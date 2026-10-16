@@ -1,18 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarOff, CalendarPlus, PlayCircle, Repeat, TriangleAlert } from "lucide-react";
-import { BlattLozenge, Button, ButtonLink, Eigenschaft, EigenschaftFehlt, Lozenge, MARKEN_TEXT, OverflowMenu } from "@/components/ui";
+import { CalendarOff, CalendarPlus, PlayCircle, TriangleAlert, Users } from "lucide-react";
+import { BlattLozenge, Button, ButtonLink, Lozenge, MARKEN_TEXT, OverflowMenu } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
-import { plusTage, wochentageText } from "@/lib/serie";
+import { plusTage } from "@/lib/serie";
 import { zeitText } from "@/lib/termin";
-import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
-import { feldName, feldText } from "@/lib/termin-felder";
 import { datumKurz } from "@/lib/zeit";
-import { verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
+import { terminHref } from "@/lib/team-ansicht";
+import type { TerminZeile } from "@/lib/queries/termine-fuer";
 import { useTerminAktionen } from "./TerminBereich";
 import { terminMenue } from "./TerminHandgriffe";
+import { TerminEigenschaften } from "./TerminEigenschaften";
 
 /* Der nächste Termin zuoberst im Trainingsplan (#403): grösser als die
    Zeilen darunter und auf einer höheren Fläche, damit man ihn am
@@ -38,19 +38,19 @@ export function NaechsterTermin({
   t,
   heute,
   ich,
+  meine,
   hervorgehoben,
 }: {
   t: TerminZeile;
   heute: string;
   ich: string;
+  meine: boolean;
   hervorgehoben: boolean;
 }) {
   const a = useTerminAktionen();
   const zeit = zeitText(t.beginn, t.ende);
   // AK 8: Heute oder Morgen zusätzlich zum Wochentag und Datum.
   const relativ = t.datum === heute ? "Heute" : t.datum === plusTage(heute, 1) ? "Morgen" : null;
-  const v = verantwortlicheMitDir(t, ich);
-  const zahlText = spielerzahlLang(spielerzahlVon(t));
   return (
     <div
       id={t.id}
@@ -68,9 +68,12 @@ export function NaechsterTermin({
           {/* Ohne Training steht der Tag in der Warnfarbe — wie die Tageszahl
               seines Kalenderblatts (PO 2026-10-07). */}
           <h4 className={cn("type-title-small", !t.ausgefallen && !t.training ? "text-icon-warning" : "text-primary")}>
-            <span className="sr-only">Nächster Termin: </span>
-            {relativ && <>{relativ} · </>}
-            {tagOhneJahr(t.datum)}
+            {/* Der Tag öffnet den Termin daneben (#435). */}
+            <Link href={terminHref(t.teamId, meine, t.id)} scroll={false} className="focus-ring rounded-klein hover:underline">
+              <span className="sr-only">Nächster Termin: </span>
+              {relativ && <>{relativ} · </>}
+              {tagOhneJahr(t.datum)}
+            </Link>
           </h4>
           <p className="mt-1 type-headline-small text-on-surface">{zeit} Uhr</p>
         </div>
@@ -126,39 +129,17 @@ export function NaechsterTermin({
           ) : (
             <Button variant="outlined" aria-haspopup="dialog" onClick={() => a.zuordnen(t)}>Training hinzufügen</Button>
           )}
+          {/* Wer kommt (#435) — sobald das Team eine Spielerliste führt. */}
+          {t.spielstand && (
+            <ButtonLink variant="outlined" href={terminHref(t.teamId, meine, t.id, "spieler")} scroll={false}>
+              <Users size={18} aria-hidden />
+              Spieler:innen
+            </ButtonLink>
+          )}
         </div>
       )}
 
-      <dl className="mt-4 grid grid-cols-[6.5rem_minmax(0,1fr)] gap-x-3 sm:grid-cols-[8rem_minmax(0,1fr)] gap-y-2 border-t border-linie pt-3">
-        {t.ort && <Eigenschaft label="Ort">{t.ort}</Eigenschaft>}
-        {/* AK 4: wer man selbst ist, steht zuerst und mit «(du)». */}
-        {v.text && <Eigenschaft label="Verantwortlich">{v.text}</Eigenschaft>}
-        {/* Aus der Spielerliste, sonst die erwartete Zahl (#434 AK 8); ein
-            ausgefallener Termin nennt keine (#437 AK 4). */}
-        {!t.ausgefallen && (zahlText ? (
-          <Eigenschaft label="Spieler:innen">{zahlText}</Eigenschaft>
-        ) : (
-          <EigenschaftFehlt label="Spieler:innen" />
-        ))}
-        {/* AK 5–7: jedes Feld mit Grösse, Toren je Torart und Untergrund;
-            «keine» Tore und unbekannte unterscheiden sich (`feldText`). */}
-        {t.felder && t.felder.length > 0 ? (
-          t.felder.map((f, i, alle) => (
-            <Eigenschaft key={i} label={feldName(i, alle.length)}>{feldText(f)}</Eigenschaft>
-          ))
-        ) : (
-          <EigenschaftFehlt label="Felder" />
-        )}
-        {t.bemerkung && <Eigenschaft label="Bemerkung"><span className="whitespace-pre-line">{t.bemerkung}</span></Eigenschaft>}
-        {t.serie && (
-          <Eigenschaft label="Terminserie">
-            <span className="inline-flex items-center gap-1">
-              <Repeat size={14} aria-hidden />
-              {wochentageText(t.serie.wochentage)}
-            </span>
-          </Eigenschaft>
-        )}
-      </dl>
+      <TerminEigenschaften t={t} ich={ich} className="mt-4 border-t border-linie pt-3" />
     </div>
   );
 }

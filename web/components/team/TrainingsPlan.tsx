@@ -12,6 +12,7 @@ import { PlanMonat } from "./PlanMonat";
 import { zeitText } from "@/lib/termin";
 import { spielerzahlKurz, spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { felderKurz } from "@/lib/termin-felder";
+import { terminHref } from "@/lib/team-ansicht";
 import { monatVon, monatsName } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
@@ -35,6 +36,7 @@ export function TrainingsPlan({
   belegt,
   meine,
   leer,
+  spalte,
 }: {
   plan: Plan;
   heute: string;
@@ -44,6 +46,9 @@ export function TrainingsPlan({
   belegt: readonly string[];
   meine: boolean;
   leer?: ReactNode;
+  /** Der geöffnete Termin (#435): ab `lg` an Stelle des Monats daneben,
+   *  schmaler an Stelle der Liste. */
+  spalte?: ReactNode;
 }) {
   const nichtsMehrOffen = plan.kommend.length === 0;
   // #403: Der erste anstehende Termin — auch ein ausgefallener (PO 6) — steht
@@ -81,16 +86,23 @@ export function TrainingsPlan({
 
   const alle = [...plan.vergangen, ...plan.kommend];
   return (
-    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_16.5rem] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
-      <div ref={liste} className="min-w-0">
+    <div
+      className={cn(
+        "lg:grid lg:items-start lg:gap-6",
+        spalte
+          ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] xl:grid-cols-[minmax(0,1fr)_32rem]"
+          : "lg:grid-cols-[minmax(0,1fr)_16.5rem] xl:grid-cols-[minmax(0,1fr)_18rem]",
+      )}
+    >
+      <div ref={liste} className={cn("min-w-0", !!spalte && "max-lg:hidden")}>
         {alle.length === 0 && leer}
         {naechster && (
           <section>
             <h3 className="type-title-small text-on-surface-mittel">
               Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
             </h3>
-            <NaechsterTermin t={naechster} heute={heute} ich={ich} hervorgehoben={naechster.id === hervorheben} />
-            <PlanMonate termine={danach} heute={heute} ich={ich} hervorheben={hervorheben} />
+            <NaechsterTermin t={naechster} heute={heute} ich={ich} meine={meine} hervorgehoben={naechster.id === hervorheben} />
+            <PlanMonate termine={danach} heute={heute} ich={ich} meine={meine} hervorheben={hervorheben} />
           </section>
         )}
         {plan.vergangen.length > 0 && (
@@ -101,10 +113,15 @@ export function TrainingsPlan({
             defaultOpen={nichtsMehrOffen || imRueckblick || rueckblickAuf > 0}
             className={cn(!nichtsMehrOffen && "mt-6")}
           >
-            <PlanMonate termine={plan.vergangen} heute={heute} ich={ich} hervorheben={hervorheben} />
+            <PlanMonate termine={plan.vergangen} heute={heute} ich={ich} meine={meine} hervorheben={hervorheben} />
           </Disclosure>
         )}
       </div>
+      {spalte ? (
+        <div className="min-w-0 rounded-flaeche bg-elev-02 p-4 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto print:hidden">
+          {spalte}
+        </div>
+      ) : (
       <div className="sticky top-20 hidden lg:block print:hidden">
         <PlanMonat
           termine={alle}
@@ -119,13 +136,14 @@ export function TrainingsPlan({
           }}
         />
       </div>
+      )}
     </div>
   );
 }
 
 /** Termine nach Monat und Tag: je Monat eine Überschrift mit Jahr, je Tag eine
  *  Karte mit seinen Terminen als Zeilen, jede mit ihrem Kalenderblatt. */
-function PlanMonate({ termine, heute, ich, hervorheben }: { termine: TerminZeile[]; heute: string; ich: string; hervorheben?: string }) {
+function PlanMonate({ termine, heute, ich, meine, hervorheben }: { termine: TerminZeile[]; heute: string; ich: string; meine: boolean; hervorheben?: string }) {
   return nachMonatUndTag(termine).map((m) => (
     <section key={m.monat} className="mt-4 first:mt-2">
       <h4 className="type-title-small text-on-surface">{monatsName(m.monat)}</h4>
@@ -137,7 +155,7 @@ function PlanMonate({ termine, heute, ich, hervorheben }: { termine: TerminZeile
             <Card>
               <ol className="divide-y divide-linie">
                 {tag.termine.map((t, i) => (
-                  <TerminReihe key={t.id} t={t} heute={heute} ich={ich} hervorgehoben={t.id === hervorheben} ersterDesTages={i === 0} />
+                  <TerminReihe key={t.id} t={t} heute={heute} ich={ich} meine={meine} hervorgehoben={t.id === hervorheben} ersterDesTages={i === 0} />
                 ))}
               </ol>
             </Card>
@@ -169,12 +187,14 @@ function TerminReihe({
   t,
   heute,
   ich,
+  meine,
   hervorgehoben,
   ersterDesTages,
 }: {
   t: TerminZeile;
   heute: string;
   ich: string;
+  meine: boolean;
   hervorgehoben: boolean;
   ersterDesTages: boolean;
 }) {
@@ -206,9 +226,10 @@ function TerminReihe({
         hervorgehoben && "kontur border-primary",
       )}
     >
-      <button type="button" onClick={() => a.bearbeiten(t)} title={ganz} className="focus-ring absolute inset-0 group-first/zeile:rounded-t-flaeche group-last/zeile:rounded-b-flaeche">
-        <span className="sr-only">Termin ändern: {zeit}</span>
-      </button>
+      {/* Die Zeile öffnet den Termin daneben (#435); ändern lässt er sich dort. */}
+      <Link href={terminHref(t.teamId, meine, t.id)} scroll={false} title={ganz} className="focus-ring absolute inset-0 group-first/zeile:rounded-t-flaeche group-last/zeile:rounded-b-flaeche">
+        <span className="sr-only">Termin öffnen: {zeit}</span>
+      </Link>
       <div aria-hidden={!ersterDesTages || undefined} className="pointer-events-none relative">
         <Kalenderblatt as={ersterDesTages ? "h5" : "div"} datum={t.datum} zustand={zustand} className={cn(vergangen && "opacity-60")} />
       </div>

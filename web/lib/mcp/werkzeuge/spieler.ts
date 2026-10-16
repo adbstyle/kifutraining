@@ -2,9 +2,10 @@ import "server-only";
 import { z } from "zod";
 import { abgebildet } from "@/lib/kern/ergebnis";
 import { aendereSpieler, entferneSpieler, ladeSpieler, ladeSpielerliste, nimmSpielerAuf } from "@/lib/kern/spieler";
-import { JS_MAX, NAME_MAX, SPIELER_MAX } from "@/lib/spieler";
+import { setzeAbmeldung, terminSpieler } from "@/lib/kern/abmeldungen";
+import { EHEMALIGE_SPIELERIN, JS_MAX, NAME_MAX, SPIELER_MAX } from "@/lib/spieler";
 import { kennung } from "@/lib/mcp/bausteine";
-import { TEAM_KENNUNG_FEHLER, TeamId } from "@/lib/mcp/werkzeuge/trainings";
+import { TEAM_KENNUNG_FEHLER, TERMIN_KENNUNG_FEHLER, TeamId, TerminId } from "@/lib/mcp/werkzeuge/trainings";
 import { werkzeug } from "@/lib/mcp/werkzeug";
 
 /**
@@ -158,4 +159,102 @@ export const spielerEntfernen = werkzeug({
       team_id: w.teamId,
       name: w.name,
     })),
+});
+
+// ── termin_spieler_abrufen (#435) ───────────────────────────────────────────
+
+/** Was jede Beschreibung eines Abmelde-Werkzeugs über das Modell sagt. */
+const ABMELDE_MODELL =
+  "Jede Spieler:in der Spielerliste ist für jeden Termin angemeldet, bis sie abgemeldet wird; einen dritten Zustand gibt " +
+  "es nicht. Ab- und anmelden geht bis zum Beginn des Termins (Uhr am Trainingsort, Schweiz), nicht an einem " +
+  "ausgefallenen. Ab Beginn gilt der Stand bei Beginn und ändert sich nicht mehr; wer danach aus der Liste fällt, steht " +
+  `dort als «${EHEMALIGE_SPIELERIN}» ohne Namen. Eine Abmeldung trägt keinen Grund, und KiFu benachrichtigt niemanden.`;
+
+export const terminSpielerAbrufen = werkzeug({
+  name: "termin_spieler_abrufen",
+  titel: "Wer an einem Termin kommt",
+  beschreibung:
+    "Nennt für einen Termin, welche Spieler:innen angemeldet und welche abgemeldet sind, dazu die Zahl der " +
+    "angemeldeten. «begonnen: true» heisst, der Stand ist der bei Beginn und lässt sich nicht mehr ändern. " +
+    `Ohne Spielerliste ist die Liste leer. ${ABMELDE_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
+  nurLesen: true,
+  eingabe: z.object({ termin_id: TerminId }),
+  ausgabe: z.object({
+    termin_id: z.string(),
+    datum: z.string(),
+    beginn: z.string(),
+    ende: z.string(),
+    ausgefallen: z.boolean(),
+    begonnen: z.boolean(),
+    angemeldet: z.number().int(),
+    gesamt: z.number().int(),
+    spieler: z.array(
+      z.object({
+        id: z.string().nullable().describe("Kennung der Spieler:in; null bei einer ehemaligen."),
+        vorname: z.string().nullable(),
+        nachname: z.string().nullable(),
+        abgemeldet: z.boolean(),
+        ehemalig: z.boolean(),
+      }),
+    ),
+  }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(await terminSpieler(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) => ({
+      termin_id: w.terminId,
+      datum: w.datum,
+      beginn: w.beginn,
+      ende: w.ende,
+      ausgefallen: w.ausgefallen,
+      begonnen: w.begonnen,
+      angemeldet: w.angemeldet,
+      gesamt: w.gesamt,
+      spieler: w.spieler.map((s) => ({
+        id: s.spielerId,
+        vorname: s.vorname,
+        nachname: s.nachname,
+        abgemeldet: s.abgemeldet,
+        ehemalig: s.ehemalig,
+      })),
+    })),
+});
+
+// ── termin_abmeldung_setzen (#435) ──────────────────────────────────────────
+
+export const terminAbmeldungSetzen = werkzeug({
+  name: "termin_abmeldung_setzen",
+  titel: "Spieler:in ab- oder anmelden",
+  beschreibung:
+    "Meldet eine Spieler:in für einen Termin ab («abgemeldet: true») oder wieder an («abgemeldet: false»). " +
+    "«termin_datum» und «termin_beginn» sind Datum und Beginn, wie du den Termin zuletzt gelesen hast: Wurde er " +
+    "inzwischen verlegt, weist KiFu mit dem neuen Stand ab (Fehlerart «konflikt») - lies ihn dann neu und frag nach. " +
+    `${ABMELDE_MODELL} ${TERMIN_KENNUNG_FEHLER} ${SPIELER_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({
+    termin_id: TerminId,
+    spieler_id: SpielerId,
+    abgemeldet: z.boolean(),
+    termin_datum: z.string().describe("Datum des Termins, wie zuletzt gelesen, als JJJJ-MM-TT."),
+    termin_beginn: z.string().describe("Beginn des Termins, wie zuletzt gelesen, als HH:MM."),
+  }),
+  ausgabe: z.object({
+    termin_id: z.string(),
+    abgemeldet: z.boolean(),
+    angemeldet: z.number().int().nullable(),
+    gesamt: z.number().int().nullable(),
+  }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(
+      await setzeAbmeldung(zugang.supabase, zugang.userId, {
+        terminId: e.termin_id,
+        spielerId: e.spieler_id,
+        abgemeldet: e.abgemeldet,
+        gesehen: { datum: e.termin_datum, beginn: e.termin_beginn },
+      }),
+      (w) => ({
+        termin_id: w.terminId,
+        abgemeldet: w.abgemeldet,
+        angemeldet: w.stand?.angemeldet ?? null,
+        gesamt: w.stand?.gesamt ?? null,
+      }),
+    ),
 });

@@ -140,6 +140,10 @@ import {
   spielerzahlKurz,
   spielerzahlLang,
   spielerzahlVon,
+  ABMELDUNG_TEXT,
+  EHEMALIGE_SPIELERIN,
+  abweisungText,
+  nachTeilnehmer,
 } from "../lib/spieler";
 import { terminBegonnen } from "../lib/zeit";
 
@@ -1849,6 +1853,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#329": ["team_plan_abrufen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
     "#434": ["spielerliste_abrufen", "spieler_aufnehmen", "spieler_aendern", "spieler_entfernen"],
+    "#435": ["termin_spieler_abrufen", "termin_abmeldung_setzen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
@@ -2018,6 +2023,18 @@ pruefe("terminBegonnen: minutengenau am Trainingsort (Zwilling von termin_begonn
   assert.equal(terminBegonnen("2026-10-16", "18:00", "2026-10-16T18:00"), true, "ab der Minute des Beginns");
   assert.equal(terminBegonnen("2026-10-16", "18:00:00", "2026-10-16T18:01"), true, "Postgres-Zeit mit Sekunden");
   assert.equal(terminBegonnen("2026-10-17", "08:00", "2026-10-16T23:59"), false);
+});
+
+pruefe("Abmelden: Abweisung nennt den Stand, Liste nach Name mit ehemaligen zuletzt (#435 AK 4, PC 4; #437 AK 5)", () => {
+  assert.equal(
+    abweisungText("verlegt", { datum: "2026-10-22", beginn: "17:30", ende: "19:00", ausgefallen: false }),
+    "Der Termin wurde inzwischen verlegt, neu auf Do., 22.10.2026 um 17:30. Sieh ihn dir noch einmal an.",
+  );
+  assert.equal(abweisungText("begonnen"), ABMELDUNG_TEXT.begonnen);
+  assert.equal(abweisungText("ausgefallen"), ABMELDUNG_TEXT.ausgefallen);
+  assert.equal(abweisungText("nicht_gefunden"), ABMELDUNG_TEXT.nichtGefunden);
+  const t = (vorname: string | null) => ({ spielerId: vorname, vorname, nachname: vorname && "X", abgemeldet: false, ehemalig: vorname === null });
+  assert.deepEqual(nachTeilnehmer([t(null), t("Noah"), t("Ayla")]).map((x) => x.vorname ?? EHEMALIGE_SPIELERIN), ["Ayla", "Noah", EHEMALIGE_SPIELERIN]);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

@@ -55,6 +55,7 @@ import { OeffnenZeileDemo } from "./OeffnenZeileDemo";
 import { EigenschaftBearbeitbarDemo } from "./EigenschaftBearbeitbarDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { CheckboxDemo } from "./CheckboxDemo";
+import { SwitchDemo } from "./SwitchDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
@@ -1807,6 +1808,24 @@ export default async function Styleguide() {
             Ein Filter ist sie nicht - der bleibt ein <code>FilterChip</code> (<Siehe id="plaketten" />).
           </p>
           <CheckboxDemo />
+
+          <h4 className="mb-2 mt-8 type-title-medium text-on-surface">
+            Schalter
+          </h4>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Für eine Ja/Nein-Angabe, die beim Umlegen sofort gilt - eine
+            Spieler:in an einem Termin angemeldet oder abgemeldet (Epic #433).
+            Neu neben der Checkbox, weil diese in ein Formular gehört, das man
+            erst speichert; ein Schalter speichert selbst (Atlassian: Toggle
+            nur für sofort wirkende Änderungen). Beide Lagen tragen ein Zeichen
+            im Knopf, damit der Zustand nicht an der Farbe allein hängt: an in
+            Primary mit Haken, aus im Rot des abgemeldeten Kalenderblatts mit
+            Kreuz. Gesperrt, wenn es nichts mehr zu ändern gibt (der Termin hat
+            begonnen); <code>neutral</code> grau ohne Zeichen, wenn es nichts zu
+            wählen gibt (er fällt aus). Darunter liegt ein echtes{" "}
+            <code>&lt;input type=&quot;checkbox&quot; role=&quot;switch&quot;&gt;</code>.
+          </p>
+          <SwitchDemo />
         </Section>
 
         <Section id="offene-einfachauswahl">

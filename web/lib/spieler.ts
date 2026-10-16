@@ -9,6 +9,7 @@
 // die Datenebene (`spieler_text_schluessel`, Unique-Index `spieler_eindeutig`).
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
+import { datumKurz } from "@/lib/zeit";
 
 /** Zwillinge der Checks `spieler_vorname`, `spieler_nachname`, `spieler_js`,
  *  `spieler_jahrgang` und der Obergrenze im Trigger `spieler_vorher`. */
@@ -143,4 +144,47 @@ export function spielerzahlLang(z: Spielerzahl): string | null {
   if (z.quelle === "liste") return `${z.angemeldet} von ${z.gesamt} angemeldet`;
   if (z.quelle === "erwartet") return `${z.zahl} ${z.zahl === 1 ? "Spieler:in" : "Spieler:innen"} erwartet`;
   return null;
+}
+
+// ── Ab- und Anmelden (#435) ─────────────────────────────────────────────────
+
+/** Warum die Datenebene ein Ab- oder Anmelden abweist (`abmeldung_anwenden`). */
+export type AbmeldeGrund = "nicht_gefunden" | "verlegt" | "ausgefallen" | "begonnen";
+
+/** Der Stand des Termins, gegen den abgewiesen wurde. */
+export type AbmeldeStand = { datum: string; beginn: string; ende: string; ausgefallen: boolean };
+
+export const ABMELDUNG_TEXT = {
+  nichtGefunden: "Diesen Termin oder diese Spieler:in gibt es nicht mehr. Sieh dir den Trainingsplan noch einmal an.",
+  begonnen: "Der Termin hat begonnen. An- und abmelden geht nur bis zum Beginn.",
+  ausgefallen: "Der Termin fällt aus. Für ihn lässt sich niemand an- oder abmelden.",
+} as const;
+
+/** Die Abweisung mit dem aktuellen Stand (#435 AK 4, #437 AK 5) — an
+ *  Oberfläche, Link und KI wortgleich. */
+export function abweisungText(grund: AbmeldeGrund, stand?: AbmeldeStand): string {
+  if (grund === "verlegt" && stand)
+    return `Der Termin wurde inzwischen verlegt, neu auf ${datumKurz(stand.datum)} um ${stand.beginn}. Sieh ihn dir noch einmal an.`;
+  if (grund === "ausgefallen") return ABMELDUNG_TEXT.ausgefallen;
+  if (grund === "begonnen") return ABMELDUNG_TEXT.begonnen;
+  return ABMELDUNG_TEXT.nichtGefunden;
+}
+
+/** Eine Spieler:in an einem Termin. `null`-Name: eine ehemalige Spieler:in an
+ *  einem vergangenen Termin (#435 PC 4). */
+export type Teilnehmer = {
+  spielerId: string | null;
+  vorname: string | null;
+  nachname: string | null;
+  abgemeldet: boolean;
+  ehemalig: boolean;
+};
+
+/** Wie eine ehemalige Spieler:in überall heisst. */
+export const EHEMALIGE_SPIELERIN = "Ehemalige Spieler:in";
+
+/** Nach Name; ehemalige zuletzt. */
+export function nachTeilnehmer(liste: Teilnehmer[]): Teilnehmer[] {
+  const benannt = liste.filter((t) => t.vorname !== null) as (Teilnehmer & { vorname: string; nachname: string })[];
+  return [...nachSpielerName(benannt), ...liste.filter((t) => t.vorname === null)];
 }

@@ -61,7 +61,14 @@ import {
   trainingLoesen,
   trainingZuordnen,
 } from "@/lib/mcp/werkzeuge/team";
-import { spielerAendern, spielerAufnehmen, spielerEntfernen, spielerlisteAbrufen } from "@/lib/mcp/werkzeuge/spieler";
+import {
+  spielerAendern,
+  spielerAufnehmen,
+  spielerEntfernen,
+  spielerlisteAbrufen,
+  terminAbmeldungSetzen,
+  terminSpielerAbrufen,
+} from "@/lib/mcp/werkzeuge/spieler";
 
 /** Der vollständige Werkzeugsatz (Story #142; Epic #139 und #190 hängen ihre
  *  Werkzeuge hier an). Der Werkzeugsatz IST die Grenze eines Zugangs: das
@@ -124,6 +131,8 @@ export const WERKZEUGE = [
   spielerAufnehmen,
   spielerAendern,
   spielerEntfernen,
+  terminSpielerAbrufen,
+  terminAbmeldungSetzen,
 ] as const;
 
 export function registriereWerkzeuge(server: McpServer): void {

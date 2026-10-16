@@ -10,6 +10,7 @@ import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
 import { TrainingAktionen } from "@/components/training/TrainingAktionen";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
+import { TrainingTeile } from "@/components/training/TrainingTeile";
 import { TrainingEigenschaften } from "@/components/training/TrainingEigenschaften";
 import {
   AnsichtFlaeche,
@@ -26,7 +27,6 @@ import { fehlendeBedingungenAus } from "@/lib/training-bedingungen";
 import { createClient } from "@/lib/supabase/server";
 import { leseGliederung, formatDuration, gesamtDauer } from "@/lib/training";
 import {
-  abschnittMitVariante,
   sichtbareZuordnungen,
   varianteAnhang,
   varianteAus,
@@ -240,90 +240,29 @@ export default async function TrainingViewPage({
           className="mb-4"
         />
 
-        <div className="flex flex-col gap-4">
-          {sections.map((s) => {
-            const blocks = s.bloecke;
-            return (
-              <section
-                key={s.key}
-                className="rounded-flaeche bg-elev-01 p-4 sm:p-5"
-              >
-                <h2 className="mb-3 type-title-medium text-on-surface">
-                  {/* Welche Variante hier steht, gehört an den Hauptteil selbst —
-                      nicht nur an die Wahl darüber (#203 AK 5). */}
-                  {abschnittMitVariante(s.key, s.label, aktive, training.varianten)}
-                  {s.sum > 0 && (
-                    <span className="ml-2 type-label-medium text-on-surface-mittel">
-                      {formatDuration(s.sum)}
-                    </span>
-                  )}
-                </h2>
-                <div className="flex flex-col gap-4">
-                  {blocks.map((b) => (
-                    <div key={b.key}>
-                      {b.label && (
-                        <h3 className="mb-2 type-title-small text-on-surface-mittel">
-                          {b.label}
-                          {b.sum > 0 && (
-                            <span className="ml-2 type-label-medium text-on-surface-mittel">
-                              {formatDuration(b.sum)}
-                            </span>
-                          )}
-                        </h3>
-                      )}
-                      <ol className="flex flex-col gap-2">
-                        {b.items.map((item) => {
-                          const dur =
-                            s.traegtDauer && item.durationMin != null
-                              ? formatDuration(item.durationMin)
-                              : null;
-                          return (
-                            // Die Übung im Training ist eine eigenständige Fassung
-                            // und verlinkt bewusst nicht auf einen Bibliotheks-
-                            // Eintrag: sie hängt von ihm nicht mehr ab, und ihr
-                            // Inhalt kann inzwischen abweichen (Story 6 AK 10).
-                            <AnsichtZeile
-                              key={item.id}
-                              id={item.id}
-                              className="flex items-center gap-3 px-2 py-2"
-                            >
-                              <ExerciseThumb
-                                bildUrl={item.bildUrl}
-                                diagramm={item.diagramm}
-                                bildQuelle={item.bildQuelle}
-                                name={item.name}
-                              />
-                              <span className="flex min-w-0 flex-1 flex-col gap-0.5 self-start">
-                                <AnsichtUebungsName id={item.id} name={item.name} />
-                              </span>
-                              {dur && (
-                                <span className="shrink-0 type-label-medium text-on-surface-mittel">
-                                  {dur}
-                                </span>
-                              )}
-                              {/* Auch aus einem fremden öffentlichen Training
-                                  kopierbar (Story 7 AK 2) — hier gibt es keinen
-                                  Editor, darum steht die Aktion in der Ansicht.
-                                  Breit im Detail der geöffneten Übung, hier nur
-                                  schmal (`InBibliothekButton`). */}
-                              {user && (
-                                <InBibliothekButton
-                                  fassungId={item.id}
-                                  name={item.name}
-                                  className="xl:hidden"
-                                />
-                              )}
-                            </AnsichtZeile>
-                          );
-                        })}
-                      </ol>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+        <TrainingTeile
+          sections={sections}
+          aktive={aktive}
+          varianten={training.varianten}
+          zeile={(item, dur) => (
+            // Die Übung im Training ist eine eigenständige Fassung und
+            // verlinkt bewusst nicht auf einen Bibliotheks-Eintrag: sie hängt
+            // von ihm nicht mehr ab, und ihr Inhalt kann inzwischen abweichen
+            // (Story 6 AK 10).
+            <AnsichtZeile key={item.id} id={item.id} className="flex items-center gap-3 px-2 py-2">
+              <ExerciseThumb bildUrl={item.bildUrl} diagramm={item.diagramm} bildQuelle={item.bildQuelle} name={item.name} />
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5 self-start">
+                <AnsichtUebungsName id={item.id} name={item.name} />
+              </span>
+              {dur && <span className="shrink-0 type-label-medium text-on-surface-mittel">{dur}</span>}
+              {/* Auch aus einem fremden öffentlichen Training kopierbar (Story 7
+                  AK 2) — hier gibt es keinen Editor, darum steht die Aktion in
+                  der Ansicht. Breit im Detail der geöffneten Übung, hier nur
+                  schmal (`InBibliothekButton`). */}
+              {user && <InBibliothekButton fassungId={item.id} name={item.name} className="xl:hidden" />}
+            </AnsichtZeile>
+          )}
+        />
 
         {!user && <AnmeldeHinweis className="mt-8" />}
       </Seitenrahmen>
