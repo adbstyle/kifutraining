@@ -144,6 +144,9 @@ import {
   EHEMALIGE_SPIELERIN,
   abweisungText,
   nachTeilnehmer,
+  LINK_PFAD,
+  istLinkToken,
+  spielerLinkUrl,
 } from "../lib/spieler";
 import { terminBegonnen } from "../lib/zeit";
 
@@ -1854,6 +1857,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
     "#434": ["spielerliste_abrufen", "spieler_aufnehmen", "spieler_aendern", "spieler_entfernen"],
     "#435": ["termin_spieler_abrufen", "termin_abmeldung_setzen"],
+    "#436": ["spieler_link_abrufen", "spieler_link_erneuern"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
@@ -2035,6 +2039,20 @@ pruefe("Abmelden: Abweisung nennt den Stand, Liste nach Name mit ehemaligen zule
   assert.equal(abweisungText("nicht_gefunden"), ABMELDUNG_TEXT.nichtGefunden);
   const t = (vorname: string | null) => ({ spielerId: vorname, vorname, nachname: vorname && "X", abgemeldet: false, ehemalig: vorname === null });
   assert.deepEqual(nachTeilnehmer([t(null), t("Noah"), t("Ayla")]).map((x) => x.vorname ?? EHEMALIGE_SPIELERIN), ["Ayla", "Noah", EHEMALIGE_SPIELERIN]);
+});
+
+pruefe("Privater Link: Format, Adresse, Pfad von Middleware und Besucherstatistik ausgenommen (#436 AK 4, 11, 14)", () => {
+  const token = "a".repeat(64);
+  assert.equal(istLinkToken(token), true);
+  for (const x of ["A".repeat(64), "a".repeat(63), "a".repeat(65), `${"a".repeat(63)}g`, 42, null])
+    assert.equal(istLinkToken(x), false, String(x));
+  assert.equal(spielerLinkUrl("https://ki-fu.ch/", token), `https://ki-fu.ch/abmelden/${token}`);
+  // Der Ordner trägt den Parameter, an dem die Besucherstatistik die Seite erkennt.
+  assert.ok(existsSync(`app/(privat)/${LINK_PFAD}/[privaterLink]/page.tsx`));
+  assert.ok(readFileSync("components/layout/Besucherstatistik.tsx", "utf8").includes('"privaterLink" in params'));
+  // Ohne Sitzung: die Middleware lässt den Pfad aus, Next schickt die Schutz-Header.
+  assert.ok(readFileSync("middleware.ts", "utf8").includes(`|${LINK_PFAD}/|`));
+  assert.ok(readFileSync("next.config.ts", "utf8").includes(`source: "/${LINK_PFAD}/:pfad*"`));
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

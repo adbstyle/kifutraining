@@ -65,6 +65,8 @@ import {
   spielerAendern,
   spielerAufnehmen,
   spielerEntfernen,
+  spielerLinkAbrufen,
+  spielerLinkErneuern,
   spielerlisteAbrufen,
   terminAbmeldungSetzen,
   terminSpielerAbrufen,
@@ -133,6 +135,8 @@ export const WERKZEUGE = [
   spielerEntfernen,
   terminSpielerAbrufen,
   terminAbmeldungSetzen,
+  spielerLinkAbrufen,
+  spielerLinkErneuern,
 ] as const;
 
 export function registriereWerkzeuge(server: McpServer): void {

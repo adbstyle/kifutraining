@@ -2,17 +2,19 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Plus, X } from "lucide-react";
+import { Link2, Pencil, Plus, X } from "lucide-react";
 import { Button, Dialog, IconButton, TextField, Tooltip } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { aendereSpielerAktion, entferneSpielerAktion, nimmSpielerAufAktion } from "@/lib/actions/spieler";
 import { spielerName, type Spieler, type SpielerFeld } from "@/lib/spieler";
+import { SpielerLinkDialog } from "./SpielerLinkDialog";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
    Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet die
    Eingabezeile, das Kreuz schliesst sie, ohne zu speichern; «Hinzufügen» und
    Enter nehmen auf, danach bleibt die Zeile für die nächste offen. Ändern
-   öffnet dieselbe Zeile mit den Angaben der Spieler:in, Entfernen fragt nach. */
+   öffnet dieselbe Zeile mit den Angaben der Spieler:in, Entfernen fragt nach.
+   Das Kettenglied zeigt ihren privaten Link (#436). */
 
 type Form = { vorname: string; nachname: string; jahrgang: string; jsNummer: string };
 const LEER: Form = { vorname: "", nachname: "", jahrgang: "", jsNummer: "" };
@@ -26,6 +28,7 @@ export function SpielerListe({ teamId, spieler }: { teamId: string; spieler: Spi
   const [form, setForm] = useState<Form>(LEER);
   const [fehler, setFehler] = useState<{ feld?: SpielerFeld; text: string } | null>(null);
   const [entfernen, setEntfernen] = useState<Spieler | null>(null);
+  const [link, setLink] = useState<Spieler | null>(null);
   const erstesFeld = useRef<HTMLInputElement>(null);
 
   function oeffnen(s?: Spieler) {
@@ -128,7 +131,7 @@ export function SpielerListe({ teamId, spieler }: { teamId: string; spieler: Spi
 
       {spieler.length > 0 ? (
         <div className="mt-4 overflow-hidden rounded-flaeche bg-elev-01">
-          <div aria-hidden className="hidden grid-cols-[minmax(0,1fr)_4.5rem_7rem_5rem] gap-3 border-b border-linie px-4 py-2 type-label-small text-on-surface-mittel sm:grid">
+          <div aria-hidden className="hidden grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem] gap-3 border-b border-linie px-4 py-2 type-label-small text-on-surface-mittel sm:grid">
             <span>Name</span>
             <span>Jahrgang</span>
             <span>J+S-Nr.</span>
@@ -136,7 +139,7 @@ export function SpielerListe({ teamId, spieler }: { teamId: string; spieler: Spi
           </div>
           <ul className="divide-y divide-linie">
             {spieler.map((s) => (
-              <li key={s.id} className="state flex items-center gap-3 py-1 pl-4 pr-2 sm:grid sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_5rem]">
+              <li key={s.id} className="state flex items-center gap-3 py-1 pl-4 pr-2 sm:grid sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem]">
                 <span className="min-w-0 flex-1">
                   <span className="type-body-medium block truncate text-on-surface">{spielerName(s)}</span>
                   {/* Schmal stehen Jahrgang und J+S-Nummer unter dem Namen. */}
@@ -149,6 +152,9 @@ export function SpielerListe({ teamId, spieler }: { teamId: string; spieler: Spi
                   {s.jsNummer ?? "–"}
                 </span>
                 <span className="flex justify-end gap-1">
+                  <Tooltip label="Privater Link">
+                    <IconButton icon={Link2} label={`Privater Link für ${spielerName(s)}`} onClick={() => setLink(s)} />
+                  </Tooltip>
                   <Tooltip label="Ändern">
                     <IconButton icon={Pencil} label={`${spielerName(s)} ändern`} onClick={() => oeffnen(s)} />
                   </Tooltip>
@@ -188,6 +194,8 @@ export function SpielerListe({ teamId, spieler }: { teamId: string; spieler: Spi
           anstehenden Terminen zählt sie nicht mehr.
         </p>
       </Dialog>
+
+      <SpielerLinkDialog spieler={link} onClose={() => setLink(null)} />
     </>
   );
 }

@@ -1,7 +1,8 @@
 "use server";
 
-import { aendereSpieler, entferneSpieler, nimmSpielerAuf } from "@/lib/kern/spieler";
-import type { SpielerEingabe, SpielerFeld } from "@/lib/spieler";
+import { aendereSpieler, entferneSpieler, erneuereSpielerLink, holeSpielerLink, nimmSpielerAuf } from "@/lib/kern/spieler";
+import { spielerLinkUrl, type SpielerEingabe, type SpielerFeld } from "@/lib/spieler";
+import { oeffentlicherOrigin } from "@/lib/origin";
 import { revalidiereTeam } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
 
@@ -44,4 +45,23 @@ export async function entferneSpielerAktion(spielerId: string): Promise<{ ok: tr
   if (!r.ok) return fehler(r);
   revalidiereTeam(r.wert.teamId);
   return { ok: true };
+}
+
+/** Den privaten Link einer Spieler:in holen (#436 AK 1) — als Adresse. */
+export async function holeSpielerLinkAktion(spielerId: string): Promise<{ ok: true; url: string } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await holeSpielerLink(a.supabase, a.userId, { spielerId });
+  if (!r.ok) return fehler(r);
+  return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token) };
+}
+
+/** Den privaten Link erneuern (#436 AK 3): Der bisherige gilt nie wieder. */
+export async function erneuereSpielerLinkAktion(spielerId: string): Promise<{ ok: true; url: string } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await erneuereSpielerLink(a.supabase, a.userId, { spielerId });
+  if (!r.ok) return fehler(r);
+  revalidiereTeam(r.wert.teamId);
+  return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token) };
 }

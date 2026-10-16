@@ -73,7 +73,7 @@ const { legeSerieFest, aendereSerie, entferneSerie, folgeDerSerie, aendereMitRei
   await import("../lib/kern/serien");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
 const { getTeamPlanFuer } = await import("../lib/queries/termine-fuer");
-const { ladeSpielerliste, nimmSpielerAuf, aendereSpieler, entferneSpieler } = await import("../lib/kern/spieler");
+const { ladeSpielerliste, nimmSpielerAuf, aendereSpieler, entferneSpieler, holeSpielerLink, erneuereSpielerLink } = await import("../lib/kern/spieler");
 const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, abweisungText, spielerzahlVon } = await import("../lib/spieler");
 const { setzeAbmeldung, terminSpieler } = await import("../lib/kern/abmeldungen");
 const { getTeamTrainingsFuer } = await import("../lib/queries/trainings-fuer");
@@ -3965,6 +3965,79 @@ try {
     assert.deepEqual(liste.spieler.map((s) => [s.vorname, s.abgemeldet, s.ehemalig]), [["Lena", false, false], [null, true, true]], "PC 4");
     assert.equal(liste.spieler[0].spielerId, lena);
   });
+  // ── Privater Link (#436) ─────────────────────────────────────────────────
+  await pruefe("Privater Link: holen, ansehen ohne Konto, ab- und anmelden, Geheimnis nur über die RPC (#436 AK 1, 4–9, 11, PC 1)", async () => {
+    const team = await serienTeam("Kern-DB-Link");
+    const lena = (await neuerSpieler(team, "Lena", "Meier")).spielerId;
+    await neuerSpieler(team, "Noah");
+    const t = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler" })).terminId;
+    // Gestern: vergangen, erscheint nicht.
+    const gestern = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
+    const link = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lena }));
+    assert.match(link.token, /^[0-9a-f]{64}$/);
+    assert.equal(link.name, "Lena Meier");
+    assert.equal(wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lena })).token, link.token, "derselbe Link, bis er erneuert wird");
+    fehler(await holeSpielerLink(b.supabase, b.id, { spielerId: lena }), "nicht_gefunden");
+    // Das Geheimnis ist über die Tabelle nicht lesbar — auch nicht für Mitglieder.
+    assert.ok((await a.supabase.from("spieler").select("link_token").eq("id", lena)).error);
+    assert.ok((await a.supabase.from("spieler").select("*").eq("id", lena)).error);
+    assert.ok((await feldAnon.rpc("spieler_link_holen", { p_spieler: lena })).error);
+
+    const ansicht = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data;
+    assert.equal(ansicht.gueltig, true);
+    assert.equal(ansicht.team, "Kern-DB-Link");
+    assert.deepEqual(ansicht.spieler, { vorname: "Lena", nachname: "Meier" }, "keine Namen anderer (OoS 2)");
+    assert.deepEqual(ansicht.termine.map((x: { id: string }) => x.id), [t], "nichts Vergangenes (OoS 2)");
+    assert.ok(!ansicht.termine.some((x: { id: string }) => x.id === gestern));
+    assert.deepEqual(ansicht.termine[0], {
+      id: t, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler", ausgefallen: false, begonnen: false, angemeldet: 2, abgemeldet: false,
+    });
+
+    const abmelden = (token: string, abgemeldet: boolean) =>
+      feldAnon.rpc("spieler_link_abmelden", { p_token: token, p_termin: t, p_abgemeldet: abgemeldet, p_gesehen_datum: tagCh(2), p_gesehen_beginn: "18:00" });
+    const ab = (await abmelden(link.token, true)).data;
+    assert.equal(ab.status, "ok");
+    assert.equal(ab.stand.angemeldet, 1);
+    // PC 1: Mitglieder sehen die Abmeldung wie eine eigene.
+    const liste = wert(await terminSpieler(a.supabase, a.id, { terminId: t }));
+    assert.deepEqual(liste.spieler.map((s) => [s.vorname, s.abgemeldet]), [["Lena", true], ["Noah", false]]);
+    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].abgemeldet, true);
+    assert.equal((await abmelden(link.token, false)).data.stand.angemeldet, 2, "AK 8: wieder angemeldet");
+    // Ein Termin eines anderen Teams passt nicht zum Link.
+    const anderes = await serienTeam("Kern-DB-Link-Anders");
+    const fremd = wert(await legeTerminFest(a.supabase, a.id, { teamId: anderes, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const r = (await feldAnon.rpc("spieler_link_abmelden", { p_token: link.token, p_termin: fremd, p_abgemeldet: true, p_gesehen_datum: null, p_gesehen_beginn: null })).data;
+    assert.deepEqual([r.status, r.grund], ["abgewiesen", "nicht_gefunden"]);
+
+    // AK 11: unbekannt antwortet wie ungültig, ohne irgendetwas preiszugeben.
+    const unbekannt = "0".repeat(64);
+    assert.deepEqual((await feldAnon.rpc("spieler_link_ansicht", { p_token: unbekannt })).data, { gueltig: false });
+    assert.deepEqual((await abmelden(unbekannt, true)).data, { status: "ungueltig" });
+    // Anon sieht die Tabellen selbst nicht.
+    assert.deepEqual((await feldAnon.from("spieler").select("id").eq("team_id", team)).data ?? [], []);
+    assert.deepEqual((await feldAnon.from("termin_abmeldungen").select("spieler_id").eq("termin_id", t)).data ?? [], []);
+  });
+
+  await pruefe("Privater Link: erneuern macht den alten ungültig, Abmeldungen bleiben; entfernt gilt keiner mehr (#436 AK 3, 10, PC 2, 3)", async () => {
+    const team = await serienTeam("Kern-DB-Link-Erneuern");
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const alt = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lena })).token;
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
+    const neu = wert(await erneuereSpielerLink(a.supabase, a.id, { spielerId: lena })).token;
+    assert.notEqual(neu, alt);
+    assert.equal(wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lena })).token, neu);
+    assert.deepEqual((await feldAnon.rpc("spieler_link_ansicht", { p_token: alt })).data, { gueltig: false });
+    assert.deepEqual(
+      (await feldAnon.rpc("spieler_link_abmelden", { p_token: alt, p_termin: t, p_abgemeldet: false, p_gesehen_datum: null, p_gesehen_beginn: null })).data,
+      { status: "ungueltig" },
+    );
+    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: neu })).data.termine[0].abgemeldet, true, "PC 3");
+    fehler(await erneuereSpielerLink(b.supabase, b.id, { spielerId: lena }), "nicht_gefunden");
+    wert(await entferneSpieler(a.supabase, a.id, { spielerId: lena }));
+    assert.deepEqual((await feldAnon.rpc("spieler_link_ansicht", { p_token: neu })).data, { gueltig: false }, "PC 2: entfernt");
+  });
+
 } finally {
   await aufraeumen();
 }

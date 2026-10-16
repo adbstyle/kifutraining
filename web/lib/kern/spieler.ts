@@ -148,3 +148,31 @@ export async function fuehrtSpielerliste(supabase: SupabaseClient, teamId: strin
   const { count } = await supabase.from("spieler").select("id", { count: "exact", head: true }).eq("team_id", teamId);
   return (count ?? 0) > 0;
 }
+
+// ── Privater Link (#436) ────────────────────────────────────────────────────
+
+/** Den privaten Link einer Spieler:in holen (AK 1, 12) — das Geheimnis, nicht die Adresse. */
+export async function holeSpielerLink(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { spielerId: string },
+): Promise<KernErgebnis<{ token: string; teamId: string; name: string }>> {
+  const s = await ladeSpieler(supabase, e.spielerId);
+  if (!s.ok) return s;
+  const { data, error } = await supabase.rpc("spieler_link_holen", { p_spieler: e.spielerId });
+  if (error) return spielerFehler(error);
+  return ok({ token: data as string, teamId: s.wert.teamId, name: `${s.wert.vorname} ${s.wert.nachname}` });
+}
+
+/** Den privaten Link erneuern (AK 3): Der bisherige gilt nie wieder. */
+export async function erneuereSpielerLink(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { spielerId: string },
+): Promise<KernErgebnis<{ token: string; teamId: string; name: string }>> {
+  const s = await ladeSpieler(supabase, e.spielerId);
+  if (!s.ok) return s;
+  const { data, error } = await supabase.rpc("spieler_link_erneuern", { p_spieler: e.spielerId });
+  if (error) return spielerFehler(error);
+  return ok({ token: data as string, teamId: s.wert.teamId, name: `${s.wert.vorname} ${s.wert.nachname}` });
+}

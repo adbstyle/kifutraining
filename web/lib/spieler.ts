@@ -188,3 +188,28 @@ export function nachTeilnehmer(liste: Teilnehmer[]): Teilnehmer[] {
   const benannt = liste.filter((t) => t.vorname !== null) as (Teilnehmer & { vorname: string; nachname: string })[];
   return [...nachSpielerName(benannt), ...liste.filter((t) => t.vorname === null)];
 }
+
+// ── Privater Link (#436) ────────────────────────────────────────────────────
+
+/** Der Pfad der Seite hinter dem privaten Link: `/abmelden/<token>`. */
+export const LINK_PFAD = "abmelden";
+
+/** 64 Hex-Zeichen wie das Kalender-Abo — vorab geprüft, bevor die Datenebene fragt. */
+export function istLinkToken(s: unknown): s is string {
+  return typeof s === "string" && /^[0-9a-f]{64}$/.test(s);
+}
+
+/** Die vollständige Adresse des privaten Links. */
+export function spielerLinkUrl(origin: string, token: string): string {
+  return `${origin.replace(/\/+$/, "")}/${LINK_PFAD}/${token}`;
+}
+
+export const LINK_TEXT = {
+  /** AK 2: was der Link kann — beim Holen, in der Oberfläche wie beim KI-Assistenten. */
+  warnung: "Wer diesen Link hat, kann diese Spieler:in für Trainings ab- und anmelden. Gib ihn nur ihren Eltern oder ihr selbst.",
+  /** Was Erneuern bewirkt (AK 3, PC 3). */
+  erneuern: "Erneuern macht den bisherigen Link sofort ungültig. Abmeldungen bleiben.",
+  /** AK 10: ein erneuerter, unbekannter oder entfernter Link. */
+  ungueltigTitel: "Dieser Link gilt nicht mehr",
+  ungueltig: "Vielleicht hat das Trainerteam ihn erneuert. Frag deine Trainerin oder deinen Trainer nach dem aktuellen Link.",
+} as const;

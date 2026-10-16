@@ -1,9 +1,17 @@
 import "server-only";
 import { z } from "zod";
 import { abgebildet } from "@/lib/kern/ergebnis";
-import { aendereSpieler, entferneSpieler, ladeSpieler, ladeSpielerliste, nimmSpielerAuf } from "@/lib/kern/spieler";
+import {
+  aendereSpieler,
+  entferneSpieler,
+  erneuereSpielerLink,
+  holeSpielerLink,
+  ladeSpieler,
+  ladeSpielerliste,
+  nimmSpielerAuf,
+} from "@/lib/kern/spieler";
 import { setzeAbmeldung, terminSpieler } from "@/lib/kern/abmeldungen";
-import { EHEMALIGE_SPIELERIN, JS_MAX, NAME_MAX, SPIELER_MAX } from "@/lib/spieler";
+import { EHEMALIGE_SPIELERIN, JS_MAX, LINK_PFAD, LINK_TEXT, NAME_MAX, SPIELER_MAX } from "@/lib/spieler";
 import { kennung } from "@/lib/mcp/bausteine";
 import { TEAM_KENNUNG_FEHLER, TERMIN_KENNUNG_FEHLER, TeamId, TerminId } from "@/lib/mcp/werkzeuge/trainings";
 import { werkzeug } from "@/lib/mcp/werkzeug";
@@ -257,4 +265,59 @@ export const terminAbmeldungSetzen = werkzeug({
         gesamt: w.stand?.gesamt ?? null,
       }),
     ),
+});
+
+// ── spieler_link_abrufen / spieler_link_erneuern (#436) ─────────────────────
+
+/** Was jede Beschreibung eines Link-Werkzeugs über das Modell sagt. */
+const LINK_MODELL =
+  "Jede Spieler:in hat einen privaten Link: Wer ihn öffnet, sieht ohne Konto den Teamnamen, Vor- und Nachnamen dieser " +
+  "Spieler:in und die anstehenden Termine des Teams mit der Zahl der Angemeldeten, und meldet sie bis zum Beginn ab und " +
+  "wieder an — keine Namen anderer, kein Training, nichts Vergangenes. KiFu verschickt den Link nicht. Gib ihn nur der " +
+  `Person weiter, die ihn verlangt, und nie in einer Gruppe. ${LINK_TEXT.warnung}`;
+
+const LinkAusgabe = z.object({
+  spieler_id: z.string(),
+  team_id: z.string(),
+  name: z.string(),
+  url: z.string().describe("Der private Link. Ein Geheimnis: Wer ihn hat, kann diese Spieler:in ab- und anmelden."),
+  hinweis: z.string(),
+});
+
+export const spielerLinkAbrufen = werkzeug({
+  name: "spieler_link_abrufen",
+  titel: "Privater Link einer Spieler:in",
+  beschreibung:
+    "Holt den privaten Link einer Spieler:in, damit du ihn ihrer Spielervertretung (Eltern oder ihr selbst) weitergibst. " +
+    `Er bleibt derselbe, bis ihn jemand erneuert. ${LINK_MODELL} ${SPIELER_KENNUNG_FEHLER}`,
+  nurLesen: true,
+  eingabe: z.object({ spieler_id: SpielerId }),
+  ausgabe: LinkAusgabe,
+  ausfuehren: async (e, zugang) =>
+    abgebildet(await holeSpielerLink(zugang.supabase, zugang.userId, { spielerId: e.spieler_id }), (w) => ({
+      spieler_id: e.spieler_id,
+      team_id: w.teamId,
+      name: w.name,
+      url: zugang.url(LINK_PFAD, w.token),
+      hinweis: LINK_TEXT.warnung,
+    })),
+});
+
+export const spielerLinkErneuern = werkzeug({
+  name: "spieler_link_erneuern",
+  titel: "Privaten Link einer Spieler:in erneuern",
+  beschreibung:
+    "Erneuert den privaten Link einer Spieler:in und gibt den neuen zurück — etwa wenn er weitergegeben oder " +
+    `missbraucht wurde. ${LINK_TEXT.erneuern} Frag vorher nach, ob das gemeint ist. ${LINK_MODELL} ${SPIELER_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({ spieler_id: SpielerId }),
+  ausgabe: LinkAusgabe,
+  ausfuehren: async (e, zugang) =>
+    abgebildet(await erneuereSpielerLink(zugang.supabase, zugang.userId, { spielerId: e.spieler_id }), (w) => ({
+      spieler_id: e.spieler_id,
+      team_id: w.teamId,
+      name: w.name,
+      url: zugang.url(LINK_PFAD, w.token),
+      hinweis: LINK_TEXT.erneuern,
+    })),
 });

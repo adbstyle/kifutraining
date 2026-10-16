@@ -5,7 +5,7 @@ import { LOZENGE_FORM } from "./Lozenge";
 
 /** Was der Termin hinter dem Blatt trägt — dieselben Zustände wie die
  *  Marken des Mini-Monats. */
-export type BlattZustand = "training" | "noch-nicht" | "ohne" | "ausgefallen";
+export type BlattZustand = "training" | "noch-nicht" | "ohne" | "ausgefallen" | "abgemeldet";
 
 /* Die Tönung je Zustand — leise, damit die Liste ruhig bleibt (PO
    2026-10-06): eine schwache Fläche in der Farbe des Zustands und die
@@ -18,6 +18,9 @@ const TOENUNG: Record<BlattZustand, string> = {
   "noch-nicht": "bg-icon-warning/12 text-icon-warning",
   ausgefallen: "bg-elev-08 text-on-surface-mittel",
   ohne: "text-on-surface",
+  // Die Spieler:in ist abgemeldet (#436): im Rot der Danger-Lozenge, wie der
+  // Schalter daneben in seiner Aus-Lage.
+  abgemeldet: "bg-lozenge-danger text-on-lozenge-danger",
 };
 
 /* Ein Termin als Kalenderblatt: Wochentag, grosse Tageszahl, Monat — wie ein
@@ -45,7 +48,7 @@ export function Kalenderblatt({
   className?: string;
 }) {
   const b = kalenderblatt(datum);
-  const leise = zustand !== "ausgefallen" && "text-on-surface-mittel";
+  const leise = zustand !== "ausgefallen" && zustand !== "abgemeldet" && "text-on-surface-mittel";
   return (
     <Element
       className={cn(
