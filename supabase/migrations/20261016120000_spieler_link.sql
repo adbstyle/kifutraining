@@ -16,8 +16,15 @@
 -- ============================================================================
 set lock_timeout = '5s';
 
-alter table spieler add column link_token text not null unique
-  default replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
+-- Ein Geheimnis für private Links (244 Bit: zwei UUID v4, 64 Hex-Zeichen wie
+-- das Kalender-Abo) — Spieler-Links und Abholadressen (#438).
+create function neues_geheimnis() returns text
+language sql volatile
+set search_path = public, pg_temp
+as $$ select replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '') $$;
+revoke all on function neues_geheimnis() from public, anon, authenticated;
+
+alter table spieler add column link_token text not null unique default neues_geheimnis();
 
 -- Das Geheimnis per Spaltenrecht aus dem Lesen nehmen.
 revoke select on spieler from authenticated;
@@ -45,7 +52,7 @@ set search_path = public, pg_temp
 as $$
 declare
   v_team uuid;
-  v_token text := replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
+  v_token text := neues_geheimnis();
 begin
   if auth.uid() is null then raise exception 'not authenticated'; end if;
   select team_id into v_team from spieler where id = p_spieler;

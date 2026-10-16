@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { AbholSeite, AbholungGiltNicht } from "@/components/privat/AbholSeite";
+import { AbholSeite } from "@/components/privat/AbholSeite";
+import { GiltNicht } from "@/components/privat/GiltNicht";
 import { ladeAbholAnsicht } from "@/lib/abholung";
+import { ABHOLUNG_TEXT } from "@/lib/spieler";
 
 /* Die Abholadresse eines Teams (#438): Eltern holen den privaten Link ihres
    Kindes selbst ab. Jeder Aufruf liest neu — eine erneuerte oder
@@ -22,6 +24,6 @@ export const metadata: Metadata = {
 export default async function AbholAdresse({ params }: { params: Promise<{ privaterLink: string }> }) {
   const { privaterLink } = await params;
   const ansicht = await ladeAbholAnsicht(privaterLink);
-  if (!ansicht.gueltig) return <AbholungGiltNicht />;
+  if (!ansicht.gueltig) return <GiltNicht titel={ABHOLUNG_TEXT.ungueltigTitel} text={ABHOLUNG_TEXT.ungueltig} />;
   return <AbholSeite token={privaterLink} team={ansicht.team} />;
 }

@@ -73,7 +73,7 @@ const { legeSerieFest, aendereSerie, entferneSerie, folgeDerSerie, aendereMitRei
   await import("../lib/kern/serien");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
 const { getTeamPlanFuer } = await import("../lib/queries/termine-fuer");
-const { ladeSpielerliste, nimmSpielerAuf, aendereSpieler, entferneSpieler, holeSpielerLink, erneuereSpielerLink, holeAbholung, schalteAbholung, erneuereAbholung } =
+const { ladeSpielerliste, nimmSpielerAuf, aendereSpieler, entferneSpieler, holeSpielerLink, erneuereSpielerLink, leseAbholung, schalteAbholung, erneuereAbholung } =
   await import("../lib/kern/spieler");
 const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, abweisungText, spielerzahlVon } = await import("../lib/spieler");
 const { setzeAbmeldung, terminSpieler } = await import("../lib/kern/abmeldungen");
@@ -4160,12 +4160,14 @@ try {
   await pruefe("Selbstabholung: aus bis eingeschaltet, Abgleich wie die Eindeutigkeit, bezogen, erneuern (#438 AK 1, 2, 4, 8, 9, 11, 13, 18; PC 1–6)", async () => {
     const team = await serienTeam("Kern-DB-Abholung");
     const lena = (await neuerSpieler(team, "Anna-Lena", "O’Brien", 2017)).spielerId;
-    const start = wert(await holeAbholung(a.supabase, a.id, { teamId: team }));
-    assert.equal(start.aktiv, false, "PO 3: aus, bis jemand einschaltet");
+    assert.deepEqual(wert(await leseAbholung(a.supabase, a.id, { teamId: team })), { teamId: team, token: null, aktiv: false }, "PO 3: aus");
+    fehler(await leseAbholung(b.supabase, b.id, { teamId: team }), "nicht_gefunden");
+    // Ausgeschaltet angelegt gilt sie noch nicht (PC 1).
+    const start = wert(await schalteAbholung(a.supabase, a.id, { teamId: team, aktiv: false }));
+    assert.equal(start.aktiv, false);
     assert.match(start.token, /^[0-9a-f]{64}$/);
     assert.deepEqual((await feldAnon.rpc("abholung_ansicht", { p_token: start.token })).data, { gueltig: false }, "PC 1");
     assert.deepEqual(await abholen(start.token, anschluss(1), "Anna-Lena", "O’Brien", 2017), { status: "ungueltig" });
-    fehler(await holeAbholung(b.supabase, b.id, { teamId: team }), "nicht_gefunden");
 
     const an = wert(await schalteAbholung(a.supabase, a.id, { teamId: team, aktiv: true }));
     assert.equal(an.token, start.token);
@@ -4215,10 +4217,20 @@ try {
     // Nach der Wartezeit wieder offen.
     await admin.from("abholung_sperren").update({ gesperrt_bis: new Date(Date.now() - 1000).toISOString() }).eq("schluessel", k);
     assert.equal((await abholen(t, k, "Lena", "Meier", 2017)).status, "ok");
-    // Ein Erfolg setzt die Zählung zurück.
+    // Ein Treffer setzt die Zählung nicht zurück: Wer ein Kind kennt, rät
+    // dazwischen nicht beliebig weiter.
     for (let i = 1; i <= 4; i++) await abholen(t, k, "Lena", "Maier", 2017);
     assert.equal((await abholen(t, k, "Lena", "Meier", 2017)).status, "ok");
-    assert.equal((await abholen(t, k, "Lena", "Maier", 2017)).status, "passt_nicht");
+    assert.equal((await abholen(t, k, "Lena", "Maier", 2017)).status, "gesperrt");
+  });
+
+  await pruefe("Selbstabholung: der Anschluss ist IPv4 ganz, IPv6 sein /64 (#438 AK 15)", async () => {
+    const { anschlussVon } = await import("../lib/abholung");
+    assert.equal(anschlussVon("203.0.113.7"), "203.0.113.7");
+    assert.equal(anschlussVon("2001:db8:0:1:aaaa::1"), "2001:db8:0:1::/64");
+    assert.equal(anschlussVon("2001:DB8::1"), "2001:db8:0:0::/64");
+    assert.equal(anschlussVon("2001:0db8:0000:0001:1:2:3:4"), "2001:db8:0:1::/64");
+    assert.equal(anschlussVon("::1"), "0:0:0:0::/64");
   });
 
 } finally {

@@ -17,6 +17,7 @@ export async function setzeAbmeldungAktion(
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await setzeAbmeldung(a.supabase, a.userId, e);
+  if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(teamId);
-  return r.ok ? { ok: true } : { ok: false, error: r.meldung };
+  return { ok: true };
 }

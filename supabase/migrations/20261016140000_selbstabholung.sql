@@ -11,8 +11,8 @@
 --
 -- Abgeglichen wird wie bei der Eindeutigkeit im Team (`spieler_text_schluessel`,
 -- PO 5). Eine nicht passende Eingabe antwortet immer gleich (AK 13); nach 5
--- davon nimmt die Abholung 15 Minuten lang keine Eingabe mehr vom selben
--- Anschluss an (AK 15, PO 4). Den Anschluss kennt die Datenebene nur als
+-- davon innert 15 Minuten nimmt die Abholung 15 Minuten lang keine Eingabe
+-- mehr vom selben Anschluss an (AK 15, PO 4) — auch keine passende. Den Anschluss kennt die Datenebene nur als
 -- Schlüssel, den der Server aus der IP-Adresse mit einem geheimen Wert bildet —
 -- keine Adresse in der Datenbank.
 --
@@ -33,7 +33,7 @@ set search_path = public, pg_temp
 as $$
 declare
   v_team uuid;
-  v_token text := replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
+  v_token text := neues_geheimnis();
 begin
   if auth.uid() is null then raise exception 'not authenticated'; end if;
   select team_id into v_team from spieler where id = p_spieler;
@@ -47,7 +47,7 @@ $$;
 
 create table team_abholung (
   team_id uuid primary key references teams (id) on delete cascade,
-  token text not null unique default replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''),
+  token text not null unique default neues_geheimnis(),
   aktiv boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -67,22 +67,8 @@ create table abholung_sperren (
 alter table abholung_sperren enable row level security;
 revoke all on abholung_sperren from anon, authenticated;
 
--- Holen legt die Adresse beim ersten Mal an — ausgeschaltet (PO 3).
-create function abholung_holen(p_team uuid) returns jsonb
-language plpgsql security definer
-set search_path = public, pg_temp
-as $$
-declare
-  a team_abholung;
-begin
-  if auth.uid() is null then raise exception 'not authenticated'; end if;
-  if not ist_team_mitglied(p_team) then raise exception 'TEAM_NICHT_GEFUNDEN'; end if;
-  insert into team_abholung (team_id) values (p_team) on conflict (team_id) do nothing;
-  select * into a from team_abholung where team_id = p_team;
-  return jsonb_build_object('token', a.token, 'aktiv', a.aktiv);
-end;
-$$;
-
+-- Lesen dürfen Mitglieder direkt (RLS); die Zeile entsteht beim ersten
+-- Schalten oder Erneuern. Bis dahin ist die Selbstabholung aus (PO 3).
 create function abholung_schalten(p_team uuid, p_aktiv boolean) returns jsonb
 language plpgsql security definer
 set search_path = public, pg_temp
@@ -105,7 +91,7 @@ set search_path = public, pg_temp
 as $$
 declare
   a team_abholung;
-  v_token text := replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
+  v_token text := neues_geheimnis();
 begin
   if auth.uid() is null then raise exception 'not authenticated'; end if;
   if not ist_team_mitglied(p_team) then raise exception 'TEAM_NICHT_GEFUNDEN'; end if;
@@ -115,10 +101,8 @@ begin
   return jsonb_build_object('token', a.token, 'aktiv', a.aktiv);
 end;
 $$;
-revoke all on function abholung_holen(uuid) from public, anon;
 revoke all on function abholung_schalten(uuid, boolean) from public, anon;
 revoke all on function abholung_erneuern(uuid) from public, anon;
-grant execute on function abholung_holen(uuid) to authenticated;
 grant execute on function abholung_schalten(uuid, boolean) to authenticated;
 grant execute on function abholung_erneuern(uuid) to authenticated;
 
@@ -183,7 +167,9 @@ begin
     return jsonb_build_object('status', case when sp.gesperrt_bis is not null then 'gesperrt' else 'passt_nicht' end);
   end if;
 
-  delete from abholung_sperren where schluessel = p_schluessel;
+  -- Ein Treffer setzt die Fehlversuche NICHT zurück: Sonst rät, wer ein Kind
+  -- kennt, zwischen zwei Treffern beliebig viele fremde Namen. Sie laufen nur
+  -- mit den 15 Minuten aus.
   update spieler set link_bezogen = true where id = s.id;
   return jsonb_build_object('status', 'ok', 'token', s.link_token,
                             'spieler', jsonb_build_object('vorname', s.vorname, 'nachname', s.nachname));

@@ -3,12 +3,13 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Link2, Pencil, Plus, X } from "lucide-react";
-import { Button, Dialog, IconButton, Lozenge, TextField, Tooltip } from "@/components/ui";
+import { Button, Dialog, IconButton, TextField, Tooltip } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { aendereSpielerAktion, entferneSpielerAktion, nimmSpielerAufAktion } from "@/lib/actions/spieler";
-import { spielerName, type Spieler, type SpielerFeld } from "@/lib/spieler";
+import { JAHRGANG_STELLEN, JS_MAX, nurZiffern, spielerName, type Spieler, type SpielerFeld } from "@/lib/spieler";
 import { SpielerLinkDialog } from "./SpielerLinkDialog";
 import { Selbstabholung } from "./Selbstabholung";
+import { BezogenLozenge } from "./BezogenLozenge";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
    Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet die
@@ -97,7 +98,7 @@ export function SpielerListe({
   const feld = (k: keyof Form) => ({
     value: form[k],
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((f) => ({ ...f, [k]: k === "jahrgang" ? e.target.value.replace(/\D/g, "") : e.target.value }));
+      setForm((f) => ({ ...f, [k]: k === "jahrgang" ? nurZiffern(e.target.value) : e.target.value }));
       setFehler(null);
     },
   });
@@ -141,8 +142,8 @@ export function SpielerListe({
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_6rem_12.5rem]">
             <TextField ref={erstesFeld} label="Vorname" autoComplete="off" {...feld("vorname")} error={!!fehlerAn("vorname")} supportingText={fehlerAn("vorname")} />
             <TextField label="Nachname" autoComplete="off" {...feld("nachname")} error={!!fehlerAn("nachname")} supportingText={fehlerAn("nachname")} />
-            <TextField label="Jahrgang" inputMode="numeric" maxLength={4} autoComplete="off" {...feld("jahrgang")} error={!!fehlerAn("jahrgang")} supportingText={fehlerAn("jahrgang")} />
-            <TextField label="J+S-Nummer (optional)" autoComplete="off" maxLength={20} {...feld("jsNummer")} error={!!fehlerAn("js_nummer")} supportingText={fehlerAn("js_nummer")} />
+            <TextField label="Jahrgang" inputMode="numeric" maxLength={JAHRGANG_STELLEN} autoComplete="off" {...feld("jahrgang")} error={!!fehlerAn("jahrgang")} supportingText={fehlerAn("jahrgang")} />
+            <TextField label="J+S-Nummer (optional)" autoComplete="off" maxLength={JS_MAX} {...feld("jsNummer")} error={!!fehlerAn("js_nummer")} supportingText={fehlerAn("js_nummer")} />
           </div>
           <Button type="submit" variant="filled" disabled={pending} className="self-end">
             {offen.id ? "Speichern" : "Hinzufügen"}
@@ -174,7 +175,7 @@ export function SpielerListe({
                   {s.jsNummer ?? "–"}
                 </span>
                 <span className="hidden sm:block">
-                  <Lozenge appearance={s.linkBezogen ? "success" : "neutral"}>{s.linkBezogen ? "Bezogen" : "Nicht bezogen"}</Lozenge>
+                  <BezogenLozenge bezogen={s.linkBezogen} />
                 </span>
                 <span className="flex justify-end gap-1">
                   <Tooltip label="Privater Link">

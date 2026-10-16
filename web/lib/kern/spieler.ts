@@ -6,6 +6,7 @@ import {
   bereinigeName,
   jahrgangAus,
   nachSpielerName,
+  spielerName,
   spielerProblem,
   type Spieler,
   type SpielerEingabe,
@@ -117,7 +118,7 @@ export async function entferneSpieler(
   if (!geladen.ok) return geladen;
   const { error } = await supabase.rpc("spieler_entfernen", { p_spieler: e.spielerId });
   if (error) return spielerFehler(error);
-  return ok({ teamId: geladen.wert.teamId, name: `${geladen.wert.vorname} ${geladen.wert.nachname}` });
+  return ok({ teamId: geladen.wert.teamId, name: spielerName(geladen.wert) });
 }
 
 /** Eine Spieler:in samt Team, soweit die RLS sie zeigt. */
@@ -151,30 +152,28 @@ export async function fuehrtSpielerliste(supabase: SupabaseClient, teamId: strin
 
 // ── Privater Link (#436) ────────────────────────────────────────────────────
 
-/** Den privaten Link einer Spieler:in holen (AK 1, 12) — das Geheimnis, nicht die Adresse. */
-export async function holeSpielerLink(
+type LinkErgebnis = KernErgebnis<{ token: string; teamId: string; name: string }>;
+
+async function linkRpc(
   supabase: SupabaseClient,
-  _userId: string,
-  e: { spielerId: string },
-): Promise<KernErgebnis<{ token: string; teamId: string; name: string }>> {
-  const s = await ladeSpieler(supabase, e.spielerId);
+  spielerId: string,
+  name: "spieler_link_holen" | "spieler_link_erneuern",
+): Promise<LinkErgebnis> {
+  const s = await ladeSpieler(supabase, spielerId);
   if (!s.ok) return s;
-  const { data, error } = await supabase.rpc("spieler_link_holen", { p_spieler: e.spielerId });
+  const { data, error } = await supabase.rpc(name, { p_spieler: spielerId });
   if (error) return spielerFehler(error);
-  return ok({ token: data as string, teamId: s.wert.teamId, name: `${s.wert.vorname} ${s.wert.nachname}` });
+  return ok({ token: data as string, teamId: s.wert.teamId, name: spielerName(s.wert) });
+}
+
+/** Den privaten Link einer Spieler:in holen (AK 1, 12) — das Geheimnis, nicht die Adresse. */
+export async function holeSpielerLink(supabase: SupabaseClient, _userId: string, e: { spielerId: string }): Promise<LinkErgebnis> {
+  return linkRpc(supabase, e.spielerId, "spieler_link_holen");
 }
 
 /** Den privaten Link erneuern (AK 3): Der bisherige gilt nie wieder. */
-export async function erneuereSpielerLink(
-  supabase: SupabaseClient,
-  _userId: string,
-  e: { spielerId: string },
-): Promise<KernErgebnis<{ token: string; teamId: string; name: string }>> {
-  const s = await ladeSpieler(supabase, e.spielerId);
-  if (!s.ok) return s;
-  const { data, error } = await supabase.rpc("spieler_link_erneuern", { p_spieler: e.spielerId });
-  if (error) return spielerFehler(error);
-  return ok({ token: data as string, teamId: s.wert.teamId, name: `${s.wert.vorname} ${s.wert.nachname}` });
+export async function erneuereSpielerLink(supabase: SupabaseClient, _userId: string, e: { spielerId: string }): Promise<LinkErgebnis> {
+  return linkRpc(supabase, e.spielerId, "spieler_link_erneuern");
 }
 
 // ── Selbstabholung (#438) ───────────────────────────────────────────────────
@@ -186,7 +185,7 @@ type AbholRoh = { token: string; aktiv: boolean };
 async function abholRpc(
   supabase: SupabaseClient,
   teamId: string,
-  name: "abholung_holen" | "abholung_schalten" | "abholung_erneuern",
+  name: "abholung_schalten" | "abholung_erneuern",
   extra: Record<string, unknown> = {},
 ): Promise<KernErgebnis<Abholung>> {
   if (!istUuid(teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
@@ -194,11 +193,6 @@ async function abholRpc(
   if (error) return spielerFehler(error);
   const r = data as AbholRoh;
   return ok({ teamId, token: r.token, aktiv: r.aktiv });
-}
-
-/** Die Abholadresse des Teams holen (AK 2) — beim ersten Mal angelegt, aus. */
-export async function holeAbholung(supabase: SupabaseClient, _userId: string, e: { teamId: string }) {
-  return abholRpc(supabase, e.teamId, "abholung_holen");
 }
 
 /** Die Selbstabholung ein- oder ausschalten (AK 1, PC 1, 5, 6). */
@@ -211,9 +205,16 @@ export async function erneuereAbholung(supabase: SupabaseClient, _userId: string
   return abholRpc(supabase, e.teamId, "abholung_erneuern");
 }
 
-/** Die Abholadresse, wie sie steht — ohne sie anzulegen (für die Karte). */
-export async function leseAbholung(supabase: SupabaseClient, teamId: string): Promise<{ token: string; aktiv: boolean } | null> {
-  if (!istUuid(teamId)) return null;
-  const { data } = await supabase.from("team_abholung").select("token, aktiv").eq("team_id", teamId).maybeSingle<AbholRoh>();
-  return data ?? null;
+/** Die Abholadresse, wie sie steht — ohne sie anzulegen (Karte, KI). `token`
+ *  fehlt, solange noch niemand die Selbstabholung eingeschaltet hat. */
+export async function leseAbholung(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { teamId: string },
+): Promise<KernErgebnis<{ teamId: string; token: string | null; aktiv: boolean }>> {
+  const team = await pruefeTeamMitglied(supabase, e.teamId);
+  if (!team.ok) return team;
+  const { data, error } = await supabase.from("team_abholung").select("token, aktiv").eq("team_id", e.teamId).maybeSingle<AbholRoh>();
+  if (error) return ausDbFehler(error);
+  return ok({ teamId: e.teamId, token: data?.token ?? null, aktiv: data?.aktiv ?? false });
 }

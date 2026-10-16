@@ -6,10 +6,10 @@ import {
   entferneSpieler,
   erneuereAbholung,
   erneuereSpielerLink,
-  holeAbholung,
   holeSpielerLink,
   ladeSpieler,
   ladeSpielerliste,
+  leseAbholung,
   nimmSpielerAuf,
   schalteAbholung,
 } from "@/lib/kern/spieler";
@@ -353,11 +353,17 @@ const ABHOL_MODELL =
 const AbholAusgabe = z.object({
   team_id: z.string(),
   aktiv: z.boolean(),
-  url: z.string().describe("Die Abholadresse. Wer sie hat und Vorname, Nachname und Jahrgang einer Spieler:in kennt, erhält deren Link."),
+  url: z
+    .string()
+    .nullable()
+    .describe(
+      "Die Abholadresse. Wer sie hat und Vorname, Nachname und Jahrgang einer Spieler:in kennt, erhält deren Link. " +
+        "null: Es gibt noch keine — sie entsteht beim ersten Einschalten.",
+    ),
   hinweis: z.string(),
 });
 
-const abholAusgabe = (w: { teamId: string; token: string; aktiv: boolean }, url: string, hinweis: string) => ({
+const abholAusgabe = (w: { teamId: string; aktiv: boolean }, url: string | null, hinweis: string) => ({
   team_id: w.teamId,
   aktiv: w.aktiv,
   url,
@@ -374,8 +380,8 @@ export const selbstabholungAbrufen = werkzeug({
   eingabe: z.object({ team_id: TeamId }),
   ausgabe: AbholAusgabe,
   ausfuehren: async (e, zugang) =>
-    abgebildet(await holeAbholung(zugang.supabase, zugang.userId, { teamId: e.team_id }), (w) =>
-      abholAusgabe(w, zugang.url(ABHOL_PFAD, w.token), w.aktiv ? ABHOLUNG_TEXT.beschreibung : ABHOLUNG_TEXT.aus),
+    abgebildet(await leseAbholung(zugang.supabase, zugang.userId, { teamId: e.team_id }), (w) =>
+      abholAusgabe(w, w.token ? zugang.url(ABHOL_PFAD, w.token) : null, w.aktiv ? ABHOLUNG_TEXT.beschreibung : ABHOLUNG_TEXT.aus),
     ),
 });
 

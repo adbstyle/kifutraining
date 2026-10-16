@@ -1,13 +1,12 @@
 "use server";
 
 import { headers } from "next/headers";
-import { anschlussSchluessel, holeLinkAb, type AbholEingabe } from "@/lib/abholung";
+import { anschlussSchluessel, holeLinkAb, type AbholEingabe, type AbholErgebnis } from "@/lib/abholung";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { spielerLinkUrl } from "@/lib/spieler";
 
-export type AbholAntwort =
-  | { status: "ok"; url: string; name: string }
-  | { status: "passt_nicht" | "gesperrt" | "ungueltig" | "fehlt" | "fehler" };
+/** Wie `AbholErgebnis`, statt des Geheimnisses die Adresse des Links. */
+export type AbholAntwort = Exclude<AbholErgebnis, { status: "ok" }> | { status: "ok"; url: string; name: string };
 
 /** Den privaten Link einer Spieler:in über die Abholadresse abholen (#438
  *  AK 8) — ohne Anmeldung: Die Adresse ist die Berechtigung. */

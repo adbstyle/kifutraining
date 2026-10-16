@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { Link2Off } from "lucide-react";
 import { ElternAnsicht } from "@/components/privat/ElternAnsicht";
+import { GiltNicht } from "@/components/privat/GiltNicht";
 import { ladeLinkAnsicht } from "@/lib/privater-link";
 import { LINK_TEXT } from "@/lib/spieler";
 
@@ -24,17 +24,6 @@ export const metadata: Metadata = {
 export default async function SpielerLinkSeite({ params }: { params: Promise<{ privaterLink: string }> }) {
   const { privaterLink } = await params;
   const ansicht = await ladeLinkAnsicht(privaterLink);
-  if (!ansicht.gueltig) return <LinkGiltNicht />;
+  if (!ansicht.gueltig) return <GiltNicht titel={LINK_TEXT.ungueltigTitel} text={LINK_TEXT.ungueltig} />;
   return <ElternAnsicht token={privaterLink} team={ansicht.team} spieler={ansicht.spieler} termine={ansicht.termine} />;
-}
-
-/* Erneuert, entfernt oder nie vergeben — alle gleich (AK 10, 11). */
-function LinkGiltNicht() {
-  return (
-    <div className="flex min-h-[70vh] flex-col justify-center gap-4 px-6 py-8">
-      <Link2Off size={48} strokeWidth={1.6} className="text-on-surface-mittel" aria-hidden />
-      <h1 className="type-headline-small text-on-surface">{LINK_TEXT.ungueltigTitel}</h1>
-      <p className="type-body-large text-on-surface-mittel">{LINK_TEXT.ungueltig}</p>
-    </div>
-  );
 }

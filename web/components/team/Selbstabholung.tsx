@@ -2,16 +2,16 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, RefreshCw } from "lucide-react";
-import { Button, Dialog, IconButton, OverflowMenu, Switch, TextField, Tooltip } from "@/components/ui";
+import { RefreshCw } from "lucide-react";
+import { Button, Dialog, KopierFeld, OverflowMenu, Switch } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { erneuereAbholungAktion, schalteAbholungAktion } from "@/lib/actions/spieler";
 import { ABHOLUNG_TEXT } from "@/lib/spieler";
 
 /* Die Selbstabholung eines Teams (#438 AK 1–5): ein Schalter, darunter die
-   Abholadresse zum Kopieren und im Menü «Abholadresse erneuern» mit
-   Bestätigung. Was die Adresse kann und was Ausschalten bewirkt, steht immer
-   dabei (AK 3, 5). Aus und wieder ein gilt dieselbe Adresse (PC 5). Die Karte
+   Abholadresse zum Kopieren (`KopierFeld`) und im Menü «Abholadresse
+   erneuern» mit Bestätigung. Was die Adresse kann und was Ausschalten
+   bewirkt, steht immer dabei (AK 3, 5). Aus und wieder ein gilt dieselbe Adresse (PC 5). Die Karte
    ist nicht modal — Ergebnisse meldet die Snackbar. */
 export function Selbstabholung({ teamId, start }: { teamId: string; start: { url: string | null; aktiv: boolean } }) {
   const router = useRouter();
@@ -45,16 +45,6 @@ export function Selbstabholung({ teamId, start }: { teamId: string; start: { url
     });
   }
 
-  async function kopieren() {
-    if (!stand.url) return;
-    try {
-      await navigator.clipboard.writeText(stand.url);
-      melde("Abholadresse kopiert.");
-    } catch {
-      melde("Kopieren ging nicht - markiere die Adresse und kopiere sie von Hand.");
-    }
-  }
-
   return (
     <section aria-labelledby="selbstabholung" className="rounded-flaeche bg-elev-01 p-4">
       <div className="flex items-center justify-between gap-3">
@@ -66,22 +56,18 @@ export function Selbstabholung({ teamId, start }: { teamId: string; start: { url
       {stand.aktiv && stand.url ? (
         <>
           <p className="type-body-medium mt-2 text-on-surface-mittel">{ABHOLUNG_TEXT.beschreibung}</p>
-          <div className="mt-3 flex items-center gap-1">
-            <TextField
-              className="min-w-0 flex-1"
-              label="Abholadresse"
-              value={stand.url}
-              readOnly
-              onFocus={(e) => e.currentTarget.select()}
-            />
-            <Tooltip label="Kopieren">
-              <IconButton icon={Copy} label="Abholadresse kopieren" onClick={kopieren} />
-            </Tooltip>
-            <OverflowMenu
-              label="Weitere Aktionen zur Abholadresse"
-              items={[{ label: "Abholadresse erneuern", icon: RefreshCw, onSelect: () => setErneuern(true) }]}
-            />
-          </div>
+          <KopierFeld
+            className="mt-3"
+            label="Abholadresse"
+            value={stand.url}
+            onKopiert={() => melde("Abholadresse kopiert.")}
+            danach={
+              <OverflowMenu
+                label="Weitere Aktionen zur Abholadresse"
+                items={[{ label: "Abholadresse erneuern", icon: RefreshCw, onSelect: () => setErneuern(true) }]}
+              />
+            }
+          />
         </>
       ) : (
         <p className="type-body-medium mt-2 text-on-surface-mittel">{ABHOLUNG_TEXT.aus}</p>

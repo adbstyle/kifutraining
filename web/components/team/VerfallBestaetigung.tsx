@@ -2,7 +2,7 @@
 
 import { TriangleAlert } from "lucide-react";
 import { Button, Dialog } from "@/components/ui";
-import { verfallText } from "@/lib/spieler";
+import { verfallDialogText } from "@/lib/spieler";
 
 /* Verlegen lässt Abmeldungen verfallen (#437 AK 1, PC 1): Wer sich für den
    alten Zeitpunkt abgemeldet hat, gilt am neuen wieder als angemeldet. Das
@@ -35,7 +35,7 @@ export function VerfallBestaetigung({
     >
       <p className="flex items-start gap-2">
         <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0 text-icon-warning" />
-        <span>{anzahl !== null && verfallText(anzahl)} Wer am neuen Zeitpunkt nicht kann, meldet sich neu ab.</span>
+        <span>{anzahl !== null && verfallDialogText(anzahl)}</span>
       </p>
     </Dialog>
   );

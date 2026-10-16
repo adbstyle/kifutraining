@@ -38,7 +38,7 @@ export default async function TeamVerwaltungPage({
     getTeam(id),
     getTeamAufloesungsInfo(id),
     ladeSpielerliste(supabase, user.id, { teamId: id }),
-    leseAbholung(supabase, id),
+    leseAbholung(supabase, user.id, { teamId: id }),
     oeffentlicherOrigin(),
   ]);
   if (!team) redirect("/teams");
@@ -54,7 +54,10 @@ export default async function TeamVerwaltungPage({
         <SpielerListe
           teamId={team.id}
           spieler={liste.wert.spieler}
-          abholung={{ url: abholung ? abholUrl(origin, abholung.token) : null, aktiv: abholung?.aktiv ?? false }}
+          abholung={{
+            url: abholung.ok && abholung.wert.token ? abholUrl(origin, abholung.wert.token) : null,
+            aktiv: abholung.ok && abholung.wert.aktiv,
+          }}
         />
       </Card>
 

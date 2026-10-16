@@ -18,6 +18,8 @@ export const NAME_MAX = 60;
 export const JS_MAX = 20;
 export const JAHRGANG_MIN = 1000;
 export const JAHRGANG_MAX = 9999;
+/** So viele Ziffern hat ein Jahrgang — für `maxLength` der Felder. */
+export const JAHRGANG_STELLEN = 4;
 export const SPIELER_MAX = 200;
 
 export const SPIELER_TEXT = {
@@ -86,6 +88,11 @@ export function jahrgangAus(j: string | number): number | null {
   if (!/^\d{4}$/.test(t)) return null;
   const n = Number(t);
   return n >= JAHRGANG_MIN && n <= JAHRGANG_MAX ? n : null;
+}
+
+/** Was in ein Jahrgang-Feld getippt wird, ohne Nicht-Ziffern. */
+export function nurZiffern(s: string): string {
+  return s.replace(/\D/g, "");
 }
 
 /** Eine Spieler:in, wie die Liste sie führt. */
@@ -161,6 +168,8 @@ export const ABMELDUNG_TEXT = {
   nichtGefunden: "Diesen Termin oder diese Spieler:in gibt es nicht mehr. Sieh dir den Trainingsplan noch einmal an.",
   begonnen: "Der Termin hat begonnen. An- und abmelden geht nur bis zum Beginn.",
   ausgefallen: "Der Termin fällt aus. Für ihn lässt sich niemand an- oder abmelden.",
+  /** Ein Termin, der begann, als die Spielerliste leer war. */
+  ohneListe: "Bei Beginn führte das Team keine Spielerliste. Für diesen Termin gilt die erwartete Spielerzahl.",
 } as const;
 
 /** Die Abweisung mit dem aktuellen Stand (#435 AK 4, #437 AK 5) — an
@@ -219,6 +228,7 @@ export const LINK_TEXT = {
   ungueltigTitel: "Dieser Link gilt nicht mehr",
   ungueltig:
     "Vielleicht hat das Trainerteam ihn erneuert. Hol den aktuellen Link über die Abholadresse deines Teams ab oder frag deine Trainerin oder deinen Trainer.",
+  erneuert: "Link erneuert. Der bisherige gilt nicht mehr.",
   /** Mit eingeschalteter Selbstabholung (#438): woher die Eltern den neuen holen. */
   erneuertAbholen: "Die Eltern holen den neuen Link wieder über die Abholadresse ab.",
 } as const;
@@ -233,6 +243,11 @@ export function verfallText(n: number): string {
 }
 
 /** Dasselbe für den KI-Weg, mit dem Weg zur Bestätigung. */
+/** Dasselbe in der Rückfrage der Oberfläche, mit dem Weg danach. */
+export function verfallDialogText(n: number): string {
+  return `${verfallText(n)} Wer am neuen Zeitpunkt nicht kann, meldet sich neu ab.`;
+}
+
 export function verfallBestaetigen(n: number): string {
   return `${verfallText(n)} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
 }

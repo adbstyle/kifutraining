@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Leerzustand, Switch } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { setzeAbmeldungAktion } from "@/lib/actions/abmeldungen";
-import { EHEMALIGE_SPIELERIN, spielerName, type Teilnehmer } from "@/lib/spieler";
+import { ABMELDUNG_TEXT, EHEMALIGE_SPIELERIN, spielerName, type Teilnehmer } from "@/lib/spieler";
 import type { TerminSpieler } from "@/lib/kern/abmeldungen";
 import { Users } from "lucide-react";
 
@@ -23,6 +23,10 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
   const [lokal, setLokal] = useState<Record<string, boolean>>({});
   useEffect(() => setLokal({}), [daten]);
 
+  // Bei Beginn war die Liste leer: Dort bleibt es so, auch wenn sie inzwischen jemanden führt.
+  if (daten.gesamt === 0 && daten.begonnen)
+    return <p className="type-body-medium text-on-surface-mittel">{ABMELDUNG_TEXT.ohneListe}</p>;
+
   if (daten.gesamt === 0)
     return (
       <Leerzustand icon={Users} titel="Noch keine Spielerliste" dicht>
@@ -35,7 +39,7 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
     );
 
   if (daten.ausgefallen)
-    return <p className="type-body-medium text-on-surface-mittel">Der Termin fällt aus. Für ihn lässt sich niemand an- oder abmelden.</p>;
+    return <p className="type-body-medium text-on-surface-mittel">{ABMELDUNG_TEXT.ausgefallen}</p>;
 
   const abgemeldet = (s: Teilnehmer) => (s.spielerId && s.spielerId in lokal ? lokal[s.spielerId] : s.abgemeldet);
   const angemeldet = daten.spieler.filter((s) => !abgemeldet(s)).length;

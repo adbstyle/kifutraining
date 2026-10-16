@@ -66,7 +66,7 @@ export async function TerminSpalte({
           </>
         )}
         {reiter === "training" && <TrainingReiter t={t} />}
-        {reiter === "spieler" && <SpielerReiterLaden t={t} />}
+        {reiter === "spieler" && <SpielerReiterLaden t={t} ich={ich} />}
       </div>
     </section>
   );
@@ -126,12 +126,8 @@ async function TrainingReiter({ t }: { t: TerminZeile }) {
   );
 }
 
-async function SpielerReiterLaden({ t }: { t: TerminZeile }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const r = user ? await terminSpieler(supabase, user.id, { terminId: t.id }) : null;
-  if (!r || !r.ok) return <SectionMessage appearance="error">{r ? r.meldung : "Nicht angemeldet."}</SectionMessage>;
+async function SpielerReiterLaden({ t, ich }: { t: TerminZeile; ich: string }) {
+  const r = await terminSpieler(await createClient(), ich, { terminId: t.id });
+  if (!r.ok) return <SectionMessage appearance="error">{r.meldung}</SectionMessage>;
   return <SpielerReiter teamId={t.teamId} daten={r.wert} />;
 }

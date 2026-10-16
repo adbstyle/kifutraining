@@ -2,7 +2,7 @@
 
 import { TriangleAlert } from "lucide-react";
 import { Button, Dialog } from "@/components/ui";
-import { verfallText } from "@/lib/spieler";
+import { verfallDialogText } from "@/lib/spieler";
 import { trainingOhneTermin } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { SerienFolge } from "@/lib/kern/serien";
@@ -69,7 +69,7 @@ export function EntfallendBestaetigung({
       {verfall > 0 && (
         <p className={wegfall ? "mt-3" : "flex items-start gap-2"}>
           {!wegfall && <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0 text-icon-warning" />}
-          <span>{verfallText(verfall)} Wer am neuen Zeitpunkt nicht kann, meldet sich neu ab.</span>
+          <span>{verfallDialogText(verfall)}</span>
         </p>
       )}
     </Dialog>

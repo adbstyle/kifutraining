@@ -7,7 +7,7 @@ import { Kalenderblatt, Leerzustand, SectionMessage, Switch } from "@/components
 import { meldeUeberLinkAktion } from "@/lib/actions/spieler-link";
 import { tagText } from "@/lib/monat";
 import type { LinkTermin } from "@/lib/privater-link";
-import { verfallenHinweis } from "@/lib/spieler";
+import { spielerName, verfallenHinweis } from "@/lib/spieler";
 
 /* Was die Spielervertretung über den privaten Link sieht (#436 AK 5–9): ihre
    Spieler:in, das Team und je anstehenden Termin ein Schalter, der sofort
@@ -37,7 +37,7 @@ export function ElternAnsicht({
   const [fehler, setFehler] = useState<{ terminId: string; text: string } | null>(null);
   useEffect(() => setLokal({}), [termine]);
 
-  const name = `${spieler.vorname} ${spieler.nachname}`;
+  const name = spielerName(spieler);
 
   function umlegen(t: LinkTermin, an: boolean) {
     setLokal((l) => ({ ...l, [t.id]: !an }));

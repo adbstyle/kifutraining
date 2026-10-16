@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Check, Copy, Link2Off, ShieldAlert } from "lucide-react";
-import { Button, ButtonLink, IconButton, SectionMessage, TextField } from "@/components/ui";
-import { holeLinkAbAktion } from "@/lib/actions/abholung";
-import { ABHOLUNG_TEXT, LINK_FEHLER, abholErhaltText } from "@/lib/spieler";
+import { ShieldAlert } from "lucide-react";
+import { Button, ButtonLink, KopierFeld, SectionMessage, TextField } from "@/components/ui";
+import { holeLinkAbAktion, type AbholAntwort } from "@/lib/actions/abholung";
+import { ABHOLUNG_TEXT, ABHOL_SPERRE_MINUTEN, JAHRGANG_STELLEN, LINK_FEHLER, abholErhaltText, nurZiffern } from "@/lib/spieler";
+import { GiltNicht } from "./GiltNicht";
 
-const KOPIERT_MS = 2500;
 const LEER = { vorname: "", nachname: "", jahrgang: "" };
 
 /* Die Abholseite eines Teams (#438 AK 6–16): Eltern geben Vorname, Nachname
@@ -17,10 +17,18 @@ const LEER = { vorname: "", nachname: "", jahrgang: "" };
    weiter (AK 12). Fürs Handy gebaut. */
 export function AbholSeite({ token, team }: { token: string; team: string }) {
   const [form, setForm] = useState(LEER);
-  const [zustand, setZustand] = useState<"eingabe" | "passt_nicht" | "gesperrt" | "fehlt" | "fehler" | "ungueltig">("eingabe");
+  const [zustand, setZustand] = useState<"eingabe" | Exclude<AbholAntwort["status"], "ok">>("eingabe");
   const [erhalt, setErhalt] = useState<{ url: string; name: string } | null>(null);
   const [pending, startTransition] = useTransition();
   const erstesFeld = useRef<HTMLInputElement>(null);
+
+  // Nach der Wartezeit lässt die Seite wieder eingeben; läuft die Sperre noch,
+  // sagt es der Server beim nächsten Versuch.
+  useEffect(() => {
+    if (zustand !== "gesperrt") return;
+    const t = setTimeout(() => setZustand("eingabe"), ABHOL_SPERRE_MINUTEN * 60_000);
+    return () => clearTimeout(t);
+  }, [zustand]);
 
   function abholen() {
     if (pending || zustand === "gesperrt") return;
@@ -42,14 +50,14 @@ export function AbholSeite({ token, team }: { token: string; team: string }) {
     requestAnimationFrame(() => erstesFeld.current?.focus());
   }
 
-  if (zustand === "ungueltig") return <AbholungGiltNicht />;
+  if (zustand === "ungueltig") return <GiltNicht titel={ABHOLUNG_TEXT.ungueltigTitel} text={ABHOLUNG_TEXT.ungueltig} />;
 
   const gesperrt = zustand === "gesperrt";
   const feld = (k: keyof typeof LEER) => ({
     value: form[k],
     disabled: gesperrt,
     onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-      setForm((f) => ({ ...f, [k]: k === "jahrgang" ? e.target.value.replace(/\D/g, "") : e.target.value })),
+      setForm((f) => ({ ...f, [k]: k === "jahrgang" ? nurZiffern(e.target.value) : e.target.value })),
   });
 
   return (
@@ -72,7 +80,7 @@ export function AbholSeite({ token, team }: { token: string; team: string }) {
           <div className="flex flex-col gap-3">
             <TextField ref={erstesFeld} label="Vorname" autoComplete="off" autoFocus {...feld("vorname")} />
             <TextField label="Nachname" autoComplete="off" {...feld("nachname")} />
-            <TextField label="Jahrgang" inputMode="numeric" maxLength={4} autoComplete="off" {...feld("jahrgang")} />
+            <TextField label="Jahrgang" inputMode="numeric" maxLength={JAHRGANG_STELLEN} autoComplete="off" {...feld("jahrgang")} />
           </div>
           {zustand === "passt_nicht" && <SectionMessage appearance="error">{ABHOLUNG_TEXT.passtNicht}</SectionMessage>}
           {zustand === "fehlt" && <SectionMessage appearance="error">{ABHOLUNG_TEXT.fehlt}</SectionMessage>}
@@ -97,47 +105,11 @@ export function AbholSeite({ token, team }: { token: string; team: string }) {
 }
 
 function Erhalt({ url, name, onWeiteres }: { url: string; name: string; onWeiteres: () => void }) {
-  const feld = useRef<HTMLInputElement>(null);
-  const [kopiert, setKopiert] = useState(false);
-  const [fehler, setFehler] = useState(false);
   const text = abholErhaltText(name);
-
-  useEffect(() => {
-    if (!kopiert) return;
-    const t = setTimeout(() => setKopiert(false), KOPIERT_MS);
-    return () => clearTimeout(t);
-  }, [kopiert]);
-
-  async function kopieren() {
-    try {
-      await navigator.clipboard.writeText(url);
-      setFehler(false);
-      setKopiert(true);
-    } catch {
-      setFehler(true);
-      feld.current?.focus();
-      feld.current?.select();
-    }
-  }
-
   return (
     <div className="flex flex-col gap-4 p-4">
       <p className="type-body-medium text-on-surface-mittel">{text.wozu}</p>
-      {fehler && <SectionMessage appearance="error">Kopieren ging nicht - markiere den Link und kopiere ihn von Hand.</SectionMessage>}
-      <div className="flex items-center gap-1">
-        <TextField
-          ref={feld}
-          className="min-w-0 flex-1"
-          label="Privater Link"
-          value={url}
-          readOnly
-          onFocus={(e) => e.currentTarget.select()}
-        />
-        <IconButton icon={kopiert ? Check : Copy} label="Link kopieren" onClick={kopieren} />
-        <span className="sr-only" role="status">
-          {kopiert ? "Link kopiert." : ""}
-        </span>
-      </div>
+      <KopierFeld label="Privater Link" value={url} />
       <SectionMessage appearance="warning" icon={ShieldAlert}>
         {text.privat}
       </SectionMessage>
@@ -149,17 +121,6 @@ function Erhalt({ url, name, onWeiteres }: { url: string; name: string; onWeiter
           Weiteres Kind abholen
         </Button>
       </div>
-    </div>
-  );
-}
-
-/* Ausgeschaltet, erneuert oder nie vergeben — alle gleich (AK 17, 18). */
-export function AbholungGiltNicht() {
-  return (
-    <div className="flex min-h-[70vh] flex-col justify-center gap-4 px-6 py-8">
-      <Link2Off size={48} strokeWidth={1.6} className="text-on-surface-mittel" aria-hidden />
-      <h1 className="type-headline-small text-on-surface">{ABHOLUNG_TEXT.ungueltigTitel}</h1>
-      <p className="type-body-large text-on-surface-mittel">{ABHOLUNG_TEXT.ungueltig}</p>
     </div>
   );
 }

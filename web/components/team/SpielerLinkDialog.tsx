@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
-import { Check, Copy } from "lucide-react";
-import { Button, Dialog, IconButton, Lozenge, SectionMessage, TextField, Tooltip } from "@/components/ui";
+import { useEffect, useState, useTransition } from "react";
+import { Button, Dialog, KopierFeld, SectionMessage } from "@/components/ui";
 import { erneuereSpielerLinkAktion, holeSpielerLinkAktion } from "@/lib/actions/spieler";
 import { LINK_TEXT, spielerName, type Spieler } from "@/lib/spieler";
-
-/** Wie lange der Knopf den Haken zeigt. */
-const KOPIERT_MS = 2500;
-const KOPIEREN_FEHLER = "Kopieren ging nicht - markiere den Link und kopiere ihn von Hand.";
+import { BezogenLozenge } from "./BezogenLozenge";
 
 /* Der private Link einer Spieler:in (#436 AK 1–3): holen, kopieren, erneuern.
    Der Link ist ein Geheimnis — was er kann, steht darum immer bei ihm (AK 2).
@@ -47,10 +43,8 @@ export function SpielerLinkDialog({
 }
 
 function LinkInhalt({ spieler, abholungAktiv }: { spieler: Spieler; abholungAktiv: boolean }) {
-  const feld = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [meldung, setMeldung] = useState<{ art: "error" | "success"; text: string } | null>(null);
-  const [kopiert, setKopiert] = useState(false);
   const [bezogen, setBezogen] = useState(spieler.linkBezogen);
   const [pending, startTransition] = useTransition();
 
@@ -66,64 +60,24 @@ function LinkInhalt({ spieler, abholungAktiv }: { spieler: Spieler; abholungAkti
     };
   }, [spieler.id]);
 
-  useEffect(() => {
-    if (!kopiert) return;
-    const t = setTimeout(() => setKopiert(false), KOPIERT_MS);
-    return () => clearTimeout(t);
-  }, [kopiert]);
-
-  async function kopieren() {
-    if (!url) return;
-    try {
-      await navigator.clipboard.writeText(url);
-      setMeldung(null);
-      setKopiert(true);
-    } catch {
-      // Ohne Zwischenablage bleibt der Handweg: das Feld markieren.
-      setKopiert(false);
-      setMeldung({ art: "error", text: KOPIEREN_FEHLER });
-      feld.current?.focus();
-      feld.current?.select();
-    }
-  }
-
   function erneuern() {
     startTransition(async () => {
       const r = await erneuereSpielerLinkAktion(spieler.id);
       if (!r.ok) return setMeldung({ art: "error", text: r.error });
       setUrl(r.url);
       setBezogen(false);
-      setKopiert(false);
-      setMeldung({ art: "success", text: "Link erneuert. Der bisherige gilt nicht mehr." });
+      setMeldung({ art: "success", text: LINK_TEXT.erneuert });
     });
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <Lozenge appearance={bezogen ? "success" : "neutral"} className="self-start">
-        {bezogen ? "Bezogen" : "Nicht bezogen"}
-      </Lozenge>
+      <BezogenLozenge bezogen={bezogen} className="self-start" />
       <p className="type-body-medium text-on-surface-mittel">
         Mit diesem Link meldet man {spielerName(spieler)} für Trainings ab und wieder an, ohne Konto. {LINK_TEXT.warnung}
       </p>
       {meldung && <SectionMessage appearance={meldung.art}>{meldung.text}</SectionMessage>}
-      <div className="flex items-center gap-2">
-        <TextField
-          ref={feld}
-          className="min-w-0 flex-1"
-          label="Privater Link"
-          value={url ?? "Wird geladen …"}
-          readOnly
-          onFocus={(e) => e.currentTarget.select()}
-        />
-        <Tooltip label={kopiert ? "Kopiert" : "Kopieren"} ende>
-          <IconButton icon={kopiert ? Check : Copy} label="Link kopieren" onClick={kopieren} disabled={!url} />
-        </Tooltip>
-        {/* Die Vorlesehilfe erfährt das Ergebnis über die Live-Region. */}
-        <span className="sr-only" role="status">
-          {kopiert ? "Link kopiert." : ""}
-        </span>
-      </div>
+      <KopierFeld label="Privater Link" value={url ?? "Wird geladen …"} disabled={!url} />
       <SectionMessage
         appearance="warning"
         actions={

@@ -118,6 +118,8 @@ type ReichweiteFrage = {
 const NUR_FELDER_GEAENDERT = "Termin geändert. Die Verantwortlichen blieben unverändert.";
 /** Dasselbe für den Ausfallgrund, den letzten Schritt (#402 AK 13). */
 const GRUND_UNVERAENDERT = "Termin geändert. Der Grund des Ausfalls blieb unverändert.";
+/** Die Verlegung liesse Abmeldungen verfallen, die Rückfrage kam nicht mehr zum Zug (#437). */
+const NICHT_GEAENDERT = "Termin nicht geändert.";
 
 /** Eine gerechnete Vorschau, die auf Bestätigung oder Ausführung wartet. */
 type SerienSchritt = {
@@ -247,8 +249,11 @@ export function TerminBereich({
       if (geaendert) {
         const r = await aendereTerminAktion(t.id, geaendert, t.training?.id ?? null, bestaetigt);
         // #437 AK 1: Verfallen Abmeldungen, erst nachfragen; der Dialog bleibt offen.
-        if (!r.ok && r.verfallend && gilt())
-          return setVerfall({ anzahl: r.verfallend, weiter: () => aendereEinzeln(t, geaendert, verantwortlich, grund, true) });
+        if (!r.ok && r.verfallend) {
+          if (gilt()) return setVerfall({ anzahl: r.verfallend, weiter: () => aendereEinzeln(t, geaendert, verantwortlich, grund, true) });
+          // Abgebrochen, bevor die Rückfrage kam: Gespeichert ist nichts.
+          return melde(NICHT_GEAENDERT);
+        }
         if (!r.ok) return einzelnGescheitert(r.error, gilt());
       }
       if (verantwortlich) {
