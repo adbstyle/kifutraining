@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Check, Copy } from "lucide-react";
-import { Button, Dialog, IconButton, SectionMessage, TextField, Tooltip } from "@/components/ui";
+import { Button, Dialog, IconButton, Lozenge, SectionMessage, TextField, Tooltip } from "@/components/ui";
 import { erneuereSpielerLinkAktion, holeSpielerLinkAktion } from "@/lib/actions/spieler";
 import { LINK_TEXT, spielerName, type Spieler } from "@/lib/spieler";
 
@@ -13,11 +13,22 @@ const KOPIEREN_FEHLER = "Kopieren ging nicht - markiere den Link und kopiere ihn
 /* Der private Link einer Spieler:in (#436 AK 1–3): holen, kopieren, erneuern.
    Der Link ist ein Geheimnis — was er kann, steht darum immer bei ihm (AK 2).
    Erneuern wirkt sofort: Der bisherige Link gilt nie wieder, die Abmeldungen
-   bleiben (PC 2, 3).
+   bleiben (PC 2, 3). Ob der aktuelle Link über die Selbstabholung bezogen
+   wurde, zeigt die Lozenge; Erneuern setzt ihn zurück (#438 PC 3).
 
    Ergebnisse stehen IM Dialog, nicht in der Snackbar: Sie liegt unter dem
    modalen Dialog und wäre dort unsichtbar (wie beim Abo-Link). */
-export function SpielerLinkDialog({ spieler, onClose }: { spieler: Spieler | null; onClose: () => void }) {
+export function SpielerLinkDialog({
+  spieler,
+  abholungAktiv,
+  onClose,
+}: {
+  spieler: Spieler | null;
+  /** Die Selbstabholung ist eingeschaltet: Nach dem Erneuern holen die Eltern
+   *  den neuen Link wieder über die Abholadresse (#438). */
+  abholungAktiv: boolean;
+  onClose: () => void;
+}) {
   return (
     <Dialog
       open={spieler !== null}
@@ -30,16 +41,17 @@ export function SpielerLinkDialog({ spieler, onClose }: { spieler: Spieler | nul
       }
     >
       {/* Eigene Komponente, damit Link und Zustand mit dem Schliessen verschwinden. */}
-      {spieler && <LinkInhalt key={spieler.id} spieler={spieler} />}
+      {spieler && <LinkInhalt key={spieler.id} spieler={spieler} abholungAktiv={abholungAktiv} />}
     </Dialog>
   );
 }
 
-function LinkInhalt({ spieler }: { spieler: Spieler }) {
+function LinkInhalt({ spieler, abholungAktiv }: { spieler: Spieler; abholungAktiv: boolean }) {
   const feld = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [meldung, setMeldung] = useState<{ art: "error" | "success"; text: string } | null>(null);
   const [kopiert, setKopiert] = useState(false);
+  const [bezogen, setBezogen] = useState(spieler.linkBezogen);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -80,6 +92,7 @@ function LinkInhalt({ spieler }: { spieler: Spieler }) {
       const r = await erneuereSpielerLinkAktion(spieler.id);
       if (!r.ok) return setMeldung({ art: "error", text: r.error });
       setUrl(r.url);
+      setBezogen(false);
       setKopiert(false);
       setMeldung({ art: "success", text: "Link erneuert. Der bisherige gilt nicht mehr." });
     });
@@ -87,6 +100,9 @@ function LinkInhalt({ spieler }: { spieler: Spieler }) {
 
   return (
     <div className="flex flex-col gap-4">
+      <Lozenge appearance={bezogen ? "success" : "neutral"} className="self-start">
+        {bezogen ? "Bezogen" : "Nicht bezogen"}
+      </Lozenge>
       <p className="type-body-medium text-on-surface-mittel">
         Mit diesem Link meldet man {spielerName(spieler)} für Trainings ab und wieder an, ohne Konto. {LINK_TEXT.warnung}
       </p>
@@ -117,6 +133,7 @@ function LinkInhalt({ spieler }: { spieler: Spieler }) {
         }
       >
         Weitergegeben oder missbraucht? {LINK_TEXT.erneuern}
+        {abholungAktiv && ` ${LINK_TEXT.erneuertAbholen}`}
       </SectionMessage>
     </div>
   );

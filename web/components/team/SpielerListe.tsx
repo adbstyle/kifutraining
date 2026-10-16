@@ -3,23 +3,35 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Link2, Pencil, Plus, X } from "lucide-react";
-import { Button, Dialog, IconButton, TextField, Tooltip } from "@/components/ui";
+import { Button, Dialog, IconButton, Lozenge, TextField, Tooltip } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { aendereSpielerAktion, entferneSpielerAktion, nimmSpielerAufAktion } from "@/lib/actions/spieler";
 import { spielerName, type Spieler, type SpielerFeld } from "@/lib/spieler";
 import { SpielerLinkDialog } from "./SpielerLinkDialog";
+import { Selbstabholung } from "./Selbstabholung";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
    Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet die
    Eingabezeile, das Kreuz schliesst sie, ohne zu speichern; «Hinzufügen» und
    Enter nehmen auf, danach bleibt die Zeile für die nächste offen. Ändern
    öffnet dieselbe Zeile mit den Angaben der Spieler:in, Entfernen fragt nach.
-   Das Kettenglied zeigt ihren privaten Link (#436). */
+   Das Kettenglied zeigt ihren privaten Link (#436); ob er über die
+   Selbstabholung bezogen wurde, sagt die Spalte «Link» (#438 AK 21). Der
+   Abschnitt «Selbstabholung» steht zuoberst (#438). */
 
 type Form = { vorname: string; nachname: string; jahrgang: string; jsNummer: string };
 const LEER: Form = { vorname: "", nachname: "", jahrgang: "", jsNummer: "" };
 
-export function SpielerListe({ teamId, spieler }: { teamId: string; spieler: Spieler[] }) {
+export function SpielerListe({
+  teamId,
+  spieler,
+  abholung,
+}: {
+  teamId: string;
+  spieler: Spieler[];
+  /** Die Selbstabholung des Teams (#438); `url` fehlt, solange es keine Adresse gibt. */
+  abholung: { url: string | null; aktiv: boolean };
+}) {
   const router = useRouter();
   const melde = useSnackbar();
   const [pending, startTransition] = useTransition();
@@ -91,12 +103,17 @@ export function SpielerListe({ teamId, spieler }: { teamId: string; spieler: Spi
   });
   const fehlerAn = (f: SpielerFeld) => fehler && (fehler.feld ?? "vorname") === f ? fehler.text : undefined;
 
+  const bezogen = spieler.filter((s) => s.linkBezogen).length;
+
   return (
     <>
       <div className="flex items-center justify-between gap-3">
         <h2 className="type-title-large text-on-surface">
           Spieler:innen
-          <span className="type-label-small ml-2 text-on-surface-mittel">{spieler.length}</span>
+          <span className="type-label-small ml-2 text-on-surface-mittel">
+            {spieler.length}
+            {spieler.length > 0 && ` · ${bezogen} ${bezogen === 1 ? "Link" : "Links"} bezogen`}
+          </span>
         </h2>
         <Tooltip label={offen ? "Abbrechen" : "Spieler:in hinzufügen"} ende>
           <IconButton
@@ -106,6 +123,10 @@ export function SpielerListe({ teamId, spieler }: { teamId: string; spieler: Spi
             onClick={() => (offen ? schliessen() : oeffnen())}
           />
         </Tooltip>
+      </div>
+
+      <div className="mt-4">
+        <Selbstabholung teamId={teamId} start={abholung} />
       </div>
 
       {offen && (
@@ -131,25 +152,29 @@ export function SpielerListe({ teamId, spieler }: { teamId: string; spieler: Spi
 
       {spieler.length > 0 ? (
         <div className="mt-4 overflow-hidden rounded-flaeche bg-elev-01">
-          <div aria-hidden className="hidden grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem] gap-3 border-b border-linie px-4 py-2 type-label-small text-on-surface-mittel sm:grid">
+          <div aria-hidden className="hidden grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem_7.5rem] gap-3 border-b border-linie px-4 py-2 type-label-small text-on-surface-mittel sm:grid">
             <span>Name</span>
             <span>Jahrgang</span>
             <span>J+S-Nr.</span>
+            <span>Link</span>
             <span />
           </div>
           <ul className="divide-y divide-linie">
             {spieler.map((s) => (
-              <li key={s.id} className="state flex items-center gap-3 py-1 pl-4 pr-2 sm:grid sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem]">
+              <li key={s.id} className="state flex items-center gap-3 py-1 pl-4 pr-2 sm:grid sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem_7.5rem]">
                 <span className="min-w-0 flex-1">
                   <span className="type-body-medium block truncate text-on-surface">{spielerName(s)}</span>
                   {/* Schmal stehen Jahrgang und J+S-Nummer unter dem Namen. */}
                   <span className="type-body-small block text-on-surface-mittel sm:hidden">
-                    {[s.jahrgang, s.jsNummer && `J+S ${s.jsNummer}`].filter(Boolean).join(" · ")}
+                    {[s.jahrgang, s.jsNummer && `J+S ${s.jsNummer}`, s.linkBezogen && "Link bezogen"].filter(Boolean).join(" · ")}
                   </span>
                 </span>
                 <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.jahrgang}</span>
                 <span className={`type-body-medium hidden truncate sm:block ${s.jsNummer ? "text-on-surface-mittel" : "text-on-surface-tief"}`}>
                   {s.jsNummer ?? "–"}
+                </span>
+                <span className="hidden sm:block">
+                  <Lozenge appearance={s.linkBezogen ? "success" : "neutral"}>{s.linkBezogen ? "Bezogen" : "Nicht bezogen"}</Lozenge>
                 </span>
                 <span className="flex justify-end gap-1">
                   <Tooltip label="Privater Link">
@@ -190,12 +215,13 @@ export function SpielerListe({ teamId, spieler }: { teamId: string; spieler: Spi
         }
       >
         <p>
-          An vergangenen Terminen steht sie danach nur noch ohne Namen, die Spielerzahl dort bleibt. An
-          anstehenden Terminen zählt sie nicht mehr.
+          Ihr privater Link gilt danach nicht mehr, und die Selbstabholung findet sie nicht mehr. An
+          vergangenen Terminen steht sie nur noch ohne Namen, die Spielerzahl dort bleibt. An anstehenden
+          Terminen zählt sie nicht mehr.
         </p>
       </Dialog>
 
-      <SpielerLinkDialog spieler={link} onClose={() => setLink(null)} />
+      <SpielerLinkDialog spieler={link} abholungAktiv={abholung.aktiv} onClose={() => setLink(null)} />
     </>
   );
 }

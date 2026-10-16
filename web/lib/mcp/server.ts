@@ -62,6 +62,9 @@ import {
   trainingZuordnen,
 } from "@/lib/mcp/werkzeuge/team";
 import {
+  abholadresseErneuern,
+  selbstabholungAbrufen,
+  selbstabholungSchalten,
   spielerAendern,
   spielerAufnehmen,
   spielerEntfernen,
@@ -137,6 +140,9 @@ export const WERKZEUGE = [
   terminAbmeldungSetzen,
   spielerLinkAbrufen,
   spielerLinkErneuern,
+  selbstabholungAbrufen,
+  selbstabholungSchalten,
+  abholadresseErneuern,
 ] as const;
 
 export function registriereWerkzeuge(server: McpServer): void {

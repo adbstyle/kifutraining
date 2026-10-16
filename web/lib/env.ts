@@ -19,4 +19,7 @@ export const env = {
   supabaseAnonKey: () => required("SUPABASE_ANON_KEY"),
   /** Nur in Seed-/Admin-Kontext verwenden — NIE in der Request-Pipeline. */
   supabaseServiceRoleKey: () => required("SUPABASE_SERVICE_ROLE_KEY"),
+  /** Geheimer Wert, mit dem die Abholung den Anschluss zur Sperre verschlüsselt
+   *  (#438 AK 15). Je Umgebung ein anderer; fehlt er, holt niemand ab. */
+  abholSchluessel: () => process.env.ABHOL_SPERRE_SCHLUESSEL || null,
 };

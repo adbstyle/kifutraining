@@ -73,7 +73,8 @@ const { legeSerieFest, aendereSerie, entferneSerie, folgeDerSerie, aendereMitRei
   await import("../lib/kern/serien");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
 const { getTeamPlanFuer } = await import("../lib/queries/termine-fuer");
-const { ladeSpielerliste, nimmSpielerAuf, aendereSpieler, entferneSpieler, holeSpielerLink, erneuereSpielerLink } = await import("../lib/kern/spieler");
+const { ladeSpielerliste, nimmSpielerAuf, aendereSpieler, entferneSpieler, holeSpielerLink, erneuereSpielerLink, holeAbholung, schalteAbholung, erneuereAbholung } =
+  await import("../lib/kern/spieler");
 const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, abweisungText, spielerzahlVon } = await import("../lib/spieler");
 const { setzeAbmeldung, terminSpieler } = await import("../lib/kern/abmeldungen");
 const { getTeamTrainingsFuer } = await import("../lib/queries/trainings-fuer");
@@ -4148,6 +4149,76 @@ try {
     assert.equal(g.verfallend, 1);
     wert(await folgeDerSerie(a.supabase, a.id, { terminId: zweiter.id, angaben: ["zeit"], bestaetigt: true }));
     assert.equal((await standVon(team, zweiter.id)).spielstand?.angemeldet, 1);
+  });
+
+  // ── Selbstabholung (#438) ────────────────────────────────────────────────
+  const abholen = async (token: string, schluessel: string, vorname: string, nachname: string, jahrgang: number) =>
+    (await feldAnon.rpc("abholung_abholen", { p_token: token, p_schluessel: schluessel, p_vorname: vorname, p_nachname: nachname, p_jahrgang: jahrgang }))
+      .data as { status: string; token?: string; spieler?: { vorname: string; nachname: string } };
+  const anschluss = (n: number) => `${"k".repeat(60)}${String(n).padStart(4, "0")}${Date.now()}`;
+
+  await pruefe("Selbstabholung: aus bis eingeschaltet, Abgleich wie die Eindeutigkeit, bezogen, erneuern (#438 AK 1, 2, 4, 8, 9, 11, 13, 18; PC 1–6)", async () => {
+    const team = await serienTeam("Kern-DB-Abholung");
+    const lena = (await neuerSpieler(team, "Anna-Lena", "O’Brien", 2017)).spielerId;
+    const start = wert(await holeAbholung(a.supabase, a.id, { teamId: team }));
+    assert.equal(start.aktiv, false, "PO 3: aus, bis jemand einschaltet");
+    assert.match(start.token, /^[0-9a-f]{64}$/);
+    assert.deepEqual((await feldAnon.rpc("abholung_ansicht", { p_token: start.token })).data, { gueltig: false }, "PC 1");
+    assert.deepEqual(await abholen(start.token, anschluss(1), "Anna-Lena", "O’Brien", 2017), { status: "ungueltig" });
+    fehler(await holeAbholung(b.supabase, b.id, { teamId: team }), "nicht_gefunden");
+
+    const an = wert(await schalteAbholung(a.supabase, a.id, { teamId: team, aktiv: true }));
+    assert.equal(an.token, start.token);
+    assert.deepEqual((await feldAnon.rpc("abholung_ansicht", { p_token: an.token })).data, { gueltig: true, team: "Kern-DB-Abholung" });
+    // AK 9: Schreibvarianten passen, Umlaute und Akzente müssen stimmen.
+    const k = anschluss(2);
+    const r = await abholen(an.token, k, "  anna lena ", "o'brien", 2017);
+    assert.equal(r.status, "ok");
+    assert.deepEqual(r.spieler, { vorname: "Anna-Lena", nachname: "O’Brien" });
+    assert.equal(r.token, wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lena })).token, "AK 11: der gültige Link");
+    assert.equal((await abholen(an.token, k, "Anna–Lena", "O`BRIEN", 2017)).status, "ok");
+    assert.equal((await abholen(an.token, k, "Anna-Lena", "O’Bríen", 2017)).status, "passt_nicht");
+    assert.deepEqual(await abholen(an.token, k, "Anna-Lena", "O’Brien", 2018), { status: "passt_nicht" }, "AK 13: dieselbe Antwort");
+    // PC 2, 3: bezogen — bis der Link erneuert wird.
+    assert.equal(wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler[0].linkBezogen, true);
+    const neuLink = wert(await erneuereSpielerLink(a.supabase, a.id, { spielerId: lena })).token;
+    assert.equal(wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler[0].linkBezogen, false);
+    assert.equal((await abholen(an.token, anschluss(3), "Anna-Lena", "O’Brien", 2017)).token, neuLink, "OoS 5: wieder abholbar");
+
+    // PC 4, 6: erneuert gilt die alte nie wieder; bezogene Links bleiben.
+    const erneuert = wert(await erneuereAbholung(a.supabase, a.id, { teamId: team }));
+    assert.notEqual(erneuert.token, an.token);
+    assert.deepEqual((await feldAnon.rpc("abholung_ansicht", { p_token: an.token })).data, { gueltig: false });
+    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: neuLink })).data.gueltig, true, "PC 6");
+    // PC 5: aus und wieder ein — dieselbe Adresse.
+    wert(await schalteAbholung(a.supabase, a.id, { teamId: team, aktiv: false }));
+    assert.deepEqual(await abholen(erneuert.token, anschluss(4), "Anna-Lena", "O’Brien", 2017), { status: "ungueltig" });
+    assert.equal(wert(await schalteAbholung(a.supabase, a.id, { teamId: team, aktiv: true })).token, erneuert.token);
+    assert.equal((await abholen(erneuert.token, anschluss(5), "Anna-Lena", "O’Brien", 2017)).status, "ok");
+
+    // Nur über die RPCs; Anon sieht keine Tabelle, ohne Anschluss keine Abholung.
+    assert.deepEqual((await feldAnon.from("team_abholung").select("token").eq("team_id", team)).data ?? [], []);
+    assert.ok((await a.supabase.from("team_abholung").update({ aktiv: false }).eq("team_id", team)).error);
+    assert.ok((await a.supabase.from("abholung_sperren").select("schluessel")).error);
+    assert.ok((await feldAnon.rpc("abholung_abholen", { p_token: erneuert.token, p_schluessel: null, p_vorname: "x", p_nachname: "y", p_jahrgang: 2017 })).error);
+  });
+
+  await pruefe("Selbstabholung: nach 5 Fehlversuchen 15 Minuten gesperrt, nur dieser Anschluss (#438 AK 15, 16)", async () => {
+    const team = await serienTeam("Kern-DB-Abholung-Sperre");
+    await neuerSpieler(team, "Lena", "Meier", 2017);
+    const t = wert(await schalteAbholung(a.supabase, a.id, { teamId: team, aktiv: true })).token;
+    const k = anschluss(6);
+    for (let i = 1; i <= 4; i++) assert.equal((await abholen(t, k, "Lena", "Maier", 2017)).status, "passt_nicht", `Versuch ${i}`);
+    assert.equal((await abholen(t, k, "Lena", "Maier", 2017)).status, "gesperrt", "der fünfte sperrt");
+    assert.equal((await abholen(t, k, "Lena", "Meier", 2017)).status, "gesperrt", "auch eine passende Eingabe");
+    assert.equal((await abholen(t, anschluss(7), "Lena", "Meier", 2017)).status, "ok", "andere bleiben offen");
+    // Nach der Wartezeit wieder offen.
+    await admin.from("abholung_sperren").update({ gesperrt_bis: new Date(Date.now() - 1000).toISOString() }).eq("schluessel", k);
+    assert.equal((await abholen(t, k, "Lena", "Meier", 2017)).status, "ok");
+    // Ein Erfolg setzt die Zählung zurück.
+    for (let i = 1; i <= 4; i++) await abholen(t, k, "Lena", "Maier", 2017);
+    assert.equal((await abholen(t, k, "Lena", "Meier", 2017)).status, "ok");
+    assert.equal((await abholen(t, k, "Lena", "Maier", 2017)).status, "passt_nicht");
   });
 
 } finally {

@@ -12,7 +12,9 @@ import { cn } from "@/lib/cn";
    Beide Lagen tragen ein Zeichen im Knopf, damit der Zustand nicht an der
    Farbe allein hängt: an in Primary mit Haken, aus im Rot des abgemeldeten
    Kalenderblatts mit Kreuz (PO 2026-10-16). `neutral`: grau und ohne Zeichen
-   — für einen Termin, an dem es nichts zu wählen gibt (ausgefallen). */
+   — für einen Termin, an dem es nichts zu wählen gibt (ausgefallen), und für
+   die Aus-Lage eines Schalters, dessen Aus kein Fehlen bedeutet (die
+   Selbstabholung, #438). */
 export function Switch({
   className,
   disabled,

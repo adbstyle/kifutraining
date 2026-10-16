@@ -26,12 +26,12 @@ import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type Ke
 
 export const SPIELER_FELD = { feld: "spieler_id" } as const;
 
-const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer";
+const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen";
 
-type SpielerRoh = { id: string; vorname: string; nachname: string; jahrgang: number; js_nummer: string | null };
+type SpielerRoh = { id: string; vorname: string; nachname: string; jahrgang: number; js_nummer: string | null; link_bezogen: boolean };
 
 function ausRoh(s: SpielerRoh): Spieler {
-  return { id: s.id, vorname: s.vorname, nachname: s.nachname, jahrgang: s.jahrgang, jsNummer: s.js_nummer };
+  return { id: s.id, vorname: s.vorname, nachname: s.nachname, jahrgang: s.jahrgang, jsNummer: s.js_nummer, linkBezogen: s.link_bezogen };
 }
 
 /** Ein Fehler der Spieler-RPCs als Kern-Fehler: «nicht gefunden» ordnet nur
@@ -175,4 +175,45 @@ export async function erneuereSpielerLink(
   const { data, error } = await supabase.rpc("spieler_link_erneuern", { p_spieler: e.spielerId });
   if (error) return spielerFehler(error);
   return ok({ token: data as string, teamId: s.wert.teamId, name: `${s.wert.vorname} ${s.wert.nachname}` });
+}
+
+// ── Selbstabholung (#438) ───────────────────────────────────────────────────
+
+export type Abholung = { teamId: string; token: string; aktiv: boolean };
+
+type AbholRoh = { token: string; aktiv: boolean };
+
+async function abholRpc(
+  supabase: SupabaseClient,
+  teamId: string,
+  name: "abholung_holen" | "abholung_schalten" | "abholung_erneuern",
+  extra: Record<string, unknown> = {},
+): Promise<KernErgebnis<Abholung>> {
+  if (!istUuid(teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
+  const { data, error } = await supabase.rpc(name, { p_team: teamId, ...extra });
+  if (error) return spielerFehler(error);
+  const r = data as AbholRoh;
+  return ok({ teamId, token: r.token, aktiv: r.aktiv });
+}
+
+/** Die Abholadresse des Teams holen (AK 2) — beim ersten Mal angelegt, aus. */
+export async function holeAbholung(supabase: SupabaseClient, _userId: string, e: { teamId: string }) {
+  return abholRpc(supabase, e.teamId, "abholung_holen");
+}
+
+/** Die Selbstabholung ein- oder ausschalten (AK 1, PC 1, 5, 6). */
+export async function schalteAbholung(supabase: SupabaseClient, _userId: string, e: { teamId: string; aktiv: boolean }) {
+  return abholRpc(supabase, e.teamId, "abholung_schalten", { p_aktiv: e.aktiv });
+}
+
+/** Die Abholadresse erneuern (AK 4, PC 4, 6): Die bisherige gilt nie wieder. */
+export async function erneuereAbholung(supabase: SupabaseClient, _userId: string, e: { teamId: string }) {
+  return abholRpc(supabase, e.teamId, "abholung_erneuern");
+}
+
+/** Die Abholadresse, wie sie steht — ohne sie anzulegen (für die Karte). */
+export async function leseAbholung(supabase: SupabaseClient, teamId: string): Promise<{ token: string; aktiv: boolean } | null> {
+  if (!istUuid(teamId)) return null;
+  const { data } = await supabase.from("team_abholung").select("token, aktiv").eq("team_id", teamId).maybeSingle<AbholRoh>();
+  return data ?? null;
 }

@@ -95,6 +95,8 @@ export type Spieler = {
   nachname: string;
   jahrgang: number;
   jsNummer: string | null;
+  /** Der aktuelle Link wurde über die Selbstabholung herausgegeben (#438 PC 2). */
+  linkBezogen: boolean;
 };
 
 /** Überall Vor- und Nachname (Epic PO 2). */
@@ -200,6 +202,9 @@ export function istLinkToken(s: unknown): s is string {
   return typeof s === "string" && /^[0-9a-f]{64}$/.test(s);
 }
 
+/** Ein Fehler der Datenebene hinter einem privaten Link — ohne Einzelheiten. */
+export const LINK_FEHLER = "Das ging gerade nicht. Versuch es noch einmal.";
+
 /** Die vollständige Adresse des privaten Links. */
 export function spielerLinkUrl(origin: string, token: string): string {
   return `${origin.replace(/\/+$/, "")}/${LINK_PFAD}/${token}`;
@@ -212,7 +217,10 @@ export const LINK_TEXT = {
   erneuern: "Erneuern macht den bisherigen Link sofort ungültig. Abmeldungen bleiben.",
   /** AK 10: ein erneuerter, unbekannter oder entfernter Link. */
   ungueltigTitel: "Dieser Link gilt nicht mehr",
-  ungueltig: "Vielleicht hat das Trainerteam ihn erneuert. Frag deine Trainerin oder deinen Trainer nach dem aktuellen Link.",
+  ungueltig:
+    "Vielleicht hat das Trainerteam ihn erneuert. Hol den aktuellen Link über die Abholadresse deines Teams ab oder frag deine Trainerin oder deinen Trainer.",
+  /** Mit eingeschalteter Selbstabholung (#438): woher die Eltern den neuen holen. */
+  erneuertAbholen: "Die Eltern holen den neuen Link wieder über die Abholadresse ab.",
 } as const;
 
 // ── Verlegen lässt Abmeldungen verfallen (#437) ─────────────────────────────
@@ -232,4 +240,57 @@ export function verfallBestaetigen(n: number): string {
 /** Am privaten Link: Der Termin wurde verlegt, seit sie abgemeldet wurde (AK 2). */
 export function verfallenHinweis(vorher: { datum: string; beginn: string }): string {
   return `Verlegt, vorher ${tagOhneJahr(vorher.datum)} um ${vorher.beginn}. Deine Abmeldung gilt nicht mehr.`;
+}
+
+// ── Selbstabholung (#438) ───────────────────────────────────────────────────
+
+/** Der Pfad der Abholseite: `/abholen/<token>`. */
+export const ABHOL_PFAD = "abholen";
+
+/** Die vollständige Abholadresse eines Teams. */
+export function abholUrl(origin: string, token: string): string {
+  return `${origin.replace(/\/+$/, "")}/${ABHOL_PFAD}/${token}`;
+}
+
+/** Fehlversuche bis zur Sperre und ihre Dauer (AK 15) — Zwilling in
+ *  `abholung_abholen` (Migration selbstabholung). */
+export const ABHOL_VERSUCHE = 5;
+export const ABHOL_SPERRE_MINUTEN = 15;
+
+export const ABHOLUNG_TEXT = {
+  /** AK 3, 5: was die Adresse kann und was Ausschalten bewirkt. */
+  beschreibung:
+    "Über diese Adresse holen Eltern den Link ihres Kindes selbst ab, mit Vorname, Nachname und Jahrgang. Wer sie hat und diese Angaben kennt, kann das Kind ab- und anmelden; teile sie nur im Eltern-Chat des Teams. Ausschalten stoppt neue Abholungen, bezogene Links gelten weiter.",
+  aus: "Ausgeschaltet. Eltern erhalten ihren Link nur von euch. Beim Einschalten gilt die bisherige Abholadresse wieder.",
+  /** AK 4, 5: vor dem Erneuern. */
+  erneuern:
+    "Die bisherige Adresse gilt danach nie mehr, auch nicht im Eltern-Chat. Spieler-Links, die Eltern schon bezogen haben, gelten weiter. Teile danach die neue Adresse im Eltern-Chat.",
+  eingeschaltet: "Selbstabholung eingeschaltet.",
+  ausgeschaltet: "Selbstabholung ausgeschaltet. Bezogene Links gelten weiter.",
+  erneuert: "Abholadresse erneuert. Teile die neue im Eltern-Chat.",
+  // ── Die Abholseite ──
+  titel: "Spieler:in-Link abholen",
+  einleitung:
+    "Gib Vorname, Nachname und Jahrgang deines Kindes so ein, wie das Trainerteam sie erfasst hat. Du erhältst seinen privaten Link, mit dem du es für Trainings ab- und wieder anmeldest.",
+  /** AK 7: was KiFu speichert, wer es sieht, wann es verschwindet. */
+  speichertTitel: "Was KiFu speichert",
+  speichert:
+    "Zu jedem Kind nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, und Abmeldungen. Das sehen die Trainer:innen des Teams, KI-Assistenten, die sie mit KiFu verbunden haben, und wer den Link des Kindes hat. Nimmt das Team ein Kind aus der Liste, verschwinden seine Angaben überall.",
+  /** AK 13, 14: immer derselbe Satz. */
+  passtNicht: "Dazu finden wir keinen Link. Prüf die Schreibweise oder frag beim Team nach.",
+  /** AK 16. */
+  gesperrtTitel: "Zu viele Versuche",
+  gesperrt: `Du kannst in ${ABHOL_SPERRE_MINUTEN} Minuten wieder eingeben. Passt es dann immer noch nicht, frag beim Team nach.`,
+  fehlt: "Bitte Vorname, Nachname und den Jahrgang als vierstellige Jahreszahl eingeben.",
+  /** AK 17. */
+  ungueltigTitel: "Diese Abholadresse gilt nicht",
+  ungueltig: "Frag deine Trainerin oder deinen Trainer nach der aktuellen Abholadresse oder direkt nach dem Link für dein Kind.",
+} as const;
+
+/** AK 10: wozu der Link dient, dass er privat ist, und wo es ihn wieder gibt. */
+export function abholErhaltText(name: string): { wozu: string; privat: string } {
+  return {
+    wozu: `Mit diesem Link meldest du ${name} für Trainings ab und wieder an, ohne Konto. Speichere ihn am besten als Lesezeichen.`,
+    privat: `Der Link ist privat. Wer ihn hat, kann ${name} ab- und anmelden. Geht er verloren, holst du ihn hier wieder ab.`,
+  };
 }

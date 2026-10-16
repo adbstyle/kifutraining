@@ -22,8 +22,10 @@ name: Sync Staging (Prod-Spiegel, manuell)
 #   von den Zustimmungen aus). `ki_aufrufe` ist ein flüchtiger Zähler.
 # - `kalender_abos` wird kopiert und direkt danach geleert (Abo-Links sind
 #   Geheimnisse der Prod-Konten, Story #330); auf Staging holt man sich neue.
-# - `spieler.link_token` bekommt nach dem Restore neue Werte (private Links
-#   der Spieler:innen, Story #436): Prod-Links gelten auf Staging nicht.
+# - `spieler.link_token` und `team_abholung.token` bekommen nach dem Restore
+#   neue Werte (private Links der Spieler:innen #436, Abholadressen #438):
+#   Prod-Links gelten auf Staging nicht; «bezogen» fällt damit zurück.
+#   `abholung_sperren` (Fehlversuche je Anschluss) wird geleert.
 #
 # Voraussetzung: Staging-Schema ist per deploy-staging.yml aktuell (develop >= main).
 # Das deckt nur ADDITIVE Migrationen ab. Trägt develop eine Migration, die eine
@@ -57,7 +59,7 @@ env:
   # Sortierung im Guard-Query entsprechen. Neue public-Tabelle in einer
   # Migration? -> hier ergänzen, sonst bricht der Guard den Sync bewusst ab
   # (statt die Tabelle still leer zu lassen).
-  PUBLIC_TABLES: "exercise_favorites exercises kalender_abos ki_aufrufe ki_zugang_namen profiles spieler team_members teams termin_abmeldungen termin_eingefroren termin_serien termin_serien_luecken termin_serien_verantwortliche termin_teilnahmen termin_verantwortliche trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings"
+  PUBLIC_TABLES: "abholung_sperren exercise_favorites exercises kalender_abos ki_aufrufe ki_zugang_namen profiles spieler team_abholung team_members teams termin_abmeldungen termin_eingefroren termin_serien termin_serien_luecken termin_serien_verantwortliche termin_teilnahmen termin_verantwortliche trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings"
 
 jobs:
   sync:
@@ -187,9 +189,14 @@ jobs:
           -- Abo-Links sind Geheimnisse der Prod-Konten (#330). Auf Staging gelten
           -- sie nicht; wer dort testet, holt sich einen neuen.
           delete from public.kalender_abos;
-          -- Ebenso die privaten Links der Spieler:innen (#436 PC 4).
+          -- Ebenso die privaten Links der Spieler:innen (#436 PC 4) und die
+          -- Abholadressen (#438 PC 7).
           update public.spieler
-          set link_token = replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
+          set link_token = replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''),
+              link_bezogen = false;
+          update public.team_abholung
+          set token = replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
+          delete from public.abholung_sperren;
           select set_config('sync.staging_ref', :'staging_ref', true);
           update public.exercises
           set bild_url = replace(bild_url,

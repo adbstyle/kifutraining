@@ -1,7 +1,7 @@
 import "server-only";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { istUuid } from "@/lib/kennung";
-import { abweisungText, istLinkToken, type AbmeldeGrund, type AbmeldeStand, type Spielstand } from "@/lib/spieler";
+import { LINK_FEHLER, abweisungText, istLinkToken, type AbmeldeGrund, type AbmeldeStand, type Spielstand } from "@/lib/spieler";
 
 /**
  * Die Seite hinter dem privaten Link einer Spieler:in (Epic #433, Story #436)
@@ -58,8 +58,6 @@ type Antwort =
   | { status: "ungueltig" }
   | { status: "ok"; abgemeldet: boolean; stand: Spielstand }
   | { status: "abgewiesen"; grund: AbmeldeGrund; stand?: AbmeldeStand };
-
-export const LINK_FEHLER = "Das ging gerade nicht. Versuch es noch einmal.";
 
 /** Über den Link ab- oder wieder anmelden (AK 8) — dieselbe Regel wie für
  *  Mitglieder, die Spieler:in ergibt sich aus dem Link. */

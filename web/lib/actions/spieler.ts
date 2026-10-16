@@ -1,7 +1,15 @@
 "use server";
 
-import { aendereSpieler, entferneSpieler, erneuereSpielerLink, holeSpielerLink, nimmSpielerAuf } from "@/lib/kern/spieler";
-import { spielerLinkUrl, type SpielerEingabe, type SpielerFeld } from "@/lib/spieler";
+import {
+  aendereSpieler,
+  entferneSpieler,
+  erneuereAbholung,
+  erneuereSpielerLink,
+  holeSpielerLink,
+  nimmSpielerAuf,
+  schalteAbholung,
+} from "@/lib/kern/spieler";
+import { abholUrl, spielerLinkUrl, type SpielerEingabe, type SpielerFeld } from "@/lib/spieler";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { revalidiereTeam } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
@@ -64,4 +72,27 @@ export async function erneuereSpielerLinkAktion(spielerId: string): Promise<{ ok
   if (!r.ok) return fehler(r);
   revalidiereTeam(r.wert.teamId);
   return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token) };
+}
+
+/** Die Selbstabholung ein- oder ausschalten (#438 AK 1) — mit der Adresse. */
+export async function schalteAbholungAktion(
+  teamId: string,
+  aktiv: boolean,
+): Promise<{ ok: true; url: string; aktiv: boolean } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await schalteAbholung(a.supabase, a.userId, { teamId, aktiv });
+  if (!r.ok) return fehler(r);
+  revalidiereTeam(teamId);
+  return { ok: true, url: abholUrl(await oeffentlicherOrigin(), r.wert.token), aktiv: r.wert.aktiv };
+}
+
+/** Die Abholadresse erneuern (#438 AK 4). */
+export async function erneuereAbholungAktion(teamId: string): Promise<{ ok: true; url: string } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await erneuereAbholung(a.supabase, a.userId, { teamId });
+  if (!r.ok) return fehler(r);
+  revalidiereTeam(teamId);
+  return { ok: true, url: abholUrl(await oeffentlicherOrigin(), r.wert.token) };
 }

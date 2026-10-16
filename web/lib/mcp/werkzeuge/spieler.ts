@@ -4,14 +4,28 @@ import { abgebildet } from "@/lib/kern/ergebnis";
 import {
   aendereSpieler,
   entferneSpieler,
+  erneuereAbholung,
   erneuereSpielerLink,
+  holeAbholung,
   holeSpielerLink,
   ladeSpieler,
   ladeSpielerliste,
   nimmSpielerAuf,
+  schalteAbholung,
 } from "@/lib/kern/spieler";
 import { setzeAbmeldung, terminSpieler } from "@/lib/kern/abmeldungen";
-import { EHEMALIGE_SPIELERIN, JS_MAX, LINK_PFAD, LINK_TEXT, NAME_MAX, SPIELER_MAX } from "@/lib/spieler";
+import {
+  ABHOL_PFAD,
+  ABHOLUNG_TEXT,
+  ABHOL_SPERRE_MINUTEN,
+  ABHOL_VERSUCHE,
+  EHEMALIGE_SPIELERIN,
+  JS_MAX,
+  LINK_PFAD,
+  LINK_TEXT,
+  NAME_MAX,
+  SPIELER_MAX,
+} from "@/lib/spieler";
 import { kennung } from "@/lib/mcp/bausteine";
 import { TEAM_KENNUNG_FEHLER, TERMIN_KENNUNG_FEHLER, TeamId, TerminId } from "@/lib/mcp/werkzeuge/trainings";
 import { werkzeug } from "@/lib/mcp/werkzeug";
@@ -51,6 +65,7 @@ const SpielerAusgabe = z.object({
   nachname: z.string(),
   jahrgang: z.number().int(),
   js_nummer: z.string().nullable(),
+  link_bezogen: z.boolean().describe("Der aktuelle private Link wurde über die Selbstabholung herausgegeben."),
 });
 
 // ── spielerliste_abrufen ────────────────────────────────────────────────────
@@ -78,6 +93,7 @@ export const spielerlisteAbrufen = werkzeug({
         nachname: s.nachname,
         jahrgang: s.jahrgang,
         js_nummer: s.jsNummer,
+        link_bezogen: s.linkBezogen,
       })),
     })),
 });
@@ -320,4 +336,75 @@ export const spielerLinkErneuern = werkzeug({
       url: zugang.url(LINK_PFAD, w.token),
       hinweis: LINK_TEXT.erneuern,
     })),
+});
+
+// ── Selbstabholung (#438) ───────────────────────────────────────────────────
+
+const ABHOL_MODELL =
+  "Mit der Selbstabholung holen Eltern den privaten Link ihres Kindes selbst ab: Sie öffnen die Abholadresse des Teams " +
+  "ohne Konto und geben Vorname, Nachname und Jahrgang ein; passt die Eingabe (wie die Eindeutigkeit der Liste: Gross- " +
+  "und Kleinschreibung, Leerzeichen, Bindestrich und Apostroph-Varianten zählen nicht), erhalten sie den Link, und er " +
+  `gilt als bezogen («link_bezogen» in «spielerliste_abrufen»). Nach ${ABHOL_VERSUCHE} nicht passenden Eingaben ist die ` +
+  `Eingabe vom selben Anschluss ${ABHOL_SPERRE_MINUTEN} Minuten gesperrt. Die Selbstabholung ist aus, bis ein Mitglied ` +
+  "sie einschaltet; aus und wieder ein gilt dieselbe Adresse. Erneuern macht die bisherige für immer ungültig. Bezogene " +
+  "Spieler-Links gelten in jedem Fall weiter; ein erneuerter Spieler-Link gilt wieder als nicht bezogen. KiFu verschickt " +
+  "die Adresse nicht.";
+
+const AbholAusgabe = z.object({
+  team_id: z.string(),
+  aktiv: z.boolean(),
+  url: z.string().describe("Die Abholadresse. Wer sie hat und Vorname, Nachname und Jahrgang einer Spieler:in kennt, erhält deren Link."),
+  hinweis: z.string(),
+});
+
+const abholAusgabe = (w: { teamId: string; token: string; aktiv: boolean }, url: string, hinweis: string) => ({
+  team_id: w.teamId,
+  aktiv: w.aktiv,
+  url,
+  hinweis,
+});
+
+export const selbstabholungAbrufen = werkzeug({
+  name: "selbstabholung_abrufen",
+  titel: "Selbstabholung eines Teams",
+  beschreibung:
+    "Nennt, ob die Selbstabholung eines deiner Teams eingeschaltet ist, und ihre Abholadresse, damit du sie weitergibst " +
+    `(nur im Eltern-Chat des Teams). Welche Links bezogen sind, steht in «spielerliste_abrufen». ${ABHOL_MODELL} ${TEAM_KENNUNG_FEHLER}`,
+  nurLesen: true,
+  eingabe: z.object({ team_id: TeamId }),
+  ausgabe: AbholAusgabe,
+  ausfuehren: async (e, zugang) =>
+    abgebildet(await holeAbholung(zugang.supabase, zugang.userId, { teamId: e.team_id }), (w) =>
+      abholAusgabe(w, zugang.url(ABHOL_PFAD, w.token), w.aktiv ? ABHOLUNG_TEXT.beschreibung : ABHOLUNG_TEXT.aus),
+    ),
+});
+
+export const selbstabholungSchalten = werkzeug({
+  name: "selbstabholung_schalten",
+  titel: "Selbstabholung ein- oder ausschalten",
+  beschreibung:
+    "Schaltet die Selbstabholung eines deiner Teams ein («aktiv: true») oder aus. Ausschalten stoppt neue Abholungen; " +
+    `bezogene Links gelten weiter. ${ABHOL_MODELL} ${TEAM_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({ team_id: TeamId, aktiv: z.boolean() }),
+  ausgabe: AbholAusgabe,
+  ausfuehren: async (e, zugang) =>
+    abgebildet(await schalteAbholung(zugang.supabase, zugang.userId, { teamId: e.team_id, aktiv: e.aktiv }), (w) =>
+      abholAusgabe(w, zugang.url(ABHOL_PFAD, w.token), w.aktiv ? ABHOLUNG_TEXT.beschreibung : ABHOLUNG_TEXT.ausgeschaltet),
+    ),
+});
+
+export const abholadresseErneuern = werkzeug({
+  name: "abholadresse_erneuern",
+  titel: "Abholadresse erneuern",
+  beschreibung:
+    "Erneuert die Abholadresse eines deiner Teams und gibt die neue zurück — etwa wenn sie ausserhalb des Teams gelandet " +
+    `ist. Frag vorher nach, ob das gemeint ist. ${ABHOLUNG_TEXT.erneuern} ${ABHOL_MODELL} ${TEAM_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({ team_id: TeamId }),
+  ausgabe: AbholAusgabe,
+  ausfuehren: async (e, zugang) =>
+    abgebildet(await erneuereAbholung(zugang.supabase, zugang.userId, { teamId: e.team_id }), (w) =>
+      abholAusgabe(w, zugang.url(ABHOL_PFAD, w.token), ABHOLUNG_TEXT.erneuern),
+    ),
 });
