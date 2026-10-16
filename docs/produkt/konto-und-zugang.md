@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-10-14. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-10-16. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -267,7 +267,8 @@ Termin ohne Training, der nicht ausgefallen ist, gilt auch für ihn als noch nic
 Er legt einzelne Termine fest — Datum, Beginn und Ende sind auch hier Pflicht, Felder und
 erwartete Spielerzahl wie in der Anwendung freiwillig — und wöchentliche Terminserien mit
 Wochentagen, Zeitraum, Zeit, Ort, Bemerkung, Verantwortlichen, Feldern und erwarteter
-Spielerzahl. Er ändert und entfernt Termine; bei einem Serientermin muss er sagen, ob es nur für
+Spielerzahl; eine erwartete Zahl weist die Anwendung wie dort ab, solange das Team eine
+Spielerliste führt, ausser an einem Termin, der schon begonnen hat. Er ändert und entfernt Termine; bei einem Serientermin muss er sagen, ob es nur für
 diesen, für diesen und alle folgenden oder für alle Termine der Serie gilt, sonst lehnt die
 Anwendung ab. Felder gibt er dabei stets als ganze Liste an, die die bisherige ersetzt; Felder
 und Spielerzahl entfernt er auch wieder, an einem einzelnen Serientermin mit derselben Wirkung
@@ -281,6 +282,21 @@ mit seinem Termin lebt: Löst er es, ersetzt es oder entfällt der Termin, wird 
 entfernt sie, lässt Termine ausfallen, setzt, ändert oder leert den Grund und nimmt einen Ausfall
 zurück. Ein Training ohne bestehenden Termin auf ein Datum zu setzen, gibt es auch beim
 Assistenten nicht mehr; er legt zuerst den Termin fest und ordnet das Training dann zu.
+
+Auch die Spielerliste eines Teams führt der Assistent nach den Regeln des
+[Team-Bereichs](team-bereich.md#spielerliste). Er liest sie mit Vorname, Nachname, Jahrgang,
+J+S-Nummer und ob der Link jeder Spieler:in bezogen ist, nimmt Spieler:innen auf, ändert und
+entfernt sie; beim ersten Aufnehmen erfährt er, wie viele anstehende Termine ihre erwartete Zahl
+verloren. Jeder Termin, den er nennt, trägt neben der erwarteten Zahl die Spielerzahl, mit der
+geplant wird, samt Quelle: aus der Spielerliste mit den Angemeldeten und allen auf der Liste,
+erwartet oder unbekannt — unbekannt auch an einem ausgefallenen Termin. Für einen einzelnen
+Termin erfährt er, wer angemeldet und wer abgemeldet ist und ob es schon der Stand bei Beginn ist.
+Er meldet ab und wieder an und nennt dafür Datum und Beginn, wie er den Termin zuletzt gelesen
+hat; wurde er inzwischen verlegt, weist die Anwendung mit dem neuen Stand ab. Er holt und erneuert
+den privaten Link einer Spieler:in, sieht, ob die Selbstabholung eingeschaltet ist, schaltet sie
+ein und aus und holt und erneuert die Abholadresse. Vor- und Nachnamen, Jahrgänge und
+J+S-Nummern der Spieler:innen, ihre privaten Links und die Abholadresse gelangen damit zum Anbieter
+des verbundenen Assistenten.
 
 Damit er den Platzbedarf einer Übung mit den Feldern eines Termins vergleichen kann, erfährt der
 Assistent mit den zulässigen Werten auch die Richtmasse von Kleinfeld und Grossfeld je
@@ -296,10 +312,14 @@ Spielerzahl eines Termins passt, beurteilt der Assistent aus diesen Angaben selb
 
 Es gelten dieselben Regeln wie in der Anwendung, und abgewiesen wird mit denselben Sätzen.
 Nachfragen muss der Assistent nicht: Er entfernt, ersetzt, löst und lässt ausfallen
-ohne Bestätigung. Ausgenommen sind Änderungen und Entfernungen einer Serie für folgende oder
+ohne Bestätigung, ebenso entfernt er Spieler:innen und erneuert Links und die Abholadresse.
+Ausgenommen sind Änderungen und Entfernungen einer Serie für folgende oder
 alle Termine, die vergangene Termine erfassen oder entfallen lassen: Die führt die Anwendung
 erst aus, wenn der Aufruf das ausdrücklich bestätigt, und nennt vorher, wie viele vergangene
-Termine es trifft. Nach jedem Schritt erfährt der Assistent, was geschehen ist — welche
+Termine es trifft. Ebenso verlangt sie eine Bestätigung, wenn eine Änderung von Datum oder
+Beginn Abmeldungen verfallen lässt — am einzelnen Termin, über die Serie oder wenn die Zeit
+wieder der Serie folgt —, und nennt vorher, wie viele; nach einer Änderung erfährt der Assistent,
+wie viele verfallen sind. Nach jedem Schritt erfährt der Assistent, was geschehen ist — welche
 entfallenen Termine ein Training trugen und ob es mit ihnen gelöscht wurde oder im Bestand
 blieb, welches Termin-Training beim Zuordnen entstand, welches Training ein ersetztes oder
 gelöstes war und ob es gelöscht wurde und, falls eine gescheiterte Kopie nicht ganz aufgeräumt
@@ -329,11 +349,16 @@ Terminserien samt Platz und erwarteter Spielerzahl festlegen, ändern und entfer
 als Kopie Trainings aus dem Team oder deine persönlichen Trainings zuordnen und sie wieder lösen,
 Verantwortliche eintragen, Ausfälle festhalten und zurücknehmen sowie die Termine eines
 Zeitraums abrufen"; „die Anzeigenamen der
-Mitglieder deiner Teams lesen (ohne E-Mail-Adressen)". Nie erreichbar sind „deine Favoriten",
+Mitglieder deiner Teams lesen (ohne E-Mail-Adressen)"; „die Spielerliste deiner Teams (Vorname,
+Nachname, Jahrgang, J+S-Nummer) einsehen und führen, Spieler:innen für Termine ab- und wieder
+anmelden und sehen, wer angemeldet ist, den privaten Link einer Spieler:in holen und erneuern,
+die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche
+Links bezogen wurden". Nie erreichbar sind „deine Favoriten",
 „die Verwaltung deiner Teams (gründen, umbenennen, Mitglieder aufnehmen oder entfernen)" und
 „dein Konto selbst (Anzeigename, Passwort, Löschen)". Kommt eine dieser Fähigkeiten dazu, muss
-man nicht erneut zustimmen; auch wer seinen Zugang erlaubt hat, bevor der Kalender oder Platz
-und Spielerzahl der Termine dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt die
+man nicht erneut zustimmen; auch wer seinen Zugang erlaubt hat, bevor der Kalender, Platz
+und Spielerzahl der Termine oder die Spielerliste samt Abmeldungen, Links und Selbstabholung
+dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt die
 Seite, nur zu erlauben, wenn man das Verbinden eben selbst gestartet hat.
 
 Beim Erlauben kann man dem Zugang einen eigenen Namen geben, etwa „Claude auf dem Laptop",
@@ -378,7 +403,12 @@ bleibt alles Eigene: Übungen und Trainings anlegen oder bearbeiten, favorisiere
 wer eine geschützte Adresse direkt aufruft, landet bei der Anmeldung und wird danach dorthin
 zurückgeführt, wo er hinwollte. Eine Ausnahme ist das Kalender-Abo: Das Kalenderprogramm ruft die Termine ohne
 Anmeldung ab, denn der Link selbst ist die Berechtigung; der Verweis in einem Kalendereintrag
-führt dagegen über die Anmeldung in den Trainingsplan.
+führt dagegen über die Anmeldung in den Trainingsplan. Ebenso ohne Konto gehen der private Link
+einer Spieler:in, über den ihre Eltern oder sie selbst sie für Termine ab- und anmelden, und die
+Abholadresse eines Teams, über die Eltern diesen Link abholen (siehe
+[Team-Bereich](team-bereich.md#privater-link)). Wer sie öffnet, wird weder angemeldet noch zum
+Mitglied, und im Browser bleibt nichts zurück; erreichbar ist nur, was zu dieser einen Spieler:in
+bzw. zur Abholung gehört.
 
 ## Konto löschen
 
@@ -393,7 +423,8 @@ gelöscht und die persönlichen Trainings mitsamt den Bildern ihrer Übungsfassu
 Bei Teams entscheidet die Mitgliederzahl: Ist noch jemand anderes im Team, bleibt es samt allen
 Trainings und Terminen unangetastet, und nur die gelöschte Person verschwindet aus der
 Mitgliederliste. War sie die letzte, löst sich das Team auf — mit seinen Trainings, Terminen,
-Terminserien und Bildern.
+Terminserien, Bildern und seiner Spielerliste; deren private Links und die Abholadresse gelten
+danach nicht mehr.
 
 Als Verantwortliche wird die Person aus allen anstehenden Terminen und Terminserien ausgetragen.
 An vergangenen Terminen bleibt ihr Eintrag ohne Namen als „Ehemaliges Mitglied" stehen, auch in
@@ -443,8 +474,9 @@ wenig wie die Anwendung. Für den Juniorenfussball gibt es keinen kuratierten Ü
 Block, zu dem der sichtbare Bestand nichts führt, bleibt leer und wird gemeldet. Die
 Zeitrichtwerte erzwingt die Anwendung weder beim Speichern noch beim Veröffentlichen. Was im
 Gespräch zur Sprache kommt — etwa ein Problem der Mannschaft —, hält das Training nicht fest.
-Die Zahl der erwarteten Kinder steht als erwartete Spielerzahl am Termin, nicht am Training oder
-an einer Variante; ob eine Übung oder ein Training zu ihr oder zum Platz des Termins passt,
+Die Zahl der Kinder steht am Termin — als erwartete Spielerzahl oder aus der Spielerliste —,
+nicht am Training oder an einer Variante, und Spieler:innen lassen sich keiner Gruppe des
+Trainings zuteilen; ob eine Übung oder ein Training zu ihr oder zum Platz des Termins passt,
 prüft die Anwendung auch beim Assistenten nicht und meldet keine Unstimmigkeit — das Urteil
 liegt bei ihm. Für eine Übung auf freiem Feld ohne Meterangabe und eine Junioren-Übung ohne
 Spielfeldgrösse bleibt der Platzbedarf seine Einschätzung, und die Richtmasse von Klein- und
@@ -464,6 +496,10 @@ nirgends.
 Im Kalender fragt der Assistent vor dem Entfernen eines Termins, dem Löschen eines Trainings
 mit Termin, dem Zuordnen, Ersetzen und Lösen nicht nach. Fallen durch eine
 Serienänderung anstehende Termine mit Training weg, erfährt er das erst danach; nur wenn
-vergangene Termine erfasst sind oder entfallen, verlangt die Anwendung eine Bestätigung im
-Aufruf und nennt vorher, was es trifft. Ob ein Termin stattgefunden hat und wer dabei war, kennt
-die Anwendung auch über den Assistenten nicht.
+vergangene Termine erfasst sind oder entfallen oder Abmeldungen verfallen, verlangt die
+Anwendung eine Bestätigung im Aufruf und nennt vorher, was es trifft. Ob ein Termin
+stattgefunden hat und wer dabei war, kennt die Anwendung auch über den Assistenten nicht; er
+erfährt nur, wer abgemeldet war. Auch beim Entfernen von Spieler:innen, beim Erneuern von Links
+und der Abholadresse und beim Schalten der Selbstabholung verlangt die Anwendung keine
+Bestätigung; ob er vorher nachfragt, liegt bei ihm. Die Liste aller Spieler:innen mit ihren Abmeldungen für mehrere Termine auf einmal liest er
+nicht; wer an einem Termin kommt, ruft er Termin für Termin ab.
