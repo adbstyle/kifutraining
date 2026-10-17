@@ -357,7 +357,7 @@ Bestätigung kommt auch dann, wenn das Ergebnis ausserhalb der Eingrenzung liegt
 
 ## Der geöffnete Termin
 
-Ein Klick auf eine Zeile im Trainingsplan oder auf den Tag des nächsten Termins öffnet den Termin.
+Ein Klick auf eine Zeile im Trainingsplan oder irgendwo auf die Karte des nächsten Termins öffnet den Termin.
 Auf breiten Bildschirmen steht er rechts neben der Liste an der Stelle des Monats; die Liste hebt
 ihn hervor. Wie bei einem Training reichen beide bis zum unteren Rand und scrollen für sich, und am
 Griff dazwischen zieht man den Termin breiter oder schmaler (Doppelklick stellt die Breite zurück);
