@@ -6,10 +6,13 @@ import {
   erneuereAbholung,
   erneuereSpielerLink,
   holeSpielerLink,
+  importiereSpieler,
   nimmSpielerAuf,
+  pruefeSpielerImport,
   schalteAbholung,
 } from "@/lib/kern/spieler";
 import { abholUrl, spielerLinkUrl, type SpielerEingabe, type SpielerFeld } from "@/lib/spieler";
+import type { ImportEintrag, ImportErwartet, ImportVorschau } from "@/lib/spieler-import";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { revalidiereTeam } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
@@ -53,6 +56,34 @@ export async function entferneSpielerAktion(spielerId: string): Promise<{ ok: tr
   if (!r.ok) return fehler(r);
   revalidiereTeam(r.wert.teamId);
   return { ok: true };
+}
+
+/** Die Vorschau eines Imports aus einer Datei (#455) — nur die vier Angaben
+ *  je Zeile kommen hierher, die Datei bleibt im Browser. */
+export async function pruefeSpielerImportAktion(
+  teamId: string,
+  zeilen: ImportEintrag[],
+): Promise<{ ok: true; vorschau: ImportVorschau } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await pruefeSpielerImport(a.supabase, a.userId, { teamId, zeilen });
+  if (!r.ok) return fehler(r);
+  return { ok: true, vorschau: r.wert };
+}
+
+/** Den Import übernehmen (#455), ganz oder gar nicht. `geaendert`: Die Liste
+ *  traf nicht mehr die bestätigte Vorschau. */
+export async function importiereSpielerAktion(
+  teamId: string,
+  zeilen: ImportEintrag[],
+  erwartet: ImportErwartet,
+): Promise<{ ok: true; neu: number; js: number; ersetzt: number } | (Fehler & { geaendert?: boolean })> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await importiereSpieler(a.supabase, a.userId, { teamId, zeilen, erwartet });
+  if (!r.ok) return { ...fehler(r), geaendert: r.art === "konflikt" };
+  revalidiereTeam(teamId);
+  return { ok: true, neu: r.wert.neu, js: r.wert.js, ersetzt: r.wert.ersetzt };
 }
 
 /** Den privaten Link einer Spieler:in holen (#436 AK 1) — als Adresse. */

@@ -153,6 +153,16 @@ import {
   ABHOL_PFAD,
   abholUrl,
 } from "../lib/spieler";
+import {
+  IMPORT_TEXT,
+  dekodiere,
+  erkenneSpalten,
+  importErgebnisText,
+  importZeilen,
+  jahrgangAusDatum,
+  jsAus,
+  leseDatei,
+} from "../lib/spieler-import";
 import { terminBegonnen } from "../lib/zeit";
 
 let gelaufen = 0;
@@ -2073,6 +2083,76 @@ pruefe("Verlegen: Texte zu verfallenden Abmeldungen (#437 AK 1, 2)", () => {
     verfallenHinweis({ datum: "2026-10-19", beginn: "18:00" }),
     "Verlegt, vorher Montag, 19. Oktober um 18:00. Deine Abmeldung gilt nicht mehr.",
   );
+});
+
+// ── CSV-Import der Spielerliste (#455) ──────────────────────────────────────
+
+const csvBytes = (text: string, kodierung: "utf8" | "latin1" = "utf8") => new Uint8Array(Buffer.from(text, kodierung));
+const CLUBCORNER_KOPF =
+  "Name;Zweitname;Vorname;Anrede;Strasse;PLZ;Ort;E-Mail gesetzliche Vertretung;Name/Vorname gesetzliche Vertretung;Geburtsdatum;Passnummer;J+S-Nummer;Rückennummer";
+
+pruefe("CSV-Import: Zeichensatz, Trennzeichen, leere und fremde Dateien (#455 AK 2–4)", () => {
+  const text = `${CLUBCORNER_KOPF}\nLüthi;;Amélie;Frau;Weg 1;3014;Bern;a@b.ch;Lüthi Eva;07.04.2016;2101204;2745102;\n\n`;
+  // Windows-1252 wie der ClubCorner-Export, UTF-8 mit BOM wie «CSV UTF-8» von Excel.
+  for (const bytes of [csvBytes(text, "latin1"), new Uint8Array([0xef, 0xbb, 0xbf, ...csvBytes(text)])]) {
+    const r = leseDatei("kader.csv", bytes);
+    assert.ok(r.ok);
+    assert.equal(r.tabelle.zeilen.length, 1, "Leerzeilen fallen weg");
+    assert.equal(r.tabelle.zeilen[0].werte[2], "Amélie");
+    assert.equal(r.tabelle.zeilen[0].nr, 2);
+  }
+  const komma = leseDatei("x.csv", csvBytes('Vorname,Nachname,Jahrgang\n"Anna, Lena","O""Brien",2017\r\n'));
+  assert.ok(komma.ok);
+  assert.deepEqual(komma.tabelle.zeilen[0].werte, ["Anna, Lena", 'O"Brien', "2017"]);
+  assert.deepEqual(leseDatei("Kader.xlsx", csvBytes("x")), { ok: false, text: IMPORT_TEXT.keineCsv("Kader.xlsx") });
+  assert.deepEqual(leseDatei("x.csv", new Uint8Array([0x50, 0x4b, 3, 4])), { ok: false, text: IMPORT_TEXT.keineCsv("x.csv") });
+  assert.deepEqual(leseDatei("x.csv", csvBytes("")), { ok: false, text: IMPORT_TEXT.leer });
+  assert.deepEqual(leseDatei("x.csv", csvBytes("Vorname;Name\n;\n")), { ok: false, text: IMPORT_TEXT.nurKopf });
+  assert.deepEqual(leseDatei("x.csv", new Uint8Array([0x4e, 0x81, 0x0a])), { ok: false, text: IMPORT_TEXT.zeichensatz });
+  assert.equal(dekodiere(csvBytes("Müller", "latin1")), "Müller");
+  const zuViele = "Vorname;Name;Jahrgang\n" + "A;B;2017\n".repeat(1001);
+  assert.deepEqual(leseDatei("x.csv", csvBytes(zuViele)), { ok: false, text: IMPORT_TEXT.zuGross });
+});
+
+pruefe("CSV-Import: Spalten an ihren Köpfen erkennen (#455 AK 5–8)", () => {
+  // ClubCorner: «Name» ist der Nachname, die Elternspalten zählen nicht.
+  assert.deepEqual(erkenneSpalten(CLUBCORNER_KOPF.split(";")), { vorname: 2, nachname: 0, geburtsdatum: 9, jsNummer: 11 });
+  assert.deepEqual(erkenneSpalten(["Rufname", "Familienname", "Geb.", "JS-Nr"]), { vorname: 0, nachname: 1, geburtsdatum: 2, jsNummer: 3 });
+  // Ein Jahrgang geht dem Geburtsdatum vor; zwei gleich gute Spalten bleiben offen.
+  assert.equal(erkenneSpalten(["Vorname", "Geburtsdatum", "Jahrgang"]).geburtsdatum, 2);
+  assert.equal(erkenneSpalten(["Vorname", "Name", "Familienname"]).nachname, null);
+  assert.equal(erkenneSpalten(["Spieler", "Telefon"]).vorname, null);
+});
+
+pruefe("CSV-Import: Jahrgang, J+S-Nummer und ausgelassene Zeilen (#455 AK 17–20)", () => {
+  for (const [roh, j] of [["07.04.2016", 2016], ["7.4.2016", 2016], ["2016-04-07", 2016], ["2016", 2016], ["07.04.2016 00:00", 2016], ["7/4/2016", 2016]] as const)
+    assert.equal(jahrgangAusDatum(roh), j, roh);
+  for (const roh of ["3.5.16", "16", "", "April 2016", "0999"]) assert.equal(jahrgangAusDatum(roh), null, roh);
+  assert.deepEqual(jsAus(" 100442966 "), { wert: "100442966", ungueltig: false });
+  assert.deepEqual(jsAus(""), { wert: null, ungueltig: false });
+  for (const roh of ["k.A.", "-", "756.1234.5678.97", "1".repeat(21)]) assert.deepEqual(jsAus(roh), { wert: null, ungueltig: true }, roh);
+
+  const r = leseDatei(
+    "x.csv",
+    csvBytes("Vorname;Name;Geburtsdatum;J+S-Nummer\nPaula Marie;Baumgartner;19.05.2016;\nLea;Hostettler;01.02.2016;k.A.\nMalea;Frey;3.5.16;1\n;Ohne;01.01.2016;\n;;;\n"),
+  );
+  assert.ok(r.ok);
+  const { eintraege, hinweise } = importZeilen(r.tabelle, erkenneSpalten(r.tabelle.kopf));
+  assert.deepEqual(eintraege, [
+    { zeile: 2, vorname: "Paula Marie", nachname: "Baumgartner", jahrgang: 2016, jsNummer: null },
+    { zeile: 3, vorname: "Lea", nachname: "Hostettler", jahrgang: 2016, jsNummer: null },
+  ]);
+  assert.deepEqual(hinweise, [
+    { zeile: 3, name: "Lea Hostettler", text: IMPORT_TEXT.js("k.A."), ausgelassen: false },
+    { zeile: 4, name: "Malea Frey", text: IMPORT_TEXT.geburt("3.5.16"), ausgelassen: true },
+    { zeile: 5, name: "Ohne", text: IMPORT_TEXT.vorname, ausgelassen: true },
+  ]);
+});
+
+pruefe("CSV-Import: Meldung nach der Übernahme (#455 PC 6)", () => {
+  assert.equal(importErgebnisText({ neu: 12, js: 0, ersetzt: 3 }), "12 Spieler:innen aufgenommen. Die Spielerzahl kommt jetzt aus der Liste.");
+  assert.equal(importErgebnisText({ neu: 1, js: 2, ersetzt: 0 }), "1 Spieler:in aufgenommen, bei 2 die J+S-Nummer geändert.");
+  assert.equal(importErgebnisText({ neu: 0, js: 1, ersetzt: 0 }), "Bei 1 Spieler:in die J+S-Nummer geändert.");
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);
