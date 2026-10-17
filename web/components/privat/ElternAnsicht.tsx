@@ -196,12 +196,13 @@ function NaechsterTermin({
       <h2 id="als-naechstes" className="type-title-small text-on-surface-mittel">
         Als Nächstes
       </h2>
-      {/* Abgemeldet trägt die ganze Karte den Fehlerton — wie ein Fehlerhinweis
-          (Fläche) mit Kontur in der Fehlerfarbe. */}
+      {/* Abgemeldet trägt die Karte den Fehlerton — zurückgenommen: die Fläche
+          eines Fehlerhinweises und die Kontur in der Fehlerfarbe, je halb
+          deckend. */}
       <div
         className={cn(
           "kontur mt-2 flex flex-col gap-3 rounded-flaeche p-4",
-          ab && !t.ausgefallen ? "border-error bg-section-danger" : "border-kante bg-elev-04",
+          ab && !t.ausgefallen ? "border-error/40 bg-section-danger/60" : "border-kante bg-elev-04",
         )}
       >
         <div>
