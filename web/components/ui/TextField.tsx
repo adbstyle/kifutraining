@@ -30,7 +30,9 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
       Ort schon sagen (die Suche in der Filterleiste). */
   labelVersteckt?: boolean;
   /** Kontur auch in Ruhe. Für Felder ohne sichtbaren Namen, die neben
-      umrandeten Knöpfen stehen — ohne Kante wären sie dort schlicht nicht da. */
+      umrandeten Knöpfen stehen — ohne Kante wären sie dort schlicht nicht da —,
+      und für eine Eingabezeile mitten in einer Liste, die sich als Formular
+      von den Zeilen abheben soll (Spielerliste, PO 2026-10-17). */
   umrandet?: boolean;
   /** Ein bedienbares Zeichen am rechten Feldrand — das Auge im Passwortfeld,
       das Kreuz im Suchfeld. Bedienbares steht im Kit rechts im Feld. */

@@ -10,10 +10,10 @@ import { GiltNicht } from "./GiltNicht";
 const LEER = { vorname: "", nachname: "", jahrgang: "" };
 
 /* Die Abholseite eines Teams (#438 AK 6–16): Eltern geben Vorname, Nachname
-   und Jahrgang ein und erhalten den privaten Link ihres Kindes. Was KiFu
+   und Jahrgang ein und erhalten den privaten Link der Spieler:in. Was KiFu
    speichert, steht vor dem Abholen (AK 7). Eine nicht passende Eingabe
    antwortet immer gleich (AK 13); nach zu vielen ist die Eingabe eine Weile
-   gesperrt (AK 15, 16). Nach dem Erhalt geht es gleich mit dem nächsten Kind
+   gesperrt (AK 15, 16). Nach dem Erhalt geht es gleich mit der nächsten Spieler:in
    weiter (AK 12). Fürs Handy gebaut. */
 export function AbholSeite({ token, team }: { token: string; team: string }) {
   const [form, setForm] = useState(LEER);
@@ -118,7 +118,7 @@ function Erhalt({ url, name, onWeiteres }: { url: string; name: string; onWeiter
           Link öffnen
         </ButtonLink>
         <Button variant="outlined" className="w-full" onClick={onWeiteres}>
-          Weiteres Kind abholen
+          Weitere Spieler:in abholen
         </Button>
       </div>
     </div>

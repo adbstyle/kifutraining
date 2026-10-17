@@ -538,14 +538,13 @@ eingeschaltet gilt dieselbe Adresse wie vorher. Weder Erneuern noch Ausschalten 
 die Eltern schon bezogen haben; beides sagt die Anwendung dabei.
 
 Auch die Abholseite braucht kein Konto und ist fürs Telefon gebaut. Unter dem Teamnamen und
-„Spieler:in-Link abholen" gibt man Vorname, Nachname und Jahrgang des Kindes so ein, wie das Team
-sie erfasst hat. Unter dem Knopf „Link abholen" steht unter „Was KiFu speichert", welche Angaben die
-Anwendung zu einem Kind führt — Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, und
+„Spieler:in-Link abholen" gibt man Vorname, Nachname und Jahrgang der Spieler:in ein. Unter dem Knopf „Link abholen" steht unter „Was KiFu speichert", welche Angaben die
+Anwendung zu einer Spieler:in führt — Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, und
 Abmeldungen —, wer sie sieht — die Trainer:innen des Teams, KI-Assistenten, die sie verbunden
-haben, und wer den Link des Kindes hat — und dass sie verschwinden, wenn das Team das Kind aus der
+haben, und wer den Link der Spieler:in hat — und dass sie verschwinden, wenn das Team sie aus der
 Liste nimmt. Abgeglichen wird wie bei der Eindeutigkeit der Liste; Umlaute, Akzente und alles
 Übrige müssen stimmen, die J+S-Nummer gehört nicht dazu. Passt die Eingabe, erscheint der Link zum
-Kopieren mit „Link öffnen" und „Weiteres Kind abholen", dazu, wozu er dient, dass er privat ist und
+Kopieren mit „Link öffnen" und „Weitere Spieler:in abholen", dazu, wozu er dient, dass er privat ist und
 dass man ihn bei Verlust hier wieder abholt; man erhält jedes Mal den gültigen Link. Passt sie
 nicht, kommt immer derselbe Satz: „Dazu finden wir keinen Link. Prüf die Schreibweise oder frag
 beim Team nach." Welche Angabe nicht stimmt oder ob es ein solches Kind gibt, verrät er nicht.

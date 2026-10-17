@@ -147,7 +147,7 @@ export function SpielerListe({
             <TextField label="J+S-Nummer (optional)" autoComplete="off" umrandet maxLength={JS_MAX} {...feld("jsNummer")} error={!!fehlerAn("js_nummer")} supportingText={fehlerAn("js_nummer")} />
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outlined" onClick={schliessen}>
+            <Button type="button" variant="outlined" onClick={schliessen} disabled={pending}>
               Abbrechen
             </Button>
             <Button type="submit" variant="filled" disabled={pending}>
