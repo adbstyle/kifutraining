@@ -1852,8 +1852,8 @@ export default async function Styleguide() {
           </h4>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Ein Geheimnis zum Weitergeben - privater Link einer Spieler:in,
-            Abholadresse eines Teams (Epic #433): ein schreibgeschütztes Feld,
-            rechts davon der Kopier-Knopf (<code>KopierFeld</code>). Neu, weil
+            Abholadresse eines Teams (Epic #433): ein schreibgeschütztes Feld mit
+            Kontur (<code>umrandet</code>), rechts davon der Kopier-Knopf (<code>KopierFeld</code>). Neu, weil
             drei Stellen dasselbe brauchten: Zwischenablage, Haken als Antwort,
             Live-Region für die Vorlesehilfe und ohne Zwischenablage den Handweg
             (Feld markiert, Hinweis darüber). Weitere Knöpfe derselben Zeile,

@@ -13,7 +13,7 @@ export const KOPIERT_MS = 2500;
 export const KOPIEREN_FEHLER = "Kopieren ging nicht - markiere den Text und kopiere ihn von Hand.";
 
 /* Ein Geheimnis zum Weitergeben (Epic #433): ein schreibgeschütztes Feld mit
-   dem Kopier-Knopf rechts davon. Neu, weil privater Link, Abholadresse und
+   Kontur (`umrandet`, PO 2026-10-17) und dem Kopier-Knopf rechts davon. Neu, weil privater Link, Abholadresse und
    abgeholter Link dasselbe brauchen — und sonst jede Stelle Zwischenablage,
    Haken, Rückfall und Vorlesehilfe nachbaute.
 
@@ -74,6 +74,7 @@ export function KopierFeld({
           label={label}
           value={value}
           readOnly
+          umrandet
           onFocus={(e) => e.currentTarget.select()}
         />
         <Tooltip label={kopiert ? "Kopiert" : "Kopieren"} ende>
