@@ -62,23 +62,11 @@ export default async function TeamVerwaltungPage({
       </Card>
 
       <Card className="p-5 sm:p-6">
-        <h2 className="type-title-large text-on-surface">
-          Mitglieder
-          <span className="type-label-small ml-2 text-on-surface-mittel">
-            {team.mitglieder.length}
-          </span>
-        </h2>
-        <p className="type-body-medium mt-2 text-on-surface-mittel">
-          Alle Mitglieder sind gleichberechtigt: Jede und jeder darf das Team
-          umbenennen, Trainings bearbeiten und weitere Trainer:innen aufnehmen.
-        </p>
-        <div className="mt-4">
-          <MitgliederListe
-            teamId={team.id}
-            mitglieder={team.mitglieder}
-            eigeneUserId={user.id}
-          />
-        </div>
+        <MitgliederListe
+          teamId={team.id}
+          mitglieder={team.mitglieder}
+          eigeneUserId={user.id}
+        />
       </Card>
 
       <Card className="p-5 sm:p-6">

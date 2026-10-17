@@ -1,17 +1,19 @@
 # Team-Bereich
 
-Stand 2026-10-16. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-17. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
 Jede angemeldete Person kann ein Team anlegen und ist damit sofort dessen erstes Mitglied.
 Weitere Trainerinnen und Trainer kommen über ihre E-Mail-Adresse dazu, sofern sie bereits ein
 bestätigtes Konto haben. Wer aufgenommen wird, muss nicht zustimmen — wer nicht mag, verlässt
-das Team wieder. Vor der Aufnahme zeigt eine Vorschau, wer sich hinter der Adresse verbirgt;
+das Team wieder. Das Plus im Kopf der Mitgliederliste öffnet dafür einen Dialog: erst die Adresse
+suchen, dann im selben Dialog bestätigen — die Vorschau zeigt, wer sich hinter der Adresse verbirgt;
 erfolglose Suchen sind auf zehn je Stunde gebremst, damit sich die Anwendung nicht als
 Auskunftsmittel über registrierte Adressen missbrauchen lässt.
 
-In der Mitgliederliste steht jedes Mitglied mit Anzeigename und E-Mail-Adresse, damit erkennbar
+Die Mitgliederliste ist eine Tabelle wie die Spielerliste; das Kreuz in einer Zeile entfernt das
+Mitglied nach Rückfrage, die eigene Zeile hat keins. Jedes Mitglied steht mit Anzeigename und E-Mail-Adresse, damit erkennbar
 ist, wer hinter einer automatischen Kennung oder einem Kürzel steckt. Die Adresse sehen nur die
 aktuellen Mitglieder eines gemeinsamen Teams — auch bei Mitgliedschaften, die schon vor dieser
 Anzeige bestanden. Wer aufgenommen wird, sieht ab dann die Adressen der übrigen und sie seine,
