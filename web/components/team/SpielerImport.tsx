@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, FileUp } from "lucide-react";
 import { Button, Dialog, Disclosure, Lozenge, SectionMessage, Select, Tabelle, TabellenZeile } from "@/components/ui";
@@ -21,6 +21,7 @@ import {
   type CsvTabelle,
   type ImportAngabe,
   type ImportEintrag,
+  type ImportHinweis,
   type ImportVorschau,
   type Zuordnung,
 } from "@/lib/spieler-import";
@@ -41,6 +42,9 @@ const OHNE_JS = "ohne";
 export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offen: boolean; onClose: () => void }) {
   const router = useRouter();
   const melde = useSnackbar();
+  // Die Vorschau liest nur; schliessen lässt sich der Dialog nur während der
+  // Übernahme nicht.
+  const [laedt, startVorschau] = useTransition();
   const [pending, startTransition] = useTransition();
   const [geladen, setGeladen] = useState<Geladen | null>(null);
   const [dateiFehler, setDateiFehler] = useState<string | null>(null);
@@ -52,18 +56,14 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
   // Verwirft die Antwort einer Vorschau, die eine neuere schon überholt hat.
   const lauf = useRef(0);
 
-  const zeilen = useMemo(
-    () =>
-      geladen && zuordnungVollstaendig(geladen.zuordnung)
-        ? importZeilen(geladen.tabelle, geladen.zuordnung)
-        : { eintraege: [] as ImportEintrag[], hinweise: [] },
-    [geladen],
-  );
+  // Die Zeilen der Datei nach der Zuordnung — dieselben für Vorschau und Übernahme.
+  const [zeilen, setZeilen] = useState<{ eintraege: ImportEintrag[]; hinweise: ImportHinweis[] }>({ eintraege: [], hinweise: [] });
 
   function schliessen() {
     if (pending) return;
     lauf.current++;
     setGeladen(null);
+    setZeilen({ eintraege: [], hinweise: [] });
     setDateiFehler(null);
     setVorschau(null);
     setGesperrt(null);
@@ -71,13 +71,17 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
     onClose();
   }
 
-  function vorschauHolen(g: Geladen) {
+  /** Datei und Zuordnung übernehmen und die Vorschau dazu holen. */
+  function laden(g: Geladen) {
     const nr = ++lauf.current;
+    setGeladen(g);
     setVorschau(null);
     setFehler(null);
-    if (!zuordnungVollstaendig(g.zuordnung)) return;
-    const { eintraege } = importZeilen(g.tabelle, g.zuordnung);
-    startTransition(async () => {
+    if (!zuordnungVollstaendig(g.zuordnung)) return setZeilen({ eintraege: [], hinweise: [] });
+    const z = importZeilen(g.tabelle, g.zuordnung);
+    setZeilen(z);
+    const { eintraege } = z;
+    startVorschau(async () => {
       const r = await pruefeSpielerImportAktion(teamId, eintraege);
       if (nr !== lauf.current) return;
       if (!r.ok) return setFehler(r.error);
@@ -97,8 +101,7 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
     }
     const g = { name: f.name, tabelle: r.tabelle, zuordnung: erkenneSpalten(r.tabelle.kopf) };
     setDateiFehler(null);
-    setGeladen(g);
-    vorschauHolen(g);
+    laden(g);
   }
 
   /** Eine Spalte gilt höchstens für eine Angabe (#455 AK 11). */
@@ -108,13 +111,11 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
     const z: Zuordnung = { ...geladen.zuordnung };
     for (const a of Object.keys(z) as ImportAngabe[]) if (spalte !== null && z[a] === spalte) z[a] = null;
     z[angabe] = spalte;
-    const g = { ...geladen, zuordnung: z };
-    setGeladen(g);
-    vorschauHolen(g);
+    laden({ ...geladen, zuordnung: z });
   }
 
   function uebernehmen() {
-    if (!vorschau || pending) return;
+    if (!vorschau || pending || laedt) return;
     startTransition(async () => {
       const r = await importiereSpielerAktion(teamId, zeilen.eintraege, erwartetVon(vorschau));
       if (!r.ok) {
@@ -135,7 +136,7 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
   const meldung = gesperrt ?? (zuGross ? IMPORT_TEXT.zuGross : null);
   const anzahlNeu = vorschau?.neu.length ?? 0;
   const anzahlJs = vorschau?.js.length ?? 0;
-  const kann = vorschau !== null && meldung === null && !fehler && !pending && anzahlNeu + anzahlJs > 0;
+  const kann = vorschau !== null && meldung === null && !fehler && !pending && !laedt && anzahlNeu + anzahlJs > 0;
   const nachZeile = new Map(zeilen.eintraege.map((e) => [e.zeile, e]));
   const eintragVon = (zeile: number) => nachZeile.get(zeile)!;
 
@@ -218,7 +219,7 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
                 </p>
               ) : (
                 vorschau && (
-                  <Vorschau vorschau={vorschau} hinweise={zeilen.hinweise} eintragVon={eintragVon} />
+                  <Vorschau vorschau={vorschau} hinweise={zeilen.hinweise} eintragVon={eintragVon} leer={zeilen.eintraege.length === 0} />
                 )
               )}
             </>
@@ -248,6 +249,8 @@ function Spalten({ geladen, onZuordnen }: { geladen: Geladen; onZuordnen: (a: Im
             <Select
               key={angabe}
               label={label}
+              // Abweichung vom Select-Grundsatz (keine «kein …»-Option): Eine
+              // erkannte J+S-Spalte muss sich wieder abwählen lassen (#455 AK 12).
               options={pflicht ? optionen : [...optionen, { value: OHNE_JS, label: "Ohne J+S-Nummer" }]}
               value={spalte === null ? (pflicht ? "" : OHNE_JS) : String(spalte)}
               onChange={(w) => onZuordnen(angabe, w)}
@@ -263,18 +266,25 @@ function Spalten({ geladen, onZuordnen }: { geladen: Geladen; onZuordnen: (a: Im
 
 function Vorschau({
   vorschau,
-  hinweise,
+  hinweise: alle,
   eintragVon,
+  leer,
 }: {
   vorschau: ImportVorschau;
-  hinweise: { zeile: number; name: string; text: string; ausgelassen: boolean }[];
+  hinweise: ImportHinweis[];
   eintragVon: (zeile: number) => ImportEintrag;
+  /** Keine Zeile der Datei taugt. */
+  leer: boolean;
 }) {
+  // Eine Zeile, die eine spätere derselben Spieler:in überstimmt, nennt die
+  // Vorschau nicht (#455 AK 21) — auch nicht ihre J+S-Nummer.
+  const genommen = new Set([...vorschau.neu, ...vorschau.js.map((j) => j.zeile), ...vorschau.gleich]);
+  const hinweise = alle.filter((h) => h.ausgelassen || genommen.has(h.zeile));
   const ausgelassen = hinweise.filter((h) => h.ausgelassen).length;
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
-        <Lozenge appearance="information">{vorschau.neu.length} neu</Lozenge>
+        {vorschau.neu.length > 0 && <Lozenge appearance="information">{vorschau.neu.length} neu</Lozenge>}
         {vorschau.js.length > 0 && <Lozenge appearance="warning">{vorschau.js.length} J+S-Nummer ändert sich</Lozenge>}
         {vorschau.gleich.length > 0 && <Lozenge>{vorschau.gleich.length} unverändert</Lozenge>}
         {ausgelassen > 0 && <Lozenge appearance="danger">{ausgelassen} ausgelassen</Lozenge>}
@@ -353,7 +363,7 @@ function Vorschau({
       )}
 
       {vorschau.neu.length + vorschau.js.length === 0 && (
-        <p>Alle stehen schon so auf der Liste; es gibt nichts zu übernehmen.</p>
+        <p>{leer ? "Keine Zeile der Datei lässt sich übernehmen." : "Alle stehen schon so auf der Liste; es gibt nichts zu übernehmen."}</p>
       )}
     </div>
   );

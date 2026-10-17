@@ -81,7 +81,7 @@ export async function importiereSpielerAktion(
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await importiereSpieler(a.supabase, a.userId, { teamId, zeilen, erwartet });
-  if (!r.ok) return { ...fehler(r), geaendert: r.art === "konflikt" };
+  if (!r.ok) return { ...fehler(r), geaendert: r.art === "konflikt" && !r.wiederholbar };
   revalidiereTeam(teamId);
   return { ok: true, neu: r.wert.neu, js: r.wert.js, ersetzt: r.wert.ersetzt };
 }

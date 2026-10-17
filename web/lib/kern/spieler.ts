@@ -20,7 +20,7 @@ import {
   type ImportVorschau,
 } from "@/lib/spieler-import";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
-import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
+import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 
 /**
  * Die Spielerliste eines Teams (Epic #433, Story #434): einsehen, aufnehmen,
@@ -233,6 +233,10 @@ export async function leseAbholung(
  *  Aufnehmen und auf eine J+S-Nummer aus Ziffern (#455 AK 17, 19). */
 function importFehler(zeilen: ImportEintrag[]): KernFehler | null {
   if (zeilen.length > IMPORT_ZEILEN_MAX) return fehlschlag("regel", IMPORT_TEXT.zuGross);
+  // Die Zeilennummer trägt die Einordnung zwischen Vorschau und Übernahme.
+  const nummern = zeilen.map((z) => z.zeile);
+  if (!nummern.every((n) => Number.isInteger(n) && n > 0) || new Set(nummern).size !== nummern.length)
+    return fehlschlag("eingabe", MELDUNG_WIEDERHOLEN);
   for (const z of zeilen) {
     const p = spielerProblem(z);
     if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
