@@ -3,6 +3,7 @@ import { ElternAnsicht } from "@/components/privat/ElternAnsicht";
 import { GiltNicht } from "@/components/privat/GiltNicht";
 import { ladeLinkAnsicht } from "@/lib/privater-link";
 import { LINK_TEXT } from "@/lib/spieler";
+import { heuteAmTrainingsort } from "@/lib/zeit";
 
 /* Der private Link einer Spieler:in (#436): Ihre Spielervertretung meldet sie
    ohne Konto für anstehende Termine ab und wieder an. Jeder Aufruf liest neu —
@@ -25,5 +26,13 @@ export default async function SpielerLinkSeite({ params }: { params: Promise<{ p
   const { privaterLink } = await params;
   const ansicht = await ladeLinkAnsicht(privaterLink);
   if (!ansicht.gueltig) return <GiltNicht titel={LINK_TEXT.ungueltigTitel} text={LINK_TEXT.ungueltig} />;
-  return <ElternAnsicht token={privaterLink} team={ansicht.team} spieler={ansicht.spieler} termine={ansicht.termine} />;
+  return (
+    <ElternAnsicht
+      token={privaterLink}
+      team={ansicht.team}
+      spieler={ansicht.spieler}
+      termine={ansicht.termine}
+      heute={heuteAmTrainingsort()}
+    />
+  );
 }
