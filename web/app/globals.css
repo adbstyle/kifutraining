@@ -54,7 +54,8 @@
   --color-linie: #ffffff1f; /* 12 % — Trenner und Haarlinie, 1 px */
   --color-kante: #ffffff47; /* 28 % — Kontur von Feld, Chip, Knopf, 1.5 px */
 
-  /* ─── Umgekehrte Fläche — nur die Snackbar (#234). Weiss 87 % über dem
+  /* ─── Umgekehrte Fläche — die Snackbar (#234) und der helle Knopf
+     (`variant="hell"`). Weiss 87 % über dem
      Grund; darauf der Grund als Schrift und das dunkle Violett als Akzent.
      Angewandt über @utility umkehr, nie als einzelne Klasse. ─── */
   --color-umkehr: #e0e1e0;
