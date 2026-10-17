@@ -1,17 +1,19 @@
 # Team-Bereich
 
-Stand 2026-10-16. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-17. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
 Jede angemeldete Person kann ein Team anlegen und ist damit sofort dessen erstes Mitglied.
 Weitere Trainerinnen und Trainer kommen über ihre E-Mail-Adresse dazu, sofern sie bereits ein
 bestätigtes Konto haben. Wer aufgenommen wird, muss nicht zustimmen — wer nicht mag, verlässt
-das Team wieder. Vor der Aufnahme zeigt eine Vorschau, wer sich hinter der Adresse verbirgt;
+das Team wieder. Das Plus im Kopf der Mitgliederliste öffnet dafür einen Dialog: erst die Adresse
+suchen, dann im selben Dialog bestätigen — die Vorschau zeigt, wer sich hinter der Adresse verbirgt;
 erfolglose Suchen sind auf zehn je Stunde gebremst, damit sich die Anwendung nicht als
 Auskunftsmittel über registrierte Adressen missbrauchen lässt.
 
-In der Mitgliederliste steht jedes Mitglied mit Anzeigename und E-Mail-Adresse, damit erkennbar
+Die Mitgliederliste ist eine Tabelle wie die Spielerliste; das Kreuz in einer Zeile entfernt das
+Mitglied nach Rückfrage, die eigene Zeile hat keins. Jedes Mitglied steht mit Anzeigename und E-Mail-Adresse, damit erkennbar
 ist, wer hinter einer automatischen Kennung oder einem Kürzel steckt. Die Adresse sehen nur die
 aktuellen Mitglieder eines gemeinsamen Teams — auch bei Mitgliedschaften, die schon vor dieser
 Anzeige bestanden. Wer aufgenommen wird, sieht ab dann die Adressen der übrigen und sie seine,
@@ -409,11 +411,12 @@ zwischen Teamname und Mitgliedern; ihr Kopf nennt, wie viele auf der Liste stehe
 Links davon bezogen sind (siehe „Selbstabholung"), etwa „15 · 9 Links bezogen". Jede Spieler:in
 trägt Vorname, Nachname und Jahrgang, auf Wunsch dazu ihre J+S-Nummer. Vor- und Nachname haben je
 1 bis 60 Zeichen, der Jahrgang ist eine vierstellige Jahreszahl, die J+S-Nummer höchstens 20
-Zeichen lang; eine Liste fasst höchstens 200 Spieler:innen. Das Plus im Kopf öffnet eine
-Eingabezeile mit den vier Feldern; „Hinzufügen" oder die Eingabetaste nimmt auf, und die Zeile
-bleibt für die nächste offen, bis das Kreuz sie ohne Speichern schliesst. Die Liste ist nach Vor-
+Zeichen lang; eine Liste fasst höchstens 200 Spieler:innen. Das Plus im Kopf öffnet den Dialog
+„Spieler:in hinzufügen" mit den vier Feldern untereinander; „Hinzufügen" oder die
+Eingabetaste nimmt auf, der Dialog sagt, wer dazukam, und bleibt für die nächste offen, bis
+„Abbrechen" ihn ohne Speichern schliesst. Die Liste ist nach Vor-
 und Nachname geordnet; jede Zeile nennt Name, Jahrgang, J+S-Nummer und ob der Link bezogen ist,
-dazu Knöpfe für den privaten Link, „Ändern" — dieselbe Eingabezeile mit den bisherigen Angaben —
+dazu Knöpfe für den privaten Link, „Ändern" — derselbe Dialog mit den bisherigen Angaben —
 und „Entfernen". Auf dem Telefon stehen Jahrgang und J+S-Nummer unter dem Namen.
 
 Dieselbe Spieler:in steht nur einmal auf der Liste: Vorname, Nachname und Jahrgang zusammen sind
@@ -530,22 +533,21 @@ im Browser legt sie nichts ab.
 Damit niemand jedem Elternteil einzeln schreiben muss, holen Eltern den Link ihres Kindes auf
 Wunsch selbst ab. Der Abschnitt „Selbstabholung" zuoberst in der Karte der Spielerliste trägt dafür
 einen Schalter; ausgeschaltet ist er, bis ein Mitglied ihn einschaltet. Eingeschaltet zeigt er die
-Abholadresse des Teams zum Kopieren und sagt, was sie kann: Wer sie hat und Vorname, Nachname und
-Jahrgang eines Kindes kennt, erhält dessen Link und kann es damit ab- und anmelden — geteilt wird
-sie darum nur im Eltern-Chat des Teams. Im Menü daneben lässt sie sich nach einer Bestätigung
+Abholadresse des Teams in einem Kasten nur zum Lesen, mit dem Knopf zum Kopieren daneben, und sagt,
+was sie kann: Wer sie hat und Vorname, Nachname und Jahrgang einer Spieler:in kennt, erhält deren
+Link und kann sie damit ab- und anmelden — geteilt wird sie darum nur teamintern. Im Menü daneben lässt sie sich nach einer Bestätigung
 erneuern; die bisherige gilt dann nie mehr. Ausschalten stoppt neue Abholungen, und wieder
 eingeschaltet gilt dieselbe Adresse wie vorher. Weder Erneuern noch Ausschalten berührt die Links,
 die Eltern schon bezogen haben; beides sagt die Anwendung dabei.
 
 Auch die Abholseite braucht kein Konto und ist fürs Telefon gebaut. Unter dem Teamnamen und
-„Spieler:in-Link abholen" gibt man Vorname, Nachname und Jahrgang des Kindes so ein, wie das Team
-sie erfasst hat. Unter dem Knopf „Link abholen" steht unter „Was KiFu speichert", welche Angaben die
-Anwendung zu einem Kind führt — Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, und
+„Spieler:in-Link abholen" gibt man Vorname, Nachname und Jahrgang der Spieler:in ein. Unter dem Knopf „Link abholen" steht unter „Was KiFu speichert", welche Angaben die
+Anwendung zu einer Spieler:in führt — Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, und
 Abmeldungen —, wer sie sieht — die Trainer:innen des Teams, KI-Assistenten, die sie verbunden
-haben, und wer den Link des Kindes hat — und dass sie verschwinden, wenn das Team das Kind aus der
+haben, und wer den Link der Spieler:in hat — und dass sie verschwinden, wenn das Team sie aus der
 Liste nimmt. Abgeglichen wird wie bei der Eindeutigkeit der Liste; Umlaute, Akzente und alles
 Übrige müssen stimmen, die J+S-Nummer gehört nicht dazu. Passt die Eingabe, erscheint der Link zum
-Kopieren mit „Link öffnen" und „Weiteres Kind abholen", dazu, wozu er dient, dass er privat ist und
+Kopieren mit „Link öffnen" und „Weitere Spieler:in abholen", dazu, wozu er dient, dass er privat ist und
 dass man ihn bei Verlust hier wieder abholt; man erhält jedes Mal den gültigen Link. Passt sie
 nicht, kommt immer derselbe Satz: „Dazu finden wir keinen Link. Prüf die Schreibweise oder frag
 beim Team nach." Welche Angabe nicht stimmt oder ob es ein solches Kind gibt, verrät er nicht.

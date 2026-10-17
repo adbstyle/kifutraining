@@ -16,6 +16,11 @@ import { cn } from "@/lib/cn";
    hier, sondern gerechnet im Styleguide (› Dialog & Snackbar), wo sie auch
    als bewusste Abweichung begründet ist.
 
+   Escape schliesst nicht selbst, sondern meldet nur `onClose`: Ob der Dialog
+   zugeht, bestimmt allein `open`. Sonst schloss der Browser ihn auch dann,
+   wenn der Aufrufer gerade nicht schliessen wollte (etwa während einer
+   Anfrage), und `open` blieb wahr — ein späteres Öffnen änderte nichts mehr.
+
    Breite: 28 rem für Rückfragen und kurze Formulare; `breit` (40 rem) für
    Formulare mit vielen Angaben wie die Termin-Dialoge (PO 2026-10-06). */
 export function Dialog({
@@ -49,7 +54,10 @@ export function Dialog({
     <dialog
       ref={ref}
       onClose={onClose}
-      onCancel={onClose}
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
