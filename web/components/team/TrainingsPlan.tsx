@@ -9,6 +9,7 @@ import { useTerminAktionen } from "./TerminBereich";
 import { TerminHandgriffe, TrainingHinzufuegen } from "./TerminHandgriffe";
 import { NaechsterTermin } from "./NaechsterTermin";
 import { PlanMonat } from "./PlanMonat";
+import { PlanGeteilt } from "./PlanGeteilt";
 import { zeitText } from "@/lib/termin";
 import { spielerzahlKurz, spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { felderKurz } from "@/lib/termin-felder";
@@ -46,8 +47,9 @@ export function TrainingsPlan({
   belegt: readonly string[];
   meine: boolean;
   leer?: ReactNode;
-  /** Der geöffnete Termin (#435): ab `lg` an Stelle des Monats daneben,
-   *  schmaler an Stelle der Liste. */
+  /** Der geöffnete Termin (#435): ab `lg` an Stelle des Monats daneben, in
+   *  einer geteilten Fläche mit Griff (`PlanGeteilt`); schmaler an Stelle
+   *  der Liste. */
   spalte?: ReactNode;
 }) {
   const nichtsMehrOffen = plan.kommend.length === 0;
@@ -85,43 +87,40 @@ export function TrainingsPlan({
   }, [sprung]);
 
   const alle = [...plan.vergangen, ...plan.kommend];
-  return (
-    <div
-      className={cn(
-        "lg:grid lg:items-start lg:gap-6",
-        spalte
-          ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] xl:grid-cols-[minmax(0,1fr)_32rem]"
-          : "lg:grid-cols-[minmax(0,1fr)_16.5rem] xl:grid-cols-[minmax(0,1fr)_18rem]",
+  const termine = (
+    <>
+      {alle.length === 0 && leer}
+      {naechster && (
+        <section>
+          <h3 className="type-title-small text-on-surface-mittel">
+            Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
+          </h3>
+          <NaechsterTermin t={naechster} heute={heute} ich={ich} meine={meine} hervorgehoben={naechster.id === hervorheben} />
+          <PlanMonate termine={danach} heute={heute} ich={ich} meine={meine} hervorheben={hervorheben} />
+        </section>
       )}
-    >
-      <div ref={liste} className={cn("min-w-0", !!spalte && "max-lg:hidden")}>
-        {alle.length === 0 && leer}
-        {naechster && (
-          <section>
-            <h3 className="type-title-small text-on-surface-mittel">
-              Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
-            </h3>
-            <NaechsterTermin t={naechster} heute={heute} ich={ich} meine={meine} hervorgehoben={naechster.id === hervorheben} />
-            <PlanMonate termine={danach} heute={heute} ich={ich} meine={meine} hervorheben={hervorheben} />
-          </section>
-        )}
-        {plan.vergangen.length > 0 && (
-          <Disclosure
-            key={`${nichtsMehrOffen ? "allein" : "mit-kommendem"}-${imRueckblick ? hervorheben : ""}-${rueckblickAuf}`}
-            title="Vergangen"
-            count={plan.vergangen.length}
-            defaultOpen={nichtsMehrOffen || imRueckblick || rueckblickAuf > 0}
-            className={cn(!nichtsMehrOffen && "mt-6")}
-          >
-            <PlanMonate termine={plan.vergangen} heute={heute} ich={ich} meine={meine} hervorheben={hervorheben} />
-          </Disclosure>
-        )}
+      {plan.vergangen.length > 0 && (
+        <Disclosure
+          key={`${nichtsMehrOffen ? "allein" : "mit-kommendem"}-${imRueckblick ? hervorheben : ""}-${rueckblickAuf}`}
+          title="Vergangen"
+          count={plan.vergangen.length}
+          defaultOpen={nichtsMehrOffen || imRueckblick || rueckblickAuf > 0}
+          className={cn(!nichtsMehrOffen && "mt-6")}
+        >
+          <PlanMonate termine={plan.vergangen} heute={heute} ich={ich} meine={meine} hervorheben={hervorheben} />
+        </Disclosure>
+      )}
+    </>
+  );
+
+  // Ein geöffneter Termin teilt die Fläche wie ein Training (#435).
+  if (spalte) return <PlanGeteilt links={termine} rechts={spalte} listeRef={liste} />;
+
+  return (
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_16.5rem] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
+      <div ref={liste} className="min-w-0">
+        {termine}
       </div>
-      {spalte ? (
-        <div className="min-w-0 rounded-flaeche bg-elev-02 p-4 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto print:hidden">
-          {spalte}
-        </div>
-      ) : (
       <div className="sticky top-20 hidden lg:block print:hidden">
         <PlanMonat
           termine={alle}
@@ -136,7 +135,6 @@ export function TrainingsPlan({
           }}
         />
       </div>
-      )}
     </div>
   );
 }

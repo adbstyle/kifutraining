@@ -358,8 +358,10 @@ Bestätigung kommt auch dann, wenn das Ergebnis ausserhalb der Eingrenzung liegt
 ## Der geöffnete Termin
 
 Ein Klick auf eine Zeile im Trainingsplan oder auf den Tag des nächsten Termins öffnet den Termin.
-Auf breiten Bildschirmen steht er rechts neben der Liste an der Stelle des Monats und bleibt beim
-Scrollen stehen; die Liste hebt ihn hervor. Schmaler nimmt er die ganze Breite ein, bis man ihn
+Auf breiten Bildschirmen steht er rechts neben der Liste an der Stelle des Monats; die Liste hebt
+ihn hervor. Wie bei einem Training reichen beide bis zum unteren Rand und scrollen für sich, und am
+Griff dazwischen zieht man den Termin breiter oder schmaler (Doppelklick stellt die Breite zurück);
+die gewählte Breite gilt auch für die zweispaltigen Seiten von Übung und Training. Schmaler nimmt er die ganze Breite ein, bis man ihn
 schliesst. Zuoberst stehen Tag, Zeit und Ort, daneben das Kreuz zum Schliessen, darunter drei
 Reiter. „Termin" bietet „Ausfallen lassen" bzw. „Ausfall zurücknehmen", „Ändern" — das bekannte
 „Termin ändern" — und im Menü die übrigen Handgriffe der Zeile; darunter die Eckdaten in derselben
