@@ -34,6 +34,7 @@ export type { FahrplanData } from "./MethodischerFahrplan";
 export { AltersstufeField } from "./AltersstufeField";
 export { TextField } from "./TextField";
 export { KopierFeld } from "./KopierFeld";
+export { Tabelle, TabellenZeile } from "./Tabelle";
 export type { TextFieldProps } from "./TextField";
 export { HeadlineField } from "./HeadlineField";
 export type { HeadlineFieldProps } from "./HeadlineField";

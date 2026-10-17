@@ -43,6 +43,8 @@ import {
   VerzeichnisFlaeche,
   type VerzeichnisBereich,
   KopierFeld,
+  Tabelle,
+  TabellenZeile,
 } from "@/components/ui";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { uebungEckdaten } from "@/lib/eckdaten";
@@ -232,6 +234,7 @@ const GLIEDERUNG = [
       {
         titel: "Text und Daten",
         eintraege: [
+          { id: "tabelle", titel: "Tabelle" },
           { id: "eigenschaften", titel: "Eigenschaften" },
           { id: "release-text", titel: "Release-Text" },
         ],
@@ -2856,6 +2859,39 @@ export default async function Styleguide() {
               </Card>
             </Disclosure>
           </div>
+        </Section>
+
+        <Section id="tabelle">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Eine Liste mit mehreren Angaben je Eintrag - die Spielerliste und die
+            Mitglieder eines Teams (PO 2026-10-17). Neu als Baustein (
+            <code>Tabelle</code>, <code>TabellenZeile</code>), weil sie an zwei
+            Orten gleich stehen soll: Fläche <code>elev-01</code>, eine Kopfzeile
+            mit den Spaltennamen in Label Small, Zeilen durch Linien getrennt, die
+            Aktionen rechts als Symbolknöpfe - das Kreuz entfernt nach Rückfrage.
+            Hinzugefügt wird über das Plus im Kopf des Abschnitts, im Dialog.
+            Kopf und Zeilen teilen Raster und Ränder, damit die Spalten genau
+            übereinander stehen. Schmal fällt die Kopfzeile weg, und jede Zeile
+            stellt ihre Angaben unter den Namen. Die Kopfzeile ist nur fürs Auge;
+            vorgelesen wird eine Liste, deren Knöpfe ihre Zeile im Namen tragen.
+          </p>
+          <Tabelle spalten="sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_3rem]" kopf={["Name", "E-Mail-Adresse", ""]}>
+            {[
+              ["Mia Muster", "mia@example.ch"],
+              ["Leo Beispiel", "leo@example.ch"],
+            ].map(([name, mail]) => (
+              <TabellenZeile key={name}>
+                <span className="min-w-0 flex-1">
+                  <span className="type-body-medium block truncate text-on-surface">{name}</span>
+                  <span className="type-body-small block text-on-surface-mittel sm:hidden">{mail}</span>
+                </span>
+                <span className="type-body-medium hidden text-on-surface-mittel sm:block">{mail}</span>
+                <span className="flex justify-end">
+                  <IconButton icon={X} label={`${name} entfernen`} />
+                </span>
+              </TabellenZeile>
+            ))}
+          </Tabelle>
         </Section>
 
         <Section id="eigenschaften">

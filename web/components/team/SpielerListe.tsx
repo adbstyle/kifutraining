@@ -3,7 +3,7 @@
 import { useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Link2, Pencil, Plus, X } from "lucide-react";
-import { Button, Dialog, IconButton, SectionMessage, TextField, Tooltip } from "@/components/ui";
+import { Button, Dialog, IconButton, SectionMessage, Tabelle, TabellenZeile, TextField, Tooltip } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { aendereSpielerAktion, entferneSpielerAktion, nimmSpielerAufAktion } from "@/lib/actions/spieler";
 import { JAHRGANG_STELLEN, JS_MAX, nurZiffern, spielerName, type Spieler, type SpielerFeld } from "@/lib/spieler";
@@ -165,17 +165,13 @@ export function SpielerListe({
       </Dialog>
 
       {spieler.length > 0 ? (
-        <div className="mt-4 overflow-hidden rounded-flaeche bg-elev-01">
-          <div aria-hidden className="hidden grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem_7.5rem] gap-3 border-b border-linie px-4 py-2 type-label-small text-on-surface-mittel sm:grid">
-            <span>Name</span>
-            <span>Jahrgang</span>
-            <span>J+S-Nr.</span>
-            <span>Link</span>
-            <span />
-          </div>
-          <ul className="divide-y divide-linie">
+        <Tabelle
+          className="mt-4"
+          spalten="sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem_7.5rem]"
+          kopf={["Name", "Jahrgang", "J+S-Nr.", "Link", ""]}
+        >
             {spieler.map((s) => (
-              <li key={s.id} className="state flex items-center gap-3 py-1 pl-4 pr-2 sm:grid sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem_7.5rem]">
+              <TabellenZeile key={s.id}>
                 <span className="min-w-0 flex-1">
                   <span className="type-body-medium block truncate text-on-surface">{spielerName(s)}</span>
                   {/* Schmal stehen Jahrgang und J+S-Nummer unter dem Namen. */}
@@ -201,10 +197,9 @@ export function SpielerListe({
                     <IconButton icon={X} label={`${spielerName(s)} entfernen`} onClick={() => setEntfernen(s)} />
                   </Tooltip>
                 </span>
-              </li>
+              </TabellenZeile>
             ))}
-          </ul>
-        </div>
+        </Tabelle>
       ) : (
         <p className="type-body-medium mt-4 text-on-surface-mittel">
           Noch niemand auf der Liste. Solange sie leer ist, planst du mit der erwarteten Spielerzahl.

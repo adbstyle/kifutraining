@@ -1,9 +1,9 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
-import { Button, Dialog, IconButton, TextField, Tooltip } from "@/components/ui";
+import { Button, Dialog, IconButton, Tabelle, TabellenZeile, TextField, Tooltip } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { entferneMitglied, nimmMitgliedAuf, sucheTrainer } from "@/lib/actions/teams";
 import type { TeamMitglied } from "@/lib/queries/teams";
@@ -14,7 +14,9 @@ import type { TeamMitglied } from "@/lib/queries/teams";
    Kennung oder einem Kürzel steckt (#425), und «X» zum Entfernen.
 
    Aufgenommen wird im Dialog, bewusst zweistufig: erst nachsehen, wer sich
-   hinter der Adresse verbirgt, dann im selben Dialog bestätigen. */
+   hinter der Adresse verbirgt, dann im selben Dialog bestätigen. «Zurück»
+   führt mit der Adresse wieder ins Feld, falls die Vorschau die falsche
+   Person zeigt. */
 export function MitgliederListe({
   teamId,
   mitglieder,
@@ -34,6 +36,13 @@ export function MitgliederListe({
   const [vorschau, setVorschau] = useState<string | null>(null);
   const [entfernen, setEntfernen] = useState<TeamMitglied | null>(null);
   const formId = useId();
+  const aufnehmenKnopf = useRef<HTMLButtonElement>(null);
+
+  // Nach der Suche verschwindet das Feld mit dem Fokus; er geht auf
+  // «Aufnehmen», sobald der Knopf nach der Anfrage bedienbar ist.
+  useEffect(() => {
+    if (vorschau && !pending) aufnehmenKnopf.current?.focus();
+  }, [vorschau, pending]);
 
   function aufnahmeSchliessen() {
     setAufnahme(false);
@@ -95,15 +104,9 @@ export function MitgliederListe({
         die Spielerliste führen, Mitglieder aufnehmen und entfernen und das Team auflösen.
       </p>
 
-      <div className="mt-4 overflow-hidden rounded-flaeche bg-elev-01">
-        <div aria-hidden className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1fr)_3rem] gap-3 border-b border-linie px-4 py-2 type-label-small text-on-surface-mittel sm:grid">
-          <span>Name</span>
-          <span>E-Mail-Adresse</span>
-          <span />
-        </div>
-        <ul className="divide-y divide-linie">
-          {mitglieder.map((m) => (
-            <li key={m.userId} className="state flex min-h-12 items-center gap-3 py-1 pl-4 pr-2 sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_3rem]">
+      <Tabelle className="mt-4" spalten="sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_3rem]" kopf={["Name", "E-Mail-Adresse", ""]}>
+        {mitglieder.map((m) => (
+          <TabellenZeile key={m.userId}>
               <span className="min-w-0 flex-1">
                 <span className="type-body-medium block truncate text-on-surface">
                   {m.anzeigeName}
@@ -124,10 +127,9 @@ export function MitgliederListe({
                   </Tooltip>
                 )}
               </span>
-            </li>
+            </TabellenZeile>
           ))}
-        </ul>
-      </div>
+      </Tabelle>
 
       <Dialog
         open={aufnahme}
@@ -135,11 +137,17 @@ export function MitgliederListe({
         title={vorschau ? "Ins Team aufnehmen?" : "Mitglied hinzufügen"}
         actions={
           <>
-            <Button type="button" variant="outlined" onClick={aufnahmeSchliessen} disabled={pending}>
-              Abbrechen
-            </Button>
             {vorschau ? (
-              <Button variant="filled" onClick={aufnehmen} disabled={pending}>
+              <Button type="button" variant="outlined" onClick={() => setVorschau(null)} disabled={pending}>
+                Zurück
+              </Button>
+            ) : (
+              <Button type="button" variant="outlined" onClick={aufnahmeSchliessen} disabled={pending}>
+                Abbrechen
+              </Button>
+            )}
+            {vorschau ? (
+              <Button ref={aufnehmenKnopf} variant="filled" onClick={aufnehmen} disabled={pending}>
                 Aufnehmen
               </Button>
             ) : (
