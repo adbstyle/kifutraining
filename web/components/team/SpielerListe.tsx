@@ -13,7 +13,8 @@ import { BezogenLozenge } from "./BezogenLozenge";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
    Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet die
-   Eingabezeile, das Kreuz schliesst sie, ohne zu speichern; «Hinzufügen» und
+   Eingabezeile in umrandeten Feldern, das Kreuz oder «Abbrechen» schliesst
+   sie, ohne zu speichern; «Hinzufügen» und
    Enter nehmen auf, danach bleibt die Zeile für die nächste offen. Ändern
    öffnet dieselbe Zeile mit den Angaben der Spieler:in, Entfernen fragt nach.
    Das Kettenglied zeigt ihren privaten Link (#436); ob er über die
@@ -140,14 +141,19 @@ export function SpielerListe({
           }}
         >
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_6rem_12.5rem]">
-            <TextField ref={erstesFeld} label="Vorname" autoComplete="off" {...feld("vorname")} error={!!fehlerAn("vorname")} supportingText={fehlerAn("vorname")} />
-            <TextField label="Nachname" autoComplete="off" {...feld("nachname")} error={!!fehlerAn("nachname")} supportingText={fehlerAn("nachname")} />
-            <TextField label="Jahrgang" inputMode="numeric" maxLength={JAHRGANG_STELLEN} autoComplete="off" {...feld("jahrgang")} error={!!fehlerAn("jahrgang")} supportingText={fehlerAn("jahrgang")} />
-            <TextField label="J+S-Nummer (optional)" autoComplete="off" maxLength={JS_MAX} {...feld("jsNummer")} error={!!fehlerAn("js_nummer")} supportingText={fehlerAn("js_nummer")} />
+            <TextField ref={erstesFeld} label="Vorname" autoComplete="off" umrandet {...feld("vorname")} error={!!fehlerAn("vorname")} supportingText={fehlerAn("vorname")} />
+            <TextField label="Nachname" autoComplete="off" umrandet {...feld("nachname")} error={!!fehlerAn("nachname")} supportingText={fehlerAn("nachname")} />
+            <TextField label="Jahrgang" inputMode="numeric" umrandet maxLength={JAHRGANG_STELLEN} autoComplete="off" {...feld("jahrgang")} error={!!fehlerAn("jahrgang")} supportingText={fehlerAn("jahrgang")} />
+            <TextField label="J+S-Nummer (optional)" autoComplete="off" umrandet maxLength={JS_MAX} {...feld("jsNummer")} error={!!fehlerAn("js_nummer")} supportingText={fehlerAn("js_nummer")} />
           </div>
-          <Button type="submit" variant="filled" disabled={pending} className="self-end">
-            {offen.id ? "Speichern" : "Hinzufügen"}
-          </Button>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outlined" onClick={schliessen}>
+              Abbrechen
+            </Button>
+            <Button type="submit" variant="filled" disabled={pending}>
+              {offen.id ? "Speichern" : "Hinzufügen"}
+            </Button>
+          </div>
         </form>
       )}
 

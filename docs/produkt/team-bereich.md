@@ -410,8 +410,8 @@ Links davon bezogen sind (siehe „Selbstabholung"), etwa „15 · 9 Links bezog
 trägt Vorname, Nachname und Jahrgang, auf Wunsch dazu ihre J+S-Nummer. Vor- und Nachname haben je
 1 bis 60 Zeichen, der Jahrgang ist eine vierstellige Jahreszahl, die J+S-Nummer höchstens 20
 Zeichen lang; eine Liste fasst höchstens 200 Spieler:innen. Das Plus im Kopf öffnet eine
-Eingabezeile mit den vier Feldern; „Hinzufügen" oder die Eingabetaste nimmt auf, und die Zeile
-bleibt für die nächste offen, bis das Kreuz sie ohne Speichern schliesst. Die Liste ist nach Vor-
+Eingabezeile mit den vier umrandeten Feldern; „Hinzufügen" oder die Eingabetaste nimmt auf, und die
+Zeile bleibt für die nächste offen, bis „Abbrechen" oder das Kreuz sie ohne Speichern schliesst. Die Liste ist nach Vor-
 und Nachname geordnet; jede Zeile nennt Name, Jahrgang, J+S-Nummer und ob der Link bezogen ist,
 dazu Knöpfe für den privaten Link, „Ändern" — dieselbe Eingabezeile mit den bisherigen Angaben —
 und „Entfernen". Auf dem Telefon stehen Jahrgang und J+S-Nummer unter dem Namen.
@@ -530,9 +530,9 @@ im Browser legt sie nichts ab.
 Damit niemand jedem Elternteil einzeln schreiben muss, holen Eltern den Link ihres Kindes auf
 Wunsch selbst ab. Der Abschnitt „Selbstabholung" zuoberst in der Karte der Spielerliste trägt dafür
 einen Schalter; ausgeschaltet ist er, bis ein Mitglied ihn einschaltet. Eingeschaltet zeigt er die
-Abholadresse des Teams zum Kopieren und sagt, was sie kann: Wer sie hat und Vorname, Nachname und
-Jahrgang eines Kindes kennt, erhält dessen Link und kann es damit ab- und anmelden — geteilt wird
-sie darum nur im Eltern-Chat des Teams. Im Menü daneben lässt sie sich nach einer Bestätigung
+Abholadresse des Teams in einem Lesefeld zum Kopieren und sagt, was sie kann: Wer sie hat und
+Vorname, Nachname und Jahrgang einer Spieler:in kennt, erhält deren Link und kann sie damit ab- und
+anmelden — geteilt wird sie darum nur teamintern. Im Menü daneben lässt sie sich nach einer Bestätigung
 erneuern; die bisherige gilt dann nie mehr. Ausschalten stoppt neue Abholungen, und wieder
 eingeschaltet gilt dieselbe Adresse wie vorher. Weder Erneuern noch Ausschalten berührt die Links,
 die Eltern schon bezogen haben; beides sagt die Anwendung dabei.
