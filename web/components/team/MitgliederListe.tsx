@@ -1,18 +1,22 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { UserMinus, UserPlus, UserRound } from "lucide-react";
-import { Button, Dialog, IconButton, TextField, Tooltip } from "@/components/ui";
+import { Plus, X } from "lucide-react";
+import { Button, Dialog, IconButton, Tabelle, TabellenZeile, TextField, Tooltip } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { entferneMitglied, nimmMitgliedAuf, sucheTrainer } from "@/lib/actions/teams";
 import type { TeamMitglied } from "@/lib/queries/teams";
 
-/* Mitgliederliste mit Aufnahme über eine Vorschau (Story 4).
-   Jedes Mitglied steht mit Anzeigename und E-Mail-Adresse da, damit erkennbar
-   ist, wer hinter einer automatischen Kennung oder einem Kürzel steckt (#425).
-   Die Aufnahme läuft bewusst zweistufig: erst nachsehen, wer sich hinter der
-   Adresse verbirgt, dann bestätigen. */
+/* Die Mitglieder eines Teams (Story 4) — gebaut wie die Spielerliste (PO
+   2026-10-17): Kopf mit Zahl und «+», darunter eine Tabelle mit Name und
+   E-Mail-Adresse, damit erkennbar ist, wer hinter einer automatischen
+   Kennung oder einem Kürzel steckt (#425), und «X» zum Entfernen.
+
+   Aufgenommen wird im Dialog, bewusst zweistufig: erst nachsehen, wer sich
+   hinter der Adresse verbirgt, dann im selben Dialog bestätigen. «Zurück»
+   führt mit der Adresse wieder ins Feld, falls die Vorschau die falsche
+   Person zeigt. */
 export function MitgliederListe({
   teamId,
   mitglieder,
@@ -23,20 +27,36 @@ export function MitgliederListe({
   eigeneUserId: string;
 }) {
   const router = useRouter();
+  const melde = useSnackbar();
   const [pending, startTransition] = useTransition();
+  const [aufnahme, setAufnahme] = useState(false);
   const [email, setEmail] = useState("");
   const [fehler, setFehler] = useState<string | undefined>();
-  const melde = useSnackbar();
+  // Gefunden: der Anzeigename der Person, die man nun bestätigt.
   const [vorschau, setVorschau] = useState<string | null>(null);
   const [entfernen, setEntfernen] = useState<TeamMitglied | null>(null);
+  const formId = useId();
+  const aufnehmenKnopf = useRef<HTMLButtonElement>(null);
+
+  // Nach der Suche verschwindet das Feld mit dem Fokus; er geht auf
+  // «Aufnehmen», sobald der Knopf nach der Anfrage bedienbar ist.
+  useEffect(() => {
+    if (vorschau && !pending) aufnehmenKnopf.current?.focus();
+  }, [vorschau, pending]);
+
+  function aufnahmeSchliessen() {
+    setAufnahme(false);
+    setEmail("");
+    setFehler(undefined);
+    setVorschau(null);
+  }
 
   function suchen() {
     setFehler(undefined);
     startTransition(async () => {
       const res = await sucheTrainer(teamId, email);
       if (res.status === "gefunden") setVorschau(res.anzeigeName);
-      else if (res.status === "bereits_mitglied")
-        setFehler("Diese Person ist bereits im Team.");
+      else if (res.status === "bereits_mitglied") setFehler("Diese Person ist bereits im Team.");
       else setFehler(res.error);
     });
   }
@@ -44,14 +64,14 @@ export function MitgliederListe({
   function aufnehmen() {
     startTransition(async () => {
       const res = await nimmMitgliedAuf(teamId, email);
-      setVorschau(null);
-      if (res.ok) {
-        setEmail("");
-        router.refresh();
-        melde(`${res.anzeigeName} ist jetzt im Team.`);
-      } else {
+      if (!res.ok) {
+        setVorschau(null);
         setFehler(res.error);
+        return;
       }
+      aufnahmeSchliessen();
+      router.refresh();
+      melde(`${res.anzeigeName} ist jetzt im Team.`);
     });
   }
 
@@ -70,88 +90,103 @@ export function MitgliederListe({
 
   return (
     <>
-      <ul className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="type-title-large text-on-surface">
+          Mitglieder
+          <span className="type-label-small ml-2 text-on-surface-mittel">{mitglieder.length}</span>
+        </h2>
+        <Tooltip label="Mitglied hinzufügen" ende>
+          <IconButton icon={Plus} label="Mitglied hinzufügen" aria-haspopup="dialog" onClick={() => setAufnahme(true)} />
+        </Tooltip>
+      </div>
+      <p className="type-body-medium mt-2 text-on-surface-mittel">
+        Alle Mitglieder sind gleichberechtigt: Jede und jeder darf das Team umbenennen, Trainings und Termine planen,
+        die Spielerliste führen, Mitglieder aufnehmen und entfernen und das Team auflösen.
+      </p>
+
+      <Tabelle className="mt-4" spalten="sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_3rem]" kopf={["Name", "E-Mail-Adresse", ""]}>
         {mitglieder.map((m) => (
-          <li
-            key={m.userId}
-            className="flex items-center gap-3 rounded-flaeche bg-elev-01 px-4 py-3"
-          >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
-              <UserRound size={18} strokeWidth={2} aria-hidden />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="type-body-large block truncate text-on-surface">
-                {m.anzeigeName}
-                {m.userId === eigeneUserId && (
-                  <span className="type-label-small ml-2 text-on-surface-mittel">(du)</span>
-                )}
+          <TabellenZeile key={m.userId}>
+              <span className="min-w-0 flex-1">
+                <span className="type-body-medium block truncate text-on-surface">
+                  {m.anzeigeName}
+                  {m.userId === eigeneUserId && <span className="type-label-small ml-2 text-on-surface-mittel">(du)</span>}
+                </span>
+                {/* Schmal steht die Adresse unter dem Namen. */}
+                <span className="type-body-small block break-all text-on-surface-mittel sm:hidden">{m.email}</span>
               </span>
               {/* Umbrechen statt kürzen: Abgeschnitten fehlte gerade der Teil
                   der Adresse, der zwei Mitglieder unterscheidet. */}
-              <span className="type-body-small block break-all text-on-surface-mittel">
-                {m.email}
+              <span className="type-body-medium hidden break-all text-on-surface-mittel sm:block">{m.email}</span>
+              <span className="flex justify-end">
+                {/* Sich selbst entfernt man über «Team verlassen» — dort hängt der
+                    Hinweis, was der Austritt bedeutet. */}
+                {m.userId !== eigeneUserId && (
+                  <Tooltip label="Aus dem Team entfernen" ende>
+                    <IconButton icon={X} label={`${m.anzeigeName} (${m.email}) aus dem Team entfernen`} onClick={() => setEntfernen(m)} />
+                  </Tooltip>
+                )}
               </span>
-            </span>
-            {/* Sich selbst entfernt man über „Team verlassen" — dort hängt der
-                Hinweis, was der Austritt bedeutet. */}
-            {m.userId !== eigeneUserId && (
-              <Tooltip label="Aus dem Team entfernen">
-                <IconButton
-                  icon={UserMinus}
-                  label={`${m.anzeigeName} (${m.email}) aus dem Team entfernen`}
-                  onClick={() => setEntfernen(m)}
-                />
-              </Tooltip>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      <form
-        noValidate
-        className="mt-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          suchen();
-        }}
-      >
-        <TextField
-          label="E-Mail-Adresse"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          error={!!fehler}
-          supportingText={fehler}
-          info="Die Person braucht bereits ein bestätigtes KiFu-Konto."
-          aktion={
-            <Button type="submit" variant="tonal" disabled={pending}>
-              <UserPlus size={18} strokeWidth={2} aria-hidden />
-              Suchen
-            </Button>
-          }
-        />
-      </form>
+            </TabellenZeile>
+          ))}
+      </Tabelle>
 
       <Dialog
-        open={vorschau != null}
-        onClose={() => setVorschau(null)}
-        title="Ins Team aufnehmen?"
+        open={aufnahme}
+        onClose={() => !pending && aufnahmeSchliessen()}
+        title={vorschau ? "Ins Team aufnehmen?" : "Mitglied hinzufügen"}
         actions={
           <>
-            <Button variant="text" onClick={() => setVorschau(null)}>
-              Abbrechen
-            </Button>
-            <Button variant="filled" onClick={aufnehmen} disabled={pending}>
-              Aufnehmen
-            </Button>
+            {vorschau ? (
+              <Button type="button" variant="outlined" onClick={() => setVorschau(null)} disabled={pending}>
+                Zurück
+              </Button>
+            ) : (
+              <Button type="button" variant="outlined" onClick={aufnahmeSchliessen} disabled={pending}>
+                Abbrechen
+              </Button>
+            )}
+            {vorschau ? (
+              <Button ref={aufnehmenKnopf} variant="filled" onClick={aufnehmen} disabled={pending}>
+                Aufnehmen
+              </Button>
+            ) : (
+              <Button type="submit" form={formId} variant="filled" disabled={pending}>
+                Suchen
+              </Button>
+            )}
           </>
         }
       >
-        <p>
-          <strong className="text-on-surface">{vorschau}</strong> wurde gefunden.
-          Als Mitglied sieht und bearbeitet diese Person alle Trainings und
-          Termine des Teams.
-        </p>
+        {vorschau ? (
+          <p>
+            <strong className="text-on-surface">{vorschau}</strong> <span className="break-all">({email.trim()})</span> wurde
+            gefunden. Als Mitglied sieht und bearbeitet diese Person alle Trainings und Termine des Teams.
+          </p>
+        ) : (
+          <form
+            id={formId}
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              suchen();
+            }}
+          >
+            <TextField
+              label="E-Mail-Adresse"
+              type="email"
+              autoFocus
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setFehler(undefined);
+              }}
+              error={!!fehler}
+              supportingText={fehler}
+              info="Die Person braucht bereits ein bestätigtes KiFu-Konto."
+            />
+          </form>
+        )}
       </Dialog>
 
       <Dialog
@@ -160,14 +195,10 @@ export function MitgliederListe({
         title="Aus dem Team entfernen?"
         actions={
           <>
-            <Button variant="text" onClick={() => setEntfernen(null)}>
+            <Button variant="outlined" onClick={() => setEntfernen(null)}>
               Abbrechen
             </Button>
-            <Button
-              variant="danger"
-              onClick={() => entfernen && entfernenAusfuehren(entfernen)}
-              disabled={pending}
-            >
+            <Button variant="danger" onClick={() => entfernen && entfernenAusfuehren(entfernen)} disabled={pending}>
               Entfernen
             </Button>
           </>
@@ -177,9 +208,8 @@ export function MitgliederListe({
             erst sie, wen man entfernt (#425). */}
         <p>
           <strong className="text-on-surface">{entfernen?.anzeigeName}</strong>{" "}
-          <span className="break-all">({entfernen?.email})</span>{" "}
-          sieht die Trainings und Termine dieses Teams danach nicht mehr.
-          Persönliche Trainings dieser Person bleiben unberührt.
+          <span className="break-all">({entfernen?.email})</span> sieht die Trainings und Termine dieses Teams danach
+          nicht mehr. Persönliche Trainings dieser Person bleiben unberührt.
         </p>
       </Dialog>
     </>

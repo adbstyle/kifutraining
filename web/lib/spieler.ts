@@ -275,7 +275,7 @@ export const ABHOL_SPERRE_MINUTEN = 15;
 export const ABHOLUNG_TEXT = {
   /** AK 3, 5: was die Adresse kann und was Ausschalten bewirkt. */
   beschreibung:
-    "Über diese Adresse holen Eltern den Link ihres Kindes selbst ab, mit Vorname, Nachname und Jahrgang. Wer sie hat und diese Angaben kennt, kann das Kind ab- und anmelden; teile sie nur im Eltern-Chat des Teams. Ausschalten stoppt neue Abholungen, bezogene Links gelten weiter.",
+    "Über diese Adresse können Spieler:innen-Links mit Vorname, Nachname und Jahrgang abgeholt werden. Wer die Abholadresse hat und die Angaben der Spieler:in kennt, kann die Spieler:in ab- und anmelden; teile sie nur teamintern. Ausschalten stoppt neue Abholungen, bezogene Spieler:innen-Links gelten weiter.",
   aus: "Ausgeschaltet. Eltern erhalten ihren Link nur von euch. Beim Einschalten gilt die bisherige Abholadresse wieder.",
   /** AK 4, 5: vor dem Erneuern. */
   erneuern:
@@ -286,11 +286,11 @@ export const ABHOLUNG_TEXT = {
   // ── Die Abholseite ──
   titel: "Spieler:in-Link abholen",
   einleitung:
-    "Gib Vorname, Nachname und Jahrgang deines Kindes so ein, wie das Trainerteam sie erfasst hat. Du erhältst seinen privaten Link, mit dem du es für Trainings ab- und wieder anmeldest.",
+    "Gib Vorname, Nachname und Jahrgang der Spieler:in ein. Du erhältst den privaten Link, mit dem du die Spieler:in für Trainings ab- und wieder anmelden kannst.",
   /** AK 7: was KiFu speichert, wer es sieht, wann es verschwindet. */
   speichertTitel: "Was KiFu speichert",
   speichert:
-    "Zu jedem Kind nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, und Abmeldungen. Das sehen die Trainer:innen des Teams, KI-Assistenten, die sie mit KiFu verbunden haben, und wer den Link des Kindes hat. Nimmt das Team ein Kind aus der Liste, verschwinden seine Angaben überall.",
+    "Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, und Abmeldungen. Das sehen die Trainer:innen des Teams, KI-Assistenten, die sie mit KiFu verbunden haben, und wer den Link der Spieler:in hat. Nimmt das Team eine Spieler:in aus der Liste, verschwinden ihre Angaben überall.",
   /** AK 13, 14: immer derselbe Satz. */
   passtNicht: "Dazu finden wir keinen Link. Prüf die Schreibweise oder frag beim Team nach.",
   /** AK 16. */
@@ -299,7 +299,7 @@ export const ABHOLUNG_TEXT = {
   fehlt: "Bitte Vorname, Nachname und den Jahrgang als vierstellige Jahreszahl eingeben.",
   /** AK 17. */
   ungueltigTitel: "Diese Abholadresse gilt nicht",
-  ungueltig: "Frag deine Trainerin oder deinen Trainer nach der aktuellen Abholadresse oder direkt nach dem Link für dein Kind.",
+  ungueltig: "Frag deine Trainerin oder deinen Trainer nach der aktuellen Abholadresse oder direkt nach dem Link der Spieler:in.",
 } as const;
 
 /** AK 10: wozu der Link dient, dass er privat ist, und wo es ihn wieder gibt. */
