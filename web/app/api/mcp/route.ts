@@ -4,6 +4,7 @@ import { verifiziereZugang } from "@/lib/supabase/bearer";
 import { oeffentlicherOriginAus } from "@/lib/origin";
 import { registriereWerkzeuge } from "@/lib/mcp/server";
 import { MCP_PFAD } from "@/lib/mcp/pfad";
+import { KEIN_ABO, aboAbweisung } from "@/lib/mcp/abo";
 import type { ZugangExtra } from "@/lib/mcp/werkzeug";
 import { APP_VERSION } from "@/lib/version";
 
@@ -21,9 +22,17 @@ import { APP_VERSION } from "@/lib/version";
  */
 export const dynamic = "force-dynamic";
 
+// Werkzeugaufrufe dauern Sekundenbruchteile. Die Grenze deckelt jede künftig
+// offen gehaltene Antwort (etwa einen Abo-Stream, siehe lib/mcp/abo.ts) weit
+// unter dem Projekt-Standard von 300 s.
+export const maxDuration = 60;
+
+// Kein Änderungs-Abo — warum, steht in lib/mcp/abo.ts.
 const mcp = createMcpHandler((server) => registriereWerkzeuge(server), {
   serverInfo: { name: "ki-fu", version: APP_VERSION },
+  ...KEIN_ABO,
 });
+const mcpOhneAbo = async (req: Request) => (await aboAbweisung(req)) ?? mcp(req);
 
 async function pruefeToken(token: string | undefined, origin: string): Promise<AuthInfo | undefined> {
   if (!token) return undefined;
@@ -45,7 +54,7 @@ async function pruefeToken(token: string | undefined, origin: string): Promise<A
 // Werkzeuge. mcp-handler hängt den Pfad an den Origin an.
 function handler(req: Request): Promise<Response> {
   const origin = oeffentlicherOriginAus(req);
-  return withMcpAuth(mcp, (_req, token) => pruefeToken(token, origin), {
+  return withMcpAuth(mcpOhneAbo, (_req, token) => pruefeToken(token, origin), {
     required: true,
     resourceMetadataPath: `/.well-known/oauth-protected-resource${MCP_PFAD}`,
     resourceUrl: origin,

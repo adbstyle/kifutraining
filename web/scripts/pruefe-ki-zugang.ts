@@ -1,9 +1,9 @@
 // Prüft die Regeln des KI-Zugangs (Story #142): web/lib/mcp/regeln.ts,
 // web/lib/weiterleitung.ts und die reinen Werkzeug-Bausteine
-// web/lib/mcp/{vokabular,eingaben,uebung-eingaben,diagramm-eingaben,ergebnis}.ts. Ohne DB und ohne Netz; läuft
+// web/lib/mcp/{vokabular,eingaben,uebung-eingaben,diagramm-eingaben,ergebnis,abo}.ts. Ohne DB und ohne Netz; läuft
 // im PR-Check neben `typecheck` und den übrigen `check:*`.
 //
-// Der Wert dieser Prüfung liegt an fünf Stellen:
+// Der Wert dieser Prüfung liegt an sechs Stellen:
 //
 // - Die Namensregel und die Aufruf-Grenze haben je einen SQL-Zwilling (CHECK
 //   `kzn_name_laenge`, `v_grenze` in `ki_aufruf_zaehlen()`). Laufen die
@@ -20,6 +20,9 @@
 //   interpoliert im PostgREST-`or=`.
 // - Die Ergebnis-Helfer sind die Konvention ALLER Werkzeuge (#192 ff.):
 //   jedes gesetzte Feld eines Kern-Fehlers muss beim Assistenten ankommen.
+// - Kein Änderungs-Abo (lib/mcp/abo.ts): Kündigt der Handler `listChanged`
+//   an oder nimmt er `subscriptions/listen` an, halten Clients endlose Streams
+//   offen — auf Vercel je Client eine Funktion bis zum Timeout.
 //
 //   npx tsx scripts/pruefe-ki-zugang.ts
 import assert from "node:assert/strict";
@@ -82,6 +85,8 @@ import {
 import { ausKern, erfolg, fehlerErgebnis } from "../lib/mcp/ergebnis";
 import type { CallToolResult } from "@modelcontextprotocol/server";
 import type { KernFehler } from "../lib/kern/ergebnis";
+import { createMcpHandler } from "mcp-handler";
+import { ABO_ABGEWIESEN, KEIN_ABO, aboAbweisung } from "../lib/mcp/abo";
 
 let gelaufen = 0;
 
@@ -875,6 +880,73 @@ pruefe("ausKern: ok → erfolg, Fehler → fehlerErgebnis", () => {
   assert.equal(r.isError, true);
   assert.equal(textVon(r), "[nicht_gefunden] kennung: weg");
   assert.deepEqual(fehlerVon(r), { art: "nicht_gefunden", meldung: "weg", feld: "kennung" });
+});
+
+// ── Kein Änderungs-Abo (lib/mcp/abo.ts) ─────────────────────────────────────
+// Am echten Handler statt an den Optionen: Die Wirkung hängt an SDK-Semantik
+// (`listChanged ?? true` beim Registrieren, `maxSubscriptions: 0` = keins),
+// die ein Update still ändern könnte — dann hielten Clients wieder endlose
+// `subscriptions/listen`-Streams offen und Funktionen bis zum Timeout wach.
+const aboHandler = createMcpHandler(
+  (server) => {
+    server.registerTool("probe", { description: "Probe" }, async () => ({ content: [] }));
+  },
+  { serverInfo: { name: "probe", version: "0" }, ...KEIN_ABO },
+);
+// So schickt der Referenz-Client (@modelcontextprotocol/client 2.3) eine
+// Anfrage im Protokoll 2026-07-28.
+function moderneAnfrage(methode: string, params: Record<string, unknown> = {}): Request {
+  return new Request("http://localhost/api/mcp", {
+    method: "POST",
+    headers: {
+      accept: "application/json, text/event-stream",
+      "content-type": "application/json",
+      "mcp-method": methode,
+      "mcp-protocol-version": "2026-07-28",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "a1",
+      method: methode,
+      params: {
+        _meta: {
+          "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+          "io.modelcontextprotocol/clientInfo": { name: "probe", version: "0" },
+          "io.modelcontextprotocol/clientCapabilities": {},
+        },
+        ...params,
+      },
+    }),
+  });
+}
+// Ein offener Stream liefert nie ein Ende — darum vor dem Lesen die Art prüfen.
+async function jsonOderStream(res: Response): Promise<unknown> {
+  if ((res.headers.get("content-type") ?? "").includes("text/event-stream")) {
+    await res.body?.cancel();
+    return "stream";
+  }
+  return res.json();
+}
+const ABO_PARAMS = { notifications: { toolsListChanged: true } };
+const entdeckt = (await jsonOderStream(await aboHandler(moderneAnfrage("server/discover")))) as {
+  result?: { capabilities?: { tools?: { listChanged?: boolean } } };
+};
+const sdkAbo = await jsonOderStream(await aboHandler(moderneAnfrage("subscriptions/listen", ABO_PARAMS)));
+const fruehAbo = await aboAbweisung(moderneAnfrage("subscriptions/listen", ABO_PARAMS));
+const fruehAboWert = fruehAbo ? await jsonOderStream(fruehAbo) : null;
+const fruehAufruf = await aboAbweisung(moderneAnfrage("tools/call", { name: "probe", arguments: {} }));
+
+pruefe("Der Server kündigt keine Änderungen am Werkzeugsatz an", () => {
+  assert.equal(entdeckt.result?.capabilities?.tools?.listChanged, false);
+});
+
+pruefe("Ein trotzdem gesendetes Abo weist das SDK sofort ab, statt einen Stream zu öffnen", () => {
+  assert.deepEqual(sdkAbo, { jsonrpc: "2.0", error: ABO_ABGEWIESEN, id: "a1" });
+});
+
+pruefe("Die Frühabweisung antwortet wie das SDK und lässt alles andere durch", () => {
+  assert.deepEqual(fruehAboWert, sdkAbo);
+  assert.equal(fruehAufruf, null);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

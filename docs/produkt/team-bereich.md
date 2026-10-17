@@ -357,9 +357,11 @@ Bestätigung kommt auch dann, wenn das Ergebnis ausserhalb der Eingrenzung liegt
 
 ## Der geöffnete Termin
 
-Ein Klick auf eine Zeile im Trainingsplan oder auf den Tag des nächsten Termins öffnet den Termin.
-Auf breiten Bildschirmen steht er rechts neben der Liste an der Stelle des Monats und bleibt beim
-Scrollen stehen; die Liste hebt ihn hervor. Schmaler nimmt er die ganze Breite ein, bis man ihn
+Ein Klick auf eine Zeile im Trainingsplan oder irgendwo auf die Karte des nächsten Termins öffnet den Termin.
+Auf breiten Bildschirmen steht er rechts neben der Liste an der Stelle des Monats; die Liste hebt
+ihn hervor. Wie bei einem Training reichen beide bis zum unteren Rand und scrollen für sich, und am
+Griff dazwischen zieht man den Termin breiter oder schmaler (Doppelklick stellt die Breite zurück);
+die gewählte Breite gilt auch für die zweispaltigen Seiten von Übung und Training. Schmaler nimmt er die ganze Breite ein, bis man ihn
 schliesst. Zuoberst stehen Tag, Zeit und Ort, daneben das Kreuz zum Schliessen, darunter drei
 Reiter. „Termin" bietet „Ausfallen lassen" bzw. „Ausfall zurücknehmen", „Ändern" — das bekannte
 „Termin ändern" — und im Menü die übrigen Handgriffe der Zeile; darunter die Eckdaten in derselben
@@ -501,8 +503,14 @@ die Eltern den neuen dort wieder abholen. Je Spieler:in und Team gibt es genau e
 
 Wer den Link öffnet, braucht weder Konto noch Anmeldung. Die Seite ist fürs Telefon gebaut, kommt
 ohne Seitenleiste aus und nennt Teamname und Name der Spieler:in mit dem Satz, dass sie für jedes
-Training angemeldet ist und man ausschaltet, wenn sie nicht kann. Darunter steht jeder anstehende
-Termin des Teams — ab heute, ein begonnener noch bis Ende seines Tages — als Karte mit
+Training zuerst angemeldet ist und man sie abmeldet, wenn sie nicht kann, und bis zum Beginn
+wieder anmeldet. Wie im Trainingsplan steht zuoberst „Als Nächstes": der nächste Termin, der
+noch nicht begonnen hat, grösser, mit „Heute" oder „Morgen", der Zahl der Angemeldeten, ob die
+Spieler:in angemeldet ist, und dem Knopf „Abmelden" oder „Wieder anmelden"; abgemeldet steht die
+Karte auf einer leicht roten Fläche, ihr Tag rot und „Wieder anmelden" als heller Knopf. Ein Termin
+von heute, der schon begonnen hat, steht darüber unter „Heute", gesperrt bis Ende des Tages.
+Darunter folgen die übrigen anstehenden Termine des Teams unter Monatsüberschriften wie
+„Oktober 2026", je als Karte mit
 Kalenderblatt, Beginn und Ende, Ort, der Zahl der Angemeldeten und einem Schalter; ist die
 Spieler:in abgemeldet, ist das Kalenderblatt rot. Ein begonnener Termin ist gesperrt mit „Hat
 begonnen · nicht mehr änderbar", ein ausgefallener grau mit „Fällt aus". Wurde ein Termin verlegt,

@@ -63,6 +63,12 @@ export function NaechsterTermin({
         hervorgehoben ? "kontur border-primary" : "kontur border-kante",
       )}
     >
+      {/* Die ganze Karte öffnet den Termin daneben (#435), wie eine Zeile des
+          Plans. Der Inhalt liegt darüber und lässt Klicks durch — ausser auf
+          seine eigenen Links und Knöpfe. Für Tastatur und Vorlesehilfe öffnet
+          weiterhin der Tag. */}
+      <Link href={terminHref(t.teamId, meine, t.id)} scroll={false} tabIndex={-1} aria-hidden className="absolute inset-0 rounded-flaeche" />
+      <div className="pointer-events-none relative [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           {/* Ohne Training steht der Tag in der Warnfarbe — wie die Tageszahl
@@ -140,6 +146,7 @@ export function NaechsterTermin({
       )}
 
       <TerminEigenschaften t={t} ich={ich} className="mt-4 border-t border-linie pt-3" />
+      </div>
     </div>
   );
 }

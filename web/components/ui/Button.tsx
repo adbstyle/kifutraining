@@ -19,7 +19,12 @@ import { cn } from "@/lib/cn";
 // `quiet` ist die knappe Bauform des `text`-Knopfes für Handlungen, die am
 // Rand einer Chip-Leiste mitlaufen («+ Variante hinzufügen»): dieselbe Farbe
 // und Schrift, nur mit knapperer Polsterung.
-type Variant = "filled" | "tonal" | "outlined" | "text" | "danger" | "quiet";
+//
+// `hell` steht auf der umgekehrten, hellen Fläche mit der Farbe des Grunds als
+// Schrift — für die eine Handlung auf einer Fläche im Fehlerton, wo `filled` (Violett
+// auf Rot) zu laut wäre und `outlined` unterginge: «Wieder anmelden» am
+// abgemeldeten nächsten Termin (PO 2026-10-17).
+type Variant = "filled" | "tonal" | "outlined" | "text" | "danger" | "quiet" | "hell";
 
 // `state` gehört in die Basis und nicht an die Varianten: Die Zustands-Ebene
 // färbt sich in der Farbe des Inhalts ein und gilt darum für jede Variante
@@ -48,6 +53,10 @@ const variants: Record<Variant, string> = {
   danger: "bg-danger text-on-danger",
   // Die dichte Bauform von `text` — dieselbe Farbe, siehe oben.
   quiet: "bg-transparent text-primary",
+  // Hell: die umgekehrte Fläche (`umkehr`), darauf die Farbe des Grunds als
+  // Schrift (PO 2026-10-17, nicht Violett); Zustands-Ebene und Fokus-Ring
+  // färben sich darin mit ein (siehe @utility umkehr).
+  hell: "umkehr",
 };
 
 /** Gemeinsame Button-Klassen — geteilt von Button und ButtonLink, damit ein

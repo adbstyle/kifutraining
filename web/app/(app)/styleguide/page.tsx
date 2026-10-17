@@ -1294,7 +1294,7 @@ export default async function Styleguide() {
 
         <Section id="knoepfe">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Sechs Varianten, eine Regel: <strong>Gefüllt trägt Schwarz</strong>{" "}
+            Sechs Varianten (und der helle Knopf weiter unten), eine Regel: <strong>Gefüllt trägt Schwarz</strong>{" "}
             - ausser Rot. <code>filled</code> ist Primary-Fläche, <code>tonal</code> eine
             Höhenstufe (08dp), <code>outlined</code> Kontur
             auf der Kante, <code>text</code> nur Schrift, <code>danger</code>{" "}
@@ -1332,7 +1332,22 @@ export default async function Styleguide() {
             Dialog-Knöpfe, Formularfüsse und alles, was neben einem{" "}
             <code>filled</code> steht, bleibt <code>text</code>.
           </p>
-          <div className="flex flex-wrap items-center gap-3">
+          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
+            Heller Knopf (<code>variant=&quot;hell&quot;</code>) - auf einer Fläche im Fehlerton
+          </p>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            Die umgekehrte, helle Fläche der Snackbar mit der Farbe des Grunds als
+            Schrift. Neu, weil auf einer Fläche im Fehlerton <code>filled</code>{" "}
+            (Violett auf Rot) zu laut wäre und <code>outlined</code> unterginge: die eine
+            Handlung «Wieder anmelden» am abgemeldeten nächsten Termin hinter dem
+            privaten Link (Epic #433). Sonst bleibt es bei den Varianten oben.
+          </p>
+          <div className="flex flex-wrap items-center gap-3 rounded-flaeche kontur border-kante bg-section-danger/60 p-4">
+            <span className="type-body-medium text-on-surface">Lena Meier ist abgemeldet.</span>
+            <Button variant="hell">Wieder anmelden</Button>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             <Button variant="quiet">
               <Plus size={16} strokeWidth={2} aria-hidden />
               Variante hinzufügen
