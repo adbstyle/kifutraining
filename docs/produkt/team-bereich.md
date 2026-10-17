@@ -427,6 +427,26 @@ einem Zusatz im Vornamen; die Meldung beim Aufnehmen sagt das. Angezeigt wird ü
 Nachname, Jahrgang und J+S-Nummer nur in der Liste. Ein geänderter Name gilt sofort überall, auch an
 vergangenen Terminen. Einsehen und führen können die Liste nur die Mitglieder des Teams.
 
+Eine ganze Mannschaft übernimmt man aus einer CSV-Datei: Das Datei-Symbol neben dem Plus öffnet den
+Dialog „Spieler:innen importieren". Gelesen wird die Datei im Browser; an KiFu gehen nur Vorname,
+Nachname, Jahrgang und J+S-Nummer, Elternkontakte, Geburtsdatum und alle übrigen Spalten nicht.
+Angenommen werden CSV-Dateien mit Semikolon oder Komma in UTF-8 oder im Windows-Zeichensatz, wie
+Excel und der Kader-Export von ClubCorner sie speichern, mit Spaltenköpfen in der ersten Zeile; eine
+leere, eine fremde oder eine Datei mit unsicherem Zeichensatz weist der Dialog mit dem Grund ab. Die
+Spalten erkennt KiFu an ihren Köpfen, unabhängig von Reihenfolge und weiteren Spalten — „Name" gilt
+als Nachname, „Jahrgang" geht „Geburtsdatum" vor —, und lässt eine Angabe offen, wenn mehrere Spalten
+gleich gut passen. Jede Zuordnung lässt sich ändern; Vorname, Nachname und Geburtsdatum brauchen je
+eine Spalte, die J+S-Nummer nicht. Aus dem Geburtsdatum übernimmt KiFu nur den Jahrgang, und nur mit
+vierstelliger Jahreszahl. Eine J+S-Nummer muss aus Ziffern bestehen; „k.A." oder Ähnliches gilt wie
+eine leere Zelle. Die Vorschau sagt, wer neu auf die Liste kommt, wer eine neue J+S-Nummer erhält
+(mit der bisherigen) und wer unverändert bleibt, und nennt jede ausgelassene Zeile mit dem Grund.
+Bestehende erkennt der Import nach derselben Regel wie die Eindeutigkeit der Liste; stehen dieselben
+Angaben mehrmals in der Datei, gilt die letzte Zeile. Eine J+S-Nummer aus der Datei ersetzt eine
+abweichende, eine leere Zelle löscht nichts, und wer in der Datei fehlt, bleibt auf der Liste.
+Übernommen wird erst nach „Übernehmen", ganz oder gar nicht; danach meldet die Anwendung, wie viele
+dazukamen und bei wie vielen sich die J+S-Nummer änderte. Würde die Liste mehr als 200 umfassen oder
+hat sie sich seit der Vorschau geändert, übernimmt der Dialog nichts und sagt nur das.
+
 Entfernen fragt nach und sagt, was folgt: Der private Link der Spieler:in gilt danach nicht mehr,
 die Selbstabholung findet sie nicht mehr, an anstehenden Terminen zählt sie nicht mehr, und an
 vergangenen steht sie nur noch ohne Namen als „Ehemalige Spieler:in", die Spielerzahl dort bleibt.
@@ -732,6 +752,14 @@ bis jemand sie entfernt. Gruppen eines Trainings bleiben Bezeichnungen ohne Spie
 Spielerliste lässt sich die Zahl nicht von Hand um Gäste ergänzen. An einem begonnenen Termin
 bietet „Termin ändern" das Feld für die erwartete Zahl weiter an; gezeigt wird sie dort aber nur,
 wenn die Liste bei Beginn leer war.
+
+Der Import liest nur CSV, keine Excel-Dateien, und nur mit Kopfzeile. Er ändert Vor- und Nachnamen
+und Jahrgänge bestehender Spieler:innen nicht: Wer nach einem Import auf den Rufnamen gekürzt wurde,
+kommt beim nächsten Import mit dem vollen Vornamen ein zweites Mal auf die Liste. Umschriebene
+Umlaute und Tippfehler erkennt er so wenig wie die Selbstabholung. Einzelne Zeilen lassen sich in der
+Vorschau weder bearbeiten noch abwählen, und ein zweistelliges Geburtsjahr
+lässt die Zeile aus. Zwei Kinder mit gleichen Angaben in einer Datei werden zu einem. Einen eigenen
+Import über den KI-Assistenten gibt es nicht; er nimmt Spieler:innen einzeln auf.
 
 Die Anwendung benachrichtigt niemanden über Ab- und Anmeldungen, und Eltern erfahren nicht von
 selbst, dass ein Termin verlegt wurde, ausfällt oder ihre Abmeldung verfallen ist — nur, wenn sie
