@@ -409,11 +409,12 @@ zwischen Teamname und Mitgliedern; ihr Kopf nennt, wie viele auf der Liste stehe
 Links davon bezogen sind (siehe „Selbstabholung"), etwa „15 · 9 Links bezogen". Jede Spieler:in
 trägt Vorname, Nachname und Jahrgang, auf Wunsch dazu ihre J+S-Nummer. Vor- und Nachname haben je
 1 bis 60 Zeichen, der Jahrgang ist eine vierstellige Jahreszahl, die J+S-Nummer höchstens 20
-Zeichen lang; eine Liste fasst höchstens 200 Spieler:innen. Das Plus im Kopf öffnet eine
-Eingabezeile mit den vier umrandeten Feldern; „Hinzufügen" oder die Eingabetaste nimmt auf, und die
-Zeile bleibt für die nächste offen, bis „Abbrechen" oder das Kreuz sie ohne Speichern schliesst. Die Liste ist nach Vor-
+Zeichen lang; eine Liste fasst höchstens 200 Spieler:innen. Das Plus im Kopf öffnet den Dialog
+„Spieler:in hinzufügen" mit den vier umrandeten Feldern untereinander; „Hinzufügen" oder die
+Eingabetaste nimmt auf, der Dialog sagt, wer dazukam, und bleibt für die nächste offen, bis
+„Abbrechen" ihn ohne Speichern schliesst. Die Liste ist nach Vor-
 und Nachname geordnet; jede Zeile nennt Name, Jahrgang, J+S-Nummer und ob der Link bezogen ist,
-dazu Knöpfe für den privaten Link, „Ändern" — dieselbe Eingabezeile mit den bisherigen Angaben —
+dazu Knöpfe für den privaten Link, „Ändern" — derselbe Dialog mit den bisherigen Angaben —
 und „Entfernen". Auf dem Telefon stehen Jahrgang und J+S-Nummer unter dem Namen.
 
 Dieselbe Spieler:in steht nur einmal auf der Liste: Vorname, Nachname und Jahrgang zusammen sind

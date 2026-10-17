@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Link2, Pencil, Plus, X } from "lucide-react";
-import { Button, Dialog, IconButton, TextField, Tooltip } from "@/components/ui";
+import { Button, Dialog, IconButton, SectionMessage, TextField, Tooltip } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { aendereSpielerAktion, entferneSpielerAktion, nimmSpielerAufAktion } from "@/lib/actions/spieler";
 import { JAHRGANG_STELLEN, JS_MAX, nurZiffern, spielerName, type Spieler, type SpielerFeld } from "@/lib/spieler";
@@ -12,11 +12,12 @@ import { Selbstabholung } from "./Selbstabholung";
 import { BezogenLozenge } from "./BezogenLozenge";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
-   Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet die
-   Eingabezeile in umrandeten Feldern, das Kreuz oder «Abbrechen» schliesst
-   sie, ohne zu speichern; «Hinzufügen» und
-   Enter nehmen auf, danach bleibt die Zeile für die nächste offen. Ändern
-   öffnet dieselbe Zeile mit den Angaben der Spieler:in, Entfernen fragt nach.
+   Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet einen
+   Dialog mit den Feldern untereinander (PO 2026-10-17); «Abbrechen» schliesst
+   ihn, ohne zu speichern. «Hinzufügen» und Enter nehmen auf, danach bleibt
+   er für die nächste offen und sagt, wer eben dazukam — die Snackbar läge
+   unter dem Dialog. Ändern öffnet denselben Dialog mit den Angaben der
+   Spieler:in und schliesst nach dem Speichern, Entfernen fragt nach.
    Das Kettenglied zeigt ihren privaten Link (#436); ob er über die
    Selbstabholung bezogen wurde, sagt die Spalte «Link» (#438 AK 21). Der
    Abschnitt «Selbstabholung» steht zuoberst (#438). */
@@ -43,19 +44,23 @@ export function SpielerListe({
   const [fehler, setFehler] = useState<{ feld?: SpielerFeld; text: string } | null>(null);
   const [entfernen, setEntfernen] = useState<Spieler | null>(null);
   const [link, setLink] = useState<Spieler | null>(null);
+  // Wer eben aufgenommen wurde — im noch offenen Dialog.
+  const [aufgenommen, setAufgenommen] = useState<string | null>(null);
   const erstesFeld = useRef<HTMLInputElement>(null);
+  const formId = useId();
 
   function oeffnen(s?: Spieler) {
     setFehler(null);
+    setAufgenommen(null);
     setOffen({ id: s?.id ?? null });
     setForm(s ? { vorname: s.vorname, nachname: s.nachname, jahrgang: String(s.jahrgang), jsNummer: s.jsNummer ?? "" } : LEER);
-    requestAnimationFrame(() => erstesFeld.current?.focus());
   }
 
   function schliessen() {
     setOffen(null);
     setForm(LEER);
     setFehler(null);
+    setAufgenommen(null);
   }
 
   function speichern() {
@@ -77,7 +82,7 @@ export function SpielerListe({
       setFehler(null);
       router.refresh();
       erstesFeld.current?.focus();
-      melde(
+      setAufgenommen(
         r.ersetzt > 0
           ? `${name} ist auf der Liste. Die Spielerzahl kommt jetzt aus ihr; ${r.ersetzt === 1 ? "eine erwartete Zahl gilt" : `${r.ersetzt} erwartete Zahlen gelten`} nicht mehr.`
           : `${name} ist auf der Liste.`,
@@ -101,6 +106,7 @@ export function SpielerListe({
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
       setForm((f) => ({ ...f, [k]: k === "jahrgang" ? nurZiffern(e.target.value) : e.target.value }));
       setFehler(null);
+      setAufgenommen(null);
     },
   });
   const fehlerAn = (f: SpielerFeld) => fehler && (fehler.feld ?? "vorname") === f ? fehler.text : undefined;
@@ -117,13 +123,8 @@ export function SpielerListe({
             {spieler.length > 0 && ` · ${bezogen} ${bezogen === 1 ? "Link" : "Links"} bezogen`}
           </span>
         </h2>
-        <Tooltip label={offen ? "Abbrechen" : "Spieler:in hinzufügen"} ende>
-          <IconButton
-            icon={offen ? X : Plus}
-            label={offen ? "Eingabe schliessen, ohne zu speichern" : "Spieler:in hinzufügen"}
-            aria-expanded={!!offen}
-            onClick={() => (offen ? schliessen() : oeffnen())}
-          />
+        <Tooltip label="Spieler:in hinzufügen" ende>
+          <IconButton icon={Plus} label="Spieler:in hinzufügen" aria-haspopup="dialog" onClick={() => oeffnen()} />
         </Tooltip>
       </div>
 
@@ -131,31 +132,37 @@ export function SpielerListe({
         <Selbstabholung teamId={teamId} start={abholung} />
       </div>
 
-      {offen && (
+      <Dialog
+        open={offen !== null}
+        onClose={() => !pending && schliessen()}
+        title={offen?.id ? "Spieler:in ändern" : "Spieler:in hinzufügen"}
+        actions={
+          <>
+            <Button type="button" variant="outlined" onClick={schliessen} disabled={pending}>
+              Abbrechen
+            </Button>
+            <Button type="submit" form={formId} variant="filled" disabled={pending}>
+              {offen?.id ? "Speichern" : "Hinzufügen"}
+            </Button>
+          </>
+        }
+      >
         <form
+          id={formId}
           noValidate
-          className="mt-4 flex flex-col gap-3"
+          className="flex flex-col gap-3"
           onSubmit={(e) => {
             e.preventDefault();
             speichern();
           }}
         >
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_6rem_12.5rem]">
-            <TextField ref={erstesFeld} label="Vorname" autoComplete="off" umrandet {...feld("vorname")} error={!!fehlerAn("vorname")} supportingText={fehlerAn("vorname")} />
-            <TextField label="Nachname" autoComplete="off" umrandet {...feld("nachname")} error={!!fehlerAn("nachname")} supportingText={fehlerAn("nachname")} />
-            <TextField label="Jahrgang" inputMode="numeric" umrandet maxLength={JAHRGANG_STELLEN} autoComplete="off" {...feld("jahrgang")} error={!!fehlerAn("jahrgang")} supportingText={fehlerAn("jahrgang")} />
-            <TextField label="J+S-Nummer (optional)" autoComplete="off" umrandet maxLength={JS_MAX} {...feld("jsNummer")} error={!!fehlerAn("js_nummer")} supportingText={fehlerAn("js_nummer")} />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outlined" onClick={schliessen} disabled={pending}>
-              Abbrechen
-            </Button>
-            <Button type="submit" variant="filled" disabled={pending}>
-              {offen.id ? "Speichern" : "Hinzufügen"}
-            </Button>
-          </div>
+          {aufgenommen && <SectionMessage appearance="success">{aufgenommen}</SectionMessage>}
+          <TextField ref={erstesFeld} label="Vorname" autoComplete="off" autoFocus umrandet {...feld("vorname")} error={!!fehlerAn("vorname")} supportingText={fehlerAn("vorname")} />
+          <TextField label="Nachname" autoComplete="off" umrandet {...feld("nachname")} error={!!fehlerAn("nachname")} supportingText={fehlerAn("nachname")} />
+          <TextField label="Jahrgang" inputMode="numeric" umrandet maxLength={JAHRGANG_STELLEN} autoComplete="off" {...feld("jahrgang")} error={!!fehlerAn("jahrgang")} supportingText={fehlerAn("jahrgang")} />
+          <TextField label="J+S-Nummer (optional)" autoComplete="off" umrandet maxLength={JS_MAX} {...feld("jsNummer")} error={!!fehlerAn("js_nummer")} supportingText={fehlerAn("js_nummer")} />
         </form>
-      )}
+      </Dialog>
 
       {spieler.length > 0 ? (
         <div className="mt-4 overflow-hidden rounded-flaeche bg-elev-01">
@@ -199,11 +206,9 @@ export function SpielerListe({
           </ul>
         </div>
       ) : (
-        !offen && (
-          <p className="type-body-medium mt-2 text-on-surface-mittel">
-            Noch niemand auf der Liste. Solange sie leer ist, planst du mit der erwarteten Spielerzahl.
-          </p>
-        )
+        <p className="type-body-medium mt-4 text-on-surface-mittel">
+          Noch niemand auf der Liste. Solange sie leer ist, planst du mit der erwarteten Spielerzahl.
+        </p>
       )}
 
       <Dialog
