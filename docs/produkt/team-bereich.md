@@ -504,9 +504,11 @@ ohne Seitenleiste aus und nennt Teamname und Name der Spieler:in mit dem Satz, d
 Training zuerst angemeldet ist und man sie abmeldet, wenn sie nicht kann, und bis zum Beginn
 wieder anmeldet. Wie im Trainingsplan steht zuoberst „Als Nächstes": der nächste Termin, der
 noch nicht begonnen hat, grösser, mit „Heute" oder „Morgen", der Zahl der Angemeldeten, ob die
-Spieler:in angemeldet ist, und dem Knopf „Abmelden" oder „Wieder anmelden"; abgemeldet steht sein
-Tag rot. Darunter folgen die übrigen anstehenden Termine des Teams — ab heute, ein begonnener noch
-bis Ende seines Tages — unter Monatsüberschriften wie „Oktober 2026", je als Karte mit
+Spieler:in angemeldet ist, und dem Knopf „Abmelden" oder „Wieder anmelden"; abgemeldet steht die
+Karte auf einer leicht roten Fläche, ihr Tag rot und „Wieder anmelden" als heller Knopf. Ein Termin
+von heute, der schon begonnen hat, steht darüber unter „Heute", gesperrt bis Ende des Tages.
+Darunter folgen die übrigen anstehenden Termine des Teams unter Monatsüberschriften wie
+„Oktober 2026", je als Karte mit
 Kalenderblatt, Beginn und Ende, Ort, der Zahl der Angemeldeten und einem Schalter; ist die
 Spieler:in abgemeldet, ist das Kalenderblatt rot. Ein begonnener Termin ist gesperrt mit „Hat
 begonnen · nicht mehr änderbar", ein ausgefallener grau mit „Fällt aus". Wurde ein Termin verlegt,

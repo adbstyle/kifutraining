@@ -47,8 +47,11 @@ export function ElternAnsicht({
   useEffect(() => setLokal({}), [termine]);
 
   const name = spielerName(spieler);
+  // Begonnen sind nur Termine von heute: Sie stehen vor «Als Nächstes», damit
+  // die Seite in der Zeitfolge bleibt.
+  const begonnen = termine.filter((t) => t.begonnen);
   const naechster = termine.find((t) => !t.begonnen);
-  const uebrige = termine.filter((t) => t !== naechster);
+  const uebrige = termine.filter((t) => !t.begonnen && t !== naechster);
 
   function umlegen(t: LinkTermin, an: boolean) {
     setLokal((l) => ({ ...l, [t.id]: !an }));
@@ -115,6 +118,16 @@ export function ElternAnsicht({
         </div>
       ) : (
         <div className="flex flex-col gap-4 px-4 py-4">
+          {begonnen.length > 0 && (
+            <section>
+              <h2 className="type-title-small text-on-surface">Heute</h2>
+              <ul className="mt-2 flex flex-col gap-2">
+                {begonnen.map((t) => (
+                  <TerminKarte key={t.id} t={t} {...stand(t)} name={name} pending={pending} onUmlegen={(an) => umlegen(t, an)} hinweise={hinweise(t, stand(t).ab)} />
+                ))}
+              </ul>
+            </section>
+          )}
           {naechster && naechsterStand && (
             <NaechsterTermin
               t={naechster}
@@ -130,34 +143,9 @@ export function ElternAnsicht({
             <section key={m.monat}>
               <h2 className="type-title-small text-on-surface">{monatsName(m.monat)}</h2>
               <ul className="mt-2 flex flex-col gap-2">
-                {m.tage.flatMap((tag) => tag.termine).map((t) => {
-                  const { ab, zweite } = stand(t);
-                  return (
-                    <li key={t.id} className="flex flex-col gap-2 rounded-flaeche bg-elev-01 px-3 py-2.5">
-                      <div className="flex items-center gap-3">
-                        <Kalenderblatt
-                          datum={t.datum}
-                          zustand={t.ausgefallen ? "ausgefallen" : ab ? "abgemeldet" : "training"}
-                          className="self-center"
-                        />
-                        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                          <span className="type-body-medium text-on-surface">
-                            {t.beginn}–{t.ende}
-                          </span>
-                          <span className="type-body-small truncate text-on-surface-mittel">{zweite}</span>
-                        </div>
-                        <Switch
-                          checked={!t.ausgefallen && !ab}
-                          neutral={t.ausgefallen}
-                          disabled={t.ausgefallen || t.begonnen || pending}
-                          onChange={(e) => umlegen(t, e.target.checked)}
-                          aria-label={`${name} am ${tagText(t.datum)} dabei`}
-                        />
-                      </div>
-                      {hinweise(t, ab)}
-                    </li>
-                  );
-                })}
+                {m.tage.flatMap((tag) => tag.termine).map((t) => (
+                  <TerminKarte key={t.id} t={t} {...stand(t)} name={name} pending={pending} onUmlegen={(an) => umlegen(t, an)} hinweise={hinweise(t, stand(t).ab)} />
+                ))}
               </ul>
             </section>
           ))}
@@ -167,30 +155,51 @@ export function ElternAnsicht({
   );
 }
 
+type KarteProps = {
+  t: LinkTermin;
+  ab: boolean;
+  zweite: string;
+  name: string;
+  pending: boolean;
+  onUmlegen: (an: boolean) => void;
+  hinweise: React.ReactNode;
+};
+
+/* Ein Termin in der Liste: Kalenderblatt, Zeit, zweite Zeile und Schalter. */
+function TerminKarte({ t, ab, zweite, name, pending, onUmlegen, hinweise }: KarteProps) {
+  return (
+    <li className="flex flex-col gap-2 rounded-flaeche bg-elev-01 px-3 py-2.5">
+      <div className="flex items-center gap-3">
+        <Kalenderblatt
+          datum={t.datum}
+          zustand={t.ausgefallen ? "ausgefallen" : ab ? "abgemeldet" : "training"}
+          className="self-center"
+        />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="type-body-medium text-on-surface">
+            {t.beginn}–{t.ende}
+          </span>
+          <span className="type-body-small truncate text-on-surface-mittel">{zweite}</span>
+        </div>
+        <Switch
+          checked={!t.ausgefallen && !ab}
+          neutral={t.ausgefallen}
+          disabled={t.ausgefallen || t.begonnen || pending}
+          onChange={(e) => onUmlegen(e.target.checked)}
+          aria-label={`${name} am ${tagText(t.datum)} dabei`}
+        />
+      </div>
+      {hinweise}
+    </li>
+  );
+}
+
 /* Der nächste Termin, der noch nicht begonnen hat — wie im Trainingsplan
    grösser und auf einer höheren Fläche (#403), dazu ein Knopf statt des
    Schalters: «Abmelden» oder «Wieder anmelden». Abgemeldet steht die Karte
    zurückgenommen im Fehlerton, der Tag in der Fehlerfarbe, und «Wieder
    anmelden» ist der helle Knopf. */
-function NaechsterTermin({
-  t,
-  ab,
-  zweite,
-  name,
-  heute,
-  pending,
-  onUmlegen,
-  hinweise,
-}: {
-  t: LinkTermin;
-  ab: boolean;
-  zweite: string;
-  name: string;
-  heute: string;
-  pending: boolean;
-  onUmlegen: (an: boolean) => void;
-  hinweise: React.ReactNode;
-}) {
+function NaechsterTermin({ t, ab, zweite, name, heute, pending, onUmlegen, hinweise }: KarteProps & { heute: string }) {
   const relativ = t.datum === heute ? "Heute" : t.datum === plusTage(heute, 1) ? "Morgen" : null;
   return (
     <section aria-labelledby="als-naechstes">
@@ -215,17 +224,31 @@ function NaechsterTermin({
             {t.beginn}–{t.ende} Uhr
           </p>
           <p className="type-body-medium mt-1 text-on-surface-mittel">{zweite}</p>
-          <p className="type-body-medium mt-1 text-on-surface">
-            {t.ausgefallen ? null : ab ? `${name} ist abgemeldet.` : `${name} ist angemeldet.`}
-          </p>
+          {!t.ausgefallen && (
+            <p className="type-body-medium mt-1 text-on-surface">
+              {ab ? `${name} ist abgemeldet.` : `${name} ist angemeldet.`}
+            </p>
+          )}
         </div>
         {!t.ausgefallen &&
           (ab ? (
-            <Button variant="hell" className="self-start" disabled={pending} onClick={() => onUmlegen(true)}>
+            <Button
+              variant="hell"
+              className="self-start"
+              disabled={pending}
+              onClick={() => onUmlegen(true)}
+              aria-label={`${name} am ${tagText(t.datum)} wieder anmelden`}
+            >
               Wieder anmelden
             </Button>
           ) : (
-            <Button variant="outlined" className="self-start" disabled={pending} onClick={() => onUmlegen(false)}>
+            <Button
+              variant="outlined"
+              className="self-start"
+              disabled={pending}
+              onClick={() => onUmlegen(false)}
+              aria-label={`${name} am ${tagText(t.datum)} abmelden`}
+            >
               Abmelden
             </Button>
           ))}
