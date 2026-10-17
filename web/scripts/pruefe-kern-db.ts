@@ -73,8 +73,9 @@ const { legeSerieFest, aendereSerie, entferneSerie, folgeDerSerie, aendereMitRei
   await import("../lib/kern/serien");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
 const { getTeamPlanFuer } = await import("../lib/queries/termine-fuer");
-const { ladeSpielerliste, nimmSpielerAuf, aendereSpieler, entferneSpieler, holeSpielerLink, erneuereSpielerLink, leseAbholung, schalteAbholung, erneuereAbholung } =
+const { ladeSpielerliste, nimmSpielerAuf, aendereSpieler, entferneSpieler, holeSpielerLink, erneuereSpielerLink, leseAbholung, schalteAbholung, erneuereAbholung, pruefeSpielerImport, importiereSpieler } =
   await import("../lib/kern/spieler");
+const { IMPORT_TEXT, erwartetVon } = await import("../lib/spieler-import");
 const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, abweisungText, spielerzahlVon } = await import("../lib/spieler");
 const { setzeAbmeldung, terminSpieler } = await import("../lib/kern/abmeldungen");
 const { getTeamTrainingsFuer } = await import("../lib/queries/trainings-fuer");
@@ -3849,6 +3850,58 @@ try {
     const viele = Array.from({ length: 199 }, (_, i) => ({ team_id: team, vorname: `Kind${i}`, nachname: "Viele", jahrgang: 2017 }));
     assert.equal((await admin.from("spieler").insert(viele)).error, null);
     fehler(await nimmSpielerAuf(a.supabase, a.id, { teamId: team, vorname: "Zuviel", nachname: "X", jahrgang: 2017 }), "regel", SPIELER_MELDUNG.SPIELERLISTE_VOLL);
+  });
+
+  await pruefe("CSV-Import: Vorschau schreibt nicht, letzte Zeile gewinnt, Übernahme nur mit passender Vorschau (#455)", async () => {
+    const team = await serienTeam("Kern-DB-Spieler-Import");
+    const bald = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", spielerzahl: 12 })).terminId;
+    const zeilen = [
+      { zeile: 2, vorname: "Lina Marie", nachname: "Aebi", jahrgang: 2016, jsNummer: "100517283" },
+      { zeile: 3, vorname: "Zoe", nachname: "Gerber", jahrgang: 2016, jsNummer: null },
+      { zeile: 4, vorname: "Zoe", nachname: "Gerber", jahrgang: 2016, jsNummer: "2734410" },
+    ];
+    const v = wert(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen }));
+    assert.deepEqual(v, { neu: [2, 4], js: [], gleich: [], bestand: 0 }, "AK 21: die letzte Zeile gewinnt");
+    assert.equal((await spielerVon(team)).length, 0, "die Vorschau schreibt nicht");
+    assert.deepEqual(wert(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen, erwartet: erwartetVon(v) })), { teamId: team, neu: 2, js: 0, ersetzt: 1 });
+    assert.deepEqual((await spielerVon(team)).map((x) => [x.vorname, x.js_nummer]), [["Lina Marie", "100517283"], ["Zoe", "2734410"]]);
+    assert.equal(spielerzahlVon(await standVon(team, bald)).quelle, "liste", "die erste Spieler:in ersetzt die erwartete Zahl");
+
+    // Weiterer Import: J+S-Nummer ändert sich, leere Zelle löscht nichts, neu, unverändert.
+    const folge = [
+      { zeile: 2, vorname: "lina marie", nachname: "AEBI", jahrgang: 2016, jsNummer: null },
+      { zeile: 3, vorname: "Zoe", nachname: "Gerber", jahrgang: 2016, jsNummer: "100388164" },
+      { zeile: 5, vorname: "Ronja", nachname: "Bühlmann", jahrgang: 2016, jsNummer: null },
+    ];
+    const v2 = wert(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen: folge }));
+    assert.deepEqual(v2, { neu: [5], js: [{ zeile: 3, alt: "2734410" }], gleich: [2], bestand: 2 });
+    // AK 27: Ein anderes Mitglied nimmt Ronja inzwischen auf — nichts wird übernommen.
+    await neuerSpieler(team, "Ronja", "Bühlmann", 2016);
+    fehler(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen: folge, erwartet: erwartetVon(v2) }), "konflikt", IMPORT_TEXT.geaendert);
+    assert.equal((await spielerVon(team)).find((x) => x.vorname === "Zoe")!.js_nummer, "2734410", "ganz oder gar nicht");
+    const v3 = wert(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen: folge }));
+    assert.deepEqual(wert(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen: folge, erwartet: erwartetVon(v3) })), { teamId: team, neu: 0, js: 1, ersetzt: 0 });
+    assert.deepEqual((await spielerVon(team)).map((x) => [x.vorname, x.js_nummer]), [["Lina Marie", "100517283"], ["Ronja", null], ["Zoe", "100388164"]]);
+
+    // Nur Mitglieder, nur gültige Angaben.
+    fehler(await pruefeSpielerImport(b.supabase, b.id, { teamId: team, zeilen }), "nicht_gefunden");
+    fehler(await importiereSpieler(b.supabase, b.id, { teamId: team, zeilen, erwartet: { neu: [], js: [] } }), "nicht_gefunden");
+    fehler(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen: [{ ...zeilen[0], vorname: " " }] }), "eingabe", SPIELER_TEXT.vorname);
+    fehler(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen: [{ ...zeilen[0], jsNummer: "k.A." }] }), "eingabe", IMPORT_TEXT.js("k.A."));
+  });
+
+  await pruefe("CSV-Import: über 200 übernimmt nichts (#455 AK 22)", async () => {
+    const team = await serienTeam("Kern-DB-Spieler-Import-Voll");
+    const viele = Array.from({ length: 199 }, (_, i) => ({ team_id: team, vorname: `Kind${i}`, nachname: "Viele", jahrgang: 2017 }));
+    assert.equal((await admin.from("spieler").insert(viele)).error, null);
+    const zeilen = [
+      { zeile: 2, vorname: "Eins", nachname: "Neu", jahrgang: 2016, jsNummer: null },
+      { zeile: 3, vorname: "Zwei", nachname: "Neu", jahrgang: 2016, jsNummer: null },
+    ];
+    const v = wert(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen }));
+    assert.equal(v.bestand + v.neu.length, 201);
+    fehler(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen, erwartet: erwartetVon(v) }), "regel", IMPORT_TEXT.zuGross);
+    assert.equal((await spielerVon(team)).length, 199);
   });
 
   await pruefe("Spielerliste ersetzt die erwartete Zahl: erste Aufnahme leert sie an anstehenden Terminen und Serien (#434 AK 8, 9, PC 1, 2)", async () => {

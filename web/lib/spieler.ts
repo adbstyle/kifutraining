@@ -37,6 +37,8 @@ export const SPIELER_MELDUNG = {
   SPIELER_NICHT_GEFUNDEN: "Spieler:in nicht gefunden.",
   SPIELERLISTE_FUEHRT_ZAHL:
     "Das Team führt eine Spielerliste: Die Spielerzahl anstehender Termine kommt aus ihr und lässt sich nicht von Hand festlegen.",
+  /** Der Import trifft eine andere Liste als seine Vorschau (#455 AK 27). */
+  SPIELERLISTE_GEAENDERT: "Die Spielerliste hat sich inzwischen geändert. Wähle die Datei erneut.",
 } as const;
 
 /** Die CHECKs der Spielerliste, samt Anführungszeichen gesucht (wie

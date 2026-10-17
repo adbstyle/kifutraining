@@ -11,8 +11,16 @@ import {
   type Spieler,
   type SpielerEingabe,
 } from "@/lib/spieler";
+import {
+  IMPORT_TEXT,
+  IMPORT_ZEILEN_MAX,
+  jsAus,
+  type ImportEintrag,
+  type ImportErwartet,
+  type ImportVorschau,
+} from "@/lib/spieler-import";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
-import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
+import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 
 /**
  * Die Spielerliste eines Teams (Epic #433, Story #434): einsehen, aufnehmen,
@@ -217,4 +225,77 @@ export async function leseAbholung(
   const { data, error } = await supabase.from("team_abholung").select("token, aktiv").eq("team_id", e.teamId).maybeSingle<AbholRoh>();
   if (error) return ausDbFehler(error);
   return ok({ teamId: e.teamId, token: data?.token ?? null, aktiv: data?.aktiv ?? false });
+}
+
+// ── Import aus einer Datei (Story #455) ─────────────────────────────────────
+
+/** Die Zeilen, wie sie aus dem Browser kommen, geprüft wie beim einzelnen
+ *  Aufnehmen und auf eine J+S-Nummer aus Ziffern (#455 AK 17, 19). */
+function importFehler(zeilen: ImportEintrag[]): KernFehler | null {
+  if (zeilen.length > IMPORT_ZEILEN_MAX) return fehlschlag("regel", IMPORT_TEXT.zuGross);
+  // Die Zeilennummer trägt die Einordnung zwischen Vorschau und Übernahme.
+  const nummern = zeilen.map((z) => z.zeile);
+  if (!nummern.every((n) => Number.isInteger(n) && n > 0) || new Set(nummern).size !== nummern.length)
+    return fehlschlag("eingabe", MELDUNG_WIEDERHOLEN);
+  for (const z of zeilen) {
+    const p = spielerProblem(z);
+    if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
+    if (z.jsNummer !== null && jsAus(z.jsNummer).wert !== z.jsNummer)
+      return fehlschlag("eingabe", IMPORT_TEXT.js(z.jsNummer), { feld: "js_nummer" });
+  }
+  return null;
+}
+
+function importArgumente(teamId: string, zeilen: ImportEintrag[]) {
+  return {
+    p_team: teamId,
+    p_zeilen: zeilen.map((z) => ({
+      zeile: z.zeile,
+      vorname: bereinigeName(z.vorname),
+      nachname: bereinigeName(z.nachname),
+      jahrgang: jahrgangAus(z.jahrgang),
+      js: z.jsNummer,
+    })),
+  };
+}
+
+function importDbFehler(e: { message: string; code?: string }): KernFehler {
+  if (e.message.includes("SPIELERLISTE_GEAENDERT")) return fehlschlag("konflikt", IMPORT_TEXT.geaendert);
+  if (e.message.includes("SPIELERLISTE_VOLL")) return fehlschlag("regel", IMPORT_TEXT.zuGross);
+  return spielerFehler(e);
+}
+
+/** Die Vorschau eines Imports (#455 AK 15, 16): Wer neu ist, wer eine neue
+ *  J+S-Nummer erhält, wer unverändert bleibt — ohne zu schreiben. */
+export async function pruefeSpielerImport(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { teamId: string; zeilen: ImportEintrag[] },
+): Promise<KernErgebnis<ImportVorschau>> {
+  const problem = importFehler(e.zeilen);
+  if (problem) return problem;
+  if (!istUuid(e.teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
+  const { data, error } = await supabase.rpc("spieler_importieren", importArgumente(e.teamId, e.zeilen));
+  if (error) return importDbFehler(error);
+  return ok(data as ImportVorschau);
+}
+
+/** Den Import übernehmen, ganz oder gar nicht (#455 AK 25–27, PC 1–4) —
+ *  nur, wenn die Datenebene dieselbe Einordnung sieht wie die bestätigte
+ *  Vorschau. `ersetzt`: anstehende Termine, die ihre erwartete Zahl verloren. */
+export async function importiereSpieler(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { teamId: string; zeilen: ImportEintrag[]; erwartet: ImportErwartet },
+): Promise<KernErgebnis<{ teamId: string; neu: number; js: number; ersetzt: number }>> {
+  const problem = importFehler(e.zeilen);
+  if (problem) return problem;
+  if (!istUuid(e.teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
+  const { data, error } = await supabase.rpc("spieler_importieren", {
+    ...importArgumente(e.teamId, e.zeilen),
+    p_erwartet: { neu: e.erwartet.neu, js: e.erwartet.js },
+  });
+  if (error) return importDbFehler(error);
+  const r = data as { neu: number; js: number; ersetzt: number };
+  return ok({ teamId: e.teamId, ...r });
 }
