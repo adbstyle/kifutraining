@@ -13,12 +13,22 @@ export function SpielerzahlField({
   onChange,
   fehler,
   disabled,
+  ausListe,
 }: {
   wert: string;
   onChange: (wert: string) => void;
   fehler?: string;
   disabled?: boolean;
+  /** Das Team führt eine Spielerliste: Die Zahl kommt aus ihr und lässt sich
+   *  hier nicht festlegen (#434 AK 9). Statt des Felds steht der Grund. */
+  ausListe?: boolean;
 }) {
+  if (ausListe)
+    return (
+      <p className="type-body-small text-on-surface-mittel">
+        Die Spielerzahl kommt aus der Spielerliste des Teams.
+      </p>
+    );
   return (
     <TextField
       label="Erwartete Spielerzahl (optional)"

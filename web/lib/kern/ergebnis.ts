@@ -102,6 +102,9 @@ export type KernFehler = {
    *  ersten (#143 AK 6) — dann bleiben `feld` und `zulaessig` oben leer.
    *  Nie eine leere Liste. */
   verstoesse?: readonly Verstoss[];
+  /** Nur bei `feld: "bestaetigt"` wegen einer Verlegung: wie viele
+   *  Abmeldungen damit verfallen (#437 AK 1) — die Oberfläche fragt nach. */
+  verfallend?: number;
   /** Zusatz nur für den Assistenten (die Oberfläche zeigt ihn nie), etwa
    *  «Es ist keine Kopie entstanden.» */
   hinweis?: string;

@@ -660,6 +660,7 @@ pruefe("fehlerErgebnis: jedes gesetzte Feld eines Kern-Fehlers kommt an", () => 
     fremd: true,
     verstoesse: [{ feld: "kategorien", meldung: "m", zulaessig: ["G"] }],
     hinweis: "Es ist keine Kopie entstanden.",
+    verfallend: 2,
   };
   const aussen = (k: string) =>
     k === "retryAfter" ? "retry_after" : k === "varianteId" ? "variante_id" : k;

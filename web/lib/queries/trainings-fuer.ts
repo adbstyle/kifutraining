@@ -10,6 +10,7 @@ import { FASSUNG_INHALT_FELDER, FASSUNG_ZUORDNUNG_FELDER } from "@/lib/fassung";
 import type { Variante } from "@/lib/varianten";
 import { kurzeZeit, nachName } from "@/lib/queries/termine-fuer";
 import type { Felder } from "@/lib/termin-felder";
+import type { Spielstand } from "@/lib/spieler";
 import { parseMaterialBasis, parseMaterialListe, type MaterialPosten } from "@/lib/material";
 
 // Trainings lesen für einen Client, der bereits als Nutzer spricht (Cookie-
@@ -517,6 +518,8 @@ export type TeamTrainingRow = TrainingListRow & {
     felder: Felder | null;
     /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
     spielerzahl: number | null;
+    /** Die Spielerzahl aus der Spielerliste (#434); `null` ohne Liste. */
+    spielstand: Spielstand;
     /** Die Terminserie, zu der der Termin gehört; `null` bei einem einzelnen. */
     serieId: string | null;
     /** Wer den Termin vorbereitet und leitet (#325 AK 16); `userId` und `name`
@@ -530,7 +533,7 @@ export type TeamTrainingRow = TrainingListRow & {
 };
 
 const TEAM_LIST_SELECT =
-  `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, serie_id, ausgefallen, ausfall_grund, ` +
+  `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, serie_id, ausgefallen, ausfall_grund, ` +
   "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ) )";
 
 export type TeamTrainingFilter = {
@@ -587,6 +590,7 @@ export async function getTeamTrainingsFuer(
       bemerkung: string | null;
       felder: Felder | null;
       erwartete_spielerzahl: number | null;
+      spielstand: Spielstand;
       serie_id: string | null;
       ausgefallen: boolean;
       ausfall_grund: string | null;
@@ -613,6 +617,7 @@ export async function getTeamTrainingsFuer(
             bemerkung: termin.bemerkung,
             felder: termin.felder,
             spielerzahl: termin.erwartete_spielerzahl,
+            spielstand: termin.spielstand ?? null,
             serieId: termin.serie_id,
             ausgefallen: termin.ausgefallen,
             ausfallGrund: termin.ausfall_grund,

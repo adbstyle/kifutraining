@@ -2,6 +2,7 @@
 
 import { TriangleAlert } from "lucide-react";
 import { Button, Dialog } from "@/components/ui";
+import { verfallDialogText } from "@/lib/spieler";
 import { trainingOhneTermin } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { SerienFolge } from "@/lib/kern/serien";
@@ -11,6 +12,9 @@ import type { SerienFolge } from "@/lib/kern/serien";
    Training geschieht: Ein Termin-Training wird mitgelöscht, ein Training aus
    dem Bestand bleibt dort (PO 2026-10-06). Eine Anzahl nennt der Dialog
    nicht (OoS 4).
+
+   Verfallen durch die Änderung Abmeldungen (#437 AK 1), sagt es derselbe
+   Dialog — auch, wenn keine Termine wegfallen.
 
    `SerienFolge` ist ein reiner Typ: `import type` zieht nichts aus dem
    server-only Fachkern in das Client-Bundle. */
@@ -27,11 +31,13 @@ export function EntfallendBestaetigung({
   onClose: () => void;
   onBestaetigen: () => void;
 }) {
+  const wegfall = aktion === "entfernen" || (folge?.entfallendAnzahl ?? 0) > 0;
+  const verfall = folge?.abmeldungenVerfallend ?? 0;
   return (
     <Dialog
       open={folge !== null}
       onClose={onClose}
-      title={aktion === "entfernen" ? "Termine entfernen?" : "Termine fallen weg"}
+      title={aktion === "entfernen" ? "Termine entfernen?" : wegfall ? "Termine fallen weg" : "Abmeldungen verfallen"}
       actions={
         <>
           <Button variant="text" onClick={onClose}>Abbrechen</Button>
@@ -41,10 +47,12 @@ export function EntfallendBestaetigung({
         </>
       }
     >
-      <p className="flex items-start gap-2">
-        <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0 text-error" />
-        Termine der Serie fallen damit weg.
-      </p>
+      {wegfall && (
+        <p className="flex items-start gap-2">
+          <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0 text-error" />
+          Termine der Serie fallen damit weg.
+        </p>
+      )}
       {folge && folge.entfallend.length > 0 && (
         <>
           <p className="mt-3">Diese tragen ein Training:</p>
@@ -57,6 +65,12 @@ export function EntfallendBestaetigung({
             ))}
           </ul>
         </>
+      )}
+      {verfall > 0 && (
+        <p className={wegfall ? "mt-3" : "flex items-start gap-2"}>
+          {!wegfall && <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0 text-icon-warning" />}
+          <span>{verfallDialogText(verfall)}</span>
+        </p>
       )}
     </Dialog>
   );

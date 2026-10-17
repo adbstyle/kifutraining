@@ -43,7 +43,8 @@ import { bearbeitungszielVon } from "@/lib/training-zugriff";
 import { sichtbarkeitVon, wert, wertOderNull } from "@/lib/wert";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings-fuer";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
-import { felderAusgabe } from "@/lib/termin-felder-ausgabe";
+import { felderAusgabe, spielerzahlQuelleAusgabe } from "@/lib/termin-felder-ausgabe";
+import { spielerzahlVon } from "@/lib/spieler";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 import { GESAMTDAUER_JUNIOREN, gesamtAbgleich, zeitAbgleich } from "@/lib/junioren";
 import type {
@@ -255,6 +256,7 @@ export function trainingAuskunft(
           bemerkung: k.termin.bemerkung,
           felder: felderAusgabe(k.termin.felder),
           erwartete_spielerzahl: k.termin.spielerzahl,
+          spielerzahl: spielerzahlQuelleAusgabe(spielerzahlVon(k.termin)),
           serie_id: k.termin.serie?.id ?? null,
           verantwortliche: k.termin.verantwortliche.map((v) => ({
             id: v.userId,

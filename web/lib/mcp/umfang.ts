@@ -15,6 +15,7 @@ export const ZUGANG_DARF: readonly string[] = [
   "Trainings anlegen, überarbeiten, veröffentlichen, zurückziehen, übernehmen und löschen",
   "Team-Trainings deiner Teams führen und im Kalender deiner Teams Termine und Terminserien samt Platz und erwarteter Spielerzahl festlegen, ändern und entfernen, ihnen als Kopie Trainings aus dem Team oder deine persönlichen Trainings zuordnen und sie wieder lösen, Verantwortliche eintragen, Ausfälle festhalten und zurücknehmen sowie die Termine eines Zeitraums abrufen",
   "die Anzeigenamen der Mitglieder deiner Teams lesen (ohne E-Mail-Adressen)",
+  "die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen und führen, Spieler:innen für Termine ab- und wieder anmelden und sehen, wer angemeldet ist, den privaten Link einer Spieler:in holen und erneuern, die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche Links bezogen wurden",
 ];
 
 export const ZUGANG_DARF_NICHT: readonly string[] = [

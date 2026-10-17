@@ -16,8 +16,11 @@ import {
   SpielerzahlEingabe,
   felderAusgabe,
   felderSchema,
+  spielerzahlQuelleAusgabe,
+  spielerzahlQuelleSchema,
   spielerzahlSchema,
 } from "@/lib/termin-felder-ausgabe";
+import { spielerzahlVon } from "@/lib/spieler";
 import {
   KENNUNG_FEHLER,
   TEAM_KENNUNG_FEHLER,
@@ -81,6 +84,21 @@ const Bestaetigt = z
   .optional()
   .describe("Nur nötig, wenn «dieser_und_folgende» oder «alle» vergangene Termine erfasst oder entfallen lässt.");
 
+/** Beim Verlegen: Abmeldungen verfallen erst nach Bestätigung (#437 AK 1, 6). */
+const VERFALL_MODELL =
+  "Ändern sich Datum oder Beginn eines Termins und hat er danach noch nicht begonnen, verfallen seine Abmeldungen: " +
+  "Alle Spieler:innen gelten wieder als angemeldet (auch über die Serie, auch an einem ausgefallenen Termin). " +
+  "Verfallen dadurch Abmeldungen, kommt zuerst ein Fehler mit «verfallend» (Anzahl); frag nach und wiederhole den " +
+  "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Felder, Verantwortliche und Training lassen sie stehen.";
+
+const BestaetigtVerlegen = z
+  .boolean()
+  .optional()
+  .describe(
+    "Nur nötig, wenn «dieser_und_folgende» oder «alle» vergangene Termine erfasst oder entfallen lässt, oder wenn durch " +
+      "die Änderung Abmeldungen verfallen.",
+  );
+
 /** Was jede Beschreibung eines Serien-Werkzeugs über das Modell sagt. */
 const SERIEN_MODELL =
   "Eine Terminserie läuft wöchentlich an einem oder mehreren Wochentagen zwischen Beginn- und " +
@@ -141,6 +159,8 @@ const PlanEintrag = z.object({
   felder: felderSchema(),
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
   erwartete_spielerzahl: spielerzahlSchema(),
+  /** Die Spielerzahl, mit der geplant wird, samt Quelle (#434 AK 12). */
+  spielerzahl: spielerzahlQuelleSchema(),
   /** `null`: ein einzelner Termin ohne Serie (#324). */
   serie_id: z.string().nullable(),
   /** Die Angaben, in denen der Termin von seiner Serie abweicht; leer ohne Serie. */
@@ -165,6 +185,7 @@ function planEintrag(t: TerminZeile, zugang: Zugang) {
     bemerkung: t.bemerkung,
     felder: felderAusgabe(t.felder),
     erwartete_spielerzahl: t.spielerzahl,
+    spielerzahl: spielerzahlQuelleAusgabe(spielerzahlVon(t)),
     serie_id: t.serie?.id ?? null,
     abweichungen: t.abweichungen,
     verantwortliche: t.verantwortliche.map((v) => ({ id: v.userId, anzeigename: v.name, ehemalig: v.ehemalig })),
@@ -226,7 +247,8 @@ export const teamPlanAbrufen = werkzeug({
     "heute, aufsteigend; der heutige Tag zählt ganz dazu) und «vergangen» (der jüngste zuerst). " +
     "«heute» ist der Tag, an dem geteilt wurde - gemessen am Trainingsort (Schweiz), nicht in deiner " +
     "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung, die Felder " +
-    "des Platzes, die erwartete Spielerzahl und das zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
+    "des Platzes, die erwartete Spielerzahl, «spielerzahl» (die Zahl, mit der geplant wird, samt Quelle - aus der Spielerliste, " +
+    "sobald das Team eine führt) und das zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
     "Termin ohne Training, der nicht ausgefallen ist, ist noch nicht vorbereitet. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
     "Ort, Bemerkung, Verantwortliche, Felder und erwartete Spielerzahl jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
     "von ihr abweicht. Jeder Eintrag nennt seine Verantwortlichen; «nur_meine» grenzt auf deine ein. " +
@@ -335,7 +357,7 @@ export const AendernEingabe = z.object({
     "Neues Beginndatum der Serie (nur mit «dieser_und_folgende» oder «alle»; bei «dieser_und_folgende» frühestens am gewählten Termin).",
   ),
   bis: DATUM.optional().describe("Neues Enddatum der Serie (nur mit «dieser_und_folgende» oder «alle»)."),
-  bestaetigt: Bestaetigt,
+  bestaetigt: BestaetigtVerlegen,
 });
 
 const EntfallenMitTraining = z.array(
@@ -378,13 +400,14 @@ export const terminAendern = werkzeug({
     "zugeordnete Training bleibt dasselbe. Für einen Termin einer Serie ist «reichweite» Pflicht; " +
     "das Datum ändert nur «nur_dieser», Wochentage und Zeitraum nur «dieser_und_folgende» oder " +
     "«alle». Das Ergebnis nennt entfallene Termine mit Training; Termin-Trainings gehen mit ihnen, " +
-    `andere bleiben im Bestand. ${SERIEN_MODELL} ${TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
+    `andere bleiben im Bestand. ${VERFALL_MODELL} ${SERIEN_MODELL} ${TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: AendernEingabe,
   ausgabe: z.object({
     termin_id: z.string(),
     serie_id: z.string().nullable().describe("Bei «dieser_und_folgende» die neue Teilserie."),
     entfallen_mit_training: EntfallenMitTraining,
+    abmeldungen_verfallen: z.number().int().describe("Wie viele Abmeldungen die Änderung verfallen liess."),
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
@@ -407,6 +430,7 @@ export const terminAendern = werkzeug({
         termin_id: w.terminId,
         serie_id: w.serie?.serieId ?? null,
         entfallen_mit_training: entfallenMitTraining(w.serie),
+        abmeldungen_verfallen: w.abmeldungenVerfallen,
       }),
     ),
 });
@@ -499,15 +523,16 @@ export const terminDerSerieFolgen = werkzeug({
   beschreibung:
     "Lässt abweichende Angaben eines Serientermins wieder seiner Serie folgen: Zeit, Ort, " +
     "Bemerkung, Verantwortliche, Felder oder erwartete Spielerzahl («spielerzahl») übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
-    `lässt sich nicht zurücksetzen («datum» wird abgewiesen). ${TERMIN_KENNUNG_FEHLER}`,
+    `lässt sich nicht zurücksetzen («datum» wird abgewiesen). ${VERFALL_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     termin_id: TerminId,
     angaben: z.array(z.enum(["zeit", "ort", "bemerkung", "verantwortliche", "felder", "spielerzahl", "datum"])).min(1),
+    bestaetigt: z.boolean().optional().describe("Nur nötig, wenn mit «zeit» Abmeldungen verfallen."),
   }),
   ausgabe: z.object({ termin_id: z.string() }),
   ausfuehren: async (e, zugang) =>
-    abgebildet(await folgeDerSerie(zugang.supabase, zugang.userId, { terminId: e.termin_id, angaben: e.angaben }), (w) => ({
+    abgebildet(await folgeDerSerie(zugang.supabase, zugang.userId, { terminId: e.termin_id, angaben: e.angaben, bestaetigt: e.bestaetigt }), (w) => ({
       termin_id: w.terminId,
     })),
 });

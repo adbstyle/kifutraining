@@ -23,6 +23,21 @@ const nextConfig: NextConfig = {
           { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
         ],
       },
+      // Hinter einem privaten Link (#436) und der Abholadresse (#438) ist der
+      // Pfad das Geheimnis: nicht
+      // als Referrer weitergeben, nicht indexieren, nirgends zwischenspeichern.
+      // Ohne Rahmen wie die Erlauben-Seite — ein Schalter liesse sich sonst
+      // unterschieben.
+      ...["/abmelden/:pfad*", "/abholen/:pfad*"].map((source) => ({
+        source,
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Cache-Control", value: "private, no-store" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+        ],
+      })),
     ];
   },
   images: {

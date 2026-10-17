@@ -10,7 +10,8 @@ import { cn } from "@/lib/cn";
 import { SeitenKopf } from "@/components/layout/SeitenKopf";
 import { leseGliederung, formatDuration } from "@/lib/training";
 import { datumKurz } from "@/lib/zeit";
-import { spielerzahlText, zeitText } from "@/lib/termin";
+import { zeitText } from "@/lib/termin";
+import { spielerzahlLang, type Spielerzahl } from "@/lib/spieler";
 import { feldName, feldText, type Felder } from "@/lib/termin-felder";
 import {
   VARIANTE_PARAM,
@@ -30,8 +31,8 @@ type TerminKontext = {
   verantwortliche: string[];
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: Felder | null;
-  /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
-  spielerzahl: number | null;
+  /** Aus der Spielerliste oder erwartet (#390, #434). */
+  spielerzahl: Spielerzahl;
 };
 
 /** Datum, Beginn und Ende, Ort, Verantwortliche, erwartete Spielerzahl,
@@ -61,10 +62,10 @@ function TerminKopf({ termin, className }: { termin: TerminKontext; className?: 
           {termin.verantwortliche.join(", ")}
         </span>
       )}
-      {termin.spielerzahl !== null && (
+      {spielerzahlLang(termin.spielerzahl) && (
         <span className="inline-flex items-center gap-1.5">
           <Shirt size={14} strokeWidth={2} aria-hidden />
-          {spielerzahlText(termin.spielerzahl)} erwartet
+          {spielerzahlLang(termin.spielerzahl)}
         </span>
       )}
       {termin.felder && (

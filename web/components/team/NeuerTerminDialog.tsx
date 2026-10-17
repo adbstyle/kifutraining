@@ -10,6 +10,7 @@ import { VerantwortlicheWahl, type VerantwortlicheWert } from "./Verantwortliche
 import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
 import { usePlatzAngaben } from "./usePlatzAngaben";
+import { terminBegonnen } from "@/lib/zeit";
 
 export type SerieFelder = {
   wochentage: Wochentag[];
@@ -53,6 +54,7 @@ export function NeuerTerminDialog({
   pending,
   fehler: serverFehler,
   mitglieder,
+  fuehrtListe,
   onClose,
   onSpeichern,
 }: {
@@ -60,6 +62,8 @@ export function NeuerTerminDialog({
   pending?: boolean;
   fehler?: string;
   mitglieder: readonly TeamMitglied[];
+  /** Das Team führt eine Spielerliste (#434): kein Feld für die Spielerzahl. */
+  fuehrtListe?: boolean;
   onClose: () => void;
   onSpeichern: (t: NeuerTermin) => void;
 }) {
@@ -190,7 +194,12 @@ export function NeuerTerminDialog({
           onChange={(w) => setze("verantwortliche", w.userIds)}
           disabled={pending}
         />
-        <SpielerzahlField {...platz.spielerzahlProps} disabled={pending} />
+        {/* Ein einzelner Termin, der schon begonnen hat, nimmt die erwartete Zahl an (Migration spielerliste). */}
+        <SpielerzahlField
+          {...platz.spielerzahlProps}
+          disabled={pending}
+          ausListe={!!fuehrtListe && (wiederholen || !f.von || !f.beginn || !terminBegonnen(f.von, f.beginn))}
+        />
         <FelderField {...platz.felderProps} disabled={pending} />
       </div>
     </Dialog>

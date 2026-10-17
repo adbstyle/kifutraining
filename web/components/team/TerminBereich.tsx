@@ -7,6 +7,7 @@ import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { AusfallDialog } from "./AusfallDialog";
 import { EntfallendBestaetigung } from "./EntfallendBestaetigung";
 import { ReichweiteDialog } from "./ReichweiteDialog";
+import { VerfallBestaetigung } from "./VerfallBestaetigung";
 import { NeuerTerminDialog } from "./NeuerTerminDialog";
 import { TerminDialog } from "./TerminDialog";
 import { TrainingWahlDialog } from "./TrainingWahlDialog";
@@ -117,6 +118,8 @@ type ReichweiteFrage = {
 const NUR_FELDER_GEAENDERT = "Termin geändert. Die Verantwortlichen blieben unverändert.";
 /** Dasselbe für den Ausfallgrund, den letzten Schritt (#402 AK 13). */
 const GRUND_UNVERAENDERT = "Termin geändert. Der Grund des Ausfalls blieb unverändert.";
+/** Die Verlegung liesse Abmeldungen verfallen, die Rückfrage kam nicht mehr zum Zug (#437). */
+const NICHT_GEAENDERT = "Termin nicht geändert.";
 
 /** Eine gerechnete Vorschau, die auf Bestätigung oder Ausführung wartet. */
 type SerienSchritt = {
@@ -134,6 +137,7 @@ export function TerminBereich({
   persoenliche,
   mitglieder,
   heute,
+  fuehrtListe,
   children,
 }: {
   teamId: string;
@@ -143,6 +147,8 @@ export function TerminBereich({
   /** Wer als Verantwortliche:r zur Wahl steht (#325). */
   mitglieder: TeamMitglied[];
   heute: string;
+  /** Das Team führt eine Spielerliste (#434). */
+  fuehrtListe: boolean;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -156,6 +162,9 @@ export function TerminBereich({
   const [ausfall, setAusfall] = useState<TerminZeile | null>(null);
   const [reichweite, setReichweite] = useState<ReichweiteFrage | null>(null);
   const [bestaetigen, setBestaetigen] = useState<SerienSchritt | null>(null);
+  /** Eine Verlegung liesse Abmeldungen verfallen (#437 AK 1): wie viele, und
+   *  wie es nach der Bestätigung weitergeht. */
+  const [verfall, setVerfall] = useState<{ anzahl: number; weiter: () => void } | null>(null);
   const [dialogFehler, setDialogFehler] = useState<string | undefined>();
 
   /** Die Nummer des laufenden Ablaufs in einem Dialog. Öffnen und Abbrechen
@@ -179,16 +188,21 @@ export function TerminBereich({
    *  schliesst, die Snackbar meldet, und man öffnet die aufgefrischte Karte.
    *
    *  Mit `nr` (siehe `laufNr`): Gilt die Nummer nach dem Aufruf nicht mehr,
-   *  bleiben die Dialoge unberührt, und nur die Snackbar sagt, was geschah. */
+   *  bleiben die Dialoge unberührt, und nur die Snackbar sagt, was geschah.
+   *
+   *  `nachfrage`: fängt eine Antwort ab, die erst eine Bestätigung braucht
+   *  (#437 AK 1) — dann bleibt alles, wie es ist. */
   function lauf<T extends { ok: boolean; error?: string }>(
     aufruf: () => Promise<T>,
     erfolg: (r: T) => string,
     schliessen: () => void,
     imDialog = false,
     nr?: number,
+    nachfrage?: (r: T) => boolean,
   ) {
     startTransition(async () => {
       const r = await aufruf();
+      if ((nr === undefined || laufNr.current === nr) && nachfrage?.(r)) return;
       router.refresh();
       if (nr !== undefined && laufNr.current !== nr) {
         melde(r.ok ? erfolg(r) : (r.error ?? "Fehlgeschlagen."));
@@ -222,12 +236,25 @@ export function TerminBereich({
    *  ersten abgebrochen, läuft der zweite auch nicht: Die Dialoge bleiben
    *  unberührt, die Snackbar sagt, dass nur die Felder gespeichert sind.
    *  Ein geänderter Ausfallgrund (#402 AK 13) folgt als letzter Schritt. */
-  function aendereEinzeln(t: TerminZeile, geaendert: Partial<TerminFelder> | null | undefined, verantwortlich?: VerantwortlicheWert, grund?: string) {
+  function aendereEinzeln(
+    t: TerminZeile,
+    geaendert: Partial<TerminFelder> | null | undefined,
+    verantwortlich?: VerantwortlicheWert,
+    grund?: string,
+    bestaetigt: number | false = false,
+  ) {
     const nr = laufNr.current;
     const gilt = () => laufNr.current === nr;
     startTransition(async () => {
       if (geaendert) {
-        const r = await aendereTerminAktion(t.id, geaendert, t.training?.id ?? null);
+        const r = await aendereTerminAktion(t.id, geaendert, t.training?.id ?? null, bestaetigt);
+        // #437 AK 1: Verfallen Abmeldungen, erst nachfragen; der Dialog bleibt offen.
+        if (!r.ok && r.verfallend) {
+          const anzahl = r.verfallend;
+          if (gilt()) return setVerfall({ anzahl, weiter: () => aendereEinzeln(t, geaendert, verantwortlich, grund, anzahl) });
+          // Abgebrochen, bevor die Rückfrage kam: Gespeichert ist nichts.
+          return melde(NICHT_GEAENDERT);
+        }
         if (!r.ok) return einzelnGescheitert(r.error, gilt());
       }
       if (verantwortlich) {
@@ -383,10 +410,28 @@ export function TerminBereich({
       if (!v.ok) return serienFehler(art, v.error);
       setReichweite(null);
       const schritt: SerienSchritt = { art, t, reichweite: r, aenderung: frage.aenderung, folge: v.folge, grund: frage.grund };
-      // AK 8: bestätigen, wenn Termine wegfallen — beim Entfernen immer.
-      if (art === "entfernen" || v.folge.entfallendAnzahl > 0) setBestaetigen(schritt);
+      // AK 8: bestätigen, wenn Termine wegfallen — beim Entfernen immer; ebenso,
+      // wenn Abmeldungen verfallen (#437 AK 1).
+      if (art === "entfernen" || v.folge.entfallendAnzahl > 0 || v.folge.abmeldungenVerfallend > 0) setBestaetigen(schritt);
       else await fuehreAus(schritt, nr);
     });
+  }
+
+  /** Eine Angabe wieder der Serie folgen lassen (#326 AK 6). Folgt die Zeit
+   *  und verfallen damit Abmeldungen, erst nachfragen (#437 AK 1). */
+  function folgen(t: TerminZeile, angabe: FolgeAngabe, bestaetigt = false) {
+    lauf(
+      () => folgeDerSerieAktion(t.id, [angabe], bestaetigt),
+      () => FOLGT_WIEDER[angabe],
+      () => setBearbeiten(null),
+      true,
+      laufNr.current,
+      (r) => {
+        if (r.ok || !r.verfallend) return false;
+        setVerfall({ anzahl: r.verfallend, weiter: () => folgen(t, angabe, true) });
+        return true;
+      },
+    );
   }
 
   function loeseSofort(t: TerminZeile) {
@@ -436,6 +481,7 @@ export function TerminBereich({
         pending={pending}
         fehler={dialogFehler}
         mitglieder={mitglieder}
+        fuehrtListe={fuehrtListe}
         onClose={() => {
           if (!neu) return;
           neuerLauf();
@@ -466,10 +512,8 @@ export function TerminBereich({
         verantwortliche={bearbeiten?.verantwortliche}
         ausfall={bearbeiten?.ausgefallen ? { grund: bearbeiten.ausfallGrund } : null}
         heute={heute}
-        onFolgen={(angabe) =>
-          bearbeiten &&
-          lauf(() => folgeDerSerieAktion(bearbeiten.id, [angabe]), () => FOLGT_WIEDER[angabe], () => setBearbeiten(null), true)
-        }
+        fuehrtListe={fuehrtListe}
+        onFolgen={(angabe) => bearbeiten && folgen(bearbeiten, angabe)}
         onClose={() => {
           // Nur ein Abbruch durch den USER zählt; schliesst der Code den
           // Dialog, ist `bearbeiten` schon leer (gilt für alle drei Dialoge).
@@ -492,6 +536,17 @@ export function TerminBereich({
           setReichweite(null);
         }}
         onWahl={reichweiteGewaehlt}
+      />
+
+      <VerfallBestaetigung
+        anzahl={verfall?.anzahl ?? null}
+        pending={pending}
+        onClose={() => setVerfall(null)}
+        onBestaetigen={() => {
+          const v = verfall;
+          setVerfall(null);
+          v?.weiter();
+        }}
       />
 
       <EntfallendBestaetigung

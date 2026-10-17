@@ -1,6 +1,6 @@
 # Trainings
 
-Stand 2026-10-05. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-10-16. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
 
 ## Die Altersstufe wird beim Anlegen gewählt
@@ -437,9 +437,11 @@ beide Ansichten nicht, sie ordnet ein und hilft auf dem Platz nicht weiter. Der 
 dasselbe als zusammenhängende, druckfertige Seite zum Mitnehmen, das Ziel im Kopf. Leere Blöcke
 erscheinen in beiden Ansichten nicht. Aus dem Trainingsplan eines Teams geöffnet, nennt die
 Durchführen-Ansicht zuoberst den Termin: Datum, Beginn und Ende, Ort, Verantwortliche, die
-erwartete Spielerzahl, die Felder des Platzes je mit Grösse, Toren und Untergrund und die
-Bemerkung; was zu einem Feld nicht erfasst ist, steht als
-unbekannt da.
+Spielerzahl — führt das Team eine Spielerliste, die angemeldeten von allen, etwa „12 von 15
+angemeldet", sonst die erwartete —, die Felder des Platzes je mit Grösse, Toren und Untergrund
+und die Bemerkung; was zu einem Feld nicht erfasst ist, steht als
+unbekannt da. Wer angemeldet ist, steht nicht dort, sondern am Termin im Trainingsplan (siehe
+[Team-Bereich](team-bereich.md#ab--und-anmelden)).
 
 Beim Zusammenstellen, in der Ansicht (breit in den Eigenschaften), zu Beginn der
 Durchführen-Ansicht und im Kopf des Drucks steht, welches Material das Training braucht — und zwar höchstens gleichzeitig, nicht die Summe über alle
@@ -585,8 +587,8 @@ dagegen in einem Zug fest.
 
 Varianten gibt es allein für den Hauptteil; wer unterschiedliche Einleitungen oder Ausklänge
 braucht, führt zwei Trainings. Eine Kinderzahl hält die Anwendung weder am Training noch an einer
-Variante fest; eine erwartete Spielerzahl trägt allein ein Team-Termin (siehe
-[Team-Bereich](team-bereich.md#der-kalender-des-teams)). Welche Variante zu wie vielen Kindern
+Variante fest; eine Spielerzahl trägt allein ein Team-Termin, erwartet oder aus der
+Spielerliste des Teams (siehe [Team-Bereich](team-bereich.md#der-kalender-des-teams)). Welche Variante zu wie vielen Kindern
 passt, schlägt sie nicht vor, auch nicht anhand dieser Zahl — die Bezeichnung ist der ganze
 Hinweis. Eine einzelne Übung lässt sich nicht von einer Variante in eine
 andere kopieren oder verschieben, und Übungen, die in mehreren Varianten stehen, werden nicht

@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-10-07. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-10-16. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Seitenleiste
 
@@ -86,8 +86,9 @@ Analytics nach Seite, Herkunft, Land und Gerätetyp. Diese legt nichts im Browse
 Personen und erhält die Adresse ohne Suchbegriffe und Filter; eine unbekannte Adresse zählt sie
 nicht. Ausserdem sagt die Seite, wie man Cookies in den
 Einstellungen des Browsers sperrt oder löscht. Sie hängt
-am Konto (Brotkrume „Konto › Cookies") und ist ohne Anmeldung über einen Verweis unten auf allen
-Seiten ohne Leiste erreichbar, etwa beim Anmelden und Registrieren; sie funktioniert auch mit gesperrten Cookies.
+am Konto (Brotkrume „Konto › Cookies") und ist ohne Anmeldung über einen Verweis unten auf den
+Seiten ohne Leiste erreichbar, etwa beim Anmelden und Registrieren — nicht aber auf den Seiten
+hinter einem privaten Link (siehe unten); sie funktioniert auch mit gesperrten Cookies.
 
 ## Brotkrumen
 
@@ -132,6 +133,12 @@ auf einem breiten Bildschirm; schmaler und auf Papier fehlt sie, und die Seite s
 untereinander. Einzig eine Übung, deren Bearbeitung ungesicherte Änderungen trägt, bleibt dann
 unter den Übungen stehen.
 
+Auch der Trainingsplan eines Teams teilt sich, sobald ein Termin geöffnet ist: links die Termine,
+rechts der Termin mit seinen Reitern an der Stelle des Monats; er bleibt beim Scrollen stehen und
+scrollt für sich (siehe [Team-Bereich](team-bereich.md#der-geöffnete-termin)). Seine Breite
+lässt sich nicht ziehen. Schmaler als ein Tablet im Querformat ersetzt der Termin die Liste, bis
+man ihn schliesst; auf Papier erscheint er nicht.
+
 ## Bedienung
 
 Die Oberfläche ist knapp gehalten. Überschriften stehen in gewöhnlicher Schreibung, nicht in
@@ -145,7 +152,13 @@ Alles, was sich bedienen lässt — Knöpfe, Felder, Filter, Einträge der Seite
 Menüs und Listen, die Werkzeuge der Zeichenfläche —, ist gleich hoch, 36 Pixel, auf dem Rechner
 wie auf dem Telefon und auch in der Durchführen-Ansicht. Knöpfe, die nur ein Zeichen tragen,
 haben wie alle Knöpfe und Felder abgerundete Ecken; ganz rund sind nur die Chips, die man an-
-und wieder abwählt.
+und wieder abwählt, und die Schalter. Ein Schalter steht dort, wo eine Ja/Nein-Angabe beim
+Umlegen sofort gilt, ohne dass man speichert — eine Spieler:in an einem Termin angemeldet oder
+abgemeldet, die Selbstabholung ein oder aus; ein Kästchen dagegen gehört in ein Formular, das man
+erst speichert. Damit der Zustand nicht an der Farbe allein hängt, trägt der Knopf des Schalters
+ein Zeichen: an einen Haken in der Akzentfarbe, aus ein Kreuz in Rot. Wo das Aus kein Fehlen
+bedeutet, wie bei der Selbstabholung, oder wo es nichts zu wählen gibt, wie an einem
+ausgefallenen Termin, ist er grau und ohne Zeichen; ist nichts mehr zu ändern, ist er gesperrt.
 
 Ein Formular liest sich als Liste aus Namen und Werten. Jede Angabe steht als eigenes Feld in
 einer eigenen Zeile, auch wo zwei Angaben zusammengehören wie Länge und Breite oder Mindest- und
@@ -196,6 +209,17 @@ Brotkrumen und einem Weg zurück zu den Übungen.
 Die Seiten zum Anmelden, Registrieren und Zurücksetzen des Passworts kommen ohne Leiste aus,
 ebenso die Bestätigung beim Verbinden eines KI-Assistenten.
 
+## Seiten hinter einem privaten Link
+
+Die Seite, über die Eltern eine Spieler:in ab- und anmelden, und die Abholseite eines Teams (siehe
+[Team-Bereich](team-bereich.md#privater-link)) sind für Menschen ohne Konto gedacht und fürs
+Telefon gebaut: eine schmale Spalte ohne Seitenleiste, ohne Brotkrumen und ohne Meldungen am
+Bildschirmrand, unten nur die Zeile „KiFu · Trainings für Kinder- und Juniorenfussball". In den
+übrigen Teil der Anwendung führen sie nicht. Eine Anmeldung kennen sie nicht — auch wer ein Konto
+hat, ist dort niemand Bestimmtes —, und sie legen nichts im Browser ab. Ihr Titel ist fest und nennt weder Team noch Kind,
+damit ein Chat beim Teilen keine Namen in die Vorschau setzt; Suchmaschinen nehmen sie nicht auf,
+die Besucherstatistik zählt sie nicht, und in eine fremde Seite einbetten lassen sie sich nicht.
+
 ## Bekannte Grenzen
 
 Wird jemand von einem anderen Konto in ein Team aufgenommen, erscheint das Team in der Leiste
@@ -210,7 +234,9 @@ KiFu hat keine vollständige Datenschutzerklärung und kein Impressum; die Seite
 beschreibt nur, was im Browser liegt, und die Besucherstatistik. Diese lässt sich nicht
 abwählen, und eine Seite, die über einen ungültigen Link nicht gefunden wird (etwa ein
 Training, das es nicht gibt), zählt sie unter dem eingegebenen Pfad. Eine eigene Einstellung, um Cookies abzuschalten, gibt
-es nicht — das geht über den Browser.
+es nicht — das geht über den Browser. Die Seite „Cookies" erwähnt die Seiten hinter einem
+privaten Link nicht, und diese verweisen weder auf sie noch auf eine andere Erklärung; was zu
+Spieler:innen gespeichert ist, sagt allein die Abholseite.
 
 „Versionen" zeigt die Texte so, wie sie veröffentlicht wurden; ältere enthalten Technisches,
 Nummern von Aufgaben und Aussagen, die inzwischen überholt sind. Nummern von Aufgaben sind dort kein Link,
