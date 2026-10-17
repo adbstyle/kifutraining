@@ -501,8 +501,8 @@ die Eltern den neuen dort wieder abholen. Je Spieler:in und Team gibt es genau e
 
 Wer den Link öffnet, braucht weder Konto noch Anmeldung. Die Seite ist fürs Telefon gebaut, kommt
 ohne Seitenleiste aus und nennt Teamname und Name der Spieler:in mit dem Satz, dass sie für jedes
-Training zuerst angemeldet ist und man das Training ausschaltet, wenn sie nicht kann, und bis zum
-Beginn wieder ein. Wie im Trainingsplan steht zuoberst „Als Nächstes": der nächste Termin, der
+Training zuerst angemeldet ist und man sie abmeldet, wenn sie nicht kann, und bis zum Beginn
+wieder anmeldet. Wie im Trainingsplan steht zuoberst „Als Nächstes": der nächste Termin, der
 noch nicht begonnen hat, grösser, mit „Heute" oder „Morgen", der Zahl der Angemeldeten, ob die
 Spieler:in angemeldet ist, und dem Knopf „Abmelden" oder „Wieder anmelden"; abgemeldet steht sein
 Tag rot. Darunter folgen die übrigen anstehenden Termine des Teams — ab heute, ein begonnener noch

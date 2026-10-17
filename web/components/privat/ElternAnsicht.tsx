@@ -103,8 +103,8 @@ export function ElternAnsicht({
         <p className="type-body-small text-on-surface-mittel">{team}</p>
         <h1 className="type-headline-small text-on-surface">{name}</h1>
         <p className="type-body-medium text-on-surface-mittel">
-          {name} ist für jedes Training zuerst angemeldet. Kann {spieler.vorname} nicht, schalte das Training aus - und
-          bis zum Beginn wieder ein.
+          {name} ist für jedes Training zuerst angemeldet. Kann {spieler.vorname} nicht, melde ab - und bis zum
+          Beginn wieder an.
         </p>
       </header>
       {termine.length === 0 ? (
