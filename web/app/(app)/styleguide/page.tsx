@@ -1336,8 +1336,8 @@ export default async function Styleguide() {
             Heller Knopf (<code>variant=&quot;hell&quot;</code>) - auf einer Fläche im Fehlerton
           </p>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-            Die umgekehrte, helle Fläche der Snackbar mit ihrem dunklen Violett als
-            Schrift (4.5:1). Neu, weil auf einer Fläche im Fehlerton <code>filled</code>{" "}
+            Die umgekehrte, helle Fläche der Snackbar mit der Farbe des Grunds als
+            Schrift. Neu, weil auf einer Fläche im Fehlerton <code>filled</code>{" "}
             (Violett auf Rot) zu laut wäre und <code>outlined</code> unterginge: die eine
             Handlung «Wieder anmelden» am abgemeldeten nächsten Termin hinter dem
             privaten Link (Epic #433). Sonst bleibt es bei den Varianten oben.

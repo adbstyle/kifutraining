@@ -20,8 +20,8 @@ import { cn } from "@/lib/cn";
 // Rand einer Chip-Leiste mitlaufen («+ Variante hinzufügen»): dieselbe Farbe
 // und Schrift, nur mit knapperer Polsterung.
 //
-// `hell` steht auf der umgekehrten, hellen Fläche mit dunkel-violetter Schrift
-// — für die eine Handlung auf einer Fläche im Fehlerton, wo `filled` (Violett
+// `hell` steht auf der umgekehrten, hellen Fläche mit der Farbe des Grunds als
+// Schrift — für die eine Handlung auf einer Fläche im Fehlerton, wo `filled` (Violett
 // auf Rot) zu laut wäre und `outlined` unterginge: «Wieder anmelden» am
 // abgemeldeten nächsten Termin (PO 2026-10-17).
 type Variant = "filled" | "tonal" | "outlined" | "text" | "danger" | "quiet" | "hell";
@@ -53,10 +53,10 @@ const variants: Record<Variant, string> = {
   danger: "bg-danger text-on-danger",
   // Die dichte Bauform von `text` — dieselbe Farbe, siehe oben.
   quiet: "bg-transparent text-primary",
-  // Hell: die umgekehrte Fläche (`umkehr`) mit ihrem Akzent als Schrift — das
-  // Violett, das dort 4.5:1 trägt; Zustands-Ebene und Fokus-Ring färben sich
-  // darin mit ein (siehe @utility umkehr).
-  hell: "umkehr text-primary",
+  // Hell: die umgekehrte Fläche (`umkehr`), darauf die Farbe des Grunds als
+  // Schrift (PO 2026-10-17, nicht Violett); Zustands-Ebene und Fokus-Ring
+  // färben sich darin mit ein (siehe @utility umkehr).
+  hell: "umkehr",
 };
 
 /** Gemeinsame Button-Klassen — geteilt von Button und ButtonLink, damit ein
