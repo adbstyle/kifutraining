@@ -1543,8 +1543,7 @@ export default async function Styleguide() {
             36 px hoch wie jedes Bedienelement, der Wert in{" "}
             <code>type-body-large</code>. Wo ein Feld keinen sichtbaren Namen trägt
             - die Suche in der Filterleiste -, gibt <code>umrandet</code> ihm auch
-            ruhend die Kante, sonst fehlte es dort schlicht. Ebenso umrandet stehen
-            die Felder im Dialog der Spielerliste (PO 2026-10-17).{" "}
+            ruhend die Kante, sonst fehlte es dort schlicht.{" "}
             <strong>Auf Touch-Geräten</strong> gibt es kein Überfahren: Ein leeres
             Feld kündigt sich dort allein über seinen Namen im Feld an. Das ist
             gewollt (PO-Entscheid 2026-10-03, Variante «ohne Kontur») - jedes

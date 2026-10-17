@@ -157,10 +157,10 @@ export function SpielerListe({
           }}
         >
           {aufgenommen && <SectionMessage appearance="success">{aufgenommen}</SectionMessage>}
-          <TextField ref={erstesFeld} label="Vorname" autoComplete="off" autoFocus umrandet {...feld("vorname")} error={!!fehlerAn("vorname")} supportingText={fehlerAn("vorname")} />
-          <TextField label="Nachname" autoComplete="off" umrandet {...feld("nachname")} error={!!fehlerAn("nachname")} supportingText={fehlerAn("nachname")} />
-          <TextField label="Jahrgang" inputMode="numeric" umrandet maxLength={JAHRGANG_STELLEN} autoComplete="off" {...feld("jahrgang")} error={!!fehlerAn("jahrgang")} supportingText={fehlerAn("jahrgang")} />
-          <TextField label="J+S-Nummer (optional)" autoComplete="off" umrandet maxLength={JS_MAX} {...feld("jsNummer")} error={!!fehlerAn("js_nummer")} supportingText={fehlerAn("js_nummer")} />
+          <TextField ref={erstesFeld} label="Vorname" autoComplete="off" autoFocus {...feld("vorname")} error={!!fehlerAn("vorname")} supportingText={fehlerAn("vorname")} />
+          <TextField label="Nachname" autoComplete="off" {...feld("nachname")} error={!!fehlerAn("nachname")} supportingText={fehlerAn("nachname")} />
+          <TextField label="Jahrgang" inputMode="numeric" maxLength={JAHRGANG_STELLEN} autoComplete="off" {...feld("jahrgang")} error={!!fehlerAn("jahrgang")} supportingText={fehlerAn("jahrgang")} />
+          <TextField label="J+S-Nummer (optional)" autoComplete="off" maxLength={JS_MAX} {...feld("jsNummer")} error={!!fehlerAn("js_nummer")} supportingText={fehlerAn("js_nummer")} />
         </form>
       </Dialog>
 
