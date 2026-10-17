@@ -4,6 +4,7 @@ import { verifiziereZugang } from "@/lib/supabase/bearer";
 import { oeffentlicherOriginAus } from "@/lib/origin";
 import { registriereWerkzeuge } from "@/lib/mcp/server";
 import { MCP_PFAD } from "@/lib/mcp/pfad";
+import { KEIN_ABO, aboAbweisung } from "@/lib/mcp/abo";
 import type { ZugangExtra } from "@/lib/mcp/werkzeug";
 import { APP_VERSION } from "@/lib/version";
 
@@ -21,18 +22,17 @@ import { APP_VERSION } from "@/lib/version";
  */
 export const dynamic = "force-dynamic";
 
-// Kein Änderungs-Abo: Der Werkzeugsatz ist fest, KiFu meldet nie
-// `list_changed`. Kündigt der Server `listChanged` an, öffnen Clients im
-// Protokoll 2026-07-28 (z. B. Claude Code) beim Verbinden einen
-// `subscriptions/listen`-Stream, der nie endet — auf Vercel hält er eine
-// Funktion bis zum Timeout (300 s) wach, danach verbindet der Client neu.
-// `listChanged: false` lässt Clients das Abo gar nicht erst öffnen;
-// `maxSubscriptions: 0` weist ein trotzdem gesendetes sofort ab.
+// Werkzeugaufrufe dauern Sekundenbruchteile. Die Grenze deckelt jede künftig
+// offen gehaltene Antwort (etwa einen Abo-Stream, siehe lib/mcp/abo.ts) weit
+// unter dem Projekt-Standard von 300 s.
+export const maxDuration = 60;
+
+// Kein Änderungs-Abo — warum, steht in lib/mcp/abo.ts.
 const mcp = createMcpHandler((server) => registriereWerkzeuge(server), {
   serverInfo: { name: "ki-fu", version: APP_VERSION },
-  capabilities: { tools: { listChanged: false } },
-  maxSubscriptions: 0,
+  ...KEIN_ABO,
 });
+const mcpOhneAbo = async (req: Request) => (await aboAbweisung(req)) ?? mcp(req);
 
 async function pruefeToken(token: string | undefined, origin: string): Promise<AuthInfo | undefined> {
   if (!token) return undefined;
@@ -54,7 +54,7 @@ async function pruefeToken(token: string | undefined, origin: string): Promise<A
 // Werkzeuge. mcp-handler hängt den Pfad an den Origin an.
 function handler(req: Request): Promise<Response> {
   const origin = oeffentlicherOriginAus(req);
-  return withMcpAuth(mcp, (_req, token) => pruefeToken(token, origin), {
+  return withMcpAuth(mcpOhneAbo, (_req, token) => pruefeToken(token, origin), {
     required: true,
     resourceMetadataPath: `/.well-known/oauth-protected-resource${MCP_PFAD}`,
     resourceUrl: origin,

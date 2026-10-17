@@ -446,7 +446,9 @@ einsehbar, und einem Abo lässt sich kein eigener Name geben.
 
 Ein KI-Zugang reicht so weit wie das Konto selbst; begrenzt wird er allein durch die
 Fähigkeiten, die die Anwendung dem Assistenten anbietet, nicht durch eine abgestufte
-Berechtigung. Den Namen, unter dem sich ein Assistent meldet, prüft niemand. Wer sich mitten im
+Berechtigung. Den Namen, unter dem sich ein Assistent meldet, prüft niemand. Kommen mit einer
+neuen Version Fähigkeiten dazu oder ändern sich welche, kennt ein bereits verbundener Assistent
+sie erst, wenn er sich neu verbindet; die Anwendung meldet solche Änderungen nicht. Wer sich mitten im
 Verbinden erst registriert, muss das Verbinden nach der Bestätigung der Adresse neu starten.
 Wann und wie oft ein Zugang benutzt wurde, ist nicht einsehbar; was über ihn geschah, wird nicht
 gesondert festgehalten, und der Name eines Zugangs lässt sich nach dem Erlauben nicht mehr
