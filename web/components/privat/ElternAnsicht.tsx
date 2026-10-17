@@ -169,8 +169,8 @@ export function ElternAnsicht({
 
 /* Der nächste Termin, der noch nicht begonnen hat — wie im Trainingsplan
    grösser und auf einer höheren Fläche (#403), dazu ein Knopf statt des
-   Schalters: «Abmelden» oder «Wieder anmelden». Abgemeldet steht der Tag im
-   Rot des abgemeldeten Kalenderblatts. */
+   Schalters: «Abmelden» oder «Wieder anmelden». Abgemeldet steht die Karte im
+   Fehlerton: Fläche wie ein Fehlerhinweis, Kontur und Tag in der Fehlerfarbe. */
 function NaechsterTermin({
   t,
   ab,
@@ -196,7 +196,14 @@ function NaechsterTermin({
       <h2 id="als-naechstes" className="type-title-small text-on-surface-mittel">
         Als Nächstes
       </h2>
-      <div className="kontur mt-2 flex flex-col gap-3 rounded-flaeche border-kante bg-elev-04 p-4">
+      {/* Abgemeldet trägt die ganze Karte den Fehlerton — wie ein Fehlerhinweis
+          (Fläche) mit Kontur in der Fehlerfarbe. */}
+      <div
+        className={cn(
+          "kontur mt-2 flex flex-col gap-3 rounded-flaeche p-4",
+          ab && !t.ausgefallen ? "border-error bg-section-danger" : "border-kante bg-elev-04",
+        )}
+      >
         <div>
           <p className={cn("type-title-small", t.ausgefallen ? "text-on-surface-mittel" : ab ? "text-error" : "text-primary")}>
             {relativ && <>{relativ} · </>}
