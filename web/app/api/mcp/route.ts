@@ -21,8 +21,17 @@ import { APP_VERSION } from "@/lib/version";
  */
 export const dynamic = "force-dynamic";
 
+// Kein Änderungs-Abo: Der Werkzeugsatz ist fest, KiFu meldet nie
+// `list_changed`. Kündigt der Server `listChanged` an, öffnen Clients im
+// Protokoll 2026-07-28 (z. B. Claude Code) beim Verbinden einen
+// `subscriptions/listen`-Stream, der nie endet — auf Vercel hält er eine
+// Funktion bis zum Timeout (300 s) wach, danach verbindet der Client neu.
+// `listChanged: false` lässt Clients das Abo gar nicht erst öffnen;
+// `maxSubscriptions: 0` weist ein trotzdem gesendetes sofort ab.
 const mcp = createMcpHandler((server) => registriereWerkzeuge(server), {
   serverInfo: { name: "ki-fu", version: APP_VERSION },
+  capabilities: { tools: { listChanged: false } },
+  maxSubscriptions: 0,
 });
 
 async function pruefeToken(token: string | undefined, origin: string): Promise<AuthInfo | undefined> {
