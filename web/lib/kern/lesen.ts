@@ -13,6 +13,7 @@ import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import { trainingAuskunft, type TrainingAuskunft } from "@/lib/kern/auskunft";
 import { hinweiseFuer, type Hinweis } from "@/lib/hinweise";
 import { NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
+import type { Spielstand } from "@/lib/spieler";
 
 /**
  * Trainings lesen (#193 AK 1/2, #195, #198 AK 2) — für die KI-Werkzeuge «training_abrufen»,
@@ -99,6 +100,8 @@ export type TrefferTermin = {
   felder: Felder | null;
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
   spielerzahl: number | null;
+  /** Die Spielerzahl aus der Spielerliste (#434); `null` ohne Liste. */
+  spielstand: Spielstand;
   /** Die Terminserie des Termins; `null` bei einem einzelnen (#324). */
   serieId: string | null;
   /** Wer den Termin vorbereitet und leitet (#325 AK 16). */

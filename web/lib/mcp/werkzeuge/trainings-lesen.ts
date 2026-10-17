@@ -5,7 +5,8 @@ import { kategorieStufe } from "@/lib/labels";
 import { stufenOptionen } from "@/lib/filter-optionen";
 import { abgebildet } from "@/lib/kern/ergebnis";
 import { TrainingAuskunft } from "@/lib/kern/auskunft-schema";
-import { felderAusgabe, felderSchema, spielerzahlSchema } from "@/lib/termin-felder-ausgabe";
+import { felderAusgabe, felderSchema, spielerzahlQuelleAusgabe, spielerzahlQuelleSchema, spielerzahlSchema } from "@/lib/termin-felder-ausgabe";
+import { spielerzahlVon } from "@/lib/spieler";
 import {
   trainingAbrufen as trainingAbrufenImKern,
   trainingsSuchen as trainingsSuchenImKern,
@@ -128,6 +129,7 @@ const SuchenTreffer = z.object({
       bemerkung: z.string().nullable(),
       felder: felderSchema(),
       erwartete_spielerzahl: spielerzahlSchema(),
+      spielerzahl: spielerzahlQuelleSchema(),
       serie_id: z.string().nullable(),
       verantwortliche: z.array(
         z.object({
@@ -200,6 +202,7 @@ export const trainingsSuchen = werkzeug({
                   bemerkung: t.termin.bemerkung,
                   felder: felderAusgabe(t.termin.felder),
                   erwartete_spielerzahl: t.termin.spielerzahl,
+                  spielerzahl: spielerzahlQuelleAusgabe(spielerzahlVon(t.termin)),
                   serie_id: t.termin.serieId,
                   verantwortliche: t.termin.verantwortliche.map((v) => ({
                     id: v.userId,

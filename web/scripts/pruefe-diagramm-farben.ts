@@ -232,7 +232,9 @@ const ZEICHENDATEIEN = [
  *  Wort: `orange` ist auch ein gespeicherter Slug unserer Palette, und der
  *  soll `defaultFarbe: "orange"` heissen dürfen. `transparent` fehlt in der
  *  Liste mit Absicht — es ist keine Farbe, sondern ihre Abwesenheit, und in
- *  jedem Satz dasselbe. */
+ *  jedem Satz dasselbe. Aus demselben Grund dürfen die Masken-Werte der
+ *  Weg-Aussparung (`MASKE` in `DiagrammView.tsx`, #430) Weiss und Schwarz
+ *  heissen: Sie sind Luminanz einer Maske, keine Farbe der Zeichnung. */
 const FARBNAMEN = [
   "white",
   "black",

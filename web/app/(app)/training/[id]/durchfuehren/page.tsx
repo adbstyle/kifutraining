@@ -4,6 +4,7 @@ import { getTerminZuTraining, verantwortlichenNamen } from "@/lib/queries/termin
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { TrainingDurchfuehren } from "@/components/training/TrainingDurchfuehren";
 import { trainingsKrumen } from "@/lib/brotkrumen";
+import { spielerzahlVon } from "@/lib/spieler";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -51,7 +52,7 @@ export default async function TrainingDurchfuehrenPage({
               bemerkung: termin.bemerkung,
               verantwortliche: verantwortlichenNamen(termin.verantwortliche),
               felder: termin.felder,
-              spielerzahl: termin.spielerzahl,
+              spielerzahl: spielerzahlVon(termin),
             }
           : undefined
       }

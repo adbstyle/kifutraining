@@ -19,7 +19,10 @@ import { useParams } from "next/navigation";
    eingefügt) und wird gar nicht gezählt. Umschreiben genügte dort nicht:
    Das Skript schickt neben der URL die Route als eigenes Feld (`dp`), an
    `beforeSend` vorbei — und bei Sonderzeichen im Pfad ist diese Route der
-   rohe Pfad, weil die Lib die kodierten Parameter nicht wiederfindet. */
+   rohe Pfad, weil die Lib die kodierten Parameter nicht wiederfindet.
+
+   Ebenso ungezählt bleiben die Seiten hinter einem privaten Link (#436
+   AK 14): Ihr Pfad IST das Geheimnis. */
 function ohneQuery(event: BeforeSendEvent): BeforeSendEvent {
   const url = new URL(event.url);
   url.search = "";
@@ -35,6 +38,7 @@ export function Besucherstatistik() {
   // Analytics registriert `beforeSend` bei jedem Wechsel neu, und zwar vor
   // dem Seitenaufruf derselben Navigation (Effekt-Reihenfolge in der Lib).
   const params = useParams();
-  const unbekannt = params != null && "nichtGefunden" in params;
-  return <Analytics beforeSend={unbekannt ? verwerfen : ohneQuery} />;
+  // Ebenso `privaterLink` (`app/(privat)/…/[privaterLink]`).
+  const ungezaehlt = params != null && ("nichtGefunden" in params || "privaterLink" in params);
+  return <Analytics beforeSend={ungezaehlt ? verwerfen : ohneQuery} />;
 }

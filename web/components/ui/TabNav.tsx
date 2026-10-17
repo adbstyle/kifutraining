@@ -23,11 +23,15 @@ export function TabNav({
   items,
   ariaLabel,
   className,
+  scroll,
 }: {
   items: TabNavItem[];
   /** Benennt, wozwischen gewechselt wird — z. B. „Ansichten des Teams". */
   ariaLabel: string;
   className?: string;
+  /** `false`: Der Wechsel bleibt an der Stelle, statt nach oben zu springen —
+   *  für Reiter in einer Spalte neben einer langen Liste (Termin, #435). */
+  scroll?: boolean;
 }) {
   return (
     <nav
@@ -42,6 +46,7 @@ export function TabNav({
           <li key={item.label}>
             <Link
               href={item.href}
+              scroll={scroll}
               aria-current={item.current ? "page" : undefined}
               className={cn(
                 "state focus-ring type-title-small relative flex h-9 items-center gap-2 whitespace-nowrap px-3 transition-colors",

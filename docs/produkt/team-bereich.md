@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-10-14. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-16. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -19,9 +19,10 @@ ohne dass er gefragt wird; wer kein Team mehr mit einer Person teilt, sieht ihre
 mehr. Der KI-Assistent bekommt die Adressen nicht.
 
 Im Team sind alle gleichberechtigt: jedes Mitglied darf umbenennen, aufnehmen, entfernen,
-Trainings und Termine bearbeiten und das Team auflösen. Abgestufte Rollen gibt es nicht. Ein
+Trainings und Termine bearbeiten, die Spielerliste führen und das Team auflösen. Abgestufte Rollen gibt es nicht. Ein
 Team ohne Mitglieder besteht nicht fort — verlässt die letzte Person das Team, verschwindet es
-samt seinen Trainings, Terminen und Terminserien, nach ausdrücklicher Bestätigung, die die
+samt seinen Trainings, Terminen, Terminserien und seiner Spielerliste — deren private Links und die
+Abholadresse gelten danach nicht mehr —, nach ausdrücklicher Bestätigung, die die
 Anzahl der Trainings und aller Termine nennt, auch derer ohne Training.
 
 ## Trainings gehören dem Team
@@ -92,11 +93,13 @@ unter den Verantwortlichen, als „Erwartete Spielerzahl (optional)" und „Feld
 (optional)". Was eine Angabe heisst — wen die Spielerzahl zählt, dass leer unbekannt und 0 Tore
 keine heisst, was ein Feld ist —, sagt der Hinweis hinter dem ⓘ der jeweiligen Angabe; auf Telefon
 und Tablet stehen die Hinweise zu Spielerzahl und Toren unter dem Feld. Ein Termin ohne Felder oder ohne Zahl ist ebenso gültig, und früher
-angelegte Termine bleiben ohne diese Angaben, bis jemand sie ergänzt. Zuordnen, Ersetzen und Lösen eines Trainings und ein Ausfall lassen
+angelegte Termine bleiben ohne diese Angaben, bis jemand sie ergänzt. Führt das Team eine
+Spielerliste, tritt an anstehenden Terminen die Zahl der angemeldeten Spieler:innen an die Stelle
+der erwarteten, und das Feld dafür entfällt (siehe „Spielerliste"). Zuordnen, Ersetzen und Lösen eines Trainings und ein Ausfall lassen
 Felder und Spielerzahl stehen.
 
-Ändern lassen sich Datum, Beginn, Ende, Ort, Bemerkung, Felder und erwartete Spielerzahl
-jederzeit, auch an vergangenen Terminen; Felder und Spielerzahl lassen sich auch wieder
+Ändern lassen sich Datum, Beginn, Ende, Ort, Bemerkung, Felder und — ohne Spielerliste —
+erwartete Spielerzahl jederzeit, auch an vergangenen Terminen; Felder und Spielerzahl lassen sich auch wieder
 entfernen. Beginn und Ende hat jeder Termin; sie lassen sich ändern, aber nicht leeren. Termine
 aus der Zeit vor dem Kalender, die ohne Ende übernommen worden waren, dauern seit dem 6. Oktober
 2026 90 Minuten ab ihrem Beginn; die wenigen ganz ohne Zeit stehen von 18:00 bis 19:30.
@@ -186,7 +189,7 @@ zählen dabei als Ganzes als eine Angabe, wie viele es auch sind; die Spielerzah
 zweite. Wer an nur einem Serientermin Felder oder Spielerzahl entfernt, obwohl die Serie sie
 vorgibt, macht ihn bewusst leer: Der Termin weicht ab und gilt als unbekannt, bis er wieder der
 Serie folgt. Ein zugeordnetes Training und ein Ausfall
-zählen nicht als Abweichung. Der geöffnete Termin nennt unter „Terminserie" die Serie mit
+zählen nicht als Abweichung. Der Dialog „Termin ändern" nennt unter „Terminserie" die Serie mit
 Wochentagen, Zeitraum, Zeit, Ort und Verantwortlichen, mit der erwarteten Spielerzahl und den
 Feldern samt Grösse, Toren und Untergrund, soweit die Serie sie vorgibt, und darunter jede
 Angabe, die abweicht,
@@ -262,13 +265,14 @@ lang ist; ganz steht er am nächsten Termin und beim Ändern des Termins. Ein
 ausgefallener Termin gilt nicht als unvorbereitet und nimmt kein neues Training an. Trug er
 eines, ruht es am Termin: Der Plan nennt es leise neben dem Ausfall, und es lässt sich öffnen,
 aber nicht durchführen. Verantwortliche, Bemerkung, Felder, erwartete Spielerzahl und
-Serienzugehörigkeit bleiben ebenfalls am Termin.
+Serienzugehörigkeit bleiben ebenfalls am Termin. Eine Spielerzahl zeigt ein ausgefallener Termin
+aber nirgends, auch keine erwartete, und Abmeldungen ruhen an ihm (siehe „Ab- und Anmelden").
 
 Den Grund kann man ergänzen, ändern oder leeren, ohne den Ausfall zurückzunehmen — über „Grund
 ändern" oder direkt beim Ändern des Termins. Er gilt immer nur für diesen Termin, auch in einer
 Serie. Wird der Ausfall
-zurückgenommen, ist der Termin wieder ein gewöhnlicher Termin ohne Grund, mit dem Training, das
-an ihm ruhte. Einzeln auf heute oder später verlegt,
+zurückgenommen, ist der Termin wieder ein gewöhnlicher Termin ohne Grund, mit dem Training und
+den Abmeldungen, die an ihm ruhten. Einzeln auf heute oder später verlegt,
 findet ein ausgefallener Termin ebenfalls wieder statt, und der Dialog sagt das vor dem
 Speichern; auf einen vergangenen Tag verlegt oder
 durch den Wochentag-Tausch seiner Serie verschoben, bleibt er ausgefallen. Ändern und
@@ -292,10 +296,14 @@ ausgefallen ist, und bei mehreren am selben Tag der früheste. Sie nennt „Heut
 vor Wochentag und Datum, darunter Zeit und Training, gross genug, dass man beides am Handy beim
 Öffnen ohne Scrollen sieht, und gleich darunter „Durchführen" und „Training öffnen" — ohne
 Training steht an seiner Stelle eine gelbe Plakette „Noch kein Training" in der Farbe der Kalenderblätter — auch der Tag darüber steht dann in diesem Gelb — und als Knopf „Training
-hinzufügen", ausgefallen der vollständige Grund. Darunter stehen alle
-Angaben ungekürzt: Ort, Verantwortliche, erwartete Spielerzahl, jedes Feld mit Grösse, Toren
+hinzufügen", ausgefallen der vollständige Grund. Führt das Team eine Spielerliste,
+steht bei diesen Knöpfen zusätzlich „Spieler:innen", das den Termin bei diesem Reiter öffnet (siehe „Der geöffnete
+Termin"); auch ein Klick auf den Tag öffnet ihn. Darunter stehen alle
+Angaben ungekürzt: Ort, Verantwortliche, die Spielerzahl — „12 von 15 angemeldet" aus der
+Spielerliste oder „12 Spieler:innen erwartet" —, jedes Feld mit Grösse, Toren
 je Torart und Untergrund, die Bemerkung und die Wochentage seiner Serie; fehlen Spielerzahl
-oder Felder, steht „Nicht erfasst". Die übrigen Handgriffe liegen in ihrem Menü. In der Liste
+oder Felder, steht „Nicht erfasst", ausgefallen fehlt die Spielerzahl ganz. Die übrigen
+Handgriffe liegen in ihrem Menü. In der Liste
 darunter steht er nicht noch einmal, in der Zahl der anstehenden Termine zählt er mit.
 
 Die übrigen Termine sind nach Monaten gegliedert, jede Überschrift mit Jahr. Die Termine eines
@@ -304,20 +312,21 @@ Kalenderblatt links — Wochentag, Tageszahl und Monat, ohne Jahr; den heutigen 
 hervor, dafür steht der nächste Termin zuoberst. Eine leise Tönung des Blatts sagt, was der
 Termin trägt: violett mit Training, gelb noch ohne, grau und durchgestrichen ausgefallen, ohne
 Tönung vergangen ohne Training. Eine Zeile
-zeigt Beginn und Ende, Ort und Platz, die erwartete Spielerzahl, was der Termin trägt und die
+zeigt Beginn und Ende, Ort und Platz, die Spielerzahl — mit Spielerliste die angemeldeten von
+allen, etwa „12/15", sonst die erwartete, ausgefallen keine —, was der Termin trägt und die
 Verantwortlichen. Was zu lang ist, endet in „…" und steht ganz im Hinweis beim Darüberfahren. Der Termin
 trägt das Training mit seinem Namen, oder — anstehend und ohne Training — an dessen Stelle
 gedämpft „Training hinzufügen", wie „Dauer hinzufügen" an einer Übung; ein Klick öffnet das
 Zuordnen. So fällt eine noch nicht vorbereitete Einheit auf und lässt sich sofort vorbereiten. Ein vergangener Termin ohne Training heisst schlicht „Ohne Training"; ob er
 stattgefunden hat, sagt die Anwendung nicht. Bemerkung, Serie und Alterskategorien stehen nicht
-in der Zeile; die Bemerkung und die Serie zeigt der Termin beim Ändern, die Alterskategorien
+in der Zeile; die Bemerkung und die Serie zeigt der geöffnete Termin, die Alterskategorien
 das Training selbst. Der Rückblick sieht genauso aus.
 
-Ein Klick auf die Zeile öffnet „Termin ändern", ein Klick auf den Trainingsnamen das Training.
-An der Zeile liegen Durchführen, Training ersetzen — vergangen ohne Training: zuordnen — und in einem Menü die übrigen
+Ein Klick auf die Zeile öffnet den Termin neben der Liste (siehe „Der geöffnete Termin"), ein
+Klick auf den Trainingsnamen das Training. An der Zeile liegen Durchführen, Training ersetzen — vergangen ohne Training: zuordnen — und in einem Menü die übrigen
 Handgriffe: Termin ändern, Training lösen, Ausfallen lassen oder — bei einem ausgefallenen —
 Grund ändern und Ausfall zurücknehmen, und Termin entfernen. Die Durchführen-Ansicht zeigt, aus
-dem Plan geöffnet, zuoberst Datum, Zeit, Ort, Verantwortliche, erwartete Spielerzahl, Felder
+dem Plan geöffnet, zuoberst Datum, Zeit, Ort, Verantwortliche, Spielerzahl, Felder
 und Bemerkung des Termins, jedes Feld mit Grösse, Toren je Torart und Untergrund; was zu einem
 Feld nicht erfasst ist, steht dort ausdrücklich als unbekannt.
 
@@ -340,10 +349,26 @@ wechselt nur der Monat, die Liste bleibt stehen, bis man wieder scrollt. Ein Kli
 Tag mit Terminen führt in der Liste zu seinem ersten Termin, beim nächsten Termin zur Karte
 zuoberst, bei einem vergangenen in den Rückblick, der dafür aufgeht; die weiteren Termine des
 Tages folgen direkt darunter. Ein Tag ohne Termin reagiert nicht; anlegen
-lässt sich aus dem Monat nichts. Am Handy gibt es den Monat nicht, ebensowenig auf Papier.
+lässt sich aus dem Monat nichts. Am Handy gibt es den Monat nicht, ebensowenig auf Papier. Ist ein Termin geöffnet, steht an
+seiner Stelle der Termin.
 
 Jede eigene Änderung erscheint sofort in der Liste, am nächsten Termin und im Monat, und die
 Bestätigung kommt auch dann, wenn das Ergebnis ausserhalb der Eingrenzung liegt.
+
+## Der geöffnete Termin
+
+Ein Klick auf eine Zeile im Trainingsplan oder auf den Tag des nächsten Termins öffnet den Termin.
+Auf breiten Bildschirmen steht er rechts neben der Liste an der Stelle des Monats und bleibt beim
+Scrollen stehen; die Liste hebt ihn hervor. Schmaler nimmt er die ganze Breite ein, bis man ihn
+schliesst. Zuoberst stehen Tag, Zeit und Ort, daneben das Kreuz zum Schliessen, darunter drei
+Reiter. „Termin" bietet „Ausfallen lassen" bzw. „Ausfall zurücknehmen", „Ändern" — das bekannte
+„Termin ändern" — und im Menü die übrigen Handgriffe der Zeile; darunter die Eckdaten in derselben
+Form wie am nächsten Termin, bei einem ausgefallenen samt Grund. „Training" zeigt das Training des
+Termins so, wie es die Trainingsansicht liest — Name, Altersstufe, Alterskategorien, Dauer, Ziel und
+die Übungen je Trainingsteil, beim Hauptteil die erste Variante —, mit „Ersetzen", „Durchführen" und
+„Training öffnen" — ausgefallen nur mit Letzterem —, ohne Training „Training hinzufügen". „Spieler:innen" zeigt, wer kommt (siehe „Ab-
+und Anmelden"). Der geöffnete Termin und sein Reiter stehen in der Adresse; der Wechsel zwischen
+den Reitern bleibt an der Stelle der Liste, und auch die Eingrenzung „Meine Termine" bleibt.
 
 ## Kalender-Abo
 
@@ -362,11 +387,11 @@ Training, und bei jedem Abruf den aktuellen Stand: Ein geänderter, verschobener
 neue Serie übergegangener Termin erscheint genau einmal. Ausgefallene und entfernte Termine
 fehlen. Von einem Termin gelangen nur der Titel „Training · Teamname", Beginn, Ende, Ort und ein
 Verweis in die Anwendung ins Kalenderprogramm — kein Trainingsname, keine Verantwortlichen,
-keine Bemerkung, weder Felder noch erwartete Spielerzahl. Die Zeiten gelten als Schweizer Zeit, auch über die Zeitumstellung hinweg und
+keine Bemerkung, weder Felder noch Spielerzahl, keine Namen von Spieler:innen. Die Zeiten gelten als Schweizer Zeit, auch über die Zeitumstellung hinweg und
 auf einem Gerät in einer anderen Zeitzone.
 
 Der Verweis im Kalendereintrag führt, nach einer Anmeldung falls nötig, zum Termin im
-Trainingsplan und hebt ihn hervor, auch wenn er im Rückblick liegt. Gibt es den Termin nicht
+Trainingsplan, öffnet ihn daneben und hebt ihn in der Liste hervor, auch wenn er im Rückblick liegt. Gibt es den Termin nicht
 mehr, öffnet sich der Trainingsplan mit dem Hinweis „Diesen Termin gibt es nicht mehr."; wer
 nicht Mitglied des Teams ist, landet in der Teamübersicht.
 
@@ -374,6 +399,160 @@ Ein Abo erlischt, wenn man es widerruft, das Team verlässt, daraus entfernt wir
 löscht oder das Team aufgelöst wird. Ab dem nächsten Abruf liefert der Link dann keine Termine
 mehr. Ein erloschenes Abo bleibt erloschen, auch wenn man später wieder ins Team kommt; einen
 neuen Link holt man sich jederzeit wieder im Trainingsplan.
+
+## Spielerliste
+
+Ein Team kann seine Spieler:innen in einer Liste führen. Sie steht unter „Team" als eigene Karte
+zwischen Teamname und Mitgliedern; ihr Kopf nennt, wie viele auf der Liste stehen und wie viele
+Links davon bezogen sind (siehe „Selbstabholung"), etwa „15 · 9 Links bezogen". Jede Spieler:in
+trägt Vorname, Nachname und Jahrgang, auf Wunsch dazu ihre J+S-Nummer. Vor- und Nachname haben je
+1 bis 60 Zeichen, der Jahrgang ist eine vierstellige Jahreszahl, die J+S-Nummer höchstens 20
+Zeichen lang; eine Liste fasst höchstens 200 Spieler:innen. Das Plus im Kopf öffnet eine
+Eingabezeile mit den vier Feldern; „Hinzufügen" oder die Eingabetaste nimmt auf, und die Zeile
+bleibt für die nächste offen, bis das Kreuz sie ohne Speichern schliesst. Die Liste ist nach Vor-
+und Nachname geordnet; jede Zeile nennt Name, Jahrgang, J+S-Nummer und ob der Link bezogen ist,
+dazu Knöpfe für den privaten Link, „Ändern" — dieselbe Eingabezeile mit den bisherigen Angaben —
+und „Entfernen". Auf dem Telefon stehen Jahrgang und J+S-Nummer unter dem Namen.
+
+Dieselbe Spieler:in steht nur einmal auf der Liste: Vorname, Nachname und Jahrgang zusammen sind
+im Team eindeutig, wobei Gross- und Kleinschreibung, überzählige Leerzeichen, Bindestrich gegen
+Leerzeichen und verschiedene Apostrophe nicht unterscheiden — „Anna-Lena" und „anna lena" gelten
+als dieselbe, „Müller" und „Mueller" nicht. Zwei Kinder mit gleichen Angaben unterscheidet man mit
+einem Zusatz im Vornamen; die Meldung beim Aufnehmen sagt das. Angezeigt wird überall Vor- und
+Nachname, Jahrgang und J+S-Nummer nur in der Liste. Ein geänderter Name gilt sofort überall, auch an
+vergangenen Terminen. Einsehen und führen können die Liste nur die Mitglieder des Teams.
+
+Entfernen fragt nach und sagt, was folgt: Der private Link der Spieler:in gilt danach nicht mehr,
+die Selbstabholung findet sie nicht mehr, an anstehenden Terminen zählt sie nicht mehr, und an
+vergangenen steht sie nur noch ohne Namen als „Ehemalige Spieler:in", die Spielerzahl dort bleibt.
+Ihre Angaben verschwinden damit überall aus dem Team.
+
+Sobald die Liste jemanden enthält, kommt die Spielerzahl anstehender Termine aus ihr: Jede
+Spieler:in der Liste zählt, bis sie abgemeldet ist. Trainingsplan, nächster Termin, geöffneter
+Termin und Durchführen-Ansicht zeigen dann die Angemeldeten von allen, in der Zeile knapp „12/15",
+sonst ausgeschrieben „12 von 15 angemeldet"; auch 0 steht da. Beim ersten Aufnehmen verlieren alle
+anstehenden Termine und alle Serien des Teams ihre erwartete Zahl — die Meldung nennt, wie viele
+Termine es betraf —, und solange die Liste jemanden enthält, nimmt die Anwendung für anstehende
+Termine und für Serien keine erwartete Zahl an. Im Dialog steht an Stelle des Feldes „Die
+Spielerzahl kommt aus der Spielerliste des Teams." Gäste und Probetrainings kommen dafür auf die
+Liste und zählen, bis man sie entfernt. Wird die Liste wieder leer, ist die Spielerzahl anstehender
+Termine unbekannt, bis jemand eine erwartete festlegt. Ein Team ohne Spielerliste plant unverändert
+mit der erwarteten Zahl.
+
+Ein Termin, der begonnen hat, behält den Stand bei seinem Beginn — wer da auf der Liste stand und
+wer abgemeldet war; spätere Änderungen an der Liste wirken dort nicht mehr, ausser auf die Namen.
+Begonnen ist ein Termin ab seiner Anfangszeit, minutengenau nach Schweizer Zeit; ein Termin, der
+schon beim Erfassen begonnen hat, hält den Stand dieses Moments fest. War die Liste bei Beginn
+leer, gilt dort die erwartete Zahl, die sich an begonnenen Terminen weiterhin festlegen lässt. Wird
+ein begonnener Termin auf einen Zeitpunkt verlegt, der noch bevorsteht, ist er wieder offen: Es
+zählt wieder die aktuelle Liste, seine Abmeldungen verfallen, und eine erwartete Zahl verliert er,
+sofern das Team eine Liste führt.
+
+## Ab- und Anmelden
+
+Jede Spieler:in der Liste ist für jeden Termin angemeldet, bis sie abgemeldet wird; einen dritten
+Zustand wie „keine Rückmeldung" gibt es nicht. Wer fehlt, ohne sich abzumelden, zählt mit — die
+Zahl ist darum eine Obergrenze. Abgemeldet und wieder angemeldet wird Termin für Termin, durch jedes
+Mitglied im geöffneten Termin oder durch die Eltern bzw. die Spieler:in selbst über ihren privaten
+Link (siehe unten), bis zum Beginn des Termins und nie an einem ausgefallenen. Eine Abmeldung über
+den Link erscheint im Team wie die eines Mitglieds; wer sie gesetzt hat, hält die Anwendung nicht
+fest, es gilt die zuletzt gesetzte. Einen Grund trägt eine Abmeldung nicht.
+
+Im Reiter „Spieler:innen" des geöffneten Termins steht jede Spieler:in mit einem Schalter, der beim
+Umlegen sofort speichert: an heisst angemeldet, aus abgemeldet, und abgemeldete Namen stehen
+gedämpft. Darüber steht „12 von 15 angemeldet" und bis wann sich das ändern lässt, etwa „Änderbar
+bis 18:00". Ab Beginn sind die Schalter gesperrt, es gilt der „Stand bei Beginn", und ehemalige
+Spieler:innen stehen ohne Namen am Ende. Ein ausgefallener Termin nennt weder Zahl noch
+Abmeldungen, sondern nur, dass sich für ihn niemand an- oder abmelden lässt. Führt das Team keine
+Liste, sagt der Reiter, wo sie zu finden ist; an einem Termin, der begann, als die Liste leer war,
+sagt er, dass dort die erwartete Spielerzahl gilt.
+
+Eine Abmeldung gilt für den Zeitpunkt, für den sie abgegeben wurde. Ändern sich Datum oder Beginn
+eines Termins, der danach noch nicht begonnen hat, verfallen seine Abmeldungen, und alle gelten
+wieder als angemeldet — auch wenn die Änderung über die Serie kommt oder die Zeit wieder der Serie
+folgt, und auch während der Termin ausfällt. Vor dem Speichern fragt die Anwendung nach und nennt
+die Zahl, etwa „Damit verfallen 3 Abmeldungen: Diese Spieler:innen gelten wieder als angemeldet.";
+bei einer Serienänderung steht das in der Rückfrage zu wegfallenden Terminen oder, fallen keine
+weg, in einer eigenen. Ein geändertes Ende, Ort, Bemerkung, Felder, Verantwortliche oder Training
+lassen die Abmeldungen stehen. Hat der Termin durch die Verlegung schon begonnen, bleibt sein Stand
+samt Abmeldungen. Die Eltern sehen am Link, dass ihre Abmeldung verfallen ist.
+
+Fällt ein Termin aus, ruhen seine Abmeldungen: Weder Zahl noch Abmeldungen sind zu sehen, und
+neue nimmt die Anwendung nicht an. Wird der Ausfall zurückgenommen, gelten sie wieder, sofern der
+Termin unterdessen nicht verlegt wurde. Wird ein Termin entfernt oder entfällt er durch eine
+Serienänderung, verschwinden seine Abmeldungen mit ihm.
+
+Wurde ein Termin verlegt, ist er ausgefallen oder hat er begonnen, seit man ihn zuletzt sah, weist
+die Anwendung ein Ab- oder Anmelden ab und nennt den aktuellen Stand, etwa „Der Termin wurde
+inzwischen verlegt, neu auf … um 18:30. Sieh ihn dir noch einmal an." — im Team, am privaten Link
+und beim KI-Assistenten gleich.
+
+## Privater Link
+
+Jede Spieler:in hat einen privaten Link, über den ihre Eltern oder sie selbst sie ohne Konto ab-
+und wieder anmelden. Ein Mitglied holt ihn über das Kettenglied in ihrer Zeile der Spielerliste:
+Der Dialog „Privater Link für …" bietet ihn zum Kopieren an, sagt, ob er bezogen ist, und warnt:
+„Wer diesen Link hat, kann diese Spieler:in für Trainings ab- und anmelden. Gib ihn nur ihren Eltern
+oder ihr selbst." Weitergeben muss ihn das Mitglied selbst, oder die Eltern holen ihn ab (siehe
+„Selbstabholung"); die Anwendung verschickt nichts und kennt keine Kontaktdaten. Der Link bleibt
+derselbe, bis jemand ihn erneuert: „Link erneuern" im selben Dialog macht den bisherigen sofort
+ungültig, die Abmeldungen bleiben. Ist die Selbstabholung eingeschaltet, sagt der Dialog dazu, dass
+die Eltern den neuen dort wieder abholen. Je Spieler:in und Team gibt es genau einen Link.
+
+Wer den Link öffnet, braucht weder Konto noch Anmeldung. Die Seite ist fürs Telefon gebaut, kommt
+ohne Seitenleiste aus und nennt Teamname und Name der Spieler:in mit dem Satz, dass sie für jedes
+Training angemeldet ist und man ausschaltet, wenn sie nicht kann. Darunter steht jeder anstehende
+Termin des Teams — ab heute, ein begonnener noch bis Ende seines Tages — als Karte mit
+Kalenderblatt, Beginn und Ende, Ort, der Zahl der Angemeldeten und einem Schalter; ist die
+Spieler:in abgemeldet, ist das Kalenderblatt rot. Ein begonnener Termin ist gesperrt mit „Hat
+begonnen · nicht mehr änderbar", ein ausgefallener grau mit „Fällt aus". Wurde ein Termin verlegt,
+seit sie abgemeldet war, steht bei ihm etwa „Verlegt, vorher Dienstag, 20. Oktober um 18:00. Deine
+Abmeldung gilt nicht mehr.", bis man neu wählt oder der Termin beginnt. Namen anderer
+Spieler:innen, Trainings und vergangene Termine zeigt die Seite nicht.
+
+Ein erneuerter, entfernter oder unbekannter Link führt auf dieselbe neutrale Seite „Dieser Link gilt
+nicht mehr", die weder Team noch Spieler:in nennt und auf die Abholadresse des Teams oder die
+Trainer:innen verweist; ob es den Link je gab, ist nicht zu erkennen. Ebenso ungültig wird er, wenn
+das Team aufgelöst wird. Die Vorschau, die ein Chat beim Teilen zeigt, trägt einen festen Titel ohne
+Team und Namen; Suchmaschinen nehmen die Seite nicht auf, die Besucherstatistik zählt sie nicht, und
+im Browser legt sie nichts ab.
+
+## Selbstabholung
+
+Damit niemand jedem Elternteil einzeln schreiben muss, holen Eltern den Link ihres Kindes auf
+Wunsch selbst ab. Der Abschnitt „Selbstabholung" zuoberst in der Karte der Spielerliste trägt dafür
+einen Schalter; ausgeschaltet ist er, bis ein Mitglied ihn einschaltet. Eingeschaltet zeigt er die
+Abholadresse des Teams zum Kopieren und sagt, was sie kann: Wer sie hat und Vorname, Nachname und
+Jahrgang eines Kindes kennt, erhält dessen Link und kann es damit ab- und anmelden — geteilt wird
+sie darum nur im Eltern-Chat des Teams. Im Menü daneben lässt sie sich nach einer Bestätigung
+erneuern; die bisherige gilt dann nie mehr. Ausschalten stoppt neue Abholungen, und wieder
+eingeschaltet gilt dieselbe Adresse wie vorher. Weder Erneuern noch Ausschalten berührt die Links,
+die Eltern schon bezogen haben; beides sagt die Anwendung dabei.
+
+Auch die Abholseite braucht kein Konto und ist fürs Telefon gebaut. Unter dem Teamnamen und
+„Spieler:in-Link abholen" gibt man Vorname, Nachname und Jahrgang des Kindes so ein, wie das Team
+sie erfasst hat. Unter dem Knopf „Link abholen" steht unter „Was KiFu speichert", welche Angaben die
+Anwendung zu einem Kind führt — Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, und
+Abmeldungen —, wer sie sieht — die Trainer:innen des Teams, KI-Assistenten, die sie verbunden
+haben, und wer den Link des Kindes hat — und dass sie verschwinden, wenn das Team das Kind aus der
+Liste nimmt. Abgeglichen wird wie bei der Eindeutigkeit der Liste; Umlaute, Akzente und alles
+Übrige müssen stimmen, die J+S-Nummer gehört nicht dazu. Passt die Eingabe, erscheint der Link zum
+Kopieren mit „Link öffnen" und „Weiteres Kind abholen", dazu, wozu er dient, dass er privat ist und
+dass man ihn bei Verlust hier wieder abholt; man erhält jedes Mal den gültigen Link. Passt sie
+nicht, kommt immer derselbe Satz: „Dazu finden wir keinen Link. Prüf die Schreibweise oder frag
+beim Team nach." Welche Angabe nicht stimmt oder ob es ein solches Kind gibt, verrät er nicht.
+
+Nach fünf nicht passenden Eingaben innerhalb von 15 Minuten nimmt die Abholung vom selben
+Internetanschluss 15 Minuten lang keine Eingabe mehr an, bei keinem Team, und die Seite sagt, dass
+es danach wieder geht; für andere Anschlüsse bleibt sie offen. Ein Treffer zwischendurch setzt die
+Zählung nicht zurück. Eine erneuerte, ausgeschaltete oder
+unbekannte Adresse zeigt die neutrale Seite „Diese Abholadresse gilt nicht" ohne Teamname. Vorschau
+im Chat, Suchmaschinen, Besucherstatistik und Browser behandelt die Abholseite wie den Link.
+
+In der Spielerliste steht je Spieler:in „Bezogen" oder „Nicht bezogen": ob ihr aktueller Link über
+die Abholadresse herausgegeben wurde. Wer ihn holte und wie oft, hält die Anwendung nicht fest.
+Erneuert ein Mitglied den Link, steht er wieder auf „Nicht bezogen"; der neue lässt sich über die
+Abholadresse erneut abholen.
 
 ## Gleichzeitige Änderungen
 
@@ -386,13 +565,17 @@ Der Dialog schliesst dann, der Plan zeigt den neuen
 Stand, und man wählt noch einmal. Ändert sich dagegen nur etwas, das am Ergebnis nichts ändert,
 gilt die Aktion; beim Ändern eines Termins übernimmt die Anwendung nur die Angaben, die man
 tatsächlich geändert hat, sodass die gleichzeitige Änderung eines anderen Feldes bestehen bleibt.
+Beim Ab- und Anmelden gilt die Regel unter „Ab- und Anmelden": Ein inzwischen verlegter,
+ausgefallener oder begonnener Termin weist ab, sonst gilt die zuletzt gesetzte Angabe.
 
 Termine, Serien, Zuordnungen, Verantwortliche und Ausfälle lassen sich auch über einen
 verbundenen KI-Assistenten führen, samt Feldern und erwarteter Spielerzahl (siehe
-[Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)). Es gelten dieselben Regeln, und
-was er festlegt, steht im selben Kalender. Platz und Spielerzahl erfährt er bei jedem Termin,
-den er nennt, und kann ein Training darauf ausrichten; ob es passt, beurteilt er selbst. Kalender-Abos und die Teams selbst verwaltet er
-nicht.
+[Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)), ebenso die Spielerliste, die
+Ab- und Anmeldungen, die privaten Links und die Selbstabholung. Es gelten dieselben Regeln, und
+was er festlegt, steht im selben Kalender; verfallen durch eine Verlegung Abmeldungen, verlangt
+auch er eine Bestätigung. Platz und Spielerzahl erfährt er bei jedem Termin, samt der Angabe, ob
+die Zahl aus der Spielerliste stammt oder erwartet ist, und kann ein Training darauf ausrichten;
+ob es passt, beurteilt er selbst. Kalender-Abos und die Teams selbst verwaltet er nicht.
 
 ## Veröffentlichen
 
@@ -424,7 +607,9 @@ Verlassen nicht.
 Löscht jemand sein Konto, gilt dasselbe in allen seinen Teams; an vergangenen Terminen bleibt
 sein Eintrag ohne Namen als „Ehemaliges Mitglied" stehen — auch in Teams, die er schon früher
 verlassen hatte. War er das letzte Mitglied eines Teams, verschwindet dieses Team samt
-Trainings, Terminen, Terminserien und Bilddateien.
+Trainings, Terminen, Terminserien, Bilddateien und Spielerliste; deren private Links und die
+Abholadresse gelten danach nicht mehr. Auf die Spielerliste wirkt das Ausscheiden eines
+Mitglieds sonst nicht.
 
 ## Drei Ansichten
 
@@ -432,7 +617,8 @@ Der Team-Bereich gliedert sich in drei Ansichten, zwischen denen ein Umschalter 
 den Brotkrumen wechselt; den Namen des Teams nennt die Brotkrume. Wer ein Team öffnet, landet
 im Trainingsplan — was als Nächstes ansteht, ist beim Öffnen die häufigste Frage. Daneben
 liegen die Trainings, also der Bestand, aus dem geplant wird, und unter „Team" der Teamname,
-die Mitglieder samt Verlassen und Auflösen.
+die Spielerliste samt Selbstabholung und die Mitglieder samt Verlassen und Auflösen. Ein
+geöffneter Termin ist keine eigene Ansicht; er steht im Trainingsplan daneben.
 
 Umbenannt wird das Team im Feld „Teamname" unter „Team". Gespeichert wird beim Verlassen des
 Felds, ohne Knopf und ohne Rückfrage; eine kurze Meldung am Bildschirmrand sagt, dass es
@@ -440,7 +626,7 @@ geklappt hat. Ein leerer Name wird nicht gespeichert: Das Feld fällt auf den bi
 zurück, und die Meldung sagt warum. Dasselbe gilt, wenn das Speichern scheitert.
 
 Jede Ansicht hat ihre eigene Adresse, der Trainingsplan samt der Eingrenzung auf die eigenen
-Termine; der gezeigte Monat steht nicht darin. Adressen des früheren Monatsüberblicks führen in
+Termine und dem geöffneten Termin mit seinem Reiter; der gezeigte Monat steht nicht darin. Adressen des früheren Monatsüberblicks führen in
 den Trainingsplan, wie er sich sonst öffnet, die Eingrenzung bleibt. Eine Adresse lässt sich einem Mitglied
 schicken, als Lesezeichen ablegen, und der Zurück-Schritt des Browsers führt in die zuvor
 geöffnete Ansicht. Wer eine Adresse eines Teams aufruft, in dem er nicht ist, landet in der
@@ -469,8 +655,8 @@ prüft die Anwendung nicht, und sie meldet keine Unstimmigkeit; das Urteil liegt
 verbundenen KI-Assistenten, der die Angaben liest. Auch die Übungssuche lässt sich nicht auf
 Platz oder Spielerzahl eines Termins eingrenzen. Mehrere Felder lassen sich nicht zu einer
 grösseren Fläche zusammenlegen, und Hütchen- oder Markierungstore zählen nicht zu den Toren
-eines Feldes. Die Spielerzahl ist eine Erwartung: Namen, Zusagen oder Anwesenheit führt die
-Anwendung nicht, und wie viele tatsächlich kamen, hält sie nicht fest. Einen Platz als Vorlage
+eines Feldes. Ohne Spielerliste ist die Spielerzahl eine Erwartung, mit ihr eine Obergrenze:
+Anwesenheit führt die Anwendung nicht, und wie viele tatsächlich kamen, hält sie nicht fest. Einen Platz als Vorlage
 für weitere Termine hinterlegen lässt sich nicht; Felder werden je Termin oder Terminserie
 erfasst. Ändern sich Platz oder Spielerzahl, wirkt das nicht auf ein bereits zugeordnetes
 Training zurück.
@@ -494,7 +680,7 @@ vergangenen Terminen sind kein Nachweis geleisteter Einsätze. Ob ein Termin sta
 und wer dabei war, hält die Anwendung nicht fest; ein vergangener Termin, der nicht ausgefallen
 ist, gilt deshalb nicht als durchgeführt, und ein Tag ohne Termin ist nicht von einer bewussten
 Pause zu unterscheiden. Dass die Verantwortlichen, die Felder oder die erwartete Spielerzahl eines Serientermins von der
-Serie abweichen, zeigt erst der geöffnete Termin. Ausfallgründe sind frei formuliert, ohne Vorschläge; einen Teilausfall oder Abbruch kennt
+Serie abweichen, zeigt erst der Dialog „Termin ändern". Ausfallgründe sind frei formuliert, ohne Vorschläge; einen Teilausfall oder Abbruch kennt
 die Anwendung nicht. Ob Altersstufe oder Inhalt eines Trainings zum Termin passen, prüft sie
 nicht, und ob und wie oft ein persönliches Training schon einem Termin zugeordnet wurde, steht
 nirgends. Bricht die Verbindung mitten im Kopieren ohne Rückmeldung ab, kann eine unvollständige
@@ -524,7 +710,44 @@ eigenen Termine eingrenzen. Ob ein Abo-Link weitergegeben wurde, erkennt die Anw
 Wer ihn hat, erhält Zeit und Ort der Termine, solange das Abo gilt; wer ihn ersetzen will,
 widerruft das Abo und holt einen neuen. Beim Verlassen oder Auflösen eines Teams und beim
 Löschen des Kontos sagt die Anwendung nicht, dass Abos erlöschen. Gedacht ist das Abo für die
-Trainerinnen und Trainer des Teams, nicht für Eltern, Spielerinnen und Spieler oder den Verein.
+Trainerinnen und Trainer des Teams, nicht für Eltern, Spielerinnen und Spieler oder den Verein;
+deren privater Link liefert kein Abo.
+
+Die Spielerliste führt nur Vorname, Nachname, Jahrgang und J+S-Nummer — weder Geburtsdatum noch
+Position, Torhüter:innen oder Kontaktdaten der Eltern. Sie lässt sich weder aus einem anderen Team
+übernehmen noch mit einem teilen; dasselbe Kind in zwei Teams hat zwei Einträge und zwei Links, und
+für Geschwister gibt es keinen gemeinsamen Link. Aus dem Jahrgang leitet die Anwendung keine
+Alterskategorie ab, und ob er zum Team passt, prüft sie nicht. Ausgetretene bleiben auf der Liste,
+bis jemand sie entfernt. Gruppen eines Trainings bleiben Bezeichnungen ohne Spieler:innen. Mit
+Spielerliste lässt sich die Zahl nicht von Hand um Gäste ergänzen. An einem begonnenen Termin
+bietet „Termin ändern" das Feld für die erwartete Zahl weiter an; gezeigt wird sie dort aber nur,
+wenn die Liste bei Beginn leer war.
+
+Die Anwendung benachrichtigt niemanden über Ab- und Anmeldungen, und Eltern erfahren nicht von
+selbst, dass ein Termin verlegt wurde, ausfällt oder ihre Abmeldung verfallen ist — nur, wenn sie
+den Link öffnen. Wer sich zu einem Termin nicht geäussert hat, ist nicht zu erkennen, denn jede
+Spieler:in gilt als angemeldet. Eine Abmeldung trägt keinen Grund, gilt immer für genau einen
+Termin und lässt sich nicht für mehrere in einem Schritt setzen; die Frist ist immer der Beginn und
+lässt sich je Team nicht einstellen. Eine verfallene Abmeldung lässt sich nicht auf den neuen
+Zeitpunkt übernehmen. Wer eine Ab- oder Anmeldung gesetzt hat, hält die Anwendung nicht fest. Ab
+Beginn lässt sich nichts mehr ändern, und wer tatsächlich da war, hält sie nicht fest; eine
+J+S-Anwesenheitskontrolle ersetzt sie nicht.
+
+Ob ein privater Link weitergegeben wurde, erkennt die Anwendung nicht, und ob ein Elternteil oder
+die Spieler:in selbst abmeldet, unterscheidet sie nicht. Sperren lässt sich ein Link nur, indem
+man ihn erneuert, und erneuert wird jeder einzeln, nie alle auf einmal. Was gespeichert ist, sagt
+nur die Abholseite, weder die Spielerliste noch die Seite hinter dem Link. Eine vollständige
+Datenschutzerklärung gibt es nicht (siehe [Navigation](navigation.md#bekannte-grenzen)).
+
+Die Abholung erkennt keine Schreibvarianten: Umschriebene Umlaute, Rufnamen oder Tippfehler
+passen nicht. Wer die Abholadresse hat und Vorname, Nachname und Jahrgang eines Kindes kennt — im
+Eltern-Chat also jede und jeder —, kann auch fremde Kinder ab- und anmelden; das trägt das Team
+bewusst. Die Sperre nach Fehlversuchen trifft den Internetanschluss, nicht die Person: Eltern am
+selben Anschluss, etwa im selben WLAN, können mitgesperrt sein, und wer den Anschluss wechselt,
+kann weiter eingeben. „Bezogen" sagt nur, dass der aktuelle Link herausgegeben wurde, nicht wer ihn
+hat oder wie oft er abgeholt wurde. Die Selbstabholung gilt für alle Spieler:innen des Teams; für
+einzelne lässt sie sich nicht ausschalten, und ein erneuerter Link lässt sich über die Abholadresse
+wieder abholen.
 
 Gleichzeitiges Bearbeiten desselben Trainings durch mehrere Mitglieder erkennt die Anwendung
 nicht; die zuletzt gespeicherte Fassung gilt. Ebenso gilt bei einem einzelnen Termin die zuletzt

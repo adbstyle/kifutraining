@@ -342,7 +342,6 @@ pruefe("10c: wirkungslose Angaben werden gespeichert und gemeldet", () => {
     [{ id: "a", art: "symbol", typ: "torwart", x: 800, y: 500, pose: "laufen" }, "pose"],
     [{ id: "a", art: "symbol", typ: "tor", x: 800, y: 500, farbe: "rot" }, "farbe"],
     [pylone("a", 800, 500, { spiegeln: true }), "spiegeln"],
-    [{ id: "a", art: "pfad", typ: "laufweg", punkte: [{ x: 1, y: 1 }, { x: 9, y: 9 }], farbe: "rot" }, "farbe"],
     [{ id: "a", art: "pfad", typ: "laufweg", punkte: [{ x: 1, y: 1 }, { x: 9, y: 9 }], gestrichelt: false }, "gestrichelt"],
   ];
   for (const [element, angabe] of faelle) {
@@ -354,6 +353,9 @@ pruefe("10c: wirkungslose Angaben werden gespeichert und gemeldet", () => {
     assert.equal((p.daten.elemente[0] as Record<string, unknown>)[angabe], (element as Record<string, unknown>)[angabe]);
   }
   keineBefunde(mit(pylone("a", 800, 500, { rotation: 0, spiegeln: false })));
+  // Bewegungspfeile färbt die ersteller:in selbst, wenn sich Wege sonst
+  // verwechseln lassen (#430) — die Farbe wirkt also auch dort.
+  keineBefunde(mit({ id: "a", art: "pfad", typ: "laufweg", punkte: [{ x: 1, y: 1 }, { x: 9, y: 9 }], farbe: "rot" }));
   // Der Renderer dreht eine Pylone sehr wohl (symbolRotation) — nur eine Figur
   // nie. Die Meldung behauptet darum nur, was stimmt.
   assert.match(mit(pylone("a", 800, 500, { rotation: 90 })).maengel[0].meldung, /Drehung ist am Symbol «pylone» nicht vorgesehen/);

@@ -1,6 +1,6 @@
 # Rückmeldungen
 
-Stand 2026-10-05. Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
+Stand 2026-10-16. Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
 
 ## Zwei Arten, etwas zu sagen
 
@@ -39,7 +39,12 @@ die Bestätigung dort. Sie erscheint ein einziges Mal: Wer die Seite danach neu 
 
 Scheitert ein Vorgang in einem Dialog, der danach offen bleibt, etwa beim Verlassen oder
 Auflösen eines Teams, steht der Grund oben im Dialog selbst und nicht am Bildschirmrand, wo
-der Dialog ihn verdecken würde.
+der Dialog ihn verdecken würde. Ebenso meldet der Dialog mit dem privaten Link einer Spieler:in
+ein Erneuern in sich selbst.
+
+Auf den Seiten hinter einem privaten Link, die Eltern ohne Konto öffnen, gibt es die Zeile nicht.
+Scheitert dort das Umlegen eines Schalters, springt er zurück, und der Grund steht als Hinweis
+an der Karte des Termins; auf der Abholseite steht jede Antwort als Hinweis über dem Knopf.
 
 ## Bekannte Grenzen
 

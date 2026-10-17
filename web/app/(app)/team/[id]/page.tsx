@@ -11,8 +11,10 @@ import { getTeam } from "@/lib/queries/teams";
 import { getTeamPlan, teilePlan } from "@/lib/queries/termine";
 import { istVerantwortlich } from "@/lib/queries/termine-fuer";
 import { getTeamTrainings, getTrainingPool } from "@/lib/queries/trainings";
-import { planHref } from "@/lib/team-ansicht";
+import { TERMIN_REITER, planHref, type TerminReiter } from "@/lib/team-ansicht";
+import { TerminSpalte } from "@/components/team/TerminSpalte";
 import { createClient } from "@/lib/supabase/server";
+import { fuehrtSpielerliste } from "@/lib/kern/spieler";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 
 /** #330 PC 8: der Verweis zeigt auf einen Termin, den es nicht mehr gibt. */
@@ -32,16 +34,18 @@ const TERMIN_WEG = "Diesen Termin gibt es nicht mehr.";
    den Trainingsplan wie jede andere; Ansicht und Monat bleiben ohne Wirkung,
    die Eingrenzung gilt (#405 PC 2, 3).
 
-   `?termin=<id>` und `?hinweis=termin_weg` setzt allein der Verweis aus dem
-   Kalender-Abo (#330 PC 7, 8) — die Seite /team/[id]/termin/[terminId] leitet
-   hierher. Sie gehören nicht zur Ansicht: Der Filter trägt sie nicht weiter.
-   `termin` hebt den Termin hervor und klappt dafür den Rückblick auf. */
+   `?termin=<id>` öffnet den Termin daneben (#435), im Reiter aus `?tab=`
+   (Termin, Training, Spieler:innen), hebt ihn in der Liste hervor und klappt
+   dafür den Rückblick auf. Auch der Verweis aus dem Kalender-Abo zielt so auf
+   einen Termin (#330 PC 7, 8) — die Seite /team/[id]/termin/[terminId] leitet
+   hierher; `?hinweis=termin_weg`, wenn es ihn nicht mehr gibt. Beides gehört
+   nicht zur Ansicht: Der Filter trägt es nicht weiter. */
 export default async function TeamPlanPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ meine?: string; termin?: string; hinweis?: string }>;
+  searchParams: Promise<{ meine?: string; termin?: string; tab?: string; hinweis?: string }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
@@ -59,12 +63,14 @@ export default async function TeamPlanPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [alleTermine, trainings, persoenliche, team] = await Promise.all([
+  const [alleTermine, trainings, persoenliche, team, fuehrtListe] = await Promise.all([
     getTeamPlan(id),
     getTeamTrainings(id),
     // Die eigenen Trainings, Entwürfe und öffentliche: zuordenbar als Kopie (#328).
     getTrainingPool({ mine: true }),
     getTeam(id),
+    // #434: Führt das Team eine Spielerliste, entfällt die erwartete Zahl.
+    fuehrtSpielerliste(supabase, id),
   ]);
   // Eingegrenzt wird hier statt in der Abfrage: Der Monat braucht auch die
   // Tage, an denen nur Termine anderer liegen (#404 AK 14).
@@ -73,9 +79,12 @@ export default async function TeamPlanPage({
   const belegt = meine ? [...new Set(alleTermine.map((t) => t.datum))].filter((d) => !eigeneTage.has(d)) : [];
   const plan = teilePlan(termine, heute);
   const leer = termine.length === 0;
+  // #435: Der Termin aus `?termin=` steht offen daneben, im Reiter aus `?tab=`.
+  const offen = hervorheben ? alleTermine.find((t) => t.id === hervorheben) : undefined;
+  const reiter: TerminReiter = TERMIN_REITER.includes(sp.tab as TerminReiter) ? (sp.tab as TerminReiter) : "termin";
 
   return (
-    <TerminBereich teamId={id} trainings={trainings} persoenliche={persoenliche} mitglieder={team?.mitglieder ?? []} heute={heute}>
+    <TerminBereich teamId={id} trainings={trainings} persoenliche={persoenliche} mitglieder={team?.mitglieder ?? []} heute={heute} fuehrtListe={fuehrtListe}>
       <section>
         {/* Keine sichtbare Überschrift: «Trainingsplan» steht schon im
             Reiter; für Screenreader bleibt sie, damit unter dem Teamnamen
@@ -99,6 +108,7 @@ export default async function TeamPlanPage({
           hervorheben={hervorheben}
           belegt={belegt}
           meine={meine}
+          spalte={offen && <TerminSpalte t={offen} reiter={reiter} meine={meine} ich={user.id} />}
           leer={
             meine ? (
               <Leerzustand icon={UserCheck} titel="Keine Termine für dich" dicht>

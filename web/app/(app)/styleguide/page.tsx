@@ -42,6 +42,7 @@ import {
   Verzeichnis,
   VerzeichnisFlaeche,
   type VerzeichnisBereich,
+  KopierFeld,
 } from "@/components/ui";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { uebungEckdaten } from "@/lib/eckdaten";
@@ -55,6 +56,7 @@ import { OeffnenZeileDemo } from "./OeffnenZeileDemo";
 import { EigenschaftBearbeitbarDemo } from "./EigenschaftBearbeitbarDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { CheckboxDemo } from "./CheckboxDemo";
+import { SwitchDemo } from "./SwitchDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
@@ -1807,6 +1809,42 @@ export default async function Styleguide() {
             Ein Filter ist sie nicht - der bleibt ein <code>FilterChip</code> (<Siehe id="plaketten" />).
           </p>
           <CheckboxDemo />
+
+          <h4 className="mb-2 mt-8 type-title-medium text-on-surface">
+            Schalter
+          </h4>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Für eine Ja/Nein-Angabe, die beim Umlegen sofort gilt - eine
+            Spieler:in an einem Termin angemeldet oder abgemeldet (Epic #433).
+            Neu neben der Checkbox, weil diese in ein Formular gehört, das man
+            erst speichert; ein Schalter speichert selbst (Atlassian: Toggle
+            nur für sofort wirkende Änderungen). Beide Lagen tragen ein Zeichen
+            im Knopf, damit der Zustand nicht an der Farbe allein hängt: an in
+            Primary mit Haken, aus im Rot des abgemeldeten Kalenderblatts mit
+            Kreuz. Gesperrt, wenn es nichts mehr zu ändern gibt (der Termin hat
+            begonnen); <code>neutral</code> grau ohne Zeichen, wenn es nichts zu
+            wählen gibt (er fällt aus) - und für die Aus-Lage eines Schalters,
+            dessen Aus kein Fehlen bedeutet (die Selbstabholung eines Teams).
+            Darunter liegt ein echtes{" "}
+            <code>&lt;input type=&quot;checkbox&quot; role=&quot;switch&quot;&gt;</code>.
+          </p>
+          <SwitchDemo />
+
+          <h4 className="mb-2 mt-8 type-title-medium text-on-surface">
+            Kopierfeld
+          </h4>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Ein Geheimnis zum Weitergeben - privater Link einer Spieler:in,
+            Abholadresse eines Teams (Epic #433): ein schreibgeschütztes Feld,
+            rechts davon der Kopier-Knopf (<code>KopierFeld</code>). Neu, weil
+            drei Stellen dasselbe brauchten: Zwischenablage, Haken als Antwort,
+            Live-Region für die Vorlesehilfe und ohne Zwischenablage den Handweg
+            (Feld markiert, Hinweis darüber). Weitere Knöpfe derselben Zeile,
+            etwa ein Menü mit «erneuern», kommen über <code>danach</code>.
+          </p>
+          <div className="max-w-md">
+            <KopierFeld label="Privater Link" value="https://ki-fu.ch/abmelden/5764a2e8a97f4895aea125a811bda390" />
+          </div>
         </Section>
 
         <Section id="offene-einfachauswahl">
@@ -3241,6 +3279,17 @@ export default async function Styleguide() {
             direkt am Element bearbeitet.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Auch <strong>Bewegungspfeile</strong> lassen sich einfärben (#430),
+            haben aber keine Standardfarbe aus der Palette: Ohne Farbe zeichnen
+            sie in der Farbe der Zeichenerklärung. Davor steht darum ein eigener
+            Knopf, der auf diese Farbe zurücksetzt. Er zeigt keinen Farbpunkt,
+            sondern den Pfeil selbst als Mini-Vorschau - nach dem Muster der
+            Posen-Knöpfe, denn ein Punkt in der Farbe der Zeichenerklärung wäre am
+            Bildschirm neben «weiss» nicht zu unterscheiden. Kreuzen sich Pfeile,
+            spart der obere den unteren mit einem durchsichtigen Rand aus (Rolle{" "}
+            <code>weg-rand</code>).
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Mehrere Elemente werden per <strong>Auswahlrahmen</strong> (Aufziehen
             auf der freien Fläche, erfasst vollständig umschlossene Elemente) oder
             additivem <strong>Umschalt-/Cmd-Klick</strong> ausgewählt (#67). Bei
@@ -3401,7 +3450,9 @@ export default async function Styleguide() {
             (<code>datumKurz</code>) sich beim Überfliegen nicht finden lässt. Im Trainingsplan steht es links an
             jeder Terminzeile. Eine leise Tönung sagt, was der Termin trägt (<code>zustand</code>): Training in Primary, noch kein
             Training in der Warnfarbe - je eine schwache Fläche (12 %) mit der Tageszahl in der Farbe selbst -,
-            ausgefallen grau mit durchgestrichener Zahl, vergangen ohne Training ohne Fläche. Die Farbe trägt
+            ausgefallen grau mit durchgestrichener Zahl, vergangen ohne Training ohne Fläche. Hinter dem
+            privaten Link einer Spieler:in sagt es «abgemeldet» im Rot der Danger-Lozenge, wie der Schalter
+            daneben in seiner Aus-Lage (Epic #433). Die Farbe trägt
             den Zustand nie allein, die Zeile daneben sagt ihn in Worten. Heute hebt das Blatt nicht hervor;
             dafür steht der nächste Termin zuoberst. Wo kein Blatt steht (der nächste Termin), sagt eine
             Lozenge in derselben Tönung den Zustand: <code>BlattLozenge</code> - Form der Lozenge, Farbe des Blatts.
@@ -3410,6 +3461,7 @@ export default async function Styleguide() {
             <Kalenderblatt datum="2026-10-06" zustand="noch-nicht" />
             <Kalenderblatt datum="2026-10-08" zustand="training" />
             <Kalenderblatt datum="2026-10-11" zustand="ausgefallen" />
+            <Kalenderblatt datum="2026-10-13" zustand="abgemeldet" />
             <Kalenderblatt datum="2026-09-30" />
             <BlattLozenge zustand="noch-nicht" iconBefore={TriangleAlert}>Noch kein Training</BlattLozenge>
           </div>
