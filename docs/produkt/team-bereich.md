@@ -530,7 +530,7 @@ im Browser legt sie nichts ab.
 Damit niemand jedem Elternteil einzeln schreiben muss, holen Eltern den Link ihres Kindes auf
 Wunsch selbst ab. Der Abschnitt „Selbstabholung" zuoberst in der Karte der Spielerliste trägt dafür
 einen Schalter; ausgeschaltet ist er, bis ein Mitglied ihn einschaltet. Eingeschaltet zeigt er die
-Abholadresse des Teams in einem Lesefeld zum Kopieren und sagt, was sie kann: Wer sie hat und
+Abholadresse des Teams in einem schreibgeschützten Feld zum Kopieren und sagt, was sie kann: Wer sie hat und
 Vorname, Nachname und Jahrgang einer Spieler:in kennt, erhält deren Link und kann sie damit ab- und
 anmelden — geteilt wird sie darum nur teamintern. Im Menü daneben lässt sie sich nach einer Bestätigung
 erneuern; die bisherige gilt dann nie mehr. Ausschalten stoppt neue Abholungen, und wieder
