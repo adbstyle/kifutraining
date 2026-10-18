@@ -11,6 +11,7 @@ import type { TerminSpieler } from "@/lib/kern/abmeldungen";
 import { SearchX, Users } from "lucide-react";
 import { KADER_TEXT, uebrigeText } from "@/lib/kader";
 import { KaderLozenges } from "./KaderLozenge";
+import { ChipZahl } from "./ChipZahl";
 
 /* Der Reiter «Spieler:innen» am Termin (#435 AK 1, 2, 5): wer angemeldet ist,
    wer abgemeldet, je mit einem Schalter, der sofort speichert. Abgemeldete
@@ -100,7 +101,7 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
                 onClick={() => setKader(eingrenzung === name ? null : name)}
               >
                 {name}
-                <span className="text-on-surface-mittel">{daten.spieler.filter((s) => s.kader.includes(name)).length}</span>
+                <ChipZahl n={daten.spieler.filter((s) => s.kader.includes(name)).length} />
               </FilterChip>
             ))}
           </div>

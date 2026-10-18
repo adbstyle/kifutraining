@@ -2427,7 +2427,8 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-6 max-w-2xl text-on-surface-mittel">
             <strong>Badge</strong> heisst der Zähler wie bei Atlassian: eine Zahl
             an einem Knopf, die zählt, was dessen Handlung bewirkt (gewählte Werte
-            am Filterknopf, Übernahmen in der Übungsauswahl). Anatomie wie{" "}
+            am Filterknopf, Übernahmen in der Übungsauswahl, die Spieler:innen,
+            auf die ein Kader-Chip eingrenzt). Anatomie wie{" "}
             <code>@atlaskit/badge</code>: <code>rounded-klein</code>, 4 px
             seitlich, mindestens 24 px breit, <code>type-lozenge</code>. Gefüllt
             in Primary - Atlassians Markenfarbe ist bei uns das Lila -, weil sie

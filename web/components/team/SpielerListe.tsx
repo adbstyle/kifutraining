@@ -27,6 +27,7 @@ import { Selbstabholung } from "./Selbstabholung";
 import { SpielerImport } from "./SpielerImport";
 import { KaderLozenges } from "./KaderLozenge";
 import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
+import { ChipZahl } from "./ChipZahl";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
@@ -282,12 +283,12 @@ export function SpielerListe({
           {kader.map((k) => (
             <FilterChip key={k.id} selected={istEingegrenzt({ kaderId: k.id })} onClick={() => grenzeEin({ kaderId: k.id })}>
               {k.name}
-              <span className="text-on-surface-mittel">{k.spielerIds.length}</span>
+              <ChipZahl n={k.spielerIds.length} />
             </FilterChip>
           ))}
           <FilterChip selected={istEingegrenzt("ohne")} onClick={() => grenzeEin("ohne")}>
             {KADER_TEXT.ohneKader}
-            <span className="text-on-surface-mittel">{ohneKader}</span>
+            <ChipZahl n={ohneKader} />
           </FilterChip>
         </div>
       )}
