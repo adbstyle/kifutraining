@@ -1,6 +1,14 @@
 "use server";
 
-import { aendereZuteilung, benenneKaderUm, entferneKader, legeKaderAn } from "@/lib/kern/kader";
+import {
+  aendereZuteilung,
+  benenneKaderUm,
+  entferneKader,
+  kaderEntfernenFolgen,
+  legeKaderAn,
+  setzeTerminKader,
+  type KaderEntfernenFolgen,
+} from "@/lib/kern/kader";
 import { revalidiereTeam } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
 
@@ -64,5 +72,33 @@ export async function aendereZuteilungAktion(
   });
   if (!r.ok) return fehler(r);
   revalidiereTeam(teamId);
+  return { ok: true, verfallen: r.wert.verfallen };
+}
+
+/** Was das Entfernen eines Kaders bewirkte (#453 AK 11) — vor der Rückfrage. */
+export async function kaderEntfernenFolgenAktion(kaderId: string): Promise<{ ok: true; folgen: KaderEntfernenFolgen } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await kaderEntfernenFolgen(a.supabase, a.userId, { kaderId });
+  if (!r.ok) return fehler(r);
+  return { ok: true, folgen: r.wert };
+}
+
+/** Die Kader eines einzelnen Termins setzen (#453 AK 1, 3) — auch «nur
+ *  dieser» an einem Serientermin. */
+export async function setzeTerminKaderAktion(
+  terminId: string,
+  kaderIds: string[],
+  bestaetigt: number | false = false,
+): Promise<{ ok: true; verfallen: number } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await setzeTerminKader(a.supabase, a.userId, {
+    terminId,
+    kaderIds,
+    bestaetigt: bestaetigt === false ? undefined : bestaetigt,
+  });
+  if (!r.ok) return fehler(r);
+  revalidiereTeam(r.wert.teamId);
   return { ok: true, verfallen: r.wert.verfallen };
 }

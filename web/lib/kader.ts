@@ -35,6 +35,8 @@ export const KADER_MELDUNG = {
   KADER_DOPPELT: "Diesen Namen trägt im Team schon ein Kader.",
   KADER_VOLL: `Ein Team führt höchstens ${KADER_MAX} Kader.`,
   KADER_NICHT_GEFUNDEN: "Kader nicht gefunden.",
+  /** #453 AK 13: auch nicht über die Serie. */
+  KADER_TERMIN_BEGONNEN: "Der Termin hat begonnen. Seine Kader lassen sich nicht mehr ändern.",
 } as const;
 
 /** Der CHECK des Kader-Namens, samt Anführungszeichen gesucht (wie
@@ -86,6 +88,50 @@ export function kaderVerfallGeaendert(n: number): string {
 /** Dasselbe für den KI-Weg, mit dem Weg zur Bestätigung (AK 16). */
 export function kaderVerfallBestaetigen(n: number): string {
   return `${kaderVerfallText(n)} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
+}
+
+// ── Termine für Kader (#453) ─────────────────────────────────────────────────
+
+/** Was ein Termin ohne Kader zeigt (AK 5). */
+export const FUER_ALLE = "Für alle";
+
+/** Der feste Hinweis am Feld «Kader» eines Termins (hinter dem ⓘ). */
+export const KADER_REGEL =
+  "Ohne Kader gilt der Termin für alle Spieler:innen. Mit Kadern gilt er für alle, die mindestens einem davon angehören.";
+
+/** Für wie viele Spieler:innen ein Termin mit diesen Kadern gilt — die Regel
+ *  der Datenebene (`termin_gilt_fuer`) auf der Spielerliste der Oberfläche. */
+export function giltFuerAnzahl(kaderIds: readonly string[], kader: readonly Kader[], spielerGesamt: number): number {
+  if (kaderIds.length === 0) return spielerGesamt;
+  return new Set(kader.filter((k) => kaderIds.includes(k.id)).flatMap((k) => k.spielerIds)).size;
+}
+
+/** Der dynamische Hinweis unter dem Feld «Kader» (AK 8): für wie viele er
+ *  gilt — und dass er für niemanden gilt, wenn die Kader leer sind. */
+export function giltFuerText(kaderIds: readonly string[], kader: readonly Kader[], spielerGesamt: number): string {
+  const n = giltFuerAnzahl(kaderIds, kader, spielerGesamt);
+  if (kaderIds.length === 0) return spielerGesamt === 1 ? "Gilt für die 1 Spieler:in." : `Gilt für alle ${spielerGesamt} Spieler:innen.`;
+  if (n === 0) return "Gilt für niemanden: Diesen Kadern gehört keine Spieler:in an.";
+  return `Gilt für ${n} von ${spielerGesamt} Spieler:innen.`;
+}
+
+/** Unter der Liste am Termin (AK 6): wer nicht dabei ist. */
+export function uebrigeText(n: number): string | null {
+  if (n <= 0) return null;
+  return n === 1
+    ? "Für die übrige Spieler:in des Teams gilt der Termin nicht."
+    : `Für die übrigen ${n} Spieler:innen des Teams gilt der Termin nicht.`;
+}
+
+/** Die Kader eines Termins, wie der Lesepfad sie führt: `id` und `name`
+ *  `null` beim ehemaligen Kader eines begonnenen Termins (PC 4). */
+export type TerminKader = { id: string | null; name: string | null };
+
+/** Nach Namen, ehemalige zuletzt. */
+export function nachTerminKader(liste: TerminKader[]): TerminKader[] {
+  return [...liste].sort((a, b) =>
+    a.name === null || b.name === null ? (a.name === null ? 1 : 0) - (b.name === null ? 1 : 0) : a.name.localeCompare(b.name, "de"),
+  );
 }
 
 /** Ein Kader, wie die Karte und die KI-Werkzeuge ihn führen. */

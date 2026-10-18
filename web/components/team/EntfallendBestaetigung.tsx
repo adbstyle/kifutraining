@@ -3,6 +3,7 @@
 import { TriangleAlert } from "lucide-react";
 import { Button, Dialog } from "@/components/ui";
 import { verfallDialogText } from "@/lib/spieler";
+import { kaderVerfallText } from "@/lib/kader";
 import { trainingOhneTermin } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { SerienFolge } from "@/lib/kern/serien";
@@ -14,7 +15,8 @@ import type { SerienFolge } from "@/lib/kern/serien";
    nicht (OoS 4).
 
    Verfallen durch die Änderung Abmeldungen (#437 AK 1), sagt es derselbe
-   Dialog — auch, wenn keine Termine wegfallen.
+   Dialog — auch, wenn keine Termine wegfallen. Ebenso Abmeldungen, deren
+   Termin wegen der Kader nicht mehr für die Spieler:in gilt (#453 AK 10).
 
    `SerienFolge` ist ein reiner Typ: `import type` zieht nichts aus dem
    server-only Fachkern in das Client-Bundle. */
@@ -33,6 +35,7 @@ export function EntfallendBestaetigung({
 }) {
   const wegfall = aktion === "entfernen" || (folge?.entfallendAnzahl ?? 0) > 0;
   const verfall = folge?.abmeldungenVerfallend ?? 0;
+  const kaderVerfall = folge?.abmeldungenKader ?? 0;
   return (
     <Dialog
       open={folge !== null}
@@ -40,7 +43,7 @@ export function EntfallendBestaetigung({
       title={aktion === "entfernen" ? "Termine entfernen?" : wegfall ? "Termine fallen weg" : "Abmeldungen verfallen"}
       actions={
         <>
-          <Button variant="text" onClick={onClose}>Abbrechen</Button>
+          <Button variant="outlined" onClick={onClose}>Abbrechen</Button>
           <Button variant="danger" disabled={pending} onClick={onBestaetigen}>
             {aktion === "entfernen" ? "Entfernen" : "Ändern"}
           </Button>
@@ -70,6 +73,12 @@ export function EntfallendBestaetigung({
         <p className={wegfall ? "mt-3" : "flex items-start gap-2"}>
           {!wegfall && <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0 text-icon-warning" />}
           <span>{verfallDialogText(verfall)}</span>
+        </p>
+      )}
+      {kaderVerfall > 0 && (
+        <p className={wegfall || verfall > 0 ? "mt-3" : "flex items-start gap-2"}>
+          {!wegfall && verfall === 0 && <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0 text-icon-warning" />}
+          <span>{kaderVerfallText(kaderVerfall)}</span>
         </p>
       )}
     </Dialog>

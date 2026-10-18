@@ -145,7 +145,7 @@ export function NaechsterTermin({
         </div>
       )}
 
-      <TerminEigenschaften t={t} ich={ich} className="mt-4 border-t border-linie pt-3" />
+      <TerminEigenschaften t={t} ich={ich} mitKadern={a.mitKadern} className="mt-4 border-t border-linie pt-3" />
       </div>
     </div>
   );

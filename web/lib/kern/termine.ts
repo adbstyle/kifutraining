@@ -1,4 +1,5 @@
 import "server-only";
+import { KADER_MELDUNG } from "@/lib/kader";
 import { verfallBestaetigen } from "@/lib/spieler";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
@@ -171,6 +172,8 @@ export type TerminFestlegen = {
   felder?: readonly FeldEingabe[] | null;
   /** Die erwartete Spielerzahl (#390); ohne Angabe: unbekannt. */
   spielerzahl?: number | null;
+  /** Für welche Kader der Termin gilt (#453 AK 1); ohne oder leer: für alle. */
+  kaderIds?: string[];
 };
 
 /** Einen einzelnen Termin ohne Training festlegen (AK 1–6), auch in der
@@ -205,6 +208,16 @@ export async function legeTerminFest(
     .select("id")
     .single<{ id: string }>();
   if (error) return ausDbFehler(error);
+  // Ein neuer Termin hat keine Abmeldungen: Kader setzen lässt nichts verfallen.
+  if (e.kaderIds?.length) {
+    const k = await supabase.rpc("termin_kader_setzen", { p_termin: data.id, p_kader: e.kaderIds });
+    if (k.error) {
+      await supabase.from("training_termine").delete().eq("id", data.id);
+      return k.error.message.includes("KADER_NICHT_GEFUNDEN")
+        ? fehlschlag("nicht_gefunden", KADER_MELDUNG.KADER_NICHT_GEFUNDEN, { feld: "kader_ids" })
+        : ausDbFehler(k.error);
+    }
+  }
   return ok({ terminId: data.id, teamId: e.teamId });
 }
 

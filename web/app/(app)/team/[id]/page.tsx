@@ -14,7 +14,8 @@ import { getTeamTrainings, getTrainingPool } from "@/lib/queries/trainings";
 import { TERMIN_REITER, planHref, type TerminReiter } from "@/lib/team-ansicht";
 import { TerminSpalte } from "@/components/team/TerminSpalte";
 import { createClient } from "@/lib/supabase/server";
-import { fuehrtSpielerliste } from "@/lib/kern/spieler";
+import { anzahlSpieler } from "@/lib/kern/spieler";
+import { ladeKader } from "@/lib/kern/kader";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 
 /** #330 PC 8: der Verweis zeigt auf einen Termin, den es nicht mehr gibt. */
@@ -63,15 +64,18 @@ export default async function TeamPlanPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [alleTermine, trainings, persoenliche, team, fuehrtListe] = await Promise.all([
+  const [alleTermine, trainings, persoenliche, team, spielerGesamt, kader] = await Promise.all([
     getTeamPlan(id),
     getTeamTrainings(id),
     // Die eigenen Trainings, Entwürfe und öffentliche: zuordenbar als Kopie (#328).
     getTrainingPool({ mine: true }),
     getTeam(id),
     // #434: Führt das Team eine Spielerliste, entfällt die erwartete Zahl.
-    fuehrtSpielerliste(supabase, id),
+    anzahlSpieler(supabase, id),
+    // #453: Für welche Kader ein Termin gilt, wählt man im Termin-Dialog.
+    ladeKader(supabase, user.id, { teamId: id }),
   ]);
+  const fuehrtListe = spielerGesamt > 0;
   // Eingegrenzt wird hier statt in der Abfrage: Der Monat braucht auch die
   // Tage, an denen nur Termine anderer liegen (#404 AK 14).
   const termine = meine ? alleTermine.filter((t) => istVerantwortlich(t, user.id)) : alleTermine;
@@ -84,7 +88,16 @@ export default async function TeamPlanPage({
   const reiter: TerminReiter = TERMIN_REITER.includes(sp.tab as TerminReiter) ? (sp.tab as TerminReiter) : "termin";
 
   return (
-    <TerminBereich teamId={id} trainings={trainings} persoenliche={persoenliche} mitglieder={team?.mitglieder ?? []} heute={heute} fuehrtListe={fuehrtListe}>
+    <TerminBereich
+      teamId={id}
+      trainings={trainings}
+      persoenliche={persoenliche}
+      mitglieder={team?.mitglieder ?? []}
+      heute={heute}
+      fuehrtListe={fuehrtListe}
+      kader={kader.ok ? kader.wert.kader : []}
+      spielerGesamt={spielerGesamt}
+    >
       <section>
         {/* Keine sichtbare Überschrift: «Trainingsplan» steht schon im
             Reiter; für Screenreader bleibt sie, damit unter dem Teamnamen
@@ -108,7 +121,7 @@ export default async function TeamPlanPage({
           hervorheben={hervorheben}
           belegt={belegt}
           meine={meine}
-          spalte={offen && <TerminSpalte t={offen} reiter={reiter} meine={meine} ich={user.id} />}
+          spalte={offen && <TerminSpalte t={offen} reiter={reiter} meine={meine} ich={user.id} mitKadern={kader.ok && kader.wert.kader.length > 0} />}
           leer={
             meine ? (
               <Leerzustand icon={UserCheck} titel="Keine Termine für dich" dicht>

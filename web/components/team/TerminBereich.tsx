@@ -40,7 +40,9 @@ import {
 } from "@/lib/serie";
 import type { FolgeAngabe, SerienAenderung, SerienFolge } from "@/lib/kern/serien";
 import { istVeraltet } from "@/lib/veraltet";
-import { datumKurz } from "@/lib/zeit";
+import { datumKurz, terminBegonnen } from "@/lib/zeit";
+import { setzeTerminKaderAktion } from "@/lib/actions/kader";
+import { kaderVerfallText, type Kader } from "@/lib/kader";
 import type { TeamTrainingRow, TrainingListRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
 import type { TeamMitglied } from "@/lib/queries/teams";
@@ -59,6 +61,8 @@ export type TerminAktionen = {
   ausfallen: (t: TerminZeile) => void;
   ausfallZuruecknehmen: (t: TerminZeile) => void;
   pending: boolean;
+  /** Das Team führt Kader (#453). */
+  mitKadern: boolean;
 };
 
 const Kontext = createContext<TerminAktionen | null>(null);
@@ -95,6 +99,7 @@ const FOLGT_WIEDER: Record<FolgeAngabe, string> = {
   verantwortliche: "Die Verantwortlichen folgen wieder der Serie.",
   felder: "Die Felder folgen wieder der Serie.",
   spielerzahl: "Die erwartete Spielerzahl folgt wieder der Serie.",
+  kader: "Die Kader folgen wieder der Serie.",
 };
 
 /** Die offene Frage nach der Reichweite (#326 AK 1–4, 7). Beim Ändern stehen
@@ -108,6 +113,8 @@ type ReichweiteFrage = {
   hinweis?: string;
   geaendert?: Partial<TerminFelder> | null;
   verantwortlich?: VerantwortlicheWert;
+  /** Die geänderten Kader (#453), für «nur dieser». */
+  kader?: string[];
   aenderung?: SerienAenderung;
   /** Der geänderte Ausfallgrund — er gilt nur für diesen Termin (#402 PC 4). */
   grund?: string;
@@ -118,6 +125,8 @@ type ReichweiteFrage = {
 const NUR_FELDER_GEAENDERT = "Termin geändert. Die Verantwortlichen blieben unverändert.";
 /** Dasselbe für den Ausfallgrund, den letzten Schritt (#402 AK 13). */
 const GRUND_UNVERAENDERT = "Termin geändert. Der Grund des Ausfalls blieb unverändert.";
+/** Dasselbe für die Kader (#453). */
+const KADER_UNVERAENDERT = "Termin geändert. Die Kader blieben unverändert.";
 /** Die Verlegung liesse Abmeldungen verfallen, die Rückfrage kam nicht mehr zum Zug (#437). */
 const NICHT_GEAENDERT = "Termin nicht geändert.";
 
@@ -138,6 +147,8 @@ export function TerminBereich({
   mitglieder,
   heute,
   fuehrtListe,
+  kader = [],
+  spielerGesamt = 0,
   children,
 }: {
   teamId: string;
@@ -149,6 +160,9 @@ export function TerminBereich({
   heute: string;
   /** Das Team führt eine Spielerliste (#434). */
   fuehrtListe: boolean;
+  /** Die Kader des Teams (#453) und wie viele Spieler:innen die Liste führt. */
+  kader?: Kader[];
+  spielerGesamt?: number;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -164,7 +178,7 @@ export function TerminBereich({
   const [bestaetigen, setBestaetigen] = useState<SerienSchritt | null>(null);
   /** Eine Verlegung liesse Abmeldungen verfallen (#437 AK 1): wie viele, und
    *  wie es nach der Bestätigung weitergeht. */
-  const [verfall, setVerfall] = useState<{ anzahl: number; weiter: () => void } | null>(null);
+  const [verfall, setVerfall] = useState<{ anzahl: number; text?: string; weiter: () => void } | null>(null);
   const [dialogFehler, setDialogFehler] = useState<string | undefined>();
 
   /** Die Nummer des laufenden Ablaufs in einem Dialog. Öffnen und Abbrechen
@@ -222,8 +236,8 @@ export function TerminBereich({
    *  Zwei Aufrufe, weil das Erstellen keine Verantwortlichen kennt. Scheitert
    *  erst der zweite, steht der Termin schon: Dann schliesst der Dialog (ein
    *  erneutes «Erstellen» legte ihn doppelt an), und die Snackbar sagt beides. */
-  async function legeNeuFest(f: TerminFelder, verantwortlich?: VerantwortlicheWert) {
-    const r = await legeTerminFestAktion(teamId, f);
+  async function legeNeuFest(f: TerminFelder, verantwortlich?: VerantwortlicheWert, kaderIds: string[] = []) {
+    const r = await legeTerminFestAktion(teamId, f, kaderIds);
     if (!r.ok || !verantwortlich) return r;
     const v = await setzeVerantwortlicheAktion(r.terminId, verantwortlich, undefined);
     return v.ok ? v : { ok: true as const, meldung: `Termin erstellt. ${v.error}` };
@@ -235,6 +249,8 @@ export function TerminBereich({
    *  scheitert der erste, läuft der zweite nicht. Hat der USER nach dem
    *  ersten abgebrochen, läuft der zweite auch nicht: Die Dialoge bleiben
    *  unberührt, die Snackbar sagt, dass nur die Felder gespeichert sind.
+   *  Die Kader (#453) folgen den Verantwortlichen; lassen sie Abmeldungen
+   *  verfallen, fragt der Ablauf nach und setzt danach mit den Kadern fort.
    *  Ein geänderter Ausfallgrund (#402 AK 13) folgt als letzter Schritt. */
   function aendereEinzeln(
     t: TerminZeile,
@@ -242,6 +258,8 @@ export function TerminBereich({
     verantwortlich?: VerantwortlicheWert,
     grund?: string,
     bestaetigt: number | false = false,
+    kaderIds?: string[],
+    kaderBestaetigt: number | false = false,
   ) {
     const nr = laufNr.current;
     const gilt = () => laufNr.current === nr;
@@ -251,7 +269,8 @@ export function TerminBereich({
         // #437 AK 1: Verfallen Abmeldungen, erst nachfragen; der Dialog bleibt offen.
         if (!r.ok && r.verfallend) {
           const anzahl = r.verfallend;
-          if (gilt()) return setVerfall({ anzahl, weiter: () => aendereEinzeln(t, geaendert, verantwortlich, grund, anzahl) });
+          if (gilt())
+            return setVerfall({ anzahl, weiter: () => aendereEinzeln(t, geaendert, verantwortlich, grund, anzahl, kaderIds) });
           // Abgebrochen, bevor die Rückfrage kam: Gespeichert ist nichts.
           return melde(NICHT_GEAENDERT);
         }
@@ -264,6 +283,27 @@ export function TerminBereich({
         }
         const v = await setzeVerantwortlicheAktion(t.id, verantwortlich, t.serie ? "nur_dieser" : undefined);
         if (!v.ok) return einzelnGescheitert(v.error, gilt(), geaendert ? NUR_FELDER_GEAENDERT : undefined);
+      }
+      if (kaderIds) {
+        const davor = geaendert || verantwortlich ? KADER_UNVERAENDERT : undefined;
+        if (davor && !gilt()) {
+          router.refresh();
+          return melde(davor);
+        }
+        const k = await setzeTerminKaderAktion(t.id, kaderIds, kaderBestaetigt);
+        // #453 AK 10, 12: Verfallen Abmeldungen, erst nachfragen — mit dem aktuellen Stand.
+        if (!k.ok && k.verfallend) {
+          const n = k.verfallend;
+          if (davor) router.refresh();
+          if (gilt())
+            return setVerfall({
+              anzahl: n,
+              text: kaderBestaetigt === false ? kaderVerfallText(n) : k.error,
+              weiter: () => aendereEinzeln(t, null, undefined, grund, false, kaderIds, n),
+            });
+          return melde(davor ?? NICHT_GEAENDERT);
+        }
+        if (!k.ok) return einzelnGescheitert(k.error, gilt(), davor);
       }
       if (grund !== undefined) {
         const vorher = geaendert || verantwortlich ? GRUND_UNVERAENDERT : undefined;
@@ -331,7 +371,10 @@ export function TerminBereich({
   async function fuehreAus(b: SerienSchritt, nr: number) {
     const erwartet = { version: b.folge.versionVorher, entfallend: b.folge.entfallend.map((e) => e.terminId) };
     const r = b.art === "aendern"
-      ? await aendereSerieAktion(b.t.id, b.reichweite, b.aenderung ?? {}, erwartet)
+      ? await aendereSerieAktion(b.t.id, b.reichweite, b.aenderung ?? {}, {
+          ...erwartet,
+          verfallend: b.folge.abmeldungenVerfallend + b.folge.abmeldungenKader,
+        })
       : await entferneSerieAktion(b.t.id, b.reichweite, erwartet);
     if (!r.ok) return serienFehler(b.art, r.error, laufNr.current !== nr);
     // Der Grund gilt nur für diesen Termin (#402 PC 4); er folgt der Serie nicht.
@@ -346,15 +389,22 @@ export function TerminBereich({
    *  die Verantwortlichen geändert haben (#325 AK 4). Gesendet wird in jedem
    *  Fall nur, was sich geändert hat (PO 17); nichts geändert: kein Aufruf.
    *  `verantwortlich` kommt nur, wenn sich die Wahl geändert hat. */
-  function speichereBearbeitung(t: TerminZeile, f: TerminFelder, regel?: SerienRegel, verantwortlich?: VerantwortlicheWert, grund?: string) {
+  function speichereBearbeitung(
+    t: TerminZeile,
+    f: TerminFelder,
+    regel?: SerienRegel,
+    verantwortlich?: VerantwortlicheWert,
+    grund?: string,
+    kaderIds?: string[],
+  ) {
     const geaendert = geaenderteFelder(f, startWerte(t));
     const regelNeu = t.serie && regel ? regelAenderung(t.serie, regel) : null;
-    if (!geaendert && !regelNeu && !verantwortlich) {
+    if (!geaendert && !regelNeu && !verantwortlich && !kaderIds) {
       if (grund === undefined) return setBearbeiten(null);
       // Nur der Grund: Er gilt für diesen Termin, eine Reichweite gibt es nicht (#402 PC 4).
       return lauf(() => lasseAusfallenAktion(t.id, grund, true), () => "Grund gespeichert.", () => setBearbeiten(null), true, laufNr.current);
     }
-    if (!t.serie) return aendereEinzeln(t, geaendert, verantwortlich, grund);
+    if (!t.serie) return aendereEinzeln(t, geaendert, verantwortlich, grund, false, kaderIds);
     const datum = geaendert?.datum !== undefined;
     const namenlose = !!verantwortlich && nurNamenloseGeaendert(verantwortlich, verantwortlicheStart(t.verantwortliche));
     const erlaubt = erlaubteReichweiten({ datum, regel: !!regelNeu, namenlose });
@@ -377,13 +427,19 @@ export function TerminBereich({
             : undefined,
       geaendert,
       verantwortlich,
+      kader: kaderIds,
       grund,
       // Für folgende und alle gehen die Verantwortlichen mit der übrigen
       // Änderung in EINE Serienänderung (PC 3, 11). Die Serienrechnung
       // (terminserie_rechnen) ersetzt damit an jedem erfassten Termin ALLE
       // Einträge durch diese Konten, auch die namenlosen gelöschter Konten.
       // Ändern sich allein diese, bleibt darum nur «nur dieser» (`namenlose`).
-      aenderung: { ...werte, ...regelNeu, ...(verantwortlich && { verantwortliche: verantwortlich.userIds }) },
+      aenderung: {
+        ...werte,
+        ...regelNeu,
+        ...(verantwortlich && { verantwortliche: verantwortlich.userIds }),
+        ...(kaderIds && { kaderIds }),
+      },
     });
   }
 
@@ -396,8 +452,8 @@ export function TerminBereich({
       // Einzeln entfernen geht durch die Bestätigung aus Teil A: Sie sagt, was
       // mit dem Training geschieht (#322; PO 2026-10-06).
       if (art === "entfernen") return setEntfernen(t);
-      if (!frage.geaendert && !frage.verantwortlich) return;
-      return aendereEinzeln(t, frage.geaendert, frage.verantwortlich, frage.grund);
+      if (!frage.geaendert && !frage.verantwortlich && !frage.kader) return;
+      return aendereEinzeln(t, frage.geaendert, frage.verantwortlich, frage.grund, false, frage.kader);
     }
     const version = t.serie?.version ?? 0;
     const nr = laufNr.current;
@@ -412,14 +468,20 @@ export function TerminBereich({
       const schritt: SerienSchritt = { art, t, reichweite: r, aenderung: frage.aenderung, folge: v.folge, grund: frage.grund };
       // AK 8: bestätigen, wenn Termine wegfallen — beim Entfernen immer; ebenso,
       // wenn Abmeldungen verfallen (#437 AK 1).
-      if (art === "entfernen" || v.folge.entfallendAnzahl > 0 || v.folge.abmeldungenVerfallend > 0) setBestaetigen(schritt);
+      if (
+        art === "entfernen" ||
+        v.folge.entfallendAnzahl > 0 ||
+        v.folge.abmeldungenVerfallend > 0 ||
+        v.folge.abmeldungenKader > 0
+      )
+        setBestaetigen(schritt);
       else await fuehreAus(schritt, nr);
     });
   }
 
   /** Eine Angabe wieder der Serie folgen lassen (#326 AK 6). Folgt die Zeit
    *  und verfallen damit Abmeldungen, erst nachfragen (#437 AK 1). */
-  function folgen(t: TerminZeile, angabe: FolgeAngabe, bestaetigt = false) {
+  function folgen(t: TerminZeile, angabe: FolgeAngabe, bestaetigt: boolean | number = false) {
     lauf(
       () => folgeDerSerieAktion(t.id, [angabe], bestaetigt),
       () => FOLGT_WIEDER[angabe],
@@ -428,7 +490,11 @@ export function TerminBereich({
       laufNr.current,
       (r) => {
         if (r.ok || !r.verfallend) return false;
-        setVerfall({ anzahl: r.verfallend, weiter: () => folgen(t, angabe, true) });
+        const n = r.verfallend;
+        // #453: Folgen die Kader, bestätigt die Zahl; die Zeit bestätigt `true`.
+        if (angabe === "kader")
+          setVerfall({ anzahl: n, text: bestaetigt === false ? kaderVerfallText(n) : r.error, weiter: () => folgen(t, angabe, n) });
+        else setVerfall({ anzahl: n, weiter: () => folgen(t, angabe, true) });
         return true;
       },
     );
@@ -470,6 +536,7 @@ export function TerminBereich({
       lauf(() => nimmAusfallZurueckAktion(t.id), () => "Ausfall zurückgenommen.", () => {});
     },
     pending,
+    mitKadern: kader.length > 0,
   };
 
   return (
@@ -482,6 +549,8 @@ export function TerminBereich({
         fehler={dialogFehler}
         mitglieder={mitglieder}
         fuehrtListe={fuehrtListe}
+        kader={kader}
+        spielerGesamt={spielerGesamt}
         onClose={() => {
           if (!neu) return;
           neuerLauf();
@@ -491,7 +560,7 @@ export function TerminBereich({
           t.art === "serie"
             ? lauf(() => legeSerieFestAktion(teamId, t.felder), () => "Terminserie erstellt.", () => setNeu(false), true, laufNr.current)
             : lauf(
-                () => legeNeuFest(t.felder, t.verantwortlich),
+                () => legeNeuFest(t.felder, t.verantwortlich, t.kaderIds),
                 (r) => ("meldung" in r && r.meldung) || "Termin erstellt.",
                 () => setNeu(false),
                 true,
@@ -513,6 +582,10 @@ export function TerminBereich({
         ausfall={bearbeiten?.ausgefallen ? { grund: bearbeiten.ausfallGrund } : null}
         heute={heute}
         fuehrtListe={fuehrtListe}
+        kader={kader}
+        terminKader={bearbeiten?.kader}
+        spielerGesamt={spielerGesamt}
+        begonnen={!!bearbeiten && terminBegonnen(bearbeiten.datum, bearbeiten.beginn)}
         onFolgen={(angabe) => bearbeiten && folgen(bearbeiten, angabe)}
         onClose={() => {
           // Nur ein Abbruch durch den USER zählt; schliesst der Code den
@@ -521,7 +594,9 @@ export function TerminBereich({
           neuerLauf();
           setBearbeiten(null);
         }}
-        onSpeichern={(f, regel, verantwortlich, grund) => bearbeiten && speichereBearbeitung(bearbeiten, f, regel, verantwortlich, grund)}
+        onSpeichern={(f, regel, verantwortlich, grund, kaderIds) =>
+          bearbeiten && speichereBearbeitung(bearbeiten, f, regel, verantwortlich, grund, kaderIds)
+        }
       />
 
       <ReichweiteDialog
@@ -540,6 +615,7 @@ export function TerminBereich({
 
       <VerfallBestaetigung
         anzahl={verfall?.anzahl ?? null}
+        text={verfall?.text}
         pending={pending}
         onClose={() => setVerfall(null)}
         onBestaetigen={() => {

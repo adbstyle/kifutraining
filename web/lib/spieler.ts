@@ -163,7 +163,7 @@ export function spielerzahlLang(z: Spielerzahl): string | null {
 // ── Ab- und Anmelden (#435) ─────────────────────────────────────────────────
 
 /** Warum die Datenebene ein Ab- oder Anmelden abweist (`abmeldung_anwenden`). */
-export type AbmeldeGrund = "nicht_gefunden" | "verlegt" | "ausgefallen" | "begonnen";
+export type AbmeldeGrund = "nicht_gefunden" | "verlegt" | "ausgefallen" | "begonnen" | "gilt_nicht";
 
 /** Der Stand des Termins, gegen den abgewiesen wurde. */
 export type AbmeldeStand = { datum: string; beginn: string; ende: string; ausgefallen: boolean };
@@ -172,6 +172,8 @@ export const ABMELDUNG_TEXT = {
   nichtGefunden: "Diesen Termin oder diese Spieler:in gibt es nicht mehr. Sieh dir den Trainingsplan noch einmal an.",
   begonnen: "Der Termin hat begonnen. An- und abmelden geht nur bis zum Beginn.",
   ausgefallen: "Der Termin fällt aus. Für ihn lässt sich niemand an- oder abmelden.",
+  /** Der Termin gilt nicht (mehr) für die Spieler:in — ihre Kader (#453 AK 9, #454 AK 5). */
+  giltNicht: "Dieser Termin gilt nicht mehr für diese Spieler:in. Sieh dir die Termine noch einmal an.",
   /** Ein Termin, der begann, als die Spielerliste leer war. */
   ohneListe: "Bei Beginn führte das Team keine Spielerliste. Für diesen Termin gilt die erwartete Spielerzahl.",
 } as const;
@@ -183,6 +185,7 @@ export function abweisungText(grund: AbmeldeGrund, stand?: AbmeldeStand): string
     return `Der Termin wurde inzwischen verlegt, neu auf ${datumKurz(stand.datum)} um ${stand.beginn}. Sieh ihn dir noch einmal an.`;
   if (grund === "ausgefallen") return ABMELDUNG_TEXT.ausgefallen;
   if (grund === "begonnen") return ABMELDUNG_TEXT.begonnen;
+  if (grund === "gilt_nicht") return ABMELDUNG_TEXT.giltNicht;
   return ABMELDUNG_TEXT.nichtGefunden;
 }
 
@@ -194,6 +197,8 @@ export type Teilnehmer = {
   nachname: string | null;
   abgemeldet: boolean;
   ehemalig: boolean;
+  /** Die Kader, über die der Termin für sie gilt (#453 AK 15); leer bei einem Termin für alle. */
+  kader: string[];
 };
 
 /** Wie eine ehemalige Spieler:in überall heisst. */

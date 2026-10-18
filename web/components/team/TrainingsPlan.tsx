@@ -1,5 +1,6 @@
 "use client";
 
+import { EHEMALIGER_KADER, KaderLozenges } from "./KaderLozenge";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { CalendarOff, LandPlot, MapPin, Shirt, UserCheck, Users } from "lucide-react";
@@ -206,8 +207,10 @@ function TerminReihe({
   const zahl = spielerzahlVon(t);
   const zahlKurz = spielerzahlKurz(zahl);
   const zahlLang = spielerzahlLang(zahl);
+  const kaderText = t.kader.map((k) => k.name ?? EHEMALIGER_KADER).join(", ");
   const ganz = [
     [zeit, ort, zahlLang].filter(Boolean).join(" · "),
+    kaderText && `Kader: ${kaderText}`,
     zustand === "ausgefallen" ? ["Ausgefallen", t.ausfallGrund].filter(Boolean).join(": ") : null,
     t.training?.name,
     v.text && `Verantwortlich: ${v.text}`,
@@ -247,10 +250,12 @@ function TerminReihe({
               {zahlKurz}
             </span>
           )}
+          {/* #453 AK 5: Für wen er gilt; ohne Kader steht nichts — er gilt für alle. */}
+          <KaderLozenges namen={t.kader.map((k) => k.name)} className="self-center" />
         </p>
         {/* Vorlesehilfen hören die erste Zeile ausgeschrieben. */}
         <p className="sr-only">
-          {[ort && `Ort: ${ort}`, zahlLang && `Spielerzahl: ${zahlLang}`].filter(Boolean).join(", ")}
+          {[ort && `Ort: ${ort}`, zahlLang && `Spielerzahl: ${zahlLang}`, kaderText && `Kader: ${kaderText}`].filter(Boolean).join(", ")}
         </p>
         <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5">
           {zustand === "ausgefallen" ? (

@@ -169,9 +169,15 @@ async function teamDesSpielers(supabase: SupabaseClient, spielerId: string): Pro
 /** Führt das Team eine Spielerliste? Dann kommt die Spielerzahl anstehender
  *  Termine aus ihr (AK 8, 9). */
 export async function fuehrtSpielerliste(supabase: SupabaseClient, teamId: string): Promise<boolean> {
-  if (!istUuid(teamId)) return false;
+  return (await anzahlSpieler(supabase, teamId)) > 0;
+}
+
+/** Wie viele Spieler:innen die Liste des Teams führt — für den Hinweis, für
+ *  wie viele ein Termin mit Kadern gilt (#453 AK 8). */
+export async function anzahlSpieler(supabase: SupabaseClient, teamId: string): Promise<number> {
+  if (!istUuid(teamId)) return 0;
   const { count } = await supabase.from("spieler").select("id", { count: "exact", head: true }).eq("team_id", teamId);
-  return (count ?? 0) > 0;
+  return count ?? 0;
 }
 
 // ── Privater Link (#436) ────────────────────────────────────────────────────

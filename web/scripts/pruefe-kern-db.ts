@@ -4374,6 +4374,137 @@ try {
     assert.ok(error, "kein direktes Schreiben");
   });
 
+  // ── Termine für Kader (#453) ─────────────────────────────────────────────
+  const { setzeTerminKader, kaderEntfernenFolgen } = await import("../lib/kern/kader");
+  const kaderTeam = async (name: string) => {
+    const team = await serienTeam(name);
+    const s1 = await neuerKader(team, "S1");
+    const s2 = await neuerKader(team, "S2");
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    const mia = (await neuerSpieler(team, "Mia")).spielerId;
+    const noah = (await neuerSpieler(team, "Noah")).spielerId;
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [lena, mia], dazu: [s1] }));
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [noah], dazu: [s2] }));
+    return { team, s1, s2, lena, mia, noah };
+  };
+  const anstehend = (team: string, kaderIds: string[] = [], tage = 7) =>
+    legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(tage), beginn: "18:00", ende: "19:30", kaderIds });
+
+  await pruefe("Kader am Termin: gilt nur für ihre Spieler:innen, Zahl und Liste nur über sie, für niemanden 0 von 0 (#453 AK 1, 4-7)", async () => {
+    const k = await kaderTeam("Kern-DB-Termin-Kader");
+    const t = wert(await anstehend(k.team, [k.s1])).terminId;
+    const alle = wert(await anstehend(k.team)).terminId;
+    assert.deepEqual((await standVon(k.team, t)).spielstand, { gesamt: 2, angemeldet: 2, eingefroren: false });
+    assert.deepEqual((await standVon(k.team, alle)).spielstand, { gesamt: 3, angemeldet: 3, eingefroren: false }, "ohne Kader für alle");
+    assert.deepEqual((await standVon(k.team, t)).kader, [{ id: k.s1, name: "S1" }]);
+    const liste = wert(await terminSpieler(a.supabase, a.id, { terminId: t }));
+    assert.deepEqual(liste.spieler.map((s) => [s.vorname, s.kader]), [["Lena", ["S1"]], ["Mia", ["S1"]]]);
+    assert.equal(liste.uebrige, 1);
+    // Mehrere Kader: mindestens einem angehören.
+    wert(await setzeTerminKader(a.supabase, a.id, { terminId: t, kaderIds: [k.s1, k.s2] }));
+    assert.equal((await standVon(k.team, t)).spielstand!.gesamt, 3);
+    // Ein leerer Kader: 0 von 0, nicht «ohne Liste».
+    const leer = await neuerKader(k.team, "Leer");
+    const niemand = wert(await anstehend(k.team, [leer])).terminId;
+    assert.deepEqual((await standVon(k.team, niemand)).spielstand, { gesamt: 0, angemeldet: 0, eingefroren: false });
+    assert.equal(wert(await terminSpieler(a.supabase, a.id, { terminId: niemand })).mitListe, true);
+    // Fremde Kader nimmt der Termin nicht an.
+    const fremd = await serienTeam("Kern-DB-Termin-Kader-Fremd");
+    const kFremd = await neuerKader(fremd, "F");
+    fehler(await setzeTerminKader(a.supabase, a.id, { terminId: t, kaderIds: [kFremd] }), "nicht_gefunden", KADER_MELDUNG.KADER_NICHT_GEFUNDEN);
+    fehler(await setzeTerminKader(b.supabase, b.id, { terminId: t, kaderIds: [] }), "nicht_gefunden");
+  });
+
+  await pruefe("Kader am Termin: ab- und anmelden nur, für wen er gilt (#453 AK 9)", async () => {
+    const k = await kaderTeam("Kern-DB-Termin-Kader-Abmelden");
+    const t = wert(await anstehend(k.team, [k.s1])).terminId;
+    const gesehen = { datum: tagCh(7), beginn: "18:00" };
+    fehler(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: k.noah, abgemeldet: true, gesehen }), "regel", ABMELDUNG_TEXT.giltNicht);
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: k.lena, abgemeldet: true, gesehen }));
+  });
+
+  await pruefe("Kader: Abmeldungen verfallen nur mit genau der bestätigten Zahl, spurlos (#453 AK 10, 12, 16, PC 1)", async () => {
+    const k = await kaderTeam("Kern-DB-Kader-Verfall");
+    const t = wert(await anstehend(k.team, [k.s1])).terminId;
+    const gesehen = { datum: tagCh(7), beginn: "18:00" };
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: k.lena, abgemeldet: true, gesehen }));
+    // Auch an einem ausgefallenen Termin (PC 1).
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "" }));
+    const weg = { teamId: k.team, spielerIds: [k.lena], weg: [k.s1] };
+    const r = fehler(await aendereZuteilung(a.supabase, a.id, weg), "regel", kaderVerfallBestaetigen(1)) as { verfallend?: number };
+    assert.equal(r.verfallend, 1);
+    assert.equal((await kaderVonTeam(k.team)).find((x) => x.id === k.s1)!.spielerIds.length, 2, "nichts geschrieben");
+    // Eine andere Zahl: der aktuelle Stand (AK 12).
+    fehler(await aendereZuteilung(a.supabase, a.id, { ...weg, bestaetigt: 2 }), "regel", kaderVerfallGeaendert(1));
+    assert.deepEqual(wert(await aendereZuteilung(a.supabase, a.id, { ...weg, bestaetigt: 1 })).verfallen, 1);
+    assert.equal((await admin.from("termin_abmeldungen").select("spieler_id").eq("termin_id", t)).data!.length, 0, "spurlos");
+    // Wieder zugeteilt: angemeldet, die Abmeldung kehrt nicht zurück (OoS 5).
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.lena], dazu: [k.s1] }));
+    // Die KI bestätigt mit «true», der Kern nennt die Zahl selbst.
+    await nimmAusfallZurueck(a.supabase, a.id, { terminId: t });
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: k.mia, abgemeldet: true, gesehen }));
+    assert.equal(wert(await setzeTerminKader(a.supabase, a.id, { terminId: t, kaderIds: [k.s2], bestaetigt: true })).verfallen, 1);
+  });
+
+  await pruefe("Kader an der Serie: vorgeben, abweichen, wieder folgen, ändern ohne Begonnene (#453 AK 2, 3, 13)", async () => {
+    const k = await kaderTeam("Kern-DB-Serie-Kader");
+    const w = wochentagVon(tagCh(8));
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: k.team, wochentage: [w], von: tagCh(1), bis: tagCh(30), beginn: "18:00", ende: "19:30", kaderIds: [k.s1] }));
+    const plan = () => getTeamPlanFuer(a.supabase, k.team).then((p) => p.filter((x) => x.serie?.id === s.serieId || x.serie === null));
+    const termine = await plan();
+    assert.ok(termine.length >= 4);
+    assert.ok(termine.every((x) => x.kader.length === 1 && x.kader[0].id === k.s1 && x.serie!.kader[0].id === k.s1));
+    const [erster, zweiter] = termine;
+    // Nur dieser: weicht ab, auch mit keinem Kader («für alle»).
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: erster.id, reichweite: "nur_dieser", kaderIds: [] }));
+    const nachher = (await plan()).find((x) => x.id === erster.id)!;
+    assert.deepEqual([nachher.kader, nachher.abweichungen], [[], ["kader"]]);
+    // Alle: der abweichende bleibt, die übrigen folgen.
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: zweiter.id, reichweite: "alle", kaderIds: [k.s2], bestaetigt: true }));
+    const alle = await plan();
+    assert.deepEqual(alle.find((x) => x.id === erster.id)!.kader, []);
+    assert.ok(alle.filter((x) => x.id !== erster.id).every((x) => x.kader[0]?.id === k.s2));
+    // Wieder folgen.
+    wert(await folgeDerSerie(a.supabase, a.id, { terminId: erster.id, angaben: ["kader"] }));
+    const gefolgt = (await plan()).find((x) => x.id === erster.id)!;
+    assert.deepEqual([gefolgt.kader.map((x) => x.id), gefolgt.abweichungen], [[k.s2], []]);
+  });
+
+  await pruefe("Kader: Stand bei Beginn bleibt, entfernter Kader dort ehemalig, anstehende gelten für alle (#453 AK 11, 13, PC 2-4)", async () => {
+    const k = await kaderTeam("Kern-DB-Kader-Beginn");
+    // Ein Termin mit S1, danach in die Vergangenheit verlegt: hält mit Lena und Mia fest.
+    const t = wert(await anstehend(k.team, [k.s1])).terminId;
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(-2) }));
+    assert.deepEqual((await standVon(k.team, t)).spielstand, { gesamt: 2, angemeldet: 2, eingefroren: true });
+    fehler(await setzeTerminKader(a.supabase, a.id, { terminId: t, kaderIds: [k.s2] }), "regel", KADER_MELDUNG.KADER_TERMIN_BEGONNEN);
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.lena], weg: [k.s1] }));
+    assert.equal((await standVon(k.team, t)).spielstand!.gesamt, 2, "Zuteilung danach ändert nichts");
+    const kommend = wert(await anstehend(k.team, [k.s1])).terminId;
+    const gemischt = wert(await anstehend(k.team, [k.s1, k.s2])).terminId;
+    const f = wert(await kaderEntfernenFolgen(a.supabase, a.id, { kaderId: k.s1 }));
+    assert.deepEqual([f.spieler, f.termine.map((x) => x.id), f.verfallend], [1, [kommend], 0]);
+    wert(await entferneKader(a.supabase, a.id, { kaderId: k.s1 }));
+    assert.deepEqual((await standVon(k.team, t)).kader, [{ id: null, name: null }], "ehemaliger Kader");
+    assert.equal((await standVon(k.team, t)).spielstand!.gesamt, 2);
+    assert.deepEqual((await standVon(k.team, kommend)).kader, [], "gilt für alle");
+    assert.equal((await standVon(k.team, kommend)).spielstand!.gesamt, 3);
+    assert.deepEqual((await standVon(k.team, gemischt)).kader.map((x) => x.name), ["S2"]);
+  });
+
+  await pruefe("Kader entfernen: Vorschau nennt verfallende Abmeldungen, Serien für alle (#453 AK 10, 11)", async () => {
+    const k = await kaderTeam("Kern-DB-Kader-Entfernen-Folgen");
+    const w = wochentagVon(tagCh(8));
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: k.team, wochentage: [w], von: tagCh(1), bis: tagCh(20), beginn: "18:00", ende: "19:30", kaderIds: [k.s1] }));
+    const t = wert(await anstehend(k.team, [k.s1, k.s2])).terminId;
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: k.lena, abgemeldet: true, gesehen: { datum: tagCh(7), beginn: "18:00" } }));
+    const f = wert(await kaderEntfernenFolgen(a.supabase, a.id, { kaderId: k.s1 }));
+    assert.deepEqual([f.serien.map((x) => x.id), f.verfallend], [[s.serieId], 1]);
+    assert.equal((await kaderVonTeam(k.team)).length, 2, "die Vorschau schreibt nichts");
+    fehler(await entferneKader(a.supabase, a.id, { kaderId: k.s1 }), "regel", kaderVerfallBestaetigen(1));
+    assert.equal(wert(await entferneKader(a.supabase, a.id, { kaderId: k.s1, bestaetigt: 1 })).verfallen, 1);
+    assert.deepEqual((await getTeamPlanFuer(a.supabase, k.team)).find((x) => x.serie?.id === s.serieId)!.serie!.kader, []);
+  });
+
 } finally {
   await aufraeumen();
 }

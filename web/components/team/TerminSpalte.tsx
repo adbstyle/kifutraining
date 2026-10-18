@@ -27,11 +27,14 @@ export async function TerminSpalte({
   reiter,
   meine,
   ich,
+  mitKadern = false,
 }: {
   t: TerminZeile;
   reiter: TerminReiter;
   meine: boolean;
   ich: string;
+  /** Das Team führt Kader (#453 AK 5). */
+  mitKadern?: boolean;
 }) {
   const reiterItems = [
     { label: "Termin", href: terminHref(t.teamId, meine, t.id, "termin"), current: reiter === "termin" },
@@ -61,7 +64,7 @@ export async function TerminSpalte({
             )}
             <div className="rounded-flaeche bg-elev-01 p-4">
               <h4 className="type-title-small text-on-surface">Eckdaten</h4>
-              <TerminEigenschaften t={t} ich={ich} className="mt-3" />
+              <TerminEigenschaften t={t} ich={ich} mitKadern={mitKadern} className="mt-3" />
             </div>
           </>
         )}

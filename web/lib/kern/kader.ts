@@ -12,6 +12,7 @@ import {
 } from "@/lib/kader";
 import { bereinigeName, SPIELER_MELDUNG } from "@/lib/spieler";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
+import { TERMIN_MELDUNG } from "@/lib/termin";
 import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 
 /**
@@ -47,6 +48,10 @@ function kaderFehler(e: { message: string; code?: string }): KernFehler {
     return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, { feld: "spieler_ids" });
   if (e.message.includes("KADER_DOPPELT")) return fehlschlag("regel", KADER_MELDUNG.KADER_DOPPELT, { feld: "name" });
   if (e.message.includes("KADER_VOLL")) return fehlschlag("regel", KADER_MELDUNG.KADER_VOLL);
+  if (e.message.includes("KADER_TERMIN_BEGONNEN"))
+    return fehlschlag("regel", KADER_MELDUNG.KADER_TERMIN_BEGONNEN, { feld: "kader_ids" });
+  if (e.message.includes("TERMIN_NICHT_GEFUNDEN"))
+    return fehlschlag("nicht_gefunden", TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN, { feld: "termin_id" });
   return ausDbFehler(e);
 }
 
@@ -186,4 +191,54 @@ export async function aendereZuteilung(
     kaderFehler,
   );
   return r.ok ? ok({ teamId: e.teamId, ...r.wert }) : r;
+}
+
+// ── Termine für Kader (#453) ─────────────────────────────────────────────────
+
+/** Die Kader eines einzelnen Termins setzen (AK 1, 3, 13) — an einem
+ *  Serientermin weicht er damit ab, auch mit keinem Kader («für alle»). */
+export async function setzeTerminKader(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { terminId: string; kaderIds: string[]; bestaetigt?: VerfallBestaetigt },
+): Promise<KernErgebnis<{ terminId: string; teamId: string; verfallen: number }>> {
+  if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN, { feld: "termin_id" });
+  if (!e.kaderIds.every(istUuid)) return fehlschlag("nicht_gefunden", KADER_MELDUNG.KADER_NICHT_GEFUNDEN, { feld: "kader_ids" });
+  const r = await mitVerfall<{ team: string; verfallen: number }>(
+    e.bestaetigt,
+    (zahl) => supabase.rpc("termin_kader_setzen", { p_termin: e.terminId, p_kader: e.kaderIds, p_bestaetigt: zahl }),
+    kaderFehler,
+  );
+  return r.ok ? ok({ terminId: e.terminId, teamId: r.wert.team, verfallen: r.wert.verfallen }) : r;
+}
+
+/** Was das Entfernen eines Kaders bewirkte (AK 11): anstehende Termine und
+ *  Serien, die danach für alle gelten, und wie viele Abmeldungen verfielen. */
+export type KaderEntfernenFolgen = {
+  spieler: number;
+  termine: { id: string; datum: string; beginn: string; ende: string; serieId: string | null }[];
+  serien: { id: string; wochentage: number[]; beginn: string; ende: string; bis: string }[];
+  verfallend: number;
+};
+
+export async function kaderEntfernenFolgen(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { kaderId: string },
+): Promise<KernErgebnis<KaderEntfernenFolgen>> {
+  if (!istUuid(e.kaderId)) return fehlschlag("nicht_gefunden", KADER_MELDUNG.KADER_NICHT_GEFUNDEN, KADER_FELD);
+  const { data, error } = await supabase.rpc("kader_entfernen_folgen", { p_kader: e.kaderId });
+  if (error) return kaderFehler(error);
+  const r = data as {
+    spieler: number;
+    termine: { id: string; datum: string; beginn: string; ende: string; serie: string | null }[];
+    serien: KaderEntfernenFolgen["serien"];
+    verfallend: number;
+  };
+  return ok({
+    spieler: r.spieler,
+    termine: r.termine.map((t) => ({ id: t.id, datum: t.datum, beginn: t.beginn, ende: t.ende, serieId: t.serie })),
+    serien: r.serien,
+    verfallend: r.verfallend,
+  });
 }
