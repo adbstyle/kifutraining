@@ -507,7 +507,11 @@ niemanden, steht dort „0 von 0" —, steht im Reiter „Spieler:innen" und lä
 anmelden. Im Trainingsplan trägt die Zeile die Kader als Plaketten, ohne Kader nichts; die Eckdaten
 nennen sie oder, sobald das Team Kader führt, „Für alle". Der Reiter „Spieler:innen" sagt oben, für
 welche Kader der Termin gilt, unter jedem Namen, über welche Kader er für sie gilt, und unten, für
-wie viele des Teams er nicht gilt.
+wie viele des Teams er nicht gilt. Gilt er für mehrere Kader, sind diese oben Chips mit der Zahl
+ihrer Spieler:innen am Termin: Ein Chip grenzt die Liste auf seinen Kader ein, ein zweiter Klick
+hebt die Eingrenzung auf; „x von y angemeldet" bleibt die Zahl des ganzen Termins. Gehört dem
+Kader niemand an, steht ein Leerfeld mit „Eingrenzung aufheben". Ab Beginn des Termins stehen die
+Kader wieder als Plaketten, ohne Eingrenzung.
 
 Eine Serie gibt ihren Terminen Kader vor; an einem Serientermin weichen sie ab wie Zeit oder Ort —
 auch mit keinem Kader, dann gilt er für alle — und folgen über „Der Serie folgen" wieder. Ändern

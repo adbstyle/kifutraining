@@ -36,6 +36,8 @@ export const KADER_TEXT = {
   leerKader: (name: string) => `Niemand in «${name}»`,
   leerKaderText:
     "Diesem Kader gehört noch keine Spieler:in an. Wähle Spieler:innen in der Liste aus und teile sie über «Kader zuteilen» zu.",
+  /** Am Termin (Reiter «Spieler:innen»): Dem Kader gehört niemand an. */
+  leerKaderTermin: "Diesem Kader gehört keine Spieler:in an.",
   leerOhne: "Alle haben einen Kader",
   leerOhneText: "Jede Spieler:in auf der Liste gehört mindestens einem Kader an.",
   eingrenzungAufheben: "Eingrenzung aufheben",
