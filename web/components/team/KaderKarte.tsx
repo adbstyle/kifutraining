@@ -2,7 +2,7 @@
 
 import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Info, Pencil, Plus, TriangleAlert, X } from "lucide-react";
+import { Pencil, Plus, TriangleAlert, X } from "lucide-react";
 import { Button, Dialog, IconButton, SectionMessage, Tabelle, TabellenZeile, TextField, Tooltip } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { benenneKaderUmAktion, entferneKaderAktion, kaderEntfernenFolgenAktion, legeKaderAnAktion } from "@/lib/actions/kader";
@@ -14,10 +14,11 @@ import { useVerfallRueckfrage } from "./VerfallBestaetigung";
 
 /* Die Kader eines Teams (Epic #447, Story #452): anlegen, umbenennen,
    entfernen. Wer welchem Kader angehört, teilt die Spielerliste darüber zu
-   (Spalte «Kader», Mehrfachauswahl). Beim Anlegen und Umbenennen steht im
-   Dialog, dass ein Name nichts Heikles tragen soll (AK 13) — als Satz im
-   Dialog und nicht hinter dem ⓘ, weil er gelesen werden muss, bevor man
-   tippt. Entfernen fragt nach (AK 4) und nennt, was danach gilt. */
+   (Spalte «Kader», Mehrfachauswahl). Dass ein Name nichts Heikles tragen
+   soll (AK 13), steht als Hinweis unter dem Namensfeld, solange kein Fehler
+   dasteht — bewusst nicht hinter dem ⓘ: Er muss gelesen werden, bevor man
+   tippt, und im niedrigen Dialog schnitte dieser das Panel ab (PO
+   2026-10-18). Entfernen fragt nach (AK 4) und nennt, was danach gilt. */
 export function KaderKarte({ teamId, kader }: { teamId: string; kader: Kader[] }) {
   const router = useRouter();
   const melde = useSnackbar();
@@ -156,12 +157,8 @@ export function KaderKarte({ teamId, kader }: { teamId: string; kader: Kader[] }
               setFehler(null);
             }}
             error={!!fehler}
-            supportingText={fehler ?? undefined}
+            supportingText={fehler ?? KADER_TEXT.heikel}
           />
-          <p className="flex items-start gap-3">
-            <Info size={16} aria-hidden className="mt-0.5 shrink-0 text-icon-information" />
-            <span>{KADER_TEXT.heikel}</span>
-          </p>
         </form>
       </Dialog>
 
