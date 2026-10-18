@@ -78,6 +78,8 @@ const { ladeSpielerliste, nimmSpielerAuf, aendereSpieler, entferneSpieler, holeS
 const { IMPORT_TEXT, erwartetVon } = await import("../lib/spieler-import");
 const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, abweisungText, spielerzahlVon } = await import("../lib/spieler");
 const { setzeAbmeldung, terminSpieler } = await import("../lib/kern/abmeldungen");
+const { ladeKader, legeKaderAn, benenneKaderUm, entferneKader, aendereZuteilung } = await import("../lib/kern/kader");
+const { KADER_MELDUNG, KADER_TEXT, kaderVerfallBestaetigen, kaderVerfallGeaendert } = await import("../lib/kader");
 const { getTeamTrainingsFuer } = await import("../lib/queries/trainings-fuer");
 const { AendernEingabe: TerminAendernEingabe } = await import("../lib/mcp/werkzeuge/team");
 const {
@@ -4285,6 +4287,91 @@ try {
     assert.equal(anschlussVon("2001:0db8:0000:0001:1:2:3:4"), "2001:db8:0:1::/64");
     assert.equal(anschlussVon("::1"), "0:0:0:0::/64");
     assert.equal(anschlussVon("::ffff:203.0.113.7"), "203.0.113.7", "IPv4 in IPv6-Schreibweise");
+  });
+
+  // ── Kader (#447) ─────────────────────────────────────────────────────────
+  const kaderVonTeam = async (team: string) => wert(await ladeKader(a.supabase, a.id, { teamId: team })).kader;
+  const neuerKader = async (team: string, name: string) => wert(await legeKaderAn(a.supabase, a.id, { teamId: team, name })).kaderId;
+
+  await pruefe("Kader: anlegen, eindeutig ohne Gross/Klein und Leerzeichen, Bindestrich unterscheidet, umbenennen (#452 AK 1, 2, 10)", async () => {
+    const team = await serienTeam("Kern-DB-Kader-Namen");
+    const s1 = await neuerKader(team, "  Stärkeklasse   1 ");
+    assert.deepEqual((await kaderVonTeam(team)).map((k) => k.name), ["Stärkeklasse 1"], "bereinigt gespeichert");
+    fehler(await legeKaderAn(a.supabase, a.id, { teamId: team, name: "stärkeklasse 1" }), "regel", KADER_MELDUNG.KADER_DOPPELT);
+    fehler(await legeKaderAn(a.supabase, a.id, { teamId: team, name: "" }), "eingabe", KADER_TEXT.name);
+    fehler(await legeKaderAn(a.supabase, a.id, { teamId: team, name: "x".repeat(31) }), "eingabe", KADER_TEXT.name);
+    await neuerKader(team, "U-10");
+    await neuerKader(team, "U 10");
+    // Ein Name auch beim Umbenennen nur einmal; der eigene Name in anderer Schreibweise geht.
+    fehler(await benenneKaderUm(a.supabase, a.id, { kaderId: s1, name: "u-10" }), "regel", KADER_MELDUNG.KADER_DOPPELT);
+    wert(await benenneKaderUm(a.supabase, a.id, { kaderId: s1, name: "STÄRKEKLASSE 1" }));
+    assert.ok((await kaderVonTeam(team)).some((k) => k.name === "STÄRKEKLASSE 1"));
+    // Unmittelbar über die RPC: Die Datenebene setzt dieselben Regeln durch.
+    const { error } = await a.supabase.rpc("kader_anlegen", { p_team: team, p_name: "x".repeat(31) });
+    assert.match(error!.message, /kader_name/);
+  });
+
+  await pruefe("Kader: höchstens 20 je Team (#452 AK 11)", async () => {
+    const team = await serienTeam("Kern-DB-Kader-Grenze");
+    for (let i = 1; i <= 20; i++) await neuerKader(team, `Kader ${i}`);
+    fehler(await legeKaderAn(a.supabase, a.id, { teamId: team, name: "Kader 21" }), "regel", KADER_MELDUNG.KADER_VOLL);
+  });
+
+  await pruefe("Kader: zuteilen und herausnehmen, mehrere in einem Schritt, Spielerliste zeigt sie (#452 AK 5, 6, 7)", async () => {
+    const team = await serienTeam("Kern-DB-Kader-Zuteilung");
+    const [s1, s2] = [await neuerKader(team, "S1"), await neuerKader(team, "S2")];
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    const mia = (await neuerSpieler(team, "Mia")).spielerId;
+    const noah = (await neuerSpieler(team, "Noah")).spielerId;
+    const z = wert(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [lena, mia], dazu: [s1, s2] }));
+    assert.deepEqual([z.dazu, z.weg, z.verfallen], [4, 0, 0]);
+    // Schon dabei: bleibt, zählt nicht.
+    assert.equal(wert(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [lena, noah], dazu: [s1] })).dazu, 1);
+    assert.equal(wert(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [lena, mia, noah], weg: [s2] })).weg, 2);
+    const liste = wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler;
+    assert.deepEqual(liste.map((s) => [s.vorname, s.kaderIds]), [["Lena", [s1]], ["Mia", [s1]], ["Noah", [s1]]]);
+    assert.deepEqual((await kaderVonTeam(team)).map((k) => [k.name, k.spielerIds.length]), [["S1", 3], ["S2", 0]]);
+  });
+
+  await pruefe("Kader: entfernen lässt die Spieler:innen auf der Liste, fällt mit Spieler:in und Team (#452 AK 3, PC 1, 3)", async () => {
+    const team = await serienTeam("Kern-DB-Kader-Entfernen");
+    const k = await neuerKader(team, "Aushilfe");
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    const mia = (await neuerSpieler(team, "Mia")).spielerId;
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [lena, mia], dazu: [k] }));
+    wert(await entferneSpieler(a.supabase, a.id, { spielerId: mia }));
+    assert.equal((await kaderVonTeam(team))[0].spielerIds.length, 1, "die entfernte fällt aus dem Kader");
+    assert.deepEqual(wert(await entferneKader(a.supabase, a.id, { kaderId: k })), { teamId: team, name: "Aushilfe", verfallen: 0 });
+    assert.deepEqual(await kaderVonTeam(team), []);
+    assert.equal(wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler.length, 1, "Lena bleibt");
+    fehler(await entferneKader(a.supabase, a.id, { kaderId: k }), "nicht_gefunden", KADER_MELDUNG.KADER_NICHT_GEFUNDEN);
+    // Das Team aufgelöst: Kader und Zuteilung gehen mit.
+    const k2 = await neuerKader(team, "S1");
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [lena], dazu: [k2] }));
+    await admin.from("teams").delete().eq("id", team);
+    assert.equal((await admin.from("kader").select("id").eq("team_id", team)).data!.length, 0);
+    assert.equal((await admin.from("kader_spieler").select("kader_id").eq("team_id", team)).data!.length, 0);
+  });
+
+  await pruefe("Kader: nur Mitglieder sehen und führen sie, nichts über Teamgrenzen (#452 AK 12)", async () => {
+    const team = await serienTeam("Kern-DB-Kader-Rechte");
+    const fremdes = await serienTeam("Kern-DB-Kader-Fremd");
+    const k = await neuerKader(team, "S1");
+    const kFremd = await neuerKader(fremdes, "S1");
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    const fremd = (await neuerSpieler(fremdes, "Fremd")).spielerId;
+    fehler(await ladeKader(b.supabase, b.id, { teamId: team }), "nicht_gefunden");
+    fehler(await legeKaderAn(b.supabase, b.id, { teamId: team, name: "X" }), "nicht_gefunden");
+    fehler(await benenneKaderUm(b.supabase, b.id, { kaderId: k, name: "X" }), "nicht_gefunden", KADER_MELDUNG.KADER_NICHT_GEFUNDEN);
+    fehler(await entferneKader(b.supabase, b.id, { kaderId: k }), "nicht_gefunden", KADER_MELDUNG.KADER_NICHT_GEFUNDEN);
+    fehler(await aendereZuteilung(b.supabase, b.id, { teamId: team, spielerIds: [lena], dazu: [k] }), "nicht_gefunden");
+    assert.deepEqual((await b.supabase.from("kader").select("id").eq("team_id", team)).data, [], "RLS: unsichtbar");
+    // Im eigenen Team weder fremde Spieler:innen noch fremde Kader.
+    fehler(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [fremd], dazu: [k] }), "nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN);
+    fehler(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [lena], dazu: [kFremd] }), "nicht_gefunden", KADER_MELDUNG.KADER_NICHT_GEFUNDEN);
+    // Schreiben geht nur über die RPCs.
+    const { error } = await a.supabase.from("kader").insert({ team_id: team, name: "Direkt" });
+    assert.ok(error, "kein direktes Schreiben");
   });
 
 } finally {

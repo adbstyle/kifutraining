@@ -74,6 +74,14 @@ import {
   terminAbmeldungSetzen,
   terminSpielerAbrufen,
 } from "@/lib/mcp/werkzeuge/spieler";
+import {
+  kaderAbrufen,
+  kaderAnlegen,
+  kaderEntfernen,
+  kaderHerausnehmen,
+  kaderUmbenennen,
+  kaderZuteilen,
+} from "@/lib/mcp/werkzeuge/kader";
 
 /** Der vollständige Werkzeugsatz (Story #142; Epic #139 und #190 hängen ihre
  *  Werkzeuge hier an). Der Werkzeugsatz IST die Grenze eines Zugangs: das
@@ -143,6 +151,12 @@ export const WERKZEUGE = [
   selbstabholungAbrufen,
   selbstabholungSchalten,
   abholadresseErneuern,
+  kaderAbrufen,
+  kaderAnlegen,
+  kaderUmbenennen,
+  kaderEntfernen,
+  kaderZuteilen,
+  kaderHerausnehmen,
 ] as const;
 
 export function registriereWerkzeuge(server: McpServer): void {

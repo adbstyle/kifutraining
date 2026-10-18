@@ -66,6 +66,7 @@ const SpielerAusgabe = z.object({
   jahrgang: z.number().int(),
   js_nummer: z.string().nullable(),
   link_bezogen: z.boolean().describe("Der aktuelle private Link wurde über die Selbstabholung herausgegeben."),
+  kader_ids: z.array(z.string()).describe("Die Kader, denen sie angehört («kader_abrufen» nennt die Namen)."),
 });
 
 // ── spielerliste_abrufen ────────────────────────────────────────────────────
@@ -94,6 +95,7 @@ export const spielerlisteAbrufen = werkzeug({
         jahrgang: s.jahrgang,
         js_nummer: s.jsNummer,
         link_bezogen: s.linkBezogen,
+        kader_ids: s.kaderIds,
       })),
     })),
 });

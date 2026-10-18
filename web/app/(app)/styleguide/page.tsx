@@ -123,6 +123,7 @@ import {
   type LozengeAppearance,
 } from "@/lib/farben";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { KaderLozenge } from "@/components/team/KaderLozenge";
 import { VERZEICHNIS_COOKIE, leseVerzeichnis } from "@/lib/verzeichnis";
 
 export const metadata: Metadata = {
@@ -1826,6 +1827,14 @@ export default async function Styleguide() {
             <code>px-3.5</code>), damit alles linksbündig liest (PO 2026-10-06).
             Ein Filter ist sie nicht - der bleibt ein <code>FilterChip</code> (<Siehe id="plaketten" />).
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Teilweise</strong> (<code>teilweise</code>, #452): Für eine
+            Auswahl gilt die Angabe nur zum Teil - beim Zuteilen von Kadern
+            gehört nur ein Teil der gewählten Spieler:innen einem Kader an. Das
+            Kästchen ist gefüllt wie gewählt, trägt aber einen Strich statt des
+            Hakens, und der Browser meldet «gemischt». Ein Klick macht daraus
+            «gewählt»; zurück zum Strich geht es erst beim neuen Öffnen.
+          </p>
           <CheckboxDemo />
 
           <h4 className="mb-2 mt-8 type-title-medium text-on-surface">
@@ -2345,6 +2354,20 @@ export default async function Styleguide() {
             </Lozenge>
             <Lozenge>Kinderfussball</Lozenge>
             <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
+          </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>Kader</strong> (<code>KaderLozenge</code>, Epic #447): ein
+            Teil des Teams, den die Trainer:innen selbst benennen - in der
+            Spielerliste, im Trainingsplan, am Termin und am privaten Link.
+            Neutral und ohne Zeichen, nur der Name (PO 2026-10-18): Ein Kader
+            trägt keine Farbe, und ein Zeichen machte aus jeder Zeile mit drei
+            Kadern ein Muster. Ein entfernter Kader steht an begonnenen Terminen
+            gedämpft als «Ehemaliger Kader».
+          </p>
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <KaderLozenge name="Stärkeklasse 1" />
+            <KaderLozenge name="Torhüterinnen" />
+            <KaderLozenge name={null} />
           </div>
           <div className="mb-6 flex flex-wrap items-center gap-3 rounded-flaeche bg-[linear-gradient(135deg,#f5f5f0,#9aa79c)] p-3">
             <HerkunftLozenge herkunft="manual" aufBild />

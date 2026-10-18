@@ -106,6 +106,8 @@ export type Spieler = {
   jsNummer: string | null;
   /** Der aktuelle Link wurde über die Selbstabholung herausgegeben (#438 PC 2). */
   linkBezogen: boolean;
+  /** Die Kader, denen sie angehört (#452 AK 5). */
+  kaderIds: string[];
 };
 
 /** Überall Vor- und Nachname (Epic PO 2). */

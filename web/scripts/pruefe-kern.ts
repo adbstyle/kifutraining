@@ -154,6 +154,21 @@ import {
   abholUrl,
 } from "../lib/spieler";
 import {
+  KADER_MELDUNG,
+  KADER_NAME_MAX,
+  KADER_TEXT,
+  VERFALL_MARKER,
+  kaderNameProblem,
+  kaderSchluessel,
+  kaderVerfallBestaetigen,
+  kaderVerfallGeaendert,
+  kaderVerfallText,
+  kaderVon,
+  nachKaderName,
+  verfallAusFehler,
+  zugehoerigkeit,
+} from "../lib/kader";
+import {
   IMPORT_TEXT,
   dekodiere,
   erkenneSpalten,
@@ -876,6 +891,10 @@ pruefe("Serien-Marker: kein Marker steckt in einem anderen (includes-Suche bleib
     ...Object.keys(TERMIN_MELDUNG),
     ...Object.keys(SERIE_MELDUNG),
     ...Object.keys(SPIELER_MELDUNG),
+    ...Object.keys(KADER_MELDUNG),
+    // Wird vor der Übersetzung abgefangen (lib/kern/kader.ts), darf aber
+    // keinen Satz treffen.
+    VERFALL_MARKER,
   ];
   assert.equal(new Set(alle).size, alle.length, "Marker doppelt vergeben");
   for (const a of alle)
@@ -1830,6 +1849,8 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
         assert.ok(block.includes("TERMIN_KENNUNG_FEHLER"), `${m[1]} nimmt termin_id, erklärt aber TERMIN_KENNUNG_FEHLER nicht`);
       if (/\bSpielerId\b/.test(eingabe))
         assert.ok(block.includes("SPIELER_KENNUNG_FEHLER"), `${m[1]} nimmt spieler_id, erklärt aber SPIELER_KENNUNG_FEHLER nicht`);
+      if (/\bKaderId\b/.test(eingabe))
+        assert.ok(block.includes("KADER_KENNUNG_FEHLER"), `${m[1]} nimmt kader_id, erklärt aber KADER_KENNUNG_FEHLER nicht`);
     }
   }
 
@@ -1874,6 +1895,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#435": ["termin_spieler_abrufen", "termin_abmeldung_setzen"],
     "#436": ["spieler_link_abrufen", "spieler_link_erneuern"],
     "#438": ["selbstabholung_abrufen", "selbstabholung_schalten", "abholadresse_erneuern"],
+    "#452": ["kader_abrufen", "kader_anlegen", "kader_umbenennen", "kader_entfernen", "kader_zuteilen", "kader_herausnehmen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
@@ -2153,6 +2175,44 @@ pruefe("CSV-Import: Meldung nach der Übernahme (#455 PC 6)", () => {
   assert.equal(importErgebnisText({ neu: 12, js: 0, ersetzt: 3 }), "12 Spieler:innen aufgenommen. Die Spielerzahl kommt jetzt aus der Liste.");
   assert.equal(importErgebnisText({ neu: 1, js: 2, ersetzt: 0 }), "1 Spieler:in aufgenommen, bei 2 die J+S-Nummer geändert.");
   assert.equal(importErgebnisText({ neu: 0, js: 1, ersetzt: 0 }), "Bei 1 Spieler:in die J+S-Nummer geändert.");
+});
+
+// ── Kader (Epic #447) ───────────────────────────────────────────────────────
+
+pruefe("Kader: Name 1 bis 30 Zeichen, Gross/Klein und Leerzeichen unterscheiden nicht, Bindestrich schon (#452 AK 10)", () => {
+  assert.equal(kaderNameProblem("Stärkeklasse 1"), null);
+  assert.equal(kaderNameProblem("   "), KADER_TEXT.name);
+  assert.equal(kaderNameProblem("x".repeat(KADER_NAME_MAX)), null);
+  assert.equal(kaderNameProblem("x".repeat(KADER_NAME_MAX + 1)), KADER_TEXT.name);
+  assert.equal(kaderNameProblem("😀".repeat(KADER_NAME_MAX)), null, "Länge in Code Points wie char_length");
+  assert.equal(kaderSchluessel("  Stärkeklasse   1 "), kaderSchluessel("stärkeklasse 1"));
+  assert.notEqual(kaderSchluessel("U-10"), kaderSchluessel("U 10"), "anders als bei Spieler:innen");
+  assert.deepEqual(nachKaderName([{ name: "Torhüterinnen" }, { name: "Aushilfe" }]).map((k) => k.name), ["Aushilfe", "Torhüterinnen"]);
+});
+
+pruefe("Kader: Marker der Datenebene tragen die Sätze der Oberfläche (#452 AK 15)", () => {
+  for (const [marker, satz] of Object.entries(KADER_MELDUNG)) assert.equal(fehlerMeldung(`x ${marker} y`), satz, marker);
+  assert.equal(fehlerMeldung('new row violates check constraint "kader_name"'), KADER_TEXT.name);
+});
+
+pruefe("Kader: Zugehörigkeit einer Auswahl und Kader einer Spieler:in (#452 AK 6, 7)", () => {
+  const k = { id: "k", name: "Aushilfe", spielerIds: ["a", "b"] };
+  assert.equal(zugehoerigkeit(k, ["a", "b"]), "alle");
+  assert.equal(zugehoerigkeit(k, ["a", "c"]), "teil");
+  assert.equal(zugehoerigkeit(k, ["c"]), "keine");
+  assert.deepEqual(kaderVon("b", [k, { id: "j", name: "S1", spielerIds: ["c"] }]).map((x) => x.id), ["k"]);
+});
+
+pruefe("Kader: verfallende Abmeldungen - Zahl aus der Datenebene, Texte (#453 AK 10, 12, 16)", () => {
+  assert.equal(verfallAusFehler(`${VERFALL_MARKER} 3`), 3);
+  assert.equal(verfallAusFehler("KADER_DOPPELT"), null);
+  assert.equal(
+    kaderVerfallText(1),
+    "Damit verfällt 1 Abmeldung: Der Termin gilt für diese Spieler:in nicht mehr. Gilt er später wieder für sie, ist sie angemeldet.",
+  );
+  assert.ok(kaderVerfallText(2).startsWith("Damit verfallen 2 Abmeldungen:"));
+  assert.ok(kaderVerfallGeaendert(4).endsWith(kaderVerfallText(4)));
+  assert.ok(kaderVerfallBestaetigen(2).startsWith(kaderVerfallText(2)) && kaderVerfallBestaetigen(2).includes("«bestaetigt: true»"));
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

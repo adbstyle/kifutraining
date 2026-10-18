@@ -35,12 +35,28 @@ import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type 
 
 export const SPIELER_FELD = { feld: "spieler_id" } as const;
 
-const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen";
+const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, kader_spieler(kader_id)";
 
-type SpielerRoh = { id: string; vorname: string; nachname: string; jahrgang: number; js_nummer: string | null; link_bezogen: boolean };
+type SpielerRoh = {
+  id: string;
+  vorname: string;
+  nachname: string;
+  jahrgang: number;
+  js_nummer: string | null;
+  link_bezogen: boolean;
+  kader_spieler: { kader_id: string }[] | null;
+};
 
 function ausRoh(s: SpielerRoh): Spieler {
-  return { id: s.id, vorname: s.vorname, nachname: s.nachname, jahrgang: s.jahrgang, jsNummer: s.js_nummer, linkBezogen: s.link_bezogen };
+  return {
+    id: s.id,
+    vorname: s.vorname,
+    nachname: s.nachname,
+    jahrgang: s.jahrgang,
+    jsNummer: s.js_nummer,
+    linkBezogen: s.link_bezogen,
+    kaderIds: (s.kader_spieler ?? []).map((k) => k.kader_id),
+  };
 }
 
 /** Ein Fehler der Spieler-RPCs als Kern-Fehler: «nicht gefunden» ordnet nur
