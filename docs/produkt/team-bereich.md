@@ -495,7 +495,8 @@ Zeile der Spielerliste ein Kästchen; für die Ausgewählten öffnet „Kader zu
 Strich, wenn nur ein Teil. Ein Klick teilt allen zu, ein weiterer nimmt alle heraus, unberührte
 bleiben, wie sie sind. In der Liste trägt jede Spieler:in ihre Kader als Plaketten; die Chips
 darüber, je mit der Zahl, grenzen sie auf einen Kader oder auf „Ohne Kader" ein, ein zweiter Klick
-hebt die Eingrenzung auf.
+hebt die Eingrenzung auf. Bleibt dabei niemand übrig, steht statt der Liste ein Leerfeld („Niemand
+in …" bzw. „Alle haben einen Kader") mit „Eingrenzung aufheben".
 
 Ein Termin oder eine Terminserie kann Kader tragen; gewählt werden sie in „Termin erstellen" und
 „Termin ändern" über „Kader (optional)", darunter steht, für wie viele Spieler:innen er damit gilt —

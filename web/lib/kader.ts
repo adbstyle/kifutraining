@@ -31,6 +31,14 @@ export const KADER_TEXT = {
   /** Ein Termin, dessen Kadern niemand angehört (#453 AK 7, 8) — im Dialog
    *  und am Termin derselbe Satz. */
   niemand: "Gilt für niemanden: Diesen Kadern gehört keine Spieler:in an.",
+  /** Die Spielerliste, eingegrenzt auf einen leeren Kader bzw. auf «Ohne
+   *  Kader», wenn jede einem angehört (Leerzustand). */
+  leerKader: (name: string) => `Niemand in «${name}»`,
+  leerKaderText:
+    "Diesem Kader gehört noch keine Spieler:in an. Wähle Spieler:innen in der Liste aus und teile sie über «Kader zuteilen» zu.",
+  leerOhne: "Alle haben einen Kader",
+  leerOhneText: "Jede Spieler:in auf der Liste gehört mindestens einem Kader an.",
+  eingrenzungAufheben: "Eingrenzung aufheben",
 } as const;
 
 /** Die Sätze zu den Markern der Datenebene (Migration kader). */

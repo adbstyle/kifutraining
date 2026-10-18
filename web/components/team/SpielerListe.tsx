@@ -2,13 +2,14 @@
 
 import { useId, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FileUp, Link2, Pencil, Plus, X } from "lucide-react";
+import { FileUp, Link2, Pencil, Plus, SearchX, X } from "lucide-react";
 import {
   Button,
   Checkbox,
   Dialog,
   FilterChip,
   IconButton,
+  Leerzustand,
   MultiSelect,
   SectionMessage,
   Tabelle,
@@ -84,7 +85,12 @@ export function SpielerListe({
   const [aufgenommen, setAufgenommen] = useState<string | null>(null);
   const erstesFeld = useRef<HTMLInputElement>(null);
   const formId = useId();
-  const [eingrenzung, setEingrenzung] = useState<Eingrenzung>(null);
+  const [gewaehlteEingrenzung, setEingrenzung] = useState<Eingrenzung>(null);
+  // Fällt der eingegrenzte Kader weg (eben entfernt), gilt wieder die ganze Liste.
+  const eingrenzung =
+    gewaehlteEingrenzung !== null && gewaehlteEingrenzung !== "ohne" && !kader.some((k) => k.id === gewaehlteEingrenzung.kaderId)
+      ? null
+      : gewaehlteEingrenzung;
   const [auswahl, setAuswahl] = useState<string[]>([]);
   const [zuteilenOffen, setZuteilenOffen] = useState(false);
   const verfall = useVerfallRueckfrage(pending);
@@ -298,7 +304,28 @@ export function SpielerListe({
         </div>
       )}
 
-      {spieler.length > 0 ? (
+      {/* Grenzt ein Chip auf niemanden ein, steht statt des leeren Tabellenkopfs
+          das Leerfeld — mit dem Weg zurück zur ganzen Liste. */}
+      {spieler.length > 0 && eingrenzung !== null && sichtbar.length === 0 ? (
+        <div className="mt-4">
+          <Leerzustand
+            icon={SearchX}
+            titel={
+              eingrenzung === "ohne"
+                ? KADER_TEXT.leerOhne
+                : KADER_TEXT.leerKader(kader.find((k) => k.id === eingrenzung.kaderId)?.name ?? "")
+            }
+            dicht
+            aktion={
+              <Button variant="text" onClick={() => setEingrenzung(null)}>
+                {KADER_TEXT.eingrenzungAufheben}
+              </Button>
+            }
+          >
+            {eingrenzung === "ohne" ? KADER_TEXT.leerOhneText : KADER_TEXT.leerKaderText}
+          </Leerzustand>
+        </div>
+      ) : spieler.length > 0 ? (
         <Tabelle className={gewaehlt.length > 0 ? "mt-3" : "mt-4"} spalten={spalten} kopf={kopf}>
           {sichtbar.map((s) => (
             <TabellenZeile key={s.id}>
