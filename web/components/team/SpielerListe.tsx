@@ -36,8 +36,9 @@ import { useVerfallRueckfrage } from "./VerfallBestaetigung";
    unter dem Dialog. Ändern öffnet denselben Dialog mit den Angaben der
    Spieler:in und schliesst nach dem Speichern, Entfernen fragt nach.
    Das Kettenglied zeigt ihren privaten Link (#436); ob er über die
-   Selbstabholung bezogen wurde (#438 AK 21), sagt sein Punkt — grün bezogen,
-   in Warnfarbe nicht bezogen (PO 2026-10-18) — statt einer eigenen Spalte. Der
+   Selbstabholung bezogen wurde (#438 AK 21), sagt ein grüner Punkt daran;
+   «nicht bezogen» steht nur im Link-Dialog — in der Liste wäre es bei fast
+   allen der lauteste Eindruck (PO 2026-10-18). Der
    Abschnitt «Selbstabholung» steht zuoberst (#438). Das Datei-Symbol neben
    dem Plus übernimmt eine ganze Mannschaft aus einer CSV-Datei (#455).
 
@@ -333,11 +334,11 @@ export function SpielerListe({
                 </span>
               )}
               <span className="flex justify-end gap-1">
-                <Tooltip label={s.linkBezogen ? "Privater Link · bezogen" : "Privater Link · nicht bezogen"}>
+                <Tooltip label={s.linkBezogen ? "Privater Link · bezogen" : "Privater Link"}>
                   <IconButton
                     icon={Link2}
-                    label={`Privater Link für ${spielerName(s)}, ${s.linkBezogen ? "bezogen" : "nicht bezogen"}`}
-                    punkt={s.linkBezogen ? "success" : "warning"}
+                    label={`Privater Link für ${spielerName(s)}${s.linkBezogen ? ", bezogen" : ""}`}
+                    punkt={s.linkBezogen ? "success" : undefined}
                     onClick={() => setLink(s)}
                   />
                 </Tooltip>

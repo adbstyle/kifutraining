@@ -1,13 +1,12 @@
 import { cn } from "@/lib/cn";
 
-/** Die Töne des Punkts: `primary` meldet Neues (Version, #410), `success` und
- *  `warning` einen Zustand (privater Link bezogen oder nicht, #447). */
-export type ZeichenPunktTon = "primary" | "success" | "warning";
+/** Die Töne des Punkts: `primary` meldet Neues (Version, #410), `success`
+ *  einen erreichten Zustand (privater Link bezogen, #447). */
+export type ZeichenPunktTon = "primary" | "success";
 
 const TON: Record<ZeichenPunktTon, string> = {
   primary: "bg-primary",
   success: "bg-icon-success",
-  warning: "bg-icon-warning",
 };
 
 /* Ein Punkt oben rechts an einem Zeichen — wie die Benachrichtigung an einem

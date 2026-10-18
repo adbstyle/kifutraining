@@ -1405,11 +1405,10 @@ export default async function Styleguide() {
               </span>
             </span>
             <IconButton icon={Link2} label="Privater Link, bezogen" punkt="success" />
-            <IconButton icon={Link2} label="Privater Link, nicht bezogen" punkt="warning" />
             <span className="type-label-small text-on-surface-mittel">
-              primary: Neues (Version, schmale Leiste) · success / warning: ein Zustand (Link bezogen / nicht bezogen).
-              Stumm - was er meldet, steht im Namen des Knopfs. Ersetzt eine Spalte oder Plakette, wo der Zustand am
-              Knopf hängt.
+              primary: Neues (Version, schmale Leiste) · success: ein erreichter Zustand (Link bezogen). Nur das
+              Bemerkenswerte trägt einen Punkt, der Normalfall keinen - sonst wird die Liste laut. Stumm - was er
+              meldet, steht im Namen des Knopfs.
             </span>
           </div>
 

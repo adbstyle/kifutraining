@@ -637,9 +637,9 @@ Zählung nicht zurück. Eine erneuerte, ausgeschaltete oder
 unbekannte Adresse zeigt die neutrale Seite „Diese Abholadresse gilt nicht" ohne Teamname. Vorschau
 im Chat, Suchmaschinen, Besucherstatistik und Browser behandelt die Abholseite wie den Link.
 
-In der Spielerliste trägt das Kettenglied jeder Spieler:in einen Punkt: grün, wenn ihr aktueller
-Link über die Abholadresse herausgegeben wurde, in Warnfarbe, solange nicht; der Tooltip sagt
-„bezogen" oder „nicht bezogen", der Link-Dialog ebenso. Wer ihn holte und wie oft, hält die Anwendung nicht fest.
+In der Spielerliste trägt das Kettenglied einen grünen Punkt, wenn der aktuelle Link der
+Spieler:in über die Abholadresse herausgegeben wurde; der Tooltip sagt dann „bezogen". Ob ein
+Link bezogen ist oder nicht, sagt auch der Dialog „Privater Link für …". Wer ihn holte und wie oft, hält die Anwendung nicht fest.
 Erneuert ein Mitglied den Link, gilt er wieder als nicht bezogen; der neue lässt sich über die
 Abholadresse erneut abholen.
 
