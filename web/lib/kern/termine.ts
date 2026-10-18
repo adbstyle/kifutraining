@@ -216,7 +216,9 @@ export async function legeTerminFest(
   if (e.kaderIds?.length) {
     const k = await supabase.rpc("termin_kader_setzen", { p_termin: data.id, p_kader: e.kaderIds });
     if (k.error) {
-      await supabase.from("training_termine").delete().eq("id", data.id);
+      // Ohne seine Kader soll der Termin nicht stehen bleiben.
+      const weg = await supabase.from("training_termine").delete().eq("id", data.id);
+      if (weg.error) return ausDbFehler(weg.error);
       return k.error.message.includes("KADER_NICHT_GEFUNDEN")
         ? fehlschlag("nicht_gefunden", KADER_MELDUNG.KADER_NICHT_GEFUNDEN, { feld: "kader_ids" })
         : ausDbFehler(k.error);

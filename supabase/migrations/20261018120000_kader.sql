@@ -23,8 +23,9 @@ set lock_timeout = '5s';
 
 -- Die gespeicherte Form eines Kader-Namens ist die bereinigte
 -- (`spieler_text_bereinigt`: NFC, ein Leerzeichen, aussen keins); der
--- Schlüssel der Eindeutigkeit nur zusätzlich klein. Zwilling: kaderSchluessel
--- in web/lib/kader.ts.
+-- Schlüssel der Eindeutigkeit nur zusätzlich klein. Die Oberfläche bereinigt
+-- mit `bereinigeName` (web/lib/spieler.ts); ob ein Name schon vergeben ist,
+-- entscheidet allein die Datenebene (KADER_DOPPELT).
 create function kader_schluessel(p text) returns text
 language sql immutable
 set search_path = public, pg_temp

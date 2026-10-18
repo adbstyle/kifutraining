@@ -205,16 +205,21 @@ set search_path = public, pg_temp
 as $$
 declare
   t training_termine;
+  v_team uuid;
   v_stand jsonb;
 begin
+  -- Dieselbe Sperre wie jede Änderung an Kadern (`kader_vorher`) und in
+  -- derselben Reihenfolge — erst sie, dann die Zeile: Sonst bliebe eine
+  -- Abmeldung stehen, die eine gleichzeitige Zuteilung eben hätte verfallen
+  -- lassen, und das Festhalten dort wartete auf diese Zeile (Deadlock).
+  select team_id into v_team from training_termine where id = p_termin;
+  if v_team is not null then
+    perform pg_advisory_xact_lock(hashtextextended('spieler:' || v_team::text, 0));
+  end if;
   select * into t from training_termine where id = p_termin for update;
   if not found or not exists (select 1 from spieler where id = p_spieler and team_id = t.team_id) then
     return jsonb_build_object('status', 'abgewiesen', 'grund', 'nicht_gefunden');
   end if;
-  -- Dieselbe Sperre wie jede Änderung an Kadern (`kader_vorher`): Sonst
-  -- bliebe eine Abmeldung stehen, die eine gleichzeitige Zuteilung eben
-  -- hätte verfallen lassen.
-  perform pg_advisory_xact_lock(hashtextextended('spieler:' || t.team_id::text, 0));
   v_stand := jsonb_build_object('datum', t.datum, 'beginn', to_char(t.beginn, 'HH24:MI'),
                                 'ende', to_char(t.ende, 'HH24:MI'), 'ausgefallen', t.ausgefallen);
   if (p_gesehen_datum is not null and p_gesehen_datum is distinct from t.datum)

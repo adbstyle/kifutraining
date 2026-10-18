@@ -28,8 +28,9 @@ export const KADER_TEXT = {
     "Noch keine Kader. Ohne Kader gilt jeder Termin für alle Spieler:innen. Mit Kadern wie «Stärkeklasse 1» oder «Torhüterinnen» bestimmst du, für wen ein Termin gilt.",
   /** Die Eingrenzung der Spielerliste auf Spieler:innen ohne Kader (AK 9). */
   ohneKader: "Ohne Kader",
-  /** Am Termin, dessen Kadern niemand angehört (#453 AK 7). */
-  niemand: "Der Termin gilt für niemanden: Seinen Kadern gehört keine Spieler:in an.",
+  /** Ein Termin, dessen Kadern niemand angehört (#453 AK 7, 8) — im Dialog
+   *  und am Termin derselbe Satz. */
+  niemand: "Gilt für niemanden: Diesen Kadern gehört keine Spieler:in an.",
 } as const;
 
 /** Die Sätze zu den Markern der Datenebene (Migration kader). */
@@ -107,7 +108,7 @@ export function giltFuerAnzahl(kaderIds: readonly string[], kader: readonly Kade
 export function giltFuerText(kaderIds: readonly string[], kader: readonly Kader[], spielerGesamt: number): string {
   const n = giltFuerAnzahl(kaderIds, kader, spielerGesamt);
   if (kaderIds.length === 0) return spielerGesamt === 1 ? "Gilt für die 1 Spieler:in." : `Gilt für alle ${spielerGesamt} Spieler:innen.`;
-  if (n === 0) return "Gilt für niemanden: Diesen Kadern gehört keine Spieler:in an.";
+  if (n === 0) return KADER_TEXT.niemand;
   return `Gilt für ${n} von ${spielerGesamt} Spieler:innen.`;
 }
 
