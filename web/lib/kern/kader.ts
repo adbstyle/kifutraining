@@ -27,7 +27,7 @@ import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type Ke
  * («ABMELDUNGEN_VERFALLEN n»), und nichts ist geschrieben.
  */
 
-export const KADER_FELD = { feld: "kader_id" } as const;
+const KADER_FELD = { feld: "kader_id" } as const;
 
 /** Was eine Änderung mit verfallenden Abmeldungen bestätigt: die Zahl, die
  *  die Oberfläche genannt hat, oder `true` (KI: was es ist, AK 16). */
@@ -69,20 +69,23 @@ export async function mitVerfall<T>(
   aufruf: (zahl: number | null) => PromiseLike<{ data: unknown; error: { message: string; code?: string } | null }>,
   fehler: (e: { message: string; code?: string }) => KernFehler,
 ): Promise<KernErgebnis<T>> {
-  let zahl = typeof bestaetigt === "number" ? bestaetigt : null;
-  for (let versuch = 0; versuch < 2; versuch++) {
-    const { data, error } = await aufruf(zahl);
-    if (!error) return ok(data as T);
-    const n = verfallAusFehler(error.message);
-    if (n === null) return fehler(error);
-    if (bestaetigt === true && versuch === 0) {
-      zahl = n;
-      continue;
-    }
-    const meldung = bestaetigt === true ? kaderVerfallBestaetigen(n) : zahl !== null ? kaderVerfallGeaendert(n) : kaderVerfallBestaetigen(n);
-    return fehlschlag("regel", meldung, { feld: "bestaetigt", verfallend: n, wiederholbar: bestaetigt === true });
-  }
-  return fehlschlag("konflikt", KADER_MELDUNG.KADER_NICHT_GEFUNDEN);
+  const zahl = typeof bestaetigt === "number" ? bestaetigt : null;
+  const erst = await aufruf(zahl);
+  if (!erst.error) return ok(erst.data as T);
+  const n = verfallAusFehler(erst.error.message);
+  if (n === null) return fehler(erst.error);
+  // Eine Zahl, die nicht mehr stimmt: der aktuelle Stand (AK 12).
+  if (zahl !== null) return verfallNachfrage(kaderVerfallGeaendert(n), n);
+  if (bestaetigt !== true) return verfallNachfrage(kaderVerfallBestaetigen(n), n);
+  // Die KI bestätigt, was es ist: einmal mit der gemeldeten Zahl.
+  const dann = await aufruf(n);
+  if (!dann.error) return ok(dann.data as T);
+  const m = verfallAusFehler(dann.error.message);
+  return m === null ? fehler(dann.error) : verfallNachfrage(kaderVerfallBestaetigen(m), m, true);
+}
+
+function verfallNachfrage(meldung: string, n: number, wiederholbar = false): KernFehler {
+  return fehlschlag("regel", meldung, { feld: "bestaetigt", verfallend: n, ...(wiederholbar && { wiederholbar }) });
 }
 
 function namensFehler(name: string): KernFehler | null {

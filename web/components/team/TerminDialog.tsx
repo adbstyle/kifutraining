@@ -29,6 +29,7 @@ import type { FolgeAngabe } from "@/lib/kern/serien";
 import {
   KEINE_VERANTWORTLICHEN,
   VerantwortlicheWahl,
+  gleicheMenge,
   nurNamenloseGeaendert,
   verantwortlicheGeaendert,
   verantwortlicheStart,
@@ -39,7 +40,7 @@ import { SpielerzahlField } from "./SpielerzahlField";
 import { terminBegonnen } from "@/lib/zeit";
 import { usePlatzAngaben } from "./usePlatzAngaben";
 import type { Kader, TerminKader } from "@/lib/kader";
-import { KaderWahl, kaderGeaendert } from "./KaderWahl";
+import { KaderWahl } from "./KaderWahl";
 
 const ANGABE: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit",
@@ -236,7 +237,7 @@ export function TerminDialog({
         serie ? regel : undefined,
         geaendert ? verantwortlich : undefined,
         grundNeu,
-        kaderGeaendert(kaderWahl, kaderStart) ? kaderWahl : undefined,
+        gleicheMenge(kaderWahl, kaderStart) ? undefined : kaderWahl,
       );
     }
   }

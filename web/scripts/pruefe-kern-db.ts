@@ -4449,12 +4449,15 @@ try {
   await pruefe("Kader an der Serie: vorgeben, abweichen, wieder folgen, ändern ohne Begonnene (#453 AK 2, 3, 13)", async () => {
     const k = await kaderTeam("Kern-DB-Serie-Kader");
     const w = wochentagVon(tagCh(8));
-    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: k.team, wochentage: [w], von: tagCh(1), bis: tagCh(30), beginn: "18:00", ende: "19:30", kaderIds: [k.s1] }));
+    // Ab zwei Wochen vorher: Die ersten Termine haben schon begonnen.
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: k.team, wochentage: [w], von: tagCh(-14), bis: tagCh(30), beginn: "18:00", ende: "19:30", kaderIds: [k.s1] }));
     const plan = () => getTeamPlanFuer(a.supabase, k.team).then((p) => p.filter((x) => x.serie?.id === s.serieId || x.serie === null));
     const termine = await plan();
-    assert.ok(termine.length >= 4);
     assert.ok(termine.every((x) => x.kader.length === 1 && x.kader[0].id === k.s1 && x.serie!.kader[0].id === k.s1));
-    const [erster, zweiter] = termine;
+    const begonnen = termine.filter((x) => x.datum < tagCh(0));
+    const kommend = termine.filter((x) => x.datum > tagCh(0));
+    assert.ok(begonnen.length >= 1 && kommend.length >= 3);
+    const [erster, zweiter] = kommend;
     // Nur dieser: weicht ab, auch mit keinem Kader («für alle»).
     wert(await aendereMitReichweite(a.supabase, a.id, { terminId: erster.id, reichweite: "nur_dieser", kaderIds: [] }));
     const nachher = (await plan()).find((x) => x.id === erster.id)!;
@@ -4463,7 +4466,10 @@ try {
     wert(await aendereMitReichweite(a.supabase, a.id, { terminId: zweiter.id, reichweite: "alle", kaderIds: [k.s2], bestaetigt: true }));
     const alle = await plan();
     assert.deepEqual(alle.find((x) => x.id === erster.id)!.kader, []);
-    assert.ok(alle.filter((x) => x.id !== erster.id).every((x) => x.kader[0]?.id === k.s2));
+    assert.ok(alle.filter((x) => x.id !== erster.id && x.datum > tagCh(0)).every((x) => x.kader[0]?.id === k.s2));
+    // AK 13: Begonnene behalten ihre Kader, auch über die Serie.
+    assert.ok(alle.filter((x) => begonnen.some((b) => b.id === x.id)).every((x) => x.kader[0]?.id === k.s1));
+    fehler(await folgeDerSerie(a.supabase, a.id, { terminId: begonnen[0].id, angaben: ["kader"] }), "regel", KADER_MELDUNG.KADER_TERMIN_BEGONNEN);
     // Wieder folgen.
     wert(await folgeDerSerie(a.supabase, a.id, { terminId: erster.id, angaben: ["kader"] }));
     const gefolgt = (await plan()).find((x) => x.id === erster.id)!;

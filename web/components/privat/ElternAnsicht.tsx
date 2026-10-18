@@ -181,7 +181,7 @@ function TerminKarte({ t, ab, zweite, name, pending, onUmlegen, hinweise }: Kart
             {t.beginn}–{t.ende}
           </span>
           <span className="type-body-small truncate text-on-surface-mittel">{zweite}</span>
-          <KaderLozenges namen={t.kader ?? []} className="mt-1" />
+          <KaderLozenges namen={t.kader} className="mt-1" />
         </div>
         <Switch
           checked={!t.ausgefallen && !ab}
@@ -226,7 +226,7 @@ function NaechsterTermin({ t, ab, zweite, name, heute, pending, onUmlegen, hinwe
             {t.beginn}–{t.ende} Uhr
           </p>
           <p className="type-body-medium mt-1 text-on-surface-mittel">{zweite}</p>
-          <KaderLozenges namen={t.kader ?? []} className="mt-2" />
+          <KaderLozenges namen={t.kader} className="mt-2" />
           {!t.ausgefallen && (
             <p className="type-body-medium mt-1 text-on-surface">
               {ab ? `${name} ist abgemeldet.` : `${name} ist angemeldet.`}

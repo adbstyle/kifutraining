@@ -9,7 +9,7 @@ import { setzeAbmeldungAktion } from "@/lib/actions/abmeldungen";
 import { ABMELDUNG_TEXT, EHEMALIGE_SPIELERIN, spielerName, type Teilnehmer } from "@/lib/spieler";
 import type { TerminSpieler } from "@/lib/kern/abmeldungen";
 import { Users } from "lucide-react";
-import { uebrigeText } from "@/lib/kader";
+import { KADER_TEXT, uebrigeText } from "@/lib/kader";
 import { KaderLozenges } from "./KaderLozenge";
 
 /* Der Reiter «Spieler:innen» am Termin (#435 AK 1, 2, 5): wer angemeldet ist,
@@ -90,7 +90,7 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
           {daten.begonnen ? "Stand bei Beginn - nicht mehr änderbar" : `Änderbar bis ${daten.beginn}`}
         </p>
       </div>
-      {daten.gesamt === 0 && <p className="type-body-medium text-on-surface-mittel">{NIEMAND}</p>}
+      {daten.gesamt === 0 && <p className="type-body-medium text-on-surface-mittel">{KADER_TEXT.niemand}</p>}
       {daten.gesamt > 0 && (
       <ul className="divide-y divide-linie rounded-flaeche bg-elev-01">
         {daten.spieler.map((s, i) => {
@@ -120,6 +120,3 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
     </div>
   );
 }
-
-/** Ein Termin, dessen Kadern niemand angehört (#453 AK 7). */
-const NIEMAND = "Der Termin gilt für niemanden: Seinen Kadern gehört keine Spieler:in an.";

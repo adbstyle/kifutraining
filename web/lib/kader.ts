@@ -28,6 +28,8 @@ export const KADER_TEXT = {
     "Noch keine Kader. Ohne Kader gilt jeder Termin für alle Spieler:innen. Mit Kadern wie «Stärkeklasse 1» oder «Torhüterinnen» bestimmst du, für wen ein Termin gilt.",
   /** Die Eingrenzung der Spielerliste auf Spieler:innen ohne Kader (AK 9). */
   ohneKader: "Ohne Kader",
+  /** Am Termin, dessen Kadern niemand angehört (#453 AK 7). */
+  niemand: "Der Termin gilt für niemanden: Seinen Kadern gehört keine Spieler:in an.",
 } as const;
 
 /** Die Sätze zu den Markern der Datenebene (Migration kader). */
@@ -52,12 +54,6 @@ function laenge(s: string): number {
 export function kaderNameProblem(name: string | null | undefined): string | null {
   const n = laenge(bereinigeName(name));
   return n < 1 || n > KADER_NAME_MAX ? KADER_TEXT.name : null;
-}
-
-/** Ob zwei Namen derselbe Kader sind: Gross/Klein und überzählige Leerzeichen
- *  unterscheiden nicht (AK 10). Zwilling von `kader_schluessel`. */
-export function kaderSchluessel(name: string): string {
-  return bereinigeName(name).toLowerCase();
 }
 
 // ── Abmeldungen verfallen (#453 AK 10, 12, 16) ───────────────────────────────
@@ -129,9 +125,8 @@ export type TerminKader = { id: string | null; name: string | null };
 
 /** Nach Namen, ehemalige zuletzt. */
 export function nachTerminKader(liste: TerminKader[]): TerminKader[] {
-  return [...liste].sort((a, b) =>
-    a.name === null || b.name === null ? (a.name === null ? 1 : 0) - (b.name === null ? 1 : 0) : a.name.localeCompare(b.name, "de"),
-  );
+  const benannt = liste.filter((k): k is { id: string | null; name: string } => k.name !== null);
+  return [...nachKaderName(benannt), ...liste.filter((k) => k.name === null)];
 }
 
 /** Ein Kader, wie die Karte und die KI-Werkzeuge ihn führen. */

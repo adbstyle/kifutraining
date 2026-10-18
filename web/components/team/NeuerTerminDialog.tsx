@@ -143,7 +143,8 @@ export function NeuerTerminDialog({
     setProblem(p && { feld: p.feld === "datum" ? "von" : p.feld, text: p.text });
     if (!p && angaben) {
       const verantwortlich = f.verantwortliche.length > 0 ? { userIds: f.verantwortliche, anonyme: [] } : undefined;
-      senden({ art: "einzeln", felder, verantwortlich, kaderIds: f.kaderIds });
+      const begonnen = terminBegonnen(f.von, f.beginn);
+      senden({ art: "einzeln", felder, verantwortlich, kaderIds: begonnen ? [] : f.kaderIds });
     }
   }
 
@@ -204,7 +205,15 @@ export function NeuerTerminDialog({
           disabled={pending}
         />
         {kader.length > 0 && (
-          <KaderWahl kader={kader} spielerGesamt={spielerGesamt} wert={f.kaderIds} onChange={(ids) => setze("kaderIds", ids)} disabled={pending} />
+          <KaderWahl
+            kader={kader}
+            spielerGesamt={spielerGesamt}
+            wert={f.kaderIds}
+            onChange={(ids) => setze("kaderIds", ids)}
+            // Kader gelten nur an anstehenden Terminen (#453 AK 1); eine Serie legt nur anstehende an.
+            begonnen={!wiederholen && !!f.von && !!f.beginn && terminBegonnen(f.von, f.beginn)}
+            disabled={pending}
+          />
         )}
         {/* Ein einzelner Termin, der schon begonnen hat, nimmt die erwartete Zahl an (Migration spielerliste). */}
         <SpielerzahlField

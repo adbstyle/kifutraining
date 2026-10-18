@@ -32,12 +32,15 @@ export function KaderZuteilen({
   const [stand, setStand] = useState<Record<string, Zugehoerigkeit>>({});
   const [anfang, setAnfang] = useState<Record<string, Zugehoerigkeit>>({});
 
+  // Nur beim Öffnen: Ein neues Rendern der Liste (Speichern, Neuladen)
+  // setzte sonst die eben gewählten Kästchen zurück.
   useEffect(() => {
     if (!offen) return;
     const s = Object.fromEntries(kader.map((k) => [k.id, zugehoerigkeit(k, auswahl)]));
     setStand(s);
     setAnfang(s);
-  }, [offen, kader, auswahl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offen]);
 
   function umschalten(id: string) {
     setStand((s) => ({ ...s, [id]: s[id] === "alle" ? "keine" : "alle" }));

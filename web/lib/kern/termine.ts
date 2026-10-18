@@ -24,7 +24,7 @@ import {
 } from "@/lib/termin-felder";
 import { kalenderMeldung } from "@/lib/veraltet";
 import { kurzeZeit } from "@/lib/queries/termine-fuer";
-import { heuteAmTrainingsort } from "@/lib/zeit";
+import { heuteAmTrainingsort, terminBegonnen } from "@/lib/zeit";
 import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import { HINWEIS_NICHTS_ENTSTANDEN, hinweisRest, kopiereTraining, type KopieErgebnis } from "@/lib/kern/kopie";
 import { gibtEsTraining, loescheTrainingMitBildern, raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
@@ -190,6 +190,10 @@ export async function legeTerminFest(
   if (!felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
   if (zahl) return zahl;
+  // Kader nur an einem anstehenden Termin (#453 AK 1, 13) — vorab, damit
+  // kein Termin ohne die gewählten Kader stehen bleibt.
+  if (e.kaderIds?.length && terminBegonnen(e.datum, e.beginn))
+    return fehlschlag("regel", KADER_MELDUNG.KADER_TERMIN_BEGONNEN, { feld: "kader_ids" });
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
 

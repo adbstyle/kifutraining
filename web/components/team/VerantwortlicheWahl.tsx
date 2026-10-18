@@ -21,7 +21,8 @@ export function verantwortlicheStart(bisher: readonly Verantwortlicher[]): Veran
   };
 }
 
-const gleicheMenge = (a: string[], b: string[]) => [...a].sort().join() === [...b].sort().join();
+/** Dieselben Werte, gleich in welcher Reihenfolge. */
+export const gleicheMenge = (a: readonly string[], b: readonly string[]) => [...a].sort().join() === [...b].sort().join();
 
 /** Hat sich die Wahl geändert? Die Reihenfolge zählt nicht. */
 export function verantwortlicheGeaendert(neu: VerantwortlicheWert, alt: VerantwortlicheWert): boolean {

@@ -3,13 +3,6 @@
 import { MultiSelect } from "@/components/ui";
 import { KADER_MELDUNG, KADER_REGEL, giltFuerText, type Kader } from "@/lib/kader";
 
-const gleicheMenge = (a: readonly string[], b: readonly string[]) => [...a].sort().join() === [...b].sort().join();
-
-/** Hat sich die Wahl geändert? Die Reihenfolge zählt nicht. */
-export function kaderGeaendert(neu: readonly string[], alt: readonly string[]): boolean {
-  return !gleicheMenge(neu, alt);
-}
-
 /* Für welche Kader ein Termin oder eine Serie gilt (#453 AK 1, 2, 8) — als
    Mehrfachauswahl wie die Verantwortlichen (PO 2026-10-18). Unter dem Feld
    steht, für wie viele Spieler:innen er damit gilt, auch wenn das niemand

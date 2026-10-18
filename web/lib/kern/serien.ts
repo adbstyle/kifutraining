@@ -65,7 +65,7 @@ export type SerieFestlegen = {
 };
 
 /** Kader-Kennungen prüfen — eine falsch geformte ist für niemanden sichtbar. */
-function kaderFehler(ids: readonly string[] | undefined) {
+function kaderIdsFehler(ids: readonly string[] | undefined) {
   return ids && !ids.every(istUuid)
     ? fehlschlag("nicht_gefunden", KADER_MELDUNG.KADER_NICHT_GEFUNDEN, { feld: "kader_ids" })
     : null;
@@ -86,7 +86,7 @@ export async function legeSerieFest(
   if (!felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
   if (zahl) return zahl;
-  const kader = kaderFehler(e.kaderIds);
+  const kader = kaderIdsFehler(e.kaderIds);
   if (kader) return kader;
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
@@ -241,7 +241,13 @@ async function laufe(
         feld: "bestaetigt",
         verfallend: vorschau.abmeldungenKader,
       });
-    erwartet = { version: vorschau.versionVorher, entfallend: vorschau.entfallend.map((x) => x.terminId) };
+    // Auch die Zahl verfallender Abmeldungen: Ändert sie sich bis zur
+    // Ausführung, weist die Datenebene ab (#453 AK 12), der Lauf ist wiederholbar.
+    erwartet = {
+      version: vorschau.versionVorher,
+      entfallend: vorschau.entfallend.map((x) => x.terminId),
+      verfallend: vorschau.abmeldungenVerfallend + vorschau.abmeldungenKader,
+    };
   }
   const terminTrainings = await terminTrainingsDerTermine(supabase, erwartet.entfallend);
   const bilder = await terminTrainingBilder(supabase, [...terminTrainings]);
@@ -291,7 +297,7 @@ export async function aendereSerie(
   if (felder && !felder.ok) return felder;
   const zahl = spielerzahlFehler(a.spielerzahl);
   if (zahl) return zahl;
-  const kader = kaderFehler(a.kaderIds);
+  const kader = kaderIdsFehler(a.kaderIds);
   if (kader) return kader;
 
   // Die Regel vorab prüfen, mit den Feldnamen des Werkzeugs (AK 5, PC 19) —
@@ -381,7 +387,7 @@ export async function folgeDerSerie(
     /** Die Oberfläche bestätigt eine Verlegung mit `true`, verfallende
      *  Abmeldungen durch Kader mit deren Zahl (#453 AK 10, 12); die KI
      *  bestätigt mit `true` beides. */
-    bestaetigt?: VerfallBestaetigt | boolean;
+    bestaetigt?: VerfallBestaetigt | false;
   },
 ): Promise<KernErgebnis<{ terminId: string; teamId: string; verfallen: number }>> {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);

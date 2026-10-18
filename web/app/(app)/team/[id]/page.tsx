@@ -76,6 +76,7 @@ export default async function TeamPlanPage({
     ladeKader(supabase, user.id, { teamId: id }),
   ]);
   const fuehrtListe = spielerGesamt > 0;
+  const teamKader = kader.ok ? kader.wert.kader : [];
   // Eingegrenzt wird hier statt in der Abfrage: Der Monat braucht auch die
   // Tage, an denen nur Termine anderer liegen (#404 AK 14).
   const termine = meine ? alleTermine.filter((t) => istVerantwortlich(t, user.id)) : alleTermine;
@@ -95,7 +96,7 @@ export default async function TeamPlanPage({
       mitglieder={team?.mitglieder ?? []}
       heute={heute}
       fuehrtListe={fuehrtListe}
-      kader={kader.ok ? kader.wert.kader : []}
+      kader={teamKader}
       spielerGesamt={spielerGesamt}
     >
       <section>
@@ -121,7 +122,7 @@ export default async function TeamPlanPage({
           hervorheben={hervorheben}
           belegt={belegt}
           meine={meine}
-          spalte={offen && <TerminSpalte t={offen} reiter={reiter} meine={meine} ich={user.id} mitKadern={kader.ok && kader.wert.kader.length > 0} />}
+          spalte={offen && <TerminSpalte t={offen} reiter={reiter} meine={meine} ich={user.id} mitKadern={teamKader.length > 0} />}
           leer={
             meine ? (
               <Leerzustand icon={UserCheck} titel="Keine Termine für dich" dicht>

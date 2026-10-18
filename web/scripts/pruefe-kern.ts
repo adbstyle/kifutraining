@@ -163,7 +163,6 @@ import {
   nachTerminKader,
   uebrigeText,
   kaderNameProblem,
-  kaderSchluessel,
   kaderVerfallBestaetigen,
   kaderVerfallGeaendert,
   kaderVerfallText,
@@ -2191,8 +2190,6 @@ pruefe("Kader: Name 1 bis 30 Zeichen, Gross/Klein und Leerzeichen unterscheiden 
   assert.equal(kaderNameProblem("x".repeat(KADER_NAME_MAX)), null);
   assert.equal(kaderNameProblem("x".repeat(KADER_NAME_MAX + 1)), KADER_TEXT.name);
   assert.equal(kaderNameProblem("😀".repeat(KADER_NAME_MAX)), null, "Länge in Code Points wie char_length");
-  assert.equal(kaderSchluessel("  Stärkeklasse   1 "), kaderSchluessel("stärkeklasse 1"));
-  assert.notEqual(kaderSchluessel("U-10"), kaderSchluessel("U 10"), "anders als bei Spieler:innen");
   assert.deepEqual(nachKaderName([{ name: "Torhüterinnen" }, { name: "Aushilfe" }]).map((k) => k.name), ["Aushilfe", "Torhüterinnen"]);
 });
 

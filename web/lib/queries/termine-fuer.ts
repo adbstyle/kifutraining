@@ -6,7 +6,7 @@ import { sortStufen } from "@/lib/training";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 import type { KategorieSlug } from "@/lib/vocab";
 import type { Spielstand } from "@/lib/spieler";
-import { nachTerminKader, type TerminKader } from "@/lib/kader";
+import { nachKaderName, nachTerminKader, type TerminKader } from "@/lib/kader";
 
 /**
  * Termine lesen für einen Client, der bereits als Nutzer spricht (Cookie-
@@ -247,9 +247,7 @@ function mapTermin(t: RawTermin): TerminZeile {
             (v) => v.name,
             (v) => v.userId,
           ),
-          kader: (t.termin_serien.termin_serien_kader ?? [])
-            .map((k) => ({ id: k.kader_id, name: k.kader?.name ?? "" }))
-            .sort((a, b) => a.name.localeCompare(b.name, "de")),
+          kader: nachKaderName((t.termin_serien.termin_serien_kader ?? []).map((k) => ({ id: k.kader_id, name: k.kader?.name ?? "" }))),
         }
       : null,
     serienTag: t.serien_tag,

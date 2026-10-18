@@ -151,18 +151,23 @@ as $$
                  case when e.fest then e.mit_liste
                       else exists (select 1 from spieler s where s.team_id = t.team_id) end as liste,
                  case when e.fest then (select count(*) from termin_teilnahmen p where p.termin_id = t.id)
-                      else (select count(*) from spieler s
-                             where s.team_id = t.team_id and termin_gilt_fuer(t.id, s.id)) end as n,
+                      when not e.mit_kader then (select count(*) from spieler s where s.team_id = t.team_id)
+                      else (select count(distinct ks.spieler_id) from termin_kader tk
+                              join kader_spieler ks on ks.kader_id = tk.kader_id
+                             where tk.termin_id = t.id) end as n,
                  case when e.fest then (select count(*) from termin_teilnahmen p where p.termin_id = t.id and p.abgemeldet)
                       else (select count(*) from termin_abmeldungen a
                              where a.termin_id = t.id and a.verfallen_am is null
                                and termin_gilt_fuer(t.id, a.spieler_id)) end as ab
-            from (select f.termin_id is not null as fest, coalesce(f.mit_liste, false) as mit_liste
+            from (select f.termin_id is not null as fest, coalesce(f.mit_liste, false) as mit_liste,
+                         exists (select 1 from termin_kader tk where tk.termin_id = t.id and tk.kader_id is not null) as mit_kader
                     from (select 1) d left join termin_eingefroren f on f.termin_id = t.id) e) z;
 $$;
 
 -- Wer an einem Termin steht, dazu je Spieler:in die Kader, über die er für
--- sie gilt (AK 6, 15). Neue Spalte: Die Funktion fällt und entsteht neu.
+-- sie gilt (AK 6, 15) — an einem festgehaltenen keine: Die Zuteilung von
+-- damals ist nicht festgehalten, die heutige spräche falsch. Neue Spalte:
+-- Die Funktion fällt und entsteht neu.
 drop function termin_teilnehmer(uuid);
 create function termin_teilnehmer(p_termin uuid)
 returns table (spieler_id uuid, vorname text, nachname text, abgemeldet boolean, ehemalig boolean, kader text[])
@@ -170,18 +175,19 @@ language sql stable
 set search_path = public, pg_temp
 as $$
   select x.spieler_id, x.vorname, x.nachname, x.abgemeldet, x.ehemalig,
+         case when x.fest then '{}'::text[] else
          coalesce(array(select k.name from termin_kader tk join kader k on k.id = tk.kader_id
                           join kader_spieler ks on ks.kader_id = k.id
                          where tk.termin_id = p_termin and ks.spieler_id = x.spieler_id
-                         order by k.name), '{}')
+                         order by k.name), '{}') end
     from (
-      select p.spieler_id, s.vorname, s.nachname, p.abgemeldet, p.spieler_id is null as ehemalig
+      select p.spieler_id, s.vorname, s.nachname, p.abgemeldet, p.spieler_id is null as ehemalig, true as fest
         from termin_teilnahmen p left join spieler s on s.id = p.spieler_id
        where p.termin_id = p_termin
       union all
       select s.id, s.vorname, s.nachname,
              exists (select 1 from termin_abmeldungen a
-                      where a.termin_id = p_termin and a.spieler_id = s.id and a.verfallen_am is null), false
+                      where a.termin_id = p_termin and a.spieler_id = s.id and a.verfallen_am is null), false, false
         from training_termine t join spieler s on s.team_id = t.team_id
        where t.id = p_termin and termin_gilt_fuer(p_termin, s.id)
          and not exists (select 1 from termin_eingefroren f where f.termin_id = p_termin)) x;
@@ -205,6 +211,10 @@ begin
   if not found or not exists (select 1 from spieler where id = p_spieler and team_id = t.team_id) then
     return jsonb_build_object('status', 'abgewiesen', 'grund', 'nicht_gefunden');
   end if;
+  -- Dieselbe Sperre wie jede Änderung an Kadern (`kader_vorher`): Sonst
+  -- bliebe eine Abmeldung stehen, die eine gleichzeitige Zuteilung eben
+  -- hätte verfallen lassen.
+  perform pg_advisory_xact_lock(hashtextextended('spieler:' || t.team_id::text, 0));
   v_stand := jsonb_build_object('datum', t.datum, 'beginn', to_char(t.beginn, 'HH24:MI'),
                                 'ende', to_char(t.ende, 'HH24:MI'), 'ausgefallen', t.ausgefallen);
   if (p_gesehen_datum is not null and p_gesehen_datum is distinct from t.datum)
@@ -328,7 +338,9 @@ begin
         from termin_serien s
        where s.team_id = v_team
          and exists (select 1 from termin_serien_kader sk where sk.serie_id = s.id and sk.kader_id = p_kader)
-         and not exists (select 1 from termin_serien_kader sk where sk.serie_id = s.id and sk.kader_id <> p_kader)), '[]'::jsonb));
+         and not exists (select 1 from termin_serien_kader sk where sk.serie_id = s.id and sk.kader_id <> p_kader)
+         and exists (select 1 from training_termine t where t.serie_id = s.id
+                      and not termin_begonnen(t.datum, t.beginn))), '[]'::jsonb));
   begin
     delete from termin_kader tk using training_termine t
      where tk.termin_id = t.id and tk.kader_id = p_kader and not termin_begonnen(t.datum, t.beginn);
