@@ -4,6 +4,7 @@ import { useId, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FileUp, Link2, Pencil, Plus, X } from "lucide-react";
 import {
+  AuswahlLeiste,
   Button,
   Checkbox,
   Dialog,
@@ -285,17 +286,12 @@ export function SpielerListe({
         />
       )}
 
-      {gewaehlt.length > 0 && (
-        <div className="mt-3 flex min-h-13 flex-wrap items-center gap-3 rounded-flaeche bg-elev-08 py-2 pl-4 pr-2">
-          <span className="type-title-small text-on-surface">{gewaehlt.length} ausgewählt</span>
-          <Button variant="filled" aria-haspopup="dialog" onClick={() => setZuteilenOffen(true)}>
-            Kader zuteilen
-          </Button>
-          <Button variant="quiet" className="ml-auto" onClick={() => setAuswahl([])}>
-            Auswahl aufheben
-          </Button>
-        </div>
-      )}
+      {/* Schwebt unten am Platz der Snackbar, solange jemand ausgewählt ist. */}
+      <AuswahlLeiste offen={gewaehlt.length > 0} titel={`${gewaehlt.length} ausgewählt`} onAufheben={() => setAuswahl([])}>
+        <Button variant="filled" aria-haspopup="dialog" onClick={() => setZuteilenOffen(true)}>
+          Kader zuteilen
+        </Button>
+      </AuswahlLeiste>
 
       {/* Grenzt ein Chip auf niemanden ein, steht statt des leeren Tabellenkopfs
           das Leerfeld — mit dem Weg zurück zur ganzen Liste. */}
@@ -309,7 +305,7 @@ export function SpielerListe({
           </EingrenzungLeer>
         </div>
       ) : spieler.length > 0 ? (
-        <Tabelle className={gewaehlt.length > 0 ? "mt-3" : "mt-4"} spalten={spalten} kopf={kopf}>
+        <Tabelle className="mt-4" spalten={spalten} kopf={kopf}>
           {sichtbar.map((s) => (
             <TabellenZeile key={s.id}>
               {mitKadern && (

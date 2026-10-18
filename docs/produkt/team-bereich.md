@@ -490,7 +490,8 @@ können Kader nur die Mitglieder des Teams.
 Eine Spieler:in gehört keinem, einem oder mehreren Kadern an. Zugeteilt wird im Dialog
 „Spieler:in hinzufügen" bzw. „Spieler:in ändern" über das Feld „Kader (optional)", das darunter
 sagt, welche Termine sie damit sieht, oder für mehrere auf einmal: Führt das Team Kader, trägt jede
-Zeile der Spielerliste ein Kästchen; für die Ausgewählten öffnet „Kader zuteilen" den Dialog
+Zeile der Spielerliste ein Kästchen; sobald jemand ausgewählt ist, schwebt unten in der Mitte eine
+Leiste mit der Zahl der Ausgewählten, „Kader zuteilen" und „Auswahl aufheben". „Kader zuteilen" öffnet den Dialog
 „Kader für 3 Spieler:innen" mit einem Kästchen je Kader — gewählt, wenn alle ihm angehören, mit
 Strich, wenn nur ein Teil. Ein Klick teilt allen zu, ein weiterer nimmt alle heraus, unberührte
 bleiben, wie sie sind. In der Liste trägt jede Spieler:in ihre Kader als Plaketten; die Chips

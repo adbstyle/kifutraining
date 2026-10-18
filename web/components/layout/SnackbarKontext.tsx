@@ -45,10 +45,10 @@ import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
  * ein Fehler, der einen offenen Dialog zurücklässt, gehört als Section Message in den
  * Dialog, nicht hierher.
  *
- * Er rechnet mit keiner festen Fussleiste. Die einzige, die es gibt — Zurück
- * und Weiter beim Durchführen —, liegt auf einer Ansicht, die nichts meldet;
- * Fremdes fällt beim Wechsel dorthin weg. Meldet sie eines Tages selbst etwas,
- * muss der Platz dort über die Leiste rücken, sonst verdeckt er sie.
+ * Über einer Auswahlleiste (`AuswahlLeiste`) rückt er um deren Höhe nach
+ * oben (`--fussleiste-hoehe`) — beide stehen unten in der Mitte. Mit der
+ * Fussleiste beim Durchführen (Zurück, Weiter) rechnet er nicht: Sie liegt auf
+ * einer Ansicht, die nichts meldet; Fremdes fällt beim Wechsel dorthin weg.
  */
 
 /** Material 2 nennt 4–10 s; 6 s reichen für die längste Meldung (#234). */
@@ -110,7 +110,7 @@ export function SnackbarProvider({ children }: { children: React.ReactNode }) {
           deren sichere Zone. Ab lg mittig über dem Inhalt, nicht über der
           Seitenleiste — ihre Breite kommt vom AppRahmen. */}
       <div className={cn(
-          "pointer-events-none fixed right-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex justify-center px-4 print:hidden",
+          "pointer-events-none fixed right-0 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+var(--fussleiste-hoehe,0px))] z-40 flex justify-center px-4 print:hidden",
           nebenLeiste,
         )}>
         {/* Der Zeiger wird hier gemessen, nicht an der einzelnen Snackbar:

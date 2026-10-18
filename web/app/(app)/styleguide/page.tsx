@@ -2735,6 +2735,17 @@ export default async function Styleguide() {
             Geheimnis, geht die Warnung
             als Section Message im Dialog voran.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Die <strong>Auswahlleiste</strong> (<code>AuswahlLeiste</code>) trägt
+            die Handlungen für mehrere ausgewählte Zeilen einer Liste. Sie schwebt
+            unten in der Mitte am Platz der Snackbar, solange etwas ausgewählt
+            ist - in einer langen Liste bleibt sie so in Reichweite, statt über
+            der Liste aus dem Bild zu scrollen. Ihre Fläche ist dunkel (
+            <code>elev-08</code>, Schatten 06dp): Sie ist Werkzeug, keine Meldung,
+            und bleibt neben der hellen Snackbar als etwas anderes lesbar. Eine
+            Snackbar rückt über sie (<code>--fussleiste-hoehe</code>), und die
+            Seite hält unten ihre Höhe frei. Sie liegt unter Snackbar und Dialog.
+          </p>
           <OverlaysDemo />
         </Section>
 

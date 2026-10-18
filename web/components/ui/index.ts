@@ -71,6 +71,7 @@ export { Disclosure } from "./Disclosure";
 export type { DisclosureProps } from "./Disclosure";
 export { Dialog } from "./Dialog";
 export { Snackbar } from "./Snackbar";
+export { AuswahlLeiste, AuswahlLeisteFlaeche } from "./AuswahlLeiste";
 export { IconButton, IconButtonLink } from "./IconButton";
 export { ZeichenPunkt } from "./ZeichenPunkt";
 export type { ZeichenPunktTon } from "./ZeichenPunkt";
