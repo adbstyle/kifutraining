@@ -2423,6 +2423,7 @@ export default async function Styleguide() {
             <Badge>2</Badge>
             <Badge>12</Badge>
             <Badge>3×</Badge>
+            <Badge appearance="neutral">14</Badge>
           </div>
           <p className="type-body-medium mb-6 max-w-2xl text-on-surface-mittel">
             <strong>Badge</strong> heisst der Zähler wie bei Atlassian: eine Zahl
@@ -2433,7 +2434,9 @@ export default async function Styleguide() {
             seitlich, mindestens 24 px breit, <code>type-lozenge</code>. Gefüllt
             in Primary - Atlassians Markenfarbe ist bei uns das Lila -, weil sie
             als Teil des Knopfes gelesen wird, nicht als eigene Aussage über den
-            Inhalt. Für die Vorlesehilfe stumm: Der Knopf sagt die Zahl in Worten.
+            Inhalt. Für die Vorlesehilfe stumm: Der Knopf sagt die Zahl in Worten.{" "}
+            <code>appearance=&quot;neutral&quot;</code> (hell, <code>umkehr</code>) trägt ein Filter-Chip in Ruhe;
+            gewählt wird seine Zahl Primary wie Kontur und Schrift.
           </p>
 
           <p className="type-label-small mb-2 text-on-surface-mittel">Chips</p>

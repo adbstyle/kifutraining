@@ -283,12 +283,12 @@ export function SpielerListe({
           {kader.map((k) => (
             <FilterChip key={k.id} selected={istEingegrenzt({ kaderId: k.id })} onClick={() => grenzeEin({ kaderId: k.id })}>
               {k.name}
-              <ChipZahl n={k.spielerIds.length} />
+              <ChipZahl n={k.spielerIds.length} aktiv={istEingegrenzt({ kaderId: k.id })} />
             </FilterChip>
           ))}
           <FilterChip selected={istEingegrenzt("ohne")} onClick={() => grenzeEin("ohne")}>
             {KADER_TEXT.ohneKader}
-            <ChipZahl n={ohneKader} />
+            <ChipZahl n={ohneKader} aktiv={istEingegrenzt("ohne")} />
           </FilterChip>
         </div>
       )}

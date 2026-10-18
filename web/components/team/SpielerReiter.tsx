@@ -101,7 +101,7 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
                 onClick={() => setKader(eingrenzung === name ? null : name)}
               >
                 {name}
-                <ChipZahl n={daten.spieler.filter((s) => s.kader.includes(name)).length} />
+                <ChipZahl n={daten.spieler.filter((s) => s.kader.includes(name)).length} aktiv={eingrenzung === name} />
               </FilterChip>
             ))}
           </div>
