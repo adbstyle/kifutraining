@@ -72,6 +72,8 @@ export type { DisclosureProps } from "./Disclosure";
 export { Dialog } from "./Dialog";
 export { Snackbar } from "./Snackbar";
 export { IconButton, IconButtonLink } from "./IconButton";
+export { ZeichenPunkt } from "./ZeichenPunkt";
+export type { ZeichenPunktTon } from "./ZeichenPunkt";
 export { HinzufuegenFeld } from "./HinzufuegenFeld";
 export type { IconButtonProps, IconButtonLinkProps } from "./IconButton";
 export { Tooltip } from "./Tooltip";

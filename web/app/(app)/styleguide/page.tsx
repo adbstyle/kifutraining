@@ -15,6 +15,7 @@ import {
   PrintButton,
   IconButton,
   IconButtonLink,
+  ZeichenPunkt,
   BlattLozenge,
   Kalenderblatt,
   KategorieLozenge,
@@ -93,6 +94,8 @@ import {
   CalendarOff,
   TriangleAlert,
   CalendarPlus,
+  Link2,
+  Tag,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { ROTATIONEN, SPIELER_POSEN, type DiagrammElement } from "@/lib/diagramm";
@@ -1388,6 +1391,25 @@ export default async function Styleguide() {
             <IconButton icon={Plus} label="Hinzufügen" variant="overlay" />
             <span className="type-label-small text-on-surface-mittel">
               ruhig · aktiv (<code>state-primary</code>) · overlay (06dp über Bild)
+            </span>
+          </div>
+
+          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
+            Punkt am Zeichen (<code>ZeichenPunkt</code>, <code>punkt</code>) - wie die Benachrichtigung an einem App-Symbol
+          </p>
+          <div className="flex items-center gap-4">
+            <span className="relative inline-flex h-9 w-9 items-center justify-center text-on-surface-mittel">
+              <span className="relative">
+                <Tag size={18} strokeWidth={2} aria-hidden />
+                <ZeichenPunkt ton="primary" />
+              </span>
+            </span>
+            <IconButton icon={Link2} label="Privater Link, bezogen" punkt="success" />
+            <IconButton icon={Link2} label="Privater Link, nicht bezogen" punkt="warning" />
+            <span className="type-label-small text-on-surface-mittel">
+              primary: Neues (Version, schmale Leiste) · success / warning: ein Zustand (Link bezogen / nicht bezogen).
+              Stumm - was er meldet, steht im Namen des Knopfs. Ersetzt eine Spalte oder Plakette, wo der Zustand am
+              Knopf hängt.
             </span>
           </div>
 

@@ -415,7 +415,7 @@ Zeichen lang; eine Liste fasst höchstens 200 Spieler:innen. Das Plus im Kopf ö
 „Spieler:in hinzufügen" mit den vier Feldern untereinander; „Hinzufügen" oder die
 Eingabetaste nimmt auf, der Dialog sagt, wer dazukam, und bleibt für die nächste offen, bis
 „Abbrechen" ihn ohne Speichern schliesst. Die Liste ist nach Vor-
-und Nachname geordnet; jede Zeile nennt Name, Jahrgang, J+S-Nummer, sobald das Team Kader führt ihre Kader, und ob der Link bezogen ist,
+und Nachname geordnet; jede Zeile nennt Name, Jahrgang, J+S-Nummer und, sobald das Team Kader führt, ihre Kader,
 dazu Knöpfe für den privaten Link, „Ändern" — derselbe Dialog mit den bisherigen Angaben —
 und „Entfernen". Auf dem Telefon stehen Jahrgang und J+S-Nummer unter dem Namen.
 
@@ -637,9 +637,10 @@ Zählung nicht zurück. Eine erneuerte, ausgeschaltete oder
 unbekannte Adresse zeigt die neutrale Seite „Diese Abholadresse gilt nicht" ohne Teamname. Vorschau
 im Chat, Suchmaschinen, Besucherstatistik und Browser behandelt die Abholseite wie den Link.
 
-In der Spielerliste steht je Spieler:in „Bezogen" oder „Nicht bezogen": ob ihr aktueller Link über
-die Abholadresse herausgegeben wurde. Wer ihn holte und wie oft, hält die Anwendung nicht fest.
-Erneuert ein Mitglied den Link, steht er wieder auf „Nicht bezogen"; der neue lässt sich über die
+In der Spielerliste trägt das Kettenglied jeder Spieler:in einen Punkt: grün, wenn ihr aktueller
+Link über die Abholadresse herausgegeben wurde, in Warnfarbe, solange nicht; der Tooltip sagt
+„bezogen" oder „nicht bezogen", der Link-Dialog ebenso. Wer ihn holte und wie oft, hält die Anwendung nicht fest.
+Erneuert ein Mitglied den Link, gilt er wieder als nicht bezogen; der neue lässt sich über die
 Abholadresse erneut abholen.
 
 ## Gleichzeitige Änderungen

@@ -23,7 +23,6 @@ import { KADER_TEXT, kaderVon, type Kader } from "@/lib/kader";
 import { JAHRGANG_STELLEN, JS_MAX, nurZiffern, spielerName, type Spieler, type SpielerFeld } from "@/lib/spieler";
 import { SpielerLinkDialog } from "./SpielerLinkDialog";
 import { Selbstabholung } from "./Selbstabholung";
-import { BezogenLozenge } from "./BezogenLozenge";
 import { SpielerImport } from "./SpielerImport";
 import { KaderLozenges } from "./KaderLozenge";
 import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
@@ -37,7 +36,8 @@ import { useVerfallRueckfrage } from "./VerfallBestaetigung";
    unter dem Dialog. Ändern öffnet denselben Dialog mit den Angaben der
    Spieler:in und schliesst nach dem Speichern, Entfernen fragt nach.
    Das Kettenglied zeigt ihren privaten Link (#436); ob er über die
-   Selbstabholung bezogen wurde, sagt die Spalte «Link» (#438 AK 21). Der
+   Selbstabholung bezogen wurde (#438 AK 21), sagt sein Punkt — grün bezogen,
+   in Warnfarbe nicht bezogen (PO 2026-10-18) — statt einer eigenen Spalte. Der
    Abschnitt «Selbstabholung» steht zuoberst (#438). Das Datei-Symbol neben
    dem Plus übernimmt eine ganze Mannschaft aus einer CSV-Datei (#455).
 
@@ -194,11 +194,11 @@ export function SpielerListe({
       ? `${wer} sieht nur Termine ohne Kader.`
       : `${wer} sieht Termine ohne Kader und die Termine von ${aufzaehlung(gewaehlteNamen)}.`;
   const spalten = mitKadern
-    ? "sm:grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_7.5rem_7.5rem]"
-    : "sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem_7.5rem]";
+    ? "sm:grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_7.5rem]"
+    : "sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem]";
   const kopf = mitKadern
-    ? ["", "Name", "Jahrgang", "J+S-Nr.", "Kader", "Link", ""]
-    : ["Name", "Jahrgang", "J+S-Nr.", "Link", ""];
+    ? ["", "Name", "Jahrgang", "J+S-Nr.", "Kader", ""]
+    : ["Name", "Jahrgang", "J+S-Nr.", ""];
   const istEingegrenzt = (e: Exclude<Eingrenzung, null>) =>
     e === "ohne" ? eingrenzung === "ohne" : eingrenzung !== null && eingrenzung !== "ohne" && eingrenzung.kaderId === e.kaderId;
   const grenzeEin = (e: Exclude<Eingrenzung, null>) => setEingrenzung(istEingegrenzt(e) ? null : e);
@@ -315,7 +315,7 @@ export function SpielerListe({
                 <span className="type-body-medium block truncate text-on-surface">{spielerName(s)}</span>
                 {/* Schmal stehen Jahrgang, J+S-Nummer und Kader unter dem Namen. */}
                 <span className="type-body-small block text-on-surface-mittel sm:hidden">
-                  {[s.jahrgang, s.jsNummer && `J+S ${s.jsNummer}`, s.linkBezogen && "Link bezogen"].filter(Boolean).join(" · ")}
+                  {[s.jahrgang, s.jsNummer && `J+S ${s.jsNummer}`].filter(Boolean).join(" · ")}
                 </span>
                 <KaderLozenges namen={namenVon(s)} className="mt-1 sm:hidden" />
               </span>
@@ -332,12 +332,14 @@ export function SpielerListe({
                   )}
                 </span>
               )}
-              <span className="hidden sm:block">
-                <BezogenLozenge bezogen={s.linkBezogen} />
-              </span>
               <span className="flex justify-end gap-1">
-                <Tooltip label="Privater Link">
-                  <IconButton icon={Link2} label={`Privater Link für ${spielerName(s)}`} onClick={() => setLink(s)} />
+                <Tooltip label={s.linkBezogen ? "Privater Link · bezogen" : "Privater Link · nicht bezogen"}>
+                  <IconButton
+                    icon={Link2}
+                    label={`Privater Link für ${spielerName(s)}, ${s.linkBezogen ? "bezogen" : "nicht bezogen"}`}
+                    punkt={s.linkBezogen ? "success" : "warning"}
+                    onClick={() => setLink(s)}
+                  />
                 </Tooltip>
                 <Tooltip label="Ändern">
                   <IconButton icon={Pencil} label={`${spielerName(s)} ändern`} onClick={() => oeffnen(s)} />
