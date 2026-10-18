@@ -1,16 +1,33 @@
 "use client";
 
-import { useId, useRef, useState, useTransition } from "react";
+import { useId, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FileUp, Link2, Pencil, Plus, X } from "lucide-react";
-import { Button, Dialog, IconButton, SectionMessage, Tabelle, TabellenZeile, TextField, Tooltip } from "@/components/ui";
+import {
+  AuswahlLeiste,
+  Button,
+  Checkbox,
+  Dialog,
+  IconButton,
+  MultiSelect,
+  SectionMessage,
+  Tabelle,
+  TabellenZeile,
+  TextField,
+  Tooltip,
+} from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { aendereSpielerAktion, entferneSpielerAktion, nimmSpielerAufAktion } from "@/lib/actions/spieler";
+import { aendereZuteilungAktion } from "@/lib/actions/kader";
+import { KADER_TEXT, kaderVon, type Kader } from "@/lib/kader";
 import { JAHRGANG_STELLEN, JS_MAX, nurZiffern, spielerName, type Spieler, type SpielerFeld } from "@/lib/spieler";
 import { SpielerLinkDialog } from "./SpielerLinkDialog";
 import { Selbstabholung } from "./Selbstabholung";
-import { BezogenLozenge } from "./BezogenLozenge";
 import { SpielerImport } from "./SpielerImport";
+import { KaderLozenges } from "./KaderLozenge";
+import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
+import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
+import { useVerfallRueckfrage } from "./VerfallBestaetigung";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
    Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet einen
@@ -20,20 +37,37 @@ import { SpielerImport } from "./SpielerImport";
    unter dem Dialog. Ändern öffnet denselben Dialog mit den Angaben der
    Spieler:in und schliesst nach dem Speichern, Entfernen fragt nach.
    Das Kettenglied zeigt ihren privaten Link (#436); ob er über die
-   Selbstabholung bezogen wurde, sagt die Spalte «Link» (#438 AK 21). Der
+   Selbstabholung bezogen wurde (#438 AK 21), sagt ein grüner Punkt daran;
+   «nicht bezogen» steht nur im Link-Dialog — in der Liste wäre es bei fast
+   allen der lauteste Eindruck (PO 2026-10-18). Der
    Abschnitt «Selbstabholung» steht zuoberst (#438). Das Datei-Symbol neben
-   dem Plus übernimmt eine ganze Mannschaft aus einer CSV-Datei (#455). */
+   dem Plus übernimmt eine ganze Mannschaft aus einer CSV-Datei (#455).
 
-type Form = { vorname: string; nachname: string; jahrgang: string; jsNummer: string };
-const LEER: Form = { vorname: "", nachname: "", jahrgang: "", jsNummer: "" };
+   Führt das Team Kader (#452), zeigt die Liste je Spieler:in ihre Kader
+   (AK 7), grenzt sich über die Chips darüber auf einen Kader oder auf
+   «Ohne Kader» ein (AK 8, 9; ein Chip zur Zeit, PO 2026-10-18) und teilt
+   über die Auswahl mehreren in einem Schritt zu (AK 6). Der Dialog führt die
+   Kader einer Spieler:in als Mehrfachauswahl (AK 5). Nimmt eine Änderung
+   Spieler:innen aus Terminen, für die sie abgemeldet waren, fragt sie vorher
+   nach (#453 AK 10). */
+
+type Form = { vorname: string; nachname: string; jahrgang: string; jsNummer: string; kaderIds: string[] };
+const LEER: Form = { vorname: "", nachname: "", jahrgang: "", jsNummer: "", kaderIds: [] };
+
+/** Die Eingrenzung auf Spieler:innen ohne Kader; sonst die id eines Kaders. */
+const OHNE = "ohne";
+
 
 export function SpielerListe({
   teamId,
   spieler,
+  kader,
   abholung,
 }: {
   teamId: string;
   spieler: Spieler[];
+  /** Die Kader des Teams (#452), nach Namen. */
+  kader: Kader[];
   /** Die Selbstabholung des Teams (#438); `url` fehlt, solange es keine Adresse gibt. */
   abholung: { url: string | null; aktiv: boolean };
 }) {
@@ -51,12 +85,46 @@ export function SpielerListe({
   const [aufgenommen, setAufgenommen] = useState<string | null>(null);
   const erstesFeld = useRef<HTMLInputElement>(null);
   const formId = useId();
+  // Die id des Kaders, auf den die Liste eingegrenzt ist, `OHNE` oder `null`.
+  const [gewaehlteEingrenzung, setEingrenzung] = useState<string | null>(null);
+  // Fällt der eingegrenzte Kader weg (eben entfernt), gilt wieder die ganze Liste.
+  const eingegrenzterKader = kader.find((k) => k.id === gewaehlteEingrenzung);
+  const eingrenzung = gewaehlteEingrenzung === OHNE || eingegrenzterKader ? gewaehlteEingrenzung : null;
+  const [auswahl, setAuswahl] = useState<string[]>([]);
+  const [zuteilenOffen, setZuteilenOffen] = useState(false);
+  const verfall = useVerfallRueckfrage(pending);
+
+  const mitKadern = kader.length > 0;
+  const sichtbar = useMemo(() => {
+    if (eingrenzung === null) return spieler;
+    if (eingrenzung === OHNE) return spieler.filter((s) => s.kaderIds.length === 0);
+    return spieler.filter((s) => s.kaderIds.includes(eingrenzung));
+  }, [spieler, eingrenzung]);
+  // Nur, wer noch da und sichtbar ist, bleibt ausgewählt.
+  const gewaehlt = auswahl.filter((id) => sichtbar.some((s) => s.id === id));
+  const ohneKader = spieler.filter((s) => s.kaderIds.length === 0).length;
+
+  /** Eine Zuteilung ausführen; liesse sie Abmeldungen verfallen, erst
+   *  nachfragen (#453 AK 10, 12). */
+  function zuteilen(spielerIds: string[], a: ZuteilungAenderung, danach: () => void, bestaetigt: number | false = false) {
+    if (a.dazu.length === 0 && a.weg.length === 0) return danach();
+    startTransition(async () => {
+      const r = await aendereZuteilungAktion(teamId, { spielerIds, ...a }, bestaetigt);
+      if (verfall.nachKader(r, bestaetigt, (n) => zuteilen(spielerIds, a, danach, n))) return;
+      if (!r.ok) return melde(r.error);
+      danach();
+    });
+  }
 
   function oeffnen(s?: Spieler) {
     setFehler(null);
     setAufgenommen(null);
     setOffen({ id: s?.id ?? null });
-    setForm(s ? { vorname: s.vorname, nachname: s.nachname, jahrgang: String(s.jahrgang), jsNummer: s.jsNummer ?? "" } : LEER);
+    setForm(
+      s
+        ? { vorname: s.vorname, nachname: s.nachname, jahrgang: String(s.jahrgang), jsNummer: s.jsNummer ?? "", kaderIds: s.kaderIds }
+        : LEER,
+    );
   }
 
   function schliessen() {
@@ -72,15 +140,24 @@ export function SpielerListe({
     const name = `${form.vorname.trim()} ${form.nachname.trim()}`;
     startTransition(async () => {
       if (offen.id) {
-        const r = await aendereSpielerAktion(offen.id, eingabe);
+        const id = offen.id;
+        const r = await aendereSpielerAktion(id, eingabe);
         if (!r.ok) return setFehler({ feld: r.feld, text: r.error });
-        schliessen();
-        router.refresh();
-        melde(`${name} geändert.`);
+        const bisher = spieler.find((s) => s.id === id)?.kaderIds ?? [];
+        zuteilen([id], kaderAenderung(bisher, form.kaderIds), () => {
+          schliessen();
+          router.refresh();
+          melde(`${name} geändert.`);
+        });
         return;
       }
       const r = await nimmSpielerAufAktion(teamId, eingabe);
       if (!r.ok) return setFehler({ feld: r.feld, text: r.error });
+      // Wer neu dazukommt, verliert keinen Termin: Zuteilen lässt nichts verfallen.
+      if (form.kaderIds.length > 0) {
+        const z = await aendereZuteilungAktion(teamId, { spielerIds: [r.spielerId], dazu: form.kaderIds, weg: [] });
+        if (!z.ok) melde(z.error);
+      }
       setForm(LEER);
       setFehler(null);
       router.refresh();
@@ -104,7 +181,7 @@ export function SpielerListe({
     });
   }
 
-  const feld = (k: keyof Form) => ({
+  const feld = (k: Exclude<keyof Form, "kaderIds">) => ({
     value: form[k],
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
       setForm((f) => ({ ...f, [k]: k === "jahrgang" ? nurZiffern(e.target.value) : e.target.value }));
@@ -115,6 +192,19 @@ export function SpielerListe({
   const fehlerAn = (f: SpielerFeld) => fehler && (fehler.feld ?? "vorname") === f ? fehler.text : undefined;
 
   const bezogen = spieler.filter((s) => s.linkBezogen).length;
+  const namenVon = (s: Spieler) => kaderVon(s.id, kader).map((k) => k.name);
+  const gewaehlteNamen = kader.filter((k) => form.kaderIds.includes(k.id)).map((k) => k.name);
+  const wer = form.vorname.trim() || "Die Spieler:in";
+  const kaderHinweis =
+    gewaehlteNamen.length === 0
+      ? `${wer} sieht nur Termine ohne Kader.`
+      : `${wer} sieht Termine ohne Kader und die Termine von ${aufzaehlung(gewaehlteNamen)}.`;
+  const spalten = mitKadern
+    ? "sm:grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_7.5rem]"
+    : "sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem]";
+  const kopf = mitKadern
+    ? ["", "Name", "Jahrgang", "J+S-Nr.", "Kader", ""]
+    : ["Name", "Jahrgang", "J+S-Nr.", ""];
 
   return (
     <>
@@ -169,44 +259,97 @@ export function SpielerListe({
           <TextField label="Nachname" autoComplete="off" {...feld("nachname")} error={!!fehlerAn("nachname")} supportingText={fehlerAn("nachname")} />
           <TextField label="Jahrgang" inputMode="numeric" maxLength={JAHRGANG_STELLEN} autoComplete="off" {...feld("jahrgang")} error={!!fehlerAn("jahrgang")} supportingText={fehlerAn("jahrgang")} />
           <TextField label="J+S-Nummer (optional)" autoComplete="off" maxLength={JS_MAX} {...feld("jsNummer")} error={!!fehlerAn("js_nummer")} supportingText={fehlerAn("js_nummer")} />
+          {mitKadern && (
+            <MultiSelect
+              label="Kader (optional)"
+              options={kader.map((k) => ({ value: k.id, label: k.name }))}
+              value={form.kaderIds}
+              onChange={(kaderIds) => setForm((f) => ({ ...f, kaderIds }))}
+              searchable={kader.length > 8}
+              actions={false}
+              supportingText={kaderHinweis}
+            />
+          )}
         </form>
       </Dialog>
 
-      {spieler.length > 0 ? (
-        <Tabelle
-          className="mt-4"
-          spalten="sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem_7.5rem]"
-          kopf={["Name", "Jahrgang", "J+S-Nr.", "Link", ""]}
-        >
-            {spieler.map((s) => (
-              <TabellenZeile key={s.id}>
-                <span className="min-w-0 flex-1">
-                  <span className="type-body-medium block truncate text-on-surface">{spielerName(s)}</span>
-                  {/* Schmal stehen Jahrgang und J+S-Nummer unter dem Namen. */}
-                  <span className="type-body-small block text-on-surface-mittel sm:hidden">
-                    {[s.jahrgang, s.jsNummer && `J+S ${s.jsNummer}`, s.linkBezogen && "Link bezogen"].filter(Boolean).join(" · ")}
-                  </span>
+      {spieler.length > 0 && mitKadern && (
+        <KaderChips
+          label="Spielerliste eingrenzen"
+          className="mt-5"
+          chips={[
+            ...kader.map((k) => ({ schluessel: k.id, name: k.name, anzahl: k.spielerIds.length })),
+            { schluessel: OHNE, name: KADER_TEXT.ohneKader, anzahl: ohneKader },
+          ]}
+          gewaehlt={eingrenzung}
+          onWahl={setEingrenzung}
+        />
+      )}
+
+      {/* Grenzt ein Chip auf niemanden ein, steht statt des leeren Tabellenkopfs
+          das Leerfeld — mit dem Weg zurück zur ganzen Liste. */}
+      {spieler.length > 0 && eingrenzung !== null && sichtbar.length === 0 ? (
+        <div className="mt-4">
+          <EingrenzungLeer
+            titel={eingegrenzterKader ? KADER_TEXT.leerKader(eingegrenzterKader.name) : KADER_TEXT.leerOhne}
+            onAufheben={() => setEingrenzung(null)}
+          >
+            {eingegrenzterKader ? KADER_TEXT.leerKaderText : KADER_TEXT.leerOhneText}
+          </EingrenzungLeer>
+        </div>
+      ) : spieler.length > 0 ? (
+        <Tabelle className="mt-4" spalten={spalten} kopf={kopf}>
+          {sichtbar.map((s) => (
+            <TabellenZeile key={s.id}>
+              {mitKadern && (
+                <Checkbox
+                  label={<span className="sr-only">{`${spielerName(s)} auswählen`}</span>}
+                  checked={gewaehlt.includes(s.id)}
+                  onChange={(e) => {
+                    const an = e.target.checked;
+                    setAuswahl((a) => (an ? [...a.filter((id) => id !== s.id), s.id] : a.filter((id) => id !== s.id)));
+                  }}
+                />
+              )}
+              <span className="min-w-0 flex-1">
+                <span className="type-body-medium block truncate text-on-surface">{spielerName(s)}</span>
+                {/* Schmal stehen Jahrgang, J+S-Nummer und Kader unter dem Namen. */}
+                <span className="type-body-small block text-on-surface-mittel sm:hidden">
+                  {[s.jahrgang, s.jsNummer && `J+S ${s.jsNummer}`].filter(Boolean).join(" · ")}
                 </span>
-                <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.jahrgang}</span>
-                <span className={`type-body-medium hidden truncate sm:block ${s.jsNummer ? "text-on-surface-mittel" : "text-on-surface-tief"}`}>
-                  {s.jsNummer ?? "–"}
+                <KaderLozenges namen={namenVon(s)} className="mt-1 sm:hidden" />
+              </span>
+              <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.jahrgang}</span>
+              <span className={`type-body-medium hidden truncate sm:block ${s.jsNummer ? "text-on-surface-mittel" : "text-on-surface-tief"}`}>
+                {s.jsNummer ?? "–"}
+              </span>
+              {mitKadern && (
+                <span className="hidden min-w-0 sm:block">
+                  {s.kaderIds.length > 0 ? (
+                    <KaderLozenges namen={namenVon(s)} />
+                  ) : (
+                    <span className="type-body-medium text-on-surface-tief">–</span>
+                  )}
                 </span>
-                <span className="hidden sm:block">
-                  <BezogenLozenge bezogen={s.linkBezogen} />
-                </span>
-                <span className="flex justify-end gap-1">
-                  <Tooltip label="Privater Link">
-                    <IconButton icon={Link2} label={`Privater Link für ${spielerName(s)}`} onClick={() => setLink(s)} />
-                  </Tooltip>
-                  <Tooltip label="Ändern">
-                    <IconButton icon={Pencil} label={`${spielerName(s)} ändern`} onClick={() => oeffnen(s)} />
-                  </Tooltip>
-                  <Tooltip label="Entfernen" ende>
-                    <IconButton icon={X} label={`${spielerName(s)} entfernen`} onClick={() => setEntfernen(s)} />
-                  </Tooltip>
-                </span>
-              </TabellenZeile>
-            ))}
+              )}
+              <span className="flex justify-end gap-1">
+                <Tooltip label={s.linkBezogen ? "Privater Link · bezogen" : "Privater Link"}>
+                  <IconButton
+                    icon={Link2}
+                    label={`Privater Link für ${spielerName(s)}${s.linkBezogen ? ", bezogen" : ""}`}
+                    punkt={s.linkBezogen ? "success" : undefined}
+                    onClick={() => setLink(s)}
+                  />
+                </Tooltip>
+                <Tooltip label="Ändern">
+                  <IconButton icon={Pencil} label={`${spielerName(s)} ändern`} onClick={() => oeffnen(s)} />
+                </Tooltip>
+                <Tooltip label="Entfernen" ende>
+                  <IconButton icon={X} label={`${spielerName(s)} entfernen`} onClick={() => setEntfernen(s)} />
+                </Tooltip>
+              </span>
+            </TabellenZeile>
+          ))}
         </Tabelle>
       ) : (
         <p className="type-body-medium mt-4 text-on-surface-mittel">
@@ -214,6 +357,14 @@ export function SpielerListe({
           Mannschaft übernimmst du aus einer CSV-Datei.
         </p>
       )}
+
+      {/* Schwebt unten am Platz der Snackbar, solange jemand ausgewählt ist;
+          im DOM nach der Liste, damit Tab aus der Zeile vorwärts zu ihr führt. */}
+      <AuswahlLeiste offen={gewaehlt.length > 0} titel={`${gewaehlt.length} ausgewählt`} onAufheben={() => setAuswahl([])}>
+        <Button variant="filled" aria-haspopup="dialog" onClick={() => setZuteilenOffen(true)}>
+          Kader zuteilen
+        </Button>
+      </AuswahlLeiste>
 
       <Dialog
         open={entfernen != null}
@@ -237,9 +388,37 @@ export function SpielerListe({
         </p>
       </Dialog>
 
+      <KaderZuteilen
+        offen={zuteilenOffen}
+        kader={kader}
+        auswahl={gewaehlt}
+        pending={pending}
+        onClose={() => setZuteilenOffen(false)}
+        onUebernehmen={(a) =>
+          zuteilen(gewaehlt, a, () => {
+            setZuteilenOffen(false);
+            setAuswahl([]);
+            router.refresh();
+            melde(gewaehlt.length === 1 ? "Kader der Spieler:in geändert." : `Kader von ${gewaehlt.length} Spieler:innen geändert.`);
+          })
+        }
+      />
+
+      {verfall.dialog}
+
       <SpielerImport teamId={teamId} offen={importOffen} onClose={() => setImportOffen(false)} />
 
       <SpielerLinkDialog spieler={link} abholungAktiv={abholung.aktiv} onClose={() => setLink(null)} />
     </>
   );
+}
+
+/** Was sich an den Kadern einer Spieler:in ändert. */
+function kaderAenderung(bisher: readonly string[], neu: readonly string[]): ZuteilungAenderung {
+  return { dazu: neu.filter((k) => !bisher.includes(k)), weg: bisher.filter((k) => !neu.includes(k)) };
+}
+
+/** «A», «A und B», «A, B und C». */
+function aufzaehlung(namen: string[]): string {
+  return namen.length <= 1 ? (namen[0] ?? "") : `${namen.slice(0, -1).join(", ")} und ${namen[namen.length - 1]}`;
 }

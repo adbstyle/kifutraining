@@ -345,20 +345,21 @@ Wortlaut der Seite: „Übungen suchen und abrufen - den ganzen Bestand, den du 
 siehst"; „eigene Übungen samt Feld-Diagramm anlegen, kopieren, ändern, öffentlich schalten und
 zurückziehen"; „Trainings anlegen, überarbeiten, veröffentlichen, zurückziehen, übernehmen und
 löschen"; „Team-Trainings deiner Teams führen und im Kalender deiner Teams Termine und
-Terminserien samt Platz und erwarteter Spielerzahl festlegen, ändern und entfernen, ihnen
+Terminserien samt Platz, erwarteter Spielerzahl und Kadern festlegen, ändern und entfernen, ihnen
 als Kopie Trainings aus dem Team oder deine persönlichen Trainings zuordnen und sie wieder lösen,
 Verantwortliche eintragen, Ausfälle festhalten und zurücknehmen sowie die Termine eines
 Zeitraums abrufen"; „die Anzeigenamen der
 Mitglieder deiner Teams lesen (ohne E-Mail-Adressen)"; „die Spielerliste deiner Teams (Vorname,
-Nachname, Jahrgang, J+S-Nummer) einsehen und führen, Spieler:innen für Termine ab- und wieder
+Nachname, Jahrgang, J+S-Nummer) einsehen und führen, Kader anlegen, umbenennen und entfernen
+und ihnen Spieler:innen zuteilen, Spieler:innen für Termine ab- und wieder
 anmelden und sehen, wer angemeldet ist, den privaten Link einer Spieler:in holen und erneuern,
 die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche
 Links bezogen wurden". Nie erreichbar sind „deine Favoriten",
 „die Verwaltung deiner Teams (gründen, umbenennen, Mitglieder aufnehmen oder entfernen)" und
 „dein Konto selbst (Anzeigename, Passwort, Löschen)". Kommt eine dieser Fähigkeiten dazu, muss
 man nicht erneut zustimmen; auch wer seinen Zugang erlaubt hat, bevor der Kalender, Platz
-und Spielerzahl der Termine oder die Spielerliste samt Abmeldungen, Links und Selbstabholung
-dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt die
+und Spielerzahl der Termine, die Spielerliste samt Abmeldungen, Links und Selbstabholung oder
+die Kader dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt die
 Seite, nur zu erlauben, wenn man das Verbinden eben selbst gestartet hat.
 
 Beim Erlauben kann man dem Zugang einen eigenen Namen geben, etwa „Claude auf dem Laptop",
@@ -498,10 +499,11 @@ nirgends.
 Im Kalender fragt der Assistent vor dem Entfernen eines Termins, dem Löschen eines Trainings
 mit Termin, dem Zuordnen, Ersetzen und Lösen nicht nach. Fallen durch eine
 Serienänderung anstehende Termine mit Training weg, erfährt er das erst danach; nur wenn
-vergangene Termine erfasst sind oder entfallen oder Abmeldungen verfallen, verlangt die
+vergangene Termine erfasst sind oder entfallen oder Abmeldungen verfallen — durch eine
+Verlegung oder eine Änderung an Kadern —, verlangt die
 Anwendung eine Bestätigung im Aufruf und nennt vorher, was es trifft. Ob ein Termin
 stattgefunden hat und wer dabei war, kennt die Anwendung auch über den Assistenten nicht; er
-erfährt nur, wer abgemeldet war. Auch beim Entfernen von Spieler:innen, beim Erneuern von Links
+erfährt nur, wer abgemeldet war. Auch beim Entfernen von Spieler:innen und Kadern, beim Erneuern von Links
 und der Abholadresse und beim Schalten der Selbstabholung verlangt die Anwendung keine
 Bestätigung; ob er vorher nachfragt, liegt bei ihm. Die Liste aller Spieler:innen mit ihren Abmeldungen für mehrere Termine auf einmal liest er
 nicht; wer an einem Termin kommt, ruft er Termin für Termin ab.

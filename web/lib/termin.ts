@@ -213,6 +213,7 @@ export const KONFLIKT_MARKER: readonly string[] = [
   "AUSFALL_GEAENDERT",
   "SERIE_GEAENDERT",
   "SERIE_BELEGUNG_GEAENDERT",
+  "SERIE_VERFALL_GEAENDERT",
 ];
 
 /** Ein Zusatz zu jeder Meldung, deren Kopie nicht aufgeräumt werden konnte

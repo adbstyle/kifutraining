@@ -29,6 +29,7 @@ import type { FolgeAngabe } from "@/lib/kern/serien";
 import {
   KEINE_VERANTWORTLICHEN,
   VerantwortlicheWahl,
+  gleicheMenge,
   nurNamenloseGeaendert,
   verantwortlicheGeaendert,
   verantwortlicheStart,
@@ -38,6 +39,8 @@ import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
 import { terminBegonnen } from "@/lib/zeit";
 import { usePlatzAngaben } from "./usePlatzAngaben";
+import type { Kader, TerminKader } from "@/lib/kader";
+import { KaderWahl } from "./KaderWahl";
 
 const ANGABE: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit",
@@ -46,11 +49,12 @@ const ANGABE: Record<FolgeAngabe, string> = {
   verantwortliche: "Die Verantwortlichen",
   spielerzahl: "Die erwartete Spielerzahl",
   felder: "Die Felder",
+  kader: "Die Kader",
 };
 /** Mehrzahl: «weichen» statt «weicht». */
-const MEHRZAHL: readonly FolgeAngabe[] = ["verantwortliche", "felder"];
+const MEHRZAHL: readonly FolgeAngabe[] = ["verantwortliche", "felder", "kader"];
 /** Die Angaben, die wieder der Serie folgen können, in der Reihenfolge des Dialogs. */
-const FOLGEN_KANN: readonly FolgeAngabe[] = ["zeit", "ort", "bemerkung", "verantwortliche", "spielerzahl", "felder"];
+const FOLGEN_KANN: readonly FolgeAngabe[] = ["zeit", "ort", "bemerkung", "verantwortliche", "kader", "spielerzahl", "felder"];
 const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   zeit: "Zeit wieder der Serie folgen lassen",
   ort: "Ort wieder der Serie folgen lassen",
@@ -58,6 +62,7 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   verantwortliche: "Verantwortliche wieder der Serie folgen lassen",
   spielerzahl: "Erwartete Spielerzahl wieder der Serie folgen lassen",
   felder: "Felder wieder der Serie folgen lassen",
+  kader: "Kader wieder der Serie folgen lassen",
 };
 
 /* Einen Termin ändern (Team-Kalender #322); erstellt wird im
@@ -73,6 +78,9 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
    Die Verantwortlichen (#325) stehen nach der Bemerkung; weichen sie an
    einem Serientermin ab, sagt es der Serien-Abschnitt (AK 19) und bietet den
    Weg zurück (AK 6).
+
+   Die Kader (#453) folgen den Verantwortlichen: für wen der Termin gilt. Ein
+   begonnener Termin behält sie (AK 13).
 
    Danach die erwartete Spielerzahl (#390; leer = unbekannt) und die Felder
    des Platzes (#389): alle Einzelheiten zum Ansehen und Ändern (AK 7, 11).
@@ -97,6 +105,10 @@ export function TerminDialog({
   ausfall,
   heute,
   fuehrtListe,
+  kader = [],
+  terminKader = [],
+  spielerGesamt = 0,
+  begonnen,
   onFolgen,
   onClose,
   onSpeichern,
@@ -121,13 +133,26 @@ export function TerminDialog({
   /** Das Team führt eine Spielerliste (#434): An einem anstehenden Termin
    *  kommt die Spielerzahl aus ihr, das Feld entfällt. */
   fuehrtListe?: boolean;
+  /** Die Kader des Teams und die des geöffneten Termins (#453). */
+  kader?: readonly Kader[];
+  terminKader?: readonly TerminKader[];
+  spielerGesamt?: number;
+  /** Der Termin hat begonnen: Seine Kader stehen fest (AK 13). */
+  begonnen?: boolean;
   onFolgen?: (angabe: FolgeAngabe) => void;
   onClose: () => void;
   /** `regel` nur bei einem Serientermin: Wochentage und Zeitraum, wie sie im
    *  Dialog stehen (geändert oder nicht). `verantwortlich` nur, wenn sich die
    *  Wahl gegenüber dem Öffnen geändert hat (PO 17); ebenso `grund`, und nur,
    *  solange der Ausfall bestehen bleibt. */
-  onSpeichern: (felder: TerminFelder, regel?: SerienRegel, verantwortlich?: VerantwortlicheWert, grund?: string) => void;
+  onSpeichern: (
+    felder: TerminFelder,
+    regel?: SerienRegel,
+    verantwortlich?: VerantwortlicheWert,
+    grund?: string,
+    /** Nur, wenn sich die Kader geändert haben (#453). */
+    kaderIds?: string[],
+  ) => void;
 }) {
   const [felder, setFelder] = useState<TerminFelder>({ datum: "" });
   const [problem, setProblem] = useState<{ feld: TerminFeld; text: string } | null>(null);
@@ -136,6 +161,8 @@ export function TerminDialog({
   const [verantwortlich, setVerantwortlich] = useState<VerantwortlicheWert>(KEINE_VERANTWORTLICHEN);
   const [grund, setGrund] = useState("");
   const [grundFehler, setGrundFehler] = useState<string>();
+  const kaderStart = terminKader.flatMap((k) => (k.id ? [k.id] : []));
+  const [kaderWahl, setKaderWahl] = useState<string[]>([]);
   const platz = usePlatzAngaben();
   // Ein begonnener Termin behält seine erwartete Zahl: Sie gilt dort, wenn die
   // Liste bei Beginn leer war (Migration spielerliste).
@@ -159,6 +186,7 @@ export function TerminDialog({
     setVerantwortlich(verantwortlicheStart(verantwortliche ?? []));
     setGrund(ausfall?.grund ?? "");
     setGrundFehler(undefined);
+    setKaderWahl(kaderStart);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -204,7 +232,13 @@ export function TerminDialog({
     if (!p && angaben && regelOk && !gp) {
       const geaendert = verantwortlicheGeaendert(verantwortlich, verantwortlicheStart(verantwortliche ?? []));
       const grundNeu = ausfall && !ausfallEndet && grund.trim() !== (ausfall.grund ?? "") ? grund : undefined;
-      onSpeichern({ ...felder, ...angaben }, serie ? regel : undefined, geaendert ? verantwortlich : undefined, grundNeu);
+      onSpeichern(
+        { ...felder, ...angaben },
+        serie ? regel : undefined,
+        geaendert ? verantwortlich : undefined,
+        grundNeu,
+        gleicheMenge(kaderWahl, kaderStart) ? undefined : kaderWahl,
+      );
     }
   }
 
@@ -216,7 +250,7 @@ export function TerminDialog({
       breit
       actions={
         <>
-          <Button variant="text" onClick={onClose}>Abbrechen</Button>
+          <Button variant="outlined" onClick={onClose}>Abbrechen</Button>
           <Button variant="filled" onClick={speichern} disabled={pending}>Speichern</Button>
         </>
       }
@@ -254,6 +288,16 @@ export function TerminDialog({
         <TextField label="Ort (optional)" maxLength={ORT_MAX} value={felder.ort ?? ""} onChange={(e) => setze("ort")(e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         <VerantwortlicheWahl mitglieder={mitglieder} bisher={verantwortliche} wert={verantwortlich} onChange={setVerantwortlich} disabled={pending} />
+        {(kader.length > 0 || terminKader.length > 0) && (
+          <KaderWahl
+            kader={kader}
+            spielerGesamt={spielerGesamt}
+            wert={kaderWahl}
+            onChange={setKaderWahl}
+            begonnen={begonnen}
+            disabled={pending}
+          />
+        )}
         <SpielerzahlField {...platz.spielerzahlProps} disabled={pending} ausListe={ausListe} />
         <FelderField {...platz.felderProps} disabled={pending} />
       </div>
@@ -266,6 +310,9 @@ export function TerminDialog({
           </p>
           {serie.verantwortliche.length > 0 && (
             <p className="type-body-small">Verantwortlich: {serie.verantwortliche.map((v) => v.name).join(", ")}</p>
+          )}
+          {serie.kader.length > 0 && (
+            <p className="type-body-small">Kader: {serie.kader.map((k) => k.name).join(", ")}</p>
           )}
           {/* #391 AK 4: was die Serie an Spielerzahl und Feldern vorgibt. */}
           {serie.spielerzahl !== null && (

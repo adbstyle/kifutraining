@@ -407,7 +407,7 @@ neuen Link holt man sich jederzeit wieder im Trainingsplan.
 ## Spielerliste
 
 Ein Team kann seine Spieler:innen in einer Liste führen. Sie steht unter „Team" als eigene Karte
-zwischen Teamname und Mitgliedern; ihr Kopf nennt, wie viele auf der Liste stehen und wie viele
+zwischen Teamname und den Kadern (siehe „Kader"); ihr Kopf nennt, wie viele auf der Liste stehen und wie viele
 Links davon bezogen sind (siehe „Selbstabholung"), etwa „15 · 9 Links bezogen". Jede Spieler:in
 trägt Vorname, Nachname und Jahrgang, auf Wunsch dazu ihre J+S-Nummer. Vor- und Nachname haben je
 1 bis 60 Zeichen, der Jahrgang ist eine vierstellige Jahreszahl, die J+S-Nummer höchstens 20
@@ -415,7 +415,7 @@ Zeichen lang; eine Liste fasst höchstens 200 Spieler:innen. Das Plus im Kopf ö
 „Spieler:in hinzufügen" mit den vier Feldern untereinander; „Hinzufügen" oder die
 Eingabetaste nimmt auf, der Dialog sagt, wer dazukam, und bleibt für die nächste offen, bis
 „Abbrechen" ihn ohne Speichern schliesst. Die Liste ist nach Vor-
-und Nachname geordnet; jede Zeile nennt Name, Jahrgang, J+S-Nummer und ob der Link bezogen ist,
+und Nachname geordnet; jede Zeile nennt Name, Jahrgang, J+S-Nummer und, sobald das Team Kader führt, ihre Kader,
 dazu Knöpfe für den privaten Link, „Ändern" — derselbe Dialog mit den bisherigen Angaben —
 und „Entfernen". Auf dem Telefon stehen Jahrgang und J+S-Nummer unter dem Namen.
 
@@ -453,8 +453,8 @@ vergangenen steht sie nur noch ohne Namen als „Ehemalige Spieler:in", die Spie
 Ihre Angaben verschwinden damit überall aus dem Team.
 
 Sobald die Liste jemanden enthält, kommt die Spielerzahl anstehender Termine aus ihr: Jede
-Spieler:in der Liste zählt, bis sie abgemeldet ist. Trainingsplan, nächster Termin, geöffneter
-Termin und Durchführen-Ansicht zeigen dann die Angemeldeten von allen, in der Zeile knapp „12/15",
+Spieler:in, für die der Termin gilt (siehe „Kader"), zählt, bis sie abgemeldet ist. Trainingsplan, nächster Termin, geöffneter
+Termin und Durchführen-Ansicht zeigen dann die Angemeldeten unter ihnen, in der Zeile knapp „12/15",
 sonst ausgeschrieben „12 von 15 angemeldet"; auch 0 steht da. Beim ersten Aufnehmen verlieren alle
 anstehenden Termine und alle Serien des Teams ihre erwartete Zahl — die Meldung nennt, wie viele
 Termine es betraf —, und solange die Liste jemanden enthält, nimmt die Anwendung für anstehende
@@ -465,7 +465,7 @@ Termine unbekannt, bis jemand eine erwartete festlegt. Ein Team ohne Spielerlist
 mit der erwarteten Zahl.
 
 Ein Termin, der begonnen hat, behält den Stand bei seinem Beginn — wer da auf der Liste stand und
-wer abgemeldet war; spätere Änderungen an der Liste wirken dort nicht mehr, ausser auf die Namen.
+für wen er galt, und wer abgemeldet war; spätere Änderungen an der Liste und an Kadern wirken dort nicht mehr, ausser auf die Namen.
 Begonnen ist ein Termin ab seiner Anfangszeit, minutengenau nach Schweizer Zeit; ein Termin, der
 schon beim Erfassen begonnen hat, hält den Stand dieses Moments fest. War die Liste bei Beginn
 leer, gilt dort die erwartete Zahl, die sich an begonnenen Terminen weiterhin festlegen lässt. Wird
@@ -473,9 +473,71 @@ ein begonnener Termin auf einen Zeitpunkt verlegt, der noch bevorsteht, ist er w
 zählt wieder die aktuelle Liste, seine Abmeldungen verfallen, und eine erwartete Zahl verliert er,
 sofern das Team eine Liste führt.
 
+## Kader
+
+Ein Team kann Teile seiner Spielerliste als Kader benennen, etwa „Stärkeklasse 1", „Torhüterinnen",
+„Schnupperlis" oder „Aushilfe", und Termine auf sie beschränken. Die Karte „Kader" steht unter
+„Team" zwischen Spielerliste und Mitgliedern; ihr Kopf zählt, wie viele Kader das Team führt, etwa
+„4 von 20", das Plus legt einen an. Jede Zeile nennt den Namen und wie viele Spieler:innen ihm
+angehören, dazu Knöpfe zum Umbenennen und Entfernen. Ein Name hat 1 bis 30 Zeichen und steht im
+Team nur einmal, wobei Gross- und Kleinschreibung und überzählige Leerzeichen nicht unterscheiden —
+anders als bei Spieler:innen unterscheiden Bindestrich und Apostroph. Ein Team führt höchstens 20
+Kader. Beim Anlegen und Umbenennen sagt der Hinweis unter dem Namensfeld, dass Eltern die Kader ihres Kindes sehen und
+ein Name darum nichts zur Gesundheit oder vergleichbar Heikles nennen soll; geprüft werden die
+Namen nicht. Ein neuer Name gilt sofort überall, auch an vergangenen Terminen. Einsehen und führen
+können Kader nur die Mitglieder des Teams.
+
+Eine Spieler:in gehört keinem, einem oder mehreren Kadern an. Zugeteilt wird im Dialog
+„Spieler:in hinzufügen" bzw. „Spieler:in ändern" über das Feld „Kader (optional)", das darunter
+sagt, welche Termine sie damit sieht, oder für mehrere auf einmal: Führt das Team Kader, trägt jede
+Zeile der Spielerliste ein Kästchen; sobald jemand ausgewählt ist, schwebt unten in der Mitte eine
+Leiste mit der Zahl der Ausgewählten, „Kader zuteilen" und „Auswahl aufheben". „Kader zuteilen" öffnet den Dialog
+„Kader für 3 Spieler:innen" mit einem Kästchen je Kader — gewählt, wenn alle ihm angehören, mit
+Strich, wenn nur ein Teil. Ein Klick teilt allen zu, ein weiterer nimmt alle heraus, unberührte
+bleiben, wie sie sind. In der Liste trägt jede Spieler:in ihre Kader als Plaketten; die Chips
+darüber, je mit der Zahl, grenzen sie auf einen Kader oder auf „Ohne Kader" ein, ein zweiter Klick
+hebt die Eingrenzung auf. Bleibt dabei niemand übrig, steht statt der Liste ein Leerfeld („Niemand
+in …" bzw. „Alle haben einen Kader") mit „Eingrenzung aufheben".
+
+Ein Termin oder eine Terminserie kann Kader tragen; gewählt werden sie in „Termin erstellen" und
+„Termin ändern" über „Kader (optional)", darunter steht, für wie viele Spieler:innen er damit gilt —
+auch, wenn das niemand ist. Ein Termin ohne Kader gilt für alle, einer mit Kadern für alle, die
+mindestens einem davon angehören. Kader schliessen nichts aus: Wer einem Kader angehört, sieht
+weiterhin alle Termine ohne Kader. Nur wer dazugehört, zählt in der Spielerzahl — gilt er für
+niemanden, steht dort „0 von 0" —, steht im Reiter „Spieler:innen" und lässt sich für ihn ab- und
+anmelden. Im Trainingsplan trägt die Zeile die Kader als Plaketten, ohne Kader nichts; die Eckdaten
+nennen sie oder, sobald das Team Kader führt, „Für alle". Der Reiter „Spieler:innen" sagt oben, für
+welche Kader der Termin gilt, unter jedem Namen, über welche Kader er für sie gilt, und unten, für
+wie viele des Teams er nicht gilt. Gilt er für mehrere Kader, sind diese oben Chips mit der Zahl
+ihrer Spieler:innen am Termin: Ein Chip grenzt die Liste auf seinen Kader ein, ein zweiter Klick
+hebt die Eingrenzung auf; „x von y angemeldet" bleibt die Zahl des ganzen Termins. Gehört dem
+Kader niemand an, steht ein Leerfeld mit „Eingrenzung aufheben". Ab Beginn des Termins stehen die
+Kader wieder als Plaketten, ohne Eingrenzung.
+
+Eine Serie gibt ihren Terminen Kader vor; an einem Serientermin weichen sie ab wie Zeit oder Ort —
+auch mit keinem Kader, dann gilt er für alle — und folgen über „Der Serie folgen" wieder. Ändern
+sich die Kader an einem Serientermin, fragt die Anwendung wie bei den übrigen Angaben, ob die
+Änderung nur für diesen, für diesen und alle folgenden oder für alle Termine der Serie gilt. Ein
+begonnener Termin ändert seine Kader nicht mehr, auch nicht über die Serie.
+
+Gilt ein anstehender Termin durch eine Änderung an Kadern, an der Zuteilung oder an den Kadern
+eines Termins oder einer Serie nicht mehr für eine Spieler:in, verfällt ihre Abmeldung dort, auch an
+einem ausgefallenen Termin; gilt er später wieder für sie, ist sie angemeldet. Vor dem Speichern
+fragt die Anwendung nach und nennt die Zahl, etwa „Damit verfallen 2 Abmeldungen: Die Termine
+gelten für diese Spieler:innen nicht mehr. Gilt ein Termin später wieder für sie, sind sie dort
+angemeldet."; hat sich die Zahl inzwischen geändert, nennt sie den neuen Stand und fragt erneut.
+Bei einer Serienänderung steht das in derselben Rückfrage wie wegfallende Termine.
+
+Entfernen fragt nach und sagt, was folgt: wie viele Spieler:innen den Kader verlieren — sie bleiben
+auf der Liste —, welche anstehenden Termine und Serien nur ihn trugen und danach für alle gelten,
+und wie viele Abmeldungen verfallen. Begonnene Termine behalten den Stand bei Beginn — wer da
+dazugehörte und wer abgemeldet war —, auch wenn sich Kader oder Zuteilungen danach ändern; ein
+entfernter Kader steht dort als „Ehemaliger Kader". Wird das Team aufgelöst, gehen seine Kader
+mit. Ein Team ohne Kader plant unverändert.
+
 ## Ab- und Anmelden
 
-Jede Spieler:in der Liste ist für jeden Termin angemeldet, bis sie abgemeldet wird; einen dritten
+Jede Spieler:in der Liste ist für jeden Termin, der für sie gilt (siehe „Kader"), angemeldet, bis sie abgemeldet wird; einen dritten
 Zustand wie „keine Rückmeldung" gibt es nicht. Wer fehlt, ohne sich abzumelden, zählt mit — die
 Zahl ist darum eine Obergrenze. Abgemeldet und wieder angemeldet wird Termin für Termin, durch jedes
 Mitglied im geöffneten Termin oder durch die Eltern bzw. die Spieler:in selbst über ihren privaten
@@ -507,7 +569,8 @@ neue nimmt die Anwendung nicht an. Wird der Ausfall zurückgenommen, gelten sie 
 Termin unterdessen nicht verlegt wurde. Wird ein Termin entfernt oder entfällt er durch eine
 Serienänderung, verschwinden seine Abmeldungen mit ihm.
 
-Wurde ein Termin verlegt, ist er ausgefallen oder hat er begonnen, seit man ihn zuletzt sah, weist
+Wurde ein Termin verlegt, ist er ausgefallen oder hat er begonnen, seit man ihn zuletzt sah, oder
+gilt er nicht mehr für die Spieler:in, weist
 die Anwendung ein Ab- oder Anmelden ab und nennt den aktuellen Stand, etwa „Der Termin wurde
 inzwischen verlegt, neu auf … um 18:30. Sieh ihn dir noch einmal an." — im Team, am privaten Link
 und beim KI-Assistenten gleich.
@@ -532,14 +595,15 @@ noch nicht begonnen hat, grösser, mit „Heute" oder „Morgen", der Zahl der A
 Spieler:in angemeldet ist, und dem Knopf „Abmelden" oder „Wieder anmelden"; abgemeldet steht die
 Karte auf einer leicht roten Fläche, ihr Tag rot und „Wieder anmelden" als heller Knopf. Ein Termin
 von heute, der schon begonnen hat, steht darüber unter „Heute", gesperrt bis Ende des Tages.
-Darunter folgen die übrigen anstehenden Termine des Teams unter Monatsüberschriften wie
+Darunter folgen die übrigen anstehenden Termine, die für die Spieler:in gelten, unter Monatsüberschriften wie
 „Oktober 2026", je als Karte mit
-Kalenderblatt, Beginn und Ende, Ort, der Zahl der Angemeldeten und einem Schalter; ist die
+Kalenderblatt, Beginn und Ende, Ort, der Zahl der Angemeldeten — nur unter denen, für die er gilt —, bei
+einem Termin mit Kadern den Kadern der Spieler:in, über die er für sie gilt, und einem Schalter; ist die
 Spieler:in abgemeldet, ist das Kalenderblatt rot. Ein begonnener Termin ist gesperrt mit „Hat
 begonnen · nicht mehr änderbar", ein ausgefallener grau mit „Fällt aus". Wurde ein Termin verlegt,
 seit sie abgemeldet war, steht bei ihm etwa „Verlegt, vorher Dienstag, 20. Oktober um 18:00. Deine
 Abmeldung gilt nicht mehr.", bis man neu wählt oder der Termin beginnt. Namen anderer
-Spieler:innen, Trainings und vergangene Termine zeigt die Seite nicht.
+Spieler:innen, fremde Kader, Termine für andere Kader, Trainings und vergangene Termine zeigt die Seite nicht.
 
 Ein erneuerter, entfernter oder unbekannter Link führt auf dieselbe neutrale Seite „Dieser Link gilt
 nicht mehr", die weder Team noch Spieler:in nennt und auf die Abholadresse des Teams oder die
@@ -579,9 +643,10 @@ Zählung nicht zurück. Eine erneuerte, ausgeschaltete oder
 unbekannte Adresse zeigt die neutrale Seite „Diese Abholadresse gilt nicht" ohne Teamname. Vorschau
 im Chat, Suchmaschinen, Besucherstatistik und Browser behandelt die Abholseite wie den Link.
 
-In der Spielerliste steht je Spieler:in „Bezogen" oder „Nicht bezogen": ob ihr aktueller Link über
-die Abholadresse herausgegeben wurde. Wer ihn holte und wie oft, hält die Anwendung nicht fest.
-Erneuert ein Mitglied den Link, steht er wieder auf „Nicht bezogen"; der neue lässt sich über die
+In der Spielerliste trägt das Kettenglied einen grünen Punkt, wenn der aktuelle Link der
+Spieler:in über die Abholadresse herausgegeben wurde; der Tooltip sagt dann „bezogen". Ob ein
+Link bezogen ist oder nicht, sagt auch der Dialog „Privater Link für …". Wer ihn holte und wie oft, hält die Anwendung nicht fest.
+Erneuert ein Mitglied den Link, gilt er wieder als nicht bezogen; der neue lässt sich über die
 Abholadresse erneut abholen.
 
 ## Gleichzeitige Änderungen
@@ -601,9 +666,10 @@ ausgefallener oder begonnener Termin weist ab, sonst gilt die zuletzt gesetzte A
 Termine, Serien, Zuordnungen, Verantwortliche und Ausfälle lassen sich auch über einen
 verbundenen KI-Assistenten führen, samt Feldern und erwarteter Spielerzahl (siehe
 [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)), ebenso die Spielerliste, die
+Kader samt Zuteilung und den Kadern von Terminen und Serien, die
 Ab- und Anmeldungen, die privaten Links und die Selbstabholung. Es gelten dieselben Regeln, und
-was er festlegt, steht im selben Kalender; verfallen durch eine Verlegung Abmeldungen, verlangt
-auch er eine Bestätigung. Platz und Spielerzahl erfährt er bei jedem Termin, samt der Angabe, ob
+was er festlegt, steht im selben Kalender; verfallen durch eine Verlegung oder eine Änderung an
+Kadern Abmeldungen, verlangt auch er eine Bestätigung. Platz und Spielerzahl erfährt er bei jedem Termin, samt der Angabe, ob
 die Zahl aus der Spielerliste stammt oder erwartet ist, und kann ein Training darauf ausrichten;
 ob es passt, beurteilt er selbst. Kalender-Abos und die Teams selbst verwaltet er nicht.
 
@@ -744,7 +810,8 @@ Trainerinnen und Trainer des Teams, nicht für Eltern, Spielerinnen und Spieler 
 deren privater Link liefert kein Abo.
 
 Die Spielerliste führt nur Vorname, Nachname, Jahrgang und J+S-Nummer — weder Geburtsdatum noch
-Position, Torhüter:innen oder Kontaktdaten der Eltern. Sie lässt sich weder aus einem anderen Team
+Position oder Kontaktdaten der Eltern; Torhüter:innen und andere Teile des Teams bildet man mit
+Kadern ab. Sie lässt sich weder aus einem anderen Team
 übernehmen noch mit einem teilen; dasselbe Kind in zwei Teams hat zwei Einträge und zwei Links, und
 für Geschwister gibt es keinen gemeinsamen Link. Aus dem Jahrgang leitet die Anwendung keine
 Alterskategorie ab, und ob er zum Team passt, prüft sie nicht. Ausgetretene bleiben auf der Liste,
@@ -752,6 +819,18 @@ bis jemand sie entfernt. Gruppen eines Trainings bleiben Bezeichnungen ohne Spie
 Spielerliste lässt sich die Zahl nicht von Hand um Gäste ergänzen. An einem begonnenen Termin
 bietet „Termin ändern" das Feld für die erwartete Zahl weiter an; gezeigt wird sie dort aber nur,
 wenn die Liste bei Beginn leer war.
+
+Ein Kader trägt nur seinen Namen — keine Farbe, Beschreibung oder zuständige Trainer:innen — und
+bildet weder Mannschaftszuteilung noch Spielberechtigung des Verbands ab. Er gilt nur in seinem
+Team, ist an keine Saison gebunden und lässt sich weder übernehmen noch teilen; Kader und
+Zuteilungen passt das Team beim Saisonwechsel selbst an, und nach Jahrgang teilt die Anwendung
+nicht zu. Einzelne Spieler:innen lassen sich keinem Termin direkt zuordnen; wer aushilft, erhält
+einen Kader wie „Aushilfe". Kader beschränken nicht, was Mitglieder sehen: Trainingsplan und
+Kalender-Abo zeigen immer alle Termine und lassen sich nicht nach Kadern eingrenzen. Eine
+verfallene Abmeldung kehrt nicht zurück, und Eltern erfahren nicht von selbst, dass ein Termin
+nicht mehr für ihr Kind gilt. Wer über die Abholadresse den Link eines fremden Kindes holt, sieht
+auch dessen Kader. Die Selbstabholung lässt sich nicht auf einzelne Kader beschränken, und ihr
+Hinweis, was KiFu speichert, nennt die Kader nicht.
 
 Der Import liest nur CSV, keine Excel-Dateien, und nur mit Kopfzeile. Er ändert Vor- und Nachnamen
 und Jahrgänge bestehender Spieler:innen nicht: Wer nach einem Import auf den Rufnamen gekürzt wurde,

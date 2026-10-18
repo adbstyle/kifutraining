@@ -170,13 +170,26 @@ export function KategorieLozenge({ k }: { k: KategorieSlug }) {
    Gefüllt in Primary — ADS' Markenfarbe ist bei uns das Lila —, weil er als
    Teil des Knopfes gelesen wird, nicht als eigene Aussage über den Inhalt
    wie die Lozenge. Für die Vorlesehilfe stumm: Der Knopf, an dem er hängt,
-   sagt die Zahl in seinem Namen in Worten. */
-export function Badge({ children, className }: { children: React.ReactNode; className?: string }) {
+   sagt die Zahl in seinem Namen in Worten.
+
+   `neutral` steht an einem Knopf, der noch nicht gewählt ist — ein Filter-Chip
+   in Ruhe nennt seine Zahl hell auf der umgekehrten Fläche (`umkehr`), erst
+   gewählt wird sie Primary wie Kontur und Schrift des Chips (PO 2026-10-18). */
+export function Badge({
+  children,
+  appearance = "primary",
+  className,
+}: {
+  children: React.ReactNode;
+  appearance?: "primary" | "neutral";
+  className?: string;
+}) {
   return (
     <span
       aria-hidden
       className={cn(
-        "type-lozenge inline-flex h-4 min-w-6 shrink-0 items-center justify-center rounded-klein bg-primary px-1 text-on-primary",
+        "type-lozenge inline-flex h-4 min-w-6 shrink-0 items-center justify-center rounded-klein px-1",
+        appearance === "primary" ? "bg-primary text-on-primary" : "umkehr",
         className,
       )}
     >

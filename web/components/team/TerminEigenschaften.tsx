@@ -5,14 +5,28 @@ import { wochentageText } from "@/lib/serie";
 import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { feldName, feldText } from "@/lib/termin-felder";
 import { verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
+import { FUER_ALLE } from "@/lib/kader";
+import { KaderLozenges } from "./KaderLozenge";
 
 /* Alle Angaben eines Termins ungekürzt (#403 AK 3, 5): Ort, Verantwortliche,
    Spielerzahl und Felder ausführlich, Bemerkung und die Wochentage der Serie.
    Fehlen Spielerzahl oder Felder, steht «Nicht erfasst» da (AK 6); Ort,
-   Verantwortliche, Bemerkung und Serie erscheinen nur, wenn es sie gibt.
+   Verantwortliche, Bemerkung und Serie erscheinen nur, wenn es sie gibt;
+   die Kader, sobald das Team welche führt — ohne steht «Für alle» (#453 AK 5).
    Geteilt vom nächsten Termin und dem Reiter «Termin» der Termin-Spalte
    (#435). */
-export function TerminEigenschaften({ t, ich, className }: { t: TerminZeile; ich: string; className?: string }) {
+export function TerminEigenschaften({
+  t,
+  ich,
+  mitKadern = false,
+  className,
+}: {
+  t: TerminZeile;
+  ich: string;
+  /** Das Team führt Kader: Dann steht auch «Für alle» da (#453 AK 5). */
+  mitKadern?: boolean;
+  className?: string;
+}) {
   const v = verantwortlicheMitDir(t, ich);
   const zahlText = spielerzahlLang(spielerzahlVon(t));
   return (
@@ -20,6 +34,12 @@ export function TerminEigenschaften({ t, ich, className }: { t: TerminZeile; ich
       {t.ort && <Eigenschaft label="Ort">{t.ort}</Eigenschaft>}
       {/* AK 4: wer man selbst ist, steht zuerst und mit «(du)». */}
       {v.text && <Eigenschaft label="Verantwortlich">{v.text}</Eigenschaft>}
+      {/* #453 AK 5: für welche Kader er gilt oder dass er für alle gilt. */}
+      {(mitKadern || t.kader.length > 0) && (
+        <Eigenschaft label="Kader">
+          {t.kader.length > 0 ? <KaderLozenges namen={t.kader.map((k) => k.name)} /> : FUER_ALLE}
+        </Eigenschaft>
+      )}
       {/* Aus der Spielerliste, sonst die erwartete Zahl (#434 AK 8); ein
           ausgefallener Termin nennt keine (#437 AK 4). */}
       {!t.ausgefallen && (zahlText ? (

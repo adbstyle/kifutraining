@@ -1,4 +1,5 @@
 import "server-only";
+import { KADER_MELDUNG } from "@/lib/kader";
 import { verfallBestaetigen } from "@/lib/spieler";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
@@ -23,7 +24,7 @@ import {
 } from "@/lib/termin-felder";
 import { kalenderMeldung } from "@/lib/veraltet";
 import { kurzeZeit } from "@/lib/queries/termine-fuer";
-import { heuteAmTrainingsort } from "@/lib/zeit";
+import { heuteAmTrainingsort, terminBegonnen } from "@/lib/zeit";
 import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import { HINWEIS_NICHTS_ENTSTANDEN, hinweisRest, kopiereTraining, type KopieErgebnis } from "@/lib/kern/kopie";
 import { gibtEsTraining, loescheTrainingMitBildern, raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
@@ -171,6 +172,8 @@ export type TerminFestlegen = {
   felder?: readonly FeldEingabe[] | null;
   /** Die erwartete Spielerzahl (#390); ohne Angabe: unbekannt. */
   spielerzahl?: number | null;
+  /** Für welche Kader der Termin gilt (#453 AK 1); ohne oder leer: für alle. */
+  kaderIds?: string[];
 };
 
 /** Einen einzelnen Termin ohne Training festlegen (AK 1–6), auch in der
@@ -187,6 +190,10 @@ export async function legeTerminFest(
   if (!felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
   if (zahl) return zahl;
+  // Kader nur an einem anstehenden Termin (#453 AK 1, 13) — vorab, damit
+  // kein Termin ohne die gewählten Kader stehen bleibt.
+  if (e.kaderIds?.length && terminBegonnen(e.datum, e.beginn))
+    return fehlschlag("regel", KADER_MELDUNG.KADER_TERMIN_BEGONNEN, { feld: "kader_ids" });
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
 
@@ -205,6 +212,18 @@ export async function legeTerminFest(
     .select("id")
     .single<{ id: string }>();
   if (error) return ausDbFehler(error);
+  // Ein neuer Termin hat keine Abmeldungen: Kader setzen lässt nichts verfallen.
+  if (e.kaderIds?.length) {
+    const k = await supabase.rpc("termin_kader_setzen", { p_termin: data.id, p_kader: e.kaderIds });
+    if (k.error) {
+      // Ohne seine Kader soll der Termin nicht stehen bleiben.
+      const weg = await supabase.from("training_termine").delete().eq("id", data.id);
+      if (weg.error) return ausDbFehler(weg.error);
+      return k.error.message.includes("KADER_NICHT_GEFUNDEN")
+        ? fehlschlag("nicht_gefunden", KADER_MELDUNG.KADER_NICHT_GEFUNDEN, { feld: "kader_ids" })
+        : ausDbFehler(k.error);
+    }
+  }
   return ok({ terminId: data.id, teamId: e.teamId });
 }
 
