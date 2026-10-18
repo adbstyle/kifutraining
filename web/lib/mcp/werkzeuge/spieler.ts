@@ -66,6 +66,7 @@ const SpielerAusgabe = z.object({
   jahrgang: z.number().int(),
   js_nummer: z.string().nullable(),
   link_bezogen: z.boolean().describe("Der aktuelle private Link wurde über die Selbstabholung herausgegeben."),
+  kader_ids: z.array(z.string()).describe("Die Kader, denen sie angehört («kader_abrufen» nennt die Namen)."),
 });
 
 // ── spielerliste_abrufen ────────────────────────────────────────────────────
@@ -94,6 +95,7 @@ export const spielerlisteAbrufen = werkzeug({
         jahrgang: s.jahrgang,
         js_nummer: s.jsNummer,
         link_bezogen: s.linkBezogen,
+        kader_ids: s.kaderIds,
       })),
     })),
 });
@@ -199,7 +201,8 @@ export const terminSpielerAbrufen = werkzeug({
   titel: "Wer an einem Termin kommt",
   beschreibung:
     "Nennt für einen Termin, welche Spieler:innen angemeldet und welche abgemeldet sind, dazu die Zahl der " +
-    "angemeldeten. «begonnen: true» heisst, der Stand ist der bei Beginn und lässt sich nicht mehr ändern. " +
+    "angemeldeten. Trägt der Termin Kader, stehen nur die Spieler:innen da, für die er gilt, je mit den Kadern, über die er " +
+    "für sie gilt. «begonnen: true» heisst, der Stand ist der bei Beginn und lässt sich nicht mehr ändern. " +
     `Ohne Spielerliste ist die Liste leer. ${ABMELDE_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: z.object({ termin_id: TerminId }),
@@ -212,6 +215,10 @@ export const terminSpielerAbrufen = werkzeug({
     begonnen: z.boolean(),
     angemeldet: z.number().int(),
     gesamt: z.number().int(),
+    kader: z
+      .array(z.object({ id: z.string().nullable(), name: z.string().nullable() }))
+      .describe("Für welche Kader der Termin gilt; leer heisst für alle. id null: ein ehemaliger Kader eines begonnenen Termins."),
+    nicht_betroffen: z.number().int().describe("Wie viele Spieler:innen des Teams der Termin nicht betrifft (0 an begonnenen)."),
     spieler: z.array(
       z.object({
         id: z.string().nullable().describe("Kennung der Spieler:in; null bei einer ehemaligen."),
@@ -219,6 +226,7 @@ export const terminSpielerAbrufen = werkzeug({
         nachname: z.string().nullable(),
         abgemeldet: z.boolean(),
         ehemalig: z.boolean(),
+        kader: z.array(z.string()).describe("Die Kader, über die der Termin für sie gilt; leer bei einem Termin für alle."),
       }),
     ),
   }),
@@ -232,12 +240,15 @@ export const terminSpielerAbrufen = werkzeug({
       begonnen: w.begonnen,
       angemeldet: w.angemeldet,
       gesamt: w.gesamt,
+      kader: w.kader,
+      nicht_betroffen: w.uebrige,
       spieler: w.spieler.map((s) => ({
         id: s.spielerId,
         vorname: s.vorname,
         nachname: s.nachname,
         abgemeldet: s.abgemeldet,
         ehemalig: s.ehemalig,
+        kader: s.kader,
       })),
     })),
 });
@@ -288,7 +299,8 @@ export const terminAbmeldungSetzen = werkzeug({
 /** Was jede Beschreibung eines Link-Werkzeugs über das Modell sagt. */
 const LINK_MODELL =
   "Jede Spieler:in hat einen privaten Link: Wer ihn öffnet, sieht ohne Konto den Teamnamen, Vor- und Nachnamen dieser " +
-  "Spieler:in und die anstehenden Termine des Teams mit der Zahl der Angemeldeten, und meldet sie bis zum Beginn ab und " +
+  "Spieler:in und die anstehenden Termine des Teams, die für sie gelten (bei Terminen mit Kadern nur die ihrer Kader, samt " +
+  "dieser Kader), mit der Zahl der Angemeldeten, und meldet sie bis zum Beginn ab und " +
   "wieder an — keine Namen anderer, kein Training, nichts Vergangenes. KiFu verschickt den Link nicht. Gib ihn nur der " +
   `Person weiter, die ihn verlangt, und nie in einer Gruppe. ${LINK_TEXT.warnung}`;
 

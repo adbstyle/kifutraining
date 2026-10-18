@@ -35,12 +35,28 @@ import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type 
 
 export const SPIELER_FELD = { feld: "spieler_id" } as const;
 
-const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen";
+const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, kader_spieler(kader_id)";
 
-type SpielerRoh = { id: string; vorname: string; nachname: string; jahrgang: number; js_nummer: string | null; link_bezogen: boolean };
+type SpielerRoh = {
+  id: string;
+  vorname: string;
+  nachname: string;
+  jahrgang: number;
+  js_nummer: string | null;
+  link_bezogen: boolean;
+  kader_spieler: { kader_id: string }[] | null;
+};
 
 function ausRoh(s: SpielerRoh): Spieler {
-  return { id: s.id, vorname: s.vorname, nachname: s.nachname, jahrgang: s.jahrgang, jsNummer: s.js_nummer, linkBezogen: s.link_bezogen };
+  return {
+    id: s.id,
+    vorname: s.vorname,
+    nachname: s.nachname,
+    jahrgang: s.jahrgang,
+    jsNummer: s.js_nummer,
+    linkBezogen: s.link_bezogen,
+    kaderIds: (s.kader_spieler ?? []).map((k) => k.kader_id),
+  };
 }
 
 /** Ein Fehler der Spieler-RPCs als Kern-Fehler: «nicht gefunden» ordnet nur
@@ -150,12 +166,13 @@ async function teamDesSpielers(supabase: SupabaseClient, spielerId: string): Pro
   return s.ok ? ok(s.wert.teamId) : s;
 }
 
-/** Führt das Team eine Spielerliste? Dann kommt die Spielerzahl anstehender
- *  Termine aus ihr (AK 8, 9). */
-export async function fuehrtSpielerliste(supabase: SupabaseClient, teamId: string): Promise<boolean> {
-  if (!istUuid(teamId)) return false;
+/** Wie viele Spieler:innen die Liste des Teams führt. Führt das Team eine,
+ *  kommt die Spielerzahl anstehender Termine aus ihr (#434 AK 8, 9); dazu
+ *  der Hinweis, für wie viele ein Termin mit Kadern gilt (#453 AK 8). */
+export async function anzahlSpieler(supabase: SupabaseClient, teamId: string): Promise<number> {
+  if (!istUuid(teamId)) return 0;
   const { count } = await supabase.from("spieler").select("id", { count: "exact", head: true }).eq("team_id", teamId);
-  return (count ?? 0) > 0;
+  return count ?? 0;
 }
 
 // ── Privater Link (#436) ────────────────────────────────────────────────────

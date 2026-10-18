@@ -27,6 +27,8 @@ import {
   verfallendeAbmeldungen,
 } from "@/lib/kern/termine";
 import { NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
+import { KADER_MELDUNG, kaderVerfallBestaetigen } from "@/lib/kader";
+import { mitVerfall, setzeTerminKader, type VerfallBestaetigt } from "@/lib/kern/kader";
 
 /**
  * Terminserien (#324, #326): festlegen, mit Reichweite ändern und entfernen,
@@ -58,7 +60,16 @@ export type SerieFestlegen = {
   /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1); ohne: unbekannt. */
   felder?: readonly FeldEingabe[] | null;
   spielerzahl?: number | null;
+  /** Die Kader jedes Termins der Serie (#453 AK 2); ohne oder leer: für alle. */
+  kaderIds?: string[];
 };
+
+/** Kader-Kennungen prüfen — eine falsch geformte ist für niemanden sichtbar. */
+function kaderIdsFehler(ids: readonly string[] | undefined) {
+  return ids && !ids.every(istUuid)
+    ? fehlschlag("nicht_gefunden", KADER_MELDUNG.KADER_NICHT_GEFUNDEN, { feld: "kader_ids" })
+    : null;
+}
 
 /** Eine Terminserie festlegen (#324): je gewähltem Wochentag im Zeitraum ein
  *  echter Termin ohne Training; bestehende Termine bleiben unberührt. */
@@ -75,6 +86,8 @@ export async function legeSerieFest(
   if (!felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
   if (zahl) return zahl;
+  const kader = kaderIdsFehler(e.kaderIds);
+  if (kader) return kader;
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
   const { data, error } = await supabase.rpc("terminserie_festlegen", {
@@ -89,6 +102,7 @@ export async function legeSerieFest(
     p_verantwortliche: verantwortliche.ids,
     p_felder: felder.felder,
     p_spielerzahl: e.spielerzahl ?? null,
+    p_kader: e.kaderIds ?? [],
   });
   if (error) return kalenderFehler(error);
   const r = data as { serie: string; termine: number };
@@ -111,6 +125,8 @@ export type SerienAenderung = {
   felder?: readonly FeldEingabe[] | null;
   /** Die erwartete Spielerzahl; `null` = unbekannt. */
   spielerzahl?: number | null;
+  /** Die Kader der Serie und der Termine, die ihr folgen (#453 AK 2); `[]` = für alle. */
+  kaderIds?: string[];
 };
 
 export type EntfallenderTermin = {
@@ -135,6 +151,8 @@ export type SerienFolge = {
   vergangene: number;
   /** Wie viele Abmeldungen die Änderung verfallen lässt (#437 AK 1). */
   abmeldungenVerfallend: number;
+  /** Wie viele, weil ein Termin für die Spieler:in nicht mehr gilt (#453 AK 10). */
+  abmeldungenKader: number;
   teamId: string;
 };
 
@@ -146,6 +164,7 @@ type Roh = {
   vergangene: number;
   /** Nur beim Ändern (`terminserie_aendern`). */
   abmeldungen_verfallend?: number;
+  abmeldungen_kader?: number;
 };
 
 function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): SerienFolge {
@@ -161,6 +180,7 @@ function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): Se
     entfallendAnzahl: r.entfallend_anzahl,
     vergangene: r.vergangene,
     abmeldungenVerfallend: r.abmeldungen_verfallend ?? 0,
+    abmeldungenKader: r.abmeldungen_kader ?? 0,
     teamId,
   };
 }
@@ -169,9 +189,13 @@ type Lauf = {
   vorschau?: boolean;
   /** Was die Oberfläche in der Vorschau sah; ohne (KI) rechnet der Kern die
    *  Vorschau selbst und verlangt `bestaetigt` für Vergangenes. */
-  erwartet?: { version: number; entfallend: string[] };
+  erwartet?: Erwartet;
   bestaetigt?: boolean;
 };
+
+/** Was die Oberfläche in der Vorschau sah (PO 17); `verfallend` ist die
+ *  Summe verfallender Abmeldungen, die sie bestätigt hat (#453 AK 12). */
+type Erwartet = { version: number; entfallend: string[]; verfallend?: number };
 
 type RpcAntwort = { data: unknown; error: { message: string; code?: string } | null };
 
@@ -195,7 +219,7 @@ async function laufe(
   supabase: SupabaseClient,
   teamId: string,
   lauf: Lauf,
-  rpc: (ausfuehren: boolean, erwartet: { version: number; entfallend: string[] } | null) => PromiseLike<RpcAntwort>,
+  rpc: (ausfuehren: boolean, erwartet: Erwartet | null) => PromiseLike<RpcAntwort>,
 ): Promise<KernErgebnis<SerienFolge>> {
   // Ohne `erwartet` spricht der KI-Weg: Vorschau und Ausführung laufen hier
   // hintereinander, ein Wettlauf dazwischen lässt sich wiederholen.
@@ -211,7 +235,19 @@ async function laufe(
       return fehlschlag("regel", vergangeneBestaetigen(vorschau.vergangene), { feld: "bestaetigt" });
     // #437 AK 1: verfallende Abmeldungen ebenso erst nach Bestätigung.
     if (vorschau.abmeldungenVerfallend > 0 && !lauf.bestaetigt) return verfallFehler(vorschau.abmeldungenVerfallend);
-    erwartet = { version: vorschau.versionVorher, entfallend: vorschau.entfallend.map((x) => x.terminId) };
+    // #453 AK 16: ebenso, wenn Termine für Spieler:innen nicht mehr gelten.
+    if (vorschau.abmeldungenKader > 0 && !lauf.bestaetigt)
+      return fehlschlag("regel", kaderVerfallBestaetigen(vorschau.abmeldungenKader), {
+        feld: "bestaetigt",
+        verfallend: vorschau.abmeldungenKader,
+      });
+    // Auch die Zahl verfallender Abmeldungen: Ändert sie sich bis zur
+    // Ausführung, weist die Datenebene ab (#453 AK 12), der Lauf ist wiederholbar.
+    erwartet = {
+      version: vorschau.versionVorher,
+      entfallend: vorschau.entfallend.map((x) => x.terminId),
+      verfallend: vorschau.abmeldungenVerfallend + vorschau.abmeldungenKader,
+    };
   }
   const terminTrainings = await terminTrainingsDerTermine(supabase, erwartet.entfallend);
   const bilder = await terminTrainingBilder(supabase, [...terminTrainings]);
@@ -243,7 +279,8 @@ export async function aendereSerie(
     a.bemerkung === undefined &&
     a.verantwortliche === undefined &&
     a.felder === undefined &&
-    a.spielerzahl === undefined
+    a.spielerzahl === undefined &&
+    a.kaderIds === undefined
   )
     return fehlschlag("eingabe", SERIE_MELDUNG.KEINE_AENDERUNG);
   if (a.von !== undefined && !istKalendertag(a.von)) return fehlschlag("eingabe", TERMIN_TEXT.datum, { feld: "von" });
@@ -260,6 +297,8 @@ export async function aendereSerie(
   if (felder && !felder.ok) return felder;
   const zahl = spielerzahlFehler(a.spielerzahl);
   if (zahl) return zahl;
+  const kader = kaderIdsFehler(a.kaderIds);
+  if (kader) return kader;
 
   // Die Regel vorab prüfen, mit den Feldnamen des Werkzeugs (AK 5, PC 19) —
   // nur wenn sie sich ändert: Eine reine Werteänderung an einem verlegten
@@ -293,6 +332,7 @@ export async function aendereSerie(
   // Schlüssel vorhanden mit null heisst «auf unbekannt setzen» (#391).
   if (felder) aenderung.felder = felder.felder;
   if (a.spielerzahl !== undefined) aenderung.spielerzahl = a.spielerzahl;
+  if (a.kaderIds !== undefined) aenderung.kader = [...new Set(a.kaderIds)];
 
   return laufe(supabase, t.team_id, e, async (ausfuehren, erwartet) =>
     supabase.rpc("terminserie_aendern", {
@@ -302,6 +342,7 @@ export async function aendereSerie(
       p_version: erwartet?.version ?? null,
       p_entfallend: ausfuehren ? (erwartet?.entfallend ?? null) : null,
       p_ausfuehren: ausfuehren,
+      p_verfallend: ausfuehren ? (erwartet?.verfallend ?? null) : null,
     }),
   );
 }
@@ -328,11 +369,11 @@ export async function entferneSerie(
   );
 }
 
-export type FolgeAngabe = "zeit" | "ort" | "bemerkung" | "verantwortliche" | "felder" | "spielerzahl";
+export type FolgeAngabe = "zeit" | "ort" | "bemerkung" | "verantwortliche" | "felder" | "spielerzahl" | "kader";
 /** Auch das Datum lässt sich nennen — die Datenebene weist es ab (PO 3). */
 export type FolgeWunsch = FolgeAngabe | "datum";
 
-const FOLGE_ANGABEN: readonly FolgeAngabe[] = ["zeit", "ort", "bemerkung", "verantwortliche", "felder", "spielerzahl"];
+const FOLGE_ANGABEN: readonly FolgeAngabe[] = ["zeit", "ort", "bemerkung", "verantwortliche", "felder", "spielerzahl", "kader"];
 
 /** Abweichende Angaben wieder der Serie folgen lassen (#326 AK 6; das Datum
  *  nie, PO 3 — «datum» reicht der Kern an die Datenebene durch, die es mit
@@ -340,8 +381,15 @@ const FOLGE_ANGABEN: readonly FolgeAngabe[] = ["zeit", "ort", "bemerkung", "vera
 export async function folgeDerSerie(
   supabase: SupabaseClient,
   _userId: string,
-  e: { terminId: string; angaben: FolgeWunsch[]; bestaetigt?: boolean },
-): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
+  e: {
+    terminId: string;
+    angaben: FolgeWunsch[];
+    /** Die Oberfläche bestätigt eine Verlegung mit `true`, verfallende
+     *  Abmeldungen durch Kader mit deren Zahl (#453 AK 10, 12); die KI
+     *  bestätigt mit `true` beides. */
+    bestaetigt?: VerfallBestaetigt | false;
+  },
+): Promise<KernErgebnis<{ terminId: string; teamId: string; verfallen: number }>> {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   if (e.angaben.length === 0 || e.angaben.some((x) => x !== "datum" && !FOLGE_ANGABEN.includes(x)))
     return fehlschlag("eingabe", SERIE_MELDUNG.SERIE_ANGABEN_UNGUELTIG, {
@@ -362,14 +410,20 @@ export async function folgeDerSerie(
       if (n.wert > 0) return verfallFehler(n.wert);
     }
   }
-  const { data, error } = await supabase.rpc("termin_der_serie_folgen", { p_termin: e.terminId, p_angaben: e.angaben });
-  if (error) return kalenderFehler(error);
-  return ok({ terminId: e.terminId, teamId: (data as { team: string }).team });
+  // #453: Folgen die Kader, zählt und bestätigt die Datenebene den Verfall.
+  const r = await mitVerfall<{ team: string; verfallen: number }>(
+    e.bestaetigt === false ? undefined : e.bestaetigt,
+    (zahl) => supabase.rpc("termin_der_serie_folgen", { p_termin: e.terminId, p_angaben: e.angaben, p_bestaetigt: zahl }),
+    (f) => kalenderFehler(f),
+  );
+  return r.ok ? ok({ terminId: e.terminId, teamId: r.wert.team, verfallen: r.wert.verfallen }) : r;
 }
 
 // ── Der KI-Weg: ein Werkzeug, die Reichweite als Angabe (#326 AK 10, 11) ──────
 
 export type MitReichweite = TerminAendern & {
+  /** Die Kader des Termins bzw. der Serie (#453); `[]` = für alle. */
+  kaderIds?: string[];
   reichweite?: Reichweite;
   wochentage?: Wochentag[];
   von?: string;
@@ -401,10 +455,24 @@ export async function aendereMitReichweite(
 
   if (!t.serie_id || e.reichweite === "nur_dieser") {
     if (regel) return fehlschlag("regel", SERIE_MELDUNG.REGEL_NUR_SERIE, { feld: "reichweite" });
-    const r = await aendereTermin(supabase, userId, e);
-    return r.ok
-      ? ok({ terminId: r.wert.terminId, teamId: r.wert.teamId, serie: null, abmeldungenVerfallen: r.wert.abmeldungenVerfallen })
-      : r;
+    const { kaderIds, ...felder } = e;
+    const nurKader =
+      kaderIds !== undefined &&
+      [felder.datum, felder.beginn, felder.ende, felder.ort, felder.bemerkung, felder.felder, felder.spielerzahl].every((x) => x === undefined);
+    let verfallen = 0;
+    let teamId = t.team_id;
+    if (!nurKader) {
+      const r = await aendereTermin(supabase, userId, felder);
+      if (!r.ok) return r;
+      verfallen = r.wert.abmeldungenVerfallen;
+      teamId = r.wert.teamId;
+    }
+    if (kaderIds !== undefined) {
+      const k = await setzeTerminKader(supabase, userId, { terminId: t.id, kaderIds, bestaetigt: e.bestaetigt === true ? true : undefined });
+      if (!k.ok) return k;
+      verfallen += k.wert.verfallen;
+    }
+    return ok({ terminId: t.id, teamId, serie: null, abmeldungenVerfallen: verfallen });
   }
   if (e.datum !== undefined) return fehlschlag("regel", SERIE_MELDUNG.DATUM_NUR_EINZELN, { feld: "datum" });
   const r = await aendereSerie(supabase, userId, {
@@ -420,11 +488,17 @@ export async function aendereMitReichweite(
       bemerkung: e.bemerkung,
       felder: e.felder,
       spielerzahl: e.spielerzahl,
+      kaderIds: e.kaderIds,
     },
     bestaetigt: e.bestaetigt === true,
   });
   return r.ok
-    ? ok({ terminId: e.terminId, teamId: r.wert.teamId, serie: r.wert, abmeldungenVerfallen: r.wert.abmeldungenVerfallend })
+    ? ok({
+        terminId: e.terminId,
+        teamId: r.wert.teamId,
+        serie: r.wert,
+        abmeldungenVerfallen: r.wert.abmeldungenVerfallend + r.wert.abmeldungenKader,
+      })
     : r;
 }
 

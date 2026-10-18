@@ -31,13 +31,13 @@ function fehler(r: { meldung: string; feld?: string }): Fehler {
 export async function nimmSpielerAufAktion(
   teamId: string,
   e: SpielerEingabe,
-): Promise<{ ok: true; ersetzt: number } | Fehler> {
+): Promise<{ ok: true; spielerId: string; ersetzt: number } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await nimmSpielerAuf(a.supabase, a.userId, { ...e, teamId });
   if (!r.ok) return fehler(r);
   revalidiereTeam(teamId);
-  return { ok: true, ersetzt: r.wert.ersetzt };
+  return { ok: true, spielerId: r.wert.spielerId, ersetzt: r.wert.ersetzt };
 }
 
 export async function aendereSpielerAktion(spielerId: string, e: SpielerEingabe): Promise<{ ok: true } | Fehler> {

@@ -7,12 +7,17 @@ import { TeamNameFeld } from "@/components/team/TeamNameFeld";
 import { getTeam, getTeamAufloesungsInfo } from "@/lib/queries/teams";
 import { createClient } from "@/lib/supabase/server";
 import { ladeSpielerliste, leseAbholung } from "@/lib/kern/spieler";
+import { ladeKader } from "@/lib/kern/kader";
+import { KaderKarte } from "@/components/team/KaderKarte";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { abholUrl } from "@/lib/spieler";
 
 
 /* Die Teamverwaltung: wie das Team heisst, wer dabei ist — Mitglieder und
  * Spieler:innen (#434) — und wie man wieder herauskommt (Story 17).
+ *
+ * Die Kader (#452) stehen unter der Spielerliste: Sie teilen deren
+ * Spieler:innen ein.
  *
  * Das gehört zusammen, weil es das Team selbst betrifft und nicht die
  * Trainingsarbeit. Die Zahlen für den Auflösen-Dialog werden nur
@@ -34,15 +39,17 @@ export default async function TeamVerwaltungPage({
 
   // Der Rahmen hat das Team bereits geladen und die Zugehörigkeit geprüft;
   // `getTeam` antwortet hier aus dem Request-Cache.
-  const [team, aufloesung, liste, abholung, origin] = await Promise.all([
+  const [team, aufloesung, liste, kader, abholung, origin] = await Promise.all([
     getTeam(id),
     getTeamAufloesungsInfo(id),
     ladeSpielerliste(supabase, user.id, { teamId: id }),
+    ladeKader(supabase, user.id, { teamId: id }),
     leseAbholung(supabase, user.id, { teamId: id }),
     oeffentlicherOrigin(),
   ]);
   if (!team) redirect("/teams");
   if (!liste.ok) throw new Error(liste.meldung);
+  if (!kader.ok) throw new Error(kader.meldung);
 
   return (
     <div className="flex flex-col gap-4">
@@ -54,11 +61,16 @@ export default async function TeamVerwaltungPage({
         <SpielerListe
           teamId={team.id}
           spieler={liste.wert.spieler}
+          kader={kader.wert.kader}
           abholung={{
             url: abholung.ok && abholung.wert.token ? abholUrl(origin, abholung.wert.token) : null,
             aktiv: abholung.ok && abholung.wert.aktiv,
           }}
         />
+      </Card>
+
+      <Card className="p-5 sm:p-6">
+        <KaderKarte teamId={team.id} kader={kader.wert.kader} />
       </Card>
 
       <Card className="p-5 sm:p-6">

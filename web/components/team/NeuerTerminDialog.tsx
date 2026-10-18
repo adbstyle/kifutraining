@@ -11,6 +11,8 @@ import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
 import { usePlatzAngaben } from "./usePlatzAngaben";
 import { terminBegonnen } from "@/lib/zeit";
+import type { Kader } from "@/lib/kader";
+import { KaderWahl } from "./KaderWahl";
 
 export type SerieFelder = {
   wochentage: Wochentag[];
@@ -22,16 +24,18 @@ export type SerieFelder = {
   bemerkung: string;
   /** Kennungen der Mitglieder, die jeder Termin der Serie trägt (#325 AK 3). */
   verantwortliche: string[];
+  /** Für welche Kader jeder Termin gilt (#453 AK 1, 2); leer = für alle. */
+  kaderIds: string[];
 };
 
 /** Was der Dialog festlegt: einen einzelnen Termin (#322 AK 1) oder eine
  *  Terminserie (#324 AK 1), beide mit Feldern und erwarteter Spielerzahl
  *  (#389, #390, #391 AK 1). `verantwortlich` nur, wenn jemand gewählt ist. */
 export type NeuerTermin =
-  | { art: "einzeln"; felder: TerminFelder; verantwortlich?: VerantwortlicheWert }
+  | { art: "einzeln"; felder: TerminFelder; verantwortlich?: VerantwortlicheWert; kaderIds: string[] }
   | { art: "serie"; felder: SerieFelder & { felder: Felder | null; spielerzahl: number | null } };
 
-const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: "", ort: "", bemerkung: "", verantwortliche: [] };
+const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: "", ort: "", bemerkung: "", verantwortliche: [], kaderIds: [] };
 
 /* Einen neuen Termin erstellen — einzeln oder, mit «Wiederholender Termin»,
    als Terminserie. Ein Einstieg statt zweier: Die Angaben sind dieselben, die
@@ -48,13 +52,15 @@ const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: 
 
    Erwartete Spielerzahl (#390 AK 1) und Felder des Platzes (#389 AK 1, 8)
    gelten für den einzelnen Termin wie für jeden Termin einer Serie
-   (#391 AK 1). */
+   (#391 AK 1). Führt das Team Kader, gilt er für die gewählten (#453). */
 export function NeuerTerminDialog({
   open,
   pending,
   fehler: serverFehler,
   mitglieder,
   fuehrtListe,
+  kader = [],
+  spielerGesamt = 0,
   onClose,
   onSpeichern,
 }: {
@@ -62,6 +68,9 @@ export function NeuerTerminDialog({
   pending?: boolean;
   fehler?: string;
   mitglieder: readonly TeamMitglied[];
+  /** Die Kader des Teams (#453) und wie viele Spieler:innen die Liste führt. */
+  kader?: readonly Kader[];
+  spielerGesamt?: number;
   /** Das Team führt eine Spielerliste (#434): kein Feld für die Spielerzahl. */
   fuehrtListe?: boolean;
   onClose: () => void;
@@ -134,7 +143,8 @@ export function NeuerTerminDialog({
     setProblem(p && { feld: p.feld === "datum" ? "von" : p.feld, text: p.text });
     if (!p && angaben) {
       const verantwortlich = f.verantwortliche.length > 0 ? { userIds: f.verantwortliche, anonyme: [] } : undefined;
-      senden({ art: "einzeln", felder, verantwortlich });
+      const begonnen = terminBegonnen(f.von, f.beginn);
+      senden({ art: "einzeln", felder, verantwortlich, kaderIds: begonnen ? [] : f.kaderIds });
     }
   }
 
@@ -146,7 +156,7 @@ export function NeuerTerminDialog({
       breit
       actions={
         <>
-          <Button variant="text" onClick={onClose}>Abbrechen</Button>
+          <Button variant="outlined" onClick={onClose}>Abbrechen</Button>
           <Button variant="filled" onClick={speichern} disabled={pending}>Erstellen</Button>
         </>
       }
@@ -194,6 +204,17 @@ export function NeuerTerminDialog({
           onChange={(w) => setze("verantwortliche", w.userIds)}
           disabled={pending}
         />
+        {kader.length > 0 && (
+          <KaderWahl
+            kader={kader}
+            spielerGesamt={spielerGesamt}
+            wert={f.kaderIds}
+            onChange={(ids) => setze("kaderIds", ids)}
+            // Kader gelten nur an anstehenden Terminen (#453 AK 1); eine Serie legt nur anstehende an.
+            begonnen={!wiederholen && !!f.von && !!f.beginn && terminBegonnen(f.von, f.beginn)}
+            disabled={pending}
+          />
+        )}
         {/* Ein einzelner Termin, der schon begonnen hat, nimmt die erwartete Zahl an (Migration spielerliste). */}
         <SpielerzahlField
           {...platz.spielerzahlProps}

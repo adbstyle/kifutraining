@@ -6,6 +6,7 @@ import { sortStufen } from "@/lib/training";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 import type { KategorieSlug } from "@/lib/vocab";
 import type { Spielstand } from "@/lib/spieler";
+import { nachKaderName, nachTerminKader, type TerminKader } from "@/lib/kader";
 
 /**
  * Termine lesen für einen Client, der bereits als Nutzer spricht (Cookie-
@@ -39,6 +40,8 @@ export type TerminSerie = {
   spielerzahl: number | null;
   /** Wer die Serie vorgibt (#325), nach Name geordnet. */
   verantwortliche: { userId: string; name: string }[];
+  /** Die Kader, die die Serie vorgibt (#453), nach Namen; leer = für alle. */
+  kader: { id: string; name: string }[];
 };
 
 /** Ein Eintrag der Verantwortlichen eines Termins (#325). */
@@ -55,7 +58,7 @@ export type Verantwortlicher = {
 /** Welche Angaben eines Serientermins von seiner Serie abweichen (#326 AK 12,
  *  14; PO 3). Das Datum weicht ab, wenn der Termin nicht mehr an seinem
  *  Serientag liegt. */
-export type Abweichung = "datum" | "zeit" | "ort" | "bemerkung" | "verantwortliche" | "felder" | "spielerzahl";
+export type Abweichung = "datum" | "zeit" | "ort" | "bemerkung" | "verantwortliche" | "felder" | "spielerzahl" | "kader";
 
 export type TerminZeile = {
   id: string;
@@ -87,6 +90,9 @@ export type TerminZeile = {
   /** Wer den Termin vorbereitet und leitet (#325), nach Name geordnet,
    *  Einträge gelöschter Konten zuletzt. */
   verantwortliche: Verantwortlicher[];
+  /** Für wen der Termin gilt (#453 AK 5): leer = für alle; ein Eintrag ohne
+   *  Namen ist ein ehemaliger Kader an einem begonnenen Termin (PC 4). */
+  kader: TerminKader[];
   /** Der Termin findet nicht statt (#327); ein Training ruht dann an ihm. */
   ausgefallen: boolean;
   /** Freiwilliger Grund des Ausfalls; nur bei `ausgefallen`. */
@@ -139,6 +145,7 @@ type RawTermin = {
   verantwortliche_abweichend: boolean;
   felder_abweichend: boolean;
   spielerzahl_abweichend: boolean;
+  kader_abweichend: boolean;
   ausgefallen: boolean;
   ausfall_grund: string | null;
   termin_verantwortliche: {
@@ -147,6 +154,7 @@ type RawTermin = {
     verantwortlich_name: string | null;
     verantwortlich_ehemalig: boolean;
   }[];
+  termin_kader: { kader_id: string | null; kader: { name: string } | null }[];
   trainings: { id: string; name: string; stufen: string[] | null; termin_training: boolean } | null;
   termin_serien: {
     id: string;
@@ -161,6 +169,7 @@ type RawTermin = {
     felder: Felder | null;
     erwartete_spielerzahl: number | null;
     termin_serien_verantwortliche: { user_id: string; verantwortlich_name: string | null }[];
+    termin_serien_kader: { kader_id: string; kader: { name: string } | null }[];
   } | null;
 };
 
@@ -175,11 +184,12 @@ export function kurzeZeit(t: string): string {
 }
 
 const TERMIN_SELECT =
-  "id, team_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, felder_abweichend, spielerzahl_abweichend, ausgefallen, ausfall_grund, " +
+  "id, team_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, felder_abweichend, spielerzahl_abweichend, kader_abweichend, ausgefallen, ausfall_grund, " +
   "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ), " +
+  "termin_kader ( kader_id, kader ( name ) ), " +
   "trainings ( id, name, stufen, termin_training ), " +
   "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, " +
-  "termin_serien_verantwortliche ( user_id, verantwortlich_name ) )";
+  "termin_serien_verantwortliche ( user_id, verantwortlich_name ), termin_serien_kader ( kader_id, kader ( name ) ) )";
 
 /** Nach Anzeigename ordnen, unbenannte (gelöschte Konten) zuletzt. Der Schlüssel
  *  (Eintrags- bzw. Konto-Kennung) macht die Reihenfolge bei gleichem Namen stabil. */
@@ -237,6 +247,7 @@ function mapTermin(t: RawTermin): TerminZeile {
             (v) => v.name,
             (v) => v.userId,
           ),
+          kader: nachKaderName((t.termin_serien.termin_serien_kader ?? []).map((k) => ({ id: k.kader_id, name: k.kader?.name ?? "" }))),
         }
       : null,
     serienTag: t.serien_tag,
@@ -249,6 +260,7 @@ function mapTermin(t: RawTermin): TerminZeile {
           t.verantwortliche_abweichend && "verantwortliche",
           t.felder_abweichend && "felder",
           t.spielerzahl_abweichend && "spielerzahl",
+          t.kader_abweichend && "kader",
         ].filter(Boolean) as Abweichung[])
       : [],
     verantwortliche: nachName(
@@ -261,6 +273,7 @@ function mapTermin(t: RawTermin): TerminZeile {
       (v) => v.name,
       (v) => v.eintragId,
     ),
+    kader: nachTerminKader((t.termin_kader ?? []).map((k) => ({ id: k.kader_id, name: k.kader?.name ?? null }))),
     ausgefallen: t.ausgefallen,
     ausfallGrund: t.ausfall_grund,
   };

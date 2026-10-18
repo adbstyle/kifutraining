@@ -19,6 +19,7 @@ import { cn } from "@/lib/cn";
 import { ButtonLink } from "./Button";
 import { Lozenge } from "./Lozenge";
 import { IconButton } from "./IconButton";
+import { ZeichenPunkt } from "./ZeichenPunkt";
 import { tooltipFlaeche } from "./Tooltip";
 
 /* ── Typen ──────────────────────────────────────────────────── */
@@ -420,13 +421,7 @@ export function Seitenleiste({
                   />
                   {/* Schmal fehlt die Plakette; dann trägt das Zeichen den Punkt. */}
                   {version.neu && schmalAb && (
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-elev-01",
-                        schmalAb === "lg" && "max-lg:hidden",
-                      )}
-                    />
+                    <ZeichenPunkt ton="primary" className={cn(schmalAb === "lg" && "max-lg:hidden")} />
                   )}
                 </span>
                 <span className={cn("truncate", k?.textWeg)}>Version {version.nummer}</span>

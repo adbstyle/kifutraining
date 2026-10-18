@@ -15,6 +15,7 @@ import {
   PrintButton,
   IconButton,
   IconButtonLink,
+  ZeichenPunkt,
   BlattLozenge,
   Kalenderblatt,
   KategorieLozenge,
@@ -61,6 +62,7 @@ import { CheckboxDemo } from "./CheckboxDemo";
 import { SwitchDemo } from "./SwitchDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
+import { TabelleAuswahlDemo } from "./TabelleAuswahlDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
@@ -93,6 +95,8 @@ import {
   CalendarOff,
   TriangleAlert,
   CalendarPlus,
+  Link2,
+  Tag,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { ROTATIONEN, SPIELER_POSEN, type DiagrammElement } from "@/lib/diagramm";
@@ -123,6 +127,7 @@ import {
   type LozengeAppearance,
 } from "@/lib/farben";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { KaderLozenge } from "@/components/team/KaderLozenge";
 import { VERZEICHNIS_COOKIE, leseVerzeichnis } from "@/lib/verzeichnis";
 
 export const metadata: Metadata = {
@@ -1391,6 +1396,24 @@ export default async function Styleguide() {
           </div>
 
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
+            Punkt am Zeichen (<code>ZeichenPunkt</code>, <code>punkt</code>) - wie die Benachrichtigung an einem App-Symbol
+          </p>
+          <div className="flex items-center gap-4">
+            <span className="relative inline-flex h-9 w-9 items-center justify-center text-on-surface-mittel">
+              <span className="relative">
+                <Tag size={18} strokeWidth={2} aria-hidden />
+                <ZeichenPunkt ton="primary" />
+              </span>
+            </span>
+            <IconButton icon={Link2} label="Privater Link, bezogen" punkt="success" />
+            <span className="type-label-small text-on-surface-mittel">
+              primary: Neues (Version, schmale Leiste) · success: ein erreichter Zustand (Link bezogen). Nur das
+              Bemerkenswerte trägt einen Punkt, der Normalfall keinen - sonst wird die Liste laut. Stumm - was er
+              meldet, steht im Namen des Knopfs.
+            </span>
+          </div>
+
+          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Icon-Knopf als Link (<code>IconButtonLink</code>) + Tooltip (24dp)
           </p>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
@@ -1825,6 +1848,14 @@ export default async function Styleguide() {
             steht sie auf der Linie der Feldnamen, eingerückt wie sie (
             <code>px-3.5</code>), damit alles linksbündig liest (PO 2026-10-06).
             Ein Filter ist sie nicht - der bleibt ein <code>FilterChip</code> (<Siehe id="plaketten" />).
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Teilweise</strong> (<code>teilweise</code>, #452): Für eine
+            Auswahl gilt die Angabe nur zum Teil - beim Zuteilen von Kadern
+            gehört nur ein Teil der gewählten Spieler:innen einem Kader an. Das
+            Kästchen ist gefüllt wie gewählt, trägt aber einen Strich statt des
+            Hakens, und der Browser meldet «gemischt». Ein Klick macht daraus
+            «gewählt»; zurück zum Strich geht es erst beim neuen Öffnen.
           </p>
           <CheckboxDemo />
 
@@ -2346,6 +2377,20 @@ export default async function Styleguide() {
             <Lozenge>Kinderfussball</Lozenge>
             <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
           </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>Kader</strong> (<code>KaderLozenge</code>, Epic #447): ein
+            Teil des Teams, den die Trainer:innen selbst benennen - in der
+            Spielerliste, im Trainingsplan, am Termin und am privaten Link.
+            Neutral und ohne Zeichen, nur der Name (PO 2026-10-18): Ein Kader
+            trägt keine Farbe, und ein Zeichen machte aus jeder Zeile mit drei
+            Kadern ein Muster. Ein entfernter Kader steht an begonnenen Terminen
+            gedämpft als «Ehemaliger Kader».
+          </p>
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <KaderLozenge name="Stärkeklasse 1" />
+            <KaderLozenge name="Torhüterinnen" />
+            <KaderLozenge name={null} />
+          </div>
           <div className="mb-6 flex flex-wrap items-center gap-3 rounded-flaeche bg-[linear-gradient(135deg,#f5f5f0,#9aa79c)] p-3">
             <HerkunftLozenge herkunft="manual" aufBild />
             <HerkunftLozenge herkunft="user" visibility="private" aufBild />
@@ -2379,16 +2424,20 @@ export default async function Styleguide() {
             <Badge>2</Badge>
             <Badge>12</Badge>
             <Badge>3×</Badge>
+            <Badge appearance="neutral">14</Badge>
           </div>
           <p className="type-body-medium mb-6 max-w-2xl text-on-surface-mittel">
             <strong>Badge</strong> heisst der Zähler wie bei Atlassian: eine Zahl
             an einem Knopf, die zählt, was dessen Handlung bewirkt (gewählte Werte
-            am Filterknopf, Übernahmen in der Übungsauswahl). Anatomie wie{" "}
+            am Filterknopf, Übernahmen in der Übungsauswahl, die Spieler:innen,
+            auf die ein Kader-Chip eingrenzt). Anatomie wie{" "}
             <code>@atlaskit/badge</code>: <code>rounded-klein</code>, 4 px
             seitlich, mindestens 24 px breit, <code>type-lozenge</code>. Gefüllt
             in Primary - Atlassians Markenfarbe ist bei uns das Lila -, weil sie
             als Teil des Knopfes gelesen wird, nicht als eigene Aussage über den
-            Inhalt. Für die Vorlesehilfe stumm: Der Knopf sagt die Zahl in Worten.
+            Inhalt. Für die Vorlesehilfe stumm: Der Knopf sagt die Zahl in Worten.{" "}
+            <code>appearance=&quot;neutral&quot;</code> (hell, <code>umkehr</code>) trägt ein Filter-Chip in Ruhe;
+            gewählt wird seine Zahl Primary wie Kontur und Schrift.
           </p>
 
           <p className="type-label-small mb-2 text-on-surface-mittel">Chips</p>
@@ -2687,6 +2736,21 @@ export default async function Styleguide() {
             Geheimnis, geht die Warnung
             als Section Message im Dialog voran.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Die <strong>Auswahlleiste</strong> (<code>AuswahlLeiste</code>) trägt
+            die Handlungen für mehrere ausgewählte Zeilen einer Liste. Sie schwebt
+            unten in der Mitte am Platz der Snackbar, solange etwas ausgewählt
+            ist - in einer langen Liste bleibt sie so in Reichweite, statt über
+            der Liste aus dem Bild zu scrollen. Ihre Fläche ist dunkel (
+            <code>elev-08</code>, Schatten 06dp): Sie ist Werkzeug, keine Meldung,
+            und bleibt neben der hellen Snackbar als etwas anderes lesbar. Eine
+            Snackbar rückt über sie, und die Seite hält unten ihre Höhe frei -
+            beides regelt der Platz am unteren Rand (<code>unterRand</code>,{" "}
+            <code>FussleisteKontext</code>). Sie liegt unter Snackbar und Dialog.
+            Im DOM steht sie nach der Liste, damit Tab aus einer Zeile vorwärts
+            zu ihr führt; geht sie mit dem Fokus darin zu, kehrt er zurück, woher
+            er kam. Vorgeführt bei der Tabelle (› Tabelle, Mehrfachauswahl).
+          </p>
           <OverlaysDemo />
         </Section>
 
@@ -2892,6 +2956,20 @@ export default async function Styleguide() {
               </TabellenZeile>
             ))}
           </Tabelle>
+
+          <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+            Mit Mehrfachauswahl und Auswahlleiste
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Lässt sich für mehrere Einträge zugleich etwas tun (Kader zuteilen in
+            der Spielerliste), steht vorne in jeder Zeile ein Kästchen
+            (<code>Checkbox</code>, Name nur für die Vorlesehilfe) in einer
+            eigenen schmalen Spalte ohne Kopf. Sobald etwas gewählt ist, schwebt
+            unten die <code>AuswahlLeiste</code> mit der Zahl, den Handlungen und
+            «Auswahl aufheben» - am Platz der Snackbar, die dann über ihr steht.
+            Wer die Liste eingrenzt, behält nur sichtbare Einträge in der Auswahl.
+          </p>
+          <TabelleAuswahlDemo />
         </Section>
 
         <Section id="eigenschaften">

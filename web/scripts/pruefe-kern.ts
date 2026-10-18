@@ -154,6 +154,24 @@ import {
   abholUrl,
 } from "../lib/spieler";
 import {
+  KADER_MELDUNG,
+  KADER_NAME_MAX,
+  KADER_TEXT,
+  VERFALL_MARKER,
+  giltFuerAnzahl,
+  giltFuerText,
+  nachTerminKader,
+  uebrigeText,
+  kaderNameProblem,
+  kaderVerfallBestaetigen,
+  kaderVerfallGeaendert,
+  kaderVerfallText,
+  kaderVon,
+  nachKaderName,
+  verfallAusFehler,
+  zugehoerigkeit,
+} from "../lib/kader";
+import {
   IMPORT_TEXT,
   dekodiere,
   erkenneSpalten,
@@ -567,7 +585,7 @@ pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit 
 });
 
 pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
-  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: false, ausfallGrund: null };
+  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], kader: [], ausgefallen: false, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
   assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
   assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } }, "2026-10-01"), false);
@@ -582,7 +600,7 @@ pruefe("Ausfall: Grund mit den Regeln der Bemerkung; nicht vorbereitet schliesst
   assert.equal(TERMIN_MELDUNG.NICHT_AUSGEFALLEN, "Dieser Termin ist nicht ausgefallen.");
   assert.ok(!KONFLIKT_MARKER.includes("TERMIN_AUSGEFALLEN"), "eine Regel, kein Konflikt");
   const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null,
-    training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: true, ausfallGrund: null };
+    training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], kader: [], ausgefallen: true, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-01"), false, "AK 8");
   assert.equal(nochNichtVorbereitet({ ...t, ausgefallen: false }, "2026-10-01"), true);
 });
@@ -615,6 +633,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     serienTag: null,
     abweichungen: [],
     verantwortliche: [],
+    kader: [],
     ausgefallen: false,
     ausfallGrund: null,
   };
@@ -876,6 +895,10 @@ pruefe("Serien-Marker: kein Marker steckt in einem anderen (includes-Suche bleib
     ...Object.keys(TERMIN_MELDUNG),
     ...Object.keys(SERIE_MELDUNG),
     ...Object.keys(SPIELER_MELDUNG),
+    ...Object.keys(KADER_MELDUNG),
+    // Wird vor der Übersetzung abgefangen (lib/kern/kader.ts), darf aber
+    // keinen Satz treffen.
+    VERFALL_MARKER,
   ];
   assert.equal(new Set(alle).size, alle.length, "Marker doppelt vergeben");
   for (const a of alle)
@@ -999,7 +1022,7 @@ pruefe("Serie: Felder und Spielerzahl mit denselben Sätzen, jede Reichweite, fo
   assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false }), ["nur_dieser", "dieser_und_folgende", "alle"]);
   assert.equal(
     SERIE_MELDUNG.SERIE_ANGABEN_UNGUELTIG,
-    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Verantwortliche, Felder oder Spielerzahl.",
+    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Verantwortliche, Felder, Spielerzahl oder Kader.",
   );
 });
 
@@ -1830,6 +1853,8 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
         assert.ok(block.includes("TERMIN_KENNUNG_FEHLER"), `${m[1]} nimmt termin_id, erklärt aber TERMIN_KENNUNG_FEHLER nicht`);
       if (/\bSpielerId\b/.test(eingabe))
         assert.ok(block.includes("SPIELER_KENNUNG_FEHLER"), `${m[1]} nimmt spieler_id, erklärt aber SPIELER_KENNUNG_FEHLER nicht`);
+      if (/\bKaderId\b/.test(eingabe))
+        assert.ok(block.includes("KADER_KENNUNG_FEHLER"), `${m[1]} nimmt kader_id, erklärt aber KADER_KENNUNG_FEHLER nicht`);
     }
   }
 
@@ -1874,6 +1899,8 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#435": ["termin_spieler_abrufen", "termin_abmeldung_setzen"],
     "#436": ["spieler_link_abrufen", "spieler_link_erneuern"],
     "#438": ["selbstabholung_abrufen", "selbstabholung_schalten", "abholadresse_erneuern"],
+    "#453": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "termin_spieler_abrufen"],
+    "#452": ["kader_abrufen", "kader_anlegen", "kader_umbenennen", "kader_entfernen", "kader_zuteilen", "kader_herausnehmen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
@@ -2053,7 +2080,7 @@ pruefe("Abmelden: Abweisung nennt den Stand, Liste nach Name mit ehemaligen zule
   assert.equal(abweisungText("begonnen"), ABMELDUNG_TEXT.begonnen);
   assert.equal(abweisungText("ausgefallen"), ABMELDUNG_TEXT.ausgefallen);
   assert.equal(abweisungText("nicht_gefunden"), ABMELDUNG_TEXT.nichtGefunden);
-  const t = (vorname: string | null) => ({ spielerId: vorname, vorname, nachname: vorname && "X", abgemeldet: false, ehemalig: vorname === null });
+  const t = (vorname: string | null) => ({ spielerId: vorname, vorname, nachname: vorname && "X", abgemeldet: false, ehemalig: vorname === null, kader: [] });
   assert.deepEqual(nachTeilnehmer([t(null), t("Noah"), t("Ayla")]).map((x) => x.vorname ?? EHEMALIGE_SPIELERIN), ["Ayla", "Noah", EHEMALIGE_SPIELERIN]);
 });
 
@@ -2153,6 +2180,64 @@ pruefe("CSV-Import: Meldung nach der Übernahme (#455 PC 6)", () => {
   assert.equal(importErgebnisText({ neu: 12, js: 0, ersetzt: 3 }), "12 Spieler:innen aufgenommen. Die Spielerzahl kommt jetzt aus der Liste.");
   assert.equal(importErgebnisText({ neu: 1, js: 2, ersetzt: 0 }), "1 Spieler:in aufgenommen, bei 2 die J+S-Nummer geändert.");
   assert.equal(importErgebnisText({ neu: 0, js: 1, ersetzt: 0 }), "Bei 1 Spieler:in die J+S-Nummer geändert.");
+});
+
+// ── Kader (Epic #447) ───────────────────────────────────────────────────────
+
+pruefe("Kader: Name 1 bis 30 Zeichen, Gross/Klein und Leerzeichen unterscheiden nicht, Bindestrich schon (#452 AK 10)", () => {
+  assert.equal(kaderNameProblem("Stärkeklasse 1"), null);
+  assert.equal(kaderNameProblem("   "), KADER_TEXT.name);
+  assert.equal(kaderNameProblem("x".repeat(KADER_NAME_MAX)), null);
+  assert.equal(kaderNameProblem("x".repeat(KADER_NAME_MAX + 1)), KADER_TEXT.name);
+  assert.equal(kaderNameProblem("😀".repeat(KADER_NAME_MAX)), null, "Länge in Code Points wie char_length");
+  assert.deepEqual(nachKaderName([{ name: "Torhüterinnen" }, { name: "Aushilfe" }]).map((k) => k.name), ["Aushilfe", "Torhüterinnen"]);
+});
+
+pruefe("Kader: Marker der Datenebene tragen die Sätze der Oberfläche (#452 AK 15)", () => {
+  for (const [marker, satz] of Object.entries(KADER_MELDUNG)) assert.equal(fehlerMeldung(`x ${marker} y`), satz, marker);
+  assert.equal(fehlerMeldung('new row violates check constraint "kader_name"'), KADER_TEXT.name);
+});
+
+pruefe("Kader: Zugehörigkeit einer Auswahl und Kader einer Spieler:in (#452 AK 6, 7)", () => {
+  const k = { id: "k", name: "Aushilfe", spielerIds: ["a", "b"] };
+  assert.equal(zugehoerigkeit(k, ["a", "b"]), "alle");
+  assert.equal(zugehoerigkeit(k, ["a", "c"]), "teil");
+  assert.equal(zugehoerigkeit(k, ["c"]), "keine");
+  assert.deepEqual(kaderVon("b", [k, { id: "j", name: "S1", spielerIds: ["c"] }]).map((x) => x.id), ["k"]);
+});
+
+pruefe("Kader: verfallende Abmeldungen - Zahl aus der Datenebene, Texte (#453 AK 10, 12, 16)", () => {
+  assert.equal(verfallAusFehler(`${VERFALL_MARKER} 3`), 3);
+  assert.equal(verfallAusFehler("KADER_DOPPELT"), null);
+  assert.equal(
+    kaderVerfallText(1),
+    "Damit verfällt 1 Abmeldung: Der Termin gilt für diese Spieler:in nicht mehr. Gilt er später wieder für sie, ist sie angemeldet.",
+  );
+  assert.ok(kaderVerfallText(2).startsWith("Damit verfallen 2 Abmeldungen:"));
+  assert.ok(kaderVerfallGeaendert(4).endsWith(kaderVerfallText(4)));
+  assert.ok(kaderVerfallBestaetigen(2).startsWith(kaderVerfallText(2)) && kaderVerfallBestaetigen(2).includes("«bestaetigt: true»"));
+});
+
+pruefe("Termine für Kader: für wie viele er gilt, die übrigen, ehemalige zuletzt (#453 AK 5-8)", () => {
+  const kader = [
+    { id: "a", name: "S1", spielerIds: ["l", "m"] },
+    { id: "b", name: "S2", spielerIds: ["m", "n"] },
+    { id: "c", name: "Leer", spielerIds: [] },
+  ];
+  assert.equal(giltFuerAnzahl([], kader, 4), 4, "ohne Kader für alle");
+  assert.equal(giltFuerAnzahl(["a", "b"], kader, 4), 3, "mindestens einem angehören, jede einmal");
+  assert.equal(giltFuerText([], kader, 4), "Gilt für alle 4 Spieler:innen.");
+  assert.equal(giltFuerText(["a"], kader, 4), "Gilt für 2 von 4 Spieler:innen.");
+  assert.equal(giltFuerText(["c"], kader, 4), "Gilt für niemanden: Diesen Kadern gehört keine Spieler:in an.");
+  assert.equal(uebrigeText(0), null);
+  assert.equal(uebrigeText(7), "Für die übrigen 7 Spieler:innen des Teams gilt der Termin nicht.");
+  assert.deepEqual(
+    nachTerminKader([{ id: null, name: null }, { id: "b", name: "S2" }, { id: "a", name: "Aushilfe" }]).map((k) => k.name),
+    ["Aushilfe", "S2", null],
+  );
+  assert.equal(abweisungText("gilt_nicht"), ABMELDUNG_TEXT.giltNicht);
+  assert.ok(KONFLIKT_MARKER.includes("SERIE_VERFALL_GEAENDERT"), "eine geänderte Zahl ist veraltet, keine Regel");
+  assert.equal(still(() => ausDbFehler({ message: "KADER_TERMIN_BEGONNEN" })).meldung, KADER_MELDUNG.KADER_TERMIN_BEGONNEN);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

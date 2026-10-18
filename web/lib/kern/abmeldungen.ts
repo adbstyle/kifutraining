@@ -12,6 +12,7 @@ import {
 import { jetztAmTrainingsort, terminBegonnen } from "@/lib/zeit";
 import { ladeTermin, TERMIN_FELD } from "@/lib/kern/termine";
 import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
+import { nachTerminKader, type TerminKader } from "@/lib/kader";
 
 /**
  * Ab- und Anmelden für einen Termin (Epic #433, Story #435) — dieselben
@@ -37,6 +38,13 @@ export type TerminSpieler = {
   angemeldet: number;
   gesamt: number;
   spieler: Teilnehmer[];
+  /** Führt das Team eine Spielerliste (bzw. führte es bei Beginn eine)? Dann
+   *  kann ein Termin mit Kadern auch für niemanden gelten (#453 AK 7). */
+  mitListe: boolean;
+  /** Für welche Kader der Termin gilt (#453 AK 5); leer = für alle. */
+  kader: TerminKader[];
+  /** Wie viele Spieler:innen des Teams er nicht betrifft (AK 6); 0 an begonnenen. */
+  uebrige: number;
 };
 
 /** Wer an einem Termin angemeldet und wer abgemeldet ist (AK 5, 7, 8). */
@@ -49,13 +57,38 @@ export async function terminSpieler(
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
   const t = geladen.wert;
-  const { data, error } = await supabase.rpc("termin_teilnehmer", { p_termin: t.id });
+  const [teilnehmer, termin, team] = await Promise.all([
+    supabase.rpc("termin_teilnehmer", { p_termin: t.id }),
+    supabase
+      .from("training_termine")
+      .select("spielstand, termin_kader ( kader_id, kader ( name ) )")
+      .eq("id", t.id)
+      .maybeSingle<{ spielstand: Spielstand; termin_kader: { kader_id: string | null; kader: { name: string } | null }[] }>(),
+    supabase.from("spieler").select("id", { count: "exact", head: true }).eq("team_id", t.team_id),
+  ]);
+  const { data, error } = teilnehmer;
   if (error) return ausDbFehler(error);
+  if (termin.error) return ausDbFehler(termin.error);
   const spieler = nachTeilnehmer(
-    ((data ?? []) as { spieler_id: string | null; vorname: string | null; nachname: string | null; abgemeldet: boolean; ehemalig: boolean }[]).map(
-      (r) => ({ spielerId: r.spieler_id, vorname: r.vorname, nachname: r.nachname, abgemeldet: r.abgemeldet, ehemalig: r.ehemalig }),
-    ),
+    (
+      (data ?? []) as {
+        spieler_id: string | null;
+        vorname: string | null;
+        nachname: string | null;
+        abgemeldet: boolean;
+        ehemalig: boolean;
+        kader: string[] | null;
+      }[]
+    ).map((r) => ({
+      spielerId: r.spieler_id,
+      vorname: r.vorname,
+      nachname: r.nachname,
+      abgemeldet: r.abgemeldet,
+      ehemalig: r.ehemalig,
+      kader: r.kader ?? [],
+    })),
   );
+  const begonnen = terminBegonnen(t.datum, t.beginn, jetzt);
   return ok({
     terminId: t.id,
     teamId: t.team_id,
@@ -63,10 +96,13 @@ export async function terminSpieler(
     beginn: t.beginn,
     ende: t.ende,
     ausgefallen: t.ausgefallen,
-    begonnen: terminBegonnen(t.datum, t.beginn, jetzt),
+    begonnen,
     angemeldet: spieler.filter((s) => !s.abgemeldet).length,
     gesamt: spieler.length,
     spieler,
+    mitListe: termin.data?.spielstand != null,
+    kader: nachTerminKader((termin.data?.termin_kader ?? []).map((k) => ({ id: k.kader_id, name: k.kader?.name ?? null }))),
+    uebrige: begonnen ? 0 : Math.max(0, (team.count ?? 0) - spieler.length),
   });
 }
 

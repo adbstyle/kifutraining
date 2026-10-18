@@ -19,7 +19,8 @@ unteren Bildschirmrand, die von selbst wieder geht.
 ## Die Zeile am unteren Rand
 
 Jede Rückmeldung zu einem Vorgang erscheint an derselben Stelle, unten in der Mitte, egal wo
-auf der Seite der Trainer geklickt hat. Es steht immer nur eine da. Schliessen mehrere
+auf der Seite der Trainer geklickt hat. Steht dort gerade die Leiste für ausgewählte Einträge
+(etwa „Kader zuteilen" in der Spielerliste), erscheint sie knapp darüber. Es steht immer nur eine da. Schliessen mehrere
 Vorgänge kurz nacheinander ab, zeigt die Anwendung ihre Rückmeldungen der Reihe nach; jede
 bekommt ihre volle Zeit erst, wenn sie erscheint, so läuft keine ungesehen ab. Eine neuere
 Rückmeldung zur selben Sache ersetzt die ältere — gelingt der zweite Versuch, steht der

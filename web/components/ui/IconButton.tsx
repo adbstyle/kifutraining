@@ -3,6 +3,7 @@ import type { ButtonHTMLAttributes, ComponentProps } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { ZeichenPunkt, type ZeichenPunktTon } from "./ZeichenPunkt";
 
 type IconBtnVariant = "standard" | "overlay";
 
@@ -51,6 +52,9 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
   variant?: "standard" | "overlay";
   /** Pass-Through an das Lucide-Icon (z. B. `fill` für den Favoriten-Herz). */
   iconProps?: Partial<ComponentProps<LucideIcon>>;
+  /** Ein Punkt am Zeichen (`ZeichenPunkt`), etwa ob der private Link bezogen
+   *  ist. Stumm — was er meldet, gehört in `label`. */
+  punkt?: ZeichenPunktTon;
 }
 
 /* Icon-Knopf: gezeichnetes Icon (Lucide) + Zustands-Ebene statt Füllung.
@@ -58,7 +62,7 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
    `active` aktiviert Toggle-Semantik (aria-pressed); ohne `active` = reiner Aktions-Button. */
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   (
-    { icon: Icon, label, active, variant = "standard", iconProps, className, ...props },
+    { icon: Icon, label, active, variant = "standard", iconProps, punkt, className, ...props },
     ref,
   ) => {
     const isToggle = active !== undefined;
@@ -70,7 +74,14 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         className={iconButtonClasses(variant, active, className)}
         {...props}
       >
-        <Icon size={ICON} strokeWidth={2} aria-hidden {...iconProps} />
+        {punkt ? (
+          <span className="relative">
+            <Icon size={ICON} strokeWidth={2} aria-hidden {...iconProps} />
+            <ZeichenPunkt ton={punkt} />
+          </span>
+        ) : (
+          <Icon size={ICON} strokeWidth={2} aria-hidden {...iconProps} />
+        )}
       </button>
     );
   },

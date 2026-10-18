@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { usePathname } from "next/navigation";
-import { Snackbar, nebenLeiste } from "@/components/ui";
+import { FussleisteKontext, Snackbar, UNTER_RAND_ABSTAND, unterRand, type MeldeFussleiste } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
 
@@ -45,10 +45,13 @@ import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
  * ein Fehler, der einen offenen Dialog zurücklässt, gehört als Section Message in den
  * Dialog, nicht hierher.
  *
- * Er rechnet mit keiner festen Fussleiste. Die einzige, die es gibt — Zurück
- * und Weiter beim Durchführen —, liegt auf einer Ansicht, die nichts meldet;
- * Fremdes fällt beim Wechsel dorthin weg. Meldet sie eines Tages selbst etwas,
- * muss der Platz dort über die Leiste rücken, sonst verdeckt er sie.
+ * Er teilt den Platz am unteren Rand (`unterRand`) mit Leisten wie der
+ * Auswahlleiste: Sie melden ihre Höhe über `FussleisteKontext`, die Snackbar
+ * steht über der höchsten, und am Ende der Seite bleibt so viel frei, dass die
+ * letzte Zeile nicht unter der Leiste liegt. Mehrere Leisten zugleich melden
+ * je für sich; jede räumt nur ihre eigene Meldung. Mit der Fussleiste beim
+ * Durchführen (Zurück, Weiter) rechnet er nicht: Sie liegt auf einer Ansicht,
+ * die nichts meldet; Fremdes fällt beim Wechsel dorthin weg.
  */
 
 /** Material 2 nennt 4–10 s; 6 s reichen für die längste Meldung (#234). */
@@ -65,6 +68,19 @@ export function SnackbarProvider({ children }: { children: React.ReactNode }) {
   const pfad = usePathname();
   const [reihe, setReihe] = useState<Eintrag[]>([]);
   const [zeigerDarauf, setZeigerDarauf] = useState(false);
+  // Die Leisten am unteren Rand: Kennung → Höhe samt Abstand nach oben.
+  const [fussleisten, setFussleisten] = useState<Record<string, number>>({});
+  const meldeFussleiste = useCallback<MeldeFussleiste>((id, hoehe) => {
+    setFussleisten((f) => {
+      if (hoehe === null) {
+        if (!(id in f)) return f;
+        const { [id]: _weg, ...rest } = f;
+        return rest;
+      }
+      return f[id] === hoehe ? f : { ...f, [id]: hoehe };
+    });
+  }, []);
+  const fussleiste = Math.max(0, ...Object.values(fussleisten));
   const pfadJetzt = useRef(pfad);
   const naechsteId = useRef(0);
 
@@ -105,14 +121,15 @@ export function SnackbarProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <SnackbarKontext.Provider value={einreihen}>
-      {children}
-      {/* Unten bleibt mindestens ein Rem frei, auf Geräten mit Home-Leiste
-          deren sichere Zone. Ab lg mittig über dem Inhalt, nicht über der
-          Seitenleiste — ihre Breite kommt vom AppRahmen. */}
-      <div className={cn(
-          "pointer-events-none fixed right-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex justify-center px-4 print:hidden",
-          nebenLeiste,
-        )}>
+      <FussleisteKontext.Provider value={meldeFussleiste}>
+        {children}
+      </FussleisteKontext.Provider>
+      {/* Hält am Ende der Seite die Höhe der Leiste frei (nicht im Druck). */}
+      {fussleiste > 0 && (
+        <div aria-hidden className="print:hidden" style={{ height: `calc(${UNTER_RAND_ABSTAND} + ${fussleiste}px)` }} />
+      )}
+      {/* Über einer Leiste am Rand steht die Snackbar um deren Höhe höher. */}
+      <div className={cn(unterRand, "z-40")} style={{ bottom: `calc(${UNTER_RAND_ABSTAND} + ${fussleiste}px)` }}>
         {/* Der Zeiger wird hier gemessen, nicht an der einzelnen Snackbar:
             Schliesst der Trainer eine per X, rückt die nächste unter den
             ruhenden Zeiger, ohne dass ein neues Betreten gemeldet würde. */}

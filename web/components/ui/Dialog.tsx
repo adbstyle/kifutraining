@@ -62,7 +62,8 @@ export function Dialog({
         if (e.target === ref.current) onClose();
       }}
       className={cn(
-        "m-auto rounded-dialog bg-elev-24 p-5 shadow-dp-24",
+        // `--zeichen-grund`: der Ring eines `ZeichenPunkt` im Dialog.
+        "m-auto rounded-dialog bg-elev-24 p-5 shadow-dp-24 [--zeichen-grund:var(--color-elev-24)]",
         breit ? "w-[min(40rem,calc(100vw-2rem))]" : "w-[min(28rem,calc(100vw-2rem))]",
         "backdrop:bg-scrim/60 backdrop:backdrop-blur-[2px]",
         className,

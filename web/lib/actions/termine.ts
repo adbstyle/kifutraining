@@ -46,6 +46,8 @@ type Fehler = { ok: false; error: string; verfallend?: number };
 export async function legeTerminFestAktion(
   teamId: string,
   felder: TerminFelder,
+  /** Für welche Kader der Termin gilt (#453 AK 1); leer = für alle. */
+  kaderIds: string[] = [],
 ): Promise<{ ok: true; terminId: string } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
@@ -58,6 +60,7 @@ export async function legeTerminFestAktion(
     bemerkung: felder.bemerkung,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
+    kaderIds,
   });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
@@ -195,6 +198,8 @@ export async function legeSerieFestAktion(
     /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1). */
     felder: Felder | null;
     spielerzahl: number | null;
+    /** Für welche Kader jeder Termin gilt (#453 AK 2). */
+    kaderIds: string[];
   },
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
@@ -237,7 +242,8 @@ export async function setzeVerantwortlicheAktion(
 // Serie und die entfallenden Termine mit Training.
 
 type Serienweit = "dieser_und_folgende" | "alle";
-type Erwartet = { version: number; entfallend: string[] };
+/** `verfallend`: die Summe verfallender Abmeldungen aus der Vorschau (#453 AK 12). */
+type Erwartet = { version: number; entfallend: string[]; verfallend?: number };
 
 async function serienLauf(
   f: (s: SupabaseClient, u: string) => Promise<KernErgebnis<SerienFolge>>,
@@ -277,7 +283,9 @@ export async function entferneSerieAktion(terminId: string, reichweite: Serienwe
 export async function folgeDerSerieAktion(
   terminId: string,
   angaben: FolgeAngabe[],
-  bestaetigt = false,
+  /** `true` bestätigt eine Verlegung (#437), eine Zahl verfallende
+   *  Abmeldungen durch Kader (#453 AK 10, 12). */
+  bestaetigt: boolean | number = false,
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
