@@ -7,7 +7,7 @@ import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { AusfallDialog } from "./AusfallDialog";
 import { EntfallendBestaetigung } from "./EntfallendBestaetigung";
 import { ReichweiteDialog } from "./ReichweiteDialog";
-import { VerfallBestaetigung } from "./VerfallBestaetigung";
+import { useVerfallRueckfrage } from "./VerfallBestaetigung";
 import { NeuerTerminDialog } from "./NeuerTerminDialog";
 import { TerminDialog } from "./TerminDialog";
 import { TrainingWahlDialog } from "./TrainingWahlDialog";
@@ -42,7 +42,7 @@ import type { FolgeAngabe, SerienAenderung, SerienFolge } from "@/lib/kern/serie
 import { istVeraltet } from "@/lib/veraltet";
 import { datumKurz, terminBegonnen } from "@/lib/zeit";
 import { setzeTerminKaderAktion } from "@/lib/actions/kader";
-import { kaderVerfallText, type Kader } from "@/lib/kader";
+import type { Kader } from "@/lib/kader";
 import type { TeamTrainingRow, TrainingListRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
 import type { TeamMitglied } from "@/lib/queries/teams";
@@ -176,9 +176,9 @@ export function TerminBereich({
   const [ausfall, setAusfall] = useState<TerminZeile | null>(null);
   const [reichweite, setReichweite] = useState<ReichweiteFrage | null>(null);
   const [bestaetigen, setBestaetigen] = useState<SerienSchritt | null>(null);
-  /** Eine Verlegung liesse Abmeldungen verfallen (#437 AK 1): wie viele, und
-   *  wie es nach der Bestätigung weitergeht. */
-  const [verfall, setVerfall] = useState<{ anzahl: number; text?: string; weiter: () => void } | null>(null);
+  /** Eine Verlegung oder eine Änderung an Kadern liesse Abmeldungen
+   *  verfallen (#437 AK 1, #453 AK 10): die Rückfrage samt Fortsetzung. */
+  const verfall = useVerfallRueckfrage(pending);
   const [dialogFehler, setDialogFehler] = useState<string | undefined>();
 
   /** Die Nummer des laufenden Ablaufs in einem Dialog. Öffnen und Abbrechen
@@ -270,7 +270,7 @@ export function TerminBereich({
         if (!r.ok && r.verfallend) {
           const anzahl = r.verfallend;
           if (gilt())
-            return setVerfall({ anzahl, weiter: () => aendereEinzeln(t, geaendert, verantwortlich, grund, anzahl, kaderIds) });
+            return verfall.nachVerlegung(anzahl, () => aendereEinzeln(t, geaendert, verantwortlich, grund, anzahl, kaderIds));
           // Abgebrochen, bevor die Rückfrage kam: Gespeichert ist nichts.
           return melde(NICHT_GEAENDERT);
         }
@@ -293,14 +293,11 @@ export function TerminBereich({
         const k = await setzeTerminKaderAktion(t.id, kaderIds, kaderBestaetigt);
         // #453 AK 10, 12: Verfallen Abmeldungen, erst nachfragen — mit dem aktuellen Stand.
         if (!k.ok && k.verfallend) {
-          const n = k.verfallend;
           if (davor) router.refresh();
-          if (gilt())
-            return setVerfall({
-              anzahl: n,
-              text: kaderBestaetigt === false ? kaderVerfallText(n) : k.error,
-              weiter: () => aendereEinzeln(t, null, undefined, grund, false, kaderIds, n),
-            });
+          if (gilt()) {
+            verfall.nachKader(k, kaderBestaetigt, (n) => aendereEinzeln(t, null, undefined, grund, false, kaderIds, n));
+            return;
+          }
           return melde(davor ?? NICHT_GEAENDERT);
         }
         if (!k.ok) return einzelnGescheitert(k.error, gilt(), davor);
@@ -489,12 +486,10 @@ export function TerminBereich({
       true,
       laufNr.current,
       (r) => {
-        if (r.ok || !r.verfallend) return false;
-        const n = r.verfallend;
         // #453: Folgen die Kader, bestätigt die Zahl; die Zeit bestätigt `true`.
-        if (angabe === "kader")
-          setVerfall({ anzahl: n, text: bestaetigt === false ? kaderVerfallText(n) : r.error, weiter: () => folgen(t, angabe, n) });
-        else setVerfall({ anzahl: n, weiter: () => folgen(t, angabe, true) });
+        if (angabe === "kader") return verfall.nachKader(r, bestaetigt === true ? false : bestaetigt, (n) => folgen(t, angabe, n));
+        if (r.ok || !r.verfallend) return false;
+        verfall.nachVerlegung(r.verfallend, () => folgen(t, angabe, true));
         return true;
       },
     );
@@ -613,17 +608,7 @@ export function TerminBereich({
         onWahl={reichweiteGewaehlt}
       />
 
-      <VerfallBestaetigung
-        anzahl={verfall?.anzahl ?? null}
-        text={verfall?.text}
-        pending={pending}
-        onClose={() => setVerfall(null)}
-        onBestaetigen={() => {
-          const v = verfall;
-          setVerfall(null);
-          v?.weiter();
-        }}
-      />
+      {verfall.dialog}
 
       <EntfallendBestaetigung
         folge={bestaetigen?.folge ?? null}

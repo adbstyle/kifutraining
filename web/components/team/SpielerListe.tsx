@@ -19,7 +19,7 @@ import {
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { aendereSpielerAktion, entferneSpielerAktion, nimmSpielerAufAktion } from "@/lib/actions/spieler";
 import { aendereZuteilungAktion } from "@/lib/actions/kader";
-import { KADER_TEXT, kaderVerfallText, kaderVon, type Kader } from "@/lib/kader";
+import { KADER_TEXT, kaderVon, type Kader } from "@/lib/kader";
 import { JAHRGANG_STELLEN, JS_MAX, nurZiffern, spielerName, type Spieler, type SpielerFeld } from "@/lib/spieler";
 import { SpielerLinkDialog } from "./SpielerLinkDialog";
 import { Selbstabholung } from "./Selbstabholung";
@@ -27,7 +27,7 @@ import { BezogenLozenge } from "./BezogenLozenge";
 import { SpielerImport } from "./SpielerImport";
 import { KaderLozenges } from "./KaderLozenge";
 import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
-import { VerfallBestaetigung } from "./VerfallBestaetigung";
+import { useVerfallRueckfrage } from "./VerfallBestaetigung";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
    Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet einen
@@ -55,7 +55,6 @@ const LEER: Form = { vorname: "", nachname: "", jahrgang: "", jsNummer: "", kade
 /** Die Eingrenzung: ein Kader, «ohne Kader» oder keine. */
 type Eingrenzung = { kaderId: string } | "ohne" | null;
 
-type Verfall = { anzahl: number; text: string; weiter: () => void };
 
 export function SpielerListe({
   teamId,
@@ -87,7 +86,7 @@ export function SpielerListe({
   const [eingrenzung, setEingrenzung] = useState<Eingrenzung>(null);
   const [auswahl, setAuswahl] = useState<string[]>([]);
   const [zuteilenOffen, setZuteilenOffen] = useState(false);
-  const [verfall, setVerfall] = useState<Verfall | null>(null);
+  const verfall = useVerfallRueckfrage(pending);
 
   const mitKadern = kader.length > 0;
   const sichtbar = useMemo(() => {
@@ -105,16 +104,7 @@ export function SpielerListe({
     if (a.dazu.length === 0 && a.weg.length === 0) return danach();
     startTransition(async () => {
       const r = await aendereZuteilungAktion(teamId, { spielerIds, ...a }, bestaetigt);
-      if (!r.ok && r.verfallend) {
-        const n = r.verfallend;
-        setVerfall({
-          anzahl: n,
-          text: bestaetigt === false ? kaderVerfallText(n) : r.error,
-          weiter: () => zuteilen(spielerIds, a, danach, n),
-        });
-        return;
-      }
-      setVerfall(null);
+      if (verfall.nachKader(r, bestaetigt, (n) => zuteilen(spielerIds, a, danach, n))) return;
       if (!r.ok) return melde(r.error);
       danach();
     });
@@ -404,13 +394,7 @@ export function SpielerListe({
         }
       />
 
-      <VerfallBestaetigung
-        anzahl={verfall?.anzahl ?? null}
-        text={verfall?.text}
-        pending={pending}
-        onClose={() => setVerfall(null)}
-        onBestaetigen={() => verfall?.weiter()}
-      />
+      {verfall.dialog}
 
       <SpielerImport teamId={teamId} offen={importOffen} onClose={() => setImportOffen(false)} />
 

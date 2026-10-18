@@ -10,7 +10,7 @@ import { KADER_MAX, KADER_MELDUNG, KADER_NAME_MAX, KADER_TEXT, kaderVerfallText,
 import type { KaderEntfernenFolgen } from "@/lib/kern/kader";
 import { wochentageText, type Wochentag } from "@/lib/serie";
 import { datumKurz } from "@/lib/zeit";
-import { VerfallBestaetigung } from "./VerfallBestaetigung";
+import { useVerfallRueckfrage } from "./VerfallBestaetigung";
 
 /* Die Kader eines Teams (Epic #447, Story #452): anlegen, umbenennen,
    entfernen. Wer welchem Kader angehört, teilt die Spielerliste darüber zu
@@ -27,7 +27,7 @@ export function KaderKarte({ teamId, kader }: { teamId: string; kader: Kader[] }
   const [name, setName] = useState("");
   const [fehler, setFehler] = useState<string | null>(null);
   const [entfernen, setEntfernen] = useState<{ kader: Kader; folgen: KaderEntfernenFolgen } | null>(null);
-  const [verfall, setVerfall] = useState<{ anzahl: number; text: string; weiter: () => void } | null>(null);
+  const verfall = useVerfallRueckfrage(pending);
   const formId = useId();
 
   function oeffnen(k?: Kader) {
@@ -65,17 +65,8 @@ export function KaderKarte({ teamId, kader }: { teamId: string; kader: Kader[] }
   function entfernenAusfuehren(k: Kader, bestaetigt: number | false = false) {
     startTransition(async () => {
       const r = await entferneKaderAktion(k.id, bestaetigt);
-      if (!r.ok && r.verfallend) {
-        setEntfernen(null);
-        setVerfall({
-          anzahl: r.verfallend,
-          text: bestaetigt === false ? kaderVerfallText(r.verfallend) : r.error,
-          weiter: () => entfernenAusfuehren(k, r.verfallend!),
-        });
-        return;
-      }
       setEntfernen(null);
-      setVerfall(null);
+      if (verfall.nachKader(r, bestaetigt, (n) => entfernenAusfuehren(k, n))) return;
       if (!r.ok) return melde(r.error);
       router.refresh();
       melde(`Kader «${r.name}» entfernt.`);
@@ -196,13 +187,7 @@ export function KaderKarte({ teamId, kader }: { teamId: string; kader: Kader[] }
         {entfernen && <EntfernenFolgen name={entfernen.kader.name} folgen={entfernen.folgen} />}
       </Dialog>
 
-      <VerfallBestaetigung
-        anzahl={verfall?.anzahl ?? null}
-        text={verfall?.text}
-        pending={pending}
-        onClose={() => setVerfall(null)}
-        onBestaetigen={() => verfall?.weiter()}
-      />
+      {verfall.dialog}
       {/* Ein Kader mehr geht nicht (AK 11). */}
       {kader.length >= KADER_MAX && (
         <SectionMessage appearance="information" className="mt-4">
