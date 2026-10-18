@@ -31,6 +31,9 @@ export type LinkTermin = {
   /** Verlegt, seit sie abgemeldet wurde (#437 AK 2): der Zeitpunkt vorher —
    *  die Abmeldung gilt nicht mehr. */
   verfallen: { datum: string; beginn: string } | null;
+  /** Die Kader der Spieler:in, über die der Termin für sie gilt (#454 AK 2);
+   *  leer bei einem Termin für alle. Fremde Kader nennt der Link nie (AK 3). */
+  kader: string[];
 };
 
 export type LinkAnsicht =

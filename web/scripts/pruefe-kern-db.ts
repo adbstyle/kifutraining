@@ -4046,7 +4046,7 @@ try {
     assert.deepEqual(ansicht.termine.map((x: { id: string }) => x.id), [t], "nichts Vergangenes (OoS 2)");
     assert.ok(!ansicht.termine.some((x: { id: string }) => x.id === gestern));
     assert.deepEqual(ansicht.termine[0], {
-      id: t, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler", ausgefallen: false, begonnen: false, angemeldet: 2, abgemeldet: false, verfallen: null,
+      id: t, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler", ausgefallen: false, begonnen: false, angemeldet: 2, abgemeldet: false, verfallen: null, kader: [],
     });
 
     const abmelden = (token: string, abgemeldet: boolean) =>
@@ -4503,6 +4503,33 @@ try {
     fehler(await entferneKader(a.supabase, a.id, { kaderId: k.s1 }), "regel", kaderVerfallBestaetigen(1));
     assert.equal(wert(await entferneKader(a.supabase, a.id, { kaderId: k.s1, bestaetigt: 1 })).verfallen, 1);
     assert.deepEqual((await getTeamPlanFuer(a.supabase, k.team)).find((x) => x.serie?.id === s.serieId)!.serie!.kader, []);
+  });
+
+  // ── Der private Link mit Kadern (#454) ───────────────────────────────────
+  await pruefe("Privater Link: nur geltende Termine, nur die eigenen Kader, Zahl nur über Geltende (#454 AK 1-5, PC 1)", async () => {
+    const k = await kaderTeam("Kern-DB-Link-Kader");
+    const aushilfe = await neuerKader(k.team, "Aushilfe");
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.lena], dazu: [aushilfe] }));
+    const s1 = wert(await anstehend(k.team, [k.s1], 5)).terminId;
+    const s2 = wert(await anstehend(k.team, [k.s2], 6)).terminId;
+    const gemischt = wert(await anstehend(k.team, [k.s2, aushilfe], 7)).terminId;
+    const alle = wert(await anstehend(k.team, [], 8)).terminId;
+    const ansicht = async (spielerId: string) =>
+      (await feldAnon.rpc("spieler_link_ansicht", { p_token: wert(await holeSpielerLink(a.supabase, a.id, { spielerId })).token })).data as {
+        termine: { id: string; angemeldet: number | null; kader: string[] }[];
+      };
+    const lena = await ansicht(k.lena);
+    assert.deepEqual(lena.termine.map((t) => t.id), [s1, gemischt, alle], "S2 betrifft Lena nicht");
+    assert.deepEqual(lena.termine.map((t) => t.kader), [["S1"], ["Aushilfe"], []], "nur ihre Kader, nie S2");
+    assert.deepEqual(lena.termine.map((t) => t.angemeldet), [2, 2, 3]);
+    // AK 5: Ein Termin, der inzwischen nicht mehr gilt, weist ab.
+    const token = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: k.lena })).token;
+    const ab = (await feldAnon.rpc("spieler_link_abmelden", { p_token: token, p_termin: s2, p_abgemeldet: true, p_gesehen_datum: null, p_gesehen_beginn: null })).data as { status: string; grund: string };
+    assert.deepEqual([ab.status, ab.grund], ["abgewiesen", "gilt_nicht"]);
+    // PC 1: Gilt er wieder für sie, steht sie dort angemeldet.
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.lena], dazu: [k.s2] }));
+    const wieder = (await ansicht(k.lena)).termine.find((t) => t.id === s2) as { abgemeldet?: boolean; kader: string[] } | undefined;
+    assert.ok(wieder && wieder.abgemeldet === false && wieder.kader[0] === "S2");
   });
 
 } finally {
