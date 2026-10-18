@@ -62,6 +62,7 @@ import { CheckboxDemo } from "./CheckboxDemo";
 import { SwitchDemo } from "./SwitchDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
+import { TabelleAuswahlDemo } from "./TabelleAuswahlDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
@@ -2743,8 +2744,12 @@ export default async function Styleguide() {
             der Liste aus dem Bild zu scrollen. Ihre Fläche ist dunkel (
             <code>elev-08</code>, Schatten 06dp): Sie ist Werkzeug, keine Meldung,
             und bleibt neben der hellen Snackbar als etwas anderes lesbar. Eine
-            Snackbar rückt über sie (<code>--fussleiste-hoehe</code>), und die
-            Seite hält unten ihre Höhe frei. Sie liegt unter Snackbar und Dialog.
+            Snackbar rückt über sie, und die Seite hält unten ihre Höhe frei -
+            beides regelt der Platz am unteren Rand (<code>unterRand</code>,{" "}
+            <code>FussleisteKontext</code>). Sie liegt unter Snackbar und Dialog.
+            Im DOM steht sie nach der Liste, damit Tab aus einer Zeile vorwärts
+            zu ihr führt; geht sie mit dem Fokus darin zu, kehrt er zurück, woher
+            er kam. Vorgeführt bei der Tabelle (› Tabelle, Mehrfachauswahl).
           </p>
           <OverlaysDemo />
         </Section>
@@ -2951,6 +2956,20 @@ export default async function Styleguide() {
               </TabellenZeile>
             ))}
           </Tabelle>
+
+          <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+            Mit Mehrfachauswahl und Auswahlleiste
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Lässt sich für mehrere Einträge zugleich etwas tun (Kader zuteilen in
+            der Spielerliste), steht vorne in jeder Zeile ein Kästchen
+            (<code>Checkbox</code>, Name nur für die Vorlesehilfe) in einer
+            eigenen schmalen Spalte ohne Kopf. Sobald etwas gewählt ist, schwebt
+            unten die <code>AuswahlLeiste</code> mit der Zahl, den Handlungen und
+            «Auswahl aufheben» - am Platz der Snackbar, die dann über ihr steht.
+            Wer die Liste eingrenzt, behält nur sichtbare Einträge in der Auswahl.
+          </p>
+          <TabelleAuswahlDemo />
         </Section>
 
         <Section id="eigenschaften">

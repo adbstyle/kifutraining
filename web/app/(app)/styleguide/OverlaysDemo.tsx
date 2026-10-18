@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { AuswahlLeiste, Button, Dialog } from "@/components/ui";
+import { Button, Dialog } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 
 export function OverlaysDemo() {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [auswahl, setAuswahl] = useState(false);
   const melde = useSnackbar();
   // Zwei Stellen, nicht eine: Meldet dieselbe Stelle zweimal, ersetzt die
   // zweite Meldung die erste — anstehen sieht man nur, wenn zwei melden.
@@ -42,18 +41,7 @@ export function OverlaysDemo() {
         >
           Zwei nacheinander
         </Button>
-        {/* Die Auswahlleiste schwebt am Platz der Snackbar; eine Snackbar
-            rückt dann über sie. */}
-        <Button variant="tonal" onClick={() => setAuswahl((a) => !a)}>
-          {auswahl ? "Auswahlleiste ausblenden" : "Auswahlleiste zeigen"}
-        </Button>
       </div>
-
-      <AuswahlLeiste offen={auswahl} titel="2 ausgewählt" onAufheben={() => setAuswahl(false)}>
-        <Button variant="filled" onClick={() => melde("Kader zugeteilt.")}>
-          Kader zuteilen
-        </Button>
-      </AuswahlLeiste>
 
       <Dialog
         open={dialogOpen}

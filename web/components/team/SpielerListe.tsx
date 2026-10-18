@@ -286,13 +286,6 @@ export function SpielerListe({
         />
       )}
 
-      {/* Schwebt unten am Platz der Snackbar, solange jemand ausgewählt ist. */}
-      <AuswahlLeiste offen={gewaehlt.length > 0} titel={`${gewaehlt.length} ausgewählt`} onAufheben={() => setAuswahl([])}>
-        <Button variant="filled" aria-haspopup="dialog" onClick={() => setZuteilenOffen(true)}>
-          Kader zuteilen
-        </Button>
-      </AuswahlLeiste>
-
       {/* Grenzt ein Chip auf niemanden ein, steht statt des leeren Tabellenkopfs
           das Leerfeld — mit dem Weg zurück zur ganzen Liste. */}
       {spieler.length > 0 && eingrenzung !== null && sichtbar.length === 0 ? (
@@ -364,6 +357,14 @@ export function SpielerListe({
           Mannschaft übernimmst du aus einer CSV-Datei.
         </p>
       )}
+
+      {/* Schwebt unten am Platz der Snackbar, solange jemand ausgewählt ist;
+          im DOM nach der Liste, damit Tab aus der Zeile vorwärts zu ihr führt. */}
+      <AuswahlLeiste offen={gewaehlt.length > 0} titel={`${gewaehlt.length} ausgewählt`} onAufheben={() => setAuswahl([])}>
+        <Button variant="filled" aria-haspopup="dialog" onClick={() => setZuteilenOffen(true)}>
+          Kader zuteilen
+        </Button>
+      </AuswahlLeiste>
 
       <Dialog
         open={entfernen != null}

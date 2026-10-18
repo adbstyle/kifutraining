@@ -718,9 +718,6 @@
        Helligkeitsänderung im Bild sein, darum kein Verlauf. */
     background-color: var(--color-elev-00);
     color: var(--color-on-surface);
-    /* Steht unten eine Auswahlleiste (`AuswahlLeiste`), hält die Seite ihre
-       Höhe frei: Die letzte Zeile lässt sich über sie hinaus scrollen. */
-    padding-bottom: var(--fussleiste-platz, 0px);
   }
 
   h1, h2, h3, h4 {
