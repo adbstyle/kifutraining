@@ -35,7 +35,7 @@ export const KADER_TEXT = {
    *  Kader», wenn jede einem angehört (Leerzustand). */
   leerKader: (name: string) => `Niemand in «${name}»`,
   leerKaderText:
-    "Diesem Kader gehört noch keine Spieler:in an. Wähle Spieler:innen in der Liste aus und teile sie über «Kader zuteilen» zu.",
+    "Diesem Kader gehört noch keine Spieler:in an. Hebe die Eingrenzung auf, wähle Spieler:innen aus und teile sie über «Kader zuteilen» zu.",
   /** Am Termin (Reiter «Spieler:innen»): Dem Kader gehört niemand an. */
   leerKaderTermin: "Diesem Kader gehört keine Spieler:in an.",
   leerOhne: "Alle haben einen Kader",

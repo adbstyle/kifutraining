@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button, FilterChip, Leerzustand, Switch } from "@/components/ui";
+import { Leerzustand, Switch } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { setzeAbmeldungAktion } from "@/lib/actions/abmeldungen";
 import { ABMELDUNG_TEXT, EHEMALIGE_SPIELERIN, spielerName, type Teilnehmer } from "@/lib/spieler";
 import type { TerminSpieler } from "@/lib/kern/abmeldungen";
-import { SearchX, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { KADER_TEXT, uebrigeText } from "@/lib/kader";
 import { KaderLozenges } from "./KaderLozenge";
-import { ChipZahl } from "./ChipZahl";
+import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
 
 /* Der Reiter «Spieler:innen» am Termin (#435 AK 1, 2, 5): wer angemeldet ist,
    wer abgemeldet, je mit einem Schalter, der sofort speichert. Abgemeldete
@@ -35,8 +35,15 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
   // Was gerade umgelegt wird, steht sofort so da; scheitert es, zurück.
   const [lokal, setLokal] = useState<Record<string, boolean>>({});
   useEffect(() => setLokal({}), [daten]);
-  // Der Name des Kaders, auf den die Liste eingegrenzt ist.
+  // Der Name des Kaders, auf den die Liste eingegrenzt ist. Der Reiter hängt
+  // am Termin (`key` in TerminSpalte): Ein anderer Termin beginnt ohne.
   const [gewaehlterKader, setKader] = useState<string | null>(null);
+  // Wie viele Spieler:innen am Termin welchem Kader angehören — einmal gezählt.
+  const jeKader = useMemo(() => {
+    const zahl = new Map<string, number>();
+    for (const s of daten.spieler) for (const k of s.kader) zahl.set(k, (zahl.get(k) ?? 0) + 1);
+    return zahl;
+  }, [daten.spieler]);
 
   // Bei Beginn war die Liste leer: Dort bleibt es so, auch wenn sie inzwischen jemanden führt.
   if (!daten.mitListe && daten.begonnen)
@@ -93,18 +100,12 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
       {mitChips ? (
         <div className="flex flex-wrap items-center gap-2">
           <span className="type-body-medium text-on-surface-mittel">Gilt für</span>
-          <div role="group" aria-label="Spieler:innen eingrenzen" className="flex flex-wrap gap-2">
-            {kaderNamen.map((name) => (
-              <FilterChip
-                key={name}
-                selected={eingrenzung === name}
-                onClick={() => setKader(eingrenzung === name ? null : name)}
-              >
-                {name}
-                <ChipZahl n={daten.spieler.filter((s) => s.kader.includes(name)).length} aktiv={eingrenzung === name} />
-              </FilterChip>
-            ))}
-          </div>
+          <KaderChips
+            label="Spieler:innen eingrenzen"
+            chips={kaderNamen.map((name) => ({ schluessel: name, name, anzahl: jeKader.get(name) ?? 0 }))}
+            gewaehlt={eingrenzung}
+            onWahl={setKader}
+          />
         </div>
       ) : (
         daten.kader.length > 0 && (
@@ -124,18 +125,9 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
       </div>
       {daten.gesamt === 0 && <p className="type-body-medium text-on-surface-mittel">{KADER_TEXT.niemand}</p>}
       {daten.gesamt > 0 && eingrenzung !== null && sichtbar.length === 0 && (
-        <Leerzustand
-          icon={SearchX}
-          titel={KADER_TEXT.leerKader(eingrenzung)}
-          dicht
-          aktion={
-            <Button variant="text" onClick={() => setKader(null)}>
-              {KADER_TEXT.eingrenzungAufheben}
-            </Button>
-          }
-        >
+        <EingrenzungLeer titel={KADER_TEXT.leerKader(eingrenzung)} onAufheben={() => setKader(null)}>
           {KADER_TEXT.leerKaderTermin}
-        </Leerzustand>
+        </EingrenzungLeer>
       )}
       {daten.gesamt > 0 && sichtbar.length > 0 && (
       <ul className="divide-y divide-linie rounded-flaeche bg-elev-01">

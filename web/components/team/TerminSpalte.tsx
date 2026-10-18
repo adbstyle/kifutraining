@@ -132,5 +132,6 @@ async function TrainingReiter({ t }: { t: TerminZeile }) {
 async function SpielerReiterLaden({ t, ich }: { t: TerminZeile; ich: string }) {
   const r = await terminSpieler(await createClient(), ich, { terminId: t.id });
   if (!r.ok) return <SectionMessage appearance="error">{r.meldung}</SectionMessage>;
-  return <SpielerReiter teamId={t.teamId} daten={r.wert} />;
+  // `key`: Eingrenzung und Schalterstand gehören zu diesem Termin.
+  return <SpielerReiter key={t.id} teamId={t.teamId} daten={r.wert} />;
 }

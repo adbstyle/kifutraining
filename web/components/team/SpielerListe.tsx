@@ -2,14 +2,12 @@
 
 import { useId, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FileUp, Link2, Pencil, Plus, SearchX, X } from "lucide-react";
+import { FileUp, Link2, Pencil, Plus, X } from "lucide-react";
 import {
   Button,
   Checkbox,
   Dialog,
-  FilterChip,
   IconButton,
-  Leerzustand,
   MultiSelect,
   SectionMessage,
   Tabelle,
@@ -27,7 +25,7 @@ import { Selbstabholung } from "./Selbstabholung";
 import { SpielerImport } from "./SpielerImport";
 import { KaderLozenges } from "./KaderLozenge";
 import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
-import { ChipZahl } from "./ChipZahl";
+import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
@@ -55,8 +53,8 @@ import { useVerfallRueckfrage } from "./VerfallBestaetigung";
 type Form = { vorname: string; nachname: string; jahrgang: string; jsNummer: string; kaderIds: string[] };
 const LEER: Form = { vorname: "", nachname: "", jahrgang: "", jsNummer: "", kaderIds: [] };
 
-/** Die Eingrenzung: ein Kader, «ohne Kader» oder keine. */
-type Eingrenzung = { kaderId: string } | "ohne" | null;
+/** Die Eingrenzung auf Spieler:innen ohne Kader; sonst die id eines Kaders. */
+const OHNE = "ohne";
 
 
 export function SpielerListe({
@@ -86,12 +84,11 @@ export function SpielerListe({
   const [aufgenommen, setAufgenommen] = useState<string | null>(null);
   const erstesFeld = useRef<HTMLInputElement>(null);
   const formId = useId();
-  const [gewaehlteEingrenzung, setEingrenzung] = useState<Eingrenzung>(null);
+  // Die id des Kaders, auf den die Liste eingegrenzt ist, `OHNE` oder `null`.
+  const [gewaehlteEingrenzung, setEingrenzung] = useState<string | null>(null);
   // Fällt der eingegrenzte Kader weg (eben entfernt), gilt wieder die ganze Liste.
-  const eingrenzung =
-    gewaehlteEingrenzung !== null && gewaehlteEingrenzung !== "ohne" && !kader.some((k) => k.id === gewaehlteEingrenzung.kaderId)
-      ? null
-      : gewaehlteEingrenzung;
+  const eingegrenzterKader = kader.find((k) => k.id === gewaehlteEingrenzung);
+  const eingrenzung = gewaehlteEingrenzung === OHNE || eingegrenzterKader ? gewaehlteEingrenzung : null;
   const [auswahl, setAuswahl] = useState<string[]>([]);
   const [zuteilenOffen, setZuteilenOffen] = useState(false);
   const verfall = useVerfallRueckfrage(pending);
@@ -99,8 +96,8 @@ export function SpielerListe({
   const mitKadern = kader.length > 0;
   const sichtbar = useMemo(() => {
     if (eingrenzung === null) return spieler;
-    if (eingrenzung === "ohne") return spieler.filter((s) => s.kaderIds.length === 0);
-    return spieler.filter((s) => s.kaderIds.includes(eingrenzung.kaderId));
+    if (eingrenzung === OHNE) return spieler.filter((s) => s.kaderIds.length === 0);
+    return spieler.filter((s) => s.kaderIds.includes(eingrenzung));
   }, [spieler, eingrenzung]);
   // Nur, wer noch da und sichtbar ist, bleibt ausgewählt.
   const gewaehlt = auswahl.filter((id) => sichtbar.some((s) => s.id === id));
@@ -207,9 +204,6 @@ export function SpielerListe({
   const kopf = mitKadern
     ? ["", "Name", "Jahrgang", "J+S-Nr.", "Kader", ""]
     : ["Name", "Jahrgang", "J+S-Nr.", ""];
-  const istEingegrenzt = (e: Exclude<Eingrenzung, null>) =>
-    e === "ohne" ? eingrenzung === "ohne" : eingrenzung !== null && eingrenzung !== "ohne" && eingrenzung.kaderId === e.kaderId;
-  const grenzeEin = (e: Exclude<Eingrenzung, null>) => setEingrenzung(istEingegrenzt(e) ? null : e);
 
   return (
     <>
@@ -279,18 +273,16 @@ export function SpielerListe({
       </Dialog>
 
       {spieler.length > 0 && mitKadern && (
-        <div role="group" aria-label="Spielerliste eingrenzen" className="mt-5 flex flex-wrap gap-2">
-          {kader.map((k) => (
-            <FilterChip key={k.id} selected={istEingegrenzt({ kaderId: k.id })} onClick={() => grenzeEin({ kaderId: k.id })}>
-              {k.name}
-              <ChipZahl n={k.spielerIds.length} aktiv={istEingegrenzt({ kaderId: k.id })} />
-            </FilterChip>
-          ))}
-          <FilterChip selected={istEingegrenzt("ohne")} onClick={() => grenzeEin("ohne")}>
-            {KADER_TEXT.ohneKader}
-            <ChipZahl n={ohneKader} aktiv={istEingegrenzt("ohne")} />
-          </FilterChip>
-        </div>
+        <KaderChips
+          label="Spielerliste eingrenzen"
+          className="mt-5"
+          chips={[
+            ...kader.map((k) => ({ schluessel: k.id, name: k.name, anzahl: k.spielerIds.length })),
+            { schluessel: OHNE, name: KADER_TEXT.ohneKader, anzahl: ohneKader },
+          ]}
+          gewaehlt={eingrenzung}
+          onWahl={setEingrenzung}
+        />
       )}
 
       {gewaehlt.length > 0 && (
@@ -309,22 +301,12 @@ export function SpielerListe({
           das Leerfeld — mit dem Weg zurück zur ganzen Liste. */}
       {spieler.length > 0 && eingrenzung !== null && sichtbar.length === 0 ? (
         <div className="mt-4">
-          <Leerzustand
-            icon={SearchX}
-            titel={
-              eingrenzung === "ohne"
-                ? KADER_TEXT.leerOhne
-                : KADER_TEXT.leerKader(kader.find((k) => k.id === eingrenzung.kaderId)?.name ?? "")
-            }
-            dicht
-            aktion={
-              <Button variant="text" onClick={() => setEingrenzung(null)}>
-                {KADER_TEXT.eingrenzungAufheben}
-              </Button>
-            }
+          <EingrenzungLeer
+            titel={eingegrenzterKader ? KADER_TEXT.leerKader(eingegrenzterKader.name) : KADER_TEXT.leerOhne}
+            onAufheben={() => setEingrenzung(null)}
           >
-            {eingrenzung === "ohne" ? KADER_TEXT.leerOhneText : KADER_TEXT.leerKaderText}
-          </Leerzustand>
+            {eingegrenzterKader ? KADER_TEXT.leerKaderText : KADER_TEXT.leerOhneText}
+          </EingrenzungLeer>
         </div>
       ) : spieler.length > 0 ? (
         <Tabelle className={gewaehlt.length > 0 ? "mt-3" : "mt-4"} spalten={spalten} kopf={kopf}>

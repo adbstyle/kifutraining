@@ -486,8 +486,10 @@ export function TerminBereich({
       true,
       laufNr.current,
       (r) => {
-        // #453: Folgen die Kader, bestätigt die Zahl; die Zeit bestätigt `true`.
-        if (angabe === "kader") return verfall.nachKader(r, bestaetigt === true ? false : bestaetigt, (n) => folgen(t, angabe, n));
+        // #453: Folgen die Kader, bestätigt die Zahl (erst `false`, dann die
+        // gemeldete); die Zeit bestätigt `true`.
+        if (angabe === "kader")
+          return verfall.nachKader(r, typeof bestaetigt === "number" ? bestaetigt : false, (n) => folgen(t, angabe, n));
         if (r.ok || !r.verfallend) return false;
         verfall.nachVerlegung(r.verfallend, () => folgen(t, angabe, true));
         return true;
