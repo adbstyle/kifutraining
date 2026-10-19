@@ -11,7 +11,7 @@ import { monatsName, tagOhneJahr, tagText } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import type { LinkTermin } from "@/lib/privater-link";
 import { plusTage } from "@/lib/serie";
-import { spielerName, spielerzahlKurz, verfallenHinweis } from "@/lib/spieler";
+import { spielerName, spielerzahlKurz, verfallenHinweis, type Spielerzahl } from "@/lib/spieler";
 
 /* Was die Spielervertretung über den privaten Link sieht (#436 AK 5–9): ihre
    Spieler:in, das Team und die anstehenden Termine. Angemeldet ist der
@@ -88,7 +88,7 @@ export function ElternAnsicht({
       // `== null`: Ein Bundle, das vor der Migration live ist, erhält noch kein `gesamt`.
       t.angemeldet == null || t.gesamt == null
         ? null
-        : spielerzahlKurz({ quelle: "liste", angemeldet: t.angemeldet + Number(t.abgemeldet) - Number(ab), gesamt: t.gesamt });
+        : { quelle: "liste" as const, angemeldet: t.angemeldet + Number(t.abgemeldet) - Number(ab), gesamt: t.gesamt };
     const zweite = t.ausgefallen ? "Fällt aus" : t.begonnen ? "Hat begonnen · nicht mehr änderbar" : null;
     return { ab, zweite, zahl };
   }
@@ -166,7 +166,7 @@ type KarteProps = {
   ab: boolean;
   /** Statt Ort und Zahl: ausgefallen oder begonnen. */
   zweite: string | null;
-  zahl: string | null;
+  zahl: Spielerzahl | null;
   name: string;
   pending: boolean;
   onUmlegen: (an: boolean) => void;
@@ -280,7 +280,7 @@ function ZweiteZeile({
 }: {
   t: LinkTermin;
   zweite: string | null;
-  zahl: string | null;
+  zahl: Spielerzahl | null;
   className: string;
   gross?: boolean;
 }) {
@@ -288,11 +288,14 @@ function ZweiteZeile({
   return (
     <p className={cn("flex min-w-0 items-center gap-x-2 text-on-surface-mittel", gross && "flex-wrap", className)}>
       {t.ort && <span className={gross ? "min-w-0" : "min-w-0 truncate"}>{t.ort}</span>}
-      {zahl && (
+      {zahl?.quelle === "liste" && (
         <span className="inline-flex shrink-0 items-center gap-1">
           <Shirt size={gross ? 16 : 14} className="shrink-0" aria-hidden />
-          <span className="sr-only">Spielerzahl </span>
-          {zahl}
+          <span aria-hidden>{spielerzahlKurz(zahl)}</span>
+          {/* Ohne «angemeldet» — das Wort gehört hier der eigenen Spieler:in. */}
+          <span className="sr-only">
+            Spielerzahl {zahl.angemeldet} von {zahl.gesamt}
+          </span>
         </span>
       )}
     </p>
