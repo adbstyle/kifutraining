@@ -599,15 +599,18 @@ Wer den Link öffnet, braucht weder Konto noch Anmeldung. Die Seite ist fürs Te
 ohne Seitenleiste aus und nennt Teamname und Name der Spieler:in mit dem Satz, dass sie für jedes
 Training zuerst angemeldet ist und man sie abmeldet, wenn sie nicht kann, und bis zum Beginn
 wieder anmeldet. Wie im Trainingsplan steht zuoberst „Als Nächstes": der nächste Termin, der
-noch nicht begonnen hat, grösser, mit „Heute" oder „Morgen", der Zahl der Angemeldeten, ob die
+noch nicht begonnen hat, grösser, mit „Heute" oder „Morgen", der Spielerzahl, ob die
 Spieler:in angemeldet ist, und dem Knopf „Abmelden" oder „Wieder anmelden"; abgemeldet steht die
 Karte auf einer leicht roten Fläche, ihr Tag rot und „Wieder anmelden" als heller Knopf. Ein Termin
 von heute, der schon begonnen hat, steht darüber unter „Heute", gesperrt bis Ende des Tages.
 Darunter folgen die übrigen anstehenden Termine, die für die Spieler:in gelten, unter Monatsüberschriften wie
 „Oktober 2026", je als Karte mit
-Kalenderblatt, Beginn und Ende, Ort, der Zahl der Angemeldeten — nur unter denen, für die er gilt —, bei
+Kalenderblatt, Beginn und Ende, Ort, der Spielerzahl, bei
 einem Termin mit Kadern den Kadern der Spieler:in, über die er für sie gilt, und einem Schalter; ist die
-Spieler:in abgemeldet, ist das Kalenderblatt rot. Ein begonnener Termin ist gesperrt mit „Hat
+Spieler:in abgemeldet, ist das Kalenderblatt rot. Die Spielerzahl steht knapp wie in der Zeile des
+Trainingsplans, mit dem Shirt und etwa „24/33": angemeldet von allen, für die der Termin gilt, gezählt
+wie für die Mitglieder — bei einem Termin mit Kadern auch über Kader, die nicht die der Spieler:in sind,
+ohne sie zu nennen. „Angemeldet" und „abgemeldet" meinen auf der Seite nur die eigene Spieler:in. Ein begonnener Termin ist gesperrt mit „Hat
 begonnen · nicht mehr änderbar", ein ausgefallener grau mit „Fällt aus". Wurde ein Termin verlegt,
 seit sie abgemeldet war, steht bei ihm etwa „Verlegt, vorher Dienstag, 20. Oktober um 18:00. Deine
 Abmeldung gilt nicht mehr.", bis man neu wählt oder der Termin beginnt. Namen anderer

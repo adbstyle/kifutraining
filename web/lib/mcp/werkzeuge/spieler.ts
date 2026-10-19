@@ -317,7 +317,7 @@ export const terminAbmeldungSetzen = werkzeug({
 const LINK_MODELL =
   "Jede Spieler:in hat einen privaten Link: Wer ihn öffnet, sieht ohne Konto den Teamnamen, Vor- und Nachnamen dieser " +
   "Spieler:in und die anstehenden Termine des Teams, die für sie gelten (bei Terminen mit Kadern nur die ihrer Kader, samt " +
-  "dieser Kader), mit der Zahl der Angemeldeten, und meldet sie bis zum Beginn ab und " +
+  "dieser Kader), mit der Zahl der Angemeldeten und derer, für die er gilt, und meldet sie bis zum Beginn ab und " +
   "wieder an — keine Namen anderer, kein Training, nichts Vergangenes. KiFu verschickt den Link nicht. Gib ihn nur der " +
   `Person weiter, die ihn verlangt, und nie in einer Gruppe. ${LINK_TEXT.warnung}`;
 
