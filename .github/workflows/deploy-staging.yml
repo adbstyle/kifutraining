@@ -31,6 +31,9 @@ jobs:
       - uses: supabase/setup-cli@v2
         with:
           version: latest
+          # Ohne Token löst die Action «latest» anonym auf und scheitert am
+          # API-Limit von GitHub («rate limit exceeded»).
+          github-token: ${{ github.token }}
       - name: Mit Staging-Projekt verknüpfen
         run: supabase link --project-ref "$SUPABASE_STAGING_REF"
         env:

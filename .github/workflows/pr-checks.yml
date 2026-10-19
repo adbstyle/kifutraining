@@ -90,6 +90,9 @@ jobs:
       - uses: supabase/setup-cli@v2
         with:
           version: latest
+          # Ohne Token löst die Action «latest» anonym auf und scheitert am
+          # API-Limit von GitHub («rate limit exceeded»).
+          github-token: ${{ github.token }}
       - name: Lokalen Stack starten und Migrationen + seed.sql anwenden
         run: supabase start
       # 'supabase start' fährt den vollen lokalen Stack hoch und wendet alle
