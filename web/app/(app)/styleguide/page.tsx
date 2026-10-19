@@ -794,7 +794,16 @@ export default async function Styleguide() {
             Layout ändert (Tabelle unten). Ein Spaltenraster gibt es nicht - die
             Lesebreite setzt der <code>Seitenrahmen</code>, Übersichten reihen
             Kacheln, so viele die Breite fasst
-            (<code>repeat(auto-fill, minmax(16rem, 1fr))</code>).
+            (<code>repeat(auto-fill, minmax(16rem, 1fr))</code>). Lange
+            Übersichten zeigen zuerst eine Seite, im Übungskatalog 24 Kacheln:
+            darunter, zentriert, eine Zählzeile «24 von 81 Übungen» in{" "}
+            <code>type-label-small</code> (Live-Region, damit das Nachladen
+            angesagt wird) und ein <code>ButtonLink</code> «Weitere anzeigen»
+            in <code>outlined</code> mit <code>scroll={"{false}"}</code>. Er
+            hebt <code>?anzahl=</code> um eine Seite an; die Adresse bleibt
+            teilbar, und ein Filterwechsel beginnt wieder bei der ersten Seite.
+            Dasselbe Muster wie «… ältere Versionen anzeigen» unter
+            «Versionen».
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Lange Formulare gliedert <code>FormAbschnitt</code>: eine Überschrift
@@ -3338,8 +3347,11 @@ export default async function Styleguide() {
             lässt sich ein Kind darstellen, das vom Betrachter weg (im Diagramm
             „nach oben") schaut, etwa eine wartende Kolonne. Nur die Frontal-Posen
             haben diese Variante; die übrigen zeigen die Figur ohnehin im Profil.
-            Torwart und Trainer haben je eine feste Standfigur ohne Pose. Alle Posen
-            als <code>GlyphVorschau</code>:
+            Torwart und Trainer haben je eine feste Standfigur ohne Pose. Die Teile
+            der Figuren stehen einmal pro Seite im <code>FigurenSprite</code> des
+            (app)-Layouts; eine Figur ist nur ein Verweis darauf mit ihren Farben
+            als CSS-Variablen - ein Diagramm ausserhalb dieses Layouts zeigte leere
+            Figuren. Alle Posen als <code>GlyphVorschau</code>:
           </p>
           <div className="mb-6 flex flex-wrap items-end gap-2">
             {(

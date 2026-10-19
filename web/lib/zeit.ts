@@ -20,6 +20,8 @@
  * die Gruppe wechseln, springt die Liste sichtbar um.
  */
 
+import { plusTage, wochentagVon } from "@/lib/serie";
+
 export const TRAININGS_ZEITZONE = "Europe/Zurich";
 
 /** Der Kalendertag eines Zeitpunkts am Trainingsort als `YYYY-MM-DD` — auch
@@ -92,4 +94,38 @@ export function datumKurz(iso: string): string {
         month: "2-digit",
         year: "numeric",
       });
+}
+
+const vor = (n: number, eins: string, mehr: string) => `vor ${n} ${n === 1 ? eins : mehr}`;
+
+/**
+ * Seit wann ein Zeitpunkt zurückliegt, für den letzten Statuswechsel einer
+ * Spieler:in am Termin (#467 AK 3–10): «gerade eben», «vor 25 Minuten»,
+ * «vor 3 Stunden» (heute), «gestern», «vorgestern», «diese Woche», «letzte
+ * Woche», sonst das Datum. Passen zwei Stufen, gewinnt die feinste — die
+ * Minuten gelten auch über Mitternacht, «gestern» auch am Montag für den
+ * Sonntag (PO 2026-10-19).
+ *
+ * Minuten und Stunden zählen die verstrichene Zeit, abgerundet; Tage und
+ * Wochen (Montag bis Sonntag) die Kalendertage am Trainingsort. `jetzt` gibt
+ * der Server mit, damit Server und Browser dieselbe Zeichenkette rendern; die
+ * Angabe gilt bis zum nächsten Laden.
+ */
+export function seitWann(zeitpunkt: string, jetzt: string): string {
+  const t = new Date(zeitpunkt);
+  const j = new Date(jetzt);
+  // Unlesbar: unverändert zurück wie bei `datumKurz`, statt still zu verschwinden.
+  if (Number.isNaN(t.getTime()) || Number.isNaN(j.getTime())) return zeitpunkt;
+  const minuten = Math.floor((j.getTime() - t.getTime()) / 60_000);
+  if (minuten < 1) return "gerade eben";
+  if (minuten < 60) return vor(minuten, "Minute", "Minuten");
+  const tag = kalendertagAmTrainingsort(t);
+  const heute = kalendertagAmTrainingsort(j);
+  if (tag >= heute) return vor(Math.floor(minuten / 60), "Stunde", "Stunden");
+  if (plusTage(tag, 1) === heute) return "gestern";
+  if (plusTage(tag, 2) === heute) return "vorgestern";
+  const montag = (d: string) => plusTage(d, 1 - wochentagVon(d));
+  if (montag(tag) === montag(heute)) return "diese Woche";
+  if (plusTage(montag(tag), 7) === montag(heute)) return "letzte Woche";
+  return datumKurz(tag);
 }

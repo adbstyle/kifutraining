@@ -17,6 +17,13 @@ export const dynamic = "force-dynamic";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
+// Der Katalog zeigt die Kacheln seitenweise: Jede Kachel trägt ihr Diagramm als
+// serverseitig gezeichnetes SVG, und der ganze Bestand auf einmal kostete pro
+// Aufruf rund eine Sekunde Rechenzeit und ~9 MB Seite. «Weitere anzeigen» hebt
+// `?anzahl=` um eine Seite an; ein Filterwechsel setzt ihn zurück
+// (lib/use-adress-filter.ts).
+const SEITE = 24;
+
 function list(v: string | string[] | undefined): string[] {
   if (!v) return [];
   return (Array.isArray(v) ? v.join(",") : v).split(",").filter(Boolean);
@@ -26,6 +33,19 @@ function num(v: string | string[] | undefined): number | undefined {
   const s = Array.isArray(v) ? v[0] : v;
   const n = s ? Number.parseInt(s, 10) : NaN;
   return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
+/** Dieselbe Adresse mit allen gesetzten Filtern, nur `anzahl` neu. Alles
+ *  ausser `anzahl` reist mit, damit ein künftiger Filter nicht still
+ *  verlorengeht; Hinweise wie `?deleted` entfernt der Flash ohnehin selbst. */
+function mitAnzahl(sp: SearchParams, anzahl: number): string {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(sp)) {
+    if (k === "anzahl" || v === undefined) continue;
+    for (const w of Array.isArray(v) ? v : [v]) p.append(k, w);
+  }
+  p.set("anzahl", String(anzahl));
+  return `/?${p}`;
 }
 
 export default async function Home({
@@ -66,6 +86,8 @@ export default async function Home({
     ...uebrige,
     einordnung: einordnungNachSpalten(teil),
   };
+
+  const anzahl = Math.max(SEITE, num(sp.anzahl) ?? 0);
 
   let rows: Awaited<ReturnType<typeof getExercises>> | null = null;
   let error: string | null = null;
@@ -126,23 +148,44 @@ export default async function Home({
                 : "Keine Übung erfüllt alle gesetzten Filter. Entferne einzelne Filter oder setze sie zurück."}
             </Leerzustand>
           ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
-              {rows.map((row) => (
-                <ExerciseCard
-                  key={row.id}
-                  ex={toCardData(row)}
-                  actionSlot={
-                    canFavorite ? (
-                      <FavoriteButton
-                        exerciseId={row.id}
-                        initial={row.is_favorited}
-                        variant="overlay"
-                      />
-                    ) : undefined
-                  }
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
+                {rows.slice(0, anzahl).map((row) => (
+                  <ExerciseCard
+                    key={row.id}
+                    ex={toCardData(row)}
+                    actionSlot={
+                      canFavorite ? (
+                        <FavoriteButton
+                          exerciseId={row.id}
+                          initial={row.is_favorited}
+                          variant="overlay"
+                        />
+                      ) : undefined
+                    }
+                  />
+                ))}
+              </div>
+              {rows.length > SEITE && (
+                <div className="mt-6 flex flex-col items-center gap-2">
+                  {/* Live-Region: Eine Sprachausgabe sagt nach dem Nachladen
+                      an, wie viele Kacheln nun zu sehen sind — auch auf der
+                      letzten Seite, wo der Knopf wegfällt. */}
+                  <p role="status" className="type-label-small text-on-surface-mittel">
+                    {Math.min(anzahl, rows.length)} von {rows.length} Übungen
+                  </p>
+                  {rows.length > anzahl && (
+                    <ButtonLink
+                      href={mitAnzahl(sp, anzahl + SEITE)}
+                      scroll={false}
+                      variant="outlined"
+                    >
+                      Weitere anzeigen
+                    </ButtonLink>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </>
       )}

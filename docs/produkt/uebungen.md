@@ -275,6 +275,11 @@ ganz einer Altersstufe gehören — der Feldtyp dem Kinderfussball, der Übungst
 Juniorenfussball. Die Beschriftung ist Text und wird mitvorgelesen, nicht bloss Farbe. Mehrere
 Werte derselben Art werden als „oder" verstanden, verschiedene Arten als „und".
 
+Der Katalog zeigt zuerst 24 Kacheln. «Weitere anzeigen» unter der letzten holt jeweils die
+nächsten 24 dazu; über dem Knopf steht, wie viele von wie vielen zu sehen sind, und die
+Trefferzahl über den Kacheln nennt immer die ganze Auswahl. Wer einen Filter ändert oder die
+Filter zurücksetzt, beginnt wieder bei den ersten 24.
+
 Angemeldete haben zwei weitere Sichten: die eigenen Übungen und die Favoriten. Favorisieren
 kann jeder jede sichtbare Übung, auch die aus dem Manual und die fremder Trainer.
 
