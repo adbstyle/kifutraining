@@ -85,7 +85,8 @@ export function ElternAnsicht({
   function stand(t: LinkTermin) {
     const ab = t.id in lokal ? lokal[t.id] : t.abgemeldet;
     const zahl =
-      t.angemeldet === null || t.gesamt === null
+      // `== null`: Ein Bundle, das vor der Migration live ist, erhält noch kein `gesamt`.
+      t.angemeldet == null || t.gesamt == null
         ? null
         : spielerzahlKurz({ quelle: "liste", angemeldet: t.angemeldet + Number(t.abgemeldet) - Number(ab), gesamt: t.gesamt });
     const zweite = t.ausgefallen ? "Fällt aus" : t.begonnen ? "Hat begonnen · nicht mehr änderbar" : null;
@@ -268,7 +269,8 @@ function NaechsterTermin({ t, ab, zweite, zahl, name, heute, pending, onUmlegen,
 }
 
 /* Ort und Spielerzahl — oder, ausgefallen bzw. begonnen, nur das. Die Zahl
-   wird nie gekürzt, nur der Ort (#472 NFR 1). */
+   wird nie gekürzt (#472 NFR 1): In der Liste kürzt sich der Ort, in der
+   grossen Karte bricht die Zeile um und der Ort steht ganz. */
 function ZweiteZeile({
   t,
   zweite,
@@ -284,8 +286,8 @@ function ZweiteZeile({
 }) {
   if (zweite) return <p className={cn("truncate text-on-surface-mittel", className)}>{zweite}</p>;
   return (
-    <p className={cn("flex min-w-0 items-center gap-2 text-on-surface-mittel", className)}>
-      {t.ort && <span className="min-w-0 truncate">{t.ort}</span>}
+    <p className={cn("flex min-w-0 items-center gap-x-2 text-on-surface-mittel", gross && "flex-wrap", className)}>
+      {t.ort && <span className={gross ? "min-w-0" : "min-w-0 truncate"}>{t.ort}</span>}
       {zahl && (
         <span className="inline-flex shrink-0 items-center gap-1">
           <Shirt size={gross ? 16 : 14} className="shrink-0" aria-hidden />
