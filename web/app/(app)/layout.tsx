@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { FigurenSprite } from "@/components/diagramm/figur";
 import { AppNav } from "@/components/layout/AppNav";
 import { AppInhalt, AppRahmen } from "@/components/layout/AppRahmen";
 import { SnackbarProvider } from "@/components/layout/SnackbarKontext";
@@ -18,25 +19,29 @@ export default async function AppLayout({
   const slim = leseLeiste(jar.get(LEISTE_COOKIE)?.value);
   const spalte = leseSpalte(jar.get(SPALTE_COOKIE)?.value);
   return (
-    // Der Team-Kontext des geöffneten Trainings überdauert die einzelne
-    // Seite und wohnt darum hier — siehe TeamKontext (#156). Ebenso, ob es
-    // einen neuen Release gibt (#410): ohne Releases keine Markierung.
-    <VersionenProvider
-      anfangsNeueste={neueste}
-      anfangsGesehen={leseGesehen(jar.get(GESEHEN_COOKIE)?.value)}
-    >
-      <TeamKontextProvider>
-        <AppRahmen anfangsSlim={slim} anfangsSpalte={spalte}>
-          <AppNav />
-          {/* Der eine Platz für Snackbars am unteren Rand überdauert ebenfalls
-              die einzelne Seite — siehe SnackbarKontext (#234). Er liegt im
-              Rahmen, damit er dessen Leistenbreite erbt. Seiten bringen ihren
-              Seitenrahmen (Breite + Kopfzeile) selbst mit. */}
-          <SnackbarProvider>
-            <AppInhalt>{children}</AppInhalt>
-          </SnackbarProvider>
-        </AppRahmen>
-      </TeamKontextProvider>
-    </VersionenProvider>
+    <>
+      {/* Die Figurteile aller Feld-Diagramme, einmal pro Seite (siehe figur.tsx). */}
+      <FigurenSprite />
+      {/* Der Team-Kontext des geöffneten Trainings überdauert die einzelne
+          Seite und wohnt darum hier — siehe TeamKontext (#156). Ebenso, ob es
+          einen neuen Release gibt (#410): ohne Releases keine Markierung. */}
+      <VersionenProvider
+        anfangsNeueste={neueste}
+        anfangsGesehen={leseGesehen(jar.get(GESEHEN_COOKIE)?.value)}
+      >
+        <TeamKontextProvider>
+          <AppRahmen anfangsSlim={slim} anfangsSpalte={spalte}>
+            <AppNav />
+            {/* Der eine Platz für Snackbars am unteren Rand überdauert ebenfalls
+                die einzelne Seite — siehe SnackbarKontext (#234). Er liegt im
+                Rahmen, damit er dessen Leistenbreite erbt. Seiten bringen ihren
+                Seitenrahmen (Breite + Kopfzeile) selbst mit. */}
+            <SnackbarProvider>
+              <AppInhalt>{children}</AppInhalt>
+            </SnackbarProvider>
+          </AppRahmen>
+        </TeamKontextProvider>
+      </VersionenProvider>
+    </>
   );
 }

@@ -11,13 +11,30 @@
  * Figuren-Version wirkt sofort auf bestehende Diagramme, ohne Standbild.
  *
  * Zeichen-Raum: 0..200 (x) × 0..280 (y), Figur-Anker (Körpermitte) bei
- * (100, 140). `FigurGrafik` ist der einzige Einstiegspunkt: sie zentriert den
- * Anker auf (0,0), skaliert je Figurenart auf Feldgrösse (der Trainer ist
- * erwachsen und grösser) und spiegelt optional die Blickrichtung.
+ * (100, 140). `FigurGrafik` zeichnet eine Figur: sie zentriert den Anker auf
+ * (0,0), skaliert je Figurenart auf Feldgrösse (der Trainer ist erwachsen und
+ * grösser) und spiegelt optional die Blickrichtung.
+ *
+ * Gezeichnet wird über ein Sprite (`FigurenSprite`, einmal im (app)-Layout):
+ * Körper je Haltung und Kopf je Ansicht und Frisur stehen dort einmal, mit
+ * Trikot, Haut und Haar als CSS-Variablen; jede Figur verweist nur per <use>
+ * darauf. Die Geometrie bleibt trotzdem hier und wirkt sofort.
  */
 
+import type { CSSProperties } from "react";
 import { dv } from "@/lib/diagramm-farben";
 import type { Punkt, SpielerPose } from "@/lib/diagramm";
+
+// Die drei Farben, die je Figur wechseln, stehen im Sprite als Variablen; die
+// Figur setzt sie auf ihrer Gruppe (siehe `FigurGrafik`). Es sind Werte der
+// einzelnen Figur, keine Farbrollen — ihr Inhalt ist selbst eine Rolle aus
+// `dv()` (z. B. `--diagramm-figur-haut-2`), daher bewusst ohne `--diagramm-`.
+const TRIKOT_PROP = "--figur-trikot";
+const HAUT_PROP = "--figur-haut";
+const HAAR_PROP = "--figur-haar";
+const TRIKOT_VAR = `var(${TRIKOT_PROP})`;
+const HAUT_VAR = `var(${HAUT_PROP})`;
+const HAAR_VAR = `var(${HAAR_PROP})`;
 
 // --- Palette (fix, unabhängig von der Trikotfarbe) ---
 // Hauttöne bewusst als warme Brauntöne von hell bis dunkel — auch der dunkelste
@@ -160,7 +177,8 @@ const BAND = dv("figur-band"); // Stirnband
 const ZOPF_TIE = dv("figur-zopfband"); // Haargummi
 
 /** Hinter dem Kopf liegende Haarteile (Vorderansicht): Zöpfe, lange Haare. */
-function frisurBack(haar: string, fr: Frisur): string {
+function frisurBack(fr: Frisur): string {
+  const haar = HAAR_VAR;
   if (fr === "zopf")
     return `<path d="M126 40 Q150 44 150 66 Q150 86 137 90 Q147 70 132 56 Z" fill="${haar}"/>`;
   if (fr === "zoepfe")
@@ -171,7 +189,8 @@ function frisurBack(haar: string, fr: Frisur): string {
 }
 /** Haar auf/über dem Kopf (Vorderansicht). Grund-Schopf als Halbmond, je
  *  Stil ergänzt. */
-function frisurTop(haar: string, fr: Frisur): string {
+function frisurTop(fr: Frisur): string {
+  const haar = HAAR_VAR;
   let s = `<circle cx="100" cy="48" r="33" fill="${haar}"/>`;
   if (fr === "lockig")
     s += [[78, 32], [92, 24], [108, 24], [122, 32], [70, 46], [130, 46]]
@@ -194,7 +213,8 @@ function frisurTop(haar: string, fr: Frisur): string {
     s += `<circle cx="64" cy="66" r="4" fill="${ZOPF_TIE}"/><circle cx="136" cy="66" r="4" fill="${ZOPF_TIE}"/>`;
   return s;
 }
-function gesichtFront(skin: string): string {
+function gesichtFront(): string {
+  const skin = HAUT_VAR;
   return (
     `<circle cx="100" cy="56" r="29" fill="${skin}"/>` +
     `<circle cx="72" cy="58" r="6" fill="${skin}"/><circle cx="128" cy="58" r="6" fill="${skin}"/>` +
@@ -203,19 +223,20 @@ function gesichtFront(skin: string): string {
     `<path d="M91 66 Q100 76 109 66" stroke="${TINTE}" stroke-width="2.8" fill="none" stroke-linecap="round"/>`
   );
 }
-function kopfFront(skin: string, haar: string, fr: Frisur): string {
-  return frisurBack(haar, fr) + frisurTop(haar, fr) + gesichtFront(skin);
+function kopfFront(fr: Frisur): string {
+  return frisurBack(fr) + frisurTop(fr) + gesichtFront();
 }
 /** Kopf von hinten: kein Gesicht — der Haarschopf deckt den Schädel, sichtbar
  *  bleiben Ohren und ein Streifen Nacken unter dem Haar. Frisur, Haarfarbe und
  *  Hautton stammen aus derselben Ableitung wie vorne, damit es dasselbe Kind
  *  bleibt; die von hinten sichtbaren Merkmale (Zopf, Zöpfe, langes Haar, Dutt,
  *  Iro, Stirnband) tragen die Wiedererkennung. */
-function kopfRuecken(skin: string, haar: string, fr: Frisur): string {
+function kopfRuecken(fr: Frisur): string {
+  const skin = HAUT_VAR;
   return (
-    frisurBack(haar, fr) +
+    frisurBack(fr) +
     `<circle cx="100" cy="56" r="29" fill="${skin}"/>` +
-    frisurTop(haar, fr) +
+    frisurTop(fr) +
     // Ohren nach dem Schopf, sonst deckt ihn die Haarkappe zu.
     `<circle cx="70" cy="60" r="6.5" fill="${skin}"/><circle cx="130" cy="60" r="6.5" fill="${skin}"/>`
   );
@@ -223,8 +244,13 @@ function kopfRuecken(skin: string, haar: string, fr: Frisur): string {
 /** Kragennaht des Trikots — nur in der Rückansicht, als leiser Schatten auf
  *  jeder Trikotfarbe. */
 const KRAGEN = `<path d="M86 97 Q100 105 114 97" stroke="${dv("schatten")}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
-/** Profilkopf, Blick nach rechts; Mitte (hx,hy). */
-function kopfProfil(hx: number, hy: number, skin: string, haar: string, fr: Frisur): string {
+/** Profilkopf, Blick nach rechts, Mitte im Ursprung — die Haltung schiebt ihn
+ *  an ihre Halsstelle (`Kopf.x/y`). */
+function kopfProfil(fr: Frisur): string {
+  const hx = 0;
+  const hy = 0;
+  const skin = HAUT_VAR;
+  const haar = HAAR_VAR;
   let s = "";
   // Hinten liegende Haarteile zuerst.
   if (fr === "zopf" || fr === "zoepfe")
@@ -262,7 +288,8 @@ function schuh(x: number, y: number, dir: 1 | -1): string {
 // --- Posen (liefern Markup im Zeichen-Raum 0..200 × 0..280) ---
 /** `hinten`: dieselbe Haltung von hinten gesehen — Kopf ohne Gesicht,
  *  Kragennaht sichtbar, Hände etwas weiter vorn am Körper. */
-function stehen(j: string, skin: string, haar: string, fr: Frisur, hinten = false): string {
+function stehen(kopf: string, hinten = false): string {
+  const [j, skin] = [TRIKOT_VAR, HAUT_VAR];
   const hx = hinten ? 7 : 0;
   return (
     `<path d="M91 154 L87 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
@@ -279,10 +306,11 @@ function stehen(j: string, skin: string, haar: string, fr: Frisur, hinten = fals
     <path d="M74 100 L60 118" stroke="${j}" stroke-width="22" stroke-linecap="round"/>
     <path d="M126 100 L140 118" stroke="${j}" stroke-width="22" stroke-linecap="round"/>
     <rect x="93" y="80" width="14" height="18" rx="5" fill="${skin}"/>
-    ${hinten ? kopfRuecken(skin, haar, fr) : kopfFront(skin, haar, fr)}`
+    ${kopf}`
   );
 }
-function laufen(j: string, skin: string, haar: string, fr: Frisur, hinten = false): string {
+function laufen(kopf: string, hinten = false): string {
+  const [j, skin] = [TRIKOT_VAR, HAUT_VAR];
   const hx = hinten ? 7 : 0;
   return (
     `<path d="M96 156 Q82 186 74 210" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
@@ -301,10 +329,11 @@ function laufen(j: string, skin: string, haar: string, fr: Frisur, hinten = fals
     <path d="M76 102 Q66 110 62 122" stroke="${j}" stroke-width="22" fill="none" stroke-linecap="round"/>
     <path d="M124 102 Q134 110 138 122" stroke="${j}" stroke-width="22" fill="none" stroke-linecap="round"/>
     <rect x="93" y="82" width="14" height="18" rx="5" fill="${skin}"/>
-    ${hinten ? kopfRuecken(skin, haar, fr) : kopfFront(skin, haar, fr)}`
+    ${kopf}`
   );
 }
-function dribbeln(j: string, skin: string, haar: string, fr: Frisur): string {
+function dribbeln(kopf: string): string {
+  const [j, skin] = [TRIKOT_VAR, HAUT_VAR];
   return (
     `<path d="M96 150 Q90 188 84 222" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
     <path d="M88 196 Q86 210 84 222" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
@@ -313,7 +342,7 @@ function dribbeln(j: string, skin: string, haar: string, fr: Frisur): string {
     <circle cx="84" cy="134" r="7" fill="${skin}"/>
     <path d="M82 100 L122 98 Q128 100 126 122 L122 150 Q120 156 112 156 L88 156 Q82 156 82 150 Z" fill="${j}"/>
     <rect x="93" y="82" width="14" height="18" rx="5" fill="${skin}"/>
-    ${kopfProfil(118, 54, skin, haar, fr)}
+    ${kopf}
     <path d="M108 150 Q126 176 132 204" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
     <path d="M128 184 Q131 196 132 204" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
     ${schuh(130, 202, 1)}
@@ -322,7 +351,8 @@ function dribbeln(j: string, skin: string, haar: string, fr: Frisur): string {
     <circle cx="132" cy="132" r="7" fill="${skin}"/>`
   );
 }
-function schiessen(j: string, skin: string, haar: string, fr: Frisur): string {
+function schiessen(kopf: string): string {
+  const [j, skin] = [TRIKOT_VAR, HAUT_VAR];
   return (
     `<path d="M94 150 L90 224" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
     <path d="M91 198 L89 220" stroke="${SOCK}" stroke-width="17" stroke-linecap="round"/>
@@ -331,7 +361,7 @@ function schiessen(j: string, skin: string, haar: string, fr: Frisur): string {
     <circle cx="70" cy="126" r="7" fill="${skin}"/>
     <path d="M82 98 L120 100 Q126 102 124 122 L120 150 Q118 156 110 156 L88 156 Q82 156 82 150 Z" fill="${j}"/>
     <rect x="92" y="82" width="14" height="18" rx="5" fill="${skin}"/>
-    ${kopfProfil(110, 54, skin, haar, fr)}
+    ${kopf}
     <path d="M106 150 Q132 152 150 142" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
     <path d="M134 148 Q144 145 150 142" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
     ${schuh(150, 140, 1)}
@@ -343,7 +373,8 @@ function schiessen(j: string, skin: string, haar: string, fr: Frisur): string {
 /** Innenseit-Pass (Profil, Blick nach rechts): Standbein gepflanzt, Passbein
  *  tief quer zum Ball geführt (flacher Innenseit-Fuss am Boden), Arme zur
  *  Balance offen — bewusst flacher als der hohe Schuss. */
-function passen(j: string, skin: string, haar: string, fr: Frisur): string {
+function passen(kopf: string): string {
+  const [j, skin] = [TRIKOT_VAR, HAUT_VAR];
   return (
     `<path d="M92 150 L86 224" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
     <path d="M89 198 L86 220" stroke="${SOCK}" stroke-width="17" stroke-linecap="round"/>
@@ -352,7 +383,7 @@ function passen(j: string, skin: string, haar: string, fr: Frisur): string {
     <circle cx="62" cy="128" r="7" fill="${skin}"/>
     <path d="M82 98 L120 100 Q126 102 124 122 L120 150 Q118 156 110 156 L88 156 Q82 156 82 150 Z" fill="${j}"/>
     <rect x="92" y="82" width="14" height="18" rx="5" fill="${skin}"/>
-    ${kopfProfil(110, 54, skin, haar, fr)}
+    ${kopf}
     <path d="M106 150 Q126 178 136 202" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
     <path d="M130 186 Q134 195 136 202" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
     <path d="M129 198 q19 -1 25 7 q1 6 -7 6 l-18 0 q-5 -7 0 -13 Z" fill="${SHOE}"/>
@@ -361,7 +392,8 @@ function passen(j: string, skin: string, haar: string, fr: Frisur): string {
     <circle cx="134" cy="126" r="7" fill="${skin}"/>`
   );
 }
-function graetschen(j: string, skin: string, haar: string, fr: Frisur): string {
+function graetschen(kopf: string): string {
+  const [j, skin] = [TRIKOT_VAR, HAUT_VAR];
   return (
     `<path d="M96 206 Q120 210 156 212" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
     <path d="M128 210 Q142 211 156 212" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
@@ -373,11 +405,12 @@ function graetschen(j: string, skin: string, haar: string, fr: Frisur): string {
     <path d="M70 170 L104 196 Q110 200 106 208 L86 214 Q80 214 78 208 L66 184 Q62 176 70 170 Z" fill="${j}"/>
     <path d="M74 168 Q86 158 96 156" stroke="${skin}" stroke-width="13" fill="none" stroke-linecap="round"/>
     <circle cx="96" cy="156" r="7" fill="${skin}"/>
-    ${kopfProfil(64, 150, skin, haar, fr)}`
+    ${kopf}`
   );
 }
 /** Torwart: Standfigur mit Handschuhen, Neon-Trikot (fix). */
-function torhueter(j: string, skin: string, haar: string, fr: Frisur): string {
+function torhueter(kopf: string): string {
+  const [j, skin] = [TORWART_TRIKOT, HAUT_VAR];
   return (
     `<path d="M88 154 L74 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
     <path d="M112 154 L126 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
@@ -393,7 +426,7 @@ function torhueter(j: string, skin: string, haar: string, fr: Frisur): string {
     <path d="M74 100 Q60 110 56 124" stroke="${j}" stroke-width="22" fill="none" stroke-linecap="round"/>
     <path d="M126 100 Q140 110 144 124" stroke="${j}" stroke-width="22" fill="none" stroke-linecap="round"/>
     <rect x="93" y="80" width="14" height="18" rx="5" fill="${skin}"/>
-    ${kopfFront(skin, haar, fr)}`
+    ${kopf}`
   );
 }
 
@@ -402,7 +435,8 @@ function torhueter(j: string, skin: string, haar: string, fr: Frisur): string {
  *  Manual. Kopf kleiner und Beine länger als beim Kind (erwachsene Proportion),
  *  die Körpergrösse kommt über `TRAINER_SCALE`. Kennt wie der Torhüter keine
  *  Posen; das Haar bleibt unter der Kappe, nur der Hautton variiert. */
-function trainer(j: string, skin: string): string {
+function trainer(): string {
+  const [j, skin] = [TRIKOT_VAR, HAUT_VAR];
   return (
     // Lange Hose mit Hüftteil, darauf die Schuhe
     `<path d="M90 158 L86 240" stroke="${TRAINER_HOSE}" stroke-width="21" stroke-linecap="round"/>
@@ -425,36 +459,94 @@ function trainer(j: string, skin: string): string {
   );
 }
 
-const POSEN: Record<SpielerPose, (j: string, s: string, h: string, fr: Frisur) => string> = {
-  stehen,
-  "stehen-hinten": (j, s, h, fr) => stehen(j, s, h, fr, true),
-  laufen,
-  "laufen-hinten": (j, s, h, fr) => laufen(j, s, h, fr, true),
-  dribbeln,
-  passen,
-  schiessen,
-  graetschen,
+/** Wo und wie eine Haltung den Kopf trägt: von vorn, von hinten oder im
+ *  Profil — dann an ihrer Halsstelle (x, y) im Zeichen-Raum. */
+type Kopf = { ansicht: "vorne" | "hinten" } | { ansicht: "profil"; x: number; y: number };
+type Haltung = {
+  /** Die Haltung zeichnet den Kopf an der Stelle von `kopf` — beim Profil
+   *  liegen danach noch Bein und Arm darüber. */
+  koerper: (kopf: string) => string;
+  kopf: Kopf | null;
+};
+type HaltungName = SpielerPose | "torwart" | "trainer";
+
+const HALTUNGEN: Record<HaltungName, Haltung> = {
+  stehen: { koerper: (k) => stehen(k), kopf: { ansicht: "vorne" } },
+  "stehen-hinten": { koerper: (k) => stehen(k, true), kopf: { ansicht: "hinten" } },
+  laufen: { koerper: (k) => laufen(k), kopf: { ansicht: "vorne" } },
+  "laufen-hinten": { koerper: (k) => laufen(k, true), kopf: { ansicht: "hinten" } },
+  dribbeln: { koerper: dribbeln, kopf: { ansicht: "profil", x: 118, y: 54 } },
+  passen: { koerper: passen, kopf: { ansicht: "profil", x: 110, y: 54 } },
+  schiessen: { koerper: schiessen, kopf: { ansicht: "profil", x: 110, y: 54 } },
+  graetschen: { koerper: graetschen, kopf: { ansicht: "profil", x: 64, y: 150 } },
+  torwart: { koerper: torhueter, kopf: { ansicht: "vorne" } },
+  // Der Trainer trägt seinen Kopf mit Kappe selbst — die Frisur bleibt darunter.
+  trainer: { koerper: () => trainer(), kopf: null },
 };
 
-/** Markup einer Figur im Zeichen-Raum. `trikot` ist die gerenderte Team-Farbe
- *  (beim Torwart ignoriert — fixes Neon). Frisur/Hautton aus `seed` abgeleitet.
- *  Nur für `FigurGrafik` — das Markup passt allein zur Skalierung seiner Art. */
-function figurMarkup(args: {
-  art: FigurArt;
-  pose?: SpielerPose;
-  trikot: string;
-  seed: string;
-}): string {
-  const { frisur, haut, haar } = figurVariante(args.seed);
-  if (args.art === "torwart") return torhueter(TORWART_TRIKOT, haut, haar, frisur);
-  if (args.art === "trainer") return trainer(args.trikot, haut);
-  return POSEN[args.pose ?? "stehen"](args.trikot, haut, haar, frisur);
+const KOEPFE: Record<Kopf["ansicht"], (fr: Frisur) => string> = {
+  vorne: kopfFront,
+  hinten: kopfRuecken,
+  profil: kopfProfil,
+};
+
+// --- Sprite ---
+// Jede Figur wäre als eigenes Markup rund 2 KB SVG; im Katalog mit Dutzenden
+// Diagrammen kostete das Megabytes und spürbar Rechenzeit. Die Teile stehen
+// darum EINMAL pro Seite im Sprite (`FigurenSprite`, im (app)-Layout), jede
+// Figur verweist nur per <use> darauf und setzt ihre Farben als
+// CSS-Variablen, die in den <use>-Baum vererben. Ein Diagramm ausserhalb des
+// (app)-Layouts zeigte darum leere Figuren.
+const FIGUR_ID = "kifu-figur";
+const koerperId = (h: HaltungName, teil: "vor" | "nach") => `${FIGUR_ID}-${h}-${teil}`;
+const kopfId = (ansicht: Kopf["ansicht"], fr: Frisur) => `${FIGUR_ID}-kopf-${ansicht}-${fr}`;
+
+/** Platzhalter für den Kopf: Jede Haltung zeichnet ihn an dieser Stelle, und
+ *  der Körper wird daran in «davor» und «danach» geteilt. */
+const LUECKE = "\u0000";
+
+/** Körper je Haltung, am Kopf geteilt. «Danach» ist leer, wo der Kopf zuletzt
+ *  kommt; im Profil liegen dort noch Bein und Arm über dem Kopf. */
+const KOERPER = (Object.keys(HALTUNGEN) as HaltungName[]).map((h) => {
+  const [vor, nach = ""] = HALTUNGEN[h].koerper(LUECKE).split(LUECKE);
+  return { h, vor, nach };
+});
+
+const SPRITE_MARKUP = [
+  ...KOERPER.flatMap(({ h, vor, nach }) => [
+    `<g id="${koerperId(h, "vor")}">${vor}</g>`,
+    ...(nach ? [`<g id="${koerperId(h, "nach")}">${nach}</g>`] : []),
+  ]),
+  ...(Object.keys(KOEPFE) as Kopf["ansicht"][]).flatMap((ansicht) =>
+    FRISUREN.map((fr) => `<g id="${kopfId(ansicht, fr)}">${KOEPFE[ansicht](fr)}</g>`),
+  ),
+].join("");
+
+/** Haltungen mit einem «Danach»-Teil — aus derselben Quelle wie das Sprite. */
+const MIT_NACH = new Set(KOERPER.filter(({ nach }) => nach).map(({ h }) => h));
+
+/** Die Figurteile für alle Diagramme der Seite — gehört genau einmal ins
+ *  (app)-Layout. Nicht `display:none`: Manche Browser lösen <use> auf
+ *  ausgeblendete Teile nicht auf, darum 0×0 und aus dem Fluss genommen. */
+export function FigurenSprite() {
+  return (
+    <svg
+      aria-hidden
+      focusable="false"
+      width="0"
+      height="0"
+      style={{ position: "absolute", overflow: "hidden" }}
+      dangerouslySetInnerHTML={{ __html: `<defs>${SPRITE_MARKUP}</defs>` }}
+    />
+  );
 }
 
-/** Fertige Figur für das Symbol-Register: Markup **und** Transform in einem
- *  Aufruf. Beide gehören zusammen — die Zeichnung des Trainers stimmt nur bei
- *  seiner eigenen Skalierung —, darum gibt es nach draussen nur diesen
- *  Einstiegspunkt und keine einzeln aufrufbaren Hälften. */
+/** Fertige Figur für das Symbol-Register: Verweise auf die Sprite-Teile
+ *  **und** Transform in einem Aufruf. Beide gehören zusammen — die Zeichnung
+ *  des Trainers stimmt nur bei seiner eigenen Skalierung. Die Teile selbst
+ *  liefert `FigurenSprite`, das einmal im Layout steht. `trikot` ist die
+ *  gerenderte Team-Farbe (der Torwart trägt fixes Neon); Frisur und Hautton
+ *  kommen aus `seed`. */
 export function FigurGrafik({
   art,
   pose,
@@ -468,10 +560,24 @@ export function FigurGrafik({
   seed: string;
   spiegeln?: boolean;
 }) {
+  const { frisur, haut, haar } = figurVariante(seed);
+  const name: HaltungName = art === "spieler" ? pose ?? "stehen" : art;
+  const { kopf } = HALTUNGEN[name];
+  const farben = {
+    [TRIKOT_PROP]: trikot,
+    [HAUT_PROP]: haut,
+    [HAAR_PROP]: haar,
+  } as CSSProperties;
   return (
-    <g
-      transform={figurTransform(spiegeln, ART_SCALE[art])}
-      dangerouslySetInnerHTML={{ __html: figurMarkup({ art, pose, trikot, seed }) }}
-    />
+    <g transform={figurTransform(spiegeln, ART_SCALE[art])} style={farben}>
+      <use href={`#${koerperId(name, "vor")}`} />
+      {kopf && (
+        <use
+          href={`#${kopfId(kopf.ansicht, frisur)}`}
+          transform={kopf.ansicht === "profil" ? `translate(${kopf.x} ${kopf.y})` : undefined}
+        />
+      )}
+      {MIT_NACH.has(name) && <use href={`#${koerperId(name, "nach")}`} />}
+    </g>
   );
 }

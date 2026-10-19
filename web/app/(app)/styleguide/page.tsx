@@ -3347,8 +3347,11 @@ export default async function Styleguide() {
             lässt sich ein Kind darstellen, das vom Betrachter weg (im Diagramm
             „nach oben") schaut, etwa eine wartende Kolonne. Nur die Frontal-Posen
             haben diese Variante; die übrigen zeigen die Figur ohnehin im Profil.
-            Torwart und Trainer haben je eine feste Standfigur ohne Pose. Alle Posen
-            als <code>GlyphVorschau</code>:
+            Torwart und Trainer haben je eine feste Standfigur ohne Pose. Die Teile
+            der Figuren stehen einmal pro Seite im <code>FigurenSprite</code> des
+            (app)-Layouts; eine Figur ist nur ein Verweis darauf mit ihren Farben
+            als CSS-Variablen - ein Diagramm ausserhalb dieses Layouts zeigte leere
+            Figuren. Alle Posen als <code>GlyphVorschau</code>:
           </p>
           <div className="mb-6 flex flex-wrap items-end gap-2">
             {(
