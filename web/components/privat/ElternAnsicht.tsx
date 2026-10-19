@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarX2 } from "lucide-react";
+import { CalendarX2, Shirt } from "lucide-react";
 import { Button, Kalenderblatt, Leerzustand, SectionMessage, Switch } from "@/components/ui";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
@@ -11,7 +11,7 @@ import { monatsName, tagOhneJahr, tagText } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import type { LinkTermin } from "@/lib/privater-link";
 import { plusTage } from "@/lib/serie";
-import { spielerName, verfallenHinweis } from "@/lib/spieler";
+import { spielerName, spielerzahlKurz, verfallenHinweis, type Spielerzahl } from "@/lib/spieler";
 
 /* Was die Spielervertretung über den privaten Link sieht (#436 AK 5–9): ihre
    Spieler:in, das Team und die anstehenden Termine. Angemeldet ist der
@@ -25,7 +25,11 @@ import { spielerName, verfallenHinweis } from "@/lib/spieler";
    der nächste Termin, der noch nicht begonnen hat, gross und mit einem Knopf
    zum Ab- oder Wiederanmelden; darunter die übrigen nach Monat, je mit dem
    Schalter. Fürs Handy gebaut. Der Satz im Kopf nennt den Vornamen statt
-   eines Pronomens — KiFu kennt das Geschlecht nicht. */
+   eines Pronomens — KiFu kennt das Geschlecht nicht.
+
+   Die Spielerzahl steht knapp wie im Trainingsplan, «24/33» mit dem Shirt
+   (#472): «angemeldet» und «abgemeldet» meinen auf dieser Seite nur die
+   eigene Spieler:in. */
 export function ElternAnsicht({
   token,
   team,
@@ -76,16 +80,17 @@ export function ElternAnsicht({
   }
 
   /** Der Stand eines Termins, wie er gerade dasteht — der lokale Schalter
-   *  zuerst; die Zahl folgt ihm, bevor der Server antwortet. */
+   *  zuerst; die Zahl der Angemeldeten folgt ihm, bevor der Server antwortet,
+   *  die Gesamtzahl bleibt (#472 PC 1). */
   function stand(t: LinkTermin) {
     const ab = t.id in lokal ? lokal[t.id] : t.abgemeldet;
-    const zahl = t.angemeldet === null ? null : t.angemeldet + Number(t.abgemeldet) - Number(ab);
-    const zweite = t.ausgefallen
-      ? "Fällt aus"
-      : t.begonnen
-        ? "Hat begonnen · nicht mehr änderbar"
-        : [t.ort, `${zahl} angemeldet`].filter(Boolean).join(" · ");
-    return { ab, zweite };
+    const zahl =
+      // `== null`: Ein Bundle, das vor der Migration live ist, erhält noch kein `gesamt`.
+      t.angemeldet == null || t.gesamt == null
+        ? null
+        : { quelle: "liste" as const, angemeldet: t.angemeldet + Number(t.abgemeldet) - Number(ab), gesamt: t.gesamt };
+    const zweite = t.ausgefallen ? "Fällt aus" : t.begonnen ? "Hat begonnen · nicht mehr änderbar" : null;
+    return { ab, zweite, zahl };
   }
   const naechsterStand = naechster && stand(naechster);
 
@@ -159,7 +164,9 @@ export function ElternAnsicht({
 type KarteProps = {
   t: LinkTermin;
   ab: boolean;
-  zweite: string;
+  /** Statt Ort und Zahl: ausgefallen oder begonnen. */
+  zweite: string | null;
+  zahl: Spielerzahl | null;
   name: string;
   pending: boolean;
   onUmlegen: (an: boolean) => void;
@@ -167,7 +174,7 @@ type KarteProps = {
 };
 
 /* Ein Termin in der Liste: Kalenderblatt, Zeit, zweite Zeile und Schalter. */
-function TerminKarte({ t, ab, zweite, name, pending, onUmlegen, hinweise }: KarteProps) {
+function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }: KarteProps) {
   return (
     <li className="flex flex-col gap-2 rounded-flaeche bg-elev-01 px-3 py-2.5">
       <div className="flex items-center gap-3">
@@ -180,7 +187,7 @@ function TerminKarte({ t, ab, zweite, name, pending, onUmlegen, hinweise }: Kart
           <span className="type-body-medium text-on-surface">
             {t.beginn}–{t.ende}
           </span>
-          <span className="type-body-small truncate text-on-surface-mittel">{zweite}</span>
+          <ZweiteZeile t={t} zweite={zweite} zahl={zahl} className="type-body-small" />
           <KaderLozenges namen={t.kader} className="mt-1" />
         </div>
         <Switch
@@ -201,7 +208,7 @@ function TerminKarte({ t, ab, zweite, name, pending, onUmlegen, hinweise }: Kart
    Schalters: «Abmelden» oder «Wieder anmelden». Abgemeldet steht die Karte
    zurückgenommen im Fehlerton, der Tag in der Fehlerfarbe, und «Wieder
    anmelden» ist der helle Knopf. */
-function NaechsterTermin({ t, ab, zweite, name, heute, pending, onUmlegen, hinweise }: KarteProps & { heute: string }) {
+function NaechsterTermin({ t, ab, zweite, zahl, name, heute, pending, onUmlegen, hinweise }: KarteProps & { heute: string }) {
   const relativ = t.datum === heute ? "Heute" : t.datum === plusTage(heute, 1) ? "Morgen" : null;
   return (
     <section aria-labelledby="als-naechstes">
@@ -225,7 +232,7 @@ function NaechsterTermin({ t, ab, zweite, name, heute, pending, onUmlegen, hinwe
           <p className={cn("mt-1 type-headline-small text-on-surface", t.ausgefallen && "line-through")}>
             {t.beginn}–{t.ende} Uhr
           </p>
-          <p className="type-body-medium mt-1 text-on-surface-mittel">{zweite}</p>
+          <ZweiteZeile t={t} zweite={zweite} zahl={zahl} className="type-body-medium mt-1" gross />
           <KaderLozenges namen={t.kader} className="mt-2" />
           {!t.ausgefallen && (
             <p className="type-body-medium mt-1 text-on-surface">
@@ -258,5 +265,39 @@ function NaechsterTermin({ t, ab, zweite, name, heute, pending, onUmlegen, hinwe
         {hinweise}
       </div>
     </section>
+  );
+}
+
+/* Ort und Spielerzahl — oder, ausgefallen bzw. begonnen, nur das. Die Zahl
+   wird nie gekürzt (#472 NFR 1): In der Liste kürzt sich der Ort, in der
+   grossen Karte bricht die Zeile um und der Ort steht ganz. */
+function ZweiteZeile({
+  t,
+  zweite,
+  zahl,
+  className,
+  gross = false,
+}: {
+  t: LinkTermin;
+  zweite: string | null;
+  zahl: Spielerzahl | null;
+  className: string;
+  gross?: boolean;
+}) {
+  if (zweite) return <p className={cn("truncate text-on-surface-mittel", className)}>{zweite}</p>;
+  return (
+    <p className={cn("flex min-w-0 items-center gap-x-2 text-on-surface-mittel", gross && "flex-wrap", className)}>
+      {t.ort && <span className={gross ? "min-w-0" : "min-w-0 truncate"}>{t.ort}</span>}
+      {zahl?.quelle === "liste" && (
+        <span className="inline-flex shrink-0 items-center gap-1">
+          <Shirt size={gross ? 16 : 14} className="shrink-0" aria-hidden />
+          <span aria-hidden>{spielerzahlKurz(zahl)}</span>
+          {/* Ohne «angemeldet» — das Wort gehört hier der eigenen Spieler:in. */}
+          <span className="sr-only">
+            Spielerzahl {zahl.angemeldet} von {zahl.gesamt}
+          </span>
+        </span>
+      )}
+    </p>
   );
 }

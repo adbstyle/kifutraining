@@ -4047,7 +4047,7 @@ try {
     assert.deepEqual(ansicht.termine.map((x: { id: string }) => x.id), [t], "nichts Vergangenes (OoS 2)");
     assert.ok(!ansicht.termine.some((x: { id: string }) => x.id === gestern));
     assert.deepEqual(ansicht.termine[0], {
-      id: t, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler", ausgefallen: false, begonnen: false, angemeldet: 2, abgemeldet: false, verfallen: null, kader: [],
+      id: t, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler", ausgefallen: false, begonnen: false, angemeldet: 2, gesamt: 2, abgemeldet: false, verfallen: null, kader: [],
     });
 
     const abmelden = (token: string, abgemeldet: boolean) =>
@@ -4055,6 +4055,11 @@ try {
     const ab = (await abmelden(link.token, true)).data;
     assert.equal(ab.status, "ok");
     assert.equal(ab.stand.angemeldet, 1);
+    // #472 PC 1: Abgemeldet zählt sie weiter zu denen, für die er gilt.
+    assert.deepEqual(
+      (({ angemeldet, gesamt }) => [angemeldet, gesamt])((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0]),
+      [1, 2],
+    );
     // PC 1: Mitglieder sehen die Abmeldung wie eine eigene.
     const liste = wert(await terminSpieler(a.supabase, a.id, { terminId: t }));
     assert.deepEqual(liste.spieler.map((s) => [s.vorname, s.abgemeldet]), [["Lena", true], ["Noah", false]]);
@@ -4098,7 +4103,7 @@ try {
   // ── Verlegen und Ausfall (#437) ──────────────────────────────────────────
   const linkAnsicht = async (spielerId: string) =>
     (await feldAnon.rpc("spieler_link_ansicht", { p_token: wert(await holeSpielerLink(a.supabase, a.id, { spielerId })).token })).data as {
-      termine: { id: string; abgemeldet: boolean; verfallen: { datum: string; beginn: string } | null }[];
+      termine: { id: string; abgemeldet: boolean; angemeldet: number | null; gesamt: number | null; verfallen: { datum: string; beginn: string } | null }[];
     };
 
   await pruefe("Verlegen: Bestätigung nennt die Zahl, danach alle angemeldet, Link zeigt den Zeitpunkt vorher (#437 AK 1, 2, 6; PC 1, 3)", async () => {
@@ -4157,7 +4162,10 @@ try {
     const u = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: u, spielerId: lena, abgemeldet: true }));
     wert(await lasseAusfallen(a.supabase, a.id, { terminId: u, grund: null }));
-    assert.equal((await linkAnsicht(lena)).termine.find((x) => x.id === u)!.abgemeldet, true);
+    const ausgefallen = (await linkAnsicht(lena)).termine.find((x) => x.id === u)!;
+    assert.equal(ausgefallen.abgemeldet, true);
+    // AK 4, #472: Ausgefallen nennt der Link keine Zahl, auch nicht von wie vielen.
+    assert.deepEqual([ausgefallen.angemeldet, ausgefallen.gesamt], [null, null]);
     wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: u }));
     assert.equal((await standVon(team, u)).spielstand?.angemeldet, 1);
     // PC 1: Auch während des Ausfalls verfällt sie beim Verlegen.
@@ -4523,12 +4531,18 @@ try {
     const alle = wert(await anstehend(k.team, [], 8)).terminId;
     const ansicht = async (spielerId: string) =>
       (await feldAnon.rpc("spieler_link_ansicht", { p_token: wert(await holeSpielerLink(a.supabase, a.id, { spielerId })).token })).data as {
-        termine: { id: string; angemeldet: number | null; kader: string[] }[];
+        termine: { id: string; angemeldet: number | null; gesamt: number | null; kader: string[] }[];
       };
     const lena = await ansicht(k.lena);
     assert.deepEqual(lena.termine.map((t) => t.id), [s1, gemischt, alle], "S2 betrifft Lena nicht");
     assert.deepEqual(lena.termine.map((t) => t.kader), [["S1"], ["Aushilfe"], []], "nur ihre Kader, nie S2");
     assert.deepEqual(lena.termine.map((t) => t.angemeldet), [2, 2, 3]);
+    // #472 AK 2: Von wie vielen, gezählt wie für die Mitglieder — am gemischten
+    // Termin auch über S2, ohne S2 zu nennen.
+    for (const t of lena.termine) {
+      const mitglieder = wert(await terminSpieler(a.supabase, a.id, { terminId: t.id }));
+      assert.deepEqual([t.angemeldet, t.gesamt], [mitglieder.angemeldet, mitglieder.gesamt], "wie für die Mitglieder");
+    }
     // AK 5: Ein Termin, der inzwischen nicht mehr gilt, weist ab.
     const token = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: k.lena })).token;
     const ab = (await feldAnon.rpc("spieler_link_abmelden", { p_token: token, p_termin: s2, p_abgemeldet: true, p_gesehen_datum: null, p_gesehen_beginn: null })).data as { status: string; grund: string };
