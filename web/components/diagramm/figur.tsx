@@ -11,9 +11,9 @@
  * Figuren-Version wirkt sofort auf bestehende Diagramme, ohne Standbild.
  *
  * Zeichen-Raum: 0..200 (x) × 0..280 (y), Figur-Anker (Körpermitte) bei
- * (100, 140). `FigurGrafik` ist der einzige Einstiegspunkt: sie zentriert den
- * Anker auf (0,0), skaliert je Figurenart auf Feldgrösse (der Trainer ist
- * erwachsen und grösser) und spiegelt optional die Blickrichtung.
+ * (100, 140). `FigurGrafik` zeichnet eine Figur: sie zentriert den Anker auf
+ * (0,0), skaliert je Figurenart auf Feldgrösse (der Trainer ist erwachsen und
+ * grösser) und spiegelt optional die Blickrichtung.
  *
  * Gezeichnet wird über ein Sprite (`FigurenSprite`, einmal im (app)-Layout):
  * Körper je Haltung und Kopf je Ansicht und Frisur stehen dort einmal, mit
@@ -26,7 +26,9 @@ import { dv } from "@/lib/diagramm-farben";
 import type { Punkt, SpielerPose } from "@/lib/diagramm";
 
 // Die drei Farben, die je Figur wechseln, stehen im Sprite als Variablen; die
-// Figur setzt sie auf ihrer Gruppe (siehe `FigurGrafik`).
+// Figur setzt sie auf ihrer Gruppe (siehe `FigurGrafik`). Es sind Werte der
+// einzelnen Figur, keine Farbrollen — ihr Inhalt ist selbst eine Rolle aus
+// `dv()` (z. B. `--diagramm-figur-haut-2`), daher bewusst ohne `--diagramm-`.
 const TRIKOT_PROP = "--figur-trikot";
 const HAUT_PROP = "--figur-haut";
 const HAAR_PROP = "--figur-haar";
@@ -495,35 +497,33 @@ const KOEPFE: Record<Kopf["ansicht"], (fr: Frisur) => string> = {
 // Figur verweist nur per <use> darauf und setzt ihre Farben als
 // CSS-Variablen, die in den <use>-Baum vererben. Ein Diagramm ausserhalb des
 // (app)-Layouts zeigte darum leere Figuren.
-const ID = "kifu-figur";
-const LUECKE = "\u0000";
-const koerperId = (h: HaltungName, teil: "vor" | "nach") => `${ID}-${h}-${teil}`;
-const kopfId = (ansicht: Kopf["ansicht"], fr: Frisur) => `${ID}-kopf-${ansicht}-${fr}`;
+const FIGUR_ID = "kifu-figur";
+const koerperId = (h: HaltungName, teil: "vor" | "nach") => `${FIGUR_ID}-${h}-${teil}`;
+const kopfId = (ansicht: Kopf["ansicht"], fr: Frisur) => `${FIGUR_ID}-kopf-${ansicht}-${fr}`;
 
-/** Körper einer Haltung, am Kopf in «davor» und «danach» geteilt. */
-function koerperTeile(h: HaltungName): [string, string] {
+/** Platzhalter für den Kopf: Jede Haltung zeichnet ihn an dieser Stelle, und
+ *  der Körper wird daran in «davor» und «danach» geteilt. */
+const LUECKE = "\u0000";
+
+/** Körper je Haltung, am Kopf geteilt. «Danach» ist leer, wo der Kopf zuletzt
+ *  kommt; im Profil liegen dort noch Bein und Arm über dem Kopf. */
+const KOERPER = (Object.keys(HALTUNGEN) as HaltungName[]).map((h) => {
   const [vor, nach = ""] = HALTUNGEN[h].koerper(LUECKE).split(LUECKE);
-  return [vor, nach];
-}
+  return { h, vor, nach };
+});
 
 const SPRITE_MARKUP = [
-  ...(Object.keys(HALTUNGEN) as HaltungName[]).flatMap((h) => {
-    const [vor, nach] = koerperTeile(h);
-    return [
-      `<g id="${koerperId(h, "vor")}">${vor}</g>`,
-      ...(nach.trim() ? [`<g id="${koerperId(h, "nach")}">${nach}</g>`] : []),
-    ];
-  }),
+  ...KOERPER.flatMap(({ h, vor, nach }) => [
+    `<g id="${koerperId(h, "vor")}">${vor}</g>`,
+    ...(nach ? [`<g id="${koerperId(h, "nach")}">${nach}</g>`] : []),
+  ]),
   ...(Object.keys(KOEPFE) as Kopf["ansicht"][]).flatMap((ansicht) =>
     FRISUREN.map((fr) => `<g id="${kopfId(ansicht, fr)}">${KOEPFE[ansicht](fr)}</g>`),
   ),
 ].join("");
 
-/** Haltungen, deren Körper nach dem Kopf weitergeht (Profil: Bein und Arm
- *  liegen über dem Kopf). */
-const MIT_NACH = new Set(
-  (Object.keys(HALTUNGEN) as HaltungName[]).filter((h) => koerperTeile(h)[1].trim()),
-);
+/** Haltungen mit einem «Danach»-Teil — aus derselben Quelle wie das Sprite. */
+const MIT_NACH = new Set(KOERPER.filter(({ nach }) => nach).map(({ h }) => h));
 
 /** Die Figurteile für alle Diagramme der Seite — gehört genau einmal ins
  *  (app)-Layout. Nicht `display:none`: Manche Browser lösen <use> auf
@@ -541,11 +541,12 @@ export function FigurenSprite() {
   );
 }
 
-/** Fertige Figur für das Symbol-Register: Teile **und** Transform in einem
- *  Aufruf. Beide gehören zusammen — die Zeichnung des Trainers stimmt nur bei
- *  seiner eigenen Skalierung —, darum gibt es nach draussen nur diesen
- *  Einstiegspunkt. `trikot` ist die gerenderte Team-Farbe (der Torwart trägt
- *  fixes Neon); Frisur und Hautton kommen aus `seed`. */
+/** Fertige Figur für das Symbol-Register: Verweise auf die Sprite-Teile
+ *  **und** Transform in einem Aufruf. Beide gehören zusammen — die Zeichnung
+ *  des Trainers stimmt nur bei seiner eigenen Skalierung. Die Teile selbst
+ *  liefert `FigurenSprite`, das einmal im Layout steht. `trikot` ist die
+ *  gerenderte Team-Farbe (der Torwart trägt fixes Neon); Frisur und Hautton
+ *  kommen aus `seed`. */
 export function FigurGrafik({
   art,
   pose,
