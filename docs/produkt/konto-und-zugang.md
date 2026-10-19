@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-10-16. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-10-19. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -290,12 +290,13 @@ entfernt sie; beim ersten Aufnehmen erfährt er, wie viele anstehende Termine ih
 verloren. Jeder Termin, den er nennt, trägt neben der erwarteten Zahl die Spielerzahl, mit der
 geplant wird, samt Quelle: aus der Spielerliste mit den Angemeldeten und allen auf der Liste,
 erwartet oder unbekannt — unbekannt auch an einem ausgefallenen Termin. Für einen einzelnen
-Termin erfährt er, wer angemeldet und wer abgemeldet ist und ob es schon der Stand bei Beginn ist.
+Termin erfährt er, wer angemeldet und wer abgemeldet ist und seit wann — Datum und Uhrzeit des
+letzten Wechsels, auch an vergangenen Terminen — und ob es schon der Stand bei Beginn ist.
 Er meldet ab und wieder an und nennt dafür Datum und Beginn, wie er den Termin zuletzt gelesen
 hat; wurde er inzwischen verlegt, weist die Anwendung mit dem neuen Stand ab. Er holt und erneuert
 den privaten Link einer Spieler:in, sieht, ob die Selbstabholung eingeschaltet ist, schaltet sie
 ein und aus und holt und erneuert die Abholadresse. Vor- und Nachnamen, Jahrgänge und
-J+S-Nummern der Spieler:innen, ihre privaten Links und die Abholadresse gelangen damit zum Anbieter
+J+S-Nummern der Spieler:innen, wann sie sich ab- und angemeldet haben, ihre privaten Links und die Abholadresse gelangen damit zum Anbieter
 des verbundenen Assistenten.
 
 Damit er den Platzbedarf einer Übung mit den Feldern eines Termins vergleichen kann, erfährt der
@@ -352,7 +353,7 @@ Zeitraums abrufen"; „die Anzeigenamen der
 Mitglieder deiner Teams lesen (ohne E-Mail-Adressen)"; „die Spielerliste deiner Teams (Vorname,
 Nachname, Jahrgang, J+S-Nummer) einsehen und führen, Kader anlegen, umbenennen und entfernen
 und ihnen Spieler:innen zuteilen, Spieler:innen für Termine ab- und wieder
-anmelden und sehen, wer angemeldet ist, den privaten Link einer Spieler:in holen und erneuern,
+anmelden und sehen, wer angemeldet ist und seit wann, den privaten Link einer Spieler:in holen und erneuern,
 die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche
 Links bezogen wurden". Nie erreichbar sind „deine Favoriten",
 „die Verwaltung deiner Teams (gründen, umbenennen, Mitglieder aufnehmen oder entfernen)" und

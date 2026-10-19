@@ -8,6 +8,7 @@ import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { setzeAbmeldungAktion } from "@/lib/actions/abmeldungen";
 import { ABMELDUNG_TEXT, EHEMALIGE_SPIELERIN, spielerName, type Teilnehmer } from "@/lib/spieler";
 import type { TerminSpieler } from "@/lib/kern/abmeldungen";
+import { seitWann } from "@/lib/zeit";
 import { Users } from "lucide-react";
 import { KADER_TEXT, uebrigeText } from "@/lib/kader";
 import { KaderLozenges } from "./KaderLozenge";
@@ -27,7 +28,10 @@ import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
    einen Kader eingrenzen — einer zur Zeit wie in der Spielerliste (PO
    2026-10-18). Die Zahl «x von y angemeldet» bleibt die des ganzen Termins.
    Ab Beginn trägt der festgehaltene Stand keine Kader je Spieler:in; dann
-   stehen sie wieder als Plaketten. */
+   stehen sie wieder als Plaketten.
+
+   Links vom Schalter steht, seit wann ihr Status gilt (#467) — nur, wenn er
+   an diesem Termin je gewechselt hat; die Zeile wird dadurch nicht höher. */
 export function SpielerReiter({ teamId, daten }: { teamId: string; daten: TerminSpieler }) {
   const router = useRouter();
   const melde = useSnackbar();
@@ -134,6 +138,9 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
         {sichtbar.map((s, i) => {
           const name = s.vorname !== null ? spielerName({ vorname: s.vorname, nachname: s.nachname ?? "" }) : EHEMALIGE_SPIELERIN;
           const ab = abgemeldet(s);
+          // Eben selbst umgelegt: Der Wechsel steht schon da, bevor die Antwort kommt.
+          const eben = s.spielerId !== null && s.spielerId in lokal && lokal[s.spielerId] !== s.abgemeldet;
+          const seit = eben ? "gerade eben" : s.gewechseltAm && seitWann(s.gewechseltAm, daten.gelesenAm);
           return (
             <li key={s.spielerId ?? `ehemalig-${i}`} className="state flex min-h-12 items-center gap-3 px-4 py-1.5">
               <span className="min-w-0 flex-1">
@@ -143,6 +150,7 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
                 </span>
                 {s.kader.length > 0 && <span className="block truncate type-body-small text-on-surface-mittel">{s.kader.join(" · ")}</span>}
               </span>
+              {seit && <span className="shrink-0 whitespace-nowrap type-body-small text-on-surface-mittel">{seit}</span>}
               <Switch
                 checked={!ab}
                 disabled={daten.begonnen || s.ehemalig || pending}
