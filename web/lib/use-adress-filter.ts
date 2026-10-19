@@ -27,6 +27,9 @@ export function useAdressFilter() {
   function schreiben(aendern: (p: URLSearchParams) => void) {
     const p = new URLSearchParams(window.location.search);
     aendern(p);
+    // Andere Filter, andere Liste: Der Katalog beginnt wieder bei der ersten
+    // Seite, statt eine früher aufgeklappte Länge mitzuschleppen.
+    p.delete("anzahl");
     const qs = p.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
