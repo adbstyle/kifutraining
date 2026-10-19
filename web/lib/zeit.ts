@@ -93,3 +93,49 @@ export function datumKurz(iso: string): string {
         year: "numeric",
       });
 }
+
+/** Tage zwischen zwei Kalendertagen (`YYYY-MM-DD`), in UTC gerechnet: Ein
+ *  Kalendertag hat keine Zeitzone, die Zeitumstellung verschiebt so keinen Tag. */
+function tageZwischen(von: string, bis: string): number {
+  return Math.round((Date.parse(`${bis}T00:00:00Z`) - Date.parse(`${von}T00:00:00Z`)) / 86_400_000);
+}
+
+/** Der Montag der Kalenderwoche eines Kalendertags, als Tage seit 1970. */
+function wochenMontag(tag: string): number {
+  const tage = Math.round(Date.parse(`${tag}T00:00:00Z`) / 86_400_000);
+  // 1970-01-01 war ein Donnerstag: +3 macht den Montag zum Wochenanfang.
+  return tage - ((((tage + 3) % 7) + 7) % 7);
+}
+
+const vor = (n: number, eins: string, mehr: string) => `vor ${n} ${n === 1 ? eins : mehr}`;
+
+/**
+ * Seit wann ein Zeitpunkt zurückliegt, für den letzten Statuswechsel einer
+ * Spieler:in am Termin (#467 AK 3–10): «gerade eben», «vor 25 Minuten»,
+ * «vor 3 Stunden» (heute), «gestern», «vorgestern», «diese Woche», «letzte
+ * Woche», sonst das Datum. Passen zwei Stufen, gewinnt die feinste — die
+ * Minuten gelten auch über Mitternacht, «gestern» auch am Montag für den
+ * Sonntag (PO 2026-10-19).
+ *
+ * Minuten und Stunden zählen die verstrichene Zeit, abgerundet; Tage und
+ * Wochen (Montag bis Sonntag) die Kalendertage am Trainingsort. `jetzt` gibt
+ * der Server mit, damit Server und Browser dieselbe Zeichenkette rendern; die
+ * Angabe gilt bis zum nächsten Laden.
+ */
+export function seitWann(zeitpunkt: string, jetzt: string): string {
+  const t = new Date(zeitpunkt);
+  const j = new Date(jetzt);
+  const minuten = Math.floor((j.getTime() - t.getTime()) / 60_000);
+  if (minuten < 1) return "gerade eben";
+  if (minuten < 60) return vor(minuten, "Minute", "Minuten");
+  const tag = kalendertagAmTrainingsort(t);
+  const heute = kalendertagAmTrainingsort(j);
+  const tage = tageZwischen(tag, heute);
+  if (tage <= 0) return vor(Math.floor(minuten / 60), "Stunde", "Stunden");
+  if (tage === 1) return "gestern";
+  if (tage === 2) return "vorgestern";
+  const wochen = (wochenMontag(heute) - wochenMontag(tag)) / 7;
+  if (wochen === 0) return "diese Woche";
+  if (wochen === 1) return "letzte Woche";
+  return datumKurz(tag);
+}

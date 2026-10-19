@@ -29,6 +29,7 @@ import {
 import { kennung } from "@/lib/mcp/bausteine";
 import { TEAM_KENNUNG_FEHLER, TERMIN_KENNUNG_FEHLER, TeamId, TerminId } from "@/lib/mcp/werkzeuge/trainings";
 import { werkzeug } from "@/lib/mcp/werkzeug";
+import { jetztAmTrainingsort } from "@/lib/zeit";
 
 /**
  * Die Spielerliste eines Teams (Epic #433, Story #434) — dünne Adapter über
@@ -200,7 +201,7 @@ export const terminSpielerAbrufen = werkzeug({
   name: "termin_spieler_abrufen",
   titel: "Wer an einem Termin kommt",
   beschreibung:
-    "Nennt für einen Termin, welche Spieler:innen angemeldet und welche abgemeldet sind, dazu die Zahl der " +
+    "Nennt für einen Termin, welche Spieler:innen angemeldet und welche abgemeldet sind und seit wann, dazu die Zahl der " +
     "angemeldeten. Trägt der Termin Kader, stehen nur die Spieler:innen da, für die er gilt, je mit den Kadern, über die er " +
     "für sie gilt. «begonnen: true» heisst, der Stand ist der bei Beginn und lässt sich nicht mehr ändern. " +
     `Ohne Spielerliste ist die Liste leer. ${ABMELDE_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
@@ -227,6 +228,14 @@ export const terminSpielerAbrufen = werkzeug({
         abgemeldet: z.boolean(),
         ehemalig: z.boolean(),
         kader: z.array(z.string()).describe("Die Kader, über die der Termin für sie gilt; leer bei einem Termin für alle."),
+        zuletzt_gewechselt: z
+          .string()
+          .nullable()
+          .describe(
+            "Wann ihr Status an diesem Termin zuletzt zwischen angemeldet und abgemeldet wechselte, als YYYY-MM-DDTHH:MM " +
+              "(Uhr am Trainingsort, Schweiz); an einem begonnenen Termin der letzte Wechsel vor Beginn. null: an diesem Termin " +
+              "nie gewechselt (eine Verlegung oder ein Wegfall durch Kader setzt das zurück) oder eine ehemalige Spieler:in.",
+          ),
       }),
     ),
   }),
@@ -249,6 +258,7 @@ export const terminSpielerAbrufen = werkzeug({
         abgemeldet: s.abgemeldet,
         ehemalig: s.ehemalig,
         kader: s.kader,
+        zuletzt_gewechselt: s.gewechseltAm && jetztAmTrainingsort(new Date(s.gewechseltAm)),
       })),
     })),
 });

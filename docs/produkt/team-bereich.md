@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-10-17. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-19. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -549,7 +549,15 @@ Im Reiter „Spieler:innen" des geöffneten Termins steht jede Spieler:in mit ei
 Umlegen sofort speichert: an heisst angemeldet, aus abgemeldet, und abgemeldete Namen stehen
 gedämpft. Darüber steht „12 von 15 angemeldet" und bis wann sich das ändern lässt, etwa „Änderbar
 bis 18:00". Ab Beginn sind die Schalter gesperrt, es gilt der „Stand bei Beginn", und ehemalige
-Spieler:innen stehen ohne Namen am Ende. Ein ausgefallener Termin nennt weder Zahl noch
+Spieler:innen stehen ohne Namen am Ende. Links vom Schalter steht, seit wann der Status einer
+Spieler:in gilt — „gerade eben", „vor 25 Minuten", „vor 3 Stunden" (heute), „gestern",
+„vorgestern", „diese Woche", „letzte Woche", sonst das Datum mit Jahr; passen zwei Angaben, gilt
+die genauere, gerechnet nach Schweizer Zeit mit Wochen von Montag bis Sonntag. Eine Zeit trägt nur,
+wer an diesem Termin je zwischen angemeldet und abgemeldet gewechselt hat; jeder Wechsel setzt sie
+neu, derselbe Stand ein zweites Mal gesetzt nicht. Eine Verlegung von Datum oder Beginn und ein
+Wegfall durch Kader setzen sie zurück, ein Ausfall lässt sie ruhen, ab Beginn bleibt die des
+letzten Wechsels davor stehen, und wer aus der Liste entfernt wird, nimmt sie überall mit. Die
+Angabe gilt ab dem Öffnen des Termins. Ein ausgefallener Termin nennt weder Zahl noch
 Abmeldungen, sondern nur, dass sich für ihn niemand an- oder abmelden lässt. Führt das Team keine
 Liste, sagt der Reiter, wo sie zu finden ist; an einem Termin, der begann, als die Liste leer war,
 sagt er, dass dort die erwartete Spielerzahl gilt.
@@ -628,7 +636,8 @@ Auch die Abholseite braucht kein Konto und ist fürs Telefon gebaut. Unter dem T
 „Spieler:in-Link abholen" gibt man Vorname, Nachname und Jahrgang der Spieler:in ein. Unter dem Knopf „Link abholen" steht unter „Was KiFu speichert", welche Angaben die
 Anwendung zu einer Spieler:in führt — Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, und
 Abmeldungen —, wer sie sieht — die Trainer:innen des Teams, KI-Assistenten, die sie verbunden
-haben, und wer den Link der Spieler:in hat — und dass sie verschwinden, wenn das Team sie aus der
+haben, und wer den Link der Spieler:in hat; wann sie sich zuletzt ab- oder wieder angemeldet hat,
+nur die Trainer:innen und ihre KI-Assistenten — und dass sie verschwinden, wenn das Team sie aus der
 Liste nimmt. Abgeglichen wird wie bei der Eindeutigkeit der Liste; Umlaute, Akzente und alles
 Übrige müssen stimmen, die J+S-Nummer gehört nicht dazu. Passt die Eingabe, erscheint der Link zum
 Kopieren mit „Link öffnen" und „Weitere Spieler:in abholen", dazu, wozu er dient, dass er privat ist und
@@ -846,7 +855,10 @@ den Link öffnen. Wer sich zu einem Termin nicht geäussert hat, ist nicht zu er
 Spieler:in gilt als angemeldet. Eine Abmeldung trägt keinen Grund, gilt immer für genau einen
 Termin und lässt sich nicht für mehrere in einem Schritt setzen; die Frist ist immer der Beginn und
 lässt sich je Team nicht einstellen. Eine verfallene Abmeldung lässt sich nicht auf den neuen
-Zeitpunkt übernehmen. Wer eine Ab- oder Anmeldung gesetzt hat, hält die Anwendung nicht fest. Ab
+Zeitpunkt übernehmen. Wer eine Ab- oder Anmeldung gesetzt hat, hält die Anwendung nicht fest, und vom Wechsel
+zwischen angemeldet und abgemeldet nur den letzten Zeitpunkt, nicht die früheren. Wie lange vor
+Beginn er lag, zeigt sie nicht, und die Eltern sehen ihn über den Link nicht. Wieder-Anmeldungen
+und der Stand bei Beginn aus der Zeit, bevor die Anwendung diese Angabe führte, tragen keine Zeit. Ab
 Beginn lässt sich nichts mehr ändern, und wer tatsächlich da war, hält sie nicht fest; eine
 J+S-Anwesenheitskontrolle ersetzt sie nicht.
 

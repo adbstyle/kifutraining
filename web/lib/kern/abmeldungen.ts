@@ -45,6 +45,9 @@ export type TerminSpieler = {
   kader: TerminKader[];
   /** Wie viele Spieler:innen des Teams er nicht betrifft (AK 6); 0 an begonnenen. */
   uebrige: number;
+  /** Wann gelesen (ISO): der Bezug für «seit wann» je Spieler:in (#467) —
+   *  vom Server, damit Server und Browser dasselbe rendern. */
+  gelesenAm: string;
 };
 
 /** Wer an einem Termin angemeldet und wer abgemeldet ist (AK 5, 7, 8). */
@@ -78,6 +81,7 @@ export async function terminSpieler(
         abgemeldet: boolean;
         ehemalig: boolean;
         kader: string[] | null;
+        gewechselt_am: string | null;
       }[]
     ).map((r) => ({
       spielerId: r.spieler_id,
@@ -86,6 +90,7 @@ export async function terminSpieler(
       abgemeldet: r.abgemeldet,
       ehemalig: r.ehemalig,
       kader: r.kader ?? [],
+      gewechseltAm: r.gewechselt_am,
     })),
   );
   const begonnen = terminBegonnen(t.datum, t.beginn, jetzt);
@@ -103,6 +108,7 @@ export async function terminSpieler(
     mitListe: termin.data?.spielstand != null,
     kader: nachTerminKader((termin.data?.termin_kader ?? []).map((k) => ({ id: k.kader_id, name: k.kader?.name ?? null }))),
     uebrige: begonnen ? 0 : Math.max(0, (team.count ?? 0) - spieler.length),
+    gelesenAm: new Date().toISOString(),
   });
 }
 

@@ -4538,6 +4538,98 @@ try {
     assert.ok(wieder && wieder.abgemeldet === false && wieder.kader[0] === "S2");
   });
 
+  // ── Zeitpunkt des letzten Statuswechsels (#467) ──────────────────────────
+  const seit = async (terminId: string) =>
+    Object.fromEntries(wert(await terminSpieler(a.supabase, a.id, { terminId })).spieler.map((s) => [s.vorname ?? "ehemalig", s.gewechseltAm]));
+  const kurz = () => new Promise((r) => setTimeout(r, 15));
+
+  await pruefe("Statuswechsel: jeder Wechsel setzt die Zeit, derselbe Status nicht, auf jedem Weg (#467 AK 1, 2; PC 1, 2)", async () => {
+    const team = await serienTeam("Kern-DB-Statuswechsel");
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    const noah = (await neuerSpieler(team, "Noah")).spielerId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    assert.deepEqual(await seit(t), { Lena: null, Noah: null }, "AK 2: nie gewechselt");
+    // Anmelden einer Angemeldeten ist kein Wechsel.
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: noah, abgemeldet: false }));
+    assert.equal((await seit(t)).Noah, null);
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
+    const t1 = (await seit(t)).Lena!;
+    assert.ok(t1);
+    // Nochmals abmelden (etwa auf einer veralteten Seite): Die Zeit bleibt (PC 2).
+    await kurz();
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
+    assert.equal((await seit(t)).Lena, t1);
+    // Über den Link wieder angemeldet: ein Wechsel, auch ohne Konto (PC 1).
+    const token = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lena })).token;
+    const ueberLink = (ab: boolean) =>
+      feldAnon.rpc("spieler_link_abmelden", { p_token: token, p_termin: t, p_abgemeldet: ab, p_gesehen_datum: tagCh(2), p_gesehen_beginn: "18:00" });
+    await kurz();
+    assert.equal((await ueberLink(false)).data.status, "ok");
+    const t2 = (await seit(t)).Lena!;
+    assert.ok(Date.parse(t2) > Date.parse(t1), "wieder angemeldet trägt eine neue Zeit");
+    await kurz();
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: false }));
+    assert.equal((await seit(t)).Lena, t2);
+    await kurz();
+    assert.equal((await ueberLink(true)).data.status, "ok");
+    assert.ok(Date.parse((await seit(t)).Lena!) > Date.parse(t2));
+    // Fremde sehen die Zeiten nicht.
+    assert.deepEqual((await feldAnon.from("termin_statuswechsel").select("spieler_id").eq("termin_id", t)).data ?? [], []);
+    assert.deepEqual((await b.supabase.from("termin_statuswechsel").select("spieler_id").eq("termin_id", t)).data ?? [], []);
+  });
+
+  await pruefe("Statuswechsel: Verlegen und Kader-Wegfall setzen zurück, Ausfall ruht, Beginn behält, Entfernen löscht (#467 PC 3–7)", async () => {
+    const team = await serienTeam("Kern-DB-Statuswechsel-Regeln");
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    const noah = (await neuerSpieler(team, "Noah")).spielerId;
+    // PC 3: Eine Verlegung setzt alle zurück, auch Wieder-Angemeldete.
+    const t = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: false }));
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: noah, abgemeldet: true }));
+    // Nur das Ende: nichts verfällt, die Zeiten bleiben.
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t, ende: "19:30" }));
+    assert.ok((await seit(t)).Lena && (await seit(t)).Noah);
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t, datum: tagCh(4), bestaetigt: true }));
+    assert.deepEqual(await seit(t), { Lena: null, Noah: null });
+    // PC 5: Ein Ausfall lässt die Zeit ruhen, die Rücknahme zeigt sie wieder.
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
+    const vorher = (await seit(t)).Lena;
+    assert.ok(vorher);
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "" }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
+    assert.equal((await seit(t)).Lena, vorher);
+
+    // PC 6, 7: Der Stand bei Beginn behält die Zeit; wer entfernt wird, nimmt sie mit.
+    const u = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(1), beginn: "18:00", ende: "19:00" })).terminId;
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: u, spielerId: noah, abgemeldet: true }));
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: u, spielerId: lena, abgemeldet: true }));
+    const zeiten = await seit(u);
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: u, datum: tagCh(-1), bestaetigt: true }));
+    assert.equal(wert(await terminSpieler(a.supabase, a.id, { terminId: u })).begonnen, true);
+    assert.deepEqual(await seit(u), zeiten, "durch die Verlegung begonnen: die Zeiten bleiben");
+    await neuerSpieler(team, "Mia");
+    assert.deepEqual(await seit(u), zeiten, "eine Änderung der Liste ändert den Stand bei Beginn nicht");
+    wert(await entferneSpieler(a.supabase, a.id, { spielerId: noah }));
+    assert.deepEqual(await seit(u), { Lena: zeiten.Lena, ehemalig: null }, "ehemalig ohne Zeit");
+    assert.equal((await admin.from("termin_statuswechsel").select("spieler_id").eq("spieler_id", noah)).data!.length, 0, "überall weg");
+  });
+
+  await pruefe("Statuswechsel: Gilt ein Termin durch Kader nicht mehr und wieder, hat sie dort nie gewechselt (#467 PC 4)", async () => {
+    const k = await kaderTeam("Kern-DB-Statuswechsel-Kader");
+    const t = wert(await anstehend(k.team, [k.s1])).terminId;
+    const gesehen = { datum: tagCh(7), beginn: "18:00" };
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: k.mia, abgemeldet: true, gesehen }));
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: k.mia, abgemeldet: false, gesehen }));
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: k.lena, abgemeldet: true, gesehen }));
+    assert.ok((await seit(t)).Mia);
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.mia], weg: [k.s1] }));
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.mia], dazu: [k.s1] }));
+    const z = await seit(t);
+    assert.equal(z.Mia, null);
+    assert.ok(z.Lena, "wer weiter dazugehört, behält die Zeit");
+  });
+
 } finally {
   await aufraeumen();
 }

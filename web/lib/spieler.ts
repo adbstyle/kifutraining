@@ -199,6 +199,9 @@ export type Teilnehmer = {
   ehemalig: boolean;
   /** Die Kader, über die der Termin für sie gilt (#453 AK 15); leer bei einem Termin für alle. */
   kader: string[];
+  /** Wann ihr Status zuletzt zwischen angemeldet und abgemeldet wechselte
+   *  (ISO-Zeitpunkt, #467); `null`, wenn sie dort nie gewechselt hat. */
+  gewechseltAm: string | null;
 };
 
 /** Wie eine ehemalige Spieler:in überall heisst. */
@@ -299,7 +302,7 @@ export const ABHOLUNG_TEXT = {
   /** AK 7: was KiFu speichert, wer es sieht, wann es verschwindet. */
   speichertTitel: "Was KiFu speichert",
   speichert:
-    "Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, und Abmeldungen. Das sehen die Trainer:innen des Teams, KI-Assistenten, die sie mit KiFu verbunden haben, und wer den Link der Spieler:in hat. Nimmt das Team eine Spieler:in aus der Liste, verschwinden ihre Angaben überall.",
+    "Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, und Abmeldungen. Das sehen die Trainer:innen des Teams, KI-Assistenten, die sie mit KiFu verbunden haben, und wer den Link der Spieler:in hat. Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen und ihre KI-Assistenten. Nimmt das Team eine Spieler:in aus der Liste, verschwinden ihre Angaben überall.",
   /** AK 13, 14: immer derselbe Satz. */
   passtNicht: "Dazu finden wir keinen Link. Prüf die Schreibweise oder frag beim Team nach.",
   /** AK 16. */

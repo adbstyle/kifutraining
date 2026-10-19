@@ -181,7 +181,7 @@ import {
   jsAus,
   leseDatei,
 } from "../lib/spieler-import";
-import { terminBegonnen } from "../lib/zeit";
+import { seitWann, terminBegonnen } from "../lib/zeit";
 
 let gelaufen = 0;
 
@@ -2072,6 +2072,41 @@ pruefe("terminBegonnen: minutengenau am Trainingsort (Zwilling von termin_begonn
   assert.equal(terminBegonnen("2026-10-17", "08:00", "2026-10-16T23:59"), false);
 });
 
+pruefe("Statuswechsel: seit wann, die feinste Stufe gewinnt, Schweizer Kalendertage (#467 AK 3–10)", () => {
+  const um = (jetzt: string) => (zeitpunkt: string) => seitWann(zeitpunkt, jetzt);
+  // Montag, 19.10.2026, 12:00 (Sommerzeit).
+  const mittag = um("2026-10-19T12:00:00+02:00");
+  assert.equal(mittag("2026-10-19T11:59:30+02:00"), "gerade eben");
+  assert.equal(mittag("2026-10-19T12:00:20+02:00"), "gerade eben", "Uhren gehen auseinander: nie «vor -1 Minute»");
+  assert.equal(mittag("2026-10-19T11:59:00+02:00"), "vor 1 Minute");
+  assert.equal(mittag("2026-10-19T11:01:00+02:00"), "vor 59 Minuten");
+  assert.equal(mittag("2026-10-19T11:00:00+02:00"), "vor 1 Stunde");
+  assert.equal(mittag("2026-10-19T10:01:00+02:00"), "vor 1 Stunde", "abgerundet");
+  assert.equal(mittag("2026-10-19T00:30:00+02:00"), "vor 11 Stunden");
+  assert.equal(mittag("2026-10-18T23:59:00+02:00"), "gestern", "Sonntag ist am Montag gestern, nicht letzte Woche");
+  assert.equal(mittag("2026-10-17T08:00:00+02:00"), "vorgestern");
+  assert.equal(mittag("2026-10-16T18:00:00+02:00"), "letzte Woche");
+  assert.equal(mittag("2026-10-12T00:00:00+02:00"), "letzte Woche");
+  assert.equal(mittag("2026-10-11T23:00:00+02:00"), "So., 11.10.2026");
+  // Über Mitternacht zählen die Minuten weiter, Stunden nicht.
+  const nacht = um("2026-10-19T00:10:00+02:00");
+  assert.equal(nacht("2026-10-18T23:50:00+02:00"), "vor 20 Minuten");
+  assert.equal(nacht("2026-10-18T22:30:00+02:00"), "gestern");
+  // Der Kalendertag ist der Schweizer: 00:30 bei uns ist in UTC noch der Vortag.
+  assert.equal(um("2026-10-19T00:30:00+02:00")("2026-10-18T21:00:00+02:00"), "gestern");
+  // Donnerstag: Montag ist diese Woche, Dienstag vorgestern.
+  const donnerstag = um("2026-10-22T12:00:00+02:00");
+  assert.equal(donnerstag("2026-10-19T10:00:00+02:00"), "diese Woche");
+  assert.equal(donnerstag("2026-10-20T10:00:00+02:00"), "vorgestern");
+  assert.equal(donnerstag("2026-10-21T10:00:00+02:00"), "gestern");
+  // Über den Jahreswechsel: die Woche von Montag bis Sonntag.
+  assert.equal(seitWann("2026-12-28T12:00:00+01:00", "2027-01-02T12:00:00+01:00"), "diese Woche");
+  assert.equal(seitWann("2026-12-31T12:00:00+01:00", "2027-01-04T12:00:00+01:00"), "letzte Woche");
+  assert.equal(seitWann("2026-12-20T12:00:00+01:00", "2027-01-04T12:00:00+01:00"), "So., 20.12.2026");
+  // Zeitumstellung: Es zählt die verstrichene Zeit (01:30 Sommerzeit bis 03:30 Winterzeit sind 3 Stunden).
+  assert.equal(seitWann("2026-10-25T01:30:00+02:00", "2026-10-25T03:30:00+01:00"), "vor 3 Stunden");
+});
+
 pruefe("Abmelden: Abweisung nennt den Stand, Liste nach Name mit ehemaligen zuletzt (#435 AK 4, PC 4; #437 AK 5)", () => {
   assert.equal(
     abweisungText("verlegt", { datum: "2026-10-22", beginn: "17:30", ende: "19:00", ausgefallen: false }),
@@ -2080,7 +2115,7 @@ pruefe("Abmelden: Abweisung nennt den Stand, Liste nach Name mit ehemaligen zule
   assert.equal(abweisungText("begonnen"), ABMELDUNG_TEXT.begonnen);
   assert.equal(abweisungText("ausgefallen"), ABMELDUNG_TEXT.ausgefallen);
   assert.equal(abweisungText("nicht_gefunden"), ABMELDUNG_TEXT.nichtGefunden);
-  const t = (vorname: string | null) => ({ spielerId: vorname, vorname, nachname: vorname && "X", abgemeldet: false, ehemalig: vorname === null, kader: [] });
+  const t = (vorname: string | null) => ({ spielerId: vorname, vorname, nachname: vorname && "X", abgemeldet: false, ehemalig: vorname === null, kader: [], gewechseltAm: null });
   assert.deepEqual(nachTeilnehmer([t(null), t("Noah"), t("Ayla")]).map((x) => x.vorname ?? EHEMALIGE_SPIELERIN), ["Ayla", "Noah", EHEMALIGE_SPIELERIN]);
 });
 
