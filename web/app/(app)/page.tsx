@@ -17,6 +17,13 @@ export const dynamic = "force-dynamic";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
+// Der Katalog zeigt die Kacheln seitenweise: Jede Kachel trägt ihr Diagramm als
+// serverseitig gezeichnetes SVG, und der ganze Bestand auf einmal kostete pro
+// Aufruf rund eine Sekunde Rechenzeit und ~9 MB Seite. «Weitere anzeigen» hebt
+// `?anzahl=` um eine Seite an; ein Filterwechsel setzt ihn zurück
+// (lib/use-adress-filter.ts).
+const SEITE = 24;
+
 function list(v: string | string[] | undefined): string[] {
   if (!v) return [];
   return (Array.isArray(v) ? v.join(",") : v).split(",").filter(Boolean);
@@ -26,6 +33,22 @@ function num(v: string | string[] | undefined): number | undefined {
   const s = Array.isArray(v) ? v[0] : v;
   const n = s ? Number.parseInt(s, 10) : NaN;
   return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
+// Die Parameter, die die Liste bestimmen — Hinweise wie `?deleted` reisen
+// beim Weiterblättern nicht mit, sonst erschiene ihr Banner erneut.
+const FILTER_PARAMETER = ["teil", "kat", "feld", "form", "typ", "kinder", "q", "fav", "mine"];
+
+/** Dieselbe Adresse mit allen gesetzten Filtern, nur `anzahl` neu. */
+function mitAnzahl(sp: SearchParams, anzahl: number): string {
+  const p = new URLSearchParams();
+  for (const k of FILTER_PARAMETER) {
+    const v = sp[k];
+    if (v === undefined) continue;
+    for (const w of Array.isArray(v) ? v : [v]) p.append(k, w);
+  }
+  p.set("anzahl", String(anzahl));
+  return `/?${p}`;
 }
 
 export default async function Home({
@@ -66,6 +89,8 @@ export default async function Home({
     ...uebrige,
     einordnung: einordnungNachSpalten(teil),
   };
+
+  const anzahl = Math.max(SEITE, num(sp.anzahl) ?? SEITE);
 
   let rows: Awaited<ReturnType<typeof getExercises>> | null = null;
   let error: string | null = null;
@@ -126,23 +151,39 @@ export default async function Home({
                 : "Keine Übung erfüllt alle gesetzten Filter. Entferne einzelne Filter oder setze sie zurück."}
             </Leerzustand>
           ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
-              {rows.map((row) => (
-                <ExerciseCard
-                  key={row.id}
-                  ex={toCardData(row)}
-                  actionSlot={
-                    canFavorite ? (
-                      <FavoriteButton
-                        exerciseId={row.id}
-                        initial={row.is_favorited}
-                        variant="overlay"
-                      />
-                    ) : undefined
-                  }
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
+                {rows.slice(0, anzahl).map((row) => (
+                  <ExerciseCard
+                    key={row.id}
+                    ex={toCardData(row)}
+                    actionSlot={
+                      canFavorite ? (
+                        <FavoriteButton
+                          exerciseId={row.id}
+                          initial={row.is_favorited}
+                          variant="overlay"
+                        />
+                      ) : undefined
+                    }
+                  />
+                ))}
+              </div>
+              {rows.length > anzahl && (
+                <div className="mt-6 flex flex-col items-center gap-2">
+                  <p className="type-label-small text-on-surface-mittel">
+                    {anzahl} von {rows.length} Übungen
+                  </p>
+                  <ButtonLink
+                    href={mitAnzahl(sp, anzahl + SEITE)}
+                    scroll={false}
+                    variant="outlined"
+                  >
+                    Weitere anzeigen
+                  </ButtonLink>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
