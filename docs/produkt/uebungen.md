@@ -248,10 +248,7 @@ Suche mit einem Klick leert und den Cursor darin stehen lässt; die übrigen Fil
 gesetzt. Der Katalog zeigt beide Altersstufen nebeneinander — er ist der eine Ort, an dem der ganze
 sichtbare Bestand zusammensteht. Jede Übung steht dort als Kachel: Bild oder Diagramm, darunter
 der Name und die Eckdaten, und auf dem Bild die Herkunft — Kifu-Manual, Community oder der eigene
-Entwurf. Der Katalog zeigt zuerst 24 Kacheln; «Weitere anzeigen» unter der letzten holt jeweils
-die nächsten 24 dazu, und darüber steht, wie viele von wie vielen zu sehen sind. Die Trefferzahl
-über den Kacheln nennt immer die ganze Auswahl. Wer einen Filter ändert, beginnt wieder bei den
-ersten 24. Die Eckdaten sagen, ohne dass man die Übung öffnet, ob sie zu Mannschaft und Platz
+Entwurf. Die Eckdaten sagen, ohne dass man die Übung öffnet, ob sie zu Mannschaft und Platz
 passt: die Alterskategorien als Buchstaben, immer aufsteigend von G bis A, die Einordnung, das
 Feld und die Anzahl Spieler:innen, etwa «F E · Fussball spielen lernen · Kleinfeld · 6–8 Sp.».
 Die Einordnung steht nur auf ihrer feinsten Ebene — im Kinderfussball-Hauptteil die
@@ -277,6 +274,11 @@ Erscheinungsformen beider Manuals, die Alterskategorien G bis A, und ebenso die 
 ganz einer Altersstufe gehören — der Feldtyp dem Kinderfussball, der Übungstyp dem
 Juniorenfussball. Die Beschriftung ist Text und wird mitvorgelesen, nicht bloss Farbe. Mehrere
 Werte derselben Art werden als „oder" verstanden, verschiedene Arten als „und".
+
+Der Katalog zeigt zuerst 24 Kacheln. «Weitere anzeigen» unter der letzten holt jeweils die
+nächsten 24 dazu; über dem Knopf steht, wie viele von wie vielen zu sehen sind, und die
+Trefferzahl über den Kacheln nennt immer die ganze Auswahl. Wer einen Filter ändert oder die
+Filter zurücksetzt, beginnt wieder bei den ersten 24.
 
 Angemeldete haben zwei weitere Sichten: die eigenen Übungen und die Favoriten. Favorisieren
 kann jeder jede sichtbare Übung, auch die aus dem Manual und die fremder Trainer.

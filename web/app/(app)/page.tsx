@@ -35,16 +35,13 @@ function num(v: string | string[] | undefined): number | undefined {
   return Number.isFinite(n) && n > 0 ? n : undefined;
 }
 
-// Die Parameter, die die Liste bestimmen — Hinweise wie `?deleted` reisen
-// beim Weiterblättern nicht mit, sonst erschiene ihr Banner erneut.
-const FILTER_PARAMETER = ["teil", "kat", "feld", "form", "typ", "kinder", "q", "fav", "mine"];
-
-/** Dieselbe Adresse mit allen gesetzten Filtern, nur `anzahl` neu. */
+/** Dieselbe Adresse mit allen gesetzten Filtern, nur `anzahl` neu. Alles
+ *  ausser `anzahl` reist mit, damit ein künftiger Filter nicht still
+ *  verlorengeht; Hinweise wie `?deleted` entfernt der Flash ohnehin selbst. */
 function mitAnzahl(sp: SearchParams, anzahl: number): string {
   const p = new URLSearchParams();
-  for (const k of FILTER_PARAMETER) {
-    const v = sp[k];
-    if (v === undefined) continue;
+  for (const [k, v] of Object.entries(sp)) {
+    if (k === "anzahl" || v === undefined) continue;
     for (const w of Array.isArray(v) ? v : [v]) p.append(k, w);
   }
   p.set("anzahl", String(anzahl));
@@ -90,7 +87,7 @@ export default async function Home({
     einordnung: einordnungNachSpalten(teil),
   };
 
-  const anzahl = Math.max(SEITE, num(sp.anzahl) ?? SEITE);
+  const anzahl = Math.max(SEITE, num(sp.anzahl) ?? 0);
 
   let rows: Awaited<ReturnType<typeof getExercises>> | null = null;
   let error: string | null = null;
@@ -171,7 +168,9 @@ export default async function Home({
               </div>
               {rows.length > anzahl && (
                 <div className="mt-6 flex flex-col items-center gap-2">
-                  <p className="type-label-small text-on-surface-mittel">
+                  {/* Live-Region: Eine Sprachausgabe sagt nach dem Nachladen
+                      an, wie viele Kacheln nun zu sehen sind. */}
+                  <p role="status" className="type-label-small text-on-surface-mittel">
                     {anzahl} von {rows.length} Übungen
                   </p>
                   <ButtonLink
