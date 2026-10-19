@@ -82,6 +82,7 @@ const { ladeKader, legeKaderAn, benenneKaderUm, entferneKader, aendereZuteilung 
 const { KADER_MELDUNG, KADER_TEXT, kaderVerfallBestaetigen, kaderVerfallGeaendert } = await import("../lib/kader");
 const { getTeamTrainingsFuer } = await import("../lib/queries/trainings-fuer");
 const { AendernEingabe: TerminAendernEingabe } = await import("../lib/mcp/werkzeuge/team");
+const { teilnehmerAusgabe } = await import("../lib/mcp/werkzeuge/spieler");
 const {
   legeUebungAn,
   aendereUebung,
@@ -4613,6 +4614,20 @@ try {
     wert(await entferneSpieler(a.supabase, a.id, { spielerId: noah }));
     assert.deepEqual(await seit(u), { Lena: zeiten.Lena, ehemalig: null }, "ehemalig ohne Zeit");
     assert.equal((await admin.from("termin_statuswechsel").select("spieler_id").eq("spieler_id", noah)).data!.length, 0, "überall weg");
+  });
+
+  await pruefe("Statuswechsel: Jede gültige Abmeldung trägt eine Zeit, auch aus dem Bestand (#467 PC 8)", async () => {
+    const offen = (await admin.from("termin_abmeldungen").select("termin_id, spieler_id").is("verfallen_am", null)).data!;
+    const zeiten = new Set((await admin.from("termin_statuswechsel").select("termin_id, spieler_id")).data!.map((z) => `${z.termin_id}/${z.spieler_id}`));
+    assert.deepEqual(offen.filter((x) => !zeiten.has(`${x.termin_id}/${x.spieler_id}`)), []);
+  });
+
+  await pruefe("Statuswechsel: Die KI erhält die Zeit als Uhr am Trainingsort (#467 AK 12)", async () => {
+    const kiZeit = (gewechseltAm: string | null) =>
+      teilnehmerAusgabe({ spielerId: "x", vorname: "Lena", nachname: "M", abgemeldet: true, ehemalig: false, kader: [], gewechseltAm }).zuletzt_gewechselt;
+    assert.equal(kiZeit("2026-10-19T12:05:00Z"), "2026-10-19T14:05", "Sommerzeit");
+    assert.equal(kiZeit("2026-12-01T23:30:00Z"), "2026-12-02T00:30", "Winterzeit, nach Mitternacht");
+    assert.equal(kiZeit(null), null);
   });
 
   await pruefe("Statuswechsel: Gilt ein Termin durch Kader nicht mehr und wieder, hat sie dort nie gewechselt (#467 PC 4)", async () => {

@@ -25,6 +25,7 @@ import {
   LINK_TEXT,
   NAME_MAX,
   SPIELER_MAX,
+  type Teilnehmer,
 } from "@/lib/spieler";
 import { kennung } from "@/lib/mcp/bausteine";
 import { TEAM_KENNUNG_FEHLER, TERMIN_KENNUNG_FEHLER, TeamId, TerminId } from "@/lib/mcp/werkzeuge/trainings";
@@ -251,17 +252,23 @@ export const terminSpielerAbrufen = werkzeug({
       gesamt: w.gesamt,
       kader: w.kader,
       nicht_betroffen: w.uebrige,
-      spieler: w.spieler.map((s) => ({
-        id: s.spielerId,
-        vorname: s.vorname,
-        nachname: s.nachname,
-        abgemeldet: s.abgemeldet,
-        ehemalig: s.ehemalig,
-        kader: s.kader,
-        zuletzt_gewechselt: s.gewechseltAm && jetztAmTrainingsort(new Date(s.gewechseltAm)),
-      })),
+      spieler: w.spieler.map(teilnehmerAusgabe),
     })),
 });
+
+/** Eine Spieler:in, wie die KI sie erhält: der letzte Wechsel als Uhr am
+ *  Trainingsort, nicht in UTC (#467 AK 12). */
+export function teilnehmerAusgabe(s: Teilnehmer) {
+  return {
+    id: s.spielerId,
+    vorname: s.vorname,
+    nachname: s.nachname,
+    abgemeldet: s.abgemeldet,
+    ehemalig: s.ehemalig,
+    kader: s.kader,
+    zuletzt_gewechselt: s.gewechseltAm && jetztAmTrainingsort(new Date(s.gewechseltAm)),
+  };
+}
 
 // ── termin_abmeldung_setzen (#435) ──────────────────────────────────────────
 

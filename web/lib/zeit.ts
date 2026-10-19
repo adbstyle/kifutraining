@@ -20,6 +20,8 @@
  * die Gruppe wechseln, springt die Liste sichtbar um.
  */
 
+import { plusTage, wochentagVon } from "@/lib/serie";
+
 export const TRAININGS_ZEITZONE = "Europe/Zurich";
 
 /** Der Kalendertag eines Zeitpunkts am Trainingsort als `YYYY-MM-DD` — auch
@@ -94,19 +96,6 @@ export function datumKurz(iso: string): string {
       });
 }
 
-/** Tage zwischen zwei Kalendertagen (`YYYY-MM-DD`), in UTC gerechnet: Ein
- *  Kalendertag hat keine Zeitzone, die Zeitumstellung verschiebt so keinen Tag. */
-function tageZwischen(von: string, bis: string): number {
-  return Math.round((Date.parse(`${bis}T00:00:00Z`) - Date.parse(`${von}T00:00:00Z`)) / 86_400_000);
-}
-
-/** Der Montag der Kalenderwoche eines Kalendertags, als Tage seit 1970. */
-function wochenMontag(tag: string): number {
-  const tage = Math.round(Date.parse(`${tag}T00:00:00Z`) / 86_400_000);
-  // 1970-01-01 war ein Donnerstag: +3 macht den Montag zum Wochenanfang.
-  return tage - ((((tage + 3) % 7) + 7) % 7);
-}
-
 const vor = (n: number, eins: string, mehr: string) => `vor ${n} ${n === 1 ? eins : mehr}`;
 
 /**
@@ -125,17 +114,18 @@ const vor = (n: number, eins: string, mehr: string) => `vor ${n} ${n === 1 ? ein
 export function seitWann(zeitpunkt: string, jetzt: string): string {
   const t = new Date(zeitpunkt);
   const j = new Date(jetzt);
+  // Unlesbar: unverändert zurück wie bei `datumKurz`, statt still zu verschwinden.
+  if (Number.isNaN(t.getTime()) || Number.isNaN(j.getTime())) return zeitpunkt;
   const minuten = Math.floor((j.getTime() - t.getTime()) / 60_000);
   if (minuten < 1) return "gerade eben";
   if (minuten < 60) return vor(minuten, "Minute", "Minuten");
   const tag = kalendertagAmTrainingsort(t);
   const heute = kalendertagAmTrainingsort(j);
-  const tage = tageZwischen(tag, heute);
-  if (tage <= 0) return vor(Math.floor(minuten / 60), "Stunde", "Stunden");
-  if (tage === 1) return "gestern";
-  if (tage === 2) return "vorgestern";
-  const wochen = (wochenMontag(heute) - wochenMontag(tag)) / 7;
-  if (wochen === 0) return "diese Woche";
-  if (wochen === 1) return "letzte Woche";
+  if (tag >= heute) return vor(Math.floor(minuten / 60), "Stunde", "Stunden");
+  if (plusTage(tag, 1) === heute) return "gestern";
+  if (plusTage(tag, 2) === heute) return "vorgestern";
+  const montag = (d: string) => plusTage(d, 1 - wochentagVon(d));
+  if (montag(tag) === montag(heute)) return "diese Woche";
+  if (plusTage(montag(tag), 7) === montag(heute)) return "letzte Woche";
   return datumKurz(tag);
 }
