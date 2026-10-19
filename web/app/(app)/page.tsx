@@ -166,20 +166,23 @@ export default async function Home({
                   />
                 ))}
               </div>
-              {rows.length > anzahl && (
+              {rows.length > SEITE && (
                 <div className="mt-6 flex flex-col items-center gap-2">
                   {/* Live-Region: Eine Sprachausgabe sagt nach dem Nachladen
-                      an, wie viele Kacheln nun zu sehen sind. */}
+                      an, wie viele Kacheln nun zu sehen sind — auch auf der
+                      letzten Seite, wo der Knopf wegfällt. */}
                   <p role="status" className="type-label-small text-on-surface-mittel">
-                    {anzahl} von {rows.length} Übungen
+                    {Math.min(anzahl, rows.length)} von {rows.length} Übungen
                   </p>
-                  <ButtonLink
-                    href={mitAnzahl(sp, anzahl + SEITE)}
-                    scroll={false}
-                    variant="outlined"
-                  >
-                    Weitere anzeigen
-                  </ButtonLink>
+                  {rows.length > anzahl && (
+                    <ButtonLink
+                      href={mitAnzahl(sp, anzahl + SEITE)}
+                      scroll={false}
+                      variant="outlined"
+                    >
+                      Weitere anzeigen
+                    </ButtonLink>
+                  )}
                 </div>
               )}
             </>
