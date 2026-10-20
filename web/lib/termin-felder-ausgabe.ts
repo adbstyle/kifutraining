@@ -94,7 +94,7 @@ export const FelderEingabe = z
 export const SPIELERZAHL_MODELL =
   "«erwartete_spielerzahl» ist die Zahl der Spieler:innen, mit der für den Termin gerechnet wird: " +
   `${TERMIN_TEXT.spielerzahlZaehlt} Ganze Zahl von ${SPIELERZAHL_MIN} bis ${SPIELERZAHL_MAX}; null heisst unbekannt. ` +
-  "Eine erwartete Zahl - wer tatsächlich kommt, hält KiFu nicht fest.";
+  "Eine Schätzung von Hand - wer tatsächlich kam, hält KiFu nur mit einer Spielerliste fest.";
 
 /** Das Ausgabe-Schema in jeder Auskunft, die einen Termin nennt (AK 6). */
 export function spielerzahlSchema() {
@@ -111,9 +111,10 @@ export const SpielerzahlEingabe = z.number().describe(SPIELERZAHL_MODELL);
 export const SPIELERZAHL_QUELLE_MODELL =
   "«spielerzahl» ist die Zahl, mit der für den Termin geplant wird, samt Quelle: «spielerliste» heisst, das Team " +
   "führt eine Spielerliste - «zahl» sind die angemeldeten, «gesamt» alle auf der Liste (abgemeldete eingeschlossen); " +
-  "die Zahl ist eine Obergrenze, wer tatsächlich kommt, hält KiFu nicht fest. An einem begonnenen Termin gilt der Stand " +
-  "bei Beginn. «erwartet» heisst, die Zahl ist von Hand geschätzt («erwartete_spielerzahl»), «unbekannt», es gibt keine " +
-  "(auch bei einem ausgefallenen Termin).";
+  "vor Beginn ist die Zahl eine Obergrenze. Ab Beginn zählt «zahl» die Anwesenden: wer bei Beginn angemeldet war, ohne " +
+  "die nachgetragen nicht Erschienenen, dazu die doch Erschienenen; «gesamt» alle im Stand bei Beginn. Ohne Nachtrag " +
+  "gilt der Stand bei Beginn als Anwesenheit. «erwartet» heisst, die Zahl ist von Hand geschätzt " +
+  "(«erwartete_spielerzahl»), «unbekannt», es gibt keine (auch bei einem ausgefallenen Termin).";
 
 export function spielerzahlQuelleSchema() {
   return z
@@ -127,7 +128,7 @@ export function spielerzahlQuelleSchema() {
 
 /** Die Spielerzahl eines Termins in der Form der Auskunft. */
 export function spielerzahlQuelleAusgabe(s: Spielerzahl): z.infer<ReturnType<typeof spielerzahlQuelleSchema>> {
-  if (s.quelle === "liste") return { quelle: "spielerliste", zahl: s.angemeldet, gesamt: s.gesamt };
+  if (s.quelle === "liste") return { quelle: "spielerliste", zahl: s.anwesend ?? s.angemeldet, gesamt: s.gesamt };
   if (s.quelle === "erwartet") return { quelle: "erwartet", zahl: s.zahl, gesamt: null };
   return { quelle: "unbekannt", zahl: null, gesamt: null };
 }

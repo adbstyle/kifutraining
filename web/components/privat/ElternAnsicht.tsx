@@ -88,7 +88,7 @@ export function ElternAnsicht({
       // `== null`: Ein Bundle, das vor der Migration live ist, erhält noch kein `gesamt`.
       t.angemeldet == null || t.gesamt == null
         ? null
-        : { quelle: "liste" as const, angemeldet: t.angemeldet + Number(t.abgemeldet) - Number(ab), gesamt: t.gesamt };
+        : { quelle: "liste" as const, angemeldet: t.angemeldet + Number(t.abgemeldet) - Number(ab), gesamt: t.gesamt, anwesend: null }; // Eltern sehen den Stand bei Beginn (#475 AK 16).
     const zweite = t.ausgefallen ? "Fällt aus" : t.begonnen ? "Hat begonnen · nicht mehr änderbar" : null;
     return { ab, zweite, zahl };
   }

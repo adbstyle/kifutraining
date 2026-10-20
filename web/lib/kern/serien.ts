@@ -24,6 +24,7 @@ import {
   ladeTermin,
   type TerminAendern,
   verfallFehler,
+  verfallend,
   verfallendeAbmeldungen,
 } from "@/lib/kern/termine";
 import { NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
@@ -153,6 +154,9 @@ export type SerienFolge = {
   abmeldungenVerfallend: number;
   /** Wie viele, weil ein Termin für die Spieler:in nicht mehr gilt (#453 AK 10). */
   abmeldungenKader: number;
+  /** Wie viele Nachträge zur Anwesenheit verfallen, weil die Änderung
+   *  begonnene Termine wieder öffnet (#475 AK 12). */
+  nachtraegeVerfallend: number;
   teamId: string;
 };
 
@@ -165,6 +169,7 @@ type Roh = {
   /** Nur beim Ändern (`terminserie_aendern`). */
   abmeldungen_verfallend?: number;
   abmeldungen_kader?: number;
+  nachtraege_verfallend?: number;
 };
 
 function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): SerienFolge {
@@ -181,6 +186,7 @@ function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): Se
     vergangene: r.vergangene,
     abmeldungenVerfallend: r.abmeldungen_verfallend ?? 0,
     abmeldungenKader: r.abmeldungen_kader ?? 0,
+    nachtraegeVerfallend: r.nachtraege_verfallend ?? 0,
     teamId,
   };
 }
@@ -233,8 +239,9 @@ async function laufe(
     if (lauf.vorschau) return ok(vorschau);
     if (vorschau.vergangene > 0 && !lauf.bestaetigt)
       return fehlschlag("regel", vergangeneBestaetigen(vorschau.vergangene), { feld: "bestaetigt" });
-    // #437 AK 1: verfallende Abmeldungen ebenso erst nach Bestätigung.
-    if (vorschau.abmeldungenVerfallend > 0 && !lauf.bestaetigt) return verfallFehler(vorschau.abmeldungenVerfallend);
+    // #437 AK 1, #475 AK 12: verfallende Abmeldungen und Nachträge ebenso erst nach Bestätigung.
+    const verfall = verfallend(vorschau.abmeldungenVerfallend, vorschau.nachtraegeVerfallend);
+    if (verfall.summe > 0 && !lauf.bestaetigt) return verfallFehler(verfall);
     // #453 AK 16: ebenso, wenn Termine für Spieler:innen nicht mehr gelten.
     if (vorschau.abmeldungenKader > 0 && !lauf.bestaetigt)
       return fehlschlag("regel", kaderVerfallBestaetigen(vorschau.abmeldungenKader), {
@@ -246,7 +253,7 @@ async function laufe(
     erwartet = {
       version: vorschau.versionVorher,
       entfallend: vorschau.entfallend.map((x) => x.terminId),
-      verfallend: vorschau.abmeldungenVerfallend + vorschau.abmeldungenKader,
+      verfallend: vorschau.abmeldungenVerfallend + vorschau.abmeldungenKader + vorschau.nachtraegeVerfallend,
     };
   }
   const terminTrainings = await terminTrainingsDerTermine(supabase, erwartet.entfallend);
@@ -407,7 +414,7 @@ export async function folgeDerSerie(
     if (z?.termin_serien) {
       const n = await verfallendeAbmeldungen(supabase, e.terminId, z.datum, z.termin_serien.beginn);
       if (!n.ok) return n;
-      if (n.wert > 0) return verfallFehler(n.wert);
+      if (n.wert.summe > 0) return verfallFehler(n.wert);
     }
   }
   // #453: Folgen die Kader, zählt und bestätigt die Datenebene den Verfall.

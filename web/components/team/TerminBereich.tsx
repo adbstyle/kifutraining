@@ -270,7 +270,9 @@ export function TerminBereich({
         if (!r.ok && r.verfallend) {
           const anzahl = r.verfallend;
           if (gilt())
-            return verfall.nachVerlegung(anzahl, () => aendereEinzeln(t, geaendert, verantwortlich, grund, anzahl, kaderIds));
+            return verfall.nachVerlegung({ ...r, verfallend: anzahl }, () =>
+              aendereEinzeln(t, geaendert, verantwortlich, grund, anzahl, kaderIds),
+            );
           // Abgebrochen, bevor die Rückfrage kam: Gespeichert ist nichts.
           return melde(NICHT_GEAENDERT);
         }
@@ -370,7 +372,7 @@ export function TerminBereich({
     const r = b.art === "aendern"
       ? await aendereSerieAktion(b.t.id, b.reichweite, b.aenderung ?? {}, {
           ...erwartet,
-          verfallend: b.folge.abmeldungenVerfallend + b.folge.abmeldungenKader,
+          verfallend: b.folge.abmeldungenVerfallend + b.folge.abmeldungenKader + b.folge.nachtraegeVerfallend,
         })
       : await entferneSerieAktion(b.t.id, b.reichweite, erwartet);
     if (!r.ok) return serienFehler(b.art, r.error, laufNr.current !== nr);
@@ -469,7 +471,8 @@ export function TerminBereich({
         art === "entfernen" ||
         v.folge.entfallendAnzahl > 0 ||
         v.folge.abmeldungenVerfallend > 0 ||
-        v.folge.abmeldungenKader > 0
+        v.folge.abmeldungenKader > 0 ||
+        v.folge.nachtraegeVerfallend > 0
       )
         setBestaetigen(schritt);
       else await fuehreAus(schritt, nr);
@@ -491,7 +494,7 @@ export function TerminBereich({
         if (angabe === "kader")
           return verfall.nachKader(r, typeof bestaetigt === "number" ? bestaetigt : false, (n) => folgen(t, angabe, n));
         if (r.ok || !r.verfallend) return false;
-        verfall.nachVerlegung(r.verfallend, () => folgen(t, angabe, true));
+        verfall.nachVerlegung({ ...r, verfallend: r.verfallend }, () => folgen(t, angabe, true));
         return true;
       },
     );

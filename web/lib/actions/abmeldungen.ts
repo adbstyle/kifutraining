@@ -1,6 +1,6 @@
 "use server";
 
-import { setzeAbmeldung, type AbmeldungSetzen } from "@/lib/kern/abmeldungen";
+import { setzeAbmeldung, setzeAnwesenheit, type AbmeldungSetzen, type AnwesenheitSetzen } from "@/lib/kern/abmeldungen";
 import { revalidiereTeam } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
 
@@ -17,6 +17,20 @@ export async function setzeAbmeldungAktion(
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await setzeAbmeldung(a.supabase, a.userId, e);
+  if (!r.ok) return { ok: false, error: r.meldung };
+  revalidiereTeam(teamId);
+  return { ok: true };
+}
+
+/** Ab Beginn nachtragen, ob eine Spieler:in da war (#475) — derselbe
+ *  Fachkern wie das KI-Werkzeug «termin_anwesenheit_setzen». */
+export async function setzeAnwesenheitAktion(
+  teamId: string,
+  e: AnwesenheitSetzen,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await setzeAnwesenheit(a.supabase, a.userId, e);
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(teamId);
   return { ok: true };

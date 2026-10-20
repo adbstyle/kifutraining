@@ -51,8 +51,9 @@ export function VerfallBestaetigung({
 
 type Frage = { anzahl: number; text?: string; weiter: () => void };
 
-/** Was eine Aktion zurückmeldet, die Abmeldungen verfallen lassen kann. */
-type Antwort = { ok: boolean; error?: string; verfallend?: number };
+/** Was eine Aktion zurückmeldet, die Abmeldungen verfallen lassen kann;
+ *  `nachtraege`: davon Nachträge zur Anwesenheit (#475 AK 12). */
+type Antwort = { ok: boolean; error?: string; verfallend?: number; nachtraege?: number };
 
 /**
  * Die Rückfrage zu verfallenden Abmeldungen an einer Stelle: Zustand, Dialog
@@ -64,7 +65,8 @@ type Antwort = { ok: boolean; error?: string; verfallend?: number };
  *   `verfallend`, fragt sie nach und gibt `true` zurück. Die erste Rückfrage
  *   (`bestaetigt === false`) nennt den Satz zu Kadern, eine weitere den
  *   aktuellen Stand der Datenebene. `weiter` erhält die zu bestätigende Zahl.
- * - `nachVerlegung(anzahl, weiter)` (#437 AK 1): der Satz zur Verlegung.
+ * - `nachVerlegung(r, weiter)` (#437 AK 1, #475 AK 12): der Satz zur
+ *   Verlegung, samt verfallender Nachträge.
  */
 export function useVerfallRueckfrage(pending?: boolean) {
   const [frage, setFrage] = useState<Frage | null>(null);
@@ -76,8 +78,9 @@ export function useVerfallRueckfrage(pending?: boolean) {
     return true;
   }
 
-  function nachVerlegung(anzahl: number, weiter: () => void) {
-    setFrage({ anzahl, weiter });
+  function nachVerlegung(r: Antwort & { verfallend: number }, weiter: () => void) {
+    const nachtraege = r.nachtraege ?? 0;
+    setFrage({ anzahl: r.verfallend, text: verfallDialogText(r.verfallend - nachtraege, nachtraege), weiter });
   }
 
   const dialog = (
