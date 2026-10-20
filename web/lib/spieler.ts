@@ -125,12 +125,14 @@ export function nachSpielerName<T extends { vorname: string; nachname: string }>
 // ── Spielerzahl eines Termins ───────────────────────────────────────────────
 
 /** Was die Datenebene zu einem Termin zählt (berechnetes Feld `spielstand`):
- *  `null`, wenn die Liste leer ist bzw. bei Beginn leer war. */
-export type Spielstand = { gesamt: number; angemeldet: number; eingefroren: boolean } | null;
+ *  `null`, wenn die Liste leer ist bzw. bei Beginn leer war. `anwesend`: ab
+ *  Beginn die Anwesenden samt Nachträgen (#475 AK 9), vorher `null`. */
+export type Spielstand = { gesamt: number; angemeldet: number; eingefroren: boolean; anwesend?: number | null } | null;
 
-/** Woher die Spielerzahl eines Termins kommt (#434 AK 8, 12; #435 AK 6). */
+/** Woher die Spielerzahl eines Termins kommt (#434 AK 8, 12; #435 AK 6).
+ *  `anwesend`: ab Beginn die Anwesenden, die dann gezählt werden (#475 AK 10). */
 export type Spielerzahl =
-  | { quelle: "liste"; angemeldet: number; gesamt: number }
+  | { quelle: "liste"; angemeldet: number; gesamt: number; anwesend: number | null }
   | { quelle: "erwartet"; zahl: number }
   | { quelle: "unbekannt" };
 
@@ -143,27 +145,44 @@ export function spielerzahlVon(t: {
   ausgefallen?: boolean;
 }): Spielerzahl {
   if (t.ausgefallen) return { quelle: "unbekannt" };
-  if (t.spielstand) return { quelle: "liste", angemeldet: t.spielstand.angemeldet, gesamt: t.spielstand.gesamt };
+  if (t.spielstand)
+    return {
+      quelle: "liste",
+      angemeldet: t.spielstand.angemeldet,
+      gesamt: t.spielstand.gesamt,
+      anwesend: t.spielstand.anwesend ?? null,
+    };
   return t.spielerzahl !== null ? { quelle: "erwartet", zahl: t.spielerzahl } : { quelle: "unbekannt" };
 }
 
-/** Knapp für die Zeile im Trainingsplan: «12/15» oder «12». */
+/** Knapp für die Zeile im Trainingsplan: «12/15» oder «12» — ab Beginn die
+ *  Anwesenden von allen (#475 AK 10). */
 export function spielerzahlKurz(z: Spielerzahl): string | null {
-  if (z.quelle === "liste") return `${z.angemeldet}/${z.gesamt}`;
+  if (z.quelle === "liste") return `${z.anwesend ?? z.angemeldet}/${z.gesamt}`;
   return z.quelle === "erwartet" ? String(z.zahl) : null;
 }
 
-/** Ausgeschrieben: «12 von 15 angemeldet» oder «12 Spieler:innen erwartet». */
+/** Ausgeschrieben: «12 von 15 angemeldet», ab Beginn «11 von 15 da», oder
+ *  «12 Spieler:innen erwartet». */
 export function spielerzahlLang(z: Spielerzahl): string | null {
-  if (z.quelle === "liste") return `${z.angemeldet} von ${z.gesamt} angemeldet`;
+  if (z.quelle === "liste")
+    return z.anwesend !== null ? `${z.anwesend} von ${z.gesamt} da` : `${z.angemeldet} von ${z.gesamt} angemeldet`;
   if (z.quelle === "erwartet") return `${z.zahl} ${z.zahl === 1 ? "Spieler:in" : "Spieler:innen"} erwartet`;
   return null;
 }
 
 // ── Ab- und Anmelden (#435) ─────────────────────────────────────────────────
 
-/** Warum die Datenebene ein Ab- oder Anmelden abweist (`abmeldung_anwenden`). */
-export type AbmeldeGrund = "nicht_gefunden" | "verlegt" | "ausgefallen" | "begonnen" | "gilt_nicht";
+/** Warum die Datenebene ein Ab- oder Anmelden (`abmeldung_anwenden`) oder
+ *  einen Nachtrag (`termin_anwesenheit_setzen`, #475) abweist. */
+export type AbmeldeGrund =
+  | "nicht_gefunden"
+  | "verlegt"
+  | "ausgefallen"
+  | "begonnen"
+  | "gilt_nicht"
+  | "nicht_begonnen"
+  | "nicht_dabei";
 
 /** Der Stand des Termins, gegen den abgewiesen wurde. */
 export type AbmeldeStand = { datum: string; beginn: string; ende: string; ausgefallen: boolean };
@@ -176,6 +195,12 @@ export const ABMELDUNG_TEXT = {
   giltNicht: "Dieser Termin gilt nicht mehr für diese Spieler:in. Sieh dir die Termine noch einmal an.",
   /** Ein Termin, der begann, als die Spielerliste leer war. */
   ohneListe: "Bei Beginn führte das Team keine Spielerliste. Für diesen Termin gilt die erwartete Spielerzahl.",
+  /** Ein Nachtrag vor Beginn (#475 AK 4). */
+  nichtBegonnen: "Der Termin hat noch nicht begonnen. Wer da war, lässt sich erst ab Beginn nachtragen.",
+  /** Ein Nachtrag für jemanden, der bei Beginn nicht zum Termin gehörte (#475 AK 5). */
+  nichtDabei: "Diese Spieler:in gehörte bei Beginn nicht zu diesem Termin. Nachtragen lässt sich nur, wer da auf der Liste stand.",
+  /** An einem ausgefallenen Termin (#475 AK 6). */
+  ausgefallenNachtrag: "Der Termin fällt aus. Für ihn lässt sich nicht nachtragen, wer da war.",
 } as const;
 
 /** Die Abweisung mit dem aktuellen Stand (#435 AK 4, #437 AK 5) — an
@@ -186,6 +211,8 @@ export function abweisungText(grund: AbmeldeGrund, stand?: AbmeldeStand): string
   if (grund === "ausgefallen") return ABMELDUNG_TEXT.ausgefallen;
   if (grund === "begonnen") return ABMELDUNG_TEXT.begonnen;
   if (grund === "gilt_nicht") return ABMELDUNG_TEXT.giltNicht;
+  if (grund === "nicht_begonnen") return ABMELDUNG_TEXT.nichtBegonnen;
+  if (grund === "nicht_dabei") return ABMELDUNG_TEXT.nichtDabei;
   return ABMELDUNG_TEXT.nichtGefunden;
 }
 
@@ -202,6 +229,38 @@ export type Teilnehmer = {
   /** Wann ihr Status zuletzt zwischen angemeldet und abgemeldet wechselte
    *  (ISO-Zeitpunkt, #467); `null`, wenn sie dort nie gewechselt hat. */
   gewechseltAm: string | null;
+  /** Ab Beginn: Ihre Anwesenheit weicht vom Stand bei Beginn ab (#475) —
+   *  angemeldet heisst dann nicht erschienen, abgemeldet doch erschienen. */
+  nachgetragen: boolean;
+};
+
+/** Der Stand einer Spieler:in an einem Termin, samt Nachtrag (#475 AK 8). */
+export type TeilnahmeStatus = "angemeldet" | "abgemeldet" | "nicht_erschienen" | "doch_erschienen";
+
+export function teilnahmeStatus(t: { abgemeldet: boolean; nachgetragen: boolean }): TeilnahmeStatus {
+  if (t.nachgetragen) return t.abgemeldet ? "doch_erschienen" : "nicht_erschienen";
+  return t.abgemeldet ? "abgemeldet" : "angemeldet";
+}
+
+/** Was der Schalter am Termin bedeutet: vor Beginn angemeldet, ab Beginn da
+ *  — dann trägt er gegen den Stand bei Beginn nach (#475). */
+export function statusNachSchalter(t: { abgemeldet: boolean }, an: boolean, abBeginn: boolean): TeilnahmeStatus {
+  return abBeginn
+    ? teilnahmeStatus({ abgemeldet: t.abgemeldet, nachgetragen: an === t.abgemeldet })
+    : teilnahmeStatus({ abgemeldet: !an, nachgetragen: false });
+}
+
+/** Anwesend ist, wer angemeldet oder doch erschienen ist (#475 AK 9). */
+export function istAnwesend(t: { abgemeldet: boolean; nachgetragen: boolean }): boolean {
+  return t.abgemeldet === t.nachgetragen;
+}
+
+/** Wie der Stand überall heisst. */
+export const TEILNAHME_TEXT: Record<TeilnahmeStatus, string> = {
+  angemeldet: "angemeldet",
+  abgemeldet: "abgemeldet",
+  nicht_erschienen: "angemeldet, nicht erschienen",
+  doch_erschienen: "abgemeldet, doch erschienen",
 };
 
 /** Wie eine ehemalige Spieler:in überall heisst. */
@@ -247,21 +306,39 @@ export const LINK_TEXT = {
 
 // ── Verlegen lässt Abmeldungen verfallen (#437) ─────────────────────────────
 
-/** Was beim Verlegen mit den Abmeldungen geschieht (AK 1) — vor dem Speichern. */
-export function verfallText(n: number): string {
-  return n === 1
-    ? "Damit verfällt 1 Abmeldung: Die Spieler:in gilt wieder als angemeldet."
-    : `Damit verfallen ${n} Abmeldungen: Diese Spieler:innen gelten wieder als angemeldet.`;
+/** Was beim Verlegen mit den Abmeldungen geschieht (AK 1) — vor dem
+ *  Speichern. Wird ein begonnener Termin wieder offen, verfallen auch seine
+ *  Nachträge (#475 AK 12). */
+export function verfallText(n: number, nachtraege = 0): string {
+  const abmeldungen =
+    n === 0
+      ? null
+      : n === 1
+        ? "Damit verfällt 1 Abmeldung: Die Spieler:in gilt wieder als angemeldet."
+        : `Damit verfallen ${n} Abmeldungen: Diese Spieler:innen gelten wieder als angemeldet.`;
+  // Ohne Abmeldungen sind es nur Nicht-Erschienene (Doch-Erschienene waren
+  // abgemeldet): Auch sie gelten wieder als angemeldet.
+  const nachtrag =
+    nachtraege === 0
+      ? null
+      : n > 0
+        ? `Damit ${nachtraege === 1 ? "verfällt auch 1 Nachtrag" : `verfallen auch ${nachtraege} Nachträge`} zur Anwesenheit.`
+        : nachtraege === 1
+          ? "Damit verfällt 1 Nachtrag zur Anwesenheit: Die Spieler:in gilt wieder als angemeldet."
+          : `Damit verfallen ${nachtraege} Nachträge zur Anwesenheit: Diese Spieler:innen gelten wieder als angemeldet.`;
+  return [abmeldungen, nachtrag].filter(Boolean).join(" ");
+}
+
+/** Dasselbe in der Rückfrage der Oberfläche, mit dem Weg danach. */
+export function verfallDialogText(n: number, nachtraege = 0): string {
+  return n > 0
+    ? `${verfallText(n, nachtraege)} Wer am neuen Zeitpunkt nicht kann, meldet sich neu ab.`
+    : verfallText(n, nachtraege);
 }
 
 /** Dasselbe für den KI-Weg, mit dem Weg zur Bestätigung. */
-/** Dasselbe in der Rückfrage der Oberfläche, mit dem Weg danach. */
-export function verfallDialogText(n: number): string {
-  return `${verfallText(n)} Wer am neuen Zeitpunkt nicht kann, meldet sich neu ab.`;
-}
-
-export function verfallBestaetigen(n: number): string {
-  return `${verfallText(n)} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
+export function verfallBestaetigen(n: number, nachtraege = 0): string {
+  return `${verfallText(n, nachtraege)} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
 }
 
 /** Am privaten Link: Der Termin wurde verlegt, seit sie abgemeldet wurde (AK 2). */

@@ -8,7 +8,8 @@ import { LINK_FEHLER, abweisungText, istLinkToken, type AbmeldeGrund, type Abmel
  * — ohne Konto und ohne Sitzung. Das Geheimnis im Link ist die Berechtigung;
  * die RPCs `spieler_link_*` prüfen es als SECURITY DEFINER und geben nur
  * heraus, was die Spielervertretung sehen darf: Teamname, ihre Spieler:in und
- * die anstehenden Termine mit der Zahl der Angemeldeten (OoS 2).
+ * die anstehenden Termine mit der Zahl der Angemeldeten und derer, für die
+ * sie gelten (OoS 2, #472).
  *
  * Ungültig, erneuert, entfernt oder unbekannt sind nicht zu unterscheiden
  * (AK 11). Das Geheimnis steht in keiner Meldung und keinem eigenen Log; als
@@ -27,6 +28,9 @@ export type LinkTermin = {
   begonnen: boolean;
   /** `null` an einem ausgefallenen Termin. */
   angemeldet: number | null;
+  /** Für wie viele er gilt — gezählt wie für die Mitglieder (#472 AK 2);
+   *  `null` an einem ausgefallenen Termin. */
+  gesamt: number | null;
   abgemeldet: boolean;
   /** Verlegt, seit sie abgemeldet wurde (#437 AK 2): der Zeitpunkt vorher —
    *  die Abmeldung gilt nicht mehr. */

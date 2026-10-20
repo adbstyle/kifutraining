@@ -40,8 +40,9 @@ import type { TerminZeile } from "@/lib/queries/termine";
 export type { TerminFelder } from "@/lib/termin";
 
 /** `verfallend`: Das Verlegen liesse so viele Abmeldungen verfallen (#437
- *  AK 1); erneut mit `bestaetigt` senden, wenn das gewollt ist. */
-type Fehler = { ok: false; error: string; verfallend?: number };
+ *  AK 1), davon `nachtraege` Nachträge zur Anwesenheit (#475 AK 12); erneut
+ *  mit `bestaetigt` senden, wenn das gewollt ist. */
+type Fehler = { ok: false; error: string; verfallend?: number; nachtraege?: number };
 
 export async function legeTerminFestAktion(
   teamId: string,
@@ -92,7 +93,7 @@ export async function aendereTerminAktion(
     spielerzahl: felder.spielerzahl,
     erwartetesTraining,
   });
-  if (!r.ok) return { ok: false, error: r.meldung, verfallend: r.verfallend };
+  if (!r.ok) return { ok: false, error: r.meldung, verfallend: r.verfallend, nachtraege: r.nachtraege };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.trainingId) revalidiereTraining(r.wert.trainingId);
   return { ok: true };
@@ -290,7 +291,7 @@ export async function folgeDerSerieAktion(
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await folgeDerSerie(a.supabase, a.userId, { terminId, angaben, bestaetigt });
-  if (!r.ok) return { ok: false, error: r.meldung, verfallend: r.verfallend };
+  if (!r.ok) return { ok: false, error: r.meldung, verfallend: r.verfallend, nachtraege: r.nachtraege };
   revalidiereTeam(r.wert.teamId);
   return { ok: true };
 }

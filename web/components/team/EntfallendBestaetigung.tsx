@@ -16,7 +16,9 @@ import type { SerienFolge } from "@/lib/kern/serien";
 
    Verfallen durch die Änderung Abmeldungen (#437 AK 1), sagt es derselbe
    Dialog — auch, wenn keine Termine wegfallen. Ebenso Abmeldungen, deren
-   Termin wegen der Kader nicht mehr für die Spieler:in gilt (#453 AK 10).
+   Termin wegen der Kader nicht mehr für die Spieler:in gilt (#453 AK 10),
+   und Nachträge zur Anwesenheit begonnener Termine, die wieder offen
+   werden (#475 AK 12).
 
    `SerienFolge` ist ein reiner Typ: `import type` zieht nichts aus dem
    server-only Fachkern in das Client-Bundle. */
@@ -34,7 +36,8 @@ export function EntfallendBestaetigung({
   onBestaetigen: () => void;
 }) {
   const wegfall = aktion === "entfernen" || (folge?.entfallendAnzahl ?? 0) > 0;
-  const verfall = folge?.abmeldungenVerfallend ?? 0;
+  const nachtraege = folge?.nachtraegeVerfallend ?? 0;
+  const verfall = (folge?.abmeldungenVerfallend ?? 0) + nachtraege;
   const kaderVerfall = folge?.abmeldungenKader ?? 0;
   return (
     <Dialog
@@ -72,7 +75,7 @@ export function EntfallendBestaetigung({
       {verfall > 0 && (
         <p className={wegfall ? "mt-3" : "flex items-start gap-2"}>
           {!wegfall && <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0 text-icon-warning" />}
-          <span>{verfallDialogText(verfall)}</span>
+          <span>{verfallDialogText(verfall - nachtraege, nachtraege)}</span>
         </p>
       )}
       {kaderVerfall > 0 && (

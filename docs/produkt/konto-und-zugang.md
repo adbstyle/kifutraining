@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-10-19. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-10-20. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -288,15 +288,17 @@ Auch die Spielerliste eines Teams führt der Assistent nach den Regeln des
 J+S-Nummer und ob der Link jeder Spieler:in bezogen ist, nimmt Spieler:innen auf, ändert und
 entfernt sie; beim ersten Aufnehmen erfährt er, wie viele anstehende Termine ihre erwartete Zahl
 verloren. Jeder Termin, den er nennt, trägt neben der erwarteten Zahl die Spielerzahl, mit der
-geplant wird, samt Quelle: aus der Spielerliste mit den Angemeldeten und allen auf der Liste,
-erwartet oder unbekannt — unbekannt auch an einem ausgefallenen Termin. Für einen einzelnen
-Termin erfährt er, wer angemeldet und wer abgemeldet ist und seit wann — Datum und Uhrzeit des
-letzten Wechsels, auch an vergangenen Terminen — und ob es schon der Stand bei Beginn ist.
-Er meldet ab und wieder an und nennt dafür Datum und Beginn, wie er den Termin zuletzt gelesen
-hat; wurde er inzwischen verlegt, weist die Anwendung mit dem neuen Stand ab. Er holt und erneuert
+geplant wird, samt Quelle: aus der Spielerliste mit den Angemeldeten — ab Beginn den Anwesenden
+— und allen auf der Liste, erwartet oder unbekannt — unbekannt auch an einem ausgefallenen
+Termin. Für einen einzelnen Termin erfährt er, wer angemeldet und wer abgemeldet ist und seit
+wann — Datum und Uhrzeit des letzten Wechsels, auch an vergangenen Terminen —, ob es schon der
+Stand bei Beginn ist und ab Beginn, wer nicht erschienen oder doch erschienen ist und wie viele
+da waren. Er meldet ab und wieder an und trägt ab Beginn nach, ob eine Spieler:in da war, und
+nennt dafür Datum und Beginn, wie er den Termin zuletzt gelesen hat; wurde er inzwischen
+verlegt, weist die Anwendung mit dem neuen Stand ab. Er holt und erneuert
 den privaten Link einer Spieler:in, sieht, ob die Selbstabholung eingeschaltet ist, schaltet sie
 ein und aus und holt und erneuert die Abholadresse. Vor- und Nachnamen, Jahrgänge und
-J+S-Nummern der Spieler:innen, wann sie sich ab- und angemeldet haben, ihre privaten Links und die Abholadresse gelangen damit zum Anbieter
+J+S-Nummern der Spieler:innen, wann sie sich ab- und angemeldet haben, wer nicht oder doch erschienen ist, ihre privaten Links und die Abholadresse gelangen damit zum Anbieter
 des verbundenen Assistenten.
 
 Damit er den Platzbedarf einer Übung mit den Feldern eines Termins vergleichen kann, erfährt der
@@ -353,7 +355,8 @@ Zeitraums abrufen"; „die Anzeigenamen der
 Mitglieder deiner Teams lesen (ohne E-Mail-Adressen)"; „die Spielerliste deiner Teams (Vorname,
 Nachname, Jahrgang, J+S-Nummer) einsehen und führen, Kader anlegen, umbenennen und entfernen
 und ihnen Spieler:innen zuteilen, Spieler:innen für Termine ab- und wieder
-anmelden und sehen, wer angemeldet ist und seit wann, den privaten Link einer Spieler:in holen und erneuern,
+anmelden und sehen, wer angemeldet ist und seit wann, ab Beginn nachtragen, wer nicht oder doch
+erschienen ist, den privaten Link einer Spieler:in holen und erneuern,
 die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche
 Links bezogen wurden". Nie erreichbar sind „deine Favoriten",
 „die Verwaltung deiner Teams (gründen, umbenennen, Mitglieder aufnehmen oder entfernen)" und
@@ -500,11 +503,12 @@ nirgends.
 Im Kalender fragt der Assistent vor dem Entfernen eines Termins, dem Löschen eines Trainings
 mit Termin, dem Zuordnen, Ersetzen und Lösen nicht nach. Fallen durch eine
 Serienänderung anstehende Termine mit Training weg, erfährt er das erst danach; nur wenn
-vergangene Termine erfasst sind oder entfallen oder Abmeldungen verfallen — durch eine
-Verlegung oder eine Änderung an Kadern —, verlangt die
+vergangene Termine erfasst sind oder entfallen oder Abmeldungen oder Nachträge verfallen — durch
+eine Verlegung oder eine Änderung an Kadern —, verlangt die
 Anwendung eine Bestätigung im Aufruf und nennt vorher, was es trifft. Ob ein Termin
-stattgefunden hat und wer dabei war, kennt die Anwendung auch über den Assistenten nicht; er
-erfährt nur, wer abgemeldet war. Auch beim Entfernen von Spieler:innen und Kadern, beim Erneuern von Links
+stattgefunden hat, kennt die Anwendung auch über den Assistenten nicht, und wer dabei war, nur
+aus dem Stand bei Beginn und den Nachträgen; ob jemand die Anwesenheit geprüft hat, erfährt er
+nicht. Auch beim Entfernen von Spieler:innen und Kadern, beim Erneuern von Links
 und der Abholadresse und beim Schalten der Selbstabholung verlangt die Anwendung keine
 Bestätigung; ob er vorher nachfragt, liegt bei ihm. Die Liste aller Spieler:innen mit ihren Abmeldungen für mehrere Termine auf einmal liest er
 nicht; wer an einem Termin kommt, ruft er Termin für Termin ab.

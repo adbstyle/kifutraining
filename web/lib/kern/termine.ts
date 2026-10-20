@@ -252,26 +252,40 @@ export type TerminAendern = {
   bestaetigt?: boolean | number;
 };
 
-/** Wie viele Abmeldungen verfallen, wenn der Termin auf `datum`/`beginn`
- *  verlegt wird (#437 AK 1) — dieselbe Entscheidung wie der Trigger. */
+/** Was eine Verlegung verfallen lässt: Abmeldungen (#437 AK 1) und, wird
+ *  ein begonnener Termin wieder offen, Nachträge zur Anwesenheit (#475 AK
+ *  12). `summe` bestätigt die Oberfläche. */
+export type Verfallend = { abmeldungen: number; nachtraege: number; summe: number };
+
+/** Was verfällt, wenn der Termin auf `datum`/`beginn` verlegt wird —
+ *  dieselbe Entscheidung wie der Trigger. */
 export async function verfallendeAbmeldungen(
   supabase: SupabaseClient,
   terminId: string,
   datum: string,
   beginn: string | null,
-): Promise<KernErgebnis<number>> {
-  const { data, error } = await supabase.rpc("termin_abmeldungen_verfallend", {
-    p_termin: terminId,
-    p_datum: datum,
-    p_beginn: beginn,
-  });
-  if (error) return ausDbFehler(error);
-  return ok((data as number | null) ?? 0);
+): Promise<KernErgebnis<Verfallend>> {
+  const p = { p_termin: terminId, p_datum: datum, p_beginn: beginn };
+  const [ab, nach] = await Promise.all([
+    supabase.rpc("termin_abmeldungen_verfallend", p),
+    supabase.rpc("termin_nachtraege_verfallend", p),
+  ]);
+  if (ab.error) return ausDbFehler(ab.error);
+  if (nach.error) return ausDbFehler(nach.error);
+  return ok(verfallend((ab.data as number | null) ?? 0, (nach.data as number | null) ?? 0));
+}
+
+export function verfallend(abmeldungen: number, nachtraege: number): Verfallend {
+  return { abmeldungen, nachtraege, summe: abmeldungen + nachtraege };
 }
 
 /** Ein Fehler, der vor dem Verlegen nach der Bestätigung fragt. */
-export function verfallFehler(n: number): KernFehler {
-  return fehlschlag("regel", verfallBestaetigen(n), { feld: "bestaetigt", verfallend: n });
+export function verfallFehler(v: Verfallend): KernFehler {
+  return fehlschlag("regel", verfallBestaetigen(v.abmeldungen, v.nachtraege), {
+    feld: "bestaetigt",
+    verfallend: v.summe,
+    nachtraege: v.nachtraege,
+  });
 }
 
 /** Warum ein bedingtes Schreiben keine Zeile traf: Der Termin ist weg, oder
@@ -358,8 +372,8 @@ export async function aendereTermin(
     if (!n.ok) return n;
     // Eine Zahl bestätigt genau so viele (Oberfläche); sind es inzwischen
     // andere, fragt der Kern neu. `true` (KI) bestätigt, was es ist.
-    if (n.wert > 0 && e.bestaetigt !== true && e.bestaetigt !== n.wert) return verfallFehler(n.wert);
-    verfallen = n.wert;
+    if (n.wert.summe > 0 && e.bestaetigt !== true && e.bestaetigt !== n.wert.summe) return verfallFehler(n.wert);
+    verfallen = n.wert.abmeldungen;
   }
 
   const erwartet = e.erwartetesTraining !== undefined ? e.erwartetesTraining : t.training_id;

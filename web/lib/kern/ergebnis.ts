@@ -105,6 +105,9 @@ export type KernFehler = {
   /** Nur bei `feld: "bestaetigt"` wegen einer Verlegung: wie viele
    *  Abmeldungen damit verfallen (#437 AK 1) — die Oberfläche fragt nach. */
   verfallend?: number;
+  /** Davon Nachträge zur Anwesenheit eines begonnenen Termins, den die
+   *  Verlegung wieder öffnet (#475 AK 12); `verfallend` ist die Summe. */
+  nachtraege?: number;
   /** Zusatz nur für den Assistenten (die Oberfläche zeigt ihn nie), etwa
    *  «Es ist keine Kopie entstanden.» */
   hinweis?: string;

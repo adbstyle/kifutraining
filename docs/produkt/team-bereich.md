@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-10-19. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-20. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -470,8 +470,8 @@ Begonnen ist ein Termin ab seiner Anfangszeit, minutengenau nach Schweizer Zeit;
 schon beim Erfassen begonnen hat, hält den Stand dieses Moments fest. War die Liste bei Beginn
 leer, gilt dort die erwartete Zahl, die sich an begonnenen Terminen weiterhin festlegen lässt. Wird
 ein begonnener Termin auf einen Zeitpunkt verlegt, der noch bevorsteht, ist er wieder offen: Es
-zählt wieder die aktuelle Liste, seine Abmeldungen verfallen, und eine erwartete Zahl verliert er,
-sofern das Team eine Liste führt.
+zählt wieder die aktuelle Liste, seine Abmeldungen und Nachträge verfallen (siehe „Nachtragen, wer
+da war"), und eine erwartete Zahl verliert er, sofern das Team eine Liste führt.
 
 ## Kader
 
@@ -537,9 +537,10 @@ mit. Ein Team ohne Kader plant unverändert.
 
 ## Ab- und Anmelden
 
-Jede Spieler:in der Liste ist für jeden Termin, der für sie gilt (siehe „Kader"), angemeldet, bis sie abgemeldet wird; einen dritten
-Zustand wie „keine Rückmeldung" gibt es nicht. Wer fehlt, ohne sich abzumelden, zählt mit — die
-Zahl ist darum eine Obergrenze. Abgemeldet und wieder angemeldet wird Termin für Termin, durch jedes
+Jede Spieler:in der Liste ist für jeden Termin, der für sie gilt (siehe „Kader"), angemeldet, bis sie abgemeldet wird; einen Zustand
+wie „keine Rückmeldung" gibt es nicht. Wer fehlt, ohne sich abzumelden, zählt bis zum Beginn mit —
+die Zahl ist darum eine Obergrenze; danach lässt es sich nachtragen (siehe „Nachtragen, wer da
+war"). Abgemeldet und wieder angemeldet wird Termin für Termin, durch jedes
 Mitglied im geöffneten Termin oder durch die Eltern bzw. die Spieler:in selbst über ihren privaten
 Link (siehe unten), bis zum Beginn des Termins und nie an einem ausgefallenen. Eine Abmeldung über
 den Link erscheint im Team wie die eines Mitglieds; wer sie gesetzt hat, hält die Anwendung nicht
@@ -548,8 +549,9 @@ fest, es gilt die zuletzt gesetzte. Einen Grund trägt eine Abmeldung nicht.
 Im Reiter „Spieler:innen" des geöffneten Termins steht jede Spieler:in mit einem Schalter, der beim
 Umlegen sofort speichert: an heisst angemeldet, aus abgemeldet, und abgemeldete Namen stehen
 gedämpft. Darüber steht „12 von 15 angemeldet" und bis wann sich das ändern lässt, etwa „Änderbar
-bis 18:00". Ab Beginn sind die Schalter gesperrt, es gilt der „Stand bei Beginn", und ehemalige
-Spieler:innen stehen ohne Namen am Ende. Links vom Schalter steht, seit wann der Status einer
+bis 18:00". Ab Beginn gilt der „Stand bei Beginn", die Schalter sagen dann, wer da war (siehe
+„Nachtragen, wer da war"), und ehemalige Spieler:innen stehen ohne Namen am Ende, ihr Schalter
+gesperrt. Links vom Schalter steht, seit wann der Status einer
 Spieler:in gilt — „gerade eben", „vor 25 Minuten", „vor 3 Stunden" (heute), „gestern",
 „vorgestern", „diese Woche", „letzte Woche", sonst das Datum mit Jahr; passen zwei Angaben, gilt
 die genauere, gerechnet nach Schweizer Zeit mit Wochen von Montag bis Sonntag. Eine Zeit trägt nur,
@@ -583,6 +585,35 @@ die Anwendung ein Ab- oder Anmelden ab und nennt den aktuellen Stand, etwa „De
 inzwischen verlegt, neu auf … um 18:30. Sieh ihn dir noch einmal an." — im Team, am privaten Link
 und beim KI-Assistenten gleich.
 
+### Nachtragen, wer da war
+
+Ab Beginn eines Termins tragen Mitglieder nach, wer trotz Anmeldung nicht erschienen und wer trotz
+Abmeldung doch erschienen ist — schon auf dem Platz oder später, ohne Frist. Der Reiter
+„Spieler:innen" nennt dann oben „11 von 15 da", gezählt sind die Angemeldeten ohne die nicht
+Erschienenen und dazu die doch Erschienenen; daneben steht „Stand bei Beginn - nachtragen, wer da
+war". Der Schalter jeder Spieler:in sagt jetzt, ob sie da war: Er steht, wie sie bei Beginn
+gemeldet war, und wer ihn umlegt, trägt die Abweichung nach; unter dem Namen steht dann
+„angemeldet, nicht erschienen" bzw. „abgemeldet, doch erschienen", eine Abgemeldete ohne Nachtrag
+heisst „abgemeldet". Zurückgelegt gilt wieder der Stand bei Beginn. Wer nicht da war, steht
+gedämpft. Ohne Nachtrag gilt der Stand bei Beginn als Anwesenheit; ob jemand die Anwesenheit
+geprüft hat, hält die Anwendung nicht fest. Ein Nachtrag ist kein Wechsel zwischen angemeldet und
+abgemeldet: Die Zeit links vom Schalter bleibt die des letzten Wechsels vor Beginn.
+
+Nachtragen lässt sich nur, wer im Stand bei Beginn steht — wer danach auf die Liste kam oder für
+wen der Termin wegen der Kader nicht galt, nicht, und an einem Termin, der begann, als die Liste
+leer war, niemand. Ab Beginn zählt die Spielerzahl überall die Anwesenden: in der Zeile etwa
+„11/15", ausgeschrieben „11 von 15 da", im Trainingsplan, am nächsten Termin, in den Eckdaten und
+in der Durchführen-Ansicht; vor dem ersten Nachtrag sind das die Angemeldeten. Die Eltern sehen
+davon nichts: Ihr Link zeigt einen Termin von heute auch nach Beginn mit der Zahl bei Beginn.
+
+Fällt ein Termin aus, ruhen seine Nachträge wie seine Abmeldungen: nicht zu sehen und nicht zu
+ändern; die Rücknahme des Ausfalls lässt sie wieder gelten. Wird ein begonnener Termin auf einen
+Zeitpunkt verlegt, der noch bevorsteht, verfallen seine Nachträge mit dem Stand bei Beginn; vor dem
+Speichern nennt die Rückfrage auch sie, etwa „Damit verfällt auch 1 Nachtrag zur Anwesenheit.",
+bei einer Serienänderung in derselben Rückfrage. Auf einen anderen vergangenen Zeitpunkt verlegt,
+bleiben sie. Wer aus der Liste entfernt wird, steht an vergangenen Terminen weiter als ehemalige
+Spieler:in ohne Namen, samt Nachtrag, und zählt dort weiter; ändern lässt sich das nicht mehr.
+
 ## Privater Link
 
 Jede Spieler:in hat einen privaten Link, über den ihre Eltern oder sie selbst sie ohne Konto ab-
@@ -599,15 +630,18 @@ Wer den Link öffnet, braucht weder Konto noch Anmeldung. Die Seite ist fürs Te
 ohne Seitenleiste aus und nennt Teamname und Name der Spieler:in mit dem Satz, dass sie für jedes
 Training zuerst angemeldet ist und man sie abmeldet, wenn sie nicht kann, und bis zum Beginn
 wieder anmeldet. Wie im Trainingsplan steht zuoberst „Als Nächstes": der nächste Termin, der
-noch nicht begonnen hat, grösser, mit „Heute" oder „Morgen", der Zahl der Angemeldeten, ob die
+noch nicht begonnen hat, grösser, mit „Heute" oder „Morgen", der Spielerzahl, ob die
 Spieler:in angemeldet ist, und dem Knopf „Abmelden" oder „Wieder anmelden"; abgemeldet steht die
 Karte auf einer leicht roten Fläche, ihr Tag rot und „Wieder anmelden" als heller Knopf. Ein Termin
 von heute, der schon begonnen hat, steht darüber unter „Heute", gesperrt bis Ende des Tages.
 Darunter folgen die übrigen anstehenden Termine, die für die Spieler:in gelten, unter Monatsüberschriften wie
 „Oktober 2026", je als Karte mit
-Kalenderblatt, Beginn und Ende, Ort, der Zahl der Angemeldeten — nur unter denen, für die er gilt —, bei
+Kalenderblatt, Beginn und Ende, Ort, der Spielerzahl, bei
 einem Termin mit Kadern den Kadern der Spieler:in, über die er für sie gilt, und einem Schalter; ist die
-Spieler:in abgemeldet, ist das Kalenderblatt rot. Ein begonnener Termin ist gesperrt mit „Hat
+Spieler:in abgemeldet, ist das Kalenderblatt rot. Die Spielerzahl steht knapp wie in der Zeile des
+Trainingsplans, mit dem Shirt und etwa „24/33": angemeldet von allen, für die der Termin gilt, gezählt
+wie für die Mitglieder — bei einem Termin mit Kadern auch über Kader, die nicht die der Spieler:in sind,
+ohne sie zu nennen. „Angemeldet" und „abgemeldet" meinen auf der Seite nur die eigene Spieler:in. Ein begonnener Termin ist gesperrt mit „Hat
 begonnen · nicht mehr änderbar", ein ausgefallener grau mit „Fällt aus". Wurde ein Termin verlegt,
 seit sie abgemeldet war, steht bei ihm etwa „Verlegt, vorher Dienstag, 20. Oktober um 18:00. Deine
 Abmeldung gilt nicht mehr.", bis man neu wählt oder der Termin beginnt. Namen anderer
@@ -760,8 +794,8 @@ prüft die Anwendung nicht, und sie meldet keine Unstimmigkeit; das Urteil liegt
 verbundenen KI-Assistenten, der die Angaben liest. Auch die Übungssuche lässt sich nicht auf
 Platz oder Spielerzahl eines Termins eingrenzen. Mehrere Felder lassen sich nicht zu einer
 grösseren Fläche zusammenlegen, und Hütchen- oder Markierungstore zählen nicht zu den Toren
-eines Feldes. Ohne Spielerliste ist die Spielerzahl eine Erwartung, mit ihr eine Obergrenze:
-Anwesenheit führt die Anwendung nicht, und wie viele tatsächlich kamen, hält sie nicht fest. Einen Platz als Vorlage
+eines Feldes. Ohne Spielerliste ist die Spielerzahl eine Erwartung, und wie viele tatsächlich
+kamen, hält die Anwendung nicht fest; mit ihr ist sie bis zum Beginn eine Obergrenze. Einen Platz als Vorlage
 für weitere Termine hinterlegen lässt sich nicht; Felder werden je Termin oder Terminserie
 erfasst. Ändern sich Platz oder Spielerzahl, wirkt das nicht auf ein bereits zugeordnetes
 Training zurück.
@@ -781,8 +815,8 @@ Steht an einem Termin noch ein ehemaliges Mitglied als Verantwortliche:r, lässt
 ist.
 
 Verantwortlich zu sein heisst nicht, als J+S-Leitperson anerkannt zu sein, und die Einträge an
-vergangenen Terminen sind kein Nachweis geleisteter Einsätze. Ob ein Termin stattgefunden hat
-und wer dabei war, hält die Anwendung nicht fest; ein vergangener Termin, der nicht ausgefallen
+vergangenen Terminen sind kein Nachweis geleisteter Einsätze. Ob ein Termin stattgefunden hat,
+hält die Anwendung nicht fest, und wer dabei war, nur mit Spielerliste; ein vergangener Termin, der nicht ausgefallen
 ist, gilt deshalb nicht als durchgeführt, und ein Tag ohne Termin ist nicht von einer bewussten
 Pause zu unterscheiden. Dass die Verantwortlichen, die Felder oder die erwartete Spielerzahl eines Serientermins von der
 Serie abweichen, zeigt erst der Dialog „Termin ändern". Ausfallgründe sind frei formuliert, ohne Vorschläge; einen Teilausfall oder Abbruch kennt
@@ -859,8 +893,14 @@ Zeitpunkt übernehmen. Wer eine Ab- oder Anmeldung gesetzt hat, hält die Anwend
 zwischen angemeldet und abgemeldet nur den letzten Zeitpunkt, nicht die früheren. Wie lange vor
 Beginn er lag, zeigt sie nicht, und die Eltern sehen ihn über den Link nicht. Wieder-Anmeldungen
 und der Stand bei Beginn aus der Zeit, bevor die Anwendung diese Angabe führte, tragen keine Zeit. Ab
-Beginn lässt sich nichts mehr ändern, und wer tatsächlich da war, hält sie nicht fest; eine
-J+S-Anwesenheitskontrolle ersetzt sie nicht.
+Beginn lässt sich nur noch nachtragen, wer da war. Ohne Nachtrag gilt der Stand bei Beginn als
+Anwesenheit — ob jemand geprüft hat, hält die Anwendung nicht fest, ebenso wenig, wer einen Nachtrag
+gesetzt hat und wann. Ein Nachtrag trägt keinen Grund und unterscheidet nicht zwischen entschuldigt
+und unentschuldigt; Teilanwesenheit wie verspätet, früher gegangen oder verletzt zuschauend kennt sie
+nicht. Wer bei Beginn nicht zum Termin gehörte, lässt sich nicht als erschienen ergänzen. Eine
+Präsenzliste über mehrere Termine und eine Auswertung, wer wie oft nicht erschienen ist, gibt es in
+der Anwendung nicht, und an J+S übermittelt sie nichts; die J+S-Anwesenheitskontrolle ersetzt sie
+nicht. Der Hinweis auf der Abholseite, was KiFu speichert, nennt die Nachträge nicht.
 
 Ob ein privater Link weitergegeben wurde, erkennt die Anwendung nicht, und ob ein Elternteil oder
 die Spieler:in selbst abmeldet, unterscheidet sie nicht. Sperren lässt sich ein Link nur, indem
