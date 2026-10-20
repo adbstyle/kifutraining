@@ -594,7 +594,7 @@ Erschienenen und dazu die doch Erschienenen; daneben steht „Stand bei Beginn -
 war". Der Schalter jeder Spieler:in sagt jetzt, ob sie da war: Er steht, wie sie bei Beginn
 gemeldet war, und wer ihn umlegt, trägt die Abweichung nach; unter dem Namen steht dann
 „angemeldet, nicht erschienen" bzw. „abgemeldet, doch erschienen", eine Abgemeldete ohne Nachtrag
-heisst „abgemeldet". Zurückgelegt gilt wieder der Stand bei Beginn. Wer da war und nicht, steht
+heisst „abgemeldet". Zurückgelegt gilt wieder der Stand bei Beginn. Wer nicht da war, steht
 gedämpft. Ohne Nachtrag gilt der Stand bei Beginn als Anwesenheit; ob jemand die Anwesenheit
 geprüft hat, hält die Anwendung nicht fest. Ein Nachtrag ist kein Wechsel zwischen angemeldet und
 abgemeldet: Die Zeit links vom Schalter bleibt die des letzten Wechsels vor Beginn.

@@ -142,6 +142,7 @@ import {
   spielerzahlVon,
   istAnwesend,
   teilnahmeStatus,
+  statusNachSchalter,
   TEILNAHME_TEXT,
   verfallDialogText,
   ABMELDUNG_TEXT,
@@ -2082,6 +2083,11 @@ pruefe("Nachtrag: vier Stände, anwesend ist, wer angemeldet oder doch erschiene
     assert.equal(istAnwesend(t), da, status);
   }
   assert.equal(TEILNAHME_TEXT.nicht_erschienen, "angemeldet, nicht erschienen");
+  // Der Schalter: vor Beginn angemeldet, ab Beginn da.
+  assert.equal(statusNachSchalter({ abgemeldet: false }, false, false), "abgemeldet");
+  assert.equal(statusNachSchalter({ abgemeldet: false }, false, true), "nicht_erschienen");
+  assert.equal(statusNachSchalter({ abgemeldet: true }, true, true), "doch_erschienen");
+  assert.equal(statusNachSchalter({ abgemeldet: true }, false, true), "abgemeldet");
   const begonnen = spielerzahlVon({ spielerzahl: null, spielstand: { gesamt: 15, angemeldet: 12, eingefroren: true, anwesend: 11 } });
   assert.equal(spielerzahlKurz(begonnen), "11/15");
   assert.equal(spielerzahlLang(begonnen), "11 von 15 da");

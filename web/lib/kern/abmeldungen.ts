@@ -127,8 +127,8 @@ export async function terminSpieler(
 /** Ein abgewiesenes Ab- oder Anmelden als Kern-Fehler. Verlegt ist ein
  *  Konflikt — die Auswahl ist veraltet —, begonnen und ausgefallen sind
  *  Regeln. */
-export function abweisung(grund: AbmeldeGrund, stand?: AbmeldeStand, nachtrag = false): KernFehler {
-  const meldung = nachtrag && grund === "ausgefallen" ? ABMELDUNG_TEXT.ausgefallenNachtrag : abweisungText(grund, stand);
+export function abweisung(grund: AbmeldeGrund, stand?: AbmeldeStand): KernFehler {
+  const meldung = abweisungText(grund, stand);
   if (grund === "nicht_gefunden") return fehlschlag("nicht_gefunden", meldung, TERMIN_FELD);
   if (grund === "verlegt") return fehlschlag("konflikt", meldung);
   return fehlschlag("regel", meldung);
@@ -198,6 +198,8 @@ export async function setzeAnwesenheit(
   });
   if (error) return ausDbFehler(error);
   const r = data as AnwesenheitAntwort;
-  if (r.status !== "ok") return abweisung(r.grund, r.stand, true);
+  // Ausgefallen: derselbe Grund wie beim Abmelden, der Satz sagt, was nicht geht.
+  if (r.status !== "ok")
+    return r.grund === "ausgefallen" ? fehlschlag("regel", ABMELDUNG_TEXT.ausgefallenNachtrag) : abweisung(r.grund, r.stand);
   return ok({ terminId: e.terminId, da: r.da, nachgetragen: r.nachgetragen, stand: r.stand });
 }

@@ -12,7 +12,7 @@ import {
   TEILNAHME_TEXT,
   istAnwesend,
   spielerName,
-  teilnahmeStatus,
+  statusNachSchalter,
   type Teilnehmer,
 } from "@/lib/spieler";
 import type { TerminSpieler } from "@/lib/kern/abmeldungen";
@@ -154,8 +154,7 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
         {sichtbar.map((s, i) => {
           const name = s.vorname !== null ? spielerName({ vorname: s.vorname, nachname: s.nachname ?? "" }) : EHEMALIGE_SPIELERIN;
           const wert = an(s);
-          // Ab Beginn trägt der Schalter nach: Der Stand folgt dem, was er zeigt.
-          const status = teilnahmeStatus(nachtragen ? { abgemeldet: s.abgemeldet, nachgetragen: wert === s.abgemeldet } : { abgemeldet: !wert, nachgetragen: false });
+          const status = statusNachSchalter(s, wert, nachtragen);
           // Eben selbst umgelegt: Der Wechsel steht schon da, bevor die Antwort
           // kommt. Ein Nachtrag ist kein Wechsel, die Zeit bleibt (#475 PC 1).
           const eben = !nachtragen && s.spielerId !== null && s.spielerId in lokal && lokal[s.spielerId] !== gespeichert(s);

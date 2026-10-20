@@ -242,6 +242,14 @@ export function teilnahmeStatus(t: { abgemeldet: boolean; nachgetragen: boolean 
   return t.abgemeldet ? "abgemeldet" : "angemeldet";
 }
 
+/** Was der Schalter am Termin bedeutet: vor Beginn angemeldet, ab Beginn da
+ *  — dann trägt er gegen den Stand bei Beginn nach (#475). */
+export function statusNachSchalter(t: { abgemeldet: boolean }, an: boolean, abBeginn: boolean): TeilnahmeStatus {
+  return abBeginn
+    ? teilnahmeStatus({ abgemeldet: t.abgemeldet, nachgetragen: an === t.abgemeldet })
+    : teilnahmeStatus({ abgemeldet: !an, nachgetragen: false });
+}
+
 /** Anwesend ist, wer angemeldet oder doch erschienen ist (#475 AK 9). */
 export function istAnwesend(t: { abgemeldet: boolean; nachgetragen: boolean }): boolean {
   return t.abgemeldet === t.nachgetragen;
