@@ -8,6 +8,9 @@ import { cn } from "@/lib/cn";
    speichert beim Umlegen (Atlassian: «Toggle» nur für sofort wirkende
    Änderungen). Darunter liegt ein echtes `<input type="checkbox"
    role="switch">` — Tastatur, Fokus und Vorlesehilfe kommen vom Browser.
+   Es braucht eine eigene Breite und Höhe: `inset-0` allein spannt es auf
+   iOS nicht auf, dort behält eine Checkbox auch mit `appearance-none` ihre
+   Eigengrösse von rund 16 px (die Bahn schrumpfte zum Punkt oben links).
 
    Beide Lagen tragen ein Zeichen im Knopf, damit der Zustand nicht an der
    Farbe allein hängt: an in Primary mit Haken, aus im Rot des abgemeldeten
@@ -31,7 +34,7 @@ export function Switch({
         role="switch"
         disabled={disabled}
         className={cn(
-          "peer focus-ring absolute inset-0 m-0 cursor-pointer appearance-none rounded-full border-2 transition-colors disabled:cursor-not-allowed",
+          "peer focus-ring absolute inset-0 m-0 h-full w-full cursor-pointer appearance-none rounded-full border-2 transition-colors disabled:cursor-not-allowed",
           neutral
             ? "border-kante bg-transparent"
             : "border-on-lozenge-danger bg-lozenge-danger checked:border-primary checked:bg-primary",
