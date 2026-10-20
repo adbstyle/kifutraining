@@ -140,6 +140,10 @@ import {
   spielerzahlKurz,
   spielerzahlLang,
   spielerzahlVon,
+  istAnwesend,
+  teilnahmeStatus,
+  TEILNAHME_TEXT,
+  verfallDialogText,
   ABMELDUNG_TEXT,
   EHEMALIGE_SPIELERIN,
   abweisungText,
@@ -1901,6 +1905,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#438": ["selbstabholung_abrufen", "selbstabholung_schalten", "abholadresse_erneuern"],
     "#453": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "termin_spieler_abrufen"],
     "#452": ["kader_abrufen", "kader_anlegen", "kader_umbenennen", "kader_entfernen", "kader_zuteilen", "kader_herausnehmen"],
+    "#475": ["termin_spieler_abrufen", "termin_anwesenheit_setzen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
@@ -2055,7 +2060,7 @@ pruefe("Spielerliste: Marker der Datenebene tragen die Sätze der Oberfläche", 
 
 pruefe("Spielerzahl: Liste vor erwartet, ausgefallen ohne Zahl (#434 AK 8, #435 AK 6, #437 AK 4)", () => {
   const liste = spielerzahlVon({ spielerzahl: 12, spielstand: { gesamt: 15, angemeldet: 0, eingefroren: false } });
-  assert.deepEqual(liste, { quelle: "liste", angemeldet: 0, gesamt: 15 });
+  assert.deepEqual(liste, { quelle: "liste", angemeldet: 0, gesamt: 15, anwesend: null });
   assert.equal(spielerzahlKurz(liste), "0/15", "auch 0 angemeldet");
   assert.equal(spielerzahlLang(liste), "0 von 15 angemeldet");
   const erwartet = spielerzahlVon({ spielerzahl: 1, spielstand: null });
@@ -2063,6 +2068,34 @@ pruefe("Spielerzahl: Liste vor erwartet, ausgefallen ohne Zahl (#434 AK 8, #435 
   assert.equal(spielerzahlLang(erwartet), "1 Spieler:in erwartet");
   assert.deepEqual(spielerzahlVon({ spielerzahl: null, spielstand: null }), { quelle: "unbekannt" });
   assert.deepEqual(spielerzahlVon({ spielerzahl: 12, spielstand: null, ausgefallen: true }), { quelle: "unbekannt" });
+});
+
+pruefe("Nachtrag: vier Stände, anwesend ist, wer angemeldet oder doch erschienen ist, ab Beginn zählen die Anwesenden (#475 AK 8–10)", () => {
+  const faelle = [
+    [{ abgemeldet: false, nachgetragen: false }, "angemeldet", true],
+    [{ abgemeldet: true, nachgetragen: false }, "abgemeldet", false],
+    [{ abgemeldet: false, nachgetragen: true }, "nicht_erschienen", false],
+    [{ abgemeldet: true, nachgetragen: true }, "doch_erschienen", true],
+  ] as const;
+  for (const [t, status, da] of faelle) {
+    assert.equal(teilnahmeStatus(t), status);
+    assert.equal(istAnwesend(t), da, status);
+  }
+  assert.equal(TEILNAHME_TEXT.nicht_erschienen, "angemeldet, nicht erschienen");
+  const begonnen = spielerzahlVon({ spielerzahl: null, spielstand: { gesamt: 15, angemeldet: 12, eingefroren: true, anwesend: 11 } });
+  assert.equal(spielerzahlKurz(begonnen), "11/15");
+  assert.equal(spielerzahlLang(begonnen), "11 von 15 da");
+  assert.deepEqual(spielerzahlVon({ spielerzahl: null, spielstand: { gesamt: 15, angemeldet: 12, eingefroren: true, anwesend: 11 }, ausgefallen: true }), { quelle: "unbekannt" }, "AK 11");
+  assert.equal(abweisungText("nicht_begonnen"), ABMELDUNG_TEXT.nichtBegonnen);
+  assert.equal(abweisungText("nicht_dabei"), ABMELDUNG_TEXT.nichtDabei);
+});
+
+pruefe("Nachtrag: Verlegen in die Zukunft nennt verfallende Nachträge (#475 AK 12)", () => {
+  assert.equal(verfallText(0, 1), "Damit verfällt 1 Nachtrag zur Anwesenheit: Die Spieler:in gilt wieder als angemeldet.");
+  assert.equal(verfallText(2, 1), `${verfallText(2)} Damit verfällt auch 1 Nachtrag zur Anwesenheit.`);
+  assert.equal(verfallText(1, 3), `${verfallText(1)} Damit verfallen auch 3 Nachträge zur Anwesenheit.`);
+  assert.ok(verfallDialogText(2).endsWith("Wer am neuen Zeitpunkt nicht kann, meldet sich neu ab."));
+  assert.equal(verfallDialogText(0, 2), verfallText(0, 2), "ohne Abmeldungen kein Satz zum Abmelden");
 });
 
 pruefe("terminBegonnen: minutengenau am Trainingsort (Zwilling von termin_begonnen)", () => {
@@ -2115,7 +2148,7 @@ pruefe("Abmelden: Abweisung nennt den Stand, Liste nach Name mit ehemaligen zule
   assert.equal(abweisungText("begonnen"), ABMELDUNG_TEXT.begonnen);
   assert.equal(abweisungText("ausgefallen"), ABMELDUNG_TEXT.ausgefallen);
   assert.equal(abweisungText("nicht_gefunden"), ABMELDUNG_TEXT.nichtGefunden);
-  const t = (vorname: string | null) => ({ spielerId: vorname, vorname, nachname: vorname && "X", abgemeldet: false, ehemalig: vorname === null, kader: [], gewechseltAm: null });
+  const t = (vorname: string | null) => ({ spielerId: vorname, vorname, nachname: vorname && "X", abgemeldet: false, ehemalig: vorname === null, kader: [], gewechseltAm: null, nachgetragen: false });
   assert.deepEqual(nachTeilnehmer([t(null), t("Noah"), t("Ayla")]).map((x) => x.vorname ?? EHEMALIGE_SPIELERIN), ["Ayla", "Noah", EHEMALIGE_SPIELERIN]);
 });
 

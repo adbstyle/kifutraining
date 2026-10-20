@@ -13,7 +13,7 @@ import {
   nimmSpielerAuf,
   schalteAbholung,
 } from "@/lib/kern/spieler";
-import { setzeAbmeldung, terminSpieler } from "@/lib/kern/abmeldungen";
+import { setzeAbmeldung, setzeAnwesenheit, terminSpieler } from "@/lib/kern/abmeldungen";
 import {
   ABHOL_PFAD,
   ABHOLUNG_TEXT,
@@ -25,6 +25,7 @@ import {
   LINK_TEXT,
   NAME_MAX,
   SPIELER_MAX,
+  teilnahmeStatus,
   type Teilnehmer,
 } from "@/lib/spieler";
 import { kennung } from "@/lib/mcp/bausteine";
@@ -193,10 +194,18 @@ export const spielerEntfernen = werkzeug({
 
 /** Was jede Beschreibung eines Abmelde-Werkzeugs über das Modell sagt. */
 const ABMELDE_MODELL =
-  "Jede Spieler:in der Spielerliste ist für jeden Termin angemeldet, bis sie abgemeldet wird; einen dritten Zustand gibt " +
+  "Jede Spieler:in der Spielerliste ist für jeden Termin angemeldet, bis sie abgemeldet wird; «keine Rückmeldung» gibt " +
   "es nicht. Ab- und anmelden geht bis zum Beginn des Termins (Uhr am Trainingsort, Schweiz), nicht an einem " +
-  "ausgefallenen. Ab Beginn gilt der Stand bei Beginn und ändert sich nicht mehr; wer danach aus der Liste fällt, steht " +
-  `dort als «${EHEMALIGE_SPIELERIN}» ohne Namen. Eine Abmeldung trägt keinen Grund, und KiFu benachrichtigt niemanden.`;
+  "ausgefallenen. Ab Beginn gilt der Stand bei Beginn; dann tragen Mitglieder nach, wer trotz Anmeldung nicht erschienen " +
+  "und wer trotz Abmeldung doch erschienen ist (termin_anwesenheit_setzen), unbefristet. Ohne Nachtrag gilt der Stand " +
+  "bei Beginn als Anwesenheit - ob jemand geprüft hat, hält KiFu nicht fest. Wer aus der Liste fällt, steht an " +
+  `begonnenen Terminen als «${EHEMALIGE_SPIELERIN}» ohne Namen, samt Nachtrag. Eine Abmeldung und ein Nachtrag tragen ` +
+  "keinen Grund, und KiFu benachrichtigt niemanden.";
+
+/** Was die KI je Spieler:in zur Anwesenheit erhält (#475 AK 13). */
+const ANWESENHEIT_BESCHREIBUNG =
+  "Nachtrag ab Beginn: «nicht_erschienen» (war angemeldet, kam nicht) oder «doch_erschienen» (war abgemeldet, kam " +
+  "doch); null ohne Nachtrag - dann gilt der Stand bei Beginn. An einem ausgefallenen Termin immer null.";
 
 export const terminSpielerAbrufen = werkzeug({
   name: "termin_spieler_abrufen",
@@ -204,7 +213,8 @@ export const terminSpielerAbrufen = werkzeug({
   beschreibung:
     "Nennt für einen Termin, welche Spieler:innen angemeldet und welche abgemeldet sind und seit wann, dazu die Zahl der " +
     "angemeldeten. Trägt der Termin Kader, stehen nur die Spieler:innen da, für die er gilt, je mit den Kadern, über die er " +
-    "für sie gilt. «begonnen: true» heisst, der Stand ist der bei Beginn und lässt sich nicht mehr ändern. " +
+    "für sie gilt. «begonnen: true» heisst, der Stand ist der bei Beginn; dazu kommen die Nachträge, wer nicht oder doch " +
+    "erschienen ist, und «anwesend». " +
     `Ohne Spielerliste ist die Liste leer. ${ABMELDE_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: z.object({ termin_id: TerminId }),
@@ -217,6 +227,11 @@ export const terminSpielerAbrufen = werkzeug({
     begonnen: z.boolean(),
     angemeldet: z.number().int(),
     gesamt: z.number().int(),
+    anwesend: z
+      .number()
+      .int()
+      .nullable()
+      .describe("Ab Beginn, wer da war: die Angemeldeten ohne die nicht Erschienenen, dazu die doch Erschienenen. Vor Beginn und an einem ausgefallenen Termin null."),
     kader: z
       .array(z.object({ id: z.string().nullable(), name: z.string().nullable() }))
       .describe("Für welche Kader der Termin gilt; leer heisst für alle. id null: ein ehemaliger Kader eines begonnenen Termins."),
@@ -226,9 +241,10 @@ export const terminSpielerAbrufen = werkzeug({
         id: z.string().nullable().describe("Kennung der Spieler:in; null bei einer ehemaligen."),
         vorname: z.string().nullable(),
         nachname: z.string().nullable(),
-        abgemeldet: z.boolean(),
+        abgemeldet: z.boolean().describe("Der Stand vor Beginn bzw. bei Beginn; ein Nachtrag ändert ihn nicht."),
         ehemalig: z.boolean(),
         kader: z.array(z.string()).describe("Die Kader, über die der Termin für sie gilt; leer bei einem Termin für alle."),
+        anwesenheit: z.enum(["nicht_erschienen", "doch_erschienen"]).nullable().describe(ANWESENHEIT_BESCHREIBUNG),
         zuletzt_gewechselt: z
           .string()
           .nullable()
@@ -250,6 +266,7 @@ export const terminSpielerAbrufen = werkzeug({
       begonnen: w.begonnen,
       angemeldet: w.angemeldet,
       gesamt: w.gesamt,
+      anwesend: w.anwesend,
       kader: w.kader,
       nicht_betroffen: w.uebrige,
       spieler: w.spieler.map(teilnehmerAusgabe),
@@ -266,8 +283,14 @@ export function teilnehmerAusgabe(s: Teilnehmer) {
     abgemeldet: s.abgemeldet,
     ehemalig: s.ehemalig,
     kader: s.kader,
+    anwesenheit: anwesenheitAusgabe(s),
     zuletzt_gewechselt: s.gewechseltAm && jetztAmTrainingsort(new Date(s.gewechseltAm)),
   };
+}
+
+function anwesenheitAusgabe(s: Teilnehmer): "nicht_erschienen" | "doch_erschienen" | null {
+  const status = teilnahmeStatus(s);
+  return status === "nicht_erschienen" || status === "doch_erschienen" ? status : null;
 }
 
 // ── termin_abmeldung_setzen (#435) ──────────────────────────────────────────
@@ -306,6 +329,51 @@ export const terminAbmeldungSetzen = werkzeug({
         termin_id: w.terminId,
         abgemeldet: w.abgemeldet,
         angemeldet: w.stand?.angemeldet ?? null,
+        gesamt: w.stand?.gesamt ?? null,
+      }),
+    ),
+});
+
+// ── termin_anwesenheit_setzen (#475) ────────────────────────────────────────
+
+export const terminAnwesenheitSetzen = werkzeug({
+  name: "termin_anwesenheit_setzen",
+  titel: "Nachtragen, wer da war",
+  beschreibung:
+    "Trägt an einem begonnenen Termin nach, ob eine Spieler:in da war («da»). Gegen den Stand bei Beginn ist es ein " +
+    "Nachtrag: «da: false» bei einer Angemeldeten heisst nicht erschienen, «da: true» bei einer Abgemeldeten doch " +
+    "erschienen. Gleich dem Stand bei Beginn nimmt es den Nachtrag zurück. Nur für Spieler:innen im Stand bei Beginn, " +
+    "nicht vor Beginn und nicht an einem ausgefallenen Termin. «termin_datum» und «termin_beginn» sind Datum und Beginn, " +
+    "wie du den Termin zuletzt gelesen hast: Wurde er inzwischen verlegt, weist KiFu mit dem neuen Stand ab (Fehlerart " +
+    `«konflikt»). ${ABMELDE_MODELL} ${TERMIN_KENNUNG_FEHLER} ${SPIELER_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({
+    termin_id: TerminId,
+    spieler_id: SpielerId,
+    da: z.boolean().describe("War die Spieler:in da?"),
+    termin_datum: z.string().describe("Datum des Termins, wie zuletzt gelesen, als JJJJ-MM-TT."),
+    termin_beginn: z.string().describe("Beginn des Termins, wie zuletzt gelesen, als HH:MM."),
+  }),
+  ausgabe: z.object({
+    termin_id: z.string(),
+    da: z.boolean(),
+    anwesenheit: z.enum(["nicht_erschienen", "doch_erschienen"]).nullable().describe(ANWESENHEIT_BESCHREIBUNG),
+    anwesend: z.number().int().nullable().describe("Wie viele jetzt als da gelten."),
+    gesamt: z.number().int().nullable(),
+  }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(
+      await setzeAnwesenheit(zugang.supabase, zugang.userId, {
+        terminId: e.termin_id,
+        spielerId: e.spieler_id,
+        da: e.da,
+        gesehen: { datum: e.termin_datum, beginn: e.termin_beginn },
+      }),
+      (w) => ({
+        termin_id: w.terminId,
+        da: w.da,
+        anwesenheit: w.nachgetragen ? (w.da ? ("doch_erschienen" as const) : ("nicht_erschienen" as const)) : null,
+        anwesend: w.stand?.anwesend ?? null,
         gesamt: w.stand?.gesamt ?? null,
       }),
     ),
