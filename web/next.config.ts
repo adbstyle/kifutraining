@@ -45,7 +45,8 @@ const nextConfig: NextConfig = {
   // Grösse). Jede landete als 404 in der Catch-all-Seite und kostete einen
   // Funktionsaufruf samt App-Layout. Das Icon steht als app/apple-icon.png
   // (Next verlinkt es selbst); die geratenen Adressen zeigen auf dieselbe
-  // statische Datei.
+  // statische Datei. Es ist app/icon.svg ohne gerundete Ecken (iOS rundet
+  // selbst), 180×180 und deckend gerendert — ändert sich icon.svg, neu erzeugen.
   async rewrites() {
     return [{ source: "/:datei(apple-touch-icon.*\\.png)", destination: "/apple-icon.png" }];
   },
