@@ -136,6 +136,10 @@ export type Spielstand = {
   /** Nur an einem Spiel (#463): die Abgemeldeten und die ohne Meldung. */
   abgemeldet?: number;
   ohne_meldung?: number;
+  /** Nur an einem Spiel (#464): die nicht Aufgebotenen — sie zählen nur so,
+   *  nicht nach ihrer Meldung —, und alle Meldungen samt ihrer. */
+  nicht_aufgeboten?: number;
+  meldungen?: number;
 } | null;
 
 /** Woher die Spielerzahl eines Termins kommt (#434 AK 8, 12; #435 AK 6).
@@ -392,7 +396,7 @@ export const ABHOLUNG_TEXT = {
   /** AK 7: was KiFu speichert, wer es sieht, wann es verschwindet. */
   speichertTitel: "Was KiFu speichert",
   speichert:
-    "Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen und An- und Abmeldungen zu Spielen. Das sehen die Trainer:innen des Teams, KI-Assistenten, die sie mit KiFu verbunden haben, und wer den Link der Spieler:in hat. Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen und ihre KI-Assistenten. Nimmt das Team eine Spieler:in aus der Liste, verschwinden ihre Angaben überall.",
+    "Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein Spiel nicht aufgeboten ist. Das sehen die Trainer:innen des Teams, KI-Assistenten, die sie mit KiFu verbunden haben, und wer den Link der Spieler:in hat. Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen und ihre KI-Assistenten. Nimmt das Team eine Spieler:in aus der Liste, verschwinden ihre Angaben überall.",
   /** AK 13, 14: immer derselbe Satz. */
   passtNicht: "Dazu finden wir keinen Link. Prüf die Schreibweise oder frag beim Team nach.",
   /** AK 16. */

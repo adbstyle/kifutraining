@@ -87,31 +87,45 @@ export function verfallSpieleAusFehler(message: string): number {
   return m ? Number(m[1]) : 0;
 }
 
+/** Wie viele der verfallenden Kennzeichnungen als nicht aufgeboten sind
+ *  (#464 AK 10): die dritte Zahl hinter dem Marker, sonst 0. */
+export function verfallKennzeichnungenAusFehler(message: string): number {
+  const m = message.match(new RegExp(`${VERFALL_MARKER} \\d+ \\d+ (\\d+)`));
+  return m ? Number(m[1]) : 0;
+}
+
 /** Was eine Änderung an Kadern mit den Abmeldungen tut — vor dem Speichern.
  *  `spiele`: davon Meldungen zu Spielen (#463 AK 14); sie sind danach ohne
- *  Meldung, wenn das Spiel wieder für sie gilt. */
-export function kaderVerfallText(n: number, spiele = 0): string {
-  const ab = n - spiele;
-  if (spiele === 0)
+ *  Meldung, wenn das Spiel wieder für sie gilt. `kennzeichnungen`: davon
+ *  Kennzeichnungen als nicht aufgeboten (#464 AK 10). */
+export function kaderVerfallText(n: number, spiele = 0, kennzeichnungen = 0): string {
+  const ab = n - spiele - kennzeichnungen;
+  if (spiele === 0 && kennzeichnungen === 0)
     return ab === 1
       ? "Damit verfällt 1 Abmeldung: Der Termin gilt für diese Spieler:in nicht mehr. Gilt er später wieder für sie, ist sie angemeldet."
       : `Damit verfallen ${ab} Abmeldungen: Die Termine gelten für diese Spieler:innen nicht mehr. Gilt ein Termin später wieder für sie, sind sie dort angemeldet.`;
-  const meldungen = spiele === 1 ? "1 Meldung zu einem Spiel" : `${spiele} Meldungen zu Spielen`;
-  const abmeldungen = ab === 0 ? "" : ab === 1 ? "1 Abmeldung zu einem Training und " : `${ab} Abmeldungen zu Trainings und `;
+  const teile = [
+    ...(ab > 0 ? [ab === 1 ? "1 Abmeldung zu einem Training" : `${ab} Abmeldungen zu Trainings`] : []),
+    ...(spiele > 0 ? [spiele === 1 ? "1 Meldung zu einem Spiel" : `${spiele} Meldungen zu Spielen`] : []),
+    ...(kennzeichnungen > 0
+      ? [kennzeichnungen === 1 ? "1 Kennzeichnung als nicht aufgeboten" : `${kennzeichnungen} Kennzeichnungen als nicht aufgeboten`]
+      : []),
+  ];
+  const liste = teile.length > 1 ? `${teile.slice(0, -1).join(", ")} und ${teile[teile.length - 1]}` : teile[0];
   return (
-    `Damit ${n === 1 ? "verfällt" : "verfallen"} ${abmeldungen}${meldungen}: Die Termine gelten für diese Spieler:innen nicht mehr. ` +
+    `Damit ${n === 1 ? "verfällt" : "verfallen"} ${liste}: Die Termine gelten für diese Spieler:innen nicht mehr. ` +
     "Gilt ein Training später wieder für sie, sind sie dort angemeldet, an einem Spiel ohne Meldung."
   );
 }
 
 /** Die vorab genannte Zahl stimmt nicht mehr (AK 12): der aktuelle Stand. */
-export function kaderVerfallGeaendert(n: number, spiele = 0): string {
-  return `Inzwischen hat sich etwas geändert. ${kaderVerfallText(n, spiele)}`;
+export function kaderVerfallGeaendert(n: number, spiele = 0, kennzeichnungen = 0): string {
+  return `Inzwischen hat sich etwas geändert. ${kaderVerfallText(n, spiele, kennzeichnungen)}`;
 }
 
 /** Dasselbe für den KI-Weg, mit dem Weg zur Bestätigung (AK 16). */
-export function kaderVerfallBestaetigen(n: number, spiele = 0): string {
-  return `${kaderVerfallText(n, spiele)} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
+export function kaderVerfallBestaetigen(n: number, spiele = 0, kennzeichnungen = 0): string {
+  return `${kaderVerfallText(n, spiele, kennzeichnungen)} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
 }
 
 // ── Termine für Kader (#453) ─────────────────────────────────────────────────

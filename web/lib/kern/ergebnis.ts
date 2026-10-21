@@ -117,6 +117,9 @@ export type KernFehler = {
   /** Nur bei Kader-Änderungen (#463 AK 14): wie viele der verfallenden
    *  Meldungen zu Spielen gehören. */
   verfallendSpiele?: number;
+  /** Davon Kennzeichnungen als nicht aufgeboten an Spielen (#464 AK 10, 13) —
+   *  bei Kader-Änderungen, beim Verlegen und Entfernen eines Spiels. */
+  kennzeichnungen?: number;
   /** Zusatz nur für den Assistenten (die Oberfläche zeigt ihn nie), etwa
    *  «Es ist keine Kopie entstanden.» */
   hinweis?: string;

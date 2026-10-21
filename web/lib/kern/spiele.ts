@@ -39,6 +39,10 @@ export type SpielTeilnehmer = {
   kader: string[];
   /** Der letzte Wechsel ihrer Meldung (ISO); `null` ohne Meldung (AK 25). */
   gewechseltAm: string | null;
+  /** Als nicht aufgeboten gekennzeichnet (#464); ihre Meldung steht darunter
+   *  weiter, zählt aber nicht. `aufgebotVerfallen`: mit einer Verlegung verfallen. */
+  nichtAufgeboten: boolean;
+  aufgebotVerfallen: boolean;
 };
 
 export type SpielSpieler = {
@@ -50,9 +54,11 @@ export type SpielSpieler = {
   ausgefallen: boolean;
   /** Ab Anpfiff gilt der Stand beim Anpfiff (AK 20). */
   begonnen: boolean;
+  /** Ohne die nicht Aufgebotenen (#464 AK 7). */
   angemeldet: number;
   abgemeldet: number;
   ohneMeldung: number;
+  nichtAufgeboten: number;
   gesamt: number;
   /** Mindest- und Höchstzahl (#459). */
   richtwertMin: number | null;
@@ -79,6 +85,8 @@ type Zeile = {
   ehemalig: boolean;
   kader: string[] | null;
   gewechselt_am: string | null;
+  nicht_aufgeboten: boolean;
+  aufgebot_verfallen: boolean;
 };
 
 /** Nach Name, ehemalige zuletzt. */
@@ -128,11 +136,14 @@ export async function spielSpieler(
           ehemalig: r.ehemalig,
           kader: r.kader ?? [],
           gewechseltAm: r.gewechselt_am,
+          nichtAufgeboten: r.nicht_aufgeboten,
+          aufgebotVerfallen: r.aufgebot_verfallen && !begonnen,
         })),
       );
   const vorlauf = termin.data?.meldefrist_vorlauf_min ?? null;
   const frist = vorlauf === null ? null : meldefristZeitpunkt(t.datum, t.beginn, vorlauf);
-  const zaehle = (m: Meldung) => spieler.filter((s) => s.meldung === m).length;
+  // Eine nicht aufgebotene zählt nur als solche (#464 AK 7).
+  const zaehle = (m: Meldung) => spieler.filter((s) => !s.nichtAufgeboten && s.meldung === m).length;
   return ok({
     terminId: t.id,
     teamId: t.team_id,
@@ -144,6 +155,7 @@ export async function spielSpieler(
     angemeldet: zaehle("angemeldet"),
     abgemeldet: zaehle("abgemeldet"),
     ohneMeldung: zaehle(null),
+    nichtAufgeboten: spieler.filter((s) => s.nichtAufgeboten).length,
     gesamt: spieler.length,
     richtwertMin: t.richtwert_min,
     richtwertMax: t.richtwert_max,
@@ -208,4 +220,44 @@ export async function setzeMeldung(
   if (r.status === "abgewiesen") return meldungAbweisung(r.grund, r.stand);
   if (r.status !== "ok") return meldungAbweisung("nicht_gefunden");
   return ok({ terminId: e.terminId, angemeldet: r.angemeldet, stand: r.stand });
+}
+
+// ── Nicht aufbieten (#464) ──────────────────────────────────────────────────
+
+export type AufgebotSetzen = {
+  terminId: string;
+  spielerId: string;
+  /** `true`: als nicht aufgeboten kennzeichnen, `false`: aufheben. */
+  nichtAufgeboten: boolean;
+  /** Datum und Beginn, wie der Aufrufer das Spiel sah (AK 5). */
+  gesehen?: { datum: string; beginn: string };
+};
+
+type AufgebotAntwort =
+  | { status: "ok"; nicht_aufgeboten: boolean; stand: { angemeldet: number; gesamt: number; nicht_aufgeboten: number } | null }
+  | { status: "abgewiesen"; grund: MeldeGrund; stand?: MeldeStand };
+
+/** Eine Spieler:in für ein Spiel als nicht aufgeboten kennzeichnen oder das
+ *  aufheben — nur Mitglieder, zu denselben Bedingungen wie ihre Meldung, mit
+ *  denselben Abweisungen (AK 1–3, 5). Die Meldung bleibt (PC 1, 7). */
+export async function setzeAufgebot(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: AufgebotSetzen,
+): Promise<
+  KernErgebnis<{ terminId: string; nichtAufgeboten: boolean; stand: { angemeldet: number; gesamt: number; nicht_aufgeboten: number } | null }>
+> {
+  if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
+  if (!istUuid(e.spielerId)) return meldungAbweisung("nicht_gefunden");
+  const { data, error } = await supabase.rpc("termin_aufgebot_setzen", {
+    p_termin: e.terminId,
+    p_spieler: e.spielerId,
+    p_nicht_aufgeboten: e.nichtAufgeboten,
+    p_gesehen_datum: e.gesehen?.datum ?? null,
+    p_gesehen_beginn: e.gesehen?.beginn ?? null,
+  });
+  if (error) return ausDbFehler(error);
+  const r = data as AufgebotAntwort;
+  if (r.status === "abgewiesen") return meldungAbweisung(r.grund, r.stand);
+  return ok({ terminId: e.terminId, nichtAufgeboten: r.nicht_aufgeboten, stand: r.stand });
 }

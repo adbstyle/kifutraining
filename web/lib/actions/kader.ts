@@ -21,10 +21,17 @@ import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
  * zurück. Stimmt sie inzwischen nicht mehr, kommt die neue (AK 12).
  */
 
-type Fehler = { ok: false; error: string; feld?: string; verfallend?: number; verfallendSpiele?: number };
+type Fehler = { ok: false; error: string; feld?: string; verfallend?: number; verfallendSpiele?: number; kennzeichnungen?: number };
 
-function fehler(r: { meldung: string; feld?: string; verfallend?: number; verfallendSpiele?: number }): Fehler {
-  return { ok: false, error: r.meldung, feld: r.feld, verfallend: r.verfallend, verfallendSpiele: r.verfallendSpiele };
+function fehler(r: { meldung: string; feld?: string; verfallend?: number; verfallendSpiele?: number; kennzeichnungen?: number }): Fehler {
+  return {
+    ok: false,
+    error: r.meldung,
+    feld: r.feld,
+    verfallend: r.verfallend,
+    verfallendSpiele: r.verfallendSpiele,
+    kennzeichnungen: r.kennzeichnungen,
+  };
 }
 
 export async function legeKaderAnAktion(teamId: string, name: string): Promise<{ ok: true; name: string } | Fehler> {

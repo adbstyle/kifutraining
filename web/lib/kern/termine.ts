@@ -408,9 +408,9 @@ export type Verfallend = {
   abmeldungen: number;
   nachtraege: number;
   summe: number;
-  /** Nur an einem Spiel (#463 AK 13, 26): verfallende Meldungen und ob die
-   *  Meldefrist danach schon abgelaufen ist. */
-  spiel?: { meldungen: number; fristAbgelaufen: boolean };
+  /** Nur an einem Spiel (#463 AK 13, 26; #464 AK 10): verfallende Meldungen
+   *  und Kennzeichnungen und ob die Meldefrist danach schon abgelaufen ist. */
+  spiel?: { meldungen: number; kennzeichnungen: number; fristAbgelaufen: boolean };
 };
 
 /** Was verfällt, wenn der Termin auf `datum`/`beginn` verlegt wird —
@@ -438,11 +438,12 @@ export function verfallend(abmeldungen: number, nachtraege: number): Verfallend 
 /** Ein Fehler, der vor dem Verlegen nach der Bestätigung fragt. */
 export function verfallFehler(v: Verfallend): KernFehler {
   if (v.spiel)
-    return fehlschlag("regel", spielBestaetigen(spielVerfallText(v.spiel.meldungen, v.spiel.fristAbgelaufen)), {
+    return fehlschlag("regel", spielBestaetigen(spielVerfallText(v.spiel.meldungen, v.spiel.fristAbgelaufen, v.spiel.kennzeichnungen)), {
       feld: "bestaetigt",
       verfallend: v.summe,
       nachtraege: v.nachtraege,
       fristAbgelaufen: v.spiel.fristAbgelaufen,
+      ...(v.spiel.kennzeichnungen > 0 && { kennzeichnungen: v.spiel.kennzeichnungen }),
     });
   return fehlschlag("regel", verfallBestaetigen(v.abmeldungen, v.nachtraege), {
     feld: "bestaetigt",
@@ -451,22 +452,30 @@ export function verfallFehler(v: Verfallend): KernFehler {
   });
 }
 
-/** Wie viele Meldungen ein Spiel trägt — offen oder beim Anpfiff
- *  festgehalten (ehemalige zählen nicht). Sie verfallen mit einem anderen
- *  Datum (#463 PC 1, 7) und verschwinden mit dem Spiel (AK 27). */
-export async function spielMeldungenZahl(supabase: SupabaseClient, terminId: string): Promise<KernErgebnis<number>> {
-  const [offen, fest] = await Promise.all([
-    supabase.from("spiel_meldungen").select("termin_id", { count: "exact", head: true }).eq("termin_id", terminId).not("zustand", "is", null),
+/** Wie viele Meldungen und Kennzeichnungen als nicht aufgeboten ein Spiel
+ *  trägt — offen oder beim Anpfiff festgehalten (ehemalige zählen nicht).
+ *  Sie verfallen mit einem anderen Datum (#463 PC 1, 7; #464 PC 2) und
+ *  verschwinden mit dem Spiel (#463 AK 27, #464 AK 10). */
+export async function spielMeldungenZahl(
+  supabase: SupabaseClient,
+  terminId: string,
+): Promise<KernErgebnis<{ meldungen: number; kennzeichnungen: number }>> {
+  const offen = () => supabase.from("spiel_meldungen").select("termin_id", { count: "exact", head: true }).eq("termin_id", terminId);
+  const fest = () =>
     supabase
       .from("spiel_teilnahmen")
       .select("termin_id", { count: "exact", head: true })
       .eq("termin_id", terminId)
-      .not("zustand", "is", null)
-      .not("spieler_id", "is", null),
+      .not("spieler_id", "is", null);
+  const zahlen = await Promise.all([
+    offen().not("zustand", "is", null),
+    fest().not("zustand", "is", null),
+    offen().eq("nicht_aufgeboten", true),
+    fest().eq("nicht_aufgeboten", true),
   ]);
-  if (offen.error) return ausDbFehler(offen.error);
-  if (fest.error) return ausDbFehler(fest.error);
-  return ok((offen.count ?? 0) + (fest.count ?? 0));
+  for (const z of zahlen) if (z.error) return ausDbFehler(z.error);
+  const [mo, mf, ko, kf] = zahlen.map((z) => z.count ?? 0);
+  return ok({ meldungen: mo + mf, kennzeichnungen: ko + kf });
 }
 
 /** Warum ein bedingtes Schreiben keine Zeile traf: Der Termin ist weg, oder
@@ -590,13 +599,20 @@ export async function aendereTermin(
   // Ein Spiel (#463 AK 13, 26): Meldungen nur mit dem Datum, dazu die Frist.
   let verfallen = 0;
   if (t.art === "spiel" && (neu.datum !== t.datum || neu.beginn !== t.beginn)) {
-    const zahl = neu.datum !== t.datum ? await spielMeldungenZahl(supabase, t.id) : ok(0);
+    const zahl = neu.datum !== t.datum ? await spielMeldungenZahl(supabase, t.id) : ok({ meldungen: 0, kennzeichnungen: 0 });
     if (!zahl.ok) return zahl;
     const vorlauf = "meldefrist_vorlauf_min" in aenderung ? (aenderung.meldefrist_vorlauf_min ?? null) : t.meldefrist_vorlauf_min;
     const frist = fristWirdAbgelaufen(t, { datum: neu.datum, beginn: neu.beginn ?? "" }, vorlauf, jetztAmTrainingsort());
-    const v: Verfallend = { abmeldungen: 0, nachtraege: 0, summe: zahl.wert, spiel: { meldungen: zahl.wert, fristAbgelaufen: frist } };
+    const { meldungen, kennzeichnungen } = zahl.wert;
+    const v: Verfallend = {
+      abmeldungen: 0,
+      nachtraege: 0,
+      summe: meldungen + kennzeichnungen,
+      spiel: { meldungen, kennzeichnungen, fristAbgelaufen: frist },
+    };
+    // #464 AK 10, 13: auch wenn nur Kennzeichnungen verfallen.
     if ((v.summe > 0 || frist) && e.bestaetigt !== true && e.bestaetigt !== v.summe) return verfallFehler(v);
-    verfallen = zahl.wert;
+    verfallen = meldungen;
   } else if (("datum" in aenderung && neu.datum !== t.datum) || ("beginn" in aenderung && neu.beginn !== t.beginn)) {
     const n = await verfallendeAbmeldungen(supabase, t.id, neu.datum, neu.beginn);
     if (!n.ok) return n;
@@ -643,8 +659,9 @@ export async function entferneTermin(
   e: {
     terminId: string;
     erwartetesTraining?: string | null;
-    /** Ein Spiel mit Meldungen (#463 AK 27): die bestätigte Zahl (Oberfläche)
-     *  oder `true` (KI). Ohne kommt ein Fehler mit `verschwindend`. */
+    /** Ein Spiel mit Meldungen oder Kennzeichnungen (#463 AK 27, #464 AK 10):
+     *  die bestätigte Summe (Oberfläche) oder `true` (KI). Ohne kommt ein
+     *  Fehler mit `verschwindend`. */
     bestaetigt?: boolean | number;
   },
 ): Promise<KernErgebnis<{ teamId: string; training: Verlassen }>> {
@@ -653,8 +670,14 @@ export async function entferneTermin(
   if (art?.art === "spiel") {
     const zahl = await spielMeldungenZahl(supabase, e.terminId);
     if (!zahl.ok) return zahl;
-    if (zahl.wert > 0 && e.bestaetigt !== true && e.bestaetigt !== zahl.wert)
-      return fehlschlag("regel", spielBestaetigen(spielEntfernenText(zahl.wert)), { feld: "bestaetigt", verschwindend: zahl.wert });
+    const { meldungen, kennzeichnungen } = zahl.wert;
+    const summe = meldungen + kennzeichnungen;
+    if (summe > 0 && e.bestaetigt !== true && e.bestaetigt !== summe)
+      return fehlschlag("regel", spielBestaetigen(spielEntfernenText(meldungen, kennzeichnungen)), {
+        feld: "bestaetigt",
+        verschwindend: summe,
+        ...(kennzeichnungen > 0 && { kennzeichnungen }),
+      });
   }
   const { data: vorher } = await supabase.from("training_termine").select("training_id").eq("id", e.terminId).maybeSingle();
   const bilder = await terminTrainingBilder(supabase, [vorher?.training_id]);

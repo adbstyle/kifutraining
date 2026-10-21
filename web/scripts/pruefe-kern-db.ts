@@ -79,7 +79,7 @@ const { IMPORT_TEXT, erwartetVon } = await import("../lib/spieler-import");
 const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, abweisungText, spielerzahlVon, verfallBestaetigen } = await import("../lib/spieler");
 const { SPIEL_MELDUNG, SPIEL_TEXT, MELDUNG_TEXT, TREFFPUNKT_TEXT, meldefristZeitpunkt, spielBestaetigen, spielEntfernenText, spielVerfallText } =
   await import("../lib/spiel");
-const { setzeMeldung, spielSpieler } = await import("../lib/kern/spiele");
+const { setzeMeldung, setzeAufgebot, spielSpieler } = await import("../lib/kern/spiele");
 const { jetztAmTrainingsort } = await import("../lib/zeit");
 const { setzeAbmeldung, setzeAnwesenheit, terminSpieler } = await import("../lib/kern/abmeldungen");
 const { ladeKader, legeKaderAn, benenneKaderUm, entferneKader, aendereZuteilung } = await import("../lib/kern/kader");
@@ -4055,7 +4055,7 @@ try {
       // Ein Training: keine Spielangaben (#459 AK 17).
       art: "training", bezeichnung: null, richtwert_min: null, richtwert_max: null,
       // Spielangaben (#463) bleiben an einem Training leer.
-      meldung: null, meldung_verfallen: false, frist: null, frist_abgelaufen: false, vorher: null, bemerkung: null, treffpunkte: null,
+      meldung: null, meldung_verfallen: false, frist: null, frist_abgelaufen: false, vorher: null, bemerkung: null, treffpunkte: null, nicht_aufgeboten: false, aufgebot_verfallen: false, nicht_aufgeboten_zahl: null,
     });
 
     const abmelden = (token: string, abgemeldet: boolean) =>
@@ -4814,7 +4814,7 @@ try {
     const plan = await standVon(team, t);
     assert.equal(plan.art, "spiel");
     assert.deepEqual(plan.spiel, { bezeichnung: "Meisterschaft gegen FC Bümpliz", richtwertMin: 9, richtwertMax: 12, meldefrist: null, vorher: null, treffpunkte: [] });
-    assert.deepEqual(plan.spielstand, { gesamt: 1, angemeldet: 0, abgemeldet: 0, ohne_meldung: 1, eingefroren: false, anwesend: null }, "#463: zuerst ohne Meldung");
+    assert.deepEqual(plan.spielstand, { gesamt: 1, angemeldet: 0, abgemeldet: 0, ohne_meldung: 1, nicht_aufgeboten: 0, meldungen: 0, eingefroren: false, anwesend: null }, "#463: zuerst ohne Meldung");
 
     // AK 3, 5: Bezeichnung und Richtwert ändern, einzeln entfernen.
     wert(await aendereTermin(a.supabase, a.id, { terminId: t, bezeichnung: "Cup gegen FC Köniz", richtwertMax: null }));
@@ -4914,7 +4914,7 @@ try {
     const lena2 = wert(await spielSpieler(a.supabase, a.id, { terminId: t })).spieler.find((x) => x.vorname === "Lena")!;
     assert.equal(lena2.gewechseltAm, lena.gewechseltAm);
     // Plan: Angemeldete von allen, für die es gilt (AK 6).
-    assert.deepEqual((await standVon(k.team, t)).spielstand, { gesamt: 3, angemeldet: 1, abgemeldet: 1, ohne_meldung: 1, eingefroren: false, anwesend: null });
+    assert.deepEqual((await standVon(k.team, t)).spielstand, { gesamt: 3, angemeldet: 1, abgemeldet: 1, ohne_meldung: 1, nicht_aufgeboten: 0, meldungen: 2, eingefroren: false, anwesend: null });
     // Fremde und Trainings.
     fehler(await setzeMeldung(b.supabase, b.id, { terminId: t, spielerId: k.lena, angemeldet: true }), "nicht_gefunden", MELDUNG_TEXT.nichtGefunden);
     const training = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: k.team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
@@ -5032,6 +5032,8 @@ try {
     const t = wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Gleich", teamId: k.team, datum: heute, beginn: plus(1), ende: plus(60) })).terminId;
     wert(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.lena, angemeldet: true }));
     wert(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.mia, angemeldet: false }));
+    // #464 PC 2: Die Kennzeichnung wird mit festgehalten.
+    wert(await setzeAufgebot(a.supabase, a.id, { terminId: t, spielerId: k.noah, nichtAufgeboten: true }));
     await new Promise((r) => setTimeout(r, 61_000));
     fehler(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.noah, angemeldet: true }), "regel", MELDUNG_TEXT.begonnen);
     // Eine neue Spieler:in hält den Stand vorher fest (spieler_vorher) — sie gehört nicht dazu.
@@ -5040,11 +5042,15 @@ try {
     assert.equal(fest.begonnen, true);
     assert.deepEqual(await meldungen(t), { Lena: "angemeldet", Mia: "abgemeldet", Noah: null }, "AK 20: der Stand beim Anpfiff");
     assert.equal((await standVon(k.team, t)).spielstand?.eingefroren, true);
+    assert.deepEqual([fest.angemeldet, fest.nichtAufgeboten], [1, 1], "#464: festgehalten, zählt nicht");
+    fehler(await setzeAufgebot(a.supabase, a.id, { terminId: t, spielerId: k.noah, nichtAufgeboten: false }), "regel", MELDUNG_TEXT.begonnen);
     // PC 7, 8: am selben Tag auf später — wieder offen mit den bisherigen Meldungen; Zoe neu ohne.
     wert(await aendereTermin(a.supabase, a.id, { terminId: t, beginn: plus(30), ende: plus(90) }));
     assert.deepEqual(await meldungen(t), { Lena: "angemeldet", Mia: "abgemeldet", Noah: null, Zoe: null });
-    // An einem anderen Datum verfallen sie (mit Rückfrage).
-    wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(3), bestaetigt: 2 }));
+    assert.equal(wert(await spielSpieler(a.supabase, a.id, { terminId: t })).nichtAufgeboten, 1, "#464 PC 2: gilt wieder");
+    // An einem anderen Datum verfallen sie (mit Rückfrage), samt Kennzeichnung.
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(3), bestaetigt: 3 }));
+    assert.equal(wert(await spielSpieler(a.supabase, a.id, { terminId: t })).nichtAufgeboten, 0);
     assert.deepEqual(await meldungen(t), { Lena: null, Mia: null, Noah: null, Zoe: null });
   });
 
@@ -5141,6 +5147,108 @@ try {
     wert(await entferneTermin(a.supabase, a.id, { terminId: t }));
     const rest = await a.supabase.from("spiel_treffpunkte").select("anreise").eq("termin_id", t);
     assert.deepEqual(rest.data, []);
+  });
+
+  // ── Nicht aufbieten (#464) ───────────────────────────────────────────────
+  await pruefe("Nicht aufbieten: kennzeichnen, Meldung bleibt und ruht, zählt nicht, nur Mitglieder (#464 AK 1–9; PC 1, 7)", async () => {
+    const k = await spielTeam("Kern-DB-Aufgebot");
+    const t = wert(await k.spiel(6)).terminId;
+    const gesehen = { datum: tagCh(6), beginn: "10:00" };
+    wert(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.lena, angemeldet: true }));
+    wert(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.mia, angemeldet: false }));
+    const vorher = wert(await spielSpieler(a.supabase, a.id, { terminId: t })).spieler.find((x) => x.vorname === "Lena")!.gewechseltAm;
+    // AK 1: gleich welche Meldung — angemeldet, abgemeldet, ohne.
+    for (const id of [k.lena, k.mia, k.noah]) wert(await setzeAufgebot(a.supabase, a.id, { terminId: t, spielerId: id, nichtAufgeboten: true, gesehen }));
+    const d = wert(await spielSpieler(a.supabase, a.id, { terminId: t }));
+    // AK 6, 7: Meldung darunter erkennbar, nichts zählt als angemeldet.
+    assert.deepEqual(
+      d.spieler.map((x) => [x.vorname, x.meldung, x.nichtAufgeboten]),
+      [["Lena", "angemeldet", true], ["Mia", "abgemeldet", true], ["Noah", null, true]],
+    );
+    assert.deepEqual([d.angemeldet, d.abgemeldet, d.ohneMeldung, d.nichtAufgeboten, d.gesamt], [0, 0, 0, 3, 3]);
+    assert.deepEqual((await standVon(k.team, t)).spielstand, {
+      gesamt: 3, angemeldet: 0, abgemeldet: 0, ohne_meldung: 0, nicht_aufgeboten: 3, meldungen: 2, eingefroren: false, anwesend: null,
+    });
+    // AK 4: keine Meldung, weder von Mitgliedern noch über den Link.
+    fehler(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.noah, angemeldet: true }), "regel", MELDUNG_TEXT.nichtAufgeboten);
+    const link = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: k.lena })).token;
+    const ueberLink = await feldAnon.rpc("spieler_link_melden", { p_token: link, p_termin: t, p_angemeldet: false, p_gesehen_datum: tagCh(6), p_gesehen_beginn: "10:00" });
+    assert.deepEqual([ueberLink.data.status, ueberLink.data.grund], ["abgewiesen", "nicht_aufgeboten"]);
+    // AK 8, 9: der Link nennt die Kennzeichnung und die Zahl.
+    const imLink = async () => (await feldAnon.rpc("spieler_link_ansicht", { p_token: link })).data.termine.find((x: { id: string }) => x.id === t);
+    const l1 = await imLink();
+    assert.deepEqual([l1.nicht_aufgeboten, l1.nicht_aufgeboten_zahl, l1.angemeldet, l1.meldung], [true, 3, 0, "angemeldet"]);
+    // AK 2, PC 1, 7: aufheben — die Meldung gilt wieder, ihr Zeitpunkt unverändert.
+    wert(await setzeAufgebot(a.supabase, a.id, { terminId: t, spielerId: k.lena, nichtAufgeboten: false, gesehen }));
+    wert(await setzeAufgebot(a.supabase, a.id, { terminId: t, spielerId: k.noah, nichtAufgeboten: false }));
+    const d2 = wert(await spielSpieler(a.supabase, a.id, { terminId: t }));
+    const lena = d2.spieler.find((x) => x.vorname === "Lena")!;
+    assert.deepEqual([lena.meldung, lena.nichtAufgeboten, lena.gewechseltAm], ["angemeldet", false, vorher]);
+    assert.deepEqual([d2.angemeldet, d2.ohneMeldung, d2.nichtAufgeboten], [1, 1, 1]);
+    assert.equal((await meldungen(t)).Noah, null, "ohne Meldung, die Zeile ist weg");
+    assert.equal((await imLink()).nicht_aufgeboten, false);
+    // AK 3, 5: nur Mitglieder; dieselben Abweisungen wie die Meldung.
+    fehler(await setzeAufgebot(b.supabase, b.id, { terminId: t, spielerId: k.lena, nichtAufgeboten: true }), "nicht_gefunden", MELDUNG_TEXT.nichtGefunden);
+    assert.ok((await feldAnon.rpc("termin_aufgebot_setzen", { p_termin: t, p_spieler: k.lena, p_nicht_aufgeboten: true })).error);
+    const f = fehler(await setzeAufgebot(a.supabase, a.id, { terminId: t, spielerId: k.lena, nichtAufgeboten: true, gesehen: { datum: tagCh(5), beginn: "10:00" } }), "konflikt");
+    assert.ok(f.meldung?.startsWith("Das Spiel wurde inzwischen verlegt"));
+    const training = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: k.team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    fehler(await setzeAufgebot(a.supabase, a.id, { terminId: training, spielerId: k.lena, nichtAufgeboten: true }), "nicht_gefunden"); // OoS 1: nicht an Trainings
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t }));
+    fehler(await setzeAufgebot(a.supabase, a.id, { terminId: t, spielerId: k.lena, nichtAufgeboten: true }), "regel", MELDUNG_TEXT.ausgefallen);
+    // PC 2: Sie ruht beim Ausfall und gilt danach wieder.
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
+    assert.equal(wert(await spielSpieler(a.supabase, a.id, { terminId: t })).spieler.find((x) => x.vorname === "Mia")!.nichtAufgeboten, true);
+  });
+
+  await pruefe("Nicht aufbieten: verfällt mit den Meldungen, Rückfrage zählt sie, auch allein; Kader, Entfernen, Anpfiff (#464 AK 10, 13; PC 2–4)", async () => {
+    const k = await spielTeam("Kern-DB-Aufgebot-Verfall");
+    const t = wert(await k.spiel(6)).terminId;
+    // AK 10: nur eine Kennzeichnung — trotzdem eine Rückfrage.
+    wert(await setzeAufgebot(a.supabase, a.id, { terminId: t, spielerId: k.noah, nichtAufgeboten: true }));
+    const r = fehler(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(7) }), "regel", spielBestaetigen(spielVerfallText(0, false, 1))) as {
+      verfallend?: number;
+      kennzeichnungen?: number;
+    };
+    assert.deepEqual([r.verfallend, r.kennzeichnungen], [1, 1]);
+    wert(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.lena, angemeldet: true }));
+    fehler(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(7), bestaetigt: 1 }), "regel");
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(7), bestaetigt: 2 }));
+    // PC 2, 3: verfallen — mit eigenem Hinweis am Link.
+    const d = wert(await spielSpieler(a.supabase, a.id, { terminId: t }));
+    const noah = d.spieler.find((x) => x.vorname === "Noah")!;
+    assert.deepEqual([noah.nichtAufgeboten, noah.aufgebotVerfallen, d.nichtAufgeboten], [false, true, 0]);
+    const link = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: k.noah })).token;
+    const imLink = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link })).data.termine.find((x: { id: string }) => x.id === t);
+    assert.deepEqual([imLink.nicht_aufgeboten, imLink.aufgebot_verfallen], [false, true]);
+    // Neu gekennzeichnet: der Hinweis geht.
+    wert(await setzeAufgebot(a.supabase, a.id, { terminId: t, spielerId: k.noah, nichtAufgeboten: true }));
+    assert.equal(wert(await spielSpieler(a.supabase, a.id, { terminId: t })).spieler.find((x) => x.vorname === "Noah")!.aufgebotVerfallen, false);
+
+    // AK 10, PC 2: Kader-Wegfall nennt die Kennzeichnung eigens.
+    const s1 = await neuerKader(k.team, "S1");
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.lena, k.mia], dazu: [s1] }));
+    const kt = wert(await k.spiel(4, { kaderIds: [s1] })).terminId;
+    wert(await setzeMeldung(a.supabase, a.id, { terminId: kt, spielerId: k.mia, angemeldet: true }));
+    wert(await setzeAufgebot(a.supabase, a.id, { terminId: kt, spielerId: k.mia, nichtAufgeboten: true }));
+    const kf = fehler(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.mia], weg: [s1] }), "regel") as {
+      verfallend?: number;
+      verfallendSpiele?: number;
+      kennzeichnungen?: number;
+      meldung?: string;
+    };
+    assert.deepEqual([kf.verfallend, kf.verfallendSpiele, kf.kennzeichnungen], [2, 1, 1]);
+    assert.ok(kf.meldung?.includes("1 Meldung zu einem Spiel und 1 Kennzeichnung als nicht aufgeboten"), kf.meldung);
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.mia], weg: [s1], bestaetigt: 2 }));
+
+    // AK 10, 13: Entfernen zählt Meldungen und Kennzeichnungen (Lenas verfiel mit der Verlegung).
+    wert(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.lena, angemeldet: true }));
+    const e =fehler(await entferneTermin(a.supabase, a.id, { terminId: t }), "regel", spielBestaetigen(spielEntfernenText(1, 1))) as {
+      verschwindend?: number;
+      kennzeichnungen?: number;
+    };
+    assert.deepEqual([e.verschwindend, e.kennzeichnungen], [2, 1]);
+    wert(await entferneTermin(a.supabase, a.id, { terminId: t, bestaetigt: true }));
   });
 
 } finally {

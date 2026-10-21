@@ -33,6 +33,12 @@ export type LinkTermin = {
    *  eines Trainings sieht die Spielervertretung nicht (PC 4). */
   bemerkung: string | null;
   treffpunkte: Treffpunkt[] | null;
+  /** Nur an einem Spiel (#464 AK 8, 9; PC 3): ob sie nicht aufgeboten ist,
+   *  ob die Kennzeichnung mit einer Verlegung verfallen ist, und wie viele
+   *  nicht aufgeboten sind (`null` an einem ausgefallenen und bei Trainings). */
+  nicht_aufgeboten: boolean;
+  aufgebot_verfallen: boolean;
+  nicht_aufgeboten_zahl: number | null;
   /** Training oder Spiel (#459 AK 17): ein Spiel mit Bezeichnung und Richtwert. */
   art: "training" | "spiel";
   bezeichnung: string | null;

@@ -184,11 +184,16 @@ export function TerminBereich({
   const [bearbeiten, setBearbeiten] = useState<TerminZeile | null>(null);
   const [zuordnen, setZuordnen] = useState<TerminZeile | null>(null);
   const [entfernen, setEntfernen] = useState<TerminZeile | null>(null);
-  // Ein Spiel (#463 AK 27): wie viele Meldungen mit ihm verschwinden — aus
-  // dem Plan, oder der aktuelle Stand, wenn er sich inzwischen geändert hat.
-  const [verschwindend, setVerschwindend] = useState<number | null>(null);
-  const meldungenVon = (t: TerminZeile) => (t.spiel ? (t.spielstand?.angemeldet ?? 0) + (t.spielstand?.abgemeldet ?? 0) : 0);
-  const entfernenZahl = entfernen ? (verschwindend ?? meldungenVon(entfernen)) : 0;
+  // Ein Spiel (#463 AK 27, #464 AK 10): wie viele Meldungen und
+  // Kennzeichnungen mit ihm verschwinden — aus dem Plan, oder der aktuelle
+  // Stand, wenn er sich inzwischen geändert hat.
+  const [verschwindend, setVerschwindend] = useState<{ meldungen: number; kennzeichnungen: number } | null>(null);
+  const meldungenVon = (t: TerminZeile) => ({
+    meldungen: t.spiel ? (t.spielstand?.meldungen ?? 0) : 0,
+    kennzeichnungen: t.spiel ? (t.spielstand?.nicht_aufgeboten ?? 0) : 0,
+  });
+  const entfernenStand = entfernen ? (verschwindend ?? meldungenVon(entfernen)) : { meldungen: 0, kennzeichnungen: 0 };
+  const entfernenZahl = entfernenStand.meldungen + entfernenStand.kennzeichnungen;
   const [loesen, setLoesen] = useState<TerminZeile | null>(null);
   const [ausfall, setAusfall] = useState<TerminZeile | null>(null);
   const [reichweite, setReichweite] = useState<ReichweiteFrage | null>(null);
@@ -729,7 +734,8 @@ export function TerminBereich({
                   // Inzwischen andere Meldungen: die Rückfrage mit dem aktuellen Stand.
                   (r) => {
                     if (r.ok || r.verschwindend === undefined) return false;
-                    setVerschwindend(r.verschwindend);
+                    const k = r.kennzeichnungen ?? 0;
+                    setVerschwindend({ meldungen: r.verschwindend - k, kennzeichnungen: k });
                     return true;
                   },
                 )
@@ -742,7 +748,7 @@ export function TerminBereich({
       >
         <p>
           {entfernen?.spiel
-            ? `Das Spiel «${entfernen.spiel.bezeichnung}» am ${datumKurz(entfernen.datum)} verschwindet aus dem Trainingsplan. ${spielEntfernenText(entfernenZahl)}`
+            ? `Das Spiel «${entfernen.spiel.bezeichnung}» am ${datumKurz(entfernen.datum)} verschwindet aus dem Trainingsplan. ${spielEntfernenText(entfernenStand.meldungen, entfernenStand.kennzeichnungen)}`
             : `Der Termin am ${entfernen ? datumKurz(entfernen.datum) : ""} verschwindet aus dem Trainingsplan.`}
           {entfernen?.training && (
             <> <strong className="text-on-surface">{entfernen.training.name}</strong> {trainingOhneTermin(entfernen.training.terminTraining)}.</>

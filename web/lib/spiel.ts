@@ -251,7 +251,27 @@ export const MELDUNG_TEXT = {
   giltNicht: "Dieses Spiel gilt nicht mehr für diese Spieler:in. Sieh dir die Termine noch einmal an.",
   fristAbgelaufen: "Die Meldefrist ist abgelaufen. Für eine Änderung wende dich an das Team.",
   nichtGefunden: "Dieses Spiel oder diese Spieler:in gibt es nicht mehr. Sieh dir den Trainingsplan noch einmal an.",
+  /** #464 AK 4: an Oberfläche, Link und KI wortgleich. */
+  nichtAufgeboten:
+    "Die Spieler:in ist für dieses Spiel nicht aufgeboten. Melden lässt sie sich erst wieder, wenn das Team das aufhebt.",
 } as const;
+
+// ── Nicht aufbieten (#464) ──────────────────────────────────────────────────
+
+export const AUFGEBOT_TEXT = {
+  nichtAufgeboten: "Nicht aufgeboten",
+  nichtAufbieten: "Nicht aufbieten",
+  aufbieten: "Aufbieten",
+  /** Am privaten Link (AK 9). */
+  eltern: (name: string) => `${name} ist für dieses Spiel nicht aufgeboten. Fragen dazu ans Team.`,
+  /** Mit einer Verlegung verfallen (PC 3). */
+  verfallen: "Die Kennzeichnung als nicht aufgeboten gilt nicht mehr.",
+} as const;
+
+/** «1 Kennzeichnung als nicht aufgeboten», «2 Kennzeichnungen …». */
+function kennzeichnungenText(k: number): string {
+  return k === 1 ? "1 Kennzeichnung als nicht aufgeboten" : `${k} Kennzeichnungen als nicht aufgeboten`;
+}
 
 /** Die Meldung als kurzer Text. */
 export function meldungText(m: Meldung): string {
@@ -268,7 +288,14 @@ export function zeitpunktKurz(iso: string): string {
 }
 
 /** Warum eine Meldung abgewiesen wurde, mit dem aktuellen Stand (AK 17). */
-export type MeldeGrund = "nicht_gefunden" | "verlegt" | "ausgefallen" | "begonnen" | "gilt_nicht" | "frist_abgelaufen";
+export type MeldeGrund =
+  | "nicht_gefunden"
+  | "verlegt"
+  | "ausgefallen"
+  | "begonnen"
+  | "gilt_nicht"
+  | "frist_abgelaufen"
+  | "nicht_aufgeboten";
 export type MeldeStand = { datum: string; beginn: string; ende: string; ausgefallen: boolean; frist?: string | null };
 
 export function meldungAbweisungText(grund: MeldeGrund, stand?: MeldeStand): string {
@@ -278,24 +305,32 @@ export function meldungAbweisungText(grund: MeldeGrund, stand?: MeldeStand): str
   if (grund === "begonnen") return MELDUNG_TEXT.begonnen;
   if (grund === "gilt_nicht") return MELDUNG_TEXT.giltNicht;
   if (grund === "frist_abgelaufen") return MELDUNG_TEXT.fristAbgelaufen;
+  if (grund === "nicht_aufgeboten") return MELDUNG_TEXT.nichtAufgeboten;
   return MELDUNG_TEXT.nichtGefunden;
 }
 
 // ── Verlegen und Entfernen (#463 AK 13, 23, 26, 27) ─────────────────────────
 
-/** Was eine Verlegung eines Spiels mit seinen Meldungen und seiner Frist tut. */
-export function spielVerfallText(meldungen: number, fristAbgelaufen: boolean): string {
+/** Was eine Verlegung eines Spiels mit seinen Meldungen, Kennzeichnungen
+ *  als nicht aufgeboten (#464 AK 10) und seiner Frist tut. */
+export function spielVerfallText(meldungen: number, fristAbgelaufen: boolean, kennzeichnungen = 0): string {
   const teile: string[] = [];
   if (meldungen === 1) teile.push("Damit verfällt 1 Meldung: Die Spieler:in ist wieder ohne Meldung.");
   else if (meldungen > 1) teile.push(`Damit verfallen ${meldungen} Meldungen: Diese Spieler:innen sind wieder ohne Meldung.`);
+  if (kennzeichnungen > 0)
+    teile.push(`${meldungen > 0 ? "Ausserdem" : "Damit"} ${kennzeichnungen === 1 ? "verfällt" : "verfallen"} ${kennzeichnungenText(kennzeichnungen)}.`);
   if (fristAbgelaufen) teile.push("Die Meldefrist ist danach schon abgelaufen; Eltern können nicht mehr melden.");
   return teile.join(" ");
 }
 
-/** Was beim Entfernen eines Spiels verschwindet (AK 27). */
-export function spielEntfernenText(meldungen: number): string {
-  if (meldungen === 0) return "";
-  return meldungen === 1 ? "Damit verschwindet 1 Meldung." : `Damit verschwinden ${meldungen} Meldungen.`;
+/** Was beim Entfernen eines Spiels verschwindet (#463 AK 27, #464 AK 10). */
+export function spielEntfernenText(meldungen: number, kennzeichnungen = 0): string {
+  const teile = [
+    ...(meldungen > 0 ? [meldungen === 1 ? "1 Meldung" : `${meldungen} Meldungen`] : []),
+    ...(kennzeichnungen > 0 ? [kennzeichnungenText(kennzeichnungen)] : []),
+  ];
+  if (teile.length === 0) return "";
+  return `Damit ${meldungen + kennzeichnungen === 1 ? "verschwindet" : "verschwinden"} ${teile.join(" und ")}.`;
 }
 
 /** Dasselbe für den KI-Weg, mit dem Weg zur Bestätigung. */

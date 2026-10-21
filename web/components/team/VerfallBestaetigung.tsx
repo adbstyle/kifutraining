@@ -66,6 +66,8 @@ type Antwort = {
   verfallendSpiele?: number;
   /** Verlegen eines Spiels (#463 AK 13, 26): die Frist ist danach abgelaufen. */
   fristAbgelaufen?: boolean;
+  /** Davon Kennzeichnungen als nicht aufgeboten (#464 AK 10). */
+  kennzeichnungen?: number;
 };
 
 /**
@@ -87,15 +89,18 @@ export function useVerfallRueckfrage(pending?: boolean) {
   function nachKader(r: Antwort, bestaetigt: number | false, weiter: (anzahl: number) => void): boolean {
     if (r.ok || !r.verfallend) return false;
     const n = r.verfallend;
-    setFrage({ anzahl: n, text: bestaetigt === false ? kaderVerfallText(n, r.verfallendSpiele) : r.error, weiter: () => weiter(n) });
+    setFrage({ anzahl: n, text: bestaetigt === false ? kaderVerfallText(n, r.verfallendSpiele, r.kennzeichnungen) : r.error, weiter: () => weiter(n) });
     return true;
   }
 
   function nachVerlegung(r: Antwort & { verfallend: number }, weiter: () => void) {
-    // Ein Spiel (#463 AK 13, 26): Meldungen und die Frist.
+    // Ein Spiel (#463 AK 13, 26; #464 AK 10): Meldungen, Kennzeichnungen und die Frist.
     if (r.fristAbgelaufen !== undefined) {
-      const text = `${spielVerfallText(r.verfallend, r.fristAbgelaufen)}${r.verfallend > 0 ? " Für den neuen Tag melden sich alle neu." : ""}`;
-      setFrage({ anzahl: r.verfallend, text, titel: r.verfallend > 0 ? "Meldungen verfallen" : "Meldefrist abgelaufen", weiter });
+      const k = r.kennzeichnungen ?? 0;
+      const meldungen = r.verfallend - k;
+      const text = `${spielVerfallText(meldungen, r.fristAbgelaufen, k)}${meldungen > 0 ? " Für den neuen Tag melden sich alle neu." : ""}`;
+      const titel = meldungen > 0 ? "Meldungen verfallen" : k > 0 ? "Kennzeichnungen verfallen" : "Meldefrist abgelaufen";
+      setFrage({ anzahl: r.verfallend, text, titel, weiter });
       return;
     }
     const nachtraege = r.nachtraege ?? 0;

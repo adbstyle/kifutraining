@@ -15,7 +15,7 @@ import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr, tagText } from "@/lib/monat";
 import type { LinkTermin } from "@/lib/privater-link";
-import { MELDUNG_TEXT, richtwertText, zeitpunktKurz, type Meldung } from "@/lib/spiel";
+import { AUFGEBOT_TEXT, MELDUNG_TEXT, richtwertText, zeitpunktKurz, type Meldung } from "@/lib/spiel";
 
 /* Ein Spiel am privaten Link (#459 AK 17, #463 AK 3, 7, 11, 12, 15, 21; Design
    PO 2026-10-21): Die Meldung steht nur als Lozenge — Angemeldet grün,
@@ -26,7 +26,8 @@ import { MELDUNG_TEXT, richtwertText, zeitpunktKurz, type Meldung } from "@/lib/
    der Stand beim Anpfiff. Abgemeldet steht die Karte leise rot getönt, mit
    rotem Kalenderblatt. Treffpunkte und Bemerkung stehen unabhängig von der
    Meldung da; ein ausgefallenes Spiel zeigt nur die Bemerkung (#465 AK 10,
-   11). */
+   11). Nicht aufgeboten (#464 AK 9) steht sie wie abgemeldet rot, mit der
+   Lozenge und dem Weg übers Team statt Knöpfen. */
 export function SpielKarte({
   t,
   meldung,
@@ -52,8 +53,9 @@ export function SpielKarte({
   fehler?: string;
   onMelden: (an: boolean) => void;
 }) {
-  const abgemeldet = meldung === "abgemeldet" && !t.ausgefallen;
-  const offen = !t.ausgefallen && !t.begonnen && !t.frist_abgelaufen;
+  const nichtAufgeboten = t.nicht_aufgeboten && !t.ausgefallen;
+  const abgemeldet = (meldung === "abgemeldet" || nichtAufgeboten) && !t.ausgefallen;
+  const offen = !t.ausgefallen && !t.begonnen && !t.frist_abgelaufen && !nichtAufgeboten;
   const richtwert = richtwertText(t.richtwert_min, t.richtwert_max);
   const Element = gross ? "div" : "li";
   return (
@@ -85,7 +87,7 @@ export function SpielKarte({
             {t.beginn}–{t.ende}
             {gross && " Uhr"}
           </span>
-          {(t.ort || angemeldet !== null) && (
+          {(t.ort || angemeldet !== null || (t.nicht_aufgeboten_zahl ?? 0) > 0) && (
             <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 type-body-small text-on-surface-mittel">
               {t.ort && <span className="min-w-0">{t.ort}</span>}
               {angemeldet !== null && t.gesamt !== null && (
@@ -99,6 +101,8 @@ export function SpielKarte({
                   </span>
                 </span>
               )}
+              {/* #464 AK 8: wie viele nicht aufgeboten sind. */}
+              {(t.nicht_aufgeboten_zahl ?? 0) > 0 && <span>{t.nicht_aufgeboten_zahl} nicht aufgeboten</span>}
             </p>
           )}
           {richtwert && angemeldet !== null && (
@@ -110,6 +114,11 @@ export function SpielKarte({
           <KaderLozenges namen={t.kader} className="mt-1" />
           {t.ausgefallen ? (
             <span className="type-body-small text-on-surface-mittel">Fällt aus</span>
+          ) : nichtAufgeboten ? (
+            <span className="flex flex-wrap items-center gap-2 type-body-small text-on-surface-mittel">
+              <Lozenge appearance="danger">{AUFGEBOT_TEXT.nichtAufgeboten}</Lozenge>
+              {AUFGEBOT_TEXT.eltern(name)}
+            </span>
           ) : (
             <span className="flex flex-wrap items-center gap-2 type-body-small text-on-surface-mittel">
               {meldung === "angemeldet" && <Lozenge appearance="success">{MELDUNG_TEXT.angemeldet}</Lozenge>}
@@ -160,6 +169,7 @@ export function SpielKarte({
         <SectionMessage>
           Verlegt, vorher {tagOhneJahr(t.vorher.datum)} um {t.vorher.beginn}.{" "}
           {t.meldung_verfallen ? "Deine Meldung gilt nicht mehr - melde neu." : meldung !== null ? "Die Meldung gilt weiter." : ""}
+          {t.aufgebot_verfallen && ` ${AUFGEBOT_TEXT.verfallen}`}
         </SectionMessage>
       )}
       {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}

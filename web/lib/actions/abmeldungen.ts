@@ -1,7 +1,7 @@
 "use server";
 
 import { setzeAbmeldung, setzeAnwesenheit, type AbmeldungSetzen, type AnwesenheitSetzen } from "@/lib/kern/abmeldungen";
-import { setzeMeldung, type MeldungSetzen } from "@/lib/kern/spiele";
+import { setzeAufgebot, setzeMeldung, type AufgebotSetzen, type MeldungSetzen } from "@/lib/kern/spiele";
 import { revalidiereTeam } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
 
@@ -32,6 +32,20 @@ export async function setzeMeldungAktion(
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await setzeMeldung(a.supabase, a.userId, e);
+  if (!r.ok) return { ok: false, error: r.meldung };
+  revalidiereTeam(teamId);
+  return { ok: true };
+}
+
+/** Eine Spieler:in für ein Spiel als nicht aufgeboten kennzeichnen oder das
+ *  aufheben (#464) — derselbe Fachkern wie «termin_aufgebot_setzen». */
+export async function setzeAufgebotAktion(
+  teamId: string,
+  e: AufgebotSetzen,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await setzeAufgebot(a.supabase, a.userId, e);
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(teamId);
   return { ok: true };

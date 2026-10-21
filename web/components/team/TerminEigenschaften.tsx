@@ -60,6 +60,10 @@ export function TerminEigenschaften({
                   {t.spielstand.angemeldet} von {t.spielstand.gesamt} angemeldet
                 </span>
                 <RichtwertLozenge zahl={t.spielstand.angemeldet} min={t.spiel.richtwertMin} max={t.spiel.richtwertMax} />
+                {/* #464 AK 8: wie viele nicht aufgeboten sind. */}
+                {(t.spielstand.nicht_aufgeboten ?? 0) > 0 && (
+                  <span className="type-body-small text-on-surface-mittel">{t.spielstand.nicht_aufgeboten} nicht aufgeboten</span>
+                )}
               </span>
             </Eigenschaft>
           )}

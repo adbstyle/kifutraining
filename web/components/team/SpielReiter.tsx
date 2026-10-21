@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { Users } from "lucide-react";
 import { ChipMenu, Leerzustand, RichtwertLozenge, richtwertSchrift } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
-import { setzeMeldungAktion } from "@/lib/actions/abmeldungen";
+import { setzeAufgebotAktion, setzeMeldungAktion } from "@/lib/actions/abmeldungen";
 import { EHEMALIGE_SPIELERIN, spielerName } from "@/lib/spieler";
-import { MELDUNG_TEXT, meldungText, zeitpunktKurz, type Meldung } from "@/lib/spiel";
+import { AUFGEBOT_TEXT, MELDUNG_TEXT, meldungText, zeitpunktKurz, type Meldung } from "@/lib/spiel";
 import type { SpielSpieler, SpielTeilnehmer } from "@/lib/kern/spiele";
 import { seitWann } from "@/lib/zeit";
 import { KADER_TEXT, uebrigeText } from "@/lib/kader";
@@ -25,18 +25,29 @@ const PUNKT: Record<"ohne" | "angemeldet" | "abgemeldet", string> = {
 };
 
 /** Die Gruppen in ihrer Reihenfolge: zuerst, wer sich noch nicht geäussert
- *  hat — bei ihnen fragt das Team nach (Story #463). */
-const GRUPPEN: { meldung: Meldung; titel: string }[] = [
+ *  hat — bei ihnen fragt das Team nach (Story #463); zuletzt die nicht
+ *  Aufgebotenen, gleich welche Meldung sie tragen (#464). */
+const GRUPPEN: { meldung: Meldung | "nicht_aufgeboten"; titel: string }[] = [
   { meldung: null, titel: "Ohne Meldung" },
   { meldung: "angemeldet", titel: "Angemeldet" },
   { meldung: "abgemeldet", titel: "Abgemeldet" },
+  { meldung: "nicht_aufgeboten", titel: AUFGEBOT_TEXT.nichtAufgeboten },
 ];
+
+/** Was unter dem Namen einer nicht Aufgebotenen steht: ihre Meldung (#464 AK 6). */
+const UNTER_KENNZEICHNUNG: Record<"ohne" | "angemeldet" | "abgemeldet", string> = {
+  ohne: "ohne Meldung",
+  angemeldet: "war angemeldet",
+  abgemeldet: "war abgemeldet",
+};
 
 /* Der Reiter «Spieler:innen» an einem Spiel (#463 AK 2, 5, 6, 7, 10, 20, 25):
    wer ohne Meldung, angemeldet oder abgemeldet ist, in Gruppen. Jede Zeile
    trägt ihre Meldung als Chip mit Menü (PO 2026-10-21, Design-Entscheid):
    «Anmelden» und «Abmelden» bis zum Anpfiff, auch nach der Meldefrist der
    Eltern. Eine abgegebene Meldung lässt sich nicht zurück auf «ohne» setzen.
+   Dazu «Nicht aufbieten» (#464): Die Spieler:in steht dann in der letzten
+   Gruppe, ihre Meldung darunter, bis «Aufbieten» das wieder aufhebt.
 
    Oben die Zahl der Angemeldeten gegen den Richtwert, farbig und in Worten,
    dazu, bis wann Eltern und Mitglieder melden. Ab dem Anpfiff gilt der
@@ -47,7 +58,11 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
   const [pending, startTransition] = useTransition();
   // Was gerade gemeldet wird, steht sofort so da; scheitert es, zurück.
   const [lokal, setLokal] = useState<Record<string, Meldung>>({});
-  useEffect(() => setLokal({}), [daten]);
+  const [lokalAufgebot, setLokalAufgebot] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    setLokal({});
+    setLokalAufgebot({});
+  }, [daten]);
   const [gewaehlterKader, setKader] = useState<string | null>(null);
   const jeKader = useMemo(() => {
     const zahl = new Map<string, number>();
@@ -72,9 +87,13 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
   if (daten.ausgefallen) return <p className="type-body-medium text-on-surface-mittel">{MELDUNG_TEXT.ausgefallen}</p>;
 
   const meldungVon = (s: SpielTeilnehmer): Meldung => (s.spielerId && s.spielerId in lokal ? lokal[s.spielerId] : s.meldung);
-  const angemeldet = daten.spieler.filter((s) => meldungVon(s) === "angemeldet").length;
-  const abgemeldet = daten.spieler.filter((s) => meldungVon(s) === "abgemeldet").length;
-  const ohne = daten.spieler.length - angemeldet - abgemeldet;
+  const aufgebotVon = (s: SpielTeilnehmer): boolean =>
+    s.spielerId && s.spielerId in lokalAufgebot ? lokalAufgebot[s.spielerId] : s.nichtAufgeboten;
+  // Eine nicht aufgebotene zählt nur als solche (#464 AK 7).
+  const nicht = daten.spieler.filter(aufgebotVon).length;
+  const angemeldet = daten.spieler.filter((s) => !aufgebotVon(s) && meldungVon(s) === "angemeldet").length;
+  const abgemeldet = daten.spieler.filter((s) => !aufgebotVon(s) && meldungVon(s) === "abgemeldet").length;
+  const ohne = daten.spieler.length - angemeldet - abgemeldet - nicht;
 
   function melden(s: SpielTeilnehmer, an: boolean) {
     const id = s.spielerId;
@@ -89,6 +108,28 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
       });
       if (!r.ok) {
         setLokal((l) => {
+          const { [id]: _weg, ...rest } = l;
+          return rest;
+        });
+        melde(r.error);
+      }
+      router.refresh();
+    });
+  }
+
+  function aufbieten(s: SpielTeilnehmer, nichtAufgeboten: boolean) {
+    const id = s.spielerId;
+    if (!id) return;
+    setLokalAufgebot((l) => ({ ...l, [id]: nichtAufgeboten }));
+    startTransition(async () => {
+      const r = await setzeAufgebotAktion(teamId, {
+        terminId: daten.terminId,
+        spielerId: id,
+        nichtAufgeboten,
+        gesehen: { datum: daten.datum, beginn: daten.beginn },
+      });
+      if (!r.ok) {
+        setLokalAufgebot((l) => {
           const { [id]: _weg, ...rest } = l;
           return rest;
         });
@@ -138,6 +179,7 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
           <RichtwertLozenge zahl={angemeldet} min={daten.richtwertMin} max={daten.richtwertMax} />
           <span className="type-body-small text-on-surface-mittel">
             {ohne} ohne Meldung · {abgemeldet} abgemeldet
+            {nicht > 0 && <> · {nicht} nicht aufgeboten</>}
           </span>
         </div>
         <p className="type-body-small text-on-surface-mittel">{melden_bis}</p>
@@ -149,7 +191,9 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
         </EingrenzungLeer>
       )}
       {GRUPPEN.map((g) => {
-        const zeilen = sichtbar.filter((s) => meldungVon(s) === g.meldung);
+        const zeilen = sichtbar.filter((s) =>
+          g.meldung === "nicht_aufgeboten" ? aufgebotVon(s) : !aufgebotVon(s) && meldungVon(s) === g.meldung,
+        );
         if (zeilen.length === 0) return null;
         return (
           <section key={g.titel} aria-label={`${g.titel}: ${zeilen.length}`}>
@@ -162,11 +206,13 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
                   key={s.spielerId ?? `ehemalig-${i}`}
                   s={s}
                   meldung={meldungVon(s)}
+                  nichtAufgeboten={aufgebotVon(s)}
                   eben={s.spielerId !== null && s.spielerId in lokal && lokal[s.spielerId] !== s.meldung}
                   gelesenAm={daten.gelesenAm}
                   fest={daten.begonnen}
                   pending={pending}
                   onMelden={(an) => melden(s, an)}
+                  onAufgebot={(nein) => aufbieten(s, nein)}
                 />
               ))}
             </ul>
@@ -181,44 +227,66 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
 function SpielZeile({
   s,
   meldung,
+  nichtAufgeboten,
   eben,
   gelesenAm,
   fest,
   pending,
   onMelden,
+  onAufgebot,
 }: {
   s: SpielTeilnehmer;
   meldung: Meldung;
+  nichtAufgeboten: boolean;
   eben: boolean;
   gelesenAm: string;
   fest: boolean;
   pending: boolean;
   onMelden: (an: boolean) => void;
+  onAufgebot: (nichtAufgeboten: boolean) => void;
 }) {
   const name = s.vorname !== null ? spielerName({ vorname: s.vorname, nachname: s.nachname ?? "" }) : EHEMALIGE_SPIELERIN;
   // Unter dem Namen: seit wann die Meldung gilt (#463 AK 25), sonst warum keine.
+  // Nicht aufgeboten: darunter ihre Meldung (#464 AK 6, Design PO 2026-10-21).
   const zeile2 = [
-    eben ? "gerade eben" : s.gewechseltAm ? seitWann(s.gewechseltAm, gelesenAm) : s.verfallen ? "Meldung mit der Verlegung verfallen" : meldung === null ? "noch keine Meldung" : null,
+    nichtAufgeboten
+      ? UNTER_KENNZEICHNUNG[meldung ?? "ohne"]
+      : eben
+        ? "gerade eben"
+        : s.gewechseltAm
+          ? seitWann(s.gewechseltAm, gelesenAm)
+          : s.verfallen
+            ? "Meldung mit der Verlegung verfallen"
+            : s.aufgebotVerfallen
+              ? "Kennzeichnung mit der Verlegung verfallen"
+              : meldung === null
+                ? "noch keine Meldung"
+                : null,
     ...s.kader,
   ]
     .filter(Boolean)
     .join(" · ");
-  const items = [
-    ...(meldung !== "angemeldet" ? [{ label: "Anmelden", onSelect: () => onMelden(true) }] : []),
-    ...(meldung !== "abgemeldet" ? [{ label: "Abmelden", onSelect: () => onMelden(false) }] : []),
-  ];
+  // Nicht aufgeboten nimmt das Spiel keine Meldung an (#464 AK 4) — nur «Aufbieten».
+  const items = nichtAufgeboten
+    ? [{ label: AUFGEBOT_TEXT.aufbieten, onSelect: () => onAufgebot(false) }]
+    : [
+        ...(meldung !== "angemeldet" ? [{ label: "Anmelden", onSelect: () => onMelden(true) }] : []),
+        ...(meldung !== "abgemeldet" ? [{ label: "Abmelden", onSelect: () => onMelden(false) }] : []),
+        { label: AUFGEBOT_TEXT.nichtAufbieten, onSelect: () => onAufgebot(true) },
+      ];
+  const status = nichtAufgeboten ? AUFGEBOT_TEXT.nichtAufgeboten : meldungText(meldung);
   return (
     <li className="state flex min-h-12 items-center gap-3 px-4 py-1.5">
       <span className="min-w-0 flex-1">
-        <span className={cn("block truncate type-body-medium", meldung === "abgemeldet" || s.ehemalig ? "text-on-surface-mittel" : "text-on-surface")}>
+        <span className={cn("block truncate type-body-medium", meldung === "abgemeldet" || nichtAufgeboten || s.ehemalig ? "text-on-surface-mittel" : "text-on-surface")}>
           {name}
         </span>
         {zeile2 && <span className="block truncate type-body-small text-on-surface-mittel">{zeile2}</span>}
       </span>
       <ChipMenu
-        label={meldungText(meldung)}
-        ariaLabel={`${name}: ${meldungText(meldung)}${fest ? "" : ", Meldung ändern"}`}
-        leading={<span aria-hidden className={cn("size-2 shrink-0 rounded-full", PUNKT[meldung ?? "ohne"])} />}
+        label={status}
+        ariaLabel={`${name}: ${status}${fest ? "" : ", Meldung ändern"}`}
+        leading={<span aria-hidden className={cn("size-2 shrink-0 rounded-full", nichtAufgeboten ? "bg-error" : PUNKT[meldung ?? "ohne"])} />}
         items={fest || s.ehemalig ? [] : items}
         disabled={pending || fest || s.ehemalig}
         menuClassName="right-0"

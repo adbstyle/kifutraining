@@ -228,7 +228,7 @@ function EntfernenFolgen({ name, folgen }: { name: string; folgen: KaderEntferne
       {folgen.verfallend > 0 && (
         <p className="mt-3 flex items-start gap-2 text-on-surface">
           <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0 text-icon-warning" />
-          <span>{kaderVerfallText(folgen.verfallend, folgen.verfallendSpiele)}</span>
+          <span>{kaderVerfallText(folgen.verfallend, folgen.verfallendSpiele, folgen.verfallendKennzeichnungen)}</span>
         </p>
       )}
     </>

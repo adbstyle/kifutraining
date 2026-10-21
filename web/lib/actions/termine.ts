@@ -51,6 +51,8 @@ type Fehler = {
   fristAbgelaufen?: boolean;
   /** Ein Spiel entfernen (#463 AK 27): so viele Meldungen verschwinden. */
   verschwindend?: number;
+  /** Davon Kennzeichnungen als nicht aufgeboten (#464 AK 10). */
+  kennzeichnungen?: number;
 };
 
 export async function legeTerminFestAktion(
@@ -114,7 +116,14 @@ export async function aendereTerminAktion(
     erwartetesTraining,
   });
   if (!r.ok)
-    return { ok: false, error: r.meldung, verfallend: r.verfallend, nachtraege: r.nachtraege, fristAbgelaufen: r.fristAbgelaufen };
+    return {
+      ok: false,
+      error: r.meldung,
+      verfallend: r.verfallend,
+      nachtraege: r.nachtraege,
+      fristAbgelaufen: r.fristAbgelaufen,
+      kennzeichnungen: r.kennzeichnungen,
+    };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.trainingId) revalidiereTraining(r.wert.trainingId);
   return { ok: true };
@@ -123,13 +132,14 @@ export async function aendereTerminAktion(
 export async function entferneTerminAktion(
   terminId: string,
   erwartetesTraining: string | null,
-  /** Ein Spiel: die bestätigte Zahl verschwindender Meldungen (#463 AK 27). */
+  /** Ein Spiel: die bestätigte Zahl verschwindender Meldungen und
+   *  Kennzeichnungen (#463 AK 27, #464 AK 10). */
   bestaetigt: number | false = false,
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await entferneTermin(a.supabase, a.userId, { terminId, erwartetesTraining, bestaetigt });
-  if (!r.ok) return { ok: false, error: r.meldung, verschwindend: r.verschwindend };
+  if (!r.ok) return { ok: false, error: r.meldung, verschwindend: r.verschwindend, kennzeichnungen: r.kennzeichnungen };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.training) revalidiereTraining(r.wert.training.trainingId);
   return { ok: true };

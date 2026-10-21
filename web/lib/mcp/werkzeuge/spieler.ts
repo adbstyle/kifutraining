@@ -14,7 +14,7 @@ import {
   schalteAbholung,
 } from "@/lib/kern/spieler";
 import { setzeAbmeldung, setzeAnwesenheit, terminSpieler } from "@/lib/kern/abmeldungen";
-import { istSpiel, setzeMeldung, spielSpieler, type SpielSpieler, type SpielTeilnehmer } from "@/lib/kern/spiele";
+import { istSpiel, setzeAufgebot, setzeMeldung, spielSpieler, type SpielSpieler, type SpielTeilnehmer } from "@/lib/kern/spiele";
 import {
   ABHOL_PFAD,
   ABHOLUNG_TEXT,
@@ -205,6 +205,10 @@ const ABMELDE_MODELL =
   "Meldung («meldung: null»), bis sie an- oder abgemeldet wird; danach wechselt sie nur noch zwischen angemeldet und " +
   "abgemeldet. Mitglieder (und du) melden bis zum Anpfiff, auch nach der Meldefrist; Eltern über ihren Link nur bis zur " +
   "Meldefrist. Ein anderes Datum lässt alle Meldungen eines Spiels verfallen, eine andere Zeit am selben Tag nicht. " +
+  "Mitglieder (und du) können eine Spieler:in für ein Spiel als nicht aufgeboten kennzeichnen (termin_aufgebot_setzen), " +
+  "gleich welche Meldung sie trägt: Die Meldung bleibt darunter stehen, zählt aber nicht als angemeldet, und bis die " +
+  "Kennzeichnung aufgehoben ist, nimmt das Spiel für sie keine Meldung an. Die Kennzeichnung trägt keinen Grund, " +
+  "verfällt mit den Meldungen und wird beim Anpfiff mit ihnen festgehalten; die Eltern sehen sie über ihren Link. " +
   "Mindest- und Höchstzahl sind ein Richtwert; wie die Zahl dazu steht, beurteilst du selbst.";
 
 /** Was die KI je Spieler:in zur Anwesenheit erhält (#475 AK 13). */
@@ -235,6 +239,11 @@ export const terminSpielerAbrufen = werkzeug({
     angemeldet: z.number().int(),
     gesamt: z.number().int(),
     ohne_meldung: z.number().int().nullable().describe("Nur an einem Spiel: wer noch ohne Meldung ist; bei Trainings null."),
+    nicht_aufgeboten: z
+      .number()
+      .int()
+      .nullable()
+      .describe("Nur an einem Spiel: wie viele nicht aufgeboten sind; sie zählen weder als angemeldet noch abgemeldet noch ohne Meldung. Bei Trainings null."),
     mindestzahl: z.number().int().nullable().describe("Nur an einem Spiel: der Richtwert, soweit festgelegt."),
     hoechstzahl: z.number().int().nullable(),
     meldefrist: z
@@ -260,6 +269,9 @@ export const terminSpielerAbrufen = werkzeug({
           .enum(["angemeldet", "abgemeldet"])
           .nullable()
           .describe("Die Meldung; an einem Spiel null, solange sie ohne Meldung ist. Bei Trainings nie null."),
+        nicht_aufgeboten: z
+          .boolean()
+          .describe("Nur an einem Spiel: als nicht aufgeboten gekennzeichnet; «meldung» ist dann die Meldung darunter. Bei Trainings false."),
         ehemalig: z.boolean(),
         kader: z.array(z.string()).describe("Die Kader, über die der Termin für sie gilt; leer bei einem Termin für alle."),
         anwesenheit: z.enum(["nicht_erschienen", "doch_erschienen"]).nullable().describe(ANWESENHEIT_BESCHREIBUNG),
@@ -289,6 +301,7 @@ export const terminSpielerAbrufen = werkzeug({
       angemeldet: w.angemeldet,
       gesamt: w.gesamt,
       ohne_meldung: null,
+      nicht_aufgeboten: null,
       mindestzahl: null,
       hoechstzahl: null,
       meldefrist: null,
@@ -313,6 +326,7 @@ function spielAusgabe(w: SpielSpieler) {
     angemeldet: w.angemeldet,
     gesamt: w.gesamt,
     ohne_meldung: w.ohneMeldung,
+    nicht_aufgeboten: w.nichtAufgeboten,
     mindestzahl: w.richtwertMin,
     hoechstzahl: w.richtwertMax,
     meldefrist: w.frist,
@@ -330,6 +344,7 @@ function spielTeilnehmerAusgabe(s: SpielTeilnehmer) {
     nachname: s.nachname,
     abgemeldet: s.meldung === "abgemeldet",
     meldung: s.meldung,
+    nicht_aufgeboten: s.nichtAufgeboten,
     ehemalig: s.ehemalig,
     kader: s.kader,
     anwesenheit: null,
@@ -346,6 +361,7 @@ export function teilnehmerAusgabe(s: Teilnehmer) {
     nachname: s.nachname,
     abgemeldet: s.abgemeldet,
     meldung: s.abgemeldet ? ("abgemeldet" as const) : ("angemeldet" as const),
+    nicht_aufgeboten: false,
     ehemalig: s.ehemalig,
     kader: s.kader,
     anwesenheit: anwesenheitAusgabe(s),
@@ -416,6 +432,49 @@ export const terminAbmeldungSetzen = werkzeug({
       }),
     );
   },
+});
+
+// ── termin_aufgebot_setzen (#464) ───────────────────────────────────────────
+
+export const terminAufgebotSetzen = werkzeug({
+  name: "termin_aufgebot_setzen",
+  titel: "Für ein Spiel nicht aufbieten",
+  beschreibung:
+    "Kennzeichnet eine Spieler:in für ein Spiel als nicht aufgeboten («nicht_aufgeboten: true») oder hebt das auf " +
+    "(«nicht_aufgeboten: false») - etwa bei zu vielen Anmeldungen oder wenn jemand pausiert. Nur an Spielen, bis zum " +
+    "Anpfiff, nicht an einem ausgefallenen, nur für wen das Spiel gilt - dieselben Bedingungen wie beim Melden. " +
+    "«termin_datum» und «termin_beginn» sind Datum und Beginn, wie du das Spiel zuletzt gelesen hast: Wurde es " +
+    "inzwischen verlegt, weist KiFu mit dem neuen Stand ab (Fehlerart «konflikt»). KiFu stellt kein Aufgebot zusammen " +
+    `und benachrichtigt niemanden. ${ABMELDE_MODELL} ${TERMIN_KENNUNG_FEHLER} ${SPIELER_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({
+    termin_id: TerminId,
+    spieler_id: SpielerId,
+    nicht_aufgeboten: z.boolean(),
+    termin_datum: z.string().describe("Datum des Spiels, wie zuletzt gelesen, als JJJJ-MM-TT."),
+    termin_beginn: z.string().describe("Anpfiff des Spiels, wie zuletzt gelesen, als HH:MM."),
+  }),
+  ausgabe: z.object({
+    termin_id: z.string(),
+    nicht_aufgeboten: z.boolean(),
+    angemeldet: z.number().int().nullable().describe("Die Angemeldeten danach, ohne die nicht Aufgebotenen."),
+    gesamt: z.number().int().nullable(),
+  }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(
+      await setzeAufgebot(zugang.supabase, zugang.userId, {
+        terminId: e.termin_id,
+        spielerId: e.spieler_id,
+        nichtAufgeboten: e.nicht_aufgeboten,
+        gesehen: { datum: e.termin_datum, beginn: e.termin_beginn },
+      }),
+      (w) => ({
+        termin_id: w.terminId,
+        nicht_aufgeboten: w.nichtAufgeboten,
+        angemeldet: w.stand?.angemeldet ?? null,
+        gesamt: w.stand?.gesamt ?? null,
+      }),
+    ),
 });
 
 // ── termin_anwesenheit_setzen (#475) ────────────────────────────────────────

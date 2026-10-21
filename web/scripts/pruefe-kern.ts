@@ -177,6 +177,7 @@ import {
   MELDUNG_TEXT,
   spielEntfernenText,
   spielVerfallText,
+  AUFGEBOT_TEXT,
   TREFFPUNKT_TEXT,
   treffpunktAnzeige,
   treffpunkteNormal,
@@ -198,6 +199,7 @@ import {
   kaderVon,
   nachKaderName,
   verfallAusFehler,
+  verfallKennzeichnungenAusFehler,
   verfallSpieleAusFehler,
   zugehoerigkeit,
 } from "../lib/kader";
@@ -1935,6 +1937,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#452": ["kader_abrufen", "kader_anlegen", "kader_umbenennen", "kader_entfernen", "kader_zuteilen", "kader_herausnehmen"],
     "#475": ["termin_spieler_abrufen", "termin_anwesenheit_setzen"],
     "#459": ["termin_festlegen", "termin_aendern", "termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen", "termin_entfernen", "team_plan_abrufen"],
+    "#464": ["termin_spieler_abrufen", "termin_aufgebot_setzen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
@@ -2475,6 +2478,23 @@ pruefe("Spiele: Treffpunkte prüfen, als Abstand zum Anpfiff führen und anzeige
   const amVortag = treffpunktAnzeige(zu[0], "2026-11-01", "Bodenweid");
   assert.deepEqual([amVortag.anreise, amVortag.ort], ["öV", "Bahnhof"]);
   assert.ok(amVortag.zeit.endsWith("31.10., 23:00"), amVortag.zeit);
+});
+
+pruefe("Spiele: nicht aufbieten - Abweisung, Verfall- und Entfernen-Texte, Kader-Marker (#464)", () => {
+  assert.equal(meldungAbweisungText("nicht_aufgeboten"), MELDUNG_TEXT.nichtAufgeboten);
+  assert.equal(spielVerfallText(0, false, 1), "Damit verfällt 1 Kennzeichnung als nicht aufgeboten.");
+  assert.equal(
+    spielVerfallText(9, false, 2),
+    "Damit verfallen 9 Meldungen: Diese Spieler:innen sind wieder ohne Meldung. Ausserdem verfallen 2 Kennzeichnungen als nicht aufgeboten.",
+  );
+  assert.equal(spielEntfernenText(11, 2), "Damit verschwinden 11 Meldungen und 2 Kennzeichnungen als nicht aufgeboten.");
+  assert.equal(spielEntfernenText(0, 1), "Damit verschwindet 1 Kennzeichnung als nicht aufgeboten.");
+  assert.equal(spielEntfernenText(2), "Damit verschwinden 2 Meldungen.", "ohne Kennzeichnung wie bisher");
+  assert.equal(verfallKennzeichnungenAusFehler("ABMELDUNGEN_VERFALLEN 4 1 1"), 1);
+  assert.equal(verfallKennzeichnungenAusFehler("ABMELDUNGEN_VERFALLEN 4 1"), 0);
+  assert.ok(kaderVerfallText(4, 1, 1).startsWith("Damit verfallen 2 Abmeldungen zu Trainings, 1 Meldung zu einem Spiel und 1 Kennzeichnung als nicht aufgeboten:"));
+  assert.ok(kaderVerfallText(1, 0, 1).startsWith("Damit verfällt 1 Kennzeichnung als nicht aufgeboten:"));
+  assert.equal(AUFGEBOT_TEXT.eltern("Mia"), "Mia ist für dieses Spiel nicht aufgeboten. Fragen dazu ans Team.");
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

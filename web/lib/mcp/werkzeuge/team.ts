@@ -134,7 +134,9 @@ const VERFALL_MODELL =
   "Alle Spieler:innen gelten wieder als angemeldet (auch über die Serie, auch an einem ausgefallenen Termin). " +
   "Verfallen dadurch Abmeldungen, kommt zuerst ein Fehler mit «verfallend» (Anzahl); frag nach und wiederhole den " +
   "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Felder, Verantwortliche und Training lassen sie stehen. " +
-  "An einem Spiel verfallen die Meldungen nur mit einem anderen Datum (alle sind dann wieder ohne Meldung); rückt die " +
+  "An einem Spiel verfallen die Meldungen nur mit einem anderen Datum (alle sind dann wieder ohne Meldung), samt den " +
+  "Kennzeichnungen als nicht aufgeboten - auch wenn nur solche verfallen, kommt zuerst der Fehler mit «verfallend» " +
+  "(davon «kennzeichnungen»); rückt die " +
   "Verlegung die Meldefrist ins Abgelaufene, kommt ebenfalls zuerst ein Fehler («frist_abgelaufen») - frag nach und " +
   "wiederhole mit «bestaetigt: true».";
 
@@ -571,8 +573,8 @@ export const terminEntfernen = werkzeug({
     "Training. Erfasst «dieser_und_folgende» oder «alle» " +
     "auch vergangene Termine, wird die Serie nur mit «bestaetigt: true» entfernt; ohne diese " +
     "Bestätigung nennt das Ergebnis, was entfiele. Ein einzelner Termin oder «nur_dieser» wird " +
-    "sofort entfernt - ein Spiel mit Meldungen erst mit «bestaetigt: true»; ohne nennt der Fehler, wie viele verschwinden " +
-    "(«verschwindend»). " +
+    "sofort entfernt - ein Spiel mit Meldungen oder Kennzeichnungen als nicht aufgeboten erst mit «bestaetigt: true»; ohne " +
+    "nennt der Fehler, wie viele verschwinden («verschwindend», davon «kennzeichnungen»). " +
     `${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ termin_id: TerminId, reichweite: Reichweite.optional(), bestaetigt: Bestaetigt }),
