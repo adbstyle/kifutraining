@@ -12,7 +12,7 @@ import {
   type Teilnehmer,
 } from "@/lib/spieler";
 import { jetztAmTrainingsort, terminBegonnen } from "@/lib/zeit";
-import { ladeTermin, TERMIN_FELD } from "@/lib/kern/termine";
+import { ladeTerminMitStand, TERMIN_FELD, type TerminMitStand } from "@/lib/kern/termine";
 import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 import { nachTerminKader, type TerminKader } from "@/lib/kader";
 import { SPIEL_TEXT } from "@/lib/spiel";
@@ -66,23 +66,25 @@ export async function terminSpieler(
   e: { terminId: string },
   jetzt: string = jetztAmTrainingsort(),
 ): Promise<KernErgebnis<TerminSpieler>> {
-  const geladen = await ladeTermin(supabase, e.terminId);
+  const geladen = await ladeTerminMitStand(supabase, e.terminId);
   if (!geladen.ok) return geladen;
-  const t = geladen.wert;
   // Ein Spiel kennt eigene Meldungen (#463), nicht die Abmeldung der Trainings.
-  if (t.art === "spiel") return fehlschlag("regel", SPIEL_TEXT.istSpiel, TERMIN_FELD);
-  const [teilnehmer, termin, team] = await Promise.all([
+  if (geladen.wert.art === "spiel") return fehlschlag("regel", SPIEL_TEXT.istSpiel, TERMIN_FELD);
+  return terminSpielerVon(supabase, geladen.wert, jetzt);
+}
+
+/** Dasselbe für einen schon geladenen Termin (Verteiler in lib/kern/spiele.ts). */
+export async function terminSpielerVon(
+  supabase: SupabaseClient,
+  t: TerminMitStand,
+  jetzt: string = jetztAmTrainingsort(),
+): Promise<KernErgebnis<TerminSpieler>> {
+  const [teilnehmer, team] = await Promise.all([
     supabase.rpc("termin_teilnehmer", { p_termin: t.id }),
-    supabase
-      .from("training_termine")
-      .select("spielstand, termin_kader ( kader_id, kader ( name ) )")
-      .eq("id", t.id)
-      .maybeSingle<{ spielstand: Spielstand; termin_kader: { kader_id: string | null; kader: { name: string } | null }[] }>(),
     supabase.from("spieler").select("id", { count: "exact", head: true }).eq("team_id", t.team_id),
   ]);
   const { data, error } = teilnehmer;
   if (error) return ausDbFehler(error);
-  if (termin.error) return ausDbFehler(termin.error);
   const spieler = nachTeilnehmer(
     (
       (data ?? []) as {
@@ -120,8 +122,8 @@ export async function terminSpieler(
     gesamt: spieler.length,
     anwesend: begonnen && !t.ausgefallen ? spieler.filter(istAnwesend).length : null,
     spieler,
-    mitListe: termin.data?.spielstand != null,
-    kader: nachTerminKader((termin.data?.termin_kader ?? []).map((k) => ({ id: k.kader_id, name: k.kader?.name ?? null }))),
+    mitListe: t.spielstand != null,
+    kader: nachTerminKader(t.termin_kader.map((k) => ({ id: k.kader_id, name: k.kader?.name ?? null }))),
     uebrige: begonnen ? 0 : Math.max(0, (team.count ?? 0) - spieler.length),
     gelesenAm: new Date().toISOString(),
   });
@@ -205,4 +207,11 @@ export async function setzeAnwesenheit(
   if (r.status !== "ok")
     return r.grund === "ausgefallen" ? fehlschlag("regel", ABMELDUNG_TEXT.ausgefallenNachtrag) : abweisung(r.grund, r.stand);
   return ok({ terminId: e.terminId, da: r.da, nachgetragen: r.nachgetragen, stand: r.stand });
+}
+
+/** Lehnt der Weg der Trainings ab, weil der Termin ein Spiel ist? Dann
+ *  meldet der KI-Weg über `setzeMeldung` (lib/kern/spiele.ts) — ohne
+ *  vorherige Abfrage der Art. */
+export function istSpielAbweisung(f: KernFehler): boolean {
+  return f.meldung === SPIEL_TEXT.istSpiel;
 }

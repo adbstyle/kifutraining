@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Users } from "lucide-react";
 import { ChipMenu, Leerzustand, RichtwertLozenge, richtwertSchrift } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
@@ -13,6 +12,7 @@ import type { SpielSpieler, SpielTeilnehmer } from "@/lib/kern/spiele";
 import { seitWann } from "@/lib/zeit";
 import { KADER_TEXT, uebrigeText } from "@/lib/kader";
 import { cn } from "@/lib/cn";
+import { useLokalerStand } from "@/lib/use-lokaler-stand";
 import { KaderLozenges } from "./KaderLozenge";
 import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
 
@@ -54,16 +54,11 @@ const UNTER_KENNZEICHNUNG: Record<"ohne" | "angemeldet" | "abgemeldet", string> 
    dem Anpfiff gilt der Stand beim Anpfiff, nachgetragen wird in
    `SpielNachAnpfiff` (#487). */
 export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpieler }) {
-  const router = useRouter();
   const melde = useSnackbar();
-  const [pending, startTransition] = useTransition();
-  // Was gerade gemeldet wird, steht sofort so da; scheitert es, zurück.
-  const [lokal, setLokal] = useState<Record<string, Meldung>>({});
-  const [lokalAufgebot, setLokalAufgebot] = useState<Record<string, boolean>>({});
-  useEffect(() => {
-    setLokal({});
-    setLokalAufgebot({});
-  }, [daten]);
+  // Was gerade gemeldet oder gekennzeichnet wird, steht sofort so da.
+  const meldungen = useLokalerStand<Meldung>(daten);
+  const aufgebot = useLokalerStand<boolean>(daten);
+  const pending = meldungen.pending || aufgebot.pending;
   const [gewaehlterKader, setKader] = useState<string | null>(null);
   const jeKader = useMemo(() => {
     const zahl = new Map<string, number>();
@@ -89,58 +84,30 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
 
   if (daten.begonnen) return <SpielNachAnpfiff teamId={teamId} daten={daten} />;
 
-  const meldungVon = (s: SpielTeilnehmer): Meldung => (s.spielerId && s.spielerId in lokal ? lokal[s.spielerId] : s.meldung);
-  const aufgebotVon = (s: SpielTeilnehmer): boolean =>
-    s.spielerId && s.spielerId in lokalAufgebot ? lokalAufgebot[s.spielerId] : s.nichtAufgeboten;
+  const meldungVon = (s: SpielTeilnehmer): Meldung => meldungen.wert(s.spielerId, s.meldung);
+  const aufgebotVon = (s: SpielTeilnehmer): boolean => aufgebot.wert(s.spielerId, s.nichtAufgeboten);
+  const gesehen = { datum: daten.datum, beginn: daten.beginn };
   // Eine nicht aufgebotene zählt nur als solche (#464 AK 7).
   const nicht = daten.spieler.filter(aufgebotVon).length;
   const angemeldet = daten.spieler.filter((s) => !aufgebotVon(s) && meldungVon(s) === "angemeldet").length;
   const abgemeldet = daten.spieler.filter((s) => !aufgebotVon(s) && meldungVon(s) === "abgemeldet").length;
   const ohne = daten.spieler.length - angemeldet - abgemeldet - nicht;
 
-  function melden(s: SpielTeilnehmer, an: boolean) {
-    const id = s.spielerId;
-    if (!id) return;
-    setLokal((l) => ({ ...l, [id]: an ? "angemeldet" : "abgemeldet" }));
-    startTransition(async () => {
-      const r = await setzeMeldungAktion(teamId, {
-        terminId: daten.terminId,
-        spielerId: id,
-        angemeldet: an,
-        gesehen: { datum: daten.datum, beginn: daten.beginn },
-      });
-      if (!r.ok) {
-        setLokal((l) => {
-          const { [id]: _weg, ...rest } = l;
-          return rest;
-        });
-        melde(r.error);
-      }
-      router.refresh();
-    });
-  }
-
-  function aufbieten(s: SpielTeilnehmer, nichtAufgeboten: boolean) {
-    const id = s.spielerId;
-    if (!id) return;
-    setLokalAufgebot((l) => ({ ...l, [id]: nichtAufgeboten }));
-    startTransition(async () => {
-      const r = await setzeAufgebotAktion(teamId, {
-        terminId: daten.terminId,
-        spielerId: id,
-        nichtAufgeboten,
-        gesehen: { datum: daten.datum, beginn: daten.beginn },
-      });
-      if (!r.ok) {
-        setLokalAufgebot((l) => {
-          const { [id]: _weg, ...rest } = l;
-          return rest;
-        });
-        melde(r.error);
-      }
-      router.refresh();
-    });
-  }
+  // Ein offenes Spiel hat keine Ehemaligen: Jede Zeile trägt ihre Kennung.
+  const melden = (id: string, an: boolean) =>
+    meldungen.aendere(
+      id,
+      an ? "angemeldet" : "abgemeldet",
+      () => setzeMeldungAktion(teamId, { terminId: daten.terminId, spielerId: id, angemeldet: an, gesehen }),
+      (r) => melde(r.error),
+    );
+  const aufbieten = (id: string, nichtAufgeboten: boolean) =>
+    aufgebot.aendere(
+      id,
+      nichtAufgeboten,
+      () => setzeAufgebotAktion(teamId, { terminId: daten.terminId, spielerId: id, nichtAufgeboten, gesehen }),
+      (r) => melde(r.error),
+    );
 
   const uebrige = uebrigeText(daten.uebrige);
   const kaderNamen = daten.kader.flatMap((k) => (k.name !== null ? [k.name] : []));
@@ -208,11 +175,11 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
                   s={s}
                   meldung={meldungVon(s)}
                   nichtAufgeboten={aufgebotVon(s)}
-                  eben={s.spielerId !== null && s.spielerId in lokal && lokal[s.spielerId] !== s.meldung}
+                  eben={meldungen.hat(s.spielerId) && meldungVon(s) !== s.meldung}
                   gelesenAm={daten.gelesenAm}
                   pending={pending}
-                  onMelden={(an) => melden(s, an)}
-                  onAufgebot={(nein) => aufbieten(s, nein)}
+                  onMelden={(an) => s.spielerId && melden(s.spielerId, an)}
+                  onAufgebot={(nein) => s.spielerId && aufbieten(s.spielerId, nein)}
                 />
               ))}
             </ul>
@@ -313,35 +280,27 @@ function warBeimAnpfiff(s: SpielTeilnehmer): string {
    Rückkehr zum Stand beim Anpfiff. Oben die Anwesenden gegen den Richtwert.
    Ehemalige stehen ohne Namen da und lassen sich nicht mehr ansprechen. */
 function SpielNachAnpfiff({ teamId, daten }: { teamId: string; daten: SpielSpieler }) {
-  const router = useRouter();
   const melde = useSnackbar();
-  const [pending, startTransition] = useTransition();
-  // Was gerade nachgetragen wird, steht sofort so da; scheitert es, zurück.
-  const [lokal, setLokal] = useState<Record<string, boolean>>({});
-  useEffect(() => setLokal({}), [daten]);
-  const nachgetragen = (s: SpielTeilnehmer) => (s.spielerId && s.spielerId in lokal ? lokal[s.spielerId] : s.nachgetragen);
+  // Was gerade nachgetragen wird, steht sofort so da.
+  const nachtraege = useLokalerStand<boolean>(daten);
+  const nachgetragen = (s: SpielTeilnehmer) => nachtraege.wert(s.spielerId, s.nachgetragen);
   const anwesend = daten.spieler.filter((s) => zaehlteBeimAnpfiff(s.meldung, s.nichtAufgeboten) !== nachgetragen(s)).length;
 
   function nachtragen(s: SpielTeilnehmer, nachtrag: boolean) {
     const id = s.spielerId;
     if (!id) return;
-    setLokal((l) => ({ ...l, [id]: nachtrag }));
-    startTransition(async () => {
-      const r = await setzeAnwesenheitAktion(teamId, {
-        terminId: daten.terminId,
-        spielerId: id,
-        da: zaehlteBeimAnpfiff(s.meldung, s.nichtAufgeboten) !== nachtrag,
-        gesehen: { datum: daten.datum, beginn: daten.beginn },
-      });
-      if (!r.ok) {
-        setLokal((l) => {
-          const { [id]: _weg, ...rest } = l;
-          return rest;
-        });
-        melde(r.error);
-      }
-      router.refresh();
-    });
+    nachtraege.aendere(
+      id,
+      nachtrag,
+      () =>
+        setzeAnwesenheitAktion(teamId, {
+          terminId: daten.terminId,
+          spielerId: id,
+          da: zaehlteBeimAnpfiff(s.meldung, s.nichtAufgeboten) !== nachtrag,
+          gesehen: { datum: daten.datum, beginn: daten.beginn },
+        }),
+      (r) => melde(r.error),
+    );
   }
 
   const farbe = richtwertSchrift(anwesend, daten.richtwertMin, daten.richtwertMax);
@@ -372,7 +331,7 @@ function SpielNachAnpfiff({ teamId, daten }: { teamId: string; daten: SpielSpiel
               s={s}
               nachgetragen={nachgetragen(s)}
               gelesenAm={daten.gelesenAm}
-              pending={pending}
+              pending={nachtraege.pending}
               onNachtrag={(n) => nachtragen(s, n)}
             />
           ))}
