@@ -135,7 +135,7 @@ export async function meldeSpielUeberLink(token: string, e: LinkMeldung): Promis
     p_gesehen_beginn: e.gesehen.beginn,
   });
   if (error || !data) return { ok: false, error: LINK_FEHLER };
-  const r = data as MeldeAntwort;
+  const r = data as MeldeAntwort | { status: "ungueltig" };
   if (r.status === "ungueltig") return { ok: false, ungueltig: true };
   if (r.status === "abgewiesen") return { ok: false, error: meldungAbweisungText(r.grund, r.stand) };
   return { ok: true, angemeldet: r.angemeldet, zahl: r.stand?.angemeldet ?? null };

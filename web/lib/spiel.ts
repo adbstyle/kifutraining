@@ -99,6 +99,7 @@ export const SPIEL_CHECKS: [string, string][] = [
   ['"tt_spiel_bezeichnung"', SPIEL_TEXT.bezeichnungLang],
   ['"tt_richtwert"', SPIEL_TEXT.richtwert],
   ['"tt_spiel_ohne_training"', SPIEL_TEXT.keinTraining],
+  ['"tt_meldefrist"', SPIEL_TEXT.meldefrist],
   // Treffpunkte (#465).
   ['"stp_anreise"', TREFFPUNKT_TEXT.anreise],
   ['"stp_ort"', TREFFPUNKT_TEXT.ort],

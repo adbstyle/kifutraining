@@ -139,13 +139,12 @@ export async function spielSpieler(
           vorname: r.vorname,
           nachname: r.nachname,
           meldung: r.zustand,
-          // Nach dem Anpfiff zählt der Stand beim Anpfiff, kein Verfall-Hinweis.
-          verfallen: r.verfallen && !begonnen,
+          verfallen: r.verfallen,
           ehemalig: r.ehemalig,
           kader: r.kader ?? [],
           gewechseltAm: r.gewechselt_am,
           nichtAufgeboten: r.nicht_aufgeboten,
-          aufgebotVerfallen: r.aufgebot_verfallen && !begonnen,
+          aufgebotVerfallen: r.aufgebot_verfallen,
           nachgetragen: r.nachgetragen,
         })),
       );
@@ -209,8 +208,7 @@ export type MeldungSetzen = {
 
 export type MeldeAntwort =
   | { status: "ok"; angemeldet: boolean; stand: { angemeldet: number; gesamt: number } | null }
-  | { status: "abgewiesen"; grund: MeldeGrund; stand?: MeldeStand }
-  | { status: "ungueltig" };
+  | { status: "abgewiesen"; grund: MeldeGrund; stand?: MeldeStand };
 
 /** Eine Spieler:in für ein Spiel an- oder abmelden — als Mitglied, bis zum
  *  Anpfiff, auch nach der Meldefrist (AK 2, 4, 10). */
@@ -231,7 +229,6 @@ export async function setzeMeldung(
   if (error) return ausDbFehler(error);
   const r = data as MeldeAntwort;
   if (r.status === "abgewiesen") return meldungAbweisung(r.grund, r.stand);
-  if (r.status !== "ok") return meldungAbweisung("nicht_gefunden");
   return ok({ terminId: e.terminId, angemeldet: r.angemeldet, stand: r.stand });
 }
 

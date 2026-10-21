@@ -222,6 +222,8 @@ function artFehler(
     richtwertMax?: number | null;
     felder?: readonly FeldEingabe[] | null;
     spielerzahl?: number | null;
+    meldefrist?: string | null;
+    treffpunkte?: readonly TreffpunktEingabe[] | null;
   },
   pruefeBezeichnung: boolean,
 ): KernFehler | null {
@@ -237,6 +239,8 @@ function artFehler(
   }
   if (leerZuNull(a.bezeichnung) !== null || (a.richtwertMin ?? null) !== null || (a.richtwertMax ?? null) !== null)
     return fehlschlag("eingabe", SPIEL_TEXT.nurSpiel, { feld: leerZuNull(a.bezeichnung) !== null ? "bezeichnung" : "mindestzahl" });
+  if (leerZuNull(a.meldefrist) !== null) return fehlschlag("eingabe", SPIEL_TEXT.nurSpiel, { feld: "meldefrist" });
+  if (a.treffpunkte?.length) return fehlschlag("eingabe", SPIEL_TEXT.nurSpiel, { feld: "treffpunkte" });
   return null;
 }
 
@@ -302,8 +306,7 @@ export async function legeTerminFest(
   if (e.art === "spiel") {
     const anpfiff = anpfiffFehler(e.datum, leerZuNull(e.beginn));
     if (anpfiff) return anpfiff;
-  } else if (leerZuNull(e.meldefrist) !== null) return fehlschlag("eingabe", SPIEL_TEXT.nurSpiel, { feld: "meldefrist" });
-  else if (e.treffpunkte?.length) return fehlschlag("eingabe", SPIEL_TEXT.nurSpiel, { feld: "treffpunkte" });
+  }
   const frist = fristFehler(e.datum, e.beginn, e.meldefrist);
   if (frist) return frist;
   const treffpunkte = treffpunkteAus(e.treffpunkte ?? [], e.datum, e.beginn);
@@ -453,7 +456,8 @@ export function verfallFehler(v: Verfallend): KernFehler {
 }
 
 /** Wie viele Meldungen und Kennzeichnungen als nicht aufgeboten ein Spiel
- *  trägt — offen oder beim Anpfiff festgehalten (ehemalige zählen nicht).
+ *  trägt — offen oder beim Anpfiff festgehalten, Ehemalige eingeschlossen:
+ *  Auch ihre verschwinden (und der Plan zählt sie, `spiel_stand`).
  *  Sie verfallen mit einem anderen Datum (#463 PC 1, 7; #464 PC 2) und
  *  verschwinden mit dem Spiel (#463 AK 27, #464 AK 10). */
 export async function spielMeldungenZahl(
@@ -461,12 +465,7 @@ export async function spielMeldungenZahl(
   terminId: string,
 ): Promise<KernErgebnis<{ meldungen: number; kennzeichnungen: number }>> {
   const offen = () => supabase.from("spiel_meldungen").select("termin_id", { count: "exact", head: true }).eq("termin_id", terminId);
-  const fest = () =>
-    supabase
-      .from("spiel_teilnahmen")
-      .select("termin_id", { count: "exact", head: true })
-      .eq("termin_id", terminId)
-      .not("spieler_id", "is", null);
+  const fest = () => supabase.from("spiel_teilnahmen").select("termin_id", { count: "exact", head: true }).eq("termin_id", terminId);
   const zahlen = await Promise.all([
     offen().not("zustand", "is", null),
     fest().not("zustand", "is", null),
@@ -538,17 +537,24 @@ export async function aendereTermin(
   const artProblem =
     t.art === "spiel"
       ? artFehler("spiel", spiel, e.bezeichnung !== undefined)
-      : artFehler("training", { bezeichnung: e.bezeichnung, richtwertMin: e.richtwertMin, richtwertMax: e.richtwertMax }, false);
+      : artFehler(
+          "training",
+          {
+            bezeichnung: e.bezeichnung,
+            richtwertMin: e.richtwertMin,
+            richtwertMax: e.richtwertMax,
+            meldefrist: e.meldefrist,
+            treffpunkte: e.treffpunkte,
+          },
+          false,
+        );
   if (artProblem) return artProblem;
   if (t.art === "spiel" && (neu.datum !== t.datum || neu.beginn !== t.beginn)) {
     const anpfiff = anpfiffFehler(neu.datum, neu.beginn);
     if (anpfiff) return anpfiff;
   }
-  if (t.art !== "spiel" && leerZuNull(e.meldefrist) !== null)
-    return fehlschlag("eingabe", SPIEL_TEXT.nurSpiel, { feld: "meldefrist" });
   const frist = t.art === "spiel" && e.meldefrist !== undefined ? fristFehler(neu.datum, neu.beginn, e.meldefrist) : null;
   if (frist) return frist;
-  if (t.art !== "spiel" && e.treffpunkte?.length) return fehlschlag("eingabe", SPIEL_TEXT.nurSpiel, { feld: "treffpunkte" });
   const treffpunkte =
     t.art === "spiel" && e.treffpunkte !== undefined ? treffpunkteAus(e.treffpunkte ?? [], neu.datum, neu.beginn) : null;
   if (treffpunkte && !treffpunkte.ok) return treffpunkte;

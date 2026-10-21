@@ -539,14 +539,16 @@ const LINK_MODELL =
   "Jede Spieler:in hat einen privaten Link: Wer ihn öffnet, sieht ohne Konto den Teamnamen, Vor- und Nachnamen dieser " +
   "Spieler:in und die anstehenden Termine des Teams, die für sie gelten (bei Terminen mit Kadern nur die ihrer Kader, samt " +
   "dieser Kader), mit der Zahl der Angemeldeten und derer, für die er gilt, und meldet sie bis zum Beginn ab und " +
-  "wieder an — keine Namen anderer, kein Training, nichts Vergangenes. KiFu verschickt den Link nicht. Gib ihn nur der " +
+  "wieder an. Spiele meldet sie an oder ab bis zur Meldefrist (ohne Frist bis zum Anpfiff) und sieht dort Bezeichnung, " +
+  "Richtwert, Meldefrist, Treffpunkte, Bemerkung und ob die Spieler:in nicht aufgeboten ist — keine Namen anderer, kein " +
+  "Training, keine Nachträge, nichts Vergangenes. KiFu verschickt den Link nicht. Gib ihn nur der " +
   `Person weiter, die ihn verlangt, und nie in einer Gruppe. ${LINK_TEXT.warnung}`;
 
 const LinkAusgabe = z.object({
   spieler_id: z.string(),
   team_id: z.string(),
   name: z.string(),
-  url: z.string().describe("Der private Link. Ein Geheimnis: Wer ihn hat, kann diese Spieler:in ab- und anmelden."),
+  url: z.string().describe("Der private Link. Ein Geheimnis: Wer ihn hat, kann diese Spieler:in für Trainings ab- und anmelden und für Spiele melden."),
   hinweis: z.string(),
 });
 

@@ -104,9 +104,10 @@ export function useSpielAngaben(datum: string, beginn: string) {
   return {
     wert,
     setze: (w: Partial<SpielEingabe>) => setWert((x) => ({ ...x, ...w })),
-    /** Beim Öffnen: der Stand eines anderen Spiels rückt nichts mit. */
-    zuruecksetzen: (w: SpielEingabe = SPIEL_LEER) => {
-      bisher.current = null;
+    /** Beim Öffnen: Ab dem Anpfiff des Spiels, das der Dialog zeigt
+     *  (`YYYY-MM-DDTHH:MM`), rückt alles mit; der Stand eines anderen nie. */
+    zuruecksetzen: (w: SpielEingabe = SPIEL_LEER, anpfiffStart: string | null = null) => {
+      bisher.current = anpfiffStart;
       setWert(w);
       setProblem(null);
     },

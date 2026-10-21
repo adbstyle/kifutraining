@@ -34,6 +34,7 @@ create function spiel_zaehlt(p_zustand text, p_nicht_aufgeboten boolean) returns
 language sql immutable
 set search_path = public, pg_temp
 as $$ select coalesce(p_zustand = 'angemeldet', false) and not p_nicht_aufgeboten; $$;
+revoke all on function spiel_zaehlt(text, boolean) from public, anon;
 grant execute on function spiel_zaehlt(text, boolean) to authenticated;
 
 -- ── Nachtragen (AK 1–7) ─────────────────────────────────────────────────────

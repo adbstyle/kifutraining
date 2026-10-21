@@ -197,13 +197,16 @@ export function TerminDialog({
       bemerkung: start?.bemerkung ?? "",
     });
     platz.zuruecksetzen(start);
-    spiel.zuruecksetzen({
-      bezeichnung: start?.bezeichnung ?? "",
-      min: start?.richtwertMin != null ? String(start.richtwertMin) : "",
-      max: start?.richtwertMax != null ? String(start.richtwertMax) : "",
-      ...fristEingabe(start?.meldefrist),
-      treffpunkte: treffpunkteEingabe(start?.treffpunkte),
-    });
+    spiel.zuruecksetzen(
+      {
+        bezeichnung: start?.bezeichnung ?? "",
+        min: start?.richtwertMin != null ? String(start.richtwertMin) : "",
+        max: start?.richtwertMax != null ? String(start.richtwertMax) : "",
+        ...fristEingabe(start?.meldefrist),
+        treffpunkte: treffpunkteEingabe(start?.treffpunkte),
+      },
+      start?.datum && start.beginn ? `${start.datum}T${start.beginn.slice(0, 5)}` : null,
+    );
     setProblem(null);
     if (serie) setRegel({ wochentage: [...serie.wochentage], von: serie.beginnDatum, bis: serie.endDatum });
     setRegelProblem(null);
