@@ -94,12 +94,21 @@ export function useVerfallRueckfrage(pending?: boolean) {
   }
 
   function nachVerlegung(r: Antwort & { verfallend: number }, weiter: () => void) {
-    // Ein Spiel (#463 AK 13, 26; #464 AK 10): Meldungen, Kennzeichnungen und die Frist.
+    // Ein Spiel (#463 AK 13, 26; #464 AK 10; #487 AK 13): Meldungen,
+    // Kennzeichnungen, Nachträge und die Frist.
     if (r.fristAbgelaufen !== undefined) {
       const k = r.kennzeichnungen ?? 0;
-      const meldungen = r.verfallend - k;
-      const text = `${spielVerfallText(meldungen, r.fristAbgelaufen, k)}${meldungen > 0 ? " Für den neuen Tag melden sich alle neu." : ""}`;
-      const titel = meldungen > 0 ? "Meldungen verfallen" : k > 0 ? "Kennzeichnungen verfallen" : "Meldefrist abgelaufen";
+      const n = r.nachtraege ?? 0;
+      const meldungen = r.verfallend - k - n;
+      const text = `${spielVerfallText(meldungen, r.fristAbgelaufen, k, n)}${meldungen > 0 ? " Für den neuen Tag melden sich alle neu." : ""}`;
+      const titel =
+        meldungen > 0
+          ? "Meldungen verfallen"
+          : k > 0
+            ? "Kennzeichnungen verfallen"
+            : n > 0
+              ? "Nachträge verfallen"
+              : "Meldefrist abgelaufen";
       setFrage({ anzahl: r.verfallend, text, titel, weiter });
       return;
     }

@@ -52,14 +52,21 @@ export function TerminEigenschaften({
           ausgefallener Termin nennt keine (#437 AK 4). */}
       {t.spiel ? (
         <>
-          {/* #463 AK 6, 7: die Angemeldeten gegen den Richtwert, farbig und in Worten. */}
+          {/* #463 AK 6, 7: die Angemeldeten gegen den Richtwert, farbig und in
+              Worten; ab dem Anpfiff die Anwesenden (#487 AK 10, 11). */}
           {!t.ausgefallen && t.spielstand && (
             <Eigenschaft label="Spieler:innen">
               <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className={richtwertSchrift(t.spielstand.angemeldet, t.spiel.richtwertMin, t.spiel.richtwertMax)}>
-                  {t.spielstand.angemeldet} von {t.spielstand.gesamt} angemeldet
+                <span className={richtwertSchrift(t.spielstand.anwesend ?? t.spielstand.angemeldet, t.spiel.richtwertMin, t.spiel.richtwertMax)}>
+                  {t.spielstand.anwesend != null
+                    ? `${t.spielstand.anwesend} von ${t.spielstand.gesamt} da`
+                    : `${t.spielstand.angemeldet} von ${t.spielstand.gesamt} angemeldet`}
                 </span>
-                <RichtwertLozenge zahl={t.spielstand.angemeldet} min={t.spiel.richtwertMin} max={t.spiel.richtwertMax} />
+                <RichtwertLozenge
+                  zahl={t.spielstand.anwesend ?? t.spielstand.angemeldet}
+                  min={t.spiel.richtwertMin}
+                  max={t.spiel.richtwertMax}
+                />
                 {/* #464 AK 8: wie viele nicht aufgeboten sind. */}
                 {(t.spielstand.nicht_aufgeboten ?? 0) > 0 && (
                   <span className="type-body-small text-on-surface-mittel">{t.spielstand.nicht_aufgeboten} nicht aufgeboten</span>

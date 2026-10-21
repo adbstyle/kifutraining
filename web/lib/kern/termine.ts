@@ -438,7 +438,7 @@ export function verfallend(abmeldungen: number, nachtraege: number): Verfallend 
 /** Ein Fehler, der vor dem Verlegen nach der Bestätigung fragt. */
 export function verfallFehler(v: Verfallend): KernFehler {
   if (v.spiel)
-    return fehlschlag("regel", spielBestaetigen(spielVerfallText(v.spiel.meldungen, v.spiel.fristAbgelaufen, v.spiel.kennzeichnungen)), {
+    return fehlschlag("regel", spielBestaetigen(spielVerfallText(v.spiel.meldungen, v.spiel.fristAbgelaufen, v.spiel.kennzeichnungen, v.nachtraege)), {
       feld: "bestaetigt",
       verfallend: v.summe,
       nachtraege: v.nachtraege,
@@ -476,6 +476,19 @@ export async function spielMeldungenZahl(
   for (const z of zahlen) if (z.error) return ausDbFehler(z.error);
   const [mo, mf, ko, kf] = zahlen.map((z) => z.count ?? 0);
   return ok({ meldungen: mo + mf, kennzeichnungen: ko + kf });
+}
+
+/** Wie viele Nachträge zur Anwesenheit ein begonnenes Spiel trägt — sie
+ *  verfallen mit jeder Verlegung, denn der Anpfiff liegt danach in der
+ *  Zukunft (#487 AK 13, PC 3). Ehemalige zählen nicht. */
+async function spielNachtraegeZahl(supabase: SupabaseClient, terminId: string): Promise<KernErgebnis<number>> {
+  const { count, error } = await supabase
+    .from("spiel_teilnahmen")
+    .select("termin_id", { count: "exact", head: true })
+    .eq("termin_id", terminId)
+    .eq("nachgetragen", true)
+    .not("spieler_id", "is", null);
+  return error ? ausDbFehler(error) : ok(count ?? 0);
 }
 
 /** Warum ein bedingtes Schreiben keine Zeile traf: Der Termin ist weg, oder
@@ -603,14 +616,16 @@ export async function aendereTermin(
     if (!zahl.ok) return zahl;
     const vorlauf = "meldefrist_vorlauf_min" in aenderung ? (aenderung.meldefrist_vorlauf_min ?? null) : t.meldefrist_vorlauf_min;
     const frist = fristWirdAbgelaufen(t, { datum: neu.datum, beginn: neu.beginn ?? "" }, vorlauf, jetztAmTrainingsort());
+    const nachtraege = await spielNachtraegeZahl(supabase, t.id);
+    if (!nachtraege.ok) return nachtraege;
     const { meldungen, kennzeichnungen } = zahl.wert;
     const v: Verfallend = {
       abmeldungen: 0,
-      nachtraege: 0,
-      summe: meldungen + kennzeichnungen,
+      nachtraege: nachtraege.wert,
+      summe: meldungen + kennzeichnungen + nachtraege.wert,
       spiel: { meldungen, kennzeichnungen, fristAbgelaufen: frist },
     };
-    // #464 AK 10, 13: auch wenn nur Kennzeichnungen verfallen.
+    // #464 AK 10, 13; #487 AK 13, 17: auch wenn nur Kennzeichnungen oder Nachträge verfallen.
     if ((v.summe > 0 || frist) && e.bestaetigt !== true && e.bestaetigt !== v.summe) return verfallFehler(v);
     verfallen = meldungen;
   } else if (("datum" in aenderung && neu.datum !== t.datum) || ("beginn" in aenderung && neu.beginn !== t.beginn)) {

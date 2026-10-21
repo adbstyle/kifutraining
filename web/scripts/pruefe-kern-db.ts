@@ -5037,15 +5037,50 @@ try {
     await new Promise((r) => setTimeout(r, 61_000));
     fehler(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.noah, angemeldet: true }), "regel", MELDUNG_TEXT.begonnen);
     // Eine neue Spieler:in hält den Stand vorher fest (spieler_vorher) — sie gehört nicht dazu.
-    await neuerSpieler(k.team, "Zoe");
+    const zoe = (await neuerSpieler(k.team, "Zoe")).spielerId;
     const fest = wert(await spielSpieler(a.supabase, a.id, { terminId: t }));
     assert.equal(fest.begonnen, true);
     assert.deepEqual(await meldungen(t), { Lena: "angemeldet", Mia: "abgemeldet", Noah: null }, "AK 20: der Stand beim Anpfiff");
     assert.equal((await standVon(k.team, t)).spielstand?.eingefroren, true);
     assert.deepEqual([fest.angemeldet, fest.nichtAufgeboten], [1, 1], "#464: festgehalten, zählt nicht");
     fehler(await setzeAufgebot(a.supabase, a.id, { terminId: t, spielerId: k.noah, nichtAufgeboten: false }), "regel", MELDUNG_TEXT.begonnen);
+
+    // #487: nachtragen, wer nicht oder doch erschienen ist (AK 1, 2, 5, 9).
+    fehler(await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: zoe, da: true }), "regel", ABMELDUNG_TEXT.nichtDabei);
+    const r1 = wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: k.lena, da: false }));
+    assert.deepEqual([r1.nachgetragen, r1.stand?.anwesend, r1.stand?.angemeldet], [true, 0, 1], "nicht erschienen");
+    wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: k.mia, da: true }));
+    wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: k.noah, da: true }));
+    const na = wert(await spielSpieler(a.supabase, a.id, { terminId: t }));
+    assert.deepEqual([na.anwesend, na.angemeldet, na.nichtAufgeboten], [2, 1, 1], "doch erschienen: abgemeldet und nicht aufgeboten");
+    assert.deepEqual(na.spieler.filter((x) => x.nachgetragen).map((x) => x.vorname), ["Lena", "Mia", "Noah"]);
+    // PC 1, 2: Meldung, Kennzeichnung und Zeitpunkt bleiben.
+    assert.deepEqual(await meldungen(t), { Lena: "angemeldet", Mia: "abgemeldet", Noah: null });
+    assert.equal(na.spieler.find((x) => x.vorname === "Lena")!.gewechseltAm, fest.spieler.find((x) => x.vorname === "Lena")!.gewechseltAm);
+    // AK 10, 19: Mitglieder sehen die Anwesenden, die Eltern weiter die Angemeldeten beim Anpfiff.
+    assert.deepEqual([(await standVon(k.team, t)).spielstand?.anwesend, (await standVon(k.team, t)).spielstand?.angemeldet], [2, 1]);
+    const lenaLink = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: k.lena })).token;
+    const imLink = (await feldAnon.rpc("spieler_link_ansicht", { p_token: lenaLink })).data.termine.find((x: { id: string }) => x.id === t);
+    assert.deepEqual([imLink.angemeldet, "anwesend" in imLink], [1, false]);
+    // AK 3: zurücknehmen.
+    wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: k.lena, da: true }));
+    assert.equal(wert(await spielSpieler(a.supabase, a.id, { terminId: t })).anwesend, 3);
+    // AK 6, 12; PC 4: ausgefallen — keine Nachträge, keine Zahl; danach gelten sie wieder.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t }));
+    fehler(await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: k.lena, da: false }), "regel", ABMELDUNG_TEXT.ausgefallenNachtrag);
+    assert.equal(wert(await spielSpieler(a.supabase, a.id, { terminId: t })).anwesend, null);
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
+    assert.equal(wert(await spielSpieler(a.supabase, a.id, { terminId: t })).anwesend, 3);
+
     // PC 7, 8: am selben Tag auf später — wieder offen mit den bisherigen Meldungen; Zoe neu ohne.
-    wert(await aendereTermin(a.supabase, a.id, { terminId: t, beginn: plus(30), ende: plus(90) }));
+    // #487 AK 13, PC 3: Die Nachträge verfallen — erst nach Rückfrage, auch wenn sonst nichts verfällt.
+    const rv = fehler(
+      await aendereTermin(a.supabase, a.id, { terminId: t, beginn: plus(30), ende: plus(90) }),
+      "regel",
+      spielBestaetigen(spielVerfallText(0, false, 0, 2)),
+    ) as { verfallend?: number; nachtraege?: number };
+    assert.deepEqual([rv.verfallend, rv.nachtraege], [2, 2]);
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t, beginn: plus(30), ende: plus(90), bestaetigt: 2 }));
     assert.deepEqual(await meldungen(t), { Lena: "angemeldet", Mia: "abgemeldet", Noah: null, Zoe: null });
     assert.equal(wert(await spielSpieler(a.supabase, a.id, { terminId: t })).nichtAufgeboten, 1, "#464 PC 2: gilt wieder");
     // An einem anderen Datum verfallen sie (mit Rückfrage), samt Kennzeichnung.

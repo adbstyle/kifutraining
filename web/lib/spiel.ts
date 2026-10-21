@@ -268,6 +268,25 @@ export const AUFGEBOT_TEXT = {
   verfallen: "Die Kennzeichnung als nicht aufgeboten gilt nicht mehr.",
 } as const;
 
+// ── Nachtrag (#487) ─────────────────────────────────────────────────────────
+
+/** Zählte die Spieler:in beim Anpfiff? Angemeldet und nicht als nicht
+ *  aufgeboten gekennzeichnet (#464 AK 7). Zwilling der SQL-Funktion
+ *  `spiel_zaehlt`. Anwesend ist, wer zählte und nicht nachgetragen ist, oder
+ *  wer nicht zählte und nachgetragen ist (#487 AK 9). */
+export function zaehlteBeimAnpfiff(meldung: Meldung, nichtAufgeboten: boolean): boolean {
+  return meldung === "angemeldet" && !nichtAufgeboten;
+}
+
+export const NACHTRAG_TEXT = {
+  nichtErschienen: "Nicht erschienen",
+  dochErschienen: "Doch erschienen",
+  /** Über der Liste eines begonnenen Spiels (Design PO 2026-10-21). */
+  kopf: "Stand beim Anpfiff · nachtragen, wer da war",
+  /** Der Menüeintrag, der einen Nachtrag zurücknimmt (AK 3). */
+  zurueck: (status: string) => `${status} (Stand beim Anpfiff)`,
+} as const;
+
 /** «1 Kennzeichnung als nicht aufgeboten», «2 Kennzeichnungen …». */
 function kennzeichnungenText(k: number): string {
   return k === 1 ? "1 Kennzeichnung als nicht aufgeboten" : `${k} Kennzeichnungen als nicht aufgeboten`;
@@ -312,13 +331,20 @@ export function meldungAbweisungText(grund: MeldeGrund, stand?: MeldeStand): str
 // ── Verlegen und Entfernen (#463 AK 13, 23, 26, 27) ─────────────────────────
 
 /** Was eine Verlegung eines Spiels mit seinen Meldungen, Kennzeichnungen
- *  als nicht aufgeboten (#464 AK 10) und seiner Frist tut. */
-export function spielVerfallText(meldungen: number, fristAbgelaufen: boolean, kennzeichnungen = 0): string {
+ *  als nicht aufgeboten (#464 AK 10), Nachträgen (#487 AK 13) und seiner
+ *  Frist tut. */
+export function spielVerfallText(meldungen: number, fristAbgelaufen: boolean, kennzeichnungen = 0, nachtraege = 0): string {
   const teile: string[] = [];
   if (meldungen === 1) teile.push("Damit verfällt 1 Meldung: Die Spieler:in ist wieder ohne Meldung.");
   else if (meldungen > 1) teile.push(`Damit verfallen ${meldungen} Meldungen: Diese Spieler:innen sind wieder ohne Meldung.`);
-  if (kennzeichnungen > 0)
-    teile.push(`${meldungen > 0 ? "Ausserdem" : "Damit"} ${kennzeichnungen === 1 ? "verfällt" : "verfallen"} ${kennzeichnungenText(kennzeichnungen)}.`);
+  const weitere = [
+    ...(kennzeichnungen > 0 ? [kennzeichnungenText(kennzeichnungen)] : []),
+    ...(nachtraege > 0 ? [nachtraege === 1 ? "1 Nachtrag zur Anwesenheit" : `${nachtraege} Nachträge zur Anwesenheit`] : []),
+  ];
+  if (weitere.length > 0)
+    teile.push(
+      `${meldungen > 0 ? "Ausserdem" : "Damit"} ${kennzeichnungen + nachtraege === 1 ? "verfällt" : "verfallen"} ${weitere.join(" und ")}.`,
+    );
   if (fristAbgelaufen) teile.push("Die Meldefrist ist danach schon abgelaufen; Eltern können nicht mehr melden.");
   return teile.join(" ");
 }

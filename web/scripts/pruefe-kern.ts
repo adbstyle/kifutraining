@@ -178,6 +178,8 @@ import {
   spielEntfernenText,
   spielVerfallText,
   AUFGEBOT_TEXT,
+  NACHTRAG_TEXT,
+  zaehlteBeimAnpfiff,
   TREFFPUNKT_TEXT,
   treffpunktAnzeige,
   treffpunkteNormal,
@@ -1938,6 +1940,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#475": ["termin_spieler_abrufen", "termin_anwesenheit_setzen"],
     "#459": ["termin_festlegen", "termin_aendern", "termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen", "termin_entfernen", "team_plan_abrufen"],
     "#464": ["termin_spieler_abrufen", "termin_aufgebot_setzen"],
+    "#487": ["termin_spieler_abrufen", "termin_anwesenheit_setzen", "team_plan_abrufen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
@@ -2495,6 +2498,19 @@ pruefe("Spiele: nicht aufbieten - Abweisung, Verfall- und Entfernen-Texte, Kader
   assert.ok(kaderVerfallText(4, 1, 1).startsWith("Damit verfallen 2 Abmeldungen zu Trainings, 1 Meldung zu einem Spiel und 1 Kennzeichnung als nicht aufgeboten:"));
   assert.ok(kaderVerfallText(1, 0, 1).startsWith("Damit verfällt 1 Kennzeichnung als nicht aufgeboten:"));
   assert.equal(AUFGEBOT_TEXT.eltern("Mia"), "Mia ist für dieses Spiel nicht aufgeboten. Fragen dazu ans Team.");
+});
+
+pruefe("Spiele: Nachtrag - wer beim Anpfiff zählte, Verfall-Text (#487)", () => {
+  assert.equal(zaehlteBeimAnpfiff("angemeldet", false), true);
+  assert.equal(zaehlteBeimAnpfiff("angemeldet", true), false, "nicht aufgeboten zählt nicht");
+  assert.equal(zaehlteBeimAnpfiff("abgemeldet", false), false);
+  assert.equal(zaehlteBeimAnpfiff(null, false), false);
+  assert.equal(spielVerfallText(0, false, 0, 1), "Damit verfällt 1 Nachtrag zur Anwesenheit.");
+  assert.equal(
+    spielVerfallText(2, false, 1, 3),
+    "Damit verfallen 2 Meldungen: Diese Spieler:innen sind wieder ohne Meldung. Ausserdem verfallen 1 Kennzeichnung als nicht aufgeboten und 3 Nachträge zur Anwesenheit.",
+  );
+  assert.equal(NACHTRAG_TEXT.zurueck("Abgemeldet"), "Abgemeldet (Stand beim Anpfiff)");
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

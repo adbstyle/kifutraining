@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
 import { nachSpielerName } from "@/lib/spieler";
 import {
+  zaehlteBeimAnpfiff,
   fristAbgelaufen,
   meldefristZeitpunkt,
   meldungAbweisungText,
@@ -43,6 +44,9 @@ export type SpielTeilnehmer = {
    *  weiter, zählt aber nicht. `aufgebotVerfallen`: mit einer Verlegung verfallen. */
   nichtAufgeboten: boolean;
   aufgebotVerfallen: boolean;
+  /** Ab dem Anpfiff: Ihre Anwesenheit weicht vom Stand beim Anpfiff ab —
+   *  nicht erschienen, wenn sie zählte, sonst doch erschienen (#487 AK 8). */
+  nachgetragen: boolean;
 };
 
 export type SpielSpieler = {
@@ -59,6 +63,9 @@ export type SpielSpieler = {
   abgemeldet: number;
   ohneMeldung: number;
   nichtAufgeboten: number;
+  /** Ab dem Anpfiff die Anwesenden (#487 AK 9); vorher und an einem
+   *  ausgefallenen Spiel `null`. */
+  anwesend: number | null;
   gesamt: number;
   /** Mindest- und Höchstzahl (#459). */
   richtwertMin: number | null;
@@ -87,6 +94,7 @@ type Zeile = {
   gewechselt_am: string | null;
   nicht_aufgeboten: boolean;
   aufgebot_verfallen: boolean;
+  nachgetragen: boolean;
 };
 
 /** Nach Name, ehemalige zuletzt. */
@@ -138,6 +146,7 @@ export async function spielSpieler(
           gewechseltAm: r.gewechselt_am,
           nichtAufgeboten: r.nicht_aufgeboten,
           aufgebotVerfallen: r.aufgebot_verfallen && !begonnen,
+          nachgetragen: r.nachgetragen,
         })),
       );
   const vorlauf = termin.data?.meldefrist_vorlauf_min ?? null;
@@ -156,6 +165,10 @@ export async function spielSpieler(
     abgemeldet: zaehle("abgemeldet"),
     ohneMeldung: zaehle(null),
     nichtAufgeboten: spieler.filter((s) => s.nichtAufgeboten).length,
+    anwesend:
+      begonnen && !t.ausgefallen
+        ? spieler.filter((s) => zaehlteBeimAnpfiff(s.meldung, s.nichtAufgeboten) !== s.nachgetragen).length
+        : null,
     gesamt: spieler.length,
     richtwertMin: t.richtwert_min,
     richtwertMax: t.richtwert_max,

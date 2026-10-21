@@ -15,6 +15,7 @@ import {
 } from "@/lib/kern/spieler";
 import { setzeAbmeldung, setzeAnwesenheit, terminSpieler } from "@/lib/kern/abmeldungen";
 import { istSpiel, setzeAufgebot, setzeMeldung, spielSpieler, type SpielSpieler, type SpielTeilnehmer } from "@/lib/kern/spiele";
+import { zaehlteBeimAnpfiff } from "@/lib/spiel";
 import {
   ABHOL_PFAD,
   ABHOLUNG_TEXT,
@@ -209,6 +210,9 @@ const ABMELDE_MODELL =
   "gleich welche Meldung sie trägt: Die Meldung bleibt darunter stehen, zählt aber nicht als angemeldet, und bis die " +
   "Kennzeichnung aufgehoben ist, nimmt das Spiel für sie keine Meldung an. Die Kennzeichnung trägt keinen Grund, " +
   "verfällt mit den Meldungen und wird beim Anpfiff mit ihnen festgehalten; die Eltern sehen sie über ihren Link. " +
+  "Ab dem Anpfiff tragen Mitglieder (und du) nach, wer nicht oder doch erschienen ist (termin_anwesenheit_setzen): " +
+  "Gezählt hat beim Anpfiff, wer angemeldet und nicht als nicht aufgeboten gekennzeichnet war; «nicht_erschienen» gilt " +
+  "für sie, «doch_erschienen» für alle anderen. Jede Verlegung eines begonnenen Spiels lässt seine Nachträge verfallen. " +
   "Mindest- und Höchstzahl sind ein Richtwert; wie die Zahl dazu steht, beurteilst du selbst.";
 
 /** Was die KI je Spieler:in zur Anwesenheit erhält (#475 AK 13). */
@@ -330,7 +334,7 @@ function spielAusgabe(w: SpielSpieler) {
     mindestzahl: w.richtwertMin,
     hoechstzahl: w.richtwertMax,
     meldefrist: w.frist,
-    anwesend: null,
+    anwesend: w.anwesend,
     kader: w.kader,
     nicht_betroffen: w.uebrige,
     spieler: w.spieler.map(spielTeilnehmerAusgabe),
@@ -347,7 +351,12 @@ function spielTeilnehmerAusgabe(s: SpielTeilnehmer) {
     nicht_aufgeboten: s.nichtAufgeboten,
     ehemalig: s.ehemalig,
     kader: s.kader,
-    anwesenheit: null,
+    // #487 AK 14: der Nachtrag gegen den Stand beim Anpfiff.
+    anwesenheit: s.nachgetragen
+      ? zaehlteBeimAnpfiff(s.meldung, s.nichtAufgeboten)
+        ? ("nicht_erschienen" as const)
+        : ("doch_erschienen" as const)
+      : null,
     zuletzt_gewechselt: s.gewechseltAm && jetztAmTrainingsort(new Date(s.gewechseltAm)),
   };
 }
@@ -485,7 +494,8 @@ export const terminAnwesenheitSetzen = werkzeug({
   beschreibung:
     "Trägt an einem begonnenen Termin nach, ob eine Spieler:in da war («da»). Gegen den Stand bei Beginn ist es ein " +
     "Nachtrag: «da: false» bei einer Angemeldeten heisst nicht erschienen, «da: true» bei einer Abgemeldeten doch " +
-    "erschienen. Gleich dem Stand bei Beginn nimmt es den Nachtrag zurück. Nur für Spieler:innen im Stand bei Beginn, " +
+    "erschienen - an einem Spiel bei einer, die ohne Meldung, abgemeldet oder nicht aufgeboten war. Gleich dem Stand " +
+    "bei Beginn nimmt es den Nachtrag zurück. Nur für Spieler:innen im Stand bei Beginn, " +
     "nicht vor Beginn und nicht an einem ausgefallenen Termin. «termin_datum» und «termin_beginn» sind Datum und Beginn, " +
     "wie du den Termin zuletzt gelesen hast: Wurde er inzwischen verlegt, weist KiFu mit dem neuen Stand ab (Fehlerart " +
     `«konflikt»). ${ABMELDE_MODELL} ${TERMIN_KENNUNG_FEHLER} ${SPIELER_KENNUNG_FEHLER}`,

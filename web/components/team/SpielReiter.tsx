@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { Users } from "lucide-react";
 import { ChipMenu, Leerzustand, RichtwertLozenge, richtwertSchrift } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
-import { setzeAufgebotAktion, setzeMeldungAktion } from "@/lib/actions/abmeldungen";
+import { setzeAnwesenheitAktion, setzeAufgebotAktion, setzeMeldungAktion } from "@/lib/actions/abmeldungen";
 import { EHEMALIGE_SPIELERIN, spielerName } from "@/lib/spieler";
-import { AUFGEBOT_TEXT, MELDUNG_TEXT, meldungText, zeitpunktKurz, type Meldung } from "@/lib/spiel";
+import { AUFGEBOT_TEXT, MELDUNG_TEXT, NACHTRAG_TEXT, meldungText, zaehlteBeimAnpfiff, zeitpunktKurz, type Meldung } from "@/lib/spiel";
 import type { SpielSpieler, SpielTeilnehmer } from "@/lib/kern/spiele";
 import { seitWann } from "@/lib/zeit";
 import { KADER_TEXT, uebrigeText } from "@/lib/kader";
@@ -50,8 +50,9 @@ const UNTER_KENNZEICHNUNG: Record<"ohne" | "angemeldet" | "abgemeldet", string> 
    Gruppe, ihre Meldung darunter, bis «Aufbieten» das wieder aufhebt.
 
    Oben die Zahl der Angemeldeten gegen den Richtwert, farbig und in Worten,
-   dazu, bis wann Eltern und Mitglieder melden. Ab dem Anpfiff gilt der
-   Stand beim Anpfiff; die Chips stehen dann fest. Kader wie bei Trainings. */
+   dazu, bis wann Eltern und Mitglieder melden. Kader wie bei Trainings. Ab
+   dem Anpfiff gilt der Stand beim Anpfiff, nachgetragen wird in
+   `SpielNachAnpfiff` (#487). */
 export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpieler }) {
   const router = useRouter();
   const melde = useSnackbar();
@@ -85,6 +86,8 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
     );
 
   if (daten.ausgefallen) return <p className="type-body-medium text-on-surface-mittel">{MELDUNG_TEXT.ausgefallen}</p>;
+
+  if (daten.begonnen) return <SpielNachAnpfiff teamId={teamId} daten={daten} />;
 
   const meldungVon = (s: SpielTeilnehmer): Meldung => (s.spielerId && s.spielerId in lokal ? lokal[s.spielerId] : s.meldung);
   const aufgebotVon = (s: SpielTeilnehmer): boolean =>
@@ -141,15 +144,13 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
 
   const uebrige = uebrigeText(daten.uebrige);
   const kaderNamen = daten.kader.flatMap((k) => (k.name !== null ? [k.name] : []));
-  const mitChips = !daten.begonnen && kaderNamen.length > 1;
+  const mitChips = kaderNamen.length > 1;
   const eingrenzung = mitChips && gewaehlterKader !== null && kaderNamen.includes(gewaehlterKader) ? gewaehlterKader : null;
   const sichtbar = eingrenzung === null ? daten.spieler : daten.spieler.filter((s) => s.kader.includes(eingrenzung));
   const farbe = richtwertSchrift(angemeldet, daten.richtwertMin, daten.richtwertMax);
-  const melden_bis = daten.begonnen
-    ? "Stand beim Anpfiff"
-    : daten.frist
-      ? `Eltern melden bis ${zeitpunktKurz(daten.frist)}${daten.fristAbgelaufen ? " (abgelaufen)" : ""} · Mitglieder bis zum Anpfiff`
-      : "Eltern und Mitglieder melden bis zum Anpfiff";
+  const melden_bis = daten.frist
+    ? `Eltern melden bis ${zeitpunktKurz(daten.frist)}${daten.fristAbgelaufen ? " (abgelaufen)" : ""} · Mitglieder bis zum Anpfiff`
+    : "Eltern und Mitglieder melden bis zum Anpfiff";
 
   return (
     <div className="flex flex-col gap-3">
@@ -209,7 +210,6 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
                   nichtAufgeboten={aufgebotVon(s)}
                   eben={s.spielerId !== null && s.spielerId in lokal && lokal[s.spielerId] !== s.meldung}
                   gelesenAm={daten.gelesenAm}
-                  fest={daten.begonnen}
                   pending={pending}
                   onMelden={(an) => melden(s, an)}
                   onAufgebot={(nein) => aufbieten(s, nein)}
@@ -230,7 +230,6 @@ function SpielZeile({
   nichtAufgeboten,
   eben,
   gelesenAm,
-  fest,
   pending,
   onMelden,
   onAufgebot,
@@ -240,7 +239,6 @@ function SpielZeile({
   nichtAufgeboten: boolean;
   eben: boolean;
   gelesenAm: string;
-  fest: boolean;
   pending: boolean;
   onMelden: (an: boolean) => void;
   onAufgebot: (nichtAufgeboten: boolean) => void;
@@ -285,10 +283,144 @@ function SpielZeile({
       </span>
       <ChipMenu
         label={status}
-        ariaLabel={`${name}: ${status}${fest ? "" : ", Meldung ändern"}`}
+        ariaLabel={`${name}: ${status}, Meldung ändern`}
         leading={<span aria-hidden className={cn("size-2 shrink-0 rounded-full", nichtAufgeboten ? "bg-error" : PUNKT[meldung ?? "ohne"])} />}
-        items={fest || s.ehemalig ? [] : items}
-        disabled={pending || fest || s.ehemalig}
+        items={items}
+        disabled={pending}
+        menuClassName="right-0"
+      />
+    </li>
+  );
+}
+
+/** Der Status beim Anpfiff, wie ihn der Chip ohne Nachtrag nennt. */
+function statusBeimAnpfiff(s: SpielTeilnehmer): string {
+  return s.nichtAufgeboten ? AUFGEBOT_TEXT.nichtAufgeboten : meldungText(s.meldung);
+}
+
+/** Unter dem Namen, wer nicht (ohne Nachtrag) als angemeldet zählt: wie er
+ *  beim Anpfiff stand. */
+function warBeimAnpfiff(s: SpielTeilnehmer): string {
+  if (s.nichtAufgeboten) return "war nicht aufgeboten";
+  return s.meldung === null ? "war ohne Meldung" : `war ${s.meldung}`;
+}
+
+/* Ein begonnenes Spiel (#487 AK 1–3, 8–11; Design PO 2026-10-21): der Stand
+   beim Anpfiff in einer Liste. Jeder Chip nennt den Status beim Anpfiff —
+   Angemeldet, Ohne Meldung, Abgemeldet, Nicht aufgeboten — oder den
+   Nachtrag: «Nicht erschienen» bei einer, die zählte, «Doch erschienen» bei
+   allen anderen. Sein Menü bietet den Nachtrag oder, wenn es einen gibt, die
+   Rückkehr zum Stand beim Anpfiff. Oben die Anwesenden gegen den Richtwert.
+   Ehemalige stehen ohne Namen da und lassen sich nicht mehr ansprechen. */
+function SpielNachAnpfiff({ teamId, daten }: { teamId: string; daten: SpielSpieler }) {
+  const router = useRouter();
+  const melde = useSnackbar();
+  const [pending, startTransition] = useTransition();
+  // Was gerade nachgetragen wird, steht sofort so da; scheitert es, zurück.
+  const [lokal, setLokal] = useState<Record<string, boolean>>({});
+  useEffect(() => setLokal({}), [daten]);
+  const nachgetragen = (s: SpielTeilnehmer) => (s.spielerId && s.spielerId in lokal ? lokal[s.spielerId] : s.nachgetragen);
+  const anwesend = daten.spieler.filter((s) => zaehlteBeimAnpfiff(s.meldung, s.nichtAufgeboten) !== nachgetragen(s)).length;
+
+  function nachtragen(s: SpielTeilnehmer, nachtrag: boolean) {
+    const id = s.spielerId;
+    if (!id) return;
+    setLokal((l) => ({ ...l, [id]: nachtrag }));
+    startTransition(async () => {
+      const r = await setzeAnwesenheitAktion(teamId, {
+        terminId: daten.terminId,
+        spielerId: id,
+        da: zaehlteBeimAnpfiff(s.meldung, s.nichtAufgeboten) !== nachtrag,
+        gesehen: { datum: daten.datum, beginn: daten.beginn },
+      });
+      if (!r.ok) {
+        setLokal((l) => {
+          const { [id]: _weg, ...rest } = l;
+          return rest;
+        });
+        melde(r.error);
+      }
+      router.refresh();
+    });
+  }
+
+  const farbe = richtwertSchrift(anwesend, daten.richtwertMin, daten.richtwertMax);
+  return (
+    <div className="flex flex-col gap-3">
+      {daten.kader.length > 0 && (
+        <p className="flex flex-wrap items-center gap-1.5 type-body-medium text-on-surface-mittel">
+          Galt für
+          <KaderLozenges namen={daten.kader.map((k) => k.name)} />
+        </p>
+      )}
+      <div className="flex flex-col gap-1">
+        <p className="type-body-medium text-on-surface-mittel">
+          <span className={cn("type-headline-small", farbe ?? "text-on-surface")}>{anwesend}</span> von {daten.gesamt} da
+        </p>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <RichtwertLozenge zahl={anwesend} min={daten.richtwertMin} max={daten.richtwertMax} />
+          <span className="type-body-small text-on-surface-mittel">{NACHTRAG_TEXT.kopf}</span>
+        </div>
+      </div>
+      {daten.gesamt === 0 ? (
+        <p className="type-body-medium text-on-surface-mittel">{KADER_TEXT.niemand}</p>
+      ) : (
+        <ul className="divide-y divide-linie rounded-flaeche bg-elev-01">
+          {daten.spieler.map((s, i) => (
+            <NachtragZeile
+              key={s.spielerId ?? `ehemalig-${i}`}
+              s={s}
+              nachgetragen={nachgetragen(s)}
+              gelesenAm={daten.gelesenAm}
+              pending={pending}
+              onNachtrag={(n) => nachtragen(s, n)}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function NachtragZeile({
+  s,
+  nachgetragen,
+  gelesenAm,
+  pending,
+  onNachtrag,
+}: {
+  s: SpielTeilnehmer;
+  nachgetragen: boolean;
+  gelesenAm: string;
+  pending: boolean;
+  onNachtrag: (nachtrag: boolean) => void;
+}) {
+  const name = s.vorname !== null ? spielerName({ vorname: s.vorname, nachname: s.nachname ?? "" }) : EHEMALIGE_SPIELERIN;
+  const zaehlte = zaehlteBeimAnpfiff(s.meldung, s.nichtAufgeboten);
+  const da = zaehlte !== nachgetragen;
+  const status = nachgetragen ? (zaehlte ? NACHTRAG_TEXT.nichtErschienen : NACHTRAG_TEXT.dochErschienen) : statusBeimAnpfiff(s);
+  const zeile2 = [zaehlte && !nachgetragen ? "angemeldet" : warBeimAnpfiff(s), s.gewechseltAm && seitWann(s.gewechseltAm, gelesenAm), ...s.kader]
+    .filter(Boolean)
+    .join(" · ");
+  // Grün, wer da war; grau, wer ohne Meldung und ohne Nachtrag blieb; sonst rot.
+  const punkt = da ? PUNKT.angemeldet : !nachgetragen && s.meldung === null && !s.nichtAufgeboten ? PUNKT.ohne : PUNKT.abgemeldet;
+  const items = s.ehemalig
+    ? []
+    : nachgetragen
+      ? [{ label: NACHTRAG_TEXT.zurueck(statusBeimAnpfiff(s)), onSelect: () => onNachtrag(false) }]
+      : [{ label: zaehlte ? NACHTRAG_TEXT.nichtErschienen : NACHTRAG_TEXT.dochErschienen, onSelect: () => onNachtrag(true) }];
+  return (
+    <li className="state flex min-h-12 items-center gap-3 px-4 py-1.5">
+      <span className="min-w-0 flex-1">
+        <span className={cn("block truncate type-body-medium", da && !s.ehemalig ? "text-on-surface" : "text-on-surface-mittel")}>{name}</span>
+        {zeile2 && <span className="block truncate type-body-small text-on-surface-mittel">{zeile2}</span>}
+      </span>
+      <ChipMenu
+        label={status}
+        ariaLabel={`${name}: ${status}${s.ehemalig ? "" : ", nachtragen"}`}
+        leading={<span aria-hidden className={cn("size-2 shrink-0 rounded-full", punkt)} />}
+        items={items}
+        disabled={pending || s.ehemalig}
         menuClassName="right-0"
       />
     </li>
