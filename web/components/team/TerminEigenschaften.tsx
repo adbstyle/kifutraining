@@ -1,5 +1,5 @@
 import { Repeat } from "lucide-react";
-import { Eigenschaft, EigenschaftFehlt, RichtwertLozenge, richtwertSchrift } from "@/components/ui";
+import { Eigenschaft, EigenschaftFehlt, RichtwertLozenge, TreffpunktListe, richtwertSchrift } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { wochentageText } from "@/lib/serie";
 import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
@@ -16,7 +16,8 @@ import { KaderLozenges } from "./KaderLozenge";
    die Kader, sobald das Team welche führt — ohne steht «Für alle» (#453 AK 5).
    Geteilt vom nächsten Termin und dem Reiter «Termin» der Termin-Spalte
    (#435). Ein Spiel (#459) nennt statt Spielerzahl und Feldern seinen
-   Richtwert, soweit festgelegt (AK 9). */
+   Richtwert, soweit festgelegt (AK 9), gleich nach dem Ort seine Treffpunkte
+   (#465 AK 8) und an der Bemerkung, dass die Eltern sie sehen (AK 9). */
 export function TerminEigenschaften({
   t,
   ich,
@@ -34,6 +35,11 @@ export function TerminEigenschaften({
   return (
     <dl className={cn("grid grid-cols-[6.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 sm:grid-cols-[8rem_minmax(0,1fr)]", className)}>
       {t.ort && <Eigenschaft label="Ort">{t.ort}</Eigenschaft>}
+      {t.spiel && t.spiel.treffpunkte.length > 0 && (
+        <Eigenschaft label="Treffpunkte">
+          <TreffpunktListe treffpunkte={t.spiel.treffpunkte} spieltag={t.datum} spielOrt={t.ort} />
+        </Eigenschaft>
+      )}
       {/* AK 4: wer man selbst ist, steht zuerst und mit «(du)». */}
       {v.text && <Eigenschaft label="Verantwortlich">{v.text}</Eigenschaft>}
       {/* #453 AK 5: für welche Kader er gilt oder dass er für alle gilt. */}
@@ -83,7 +89,11 @@ export function TerminEigenschaften({
           )}
         </>
       )}
-      {t.bemerkung && <Eigenschaft label="Bemerkung"><span className="whitespace-pre-line">{t.bemerkung}</span></Eigenschaft>}
+      {t.bemerkung && (
+        <Eigenschaft label={t.spiel ? "Bemerkung · sichtbar für Eltern" : "Bemerkung"}>
+          <span className="whitespace-pre-line">{t.bemerkung}</span>
+        </Eigenschaft>
+      )}
       {t.serie && (
         <Eigenschaft label="Terminserie">
           <span className="inline-flex items-center gap-1">

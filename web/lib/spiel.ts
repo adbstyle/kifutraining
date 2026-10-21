@@ -35,13 +35,52 @@ export const SPIEL_TEXT = {
   /** An einem Spiel: nur, was es dort gibt (AK 14, 16). */
   nurTraining: "Felder und erwartete Spielerzahl gibt es nur bei Trainings.",
   /** Ein Training trägt keine Spielangaben. */
-  nurSpiel: "Bezeichnung, Mindest- und Höchstzahl gibt es nur bei Spielen.",
+  nurSpiel: "Bezeichnung, Mindest- und Höchstzahl, Meldefrist und Treffpunkte gibt es nur bei Spielen.",
   /** Ein Spiel trägt nie ein Training (#459 AK 14). */
   keinTraining: "Einem Spiel lässt sich kein Training zuordnen.",
   /** Ab- und Anmelden der Trainings an einem Spiel — ein veralteter Weg. */
   istSpiel: "Für ein Spiel gilt diese An- und Abmeldung nicht. Sieh dir das Spiel noch einmal an.",
   meldefrist: "Die Meldefrist liegt vor dem Anpfiff, höchstens ein Jahr davor.",
   meldefristFormat: "Bitte die Meldefrist mit Datum und Uhrzeit angeben.",
+} as const;
+
+// Treffpunkte (#465): Auswahl, Grenzen und Sätze — vor den Markern, die
+// sie nennen. Die Regeln dazu stehen unten.
+
+/** Die feste Auswahl der Anreisearten (AK 3). Zwilling des Checks
+ *  `stp_anreise`; die Reihenfolge ist die der Auswahl. */
+export type Anreise = "vor_ort" | "oev" | "auto" | "velo" | "car";
+export const ANREISEARTEN: readonly Anreise[] = ["vor_ort", "oev", "auto", "velo", "car"];
+export const ANREISE_TEXT: Record<Anreise, string> = {
+  vor_ort: "vor Ort",
+  oev: "öV",
+  auto: "Auto",
+  velo: "Velo",
+  car: "Car oder Vereinsbus",
+};
+
+export function istAnreise(x: unknown): x is Anreise {
+  return typeof x === "string" && (ANREISEARTEN as readonly string[]).includes(x);
+}
+
+/** Je Anreiseart einer, also höchstens fünf (AK 6); Ort höchstens 100
+ *  Zeichen (AK 7). Zwillinge der Checks `stp_*`. */
+export const TREFFPUNKTE_MAX = 5;
+export const TREFFPUNKT_ORT_MAX = 100;
+/** Höchstens ein Jahr vor oder nach dem Anpfiff (Check `stp_vorlauf`). */
+export const TREFFPUNKT_ABSTAND_MAX_MIN = 525_600;
+
+export const TREFFPUNKT_TEXT = {
+  anreise: "Bitte für jeden Treffpunkt eine Anreiseart wählen: vor Ort, öV, Auto, Velo oder Car oder Vereinsbus.",
+  zeitpunkt: "Bitte für jeden Treffpunkt Datum und Uhrzeit angeben.",
+  zeitpunktWeit: "Ein Treffpunkt liegt höchstens ein Jahr vor oder nach dem Anpfiff.",
+  ort: "Bitte für jeden Treffpunkt ausser vor Ort einen Ort angeben.",
+  ortLang: `Der Ort eines Treffpunkts darf höchstens ${TREFFPUNKT_ORT_MAX} Zeichen lang sein.`,
+  ortVorOrt: "Der Treffpunkt vor Ort hat keinen eigenen Ort: Es gilt der Ort des Spiels.",
+  doppelt: "Je Anreiseart gibt es höchstens einen Treffpunkt.",
+  zuViele: `Ein Spiel hat höchstens ${TREFFPUNKTE_MAX} Treffpunkte.`,
+  /** Beim Schreiben der Bemerkung eines Spiels (AK 9). */
+  bemerkungSichtbar: "Die Eltern sehen die Bemerkung eines Spiels über ihren privaten Link.",
 } as const;
 
 /** Die Sätze zu den Markern der Datenebene — dieselben, die der Fachkern
@@ -51,6 +90,7 @@ export const SPIEL_MELDUNG = {
     "Ein Spiel lässt sich nur mit einem Anpfiff erfassen oder verlegen, der noch bevorsteht.",
   TERMIN_ART_FEST:
     "Die Art eines Termins lässt sich nicht ändern. Entferne ihn und lege ihn neu an.",
+  TREFFPUNKTE_NUR_SPIEL: SPIEL_TEXT.nurSpiel,
 } as const;
 
 /** Die Checks am Termin, samt Anführungszeichen gesucht (siehe
@@ -59,6 +99,11 @@ export const SPIEL_CHECKS: [string, string][] = [
   ['"tt_spiel_bezeichnung"', SPIEL_TEXT.bezeichnungLang],
   ['"tt_richtwert"', SPIEL_TEXT.richtwert],
   ['"tt_spiel_ohne_training"', SPIEL_TEXT.keinTraining],
+  // Treffpunkte (#465).
+  ['"stp_anreise"', TREFFPUNKT_TEXT.anreise],
+  ['"stp_ort"', TREFFPUNKT_TEXT.ort],
+  ['"stp_vorlauf"', TREFFPUNKT_TEXT.zeitpunktWeit],
+  ['"spiel_treffpunkte_pkey"', TREFFPUNKT_TEXT.doppelt],
 ];
 
 /** Länge wie Postgres `char_length`: in Code Points. */
@@ -256,4 +301,67 @@ export function spielEntfernenText(meldungen: number): string {
 /** Dasselbe für den KI-Weg, mit dem Weg zur Bestätigung. */
 export function spielBestaetigen(text: string): string {
   return `${text} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
+}
+
+// ── Treffpunkte (#465) ──────────────────────────────────────────────────────
+
+/** Ein Treffpunkt, wie man ihn erfasst und sieht: `zeitpunkt` als
+ *  Wanduhrzeit `YYYY-MM-DDTHH:MM`, `ort` nur ausser vor Ort. */
+export type Treffpunkt = { anreise: Anreise; zeitpunkt: string; ort: string | null };
+/** Wie ihn die Datenebene führt: als Abstand zum Anpfiff (PC 2). */
+export type TreffpunktZeile = { anreise: Anreise; vorlauf_min: number; ort: string | null };
+
+export type TreffpunktProblem = { feld: "treffpunkte"; index: number | null; text: string };
+
+/** Prüft eine ganze Liste von Treffpunkten zu einem Anpfiff und gibt sie
+ *  in der Form der Datenebene zurück — oder das erste Problem (AK 2–7). Der
+ *  Ort wird gekürzt gespeichert. Der Zeitpunkt darf nach dem Anpfiff und an
+ *  einem anderen Tag liegen (AK 5). */
+export function treffpunkteNormal(
+  liste: readonly { anreise: unknown; zeitpunkt: unknown; ort?: unknown }[],
+  datum: string,
+  beginn: string,
+): { ok: true; zeilen: TreffpunktZeile[] } | { ok: false; problem: TreffpunktProblem } {
+  const p = (index: number | null, text: string) => ({ ok: false as const, problem: { feld: "treffpunkte" as const, index, text } });
+  if (liste.length > TREFFPUNKTE_MAX) return p(null, TREFFPUNKT_TEXT.zuViele);
+  const anpfiff = wanduhrMinuten(`${datum}T${(beginn ?? "").slice(0, 5)}`);
+  const zeilen: TreffpunktZeile[] = [];
+  for (const [i, t] of liste.entries()) {
+    if (!istAnreise(t.anreise)) return p(i, TREFFPUNKT_TEXT.anreise);
+    if (zeilen.some((z) => z.anreise === t.anreise)) return p(i, TREFFPUNKT_TEXT.doppelt);
+    const zeit = typeof t.zeitpunkt === "string" ? wanduhrMinuten(t.zeitpunkt) : null;
+    if (zeit === null || anpfiff === null) return p(i, TREFFPUNKT_TEXT.zeitpunkt);
+    const vorlauf = anpfiff - zeit;
+    if (Math.abs(vorlauf) > TREFFPUNKT_ABSTAND_MAX_MIN) return p(i, TREFFPUNKT_TEXT.zeitpunktWeit);
+    const ort = typeof t.ort === "string" && t.ort.trim() !== "" ? t.ort.trim() : null;
+    if (t.anreise === "vor_ort") {
+      if (ort !== null) return p(i, TREFFPUNKT_TEXT.ortVorOrt);
+    } else {
+      if (ort === null) return p(i, TREFFPUNKT_TEXT.ort);
+      if (laenge(ort) > TREFFPUNKT_ORT_MAX) return p(i, TREFFPUNKT_TEXT.ortLang);
+    }
+    zeilen.push({ anreise: t.anreise, vorlauf_min: vorlauf, ort });
+  }
+  return { ok: true, zeilen };
+}
+
+/** Die Treffpunkte eines Spiels zu seinem aktuellen Anpfiff, frühester
+ *  zuerst (PC 2). */
+export function treffpunkteZu(zeilen: readonly TreffpunktZeile[], datum: string, beginn: string): Treffpunkt[] {
+  return [...zeilen]
+    .sort((a, b) => b.vorlauf_min - a.vorlauf_min)
+    .map((z) => ({ anreise: z.anreise, zeitpunkt: meldefristZeitpunkt(datum, beginn, z.vorlauf_min), ort: z.ort }));
+}
+
+/** Wie ein Treffpunkt angezeigt wird (AK 8; PC 1): Uhrzeit, das Datum nur
+ *  ausserhalb des Spieltags; vor Ort mit dem aktuellen Ort des Spiels oder,
+ *  solange es keinen hat, nur mit der Zeit. */
+export function treffpunktAnzeige(
+  t: Treffpunkt,
+  spieltag: string,
+  spielOrt: string | null,
+): { anreise: string; zeit: string; ort: string | null } {
+  const tag = t.zeitpunkt.slice(0, 10);
+  const zeit = tag === spieltag ? t.zeitpunkt.slice(11, 16) : zeitpunktKurz(t.zeitpunkt);
+  return { anreise: ANREISE_TEXT[t.anreise], zeit, ort: t.anreise === "vor_ort" ? spielOrt : t.ort };
 }

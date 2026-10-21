@@ -93,6 +93,7 @@ function startWerte(t: TerminZeile): TerminFelder {
           richtwertMin: t.spiel.richtwertMin,
           richtwertMax: t.spiel.richtwertMax,
           meldefrist: t.spiel.meldefrist,
+          treffpunkte: t.spiel.treffpunkte,
         }
       : {}),
   };

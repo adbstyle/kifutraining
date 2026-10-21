@@ -39,8 +39,16 @@ import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
 import { terminBegonnen } from "@/lib/zeit";
 import { usePlatzAngaben } from "./usePlatzAngaben";
-import { SPIEL_MELDUNG } from "@/lib/spiel";
-import { BezeichnungFeld, MeldefristFelder, RichtwertFelder, fristEingabe, useSpielAngaben } from "./SpielFelder";
+import { SPIEL_MELDUNG, TREFFPUNKT_TEXT } from "@/lib/spiel";
+import {
+  BezeichnungFeld,
+  MeldefristFelder,
+  RichtwertFelder,
+  TreffpunkteFelder,
+  fristEingabe,
+  treffpunkteEingabe,
+  useSpielAngaben,
+} from "./SpielFelder";
 import type { Kader, TerminKader } from "@/lib/kader";
 import { KaderWahl } from "./KaderWahl";
 
@@ -172,7 +180,7 @@ export function TerminDialog({
   const [kaderWahl, setKaderWahl] = useState<string[]>([]);
   const platz = usePlatzAngaben();
   const istSpiel = start?.art === "spiel";
-  const spiel = useSpielAngaben();
+  const spiel = useSpielAngaben(felder.datum, felder.beginn ?? "");
   // Ein begonnener Termin behält seine erwartete Zahl: Sie gilt dort, wenn die
   // Liste bei Beginn leer war (Migration spielerliste).
   const ausListe = !!fuehrtListe && !(!!felder.datum && !!felder.beginn && terminBegonnen(felder.datum, felder.beginn));
@@ -194,6 +202,7 @@ export function TerminDialog({
       min: start?.richtwertMin != null ? String(start.richtwertMin) : "",
       max: start?.richtwertMax != null ? String(start.richtwertMax) : "",
       ...fristEingabe(start?.meldefrist),
+      treffpunkte: treffpunkteEingabe(start?.treffpunkte),
     });
     setProblem(null);
     if (serie) setRegel({ wochentage: [...serie.wochentage], von: serie.beginnDatum, bis: serie.endDatum });
@@ -265,7 +274,7 @@ export function TerminDialog({
   function speichereSpiel() {
     const p = terminProblem(felder);
     setProblem(p);
-    const angaben = spiel.pruefe(felder.datum, felder.beginn ?? "");
+    const angaben = spiel.pruefe();
     const gp = ausfall && !ausfallEndet ? ausfallProblem(grund) : null;
     setGrundFehler(gp?.text);
     if (p || !angaben || gp) return;
@@ -333,7 +342,8 @@ export function TerminDialog({
         <TextField label="Ort (optional)" maxLength={ORT_MAX} value={felder.ort ?? ""} onChange={(e) => setze("ort")(e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
         {istSpiel && <RichtwertFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <MeldefristFelder angaben={spiel} disabled={pending} />}
-        <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
+        {istSpiel && <TreffpunkteFelder angaben={spiel} spieltag={felder.datum} disabled={pending} />}
+        <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} info={istSpiel ? TREFFPUNKT_TEXT.bemerkungSichtbar : undefined} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         <VerantwortlicheWahl mitglieder={mitglieder} bisher={verantwortliche} wert={verantwortlich} onChange={setVerantwortlich} disabled={pending} />
         {(kader.length > 0 || terminKader.length > 0) && (
           <KaderWahl

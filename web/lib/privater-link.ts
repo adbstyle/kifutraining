@@ -2,7 +2,7 @@ import "server-only";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { istUuid } from "@/lib/kennung";
 import { LINK_FEHLER, abweisungText, istLinkToken, type AbmeldeGrund, type AbmeldeStand, type Spielstand } from "@/lib/spieler";
-import { meldungAbweisungText, type Meldung } from "@/lib/spiel";
+import { meldungAbweisungText, type Meldung, type Treffpunkt } from "@/lib/spiel";
 import type { MeldeAntwort } from "@/lib/kern/spiele";
 
 /**
@@ -28,6 +28,11 @@ export type LinkTermin = {
   frist: string | null;
   frist_abgelaufen: boolean;
   vorher: { datum: string; beginn: string } | null;
+  /** Nur an einem Spiel (#465 AK 10, 11): die Bemerkung und die Treffpunkte,
+   *  frühester zuerst — an einem ausgefallenen keine (`null`). Die Bemerkung
+   *  eines Trainings sieht die Spielervertretung nicht (PC 4). */
+  bemerkung: string | null;
+  treffpunkte: Treffpunkt[] | null;
   /** Training oder Spiel (#459 AK 17): ein Spiel mit Bezeichnung und Richtwert. */
   art: "training" | "spiel";
   bezeichnung: string | null;

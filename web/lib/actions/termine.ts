@@ -68,6 +68,7 @@ export async function legeTerminFestAktion(
     richtwertMin: felder.richtwertMin,
     richtwertMax: felder.richtwertMax,
     meldefrist: felder.meldefrist,
+    treffpunkte: felder.treffpunkte,
     datum: felder.datum,
     beginn: felder.beginn ?? "",
     ende: felder.ende ?? "",
@@ -109,6 +110,7 @@ export async function aendereTerminAktion(
     richtwertMin: felder.richtwertMin,
     richtwertMax: felder.richtwertMax,
     meldefrist: felder.meldefrist,
+    treffpunkte: felder.treffpunkte,
     erwartetesTraining,
   });
   if (!r.ok)

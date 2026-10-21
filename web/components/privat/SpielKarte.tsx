@@ -1,7 +1,16 @@
 "use client";
 
 import { Shirt } from "lucide-react";
-import { Button, Kalenderblatt, Lozenge, RichtwertLozenge, SectionMessage, SpielLozenge, richtwertSchrift } from "@/components/ui";
+import {
+  Button,
+  Kalenderblatt,
+  Lozenge,
+  RichtwertLozenge,
+  SectionMessage,
+  SpielLozenge,
+  TreffpunktListe,
+  richtwertSchrift,
+} from "@/components/ui";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr, tagText } from "@/lib/monat";
@@ -15,7 +24,9 @@ import { MELDUNG_TEXT, richtwertText, zeitpunktKurz, type Meldung } from "@/lib/
    «Anmelden» (gefüllt) und «Abmelden», sonst die jeweils andere. Nach der
    Meldefrist keine Knöpfe, sondern der Weg übers Team; ab dem Anpfiff gilt
    der Stand beim Anpfiff. Abgemeldet steht die Karte leise rot getönt, mit
-   rotem Kalenderblatt. */
+   rotem Kalenderblatt. Treffpunkte und Bemerkung stehen unabhängig von der
+   Meldung da; ein ausgefallenes Spiel zeigt nur die Bemerkung (#465 AK 10,
+   11). */
 export function SpielKarte({
   t,
   meldung,
@@ -131,6 +142,18 @@ export function SpielKarte({
               Abmelden
             </Button>
           )}
+        </div>
+      )}
+      {t.treffpunkte && t.treffpunkte.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <span className="type-label-medium text-on-surface-mittel">Treffpunkte</span>
+          <TreffpunktListe treffpunkte={t.treffpunkte} spieltag={t.datum} spielOrt={t.ort} className="type-body-medium text-on-surface" />
+        </div>
+      )}
+      {t.bemerkung && (
+        <div className="flex flex-col gap-1">
+          <span className="type-label-medium text-on-surface-mittel">Bemerkung</span>
+          <p className="type-body-medium whitespace-pre-line text-on-surface">{t.bemerkung}</p>
         </div>
       )}
       {t.vorher && !t.ausgefallen && !t.begonnen && (

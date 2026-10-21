@@ -35,7 +35,9 @@ import {
   spielBestaetigen,
   spielEntfernenText,
   spielVerfallText,
+  treffpunkteNormal,
   type TerminArt,
+  type TreffpunktZeile,
 } from "@/lib/spiel";
 import { kurzeZeit } from "@/lib/queries/termine-fuer";
 import { heuteAmTrainingsort, jetztAmTrainingsort, terminBegonnen } from "@/lib/zeit";
@@ -194,6 +196,8 @@ export type TerminFestlegen = {
   richtwertMax?: number | null;
   /** Nur an einem Spiel: die Meldefrist als `YYYY-MM-DDTHH:MM` (#463 AK 8). */
   meldefrist?: string | null;
+  /** Nur an einem Spiel: die Treffpunkte (#465 AK 1–7); ohne oder leer: keine. */
+  treffpunkte?: readonly TreffpunktEingabe[] | null;
   datum: string;
   beginn: string;
   ende: string;
@@ -236,6 +240,29 @@ function artFehler(
   return null;
 }
 
+/** Ein Treffpunkt, wie ihn Oberfläche und KI angeben: `zeitpunkt` als
+ *  `YYYY-MM-DDTHH:MM`, `ort` nur ausser vor Ort (#465). */
+export type TreffpunktEingabe = { anreise: string; zeitpunkt: string; ort?: string | null };
+
+/** Die Treffpunkte eines Spiels zum Anpfiff `datum`/`beginn` prüfen
+ *  (#465 AK 2–7); das Feld nennt die Zeile («treffpunkte[1]»). */
+function treffpunkteAus(
+  liste: readonly TreffpunktEingabe[],
+  datum: string,
+  beginn: string | null | undefined,
+): KernErgebnis<TreffpunktZeile[]> {
+  const r = treffpunkteNormal(liste, datum, beginn ?? "");
+  if (r.ok) return ok(r.zeilen);
+  const { index, text } = r.problem;
+  return fehlschlag("eingabe", text, { feld: index === null ? "treffpunkte" : `treffpunkte[${index}]` });
+}
+
+/** Die ganze Liste der Treffpunkte eines Spiels schreiben (#465 AK 1). */
+async function setzeTreffpunkte(supabase: SupabaseClient, terminId: string, zeilen: TreffpunktZeile[]): Promise<KernErgebnis> {
+  const { error } = await supabase.rpc("spiel_treffpunkte_setzen", { p_termin: terminId, p_liste: zeilen });
+  return error ? ausDbFehler(error) : ok(undefined);
+}
+
 /** Die Meldefrist eines Spiels prüfen (#463 AK 8): leer heisst keine. */
 function fristFehler(datum: string, beginn: string | null | undefined, frist: string | null | undefined): KernFehler | null {
   const f = leerZuNull(frist);
@@ -276,8 +303,11 @@ export async function legeTerminFest(
     const anpfiff = anpfiffFehler(e.datum, leerZuNull(e.beginn));
     if (anpfiff) return anpfiff;
   } else if (leerZuNull(e.meldefrist) !== null) return fehlschlag("eingabe", SPIEL_TEXT.nurSpiel, { feld: "meldefrist" });
+  else if (e.treffpunkte?.length) return fehlschlag("eingabe", SPIEL_TEXT.nurSpiel, { feld: "treffpunkte" });
   const frist = fristFehler(e.datum, e.beginn, e.meldefrist);
   if (frist) return frist;
+  const treffpunkte = treffpunkteAus(e.treffpunkte ?? [], e.datum, e.beginn);
+  if (!treffpunkte.ok) return treffpunkte;
   const felder = pruefeFelder(e.felder);
   if (!felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
@@ -309,6 +339,14 @@ export async function legeTerminFest(
     .select("id")
     .single<{ id: string }>();
   if (error) return ausDbFehler(error);
+  if (treffpunkte.wert.length) {
+    const tp = await setzeTreffpunkte(supabase, data.id, treffpunkte.wert);
+    if (!tp.ok) {
+      // Ohne seine Treffpunkte soll das Spiel nicht stehen bleiben.
+      const weg = await supabase.from("training_termine").delete().eq("id", data.id);
+      return weg.error ? ausDbFehler(weg.error) : tp;
+    }
+  }
   // Ein neuer Termin hat keine Abmeldungen: Kader setzen lässt nichts verfallen.
   if (e.kaderIds?.length) {
     const k = await supabase.rpc("termin_kader_setzen", { p_termin: data.id, p_kader: e.kaderIds });
@@ -349,6 +387,11 @@ export type TerminAendern = {
    *  Verlegung nimmt sie im selben Abstand mit), `null` = entfernen, sonst
    *  der Zeitpunkt `YYYY-MM-DDTHH:MM`. */
   meldefrist?: string | null;
+  /** Nur an einem Spiel (#465 AK 1): die ganze Liste, `undefined` =
+   *  unverändert (eine Verlegung nimmt sie im selben Abstand mit, PC 2),
+   *  `null` oder `[]` = alle entfernen. Die Zeitpunkte gelten zum neuen
+   *  Anpfiff. */
+  treffpunkte?: readonly TreffpunktEingabe[] | null;
   /** Das Training, das der Termin bei der Auswahl trug (AK 23). `undefined`
    *  beim KI-Weg: geprüft wird dann gegen den eben gelesenen Stand. */
   erwartetesTraining?: string | null;
@@ -483,6 +526,10 @@ export async function aendereTermin(
     return fehlschlag("eingabe", SPIEL_TEXT.nurSpiel, { feld: "meldefrist" });
   const frist = t.art === "spiel" && e.meldefrist !== undefined ? fristFehler(neu.datum, neu.beginn, e.meldefrist) : null;
   if (frist) return frist;
+  if (t.art !== "spiel" && e.treffpunkte?.length) return fehlschlag("eingabe", SPIEL_TEXT.nurSpiel, { feld: "treffpunkte" });
+  const treffpunkte =
+    t.art === "spiel" && e.treffpunkte !== undefined ? treffpunkteAus(e.treffpunkte ?? [], neu.datum, neu.beginn) : null;
+  if (treffpunkte && !treffpunkte.ok) return treffpunkte;
   const felder = e.felder === undefined ? null : pruefeFelder(e.felder);
   if (felder && !felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
@@ -560,7 +607,11 @@ export async function aendereTermin(
   }
 
   const erwartet = e.erwartetesTraining !== undefined ? e.erwartetesTraining : t.training_id;
-  const basis = supabase.from("training_termine").update({ ...aenderung, ...flags, ...ausfall }).eq("id", t.id);
+  // Ändern sich nur die Treffpunkte (#465), steht am Termin nichts zu
+  // schreiben — dann prüft dieselbe Bedingung nur den Stand.
+  const schreiben = { ...aenderung, ...flags, ...ausfall };
+  const tabelle = supabase.from("training_termine");
+  const basis = (Object.keys(schreiben).length > 0 ? tabelle.update(schreiben) : tabelle.select("id")).eq("id", t.id);
   const { data, error } = await (erwartet === null
     ? basis.is("training_id", null)
     : basis.eq("training_id", erwartet)
@@ -569,6 +620,10 @@ export async function aendereTermin(
     .maybeSingle();
   if (error) return ausDbFehler(error);
   if (!data) return warumNichtGeschrieben(supabase, t.id, e.erwartetesTraining === undefined);
+  if (treffpunkte) {
+    const tp = await setzeTreffpunkte(supabase, t.id, treffpunkte.wert);
+    if (!tp.ok) return tp;
+  }
   return ok({ terminId: t.id, teamId: t.team_id, trainingId: erwartet, abmeldungenVerfallen: verfallen });
 }
 

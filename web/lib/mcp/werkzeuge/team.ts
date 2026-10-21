@@ -30,7 +30,7 @@ import {
   TrainingId,
 } from "@/lib/mcp/werkzeuge/trainings";
 import { werkzeug, type Zugang } from "@/lib/mcp/werkzeug";
-import { BEZEICHNUNG_MAX, RICHTWERT_MAX, RICHTWERT_MIN, TERMIN_ARTEN } from "@/lib/spiel";
+import { BEZEICHNUNG_MAX, RICHTWERT_MAX, RICHTWERT_MIN, TERMIN_ARTEN, TREFFPUNKTE_MAX, TREFFPUNKT_ORT_MAX } from "@/lib/spiel";
 import { KaderId, KADER_KENNUNG_FEHLER } from "@/lib/mcp/werkzeuge/kader";
 
 /**
@@ -81,6 +81,27 @@ const MELDEFRIST = z
   .describe(
     "Meldefrist eines Spiels für die Eltern als JJJJ-MM-TTTHH:MM (Uhr am Trainingsort), vor dem Anpfiff, höchstens ein Jahr " +
       "davor. Ohne Frist melden Eltern bis zum Anpfiff. Eine Verlegung nimmt sie im selben Abstand mit.",
+  );
+const TREFFPUNKTE = z
+  .array(
+    z.object({
+      anreise: z
+        .string()
+        .describe("«vor_ort» (am Spielort), «oev», «auto», «velo» oder «car» (Car oder Vereinsbus); je Anreiseart ein Treffpunkt."),
+      zeitpunkt: z
+        .string()
+        .describe("Wann sich das Team trifft, als JJJJ-MM-TTTHH:MM (Uhr am Trainingsort); auch nach dem Anpfiff oder an einem anderen Tag."),
+      ort: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(`Wo, höchstens ${TREFFPUNKT_ORT_MAX} Zeichen; Pflicht ausser bei «vor_ort», dort weglassen (es gilt der Ort des Spiels).`),
+    }),
+  )
+  .describe(
+    `Treffpunkte eines Spiels als GANZE Liste, höchstens ${TREFFPUNKTE_MAX}, je Anreiseart einer. Die Eltern sehen sie über ihren ` +
+      "Link (nicht an einem ausgefallenen Spiel). Eine Verlegung nimmt sie im selben Abstand zum Anpfiff mit. Eine Rückkehr gehört " +
+      "in die Bemerkung.",
   );
 const RICHTWERT_ZAHL = z
   .number()
@@ -196,6 +217,10 @@ const PlanEintrag = z.object({
   hoechstzahl: z.number().int().nullable(),
   /** Nur bei Spielen: die Meldefrist der Eltern, «vorher» bei einem verlegten. */
   meldefrist: z.string().nullable(),
+  treffpunkte: z
+    .array(z.object({ anreise: z.string(), zeitpunkt: z.string(), ort: z.string().nullable() }))
+    .nullable()
+    .describe("Nur bei Spielen, frühester zuerst; «vor_ort» ohne eigenen Ort (es gilt der Ort des Spiels). Bei Trainings null."),
   vorher: z.object({ datum: z.string(), beginn: z.string() }).nullable().describe("Ein verlegtes Spiel: der zuletzt gültige Zeitpunkt."),
   datum: z.string(),
   beginn: z.string(),
@@ -232,6 +257,7 @@ function planEintrag(t: TerminZeile, zugang: Zugang) {
     mindestzahl: t.spiel?.richtwertMin ?? null,
     hoechstzahl: t.spiel?.richtwertMax ?? null,
     meldefrist: t.spiel?.meldefrist ?? null,
+    treffpunkte: t.spiel?.treffpunkte ?? null,
     vorher: t.spiel?.vorher ?? null,
     datum: t.datum,
     beginn: t.beginn,
@@ -361,6 +387,7 @@ export const terminFestlegen = werkzeug({
       "Höchstzahl an Spieler:innen eines Spiels; ohne Angabe nicht festgelegt. Nicht kleiner als die Mindestzahl.",
     ),
     meldefrist: MELDEFRIST.optional(),
+    treffpunkte: TREFFPUNKTE.optional(),
     datum: DATUM,
     beginn: UHRZEIT.describe("Beginn als HH:MM, etwa 18:30; bei einem Spiel der Anpfiff."),
     ende: UHRZEIT.describe("Ende als HH:MM am selben Tag, etwa 20:00."),
@@ -382,6 +409,7 @@ export const terminFestlegen = werkzeug({
         richtwertMin: e.mindestzahl,
         richtwertMax: e.hoechstzahl,
         meldefrist: e.meldefrist,
+        treffpunkte: e.treffpunkte,
         datum: e.datum,
         beginn: e.beginn,
         ende: e.ende,
@@ -417,6 +445,12 @@ export const AendernEingabe = z.object({
   mindestzahl: RICHTWERT_ZAHL.nullable().optional().describe("Nur bei einem Spiel: neue Mindestzahl; null entfernt sie, ohne Angabe unverändert."),
   hoechstzahl: RICHTWERT_ZAHL.nullable().optional().describe("Nur bei einem Spiel: neue Höchstzahl; null entfernt sie, ohne Angabe unverändert."),
   meldefrist: MELDEFRIST.nullable().optional().describe("Nur bei einem Spiel: neue Meldefrist als JJJJ-MM-TTTHH:MM; null entfernt sie, ohne Angabe unverändert."),
+  treffpunkte: TREFFPUNKTE.nullable()
+    .optional()
+    .describe(
+      "Nur bei einem Spiel: die Treffpunkte als GANZE neue Liste - sie ersetzt die bisherige, die Zeitpunkte gelten zum neuen " +
+        "Anpfiff; null (oder []) entfernt alle, ohne Angabe unverändert (eine Verlegung nimmt sie dann im selben Abstand mit).",
+    ),
   felder: FelderEingabe.nullable()
     .optional()
     .describe(
@@ -507,6 +541,7 @@ export const terminAendern = werkzeug({
         richtwertMin: e.mindestzahl,
         richtwertMax: e.hoechstzahl,
         meldefrist: e.meldefrist,
+        treffpunkte: e.treffpunkte,
         kaderIds: e.kader_ids,
         reichweite: e.reichweite,
         wochentage: e.wochentage?.map(alsWochentag),

@@ -177,6 +177,10 @@ import {
   MELDUNG_TEXT,
   spielEntfernenText,
   spielVerfallText,
+  TREFFPUNKT_TEXT,
+  treffpunktAnzeige,
+  treffpunkteNormal,
+  treffpunkteZu,
 } from "../lib/spiel";
 import {
   KADER_MELDUNG,
@@ -2420,6 +2424,57 @@ pruefe("Spiele: Meldefrist als Abstand zum Anpfiff, Verfall- und Abweisungstexte
   assert.equal(kaderVerfallText(2), kaderVerfallText(2, 0), "ohne Spiele der bisherige Satz");
   assert.ok(kaderVerfallText(3, 1).startsWith("Damit verfallen 2 Abmeldungen zu Trainings und 1 Meldung zu einem Spiel"));
   assert.ok(kaderVerfallText(1, 1).startsWith("Damit verfällt 1 Meldung zu einem Spiel"));
+});
+
+pruefe("Spiele: Treffpunkte prüfen, als Abstand zum Anpfiff führen und anzeigen (#465)", () => {
+  const ok = treffpunkteNormal(
+    [
+      { anreise: "oev", zeitpunkt: "2026-10-30T18:00", ort: " Bahnhof " },
+      { anreise: "vor_ort", zeitpunkt: "2026-10-31T10:15" },
+    ],
+    "2026-10-31",
+    "10:00",
+  );
+  assert.deepEqual(ok, {
+    ok: true,
+    zeilen: [
+      { anreise: "oev", vorlauf_min: 16 * 60, ort: "Bahnhof" },
+      { anreise: "vor_ort", vorlauf_min: -15, ort: null },
+    ],
+  }, "AK 5: Vortag und nach dem Anpfiff");
+  const problem = (liste: { anreise: unknown; zeitpunkt: unknown; ort?: unknown }[]) => {
+    const r = treffpunkteNormal(liste, "2026-10-31", "10:00");
+    return r.ok ? null : r.problem;
+  };
+  assert.deepEqual(problem([{ anreise: "zug", zeitpunkt: "2026-10-31T09:00" }]), { feld: "treffpunkte", index: 0, text: TREFFPUNKT_TEXT.anreise });
+  assert.equal(problem([{ anreise: "auto", zeitpunkt: "2026-10-31T09:00", ort: "  " }])?.text, TREFFPUNKT_TEXT.ort);
+  assert.equal(problem([{ anreise: "vor_ort", zeitpunkt: "2026-10-31T09:00", ort: "Platz" }])?.text, TREFFPUNKT_TEXT.ortVorOrt);
+  assert.equal(problem([{ anreise: "velo", zeitpunkt: "2026-10-31T09:00", ort: "ä".repeat(101) }])?.text, TREFFPUNKT_TEXT.ortLang);
+  assert.equal(problem([{ anreise: "velo", zeitpunkt: "2026-10-31T09:00", ort: "ä".repeat(100) }]), null, "100 Zeichen in Code Points");
+  assert.equal(problem([{ anreise: "car", zeitpunkt: "2025-10-30T09:00", ort: "X" }])?.text, TREFFPUNKT_TEXT.zeitpunktWeit);
+  assert.equal(problem([{ anreise: "car", zeitpunkt: "31.10. 9 Uhr", ort: "X" }])?.text, TREFFPUNKT_TEXT.zeitpunkt);
+  assert.deepEqual(
+    problem([
+      { anreise: "car", zeitpunkt: "2026-10-31T08:00", ort: "X" },
+      { anreise: "car", zeitpunkt: "2026-10-31T08:30", ort: "Y" },
+    ]),
+    { feld: "treffpunkte", index: 1, text: TREFFPUNKT_TEXT.doppelt },
+  );
+  const sechs = ["vor_ort", "oev", "auto", "velo", "car", "car"].map((anreise) => ({ anreise, zeitpunkt: "2026-10-31T08:00", ort: "X" }));
+  assert.deepEqual(problem(sechs), { feld: "treffpunkte", index: null, text: TREFFPUNKT_TEXT.zuViele });
+
+  // PC 2: verlegt, frühester zuerst, im selben Abstand — auch über den Tag.
+  const zu = treffpunkteZu([{ anreise: "vor_ort", vorlauf_min: 30, ort: null }, { anreise: "oev", vorlauf_min: 120, ort: "Bahnhof" }], "2026-11-01", "01:00");
+  assert.deepEqual(zu, [
+    { anreise: "oev", zeitpunkt: "2026-10-31T23:00", ort: "Bahnhof" },
+    { anreise: "vor_ort", zeitpunkt: "2026-11-01T00:30", ort: null },
+  ]);
+  // AK 8, PC 1: Datum nur ausserhalb des Spieltags; vor Ort mit dem Ort des Spiels oder nur der Zeit.
+  assert.deepEqual(treffpunktAnzeige(zu[1], "2026-11-01", "Bodenweid"), { anreise: "vor Ort", zeit: "00:30", ort: "Bodenweid" });
+  assert.deepEqual(treffpunktAnzeige(zu[1], "2026-11-01", null), { anreise: "vor Ort", zeit: "00:30", ort: null });
+  const amVortag = treffpunktAnzeige(zu[0], "2026-11-01", "Bodenweid");
+  assert.deepEqual([amVortag.anreise, amVortag.ort], ["öV", "Bahnhof"]);
+  assert.ok(amVortag.zeit.endsWith("31.10., 23:00"), amVortag.zeit);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

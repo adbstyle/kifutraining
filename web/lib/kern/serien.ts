@@ -476,6 +476,8 @@ export async function aendereMitReichweite(
         felder.bezeichnung,
         felder.richtwertMin,
         felder.richtwertMax,
+        felder.meldefrist,
+        felder.treffpunkte,
       ].every((x) => x === undefined);
     let verfallen = 0;
     let teamId = t.team_id;

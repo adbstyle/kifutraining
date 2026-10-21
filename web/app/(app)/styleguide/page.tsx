@@ -11,6 +11,7 @@ import {
   SichtbarkeitLozenge,
   SpielLozenge,
   RichtwertLozenge,
+  TreffpunktListe,
   richtwertSchrift,
   Card,
   ExerciseCard,
@@ -2411,6 +2412,22 @@ export default async function Styleguide() {
             <span className={richtwertSchrift(14, 9, 12)}>14</span>
             <RichtwertLozenge zahl={14} min={9} max={12} />
           </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>Treffpunkte</strong> (<code>TreffpunktListe</code>, #465): die Treffpunkte eines Spiels in drei
+            Spalten - Anreiseart, Zeit, Ort -, frühester zuerst. Das Datum steht nur bei einem Treffpunkt, der nicht am
+            Spieltag liegt; vor Ort nennt den aktuellen Ort des Spiels. Kein eigener Baustein für die Liste der
+            Eigenschaften, weil die Zeilen an Zeit und Ort ausgerichtet sein müssen.
+          </p>
+          <TreffpunktListe
+            className="type-body-medium mb-6 max-w-md text-on-surface"
+            spieltag="2026-10-31"
+            spielOrt="Sportanlage Bodenweid, Bern"
+            treffpunkte={[
+              { anreise: "car", zeitpunkt: "2026-10-30T18:00", ort: "Clubhaus, Vorplatz" },
+              { anreise: "oev", zeitpunkt: "2026-10-31T08:20", ort: "Bahnhof Bern, Treffpunkt" },
+              { anreise: "vor_ort", zeitpunkt: "2026-10-31T09:15", ort: null },
+            ]}
+          />
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Kader</strong> (<code>KaderLozenge</code>, Epic #447): ein
             Teil des Teams, den die Trainer:innen selbst benennen - in der

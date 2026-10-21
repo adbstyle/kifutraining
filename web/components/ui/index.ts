@@ -82,6 +82,7 @@ export type { IconButtonProps, IconButtonLinkProps } from "./IconButton";
 export { Tooltip } from "./Tooltip";
 export { InfoKnopf } from "./InfoKnopf";
 export { RichtwertLozenge, richtwertSchrift } from "./Richtwert";
+export { TreffpunktListe } from "./TreffpunktListe";
 export { TabNav } from "./TabNav";
 export type { TabNavItem } from "./TabNav";
 export { Breadcrumbs } from "./Breadcrumbs";
