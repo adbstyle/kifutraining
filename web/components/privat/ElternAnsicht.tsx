@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { CalendarX2, Shirt } from "lucide-react";
 import { Button, Kalenderblatt, Leerzustand, SectionMessage, Switch } from "@/components/ui";
 import type { Meldung } from "@/lib/spiel";
@@ -14,6 +13,7 @@ import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import type { LinkTermin } from "@/lib/privater-link";
 import { plusTage } from "@/lib/serie";
 import { spielerName, spielerzahlKurz, verfallenHinweis, type Spielerzahl } from "@/lib/spieler";
+import { useLokalerStand } from "@/lib/use-lokaler-stand";
 
 /* Was die Spielervertretung über den privaten Link sieht (#436 AK 5–9): ihre
    Spieler:in, das Team und die anstehenden Termine. Angemeldet ist der
@@ -46,17 +46,16 @@ export function ElternAnsicht({
   /** Der Kalendertag am Trainingsort — für «Heute» und «Morgen». */
   heute: string;
 }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  // Was gerade umgelegt wird, steht sofort so da; scheitert es, zurück.
-  const [lokal, setLokal] = useState<Record<string, boolean>>({});
-  // Bei Spielen die Meldung (#463), ebenso sofort und zurück, wenn es scheitert.
-  const [lokalSpiel, setLokalSpiel] = useState<Record<string, Meldung>>({});
+  // Was gerade umgelegt wird, steht sofort so da; scheitert es, zurück. Bei
+  // Spielen die Meldung (#463) ebenso.
+  const abmeldungen = useLokalerStand<boolean>(termine);
+  const meldungen = useLokalerStand<Meldung>(termine);
+  const pending = abmeldungen.pending || meldungen.pending;
   const [fehler, setFehler] = useState<{ terminId: string; text: string } | null>(null);
-  useEffect(() => {
-    setLokal({});
-    setLokalSpiel({});
-  }, [termine]);
+  // Ein inzwischen erneuerter Link: Die Seite lädt neu und sagt es.
+  const zeigeFehler = (terminId: string) => (r: { ungueltig: true } | { ungueltig?: false; error: string }) => {
+    if (!r.ungueltig) setFehler({ terminId, text: r.error });
+  };
 
   const name = spielerName(spieler);
   // Begonnen sind nur Termine von heute: Sie stehen vor «Als Nächstes», damit
@@ -66,47 +65,30 @@ export function ElternAnsicht({
   const uebrige = termine.filter((t) => !t.begonnen && t !== naechster);
 
   function umlegen(t: LinkTermin, an: boolean) {
-    setLokal((l) => ({ ...l, [t.id]: !an }));
     setFehler(null);
-    startTransition(async () => {
-      const r = await meldeUeberLinkAktion(token, {
-        terminId: t.id,
-        abgemeldet: !an,
-        gesehen: { datum: t.datum, beginn: t.beginn },
-      });
-      if (!r.ok) {
-        setLokal((l) => {
-          const { [t.id]: _weg, ...rest } = l;
-          return rest;
-        });
-        // Ein inzwischen erneuerter Link: Die Seite lädt neu und sagt es.
-        if (!r.ungueltig) setFehler({ terminId: t.id, text: r.error });
-      }
-      router.refresh();
-    });
+    abmeldungen.aendere(
+      t.id,
+      !an,
+      () => meldeUeberLinkAktion(token, { terminId: t.id, abgemeldet: !an, gesehen: { datum: t.datum, beginn: t.beginn } }),
+      zeigeFehler(t.id),
+    );
   }
 
   /** Ein Spiel melden (#463 AK 3): bis zur Meldefrist, sonst bis zum Anpfiff. */
   function melden(t: LinkTermin, an: boolean) {
-    setLokalSpiel((l) => ({ ...l, [t.id]: an ? "angemeldet" : "abgemeldet" }));
     setFehler(null);
-    startTransition(async () => {
-      const r = await meldeSpielUeberLinkAktion(token, { terminId: t.id, angemeldet: an, gesehen: { datum: t.datum, beginn: t.beginn } });
-      if (!r.ok) {
-        setLokalSpiel((l) => {
-          const { [t.id]: _weg, ...rest } = l;
-          return rest;
-        });
-        if (!r.ungueltig) setFehler({ terminId: t.id, text: r.error });
-      }
-      router.refresh();
-    });
+    meldungen.aendere(
+      t.id,
+      an ? "angemeldet" : "abgemeldet",
+      () => meldeSpielUeberLinkAktion(token, { terminId: t.id, angemeldet: an, gesehen: { datum: t.datum, beginn: t.beginn } }),
+      zeigeFehler(t.id),
+    );
   }
 
   /** Ein Spiel, wie es gerade dasteht: die lokale Meldung zuerst, die Zahl der
    *  Angemeldeten folgt ihr. */
   function spielKarte(t: LinkTermin, o: { gross?: boolean; kopf?: string } = {}) {
-    const meldung = t.id in lokalSpiel ? lokalSpiel[t.id] : t.meldung;
+    const meldung = meldungen.wert(t.id, t.meldung);
     const angemeldet =
       t.ausgefallen || t.angemeldet == null
         ? null
@@ -131,7 +113,7 @@ export function ElternAnsicht({
    *  zuerst; die Zahl der Angemeldeten folgt ihm, bevor der Server antwortet,
    *  die Gesamtzahl bleibt (#472 PC 1). */
   function stand(t: LinkTermin) {
-    const ab = t.id in lokal ? lokal[t.id] : t.abgemeldet;
+    const ab = abmeldungen.wert(t.id, t.abgemeldet);
     const zahl =
       // `== null`: Ein Bundle, das vor der Migration live ist, erhält noch kein `gesamt`.
       t.angemeldet == null || t.gesamt == null

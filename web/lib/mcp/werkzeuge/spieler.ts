@@ -13,8 +13,8 @@ import {
   nimmSpielerAuf,
   schalteAbholung,
 } from "@/lib/kern/spieler";
-import { setzeAbmeldung, setzeAnwesenheit, terminSpieler } from "@/lib/kern/abmeldungen";
-import { istSpiel, setzeAufgebot, setzeMeldung, spielSpieler, type SpielSpieler, type SpielTeilnehmer } from "@/lib/kern/spiele";
+import { istSpielAbweisung, setzeAbmeldung, setzeAnwesenheit, type TerminSpieler } from "@/lib/kern/abmeldungen";
+import { setzeAufgebot, setzeMeldung, teilnehmerAmTermin, type SpielSpieler, type SpielTeilnehmer } from "@/lib/kern/spiele";
 import { zaehlteBeimAnpfiff } from "@/lib/spiel";
 import {
   ABHOL_PFAD,
@@ -290,32 +290,36 @@ export const terminSpielerAbrufen = werkzeug({
       }),
     ),
   }),
-  ausfuehren: async (e, zugang) => {
-    // Ein Spiel hat eigene Meldungen (#463); Zahlen ohne Bewertung (PO 2026-10-21).
-    if (await istSpiel(zugang.supabase, e.termin_id))
-      return abgebildet(await spielSpieler(zugang.supabase, zugang.userId, { terminId: e.termin_id }), spielAusgabe);
-    return abgebildet(await terminSpieler(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) => ({
-      termin_id: w.terminId,
-      art: "training" as const,
-      datum: w.datum,
-      beginn: w.beginn,
-      ende: w.ende,
-      ausgefallen: w.ausgefallen,
-      begonnen: w.begonnen,
-      angemeldet: w.angemeldet,
-      gesamt: w.gesamt,
-      ohne_meldung: null,
-      nicht_aufgeboten: null,
-      mindestzahl: null,
-      hoechstzahl: null,
-      meldefrist: null,
-      anwesend: w.anwesend,
-      kader: w.kader,
-      nicht_betroffen: w.uebrige,
-      spieler: w.spieler.map(teilnehmerAusgabe),
-    }));
-  },
+  // Ein Spiel hat eigene Meldungen (#463); Zahlen ohne Bewertung (PO 2026-10-21).
+  ausfuehren: async (e, zugang) =>
+    abgebildet(await teilnehmerAmTermin(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) =>
+      w.art === "spiel" ? spielAusgabe(w.spiel) : trainingAusgabe(w.training),
+    ),
 });
+
+/** Ein Training, wie die KI es erhält. */
+function trainingAusgabe(w: TerminSpieler) {
+  return {
+    termin_id: w.terminId,
+    art: "training" as const,
+    datum: w.datum,
+    beginn: w.beginn,
+    ende: w.ende,
+    ausgefallen: w.ausgefallen,
+    begonnen: w.begonnen,
+    angemeldet: w.angemeldet,
+    gesamt: w.gesamt,
+    ohne_meldung: null,
+    nicht_aufgeboten: null,
+    mindestzahl: null,
+    hoechstzahl: null,
+    meldefrist: null,
+    anwesend: w.anwesend,
+    kader: w.kader,
+    nicht_betroffen: w.uebrige,
+    spieler: w.spieler.map(teilnehmerAusgabe),
+  };
+}
 
 /** Ein Spiel, wie die KI es erhält (#463 AK 22). */
 function spielAusgabe(w: SpielSpieler) {
@@ -410,8 +414,15 @@ export const terminAbmeldungSetzen = werkzeug({
   }),
   ausfuehren: async (e, zugang) => {
     const gesehen = { datum: e.termin_datum, beginn: e.termin_beginn };
-    // An einem Spiel die Meldung (#463 AK 22, 24): dieselben Regeln wie die Oberfläche.
-    if (await istSpiel(zugang.supabase, e.termin_id))
+    const training = await setzeAbmeldung(zugang.supabase, zugang.userId, {
+      terminId: e.termin_id,
+      spielerId: e.spieler_id,
+      abgemeldet: e.abgemeldet,
+      gesehen,
+    });
+    // An einem Spiel die Meldung (#463 AK 22, 24): dieselben Regeln wie die
+    // Oberfläche. Die Datenebene sagt, dass es eines ist — kein Vorab-Zugriff.
+    if (!training.ok && istSpielAbweisung(training))
       return abgebildet(
         await setzeMeldung(zugang.supabase, zugang.userId, {
           terminId: e.termin_id,
@@ -426,20 +437,12 @@ export const terminAbmeldungSetzen = werkzeug({
           gesamt: w.stand?.gesamt ?? null,
         }),
       );
-    return abgebildet(
-      await setzeAbmeldung(zugang.supabase, zugang.userId, {
-        terminId: e.termin_id,
-        spielerId: e.spieler_id,
-        abgemeldet: e.abgemeldet,
-        gesehen,
-      }),
-      (w) => ({
-        termin_id: w.terminId,
-        abgemeldet: w.abgemeldet,
-        angemeldet: w.stand?.angemeldet ?? null,
-        gesamt: w.stand?.gesamt ?? null,
-      }),
-    );
+    return abgebildet(training, (w) => ({
+      termin_id: w.terminId,
+      abgemeldet: w.abgemeldet,
+      angemeldet: w.stand?.angemeldet ?? null,
+      gesamt: w.stand?.gesamt ?? null,
+    }));
   },
 });
 

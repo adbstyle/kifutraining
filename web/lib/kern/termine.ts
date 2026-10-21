@@ -1,6 +1,6 @@
 import "server-only";
 import { KADER_MELDUNG } from "@/lib/kader";
-import { verfallBestaetigen } from "@/lib/spieler";
+import { verfallBestaetigen, type Spielstand } from "@/lib/spieler";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
 import {
@@ -168,16 +168,24 @@ function meldungZu(marker: string): string {
 
 /** Einen Termin lesen, soweit die RLS ihn zeigt (nur Mitglieder des Teams).
  *  Unsichtbar und nicht vorhanden bleiben ununterscheidbar. */
-export async function ladeTermin(
-  supabase: SupabaseClient,
-  terminId: string,
-): Promise<KernErgebnis<TerminRoh>> {
+export async function ladeTermin(supabase: SupabaseClient, terminId: string): Promise<KernErgebnis<TerminRoh>> {
+  return lade<TerminRoh>(supabase, terminId, TERMIN_ROH);
+}
+
+/** Ein Termin samt Spielerzahl und Kadern — was die Reiter «Spieler:innen»
+ *  von Trainings und Spielen brauchen, in einem Zugriff. */
+export type TerminMitStand = TerminRoh & {
+  spielstand: Spielstand;
+  termin_kader: { kader_id: string | null; kader: { name: string } | null }[];
+};
+
+export async function ladeTerminMitStand(supabase: SupabaseClient, terminId: string): Promise<KernErgebnis<TerminMitStand>> {
+  return lade<TerminMitStand>(supabase, terminId, `${TERMIN_ROH}, spielstand, termin_kader ( kader_id, kader ( name ) )`);
+}
+
+async function lade<T extends TerminRoh>(supabase: SupabaseClient, terminId: string, spalten: string): Promise<KernErgebnis<T>> {
   if (!istUuid(terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
-  const { data, error } = await supabase
-    .from("training_termine")
-    .select(TERMIN_ROH)
-    .eq("id", terminId)
-    .maybeSingle<TerminRoh>();
+  const { data, error } = await supabase.from("training_termine").select(spalten).eq("id", terminId).maybeSingle<T>();
   if (error) return ausDbFehler(error);
   if (!data) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   return ok({ ...data, beginn: kurzeZeit(data.beginn), ende: kurzeZeit(data.ende) });

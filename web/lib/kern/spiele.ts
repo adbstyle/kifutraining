@@ -12,7 +12,8 @@ import {
   type Meldung,
 } from "@/lib/spiel";
 import { jetztAmTrainingsort, terminBegonnen } from "@/lib/zeit";
-import { ladeTermin, TERMIN_FELD } from "@/lib/kern/termine";
+import { ladeTerminMitStand, TERMIN_FELD, type TerminMitStand } from "@/lib/kern/termine";
+import { terminSpielerVon, type TerminSpieler } from "@/lib/kern/abmeldungen";
 import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 import { nachTerminKader, type TerminKader } from "@/lib/kader";
 
@@ -104,25 +105,36 @@ export async function spielSpieler(
   e: { terminId: string },
   jetzt: string = jetztAmTrainingsort(),
 ): Promise<KernErgebnis<SpielSpieler>> {
-  const geladen = await ladeTermin(supabase, e.terminId);
+  const geladen = await ladeTerminMitStand(supabase, e.terminId);
   if (!geladen.ok) return geladen;
-  const t = geladen.wert;
-  if (t.art !== "spiel") return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
-  const [teilnehmer, termin, team] = await Promise.all([
+  if (geladen.wert.art !== "spiel") return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
+  return spielSpielerVon(supabase, geladen.wert, jetzt);
+}
+
+/** Wer an einem Termin welche Meldung trägt — Training oder Spiel, mit
+ *  einem Zugriff auf den Termin verteilt (KI «termin_spieler_abrufen»). */
+export async function teilnehmerAmTermin(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { terminId: string },
+  jetzt: string = jetztAmTrainingsort(),
+): Promise<KernErgebnis<{ art: "training"; training: TerminSpieler } | { art: "spiel"; spiel: SpielSpieler }>> {
+  const geladen = await ladeTerminMitStand(supabase, e.terminId);
+  if (!geladen.ok) return geladen;
+  if (geladen.wert.art === "spiel") {
+    const r = await spielSpielerVon(supabase, geladen.wert, jetzt);
+    return r.ok ? ok({ art: "spiel", spiel: r.wert }) : r;
+  }
+  const r = await terminSpielerVon(supabase, geladen.wert, jetzt);
+  return r.ok ? ok({ art: "training", training: r.wert }) : r;
+}
+
+async function spielSpielerVon(supabase: SupabaseClient, t: TerminMitStand, jetzt: string): Promise<KernErgebnis<SpielSpieler>> {
+  const [teilnehmer, team] = await Promise.all([
     supabase.rpc("spiel_teilnehmer", { p_termin: t.id }),
-    supabase
-      .from("training_termine")
-      .select("spielstand, meldefrist_vorlauf_min, termin_kader ( kader_id, kader ( name ) )")
-      .eq("id", t.id)
-      .maybeSingle<{
-        spielstand: { gesamt: number } | null;
-        meldefrist_vorlauf_min: number | null;
-        termin_kader: { kader_id: string | null; kader: { name: string } | null }[];
-      }>(),
     supabase.from("spieler").select("id", { count: "exact", head: true }).eq("team_id", t.team_id),
   ]);
   if (teilnehmer.error) return ausDbFehler(teilnehmer.error);
-  if (termin.error) return ausDbFehler(termin.error);
   const begonnen = terminBegonnen(t.datum, t.beginn, jetzt);
   // AK 19: Ein ausgefallenes Spiel zeigt weder Meldungen noch Zahl.
   const spieler = t.ausgefallen
@@ -142,7 +154,7 @@ export async function spielSpieler(
           nachgetragen: r.nachgetragen,
         })),
       );
-  const vorlauf = termin.data?.meldefrist_vorlauf_min ?? null;
+  const vorlauf = t.meldefrist_vorlauf_min;
   const frist = vorlauf === null ? null : meldefristZeitpunkt(t.datum, t.beginn, vorlauf);
   // Eine nicht aufgebotene zählt nur als solche (#464 AK 7).
   const zaehle = (m: Meldung) => spieler.filter((s) => !s.nichtAufgeboten && s.meldung === m).length;
@@ -168,19 +180,11 @@ export async function spielSpieler(
     frist,
     fristAbgelaufen: fristAbgelaufen(frist, jetzt),
     spieler,
-    mitListe: termin.data?.spielstand != null,
-    kader: nachTerminKader((termin.data?.termin_kader ?? []).map((k) => ({ id: k.kader_id, name: k.kader?.name ?? null }))),
+    mitListe: t.spielstand != null,
+    kader: nachTerminKader(t.termin_kader.map((k) => ({ id: k.kader_id, name: k.kader?.name ?? null }))),
     uebrige: begonnen ? 0 : Math.max(0, (team.count ?? 0) - ((teilnehmer.data ?? []) as Zeile[]).length),
     gelesenAm: new Date().toISOString(),
   });
-}
-
-/** Ist der Termin ein Spiel? `null`, wenn es ihn nicht gibt (oder er
- *  unsichtbar ist) — dann antwortet der Weg der Trainings mit «nicht gefunden». */
-export async function istSpiel(supabase: SupabaseClient, terminId: string): Promise<boolean | null> {
-  if (!istUuid(terminId)) return null;
-  const { data } = await supabase.from("training_termine").select("art").eq("id", terminId).maybeSingle<{ art: string }>();
-  return data ? data.art === "spiel" : null;
 }
 
 /** Eine abgewiesene Meldung als Kern-Fehler. Verlegt ist ein Konflikt — die
