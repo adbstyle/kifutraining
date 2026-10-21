@@ -76,6 +76,12 @@ const ART = z.enum(TERMIN_ARTEN as ["training", "spiel"]).describe("«training»
 const BEZEICHNUNG = z
   .string()
   .describe(`Bezeichnung eines Spiels, 1 bis ${BEZEICHNUNG_MAX} Zeichen, etwa «Meisterschaft gegen FC Bümpliz».`);
+const MELDEFRIST = z
+  .string()
+  .describe(
+    "Meldefrist eines Spiels für die Eltern als JJJJ-MM-TTTHH:MM (Uhr am Trainingsort), vor dem Anpfiff, höchstens ein Jahr " +
+      "davor. Ohne Frist melden Eltern bis zum Anpfiff. Eine Verlegung nimmt sie im selben Abstand mit.",
+  );
 const RICHTWERT_ZAHL = z
   .number()
   .int()
@@ -103,10 +109,13 @@ const Bestaetigt = z
 
 /** Beim Verlegen: Abmeldungen verfallen erst nach Bestätigung (#437 AK 1, 6). */
 const VERFALL_MODELL =
-  "Ändern sich Datum oder Beginn eines Termins und hat er danach noch nicht begonnen, verfallen seine Abmeldungen: " +
+  "Ändern sich Datum oder Beginn eines Trainings und hat es danach noch nicht begonnen, verfallen seine Abmeldungen: " +
   "Alle Spieler:innen gelten wieder als angemeldet (auch über die Serie, auch an einem ausgefallenen Termin). " +
   "Verfallen dadurch Abmeldungen, kommt zuerst ein Fehler mit «verfallend» (Anzahl); frag nach und wiederhole den " +
-  "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Felder, Verantwortliche und Training lassen sie stehen.";
+  "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Felder, Verantwortliche und Training lassen sie stehen. " +
+  "An einem Spiel verfallen die Meldungen nur mit einem anderen Datum (alle sind dann wieder ohne Meldung); rückt die " +
+  "Verlegung die Meldefrist ins Abgelaufene, kommt ebenfalls zuerst ein Fehler («frist_abgelaufen») - frag nach und " +
+  "wiederhole mit «bestaetigt: true».";
 
 const BestaetigtVerlegen = z
   .boolean()
@@ -185,6 +194,9 @@ const PlanEintrag = z.object({
   bezeichnung: z.string().nullable(),
   mindestzahl: z.number().int().nullable(),
   hoechstzahl: z.number().int().nullable(),
+  /** Nur bei Spielen: die Meldefrist der Eltern, «vorher» bei einem verlegten. */
+  meldefrist: z.string().nullable(),
+  vorher: z.object({ datum: z.string(), beginn: z.string() }).nullable().describe("Ein verlegtes Spiel: der zuletzt gültige Zeitpunkt."),
   datum: z.string(),
   beginn: z.string(),
   ende: z.string(),
@@ -219,6 +231,8 @@ function planEintrag(t: TerminZeile, zugang: Zugang) {
     bezeichnung: t.spiel?.bezeichnung ?? null,
     mindestzahl: t.spiel?.richtwertMin ?? null,
     hoechstzahl: t.spiel?.richtwertMax ?? null,
+    meldefrist: t.spiel?.meldefrist ?? null,
+    vorher: t.spiel?.vorher ?? null,
     datum: t.datum,
     beginn: t.beginn,
     ende: t.ende,
@@ -346,6 +360,7 @@ export const terminFestlegen = werkzeug({
     hoechstzahl: RICHTWERT_ZAHL.optional().describe(
       "Höchstzahl an Spieler:innen eines Spiels; ohne Angabe nicht festgelegt. Nicht kleiner als die Mindestzahl.",
     ),
+    meldefrist: MELDEFRIST.optional(),
     datum: DATUM,
     beginn: UHRZEIT.describe("Beginn als HH:MM, etwa 18:30; bei einem Spiel der Anpfiff."),
     ende: UHRZEIT.describe("Ende als HH:MM am selben Tag, etwa 20:00."),
@@ -366,6 +381,7 @@ export const terminFestlegen = werkzeug({
         bezeichnung: e.bezeichnung,
         richtwertMin: e.mindestzahl,
         richtwertMax: e.hoechstzahl,
+        meldefrist: e.meldefrist,
         datum: e.datum,
         beginn: e.beginn,
         ende: e.ende,
@@ -400,6 +416,7 @@ export const AendernEingabe = z.object({
   bezeichnung: BEZEICHNUNG.optional().describe("Nur bei einem Spiel: neue Bezeichnung; ohne Angabe unverändert."),
   mindestzahl: RICHTWERT_ZAHL.nullable().optional().describe("Nur bei einem Spiel: neue Mindestzahl; null entfernt sie, ohne Angabe unverändert."),
   hoechstzahl: RICHTWERT_ZAHL.nullable().optional().describe("Nur bei einem Spiel: neue Höchstzahl; null entfernt sie, ohne Angabe unverändert."),
+  meldefrist: MELDEFRIST.nullable().optional().describe("Nur bei einem Spiel: neue Meldefrist als JJJJ-MM-TTTHH:MM; null entfernt sie, ohne Angabe unverändert."),
   felder: FelderEingabe.nullable()
     .optional()
     .describe(
@@ -489,6 +506,7 @@ export const terminAendern = werkzeug({
         bezeichnung: e.bezeichnung,
         richtwertMin: e.mindestzahl,
         richtwertMax: e.hoechstzahl,
+        meldefrist: e.meldefrist,
         kaderIds: e.kader_ids,
         reichweite: e.reichweite,
         wochentage: e.wochentage?.map(alsWochentag),
@@ -518,7 +536,8 @@ export const terminEntfernen = werkzeug({
     "Training. Erfasst «dieser_und_folgende» oder «alle» " +
     "auch vergangene Termine, wird die Serie nur mit «bestaetigt: true» entfernt; ohne diese " +
     "Bestätigung nennt das Ergebnis, was entfiele. Ein einzelner Termin oder «nur_dieser» wird " +
-    "sofort entfernt. " +
+    "sofort entfernt - ein Spiel mit Meldungen erst mit «bestaetigt: true»; ohne nennt der Fehler, wie viele verschwinden " +
+    "(«verschwindend»). " +
     `${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ termin_id: TerminId, reichweite: Reichweite.optional(), bestaetigt: Bestaetigt }),

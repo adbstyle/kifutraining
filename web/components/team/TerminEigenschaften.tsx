@@ -1,12 +1,12 @@
 import { Repeat } from "lucide-react";
-import { Eigenschaft, EigenschaftFehlt } from "@/components/ui";
+import { Eigenschaft, EigenschaftFehlt, RichtwertLozenge, richtwertSchrift } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { wochentageText } from "@/lib/serie";
 import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { feldName, feldText } from "@/lib/termin-felder";
 import { verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { FUER_ALLE } from "@/lib/kader";
-import { richtwertText } from "@/lib/spiel";
+import { richtwertText, zeitpunktKurz } from "@/lib/spiel";
 import { KaderLozenges } from "./KaderLozenge";
 
 /* Alle Angaben eines Termins ungekürzt (#403 AK 3, 5): Ort, Verantwortliche,
@@ -45,9 +45,26 @@ export function TerminEigenschaften({
       {/* Aus der Spielerliste, sonst die erwartete Zahl (#434 AK 8); ein
           ausgefallener Termin nennt keine (#437 AK 4). */}
       {t.spiel ? (
-        richtwertText(t.spiel.richtwertMin, t.spiel.richtwertMax) && (
-          <Eigenschaft label="Richtwert">{richtwertText(t.spiel.richtwertMin, t.spiel.richtwertMax)} Spieler:innen</Eigenschaft>
-        )
+        <>
+          {/* #463 AK 6, 7: die Angemeldeten gegen den Richtwert, farbig und in Worten. */}
+          {!t.ausgefallen && t.spielstand && (
+            <Eigenschaft label="Spieler:innen">
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className={richtwertSchrift(t.spielstand.angemeldet, t.spiel.richtwertMin, t.spiel.richtwertMax)}>
+                  {t.spielstand.angemeldet} von {t.spielstand.gesamt} angemeldet
+                </span>
+                <RichtwertLozenge zahl={t.spielstand.angemeldet} min={t.spiel.richtwertMin} max={t.spiel.richtwertMax} />
+              </span>
+            </Eigenschaft>
+          )}
+          {richtwertText(t.spiel.richtwertMin, t.spiel.richtwertMax) && (
+            <Eigenschaft label="Richtwert">{richtwertText(t.spiel.richtwertMin, t.spiel.richtwertMax)} Spieler:innen</Eigenschaft>
+          )}
+          {/* #463 AK 8: bis wann Eltern melden; ohne Frist bis zum Anpfiff. */}
+          <Eigenschaft label="Meldefrist">
+            {t.spiel.meldefrist ? `Eltern bis ${zeitpunktKurz(t.spiel.meldefrist)}` : "Bis zum Anpfiff"}
+          </Eigenschaft>
+        </>
       ) : (
         <>
           {!t.ausgefallen && (zahlText ? (

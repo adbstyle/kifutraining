@@ -8,6 +8,7 @@ import {
   kaderVerfallGeaendert,
   nachKaderName,
   verfallAusFehler,
+  verfallSpieleAusFehler,
   type Kader,
 } from "@/lib/kader";
 import { bereinigeName, SPIELER_MELDUNG } from "@/lib/spieler";
@@ -74,18 +75,25 @@ export async function mitVerfall<T>(
   if (!erst.error) return ok(erst.data as T);
   const n = verfallAusFehler(erst.error.message);
   if (n === null) return fehler(erst.error);
+  const sp = verfallSpieleAusFehler(erst.error.message);
   // Eine Zahl, die nicht mehr stimmt: der aktuelle Stand (AK 12).
-  if (zahl !== null) return verfallNachfrage(kaderVerfallGeaendert(n), n);
-  if (bestaetigt !== true) return verfallNachfrage(kaderVerfallBestaetigen(n), n);
+  if (zahl !== null) return verfallNachfrage(kaderVerfallGeaendert(n, sp), n, sp);
+  if (bestaetigt !== true) return verfallNachfrage(kaderVerfallBestaetigen(n, sp), n, sp);
   // Die KI bestätigt, was es ist: einmal mit der gemeldeten Zahl.
   const dann = await aufruf(n);
   if (!dann.error) return ok(dann.data as T);
   const m = verfallAusFehler(dann.error.message);
-  return m === null ? fehler(dann.error) : verfallNachfrage(kaderVerfallBestaetigen(m), m, true);
+  const msp = verfallSpieleAusFehler(dann.error.message);
+  return m === null ? fehler(dann.error) : verfallNachfrage(kaderVerfallBestaetigen(m, msp), m, msp, true);
 }
 
-function verfallNachfrage(meldung: string, n: number, wiederholbar = false): KernFehler {
-  return fehlschlag("regel", meldung, { feld: "bestaetigt", verfallend: n, ...(wiederholbar && { wiederholbar }) });
+function verfallNachfrage(meldung: string, n: number, spiele: number, wiederholbar = false): KernFehler {
+  return fehlschlag("regel", meldung, {
+    feld: "bestaetigt",
+    verfallend: n,
+    ...(spiele > 0 && { verfallendSpiele: spiele }),
+    ...(wiederholbar && { wiederholbar }),
+  });
 }
 
 function namensFehler(name: string): KernFehler | null {
@@ -222,6 +230,8 @@ export type KaderEntfernenFolgen = {
   termine: { id: string; datum: string; beginn: string; ende: string; serieId: string | null }[];
   serien: { id: string; wochentage: number[]; beginn: string; ende: string; bis: string }[];
   verfallend: number;
+  /** Davon Meldungen zu Spielen (#463 AK 14). */
+  verfallendSpiele: number;
 };
 
 export async function kaderEntfernenFolgen(
@@ -237,11 +247,13 @@ export async function kaderEntfernenFolgen(
     termine: { id: string; datum: string; beginn: string; ende: string; serie: string | null }[];
     serien: KaderEntfernenFolgen["serien"];
     verfallend: number;
+    verfallend_spiele?: number;
   };
   return ok({
     spieler: r.spieler,
     termine: r.termine.map((t) => ({ id: t.id, datum: t.datum, beginn: t.beginn, ende: t.ende, serieId: t.serie })),
     serien: r.serien,
     verfallend: r.verfallend,
+    verfallendSpiele: r.verfallend_spiele ?? 0,
   });
 }

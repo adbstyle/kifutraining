@@ -3,11 +3,12 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarX2, Shirt } from "lucide-react";
-import { Button, Kalenderblatt, Leerzustand, SectionMessage, SpielLozenge, Switch } from "@/components/ui";
-import { richtwertText } from "@/lib/spiel";
+import { Button, Kalenderblatt, Leerzustand, SectionMessage, Switch } from "@/components/ui";
+import type { Meldung } from "@/lib/spiel";
+import { SpielKarte } from "./SpielKarte";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
-import { meldeUeberLinkAktion } from "@/lib/actions/spieler-link";
+import { meldeSpielUeberLinkAktion, meldeUeberLinkAktion } from "@/lib/actions/spieler-link";
 import { monatsName, tagOhneJahr, tagText } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import type { LinkTermin } from "@/lib/privater-link";
@@ -49,8 +50,13 @@ export function ElternAnsicht({
   const [pending, startTransition] = useTransition();
   // Was gerade umgelegt wird, steht sofort so da; scheitert es, zurück.
   const [lokal, setLokal] = useState<Record<string, boolean>>({});
+  // Bei Spielen die Meldung (#463), ebenso sofort und zurück, wenn es scheitert.
+  const [lokalSpiel, setLokalSpiel] = useState<Record<string, Meldung>>({});
   const [fehler, setFehler] = useState<{ terminId: string; text: string } | null>(null);
-  useEffect(() => setLokal({}), [termine]);
+  useEffect(() => {
+    setLokal({});
+    setLokalSpiel({});
+  }, [termine]);
 
   const name = spielerName(spieler);
   // Begonnen sind nur Termine von heute: Sie stehen vor «Als Nächstes», damit
@@ -78,6 +84,47 @@ export function ElternAnsicht({
       }
       router.refresh();
     });
+  }
+
+  /** Ein Spiel melden (#463 AK 3): bis zur Meldefrist, sonst bis zum Anpfiff. */
+  function melden(t: LinkTermin, an: boolean) {
+    setLokalSpiel((l) => ({ ...l, [t.id]: an ? "angemeldet" : "abgemeldet" }));
+    setFehler(null);
+    startTransition(async () => {
+      const r = await meldeSpielUeberLinkAktion(token, { terminId: t.id, angemeldet: an, gesehen: { datum: t.datum, beginn: t.beginn } });
+      if (!r.ok) {
+        setLokalSpiel((l) => {
+          const { [t.id]: _weg, ...rest } = l;
+          return rest;
+        });
+        if (!r.ungueltig) setFehler({ terminId: t.id, text: r.error });
+      }
+      router.refresh();
+    });
+  }
+
+  /** Ein Spiel, wie es gerade dasteht: die lokale Meldung zuerst, die Zahl der
+   *  Angemeldeten folgt ihr. */
+  function spielKarte(t: LinkTermin, o: { gross?: boolean; kopf?: string } = {}) {
+    const meldung = t.id in lokalSpiel ? lokalSpiel[t.id] : t.meldung;
+    const angemeldet =
+      t.ausgefallen || t.angemeldet == null
+        ? null
+        : t.angemeldet + Number(meldung === "angemeldet") - Number(t.meldung === "angemeldet");
+    return (
+      <SpielKarte
+        key={t.id}
+        t={t}
+        meldung={meldung}
+        angemeldet={angemeldet}
+        name={name}
+        pending={pending}
+        gross={o.gross}
+        kopf={o.kopf}
+        fehler={fehler?.terminId === t.id ? fehler.text : undefined}
+        onMelden={(an) => melden(t, an)}
+      />
+    );
   }
 
   /** Der Stand eines Termins, wie er gerade dasteht — der lokale Schalter
@@ -114,7 +161,7 @@ export function ElternAnsicht({
         <h1 className="type-headline-small text-on-surface">{name}</h1>
         <p className="type-body-medium text-on-surface-mittel">
           {name} ist für jedes Training zuerst angemeldet. Kann {spieler.vorname} nicht, melde ab - und bis zum
-          Beginn wieder an.
+          Beginn wieder an. Für ein Spiel ist {spieler.vorname} erst angemeldet, wenn du anmeldest.
         </p>
       </header>
       {termine.length === 0 ? (
@@ -129,13 +176,25 @@ export function ElternAnsicht({
             <section>
               <h2 className="type-title-small text-on-surface">Heute</h2>
               <ul className="mt-2 flex flex-col gap-2">
-                {begonnen.map((t) => (
-                  <TerminKarte key={t.id} t={t} {...stand(t)} name={name} pending={pending} onUmlegen={(an) => umlegen(t, an)} hinweise={hinweise(t, stand(t).ab)} />
-                ))}
+                {begonnen.map((t) =>
+                  t.art === "spiel" ? (
+                    spielKarte(t)
+                  ) : (
+                    <TerminKarte key={t.id} t={t} {...stand(t)} name={name} pending={pending} onUmlegen={(an) => umlegen(t, an)} hinweise={hinweise(t, stand(t).ab)} />
+                  ),
+                )}
               </ul>
             </section>
           )}
-          {naechster && naechsterStand && (
+          {naechster && naechster.art === "spiel" && (
+            <section aria-labelledby="als-naechstes">
+              <h2 id="als-naechstes" className="type-title-small text-on-surface-mittel">
+                Als Nächstes
+              </h2>
+              <div className="mt-2">{spielKarte(naechster, { gross: true, kopf: relativerTag(naechster.datum, heute) })}</div>
+            </section>
+          )}
+          {naechster && naechster.art !== "spiel" && naechsterStand && (
             <NaechsterTermin
               t={naechster}
               {...naechsterStand}
@@ -150,9 +209,13 @@ export function ElternAnsicht({
             <section key={m.monat}>
               <h2 className="type-title-small text-on-surface">{monatsName(m.monat)}</h2>
               <ul className="mt-2 flex flex-col gap-2">
-                {m.tage.flatMap((tag) => tag.termine).map((t) => (
-                  <TerminKarte key={t.id} t={t} {...stand(t)} name={name} pending={pending} onUmlegen={(an) => umlegen(t, an)} hinweise={hinweise(t, stand(t).ab)} />
-                ))}
+                {m.tage.flatMap((tag) => tag.termine).map((t) =>
+                  t.art === "spiel" ? (
+                    spielKarte(t)
+                  ) : (
+                    <TerminKarte key={t.id} t={t} {...stand(t)} name={name} pending={pending} onUmlegen={(an) => umlegen(t, an)} hinweise={hinweise(t, stand(t).ab)} />
+                  ),
+                )}
               </ul>
             </section>
           ))}
@@ -174,51 +237,31 @@ type KarteProps = {
   hinweise: React.ReactNode;
 };
 
-/* Ein Spiel als Spiel (#459 AK 17): Lozenge, Bezeichnung und Richtwert. */
-function SpielZeile({ t, gross = false }: { t: LinkTermin; gross?: boolean }) {
-  if (t.art !== "spiel") return null;
-  const richtwert = richtwertText(t.richtwert_min, t.richtwert_max);
-  return (
-    <>
-      <span className="flex min-w-0 items-center gap-2">
-        <SpielLozenge />
-        <span className={cn("truncate text-on-surface", gross ? "type-title-medium" : "type-title-small")}>{t.bezeichnung}</span>
-      </span>
-      {richtwert && <span className="type-body-small text-on-surface-mittel">Richtwert {richtwert} Spieler:innen</span>}
-    </>
-  );
-}
-
-/* Ein Termin in der Liste: Kalenderblatt, Zeit, zweite Zeile und Schalter.
-   Ein Spiel trägt (bis zu den Meldungen, #463) keinen Schalter. */
+/* Ein Termin in der Liste: Kalenderblatt, Zeit, zweite Zeile und Schalter. */
 function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }: KarteProps) {
-  const spiel = t.art === "spiel";
   return (
     <li className="flex flex-col gap-2 rounded-flaeche bg-elev-01 px-3 py-2.5">
       <div className="flex items-center gap-3">
         <Kalenderblatt
           datum={t.datum}
-          zustand={t.ausgefallen ? "ausgefallen" : spiel ? "spiel" : ab ? "abgemeldet" : "training"}
+          zustand={t.ausgefallen ? "ausgefallen" : ab ? "abgemeldet" : "training"}
           className="self-center"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <SpielZeile t={t} />
           <span className="type-body-medium text-on-surface">
             {t.beginn}–{t.ende}
           </span>
           <ZweiteZeile t={t} zweite={zweite} zahl={zahl} className="type-body-small" />
           <KaderLozenges namen={t.kader} className="mt-1" />
         </div>
-        {!spiel && (
-          <Switch
-            ton="erfolg"
-            checked={!t.ausgefallen && !ab}
-            neutral={t.ausgefallen}
-            disabled={t.ausgefallen || t.begonnen || pending}
-            onChange={(e) => onUmlegen(e.target.checked)}
-            aria-label={`${name} am ${tagText(t.datum)} dabei`}
-          />
-        )}
+        <Switch
+          ton="erfolg"
+          checked={!t.ausgefallen && !ab}
+          neutral={t.ausgefallen}
+          disabled={t.ausgefallen || t.begonnen || pending}
+          onChange={(e) => onUmlegen(e.target.checked)}
+          aria-label={`${name} am ${tagText(t.datum)} dabei`}
+        />
       </div>
       {hinweise}
     </li>
@@ -232,7 +275,6 @@ function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }
    anmelden» ist der helle Knopf. */
 function NaechsterTermin({ t, ab, zweite, zahl, name, heute, pending, onUmlegen, hinweise }: KarteProps & { heute: string }) {
   const relativ = t.datum === heute ? "Heute" : t.datum === plusTage(heute, 1) ? "Morgen" : null;
-  const spiel = t.art === "spiel";
   return (
     <section aria-labelledby="als-naechstes">
       <h2 id="als-naechstes" className="type-title-small text-on-surface-mittel">
@@ -255,19 +297,15 @@ function NaechsterTermin({ t, ab, zweite, zahl, name, heute, pending, onUmlegen,
           <p className={cn("mt-1 type-headline-small text-on-surface", t.ausgefallen && "line-through")}>
             {t.beginn}–{t.ende} Uhr
           </p>
-          <div className="mt-1 flex flex-col gap-0.5">
-            <SpielZeile t={t} gross />
-          </div>
           <ZweiteZeile t={t} zweite={zweite} zahl={zahl} className="type-body-medium mt-1" gross />
           <KaderLozenges namen={t.kader} className="mt-2" />
-          {!t.ausgefallen && !spiel && (
+          {!t.ausgefallen && (
             <p className="type-body-medium mt-1 text-on-surface">
               {ab ? `${name} ist abgemeldet.` : `${name} ist angemeldet.`}
             </p>
           )}
         </div>
         {!t.ausgefallen &&
-          !spiel &&
           (ab ? (
             <Button
               variant="hell"
@@ -327,4 +365,10 @@ function ZweiteZeile({
       )}
     </p>
   );
+}
+
+/** «Heute · Samstag, 31. Oktober», «Morgen · …» oder nur der Tag. */
+function relativerTag(datum: string, heute: string): string {
+  const relativ = datum === heute ? "Heute" : datum === plusTage(heute, 1) ? "Morgen" : null;
+  return `${relativ ? `${relativ} · ` : ""}${tagOhneJahr(datum)}`;
 }

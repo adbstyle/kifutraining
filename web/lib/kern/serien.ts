@@ -537,7 +537,8 @@ export async function entferneMitReichweite(
   if (!t.serie_id && e.reichweite && e.reichweite !== "nur_dieser")
     return fehlschlag("regel", SERIE_MELDUNG.TERMIN_OHNE_SERIE, { feld: "reichweite" });
   if (!t.serie_id || e.reichweite === "nur_dieser") {
-    const r = await entferneTermin(supabase, userId, { terminId: t.id });
+    // Ein Spiel mit Meldungen nur bestätigt (#463 AK 27).
+    const r = await entferneTermin(supabase, userId, { terminId: t.id, bestaetigt: e.bestaetigt });
     return r.ok ? ok({ ...r.wert, serie: null }) : r;
   }
   const r = await entferneSerie(supabase, userId, {

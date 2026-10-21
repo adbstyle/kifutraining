@@ -14,6 +14,7 @@ import {
   schalteAbholung,
 } from "@/lib/kern/spieler";
 import { setzeAbmeldung, setzeAnwesenheit, terminSpieler } from "@/lib/kern/abmeldungen";
+import { istSpiel, setzeMeldung, spielSpieler, type SpielSpieler, type SpielTeilnehmer } from "@/lib/kern/spiele";
 import {
   ABHOL_PFAD,
   ABHOLUNG_TEXT,
@@ -200,7 +201,11 @@ const ABMELDE_MODELL =
   "und wer trotz Abmeldung doch erschienen ist (termin_anwesenheit_setzen), unbefristet. Ohne Nachtrag gilt der Stand " +
   "bei Beginn als Anwesenheit - ob jemand geprüft hat, hält KiFu nicht fest. Wer aus der Liste fällt, steht an " +
   `begonnenen Terminen als «${EHEMALIGE_SPIELERIN}» ohne Namen, samt Nachtrag. Eine Abmeldung und ein Nachtrag tragen ` +
-  "keinen Grund, und KiFu benachrichtigt niemanden.";
+  "keinen Grund, und KiFu benachrichtigt niemanden. Spiele (art «spiel») sind anders: Jede Spieler:in ist zuerst ohne " +
+  "Meldung («meldung: null»), bis sie an- oder abgemeldet wird; danach wechselt sie nur noch zwischen angemeldet und " +
+  "abgemeldet. Mitglieder (und du) melden bis zum Anpfiff, auch nach der Meldefrist; Eltern über ihren Link nur bis zur " +
+  "Meldefrist. Ein anderes Datum lässt alle Meldungen eines Spiels verfallen, eine andere Zeit am selben Tag nicht. " +
+  "Mindest- und Höchstzahl sind ein Richtwert; wie die Zahl dazu steht, beurteilst du selbst.";
 
 /** Was die KI je Spieler:in zur Anwesenheit erhält (#475 AK 13). */
 const ANWESENHEIT_BESCHREIBUNG =
@@ -211,7 +216,8 @@ export const terminSpielerAbrufen = werkzeug({
   name: "termin_spieler_abrufen",
   titel: "Wer an einem Termin kommt",
   beschreibung:
-    "Nennt für einen Termin, welche Spieler:innen angemeldet und welche abgemeldet sind und seit wann, dazu die Zahl der " +
+    "Nennt für einen Termin, welche Spieler:innen angemeldet und welche abgemeldet sind und seit wann - an einem Spiel auch, " +
+    "wer noch ohne Meldung ist -, dazu die Zahl der " +
     "angemeldeten. Trägt der Termin Kader, stehen nur die Spieler:innen da, für die er gilt, je mit den Kadern, über die er " +
     "für sie gilt. «begonnen: true» heisst, der Stand ist der bei Beginn; dazu kommen die Nachträge, wer nicht oder doch " +
     "erschienen ist, und «anwesend». " +
@@ -220,6 +226,7 @@ export const terminSpielerAbrufen = werkzeug({
   eingabe: z.object({ termin_id: TerminId }),
   ausgabe: z.object({
     termin_id: z.string(),
+    art: z.enum(["training", "spiel"]),
     datum: z.string(),
     beginn: z.string(),
     ende: z.string(),
@@ -227,6 +234,13 @@ export const terminSpielerAbrufen = werkzeug({
     begonnen: z.boolean(),
     angemeldet: z.number().int(),
     gesamt: z.number().int(),
+    ohne_meldung: z.number().int().nullable().describe("Nur an einem Spiel: wer noch ohne Meldung ist; bei Trainings null."),
+    mindestzahl: z.number().int().nullable().describe("Nur an einem Spiel: der Richtwert, soweit festgelegt."),
+    hoechstzahl: z.number().int().nullable(),
+    meldefrist: z
+      .string()
+      .nullable()
+      .describe("Nur an einem Spiel: bis wann Eltern melden, als YYYY-MM-DDTHH:MM (Uhr am Trainingsort); null ohne Frist (bis zum Anpfiff)."),
     anwesend: z
       .number()
       .int()
@@ -242,6 +256,10 @@ export const terminSpielerAbrufen = werkzeug({
         vorname: z.string().nullable(),
         nachname: z.string().nullable(),
         abgemeldet: z.boolean().describe("Der Stand vor Beginn bzw. bei Beginn; ein Nachtrag ändert ihn nicht."),
+        meldung: z
+          .enum(["angemeldet", "abgemeldet"])
+          .nullable()
+          .describe("Die Meldung; an einem Spiel null, solange sie ohne Meldung ist. Bei Trainings nie null."),
         ehemalig: z.boolean(),
         kader: z.array(z.string()).describe("Die Kader, über die der Termin für sie gilt; leer bei einem Termin für alle."),
         anwesenheit: z.enum(["nicht_erschienen", "doch_erschienen"]).nullable().describe(ANWESENHEIT_BESCHREIBUNG),
@@ -256,9 +274,13 @@ export const terminSpielerAbrufen = werkzeug({
       }),
     ),
   }),
-  ausfuehren: async (e, zugang) =>
-    abgebildet(await terminSpieler(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) => ({
+  ausfuehren: async (e, zugang) => {
+    // Ein Spiel hat eigene Meldungen (#463); Zahlen ohne Bewertung (PO 2026-10-21).
+    if (await istSpiel(zugang.supabase, e.termin_id))
+      return abgebildet(await spielSpieler(zugang.supabase, zugang.userId, { terminId: e.termin_id }), spielAusgabe);
+    return abgebildet(await terminSpieler(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) => ({
       termin_id: w.terminId,
+      art: "training" as const,
       datum: w.datum,
       beginn: w.beginn,
       ende: w.ende,
@@ -266,12 +288,54 @@ export const terminSpielerAbrufen = werkzeug({
       begonnen: w.begonnen,
       angemeldet: w.angemeldet,
       gesamt: w.gesamt,
+      ohne_meldung: null,
+      mindestzahl: null,
+      hoechstzahl: null,
+      meldefrist: null,
       anwesend: w.anwesend,
       kader: w.kader,
       nicht_betroffen: w.uebrige,
       spieler: w.spieler.map(teilnehmerAusgabe),
-    })),
+    }));
+  },
 });
+
+/** Ein Spiel, wie die KI es erhält (#463 AK 22). */
+function spielAusgabe(w: SpielSpieler) {
+  return {
+    termin_id: w.terminId,
+    art: "spiel" as const,
+    datum: w.datum,
+    beginn: w.beginn,
+    ende: w.ende,
+    ausgefallen: w.ausgefallen,
+    begonnen: w.begonnen,
+    angemeldet: w.angemeldet,
+    gesamt: w.gesamt,
+    ohne_meldung: w.ohneMeldung,
+    mindestzahl: w.richtwertMin,
+    hoechstzahl: w.richtwertMax,
+    meldefrist: w.frist,
+    anwesend: null,
+    kader: w.kader,
+    nicht_betroffen: w.uebrige,
+    spieler: w.spieler.map(spielTeilnehmerAusgabe),
+  };
+}
+
+function spielTeilnehmerAusgabe(s: SpielTeilnehmer) {
+  return {
+    id: s.spielerId,
+    vorname: s.vorname,
+    nachname: s.nachname,
+    abgemeldet: s.meldung === "abgemeldet",
+    meldung: s.meldung,
+    ehemalig: s.ehemalig,
+    kader: s.kader,
+    anwesenheit: null,
+    zuletzt_gewechselt: s.gewechseltAm && jetztAmTrainingsort(new Date(s.gewechseltAm)),
+  };
+}
 
 /** Eine Spieler:in, wie die KI sie erhält: der letzte Wechsel als Uhr am
  *  Trainingsort, nicht in UTC (#467 AK 12). */
@@ -281,6 +345,7 @@ export function teilnehmerAusgabe(s: Teilnehmer) {
     vorname: s.vorname,
     nachname: s.nachname,
     abgemeldet: s.abgemeldet,
+    meldung: s.abgemeldet ? ("abgemeldet" as const) : ("angemeldet" as const),
     ehemalig: s.ehemalig,
     kader: s.kader,
     anwesenheit: anwesenheitAusgabe(s),
@@ -299,7 +364,8 @@ export const terminAbmeldungSetzen = werkzeug({
   name: "termin_abmeldung_setzen",
   titel: "Spieler:in ab- oder anmelden",
   beschreibung:
-    "Meldet eine Spieler:in für einen Termin ab («abgemeldet: true») oder wieder an («abgemeldet: false»). " +
+    "Meldet eine Spieler:in für einen Termin ab («abgemeldet: true») oder wieder an («abgemeldet: false») - an einem " +
+    "Spiel ist «abgemeldet: false» die Anmeldung. " +
     "«termin_datum» und «termin_beginn» sind Datum und Beginn, wie du den Termin zuletzt gelesen hast: Wurde er " +
     "inzwischen verlegt, weist KiFu mit dem neuen Stand ab (Fehlerart «konflikt») - lies ihn dann neu und frag nach. " +
     `${ABMELDE_MODELL} ${TERMIN_KENNUNG_FEHLER} ${SPIELER_KENNUNG_FEHLER}`,
@@ -317,13 +383,30 @@ export const terminAbmeldungSetzen = werkzeug({
     angemeldet: z.number().int().nullable(),
     gesamt: z.number().int().nullable(),
   }),
-  ausfuehren: async (e, zugang) =>
-    abgebildet(
+  ausfuehren: async (e, zugang) => {
+    const gesehen = { datum: e.termin_datum, beginn: e.termin_beginn };
+    // An einem Spiel die Meldung (#463 AK 22, 24): dieselben Regeln wie die Oberfläche.
+    if (await istSpiel(zugang.supabase, e.termin_id))
+      return abgebildet(
+        await setzeMeldung(zugang.supabase, zugang.userId, {
+          terminId: e.termin_id,
+          spielerId: e.spieler_id,
+          angemeldet: !e.abgemeldet,
+          gesehen,
+        }),
+        (w) => ({
+          termin_id: w.terminId,
+          abgemeldet: !w.angemeldet,
+          angemeldet: w.stand?.angemeldet ?? null,
+          gesamt: w.stand?.gesamt ?? null,
+        }),
+      );
+    return abgebildet(
       await setzeAbmeldung(zugang.supabase, zugang.userId, {
         terminId: e.termin_id,
         spielerId: e.spieler_id,
         abgemeldet: e.abgemeldet,
-        gesehen: { datum: e.termin_datum, beginn: e.termin_beginn },
+        gesehen,
       }),
       (w) => ({
         termin_id: w.terminId,
@@ -331,7 +414,8 @@ export const terminAbmeldungSetzen = werkzeug({
         angemeldet: w.stand?.angemeldet ?? null,
         gesamt: w.stand?.gesamt ?? null,
       }),
-    ),
+    );
+  },
 });
 
 // ── termin_anwesenheit_setzen (#475) ────────────────────────────────────────

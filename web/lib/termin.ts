@@ -30,6 +30,8 @@ export type TerminFelder = {
   bezeichnung?: string | null;
   richtwertMin?: number | null;
   richtwertMax?: number | null;
+  /** Nur an einem Spiel: die Meldefrist `YYYY-MM-DDTHH:MM`; leer = keine (#463). */
+  meldefrist?: string | null;
 };
 
 export type TerminFeld = "datum" | "beginn" | "ende" | "ort" | "bemerkung";
@@ -171,6 +173,9 @@ export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partia
   if (!gleich(neu.bezeichnung, start.bezeichnung)) aenderung.bezeichnung = neu.bezeichnung ?? "";
   if ((neu.richtwertMin ?? null) !== (start.richtwertMin ?? null)) aenderung.richtwertMin = neu.richtwertMin ?? null;
   if ((neu.richtwertMax ?? null) !== (start.richtwertMax ?? null)) aenderung.richtwertMax = neu.richtwertMax ?? null;
+  // Die Frist nur, wenn sie selbst geändert wurde: Eine Verlegung nimmt sie
+  // im selben Abstand mit (#463 PC 3).
+  if (!gleich(neu.meldefrist, start.meldefrist)) aenderung.meldefrist = leerZuNull(neu.meldefrist);
   return Object.keys(aenderung).length > 0 ? aenderung : null;
 }
 

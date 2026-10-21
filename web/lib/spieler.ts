@@ -128,7 +128,15 @@ export function nachSpielerName<T extends { vorname: string; nachname: string }>
 /** Was die Datenebene zu einem Termin zählt (berechnetes Feld `spielstand`):
  *  `null`, wenn die Liste leer ist bzw. bei Beginn leer war. `anwesend`: ab
  *  Beginn die Anwesenden samt Nachträgen (#475 AK 9), vorher `null`. */
-export type Spielstand = { gesamt: number; angemeldet: number; eingefroren: boolean; anwesend?: number | null } | null;
+export type Spielstand = {
+  gesamt: number;
+  angemeldet: number;
+  eingefroren: boolean;
+  anwesend?: number | null;
+  /** Nur an einem Spiel (#463): die Abgemeldeten und die ohne Meldung. */
+  abgemeldet?: number;
+  ohne_meldung?: number;
+} | null;
 
 /** Woher die Spielerzahl eines Termins kommt (#434 AK 8, 12; #435 AK 6).
  *  `anwesend`: ab Beginn die Anwesenden, die dann gezählt werden (#475 AK 10). */
@@ -296,7 +304,8 @@ export function spielerLinkUrl(origin: string, token: string): string {
 
 export const LINK_TEXT = {
   /** AK 2: was der Link kann — beim Holen, in der Oberfläche wie beim KI-Assistenten. */
-  warnung: "Wer diesen Link hat, kann diese Spieler:in für Trainings ab- und anmelden. Gib ihn nur ihren Eltern oder ihr selbst.",
+  warnung:
+    "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
   /** Was Erneuern bewirkt (AK 3, PC 3). */
   erneuern: "Erneuern macht den bisherigen Link sofort ungültig. Abmeldungen bleiben.",
   /** AK 10: ein erneuerter, unbekannter oder entfernter Link. */
@@ -379,11 +388,11 @@ export const ABHOLUNG_TEXT = {
   // ── Die Abholseite ──
   titel: "Spieler:in-Link abholen",
   einleitung:
-    "Gib Vorname, Nachname und Jahrgang der Spieler:in ein. Du erhältst den privaten Link, mit dem du die Spieler:in für Trainings ab- und wieder anmelden kannst.",
+    "Gib Vorname, Nachname und Jahrgang der Spieler:in ein. Du erhältst den privaten Link, mit dem du die Spieler:in für Trainings und Spiele ab- und anmelden kannst.",
   /** AK 7: was KiFu speichert, wer es sieht, wann es verschwindet. */
   speichertTitel: "Was KiFu speichert",
   speichert:
-    "Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, und Abmeldungen. Das sehen die Trainer:innen des Teams, KI-Assistenten, die sie mit KiFu verbunden haben, und wer den Link der Spieler:in hat. Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen und ihre KI-Assistenten. Nimmt das Team eine Spieler:in aus der Liste, verschwinden ihre Angaben überall.",
+    "Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen und An- und Abmeldungen zu Spielen. Das sehen die Trainer:innen des Teams, KI-Assistenten, die sie mit KiFu verbunden haben, und wer den Link der Spieler:in hat. Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen und ihre KI-Assistenten. Nimmt das Team eine Spieler:in aus der Liste, verschwinden ihre Angaben überall.",
   /** AK 13, 14: immer derselbe Satz. */
   passtNicht: "Dazu finden wir keinen Link. Prüf die Schreibweise oder frag beim Team nach.",
   /** AK 16. */
@@ -398,7 +407,7 @@ export const ABHOLUNG_TEXT = {
 /** AK 10: wozu der Link dient, dass er privat ist, und wo es ihn wieder gibt. */
 export function abholErhaltText(name: string): { wozu: string; privat: string } {
   return {
-    wozu: `Mit diesem Link meldest du ${name} für Trainings ab und wieder an, ohne Konto. Speichere ihn am besten als Lesezeichen.`,
+    wozu: `Mit diesem Link meldest du ${name} für Trainings ab und wieder an und für Spiele an oder ab, ohne Konto. Speichere ihn am besten als Lesezeichen.`,
     privat: `Der Link ist privat. Wer ihn hat, kann ${name} ab- und anmelden. Geht er verloren, holst du ihn hier wieder ab.`,
   };
 }

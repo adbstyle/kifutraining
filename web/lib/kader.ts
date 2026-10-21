@@ -80,21 +80,38 @@ export function verfallAusFehler(message: string): number | null {
   return m ? Number(m[1]) : null;
 }
 
-/** Was eine Änderung an Kadern mit den Abmeldungen tut — vor dem Speichern. */
-export function kaderVerfallText(n: number): string {
-  return n === 1
-    ? "Damit verfällt 1 Abmeldung: Der Termin gilt für diese Spieler:in nicht mehr. Gilt er später wieder für sie, ist sie angemeldet."
-    : `Damit verfallen ${n} Abmeldungen: Die Termine gelten für diese Spieler:innen nicht mehr. Gilt ein Termin später wieder für sie, sind sie dort angemeldet.`;
+/** Wie viele der verfallenden zu Spielen gehören (#463 AK 14): die zweite
+ *  Zahl hinter dem Marker, sonst 0. */
+export function verfallSpieleAusFehler(message: string): number {
+  const m = message.match(new RegExp(`${VERFALL_MARKER} \\d+ (\\d+)`));
+  return m ? Number(m[1]) : 0;
+}
+
+/** Was eine Änderung an Kadern mit den Abmeldungen tut — vor dem Speichern.
+ *  `spiele`: davon Meldungen zu Spielen (#463 AK 14); sie sind danach ohne
+ *  Meldung, wenn das Spiel wieder für sie gilt. */
+export function kaderVerfallText(n: number, spiele = 0): string {
+  const ab = n - spiele;
+  if (spiele === 0)
+    return ab === 1
+      ? "Damit verfällt 1 Abmeldung: Der Termin gilt für diese Spieler:in nicht mehr. Gilt er später wieder für sie, ist sie angemeldet."
+      : `Damit verfallen ${ab} Abmeldungen: Die Termine gelten für diese Spieler:innen nicht mehr. Gilt ein Termin später wieder für sie, sind sie dort angemeldet.`;
+  const meldungen = spiele === 1 ? "1 Meldung zu einem Spiel" : `${spiele} Meldungen zu Spielen`;
+  const abmeldungen = ab === 0 ? "" : ab === 1 ? "1 Abmeldung zu einem Training und " : `${ab} Abmeldungen zu Trainings und `;
+  return (
+    `Damit ${n === 1 ? "verfällt" : "verfallen"} ${abmeldungen}${meldungen}: Die Termine gelten für diese Spieler:innen nicht mehr. ` +
+    "Gilt ein Training später wieder für sie, sind sie dort angemeldet, an einem Spiel ohne Meldung."
+  );
 }
 
 /** Die vorab genannte Zahl stimmt nicht mehr (AK 12): der aktuelle Stand. */
-export function kaderVerfallGeaendert(n: number): string {
-  return `Inzwischen hat sich etwas geändert. ${kaderVerfallText(n)}`;
+export function kaderVerfallGeaendert(n: number, spiele = 0): string {
+  return `Inzwischen hat sich etwas geändert. ${kaderVerfallText(n, spiele)}`;
 }
 
 /** Dasselbe für den KI-Weg, mit dem Weg zur Bestätigung (AK 16). */
-export function kaderVerfallBestaetigen(n: number): string {
-  return `${kaderVerfallText(n)} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
+export function kaderVerfallBestaetigen(n: number, spiele = 0): string {
+  return `${kaderVerfallText(n, spiele)} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
 }
 
 // ── Termine für Kader (#453) ─────────────────────────────────────────────────

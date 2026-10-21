@@ -31,9 +31,11 @@ export function erfolg<T extends Record<string, unknown>>(wert: T): CallToolResu
  *  nur die camelCase-Felder (auch die in `fehlend`) in snake_case wie alle
  *  Ausgaben. Abgeleitet,
  *  damit ein neues Feld in `KernFehler` ohne Zutun auch hier erscheint. */
-type FehlerAusgabe = Omit<KernFehler, "ok" | "retryAfter" | "varianteId" | "fehlend"> & {
+type FehlerAusgabe = Omit<KernFehler, "ok" | "retryAfter" | "varianteId" | "fehlend" | "fristAbgelaufen" | "verfallendSpiele"> & {
   retry_after?: number;
   variante_id?: string;
+  frist_abgelaufen?: boolean;
+  verfallend_spiele?: number;
   /** Alle fehlenden Veröffentlichungs-Bedingungen (#196 NFR 2), je Eintrag
    *  ebenfalls in snake_case. */
   fehlend?: { bedingung: string; variante_id: string | null }[];
@@ -67,11 +69,13 @@ export function fehlerText(f: Omit<KernFehler, "ok">): string {
  *  jedes gesetzte Feld des Kern-Fehlers erscheint in `structuredContent.fehler`,
  *  auch solche, die spätere Stories hinzufügen. */
 export function fehlerErgebnis(f: Omit<KernFehler, "ok"> & { ok?: false }): CallToolResult {
-  const { ok: _ok, retryAfter, varianteId, fehlend, ...rest } = f;
+  const { ok: _ok, retryAfter, varianteId, fehlend, fristAbgelaufen, verfallendSpiele, ...rest } = f;
   const fehler: FehlerAusgabe = ohneLeere({
     ...rest,
     retry_after: retryAfter,
     variante_id: varianteId,
+    frist_abgelaufen: fristAbgelaufen,
+    verfallend_spiele: verfallendSpiele,
     fehlend: fehlend?.map((b) => ({ bedingung: b.bedingung, variante_id: b.varianteId })),
   });
   return {

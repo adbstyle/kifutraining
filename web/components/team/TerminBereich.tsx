@@ -9,6 +9,7 @@ import { EntfallendBestaetigung } from "./EntfallendBestaetigung";
 import { ReichweiteDialog } from "./ReichweiteDialog";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
 import { NeuerTerminDialog } from "./NeuerTerminDialog";
+import { spielEntfernenText } from "@/lib/spiel";
 import { TerminDialog } from "./TerminDialog";
 import { TrainingWahlDialog } from "./TrainingWahlDialog";
 import { nurNamenloseGeaendert, verantwortlicheStart, type VerantwortlicheWert } from "./VerantwortlicheWahl";
@@ -87,7 +88,12 @@ function startWerte(t: TerminZeile): TerminFelder {
     spielerzahl: t.spielerzahl,
     // Ein Spiel (#459): Bezeichnung und Richtwert statt Feldern und Zahl.
     ...(t.spiel
-      ? { bezeichnung: t.spiel.bezeichnung, richtwertMin: t.spiel.richtwertMin, richtwertMax: t.spiel.richtwertMax }
+      ? {
+          bezeichnung: t.spiel.bezeichnung,
+          richtwertMin: t.spiel.richtwertMin,
+          richtwertMax: t.spiel.richtwertMax,
+          meldefrist: t.spiel.meldefrist,
+        }
       : {}),
   };
 }
@@ -177,6 +183,11 @@ export function TerminBereich({
   const [bearbeiten, setBearbeiten] = useState<TerminZeile | null>(null);
   const [zuordnen, setZuordnen] = useState<TerminZeile | null>(null);
   const [entfernen, setEntfernen] = useState<TerminZeile | null>(null);
+  // Ein Spiel (#463 AK 27): wie viele Meldungen mit ihm verschwinden — aus
+  // dem Plan, oder der aktuelle Stand, wenn er sich inzwischen geändert hat.
+  const [verschwindend, setVerschwindend] = useState<number | null>(null);
+  const meldungenVon = (t: TerminZeile) => (t.spiel ? (t.spielstand?.angemeldet ?? 0) + (t.spielstand?.abgemeldet ?? 0) : 0);
+  const entfernenZahl = entfernen ? (verschwindend ?? meldungenVon(entfernen)) : 0;
   const [loesen, setLoesen] = useState<TerminZeile | null>(null);
   const [ausfall, setAusfall] = useState<TerminZeile | null>(null);
   const [reichweite, setReichweite] = useState<ReichweiteFrage | null>(null);
@@ -272,8 +283,9 @@ export function TerminBereich({
       if (geaendert) {
         const r = await aendereTerminAktion(t.id, geaendert, t.training?.id ?? null, bestaetigt);
         // #437 AK 1: Verfallen Abmeldungen, erst nachfragen; der Dialog bleibt offen.
-        if (!r.ok && r.verfallend) {
-          const anzahl = r.verfallend;
+        // Ein Spiel fragt auch, wenn nur die Frist ins Abgelaufene rückt (#463 AK 26).
+        if (!r.ok && (r.verfallend || r.fristAbgelaufen)) {
+          const anzahl = r.verfallend ?? 0;
           if (gilt())
             return verfall.nachVerlegung({ ...r, verfallend: anzahl }, () =>
               aendereEinzeln(t, geaendert, verantwortlich, grund, anzahl, kaderIds),
@@ -688,17 +700,38 @@ export function TerminBereich({
 
       <Dialog
         open={entfernen !== null}
-        onClose={() => setEntfernen(null)}
-        title="Termin entfernen?"
+        onClose={() => {
+          setEntfernen(null);
+          setVerschwindend(null);
+        }}
+        title={entfernen?.spiel ? "Spiel entfernen?" : "Termin entfernen?"}
         actions={
           <>
-            <Button variant="text" onClick={() => setEntfernen(null)}>Abbrechen</Button>
+            <Button variant="outlined" onClick={() => {
+              setEntfernen(null);
+              setVerschwindend(null);
+            }}>Abbrechen</Button>
             <Button
               variant="danger"
               disabled={pending}
               onClick={() =>
                 entfernen &&
-                lauf(() => entferneTerminAktion(entfernen.id, entfernen.training?.id ?? null), () => "Termin entfernt.", () => setEntfernen(null))
+                lauf(
+                  () => entferneTerminAktion(entfernen.id, entfernen.training?.id ?? null, entfernenZahl),
+                  () => (entfernen.spiel ? "Spiel entfernt." : "Termin entfernt."),
+                  () => {
+                    setEntfernen(null);
+                    setVerschwindend(null);
+                  },
+                  false,
+                  undefined,
+                  // Inzwischen andere Meldungen: die Rückfrage mit dem aktuellen Stand.
+                  (r) => {
+                    if (r.ok || r.verschwindend === undefined) return false;
+                    setVerschwindend(r.verschwindend);
+                    return true;
+                  },
+                )
               }
             >
               Entfernen
@@ -707,7 +740,9 @@ export function TerminBereich({
         }
       >
         <p>
-          Der Termin am {entfernen ? datumKurz(entfernen.datum) : ""} verschwindet aus dem Trainingsplan.
+          {entfernen?.spiel
+            ? `Das Spiel «${entfernen.spiel.bezeichnung}» am ${datumKurz(entfernen.datum)} verschwindet aus dem Trainingsplan. ${spielEntfernenText(entfernenZahl)}`
+            : `Der Termin am ${entfernen ? datumKurz(entfernen.datum) : ""} verschwindet aus dem Trainingsplan.`}
           {entfernen?.training && (
             <> <strong className="text-on-surface">{entfernen.training.name}</strong> {trainingOhneTermin(entfernen.training.terminTraining)}.</>
           )}

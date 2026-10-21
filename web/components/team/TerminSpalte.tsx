@@ -5,16 +5,19 @@ import { TrainingTeile } from "@/components/training/TrainingTeile";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { tagOhneJahr } from "@/lib/monat";
 import { zeitText } from "@/lib/termin";
+import { terminBegonnen } from "@/lib/zeit";
 import { formatDuration, gesamtDauer, leseGliederung } from "@/lib/training";
 import { sichtbareZuordnungen, varianteAus } from "@/lib/varianten";
 import { planHref, terminHref, type TerminReiter } from "@/lib/team-ansicht";
 import { getTrainingView } from "@/lib/queries/trainings";
 import { terminSpieler } from "@/lib/kern/abmeldungen";
+import { spielSpieler } from "@/lib/kern/spiele";
 import { createClient } from "@/lib/supabase/server";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
 import { TerminEigenschaften } from "./TerminEigenschaften";
 import { TerminKnoepfe, TrainingKnoepfe } from "./TerminSpalteKnoepfe";
 import { SpielerReiter } from "./SpielerReiter";
+import { SpielReiter } from "./SpielReiter";
 
 /* Ein geöffneter Termin neben dem Trainingsplan (Epic #433, #435): drei
    Reiter — der Termin selbst, sein Training und wer kommt. Die Reiter sind
@@ -24,8 +27,8 @@ import { SpielerReiter } from "./SpielerReiter";
    Trainingsseite (`TrainingTeile`), ohne Bearbeiten.
 
    Ein Spiel (#459) trägt kein Training: Sein erster Reiter heisst «Spiel»,
-   einen Reiter «Training» gibt es nicht; wer kommt, folgt mit den Meldungen
-   (#463). */
+   einen Reiter «Training» gibt es nicht; «Spieler:innen» zeigt die
+   Meldungen (#463). */
 export async function TerminSpalte({
   t,
   reiter,
@@ -40,15 +43,18 @@ export async function TerminSpalte({
   /** Das Team führt Kader (#453 AK 5). */
   mitKadern?: boolean;
 }) {
+  // Ein Spiel zeigt keinen Reiter «Training», auch wenn die Adresse ihn nennt.
+  const offen: TerminReiter = t.spiel && reiter === "training" ? "termin" : reiter;
   const reiterItems = t.spiel
-    ? [{ label: "Spiel", href: terminHref(t.teamId, meine, t.id, "termin"), current: true }]
+    ? [
+        { label: "Spiel", href: terminHref(t.teamId, meine, t.id, "termin"), current: offen === "termin" },
+        { label: "Spieler:innen", href: terminHref(t.teamId, meine, t.id, "spieler"), current: offen === "spieler" },
+      ]
     : [
         { label: "Termin", href: terminHref(t.teamId, meine, t.id, "termin"), current: reiter === "termin" },
         { label: "Training", href: terminHref(t.teamId, meine, t.id, "training"), current: reiter === "training" },
         { label: "Spieler:innen", href: terminHref(t.teamId, meine, t.id, "spieler"), current: reiter === "spieler" },
       ];
-  // Ein Spiel zeigt nur seinen eigenen Reiter, auch wenn die Adresse einen anderen nennt.
-  const offen: TerminReiter = t.spiel ? "termin" : reiter;
   return (
     <section aria-label={`${t.spiel ? "Spiel" : "Termin"} ${tagOhneJahr(t.datum)}`} className="flex flex-col">
       <div className="flex items-start gap-2">
@@ -72,6 +78,12 @@ export async function TerminSpalte({
                 {t.spiel ? "Das Spiel" : "Der Termin"} fällt aus{t.ausfallGrund ? `: ${t.ausfallGrund}` : "."}
               </SectionMessage>
             )}
+            {/* #463 AK 16: ein verlegtes anstehendes Spiel nennt den Zeitpunkt vorher. */}
+            {t.spiel?.vorher && !terminBegonnen(t.datum, t.beginn) && (
+              <SectionMessage appearance="information">
+                Verlegt, vorher {tagOhneJahr(t.spiel.vorher.datum)} um {t.spiel.vorher.beginn}.
+              </SectionMessage>
+            )}
             <div className="rounded-flaeche bg-elev-01 p-4">
               <h4 className="type-title-small text-on-surface">Eckdaten</h4>
               <TerminEigenschaften t={t} ich={ich} mitKadern={mitKadern} className="mt-3" />
@@ -79,7 +91,7 @@ export async function TerminSpalte({
           </>
         )}
         {offen === "training" && <TrainingReiter t={t} />}
-        {offen === "spieler" && <SpielerReiterLaden t={t} ich={ich} />}
+        {offen === "spieler" && (t.spiel ? <SpielReiterLaden t={t} ich={ich} /> : <SpielerReiterLaden t={t} ich={ich} />)}
       </div>
     </section>
   );
@@ -144,4 +156,10 @@ async function SpielerReiterLaden({ t, ich }: { t: TerminZeile; ich: string }) {
   if (!r.ok) return <SectionMessage appearance="error">{r.meldung}</SectionMessage>;
   // `key`: Eingrenzung und Schalterstand gehören zu diesem Termin.
   return <SpielerReiter key={t.id} teamId={t.teamId} daten={r.wert} />;
+}
+
+async function SpielReiterLaden({ t, ich }: { t: TerminZeile; ich: string }) {
+  const r = await spielSpieler(await createClient(), ich, { terminId: t.id });
+  if (!r.ok) return <SectionMessage appearance="error">{r.meldung}</SectionMessage>;
+  return <SpielReiter key={t.id} teamId={t.teamId} daten={r.wert} />;
 }

@@ -27,12 +27,18 @@ import {
   SPIEL_MELDUNG,
   SPIEL_TEXT,
   bezeichnungProblem,
+  fristWirdAbgelaufen,
   istTerminArt,
+  meldefristProblem,
+  meldefristVorlauf,
   richtwertProblem,
+  spielBestaetigen,
+  spielEntfernenText,
+  spielVerfallText,
   type TerminArt,
 } from "@/lib/spiel";
 import { kurzeZeit } from "@/lib/queries/termine-fuer";
-import { heuteAmTrainingsort, terminBegonnen } from "@/lib/zeit";
+import { heuteAmTrainingsort, jetztAmTrainingsort, terminBegonnen } from "@/lib/zeit";
 import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import { HINWEIS_NICHTS_ENTSTANDEN, hinweisRest, kopiereTraining, type KopieErgebnis } from "@/lib/kern/kopie";
 import { gibtEsTraining, loescheTrainingMitBildern, raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
@@ -67,7 +73,7 @@ import {
 export const TERMIN_FELD = { feld: "termin_id" } as const;
 
 export const TERMIN_ROH =
-  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, training_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
+  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, training_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
 
 export type TerminRoh = {
   id: string;
@@ -78,6 +84,8 @@ export type TerminRoh = {
   bezeichnung: string | null;
   richtwert_min: number | null;
   richtwert_max: number | null;
+  /** Nur an einem Spiel: die Meldefrist als Minuten vor dem Anpfiff (#463). */
+  meldefrist_vorlauf_min: number | null;
   training_id: string | null;
   datum: string;
   beginn: string;
@@ -184,6 +192,8 @@ export type TerminFestlegen = {
   /** Nur an einem Spiel: Mindest- und Höchstzahl je für sich (AK 5). */
   richtwertMin?: number | null;
   richtwertMax?: number | null;
+  /** Nur an einem Spiel: die Meldefrist als `YYYY-MM-DDTHH:MM` (#463 AK 8). */
+  meldefrist?: string | null;
   datum: string;
   beginn: string;
   ende: string;
@@ -226,6 +236,20 @@ function artFehler(
   return null;
 }
 
+/** Die Meldefrist eines Spiels prüfen (#463 AK 8): leer heisst keine. */
+function fristFehler(datum: string, beginn: string | null | undefined, frist: string | null | undefined): KernFehler | null {
+  const f = leerZuNull(frist);
+  if (f === null) return null;
+  const p = meldefristProblem(datum, beginn ?? "", f);
+  return p ? fehlschlag("eingabe", p.text, { feld: p.feld }) : null;
+}
+
+/** Die Meldefrist als Minuten vor dem Anpfiff, wie sie gespeichert wird. */
+function vorlaufAus(datum: string, beginn: string | null | undefined, frist: string | null | undefined): number | null {
+  const f = leerZuNull(frist);
+  return f === null ? null : meldefristVorlauf(datum, beginn ?? "", f);
+}
+
 /** Ein Spiel nur mit bevorstehendem Anpfiff (#459 AK 21) — vorab mit dem
  *  Satz der Datenebene (`SPIEL_ANPFIFF_VERGANGEN`). */
 function anpfiffFehler(datum: string, beginn: string | null): KernFehler | null {
@@ -251,7 +275,9 @@ export async function legeTerminFest(
   if (e.art === "spiel") {
     const anpfiff = anpfiffFehler(e.datum, leerZuNull(e.beginn));
     if (anpfiff) return anpfiff;
-  }
+  } else if (leerZuNull(e.meldefrist) !== null) return fehlschlag("eingabe", SPIEL_TEXT.nurSpiel, { feld: "meldefrist" });
+  const frist = fristFehler(e.datum, e.beginn, e.meldefrist);
+  if (frist) return frist;
   const felder = pruefeFelder(e.felder);
   if (!felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
@@ -271,6 +297,7 @@ export async function legeTerminFest(
       bezeichnung: e.art === "spiel" ? leerZuNull(e.bezeichnung) : null,
       richtwert_min: e.art === "spiel" ? (e.richtwertMin ?? null) : null,
       richtwert_max: e.art === "spiel" ? (e.richtwertMax ?? null) : null,
+      meldefrist_vorlauf_min: e.art === "spiel" ? vorlaufAus(e.datum, e.beginn, e.meldefrist) : null,
       datum: e.datum,
       beginn: leerZuNull(e.beginn),
       ende: leerZuNull(e.ende),
@@ -318,6 +345,10 @@ export type TerminAendern = {
   bezeichnung?: string;
   richtwertMin?: number | null;
   richtwertMax?: number | null;
+  /** Nur an einem Spiel (#463 AK 8): `undefined` = unverändert (eine
+   *  Verlegung nimmt sie im selben Abstand mit), `null` = entfernen, sonst
+   *  der Zeitpunkt `YYYY-MM-DDTHH:MM`. */
+  meldefrist?: string | null;
   /** Das Training, das der Termin bei der Auswahl trug (AK 23). `undefined`
    *  beim KI-Weg: geprüft wird dann gegen den eben gelesenen Stand. */
   erwartetesTraining?: string | null;
@@ -330,7 +361,14 @@ export type TerminAendern = {
 /** Was eine Verlegung verfallen lässt: Abmeldungen (#437 AK 1) und, wird
  *  ein begonnener Termin wieder offen, Nachträge zur Anwesenheit (#475 AK
  *  12). `summe` bestätigt die Oberfläche. */
-export type Verfallend = { abmeldungen: number; nachtraege: number; summe: number };
+export type Verfallend = {
+  abmeldungen: number;
+  nachtraege: number;
+  summe: number;
+  /** Nur an einem Spiel (#463 AK 13, 26): verfallende Meldungen und ob die
+   *  Meldefrist danach schon abgelaufen ist. */
+  spiel?: { meldungen: number; fristAbgelaufen: boolean };
+};
 
 /** Was verfällt, wenn der Termin auf `datum`/`beginn` verlegt wird —
  *  dieselbe Entscheidung wie der Trigger. */
@@ -356,11 +394,36 @@ export function verfallend(abmeldungen: number, nachtraege: number): Verfallend 
 
 /** Ein Fehler, der vor dem Verlegen nach der Bestätigung fragt. */
 export function verfallFehler(v: Verfallend): KernFehler {
+  if (v.spiel)
+    return fehlschlag("regel", spielBestaetigen(spielVerfallText(v.spiel.meldungen, v.spiel.fristAbgelaufen)), {
+      feld: "bestaetigt",
+      verfallend: v.summe,
+      nachtraege: v.nachtraege,
+      fristAbgelaufen: v.spiel.fristAbgelaufen,
+    });
   return fehlschlag("regel", verfallBestaetigen(v.abmeldungen, v.nachtraege), {
     feld: "bestaetigt",
     verfallend: v.summe,
     nachtraege: v.nachtraege,
   });
+}
+
+/** Wie viele Meldungen ein Spiel trägt — offen oder beim Anpfiff
+ *  festgehalten (ehemalige zählen nicht). Sie verfallen mit einem anderen
+ *  Datum (#463 PC 1, 7) und verschwinden mit dem Spiel (AK 27). */
+export async function spielMeldungenZahl(supabase: SupabaseClient, terminId: string): Promise<KernErgebnis<number>> {
+  const [offen, fest] = await Promise.all([
+    supabase.from("spiel_meldungen").select("termin_id", { count: "exact", head: true }).eq("termin_id", terminId).not("zustand", "is", null),
+    supabase
+      .from("spiel_teilnahmen")
+      .select("termin_id", { count: "exact", head: true })
+      .eq("termin_id", terminId)
+      .not("zustand", "is", null)
+      .not("spieler_id", "is", null),
+  ]);
+  if (offen.error) return ausDbFehler(offen.error);
+  if (fest.error) return ausDbFehler(fest.error);
+  return ok((offen.count ?? 0) + (fest.count ?? 0));
 }
 
 /** Warum ein bedingtes Schreiben keine Zeile traf: Der Termin ist weg, oder
@@ -416,6 +479,10 @@ export async function aendereTermin(
     const anpfiff = anpfiffFehler(neu.datum, neu.beginn);
     if (anpfiff) return anpfiff;
   }
+  if (t.art !== "spiel" && leerZuNull(e.meldefrist) !== null)
+    return fehlschlag("eingabe", SPIEL_TEXT.nurSpiel, { feld: "meldefrist" });
+  const frist = t.art === "spiel" && e.meldefrist !== undefined ? fristFehler(neu.datum, neu.beginn, e.meldefrist) : null;
+  if (frist) return frist;
   const felder = e.felder === undefined ? null : pruefeFelder(e.felder);
   if (felder && !felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
@@ -428,6 +495,7 @@ export async function aendereTermin(
       bezeichnung: string | null;
       richtwert_min: number | null;
       richtwert_max: number | null;
+      meldefrist_vorlauf_min: number | null;
     }
   > = {};
   if (e.datum !== undefined) aenderung.datum = neu.datum;
@@ -444,6 +512,7 @@ export async function aendereTermin(
     if (e.bezeichnung !== undefined) aenderung.bezeichnung = leerZuNull(e.bezeichnung);
     if (e.richtwertMin !== undefined) aenderung.richtwert_min = e.richtwertMin;
     if (e.richtwertMax !== undefined) aenderung.richtwert_max = e.richtwertMax;
+    if (e.meldefrist !== undefined) aenderung.meldefrist_vorlauf_min = vorlaufAus(neu.datum, neu.beginn, e.meldefrist);
   }
 
   // «Nur dieser» (#326 AK 1, PC 1): Jede Angabe eines Serientermins, die sich
@@ -471,8 +540,17 @@ export async function aendereTermin(
   const ausfall = ausfallEndet ? { ausgefallen: false, ausfall_grund: null } : {};
 
   // #437 AK 1: Verlegt, verfallen die Abmeldungen — erst nach Bestätigung.
+  // Ein Spiel (#463 AK 13, 26): Meldungen nur mit dem Datum, dazu die Frist.
   let verfallen = 0;
-  if (("datum" in aenderung && neu.datum !== t.datum) || ("beginn" in aenderung && neu.beginn !== t.beginn)) {
+  if (t.art === "spiel" && (neu.datum !== t.datum || neu.beginn !== t.beginn)) {
+    const zahl = neu.datum !== t.datum ? await spielMeldungenZahl(supabase, t.id) : ok(0);
+    if (!zahl.ok) return zahl;
+    const vorlauf = "meldefrist_vorlauf_min" in aenderung ? (aenderung.meldefrist_vorlauf_min ?? null) : t.meldefrist_vorlauf_min;
+    const frist = fristWirdAbgelaufen(t, { datum: neu.datum, beginn: neu.beginn ?? "" }, vorlauf, jetztAmTrainingsort());
+    const v: Verfallend = { abmeldungen: 0, nachtraege: 0, summe: zahl.wert, spiel: { meldungen: zahl.wert, fristAbgelaufen: frist } };
+    if ((v.summe > 0 || frist) && e.bestaetigt !== true && e.bestaetigt !== v.summe) return verfallFehler(v);
+    verfallen = zahl.wert;
+  } else if (("datum" in aenderung && neu.datum !== t.datum) || ("beginn" in aenderung && neu.beginn !== t.beginn)) {
     const n = await verfallendeAbmeldungen(supabase, t.id, neu.datum, neu.beginn);
     if (!n.ok) return n;
     // Eine Zahl bestätigt genau so viele (Oberfläche); sind es inzwischen
@@ -507,9 +585,22 @@ async function verlassen(supabase: SupabaseClient, trainingId: string | null): P
 export async function entferneTermin(
   supabase: SupabaseClient,
   _userId: string,
-  e: { terminId: string; erwartetesTraining?: string | null },
+  e: {
+    terminId: string;
+    erwartetesTraining?: string | null;
+    /** Ein Spiel mit Meldungen (#463 AK 27): die bestätigte Zahl (Oberfläche)
+     *  oder `true` (KI). Ohne kommt ein Fehler mit `verschwindend`. */
+    bestaetigt?: boolean | number;
+  },
 ): Promise<KernErgebnis<{ teamId: string; training: Verlassen }>> {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
+  const { data: art } = await supabase.from("training_termine").select("art").eq("id", e.terminId).maybeSingle<{ art: TerminArt }>();
+  if (art?.art === "spiel") {
+    const zahl = await spielMeldungenZahl(supabase, e.terminId);
+    if (!zahl.ok) return zahl;
+    if (zahl.wert > 0 && e.bestaetigt !== true && e.bestaetigt !== zahl.wert)
+      return fehlschlag("regel", spielBestaetigen(spielEntfernenText(zahl.wert)), { feld: "bestaetigt", verschwindend: zahl.wert });
+  }
   const { data: vorher } = await supabase.from("training_termine").select("training_id").eq("id", e.terminId).maybeSingle();
   const bilder = await terminTrainingBilder(supabase, [vorher?.training_id]);
   const { data, error } = await supabase.rpc("termin_entfernen", {

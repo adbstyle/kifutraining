@@ -40,7 +40,7 @@ import { SpielerzahlField } from "./SpielerzahlField";
 import { terminBegonnen } from "@/lib/zeit";
 import { usePlatzAngaben } from "./usePlatzAngaben";
 import { SPIEL_MELDUNG } from "@/lib/spiel";
-import { BezeichnungFeld, RichtwertFelder, useSpielAngaben } from "./SpielFelder";
+import { BezeichnungFeld, MeldefristFelder, RichtwertFelder, fristEingabe, useSpielAngaben } from "./SpielFelder";
 import type { Kader, TerminKader } from "@/lib/kader";
 import { KaderWahl } from "./KaderWahl";
 
@@ -193,6 +193,7 @@ export function TerminDialog({
       bezeichnung: start?.bezeichnung ?? "",
       min: start?.richtwertMin != null ? String(start.richtwertMin) : "",
       max: start?.richtwertMax != null ? String(start.richtwertMax) : "",
+      ...fristEingabe(start?.meldefrist),
     });
     setProblem(null);
     if (serie) setRegel({ wochentage: [...serie.wochentage], von: serie.beginnDatum, bis: serie.endDatum });
@@ -264,7 +265,7 @@ export function TerminDialog({
   function speichereSpiel() {
     const p = terminProblem(felder);
     setProblem(p);
-    const angaben = spiel.pruefe();
+    const angaben = spiel.pruefe(felder.datum, felder.beginn ?? "");
     const gp = ausfall && !ausfallEndet ? ausfallProblem(grund) : null;
     setGrundFehler(gp?.text);
     if (p || !angaben || gp) return;
@@ -331,6 +332,7 @@ export function TerminDialog({
         </div>
         <TextField label="Ort (optional)" maxLength={ORT_MAX} value={felder.ort ?? ""} onChange={(e) => setze("ort")(e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
         {istSpiel && <RichtwertFelder angaben={spiel} disabled={pending} />}
+        {istSpiel && <MeldefristFelder angaben={spiel} disabled={pending} />}
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         <VerantwortlicheWahl mitglieder={mitglieder} bisher={verantwortliche} wert={verantwortlich} onChange={setVerantwortlich} disabled={pending} />
         {(kader.length > 0 || terminKader.length > 0) && (

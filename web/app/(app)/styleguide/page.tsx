@@ -10,6 +10,8 @@ import {
   HerkunftLozenge,
   SichtbarkeitLozenge,
   SpielLozenge,
+  RichtwertLozenge,
+  richtwertSchrift,
   Card,
   ExerciseCard,
   FormAbschnitt,
@@ -2391,6 +2393,23 @@ export default async function Styleguide() {
             <Lozenge>Kinderfussball</Lozenge>
             <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
             <SpielLozenge />
+          </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>Richtwert</strong> (<code>RichtwertLozenge</code>, <code>richtwertSchrift</code>, Epic #448): wie die
+            Spielerzahl eines Spiels zu Mindest- und Höchstzahl steht. Unter der Mindestzahl im Fehlerton, genau die
+            Mindestzahl (knapp) und über der Höchstzahl in der Warnung, dazwischen im Erfolg (PO 2026-10-21). Bewertet
+            wird nur gegen festgelegte Grenzen; ohne Richtwert bleibt die Zahl neutral. Die Lozenge sagt die Stufe in
+            Worten, die Farbe trägt sie nie allein.
+          </p>
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <span className={richtwertSchrift(7, 9, 12)}>7</span>
+            <RichtwertLozenge zahl={7} min={9} max={12} />
+            <span className={richtwertSchrift(9, 9, 12)}>9</span>
+            <RichtwertLozenge zahl={9} min={9} max={12} />
+            <span className={richtwertSchrift(11, 9, 12)}>11</span>
+            <RichtwertLozenge zahl={11} min={9} max={12} />
+            <span className={richtwertSchrift(14, 9, 12)}>14</span>
+            <RichtwertLozenge zahl={14} min={9} max={12} />
           </div>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Kader</strong> (<code>KaderLozenge</code>, Epic #447): ein

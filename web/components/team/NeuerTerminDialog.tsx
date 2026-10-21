@@ -18,7 +18,7 @@ import {
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { SPIEL_MELDUNG, SPIEL_TEXT, type TerminArt } from "@/lib/spiel";
-import { BezeichnungFeld, RichtwertFelder, useSpielAngaben } from "./SpielFelder";
+import { BezeichnungFeld, MeldefristFelder, RichtwertFelder, fristEingabe, useSpielAngaben } from "./SpielFelder";
 import { maxEnddatum, serieProblem, wochentagVon, type SerieFeld, type Wochentag } from "@/lib/serie";
 import { BEMERKUNG_MAX, ORT_MAX, istKalendertag, terminProblem, type TerminFelder } from "@/lib/termin";
 import type { Felder } from "@/lib/termin-felder";
@@ -196,7 +196,7 @@ export function NeuerTerminDialog({
     const felder: TerminFelder = { art: "spiel", datum: f.von, beginn: f.beginn, ende: f.ende, ort: f.ort, bemerkung: f.bemerkung };
     const p = terminProblem(felder);
     setProblem(p && { feld: p.feld === "datum" ? "von" : p.feld, text: p.text });
-    const angaben = spiel.pruefe();
+    const angaben = spiel.pruefe(f.von, f.beginn);
     if (p || !angaben) return;
     if (terminBegonnen(f.von, f.beginn)) {
       setProblem({ feld: "beginn", text: SPIEL_MELDUNG.SPIEL_ANPFIFF_VERGANGEN });
@@ -277,6 +277,7 @@ export function NeuerTerminDialog({
         )}
         <TextField label="Ort (optional)" maxLength={ORT_MAX} value={f.ort} onChange={(e) => setze("ort", e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
         {istSpiel && <RichtwertFelder angaben={spiel} disabled={pending} />}
+        {istSpiel && <MeldefristFelder angaben={spiel} disabled={pending} />}
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={f.bemerkung} onChange={(e) => setze("bemerkung", e.target.value)} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         <VerantwortlicheWahl
           mitglieder={mitglieder}

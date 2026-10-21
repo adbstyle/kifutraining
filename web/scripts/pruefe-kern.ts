@@ -168,6 +168,15 @@ import {
   richtwertStufe,
   richtwertStufeText,
   richtwertText,
+  fristAbgelaufen,
+  fristWirdAbgelaufen,
+  meldefristProblem,
+  meldefristVorlauf,
+  meldefristZeitpunkt,
+  meldungAbweisungText,
+  MELDUNG_TEXT,
+  spielEntfernenText,
+  spielVerfallText,
 } from "../lib/spiel";
 import {
   KADER_MELDUNG,
@@ -185,6 +194,7 @@ import {
   kaderVon,
   nachKaderName,
   verfallAusFehler,
+  verfallSpieleAusFehler,
   zugehoerigkeit,
 } from "../lib/kader";
 import {
@@ -2376,6 +2386,40 @@ pruefe("Spiele: Bezeichnung, Richtwert, Bewertung und Marker (#459, #463 AK 7/28
   const alle = [...Object.keys(TERMIN_MELDUNG), ...Object.keys(SERIE_MELDUNG), ...Object.keys(SPIEL_MELDUNG)];
   for (const a of Object.keys(SPIEL_MELDUNG)) for (const b of alle) if (a !== b) assert.ok(!b.includes(a) && !a.includes(b), `${a} / ${b}`);
   assert.equal(abweisungText("ist_spiel"), SPIEL_TEXT.istSpiel);
+});
+
+pruefe("Spiele: Meldefrist als Abstand zum Anpfiff, Verfall- und Abweisungstexte (#463)", () => {
+  // Wanduhr ohne Zeitzone: die Zeitumstellung (25.10.2026) verschiebt nichts.
+  assert.equal(meldefristVorlauf("2026-10-25", "10:00", "2026-10-24T20:00"), 14 * 60);
+  assert.equal(meldefristZeitpunkt("2026-10-25", "10:00", 14 * 60), "2026-10-24T20:00");
+  assert.equal(meldefristZeitpunkt("2026-11-01", "09:30", 24 * 60), "2026-10-31T09:30");
+  assert.equal(meldefristProblem("2026-10-25", "10:00", "2026-10-24T20:00"), null);
+  assert.equal(meldefristProblem("2026-10-25", "10:00", "2026-10-25T10:00")?.text, SPIEL_TEXT.meldefrist, "nicht beim Anpfiff");
+  assert.equal(meldefristProblem("2026-10-25", "10:00", "2025-10-24T10:00")?.text, SPIEL_TEXT.meldefrist, "höchstens ein Jahr");
+  assert.equal(meldefristProblem("2026-10-25", "10:00", "morgen")?.text, SPIEL_TEXT.meldefristFormat);
+  assert.equal(fristAbgelaufen(null, "2026-10-21T12:00"), false);
+  assert.equal(fristAbgelaufen("2026-10-21T12:00", "2026-10-21T12:00"), true, "minutengenau wie termin_begonnen");
+  // Verlegt: nur, wenn sie dadurch erst abläuft.
+  const jetzt = "2026-10-21T12:00";
+  assert.equal(fristWirdAbgelaufen({ datum: "2026-10-23", beginn: "10:00" }, { datum: "2026-10-22", beginn: "10:00" }, 24 * 60, jetzt), true);
+  assert.equal(fristWirdAbgelaufen({ datum: "2026-10-23", beginn: "10:00" }, { datum: "2026-10-24", beginn: "10:00" }, 24 * 60, jetzt), false);
+  assert.equal(fristWirdAbgelaufen({ datum: "2026-10-22", beginn: "10:00" }, { datum: "2026-10-22", beginn: "08:00" }, 24 * 60, jetzt), false, "war schon vorbei");
+  assert.equal(fristWirdAbgelaufen({ datum: "2026-10-23", beginn: "10:00" }, { datum: "2026-10-22", beginn: "10:00" }, null, jetzt), false);
+
+  assert.equal(spielVerfallText(1, false), "Damit verfällt 1 Meldung: Die Spieler:in ist wieder ohne Meldung.");
+  assert.ok(spielVerfallText(3, true).startsWith("Damit verfallen 3 Meldungen") && spielVerfallText(3, true).includes("Meldefrist"));
+  assert.equal(spielVerfallText(0, false), "");
+  assert.equal(spielEntfernenText(2), "Damit verschwinden 2 Meldungen.");
+  assert.equal(meldungAbweisungText("frist_abgelaufen"), MELDUNG_TEXT.fristAbgelaufen);
+  assert.ok(meldungAbweisungText("verlegt", { datum: "2026-10-31", beginn: "10:00", ende: "11:00", ausgefallen: false }).includes("10:00"));
+
+  // Kader (#463 AK 14): Meldungen zu Spielen eigens genannt.
+  assert.equal(verfallAusFehler("ABMELDUNGEN_VERFALLEN 3 1"), 3);
+  assert.equal(verfallSpieleAusFehler("ABMELDUNGEN_VERFALLEN 3 1"), 1);
+  assert.equal(verfallSpieleAusFehler("ABMELDUNGEN_VERFALLEN 3"), 0);
+  assert.equal(kaderVerfallText(2), kaderVerfallText(2, 0), "ohne Spiele der bisherige Satz");
+  assert.ok(kaderVerfallText(3, 1).startsWith("Damit verfallen 2 Abmeldungen zu Trainings und 1 Meldung zu einem Spiel"));
+  assert.ok(kaderVerfallText(1, 1).startsWith("Damit verfällt 1 Meldung zu einem Spiel"));
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

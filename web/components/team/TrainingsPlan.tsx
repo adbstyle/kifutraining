@@ -4,7 +4,7 @@ import { EHEMALIGER_KADER, KaderLozenges } from "./KaderLozenge";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { CalendarOff, LandPlot, MapPin, Shirt, UserCheck, Users } from "lucide-react";
-import { Card, Disclosure, Kalenderblatt, Lozenge, SpielLozenge } from "@/components/ui";
+import { Card, Disclosure, Kalenderblatt, Lozenge, SpielLozenge, richtwertSchrift } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen } from "./TerminBereich";
 import { TerminHandgriffe, TrainingHinzufuegen } from "./TerminHandgriffe";
@@ -247,7 +247,16 @@ function TerminReihe({
           {zahlKurz && (
             <span className="inline-flex shrink-0 items-center gap-1 type-body-small text-on-surface-mittel">
               <Shirt size={14} className="shrink-0" />
-              {zahlKurz}
+              {/* Ein Spiel färbt die Zahl nach seinem Richtwert (#463 AK 7). */}
+              <span
+                className={
+                  t.spiel && zahl.quelle === "liste"
+                    ? richtwertSchrift(zahl.anwesend ?? zahl.angemeldet, t.spiel.richtwertMin, t.spiel.richtwertMax)
+                    : undefined
+                }
+              >
+                {zahlKurz}
+              </span>
             </span>
           )}
           {/* #453 AK 5: Für wen er gilt; ohne Kader steht nichts — er gilt für alle. */}

@@ -7,7 +7,7 @@ import { heuteAmTrainingsort } from "@/lib/zeit";
 import type { KategorieSlug } from "@/lib/vocab";
 import type { Spielstand } from "@/lib/spieler";
 import { nachKaderName, nachTerminKader, type TerminKader } from "@/lib/kader";
-import type { TerminArt } from "@/lib/spiel";
+import { meldefristZeitpunkt, type TerminArt } from "@/lib/spiel";
 
 /**
  * Termine lesen für einen Client, der bereits als Nutzer spricht (Cookie-
@@ -67,6 +67,11 @@ export type SpielAngaben = {
   /** Mindest- und Höchstzahl je für sich; `null` = nicht festgelegt. */
   richtwertMin: number | null;
   richtwertMax: number | null;
+  /** Die Meldefrist der Spielervertretung als `YYYY-MM-DDTHH:MM` (#463 AK 8);
+   *  `null`: ohne Frist, Eltern melden bis zum Anpfiff. */
+  meldefrist: string | null;
+  /** Ein verlegtes Spiel: der zuletzt gültige Zeitpunkt (#463 AK 16). */
+  vorher: { datum: string; beginn: string } | null;
 };
 
 export type TerminZeile = {
@@ -146,6 +151,9 @@ type RawTermin = {
   bezeichnung: string | null;
   richtwert_min: number | null;
   richtwert_max: number | null;
+  meldefrist_vorlauf_min: number | null;
+  vorher_datum: string | null;
+  vorher_beginn: string | null;
   datum: string;
   beginn: string;
   ende: string;
@@ -201,7 +209,7 @@ export function kurzeZeit(t: string): string {
 }
 
 const TERMIN_SELECT =
-  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, felder_abweichend, spielerzahl_abweichend, kader_abweichend, ausgefallen, ausfall_grund, " +
+  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, vorher_datum, vorher_beginn, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, felder_abweichend, spielerzahl_abweichend, kader_abweichend, ausgefallen, ausfall_grund, " +
   "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ), " +
   "termin_kader ( kader_id, kader ( name ) ), " +
   "trainings ( id, name, stufen, termin_training ), " +
@@ -230,7 +238,15 @@ function mapTermin(t: RawTermin): TerminZeile {
     art: t.art,
     spiel:
       t.art === "spiel"
-        ? { bezeichnung: t.bezeichnung ?? "", richtwertMin: t.richtwert_min, richtwertMax: t.richtwert_max }
+        ? {
+            bezeichnung: t.bezeichnung ?? "",
+            richtwertMin: t.richtwert_min,
+            richtwertMax: t.richtwert_max,
+            meldefrist:
+              t.meldefrist_vorlauf_min === null ? null : meldefristZeitpunkt(t.datum, t.beginn, t.meldefrist_vorlauf_min),
+            vorher:
+              t.vorher_datum && t.vorher_beginn ? { datum: t.vorher_datum, beginn: kurzeZeit(t.vorher_beginn) } : null,
+          }
         : null,
     datum: t.datum,
     beginn: kurzeZeit(t.beginn),
