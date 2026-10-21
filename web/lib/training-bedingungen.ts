@@ -13,6 +13,7 @@ import { TERMIN_MELDUNG, TERMIN_TEXT } from "@/lib/termin";
 import { SERIE_MELDUNG } from "@/lib/serie";
 import { SPIELER_CHECKS, SPIELER_MELDUNG } from "@/lib/spieler";
 import { KADER_CHECKS, KADER_MELDUNG } from "@/lib/kader";
+import { SPIEL_CHECKS, SPIEL_MELDUNG } from "@/lib/spiel";
 import { FELDER_TEXT } from "@/lib/termin-felder";
 import { sichtbareZuordnungen } from "@/lib/varianten";
 
@@ -336,6 +337,8 @@ const TERMIN_MARKER: [string, string][] = [
   ...Object.entries(SPIELER_MELDUNG),
   // Die Kader eines Teams (#447).
   ...Object.entries(KADER_MELDUNG),
+  // Spiele (#448).
+  ...Object.entries(SPIEL_MELDUNG),
 ];
 
 /** Die CHECKs am Termin, die die Applikation am Namen erkennt — wie
@@ -352,6 +355,7 @@ const TERMIN_CHECKS: [string, string][] = [
   ['"ts_spielerzahl"', TERMIN_TEXT.spielerzahl],
   ...SPIELER_CHECKS,
   ...KADER_CHECKS,
+  ...SPIEL_CHECKS,
 ];
 
 /** Die Meldung zu einem Marker aus Übungsfolge, Variantenfolge oder Termin,

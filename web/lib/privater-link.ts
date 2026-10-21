@@ -19,6 +19,11 @@ import { LINK_FEHLER, abweisungText, istLinkToken, type AbmeldeGrund, type Abmel
 
 export type LinkTermin = {
   id: string;
+  /** Training oder Spiel (#459 AK 17): ein Spiel mit Bezeichnung und Richtwert. */
+  art: "training" | "spiel";
+  bezeichnung: string | null;
+  richtwert_min: number | null;
+  richtwert_max: number | null;
   datum: string;
   beginn: string;
   ende: string;

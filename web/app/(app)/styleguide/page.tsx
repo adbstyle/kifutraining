@@ -9,6 +9,7 @@ import {
   Lozenge,
   HerkunftLozenge,
   SichtbarkeitLozenge,
+  SpielLozenge,
   Card,
   ExerciseCard,
   FormAbschnitt,
@@ -2360,7 +2361,9 @@ export default async function Styleguide() {
             <code>danger</code> stehen im Kit bereit. Herkunft und Sichtbarkeit
             stehen fertig als <code>HerkunftLozenge</code> und{" "}
             <code>SichtbarkeitLozenge</code>; der Entwurf trägt den Stift, damit
-            er sich vom Manual-Bestand nicht nur im Wort unterscheidet.
+            er sich vom Manual-Bestand nicht nur im Wort unterscheidet. Ein Spiel
+            trägt überall, wo Termine erscheinen, die <code>SpielLozenge</code>{" "}
+            (<code>discovery</code>, Epic #448) — in der Tönung seines Kalenderblatts.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Über einem Bild</strong> (<code>aufBild</code>, etwa die
@@ -2387,6 +2390,7 @@ export default async function Styleguide() {
             </Lozenge>
             <Lozenge>Kinderfussball</Lozenge>
             <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
+            <SpielLozenge />
           </div>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Kader</strong> (<code>KaderLozenge</code>, Epic #447): ein

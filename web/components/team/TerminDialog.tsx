@@ -39,6 +39,8 @@ import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
 import { terminBegonnen } from "@/lib/zeit";
 import { usePlatzAngaben } from "./usePlatzAngaben";
+import { SPIEL_MELDUNG } from "@/lib/spiel";
+import { BezeichnungFeld, RichtwertFelder, useSpielAngaben } from "./SpielFelder";
 import type { Kader, TerminKader } from "@/lib/kader";
 import { KaderWahl } from "./KaderWahl";
 
@@ -91,7 +93,12 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
    Ein ausgefallener Termin zeigt zuoberst seinen Grund, ganz und änderbar
    (#402 AK 12, 13) — er gilt nur für diesen Termin, auch in einer Serie
    (PC 4). Wer ihn auf heute oder später verlegt, erfährt vor dem Speichern,
-   dass der Ausfall damit endet (AK 14); der Grund ist dann gegenstandslos. */
+   dass der Ausfall damit endet (AK 14); der Grund ist dann gegenstandslos.
+
+   Ein Spiel (#459) trägt statt Feldern und erwarteter Spielerzahl seine
+   Bezeichnung und seinen Richtwert; die Art bleibt. Sein Anpfiff lässt sich
+   nur auf einen bevorstehenden legen (AK 21), und jede Verlegung beendet
+   seinen Ausfall (PC 5). */
 export function TerminDialog({
   open,
   start,
@@ -164,6 +171,8 @@ export function TerminDialog({
   const kaderStart = terminKader.flatMap((k) => (k.id ? [k.id] : []));
   const [kaderWahl, setKaderWahl] = useState<string[]>([]);
   const platz = usePlatzAngaben();
+  const istSpiel = start?.art === "spiel";
+  const spiel = useSpielAngaben();
   // Ein begonnener Termin behält seine erwartete Zahl: Sie gilt dort, wenn die
   // Liste bei Beginn leer war (Migration spielerliste).
   const ausListe = !!fuehrtListe && !(!!felder.datum && !!felder.beginn && terminBegonnen(felder.datum, felder.beginn));
@@ -180,6 +189,11 @@ export function TerminDialog({
       bemerkung: start?.bemerkung ?? "",
     });
     platz.zuruecksetzen(start);
+    spiel.zuruecksetzen({
+      bezeichnung: start?.bezeichnung ?? "",
+      min: start?.richtwertMin != null ? String(start.richtwertMin) : "",
+      max: start?.richtwertMax != null ? String(start.richtwertMax) : "",
+    });
     setProblem(null);
     if (serie) setRegel({ wochentage: [...serie.wochentage], von: serie.beginnDatum, bis: serie.endDatum });
     setRegelProblem(null);
@@ -198,8 +212,10 @@ export function TerminDialog({
   const terminDatum = start?.datum ?? "";
   const verschoben = !!serienTag && !!abweichungen?.includes("datum");
   const folgenKann = FOLGEN_KANN.filter((a) => abweichungen?.includes(a));
-  // Dieselbe Regel wie der Fachkern (`aendereTermin`): ein anderes Datum ab heute.
-  const ausfallEndet = !!ausfall && felder.datum !== terminDatum && felder.datum >= heute;
+  // Dieselbe Regel wie der Fachkern (`aendereTermin`): ein anderes Datum ab
+  // heute — bei einem Spiel jede Verlegung, auch nur der Zeit (#459 PC 5).
+  const verlegt = felder.datum !== terminDatum || (felder.beginn ?? "") !== (start?.beginn ?? "");
+  const ausfallEndet = !!ausfall && (istSpiel ? verlegt : felder.datum !== terminDatum && felder.datum >= heute);
 
   function regelPruefen(): boolean {
     if (!serie) return true;
@@ -223,6 +239,7 @@ export function TerminDialog({
   }
 
   function speichern() {
+    if (istSpiel) return speichereSpiel();
     const p = terminProblem(felder);
     setProblem(p);
     const angaben = platz.pruefe();
@@ -242,11 +259,35 @@ export function TerminDialog({
     }
   }
 
+  /** Ein Spiel: Bezeichnung und Richtwert statt Feldern und Spielerzahl, ein
+   *  verlegter Anpfiff nur in die Zukunft. */
+  function speichereSpiel() {
+    const p = terminProblem(felder);
+    setProblem(p);
+    const angaben = spiel.pruefe();
+    const gp = ausfall && !ausfallEndet ? ausfallProblem(grund) : null;
+    setGrundFehler(gp?.text);
+    if (p || !angaben || gp) return;
+    if (verlegt && terminBegonnen(felder.datum, felder.beginn ?? "")) {
+      setProblem({ feld: "beginn", text: SPIEL_MELDUNG.SPIEL_ANPFIFF_VERGANGEN });
+      return;
+    }
+    const geaendert = verantwortlicheGeaendert(verantwortlich, verantwortlicheStart(verantwortliche ?? []));
+    const grundNeu = ausfall && !ausfallEndet && grund.trim() !== (ausfall.grund ?? "") ? grund : undefined;
+    onSpeichern(
+      { ...felder, art: "spiel", ...angaben },
+      undefined,
+      geaendert ? verantwortlich : undefined,
+      grundNeu,
+      gleicheMenge(kaderWahl, kaderStart) ? undefined : kaderWahl,
+    );
+  }
+
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title="Termin ändern"
+      title={istSpiel ? "Spiel ändern" : "Termin ändern"}
       breit
       actions={
         <>
@@ -260,7 +301,9 @@ export function TerminDialog({
         <div className="mb-4 flex flex-col gap-3">
           {ausfallEndet ? (
             <SectionMessage appearance="information">
-              Am neuen Tag findet der Termin statt: Mit dem Speichern endet sein Ausfall, und der Grund entfällt.
+              {istSpiel
+                ? "Verlegt findet das Spiel statt: Mit dem Speichern endet sein Ausfall, und der Grund entfällt."
+                : "Am neuen Tag findet der Termin statt: Mit dem Speichern endet sein Ausfall, und der Grund entfällt."}
             </SectionMessage>
           ) : (
             <TextArea
@@ -280,12 +323,14 @@ export function TerminDialog({
         </div>
       )}
       <div className="flex flex-col gap-4">
+        {istSpiel && <BezeichnungFeld angaben={spiel} disabled={pending} />}
         <DateField label="Datum" value={felder.datum} onChange={(e) => setze("datum")(e.target.value)} error={!!fehlerAn("datum")} supportingText={fehlerAn("datum")} />
         <div className="flex flex-col gap-4 sm:flex-row">
-          <TimeField label="Beginn" className="flex-1" value={felder.beginn ?? ""} onChange={(e) => setze("beginn")(e.target.value)} error={!!fehlerAn("beginn")} supportingText={fehlerAn("beginn")} />
+          <TimeField label={istSpiel ? "Anpfiff" : "Beginn"} className="flex-1" value={felder.beginn ?? ""} onChange={(e) => setze("beginn")(e.target.value)} error={!!fehlerAn("beginn")} supportingText={fehlerAn("beginn")} />
           <TimeField label="Ende" className="flex-1" value={felder.ende ?? ""} onChange={(e) => setze("ende")(e.target.value)} error={!!fehlerAn("ende")} supportingText={fehlerAn("ende")} />
         </div>
         <TextField label="Ort (optional)" maxLength={ORT_MAX} value={felder.ort ?? ""} onChange={(e) => setze("ort")(e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
+        {istSpiel && <RichtwertFelder angaben={spiel} disabled={pending} />}
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         <VerantwortlicheWahl mitglieder={mitglieder} bisher={verantwortliche} wert={verantwortlich} onChange={setVerantwortlich} disabled={pending} />
         {(kader.length > 0 || terminKader.length > 0) && (
@@ -298,8 +343,12 @@ export function TerminDialog({
             disabled={pending}
           />
         )}
-        <SpielerzahlField {...platz.spielerzahlProps} disabled={pending} ausListe={ausListe} />
-        <FelderField {...platz.felderProps} disabled={pending} />
+        {!istSpiel && (
+          <>
+            <SpielerzahlField {...platz.spielerzahlProps} disabled={pending} ausListe={ausListe} />
+            <FelderField {...platz.felderProps} disabled={pending} />
+          </>
+        )}
       </div>
       {serie && (
         <section aria-labelledby={serieTitelId} className="mt-6 border-t border-linie pt-4">

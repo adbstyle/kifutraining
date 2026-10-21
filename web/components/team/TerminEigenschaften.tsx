@@ -6,6 +6,7 @@ import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { feldName, feldText } from "@/lib/termin-felder";
 import { verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { FUER_ALLE } from "@/lib/kader";
+import { richtwertText } from "@/lib/spiel";
 import { KaderLozenges } from "./KaderLozenge";
 
 /* Alle Angaben eines Termins ungekürzt (#403 AK 3, 5): Ort, Verantwortliche,
@@ -14,7 +15,8 @@ import { KaderLozenges } from "./KaderLozenge";
    Verantwortliche, Bemerkung und Serie erscheinen nur, wenn es sie gibt;
    die Kader, sobald das Team welche führt — ohne steht «Für alle» (#453 AK 5).
    Geteilt vom nächsten Termin und dem Reiter «Termin» der Termin-Spalte
-   (#435). */
+   (#435). Ein Spiel (#459) nennt statt Spielerzahl und Feldern seinen
+   Richtwert, soweit festgelegt (AK 9). */
 export function TerminEigenschaften({
   t,
   ich,
@@ -42,19 +44,27 @@ export function TerminEigenschaften({
       )}
       {/* Aus der Spielerliste, sonst die erwartete Zahl (#434 AK 8); ein
           ausgefallener Termin nennt keine (#437 AK 4). */}
-      {!t.ausgefallen && (zahlText ? (
-        <Eigenschaft label="Spieler:innen">{zahlText}</Eigenschaft>
+      {t.spiel ? (
+        richtwertText(t.spiel.richtwertMin, t.spiel.richtwertMax) && (
+          <Eigenschaft label="Richtwert">{richtwertText(t.spiel.richtwertMin, t.spiel.richtwertMax)} Spieler:innen</Eigenschaft>
+        )
       ) : (
-        <EigenschaftFehlt label="Spieler:innen" />
-      ))}
-      {/* AK 5–7: jedes Feld mit Grösse, Toren je Torart und Untergrund;
-          «keine» Tore und unbekannte unterscheiden sich (`feldText`). */}
-      {t.felder && t.felder.length > 0 ? (
-        t.felder.map((f, i, alle) => (
-          <Eigenschaft key={i} label={feldName(i, alle.length)}>{feldText(f)}</Eigenschaft>
-        ))
-      ) : (
-        <EigenschaftFehlt label="Felder" />
+        <>
+          {!t.ausgefallen && (zahlText ? (
+            <Eigenschaft label="Spieler:innen">{zahlText}</Eigenschaft>
+          ) : (
+            <EigenschaftFehlt label="Spieler:innen" />
+          ))}
+          {/* AK 5–7: jedes Feld mit Grösse, Toren je Torart und Untergrund;
+              «keine» Tore und unbekannte unterscheiden sich (`feldText`). */}
+          {t.felder && t.felder.length > 0 ? (
+            t.felder.map((f, i, alle) => (
+              <Eigenschaft key={i} label={feldName(i, alle.length)}>{feldText(f)}</Eigenschaft>
+            ))
+          ) : (
+            <EigenschaftFehlt label="Felder" />
+          )}
+        </>
       )}
       {t.bemerkung && <Eigenschaft label="Bemerkung"><span className="whitespace-pre-line">{t.bemerkung}</span></Eigenschaft>}
       {t.serie && (

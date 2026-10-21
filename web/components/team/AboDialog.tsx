@@ -75,7 +75,7 @@ function AboInhalt({ links }: { links: { url: string; webcal: string } }) {
     <>
       <SectionMessage icon={ShieldAlert}>
         Dieser Link ist persönlich. Gib ihn nicht weiter: Wer ihn hat, sieht Zeit und Ort der
-        Trainings dieses Teams.
+        Trainings und Spiele dieses Teams.
       </SectionMessage>
       {fehler && (
         <SectionMessage appearance="error" className="mt-3">

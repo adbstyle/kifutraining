@@ -3,7 +3,8 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarX2, Shirt } from "lucide-react";
-import { Button, Kalenderblatt, Leerzustand, SectionMessage, Switch } from "@/components/ui";
+import { Button, Kalenderblatt, Leerzustand, SectionMessage, SpielLozenge, Switch } from "@/components/ui";
+import { richtwertText } from "@/lib/spiel";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
 import { meldeUeberLinkAktion } from "@/lib/actions/spieler-link";
@@ -173,31 +174,51 @@ type KarteProps = {
   hinweise: React.ReactNode;
 };
 
-/* Ein Termin in der Liste: Kalenderblatt, Zeit, zweite Zeile und Schalter. */
+/* Ein Spiel als Spiel (#459 AK 17): Lozenge, Bezeichnung und Richtwert. */
+function SpielZeile({ t, gross = false }: { t: LinkTermin; gross?: boolean }) {
+  if (t.art !== "spiel") return null;
+  const richtwert = richtwertText(t.richtwert_min, t.richtwert_max);
+  return (
+    <>
+      <span className="flex min-w-0 items-center gap-2">
+        <SpielLozenge />
+        <span className={cn("truncate text-on-surface", gross ? "type-title-medium" : "type-title-small")}>{t.bezeichnung}</span>
+      </span>
+      {richtwert && <span className="type-body-small text-on-surface-mittel">Richtwert {richtwert} Spieler:innen</span>}
+    </>
+  );
+}
+
+/* Ein Termin in der Liste: Kalenderblatt, Zeit, zweite Zeile und Schalter.
+   Ein Spiel trägt (bis zu den Meldungen, #463) keinen Schalter. */
 function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }: KarteProps) {
+  const spiel = t.art === "spiel";
   return (
     <li className="flex flex-col gap-2 rounded-flaeche bg-elev-01 px-3 py-2.5">
       <div className="flex items-center gap-3">
         <Kalenderblatt
           datum={t.datum}
-          zustand={t.ausgefallen ? "ausgefallen" : ab ? "abgemeldet" : "training"}
+          zustand={t.ausgefallen ? "ausgefallen" : spiel ? "spiel" : ab ? "abgemeldet" : "training"}
           className="self-center"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <SpielZeile t={t} />
           <span className="type-body-medium text-on-surface">
             {t.beginn}–{t.ende}
           </span>
           <ZweiteZeile t={t} zweite={zweite} zahl={zahl} className="type-body-small" />
           <KaderLozenges namen={t.kader} className="mt-1" />
         </div>
-        <Switch
-          ton="erfolg"
-          checked={!t.ausgefallen && !ab}
-          neutral={t.ausgefallen}
-          disabled={t.ausgefallen || t.begonnen || pending}
-          onChange={(e) => onUmlegen(e.target.checked)}
-          aria-label={`${name} am ${tagText(t.datum)} dabei`}
-        />
+        {!spiel && (
+          <Switch
+            ton="erfolg"
+            checked={!t.ausgefallen && !ab}
+            neutral={t.ausgefallen}
+            disabled={t.ausgefallen || t.begonnen || pending}
+            onChange={(e) => onUmlegen(e.target.checked)}
+            aria-label={`${name} am ${tagText(t.datum)} dabei`}
+          />
+        )}
       </div>
       {hinweise}
     </li>
@@ -211,6 +232,7 @@ function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }
    anmelden» ist der helle Knopf. */
 function NaechsterTermin({ t, ab, zweite, zahl, name, heute, pending, onUmlegen, hinweise }: KarteProps & { heute: string }) {
   const relativ = t.datum === heute ? "Heute" : t.datum === plusTage(heute, 1) ? "Morgen" : null;
+  const spiel = t.art === "spiel";
   return (
     <section aria-labelledby="als-naechstes">
       <h2 id="als-naechstes" className="type-title-small text-on-surface-mittel">
@@ -233,15 +255,19 @@ function NaechsterTermin({ t, ab, zweite, zahl, name, heute, pending, onUmlegen,
           <p className={cn("mt-1 type-headline-small text-on-surface", t.ausgefallen && "line-through")}>
             {t.beginn}–{t.ende} Uhr
           </p>
+          <div className="mt-1 flex flex-col gap-0.5">
+            <SpielZeile t={t} gross />
+          </div>
           <ZweiteZeile t={t} zweite={zweite} zahl={zahl} className="type-body-medium mt-1" gross />
           <KaderLozenges namen={t.kader} className="mt-2" />
-          {!t.ausgefallen && (
+          {!t.ausgefallen && !spiel && (
             <p className="type-body-medium mt-1 text-on-surface">
               {ab ? `${name} ist abgemeldet.` : `${name} ist angemeldet.`}
             </p>
           )}
         </div>
         {!t.ausgefallen &&
+          !spiel &&
           (ab ? (
             <Button
               variant="hell"

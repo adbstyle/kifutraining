@@ -159,6 +159,17 @@ import {
   abholUrl,
 } from "../lib/spieler";
 import {
+  BEZEICHNUNG_MAX,
+  SPIEL_CHECKS,
+  SPIEL_MELDUNG,
+  SPIEL_TEXT,
+  bezeichnungProblem,
+  richtwertProblem,
+  richtwertStufe,
+  richtwertStufeText,
+  richtwertText,
+} from "../lib/spiel";
+import {
   KADER_MELDUNG,
   KADER_NAME_MAX,
   KADER_TEXT,
@@ -590,7 +601,7 @@ pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit 
 });
 
 pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
-  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], kader: [], ausgefallen: false, ausfallGrund: null };
+  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], kader: [], ausgefallen: false, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
   assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
   assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } }, "2026-10-01"), false);
@@ -604,7 +615,7 @@ pruefe("Ausfall: Grund mit den Regeln der Bemerkung; nicht vorbereitet schliesst
   assert.equal(TERMIN_TEXT.grundLang, "Der Grund darf höchstens 500 Zeichen lang sein.");
   assert.equal(TERMIN_MELDUNG.NICHT_AUSGEFALLEN, "Dieser Termin ist nicht ausgefallen.");
   assert.ok(!KONFLIKT_MARKER.includes("TERMIN_AUSGEFALLEN"), "eine Regel, kein Konflikt");
-  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null,
+  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null,
     training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], kader: [], ausgefallen: true, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-01"), false, "AK 8");
   assert.equal(nochNichtVorbereitet({ ...t, ausgefallen: false }, "2026-10-01"), true);
@@ -622,6 +633,8 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
   const termin = {
     id: "tt1",
     teamId: "team1",
+    art: "training" as const,
+    spiel: null,
     datum: "2026-09-23",
     beginn: "18:30",
     ende: "20:00",
@@ -1907,6 +1920,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#453": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "termin_spieler_abrufen"],
     "#452": ["kader_abrufen", "kader_anlegen", "kader_umbenennen", "kader_entfernen", "kader_zuteilen", "kader_herausnehmen"],
     "#475": ["termin_spieler_abrufen", "termin_anwesenheit_setzen"],
+    "#459": ["termin_festlegen", "termin_aendern", "termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen", "termin_entfernen", "team_plan_abrufen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
@@ -2312,6 +2326,56 @@ pruefe("Termine für Kader: für wie viele er gilt, die übrigen, ehemalige zule
   assert.equal(abweisungText("gilt_nicht"), ABMELDUNG_TEXT.giltNicht);
   assert.ok(KONFLIKT_MARKER.includes("SERIE_VERFALL_GEAENDERT"), "eine geänderte Zahl ist veraltet, keine Regel");
   assert.equal(still(() => ausDbFehler({ message: "KADER_TERMIN_BEGONNEN" })).meldung, KADER_MELDUNG.KADER_TERMIN_BEGONNEN);
+});
+
+pruefe("Spiele: Bezeichnung, Richtwert, Bewertung und Marker (#459, #463 AK 7/28/29)", () => {
+  assert.equal(bezeichnungProblem("  Cup gegen FC Köniz "), null);
+  assert.equal(bezeichnungProblem("   ")?.text, SPIEL_TEXT.bezeichnung);
+  assert.equal(bezeichnungProblem(null)?.text, SPIEL_TEXT.bezeichnung);
+  assert.equal(bezeichnungProblem("x".repeat(BEZEICHNUNG_MAX)), null);
+  assert.equal(bezeichnungProblem("x".repeat(BEZEICHNUNG_MAX + 1))?.text, SPIEL_TEXT.bezeichnungLang);
+  // In Code Points gezählt wie Postgres `char_length`.
+  assert.equal(bezeichnungProblem("⚽".repeat(BEZEICHNUNG_MAX)), null);
+
+  assert.equal(richtwertProblem(null, null), null);
+  assert.equal(richtwertProblem(9, null), null);
+  assert.equal(richtwertProblem(null, 12), null);
+  assert.equal(richtwertProblem(9, 9), null, "gleich gross ist erlaubt");
+  assert.deepEqual(richtwertProblem(0, 12), { feld: "mindestzahl", text: SPIEL_TEXT.richtwert });
+  assert.deepEqual(richtwertProblem(9, 201), { feld: "hoechstzahl", text: SPIEL_TEXT.richtwert });
+  assert.deepEqual(richtwertProblem(9.5, null), { feld: "mindestzahl", text: SPIEL_TEXT.richtwert });
+  assert.deepEqual(richtwertProblem(12, 9), { feld: "mindestzahl", text: SPIEL_TEXT.richtwertReihenfolge });
+
+  assert.equal(richtwertText(9, 12), "9 bis 12");
+  assert.equal(richtwertText(9, 9), "9");
+  assert.equal(richtwertText(9, null), "mindestens 9");
+  assert.equal(richtwertText(null, 12), "höchstens 12");
+  assert.equal(richtwertText(null, null), null);
+
+  // Die Bewertung: unter, knapp (genau die Mindestzahl, auch bei Min = Max),
+  // im Richtwert (bis und mit Höchstzahl), über; nur gegen gesetzte Grenzen.
+  assert.equal(richtwertStufe(7, 9, 12), "unter");
+  assert.equal(richtwertStufe(9, 9, 12), "knapp");
+  assert.equal(richtwertStufe(10, 9, 12), "im");
+  assert.equal(richtwertStufe(12, 9, 12), "im", "die Höchstzahl erreicht ist im Richtwert");
+  assert.equal(richtwertStufe(13, 9, 12), "ueber");
+  assert.equal(richtwertStufe(11, 11, 11), "knapp");
+  assert.equal(richtwertStufe(12, 11, 11), "ueber");
+  assert.equal(richtwertStufe(30, 9, null), "im", "ohne Höchstzahl nie zu viele");
+  assert.equal(richtwertStufe(0, null, 12), "im", "ohne Mindestzahl nie zu wenige");
+  assert.equal(richtwertStufe(13, null, 12), "ueber");
+  assert.equal(richtwertStufe(5, null, null), null);
+  assert.equal(richtwertStufeText(7, 9, 12), "noch 2 bis Mindestzahl 9");
+  assert.equal(richtwertStufeText(9, 9, 12), "Mindestzahl 9 knapp erreicht");
+  assert.equal(richtwertStufeText(14, 9, 12), "2 über Höchstzahl 12");
+
+  for (const [marker, satz] of Object.entries(SPIEL_MELDUNG)) assert.equal(fehlerMeldung(`x ${marker} y`), satz, marker);
+  for (const [check, satz] of SPIEL_CHECKS)
+    assert.equal(fehlerMeldung(`new row violates check constraint ${check}`), satz, check);
+  // Kein Spiel-Marker steckt in einem anderen Marker des Kalenders.
+  const alle = [...Object.keys(TERMIN_MELDUNG), ...Object.keys(SERIE_MELDUNG), ...Object.keys(SPIEL_MELDUNG)];
+  for (const a of Object.keys(SPIEL_MELDUNG)) for (const b of alle) if (a !== b) assert.ok(!b.includes(a) && !a.includes(b), `${a} / ${b}`);
+  assert.equal(abweisungText("ist_spiel"), SPIEL_TEXT.istSpiel);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

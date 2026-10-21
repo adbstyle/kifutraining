@@ -77,6 +77,7 @@ export function useTerminAktionen(): TerminAktionen {
  *  für `geaenderteFelder`. */
 function startWerte(t: TerminZeile): TerminFelder {
   return {
+    art: t.art,
     datum: t.datum,
     beginn: t.beginn,
     ende: t.ende,
@@ -84,6 +85,10 @@ function startWerte(t: TerminZeile): TerminFelder {
     bemerkung: t.bemerkung ?? "",
     felder: t.felder,
     spielerzahl: t.spielerzahl,
+    // Ein Spiel (#459): Bezeichnung und Richtwert statt Feldern und Zahl.
+    ...(t.spiel
+      ? { bezeichnung: t.spiel.bezeichnung, richtwertMin: t.spiel.richtwertMin, richtwertMax: t.spiel.richtwertMax }
+      : {}),
   };
 }
 

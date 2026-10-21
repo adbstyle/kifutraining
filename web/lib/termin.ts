@@ -6,9 +6,10 @@
 // ruft sie vor jedem Schreiben auf, und die Datenebene meldet mit denselben
 // Markern (TERMIN_MELDUNG), wenn sie trotzdem abweist.
 //
-// REIN: importiert nur lib/termin-felder.ts (ebenfalls rein) — `check:kern`
-// lädt diese Datei mit tsx.
+// REIN: importiert nur lib/termin-felder.ts und lib/spiel.ts (ebenfalls
+// rein) — `check:kern` lädt diese Datei mit tsx.
 import { gleicheFelder, type Felder } from "@/lib/termin-felder";
+import type { TerminArt } from "@/lib/spiel";
 
 /** Die Angaben eines Termins, wie der Dialog sie führt. `felder` sind die
  *  Felder des Platzes (#389, lib/termin-felder.ts) — nicht zu verwechseln mit
@@ -23,6 +24,12 @@ export type TerminFelder = {
   felder?: Felder | null;
   /** Die erwartete Spielerzahl (#390); `null`: unbekannt. */
   spielerzahl?: number | null;
+  /** Training oder Spiel (#459); nur beim Festlegen, danach fest. */
+  art?: TerminArt;
+  /** Nur an einem Spiel: Bezeichnung und Richtwert (#459). */
+  bezeichnung?: string | null;
+  richtwertMin?: number | null;
+  richtwertMax?: number | null;
 };
 
 export type TerminFeld = "datum" | "beginn" | "ende" | "ort" | "bemerkung";
@@ -161,6 +168,9 @@ export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partia
   if (!gleich(neu.bemerkung, start.bemerkung)) aenderung.bemerkung = neu.bemerkung ?? "";
   if (!gleicheFelder(neu.felder, start.felder)) aenderung.felder = neu.felder ?? null;
   if ((neu.spielerzahl ?? null) !== (start.spielerzahl ?? null)) aenderung.spielerzahl = neu.spielerzahl ?? null;
+  if (!gleich(neu.bezeichnung, start.bezeichnung)) aenderung.bezeichnung = neu.bezeichnung ?? "";
+  if ((neu.richtwertMin ?? null) !== (start.richtwertMin ?? null)) aenderung.richtwertMin = neu.richtwertMin ?? null;
+  if ((neu.richtwertMax ?? null) !== (start.richtwertMax ?? null)) aenderung.richtwertMax = neu.richtwertMax ?? null;
   return Object.keys(aenderung).length > 0 ? aenderung : null;
 }
 

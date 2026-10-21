@@ -15,6 +15,7 @@ import { jetztAmTrainingsort, terminBegonnen } from "@/lib/zeit";
 import { ladeTermin, TERMIN_FELD } from "@/lib/kern/termine";
 import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 import { nachTerminKader, type TerminKader } from "@/lib/kader";
+import { SPIEL_TEXT } from "@/lib/spiel";
 
 /**
  * Ab- und Anmelden für einen Termin (Epic #433, Story #435) — dieselben
@@ -68,6 +69,8 @@ export async function terminSpieler(
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
   const t = geladen.wert;
+  // Ein Spiel kennt eigene Meldungen (#463), nicht die Abmeldung der Trainings.
+  if (t.art === "spiel") return fehlschlag("regel", SPIEL_TEXT.istSpiel, TERMIN_FELD);
   const [teilnehmer, termin, team] = await Promise.all([
     supabase.rpc("termin_teilnehmer", { p_termin: t.id }),
     supabase

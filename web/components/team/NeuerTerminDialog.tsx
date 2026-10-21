@@ -1,7 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Checkbox, DateField, Dialog, SectionMessage, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
+import {
+  Button,
+  Checkbox,
+  ChoiceChip,
+  ChoiceChipGroup,
+  DateField,
+  Dialog,
+  InfoKnopf,
+  SectionMessage,
+  TextArea,
+  TextField,
+  TimeField,
+  WochentagWahl,
+  feldNameKlasse,
+} from "@/components/ui";
+import { cn } from "@/lib/cn";
+import { SPIEL_MELDUNG, SPIEL_TEXT, type TerminArt } from "@/lib/spiel";
+import { BezeichnungFeld, RichtwertFelder, useSpielAngaben } from "./SpielFelder";
 import { maxEnddatum, serieProblem, wochentagVon, type SerieFeld, type Wochentag } from "@/lib/serie";
 import { BEMERKUNG_MAX, ORT_MAX, istKalendertag, terminProblem, type TerminFelder } from "@/lib/termin";
 import type { Felder } from "@/lib/termin-felder";
@@ -52,7 +69,12 @@ const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: 
 
    Erwartete Spielerzahl (#390 AK 1) und Felder des Platzes (#389 AK 1, 8)
    gelten für den einzelnen Termin wie für jeden Termin einer Serie
-   (#391 AK 1). Führt das Team Kader, gilt er für die gewählten (#453). */
+   (#391 AK 1). Führt das Team Kader, gilt er für die gewählten (#453).
+
+   Zuerst die Art (#459 AK 1): ohne Vorwahl, damit niemand aus Versehen ein
+   Training erfasst. Ein Spiel trägt statt Feldern, Spielerzahl und Serie
+   eine Bezeichnung und einen Richtwert; sein Beginn heisst Anpfiff und liegt
+   in der Zukunft (AK 21). */
 export function NeuerTerminDialog({
   open,
   pending,
@@ -77,6 +99,9 @@ export function NeuerTerminDialog({
   onSpeichern: (t: NeuerTermin) => void;
 }) {
   const [f, setF] = useState<SerieFelder>(LEER);
+  const [art, setArt] = useState<TerminArt | null>(null);
+  const [artFehler, setArtFehler] = useState(false);
+  const spiel = useSpielAngaben();
   const [wiederholen, setWiederholen] = useState(false);
   const [tageVonHand, setTageVonHand] = useState(false);
   const [problem, setProblem] = useState<{ feld: SerieFeld; text: string } | null>(null);
@@ -91,6 +116,9 @@ export function NeuerTerminDialog({
   useEffect(() => {
     if (!open) return;
     setF(LEER);
+    setArt(null);
+    setArtFehler(false);
+    spiel.zuruecksetzen();
     setWiederholen(false);
     setTageVonHand(false);
     setProblem(null);
@@ -121,7 +149,20 @@ export function NeuerTerminDialog({
     onSpeichern(t);
   }
 
+  function artGewaehlt(a: TerminArt) {
+    setArt(a);
+    setArtFehler(false);
+    setProblem(null);
+    setVerworfen(serverFehler);
+    if (a === "spiel") setWiederholen(false);
+  }
+
   function speichern() {
+    if (!art) {
+      setArtFehler(true);
+      return;
+    }
+    if (art === "spiel") return speichereSpiel();
     // Felder und Spielerzahl prüfen beide Arten gleich.
     const angaben = platz.pruefe();
     if (wiederholen) {
@@ -131,6 +172,7 @@ export function NeuerTerminDialog({
       return;
     }
     const felder: TerminFelder = {
+      art: "training",
       datum: f.von,
       beginn: f.beginn,
       ende: f.ende,
@@ -148,6 +190,24 @@ export function NeuerTerminDialog({
     }
   }
 
+  /** Ein Spiel: Bezeichnung und Richtwert statt Feldern und Spielerzahl, nur
+   *  einzeln, mit bevorstehendem Anpfiff. */
+  function speichereSpiel() {
+    const felder: TerminFelder = { art: "spiel", datum: f.von, beginn: f.beginn, ende: f.ende, ort: f.ort, bemerkung: f.bemerkung };
+    const p = terminProblem(felder);
+    setProblem(p && { feld: p.feld === "datum" ? "von" : p.feld, text: p.text });
+    const angaben = spiel.pruefe();
+    if (p || !angaben) return;
+    if (terminBegonnen(f.von, f.beginn)) {
+      setProblem({ feld: "beginn", text: SPIEL_MELDUNG.SPIEL_ANPFIFF_VERGANGEN });
+      return;
+    }
+    const verantwortlich = f.verantwortliche.length > 0 ? { userIds: f.verantwortliche, anonyme: [] } : undefined;
+    senden({ art: "einzeln", felder: { ...felder, ...angaben }, verantwortlich, kaderIds: f.kaderIds });
+  }
+
+  const istSpiel = art === "spiel";
+
   return (
     <Dialog
       open={open}
@@ -163,6 +223,23 @@ export function NeuerTerminDialog({
     >
       {fehlerAnzeigen && <SectionMessage appearance="error" className="mb-4">{fehlerAnzeigen}</SectionMessage>}
       <div className="flex flex-col gap-4">
+        {/* Die Art wie die Wochentage: Name in der Schrift der Feldnamen, die
+            Wahl auf ihrer Linie (px-3.5). Der feste Hinweis steht hinter dem ⓘ. */}
+        <fieldset>
+          <legend className={cn(feldNameKlasse(artFehler), "flex w-full items-center justify-between")}>
+            Art
+            <InfoKnopf label="Art">Die Art lässt sich danach nicht mehr ändern.</InfoKnopf>
+          </legend>
+          <ChoiceChipGroup ariaLabel="Art des Termins" className="mt-1.5 px-3.5">
+            {(["training", "spiel"] as const).map((a, i) => (
+              <ChoiceChip key={a} look="nutzertext" tabStop={i === 0 && !art} selected={art === a} onSelect={() => artGewaehlt(a)}>
+                {a === "training" ? "Training" : "Spiel"}
+              </ChoiceChip>
+            ))}
+          </ChoiceChipGroup>
+          {artFehler && <p role="alert" className="mt-1 px-3.5 type-body-small text-error">{SPIEL_TEXT.artWaehlen}</p>}
+        </fieldset>
+        {istSpiel && <BezeichnungFeld angaben={spiel} disabled={pending} />}
         <DateField
           label={wiederholen ? "Beginndatum" : "Datum"}
           value={f.von}
@@ -171,10 +248,12 @@ export function NeuerTerminDialog({
           supportingText={fehlerAn("von")}
         />
         <div className="flex flex-col gap-4 sm:flex-row">
-          <TimeField label="Beginn" className="flex-1" value={f.beginn} onChange={(e) => setze("beginn", e.target.value)} error={!!fehlerAn("beginn")} supportingText={fehlerAn("beginn")} />
+          <TimeField label={istSpiel ? "Anpfiff" : "Beginn"} className="flex-1" value={f.beginn} onChange={(e) => setze("beginn", e.target.value)} error={!!fehlerAn("beginn")} supportingText={fehlerAn("beginn")} />
           <TimeField label="Ende" className="flex-1" value={f.ende} onChange={(e) => setze("ende", e.target.value)} error={!!fehlerAn("ende")} supportingText={fehlerAn("ende")} />
         </div>
-        <Checkbox label="Wiederholender Termin" className="self-start px-3.5" checked={wiederholen} onChange={(e) => wiederholenGewaehlt(e.target.checked)} />
+        {!istSpiel && (
+          <Checkbox label="Wiederholender Termin" className="self-start px-3.5" checked={wiederholen} onChange={(e) => wiederholenGewaehlt(e.target.checked)} />
+        )}
         {wiederholen && (
           <>
             <WochentagWahl
@@ -197,6 +276,7 @@ export function NeuerTerminDialog({
           </>
         )}
         <TextField label="Ort (optional)" maxLength={ORT_MAX} value={f.ort} onChange={(e) => setze("ort", e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
+        {istSpiel && <RichtwertFelder angaben={spiel} disabled={pending} />}
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={f.bemerkung} onChange={(e) => setze("bemerkung", e.target.value)} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         <VerantwortlicheWahl
           mitglieder={mitglieder}
@@ -216,12 +296,16 @@ export function NeuerTerminDialog({
           />
         )}
         {/* Ein einzelner Termin, der schon begonnen hat, nimmt die erwartete Zahl an (Migration spielerliste). */}
-        <SpielerzahlField
-          {...platz.spielerzahlProps}
-          disabled={pending}
-          ausListe={!!fuehrtListe && (wiederholen || !f.von || !f.beginn || !terminBegonnen(f.von, f.beginn))}
-        />
-        <FelderField {...platz.felderProps} disabled={pending} />
+        {!istSpiel && (
+          <>
+            <SpielerzahlField
+              {...platz.spielerzahlProps}
+              disabled={pending}
+              ausListe={!!fuehrtListe && (wiederholen || !f.von || !f.beginn || !terminBegonnen(f.von, f.beginn))}
+            />
+            <FelderField {...platz.felderProps} disabled={pending} />
+          </>
+        )}
       </div>
     </Dialog>
   );

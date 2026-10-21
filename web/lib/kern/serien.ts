@@ -465,7 +465,18 @@ export async function aendereMitReichweite(
     const { kaderIds, ...felder } = e;
     const nurKader =
       kaderIds !== undefined &&
-      [felder.datum, felder.beginn, felder.ende, felder.ort, felder.bemerkung, felder.felder, felder.spielerzahl].every((x) => x === undefined);
+      [
+        felder.datum,
+        felder.beginn,
+        felder.ende,
+        felder.ort,
+        felder.bemerkung,
+        felder.felder,
+        felder.spielerzahl,
+        felder.bezeichnung,
+        felder.richtwertMin,
+        felder.richtwertMax,
+      ].every((x) => x === undefined);
     let verfallen = 0;
     let teamId = t.team_id;
     if (!nurKader) {

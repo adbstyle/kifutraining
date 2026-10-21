@@ -13,7 +13,11 @@ export const dynamic = "force-dynamic";
 
 const DATEI = /^([0-9a-f]{64})\.ics$/;
 
-type Feed = { gueltig: boolean; team?: { id: string; name: string }; termine?: AboTermin[] };
+type Feed = {
+  gueltig: boolean;
+  team?: { id: string; name: string };
+  termine?: (AboTermin & { art: "training" | "spiel"; bezeichnung: string | null })[];
+};
 
 export async function GET(req: Request, { params }: { params: Promise<{ datei: string }> }) {
   const { datei } = await params;
@@ -33,12 +37,19 @@ export async function GET(req: Request, { params }: { params: Promise<{ datei: s
     feed = data as Feed;
   }
   const titel = feed.gueltig ? `Training · ${feed.team!.name}` : "KiFu";
+  // Ein Spiel heisst nach seiner Bezeichnung (#459 PC 1); der Kalender nennt
+  // Trainings und Spiele (PC 6).
+  const termine: AboTermin[] = feed.gueltig
+    ? feed.termine!.map(({ art, bezeichnung, ...t }) =>
+        art === "spiel" && bezeichnung ? { ...t, titel: `${bezeichnung} · ${feed.team!.name}` } : t,
+      )
+    : [];
   const text = kalenderText({
-    kalenderName: feed.gueltig ? titel : "KiFu – Abo erloschen",
+    kalenderName: feed.gueltig ? `Trainings und Spiele · ${feed.team!.name}` : "KiFu – Abo erloschen",
     titel,
     teamId: feed.team?.id ?? "",
     origin,
-    termine: feed.gueltig ? feed.termine! : [],
+    termine,
     jetzt: new Date(),
   });
   return new Response(text, {

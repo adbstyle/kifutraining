@@ -11,6 +11,7 @@
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
 import { datumKurz } from "@/lib/zeit";
 import { tagOhneJahr } from "@/lib/monat";
+import { SPIEL_TEXT } from "@/lib/spiel";
 
 /** Zwillinge der Checks `spieler_vorname`, `spieler_nachname`, `spieler_js`,
  *  `spieler_jahrgang` und der Obergrenze im Trigger `spieler_vorher`. */
@@ -182,7 +183,9 @@ export type AbmeldeGrund =
   | "begonnen"
   | "gilt_nicht"
   | "nicht_begonnen"
-  | "nicht_dabei";
+  | "nicht_dabei"
+  /** Ein Spiel (#448): Für Spiele gilt diese Abmeldung nicht. */
+  | "ist_spiel";
 
 /** Der Stand des Termins, gegen den abgewiesen wurde. */
 export type AbmeldeStand = { datum: string; beginn: string; ende: string; ausgefallen: boolean };
@@ -213,6 +216,7 @@ export function abweisungText(grund: AbmeldeGrund, stand?: AbmeldeStand): string
   if (grund === "gilt_nicht") return ABMELDUNG_TEXT.giltNicht;
   if (grund === "nicht_begonnen") return ABMELDUNG_TEXT.nichtBegonnen;
   if (grund === "nicht_dabei") return ABMELDUNG_TEXT.nichtDabei;
+  if (grund === "ist_spiel") return SPIEL_TEXT.istSpiel;
   return ABMELDUNG_TEXT.nichtGefunden;
 }
 

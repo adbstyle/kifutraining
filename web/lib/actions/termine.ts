@@ -54,6 +54,10 @@ export async function legeTerminFestAktion(
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await legeTerminFest(a.supabase, a.userId, {
     teamId,
+    art: felder.art ?? "training",
+    bezeichnung: felder.bezeichnung,
+    richtwertMin: felder.richtwertMin,
+    richtwertMax: felder.richtwertMax,
     datum: felder.datum,
     beginn: felder.beginn ?? "",
     ende: felder.ende ?? "",
@@ -91,6 +95,9 @@ export async function aendereTerminAktion(
     bemerkung: felder.bemerkung,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
+    bezeichnung: felder.bezeichnung ?? undefined,
+    richtwertMin: felder.richtwertMin,
+    richtwertMax: felder.richtwertMax,
     erwartetesTraining,
   });
   if (!r.ok) return { ok: false, error: r.meldung, verfallend: r.verfallend, nachtraege: r.nachtraege };

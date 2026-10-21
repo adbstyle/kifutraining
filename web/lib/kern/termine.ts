@@ -23,6 +23,14 @@ import {
   type Felder,
 } from "@/lib/termin-felder";
 import { kalenderMeldung } from "@/lib/veraltet";
+import {
+  SPIEL_MELDUNG,
+  SPIEL_TEXT,
+  bezeichnungProblem,
+  istTerminArt,
+  richtwertProblem,
+  type TerminArt,
+} from "@/lib/spiel";
 import { kurzeZeit } from "@/lib/queries/termine-fuer";
 import { heuteAmTrainingsort, terminBegonnen } from "@/lib/zeit";
 import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugriff";
@@ -59,11 +67,17 @@ import {
 export const TERMIN_FELD = { feld: "termin_id" } as const;
 
 export const TERMIN_ROH =
-  "id, team_id, training_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
+  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, training_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
 
 export type TerminRoh = {
   id: string;
   team_id: string;
+  /** Training oder Spiel (#459); die Art bleibt. */
+  art: TerminArt;
+  /** Nur an einem Spiel: Bezeichnung und Richtwert (#459). */
+  bezeichnung: string | null;
+  richtwert_min: number | null;
+  richtwert_max: number | null;
   training_id: string | null;
   datum: string;
   beginn: string;
@@ -163,6 +177,13 @@ export async function ladeTermin(
 
 export type TerminFestlegen = {
   teamId: string;
+  /** Training oder Spiel (#459 AK 1); über den KI-Assistenten Pflicht (AK 19). */
+  art: TerminArt;
+  /** Nur an einem Spiel: Pflicht (AK 2). */
+  bezeichnung?: string | null;
+  /** Nur an einem Spiel: Mindest- und Höchstzahl je für sich (AK 5). */
+  richtwertMin?: number | null;
+  richtwertMax?: number | null;
   datum: string;
   beginn: string;
   ende: string;
@@ -176,16 +197,61 @@ export type TerminFestlegen = {
   kaderIds?: string[];
 };
 
+/** Was ein Spiel trägt und ein Training nicht (#459 AK 2, 5, 10, 11, 16) —
+ *  und umgekehrt. Geprüft wird die Angabe, wie sie nach dem Schreiben
+ *  dastünde. Leere Felder- oder Zahlangaben an einem Spiel sind keine. */
+function artFehler(
+  art: TerminArt,
+  a: {
+    bezeichnung?: string | null;
+    richtwertMin?: number | null;
+    richtwertMax?: number | null;
+    felder?: readonly FeldEingabe[] | null;
+    spielerzahl?: number | null;
+  },
+  pruefeBezeichnung: boolean,
+): KernFehler | null {
+  if (art === "spiel") {
+    if ((a.felder?.length ?? 0) > 0 || (a.spielerzahl !== undefined && a.spielerzahl !== null))
+      return fehlschlag("eingabe", SPIEL_TEXT.nurTraining, { feld: a.spielerzahl != null ? "erwartete_spielerzahl" : "felder" });
+    if (pruefeBezeichnung) {
+      const b = bezeichnungProblem(a.bezeichnung);
+      if (b) return fehlschlag("eingabe", b.text, { feld: b.feld });
+    }
+    const r = richtwertProblem(a.richtwertMin ?? null, a.richtwertMax ?? null);
+    return r ? fehlschlag("eingabe", r.text, { feld: r.feld }) : null;
+  }
+  if (leerZuNull(a.bezeichnung) !== null || (a.richtwertMin ?? null) !== null || (a.richtwertMax ?? null) !== null)
+    return fehlschlag("eingabe", SPIEL_TEXT.nurSpiel, { feld: leerZuNull(a.bezeichnung) !== null ? "bezeichnung" : "mindestzahl" });
+  return null;
+}
+
+/** Ein Spiel nur mit bevorstehendem Anpfiff (#459 AK 21) — vorab mit dem
+ *  Satz der Datenebene (`SPIEL_ANPFIFF_VERGANGEN`). */
+function anpfiffFehler(datum: string, beginn: string | null): KernFehler | null {
+  return beginn && terminBegonnen(datum, beginn)
+    ? fehlschlag("regel", SPIEL_MELDUNG.SPIEL_ANPFIFF_VERGANGEN, { feld: "beginn" })
+    : null;
+}
+
 /** Einen einzelnen Termin ohne Training festlegen (AK 1–6), auch in der
  *  Vergangenheit (AK 4), auf Wunsch mit seinen Feldern (#389 AK 1, 8) und
- *  der erwarteten Spielerzahl (#390 AK 1). */
+ *  der erwarteten Spielerzahl (#390 AK 1). Ein Spiel (#459) trägt statt
+ *  dessen Bezeichnung und Richtwert und hat seinen Anpfiff noch vor sich. */
 export async function legeTerminFest(
   supabase: SupabaseClient,
   _userId: string,
   e: TerminFestlegen,
 ): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
+  if (!istTerminArt(e.art)) return fehlschlag("eingabe", SPIEL_TEXT.art, { feld: "art" });
   const problem = feldFehler(terminProblem(e));
   if (problem) return problem;
+  const art = artFehler(e.art, e, true);
+  if (art) return art;
+  if (e.art === "spiel") {
+    const anpfiff = anpfiffFehler(e.datum, leerZuNull(e.beginn));
+    if (anpfiff) return anpfiff;
+  }
   const felder = pruefeFelder(e.felder);
   if (!felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
@@ -201,6 +267,10 @@ export async function legeTerminFest(
     .from("training_termine")
     .insert({
       team_id: e.teamId,
+      art: e.art,
+      bezeichnung: e.art === "spiel" ? leerZuNull(e.bezeichnung) : null,
+      richtwert_min: e.art === "spiel" ? (e.richtwertMin ?? null) : null,
+      richtwert_max: e.art === "spiel" ? (e.richtwertMax ?? null) : null,
       datum: e.datum,
       beginn: leerZuNull(e.beginn),
       ende: leerZuNull(e.ende),
@@ -243,6 +313,11 @@ export type TerminAendern = {
   /** Die erwartete Spielerzahl (#390 AK 2): `undefined` = unverändert,
    *  `null` = entfernen. */
   spielerzahl?: number | null;
+  /** Nur an einem Spiel (#459 AK 3, 5): `undefined` = unverändert; der
+   *  Richtwert je Grenze `null` = entfernen. */
+  bezeichnung?: string;
+  richtwertMin?: number | null;
+  richtwertMax?: number | null;
   /** Das Training, das der Termin bei der Auswahl trug (AK 23). `undefined`
    *  beim KI-Weg: geprüft wird dann gegen den eben gelesenen Stand. */
   erwartetesTraining?: string | null;
@@ -324,12 +399,37 @@ export async function aendereTermin(
   };
   const problem = feldFehler(terminProblem(neu));
   if (problem) return problem;
+  // Die Spielangaben, wie sie nach dem Schreiben dastünden (#459).
+  const spiel = {
+    bezeichnung: e.bezeichnung,
+    richtwertMin: e.richtwertMin !== undefined ? e.richtwertMin : t.richtwert_min,
+    richtwertMax: e.richtwertMax !== undefined ? e.richtwertMax : t.richtwert_max,
+    felder: e.felder,
+    spielerzahl: e.spielerzahl,
+  };
+  const artProblem =
+    t.art === "spiel"
+      ? artFehler("spiel", spiel, e.bezeichnung !== undefined)
+      : artFehler("training", { bezeichnung: e.bezeichnung, richtwertMin: e.richtwertMin, richtwertMax: e.richtwertMax }, false);
+  if (artProblem) return artProblem;
+  if (t.art === "spiel" && (neu.datum !== t.datum || neu.beginn !== t.beginn)) {
+    const anpfiff = anpfiffFehler(neu.datum, neu.beginn);
+    if (anpfiff) return anpfiff;
+  }
   const felder = e.felder === undefined ? null : pruefeFelder(e.felder);
   if (felder && !felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
   if (zahl) return zahl;
 
-  const aenderung: Partial<typeof neu & { felder: Felder | null; erwartete_spielerzahl: number | null }> = {};
+  const aenderung: Partial<
+    typeof neu & {
+      felder: Felder | null;
+      erwartete_spielerzahl: number | null;
+      bezeichnung: string | null;
+      richtwert_min: number | null;
+      richtwert_max: number | null;
+    }
+  > = {};
   if (e.datum !== undefined) aenderung.datum = neu.datum;
   if (e.beginn !== undefined || e.ende !== undefined) {
     aenderung.beginn = neu.beginn;
@@ -340,6 +440,11 @@ export async function aendereTermin(
   // Die Felder sind EINE Angabe und gehen als ganze Liste (#389 AK 7).
   if (felder) aenderung.felder = felder.felder;
   if (e.spielerzahl !== undefined) aenderung.erwartete_spielerzahl = e.spielerzahl;
+  if (t.art === "spiel") {
+    if (e.bezeichnung !== undefined) aenderung.bezeichnung = leerZuNull(e.bezeichnung);
+    if (e.richtwertMin !== undefined) aenderung.richtwert_min = e.richtwertMin;
+    if (e.richtwertMax !== undefined) aenderung.richtwert_max = e.richtwertMax;
+  }
 
   // «Nur dieser» (#326 AK 1, PC 1): Jede Angabe eines Serientermins, die sich
   // ändert, weicht danach ab — bis man sie wieder der Serie folgen lässt. Nur
@@ -484,6 +589,7 @@ export async function ordneTrainingZu(
   if (!termin.ok) return termin;
   const t = termin.wert;
   // AK 9 (#327): Vor jeder Kopie abweisen, sonst bliebe eine Kopie zurück.
+  if (t.art === "spiel") return fehlschlag("regel", SPIEL_TEXT.keinTraining, TERMIN_FELD);
   if (t.ausgefallen) return fehlschlag("regel", TERMIN_MELDUNG.TERMIN_AUSGEFALLEN, TERMIN_FELD);
 
   const training = await ladeTrainingZumBearbeiten(supabase, userId, e.trainingId);

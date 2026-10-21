@@ -1,5 +1,5 @@
 import { CalendarOff, Clock, X } from "lucide-react";
-import { IconButtonLink, KategorieLozenge, Lozenge, SectionMessage, TabNav } from "@/components/ui";
+import { IconButtonLink, KategorieLozenge, Lozenge, SectionMessage, SpielLozenge, TabNav } from "@/components/ui";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { TrainingTeile } from "@/components/training/TrainingTeile";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
@@ -21,7 +21,11 @@ import { SpielerReiter } from "./SpielerReiter";
    Adressen (`?termin=…&tab=…`) wie jede Ansicht im Team; ein Wechsel bleibt an
    der Stelle (`scroll={false}`). Geladen wird nur, was der offene Reiter
    braucht. Der Reiter «Training» zeigt dieselbe Leseansicht wie die
-   Trainingsseite (`TrainingTeile`), ohne Bearbeiten. */
+   Trainingsseite (`TrainingTeile`), ohne Bearbeiten.
+
+   Ein Spiel (#459) trägt kein Training: Sein erster Reiter heisst «Spiel»,
+   einen Reiter «Training» gibt es nicht; wer kommt, folgt mit den Meldungen
+   (#463). */
 export async function TerminSpalte({
   t,
   reiter,
@@ -36,30 +40,36 @@ export async function TerminSpalte({
   /** Das Team führt Kader (#453 AK 5). */
   mitKadern?: boolean;
 }) {
-  const reiterItems = [
-    { label: "Termin", href: terminHref(t.teamId, meine, t.id, "termin"), current: reiter === "termin" },
-    { label: "Training", href: terminHref(t.teamId, meine, t.id, "training"), current: reiter === "training" },
-    { label: "Spieler:innen", href: terminHref(t.teamId, meine, t.id, "spieler"), current: reiter === "spieler" },
-  ];
+  const reiterItems = t.spiel
+    ? [{ label: "Spiel", href: terminHref(t.teamId, meine, t.id, "termin"), current: true }]
+    : [
+        { label: "Termin", href: terminHref(t.teamId, meine, t.id, "termin"), current: reiter === "termin" },
+        { label: "Training", href: terminHref(t.teamId, meine, t.id, "training"), current: reiter === "training" },
+        { label: "Spieler:innen", href: terminHref(t.teamId, meine, t.id, "spieler"), current: reiter === "spieler" },
+      ];
+  // Ein Spiel zeigt nur seinen eigenen Reiter, auch wenn die Adresse einen anderen nennt.
+  const offen: TerminReiter = t.spiel ? "termin" : reiter;
   return (
-    <section aria-label={`Termin ${tagOhneJahr(t.datum)}`} className="flex flex-col">
+    <section aria-label={`${t.spiel ? "Spiel" : "Termin"} ${tagOhneJahr(t.datum)}`} className="flex flex-col">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <h3 className="type-title-large text-on-surface">{tagOhneJahr(t.datum)}</h3>
+          {t.spiel && <SpielLozenge />}
+          <h3 className="type-title-large text-on-surface">{t.spiel ? t.spiel.bezeichnung : tagOhneJahr(t.datum)}</h3>
+          {t.spiel && <p className="type-body-medium text-on-surface-mittel">{tagOhneJahr(t.datum)}</p>}
           <p className="type-body-medium text-on-surface-mittel">
             {zeitText(t.beginn, t.ende)} Uhr{t.ort ? ` · ${t.ort}` : ""}
           </p>
         </div>
-        <IconButtonLink href={planHref(t.teamId, meine)} scroll={false} icon={X} label="Termin schliessen" />
+        <IconButtonLink href={planHref(t.teamId, meine)} scroll={false} icon={X} label={t.spiel ? "Spiel schliessen" : "Termin schliessen"} />
       </div>
       <TabNav items={reiterItems} ariaLabel="Bereiche des Termins" scroll={false} className="mt-2" />
       <div className="mt-4 flex flex-col gap-4">
-        {reiter === "termin" && (
+        {offen === "termin" && (
           <>
             <TerminKnoepfe t={t} />
             {t.ausgefallen && (
               <SectionMessage icon={CalendarOff}>
-                Der Termin fällt aus{t.ausfallGrund ? `: ${t.ausfallGrund}` : "."}
+                {t.spiel ? "Das Spiel" : "Der Termin"} fällt aus{t.ausfallGrund ? `: ${t.ausfallGrund}` : "."}
               </SectionMessage>
             )}
             <div className="rounded-flaeche bg-elev-01 p-4">
@@ -68,8 +78,8 @@ export async function TerminSpalte({
             </div>
           </>
         )}
-        {reiter === "training" && <TrainingReiter t={t} />}
-        {reiter === "spieler" && <SpielerReiterLaden t={t} ich={ich} />}
+        {offen === "training" && <TrainingReiter t={t} />}
+        {offen === "spieler" && <SpielerReiterLaden t={t} ich={ich} />}
       </div>
     </section>
   );
