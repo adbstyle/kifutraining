@@ -282,9 +282,9 @@ export const TEILNAHME_TEXT: Record<TeilnahmeStatus, string> = {
 /** Wie eine ehemalige Spieler:in überall heisst. */
 export const EHEMALIGE_SPIELERIN = "Ehemalige Spieler:in";
 
-/** Nach Name; ehemalige zuletzt. */
-export function nachTeilnehmer(liste: Teilnehmer[]): Teilnehmer[] {
-  const benannt = liste.filter((t) => t.vorname !== null) as (Teilnehmer & { vorname: string; nachname: string })[];
+/** Nach Name; ehemalige zuletzt — an Trainings und an Spielen. */
+export function nachTeilnehmer<T extends { vorname: string | null; nachname: string | null }>(liste: T[]): T[] {
+  const benannt = liste.filter((t) => t.vorname !== null) as (T & { vorname: string; nachname: string })[];
   return [...nachSpielerName(benannt), ...liste.filter((t) => t.vorname === null)];
 }
 

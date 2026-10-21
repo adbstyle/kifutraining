@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
-import { nachSpielerName } from "@/lib/spieler";
+import { nachTeilnehmer } from "@/lib/spieler";
 import {
   zaehlteBeimAnpfiff,
   fristAbgelaufen,
@@ -97,12 +97,6 @@ type Zeile = {
   nachgetragen: boolean;
 };
 
-/** Nach Name, ehemalige zuletzt. */
-function nachName(liste: SpielTeilnehmer[]): SpielTeilnehmer[] {
-  const benannt = liste.filter((t) => t.vorname !== null) as (SpielTeilnehmer & { vorname: string; nachname: string })[];
-  return [...nachSpielerName(benannt), ...liste.filter((t) => t.vorname === null)];
-}
-
 /** Wer an einem Spiel welche Meldung trägt (AK 5, 6, 20, 25). */
 export async function spielSpieler(
   supabase: SupabaseClient,
@@ -133,7 +127,7 @@ export async function spielSpieler(
   // AK 19: Ein ausgefallenes Spiel zeigt weder Meldungen noch Zahl.
   const spieler = t.ausgefallen
     ? []
-    : nachName(
+    : nachTeilnehmer(
         ((teilnehmer.data ?? []) as Zeile[]).map((r) => ({
           spielerId: r.spieler_id,
           vorname: r.vorname,

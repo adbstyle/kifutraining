@@ -479,14 +479,14 @@ export async function spielMeldungenZahl(
 
 /** Wie viele Nachträge zur Anwesenheit ein begonnenes Spiel trägt — sie
  *  verfallen mit jeder Verlegung, denn der Anpfiff liegt danach in der
- *  Zukunft (#487 AK 13, PC 3). Ehemalige zählen nicht. */
+ *  Zukunft (#487 AK 13, PC 3). Wie bei den Meldungen samt Ehemaligen: Auch
+ *  ihre verschwinden. */
 async function spielNachtraegeZahl(supabase: SupabaseClient, terminId: string): Promise<KernErgebnis<number>> {
   const { count, error } = await supabase
     .from("spiel_teilnahmen")
     .select("termin_id", { count: "exact", head: true })
     .eq("termin_id", terminId)
-    .eq("nachgetragen", true)
-    .not("spieler_id", "is", null);
+    .eq("nachgetragen", true);
   return error ? ausDbFehler(error) : ok(count ?? 0);
 }
 
@@ -644,22 +644,30 @@ export async function aendereTermin(
   }
 
   const erwartet = e.erwartetesTraining !== undefined ? e.erwartetesTraining : t.training_id;
-  // Ändern sich nur die Treffpunkte (#465), steht am Termin nichts zu
-  // schreiben — dann prüft dieselbe Bedingung nur den Stand.
-  const schreiben = { ...aenderung, ...flags, ...ausfall };
-  const tabelle = supabase.from("training_termine");
-  const basis = (Object.keys(schreiben).length > 0 ? tabelle.update(schreiben) : tabelle.select("id")).eq("id", t.id);
-  const { data, error } = await (erwartet === null
-    ? basis.is("training_id", null)
-    : basis.eq("training_id", erwartet)
-  )
-    .select("id")
-    .maybeSingle();
-  if (error) return ausDbFehler(error);
-  if (!data) return warumNichtGeschrieben(supabase, t.id, e.erwartetesTraining === undefined);
+  // Die Treffpunkte (#465) zuerst: Scheitert danach das Schreiben am Termin,
+  // gehen sie auf den Stand zurück — wie `legeTerminFest` aufräumt.
+  let treffpunkteVorher: TreffpunktZeile[] | null = null;
   if (treffpunkte) {
+    const vorher = await supabase.from("spiel_treffpunkte").select("anreise, vorlauf_min, ort").eq("termin_id", t.id);
+    if (vorher.error) return ausDbFehler(vorher.error);
+    treffpunkteVorher = vorher.data as TreffpunktZeile[];
     const tp = await setzeTreffpunkte(supabase, t.id, treffpunkte.wert);
     if (!tp.ok) return tp;
+  }
+  const schreiben = { ...aenderung, ...flags, ...ausfall };
+  // Ändern sich nur die Treffpunkte, steht am Termin nichts zu schreiben.
+  if (Object.keys(schreiben).length > 0) {
+    const basis = supabase.from("training_termine").update(schreiben).eq("id", t.id);
+    const { data, error } = await (erwartet === null
+      ? basis.is("training_id", null)
+      : basis.eq("training_id", erwartet)
+    )
+      .select("id")
+      .maybeSingle();
+    if (error || !data) {
+      if (treffpunkteVorher) await setzeTreffpunkte(supabase, t.id, treffpunkteVorher);
+      return error ? ausDbFehler(error) : warumNichtGeschrieben(supabase, t.id, e.erwartetesTraining === undefined);
+    }
   }
   return ok({ terminId: t.id, teamId: t.team_id, trainingId: erwartet, abmeldungenVerfallen: verfallen });
 }
@@ -687,8 +695,12 @@ export async function entferneTermin(
   },
 ): Promise<KernErgebnis<{ teamId: string; training: Verlassen }>> {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
-  const { data: art } = await supabase.from("training_termine").select("art").eq("id", e.terminId).maybeSingle<{ art: TerminArt }>();
-  if (art?.art === "spiel") {
+  const { data: vorher } = await supabase
+    .from("training_termine")
+    .select("art, training_id")
+    .eq("id", e.terminId)
+    .maybeSingle<{ art: TerminArt; training_id: string | null }>();
+  if (vorher?.art === "spiel") {
     const zahl = await spielMeldungenZahl(supabase, e.terminId);
     if (!zahl.ok) return zahl;
     const { meldungen, kennzeichnungen } = zahl.wert;
@@ -700,7 +712,6 @@ export async function entferneTermin(
         ...(kennzeichnungen > 0 && { kennzeichnungen }),
       });
   }
-  const { data: vorher } = await supabase.from("training_termine").select("training_id").eq("id", e.terminId).maybeSingle();
   const bilder = await terminTrainingBilder(supabase, [vorher?.training_id]);
   const { data, error } = await supabase.rpc("termin_entfernen", {
     p_termin: e.terminId,

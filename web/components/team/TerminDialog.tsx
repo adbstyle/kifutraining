@@ -251,45 +251,26 @@ export function TerminDialog({
     return !r;
   }
 
+  /** Ein Spiel (#459) trägt Bezeichnung, Richtwert, Meldefrist und
+   *  Treffpunkte statt Feldern und Spielerzahl, hat nie eine Serie, und ein
+   *  verlegter Anpfiff liegt nur in der Zukunft. */
   function speichern() {
-    if (istSpiel) return speichereSpiel();
     const p = terminProblem(felder);
     setProblem(p);
-    const angaben = platz.pruefe();
+    const angaben = istSpiel ? spiel.pruefe() : platz.pruefe();
     const regelOk = regelPruefen();
     const gp = ausfall && !ausfallEndet ? ausfallProblem(grund) : null;
     setGrundFehler(gp?.text);
-    if (!p && angaben && regelOk && !gp) {
-      const geaendert = verantwortlicheGeaendert(verantwortlich, verantwortlicheStart(verantwortliche ?? []));
-      const grundNeu = ausfall && !ausfallEndet && grund.trim() !== (ausfall.grund ?? "") ? grund : undefined;
-      onSpeichern(
-        { ...felder, ...angaben },
-        serie ? regel : undefined,
-        geaendert ? verantwortlich : undefined,
-        grundNeu,
-        gleicheMenge(kaderWahl, kaderStart) ? undefined : kaderWahl,
-      );
-    }
-  }
-
-  /** Ein Spiel: Bezeichnung und Richtwert statt Feldern und Spielerzahl, ein
-   *  verlegter Anpfiff nur in die Zukunft. */
-  function speichereSpiel() {
-    const p = terminProblem(felder);
-    setProblem(p);
-    const angaben = spiel.pruefe();
-    const gp = ausfall && !ausfallEndet ? ausfallProblem(grund) : null;
-    setGrundFehler(gp?.text);
-    if (p || !angaben || gp) return;
-    if (verlegt && terminBegonnen(felder.datum, felder.beginn ?? "")) {
+    if (p || !angaben || !regelOk || gp) return;
+    if (istSpiel && verlegt && terminBegonnen(felder.datum, felder.beginn ?? "")) {
       setProblem({ feld: "beginn", text: SPIEL_MELDUNG.SPIEL_ANPFIFF_VERGANGEN });
       return;
     }
     const geaendert = verantwortlicheGeaendert(verantwortlich, verantwortlicheStart(verantwortliche ?? []));
     const grundNeu = ausfall && !ausfallEndet && grund.trim() !== (ausfall.grund ?? "") ? grund : undefined;
     onSpeichern(
-      { ...felder, art: "spiel", ...angaben },
-      undefined,
+      istSpiel ? { ...felder, art: "spiel", ...angaben } : { ...felder, ...angaben },
+      serie ? regel : undefined,
       geaendert ? verantwortlich : undefined,
       grundNeu,
       gleicheMenge(kaderWahl, kaderStart) ? undefined : kaderWahl,

@@ -5027,8 +5027,8 @@ try {
       const z = h * 60 + m + min;
       return `${String(Math.floor(z / 60)).padStart(2, "0")}:${String(z % 60).padStart(2, "0")}`;
     };
-    // Kurz vor Mitternacht ginge «heute später» nicht — dann überspringen.
-    if (h * 60 + m > 23 * 60 - 10) return;
+    // Kurz vor Mitternacht ginge «heute später» nicht (bis plus 90 Minuten) — dann überspringen.
+    if (h * 60 + m > 24 * 60 - 100) return;
     const t = wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Gleich", teamId: k.team, datum: heute, beginn: plus(1), ende: plus(60) })).terminId;
     wert(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.lena, angemeldet: true }));
     wert(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.mia, angemeldet: false }));
