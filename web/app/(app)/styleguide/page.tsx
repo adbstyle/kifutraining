@@ -1883,6 +1883,8 @@ export default async function Styleguide() {
             begonnen); <code>neutral</code> grau ohne Zeichen, wenn es nichts zu
             wählen gibt (er fällt aus) - und für die Aus-Lage eines Schalters,
             dessen Aus kein Fehlen bedeutet (die Selbstabholung eines Teams).
+            <code>ton=&quot;erfolg&quot;</code> legt die An-Lage ins Grün der Success-Lozenge, gespiegelt zur roten
+            Aus-Lage: für «angemeldet» und «da», weil ein angemeldetes Kind bei Spielen grün erscheint (Epic #448).
             Darunter liegt ein echtes{" "}
             <code>&lt;input type=&quot;checkbox&quot; role=&quot;switch&quot;&gt;</code>.
           </p>
@@ -3594,7 +3596,8 @@ export default async function Styleguide() {
             Training in der Warnfarbe - je eine schwache Fläche (12 %) mit der Tageszahl in der Farbe selbst -,
             ausgefallen grau mit durchgestrichener Zahl, vergangen ohne Training ohne Fläche. Hinter dem
             privaten Link einer Spieler:in sagt es «abgemeldet» im Rot der Danger-Lozenge, wie der Schalter
-            daneben in seiner Aus-Lage (Epic #433). Die Farbe trägt
+            daneben in seiner Aus-Lage (Epic #433). Ein Spiel trägt die Tönung seiner Lozenge «Spiel»
+            (discovery, Epic #448), damit es sich schon am Blatt vom Training abhebt. Die Farbe trägt
             den Zustand nie allein, die Zeile daneben sagt ihn in Worten. Heute hebt das Blatt nicht hervor;
             dafür steht der nächste Termin zuoberst. Wo kein Blatt steht (der nächste Termin), sagt eine
             Lozenge in derselben Tönung den Zustand: <code>BlattLozenge</code> - Form der Lozenge, Farbe des Blatts.
@@ -3604,6 +3607,7 @@ export default async function Styleguide() {
             <Kalenderblatt datum="2026-10-08" zustand="training" />
             <Kalenderblatt datum="2026-10-11" zustand="ausgefallen" />
             <Kalenderblatt datum="2026-10-13" zustand="abgemeldet" />
+            <Kalenderblatt datum="2026-10-17" zustand="spiel" />
             <Kalenderblatt datum="2026-09-30" />
             <BlattLozenge zustand="noch-nicht" iconBefore={TriangleAlert}>Noch kein Training</BlattLozenge>
           </div>

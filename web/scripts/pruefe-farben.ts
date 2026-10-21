@@ -276,6 +276,8 @@ pruefe("Die Zeichen im Mini-Monat heben sich von seiner Fläche ab (WCAG 1.4.11)
   const knopf = elev(1);
   const zeichen: [string, string][] = [
     ["Training", PRIMARY],
+    // Ein Spiel (#448): Quadrat in der Schrift der Lozenge «Spiel».
+    ["Spiel", LOZENGE.discovery.schrift],
     ["Noch kein Training", SECTION.warning.icon],
     ["Ausgefallen", SECTION.danger.icon],
   ];

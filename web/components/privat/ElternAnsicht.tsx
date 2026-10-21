@@ -191,6 +191,7 @@ function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }
           <KaderLozenges namen={t.kader} className="mt-1" />
         </div>
         <Switch
+          ton="erfolg"
           checked={!t.ausgefallen && !ab}
           neutral={t.ausgefallen}
           disabled={t.ausgefallen || t.begonnen || pending}
