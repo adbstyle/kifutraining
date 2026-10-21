@@ -26,8 +26,8 @@ export function TerminKnoepfe({ t }: { t: TerminZeile }) {
           Ausfallen lassen
         </Button>
       )}
-      <Button aria-haspopup="dialog" onClick={() => a.bearbeiten(t)}>
-        Ändern
+      <Button variant={t.spiel ? "outlined" : "filled"} aria-haspopup="dialog" onClick={() => a.bearbeiten(t)}>
+        {t.spiel ? "Spiel ändern" : "Ändern"}
       </Button>
       <OverflowMenu label={`Weitere Aktionen zum Termin ${datumKurz(t.datum)}`} items={terminMenue(t, a)} />
     </div>

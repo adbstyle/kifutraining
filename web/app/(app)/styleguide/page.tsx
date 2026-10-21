@@ -9,6 +9,10 @@ import {
   Lozenge,
   HerkunftLozenge,
   SichtbarkeitLozenge,
+  SpielLozenge,
+  RichtwertLozenge,
+  TreffpunktListe,
+  richtwertSchrift,
   Card,
   ExerciseCard,
   FormAbschnitt,
@@ -1883,6 +1887,8 @@ export default async function Styleguide() {
             begonnen); <code>neutral</code> grau ohne Zeichen, wenn es nichts zu
             wählen gibt (er fällt aus) - und für die Aus-Lage eines Schalters,
             dessen Aus kein Fehlen bedeutet (die Selbstabholung eines Teams).
+            <code>ton=&quot;erfolg&quot;</code> legt die An-Lage ins Grün der Success-Lozenge, gespiegelt zur roten
+            Aus-Lage: für «angemeldet» und «da», weil ein angemeldetes Kind bei Spielen grün erscheint (Epic #448).
             Darunter liegt ein echtes{" "}
             <code>&lt;input type=&quot;checkbox&quot; role=&quot;switch&quot;&gt;</code>.
           </p>
@@ -2358,7 +2364,9 @@ export default async function Styleguide() {
             <code>danger</code> stehen im Kit bereit. Herkunft und Sichtbarkeit
             stehen fertig als <code>HerkunftLozenge</code> und{" "}
             <code>SichtbarkeitLozenge</code>; der Entwurf trägt den Stift, damit
-            er sich vom Manual-Bestand nicht nur im Wort unterscheidet.
+            er sich vom Manual-Bestand nicht nur im Wort unterscheidet. Ein Spiel
+            trägt überall, wo Termine erscheinen, die <code>SpielLozenge</code>{" "}
+            (<code>discovery</code>, Epic #448) — in der Tönung seines Kalenderblatts.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Über einem Bild</strong> (<code>aufBild</code>, etwa die
@@ -2385,7 +2393,41 @@ export default async function Styleguide() {
             </Lozenge>
             <Lozenge>Kinderfussball</Lozenge>
             <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
+            <SpielLozenge />
           </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>Richtwert</strong> (<code>RichtwertLozenge</code>, <code>richtwertSchrift</code>, Epic #448): wie die
+            Spielerzahl eines Spiels zu Mindest- und Höchstzahl steht. Unter der Mindestzahl im Fehlerton, genau die
+            Mindestzahl (knapp) und über der Höchstzahl in der Warnung, dazwischen im Erfolg (PO 2026-10-21). Bewertet
+            wird nur gegen festgelegte Grenzen; ohne Richtwert bleibt die Zahl neutral. Die Lozenge sagt die Stufe in
+            Worten, die Farbe trägt sie nie allein.
+          </p>
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <span className={richtwertSchrift(7, 9, 12)}>7</span>
+            <RichtwertLozenge zahl={7} min={9} max={12} />
+            <span className={richtwertSchrift(9, 9, 12)}>9</span>
+            <RichtwertLozenge zahl={9} min={9} max={12} />
+            <span className={richtwertSchrift(11, 9, 12)}>11</span>
+            <RichtwertLozenge zahl={11} min={9} max={12} />
+            <span className={richtwertSchrift(14, 9, 12)}>14</span>
+            <RichtwertLozenge zahl={14} min={9} max={12} />
+          </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>Treffpunkte</strong> (<code>TreffpunktListe</code>, #465): die Treffpunkte eines Spiels in drei
+            Spalten - Anreiseart, Zeit, Ort -, frühester zuerst. Das Datum steht nur bei einem Treffpunkt, der nicht am
+            Spieltag liegt; vor Ort nennt den aktuellen Ort des Spiels. Kein eigener Baustein für die Liste der
+            Eigenschaften, weil die Zeilen an Zeit und Ort ausgerichtet sein müssen.
+          </p>
+          <TreffpunktListe
+            className="type-body-medium mb-6 max-w-md text-on-surface"
+            spieltag="2026-10-31"
+            spielOrt="Sportanlage Bodenweid, Bern"
+            treffpunkte={[
+              { anreise: "car", zeitpunkt: "2026-10-30T18:00", ort: "Clubhaus, Vorplatz" },
+              { anreise: "oev", zeitpunkt: "2026-10-31T08:20", ort: "Bahnhof Bern, Treffpunkt" },
+              { anreise: "vor_ort", zeitpunkt: "2026-10-31T09:15", ort: null },
+            ]}
+          />
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Kader</strong> (<code>KaderLozenge</code>, Epic #447): ein
             Teil des Teams, den die Trainer:innen selbst benennen - in der
@@ -3594,7 +3636,8 @@ export default async function Styleguide() {
             Training in der Warnfarbe - je eine schwache Fläche (12 %) mit der Tageszahl in der Farbe selbst -,
             ausgefallen grau mit durchgestrichener Zahl, vergangen ohne Training ohne Fläche. Hinter dem
             privaten Link einer Spieler:in sagt es «abgemeldet» im Rot der Danger-Lozenge, wie der Schalter
-            daneben in seiner Aus-Lage (Epic #433). Die Farbe trägt
+            daneben in seiner Aus-Lage (Epic #433). Ein Spiel trägt die Tönung seiner Lozenge «Spiel»
+            (discovery, Epic #448), damit es sich schon am Blatt vom Training abhebt. Die Farbe trägt
             den Zustand nie allein, die Zeile daneben sagt ihn in Worten. Heute hebt das Blatt nicht hervor;
             dafür steht der nächste Termin zuoberst. Wo kein Blatt steht (der nächste Termin), sagt eine
             Lozenge in derselben Tönung den Zustand: <code>BlattLozenge</code> - Form der Lozenge, Farbe des Blatts.
@@ -3604,6 +3647,7 @@ export default async function Styleguide() {
             <Kalenderblatt datum="2026-10-08" zustand="training" />
             <Kalenderblatt datum="2026-10-11" zustand="ausgefallen" />
             <Kalenderblatt datum="2026-10-13" zustand="abgemeldet" />
+            <Kalenderblatt datum="2026-10-17" zustand="spiel" />
             <Kalenderblatt datum="2026-09-30" />
             <BlattLozenge zustand="noch-nicht" iconBefore={TriangleAlert}>Noch kein Training</BlattLozenge>
           </div>

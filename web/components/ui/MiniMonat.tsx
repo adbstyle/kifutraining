@@ -18,10 +18,11 @@ const WOCHENTAGE = [
 ] as const;
 
 /** Was ein Termin im Monat ist (#404 AK 5). */
-export type MarkenZustand = "training" | "noch-nicht" | "ohne" | "ausgefallen";
+export type MarkenZustand = "training" | "spiel" | "noch-nicht" | "ohne" | "ausgefallen";
 
 export const MARKEN_TEXT: Record<MarkenZustand, string> = {
   training: "Training",
+  spiel: "Spiel",
   "noch-nicht": "Noch kein Training",
   ohne: "Vergangen ohne Training",
   ausgefallen: "Ausgefallen",
@@ -48,9 +49,13 @@ const mitZeichen = (m: Marke): m is ZeichenMarke => m.zustand !== "ohne";
  *  der Warnfarbe (noch kein Training), Kreuz in Rot (ausgefallen; das Rot der
  *  Warnzeichen wie das Gelb, PO 2026-10-07). Training und «noch kein Training» unterscheidet nur noch
  *  die Farbe — bewusst, damit das Gelb auffällt (PO 2026-10-07, hebt #404
- *  AK 8 für diese beiden auf); vorgelesen wird jeder Zustand beim Namen. */
+ *  AK 8 für diese beiden auf); vorgelesen wird jeder Zustand beim Namen.
+ *  Ein Spiel (Epic #448) ist ein Quadrat in der Schrift der Lozenge «Spiel»
+ *  — eine andere Form, damit es sich nicht an der Farbe allein vom Training
+ *  abhebt. */
 function MarkenZeichen({ zustand }: { zustand: ZeichenZustand }) {
   if (zustand === "training") return <span aria-hidden className="block size-2 rounded-full bg-primary" />;
+  if (zustand === "spiel") return <span aria-hidden className="block size-2 bg-on-lozenge-discovery" />;
   if (zustand === "noch-nicht") return <span aria-hidden className="block size-2 rounded-full bg-icon-warning" />;
   return <X aria-hidden size={10} strokeWidth={3} className="text-icon-danger" />;
 }

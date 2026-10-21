@@ -4,7 +4,7 @@ import { EHEMALIGER_KADER, KaderLozenges } from "./KaderLozenge";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { CalendarOff, LandPlot, MapPin, Shirt, UserCheck, Users } from "lucide-react";
-import { Card, Disclosure, Kalenderblatt, Lozenge } from "@/components/ui";
+import { Card, Disclosure, Kalenderblatt, Lozenge, SpielLozenge, richtwertSchrift } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen } from "./TerminBereich";
 import { TerminHandgriffe, TrainingHinzufuegen } from "./TerminHandgriffe";
@@ -212,7 +212,7 @@ function TerminReihe({
     [zeit, ort, zahlLang].filter(Boolean).join(" · "),
     kaderText && `Kader: ${kaderText}`,
     zustand === "ausgefallen" ? ["Ausgefallen", t.ausfallGrund].filter(Boolean).join(": ") : null,
-    t.training?.name,
+    t.spiel ? `Spiel: ${t.spiel.bezeichnung}` : t.training?.name,
     v.text && `Verantwortlich: ${v.text}`,
   ].filter(Boolean).join("\n");
   return (
@@ -229,7 +229,7 @@ function TerminReihe({
     >
       {/* Die Zeile öffnet den Termin daneben (#435); ändern lässt er sich dort. */}
       <Link href={terminHref(t.teamId, meine, t.id)} scroll={false} title={ganz} className="focus-ring absolute inset-0 group-first/zeile:rounded-t-flaeche group-last/zeile:rounded-b-flaeche">
-        <span className="sr-only">Termin öffnen: {zeit}</span>
+        <span className="sr-only">{t.spiel ? `Spiel öffnen: ${t.spiel.bezeichnung}, ${zeit}` : `Termin öffnen: ${zeit}`}</span>
       </Link>
       <div aria-hidden={!ersterDesTages || undefined} className="pointer-events-none relative">
         <Kalenderblatt as={ersterDesTages ? "h5" : "div"} datum={t.datum} zustand={zustand} className={cn(vergangen && "opacity-60")} />
@@ -247,7 +247,16 @@ function TerminReihe({
           {zahlKurz && (
             <span className="inline-flex shrink-0 items-center gap-1 type-body-small text-on-surface-mittel">
               <Shirt size={14} className="shrink-0" />
-              {zahlKurz}
+              {/* Ein Spiel färbt die Zahl nach seinem Richtwert (#463 AK 7). */}
+              <span
+                className={
+                  t.spiel && zahl.quelle === "liste"
+                    ? richtwertSchrift(zahl.anwesend ?? zahl.angemeldet, t.spiel.richtwertMin, t.spiel.richtwertMax)
+                    : undefined
+                }
+              >
+                {zahlKurz}
+              </span>
             </span>
           )}
           {/* #453 AK 5: Für wen er gilt; ohne Kader steht nichts — er gilt für alle. */}
@@ -268,6 +277,12 @@ function TerminReihe({
                   {t.ausfallGrund}
                 </span>
               )}
+              {t.spiel && (
+                <span className="gedaempft flex min-w-0 items-center gap-2">
+                  <SpielLozenge />
+                  <span className="truncate type-body-small text-on-surface-mittel line-through">{t.spiel.bezeichnung}</span>
+                </span>
+              )}
               {/* Ein Training ruht am ausgefallenen Termin (PO 2026-10-06). */}
               {t.training && (
                 <Link
@@ -279,6 +294,12 @@ function TerminReihe({
                   {t.training.name}
                 </Link>
               )}
+            </span>
+          ) : zustand === "spiel" ? (
+            // Ein Spiel steht mit seiner Bezeichnung, wo bei einem Training dessen Name steht (#459 AK 8).
+            <span className="gedaempft flex min-w-0 max-w-full items-center gap-2">
+              <SpielLozenge />
+              <span className="truncate type-title-small text-on-surface">{t.spiel!.bezeichnung}</span>
             </span>
           ) : zustand === "training" ? (
             <Link

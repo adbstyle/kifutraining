@@ -17,16 +17,26 @@ import { cn } from "@/lib/cn";
    Kalenderblatts mit Kreuz (PO 2026-10-16). `neutral`: grau und ohne Zeichen
    — für einen Termin, an dem es nichts zu wählen gibt (ausgefallen), und für
    die Aus-Lage eines Schalters, dessen Aus kein Fehlen bedeutet (die
-   Selbstabholung, #438). */
+   Selbstabholung, #438).
+
+   `ton="erfolg"`: die An-Lage im Grün der Success-Lozenge statt in Primary —
+   gespiegelt zur roten Aus-Lage (dunkle Bahn, heller Knopf). Für
+   «angemeldet» und «da»: Bei Spielen ist angemeldet grün (Plakette,
+   Status-Chip), darum auch der Schalter der Trainings (PO 2026-10-21,
+   Epic #448). */
 export function Switch({
   className,
   disabled,
   neutral = false,
+  ton = "primary",
   ...rest
 }: Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "role"> & {
   /** Ohne Bedeutung von an/aus: grau, ohne Zeichen. */
   neutral?: boolean;
+  /** Farbe der An-Lage: Primary oder das Grün der Success-Lozenge. */
+  ton?: "primary" | "erfolg";
 }) {
+  const erfolg = ton === "erfolg";
   return (
     <span className={cn("relative inline-flex h-8 w-[52px] shrink-0 items-center", disabled && "opacity-40", className)}>
       <input
@@ -37,7 +47,10 @@ export function Switch({
           "peer focus-ring absolute inset-0 m-0 h-full w-full cursor-pointer appearance-none rounded-full border-2 transition-colors disabled:cursor-not-allowed",
           neutral
             ? "border-kante bg-transparent"
-            : "border-on-lozenge-danger bg-lozenge-danger checked:border-primary checked:bg-primary",
+            : cn(
+                "border-on-lozenge-danger bg-lozenge-danger",
+                erfolg ? "checked:border-on-lozenge-success checked:bg-lozenge-success" : "checked:border-primary checked:bg-primary",
+              ),
         )}
         {...rest}
       />
@@ -47,10 +60,18 @@ export function Switch({
         <>
           <span
             aria-hidden
-            className="pointer-events-none absolute left-1 flex h-6 w-6 items-center justify-center rounded-full bg-on-lozenge-danger text-lozenge-danger transition-[left] peer-checked:left-6 peer-checked:bg-on-primary peer-checked:text-primary"
+            className={cn(
+              "pointer-events-none absolute left-1 flex h-6 w-6 items-center justify-center rounded-full bg-on-lozenge-danger transition-[left] peer-checked:left-6",
+              erfolg ? "peer-checked:bg-on-lozenge-success" : "peer-checked:bg-on-primary",
+            )}
           />
           <X aria-hidden size={16} strokeWidth={3} className="pointer-events-none absolute left-2 text-lozenge-danger peer-checked:hidden" />
-          <Check aria-hidden size={16} strokeWidth={3} className="pointer-events-none absolute left-7 hidden text-primary peer-checked:block" />
+          <Check
+            aria-hidden
+            size={16}
+            strokeWidth={3}
+            className={cn("pointer-events-none absolute left-7 hidden peer-checked:block", erfolg ? "text-lozenge-success" : "text-primary")}
+          />
         </>
       )}
     </span>

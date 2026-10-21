@@ -137,6 +137,13 @@ export function SichtbarkeitLozenge({ oeffentlich }: { oeffentlich: boolean }) {
   );
 }
 
+/* Ein Spiel (Epic #448) — überall, wo Termine erscheinen, als Spiel von einem
+   Training unterscheidbar (#459 AK 7). `discovery`: etwas Zusätzliches neben
+   den Trainings, in derselben Tönung wie sein Kalenderblatt. */
+export function SpielLozenge() {
+  return <Lozenge appearance="discovery">Spiel</Lozenge>;
+}
+
 /* ── Alterskategorie (G bis A) ────────────────────────────────
    Je Stufe ein fest lernbarer Atlassian-Akzent — wie Jira Kategorien ohne
    Wertung färbt. Der Buchstabe unterscheidet mit (a11y: nie nur über Farbe),

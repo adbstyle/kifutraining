@@ -73,6 +73,7 @@ import {
   spielerlisteAbrufen,
   terminAbmeldungSetzen,
   terminAnwesenheitSetzen,
+  terminAufgebotSetzen,
   terminSpielerAbrufen,
 } from "@/lib/mcp/werkzeuge/spieler";
 import {
@@ -147,6 +148,7 @@ export const WERKZEUGE = [
   spielerEntfernen,
   terminSpielerAbrufen,
   terminAbmeldungSetzen,
+  terminAufgebotSetzen,
   terminAnwesenheitSetzen,
   spielerLinkAbrufen,
   spielerLinkErneuern,

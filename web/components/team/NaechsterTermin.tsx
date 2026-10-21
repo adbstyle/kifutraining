@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { CalendarOff, CalendarPlus, PlayCircle, TriangleAlert, Users } from "lucide-react";
-import { BlattLozenge, Button, ButtonLink, Lozenge, MARKEN_TEXT, OverflowMenu } from "@/components/ui";
+import { BlattLozenge, Button, ButtonLink, Lozenge, MARKEN_TEXT, OverflowMenu, SpielLozenge } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage } from "@/lib/serie";
@@ -73,7 +73,12 @@ export function NaechsterTermin({
         <div className="min-w-0">
           {/* Ohne Training steht der Tag in der Warnfarbe — wie die Tageszahl
               seines Kalenderblatts (PO 2026-10-07). */}
-          <h4 className={cn("type-title-small", !t.ausgefallen && !t.training ? "text-icon-warning" : "text-primary")}>
+          <h4
+            className={cn(
+              "type-title-small",
+              t.spiel ? "text-on-lozenge-discovery" : !t.ausgefallen && !t.training ? "text-icon-warning" : "text-primary",
+            )}
+          >
             {/* Der Tag öffnet den Termin daneben (#435). */}
             <Link href={terminHref(t.teamId, meine, t.id)} scroll={false} className="focus-ring rounded-klein hover:underline">
               <span className="sr-only">Nächster Termin: </span>
@@ -105,6 +110,12 @@ export function NaechsterTermin({
                 {t.ausfallGrund}
               </p>
             )}
+            {t.spiel && (
+              <p className="mt-1 flex items-center gap-2 type-body-medium text-on-surface-mittel">
+                <SpielLozenge />
+                {t.spiel.bezeichnung}
+              </p>
+            )}
             {/* Ein Training ruht am ausgefallenen Termin (PO 2026-10-06). */}
             {t.training && (
               <Link href={`/training/${t.training.id}`} className="focus-ring mt-1 inline-block rounded-klein type-body-medium text-on-surface-mittel hover:underline">
@@ -113,6 +124,12 @@ export function NaechsterTermin({
               </Link>
             )}
           </>
+        ) : t.spiel ? (
+          // Ein Spiel kann der nächste Termin sein (#459 AK 22).
+          <div className="flex flex-col items-start gap-1">
+            <SpielLozenge />
+            <p className="type-title-large text-on-surface">{t.spiel.bezeichnung}</p>
+          </div>
         ) : t.training ? (
           <Link href={`/training/${t.training.id}`} className="focus-ring rounded-klein type-title-large text-on-surface hover:underline">
             {t.training.name}
@@ -124,7 +141,9 @@ export function NaechsterTermin({
 
       {!t.ausgefallen && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {t.training ? (
+          {t.spiel ? (
+            <ButtonLink variant="outlined" href={terminHref(t.teamId, meine, t.id)} scroll={false}>Spiel öffnen</ButtonLink>
+          ) : t.training ? (
             <>
               <ButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`}>
                 <PlayCircle size={18} aria-hidden />

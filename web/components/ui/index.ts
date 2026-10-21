@@ -1,6 +1,6 @@
 export { Button, ButtonLink, buttonClasses } from "./Button";
 export { ButtonGroup } from "./ButtonGroup";
-export { Lozenge, HerkunftLozenge, SichtbarkeitLozenge, KategorieLozenge, Badge } from "./Lozenge";
+export { Lozenge, HerkunftLozenge, SichtbarkeitLozenge, KategorieLozenge, Badge, SpielLozenge } from "./Lozenge";
 export {
   FilterChip,
   ChoiceChip,
@@ -80,6 +80,9 @@ export type { ZeichenPunktTon } from "./ZeichenPunkt";
 export { HinzufuegenFeld } from "./HinzufuegenFeld";
 export type { IconButtonProps, IconButtonLinkProps } from "./IconButton";
 export { Tooltip } from "./Tooltip";
+export { InfoKnopf } from "./InfoKnopf";
+export { RichtwertLozenge, richtwertSchrift } from "./Richtwert";
+export { TreffpunktListe } from "./TreffpunktListe";
 export { TabNav } from "./TabNav";
 export type { TabNavItem } from "./TabNav";
 export { Breadcrumbs } from "./Breadcrumbs";

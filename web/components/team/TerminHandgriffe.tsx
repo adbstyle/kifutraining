@@ -40,10 +40,10 @@ export function terminMenue(t: TerminZeile, a: TerminAktionen): MenuItemDef[] {
           { label: "Ausfall zurücknehmen", icon: Undo2, onSelect: () => a.ausfallZuruecknehmen(t) },
         ]
       : []),
-    { label: "Termin ändern", icon: Pencil, onSelect: () => a.bearbeiten(t) },
+    { label: t.art === "spiel" ? "Spiel ändern" : "Termin ändern", icon: Pencil, onSelect: () => a.bearbeiten(t) },
     ...(t.training ? [{ label: "Training lösen", icon: Unlink, onSelect: () => a.loesen(t) }] : []),
     ...(!t.ausgefallen ? [{ label: "Ausfallen lassen", icon: CalendarOff, onSelect: () => a.ausfallen(t) }] : []),
-    { label: "Termin entfernen", icon: Trash2, danger: true, onSelect: () => a.entfernen(t) },
+    { label: t.art === "spiel" ? "Spiel entfernen" : "Termin entfernen", icon: Trash2, danger: true, onSelect: () => a.entfernen(t) },
   ];
 }
 
@@ -60,7 +60,8 @@ export function TerminHandgriffe({ t, zuordnen = true }: { t: TerminZeile; zuord
           <IconButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`} icon={PlayCircle} label={`${t.training.name} durchführen`} />
         </Tooltip>
       )}
-      {!t.ausgefallen && zuordnen && (
+      {/* Ein Spiel trägt nie ein Training (#459 AK 14). */}
+      {!t.ausgefallen && zuordnen && t.art === "training" && (
         <Tooltip label={t.training ? "Training ersetzen" : "Training zuordnen"}>
           <IconButton icon={CalendarPlus} label={`Training für ${datumKurz(t.datum)} ${t.training ? "ersetzen" : "zuordnen"}`} onClick={() => a.zuordnen(t)} />
         </Tooltip>

@@ -667,9 +667,18 @@ pruefe("fehlerErgebnis: jedes gesetzte Feld eines Kern-Fehlers kommt an", () => 
     hinweis: "Es ist keine Kopie entstanden.",
     verfallend: 2,
     nachtraege: 1,
+    fristAbgelaufen: true,
+    verschwindend: 3,
+    verfallendSpiele: 1,
+    kennzeichnungen: 1,
   };
-  const aussen = (k: string) =>
-    k === "retryAfter" ? "retry_after" : k === "varianteId" ? "variante_id" : k;
+  const SNAKE: Record<string, string> = {
+    retryAfter: "retry_after",
+    varianteId: "variante_id",
+    fristAbgelaufen: "frist_abgelaufen",
+    verfallendSpiele: "verfallend_spiele",
+  };
+  const aussen = (k: string) => SNAKE[k] ?? k;
   const f = fehlerVon(fehlerErgebnis(voll));
   assert.deepEqual(
     Object.keys(f).sort(),

@@ -30,6 +30,7 @@ import {
   TrainingId,
 } from "@/lib/mcp/werkzeuge/trainings";
 import { werkzeug, type Zugang } from "@/lib/mcp/werkzeug";
+import { BEZEICHNUNG_MAX, RICHTWERT_MAX, RICHTWERT_MIN, TERMIN_ARTEN, TREFFPUNKTE_MAX, TREFFPUNKT_ORT_MAX } from "@/lib/spiel";
 import { KaderId, KADER_KENNUNG_FEHLER } from "@/lib/mcp/werkzeuge/kader";
 
 /**
@@ -63,7 +64,49 @@ const TERMIN_MODELL =
   "(mit freiwilligem Grund); sein Training ruht dann am Termin. Ein ausgefallener nimmt kein neues " +
   "Training an und findet wieder statt, wenn er einzeln auf heute oder später verlegt wird; " +
   "«hat stattgefunden» kennt KiFu nicht. Felder und Spielerzahl " +
-  "sind Angaben für deine Planung; KiFu prüft nicht, ob ein Training auf sie passt - das beurteilst du.";
+  "sind Angaben für deine Planung; KiFu prüft nicht, ob ein Training auf sie passt - das beurteilst du. " +
+  "Jeder Termin ist ein Training oder ein Spiel («art»), festgelegt beim Erfassen und danach nicht mehr änderbar; Serien sind " +
+  "immer Trainings. Ein Spiel (Meisterschafts-, Cup-, Freundschaftsspiel oder Turnier) trägt eine Bezeichnung, auf Wunsch " +
+  "Mindest- und Höchstzahl an Spieler:innen als Richtwert (begrenzen keine Anmeldungen), nie ein Training, keine Felder und keine " +
+  "erwartete Spielerzahl. Beginn heisst bei einem Spiel Anpfiff; ein Spiel lässt sich nur mit einem noch bevorstehenden Anpfiff " +
+  "festlegen und nur auf einen solchen verlegen, und eine Verlegung beendet seinen Ausfall. Treten Mannschaften eines Turniers zu " +
+  "verschiedenen Zeiten an, ist es je Mannschaft ein Spiel.";
+
+const ART = z.enum(TERMIN_ARTEN as ["training", "spiel"]).describe("«training» oder «spiel»; bleibt nach dem Festlegen.");
+const BEZEICHNUNG = z
+  .string()
+  .describe(`Bezeichnung eines Spiels, 1 bis ${BEZEICHNUNG_MAX} Zeichen, etwa «Meisterschaft gegen FC Bümpliz».`);
+const MELDEFRIST = z
+  .string()
+  .describe(
+    "Meldefrist eines Spiels für die Eltern als JJJJ-MM-TTTHH:MM (Uhr am Trainingsort), vor dem Anpfiff, höchstens ein Jahr " +
+      "davor. Ohne Frist melden Eltern bis zum Anpfiff. Eine Verlegung nimmt sie im selben Abstand mit.",
+  );
+const TREFFPUNKTE = z
+  .array(
+    z.object({
+      anreise: z
+        .string()
+        .describe("«vor_ort» (am Spielort), «oev», «auto», «velo» oder «car» (Car oder Vereinsbus); je Anreiseart ein Treffpunkt."),
+      zeitpunkt: z
+        .string()
+        .describe("Wann sich das Team trifft, als JJJJ-MM-TTTHH:MM (Uhr am Trainingsort); auch nach dem Anpfiff oder an einem anderen Tag."),
+      ort: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(`Wo, höchstens ${TREFFPUNKT_ORT_MAX} Zeichen; Pflicht ausser bei «vor_ort», dort weglassen (es gilt der Ort des Spiels).`),
+    }),
+  )
+  .describe(
+    `Treffpunkte eines Spiels als GANZE Liste, höchstens ${TREFFPUNKTE_MAX}, je Anreiseart einer. Die Eltern sehen sie über ihren ` +
+      "Link (nicht an einem ausgefallenen Spiel). Eine Verlegung nimmt sie im selben Abstand zum Anpfiff mit. Eine Rückkehr gehört " +
+      "in die Bemerkung.",
+  );
+const RICHTWERT_ZAHL = z
+  .number()
+  .int()
+  .describe(`Ganze Zahl von ${RICHTWERT_MIN} bis ${RICHTWERT_MAX}; nur bei Spielen.`);
 
 const DATUM = z.string().describe("Datum als JJJJ-MM-TT, etwa 2026-10-07.");
 const UHRZEIT = z.string().describe("Uhrzeit als HH:MM (24 Stunden), etwa 18:30.");
@@ -87,10 +130,15 @@ const Bestaetigt = z
 
 /** Beim Verlegen: Abmeldungen verfallen erst nach Bestätigung (#437 AK 1, 6). */
 const VERFALL_MODELL =
-  "Ändern sich Datum oder Beginn eines Termins und hat er danach noch nicht begonnen, verfallen seine Abmeldungen: " +
+  "Ändern sich Datum oder Beginn eines Trainings und hat es danach noch nicht begonnen, verfallen seine Abmeldungen: " +
   "Alle Spieler:innen gelten wieder als angemeldet (auch über die Serie, auch an einem ausgefallenen Termin). " +
   "Verfallen dadurch Abmeldungen, kommt zuerst ein Fehler mit «verfallend» (Anzahl); frag nach und wiederhole den " +
-  "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Felder, Verantwortliche und Training lassen sie stehen.";
+  "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Felder, Verantwortliche und Training lassen sie stehen. " +
+  "An einem Spiel verfallen die Meldungen nur mit einem anderen Datum (alle sind dann wieder ohne Meldung), samt den " +
+  "Kennzeichnungen als nicht aufgeboten - auch wenn nur solche verfallen, kommt zuerst der Fehler mit «verfallend» " +
+  "(davon «kennzeichnungen»); rückt die " +
+  "Verlegung die Meldefrist ins Abgelaufene, kommt ebenfalls zuerst ein Fehler («frist_abgelaufen») - frag nach und " +
+  "wiederhole mit «bestaetigt: true».";
 
 const BestaetigtVerlegen = z
   .boolean()
@@ -163,6 +211,19 @@ const Verantwortlich = z.object({
 const PlanEintrag = z.object({
   /** Kennung des Termins — für «termin_aendern», «termin_entfernen», «training_zuordnen» und «training_loesen». */
   id: z.string(),
+  /** Training oder Spiel (#459). */
+  art: z.enum(TERMIN_ARTEN as ["training", "spiel"]),
+  /** Nur bei Spielen, sonst null: Bezeichnung, Mindest- und Höchstzahl (null = nicht festgelegt). */
+  bezeichnung: z.string().nullable(),
+  mindestzahl: z.number().int().nullable(),
+  hoechstzahl: z.number().int().nullable(),
+  /** Nur bei Spielen: die Meldefrist der Eltern, «vorher» bei einem verlegten. */
+  meldefrist: z.string().nullable(),
+  treffpunkte: z
+    .array(z.object({ anreise: z.string(), zeitpunkt: z.string(), ort: z.string().nullable() }))
+    .nullable()
+    .describe("Nur bei Spielen, frühester zuerst; «vor_ort» ohne eigenen Ort (es gilt der Ort des Spiels). Bei Trainings null."),
+  vorher: z.object({ datum: z.string(), beginn: z.string() }).nullable().describe("Ein verlegtes Spiel: der zuletzt gültige Zeitpunkt."),
   datum: z.string(),
   beginn: z.string(),
   ende: z.string(),
@@ -193,6 +254,13 @@ const PlanEintrag = z.object({
 function planEintrag(t: TerminZeile, zugang: Zugang) {
   return {
     id: t.id,
+    art: t.art,
+    bezeichnung: t.spiel?.bezeichnung ?? null,
+    mindestzahl: t.spiel?.richtwertMin ?? null,
+    hoechstzahl: t.spiel?.richtwertMax ?? null,
+    meldefrist: t.spiel?.meldefrist ?? null,
+    treffpunkte: t.spiel?.treffpunkte ?? null,
+    vorher: t.spiel?.vorher ?? null,
     datum: t.datum,
     beginn: t.beginn,
     ende: t.ende,
@@ -262,13 +330,13 @@ export const teamPlanAbrufen = werkzeug({
   name: "team_plan_abrufen",
   titel: "Kalender eines Teams",
   beschreibung:
-    "Liefert den Kalender eines deiner Teams, bereits geteilt wie im Team-Bereich: «kommend» (ab " +
+    "Liefert den Kalender eines deiner Teams (Trainings und Spiele, je mit «art»), bereits geteilt wie im Team-Bereich: «kommend» (ab " +
     "heute, aufsteigend; der heutige Tag zählt ganz dazu) und «vergangen» (der jüngste zuerst). " +
     "«heute» ist der Tag, an dem geteilt wurde - gemessen am Trainingsort (Schweiz), nicht in deiner " +
     "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung, die Felder " +
     "des Platzes, die erwartete Spielerzahl, «spielerzahl» (die Zahl, mit der geplant wird, samt Quelle - aus der Spielerliste, " +
     "sobald das Team eine führt) und das zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
-    "Termin ohne Training, der nicht ausgefallen ist, ist noch nicht vorbereitet. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
+    "Training ohne Training-Inhalt, das nicht ausgefallen ist, ist noch nicht vorbereitet; ein Spiel nie. Spiele nennen Bezeichnung, Mindest- und Höchstzahl. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
     "Ort, Bemerkung, Verantwortliche, Felder, erwartete Spielerzahl und Kader jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
     "von ihr abweicht. Jeder Eintrag nennt seine Verantwortlichen und seine Kader («kader» leer: für alle); «nur_meine» grenzt auf deine ein. " +
     "Ausgefallene Termine stehen mit «ausgefallen: true» und Grund im Plan. " +
@@ -306,15 +374,24 @@ export const terminFestlegen = werkzeug({
   name: "termin_festlegen",
   titel: "Termin festlegen",
   beschreibung:
-    "Legt im Kalender eines deiner Teams einen einzelnen Termin ohne Training fest - auch in der " +
-    "Vergangenheit. Datum, Beginn und Ende sind Pflicht, das Ende liegt am selben Tag nach dem " +
-    "Beginn; Ort, Bemerkung, Felder, erwartete Spielerzahl und Kader sind frei. Ein Training ordnest du danach mit «training_zuordnen» zu. " +
+    "Legt im Kalender eines deiner Teams einen einzelnen Termin fest: ein Training (ohne Training-Inhalt, auch in der " +
+    "Vergangenheit) oder ein Spiel - «art» ist Pflicht. Datum, Beginn und Ende sind Pflicht, das Ende liegt am selben Tag nach dem " +
+    "Beginn; Ort, Bemerkung und Kader sind frei. Ein Training trägt auf Wunsch Felder und erwartete Spielerzahl; einen Inhalt ordnest du " +
+    "danach mit «training_zuordnen» zu. Ein Spiel braucht eine Bezeichnung und trägt auf Wunsch Mindest- und Höchstzahl. " +
     `${TERMIN_MODELL} ${KADER_TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     team_id: TeamId,
+    art: ART,
+    bezeichnung: BEZEICHNUNG.optional().describe(`Pflicht bei einem Spiel, 1 bis ${BEZEICHNUNG_MAX} Zeichen; bei einem Training weglassen.`),
+    mindestzahl: RICHTWERT_ZAHL.optional().describe("Mindestzahl an Spieler:innen eines Spiels; ohne Angabe nicht festgelegt."),
+    hoechstzahl: RICHTWERT_ZAHL.optional().describe(
+      "Höchstzahl an Spieler:innen eines Spiels; ohne Angabe nicht festgelegt. Nicht kleiner als die Mindestzahl.",
+    ),
+    meldefrist: MELDEFRIST.optional(),
+    treffpunkte: TREFFPUNKTE.optional(),
     datum: DATUM,
-    beginn: UHRZEIT.describe("Beginn als HH:MM, etwa 18:30."),
+    beginn: UHRZEIT.describe("Beginn als HH:MM, etwa 18:30; bei einem Spiel der Anpfiff."),
     ende: UHRZEIT.describe("Ende als HH:MM am selben Tag, etwa 20:00."),
     ort: ORT.optional(),
     bemerkung: BEMERKUNG.optional(),
@@ -329,6 +406,12 @@ export const terminFestlegen = werkzeug({
     abgebildet(
       await legeTerminFest(zugang.supabase, zugang.userId, {
         teamId: e.team_id,
+        art: e.art,
+        bezeichnung: e.bezeichnung,
+        richtwertMin: e.mindestzahl,
+        richtwertMax: e.hoechstzahl,
+        meldefrist: e.meldefrist,
+        treffpunkte: e.treffpunkte,
         datum: e.datum,
         beginn: e.beginn,
         ende: e.ende,
@@ -360,6 +443,16 @@ export const AendernEingabe = z.object({
   ),
   ort: ORT.nullable().optional().describe("Neuer Ort; null leert ihn, ohne Angabe unverändert."),
   bemerkung: BEMERKUNG.nullable().optional().describe("Neue Bemerkung; null leert sie, ohne Angabe unverändert."),
+  bezeichnung: BEZEICHNUNG.optional().describe("Nur bei einem Spiel: neue Bezeichnung; ohne Angabe unverändert."),
+  mindestzahl: RICHTWERT_ZAHL.nullable().optional().describe("Nur bei einem Spiel: neue Mindestzahl; null entfernt sie, ohne Angabe unverändert."),
+  hoechstzahl: RICHTWERT_ZAHL.nullable().optional().describe("Nur bei einem Spiel: neue Höchstzahl; null entfernt sie, ohne Angabe unverändert."),
+  meldefrist: MELDEFRIST.nullable().optional().describe("Nur bei einem Spiel: neue Meldefrist als JJJJ-MM-TTTHH:MM; null entfernt sie, ohne Angabe unverändert."),
+  treffpunkte: TREFFPUNKTE.nullable()
+    .optional()
+    .describe(
+      "Nur bei einem Spiel: die Treffpunkte als GANZE neue Liste - sie ersetzt die bisherige, die Zeitpunkte gelten zum neuen " +
+        "Anpfiff; null (oder []) entfernt alle, ohne Angabe unverändert (eine Verlegung nimmt sie dann im selben Abstand mit).",
+    ),
   felder: FelderEingabe.nullable()
     .optional()
     .describe(
@@ -420,7 +513,8 @@ export const terminAendern = werkzeug({
   name: "termin_aendern",
   titel: "Termin ändern",
   beschreibung:
-    "Ändert Datum, Zeit, Ort, Bemerkung, die Felder, die erwartete Spielerzahl oder die Kader eines Termins - nur, was du mitgibst. Beginn und Ende " +
+    "Ändert Datum, Zeit, Ort, Bemerkung, die Felder, die erwartete Spielerzahl oder die Kader eines Termins, bei einem Spiel auch " +
+    "Bezeichnung, Mindest- und Höchstzahl - nur, was du mitgibst; die Art bleibt. Beginn und Ende " +
     "lassen sich nicht leeren; ändert sich die Zeit, braucht der Termin danach beide. Das " +
     "zugeordnete Training bleibt dasselbe. Für einen Termin einer Serie ist «reichweite» Pflicht; " +
     "das Datum ändert nur «nur_dieser», Wochentage und Zeitraum nur «dieser_und_folgende» oder " +
@@ -445,6 +539,11 @@ export const terminAendern = werkzeug({
         bemerkung: e.bemerkung,
         felder: e.felder,
         spielerzahl: e.erwartete_spielerzahl,
+        bezeichnung: e.bezeichnung,
+        richtwertMin: e.mindestzahl,
+        richtwertMax: e.hoechstzahl,
+        meldefrist: e.meldefrist,
+        treffpunkte: e.treffpunkte,
         kaderIds: e.kader_ids,
         reichweite: e.reichweite,
         wochentage: e.wochentage?.map(alsWochentag),
@@ -474,7 +573,8 @@ export const terminEntfernen = werkzeug({
     "Training. Erfasst «dieser_und_folgende» oder «alle» " +
     "auch vergangene Termine, wird die Serie nur mit «bestaetigt: true» entfernt; ohne diese " +
     "Bestätigung nennt das Ergebnis, was entfiele. Ein einzelner Termin oder «nur_dieser» wird " +
-    "sofort entfernt. " +
+    "sofort entfernt - ein Spiel mit Meldungen oder Kennzeichnungen als nicht aufgeboten erst mit «bestaetigt: true»; ohne " +
+    "nennt der Fehler, wie viele verschwinden («verschwindend», davon «kennzeichnungen»). " +
     `${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ termin_id: TerminId, reichweite: Reichweite.optional(), bestaetigt: Bestaetigt }),

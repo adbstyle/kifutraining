@@ -7,6 +7,7 @@ import { heuteAmTrainingsort } from "@/lib/zeit";
 import type { KategorieSlug } from "@/lib/vocab";
 import type { Spielstand } from "@/lib/spieler";
 import { nachKaderName, nachTerminKader, type TerminKader } from "@/lib/kader";
+import { meldefristZeitpunkt, treffpunkteZu, type TerminArt, type Treffpunkt, type TreffpunktZeile } from "@/lib/spiel";
 
 /**
  * Termine lesen für einen Client, der bereits als Nutzer spricht (Cookie-
@@ -60,9 +61,28 @@ export type Verantwortlicher = {
  *  Serientag liegt. */
 export type Abweichung = "datum" | "zeit" | "ort" | "bemerkung" | "verantwortliche" | "felder" | "spielerzahl" | "kader";
 
+/** Was nur ein Spiel trägt (#459): Bezeichnung und Richtwert. */
+export type SpielAngaben = {
+  bezeichnung: string;
+  /** Mindest- und Höchstzahl je für sich; `null` = nicht festgelegt. */
+  richtwertMin: number | null;
+  richtwertMax: number | null;
+  /** Die Meldefrist der Spielervertretung als `YYYY-MM-DDTHH:MM` (#463 AK 8);
+   *  `null`: ohne Frist, Eltern melden bis zum Anpfiff. */
+  meldefrist: string | null;
+  /** Ein verlegtes Spiel: der zuletzt gültige Zeitpunkt (#463 AK 16). */
+  vorher: { datum: string; beginn: string } | null;
+  /** Die Treffpunkte zum aktuellen Anpfiff, frühester zuerst (#465). */
+  treffpunkte: Treffpunkt[];
+};
+
 export type TerminZeile = {
   id: string;
   teamId: string;
+  /** Training oder Spiel (#459); die Art bleibt. */
+  art: TerminArt;
+  /** Nur an einem Spiel, sonst `null`. */
+  spiel: SpielAngaben | null;
   datum: string;
   /** `HH:MM`; Pflicht an jedem Termin. */
   beginn: string;
@@ -129,6 +149,14 @@ export function verantwortlicheMitDir(t: TerminZeile, ich: string): { text: stri
 type RawTermin = {
   id: string;
   team_id: string;
+  art: TerminArt;
+  bezeichnung: string | null;
+  richtwert_min: number | null;
+  richtwert_max: number | null;
+  meldefrist_vorlauf_min: number | null;
+  vorher_datum: string | null;
+  vorher_beginn: string | null;
+  spiel_treffpunkte: TreffpunktZeile[];
   datum: string;
   beginn: string;
   ende: string;
@@ -184,9 +212,10 @@ export function kurzeZeit(t: string): string {
 }
 
 const TERMIN_SELECT =
-  "id, team_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, felder_abweichend, spielerzahl_abweichend, kader_abweichend, ausgefallen, ausfall_grund, " +
+  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, vorher_datum, vorher_beginn, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, felder_abweichend, spielerzahl_abweichend, kader_abweichend, ausgefallen, ausfall_grund, " +
   "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ), " +
   "termin_kader ( kader_id, kader ( name ) ), " +
+  "spiel_treffpunkte ( anreise, vorlauf_min, ort ), " +
   "trainings ( id, name, stufen, termin_training ), " +
   "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, " +
   "termin_serien_verantwortliche ( user_id, verantwortlich_name ), termin_serien_kader ( kader_id, kader ( name ) ) )";
@@ -210,6 +239,20 @@ function mapTermin(t: RawTermin): TerminZeile {
   return {
     id: t.id,
     teamId: t.team_id,
+    art: t.art,
+    spiel:
+      t.art === "spiel"
+        ? {
+            bezeichnung: t.bezeichnung ?? "",
+            richtwertMin: t.richtwert_min,
+            richtwertMax: t.richtwert_max,
+            meldefrist:
+              t.meldefrist_vorlauf_min === null ? null : meldefristZeitpunkt(t.datum, t.beginn, t.meldefrist_vorlauf_min),
+            vorher:
+              t.vorher_datum && t.vorher_beginn ? { datum: t.vorher_datum, beginn: kurzeZeit(t.vorher_beginn) } : null,
+            treffpunkte: treffpunkteZu(t.spiel_treffpunkte ?? [], t.datum, t.beginn),
+          }
+        : null,
     datum: t.datum,
     beginn: kurzeZeit(t.beginn),
     ende: kurzeZeit(t.ende),
@@ -352,17 +395,19 @@ export async function getTeamPlanFuer(
 }
 
 /** «Noch nicht vorbereitet» (Epic PO 7): anstehend, ohne Training und nicht
- *  ausgefallen (#327 AK 8). */
+ *  ausgefallen (#327 AK 8) — ein Spiel nie (#459 AK 15). */
 export function nochNichtVorbereitet(t: TerminZeile, heute: string): boolean {
-  return t.datum >= heute && t.training === null && !t.ausgefallen;
+  return t.art === "training" && t.datum >= heute && t.training === null && !t.ausgefallen;
 }
 
 /** Was ein Termin trägt (Epic #401): ein Training, noch keines (anstehend),
- *  keines (vergangen) — oder er ist ausgefallen, was allem vorgeht. */
-export type TerminZustand = "training" | "noch-nicht" | "ohne" | "ausgefallen";
+ *  keines (vergangen) — oder er ist ausgefallen, was allem vorgeht. Ein Spiel
+ *  ist ein Spiel, nie ein Termin ohne Training (#459 AK 15). */
+export type TerminZustand = "training" | "spiel" | "noch-nicht" | "ohne" | "ausgefallen";
 
 export function terminZustand(t: TerminZeile, heute: string): TerminZustand {
   if (t.ausgefallen) return "ausgefallen";
+  if (t.art === "spiel") return "spiel";
   if (t.training) return "training";
   return nochNichtVorbereitet(t, heute) ? "noch-nicht" : "ohne";
 }
