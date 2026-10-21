@@ -283,7 +283,6 @@ function SpielNachAnpfiff({ teamId, daten }: { teamId: string; daten: SpielSpiel
   const melde = useSnackbar();
   // Was gerade nachgetragen wird, steht sofort so da.
   const nachtraege = useLokalerStand<boolean>(daten);
-  const pending = nachtraege.pending;
   const nachgetragen = (s: SpielTeilnehmer) => nachtraege.wert(s.spielerId, s.nachgetragen);
   const anwesend = daten.spieler.filter((s) => zaehlteBeimAnpfiff(s.meldung, s.nichtAufgeboten) !== nachgetragen(s)).length;
 
@@ -332,7 +331,7 @@ function SpielNachAnpfiff({ teamId, daten }: { teamId: string; daten: SpielSpiel
               s={s}
               nachgetragen={nachgetragen(s)}
               gelesenAm={daten.gelesenAm}
-              pending={pending}
+              pending={nachtraege.pending}
               onNachtrag={(n) => nachtragen(s, n)}
             />
           ))}
