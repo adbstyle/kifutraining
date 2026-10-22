@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Trainings ab- und anmelden - KiFu",
-  description: "Für Trainings ab- und wieder anmelden.",
+  description: "Für Trainings und Spiele ab- und anmelden.",
   robots: { index: false, follow: false },
   referrer: "no-referrer",
 };
