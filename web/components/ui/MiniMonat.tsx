@@ -42,35 +42,44 @@ function tagStand(marken: readonly Marke[]): TagStand | undefined {
   return statt.some((m) => m.spiel) ? "spiel" : "training";
 }
 
-/** Der dringlichste Status eines Tages — rot vor gelb vor grün. */
+/** Die farbigen Status eines Tages, je Termin einer, der dringlichste zuerst
+ *  — rot vor gelb vor grün. */
 const RANG: StatusTon[] = ["danger", "warning", "success"];
-function tagTon(marken: readonly Marke[]): StatusTon | undefined {
-  return RANG.find((ton) => marken.some((m) => !m.ausgefallen && m.ton === ton));
+function tagToene(marken: readonly Marke[]): StatusTon[] {
+  return marken
+    .flatMap((m) => (!m.ausgefallen && m.ton ? [m.ton] : []))
+    .sort((a, b) => RANG.indexOf(a) - RANG.indexOf(b));
 }
+
+/** Je Tag höchstens so viele Punkte; die übrigen zählt «+n». */
+const HOECHSTENS = 2;
 
 /** Die Zahl des Tages (Epic #490) — wie das Kalenderblatt in der Liste: ein
  *  Tag mit einem Spiel weiss hinterlegt, einer mit nur Trainings hell
  *  umrandet (PO 2026-10-22), einer mit nur ausgefallenen Terminen grau und
  *  durchgestrichen. Heute ohne Termin auf Primary, mit Termin dessen Fläche
  *  und ein Rahmen in Primary. `belegt`: der gepunktete Ring, wo etwas liegt,
- *  das der Monat nicht zeigt. `ton`: ein Punkt oben rechts in der Farbe des
- *  dringlichsten farbigen Status (PO 2026-10-22), etwa rot, wenn für ein
- *  Spiel zu wenige gemeldet sind. */
+ *  das der Monat nicht zeigt. `toene`: je Termin mit farbigem Status ein
+ *  Punkt oben rechts (PO 2026-10-22), etwa rot, wenn für ein Spiel zu wenige
+ *  gemeldet sind — höchstens zwei, das zweite halb hinter dem ersten, die
+ *  übrigen als «+n» unten rechts. */
 function Tageszahl({
   tag,
   heute,
   imMonat,
   stand,
-  ton,
+  toene = [],
   belegt = false,
 }: {
   tag: string;
   heute: string;
   imMonat: boolean;
   stand?: TagStand;
-  ton?: StatusTon;
+  toene?: readonly StatusTon[];
   belegt?: boolean;
 }) {
+  const gezeigt = toene.slice(0, HOECHSTENS);
+  const mehr = toene.length - gezeigt.length;
   return (
     <span
       aria-hidden
@@ -98,7 +107,15 @@ function Tageszahl({
       )}
     >
       {Number(tag.slice(8))}
-      {ton && <ZeichenPunkt ton={ton} className="-top-1 -right-1" />}
+      {/* Das erste liegt über dem zweiten, das nach rechts versetzt dahinter sitzt. */}
+      {gezeigt.map((ton, i) => (
+        <ZeichenPunkt key={i} ton={ton} className={i === 0 ? "-top-1 -right-1 z-[2]" : "-top-1 -right-[9px] z-[1]"} />
+      ))}
+      {mehr > 0 && (
+        <span className="absolute -right-1.5 -bottom-1.5 z-[2] flex h-3 min-w-3 items-center justify-center rounded-full bg-elev-01 px-px text-[0.5rem] leading-none text-on-surface-mittel">
+          +{mehr}
+        </span>
+      )}
     </span>
   );
 }
@@ -195,7 +212,7 @@ export function MiniMonat({
                       onClick={() => onWahl(liste[0].id)}
                       className="state focus-ring flex h-9 w-full items-center justify-center rounded-flaeche"
                     >
-                      <Tageszahl tag={tag} heute={heute} imMonat={imMonat} stand={stand} ton={tagTon(liste)} />
+                      <Tageszahl tag={tag} heute={heute} imMonat={imMonat} stand={stand} toene={tagToene(liste)} />
                     </button>
                   ) : (
                     <div className="flex h-9 items-center justify-center">

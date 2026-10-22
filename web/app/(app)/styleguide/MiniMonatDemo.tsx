@@ -4,7 +4,7 @@ import { useState } from "react";
 import { MiniMonat, type Marke } from "@/components/ui";
 
 /* Der Mini-Monat mit festen Beispieltagen (Oktober 2026, «heute» der 6.):
-   Tage mit Spiel weiss, mit nur Trainings umrandet, ein Tag mit nur einem ausgefallenen
+   Tage mit Spiel weiss, mit nur Trainings umrandet, ein Tag mit drei farbigen Status («+1»), ein Tag mit nur einem ausgefallenen
    Termin grau, ein Tag mit einem stattfindenden und einem ausgefallenen hell,
    ein belegter Tag und ein Termin in der Randwoche. In der Anwendung sind es
    die Termine des Teams neben dem Trainingsplan (`PlanMonat`). */
@@ -17,6 +17,11 @@ const MARKEN: Record<string, Marke[]> = {
   ],
   "2026-10-10": [{ id: "s", spiel: true, ausgefallen: false, ton: "danger", label: "10:00 Spiel Meisterschaft gegen FC Bümpliz, Zu wenig" }],
   "2026-10-11": [{ id: "f", spiel: true, ausgefallen: true, label: "14:00 Spiel Freundschaftsspiel FC Breitenrain" }],
+  "2026-10-24": [
+    { id: "t1", spiel: true, ausgefallen: false, ton: "success", label: "09:00 Spiel Turnier Runde 1, Genügend" },
+    { id: "t2", spiel: true, ausgefallen: false, ton: "danger", label: "11:00 Spiel Turnier Runde 2, Zu wenig" },
+    { id: "t3", spiel: true, ausgefallen: false, ton: "warning", label: "13:00 Spiel Turnier Runde 3, Knapp" },
+  ],
   "2026-10-15": [{ id: "g", spiel: false, ausgefallen: false, label: "17:00 Training" }],
 };
 
