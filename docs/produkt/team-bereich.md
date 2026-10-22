@@ -297,7 +297,7 @@ Ganz oben steht „Als Nächstes" als grössere Karte: der erste anstehende Term
 bei mehreren am selben Tag der früheste. Ein ausgefallener Termin davor bekommt keine Karte, er
 steht als gewöhnliche Zeile in der Liste. Die Karte ist aufgebaut wie eine Zeile, nur grösser:
 links das Kalenderblatt, daneben der Status in einem Wort („Vorbereitet" grün oder „Nicht
-vorbereitet" grau), der Name des Trainings — ohne Training „Noch kein Training" —, Zeit und Ort,
+vorbereitet" — nur hier, auf der grossen Karte, gelb), der Name des Trainings — ohne Training „Noch kein Training" —, Zeit und Ort,
 rechts das Menü mit „Training ersetzen" und den übrigen Handgriffen. Darunter der Abschnitt
 „Kader": die Kader des Termins, die Zahl der Angemeldeten von allen, für die der Termin gilt,
 etwa „12 von 14 angemeldet", und eine Zeile mit den Abgemeldeten, „änderbar bis zum Beginn" und

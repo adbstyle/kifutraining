@@ -12,7 +12,7 @@ import { zeitpunktKurz } from "@/lib/spiel";
 import { feldName, feldText } from "@/lib/termin-felder";
 import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { terminHref } from "@/lib/team-ansicht";
-import { blattStand, handlungsMeldung, nachMeldefrist, terminStatus } from "@/lib/termin-status";
+import { TERMIN_STATUS, blattStand, handlungsMeldung, nachMeldefrist, terminStatus } from "@/lib/termin-status";
 import { verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { useTerminAktionen } from "./TerminBereich";
 import { terminMenue } from "./TerminHandgriffe";
@@ -57,7 +57,12 @@ export function NaechsterTermin({
 }) {
   const a = useTerminAktionen();
   const zeit = zeitText(t.beginn, t.ende);
-  const status = terminStatus(t, heute);
+  const grundStatus = terminStatus(t, heute);
+  // Nur auf der grossen Karte: Ein Training, das als Nächstes ansteht und
+  // noch nicht vorbereitet ist, mahnt in der Warnfarbe; in der Liste bleibt
+  // es grau (PO 2026-10-22).
+  const status =
+    grundStatus === TERMIN_STATUS.nichtVorbereitet ? { ...grundStatus, appearance: "warning" as const } : grundStatus;
   const nachFrist = nachMeldefrist(t, jetzt);
   const handlung = nachFrist ? handlungsMeldung(t) : null;
   const name = t.spiel ? t.spiel.bezeichnung : t.training ? t.training.name : "Noch kein Training";
