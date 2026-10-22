@@ -346,11 +346,10 @@ kein Datum vor.
 Auf breiten Bildschirmen, ab etwa der Breite eines Tablets im Querformat, steht rechts neben
 den Terminen ein Monat und bleibt beim Scrollen stehen. Er zeigt Monat und Jahr, die Wochen von
 Montag bis Sonntag samt den Randtagen der Nachbarmonate — immer sechs Wochen, damit er beim
-Blättern nicht in der Höhe springt — und hebt den heutigen Tag hervor. Ein Tag, an dem ein
-Termin stattfindet, ist hell hinterlegt wie ein weisses Kalenderblatt; ein Tag mit nur
-ausgefallenen Terminen grau und durchgestrichen. Training und Spiel unterscheidet der Monat nicht;
-eine Legende darunter nennt beide Flächen, und vorgelesen wird jeder Termin beim Namen, ein
-ausgefallener mit „fällt aus". Wie im Google Kalender folgt der Monat der Liste: Er
+Blättern nicht in der Höhe springt — und hebt den heutigen Tag hervor. Jeder Tag sieht aus wie
+das Kalenderblatt der Liste: mit einem Spiel weiss hinterlegt, mit nur Trainings hell umrandet,
+mit nur ausgefallenen Terminen grau und durchgestrichen. Eine Legende darunter nennt alle drei,
+und vorgelesen wird jeder Termin beim Namen, ein ausgefallener mit „fällt aus". Wie im Google Kalender folgt der Monat der Liste: Er
 zeigt den Monat des obersten Termins, den man gerade sieht. Mit den Pfeilen und „Heute"
 wechselt nur der Monat, die Liste bleibt stehen, bis man wieder scrollt. Ein Klick auf einen
 Tag mit Terminen führt in der Liste zu seinem ersten Termin, beim nächsten Termin zur Karte

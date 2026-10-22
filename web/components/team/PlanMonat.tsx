@@ -94,7 +94,7 @@ export function PlanMonat({
           tag.datum,
           tag.termine.map((t) => {
             const was = t.spiel ? `Spiel ${t.spiel.bezeichnung}` : t.training ? t.training.name : "Training";
-            return { id: t.id, ausgefallen: t.ausgefallen, label: `${t.beginn} ${was}` };
+            return { id: t.id, spiel: t.art === "spiel", ausgefallen: t.ausgefallen, label: `${t.beginn} ${was}` };
           }),
         );
     return m;

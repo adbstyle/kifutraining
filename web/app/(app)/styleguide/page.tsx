@@ -3669,9 +3669,9 @@ export default async function Styleguide() {
         <Section id="mini-monat">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Ein kleiner Monat zum Navigieren neben einer Liste (Epic #401). Neu, weil kein Baustein ein
-            Kalenderraster kennt. <code>MiniMonat</code> hinterlegt jeden Tag, an dem ein Termin stattfindet, hell
-            wie ein weisses Kalenderblatt, und einen Tag mit nur ausgefallenen Terminen grau und durchgestrichen
-            (Epic #490). Training und Spiel unterscheidet er nicht; die Legende darunter sagt beides. Die Zellen
+            Kalenderraster kennt. <code>MiniMonat</code> zeigt jeden Tag wie das Kalenderblatt der Liste (Epic
+            #490): mit einem Spiel weiss hinterlegt, mit nur Trainings hell umrandet, mit nur ausgefallenen
+            Terminen grau und durchgestrichen; die Legende darunter nennt alle drei. Die Zellen
             sind alle gleich hoch, und jeder Monat zeigt sechs Wochen: Beim Blättern springt die Höhe nicht (wie
             im Google und Proton Kalender). Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
             (<code>onWahl</code>), ein leerer Tag ist keiner. Blättern und «Heute» melden nur den Monat (<code>onMonat</code>): Wie im Google Kalender
