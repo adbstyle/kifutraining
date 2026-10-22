@@ -1885,8 +1885,10 @@ export default async function Styleguide() {
             begonnen); <code>neutral</code> grau ohne Zeichen, wenn es nichts zu
             wählen gibt (er fällt aus) - und für die Aus-Lage eines Schalters,
             dessen Aus kein Fehlen bedeutet (die Selbstabholung eines Teams).
-            <code>ton=&quot;erfolg&quot;</code> legt die An-Lage ins Grün der Success-Lozenge, gespiegelt zur roten
-            Aus-Lage: für «angemeldet» und «da», weil ein angemeldetes Kind bei Spielen grün erscheint (Epic #448).
+            <code>ton=&quot;ruhig&quot;</code> (Epic #490) für «angemeldet» und «da» an Trainings: Der Schalter zeigt den
+            Stand, ohne ihn zu bewerten - an eine durchsichtige Bahn mit heller Kontur und grossem hellem Knopf rechts
+            (wie ein Ghost-Knopf), aus eine dunkle Bahn mit grauer Kontur und kleinem grauem Knopf links. Ohne Zeichen:
+            Lage und Grösse des Knopfs sagen den Stand, nicht die Farbe.
             Darunter liegt ein echtes{" "}
             <code>&lt;input type=&quot;checkbox&quot; role=&quot;switch&quot;&gt;</code>.
           </p>
@@ -2363,8 +2365,7 @@ export default async function Styleguide() {
             stehen fertig als <code>HerkunftLozenge</code> und{" "}
             <code>SichtbarkeitLozenge</code>; der Entwurf trägt den Stift, damit
             er sich vom Manual-Bestand nicht nur im Wort unterscheidet. Ein Spiel
-            trägt überall, wo Termine erscheinen, die <code>SpielLozenge</code>{" "}
-            (<code>discovery</code>, Epic #448) — in der Tönung seines Kalenderblatts.
+            trägt keine eigene Lozenge; es zeigt sich an Name und Status (Epic #490).
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Über einem Bild</strong> (<code>aufBild</code>, etwa die

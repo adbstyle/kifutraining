@@ -17,6 +17,7 @@ export function Meldebalken({
   min = null,
   max = null,
   wort = "angemeldet",
+  zusatz,
   className,
 }: {
   zahl: number;
@@ -25,6 +26,8 @@ export function Meldebalken({
   max?: number | null;
   /** «angemeldet» oder, ab Beginn, «da». */
   wort?: string;
+  /** Hinter der Zahl, etwa «1 nicht aufgeboten». */
+  zusatz?: string;
   className?: string;
 }) {
   const bereich = richtwertText(min, max);
@@ -36,6 +39,7 @@ export function Meldebalken({
       <div aria-hidden className="flex items-baseline justify-between gap-3 type-body-medium text-on-surface">
         <span>
           <span className="font-semibold">{zahl}</span> {wort}
+          {zusatz && <span className="text-on-surface-mittel"> · {zusatz}</span>}
         </span>
         <span className="type-body-small text-on-surface-mittel">
           {bereich ? `gesucht ${bereich} von ${gesamt}` : `von ${gesamt}`}
@@ -43,7 +47,7 @@ export function Meldebalken({
       </div>
       <div
         role="img"
-        aria-label={`${zahl} von ${gesamt} ${wort}${bereich ? `, gesucht ${bereich}` : ""}`}
+        aria-label={`${zahl} von ${gesamt} ${wort}${zusatz ? `, ${zusatz}` : ""}${bereich ? `, gesucht ${bereich}` : ""}`}
         className="relative h-2 overflow-hidden rounded-full bg-on-surface/10"
       >
         {bereich && (
