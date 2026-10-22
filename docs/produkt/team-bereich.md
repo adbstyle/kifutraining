@@ -331,9 +331,10 @@ Alterskategorien stehen nicht in der Zeile; Bemerkung, Serie und Platz zeigt der
 Termin, die Alterskategorien das Training selbst. Der Rückblick sieht genauso aus.
 
 Ein Klick auf die Zeile öffnet den Termin neben der Liste (siehe „Der geöffnete Termin"), ein
-Klick auf den Trainingsnamen das Training. An der Zeile liegen Durchführen, Training ersetzen — vergangen ohne Training: zuordnen — und in einem Menü die übrigen
-Handgriffe: Termin ändern, Training lösen, Ausfallen lassen oder — bei einem ausgefallenen —
-Grund ändern und Ausfall zurücknehmen, und Termin entfernen. Die Durchführen-Ansicht zeigt, aus
+Klick auf den Trainingsnamen das Training. Alle Handgriffe einer Zeile liegen in ihrem Menü rechts:
+Durchführen, Training ersetzen — vergangen ohne Training: zuordnen —, Termin ändern, Training
+lösen, Ausfallen lassen oder — bei einem ausgefallenen — Grund ändern und Ausfall zurücknehmen,
+und Termin entfernen. Die Durchführen-Ansicht zeigt, aus
 dem Plan geöffnet, zuoberst Datum, Zeit, Ort, Verantwortliche, Spielerzahl, Felder
 und Bemerkung des Termins, jedes Feld mit Grösse, Toren je Torart und Untergrund; was zu einem
 Feld nicht erfasst ist, steht dort ausdrücklich als unbekannt.
