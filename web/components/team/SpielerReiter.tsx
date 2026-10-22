@@ -172,6 +172,7 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
               </span>
               {seit && <span className="shrink-0 whitespace-nowrap type-body-small text-on-surface-mittel">{seit}</span>}
               <Switch
+                ton="ruhig"
                 checked={wert}
                 disabled={s.ehemalig || pending}
                 onChange={(e) => umlegen(s, e.target.checked)}

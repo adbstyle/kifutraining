@@ -1,88 +1,55 @@
-import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { kalenderblatt, tagOhneJahr } from "@/lib/monat";
-import { LOZENGE_FORM } from "./Lozenge";
+import type { BlattStand } from "@/lib/termin-status";
 
-/** Was der Termin hinter dem Blatt trägt — dieselben Zustände wie die
- *  Marken des Mini-Monats. */
-export type BlattZustand = "training" | "noch-nicht" | "ohne" | "ausgefallen" | "abgemeldet";
-
-/* Die Tönung je Zustand — leise, damit die Liste ruhig bleibt (PO
-   2026-10-06): eine schwache Fläche in der Farbe des Zustands und die
-   Tageszahl in ihr selbst. Mit Training Primary, ohne vorbereitetes Training
-   die Warnfarbe, ausgefallen grau mit durchgestrichener Zahl; vergangen ohne
-   Training bleibt das Blatt ohne Fläche. Die Schrift trägt 4.5:1 und besser
-   (pruefe-farben.ts). */
-const TOENUNG: Record<BlattZustand, string> = {
-  training: "bg-primary/12 text-primary",
-  "noch-nicht": "bg-icon-warning/12 text-icon-warning",
-  ausgefallen: "bg-elev-08 text-on-surface-mittel",
-  ohne: "text-on-surface",
-  // Die Spieler:in ist abgemeldet (#436): im Rot der Danger-Lozenge, wie der
-  // Schalter daneben in seiner Aus-Lage.
-  abgemeldet: "bg-lozenge-danger text-on-lozenge-danger",
+/* Die Fläche je Stand (Epic #490): Ein Spiel, das bevorsteht, trägt ein
+   weisses Blatt (die umgekehrte Fläche, `umkehr`); ein Training, das
+   bevorsteht, ein leiseres — nur hell umrandet, damit die Spiele
+   hervortreten (`leise`, PO 2026-10-22); einer, der nicht oder nicht mehr
+   zählt, ein graues — vergangen ohne Strich, gestrichen (ausgefallen, am
+   privaten Link auch abgemeldet oder nicht aufgeboten) mit durchgestrichener
+   Tageszahl. Was der Termin trägt, sagt nicht das Blatt, sondern die
+   Status-Lozenge daneben. */
+const FLAECHE: Record<BlattStand, string> = {
+  aktiv: "umkehr text-on-surface",
+  leise: "kontur border-on-surface-mittel text-on-surface",
+  vergangen: "bg-elev-08 text-on-surface-mittel",
+  gestrichen: "bg-elev-08 text-on-surface-mittel",
 };
 
 /* Ein Termin als Kalenderblatt: Wochentag, grosse Tageszahl, Monat — wie ein
    Abreisskalender links an der Zeile (Epic #401, Muster «Kalenderblatt»). Das
    Auge findet den Tag, ohne eine Datumszeile zu lesen (#402 AK 1); das Jahr
-   steht nie darauf, es gehört in die Überschrift des Monats.
-
-   Die Tönung sagt, was der Termin trägt (`zustand`, PO 2026-10-06): So fällt
-   eine unvorbereitete Einheit schon am Blatt auf. Die Farbe trägt es nie
-   allein — die Zeile daneben sagt es in Worten. Heute hebt das Blatt nicht
-   hervor; dafür steht der nächste Termin zuoberst (PO 2026-10-06).
+   steht nie darauf, es gehört in die Überschrift des Monats. Heute hebt das
+   Blatt nicht hervor; dafür steht der nächste Termin zuoberst.
 
    Sichtbar ist die Kurzform stumm geschaltet; vorgelesen wird der
    ausgeschriebene Tag. `as`: das Element, etwa die Überschrift des Tages. */
 export function Kalenderblatt({
   datum,
-  zustand = "ohne",
+  stand = "aktiv",
   as: Element = "div",
   className,
 }: {
   /** `YYYY-MM-DD`. */
   datum: string;
-  zustand?: BlattZustand;
+  stand?: BlattStand;
   as?: "div" | "h5";
   className?: string;
 }) {
   const b = kalenderblatt(datum);
-  const leise = zustand !== "ausgefallen" && zustand !== "abgemeldet" && "text-on-surface-mittel";
   return (
     <Element
       className={cn(
         "flex w-12 shrink-0 flex-col items-center self-start rounded-klein py-1 text-center leading-none",
-        TOENUNG[zustand],
+        FLAECHE[stand],
         className,
       )}
     >
-      <span aria-hidden className={cn("type-label-small", leise)}>{b.wochentag}</span>
-      <span aria-hidden className={cn("type-title-large", zustand === "ausgefallen" && "line-through")}>{b.tag}</span>
-      <span aria-hidden className={cn("type-label-small", leise)}>{b.monat}</span>
+      <span aria-hidden className="type-label-small">{b.wochentag}</span>
+      <span aria-hidden className={cn("type-title-large", stand === "gestrichen" && "line-through")}>{b.tag}</span>
+      <span aria-hidden className="type-label-small">{b.monat}</span>
       <span className="sr-only">{tagOhneJahr(datum)} {datum.slice(0, 4)}</span>
     </Element>
-  );
-}
-
-/* Der Zustand eines Termins als Lozenge in der Tönung seines Kalenderblatts
-   (PO 2026-10-07): Der nächste Termin trägt kein Blatt, sagt seinen Zustand
-   aber in derselben Farbe wie die Blätter darunter. Darum nicht Atlassians
-   `warning` (orange) — die Warnfarbe der Blätter ist das Gelb der
-   Warnzeichen. Form wie jede Lozenge (`LOZENGE_FORM`). */
-export function BlattLozenge({
-  zustand,
-  iconBefore: Icon,
-  children,
-}: {
-  zustand: BlattZustand;
-  iconBefore?: LucideIcon;
-  children: React.ReactNode;
-}) {
-  return (
-    <span className={cn(LOZENGE_FORM, TOENUNG[zustand])}>
-      {Icon && <Icon size={12} strokeWidth={2.5} className="shrink-0" aria-hidden />}
-      <span className="truncate">{children}</span>
-    </span>
   );
 }

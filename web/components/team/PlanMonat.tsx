@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { MARKEN_TEXT, MiniMonat, type Marke } from "@/components/ui";
+import { MiniMonat, type Marke, type StatusTon } from "@/components/ui";
+import { terminStatus } from "@/lib/termin-status";
 import { monatVon } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
-import { terminZustand, type TerminZeile } from "@/lib/queries/termine-fuer";
+import type { TerminZeile } from "@/lib/queries/termine-fuer";
 
 /* Der Monat neben den Terminen (#404). Er folgt der Liste, die Liste aber
    nicht ihm — wie der kleine Monat im Google Kalender (PO 8):
@@ -92,10 +93,18 @@ export function PlanMonat({
       for (const tag of tage)
         m.set(
           tag.datum,
-          tag.termine.map((t) => {
-            const z = terminZustand(t, heute);
-            const was = z === "training" ? t.training!.name : MARKEN_TEXT[z];
-            return { id: t.id, zustand: z, label: `${t.beginn} ${was}` };
+          tag.termine.map((t): Marke => {
+            const was = t.spiel ? `Spiel ${t.spiel.bezeichnung}` : t.training ? t.training.name : "Training";
+            // Der farbige Status setzt den Punkt am Tag (Epic #490); vorgelesen wird er mit.
+            const status = terminStatus(t, heute);
+            const ton = status && status.appearance !== "neutral" ? (status.appearance as StatusTon) : undefined;
+            return {
+              id: t.id,
+              spiel: t.art === "spiel",
+              ausgefallen: t.ausgefallen,
+              ton,
+              label: `${t.beginn} ${was}${status && !t.ausgefallen ? `, ${status.wort}` : ""}`,
+            };
           }),
         );
     return m;

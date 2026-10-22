@@ -17,16 +17,41 @@ import { cn } from "@/lib/cn";
    Kalenderblatts mit Kreuz (PO 2026-10-16). `neutral`: grau und ohne Zeichen
    — für einen Termin, an dem es nichts zu wählen gibt (ausgefallen), und für
    die Aus-Lage eines Schalters, dessen Aus kein Fehlen bedeutet (die
-   Selbstabholung, #438). */
+   Selbstabholung, #438).
+
+   `ton="ruhig"` (Epic #490, #498): für «angemeldet» und «da» an Trainings —
+   der Schalter zeigt den Stand, ohne ihn zu bewerten. An: durchsichtige Bahn
+   mit heller Kontur und grossem hellem Knopf rechts (wie ein Ghost-Knopf);
+   aus: dunkle Bahn mit grauer Kontur und kleinem grauem Knopf links. Ohne
+   Zeichen — die Lage und Grösse des Knopfs sagen es, nicht die Farbe. */
 export function Switch({
   className,
   disabled,
   neutral = false,
+  ton = "primary",
   ...rest
 }: Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "role"> & {
   /** Ohne Bedeutung von an/aus: grau, ohne Zeichen. */
   neutral?: boolean;
+  /** Primary mit Zeichen oder ruhig ohne Farbe (Trainings, #498). */
+  ton?: "primary" | "ruhig";
 }) {
+  if (ton === "ruhig" && !neutral)
+    return (
+      <span className={cn("relative inline-flex h-8 w-[52px] shrink-0 items-center", disabled && "opacity-40", className)}>
+        <input
+          type="checkbox"
+          role="switch"
+          disabled={disabled}
+          className="peer focus-ring absolute inset-0 m-0 h-full w-full cursor-pointer appearance-none rounded-full border-2 border-on-surface-mittel bg-elev-08 transition-colors checked:border-on-surface/60 checked:bg-transparent disabled:cursor-not-allowed"
+          {...rest}
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-2 size-4 rounded-full bg-on-surface-mittel transition-[left,width,height,background-color] peer-checked:left-[26px] peer-checked:size-5 peer-checked:bg-on-surface"
+        />
+      </span>
+    );
   return (
     <span className={cn("relative inline-flex h-8 w-[52px] shrink-0 items-center", disabled && "opacity-40", className)}>
       <input
@@ -47,7 +72,7 @@ export function Switch({
         <>
           <span
             aria-hidden
-            className="pointer-events-none absolute left-1 flex h-6 w-6 items-center justify-center rounded-full bg-on-lozenge-danger text-lozenge-danger transition-[left] peer-checked:left-6 peer-checked:bg-on-primary peer-checked:text-primary"
+            className="pointer-events-none absolute left-1 flex h-6 w-6 items-center justify-center rounded-full bg-on-lozenge-danger transition-[left] peer-checked:left-6 peer-checked:bg-on-primary"
           />
           <X aria-hidden size={16} strokeWidth={3} className="pointer-events-none absolute left-2 text-lozenge-danger peer-checked:hidden" />
           <Check aria-hidden size={16} strokeWidth={3} className="pointer-events-none absolute left-7 hidden text-primary peer-checked:block" />

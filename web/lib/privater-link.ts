@@ -2,6 +2,8 @@ import "server-only";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { istUuid } from "@/lib/kennung";
 import { LINK_FEHLER, abweisungText, istLinkToken, type AbmeldeGrund, type AbmeldeStand, type Spielstand } from "@/lib/spieler";
+import { meldungAbweisungText, type Meldung, type Treffpunkt } from "@/lib/spiel";
+import type { MeldeAntwort } from "@/lib/kern/spiele";
 
 /**
  * Die Seite hinter dem privaten Link einer Spieler:in (Epic #433, Story #436)
@@ -19,6 +21,29 @@ import { LINK_FEHLER, abweisungText, istLinkToken, type AbmeldeGrund, type Abmel
 
 export type LinkTermin = {
   id: string;
+  /** Nur an einem Spiel (#463): ihre Meldung (null = ohne), ob sie mit einer
+   *  Verlegung verfallen ist, die Meldefrist und der Zeitpunkt vorher. */
+  meldung: Meldung;
+  meldung_verfallen: boolean;
+  frist: string | null;
+  frist_abgelaufen: boolean;
+  vorher: { datum: string; beginn: string } | null;
+  /** Nur an einem Spiel (#465 AK 10, 11): die Bemerkung und die Treffpunkte,
+   *  frühester zuerst — an einem ausgefallenen keine (`null`). Die Bemerkung
+   *  eines Trainings sieht die Spielervertretung nicht (PC 4). */
+  bemerkung: string | null;
+  treffpunkte: Treffpunkt[] | null;
+  /** Nur an einem Spiel (#464 AK 8, 9; PC 3): ob sie nicht aufgeboten ist,
+   *  ob die Kennzeichnung mit einer Verlegung verfallen ist, und wie viele
+   *  nicht aufgeboten sind (`null` an einem ausgefallenen und bei Trainings). */
+  nicht_aufgeboten: boolean;
+  aufgebot_verfallen: boolean;
+  nicht_aufgeboten_zahl: number | null;
+  /** Training oder Spiel (#459 AK 17): ein Spiel mit Bezeichnung und Richtwert. */
+  art: "training" | "spiel";
+  bezeichnung: string | null;
+  richtwert_min: number | null;
+  richtwert_max: number | null;
   datum: string;
   beginn: string;
   ende: string;
@@ -86,4 +111,32 @@ export async function meldeUeberLink(token: string, e: LinkAbmeldung): Promise<L
   if (r.status === "ungueltig") return { ok: false, ungueltig: true };
   if (r.status === "abgewiesen") return { ok: false, error: abweisungText(r.grund, r.stand) };
   return { ok: true, abgemeldet: r.abgemeldet, angemeldet: r.stand?.angemeldet ?? 0 };
+}
+
+export type LinkMeldung = { terminId: string; angemeldet: boolean; gesehen: { datum: string; beginn: string } };
+
+export type LinkMeldeErgebnis =
+  | { ok: true; angemeldet: boolean; zahl: number | null }
+  | { ok: false; ungueltig: true }
+  | { ok: false; ungueltig?: false; error: string };
+
+/** Für ein Spiel über den Link an- oder abmelden (#463 AK 3, 9, 17): bis zur
+ *  Meldefrist, ohne Frist bis zum Anpfiff — dieselbe Regel wie für
+ *  Mitglieder, dazu die Frist. */
+export async function meldeSpielUeberLink(token: string, e: LinkMeldung): Promise<LinkMeldeErgebnis> {
+  if (!istLinkToken(token)) return { ok: false, ungueltig: true };
+  if (!istUuid(e.terminId) || !/^\d{4}-\d{2}-\d{2}$/.test(e.gesehen.datum) || !/^\d{2}:\d{2}$/.test(e.gesehen.beginn))
+    return { ok: false, error: meldungAbweisungText("nicht_gefunden") };
+  const { data, error } = await createAnonClient().rpc("spieler_link_melden", {
+    p_token: token,
+    p_termin: e.terminId,
+    p_angemeldet: e.angemeldet,
+    p_gesehen_datum: e.gesehen.datum,
+    p_gesehen_beginn: e.gesehen.beginn,
+  });
+  if (error || !data) return { ok: false, error: LINK_FEHLER };
+  const r = data as MeldeAntwort | { status: "ungueltig" };
+  if (r.status === "ungueltig") return { ok: false, ungueltig: true };
+  if (r.status === "abgewiesen") return { ok: false, error: meldungAbweisungText(r.grund, r.stand) };
+  return { ok: true, angemeldet: r.angemeldet, zahl: r.stand?.angemeldet ?? null };
 }

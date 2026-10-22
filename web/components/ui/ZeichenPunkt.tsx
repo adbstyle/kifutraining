@@ -1,12 +1,16 @@
 import { cn } from "@/lib/cn";
 
 /** Die Töne des Punkts: `primary` meldet Neues (Version, #410), `success`
- *  einen erreichten Zustand (privater Link bezogen, #447). */
-export type ZeichenPunktTon = "primary" | "success";
+ *  einen erreichten Zustand (privater Link bezogen, #447); `warning` und
+ *  `danger` mit `success` den farbigen Status eines Tages im Mini-Monat
+ *  (Epic #490) — in den Zeichenfarben der Section Message. */
+export type ZeichenPunktTon = "primary" | "success" | "warning" | "danger";
 
 const TON: Record<ZeichenPunktTon, string> = {
   primary: "bg-primary",
   success: "bg-icon-success",
+  warning: "bg-icon-warning",
+  danger: "bg-icon-danger",
 };
 
 /* Ein Punkt oben rechts an einem Zeichen — wie die Benachrichtigung an einem

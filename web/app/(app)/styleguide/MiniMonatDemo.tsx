@@ -4,30 +4,25 @@ import { useState } from "react";
 import { MiniMonat, type Marke } from "@/components/ui";
 
 /* Der Mini-Monat mit festen Beispieltagen (Oktober 2026, «heute» der 6.):
-   alle vier Zustände (vergangen ohne Training nur als Ring), ein Tag mit zwei
-   Terminen, einer mit drei («+1») und einer mit vier («+2»), ein belegter Tag
-   und eine Marke in der Randwoche. In der Anwendung sind es die Termine des
-   Teams neben dem Trainingsplan (`PlanMonat`). */
+   Tage mit Spiel weiss, mit nur Trainings umrandet, ein Tag mit drei farbigen Status («+1»), ein Tag mit nur einem ausgefallenen
+   Termin grau, ein Tag mit einem stattfindenden und einem ausgefallenen hell,
+   ein belegter Tag und ein Termin in der Randwoche. In der Anwendung sind es
+   die Termine des Teams neben dem Trainingsplan (`PlanMonat`). */
 const MARKEN: Record<string, Marke[]> = {
-  "2026-09-29": [{ id: "a", zustand: "ohne", label: "Vergangen ohne Training" }],
-  "2026-10-01": [{ id: "b", zustand: "training", label: "Training" }],
+  "2026-09-29": [{ id: "a", spiel: false, ausgefallen: false, label: "18:00 Training" }],
+  "2026-10-01": [{ id: "b", spiel: false, ausgefallen: false, ton: "success", label: "18:00 Passspiel im Dreieck, Vorbereitet" }],
   "2026-10-06": [
-    { id: "c", zustand: "training", label: "17:30 Training" },
-    { id: "d", zustand: "noch-nicht", label: "19:30 noch kein Training" },
+    { id: "c", spiel: false, ausgefallen: false, label: "17:30 Training" },
+    { id: "d", spiel: false, ausgefallen: true, label: "19:30 Training" },
   ],
-  "2026-10-08": [{ id: "e", zustand: "noch-nicht", label: "Noch kein Training" }],
-  "2026-10-11": [{ id: "f", zustand: "ausgefallen", label: "Ausgefallen" }],
-  "2026-10-15": [
-    { id: "g", zustand: "training", label: "17:00 Training" },
-    { id: "h", zustand: "noch-nicht", label: "18:00 noch kein Training" },
-    { id: "i", zustand: "noch-nicht", label: "19:00 noch kein Training" },
+  "2026-10-10": [{ id: "s", spiel: true, ausgefallen: false, ton: "danger", label: "10:00 Spiel Meisterschaft gegen FC Bümpliz, Zu wenig" }],
+  "2026-10-11": [{ id: "f", spiel: true, ausgefallen: true, label: "14:00 Spiel Freundschaftsspiel FC Breitenrain" }],
+  "2026-10-24": [
+    { id: "t1", spiel: true, ausgefallen: false, ton: "success", label: "09:00 Spiel Turnier Runde 1, Genügend" },
+    { id: "t2", spiel: true, ausgefallen: false, ton: "danger", label: "11:00 Spiel Turnier Runde 2, Zu wenig" },
+    { id: "t3", spiel: true, ausgefallen: false, ton: "warning", label: "13:00 Spiel Turnier Runde 3, Knapp" },
   ],
-  "2026-10-22": [
-    { id: "j", zustand: "training", label: "16:00 Training" },
-    { id: "k", zustand: "training", label: "17:00 Training" },
-    { id: "l", zustand: "noch-nicht", label: "18:00 noch kein Training" },
-    { id: "m", zustand: "noch-nicht", label: "19:00 noch kein Training" },
-  ],
+  "2026-10-15": [{ id: "g", spiel: false, ausgefallen: false, label: "17:00 Training" }],
 };
 
 export function MiniMonatDemo() {

@@ -16,6 +16,9 @@ export type AboTermin = {
   ort: string | null;
   /** Zeitpunkt der letzten Änderung (timestamptz, ISO). */
   geaendert: string;
+  /** Ein eigener Titel, etwa für ein Spiel «Bezeichnung · Teamname» (#459
+   *  PC 1); ohne ihn gilt der Titel des Kalenders für Trainings. */
+  titel?: string;
 };
 
 const VTIMEZONE = [
@@ -89,7 +92,7 @@ export function aboLinks(origin: string, token: string) {
 
 export function kalenderText(k: {
   kalenderName: string;
-  /** «Training · Teamname» (PC 2). */
+  /** «Training · Teamname» (PC 2) — der Titel jedes Termins ohne eigenen. */
   titel: string;
   teamId: string;
   origin: string;
@@ -118,7 +121,7 @@ export function kalenderText(k: {
     // Beginn und Ende sind Pflicht, das Ende liegt am selben Tag danach
     // (NOT NULL, `tt_ende_nach_beginn`).
     z.push(`DTSTART;TZID=Europe/Zurich:${lokal(t.datum, t.beginn)}`, `DTEND;TZID=Europe/Zurich:${lokal(t.datum, t.ende)}`);
-    z.push(`SUMMARY:${textEscape(k.titel)}`);
+    z.push(`SUMMARY:${textEscape(t.titel ?? k.titel)}`);
     if (t.ort) z.push(`LOCATION:${textEscape(t.ort)}`);
     z.push(`URL:${verweis}`, `DESCRIPTION:${textEscape(verweis)}`, "END:VEVENT");
   }

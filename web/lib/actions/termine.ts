@@ -42,7 +42,18 @@ export type { TerminFelder } from "@/lib/termin";
 /** `verfallend`: Das Verlegen liesse so viele Abmeldungen verfallen (#437
  *  AK 1), davon `nachtraege` Nachträge zur Anwesenheit (#475 AK 12); erneut
  *  mit `bestaetigt` senden, wenn das gewollt ist. */
-type Fehler = { ok: false; error: string; verfallend?: number; nachtraege?: number };
+type Fehler = {
+  ok: false;
+  error: string;
+  verfallend?: number;
+  nachtraege?: number;
+  /** Ein Spiel (#463 AK 26): Die Verlegung rückt die Meldefrist ins Abgelaufene. */
+  fristAbgelaufen?: boolean;
+  /** Ein Spiel entfernen (#463 AK 27): so viele Meldungen verschwinden. */
+  verschwindend?: number;
+  /** Davon Kennzeichnungen als nicht aufgeboten (#464 AK 10). */
+  kennzeichnungen?: number;
+};
 
 export async function legeTerminFestAktion(
   teamId: string,
@@ -54,6 +65,12 @@ export async function legeTerminFestAktion(
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await legeTerminFest(a.supabase, a.userId, {
     teamId,
+    art: felder.art ?? "training",
+    bezeichnung: felder.bezeichnung,
+    richtwertMin: felder.richtwertMin,
+    richtwertMax: felder.richtwertMax,
+    meldefrist: felder.meldefrist,
+    treffpunkte: felder.treffpunkte,
     datum: felder.datum,
     beginn: felder.beginn ?? "",
     ende: felder.ende ?? "",
@@ -91,9 +108,22 @@ export async function aendereTerminAktion(
     bemerkung: felder.bemerkung,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
+    bezeichnung: felder.bezeichnung ?? undefined,
+    richtwertMin: felder.richtwertMin,
+    richtwertMax: felder.richtwertMax,
+    meldefrist: felder.meldefrist,
+    treffpunkte: felder.treffpunkte,
     erwartetesTraining,
   });
-  if (!r.ok) return { ok: false, error: r.meldung, verfallend: r.verfallend, nachtraege: r.nachtraege };
+  if (!r.ok)
+    return {
+      ok: false,
+      error: r.meldung,
+      verfallend: r.verfallend,
+      nachtraege: r.nachtraege,
+      fristAbgelaufen: r.fristAbgelaufen,
+      kennzeichnungen: r.kennzeichnungen,
+    };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.trainingId) revalidiereTraining(r.wert.trainingId);
   return { ok: true };
@@ -102,11 +132,14 @@ export async function aendereTerminAktion(
 export async function entferneTerminAktion(
   terminId: string,
   erwartetesTraining: string | null,
+  /** Ein Spiel: die bestätigte Zahl verschwindender Meldungen und
+   *  Kennzeichnungen (#463 AK 27, #464 AK 10). */
+  bestaetigt: number | false = false,
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await entferneTermin(a.supabase, a.userId, { terminId, erwartetesTraining });
-  if (!r.ok) return { ok: false, error: r.meldung };
+  const r = await entferneTermin(a.supabase, a.userId, { terminId, erwartetesTraining, bestaetigt });
+  if (!r.ok) return { ok: false, error: r.meldung, verschwindend: r.verschwindend, kennzeichnungen: r.kennzeichnungen };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.training) revalidiereTraining(r.wert.training.trainingId);
   return { ok: true };

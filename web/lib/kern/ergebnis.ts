@@ -108,6 +108,18 @@ export type KernFehler = {
   /** Davon Nachträge zur Anwesenheit eines begonnenen Termins, den die
    *  Verlegung wieder öffnet (#475 AK 12); `verfallend` ist die Summe. */
   nachtraege?: number;
+  /** Nur an einem Spiel (#463 AK 13, 26): Die Verlegung rückt die Meldefrist
+   *  ins Abgelaufene — auch ohne verfallende Meldungen eine Rückfrage. */
+  fristAbgelaufen?: boolean;
+  /** Nur beim Entfernen eines Spiels (#463 AK 27): wie viele Meldungen mit
+   *  ihm verschwinden; erneut mit dieser Zahl als `bestaetigt` senden. */
+  verschwindend?: number;
+  /** Nur bei Kader-Änderungen (#463 AK 14): wie viele der verfallenden
+   *  Meldungen zu Spielen gehören. */
+  verfallendSpiele?: number;
+  /** Davon Kennzeichnungen als nicht aufgeboten an Spielen (#464 AK 10, 13) —
+   *  bei Kader-Änderungen, beim Verlegen und Entfernen eines Spiels. */
+  kennzeichnungen?: number;
   /** Zusatz nur für den Assistenten (die Oberfläche zeigt ihn nie), etwa
    *  «Es ist keine Kopie entstanden.» */
   hinweis?: string;

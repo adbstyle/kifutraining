@@ -144,7 +144,7 @@ export default async function KontoPage() {
       <Card className="mb-4 p-6">
         <h2 className="type-title-large text-on-surface">Kalender-Abos</h2>
         <p className="type-body-medium mt-2 text-on-surface-mittel">
-          Deine persönlichen Links, mit denen dein Kalenderprogramm die Trainingszeiten deiner Teams
+          Deine persönlichen Links, mit denen dein Kalenderprogramm die Trainings und Spiele deiner Teams
           abonniert.
         </p>
         <div className="mt-4">

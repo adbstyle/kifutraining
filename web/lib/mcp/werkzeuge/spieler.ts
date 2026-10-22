@@ -13,7 +13,9 @@ import {
   nimmSpielerAuf,
   schalteAbholung,
 } from "@/lib/kern/spieler";
-import { setzeAbmeldung, setzeAnwesenheit, terminSpieler } from "@/lib/kern/abmeldungen";
+import { istSpielAbweisung, setzeAbmeldung, setzeAnwesenheit, type TerminSpieler } from "@/lib/kern/abmeldungen";
+import { setzeAufgebot, setzeMeldung, teilnehmerAmTermin, type SpielSpieler, type SpielTeilnehmer } from "@/lib/kern/spiele";
+import { meldefristVerpasst, zaehlteBeimAnpfiff } from "@/lib/spiel";
 import {
   ABHOL_PFAD,
   ABHOLUNG_TEXT,
@@ -200,7 +202,19 @@ const ABMELDE_MODELL =
   "und wer trotz Abmeldung doch erschienen ist (termin_anwesenheit_setzen), unbefristet. Ohne Nachtrag gilt der Stand " +
   "bei Beginn als Anwesenheit - ob jemand geprüft hat, hält KiFu nicht fest. Wer aus der Liste fällt, steht an " +
   `begonnenen Terminen als «${EHEMALIGE_SPIELERIN}» ohne Namen, samt Nachtrag. Eine Abmeldung und ein Nachtrag tragen ` +
-  "keinen Grund, und KiFu benachrichtigt niemanden.";
+  "keinen Grund, und KiFu benachrichtigt niemanden. Spiele (art «spiel») sind anders: Jede Spieler:in ist zuerst ohne " +
+  "Meldung («meldung: null»), bis sie an- oder abgemeldet wird; danach wechselt sie nur noch zwischen angemeldet und " +
+  "abgemeldet. Mitglieder (und du) melden bis zum Anpfiff, auch nach der Meldefrist; Eltern über ihren Link nur bis zur " +
+  "Meldefrist. Wer nach Ablauf der Meldefrist noch ohne Meldung ist, hat die Meldefrist verpasst («meldefrist_verpasst»): " +
+  "Das Team rechnet nicht mit ihr, sie lässt sich aber bis zum Anpfiff weiter melden. Ein anderes Datum lässt alle Meldungen eines Spiels verfallen, eine andere Zeit am selben Tag nicht. " +
+  "Mitglieder (und du) können eine Spieler:in für ein Spiel als nicht aufgeboten kennzeichnen (termin_aufgebot_setzen), " +
+  "gleich welche Meldung sie trägt: Die Meldung bleibt darunter stehen, zählt aber nicht als angemeldet, und bis die " +
+  "Kennzeichnung aufgehoben ist, nimmt das Spiel für sie keine Meldung an. Die Kennzeichnung trägt keinen Grund, " +
+  "verfällt mit den Meldungen und wird beim Anpfiff mit ihnen festgehalten; die Eltern sehen sie über ihren Link. " +
+  "Ab dem Anpfiff tragen Mitglieder (und du) nach, wer nicht oder doch erschienen ist (termin_anwesenheit_setzen): " +
+  "Gezählt hat beim Anpfiff, wer angemeldet und nicht als nicht aufgeboten gekennzeichnet war; «nicht_erschienen» gilt " +
+  "für sie, «doch_erschienen» für alle anderen. Jede Verlegung eines begonnenen Spiels lässt seine Nachträge verfallen. " +
+  "Mindest- und Höchstzahl sind ein Richtwert; wie die Zahl dazu steht, beurteilst du selbst.";
 
 /** Was die KI je Spieler:in zur Anwesenheit erhält (#475 AK 13). */
 const ANWESENHEIT_BESCHREIBUNG =
@@ -211,7 +225,8 @@ export const terminSpielerAbrufen = werkzeug({
   name: "termin_spieler_abrufen",
   titel: "Wer an einem Termin kommt",
   beschreibung:
-    "Nennt für einen Termin, welche Spieler:innen angemeldet und welche abgemeldet sind und seit wann, dazu die Zahl der " +
+    "Nennt für einen Termin, welche Spieler:innen angemeldet und welche abgemeldet sind und seit wann - an einem Spiel auch, " +
+    "wer noch ohne Meldung ist -, dazu die Zahl der " +
     "angemeldeten. Trägt der Termin Kader, stehen nur die Spieler:innen da, für die er gilt, je mit den Kadern, über die er " +
     "für sie gilt. «begonnen: true» heisst, der Stand ist der bei Beginn; dazu kommen die Nachträge, wer nicht oder doch " +
     "erschienen ist, und «anwesend». " +
@@ -220,6 +235,7 @@ export const terminSpielerAbrufen = werkzeug({
   eingabe: z.object({ termin_id: TerminId }),
   ausgabe: z.object({
     termin_id: z.string(),
+    art: z.enum(["training", "spiel"]),
     datum: z.string(),
     beginn: z.string(),
     ende: z.string(),
@@ -227,6 +243,27 @@ export const terminSpielerAbrufen = werkzeug({
     begonnen: z.boolean(),
     angemeldet: z.number().int(),
     gesamt: z.number().int(),
+    ohne_meldung: z
+      .number()
+      .int()
+      .nullable()
+      .describe("Nur an einem Spiel: wer vor Ablauf der Meldefrist noch ohne Meldung ist; danach 0. Bei Trainings null."),
+    meldefrist_verpasst: z
+      .number()
+      .int()
+      .nullable()
+      .describe("Nur an einem Spiel: wer nach Ablauf der Meldefrist ohne Meldung ist - das Team rechnet nicht mit ihnen; davor 0. Bei Trainings null."),
+    nicht_aufgeboten: z
+      .number()
+      .int()
+      .nullable()
+      .describe("Nur an einem Spiel: wie viele nicht aufgeboten sind; sie zählen weder als angemeldet noch abgemeldet noch ohne Meldung. Bei Trainings null."),
+    mindestzahl: z.number().int().nullable().describe("Nur an einem Spiel: der Richtwert, soweit festgelegt."),
+    hoechstzahl: z.number().int().nullable(),
+    meldefrist: z
+      .string()
+      .nullable()
+      .describe("Nur an einem Spiel: bis wann Eltern melden, als YYYY-MM-DDTHH:MM (Uhr am Trainingsort); null ohne Frist (bis zum Anpfiff)."),
     anwesend: z
       .number()
       .int()
@@ -242,6 +279,16 @@ export const terminSpielerAbrufen = werkzeug({
         vorname: z.string().nullable(),
         nachname: z.string().nullable(),
         abgemeldet: z.boolean().describe("Der Stand vor Beginn bzw. bei Beginn; ein Nachtrag ändert ihn nicht."),
+        meldung: z
+          .enum(["angemeldet", "abgemeldet"])
+          .nullable()
+          .describe("Die Meldung; an einem Spiel null, solange sie ohne Meldung ist. Bei Trainings nie null."),
+        nicht_aufgeboten: z
+          .boolean()
+          .describe("Nur an einem Spiel: als nicht aufgeboten gekennzeichnet; «meldung» ist dann die Meldung darunter. Bei Trainings false."),
+        meldefrist_verpasst: z
+          .boolean()
+          .describe("Nur an einem Spiel: nach Ablauf der Meldefrist ohne Meldung (und nicht als nicht aufgeboten gekennzeichnet), auch wer erst danach dazukam; zählt nicht als angemeldet. Ohne Meldefrist und bei Trainings false."),
         ehemalig: z.boolean(),
         kader: z.array(z.string()).describe("Die Kader, über die der Termin für sie gilt; leer bei einem Termin für alle."),
         anwesenheit: z.enum(["nicht_erschienen", "doch_erschienen"]).nullable().describe(ANWESENHEIT_BESCHREIBUNG),
@@ -256,22 +303,84 @@ export const terminSpielerAbrufen = werkzeug({
       }),
     ),
   }),
+  // Ein Spiel hat eigene Meldungen (#463); Zahlen ohne Bewertung (PO 2026-10-21).
   ausfuehren: async (e, zugang) =>
-    abgebildet(await terminSpieler(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) => ({
-      termin_id: w.terminId,
-      datum: w.datum,
-      beginn: w.beginn,
-      ende: w.ende,
-      ausgefallen: w.ausgefallen,
-      begonnen: w.begonnen,
-      angemeldet: w.angemeldet,
-      gesamt: w.gesamt,
-      anwesend: w.anwesend,
-      kader: w.kader,
-      nicht_betroffen: w.uebrige,
-      spieler: w.spieler.map(teilnehmerAusgabe),
-    })),
+    abgebildet(await teilnehmerAmTermin(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) =>
+      w.art === "spiel" ? spielAusgabe(w.spiel) : trainingAusgabe(w.training),
+    ),
 });
+
+/** Ein Training, wie die KI es erhält. */
+function trainingAusgabe(w: TerminSpieler) {
+  return {
+    termin_id: w.terminId,
+    art: "training" as const,
+    datum: w.datum,
+    beginn: w.beginn,
+    ende: w.ende,
+    ausgefallen: w.ausgefallen,
+    begonnen: w.begonnen,
+    angemeldet: w.angemeldet,
+    gesamt: w.gesamt,
+    ohne_meldung: null,
+    meldefrist_verpasst: null,
+    nicht_aufgeboten: null,
+    mindestzahl: null,
+    hoechstzahl: null,
+    meldefrist: null,
+    anwesend: w.anwesend,
+    kader: w.kader,
+    nicht_betroffen: w.uebrige,
+    spieler: w.spieler.map(teilnehmerAusgabe),
+  };
+}
+
+/** Ein Spiel, wie die KI es erhält (#463 AK 22). */
+function spielAusgabe(w: SpielSpieler) {
+  return {
+    termin_id: w.terminId,
+    art: "spiel" as const,
+    datum: w.datum,
+    beginn: w.beginn,
+    ende: w.ende,
+    ausgefallen: w.ausgefallen,
+    begonnen: w.begonnen,
+    angemeldet: w.angemeldet,
+    gesamt: w.gesamt,
+    // #496 AK 9: nach der Frist heissen sie «Meldefrist verpasst».
+    ohne_meldung: w.fristAbgelaufen ? 0 : w.ohneMeldung,
+    meldefrist_verpasst: w.fristAbgelaufen ? w.ohneMeldung : 0,
+    nicht_aufgeboten: w.nichtAufgeboten,
+    mindestzahl: w.richtwertMin,
+    hoechstzahl: w.richtwertMax,
+    meldefrist: w.frist,
+    anwesend: w.anwesend,
+    kader: w.kader,
+    nicht_betroffen: w.uebrige,
+    spieler: w.spieler.map((s) => spielTeilnehmerAusgabe(s, w.fristAbgelaufen)),
+  };
+}
+
+function spielTeilnehmerAusgabe(s: SpielTeilnehmer, fristAbgelaufen: boolean) {
+  return {
+    id: s.spielerId,
+    vorname: s.vorname,
+    nachname: s.nachname,
+    abgemeldet: s.meldung === "abgemeldet",
+    meldung: s.meldung,
+    nicht_aufgeboten: s.nichtAufgeboten,
+    meldefrist_verpasst: meldefristVerpasst(s.meldung, s.nichtAufgeboten, fristAbgelaufen),
+    ehemalig: s.ehemalig,
+    kader: s.kader,
+    // #487 AK 14: der Nachtrag gegen den Stand beim Anpfiff.
+    anwesenheit: s.nachgetragen
+      ? zaehlteBeimAnpfiff(s.meldung, s.nichtAufgeboten)
+        ? ("nicht_erschienen" as const)
+        : ("doch_erschienen" as const)
+      : null,
+    zuletzt_gewechselt: s.gewechseltAm && jetztAmTrainingsort(new Date(s.gewechseltAm)),
+  };
+}
 
 /** Eine Spieler:in, wie die KI sie erhält: der letzte Wechsel als Uhr am
  *  Trainingsort, nicht in UTC (#467 AK 12). */
@@ -281,6 +390,9 @@ export function teilnehmerAusgabe(s: Teilnehmer) {
     vorname: s.vorname,
     nachname: s.nachname,
     abgemeldet: s.abgemeldet,
+    meldung: s.abgemeldet ? ("abgemeldet" as const) : ("angemeldet" as const),
+    nicht_aufgeboten: false,
+    meldefrist_verpasst: false,
     ehemalig: s.ehemalig,
     kader: s.kader,
     anwesenheit: anwesenheitAusgabe(s),
@@ -299,7 +411,8 @@ export const terminAbmeldungSetzen = werkzeug({
   name: "termin_abmeldung_setzen",
   titel: "Spieler:in ab- oder anmelden",
   beschreibung:
-    "Meldet eine Spieler:in für einen Termin ab («abgemeldet: true») oder wieder an («abgemeldet: false»). " +
+    "Meldet eine Spieler:in für einen Termin ab («abgemeldet: true») oder wieder an («abgemeldet: false») - an einem " +
+    "Spiel ist «abgemeldet: false» die Anmeldung. " +
     "«termin_datum» und «termin_beginn» sind Datum und Beginn, wie du den Termin zuletzt gelesen hast: Wurde er " +
     "inzwischen verlegt, weist KiFu mit dem neuen Stand ab (Fehlerart «konflikt») - lies ihn dann neu und frag nach. " +
     `${ABMELDE_MODELL} ${TERMIN_KENNUNG_FEHLER} ${SPIELER_KENNUNG_FEHLER}`,
@@ -317,17 +430,77 @@ export const terminAbmeldungSetzen = werkzeug({
     angemeldet: z.number().int().nullable(),
     gesamt: z.number().int().nullable(),
   }),
+  ausfuehren: async (e, zugang) => {
+    const gesehen = { datum: e.termin_datum, beginn: e.termin_beginn };
+    const training = await setzeAbmeldung(zugang.supabase, zugang.userId, {
+      terminId: e.termin_id,
+      spielerId: e.spieler_id,
+      abgemeldet: e.abgemeldet,
+      gesehen,
+    });
+    // An einem Spiel die Meldung (#463 AK 22, 24): dieselben Regeln wie die
+    // Oberfläche. Die Datenebene sagt, dass es eines ist — kein Vorab-Zugriff.
+    if (!training.ok && istSpielAbweisung(training))
+      return abgebildet(
+        await setzeMeldung(zugang.supabase, zugang.userId, {
+          terminId: e.termin_id,
+          spielerId: e.spieler_id,
+          angemeldet: !e.abgemeldet,
+          gesehen,
+        }),
+        (w) => ({
+          termin_id: w.terminId,
+          abgemeldet: !w.angemeldet,
+          angemeldet: w.stand?.angemeldet ?? null,
+          gesamt: w.stand?.gesamt ?? null,
+        }),
+      );
+    return abgebildet(training, (w) => ({
+      termin_id: w.terminId,
+      abgemeldet: w.abgemeldet,
+      angemeldet: w.stand?.angemeldet ?? null,
+      gesamt: w.stand?.gesamt ?? null,
+    }));
+  },
+});
+
+// ── termin_aufgebot_setzen (#464) ───────────────────────────────────────────
+
+export const terminAufgebotSetzen = werkzeug({
+  name: "termin_aufgebot_setzen",
+  titel: "Für ein Spiel nicht aufbieten",
+  beschreibung:
+    "Kennzeichnet eine Spieler:in für ein Spiel als nicht aufgeboten («nicht_aufgeboten: true») oder hebt das auf " +
+    "(«nicht_aufgeboten: false») - etwa bei zu vielen Anmeldungen oder wenn jemand pausiert. Nur an Spielen, bis zum " +
+    "Anpfiff, nicht an einem ausgefallenen, nur für wen das Spiel gilt - dieselben Bedingungen wie beim Melden. " +
+    "«termin_datum» und «termin_beginn» sind Datum und Beginn, wie du das Spiel zuletzt gelesen hast: Wurde es " +
+    "inzwischen verlegt, weist KiFu mit dem neuen Stand ab (Fehlerart «konflikt»). KiFu stellt kein Aufgebot zusammen " +
+    `und benachrichtigt niemanden. ${ABMELDE_MODELL} ${TERMIN_KENNUNG_FEHLER} ${SPIELER_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({
+    termin_id: TerminId,
+    spieler_id: SpielerId,
+    nicht_aufgeboten: z.boolean(),
+    termin_datum: z.string().describe("Datum des Spiels, wie zuletzt gelesen, als JJJJ-MM-TT."),
+    termin_beginn: z.string().describe("Anpfiff des Spiels, wie zuletzt gelesen, als HH:MM."),
+  }),
+  ausgabe: z.object({
+    termin_id: z.string(),
+    nicht_aufgeboten: z.boolean(),
+    angemeldet: z.number().int().nullable().describe("Die Angemeldeten danach, ohne die nicht Aufgebotenen."),
+    gesamt: z.number().int().nullable(),
+  }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
-      await setzeAbmeldung(zugang.supabase, zugang.userId, {
+      await setzeAufgebot(zugang.supabase, zugang.userId, {
         terminId: e.termin_id,
         spielerId: e.spieler_id,
-        abgemeldet: e.abgemeldet,
+        nichtAufgeboten: e.nicht_aufgeboten,
         gesehen: { datum: e.termin_datum, beginn: e.termin_beginn },
       }),
       (w) => ({
         termin_id: w.terminId,
-        abgemeldet: w.abgemeldet,
+        nicht_aufgeboten: w.nichtAufgeboten,
         angemeldet: w.stand?.angemeldet ?? null,
         gesamt: w.stand?.gesamt ?? null,
       }),
@@ -342,7 +515,8 @@ export const terminAnwesenheitSetzen = werkzeug({
   beschreibung:
     "Trägt an einem begonnenen Termin nach, ob eine Spieler:in da war («da»). Gegen den Stand bei Beginn ist es ein " +
     "Nachtrag: «da: false» bei einer Angemeldeten heisst nicht erschienen, «da: true» bei einer Abgemeldeten doch " +
-    "erschienen. Gleich dem Stand bei Beginn nimmt es den Nachtrag zurück. Nur für Spieler:innen im Stand bei Beginn, " +
+    "erschienen - an einem Spiel bei einer, die ohne Meldung, abgemeldet oder nicht aufgeboten war. Gleich dem Stand " +
+    "bei Beginn nimmt es den Nachtrag zurück. Nur für Spieler:innen im Stand bei Beginn, " +
     "nicht vor Beginn und nicht an einem ausgefallenen Termin. «termin_datum» und «termin_beginn» sind Datum und Beginn, " +
     "wie du den Termin zuletzt gelesen hast: Wurde er inzwischen verlegt, weist KiFu mit dem neuen Stand ab (Fehlerart " +
     `«konflikt»). ${ABMELDE_MODELL} ${TERMIN_KENNUNG_FEHLER} ${SPIELER_KENNUNG_FEHLER}`,
@@ -386,14 +560,16 @@ const LINK_MODELL =
   "Jede Spieler:in hat einen privaten Link: Wer ihn öffnet, sieht ohne Konto den Teamnamen, Vor- und Nachnamen dieser " +
   "Spieler:in und die anstehenden Termine des Teams, die für sie gelten (bei Terminen mit Kadern nur die ihrer Kader, samt " +
   "dieser Kader), mit der Zahl der Angemeldeten und derer, für die er gilt, und meldet sie bis zum Beginn ab und " +
-  "wieder an — keine Namen anderer, kein Training, nichts Vergangenes. KiFu verschickt den Link nicht. Gib ihn nur der " +
+  "wieder an. Spiele meldet sie an oder ab bis zur Meldefrist (ohne Frist bis zum Anpfiff) und sieht dort Bezeichnung, " +
+  "Richtwert, Meldefrist, Treffpunkte, Bemerkung und ob die Spieler:in nicht aufgeboten ist — keine Namen anderer, kein " +
+  "Training, keine Nachträge, nichts Vergangenes. KiFu verschickt den Link nicht. Gib ihn nur der " +
   `Person weiter, die ihn verlangt, und nie in einer Gruppe. ${LINK_TEXT.warnung}`;
 
 const LinkAusgabe = z.object({
   spieler_id: z.string(),
   team_id: z.string(),
   name: z.string(),
-  url: z.string().describe("Der private Link. Ein Geheimnis: Wer ihn hat, kann diese Spieler:in ab- und anmelden."),
+  url: z.string().describe("Der private Link. Ein Geheimnis: Wer ihn hat, kann diese Spieler:in für Trainings ab- und anmelden und für Spiele melden."),
   hinweis: z.string(),
 });
 

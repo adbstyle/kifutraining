@@ -16,7 +16,7 @@ import { TerminSpalte } from "@/components/team/TerminSpalte";
 import { createClient } from "@/lib/supabase/server";
 import { anzahlSpieler } from "@/lib/kern/spieler";
 import { ladeKader } from "@/lib/kern/kader";
-import { heuteAmTrainingsort } from "@/lib/zeit";
+import { heuteAmTrainingsort, jetztAmTrainingsort } from "@/lib/zeit";
 
 /** #330 PC 8: der Verweis zeigt auf einen Termin, den es nicht mehr gibt. */
 const TERMIN_WEG = "Diesen Termin gibt es nicht mehr.";
@@ -55,6 +55,9 @@ export default async function TeamPlanPage({
   const hervorheben = istUuid(sp.termin) ? sp.termin : undefined;
   const terminWeg = sp.hinweis === "termin_weg";
   const heute = heuteAmTrainingsort();
+  // Der Stand beim Laden: Wechsel an Meldefrist und Anpfiff zeigt erst das
+  // nächste Laden (Epic #490, Out of Scope 6).
+  const jetzt = jetztAmTrainingsort();
 
   // Den Zugriff hat der Rahmen geprüft; gebraucht wird die eigene Kennung für
   // die Eingrenzung, das Team (aus dem Request-Cache) für die Mitglieder.
@@ -118,6 +121,7 @@ export default async function TeamPlanPage({
         <TrainingsPlan
           plan={plan}
           heute={heute}
+          jetzt={jetzt}
           ich={user.id}
           hervorheben={hervorheben}
           belegt={belegt}

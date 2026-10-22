@@ -1,17 +1,17 @@
 "use client";
 
-import { CalendarOff, CalendarPlus, ClipboardList, MessageSquareText, Pencil, PlayCircle, Trash2, Undo2, Unlink } from "lucide-react";
-import { IconButton, IconButtonLink, OverflowMenu, Tooltip, type MenuItemDef } from "@/components/ui";
+import { CalendarOff, CalendarPlus, MessageSquareText, Plus, Pencil, PlayCircle, Trash2, Undo2, Unlink } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { OverflowMenu, type MenuItemDef } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen, type TerminAktionen } from "./TerminBereich";
 import { datumKurz } from "@/lib/zeit";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
 
-/** «Training hinzufügen» an einem anstehenden Termin ohne Training — wie
- *  «Dauer hinzufügen» an einer Übung im Training (`DauerWert`): gedämpft an
- *  der Stelle, wo sonst das Training steht, mit Zustands-Ebene beim
- *  Überfahren. Ein Klick öffnet das Zuordnen. `className` setzt die Schrift
- *  der Stelle. Positioniert, damit es über der Fläche einer Zeile liegt. */
+/** «+ Training hinzufügen» an einem anstehenden Termin ohne Training — an der
+ *  Stelle, wo sonst sein Name steht, in Primary wie ein Link (Epic #490,
+ *  Tafel 2). Ein Klick öffnet das Zuordnen. `className` setzt die Schrift der
+ *  Stelle. Positioniert, damit es über der Fläche einer Zeile liegt. */
 export function TrainingHinzufuegen({ t, className }: { t: TerminZeile; className?: string }) {
   const a = useTerminAktionen();
   return (
@@ -19,12 +19,9 @@ export function TrainingHinzufuegen({ t, className }: { t: TerminZeile; classNam
       type="button"
       aria-haspopup="dialog"
       onClick={() => a.zuordnen(t)}
-      className={cn(
-        "state focus-ring pointer-events-auto relative -mx-2 -my-1 inline-flex items-center gap-1.5 rounded-flaeche px-2 py-1 text-on-surface-mittel",
-        className,
-      )}
+      className={cn("focus-ring pointer-events-auto relative inline-flex items-center gap-1 rounded-klein text-primary hover:underline", className)}
     >
-      <ClipboardList size={14} strokeWidth={2} aria-hidden className="shrink-0" />
+      <Plus size={16} strokeWidth={2.5} aria-hidden className="shrink-0" />
       Training hinzufügen
     </button>
   );
@@ -40,32 +37,37 @@ export function terminMenue(t: TerminZeile, a: TerminAktionen): MenuItemDef[] {
           { label: "Ausfall zurücknehmen", icon: Undo2, onSelect: () => a.ausfallZuruecknehmen(t) },
         ]
       : []),
-    { label: "Termin ändern", icon: Pencil, onSelect: () => a.bearbeiten(t) },
+    { label: t.art === "spiel" ? "Spiel ändern" : "Termin ändern", icon: Pencil, onSelect: () => a.bearbeiten(t) },
     ...(t.training ? [{ label: "Training lösen", icon: Unlink, onSelect: () => a.loesen(t) }] : []),
     ...(!t.ausgefallen ? [{ label: "Ausfallen lassen", icon: CalendarOff, onSelect: () => a.ausfallen(t) }] : []),
-    { label: "Termin entfernen", icon: Trash2, danger: true, onSelect: () => a.entfernen(t) },
+    { label: t.art === "spiel" ? "Spiel entfernen" : "Termin entfernen", icon: Trash2, danger: true, onSelect: () => a.entfernen(t) },
   ];
 }
 
-/** Alle Handgriffe an einer Terminzeile (#402 AK 16, 17): Durchführen und
- *  Zuordnen als Knöpfe, der Rest im Menü. Positioniert, damit sie über der
- *  Fläche der Zeile liegen und für sich bedienbar bleiben. `zuordnen: false`,
- *  wo die Zeile das Zuordnen schon selbst anbietet («Training hinzufügen»). */
+/** Alle Handgriffe an einer Terminzeile (#402 AK 16, 17) in einem Menü —
+ *  auch Durchführen und Zuordnen, damit die Zeile ruhig bleibt (PO
+ *  2026-10-22). Positioniert, damit das Menü über der Fläche der Zeile liegt
+ *  und für sich bedienbar bleibt. `zuordnen: false`, wo die Zeile das
+ *  Zuordnen schon selbst anbietet («Training hinzufügen»). */
 export function TerminHandgriffe({ t, zuordnen = true }: { t: TerminZeile; zuordnen?: boolean }) {
   const a = useTerminAktionen();
+  const router = useRouter();
+  const training = t.training;
   return (
-    <div className="relative flex shrink-0 gap-0.5">
-      {!t.ausgefallen && t.training && (
-        <Tooltip label="Durchführen">
-          <IconButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`} icon={PlayCircle} label={`${t.training.name} durchführen`} />
-        </Tooltip>
-      )}
-      {!t.ausgefallen && zuordnen && (
-        <Tooltip label={t.training ? "Training ersetzen" : "Training zuordnen"}>
-          <IconButton icon={CalendarPlus} label={`Training für ${datumKurz(t.datum)} ${t.training ? "ersetzen" : "zuordnen"}`} onClick={() => a.zuordnen(t)} />
-        </Tooltip>
-      )}
-      <OverflowMenu label={`Weitere Aktionen zum Termin ${datumKurz(t.datum)}`} items={terminMenue(t, a)} />
+    <div className="relative flex shrink-0">
+      <OverflowMenu
+        label={`Weitere Aktionen zum Termin ${datumKurz(t.datum)}`}
+        items={[
+          ...(!t.ausgefallen && training
+            ? [{ label: "Durchführen", icon: PlayCircle, onSelect: () => router.push(`/training/${training.id}/durchfuehren?termin=${t.id}`) }]
+            : []),
+          // Ein Spiel trägt nie ein Training (#459 AK 14).
+          ...(!t.ausgefallen && zuordnen && t.art === "training"
+            ? [{ label: training ? "Training ersetzen" : "Training zuordnen", icon: CalendarPlus, onSelect: () => a.zuordnen(t) }]
+            : []),
+          ...terminMenue(t, a),
+        ]}
+      />
     </div>
   );
 }

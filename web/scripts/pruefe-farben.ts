@@ -245,44 +245,23 @@ pruefe("Jede Lozenge trägt ihre Schrift auf jeder Höhenstufe", () => {
   }
 });
 
-pruefe("Kalenderblatt: Tageszahl und Beschriftung tragen auf ihrer Tönung (4.5:1)", () => {
-  // Kalenderblatt: 12 % der Zustandsfarbe über der Karte (elev-01), die Zahl
-  // in der Farbe selbst, Wochentag und Monat in der leisen Schrift.
-  const karte = elev(1);
-  for (const [was, farbe] of [["Training", PRIMARY], ["Noch kein Training", SECTION.warning.icon]] as const) {
-    const flaeche = ueberlagern(farbe, 0.12, karte);
-    const zahl = kontrast(farbe, flaeche);
-    assert.ok(zahl >= 4.5, `${was}: Zahl ${z(zahl)}:1`);
-    const leise = kontrast(deckend(hex8("#ffffff", SCHRIFT.mittel), flaeche), flaeche);
-    assert.ok(leise >= 4.5, `${was}: Beschriftung ${z(leise)}:1`);
-  }
+pruefe("Kalenderblatt: Schrift trägt auf weissem und grauem Blatt (4.5:1)", () => {
+  // Epic #490: Bevorstehend ist das Blatt die umgekehrte Fläche (`umkehr`)
+  // mit ihrer Schrift; vergangen und gestrichen grau (elev-08) mit der leisen
+  // Schrift. Dieselben Flächen hinterlegen die Tage im Mini-Monat.
+  const weiss = kontrast(UMKEHR.schrift, UMKEHR.flaeche);
+  assert.ok(weiss >= 4.5, `weisses Blatt: ${z(weiss)}:1`);
+  const grau = elev(8);
+  const leise = kontrast(deckend(hex8("#ffffff", SCHRIFT.mittel), grau), grau);
+  assert.ok(leise >= 4.5, `graues Blatt: ${z(leise)}:1`);
 });
 
-pruefe("Nächster Termin ohne Training: Tag und BlattLozenge tragen auf seiner Karte (4.5:1)", () => {
-  // Der nächste Termin liegt auf elev-04; die Lozenge in der Tönung des
-  // Kalenderblatts: 12 % der Warnfarbe, die Schrift in ihr selbst.
-  const flaeche = ueberlagern(SECTION.warning.icon, 0.12, elev(4));
-  const wert = kontrast(SECTION.warning.icon, flaeche);
-  assert.ok(wert >= 4.5, `Noch kein Training auf ${elevName(4)}: ${z(wert)}:1`);
-  // Dazu der Tag darüber, ohne Tönung in der Warnfarbe.
-  const tag = kontrast(SECTION.warning.icon, elev(4));
-  assert.ok(tag >= 4.5, `Tag ohne Training auf ${elevName(4)}: ${z(tag)}:1`);
-});
-
-pruefe("Die Zeichen im Mini-Monat heben sich von seiner Fläche ab (WCAG 1.4.11)", () => {
-  // MiniMonat: Punkt in Primary, Punkt in der Warnfarbe (`icon-warning`),
-  // das Kreuz in Rot (`icon-danger`) — als Badges auf dem Ring des Tags, auf der
-  // Fläche des Monats (elev-01). Als Grafik brauchen sie 3:1.
-  const knopf = elev(1);
-  const zeichen: [string, string][] = [
-    ["Training", PRIMARY],
-    ["Noch kein Training", SECTION.warning.icon],
-    ["Ausgefallen", SECTION.danger.icon],
-  ];
-  for (const [was, farbe] of zeichen) {
-    const wert = kontrast(farbe, knopf);
-    assert.ok(wert >= 3, `${was} auf ${elevName(1)}: ${z(wert)}:1`);
-  }
+pruefe("Mini-Monat: ein Tag mit Termin hebt sich von der Fläche ab (WCAG 1.4.11)", () => {
+  // Die helle Hinterlegung trägt «hier findet etwas statt» als Grafik (3:1)
+  // auf der Fläche des Monats (elev-01). Ein ausgefallener Tag sagt es mit
+  // dem Strich und beim Vorlesen, nicht mit seinem Grau allein.
+  const wert = kontrast(UMKEHR.flaeche, elev(1));
+  assert.ok(wert >= 3, `Termin auf ${elevName(1)}: ${z(wert)}:1`);
 });
 
 pruefe("Jede Section Message trägt Schrift und Zeichen", () => {

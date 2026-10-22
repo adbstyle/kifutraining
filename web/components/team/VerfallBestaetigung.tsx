@@ -5,6 +5,7 @@ import { TriangleAlert } from "lucide-react";
 import { Button, Dialog } from "@/components/ui";
 import { verfallDialogText } from "@/lib/spieler";
 import { kaderVerfallText } from "@/lib/kader";
+import { spielVerfallText } from "@/lib/spiel";
 
 /* Verlegen lässt Abmeldungen verfallen (#437 AK 1, PC 1): Wer sich für den
    alten Zeitpunkt abgemeldet hat, gilt am neuen wieder als angemeldet. Das
@@ -17,6 +18,7 @@ import { kaderVerfallText } from "@/lib/kader";
 export function VerfallBestaetigung({
   anzahl,
   text,
+  titel = "Abmeldungen verfallen",
   pending,
   onClose,
   onBestaetigen,
@@ -25,6 +27,8 @@ export function VerfallBestaetigung({
   anzahl: number | null;
   /** Statt des Satzes zur Verlegung. */
   text?: string;
+  /** Bei einem Spiel «Meldungen verfallen» (#463). */
+  titel?: string;
   pending?: boolean;
   onClose: () => void;
   onBestaetigen: () => void;
@@ -33,7 +37,7 @@ export function VerfallBestaetigung({
     <Dialog
       open={anzahl !== null}
       onClose={onClose}
-      title="Abmeldungen verfallen"
+      title={titel}
       actions={
         <>
           <Button variant="outlined" onClick={onClose}>Abbrechen</Button>
@@ -49,11 +53,22 @@ export function VerfallBestaetigung({
   );
 }
 
-type Frage = { anzahl: number; text?: string; weiter: () => void };
+type Frage = { anzahl: number; text?: string; titel?: string; weiter: () => void };
 
 /** Was eine Aktion zurückmeldet, die Abmeldungen verfallen lassen kann;
  *  `nachtraege`: davon Nachträge zur Anwesenheit (#475 AK 12). */
-type Antwort = { ok: boolean; error?: string; verfallend?: number; nachtraege?: number };
+type Antwort = {
+  ok: boolean;
+  error?: string;
+  verfallend?: number;
+  nachtraege?: number;
+  /** Kader (#463 AK 14): davon Meldungen zu Spielen. */
+  verfallendSpiele?: number;
+  /** Verlegen eines Spiels (#463 AK 13, 26): die Frist ist danach abgelaufen. */
+  fristAbgelaufen?: boolean;
+  /** Davon Kennzeichnungen als nicht aufgeboten (#464 AK 10). */
+  kennzeichnungen?: number;
+};
 
 /**
  * Die Rückfrage zu verfallenden Abmeldungen an einer Stelle: Zustand, Dialog
@@ -74,11 +89,29 @@ export function useVerfallRueckfrage(pending?: boolean) {
   function nachKader(r: Antwort, bestaetigt: number | false, weiter: (anzahl: number) => void): boolean {
     if (r.ok || !r.verfallend) return false;
     const n = r.verfallend;
-    setFrage({ anzahl: n, text: bestaetigt === false ? kaderVerfallText(n) : r.error, weiter: () => weiter(n) });
+    setFrage({ anzahl: n, text: bestaetigt === false ? kaderVerfallText(n, r.verfallendSpiele, r.kennzeichnungen) : r.error, weiter: () => weiter(n) });
     return true;
   }
 
   function nachVerlegung(r: Antwort & { verfallend: number }, weiter: () => void) {
+    // Ein Spiel (#463 AK 13, 26; #464 AK 10; #487 AK 13): Meldungen,
+    // Kennzeichnungen, Nachträge und die Frist.
+    if (r.fristAbgelaufen !== undefined) {
+      const k = r.kennzeichnungen ?? 0;
+      const n = r.nachtraege ?? 0;
+      const meldungen = r.verfallend - k - n;
+      const text = `${spielVerfallText(meldungen, r.fristAbgelaufen, k, n)}${meldungen > 0 ? " Für den neuen Tag melden sich alle neu." : ""}`;
+      const titel =
+        meldungen > 0
+          ? "Meldungen verfallen"
+          : k > 0
+            ? "Kennzeichnungen verfallen"
+            : n > 0
+              ? "Nachträge verfallen"
+              : "Meldefrist abgelaufen";
+      setFrage({ anzahl: r.verfallend, text, titel, weiter });
+      return;
+    }
     const nachtraege = r.nachtraege ?? 0;
     setFrage({ anzahl: r.verfallend, text: verfallDialogText(r.verfallend - nachtraege, nachtraege), weiter });
   }
@@ -87,6 +120,7 @@ export function useVerfallRueckfrage(pending?: boolean) {
     <VerfallBestaetigung
       anzahl={frage?.anzahl ?? null}
       text={frage?.text}
+      titel={frage?.titel}
       pending={pending}
       onClose={() => setFrage(null)}
       onBestaetigen={() => {
