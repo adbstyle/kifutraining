@@ -120,33 +120,41 @@ export function NaechsterTermin({
           </SectionMessage>
         )}
 
-        <KartenAbschnitt titel="Team" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
-          <TeamStand t={t} ich={ich} nachFrist={nachFrist} />
-        </KartenAbschnitt>
-
         {t.spiel ? (
-          t.spiel.treffpunkte.length > 0 && (
-            <KartenAbschnitt titel="Treffpunkte">
-              <TreffpunktListe
-                treffpunkte={[...t.spiel.treffpunkte].reverse()}
-                spieltag={t.datum}
-                spielOrt={t.ort}
-                className="type-body-medium text-on-surface"
-              />
+          <>
+            <KartenAbschnitt titel="Team" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
+              <TeamStand t={t} ich={ich} nachFrist={nachFrist} />
             </KartenAbschnitt>
-          )
-        ) : (
-          <KartenAbschnitt titel="Platz">
-            {t.felder && t.felder.length > 0 ? (
-              <ul className="flex flex-col gap-1 type-body-medium text-on-surface">
-                {t.felder.map((f, i, alle) => (
-                  <li key={i}>{alle.length > 1 ? `${feldName(i, alle.length)}: ${feldText(f)}` : feldText(f)}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="type-body-medium text-on-surface-mittel">Nicht erfasst</p>
+            {t.spiel.treffpunkte.length > 0 && (
+              <KartenAbschnitt titel="Treffpunkte">
+                <TreffpunktListe
+                  treffpunkte={[...t.spiel.treffpunkte].reverse()}
+                  spieltag={t.datum}
+                  spielOrt={t.ort}
+                  className="type-body-medium text-on-surface"
+                />
+              </KartenAbschnitt>
             )}
-          </KartenAbschnitt>
+          </>
+        ) : (
+          // Beim Training stehen Team und Platz ab Tabletbreite nebeneinander,
+          // auf gleicher Höhe (PO 2026-10-22); schmal untereinander.
+          <div className="grid gap-x-6 gap-y-3.5 sm:grid-cols-2">
+            <KartenAbschnitt titel="Team" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
+              <TeamStand t={t} ich={ich} nachFrist={nachFrist} />
+            </KartenAbschnitt>
+            <KartenAbschnitt titel="Platz">
+              {t.felder && t.felder.length > 0 ? (
+                <ul className="flex flex-col gap-1 type-body-medium text-on-surface">
+                  {t.felder.map((f, i, alle) => (
+                    <li key={i}>{alle.length > 1 ? `${feldName(i, alle.length)}: ${feldText(f)}` : feldText(f)}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="type-body-medium text-on-surface-mittel">Nicht erfasst</p>
+              )}
+            </KartenAbschnitt>
+          </div>
         )}
 
         <div className="flex flex-wrap gap-2">
