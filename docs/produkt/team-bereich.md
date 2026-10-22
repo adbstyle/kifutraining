@@ -348,7 +348,9 @@ den Terminen ein Monat und bleibt beim Scrollen stehen. Er zeigt Monat und Jahr,
 Montag bis Sonntag samt den Randtagen der Nachbarmonate — immer sechs Wochen, damit er beim
 Blättern nicht in der Höhe springt — und hebt den heutigen Tag hervor. Jeder Tag sieht aus wie
 das Kalenderblatt der Liste: mit einem Spiel weiss hinterlegt, mit nur Trainings hell umrandet,
-mit nur ausgefallenen Terminen grau und durchgestrichen. Eine Legende darunter nennt alle drei,
+mit nur ausgefallenen Terminen grau und durchgestrichen. Trägt ein Termin des Tages einen
+farbigen Status, sitzt oben rechts ein Punkt in dessen Farbe — rot etwa, wenn für ein Spiel zu
+wenige angemeldet sind; bei mehreren gilt der dringlichste. Eine Legende darunter nennt die Flächen,
 und vorgelesen wird jeder Termin beim Namen, ein ausgefallener mit „fällt aus". Wie im Google Kalender folgt der Monat der Liste: Er
 zeigt den Monat des obersten Termins, den man gerade sieht. Mit den Pfeilen und „Heute"
 wechselt nur der Monat, die Liste bleibt stehen, bis man wieder scrollt. Ein Klick auf einen

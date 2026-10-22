@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { MiniMonat, type Marke } from "@/components/ui";
+import { MiniMonat, type Marke, type StatusTon } from "@/components/ui";
+import { terminStatus } from "@/lib/termin-status";
 import { monatVon } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
@@ -92,13 +93,22 @@ export function PlanMonat({
       for (const tag of tage)
         m.set(
           tag.datum,
-          tag.termine.map((t) => {
+          tag.termine.map((t): Marke => {
             const was = t.spiel ? `Spiel ${t.spiel.bezeichnung}` : t.training ? t.training.name : "Training";
-            return { id: t.id, spiel: t.art === "spiel", ausgefallen: t.ausgefallen, label: `${t.beginn} ${was}` };
+            // Der farbige Status setzt den Punkt am Tag (Epic #490); vorgelesen wird er mit.
+            const status = terminStatus(t, heute);
+            const ton = status && status.appearance !== "neutral" ? (status.appearance as StatusTon) : undefined;
+            return {
+              id: t.id,
+              spiel: t.art === "spiel",
+              ausgefallen: t.ausgefallen,
+              ton,
+              label: `${t.beginn} ${was}${status && !t.ausgefallen ? `, ${status.wort}` : ""}`,
+            };
           }),
         );
     return m;
-  }, [termine]);
+  }, [termine, heute]);
   const belegteTage = useMemo(() => new Set(belegt), [belegt]);
 
   function waehle(id: string) {

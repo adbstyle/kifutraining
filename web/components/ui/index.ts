@@ -14,7 +14,7 @@ export { Card } from "./Card";
 export { Kalenderblatt } from "./Kalenderblatt";
 export { Meldebalken } from "./Meldebalken";
 export { MiniMonat } from "./MiniMonat";
-export type { Marke } from "./MiniMonat";
+export type { Marke, StatusTon } from "./MiniMonat";
 export { AuswahlListe } from "./AuswahlListe";
 export type { AuswahlEintrag } from "./AuswahlListe";
 export { FormAbschnitt } from "./FormAbschnitt";

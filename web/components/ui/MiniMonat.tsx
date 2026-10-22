@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 import { monatsName, monatsRaster, monatVon, plusMonate, tagText } from "@/lib/monat";
 import { Button } from "./Button";
 import { IconButton } from "./IconButton";
+import { ZeichenPunkt, type ZeichenPunktTon } from "./ZeichenPunkt";
 
 const WOCHENTAGE = [
   ["Mo", "Montag"],
@@ -23,8 +24,12 @@ export type Marke = {
   id: string;
   spiel: boolean;
   ausgefallen: boolean;
+  /** Die Farbe seines Status, wenn er eine trägt (grün, gelb, rot). */
+  ton?: StatusTon;
   label: string;
 };
+
+export type StatusTon = Extract<ZeichenPunktTon, "success" | "warning" | "danger">;
 
 /** Was ein Tag im Monat trägt: ein Spiel geht einem Training vor, beides
  *  einem Tag mit nur ausgefallenen Terminen. */
@@ -37,30 +42,40 @@ function tagStand(marken: readonly Marke[]): TagStand | undefined {
   return statt.some((m) => m.spiel) ? "spiel" : "training";
 }
 
+/** Der dringlichste Status eines Tages — rot vor gelb vor grün. */
+const RANG: StatusTon[] = ["danger", "warning", "success"];
+function tagTon(marken: readonly Marke[]): StatusTon | undefined {
+  return RANG.find((ton) => marken.some((m) => !m.ausgefallen && m.ton === ton));
+}
+
 /** Die Zahl des Tages (Epic #490) — wie das Kalenderblatt in der Liste: ein
  *  Tag mit einem Spiel weiss hinterlegt, einer mit nur Trainings hell
  *  umrandet (PO 2026-10-22), einer mit nur ausgefallenen Terminen grau und
  *  durchgestrichen. Heute ohne Termin auf Primary, mit Termin dessen Fläche
  *  und ein Rahmen in Primary. `belegt`: der gepunktete Ring, wo etwas liegt,
- *  das der Monat nicht zeigt. */
+ *  das der Monat nicht zeigt. `ton`: ein Punkt oben rechts in der Farbe des
+ *  dringlichsten farbigen Status (PO 2026-10-22), etwa rot, wenn für ein
+ *  Spiel zu wenige gemeldet sind. */
 function Tageszahl({
   tag,
   heute,
   imMonat,
   stand,
+  ton,
   belegt = false,
 }: {
   tag: string;
   heute: string;
   imMonat: boolean;
   stand?: TagStand;
+  ton?: StatusTon;
   belegt?: boolean;
 }) {
   return (
     <span
       aria-hidden
       className={cn(
-        "flex size-6 items-center justify-center rounded-klein type-body-small",
+        "relative flex size-6 items-center justify-center rounded-klein type-body-small",
         stand === "spiel"
           ? "umkehr font-medium text-on-surface"
           : stand === "training"
@@ -83,6 +98,7 @@ function Tageszahl({
       )}
     >
       {Number(tag.slice(8))}
+      {ton && <ZeichenPunkt ton={ton} className="-top-1 -right-1" />}
     </span>
   );
 }
@@ -179,7 +195,7 @@ export function MiniMonat({
                       onClick={() => onWahl(liste[0].id)}
                       className="state focus-ring flex h-9 w-full items-center justify-center rounded-flaeche"
                     >
-                      <Tageszahl tag={tag} heute={heute} imMonat={imMonat} stand={stand} />
+                      <Tageszahl tag={tag} heute={heute} imMonat={imMonat} stand={stand} ton={tagTon(liste)} />
                     </button>
                   ) : (
                     <div className="flex h-9 items-center justify-center">
