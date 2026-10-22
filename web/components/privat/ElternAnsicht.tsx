@@ -112,7 +112,8 @@ export function ElternAnsicht({
       t.angemeldet == null || t.gesamt == null
         ? null
         : { quelle: "liste" as const, angemeldet: t.angemeldet + Number(t.abgemeldet) - Number(ab), gesamt: t.gesamt, anwesend: null }; // Eltern sehen den Stand bei Beginn (#475 AK 16).
-    const zweite = t.ausgefallen ? "Fällt aus" : t.begonnen ? "Hat begonnen · nicht mehr änderbar" : null;
+    // «Fällt aus» sagt schon die Lozenge; ausgefallen bleibt der Ort stehen.
+    const zweite = !t.ausgefallen && t.begonnen ? "Hat begonnen · nicht mehr änderbar" : null;
     return { ab, zweite, zahl };
   }
 
@@ -183,7 +184,7 @@ export function ElternAnsicht({
 type KarteProps = {
   t: LinkTermin;
   ab: boolean;
-  /** Statt Ort und Zahl: ausgefallen oder begonnen. */
+  /** Statt des Orts: begonnen und nicht mehr änderbar. */
   zweite: string | null;
   zahl: Spielerzahl | null;
   name: string;
