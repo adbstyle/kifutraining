@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-10-20. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-10-22. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -261,27 +261,34 @@ Bemerkung, Verantwortliche, Felder und erwartete Spielerzahl. Dabei unterscheide
 Angabe zu Platz und Spielerzahl, ob sie unbekannt ist oder ob ausdrücklich nichts da ist: Ein
 Termin ohne Felder hat einen unbekannten Platz, eine leere Grösse, Toranzahl oder
 Untergrundangabe gilt als unbekannt, ebenso eine nicht erfasste Spielerzahl; 0 Tore einer
-Torart heisst dagegen, dass keine dastehen. Ein anstehender
-Termin ohne Training, der nicht ausgefallen ist, gilt auch für ihn als noch nicht vorbereitet.
+Torart heisst dagegen, dass keine dastehen. Jeder Termin sagt zudem, ob er ein Training oder ein
+Spiel ist; ein Spiel nennt seine Bezeichnung, Mindest- und Höchstzahl, die Meldefrist, die
+Treffpunkte und, wurde es verlegt, den zuletzt gültigen Zeitpunkt davor. Ein anstehendes
+Training ohne Inhalt, das nicht ausgefallen ist, gilt auch für ihn als noch nicht vorbereitet, ein
+Spiel nie.
 
-Er legt einzelne Termine fest — Datum, Beginn und Ende sind auch hier Pflicht, Felder und
-erwartete Spielerzahl wie in der Anwendung freiwillig — und wöchentliche Terminserien mit
-Wochentagen, Zeitraum, Zeit, Ort, Bemerkung, Verantwortlichen, Feldern und erwarteter
-Spielerzahl; eine erwartete Zahl weist die Anwendung wie dort ab, solange das Team eine
-Spielerliste führt, ausser an einem Termin, der schon begonnen hat. Er ändert und entfernt Termine; bei einem Serientermin muss er sagen, ob es nur für
+Er legt einzelne Termine fest — Datum, Beginn und Ende sind auch hier Pflicht, Felder und erwartete
+Spielerzahl wie in der Anwendung freiwillig, und jeder neue Termin nennt, ob er ein Training oder
+ein Spiel ist. Ein Spiel legt er wie in der Anwendung mit Bezeichnung und einem Anpfiff fest, der
+noch bevorsteht, auf Wunsch mit Mindest- und Höchstzahl, Meldefrist und Treffpunkten, die er stets
+als ganze Liste angibt; Felder und erwartete Spielerzahl weist die Anwendung an einem Spiel ab. Dazu
+kommen wöchentliche Terminserien, immer aus Trainings, mit Wochentagen, Zeitraum, Zeit, Ort,
+Bemerkung, Verantwortlichen, Feldern und erwarteter Spielerzahl; eine erwartete Zahl weist die
+Anwendung wie dort ab, solange das Team eine Spielerliste führt, ausser an einem Termin, der schon
+begonnen hat. Er ändert und entfernt Termine; bei einem Serientermin muss er sagen, ob es nur für
 diesen, für diesen und alle folgenden oder für alle Termine der Serie gilt, sonst lehnt die
-Anwendung ab. Felder gibt er dabei stets als ganze Liste an, die die bisherige ersetzt; Felder
-und Spielerzahl entfernt er auch wieder, an einem einzelnen Serientermin mit derselben Wirkung
-wie in der Anwendung: Der Termin weicht dann ab und gilt als unbekannt. Eine abweichende
-Angabe lässt er wieder der Serie folgen, Felder und Spielerzahl eingeschlossen, das Datum
-ausgenommen. Er ordnet Terminen Trainings zu
-— aus dem Bestand des Teams, das Training eines anderen Termins oder ein eigenes persönliches
-Training jeder Altersstufe —, ersetzt und löst sie. Wie in der Anwendung bekommt der Termin
-dabei immer still eine eigene Kopie, ein Termin-Training, das nicht in den Bestand kommt und
-mit seinem Termin lebt: Löst er es, ersetzt es oder entfällt der Termin, wird es gelöscht. Er trägt Verantwortliche ein, ändert und
-entfernt sie, lässt Termine ausfallen, setzt, ändert oder leert den Grund und nimmt einen Ausfall
-zurück. Ein Training ohne bestehenden Termin auf ein Datum zu setzen, gibt es auch beim
-Assistenten nicht mehr; er legt zuerst den Termin fest und ordnet das Training dann zu.
+Anwendung ab. Felder gibt er dabei stets als ganze Liste an, die die bisherige ersetzt; Felder und
+Spielerzahl entfernt er auch wieder, an einem einzelnen Serientermin mit derselben Wirkung wie in
+der Anwendung: Der Termin weicht dann ab und gilt als unbekannt. Eine abweichende Angabe lässt er
+wieder der Serie folgen, Felder und Spielerzahl eingeschlossen, das Datum ausgenommen. Er ordnet
+Terminen Trainings zu — aus dem Bestand des Teams, das Training eines anderen Termins oder ein
+eigenes persönliches Training jeder Altersstufe —, ersetzt und löst sie. Wie in der Anwendung
+bekommt der Termin dabei immer still eine eigene Kopie, ein Termin-Training, das nicht in den
+Bestand kommt und mit seinem Termin lebt: Löst er es, ersetzt es oder entfällt der Termin, wird es
+gelöscht. Er trägt Verantwortliche ein, ändert und entfernt sie, lässt Termine ausfallen, setzt,
+ändert oder leert den Grund und nimmt einen Ausfall zurück. Ein Training ohne bestehenden Termin auf
+ein Datum zu setzen, gibt es auch beim Assistenten nicht mehr; er legt zuerst den Termin fest und
+ordnet das Training dann zu.
 
 Auch die Spielerliste eines Teams führt der Assistent nach den Regeln des
 [Team-Bereichs](team-bereich.md#spielerliste). Er liest sie mit Vorname, Nachname, Jahrgang,
@@ -295,10 +302,21 @@ wann — Datum und Uhrzeit des letzten Wechsels, auch an vergangenen Terminen �
 Stand bei Beginn ist und ab Beginn, wer nicht erschienen oder doch erschienen ist und wie viele
 da waren. Er meldet ab und wieder an und trägt ab Beginn nach, ob eine Spieler:in da war, und
 nennt dafür Datum und Beginn, wie er den Termin zuletzt gelesen hat; wurde er inzwischen
-verlegt, weist die Anwendung mit dem neuen Stand ab. Er holt und erneuert
+verlegt, weist die Anwendung mit dem neuen Stand ab.
+
+An einem Spiel erfährt der Assistent für jede Spieler:in ihre Meldung oder dass sie noch ohne
+Meldung ist, ob sie als nicht aufgeboten gekennzeichnet ist und ob sie die Meldefrist verpasst
+hat, dazu die Zahl der Angemeldeten, der noch ohne Meldung, der mit verpasster Meldefrist und der
+nicht Aufgebotenen sowie Mindest- und Höchstzahl und die Meldefrist. Wie die Zahl zum Richtwert
+steht, sagt ihm die Anwendung nicht; das beurteilt er selbst. Er meldet Spieler:innen für Spiele
+an und ab — wie ein Mitglied bis zum Anpfiff, auch nach der Meldefrist —, kennzeichnet sie als
+nicht aufgeboten und hebt das auf und trägt ab dem Anpfiff nach, wer nicht oder doch erschienen
+ist, jeweils mit Datum und Anpfiff, wie er das Spiel zuletzt gelesen hat. Er holt und erneuert
 den privaten Link einer Spieler:in, sieht, ob die Selbstabholung eingeschaltet ist, schaltet sie
 ein und aus und holt und erneuert die Abholadresse. Vor- und Nachnamen, Jahrgänge und
-J+S-Nummern der Spieler:innen, wann sie sich ab- und angemeldet haben, wer nicht oder doch erschienen ist, ihre privaten Links und die Abholadresse gelangen damit zum Anbieter
+J+S-Nummern der Spieler:innen, wann sie sich ab- und angemeldet haben, ihre Meldungen zu Spielen,
+wer nicht aufgeboten und wer nicht oder doch erschienen ist, ihre privaten Links und die
+Abholadresse gelangen damit zum Anbieter
 des verbundenen Assistenten.
 
 Damit er den Platzbedarf einer Übung mit den Feldern eines Termins vergleichen kann, erfährt der
@@ -314,23 +332,25 @@ freiwillige Spielfeldgrösse der Platzbedarf einer Übung. Ob ein Training zu Pl
 Spielerzahl eines Termins passt, beurteilt der Assistent aus diesen Angaben selbst.
 
 Es gelten dieselben Regeln wie in der Anwendung, und abgewiesen wird mit denselben Sätzen.
-Nachfragen muss der Assistent nicht: Er entfernt, ersetzt, löst und lässt ausfallen
-ohne Bestätigung, ebenso entfernt er Spieler:innen und erneuert Links und die Abholadresse.
-Ausgenommen sind Änderungen und Entfernungen einer Serie für folgende oder
-alle Termine, die vergangene Termine erfassen oder entfallen lassen: Die führt die Anwendung
-erst aus, wenn der Aufruf das ausdrücklich bestätigt, und nennt vorher, wie viele vergangene
-Termine es trifft. Ebenso verlangt sie eine Bestätigung, wenn eine Änderung von Datum oder
-Beginn Abmeldungen verfallen lässt — am einzelnen Termin, über die Serie oder wenn die Zeit
-wieder der Serie folgt —, und nennt vorher, wie viele; nach einer Änderung erfährt der Assistent,
-wie viele verfallen sind. Nach jedem Schritt erfährt der Assistent, was geschehen ist — welche
-entfallenen Termine ein Training trugen und ob es mit ihnen gelöscht wurde oder im Bestand
-blieb, welches Termin-Training beim Zuordnen entstand, welches Training ein ersetztes oder
-gelöstes war und ob es gelöscht wurde und, falls eine gescheiterte Kopie nicht ganz aufgeräumt
-werden konnte, was davon stehen blieb. Ein Team, in dem man nicht Mitglied ist, gilt als nicht gefunden.
-Kalender-Abos holt, zeigt und widerruft der Assistent nicht, und Teams gründen, umbenennen,
-auflösen oder Mitglieder verwalten kann er nicht. Damit legt der Assistent Trainings beider
-Altersstufen an und führt sie samt dem Kalender der Teams weitgehend wie die Anwendung; was ihm
-fehlt, steht unter den bekannten Grenzen.
+Nachfragen muss der Assistent nicht: Er entfernt, ersetzt, löst und lässt ausfallen ohne
+Bestätigung, ebenso entfernt er Spieler:innen und erneuert Links und die Abholadresse. Ausgenommen
+sind Änderungen und Entfernungen einer Serie für folgende oder alle Termine, die vergangene Termine
+erfassen oder entfallen lassen: Die führt die Anwendung erst aus, wenn der Aufruf das ausdrücklich
+bestätigt, und nennt vorher, wie viele vergangene Termine es trifft. Ebenso verlangt sie eine
+Bestätigung, wenn eine Änderung von Datum oder Beginn Abmeldungen verfallen lässt — am einzelnen
+Termin, über die Serie oder wenn die Zeit wieder der Serie folgt —, und nennt vorher, wie viele;
+nach einer Änderung erfährt der Assistent, wie viele verfallen sind. Bei einem Spiel verlangt sie
+die Bestätigung, wenn ein anderes Datum Meldungen oder Kennzeichnungen als nicht aufgeboten
+verfallen lässt, wenn eine Verlegung Nachträge verfallen lässt oder die Meldefrist ins Abgelaufene
+rückt, und beim Entfernen eines Spiels, das Meldungen oder Kennzeichnungen trägt. Nach jedem Schritt
+erfährt der Assistent, was geschehen ist — welche entfallenen Termine ein Training trugen und ob es
+mit ihnen gelöscht wurde oder im Bestand blieb, welches Termin-Training beim Zuordnen entstand,
+welches Training ein ersetztes oder gelöstes war und ob es gelöscht wurde und, falls eine
+gescheiterte Kopie nicht ganz aufgeräumt werden konnte, was davon stehen blieb. Ein Team, in dem man
+nicht Mitglied ist, gilt als nicht gefunden. Kalender-Abos holt, zeigt und widerruft der Assistent
+nicht, und Teams gründen, umbenennen, auflösen oder Mitglieder verwalten kann er nicht. Damit legt
+der Assistent Trainings beider Altersstufen an und führt sie samt dem Kalender der Teams weitgehend
+wie die Anwendung; was ihm fehlt, steht unter den bekannten Grenzen.
 
 Verbunden wird in zwei Schritten. Zuerst trägt man die Adresse `https://ki-fu.ch/api/mcp` in
 den Assistenten ein; die Konto-Seite nennt sie ebenfalls und zeigt die zwei gängigen Wege: In
@@ -341,30 +361,30 @@ auf der man den Zugriff erlaubt oder ablehnt. Wer dort nicht angemeldet ist, mel
 Seite zurück, wo er weiterhin ablehnen kann. Ein Passwort oder einen Schlüssel muss man dem
 Assistenten nie geben.
 
-Die Seite zum Erlauben nennt, welcher Assistent anfragt, mit welchem Konto man angemeldet ist
-und wohin es danach zurückgeht. Sie zählt auf, was ein Zugang künftig insgesamt darf — also
-auch das, was erst mit späteren Erweiterungen dazukommt und heute noch nicht geht —, im
-Wortlaut der Seite: „Übungen suchen und abrufen - den ganzen Bestand, den du auch in KiFu
-siehst"; „eigene Übungen samt Feld-Diagramm anlegen, kopieren, ändern, öffentlich schalten und
-zurückziehen"; „Trainings anlegen, überarbeiten, veröffentlichen, zurückziehen, übernehmen und
-löschen"; „Team-Trainings deiner Teams führen und im Kalender deiner Teams Termine und
-Terminserien samt Platz, erwarteter Spielerzahl und Kadern festlegen, ändern und entfernen, ihnen
-als Kopie Trainings aus dem Team oder deine persönlichen Trainings zuordnen und sie wieder lösen,
-Verantwortliche eintragen, Ausfälle festhalten und zurücknehmen sowie die Termine eines
-Zeitraums abrufen"; „die Anzeigenamen der
-Mitglieder deiner Teams lesen (ohne E-Mail-Adressen)"; „die Spielerliste deiner Teams (Vorname,
-Nachname, Jahrgang, J+S-Nummer) einsehen und führen, Kader anlegen, umbenennen und entfernen
-und ihnen Spieler:innen zuteilen, Spieler:innen für Termine ab- und wieder
-anmelden und sehen, wer angemeldet ist und seit wann, ab Beginn nachtragen, wer nicht oder doch
-erschienen ist, den privaten Link einer Spieler:in holen und erneuern,
-die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche
-Links bezogen wurden". Nie erreichbar sind „deine Favoriten",
-„die Verwaltung deiner Teams (gründen, umbenennen, Mitglieder aufnehmen oder entfernen)" und
-„dein Konto selbst (Anzeigename, Passwort, Löschen)". Kommt eine dieser Fähigkeiten dazu, muss
-man nicht erneut zustimmen; auch wer seinen Zugang erlaubt hat, bevor der Kalender, Platz
-und Spielerzahl der Termine, die Spielerliste samt Abmeldungen, Links und Selbstabholung oder
-die Kader dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt die
-Seite, nur zu erlauben, wenn man das Verbinden eben selbst gestartet hat.
+Die Seite zum Erlauben nennt, welcher Assistent anfragt, mit welchem Konto man angemeldet ist und
+wohin es danach zurückgeht. Sie zählt auf, was ein Zugang künftig insgesamt darf — also auch das,
+was erst mit späteren Erweiterungen dazukommt und heute noch nicht geht —, im Wortlaut der Seite:
+„Übungen suchen und abrufen - den ganzen Bestand, den du auch in KiFu siehst"; „eigene Übungen samt
+Feld-Diagramm anlegen, kopieren, ändern, öffentlich schalten und zurückziehen"; „Trainings anlegen,
+überarbeiten, veröffentlichen, zurückziehen, übernehmen und löschen"; „Team-Trainings deiner Teams
+führen und im Kalender deiner Teams Termine und Terminserien samt Platz, erwarteter Spielerzahl und
+Kadern sowie Spiele mit Bezeichnung, Richtwert, Meldefrist und Treffpunkten festlegen, ändern und
+entfernen, ihnen als Kopie Trainings aus dem Team oder deine persönlichen Trainings zuordnen und sie
+wieder lösen, Verantwortliche eintragen, Ausfälle festhalten und zurücknehmen sowie die Termine
+eines Zeitraums abrufen"; „die Anzeigenamen der Mitglieder deiner Teams lesen (ohne
+E-Mail-Adressen)"; „die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen
+und führen, Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen
+für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten
+kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab
+Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link
+einer Spieler:in holen und erneuern, die Selbstabholung ein- und ausschalten, die Abholadresse holen
+und erneuern und sehen, welche Links bezogen wurden". Nie erreichbar sind „deine Favoriten", „die
+Verwaltung deiner Teams (gründen, umbenennen, Mitglieder aufnehmen oder entfernen)" und „dein Konto
+selbst (Anzeigename, Passwort, Löschen)". Kommt eine dieser Fähigkeiten dazu, muss man nicht erneut
+zustimmen; auch wer seinen Zugang erlaubt hat, bevor der Kalender, Platz und Spielerzahl der
+Termine, die Spielerliste samt Abmeldungen, Links und Selbstabholung oder die Kader oder die Spiele
+dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt
+die Seite, nur zu erlauben, wenn man das Verbinden eben selbst gestartet hat.
 
 Beim Erlauben kann man dem Zugang einen eigenen Namen geben, etwa „Claude auf dem Laptop",
 höchstens vierzig Zeichen. Vorgeschlagen ist der Name, den der Assistent selbst nennt; wer ihn
@@ -500,15 +520,16 @@ Trainings als Kopie zu einem Termin, auch eines persönlichen. Bricht das Kopier
 auf diese Weise ab, kann eine kopierte Bilddatei ohne Übung liegen bleiben; zu sehen ist sie
 nirgends.
 
-Im Kalender fragt der Assistent vor dem Entfernen eines Termins, dem Löschen eines Trainings
-mit Termin, dem Zuordnen, Ersetzen und Lösen nicht nach. Fallen durch eine
-Serienänderung anstehende Termine mit Training weg, erfährt er das erst danach; nur wenn
-vergangene Termine erfasst sind oder entfallen oder Abmeldungen oder Nachträge verfallen — durch
-eine Verlegung oder eine Änderung an Kadern —, verlangt die
-Anwendung eine Bestätigung im Aufruf und nennt vorher, was es trifft. Ob ein Termin
-stattgefunden hat, kennt die Anwendung auch über den Assistenten nicht, und wer dabei war, nur
-aus dem Stand bei Beginn und den Nachträgen; ob jemand die Anwesenheit geprüft hat, erfährt er
-nicht. Auch beim Entfernen von Spieler:innen und Kadern, beim Erneuern von Links
-und der Abholadresse und beim Schalten der Selbstabholung verlangt die Anwendung keine
-Bestätigung; ob er vorher nachfragt, liegt bei ihm. Die Liste aller Spieler:innen mit ihren Abmeldungen für mehrere Termine auf einmal liest er
-nicht; wer an einem Termin kommt, ruft er Termin für Termin ab.
+Im Kalender fragt der Assistent vor dem Entfernen eines Termins, dem Löschen eines Trainings mit
+Termin, dem Zuordnen, Ersetzen und Lösen nicht nach. Fallen durch eine Serienänderung anstehende
+Termine mit Training weg, erfährt er das erst danach; nur wenn vergangene Termine erfasst sind oder
+entfallen, Abmeldungen, Meldungen zu Spielen, Kennzeichnungen oder Nachträge verfallen — durch eine
+Verlegung oder eine Änderung an Kadern —, die Meldefrist eines Spiels ins Abgelaufene rückt oder ein
+Spiel mit Meldungen oder Kennzeichnungen entfernt wird, verlangt die Anwendung eine Bestätigung im
+Aufruf und nennt vorher, was es trifft. Ob ein Termin stattgefunden hat, kennt die Anwendung auch
+über den Assistenten nicht, und wer dabei war, nur aus dem Stand bei Beginn und den Nachträgen; ob
+jemand die Anwesenheit geprüft hat, erfährt er nicht. Auch beim Entfernen von Spieler:innen und
+Kadern, beim Erneuern von Links und der Abholadresse und beim Schalten der Selbstabholung verlangt
+die Anwendung keine Bestätigung; ob er vorher nachfragt, liegt bei ihm. Die Liste aller
+Spieler:innen mit ihren Abmeldungen für mehrere Termine auf einmal liest er nicht; wer an einem
+Termin kommt, ruft er Termin für Termin ab.
