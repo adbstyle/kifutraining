@@ -15,7 +15,8 @@ import type { TerminZeile } from "./queries/termine-fuer";
    seinem Namen, überall, wo Mitglieder Termine sehen. Die Farbe unterstreicht
    nur das Wort, die Zahl daneben steht immer ungefärbt.
 
-   - Training: «Vorbereitet» (grau), «Nicht vorbereitet» (gelb).
+   - Training: «Vorbereitet» (grün), «Nicht vorbereitet» (grau) — so bleibt
+     der Plan ruhig, wo die meisten Trainings noch offen sind (PO 2026-10-22).
    - Spiel: wie seine Spielerzahl zum Richtwert steht — «Zu wenig» und «Zu
      viel» rot, «Knapp» gelb, «Genügend» grün. Ohne Richtwert oder ohne
      Spielerliste gibt es keinen.
@@ -31,8 +32,8 @@ export const SPIEL_STATUS: Record<RichtwertStufe, TerminStatus> = {
 };
 
 export const TERMIN_STATUS = {
-  vorbereitet: { wort: "Vorbereitet", appearance: "neutral" },
-  nichtVorbereitet: { wort: "Nicht vorbereitet", appearance: "warning" },
+  vorbereitet: { wort: "Vorbereitet", appearance: "success" },
+  nichtVorbereitet: { wort: "Nicht vorbereitet", appearance: "neutral" },
   faelltAus: { wort: "Fällt aus", appearance: "neutral" },
 } as const satisfies Record<string, TerminStatus>;
 

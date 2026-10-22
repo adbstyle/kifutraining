@@ -2403,14 +2403,14 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Status in einem Wort</strong> (<code>terminStatus</code>, <code>spielStatus</code>,{" "}
             <code>meldeStatus</code>, Epic #490): über dem Namen eines Termins und an jeder Spieler:in eines Spiels. Die
-            Farbe unterstreicht nur das Wort; Zahlen bleiben ungefärbt. Training: Vorbereitet grau, Nicht vorbereitet
-            gelb. Spiel gegen seinen Richtwert: Zu wenig und Zu viel rot, Knapp (genau die Mindestzahl) gelb, Genügend
+            Farbe unterstreicht nur das Wort; Zahlen bleiben ungefärbt. Training: Vorbereitet grün, Nicht vorbereitet
+            grau. Spiel gegen seinen Richtwert: Zu wenig und Zu viel rot, Knapp (genau die Mindestzahl) gelb, Genügend
             grün; ohne Richtwert keiner. Fällt aus grau. Spieler:in: Ohne Meldung gelb, nach der Meldefrist
             Meldefrist verpasst rot, Angemeldet grün, Abgemeldet und Nicht aufgeboten rot.
           </p>
           <div className="mb-6 flex flex-wrap items-center gap-3">
-            <Lozenge>Vorbereitet</Lozenge>
-            <Lozenge appearance="warning">Nicht vorbereitet</Lozenge>
+            <Lozenge appearance="success">Vorbereitet</Lozenge>
+            <Lozenge>Nicht vorbereitet</Lozenge>
             <Lozenge appearance="danger">Zu wenig</Lozenge>
             <Lozenge appearance="warning">Knapp</Lozenge>
             <Lozenge appearance="success">Genügend</Lozenge>
