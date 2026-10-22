@@ -17,7 +17,7 @@ import { nachMonatUndTag } from "@/lib/plan-gliederung";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
 // (next/headers) ins Client-Bundle.
 import { nochNichtVorbereitet, verantwortlicheMitDir, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
-import { blattStand, terminStatus } from "@/lib/termin-status";
+import { blattStand, nachMeldefrist, terminStatus } from "@/lib/termin-status";
 
 /* Der Kalender eines Teams als Liste (Team-Kalender #322, #323; gegliedert
    mit Story 18 und Epic #401): zuoberst, was ansteht, danach der Rückblick,
@@ -31,6 +31,7 @@ import { blattStand, terminStatus } from "@/lib/termin-status";
 export function TrainingsPlan({
   plan,
   heute,
+  jetzt,
   ich,
   hervorheben,
   belegt,
@@ -40,6 +41,8 @@ export function TrainingsPlan({
 }: {
   plan: Plan;
   heute: string;
+  /** `YYYY-MM-DDTHH:MM` am Trainingsort — der Stand beim Laden (#494). */
+  jetzt: string;
   ich: string;
   hervorheben?: string;
   /** Tage mit Terminen, die «Meine Termine» ausblendet (#404 AK 14). */
@@ -96,8 +99,8 @@ export function TrainingsPlan({
           <h3 className="type-title-small text-on-surface-mittel">
             Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
           </h3>
-          {naechster && <NaechsterTermin t={naechster} heute={heute} ich={ich} meine={meine} hervorgehoben={naechster.id === hervorheben} />}
-          <PlanMonate termine={danach} heute={heute} ich={ich} meine={meine} hervorheben={hervorheben} />
+          {naechster && <NaechsterTermin t={naechster} heute={heute} jetzt={jetzt} ich={ich} meine={meine} hervorgehoben={naechster.id === hervorheben} />}
+          <PlanMonate termine={danach} heute={heute} jetzt={jetzt} ich={ich} meine={meine} hervorheben={hervorheben} />
         </section>
       )}
       {plan.vergangen.length > 0 && (
@@ -108,7 +111,7 @@ export function TrainingsPlan({
           defaultOpen={nichtsMehrOffen || imRueckblick || rueckblickAuf > 0}
           className={cn(!nichtsMehrOffen && "mt-6")}
         >
-          <PlanMonate termine={plan.vergangen} heute={heute} ich={ich} meine={meine} hervorheben={hervorheben} />
+          <PlanMonate termine={plan.vergangen} heute={heute} jetzt={jetzt} ich={ich} meine={meine} hervorheben={hervorheben} />
         </Disclosure>
       )}
     </>
@@ -141,28 +144,67 @@ export function TrainingsPlan({
 }
 
 /** Termine nach Monat und Tag: je Monat eine Überschrift mit Jahr, je Tag eine
- *  Karte mit seinen Terminen als Zeilen, jede mit ihrem Kalenderblatt. */
-function PlanMonate({ termine, heute, ich, meine, hervorheben }: { termine: TerminZeile[]; heute: string; ich: string; meine: boolean; hervorheben?: string }) {
+ *  Karte mit seinen Terminen als Zeilen, jede mit ihrem Kalenderblatt. Ein
+ *  Spiel nach der Meldefrist steht an seinem Platz als grosse Karte statt als
+ *  Zeile (#494 AK 1); die Zeilen davor und danach bilden je eine Karte. */
+function PlanMonate({
+  termine,
+  heute,
+  jetzt,
+  ich,
+  meine,
+  hervorheben,
+}: {
+  termine: TerminZeile[];
+  heute: string;
+  jetzt: string;
+  ich: string;
+  meine: boolean;
+  hervorheben?: string;
+}) {
   return nachMonatUndTag(termine).map((m) => (
     <section key={m.monat} className="mt-4 first:mt-2">
       <h4 className="type-title-small text-on-surface">{monatsName(m.monat)}</h4>
       <ol className="mt-2 flex flex-col gap-2">
-        {m.tage.map((tag) => (
-          <li key={tag.datum}>
-            {/* Ohne Polsterung: Die Zeilen füllen die Karte, ihre Zustands-
-                Ebene beim Überfahren reicht bis an deren Rand. */}
-            <Card>
-              <ol className="divide-y divide-linie">
-                {tag.termine.map((t, i) => (
-                  <TerminReihe key={t.id} t={t} heute={heute} ich={ich} meine={meine} hervorgehoben={t.id === hervorheben} ersterDesTages={i === 0} />
-                ))}
-              </ol>
-            </Card>
-          </li>
-        ))}
+        {m.tage.flatMap((tag) => {
+          // Die erste Zeile des Tages trägt dessen Überschrift.
+          const erste = tag.termine.find((t) => !nachMeldefrist(t, jetzt));
+          return abschnitte(tag.termine, (t) => nachMeldefrist(t, jetzt)).map((teil) =>
+            teil.gross ? (
+              <li key={teil.termine[0].id}>
+                <NaechsterTermin t={teil.termine[0]} heute={heute} jetzt={jetzt} ich={ich} meine={meine} hervorgehoben={teil.termine[0].id === hervorheben} naechster={false} />
+              </li>
+            ) : (
+              <li key={teil.termine[0].id}>
+                {/* Ohne Polsterung: Die Zeilen füllen die Karte, ihre Zustands-
+                    Ebene beim Überfahren reicht bis an deren Rand. */}
+                <Card>
+                  <ol className="divide-y divide-linie">
+                    {teil.termine.map((t) => (
+                      <TerminReihe key={t.id} t={t} heute={heute} ich={ich} meine={meine} hervorgehoben={t.id === hervorheben} ersterDesTages={t === erste} />
+                    ))}
+                  </ol>
+                </Card>
+              </li>
+            ),
+          );
+        })}
       </ol>
     </section>
   ));
+}
+
+/** Teilt die Termine eines Tages in Folgen gewöhnlicher Zeilen und einzelne
+ *  grosse Karten, in ihrer Reihenfolge. */
+function abschnitte(termine: TerminZeile[], gross: (t: TerminZeile) => boolean): { gross: boolean; termine: TerminZeile[] }[] {
+  const teile: { gross: boolean; termine: TerminZeile[] }[] = [];
+  for (const t of termine) {
+    const g = gross(t);
+    const letzter = teile.at(-1);
+    if (!g && letzter && !letzter.gross) letzter.termine.push(t);
+    else teile.push({ gross: g, termine: [t] });
+  }
+  return teile;
 }
 
 /* Ein Termin als knappe Zeile (#402; Epic #490, Tafel 2 und 2c). Die ganze

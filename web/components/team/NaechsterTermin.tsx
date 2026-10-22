@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { CalendarPlus } from "lucide-react";
-import { Button, ButtonLink, Kalenderblatt, Lozenge, Meldebalken, OverflowMenu, TreffpunktListe } from "@/components/ui";
+import { Button, ButtonLink, Kalenderblatt, Lozenge, Meldebalken, OverflowMenu, SectionMessage, TreffpunktListe } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { zeitText } from "@/lib/termin";
@@ -11,7 +11,7 @@ import { zeitpunktKurz } from "@/lib/spiel";
 import { feldName, feldText } from "@/lib/termin-felder";
 import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { terminHref } from "@/lib/team-ansicht";
-import { terminStatus } from "@/lib/termin-status";
+import { handlungsMeldung, nachMeldefrist, terminStatus } from "@/lib/termin-status";
 import { verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { useTerminAktionen } from "./TerminBereich";
 import { terminMenue } from "./TerminHandgriffe";
@@ -34,19 +34,27 @@ import { KaderLozenges } from "./KaderLozenge";
 export function NaechsterTermin({
   t,
   heute,
+  jetzt,
   ich,
   meine,
   hervorgehoben,
+  naechster = true,
 }: {
   t: TerminZeile;
   heute: string;
+  /** `YYYY-MM-DDTHH:MM` am Trainingsort, für die Meldefrist (#494). */
+  jetzt: string;
   ich: string;
   meine: boolean;
   hervorgehoben: boolean;
+  /** `false`: ein Spiel nach der Meldefrist in der Liste, nicht «Als Nächstes» (#494). */
+  naechster?: boolean;
 }) {
   const a = useTerminAktionen();
   const zeit = zeitText(t.beginn, t.ende);
   const status = terminStatus(t, heute);
+  const nachFrist = nachMeldefrist(t, jetzt);
+  const handlung = nachFrist ? handlungsMeldung(t) : null;
   const name = t.spiel ? t.spiel.bezeichnung : t.training ? t.training.name : "Noch kein Training";
   const oeffnen = terminHref(t.teamId, meine, t.id);
   return (
@@ -57,7 +65,8 @@ export function NaechsterTermin({
       tabIndex={-1}
       className={cn(
         // Eine Stufe höher als die Karten der Tage darunter: abgehoben (AK 1).
-        "relative mt-2 rounded-flaeche bg-elev-04 p-4 outline-none focus:border-primary",
+        "relative rounded-flaeche bg-elev-04 p-4 outline-none focus:border-primary",
+        naechster && "mt-2",
         hervorgehoben ? "kontur border-primary" : "kontur border-kante",
       )}
     >
@@ -73,7 +82,7 @@ export function NaechsterTermin({
             {status && <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>}
             <h4 className="type-title-large max-w-full text-on-surface">
               <Link href={oeffnen} scroll={false} className="focus-ring rounded-klein hover:underline">
-                <span className="sr-only">Nächster Termin, {tagOhneJahr(t.datum)}: </span>
+                <span className="sr-only">{naechster ? "Nächster Termin" : "Spiel nach der Meldefrist"}, {tagOhneJahr(t.datum)}: </span>
                 {name}
               </Link>
             </h4>
@@ -88,8 +97,17 @@ export function NaechsterTermin({
           />
         </div>
 
+        {/* #494: Nach der Meldefrist meldet sich niemand mehr von selbst — die
+            Karte sagt, was vor dem Anpfiff zu tun ist. `status`, damit beim
+            Laden nicht jede Karte als Alarm vorgelesen wird. */}
+        {handlung && (
+          <SectionMessage appearance={handlung.appearance} role="status">
+            {handlung.text}
+          </SectionMessage>
+        )}
+
         <Abschnitt titel="Team" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
-          <TeamStand t={t} ich={ich} />
+          <TeamStand t={t} ich={ich} nachFrist={nachFrist} />
         </Abschnitt>
 
         {t.spiel ? (
@@ -157,7 +175,7 @@ function Abschnitt({ titel, zusatz, children }: { titel: string; zusatz?: React.
  *  Spiel, wie viele noch ohne Meldung sind, und die Meldefrist. Ohne
  *  Spielerliste die erwartete Zahl (Training) bzw. dass nicht gemeldet wird
  *  (Spiel). */
-function TeamStand({ t, ich }: { t: TerminZeile; ich: string }) {
+function TeamStand({ t, ich, nachFrist }: { t: TerminZeile; ich: string; nachFrist: boolean }) {
   const v = verantwortlicheMitDir(t, ich).text;
   const s = t.spielstand;
   if (!s) {
@@ -172,7 +190,7 @@ function TeamStand({ t, ich }: { t: TerminZeile; ich: string }) {
       ? ["Stand beim Anpfiff"]
       : [
         (s.ohne_meldung ?? 0) > 0 ? `${s.ohne_meldung} ohne Meldung` : "alle haben sich gemeldet",
-        t.spiel.meldefrist && `Meldefrist ${zeitpunktKurz(t.spiel.meldefrist)}`,
+        t.spiel.meldefrist && `Meldefrist ${nachFrist ? "abgelaufen " : ""}${zeitpunktKurz(t.spiel.meldefrist)}`,
         ]
     : [da === null && `${s.gesamt - s.angemeldet} abgemeldet · änderbar bis zum Beginn`, v && `verantwortlich ${v}`];
   return (

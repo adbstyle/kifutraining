@@ -130,7 +130,7 @@ import { aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type Abo
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
-import { blattStand, spielStatus, terminStatus } from "../lib/termin-status";
+import { blattStand, handlungsMeldung, nachMeldefrist, spielStatus, terminStatus } from "../lib/termin-status";
 import {
   SPIELER_MELDUNG,
   SPIELER_TEXT,
@@ -646,6 +646,21 @@ pruefe("Status eines Termins in einem Wort, Kalenderblatt weiss oder grau (#491)
   assert.equal(terminStatus({ ...spiel, spiel: { ...spiel.spiel, richtwertMin: null, richtwertMax: null }, spielstand: stand(9) }, "2026-11-01"), null, "ohne Richtwert");
   assert.equal(spielStatus(30, 9, null)?.wort, "Genügend", "nur Mindestzahl: nie zu viel");
   assert.equal(spielStatus(0, null, 12)?.wort, "Genügend", "nur Höchstzahl: nie zu wenig");
+
+  // #494: grosse Karte nach der Meldefrist bis zum Anpfiff, mit Handlung.
+  const nachFrist = { ...spiel, beginn: "10:00", spielstand: stand(7), spiel: { ...spiel.spiel, meldefrist: "2026-10-29T20:00" } };
+  assert.equal(nachMeldefrist(nachFrist, "2026-10-29T19:59"), false, "Frist läuft");
+  assert.equal(nachMeldefrist(nachFrist, "2026-10-29T20:00"), true, "ab der Frist");
+  assert.equal(nachMeldefrist(nachFrist, "2026-11-03T09:59"), true);
+  assert.equal(nachMeldefrist(nachFrist, "2026-11-03T10:00"), false, "ab Anpfiff wieder Zeile");
+  assert.equal(nachMeldefrist({ ...nachFrist, ausgefallen: true }, "2026-10-30T12:00"), false, "ausgefallen nie");
+  assert.equal(nachMeldefrist({ ...nachFrist, spielstand: null }, "2026-10-30T12:00"), false, "ohne Spielerliste nie");
+  assert.equal(nachMeldefrist({ ...nachFrist, spiel: { ...nachFrist.spiel, richtwertMin: null, richtwertMax: null } }, "2026-10-30T12:00"), false, "ohne Richtwert nie");
+  assert.equal(nachMeldefrist({ ...nachFrist, spiel: { ...nachFrist.spiel, meldefrist: null } }, "2026-10-30T12:00"), false, "ohne Meldefrist nie");
+  assert.deepEqual(handlungsMeldung(nachFrist), { appearance: "error", text: "Es fehlen 2 bis zur Mindestzahl 9. Spieler:innen direkt anfragen." });
+  assert.equal(handlungsMeldung({ ...nachFrist, spielstand: stand(9) })?.appearance, "warning");
+  assert.deepEqual(handlungsMeldung({ ...nachFrist, spielstand: stand(13) }), { appearance: "error", text: "1 über der Höchstzahl 12. Aufgebot klären." });
+  assert.equal(handlungsMeldung({ ...nachFrist, spielstand: stand(11) }), null, "genügend ohne Meldung");
 
   assert.equal(blattStand(t, "2026-11-03"), "aktiv");
   assert.equal(blattStand(t, "2026-11-04"), "vergangen");
