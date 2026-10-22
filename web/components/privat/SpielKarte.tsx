@@ -1,33 +1,28 @@
 "use client";
 
-import { Shirt } from "lucide-react";
-import {
-  Button,
-  Kalenderblatt,
-  Lozenge,
-  RichtwertLozenge,
-  SectionMessage,
-  SpielLozenge,
-  TreffpunktListe,
-  richtwertSchrift,
-} from "@/components/ui";
+import { Button, Kalenderblatt, Lozenge, Meldebalken, SectionMessage, TreffpunktListe } from "@/components/ui";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
+import { KartenAbschnitt } from "@/components/team/KartenAbschnitt";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr, tagText } from "@/lib/monat";
 import type { LinkTermin } from "@/lib/privater-link";
-import { AUFGEBOT_TEXT, MELDUNG_TEXT, richtwertText, zeitpunktKurz, type Meldung } from "@/lib/spiel";
+import { AUFGEBOT_TEXT, zeitpunktKurz, type Meldung } from "@/lib/spiel";
+import { TERMIN_STATUS, meldeStatus } from "@/lib/termin-status";
 
-/* Ein Spiel am privaten Link (#459 AK 17, #463 AK 3, 7, 11, 12, 15, 21; Design
-   PO 2026-10-21): Die Meldung steht nur als Lozenge — Angemeldet grün,
-   Abgemeldet rot —, daneben bis wann sie sich ändern lässt. Darunter nur die
-   Handlung, die möglich ist, als Knopf ohne Zeichen: ohne Meldung
-   «Anmelden» (gefüllt) und «Abmelden», sonst die jeweils andere. Nach der
-   Meldefrist keine Knöpfe, sondern der Weg übers Team; ab dem Anpfiff gilt
-   der Stand beim Anpfiff. Abgemeldet steht die Karte leise rot getönt, mit
-   rotem Kalenderblatt. Treffpunkte und Bemerkung stehen unabhängig von der
-   Meldung da; ein ausgefallenes Spiel zeigt nur die Bemerkung (#465 AK 10,
-   11). Nicht aufgeboten (#464 AK 9) steht sie wie abgemeldet rot, mit der
-   Lozenge und dem Weg übers Team statt Knöpfen. */
+/* Ein Spiel am privaten Link (#459, #463, #464, #465; Epic #490, Tafel 9).
+   Von oben nach unten: Kalenderblatt, der Status der eigenen Spieler:in als
+   Lozenge, Bezeichnung, Zeit und Ort; bis wann sich melden lässt; die
+   Handlung als Knopf; Hinweise zur Verlegung oder zu einem Fehler;
+   TREFFPUNKTE, frühester zuerst; TEAM mit Balken; BEMERKUNG.
+
+   - Ohne Meldung «Anmelden» hell und «Abmelden» umrandet, sonst nur der eine
+     mögliche Wechsel umrandet. Nach der Meldefrist, ab dem Anpfiff und bei
+     nicht aufgeboten keine Knöpfe, nur der Satz dazu.
+   - Abgemeldet, nicht aufgeboten, Meldefrist verpasst und ausgefallen: Die
+     Karte tritt gedämpft zurück, das Kalenderblatt grau und durchgestrichen.
+   - Treffpunkte nur, solange das Spiel nicht begonnen hat und die
+     Spieler:in dabei sein kann.
+   - Ein ausgefallenes Spiel zeigt nur Kopf und Bemerkung (#465 AK 10, 11). */
 export function SpielKarte({
   t,
   meldung,
@@ -48,97 +43,56 @@ export function SpielKarte({
   pending: boolean;
   /** «Als Nächstes»: grösser, auf höherer Fläche. */
   gross?: boolean;
-  /** Über der Zeit, etwa «Morgen · Samstag, 31. Oktober». */
+  /** Über dem Namen, etwa «Morgen · Samstag, 31. Oktober». */
   kopf?: string;
   fehler?: string;
   onMelden: (an: boolean) => void;
 }) {
   const nichtAufgeboten = t.nicht_aufgeboten && !t.ausgefallen;
-  const abgemeldet = (meldung === "abgemeldet" || nichtAufgeboten) && !t.ausgefallen;
+  const status = t.ausgefallen ? TERMIN_STATUS.faelltAus : meldeStatus(meldung, nichtAufgeboten, t.frist_abgelaufen);
+  // Zählt nicht: abgemeldet, nicht aufgeboten, Meldefrist verpasst, ausgefallen.
+  const gedaempft = t.ausgefallen || nichtAufgeboten || meldung === "abgemeldet" || (meldung === null && t.frist_abgelaufen);
   const offen = !t.ausgefallen && !t.begonnen && !t.frist_abgelaufen && !nichtAufgeboten;
-  const richtwert = richtwertText(t.richtwert_min, t.richtwert_max);
+  const frist = t.begonnen
+    ? "Hat begonnen · nicht mehr änderbar"
+    : t.frist_abgelaufen
+      ? "Meldefrist abgelaufen · Änderung übers Team"
+      : t.frist
+        ? `${meldung === null ? "Bitte melden bis" : "Änderbar bis"} ${zeitpunktKurz(t.frist)}`
+        : "Änderbar bis zum Anpfiff";
+  const treffpunkte = !t.begonnen && !gedaempft && t.treffpunkte && t.treffpunkte.length > 0 ? t.treffpunkte : null;
   const Element = gross ? "div" : "li";
   return (
     <Element
       className={cn(
         "flex flex-col gap-3 rounded-flaeche",
-        gross ? "kontur border-kante p-4" : "px-3 py-2.5",
-        abgemeldet ? "bg-section-danger/60" : gross ? "bg-elev-04" : "bg-elev-01",
+        gross ? "p-4" : "px-3 py-3",
+        gedaempft ? "kontur border-linie bg-transparent" : gross ? "kontur border-kante bg-elev-04" : "bg-elev-01",
       )}
     >
       <div className="flex items-start gap-3">
-        {!gross && (
-          <Kalenderblatt
-            datum={t.datum}
-            zustand={t.ausgefallen ? "ausgefallen" : abgemeldet ? "abgemeldet" : "spiel"}
-            className="self-start"
-          />
-        )}
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          {kopf && <p className={cn("type-title-small", abgemeldet ? "text-error" : "text-on-lozenge-discovery")}>{kopf}</p>}
-          <span className="flex min-w-0 items-center gap-2">
-            <SpielLozenge />
-            <span className={cn("truncate text-on-surface", gross ? "type-title-large" : "type-title-small", t.ausgefallen && "line-through")}>
-              {t.bezeichnung}
-            </span>
+        <Kalenderblatt datum={t.datum} stand={gedaempft ? "gestrichen" : "aktiv"} />
+        <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+          {kopf && <p className="type-title-small text-on-surface-mittel">{kopf}</p>}
+          <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>
+          <span className={cn("max-w-full truncate", gross ? "type-title-large" : "type-title-small", gedaempft ? "text-on-surface-mittel" : "text-on-surface", t.ausgefallen && "line-through")}>
+            {t.bezeichnung}
           </span>
-          <span className={cn("text-on-surface", gross ? "type-headline-small" : "type-body-medium")}>
-            {gross && !kopf && <>{tagOhneJahr(t.datum)} · </>}
+          <span className={cn(gross ? "type-title-medium" : "type-body-medium", "text-on-surface-mittel")}>
             {t.beginn}–{t.ende}
             {gross && " Uhr"}
           </span>
-          {(t.ort || angemeldet !== null || (t.nicht_aufgeboten_zahl ?? 0) > 0) && (
-            <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 type-body-small text-on-surface-mittel">
-              {t.ort && <span className="min-w-0">{t.ort}</span>}
-              {angemeldet !== null && t.gesamt !== null && (
-                <span className="inline-flex shrink-0 items-center gap-1">
-                  <Shirt size={14} className="shrink-0" aria-hidden />
-                  <span aria-hidden className={richtwertSchrift(angemeldet, t.richtwert_min, t.richtwert_max)}>
-                    {angemeldet}/{t.gesamt}
-                  </span>
-                  <span className="sr-only">
-                    Spielerzahl {angemeldet} von {t.gesamt}
-                  </span>
-                </span>
-              )}
-              {/* #464 AK 8: wie viele nicht aufgeboten sind. */}
-              {(t.nicht_aufgeboten_zahl ?? 0) > 0 && <span>{t.nicht_aufgeboten_zahl} nicht aufgeboten</span>}
-            </p>
-          )}
-          {richtwert && angemeldet !== null && (
-            <span className="flex flex-wrap items-center gap-2 type-body-small text-on-surface-mittel">
-              Richtwert {richtwert}
-              <RichtwertLozenge zahl={angemeldet} min={t.richtwert_min} max={t.richtwert_max} />
-            </span>
-          )}
-          <KaderLozenges namen={t.kader} className="mt-1" />
-          {t.ausgefallen ? (
-            <span className="type-body-small text-on-surface-mittel">Fällt aus</span>
-          ) : nichtAufgeboten ? (
-            <span className="flex flex-wrap items-center gap-2 type-body-small text-on-surface-mittel">
-              <Lozenge appearance="danger">{AUFGEBOT_TEXT.nichtAufgeboten}</Lozenge>
-              {AUFGEBOT_TEXT.eltern(name)}
-            </span>
-          ) : (
-            <span className="flex flex-wrap items-center gap-2 type-body-small text-on-surface-mittel">
-              {meldung === "angemeldet" && <Lozenge appearance="success">{MELDUNG_TEXT.angemeldet}</Lozenge>}
-              {meldung === "abgemeldet" && <Lozenge appearance="danger">{MELDUNG_TEXT.abgemeldet}</Lozenge>}
-              {t.begonnen
-                ? "Hat begonnen · nicht mehr änderbar"
-                : t.frist_abgelaufen
-                  ? "Meldefrist abgelaufen · Änderung übers Team"
-                  : t.frist
-                    ? `Änderbar bis ${zeitpunktKurz(t.frist)}`
-                    : "Änderbar bis zum Anpfiff"}
-            </span>
-          )}
+          {t.ort && <span className="type-body-medium text-on-surface-mittel">{t.ort}</span>}
         </div>
       </div>
+      {!t.ausgefallen && (
+        <p className="type-body-small text-on-surface-mittel">{nichtAufgeboten ? AUFGEBOT_TEXT.eltern(name) : frist}</p>
+      )}
       {offen && (
         <div className="flex flex-wrap gap-2">
           {meldung !== "angemeldet" && (
             <Button
-              variant={meldung === null ? "filled" : "outlined"}
+              variant={meldung === null ? "hell" : "outlined"}
               disabled={pending}
               onClick={() => onMelden(true)}
               aria-label={`${name} am ${tagText(t.datum)} anmelden`}
@@ -153,18 +107,6 @@ export function SpielKarte({
           )}
         </div>
       )}
-      {t.treffpunkte && t.treffpunkte.length > 0 && (
-        <div className="flex flex-col gap-1">
-          <span className="type-label-medium text-on-surface-mittel">Treffpunkte</span>
-          <TreffpunktListe treffpunkte={t.treffpunkte} spieltag={t.datum} spielOrt={t.ort} className="type-body-medium text-on-surface" />
-        </div>
-      )}
-      {t.bemerkung && (
-        <div className="flex flex-col gap-1">
-          <span className="type-label-medium text-on-surface-mittel">Bemerkung</span>
-          <p className="type-body-medium whitespace-pre-line text-on-surface">{t.bemerkung}</p>
-        </div>
-      )}
       {t.vorher && !t.ausgefallen && !t.begonnen && (
         <SectionMessage>
           Verlegt, vorher {tagOhneJahr(t.vorher.datum)} um {t.vorher.beginn}.{" "}
@@ -173,6 +115,31 @@ export function SpielKarte({
         </SectionMessage>
       )}
       {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
+      {treffpunkte && (
+        <KartenAbschnitt ebene="h4" titel="Treffpunkte">
+          <TreffpunktListe treffpunkte={treffpunkte} spieltag={t.datum} spielOrt={t.ort} className="type-body-medium text-on-surface" />
+        </KartenAbschnitt>
+      )}
+      {!t.ausgefallen && (
+        <KartenAbschnitt ebene="h4" titel="Team" zusatz={<KaderLozenges namen={t.kader} />}>
+          {angemeldet !== null && t.gesamt !== null ? (
+            <Meldebalken
+              zahl={angemeldet}
+              gesamt={t.gesamt}
+              min={t.richtwert_min}
+              max={t.richtwert_max}
+              zusatz={(t.nicht_aufgeboten_zahl ?? 0) > 0 ? `${t.nicht_aufgeboten_zahl} nicht aufgeboten` : undefined}
+            />
+          ) : (
+            <p className="type-body-medium text-on-surface-mittel">Das Team führt keine Spielerliste.</p>
+          )}
+        </KartenAbschnitt>
+      )}
+      {t.bemerkung && (
+        <KartenAbschnitt ebene="h4" titel="Bemerkung">
+          <p className="type-body-medium whitespace-pre-line text-on-surface">{t.bemerkung}</p>
+        </KartenAbschnitt>
+      )}
     </Element>
   );
 }

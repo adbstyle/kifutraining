@@ -9,10 +9,7 @@ import {
   Lozenge,
   HerkunftLozenge,
   SichtbarkeitLozenge,
-  SpielLozenge,
-  RichtwertLozenge,
   TreffpunktListe,
-  richtwertSchrift,
   Card,
   ExerciseCard,
   FormAbschnitt,
@@ -20,8 +17,8 @@ import {
   IconButton,
   IconButtonLink,
   ZeichenPunkt,
-  BlattLozenge,
   Kalenderblatt,
+  Meldebalken,
   KategorieLozenge,
   TabNav,
   Tooltip,
@@ -73,6 +70,7 @@ import { ChipMenuDemo } from "./ChipMenuDemo";
 import { MaterialDemo } from "./MaterialDemo";
 import { FelderDemo } from "./FelderDemo";
 import { MiniMonatDemo } from "./MiniMonatDemo";
+import { LozengeAuswahlDemo } from "./LozengeAuswahlDemo";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import { TrainingCard } from "@/components/training/TrainingCard";
@@ -97,7 +95,6 @@ import {
   Layers,
   RefreshCw,
   CalendarOff,
-  TriangleAlert,
   CalendarPlus,
   Link2,
   Tag,
@@ -257,6 +254,7 @@ const GLIEDERUNG = [
           { id: "material", titel: "Material" },
           { id: "kalenderblatt", titel: "Kalenderblatt" },
           { id: "mini-monat", titel: "Mini-Monat" },
+          { id: "meldebalken", titel: "Meldebalken" },
           { id: "platz-spielerzahl", titel: "Platz und Spielerzahl eines Termins" },
         ],
       },
@@ -1887,8 +1885,10 @@ export default async function Styleguide() {
             begonnen); <code>neutral</code> grau ohne Zeichen, wenn es nichts zu
             wählen gibt (er fällt aus) - und für die Aus-Lage eines Schalters,
             dessen Aus kein Fehlen bedeutet (die Selbstabholung eines Teams).
-            <code>ton=&quot;erfolg&quot;</code> legt die An-Lage ins Grün der Success-Lozenge, gespiegelt zur roten
-            Aus-Lage: für «angemeldet» und «da», weil ein angemeldetes Kind bei Spielen grün erscheint (Epic #448).
+            <code>ton=&quot;ruhig&quot;</code> (Epic #490) für «angemeldet» und «da» an Trainings: Der Schalter zeigt den
+            Stand, ohne ihn zu bewerten - an eine durchsichtige Bahn mit heller Kontur und grossem hellem Knopf rechts
+            (wie ein Ghost-Knopf), aus eine dunkle Bahn mit grauer Kontur und kleinem grauem Knopf links. Ohne Zeichen:
+            Lage und Grösse des Knopfs sagen den Stand, nicht die Farbe.
             Darunter liegt ein echtes{" "}
             <code>&lt;input type=&quot;checkbox&quot; role=&quot;switch&quot;&gt;</code>.
           </p>
@@ -2290,6 +2290,13 @@ export default async function Styleguide() {
             Aussage, die auch ohne es ankommt.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Trenner, Hinweis, Ziel</strong> (Epic #490, für die <code>LozengeAuswahl</code>):{" "}
+            <code>trenner</code> setzt einen Strich vor einen Eintrag - Seltenes steht danach;{" "}
+            <code>hinweis</code> setzt einen leisen Satz unter die Zeile, mit ihr verknüpft
+            (<code>aria-describedby</code>), etwa wohin ein Rückgängig führt; <code>trailing</code> nimmt
+            neben einem Kürzel auch ein Element, etwa Pfeil und Ziel-Lozenge eines Wechsels.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Tastatur:</strong> Beim Öffnen springt der Fokus auf den
             ersten Eintrag, <kbd>↑</kbd>/<kbd>↓</kbd> laufen zyklisch,{" "}
             <kbd>Home</kbd>/<kbd>End</kbd> an die Enden. Den Fokus an den Trigger
@@ -2365,8 +2372,7 @@ export default async function Styleguide() {
             stehen fertig als <code>HerkunftLozenge</code> und{" "}
             <code>SichtbarkeitLozenge</code>; der Entwurf trägt den Stift, damit
             er sich vom Manual-Bestand nicht nur im Wort unterscheidet. Ein Spiel
-            trägt überall, wo Termine erscheinen, die <code>SpielLozenge</code>{" "}
-            (<code>discovery</code>, Epic #448) — in der Tönung seines Kalenderblatts.
+            trägt keine eigene Lozenge; es zeigt sich an Name und Status (Epic #490).
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Über einem Bild</strong> (<code>aufBild</code>, etwa die
@@ -2393,24 +2399,36 @@ export default async function Styleguide() {
             </Lozenge>
             <Lozenge>Kinderfussball</Lozenge>
             <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
-            <SpielLozenge />
           </div>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-            <strong>Richtwert</strong> (<code>RichtwertLozenge</code>, <code>richtwertSchrift</code>, Epic #448): wie die
-            Spielerzahl eines Spiels zu Mindest- und Höchstzahl steht. Unter der Mindestzahl im Fehlerton, genau die
-            Mindestzahl (knapp) und über der Höchstzahl in der Warnung, dazwischen im Erfolg (PO 2026-10-21). Bewertet
-            wird nur gegen festgelegte Grenzen; ohne Richtwert bleibt die Zahl neutral. Die Lozenge sagt die Stufe in
-            Worten, die Farbe trägt sie nie allein.
+            <strong>Status in einem Wort</strong> (<code>terminStatus</code>, <code>spielStatus</code>,{" "}
+            <code>meldeStatus</code>, Epic #490): über dem Namen eines Termins und an jeder Spieler:in eines Spiels. Die
+            Farbe unterstreicht nur das Wort; Zahlen bleiben ungefärbt. Training: Vorbereitet grau, Nicht vorbereitet
+            gelb. Spiel gegen seinen Richtwert: Zu wenig und Zu viel rot, Knapp (genau die Mindestzahl) gelb, Genügend
+            grün; ohne Richtwert keiner. Fällt aus grau. Spieler:in: Ohne Meldung gelb, nach der Meldefrist
+            Meldefrist verpasst rot, Angemeldet grün, Abgemeldet und Nicht aufgeboten rot.
           </p>
           <div className="mb-6 flex flex-wrap items-center gap-3">
-            <span className={richtwertSchrift(7, 9, 12)}>7</span>
-            <RichtwertLozenge zahl={7} min={9} max={12} />
-            <span className={richtwertSchrift(9, 9, 12)}>9</span>
-            <RichtwertLozenge zahl={9} min={9} max={12} />
-            <span className={richtwertSchrift(11, 9, 12)}>11</span>
-            <RichtwertLozenge zahl={11} min={9} max={12} />
-            <span className={richtwertSchrift(14, 9, 12)}>14</span>
-            <RichtwertLozenge zahl={14} min={9} max={12} />
+            <Lozenge>Vorbereitet</Lozenge>
+            <Lozenge appearance="warning">Nicht vorbereitet</Lozenge>
+            <Lozenge appearance="danger">Zu wenig</Lozenge>
+            <Lozenge appearance="warning">Knapp</Lozenge>
+            <Lozenge appearance="success">Genügend</Lozenge>
+            <Lozenge appearance="danger">Zu viel</Lozenge>
+            <Lozenge>Fällt aus</Lozenge>
+            <Lozenge appearance="danger">Meldefrist verpasst</Lozenge>
+          </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>LozengeAuswahl</strong> (Epic #490): eine Lozenge, die zugleich der Knopf für ein Menü ist - wie
+            Jiras Status-Lozenge. Neu, weil der Status einer Spieler:in dort geändert werden soll, wo er steht; sie
+            ersetzt den Status-Chip mit Punkt. Sie sieht aus wie die Lozenge und ist genauso klein, dazu ein kleiner
+            Chevron; die Trefferfläche ist unsichtbar auf mindestens 24 × 24 px vergrössert. Das Menü bietet nur die
+            möglichen Wechsel, nie den aktuellen Zustand: links die Handlung, rechts Pfeil und Ziel-Lozenge, Seltenes
+            nach einem Trenner, wenn nötig ein Hinweis darunter. Ohne Wechsel ist sie eine gewöhnliche Lozenge.
+            Barrierefrei wie das Menü: Name «Status Person: Zustand», ↑/↓ und Escape.
+          </p>
+          <div className="mb-6">
+            <LozengeAuswahlDemo />
           </div>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Treffpunkte</strong> (<code>TreffpunktListe</code>, #465): die Treffpunkte eines Spiels in drei
@@ -3632,59 +3650,61 @@ export default async function Styleguide() {
             Ein Termin wie ein Blatt vom Abreisskalender: Wochentag, grosse Tageszahl, Monat - nie das Jahr,
             das steht in der Überschrift des Monats (Epic #401). Neu, weil ein Datum als Text in einer Zeile
             (<code>datumKurz</code>) sich beim Überfliegen nicht finden lässt. Im Trainingsplan steht es links an
-            jeder Terminzeile. Eine leise Tönung sagt, was der Termin trägt (<code>zustand</code>): Training in Primary, noch kein
-            Training in der Warnfarbe - je eine schwache Fläche (12 %) mit der Tageszahl in der Farbe selbst -,
-            ausgefallen grau mit durchgestrichener Zahl, vergangen ohne Training ohne Fläche. Hinter dem
-            privaten Link einer Spieler:in sagt es «abgemeldet» im Rot der Danger-Lozenge, wie der Schalter
-            daneben in seiner Aus-Lage (Epic #433). Ein Spiel trägt die Tönung seiner Lozenge «Spiel»
-            (discovery, Epic #448), damit es sich schon am Blatt vom Training abhebt. Die Farbe trägt
-            den Zustand nie allein, die Zeile daneben sagt ihn in Worten. Heute hebt das Blatt nicht hervor;
-            dafür steht der nächste Termin zuoberst. Wo kein Blatt steht (der nächste Termin), sagt eine
-            Lozenge in derselben Tönung den Zustand: <code>BlattLozenge</code> - Form der Lozenge, Farbe des Blatts.
+            jeder Terminzeile. Das Blatt sagt nur, ob ein Termin zählt (<code>stand</code>, Epic #490): weiss
+            (die umgekehrte Fläche <code>umkehr</code>), solange er bevorsteht; grau ab dem Folgetag; grau mit
+            durchgestrichener Zahl, wenn er ausfällt - hinter dem privaten Link auch, wenn die eigene
+            Spieler:in abgemeldet oder nicht aufgeboten ist. Was ein Termin trägt, sagt die Status-Lozenge
+            daneben in einem Wort, nicht mehr die Tönung des Blatts. Heute hebt das Blatt nicht hervor;
+            dafür steht der nächste Termin zuoberst.
           </p>
           <div className="flex items-start gap-4">
-            <Kalenderblatt datum="2026-10-06" zustand="noch-nicht" />
-            <Kalenderblatt datum="2026-10-08" zustand="training" />
-            <Kalenderblatt datum="2026-10-11" zustand="ausgefallen" />
-            <Kalenderblatt datum="2026-10-13" zustand="abgemeldet" />
-            <Kalenderblatt datum="2026-10-17" zustand="spiel" />
-            <Kalenderblatt datum="2026-09-30" />
-            <BlattLozenge zustand="noch-nicht" iconBefore={TriangleAlert}>Noch kein Training</BlattLozenge>
+            <Kalenderblatt datum="2026-10-08" />
+            <Kalenderblatt datum="2026-09-30" stand="vergangen" />
+            <Kalenderblatt datum="2026-10-11" stand="gestrichen" />
           </div>
         </Section>
 
         <Section id="mini-monat">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Ein kleiner Monat zum Navigieren neben einer Liste (Epic #401). Neu, weil kein Baustein ein
-            Kalenderraster kennt. <code>MiniMonat</code> legt um jeden Tag mit Einträgen einen gepunkteten Ring und
-            setzt die Einträge als kleine Badges oben rechts darauf - wie der Punkt an einem Zeichen für
-            Neuigkeiten. Die Zellen sind alle gleich hoch, und jeder Monat zeigt sechs Wochen: Beim Blättern
-            springt die Höhe nicht (wie im Google und Proton Kalender). Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
+            Kalenderraster kennt. <code>MiniMonat</code> hinterlegt jeden Tag, an dem ein Termin stattfindet, hell
+            wie ein weisses Kalenderblatt, und einen Tag mit nur ausgefallenen Terminen grau und durchgestrichen
+            (Epic #490). Training und Spiel unterscheidet er nicht; die Legende darunter sagt beides. Die Zellen
+            sind alle gleich hoch, und jeder Monat zeigt sechs Wochen: Beim Blättern springt die Höhe nicht (wie
+            im Google und Proton Kalender). Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
             (<code>onWahl</code>), ein leerer Tag ist keiner. Blättern und «Heute» melden nur den Monat (<code>onMonat</code>): Wie im Google Kalender
             folgt der Monat der Liste, die Liste aber nicht ihm.
           </p>
           <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
             <li>
-              <strong>Zustand als Zeichen</strong> - Punkt in Primary (Training), Punkt in der Warnfarbe (noch kein
-              Training), rotes Kreuz (ausgefallen); vergangen ohne Training zeigt nur den Ring. Die beiden Punkte unterscheidet
-              bewusst nur die Farbe, damit das Gelb auffällt. Eine Legende gibt es nicht: Die Liste daneben
-              trägt dieselben Farben, und vorgelesen wird jeder Zustand beim Namen.
+              <strong>Vorgelesen</strong> - jeder Tag nennt seine Termine beim Namen, ein ausgefallener mit
+              «fällt aus»; die Fläche trägt es also nie allein.
             </li>
             <li>
-              <strong>Mehr als zwei</strong> - zwei Badges oben rechts, das zweite halb hinter dem ersten, und
-              «+n» unten rechts am Ring; die übrigen stehen in der Liste.
+              <strong>Zielgrösse</strong> - geklickt wird der ganze Tag (36 px hoch, WCAG 2.5.8).
             </li>
             <li>
-              <strong>Zielgrösse</strong> - geklickt wird der ganze Tag (36 px hoch), nicht das einzelne Badge,
-              das dafür zu klein wäre (WCAG 2.5.8).
-            </li>
-            <li>
-              <strong>Belegt</strong> - der Ring ohne Badge: Dort liegt etwas, das der Monat nicht zeigt (bei
-              «Meine Termine» die Termine anderer), oder nur Vergangenes ohne Training. Heute trägt die Zahl auf
-              Primary, ohne Ring.
+              <strong>Belegt</strong> - ein gepunkteter Ring: Dort liegt etwas, das der Monat nicht zeigt (bei
+              «Meine Termine» die Termine anderer). Heute trägt die Zahl auf Primary.
             </li>
           </ul>
           <MiniMonatDemo />
+        </Section>
+
+        <Section id="meldebalken">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Wie viele kommen, als Balken (<code>Meldebalken</code>, Epic #490): im Abschnitt TEAM der grossen
+            Karten im Trainingsplan und am privaten Link. Neu, weil keine Anzeige eine Menge gegen einen Bereich
+            zeigt. Der helle Anteil sind die Angemeldeten (ab Beginn: die Anwesenden) von allen, für die der
+            Termin gilt; ein Richtwert liegt als hellere Zone darunter, mit nur einer Mindestzahl bis ans Ende,
+            mit nur einer Höchstzahl ab dem Anfang. Der Balken bewertet nicht und bleibt ungefärbt - die
+            Bewertung sagt allein der Status in einem Wort. Vorgelesen wird beides in einem Satz.
+          </p>
+          <div className="flex max-w-md flex-col gap-6">
+            <Meldebalken zahl={7} gesamt={14} min={9} max={12} />
+            <Meldebalken zahl={11} gesamt={16} min={9} />
+            <Meldebalken zahl={12} gesamt={14} />
+          </div>
         </Section>
 
         <Section id="platz-spielerzahl">

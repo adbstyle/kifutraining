@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarX2, Shirt } from "lucide-react";
-import { Button, Kalenderblatt, Leerzustand, SectionMessage, Switch } from "@/components/ui";
+import { CalendarX2 } from "lucide-react";
+import { Button, Kalenderblatt, Leerzustand, Lozenge, SectionMessage, Switch } from "@/components/ui";
+import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
 import type { Meldung } from "@/lib/spiel";
 import { SpielKarte } from "./SpielKarte";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
@@ -61,7 +62,9 @@ export function ElternAnsicht({
   // Begonnen sind nur Termine von heute: Sie stehen vor «Als Nächstes», damit
   // die Seite in der Zeitfolge bleibt.
   const begonnen = termine.filter((t) => t.begonnen);
-  const naechster = termine.find((t) => !t.begonnen);
+  // #497 AK 12: «Als Nächstes» ist der nächste Termin, der stattfindet; ein
+  // ausgefallener davor steht als gewöhnliche Karte in der Liste.
+  const naechster = termine.find((t) => !t.begonnen && !t.ausgefallen);
   const uebrige = termine.filter((t) => !t.begonnen && t !== naechster);
 
   function umlegen(t: LinkTermin, an: boolean) {
@@ -219,25 +222,36 @@ type KarteProps = {
   hinweise: React.ReactNode;
 };
 
-/* Ein Termin in der Liste: Kalenderblatt, Zeit, zweite Zeile und Schalter. */
+/** Der Status der eigenen Spieler:in an einem Training (Epic #490): grün
+ *  angemeldet, rot abgemeldet, grau, wenn er ausfällt. */
+function trainingStatus(t: LinkTermin, ab: boolean) {
+  return t.ausgefallen ? TERMIN_STATUS.faelltAus : ab ? MELDE_STATUS.abgemeldet : MELDE_STATUS.angemeldet;
+}
+
+/* Ein Training in der Liste (Epic #490, Tafel 9 Gruppe 4): Kalenderblatt,
+   der Status als Lozenge, Zeit, Ort, Kader und Spielerzahl, rechts der
+   Schalter. Abgemeldet oder ausgefallen tritt die Karte gedämpft zurück. */
 function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }: KarteProps) {
+  const status = trainingStatus(t, ab);
+  const gedaempft = t.ausgefallen || ab;
   return (
-    <li className="flex flex-col gap-2 rounded-flaeche bg-elev-01 px-3 py-2.5">
-      <div className="flex items-center gap-3">
-        <Kalenderblatt
-          datum={t.datum}
-          zustand={t.ausgefallen ? "ausgefallen" : ab ? "abgemeldet" : "training"}
-          className="self-center"
-        />
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="type-body-medium text-on-surface">
+    <li className={cn("flex flex-col gap-2 rounded-flaeche px-3 py-3", gedaempft ? "kontur border-linie" : "bg-elev-01")}>
+      <div className="flex items-start gap-3">
+        <Kalenderblatt datum={t.datum} stand={gedaempft ? "gestrichen" : "aktiv"} />
+        <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+          <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>
+          <span className={cn("type-body-medium", gedaempft ? "text-on-surface-mittel" : "text-on-surface")}>
             {t.beginn}–{t.ende}
           </span>
-          <ZweiteZeile t={t} zweite={zweite} zahl={zahl} className="type-body-small" />
-          <KaderLozenges namen={t.kader} className="mt-1" />
+          {zweite ? (
+            <span className="type-body-small text-on-surface-mittel">{zweite}</span>
+          ) : (
+            t.ort && <span className="max-w-full truncate type-body-small text-on-surface-mittel">{t.ort}</span>
+          )}
+          <TeamZeile t={t} zahl={zahl} />
         </div>
         <Switch
-          ton="erfolg"
+          ton="ruhig"
           checked={!t.ausgefallen && !ab}
           neutral={t.ausgefallen}
           disabled={t.ausgefallen || t.begonnen || pending}
@@ -250,102 +264,65 @@ function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }
   );
 }
 
-/* Der nächste Termin, der noch nicht begonnen hat — wie im Trainingsplan
-   grösser und auf einer höheren Fläche (#403), dazu ein Knopf statt des
-   Schalters: «Abmelden» oder «Wieder anmelden». Abgemeldet steht die Karte
-   zurückgenommen im Fehlerton, der Tag in der Fehlerfarbe, und «Wieder
-   anmelden» ist der helle Knopf. */
-function NaechsterTermin({ t, ab, zweite, zahl, name, heute, pending, onUmlegen, hinweise }: KarteProps & { heute: string }) {
-  const relativ = t.datum === heute ? "Heute" : t.datum === plusTage(heute, 1) ? "Morgen" : null;
+/* Das nächste Training, das stattfindet und noch nicht begonnen hat — wie im
+   Trainingsplan grösser und auf einer höheren Fläche (#403; Epic #490,
+   Tafel 9, 4.3): über dem Kopf Heute oder Morgen und der Tag, dann
+   Kalenderblatt, Status, Zeit, Ort, Kader und Zahl; darunter bis wann sich
+   ändern lässt und ein Knopf statt des Schalters, umrandet. Abgemeldet tritt
+   die Karte gedämpft zurück. */
+function NaechsterTermin({ t, ab, zahl, name, heute, pending, onUmlegen, hinweise }: KarteProps & { heute: string }) {
+  const status = trainingStatus(t, ab);
   return (
     <section aria-labelledby="als-naechstes">
       <h2 id="als-naechstes" className="type-title-small text-on-surface-mittel">
         Als Nächstes
       </h2>
-      {/* Abgemeldet trägt die Karte den Fehlerton — zurückgenommen: die Fläche
-          eines Fehlerhinweises halb deckend, die Kontur bleibt die Kante
-          (eine Fehlerkontur gibt es nur voll, check:farben). */}
-      <div
-        className={cn(
-          "kontur mt-2 flex flex-col gap-3 rounded-flaeche p-4",
-          "border-kante", ab && !t.ausgefallen ? "bg-section-danger/60" : "bg-elev-04",
-        )}
-      >
-        <div>
-          <p className={cn("type-title-small", t.ausgefallen ? "text-on-surface-mittel" : ab ? "text-error" : "text-primary")}>
-            {relativ && <>{relativ} · </>}
-            {tagOhneJahr(t.datum)}
-          </p>
-          <p className={cn("mt-1 type-headline-small text-on-surface", t.ausgefallen && "line-through")}>
-            {t.beginn}–{t.ende} Uhr
-          </p>
-          <ZweiteZeile t={t} zweite={zweite} zahl={zahl} className="type-body-medium mt-1" gross />
-          <KaderLozenges namen={t.kader} className="mt-2" />
-          {!t.ausgefallen && (
-            <p className="type-body-medium mt-1 text-on-surface">
-              {ab ? `${name} ist abgemeldet.` : `${name} ist angemeldet.`}
-            </p>
-          )}
+      <div className={cn("mt-2 flex flex-col gap-3 rounded-flaeche p-4", ab ? "kontur border-linie" : "kontur border-kante bg-elev-04")}>
+        <p className="type-title-small text-on-surface-mittel">{relativerTag(t.datum, heute)}</p>
+        <div className="flex items-start gap-3">
+          <Kalenderblatt datum={t.datum} stand={ab ? "gestrichen" : "aktiv"} />
+          <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+            <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>
+            <span className={cn("type-title-large", ab ? "text-on-surface-mittel" : "text-on-surface")}>
+              {t.beginn}–{t.ende} Uhr
+            </span>
+            {t.ort && <span className="type-body-medium text-on-surface-mittel">{t.ort}</span>}
+            <TeamZeile t={t} zahl={zahl} />
+          </div>
         </div>
-        {!t.ausgefallen &&
-          (ab ? (
-            <Button
-              variant="hell"
-              className="self-start"
-              disabled={pending}
-              onClick={() => onUmlegen(true)}
-              aria-label={`${name} am ${tagText(t.datum)} wieder anmelden`}
-            >
-              Wieder anmelden
-            </Button>
-          ) : (
-            <Button
-              variant="outlined"
-              className="self-start"
-              disabled={pending}
-              onClick={() => onUmlegen(false)}
-              aria-label={`${name} am ${tagText(t.datum)} abmelden`}
-            >
-              Abmelden
-            </Button>
-          ))}
+        <p className="type-body-small text-on-surface-mittel">Änderbar bis zum Beginn</p>
+        <Button
+          variant="outlined"
+          className="self-start"
+          disabled={pending}
+          onClick={() => onUmlegen(ab)}
+          aria-label={`${name} am ${tagText(t.datum)} ${ab ? "anmelden" : "abmelden"}`}
+        >
+          {ab ? "Anmelden" : "Abmelden"}
+        </Button>
         {hinweise}
       </div>
     </section>
   );
 }
 
-/* Ort und Spielerzahl — oder, ausgefallen bzw. begonnen, nur das. Die Zahl
-   wird nie gekürzt (#472 NFR 1): In der Liste kürzt sich der Ort, in der
-   grossen Karte bricht die Zeile um und der Ort steht ganz. */
-function ZweiteZeile({
-  t,
-  zweite,
-  zahl,
-  className,
-  gross = false,
-}: {
-  t: LinkTermin;
-  zweite: string | null;
-  zahl: Spielerzahl | null;
-  className: string;
-  gross?: boolean;
-}) {
-  if (zweite) return <p className={cn("truncate text-on-surface-mittel", className)}>{zweite}</p>;
+/* Kader und Spielerzahl knapp: «S1 15/16». Die Zahl wird nie gekürzt (#472
+   NFR 1) und bleibt ungefärbt. */
+function TeamZeile({ t, zahl }: { t: LinkTermin; zahl: Spielerzahl | null }) {
+  if (t.kader.length === 0 && zahl?.quelle !== "liste") return null;
   return (
-    <p className={cn("flex min-w-0 items-center gap-x-2 text-on-surface-mittel", gross && "flex-wrap", className)}>
-      {t.ort && <span className={gross ? "min-w-0" : "min-w-0 truncate"}>{t.ort}</span>}
+    <span className="flex flex-wrap items-center gap-2 type-body-small text-on-surface-mittel">
+      <KaderLozenges namen={t.kader} />
       {zahl?.quelle === "liste" && (
-        <span className="inline-flex shrink-0 items-center gap-1">
-          <Shirt size={gross ? 16 : 14} className="shrink-0" aria-hidden />
-          <span aria-hidden>{spielerzahlKurz(zahl)}</span>
+        <>
+          <span aria-hidden className="tabular-nums">{spielerzahlKurz(zahl)}</span>
           {/* Ohne «angemeldet» — das Wort gehört hier der eigenen Spieler:in. */}
           <span className="sr-only">
             Spielerzahl {zahl.angemeldet} von {zahl.gesamt}
           </span>
-        </span>
+        </>
       )}
-    </p>
+    </span>
   );
 }
 

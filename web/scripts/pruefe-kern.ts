@@ -130,6 +130,8 @@ import { aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type Abo
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
+import { blattStand, handlungsMeldung, meldeStatus, nachMeldefrist, spielStatus, terminStatus } from "../lib/termin-status";
+import { meldefristVerpasst } from "../lib/spiel";
 import {
   SPIELER_MELDUNG,
   SPIELER_TEXT,
@@ -623,6 +625,47 @@ pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
   assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
   assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
   assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } }, "2026-10-01"), false);
+});
+
+pruefe("Status eines Termins in einem Wort, Kalenderblatt weiss oder grau (#491)", () => {
+  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-11-03", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], kader: [], ausgefallen: false, ausfallGrund: null };
+  const mitTraining = { ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } };
+  assert.deepEqual(terminStatus(mitTraining, "2026-11-01"), { wort: "Vorbereitet", appearance: "neutral" });
+  assert.deepEqual(terminStatus(t, "2026-11-01"), { wort: "Nicht vorbereitet", appearance: "warning" });
+  assert.deepEqual(terminStatus({ ...mitTraining, ausgefallen: true }, "2026-11-01"), { wort: "Fällt aus", appearance: "neutral" });
+  assert.equal(terminStatus(mitTraining, "2026-11-04"), null, "vergangen ohne Status");
+  assert.equal(terminStatus(mitTraining, "2026-11-03")?.wort, "Vorbereitet", "heute bevorstehend bis Tagesende");
+
+  const spiel = { ...t, art: "spiel" as const, spiel: { bezeichnung: "Meisterschaft", richtwertMin: 9, richtwertMax: 12, meldefrist: null, vorher: null, treffpunkte: [] } };
+  const stand = (angemeldet: number, anwesend?: number) => ({ gesamt: 14, angemeldet, eingefroren: anwesend !== undefined, anwesend: anwesend ?? null });
+  assert.equal(terminStatus({ ...spiel, spielstand: stand(7) }, "2026-11-01")?.wort, "Zu wenig");
+  assert.equal(terminStatus({ ...spiel, spielstand: stand(9) }, "2026-11-01")?.wort, "Knapp");
+  assert.equal(terminStatus({ ...spiel, spielstand: stand(12) }, "2026-11-01")?.wort, "Genügend");
+  assert.deepEqual(terminStatus({ ...spiel, spielstand: stand(13) }, "2026-11-01"), { wort: "Zu viel", appearance: "danger" }, "zu viel ist rot");
+  assert.equal(terminStatus({ ...spiel, spielstand: stand(12, 8) }, "2026-11-03")?.wort, "Zu wenig", "ab Anpfiff zählen die Anwesenden");
+  assert.equal(terminStatus({ ...spiel, spielstand: null }, "2026-11-01"), null, "ohne Spielerliste");
+  assert.equal(terminStatus({ ...spiel, spiel: { ...spiel.spiel, richtwertMin: null, richtwertMax: null }, spielstand: stand(9) }, "2026-11-01"), null, "ohne Richtwert");
+  assert.equal(spielStatus(30, 9, null)?.wort, "Genügend", "nur Mindestzahl: nie zu viel");
+  assert.equal(spielStatus(0, null, 12)?.wort, "Genügend", "nur Höchstzahl: nie zu wenig");
+
+  // #494: grosse Karte nach der Meldefrist bis zum Anpfiff, mit Handlung.
+  const nachFrist = { ...spiel, beginn: "10:00", spielstand: stand(7), spiel: { ...spiel.spiel, meldefrist: "2026-10-29T20:00" } };
+  assert.equal(nachMeldefrist(nachFrist, "2026-10-29T19:59"), false, "Frist läuft");
+  assert.equal(nachMeldefrist(nachFrist, "2026-10-29T20:00"), true, "ab der Frist");
+  assert.equal(nachMeldefrist(nachFrist, "2026-11-03T09:59"), true);
+  assert.equal(nachMeldefrist(nachFrist, "2026-11-03T10:00"), false, "ab Anpfiff wieder Zeile");
+  assert.equal(nachMeldefrist({ ...nachFrist, ausgefallen: true }, "2026-10-30T12:00"), false, "ausgefallen nie");
+  assert.equal(nachMeldefrist({ ...nachFrist, spielstand: null }, "2026-10-30T12:00"), false, "ohne Spielerliste nie");
+  assert.equal(nachMeldefrist({ ...nachFrist, spiel: { ...nachFrist.spiel, richtwertMin: null, richtwertMax: null } }, "2026-10-30T12:00"), false, "ohne Richtwert nie");
+  assert.equal(nachMeldefrist({ ...nachFrist, spiel: { ...nachFrist.spiel, meldefrist: null } }, "2026-10-30T12:00"), false, "ohne Meldefrist nie");
+  assert.deepEqual(handlungsMeldung(nachFrist), { appearance: "error", text: "Es fehlen 2 bis zur Mindestzahl 9. Spieler:innen direkt anfragen." });
+  assert.equal(handlungsMeldung({ ...nachFrist, spielstand: stand(9) })?.appearance, "warning");
+  assert.deepEqual(handlungsMeldung({ ...nachFrist, spielstand: stand(13) }), { appearance: "error", text: "1 über der Höchstzahl 12. Aufgebot klären." });
+  assert.equal(handlungsMeldung({ ...nachFrist, spielstand: stand(11) }), null, "genügend ohne Meldung");
+
+  assert.equal(blattStand(t, "2026-11-03"), "aktiv");
+  assert.equal(blattStand(t, "2026-11-04"), "vergangen");
+  assert.equal(blattStand({ ...t, ausgefallen: true }, "2026-11-04"), "gestrichen");
 });
 
 pruefe("Ausfall: Grund mit den Regeln der Bemerkung; nicht vorbereitet schliesst Ausfälle aus (#327)", () => {
@@ -2386,7 +2429,9 @@ pruefe("Spiele: Bezeichnung, Richtwert, Bewertung und Marker (#459, #463 AK 7/28
   assert.equal(richtwertStufe(13, null, 12), "ueber");
   assert.equal(richtwertStufe(5, null, null), null);
   assert.equal(richtwertStufeText(7, 9, 12), "noch 2 bis Mindestzahl 9");
-  assert.equal(richtwertStufeText(9, 9, 12), "Mindestzahl 9 knapp erreicht");
+  assert.equal(richtwertStufeText(9, 9, 12), "Mindestzahl 9 genau erreicht");
+  assert.equal(richtwertStufeText(11, 9, 12), "Richtwert 9 bis 12");
+  assert.equal(richtwertStufeText(30, 9, null), "Richtwert mindestens 9");
   assert.equal(richtwertStufeText(14, 9, 12), "2 über Höchstzahl 12");
 
   for (const [marker, satz] of Object.entries(SPIEL_MELDUNG)) assert.equal(fehlerMeldung(`x ${marker} y`), satz, marker);
@@ -2510,7 +2555,19 @@ pruefe("Spiele: Nachtrag - wer beim Anpfiff zählte, Verfall-Text (#487)", () =>
     spielVerfallText(2, false, 1, 3),
     "Damit verfallen 2 Meldungen: Diese Spieler:innen sind wieder ohne Meldung. Ausserdem verfallen 1 Kennzeichnung als nicht aufgeboten und 3 Nachträge zur Anwesenheit.",
   );
-  assert.equal(NACHTRAG_TEXT.zurueck("Abgemeldet"), "Abgemeldet (Stand beim Anpfiff)");
+  assert.equal(NACHTRAG_TEXT.zurueck, "Nachtrag zurücknehmen");
+});
+
+pruefe("Status einer Spieler:in und Meldefrist verpasst (#495, #496)", () => {
+  assert.deepEqual(meldeStatus(null, false, false), { wort: "Ohne Meldung", appearance: "warning" });
+  assert.deepEqual(meldeStatus(null, false, true), { wort: "Meldefrist verpasst", appearance: "danger" }, "nach der Frist");
+  assert.equal(meldeStatus(null, true, true).wort, "Nicht aufgeboten", "die Kennzeichnung geht vor");
+  assert.equal(meldeStatus("angemeldet", false, true).wort, "Angemeldet");
+  assert.equal(meldeStatus("abgemeldet", false, false).appearance, "danger");
+  assert.equal(meldefristVerpasst(null, false, true), true);
+  assert.equal(meldefristVerpasst(null, false, false), false, "ohne oder vor der Frist nie");
+  assert.equal(meldefristVerpasst(null, true, true), false);
+  assert.equal(meldefristVerpasst("angemeldet", false, true), false);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

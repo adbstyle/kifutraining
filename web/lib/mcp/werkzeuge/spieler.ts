@@ -15,7 +15,7 @@ import {
 } from "@/lib/kern/spieler";
 import { istSpielAbweisung, setzeAbmeldung, setzeAnwesenheit, type TerminSpieler } from "@/lib/kern/abmeldungen";
 import { setzeAufgebot, setzeMeldung, teilnehmerAmTermin, type SpielSpieler, type SpielTeilnehmer } from "@/lib/kern/spiele";
-import { zaehlteBeimAnpfiff } from "@/lib/spiel";
+import { meldefristVerpasst, zaehlteBeimAnpfiff } from "@/lib/spiel";
 import {
   ABHOL_PFAD,
   ABHOLUNG_TEXT,
@@ -205,7 +205,8 @@ const ABMELDE_MODELL =
   "keinen Grund, und KiFu benachrichtigt niemanden. Spiele (art «spiel») sind anders: Jede Spieler:in ist zuerst ohne " +
   "Meldung («meldung: null»), bis sie an- oder abgemeldet wird; danach wechselt sie nur noch zwischen angemeldet und " +
   "abgemeldet. Mitglieder (und du) melden bis zum Anpfiff, auch nach der Meldefrist; Eltern über ihren Link nur bis zur " +
-  "Meldefrist. Ein anderes Datum lässt alle Meldungen eines Spiels verfallen, eine andere Zeit am selben Tag nicht. " +
+  "Meldefrist. Wer nach Ablauf der Meldefrist noch ohne Meldung ist, hat die Meldefrist verpasst («meldefrist_verpasst»): " +
+  "Das Team rechnet nicht mit ihr, sie lässt sich aber bis zum Anpfiff weiter melden. Ein anderes Datum lässt alle Meldungen eines Spiels verfallen, eine andere Zeit am selben Tag nicht. " +
   "Mitglieder (und du) können eine Spieler:in für ein Spiel als nicht aufgeboten kennzeichnen (termin_aufgebot_setzen), " +
   "gleich welche Meldung sie trägt: Die Meldung bleibt darunter stehen, zählt aber nicht als angemeldet, und bis die " +
   "Kennzeichnung aufgehoben ist, nimmt das Spiel für sie keine Meldung an. Die Kennzeichnung trägt keinen Grund, " +
@@ -242,7 +243,16 @@ export const terminSpielerAbrufen = werkzeug({
     begonnen: z.boolean(),
     angemeldet: z.number().int(),
     gesamt: z.number().int(),
-    ohne_meldung: z.number().int().nullable().describe("Nur an einem Spiel: wer noch ohne Meldung ist; bei Trainings null."),
+    ohne_meldung: z
+      .number()
+      .int()
+      .nullable()
+      .describe("Nur an einem Spiel: wer vor Ablauf der Meldefrist noch ohne Meldung ist; danach 0. Bei Trainings null."),
+    meldefrist_verpasst: z
+      .number()
+      .int()
+      .nullable()
+      .describe("Nur an einem Spiel: wer nach Ablauf der Meldefrist ohne Meldung ist - das Team rechnet nicht mit ihnen; davor 0. Bei Trainings null."),
     nicht_aufgeboten: z
       .number()
       .int()
@@ -276,6 +286,9 @@ export const terminSpielerAbrufen = werkzeug({
         nicht_aufgeboten: z
           .boolean()
           .describe("Nur an einem Spiel: als nicht aufgeboten gekennzeichnet; «meldung» ist dann die Meldung darunter. Bei Trainings false."),
+        meldefrist_verpasst: z
+          .boolean()
+          .describe("Nur an einem Spiel: nach Ablauf der Meldefrist ohne Meldung (und nicht als nicht aufgeboten gekennzeichnet), auch wer erst danach dazukam; zählt nicht als angemeldet. Ohne Meldefrist und bei Trainings false."),
         ehemalig: z.boolean(),
         kader: z.array(z.string()).describe("Die Kader, über die der Termin für sie gilt; leer bei einem Termin für alle."),
         anwesenheit: z.enum(["nicht_erschienen", "doch_erschienen"]).nullable().describe(ANWESENHEIT_BESCHREIBUNG),
@@ -310,6 +323,7 @@ function trainingAusgabe(w: TerminSpieler) {
     angemeldet: w.angemeldet,
     gesamt: w.gesamt,
     ohne_meldung: null,
+    meldefrist_verpasst: null,
     nicht_aufgeboten: null,
     mindestzahl: null,
     hoechstzahl: null,
@@ -333,7 +347,9 @@ function spielAusgabe(w: SpielSpieler) {
     begonnen: w.begonnen,
     angemeldet: w.angemeldet,
     gesamt: w.gesamt,
-    ohne_meldung: w.ohneMeldung,
+    // #496 AK 9: nach der Frist heissen sie «Meldefrist verpasst».
+    ohne_meldung: w.fristAbgelaufen ? 0 : w.ohneMeldung,
+    meldefrist_verpasst: w.fristAbgelaufen ? w.ohneMeldung : 0,
     nicht_aufgeboten: w.nichtAufgeboten,
     mindestzahl: w.richtwertMin,
     hoechstzahl: w.richtwertMax,
@@ -341,11 +357,11 @@ function spielAusgabe(w: SpielSpieler) {
     anwesend: w.anwesend,
     kader: w.kader,
     nicht_betroffen: w.uebrige,
-    spieler: w.spieler.map(spielTeilnehmerAusgabe),
+    spieler: w.spieler.map((s) => spielTeilnehmerAusgabe(s, w.fristAbgelaufen)),
   };
 }
 
-function spielTeilnehmerAusgabe(s: SpielTeilnehmer) {
+function spielTeilnehmerAusgabe(s: SpielTeilnehmer, fristAbgelaufen: boolean) {
   return {
     id: s.spielerId,
     vorname: s.vorname,
@@ -353,6 +369,7 @@ function spielTeilnehmerAusgabe(s: SpielTeilnehmer) {
     abgemeldet: s.meldung === "abgemeldet",
     meldung: s.meldung,
     nicht_aufgeboten: s.nichtAufgeboten,
+    meldefrist_verpasst: meldefristVerpasst(s.meldung, s.nichtAufgeboten, fristAbgelaufen),
     ehemalig: s.ehemalig,
     kader: s.kader,
     // #487 AK 14: der Nachtrag gegen den Stand beim Anpfiff.
@@ -375,6 +392,7 @@ export function teilnehmerAusgabe(s: Teilnehmer) {
     abgemeldet: s.abgemeldet,
     meldung: s.abgemeldet ? ("abgemeldet" as const) : ("angemeldet" as const),
     nicht_aufgeboten: false,
+    meldefrist_verpasst: false,
     ehemalig: s.ehemalig,
     kader: s.kader,
     anwesenheit: anwesenheitAusgabe(s),

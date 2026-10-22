@@ -1,25 +1,23 @@
 "use client";
 
-import { EHEMALIGER_KADER, KaderLozenges } from "./KaderLozenge";
+import { EHEMALIGER_KADER } from "./KaderLozenge";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { CalendarOff, LandPlot, MapPin, Shirt, UserCheck, Users } from "lucide-react";
-import { Card, Disclosure, Kalenderblatt, Lozenge, SpielLozenge, richtwertSchrift } from "@/components/ui";
+import { Card, Disclosure, Kalenderblatt, Lozenge } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { useTerminAktionen } from "./TerminBereich";
 import { TerminHandgriffe, TrainingHinzufuegen } from "./TerminHandgriffe";
 import { NaechsterTermin } from "./NaechsterTermin";
 import { PlanMonat } from "./PlanMonat";
 import { PlanGeteilt } from "./PlanGeteilt";
 import { zeitText } from "@/lib/termin";
 import { spielerzahlKurz, spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
-import { felderKurz } from "@/lib/termin-felder";
 import { terminHref } from "@/lib/team-ansicht";
 import { monatVon, monatsName } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
 // (next/headers) ins Client-Bundle.
-import { terminZustand, verantwortlicheMitDir, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
+import { nochNichtVorbereitet, verantwortlicheMitDir, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
+import { blattStand, nachMeldefrist, terminStatus } from "@/lib/termin-status";
 
 /* Der Kalender eines Teams als Liste (Team-Kalender #322, #323; gegliedert
    mit Story 18 und Epic #401): zuoberst, was ansteht, danach der Rückblick,
@@ -33,6 +31,7 @@ import { terminZustand, verantwortlicheMitDir, type Plan, type TerminZeile } fro
 export function TrainingsPlan({
   plan,
   heute,
+  jetzt,
   ich,
   hervorheben,
   belegt,
@@ -42,6 +41,8 @@ export function TrainingsPlan({
 }: {
   plan: Plan;
   heute: string;
+  /** `YYYY-MM-DDTHH:MM` am Trainingsort — der Stand beim Laden (#494). */
+  jetzt: string;
   ich: string;
   hervorheben?: string;
   /** Tage mit Terminen, die «Meine Termine» ausblendet (#404 AK 14). */
@@ -54,12 +55,14 @@ export function TrainingsPlan({
   spalte?: ReactNode;
 }) {
   const nichtsMehrOffen = plan.kommend.length === 0;
-  // #403: Der erste anstehende Termin — auch ein ausgefallener (PO 6) — steht
-  // zuoberst und nicht noch einmal in der Liste (AK 18); die Zahl zählt ihn
-  // mit (AK 19). Die Reihenfolge des Tages (Beginn, dann Anlegen) kommt aus
-  // der Datenbank (AK 16), die Eingrenzung auf die eigenen Termine aus der
-  // Seite (AK 17).
-  const [naechster, ...danach] = plan.kommend;
+  // #403, #492 AK 1, 2: Der erste anstehende Termin, der stattfindet, steht
+  // zuoberst und nicht noch einmal in der Liste (AK 18); ein ausgefallener
+  // davor bleibt eine gewöhnliche Zeile (Epic #490, hebt PO 6 auf). Die Zahl
+  // zählt alle anstehenden (AK 19). Die Reihenfolge des Tages (Beginn, dann
+  // Anlegen) kommt aus der Datenbank (AK 16), die Eingrenzung auf die eigenen
+  // Termine aus der Seite (AK 17).
+  const naechster = plan.kommend.find((t) => !t.ausgefallen);
+  const danach = plan.kommend.filter((t) => t !== naechster);
   const liste = useRef<HTMLDivElement>(null);
   // #404 AK 10, 11: ein im Monat gewählter Termin. `nr` macht jede Wahl neu,
   // auch dieselbe zweimal.
@@ -91,13 +94,13 @@ export function TrainingsPlan({
   const termine = (
     <>
       {alle.length === 0 && leer}
-      {naechster && (
+      {plan.kommend.length > 0 && (
         <section>
           <h3 className="type-title-small text-on-surface-mittel">
             Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
           </h3>
-          <NaechsterTermin t={naechster} heute={heute} ich={ich} meine={meine} hervorgehoben={naechster.id === hervorheben} />
-          <PlanMonate termine={danach} heute={heute} ich={ich} meine={meine} hervorheben={hervorheben} />
+          {naechster && <NaechsterTermin t={naechster} heute={heute} jetzt={jetzt} ich={ich} meine={meine} hervorgehoben={naechster.id === hervorheben} />}
+          <PlanMonate termine={danach} heute={heute} jetzt={jetzt} ich={ich} meine={meine} hervorheben={hervorheben} />
         </section>
       )}
       {plan.vergangen.length > 0 && (
@@ -108,7 +111,7 @@ export function TrainingsPlan({
           defaultOpen={nichtsMehrOffen || imRueckblick || rueckblickAuf > 0}
           className={cn(!nichtsMehrOffen && "mt-6")}
         >
-          <PlanMonate termine={plan.vergangen} heute={heute} ich={ich} meine={meine} hervorheben={hervorheben} />
+          <PlanMonate termine={plan.vergangen} heute={heute} jetzt={jetzt} ich={ich} meine={meine} hervorheben={hervorheben} />
         </Disclosure>
       )}
     </>
@@ -141,47 +144,94 @@ export function TrainingsPlan({
 }
 
 /** Termine nach Monat und Tag: je Monat eine Überschrift mit Jahr, je Tag eine
- *  Karte mit seinen Terminen als Zeilen, jede mit ihrem Kalenderblatt. */
-function PlanMonate({ termine, heute, ich, meine, hervorheben }: { termine: TerminZeile[]; heute: string; ich: string; meine: boolean; hervorheben?: string }) {
+ *  Karte mit seinen Terminen als Zeilen, jede mit ihrem Kalenderblatt. Ein
+ *  Spiel nach der Meldefrist steht an seinem Platz als grosse Karte statt als
+ *  Zeile (#494 AK 1); die Zeilen davor und danach bilden je eine Karte. */
+function PlanMonate({
+  termine,
+  heute,
+  jetzt,
+  ich,
+  meine,
+  hervorheben,
+}: {
+  termine: TerminZeile[];
+  heute: string;
+  jetzt: string;
+  ich: string;
+  meine: boolean;
+  hervorheben?: string;
+}) {
   return nachMonatUndTag(termine).map((m) => (
     <section key={m.monat} className="mt-4 first:mt-2">
       <h4 className="type-title-small text-on-surface">{monatsName(m.monat)}</h4>
       <ol className="mt-2 flex flex-col gap-2">
-        {m.tage.map((tag) => (
-          <li key={tag.datum}>
-            {/* Ohne Polsterung: Die Zeilen füllen die Karte, ihre Zustands-
-                Ebene beim Überfahren reicht bis an deren Rand. */}
-            <Card>
-              <ol className="divide-y divide-linie">
-                {tag.termine.map((t, i) => (
-                  <TerminReihe key={t.id} t={t} heute={heute} ich={ich} meine={meine} hervorgehoben={t.id === hervorheben} ersterDesTages={i === 0} />
-                ))}
-              </ol>
-            </Card>
-          </li>
-        ))}
+        {m.tage.flatMap((tag) => {
+          // Der erste Termin des Tages — Zeile oder grosse Karte — trägt
+          // dessen Überschrift (sein Kalenderblatt).
+          const erste = tag.termine[0];
+          return abschnitte(tag.termine, (t) => nachMeldefrist(t, jetzt)).map((teil) =>
+            teil.gross ? (
+              <li key={teil.termine[0].id}>
+                <NaechsterTermin
+                  t={teil.termine[0]}
+                  heute={heute}
+                  jetzt={jetzt}
+                  ich={ich}
+                  meine={meine}
+                  hervorgehoben={teil.termine[0].id === hervorheben}
+                  naechster={false}
+                  tagesUeberschrift={teil.termine[0] === erste}
+                />
+              </li>
+            ) : (
+              <li key={teil.termine[0].id}>
+                {/* Ohne Polsterung: Die Zeilen füllen die Karte, ihre Zustands-
+                    Ebene beim Überfahren reicht bis an deren Rand. */}
+                <Card>
+                  <ol className="divide-y divide-linie">
+                    {teil.termine.map((t) => (
+                      <TerminReihe key={t.id} t={t} heute={heute} ich={ich} meine={meine} hervorgehoben={t.id === hervorheben} ersterDesTages={t === erste} />
+                    ))}
+                  </ol>
+                </Card>
+              </li>
+            ),
+          );
+        })}
       </ol>
     </section>
   ));
 }
 
-/** Ort und Platz in einem: «Allmend · 30 × 30 m · Kunstrasen» (PO: der Platz steht hinter dem Ort). */
-function ortUndPlatz(t: TerminZeile): string | null {
-  return [t.ort, felderKurz(t.felder)].filter(Boolean).join(" · ") || null;
+/** Teilt die Termine eines Tages in Folgen gewöhnlicher Zeilen und einzelne
+ *  grosse Karten, in ihrer Reihenfolge. */
+function abschnitte(termine: TerminZeile[], gross: (t: TerminZeile) => boolean): { gross: boolean; termine: TerminZeile[] }[] {
+  const teile: { gross: boolean; termine: TerminZeile[] }[] = [];
+  for (const t of termine) {
+    const g = gross(t);
+    const letzter = teile.at(-1);
+    if (!g && letzter && !letzter.gross) letzter.termine.push(t);
+    else teile.push({ gross: g, termine: [t] });
+  }
+  return teile;
 }
 
-/* Ein Termin als knappe Zeile (#402 AK 4–11, 15–17; PO 4, 5). Die ganze
-   Zeile öffnet «Termin ändern»: Ihre Fläche ist ein Knopf, über dem der
+/* Ein Termin als knappe Zeile (#402; Epic #490, Tafel 2 und 2c). Die ganze
+   Zeile öffnet den Termin daneben: Ihre Fläche ist ein Link, über dem der
    Inhalt liegt, ohne Klicks abzufangen (`pointer-events-none`). Nur der
-   Trainingsname, der zum Training führt, und die Handgriffe rechts nehmen
+   Trainingsname, «+ Training hinzufügen» und die Handgriffe rechts nehmen
    Klicks selbst an. Was zu lang ist, endet in «…»; die ganze Zeile steht im
-   Tooltip des Knopfes (AK 9), alles Weitere am geöffneten Termin (AK 12).
+   Tooltip des Links, alles Weitere am geöffneten Termin.
 
-   Jeder Termin hat sein Kalenderblatt, dessen Fläche sagt, was er trägt (PO
-   2026-10-06); die Termine eines Tages stehen in einer Karte zusammen. Nur
-   das erste Blatt ist die Überschrift des Tages, die übrigen sind stumm.
-   Anstehend ohne Training steht statt eines Zustands gleich «Training
-   hinzufügen». */
+   Aufbau wie im Design: links das Kalenderblatt (weiss, vergangen grau,
+   ausgefallen grau und durchgestrichen), daneben untereinander der Status
+   als Lozenge, der Name und eine ruhige Zeile mit Zeit, Ort — bei einem
+   ausgefallenen Termin statt des Orts der Grund —, Kader und Verantwortlichen;
+   rechts die Spielerzahl klein und ungefärbt, dann die Handgriffe. Ein
+   vergangener Termin steht gedämpft und ohne Status, ein ausgefallener
+   gedämpft mit durchgestrichenem Namen. Nur das erste Blatt eines Tages ist
+   dessen Überschrift, die übrigen sind stumm. */
 function TerminReihe({
   t,
   heute,
@@ -197,24 +247,24 @@ function TerminReihe({
   hervorgehoben: boolean;
   ersterDesTages: boolean;
 }) {
-  const a = useTerminAktionen();
   const vergangen = t.datum < heute;
+  const gedaempft = vergangen || t.ausgefallen;
   const zeit = zeitText(t.beginn, t.ende);
-  const ort = ortUndPlatz(t);
   const v = verantwortlicheMitDir(t, ich);
-  const VIcon = v.selbst ? UserCheck : Users;
-  const zustand = terminZustand(t, heute);
+  const status = terminStatus(t, heute);
   const zahl = spielerzahlVon(t);
   const zahlKurz = spielerzahlKurz(zahl);
   const zahlLang = spielerzahlLang(zahl);
   const kaderText = t.kader.map((k) => k.name ?? EHEMALIGER_KADER).join(", ");
-  const ganz = [
-    [zeit, ort, zahlLang].filter(Boolean).join(" · "),
-    kaderText && `Kader: ${kaderText}`,
-    zustand === "ausgefallen" ? ["Ausgefallen", t.ausfallGrund].filter(Boolean).join(": ") : null,
-    t.spiel ? `Spiel: ${t.spiel.bezeichnung}` : t.training?.name,
-    v.text && `Verantwortlich: ${v.text}`,
-  ].filter(Boolean).join("\n");
+  const name = t.spiel ? t.spiel.bezeichnung : t.training ? t.training.name : t.ausgefallen || vergangen ? "Kein Training eingetragen" : null;
+  const unterzeile = [
+    zeit,
+    t.ausgefallen ? t.ausfallGrund : t.ort,
+    t.ausgefallen && t.training ? "Training ruht" : null,
+    kaderText && `Kader ${kaderText}`,
+    v.text,
+  ].filter(Boolean).join(" · ");
+  const ganz = [status?.wort, name, unterzeile, zahlLang].filter(Boolean).join("\n");
   return (
     <li
       id={t.id}
@@ -223,7 +273,7 @@ function TerminReihe({
       // Sprungziel aus dem Kalender-Abo und dem Monat; die Kontur zeigt, wo man landet.
       tabIndex={-1}
       className={cn(
-        "group/zeile state relative flex items-start gap-2 px-3 py-2.5 outline-none first:rounded-t-flaeche last:rounded-b-flaeche focus:kontur focus:border-primary",
+        "group/zeile state relative flex items-start gap-3 px-3 py-2.5 outline-none first:rounded-t-flaeche last:rounded-b-flaeche focus:kontur focus:border-primary",
         hervorgehoben && "kontur border-primary",
       )}
     >
@@ -232,98 +282,37 @@ function TerminReihe({
         <span className="sr-only">{t.spiel ? `Spiel öffnen: ${t.spiel.bezeichnung}, ${zeit}` : `Termin öffnen: ${zeit}`}</span>
       </Link>
       <div aria-hidden={!ersterDesTages || undefined} className="pointer-events-none relative">
-        <Kalenderblatt as={ersterDesTages ? "h5" : "div"} datum={t.datum} zustand={zustand} className={cn(vergangen && "opacity-60")} />
+        <Kalenderblatt as={ersterDesTages ? "h5" : "div"} datum={t.datum} stand={blattStand(t, heute)} />
       </div>
-      <div className={cn("pointer-events-none relative min-w-0 flex-1 py-0.5", (vergangen || t.ausgefallen) && "[&_.gedaempft]:opacity-60")}>
-        {/* Schmal bricht um, was unter 8 rem schrumpfte, und kürzt erst auf ganzer Breite. */}
-        <p aria-hidden className="gedaempft flex min-w-0 flex-wrap items-baseline gap-x-2 type-body-medium text-on-surface">
-          <span className="shrink-0">{zeit}</span>
-          {ort && (
-            <span className="inline-flex min-w-32 max-w-full items-center gap-1 type-body-small text-on-surface-mittel">
-              {t.ort ? <MapPin size={14} className="shrink-0" /> : <LandPlot size={14} className="shrink-0" />}
-              <span className="truncate">{ort}</span>
-            </span>
-          )}
-          {zahlKurz && (
-            <span className="inline-flex shrink-0 items-center gap-1 type-body-small text-on-surface-mittel">
-              <Shirt size={14} className="shrink-0" />
-              {/* Ein Spiel färbt die Zahl nach seinem Richtwert (#463 AK 7). */}
-              <span
-                className={
-                  t.spiel && zahl.quelle === "liste"
-                    ? richtwertSchrift(zahl.anwesend ?? zahl.angemeldet, t.spiel.richtwertMin, t.spiel.richtwertMax)
-                    : undefined
-                }
-              >
-                {zahlKurz}
-              </span>
-            </span>
-          )}
-          {/* #453 AK 5: Für wen er gilt; ohne Kader steht nichts — er gilt für alle. */}
-          <KaderLozenges namen={t.kader.map((k) => k.name)} className="self-center" />
-        </p>
-        {/* Vorlesehilfen hören die erste Zeile ausgeschrieben. */}
-        <p className="sr-only">
-          {[ort && `Ort: ${ort}`, zahlLang && `Spielerzahl: ${zahlLang}`, kaderText && `Kader: ${kaderText}`].filter(Boolean).join(", ")}
-        </p>
-        <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5">
-          {zustand === "ausgefallen" ? (
-            <span className="flex min-w-0 max-w-full items-center gap-2">
-              <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
-              {/* AK 7: der Grund, gekürzt; ganz im Tooltip und am geöffneten Termin. */}
-              {t.ausfallGrund && (
-                <span className="truncate type-body-small text-on-surface-mittel">
-                  <span className="sr-only">Grund: </span>
-                  {t.ausfallGrund}
-                </span>
-              )}
-              {t.spiel && (
-                <span className="gedaempft flex min-w-0 items-center gap-2">
-                  <SpielLozenge />
-                  <span className="truncate type-body-small text-on-surface-mittel line-through">{t.spiel.bezeichnung}</span>
-                </span>
-              )}
-              {/* Ein Training ruht am ausgefallenen Termin (PO 2026-10-06). */}
-              {t.training && (
-                <Link
-                  href={`/training/${t.training.id}`}
-                  title={t.training.name}
-                  className="gedaempft focus-ring pointer-events-auto min-w-0 truncate rounded-klein type-body-small text-on-surface-mittel hover:underline"
-                >
-                  <span className="sr-only">Training: </span>
-                  {t.training.name}
-                </Link>
-              )}
-            </span>
-          ) : zustand === "spiel" ? (
-            // Ein Spiel steht mit seiner Bezeichnung, wo bei einem Training dessen Name steht (#459 AK 8).
-            <span className="gedaempft flex min-w-0 max-w-full items-center gap-2">
-              <SpielLozenge />
-              <span className="truncate type-title-small text-on-surface">{t.spiel!.bezeichnung}</span>
-            </span>
-          ) : zustand === "training" ? (
-            <Link
-              href={`/training/${t.training!.id}`}
-              title={t.training!.name}
-              className="gedaempft focus-ring pointer-events-auto min-w-0 truncate rounded-klein type-title-small text-on-surface hover:underline"
-            >
-              {t.training!.name}
-            </Link>
-          ) : zustand === "noch-nicht" ? (
-            <TrainingHinzufuegen t={t} className="type-body-medium" />
-          ) : (
-            <Lozenge>Ohne Training</Lozenge>
-          )}
-          {v.text && (
-            <span className="gedaempft inline-flex min-w-32 max-w-full items-center gap-1 type-body-small text-on-surface-mittel">
-              <VIcon size={14} aria-hidden className="shrink-0" />
-              <span className="sr-only">Verantwortlich: </span>
-              <span className="truncate">{v.text}</span>
-            </span>
-          )}
-        </div>
+      <div className="pointer-events-none relative flex min-w-0 flex-1 flex-col items-start gap-0.5">
+        {status && <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>}
+        {t.training && !t.ausgefallen ? (
+          <Link
+            href={`/training/${t.training.id}`}
+            title={t.training.name}
+            className={cn(
+              "focus-ring pointer-events-auto max-w-full truncate rounded-klein type-title-small hover:underline",
+              vergangen ? "text-on-surface-mittel" : "text-on-surface",
+            )}
+          >
+            {t.training.name}
+          </Link>
+        ) : name ? (
+          <span className={cn("max-w-full truncate type-title-small", gedaempft ? "text-on-surface-mittel" : "text-on-surface", t.ausgefallen && "line-through")}>
+            {name}
+          </span>
+        ) : (
+          <TrainingHinzufuegen t={t} className="type-title-small" />
+        )}
+        <span className="max-w-full truncate type-body-medium text-on-surface-mittel">{unterzeile}</span>
       </div>
-      <TerminHandgriffe t={t} zuordnen={zustand !== "noch-nicht"} />
+      {zahlKurz && (
+        <span className="pointer-events-none relative shrink-0 py-0.5 type-body-small tabular-nums text-on-surface-mittel">
+          <span aria-hidden>{zahlKurz}</span>
+          <span className="sr-only">Spielerzahl: {zahlLang}</span>
+        </span>
+      )}
+      <TerminHandgriffe t={t} zuordnen={!nochNichtVorbereitet(t, heute)} />
     </li>
   );
 }

@@ -1,13 +1,26 @@
 import { Repeat } from "lucide-react";
-import { Eigenschaft, EigenschaftFehlt, RichtwertLozenge, TreffpunktListe, richtwertSchrift } from "@/components/ui";
+import { Eigenschaft, EigenschaftFehlt, Lozenge, TreffpunktListe } from "@/components/ui";
+import { spielStatus } from "@/lib/termin-status";
 import { cn } from "@/lib/cn";
 import { wochentageText } from "@/lib/serie";
 import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { feldName, feldText } from "@/lib/termin-felder";
 import { verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { FUER_ALLE } from "@/lib/kader";
-import { richtwertText, zeitpunktKurz } from "@/lib/spiel";
+import { richtwertStufeText, richtwertText, zeitpunktKurz } from "@/lib/spiel";
 import { KaderLozenges } from "./KaderLozenge";
+
+/** Der Status eines Spiels als Lozenge mit seinem Detail; ohne Richtwert nichts. */
+function spielStatusEcke(zahl: number, min: number | null, max: number | null) {
+  const status = spielStatus(zahl, min, max);
+  if (!status) return null;
+  return (
+    <>
+      <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>
+      <span className="type-body-small text-on-surface-mittel">{richtwertStufeText(zahl, min, max)}</span>
+    </>
+  );
+}
 
 /* Alle Angaben eines Termins ungekürzt (#403 AK 3, 5): Ort, Verantwortliche,
    Spielerzahl und Felder ausführlich, Bemerkung und die Wochentage der Serie.
@@ -52,21 +65,18 @@ export function TerminEigenschaften({
           ausgefallener Termin nennt keine (#437 AK 4). */}
       {t.spiel ? (
         <>
-          {/* #463 AK 6, 7: die Angemeldeten gegen den Richtwert, farbig und in
-              Worten; ab dem Anpfiff die Anwesenden (#487 AK 10, 11). */}
+          {/* #463 AK 6, 7: die Angemeldeten, ab dem Anpfiff die Anwesenden
+              (#487 AK 10, 11) — ungefärbt mit dem Status des Spiels in einem
+              Wort und seinem Detail (Epic #490, #495 AK 13). */}
           {!t.ausgefallen && t.spielstand && (
             <Eigenschaft label="Spieler:innen">
               <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className={richtwertSchrift(t.spielstand.anwesend ?? t.spielstand.angemeldet, t.spiel.richtwertMin, t.spiel.richtwertMax)}>
+                {spielStatusEcke(t.spielstand.anwesend ?? t.spielstand.angemeldet, t.spiel.richtwertMin, t.spiel.richtwertMax)}
+                <span>
                   {t.spielstand.anwesend != null
                     ? `${t.spielstand.anwesend} von ${t.spielstand.gesamt} da`
                     : `${t.spielstand.angemeldet} von ${t.spielstand.gesamt} angemeldet`}
                 </span>
-                <RichtwertLozenge
-                  zahl={t.spielstand.anwesend ?? t.spielstand.angemeldet}
-                  min={t.spiel.richtwertMin}
-                  max={t.spiel.richtwertMax}
-                />
                 {/* #464 AK 8: wie viele nicht aufgeboten sind. */}
                 {(t.spielstand.nicht_aufgeboten ?? 0) > 0 && (
                   <span className="type-body-small text-on-surface-mittel">{t.spielstand.nicht_aufgeboten} nicht aufgeboten</span>

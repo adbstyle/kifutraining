@@ -168,9 +168,9 @@ export function richtwertStufeText(zahl: number, min: number | null, max: number
     const fehlen = min - zahl;
     return `noch ${fehlen} bis Mindestzahl ${min}`;
   }
-  if (stufe === "knapp") return `Mindestzahl ${min} knapp erreicht`;
+  if (stufe === "knapp") return `Mindestzahl ${min} genau erreicht`;
   if (stufe === "ueber") return `${zahl - (max ?? 0)} über Höchstzahl ${max}`;
-  if (stufe === "im") return "im Richtwert";
+  if (stufe === "im") return `Richtwert ${richtwertText(min, max)}`;
   return null;
 }
 
@@ -246,6 +246,8 @@ export const MELDUNG_TEXT = {
   ohne: "Ohne Meldung",
   angemeldet: "Angemeldet",
   abgemeldet: "Abgemeldet",
+  /** Nach der Meldefrist ohne Meldung (#496): kein Speicherwert, der Name. */
+  verpasst: "Meldefrist verpasst",
   /** Die Abweisungen — an Oberfläche, Link und KI wortgleich (AK 17, 24). */
   begonnen: "Das Spiel hat begonnen. Gemeldet wird nur bis zum Anpfiff.",
   ausgefallen: "Das Spiel fällt aus. Für es lässt sich niemand an- oder abmelden.",
@@ -284,8 +286,10 @@ export const NACHTRAG_TEXT = {
   dochErschienen: "Doch erschienen",
   /** Über der Liste eines begonnenen Spiels (Design PO 2026-10-21). */
   kopf: "Stand beim Anpfiff · nachtragen, wer da war",
-  /** Der Menüeintrag, der einen Nachtrag zurücknimmt (AK 3). */
-  zurueck: (status: string) => `${status} (Stand beim Anpfiff)`,
+  /** Der Menüeintrag, der einen Nachtrag zurücknimmt (AK 3; Epic #490: das
+   *  Ziel steht als Lozenge daneben, der Hinweis darunter). */
+  zurueck: "Nachtrag zurücknehmen",
+  zurueckHinweis: "Zurück zum Stand beim Anpfiff",
 } as const;
 
 /** «1 Kennzeichnung als nicht aufgeboten», «2 Kennzeichnungen …». */
@@ -296,6 +300,14 @@ function kennzeichnungenText(k: number): string {
 /** Die Meldung als kurzer Text. */
 export function meldungText(m: Meldung): string {
   return m === null ? MELDUNG_TEXT.ohne : MELDUNG_TEXT[m];
+}
+
+/** Hat die Spieler:in die Meldefrist verpasst (#496)? Ohne Meldung, nicht
+ *  als nicht aufgeboten gekennzeichnet, und die Meldefrist ist abgelaufen —
+ *  auch wer erst danach zum Spiel kam. Ohne Meldefrist nie. Kein eigener
+ *  Speicherwert: Sie zählt wie jede ohne Meldung nicht als angemeldet. */
+export function meldefristVerpasst(m: Meldung, nichtAufgeboten: boolean, fristAbgelaufen: boolean): boolean {
+  return fristAbgelaufen && m === null && !nichtAufgeboten;
 }
 
 /** Ein Wanduhr-Zeitpunkt `YYYY-MM-DDTHH:MM` als «Do., 29.10., 20:00». */

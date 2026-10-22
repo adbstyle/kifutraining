@@ -1,5 +1,5 @@
 import { CalendarOff, Clock, X } from "lucide-react";
-import { IconButtonLink, KategorieLozenge, Lozenge, SectionMessage, SpielLozenge, TabNav } from "@/components/ui";
+import { IconButtonLink, KategorieLozenge, Lozenge, SectionMessage, TabNav } from "@/components/ui";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { TrainingTeile } from "@/components/training/TrainingTeile";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
@@ -59,7 +59,6 @@ export async function TerminSpalte({
     <section aria-label={`${t.spiel ? "Spiel" : "Termin"} ${tagOhneJahr(t.datum)}`} className="flex flex-col">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          {t.spiel && <SpielLozenge />}
           <h3 className="type-title-large text-on-surface">{t.spiel ? t.spiel.bezeichnung : tagOhneJahr(t.datum)}</h3>
           {t.spiel && <p className="type-body-medium text-on-surface-mittel">{tagOhneJahr(t.datum)}</p>}
           <p className="type-body-medium text-on-surface-mittel">

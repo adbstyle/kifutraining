@@ -19,11 +19,11 @@ import { cn } from "@/lib/cn";
    die Aus-Lage eines Schalters, dessen Aus kein Fehlen bedeutet (die
    Selbstabholung, #438).
 
-   `ton="erfolg"`: die An-Lage im Grün der Success-Lozenge statt in Primary —
-   gespiegelt zur roten Aus-Lage (dunkle Bahn, heller Knopf). Für
-   «angemeldet» und «da»: Bei Spielen ist angemeldet grün (Plakette,
-   Status-Chip), darum auch der Schalter der Trainings (PO 2026-10-21,
-   Epic #448). */
+   `ton="ruhig"` (Epic #490, #498): für «angemeldet» und «da» an Trainings —
+   der Schalter zeigt den Stand, ohne ihn zu bewerten. An: durchsichtige Bahn
+   mit heller Kontur und grossem hellem Knopf rechts (wie ein Ghost-Knopf);
+   aus: dunkle Bahn mit grauer Kontur und kleinem grauem Knopf links. Ohne
+   Zeichen — die Lage und Grösse des Knopfs sagen es, nicht die Farbe. */
 export function Switch({
   className,
   disabled,
@@ -33,10 +33,25 @@ export function Switch({
 }: Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "role"> & {
   /** Ohne Bedeutung von an/aus: grau, ohne Zeichen. */
   neutral?: boolean;
-  /** Farbe der An-Lage: Primary oder das Grün der Success-Lozenge. */
-  ton?: "primary" | "erfolg";
+  /** Primary mit Zeichen oder ruhig ohne Farbe (Trainings, #498). */
+  ton?: "primary" | "ruhig";
 }) {
-  const erfolg = ton === "erfolg";
+  if (ton === "ruhig" && !neutral)
+    return (
+      <span className={cn("relative inline-flex h-8 w-[52px] shrink-0 items-center", disabled && "opacity-40", className)}>
+        <input
+          type="checkbox"
+          role="switch"
+          disabled={disabled}
+          className="peer focus-ring absolute inset-0 m-0 h-full w-full cursor-pointer appearance-none rounded-full border-2 border-on-surface-mittel bg-elev-08 transition-colors checked:border-on-surface/60 checked:bg-transparent disabled:cursor-not-allowed"
+          {...rest}
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-2 size-4 rounded-full bg-on-surface-mittel transition-[left,width,height,background-color] peer-checked:left-[26px] peer-checked:size-5 peer-checked:bg-on-surface"
+        />
+      </span>
+    );
   return (
     <span className={cn("relative inline-flex h-8 w-[52px] shrink-0 items-center", disabled && "opacity-40", className)}>
       <input
@@ -47,10 +62,7 @@ export function Switch({
           "peer focus-ring absolute inset-0 m-0 h-full w-full cursor-pointer appearance-none rounded-full border-2 transition-colors disabled:cursor-not-allowed",
           neutral
             ? "border-kante bg-transparent"
-            : cn(
-                "border-on-lozenge-danger bg-lozenge-danger",
-                erfolg ? "checked:border-on-lozenge-success checked:bg-lozenge-success" : "checked:border-primary checked:bg-primary",
-              ),
+            : "border-on-lozenge-danger bg-lozenge-danger checked:border-primary checked:bg-primary",
         )}
         {...rest}
       />
@@ -60,18 +72,10 @@ export function Switch({
         <>
           <span
             aria-hidden
-            className={cn(
-              "pointer-events-none absolute left-1 flex h-6 w-6 items-center justify-center rounded-full bg-on-lozenge-danger transition-[left] peer-checked:left-6",
-              erfolg ? "peer-checked:bg-on-lozenge-success" : "peer-checked:bg-on-primary",
-            )}
+            className="pointer-events-none absolute left-1 flex h-6 w-6 items-center justify-center rounded-full bg-on-lozenge-danger transition-[left] peer-checked:left-6 peer-checked:bg-on-primary"
           />
           <X aria-hidden size={16} strokeWidth={3} className="pointer-events-none absolute left-2 text-lozenge-danger peer-checked:hidden" />
-          <Check
-            aria-hidden
-            size={16}
-            strokeWidth={3}
-            className={cn("pointer-events-none absolute left-7 hidden peer-checked:block", erfolg ? "text-lozenge-success" : "text-primary")}
-          />
+          <Check aria-hidden size={16} strokeWidth={3} className="pointer-events-none absolute left-7 hidden text-primary peer-checked:block" />
         </>
       )}
     </span>

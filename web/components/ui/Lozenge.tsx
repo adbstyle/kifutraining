@@ -23,8 +23,8 @@ import type { KategorieSlug } from "@/lib/vocab";
    - `information` — gilt nach aussen: öffentlich, Community.
    - `discovery` — etwas Zusätzliches: mehrere Varianten, eine neue Version.
    - `success` / `warning` / `danger` — erledigt / braucht Aufmerksamkeit /
-     blockiert (im Kit, derzeit ohne Ort; ein Termin ohne Training trägt die
-     Tönung seines Kalenderblatts, `BlattLozenge`).
+     blockiert: der Status eines Termins oder einer Spieler:in in einem Wort
+     (Epic #490, `lib/termin-status.ts`).
    - `accent-*` — Kategorien ohne Wertung; bei uns die Alterskategorien.
    Die Akzente teilen Atlassians Palette mit den Bedeutungen (`accent-blue`
    hat die Werte von `information`, `accent-purple` die von `discovery`,
@@ -33,7 +33,7 @@ import type { KategorieSlug } from "@/lib/vocab";
    Lozenge ein Wort.
    Die Farben stehen wörtlich aus Atlassians Dark-Theme (lib/farben.ts),
    im Druck aus dem Light-Theme — die Rollen wechseln im `@media print`. */
-/** Die Form jeder Lozenge, ohne Farbe — auch für `BlattLozenge`. */
+/** Die Form jeder Lozenge, ohne Farbe — auch für die `LozengeAuswahl`. */
 export const LOZENGE_FORM = "type-lozenge inline-flex h-5 max-w-[200px] shrink-0 items-center gap-1 rounded-flaeche px-1 py-0.5";
 
 const darstellungen: Record<LozengeAppearance, string> = {
@@ -51,6 +51,12 @@ const darstellungen: Record<LozengeAppearance, string> = {
   "accent-purple": "bg-lozenge-accent-purple text-on-lozenge-accent-purple",
   "accent-gray": "bg-lozenge-accent-gray text-on-lozenge-accent-gray",
 };
+
+/** Form und Farbe einer Lozenge — auch für die `LozengeAuswahl`, die genauso
+ *  aussieht, aber ein Knopf ist. */
+export function lozengeKlassen(appearance: LozengeAppearance): string {
+  return cn(LOZENGE_FORM, darstellungen[appearance]);
+}
 
 export function Lozenge({
   appearance = "neutral",
@@ -137,12 +143,6 @@ export function SichtbarkeitLozenge({ oeffentlich }: { oeffentlich: boolean }) {
   );
 }
 
-/* Ein Spiel (Epic #448) — überall, wo Termine erscheinen, als Spiel von einem
-   Training unterscheidbar (#459 AK 7). `discovery`: etwas Zusätzliches neben
-   den Trainings, in derselben Tönung wie sein Kalenderblatt. */
-export function SpielLozenge() {
-  return <Lozenge appearance="discovery">Spiel</Lozenge>;
-}
 
 /* ── Alterskategorie (G bis A) ────────────────────────────────
    Je Stufe ein fest lernbarer Atlassian-Akzent — wie Jira Kategorien ohne
