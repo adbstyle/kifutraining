@@ -170,8 +170,8 @@ function PlanMonate({
           // Der erste Termin des Tages — Zeile oder grosse Karte — trägt
           // dessen Überschrift (sein Kalenderblatt).
           const erste = tag.termine[0];
-          return abschnitte(tag.termine, (t) => nachMeldefrist(t, jetzt)).map((teil) =>
-            teil.gross ? (
+          return abschnitte(tag.termine, (t) => (nachMeldefrist(t, jetzt) ? "gross" : t.ausgefallen ? "gedaempft" : "zeile")).map((teil) =>
+            teil.art === "gross" ? (
               <li key={teil.termine[0].id}>
                 <NaechsterTermin
                   t={teil.termine[0]}
@@ -186,15 +186,13 @@ function PlanMonate({
               </li>
             ) : (
               <li key={teil.termine[0].id}>
-                {/* Ohne Polsterung: Die Zeilen füllen die Karte, ihre Zustands-
-                    Ebene beim Überfahren reicht bis an deren Rand. */}
-                <Card>
+                <ZeilenKarte gedaempft={teil.art === "gedaempft"}>
                   <ol className="divide-y divide-linie">
                     {teil.termine.map((t) => (
                       <TerminReihe key={t.id} t={t} heute={heute} ich={ich} meine={meine} hervorgehoben={t.id === hervorheben} ersterDesTages={t === erste} />
                     ))}
                   </ol>
-                </Card>
+                </ZeilenKarte>
               </li>
             ),
           );
@@ -204,15 +202,26 @@ function PlanMonate({
   ));
 }
 
-/** Teilt die Termine eines Tages in Folgen gewöhnlicher Zeilen und einzelne
- *  grosse Karten, in ihrer Reihenfolge. */
-function abschnitte(termine: TerminZeile[], gross: (t: TerminZeile) => boolean): { gross: boolean; termine: TerminZeile[] }[] {
-  const teile: { gross: boolean; termine: TerminZeile[] }[] = [];
+/** Die Karte um Zeilen eines Tages, ohne Polsterung: Die Zeilen füllen sie,
+ *  ihre Zustands-Ebene beim Überfahren reicht bis an deren Rand. Ausgefallene
+ *  treten wie am privaten Link zurück — ohne Fläche, nur umrandet (PO
+ *  2026-10-22). */
+function ZeilenKarte({ gedaempft, children }: { gedaempft: boolean; children: ReactNode }) {
+  return gedaempft ? <div className="kontur rounded-flaeche border-linie">{children}</div> : <Card>{children}</Card>;
+}
+
+type Abschnitt = { art: "gross" | "gedaempft" | "zeile"; termine: TerminZeile[] };
+
+/** Teilt die Termine eines Tages in ihrer Reihenfolge in einzelne grosse
+ *  Karten und Folgen von Zeilen — gewöhnliche und ausgefallene getrennt, je
+ *  in ihrer eigenen Karte. */
+function abschnitte(termine: TerminZeile[], art: (t: TerminZeile) => Abschnitt["art"]): Abschnitt[] {
+  const teile: Abschnitt[] = [];
   for (const t of termine) {
-    const g = gross(t);
+    const a = art(t);
     const letzter = teile.at(-1);
-    if (!g && letzter && !letzter.gross) letzter.termine.push(t);
-    else teile.push({ gross: g, termine: [t] });
+    if (a !== "gross" && letzter?.art === a) letzter.termine.push(t);
+    else teile.push({ art: a, termine: [t] });
   }
   return teile;
 }
