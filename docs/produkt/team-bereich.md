@@ -293,36 +293,42 @@ Die Grenze zwischen den Abschnitten liegt am Tagesende, gemessen an der Schweize
 Einheit von heute Abend bleibt den ganzen Tag oben, auch während sie läuft und auch, wenn ihr
 Ende schon vorüber ist. Das Ende des Termins zählt dafür bewusst nicht.
 
-Ganz oben steht der nächste Termin als grössere Karte — der erste, der ansteht, auch wenn er
-ausgefallen ist, und bei mehreren am selben Tag der früheste. Sie nennt „Heute" oder „Morgen"
-vor Wochentag und Datum, darunter Zeit und Training, gross genug, dass man beides am Handy beim
-Öffnen ohne Scrollen sieht, und gleich darunter „Durchführen" und „Training öffnen" — ohne
-Training steht an seiner Stelle eine gelbe Plakette „Noch kein Training" in der Farbe der Kalenderblätter — auch der Tag darüber steht dann in diesem Gelb — und als Knopf „Training
-hinzufügen", ausgefallen der vollständige Grund. Führt das Team eine Spielerliste,
-steht bei diesen Knöpfen zusätzlich „Spieler:innen", das den Termin bei diesem Reiter öffnet (siehe „Der geöffnete
-Termin"); auch ein Klick auf den Tag öffnet ihn. Darunter stehen alle
-Angaben ungekürzt: Ort, Verantwortliche, die Spielerzahl — „12 von 15 angemeldet" aus der
-Spielerliste oder „12 Spieler:innen erwartet" —, jedes Feld mit Grösse, Toren
-je Torart und Untergrund, die Bemerkung und die Wochentage seiner Serie; fehlen Spielerzahl
-oder Felder, steht „Nicht erfasst", ausgefallen fehlt die Spielerzahl ganz. Die übrigen
-Handgriffe liegen in ihrem Menü. In der Liste
-darunter steht er nicht noch einmal, in der Zahl der anstehenden Termine zählt er mit.
+Ganz oben steht „Als Nächstes" als grössere Karte: der erste anstehende Termin, der stattfindet,
+bei mehreren am selben Tag der früheste. Ein ausgefallener Termin davor bekommt keine Karte, er
+steht als gewöhnliche Zeile in der Liste. Die Karte ist aufgebaut wie eine Zeile, nur grösser:
+links das weisse Kalenderblatt, daneben der Status in einem Wort („Vorbereitet" grau oder „Nicht
+vorbereitet" gelb), der Name des Trainings — ohne Training „Noch kein Training" —, Zeit und Ort,
+rechts das Menü mit „Training ersetzen" und den übrigen Handgriffen. Darunter der Abschnitt
+„Team": die Kader des Termins, links die Zahl der Angemeldeten und rechts „von" allen, für die
+der Termin gilt, dazu ein Balken, dessen heller Anteil die Angemeldeten sind — ungefärbt, er
+bewertet nicht —, und eine Zeile mit den Abgemeldeten, „änderbar bis zum Beginn" und den
+Verantwortlichen. Ohne Spielerliste steht dort die erwartete Spielerzahl ohne Balken. Dann der
+Abschnitt „Platz" mit Grösse, Toren und Untergrund jedes Feldes, ohne Felder „Nicht erfasst".
+Zuunterst „Durchführen" als heller Knopf und „Training öffnen", ohne Training „Training
+hinzufügen" als heller Knopf; führt das Team eine Spielerliste, dazu „Spieler:innen", das den
+Termin bei diesem Reiter öffnet (siehe „Der geöffnete Termin"). Ein Klick auf die Karte oder den
+Namen öffnet den Termin. Bemerkung und Wochentage der Serie zeigt erst der geöffnete Termin. In
+der Liste darunter steht er nicht noch einmal, in der Zahl der anstehenden Termine zählt er mit.
 
 Die übrigen Termine sind nach Monaten gegliedert, jede Überschrift mit Jahr. Die Termine eines
 Tages stehen zusammen in einer Karte, nach Beginn geordnet, jeder als knappe Zeile mit seinem
 Kalenderblatt links — Wochentag, Tageszahl und Monat, ohne Jahr; den heutigen Tag hebt es nicht
-hervor, dafür steht der nächste Termin zuoberst. Eine leise Tönung des Blatts sagt, was der
-Termin trägt: violett mit Training, gelb noch ohne, grau und durchgestrichen ausgefallen, ohne
-Tönung vergangen ohne Training. Eine Zeile
-zeigt Beginn und Ende, Ort und Platz, die Spielerzahl — mit Spielerliste die angemeldeten von
-allen, etwa „12/15", sonst die erwartete, ausgefallen keine —, was der Termin trägt und die
-Verantwortlichen. Was zu lang ist, endet in „…" und steht ganz im Hinweis beim Darüberfahren. Der Termin
-trägt das Training mit seinem Namen, oder — anstehend und ohne Training — an dessen Stelle
-gedämpft „Training hinzufügen", wie „Dauer hinzufügen" an einer Übung; ein Klick öffnet das
-Zuordnen. So fällt eine noch nicht vorbereitete Einheit auf und lässt sich sofort vorbereiten. Ein vergangener Termin ohne Training heisst schlicht „Ohne Training"; ob er
-stattgefunden hat, sagt die Anwendung nicht. Bemerkung, Serie und Alterskategorien stehen nicht
-in der Zeile; die Bemerkung und die Serie zeigt der geöffnete Termin, die Alterskategorien
-das Training selbst. Der Rückblick sieht genauso aus.
+hervor, dafür steht der nächste Termin zuoberst. Das Blatt ist weiss, solange der Termin
+ansteht, grau ab dem Folgetag und grau mit durchgestrichener Tageszahl, wenn er ausfällt. Was
+der Termin trägt, sagt ein Status in einem Wort über seinem Namen: „Vorbereitet" grau, „Nicht
+vorbereitet" gelb, „Fällt aus" grau; ein vergangener Termin trägt keinen. Darunter der Name des
+Trainings oder — anstehend und ohne Training — „+ Training hinzufügen" in Violett, das das
+Zuordnen öffnet; so fällt eine noch nicht vorbereitete Einheit auf und lässt sich sofort
+vorbereiten. Ein vergangener oder ausgefallener Termin ohne Training heisst „Kein Training
+eingetragen"; ob er stattgefunden hat, sagt die Anwendung nicht. Eine ruhige Zeile darunter
+nennt Beginn und Ende, Ort — ausgefallen statt dessen den Grund und, falls ein Training
+zugeordnet ist, „Training ruht" —, die Kader und die Verantwortlichen. Rechts steht die
+Spielerzahl klein und ungefärbt: mit Spielerliste die angemeldeten von allen, etwa „12/15", ab
+Beginn die Anwesenden, sonst die erwartete, ausgefallen keine. Vergangene und ausgefallene
+Termine stehen gedämpft, ein ausgefallener mit durchgestrichenem Namen. Was zu lang ist, endet
+in „…" und steht ganz im Hinweis beim Darüberfahren. Bemerkung, Serie, Platz und
+Alterskategorien stehen nicht in der Zeile; Bemerkung, Serie und Platz zeigt der geöffnete
+Termin, die Alterskategorien das Training selbst. Der Rückblick sieht genauso aus.
 
 Ein Klick auf die Zeile öffnet den Termin neben der Liste (siehe „Der geöffnete Termin"), ein
 Klick auf den Trainingsnamen das Training. An der Zeile liegen Durchführen, Training ersetzen — vergangen ohne Training: zuordnen — und in einem Menü die übrigen
@@ -340,12 +346,11 @@ kein Datum vor.
 Auf breiten Bildschirmen, ab etwa der Breite eines Tablets im Querformat, steht rechts neben
 den Terminen ein Monat und bleibt beim Scrollen stehen. Er zeigt Monat und Jahr, die Wochen von
 Montag bis Sonntag samt den Randtagen der Nachbarmonate — immer sechs Wochen, damit er beim
-Blättern nicht in der Höhe springt — und hebt den heutigen Tag hervor. Ein Tag
-mit Terminen trägt einen gepunkteten Kreis um die Zahl, und seine Termine sitzen als kleine Zeichen
-oben rechts auf dem Kreis, das zweite halb hinter dem ersten; jedes sagt, was der Termin ist: ein violetter Punkt für ein Training,
-ein gelber für „Noch kein Training", ein rotes Kreuz für ausgefallen; ein vergangener Termin ohne
-Training zeigt nur den Kreis. Eine Legende gibt es nicht. Trägt ein Tag mehr als zwei Termine, steht unten
-rechts am Kreis „+" mit der Zahl der weiteren. Wie im Google Kalender folgt der Monat der Liste: Er
+Blättern nicht in der Höhe springt — und hebt den heutigen Tag hervor. Ein Tag, an dem ein
+Termin stattfindet, ist hell hinterlegt wie ein weisses Kalenderblatt; ein Tag mit nur
+ausgefallenen Terminen grau und durchgestrichen. Training und Spiel unterscheidet der Monat nicht;
+eine Legende darunter nennt beide Flächen, und vorgelesen wird jeder Termin beim Namen, ein
+ausgefallener mit „fällt aus". Wie im Google Kalender folgt der Monat der Liste: Er
 zeigt den Monat des obersten Termins, den man gerade sieht. Mit den Pfeilen und „Heute"
 wechselt nur der Monat, die Liste bleibt stehen, bis man wieder scrollt. Ein Klick auf einen
 Tag mit Terminen führt in der Liste zu seinem ersten Termin, beim nächsten Termin zur Karte
@@ -630,19 +635,23 @@ Wer den Link öffnet, braucht weder Konto noch Anmeldung. Die Seite ist fürs Te
 ohne Seitenleiste aus und nennt Teamname und Name der Spieler:in mit dem Satz, dass sie für jedes
 Training zuerst angemeldet ist und man sie abmeldet, wenn sie nicht kann, und bis zum Beginn
 wieder anmeldet. Wie im Trainingsplan steht zuoberst „Als Nächstes": der nächste Termin, der
-noch nicht begonnen hat, grösser, mit „Heute" oder „Morgen", der Spielerzahl, ob die
-Spieler:in angemeldet ist, und dem Knopf „Abmelden" oder „Wieder anmelden"; abgemeldet steht die
-Karte auf einer leicht roten Fläche, ihr Tag rot und „Wieder anmelden" als heller Knopf. Ein Termin
-von heute, der schon begonnen hat, steht darüber unter „Heute", gesperrt bis Ende des Tages.
-Darunter folgen die übrigen anstehenden Termine, die für die Spieler:in gelten, unter Monatsüberschriften wie
-„Oktober 2026", je als Karte mit
-Kalenderblatt, Beginn und Ende, Ort, der Spielerzahl, bei
-einem Termin mit Kadern den Kadern der Spieler:in, über die er für sie gilt, und einem Schalter; ist die
-Spieler:in abgemeldet, ist das Kalenderblatt rot. Die Spielerzahl steht knapp wie in der Zeile des
-Trainingsplans, mit dem Shirt und etwa „24/33": angemeldet von allen, für die der Termin gilt, gezählt
-wie für die Mitglieder — bei einem Termin mit Kadern auch über Kader, die nicht die der Spieler:in sind,
-ohne sie zu nennen. „Angemeldet" und „abgemeldet" meinen auf der Seite nur die eigene Spieler:in. Ein begonnener Termin ist gesperrt mit „Hat
-begonnen · nicht mehr änderbar", ein ausgefallener grau mit „Fällt aus". Wurde ein Termin verlegt,
+stattfindet und noch nicht begonnen hat, grösser, mit „Heute" oder „Morgen" vor dem Tag, dem
+Status der Spieler:in, Zeit, Ort, Kadern und Spielerzahl, darunter „Änderbar bis zum Beginn" und
+dem umrandeten Knopf „Abmelden" oder „Anmelden"; abgemeldet tritt die Karte gedämpft zurück. Ein
+ausgefallener Termin davor steht als gewöhnliche Karte in der Liste. Ein Termin von heute, der
+schon begonnen hat, steht darüber unter „Heute", gesperrt bis Ende des Tages. Darunter folgen die
+übrigen anstehenden Termine, die für die Spieler:in gelten, unter Monatsüberschriften wie
+„Oktober 2026", je als Karte mit dem Kalenderblatt, dem Status der Spieler:in als Plakette —
+„Angemeldet" grün, „Abgemeldet" rot, „Fällt aus" grau —, Beginn und Ende, Ort, bei einem Termin
+mit Kadern den Kadern der Spieler:in, über die er für sie gilt, der Spielerzahl und einem
+Schalter. Der Schalter bewertet nicht: eingeschaltet eine durchsichtige Bahn mit heller Kontur
+und grossem hellem Knopf, ausgeschaltet eine dunkle Bahn mit grauer Kontur und kleinem grauem
+Knopf. Ist die Spieler:in abgemeldet oder fällt der Termin aus, tritt die Karte gedämpft zurück,
+das Kalenderblatt grau mit durchgestrichener Zahl. Die Spielerzahl steht knapp und ungefärbt,
+etwa „24/33": angemeldet von allen, für die der Termin gilt, gezählt wie für die Mitglieder — bei
+einem Termin mit Kadern auch über Kader, die nicht die der Spieler:in sind, ohne sie zu nennen.
+„Angemeldet" und „abgemeldet" meinen auf der Seite nur die eigene Spieler:in. Ein begonnener
+Termin ist gesperrt mit „Hat begonnen · nicht mehr änderbar". Wurde ein Termin verlegt,
 seit sie abgemeldet war, steht bei ihm etwa „Verlegt, vorher Dienstag, 20. Oktober um 18:00. Deine
 Abmeldung gilt nicht mehr.", bis man neu wählt oder der Termin beginnt. Namen anderer
 Spieler:innen, fremde Kader, Termine für andere Kader, Trainings und vergangene Termine zeigt die Seite nicht.
