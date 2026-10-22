@@ -3,7 +3,6 @@ import { ElternAnsicht } from "@/components/privat/ElternAnsicht";
 import { GiltNicht } from "@/components/privat/GiltNicht";
 import { ladeLinkAnsicht } from "@/lib/privater-link";
 import { LINK_TEXT } from "@/lib/spieler";
-import { heuteAmTrainingsort } from "@/lib/zeit";
 
 /* Der private Link einer Spieler:in (#436): Ihre Spielervertretung meldet sie
    ohne Konto für anstehende Termine ab und wieder an. Jeder Aufruf liest neu —
@@ -32,7 +31,6 @@ export default async function SpielerLinkSeite({ params }: { params: Promise<{ p
       team={ansicht.team}
       spieler={ansicht.spieler}
       termine={ansicht.termine}
-      heute={heuteAmTrainingsort()}
     />
   );
 }

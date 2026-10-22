@@ -2403,14 +2403,14 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Status in einem Wort</strong> (<code>terminStatus</code>, <code>spielStatus</code>,{" "}
             <code>meldeStatus</code>, Epic #490): über dem Namen eines Termins und an jeder Spieler:in eines Spiels. Die
-            Farbe unterstreicht nur das Wort; Zahlen bleiben ungefärbt. Training: Vorbereitet grau, Nicht vorbereitet
-            gelb. Spiel gegen seinen Richtwert: Zu wenig und Zu viel rot, Knapp (genau die Mindestzahl) gelb, Genügend
+            Farbe unterstreicht nur das Wort; Zahlen bleiben ungefärbt. Training: Vorbereitet grün, Nicht vorbereitet
+            grau. Spiel gegen seinen Richtwert: Zu wenig und Zu viel rot, Knapp (genau die Mindestzahl) gelb, Genügend
             grün; ohne Richtwert keiner. Fällt aus grau. Spieler:in: Ohne Meldung gelb, nach der Meldefrist
             Meldefrist verpasst rot, Angemeldet grün, Abgemeldet und Nicht aufgeboten rot.
           </p>
           <div className="mb-6 flex flex-wrap items-center gap-3">
-            <Lozenge>Vorbereitet</Lozenge>
-            <Lozenge appearance="warning">Nicht vorbereitet</Lozenge>
+            <Lozenge appearance="success">Vorbereitet</Lozenge>
+            <Lozenge>Nicht vorbereitet</Lozenge>
             <Lozenge appearance="danger">Zu wenig</Lozenge>
             <Lozenge appearance="warning">Knapp</Lozenge>
             <Lozenge appearance="success">Genügend</Lozenge>
@@ -3650,15 +3650,17 @@ export default async function Styleguide() {
             Ein Termin wie ein Blatt vom Abreisskalender: Wochentag, grosse Tageszahl, Monat - nie das Jahr,
             das steht in der Überschrift des Monats (Epic #401). Neu, weil ein Datum als Text in einer Zeile
             (<code>datumKurz</code>) sich beim Überfliegen nicht finden lässt. Im Trainingsplan steht es links an
-            jeder Terminzeile. Das Blatt sagt nur, ob ein Termin zählt (<code>stand</code>, Epic #490): weiss
-            (die umgekehrte Fläche <code>umkehr</code>), solange er bevorsteht; grau ab dem Folgetag; grau mit
+            jeder Terminzeile. Das Blatt sagt nur, ob ein Termin zählt (<code>stand</code>, Epic #490): ein
+            bevorstehendes Spiel weiss (die umgekehrte Fläche <code>umkehr</code>), ein bevorstehendes Training
+            leiser, nur hell umrandet (<code>leise</code>), damit die Spiele hervortreten; grau ab dem Folgetag; grau mit
             durchgestrichener Zahl, wenn er ausfällt - hinter dem privaten Link auch, wenn die eigene
             Spieler:in abgemeldet oder nicht aufgeboten ist. Was ein Termin trägt, sagt die Status-Lozenge
             daneben in einem Wort, nicht mehr die Tönung des Blatts. Heute hebt das Blatt nicht hervor;
             dafür steht der nächste Termin zuoberst.
           </p>
           <div className="flex items-start gap-4">
-            <Kalenderblatt datum="2026-10-08" />
+            <Kalenderblatt datum="2026-10-10" />
+            <Kalenderblatt datum="2026-10-08" stand="leise" />
             <Kalenderblatt datum="2026-09-30" stand="vergangen" />
             <Kalenderblatt datum="2026-10-11" stand="gestrichen" />
           </div>
@@ -3667,9 +3669,12 @@ export default async function Styleguide() {
         <Section id="mini-monat">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Ein kleiner Monat zum Navigieren neben einer Liste (Epic #401). Neu, weil kein Baustein ein
-            Kalenderraster kennt. <code>MiniMonat</code> hinterlegt jeden Tag, an dem ein Termin stattfindet, hell
-            wie ein weisses Kalenderblatt, und einen Tag mit nur ausgefallenen Terminen grau und durchgestrichen
-            (Epic #490). Training und Spiel unterscheidet er nicht; die Legende darunter sagt beides. Die Zellen
+            Kalenderraster kennt. <code>MiniMonat</code> zeigt jeden Tag wie das Kalenderblatt der Liste (Epic
+            #490): mit einem Spiel weiss hinterlegt, mit nur Trainings hell umrandet, mit nur ausgefallenen
+            Terminen grau und durchgestrichen; die Legende darunter nennt alle drei. Trägt ein Termin des Tages einen
+            farbigen Status, sitzt oben rechts ein Punkt in dessen Farbe (<code>ZeichenPunkt</code>), je Termin einer, der
+            dringlichste zuerst - rot vor gelb vor grün; höchstens zwei, das zweite halb dahinter, die übrigen als
+            «+n» unten rechts. Die Zellen
             sind alle gleich hoch, und jeder Monat zeigt sechs Wochen: Beim Blättern springt die Höhe nicht (wie
             im Google und Proton Kalender). Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
             (<code>onWahl</code>), ein leerer Tag ist keiner. Blättern und «Heute» melden nur den Monat (<code>onMonat</code>): Wie im Google Kalender

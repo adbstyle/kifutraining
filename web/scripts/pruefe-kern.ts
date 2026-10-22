@@ -630,8 +630,8 @@ pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
 pruefe("Status eines Termins in einem Wort, Kalenderblatt weiss oder grau (#491)", () => {
   const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-11-03", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], kader: [], ausgefallen: false, ausfallGrund: null };
   const mitTraining = { ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } };
-  assert.deepEqual(terminStatus(mitTraining, "2026-11-01"), { wort: "Vorbereitet", appearance: "neutral" });
-  assert.deepEqual(terminStatus(t, "2026-11-01"), { wort: "Nicht vorbereitet", appearance: "warning" });
+  assert.deepEqual(terminStatus(mitTraining, "2026-11-01"), { wort: "Vorbereitet", appearance: "success" });
+  assert.deepEqual(terminStatus(t, "2026-11-01"), { wort: "Nicht vorbereitet", appearance: "neutral" });
   assert.deepEqual(terminStatus({ ...mitTraining, ausgefallen: true }, "2026-11-01"), { wort: "Fällt aus", appearance: "neutral" });
   assert.equal(terminStatus(mitTraining, "2026-11-04"), null, "vergangen ohne Status");
   assert.equal(terminStatus(mitTraining, "2026-11-03")?.wort, "Vorbereitet", "heute bevorstehend bis Tagesende");
@@ -663,7 +663,8 @@ pruefe("Status eines Termins in einem Wort, Kalenderblatt weiss oder grau (#491)
   assert.deepEqual(handlungsMeldung({ ...nachFrist, spielstand: stand(13) }), { appearance: "error", text: "1 über der Höchstzahl 12. Aufgebot klären." });
   assert.equal(handlungsMeldung({ ...nachFrist, spielstand: stand(11) }), null, "genügend ohne Meldung");
 
-  assert.equal(blattStand(t, "2026-11-03"), "aktiv");
+  assert.equal(blattStand(t, "2026-11-03"), "leise", "Training leiser als ein Spiel");
+  assert.equal(blattStand(spiel, "2026-11-03"), "aktiv");
   assert.equal(blattStand(t, "2026-11-04"), "vergangen");
   assert.equal(blattStand({ ...t, ausgefallen: true }, "2026-11-04"), "gestrichen");
 });

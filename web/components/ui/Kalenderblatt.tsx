@@ -2,14 +2,17 @@ import { cn } from "@/lib/cn";
 import { kalenderblatt, tagOhneJahr } from "@/lib/monat";
 import type { BlattStand } from "@/lib/termin-status";
 
-/* Die Fläche je Stand (Epic #490): Ein Termin, der bevorsteht, trägt ein
-   weisses Blatt (die umgekehrte Fläche, `umkehr`); einer, der nicht oder
-   nicht mehr zählt, ein graues — vergangen ohne Strich, gestrichen
-   (ausgefallen, am privaten Link auch abgemeldet oder nicht aufgeboten) mit
-   durchgestrichener Tageszahl. Was der Termin trägt, sagt nicht mehr das
-   Blatt, sondern die Status-Lozenge daneben. */
+/* Die Fläche je Stand (Epic #490): Ein Spiel, das bevorsteht, trägt ein
+   weisses Blatt (die umgekehrte Fläche, `umkehr`); ein Training, das
+   bevorsteht, ein leiseres — nur hell umrandet, damit die Spiele
+   hervortreten (`leise`, PO 2026-10-22); einer, der nicht oder nicht mehr
+   zählt, ein graues — vergangen ohne Strich, gestrichen (ausgefallen, am
+   privaten Link auch abgemeldet oder nicht aufgeboten) mit durchgestrichener
+   Tageszahl. Was der Termin trägt, sagt nicht das Blatt, sondern die
+   Status-Lozenge daneben. */
 const FLAECHE: Record<BlattStand, string> = {
   aktiv: "umkehr text-on-surface",
+  leise: "kontur border-on-surface-mittel text-on-surface",
   vergangen: "bg-elev-08 text-on-surface-mittel",
   gestrichen: "bg-elev-08 text-on-surface-mittel",
 };

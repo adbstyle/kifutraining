@@ -1,7 +1,8 @@
 "use client";
 
 import { CalendarOff, CalendarPlus, MessageSquareText, Plus, Pencil, PlayCircle, Trash2, Undo2, Unlink } from "lucide-react";
-import { IconButton, IconButtonLink, OverflowMenu, Tooltip, type MenuItemDef } from "@/components/ui";
+import { useRouter } from "next/navigation";
+import { OverflowMenu, type MenuItemDef } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen, type TerminAktionen } from "./TerminBereich";
 import { datumKurz } from "@/lib/zeit";
@@ -43,26 +44,30 @@ export function terminMenue(t: TerminZeile, a: TerminAktionen): MenuItemDef[] {
   ];
 }
 
-/** Alle Handgriffe an einer Terminzeile (#402 AK 16, 17): Durchführen und
- *  Zuordnen als Knöpfe, der Rest im Menü. Positioniert, damit sie über der
- *  Fläche der Zeile liegen und für sich bedienbar bleiben. `zuordnen: false`,
- *  wo die Zeile das Zuordnen schon selbst anbietet («Training hinzufügen»). */
+/** Alle Handgriffe an einer Terminzeile (#402 AK 16, 17) in einem Menü —
+ *  auch Durchführen und Zuordnen, damit die Zeile ruhig bleibt (PO
+ *  2026-10-22). Positioniert, damit das Menü über der Fläche der Zeile liegt
+ *  und für sich bedienbar bleibt. `zuordnen: false`, wo die Zeile das
+ *  Zuordnen schon selbst anbietet («Training hinzufügen»). */
 export function TerminHandgriffe({ t, zuordnen = true }: { t: TerminZeile; zuordnen?: boolean }) {
   const a = useTerminAktionen();
+  const router = useRouter();
+  const training = t.training;
   return (
-    <div className="relative flex shrink-0 gap-0.5">
-      {!t.ausgefallen && t.training && (
-        <Tooltip label="Durchführen">
-          <IconButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`} icon={PlayCircle} label={`${t.training.name} durchführen`} />
-        </Tooltip>
-      )}
-      {/* Ein Spiel trägt nie ein Training (#459 AK 14). */}
-      {!t.ausgefallen && zuordnen && t.art === "training" && (
-        <Tooltip label={t.training ? "Training ersetzen" : "Training zuordnen"}>
-          <IconButton icon={CalendarPlus} label={`Training für ${datumKurz(t.datum)} ${t.training ? "ersetzen" : "zuordnen"}`} onClick={() => a.zuordnen(t)} />
-        </Tooltip>
-      )}
-      <OverflowMenu label={`Weitere Aktionen zum Termin ${datumKurz(t.datum)}`} items={terminMenue(t, a)} />
+    <div className="relative flex shrink-0">
+      <OverflowMenu
+        label={`Weitere Aktionen zum Termin ${datumKurz(t.datum)}`}
+        items={[
+          ...(!t.ausgefallen && training
+            ? [{ label: "Durchführen", icon: PlayCircle, onSelect: () => router.push(`/training/${training.id}/durchfuehren?termin=${t.id}`) }]
+            : []),
+          // Ein Spiel trägt nie ein Training (#459 AK 14).
+          ...(!t.ausgefallen && zuordnen && t.art === "training"
+            ? [{ label: training ? "Training ersetzen" : "Training zuordnen", icon: CalendarPlus, onSelect: () => a.zuordnen(t) }]
+            : []),
+          ...terminMenue(t, a),
+        ]}
+      />
     </div>
   );
 }

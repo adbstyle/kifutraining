@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 import { monatsName, monatsRaster, monatVon, plusMonate, tagText } from "@/lib/monat";
 import { Button } from "./Button";
 import { IconButton } from "./IconButton";
+import { ZeichenPunkt, type ZeichenPunktTon } from "./ZeichenPunkt";
 
 const WOCHENTAGE = [
   ["Mo", "Montag"],
@@ -17,56 +18,104 @@ const WOCHENTAGE = [
   ["So", "Sonntag"],
 ] as const;
 
-/** Ein Termin an einem Tag des Monats: Ausgefallen oder nicht ist alles, was
- *  der Monat unterscheidet (Epic #490); `label` ist der zugängliche Name. */
+/** Ein Termin an einem Tag des Monats: ob er ein Spiel ist und ob er ausfällt
+ *  (Epic #490); `label` ist der zugängliche Name. */
 export type Marke = {
   id: string;
+  spiel: boolean;
   ausgefallen: boolean;
+  /** Die Farbe seines Status, wenn er eine trägt (grün, gelb, rot). */
+  ton?: StatusTon;
   label: string;
 };
 
-/** Die Zahl des Tages (Epic #490): ein Tag mit einem Termin, der
- *  stattfindet, hell hinterlegt wie ein weisses Kalenderblatt — ohne
- *  Unterschied zwischen Training und Spiel; ein Tag mit nur ausgefallenen
- *  Terminen grau und durchgestrichen. Heute ohne Termin auf Primary, mit
- *  Termin dessen Fläche und ein Rahmen in Primary. `belegt`: der gepunktete
- *  Ring, wo etwas liegt, das der Monat nicht zeigt. */
+export type StatusTon = Extract<ZeichenPunktTon, "success" | "warning" | "danger">;
+
+/** Was ein Tag im Monat trägt: ein Spiel geht einem Training vor, beides
+ *  einem Tag mit nur ausgefallenen Terminen. */
+type TagStand = "spiel" | "training" | "ausgefallen";
+
+function tagStand(marken: readonly Marke[]): TagStand | undefined {
+  if (marken.length === 0) return undefined;
+  const statt = marken.filter((m) => !m.ausgefallen);
+  if (statt.length === 0) return "ausgefallen";
+  return statt.some((m) => m.spiel) ? "spiel" : "training";
+}
+
+/** Die farbigen Status eines Tages, je Termin einer, der dringlichste zuerst
+ *  — rot vor gelb vor grün. */
+const RANG: StatusTon[] = ["danger", "warning", "success"];
+function tagToene(marken: readonly Marke[]): StatusTon[] {
+  return marken
+    .flatMap((m) => (!m.ausgefallen && m.ton ? [m.ton] : []))
+    .sort((a, b) => RANG.indexOf(a) - RANG.indexOf(b));
+}
+
+/** Je Tag höchstens so viele Punkte; die übrigen zählt «+n». */
+const HOECHSTENS = 2;
+
+/** Die Zahl des Tages (Epic #490) — wie das Kalenderblatt in der Liste: ein
+ *  Tag mit einem Spiel weiss hinterlegt, einer mit nur Trainings hell
+ *  umrandet (PO 2026-10-22), einer mit nur ausgefallenen Terminen grau und
+ *  durchgestrichen. Heute ohne Termin auf Primary, mit Termin dessen Fläche
+ *  und ein Rahmen in Primary. `belegt`: der gepunktete Ring, wo etwas liegt,
+ *  das der Monat nicht zeigt. `toene`: je Termin mit farbigem Status ein
+ *  Punkt oben rechts (PO 2026-10-22), etwa rot, wenn für ein Spiel zu wenige
+ *  gemeldet sind — höchstens zwei, das zweite halb hinter dem ersten, die
+ *  übrigen als «+n» unten rechts. */
 function Tageszahl({
   tag,
   heute,
   imMonat,
   stand,
+  toene = [],
   belegt = false,
 }: {
   tag: string;
   heute: string;
   imMonat: boolean;
-  stand?: "termin" | "ausgefallen";
+  stand?: TagStand;
+  toene?: readonly StatusTon[];
   belegt?: boolean;
 }) {
+  const gezeigt = toene.slice(0, HOECHSTENS);
+  const mehr = toene.length - gezeigt.length;
   return (
     <span
       aria-hidden
       className={cn(
-        "flex size-6 items-center justify-center rounded-klein border border-dotted type-body-small",
-        stand === "termin"
+        "relative flex size-6 items-center justify-center rounded-klein type-body-small",
+        stand === "spiel"
           ? "umkehr font-medium text-on-surface"
-          : stand === "ausgefallen"
-            ? "bg-elev-08 text-on-surface-mittel line-through"
-            : tag === heute
-              ? "bg-primary font-medium text-on-primary"
-              : imMonat
-                ? "text-on-surface"
-                : "text-on-surface-mittel",
+          : stand === "training"
+            ? "font-medium text-on-surface"
+            : stand === "ausgefallen"
+              ? "bg-elev-08 text-on-surface-mittel line-through"
+              : tag === heute
+                ? "bg-primary font-medium text-on-primary"
+                : imMonat
+                  ? "text-on-surface"
+                  : "text-on-surface-mittel",
         // Heute mit Termin: dessen Fläche, dazu ein Rahmen in Primary.
         tag === heute && stand
           ? "border-2 border-solid border-primary"
-          : belegt && tag !== heute
-            ? "rounded-full border-on-surface-mittel"
-            : "border-transparent",
+          : stand === "training"
+            ? "kontur border-on-surface-mittel"
+            : belegt && tag !== heute
+              ? "rounded-full border border-dotted border-on-surface-mittel"
+              : "border border-transparent",
       )}
     >
       {Number(tag.slice(8))}
+      {/* Das erste liegt über dem zweiten, das nach rechts versetzt dahinter sitzt. */}
+      {gezeigt.map((ton, i) => (
+        <ZeichenPunkt key={i} ton={ton} className={i === 0 ? "-top-1 -right-1 z-[2]" : "-top-1 -right-[9px] z-[1]"} />
+      ))}
+      {mehr > 0 && (
+        <span className="absolute -right-1.5 -bottom-1.5 z-[2] flex h-3 min-w-3 items-center justify-center rounded-full bg-elev-01 px-px text-[0.5rem] leading-none text-on-surface-mittel">
+          +{mehr}
+        </span>
+      )}
     </span>
   );
 }
@@ -76,9 +125,10 @@ function Tageszahl({
    Seitenspalte und zeigt je Tag nur, ob dort etwas stattfindet; Zeit und
    Namen stehen in der Liste.
 
-   - Ein Tag mit einem Termin, der stattfindet, ist hell hinterlegt; einer
-     mit nur ausgefallenen grau und durchgestrichen (Epic #490). Training und
-     Spiel unterscheidet er nicht, die Legende darunter sagt beides.
+   - Wie die Kalenderblätter der Liste (Epic #490): ein Tag mit einem Spiel
+     weiss, einer mit nur Trainings hell umrandet, einer mit nur
+     ausgefallenen grau und durchgestrichen. Die Legende darunter sagt alle
+     drei.
    - Jeder Monat zeigt sechs Wochen (`monatsRaster`): Beim Blättern springt
      die Höhe nicht.
    - Ein Tag mit Einträgen ist ein Knopf und meldet seinen ersten Eintrag
@@ -151,7 +201,7 @@ export function MiniMonat({
           <div role="row" key={w[0].tag} className="grid grid-cols-7 gap-px">
             {w.map(({ tag, imMonat }) => {
               const liste = marken(tag);
-              const stand = liste.length === 0 ? undefined : liste.some((m) => !m.ausgefallen) ? "termin" : "ausgefallen";
+              const stand = tagStand(liste);
               const istBelegt = liste.length === 0 && !!belegt?.(tag);
               return (
                 <div role="cell" key={tag} aria-current={tag === heute ? "date" : undefined} className="min-w-0">
@@ -162,7 +212,7 @@ export function MiniMonat({
                       onClick={() => onWahl(liste[0].id)}
                       className="state focus-ring flex h-9 w-full items-center justify-center rounded-flaeche"
                     >
-                      <Tageszahl tag={tag} heute={heute} imMonat={imMonat} stand={stand} />
+                      <Tageszahl tag={tag} heute={heute} imMonat={imMonat} stand={stand} toene={tagToene(liste)} />
                     </button>
                   ) : (
                     <div className="flex h-9 items-center justify-center">
@@ -183,7 +233,11 @@ export function MiniMonat({
       <ul className="mt-3 flex flex-col gap-1.5 type-body-small text-on-surface-mittel">
         <li className="flex items-center gap-2">
           <span aria-hidden className="umkehr size-2.5 rounded-klein" />
-          Termin – Training oder Spiel
+          Spiel
+        </li>
+        <li className="flex items-center gap-2">
+          <span aria-hidden className="kontur size-2.5 rounded-klein border-on-surface-mittel" />
+          Training
         </li>
         <li className="flex items-center gap-2">
           <span aria-hidden className="size-2.5 rounded-klein bg-elev-08" />

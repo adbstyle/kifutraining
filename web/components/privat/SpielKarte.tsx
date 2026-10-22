@@ -13,7 +13,7 @@ import { TERMIN_STATUS, meldeStatus } from "@/lib/termin-status";
    Von oben nach unten: Kalenderblatt, der Status der eigenen Spieler:in als
    Lozenge, Bezeichnung, Zeit und Ort; bis wann sich melden lässt; die
    Handlung als Knopf; Hinweise zur Verlegung oder zu einem Fehler;
-   TREFFPUNKTE, frühester zuerst; TEAM mit Balken; BEMERKUNG.
+   TREFFPUNKTE, frühester zuerst; KADER mit Balken; BEMERKUNG.
 
    - Ohne Meldung «Anmelden» hell und «Abmelden» umrandet, sonst nur der eine
      mögliche Wechsel umrandet. Nach der Meldefrist, ab dem Anpfiff und bei
@@ -29,8 +29,6 @@ export function SpielKarte({
   angemeldet,
   name,
   pending,
-  gross = false,
-  kopf,
   fehler,
   onMelden,
 }: {
@@ -41,10 +39,6 @@ export function SpielKarte({
   angemeldet: number | null;
   name: string;
   pending: boolean;
-  /** «Als Nächstes»: grösser, auf höherer Fläche. */
-  gross?: boolean;
-  /** Über dem Namen, etwa «Morgen · Samstag, 31. Oktober». */
-  kopf?: string;
   fehler?: string;
   onMelden: (an: boolean) => void;
 }) {
@@ -61,26 +55,23 @@ export function SpielKarte({
         ? `${meldung === null ? "Bitte melden bis" : "Änderbar bis"} ${zeitpunktKurz(t.frist)}`
         : "Änderbar bis zum Anpfiff";
   const treffpunkte = !t.begonnen && !gedaempft && t.treffpunkte && t.treffpunkte.length > 0 ? t.treffpunkte : null;
-  const Element = gross ? "div" : "li";
   return (
-    <Element
+    <li
       className={cn(
         "flex flex-col gap-3 rounded-flaeche",
-        gross ? "p-4" : "px-3 py-3",
-        gedaempft ? "kontur border-linie bg-transparent" : gross ? "kontur border-kante bg-elev-04" : "bg-elev-01",
+        "px-3 py-3",
+        gedaempft ? "kontur border-linie bg-transparent" : "bg-elev-01",
       )}
     >
       <div className="flex items-start gap-3">
         <Kalenderblatt datum={t.datum} stand={gedaempft ? "gestrichen" : "aktiv"} />
         <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
-          {kopf && <p className="type-title-small text-on-surface-mittel">{kopf}</p>}
           <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>
-          <span className={cn("max-w-full truncate", gross ? "type-title-large" : "type-title-small", gedaempft ? "text-on-surface-mittel" : "text-on-surface", t.ausgefallen && "line-through")}>
+          <span className={cn("max-w-full truncate", "type-title-small", gedaempft ? "text-on-surface-mittel" : "text-on-surface", t.ausgefallen && "line-through")}>
             {t.bezeichnung}
           </span>
-          <span className={cn(gross ? "type-title-medium" : "type-body-medium", "text-on-surface-mittel")}>
+          <span className="type-body-medium text-on-surface-mittel">
             {t.beginn}–{t.ende}
-            {gross && " Uhr"}
           </span>
           {t.ort && <span className="type-body-medium text-on-surface-mittel">{t.ort}</span>}
         </div>
@@ -121,7 +112,7 @@ export function SpielKarte({
         </KartenAbschnitt>
       )}
       {!t.ausgefallen && (
-        <KartenAbschnitt ebene="h4" titel="Team" zusatz={<KaderLozenges namen={t.kader} />}>
+        <KartenAbschnitt ebene="h4" titel="Kader" zusatz={<KaderLozenges namen={t.kader} />}>
           {angemeldet !== null && t.gesamt !== null ? (
             <Meldebalken
               zahl={angemeldet}
@@ -140,6 +131,6 @@ export function SpielKarte({
           <p className="type-body-medium whitespace-pre-line text-on-surface">{t.bemerkung}</p>
         </KartenAbschnitt>
       )}
-    </Element>
+    </li>
   );
 }

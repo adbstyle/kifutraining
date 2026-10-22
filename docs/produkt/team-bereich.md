@@ -296,13 +296,12 @@ Ende schon vorüber ist. Das Ende des Termins zählt dafür bewusst nicht.
 Ganz oben steht „Als Nächstes" als grössere Karte: der erste anstehende Termin, der stattfindet,
 bei mehreren am selben Tag der früheste. Ein ausgefallener Termin davor bekommt keine Karte, er
 steht als gewöhnliche Zeile in der Liste. Die Karte ist aufgebaut wie eine Zeile, nur grösser:
-links das weisse Kalenderblatt, daneben der Status in einem Wort („Vorbereitet" grau oder „Nicht
-vorbereitet" gelb), der Name des Trainings — ohne Training „Noch kein Training" —, Zeit und Ort,
+links das Kalenderblatt, daneben der Status in einem Wort („Vorbereitet" grün oder „Nicht
+vorbereitet" — nur hier, auf der grossen Karte, gelb), der Name des Trainings — ohne Training „Noch kein Training" —, Zeit und Ort,
 rechts das Menü mit „Training ersetzen" und den übrigen Handgriffen. Darunter der Abschnitt
-„Team": die Kader des Termins, links die Zahl der Angemeldeten und rechts „von" allen, für die
-der Termin gilt, dazu ein Balken, dessen heller Anteil die Angemeldeten sind — ungefärbt, er
-bewertet nicht —, und eine Zeile mit den Abgemeldeten, „änderbar bis zum Beginn" und den
-Verantwortlichen. Ohne Spielerliste steht dort die erwartete Spielerzahl ohne Balken. Dann der
+„Kader": die Kader des Termins, die Zahl der Angemeldeten von allen, für die der Termin gilt,
+etwa „12 von 14 angemeldet", und eine Zeile mit den Abgemeldeten, „änderbar bis zum Beginn" und
+den Verantwortlichen. Ohne Spielerliste steht dort die erwartete Spielerzahl. Dann der
 Abschnitt „Platz" mit Grösse, Toren und Untergrund jedes Feldes, ohne Felder „Nicht erfasst".
 Zuunterst „Durchführen" als heller Knopf und „Training öffnen", ohne Training „Training
 hinzufügen" als heller Knopf; führt das Team eine Spielerliste, dazu „Spieler:innen", das den
@@ -313,10 +312,10 @@ der Liste darunter steht er nicht noch einmal, in der Zahl der anstehenden Termi
 Die übrigen Termine sind nach Monaten gegliedert, jede Überschrift mit Jahr. Die Termine eines
 Tages stehen zusammen in einer Karte, nach Beginn geordnet, jeder als knappe Zeile mit seinem
 Kalenderblatt links — Wochentag, Tageszahl und Monat, ohne Jahr; den heutigen Tag hebt es nicht
-hervor, dafür steht der nächste Termin zuoberst. Das Blatt ist weiss, solange der Termin
-ansteht, grau ab dem Folgetag und grau mit durchgestrichener Tageszahl, wenn er ausfällt. Was
-der Termin trägt, sagt ein Status in einem Wort über seinem Namen: „Vorbereitet" grau, „Nicht
-vorbereitet" gelb, „Fällt aus" grau; ein vergangener Termin trägt keinen. Darunter der Name des
+hervor, dafür steht der nächste Termin zuoberst. Das Blatt eines anstehenden Trainings ist hell
+umrandet, das eines anstehenden Spiels weiss, damit die Spiele hervortreten; grau ab dem Folgetag und grau mit durchgestrichener Tageszahl, wenn er ausfällt. Was
+der Termin trägt, sagt ein Status in einem Wort über seinem Namen: „Vorbereitet" grün, „Nicht
+vorbereitet" grau, „Fällt aus" grau; ein vergangener Termin trägt keinen. Darunter der Name des
 Trainings oder — anstehend und ohne Training — „+ Training hinzufügen" in Violett, das das
 Zuordnen öffnet; so fällt eine noch nicht vorbereitete Einheit auf und lässt sich sofort
 vorbereiten. Ein vergangener oder ausgefallener Termin ohne Training heisst „Kein Training
@@ -331,9 +330,10 @@ Alterskategorien stehen nicht in der Zeile; Bemerkung, Serie und Platz zeigt der
 Termin, die Alterskategorien das Training selbst. Der Rückblick sieht genauso aus.
 
 Ein Klick auf die Zeile öffnet den Termin neben der Liste (siehe „Der geöffnete Termin"), ein
-Klick auf den Trainingsnamen das Training. An der Zeile liegen Durchführen, Training ersetzen — vergangen ohne Training: zuordnen — und in einem Menü die übrigen
-Handgriffe: Termin ändern, Training lösen, Ausfallen lassen oder — bei einem ausgefallenen —
-Grund ändern und Ausfall zurücknehmen, und Termin entfernen. Die Durchführen-Ansicht zeigt, aus
+Klick auf den Trainingsnamen das Training. Alle Handgriffe einer Zeile liegen in ihrem Menü rechts:
+Durchführen, Training ersetzen — vergangen ohne Training: zuordnen —, Termin ändern, Training
+lösen, Ausfallen lassen oder — bei einem ausgefallenen — Grund ändern und Ausfall zurücknehmen,
+und Termin entfernen. Die Durchführen-Ansicht zeigt, aus
 dem Plan geöffnet, zuoberst Datum, Zeit, Ort, Verantwortliche, Spielerzahl, Felder
 und Bemerkung des Termins, jedes Feld mit Grösse, Toren je Torart und Untergrund; was zu einem
 Feld nicht erfasst ist, steht dort ausdrücklich als unbekannt.
@@ -346,11 +346,13 @@ kein Datum vor.
 Auf breiten Bildschirmen, ab etwa der Breite eines Tablets im Querformat, steht rechts neben
 den Terminen ein Monat und bleibt beim Scrollen stehen. Er zeigt Monat und Jahr, die Wochen von
 Montag bis Sonntag samt den Randtagen der Nachbarmonate — immer sechs Wochen, damit er beim
-Blättern nicht in der Höhe springt — und hebt den heutigen Tag hervor. Ein Tag, an dem ein
-Termin stattfindet, ist hell hinterlegt wie ein weisses Kalenderblatt; ein Tag mit nur
-ausgefallenen Terminen grau und durchgestrichen. Training und Spiel unterscheidet der Monat nicht;
-eine Legende darunter nennt beide Flächen, und vorgelesen wird jeder Termin beim Namen, ein
-ausgefallener mit „fällt aus". Wie im Google Kalender folgt der Monat der Liste: Er
+Blättern nicht in der Höhe springt — und hebt den heutigen Tag hervor. Jeder Tag sieht aus wie
+das Kalenderblatt der Liste: mit einem Spiel weiss hinterlegt, mit nur Trainings hell umrandet,
+mit nur ausgefallenen Terminen grau und durchgestrichen. Trägt ein Termin des Tages einen
+farbigen Status, sitzt oben rechts ein Punkt in dessen Farbe — rot etwa, wenn für ein Spiel zu
+wenige angemeldet sind; je Termin einer, der dringlichste zuerst, höchstens zwei hintereinander,
+die übrigen als „+" mit ihrer Zahl unten rechts. Eine Legende darunter nennt die Flächen,
+und vorgelesen wird jeder Termin beim Namen, ein ausgefallener mit „fällt aus". Wie im Google Kalender folgt der Monat der Liste: Er
 zeigt den Monat des obersten Termins, den man gerade sieht. Mit den Pfeilen und „Heute"
 wechselt nur der Monat, die Liste bleibt stehen, bis man wieder scrollt. Ein Klick auf einen
 Tag mit Terminen führt in der Liste zu seinem ersten Termin, beim nächsten Termin zur Karte
@@ -634,12 +636,8 @@ die Eltern den neuen dort wieder abholen. Je Spieler:in und Team gibt es genau e
 Wer den Link öffnet, braucht weder Konto noch Anmeldung. Die Seite ist fürs Telefon gebaut, kommt
 ohne Seitenleiste aus und nennt Teamname und Name der Spieler:in mit dem Satz, dass sie für jedes
 Training zuerst angemeldet ist und man sie abmeldet, wenn sie nicht kann, und bis zum Beginn
-wieder anmeldet. Wie im Trainingsplan steht zuoberst „Als Nächstes": der nächste Termin, der
-stattfindet und noch nicht begonnen hat, grösser, mit „Heute" oder „Morgen" vor dem Tag, dem
-Status der Spieler:in, Zeit, Ort, Kadern und Spielerzahl, darunter „Änderbar bis zum Beginn" und
-dem umrandeten Knopf „Abmelden" oder „Anmelden"; abgemeldet tritt die Karte gedämpft zurück. Ein
-ausgefallener Termin davor steht als gewöhnliche Karte in der Liste. Ein Termin von heute, der
-schon begonnen hat, steht darüber unter „Heute", gesperrt bis Ende des Tages. Darunter folgen die
+wieder anmeldet. Eine Karte „Als Nächstes" gibt es hier nicht: Ein Termin von heute, der schon
+begonnen hat, steht zuoberst unter „Heute", gesperrt bis Ende des Tages. Darunter folgen alle
 übrigen anstehenden Termine, die für die Spieler:in gelten, unter Monatsüberschriften wie
 „Oktober 2026", je als Karte mit dem Kalenderblatt, dem Status der Spieler:in als Plakette —
 „Angemeldet" grün, „Abgemeldet" rot, „Fällt aus" grau —, Beginn und Ende, Ort, bei einem Termin

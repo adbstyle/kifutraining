@@ -12,7 +12,7 @@ import { zeitpunktKurz } from "@/lib/spiel";
 import { feldName, feldText } from "@/lib/termin-felder";
 import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { terminHref } from "@/lib/team-ansicht";
-import { handlungsMeldung, nachMeldefrist, terminStatus } from "@/lib/termin-status";
+import { TERMIN_STATUS, blattStand, handlungsMeldung, nachMeldefrist, terminStatus } from "@/lib/termin-status";
 import { verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { useTerminAktionen } from "./TerminBereich";
 import { terminMenue } from "./TerminHandgriffe";
@@ -25,7 +25,7 @@ import { KartenAbschnitt } from "./KartenAbschnitt";
    Spielfeldrand nicht suchen muss.
 
    Von oben nach unten: der Kopf wie eine Zeile — weisses Kalenderblatt,
-   Status, Name, Zeit und Ort, das Menü —, dann der Abschnitt TEAM (wer kommt,
+   Status, Name, Zeit und Ort, das Menü —, dann der Abschnitt KADER (wer kommt,
    als Balken), bei einem Training der Abschnitt PLATZ, bei einem Spiel die
    TREFFPUNKTE, der späteste zuoberst: Die Trainer:in steht am Treffpunkt nächst
    am Spiel. Zuunterst die Handgriffe, der wichtigste hell. Bemerkung und
@@ -57,7 +57,12 @@ export function NaechsterTermin({
 }) {
   const a = useTerminAktionen();
   const zeit = zeitText(t.beginn, t.ende);
-  const status = terminStatus(t, heute);
+  const grundStatus = terminStatus(t, heute);
+  // Nur auf der grossen Karte: Ein Training, das als Nächstes ansteht und
+  // noch nicht vorbereitet ist, mahnt in der Warnfarbe; in der Liste bleibt
+  // es grau (PO 2026-10-22).
+  const status =
+    grundStatus === TERMIN_STATUS.nichtVorbereitet ? { ...grundStatus, appearance: "warning" as const } : grundStatus;
   const nachFrist = nachMeldefrist(t, jetzt);
   const handlung = nachFrist ? handlungsMeldung(t) : null;
   const name = t.spiel ? t.spiel.bezeichnung : t.training ? t.training.name : "Noch kein Training";
@@ -86,7 +91,7 @@ export function NaechsterTermin({
       <Link href={oeffnen} scroll={false} tabIndex={-1} aria-hidden className="absolute inset-0 rounded-flaeche" />
       <div className="pointer-events-none relative flex flex-col gap-3.5 [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
         <div className="flex items-start gap-4">
-          <Kalenderblatt datum={t.datum} as={tagesUeberschrift ? "h5" : "div"} />
+          <Kalenderblatt datum={t.datum} stand={blattStand(t, heute)} as={tagesUeberschrift ? "h5" : "div"} />
           <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
             {relativ && (
               <p className="type-title-small text-on-surface-mittel">
@@ -120,33 +125,41 @@ export function NaechsterTermin({
           </SectionMessage>
         )}
 
-        <KartenAbschnitt titel="Team" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
-          <TeamStand t={t} ich={ich} nachFrist={nachFrist} />
-        </KartenAbschnitt>
-
         {t.spiel ? (
-          t.spiel.treffpunkte.length > 0 && (
-            <KartenAbschnitt titel="Treffpunkte">
-              <TreffpunktListe
-                treffpunkte={[...t.spiel.treffpunkte].reverse()}
-                spieltag={t.datum}
-                spielOrt={t.ort}
-                className="type-body-medium text-on-surface"
-              />
+          <>
+            <KartenAbschnitt titel="Kader" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
+              <TeamStand t={t} ich={ich} nachFrist={nachFrist} />
             </KartenAbschnitt>
-          )
-        ) : (
-          <KartenAbschnitt titel="Platz">
-            {t.felder && t.felder.length > 0 ? (
-              <ul className="flex flex-col gap-1 type-body-medium text-on-surface">
-                {t.felder.map((f, i, alle) => (
-                  <li key={i}>{alle.length > 1 ? `${feldName(i, alle.length)}: ${feldText(f)}` : feldText(f)}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="type-body-medium text-on-surface-mittel">Nicht erfasst</p>
+            {t.spiel.treffpunkte.length > 0 && (
+              <KartenAbschnitt titel="Treffpunkte">
+                <TreffpunktListe
+                  treffpunkte={[...t.spiel.treffpunkte].reverse()}
+                  spieltag={t.datum}
+                  spielOrt={t.ort}
+                  className="type-body-medium text-on-surface"
+                />
+              </KartenAbschnitt>
             )}
-          </KartenAbschnitt>
+          </>
+        ) : (
+          // Beim Training stehen Team und Platz ab Tabletbreite nebeneinander,
+          // auf gleicher Höhe (PO 2026-10-22); schmal untereinander.
+          <div className="grid gap-x-6 gap-y-3.5 sm:grid-cols-2">
+            <KartenAbschnitt titel="Kader" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
+              <TeamStand t={t} ich={ich} nachFrist={nachFrist} />
+            </KartenAbschnitt>
+            <KartenAbschnitt titel="Platz">
+              {t.felder && t.felder.length > 0 ? (
+                <ul className="flex flex-col gap-1 type-body-medium text-on-surface">
+                  {t.felder.map((f, i, alle) => (
+                    <li key={i}>{alle.length > 1 ? `${feldName(i, alle.length)}: ${feldText(f)}` : feldText(f)}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="type-body-medium text-on-surface-mittel">Nicht erfasst</p>
+              )}
+            </KartenAbschnitt>
+          </div>
         )}
 
         <div className="flex flex-wrap gap-2">
@@ -196,15 +209,18 @@ function TeamStand({ t, ich, nachFrist }: { t: TerminZeile; ich: string; nachFri
         t.spiel.meldefrist && `Meldefrist ${nachFrist ? "abgelaufen " : ""}${zeitpunktKurz(t.spiel.meldefrist)}`,
         ]
     : [da === null && `${s.gesamt - s.angemeldet} abgemeldet · änderbar bis zum Beginn`, v && `verantwortlich ${v}`];
+  const wort = da === null ? "angemeldet" : "da";
   return (
     <>
-      <Meldebalken
-        zahl={da ?? s.angemeldet}
-        gesamt={s.gesamt}
-        min={t.spiel?.richtwertMin}
-        max={t.spiel?.richtwertMax}
-        wort={da === null ? "angemeldet" : "da"}
-      />
+      {/* Ein Training hat keinen Richtwert: Zahl und Text genügen, der Balken
+          bleibt den Spielen (PO 2026-10-22). */}
+      {t.spiel ? (
+        <Meldebalken zahl={da ?? s.angemeldet} gesamt={s.gesamt} min={t.spiel.richtwertMin} max={t.spiel.richtwertMax} wort={wort} />
+      ) : (
+        <p className="type-body-medium text-on-surface">
+          <span className="font-semibold">{da ?? s.angemeldet}</span> von {s.gesamt} {wort}
+        </p>
+      )}
       <p className="type-body-small text-on-surface-mittel">{zeile.filter(Boolean).join(" · ")}</p>
     </>
   );
