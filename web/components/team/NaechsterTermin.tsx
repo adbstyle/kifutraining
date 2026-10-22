@@ -196,15 +196,18 @@ function TeamStand({ t, ich, nachFrist }: { t: TerminZeile; ich: string; nachFri
         t.spiel.meldefrist && `Meldefrist ${nachFrist ? "abgelaufen " : ""}${zeitpunktKurz(t.spiel.meldefrist)}`,
         ]
     : [da === null && `${s.gesamt - s.angemeldet} abgemeldet · änderbar bis zum Beginn`, v && `verantwortlich ${v}`];
+  const wort = da === null ? "angemeldet" : "da";
   return (
     <>
-      <Meldebalken
-        zahl={da ?? s.angemeldet}
-        gesamt={s.gesamt}
-        min={t.spiel?.richtwertMin}
-        max={t.spiel?.richtwertMax}
-        wort={da === null ? "angemeldet" : "da"}
-      />
+      {/* Ein Training hat keinen Richtwert: Zahl und Text genügen, der Balken
+          bleibt den Spielen (PO 2026-10-22). */}
+      {t.spiel ? (
+        <Meldebalken zahl={da ?? s.angemeldet} gesamt={s.gesamt} min={t.spiel.richtwertMin} max={t.spiel.richtwertMax} wort={wort} />
+      ) : (
+        <p className="type-body-medium text-on-surface">
+          <span className="font-semibold">{da ?? s.angemeldet}</span> von {s.gesamt} {wort}
+        </p>
+      )}
       <p className="type-body-small text-on-surface-mittel">{zeile.filter(Boolean).join(" · ")}</p>
     </>
   );
