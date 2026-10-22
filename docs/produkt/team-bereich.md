@@ -350,7 +350,8 @@ Blättern nicht in der Höhe springt — und hebt den heutigen Tag hervor. Jeder
 das Kalenderblatt der Liste: mit einem Spiel weiss hinterlegt, mit nur Trainings hell umrandet,
 mit nur ausgefallenen Terminen grau und durchgestrichen. Trägt ein Termin des Tages einen
 farbigen Status, sitzt oben rechts ein Punkt in dessen Farbe — rot etwa, wenn für ein Spiel zu
-wenige angemeldet sind; bei mehreren gilt der dringlichste. Eine Legende darunter nennt die Flächen,
+wenige angemeldet sind; je Termin einer, der dringlichste zuerst, höchstens zwei hintereinander,
+die übrigen als „+" mit ihrer Zahl unten rechts. Eine Legende darunter nennt die Flächen,
 und vorgelesen wird jeder Termin beim Namen, ein ausgefallener mit „fällt aus". Wie im Google Kalender folgt der Monat der Liste: Er
 zeigt den Monat des obersten Termins, den man gerade sieht. Mit den Pfeilen und „Heute"
 wechselt nur der Monat, die Liste bleibt stehen, bis man wieder scrollt. Ein Klick auf einen
