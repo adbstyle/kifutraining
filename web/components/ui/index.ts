@@ -54,6 +54,8 @@ export { Menu } from "./Menu";
 export type { MenuItemDef } from "./Menu";
 export { OverflowMenu } from "./OverflowMenu";
 export { ChipMenu } from "./ChipMenu";
+export { LozengeAuswahl } from "./LozengeAuswahl";
+export type { Wechsel } from "./LozengeAuswahl";
 export { Seitenleiste, SeitenleistenKnopf, leisteStil, nebenLeiste, unterKopfzeile } from "./Seitenleiste";
 export type {
   SeitenleisteProps,

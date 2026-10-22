@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import type { RefObject } from "react";
+import { Fragment, useEffect, useId, useRef } from "react";
+import type { ReactNode, RefObject } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -24,8 +24,14 @@ function eintraege(wurzel: HTMLElement | null) {
 export interface MenuItemDef {
   label: string;
   icon?: LucideIcon;
-  trailing?: string;
+  /** Rechts in der Zeile: ein Kürzel oder, bei der `LozengeAuswahl`, der Pfeil
+   *  mit dem Ziel-Zustand. */
+  trailing?: ReactNode;
   danger?: boolean;
+  /** Ein Strich davor: Seltenes steht nach einem Trenner (Epic #490). */
+  trenner?: boolean;
+  /** Ein leiser Satz unter der Zeile, etwa wohin ein Rückgängig führt. */
+  hinweis?: string;
   onSelect?: () => void;
 }
 
@@ -59,6 +65,7 @@ export function Menu({
   triggerRef?: RefObject<HTMLElement | null>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const menuId = useId();
 
   /** Schliessen mit Fokus-Rückgabe an den Trigger. Ohne `triggerRef` (Menü
    *  ohne Toggle-Trigger) bleibt es beim blossen Schliessen. */
@@ -143,9 +150,11 @@ export function Menu({
       {items.map((item, i) => {
         const Icon = item.icon;
         return (
+          <Fragment key={i}>
+          {item.trenner && <div role="separator" className="my-1 h-px bg-linie" />}
           <button
-            key={i}
             role="menuitem"
+            aria-describedby={item.hinweis ? `${menuId}-${i}` : undefined}
             type="button"
             onClick={() => {
               item.onSelect?.();
@@ -180,6 +189,12 @@ export function Menu({
               </span>
             )}
           </button>
+          {item.hinweis && (
+            <p id={`${menuId}-${i}`} className="px-3 pb-2 type-body-small text-on-surface-mittel">
+              {item.hinweis}
+            </p>
+          )}
+          </Fragment>
         );
       })}
     </div>

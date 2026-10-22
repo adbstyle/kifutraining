@@ -1,5 +1,13 @@
 import type { LozengeAppearance } from "./farben";
-import { fristAbgelaufen, richtwertStufe, type RichtwertStufe } from "./spiel";
+import {
+  AUFGEBOT_TEXT,
+  MELDUNG_TEXT,
+  NACHTRAG_TEXT,
+  fristAbgelaufen,
+  richtwertStufe,
+  type Meldung,
+  type RichtwertStufe,
+} from "./spiel";
 import type { TerminZeile } from "./queries/termine-fuer";
 
 /* Der Status eines Termins in einem Wort (Epic #490): als Lozenge über
@@ -26,6 +34,26 @@ export const TERMIN_STATUS = {
   nichtVorbereitet: { wort: "Nicht vorbereitet", appearance: "warning" },
   faelltAus: { wort: "Fällt aus", appearance: "neutral" },
 } as const satisfies Record<string, TerminStatus>;
+
+/** Der Status einer Spieler:in an einem Spiel (#495, #496): grün angemeldet
+ *  und doch erschienen, gelb ohne Meldung, rot abgemeldet, nicht aufgeboten,
+ *  nicht erschienen und Meldefrist verpasst. */
+export const MELDE_STATUS = {
+  ohne: { wort: MELDUNG_TEXT.ohne, appearance: "warning" },
+  verpasst: { wort: MELDUNG_TEXT.verpasst, appearance: "danger" },
+  angemeldet: { wort: MELDUNG_TEXT.angemeldet, appearance: "success" },
+  abgemeldet: { wort: MELDUNG_TEXT.abgemeldet, appearance: "danger" },
+  nichtAufgeboten: { wort: AUFGEBOT_TEXT.nichtAufgeboten, appearance: "danger" },
+  nichtErschienen: { wort: NACHTRAG_TEXT.nichtErschienen, appearance: "danger" },
+  dochErschienen: { wort: NACHTRAG_TEXT.dochErschienen, appearance: "success" },
+} as const satisfies Record<string, TerminStatus>;
+
+/** Der Stand vor dem Anpfiff bzw. beim Anpfiff, ohne Nachtrag. */
+export function meldeStatus(m: Meldung, nichtAufgeboten: boolean, fristAbgelaufen: boolean): TerminStatus {
+  if (nichtAufgeboten) return MELDE_STATUS.nichtAufgeboten;
+  if (m !== null) return MELDE_STATUS[m];
+  return fristAbgelaufen ? MELDE_STATUS.verpasst : MELDE_STATUS.ohne;
+}
 
 /** Der Status eines Spiels aus seiner Spielerzahl; ohne Richtwert `null`. */
 export function spielStatus(zahl: number, min: number | null, max: number | null): TerminStatus | null {

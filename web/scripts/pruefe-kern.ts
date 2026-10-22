@@ -130,7 +130,8 @@ import { aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type Abo
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
-import { blattStand, handlungsMeldung, nachMeldefrist, spielStatus, terminStatus } from "../lib/termin-status";
+import { blattStand, handlungsMeldung, meldeStatus, nachMeldefrist, spielStatus, terminStatus } from "../lib/termin-status";
+import { meldefristVerpasst } from "../lib/spiel";
 import {
   SPIELER_MELDUNG,
   SPIELER_TEXT,
@@ -2428,7 +2429,9 @@ pruefe("Spiele: Bezeichnung, Richtwert, Bewertung und Marker (#459, #463 AK 7/28
   assert.equal(richtwertStufe(13, null, 12), "ueber");
   assert.equal(richtwertStufe(5, null, null), null);
   assert.equal(richtwertStufeText(7, 9, 12), "noch 2 bis Mindestzahl 9");
-  assert.equal(richtwertStufeText(9, 9, 12), "Mindestzahl 9 knapp erreicht");
+  assert.equal(richtwertStufeText(9, 9, 12), "Mindestzahl 9 genau erreicht");
+  assert.equal(richtwertStufeText(11, 9, 12), "Richtwert 9 bis 12");
+  assert.equal(richtwertStufeText(30, 9, null), "Richtwert mindestens 9");
   assert.equal(richtwertStufeText(14, 9, 12), "2 über Höchstzahl 12");
 
   for (const [marker, satz] of Object.entries(SPIEL_MELDUNG)) assert.equal(fehlerMeldung(`x ${marker} y`), satz, marker);
@@ -2552,7 +2555,19 @@ pruefe("Spiele: Nachtrag - wer beim Anpfiff zählte, Verfall-Text (#487)", () =>
     spielVerfallText(2, false, 1, 3),
     "Damit verfallen 2 Meldungen: Diese Spieler:innen sind wieder ohne Meldung. Ausserdem verfallen 1 Kennzeichnung als nicht aufgeboten und 3 Nachträge zur Anwesenheit.",
   );
-  assert.equal(NACHTRAG_TEXT.zurueck("Abgemeldet"), "Abgemeldet (Stand beim Anpfiff)");
+  assert.equal(NACHTRAG_TEXT.zurueck, "Nachtrag zurücknehmen");
+});
+
+pruefe("Status einer Spieler:in und Meldefrist verpasst (#495, #496)", () => {
+  assert.deepEqual(meldeStatus(null, false, false), { wort: "Ohne Meldung", appearance: "warning" });
+  assert.deepEqual(meldeStatus(null, false, true), { wort: "Meldefrist verpasst", appearance: "danger" }, "nach der Frist");
+  assert.equal(meldeStatus(null, true, true).wort, "Nicht aufgeboten", "die Kennzeichnung geht vor");
+  assert.equal(meldeStatus("angemeldet", false, true).wort, "Angemeldet");
+  assert.equal(meldeStatus("abgemeldet", false, false).appearance, "danger");
+  assert.equal(meldefristVerpasst(null, false, true), true);
+  assert.equal(meldefristVerpasst(null, false, false), false, "ohne oder vor der Frist nie");
+  assert.equal(meldefristVerpasst(null, true, true), false);
+  assert.equal(meldefristVerpasst("angemeldet", false, true), false);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

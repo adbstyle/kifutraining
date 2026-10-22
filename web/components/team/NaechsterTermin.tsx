@@ -189,7 +189,8 @@ function TeamStand({ t, ich, nachFrist }: { t: TerminZeile; ich: string; nachFri
     ? da !== null
       ? ["Stand beim Anpfiff"]
       : [
-        (s.ohne_meldung ?? 0) > 0 ? `${s.ohne_meldung} ohne Meldung` : "alle haben sich gemeldet",
+        // #496 AK 4: nach der Frist heisst «ohne Meldung» «Meldefrist verpasst».
+        (s.ohne_meldung ?? 0) > 0 ? `${s.ohne_meldung} ${nachFrist ? "Meldefrist verpasst" : "ohne Meldung"}` : "alle haben sich gemeldet",
         t.spiel.meldefrist && `Meldefrist ${nachFrist ? "abgelaufen " : ""}${zeitpunktKurz(t.spiel.meldefrist)}`,
         ]
     : [da === null && `${s.gesamt - s.angemeldet} abgemeldet · änderbar bis zum Beginn`, v && `verantwortlich ${v}`];

@@ -9,10 +9,7 @@ import {
   Lozenge,
   HerkunftLozenge,
   SichtbarkeitLozenge,
-  SpielLozenge,
-  RichtwertLozenge,
   TreffpunktListe,
-  richtwertSchrift,
   Card,
   ExerciseCard,
   FormAbschnitt,
@@ -73,6 +70,7 @@ import { ChipMenuDemo } from "./ChipMenuDemo";
 import { MaterialDemo } from "./MaterialDemo";
 import { FelderDemo } from "./FelderDemo";
 import { MiniMonatDemo } from "./MiniMonatDemo";
+import { LozengeAuswahlDemo } from "./LozengeAuswahlDemo";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import { TrainingCard } from "@/components/training/TrainingCard";
@@ -2393,24 +2391,36 @@ export default async function Styleguide() {
             </Lozenge>
             <Lozenge>Kinderfussball</Lozenge>
             <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
-            <SpielLozenge />
           </div>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-            <strong>Richtwert</strong> (<code>RichtwertLozenge</code>, <code>richtwertSchrift</code>, Epic #448): wie die
-            Spielerzahl eines Spiels zu Mindest- und Höchstzahl steht. Unter der Mindestzahl im Fehlerton, genau die
-            Mindestzahl (knapp) und über der Höchstzahl in der Warnung, dazwischen im Erfolg (PO 2026-10-21). Bewertet
-            wird nur gegen festgelegte Grenzen; ohne Richtwert bleibt die Zahl neutral. Die Lozenge sagt die Stufe in
-            Worten, die Farbe trägt sie nie allein.
+            <strong>Status in einem Wort</strong> (<code>terminStatus</code>, <code>spielStatus</code>,{" "}
+            <code>meldeStatus</code>, Epic #490): über dem Namen eines Termins und an jeder Spieler:in eines Spiels. Die
+            Farbe unterstreicht nur das Wort; Zahlen bleiben ungefärbt. Training: Vorbereitet grau, Nicht vorbereitet
+            gelb. Spiel gegen seinen Richtwert: Zu wenig und Zu viel rot, Knapp (genau die Mindestzahl) gelb, Genügend
+            grün; ohne Richtwert keiner. Fällt aus grau. Spieler:in: Ohne Meldung gelb, nach der Meldefrist
+            Meldefrist verpasst rot, Angemeldet grün, Abgemeldet und Nicht aufgeboten rot.
           </p>
           <div className="mb-6 flex flex-wrap items-center gap-3">
-            <span className={richtwertSchrift(7, 9, 12)}>7</span>
-            <RichtwertLozenge zahl={7} min={9} max={12} />
-            <span className={richtwertSchrift(9, 9, 12)}>9</span>
-            <RichtwertLozenge zahl={9} min={9} max={12} />
-            <span className={richtwertSchrift(11, 9, 12)}>11</span>
-            <RichtwertLozenge zahl={11} min={9} max={12} />
-            <span className={richtwertSchrift(14, 9, 12)}>14</span>
-            <RichtwertLozenge zahl={14} min={9} max={12} />
+            <Lozenge>Vorbereitet</Lozenge>
+            <Lozenge appearance="warning">Nicht vorbereitet</Lozenge>
+            <Lozenge appearance="danger">Zu wenig</Lozenge>
+            <Lozenge appearance="warning">Knapp</Lozenge>
+            <Lozenge appearance="success">Genügend</Lozenge>
+            <Lozenge appearance="danger">Zu viel</Lozenge>
+            <Lozenge>Fällt aus</Lozenge>
+            <Lozenge appearance="danger">Meldefrist verpasst</Lozenge>
+          </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>LozengeAuswahl</strong> (Epic #490): eine Lozenge, die zugleich der Knopf für ein Menü ist - wie
+            Jiras Status-Lozenge. Neu, weil der Status einer Spieler:in dort geändert werden soll, wo er steht; sie
+            ersetzt den Status-Chip mit Punkt. Sie sieht aus wie die Lozenge und ist genauso klein, dazu ein kleiner
+            Chevron; die Trefferfläche ist unsichtbar auf mindestens 24 × 24 px vergrössert. Das Menü bietet nur die
+            möglichen Wechsel, nie den aktuellen Zustand: links die Handlung, rechts Pfeil und Ziel-Lozenge, Seltenes
+            nach einem Trenner, wenn nötig ein Hinweis darunter. Ohne Wechsel ist sie eine gewöhnliche Lozenge.
+            Barrierefrei wie das Menü: Name «Status Person: Zustand», ↑/↓ und Escape.
+          </p>
+          <div className="mb-6">
+            <LozengeAuswahlDemo />
           </div>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Treffpunkte</strong> (<code>TreffpunktListe</code>, #465): die Treffpunkte eines Spiels in drei

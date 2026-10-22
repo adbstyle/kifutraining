@@ -52,6 +52,12 @@ const darstellungen: Record<LozengeAppearance, string> = {
   "accent-gray": "bg-lozenge-accent-gray text-on-lozenge-accent-gray",
 };
 
+/** Form und Farbe einer Lozenge — auch für die `LozengeAuswahl`, die genauso
+ *  aussieht, aber ein Knopf ist. */
+export function lozengeKlassen(appearance: LozengeAppearance): string {
+  return cn(LOZENGE_FORM, darstellungen[appearance]);
+}
+
 export function Lozenge({
   appearance = "neutral",
   aufBild = false,
