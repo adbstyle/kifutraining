@@ -70,7 +70,7 @@ export function SpielKarte({
         {!gross && (
           <Kalenderblatt
             datum={t.datum}
-            zustand={t.ausgefallen ? "ausgefallen" : abgemeldet ? "abgemeldet" : "spiel"}
+            stand={t.ausgefallen || abgemeldet ? "gestrichen" : "aktiv"}
             className="self-start"
           />
         )}

@@ -1,17 +1,16 @@
 "use client";
 
-import { CalendarOff, CalendarPlus, ClipboardList, MessageSquareText, Pencil, PlayCircle, Trash2, Undo2, Unlink } from "lucide-react";
+import { CalendarOff, CalendarPlus, MessageSquareText, Plus, Pencil, PlayCircle, Trash2, Undo2, Unlink } from "lucide-react";
 import { IconButton, IconButtonLink, OverflowMenu, Tooltip, type MenuItemDef } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen, type TerminAktionen } from "./TerminBereich";
 import { datumKurz } from "@/lib/zeit";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
 
-/** «Training hinzufügen» an einem anstehenden Termin ohne Training — wie
- *  «Dauer hinzufügen» an einer Übung im Training (`DauerWert`): gedämpft an
- *  der Stelle, wo sonst das Training steht, mit Zustands-Ebene beim
- *  Überfahren. Ein Klick öffnet das Zuordnen. `className` setzt die Schrift
- *  der Stelle. Positioniert, damit es über der Fläche einer Zeile liegt. */
+/** «+ Training hinzufügen» an einem anstehenden Termin ohne Training — an der
+ *  Stelle, wo sonst sein Name steht, in Primary wie ein Link (Epic #490,
+ *  Tafel 2). Ein Klick öffnet das Zuordnen. `className` setzt die Schrift der
+ *  Stelle. Positioniert, damit es über der Fläche einer Zeile liegt. */
 export function TrainingHinzufuegen({ t, className }: { t: TerminZeile; className?: string }) {
   const a = useTerminAktionen();
   return (
@@ -19,12 +18,9 @@ export function TrainingHinzufuegen({ t, className }: { t: TerminZeile; classNam
       type="button"
       aria-haspopup="dialog"
       onClick={() => a.zuordnen(t)}
-      className={cn(
-        "state focus-ring pointer-events-auto relative -mx-2 -my-1 inline-flex items-center gap-1.5 rounded-flaeche px-2 py-1 text-on-surface-mittel",
-        className,
-      )}
+      className={cn("focus-ring pointer-events-auto relative inline-flex items-center gap-1 rounded-klein text-primary hover:underline", className)}
     >
-      <ClipboardList size={14} strokeWidth={2} aria-hidden className="shrink-0" />
+      <Plus size={16} strokeWidth={2.5} aria-hidden className="shrink-0" />
       Training hinzufügen
     </button>
   );

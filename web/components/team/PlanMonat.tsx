@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { MARKEN_TEXT, MiniMonat, type Marke } from "@/components/ui";
+import { MiniMonat, type Marke } from "@/components/ui";
 import { monatVon } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
-import { terminZustand, type TerminZeile } from "@/lib/queries/termine-fuer";
+import type { TerminZeile } from "@/lib/queries/termine-fuer";
 
 /* Der Monat neben den Terminen (#404). Er folgt der Liste, die Liste aber
    nicht ihm — wie der kleine Monat im Google Kalender (PO 8):
@@ -93,13 +93,12 @@ export function PlanMonat({
         m.set(
           tag.datum,
           tag.termine.map((t) => {
-            const z = terminZustand(t, heute);
-            const was = z === "training" ? t.training!.name : z === "spiel" ? `Spiel ${t.spiel!.bezeichnung}` : MARKEN_TEXT[z];
-            return { id: t.id, zustand: z, label: `${t.beginn} ${was}` };
+            const was = t.spiel ? `Spiel ${t.spiel.bezeichnung}` : t.training ? t.training.name : "Training";
+            return { id: t.id, ausgefallen: t.ausgefallen, label: `${t.beginn} ${was}` };
           }),
         );
     return m;
-  }, [termine, heute]);
+  }, [termine]);
   const belegteTage = useMemo(() => new Set(belegt), [belegt]);
 
   function waehle(id: string) {

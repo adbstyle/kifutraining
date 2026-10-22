@@ -72,7 +72,7 @@ const { kalendertagAmTrainingsort } = await import("../lib/zeit");
 const { legeSerieFest, aendereSerie, entferneSerie, folgeDerSerie, aendereMitReichweite, entferneMitReichweite } =
   await import("../lib/kern/serien");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
-const { getTeamPlanFuer, nochNichtVorbereitet, terminZustand } = await import("../lib/queries/termine-fuer");
+const { getTeamPlanFuer, nochNichtVorbereitet } = await import("../lib/queries/termine-fuer");
 const { ladeSpielerliste, nimmSpielerAuf, aendereSpieler, entferneSpieler, holeSpielerLink, erneuereSpielerLink, leseAbholung, schalteAbholung, erneuereAbholung, pruefeSpielerImport, importiereSpieler } =
   await import("../lib/kern/spieler");
 const { IMPORT_TEXT, erwartetVon } = await import("../lib/spieler-import");
@@ -4869,7 +4869,7 @@ try {
     const kommend = wert(await teamPlan(a.supabase, a.id, { teamId: spielTeam })).kommend;
     assert.equal(kommend[0].id, naechstes);
     assert.equal(nochNichtVorbereitet(kommend[0], tagCh(0)), false);
-    assert.equal(terminZustand(kommend[0], tagCh(0)), "spiel");
+    assert.equal(kommend[0].art, "spiel");
   });
 
   // ── Für Spiele ausdrücklich melden (#463) ───────────────────────────────

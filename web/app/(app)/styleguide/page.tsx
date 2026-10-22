@@ -20,7 +20,6 @@ import {
   IconButton,
   IconButtonLink,
   ZeichenPunkt,
-  BlattLozenge,
   Kalenderblatt,
   KategorieLozenge,
   TabNav,
@@ -97,7 +96,6 @@ import {
   Layers,
   RefreshCw,
   CalendarOff,
-  TriangleAlert,
   CalendarPlus,
   Link2,
   Tag,
@@ -3632,56 +3630,42 @@ export default async function Styleguide() {
             Ein Termin wie ein Blatt vom Abreisskalender: Wochentag, grosse Tageszahl, Monat - nie das Jahr,
             das steht in der Überschrift des Monats (Epic #401). Neu, weil ein Datum als Text in einer Zeile
             (<code>datumKurz</code>) sich beim Überfliegen nicht finden lässt. Im Trainingsplan steht es links an
-            jeder Terminzeile. Eine leise Tönung sagt, was der Termin trägt (<code>zustand</code>): Training in Primary, noch kein
-            Training in der Warnfarbe - je eine schwache Fläche (12 %) mit der Tageszahl in der Farbe selbst -,
-            ausgefallen grau mit durchgestrichener Zahl, vergangen ohne Training ohne Fläche. Hinter dem
-            privaten Link einer Spieler:in sagt es «abgemeldet» im Rot der Danger-Lozenge, wie der Schalter
-            daneben in seiner Aus-Lage (Epic #433). Ein Spiel trägt die Tönung seiner Lozenge «Spiel»
-            (discovery, Epic #448), damit es sich schon am Blatt vom Training abhebt. Die Farbe trägt
-            den Zustand nie allein, die Zeile daneben sagt ihn in Worten. Heute hebt das Blatt nicht hervor;
-            dafür steht der nächste Termin zuoberst. Wo kein Blatt steht (der nächste Termin), sagt eine
-            Lozenge in derselben Tönung den Zustand: <code>BlattLozenge</code> - Form der Lozenge, Farbe des Blatts.
+            jeder Terminzeile. Das Blatt sagt nur, ob ein Termin zählt (<code>stand</code>, Epic #490): weiss
+            (die umgekehrte Fläche <code>umkehr</code>), solange er bevorsteht; grau ab dem Folgetag; grau mit
+            durchgestrichener Zahl, wenn er ausfällt - hinter dem privaten Link auch, wenn die eigene
+            Spieler:in abgemeldet oder nicht aufgeboten ist. Was ein Termin trägt, sagt die Status-Lozenge
+            daneben in einem Wort, nicht mehr die Tönung des Blatts. Heute hebt das Blatt nicht hervor;
+            dafür steht der nächste Termin zuoberst.
           </p>
           <div className="flex items-start gap-4">
-            <Kalenderblatt datum="2026-10-06" zustand="noch-nicht" />
-            <Kalenderblatt datum="2026-10-08" zustand="training" />
-            <Kalenderblatt datum="2026-10-11" zustand="ausgefallen" />
-            <Kalenderblatt datum="2026-10-13" zustand="abgemeldet" />
-            <Kalenderblatt datum="2026-10-17" zustand="spiel" />
-            <Kalenderblatt datum="2026-09-30" />
-            <BlattLozenge zustand="noch-nicht" iconBefore={TriangleAlert}>Noch kein Training</BlattLozenge>
+            <Kalenderblatt datum="2026-10-08" />
+            <Kalenderblatt datum="2026-09-30" stand="vergangen" />
+            <Kalenderblatt datum="2026-10-11" stand="gestrichen" />
           </div>
         </Section>
 
         <Section id="mini-monat">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Ein kleiner Monat zum Navigieren neben einer Liste (Epic #401). Neu, weil kein Baustein ein
-            Kalenderraster kennt. <code>MiniMonat</code> legt um jeden Tag mit Einträgen einen gepunkteten Ring und
-            setzt die Einträge als kleine Badges oben rechts darauf - wie der Punkt an einem Zeichen für
-            Neuigkeiten. Die Zellen sind alle gleich hoch, und jeder Monat zeigt sechs Wochen: Beim Blättern
-            springt die Höhe nicht (wie im Google und Proton Kalender). Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
+            Kalenderraster kennt. <code>MiniMonat</code> hinterlegt jeden Tag, an dem ein Termin stattfindet, hell
+            wie ein weisses Kalenderblatt, und einen Tag mit nur ausgefallenen Terminen grau und durchgestrichen
+            (Epic #490). Training und Spiel unterscheidet er nicht; die Legende darunter sagt beides. Die Zellen
+            sind alle gleich hoch, und jeder Monat zeigt sechs Wochen: Beim Blättern springt die Höhe nicht (wie
+            im Google und Proton Kalender). Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
             (<code>onWahl</code>), ein leerer Tag ist keiner. Blättern und «Heute» melden nur den Monat (<code>onMonat</code>): Wie im Google Kalender
             folgt der Monat der Liste, die Liste aber nicht ihm.
           </p>
           <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
             <li>
-              <strong>Zustand als Zeichen</strong> - Punkt in Primary (Training), Punkt in der Warnfarbe (noch kein
-              Training), rotes Kreuz (ausgefallen); vergangen ohne Training zeigt nur den Ring. Die beiden Punkte unterscheidet
-              bewusst nur die Farbe, damit das Gelb auffällt. Eine Legende gibt es nicht: Die Liste daneben
-              trägt dieselben Farben, und vorgelesen wird jeder Zustand beim Namen.
+              <strong>Vorgelesen</strong> - jeder Tag nennt seine Termine beim Namen, ein ausgefallener mit
+              «fällt aus»; die Fläche trägt es also nie allein.
             </li>
             <li>
-              <strong>Mehr als zwei</strong> - zwei Badges oben rechts, das zweite halb hinter dem ersten, und
-              «+n» unten rechts am Ring; die übrigen stehen in der Liste.
+              <strong>Zielgrösse</strong> - geklickt wird der ganze Tag (36 px hoch, WCAG 2.5.8).
             </li>
             <li>
-              <strong>Zielgrösse</strong> - geklickt wird der ganze Tag (36 px hoch), nicht das einzelne Badge,
-              das dafür zu klein wäre (WCAG 2.5.8).
-            </li>
-            <li>
-              <strong>Belegt</strong> - der Ring ohne Badge: Dort liegt etwas, das der Monat nicht zeigt (bei
-              «Meine Termine» die Termine anderer), oder nur Vergangenes ohne Training. Heute trägt die Zahl auf
-              Primary, ohne Ring.
+              <strong>Belegt</strong> - ein gepunkteter Ring: Dort liegt etwas, das der Monat nicht zeigt (bei
+              «Meine Termine» die Termine anderer). Heute trägt die Zahl auf Primary.
             </li>
           </ul>
           <MiniMonatDemo />

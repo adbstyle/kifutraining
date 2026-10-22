@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarOff, CalendarPlus, PlayCircle, TriangleAlert, Users } from "lucide-react";
-import { BlattLozenge, Button, ButtonLink, Lozenge, MARKEN_TEXT, OverflowMenu, SpielLozenge } from "@/components/ui";
+import { CalendarOff, CalendarPlus, PlayCircle, Users } from "lucide-react";
+import { Button, ButtonLink, Lozenge, OverflowMenu, SpielLozenge } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage } from "@/lib/serie";
@@ -135,7 +135,7 @@ export function NaechsterTermin({
             {t.training.name}
           </Link>
         ) : (
-          <BlattLozenge zustand="noch-nicht" iconBefore={TriangleAlert}>{MARKEN_TEXT["noch-nicht"]}</BlattLozenge>
+          <Lozenge appearance="warning">Nicht vorbereitet</Lozenge>
         )}
       </div>
 
