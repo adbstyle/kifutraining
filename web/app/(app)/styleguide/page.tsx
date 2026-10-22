@@ -21,6 +21,7 @@ import {
   IconButtonLink,
   ZeichenPunkt,
   Kalenderblatt,
+  Meldebalken,
   KategorieLozenge,
   TabNav,
   Tooltip,
@@ -255,6 +256,7 @@ const GLIEDERUNG = [
           { id: "material", titel: "Material" },
           { id: "kalenderblatt", titel: "Kalenderblatt" },
           { id: "mini-monat", titel: "Mini-Monat" },
+          { id: "meldebalken", titel: "Meldebalken" },
           { id: "platz-spielerzahl", titel: "Platz und Spielerzahl eines Termins" },
         ],
       },
@@ -3669,6 +3671,22 @@ export default async function Styleguide() {
             </li>
           </ul>
           <MiniMonatDemo />
+        </Section>
+
+        <Section id="meldebalken">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Wie viele kommen, als Balken (<code>Meldebalken</code>, Epic #490): im Abschnitt TEAM der grossen
+            Karten im Trainingsplan und am privaten Link. Neu, weil keine Anzeige eine Menge gegen einen Bereich
+            zeigt. Der helle Anteil sind die Angemeldeten (ab Beginn: die Anwesenden) von allen, für die der
+            Termin gilt; ein Richtwert liegt als hellere Zone darunter, mit nur einer Mindestzahl bis ans Ende,
+            mit nur einer Höchstzahl ab dem Anfang. Der Balken bewertet nicht und bleibt ungefärbt - die
+            Bewertung sagt allein der Status in einem Wort. Vorgelesen wird beides in einem Satz.
+          </p>
+          <div className="flex max-w-md flex-col gap-6">
+            <Meldebalken zahl={7} gesamt={14} min={9} max={12} />
+            <Meldebalken zahl={11} gesamt={16} min={9} />
+            <Meldebalken zahl={12} gesamt={14} />
+          </div>
         </Section>
 
         <Section id="platz-spielerzahl">

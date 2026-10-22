@@ -52,12 +52,14 @@ export function TrainingsPlan({
   spalte?: ReactNode;
 }) {
   const nichtsMehrOffen = plan.kommend.length === 0;
-  // #403: Der erste anstehende Termin — auch ein ausgefallener (PO 6) — steht
-  // zuoberst und nicht noch einmal in der Liste (AK 18); die Zahl zählt ihn
-  // mit (AK 19). Die Reihenfolge des Tages (Beginn, dann Anlegen) kommt aus
-  // der Datenbank (AK 16), die Eingrenzung auf die eigenen Termine aus der
-  // Seite (AK 17).
-  const [naechster, ...danach] = plan.kommend;
+  // #403, #492 AK 1, 2: Der erste anstehende Termin, der stattfindet, steht
+  // zuoberst und nicht noch einmal in der Liste (AK 18); ein ausgefallener
+  // davor bleibt eine gewöhnliche Zeile (Epic #490, hebt PO 6 auf). Die Zahl
+  // zählt alle anstehenden (AK 19). Die Reihenfolge des Tages (Beginn, dann
+  // Anlegen) kommt aus der Datenbank (AK 16), die Eingrenzung auf die eigenen
+  // Termine aus der Seite (AK 17).
+  const naechster = plan.kommend.find((t) => !t.ausgefallen);
+  const danach = plan.kommend.filter((t) => t !== naechster);
   const liste = useRef<HTMLDivElement>(null);
   // #404 AK 10, 11: ein im Monat gewählter Termin. `nr` macht jede Wahl neu,
   // auch dieselbe zweimal.
@@ -89,12 +91,12 @@ export function TrainingsPlan({
   const termine = (
     <>
       {alle.length === 0 && leer}
-      {naechster && (
+      {plan.kommend.length > 0 && (
         <section>
           <h3 className="type-title-small text-on-surface-mittel">
             Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
           </h3>
-          <NaechsterTermin t={naechster} heute={heute} ich={ich} meine={meine} hervorgehoben={naechster.id === hervorheben} />
+          {naechster && <NaechsterTermin t={naechster} heute={heute} ich={ich} meine={meine} hervorgehoben={naechster.id === hervorheben} />}
           <PlanMonate termine={danach} heute={heute} ich={ich} meine={meine} hervorheben={hervorheben} />
         </section>
       )}
