@@ -51,7 +51,8 @@ export function Meldebalken({
         className="relative h-2 overflow-hidden rounded-full bg-on-surface/10"
       >
         {bereich && (
-          <div className="absolute inset-y-0 bg-on-surface/16" style={{ left: anteil(von), width: `calc(${anteil(bis)} - ${anteil(von)})` }} />
+          // Mindest- gleich Höchstzahl: ein schmaler Strich statt einer leeren Zone.
+          <div className="absolute inset-y-0 bg-on-surface/16" style={{ left: anteil(von), width: `max(3px, calc(${anteil(bis)} - ${anteil(von)}))` }} />
         )}
         <div className="umkehr absolute inset-y-0 left-0 rounded-full" style={{ width: anteil(zahl) }} />
       </div>

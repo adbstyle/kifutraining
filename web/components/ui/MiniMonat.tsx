@@ -25,10 +25,11 @@ export type Marke = {
   label: string;
 };
 
-/** Die Zahl des Tages (Epic #490): heute auf Primary; ein Tag mit einem
- *  Termin, der stattfindet, hell hinterlegt wie ein weisses Kalenderblatt —
- *  ohne Unterschied zwischen Training und Spiel; ein Tag mit nur
- *  ausgefallenen Terminen grau und durchgestrichen. `belegt`: der gepunktete
+/** Die Zahl des Tages (Epic #490): ein Tag mit einem Termin, der
+ *  stattfindet, hell hinterlegt wie ein weisses Kalenderblatt — ohne
+ *  Unterschied zwischen Training und Spiel; ein Tag mit nur ausgefallenen
+ *  Terminen grau und durchgestrichen. Heute ohne Termin auf Primary, mit
+ *  Termin dessen Fläche und ein Rahmen in Primary. `belegt`: der gepunktete
  *  Ring, wo etwas liegt, das der Monat nicht zeigt. */
 function Tageszahl({
   tag,
@@ -48,16 +49,21 @@ function Tageszahl({
       aria-hidden
       className={cn(
         "flex size-6 items-center justify-center rounded-klein border border-dotted type-body-small",
-        tag === heute
-          ? "bg-primary font-medium text-on-primary"
-          : stand === "termin"
-            ? "umkehr font-medium text-on-surface"
-            : stand === "ausgefallen"
-              ? "bg-elev-08 text-on-surface-mittel line-through"
+        stand === "termin"
+          ? "umkehr font-medium text-on-surface"
+          : stand === "ausgefallen"
+            ? "bg-elev-08 text-on-surface-mittel line-through"
+            : tag === heute
+              ? "bg-primary font-medium text-on-primary"
               : imMonat
                 ? "text-on-surface"
                 : "text-on-surface-mittel",
-        belegt && tag !== heute ? "rounded-full border-on-surface-mittel" : "border-transparent",
+        // Heute mit Termin: dessen Fläche, dazu ein Rahmen in Primary.
+        tag === heute && stand
+          ? "border-2 border-solid border-primary"
+          : belegt && tag !== heute
+            ? "rounded-full border-on-surface-mittel"
+            : "border-transparent",
       )}
     >
       {Number(tag.slice(8))}

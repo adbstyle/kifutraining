@@ -167,12 +167,22 @@ function PlanMonate({
       <h4 className="type-title-small text-on-surface">{monatsName(m.monat)}</h4>
       <ol className="mt-2 flex flex-col gap-2">
         {m.tage.flatMap((tag) => {
-          // Die erste Zeile des Tages trägt dessen Überschrift.
-          const erste = tag.termine.find((t) => !nachMeldefrist(t, jetzt));
+          // Der erste Termin des Tages — Zeile oder grosse Karte — trägt
+          // dessen Überschrift (sein Kalenderblatt).
+          const erste = tag.termine[0];
           return abschnitte(tag.termine, (t) => nachMeldefrist(t, jetzt)).map((teil) =>
             teil.gross ? (
               <li key={teil.termine[0].id}>
-                <NaechsterTermin t={teil.termine[0]} heute={heute} jetzt={jetzt} ich={ich} meine={meine} hervorgehoben={teil.termine[0].id === hervorheben} naechster={false} />
+                <NaechsterTermin
+                  t={teil.termine[0]}
+                  heute={heute}
+                  jetzt={jetzt}
+                  ich={ich}
+                  meine={meine}
+                  hervorgehoben={teil.termine[0].id === hervorheben}
+                  naechster={false}
+                  tagesUeberschrift={teil.termine[0] === erste}
+                />
               </li>
             ) : (
               <li key={teil.termine[0].id}>

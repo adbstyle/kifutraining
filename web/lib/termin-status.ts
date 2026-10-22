@@ -4,6 +4,7 @@ import {
   MELDUNG_TEXT,
   NACHTRAG_TEXT,
   fristAbgelaufen,
+  meldefristVerpasst,
   richtwertStufe,
   type Meldung,
   type RichtwertStufe,
@@ -52,7 +53,7 @@ export const MELDE_STATUS = {
 export function meldeStatus(m: Meldung, nichtAufgeboten: boolean, fristAbgelaufen: boolean): TerminStatus {
   if (nichtAufgeboten) return MELDE_STATUS.nichtAufgeboten;
   if (m !== null) return MELDE_STATUS[m];
-  return fristAbgelaufen ? MELDE_STATUS.verpasst : MELDE_STATUS.ohne;
+  return meldefristVerpasst(m, nichtAufgeboten, fristAbgelaufen) ? MELDE_STATUS.verpasst : MELDE_STATUS.ohne;
 }
 
 /** Der Status eines Spiels aus seiner Spielerzahl; ohne Richtwert `null`. */

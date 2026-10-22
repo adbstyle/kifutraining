@@ -5,6 +5,7 @@ import { CalendarPlus } from "lucide-react";
 import { Button, ButtonLink, Kalenderblatt, Lozenge, Meldebalken, OverflowMenu, SectionMessage, TreffpunktListe } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
+import { plusTage } from "@/lib/serie";
 import { zeitText } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import { zeitpunktKurz } from "@/lib/spiel";
@@ -16,6 +17,7 @@ import { verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-f
 import { useTerminAktionen } from "./TerminBereich";
 import { terminMenue } from "./TerminHandgriffe";
 import { KaderLozenges } from "./KaderLozenge";
+import { KartenAbschnitt } from "./KartenAbschnitt";
 
 /* Ein Termin als grosse Karte zuoberst im Trainingsplan (#403; Epic #490,
    Tafeln 2b und 2d): «Als Nächstes» ist der nächste Termin, der stattfindet.
@@ -39,6 +41,7 @@ export function NaechsterTermin({
   meine,
   hervorgehoben,
   naechster = true,
+  tagesUeberschrift = false,
 }: {
   t: TerminZeile;
   heute: string;
@@ -49,6 +52,8 @@ export function NaechsterTermin({
   hervorgehoben: boolean;
   /** `false`: ein Spiel nach der Meldefrist in der Liste, nicht «Als Nächstes» (#494). */
   naechster?: boolean;
+  /** In der Liste der erste Termin seines Tages: Das Blatt ist dessen Überschrift. */
+  tagesUeberschrift?: boolean;
 }) {
   const a = useTerminAktionen();
   const zeit = zeitText(t.beginn, t.ende);
@@ -57,6 +62,10 @@ export function NaechsterTermin({
   const handlung = nachFrist ? handlungsMeldung(t) : null;
   const name = t.spiel ? t.spiel.bezeichnung : t.training ? t.training.name : "Noch kein Training";
   const oeffnen = terminHref(t.teamId, meine, t.id);
+  // #403 AK 8: Heute oder Morgen über dem Namen des nächsten Termins.
+  const relativ = !naechster ? null : t.datum === heute ? "Heute" : t.datum === plusTage(heute, 1) ? "Morgen" : null;
+  // Die Karte «Als Nächstes» trägt ihre Überschrift; in der Liste ist das Blatt die des Tages.
+  const NameElement = naechster ? "h4" : "p";
   return (
     <div
       id={t.id}
@@ -77,15 +86,20 @@ export function NaechsterTermin({
       <Link href={oeffnen} scroll={false} tabIndex={-1} aria-hidden className="absolute inset-0 rounded-flaeche" />
       <div className="pointer-events-none relative flex flex-col gap-3.5 [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
         <div className="flex items-start gap-4">
-          <Kalenderblatt datum={t.datum} />
+          <Kalenderblatt datum={t.datum} as={tagesUeberschrift ? "h5" : "div"} />
           <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+            {relativ && (
+              <p className="type-title-small text-on-surface-mittel">
+                {relativ} · {tagOhneJahr(t.datum)}
+              </p>
+            )}
             {status && <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>}
-            <h4 className="type-title-large max-w-full text-on-surface">
+            <NameElement className="type-title-large max-w-full text-on-surface">
               <Link href={oeffnen} scroll={false} className="focus-ring rounded-klein hover:underline">
                 <span className="sr-only">{naechster ? "Nächster Termin" : "Spiel nach der Meldefrist"}, {tagOhneJahr(t.datum)}: </span>
                 {name}
               </Link>
-            </h4>
+            </NameElement>
             <p className="type-body-medium text-on-surface-mittel">{[zeit, t.ort].filter(Boolean).join(" · ")}</p>
           </div>
           <OverflowMenu
@@ -106,23 +120,23 @@ export function NaechsterTermin({
           </SectionMessage>
         )}
 
-        <Abschnitt titel="Team" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
+        <KartenAbschnitt titel="Team" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
           <TeamStand t={t} ich={ich} nachFrist={nachFrist} />
-        </Abschnitt>
+        </KartenAbschnitt>
 
         {t.spiel ? (
           t.spiel.treffpunkte.length > 0 && (
-            <Abschnitt titel="Treffpunkte">
+            <KartenAbschnitt titel="Treffpunkte">
               <TreffpunktListe
                 treffpunkte={[...t.spiel.treffpunkte].reverse()}
                 spieltag={t.datum}
                 spielOrt={t.ort}
                 className="type-body-medium text-on-surface"
               />
-            </Abschnitt>
+            </KartenAbschnitt>
           )
         ) : (
-          <Abschnitt titel="Platz">
+          <KartenAbschnitt titel="Platz">
             {t.felder && t.felder.length > 0 ? (
               <ul className="flex flex-col gap-1 type-body-medium text-on-surface">
                 {t.felder.map((f, i, alle) => (
@@ -132,7 +146,7 @@ export function NaechsterTermin({
             ) : (
               <p className="type-body-medium text-on-surface-mittel">Nicht erfasst</p>
             )}
-          </Abschnitt>
+          </KartenAbschnitt>
         )}
 
         <div className="flex flex-wrap gap-2">
@@ -157,18 +171,6 @@ export function NaechsterTermin({
   );
 }
 
-/** Ein Abschnitt der Karte: Trenner, kleine Überschrift, Inhalt. */
-function Abschnitt({ titel, zusatz, children }: { titel: string; zusatz?: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <section className="flex flex-col gap-2 border-t border-linie pt-3.5">
-      <div className="flex flex-wrap items-center gap-2">
-        <h5 className="type-label-medium uppercase tracking-wider text-on-surface-mittel">{titel}</h5>
-        {zusatz}
-      </div>
-      {children}
-    </section>
-  );
-}
 
 /** Wer kommt: der Balken, darunter eine ruhige Zeile — beim Training die
  *  Abgemeldeten, bis wann man ändern kann, und wer verantwortlich ist; beim

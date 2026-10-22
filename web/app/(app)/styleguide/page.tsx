@@ -2290,6 +2290,13 @@ export default async function Styleguide() {
             Aussage, die auch ohne es ankommt.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Trenner, Hinweis, Ziel</strong> (Epic #490, für die <code>LozengeAuswahl</code>):{" "}
+            <code>trenner</code> setzt einen Strich vor einen Eintrag - Seltenes steht danach;{" "}
+            <code>hinweis</code> setzt einen leisen Satz unter die Zeile, mit ihr verknüpft
+            (<code>aria-describedby</code>), etwa wohin ein Rückgängig führt; <code>trailing</code> nimmt
+            neben einem Kürzel auch ein Element, etwa Pfeil und Ziel-Lozenge eines Wechsels.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Tastatur:</strong> Beim Öffnen springt der Fokus auf den
             ersten Eintrag, <kbd>↑</kbd>/<kbd>↓</kbd> laufen zyklisch,{" "}
             <kbd>Home</kbd>/<kbd>End</kbd> an die Enden. Den Fokus an den Trigger

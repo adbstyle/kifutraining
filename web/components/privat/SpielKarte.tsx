@@ -2,6 +2,7 @@
 
 import { Button, Kalenderblatt, Lozenge, Meldebalken, SectionMessage, TreffpunktListe } from "@/components/ui";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
+import { KartenAbschnitt } from "@/components/team/KartenAbschnitt";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr, tagText } from "@/lib/monat";
 import type { LinkTermin } from "@/lib/privater-link";
@@ -115,12 +116,12 @@ export function SpielKarte({
       )}
       {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
       {treffpunkte && (
-        <Abschnitt titel="Treffpunkte">
+        <KartenAbschnitt ebene="h4" titel="Treffpunkte">
           <TreffpunktListe treffpunkte={treffpunkte} spieltag={t.datum} spielOrt={t.ort} className="type-body-medium text-on-surface" />
-        </Abschnitt>
+        </KartenAbschnitt>
       )}
       {!t.ausgefallen && (
-        <Abschnitt titel="Team" zusatz={<KaderLozenges namen={t.kader} />}>
+        <KartenAbschnitt ebene="h4" titel="Team" zusatz={<KaderLozenges namen={t.kader} />}>
           {angemeldet !== null && t.gesamt !== null ? (
             <Meldebalken
               zahl={angemeldet}
@@ -132,26 +133,13 @@ export function SpielKarte({
           ) : (
             <p className="type-body-medium text-on-surface-mittel">Das Team führt keine Spielerliste.</p>
           )}
-        </Abschnitt>
+        </KartenAbschnitt>
       )}
       {t.bemerkung && (
-        <Abschnitt titel="Bemerkung">
+        <KartenAbschnitt ebene="h4" titel="Bemerkung">
           <p className="type-body-medium whitespace-pre-line text-on-surface">{t.bemerkung}</p>
-        </Abschnitt>
+        </KartenAbschnitt>
       )}
     </Element>
-  );
-}
-
-/** Ein Abschnitt der Karte: Trenner, kleine Überschrift, Inhalt. */
-function Abschnitt({ titel, zusatz, children }: { titel: string; zusatz?: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <section className="flex flex-col gap-2 border-t border-linie pt-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <h4 className="type-label-medium uppercase tracking-wider text-on-surface-mittel">{titel}</h4>
-        {zusatz}
-      </div>
-      {children}
-    </section>
   );
 }
