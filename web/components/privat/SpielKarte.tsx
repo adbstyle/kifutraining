@@ -13,7 +13,7 @@ import { TERMIN_STATUS, meldeStatus } from "@/lib/termin-status";
    Von oben nach unten: Kalenderblatt, der Status der eigenen Spieler:in als
    Lozenge, Bezeichnung, Zeit und Ort; bis wann sich melden lässt; die
    Handlung als Knopf; Hinweise zur Verlegung oder zu einem Fehler;
-   TREFFPUNKTE, frühester zuerst; TEAM mit Balken; BEMERKUNG.
+   TREFFPUNKTE, frühester zuerst; KADER mit Balken; BEMERKUNG.
 
    - Ohne Meldung «Anmelden» hell und «Abmelden» umrandet, sonst nur der eine
      mögliche Wechsel umrandet. Nach der Meldefrist, ab dem Anpfiff und bei
@@ -121,7 +121,7 @@ export function SpielKarte({
         </KartenAbschnitt>
       )}
       {!t.ausgefallen && (
-        <KartenAbschnitt ebene="h4" titel="Team" zusatz={<KaderLozenges namen={t.kader} />}>
+        <KartenAbschnitt ebene="h4" titel="Kader" zusatz={<KaderLozenges namen={t.kader} />}>
           {angemeldet !== null && t.gesamt !== null ? (
             <Meldebalken
               zahl={angemeldet}

@@ -25,7 +25,7 @@ import { KartenAbschnitt } from "./KartenAbschnitt";
    Spielfeldrand nicht suchen muss.
 
    Von oben nach unten: der Kopf wie eine Zeile — weisses Kalenderblatt,
-   Status, Name, Zeit und Ort, das Menü —, dann der Abschnitt TEAM (wer kommt,
+   Status, Name, Zeit und Ort, das Menü —, dann der Abschnitt KADER (wer kommt,
    als Balken), bei einem Training der Abschnitt PLATZ, bei einem Spiel die
    TREFFPUNKTE, der späteste zuoberst: Die Trainer:in steht am Treffpunkt nächst
    am Spiel. Zuunterst die Handgriffe, der wichtigste hell. Bemerkung und
@@ -122,7 +122,7 @@ export function NaechsterTermin({
 
         {t.spiel ? (
           <>
-            <KartenAbschnitt titel="Team" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
+            <KartenAbschnitt titel="Kader" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
               <TeamStand t={t} ich={ich} nachFrist={nachFrist} />
             </KartenAbschnitt>
             {t.spiel.treffpunkte.length > 0 && (
@@ -140,7 +140,7 @@ export function NaechsterTermin({
           // Beim Training stehen Team und Platz ab Tabletbreite nebeneinander,
           // auf gleicher Höhe (PO 2026-10-22); schmal untereinander.
           <div className="grid gap-x-6 gap-y-3.5 sm:grid-cols-2">
-            <KartenAbschnitt titel="Team" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
+            <KartenAbschnitt titel="Kader" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
               <TeamStand t={t} ich={ich} nachFrist={nachFrist} />
             </KartenAbschnitt>
             <KartenAbschnitt titel="Platz">

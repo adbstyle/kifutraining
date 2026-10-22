@@ -299,7 +299,7 @@ steht als gewöhnliche Zeile in der Liste. Die Karte ist aufgebaut wie eine Zeil
 links das Kalenderblatt, daneben der Status in einem Wort („Vorbereitet" grün oder „Nicht
 vorbereitet" grau), der Name des Trainings — ohne Training „Noch kein Training" —, Zeit und Ort,
 rechts das Menü mit „Training ersetzen" und den übrigen Handgriffen. Darunter der Abschnitt
-„Team": die Kader des Termins, die Zahl der Angemeldeten von allen, für die der Termin gilt,
+„Kader": die Kader des Termins, die Zahl der Angemeldeten von allen, für die der Termin gilt,
 etwa „12 von 14 angemeldet", und eine Zeile mit den Abgemeldeten, „änderbar bis zum Beginn" und
 den Verantwortlichen. Ohne Spielerliste steht dort die erwartete Spielerzahl. Dann der
 Abschnitt „Platz" mit Grösse, Toren und Untergrund jedes Feldes, ohne Felder „Nicht erfasst".

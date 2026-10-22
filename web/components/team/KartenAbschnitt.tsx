@@ -1,6 +1,6 @@
 /* Ein Abschnitt einer grossen Terminkarte (Epic #490): Trenner, kleine
    Überschrift in Versalien, daneben ein Zusatz (etwa die Kader), darunter der
-   Inhalt — TEAM, PLATZ, TREFFPUNKTE, BEMERKUNG. Geteilt von der Karte «Als
+   Inhalt — KADER, PLATZ, TREFFPUNKTE, BEMERKUNG. Geteilt von der Karte «Als
    Nächstes» im Trainingsplan und der Spielkarte am privaten Link. `ebene`:
    die Überschrift passend zur Seite. */
 export function KartenAbschnitt({
