@@ -26,12 +26,10 @@ import { useLokalerStand } from "@/lib/use-lokaler-stand";
 import { KaderLozenges } from "./KaderLozenge";
 import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
 
-/** Die Gruppen in ihrer Reihenfolge: zuerst, wer sich noch nicht geäussert
- *  hat — bei ihnen fragt das Team nach (Story #463), nach der Meldefrist als
- *  «Meldefrist verpasst» (#496); zuletzt die nicht Aufgebotenen, gleich welche
- *  Meldung sie tragen (#464). */
+/** Wofür eine Spieler:in im Kopf zählt: ohne Meldung (nach der Meldefrist
+ *  «Meldefrist verpasst», #496), angemeldet, abgemeldet oder — gleich welche
+ *  Meldung sie trägt — nicht aufgeboten (#464). */
 type Gruppe = "ohne" | "angemeldet" | "abgemeldet" | "nicht_aufgeboten";
-const GRUPPEN: Gruppe[] = ["ohne", "angemeldet", "abgemeldet", "nicht_aufgeboten"];
 
 /** Was unter dem Namen einer nicht Aufgebotenen steht: ihre Meldung (#464 AK 6). */
 const UNTER_KENNZEICHNUNG: Record<"ohne" | "angemeldet" | "abgemeldet", string> = {
@@ -61,7 +59,7 @@ function Kopf({ zahl, gesamt, wort, min, max, children }: { zahl: number; gesamt
 }
 
 /* Der Reiter «Spieler:innen» an einem Spiel (#463, #464; Epic #490, Tafel 4):
-   wer ohne Meldung, angemeldet oder abgemeldet ist, in Gruppen. Jede Zeile
+   wer ohne Meldung, angemeldet oder abgemeldet ist, als flache Liste. Jede Zeile
    trägt ihren Status als `LozengeAuswahl`: Ein Tipp darauf öffnet die
    möglichen Wechsel — «Anmelden» und «Abmelden» bis zum Anpfiff, auch nach
    der Meldefrist der Eltern, nach einem Trenner «Nicht aufbieten» bzw.
@@ -119,7 +117,6 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
   // Eine nicht aufgebotene zählt nur als solche (#464 AK 7).
   const zahl = (g: Gruppe) => daten.spieler.filter((s) => gruppeVon(s) === g).length;
   const verpasst = daten.fristAbgelaufen;
-  const ohneWort = verpasst ? MELDUNG_TEXT.verpasst : MELDUNG_TEXT.ohne;
 
   // Ein offenes Spiel hat keine Ehemaligen: Jede Zeile trägt ihre Kennung.
   const melden = (id: string, an: boolean) =>
@@ -145,12 +142,6 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
   const melden_bis = daten.frist
     ? `Eltern melden bis ${zeitpunktKurz(daten.frist)}${verpasst ? " (abgelaufen)" : ""} · Mitglieder bis zum Anpfiff`
     : "Eltern und Mitglieder melden bis zum Anpfiff";
-  const titel: Record<Gruppe, string> = {
-    ohne: ohneWort,
-    angemeldet: MELDUNG_TEXT.angemeldet,
-    abgemeldet: MELDUNG_TEXT.abgemeldet,
-    nicht_aufgeboten: AUFGEBOT_TEXT.nichtAufgeboten,
-  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -185,33 +176,27 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
           {KADER_TEXT.leerKaderTermin}
         </EingrenzungLeer>
       )}
-      {GRUPPEN.map((g) => {
-        const zeilen = sichtbar.filter((s) => gruppeVon(s) === g);
-        if (zeilen.length === 0) return null;
-        return (
-          <section key={g} aria-label={`${titel[g]}: ${zeilen.length}`}>
-            <h4 className="px-1 pb-1 type-label-medium uppercase tracking-wider text-on-surface-mittel">
-              {titel[g]} · {zeilen.length}
-            </h4>
-            <ul className="divide-y divide-linie rounded-flaeche bg-elev-01">
-              {zeilen.map((s, i) => (
-                <SpielZeile
-                  key={s.spielerId ?? `ehemalig-${i}`}
-                  s={s}
-                  meldung={meldungVon(s)}
-                  nichtAufgeboten={aufgebotVon(s)}
-                  fristAbgelaufen={verpasst}
-                  eben={meldungen.hat(s.spielerId) && meldungVon(s) !== s.meldung}
-                  gelesenAm={daten.gelesenAm}
-                  pending={pending}
-                  onMelden={(an) => s.spielerId && melden(s.spielerId, an)}
-                  onAufgebot={(nein) => s.spielerId && aufbieten(s.spielerId, nein)}
-                />
-              ))}
-            </ul>
-          </section>
-        );
-      })}
+      {/* Eine flache Liste ohne Gruppen (PO 2026-10-22): Der Status jeder
+          Zeile steht in ihrer Lozenge, und eine Zeile bleibt an ihrem Platz,
+          wenn sich ihr Status ändert. */}
+      {sichtbar.length > 0 && (
+        <ul className="divide-y divide-linie rounded-flaeche bg-elev-01">
+          {sichtbar.map((s, i) => (
+            <SpielZeile
+              key={s.spielerId ?? `ehemalig-${i}`}
+              s={s}
+              meldung={meldungVon(s)}
+              nichtAufgeboten={aufgebotVon(s)}
+              fristAbgelaufen={verpasst}
+              eben={meldungen.hat(s.spielerId) && meldungVon(s) !== s.meldung}
+              gelesenAm={daten.gelesenAm}
+              pending={pending}
+              onMelden={(an) => s.spielerId && melden(s.spielerId, an)}
+              onAufgebot={(nein) => s.spielerId && aufbieten(s.spielerId, nein)}
+            />
+          ))}
+        </ul>
+      )}
       {uebrige && <p className="type-body-small text-on-surface-mittel">{uebrige}</p>}
     </div>
   );
