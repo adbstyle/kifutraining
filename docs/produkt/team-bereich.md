@@ -635,12 +635,8 @@ die Eltern den neuen dort wieder abholen. Je Spieler:in und Team gibt es genau e
 Wer den Link öffnet, braucht weder Konto noch Anmeldung. Die Seite ist fürs Telefon gebaut, kommt
 ohne Seitenleiste aus und nennt Teamname und Name der Spieler:in mit dem Satz, dass sie für jedes
 Training zuerst angemeldet ist und man sie abmeldet, wenn sie nicht kann, und bis zum Beginn
-wieder anmeldet. Wie im Trainingsplan steht zuoberst „Als Nächstes": der nächste Termin, der
-stattfindet und noch nicht begonnen hat, grösser, mit „Heute" oder „Morgen" vor dem Tag, dem
-Status der Spieler:in, Zeit, Ort, Kadern und Spielerzahl, darunter „Änderbar bis zum Beginn" und
-dem umrandeten Knopf „Abmelden" oder „Anmelden"; abgemeldet tritt die Karte gedämpft zurück. Ein
-ausgefallener Termin davor steht als gewöhnliche Karte in der Liste. Ein Termin von heute, der
-schon begonnen hat, steht darüber unter „Heute", gesperrt bis Ende des Tages. Darunter folgen die
+wieder anmeldet. Eine Karte „Als Nächstes" gibt es hier nicht: Ein Termin von heute, der schon
+begonnen hat, steht zuoberst unter „Heute", gesperrt bis Ende des Tages. Darunter folgen alle
 übrigen anstehenden Termine, die für die Spieler:in gelten, unter Monatsüberschriften wie
 „Oktober 2026", je als Karte mit dem Kalenderblatt, dem Status der Spieler:in als Plakette —
 „Angemeldet" grün, „Abgemeldet" rot, „Fällt aus" grau —, Beginn und Ende, Ort, bei einem Termin
