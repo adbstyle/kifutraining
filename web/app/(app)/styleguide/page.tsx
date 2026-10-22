@@ -3650,15 +3650,17 @@ export default async function Styleguide() {
             Ein Termin wie ein Blatt vom Abreisskalender: Wochentag, grosse Tageszahl, Monat - nie das Jahr,
             das steht in der Überschrift des Monats (Epic #401). Neu, weil ein Datum als Text in einer Zeile
             (<code>datumKurz</code>) sich beim Überfliegen nicht finden lässt. Im Trainingsplan steht es links an
-            jeder Terminzeile. Das Blatt sagt nur, ob ein Termin zählt (<code>stand</code>, Epic #490): weiss
-            (die umgekehrte Fläche <code>umkehr</code>), solange er bevorsteht; grau ab dem Folgetag; grau mit
+            jeder Terminzeile. Das Blatt sagt nur, ob ein Termin zählt (<code>stand</code>, Epic #490): ein
+            bevorstehendes Spiel weiss (die umgekehrte Fläche <code>umkehr</code>), ein bevorstehendes Training
+            leiser, nur hell umrandet (<code>leise</code>), damit die Spiele hervortreten; grau ab dem Folgetag; grau mit
             durchgestrichener Zahl, wenn er ausfällt - hinter dem privaten Link auch, wenn die eigene
             Spieler:in abgemeldet oder nicht aufgeboten ist. Was ein Termin trägt, sagt die Status-Lozenge
             daneben in einem Wort, nicht mehr die Tönung des Blatts. Heute hebt das Blatt nicht hervor;
             dafür steht der nächste Termin zuoberst.
           </p>
           <div className="flex items-start gap-4">
-            <Kalenderblatt datum="2026-10-08" />
+            <Kalenderblatt datum="2026-10-10" />
+            <Kalenderblatt datum="2026-10-08" stand="leise" />
             <Kalenderblatt datum="2026-09-30" stand="vergangen" />
             <Kalenderblatt datum="2026-10-11" stand="gestrichen" />
           </div>

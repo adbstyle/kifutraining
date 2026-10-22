@@ -12,7 +12,7 @@ import { zeitpunktKurz } from "@/lib/spiel";
 import { feldName, feldText } from "@/lib/termin-felder";
 import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { terminHref } from "@/lib/team-ansicht";
-import { handlungsMeldung, nachMeldefrist, terminStatus } from "@/lib/termin-status";
+import { blattStand, handlungsMeldung, nachMeldefrist, terminStatus } from "@/lib/termin-status";
 import { verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { useTerminAktionen } from "./TerminBereich";
 import { terminMenue } from "./TerminHandgriffe";
@@ -86,7 +86,7 @@ export function NaechsterTermin({
       <Link href={oeffnen} scroll={false} tabIndex={-1} aria-hidden className="absolute inset-0 rounded-flaeche" />
       <div className="pointer-events-none relative flex flex-col gap-3.5 [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
         <div className="flex items-start gap-4">
-          <Kalenderblatt datum={t.datum} as={tagesUeberschrift ? "h5" : "div"} />
+          <Kalenderblatt datum={t.datum} stand={blattStand(t, heute)} as={tagesUeberschrift ? "h5" : "div"} />
           <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
             {relativ && (
               <p className="type-title-small text-on-surface-mittel">

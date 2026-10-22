@@ -663,7 +663,8 @@ pruefe("Status eines Termins in einem Wort, Kalenderblatt weiss oder grau (#491)
   assert.deepEqual(handlungsMeldung({ ...nachFrist, spielstand: stand(13) }), { appearance: "error", text: "1 über der Höchstzahl 12. Aufgebot klären." });
   assert.equal(handlungsMeldung({ ...nachFrist, spielstand: stand(11) }), null, "genügend ohne Meldung");
 
-  assert.equal(blattStand(t, "2026-11-03"), "aktiv");
+  assert.equal(blattStand(t, "2026-11-03"), "leise", "Training leiser als ein Spiel");
+  assert.equal(blattStand(spiel, "2026-11-03"), "aktiv");
   assert.equal(blattStand(t, "2026-11-04"), "vergangen");
   assert.equal(blattStand({ ...t, ausgefallen: true }, "2026-11-04"), "gestrichen");
 });

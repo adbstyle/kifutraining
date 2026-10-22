@@ -296,7 +296,7 @@ Ende schon vorüber ist. Das Ende des Termins zählt dafür bewusst nicht.
 Ganz oben steht „Als Nächstes" als grössere Karte: der erste anstehende Termin, der stattfindet,
 bei mehreren am selben Tag der früheste. Ein ausgefallener Termin davor bekommt keine Karte, er
 steht als gewöhnliche Zeile in der Liste. Die Karte ist aufgebaut wie eine Zeile, nur grösser:
-links das weisse Kalenderblatt, daneben der Status in einem Wort („Vorbereitet" grün oder „Nicht
+links das Kalenderblatt, daneben der Status in einem Wort („Vorbereitet" grün oder „Nicht
 vorbereitet" grau), der Name des Trainings — ohne Training „Noch kein Training" —, Zeit und Ort,
 rechts das Menü mit „Training ersetzen" und den übrigen Handgriffen. Darunter der Abschnitt
 „Team": die Kader des Termins, links die Zahl der Angemeldeten und rechts „von" allen, für die
@@ -313,8 +313,8 @@ der Liste darunter steht er nicht noch einmal, in der Zahl der anstehenden Termi
 Die übrigen Termine sind nach Monaten gegliedert, jede Überschrift mit Jahr. Die Termine eines
 Tages stehen zusammen in einer Karte, nach Beginn geordnet, jeder als knappe Zeile mit seinem
 Kalenderblatt links — Wochentag, Tageszahl und Monat, ohne Jahr; den heutigen Tag hebt es nicht
-hervor, dafür steht der nächste Termin zuoberst. Das Blatt ist weiss, solange der Termin
-ansteht, grau ab dem Folgetag und grau mit durchgestrichener Tageszahl, wenn er ausfällt. Was
+hervor, dafür steht der nächste Termin zuoberst. Das Blatt eines anstehenden Trainings ist hell
+umrandet, das eines anstehenden Spiels weiss, damit die Spiele hervortreten; grau ab dem Folgetag und grau mit durchgestrichener Tageszahl, wenn er ausfällt. Was
 der Termin trägt, sagt ein Status in einem Wort über seinem Namen: „Vorbereitet" grün, „Nicht
 vorbereitet" grau, „Fällt aus" grau; ein vergangener Termin trägt keinen. Darunter der Name des
 Trainings oder — anstehend und ohne Training — „+ Training hinzufügen" in Violett, das das

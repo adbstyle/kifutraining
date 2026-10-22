@@ -237,7 +237,7 @@ function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }
   return (
     <li className={cn("flex flex-col gap-2 rounded-flaeche px-3 py-3", gedaempft ? "kontur border-linie" : "bg-elev-01")}>
       <div className="flex items-start gap-3">
-        <Kalenderblatt datum={t.datum} stand={gedaempft ? "gestrichen" : "aktiv"} />
+        <Kalenderblatt datum={t.datum} stand={gedaempft ? "gestrichen" : "leise"} />
         <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
           <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>
           <span className={cn("type-body-medium", gedaempft ? "text-on-surface-mittel" : "text-on-surface")}>
@@ -280,7 +280,7 @@ function NaechsterTermin({ t, ab, zahl, name, heute, pending, onUmlegen, hinweis
       <div className={cn("mt-2 flex flex-col gap-3 rounded-flaeche p-4", ab ? "kontur border-linie" : "kontur border-kante bg-elev-04")}>
         <p className="type-title-small text-on-surface-mittel">{relativerTag(t.datum, heute)}</p>
         <div className="flex items-start gap-3">
-          <Kalenderblatt datum={t.datum} stand={ab ? "gestrichen" : "aktiv"} />
+          <Kalenderblatt datum={t.datum} stand={ab ? "gestrichen" : "leise"} />
           <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
             <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>
             <span className={cn("type-title-large", ab ? "text-on-surface-mittel" : "text-on-surface")}>

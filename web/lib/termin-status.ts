@@ -76,13 +76,16 @@ export function terminStatus(t: TerminZeile, heute: string): TerminStatus | null
   return t.training ? TERMIN_STATUS.vorbereitet : TERMIN_STATUS.nichtVorbereitet;
 }
 
-/** Wie das Kalenderblatt eines Termins steht: weiss, solange er bevorsteht;
- *  grau ab dem Folgetag; grau und durchgestrichen, wenn er ausfällt. */
-export type BlattStand = "aktiv" | "vergangen" | "gestrichen";
+/** Wie das Kalenderblatt eines Termins steht: ein bevorstehendes Spiel weiss,
+ *  ein bevorstehendes Training leiser — nur umrandet, damit die Spiele
+ *  hervortreten (PO 2026-10-22); grau ab dem Folgetag; grau und
+ *  durchgestrichen, wenn er ausfällt. */
+export type BlattStand = "aktiv" | "leise" | "vergangen" | "gestrichen";
 
-export function blattStand(t: Pick<TerminZeile, "datum" | "ausgefallen">, heute: string): BlattStand {
+export function blattStand(t: Pick<TerminZeile, "datum" | "ausgefallen" | "art">, heute: string): BlattStand {
   if (t.ausgefallen) return "gestrichen";
-  return t.datum < heute ? "vergangen" : "aktiv";
+  if (t.datum < heute) return "vergangen";
+  return t.art === "spiel" ? "aktiv" : "leise";
 }
 
 /** Hat das Spiel gerade Handlungsbedarf (#494)? Die Meldefrist ist
