@@ -3499,6 +3499,19 @@ try {
     // PC 5: Danach erfährt das andere Mitglied, dass es das Team nicht mehr gibt.
     assert.deepEqual(await aufloesen(a, zwei, "Kern-DB-Auflösen-480-B"), { status: "team_weg" });
     assert.deepEqual(await austritt(a, zwei), { status: "team_weg" });
+
+    // Unicode-Normalform zählt nicht: «ö» als o + Trema bestätigt «ö».
+    const drei = await serienTeam("Kern-DB-Auflösen-480-C");
+    assert.equal((await aufloesen(a, drei, "Kern-DB-Auflösen-480-C".normalize("NFD"))).status, "aufgeloest");
+
+    // Out of Scope 1: Löscht das letzte Mitglied sein Konto, löst sich das Team ohne Namen auf.
+    const vier = await serienTeam("Kern-DB-Auflösen-480-D");
+    await admin.from("team_members").insert({ team_id: vier, user_id: c.id });
+    await admin.from("team_members").delete().eq("team_id", vier).eq("user_id", a.id);
+    const { error: weg } = await admin.auth.admin.deleteUser(c.id);
+    if (weg) throw weg;
+    konten.splice(konten.indexOf(c.id), 1);
+    assert.ok(!(await besteht(vier)), "Konto-Löschung löst ohne Namen auf");
   });
 
   // ── Kalender: Felder eines Termins (#389) ────────────────────────────────

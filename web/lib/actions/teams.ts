@@ -254,6 +254,6 @@ export async function loeseTeamAuf(
   return auswerten(
     teamId,
     "auflösen",
-    await supabase.rpc("loese_team_auf", { p_team: teamId, p_teamname: teamname.trim() }),
+    await supabase.rpc("loese_team_auf", { p_team: teamId, p_teamname: teamname?.trim() ?? "" }),
   );
 }

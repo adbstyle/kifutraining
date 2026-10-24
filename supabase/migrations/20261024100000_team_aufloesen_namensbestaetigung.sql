@@ -18,7 +18,9 @@
 --
 -- Verglichen wird der Name genau, mit Gross- und Kleinschreibung (AK 6);
 -- Leerzeichen am Anfang und Ende der Eingabe zählen nicht (AK 7). Der
--- gespeicherte Name trägt keine (teams_name_check, pruefeName).
+-- gespeicherte Name trägt keine (teams_name_check, pruefeName). Beide Seiten
+-- in Unicode-Normalform NFC: ein eingefügtes «ü» aus zwei Zeichen ist
+-- dasselbe «ü».
 --
 -- Ob ein Austritt auflöst, entscheidet sich beim Ausführen (AK 12): Zählung,
 -- Namensvergleich und Löschung liegen in derselben Transaktion unter einer
@@ -118,7 +120,7 @@ begin
   if p_teamname is null then
     return jsonb_build_object('status', 'aufloesung_noetig', 'name', v_name);
   end if;
-  if btrim(p_teamname) is distinct from v_name then
+  if normalize(btrim(p_teamname), nfc) is distinct from normalize(v_name, nfc) then
     return jsonb_build_object('status', 'name_falsch', 'name', v_name);
   end if;
 
@@ -161,7 +163,8 @@ begin
     raise exception 'not a member of this team';
   end if;
 
-  if p_teamname is null or btrim(p_teamname) is distinct from v_name then
+  if p_teamname is null
+     or normalize(btrim(p_teamname), nfc) is distinct from normalize(v_name, nfc) then
     return jsonb_build_object('status', 'name_falsch', 'name', v_name);
   end if;
 

@@ -61,8 +61,9 @@ export function TeamGefahrenzone({
 
   const letzte = anzahlMitglieder <= 1;
   // Exakt, mit Gross- und Kleinschreibung; Leerzeichen am Rand zählen nicht
-  // (AK 6, 7). Dieselbe Regel wiederholt die Datenbank.
-  const passt = eingabe.trim() === name;
+  // (AK 6, 7), die Unicode-Normalform auch nicht. Dieselbe Regel wiederholt
+  // die Datenbank.
+  const passt = eingabe.trim().normalize("NFC") === name.normalize("NFC");
 
   function oeffnen(welcher: NonNullable<typeof offen>, mitHinweis: string | null = null) {
     // Der Dialog bleibt im DOM; jeder Anlauf beginnt leer.
