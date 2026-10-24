@@ -1404,7 +1404,7 @@ export default async function Styleguide() {
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Icon-Knöpfe - Zeichen plus Zustands-Ebene, aktiv in Primary; die
             Hauptaktion einer Zeile (<code>primary</code>, etwa Kopieren im{" "}
-            <code>KopierFeld</code>) trägt das Zeichen in Primary ohne angehobene Ebene
+            <code>KopierFeld</code>) ist gefüllt wie <code>filled</code>: Primary-Fläche, dunkles Zeichen
           </p>
           <div className="flex items-center gap-4">
             <IconButton icon={Search} label="Suchen" />

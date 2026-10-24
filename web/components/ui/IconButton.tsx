@@ -30,9 +30,9 @@ function iconButtonClasses(
     "disabled:opacity-40 disabled:pointer-events-none",
     BOX,
     // `primary`: die Hauptaktion einer Zeile (etwa Kopieren im KopierFeld,
-    // PO 2026-10-24) — Zeichen in Primary, aber ohne angehobene Ebene und ohne
-    // Umschalt-Bedeutung.
-    active ? "text-primary state-primary" : primary ? "text-primary" : "text-on-surface-mittel",
+    // PO 2026-10-24) — gefüllt wie der Knopf `filled`, Primary-Fläche mit
+    // dunklem Zeichen, ohne Umschalt-Bedeutung.
+    active ? "text-primary state-primary" : primary ? "bg-primary text-on-primary" : "text-on-surface-mittel",
     // Über Bild oder Diagramm braucht das Zeichen einen eigenen Grund: eine
     // knapp deckende Höhenstufe plus Weichzeichner — kein Schatten, denn der
     // Knopf liegt AUF dem Bild und schwebt nicht darüber.
@@ -59,7 +59,7 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
   /** Ein Punkt am Zeichen (`ZeichenPunkt`), etwa ob der private Link bezogen
    *  ist. Stumm — was er meldet, gehört in `label`. */
   punkt?: ZeichenPunktTon;
-  /** Hauptaktion: das Zeichen in Primary statt gedämpft — kein Umschalter. */
+  /** Hauptaktion: gefüllt in Primary wie `Button variant="filled"` — kein Umschalter. */
   primary?: boolean;
 }
 
