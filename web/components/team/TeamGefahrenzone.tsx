@@ -53,9 +53,10 @@ export function TeamGefahrenzone({
   const [offen, setOffen] = useState<"verlassen" | "aufloesen" | "austritt" | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
   const [hinweis, setHinweis] = useState<string | null>(null);
-  // Der Name, den die Bestätigung verlangt — der aktuelle laut Datenbank,
-  // sobald sie einen anderen gemeldet hat.
-  const [name, setName] = useState(teamName);
+  // Der Name, den die Bestätigung verlangt: der angezeigte — oder der
+  // aktuelle laut Datenbank, sobald sie einen anderen gemeldet hat (PC 3).
+  const [gemeldet, setGemeldet] = useState<string | null>(null);
+  const name = gemeldet ?? teamName;
   const [eingabe, setEingabe] = useState("");
 
   const letzte = anzahlMitglieder <= 1;
@@ -66,16 +67,20 @@ export function TeamGefahrenzone({
   function oeffnen(welcher: NonNullable<typeof offen>, mitHinweis: string | null = null) {
     // Der Dialog bleibt im DOM; jeder Anlauf beginnt leer.
     setFehler(null);
+    setGemeldet(null);
     setHinweis(mitHinweis);
     setEingabe("");
     setOffen(welcher);
   }
 
-  function schliessen() {
-    if (!pending) setOffen(null);
+  // Nur den eigenen Dialog schliessen: Wechselt der Austritt in die
+  // Namensbestätigung (PC 4), meldet der zugehende Dialog sein `close` erst
+  // danach — es darf den neuen nicht mitnehmen.
+  function schliessen(...welche: NonNullable<typeof offen>[]) {
+    if (!pending) setOffen((o) => (o && welche.includes(o) ? null : o));
   }
 
-  function auswerten(res: MitgliedschaftResult) {
+  function behandle(res: MitgliedschaftResult) {
     switch (res.status) {
       case "entfernt":
       case "aufgeloest":
@@ -84,14 +89,14 @@ export function TeamGefahrenzone({
       case "aufloesung_noetig":
         // Zwischen Anzeige und Ausführung sind die anderen ausgetreten:
         // nicht still auflösen, sondern die Bestätigung verlangen (PC 4).
-        setName(res.name);
         oeffnen(
           "austritt",
           "Inzwischen bist du das letzte Mitglied. Mit deinem Austritt löst sich das Team auf.",
         );
+        setGemeldet(res.name);
         return;
       case "name_falsch":
-        setName(res.name);
+        setGemeldet(res.name);
         setFehler(`Das Team heisst inzwischen «${res.name}». Gib diesen Namen ein, um fortzufahren.`);
         return;
       case "team_weg":
@@ -104,13 +109,13 @@ export function TeamGefahrenzone({
   }
 
   function verlassen() {
-    startTransition(async () => auswerten(await verlasseTeam(teamId)));
+    startTransition(async () => behandle(await verlasseTeam(teamId)));
   }
 
   function bestaetigen() {
     if (!passt || pending) return;
     startTransition(async () =>
-      auswerten(
+      behandle(
         offen === "austritt"
           ? await verlasseTeam(teamId, eingabe)
           : await loeseTeamAuf(teamId, eingabe),
@@ -120,12 +125,7 @@ export function TeamGefahrenzone({
 
   return (
     <Gefahrenzone
-      beschreibung={
-        <>
-          Verlassen betrifft nur dich - ausser du bist das letzte Mitglied. Auflösen löscht
-          das Team samt allen Inhalten für alle Mitglieder.
-        </>
-      }
+      beschreibung="Verlassen betrifft nur dich - ausser du bist das letzte Mitglied. Auflösen löscht das Team samt allen Inhalten für alle Mitglieder."
     >
       <div className="flex flex-wrap gap-2">
         <Button
@@ -144,11 +144,11 @@ export function TeamGefahrenzone({
 
       <Dialog
         open={offen === "verlassen"}
-        onClose={schliessen}
+        onClose={() => schliessen("verlassen")}
         title="Team verlassen?"
         actions={
           <>
-            <Button variant="text" onClick={schliessen}>
+            <Button variant="text" onClick={() => schliessen("verlassen")}>
               Abbrechen
             </Button>
             <Button variant="filled" onClick={verlassen} disabled={pending}>
@@ -181,11 +181,16 @@ export function TeamGefahrenzone({
         fehler={fehler}
         hinweis={hinweis}
         folgen={folgen}
-        onClose={schliessen}
+        onClose={() => schliessen("aufloesen", "austritt")}
         onBestaetigen={bestaetigen}
       />
     </Gefahrenzone>
   );
+}
+
+/** «1 Spiel», «2 Spiele». */
+function n(zahl: number, eins: string, mehr: string) {
+  return `${zahl} ${zahl === 1 ? eins : mehr}`;
 }
 
 /* Die Bestätigung per Namenseingabe (#480): was verloren geht, welcher Name
@@ -223,8 +228,11 @@ function NamensBestaetigung({
   onClose: () => void;
   onBestaetigen: () => void;
 }) {
+  const formId = useId();
   const anleitungId = useId();
-  const n = (zahl: number, eins: string, mehr: string) => `${zahl} ${zahl === 1 ? eins : mehr}`;
+  const aktion = austritt ? "Verlassen und auflösen" : "Team auflösen";
+  const warnung =
+    hinweis ?? (austritt ? "Du bist das letzte Mitglied. Mit deinem Austritt löst sich das Team auf." : null);
 
   return (
     <Dialog
@@ -236,15 +244,23 @@ function NamensBestaetigung({
           <Button variant="text" onClick={onClose}>
             Abbrechen
           </Button>
-          <Button variant="danger" onClick={onBestaetigen} disabled={!passt || pending}>
-            {austritt ? "Verlassen und auflösen" : "Team auflösen"}
+          <Button type="submit" form={formId} variant="danger" disabled={!passt || pending}>
+            {aktion}
           </Button>
         </>
       }
     >
-      <div className="flex flex-col gap-3">
+      <form
+        id={formId}
+        noValidate
+        className="flex flex-col gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onBestaetigen();
+        }}
+      >
         {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
-        {hinweis && <SectionMessage appearance="warning">{hinweis}</SectionMessage>}
+        {warnung && <SectionMessage appearance="warning">{warnung}</SectionMessage>}
         <p className="flex items-start gap-2">
           <AlertTriangle
             size={18}
@@ -252,17 +268,14 @@ function NamensBestaetigung({
             className="mt-0.5 shrink-0 text-error"
             aria-hidden
           />
-          <span>
-            {austritt && !hinweis && "Du bist das letzte Mitglied - mit deinem Austritt löst sich das Team auf. "}
-            Für alle Mitglieder verschwinden unwiderruflich:
-          </span>
+          <span>Für alle Mitglieder verschwinden unwiderruflich:</span>
         </p>
         <ul className="list-disc space-y-1 pl-5">
           <li>{n(folgen.trainings, "Team-Training", "Team-Trainings")}</li>
           <li>{n(folgen.termine, "Trainingstermin", "Trainingstermine")} samt Abmeldungen und Anwesenheiten</li>
           <li>{n(folgen.spiele, "Spiel", "Spiele")} samt Meldungen und Aufgeboten</li>
           <li>die Spielerliste mit {n(folgen.spieler, "Spieler:in", "Spieler:innen")}</li>
-          <li>{n(folgen.kader, "Kader", "Kader")}</li>
+          <li>{folgen.kader} Kader</li>
         </ul>
         <p>
           Persönliche Trainings der Mitglieder bleiben erhalten - auch Kopien aus diesem Team.
@@ -275,11 +288,7 @@ function NamensBestaetigung({
           label="Teamname"
           value={eingabe}
           onChange={(e) => onEingabe(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key !== "Enter") return;
-            e.preventDefault();
-            onBestaetigen();
-          }}
+          enterKeyHint="go"
           aria-describedby={anleitungId}
           autoFocus
           autoComplete="off"
@@ -292,9 +301,9 @@ function NamensBestaetigung({
         />
         {/* Dauerhaft im DOM, damit die Vorlesehilfe die Änderung ansagt. */}
         <span className="sr-only" role="status">
-          {passt ? `Der Name stimmt. ${austritt ? "Verlassen und auflösen" : "Team auflösen"} ist freigegeben.` : ""}
+          {passt ? `Der Name stimmt. ${aktion} ist freigegeben.` : ""}
         </span>
-      </div>
+      </form>
     </Dialog>
   );
 }

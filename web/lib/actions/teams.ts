@@ -219,7 +219,8 @@ export async function entferneMitglied(
     await supabase.rpc("entferne_team_mitglied", {
       p_team: teamId,
       p_user: userId,
-      p_teamname: teamname,
+      // Wie die Oberfläche: Leerraum am Rand zählt nicht (AK 7).
+      p_teamname: teamname?.trim(),
     }),
   );
 }
@@ -253,6 +254,6 @@ export async function loeseTeamAuf(
   return auswerten(
     teamId,
     "auflösen",
-    await supabase.rpc("loese_team_auf", { p_team: teamId, p_teamname: teamname }),
+    await supabase.rpc("loese_team_auf", { p_team: teamId, p_teamname: teamname.trim() }),
   );
 }

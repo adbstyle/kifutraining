@@ -14,14 +14,14 @@ import { cn } from "@/lib/cn";
    Höhenstufe 4.5:1 als Schrift und 3:1 als Kontur (check:farben), auch im
    Druck. Eine Kontur mit Alpha bräche die 3:1 — darum volles `border-error`.
 
-   Der Inhalt trägt die Knöpfe; die destruktive Handlung selbst ist `danger`. */
+   Der Inhalt trägt die Knöpfe; die destruktive Handlung selbst ist `danger`.
+   Eine eigene `<section>` statt `Card`: Die Überschrift benennt den Bereich
+   (`aria-labelledby`), damit die Vorlesehilfe ihn als Gefahrenzone ansagt. */
 export function Gefahrenzone({
-  titel = "Gefahrenzone",
   beschreibung,
   children,
   className,
 }: {
-  titel?: string;
   /** Ein Satz, was die Handlungen hier bewirken. */
   beschreibung?: ReactNode;
   children: ReactNode;
@@ -35,7 +35,7 @@ export function Gefahrenzone({
     >
       <h2 id={id} className="type-title-large flex items-center gap-2 text-error">
         <AlertTriangle size={20} strokeWidth={2} aria-hidden />
-        {titel}
+        Gefahrenzone
       </h2>
       {beschreibung && (
         <p className="type-body-medium mt-2 text-on-surface-mittel">{beschreibung}</p>

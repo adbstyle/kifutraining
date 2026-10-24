@@ -83,16 +83,23 @@ declare
   v_bilder jsonb;
 begin
   if v_uid is null then raise exception 'not authenticated'; end if;
-
-  -- Sperren, damit ein gleichzeitiger Austritt oder eine Umbenennung die
-  -- Zählung und den Namensvergleich nicht überholt.
-  select name into v_name from teams where id = p_team for update;
-  if not found then return jsonb_build_object('status', 'team_weg'); end if;
-
-  if not exists (select 1 from team_members
-                 where team_id = p_team and user_id = v_uid) then
+  if not ist_team_mitglied(p_team) then
+    -- Mit dem Team ist auch die Mitgliedschaft weg (PC 5).
+    if not exists (select 1 from teams where id = p_team) then
+      return jsonb_build_object('status', 'team_weg');
+    end if;
     raise exception 'not a member of this team';
   end if;
+
+  -- Sperren, damit ein gleichzeitiger Austritt oder eine Umbenennung die
+  -- Zählung und den Namensvergleich nicht überholt — und unter der Sperre
+  -- erneut prüfen, was sich bis dahin geändert haben kann.
+  select name into v_name from teams where id = p_team for update;
+  if not found then return jsonb_build_object('status', 'team_weg'); end if;
+  if not ist_team_mitglied(p_team) then
+    raise exception 'not a member of this team';
+  end if;
+
   if not exists (select 1 from team_members
                  where team_id = p_team and user_id = p_user) then
     -- Schon weg: kein Fehler, der Zielzustand ist erreicht.
@@ -141,12 +148,16 @@ declare
   v_bilder jsonb;
 begin
   if v_uid is null then raise exception 'not authenticated'; end if;
+  if not ist_team_mitglied(p_team) then
+    if not exists (select 1 from teams where id = p_team) then
+      return jsonb_build_object('status', 'team_weg');
+    end if;
+    raise exception 'not a member of this team';
+  end if;
 
   select name into v_name from teams where id = p_team for update;
   if not found then return jsonb_build_object('status', 'team_weg'); end if;
-
-  if not exists (select 1 from team_members
-                 where team_id = p_team and user_id = v_uid) then
+  if not ist_team_mitglied(p_team) then
     raise exception 'not a member of this team';
   end if;
 
