@@ -12,7 +12,7 @@ import { ABO_TEXT } from "@/lib/spieler-abo";
  *  Widerrufen oder dass es widerrufen ist. */
 type Schritt = "adresse" | "rueckfrage" | "widerrufen";
 
-/* Das Kalender-Abo am privaten Link (#507): Der Icon-Knopf rechts oben öffnet
+/* Das Kalender-Abo am privaten Link (#507): Der Icon-Knopf hinter dem Namen öffnet
    den Dialog und holt dabei die Abo-Adresse — dieselbe, solange sie gilt
    (AK 1, 5). Dazu, dass das Abo nur anzeigt und das Kalenderprogramm erst
    nach einer Weile nachzieht (AK 2, 3), und wie man sie übernimmt (AK 4).

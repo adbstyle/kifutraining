@@ -873,7 +873,7 @@ im Browser legt sie nichts ab.
 
 ### Kalender-Abo am privaten Link
 
-Über das Kalender-Zeichen rechts oben auf der Seite holen Eltern oder die Spieler:in selbst eine
+Über das Kalender-Zeichen gleich hinter dem Namen der Spieler:in holen Eltern oder die Spieler:in selbst eine
 Abo-Adresse, mit der ihr Kalenderprogramm die Termine der Spieler:in abruft. Der Dialog „Im
 Kalender abonnieren" erklärt die Zeichen — „Im Kalender steht vor jedem Termin ✅ zugesagt, ❔
 vielleicht (Spiel ohne Meldung) oder ❌ abgesagt." —, sagt, dass das Abo nur anzeigt und weiterhin

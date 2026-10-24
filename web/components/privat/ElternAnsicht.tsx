@@ -133,12 +133,11 @@ export function ElternAnsicht({
   return (
     <>
       <header className="flex flex-col gap-0.5 border-b border-linie px-4 pb-4 pt-6">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <p className="type-body-small text-on-surface-mittel">{team}</p>
-            <h1 className="type-headline-small text-on-surface">{name}</h1>
-          </div>
-          {/* Das Kalender-Abo (#507 AK 1). */}
+        <p className="type-body-small text-on-surface-mittel">{team}</p>
+        {/* Das Kalender-Abo (#507 AK 1) gleich hinter dem Namen: Es ist der
+            Kalender dieser Spieler:in (PO 2026-10-24). */}
+        <div className="flex items-center gap-1">
+          <h1 className="min-w-0 type-headline-small text-on-surface">{name}</h1>
           <AboKnopf token={token} />
         </div>
         <p className="type-body-medium text-on-surface-mittel">

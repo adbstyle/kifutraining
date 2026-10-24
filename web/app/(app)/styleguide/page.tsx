@@ -2820,9 +2820,9 @@ export default async function Styleguide() {
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Das <strong>Kalender-Abo am privaten Link</strong> (<code>AboKnopf</code>)
-            sitzt als <code>IconButton</code> mit Tooltip rechts oben im Kopf der
-            Seite: Die Seite hat keine Seitenleiste und kein Menü, und der Knopf
-            darf die Termine darunter nicht verdrängen. Die Rückfrage vor dem
+            sitzt als <code>IconButton</code> mit Tooltip gleich hinter dem Namen der
+            Spieler:in: Es ist ihr Kalender, und die Seite hat weder Seitenleiste
+            noch Menü, in dem er sonst stünde. Die Rückfrage vor dem
             Widerrufen ist ein Schritt <strong>im selben Dialog</strong> statt eines
             zweiten: Auf dem Telefon stapelten sich sonst zwei Dialoge, und nach dem
             Widerrufen geht es dort gleich mit «Neue Abo-Adresse holen» weiter. Der
