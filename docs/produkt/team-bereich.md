@@ -423,6 +423,9 @@ löscht oder das Team aufgelöst wird. Ab dem nächsten Abruf liefert der Link d
 mehr. Ein erloschenes Abo bleibt erloschen, auch wenn man später wieder ins Team kommt; einen
 neuen Link holt man sich jederzeit wieder im Trainingsplan.
 
+Eltern und Spieler:innen abonnieren die Termine der Spieler:in über ihren privaten Link (siehe
+„Kalender-Abo am privaten Link"); dieses Abo hier gilt nur für Mitglieder.
+
 ## Spielerliste
 
 Ein Team kann seine Spieler:innen in einer Liste führen. Sie steht unter „Team" als eigene Karte
@@ -795,8 +798,10 @@ Kennzeichnungen mit dem Spiel verschwinden.
 
 ### Kalender-Abo und KI-Assistent
 
-Im Kalender-Abo erscheint ein Spiel mit dem Titel „Bezeichnung · Teamname", ohne Treffpunkte,
-Meldefrist und Richtwert (siehe „Kalender-Abo"). Ein verbundener KI-Assistent führt Spiele nach
+Im Kalender-Abo der Mitglieder erscheint ein Spiel mit dem Titel „Bezeichnung · Teamname", ohne
+Treffpunkte, Meldefrist und Richtwert (siehe „Kalender-Abo"); im Abo am privaten Link dazu mit dem
+Status der Spieler:in, den Treffpunkten und der Bemerkung (siehe „Kalender-Abo am privaten
+Link"). Ein verbundener KI-Assistent führt Spiele nach
 denselben Regeln (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)): Er legt sie
 samt Richtwert, Meldefrist und Treffpunkten fest, ändert und entfernt sie, meldet an und ab,
 kennzeichnet als nicht aufgeboten und trägt nach. Er erfährt die Zahlen — Angemeldete, ohne Meldung,
@@ -812,8 +817,9 @@ diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelde
 sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst." Weitergeben muss
 ihn das Mitglied selbst, oder die Eltern holen ihn ab (siehe „Selbstabholung"); die Anwendung
 verschickt nichts und kennt keine Kontaktdaten. Der Link bleibt derselbe, bis jemand ihn erneuert:
-„Link erneuern" im selben Dialog macht den bisherigen sofort ungültig, die Abmeldungen bleiben. Ist
-die Selbstabholung eingeschaltet, sagt der Dialog dazu, dass die Eltern den neuen dort wieder
+„Link erneuern" im selben Dialog macht den bisherigen sofort ungültig, die Abmeldungen bleiben; der
+Dialog sagt dazu, dass ein Kalender-Abo der Spieler:in damit erlischt und über den neuen Link neu zu
+holen ist. Ist die Selbstabholung eingeschaltet, sagt der Dialog dazu, dass die Eltern den neuen dort wieder
 abholen. Je Spieler:in und Team gibt es genau einen Link.
 
 Wer den Link öffnet, braucht weder Konto noch Anmeldung. Die Seite ist fürs Telefon gebaut, kommt
@@ -864,6 +870,46 @@ Trainer:innen verweist; ob es den Link je gab, ist nicht zu erkennen. Ebenso ung
 das Team aufgelöst wird. Die Vorschau, die ein Chat beim Teilen zeigt, trägt einen festen Titel ohne
 Team und Namen; Suchmaschinen nehmen die Seite nicht auf, die Besucherstatistik zählt sie nicht, und
 im Browser legt sie nichts ab.
+
+### Kalender-Abo am privaten Link
+
+Über das Kalender-Zeichen rechts oben auf der Seite holen Eltern oder die Spieler:in selbst eine
+Abo-Adresse, mit der ihr Kalenderprogramm die Termine der Spieler:in abruft. Der Dialog „Im
+Kalender abonnieren" erklärt die Zeichen — „Im Kalender steht vor jedem Termin ✅ zugesagt, ❔
+vielleicht (Spiel ohne Meldung) oder ❌ abgesagt." —, sagt, dass das Abo nur anzeigt und ab- und
+angemeldet weiterhin über den Link wird, und dass das Kalenderprogramm Änderungen erst nach einer
+Weile übernimmt. Er bietet die Adresse zum Kopieren an und sagt, wie sie in Apple Kalender — dort
+auch direkt zu öffnen —, Google Kalender, Outlook und Proton Calendar übernommen wird. Je Link gibt
+es höchstens eine gültige Abo-Adresse; wer sie erneut holt, erhält dieselbe. Die Adresse ist eine
+eigene: Mit ihr lässt sich weder ab- und anmelden noch der private Link ermitteln.
+
+Das Abo enthält dieselben Termine wie der Link im selben Moment, ausgenommen ausgefallene: die
+anstehenden Trainings und Spiele, die für die Spieler:in gelten, samt dem begonnenen Termin von
+heute, und bei jedem Abruf den aktuellen Stand. Ein verlegter Termin erscheint genau einmal am neuen
+Zeitpunkt, ein ausgefallener fehlt; vergangene Tage fallen heraus wie am Link. Der Titel trägt
+vorn den Status, dann „Training" oder die Bezeichnung des Spiels und den Teamnamen, etwa
+„✅ Training · FC Beispiel" oder „❔ Cup gegen Thun · FC Beispiel":
+
+- Training: angemeldet ✅ zugesagt, abgemeldet ❌ abgesagt.
+- Spiel: angemeldet ✅ zugesagt; ohne Meldung ❔ vielleicht, bis die Meldefrist abläuft — ohne
+  Meldefrist bis zum Anpfiff —, danach ❌ abgesagt; abgemeldet oder nicht aufgeboten ❌ abgesagt,
+  nicht aufgeboten auch dann, wenn die Spieler:in angemeldet ist.
+
+Vielleicht steht im Kalender als vorläufig, abgesagt als frei. Die Beschreibung nennt den Status
+als Wort, bei einem Spiel dazu die Treffpunkte — wie am Link nur, solange es nicht begonnen hat und
+nicht abgesagt ist — und die Bemerkung, so wie das Team sie geschrieben hat. Weiter gelangen nur
+Beginn, Ende und Ort ins Kalenderprogramm; kein Name der Spieler:in, keine Meldefrist, kein
+Richtwert, keine Spielerzahl, kein Grund einer Absage und kein Verweis, der den privaten Link
+verriete. Der Kalender heisst „Trainings und Spiele · Teamname"; wer mehrere Abos hat, benennt sie
+im Kalenderprogramm selbst. Die Zeiten gelten als Schweizer Zeit.
+
+Das Abo erlischt, wenn ein Mitglied den Link erneuert, die Spieler:in entfernt wird, das Team
+aufgelöst wird oder Eltern es selbst widerrufen: „Abo widerrufen" im selben Dialog fragt nach, sagt
+dazu, dass die bisherige Abo-Adresse danach für alle, die sie nutzen, keine Termine mehr liefert,
+und bestätigt es danach; der Link und die Meldungen bleiben. Ab dem nächsten Abruf liefert die
+Adresse einen leeren Kalender. Ein erloschenes Abo bleibt erloschen; über den gültigen Link holt man
+jederzeit eine neue Adresse, nach dem Widerrufen gleich im Dialog. Mitglieder sehen nicht, ob für
+eine Spieler:in ein Abo besteht.
 
 ## Selbstabholung
 
@@ -1063,8 +1109,18 @@ Termine eingrenzen, ebenso wenig auf Trainings oder Spiele. Ob ein Abo-Link weit
 erkennt die Anwendung nicht: Wer ihn hat, erhält Zeit und Ort der Termine, solange das Abo gilt; wer
 ihn ersetzen will, widerruft das Abo und holt einen neuen. Beim Verlassen oder Auflösen eines Teams
 und beim Löschen des Kontos sagt die Anwendung nicht, dass Abos erlöschen. Gedacht ist das Abo für
-die Trainerinnen und Trainer des Teams, nicht für Eltern, Spielerinnen und Spieler oder den Verein;
-deren privater Link liefert kein Abo.
+die Trainerinnen und Trainer des Teams, nicht für den Verein.
+
+Für das Abo am privaten Link gilt dasselbe zur Abrufhäufigkeit und zu bereits geladenen Einträgen.
+Zu- oder Absagen im Kalenderprogramm wirken nicht zurück, gemeldet wird über den Link. Das Abo
+erinnert weder an Termine noch an fehlende Meldungen und führt nie die Termine mehrerer
+Spieler:innen oder Teams zusammen. Ob eine Abo-Adresse weitergegeben wurde, erkennt die Anwendung
+nicht; alle, die denselben Link haben, teilen sich dieselbe Adresse, und ein Widerruf trifft sie
+alle. Dass ein Abo erloschen ist, erfahren Eltern nicht von selbst. Wie die Zeichen im Titel
+aussehen und ob ein Programm vorläufige oder freie Einträge eigens darstellt, bestimmt das
+Programm; abgesagte Termine stehen weiterhin im Kalender. Treffpunkte und Bemerkung gelangen so ins
+Abo, wie Mitglieder sie geschrieben haben, auch mit Namen darin. Über einen KI-Assistenten lassen
+sich Abos am privaten Link weder holen noch einsehen noch widerrufen.
 
 Die Spielerliste führt nur Vorname, Nachname, Jahrgang und J+S-Nummer — weder Geburtsdatum noch
 Position oder Kontaktdaten der Eltern; Torhüter:innen und andere Teile des Teams bildet man mit
@@ -1083,7 +1139,7 @@ Team, ist an keine Saison gebunden und lässt sich weder übernehmen noch teilen
 Zuteilungen passt das Team beim Saisonwechsel selbst an, und nach Jahrgang teilt die Anwendung
 nicht zu. Einzelne Spieler:innen lassen sich keinem Termin direkt zuordnen; wer aushilft, erhält
 einen Kader wie „Aushilfe". Kader beschränken nicht, was Mitglieder sehen: Trainingsplan und
-Kalender-Abo zeigen immer alle Termine und lassen sich nicht nach Kadern eingrenzen. Eine
+Kalender-Abo der Mitglieder zeigen immer alle Termine und lassen sich nicht nach Kadern eingrenzen. Eine
 verfallene Abmeldung kehrt nicht zurück, und Eltern erfahren nicht von selbst, dass ein Termin
 nicht mehr für ihr Kind gilt. Wer über die Abholadresse den Link eines fremden Kindes holt, sieht
 auch dessen Kader. Die Selbstabholung lässt sich nicht auf einzelne Kader beschränken, und ihr
