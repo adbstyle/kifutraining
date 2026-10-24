@@ -347,8 +347,8 @@ erfährt der Assistent, was geschehen ist — welche entfallenen Termine ein Tra
 mit ihnen gelöscht wurde oder im Bestand blieb, welches Termin-Training beim Zuordnen entstand,
 welches Training ein ersetztes oder gelöstes war und ob es gelöscht wurde und, falls eine
 gescheiterte Kopie nicht ganz aufgeräumt werden konnte, was davon stehen blieb. Ein Team, in dem man
-nicht Mitglied ist, gilt als nicht gefunden. Kalender-Abos holt, zeigt und widerruft der Assistent
-nicht, und Teams gründen, umbenennen, auflösen oder Mitglieder verwalten kann er nicht. Damit legt
+nicht Mitglied ist, gilt als nicht gefunden. Kalender-Abos — die der Mitglieder wie die am privaten
+Link einer Spieler:in — holt, zeigt und widerruft der Assistent nicht, und Teams gründen, umbenennen, auflösen oder Mitglieder verwalten kann er nicht. Damit legt
 der Assistent Trainings beider Altersstufen an und führt sie samt dem Kalender der Teams weitgehend
 wie die Anwendung; was ihm fehlt, steht unter den bekannten Grenzen.
 
@@ -429,7 +429,8 @@ wer eine geschützte Adresse direkt aufruft, landet bei der Anmeldung und wird d
 zurückgeführt, wo er hinwollte. Eine Ausnahme ist das Kalender-Abo: Das Kalenderprogramm ruft die Termine ohne
 Anmeldung ab, denn der Link selbst ist die Berechtigung; der Verweis in einem Kalendereintrag
 führt dagegen über die Anmeldung in den Trainingsplan. Ebenso ohne Konto gehen der private Link
-einer Spieler:in, über den ihre Eltern oder sie selbst sie für Termine ab- und anmelden, und die
+einer Spieler:in, über den ihre Eltern oder sie selbst sie für Termine ab- und anmelden und ihre
+Termine abonnieren, und die
 Abholadresse eines Teams, über die Eltern diesen Link abholen (siehe
 [Team-Bereich](team-bereich.md#privater-link)). Wer sie öffnet, wird weder angemeldet noch zum
 Mitglied, und im Browser bleibt nichts zurück; erreichbar ist nur, was zu dieser einen Spieler:in

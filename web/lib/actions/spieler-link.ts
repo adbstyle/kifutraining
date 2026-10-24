@@ -1,8 +1,13 @@
 "use server";
 
+import { oeffentlicherOrigin } from "@/lib/origin";
 import {
+  holeAbo,
   meldeSpielUeberLink,
   meldeUeberLink,
+  widerrufeAbo,
+  type AboHolenErgebnis,
+  type AboWiderrufErgebnis,
   type LinkAbmeldeErgebnis,
   type LinkAbmeldung,
   type LinkMeldeErgebnis,
@@ -19,4 +24,14 @@ export async function meldeUeberLinkAktion(token: string, e: LinkAbmeldung): Pro
 /** Für ein Spiel über den privaten Link an- oder abmelden (#463 AK 3, 9). */
 export async function meldeSpielUeberLinkAktion(token: string, e: LinkMeldung): Promise<LinkMeldeErgebnis> {
   return meldeSpielUeberLink(token, e);
+}
+
+/** Die Abo-Adresse zum privaten Link holen (#507 AK 1, 5). */
+export async function holeAboUeberLinkAktion(token: string): Promise<AboHolenErgebnis> {
+  return holeAbo(token, await oeffentlicherOrigin());
+}
+
+/** Das Abo über den privaten Link widerrufen (#509 AK 1). */
+export async function widerrufeAboUeberLinkAktion(token: string): Promise<AboWiderrufErgebnis> {
+  return widerrufeAbo(token);
 }

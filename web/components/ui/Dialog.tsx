@@ -9,7 +9,9 @@ import { cn } from "@/lib/cn";
    (24dp): ein Dialog liegt über allem, also trägt er die hellste Stufe und
    den weichesten Schatten.
 
-   `actions` nimmt typischerweise Text-/Tonal-Buttons auf. Text-Knöpfe bleiben
+   `actions` nimmt typischerweise Text-/Tonal-Buttons auf; neben einem
+   destruktiven Knopf (`danger`, `dangerOutlined`) steht der Ausweg als
+   Secondary Button (`outlined`), etwa «Abbrechen» oder «Schliessen». Text-Knöpfe bleiben
    hier Primary, obwohl es auf 24dp knapp unter die 4.5:1 für Fliesstext fällt
    — Materials eigene Baseline hält es genauso, und ein eigener Farbton nur für
    Dialoge risse die Handlungsfarbe der App auseinander. Die Zahl steht nicht

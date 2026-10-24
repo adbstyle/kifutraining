@@ -7,11 +7,11 @@
 import { revalidatePath } from "next/cache";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
 import { oeffentlicherOrigin } from "@/lib/origin";
-import { aboLinks } from "@/lib/ical";
+import { aboUrl } from "@/lib/ical";
 import { NICHT_GEFUNDEN } from "@/lib/kern/ergebnis";
 import { istUuid } from "@/lib/kennung";
 
-export type AboHolenErgebnis = { ok: true; url: string; webcal: string } | { ok: false; error: string };
+export type AboHolenErgebnis = { ok: true; url: string } | { ok: false; error: string };
 export type AboWiderrufErgebnis = { ok: true } | { ok: false; error: string };
 
 const MELDUNG_NICHT_GEHOLT = "Der Abo-Link liess sich gerade nicht holen. Bitte versuche es noch einmal.";
@@ -35,7 +35,7 @@ export async function holeAboAktion(teamId: string): Promise<AboHolenErgebnis> {
     console.error("[kalender-abo] holen: kein Token zurückgegeben");
     return { ok: false, error: MELDUNG_NICHT_GEHOLT };
   }
-  return { ok: true, ...aboLinks(await oeffentlicherOrigin(), data) };
+  return { ok: true, url: aboUrl(await oeffentlicherOrigin(), data) };
 }
 
 /** Ein eigenes Abo widerrufen (AK 7); der Link liefert ab dem nächsten Abruf
