@@ -4,7 +4,7 @@ import { istUuid } from "@/lib/kennung";
 import { LINK_FEHLER, abweisungText, istLinkToken, type AbmeldeGrund, type AbmeldeStand, type Spielstand } from "@/lib/spieler";
 import { meldungAbweisungText, type Meldung, type Treffpunkt } from "@/lib/spiel";
 import type { MeldeAntwort } from "@/lib/kern/spiele";
-import { spielerAboLinks } from "@/lib/spieler-abo";
+import { spielerAboUrl } from "@/lib/spieler-abo";
 
 /**
  * Die Seite hinter dem privaten Link einer Spieler:in (Epic #433, Story #436)
@@ -144,7 +144,7 @@ export async function meldeSpielUeberLink(token: string, e: LinkMeldung): Promis
 }
 
 export type AboHolenErgebnis =
-  | { ok: true; url: string; webcal: string }
+  | { ok: true; url: string }
   | { ok: false; ungueltig: true }
   | { ok: false; ungueltig?: false; error: string };
 
@@ -154,7 +154,7 @@ export async function holeAbo(token: string, origin: string): Promise<AboHolenEr
   const { data, error } = await createAnonClient().rpc("spieler_abo_holen", { p_link: token });
   if (error) return { ok: false, error: LINK_FEHLER };
   if (!data) return { ok: false, ungueltig: true };
-  return { ok: true, ...spielerAboLinks(origin, data as string) };
+  return { ok: true, url: spielerAboUrl(origin, data as string) };
 }
 
 export type AboWiderrufErgebnis = { ok: true } | { ok: false; ungueltig: true } | { ok: false; ungueltig?: false; error: string };

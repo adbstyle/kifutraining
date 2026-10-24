@@ -83,7 +83,7 @@ export function KopierFeld({
           </span>
         </div>
         <Tooltip label={kopiert ? "Kopiert" : "Kopieren"} ende>
-          <IconButton icon={kopiert ? Check : Copy} label={`${label} kopieren`} onClick={kopieren} disabled={disabled} />
+          <IconButton primary icon={kopiert ? Check : Copy} label={`${label} kopieren`} onClick={kopieren} disabled={disabled} />
         </Tooltip>
         {danach}
         <span className="sr-only" role="status">

@@ -126,8 +126,8 @@ import { MASS_TEXT } from "../lib/feldmass";
 import { ZEITRAUM_TEXT, kalenderblatt, monatVon, monatsName, monatsRaster, plusMonate, tagOhneJahr, tagText, zeitraumProblem } from "../lib/monat";
 import { nachMonatUndTag } from "../lib/plan-gliederung";
 import { planHref } from "../lib/team-ansicht";
-import { aboDatei, aboLinks, aboPfad, aboTokenAus, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
-import { aboEintrag, aboKalenderName, aboStatus, spielerAboLinks, type AboFeedTermin } from "../lib/spieler-abo";
+import { aboDatei, aboPfad, aboUrl, aboTokenAus, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
+import { aboEintrag, aboKalenderName, aboStatus, spielerAboUrl, type AboFeedTermin } from "../lib/spieler-abo";
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
@@ -2068,15 +2068,9 @@ pruefe("Abo: Kopf, Zeitstempel und CRLF überall (RFC 5545, AK 2)", () => {
   assert.equal(aboPfad("tok"), "/api/kalender/tok.ics");
 });
 
-pruefe("Abo: aboLinks - https und http werden zu webcal:, der Pfad bleibt", () => {
-  assert.deepEqual(aboLinks("https://ki-fu.ch", "tok"), {
-    url: "https://ki-fu.ch/api/kalender/tok.ics",
-    webcal: "webcal://ki-fu.ch/api/kalender/tok.ics",
-  });
-  assert.deepEqual(aboLinks("http://127.0.0.1:3000", "tok"), {
-    url: "http://127.0.0.1:3000/api/kalender/tok.ics",
-    webcal: "webcal://127.0.0.1:3000/api/kalender/tok.ics",
-  });
+pruefe("Abo: aboUrl - Origin und Pfad, mit und ohne Bereich", () => {
+  assert.equal(aboUrl("https://ki-fu.ch", "tok"), "https://ki-fu.ch/api/kalender/tok.ics");
+  assert.equal(aboUrl("http://127.0.0.1:3000", "tok", "spieler/"), "http://127.0.0.1:3000/api/kalender/spieler/tok.ics");
 });
 
 pruefe("Abo: Zeiten mit Sekunden (time-Spalte) gehen als HH:MM durch", () => {
@@ -2190,14 +2184,11 @@ pruefe("Abo Spielervertretung: Treffpunkte und Bemerkung wie am Link (#508 PC 2,
   assert.ok(text.includes("\r\nSUMMARY:❌ Cup · FC Test\r\n"));
 });
 
-pruefe("Abo Spielervertretung: Adresse neben dem Abo der Mitglieder, webcal für Apple (#507 AK 4)", () => {
+pruefe("Abo Spielervertretung: Adresse neben dem Abo der Mitglieder (#507 AK 4)", () => {
   assert.equal(aboPfad("tok", "spieler/"), "/api/kalender/spieler/tok.ics");
   assert.equal(aboTokenAus(`${"a".repeat(64)}.ics`), "a".repeat(64));
   for (const falsch of ["tok.ics", `${"a".repeat(64)}.ICS`, `${"A".repeat(64)}.ics`, `${"a".repeat(64)}.ics.x`]) assert.equal(aboTokenAus(falsch), null, falsch);
-  assert.deepEqual(spielerAboLinks("https://ki-fu.ch", "tok"), {
-    url: "https://ki-fu.ch/api/kalender/spieler/tok.ics",
-    webcal: "webcal://ki-fu.ch/api/kalender/spieler/tok.ics",
-  });
+  assert.equal(spielerAboUrl("https://ki-fu.ch", "tok"), "https://ki-fu.ch/api/kalender/spieler/tok.ics");
 });
 
 pruefe("Spielerliste: Namen bereinigt, Grenzen der Angaben (#434 AK 6, 14)", () => {

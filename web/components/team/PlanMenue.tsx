@@ -16,7 +16,7 @@ import { AboDialog } from "./AboDialog";
 export function PlanMenue({ teamId, teamName }: { teamId: string; teamName: string }) {
   const [pending, startTransition] = useTransition();
   const melde = useSnackbar();
-  const [links, setLinks] = useState<{ url: string; webcal: string } | null>(null);
+  const [url, setUrl] = useState<string | null>(null);
 
   function holen() {
     if (pending) return;
@@ -26,7 +26,7 @@ export function PlanMenue({ teamId, teamName }: { teamId: string; teamName: stri
         melde(res.error);
         return;
       }
-      setLinks({ url: res.url, webcal: res.webcal });
+      setUrl(res.url);
     });
   }
 
@@ -36,7 +36,7 @@ export function PlanMenue({ teamId, teamName }: { teamId: string; teamName: stri
         label="Weitere Aktionen zum Trainingsplan"
         items={[{ label: "Kalender abonnieren", icon: CalendarDays, onSelect: holen }]}
       />
-      <AboDialog links={links} teamName={teamName} onClose={() => setLinks(null)} />
+      <AboDialog url={url} teamName={teamName} onClose={() => setUrl(null)} />
     </>
   );
 }

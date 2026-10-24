@@ -18,6 +18,7 @@ function iconButtonClasses(
   variant: IconBtnVariant = "standard",
   active?: boolean,
   className?: string,
+  primary?: boolean,
 ): string {
   return cn(
     // `state` trägt Überfahren, Fokus und Druck — in der Farbe des Zeichens.
@@ -28,7 +29,10 @@ function iconButtonClasses(
     "state focus-ring inline-flex items-center justify-center rounded-flaeche transition-colors",
     "disabled:opacity-40 disabled:pointer-events-none",
     BOX,
-    active ? "text-primary state-primary" : "text-on-surface-mittel",
+    // `primary`: die Hauptaktion einer Zeile (etwa Kopieren im KopierFeld,
+    // PO 2026-10-24) — Zeichen in Primary, aber ohne angehobene Ebene und ohne
+    // Umschalt-Bedeutung.
+    active ? "text-primary state-primary" : primary ? "text-primary" : "text-on-surface-mittel",
     // Über Bild oder Diagramm braucht das Zeichen einen eigenen Grund: eine
     // knapp deckende Höhenstufe plus Weichzeichner — kein Schatten, denn der
     // Knopf liegt AUF dem Bild und schwebt nicht darüber.
@@ -55,6 +59,8 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
   /** Ein Punkt am Zeichen (`ZeichenPunkt`), etwa ob der private Link bezogen
    *  ist. Stumm — was er meldet, gehört in `label`. */
   punkt?: ZeichenPunktTon;
+  /** Hauptaktion: das Zeichen in Primary statt gedämpft — kein Umschalter. */
+  primary?: boolean;
 }
 
 /* Icon-Knopf: gezeichnetes Icon (Lucide) + Zustands-Ebene statt Füllung.
@@ -62,7 +68,7 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
    `active` aktiviert Toggle-Semantik (aria-pressed); ohne `active` = reiner Aktions-Button. */
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   (
-    { icon: Icon, label, active, variant = "standard", iconProps, punkt, className, ...props },
+    { icon: Icon, label, active, variant = "standard", iconProps, punkt, primary, className, ...props },
     ref,
   ) => {
     const isToggle = active !== undefined;
@@ -71,7 +77,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         ref={ref}
         aria-label={label}
         aria-pressed={isToggle ? active : undefined}
-        className={iconButtonClasses(variant, active, className)}
+        className={iconButtonClasses(variant, active, className, primary)}
         {...props}
       >
         {punkt ? (

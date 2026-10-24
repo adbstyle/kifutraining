@@ -25,7 +25,7 @@ export function AboKnopf({ token }: { token: string }) {
   const router = useRouter();
   const [offen, setOffen] = useState(false);
   const [schritt, setSchritt] = useState<Schritt>("adresse");
-  const [links, setLinks] = useState<{ url: string; webcal: string } | null>(null);
+  const [url, setUrl] = useState<string | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -41,7 +41,7 @@ export function AboKnopf({ token }: { token: string }) {
     startTransition(async () => {
       const r = await holeAboUeberLinkAktion(token);
       if (!r.ok) return scheitern(r);
-      setLinks({ url: r.url, webcal: r.webcal });
+      setUrl(r.url);
       setSchritt("adresse");
     });
   }
@@ -51,7 +51,7 @@ export function AboKnopf({ token }: { token: string }) {
     startTransition(async () => {
       const r = await widerrufeAboUeberLinkAktion(token);
       if (!r.ok) return scheitern(r);
-      setLinks(null);
+      setUrl(null);
       setSchritt("widerrufen");
     });
   }
@@ -96,7 +96,7 @@ export function AboKnopf({ token }: { token: string }) {
             </>
           ) : (
             <>
-              {schritt === "adresse" && links && (
+              {schritt === "adresse" && url && (
                 <Button variant="dangerOutlined" onClick={() => setSchritt("rueckfrage")} disabled={pending}>
                   Abo widerrufen
                 </Button>
@@ -141,10 +141,8 @@ export function AboKnopf({ token }: { token: string }) {
               </SectionMessage>
             )}
             {/* Gescheitert steht nur der Fehler da, kein «Wird geholt …». */}
-            {(links || !fehler) && (
-              <KopierFeld label="Abo-Adresse" value={links?.url ?? "Wird geholt …"} disabled={!links} />
-            )}
-            {links && <AboAnleitung webcal={links.webcal} begriff="Abo-Adresse" />}
+            {(url || !fehler) && <KopierFeld label="Abo-Adresse" value={url ?? "Wird geholt …"} disabled={!url} />}
+            {url && <AboAnleitung begriff="Abo-Adresse" />}
           </div>
         )}
       </Dialog>

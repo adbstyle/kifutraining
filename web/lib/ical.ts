@@ -105,12 +105,8 @@ export function aboTokenAus(datei: string): string | null {
  *  Adresse: So entfernen Programme, die das tun, die Einträge (#330 PC 9). */
 export const ABO_ERLOSCHEN = "KiFu – Abo erloschen";
 
-/** Die beiden Schreibweisen eines Abo-Links: https für Google, Outlook und
- *  Proton, `webcal:` für Apple Kalender (öffnet das Abonnement direkt). */
-export function aboLinks(origin: string, token: string, bereich?: string) {
-  const url = `${origin}${aboPfad(token, bereich)}`;
-  return { url, webcal: url.replace(/^https?:/, "webcal:") };
-}
+/** Die vollständige Abo-Adresse, wie man sie ins Kalenderprogramm einfügt. */
+export const aboUrl = (origin: string, token: string, bereich?: string) => `${origin}${aboPfad(token, bereich)}`;
 
 export function kalenderText(k: {
   kalenderName: string;

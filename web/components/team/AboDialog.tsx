@@ -17,18 +17,18 @@ const KOPIEREN_FEHLER = "Kopieren ging nicht - markiere den Link und kopiere ihn
    Das Ergebnis des Kopierens steht IM Dialog, nicht in der Snackbar: Sie liegt
    unter dem modalen Dialog und wäre dort unsichtbar. */
 export function AboDialog({
-  links,
+  url,
   teamName,
   onClose,
 }: {
   /** `null`: geschlossen. */
-  links: { url: string; webcal: string } | null;
+  url: string | null;
   teamName: string;
   onClose: () => void;
 }) {
   return (
     <Dialog
-      open={links !== null}
+      open={url !== null}
       onClose={onClose}
       title={`Kalender abonnieren · ${teamName}`}
       actions={
@@ -39,12 +39,12 @@ export function AboDialog({
     >
       {/* Eigene Komponente, damit der Kopier-Zustand mit dem Schliessen
           verschwindet. */}
-      {links && <AboInhalt links={links} />}
+      {url && <AboInhalt url={url} />}
     </Dialog>
   );
 }
 
-function AboInhalt({ links }: { links: { url: string; webcal: string } }) {
+function AboInhalt({ url }: { url: string }) {
   const feld = useRef<HTMLInputElement>(null);
   const [kopiert, setKopiert] = useState(false);
   const [fehler, setFehler] = useState(false);
@@ -59,7 +59,7 @@ function AboInhalt({ links }: { links: { url: string; webcal: string } }) {
 
   async function kopieren() {
     try {
-      await navigator.clipboard.writeText(links.url);
+      await navigator.clipboard.writeText(url);
       setFehler(false);
       setKopiert(true);
     } catch {
@@ -88,7 +88,7 @@ function AboInhalt({ links }: { links: { url: string; webcal: string } }) {
           ref={feld}
           className="min-w-0 flex-1"
           label="Abo-Link"
-          value={links.url}
+          value={url}
           readOnly
           onFocus={(e) => e.currentTarget.select()}
         />
@@ -103,7 +103,7 @@ function AboInhalt({ links }: { links: { url: string; webcal: string } }) {
         </span>
       </div>
       <div className="mt-4">
-        <AboAnleitung webcal={links.webcal} />
+        <AboAnleitung />
       </div>
       <p className="type-body-small mt-4">
         Unter «Konto» findest du deine Abos wieder und kannst sie widerrufen. Wie oft dein

@@ -78,6 +78,7 @@ import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
 import {
   Search,
   SlidersHorizontal,
+  Copy,
   Plus,
   X,
   ChevronDown,
@@ -1401,15 +1402,18 @@ export default async function Styleguide() {
           </ButtonGroup>
 
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
-            Icon-Knöpfe - Zeichen plus Zustands-Ebene, aktiv in Primary
+            Icon-Knöpfe - Zeichen plus Zustands-Ebene, aktiv in Primary; die
+            Hauptaktion einer Zeile (<code>primary</code>, etwa Kopieren im{" "}
+            <code>KopierFeld</code>) trägt das Zeichen in Primary ohne angehobene Ebene
           </p>
           <div className="flex items-center gap-4">
             <IconButton icon={Search} label="Suchen" />
             <IconButton icon={SlidersHorizontal} label="Filter" active />
             <IconButton icon={Plus} label="Hinzufügen" />
             <IconButton icon={Plus} label="Hinzufügen" variant="overlay" />
+            <IconButton icon={Copy} label="Kopieren" primary />
             <span className="type-label-small text-on-surface-mittel">
-              ruhig · aktiv (<code>state-primary</code>) · overlay (06dp über Bild)
+              ruhig · aktiv (<code>state-primary</code>) · overlay (06dp über Bild) · Hauptaktion (<code>primary</code>)
             </span>
           </div>
 

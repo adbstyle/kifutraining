@@ -9,7 +9,7 @@
 //
 // REIN: reine Helfer; aus `privater-link` nur Typen.
 
-import { aboLinks, type AboTermin } from "./ical";
+import { aboUrl, type AboTermin } from "./ical";
 import type { LinkTermin } from "./privater-link";
 import { treffpunktAnzeige } from "./spiel";
 
@@ -103,7 +103,7 @@ function spielAbschnitte(t: AboFeedTermin, status: AboStatus): string[] {
 export const aboKalenderName = (team: string) => `Trainings und Spiele · ${team}`;
 
 /** Die Adresse des Feeds neben der der Mitglieder: `/api/kalender/spieler/…`. */
-export const spielerAboLinks = (origin: string, token: string) => aboLinks(origin, token, "spieler/");
+export const spielerAboUrl = (origin: string, token: string) => aboUrl(origin, token, "spieler/");
 
 export const ABO_TEXT = {
   /** Was die Zeichen im Titel bedeuten — damit die Spielervertretung sie im Kalender liest. */
