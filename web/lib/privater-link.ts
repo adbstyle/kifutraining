@@ -9,10 +9,11 @@ import { spielerAboLinks } from "@/lib/spieler-abo";
 /**
  * Die Seite hinter dem privaten Link einer Spieler:in (Epic #433, Story #436)
  * — ohne Konto und ohne Sitzung. Das Geheimnis im Link ist die Berechtigung;
- * die RPCs `spieler_link_*` prüfen es als SECURITY DEFINER und geben nur
- * heraus, was die Spielervertretung sehen darf: Teamname, ihre Spieler:in und
- * die anstehenden Termine mit der Zahl der Angemeldeten und derer, für die
- * sie gelten (OoS 2, #472).
+ * die RPCs `spieler_link_*` und `spieler_abo_holen`/`_widerrufen` (#506)
+ * prüfen es als SECURITY DEFINER und geben nur heraus, was die
+ * Spielervertretung sehen darf: Teamname, ihre Spieler:in, die anstehenden
+ * Termine mit der Zahl der Angemeldeten und derer, für die sie gelten (OoS 2,
+ * #472), und die Abo-Adresse ihres Kalender-Abos.
  *
  * Ungültig, erneuert, entfernt oder unbekannt sind nicht zu unterscheiden
  * (AK 11). Das Geheimnis steht in keiner Meldung und keinem eigenen Log; als

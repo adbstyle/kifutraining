@@ -1355,7 +1355,8 @@ export default async function Styleguide() {
             <strong>nicht</strong> für
             Knöpfe, die einen Vorgang abschliessen oder abbrechen -
             Dialog-Knöpfe, Formularfüsse und alles, was neben einem{" "}
-            <code>filled</code> steht, bleibt <code>text</code>.
+            <code>filled</code> steht, bleibt <code>text</code> - neben einem
+            destruktiven Knopf als Secondary Button (<code>outlined</code>).
           </p>
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Heller Knopf (<code>variant=&quot;hell&quot;</code>) - auf einer Fläche im Fehlerton
@@ -2726,7 +2727,7 @@ export default async function Styleguide() {
               warning - im Kit, derzeit ohne Ort.
             </SectionMessage>
             <SectionMessage appearance="success">
-              success - im Kit, derzeit ohne Ort.
+              success - etwa nach dem Widerrufen des Abos am privaten Link.
             </SectionMessage>
             <SectionMessage appearance="discovery">
               discovery - im Kit, derzeit ohne Ort.
@@ -2821,7 +2822,11 @@ export default async function Styleguide() {
             Widerrufen ist ein Schritt <strong>im selben Dialog</strong> statt eines
             zweiten: Auf dem Telefon stapelten sich sonst zwei Dialoge, und nach dem
             Widerrufen geht es dort gleich mit «Neue Abo-Adresse holen» weiter. Der
-            Fokus springt bei jedem Schritt auf den Knopf, der dort weiterführt.
+            Fokus springt bei jedem Schritt auf einen Knopf des Schritts: «Schliessen»,
+            «Abbrechen», «Neue Abo-Adresse holen». Anders als beim privaten Link
+            warnt der Dialog nicht vor dem Weitergeben: Die Abo-Adresse zeigt nur
+            an, und einen Datenschutzhinweis gibt es dort bewusst nicht (PO, Epic
+            Kalender-Abo für Spielervertretungen).
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Die <strong>Auswahlleiste</strong> (<code>AuswahlLeiste</code>) trägt

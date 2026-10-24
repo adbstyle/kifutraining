@@ -6,9 +6,10 @@
 // (PC 4), und die Zeitumstellung verschiebt nichts. Je Termin gehen nur Titel,
 // Beginn, Ende, Ort und der Verweis in die Anwendung hinaus (PC 2) — beim Abo
 // einer Spielervertretung (#506) statt des Verweises eine Beschreibung und
-// der Status ihrer Spieler:in.
+// der Status ihrer Spieler:in; die Beschreibung trägt bei Spielen Treffpunkte
+// und Bemerkung so, wie Mitglieder sie geschrieben haben.
 //
-// REIN: importiert nichts.
+// REIN: importiert nichts; dazu zwei Antwort-Helfer der Feed-Routen.
 
 export type AboTermin = {
   id: string;
@@ -90,8 +91,8 @@ const hhmm = (zeit: string) => zeit.slice(0, 5);
 const lokal = (datum: string, zeit: string) => `${kompakt(datum)}T${hhmm(zeit).replace(":", "")}00`;
 const utc = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 
-/** Der Pfad des Feeds zu einem Abo-Token; `bereich` trennt das Abo am
- *  privaten Link (`"spieler/"`, #507) von dem der Mitglieder. */
+/** Der Dateiname und der Pfad des Feeds zu einem Abo-Token; `bereich`
+ *  trennt das Abo am privaten Link (`"spieler/"`, #507) von dem der Mitglieder. */
 export const aboDatei = (token: string) => `${token}.ics`;
 export const aboPfad = (token: string, bereich = "") => `/api/kalender/${bereich}${aboDatei(token)}`;
 

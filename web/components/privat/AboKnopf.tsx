@@ -58,12 +58,15 @@ export function AboKnopf({ token }: { token: string }) {
 
   function oeffnen() {
     setOffen(true);
-    // Nach dem Widerrufen erst auf Wunsch eine neue — sonst entstünde sie
-    // schon beim Wiederöffnen.
-    if (!links && schritt === "adresse") holen();
+    // Bei jedem Öffnen neu: Wurde der Link inzwischen erneuert, stünde sonst
+    // eine erloschene Adresse da (holen liefert dieselbe, solange sie gilt).
+    // Nach dem Widerrufen erst auf Wunsch eine neue.
+    if (schritt === "adresse") holen();
   }
 
   function schliessen() {
+    // Während einer Anfrage bleibt der Dialog offen (wie in SpielerListe).
+    if (pending) return;
     setOffen(false);
     setFehler(null);
     if (schritt === "rueckfrage") setSchritt("adresse");
@@ -98,7 +101,8 @@ export function AboKnopf({ token }: { token: string }) {
                   Abo widerrufen
                 </Button>
               )}
-              <Button variant="outlined" onClick={schliessen}>
+              {/* Zurück aus der Rückfrage ist der fokussierte Knopf weg. */}
+              <Button variant="outlined" onClick={schliessen} disabled={pending} autoFocus>
                 Schliessen
               </Button>
             </>

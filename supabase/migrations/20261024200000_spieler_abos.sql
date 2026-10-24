@@ -34,7 +34,8 @@ alter table spieler_abos enable row level security;
 revoke all on spieler_abos from anon, authenticated;
 
 -- PC 7: Ein erneuerter Link lässt das Abo erlöschen — gleich über welchen
--- Weg (Oberfläche, KI-Assistent, Abgleich nach Staging).
+-- Weg (Oberfläche, KI-Assistent). Der Abgleich nach Staging läuft ohne
+-- Trigger und leert die Tabelle darum selbst (sync-staging.yml).
 create function spieler_abo_erloeschen() returns trigger
 language plpgsql security definer
 set search_path = public, pg_temp

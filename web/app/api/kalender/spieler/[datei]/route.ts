@@ -9,7 +9,8 @@ import { aboEintrag, aboKalenderName, type AboFeed } from "@/lib/spieler-abo";
    Kalender wie beim Abo der Mitglieder (PC 7) — und nichts, woran man
    erkennt, ob es sie je gab.
 
-   Die Adresse IST das Geheimnis: Sie steht nie in einer Log-Zeile. */
+   Die Adresse IST das Geheimnis: Sie steht in keiner eigenen Log-Zeile, als
+   Teil des Pfads aber in den Zugriffsprotokollen der Plattform. */
 export const dynamic = "force-dynamic";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ datei: string }> }) {
