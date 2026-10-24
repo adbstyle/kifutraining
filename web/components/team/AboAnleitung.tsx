@@ -20,8 +20,10 @@ export function AboAnleitung({ webcal, begriff = "Link" }: { webcal: string; beg
         </div>
       </li>
       <li>
-        <strong className="text-on-surface">Google Kalender:</strong> Weitere Kalender → Per URL →{" "}
-        {begriff} einfügen.
+        {/* Die App kann keine Abo-Adresse hinzufügen, auch nicht auf Android:
+            nur calendar.google.com im Browser (PO 2026-10-24). */}
+        <strong className="text-on-surface">Google Kalender:</strong> im Browser auf calendar.google.com →
+        Weitere Kalender → Per URL → {begriff} einfügen; danach erscheint er auch in der App.
       </li>
       <li>
         <strong className="text-on-surface">Outlook:</strong> Kalender hinzufügen → Aus dem Internet

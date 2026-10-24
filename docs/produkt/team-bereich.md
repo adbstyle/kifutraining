@@ -398,8 +398,9 @@ Trainingsplan holt „Kalender abonnieren" im Menü neben „Termin erstellen" d
 für dieses Team; beim ersten Mal entsteht er, danach kommt derselbe, solange das Abo gilt. Der
 Dialog warnt, dass der Link persönlich ist und nicht weitergegeben werden soll, weil jeder, der ihn
 hat, Zeit und Ort der Trainings und Spiele sieht. Er bietet den Link zum Kopieren an und sagt, wie
-er in Apple Kalender — dort auch direkt zu öffnen —, Google Kalender, Outlook und Proton Calendar
-übernommen wird. Jedes Mitglied hat je Team höchstens einen gültigen Link; unter „Konto" sind alle
+er in Apple Kalender — dort über „In Apple Kalender öffnen" auch direkt —, Google Kalender — nur
+im Browser auf calendar.google.com, danach erscheint er auch in der App —, Outlook und Proton
+Calendar übernommen wird. Jedes Mitglied hat je Team höchstens einen gültigen Link; unter „Konto" sind alle
 eigenen Abos wieder einsehbar und lassen sich widerrufen (siehe [Konto und
 Zugang](konto-und-zugang.md#kalender-abos)).
 
@@ -879,7 +880,9 @@ Kalender abonnieren" erklärt die Zeichen — „Im Kalender steht vor jedem Ter
 vielleicht (Spiel ohne Meldung) oder ❌ abgesagt." —, sagt, dass das Abo nur anzeigt und weiterhin
 über den Link ab- und angemeldet wird, und dass das Kalenderprogramm Änderungen erst nach einer
 Weile übernimmt. Er bietet die Adresse zum Kopieren an und sagt, wie sie in Apple Kalender — dort
-auch direkt zu öffnen —, Google Kalender, Outlook und Proton Calendar übernommen wird. Je Link gibt
+über „In Apple Kalender öffnen" auch direkt —, Google Kalender — nur im Browser auf
+calendar.google.com, danach erscheint sie auch in der App —, Outlook und Proton Calendar übernommen
+wird. Je Link gibt
 es höchstens eine gültige Abo-Adresse; wer sie erneut holt, erhält dieselbe. Die Adresse ist eine
 eigene: Mit ihr lässt sich weder ab- und anmelden noch der private Link ermitteln.
 
