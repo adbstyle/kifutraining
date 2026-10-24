@@ -79,27 +79,33 @@ export const getTeam = cache(async function getTeam(
   return { id: team.id, name: team.name, mitglieder };
 });
 
-/** Was beim Auflösen verloren geht (Story 13 AK 5): die Zahlen für den
- *  Bestätigungsdialog. Persönliche Trainings der Mitglieder zählen nicht dazu —
- *  sie gehören nicht dem Team. */
+/** Was beim Auflösen verloren geht (Story 13 AK 5, #480 AK 3): die Zahlen für
+ *  den Bestätigungsdialog. Persönliche Trainings der Mitglieder zählen nicht
+ *  dazu — sie gehören nicht dem Team. Spielerliste und Kader zählt die
+ *  Verwaltungsseite selbst, sie lädt beide ohnehin. */
 export async function getTeamAufloesungsInfo(
   teamId: string,
-): Promise<{ trainings: number; termine: number }> {
+): Promise<{ trainings: number; termine: number; spiele: number }> {
   const supabase = await createClient();
+  const termineDerArt = (art: "training" | "spiel") =>
+    supabase
+      .from("training_termine")
+      .select("id", { count: "exact", head: true })
+      .eq("team_id", teamId)
+      .eq("art", art);
 
-  // Gezählt wird der Bestand, wie ihn die Trainings-Ansicht zeigt; die
-  // Termin-Trainings gehen mit den Terminen, die der Dialog ebenfalls nennt.
-  const { count: trainings } = await supabase
-    .from("trainings")
-    .select("id", { count: "exact", head: true })
-    .eq("team_id", teamId)
-    .eq("termin_training", false);
+  const [{ count: trainings }, { count: termine }, { count: spiele }] = await Promise.all([
+    // Gezählt wird der Bestand, wie ihn die Trainings-Ansicht zeigt; die
+    // Termin-Trainings gehen mit den Terminen, die der Dialog ebenfalls nennt.
+    supabase
+      .from("trainings")
+      .select("id", { count: "exact", head: true })
+      .eq("team_id", teamId)
+      .eq("termin_training", false),
+    // Alle Termine des Teams, auch jene ohne Training (#322 PC 10).
+    termineDerArt("training"),
+    termineDerArt("spiel"),
+  ]);
 
-  // Alle Termine des Teams, auch jene ohne Training (#322 PC 10).
-  const { count: termine } = await supabase
-    .from("training_termine")
-    .select("id", { count: "exact", head: true })
-    .eq("team_id", teamId);
-
-  return { trainings: trainings ?? 0, termine: termine ?? 0 };
+  return { trainings: trainings ?? 0, termine: termine ?? 0, spiele: spiele ?? 0 };
 }

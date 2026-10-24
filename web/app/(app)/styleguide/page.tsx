@@ -47,6 +47,7 @@ import {
   KopierFeld,
   Tabelle,
   TabellenZeile,
+  Gefahrenzone,
 } from "@/components/ui";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { uebungEckdaten } from "@/lib/eckdaten";
@@ -235,6 +236,7 @@ const GLIEDERUNG = [
         eintraege: [
           { id: "liste-detail", titel: "Liste mit Detail daneben" },
           { id: "disclosure", titel: "Disclosure" },
+          { id: "gefahrenzone", titel: "Gefahrenzone" },
         ],
       },
       {
@@ -2992,6 +2994,42 @@ export default async function Styleguide() {
               </Card>
             </Disclosure>
           </div>
+        </Section>
+
+        <Section id="gefahrenzone">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Der Bereich am Ende einer Verwaltungsseite für Handlungen, die sich
+            nicht zurücknehmen lassen und andere mittreffen - in der
+            Teamverwaltung Verlassen und Auflösen (#480). Eine Karte auf{" "}
+            <code>elev-01</code> wie jede andere, aber mit voller Kontur und
+            Überschrift in Error: {v(kontrast(ERROR, elev(1)))} als Schrift, als
+            Kontur mindestens 3:1 auf jeder Stufe und im Druck. Getönt wird die
+            Fläche nicht - <code>section-danger</code> heisst «etwas ist
+            schiefgegangen» (<Siehe id="meldungen" />), die Gefahrenzone dagegen
+            «hier ist Vorsicht geboten». Eine Kontur mit Alpha bräche die 3:1;
+            darum volles <code>border-error</code>.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Löscht eine Handlung dort für alle, bestätigt man sie durch die{" "}
+            <strong>Eingabe des Namens</strong>: Der Dialog nennt, was verloren
+            geht, und den einzugebenden Namen; der <code>danger</code>-Knopf ist
+            erst frei, wenn die Eingabe genau stimmt (Gross- und Kleinschreibung
+            zählen, Leerzeichen am Rand nicht). Das Feld schaltet Autokorrektur,
+            automatische Grossschreibung und Rechtschreibprüfung ab, Einfügen
+            bleibt erlaubt. Die Vorlesehilfe hört den Namen über{" "}
+            <code>aria-describedby</code> mit dem Feld und die Freigabe über eine
+            Live-Region. Andere Löschungen bleiben bei der gewöhnlichen Rückfrage
+            - die Eingabe ist dem vorbehalten, was mehrere Menschen trifft.
+          </p>
+          <Gefahrenzone
+            className="max-w-xl"
+            beschreibung="Verlassen betrifft nur dich - ausser du bist das letzte Mitglied. Auflösen löscht das Team samt allen Inhalten für alle Mitglieder."
+          >
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outlined">Team verlassen</Button>
+              <Button variant="danger">Team auflösen</Button>
+            </div>
+          </Gefahrenzone>
         </Section>
 
         <Section id="tabelle">

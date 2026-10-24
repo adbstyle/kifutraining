@@ -3252,8 +3252,8 @@ try {
     if (user) q = q.eq("user_id", user);
     return (await q).data ?? [];
   };
-  const austreten = async (k: Konto, team: string, bestaetigt = false) => {
-    const { error } = await k.supabase.rpc("entferne_team_mitglied", { p_team: team, p_user: k.id, p_bestaetigt: bestaetigt });
+  const austreten = async (k: Konto, team: string, teamname?: string) => {
+    const { error } = await k.supabase.rpc("entferne_team_mitglied", { p_team: team, p_user: k.id, p_teamname: teamname });
     if (error) throw error;
   };
 
@@ -3419,7 +3419,7 @@ try {
     const team = await serienTeam("Kern-DB-Abo-Entfernen");
     await admin.from("team_members").insert({ team_id: team, user_id: b.id });
     const tb = (await holen(b, team)).token!;
-    const { error } = await a.supabase.rpc("entferne_team_mitglied", { p_team: team, p_user: b.id, p_bestaetigt: false });
+    const { error } = await a.supabase.rpc("entferne_team_mitglied", { p_team: team, p_user: b.id });
     assert.equal(error, null);
     assert.deepEqual(await feed(tb), { gueltig: false });
     assert.equal((await aboZeilen(team, b.id)).length, 0);
@@ -3427,7 +3427,7 @@ try {
     // Auflösung: das letzte Mitglied tritt aus; Team und Abo sind weg.
     const aufgeloest = await serienTeam("Kern-DB-Abo-Aufloesen");
     const ta = (await holen(a, aufgeloest)).token!;
-    await austreten(a, aufgeloest, true);
+    await austreten(a, aufgeloest, "Kern-DB-Abo-Aufloesen");
     assert.equal((await admin.from("teams").select("id").eq("id", aufgeloest)).data!.length, 0, "Team aufgelöst");
     assert.deepEqual(await feed(ta), { gueltig: false });
     assert.equal((await aboZeilen(aufgeloest)).length, 0);
@@ -3443,6 +3443,75 @@ try {
     konten.splice(konten.indexOf(c.id), 1);
     assert.deepEqual(await feed(token), { gueltig: false });
     assert.equal((await aboZeilen(tc)).length, 0, "kein verwaistes Abo");
+  });
+
+  // ── Team-Auflösung nur mit dem Teamnamen (#480) ──────────────────────────
+  await pruefe("Team löst sich nur mit dem aktuellen Teamnamen auf, auch ausserhalb der Oberfläche (#480 AK 5–7, 10–12, PC 1–5)", async () => {
+    const besteht = async (team: string) => (await admin.from("teams").select("id").eq("id", team)).data!.length === 1;
+    const austritt = async (k: Konto, team: string, teamname?: string) => {
+      const { data, error } = await k.supabase.rpc("entferne_team_mitglied", { p_team: team, p_user: k.id, p_teamname: teamname });
+      if (error) throw error;
+      return data as { status: string; name?: string };
+    };
+    const aufloesen = async (k: Konto, team: string, teamname: string) => {
+      const { data, error } = await k.supabase.rpc("loese_team_auf", { p_team: team, p_teamname: teamname });
+      if (error) throw error;
+      return data as { status: string; name?: string };
+    };
+
+    const team = await serienTeam("Kern-DB-Auflösen-480");
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+
+    // AK 11: Die direkten Löschwege sind zu — weder Team noch eigene Mitgliedschaft.
+    await a.supabase.from("teams").delete().eq("id", team);
+    await a.supabase.from("team_members").delete().eq("team_id", team).eq("user_id", a.id);
+    assert.ok(await besteht(team), "direktes DELETE auf teams wirkungslos");
+    assert.equal((await admin.from("team_members").select("user_id").eq("team_id", team)).data!.length, 2, "direktes DELETE auf team_members wirkungslos");
+
+    // AK 6: Gross- und Kleinschreibung zählen; PC 2: Team unverändert.
+    assert.deepEqual(await aufloesen(a, team, "kern-db-auflösen-480"), { status: "name_falsch", name: "Kern-DB-Auflösen-480" });
+    assert.ok(await besteht(team));
+
+    // Out of Scope 2: Wer nicht als letztes Mitglied geht, braucht keinen Namen.
+    assert.deepEqual(await austritt(b, team), { status: "entfernt" });
+
+    // PC 4: Als letztes Mitglied ohne Namen abgewiesen — mit dem verlangten Namen.
+    assert.deepEqual(await austritt(a, team), { status: "aufloesung_noetig", name: "Kern-DB-Auflösen-480" });
+    assert.ok(await besteht(team));
+
+    // PC 3: Umbenannt — der alte Name trägt nicht mehr, die Antwort nennt den neuen.
+    await admin.from("teams").update({ name: "Kern-DB-Umbenannt-480" }).eq("id", team);
+    assert.deepEqual(await austritt(a, team, "Kern-DB-Auflösen-480"), { status: "name_falsch", name: "Kern-DB-Umbenannt-480" });
+    assert.ok(await besteht(team));
+
+    // AK 7, 10, PC 1: Leerzeichen am Rand zählen nicht; der Austritt löst auf.
+    assert.equal((await austritt(a, team, "  Kern-DB-Umbenannt-480 ")).status, "aufgeloest");
+    assert.ok(!(await besteht(team)), "Team aufgelöst");
+
+    // AK 5: Ausdrückliches Auflösen durch ein beliebiges Mitglied.
+    const zwei = await serienTeam("Kern-DB-Auflösen-480-B");
+    await admin.from("team_members").insert({ team_id: zwei, user_id: b.id });
+    const c = await wegwerfKonto();
+    await assert.rejects(aufloesen(c, zwei, "Kern-DB-Auflösen-480-B"), (e: { message: string }) => e.message.includes("not a member"), "Nichtmitglied abgewiesen");
+    assert.equal((await aufloesen(b, zwei, "Kern-DB-Auflösen-480-B")).status, "aufgeloest");
+    assert.ok(!(await besteht(zwei)));
+
+    // PC 5: Danach erfährt das andere Mitglied, dass es das Team nicht mehr gibt.
+    assert.deepEqual(await aufloesen(a, zwei, "Kern-DB-Auflösen-480-B"), { status: "team_weg" });
+    assert.deepEqual(await austritt(a, zwei), { status: "team_weg" });
+
+    // Unicode-Normalform zählt nicht: «ö» als o + Trema bestätigt «ö».
+    const drei = await serienTeam("Kern-DB-Auflösen-480-C");
+    assert.equal((await aufloesen(a, drei, "Kern-DB-Auflösen-480-C".normalize("NFD"))).status, "aufgeloest");
+
+    // Out of Scope 1: Löscht das letzte Mitglied sein Konto, löst sich das Team ohne Namen auf.
+    const vier = await serienTeam("Kern-DB-Auflösen-480-D");
+    await admin.from("team_members").insert({ team_id: vier, user_id: c.id });
+    await admin.from("team_members").delete().eq("team_id", vier).eq("user_id", a.id);
+    const { error: weg } = await admin.auth.admin.deleteUser(c.id);
+    if (weg) throw weg;
+    konten.splice(konten.indexOf(c.id), 1);
+    assert.ok(!(await besteht(vier)), "Konto-Löschung löst ohne Namen auf");
   });
 
   // ── Kalender: Felder eines Termins (#389) ────────────────────────────────
