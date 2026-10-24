@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidiereTeam } from "@/lib/revalidate";
 import { teamNameProblem } from "@/lib/team";
 import { eigeneBildPfade } from "@/lib/fassung";
-import { raeumeVerwaisteBilder, teamBildKandidaten } from "@/lib/storage-aufraeumen";
+import { raeumeVerwaisteBilder } from "@/lib/storage-aufraeumen";
 
 /**
  * Server Actions rund um Teams (Team-Epic Stories 3, 4).
@@ -135,31 +135,77 @@ export async function nimmMitgliedAuf(
   return { ok: true, anzeigeName: res.anzeige_name! };
 }
 
-// ── Story 13: Verlassen, Entfernen, Auflösen ─────────────────────────────────
+// ── Story 13 / #480: Verlassen, Entfernen, Auflösen ──────────────────────────
 
-/** Ergebnis eines Austritts bzw. einer Entfernung. `aufloesung_noetig` heisst:
- *  der Vorgang würde das letzte Mitglied entfernen und damit das Team samt
- *  seinen Trainings und Terminen auflösen — dafür braucht es eine eigene
- *  Bestätigung. */
+/** Ergebnis eines Austritts, einer Entfernung oder einer Auflösung.
+ *
+ *  Ein Team verschwindet nur mit dem bestätigten aktuellen Teamnamen (#480) —
+ *  die Datenbank prüft das, nicht die Oberfläche:
+ *  - `aufloesung_noetig`: der Vorgang würde das letzte Mitglied entfernen und
+ *    damit das Team auflösen; dafür braucht es den Namen (`name` = aktueller).
+ *  - `name_falsch`: der bestätigte Name ist nicht (mehr) der aktuelle — etwa
+ *    weil jemand das Team inzwischen umbenannt hat.
+ *  - `team_weg`: ein anderes Mitglied hat das Team inzwischen aufgelöst. */
 export type MitgliedschaftResult =
   | { status: "entfernt" }
   | { status: "aufgeloest" }
-  | { status: "aufloesung_noetig" }
+  | { status: "aufloesung_noetig"; name: string }
+  | { status: "name_falsch"; name: string }
+  | { status: "team_weg" }
   | { status: "fehler"; error: string };
+
+type RpcAntwort = {
+  status: "entfernt" | "aufgeloest" | "aufloesung_noetig" | "name_falsch" | "team_weg";
+  name?: string;
+  bilder?: { id: string; bild_url: string | null }[];
+};
+
+/** Die Antwort beider RPCs in Klartext übersetzen und nachlaufen lassen. */
+async function auswerten(
+  teamId: string,
+  was: string,
+  { data, error }: { data: unknown; error: { message: string } | null },
+): Promise<MitgliedschaftResult> {
+  if (error) {
+    console.error(`[team] ${was}`, error);
+    if (error.message.includes("not a member"))
+      return { status: "fehler", error: "Du bist nicht mehr Mitglied dieses Teams." };
+    return { status: "fehler", error: "Das hat nicht geklappt. Bitte erneut versuchen." };
+  }
+
+  const res = data as RpcAntwort;
+  // Die Ansichten eines Teams, das es nicht mehr gibt, nicht neu rendern: Ihr
+  // Rahmen leitete dann schon in der Antwort auf /teams um, und die Oberfläche
+  // käme nicht mehr dazu, den Ausgang zu melden (PC 5).
+  if (res.status === "team_weg" || res.status === "aufgeloest") revalidatePath("/teams");
+  else revalidiereTeam(teamId);
+  switch (res.status) {
+    case "aufloesung_noetig":
+    case "name_falsch":
+      return { status: res.status, name: res.name! };
+    case "team_weg":
+    case "entfernt":
+      return { status: res.status };
+    case "aufgeloest":
+      // Das Team ist weg — und mit der Mitgliedschaft auch das Recht, seine
+      // Bilder zu löschen. Den Nachlauf erledigt darum der Service-Role-Client.
+      await raeumeVerwaisteBilder(eigeneBildPfade(res.bilder ?? []));
+      return { status: "aufgeloest" };
+  }
+}
 
 /** Ein Mitglied entfernen — sich selbst („verlassen") oder eine andere Person.
  *  Beides derselbe Vorgang: im Team sind alle gleichberechtigt.
  *
  *  Ob der Vorgang das Team leert, entscheidet die RPC in derselben Transaktion
- *  wie die Löschung — sonst könnte zwischen Prüfung und Ausführung jemand
- *  anders austreten und das Team unbestätigt verschwinden. Aus demselben Grund
- *  räumt hier NICHTS vor der RPC auf: eine Bestätigung ist kein Beweis, dass
- *  der Vorgang beim Ausführen noch auflöst. Löst er auf, gibt die RPC die
- *  Bildpfade zurück, die sie mitgelöscht hat. */
+ *  wie die Löschung (#480 AK 12) — sonst könnte zwischen Prüfung und Ausführung
+ *  jemand anders austreten und das Team unbestätigt verschwinden. Aus demselben
+ *  Grund räumt hier NICHTS vor der RPC auf. Leert der Vorgang das Team, löst er
+ *  nur mit dem aktuellen `teamname` auf. */
 export async function entferneMitglied(
   teamId: string,
   userId: string,
-  bestaetigt = false,
+  teamname?: string,
 ): Promise<MitgliedschaftResult> {
   const supabase = await createClient();
   const {
@@ -167,65 +213,46 @@ export async function entferneMitglied(
   } = await supabase.auth.getUser();
   if (!user) return { status: "fehler", error: "Nicht angemeldet." };
 
-  const { data, error } = await supabase.rpc("entferne_team_mitglied", {
-    p_team: teamId,
-    p_user: userId,
-    p_bestaetigt: bestaetigt,
-  });
-  if (error) return { status: "fehler", error: error.message };
-
-  const res = data as {
-    status: string;
-    bilder?: { id: string; bild_url: string | null }[];
-  };
-  revalidiereTeam(teamId);
-  if (res.status === "aufloesung_noetig") return { status: "aufloesung_noetig" };
-  if (res.status !== "aufgeloest") return { status: "entfernt" };
-
-  // Das Team ist weg — und mit der Mitgliedschaft auch das Recht, seine Bilder
-  // zu löschen. Den Nachlauf erledigt darum der Service-Role-Client.
-  await raeumeVerwaisteBilder(eigeneBildPfade(res.bilder ?? []));
-  return { status: "aufgeloest" };
+  return auswerten(
+    teamId,
+    "entfernen",
+    await supabase.rpc("entferne_team_mitglied", {
+      p_team: teamId,
+      p_user: userId,
+      p_teamname: teamname,
+    }),
+  );
 }
 
-/** Das Team selbst verlassen (Story 13 AK 1–3). */
+/** Das Team selbst verlassen (Story 13 AK 1–3; als letztes Mitglied #480 AK 10). */
 export async function verlasseTeam(
   teamId: string,
-  bestaetigt = false,
+  teamname?: string,
 ): Promise<MitgliedschaftResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { status: "fehler", error: "Nicht angemeldet." };
-  return entferneMitglied(teamId, user.id, bestaetigt);
+  return entferneMitglied(teamId, user.id, teamname);
 }
 
-/** Das Team ausdrücklich auflösen (Story 13 AK 5). Trainings und Termine des
- *  Teams gehen dabei verloren; persönliche Trainings der Mitglieder — auch
+/** Das Team ausdrücklich auflösen (Story 13 AK 5, #480 AK 5–7). Alle Inhalte
+ *  des Teams gehen dabei verloren; persönliche Trainings der Mitglieder — auch
  *  Kopien, die jemand zu sich übernommen hat — bleiben unberührt. */
-export async function loeseTeamAuf(teamId: string): Promise<TeamActionResult> {
+export async function loeseTeamAuf(
+  teamId: string,
+  teamname: string,
+): Promise<MitgliedschaftResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
+  if (!user) return { status: "fehler", error: "Nicht angemeldet." };
 
-  // Pfade vor dem Löschen merken, aufräumen danach: die Kaskade entfernt Team,
-  // Trainings und Mitgliedschaft in einem Zug — mit ihr erlischt auch das Recht
-  // an den Dateien. Ein Wettlauf besteht hier nicht: das Löschen des Teams
-  // gelingt ganz oder gar nicht, und nur danach wird aufgeräumt.
-  const pfade = eigeneBildPfade(await teamBildKandidaten(supabase, [teamId]));
-
-  const { data, error } = await supabase
-    .from("teams")
-    .delete()
-    .eq("id", teamId)
-    .select("id");
-  if (error) return { ok: false, error: error.message };
-  if (!data?.length) return { ok: false, error: "Team nicht gefunden." };
-
-  await raeumeVerwaisteBilder(pfade);
-  revalidiereTeam(teamId);
-  return { ok: true };
+  return auswerten(
+    teamId,
+    "auflösen",
+    await supabase.rpc("loese_team_auf", { p_team: teamId, p_teamname: teamname }),
+  );
 }

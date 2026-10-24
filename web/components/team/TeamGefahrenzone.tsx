@@ -1,100 +1,149 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, LogOut, Trash2 } from "lucide-react";
-import { SectionMessage, Button, Dialog } from "@/components/ui";
-import { loeseTeamAuf, verlasseTeam } from "@/lib/actions/teams";
+import { SectionMessage, Button, Dialog, Gefahrenzone, TextField } from "@/components/ui";
+import {
+  loeseTeamAuf,
+  verlasseTeam,
+  type MitgliedschaftResult,
+} from "@/lib/actions/teams";
 
-/* Team verlassen und Team auflösen (Story 13).
-   Beide Wege enden im selben Zustand, wenn nur noch eine Person da ist —
-   darum fängt der Austritt genau diesen Fall ab und fragt stattdessen nach
-   der Auflösung, mit dem, was dabei verloren geht.
+/** Was mit dem Team für alle verschwindet (#480 AK 3). */
+export type AufloesungsFolgen = {
+  trainings: number;
+  termine: number;
+  spiele: number;
+  spieler: number;
+  kader: number;
+};
 
-   Scheitert einer der beiden Wege, bleibt sein Dialog offen und nennt den
-   Grund als Section Message — dort, wo der Trainer erneut bestätigen oder abbrechen
-   kann. Eine Snackbar läge unter dem Dialog (Material, #234). */
+/* Team verlassen und Team auflösen (Story 13, #480) — in der Gefahrenzone der
+   Teamverwaltung.
+
+   Ein Team verschwindet nur, wenn die auslösende Person seinen Namen eingibt:
+   beim Auflösen wie beim Austritt als letztes Mitglied (AK 5, 10). Geprüft
+   wird beim Ausführen in der Datenbank (AK 11, 12) — die Oberfläche gibt den
+   Knopf erst frei, wenn die Eingabe stimmt, entscheidet aber nichts. Darum
+   kann der gewöhnliche Austritt in die Namensbestätigung umschlagen, wenn
+   inzwischen alle anderen gegangen sind (PC 4), und der genannte Name kann
+   sich ändern, wenn jemand das Team umbenannt hat (PC 3).
+
+   Scheitert ein Weg, bleibt sein Dialog offen und nennt den Grund als Section
+   Message — dort, wo der Trainer erneut bestätigen oder abbrechen kann. Eine
+   Snackbar läge unter dem Dialog (Material, #234). Nur wenn es das Team nicht
+   mehr gibt (PC 5), gibt es nichts mehr zu bestätigen: dann zurück zu den
+   Teams, die es per Snackbar melden (`?weg=1`). */
 export function TeamGefahrenzone({
   teamId,
+  teamName,
   anzahlMitglieder,
-  anzahlTrainings,
-  anzahlTermine,
+  folgen,
 }: {
   teamId: string;
+  teamName: string;
   anzahlMitglieder: number;
-  anzahlTrainings: number;
-  anzahlTermine: number;
+  folgen: AufloesungsFolgen;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [verlassenOffen, setVerlassenOffen] = useState(false);
-  const [aufloesenOffen, setAufloesenOffen] = useState(false);
+  // `austritt`: als letztes Mitglied verlassen — dieselbe Bestätigung wie
+  // beim Auflösen (AK 10), nur ein anderer Vorgang.
+  const [offen, setOffen] = useState<"verlassen" | "aufloesen" | "austritt" | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
+  const [hinweis, setHinweis] = useState<string | null>(null);
+  // Der Name, den die Bestätigung verlangt — der aktuelle laut Datenbank,
+  // sobald sie einen anderen gemeldet hat.
+  const [name, setName] = useState(teamName);
+  const [eingabe, setEingabe] = useState("");
 
   const letzte = anzahlMitglieder <= 1;
+  // Exakt, mit Gross- und Kleinschreibung; Leerzeichen am Rand zählen nicht
+  // (AK 6, 7). Dieselbe Regel wiederholt die Datenbank.
+  const passt = eingabe.trim() === name;
 
-  function oeffnen(welcher: "verlassen" | "aufloesen") {
+  function oeffnen(welcher: NonNullable<typeof offen>, mitHinweis: string | null = null) {
+    // Der Dialog bleibt im DOM; jeder Anlauf beginnt leer.
     setFehler(null);
-    setVerlassenOffen(welcher === "verlassen");
-    setAufloesenOffen(welcher === "aufloesen");
+    setHinweis(mitHinweis);
+    setEingabe("");
+    setOffen(welcher);
   }
 
   function schliessen() {
-    setVerlassenOffen(false);
-    setAufloesenOffen(false);
+    if (!pending) setOffen(null);
   }
 
-  function verlassen(bestaetigt: boolean) {
-    startTransition(async () => {
-      const res = await verlasseTeam(teamId, bestaetigt);
-      if (res.status === "aufloesung_noetig") {
+  function auswerten(res: MitgliedschaftResult) {
+    switch (res.status) {
+      case "entfernt":
+      case "aufgeloest":
+        router.push("/teams");
+        return;
+      case "aufloesung_noetig":
         // Zwischen Anzeige und Ausführung sind die anderen ausgetreten:
-        // nicht still auflösen, sondern die Tragweite zeigen.
-        oeffnen("aufloesen");
+        // nicht still auflösen, sondern die Bestätigung verlangen (PC 4).
+        setName(res.name);
+        oeffnen(
+          "austritt",
+          "Inzwischen bist du das letzte Mitglied. Mit deinem Austritt löst sich das Team auf.",
+        );
         return;
-      }
-      if (res.status === "fehler") {
+      case "name_falsch":
+        setName(res.name);
+        setFehler(`Das Team heisst inzwischen «${res.name}». Gib diesen Namen ein, um fortzufahren.`);
+        return;
+      case "team_weg":
+        setOffen(null);
+        router.push("/teams?weg=1");
+        return;
+      case "fehler":
         setFehler(res.error);
-        return;
-      }
-      router.push("/teams");
-    });
+    }
   }
 
-  function aufloesen() {
-    startTransition(async () => {
-      const res = await loeseTeamAuf(teamId);
-      if (!res.ok) {
-        setFehler(res.error ?? "Fehlgeschlagen.");
-        return;
-      }
-      router.push("/teams");
-    });
+  function verlassen() {
+    startTransition(async () => auswerten(await verlasseTeam(teamId)));
+  }
+
+  function bestaetigen() {
+    if (!passt || pending) return;
+    startTransition(async () =>
+      auswerten(
+        offen === "austritt"
+          ? await verlasseTeam(teamId, eingabe)
+          : await loeseTeamAuf(teamId, eingabe),
+      ),
+    );
   }
 
   return (
-    <>
+    <Gefahrenzone
+      beschreibung={
+        <>
+          Verlassen betrifft nur dich - ausser du bist das letzte Mitglied. Auflösen löscht
+          das Team samt allen Inhalten für alle Mitglieder.
+        </>
+      }
+    >
       <div className="flex flex-wrap gap-2">
         <Button
           variant="outlined"
           disabled={pending}
-          onClick={() => oeffnen(letzte ? "aufloesen" : "verlassen")}
+          onClick={() => oeffnen(letzte ? "austritt" : "verlassen")}
         >
           <LogOut size={18} strokeWidth={2} aria-hidden />
           Team verlassen
         </Button>
-        <Button
-          variant="danger"
-          disabled={pending}
-          onClick={() => oeffnen("aufloesen")}
-        >
+        <Button variant="danger" disabled={pending} onClick={() => oeffnen("aufloesen")}>
           <Trash2 size={18} strokeWidth={2} aria-hidden />
           Team auflösen
         </Button>
       </div>
 
       <Dialog
-        open={verlassenOffen}
+        open={offen === "verlassen"}
         onClose={schliessen}
         title="Team verlassen?"
         actions={
@@ -102,7 +151,7 @@ export function TeamGefahrenzone({
             <Button variant="text" onClick={schliessen}>
               Abbrechen
             </Button>
-            <Button variant="filled" onClick={() => verlassen(false)} disabled={pending}>
+            <Button variant="filled" onClick={verlassen} disabled={pending}>
               Verlassen
             </Button>
           </>
@@ -121,51 +170,131 @@ export function TeamGefahrenzone({
         </p>
       </Dialog>
 
-      <Dialog
-        open={aufloesenOffen}
+      <NamensBestaetigung
+        open={offen === "aufloesen" || offen === "austritt"}
+        austritt={offen === "austritt"}
+        name={name}
+        eingabe={eingabe}
+        onEingabe={setEingabe}
+        passt={passt}
+        pending={pending}
+        fehler={fehler}
+        hinweis={hinweis}
+        folgen={folgen}
         onClose={schliessen}
-        title="Team auflösen?"
-        actions={
-          <>
-            <Button variant="text" onClick={schliessen}>
-              Abbrechen
-            </Button>
-            <Button variant="danger" onClick={aufloesen} disabled={pending}>
-              Endgültig auflösen
-            </Button>
-          </>
-        }
-      >
-        <div className="flex flex-col gap-3">
-          {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
-          <p className="flex items-start gap-2">
-            <AlertTriangle
-              size={18}
-              strokeWidth={2}
-              className="mt-0.5 shrink-0 text-error"
-              aria-hidden
-            />
-            <span>
-              {letzte
-                ? "Du bist das letzte Mitglied - mit deinem Austritt löst sich das Team auf. Diese Aktion kann nicht rückgängig gemacht werden."
-                : "Diese Aktion kann nicht rückgängig gemacht werden."}
-            </span>
-          </p>
-          <ul className="list-disc space-y-1 pl-5">
-            <li>
-              {anzahlTrainings}{" "}
-              {anzahlTrainings === 1 ? "Team-Training wird" : "Team-Trainings werden"} gelöscht.
-            </li>
-            <li>
-              {anzahlTermine} {anzahlTermine === 1 ? "Termin entfällt" : "Termine entfallen"}.
-            </li>
-            <li>
-              Persönliche Trainings der Mitglieder bleiben erhalten - auch
-              Kopien aus diesem Team.
-            </li>
-          </ul>
-        </div>
-      </Dialog>
-    </>
+        onBestaetigen={bestaetigen}
+      />
+    </Gefahrenzone>
+  );
+}
+
+/* Die Bestätigung per Namenseingabe (#480): was verloren geht, welcher Name
+   einzugeben ist, und der Knopf erst frei, wenn die Eingabe stimmt.
+
+   Die Eingabe verfälscht nichts von selbst — keine Autokorrektur, keine
+   automatische Grossschreibung, keine Rechtschreibprüfung (NFR 1). Einfügen
+   bleibt erlaubt (AK 8). Die Vorlesehilfe hört den verlangten Namen mit dem
+   Feld (`aria-describedby`) und erfährt über eine Live-Region, wann der Knopf
+   frei ist (NFR 3). */
+function NamensBestaetigung({
+  open,
+  austritt,
+  name,
+  eingabe,
+  onEingabe,
+  passt,
+  pending,
+  fehler,
+  hinweis,
+  folgen,
+  onClose,
+  onBestaetigen,
+}: {
+  open: boolean;
+  austritt: boolean;
+  name: string;
+  eingabe: string;
+  onEingabe: (wert: string) => void;
+  passt: boolean;
+  pending: boolean;
+  fehler: string | null;
+  hinweis: string | null;
+  folgen: AufloesungsFolgen;
+  onClose: () => void;
+  onBestaetigen: () => void;
+}) {
+  const anleitungId = useId();
+  const n = (zahl: number, eins: string, mehr: string) => `${zahl} ${zahl === 1 ? eins : mehr}`;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={austritt ? "Team verlassen und auflösen?" : "Team auflösen?"}
+      actions={
+        <>
+          <Button variant="text" onClick={onClose}>
+            Abbrechen
+          </Button>
+          <Button variant="danger" onClick={onBestaetigen} disabled={!passt || pending}>
+            {austritt ? "Verlassen und auflösen" : "Team auflösen"}
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
+        {hinweis && <SectionMessage appearance="warning">{hinweis}</SectionMessage>}
+        <p className="flex items-start gap-2">
+          <AlertTriangle
+            size={18}
+            strokeWidth={2}
+            className="mt-0.5 shrink-0 text-error"
+            aria-hidden
+          />
+          <span>
+            {austritt && !hinweis && "Du bist das letzte Mitglied - mit deinem Austritt löst sich das Team auf. "}
+            Für alle Mitglieder verschwinden unwiderruflich:
+          </span>
+        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>{n(folgen.trainings, "Team-Training", "Team-Trainings")}</li>
+          <li>{n(folgen.termine, "Trainingstermin", "Trainingstermine")} samt Abmeldungen und Anwesenheiten</li>
+          <li>{n(folgen.spiele, "Spiel", "Spiele")} samt Meldungen und Aufgeboten</li>
+          <li>die Spielerliste mit {n(folgen.spieler, "Spieler:in", "Spieler:innen")}</li>
+          <li>{n(folgen.kader, "Kader", "Kader")}</li>
+        </ul>
+        <p>
+          Persönliche Trainings der Mitglieder bleiben erhalten - auch Kopien aus diesem Team.
+        </p>
+        <p id={anleitungId}>
+          Gib zur Bestätigung den Teamnamen{" "}
+          «<span className="select-all font-medium text-on-surface">{name}</span>» ein.
+        </p>
+        <TextField
+          label="Teamname"
+          value={eingabe}
+          onChange={(e) => onEingabe(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            onBestaetigen();
+          }}
+          aria-describedby={anleitungId}
+          autoFocus
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          // Passwort-Manager halten das Feld sonst für ein Login-Feld.
+          data-1p-ignore
+          data-lpignore="true"
+        />
+        {/* Dauerhaft im DOM, damit die Vorlesehilfe die Änderung ansagt. */}
+        <span className="sr-only" role="status">
+          {passt ? `Der Name stimmt. ${austritt ? "Verlassen und auflösen" : "Team auflösen"} ist freigegeben.` : ""}
+        </span>
+      </div>
+    </Dialog>
   );
 }

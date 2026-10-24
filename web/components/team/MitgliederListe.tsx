@@ -83,6 +83,10 @@ export function MitgliederListe({
         melde(res.error);
         return;
       }
+      if (res.status === "team_weg") {
+        router.push("/teams?weg=1");
+        return;
+      }
       router.refresh();
       melde(`${mitglied.anzeigeName} ist nicht mehr im Team.`);
     });

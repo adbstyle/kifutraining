@@ -14,7 +14,8 @@ import { abholUrl } from "@/lib/spieler";
 
 
 /* Die Teamverwaltung: wie das Team heisst, wer dabei ist — Mitglieder und
- * Spieler:innen (#434) — und wie man wieder herauskommt (Story 17).
+ * Spieler:innen (#434) — und wie man wieder herauskommt: in der Gefahrenzone
+ * am Ende (Story 17, #480).
  *
  * Die Kader (#452) stehen unter der Spielerliste: Sie teilen deren
  * Spieler:innen ein.
@@ -81,19 +82,16 @@ export default async function TeamVerwaltungPage({
         />
       </Card>
 
-      <Card className="p-5 sm:p-6">
-        <h2 className="type-title-large text-on-surface">Mitgliedschaft beenden</h2>
-        <p className="type-body-medium mt-2 mb-4 text-on-surface-mittel">
-          Verlassen betrifft nur dich; Auflösen löscht das Team samt seinen
-          Trainings und Terminen für alle.
-        </p>
-        <TeamGefahrenzone
-          teamId={team.id}
-          anzahlMitglieder={team.mitglieder.length}
-          anzahlTrainings={aufloesung.trainings}
-          anzahlTermine={aufloesung.termine}
-        />
-      </Card>
+      <TeamGefahrenzone
+        teamId={team.id}
+        teamName={team.name}
+        anzahlMitglieder={team.mitglieder.length}
+        folgen={{
+          ...aufloesung,
+          spieler: liste.wert.spieler.length,
+          kader: kader.wert.kader.length,
+        }}
+      />
     </div>
   );
 }

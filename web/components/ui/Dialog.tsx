@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
@@ -42,6 +42,9 @@ export function Dialog({
   className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  // Der Titel ist der Name des Dialogs: Die Vorlesehilfe nennt ihn beim
+  // Öffnen, statt nur «Dialog» zu sagen.
+  const titelId = useId();
 
   useEffect(() => {
     const d = ref.current;
@@ -53,6 +56,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
+      aria-labelledby={title ? titelId : undefined}
       onClose={onClose}
       onCancel={(e) => {
         e.preventDefault();
@@ -72,7 +76,7 @@ export function Dialog({
       {title && (
         // Title Large wie der Name auf Übungsseite und Detail (PO 2026-10-05):
         // Ein Dialog ist ein Arbeitsschritt, kein Plakat.
-        <h2 className="type-title-large mb-3 text-on-surface">
+        <h2 id={titelId} className="type-title-large mb-3 text-on-surface">
           {title}
         </h2>
       )}
