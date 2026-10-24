@@ -10,11 +10,14 @@ export function AboAnleitung({ webcal, begriff = "Link" }: { webcal: string; beg
   return (
     <ul className="type-body-small list-disc space-y-1 pl-5">
       <li>
-        <strong className="text-on-surface">Apple Kalender:</strong>{" "}
-        <ButtonLink variant="text" href={webcal}>
-          <ExternalLink size={14} aria-hidden /> Direkt öffnen
-        </ButtonLink>{" "}
-        oder Ablage → Neues Kalenderabonnement → {begriff} einfügen.
+        <strong className="text-on-surface">Apple Kalender:</strong> auf iPhone, iPad und Mac direkt
+        öffnen, oder am Mac Ablage → Neues Kalenderabonnement → {begriff} einfügen.
+        {/* Secondary Button (PO 2026-10-24): der kürzeste Weg auf dem iPhone. */}
+        <div className="mt-2">
+          <ButtonLink variant="outlined" href={webcal}>
+            <ExternalLink size={16} aria-hidden /> In Apple Kalender öffnen
+          </ButtonLink>
+        </div>
       </li>
       <li>
         <strong className="text-on-surface">Google Kalender:</strong> Weitere Kalender → Per URL →{" "}
