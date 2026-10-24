@@ -66,7 +66,7 @@ export function AbosListe({ abos }: { abos: MeinAbo[] }) {
       </div>
 
       <AboDialog
-        links={anzeigen ? { url: anzeigen.url, webcal: anzeigen.webcal } : null}
+        url={anzeigen?.url ?? null}
         teamName={anzeigen?.team.name ?? ""}
         onClose={() => setAnzeigen(null)}
       />

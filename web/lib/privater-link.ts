@@ -4,14 +4,16 @@ import { istUuid } from "@/lib/kennung";
 import { LINK_FEHLER, abweisungText, istLinkToken, type AbmeldeGrund, type AbmeldeStand, type Spielstand } from "@/lib/spieler";
 import { meldungAbweisungText, type Meldung, type Treffpunkt } from "@/lib/spiel";
 import type { MeldeAntwort } from "@/lib/kern/spiele";
+import { spielerAboUrl } from "@/lib/spieler-abo";
 
 /**
  * Die Seite hinter dem privaten Link einer Spieler:in (Epic #433, Story #436)
  * — ohne Konto und ohne Sitzung. Das Geheimnis im Link ist die Berechtigung;
- * die RPCs `spieler_link_*` prüfen es als SECURITY DEFINER und geben nur
- * heraus, was die Spielervertretung sehen darf: Teamname, ihre Spieler:in und
- * die anstehenden Termine mit der Zahl der Angemeldeten und derer, für die
- * sie gelten (OoS 2, #472).
+ * die RPCs `spieler_link_*` und `spieler_abo_holen`/`_widerrufen` (#506)
+ * prüfen es als SECURITY DEFINER und geben nur heraus, was die
+ * Spielervertretung sehen darf: Teamname, ihre Spieler:in, die anstehenden
+ * Termine mit der Zahl der Angemeldeten und derer, für die sie gelten (OoS 2,
+ * #472), und die Abo-Adresse ihres Kalender-Abos.
  *
  * Ungültig, erneuert, entfernt oder unbekannt sind nicht zu unterscheiden
  * (AK 11). Das Geheimnis steht in keiner Meldung und keinem eigenen Log; als
@@ -139,4 +141,29 @@ export async function meldeSpielUeberLink(token: string, e: LinkMeldung): Promis
   if (r.status === "ungueltig") return { ok: false, ungueltig: true };
   if (r.status === "abgewiesen") return { ok: false, error: meldungAbweisungText(r.grund, r.stand) };
   return { ok: true, angemeldet: r.angemeldet, zahl: r.stand?.angemeldet ?? null };
+}
+
+export type AboHolenErgebnis =
+  | { ok: true; url: string }
+  | { ok: false; ungueltig: true }
+  | { ok: false; ungueltig?: false; error: string };
+
+/** Die Abo-Adresse zum Link holen (#507 AK 1, 5): dieselbe, solange sie gilt. */
+export async function holeAbo(token: string, origin: string): Promise<AboHolenErgebnis> {
+  if (!istLinkToken(token)) return { ok: false, ungueltig: true };
+  const { data, error } = await createAnonClient().rpc("spieler_abo_holen", { p_link: token });
+  if (error) return { ok: false, error: LINK_FEHLER };
+  if (!data) return { ok: false, ungueltig: true };
+  return { ok: true, url: spielerAboUrl(origin, data as string) };
+}
+
+export type AboWiderrufErgebnis = { ok: true } | { ok: false; ungueltig: true } | { ok: false; ungueltig?: false; error: string };
+
+/** Das Abo über den Link widerrufen (#509 AK 1, PC 1–3): Die bisherige
+ *  Adresse liefert nichts mehr; Link und Meldungen bleiben. */
+export async function widerrufeAbo(token: string): Promise<AboWiderrufErgebnis> {
+  if (!istLinkToken(token)) return { ok: false, ungueltig: true };
+  const { data, error } = await createAnonClient().rpc("spieler_abo_widerrufen", { p_link: token });
+  if (error || !data) return { ok: false, error: LINK_FEHLER };
+  return data === "ungueltig" ? { ok: false, ungueltig: true } : { ok: true };
 }

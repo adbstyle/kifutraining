@@ -7,13 +7,19 @@ import { TeamErstellenButton } from "@/components/team/TeamErstellenButton";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { createClient } from "@/lib/supabase/server";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { Flash } from "@/components/Flash";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Teams - KiFu", robots: { index: false } };
 
 /* Übersicht der eigenen Teams (Story 3, Story 12). Teams sind nur ihren
    Mitgliedern sichtbar — es gibt keine öffentliche Team-Liste. */
-export default async function TeamsPage() {
+export default async function TeamsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ weg?: string }>;
+}) {
+  const sp = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -26,6 +32,10 @@ export default async function TeamsPage() {
     <Seitenrahmen breite="voll" krumen={[{ label: "Teams" }]} aktionen={<TeamErstellenButton />}>
       {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
       <h1 className="sr-only">Teams</h1>
+      {/* Ein anderes Mitglied hat das Team aufgelöst, während man es offen hatte (#480 PC 5). */}
+      {sp.weg && (
+        <Flash message="Dieses Team besteht nicht mehr - ein anderes Mitglied hat es aufgelöst." param="weg" />
+      )}
       {teams.length === 0 ? (
         <Leerzustand icon={Users} titel="Noch kein Team">
           Lege ein Team an und nimm die Trainer:innen dazu, mit denen du

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
@@ -9,7 +9,9 @@ import { cn } from "@/lib/cn";
    (24dp): ein Dialog liegt über allem, also trägt er die hellste Stufe und
    den weichesten Schatten.
 
-   `actions` nimmt typischerweise Text-/Tonal-Buttons auf. Text-Knöpfe bleiben
+   `actions` nimmt typischerweise Text-/Tonal-Buttons auf; neben einem
+   destruktiven Knopf (`danger`, `dangerOutlined`) steht der Ausweg als
+   Secondary Button (`outlined`), etwa «Abbrechen» oder «Schliessen». Text-Knöpfe bleiben
    hier Primary, obwohl es auf 24dp knapp unter die 4.5:1 für Fliesstext fällt
    — Materials eigene Baseline hält es genauso, und ein eigener Farbton nur für
    Dialoge risse die Handlungsfarbe der App auseinander. Die Zahl steht nicht
@@ -42,6 +44,9 @@ export function Dialog({
   className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  // Der Titel ist der Name des Dialogs: Die Vorlesehilfe nennt ihn beim
+  // Öffnen, statt nur «Dialog» zu sagen.
+  const titelId = useId();
 
   useEffect(() => {
     const d = ref.current;
@@ -53,6 +58,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
+      aria-labelledby={title ? titelId : undefined}
       onClose={onClose}
       onCancel={(e) => {
         e.preventDefault();
@@ -72,7 +78,7 @@ export function Dialog({
       {title && (
         // Title Large wie der Name auf Übungsseite und Detail (PO 2026-10-05):
         // Ein Dialog ist ein Arbeitsschritt, kein Plakat.
-        <h2 className="type-title-large mb-3 text-on-surface">
+        <h2 id={titelId} className="type-title-large mb-3 text-on-surface">
           {title}
         </h2>
       )}

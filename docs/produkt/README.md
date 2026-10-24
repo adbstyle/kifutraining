@@ -9,7 +9,7 @@ Antwort auf die Frage „Was geht heute?" für alle, die nicht im Code nachsehen
 | [Konto und Zugang](konto-und-zugang.md) | Registrieren, Anmelden, Anzeigename, KI-Assistent verbinden, Kalender-Abos, Konto löschen |
 | [Übungen](uebungen.md) | Altersstufen, Übungsbestand, eigene Übungen, Feld-Diagramme, Favoriten |
 | [Trainings](trainings.md) | Trainings der beiden Altersstufen zusammenstellen, durchführen, drucken, veröffentlichen |
-| [Team-Bereich](team-bereich.md) | Trainerteams, Team-Trainings, Kalender mit Terminen und Terminserien samt Platz und Spielerzahl, Verantwortliche, Ausfälle, Trainingsplan mit nächstem Termin, Monat und geöffnetem Termin, Kalender-Abo, Spielerliste, Kader, Ab- und Anmelden, Spiele mit Meldungen, Meldefrist und Treffpunkten, privater Link je Spieler:in, Selbstabholung |
+| [Team-Bereich](team-bereich.md) | Trainerteams samt Verlassen und Auflösen mit Teamnamen, Team-Trainings, Kalender mit Terminen und Terminserien samt Platz und Spielerzahl, Verantwortliche, Ausfälle, Trainingsplan mit nächstem Termin, Monat und geöffnetem Termin, Kalender-Abo, Spielerliste, Kader, Ab- und Anmelden, Spiele mit Meldungen, Meldefrist und Treffpunkten, privater Link je Spieler:in mit Kalender-Abo, Selbstabholung |
 | [Rückmeldungen](rueckmeldungen.md) | Wie die Anwendung über Vorgänge und Zustände Bescheid gibt |
 
 ## Pflicht zur Aktualisierung

@@ -311,7 +311,8 @@ export const LINK_TEXT = {
   warnung:
     "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
   /** Was Erneuern bewirkt (AK 3, PC 3). */
-  erneuern: "Erneuern macht den bisherigen Link sofort ungültig. Abmeldungen bleiben.",
+  erneuern:
+    "Erneuern macht den bisherigen Link sofort ungültig. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen.",
   /** AK 10: ein erneuerter, unbekannter oder entfernter Link. */
   ungueltigTitel: "Dieser Link gilt nicht mehr",
   ungueltig:

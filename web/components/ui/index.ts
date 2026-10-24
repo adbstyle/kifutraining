@@ -11,6 +11,7 @@ export {
   chipTextSelected,
 } from "./Chip";
 export { Card } from "./Card";
+export { Gefahrenzone } from "./Gefahrenzone";
 export { Kalenderblatt } from "./Kalenderblatt";
 export { Meldebalken } from "./Meldebalken";
 export { MiniMonat } from "./MiniMonat";

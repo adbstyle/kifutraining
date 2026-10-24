@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, ExternalLink, ShieldAlert } from "lucide-react";
-import { SectionMessage, Button, ButtonLink, Dialog, TextField } from "@/components/ui";
+import { Check, Copy, ShieldAlert } from "lucide-react";
+import { SectionMessage, Button, Dialog, TextField } from "@/components/ui";
+import { AboAnleitung } from "./AboAnleitung";
 
 /** Wie lange der Knopf «Kopiert» zeigt. */
 const KOPIERT_MS = 2500;
@@ -16,18 +17,18 @@ const KOPIEREN_FEHLER = "Kopieren ging nicht - markiere den Link und kopiere ihn
    Das Ergebnis des Kopierens steht IM Dialog, nicht in der Snackbar: Sie liegt
    unter dem modalen Dialog und wäre dort unsichtbar. */
 export function AboDialog({
-  links,
+  url,
   teamName,
   onClose,
 }: {
   /** `null`: geschlossen. */
-  links: { url: string; webcal: string } | null;
+  url: string | null;
   teamName: string;
   onClose: () => void;
 }) {
   return (
     <Dialog
-      open={links !== null}
+      open={url !== null}
       onClose={onClose}
       title={`Kalender abonnieren · ${teamName}`}
       actions={
@@ -38,12 +39,12 @@ export function AboDialog({
     >
       {/* Eigene Komponente, damit der Kopier-Zustand mit dem Schliessen
           verschwindet. */}
-      {links && <AboInhalt links={links} />}
+      {url && <AboInhalt url={url} />}
     </Dialog>
   );
 }
 
-function AboInhalt({ links }: { links: { url: string; webcal: string } }) {
+function AboInhalt({ url }: { url: string }) {
   const feld = useRef<HTMLInputElement>(null);
   const [kopiert, setKopiert] = useState(false);
   const [fehler, setFehler] = useState(false);
@@ -58,7 +59,7 @@ function AboInhalt({ links }: { links: { url: string; webcal: string } }) {
 
   async function kopieren() {
     try {
-      await navigator.clipboard.writeText(links.url);
+      await navigator.clipboard.writeText(url);
       setFehler(false);
       setKopiert(true);
     } catch {
@@ -87,7 +88,7 @@ function AboInhalt({ links }: { links: { url: string; webcal: string } }) {
           ref={feld}
           className="min-w-0 flex-1"
           label="Abo-Link"
-          value={links.url}
+          value={url}
           readOnly
           onFocus={(e) => e.currentTarget.select()}
         />
@@ -101,27 +102,9 @@ function AboInhalt({ links }: { links: { url: string; webcal: string } }) {
           {kopiert ? "Abo-Link kopiert." : ""}
         </span>
       </div>
-      <ul className="type-body-small mt-4 list-disc space-y-1 pl-5">
-        <li>
-          <strong className="text-on-surface">Apple Kalender:</strong>{" "}
-          <ButtonLink variant="text" href={links.webcal}>
-            <ExternalLink size={14} aria-hidden /> Direkt öffnen
-          </ButtonLink>{" "}
-          oder Ablage → Neues Kalenderabonnement → Link einfügen.
-        </li>
-        <li>
-          <strong className="text-on-surface">Google Kalender:</strong> Weitere Kalender → Per URL →
-          Link einfügen.
-        </li>
-        <li>
-          <strong className="text-on-surface">Outlook:</strong> Kalender hinzufügen → Aus dem
-          Internet abonnieren → Link einfügen.
-        </li>
-        <li>
-          <strong className="text-on-surface">Proton Calendar:</strong> Kalender hinzufügen → Über
-          Link hinzufügen → Link einfügen.
-        </li>
-      </ul>
+      <div className="mt-4">
+        <AboAnleitung />
+      </div>
       <p className="type-body-small mt-4">
         Unter «Konto» findest du deine Abos wieder und kannst sie widerrufen. Wie oft dein
         Kalenderprogramm nachsieht, bestimmt es selbst.

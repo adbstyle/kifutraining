@@ -47,6 +47,7 @@ import {
   KopierFeld,
   Tabelle,
   TabellenZeile,
+  Gefahrenzone,
 } from "@/components/ui";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { uebungEckdaten } from "@/lib/eckdaten";
@@ -78,6 +79,7 @@ import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
 import {
   Search,
   SlidersHorizontal,
+  Copy,
   Plus,
   X,
   ChevronDown,
@@ -235,6 +237,7 @@ const GLIEDERUNG = [
         eintraege: [
           { id: "liste-detail", titel: "Liste mit Detail daneben" },
           { id: "disclosure", titel: "Disclosure" },
+          { id: "gefahrenzone", titel: "Gefahrenzone" },
         ],
       },
       {
@@ -1313,13 +1316,18 @@ export default async function Styleguide() {
 
         <Section id="knoepfe">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Sechs Varianten (und der helle Knopf weiter unten), eine Regel: <strong>Gefüllt trägt Schwarz</strong>{" "}
+            Sieben Varianten (und der helle Knopf weiter unten), eine Regel: <strong>Gefüllt trägt Schwarz</strong>{" "}
             - ausser Rot. <code>filled</code> ist Primary-Fläche, <code>tonal</code> eine
             Höhenstufe (08dp), <code>outlined</code> Kontur
-            auf der Kante, <code>text</code> nur Schrift, <code>danger</code>{" "}
+            auf der Kante - der <strong>Secondary Button</strong>, wenn von ihm die
+            Rede ist, <code>text</code> nur Schrift, <code>danger</code>{" "}
             gefüllt in <code>danger</code> mit weisser Schrift - Löschen soll
             man nicht übersehen (PO 2026-10-06). Das helle Error-Rot trüge
-            Weiss nicht, darum hat die Fläche ihre eigene, dunklere Rolle; dazu der leise Knopf (<code>quiet</code>)
+            Weiss nicht, darum hat die Fläche ihre eigene, dunklere Rolle. Steht
+            Destruktives als Nebenaktion neben dem Hauptweg eines Dialogs, trägt es{" "}
+            <code>dangerOutlined</code>, den <strong>Error-Secondary-Button</strong>: die Bauform von <code>outlined</code> mit
+            Kontur und Schrift in Error - die Rückfrage danach bleibt{" "}
+            <code>danger</code> (PO 2026-10-24); dazu der leise Knopf (<code>quiet</code>)
             weiter unten, der als einziger nicht über die Emphase leiser wird,
             sondern über die Schrift. Alle tragen{" "}
             <code>state</code> in der Basis und <code>rounded-flaeche</code>; es
@@ -1333,6 +1341,7 @@ export default async function Styleguide() {
             <Button variant="outlined">Filter zurücksetzen</Button>
             <Button variant="text">Abbrechen</Button>
             <Button variant="danger">Übung löschen</Button>
+            <Button variant="dangerOutlined">Abo widerrufen</Button>
           </div>
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Leiser Knopf (<code>variant=&quot;quiet&quot;</code>) - eine Stufe unter{" "}
@@ -1349,7 +1358,8 @@ export default async function Styleguide() {
             <strong>nicht</strong> für
             Knöpfe, die einen Vorgang abschliessen oder abbrechen -
             Dialog-Knöpfe, Formularfüsse und alles, was neben einem{" "}
-            <code>filled</code> steht, bleibt <code>text</code>.
+            <code>filled</code> steht, bleibt <code>text</code> - neben einem
+            destruktiven Knopf als Secondary Button (<code>outlined</code>).
           </p>
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Heller Knopf (<code>variant=&quot;hell&quot;</code>) - auf einer Fläche im Fehlerton
@@ -1394,15 +1404,18 @@ export default async function Styleguide() {
           </ButtonGroup>
 
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
-            Icon-Knöpfe - Zeichen plus Zustands-Ebene, aktiv in Primary
+            Icon-Knöpfe - Zeichen plus Zustands-Ebene, aktiv in Primary; die
+            Hauptaktion einer Zeile (<code>primary</code>, etwa Kopieren im{" "}
+            <code>KopierFeld</code>) ist gefüllt wie <code>filled</code>: Primary-Fläche, dunkles Zeichen
           </p>
           <div className="flex items-center gap-4">
             <IconButton icon={Search} label="Suchen" />
             <IconButton icon={SlidersHorizontal} label="Filter" active />
             <IconButton icon={Plus} label="Hinzufügen" />
             <IconButton icon={Plus} label="Hinzufügen" variant="overlay" />
+            <IconButton icon={Copy} label="Kopieren" primary />
             <span className="type-label-small text-on-surface-mittel">
-              ruhig · aktiv (<code>state-primary</code>) · overlay (06dp über Bild)
+              ruhig · aktiv (<code>state-primary</code>) · overlay (06dp über Bild) · Hauptaktion (<code>primary</code>)
             </span>
           </div>
 
@@ -2720,7 +2733,7 @@ export default async function Styleguide() {
               warning - im Kit, derzeit ohne Ort.
             </SectionMessage>
             <SectionMessage appearance="success">
-              success - im Kit, derzeit ohne Ort.
+              success - etwa nach dem Widerrufen des Abos am privaten Link.
             </SectionMessage>
             <SectionMessage appearance="discovery">
               discovery - im Kit, derzeit ohne Ort.
@@ -2803,7 +2816,23 @@ export default async function Styleguide() {
             eine Live-Region für die Vorlesehilfe); scheitert es, steht eine
             Section Message <code>error</code> im Dialog, und das Feld ist markiert. Ist der Link ein
             Geheimnis, geht die Warnung
-            als Section Message im Dialog voran.
+            als Section Message im Dialog voran. Neuere Stellen (privater Link,
+            Abholadresse, Abo am privaten Link) nehmen dafür das{" "}
+            <code>KopierFeld</code>.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Das <strong>Kalender-Abo am privaten Link</strong> (<code>AboKnopf</code>)
+            sitzt als <code>IconButton</code> mit Tooltip gleich hinter dem Namen der
+            Spieler:in: Es ist ihr Kalender, und die Seite hat weder Seitenleiste
+            noch Menü, in dem er sonst stünde. Die Rückfrage vor dem
+            Widerrufen ist ein Schritt <strong>im selben Dialog</strong> statt eines
+            zweiten: Auf dem Telefon stapelten sich sonst zwei Dialoge, und nach dem
+            Widerrufen geht es dort gleich mit «Neue Abo-Adresse holen» weiter. Der
+            Fokus springt bei jedem Schritt auf einen Knopf des Schritts: «Schliessen»,
+            «Abbrechen», «Neue Abo-Adresse holen». Anders als beim privaten Link
+            warnt der Dialog nicht vor dem Weitergeben: Die Abo-Adresse zeigt nur
+            an, und einen Datenschutzhinweis gibt es dort bewusst nicht (PO, Epic
+            Kalender-Abo für Spielervertretungen).
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Die <strong>Auswahlleiste</strong> (<code>AuswahlLeiste</code>) trägt
@@ -2992,6 +3021,42 @@ export default async function Styleguide() {
               </Card>
             </Disclosure>
           </div>
+        </Section>
+
+        <Section id="gefahrenzone">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Der Bereich am Ende einer Verwaltungsseite für Handlungen, die sich
+            nicht zurücknehmen lassen und andere mittreffen - in der
+            Teamverwaltung Verlassen und Auflösen (#480). Eine Karte auf{" "}
+            <code>elev-01</code> wie jede andere, aber mit voller Kontur und
+            Überschrift in Error: {v(kontrast(ERROR, elev(1)))} als Schrift, als
+            Kontur mindestens 3:1 auf jeder Stufe und im Druck. Getönt wird die
+            Fläche nicht - <code>section-danger</code> heisst «etwas ist
+            schiefgegangen» (<Siehe id="meldungen" />), die Gefahrenzone dagegen
+            «hier ist Vorsicht geboten». Eine Kontur mit Alpha bräche die 3:1;
+            darum volles <code>border-error</code>.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Löscht eine Handlung dort für alle, bestätigt man sie durch die{" "}
+            <strong>Eingabe des Namens</strong>: Der Dialog nennt, was verloren
+            geht, und den einzugebenden Namen; der <code>danger</code>-Knopf ist
+            erst frei, wenn die Eingabe genau stimmt (Gross- und Kleinschreibung
+            zählen, Leerzeichen am Rand nicht). Das Feld schaltet Autokorrektur,
+            automatische Grossschreibung und Rechtschreibprüfung ab, Einfügen
+            bleibt erlaubt. Die Vorlesehilfe hört den Namen über{" "}
+            <code>aria-describedby</code> mit dem Feld und die Freigabe über eine
+            Live-Region. Andere Löschungen bleiben bei der gewöhnlichen Rückfrage
+            - die Eingabe ist dem vorbehalten, was mehrere Menschen trifft.
+          </p>
+          <Gefahrenzone
+            className="max-w-xl"
+            beschreibung="Verlassen betrifft nur dich - ausser du bist das letzte Mitglied. Auflösen löscht das Team samt allen Inhalten für alle Mitglieder."
+          >
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outlined">Team verlassen</Button>
+              <Button variant="danger">Team auflösen</Button>
+            </div>
+          </Gefahrenzone>
         </Section>
 
         <Section id="tabelle">

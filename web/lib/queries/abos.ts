@@ -7,15 +7,13 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { oeffentlicherOrigin } from "@/lib/origin";
-import { aboLinks } from "@/lib/ical";
+import { aboUrl } from "@/lib/ical";
 
 export type MeinAbo = {
   id: string;
   team: { name: string };
   /** Der https-Link zum Feed — der, den Google, Outlook und Proton brauchen. */
   url: string;
-  /** Derselbe Link mit `webcal:` — Apple Kalender öffnet ihn direkt. */
-  webcal: string;
 };
 
 /** Die gültigen Abos, ältestes zuerst — oder `null`, wenn sie sich nicht laden
@@ -49,6 +47,6 @@ export async function getMeineAbos(): Promise<MeinAbo[] | null> {
   // aufgelöst), ist auch das Abo schon erloschen.
   return data.flatMap((a) => {
     const name = namen.get(a.team_id);
-    return name === undefined ? [] : [{ id: a.id, team: { name }, ...aboLinks(origin, a.token) }];
+    return name === undefined ? [] : [{ id: a.id, team: { name }, url: aboUrl(origin, a.token) }];
   });
 }
