@@ -1316,12 +1316,13 @@ export default async function Styleguide() {
             Sieben Varianten (und der helle Knopf weiter unten), eine Regel: <strong>Gefüllt trägt Schwarz</strong>{" "}
             - ausser Rot. <code>filled</code> ist Primary-Fläche, <code>tonal</code> eine
             Höhenstufe (08dp), <code>outlined</code> Kontur
-            auf der Kante, <code>text</code> nur Schrift, <code>danger</code>{" "}
+            auf der Kante - der <strong>Secondary Button</strong>, wenn von ihm die
+            Rede ist, <code>text</code> nur Schrift, <code>danger</code>{" "}
             gefüllt in <code>danger</code> mit weisser Schrift - Löschen soll
             man nicht übersehen (PO 2026-10-06). Das helle Error-Rot trüge
             Weiss nicht, darum hat die Fläche ihre eigene, dunklere Rolle. Steht
             Destruktives als Nebenaktion neben dem Hauptweg eines Dialogs, trägt es{" "}
-            <code>dangerOutlined</code>: die Bauform von <code>outlined</code> mit
+            <code>dangerOutlined</code>, den <strong>Error-Secondary-Button</strong>: die Bauform von <code>outlined</code> mit
             Kontur und Schrift in Error - die Rückfrage danach bleibt{" "}
             <code>danger</code> (PO 2026-10-24); dazu der leise Knopf (<code>quiet</code>)
             weiter unten, der als einziger nicht über die Emphase leiser wird,

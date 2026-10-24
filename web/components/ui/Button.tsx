@@ -42,7 +42,8 @@ const variants: Record<Variant, string> = {
   filled: "bg-primary text-on-primary",
   // Mittlere Emphase — eine Höhenstufe statt einer Akzentfläche.
   tonal: "bg-elev-08 text-on-surface",
-  // Mittlere Emphase — nur Kontur, die Fläche bleibt der Grund.
+  // Mittlere Emphase — nur Kontur, die Fläche bleibt der Grund. Heisst in
+  // Gesprächen und im Styleguide «Secondary Button» (PO 2026-10-24).
   outlined: "bg-transparent text-on-surface kontur border-kante",
   // Niedrigste Emphase — nichts als Schrift im Akzent.
   text: "bg-transparent text-primary",
@@ -51,8 +52,8 @@ const variants: Record<Variant, string> = {
   // helle Schrift-Rot trüge Weiss nur mit 2.50:1, `danger` trägt 5.16:1.
   // Die einzige gefüllte Variante mit weisser Schrift.
   danger: "bg-danger text-on-danger",
-  // Destruktiv, aber Nebenaktion (PO 2026-10-24, Abo am privaten Link): die
-  // Bauform von `outlined`, Kontur und Schrift im hellen Error-Rot — es trägt
+  // Destruktiv, aber Nebenaktion (PO 2026-10-24, Abo am privaten Link): der
+  // Error-Secondary-Button — die Bauform von `outlined`, Kontur und Schrift im hellen Error-Rot — es trägt
   // auf dem Grund, anders als Weiss auf ihm. Für ein Zerstören, das neben dem
   // Hauptweg eines Dialogs steht; die Rückfrage danach trägt `danger`.
   dangerOutlined: "bg-transparent text-error kontur border-error",
