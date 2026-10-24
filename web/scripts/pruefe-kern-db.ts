@@ -4108,6 +4108,99 @@ try {
     assert.deepEqual((await feldAnon.rpc("spieler_link_ansicht", { p_token: neu })).data, { gueltig: false }, "PC 2: entfernt");
   });
 
+  // ── Kalender-Abo der Spielervertretung (#507) ────────────────────────────
+  const linkVon = async (spielerId: string) => wert(await holeSpielerLink(a.supabase, a.id, { spielerId })).token;
+  const aboHolen = async (link: string) => (await feldAnon.rpc("spieler_abo_holen", { p_link: link })).data as string | null;
+  type AboFeedDb = { gueltig: boolean; abo?: string; team?: string; termine?: Record<string, unknown>[] };
+  const aboFeed = async (token: string) => (await feldAnon.rpc("spieler_abo_termine", { p_token: token })).data as AboFeedDb;
+
+  await pruefe("Abo Spielervertretung: über den Link holen, dieselbe Adresse, nur lesend, nie ableitbar (#507 AK 1, 5, 8–10; OoS 7)", async () => {
+    const team = await serienTeam("Kern-DB-Eltern-Abo");
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const link = await linkVon(lena);
+    const abo = (await aboHolen(link))!;
+    assert.match(abo, /^[0-9a-f]{64}$/, "AK 9: nicht erratbar");
+    assert.notEqual(abo, link);
+    assert.equal(await aboHolen(link), abo, "AK 5: dieselbe Adresse");
+    assert.equal((await admin.from("spieler_abos").select("id").eq("spieler_id", lena)).data!.length, 1, "AK 8: höchstens eine");
+    assert.equal(await aboHolen("f".repeat(64)), null, "ungültiger Link holt nichts");
+    // AK 10: Die Abo-Adresse ist kein Link — weder Ansicht noch Ab-/Anmelden.
+    assert.deepEqual((await feldAnon.rpc("spieler_link_ansicht", { p_token: abo })).data, { gueltig: false });
+    assert.deepEqual(
+      (await feldAnon.rpc("spieler_link_abmelden", { p_token: abo, p_termin: t, p_abgemeldet: true, p_gesehen_datum: null, p_gesehen_beginn: null })).data,
+      { status: "ungueltig" },
+    );
+    assert.equal(await aboHolen(abo), null, "aus der Abo-Adresse entsteht keine weitere");
+    // OoS 7: Mitglieder und anon sehen keine Abo-Zeile.
+    for (const k of [a.supabase, feldAnon]) assert.ok((await k.from("spieler_abos").select("id")).error, "kein Recht auf die Tabelle");
+    // Der Feed nennt keinen Namen und verrät den Link nicht (PC 2, 6).
+    const f = await aboFeed(abo);
+    assert.deepEqual([f.gueltig, f.team], [true, "Kern-DB-Eltern-Abo"]);
+    assert.ok(!JSON.stringify(f).includes("Lena") && !JSON.stringify(f).includes(link));
+    assert.deepEqual(Object.keys(f.termine![0]).sort(), [
+      "abgemeldet", "art", "beginn", "begonnen", "bemerkung", "bezeichnung", "datum", "ende", "frist", "frist_abgelaufen",
+      "id", "meldung", "nicht_aufgeboten", "ort", "treffpunkte",
+    ]);
+    assert.deepEqual(await aboFeed("f".repeat(64)), { gueltig: false });
+  });
+
+  await pruefe("Abo Spielervertretung: dieselben Termine wie der Link im selben Moment, ohne ausgefallene, mit dem Stand (#507 PC 1, 3, 4)", async () => {
+    const team = await serienTeam("Kern-DB-Eltern-Abo-Gleichlauf");
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    const noah = (await neuerSpieler(team, "Noah")).spielerId;
+    const kader = wert(await legeKaderAn(a.supabase, a.id, { teamId: team, name: "Nur Noah" })).kaderId;
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [noah], dazu: [kader] }));
+    const neu = (tage: number, beginn = "18:00") =>
+      legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(tage), beginn, ende: "21:00" }).then((r) => wert(r).terminId);
+    const offen = await neu(2);
+    const ab = await neu(3);
+    const aus = await neu(4);
+    const fremd = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:00" })).terminId;
+    const { setzeTerminKader } = await import("../lib/kern/kader");
+    wert(await setzeTerminKader(a.supabase, a.id, { terminId: fremd, kaderIds: [kader] }));
+    await admin.from("training_termine").insert({ team_id: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" });
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: ab, spielerId: lena, abgemeldet: true }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus }));
+    const link = await linkVon(lena);
+    const abo = (await aboHolen(link))!;
+    const ansicht = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link })).data as { termine: { id: string; ausgefallen: boolean }[] };
+    const ids = (await aboFeed(abo)).termine!.map((x) => x.id);
+    assert.deepEqual(ids, ansicht.termine.filter((x) => !x.ausgefallen).map((x) => x.id), "PC 1: wie der Link, ohne ausgefallene");
+    assert.deepEqual(ids, [offen, ab], "nichts Vergangenes, nichts für andere Kader");
+    assert.ok(!ids.includes(fremd) && !ids.includes(aus));
+    assert.deepEqual((await aboFeed(abo)).termine!.map((x) => x.abgemeldet), [false, true], "PC 3");
+    // PC 4: Verlegt erscheint er genau einmal am neuen Zeitpunkt, ausgefallen fehlt er.
+    wert(await aendereTermin(a.supabase, a.id, { terminId: offen, datum: tagCh(6) }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: aus }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: ab }));
+    const danach = (await aboFeed(abo)).termine!;
+    assert.deepEqual(danach.map((x) => [x.id, x.datum]), [[aus, tagCh(4)], [offen, tagCh(6)]]);
+  });
+
+  await pruefe("Abo Spielervertretung erlischt mit Erneuern, Entfernen und Auflösen und lebt nicht wieder auf (#507 PC 7, 8)", async () => {
+    const team = await serienTeam("Kern-DB-Eltern-Abo-Erloeschen");
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    const noah = (await neuerSpieler(team, "Noah")).spielerId;
+    await admin.from("training_termine").insert({ team_id: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" });
+    const alt = (await aboHolen(await linkVon(lena)))!;
+    const vonNoah = (await aboHolen(await linkVon(noah)))!;
+    wert(await erneuereSpielerLink(a.supabase, a.id, { spielerId: lena }));
+    assert.deepEqual(await aboFeed(alt), { gueltig: false }, "erneuert");
+    assert.equal((await aboFeed(vonNoah)).gueltig, true, "andere Abos bleiben");
+    const neu = (await aboHolen(await linkVon(lena)))!;
+    assert.notEqual(neu, alt, "PC 8: über den neuen Link eine neue Adresse");
+    assert.deepEqual(await aboFeed(alt), { gueltig: false }, "PC 8: die alte bleibt erloschen");
+    wert(await entferneSpieler(a.supabase, a.id, { spielerId: lena }));
+    assert.deepEqual(await aboFeed(neu), { gueltig: false }, "entfernt");
+    // Auflösen: Ohne Mitglieder löst der Trigger das Team auf, der Cascade
+    // nimmt Spieler:innen und Abos mit — gleich über welchen Weg.
+    await admin.from("team_members").delete().eq("team_id", team);
+    assert.equal((await admin.from("teams").select("id").eq("id", team)).data!.length, 0, "Team aufgelöst");
+    assert.deepEqual(await aboFeed(vonNoah), { gueltig: false }, "aufgelöst");
+    assert.equal((await admin.from("spieler_abos").select("id").in("token", [alt, neu, vonNoah])).data!.length, 0);
+  });
+
   // ── Verlegen und Ausfall (#437) ──────────────────────────────────────────
   const linkAnsicht = async (spielerId: string) =>
     (await feldAnon.rpc("spieler_link_ansicht", { p_token: wert(await holeSpielerLink(a.supabase, a.id, { spielerId })).token })).data as {

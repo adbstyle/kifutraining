@@ -1,5 +1,5 @@
 import { createAnonClient } from "@/lib/supabase/anon";
-import { kalenderText, type AboTermin } from "@/lib/ical";
+import { kalenderAntwort, kalenderNichtErreichbar, kalenderText, type AboTermin } from "@/lib/ical";
 import { oeffentlicherOriginAus } from "@/lib/origin";
 
 /* Der Feed eines Kalender-Abos (#330). Jeder Abruf liefert den aktuellen Stand
@@ -26,14 +26,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ datei: s
   let feed: Feed = { gueltig: false };
   if (m) {
     const { data, error } = await createAnonClient().rpc("kalender_abo_termine", { p_token: m[1] });
-    if (error) {
-      // Nur die Meldung der Datenbank, nie der Aufruf: Er trägt das Token.
-      console.error("[abo]", error.message);
-      return new Response("Der Kalender ist gerade nicht erreichbar.", {
-        status: 503,
-        headers: { "Retry-After": "300", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" },
-      });
-    }
+    if (error) return kalenderNichtErreichbar(error.message);
     feed = data as Feed;
   }
   const titel = feed.gueltig ? `Training · ${feed.team!.name}` : "KiFu";
@@ -44,20 +37,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ datei: s
         art === "spiel" && bezeichnung ? { ...t, titel: `${bezeichnung} · ${feed.team!.name}` } : t,
       )
     : [];
-  const text = kalenderText({
-    kalenderName: feed.gueltig ? `Trainings und Spiele · ${feed.team!.name}` : "KiFu – Abo erloschen",
-    titel,
-    teamId: feed.team?.id ?? "",
-    origin,
-    termine,
-    jetzt: new Date(),
-  });
-  return new Response(text, {
-    headers: {
-      "Content-Type": "text/calendar; charset=utf-8",
-      "Cache-Control": "no-store",
-      "Content-Disposition": 'inline; filename="kifu.ics"',
-      "X-Robots-Tag": "noindex",
-    },
-  });
+  return kalenderAntwort(
+    kalenderText({
+      kalenderName: feed.gueltig ? `Trainings und Spiele · ${feed.team!.name}` : "KiFu – Abo erloschen",
+      titel,
+      verweis: (id) => `${origin}/team/${feed.team?.id ?? ""}/termin/${id}`,
+      termine,
+      jetzt: new Date(),
+    }),
+  );
 }

@@ -6,6 +6,7 @@ import { Kalenderblatt, Leerzustand, Lozenge, SectionMessage, Switch } from "@/c
 import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
 import type { Meldung } from "@/lib/spiel";
 import { SpielKarte } from "./SpielKarte";
+import { AboKnopf } from "./AboKnopf";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
 import { meldeSpielUeberLinkAktion, meldeUeberLinkAktion } from "@/lib/actions/spieler-link";
@@ -132,8 +133,14 @@ export function ElternAnsicht({
   return (
     <>
       <header className="flex flex-col gap-0.5 border-b border-linie px-4 pb-4 pt-6">
-        <p className="type-body-small text-on-surface-mittel">{team}</p>
-        <h1 className="type-headline-small text-on-surface">{name}</h1>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <p className="type-body-small text-on-surface-mittel">{team}</p>
+            <h1 className="type-headline-small text-on-surface">{name}</h1>
+          </div>
+          {/* Das Kalender-Abo (#507 AK 1). */}
+          <AboKnopf token={token} />
+        </div>
         <p className="type-body-medium text-on-surface-mittel">
           {name} ist für jedes Training zuerst angemeldet. Kann {spieler.vorname} nicht, melde ab - und bis zum
           Beginn wieder an. Für ein Spiel ist {spieler.vorname} erst angemeldet, wenn du anmeldest.

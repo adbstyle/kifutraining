@@ -4,7 +4,9 @@
 // Zeitzonen-Definition: So erscheint ein Termin im Kalenderprogramm zum selben
 // Zeitpunkt wie in der Schweiz, auch wenn das Gerät eine andere Zeitzone nutzt
 // (PC 4), und die Zeitumstellung verschiebt nichts. Je Termin gehen nur Titel,
-// Beginn, Ende, Ort und der Verweis in die Anwendung hinaus (PC 2).
+// Beginn, Ende, Ort und der Verweis in die Anwendung hinaus (PC 2) — beim Abo
+// einer Spielervertretung (#506) statt des Verweises eine Beschreibung und
+// der Status ihrer Spieler:in.
 //
 // REIN: importiert nichts.
 
@@ -14,11 +16,20 @@ export type AboTermin = {
   beginn: string;
   ende: string;
   ort: string | null;
-  /** Zeitpunkt der letzten Änderung (timestamptz, ISO). */
-  geaendert: string;
+  /** Zeitpunkt der letzten Änderung (timestamptz, ISO). Ohne ihn keine
+   *  LAST-MODIFIED: Der Stand einer Spieler:in ändert sich, ohne dass der
+   *  Termin es tut (#506). */
+  geaendert?: string;
   /** Ein eigener Titel, etwa für ein Spiel «Bezeichnung · Teamname» (#459
    *  PC 1); ohne ihn gilt der Titel des Kalenders für Trainings. */
   titel?: string;
+  /** Freitext für DESCRIPTION, vor einem Verweis. */
+  beschreibung?: string;
+  /** STATUS des Eintrags (RFC 5545 3.8.1.11). CANCELLED bewusst nicht:
+   *  Google Kalender verschluckt solche Einträge teils ganz (#506). */
+  status?: "CONFIRMED" | "TENTATIVE";
+  /** Als «frei» eintragen (TRANSP:TRANSPARENT), etwa abgesagt (#506). */
+  frei?: boolean;
 };
 
 const VTIMEZONE = [
@@ -86,7 +97,11 @@ export const aboPfad = (token: string) => `/api/kalender/${aboDatei(token)}`;
 /** Die beiden Schreibweisen eines Abo-Links: https für Google, Outlook und
  *  Proton, `webcal:` für Apple Kalender (öffnet das Abonnement direkt). */
 export function aboLinks(origin: string, token: string) {
-  const url = `${origin}${aboPfad(token)}`;
+  return abonnierLinks(`${origin}${aboPfad(token)}`);
+}
+
+/** Zu einer Feed-Adresse die Schreibweise für Apple Kalender dazu. */
+export function abonnierLinks(url: string) {
   return { url, webcal: url.replace(/^https?:/, "webcal:") };
 }
 
@@ -94,8 +109,13 @@ export function kalenderText(k: {
   kalenderName: string;
   /** «Training · Teamname» (PC 2) — der Titel jedes Termins ohne eigenen. */
   titel: string;
-  teamId: string;
-  origin: string;
+  /** Die Adresse eines Termins in der Anwendung (#330 PC 7); ohne sie kein
+   *  Verweis — das Abo einer Spielervertretung verriete sonst ihren Link. */
+  verweis?: (terminId: string) => string;
+  /** Hängt sich an die UID: Dieselben Termine in mehreren Abos (zwei
+   *  Spieler:innen eines Teams, Mitglied und Elternteil) bleiben je
+   *  Kalender eigene Einträge. */
+  uidZusatz?: string;
   termine: AboTermin[];
   jetzt: Date;
 }): string {
@@ -114,17 +134,48 @@ export function kalenderText(k: {
   for (const t of k.termine) {
     // PC 7, 8: Der Verweis führt über eine eigene Adresse, die Anmeldung,
     // Rückblick und «nicht mehr vorhanden» auflöst.
-    const verweis = `${k.origin}/team/${k.teamId}/termin/${t.id}`;
+    const verweis = k.verweis?.(t.id);
     // PC 6: Die UID ist die Kennung des Termins — ein geänderter, verschobener
     // oder in eine neue Serie übergegangener Termin erscheint genau einmal.
-    z.push("BEGIN:VEVENT", `UID:${t.id}@ki-fu.ch`, `DTSTAMP:${utc(k.jetzt.toISOString())}`, `LAST-MODIFIED:${utc(t.geaendert)}`);
+    const uid = k.uidZusatz ? `${t.id}.${k.uidZusatz}` : t.id;
+    z.push("BEGIN:VEVENT", `UID:${uid}@ki-fu.ch`, `DTSTAMP:${utc(k.jetzt.toISOString())}`);
+    if (t.geaendert) z.push(`LAST-MODIFIED:${utc(t.geaendert)}`);
     // Beginn und Ende sind Pflicht, das Ende liegt am selben Tag danach
     // (NOT NULL, `tt_ende_nach_beginn`).
     z.push(`DTSTART;TZID=Europe/Zurich:${lokal(t.datum, t.beginn)}`, `DTEND;TZID=Europe/Zurich:${lokal(t.datum, t.ende)}`);
     z.push(`SUMMARY:${textEscape(t.titel ?? k.titel)}`);
     if (t.ort) z.push(`LOCATION:${textEscape(t.ort)}`);
-    z.push(`URL:${verweis}`, `DESCRIPTION:${textEscape(verweis)}`, "END:VEVENT");
+    if (t.status) z.push(`STATUS:${t.status}`);
+    if (t.frei) z.push("TRANSP:TRANSPARENT");
+    if (verweis) z.push(`URL:${verweis}`);
+    const beschreibung = [t.beschreibung, verweis].filter(Boolean).join("\n\n");
+    if (beschreibung) z.push(`DESCRIPTION:${textEscape(beschreibung)}`);
+    z.push("END:VEVENT");
   }
   z.push("END:VCALENDAR");
   return z.map(falten).join("\r\n") + "\r\n";
+}
+
+/** Der Feed als Antwort — nie zwischengespeichert, nicht für Suchmaschinen:
+ *  Die Adresse IST das Geheimnis. */
+export function kalenderAntwort(text: string): Response {
+  return new Response(text, {
+    headers: {
+      "Content-Type": "text/calendar; charset=utf-8",
+      "Cache-Control": "no-store",
+      "Content-Disposition": 'inline; filename="kifu.ics"',
+      "X-Robots-Tag": "noindex",
+    },
+  });
+}
+
+/** Die Datenebene antwortet nicht: ein Fehler mit Wiederholung statt eines
+ *  leeren Kalenders, der die Einträge im Programm löschen würde. Nur die
+ *  Meldung der Datenbank ins Log, nie der Aufruf: Er trägt das Token. */
+export function kalenderNichtErreichbar(meldung: string): Response {
+  console.error("[abo]", meldung);
+  return new Response("Der Kalender ist gerade nicht erreichbar.", {
+    status: 503,
+    headers: { "Retry-After": "300", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" },
+  });
 }

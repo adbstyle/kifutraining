@@ -127,6 +127,7 @@ import { ZEITRAUM_TEXT, kalenderblatt, monatVon, monatsName, monatsRaster, plusM
 import { nachMonatUndTag } from "../lib/plan-gliederung";
 import { planHref } from "../lib/team-ansicht";
 import { aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
+import { aboEintrag, aboKalenderName, aboStatus, spielerAboLinks, spielerAboPfad, type AboFeedTermin } from "../lib/spieler-abo";
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
@@ -2037,7 +2038,7 @@ const aboTermin = (t: Partial<AboTermin> & { id: string }): AboTermin => ({
   datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, geaendert: "2026-09-30T08:00:00Z", ...t,
 });
 const aboText = (termine: AboTermin[]) =>
-  kalenderText({ kalenderName: "Training · FC Test", titel: "Training · FC Test", teamId: "team", origin: "https://ki-fu.ch", jetzt: ABO_JETZT, termine });
+  kalenderText({ kalenderName: "Training · FC Test", titel: "Training · FC Test", verweis: (id) => `https://ki-fu.ch/team/team/termin/${id}`, jetzt: ABO_JETZT, termine });
 
 pruefe("Abo: Wanduhrzeit mit TZID, Beginn und Ende des Termins (#330 PC 2–4, Review Focus 1)", () => {
   const text = aboText([
@@ -2091,7 +2092,7 @@ pruefe("Abo: Ohne Termine bleibt es ein gültiger Kalender samt Zeitzone", () =>
 
 pruefe("Abo: Semikolon, Komma, Backslash und Zeilenumbruch im Text werden maskiert", () => {
   assert.equal(textEscape("a;b,c\\d\ne\r\nf"), "a\\;b\\,c\\\\d\\ne\\nf");
-  const text = kalenderText({ kalenderName: "Kids; U9, A\nB", titel: "Training; X, Y\nZ", teamId: "t", origin: "https://ki-fu.ch", jetzt: ABO_JETZT, termine: [aboTermin({ id: "a" })] });
+  const text = kalenderText({ kalenderName: "Kids; U9, A\nB", titel: "Training; X, Y\nZ", jetzt: ABO_JETZT, termine: [aboTermin({ id: "a" })] });
   assert.ok(text.includes("\r\nSUMMARY:Training\\; X\\, Y\\nZ\r\n"));
   assert.ok(text.includes("\r\nX-WR-CALNAME:Kids\\; U9\\, A\\nB\r\n"));
 });
@@ -2105,12 +2106,56 @@ pruefe("Abo: Faltung zählt Oktette, nicht Zeichen", () => {
 
 pruefe("Abo: Eine lange URL-Zeile wird gefaltet und fügt sich wieder zusammen", () => {
   const origin = "https://" + "sehr-lange-adresse.".repeat(6) + "ki-fu.ch";
-  const text = kalenderText({ kalenderName: "K", titel: "T", teamId: "t", origin, jetzt: ABO_JETZT, termine: [aboTermin({ id: "a" })] });
+  const text = kalenderText({ kalenderName: "K", titel: "T", verweis: (id) => `${origin}/team/t/termin/${id}`, jetzt: ABO_JETZT, termine: [aboTermin({ id: "a" })] });
   const zeilen = text.split("\r\n");
   assert.ok(zeilen.every((l) => new TextEncoder().encode(l).length <= 75), "alle Zeilen ≤ 75 Oktette");
   const entfaltet = text.replace(/\r\n /g, "");
   assert.ok(entfaltet.includes(`\r\nURL:${origin}/team/t/termin/a\r\n`), "URL entfaltet vollständig");
   assert.ok(zeilen.some((l) => l.startsWith(" ")), "es wurde tatsächlich gefaltet");
+});
+
+const feedTermin = (t: Partial<AboFeedTermin> & { id: string }): AboFeedTermin => ({
+  datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: "Sportplatz", art: "training", bezeichnung: null,
+  begonnen: false, abgemeldet: false, meldung: null, frist: null, frist_abgelaufen: false, nicht_aufgeboten: false,
+  bemerkung: null, treffpunkte: null, ...t,
+});
+const elternAbo = (termine: AboFeedTermin[]) =>
+  kalenderText({ kalenderName: aboKalenderName("FC Test"), titel: "KiFu", uidZusatz: "abo1", jetzt: ABO_JETZT, termine: termine.map((t) => aboEintrag(t, "FC Test")) });
+
+pruefe("Abo Spielervertretung: Training angemeldet = zugesagt, abgemeldet = abgesagt (#507 PC 3, AK 6)", () => {
+  assert.equal(aboStatus(feedTermin({ id: "a" })), "zugesagt");
+  assert.equal(aboStatus(feedTermin({ id: "a", abgemeldet: true })), "abgesagt");
+  const zu = aboEintrag(feedTermin({ id: "a" }), "FC Test");
+  assert.equal(zu.titel, "✅ Training · FC Test", "Status vorn im Titel");
+  assert.equal(zu.beschreibung, "Zugesagt");
+  assert.equal(zu.status, "CONFIRMED");
+  assert.equal(zu.frei, false);
+  const ab = aboEintrag(feedTermin({ id: "a", abgemeldet: true }), "FC Test");
+  assert.equal(ab.titel, "❌ Training · FC Test");
+  assert.equal(ab.frei, true, "abgesagt belegt keine Zeit");
+});
+
+pruefe("Abo Spielervertretung: nur Terminart, Team, Zeit, Ort, Status — kein Verweis, eigene UID (#507 PC 2, 5, 6; OoS 3)", () => {
+  const text = elternAbo([feedTermin({ id: "a", ort: "Halle; Nord" })]);
+  assert.ok(text.includes("\r\nX-WR-CALNAME:Trainings und Spiele · FC Test\r\n"), "Kalender heisst nach dem Team");
+  assert.ok(text.includes("\r\nUID:a.abo1@ki-fu.ch\r\n"), "UID je Abo");
+  assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20261007T180000\r\nDTEND;TZID=Europe/Zurich:20261007T193000"), "Schweizer Wanduhrzeit");
+  assert.ok(text.includes("\r\nLOCATION:Halle\\; Nord\r\n"));
+  assert.ok(text.includes("\r\nSUMMARY:✅ Training · FC Test\r\n"));
+  assert.ok(text.includes("\r\nSTATUS:CONFIRMED\r\n"));
+  assert.ok(text.includes("\r\nDESCRIPTION:Zugesagt\r\n"));
+  assert.ok(!text.includes("URL:") && !text.includes("http"), "kein Verweis, der den Link verriete");
+  assert.ok(!text.includes("LAST-MODIFIED"), "der Stand ändert sich ohne den Termin");
+  assert.ok(!text.includes("TRANSP:"), "zugesagt belegt Zeit");
+  assert.ok(elternAbo([feedTermin({ id: "a", abgemeldet: true })]).includes("\r\nTRANSP:TRANSPARENT\r\n"));
+});
+
+pruefe("Abo Spielervertretung: Adresse neben dem Abo der Mitglieder, webcal für Apple (#507 AK 4)", () => {
+  assert.equal(spielerAboPfad("tok"), "/api/kalender/spieler/tok.ics");
+  assert.deepEqual(spielerAboLinks("https://ki-fu.ch/", "tok"), {
+    url: "https://ki-fu.ch/api/kalender/spieler/tok.ics",
+    webcal: "webcal://ki-fu.ch/api/kalender/spieler/tok.ics",
+  });
 });
 
 pruefe("Spielerliste: Namen bereinigt, Grenzen der Angaben (#434 AK 6, 14)", () => {
