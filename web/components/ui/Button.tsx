@@ -24,7 +24,7 @@ import { cn } from "@/lib/cn";
 // Schrift — für die eine Handlung auf einer Fläche im Fehlerton, wo `filled` (Violett
 // auf Rot) zu laut wäre und `outlined` unterginge: «Wieder anmelden» am
 // abgemeldeten nächsten Termin (PO 2026-10-17).
-type Variant = "filled" | "tonal" | "outlined" | "text" | "danger" | "quiet" | "hell";
+type Variant = "filled" | "tonal" | "outlined" | "text" | "danger" | "dangerOutlined" | "quiet" | "hell";
 
 // `state` gehört in die Basis und nicht an die Varianten: Die Zustands-Ebene
 // färbt sich in der Farbe des Inhalts ein und gilt darum für jede Variante
@@ -51,6 +51,11 @@ const variants: Record<Variant, string> = {
   // helle Schrift-Rot trüge Weiss nur mit 2.50:1, `danger` trägt 5.16:1.
   // Die einzige gefüllte Variante mit weisser Schrift.
   danger: "bg-danger text-on-danger",
+  // Destruktiv, aber Nebenaktion (PO 2026-10-24, Abo am privaten Link): die
+  // Bauform von `outlined`, Kontur und Schrift im hellen Error-Rot — es trägt
+  // auf dem Grund, anders als Weiss auf ihm. Für ein Zerstören, das neben dem
+  // Hauptweg eines Dialogs steht; die Rückfrage danach trägt `danger`.
+  dangerOutlined: "bg-transparent text-error kontur border-error",
   // Die dichte Bauform von `text` — dieselbe Farbe, siehe oben.
   quiet: "bg-transparent text-primary",
   // Hell: die umgekehrte Fläche (`umkehr`), darauf die Farbe des Grunds als

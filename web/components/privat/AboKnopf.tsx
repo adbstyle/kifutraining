@@ -94,11 +94,11 @@ export function AboKnopf({ token }: { token: string }) {
           ) : (
             <>
               {schritt === "adresse" && links && (
-                <Button variant="text" onClick={() => setSchritt("rueckfrage")} disabled={pending}>
+                <Button variant="dangerOutlined" onClick={() => setSchritt("rueckfrage")} disabled={pending}>
                   Abo widerrufen
                 </Button>
               )}
-              <Button variant="text" onClick={schliessen}>
+              <Button variant="outlined" onClick={schliessen}>
                 Schliessen
               </Button>
             </>
