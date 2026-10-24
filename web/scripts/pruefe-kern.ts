@@ -2150,6 +2150,47 @@ pruefe("Abo Spielervertretung: nur Terminart, Team, Zeit, Ort, Status — kein V
   assert.ok(elternAbo([feedTermin({ id: "a", abgemeldet: true })]).includes("\r\nTRANSP:TRANSPARENT\r\n"));
 });
 
+pruefe("Abo Spielervertretung: Spiel zugesagt, vielleicht bis zur Frist, sonst abgesagt (#508 PC 3–6, AK 2)", () => {
+  const spiel = (t: Partial<AboFeedTermin>) => feedTermin({ id: "s", art: "spiel", bezeichnung: "Cup gegen Thun", ...t });
+  assert.equal(aboStatus(spiel({ meldung: "angemeldet" })), "zugesagt", "PC 3");
+  assert.equal(aboStatus(spiel({ meldung: "angemeldet", nicht_aufgeboten: true })), "abgesagt", "nicht aufgeboten, auch wenn angemeldet");
+  assert.equal(aboStatus(spiel({})), "vielleicht", "PC 4: ohne Meldung, ohne Frist, vor dem Anpfiff");
+  assert.equal(aboStatus(spiel({ frist: "2026-10-05T18:00" })), "vielleicht", "Frist noch nicht abgelaufen");
+  assert.equal(aboStatus(spiel({ frist: "2026-10-05T18:00", frist_abgelaufen: true })), "abgesagt", "PC 6: Frist abgelaufen");
+  assert.equal(aboStatus(spiel({ begonnen: true })), "abgesagt", "PC 5: ohne Frist zählt der Anpfiff");
+  assert.equal(aboStatus(spiel({ nicht_aufgeboten: true })), "abgesagt");
+  assert.equal(aboStatus(spiel({ meldung: "abgemeldet" })), "abgesagt");
+  assert.equal(aboStatus(spiel({ meldung: "angemeldet", begonnen: true })), "zugesagt", "angemeldet bleibt zugesagt");
+  const vielleicht = aboEintrag(spiel({}), "FC Test");
+  assert.equal(vielleicht.titel, "❔ Cup gegen Thun · FC Test", "Bezeichnung statt Terminart");
+  assert.deepEqual([vielleicht.status, vielleicht.frei], ["TENTATIVE", false]);
+  assert.equal(aboEintrag(spiel({ bezeichnung: null }), "FC Test").titel, "❔ Spiel · FC Test");
+  // Ein Training kennt kein «vielleicht», auch ohne Meldung.
+  assert.equal(aboStatus(feedTermin({ id: "t", meldung: null })), "zugesagt");
+});
+
+pruefe("Abo Spielervertretung: Treffpunkte und Bemerkung wie am Link (#508 PC 2, AK 3; OoS 1, 2)", () => {
+  const treffpunkte = [
+    { anreise: "car" as const, zeitpunkt: "2026-10-06T19:00", ort: null },
+    { anreise: "oev" as const, zeitpunkt: "2026-10-07T16:30", ort: "Bahnhof; Gleis 3" },
+    { anreise: "vor_ort" as const, zeitpunkt: "2026-10-07T17:30", ort: null },
+  ];
+  const spiel = (t: Partial<AboFeedTermin>) =>
+    feedTermin({ id: "s", art: "spiel", bezeichnung: "Cup", ort: "Wyler", treffpunkte, bemerkung: "Leibchen mitnehmen", frist: "2026-10-05T18:00", ...t });
+  assert.equal(
+    aboEintrag(spiel({ meldung: "angemeldet" }), "FC Test").beschreibung,
+    "Zugesagt\n\nTreffpunkte\nDi., 06.10., 19:00 · Car oder Vereinsbus\n16:30 · öV · Bahnhof; Gleis 3\n17:30 · vor Ort · Wyler\n\nBemerkung\nLeibchen mitnehmen",
+  );
+  // Abgesagt oder begonnen: am Link gedämpft bzw. vorbei — keine Treffpunkte, die Bemerkung bleibt.
+  assert.equal(aboEintrag(spiel({ meldung: "abgemeldet" }), "FC Test").beschreibung, "Abgesagt\n\nBemerkung\nLeibchen mitnehmen");
+  assert.equal(aboEintrag(spiel({ meldung: "angemeldet", begonnen: true }), "FC Test").beschreibung, "Zugesagt\n\nBemerkung\nLeibchen mitnehmen");
+  assert.equal(aboEintrag(spiel({ treffpunkte: [], bemerkung: null }), "FC Test").beschreibung, "Vielleicht");
+  // Weder Meldefrist noch Richtwert noch Zahl der Angemeldeten (OoS 1), kein Grund der Absage (OoS 2).
+  const text = elternAbo([spiel({ nicht_aufgeboten: true })]);
+  assert.ok(!/frist|aufgeboten|angemeldet|18:00/i.test(text.replace(/DTSTART[^\r]*|DTEND[^\r]*/g, "")));
+  assert.ok(text.includes("\r\nSUMMARY:❌ Cup · FC Test\r\n"));
+});
+
 pruefe("Abo Spielervertretung: Adresse neben dem Abo der Mitglieder, webcal für Apple (#507 AK 4)", () => {
   assert.equal(spielerAboPfad("tok"), "/api/kalender/spieler/tok.ics");
   assert.deepEqual(spielerAboLinks("https://ki-fu.ch/", "tok"), {

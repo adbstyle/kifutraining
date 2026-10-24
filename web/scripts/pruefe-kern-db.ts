@@ -5277,6 +5277,33 @@ try {
     assert.deepEqual(rest.data, []);
   });
 
+  await pruefe("Abo Spielervertretung: Spiele mit Meldung, Frist, Kennzeichnung, Treffpunkten und Bemerkung wie am Link (#508 AK 1, PC 1, 2, 7)", async () => {
+    const k = await spielTeam("Kern-DB-Eltern-Abo-Spiele");
+    const offen = wert(await k.spiel(7, { treffpunkte: [{ anreise: "oev", zeitpunkt: `${tagCh(7)}T09:00`, ort: "Bahnhof" }], bemerkung: "Leibchen" })).terminId;
+    const vorbei = wert(await k.spiel(5, { meldefrist: `${tagCh(-1)}T20:00` })).terminId;
+    const aus = wert(await k.spiel(6)).terminId;
+    const training = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: k.team, datum: tagCh(4), beginn: "18:00", ende: "19:00" })).terminId;
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus }));
+    wert(await setzeAufgebot(a.supabase, a.id, { terminId: offen, spielerId: k.lena, nichtAufgeboten: true }));
+    const link = await linkVon(k.lena);
+    const abo = (await aboHolen(link))!;
+    const ansicht = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link })).data as { termine: Record<string, unknown>[] };
+    const feld = ["id", "art", "bezeichnung", "meldung", "frist", "frist_abgelaufen", "nicht_aufgeboten", "bemerkung", "treffpunkte"];
+    const auswahl = (x: Record<string, unknown>) => Object.fromEntries(feld.map((f) => [f, x[f]]));
+    const termine = (await aboFeed(abo)).termine!;
+    // AK 1, PC 1, 2: im selben Abo wie die Trainings, mit denselben Angaben wie der Link, ohne ausgefallene.
+    assert.deepEqual(termine.map(auswahl), ansicht.termine.filter((x) => !x.ausgefallen).map(auswahl));
+    assert.deepEqual(termine.map((x) => x.id), [training, vorbei, offen]);
+    const o = termine.find((x) => x.id === offen)!;
+    assert.deepEqual([o.nicht_aufgeboten, o.bemerkung, o.treffpunkte], [true, "Leibchen", [{ anreise: "oev", zeitpunkt: `${tagCh(7)}T09:00`, ort: "Bahnhof" }]]);
+    assert.equal(termine.find((x) => x.id === vorbei)!.frist_abgelaufen, true);
+    // PC 7: Der nächste Abruf zeigt den neuen Stand.
+    wert(await setzeAufgebot(a.supabase, a.id, { terminId: offen, spielerId: k.lena, nichtAufgeboten: false }));
+    wert(await setzeMeldung(a.supabase, a.id, { terminId: offen, spielerId: k.lena, angemeldet: true }));
+    const danach = (await aboFeed(abo)).termine!.find((x) => x.id === offen)!;
+    assert.deepEqual([danach.nicht_aufgeboten, danach.meldung], [false, "angemeldet"]);
+  });
+
   // ── Nicht aufbieten (#464) ───────────────────────────────────────────────
   await pruefe("Nicht aufbieten: kennzeichnen, Meldung bleibt und ruht, zählt nicht, nur Mitglieder (#464 AK 1–9; PC 1, 7)", async () => {
     const k = await spielTeam("Kern-DB-Aufgebot");
