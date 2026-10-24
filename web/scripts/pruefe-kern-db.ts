@@ -4201,6 +4201,32 @@ try {
     assert.equal((await admin.from("spieler_abos").select("id").in("token", [alt, neu, vonNoah])).data!.length, 0);
   });
 
+  await pruefe("Abo Spielervertretung widerrufen: Adresse erlischt für alle, Link und Abmeldungen bleiben, neue holbar (#509 AK 1, 4; PC 1–3)", async () => {
+    const team = await serienTeam("Kern-DB-Eltern-Abo-Widerruf");
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    const noah = (await neuerSpieler(team, "Noah")).spielerId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
+    const link = await linkVon(lena);
+    const alt = (await aboHolen(link))!;
+    const vonNoah = (await aboHolen(await linkVon(noah)))!;
+    const widerrufen = async (l: string) => (await feldAnon.rpc("spieler_abo_widerrufen", { p_link: l })).data;
+    assert.equal(await widerrufen(alt), "ungueltig", "die Abo-Adresse selbst widerruft nichts");
+    assert.equal(await widerrufen(link), "ok");
+    assert.deepEqual(await aboFeed(alt), { gueltig: false }, "PC 1");
+    assert.equal((await aboFeed(vonNoah)).gueltig, true, "fremde Abos bleiben");
+    // PC 3: Link, Abmeldung und Zahl bleiben.
+    assert.equal(await linkVon(lena), link);
+    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link })).data.termine[0].abgemeldet, true);
+    assert.equal(await widerrufen(link), "ok", "ohne Abo kein Fehler");
+    // AK 4, PC 2: eine neue Adresse, die alte bleibt erloschen.
+    const neu = (await aboHolen(link))!;
+    assert.notEqual(neu, alt);
+    assert.equal((await aboFeed(neu)).gueltig, true);
+    assert.deepEqual(await aboFeed(alt), { gueltig: false });
+    assert.equal(await widerrufen("f".repeat(64)), "ungueltig");
+  });
+
   // ── Verlegen und Ausfall (#437) ──────────────────────────────────────────
   const linkAnsicht = async (spielerId: string) =>
     (await feldAnon.rpc("spieler_link_ansicht", { p_token: wert(await holeSpielerLink(a.supabase, a.id, { spielerId })).token })).data as {

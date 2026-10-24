@@ -119,4 +119,10 @@ export const ABO_TEXT = {
   /** #507 AK 3. */
   verzoegerung: "Dein Kalenderprogramm übernimmt Änderungen erst nach einer Weile; wie oft es nachsieht, bestimmt es selbst.",
   fehler: "Die Abo-Adresse liess sich gerade nicht holen. Versuch es noch einmal.",
+  /** #509 AK 3: vor dem Bestätigen. */
+  widerrufen:
+    "Die bisherige Abo-Adresse liefert danach für alle, die sie nutzen, keine Termine mehr. Dieser Link und deine Ab- und Anmeldungen bleiben. Eine neue Abo-Adresse holst du jederzeit hier.",
+  /** #509 PC 1; OoS 1. */
+  widerrufenOk:
+    "Abo widerrufen: Die bisherige Abo-Adresse liefert keine Termine mehr. Den abonnierten Kalender selbst entfernst du in deinem Kalenderprogramm.",
 } as const;

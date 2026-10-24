@@ -5,7 +5,9 @@ import {
   holeAbo,
   meldeSpielUeberLink,
   meldeUeberLink,
+  widerrufeAbo,
   type AboHolenErgebnis,
+  type AboWiderrufErgebnis,
   type LinkAbmeldeErgebnis,
   type LinkAbmeldung,
   type LinkMeldeErgebnis,
@@ -27,4 +29,9 @@ export async function meldeSpielUeberLinkAktion(token: string, e: LinkMeldung): 
 /** Die Abo-Adresse zum privaten Link holen (#507 AK 1, 5). */
 export async function holeAboUeberLinkAktion(token: string): Promise<AboHolenErgebnis> {
   return holeAbo(token, await oeffentlicherOrigin());
+}
+
+/** Das Abo über den privaten Link widerrufen (#509 AK 1). */
+export async function widerrufeAboUeberLinkAktion(token: string): Promise<AboWiderrufErgebnis> {
+  return widerrufeAbo(token);
 }

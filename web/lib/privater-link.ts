@@ -155,3 +155,14 @@ export async function holeAbo(token: string, origin: string): Promise<AboHolenEr
   if (!data) return { ok: false, ungueltig: true };
   return { ok: true, ...spielerAboLinks(origin, data as string) };
 }
+
+export type AboWiderrufErgebnis = { ok: true } | { ok: false; ungueltig: true } | { ok: false; ungueltig?: false; error: string };
+
+/** Das Abo über den Link widerrufen (#509 AK 1, PC 1–3): Die bisherige
+ *  Adresse liefert nichts mehr; Link und Meldungen bleiben. */
+export async function widerrufeAbo(token: string): Promise<AboWiderrufErgebnis> {
+  if (!istLinkToken(token)) return { ok: false, ungueltig: true };
+  const { data, error } = await createAnonClient().rpc("spieler_abo_widerrufen", { p_link: token });
+  if (error || !data) return { ok: false, error: LINK_FEHLER };
+  return data === "ungueltig" ? { ok: false, ungueltig: true } : { ok: true };
+}
