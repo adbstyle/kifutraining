@@ -876,8 +876,8 @@ im Browser legt sie nichts ab.
 Über das Kalender-Zeichen rechts oben auf der Seite holen Eltern oder die Spieler:in selbst eine
 Abo-Adresse, mit der ihr Kalenderprogramm die Termine der Spieler:in abruft. Der Dialog „Im
 Kalender abonnieren" erklärt die Zeichen — „Im Kalender steht vor jedem Termin ✅ zugesagt, ❔
-vielleicht (Spiel ohne Meldung) oder ❌ abgesagt." —, sagt, dass das Abo nur anzeigt und ab- und
-angemeldet weiterhin über den Link wird, und dass das Kalenderprogramm Änderungen erst nach einer
+vielleicht (Spiel ohne Meldung) oder ❌ abgesagt." —, sagt, dass das Abo nur anzeigt und weiterhin
+über den Link ab- und angemeldet wird, und dass das Kalenderprogramm Änderungen erst nach einer
 Weile übernimmt. Er bietet die Adresse zum Kopieren an und sagt, wie sie in Apple Kalender — dort
 auch direkt zu öffnen —, Google Kalender, Outlook und Proton Calendar übernommen wird. Je Link gibt
 es höchstens eine gültige Abo-Adresse; wer sie erneut holt, erhält dieselbe. Die Adresse ist eine

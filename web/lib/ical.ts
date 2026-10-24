@@ -20,9 +20,9 @@ export type AboTermin = {
    *  LAST-MODIFIED: Der Stand einer Spieler:in ändert sich, ohne dass der
    *  Termin es tut (#506). */
   geaendert?: string;
-  /** Ein eigener Titel, etwa für ein Spiel «Bezeichnung · Teamname» (#459
-   *  PC 1); ohne ihn gilt der Titel des Kalenders für Trainings. */
-  titel?: string;
+  /** «Training · Teamname» (#330 PC 2), ein Spiel «Bezeichnung · Teamname»
+   *  (#459 PC 1), am privaten Link mit dem Status vorn (#507 AK 6). */
+  titel: string;
   /** Freitext für DESCRIPTION, vor einem Verweis. */
   beschreibung?: string;
   /** STATUS des Eintrags (RFC 5545 3.8.1.11). CANCELLED bewusst nicht:
@@ -90,25 +90,29 @@ const hhmm = (zeit: string) => zeit.slice(0, 5);
 const lokal = (datum: string, zeit: string) => `${kompakt(datum)}T${hhmm(zeit).replace(":", "")}00`;
 const utc = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 
-/** Der Pfad des Feeds zu einem Abo-Token. */
+/** Der Pfad des Feeds zu einem Abo-Token; `bereich` trennt das Abo am
+ *  privaten Link (`"spieler/"`, #507) von dem der Mitglieder. */
 export const aboDatei = (token: string) => `${token}.ics`;
-export const aboPfad = (token: string) => `/api/kalender/${aboDatei(token)}`;
+export const aboPfad = (token: string, bereich = "") => `/api/kalender/${bereich}${aboDatei(token)}`;
+
+/** Das Token aus dem Dateinamen eines Feeds — 64 Hex-Zeichen, sonst `null`. */
+export function aboTokenAus(datei: string): string | null {
+  return /^([0-9a-f]{64})\.ics$/.exec(datei)?.[1] ?? null;
+}
+
+/** Der Name eines leeren Kalenders zu einer ungültigen oder erloschenen
+ *  Adresse: So entfernen Programme, die das tun, die Einträge (#330 PC 9). */
+export const ABO_ERLOSCHEN = "KiFu – Abo erloschen";
 
 /** Die beiden Schreibweisen eines Abo-Links: https für Google, Outlook und
  *  Proton, `webcal:` für Apple Kalender (öffnet das Abonnement direkt). */
-export function aboLinks(origin: string, token: string) {
-  return abonnierLinks(`${origin}${aboPfad(token)}`);
-}
-
-/** Zu einer Feed-Adresse die Schreibweise für Apple Kalender dazu. */
-export function abonnierLinks(url: string) {
+export function aboLinks(origin: string, token: string, bereich?: string) {
+  const url = `${origin}${aboPfad(token, bereich)}`;
   return { url, webcal: url.replace(/^https?:/, "webcal:") };
 }
 
 export function kalenderText(k: {
   kalenderName: string;
-  /** «Training · Teamname» (PC 2) — der Titel jedes Termins ohne eigenen. */
-  titel: string;
   /** Die Adresse eines Termins in der Anwendung (#330 PC 7); ohne sie kein
    *  Verweis — das Abo einer Spielervertretung verriete sonst ihren Link. */
   verweis?: (terminId: string) => string;
@@ -143,7 +147,7 @@ export function kalenderText(k: {
     // Beginn und Ende sind Pflicht, das Ende liegt am selben Tag danach
     // (NOT NULL, `tt_ende_nach_beginn`).
     z.push(`DTSTART;TZID=Europe/Zurich:${lokal(t.datum, t.beginn)}`, `DTEND;TZID=Europe/Zurich:${lokal(t.datum, t.ende)}`);
-    z.push(`SUMMARY:${textEscape(t.titel ?? k.titel)}`);
+    z.push(`SUMMARY:${textEscape(t.titel)}`);
     if (t.ort) z.push(`LOCATION:${textEscape(t.ort)}`);
     if (t.status) z.push(`STATUS:${t.status}`);
     if (t.frei) z.push("TRANSP:TRANSPARENT");

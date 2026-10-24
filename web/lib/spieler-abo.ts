@@ -7,9 +7,9 @@
 // abgesagt schon in der Kalenderübersicht, in allen vier Programmen (#507
 // AK 6). Kein Name der Spieler:in, kein Verweis auf den Link (PC 2, 6).
 //
-// REIN: nur Typen und reine Helfer.
+// REIN: reine Helfer; aus `privater-link` nur Typen.
 
-import { abonnierLinks, type AboTermin } from "./ical";
+import { aboLinks, type AboTermin } from "./ical";
 import type { LinkTermin } from "./privater-link";
 import { treffpunktAnzeige } from "./spiel";
 
@@ -36,7 +36,6 @@ export type AboFeedTermin = Pick<
   | "begonnen"
   | "abgemeldet"
   | "meldung"
-  | "frist"
   | "frist_abgelaufen"
   | "nicht_aufgeboten"
   | "bemerkung"
@@ -50,14 +49,13 @@ export type AboFeed = { gueltig: false } | { gueltig: true; abo: string; team: s
  *    «vielleicht» gibt es nicht.
  *  - Spiel (#508 PC 3–6): nicht aufgeboten = abgesagt, auch wenn angemeldet;
  *    angemeldet = zugesagt; ohne Meldung = vielleicht, bis die Meldefrist
- *    abläuft — ohne Frist gilt der Anpfiff; sonst abgesagt. */
+ *    abläuft (`frist_abgelaufen`, ohne Frist nie) — ohne Frist gilt der
+ *    Anpfiff; sonst abgesagt. */
 export function aboStatus(t: AboFeedTermin): AboStatus {
   if (t.art !== "spiel") return t.abgemeldet ? "abgesagt" : "zugesagt";
-  if (t.nicht_aufgeboten) return "abgesagt";
+  if (t.nicht_aufgeboten || t.meldung === "abgemeldet") return "abgesagt";
   if (t.meldung === "angemeldet") return "zugesagt";
-  if (t.meldung === "abgemeldet") return "abgesagt";
-  const fristVorbei = t.begonnen || (t.frist !== null && t.frist_abgelaufen);
-  return fristVorbei ? "abgesagt" : "vielleicht";
+  return t.begonnen || t.frist_abgelaufen ? "abgesagt" : "vielleicht";
 }
 
 /** Ein Termin, wie er ins Abo geht (#507 PC 2, #508 PC 2): Terminart bzw.
@@ -104,21 +102,16 @@ function spielAbschnitte(t: AboFeedTermin, status: AboStatus): string[] {
 /** Der Kalender heisst nach dem Team (#507 PC 6) — wie das Abo der Mitglieder. */
 export const aboKalenderName = (team: string) => `Trainings und Spiele · ${team}`;
 
-/** Der Pfad des Feeds zu einer Abo-Adresse — neben dem der Mitglieder. */
-export const spielerAboPfad = (token: string) => `/api/kalender/spieler/${token}.ics`;
-
-export function spielerAboLinks(origin: string, token: string) {
-  return abonnierLinks(`${origin.replace(/\/+$/, "")}${spielerAboPfad(token)}`);
-}
+/** Die Adresse des Feeds neben der der Mitglieder: `/api/kalender/spieler/…`. */
+export const spielerAboLinks = (origin: string, token: string) => aboLinks(origin, token, "spieler/");
 
 export const ABO_TEXT = {
-  /** Die Zeichen im Titel — damit die Spielervertretung sie im Kalender liest. */
-  zeichen: `Im Kalender steht vor jedem Termin ${ABO_STATUS.zugesagt.zeichen} zugesagt, ${ABO_STATUS.vielleicht.zeichen} vielleicht (Spiel ohne Meldung) oder ${ABO_STATUS.abgesagt.zeichen} abgesagt.`,
+  /** Was die Zeichen im Titel bedeuten — damit die Spielervertretung sie im Kalender liest. */
+  legende: `Im Kalender steht vor jedem Termin ${ABO_STATUS.zugesagt.zeichen} zugesagt, ${ABO_STATUS.vielleicht.zeichen} vielleicht (Spiel ohne Meldung) oder ${ABO_STATUS.abgesagt.zeichen} abgesagt.`,
   /** #507 AK 2. */
   nurAnzeigen: "Das Abo zeigt nur an: Ab- und anmelden geht weiterhin hier über diesen Link.",
   /** #507 AK 3. */
   verzoegerung: "Dein Kalenderprogramm übernimmt Änderungen erst nach einer Weile; wie oft es nachsieht, bestimmt es selbst.",
-  fehler: "Die Abo-Adresse liess sich gerade nicht holen. Versuch es noch einmal.",
   /** #509 AK 3: vor dem Bestätigen. */
   widerrufen:
     "Die bisherige Abo-Adresse liefert danach für alle, die sie nutzen, keine Termine mehr. Dieser Link und deine Ab- und Anmeldungen bleiben. Eine neue Abo-Adresse holst du jederzeit hier.",

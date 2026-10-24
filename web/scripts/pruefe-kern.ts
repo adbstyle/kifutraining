@@ -126,8 +126,8 @@ import { MASS_TEXT } from "../lib/feldmass";
 import { ZEITRAUM_TEXT, kalenderblatt, monatVon, monatsName, monatsRaster, plusMonate, tagOhneJahr, tagText, zeitraumProblem } from "../lib/monat";
 import { nachMonatUndTag } from "../lib/plan-gliederung";
 import { planHref } from "../lib/team-ansicht";
-import { aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
-import { aboEintrag, aboKalenderName, aboStatus, spielerAboLinks, spielerAboPfad, type AboFeedTermin } from "../lib/spieler-abo";
+import { aboDatei, aboLinks, aboPfad, aboTokenAus, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
+import { aboEintrag, aboKalenderName, aboStatus, spielerAboLinks, type AboFeedTermin } from "../lib/spieler-abo";
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
@@ -2035,14 +2035,14 @@ pruefe("Plan-Gliederung: Monate und Tage in der Reihenfolge der Eingabe, im Tag 
 
 const ABO_JETZT = new Date("2026-10-01T10:00:00Z");
 const aboTermin = (t: Partial<AboTermin> & { id: string }): AboTermin => ({
-  datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, geaendert: "2026-09-30T08:00:00Z", ...t,
+  datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, geaendert: "2026-09-30T08:00:00Z", titel: "Training · FC Test", ...t,
 });
 const aboText = (termine: AboTermin[]) =>
-  kalenderText({ kalenderName: "Training · FC Test", titel: "Training · FC Test", verweis: (id) => `https://ki-fu.ch/team/team/termin/${id}`, jetzt: ABO_JETZT, termine });
+  kalenderText({ kalenderName: "Training · FC Test", verweis: (id) => `https://ki-fu.ch/team/team/termin/${id}`, jetzt: ABO_JETZT, termine });
 
 pruefe("Abo: Wanduhrzeit mit TZID, Beginn und Ende des Termins (#330 PC 2–4, Review Focus 1)", () => {
   const text = aboText([
-    { id: "a", datum: "2027-03-28", beginn: "02:30", ende: "04:00", ort: "Halle; Nord, 2", geaendert: "2026-09-30T08:00:00Z" },
+    aboTermin({ id: "a", datum: "2027-03-28", beginn: "02:30", ende: "04:00", ort: "Halle; Nord, 2" }),
   ]);
   assert.ok(text.includes("BEGIN:VTIMEZONE\r\nTZID:Europe/Zurich"));
   assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20270328T023000\r\nDTEND;TZID=Europe/Zurich:20270328T040000"), "Wanduhrzeit, nicht UTC");
@@ -2092,7 +2092,7 @@ pruefe("Abo: Ohne Termine bleibt es ein gültiger Kalender samt Zeitzone", () =>
 
 pruefe("Abo: Semikolon, Komma, Backslash und Zeilenumbruch im Text werden maskiert", () => {
   assert.equal(textEscape("a;b,c\\d\ne\r\nf"), "a\\;b\\,c\\\\d\\ne\\nf");
-  const text = kalenderText({ kalenderName: "Kids; U9, A\nB", titel: "Training; X, Y\nZ", jetzt: ABO_JETZT, termine: [aboTermin({ id: "a" })] });
+  const text = kalenderText({ kalenderName: "Kids; U9, A\nB", jetzt: ABO_JETZT, termine: [aboTermin({ id: "a", titel: "Training; X, Y\nZ" })] });
   assert.ok(text.includes("\r\nSUMMARY:Training\\; X\\, Y\\nZ\r\n"));
   assert.ok(text.includes("\r\nX-WR-CALNAME:Kids\\; U9\\, A\\nB\r\n"));
 });
@@ -2106,7 +2106,7 @@ pruefe("Abo: Faltung zählt Oktette, nicht Zeichen", () => {
 
 pruefe("Abo: Eine lange URL-Zeile wird gefaltet und fügt sich wieder zusammen", () => {
   const origin = "https://" + "sehr-lange-adresse.".repeat(6) + "ki-fu.ch";
-  const text = kalenderText({ kalenderName: "K", titel: "T", verweis: (id) => `${origin}/team/t/termin/${id}`, jetzt: ABO_JETZT, termine: [aboTermin({ id: "a" })] });
+  const text = kalenderText({ kalenderName: "K", verweis: (id) => `${origin}/team/t/termin/${id}`, jetzt: ABO_JETZT, termine: [aboTermin({ id: "a" })] });
   const zeilen = text.split("\r\n");
   assert.ok(zeilen.every((l) => new TextEncoder().encode(l).length <= 75), "alle Zeilen ≤ 75 Oktette");
   const entfaltet = text.replace(/\r\n /g, "");
@@ -2116,11 +2116,11 @@ pruefe("Abo: Eine lange URL-Zeile wird gefaltet und fügt sich wieder zusammen",
 
 const feedTermin = (t: Partial<AboFeedTermin> & { id: string }): AboFeedTermin => ({
   datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: "Sportplatz", art: "training", bezeichnung: null,
-  begonnen: false, abgemeldet: false, meldung: null, frist: null, frist_abgelaufen: false, nicht_aufgeboten: false,
+  begonnen: false, abgemeldet: false, meldung: null, frist_abgelaufen: false, nicht_aufgeboten: false,
   bemerkung: null, treffpunkte: null, ...t,
 });
 const elternAbo = (termine: AboFeedTermin[]) =>
-  kalenderText({ kalenderName: aboKalenderName("FC Test"), titel: "KiFu", uidZusatz: "abo1", jetzt: ABO_JETZT, termine: termine.map((t) => aboEintrag(t, "FC Test")) });
+  kalenderText({ kalenderName: aboKalenderName("FC Test"), uidZusatz: "abo1", jetzt: ABO_JETZT, termine: termine.map((t) => aboEintrag(t, "FC Test")) });
 
 pruefe("Abo Spielervertretung: Training angemeldet = zugesagt, abgemeldet = abgesagt (#507 PC 3, AK 6)", () => {
   assert.equal(aboStatus(feedTermin({ id: "a" })), "zugesagt");
@@ -2155,8 +2155,7 @@ pruefe("Abo Spielervertretung: Spiel zugesagt, vielleicht bis zur Frist, sonst a
   assert.equal(aboStatus(spiel({ meldung: "angemeldet" })), "zugesagt", "PC 3");
   assert.equal(aboStatus(spiel({ meldung: "angemeldet", nicht_aufgeboten: true })), "abgesagt", "nicht aufgeboten, auch wenn angemeldet");
   assert.equal(aboStatus(spiel({})), "vielleicht", "PC 4: ohne Meldung, ohne Frist, vor dem Anpfiff");
-  assert.equal(aboStatus(spiel({ frist: "2026-10-05T18:00" })), "vielleicht", "Frist noch nicht abgelaufen");
-  assert.equal(aboStatus(spiel({ frist: "2026-10-05T18:00", frist_abgelaufen: true })), "abgesagt", "PC 6: Frist abgelaufen");
+  assert.equal(aboStatus(spiel({ frist_abgelaufen: true })), "abgesagt", "PC 6: Frist abgelaufen");
   assert.equal(aboStatus(spiel({ begonnen: true })), "abgesagt", "PC 5: ohne Frist zählt der Anpfiff");
   assert.equal(aboStatus(spiel({ nicht_aufgeboten: true })), "abgesagt");
   assert.equal(aboStatus(spiel({ meldung: "abgemeldet" })), "abgesagt");
@@ -2176,7 +2175,7 @@ pruefe("Abo Spielervertretung: Treffpunkte und Bemerkung wie am Link (#508 PC 2,
     { anreise: "vor_ort" as const, zeitpunkt: "2026-10-07T17:30", ort: null },
   ];
   const spiel = (t: Partial<AboFeedTermin>) =>
-    feedTermin({ id: "s", art: "spiel", bezeichnung: "Cup", ort: "Wyler", treffpunkte, bemerkung: "Leibchen mitnehmen", frist: "2026-10-05T18:00", ...t });
+    feedTermin({ id: "s", art: "spiel", bezeichnung: "Cup", ort: "Wyler", treffpunkte, bemerkung: "Leibchen mitnehmen", ...t });
   assert.equal(
     aboEintrag(spiel({ meldung: "angemeldet" }), "FC Test").beschreibung,
     "Zugesagt\n\nTreffpunkte\nDi., 06.10., 19:00 · Car oder Vereinsbus\n16:30 · öV · Bahnhof; Gleis 3\n17:30 · vor Ort · Wyler\n\nBemerkung\nLeibchen mitnehmen",
@@ -2192,8 +2191,10 @@ pruefe("Abo Spielervertretung: Treffpunkte und Bemerkung wie am Link (#508 PC 2,
 });
 
 pruefe("Abo Spielervertretung: Adresse neben dem Abo der Mitglieder, webcal für Apple (#507 AK 4)", () => {
-  assert.equal(spielerAboPfad("tok"), "/api/kalender/spieler/tok.ics");
-  assert.deepEqual(spielerAboLinks("https://ki-fu.ch/", "tok"), {
+  assert.equal(aboPfad("tok", "spieler/"), "/api/kalender/spieler/tok.ics");
+  assert.equal(aboTokenAus(`${"a".repeat(64)}.ics`), "a".repeat(64));
+  for (const falsch of ["tok.ics", `${"a".repeat(64)}.ICS`, `${"A".repeat(64)}.ics`, `${"a".repeat(64)}.ics.x`]) assert.equal(aboTokenAus(falsch), null, falsch);
+  assert.deepEqual(spielerAboLinks("https://ki-fu.ch", "tok"), {
     url: "https://ki-fu.ch/api/kalender/spieler/tok.ics",
     webcal: "webcal://ki-fu.ch/api/kalender/spieler/tok.ics",
   });

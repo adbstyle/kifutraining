@@ -56,6 +56,8 @@ create trigger spieler_link_erneuert
 -- Die Abo-Adresse zum privaten Link — dieselbe, solange sie gilt. Ein
 -- ungültiger Link liefert `null`. `for key share` hält Erneuern und Entfernen
 -- an, bis das Abo steht; danach löscht es der Trigger bzw. der Cascade.
+-- Einfügen und Lesen in einem Schritt: `do update` liefert auch die
+-- bestehende Zeile zurück, ein gleichzeitiger Widerruf kann nicht dazwischen.
 create function spieler_abo_holen(p_link text) returns text
 language plpgsql security definer
 set search_path = public, pg_temp
@@ -66,8 +68,9 @@ declare
 begin
   select id into v_spieler from spieler where link_token = p_link for key share;
   if not found then return null; end if;
-  insert into spieler_abos (spieler_id) values (v_spieler) on conflict (spieler_id) do nothing;
-  select token into v_token from spieler_abos where spieler_id = v_spieler;
+  insert into spieler_abos (spieler_id) values (v_spieler)
+    on conflict (spieler_id) do update set spieler_id = excluded.spieler_id
+    returning token into v_token;
   return v_token;
 end;
 $$;
@@ -102,7 +105,7 @@ begin
                'id', e -> 'id', 'datum', e -> 'datum', 'beginn', e -> 'beginn', 'ende', e -> 'ende',
                'ort', e -> 'ort', 'art', e -> 'art', 'bezeichnung', e -> 'bezeichnung',
                'begonnen', e -> 'begonnen', 'abgemeldet', e -> 'abgemeldet',
-               'meldung', e -> 'meldung', 'frist', e -> 'frist', 'frist_abgelaufen', e -> 'frist_abgelaufen',
+               'meldung', e -> 'meldung', 'frist_abgelaufen', e -> 'frist_abgelaufen',
                'nicht_aufgeboten', e -> 'nicht_aufgeboten',
                'bemerkung', e -> 'bemerkung', 'treffpunkte', e -> 'treffpunkte')
              order by x.n)

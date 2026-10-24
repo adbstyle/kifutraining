@@ -4139,7 +4139,7 @@ try {
     assert.deepEqual([f.gueltig, f.team], [true, "Kern-DB-Eltern-Abo"]);
     assert.ok(!JSON.stringify(f).includes("Lena") && !JSON.stringify(f).includes(link));
     assert.deepEqual(Object.keys(f.termine![0]).sort(), [
-      "abgemeldet", "art", "beginn", "begonnen", "bemerkung", "bezeichnung", "datum", "ende", "frist", "frist_abgelaufen",
+      "abgemeldet", "art", "beginn", "begonnen", "bemerkung", "bezeichnung", "datum", "ende", "frist_abgelaufen",
       "id", "meldung", "nicht_aufgeboten", "ort", "treffpunkte",
     ]);
     assert.deepEqual(await aboFeed("f".repeat(64)), { gueltig: false });
@@ -5314,7 +5314,7 @@ try {
     const link = await linkVon(k.lena);
     const abo = (await aboHolen(link))!;
     const ansicht = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link })).data as { termine: Record<string, unknown>[] };
-    const feld = ["id", "art", "bezeichnung", "meldung", "frist", "frist_abgelaufen", "nicht_aufgeboten", "bemerkung", "treffpunkte"];
+    const feld = ["id", "art", "bezeichnung", "meldung", "frist_abgelaufen", "nicht_aufgeboten", "bemerkung", "treffpunkte"];
     const auswahl = (x: Record<string, unknown>) => Object.fromEntries(feld.map((f) => [f, x[f]]));
     const termine = (await aboFeed(abo)).termine!;
     // AK 1, PC 1, 2: im selben Abo wie die Trainings, mit denselben Angaben wie der Link, ohne ausgefallene.

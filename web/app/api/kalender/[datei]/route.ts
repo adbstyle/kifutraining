@@ -1,5 +1,5 @@
 import { createAnonClient } from "@/lib/supabase/anon";
-import { kalenderAntwort, kalenderNichtErreichbar, kalenderText, type AboTermin } from "@/lib/ical";
+import { ABO_ERLOSCHEN, aboTokenAus, kalenderAntwort, kalenderNichtErreichbar, kalenderText, type AboTermin } from "@/lib/ical";
 import { oeffentlicherOriginAus } from "@/lib/origin";
 
 /* Der Feed eines Kalender-Abos (#330). Jeder Abruf liefert den aktuellen Stand
@@ -11,36 +11,33 @@ import { oeffentlicherOriginAus } from "@/lib/origin";
    Antwort ist weder zwischenspeicherbar noch für Suchmaschinen gedacht. */
 export const dynamic = "force-dynamic";
 
-const DATEI = /^([0-9a-f]{64})\.ics$/;
-
 type Feed = {
   gueltig: boolean;
   team?: { id: string; name: string };
-  termine?: (AboTermin & { art: "training" | "spiel"; bezeichnung: string | null })[];
+  termine?: (Omit<AboTermin, "titel"> & { art: "training" | "spiel"; bezeichnung: string | null })[];
 };
 
 export async function GET(req: Request, { params }: { params: Promise<{ datei: string }> }) {
   const { datei } = await params;
   const origin = oeffentlicherOriginAus(req);
-  const m = DATEI.exec(datei);
+  const token = aboTokenAus(datei);
   let feed: Feed = { gueltig: false };
-  if (m) {
-    const { data, error } = await createAnonClient().rpc("kalender_abo_termine", { p_token: m[1] });
+  if (token) {
+    const { data, error } = await createAnonClient().rpc("kalender_abo_termine", { p_token: token });
     if (error) return kalenderNichtErreichbar(error.message);
     feed = data as Feed;
   }
-  const titel = feed.gueltig ? `Training · ${feed.team!.name}` : "KiFu";
-  // Ein Spiel heisst nach seiner Bezeichnung (#459 PC 1); der Kalender nennt
-  // Trainings und Spiele (PC 6).
+  // Ein Spiel heisst nach seiner Bezeichnung (#459 PC 1), sonst
+  // «Training · Teamname» (PC 2); der Kalender nennt Trainings und Spiele (PC 6).
   const termine: AboTermin[] = feed.gueltig
-    ? feed.termine!.map(({ art, bezeichnung, ...t }) =>
-        art === "spiel" && bezeichnung ? { ...t, titel: `${bezeichnung} · ${feed.team!.name}` } : t,
-      )
+    ? feed.termine!.map(({ art, bezeichnung, ...t }) => ({
+        ...t,
+        titel: `${art === "spiel" && bezeichnung ? bezeichnung : "Training"} · ${feed.team!.name}`,
+      }))
     : [];
   return kalenderAntwort(
     kalenderText({
-      kalenderName: feed.gueltig ? `Trainings und Spiele · ${feed.team!.name}` : "KiFu – Abo erloschen",
-      titel,
+      kalenderName: feed.gueltig ? `Trainings und Spiele · ${feed.team!.name}` : ABO_ERLOSCHEN,
       verweis: (id) => `${origin}/team/${feed.team?.id ?? ""}/termin/${id}`,
       termine,
       jetzt: new Date(),

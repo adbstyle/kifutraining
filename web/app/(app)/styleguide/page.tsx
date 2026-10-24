@@ -2803,7 +2803,19 @@ export default async function Styleguide() {
             eine Live-Region für die Vorlesehilfe); scheitert es, steht eine
             Section Message <code>error</code> im Dialog, und das Feld ist markiert. Ist der Link ein
             Geheimnis, geht die Warnung
-            als Section Message im Dialog voran.
+            als Section Message im Dialog voran. Neuere Stellen (privater Link,
+            Abholadresse, Abo am privaten Link) nehmen dafür das{" "}
+            <code>KopierFeld</code>.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Das <strong>Kalender-Abo am privaten Link</strong> (<code>AboKnopf</code>)
+            sitzt als <code>IconButton</code> mit Tooltip rechts oben im Kopf der
+            Seite: Die Seite hat keine Seitenleiste und kein Menü, und der Knopf
+            darf die Termine darunter nicht verdrängen. Die Rückfrage vor dem
+            Widerrufen ist ein Schritt <strong>im selben Dialog</strong> statt eines
+            zweiten: Auf dem Telefon stapelten sich sonst zwei Dialoge, und nach dem
+            Widerrufen geht es dort gleich mit «Neue Abo-Adresse holen» weiter. Der
+            Fokus springt bei jedem Schritt auf den Knopf, der dort weiterführt.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Die <strong>Auswahlleiste</strong> (<code>AuswahlLeiste</code>) trägt

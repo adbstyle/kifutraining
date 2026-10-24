@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarPlus } from "lucide-react";
-import { Button, Dialog, IconButton, KopierFeld, SectionMessage } from "@/components/ui";
+import { Button, Dialog, IconButton, KopierFeld, SectionMessage, Tooltip } from "@/components/ui";
 import { AboAnleitung } from "@/components/team/AboAnleitung";
 import { holeAboUeberLinkAktion, widerrufeAboUeberLinkAktion } from "@/lib/actions/spieler-link";
 import { ABO_TEXT } from "@/lib/spieler-abo";
@@ -73,7 +73,9 @@ export function AboKnopf({ token }: { token: string }) {
 
   return (
     <>
-      <IconButton icon={CalendarPlus} label="Im Kalender abonnieren" onClick={oeffnen} />
+      <Tooltip label="Im Kalender abonnieren" ende>
+        <IconButton icon={CalendarPlus} label="Im Kalender abonnieren" onClick={oeffnen} />
+      </Tooltip>
       <Dialog
         open={offen}
         onClose={schliessen}
@@ -81,7 +83,8 @@ export function AboKnopf({ token }: { token: string }) {
         actions={
           schritt === "rueckfrage" ? (
             <>
-              <Button variant="outlined" onClick={() => setSchritt("adresse")} disabled={pending}>
+              {/* Der Knopf, der hierher führte, ist weg: Der Fokus geht auf den sicheren Weg zurück. */}
+              <Button variant="outlined" onClick={() => setSchritt("adresse")} disabled={pending} autoFocus>
                 Abbrechen
               </Button>
               <Button variant="danger" onClick={widerrufen} disabled={pending}>
@@ -111,13 +114,13 @@ export function AboKnopf({ token }: { token: string }) {
           <div className="flex flex-col gap-4">
             <SectionMessage appearance="success">{ABO_TEXT.widerrufenOk}</SectionMessage>
             {fehlerMeldung}
-            <Button variant="outlined" className="self-start" onClick={holen} disabled={pending}>
+            <Button variant="outlined" className="self-start" onClick={holen} disabled={pending} autoFocus>
               Neue Abo-Adresse holen
             </Button>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            <p className="type-body-medium text-on-surface-mittel">{ABO_TEXT.zeichen}</p>
+            <p className="type-body-medium text-on-surface-mittel">{ABO_TEXT.legende}</p>
             <SectionMessage>
               {ABO_TEXT.nurAnzeigen} {ABO_TEXT.verzoegerung}
             </SectionMessage>
@@ -133,8 +136,11 @@ export function AboKnopf({ token }: { token: string }) {
                 {fehler}
               </SectionMessage>
             )}
-            <KopierFeld label="Abo-Adresse" value={links?.url ?? "Wird geholt …"} disabled={!links} />
-            {links && <AboAnleitung webcal={links.webcal} />}
+            {/* Gescheitert steht nur der Fehler da, kein «Wird geholt …». */}
+            {(links || !fehler) && (
+              <KopierFeld label="Abo-Adresse" value={links?.url ?? "Wird geholt …"} disabled={!links} />
+            )}
+            {links && <AboAnleitung webcal={links.webcal} begriff="Abo-Adresse" />}
           </div>
         )}
       </Dialog>
