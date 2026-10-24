@@ -24,8 +24,8 @@ Im Team sind alle gleichberechtigt: jedes Mitglied darf umbenennen, aufnehmen, e
 Trainings und Termine bearbeiten, die Spielerliste führen und das Team auflösen. Abgestufte Rollen gibt es nicht. Ein
 Team ohne Mitglieder besteht nicht fort — verlässt die letzte Person das Team, verschwindet es
 samt seinen Trainings, Terminen, Terminserien und seiner Spielerliste — deren private Links und die
-Abholadresse gelten danach nicht mehr —, nach ausdrücklicher Bestätigung, die die
-Anzahl der Trainings und aller Termine nennt, auch derer ohne Training.
+Abholadresse gelten danach nicht mehr. Auflösen und der Austritt als letztes Mitglied gehen nur
+mit Eingabe des Teamnamens (siehe „Team verlassen und auflösen").
 
 ## Trainings gehören dem Team
 
@@ -995,6 +995,30 @@ Team-Trainings lassen sich nicht direkt veröffentlichen — wer eine Team-Arbei
 übernimmt sie zuerst zu sich. An jedem öffentlichen Training steht der Anzeigename seines
 Urhebers; bei gelöschten Konten bleibt es anonymisiert erhalten.
 
+## Team verlassen und auflösen
+
+Verlassen und Auflösen stehen unter „Team" in einem eigenen Bereich „Gefahrenzone", mit Kontur
+und Überschrift in der Fehlerfarbe und dem Satz, dass Verlassen nur die eigene Person betrifft —
+ausser sie ist das letzte Mitglied —, Auflösen aber das Team samt allen Inhalten für alle
+Mitglieder löscht. „Team verlassen" fragt kurz nach und sagt, dass das Team für die übrigen
+bestehen bleibt und die eigenen persönlichen Trainings unberührt bleiben.
+
+„Team auflösen" öffnet eine Bestätigung, die aufzählt, was für alle Mitglieder unwiderruflich
+verschwindet — Trainings, Termine, Spiele, die Spielerliste und die Kader, je mit Anzahl —, und
+den Namen nennt, den man eingeben muss. Der Knopf zum Auflösen ist erst frei, wenn die Eingabe
+dem Teamnamen genau entspricht, mit Gross- und Kleinschreibung; Leerzeichen am Anfang und am
+Ende zählen nicht, und Einfügen ist erlaubt. Das Feld korrigiert und ergänzt nichts von selbst,
+und die Vorlesehilfe hört, welcher Name gefragt ist und wann der Knopf frei wird. Wer als
+letztes Mitglied austritt, erhält dieselbe Bestätigung mit dem Hinweis, dass sich das Team mit
+dem Austritt auflöst.
+
+Geprüft wird beim Ausführen, nicht beim Öffnen: Sind inzwischen alle anderen gegangen, schlägt
+ein gewöhnlicher Austritt in die Bestätigung um („Inzwischen bist du das letzte Mitglied. Mit
+deinem Austritt löst sich das Team auf."). Hat jemand das Team inzwischen umbenannt, nennt die
+Bestätigung den neuen Namen und verlangt ihn; hat es ein anderes Mitglied schon aufgelöst, geht
+es zur Teamübersicht mit einer Meldung. Diese Regel gilt auch ausserhalb der Oberfläche: Ohne den
+aktuellen Teamnamen löst sich kein Team auf.
+
 ## Was beim Ausscheiden passiert
 
 Verlässt ein Mitglied das Team oder wird es entfernt, bleiben dessen Trainings und Termine für
@@ -1111,6 +1135,11 @@ erkennt die Anwendung nicht: Wer ihn hat, erhält Zeit und Ort der Termine, sola
 ihn ersetzen will, widerruft das Abo und holt einen neuen. Beim Verlassen oder Auflösen eines Teams
 und beim Löschen des Kontos sagt die Anwendung nicht, dass Abos erlöschen. Gedacht ist das Abo für
 die Trainerinnen und Trainer des Teams, nicht für den Verein.
+
+Löscht das letzte Mitglied sein Konto, löst sich das Team ohne Eingabe des Teamnamens auf. Die
+Namenseingabe unterscheidet gleichnamige Teams nicht. Die übrigen Mitglieder und die Eltern
+erfahren nichts von einer Auflösung, vorher lässt sich weder die Spielerliste noch ein Training
+exportieren, und ein aufgelöstes Team lässt sich nicht wiederherstellen.
 
 Für das Abo am privaten Link gilt dasselbe zur Abrufhäufigkeit und zu bereits geladenen Einträgen.
 Zu- oder Absagen im Kalenderprogramm wirken nicht zurück, gemeldet wird über den Link. Das Abo
