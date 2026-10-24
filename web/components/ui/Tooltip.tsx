@@ -7,7 +7,8 @@ import { cn } from "@/lib/cn";
    unterhalb des Triggers: so verdeckt er nicht, was darüber liegt, und sitzt
    dort, wo der Blick nach dem Zeichen ohnehin hinwandert. CSS-only — erscheint
    bei Hover und Tastatur-Fokus auf dem umschlossenen Trigger (`group-hover` /
-   `group-focus-within`). `aria-hidden`, weil der Trigger (z. B. IconButton)
+   `:focus-visible`). Nur sichtbarer Fokus zählt: Ein Dialog, der beim Öffnen
+   selbst fokussiert, blendete sonst den Tooltip ungefragt ein (PO 2026-10-24). `aria-hidden`, weil der Trigger (z. B. IconButton)
    den Namen bereits über sein `aria-label` trägt — kein doppeltes Vorlesen.
 
    Verwendung: einen einzelnen interaktiven Trigger umschliessen.
@@ -52,7 +53,7 @@ export function Tooltip({
           "pointer-events-none absolute top-full z-50 mt-1.5 hidden opacity-0 transition-[opacity,display] transition-discrete duration-150 starting:opacity-0",
           tooltipFlaeche,
           ende ? "right-0" : "left-1/2 -translate-x-1/2",
-          "group-hover:block group-hover:opacity-100 group-focus-within:block group-focus-within:opacity-100",
+          "group-hover:block group-hover:opacity-100 group-has-[:focus-visible]:block group-has-[:focus-visible]:opacity-100",
         )}
       >
         {label}

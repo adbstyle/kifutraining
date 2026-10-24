@@ -102,7 +102,9 @@ export function AboKnopf({ token }: { token: string }) {
                 </Button>
               )}
               {/* Zurück aus der Rückfrage ist der fokussierte Knopf weg. */}
-              <Button variant="outlined" onClick={schliessen} disabled={pending} autoFocus>
+              {/* Nicht gesperrt, damit er den Fokus beim Öffnen annimmt — während
+                  einer Anfrage schliesst `schliessen` ohnehin nicht. */}
+              <Button variant="outlined" onClick={schliessen} autoFocus>
                 Schliessen
               </Button>
             </>
