@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, TriangleAlert, Users } from "lucide-react";
+import { Group, Plus, TriangleAlert } from "lucide-react";
 import { Button, ChipMenu } from "@/components/ui";
 import { zeitKurz, zeitText, type Zeitsumme } from "@/lib/gruppen";
 import { ordnungsEintraege, useChipFokus } from "./useChipFokus";
@@ -76,7 +76,7 @@ export function GruppenLeiste({
       aria-label="Gruppen"
       className="flex flex-wrap items-center gap-x-3 gap-y-2"
     >
-      <Users
+      <Group
         size={18}
         strokeWidth={2}
         aria-hidden

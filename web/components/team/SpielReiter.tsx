@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { Shirt } from "lucide-react";
 import { Leerzustand, Lozenge, LozengeAuswahl, type Wechsel } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { setzeAnwesenheitAktion, setzeAufgebotAktion, setzeMeldungAktion } from "@/lib/actions/abmeldungen";
@@ -90,7 +90,7 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
 
   if (!daten.mitListe)
     return (
-      <Leerzustand icon={Users} titel="Noch keine Spielerliste" dicht>
+      <Leerzustand icon={Shirt} titel="Noch keine Spielerliste" dicht>
         Wer zu einem Spiel kommt, siehst du, sobald das Team eine Spielerliste führt. Sie steht unter{" "}
         <Link href={`/team/${teamId}/verwaltung`} className="focus-ring rounded-klein text-primary hover:underline">
           Team

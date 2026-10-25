@@ -4965,22 +4965,29 @@ try {
     assert.deepEqual((await standVon(team, t)).spielstand, { gesamt: 3, angemeldet: 3, eingefroren: false, anwesend: null });
 
     // Die Serie: Nur der Termin, der wieder offen wird, verliert seine Nachträge.
+    // Ein Tausch der Wochentage verschiebt jeden Termin innerhalb seiner
+    // Kalenderwoche (Mo–So). Gestern kommt so nur in die Zukunft, wenn in
+    // seiner Woche noch zwei Tage folgen — sonntags und montags (gestern
+    // Samstag oder Sonntag) nicht. Dann rückt er einen Tag zurück und behält
+    // seinen Nachtrag wie der von vor einer Woche (PC 3); der Beginn der
+    // Serie liegt darum einen Tag vor dem ersten Termin.
     const w = wochentagVon(tagCh(-1));
-    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [w], von: tagCh(-8), bis: tagCh(20), beginn: "18:00", ende: "19:00" }));
+    const oeffnet = w <= 5;
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [w], von: tagCh(-9), bis: tagCh(20), beginn: "18:00", ende: "19:00" }));
     const tv = await termineDer(s.serieId);
     const vorWoche = tv.find((x) => x.datum === tagCh(-8))!.id;
     const gestern = tv.find((x) => x.datum === tagCh(-1))!.id;
     wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: vorWoche, spielerId: lena, da: false }));
     wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: gestern, spielerId: lena, da: false }));
-    const ziel = (((w - 1 + 2) % 7) + 1) as typeof w;
+    const ziel = (oeffnet ? w + 2 : w - 1) as typeof w;
     const tausch = { terminId: gestern, reichweite: "alle" as const, aenderung: { wochentage: [ziel] } };
     const v = wert(await aendereSerie(a.supabase, a.id, { ...tausch, vorschau: true }));
-    assert.equal(v.nachtraegeVerfallend, 1, "vor einer Woche bleibt vergangen und festgehalten");
+    assert.equal(v.nachtraegeVerfallend, oeffnet ? 1 : 0, "vor einer Woche bleibt vergangen und festgehalten");
     const summe = v.abmeldungenVerfallend + v.abmeldungenKader + v.nachtraegeVerfallend;
     fehler(await aendereSerie(a.supabase, a.id, { ...tausch, erwartet: { version: v.versionVorher, entfallend: [], verfallend: summe - 1 } }), "konflikt");
     wert(await aendereSerie(a.supabase, a.id, { ...tausch, erwartet: { version: v.versionVorher, entfallend: [], verfallend: summe } }));
     assert.deepEqual((await anwesenheit(vorWoche)).Lena, [false, true]);
-    assert.deepEqual((await anwesenheit(gestern)).Lena, [false, false]);
+    assert.deepEqual((await anwesenheit(gestern)).Lena, oeffnet ? [false, false] : [false, true]);
   });
 
   // ── Spiele selbst erfassen (#459) ───────────────────────────────────────

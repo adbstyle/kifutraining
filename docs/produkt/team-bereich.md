@@ -831,10 +831,11 @@ Nächstes" gibt es hier nicht: Ein Termin von heute, der schon begonnen hat, ste
 Spieler:in gelten, unter Monatsüberschriften wie „Oktober 2026", jedes Training als Karte mit dem
 Kalenderblatt, dem Status der Spieler:in als Plakette — „Angemeldet" grün, „Abgemeldet" rot, „Fällt
 aus" grau —, Beginn und Ende, Ort, bei einem Termin mit Kadern den Kadern der Spieler:in, über die
-er für sie gilt, der Spielerzahl und einem Schalter. Der Schalter bewertet nicht: eingeschaltet eine
-durchsichtige Bahn mit heller Kontur und grossem hellem Knopf, ausgeschaltet eine dunkle Bahn mit
-grauer Kontur und kleinem grauem Knopf. Ist die Spieler:in abgemeldet oder fällt der Termin aus,
-tritt die Karte gedämpft zurück, das Kalenderblatt grau mit durchgestrichener Zahl. Die Spielerzahl
+er für sie gilt, der Spielerzahl und einem Schalter. Der Schalter bewertet nicht und ist nie rot:
+angemeldet steht sein Knopf rechts in der Akzentfarbe mit einem Haken, abgemeldet links in Grau
+mit einem Kreuz, an einem ausgefallenen Termin grau und ohne Zeichen. Ist die Spieler:in
+abgemeldet oder fällt der Termin aus, tritt die Karte gedämpft zurück, das Kalenderblatt grau mit
+durchgestrichener Zahl. Die Spielerzahl
 steht knapp und ungefärbt, etwa „24/33": angemeldet von allen, für die der Termin gilt, gezählt wie
 für die Mitglieder — bei einem Termin mit Kadern auch über Kader, die nicht die der Spieler:in sind,
 ohne sie zu nennen. „Angemeldet" und „abgemeldet" meinen auf der Seite nur die eigene Spieler:in.

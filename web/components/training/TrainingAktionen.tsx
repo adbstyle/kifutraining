@@ -10,9 +10,9 @@ import {
   Pencil,
   Play,
   Printer,
+  Shield,
   Trash2,
   Undo2,
-  Users,
 } from "lucide-react";
 import {
   Button,
@@ -243,7 +243,7 @@ export function TrainingAktionen({
   if (rechte.insTeamStellen)
     eintraege.push({
       label: "Ins Team stellen",
-      icon: Users,
+      icon: Shield,
       onSelect: () => setZielWahl("ins_team_stellen"),
     });
   if (rechte.terminZuordnen)

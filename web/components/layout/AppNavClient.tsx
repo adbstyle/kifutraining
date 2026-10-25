@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { ClipboardCheck, ClipboardList, LayoutGrid, ListChecks, Users } from "lucide-react";
+import { ClipboardList, LayoutGrid, Shield } from "lucide-react";
 import { Seitenleiste } from "@/components/ui";
 import type { SeitenleisteGruppe } from "@/components/ui";
 import { aktiveBereiche, teamOffen } from "@/lib/navigation";
@@ -61,17 +61,17 @@ export function AppNavClient({
     gruppen.push({
       titel: "Mein Bereich",
       eintraege: [
-        { label: "Meine Übungen", href: "/?mine=1", icon: ListChecks, current: aktiv.meineUebungen },
+        { label: "Meine Übungen", href: "/?mine=1", icon: LayoutGrid, current: aktiv.meineUebungen },
         {
           label: "Meine Trainings",
           href: "/trainings?mine=1",
-          icon: ClipboardCheck,
+          icon: ClipboardList,
           current: aktiv.meineTrainings,
         },
         {
           label: "Teams",
           href: "/teams",
-          icon: Users,
+          icon: Shield,
           current: aktiv.teamsSeite,
           bereichAktiv: aktiv.teamsBereich,
           unterpunkte: teams.map((t) => ({

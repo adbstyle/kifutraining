@@ -17,7 +17,7 @@ import {
 } from "@/lib/spieler";
 import type { TerminSpieler } from "@/lib/kern/abmeldungen";
 import { seitWann } from "@/lib/zeit";
-import { Users } from "lucide-react";
+import { Shirt } from "lucide-react";
 import { KADER_TEXT, uebrigeText } from "@/lib/kader";
 import { KaderLozenges } from "./KaderLozenge";
 import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
@@ -70,7 +70,7 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
 
   if (!daten.mitListe)
     return (
-      <Leerzustand icon={Users} titel="Noch keine Spielerliste" dicht>
+      <Leerzustand icon={Shirt} titel="Noch keine Spielerliste" dicht>
         Wer an einem Termin kommt, siehst du, sobald das Team eine Spielerliste führt. Sie steht unter{" "}
         <Link href={`/team/${teamId}/verwaltung`} className="focus-ring rounded-klein text-primary hover:underline">
           Team
@@ -172,7 +172,6 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
               </span>
               {seit && <span className="shrink-0 whitespace-nowrap type-body-small text-on-surface-mittel">{seit}</span>}
               <Switch
-                ton="ruhig"
                 checked={wert}
                 disabled={s.ehemalig || pending}
                 onChange={(e) => umlegen(s, e.target.checked)}

@@ -6,12 +6,12 @@ import Link from "next/link";
 import { AB_LG } from "@/lib/breite";
 import {
   ChevronDown,
+  History,
   LogIn,
   Menu as MenuIcon,
   Palette,
   PanelLeftClose,
   PanelLeftOpen,
-  Tag,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -413,7 +413,7 @@ export function Seitenleiste({
                 )}
               >
                 <span className="relative shrink-0">
-                  <Tag
+                  <History
                     size={18}
                     strokeWidth={2}
                     aria-hidden
