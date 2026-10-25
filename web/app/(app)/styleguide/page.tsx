@@ -1431,9 +1431,10 @@ export default async function Styleguide() {
             einer Leiste aus Chips, auf deren Linie er sitzen soll. Er gilt{" "}
             <strong>nicht</strong> für
             Knöpfe, die einen Vorgang abschliessen oder abbrechen -
-            Dialog-Knöpfe, Formularfüsse und alles, was neben einem{" "}
-            <code>filled</code> steht, bleibt <code>text</code> - neben einem
-            destruktiven Knopf als Secondary Button (<code>outlined</code>).
+            Formularfüsse und alles, was neben einem <code>filled</code> steht,
+            bleibt <code>text</code>. Im Fuss eines Dialogs steht der Ausweg
+            («Abbrechen», «Schliessen», «Verstanden») immer als Secondary Button
+            (<code>outlined</code>) - auch als einzige Aktion.
           </p>
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Heller Knopf (<code>variant=&quot;hell&quot;</code>) - auf einer Fläche im Fehlerton
@@ -2875,14 +2876,17 @@ export default async function Styleguide() {
             von unten ein; bei reduzierter Bewegung blendet sie nur ein.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            <strong>Bewusste Abweichung:</strong> Die Textknöpfe im Dialog bleiben
-            Primary und kommen auf 24dp damit auf{" "}
+            Im Fuss eines Dialogs steht kein Textknopf: Der Ausweg ist ein
+            Secondary Button (<code>outlined</code>), seine Schrift ist{" "}
+            <code>on-surface</code>. <strong>Bewusste Abweichung:</strong>{" "}
+            Textknöpfe im Inhalt eines Dialogs («Der Serie folgen», «Übung
+            erfassen») bleiben Primary und kommen auf 24dp damit auf{" "}
             {v(kontrast(PRIMARY, elev(24)))} - knapp unter 4.5:1. Materials
             eigene Baseline tut dasselbe, und die Alternative wäre schlechter:
-            Weisse Knopfschrift wäre von der Fliesstextzeile darüber nicht mehr zu
-            unterscheiden. Die Knöpfe sind gross gesetzt, stehen abgesetzt am Fuss
-            und tragen den Ring; wer sie nicht als Knöpfe liest, verliert nichts,
-            denn der Dialog nennt seine Handlung auch im Text.
+            Weisse Knopfschrift wäre von der Fliesstextzeile daneben nicht mehr zu
+            unterscheiden. Die Knöpfe sind gross gesetzt und tragen den Ring; wer
+            sie nicht als Knöpfe liest, verliert nichts, denn der Dialog nennt
+            seine Handlung auch im Text.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Die Snackbar meldet einen <strong>Vorgang</strong>, die Section

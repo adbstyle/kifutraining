@@ -40,7 +40,7 @@ export function AusfallDialog({
       title={istAusfall ? "Grund des Ausfalls" : "Termin ausfallen lassen"}
       actions={
         <>
-          <Button variant="text" onClick={onClose}>Abbrechen</Button>
+          <Button variant="outlined" onClick={onClose}>Abbrechen</Button>
           <Button
             variant="filled"
             disabled={pending}

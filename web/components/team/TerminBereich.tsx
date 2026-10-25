@@ -840,7 +840,7 @@ export function TerminBereich({
         title="Training lösen?"
         actions={
           <>
-            <Button variant="text" onClick={() => setLoesen(null)}>Abbrechen</Button>
+            <Button variant="outlined" onClick={() => setLoesen(null)}>Abbrechen</Button>
             <Button variant="danger" disabled={pending} onClick={() => loesen && loeseSofort(loesen)}>
               Lösen und löschen
             </Button>

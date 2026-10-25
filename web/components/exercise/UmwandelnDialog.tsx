@@ -95,7 +95,7 @@ export function UmwandelnDialog({
         // Formular, und ein Button ohne Typ ist ein Submit — er würde die Übung
         // speichern, statt den Dialog zu bedienen.
         <>
-          <Button type="button" variant="text" onClick={onClose}>
+          <Button type="button" variant="outlined" onClick={onClose}>
             Abbrechen
           </Button>
           <Button type="button" variant="filled" onClick={bestaetigen}>

@@ -115,7 +115,7 @@ export function OwnerActions({
         title="Übung löschen?"
         actions={
           <>
-            <Button variant="text" onClick={() => setConfirmOpen(false)}>
+            <Button variant="outlined" onClick={() => setConfirmOpen(false)}>
               Abbrechen
             </Button>
             <form action={deleteExercise.bind(null, id)}>

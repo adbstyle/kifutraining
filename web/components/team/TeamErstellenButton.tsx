@@ -41,7 +41,7 @@ export function TeamErstellenButton() {
         title="Neues Team"
         actions={
           <>
-            <Button variant="text" onClick={() => setOpen(false)}>
+            <Button variant="outlined" onClick={() => setOpen(false)}>
               Abbrechen
             </Button>
             <Button variant="filled" onClick={anlegen} disabled={pending}>

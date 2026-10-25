@@ -31,7 +31,7 @@ export function SpielerLinkDialog({
       onClose={onClose}
       title={spieler ? `Privater Link für ${spielerName(spieler)}` : ""}
       actions={
-        <Button variant="text" onClick={onClose}>
+        <Button variant="outlined" onClick={onClose}>
           Schliessen
         </Button>
       }

@@ -804,7 +804,7 @@ export function TrainingEditor({
         title="Übungen ausserhalb der Stufen"
         actions={
           <>
-            <Button variant="text" onClick={() => setMismatch(null)}>
+            <Button variant="outlined" onClick={() => setMismatch(null)}>
               Behalten
             </Button>
             <Button
@@ -832,7 +832,7 @@ export function TrainingEditor({
         title={`${gruppeWeg?.name ?? "Gruppe"} entfernen?`}
         actions={
           <>
-            <Button variant="text" onClick={() => setGruppeWeg(null)}>
+            <Button variant="outlined" onClick={() => setGruppeWeg(null)}>
               Abbrechen
             </Button>
             <Button
@@ -865,7 +865,7 @@ export function TrainingEditor({
         title={`${uebungWeg?.name ?? "Übung"} entfernen?`}
         actions={
           <>
-            <Button variant="text" onClick={() => setUebungWeg(null)}>
+            <Button variant="outlined" onClick={() => setUebungWeg(null)}>
               Abbrechen
             </Button>
             <Button variant="danger" onClick={() => uebungWeg && entferneUebung(uebungWeg)}>
@@ -922,7 +922,7 @@ export function TrainingEditor({
         title={`Variante „${varianteWeg?.name ?? ""}" entfernen?`}
         actions={
           <>
-            <Button variant="text" onClick={() => setVarianteWeg(null)}>
+            <Button variant="outlined" onClick={() => setVarianteWeg(null)}>
               Abbrechen
             </Button>
             <Button

@@ -189,7 +189,7 @@ export function VerlassenWarnung({
       title={titel}
       actions={
         <>
-          <Button type="button" variant="text" onClick={bleiben}>
+          <Button type="button" variant="outlined" onClick={bleiben}>
             Weiter bearbeiten
           </Button>
           <Button type="button" variant="danger" onClick={verlassen}>
