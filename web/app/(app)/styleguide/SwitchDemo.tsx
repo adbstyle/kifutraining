@@ -4,12 +4,13 @@ import { useState } from "react";
 import { Switch } from "@/components/ui";
 
 /* Der Schalter an seinem Anwendungsfall: eine Spieler:in an einem Termin
-   angemeldet (Ton «ruhig») oder abgemeldet, dazu gesperrt (begonnen), neutral
+   angemeldet (Ton «ruhig») oder abgemeldet, eine Trainer:in dabei (Proton), dazu gesperrt (begonnen), neutral
    (ausgefallen) und ein Schalter, dessen Aus neutral ist (Selbstabholung). */
 export function SwitchDemo() {
   const [lena, setLena] = useState(true);
   const [noah, setNoah] = useState(false);
   const [selbst, setSelbst] = useState(false);
+  const [dabei, setDabei] = useState(true);
   return (
     <ul className="flex max-w-sm flex-col divide-y divide-linie rounded-flaeche bg-elev-01">
       {[
@@ -21,6 +22,10 @@ export function SwitchDemo() {
           <Switch ton="ruhig" checked={s.an} onChange={(e) => s.setze(e.target.checked)} aria-label={`${s.name} angemeldet`} />
         </li>
       ))}
+      <li className="flex items-center gap-3 px-4 py-2">
+        <span className="min-w-0 flex-1 type-body-medium text-on-surface">Trainer:in dabei (Proton)</span>
+        <Switch checked={dabei} onChange={(e) => setDabei(e.target.checked)} aria-label="Trainer:in dabei" />
+      </li>
       <li className="flex items-center gap-3 px-4 py-2">
         <span className="min-w-0 flex-1 type-body-medium text-on-surface-mittel">Begonnen (gesperrt)</span>
         <Switch ton="ruhig" checked readOnly disabled aria-label="Begonnen, angemeldet" />

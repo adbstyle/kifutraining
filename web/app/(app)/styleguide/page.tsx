@@ -7,6 +7,8 @@ import {
   ButtonGroup,
   Badge,
   Lozenge,
+  SecondaryLozenge,
+  ZeichenZahl,
   HerkunftLozenge,
   SichtbarkeitLozenge,
   TreffpunktListe,
@@ -18,7 +20,6 @@ import {
   IconButtonLink,
   ZeichenPunkt,
   Kalenderblatt,
-  Meldebalken,
   KategorieLozenge,
   TabNav,
   Tooltip,
@@ -89,7 +90,6 @@ import {
   Globe,
   BookOpen,
   Trash2,
-  User,
   Pencil,
   Info,
   SearchX,
@@ -100,6 +100,24 @@ import {
   CalendarPlus,
   Link2,
   Tag,
+  Shield,
+  UserRound,
+  UserRoundCheck,
+  UserRoundX,
+  UserPen,
+  Users,
+  Group,
+  Shirt,
+  CalendarDays,
+  Repeat,
+  ClipboardList,
+  LayoutGrid,
+  ListChecks,
+  MapPin,
+  Clock,
+  LandPlot,
+  History,
+  type LucideIcon,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { ROTATIONEN, SPIELER_POSEN, type DiagrammElement } from "@/lib/diagramm";
@@ -257,7 +275,6 @@ const GLIEDERUNG = [
           { id: "material", titel: "Material" },
           { id: "kalenderblatt", titel: "Kalenderblatt" },
           { id: "mini-monat", titel: "Mini-Monat" },
-          { id: "meldebalken", titel: "Meldebalken" },
           { id: "platz-spielerzahl", titel: "Platz und Spielerzahl eines Termins" },
         ],
       },
@@ -584,7 +601,29 @@ const iconSet = [
   Globe,
   BookOpen,
   Trash2,
-  User,
+  UserRound,
+];
+
+/* Eine Entität, ein Zeichen (PO 2026-10-25, Designsystem «Ikonografie»):
+   Wer ein Zeichen für eine dieser Sachen braucht, nimmt dieses und kein
+   anderes - und ein Zeichen meint keine zweite Sache. Was davon heute noch
+   abweicht, nennt die Zeile selbst. */
+const zeichenJeSache: [LucideIcon[], string, string][] = [
+  [[Shield], "Shield", "Team"],
+  [[UserRound], "UserRound", "Mitglied"],
+  [[Users, UserRoundCheck, UserRoundX], "Users · UserRoundCheck · UserRoundX", "Trainer:innen am Termin - davor der eigene Stand: nicht eingeladen, dabei, abgesagt"],
+  [[UserPen], "UserPen", "Verantwortung für einen Termin (wer vorbereitet und leitet)"],
+  [[Group], "Group", "Gruppe im Hauptteil eines Trainings"],
+  [[Shirt], "Shirt", "Spieler:in, Spielerliste, Spielerzahl"],
+  [[Tag], "Tag", "Kader - nur in Überschriften, die Kader-Lozenges bleiben ohne Zeichen"],
+  [[Link2], "Link2", "Spielervertretung (der private Link)"],
+  [[CalendarDays, CalendarPlus, CalendarOff], "CalendarDays · CalendarPlus · CalendarOff", "Termin"],
+  [[Repeat], "Repeat", "Terminserie"],
+  [[ClipboardList], "ClipboardList", "Training, auch «Meine Trainings»"],
+  [[LayoutGrid], "LayoutGrid", "Übung, auch «Meine Übungen»"],
+  [[ListChecks], "ListChecks", "nur die Zahl der Übungen in einem Training"],
+  [[Layers, MapPin, Clock, LandPlot], "Layers · MapPin · Clock · LandPlot", "Variante · Ort · Zeit · Platz"],
+  [[History], "History", "Version (Versionszeile und Release-History)"],
 ];
 
 /* Beispieltexte für die drei Stufen des methodischen Fahrplans; die
@@ -827,7 +866,16 @@ export default async function Styleguide() {
             Überschrift für <code>aria-labelledby</code>, statt den Namen doppelt
             zu zeigen.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            In einem Dialog die kleinere Form (<code>imDialog</code>, Epic #518): eine Linie darüber, die Überschrift in{" "}
+            <code>type-label-medium</code> und darunter ein Satz, wozu der Abschnitt dient (<code>untertitel</code>) -
+            so muss nicht jedes Feld darunter sich selbst erklären. «Termin erstellen» gliedert so Spieler:innen und
+            Trainer:innen.
+          </p>
           <div className="mb-8 grid max-w-md gap-8">
+            <FormAbschnitt titel="Trainer:innen" untertitel="Wer eingeladen ist, gilt als dabei, bis sie oder er absagt." imDialog>
+              <TextField label="Eingeladen" />
+            </FormAbschnitt>
             <FormAbschnitt titel="Durchführung">
               <TextField label="Ablauf" />
             </FormAbschnitt>
@@ -1307,6 +1355,32 @@ export default async function Styleguide() {
               <div key={sz} className="flex flex-col items-center gap-1">
                 <Search size={sz} strokeWidth={2} aria-hidden />
                 <span className="type-label-small">{sz}px</span>
+              </div>
+            ))}
+          </div>
+
+          <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+            Eine Sache, ein Zeichen
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            Jede Sache der Anwendung hat genau ein Zeichen, und ein Zeichen
+            meint keine zweite Sache - so erkennt man auf dem Platz, wovon
+            eine Zeile spricht, bevor man sie liest. Wo die Anwendung davon
+            noch abweicht, steht es in der Zeile. Teams, Mitglieder,
+            Spieler:innen und Kader tragen ihr Zeichen auch vor der
+            Überschrift ihres Abschnitts - 20 px in der Farbe der Überschrift,
+            gebaut wie bei der Gefahrenzone.
+          </p>
+          <div className="space-y-2">
+            {zeichenJeSache.map(([zeichen, namen, sache]) => (
+              <div key={namen} className="flex flex-wrap items-center gap-3 border-b border-linie pb-2">
+                <span className="flex w-24 shrink-0 gap-2 text-on-surface-mittel">
+                  {zeichen.map((Zeichen, i) => (
+                    <Zeichen key={i} size={18} strokeWidth={2} aria-hidden />
+                  ))}
+                </span>
+                <code className="type-body-small w-72 text-on-surface">{namen}</code>
+                <span className="type-body-small min-w-0 flex-1 text-on-surface-mittel">{sache}</span>
               </div>
             ))}
           </div>
@@ -1891,18 +1965,24 @@ export default async function Styleguide() {
             Spieler:in an einem Termin angemeldet oder abgemeldet (Epic #433).
             Neu neben der Checkbox, weil diese in ein Formular gehört, das man
             erst speichert; ein Schalter speichert selbst (Atlassian: Toggle
-            nur für sofort wirkende Änderungen). Beide Lagen tragen ein Zeichen
-            im Knopf, damit der Zustand nicht an der Farbe allein hängt: an in
-            Primary mit Haken, aus im Rot des abgemeldeten Kalenderblatts mit
-            Kreuz. Gesperrt, wenn es nichts mehr zu ändern gibt (der Termin hat
-            begonnen); <code>neutral</code> grau ohne Zeichen, wenn es nichts zu
-            wählen gibt (er fällt aus) - und für die Aus-Lage eines Schalters,
-            dessen Aus kein Fehlen bedeutet (die Selbstabholung eines Teams).
-            <code>ton=&quot;ruhig&quot;</code> (Epic #490) für «angemeldet» und «da» an Trainings: Der Schalter zeigt den
-            Stand, ohne ihn zu bewerten - an eine durchsichtige Bahn mit heller Kontur und grossem hellem Knopf rechts
-            (wie ein Ghost-Knopf), aus eine dunkle Bahn mit grauer Kontur und kleinem grauem Knopf links. Ohne Zeichen:
-            Lage und Grösse des Knopfs sagen den Stand, nicht die Farbe.
-            Darunter liegt ein echtes{" "}
+            nur für sofort wirkende Änderungen). Eine Form nach dem Vorbild von
+            Proton: Die Bahn ist nur eine Kontur (<code>kontur</code> in{" "}
+            <code>kante</code>) ohne Fläche, die Farbe trägt allein der Knopf
+            (26 px). An steht er rechts in <code>primary</code> mit Haken in{" "}
+            <code>on-primary</code>, aus links in <code>on-surface-mittel</code>{" "}
+            mit Kreuz in <code>elev-01</code> - beide Lagen tragen ein Zeichen,
+            damit der Zustand nicht an der Farbe allein hängt. Rot gibt es am
+            Schalter nicht, auch nicht in langen Listen: Ein Fehlen, das
+            auffallen soll, zeigen Lozenge und Kalenderblatt. Gesperrt, wenn es
+            nichts mehr zu ändern gibt (der Termin hat begonnen);{" "}
+            <code>neutral</code> mit kleinem grauem Knopf ohne Zeichen, wenn es
+            nichts zu wählen gibt (er fällt aus) - und für die Aus-Lage eines
+            Schalters, dessen Aus kein Fehlen bedeutet (die Selbstabholung eines
+            Teams). <code>ton=&quot;ruhig&quot;</code> (Epic #490, wieder seit PO 2026-10-25) für «angemeldet» und
+            «da» von Spieler:innen an Trainings, am privaten Link und in der Spielerliste am Termin: Der Schalter zeigt
+            den Stand, ohne ihn zu bewerten - an eine durchsichtige Bahn mit heller Kontur und grossem hellem Knopf
+            rechts, aus eine dunkle Bahn mit grauer Kontur und kleinem grauem Knopf links, ohne Zeichen. Die Form nach
+            Proton bleibt für «dabei» der Trainer:innen. Darunter liegt ein echtes{" "}
             <code>&lt;input type=&quot;checkbox&quot; role=&quot;switch&quot;&gt;</code>.
           </p>
           <SwitchDemo />
@@ -2130,7 +2210,7 @@ export default async function Styleguide() {
             vorgelesen wird («Wert, Gruppe») - sonst hörte man eine lange Liste
             ohne jede Gliederung. <code>zusatz</code> setzt unter den Namen einer
             Option eine gedämpfte zweite Zeile - nötig, wo der Name allein eine
-            Option nicht erkennen lässt (in der Anwendung: die Verantwortlichen
+            Option nicht erkennen lässt (in der Anwendung: die Eingeladenen
             eines Termins, deren Anzeigename gleich lauten oder eine
             automatische Kennung sein kann, darunter die E-Mail-Adresse). Die
             Zeile bricht an jeder Stelle um statt zu kürzen, weil gerade der
@@ -2430,6 +2510,32 @@ export default async function Styleguide() {
             <Lozenge appearance="danger">Zu viel</Lozenge>
             <Lozenge>Fällt aus</Lozenge>
             <Lozenge appearance="danger">Meldefrist verpasst</Lozenge>
+          </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>SecondaryLozenge</strong> (Epic #518, PO 2026-10-25): dieselbe Form, nur die Kontur - wie
+            Atlassians «Tag» und die Secondary Buttons. Sie steht NEBEN dem Status, nie an seiner Stelle: Den Status
+            trägt höchstens eine gefüllte Lozenge. Kontur in der Füllfarbe der gefüllten Lozenge - die Zeichenfarbe war neben dem Status zu laut. Ohne Text nur das
+            Zeichen; der Satz steht dann für Vorlesehilfe und Tooltip (<code>label</code>). Im Trainingsplan meldet sie
+            Trainer-Lücken: Niemand verantwortlich gelb.
+          </p>
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <span className="flex items-center gap-1">
+              <Lozenge>Nicht vorbereitet</Lozenge>
+              <SecondaryLozenge appearance="warning" iconBefore={UserPen} label="Niemand verantwortlich" />
+            </span>
+            <SecondaryLozenge appearance="warning" iconBefore={UserPen}>Niemand verantwortlich</SecondaryLozenge>
+            <SecondaryLozenge>Neutral</SecondaryLozenge>
+          </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>ZeichenZahl</strong> (Epic #518): eine knappe Angabe mit Zeichen davor - mehrere auf einer Linie
+            ersetzen Abschnitte mit Überschriften (Karte «Als Nächstes», Terminzeile). Ungefärbt; der ganze Satz ist
+            ihr Name für die Vorlesehilfe und steht beim Überfahren da. <code>klein</code> in der Terminzeile.
+          </p>
+          <div className="mb-6 flex flex-wrap items-center gap-5 text-on-surface">
+            <ZeichenZahl icon={Shirt} label="Spieler:innen: 34 von 36 angemeldet · 2 abgemeldet">34/36</ZeichenZahl>
+            <ZeichenZahl icon={UserRoundCheck} label="Trainer:innen: 3 von 3 dabei · Anna verantwortlich · du bist dabei">3/3</ZeichenZahl>
+            <ZeichenZahl icon={LandPlot} label="Platz: 40 × 30 m · Kunstrasen">40 × 30 m · Kunstrasen</ZeichenZahl>
+            <ZeichenZahl icon={Users} label="Trainer:innen: 2 von 2 dabei · du bist nicht eingeladen" klein>2/2</ZeichenZahl>
           </div>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>LozengeAuswahl</strong> (Epic #490): eine Lozenge, die zugleich der Knopf für ein Menü ist - wie
@@ -3761,22 +3867,6 @@ export default async function Styleguide() {
           <MiniMonatDemo />
         </Section>
 
-        <Section id="meldebalken">
-          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Wie viele kommen, als Balken (<code>Meldebalken</code>, Epic #490): im Abschnitt TEAM der grossen
-            Karten im Trainingsplan und am privaten Link. Neu, weil keine Anzeige eine Menge gegen einen Bereich
-            zeigt. Der helle Anteil sind die Angemeldeten (ab Beginn: die Anwesenden) von allen, für die der
-            Termin gilt; ein Richtwert liegt als hellere Zone darunter, mit nur einer Mindestzahl bis ans Ende,
-            mit nur einer Höchstzahl ab dem Anfang. Der Balken bewertet nicht und bleibt ungefärbt - die
-            Bewertung sagt allein der Status in einem Wort. Vorgelesen wird beides in einem Satz.
-          </p>
-          <div className="flex max-w-md flex-col gap-6">
-            <Meldebalken zahl={7} gesamt={14} min={9} max={12} />
-            <Meldebalken zahl={11} gesamt={16} min={9} />
-            <Meldebalken zahl={12} gesamt={14} />
-          </div>
-        </Section>
-
         <Section id="platz-spielerzahl">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Der Platz eines Termins (Epic #388): ein oder mehrere getrennte Felder,
@@ -3834,9 +3924,9 @@ export default async function Styleguide() {
               Touch-Geräten auch unter dem Feld, <code>infoAufTouch</code>); sonst
               steht unter dem Feld nur ein Fehler. Es heisst «Erwartete
               Spielerzahl» wie in der Auskunft des Assistenten. Im Trainingsplan
-              steht sie in derselben Zeile wie die Felder, mit dem Zeichen{" "}
-              <code>Shirt</code> - <code>Users</code>{" "}
-              trägt schon die Verantwortlichen.
+              steht sie knapp und ohne Zeichen rechts in der Terminzeile, in der
+              Durchführen-Ansicht ausgeschrieben mit dem Zeichen{" "}
+              <code>Shirt</code> (Spieler:in).
             </li>
           </ul>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">

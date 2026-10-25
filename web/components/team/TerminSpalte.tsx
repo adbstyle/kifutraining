@@ -1,4 +1,5 @@
 import { CalendarOff, Clock, X } from "lucide-react";
+import type { Eingrenzung } from "@/lib/trainer";
 import { IconButtonLink, KategorieLozenge, Lozenge, SectionMessage, TabNav } from "@/components/ui";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { TrainingTeile } from "@/components/training/TrainingTeile";
@@ -18,9 +19,12 @@ import { TerminEigenschaften } from "./TerminEigenschaften";
 import { TerminKnoepfe, TrainingKnoepfe } from "./TerminSpalteKnoepfe";
 import { SpielerReiter } from "./SpielerReiter";
 import { SpielReiter } from "./SpielReiter";
+import { TrainerReiter } from "./TrainerReiter";
+import type { TeamMitglied } from "@/lib/queries/teams";
 
-/* Ein geöffneter Termin neben dem Trainingsplan (Epic #433, #435): drei
-   Reiter — der Termin selbst, sein Training und wer kommt. Die Reiter sind
+/* Ein geöffneter Termin neben dem Trainingsplan (Epic #433, #435): vier
+   Reiter — der Termin selbst, sein Training, welche Spieler:innen kommen und
+   welche Trainer:innen eingeladen sind (#519). Die Reiter sind
    Adressen (`?termin=…&tab=…`) wie jede Ansicht im Team; ein Wechsel bleibt an
    der Stelle (`scroll={false}`). Geladen wird nur, was der offene Reiter
    braucht. Der Reiter «Training» zeigt dieselbe Leseansicht wie die
@@ -32,14 +36,17 @@ import { SpielReiter } from "./SpielReiter";
 export async function TerminSpalte({
   t,
   reiter,
-  meine,
+  eingrenzung,
   ich,
+  mitglieder,
   mitKadern = false,
 }: {
   t: TerminZeile;
   reiter: TerminReiter;
-  meine: boolean;
+  eingrenzung: Eingrenzung | null;
   ich: string;
+  /** Die Mitglieder des Teams, für den Reiter «Trainer:innen». */
+  mitglieder: readonly TeamMitglied[];
   /** Das Team führt Kader (#453 AK 5). */
   mitKadern?: boolean;
 }) {
@@ -47,13 +54,15 @@ export async function TerminSpalte({
   const offen: TerminReiter = t.spiel && reiter === "training" ? "termin" : reiter;
   const reiterItems = t.spiel
     ? [
-        { label: "Spiel", href: terminHref(t.teamId, meine, t.id, "termin"), current: offen === "termin" },
-        { label: "Spieler:innen", href: terminHref(t.teamId, meine, t.id, "spieler"), current: offen === "spieler" },
+        { label: "Spiel", href: terminHref(t.teamId, eingrenzung, t.id, "termin"), current: offen === "termin" },
+        { label: "Spieler:innen", href: terminHref(t.teamId, eingrenzung, t.id, "spieler"), current: offen === "spieler" },
+        { label: "Trainer:innen", href: terminHref(t.teamId, eingrenzung, t.id, "trainer"), current: offen === "trainer" },
       ]
     : [
-        { label: "Termin", href: terminHref(t.teamId, meine, t.id, "termin"), current: reiter === "termin" },
-        { label: "Training", href: terminHref(t.teamId, meine, t.id, "training"), current: reiter === "training" },
-        { label: "Spieler:innen", href: terminHref(t.teamId, meine, t.id, "spieler"), current: reiter === "spieler" },
+        { label: "Termin", href: terminHref(t.teamId, eingrenzung, t.id, "termin"), current: reiter === "termin" },
+        { label: "Training", href: terminHref(t.teamId, eingrenzung, t.id, "training"), current: reiter === "training" },
+        { label: "Spieler:innen", href: terminHref(t.teamId, eingrenzung, t.id, "spieler"), current: reiter === "spieler" },
+        { label: "Trainer:innen", href: terminHref(t.teamId, eingrenzung, t.id, "trainer"), current: reiter === "trainer" },
       ];
   return (
     <section aria-label={`${t.spiel ? "Spiel" : "Termin"} ${tagOhneJahr(t.datum)}`} className="flex flex-col">
@@ -65,7 +74,7 @@ export async function TerminSpalte({
             {zeitText(t.beginn, t.ende)} Uhr{t.ort ? ` · ${t.ort}` : ""}
           </p>
         </div>
-        <IconButtonLink href={planHref(t.teamId, meine)} scroll={false} icon={X} label={t.spiel ? "Spiel schliessen" : "Termin schliessen"} />
+        <IconButtonLink href={planHref(t.teamId, eingrenzung)} scroll={false} icon={X} label={t.spiel ? "Spiel schliessen" : "Termin schliessen"} />
       </div>
       <TabNav items={reiterItems} ariaLabel="Bereiche des Termins" scroll={false} className="mt-2" />
       <div className="mt-4 flex flex-col gap-4">
@@ -90,6 +99,7 @@ export async function TerminSpalte({
           </>
         )}
         {offen === "training" && <TrainingReiter t={t} />}
+        {offen === "trainer" && <TrainerReiter key={t.id} t={t} mitglieder={mitglieder} />}
         {offen === "spieler" && (t.spiel ? <SpielReiterLaden t={t} ich={ich} /> : <SpielerReiterLaden t={t} ich={ich} />)}
       </div>
     </section>

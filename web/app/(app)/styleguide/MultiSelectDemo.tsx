@@ -27,7 +27,7 @@ const stufen: SelectOption[] = [
   { value: "A", label: "A-Junior:innen", group: "Juniorenfussball" },
 ];
 
-// Mit Zusatzzeile — so wählt man Verantwortliche eines Termins (#425): Der
+// Mit Zusatzzeile — so wählt man die Eingeladenen eines Termins (#425, #519): Der
 // Anzeigename allein unterscheidet Gleichnamige und automatische Kennungen
 // nicht, die E-Mail-Adresse darunter schon.
 const mitglieder: MultiSelectOption[] = [
@@ -93,7 +93,7 @@ export function MultiSelectDemo() {
       {/* Zusatzzeile — gedämpft unter dem Namen, bricht an jeder Stelle um
           statt zu kürzen. Die Suche findet auch sie, im Feld steht nur der Name. */}
       <MultiSelect
-        label="Verantwortlich (mit Zusatzzeile)"
+        label="Eingeladen (mit Zusatzzeile)"
         actions={false}
         options={mitglieder}
         supportingText="zusatz: zweite Zeile je Option, etwa die E-Mail-Adresse eines Mitglieds."

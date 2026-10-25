@@ -1,5 +1,7 @@
 "use client";
 
+import { trainerLuecke, type Eingrenzung } from "@/lib/trainer";
+import { fehlenText } from "@/lib/besetzung";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { MiniMonat, type Marke, type StatusTon } from "@/components/ui";
 import { terminStatus } from "@/lib/termin-status";
@@ -29,7 +31,7 @@ export function PlanMonat({
   termine,
   heute,
   belegt,
-  meine,
+  eingrenzung,
   anfang,
   liste,
   onWahl,
@@ -38,7 +40,7 @@ export function PlanMonat({
   heute: string;
   /** Tage mit Terminen, die die Eingrenzung ausblendet. */
   belegt: readonly string[];
-  meine: boolean;
+  eingrenzung: Eingrenzung | null;
   /** Der Monat beim ersten Rendern — derselbe auf Server und Browser. */
   anfang: string;
   liste: RefObject<HTMLElement | null>;
@@ -98,12 +100,16 @@ export function PlanMonat({
             // Der farbige Status setzt den Punkt am Tag (Epic #490); vorgelesen wird er mit.
             const status = terminStatus(t, heute);
             const ton = status && status.appearance !== "neutral" ? (status.appearance as StatusTon) : undefined;
+            // Die Trainer-Lücke als weiterer Punkt (#521, PO 14).
+            const luecke = trainerLuecke(t, heute);
+            const lueckeText = luecke ? (luecke.art === "zuWenig" ? fehlenText(luecke.fehlen) : "niemand verantwortlich") : null;
             return {
               id: t.id,
               spiel: t.art === "spiel",
               ausgefallen: t.ausgefallen,
               ton,
-              label: `${t.beginn} ${was}${status && !t.ausgefallen ? `, ${status.wort}` : ""}`,
+              zweiterTon: luecke ? (luecke.art === "zuWenig" ? "danger" : "warning") : undefined,
+              label: [`${t.beginn} ${was}`, status && !t.ausgefallen && status.wort, lueckeText].filter(Boolean).join(", "),
             };
           }),
         );
@@ -126,7 +132,7 @@ export function PlanMonat({
       belegt={(tag) => belegteTage.has(tag)}
       onWahl={waehle}
       onMonat={setGewaehlt}
-      hinweis={meine ? "Nur deine Termine" : undefined}
+      hinweis={eingrenzung ? "Nur deine Termine" : undefined}
     />
   );
 }

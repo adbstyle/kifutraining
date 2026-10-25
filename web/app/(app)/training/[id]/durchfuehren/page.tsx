@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { getTrainingView } from "@/lib/queries/trainings";
-import { getTerminZuTraining, verantwortlichenNamen } from "@/lib/queries/termine";
+import { getTerminZuTraining } from "@/lib/queries/termine";
+import { trainerNameFuer, verantwortlichText } from "@/lib/trainer";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { TrainingDurchfuehren } from "@/components/training/TrainingDurchfuehren";
 import { trainingsKrumen } from "@/lib/brotkrumen";
 import { spielerzahlVon } from "@/lib/spieler";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -29,6 +31,8 @@ export default async function TrainingDurchfuehrenPage({
   // ohnehin nur Team-Mitgliedern.
   const { termin: terminParam, variante } = await searchParams;
   const termin = terminParam ? await getTerminZuTraining(id) : null;
+  // Wer man selbst ist: Die Trainer:innen nennen einen mit «(du)» (#519 AK 17).
+  const ich = termin ? ((await (await createClient()).auth.getUser()).data.user?.id ?? "") : "";
 
   return (
     <TrainingDurchfuehren
@@ -50,7 +54,9 @@ export default async function TrainingDurchfuehrenPage({
               ende: termin.ende,
               ort: termin.ort,
               bemerkung: termin.bemerkung,
-              verantwortliche: verantwortlichenNamen(termin.verantwortliche),
+              verantwortlich: verantwortlichText(termin.trainer, ich),
+              dabei: termin.trainer.filter((tr) => !tr.abgesagtAm).map((tr) => trainerNameFuer(tr, ich)),
+              abgesagt: termin.trainer.filter((tr) => tr.abgesagtAm).map((tr) => trainerNameFuer(tr, ich)),
               felder: termin.felder,
               spielerzahl: spielerzahlVon(termin),
             }

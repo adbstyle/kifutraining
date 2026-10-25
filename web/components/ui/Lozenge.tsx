@@ -95,6 +95,54 @@ export function Lozenge({
   );
 }
 
+/* ── Secondary Lozenge ────────────────────────────────────────
+   Dieselbe Form, aber nur die Kontur (wie Atlassians «Tag» und die
+   «secondary»-Knöpfe, PO 2026-10-25): ein Hinweis NEBEN dem Status, nie der
+   Status selbst — den trägt höchstens eine gefüllte Lozenge. Kontur in der
+   Füllfarbe der gefüllten Lozenge (`lozenge-*`, PO 2026-10-25: die
+   Zeichenfarbe war neben dem Status zu laut), Schrift wie die gefüllte.
+
+   `label` ohne `children`: nur das Zeichen (Trainer-Lücken im Trainingsplan,
+   Epic #518). Der Satz steht dann für die Vorlesehilfe und beim Überfahren
+   da — nie nur über Farbe oder Form. */
+type SekundaerTon = "neutral" | "success" | "warning" | "danger" | "information" | "discovery";
+const SEKUNDAER: Record<SekundaerTon, string> = {
+  neutral: "border-kante text-on-lozenge-neutral",
+  success: "border-lozenge-success text-on-lozenge-success",
+  warning: "border-lozenge-warning text-on-lozenge-warning",
+  danger: "border-lozenge-danger text-on-lozenge-danger",
+  information: "border-lozenge-information text-on-lozenge-information",
+  discovery: "border-lozenge-discovery text-on-lozenge-discovery",
+};
+
+export function SecondaryLozenge({
+  appearance = "neutral",
+  iconBefore: Icon,
+  label,
+  children,
+  className,
+}: {
+  appearance?: SekundaerTon;
+  iconBefore?: LucideIcon;
+  /** Der ausgeschriebene Satz; ohne `children` der einzige Name. */
+  label?: string;
+  children?: React.ReactNode;
+  className?: string;
+}) {
+  const nurZeichen = !children;
+  return (
+    <span
+      role={nurZeichen ? "img" : undefined}
+      aria-label={nurZeichen ? label : undefined}
+      title={label}
+      className={cn(LOZENGE_FORM, "kontur bg-transparent", nurZeichen && "min-w-5 justify-center", SEKUNDAER[appearance], className)}
+    >
+      {Icon && <Icon size={12} strokeWidth={2.5} className="shrink-0" aria-hidden />}
+      {children && <span className="truncate">{children}</span>}
+    </span>
+  );
+}
+
 /* Herkunft einer Übung (Manual-Bestand, eigene öffentliche, eigener Entwurf)
    — eine Quelle für Karte, Detailansicht und Übungsauswahl. Kifu-Manual und
    Entwurf sind neutral: Sie sagen, woher etwas stammt oder in welchem

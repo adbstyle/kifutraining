@@ -347,16 +347,28 @@ export function verfallText(n: number, nachtraege = 0): string {
   return [abmeldungen, nachtrag].filter(Boolean).join(" ");
 }
 
+/** Was beim Verlegen mit den Absagen der Trainer:innen geschieht (#520 AK 11,
+ *  PC 2, 3) — als Satz an `text` (das, was mit den Spieler:innen geschieht)
+ *  gehängt; steht davor nichts, beginnt er mit «Damit». */
+export function mitAbsagen(text: string, n: number): string {
+  if (n === 0) return text;
+  const satz =
+    n === 1
+      ? "verfällt 1 Absage einer Trainer:in: Sie gilt wieder als dabei."
+      : `verfallen ${n} Absagen von Trainer:innen: Sie gelten wieder als dabei.`;
+  return text ? `${text} Ausserdem ${satz}` : `Damit ${satz}`;
+}
+
 /** Dasselbe in der Rückfrage der Oberfläche, mit dem Weg danach. */
-export function verfallDialogText(n: number, nachtraege = 0): string {
-  return n > 0
-    ? `${verfallText(n, nachtraege)} Wer am neuen Zeitpunkt nicht kann, meldet sich neu ab.`
-    : verfallText(n, nachtraege);
+export function verfallDialogText(n: number, nachtraege = 0, absagen = 0): string {
+  const text = n > 0 ? `${verfallText(n, nachtraege)} Wer am neuen Zeitpunkt nicht kann, meldet sich neu ab.` : verfallText(n, nachtraege);
+  return mitAbsagen(text, absagen);
 }
 
 /** Dasselbe für den KI-Weg, mit dem Weg zur Bestätigung. */
-export function verfallBestaetigen(n: number, nachtraege = 0): string {
-  return `${verfallText(n, nachtraege)} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
+export function verfallBestaetigen(n: number, nachtraege = 0, absagen = 0): string {
+  const text = mitAbsagen(verfallText(n, nachtraege), absagen);
+  return `${text} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
 }
 
 /** Am privaten Link: Der Termin wurde verlegt, seit sie abgemeldet wurde (AK 2). */

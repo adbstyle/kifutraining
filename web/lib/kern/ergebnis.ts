@@ -108,6 +108,8 @@ export type KernFehler = {
   /** Davon Nachträge zur Anwesenheit eines begonnenen Termins, den die
    *  Verlegung wieder öffnet (#475 AK 12); `verfallend` ist die Summe. */
   nachtraege?: number;
+  /** Davon Absagen von Trainer:innen (#520 AK 11). */
+  absagen?: number;
   /** Nur an einem Spiel (#463 AK 13, 26): Die Verlegung rückt die Meldefrist
    *  ins Abgelaufene — auch ohne verfallende Meldungen eine Rückfrage. */
   fristAbgelaufen?: boolean;

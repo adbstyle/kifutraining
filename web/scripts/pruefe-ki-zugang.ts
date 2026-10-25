@@ -667,6 +667,7 @@ pruefe("fehlerErgebnis: jedes gesetzte Feld eines Kern-Fehlers kommt an", () => 
     hinweis: "Es ist keine Kopie entstanden.",
     verfallend: 2,
     nachtraege: 1,
+    absagen: 1,
     fristAbgelaufen: true,
     verschwindend: 3,
     verfallendSpiele: 1,

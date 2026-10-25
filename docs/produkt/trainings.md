@@ -436,7 +436,8 @@ Ablauf, gleich danach die Varianten, wo die Übung welche führt, und zuunterst 
 beide Ansichten nicht, sie ordnet ein und hilft auf dem Platz nicht weiter. Der Druck zeigt
 dasselbe als zusammenhängende, druckfertige Seite zum Mitnehmen, das Ziel im Kopf. Leere Blöcke
 erscheinen in beiden Ansichten nicht. Aus dem Trainingsplan eines Teams geöffnet, nennt die
-Durchführen-Ansicht zuoberst den Termin: Datum, Beginn und Ende, Ort, Verantwortliche, die
+Durchführen-Ansicht zuoberst den Termin: Datum, Beginn und Ende, Ort, wer verantwortlich ist, wer
+dabei ist und wer abgesagt hat, die
 Spielerzahl — führt das Team eine Spielerliste, die angemeldeten von allen, etwa „12 von 15
 angemeldet", sonst die erwartete —, die Felder des Platzes je mit Grösse, Toren und Untergrund
 und die Bemerkung; was zu einem Feld nicht erfasst ist, steht als

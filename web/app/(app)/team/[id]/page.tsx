@@ -5,13 +5,13 @@ import { TerminBereich } from "@/components/team/TerminBereich";
 import { TrainingsPlan } from "@/components/team/TrainingsPlan";
 import { NeuerTerminKnopf } from "@/components/team/NeuerTerminKnopf";
 import { PlanMenue } from "@/components/team/PlanMenue";
-import { NurMeineFilter } from "@/components/team/NurMeineFilter";
+import { EingrenzungFilter } from "@/components/team/EingrenzungFilter";
 import { istUuid } from "@/lib/kennung";
 import { getTeam } from "@/lib/queries/teams";
 import { getTeamPlan, teilePlan } from "@/lib/queries/termine";
-import { istVerantwortlich } from "@/lib/queries/termine-fuer";
+import { imFilter } from "@/lib/trainer";
 import { getTeamTrainings, getTrainingPool } from "@/lib/queries/trainings";
-import { TERMIN_REITER, planHref, type TerminReiter } from "@/lib/team-ansicht";
+import { TERMIN_REITER, eingrenzungAus, type TerminReiter } from "@/lib/team-ansicht";
 import { TerminSpalte } from "@/components/team/TerminSpalte";
 import { createClient } from "@/lib/supabase/server";
 import { anzahlSpieler } from "@/lib/kern/spieler";
@@ -27,9 +27,9 @@ const TERMIN_WEG = "Diesen Termin gibt es nicht mehr.";
    Trainingsort und lässt sich nur an einer Stelle bestimmen, wenn Server und
    Browser dieselbe Liste rendern sollen.
 
-   `?meine=1` grenzt auf die Termine ein, für die der USER verantwortlich ist
-   (#325 AK 11) — anstehende wie vergangene. Die Basis-Adresse des Teams trägt
-   sie nicht.
+   `?meine=1` grenzt auf die Termine ein, an denen der USER dabei ist,
+   `?eingeladen=1` auf die, zu denen er eingeladen ist (#518 PO 12) —
+   anstehende wie vergangene. Die Basis-Adresse des Teams trägt sie nicht.
 
    Adressen des früheren Monatsüberblicks (`?ansicht=monat&monat=…`) öffnen
    den Trainingsplan wie jede andere; Ansicht und Monat bleiben ohne Wirkung,
@@ -46,11 +46,11 @@ export default async function TeamPlanPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ meine?: string; termin?: string; tab?: string; hinweis?: string }>;
+  searchParams: Promise<{ meine?: string; eingeladen?: string; termin?: string; tab?: string; hinweis?: string }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const meine = sp.meine === "1";
+  const eingrenzung = eingrenzungAus(sp);
   // Nur eine Kennung ist ein Ziel; alles andere bleibt ohne Wirkung.
   const hervorheben = istUuid(sp.termin) ? sp.termin : undefined;
   const terminWeg = sp.hinweis === "termin_weg";
@@ -82,9 +82,9 @@ export default async function TeamPlanPage({
   const teamKader = kader.ok ? kader.wert.kader : [];
   // Eingegrenzt wird hier statt in der Abfrage: Der Monat braucht auch die
   // Tage, an denen nur Termine anderer liegen (#404 AK 14).
-  const termine = meine ? alleTermine.filter((t) => istVerantwortlich(t, user.id)) : alleTermine;
+  const termine = eingrenzung ? alleTermine.filter((t) => imFilter(t.trainer, user.id, eingrenzung)) : alleTermine;
   const eigeneTage = new Set(termine.map((t) => t.datum));
-  const belegt = meine ? [...new Set(alleTermine.map((t) => t.datum))].filter((d) => !eigeneTage.has(d)) : [];
+  const belegt = eingrenzung ? [...new Set(alleTermine.map((t) => t.datum))].filter((d) => !eigeneTage.has(d)) : [];
   const plan = teilePlan(termine, heute);
   const leer = termine.length === 0;
   // #435: Der Termin aus `?termin=` steht offen daneben, im Reiter aus `?tab=`.
@@ -97,6 +97,7 @@ export default async function TeamPlanPage({
       trainings={trainings}
       persoenliche={persoenliche}
       mitglieder={team?.mitglieder ?? []}
+      ich={user.id}
       heute={heute}
       fuehrtListe={fuehrtListe}
       kader={teamKader}
@@ -110,7 +111,7 @@ export default async function TeamPlanPage({
         <h2 className="sr-only">Trainingsplan</h2>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            {(meine || !leer) && <NurMeineFilter aktiv={meine} href={planHref(id, !meine)} />}
+            {(eingrenzung || !leer) && <EingrenzungFilter teamId={id} aktiv={eingrenzung} />}
           </div>
           <div className="ml-auto flex items-center gap-1">
             <NeuerTerminKnopf />
@@ -125,13 +126,24 @@ export default async function TeamPlanPage({
           ich={user.id}
           hervorheben={hervorheben}
           belegt={belegt}
-          meine={meine}
-          spalte={offen && <TerminSpalte t={offen} reiter={reiter} meine={meine} ich={user.id} mitKadern={teamKader.length > 0} />}
+          eingrenzung={eingrenzung}
+          spalte={
+            offen && (
+              <TerminSpalte
+                t={offen}
+                reiter={reiter}
+                eingrenzung={eingrenzung}
+                ich={user.id}
+                mitglieder={team?.mitglieder ?? []}
+                mitKadern={teamKader.length > 0}
+              />
+            )
+          }
           leer={
-            meine ? (
+            eingrenzung ? (
               <Leerzustand icon={UserCheck} titel="Keine Termine für dich" dicht>
-                Du bist für keinen Termin verantwortlich. Eintragen kannst du dich, wenn du einen Termin
-                änderst.
+                {eingrenzung === "dabei" ? "Du bist bei keinem Termin dabei." : "Du bist zu keinem Termin eingeladen."}{" "}
+                Einladen kannst du dich an jedem Termin unter «Trainer:innen».
               </Leerzustand>
             ) : (
               <Leerzustand icon={CalendarPlus} titel="Noch keine Termine" dicht>

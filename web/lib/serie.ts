@@ -82,8 +82,8 @@ export const SERIE_TEXT = {
     "Eine Terminserie dauert höchstens bis zum gleichen Kalendertag im Folgejahr (nach einem 29. Februar bis zum 28. Februar).",
   ohneTag: "Im gewählten Zeitraum liegt keiner der gewählten Wochentage.",
   datumUndRegel: "Datum und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
-  /** #325: Einträge gelöschter Konten gibt es nur am Termin, nicht an der
-   *  Serie; eine Serienänderung der Verantwortlichen ersetzte sie überall. */
+  /** #325, #519: Einträge gelöschter Konten gibt es nur am Termin, nicht an
+   *  der Serie; eine Serienänderung der Eingeladenen ersetzte sie überall. */
   namenloseNurEinzeln: "Ehemalige Mitglieder ohne Namen lassen sich nur für diesen einen Termin entfernen.",
   namenloseUndRegel:
     "Ehemalige Mitglieder ohne Namen und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
@@ -210,7 +210,7 @@ export const SERIE_MELDUNG = {
     "Seit deiner Auswahl hat sich geändert, wie viele Abmeldungen verfallen. Sieh dir die Änderung noch einmal an.",
   KEINE_AENDERUNG: "Gib mindestens eine Angabe an, die sich ändern soll.",
   SERIE_ANGABEN_UNGUELTIG:
-    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Verantwortliche, Felder, Spielerzahl oder Kader.",
+    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.",
 } as const;
 
 /** Der KI-Weg verlangt eine ausdrückliche Bestätigung, wenn «dieser und

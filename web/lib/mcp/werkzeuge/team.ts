@@ -3,7 +3,7 @@ import { z } from "zod";
 import { kategorieStufe } from "@/lib/labels";
 import { abgebildet } from "@/lib/kern/ergebnis";
 import { meineTeams, teamPlan } from "@/lib/kern/team";
-import { setzeVerantwortliche, teamMitglieder } from "@/lib/kern/verantwortliche";
+import { aendereTrainer, setzeAbsage, teamMitglieder } from "@/lib/kern/trainer";
 import { aendereMitReichweite, entferneMitReichweite, folgeDerSerie, legeSerieFest } from "@/lib/kern/serien";
 import { lasseAusfallen, legeTerminFest, loeseTraining, nimmAusfallZurueck, ordneTrainingZu, type Verlassen } from "@/lib/kern/termine";
 import { KI_WOCHENTAG, alsKiWochentag, alsWochentag } from "@/lib/serie";
@@ -20,6 +20,18 @@ import {
   spielerzahlQuelleSchema,
   spielerzahlSchema,
 } from "@/lib/termin-felder-ausgabe";
+import {
+  BESETZUNG_MODELL,
+  BesetzungEingabe,
+  TRAINER_MODELL,
+  alsBesetzung,
+  besetzungSchema,
+  serienTrainerAusgabe,
+  serienTrainerSchema,
+  trainerAusgabe,
+  trainerSchema,
+} from "@/lib/trainer-ausgabe";
+import { angezeigteSpielerzahl, noetigeTrainer } from "@/lib/besetzung";
 import { spielerzahlVon } from "@/lib/spieler";
 import {
   KENNUNG_FEHLER,
@@ -43,8 +55,9 @@ import { KaderId, KADER_KENNUNG_FEHLER } from "@/lib/mcp/werkzeuge/kader";
  * übernehmen gehen über «training_anlegen» und «training_kopieren» mit
  * «team_id»; bearbeitet werden sie mit denselben Werkzeugen wie persönliche.
  *
- * Verantwortliche (#325) sind Mitglieder des Teams; ihre Kennungen nennt
- * «team_mitglieder_abrufen» — ohne E-Mail-Adresse, nur mit Anzeigename.
+ * Eingeladene Trainer:innen und die Verantwortliche (#519) sind Mitglieder des
+ * Teams; ihre Kennungen nennt «team_mitglieder_abrufen» — ohne E-Mail-Adresse,
+ * nur mit Anzeigename.
  *
  * Datum und Uhrzeit sind hier nur Zeichenketten: Das Format — und ob es den
  * Tag gibt — prüft der Kern (`terminProblem`, lib/termin.ts) und benennt es
@@ -133,7 +146,8 @@ const VERFALL_MODELL =
   "Ändern sich Datum oder Beginn eines Trainings und hat es danach noch nicht begonnen, verfallen seine Abmeldungen: " +
   "Alle Spieler:innen gelten wieder als angemeldet (auch über die Serie, auch an einem ausgefallenen Termin). " +
   "Verfallen dadurch Abmeldungen, kommt zuerst ein Fehler mit «verfallend» (Anzahl); frag nach und wiederhole den " +
-  "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Felder, Verantwortliche und Training lassen sie stehen. " +
+  "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Felder, Trainer:innen und Training lassen sie stehen. " +
+  "Ebenso verfallen die Absagen der Trainer:innen (an einem Spiel nur mit einem anderen Datum); «absagen» im Fehler nennt, wie viele. " +
   "An einem Spiel verfallen die Meldungen nur mit einem anderen Datum (alle sind dann wieder ohne Meldung), samt den " +
   "Kennzeichnungen als nicht aufgeboten - auch wenn nur solche verfallen, kommt zuerst der Fehler mit «verfallend» " +
   "(davon «kennzeichnungen»); rückt die " +
@@ -160,12 +174,20 @@ const KaderIds = z
   .array(KaderId)
   .describe("Kennungen von Kadern dieses Teams; die ganze neue Liste, [] heisst: für alle.");
 
+const MITGLIED = kennung("Kennung eines Mitglieds aus «team_mitglieder_abrufen».");
+const EINGELADENE = z
+  .array(MITGLIED)
+  .describe("Die eingeladenen Trainer:innen; ohne Angabe alle Mitglieder des Teams.");
+const VERANTWORTLICH = MITGLIED.describe(
+  "Wer vorbereitet und leitet - genau eine Person, damit eingeladen; ohne Angabe du selbst.",
+);
+
 /** Was jede Beschreibung eines Serien-Werkzeugs über das Modell sagt. */
 const SERIEN_MODELL =
   "Eine Terminserie läuft wöchentlich an einem oder mehreren Wochentagen zwischen Beginn- und " +
   "Enddatum (höchstens bis zum gleichen Kalendertag im Folgejahr) und legt ihre Termine als " +
   "einzelne Termine an. Ein Termin einer Serie kann je Angabe abweichen (Datum, Zeit, Ort, " +
-  "Bemerkung, Verantwortliche, Felder, erwartete Spielerzahl, Kader) und behält die Abweichung bei späteren Serienänderungen; " +
+  "Bemerkung, Eingeladene, Verantwortung, Mindestbesetzung, Felder, erwartete Spielerzahl, Kader) und behält die Abweichung bei späteren Serienänderungen; " +
   "das Datum gilt immer, wie es ist. Die Felder sind eine Angabe (die ganze Liste), die Spielerzahl eine zweite. " +
   "Wer an nur einem Serientermin Felder oder Spielerzahl entfernt, macht ihn bewusst leer: Er weicht ab und gilt " +
   "als unbekannt, bis er wieder der Serie folgt. Einzeln entfernte Termine legt keine Serienänderung wieder an.";
@@ -202,12 +224,6 @@ export const teamsAbrufen = werkzeug({
 
 // ── team_plan_abrufen ───────────────────────────────────────────────────────
 
-const Verantwortlich = z.object({
-  id: z.string().nullable().describe("Kennung des Mitglieds; null bei einem gelöschten Konto."),
-  anzeigename: z.string().nullable(),
-  ehemalig: z.boolean().describe("Nicht mehr im Team."),
-});
-
 const PlanEintrag = z.object({
   /** Kennung des Termins — für «termin_aendern», «termin_entfernen», «training_zuordnen» und «training_loesen». */
   id: z.string(),
@@ -238,11 +254,20 @@ const PlanEintrag = z.object({
   /** `null`: ein einzelner Termin ohne Serie (#324). */
   serie_id: z.string().nullable(),
   /** Die Angaben, in denen der Termin von seiner Serie abweicht; leer ohne Serie. */
-  abweichungen: z.array(z.enum(["datum", "zeit", "ort", "bemerkung", "verantwortliche", "felder", "spielerzahl", "kader"])),
+  abweichungen: z.array(
+    z.enum(["datum", "zeit", "ort", "bemerkung", "eingeladene", "verantwortung", "besetzung", "felder", "spielerzahl", "kader"]),
+  ),
   /** Für wen der Termin gilt (#453); leer = für alle. `id: null` ist ein ehemaliger Kader eines begonnenen Termins. */
   kader: z.array(z.object({ id: z.string().nullable(), name: z.string().nullable() })),
-  /** Wer den Termin vorbereitet und leitet (#325); leer ohne Eintrag. */
-  verantwortliche: z.array(Verantwortlich),
+  /** Die Eingeladenen und wer den Termin vorbereitet und leitet (#519). */
+  trainer: trainerSchema(),
+  /** Die Mindestbesetzung (#521 AK 12) und wie viele Trainer:innen sie verlangt; ohne Bewertung (OoS 5). */
+  mindestbesetzung: besetzungSchema(),
+  noetige_trainer: z
+    .number()
+    .int()
+    .nullable()
+    .describe("Wie viele Trainer:innen die Mindestbesetzung verlangt; null ohne Mindestbesetzung oder bei unbekannter Spielerzahl."),
   /** Ein ausgefallener Termin gilt nicht als unvorbereitet; ein Training ruht an ihm (#327, PO 2026-10-06). */
   ausgefallen: z.boolean(),
   /** Freiwilliger Grund des Ausfalls; `null` ohne Angabe und bei einem Termin, der stattfindet. */
@@ -272,7 +297,9 @@ function planEintrag(t: TerminZeile, zugang: Zugang) {
     serie_id: t.serie?.id ?? null,
     abweichungen: t.abweichungen,
     kader: t.kader,
-    verantwortliche: t.verantwortliche.map((v) => ({ id: v.userId, anzeigename: v.name, ehemalig: v.ehemalig })),
+    trainer: trainerAusgabe(t.trainer),
+    mindestbesetzung: t.mindestbesetzung,
+    noetige_trainer: noetigeTrainer(t.mindestbesetzung, angezeigteSpielerzahl(spielerzahlVon(t))),
     ausgefallen: t.ausgefallen,
     ausfall_grund: t.ausfallGrund,
     training: t.training
@@ -295,8 +322,10 @@ const PlanSerie = z.object({
   ende: z.string(),
   ort: z.string().nullable(),
   bemerkung: z.string().nullable(),
-  /** Wer die Serie vorgibt (#325). */
-  verantwortliche: z.array(z.object({ id: z.string(), anzeigename: z.string() })),
+  /** Wen die Serie einlädt und wer verantwortlich ist (#519). */
+  trainer: serienTrainerSchema(),
+  /** Die Mindestbesetzung, die die Serie vorgibt (#521). */
+  mindestbesetzung: besetzungSchema(),
   /** Felder und erwartete Spielerzahl, die die Serie vorgibt (#391 AK 9). */
   felder: felderSchema(),
   erwartete_spielerzahl: spielerzahlSchema(),
@@ -318,7 +347,8 @@ function planSerien(termine: TerminZeile[]) {
         ende: t.serie.ende,
         ort: t.serie.ort,
         bemerkung: t.serie.bemerkung,
-        verantwortliche: t.serie.verantwortliche.map((v) => ({ id: v.userId, anzeigename: v.name })),
+        trainer: serienTrainerAusgabe(t.serie.trainer),
+        mindestbesetzung: t.serie.mindestbesetzung,
         felder: felderAusgabe(t.serie.felder),
         erwartete_spielerzahl: t.serie.spielerzahl,
         kader: t.serie.kader,
@@ -337,8 +367,10 @@ export const teamPlanAbrufen = werkzeug({
     "des Platzes, die erwartete Spielerzahl, «spielerzahl» (die Zahl, mit der geplant wird, samt Quelle - aus der Spielerliste, " +
     "sobald das Team eine führt) und das zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
     "Training ohne Training-Inhalt, das nicht ausgefallen ist, ist noch nicht vorbereitet; ein Spiel nie. Spiele nennen Bezeichnung, Mindest- und Höchstzahl. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
-    "Ort, Bemerkung, Verantwortliche, Felder, erwartete Spielerzahl und Kader jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
-    "von ihr abweicht. Jeder Eintrag nennt seine Verantwortlichen und seine Kader («kader» leer: für alle); «nur_meine» grenzt auf deine ein. " +
+    "Ort, Bemerkung, Trainer:innen, Felder, erwartete Spielerzahl und Kader jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
+    "von ihr abweicht. Jeder Eintrag nennt seine Trainer:innen und seine Kader («kader» leer: für alle); «eingrenzung» grenzt auf " +
+    "deine Termine ein. " +
+    `${TRAINER_MODELL} ` +
     "Ausgefallene Termine stehen mit «ausgefallen: true» und Grund im Plan. " +
     "Mit «von» und «bis» (beide eingeschlossen, höchstens bis zum gleichen Kalendertag im Folgejahr) " +
     "nur die Termine dieses Zeitraums, nach denselben Regeln für kommend und vergangen; ohne Termine eine leere Auskunft. " +
@@ -347,7 +379,11 @@ export const teamPlanAbrufen = werkzeug({
   nurLesen: true,
   eingabe: z.object({
     team_id: TeamId,
-    nur_meine: z.boolean().optional().describe("Nur Termine, für die du verantwortlich bist."),
+    eingrenzung: z
+      .enum(["dabei", "eingeladen"])
+      .optional()
+      .describe("«dabei»: nur Termine, an denen du dabei bist; «eingeladen»: alle, zu denen du eingeladen bist. Ohne Angabe alle."),
+    nur_meine: z.boolean().optional().describe("Veraltet: wie «eingrenzung: dabei»."),
     von: DATUM.optional().describe("Erster Tag des Zeitraums (eingeschlossen); nur zusammen mit «bis»."),
     bis: DATUM.optional().describe("Letzter Tag des Zeitraums (eingeschlossen); nur zusammen mit «von»."),
   }),
@@ -359,7 +395,12 @@ export const teamPlanAbrufen = werkzeug({
     vergangen: z.array(PlanEintrag),
   }),
   ausfuehren: async (e, zugang) =>
-    abgebildet(await teamPlan(zugang.supabase, zugang.userId, { teamId: e.team_id, nurMeine: e.nur_meine, von: e.von, bis: e.bis }), (w) => ({
+    abgebildet(await teamPlan(zugang.supabase, zugang.userId, {
+        teamId: e.team_id,
+        eingrenzung: e.eingrenzung ?? (e.nur_meine ? "dabei" : undefined),
+        von: e.von,
+        bis: e.bis,
+      }), (w) => ({
       team: w.team,
       heute: w.heute,
       serien: planSerien([...w.kommend, ...w.vergangen]),
@@ -376,7 +417,7 @@ export const terminFestlegen = werkzeug({
   beschreibung:
     "Legt im Kalender eines deiner Teams einen einzelnen Termin fest: ein Training (ohne Training-Inhalt, auch in der " +
     "Vergangenheit) oder ein Spiel - «art» ist Pflicht. Datum, Beginn und Ende sind Pflicht, das Ende liegt am selben Tag nach dem " +
-    "Beginn; Ort, Bemerkung und Kader sind frei. Ein Training trägt auf Wunsch Felder und erwartete Spielerzahl; einen Inhalt ordnest du " +
+    "Beginn; Ort, Bemerkung und Kader sind frei. Ohne Angabe sind alle Mitglieder eingeladen und du bist verantwortlich. Ein Training trägt auf Wunsch Felder und erwartete Spielerzahl; einen Inhalt ordnest du " +
     "danach mit «training_zuordnen» zu. Ein Spiel braucht eine Bezeichnung und trägt auf Wunsch Mindest- und Höchstzahl. " +
     `${TERMIN_MODELL} ${KADER_TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
   nurLesen: false,
@@ -400,6 +441,9 @@ export const terminFestlegen = werkzeug({
       `Die erwartete Spielerzahl; ohne Angabe unbekannt. ${SPIELERZAHL_MODELL}`,
     ),
     kader_ids: KaderIds.optional().describe("Für welche Kader der Termin gilt; ohne Angabe für alle."),
+    eingeladene: EINGELADENE.optional(),
+    verantwortlich: VERANTWORTLICH.optional(),
+    mindestbesetzung: BesetzungEingabe.optional().describe(`Ohne Angabe keine. ${BESETZUNG_MODELL}`),
   }),
   ausgabe: z.object({ termin_id: z.string(), team_id: z.string() }),
   ausfuehren: async (e, zugang) =>
@@ -420,6 +464,9 @@ export const terminFestlegen = werkzeug({
         felder: e.felder,
         spielerzahl: e.erwartete_spielerzahl,
         kaderIds: e.kader_ids,
+        eingeladene: e.eingeladene,
+        verantwortlich: e.verantwortlich,
+        mindestbesetzung: alsBesetzung(e.mindestbesetzung),
       }),
       (w) => ({ termin_id: w.terminId, team_id: w.teamId }),
     ),
@@ -465,6 +512,9 @@ export const AendernEingabe = z.object({
       "Neue erwartete Spielerzahl; null entfernt sie, ohne Angabe unverändert. An einem Termin einer Serie gilt " +
         `«reichweite». ${SPIELERZAHL_MODELL}`,
     ),
+  mindestbesetzung: BesetzungEingabe.optional().describe(
+    `Neue Mindestbesetzung; null entfernt sie, ohne Angabe unverändert. An einem Termin einer Serie gilt «reichweite». ${BESETZUNG_MODELL}`,
+  ),
   kader_ids: KaderIds.optional().describe(
     "Für welche Kader der Termin gilt, als GANZE neue Liste; [] heisst für alle, ohne Angabe unverändert. An einem " +
       "Termin einer Serie gilt «reichweite».",
@@ -539,6 +589,7 @@ export const terminAendern = werkzeug({
         bemerkung: e.bemerkung,
         felder: e.felder,
         spielerzahl: e.erwartete_spielerzahl,
+        mindestbesetzung: alsBesetzung(e.mindestbesetzung),
         bezeichnung: e.bezeichnung,
         richtwertMin: e.mindestzahl,
         richtwertMax: e.hoechstzahl,
@@ -598,9 +649,9 @@ export const terminserieFestlegen = werkzeug({
   beschreibung:
     "Legt für eines deiner Teams eine wöchentliche Terminserie fest: je gewähltem Wochentag " +
     "zwischen «von» und «bis» (beide eingeschlossen) einen Termin ohne Training mit Beginn, Ende, " +
-    "Ort, Bemerkung, Verantwortlichen, Feldern, erwarteter Spielerzahl und Kadern der Serie - auch ganz oder teilweise in " +
+    "Ort, Bemerkung, Eingeladenen, Verantwortlicher, Feldern, erwarteter Spielerzahl und Kadern der Serie - auch ganz oder teilweise in " +
     "der Vergangenheit. Bestehende " +
-    "Termine an denselben Tagen bleiben daneben stehen. " +
+    "Termine an denselben Tagen bleiben daneben stehen. Ohne Angabe sind alle Mitglieder eingeladen und du bist verantwortlich. " +
     `${SERIEN_MODELL} ${KADER_TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
@@ -612,10 +663,9 @@ export const terminserieFestlegen = werkzeug({
     ende: UHRZEIT,
     ort: ORT.optional(),
     bemerkung: BEMERKUNG.optional(),
-    verantwortliche: z
-      .array(kennung("Kennung eines Mitglieds aus «team_mitglieder_abrufen»."))
-      .optional()
-      .describe("Mitglieder, die jeden Termin der Serie vorbereiten und leiten; ohne Angabe niemand."),
+    eingeladene: EINGELADENE.optional(),
+    verantwortlich: VERANTWORTLICH.optional(),
+    mindestbesetzung: BesetzungEingabe.optional().describe(`Die Mindestbesetzung jedes Termins der Serie; ohne Angabe keine. ${BESETZUNG_MODELL}`),
     felder: FelderEingabe.optional().describe(`Die Felder jedes Termins der Serie; ohne Angabe unbekannt. ${FELDER_MODELL}`),
     erwartete_spielerzahl: SpielerzahlEingabe.optional().describe(
       `Die erwartete Spielerzahl jedes Termins der Serie; ohne Angabe unbekannt. ${SPIELERZAHL_MODELL}`,
@@ -634,7 +684,9 @@ export const terminserieFestlegen = werkzeug({
         ende: e.ende,
         ort: e.ort,
         bemerkung: e.bemerkung,
-        verantwortliche: e.verantwortliche,
+        eingeladene: e.eingeladene,
+        verantwortlich: e.verantwortlich,
+        mindestbesetzung: alsBesetzung(e.mindestbesetzung),
         felder: e.felder,
         spielerzahl: e.erwartete_spielerzahl,
         kaderIds: e.kader_ids,
@@ -650,12 +702,16 @@ export const terminDerSerieFolgen = werkzeug({
   titel: "Termin wieder der Serie folgen lassen",
   beschreibung:
     "Lässt abweichende Angaben eines Serientermins wieder seiner Serie folgen: Zeit, Ort, " +
-    "Bemerkung, Verantwortliche, Felder, erwartete Spielerzahl («spielerzahl») oder Kader übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
+    "Bemerkung, Eingeladene, Verantwortung, Mindestbesetzung («besetzung»), Felder, erwartete Spielerzahl («spielerzahl») oder Kader übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
     `lässt sich nicht zurücksetzen («datum» wird abgewiesen). ${VERFALL_MODELL} ${KADER_TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     termin_id: TerminId,
-    angaben: z.array(z.enum(["zeit", "ort", "bemerkung", "verantwortliche", "felder", "spielerzahl", "kader", "datum"])).min(1),
+    angaben: z
+      .array(
+        z.enum(["zeit", "ort", "bemerkung", "eingeladene", "verantwortung", "besetzung", "felder", "spielerzahl", "kader", "datum"]),
+      )
+      .min(1),
     bestaetigt: z.boolean().optional().describe("Nur nötig, wenn mit «zeit» oder «kader» Abmeldungen verfallen."),
   }),
   ausgabe: z.object({
@@ -775,8 +831,8 @@ export const teamMitgliederAbrufen = werkzeug({
   titel: "Mitglieder eines Teams",
   beschreibung:
     "Nennt die Mitglieder eines deiner Teams mit Anzeigename und Kennung - ohne E-Mail-Adresse. " +
-    "«ich» markiert dich selbst. Die Kennungen brauchst du für «verantwortliche» in " +
-    `«termin_verantwortliche_setzen» und «terminserie_festlegen». ${TEAM_KENNUNG_FEHLER}`,
+    "«ich» markiert dich selbst. Die Kennungen brauchst du für «eingeladene» und «verantwortlich» in " +
+    `«termin_festlegen» und «terminserie_festlegen» und für «termin_trainer_aendern». ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: z.object({ team_id: TeamId }),
   ausgabe: z.object({
@@ -785,43 +841,80 @@ export const teamMitgliederAbrufen = werkzeug({
   ausfuehren: async (e, zugang) => teamMitglieder(zugang.supabase, zugang.userId, { teamId: e.team_id }),
 });
 
-// ── termin_verantwortliche_setzen ───────────────────────────────────────────
+// ── termin_trainer_aendern ──────────────────────────────────────────────────
 
-export const terminVerantwortlicheSetzen = werkzeug({
-  name: "termin_verantwortliche_setzen",
-  titel: "Verantwortliche eines Termins setzen",
+export const terminTrainerAendern = werkzeug({
+  name: "termin_trainer_aendern",
+  titel: "Trainer:innen eines Termins ändern",
   beschreibung:
-    "Setzt die Mitglieder, die einen Termin vorbereiten und leiten - ein oder mehrere, oder keine " +
-    "(leere Liste). Neu eintragen lassen sich nur aktuelle Mitglieder. Für einen Termin einer Serie " +
-    "ist «reichweite» Pflicht. Bei «nur_dieser» (und an einem einzelnen Termin) bleiben Einträge " +
-    "ehemaliger Mitglieder, wenn du sie mitgibst, und Einträge gelöschter Konten (ohne Kennung), " +
-    "ausser «ohne_namen_behalten» ist false. «dieser_und_folgende» und «alle» ersetzen dagegen alle " +
-    "Einträge der erfassten Termine durch die genannten aktuellen Mitglieder - auch die " +
-    "ehemaliger Mitglieder und gelöschter Konten; «dieser_und_folgende» teilt dabei die Serie, die " +
-    `neue Serie trägt die neuen Verantwortlichen. ${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
+    "Lädt Trainer:innen zu einem Termin ein, lädt sie aus oder gibt die Verantwortung weiter - ohne dass jemand " +
+    "zustimmen muss, auch an begonnenen und vergangenen Terminen. Neu einladen lassen sich nur aktuelle Mitglieder. " +
+    "Ausladen wirkt immer, auch bei der Verantwortlichen: Der Termin ist danach ohne Verantwortliche:n. Wer " +
+    "«verantwortlich» wird, ist damit eingeladen; dieselbe Person lässt sich nicht gleichzeitig ausladen. Für einen " +
+    "Termin einer Serie ist «reichweite» Pflicht; «dieser_und_folgende» und «alle» geben jedem erfassten Termin dieselben " +
+    "Eingeladenen (die des gewählten Termins mit deiner Änderung) bzw. dieselbe Verantwortliche, ausser Terminen, die bei " +
+    "dieser Angabe abweichen; «dieser_und_folgende» teilt dabei die Serie. Einträge gelöschter Konten entfernt " +
+    `«ohne_namen_entfernen» nur bei «nur_dieser» oder einem einzelnen Termin. ${TRAINER_MODELL} ${SERIEN_MODELL} ` +
+    TERMIN_KENNUNG_FEHLER,
   nurLesen: false,
   eingabe: z.object({
     termin_id: TerminId,
-    verantwortliche: z.array(kennung("Kennung eines Mitglieds aus «team_mitglieder_abrufen».")),
-    ohne_namen_behalten: z
+    einladen: z.array(MITGLIED).optional().describe("Mitglieder, die dazukommen."),
+    ausladen: z.array(MITGLIED).optional().describe("Eingeladene, die wegfallen - auch die Verantwortliche."),
+    verantwortlich: VERANTWORTLICH.optional().describe("Wer neu verantwortlich ist; ohne Angabe unverändert."),
+    ohne_namen_entfernen: z
       .boolean()
       .optional()
-      .describe(
-        "Nur bei nur_dieser oder einem Einzeltermin: false entfernt Einträge gelöschter Konten; ohne Angabe bleiben sie.",
-      ),
+      .describe("true entfernt Einträge gelöschter Konten; nur bei nur_dieser oder einem einzelnen Termin."),
     reichweite: Reichweite.optional(),
     bestaetigt: Bestaetigt,
   }),
   ausgabe: z.object({ termin_id: z.string(), serie_id: z.string().nullable() }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
-      await setzeVerantwortliche(zugang.supabase, zugang.userId, {
+      await aendereTrainer(zugang.supabase, zugang.userId, {
         terminId: e.termin_id,
-        userIds: e.verantwortliche,
-        anonyme: e.ohne_namen_behalten === false ? [] : null,
+        einladen: e.einladen,
+        ausladen: e.ausladen,
+        ohneNamenEntfernen: e.ohne_namen_entfernen,
+        verantwortlich: e.verantwortlich,
         reichweite: e.reichweite,
         bestaetigt: e.bestaetigt,
       }),
       (w) => ({ termin_id: w.terminId, serie_id: w.serie?.serieId ?? null }),
+    ),
+});
+
+// ── termin_trainer_absagen ──────────────────────────────────────────────────
+
+export const terminTrainerAbsagen = werkzeug({
+  name: "termin_trainer_absagen",
+  titel: "Trainer:in absagen oder wieder zusagen",
+  beschreibung:
+    "Sagt eine eingeladene Trainer:in - dich oder eine andere - für einen einzelnen Termin ab («abgesagt: true») oder " +
+    "wieder zu («abgesagt: false»), auch an einem Termin einer Serie immer nur für diesen. Nur bis zum Beginn bzw. " +
+    "Anpfiff und nie an einem ausgefallenen Termin. Die Verantwortliche kann erst absagen, wenn eine andere Trainer:in, " +
+    "die dabei ist, übernimmt («uebernimmt») - ausser niemand sonst ist dabei; dann ist der Termin danach ohne " +
+    "Verantwortliche:n. Wird ein Termin verlegt, verfallen seine Absagen (ein Training bei neuem Datum oder Beginn, ein " +
+    `Spiel bei neuem Datum). ${TRAINER_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({
+    termin_id: TerminId,
+    trainer_id: MITGLIED.describe("Kennung der eingeladenen Trainer:in, die absagt oder wieder zusagt."),
+    abgesagt: z.boolean(),
+    uebernimmt: MITGLIED.optional().describe(
+      "Nur wenn die Verantwortliche absagt: wer die Verantwortung übernimmt - eine andere Eingeladene, die dabei ist.",
+    ),
+  }),
+  ausgabe: z.object({ termin_id: z.string() }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(
+      await setzeAbsage(zugang.supabase, zugang.userId, {
+        terminId: e.termin_id,
+        userId: e.trainer_id,
+        abgesagt: e.abgesagt,
+        uebernimmt: e.uebernimmt,
+      }),
+      (w) => ({ termin_id: w.terminId }),
     ),
 });

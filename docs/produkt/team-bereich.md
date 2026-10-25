@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-10-22. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-25. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -79,8 +79,8 @@ Ein einzelner Termin entsteht im Trainingsplan über „Termin erstellen". Zuers
 Art nicht mehr ändern. Datum, Beginn und Ende
 sind Pflicht, das Ende liegt am selben Tag nach dem Beginn; der Ort darf höchstens 100 Zeichen
 lang sein, die Bemerkung höchstens 500. Trainings in der Vergangenheit sind erlaubt, damit sich
-Durchgeführtes nachtragen lässt. Beim Erstellen lassen sich gleich die Verantwortlichen
-eintragen (siehe unten). Wie viele Termine ein Tag trägt, ist nicht begrenzt; sie stehen nach
+Durchgeführtes nachtragen lässt. Beim Erstellen wählt man gleich, wer eingeladen und wer
+verantwortlich ist (siehe „Trainer:innen"). Wie viele Termine ein Tag trägt, ist nicht begrenzt; sie stehen nach
 ihrem Beginn geordnet, bei gleichem Beginn in der Reihenfolge, in der sie angelegt wurden.
 
 Auf welchem Platz trainiert wird, hält ein Termin auf Wunsch in seinen Feldern fest — einem oder mehreren
@@ -94,7 +94,7 @@ beim Untergrund ausdrücklich als „Unbekannt" gewählt; 0 Tore einer Torart he
 keine dastehen. Spielfelder innerhalb eines Feldes steckt der Trainer selbst ab. Ebenso
 freiwillig ist die erwartete Spielerzahl: alle Kinder, mit denen gerechnet wird, einschliesslich
 Torhüter:innen und ohne Trainer:innen, als ganze Zahl von 1 bis 200. Beides steht im Dialog
-unter den Verantwortlichen, als „Erwartete Spielerzahl (optional)" und „Feld hinzufügen
+unter den Trainer:innen, als „Erwartete Spielerzahl (optional)" und „Feld hinzufügen
 (optional)". Was eine Angabe heisst — wen die Spielerzahl zählt, dass leer unbekannt und 0 Tore
 keine heisst, was ein Feld ist —, sagt der Hinweis hinter dem ⓘ der jeweiligen Angabe; auf Telefon
 und Tablet stehen die Hinweise zu Spielerzahl und Toren unter dem Feld. Ein Termin ohne Felder oder ohne Zahl ist ebenso gültig, und früher
@@ -165,7 +165,7 @@ an: Im selben Dialog wie der einzelne Termin („Termin erstellen") macht das An
 „Wiederholender Termin" daraus eine Serie. Das Datum wird zum Beginndatum, dazu kommen ein oder
 mehrere Wochentage und ein Enddatum; vorgewählt ist der Wochentag des Datums, und er folgt
 einem geänderten Datum, bis man selbst Wochentage wählt. Beginn, Ende, Ort, Bemerkung,
-Verantwortliche, erwartete Spielerzahl und Felder sind dieselben Angaben wie beim einzelnen
+Trainer:innen, Mindestbesetzung, erwartete Spielerzahl und Felder sind dieselben Angaben wie beim einzelnen
 Termin, und die Serie gibt sie jedem ihrer Termine mit. Es gelten
 dieselben Regeln wie für einen einzelnen Termin. Das Enddatum liegt frühestens am Beginndatum
 und spätestens am gleichen Kalendertag des Folgejahres — nach einem 29. Februar am 28. Februar
@@ -178,25 +178,27 @@ Die Serie legt für jeden gewählten Wochentag im Zeitraum, beide Enden eingesch
 einen Termin ohne Training an. Termine, die das Team an denselben Tagen schon hat, bleiben
 unberührt daneben stehen. Im Plan trägt jeder Termin einer Serie deren Zeichen mit ihren
 Wochentagen, etwa „Di, Do". Ein Serientermin ist ein gewöhnlicher Termin: Er bekommt sein
-Training, seine Verantwortlichen und seinen Ausfall einzeln.
+Training, seine Absagen und seinen Ausfall einzeln.
 
 Ändert man einen Serientermin, fragt die Anwendung wie gängige Kalender, wofür die Änderung
 gilt: „Nur dieser Termin", „Dieser und alle folgenden" oder „Alle Termine der Serie". Zeit, Ort,
-Bemerkung, Verantwortliche, erwartete Spielerzahl und Felder gelten für jede der drei Wahlen. Das Datum ändert sich nur für
+Bemerkung, Eingeladene, Verantwortliche, Mindestbesetzung, erwartete Spielerzahl und Felder gelten
+für jede der drei Wahlen. Das Datum ändert sich nur für
 diesen einen Termin. Wochentage und Zeitraum stehen im selben Dialog unter „Terminserie" und
 gelten dagegen nur für folgende oder alle — Datum und Wochentage zugleich lassen sich nicht in
 einem Schritt ändern. Ist die Wahl eingeschränkt, sagt ein Satz warum; bleibt nur eine, ist sie
 vorgewählt.
 
 „Nur dieser Termin" macht die geänderte Angabe zu einer Abweichung. Ein Termin weicht je
-Angabe ab — Datum, Zeit (Beginn und Ende zusammen), Ort, Bemerkung, Verantwortliche, erwartete
-Spielerzahl, Felder — und behält die Abweichung bei späteren Änderungen der Serie. Die Felder
+Angabe ab — Datum, Zeit (Beginn und Ende zusammen), Ort, Bemerkung, Eingeladene,
+Verantwortliche, Mindestbesetzung, erwartete Spielerzahl, Felder — und behält die Abweichung bei späteren Änderungen der Serie. Die Felder
 zählen dabei als Ganzes als eine Angabe, wie viele es auch sind; die Spielerzahl ist eine
 zweite. Wer an nur einem Serientermin Felder oder Spielerzahl entfernt, obwohl die Serie sie
 vorgibt, macht ihn bewusst leer: Der Termin weicht ab und gilt als unbekannt, bis er wieder der
 Serie folgt. Ein zugeordnetes Training und ein Ausfall
 zählen nicht als Abweichung. Der Dialog „Termin ändern" nennt unter „Terminserie" die Serie mit
-Wochentagen, Zeitraum, Zeit, Ort und Verantwortlichen, mit der erwarteten Spielerzahl und den
+Wochentagen, Zeitraum, Zeit, Ort, Eingeladenen, Verantwortlicher und Mindestbesetzung, mit der
+erwarteten Spielerzahl und den
 Feldern samt Grösse, Toren und Untergrund, soweit die Serie sie vorgibt, und darunter jede
 Angabe, die abweicht,
 mit „Der Serie folgen" als Weg zurück; ein verschobener Termin sagt, an welchem Tag er
@@ -226,41 +228,101 @@ vergangenen Termine. Wo Termine entfallen — beim Entfernen immer, beim Ändern
 das zu bestätigen. Die Rückfrage nennt vorher jeden entfallenden Termin, der ein Training
 trägt, und sagt, was mit dessen Training geschieht — ein Termin-Training wird mitgelöscht, ein
 älteres Training aus dem Bestand bleibt dort; Termine ohne
-Training, mit Verantwortlichen oder mit abweichenden Angaben nennt sie nicht, eine Anzahl auch
+Training, mit Eingeladenen oder mit abweichenden Angaben nennt sie nicht, eine Anzahl auch
 nicht. Geändert oder entfernt werden entweder alle betroffenen Termine oder keiner.
 
-## Verantwortliche
+## Trainer:innen
 
-Ein Termin kann ein oder mehrere Mitglieder als Verantwortliche tragen — diejenigen, die das
-Training vorbereiten und leiten; zwischen den beiden unterscheidet die Anwendung nicht. Jedes
-Mitglied darf sich selbst und andere eintragen, ändern und entfernen, auch an vergangenen
-Terminen, und ein Termin darf ohne Verantwortliche sein. Neu eintragen lassen sich nur
-aktuelle Mitglieder; ist eine gewählte Person inzwischen nicht mehr im Team, lehnt die
-Anwendung ab und sagt es. Angezeigt werden Verantwortliche immer mit ihrem aktuellen
-Anzeigenamen — im Trainingsplan, wo man selbst zuerst und mit „(du)" steht, beim Ändern eines
-Termins und in der Durchführen-Ansicht. In der Auswahl steht unter jedem Mitglied zusätzlich
-seine E-Mail-Adresse, und die Suche findet auch sie; ehemalige Mitglieder stehen dort ohne
-Adresse.
+Zu jedem Termin lädt das Team Trainer:innen ein, wie zu einem Termin in einem Kalenderprogramm.
+Wer eingeladen ist, gilt als dabei, bis sie oder er absagt; eine Zusage braucht es nicht, auch
+nicht bei Spielen. Unter den Eingeladenen ist höchstens eine Person verantwortlich: Sie bereitet
+den Termin vor und leitet ihn. Wer verantwortlich wird, ist damit eingeladen und dabei; eine
+frühere Absage fällt weg. „Absagen" und „dabei" sind die Wörter der Trainer:innen, „abmelden" und
+„angemeldet" die der Spieler:innen.
 
-Eine Serie gibt ihren Terminen Verantwortliche vor. Ein einzelner Termin kann abweichende
-haben, auch keine, und lässt sich danach wieder den Verantwortlichen der Serie folgen lassen.
-Ändert man die Verantwortlichen für folgende oder alle Termine, übernehmen sie alle Termine der
-gewählten Reichweite ohne abweichende Verantwortliche, und in jedem Fall der gewählte; „dieser und
-alle folgenden" teilt auch hier die Serie.
+Beim Erstellen eines Termins oder einer Serie stehen im Dialog unter „Trainer:innen" die Felder
+„Eingeladen" und „Verantwortlich". Vorgewählt sind alle Mitglieder als eingeladen und man selbst
+als verantwortlich; jemand muss verantwortlich sein. In der Auswahl steht unter jedem Mitglied
+seine E-Mail-Adresse, und die Suche findet auch sie; ehemalige Mitglieder stehen unter
+„Ehemalige", ohne Adresse. Neu einladen lassen sich nur aktuelle Mitglieder; ist eine gewählte
+Person inzwischen nicht mehr im Team, lehnt die Anwendung ab und sagt es. Beim Ändern lädt man
+weitere ein, lädt aus und gibt die Verantwortung einer anderen Person. Ausladen wirkt immer, auch
+bei der Verantwortlichen; der Termin steht dann ohne Verantwortliche:n da. Wer neu ins Team kommt,
+ist zu keinem bestehenden Termin eingeladen, bis ihn jemand einlädt. Angezeigt werden
+Trainer:innen immer mit ihrem aktuellen Anzeigenamen, man selbst mit „(du)".
 
-Mit „Meine Termine" grenzt sich der Trainingsplan auf die Termine ein, für die man selbst
-verantwortlich ist, anstehende wie vergangene; auch der nächste Termin ist dann der nächste
-eigene. Der Monat neben den Terminen zeigt nur noch die eigenen, und Tage, an denen nur Termine
-anderer liegen, tragen dort nur den Kreis, ohne Zeichen: belegt. Die Eingrenzung steht in der Adresse und
-fällt weg, sobald man das Team erneut öffnet.
+Der geöffnete Termin zeigt im Reiter „Trainer:innen", wer kommt: zuoberst etwa „2 von 3 dabei",
+wer verantwortlich ist — oder „Niemand ist verantwortlich." —, eine Mindestbesetzung und bis wann
+sich Absagen ändern lassen, etwa „Absagen änderbar bis 18:00", bei einem Spiel mit „(Anpfiff)".
+Darunter stehen die Gruppen „Dabei", „Abgesagt" mit dem Zeitpunkt der Absage, etwa „abgesagt vor
+3 Stunden", und „Nicht eingeladen" mit den übrigen Mitgliedern. Jede eingeladene Person hat einen
+Schalter — an heisst dabei, aus abgesagt — und ein Menü mit „Verantwortung geben" und „Ausladen",
+jedes nicht eingeladene Mitglied einen Knopf zum Einladen. Jedes Mitglied darf für alle absagen
+und wieder zusagen, alle einladen und ausladen; das sagt ein Hinweis unter der Liste. An einem
+Serientermin gilt alles in diesem Reiter nur für diesen Termin; für die Serie ändert man über
+„Termin ändern". Den eigenen Stand ändert man auch, ohne den Termin zu öffnen: Im Menü jeder Zeile
+und der Karte „Als Nächstes" steht zuoberst „Absagen" bzw. „Wieder zusagen", und wer nicht
+eingeladen ist, lädt sich mit „Ich helfe aus" selbst ein. Auf der Karte „Als Nächstes" tut der
+Schalter „Ich bin dabei" dasselbe.
 
-Wer das Team verlässt oder daraus entfernt wird, verschwindet aus allen anstehenden Terminen und
-Serien des Teams. An vergangenen Terminen bleibt sein Eintrag mit dem aktuellen Anzeigenamen
-stehen und ist in der Auswahl als „nicht mehr im Team" kenntlich; entfernen lässt er sich dort
-weiterhin, neu hinzufügen nicht. Hatte ein Serientermin abweichende Verantwortliche und sind
-diese alle ausgetragen, folgt er deshalb nicht wieder der Serie, sondern bleibt ohne
-Verantwortliche. Wird ein vergangener Termin auf heute oder später verlegt, fallen ehemalige
-Mitglieder aus ihm weg.
+Absagen lassen sich bis zum Beginn bzw. Anpfiff ändern, danach stehen sie fest; an einem
+ausgefallenen Termin ruhen sie, bis der Ausfall zurückgenommen ist. Sagt die Verantwortliche ab,
+fragt die Anwendung „Wer übernimmt?" und bietet die anderen an, die dabei sind; übergeben und
+abgesagt wird in einem Schritt. Ist sonst niemand dabei, darf sie trotzdem absagen, und der Termin
+steht ohne Verantwortliche:n im Plan; „Jemanden einladen" führt statt dessen in den Reiter. Hat
+sich seit dem Öffnen der Termin oder seine Verantwortung geändert, lehnt die Anwendung die Absage
+ab und zeigt den neuen Stand. Ändern sich Datum oder Beginn eines Termins, der noch nicht begonnen
+hat, verfallen seine Absagen, und alle Eingeladenen gelten wieder als dabei — bei einem Spiel nur,
+wenn sich das Datum ändert. Vor dem Speichern fragt die Anwendung nach, etwa „Damit verfällt 1
+Absage einer Trainer:in: Sie gilt wieder als dabei."; verfallen auch Abmeldungen, steht der Satz
+mit „Ausserdem" dahinter. Ein geändertes Ende, Ort oder Training lässt die Absagen stehen. Eine
+Absage trägt keinen Grund.
+
+Eine Serie gibt ihren Terminen die Eingeladenen, die Verantwortliche und die Mindestbesetzung vor
+— drei Angaben, in denen ein einzelner Termin abweichen und mit „Der Serie folgen" zurückkehren
+kann. Ändert man eine davon für folgende oder alle Termine, übernehmen sie alle Termine der
+gewählten Reichweite, die darin nicht abweichen, und in jedem Fall der gewählte; „dieser und alle
+folgenden" teilt auch hier die Serie. Ehemalige Mitglieder, die an einem vergangenen Termin noch
+stehen, gehen dabei nicht in die Serie über. Absagen gelten immer nur für ihren Termin.
+
+### Mindestbesetzung
+
+Wie viele Trainer:innen ein Termin braucht, legt er auf Wunsch unter „Mindestbesetzung
+(optional)" fest: als „Feste Zahl" — mindestens so viele Trainer:innen — oder als „Verhältnis" —
+eine Trainer:in je so viele Spieler:innen —, je eine ganze Zahl von 1 bis 99. Eine Serie gibt sie
+ihren Terminen vor wie jede andere Angabe. Beim Verhältnis rechnet die Anwendung mit der
+Spielerzahl, die der Termin anzeigt — den Angemeldeten, ab Beginn den Anwesenden, ohne
+Spielerliste der erwarteten —, rundet kaufmännisch und verlangt mindestens eine Trainer:in, sobald
+Spieler:innen da sind. Die nötige Zahl folgt so den Ab- und Anmeldungen; der Dialog nennt sie vorab,
+etwa „Bei 16 angemeldeten Spieler:innen sind 2 Trainer:innen nötig." Ist keine Spielerzahl
+bekannt, rechnet die Anwendung nicht und sagt das.
+
+Sind an einem anstehenden Termin weniger dabei als nötig, trägt er im Plan neben dem Status eine
+rot umrandete Plakette mit einem Zeichen, beim Darüberfahren und für die Vorlesehilfe etwa „1
+Trainer:in fehlt"; der Reiter „Trainer:innen" nennt „noch 1 bis zur Mindestbesetzung von 2". Ein
+anstehender Termin ohne Verantwortliche:n trägt eine gelb umrandete Plakette „Niemand
+verantwortlich"; fehlt beides, steht nur die rote. Im Monat neben der Liste steht die Lücke als
+weiterer Punkt. Ein vergangener oder ausgefallener Termin wird nicht bewertet. Die Mindestbesetzung
+verhindert nichts: Speichern, Absagen und Ausladen gehen auch, wenn danach zu wenige dabei sind.
+
+### Eingrenzen
+
+Mit „Meine Termine" grenzt sich der Trainingsplan auf die Termine ein, an denen man dabei ist, mit
+„Eingeladen" auf alle, zu denen man eingeladen ist, abgesagte eingeschlossen — anstehende wie
+vergangene. Es gilt höchstens eine der beiden. Auch der nächste Termin ist dann der nächste eigene.
+Der Monat neben den Terminen zeigt nur noch die eigenen, und Tage, an denen nur Termine anderer
+liegen, tragen dort nur den Kreis, ohne Zeichen: belegt. Die Eingrenzung steht in der Adresse und
+fällt weg, sobald man das Team erneut öffnet. Ältere Adressen mit „Meine Termine" grenzen auf die
+Termine ein, an denen man dabei ist.
+
+### Ausscheiden
+
+Wer das Team verlässt oder daraus entfernt wird, wird aus allen anstehenden Terminen und Serien
+des Teams ausgeladen; war er verantwortlich, steht der Termin ohne Verantwortliche:n da. An
+vergangenen Terminen bleibt sein Eintrag mit dem aktuellen Anzeigenamen stehen und ist in der
+Auswahl als „nicht mehr im Team" kenntlich; ausladen lässt er sich dort weiterhin, neu einladen
+nicht. Wird ein vergangener Termin auf heute oder später verlegt, fallen ehemalige Mitglieder aus
+ihm weg.
 
 ## Ausfälle
 
@@ -270,8 +332,8 @@ Termin. Im Plan steht er mit der Plakette „Ausgefallen" und dem Grund daneben,
 lang ist; ganz steht er am nächsten Termin und beim Ändern des Termins. Ein
 ausgefallener Termin gilt nicht als unvorbereitet und nimmt kein neues Training an. Trug er
 eines, ruht es am Termin: Der Plan nennt es leise neben dem Ausfall, und es lässt sich öffnen,
-aber nicht durchführen. Verantwortliche, Bemerkung, Felder, erwartete Spielerzahl und
-Serienzugehörigkeit bleiben ebenfalls am Termin. Eine Spielerzahl zeigt ein ausgefallener Termin
+aber nicht durchführen. Eingeladene samt Absagen, Verantwortliche, Bemerkung, Felder,
+erwartete Spielerzahl und Serienzugehörigkeit bleiben ebenfalls am Termin; Absagen und Zusagen ruhen. Eine Spielerzahl zeigt ein ausgefallener Termin
 aber nirgends, auch keine erwartete, und Abmeldungen ruhen an ihm (siehe „Ab- und Anmelden").
 
 Den Grund kann man ergänzen, ändern oder leeren, ohne den Ausfall zurückzunehmen — über „Grund
@@ -303,15 +365,19 @@ mehreren am selben Tag der früheste. Ein ausgefallener Termin davor bekommt kei
 als gewöhnliche Zeile in der Liste. Die Karte ist aufgebaut wie eine Zeile, nur grösser: links das
 Kalenderblatt, daneben der Status in einem Wort („Vorbereitet" grün oder „Nicht vorbereitet" — nur
 hier, auf der grossen Karte, gelb), der Name des Trainings — ohne Training „Noch kein Training" —,
-Zeit und Ort, rechts das Menü mit „Training ersetzen" und den übrigen Handgriffen. Darunter der
-Abschnitt „Kader": die Kader des Termins, die Zahl der Angemeldeten von allen, für die der Termin
-gilt, etwa „12 von 14 angemeldet", und eine Zeile mit den Abgemeldeten, „änderbar bis zum Beginn"
-und den Verantwortlichen. Ohne Spielerliste steht dort die erwartete Spielerzahl. Dann der Abschnitt
-„Platz" mit Grösse, Toren und Untergrund jedes Feldes, ohne Felder „Nicht erfasst". Zuunterst
-„Durchführen" als heller Knopf und „Training öffnen", ohne Training „Training hinzufügen" als heller
-Knopf; führt das Team eine Spielerliste, dazu „Spieler:innen", das den Termin bei diesem Reiter
-öffnet (siehe „Der geöffnete Termin"). Ein Klick auf die Karte oder den Namen öffnet den Termin.
-Bemerkung und Wochentage der Serie zeigt erst der geöffnete Termin. In der Liste darunter steht er
+Zeit und Ort, rechts das Menü mit „Training ersetzen" und den übrigen Handgriffen. Über dem Namen
+steht für die nächsten Tage „Heute" oder „Morgen" mit dem Tag, neben dem Status eine Trainer-Lücke
+(siehe „Mindestbesetzung"). Darunter eine Zeile mit Zeichen und Zahlen: die Spielerzahl — mit
+Spielerliste die Angemeldeten von allen, etwa „12/14", sonst die erwartete —, die Kader, die
+Trainer:innen als „dabei/eingeladen" mit dem eigenen Stand als Zeichen davor und der Platz, ohne
+Felder „Platz nicht erfasst"; die Einzelheiten nennt jedes Zeichen beim Darüberfahren und für die
+Vorlesehilfe. Dann die Bemerkung und der Schalter „Ich bin dabei" mit dem Satz, wer verantwortlich
+ist, und — wenn das zutrifft — „du hast abgesagt" oder „du bist nicht eingeladen"; ab Beginn und an
+einem ausgefallenen Termin ist er gesperrt. Zuunterst „Durchführen" als heller Knopf und „Training
+öffnen", ohne Training „Training hinzufügen" als heller Knopf; dazu „Spieler:innen", sofern das Team
+eine Spielerliste führt, und „Trainer:innen", die den Termin bei diesem Reiter öffnen (siehe „Der
+geöffnete Termin"). Ein Klick auf die Karte oder den Namen öffnet den Termin. Die Namen der
+Trainer:innen und die Wochentage der Serie zeigt erst der geöffnete Termin. In der Liste darunter steht er
 nicht noch einmal, in der Zahl der anstehenden Termine zählt er mit. Auch ein Spiel kann „Als
 Nächstes" sein; seine Karte beschreibt „Spiele".
 
@@ -328,9 +394,12 @@ und ohne Training — „+ Training hinzufügen" in Violett, das das Zuordnen ö
 nicht vorbereitete Einheit auf und lässt sich sofort vorbereiten. Ein vergangener oder ausgefallener
 Termin ohne Training heisst „Kein Training eingetragen"; ob er stattgefunden hat, sagt die Anwendung
 nicht. Eine ruhige Zeile darunter nennt Beginn und Ende, Ort — ausgefallen statt dessen den Grund
-und, falls ein Training zugeordnet ist, „Training ruht" —, die Kader und die Verantwortlichen.
-Rechts steht die Spielerzahl klein und ungefärbt: mit Spielerliste die angemeldeten von allen, etwa
-„12/15", ab Beginn die Anwesenden, sonst die erwartete, ausgefallen keine. Vergangene und
+und, falls ein Training zugeordnet ist, „Training ruht" — und die Kader. Neben dem Status steht
+eine Trainer-Lücke (siehe „Mindestbesetzung"). Rechts stehen klein und ungefärbt, je mit einem
+Zeichen, die Spielerzahl — mit Spielerliste die angemeldeten von allen, etwa „12/15", ab Beginn die
+Anwesenden, sonst die erwartete, ausgefallen keine — und die Trainer:innen als „dabei/eingeladen",
+etwa „2/3", davor der eigene Stand: dabei, abgesagt oder nicht eingeladen; ein ausgefallener Termin
+nennt keine Trainer:innen. Namen stehen in der Zeile keine. Vergangene und
 ausgefallene Termine stehen gedämpft, ein ausgefallener mit durchgestrichenem Namen. Was zu lang
 ist, endet in „…" und steht ganz im Hinweis beim Darüberfahren. Bemerkung, Serie, Platz und
 Alterskategorien stehen nicht in der Zeile; Bemerkung, Serie und Platz zeigt der geöffnete Termin,
@@ -338,16 +407,18 @@ die Alterskategorien das Training selbst. Der Rückblick sieht genauso aus.
 
 Ein Klick auf die Zeile öffnet den Termin neben der Liste (siehe „Der geöffnete Termin"), ein
 Klick auf den Trainingsnamen das Training. Alle Handgriffe einer Zeile liegen in ihrem Menü rechts:
-Durchführen, Training ersetzen — vergangen ohne Training: zuordnen —, Termin ändern, Training
+zuoberst, solange der Termin nicht begonnen hat und nicht ausfällt, der eigene Stand — „Absagen",
+„Wieder zusagen" oder „Ich helfe aus" (siehe „Trainer:innen") —, dann Durchführen, Training ersetzen — vergangen ohne Training: zuordnen —, Termin ändern, Training
 lösen, Ausfallen lassen oder — bei einem ausgefallenen — Grund ändern und Ausfall zurücknehmen,
 und Termin entfernen; ein Spiel bietet nur „Spiel ändern", die Handgriffe zum Ausfall und „Spiel
 entfernen". Die Durchführen-Ansicht zeigt, aus
-dem Plan geöffnet, zuoberst Datum, Zeit, Ort, Verantwortliche, Spielerzahl, Felder
+dem Plan geöffnet, zuoberst Datum, Zeit, Ort, wer verantwortlich ist, wer dabei ist und wer
+abgesagt hat, Spielerzahl, Felder
 und Bemerkung des Termins, jedes Feld mit Grösse, Toren je Torart und Untergrund; was zu einem
 Feld nicht erfasst ist, steht dort ausdrücklich als unbekannt.
 
 Eine eigene Überschrift trägt der Trainingsplan nicht, sie steht schon im Umschalter der
-Team-Ansichten. Über den Terminen liegt eine Zeile: links die Eingrenzung „Meine Termine",
+Team-Ansichten. Über den Terminen liegt eine Zeile: links die Eingrenzungen „Meine Termine" und „Eingeladen",
 rechts „Termin erstellen" und ein Menü mit „Kalender abonnieren". „Termin erstellen" belegt
 kein Datum vor.
 
@@ -380,16 +451,18 @@ Liste hebt ihn hervor. Wie bei einem Training reichen beide bis zum unteren Rand
 sich, und am Griff dazwischen zieht man den Termin breiter oder schmaler (Doppelklick stellt die
 Breite zurück); die gewählte Breite gilt auch für die zweispaltigen Seiten von Übung und Training.
 Schmaler nimmt er die ganze Breite ein, bis man ihn schliesst. Zuoberst stehen Tag, Zeit und Ort,
-daneben das Kreuz zum Schliessen, darunter drei Reiter — ein Spiel nur zwei (siehe „Spiele").
+daneben das Kreuz zum Schliessen, darunter vier Reiter — ein Spiel drei (siehe „Spiele").
 „Termin" bietet „Ausfallen lassen" bzw. „Ausfall zurücknehmen", „Ändern" — das bekannte „Termin
 ändern" — und im Menü die übrigen Handgriffe der Zeile; darunter die Eckdaten in derselben Form wie
 am nächsten Termin, bei einem ausgefallenen samt Grund. „Training" zeigt das Training des Termins
 so, wie es die Trainingsansicht liest — Name, Altersstufe, Alterskategorien, Dauer, Ziel und die
 Übungen je Trainingsteil, beim Hauptteil die erste Variante —, mit „Ersetzen", „Durchführen" und
 „Training öffnen" — ausgefallen nur mit Letzterem —, ohne Training „Training hinzufügen".
-„Spieler:innen" zeigt, wer kommt (siehe „Ab- und Anmelden"). Der geöffnete Termin und sein Reiter
-stehen in der Adresse; der Wechsel zwischen den Reitern bleibt an der Stelle der Liste, und auch die
-Eingrenzung „Meine Termine" bleibt.
+„Spieler:innen" zeigt, welche Spieler:innen kommen (siehe „Ab- und Anmelden"), „Trainer:innen",
+welche Trainer:innen (siehe „Trainer:innen"). Unter den Eckdaten stehen dazu „Verantwortlich" —
+ohne Verantwortliche:n „Niemand" — und „Trainer:innen" mit „2 von 3 dabei", mit Mindestbesetzung samt der nötigen
+Zahl. Der geöffnete Termin und sein Reiter stehen in der Adresse; der Wechsel zwischen den Reitern
+bleibt an der Stelle der Liste, und auch die Eingrenzung bleibt.
 
 ## Kalender-Abo
 
@@ -397,19 +470,26 @@ Die Trainings und Spiele eines Teams lassen sich im eigenen Kalenderprogramm abo
 Trainingsplan holt „Kalender abonnieren" im Menü neben „Termin erstellen" den persönlichen Abo-Link
 für dieses Team; beim ersten Mal entsteht er, danach kommt derselbe, solange das Abo gilt. Der
 Dialog warnt, dass der Link persönlich ist und nicht weitergegeben werden soll, weil jeder, der ihn
-hat, Zeit und Ort der Trainings und Spiele sieht. Er bietet den Link zum Kopieren an und sagt, wie
+hat, Zeit und Ort der Trainings und Spiele sieht, zu denen man eingeladen ist, und sagt, dass die
+Einträge die Namen der eingeladenen Trainer:innen nennen und diese damit auch beim Anbieter des
+Kalenderprogramms liegen. Er bietet den Link zum Kopieren an und sagt, wie
 er in Apple Kalender auf iPhone und Mac, Google Kalender — nur im Browser auf calendar.google.com,
 danach erscheint er auch in der App —, Outlook und Proton Calendar übernommen wird. Jedes Mitglied hat je Team höchstens einen gültigen Link; unter „Konto" sind alle
 eigenen Abos wieder einsehbar und lassen sich widerrufen (siehe [Konto und
 Zugang](konto-und-zugang.md#kalender-abos)).
 
-Das Abo liefert alle anstehenden Termine des Teams und die der letzten 28 Tage, mit und ohne
-Training, und bei jedem Abruf den aktuellen Stand: Ein geänderter, verschobener oder in eine neue
-Serie übergegangener Termin erscheint genau einmal. Ausgefallene und entfernte Termine fehlen. Von
-einem Termin gelangen nur der Titel — „Training · Teamname", bei einem Spiel „Bezeichnung ·
-Teamname" —, Beginn, Ende, Ort und ein Verweis in die Anwendung ins Kalenderprogramm — kein
-Trainingsname, keine Verantwortlichen, keine Bemerkung, weder Felder noch Spielerzahl, keine Namen
-von Spieler:innen und bei Spielen weder Treffpunkte noch Meldefrist noch Richtwert. Die Zeiten
+Das Abo liefert die anstehenden Termine des Teams und die der letzten 28 Tage, zu denen man
+eingeladen ist, mit und ohne Training, und bei jedem Abruf den aktuellen Stand: Ein geänderter,
+verschobener oder in eine neue Serie übergegangener Termin erscheint genau einmal, und auch eine
+Absage, Zusage oder Einladung anderer gilt als Änderung des Eintrags. Ausgefallene und entfernte
+Termine fehlen, ebenso Termine, zu denen man nicht oder nicht mehr eingeladen ist. Ein abgesagter
+Termin bleibt und trägt „Abgesagt · " vorn im Titel, einer, für den man verantwortlich ist,
+„Verantwortlich · ". Von einem Termin gelangen der Titel — „Training · Teamname", bei einem Spiel
+„Bezeichnung · Teamname" —, Beginn, Ende, Ort, ein Verweis in die Anwendung und eine
+Beschreibung ins Kalenderprogramm. Die Beschreibung nennt den eigenen Stand, wer dabei ist, wer
+abgesagt hat und wer verantwortlich ist, mit Namen, und eine Lücke zur Mindestbesetzung — keinen
+Trainingsnamen, keine Bemerkung, weder Felder noch Spielerzahl, keine Namen von Spieler:innen und
+bei Spielen weder Treffpunkte noch Meldefrist noch Richtwert. Die Zeiten
 gelten als Schweizer Zeit, auch über die Zeitumstellung hinweg und auf einem Gerät in einer anderen
 Zeitzone.
 
@@ -578,7 +658,9 @@ fest, es gilt die zuletzt gesetzte. Einen Grund trägt eine Abmeldung nicht.
 
 Im Reiter „Spieler:innen" des geöffneten Termins steht jede Spieler:in mit einem Schalter, der beim
 Umlegen sofort speichert: an heisst angemeldet, aus abgemeldet, und abgemeldete Namen stehen
-gedämpft. Darüber steht „12 von 15 angemeldet" und bis wann sich das ändern lässt, etwa „Änderbar
+gedämpft. Der Schalter ist hier ruhig gehalten und bewertet nicht: angemeldet eine durchsichtige
+Bahn mit heller Kontur und einem grossen hellen Knopf rechts, abgemeldet eine dunkle Bahn mit
+grauer Kontur und einem kleinen grauen Knopf links, beides ohne Zeichen. Darüber steht „12 von 15 angemeldet" und bis wann sich das ändern lässt, etwa „Änderbar
 bis 18:00". Ab Beginn gilt der „Stand bei Beginn", die Schalter sagen dann, wer da war (siehe
 „Nachtragen, wer da war"), und ehemalige Spieler:innen stehen ohne Namen am Ende, ihr Schalter
 gesperrt. Links vom Schalter steht, seit wann der Status einer
@@ -600,8 +682,8 @@ wieder als angemeldet — auch wenn die Änderung über die Serie kommt oder die
 folgt, und auch während der Termin ausfällt. Vor dem Speichern fragt die Anwendung nach und nennt
 die Zahl, etwa „Damit verfallen 3 Abmeldungen: Diese Spieler:innen gelten wieder als angemeldet.";
 bei einer Serienänderung steht das in der Rückfrage zu wegfallenden Terminen oder, fallen keine
-weg, in einer eigenen. Ein geändertes Ende, Ort, Bemerkung, Felder, Verantwortliche oder Training
-lassen die Abmeldungen stehen. Hat der Termin durch die Verlegung schon begonnen, bleibt sein Stand
+weg, in einer eigenen. Ein geändertes Ende, Ort, Bemerkung, Felder, Trainer:innen oder Training
+lassen die Abmeldungen stehen. Absagen von Trainer:innen verfallen mit (siehe „Trainer:innen"). Hat der Termin durch die Verlegung schon begonnen, bleibt sein Stand
 samt Abmeldungen. Die Eltern sehen am Link, dass ihre Abmeldung verfallen ist.
 
 Fällt ein Termin aus, ruhen seine Abmeldungen: Weder Zahl noch Abmeldungen sind zu sehen, und
@@ -658,7 +740,8 @@ einer Serie; der Dialog bietet dafür weder „Wiederholender Termin" noch Felde
 Tritt das Team an einem Turnier mit mehreren Mannschaften zu verschiedenen Zeiten an, erfasst es
 je Mannschaft ein Spiel mit deren Kader.
 
-Wie bei einem Training sind Ort, Bemerkung, Verantwortliche und Kader freiwillig. Dazu kommen drei
+Wie bei einem Training sind Ort, Bemerkung, Kader und Mindestbesetzung freiwillig, und das Spiel
+lädt Trainer:innen ein (siehe „Trainer:innen"). Dazu kommen drei
 Angaben nur für Spiele, alle ebenfalls freiwillig. „Mindestzahl (optional)" und „Höchstzahl
 (optional)" bilden zusammen den Richtwert: wie viele Spieler:innen das Team für das Spiel
 anstrebt, je eine ganze Zahl von 1 bis 200, jede für sich festzulegen, die Mindestzahl nicht über
@@ -685,29 +768,28 @@ festgelegten Grenzen; ohne Richtwert oder ohne Spielerliste trägt ein anstehend
 Status, ein ausgefallenes „Fällt aus". Die Zahl rechts in der Zeile bleibt ungefärbt: die
 Angemeldeten von allen, für die das Spiel gilt, etwa „7/14", ab dem Anpfiff die Anwesenden.
 
-Ein Spiel kann „Als Nächstes" sein. Seine Karte trägt unter dem Kopf den Abschnitt „Kader" mit den
-Kadern des Spiels und einem Balken: hell die Angemeldeten von allen, der Richtwert als hellere Zone
-darunter, darüber etwa „7 angemeldet" und „gesucht 9 bis 12 von 14". Der Balken bewertet nicht,
-das tut allein der Status. Eine ruhige Zeile darunter nennt, wie viele noch ohne Meldung sind —
-oder „alle haben sich gemeldet" — und die Meldefrist. Führt das Team keine Spielerliste, steht dort
-„Das Team führt keine Spielerliste – hier wird nicht gemeldet." Dann folgen die Treffpunkte, der
-späteste — der dem Anpfiff nächste — zuoberst. Zuunterst stehen „Spieler:innen", sofern das Team
-eine Liste führt, und „Spiel öffnen". Ab dem Anpfiff zählt der Balken die Anwesenden, und die
-Zeile sagt „Stand beim Anpfiff".
+Ein Spiel kann „Als Nächstes" sein. Seine Karte ist gebaut wie die eines Trainings; in der Zeile mit
+Zeichen stehen die Angemeldeten von allen, etwa „7/14", die Kader, die Meldefrist und die
+Trainer:innen, und beim Darüberfahren nennt die Spielerzahl den Richtwert und wie viele noch ohne
+Meldung sind. Führt das Team keine Spielerliste, steht dort ein Strich, und das Zeichen sagt „Das
+Team führt keine Spielerliste – hier wird nicht gemeldet." Dann folgen die Treffpunkte, der
+späteste — der dem Anpfiff nächste — zuoberst, die Bemerkung und der Schalter „Ich bin dabei".
+Zuunterst stehen „Spieler:innen", sofern das Team eine Liste führt, „Trainer:innen" und „Spiel
+öffnen". Ab dem Anpfiff zählt die Zahl die Anwesenden.
 
 Nach der Meldefrist meldet sich niemand mehr von selbst. Ein Spiel mit Meldefrist, Richtwert und
 Spielerliste steht darum vom Ablauf der Frist bis zum Anpfiff auch in der Liste als grosse Karte
 wie „Als Nächstes", an seinem Platz zwischen den Zeilen, und ein Hinweis sagt, was zu tun ist: rot
 etwa „Es fehlen 2 bis zur Mindestzahl 9. Spieler:innen direkt anfragen." oder „3 über der
 Höchstzahl 12. Aufgebot klären.", gelb „Genau die Mindestzahl 9 ist erreicht. Fällt jemand aus,
-reicht es nicht mehr. Ersatz bereithalten."; bei „Genügend" steht keiner. Die Zeile unter dem
-Balken zählt dann die verpasste Meldefrist statt „ohne Meldung" und nennt die Frist „abgelaufen".
+reicht es nicht mehr. Ersatz bereithalten."; bei „Genügend" steht keiner. Die Spielerzahl zählt dann beim Darüberfahren die verpasste
+Meldefrist statt „ohne Meldung", und die Meldefrist heisst „abgelaufen".
 Ein ausgefallenes Spiel wird nie zur grossen Karte.
 
 Geöffnet trägt ein Spiel seine Bezeichnung als Titel, darunter Tag, Zeit und Ort, und hat zwei
-Reiter, „Spiel" und „Spieler:innen"; einen Reiter „Training" gibt es nicht. „Spiel" bietet
+Reiter, „Spiel", „Spieler:innen" und „Trainer:innen"; einen Reiter „Training" gibt es nicht. „Spiel" bietet
 „Ausfallen lassen" bzw. „Ausfall zurücknehmen", „Spiel ändern" und im Menü die übrigen Handgriffe,
-darunter die Eckdaten: Ort, Treffpunkte, Verantwortliche, Kader, die Spieler:innen mit dem Status
+darunter die Eckdaten: Ort, Treffpunkte, Verantwortlich, Trainer:innen, Kader, die Spieler:innen mit dem Status
 samt einem Detail wie „noch 2 bis Mindestzahl 9" oder „3 über Höchstzahl 12" und der Zahl der
 Angemeldeten — ab dem Anpfiff der Anwesenden — sowie der nicht Aufgebotenen, der Richtwert, die
 Meldefrist, etwa „Eltern bis Do., 29.10., 20:00" oder „Bis zum Anpfiff", und die Bemerkung. Die
@@ -798,8 +880,8 @@ Kennzeichnungen mit dem Spiel verschwinden.
 
 ### Kalender-Abo und KI-Assistent
 
-Im Kalender-Abo der Mitglieder erscheint ein Spiel mit dem Titel „Bezeichnung · Teamname", ohne
-Treffpunkte, Meldefrist und Richtwert (siehe „Kalender-Abo"); im Abo am privaten Link dazu mit dem
+Im Kalender-Abo der Mitglieder erscheint ein Spiel, zu dem man eingeladen ist, mit dem Titel
+„Bezeichnung · Teamname", ohne Treffpunkte, Meldefrist und Richtwert (siehe „Kalender-Abo"); im Abo am privaten Link dazu mit dem
 Status der Spieler:in, den Treffpunkten und der Bemerkung (siehe „Kalender-Abo am privaten
 Link"). Ein verbundener KI-Assistent führt Spiele nach
 denselben Regeln (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)): Er legt sie
@@ -831,10 +913,14 @@ Nächstes" gibt es hier nicht: Ein Termin von heute, der schon begonnen hat, ste
 Spieler:in gelten, unter Monatsüberschriften wie „Oktober 2026", jedes Training als Karte mit dem
 Kalenderblatt, dem Status der Spieler:in als Plakette — „Angemeldet" grün, „Abgemeldet" rot, „Fällt
 aus" grau —, Beginn und Ende, Ort, bei einem Termin mit Kadern den Kadern der Spieler:in, über die
-er für sie gilt, der Spielerzahl und einem Schalter. Der Schalter bewertet nicht: eingeschaltet eine
-durchsichtige Bahn mit heller Kontur und grossem hellem Knopf, ausgeschaltet eine dunkle Bahn mit
-grauer Kontur und kleinem grauem Knopf. Ist die Spieler:in abgemeldet oder fällt der Termin aus,
-tritt die Karte gedämpft zurück, das Kalenderblatt grau mit durchgestrichener Zahl. Die Spielerzahl
+er für sie gilt, der Spielerzahl, wer verantwortlich ist — etwa „Verantwortlich: Anna Keller", ohne
+Verantwortliche:n nichts — und einem Schalter. Der Schalter ist derselbe ruhige wie im Reiter
+„Spieler:innen": angemeldet ein grosser heller Knopf rechts, abgemeldet ein kleiner grauer links,
+ohne Farbe und ohne Zeichen; an einem ausgefallenen Termin ist er grau. Der Name der
+Verantwortlichen ist eine Auskunft, kein Kontakt: Wer sie ist, erfahren die Eltern so, erreichen
+lässt sie sich über die Anwendung nicht. Ist die Spieler:in
+abgemeldet oder fällt der Termin aus, tritt die Karte gedämpft zurück, das Kalenderblatt grau mit
+durchgestrichener Zahl. Die Spielerzahl
 steht knapp und ungefärbt, etwa „24/33": angemeldet von allen, für die der Termin gilt, gezählt wie
 für die Mitglieder — bei einem Termin mit Kadern auch über Kader, die nicht die der Spieler:in sind,
 ohne sie zu nennen. „Angemeldet" und „abgemeldet" meinen auf der Seite nur die eigene Spieler:in.
@@ -846,17 +932,15 @@ Seite nicht.
 
 Ein Spiel steht in derselben Liste als eigene Karte: Kalenderblatt, der Status der Spieler:in als
 Plakette — „Ohne Meldung" gelb, „Angemeldet" grün, „Abgemeldet", „Nicht aufgeboten" und
-„Meldefrist verpasst" rot, „Fällt aus" grau —, die Bezeichnung, Beginn und Ende und der Ort.
-Darunter steht, bis wann sich melden lässt — ohne Meldung etwa „Bitte melden bis Do., 29.10.,
-20:00", sonst „Änderbar bis …", ohne Meldefrist „Änderbar bis zum Anpfiff" —, und darunter die
-Knöpfe: ohne Meldung „Anmelden" hell und „Abmelden", sonst nur der eine mögliche Wechsel. Nach der
+„Meldefrist verpasst" rot, „Fällt aus" grau —, die Bezeichnung, Beginn und Ende, der Ort und wer
+verantwortlich ist. Darunter steht eine Zeile mit Zeichen: bis wann sich melden lässt — ohne
+Meldung etwa „Bitte melden bis Do., 29.10., 20:00", sonst „Änderbar bis …", ohne Meldefrist
+„Änderbar bis zum Anpfiff" —, die Angemeldeten von allen samt dem gesuchten Bereich, etwa „7/14 ·
+gesucht 9 bis 12", und die Kader der Spieler:in; darunter die Knöpfe: ohne Meldung „Anmelden" hell und „Abmelden", sonst nur der eine mögliche Wechsel. Nach der
 Meldefrist gibt es keine Knöpfe mehr, nur „Meldefrist abgelaufen · Änderung übers Team", ab dem
 Anpfiff „Hat begonnen · nicht mehr änderbar". Ist die Spieler:in nicht aufgeboten, steht statt
 dessen „… ist für dieses Spiel nicht aufgeboten. Fragen dazu ans Team." mit ihrem Namen, ebenfalls
-ohne Knöpfe. Es folgen die Treffpunkte, frühester zuerst, der Abschnitt „Kader" mit den Kadern der
-Spieler:in und demselben Balken wie im Trainingsplan — die Angemeldeten von allen, der Richtwert
-als „gesucht 9 bis 12 von 14" und wie viele nicht aufgeboten sind, aber ohne Status — und die
-Bemerkung. Abgemeldet, nicht aufgeboten, mit verpasster Meldefrist oder ausgefallen tritt die Karte
+ohne Knöpfe. Es folgen die Treffpunkte, frühester zuerst, und die Bemerkung. Abgemeldet, nicht aufgeboten, mit verpasster Meldefrist oder ausgefallen tritt die Karte
 gedämpft zurück, das Kalenderblatt grau und durchgestrichen, und die Treffpunkte entfallen, ebenso
 ab dem Anpfiff; ein ausgefallenes Spiel zeigt nur Kopf und Bemerkung. Wurde ein Spiel verlegt,
 steht etwa „Verlegt, vorher Dienstag, 20. Oktober um 18:00." dabei, auch wenn sich nur die Zeit
@@ -966,14 +1050,17 @@ tatsächlich geändert hat, sodass die gleichzeitige Änderung eines anderen Fel
 Beim Ab- und Anmelden gilt die Regel unter „Ab- und Anmelden": Ein inzwischen verlegter,
 ausgefallener oder begonnener Termin weist ab, sonst gilt die zuletzt gesetzte Angabe.
 
-Termine, Serien, Zuordnungen, Verantwortliche und Ausfälle lassen sich auch über einen verbundenen
-KI-Assistenten führen, samt Feldern und erwarteter Spielerzahl (siehe [Konto und
+Termine, Serien, Zuordnungen, Trainer:innen samt Absagen und Mindestbesetzung und Ausfälle lassen
+sich auch über einen verbundenen KI-Assistenten führen, samt Feldern und erwarteter Spielerzahl (siehe [Konto und
 Zugang](konto-und-zugang.md#ki-assistent-verbinden)), ebenso Spiele samt Richtwert, Meldefrist und
 Treffpunkten, die Spielerliste, die Kader samt Zuteilung und den Kadern von Terminen und Serien, die
 Ab- und Anmeldungen, die Meldungen zu Spielen und die Kennzeichnungen als nicht aufgeboten, die
 Nachträge, die privaten Links und die Selbstabholung. Es gelten dieselben Regeln, und was er
 festlegt, steht im selben Kalender; verfallen durch eine Verlegung oder eine Änderung an Kadern
-Abmeldungen oder Meldungen, verlangt auch er eine Bestätigung. Platz und Spielerzahl erfährt er bei
+Abmeldungen, Meldungen oder Absagen, verlangt auch er eine Bestätigung. Legt er einen Termin oder
+eine Serie ohne Angabe zu den Trainer:innen fest, sind wie in der Anwendung alle Mitglieder
+eingeladen und er selbst verantwortlich. Wer dabei ist, wer abgesagt hat und seit wann, wer
+verantwortlich ist und wie viele die Mindestbesetzung verlangt, erfährt er bei jedem Termin. Platz und Spielerzahl erfährt er bei
 jedem Termin, samt der Angabe, ob die Zahl aus der Spielerliste stammt oder erwartet ist, und kann
 ein Training darauf ausrichten; ob es passt, beurteilt er selbst. Kalender-Abos und die Teams selbst
 verwaltet er nicht.
@@ -1024,8 +1111,8 @@ aktuellen Teamnamen löst sich kein Team auf.
 Verlässt ein Mitglied das Team oder wird es entfernt, bleiben dessen Trainings und Termine für
 die übrigen vollständig nutzbar — sie gehören dem Team und wechseln nie den Eigentümer.
 Persönliche Kopien, die jemand zu sich übernommen hat, bleiben ebenfalls bestehen; sie sind
-eigenständig. Aus allen anstehenden Terminen und Serien des Teams wird das Mitglied als
-Verantwortliche:r ausgetragen, an vergangenen bleibt sein Eintrag mit dem aktuellen Anzeigenamen.
+eigenständig. Aus allen anstehenden Terminen und Serien des Teams wird das Mitglied ausgeladen,
+an vergangenen bleibt sein Eintrag mit dem aktuellen Anzeigenamen.
 Sein Kalender-Abo für dieses Team erlischt; einen Hinweis darauf gibt die Anwendung beim
 Verlassen nicht.
 
@@ -1065,8 +1152,10 @@ Trainings zurück, nach dem Löschen eines Trainings mit Termin in den Trainings
 
 ## Bekannte Grenzen
 
-Die Anwendung erinnert an keinen Termin und benachrichtigt niemanden — weder Verantwortliche
-noch andere Mitglieder — über neue, geänderte oder ausgefallene Termine. Der Kalender führt
+Die Anwendung erinnert an keinen Termin und benachrichtigt niemanden — weder Eingeladene noch
+Verantwortliche noch andere Mitglieder — über neue, geänderte oder ausgefallene Termine, über
+Einladungen und Absagen oder eine fehlende Mindestbesetzung; eine Lücke zeigt nur der
+Trainingsplan, das Kalender-Abo nennt sie in der Beschreibung. Der Kalender führt
 Trainings und Spiele, aber keine anderen Anlässe, und nur ein Spiel trägt eine eigene Bezeichnung;
 wer mehrere Mannschaften getrennt plant, führt sie als eigene Teams. Die Termine
 mehrerer Teams stehen nirgends gemeinsam, weder in einem Kalender noch in einem Abo, und ein
@@ -1095,16 +1184,16 @@ noch auf eine doppelt angelegte Serie, und sie nennt nicht, wie viele Termine ei
 nicht aus seiner Serie lösen, eine Änderung nicht auf einen Ausschnitt der Serie beschränken,
 und entfernte Termine lassen sich nicht wiederherstellen. „Der Serie folgen" wirkt sofort und
 schliesst den Dialog; was darin sonst schon geändert, aber nicht gespeichert war, geht verloren.
-Steht an einem Termin noch ein ehemaliges Mitglied als Verantwortliche:r, lässt sich eine
-Änderung der Verantwortlichen für folgende oder alle Termine erst speichern, wenn es abgewählt
-ist.
+Wer neu ins Team kommt, muss zu den bestehenden Terminen einzeln oder über die Serie eingeladen
+werden; einen Weg, ihn zu allen anstehenden Terminen auf einmal einzuladen, gibt es nicht.
 
-Verantwortlich zu sein heisst nicht, als J+S-Leitperson anerkannt zu sein, und die Einträge an
-vergangenen Terminen sind kein Nachweis geleisteter Einsätze. Ob ein Termin stattgefunden hat,
+Verantwortlich zu sein heisst nicht, als J+S-Leitperson anerkannt zu sein, und weder
+Einladungen noch „dabei" an vergangenen Terminen sind ein Nachweis geleisteter Einsätze. Eine
+Absage trägt keinen Grund, und eine Vertretung schlägt die Anwendung nicht vor. Ob ein Termin stattgefunden hat,
 hält die Anwendung nicht fest, und wer dabei war, nur mit Spielerliste; ein vergangener Termin, der nicht ausgefallen
 ist, gilt deshalb nicht als durchgeführt, und ein Tag ohne Termin ist nicht von einer bewussten
-Pause zu unterscheiden. Dass die Verantwortlichen, die Felder oder die erwartete Spielerzahl eines Serientermins von der
-Serie abweichen, zeigt erst der Dialog „Termin ändern". Ausfallgründe sind frei formuliert, ohne Vorschläge; einen Teilausfall oder Abbruch kennt
+Pause zu unterscheiden. Dass die Trainer:innen, die Mindestbesetzung, die Felder oder die erwartete Spielerzahl eines
+Serientermins von der Serie abweichen, zeigt erst der Dialog „Termin ändern". Ausfallgründe sind frei formuliert, ohne Vorschläge; einen Teilausfall oder Abbruch kennt
 die Anwendung nicht. Ob Altersstufe oder Inhalt eines Trainings zum Termin passen, prüft sie
 nicht, und ob und wie oft ein persönliches Training schon einem Termin zugeordnet wurde, steht
 nirgends. Bricht die Verbindung mitten im Kopieren ohne Rückmeldung ab, kann eine unvollständige
@@ -1220,7 +1309,7 @@ Grund. Ein Spiel hat höchstens fünf Treffpunkte, je Anreiseart einen; Eltern w
 Treffpunkt und bieten keine Fahrgemeinschaften an, und eine Rückkehrzeit hat kein eigenes Feld.
 Geänderte Treffpunkte oder eine geänderte Bemerkung kennzeichnet die Anwendung für die Eltern
 nicht, und von mehreren Verlegungen nennt sie nur den zuletzt gültigen Zeitpunkt. Den Status eines
-Spiels sehen die Eltern nicht, nur Balken und Richtwert. Ohne Spielerliste führt ein Spiel weder
+Spiels sehen die Eltern nicht, nur die Zahl der Angemeldeten und den gesuchten Bereich. Ohne Spielerliste führt ein Spiel weder
 Meldungen noch Spielerzahl, und eine erwartete Zahl lässt sich an einem Spiel nicht festhalten.
 
 Ob ein privater Link weitergegeben wurde, erkennt die Anwendung nicht, und ob ein Elternteil oder

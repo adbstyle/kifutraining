@@ -2,7 +2,7 @@
 
 import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Plus, TriangleAlert, X } from "lucide-react";
+import { Pencil, Plus, Tag, TriangleAlert, X } from "lucide-react";
 import { Button, Dialog, IconButton, SectionMessage, Tabelle, TabellenZeile, TextField, Tooltip } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { benenneKaderUmAktion, entferneKaderAktion, kaderEntfernenFolgenAktion, legeKaderAnAktion } from "@/lib/actions/kader";
@@ -77,10 +77,13 @@ export function KaderKarte({ teamId, kader }: { teamId: string; kader: Kader[] }
   return (
     <>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="type-title-large text-on-surface">
-          Kader
-          <span className="type-label-small ml-2 text-on-surface-mittel">
-            {kader.length} von {KADER_MAX}
+        <h2 className="flex items-center gap-2 type-title-large text-on-surface">
+          <Tag size={20} strokeWidth={2} aria-hidden />
+          <span>
+            Kader
+            <span className="type-label-small ml-2 text-on-surface-mittel">
+              {kader.length} von {KADER_MAX}
+            </span>
           </span>
         </h2>
         <Tooltip label="Kader anlegen" ende>

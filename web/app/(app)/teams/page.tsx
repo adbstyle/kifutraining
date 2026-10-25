@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronRight, Users } from "lucide-react";
+import { ChevronRight, Shield } from "lucide-react";
 import { Card, Leerzustand } from "@/components/ui";
 import { TeamErstellenButton } from "@/components/team/TeamErstellenButton";
 import { getMeineTeams } from "@/lib/queries/teams";
@@ -37,7 +37,7 @@ export default async function TeamsPage({
         <Flash message="Dieses Team besteht nicht mehr - ein anderes Mitglied hat es aufgelöst." param="weg" />
       )}
       {teams.length === 0 ? (
-        <Leerzustand icon={Users} titel="Noch kein Team">
+        <Leerzustand icon={Shield} titel="Noch kein Team">
           Lege ein Team an und nimm die Trainer:innen dazu, mit denen du
           zusammen planst.
         </Leerzustand>
@@ -53,7 +53,7 @@ export default async function TeamsPage({
             >
               <Card className="flex h-full items-center gap-4 p-5">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
-                  <Users size={22} strokeWidth={2} aria-hidden />
+                  <Shield size={22} strokeWidth={2} aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="type-title-large block truncate text-on-surface">
