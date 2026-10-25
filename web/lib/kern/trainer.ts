@@ -155,10 +155,18 @@ export async function aendereTrainer(
   if (eintraege.ids.length) return fehlschlag("regel", SERIE_TEXT.namenloseNurEinzeln, { feld: "ausladen_eintraege" });
   const aenderung: { eingeladene?: string[]; verantwortlich?: string } = {};
   if (einladen.ids.length || ausladen.ids.length) {
-    // Die Serie erhält die ganze Liste: die des Termins, um die Differenz geändert.
+    // Die Serie erhält die ganze Liste: die des Termins, um die Differenz
+    // geändert — ohne ehemalige Mitglieder eines vergangenen Termins, die
+    // sich nicht neu einladen lassen (#519 AK 11).
     const { data, error } = await supabase.from("termin_trainer").select("user_id").eq("termin_id", t.id);
     if (error) return kalenderFehler(error);
-    const bisher = (data as { user_id: string | null }[]).flatMap((r) => (r.user_id ? [r.user_id] : []));
+    let mitglieder: Set<string>;
+    try {
+      mitglieder = new Set((await getTeamMitgliederFuer(supabase, t.team_id)).map((m) => m.userId));
+    } catch (err) {
+      return kalenderFehler(err as { message: string });
+    }
+    const bisher = (data as { user_id: string | null }[]).flatMap((r) => (r.user_id && mitglieder.has(r.user_id) ? [r.user_id] : []));
     aenderung.eingeladene = [...new Set([...bisher, ...einladen.ids])].filter((u) => !ausladen.ids.includes(u));
   }
   if (v.id !== undefined) aenderung.verantwortlich = v.id;

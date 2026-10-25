@@ -4,7 +4,7 @@ import { ArrowLeftRight, UserMinus, UserPlus } from "lucide-react";
 import { IconButton, Lozenge, OverflowMenu, SectionMessage, Switch } from "@/components/ui";
 import type { TeamMitglied } from "@/lib/queries/teams";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
-import { absageOffen, dabeiZahl, noetigeVon, trainerName, verantwortlicheVon, type TerminTrainer } from "@/lib/trainer";
+import { absageOffen, dabeiZahl, eingeladenZahl, noetigeVon, trainerName, verantwortlicheVon, type TerminTrainer } from "@/lib/trainer";
 import { besetzungText, fehlendeTrainer } from "@/lib/besetzung";
 import { TrainerLozenge } from "./TrainerZeichen";
 import { heuteAmTrainingsort } from "@/lib/zeit";
@@ -110,7 +110,7 @@ export function TrainerReiter({ t, mitglieder }: { t: TerminZeile; mitglieder: r
           </div>
         )}
         <span className="type-headline-small text-on-surface">
-          {dabeiZahl(t.trainer)} von {t.trainer.length} dabei
+          {dabeiZahl(t.trainer)} von {eingeladenZahl(t.trainer)} dabei
         </span>
         <span className="type-body-small text-on-surface-mittel">
           {verantwortlich ? `${mitDu(trainerName(verantwortlich), verantwortlich.userId)} ist verantwortlich.` : "Niemand ist verantwortlich."}

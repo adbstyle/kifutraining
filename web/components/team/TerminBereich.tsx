@@ -479,7 +479,8 @@ export function TerminBereich({
       aenderung: {
         ...werte,
         ...regelNeu,
-        ...(trainer?.eingeladene && { eingeladene: trainer.eingeladene }),
+        // Nur aktuelle Mitglieder: Ehemalige eines vergangenen Termins lassen sich nicht neu einladen (#519 AK 11).
+        ...(trainer?.eingeladene && { eingeladene: trainer.eingeladene.filter((u) => mitglieder.some((m) => m.userId === u)) }),
         ...(trainer?.verantwortlich && { verantwortlich: trainer.verantwortlich }),
         ...(kaderIds && { kaderIds }),
       },

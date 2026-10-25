@@ -6,7 +6,7 @@ import { wochentageText } from "@/lib/serie";
 import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { feldName, feldText } from "@/lib/termin-felder";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
-import { dabeiZahl, noetigeVon, verantwortlichText } from "@/lib/trainer";
+import { dabeiZahl, eingeladenZahl, noetigeVon, verantwortlichText } from "@/lib/trainer";
 import { FUER_ALLE } from "@/lib/kader";
 import { richtwertStufeText, richtwertText, zeitpunktKurz } from "@/lib/spiel";
 import { KaderLozenges } from "./KaderLozenge";
@@ -46,6 +46,7 @@ export function TerminEigenschaften({
   className?: string;
 }) {
   const v = verantwortlichText(t.trainer, ich);
+  const noetig = noetigeVon(t);
   const zahlText = spielerzahlLang(spielerzahlVon(t));
   return (
     <dl className={cn("grid grid-cols-[6.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 sm:grid-cols-[8rem_minmax(0,1fr)]", className)}>
@@ -58,8 +59,8 @@ export function TerminEigenschaften({
       {/* #519 AK 17: wer verantwortlich ist, man selbst mit «(du)»; die Namen aller im Reiter «Trainer:innen». */}
       <Eigenschaft label="Verantwortlich">{v ?? "Niemand"}</Eigenschaft>
       <Eigenschaft label="Trainer:innen">
-        {dabeiZahl(t.trainer)} von {t.trainer.length} dabei
-        {noetigeVon(t) !== null && ` · nötig ${noetigeVon(t)}`}
+        {dabeiZahl(t.trainer)} von {eingeladenZahl(t.trainer)} dabei
+        {noetig !== null && ` · nötig ${noetig}`}
       </Eigenschaft>
       {/* #453 AK 5: für welche Kader er gilt oder dass er für alle gilt. */}
       {(mitKadern || t.kader.length > 0) && (

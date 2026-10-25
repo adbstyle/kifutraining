@@ -383,6 +383,7 @@ export const teamPlanAbrufen = werkzeug({
       .enum(["dabei", "eingeladen"])
       .optional()
       .describe("«dabei»: nur Termine, an denen du dabei bist; «eingeladen»: alle, zu denen du eingeladen bist. Ohne Angabe alle."),
+    nur_meine: z.boolean().optional().describe("Veraltet: wie «eingrenzung: dabei»."),
     von: DATUM.optional().describe("Erster Tag des Zeitraums (eingeschlossen); nur zusammen mit «bis»."),
     bis: DATUM.optional().describe("Letzter Tag des Zeitraums (eingeschlossen); nur zusammen mit «von»."),
   }),
@@ -394,7 +395,12 @@ export const teamPlanAbrufen = werkzeug({
     vergangen: z.array(PlanEintrag),
   }),
   ausfuehren: async (e, zugang) =>
-    abgebildet(await teamPlan(zugang.supabase, zugang.userId, { teamId: e.team_id, eingrenzung: e.eingrenzung, von: e.von, bis: e.bis }), (w) => ({
+    abgebildet(await teamPlan(zugang.supabase, zugang.userId, {
+        teamId: e.team_id,
+        eingrenzung: e.eingrenzung ?? (e.nur_meine ? "dabei" : undefined),
+        von: e.von,
+        bis: e.bis,
+      }), (w) => ({
       team: w.team,
       heute: w.heute,
       serien: planSerien([...w.kommend, ...w.vergangen]),

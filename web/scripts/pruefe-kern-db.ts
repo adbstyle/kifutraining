@@ -2003,9 +2003,11 @@ try {
     assert.equal(vb.verantwortlich, true);
     assert.ok(vb.name, "mit aktuellem Anzeigenamen");
     assert.deepEqual(plan.kommend.find((y) => y.id === anstehend.id)!.serie!.trainer.map((v) => v.userId), [a.id]);
-    // Verlegt man den vergangenen auf heute, fällt B heraus.
-    wert(await aendereTermin(a.supabase, a.id, { terminId: vergangen.id, datum: heuteCh, bestaetigt: true }));
-    assert.deepEqual(await eingeladeneVon(vergangen.id), [a.id]);
+    // Eine Serienänderung ab dem vergangenen Termin scheitert nicht an der Ausgetretenen:
+    // Sie geht nicht in die Liste der Serie (Review PR #525).
+    wert(await aendereTrainer(a.supabase, a.id, { terminId: vergangen.id, einladen: [x.id], reichweite: "alle", bestaetigt: true }));
+    assert.deepEqual(await serienVorgabe(s.serieId), [a.id, x.id].sort());
+    assert.deepEqual(await eingeladeneVon(vergangen.id), [a.id, x.id].sort());
 
     // PC 9: Konto löschen — anstehend und Serie ohne es, vergangen anonym und zuletzt, auch nach dem Austritt.
     const alt = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-3), beginn: "10:00", ende: "11:00", eingeladene: [a.id, d.id, x.id], verantwortlich: d.id })).terminId;

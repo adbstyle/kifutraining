@@ -856,8 +856,8 @@ pruefe("Trainer: Eingrenzung, Zahl und Satz aus Sicht des USERS (#519 AK 18, 19,
   assert.ok(!imFilter(liste, "c", "eingeladen"));
   // Einträge gelöschter Konten zählen nicht als dabei.
   assert.equal(dabeiZahl(liste), 2);
-  assert.equal(trainerZahlSatz(liste, "b"), "Trainer:innen: 2 von 3 dabei · Anna Keller verantwortlich · du bist dabei");
-  assert.equal(trainerZahlSatz(liste, "a"), "Trainer:innen: 2 von 3 dabei · du bist verantwortlich · du bist dabei");
+  assert.equal(trainerZahlSatz(liste, "b"), "Trainer:innen: 2 von 2 dabei · Anna Keller verantwortlich · du bist dabei");
+  assert.equal(trainerZahlSatz(liste, "a"), "Trainer:innen: 2 von 2 dabei · du bist verantwortlich · du bist dabei");
   assert.equal(trainerZahlSatz([], "a"), "Trainer:innen: 0 von 0 dabei · niemand verantwortlich · du bist nicht eingeladen");
   // AK 18: nur anstehend und nicht ausgefallen.
   const ohne = { trainer: [tr("b", "Ben")], datum: "2026-10-27", ausgefallen: false };
@@ -908,7 +908,7 @@ pruefe("Trainer: Absagen — dabei, Zahl, Eingrenzung, wer übernehmen kann, Ver
   assert.equal(dabeiZahl(liste), 2, "gelöschte Konten und Abgesagte zählen nicht");
   // PC 7: eine Absage nimmt den Termin aus «dabei», nicht aus «eingeladen».
   assert.ok(!imFilter(liste, "b", "dabei") && imFilter(liste, "b", "eingeladen"));
-  assert.equal(trainerZahlSatz(liste, "b"), "Trainer:innen: 2 von 4 dabei · Anna verantwortlich · du hast abgesagt");
+  assert.equal(trainerZahlSatz(liste, "b"), "Trainer:innen: 2 von 3 dabei · Anna verantwortlich · du hast abgesagt", "gelöschte Konten zählen nicht");
   assert.deepEqual(uebernehmenKoennen(liste, "a").map((t) => t.userId), ["c"], "nur andere, die dabei sind");
   assert.ok(absageOffen({ ausgefallen: false }, false));
   assert.ok(!absageOffen({ ausgefallen: true }, false), "AK 3: nie an einem ausgefallenen Termin");

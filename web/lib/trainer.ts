@@ -9,7 +9,7 @@
  * Wer verantwortlich wird, ist damit eingeladen und dabei; Ausladen wirkt immer.
  */
 
-import { angezeigteSpielerzahl, fehlendeTrainer, noetigeTrainer, type Mindestbesetzung } from "@/lib/besetzung";
+import { angezeigteSpielerzahl, besetzungAus, fehlendeTrainer, noetigeTrainer, type Mindestbesetzung } from "@/lib/besetzung";
 import { spielerzahlVon, type Spielstand } from "@/lib/spieler";
 
 /** Wie ein Eintrag ohne Namen (gelöschtes Konto) überall heisst. */
@@ -104,6 +104,12 @@ export function nachTrainerName<T extends { name: string | null }>(liste: readon
   });
 }
 
+/** Wie viele eingeladen sind — ohne Einträge gelöschter Konten, die weder
+ *  dabei sein noch absagen können; der Nenner zu `dabeiZahl`. */
+export function eingeladenZahl(trainer: readonly TerminTrainer[]): number {
+  return trainer.filter((t) => t.userId).length;
+}
+
 /** Wie viele dabei sind (ohne Einträge gelöschter Konten). */
 export function dabeiZahl(trainer: readonly TerminTrainer[]): number {
   return trainer.filter((t) => t.userId && !t.abgesagtAm).length;
@@ -153,7 +159,7 @@ export function trainerZahlSatz(trainer: readonly TerminTrainer[], ich: string, 
       ? "du hast abgesagt"
       : "du bist nicht eingeladen";
   return [
-    `Trainer:innen: ${dabeiZahl(trainer)} von ${trainer.length} dabei`,
+    `Trainer:innen: ${dabeiZahl(trainer)} von ${eingeladenZahl(trainer)} dabei`,
     ...(noetig !== null ? [`nötig ${noetig}`] : []),
     v ? `${v.userId === ich ? "du bist" : trainerName(v)} verantwortlich` : "niemand verantwortlich",
     eigen,
@@ -239,17 +245,19 @@ export function aboTitel(t: AboTrainerTermin, titel: string): string {
  *  der Weg in KiFu (der Verweis folgt in `kalenderText`). */
 export function aboBeschreibung(t: AboTrainerTermin): string {
   const name = (x: AboTrainerTermin["trainer"][number]) => (x.ich ? `${x.name ?? EHEMALIGES_MITGLIED} (du)` : (x.name ?? EHEMALIGES_MITGLIED));
-  const dabei = t.trainer.filter((x) => !x.abgesagt);
-  const abgesagt = t.trainer.filter((x) => x.abgesagt);
+  // Einträge gelöschter Konten (ohne Namen) zählen weder als dabei noch als eingeladen.
+  const benannt = t.trainer.filter((x) => x.name !== null);
+  const dabei = benannt.filter((x) => !x.abgesagt);
+  const abgesagt = benannt.filter((x) => x.abgesagt);
   const v = t.trainer.find((x) => x.verantwortlich);
   const noetig = noetigeTrainer(
-    t.besetzung_art && t.besetzung_zahl !== null ? ({ art: t.besetzung_art, zahl: t.besetzung_zahl } as Mindestbesetzung) : null,
+    besetzungAus(t.besetzung_art, t.besetzung_zahl),
     angezeigteSpielerzahl(spielerzahlVon({ spielerzahl: t.erwartete_spielerzahl, spielstand: t.spielstand })),
   );
   const fehlen = fehlendeTrainer(noetig, dabei.length);
   return [
     t.stand === "verantwortlich" ? "Du bist verantwortlich." : t.stand === "abgesagt" ? "Du hast abgesagt." : "Du bist dabei.",
-    `Dabei (${dabei.length} von ${t.trainer.length}): ${dabei.map(name).join(", ") || "niemand"}`,
+    `Dabei (${dabei.length} von ${benannt.length}): ${dabei.map(name).join(", ") || "niemand"}`,
     abgesagt.length > 0 ? `Abgesagt: ${abgesagt.map(name).join(", ")}` : null,
     t.stand === "verantwortlich" ? null : v ? `Verantwortlich: ${name(v)}` : "Niemand ist verantwortlich.",
     fehlen > 0 ? `Mindestbesetzung ${noetig} – es ${fehlen === 1 ? "fehlt 1 Trainer:in" : `fehlen ${fehlen} Trainer:innen`}.` : null,
