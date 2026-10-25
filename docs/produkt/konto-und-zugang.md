@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-10-22. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-10-25. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -31,9 +31,11 @@ an. Mehr Profilangaben gibt es nicht — kein Bild, keine Postadresse, keine Ver
 
 Der Anzeigename ist das, was andere von einer Person zu sehen bekommen. Die E-Mail-Adresse
 sehen nur die Mitglieder der eigenen Teams, in der Mitgliederliste und bei der Wahl der
-Verantwortlichen eines Termins; allen anderen bleibt sie verborgen. Der Name steht als Urheber
-an veröffentlichten Trainings, in den Mitgliederlisten der Teams und an den Terminen, für die
-man verantwortlich ist. Wer keinen gewählt hat, erscheint nicht namenlos, sondern unter einer
+Trainer:innen eines Termins; allen anderen bleibt sie verborgen. Der Name steht als Urheber
+an veröffentlichten Trainings, in den Mitgliederlisten der Teams, an den Terminen, zu denen man
+eingeladen ist, und in den Kalender-Abos der anderen Eingeladenen. Ist man für einen Termin
+verantwortlich, sehen ihn auch die Eltern und Spieler:innen am privaten Link; das sagt der
+Hinweis beim Feld. Wer keinen gewählt hat, erscheint nicht namenlos, sondern unter einer
 automatisch vergebenen, je Konto verschiedenen Kennung — etwa „Trainer:in a1b2".
 
 Gesetzt wird er im Konto in einem einzigen Feld. Es zeigt den aktuellen Namen, auch die
@@ -239,7 +241,7 @@ mit Namen und Mitgliederzahl, und die Mitglieder eines Teams mit ihrem Anzeigena
 Kennung — nie mit der E-Mail-Adresse —, wobei er erfährt, welches davon man selbst ist. Er sucht
 im Trainingsbestand eines Teams wie im eigenen — Termin-Trainings stehen nicht darin, die nennt
 der Kalender —; ein älteres Bestands-Training, das einem Termin zugeordnet ist, nennt dabei
-diesen Termin samt Zeit, Ort, Verantwortlichen, Feldern und erwarteter Spielerzahl. Ein Training legt er auf Wunsch
+diesen Termin samt Zeit, Ort, Trainer:innen, Feldern und erwarteter Spielerzahl. Ein Training legt er auf Wunsch
 direkt im Team an, stellt ein eigenes Training als Kopie ins Team oder übernimmt ein
 Team-Training als Kopie in den persönlichen Bestand; das Original bleibt jeweils, wie es ist,
 und ein Termin geht nie mit. Team-Trainings überarbeitet er mit denselben Möglichkeiten wie
@@ -251,13 +253,15 @@ Anstehendes und Vergangenes; die Grenze liegt wie im Team-Bereich am heutigen Ta
 Schweiz, die Einheit von heute zählt noch zum Anstehenden, und der Assistent muss nicht selbst
 rechnen. Auf Wunsch beschränkt er die Auskunft auf einen Zeitraum, dessen Von- und Bis-Tag
 beide mitzählen und der höchstens bis zum gleichen Kalendertag im Folgejahr reicht, und auf die
-Termine, für die man selbst verantwortlich ist; ein Zeitraum ohne Termine ergibt eine leere
+Termine, an denen man dabei ist, oder auf alle, zu denen man eingeladen ist; ein Zeitraum ohne Termine ergibt eine leere
 Auskunft. Jeder Termin nennt Datum, Beginn, Ende, Ort und Bemerkung, die Felder des Platzes je
 mit Grösse, Toren je Torart und Untergrund, die erwartete Spielerzahl, sein Training oder dass er
-keines trägt, seine Verantwortlichen, ob er ausgefallen ist und aus welchem Grund, und bei
+keines trägt, seine Trainer:innen — wer eingeladen, wer dabei ist, wer wann abgesagt hat und wer
+verantwortlich ist —, die Mindestbesetzung und wie viele sie verlangt, ob er ausgefallen ist und
+aus welchem Grund, und bei
 einem Serientermin die Serie und die Angaben, in denen er von ihr abweicht — Felder und
 Spielerzahl eingeschlossen. Zu jeder Serie erfährt er Wochentage, Zeitraum, Zeit, Ort,
-Bemerkung, Verantwortliche, Felder und erwartete Spielerzahl. Dabei unterscheidet er bei jeder
+Bemerkung, Trainer:innen, Mindestbesetzung, Felder und erwartete Spielerzahl. Dabei unterscheidet er bei jeder
 Angabe zu Platz und Spielerzahl, ob sie unbekannt ist oder ob ausdrücklich nichts da ist: Ein
 Termin ohne Felder hat einen unbekannten Platz, eine leere Grösse, Toranzahl oder
 Untergrundangabe gilt als unbekannt, ebenso eine nicht erfasste Spielerzahl; 0 Tore einer
@@ -273,7 +277,7 @@ ein Spiel ist. Ein Spiel legt er wie in der Anwendung mit Bezeichnung und einem 
 noch bevorsteht, auf Wunsch mit Mindest- und Höchstzahl, Meldefrist und Treffpunkten, die er stets
 als ganze Liste angibt; Felder und erwartete Spielerzahl weist die Anwendung an einem Spiel ab. Dazu
 kommen wöchentliche Terminserien, immer aus Trainings, mit Wochentagen, Zeitraum, Zeit, Ort,
-Bemerkung, Verantwortlichen, Feldern und erwarteter Spielerzahl; eine erwartete Zahl weist die
+Bemerkung, Trainer:innen, Mindestbesetzung, Feldern und erwarteter Spielerzahl; eine erwartete Zahl weist die
 Anwendung wie dort ab, solange das Team eine Spielerliste führt, ausser an einem Termin, der schon
 begonnen hat. Er ändert und entfernt Termine; bei einem Serientermin muss er sagen, ob es nur für
 diesen, für diesen und alle folgenden oder für alle Termine der Serie gilt, sonst lehnt die
@@ -285,7 +289,10 @@ Terminen Trainings zu — aus dem Bestand des Teams, das Training eines anderen 
 eigenes persönliches Training jeder Altersstufe —, ersetzt und löst sie. Wie in der Anwendung
 bekommt der Termin dabei immer still eine eigene Kopie, ein Termin-Training, das nicht in den
 Bestand kommt und mit seinem Termin lebt: Löst er es, ersetzt es oder entfällt der Termin, wird es
-gelöscht. Er trägt Verantwortliche ein, ändert und entfernt sie, lässt Termine ausfallen, setzt,
+gelöscht. Er lädt Trainer:innen ein und aus, gibt die Verantwortung weiter, sagt für Trainer:innen ab und
+wieder zu — eine Verantwortliche nur, wenn er sagt, wer übernimmt, oder sonst niemand dabei ist
+—, ohne Angabe beim Festlegen mit allen Mitgliedern eingeladen und sich selbst verantwortlich,
+lässt Termine ausfallen, setzt,
 ändert oder leert den Grund und nimmt einen Ausfall zurück. Ein Training ohne bestehenden Termin auf
 ein Datum zu setzen, gibt es auch beim Assistenten nicht mehr; er legt zuerst den Termin fest und
 ordnet das Training dann zu.
@@ -370,8 +377,9 @@ Feld-Diagramm anlegen, kopieren, ändern, öffentlich schalten und zurückziehen
 führen und im Kalender deiner Teams Termine und Terminserien samt Platz, erwarteter Spielerzahl und
 Kadern sowie Spiele mit Bezeichnung, Richtwert, Meldefrist und Treffpunkten festlegen, ändern und
 entfernen, ihnen als Kopie Trainings aus dem Team oder deine persönlichen Trainings zuordnen und sie
-wieder lösen, Verantwortliche eintragen, Ausfälle festhalten und zurücknehmen sowie die Termine
-eines Zeitraums abrufen"; „die Anzeigenamen der Mitglieder deiner Teams lesen (ohne
+wieder lösen, Trainer:innen einladen, ausladen, absagen und wieder zusagen und bestimmen, wer
+verantwortlich ist, Ausfälle festhalten und zurücknehmen sowie die Termine eines Zeitraums
+abrufen"; „die Anzeigenamen der Mitglieder deiner Teams lesen (ohne
 E-Mail-Adressen)"; „die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen
 und führen, Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen
 für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten
@@ -452,7 +460,7 @@ Mitgliederliste. War sie die letzte, löst sich das Team auf — mit seinen Trai
 Terminserien, Bildern und seiner Spielerliste; deren private Links und die Abholadresse gelten
 danach nicht mehr.
 
-Als Verantwortliche wird die Person aus allen anstehenden Terminen und Terminserien ausgetragen.
+Aus allen anstehenden Terminen und Terminserien wird die Person ausgeladen.
 An vergangenen Terminen bleibt ihr Eintrag ohne Namen als „Ehemaliges Mitglied" stehen, auch in
 Teams, die sie schon früher verlassen hatte. Ihre Kalender-Abos erlöschen; ein Hinweis darauf
 steht nicht in der Bestätigung.
