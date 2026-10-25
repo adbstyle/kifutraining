@@ -81,7 +81,7 @@ function LinkInhalt({ spieler, abholungAktiv }: { spieler: Spieler; abholungAkti
       <SectionMessage
         appearance="warning"
         actions={
-          <Button variant="text" onClick={erneuern} disabled={pending || !url}>
+          <Button variant="link" onClick={erneuern} disabled={pending || !url}>
             Link erneuern
           </Button>
         }

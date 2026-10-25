@@ -210,7 +210,7 @@ export function VorschlagMessage({
     <SectionMessage
       icon={ListPlus}
       actions={
-        <Button type="button" variant="text" onClick={onUebernehmen}>
+        <Button type="button" variant="link" onClick={onUebernehmen}>
           Vorschlag übernehmen
         </Button>
       }

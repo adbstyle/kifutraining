@@ -24,7 +24,14 @@ import { cn } from "@/lib/cn";
 // Schrift — für die eine Handlung auf einer Fläche im Fehlerton, wo `filled` (Violett
 // auf Rot) zu laut wäre und `outlined` unterginge: «Wieder anmelden» am
 // abgemeldeten nächsten Termin (PO 2026-10-17).
-type Variant = "filled" | "tonal" | "outlined" | "text" | "danger" | "dangerOutlined" | "quiet" | "hell";
+//
+// `link` sieht aus wie ein klassischer Link: Primary, unterstrichen, im
+// Schriftschnitt des umgebenden Fliesstexts, ohne Höhe, Polsterung und
+// Zustands-Ebene (PO 2026-10-25). Für Handlungen, die im Inhalt mitlaufen —
+// die Aktionen einer Section Message, der Weg aus einem Leerzustand, eine
+// Zeilenaktion —, wo ein Knopf zu schwer wöge. Was die Seite wechselt, steht
+// als `ButtonLink`, alles andere bleibt technisch ein <button>.
+type Variant = "filled" | "tonal" | "outlined" | "text" | "danger" | "dangerOutlined" | "quiet" | "hell" | "link";
 
 // `state` gehört in die Basis und nicht an die Varianten: Die Zustands-Ebene
 // färbt sich in der Farbe des Inhalts ein und gilt darum für jede Variante
@@ -63,11 +70,15 @@ const variants: Record<Variant, string> = {
   // Schrift (PO 2026-10-17, nicht Violett); Zustands-Ebene und Fokus-Ring
   // färben sich darin mit ein (siehe @utility umkehr).
   hell: "umkehr",
+  // Ohne `base`: Der Link teilt mit den Knöpfen nur Fokus-Ring und Abschalten.
+  // Keine Schriftklasse — er erbt den Schnitt des Texts, in dem er steht.
+  link: "focus-ring inline-flex items-center gap-1 rounded-klein text-primary underline decoration-1 underline-offset-[3px] hover:decoration-2 disabled:opacity-40 disabled:pointer-events-none",
 };
 
 /** Gemeinsame Button-Klassen — geteilt von Button und ButtonLink, damit ein
  *  navigierender Button als <a>/<Link> dieselbe Optik trägt (kein <a><button>). */
 export function buttonClasses(variant: Variant = "filled", className?: string): string {
+  if (variant === "link") return cn(variants.link, className);
   // `quiet` rückt Zeichen und Rand näher an den Text.
   return cn(base, variants[variant], variant === "quiet" ? "gap-1.5 px-2" : "gap-2 px-4", className);
 }

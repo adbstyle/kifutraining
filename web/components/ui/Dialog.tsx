@@ -11,7 +11,7 @@ import { cn } from "@/lib/cn";
 
    In `actions` steht der Ausweg («Abbrechen», «Schliessen», «Verstanden»)
    immer als Secondary Button (`outlined`) — auch als einzige Aktion, kein
-   Text-Knopf. Text-Knöpfe im Inhalt bleiben Primary, obwohl es auf 24dp knapp
+   Text-Knopf. Links im Inhalt (`variant="link"`) bleiben Primary, obwohl es auf 24dp knapp
    unter die 4.5:1 für Fliesstext fällt — Materials eigene Baseline hält es
    genauso, und ein eigener Farbton nur für Dialoge risse die Handlungsfarbe
    der App auseinander. Die Zahl steht nicht hier, sondern gerechnet im

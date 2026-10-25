@@ -1418,6 +1418,24 @@ export default async function Styleguide() {
             <Button variant="dangerOutlined">Abo widerrufen</Button>
           </div>
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
+            Link (<code>variant=&quot;link&quot;</code>) - im Fliesstext
+          </p>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            Kein Knopf, sondern ein klassischer Link (PO 2026-10-25): Primary,
+            unterstrichen, beim Überfahren dicker unterstrichen. Er hat keine
+            Höhe, keine Polsterung und keine Zustands-Ebene und setzt keine
+            eigene Schrift - er erbt den Schnitt des Texts, in dem er steht. Er
+            gilt für Handlungen, die <strong>im Inhalt mitlaufen</strong>: die
+            Aktionen einer Section Message (<Siehe id="meldungen" />), der
+            Weg aus einem Leerzustand, eine Zeilenaktion wie «Der Serie folgen».
+            Wechselt er die Seite, steht er als <code>ButtonLink</code>, sonst
+            bleibt er ein <code>&lt;button&gt;</code>.
+          </p>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface">
+            Ort weicht von der Serie ab.{" "}
+            <Button variant="link">Der Serie folgen</Button>
+          </p>
+          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Leiser Knopf (<code>variant=&quot;quiet&quot;</code>) - eine Stufe unter{" "}
             <code>text</code>
           </p>
@@ -2773,7 +2791,7 @@ export default async function Styleguide() {
             Die dritte Sorte Zeile: keine Auskunft über den Bestand, sondern eine{" "}
             <strong>Nachricht an den Nutzer</strong> - das Speichern ist
             gescheitert, die Mail ist unterwegs, das Feld-Diagramm zeigt anderes
-            Material. Ohne Knöpfe meldet sie bloss; mit ein oder zwei Knöpfen
+            Material. Ohne Aktion meldet sie bloss; mit ein oder zwei Aktionen
             verlangt sie eine Antwort und bleibt stehen, bis eine gewählt ist.
             Baustein und Name stammen von Atlassian wie in Jira. Nicht Atlassians{" "}
             <em>Banner</em>: Der ist ein kräftig gefüllter, einzeiliger Streifen
@@ -2786,9 +2804,10 @@ export default async function Styleguide() {
             <code>rounded-dialog</code>, das Zeichen 16 px (im 24-px-Feld) in{" "}
             <code>icon-*</code> links, 16 px zum Text. Der Text steht in{" "}
             <code>type-body-medium</code> und <code>on-surface</code>; den Ton
-            tragen Fläche und Zeichen. Die Knöpfe (<code>text</code>) stehen wie
-            Atlassians Aktionen <strong>unter</strong> dem Text und fluchten mit
-            ihm, abweisend zuerst.
+            tragen Fläche und Zeichen. Die Aktionen stehen wie bei Atlassian{" "}
+            <strong>unter</strong> dem Text, als Links (<code>link</code>, PO
+            2026-10-25) in seinem Schriftschnitt; sie fluchten mit ihm, abweisend
+            zuerst.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Die Darstellungen tragen Atlassians Namen: <code>error</code> meldet,
@@ -2796,7 +2815,7 @@ export default async function Styleguide() {
             andere; <code>warning</code>, <code>success</code> und{" "}
             <code>discovery</code> stehen im Kit bereit. Das Zeichen lässt sich
             überschreiben, die Farbe bleibt die der Darstellung. Die Vorlesehilfe
-            erfährt den Ton über <code>role</code>: ein Fehler ohne Knöpfe
+            erfährt den Ton über <code>role</code>: ein Fehler ohne Aktion
             unterbricht (<code>alert</code>), alles andere reiht sich ein (
             <code>status</code>).
           </p>
@@ -2824,10 +2843,10 @@ export default async function Styleguide() {
               icon={RefreshCw}
               actions={
                 <>
-                  <Button type="button" variant="text">
+                  <Button type="button" variant="link">
                     Material beibehalten
                   </Button>
-                  <Button type="button" variant="text">
+                  <Button type="button" variant="link">
                     Neuen Vorschlag übernehmen
                   </Button>
                 </>
@@ -2879,13 +2898,13 @@ export default async function Styleguide() {
             Im Fuss eines Dialogs steht kein Textknopf: Der Ausweg ist ein
             Secondary Button (<code>outlined</code>), seine Schrift ist{" "}
             <code>on-surface</code>. <strong>Bewusste Abweichung:</strong>{" "}
-            Textknöpfe im Inhalt eines Dialogs («Der Serie folgen», «Übung
+            Links im Inhalt eines Dialogs («Der Serie folgen», «Übung
             erfassen») bleiben Primary und kommen auf 24dp damit auf{" "}
             {v(kontrast(PRIMARY, elev(24)))} - knapp unter 4.5:1. Materials
             eigene Baseline tut dasselbe, und die Alternative wäre schlechter:
-            Weisse Knopfschrift wäre von der Fliesstextzeile daneben nicht mehr zu
-            unterscheiden. Die Knöpfe sind gross gesetzt und tragen den Ring; wer
-            sie nicht als Knöpfe liest, verliert nichts, denn der Dialog nennt
+            Weisse Linkschrift wäre von der Fliesstextzeile daneben nicht mehr zu
+            unterscheiden. Die Links sind unterstrichen und tragen den Ring; wer
+            sie nicht als Links liest, verliert nichts, denn der Dialog nennt
             seine Handlung auch im Text.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">

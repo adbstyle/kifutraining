@@ -248,14 +248,13 @@ export function ExercisePickerDialog({
                 <>
                   <span>{leerBestandText(ziel, altersstufe)} Erfasse zuerst eine.</span>
                   <ButtonLink
-                    variant="text"
+                    variant="link"
                     // Im Kinderfussball-Hauptteil kennt der Block seine Kategorie;
                     // sie reist mit, sonst stünde das Einordnungsfeld leer da.
                     href={`/neu?stufe=${altersstufe}&teil=${trainingsteil}${
                       hauptteilkategorie ? `&kategorie=${hauptteilkategorie}` : ""
                     }`}
                   >
-                    <Plus size={18} strokeWidth={2} aria-hidden />
                     Übung erfassen
                   </ButtonLink>
                 </>

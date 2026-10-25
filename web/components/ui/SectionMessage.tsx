@@ -27,10 +27,9 @@ import { cn } from "@/lib/cn";
    Zeichen (16 px in einem 24-px-Feld wie ADS `medium`/`spacious`, `icon-*` =
    ADS `icon.<x>`) links, 16 px Abstand zum Text. Der Text steht in
    `on-surface` — den Ton tragen Fläche und Zeichen, das zugleich
-   ohne Farbwahrnehmung erkennbar ist. Die Knöpfe stehen wie Atlassians
-   Aktionen UNTER dem Text, linksbündig mit ihm (der Textknopf bringt seine
-   Polsterung mit, darum rückt die Leiste um sie nach links), abweisend
-   zuerst.
+   ohne Farbwahrnehmung erkennbar ist. Die Aktionen stehen wie bei Atlassian
+   UNTER dem Text als Links (`variant="link"`, PO 2026-10-25), linksbündig mit
+   ihm und in seinem Schriftschnitt, abweisend zuerst.
 
    Die Darstellungen tragen Atlassians Namen: `information` (Vorgabe),
    `warning`, `error`, `success`, `discovery`. In KiFu angewandt sind vor
@@ -69,7 +68,7 @@ export function SectionMessage({
   icon?: LucideIcon;
   /** Der Text — ein oder zwei Sätze. */
   children: ReactNode;
-  /** Ein oder zwei Knöpfe `variant="text"`, abweisend zuerst. */
+  /** Ein oder zwei Links (`variant="link"`), abweisend zuerst. */
   actions?: ReactNode;
   /** Vorgabe: `alert` beim Fehler ohne Knöpfe, sonst `status`. */
   role?: "alert" | "status";
@@ -88,7 +87,9 @@ export function SectionMessage({
       <div className="min-w-0 grow">
         {/* Die erste Zeile mittig zum 24-px-Zeichenfeld, weitere laufen darunter. */}
         <div className="type-body-medium pt-px text-on-surface">{children}</div>
-        {actions && <div className="-ml-4 mt-2 flex flex-wrap gap-x-2">{actions}</div>}
+        {/* Die Schrift steht an der Leiste: Die Links erben sie und tragen so
+            den Schnitt des Texts darüber. */}
+        {actions && <div className="type-body-medium mt-2 flex flex-wrap gap-x-4 gap-y-1">{actions}</div>}
       </div>
     </div>
   );

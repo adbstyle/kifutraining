@@ -135,7 +135,7 @@ export default async function ZustimmungSeite({
           appearance="error"
           className="mb-4"
           actions={
-            <ButtonLink href="/konto" variant="text">
+            <ButtonLink href="/konto" variant="link">
               Zum Konto
             </ButtonLink>
           }
