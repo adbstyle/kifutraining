@@ -78,7 +78,7 @@ export function KaderKarte({ teamId, kader }: { teamId: string; kader: Kader[] }
     <>
       <div className="flex items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 type-title-large text-on-surface">
-          <Tag size={20} strokeWidth={2} aria-hidden className="shrink-0 text-on-surface-mittel" />
+          <Tag size={20} strokeWidth={2} aria-hidden />
           <span>
             Kader
             <span className="type-label-small ml-2 text-on-surface-mittel">

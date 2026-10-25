@@ -210,7 +210,7 @@ export function SpielerListe({
     <>
       <div className="flex items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 type-title-large text-on-surface">
-          <Shirt size={20} strokeWidth={2} aria-hidden className="shrink-0 text-on-surface-mittel" />
+          <Shirt size={20} strokeWidth={2} aria-hidden />
           <span>
             Spieler:innen
             <span className="type-label-small ml-2 text-on-surface-mittel">

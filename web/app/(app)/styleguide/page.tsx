@@ -102,17 +102,17 @@ import {
   Shield,
   UserRound,
   Users,
+  Group,
   Shirt,
   CalendarDays,
   Repeat,
   ClipboardList,
-  Trophy,
   LayoutGrid,
   ListChecks,
   MapPin,
   Clock,
   LandPlot,
-  ScrollText,
+  History,
   type LucideIcon,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
@@ -608,18 +608,18 @@ const iconSet = [
 const zeichenJeSache: [LucideIcon[], string, string][] = [
   [[Shield], "Shield", "Team"],
   [[UserRound], "UserRound", "Mitglied"],
-  [[Users], "Users", "Trainer:innen am Termin - heute die Verantwortlichen, ausserdem die Gruppen im Hauptteil"],
+  [[Users], "Users", "Trainer:innen am Termin - heute die Verantwortlichen"],
+  [[Group], "Group", "Gruppe im Hauptteil eines Trainings"],
   [[Shirt], "Shirt", "Spieler:in, Spielerliste, Spielerzahl"],
   [[Tag], "Tag", "Kader - nur in Überschriften, die Kader-Lozenges bleiben ohne Zeichen"],
   [[Link2], "Link2", "Spielervertretung (der private Link)"],
   [[CalendarDays, CalendarPlus, CalendarOff], "CalendarDays · CalendarPlus · CalendarOff", "Termin"],
   [[Repeat], "Repeat", "Terminserie"],
-  [[ClipboardList], "ClipboardList", "Training - «Meine Trainings» in der Seitenleiste trägt ClipboardCheck"],
-  [[Trophy], "Trophy", "Spiel"],
+  [[ClipboardList], "ClipboardList", "Training, auch «Meine Trainings»"],
   [[LayoutGrid], "LayoutGrid", "Übung, auch «Meine Übungen»"],
   [[ListChecks], "ListChecks", "nur die Zahl der Übungen in einem Training"],
   [[Layers, MapPin, Clock, LandPlot], "Layers · MapPin · Clock · LandPlot", "Variante · Ort · Zeit · Platz"],
-  [[ScrollText], "ScrollText", "Version (Versionszeile und Release-History)"],
+  [[History], "History", "Version (Versionszeile und Release-History)"],
 ];
 
 /* Beispieltexte für die drei Stufen des methodischen Fahrplans; die
@@ -1355,7 +1355,8 @@ export default async function Styleguide() {
             eine Zeile spricht, bevor man sie liest. Wo die Anwendung davon
             noch abweicht, steht es in der Zeile. Teams, Mitglieder,
             Spieler:innen und Kader tragen ihr Zeichen auch vor der
-            Überschrift ihres Abschnitts (20 px, <code>on-surface-mittel</code>).
+            Überschrift ihres Abschnitts - 20 px in der Farbe der Überschrift,
+            gebaut wie bei der Gefahrenzone.
           </p>
           <div className="space-y-2">
             {zeichenJeSache.map(([zeichen, namen, sache]) => (

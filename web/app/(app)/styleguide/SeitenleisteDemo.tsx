@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardCheck, ClipboardList, LayoutGrid, Shield } from "lucide-react";
+import { ClipboardList, LayoutGrid, Shield } from "lucide-react";
 import { Breadcrumbs, ChoiceChip, ChoiceChipGroup, Seitenleiste, SeitenleistenKnopf, leisteStil } from "@/components/ui";
 import type { SeitenleisteGruppe } from "@/components/ui";
 
@@ -21,7 +21,7 @@ function gruppen(angemeldet: boolean): SeitenleisteGruppe[] {
             titel: "Mein Bereich",
             eintraege: [
               { label: "Meine Übungen", href: "#meine-uebungen", icon: LayoutGrid },
-              { label: "Meine Trainings", href: "#meine-trainings", icon: ClipboardCheck },
+              { label: "Meine Trainings", href: "#meine-trainings", icon: ClipboardList },
               {
                 label: "Teams",
                 href: "#teams",

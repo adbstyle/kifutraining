@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { ClipboardCheck, ClipboardList, LayoutGrid, Shield } from "lucide-react";
+import { ClipboardList, LayoutGrid, Shield } from "lucide-react";
 import { Seitenleiste } from "@/components/ui";
 import type { SeitenleisteGruppe } from "@/components/ui";
 import { aktiveBereiche, teamOffen } from "@/lib/navigation";
@@ -65,7 +65,7 @@ export function AppNavClient({
         {
           label: "Meine Trainings",
           href: "/trainings?mine=1",
-          icon: ClipboardCheck,
+          icon: ClipboardList,
           current: aktiv.meineTrainings,
         },
         {
