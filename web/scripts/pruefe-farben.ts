@@ -209,6 +209,23 @@ pruefe("Die Aufschrift gefüllter Flächen trägt", () => {
   assert.ok(aufDangerDruck >= 4.5, `on-danger auf danger (Druck): ${z(aufDangerDruck)}:1`);
 });
 
+pruefe("Schalter: Knopf und Zeichen tragen (WCAG 1.4.11)", () => {
+  // Die Bahn ist nur Kontur; den Stand tragen Lage, Farbe und Zeichen des
+  // Knopfs — beides grafische Objekte, also 3:1. Der Schalter steht in
+  // Listen auf Seite, Karte und Menüfläche (bis elev-08).
+  for (const stufe of ELEV.filter((s) => s.dp <= 8)) {
+    const an = kontrast(PRIMARY, stufe.hex);
+    assert.ok(an >= 3.0, `Knopf an (primary) auf ${elevName(stufe.dp)}: ${z(an)}:1`);
+    const knopfAus = ueberlagern("#ffffff", SCHRIFT.mittel, stufe.hex);
+    const aus = kontrast(knopfAus, stufe.hex);
+    assert.ok(aus >= 3.0, `Knopf aus (on-surface-mittel) auf ${elevName(stufe.dp)}: ${z(aus)}:1`);
+    const kreuz = kontrast(elev(1), knopfAus);
+    assert.ok(kreuz >= 3.0, `Kreuz (elev-01) auf dem Knopf über ${elevName(stufe.dp)}: ${z(kreuz)}:1`);
+  }
+  const haken = kontrast(ON_PRIMARY, PRIMARY);
+  assert.ok(haken >= 3.0, `Haken (on-primary) auf primary: ${z(haken)}:1`);
+});
+
 // ── Umgekehrte Fläche (Snackbar) ───────────────────────────────────────────
 pruefe("Die umgekehrte Fläche ist Weiss über dem Grund in ihrer Deckung", () => {
   assert.equal(UMKEHR.flaeche, ueberlagern("#ffffff", UMKEHR.deckung, GRUND));

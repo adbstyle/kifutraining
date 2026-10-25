@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FileUp, Link2, Pencil, Plus, X } from "lucide-react";
+import { FileUp, Link2, Pencil, Plus, Shirt, X } from "lucide-react";
 import {
   AuswahlLeiste,
   Button,
@@ -209,11 +209,14 @@ export function SpielerListe({
   return (
     <>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="type-title-large text-on-surface">
-          Spieler:innen
-          <span className="type-label-small ml-2 text-on-surface-mittel">
-            {spieler.length}
-            {spieler.length > 0 && ` · ${bezogen} ${bezogen === 1 ? "Link" : "Links"} bezogen`}
+        <h2 className="flex items-center gap-2 type-title-large text-on-surface">
+          <Shirt size={20} strokeWidth={2} aria-hidden className="shrink-0 text-on-surface-mittel" />
+          <span>
+            Spieler:innen
+            <span className="type-label-small ml-2 text-on-surface-mittel">
+              {spieler.length}
+              {spieler.length > 0 && ` · ${bezogen} ${bezogen === 1 ? "Link" : "Links"} bezogen`}
+            </span>
           </span>
         </h2>
         <span className="flex gap-1">

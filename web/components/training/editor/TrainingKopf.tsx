@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { Shield } from "lucide-react";
 import {
   Card,
   Lozenge,
@@ -63,7 +63,7 @@ export function TrainingKopf({
             href={`/team/${training.team.id}`}
             className="focus-ring inline-flex items-center gap-1.5 rounded-flaeche type-body-small text-on-surface-mittel hover:text-primary"
           >
-            <Users size={16} strokeWidth={2} aria-hidden />
+            <Shield size={16} strokeWidth={2} aria-hidden />
             Team-Training von {training.team.name}
           </Link>
         ) : (

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { ExternalLink, Tag } from "lucide-react";
+import { ExternalLink, ScrollText } from "lucide-react";
 import {
   ButtonLink,
   Leerzustand,
@@ -65,7 +65,7 @@ export default async function VersionenPage({
       </p>
 
       {!stand ? (
-        <Leerzustand icon={Tag} titel="Die Versionen sind gerade nicht abrufbar">
+        <Leerzustand icon={ScrollText} titel="Die Versionen sind gerade nicht abrufbar">
           Versuch es später nochmals.
         </Leerzustand>
       ) : (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardCheck, ClipboardList, LayoutGrid, ListChecks, Users } from "lucide-react";
+import { ClipboardCheck, ClipboardList, LayoutGrid, Shield } from "lucide-react";
 import { Breadcrumbs, ChoiceChip, ChoiceChipGroup, Seitenleiste, SeitenleistenKnopf, leisteStil } from "@/components/ui";
 import type { SeitenleisteGruppe } from "@/components/ui";
 
@@ -20,12 +20,12 @@ function gruppen(angemeldet: boolean): SeitenleisteGruppe[] {
           {
             titel: "Mein Bereich",
             eintraege: [
-              { label: "Meine Übungen", href: "#meine-uebungen", icon: ListChecks },
+              { label: "Meine Übungen", href: "#meine-uebungen", icon: LayoutGrid },
               { label: "Meine Trainings", href: "#meine-trainings", icon: ClipboardCheck },
               {
                 label: "Teams",
                 href: "#teams",
-                icon: Users,
+                icon: Shield,
                 bereichAktiv: true,
                 unterpunkte: [
                   { label: "D-Junioren Db", href: "#team-db" },

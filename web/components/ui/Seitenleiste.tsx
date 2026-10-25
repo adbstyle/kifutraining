@@ -11,7 +11,7 @@ import {
   Palette,
   PanelLeftClose,
   PanelLeftOpen,
-  Tag,
+  ScrollText,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -413,7 +413,7 @@ export function Seitenleiste({
                 )}
               >
                 <span className="relative shrink-0">
-                  <Tag
+                  <ScrollText
                     size={18}
                     strokeWidth={2}
                     aria-hidden

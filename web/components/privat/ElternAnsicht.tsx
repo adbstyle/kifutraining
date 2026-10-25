@@ -228,7 +228,6 @@ function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }
           <TeamZeile t={t} zahl={zahl} />
         </div>
         <Switch
-          ton="ruhig"
           checked={!t.ausgefallen && !ab}
           neutral={t.ausgefallen}
           disabled={t.ausgefallen || t.begonnen || pending}

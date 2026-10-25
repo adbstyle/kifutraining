@@ -100,6 +100,21 @@ import {
   CalendarPlus,
   Link2,
   Tag,
+  Shield,
+  UserRound,
+  Users,
+  Shirt,
+  CalendarDays,
+  Repeat,
+  ClipboardList,
+  Trophy,
+  LayoutGrid,
+  ListChecks,
+  MapPin,
+  Clock,
+  LandPlot,
+  ScrollText,
+  type LucideIcon,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { ROTATIONEN, SPIELER_POSEN, type DiagrammElement } from "@/lib/diagramm";
@@ -585,6 +600,26 @@ const iconSet = [
   BookOpen,
   Trash2,
   User,
+];
+
+/* Eine Entität, ein Zeichen (PO 2026-10-25, Designsystem «Ikonografie»):
+   Wer ein Zeichen für eine dieser Sachen braucht, nimmt dieses und kein
+   anderes - und ein Zeichen meint keine zweite Sache. */
+const zeichenJeSache: [LucideIcon[], string, string][] = [
+  [[Shield], "Shield", "Team"],
+  [[UserRound], "UserRound", "Mitglied"],
+  [[Users], "Users", "Trainer:innen am Termin - heute die Verantwortlichen, ausserdem die Gruppen im Hauptteil"],
+  [[Shirt], "Shirt", "Spieler:in, Spielerliste, Spielerzahl"],
+  [[Tag], "Tag", "Kader - nur in Überschriften, die Kader-Lozenges bleiben ohne Zeichen"],
+  [[Link2], "Link2", "Spielervertretung (der private Link)"],
+  [[CalendarDays, CalendarPlus, CalendarOff], "CalendarDays · CalendarPlus · CalendarOff", "Termin"],
+  [[Repeat], "Repeat", "Terminserie"],
+  [[ClipboardList], "ClipboardList", "Training - «Meine Trainings» in der Seitenleiste trägt ClipboardCheck"],
+  [[Trophy], "Trophy", "Spiel"],
+  [[LayoutGrid], "LayoutGrid", "Übung, auch «Meine Übungen»"],
+  [[ListChecks], "ListChecks", "nur die Zahl der Übungen in einem Training"],
+  [[Layers, MapPin, Clock, LandPlot], "Layers · MapPin · Clock · LandPlot", "Variante · Ort · Zeit · Platz"],
+  [[ScrollText], "ScrollText", "Version (Versionszeile und Release-History)"],
 ];
 
 /* Beispieltexte für die drei Stufen des methodischen Fahrplans; die
@@ -1310,6 +1345,30 @@ export default async function Styleguide() {
               </div>
             ))}
           </div>
+
+          <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+            Eine Sache, ein Zeichen
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            Jede Sache der Anwendung hat genau ein Zeichen, und ein Zeichen
+            meint keine zweite Sache - so erkennt man auf dem Platz, wovon
+            eine Zeile spricht, bevor man sie liest. Teams, Mitglieder,
+            Spieler:innen und Kader tragen ihr Zeichen auch vor der
+            Überschrift ihres Abschnitts (20 px, <code>on-surface-mittel</code>).
+          </p>
+          <div className="space-y-2">
+            {zeichenJeSache.map(([zeichen, namen, sache]) => (
+              <div key={namen} className="flex flex-wrap items-center gap-3 border-b border-linie pb-2">
+                <span className="flex w-24 shrink-0 gap-2 text-on-surface-mittel">
+                  {zeichen.map((Zeichen, i) => (
+                    <Zeichen key={i} size={18} strokeWidth={2} aria-hidden />
+                  ))}
+                </span>
+                <code className="type-body-small w-72 text-on-surface">{namen}</code>
+                <span className="type-body-small min-w-0 flex-1 text-on-surface-mittel">{sache}</span>
+              </div>
+            ))}
+          </div>
         </Section>
 
         <BereichKopf titel="Komponenten" />
@@ -1891,18 +1950,20 @@ export default async function Styleguide() {
             Spieler:in an einem Termin angemeldet oder abgemeldet (Epic #433).
             Neu neben der Checkbox, weil diese in ein Formular gehört, das man
             erst speichert; ein Schalter speichert selbst (Atlassian: Toggle
-            nur für sofort wirkende Änderungen). Beide Lagen tragen ein Zeichen
-            im Knopf, damit der Zustand nicht an der Farbe allein hängt: an in
-            Primary mit Haken, aus im Rot des abgemeldeten Kalenderblatts mit
-            Kreuz. Gesperrt, wenn es nichts mehr zu ändern gibt (der Termin hat
-            begonnen); <code>neutral</code> grau ohne Zeichen, wenn es nichts zu
-            wählen gibt (er fällt aus) - und für die Aus-Lage eines Schalters,
-            dessen Aus kein Fehlen bedeutet (die Selbstabholung eines Teams).
-            <code>ton=&quot;ruhig&quot;</code> (Epic #490) für «angemeldet» und «da» an Trainings: Der Schalter zeigt den
-            Stand, ohne ihn zu bewerten - an eine durchsichtige Bahn mit heller Kontur und grossem hellem Knopf rechts
-            (wie ein Ghost-Knopf), aus eine dunkle Bahn mit grauer Kontur und kleinem grauem Knopf links. Ohne Zeichen:
-            Lage und Grösse des Knopfs sagen den Stand, nicht die Farbe.
-            Darunter liegt ein echtes{" "}
+            nur für sofort wirkende Änderungen). Eine Form nach dem Vorbild von
+            Proton: Die Bahn ist nur eine Kontur (<code>kontur</code> in{" "}
+            <code>kante</code>) ohne Fläche, die Farbe trägt allein der Knopf
+            (26 px). An steht er rechts in <code>primary</code> mit Haken in{" "}
+            <code>on-primary</code>, aus links in <code>on-surface-mittel</code>{" "}
+            mit Kreuz in <code>elev-01</code> - beide Lagen tragen ein Zeichen,
+            damit der Zustand nicht an der Farbe allein hängt. Rot gibt es am
+            Schalter nicht, auch nicht in langen Listen: Ein Fehlen, das
+            auffallen soll, zeigen Lozenge und Kalenderblatt. Gesperrt, wenn es
+            nichts mehr zu ändern gibt (der Termin hat begonnen);{" "}
+            <code>neutral</code> mit kleinem grauem Knopf ohne Zeichen, wenn es
+            nichts zu wählen gibt (er fällt aus) - und für die Aus-Lage eines
+            Schalters, dessen Aus kein Fehlen bedeutet (die Selbstabholung eines
+            Teams). Darunter liegt ein echtes{" "}
             <code>&lt;input type=&quot;checkbox&quot; role=&quot;switch&quot;&gt;</code>.
           </p>
           <SwitchDemo />

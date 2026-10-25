@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X } from "lucide-react";
+import { Plus, UserRound, X } from "lucide-react";
 import { Button, Dialog, IconButton, Tabelle, TabellenZeile, TextField, Tooltip } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { entferneMitglied, nimmMitgliedAuf, sucheTrainer } from "@/lib/actions/teams";
@@ -95,9 +95,12 @@ export function MitgliederListe({
   return (
     <>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="type-title-large text-on-surface">
-          Mitglieder
-          <span className="type-label-small ml-2 text-on-surface-mittel">{mitglieder.length}</span>
+        <h2 className="flex items-center gap-2 type-title-large text-on-surface">
+          <UserRound size={20} strokeWidth={2} aria-hidden className="shrink-0 text-on-surface-mittel" />
+          <span>
+            Mitglieder
+            <span className="type-label-small ml-2 text-on-surface-mittel">{mitglieder.length}</span>
+          </span>
         </h2>
         <Tooltip label="Mitglied hinzufügen" ende>
           <IconButton icon={Plus} label="Mitglied hinzufügen" aria-haspopup="dialog" onClick={() => setAufnahme(true)} />
