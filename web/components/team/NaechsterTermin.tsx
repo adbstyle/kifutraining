@@ -90,10 +90,10 @@ export function NaechsterTermin({
     >
       {/* Die ganze Karte öffnet den Termin daneben (#435), wie eine Zeile des
           Plans. Der Inhalt liegt darüber und lässt Klicks durch — ausser auf
-          seine eigenen Links, Knöpfe und den Schalter. Für Tastatur und Vorlesehilfe öffnet
-          der Name. */}
+          seine eigenen Links, Knöpfe und den Schalter samt Beschriftung. Für
+          Tastatur und Vorlesehilfe öffnet der Name. */}
       <Link href={oeffnen} scroll={false} tabIndex={-1} aria-hidden className="absolute inset-0 rounded-flaeche" />
-      <div className="pointer-events-none relative flex flex-col gap-3.5 [&_a]:pointer-events-auto [&_button]:pointer-events-auto [&_input]:pointer-events-auto">
+      <div className="pointer-events-none relative flex flex-col gap-3.5 [&_a]:pointer-events-auto [&_button]:pointer-events-auto [&_label]:pointer-events-auto">
         <div className="flex items-start gap-4">
           <Kalenderblatt datum={t.datum} stand={blattStand(t, heute)} as={tagesUeberschrift ? "h5" : "div"} />
           <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
@@ -194,15 +194,18 @@ function IchBinDabei({ t }: { t: TerminZeile }) {
   const offen = absageOffen(t, terminBegonnen(t.datum, t.beginn));
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-      <Switch
-        checked={!!ich && !ich.abgesagtAm}
-        disabled={!offen || a.pending}
-        aria-label="Ich bin dabei"
-        onChange={(e) =>
-          ich ? a.absagen(t, ich, !e.target.checked) : a.trainer(t, { einladen: [a.ich] }, "Du bist eingeladen.")
-        }
-      />
-      <span aria-hidden className="type-body-medium text-on-surface">Ich bin dabei</span>
+      {/* Auch ein Tipp auf die Beschriftung legt um, statt den Termin zu öffnen. */}
+      <label className="flex cursor-pointer items-center gap-3">
+        <Switch
+          checked={!!ich && !ich.abgesagtAm}
+          disabled={!offen || a.pending}
+          aria-label="Ich bin dabei"
+          onChange={(e) =>
+            ich ? a.absagen(t, ich, !e.target.checked) : a.trainer(t, { einladen: [a.ich] }, "Du bist eingeladen.")
+          }
+        />
+        <span aria-hidden className="type-body-medium text-on-surface">Ich bin dabei</span>
+      </label>
       <span className="type-body-small text-on-surface-mittel">
         {[verantwortlichZeile(t, a.ich), ich?.abgesagtAm && "du hast abgesagt", !ich && "du bist nicht eingeladen"]
           .filter(Boolean)
