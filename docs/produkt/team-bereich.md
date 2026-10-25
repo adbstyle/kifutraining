@@ -460,7 +460,7 @@ so, wie es die Trainingsansicht liest — Name, Altersstufe, Alterskategorien, D
 „Training öffnen" — ausgefallen nur mit Letzterem —, ohne Training „Training hinzufügen".
 „Spieler:innen" zeigt, welche Spieler:innen kommen (siehe „Ab- und Anmelden"), „Trainer:innen",
 welche Trainer:innen (siehe „Trainer:innen"). Unter den Eckdaten stehen dazu „Verantwortlich" —
-ohne „Niemand" — und „Trainer:innen" mit „2 von 3 dabei", mit Mindestbesetzung samt der nötigen
+ohne Verantwortliche:n „Niemand" — und „Trainer:innen" mit „2 von 3 dabei", mit Mindestbesetzung samt der nötigen
 Zahl. Der geöffnete Termin und sein Reiter stehen in der Adresse; der Wechsel zwischen den Reitern
 bleibt an der Stelle der Liste, und auch die Eingrenzung bleibt.
 
@@ -782,8 +782,8 @@ Spielerliste steht darum vom Ablauf der Frist bis zum Anpfiff auch in der Liste 
 wie „Als Nächstes", an seinem Platz zwischen den Zeilen, und ein Hinweis sagt, was zu tun ist: rot
 etwa „Es fehlen 2 bis zur Mindestzahl 9. Spieler:innen direkt anfragen." oder „3 über der
 Höchstzahl 12. Aufgebot klären.", gelb „Genau die Mindestzahl 9 ist erreicht. Fällt jemand aus,
-reicht es nicht mehr. Ersatz bereithalten."; bei „Genügend" steht keiner. Die Zeile unter dem
-Balken zählt dann die verpasste Meldefrist statt „ohne Meldung" und nennt die Frist „abgelaufen".
+reicht es nicht mehr. Ersatz bereithalten."; bei „Genügend" steht keiner. Die Spielerzahl zählt dann beim Darüberfahren die verpasste
+Meldefrist statt „ohne Meldung", und die Meldefrist heisst „abgelaufen".
 Ein ausgefallenes Spiel wird nie zur grossen Karte.
 
 Geöffnet trägt ein Spiel seine Bezeichnung als Titel, darunter Tag, Zeit und Ort, und hat zwei
@@ -1309,7 +1309,7 @@ Grund. Ein Spiel hat höchstens fünf Treffpunkte, je Anreiseart einen; Eltern w
 Treffpunkt und bieten keine Fahrgemeinschaften an, und eine Rückkehrzeit hat kein eigenes Feld.
 Geänderte Treffpunkte oder eine geänderte Bemerkung kennzeichnet die Anwendung für die Eltern
 nicht, und von mehreren Verlegungen nennt sie nur den zuletzt gültigen Zeitpunkt. Den Status eines
-Spiels sehen die Eltern nicht, nur Balken und Richtwert. Ohne Spielerliste führt ein Spiel weder
+Spiels sehen die Eltern nicht, nur die Zahl der Angemeldeten und den gesuchten Bereich. Ohne Spielerliste führt ein Spiel weder
 Meldungen noch Spielerzahl, und eine erwartete Zahl lässt sich an einem Spiel nicht festhalten.
 
 Ob ein privater Link weitergegeben wurde, erkennt die Anwendung nicht, und ob ein Elternteil oder
