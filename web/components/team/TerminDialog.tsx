@@ -28,6 +28,8 @@ import { TRAINER_TEXT, trainerName, verantwortlicheVon, type TerminTrainer } fro
 import type { TeamMitglied } from "@/lib/queries/teams";
 import type { FolgeAngabe } from "@/lib/kern/serien";
 import { TrainerWahl, gleicheMenge, trainerAenderung, trainerStart, type TrainerAenderung, type TrainerWert } from "./TrainerWahl";
+import { KEINE_BESETZUNG, MindestbesetzungFeld, besetzungAusEingabe, besetzungEingabe, type BesetzungEingabe } from "./MindestbesetzungFeld";
+import { besetzungText } from "@/lib/besetzung";
 import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
 import { terminBegonnen } from "@/lib/zeit";
@@ -51,6 +53,7 @@ const ANGABE: Record<FolgeAngabe, string> = {
   bemerkung: "Die Bemerkung",
   eingeladene: "Die Eingeladenen",
   verantwortung: "Die Verantwortung",
+  besetzung: "Die Mindestbesetzung",
   spielerzahl: "Die erwartete Spielerzahl",
   felder: "Die Felder",
   kader: "Die Kader",
@@ -66,6 +69,7 @@ const FOLGEN_KANN: readonly FolgeAngabe[] = [
   "spielerzahl",
   "eingeladene",
   "verantwortung",
+  "besetzung",
   "felder",
 ];
 const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
@@ -74,6 +78,7 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   bemerkung: "Bemerkung wieder der Serie folgen lassen",
   eingeladene: "Eingeladene wieder der Serie folgen lassen",
   verantwortung: "Verantwortung wieder der Serie folgen lassen",
+  besetzung: "Mindestbesetzung wieder der Serie folgen lassen",
   spielerzahl: "Erwartete Spielerzahl wieder der Serie folgen lassen",
   felder: "Felder wieder der Serie folgen lassen",
   kader: "Kader wieder der Serie folgen lassen",
@@ -122,6 +127,7 @@ export function TerminDialog({
   mitglieder,
   ich,
   trainer,
+  spielerzahlAktuell = null,
   ausfall,
   heute,
   fuehrtListe,
@@ -148,6 +154,8 @@ export function TerminDialog({
   ich: string;
   /** Die Trainer:innen des geöffneten Termins; ohne: keine. */
   trainer?: readonly TerminTrainer[];
+  /** Die Spielerzahl, die der Termin anzeigt — für den Hinweis zum Verhältnis (#521 AK 14). */
+  spielerzahlAktuell?: number | null;
   /** Der Termin ist ausgefallen, mit diesem Grund (#402 AK 12); ohne: nicht ausgefallen. */
   ausfall?: { grund: string | null } | null;
   /** Der heutige Kalendertag — ab ihm endet ein Ausfall beim Verlegen (AK 14). */
@@ -182,6 +190,8 @@ export function TerminDialog({
   const [regelProblem, setRegelProblem] = useState<{ feld: SerieFeld | "beides"; text: string } | null>(null);
   const [besetzung, setBesetzung] = useState<TrainerWert>({ eingeladene: [], anonyme: [], verantwortlich: null });
   const besetzungStart = trainerStart(trainer ?? []);
+  const [mindest, setMindest] = useState<BesetzungEingabe>(KEINE_BESETZUNG);
+  const [mindestFehler, setMindestFehler] = useState<string>();
   const [grund, setGrund] = useState("");
   const [grundFehler, setGrundFehler] = useState<string>();
   const kaderStart = terminKader.flatMap((k) => (k.id ? [k.id] : []));
@@ -219,6 +229,8 @@ export function TerminDialog({
     if (serie) setRegel({ wochentage: [...serie.wochentage], von: serie.beginnDatum, bis: serie.endDatum });
     setRegelProblem(null);
     setBesetzung(trainerStart(trainer ?? []));
+    setMindest(besetzungEingabe(start?.mindestbesetzung ?? null));
+    setMindestFehler(undefined);
     setGrund(ausfall?.grund ?? "");
     setGrundFehler(undefined);
     setKaderWahl(kaderStart);
@@ -269,14 +281,18 @@ export function TerminDialog({
     const regelOk = regelPruefen();
     const gp = ausfall && !ausfallEndet ? ausfallProblem(grund) : null;
     setGrundFehler(gp?.text);
-    if (p || !angaben || !regelOk || gp) return;
+    const m = besetzungAusEingabe(mindest);
+    setMindestFehler(m.ok ? undefined : m.text);
+    if (p || !angaben || !regelOk || gp || !m.ok) return;
     if (istSpiel && verlegt && terminBegonnen(felder.datum, felder.beginn ?? "")) {
       setProblem({ feld: "beginn", text: SPIEL_MELDUNG.SPIEL_ANPFIFF_VERGANGEN });
       return;
     }
     const grundNeu = ausfall && !ausfallEndet && grund.trim() !== (ausfall.grund ?? "") ? grund : undefined;
     onSpeichern(
-      istSpiel ? { ...felder, art: "spiel", ...angaben } : { ...felder, ...angaben },
+      istSpiel
+        ? { ...felder, art: "spiel", ...angaben, mindestbesetzung: m.wert }
+        : { ...felder, ...angaben, mindestbesetzung: m.wert },
       serie ? regel : undefined,
       trainerAenderung(besetzung, besetzungStart) ?? undefined,
       grundNeu,
@@ -352,6 +368,23 @@ export function TerminDialog({
         )}
         <FormAbschnitt titel="Trainer:innen" untertitel={TRAINER_TEXT.eingeladenHinweis} imDialog>
           <TrainerWahl mitglieder={mitglieder} ich={ich} bisher={trainer} wert={besetzung} onChange={setBesetzung} disabled={pending} />
+          <MindestbesetzungFeld
+            wert={mindest}
+            onChange={(w) => {
+              setMindest(w);
+              setMindestFehler(undefined);
+            }}
+            spielerzahl={
+              fuehrtListe || istSpiel
+                ? spielerzahlAktuell
+                : platz.spielerzahlProps.wert.trim() === ""
+                  ? null
+                  : Number(platz.spielerzahlProps.wert)
+            }
+            spielerWort={fuehrtListe || istSpiel ? "angemeldeten" : "erwarteten"}
+            fehler={mindestFehler}
+            disabled={pending}
+          />
         </FormAbschnitt>
         {!istSpiel && (
           <div className="border-t border-linie pt-4">
@@ -369,6 +402,7 @@ export function TerminDialog({
           {serie.trainer.length > 0 && (
             <p className="type-body-small">Eingeladen: {serie.trainer.map((v) => v.name).join(", ")}</p>
           )}
+          {serie.mindestbesetzung && <p className="type-body-small">Mindestbesetzung: {besetzungText(serie.mindestbesetzung)}</p>}
           {verantwortlicheVon(serie.trainer) && (
             <p className="type-body-small">Verantwortlich: {trainerName(verantwortlicheVon(serie.trainer)!)}</p>
           )}

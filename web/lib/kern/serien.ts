@@ -11,6 +11,7 @@ import {
 import { TERMIN_TEXT, istKalendertag, leerZuNull, textProblem, zeitProblem } from "@/lib/termin";
 import type { FeldEingabe } from "@/lib/termin-felder";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
+import type { Mindestbesetzung } from "@/lib/besetzung";
 import { bereinigeKennungen, trainerBeimFestlegen, type TrainerWahl } from "@/lib/kern/trainer";
 import { TRAINER_TEXT } from "@/lib/trainer";
 import { raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
@@ -21,6 +22,7 @@ import {
   spielerzahlFehler,
   entferneTermin,
   type Verlassen,
+  besetzungFehler,
   kalenderFehler,
   ladeTermin,
   type TerminAendern,
@@ -62,6 +64,8 @@ export type SerieFestlegen = {
   spielerzahl?: number | null;
   /** Die Kader jedes Termins der Serie (#453 AK 2); ohne oder leer: für alle. */
   kaderIds?: string[];
+  /** Die Mindestbesetzung jedes Termins der Serie (#521 AK 1, 2); ohne: keine. */
+  mindestbesetzung?: Mindestbesetzung;
 } & TrainerWahl;
 
 /** Kader-Kennungen prüfen — eine falsch geformte ist für niemanden sichtbar. */
@@ -86,6 +90,8 @@ export async function legeSerieFest(
   if (zahl) return zahl;
   const kader = kaderIdsFehler(e.kaderIds);
   if (kader) return kader;
+  const besetzung = besetzungFehler(e.mindestbesetzung);
+  if (besetzung) return besetzung;
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
   // Jeder Termin der Serie trägt die Eingeladenen und die Verantwortliche (#519 AK 2).
@@ -105,6 +111,7 @@ export async function legeSerieFest(
     p_felder: felder.felder,
     p_spielerzahl: e.spielerzahl ?? null,
     p_kader: e.kaderIds ?? [],
+    p_besetzung: e.mindestbesetzung ?? null,
   });
   if (error) return kalenderFehler(error);
   const r = data as { serie: string; termine: number };
@@ -131,6 +138,8 @@ export type SerienAenderung = {
   spielerzahl?: number | null;
   /** Die Kader der Serie und der Termine, die ihr folgen (#453 AK 2); `[]` = für alle. */
   kaderIds?: string[];
+  /** Die Mindestbesetzung der Serie (#521 AK 3); `null` = entfernen. */
+  mindestbesetzung?: Mindestbesetzung;
 };
 
 export type EntfallenderTermin = {
@@ -296,6 +305,7 @@ export async function aendereSerie(
     a.verantwortlich === undefined &&
     a.felder === undefined &&
     a.spielerzahl === undefined &&
+    a.mindestbesetzung === undefined &&
     a.kaderIds === undefined
   )
     return fehlschlag("eingabe", SERIE_MELDUNG.KEINE_AENDERUNG);
@@ -317,6 +327,8 @@ export async function aendereSerie(
   if (zahl) return zahl;
   const kader = kaderIdsFehler(a.kaderIds);
   if (kader) return kader;
+  const besetzung = besetzungFehler(a.mindestbesetzung);
+  if (besetzung) return besetzung;
 
   // Die Regel vorab prüfen, mit den Feldnamen des Werkzeugs (AK 5, PC 19) —
   // nur wenn sie sich ändert: Eine reine Werteänderung an einem verlegten
@@ -352,6 +364,7 @@ export async function aendereSerie(
   if (felder) aenderung.felder = felder.felder;
   if (a.spielerzahl !== undefined) aenderung.spielerzahl = a.spielerzahl;
   if (a.kaderIds !== undefined) aenderung.kader = [...new Set(a.kaderIds)];
+  if (a.mindestbesetzung !== undefined) aenderung.besetzung = a.mindestbesetzung;
 
   return laufe(supabase, t.team_id, e, async (ausfuehren, erwartet) =>
     supabase.rpc("terminserie_aendern", {
@@ -394,6 +407,7 @@ export type FolgeAngabe =
   | "bemerkung"
   | "eingeladene"
   | "verantwortung"
+  | "besetzung"
   | "felder"
   | "spielerzahl"
   | "kader";
@@ -406,6 +420,7 @@ const FOLGE_ANGABEN: readonly FolgeAngabe[] = [
   "bemerkung",
   "eingeladene",
   "verantwortung",
+  "besetzung",
   "felder",
   "spielerzahl",
   "kader",
@@ -502,6 +517,7 @@ export async function aendereMitReichweite(
         felder.bemerkung,
         felder.felder,
         felder.spielerzahl,
+        felder.mindestbesetzung,
         felder.bezeichnung,
         felder.richtwertMin,
         felder.richtwertMax,
@@ -537,6 +553,7 @@ export async function aendereMitReichweite(
       bemerkung: e.bemerkung,
       felder: e.felder,
       spielerzahl: e.spielerzahl,
+      mindestbesetzung: e.mindestbesetzung,
       kaderIds: e.kaderIds,
     },
     bestaetigt: e.bestaetigt === true,

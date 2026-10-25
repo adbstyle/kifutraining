@@ -9,7 +9,6 @@
 // die Datenebene (`spieler_text_schluessel`, Unique-Index `spieler_eindeutig`).
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
-import { absagenVerfallText } from "@/lib/trainer";
 import { datumKurz } from "@/lib/zeit";
 import { tagOhneJahr } from "@/lib/monat";
 import { SPIEL_TEXT } from "@/lib/spiel";
@@ -346,6 +345,15 @@ export function verfallText(n: number, nachtraege = 0): string {
           ? "Damit verfällt 1 Nachtrag zur Anwesenheit: Die Spieler:in gilt wieder als angemeldet."
           : `Damit verfallen ${nachtraege} Nachträge zur Anwesenheit: Diese Spieler:innen gelten wieder als angemeldet.`;
   return [abmeldungen, nachtrag].filter(Boolean).join(" ");
+}
+
+/** Was beim Verlegen mit den Absagen der Trainer:innen geschieht (#520 AK 11,
+ *  PC 2, 3) — ein Satz, der an den der Abmeldungen anschliesst; leer ohne. */
+export function absagenVerfallText(n: number): string {
+  if (n === 0) return "";
+  return n === 1
+    ? "Ausserdem verfällt 1 Absage einer Trainer:in: Sie gilt wieder als dabei."
+    : `Ausserdem verfallen ${n} Absagen von Trainer:innen: Sie gelten wieder als dabei.`;
 }
 
 /** Dasselbe in der Rückfrage der Oberfläche, mit dem Weg danach. */

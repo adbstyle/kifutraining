@@ -26,6 +26,9 @@ export type Marke = {
   ausgefallen: boolean;
   /** Die Farbe seines Status, wenn er eine trägt (grün, gelb, rot). */
   ton?: StatusTon;
+  /** Ein weiterer Punkt für eine Lücke daneben, etwa bei den Trainer:innen
+   *  (#521, PO 14): rot zu wenige, gelb niemand verantwortlich. */
+  zweiterTon?: StatusTon;
   label: string;
 };
 
@@ -47,7 +50,7 @@ function tagStand(marken: readonly Marke[]): TagStand | undefined {
 const RANG: StatusTon[] = ["danger", "warning", "success"];
 function tagToene(marken: readonly Marke[]): StatusTon[] {
   return marken
-    .flatMap((m) => (!m.ausgefallen && m.ton ? [m.ton] : []))
+    .flatMap((m) => (m.ausgefallen ? [] : [m.ton, m.zweiterTon].filter((t): t is StatusTon => !!t)))
     .sort((a, b) => RANG.indexOf(a) - RANG.indexOf(b));
 }
 

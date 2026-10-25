@@ -1,6 +1,6 @@
 "use client";
 
-import { ohneVerantwortliche, type Eingrenzung } from "@/lib/trainer";
+import { trainerLuecke, type Eingrenzung } from "@/lib/trainer";
 import { EHEMALIGER_KADER } from "./KaderLozenge";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -298,7 +298,7 @@ function TerminReihe({
         <Kalenderblatt as={ersterDesTages ? "h5" : "div"} datum={t.datum} stand={blattStand(t, heute)} />
       </div>
       <div className="pointer-events-none relative flex min-w-0 flex-1 flex-col items-start gap-0.5">
-        {(status || ohneVerantwortliche(t, heute)) && (
+        {(status || trainerLuecke(t, heute)) && (
           <span className="flex flex-wrap items-center gap-1">
             {status && <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>}
             <TrainerLozenge t={t} heute={heute} />

@@ -45,6 +45,7 @@ import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainin
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
 import { felderAusgabe, spielerzahlQuelleAusgabe } from "@/lib/termin-felder-ausgabe";
 import { trainerAusgabe } from "@/lib/trainer-ausgabe";
+import { angezeigteSpielerzahl, noetigeTrainer } from "@/lib/besetzung";
 import { spielerzahlVon } from "@/lib/spieler";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 import { GESAMTDAUER_JUNIOREN, gesamtAbgleich, zeitAbgleich } from "@/lib/junioren";
@@ -260,6 +261,8 @@ export function trainingAuskunft(
           spielerzahl: spielerzahlQuelleAusgabe(spielerzahlVon(k.termin)),
           serie_id: k.termin.serie?.id ?? null,
           trainer: trainerAusgabe(k.termin.trainer),
+          mindestbesetzung: k.termin.mindestbesetzung,
+          noetige_trainer: noetigeTrainer(k.termin.mindestbesetzung, angezeigteSpielerzahl(spielerzahlVon(k.termin))),
           ausgefallen: k.termin.ausgefallen,
           ausfall_grund: k.termin.ausfallGrund,
           // Dieselbe Grenze wie der Plan (`teilePlan`): der heutige Tag zählt

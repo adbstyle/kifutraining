@@ -1,6 +1,6 @@
 "use client";
 
-import { absageOffen, ohneVerantwortliche, trainerNameFuer, verantwortlicheVon, type Eingrenzung } from "@/lib/trainer";
+import { absageOffen, trainerLuecke, trainerNameFuer, verantwortlicheVon, type Eingrenzung } from "@/lib/trainer";
 import Link from "next/link";
 import { CalendarPlus, Clock, LandPlot, Shirt } from "lucide-react";
 import { Button, ButtonLink, Kalenderblatt, Lozenge, OverflowMenu, SectionMessage, Switch, TreffpunktListe, ZeichenZahl } from "@/components/ui";
@@ -102,7 +102,7 @@ export function NaechsterTermin({
                 {relativ} · {tagOhneJahr(t.datum)}
               </p>
             )}
-            {(status || ohneVerantwortliche(t, heute)) && (
+            {(status || trainerLuecke(t, heute)) && (
               <span className="flex flex-wrap items-center gap-1">
                 {status && <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>}
                 <TrainerLozenge t={t} heute={heute} />

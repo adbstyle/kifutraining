@@ -9,6 +9,9 @@
  * Wer verantwortlich wird, ist damit eingeladen und dabei; Ausladen wirkt immer.
  */
 
+import { angezeigteSpielerzahl, fehlendeTrainer, noetigeTrainer, type Mindestbesetzung } from "@/lib/besetzung";
+import { spielerzahlVon, type Spielstand } from "@/lib/spieler";
+
 /** Wie ein Eintrag ohne Namen (gelöschtes Konto) überall heisst. */
 export const EHEMALIGES_MITGLIED = "Ehemaliges Mitglied";
 
@@ -115,8 +118,34 @@ export function ohneVerantwortliche(
   return t.datum >= heute && !t.ausgefallen && !verantwortlicheVon(t.trainer);
 }
 
-/** Der ganze Satz zur Trainer-Zahl eines Termins, aus Sicht des USERS. */
-export function trainerZahlSatz(trainer: readonly TerminTrainer[], ich: string): string {
+/** Was die Besetzung eines Termins braucht. */
+type MitBesetzung = {
+  trainer: readonly TerminTrainer[];
+  mindestbesetzung: Mindestbesetzung;
+  spielerzahl: number | null;
+  spielstand: Spielstand;
+  datum: string;
+  ausgefallen: boolean;
+};
+
+/** Wie viele Trainer:innen der Termin braucht (#521 AK 6, 9); `null`: keine Bewertung. */
+export function noetigeVon(t: Omit<MitBesetzung, "trainer" | "datum">): number | null {
+  return noetigeTrainer(t.mindestbesetzung, angezeigteSpielerzahl(spielerzahlVon(t)));
+}
+
+/** Die Trainer-Lücke eines anstehenden, nicht ausgefallenen Termins (#519 AK 18,
+ *  #521 AK 8, 16): zu wenige dabei geht vor «niemand verantwortlich» — fehlt
+ *  beides, zählt nur die Unterbesetzung. `null`: keine. */
+export function trainerLuecke(t: MitBesetzung, heute: string): { art: "zuWenig"; fehlen: number } | { art: "niemand" } | null {
+  if (t.datum < heute || t.ausgefallen) return null;
+  const fehlen = fehlendeTrainer(noetigeVon(t), dabeiZahl(t.trainer));
+  if (fehlen > 0) return { art: "zuWenig", fehlen };
+  return ohneVerantwortliche(t, heute) ? { art: "niemand" } : null;
+}
+
+/** Der ganze Satz zur Trainer-Zahl eines Termins, aus Sicht des USERS; mit
+ *  `noetig` auch, wie viele die Mindestbesetzung verlangt (#521 AK 9). */
+export function trainerZahlSatz(trainer: readonly TerminTrainer[], ich: string, noetig: number | null = null): string {
   const v = verantwortlicheVon(trainer);
   const eigen = istDabei(trainer, ich)
     ? "du bist dabei"
@@ -125,6 +154,7 @@ export function trainerZahlSatz(trainer: readonly TerminTrainer[], ich: string):
       : "du bist nicht eingeladen";
   return [
     `Trainer:innen: ${dabeiZahl(trainer)} von ${trainer.length} dabei`,
+    ...(noetig !== null ? [`nötig ${noetig}`] : []),
     v ? `${v.userId === ich ? "du bist" : trainerName(v)} verantwortlich` : "niemand verantwortlich",
     eigen,
   ].join(" · ");
@@ -177,14 +207,9 @@ export function trainerAenderung(neu: TrainerWert, alt: TrainerWert) {
 }
 export type TrainerAenderung = NonNullable<ReturnType<typeof trainerAenderung>>;
 
-/** Was beim Verlegen mit den Absagen geschieht (#520 AK 11, PC 2, 3) — ein
- *  Satz, der an den der Abmeldungen anschliesst; leer ohne Absagen. */
-export function absagenVerfallText(n: number): string {
-  if (n === 0) return "";
-  return n === 1
-    ? "Ausserdem verfällt 1 Absage einer Trainer:in: Sie gilt wieder als dabei."
-    : `Ausserdem verfallen ${n} Absagen von Trainer:innen: Sie gelten wieder als dabei.`;
-}
+/** Der Satz zu verfallenden Absagen steht bei den Verfall-Sätzen der
+ *  Abmeldungen (lib/spieler.ts), an die er anschliesst. */
+export { absagenVerfallText } from "@/lib/spieler";
 
 export const TRAINER_TEXT = {
   /** Eingabe mit einer Kennung, die keine ist. */

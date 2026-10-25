@@ -6,7 +6,7 @@ import { wochentageText } from "@/lib/serie";
 import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { feldName, feldText } from "@/lib/termin-felder";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
-import { dabeiZahl, verantwortlichText } from "@/lib/trainer";
+import { dabeiZahl, noetigeVon, verantwortlichText } from "@/lib/trainer";
 import { FUER_ALLE } from "@/lib/kader";
 import { richtwertStufeText, richtwertText, zeitpunktKurz } from "@/lib/spiel";
 import { KaderLozenges } from "./KaderLozenge";
@@ -59,6 +59,7 @@ export function TerminEigenschaften({
       <Eigenschaft label="Verantwortlich">{v ?? "Niemand"}</Eigenschaft>
       <Eigenschaft label="Trainer:innen">
         {dabeiZahl(t.trainer)} von {t.trainer.length} dabei
+        {noetigeVon(t) !== null && ` · nötig ${noetigeVon(t)}`}
       </Eigenschaft>
       {/* #453 AK 5: für welche Kader er gilt oder dass er für alle gilt. */}
       {(mitKadern || t.kader.length > 0) && (

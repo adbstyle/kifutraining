@@ -12,6 +12,8 @@ import { NeuerTerminDialog } from "./NeuerTerminDialog";
 import { spielEntfernenText } from "@/lib/spiel";
 import { TerminDialog } from "./TerminDialog";
 import { TrainingWahlDialog } from "./TrainingWahlDialog";
+import { angezeigteSpielerzahl } from "@/lib/besetzung";
+import { spielerzahlVon } from "@/lib/spieler";
 import { AbsageDialog } from "./AbsageDialog";
 import { terminHref } from "@/lib/team-ansicht";
 import { uebernehmenKoennen, type TerminTrainer } from "@/lib/trainer";
@@ -101,6 +103,7 @@ function startWerte(t: TerminZeile): TerminFelder {
     bemerkung: t.bemerkung ?? "",
     felder: t.felder,
     spielerzahl: t.spielerzahl,
+    mindestbesetzung: t.mindestbesetzung,
     // Ein Spiel (#459): Bezeichnung und Richtwert statt Feldern und Zahl.
     ...(t.spiel
       ? {
@@ -125,6 +128,7 @@ const FOLGT_WIEDER: Record<FolgeAngabe, string> = {
   bemerkung: "Die Bemerkung folgt wieder der Serie.",
   eingeladene: "Die Eingeladenen folgen wieder der Serie.",
   verantwortung: "Die Verantwortung folgt wieder der Serie.",
+  besetzung: "Die Mindestbesetzung folgt wieder der Serie.",
   felder: "Die Felder folgen wieder der Serie.",
   spielerzahl: "Die erwartete Spielerzahl folgt wieder der Serie.",
   kader: "Die Kader folgen wieder der Serie.",
@@ -633,7 +637,7 @@ export function TerminBereich({
           t.art === "serie"
             ? lauf(() => legeSerieFestAktion(teamId, t.felder), () => "Terminserie erstellt.", () => setNeu(false), true, laufNr.current)
             : lauf(
-                () => legeTerminFestAktion(teamId, t.felder, t.kaderIds, t.trainer),
+                () => legeTerminFestAktion(teamId, { ...t.felder, mindestbesetzung: t.trainer.mindestbesetzung }, t.kaderIds, t.trainer),
                 () => "Termin erstellt.",
                 () => setNeu(false),
                 true,
@@ -653,6 +657,7 @@ export function TerminBereich({
         mitglieder={mitglieder}
         ich={ich}
         trainer={bearbeiten?.trainer}
+        spielerzahlAktuell={bearbeiten ? angezeigteSpielerzahl(spielerzahlVon(bearbeiten)) : null}
         ausfall={bearbeiten?.ausgefallen ? { grund: bearbeiten.ausfallGrund } : null}
         heute={heute}
         fuehrtListe={fuehrtListe}

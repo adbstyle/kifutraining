@@ -7,7 +7,8 @@ import { abgebildet } from "@/lib/kern/ergebnis";
 import { TrainingAuskunft } from "@/lib/kern/auskunft-schema";
 import { felderAusgabe, felderSchema, spielerzahlQuelleAusgabe, spielerzahlQuelleSchema, spielerzahlSchema } from "@/lib/termin-felder-ausgabe";
 import { spielerzahlVon } from "@/lib/spieler";
-import { trainerAusgabe, trainerSchema } from "@/lib/trainer-ausgabe";
+import { besetzungSchema, trainerAusgabe, trainerSchema } from "@/lib/trainer-ausgabe";
+import { angezeigteSpielerzahl, noetigeTrainer } from "@/lib/besetzung";
 import {
   trainingAbrufen as trainingAbrufenImKern,
   trainingsSuchen as trainingsSuchenImKern,
@@ -133,6 +134,8 @@ const SuchenTreffer = z.object({
       spielerzahl: spielerzahlQuelleSchema(),
       serie_id: z.string().nullable(),
       trainer: trainerSchema(),
+      mindestbesetzung: besetzungSchema(),
+      noetige_trainer: z.number().int().nullable(),
       ausgefallen: z.boolean().describe("Ob der Termin ausgefallen ist; das Training ruht dann an ihm."),
       ausfall_grund: z.string().nullable(),
       anstehend: z.boolean(),
@@ -200,6 +203,8 @@ export const trainingsSuchen = werkzeug({
                   spielerzahl: spielerzahlQuelleAusgabe(spielerzahlVon(t.termin)),
                   serie_id: t.termin.serieId,
                   trainer: trainerAusgabe(t.termin.trainer),
+                  mindestbesetzung: t.termin.mindestbesetzung,
+                  noetige_trainer: noetigeTrainer(t.termin.mindestbesetzung, angezeigteSpielerzahl(spielerzahlVon(t.termin))),
                   ausgefallen: t.termin.ausgefallen,
                   ausfall_grund: t.termin.ausfallGrund,
                   anstehend: t.termin.anstehend,

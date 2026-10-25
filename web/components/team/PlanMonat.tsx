@@ -1,6 +1,7 @@
 "use client";
 
-import type { Eingrenzung } from "@/lib/trainer";
+import { trainerLuecke, type Eingrenzung } from "@/lib/trainer";
+import { fehlenText } from "@/lib/besetzung";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { MiniMonat, type Marke, type StatusTon } from "@/components/ui";
 import { terminStatus } from "@/lib/termin-status";
@@ -99,12 +100,16 @@ export function PlanMonat({
             // Der farbige Status setzt den Punkt am Tag (Epic #490); vorgelesen wird er mit.
             const status = terminStatus(t, heute);
             const ton = status && status.appearance !== "neutral" ? (status.appearance as StatusTon) : undefined;
+            // Die Trainer-Lücke als weiterer Punkt (#521, PO 14).
+            const luecke = trainerLuecke(t, heute);
+            const lueckeText = luecke ? (luecke.art === "zuWenig" ? fehlenText(luecke.fehlen) : "niemand verantwortlich") : null;
             return {
               id: t.id,
               spiel: t.art === "spiel",
               ausgefallen: t.ausgefallen,
               ton,
-              label: `${t.beginn} ${was}${status && !t.ausgefallen ? `, ${status.wort}` : ""}`,
+              zweiterTon: luecke ? (luecke.art === "zuWenig" ? "danger" : "warning") : undefined,
+              label: [`${t.beginn} ${was}`, status && !t.ausgefallen && status.wort, lueckeText].filter(Boolean).join(", "),
             };
           }),
         );

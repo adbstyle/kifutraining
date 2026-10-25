@@ -126,6 +126,7 @@ import { MASS_TEXT } from "../lib/feldmass";
 import { ZEITRAUM_TEXT, kalenderblatt, monatVon, monatsName, monatsRaster, plusMonate, tagOhneJahr, tagText, zeitraumProblem } from "../lib/monat";
 import { nachMonatUndTag } from "../lib/plan-gliederung";
 import { eingrenzungAus, planHref, terminHref } from "../lib/team-ansicht";
+import { BESETZUNG_TEXT, besetzungProblem, besetzungText, fehlenText, noetigeTrainer, verhaeltnisHinweis } from "../lib/besetzung";
 import {
   TRAINER_MELDUNG,
   TRAINER_TEXT,
@@ -135,6 +136,7 @@ import {
   hatAbgesagt,
   istDabei,
   uebernehmenKoennen,
+  trainerLuecke,
   imFilter,
   nachTrainerName,
   ohneVerantwortliche,
@@ -640,14 +642,14 @@ pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit 
 });
 
 pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
-  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], kader: [], ausgefallen: false, ausfallGrund: null };
+  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], mindestbesetzung: null, kader: [], ausgefallen: false, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
   assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
   assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } }, "2026-10-01"), false);
 });
 
 pruefe("Status eines Termins in einem Wort, Kalenderblatt weiss oder grau (#491)", () => {
-  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-11-03", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], kader: [], ausgefallen: false, ausfallGrund: null };
+  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-11-03", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], mindestbesetzung: null, kader: [], ausgefallen: false, ausfallGrund: null };
   const mitTraining = { ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } };
   assert.deepEqual(terminStatus(mitTraining, "2026-11-01"), { wort: "Vorbereitet", appearance: "success" });
   assert.deepEqual(terminStatus(t, "2026-11-01"), { wort: "Nicht vorbereitet", appearance: "neutral" });
@@ -697,7 +699,7 @@ pruefe("Ausfall: Grund mit den Regeln der Bemerkung; nicht vorbereitet schliesst
   assert.equal(TERMIN_MELDUNG.NICHT_AUSGEFALLEN, "Dieser Termin ist nicht ausgefallen.");
   assert.ok(!KONFLIKT_MARKER.includes("TERMIN_AUSGEFALLEN"), "eine Regel, kein Konflikt");
   const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null,
-    training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], kader: [], ausgefallen: true, ausfallGrund: null };
+    training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], mindestbesetzung: null, kader: [], ausgefallen: true, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-01"), false, "AK 8");
   assert.equal(nochNichtVorbereitet({ ...t, ausgefallen: false }, "2026-10-01"), true);
 });
@@ -732,6 +734,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     serienTag: null,
     abweichungen: [],
     trainer: [],
+    mindestbesetzung: null,
     kader: [],
     ausgefallen: false,
     ausfallGrund: null,
@@ -760,10 +763,15 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     spielerzahl: { quelle: "erwartet", zahl: 12, gesamt: null },
     serie_id: null,
     trainer: [],
+    mindestbesetzung: null,
+    noetige_trainer: null,
     ausgefallen: false,
     ausfall_grund: null,
     anstehend: true,
   });
+  // #521 AK 12: die Mindestbesetzung und die nötige Zahl (12 Spieler:innen, 1 je 5 → 2).
+  const mitBesetzung = trainingAuskunft(team, { userId: ICH, termin: { ...termin, mindestbesetzung: { art: "verhaeltnis", zahl: 5 } } }).termin!;
+  assert.deepEqual([mitBesetzung.mindestbesetzung, mitBesetzung.noetige_trainer], [{ art: "verhaeltnis", zahl: 5 }, 2]);
   // Platz unbekannt: «felder: null», nicht eine leere Liste (AK 14).
   assert.equal(trainingAuskunft(team, { userId: ICH, termin: { ...termin, felder: null } }).termin?.felder, null);
   assert.equal(trainingAuskunft(team, { userId: ICH, termin: { ...termin, spielerzahl: null } }).termin?.erwartete_spielerzahl, null);
@@ -860,6 +868,38 @@ pruefe("Trainer: Eingrenzung, Zahl und Satz aus Sicht des USERS (#519 AK 18, 19,
   // Nach Name, gelöschte Konten zuletzt, Gleichnamige nach Kennung.
   const sortiert = nachTrainerName([tr(null, null), tr("z", "Anna"), tr("y", "Anna"), tr("x", "Ben")], (t) => t.eintragId);
   assert.deepEqual(sortiert.map((t) => t.userId), ["y", "z", "x", null]);
+});
+
+pruefe("Mindestbesetzung: nötige Zahl, Grenzen, Lücke vor «niemand verantwortlich» (#521 AK 5–10, 16)", () => {
+  // AK 6, 7, 10: kaufmännisch gerundet, mindestens 1, ohne Zahl keine Bewertung.
+  assert.equal(noetigeTrainer(null, 30), null);
+  assert.equal(noetigeTrainer({ art: "fest", zahl: 3 }, null), 3);
+  assert.equal(noetigeTrainer({ art: "verhaeltnis", zahl: 17 }, 34), 2);
+  assert.equal(noetigeTrainer({ art: "verhaeltnis", zahl: 10 }, 25), 3, "2,5 rundet auf");
+  assert.equal(noetigeTrainer({ art: "verhaeltnis", zahl: 10 }, 24), 2);
+  assert.equal(noetigeTrainer({ art: "verhaeltnis", zahl: 12 }, 3), 1, "mindestens 1");
+  assert.equal(noetigeTrainer({ art: "verhaeltnis", zahl: 12 }, 0), 0);
+  assert.equal(noetigeTrainer({ art: "verhaeltnis", zahl: 12 }, null), null);
+  // AK 5: ganze Zahlen von 1 bis 99.
+  assert.equal(besetzungProblem({ art: "fest", zahl: 1 }), null);
+  assert.equal(besetzungProblem({ art: "fest", zahl: 99 }), null);
+  for (const zahl of [0, 100, 2.5, NaN]) assert.equal(besetzungProblem({ art: "fest", zahl }), BESETZUNG_TEXT.zahl, String(zahl));
+  assert.equal(besetzungProblem({ art: "anders" as never, zahl: 2 }), BESETZUNG_TEXT.art);
+  // AK 14, 15: der Hinweis beim Verhältnis.
+  assert.equal(verhaeltnisHinweis({ art: "verhaeltnis", zahl: 17 }, 34), "Bei 34 angemeldeten Spieler:innen sind 2 Trainer:innen nötig. Die Zahl folgt den Ab- und Anmeldungen.");
+  assert.equal(verhaeltnisHinweis({ art: "verhaeltnis", zahl: 17 }, null), BESETZUNG_TEXT.ohneZahl);
+  // AK 8, 16: die Lücke — zu wenige geht vor niemand verantwortlich, nur anstehend und nicht ausgefallen.
+  const basis = { mindestbesetzung: { art: "fest" as const, zahl: 2 }, spielerzahl: null, spielstand: null, datum: "2026-11-01", ausgefallen: false };
+  assert.deepEqual(trainerLuecke({ ...basis, trainer: [tr("b", "Ben")] }, "2026-10-30"), { art: "zuWenig", fehlen: 1 });
+  assert.deepEqual(trainerLuecke({ ...basis, trainer: [tr("b", "Ben"), tr("c", "Carla")] }, "2026-10-30"), { art: "niemand" });
+  assert.equal(trainerLuecke({ ...basis, trainer: [tr("a", "Anna", true), tr("c", "Carla")] }, "2026-10-30"), null);
+  assert.equal(trainerLuecke({ ...basis, trainer: [] }, "2026-11-02"), null, "vergangen: keine Bewertung");
+  assert.equal(trainerLuecke({ ...basis, ausgefallen: true, trainer: [] }, "2026-10-30"), null);
+  // Verhältnis ohne bekannte Spielerzahl: keine Unterbesetzung, nur «niemand verantwortlich».
+  assert.deepEqual(trainerLuecke({ ...basis, mindestbesetzung: { art: "verhaeltnis", zahl: 10 }, trainer: [] }, "2026-10-30"), { art: "niemand" });
+  assert.equal(trainerZahlSatz([tr("a", "Anna", true)], "a", 3), "Trainer:innen: 1 von 1 dabei · nötig 3 · du bist verantwortlich · du bist dabei");
+  assert.equal(fehlenText(1), "1 Trainer:in fehlt");
+  assert.equal(besetzungText({ art: "verhaeltnis", zahl: 17 }), "1 Trainer:in je 17 Spieler:innen");
 });
 
 pruefe("Trainer: Absagen — dabei, Zahl, Eingrenzung, wer übernehmen kann, Verfall-Satz (#520)", () => {
@@ -1201,7 +1241,7 @@ pruefe("Serie: Felder und Spielerzahl mit denselben Sätzen, jede Reichweite, fo
   assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false }), ["nur_dieser", "dieser_und_folgende", "alle"]);
   assert.equal(
     SERIE_MELDUNG.SERIE_ANGABEN_UNGUELTIG,
-    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Eingeladene, Verantwortung, Felder, Spielerzahl oder Kader.",
+    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.",
   );
 });
 

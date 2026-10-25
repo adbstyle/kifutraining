@@ -20,7 +20,18 @@ import {
   spielerzahlQuelleSchema,
   spielerzahlSchema,
 } from "@/lib/termin-felder-ausgabe";
-import { TRAINER_MODELL, serienTrainerAusgabe, serienTrainerSchema, trainerAusgabe, trainerSchema } from "@/lib/trainer-ausgabe";
+import {
+  BESETZUNG_MODELL,
+  BesetzungEingabe,
+  TRAINER_MODELL,
+  alsBesetzung,
+  besetzungSchema,
+  serienTrainerAusgabe,
+  serienTrainerSchema,
+  trainerAusgabe,
+  trainerSchema,
+} from "@/lib/trainer-ausgabe";
+import { angezeigteSpielerzahl, noetigeTrainer } from "@/lib/besetzung";
 import { spielerzahlVon } from "@/lib/spieler";
 import {
   KENNUNG_FEHLER,
@@ -176,7 +187,7 @@ const SERIEN_MODELL =
   "Eine Terminserie läuft wöchentlich an einem oder mehreren Wochentagen zwischen Beginn- und " +
   "Enddatum (höchstens bis zum gleichen Kalendertag im Folgejahr) und legt ihre Termine als " +
   "einzelne Termine an. Ein Termin einer Serie kann je Angabe abweichen (Datum, Zeit, Ort, " +
-  "Bemerkung, Eingeladene, Verantwortung, Felder, erwartete Spielerzahl, Kader) und behält die Abweichung bei späteren Serienänderungen; " +
+  "Bemerkung, Eingeladene, Verantwortung, Mindestbesetzung, Felder, erwartete Spielerzahl, Kader) und behält die Abweichung bei späteren Serienänderungen; " +
   "das Datum gilt immer, wie es ist. Die Felder sind eine Angabe (die ganze Liste), die Spielerzahl eine zweite. " +
   "Wer an nur einem Serientermin Felder oder Spielerzahl entfernt, macht ihn bewusst leer: Er weicht ab und gilt " +
   "als unbekannt, bis er wieder der Serie folgt. Einzeln entfernte Termine legt keine Serienänderung wieder an.";
@@ -244,12 +255,19 @@ const PlanEintrag = z.object({
   serie_id: z.string().nullable(),
   /** Die Angaben, in denen der Termin von seiner Serie abweicht; leer ohne Serie. */
   abweichungen: z.array(
-    z.enum(["datum", "zeit", "ort", "bemerkung", "eingeladene", "verantwortung", "felder", "spielerzahl", "kader"]),
+    z.enum(["datum", "zeit", "ort", "bemerkung", "eingeladene", "verantwortung", "besetzung", "felder", "spielerzahl", "kader"]),
   ),
   /** Für wen der Termin gilt (#453); leer = für alle. `id: null` ist ein ehemaliger Kader eines begonnenen Termins. */
   kader: z.array(z.object({ id: z.string().nullable(), name: z.string().nullable() })),
   /** Die Eingeladenen und wer den Termin vorbereitet und leitet (#519). */
   trainer: trainerSchema(),
+  /** Die Mindestbesetzung (#521 AK 12) und wie viele Trainer:innen sie verlangt; ohne Bewertung (OoS 5). */
+  mindestbesetzung: besetzungSchema(),
+  noetige_trainer: z
+    .number()
+    .int()
+    .nullable()
+    .describe("Wie viele Trainer:innen die Mindestbesetzung verlangt; null ohne Mindestbesetzung oder bei unbekannter Spielerzahl."),
   /** Ein ausgefallener Termin gilt nicht als unvorbereitet; ein Training ruht an ihm (#327, PO 2026-10-06). */
   ausgefallen: z.boolean(),
   /** Freiwilliger Grund des Ausfalls; `null` ohne Angabe und bei einem Termin, der stattfindet. */
@@ -280,6 +298,8 @@ function planEintrag(t: TerminZeile, zugang: Zugang) {
     abweichungen: t.abweichungen,
     kader: t.kader,
     trainer: trainerAusgabe(t.trainer),
+    mindestbesetzung: t.mindestbesetzung,
+    noetige_trainer: noetigeTrainer(t.mindestbesetzung, angezeigteSpielerzahl(spielerzahlVon(t))),
     ausgefallen: t.ausgefallen,
     ausfall_grund: t.ausfallGrund,
     training: t.training
@@ -304,6 +324,8 @@ const PlanSerie = z.object({
   bemerkung: z.string().nullable(),
   /** Wen die Serie einlädt und wer verantwortlich ist (#519). */
   trainer: serienTrainerSchema(),
+  /** Die Mindestbesetzung, die die Serie vorgibt (#521). */
+  mindestbesetzung: besetzungSchema(),
   /** Felder und erwartete Spielerzahl, die die Serie vorgibt (#391 AK 9). */
   felder: felderSchema(),
   erwartete_spielerzahl: spielerzahlSchema(),
@@ -326,6 +348,7 @@ function planSerien(termine: TerminZeile[]) {
         ort: t.serie.ort,
         bemerkung: t.serie.bemerkung,
         trainer: serienTrainerAusgabe(t.serie.trainer),
+        mindestbesetzung: t.serie.mindestbesetzung,
         felder: felderAusgabe(t.serie.felder),
         erwartete_spielerzahl: t.serie.spielerzahl,
         kader: t.serie.kader,
@@ -414,6 +437,7 @@ export const terminFestlegen = werkzeug({
     kader_ids: KaderIds.optional().describe("Für welche Kader der Termin gilt; ohne Angabe für alle."),
     eingeladene: EINGELADENE.optional(),
     verantwortlich: VERANTWORTLICH.optional(),
+    mindestbesetzung: BesetzungEingabe.optional().describe(`Ohne Angabe keine. ${BESETZUNG_MODELL}`),
   }),
   ausgabe: z.object({ termin_id: z.string(), team_id: z.string() }),
   ausfuehren: async (e, zugang) =>
@@ -436,6 +460,7 @@ export const terminFestlegen = werkzeug({
         kaderIds: e.kader_ids,
         eingeladene: e.eingeladene,
         verantwortlich: e.verantwortlich,
+        mindestbesetzung: alsBesetzung(e.mindestbesetzung),
       }),
       (w) => ({ termin_id: w.terminId, team_id: w.teamId }),
     ),
@@ -481,6 +506,9 @@ export const AendernEingabe = z.object({
       "Neue erwartete Spielerzahl; null entfernt sie, ohne Angabe unverändert. An einem Termin einer Serie gilt " +
         `«reichweite». ${SPIELERZAHL_MODELL}`,
     ),
+  mindestbesetzung: BesetzungEingabe.optional().describe(
+    `Neue Mindestbesetzung; null entfernt sie, ohne Angabe unverändert. An einem Termin einer Serie gilt «reichweite». ${BESETZUNG_MODELL}`,
+  ),
   kader_ids: KaderIds.optional().describe(
     "Für welche Kader der Termin gilt, als GANZE neue Liste; [] heisst für alle, ohne Angabe unverändert. An einem " +
       "Termin einer Serie gilt «reichweite».",
@@ -555,6 +583,7 @@ export const terminAendern = werkzeug({
         bemerkung: e.bemerkung,
         felder: e.felder,
         spielerzahl: e.erwartete_spielerzahl,
+        mindestbesetzung: alsBesetzung(e.mindestbesetzung),
         bezeichnung: e.bezeichnung,
         richtwertMin: e.mindestzahl,
         richtwertMax: e.hoechstzahl,
@@ -630,6 +659,7 @@ export const terminserieFestlegen = werkzeug({
     bemerkung: BEMERKUNG.optional(),
     eingeladene: EINGELADENE.optional(),
     verantwortlich: VERANTWORTLICH.optional(),
+    mindestbesetzung: BesetzungEingabe.optional().describe(`Die Mindestbesetzung jedes Termins der Serie; ohne Angabe keine. ${BESETZUNG_MODELL}`),
     felder: FelderEingabe.optional().describe(`Die Felder jedes Termins der Serie; ohne Angabe unbekannt. ${FELDER_MODELL}`),
     erwartete_spielerzahl: SpielerzahlEingabe.optional().describe(
       `Die erwartete Spielerzahl jedes Termins der Serie; ohne Angabe unbekannt. ${SPIELERZAHL_MODELL}`,
@@ -650,6 +680,7 @@ export const terminserieFestlegen = werkzeug({
         bemerkung: e.bemerkung,
         eingeladene: e.eingeladene,
         verantwortlich: e.verantwortlich,
+        mindestbesetzung: alsBesetzung(e.mindestbesetzung),
         felder: e.felder,
         spielerzahl: e.erwartete_spielerzahl,
         kaderIds: e.kader_ids,
@@ -665,13 +696,15 @@ export const terminDerSerieFolgen = werkzeug({
   titel: "Termin wieder der Serie folgen lassen",
   beschreibung:
     "Lässt abweichende Angaben eines Serientermins wieder seiner Serie folgen: Zeit, Ort, " +
-    "Bemerkung, Eingeladene, Verantwortung, Felder, erwartete Spielerzahl («spielerzahl») oder Kader übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
+    "Bemerkung, Eingeladene, Verantwortung, Mindestbesetzung («besetzung»), Felder, erwartete Spielerzahl («spielerzahl») oder Kader übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
     `lässt sich nicht zurücksetzen («datum» wird abgewiesen). ${VERFALL_MODELL} ${KADER_TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     termin_id: TerminId,
     angaben: z
-      .array(z.enum(["zeit", "ort", "bemerkung", "eingeladene", "verantwortung", "felder", "spielerzahl", "kader", "datum"]))
+      .array(
+        z.enum(["zeit", "ort", "bemerkung", "eingeladene", "verantwortung", "besetzung", "felder", "spielerzahl", "kader", "datum"]),
+      )
       .min(1),
     bestaetigt: z.boolean().optional().describe("Nur nötig, wenn mit «zeit» oder «kader» Abmeldungen verfallen."),
   }),

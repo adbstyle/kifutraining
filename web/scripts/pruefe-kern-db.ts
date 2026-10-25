@@ -61,6 +61,7 @@ const { legeTerminFest, aendereTermin, entferneTermin, ordneTrainingZu, loeseTra
 );
 const { TERMIN_MELDUNG, TERMIN_TEXT } = await import("../lib/termin");
 const { TRAINER_MELDUNG, TRAINER_TEXT, absagenVerfallText } = await import("../lib/trainer");
+const { BESETZUNG_TEXT } = await import("../lib/besetzung");
 const { FELDER_TEXT, felderProblem } = await import("../lib/termin-felder");
 type Feld = import("../lib/termin-felder").Feld;
 type Felder = import("../lib/termin-felder").Felder;
@@ -1484,6 +1485,7 @@ try {
       spielstand: null,
       serieId: null,
       trainer: [{ eintragId: eintrag, userId: a.id, name, ehemalig: false, verantwortlich: true, abgesagtAm: null }],
+      mindestbesetzung: null,
       ausgefallen: false,
       ausfallGrund: null,
       anstehend: true,
@@ -1513,6 +1515,8 @@ try {
       spielerzahl: { quelle: "unbekannt", zahl: null, gesamt: null },
       serie_id: null,
       trainer: [{ id: a.id, anzeigename: name, ehemalig: false, verantwortlich: true, abgesagt_am: null }],
+      mindestbesetzung: null,
+      noetige_trainer: null,
       ausgefallen: false,
       ausfall_grund: null,
       anstehend: true,
@@ -2128,6 +2132,56 @@ try {
     const eintrag = plan.kommend.find((x) => x.id === t)!.trainer.find((x) => x.userId === b.id)!;
     assert.ok(eintrag.abgesagtAm, "der Plan nennt den Zeitpunkt");
     assert.equal(trainerAusgabe([eintrag])[0].abgesagt_am, eintrag.abgesagtAm);
+  });
+
+  await pruefe("Mindestbesetzung: festlegen, ändern, entfernen, Grenzen, Serie mit Reichweite, folgen, teilen (#521 AK 1–5, 11, PC 1)", async () => {
+    const team = await serienTeam("Kern-DB-Mindestbesetzung");
+    const besetzungVon = async (terminId: string) =>
+      (await admin.from("training_termine").select("besetzung_art, besetzung_zahl, besetzung_abweichend").eq("id", terminId).single()).data!;
+    // Einzeln: festlegen, ändern, entfernen (AK 1, 2).
+    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", mindestbesetzung: { art: "fest", zahl: 2 } })).terminId;
+    assert.deepEqual(await besetzungVon(t), { besetzung_art: "fest", besetzung_zahl: 2, besetzung_abweichend: false });
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t, mindestbesetzung: { art: "verhaeltnis", zahl: 12 } }));
+    assert.deepEqual((await teamPlan(a.supabase, a.id, { teamId: team }).then(wert)).kommend.find((x) => x.id === t)!.mindestbesetzung, { art: "verhaeltnis", zahl: 12 });
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t, mindestbesetzung: null }));
+    assert.deepEqual(await besetzungVon(t), { besetzung_art: null, besetzung_zahl: null, besetzung_abweichend: false });
+    // AK 5: ganze Zahlen von 1 bis 99, vorab mit dem Satz der Oberfläche; die Datenebene als Rückhalt.
+    for (const zahl of [0, 100, 1.5])
+      fehler(await aendereTermin(a.supabase, a.id, { terminId: t, mindestbesetzung: { art: "fest", zahl } }), "eingabe", BESETZUNG_TEXT.zahl);
+    fehler(await aendereTermin(a.supabase, a.id, { terminId: t, mindestbesetzung: { art: "keine" as never, zahl: 2 } }), "eingabe", BESETZUNG_TEXT.art);
+    const { error: direkt } = await admin.from("training_termine").update({ besetzung_art: "fest", besetzung_zahl: 0 }).eq("id", t);
+    assert.ok(direkt?.message.includes("tt_besetzung"), direkt?.message);
+
+    // Serie (AK 1, 3, 4, PC 1): jeder Termin trägt sie; nur dieser weicht ab; alle lässt den abweichenden aus.
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [wochentagVon(tagCh(1))], von: tagCh(1), bis: tagCh(22), beginn: "18:00", ende: "19:30", mindestbesetzung: { art: "verhaeltnis", zahl: 10 } }));
+    const st = await termineDer(s.serieId);
+    for (const x of st) assert.deepEqual(await besetzungVon(x.id), { besetzung_art: "verhaeltnis", besetzung_zahl: 10, besetzung_abweichend: false });
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: st[1].id, reichweite: "nur_dieser", mindestbesetzung: { art: "fest", zahl: 3 } }));
+    assert.deepEqual(await besetzungVon(st[1].id), { besetzung_art: "fest", besetzung_zahl: 3, besetzung_abweichend: true });
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: st[0].id, reichweite: "alle", mindestbesetzung: { art: "fest", zahl: 2 }, bestaetigt: true }));
+    assert.deepEqual(await besetzungVon(st[0].id), { besetzung_art: "fest", besetzung_zahl: 2, besetzung_abweichend: false });
+    assert.deepEqual(await besetzungVon(st[1].id), { besetzung_art: "fest", besetzung_zahl: 3, besetzung_abweichend: true }, "der abweichende bleibt");
+    const plan = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
+    const eintrag = plan.kommend.find((x) => x.id === st[1].id)!;
+    assert.deepEqual(eintrag.serie!.mindestbesetzung, { art: "fest", zahl: 2 });
+    assert.ok(eintrag.abweichungen.includes("besetzung"));
+    // AK 4: wieder der Serie folgen.
+    wert(await folgeDerSerie(a.supabase, a.id, { terminId: st[1].id, angaben: ["besetzung"] }));
+    assert.deepEqual(await besetzungVon(st[1].id), { besetzung_art: "fest", besetzung_zahl: 2, besetzung_abweichend: false });
+    // Teilen: die neue Serie trägt die neue Angabe, die alte behält ihre; erweitern: neue Termine tragen sie.
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: st[2].id, reichweite: "dieser_und_folgende", mindestbesetzung: null }));
+    const neueSerie = (await admin.from("training_termine").select("serie_id").eq("id", st[2].id).single()).data!.serie_id as string;
+    assert.notEqual(neueSerie, s.serieId);
+    const serieBesetzung = async (id: string) =>
+      (await admin.from("termin_serien").select("besetzung_art, besetzung_zahl").eq("id", id).single()).data!;
+    assert.deepEqual(await serieBesetzung(s.serieId), { besetzung_art: "fest", besetzung_zahl: 2 });
+    assert.deepEqual(await serieBesetzung(neueSerie), { besetzung_art: null, besetzung_zahl: null });
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: st[0].id, reichweite: "alle", bis: tagCh(29), bestaetigt: true }));
+    const dazu = (await termineDer(s.serieId)).filter((x) => x.datum > tagCh(8));
+    for (const x of dazu) assert.equal((await besetzungVon(x.id)).besetzung_art, "fest", `neuer Termin ${x.datum}`);
+    // KI-Auskunft: Mindestbesetzung und nötige Zahl stehen im Plan (AK 12).
+    const s2 = await teamPlan(a.supabase, a.id, { teamId: team }).then(wert);
+    assert.deepEqual(s2.kommend.find((x) => x.id === st[0].id)!.mindestbesetzung, { art: "fest", zahl: 2 });
   });
 
   await pruefe("Trainingsplan eingrenzen: dabei und eingeladen, mit Zeitraum (#519 AK 19, 26, #329)", async () => {

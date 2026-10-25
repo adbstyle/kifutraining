@@ -43,6 +43,7 @@ import { kurzeZeit } from "@/lib/queries/termine-fuer";
 import { heuteAmTrainingsort, jetztAmTrainingsort, terminBegonnen } from "@/lib/zeit";
 import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import { absagenVerfallText } from "@/lib/trainer";
+import { besetzungProblem, type Mindestbesetzung } from "@/lib/besetzung";
 import { trainerBeimFestlegen, type TrainerWahl } from "@/lib/kern/trainer";
 import { HINWEIS_NICHTS_ENTSTANDEN, hinweisRest, kopiereTraining, type KopieErgebnis } from "@/lib/kern/kopie";
 import { gibtEsTraining, loescheTrainingMitBildern, raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
@@ -77,7 +78,7 @@ import {
 export const TERMIN_FELD = { feld: "termin_id" } as const;
 
 export const TERMIN_ROH =
-  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, training_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
+  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, training_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
 
 export type TerminRoh = {
   id: string;
@@ -100,6 +101,9 @@ export type TerminRoh = {
   felder: Felder | null;
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
   erwartete_spielerzahl: number | null;
+  /** Die Mindestbesetzung (#521). */
+  besetzung_art: string | null;
+  besetzung_zahl: number | null;
   /** Nur Serientermine tragen eine Serie; die Flags zeigen, welche Angaben
    *  von ihr abweichen. */
   serie_id: string | null;
@@ -130,6 +134,12 @@ export function pruefeFelder(
 
 /** Die erwartete Spielerzahl prüfen (#390 AK 3, 7) — mit dem Satz der
  *  Oberfläche und dem Eingabenamen des Werkzeugs. */
+/** Die Mindestbesetzung vorab prüfen (#521 AK 5) — mit dem Satz der Oberfläche. */
+export function besetzungFehler(m: Mindestbesetzung | undefined): KernFehler | null {
+  const p = m === undefined ? null : besetzungProblem(m);
+  return p ? fehlschlag("eingabe", p, { feld: "mindestbesetzung" }) : null;
+}
+
 export function spielerzahlFehler(n: number | null | undefined): KernFehler | null {
   const p = n === undefined ? null : spielerzahlProblem(n);
   return p ? fehlschlag("eingabe", p.text, { feld: p.feld }) : null;
@@ -207,6 +217,8 @@ export type TerminFestlegen = {
   spielerzahl?: number | null;
   /** Für welche Kader der Termin gilt (#453 AK 1); ohne oder leer: für alle. */
   kaderIds?: string[];
+  /** Wie viele Trainer:innen mindestens dabei sein sollen (#521); ohne: keine. */
+  mindestbesetzung?: Mindestbesetzung;
 } & TrainerWahl;
 
 /** Was ein Spiel trägt und ein Training nicht (#459 AK 2, 5, 10, 11, 16) —
@@ -313,6 +325,8 @@ export async function legeTerminFest(
   if (!felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
   if (zahl) return zahl;
+  const besetzung = besetzungFehler(e.mindestbesetzung);
+  if (besetzung) return besetzung;
   // Kader nur an einem anstehenden Termin (#453 AK 1, 13) — vorab, damit
   // kein Termin ohne die gewählten Kader stehen bleibt.
   if (e.kaderIds?.length && terminBegonnen(e.datum, e.beginn))
@@ -338,6 +352,8 @@ export async function legeTerminFest(
       bemerkung: leerZuNull(e.bemerkung),
       felder: felder.felder,
       erwartete_spielerzahl: e.spielerzahl ?? null,
+      besetzung_art: e.mindestbesetzung?.art ?? null,
+      besetzung_zahl: e.mindestbesetzung?.zahl ?? null,
     })
     .select("id")
     .single<{ id: string }>();
@@ -391,6 +407,8 @@ export type TerminAendern = {
   /** Die erwartete Spielerzahl (#390 AK 2): `undefined` = unverändert,
    *  `null` = entfernen. */
   spielerzahl?: number | null;
+  /** Die Mindestbesetzung (#521 AK 1, 2): `undefined` = unverändert, `null` = entfernen. */
+  mindestbesetzung?: Mindestbesetzung;
   /** Nur an einem Spiel (#459 AK 3, 5): `undefined` = unverändert; der
    *  Richtwert je Grenze `null` = entfernen. */
   bezeichnung?: string;
@@ -583,11 +601,15 @@ export async function aendereTermin(
   if (felder && !felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
   if (zahl) return zahl;
+  const besetzung = besetzungFehler(e.mindestbesetzung);
+  if (besetzung) return besetzung;
 
   const aenderung: Partial<
     typeof neu & {
       felder: Felder | null;
       erwartete_spielerzahl: number | null;
+      besetzung_art: string | null;
+      besetzung_zahl: number | null;
       bezeichnung: string | null;
       richtwert_min: number | null;
       richtwert_max: number | null;
@@ -604,6 +626,10 @@ export async function aendereTermin(
   // Die Felder sind EINE Angabe und gehen als ganze Liste (#389 AK 7).
   if (felder) aenderung.felder = felder.felder;
   if (e.spielerzahl !== undefined) aenderung.erwartete_spielerzahl = e.spielerzahl;
+  if (e.mindestbesetzung !== undefined) {
+    aenderung.besetzung_art = e.mindestbesetzung?.art ?? null;
+    aenderung.besetzung_zahl = e.mindestbesetzung?.zahl ?? null;
+  }
   if (t.art === "spiel") {
     if (e.bezeichnung !== undefined) aenderung.bezeichnung = leerZuNull(e.bezeichnung);
     if (e.richtwertMin !== undefined) aenderung.richtwert_min = e.richtwertMin;
@@ -625,6 +651,11 @@ export async function aendereTermin(
     if ("bemerkung" in aenderung && neu.bemerkung !== t.bemerkung) flags.bemerkung_abweichend = true;
     if (felder && !gleicheFelder(felder.felder, t.felder)) flags.felder_abweichend = true;
     if (e.spielerzahl !== undefined && e.spielerzahl !== t.erwartete_spielerzahl) flags.spielerzahl_abweichend = true;
+    if (
+      e.mindestbesetzung !== undefined &&
+      ((e.mindestbesetzung?.art ?? null) !== t.besetzung_art || (e.mindestbesetzung?.zahl ?? null) !== t.besetzung_zahl)
+    )
+      flags.besetzung_abweichend = true;
   }
 
   // #327 PO 6, PC 4: Ein einzeln auf heute oder später verlegter Termin findet

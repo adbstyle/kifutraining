@@ -28,6 +28,7 @@ import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
 import type { TerminFelder } from "@/lib/termin";
 import type { Felder } from "@/lib/termin-felder";
+import type { Mindestbesetzung } from "@/lib/besetzung";
 import type { TerminZeile } from "@/lib/queries/termine";
 
 /**
@@ -82,6 +83,7 @@ export async function legeTerminFestAktion(
     bemerkung: felder.bemerkung,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
+    mindestbesetzung: felder.mindestbesetzung ?? null,
     kaderIds,
     eingeladene: trainer.eingeladene,
     verantwortlich: trainer.verantwortlich,
@@ -114,6 +116,7 @@ export async function aendereTerminAktion(
     bemerkung: felder.bemerkung,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
+    mindestbesetzung: felder.mindestbesetzung,
     bezeichnung: felder.bezeichnung ?? undefined,
     richtwertMin: felder.richtwertMin,
     richtwertMax: felder.richtwertMax,
@@ -242,6 +245,8 @@ export async function legeSerieFestAktion(
     spielerzahl: number | null;
     /** Für welche Kader jeder Termin gilt (#453 AK 2). */
     kaderIds: string[];
+    /** Die Mindestbesetzung jedes Termins (#521 AK 1, 2). */
+    mindestbesetzung: Mindestbesetzung;
   },
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();

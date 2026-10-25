@@ -4,7 +4,10 @@ import { ArrowLeftRight, UserMinus, UserPlus } from "lucide-react";
 import { IconButton, Lozenge, OverflowMenu, SectionMessage, Switch } from "@/components/ui";
 import type { TeamMitglied } from "@/lib/queries/teams";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
-import { absageOffen, dabeiZahl, trainerName, verantwortlicheVon, type TerminTrainer } from "@/lib/trainer";
+import { absageOffen, dabeiZahl, noetigeVon, trainerName, verantwortlicheVon, type TerminTrainer } from "@/lib/trainer";
+import { besetzungText, fehlendeTrainer } from "@/lib/besetzung";
+import { TrainerLozenge } from "./TrainerZeichen";
+import { heuteAmTrainingsort } from "@/lib/zeit";
 import { seitWann, terminBegonnen } from "@/lib/zeit";
 import { useTerminAktionen } from "./TerminBereich";
 
@@ -34,6 +37,9 @@ export function TrainerReiter({ t, mitglieder }: { t: TerminZeile; mitglieder: r
   const abgesagt = t.trainer.filter((x) => x.abgesagtAm).sort(zuerstDu);
   const nichtEingeladen = mitglieder.filter((m) => !t.trainer.some((tr) => tr.userId === m.userId));
   const mitDu = (name: string, userId: string | null) => (userId === a.ich ? `${name} (du)` : name);
+  // #521 AK 9: wie viele dabei und wie viele nötig sind.
+  const noetig = noetigeVon(t);
+  const fehlen = fehlendeTrainer(noetig, dabeiZahl(t.trainer));
 
   function zeile(tr: TerminTrainer) {
     const name = mitDu(trainerName(tr), tr.userId);
@@ -97,12 +103,24 @@ export function TrainerReiter({ t, mitglieder }: { t: TerminZeile; mitglieder: r
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-1">
+        {fehlen > 0 && !t.ausgefallen && !begonnen && (
+          <div className="flex flex-wrap items-center gap-2">
+            <TrainerLozenge t={t} heute={heuteAmTrainingsort()} />
+            <span className="type-body-small text-on-surface-mittel">noch {fehlen} bis zur Mindestbesetzung von {noetig}</span>
+          </div>
+        )}
         <span className="type-headline-small text-on-surface">
           {dabeiZahl(t.trainer)} von {t.trainer.length} dabei
         </span>
         <span className="type-body-small text-on-surface-mittel">
           {verantwortlich ? `${mitDu(trainerName(verantwortlich), verantwortlich.userId)} ist verantwortlich.` : "Niemand ist verantwortlich."}
         </span>
+        {t.mindestbesetzung && (
+          <span className="type-body-small text-on-surface-mittel">
+            Mindestbesetzung {besetzungText(t.mindestbesetzung)}
+            {t.mindestbesetzung.art === "verhaeltnis" ? (noetig === null ? " · noch keine Spielerzahl" : ` · nötig ${noetig}`) : ""}
+          </span>
+        )}
         <span className="type-body-small text-on-surface-mittel">
           {t.ausgefallen
             ? "Der Termin fällt aus: Absagen und Zusagen ruhen."

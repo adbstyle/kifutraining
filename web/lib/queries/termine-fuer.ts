@@ -9,6 +9,7 @@ import type { Spielstand } from "@/lib/spieler";
 import { nachKaderName, nachTerminKader, type TerminKader } from "@/lib/kader";
 import { meldefristZeitpunkt, treffpunkteZu, type TerminArt, type Treffpunkt, type TreffpunktZeile } from "@/lib/spiel";
 import { imFilter, nachTrainerName, type Eingrenzung, type SerienTrainer, type TerminTrainer } from "@/lib/trainer";
+import { besetzungAus, type Mindestbesetzung } from "@/lib/besetzung";
 
 /**
  * Termine lesen für einen Client, der bereits als Nutzer spricht (Cookie-
@@ -40,6 +41,8 @@ export type TerminSerie = {
   /** Felder und erwartete Spielerzahl, die die Serie vorgibt (#391); `null` = unbekannt. */
   felder: Felder | null;
   spielerzahl: number | null;
+  /** Die Mindestbesetzung, die die Serie vorgibt (#521). */
+  mindestbesetzung: Mindestbesetzung;
   /** Die Eingeladenen und die Verantwortliche, die die Serie vorgibt (#519), nach Name. */
   trainer: SerienTrainer[];
   /** Die Kader, die die Serie vorgibt (#453), nach Namen; leer = für alle. */
@@ -56,6 +59,7 @@ export type Abweichung =
   | "bemerkung"
   | "eingeladene"
   | "verantwortung"
+  | "besetzung"
   | "felder"
   | "spielerzahl"
   | "kader";
@@ -93,6 +97,8 @@ export type TerminZeile = {
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. Führt das Team
    *  eine Spielerliste, geht `spielstand` vor (`spielerzahlVon`, #434). */
   spielerzahl: number | null;
+  /** Wie viele Trainer:innen mindestens dabei sein sollen (#521); `null`: keine Angabe. */
+  mindestbesetzung: Mindestbesetzung;
   /** Die Spielerzahl aus der Spielerliste (#434, #435); `null`, wenn die
    *  Liste leer ist bzw. bei Beginn leer war. */
   spielstand: Spielstand;
@@ -146,6 +152,9 @@ type RawTermin = {
   verantwortung_abweichend: boolean;
   felder_abweichend: boolean;
   spielerzahl_abweichend: boolean;
+  besetzung_art: string | null;
+  besetzung_zahl: number | null;
+  besetzung_abweichend: boolean;
   kader_abweichend: boolean;
   ausgefallen: boolean;
   ausfall_grund: string | null;
@@ -171,6 +180,8 @@ type RawTermin = {
     bemerkung: string | null;
     felder: Felder | null;
     erwartete_spielerzahl: number | null;
+    besetzung_art: string | null;
+    besetzung_zahl: number | null;
     termin_serien_trainer: { user_id: string; verantwortlich: boolean; trainer_name: string | null }[];
     termin_serien_kader: { kader_id: string; kader: { name: string } | null }[];
   } | null;
@@ -187,12 +198,12 @@ export function kurzeZeit(t: string): string {
 }
 
 const TERMIN_SELECT =
-  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, vorher_datum, vorher_beginn, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, eingeladene_abweichend, verantwortung_abweichend, felder_abweichend, spielerzahl_abweichend, kader_abweichend, ausgefallen, ausfall_grund, " +
+  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, vorher_datum, vorher_beginn, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, eingeladene_abweichend, verantwortung_abweichend, felder_abweichend, spielerzahl_abweichend, kader_abweichend, besetzung_art, besetzung_zahl, besetzung_abweichend, ausgefallen, ausfall_grund, " +
   "termin_trainer ( id, user_id, verantwortlich, abgesagt_am, trainer_name, trainer_ehemalig ), " +
   "termin_kader ( kader_id, kader ( name ) ), " +
   "spiel_treffpunkte ( anreise, vorlauf_min, ort ), " +
   "trainings ( id, name, stufen, termin_training ), " +
-  "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, " +
+  "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, " +
   "termin_serien_trainer ( user_id, verantwortlich, trainer_name ), termin_serien_kader ( kader_id, kader ( name ) ) )";
 
 /** Nach Anzeigename ordnen, unbenannte (gelöschte Konten) zuletzt. Der Schlüssel
@@ -259,6 +270,7 @@ function mapTermin(t: RawTermin): TerminZeile {
     bemerkung: t.bemerkung,
     felder: t.felder,
     spielerzahl: t.erwartete_spielerzahl,
+    mindestbesetzung: besetzungAus(t.besetzung_art, t.besetzung_zahl),
     spielstand: t.spielstand ?? null,
     training: t.trainings
       ? {
@@ -281,6 +293,7 @@ function mapTermin(t: RawTermin): TerminZeile {
           bemerkung: t.termin_serien.bemerkung,
           felder: t.termin_serien.felder,
           spielerzahl: t.termin_serien.erwartete_spielerzahl,
+          mindestbesetzung: besetzungAus(t.termin_serien.besetzung_art, t.termin_serien.besetzung_zahl),
           trainer: nachTrainerName(
             (t.termin_serien.termin_serien_trainer ?? []).map((v) => ({
               userId: v.user_id,
@@ -301,6 +314,7 @@ function mapTermin(t: RawTermin): TerminZeile {
           t.bemerkung_abweichend && "bemerkung",
           t.eingeladene_abweichend && "eingeladene",
           t.verantwortung_abweichend && "verantwortung",
+          t.besetzung_abweichend && "besetzung",
           t.felder_abweichend && "felder",
           t.spielerzahl_abweichend && "spielerzahl",
           t.kader_abweichend && "kader",

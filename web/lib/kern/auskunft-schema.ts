@@ -14,7 +14,7 @@
 import { z } from "zod";
 import { Sichtbarkeit, Wert } from "@/lib/wert";
 import { felderSchema, spielerzahlQuelleSchema, spielerzahlSchema } from "@/lib/termin-felder-ausgabe";
-import { trainerSchema } from "@/lib/trainer-ausgabe";
+import { besetzungSchema, trainerSchema } from "@/lib/trainer-ausgabe";
 import { gesamtMaterialSchema, materialSchema } from "@/lib/material-ausgabe";
 import { UEBEN_ZEILEN } from "@/lib/freitext";
 
@@ -178,6 +178,9 @@ function baueSchema(streng: boolean) {
       serie_id: z.string().nullable(),
       /** Die Eingeladenen samt Verantwortlicher (#519 AK 23). */
       trainer: trainerSchema(streng),
+      /** Die Mindestbesetzung und wie viele Trainer:innen sie verlangt (#521 AK 12). */
+      mindestbesetzung: besetzungSchema(),
+      noetige_trainer: z.number().int().nullable(),
       /** Ein ausgefallener Termin behält sein Training, es ruht dann an ihm
        *  (PO 2026-10-06). */
       ausgefallen: z.boolean(),

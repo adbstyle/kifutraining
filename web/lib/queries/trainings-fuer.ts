@@ -10,6 +10,7 @@ import { FASSUNG_INHALT_FELDER, FASSUNG_ZUORDNUNG_FELDER } from "@/lib/fassung";
 import type { Variante } from "@/lib/varianten";
 import { kurzeZeit, mapTrainer } from "@/lib/queries/termine-fuer";
 import type { TerminTrainer } from "@/lib/trainer";
+import { besetzungAus, type Mindestbesetzung } from "@/lib/besetzung";
 import type { Felder } from "@/lib/termin-felder";
 import type { Spielstand } from "@/lib/spieler";
 import { parseMaterialBasis, parseMaterialListe, type MaterialPosten } from "@/lib/material";
@@ -525,6 +526,8 @@ export type TeamTrainingRow = TrainingListRow & {
     serieId: string | null;
     /** Die eingeladenen Trainer:innen samt Verantwortlicher (#519), wie im Plan. */
     trainer: TerminTrainer[];
+    /** Die Mindestbesetzung (#521). */
+    mindestbesetzung: Mindestbesetzung;
     /** Ein ausgefallener Termin behält sein Training (PO 2026-10-06); die
      *  Felder halten die Gestalt wie im Plan. */
     ausgefallen: boolean;
@@ -533,7 +536,7 @@ export type TeamTrainingRow = TrainingListRow & {
 };
 
 const TEAM_LIST_SELECT =
-  `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, serie_id, ausgefallen, ausfall_grund, ` +
+  `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, spielstand, serie_id, ausgefallen, ausfall_grund, ` +
   "termin_trainer ( id, user_id, verantwortlich, abgesagt_am, trainer_name, trainer_ehemalig ) )";
 
 export type TeamTrainingFilter = {
@@ -590,6 +593,8 @@ export async function getTeamTrainingsFuer(
       bemerkung: string | null;
       felder: Felder | null;
       erwartete_spielerzahl: number | null;
+      besetzung_art: string | null;
+      besetzung_zahl: number | null;
       spielstand: Spielstand;
       serie_id: string | null;
       ausgefallen: boolean;
@@ -625,6 +630,7 @@ export async function getTeamTrainingsFuer(
             ausfallGrund: termin.ausfall_grund,
             // Wie im Plan geordnet (gleiche Funktion), gelöschte Konten zuletzt.
             trainer: mapTrainer(termin.termin_trainer ?? []),
+            mindestbesetzung: besetzungAus(termin.besetzung_art, termin.besetzung_zahl),
           }
         : null,
     };

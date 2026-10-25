@@ -25,6 +25,9 @@ import { BEMERKUNG_MAX, ORT_MAX, istKalendertag, terminProblem, type TerminFelde
 import type { Felder } from "@/lib/termin-felder";
 import type { TeamMitglied } from "@/lib/queries/teams";
 import { TrainerWahl, trainerVorwahl, type TrainerWert } from "./TrainerWahl";
+import { KEINE_BESETZUNG, MindestbesetzungFeld, besetzungAusEingabe, type BesetzungEingabe } from "./MindestbesetzungFeld";
+import { giltFuerAnzahl } from "@/lib/kader";
+import type { Mindestbesetzung } from "@/lib/besetzung";
 import { TRAINER_TEXT } from "@/lib/trainer";
 import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
@@ -46,7 +49,7 @@ export type SerieFelder = {
 };
 
 /** Die Trainer:innen beim Festlegen (#519 AK 1–4): wer eingeladen und wer verantwortlich ist. */
-export type TrainerFestlegen = { eingeladene: string[]; verantwortlich: string };
+export type TrainerFestlegen = { eingeladene: string[]; verantwortlich: string; mindestbesetzung: Mindestbesetzung };
 
 /** Was der Dialog festlegt: einen einzelnen Termin (#322 AK 1) oder eine
  *  Terminserie (#324 AK 1), beide mit Feldern und erwarteter Spielerzahl
@@ -115,6 +118,8 @@ export function NeuerTerminDialog({
   const [problem, setProblem] = useState<{ feld: SerieFeld; text: string } | null>(null);
   const [trainer, setTrainer] = useState<TrainerWert>(() => trainerVorwahl(mitglieder, ich));
   const [trainerFehler, setTrainerFehler] = useState<string>();
+  const [besetzung, setBesetzung] = useState<BesetzungEingabe>(KEINE_BESETZUNG);
+  const [besetzungFehler, setBesetzungFehler] = useState<string>();
   const platz = usePlatzAngaben();
   // Ein Server-Fehler gilt für die Art, mit der gespeichert wurde; schaltet
   // der USER um, ist er verworfen — bis zum nächsten Speichern.
@@ -134,6 +139,8 @@ export function NeuerTerminDialog({
     setProblem(null);
     setTrainer(trainerVorwahl(mitglieder, ich));
     setTrainerFehler(undefined);
+    setBesetzung(KEINE_BESETZUNG);
+    setBesetzungFehler(undefined);
     platz.zuruecksetzen();
     setVerworfen(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -173,7 +180,10 @@ export function NeuerTerminDialog({
   function trainerPruefen(): TrainerFestlegen | null {
     const v = trainer.verantwortlich;
     setTrainerFehler(v ? undefined : TRAINER_TEXT.verantwortlichPflicht);
-    return v ? { eingeladene: trainer.eingeladene, verantwortlich: v } : null;
+    // #521 AK 5: eine ganze Zahl von 1 bis 99.
+    const m = besetzungAusEingabe(besetzung);
+    setBesetzungFehler(m.ok ? undefined : m.text);
+    return v && m.ok ? { eingeladene: trainer.eingeladene, verantwortlich: v, mindestbesetzung: m.wert } : null;
   }
 
   function speichern() {
@@ -332,6 +342,24 @@ export function NeuerTerminDialog({
               setTrainerFehler(undefined);
             }}
             fehler={trainerFehler}
+            disabled={pending}
+          />
+          <MindestbesetzungFeld
+            wert={besetzung}
+            onChange={(w) => {
+              setBesetzung(w);
+              setBesetzungFehler(undefined);
+            }}
+            // AK 14: die Spielerzahl, für die der Termin bzw. die Serie gilt.
+            spielerzahl={
+              fuehrtListe
+                ? giltFuerAnzahl(f.kaderIds, kader, spielerGesamt)
+                : platz.spielerzahlProps.wert.trim() === "" || istSpiel
+                  ? null
+                  : Number(platz.spielerzahlProps.wert)
+            }
+            spielerWort={fuehrtListe ? "angemeldeten" : "erwarteten"}
+            fehler={besetzungFehler}
             disabled={pending}
           />
         </FormAbschnitt>

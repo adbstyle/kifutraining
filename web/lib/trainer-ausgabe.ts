@@ -5,9 +5,10 @@
 // Eigenes Modul neben lib/trainer.ts, damit zod nicht in die Client-Bundles
 // der Termin-Dialoge gerät.
 //
-// REIN: nur zod und lib/trainer — die Prüfskripte laden diese Datei mit tsx.
+// REIN: nur zod, lib/trainer und lib/besetzung — die Prüfskripte laden diese Datei mit tsx.
 import { z } from "zod";
 import type { SerienTrainer, TerminTrainer } from "@/lib/trainer";
+import { BESETZUNG_ARTEN, BESETZUNG_MAX, BESETZUNG_MIN, type Mindestbesetzung } from "@/lib/besetzung";
 
 /** Was jede Auskunft über die Trainer:innen sagt (#519 AK 23). */
 export const TRAINER_MODELL =
@@ -48,4 +49,27 @@ export function serienTrainerSchema() {
 
 export function serienTrainerAusgabe(trainer: readonly SerienTrainer[]): z.infer<ReturnType<typeof serienTrainerSchema>> {
   return trainer.map((t) => ({ id: t.userId, anzeigename: t.name, verantwortlich: t.verantwortlich }));
+}
+
+/** Was jede Auskunft und jede Eingabe über die Mindestbesetzung sagt (#521 AK 11–13). */
+export const BESETZUNG_MODELL =
+  "«mindestbesetzung» ist, wie viele Trainer:innen mindestens dabei sein sollen: «art» «fest» = «zahl» Trainer:innen, " +
+  "«verhaeltnis» = 1 Trainer:in je «zahl» Spieler:innen (kaufmännisch gerundet nach der Spielerzahl des Termins, " +
+  `mindestens 1, sobald Spieler:innen da sind). «zahl» ist eine ganze Zahl von ${BESETZUNG_MIN} bis ${BESETZUNG_MAX}; null heisst keine.`;
+
+export function besetzungSchema() {
+  return z
+    .object({ art: z.enum(BESETZUNG_ARTEN as ["fest", "verhaeltnis"]), zahl: z.number().int() })
+    .nullable()
+    .describe(BESETZUNG_MODELL);
+}
+
+/** Bewusst locker: Die Regeln prüft der Fachkern mit den Sätzen der Oberfläche. */
+export const BesetzungEingabe = z
+  .object({ art: z.string(), zahl: z.number() })
+  .nullable()
+  .describe(BESETZUNG_MODELL);
+
+export function alsBesetzung(e: { art: string; zahl: number } | null | undefined): Mindestbesetzung | undefined {
+  return e === undefined ? undefined : (e as Mindestbesetzung);
 }
