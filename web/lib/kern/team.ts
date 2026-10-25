@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getMeineTeamsFuer } from "@/lib/queries/teams-fuer";
 import { getTeamPlanFuer, teilePlan, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { heuteAmTrainingsort } from "@/lib/zeit";
+import type { Eingrenzung } from "@/lib/trainer";
 import { ZEITRAUM_TEXT, zeitraumProblem } from "@/lib/monat";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import { fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
@@ -58,7 +59,7 @@ export type TeamPlan = {
 export async function teamPlan(
   supabase: SupabaseClient,
   userId: string,
-  e: { teamId: string; heute?: string; nurMeine?: boolean; von?: string; bis?: string },
+  e: { teamId: string; heute?: string; eingrenzung?: Eingrenzung; von?: string; bis?: string },
 ): Promise<KernErgebnis<TeamPlan>> {
   // Ein Zeitraum braucht beide Tage und höchstens ein Jahr (#329 AK 14); die
   // Abweisung nennt das Feld, damit der Assistent den richtigen Tag korrigiert.
@@ -71,8 +72,8 @@ export async function teamPlan(
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
   const heute = e.heute ?? heuteAmTrainingsort();
-  const nurMeine = e.nurMeine ? userId : undefined;
-  const termine = await ohneWurf("teamPlan", () => getTeamPlanFuer(supabase, e.teamId, { heute, nurMeine, von: e.von, bis: e.bis }));
+  const eingrenzung = e.eingrenzung ? { userId, art: e.eingrenzung } : undefined;
+  const termine = await ohneWurf("teamPlan", () => getTeamPlanFuer(supabase, e.teamId, { heute, eingrenzung, von: e.von, bis: e.bis }));
   if (!termine.ok) return termine;
   return ok({ team: team.wert, heute, ...teilePlan(termine.wert, heute) });
 }

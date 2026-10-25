@@ -1,9 +1,12 @@
 "use client";
 
+import { ohneVerantwortliche, type Eingrenzung } from "@/lib/trainer";
 import { EHEMALIGER_KADER } from "./KaderLozenge";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Card, Disclosure, Kalenderblatt, Lozenge } from "@/components/ui";
+import { Card, Disclosure, Kalenderblatt, Lozenge, ZeichenZahl } from "@/components/ui";
+import { Shirt } from "lucide-react";
+import { TrainerLozenge, TrainerZahl } from "./TrainerZeichen";
 import { cn } from "@/lib/cn";
 import { TerminHandgriffe, TrainingHinzufuegen } from "./TerminHandgriffe";
 import { NaechsterTermin } from "./NaechsterTermin";
@@ -16,7 +19,7 @@ import { monatVon, monatsName } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
 // (next/headers) ins Client-Bundle.
-import { nochNichtVorbereitet, verantwortlicheMitDir, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
+import { nochNichtVorbereitet, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { blattStand, nachMeldefrist, terminStatus } from "@/lib/termin-status";
 
 /* Der Kalender eines Teams als Liste (Team-Kalender #322, #323; gegliedert
@@ -35,7 +38,7 @@ export function TrainingsPlan({
   ich,
   hervorheben,
   belegt,
-  meine,
+  eingrenzung,
   leer,
   spalte,
 }: {
@@ -47,7 +50,7 @@ export function TrainingsPlan({
   hervorheben?: string;
   /** Tage mit Terminen, die «Meine Termine» ausblendet (#404 AK 14). */
   belegt: readonly string[];
-  meine: boolean;
+  eingrenzung: Eingrenzung | null;
   leer?: ReactNode;
   /** Der geöffnete Termin (#435): ab `lg` an Stelle des Monats daneben, in
    *  einer geteilten Fläche mit Griff (`PlanGeteilt`); schmaler an Stelle
@@ -99,8 +102,8 @@ export function TrainingsPlan({
           <h3 className="type-title-small text-on-surface-mittel">
             Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
           </h3>
-          {naechster && <NaechsterTermin t={naechster} heute={heute} jetzt={jetzt} ich={ich} meine={meine} hervorgehoben={naechster.id === hervorheben} />}
-          <PlanMonate termine={danach} heute={heute} jetzt={jetzt} ich={ich} meine={meine} hervorheben={hervorheben} />
+          {naechster && <NaechsterTermin t={naechster} heute={heute} jetzt={jetzt} ich={ich} eingrenzung={eingrenzung} hervorgehoben={naechster.id === hervorheben} />}
+          <PlanMonate termine={danach} heute={heute} jetzt={jetzt} ich={ich} eingrenzung={eingrenzung} hervorheben={hervorheben} />
         </section>
       )}
       {plan.vergangen.length > 0 && (
@@ -111,7 +114,7 @@ export function TrainingsPlan({
           defaultOpen={nichtsMehrOffen || imRueckblick || rueckblickAuf > 0}
           className={cn(!nichtsMehrOffen && "mt-6")}
         >
-          <PlanMonate termine={plan.vergangen} heute={heute} jetzt={jetzt} ich={ich} meine={meine} hervorheben={hervorheben} />
+          <PlanMonate termine={plan.vergangen} heute={heute} jetzt={jetzt} ich={ich} eingrenzung={eingrenzung} hervorheben={hervorheben} />
         </Disclosure>
       )}
     </>
@@ -130,7 +133,7 @@ export function TrainingsPlan({
           termine={alle}
           heute={heute}
           belegt={belegt}
-          meine={meine}
+          eingrenzung={eingrenzung}
           anfang={monatVon(plan.kommend[0]?.datum ?? heute)}
           liste={liste}
           onWahl={(id) => {
@@ -152,14 +155,14 @@ function PlanMonate({
   heute,
   jetzt,
   ich,
-  meine,
+  eingrenzung,
   hervorheben,
 }: {
   termine: TerminZeile[];
   heute: string;
   jetzt: string;
   ich: string;
-  meine: boolean;
+  eingrenzung: Eingrenzung | null;
   hervorheben?: string;
 }) {
   return nachMonatUndTag(termine).map((m) => (
@@ -178,7 +181,7 @@ function PlanMonate({
                   heute={heute}
                   jetzt={jetzt}
                   ich={ich}
-                  meine={meine}
+                  eingrenzung={eingrenzung}
                   hervorgehoben={teil.termine[0].id === hervorheben}
                   naechster={false}
                   tagesUeberschrift={teil.termine[0] === erste}
@@ -189,7 +192,7 @@ function PlanMonate({
                 <ZeilenKarte gedaempft={teil.art === "gedaempft"}>
                   <ol className="divide-y divide-linie">
                     {teil.termine.map((t) => (
-                      <TerminReihe key={t.id} t={t} heute={heute} ich={ich} meine={meine} hervorgehoben={t.id === hervorheben} ersterDesTages={t === erste} />
+                      <TerminReihe key={t.id} t={t} heute={heute} ich={ich} eingrenzung={eingrenzung} hervorgehoben={t.id === hervorheben} ersterDesTages={t === erste} />
                     ))}
                   </ol>
                 </ZeilenKarte>
@@ -236,30 +239,32 @@ function abschnitte(termine: TerminZeile[], art: (t: TerminZeile) => Abschnitt["
    Aufbau wie im Design: links das Kalenderblatt (weiss, vergangen grau,
    ausgefallen grau und durchgestrichen), daneben untereinander der Status
    als Lozenge, der Name und eine ruhige Zeile mit Zeit, Ort — bei einem
-   ausgefallenen Termin statt des Orts der Grund —, Kader und Verantwortlichen;
-   rechts die Spielerzahl klein und ungefärbt, dann die Handgriffe. Ein
-   vergangener Termin steht gedämpft und ohne Status, ein ausgefallener
-   gedämpft mit durchgestrichenem Namen. Nur das erste Blatt eines Tages ist
+   ausgefallenen Termin statt des Orts der Grund — und Kader; rechts mit
+   Zeichen die Spielerzahl und die Trainer:innen (dabei/eingeladen, davor der
+   eigene Stand), klein und ungefärbt, dann die Handgriffe. Namen stehen nur
+   am geöffneten Termin (#518 PO 16); ohne Verantwortliche:n steht neben dem
+   Status eine Secondary Lozenge (#519 AK 18). Ein vergangener Termin steht
+   gedämpft und ohne Status, ein ausgefallener gedämpft mit durchgestrichenem
+   Namen und ohne Trainer:innen. Nur das erste Blatt eines Tages ist
    dessen Überschrift, die übrigen sind stumm. */
 function TerminReihe({
   t,
   heute,
   ich,
-  meine,
+  eingrenzung,
   hervorgehoben,
   ersterDesTages,
 }: {
   t: TerminZeile;
   heute: string;
   ich: string;
-  meine: boolean;
+  eingrenzung: Eingrenzung | null;
   hervorgehoben: boolean;
   ersterDesTages: boolean;
 }) {
   const vergangen = t.datum < heute;
   const gedaempft = vergangen || t.ausgefallen;
   const zeit = zeitText(t.beginn, t.ende);
-  const v = verantwortlicheMitDir(t, ich);
   const status = terminStatus(t, heute);
   const zahl = spielerzahlVon(t);
   const zahlKurz = spielerzahlKurz(zahl);
@@ -271,7 +276,6 @@ function TerminReihe({
     t.ausgefallen ? t.ausfallGrund : t.ort,
     t.ausgefallen && t.training ? "Training ruht" : null,
     kaderText && `Kader ${kaderText}`,
-    v.text,
   ].filter(Boolean).join(" · ");
   const ganz = [status?.wort, name, unterzeile, zahlLang].filter(Boolean).join("\n");
   return (
@@ -287,14 +291,19 @@ function TerminReihe({
       )}
     >
       {/* Die Zeile öffnet den Termin daneben (#435); ändern lässt er sich dort. */}
-      <Link href={terminHref(t.teamId, meine, t.id)} scroll={false} title={ganz} className="focus-ring absolute inset-0 group-first/zeile:rounded-t-flaeche group-last/zeile:rounded-b-flaeche">
+      <Link href={terminHref(t.teamId, eingrenzung, t.id)} scroll={false} title={ganz} className="focus-ring absolute inset-0 group-first/zeile:rounded-t-flaeche group-last/zeile:rounded-b-flaeche">
         <span className="sr-only">{t.spiel ? `Spiel öffnen: ${t.spiel.bezeichnung}, ${zeit}` : `Termin öffnen: ${zeit}`}</span>
       </Link>
       <div aria-hidden={!ersterDesTages || undefined} className="pointer-events-none relative">
         <Kalenderblatt as={ersterDesTages ? "h5" : "div"} datum={t.datum} stand={blattStand(t, heute)} />
       </div>
       <div className="pointer-events-none relative flex min-w-0 flex-1 flex-col items-start gap-0.5">
-        {status && <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>}
+        {(status || ohneVerantwortliche(t, heute)) && (
+          <span className="flex flex-wrap items-center gap-1">
+            {status && <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>}
+            <TrainerLozenge t={t} heute={heute} />
+          </span>
+        )}
         {t.training && !t.ausgefallen ? (
           <Link
             href={`/training/${t.training.id}`}
@@ -315,12 +324,14 @@ function TerminReihe({
         )}
         <span className="max-w-full truncate type-body-medium text-on-surface-mittel">{unterzeile}</span>
       </div>
-      {zahlKurz && (
-        <span className="pointer-events-none relative shrink-0 py-0.5 type-body-small tabular-nums text-on-surface-mittel">
-          <span aria-hidden>{zahlKurz}</span>
-          <span className="sr-only">Spielerzahl: {zahlLang}</span>
-        </span>
-      )}
+      <span className="pointer-events-none relative flex shrink-0 flex-col items-end gap-1 py-0.5 text-on-surface-mittel sm:flex-row sm:items-center sm:gap-3">
+        {zahlKurz && (
+          <ZeichenZahl icon={Shirt} label={`Spielerzahl: ${zahlLang}`} klein>
+            {zahlKurz}
+          </ZeichenZahl>
+        )}
+        {!t.ausgefallen && <TrainerZahl t={t} ich={ich} klein />}
+      </span>
       <TerminHandgriffe t={t} zuordnen={!nochNichtVorbereitet(t, heute)} />
     </li>
   );

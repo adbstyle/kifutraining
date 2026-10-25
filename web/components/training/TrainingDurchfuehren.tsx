@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, LandPlot, MapPin, Shirt, Users } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, LandPlot, MapPin, Shirt, UserPen, Users } from "lucide-react";
 import { TrainingExerciseDetail } from "./TrainingExerciseDetail";
 import { VariantenWahl } from "./VariantenWahl";
 import { GesamtMaterialListe } from "./GesamtMaterialListe";
@@ -27,15 +27,17 @@ type TerminKontext = {
   ende: string;
   ort: string | null;
   bemerkung: string | null;
-  /** Die Namen der Verantwortlichen (#325 AK 10); leer: niemand eingetragen. */
-  verantwortliche: string[];
+  /** Wer verantwortlich ist (#519 AK 17); `null`: niemand. */
+  verantwortlich: string | null;
+  /** Die Namen der Eingeladenen, man selbst mit «(du)». */
+  eingeladene: string[];
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: Felder | null;
   /** Aus der Spielerliste oder erwartet (#390, #434). */
   spielerzahl: Spielerzahl;
 };
 
-/** Datum, Beginn und Ende, Ort, Verantwortliche, erwartete Spielerzahl,
+/** Datum, Beginn und Ende, Ort, Trainer:innen (#519 AK 17), erwartete Spielerzahl,
  *  Felder und Bemerkung der Einheit — der Kontext für alle, die gerade am
  *  Platz stehen (Story 7 AK 19, #325 AK 10, #389 AK 11, #390 AK 4): je Feld
  *  Grösse, Tore und Untergrund, Unbekanntes als «unbekannt». */
@@ -55,11 +57,15 @@ function TerminKopf({ termin, className }: { termin: TerminKontext; className?: 
           {termin.ort}
         </span>
       )}
-      {termin.verantwortliche.length > 0 && (
+      <span className="inline-flex items-center gap-1.5">
+        <UserPen size={14} strokeWidth={2} aria-hidden />
+        Verantwortlich: {termin.verantwortlich ?? "niemand"}
+      </span>
+      {termin.eingeladene.length > 0 && (
         <span className="inline-flex items-center gap-1.5">
           <Users size={14} strokeWidth={2} aria-hidden />
-          <span className="sr-only">Verantwortlich: </span>
-          {termin.verantwortliche.join(", ")}
+          <span className="sr-only">Eingeladen: </span>
+          {termin.eingeladene.join(", ")}
         </span>
       )}
       {spielerzahlLang(termin.spielerzahl) && (

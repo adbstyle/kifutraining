@@ -7,6 +7,7 @@ import { abgebildet } from "@/lib/kern/ergebnis";
 import { TrainingAuskunft } from "@/lib/kern/auskunft-schema";
 import { felderAusgabe, felderSchema, spielerzahlQuelleAusgabe, spielerzahlQuelleSchema, spielerzahlSchema } from "@/lib/termin-felder-ausgabe";
 import { spielerzahlVon } from "@/lib/spieler";
+import { trainerAusgabe, trainerSchema } from "@/lib/trainer-ausgabe";
 import {
   trainingAbrufen as trainingAbrufenImKern,
   trainingsSuchen as trainingsSuchenImKern,
@@ -63,7 +64,7 @@ export const trainingAbrufen = werkzeug({
     "Lesbar ist jedes Training, " +
     "das dein Konto in KiFu sieht; ändern lassen sich nur die mit «bearbeitbar». Ein " +
     "Team-Training trägt in «termin» den Termin, dem es zugeordnet ist (höchstens einen; " +
-    "«anstehend» sagt, ob er heute oder später ist; «verantwortliche» nennt, wer ihn vorbereitet und leitet, «felder» den Platz, «erwartete_spielerzahl» die erwartete Zahl Spieler:innen), sonst null. Ob es " +
+    "«anstehend» sagt, ob er heute oder später ist; «trainer» nennt die Eingeladenen und wer ihn vorbereitet und leitet, «felder» den Platz, «erwartete_spielerzahl» die erwartete Zahl Spieler:innen), sonst null. Ob es " +
     "veröffentlicht werden kann und was dazu fehlt, zeigt «training_hinweise_abrufen». " +
     `${KENNUNG_FEHLER}`,
   nurLesen: true,
@@ -131,13 +132,7 @@ const SuchenTreffer = z.object({
       erwartete_spielerzahl: spielerzahlSchema(),
       spielerzahl: spielerzahlQuelleSchema(),
       serie_id: z.string().nullable(),
-      verantwortliche: z.array(
-        z.object({
-          id: z.string().nullable().describe("Kennung des Mitglieds; null bei einem gelöschten Konto."),
-          anzeigename: z.string().nullable(),
-          ehemalig: z.boolean().describe("Nicht mehr im Team."),
-        }),
-      ),
+      trainer: trainerSchema(),
       ausgefallen: z.boolean().describe("Ob der Termin ausgefallen ist; das Training ruht dann an ihm."),
       ausfall_grund: z.string().nullable(),
       anstehend: z.boolean(),
@@ -158,7 +153,7 @@ export const trainingsSuchen = werkzeug({
     "Übersicht auf die erste Variante; «varianten_zahl» sagt, wie viele es gibt. " +
     "Team-Trainings erscheinen nur mit «bestand: team», ohne Termin-Trainings (die nennt " +
     "«team_plan_abrufen»); dort trägt jeder Treffer seinen allfälligen " +
-    "Termin samt Verantwortlichen, Feldern des Platzes und erwarteter Spielerzahl («termin», null ohne) - «eigen» ist bei ihnen immer false, bearbeiten darf sie " +
+    "Termin samt Trainer:innen, Feldern des Platzes und erwarteter Spielerzahl («termin», null ohne) - «eigen» ist bei ihnen immer false, bearbeiten darf sie " +
     "jedes Mitglied. Das ganze Training liefert «training_abrufen», " +
     `übernehmen lässt es sich mit «training_kopieren». ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: true,
@@ -204,11 +199,7 @@ export const trainingsSuchen = werkzeug({
                   erwartete_spielerzahl: t.termin.spielerzahl,
                   spielerzahl: spielerzahlQuelleAusgabe(spielerzahlVon(t.termin)),
                   serie_id: t.termin.serieId,
-                  verantwortliche: t.termin.verantwortliche.map((v) => ({
-                    id: v.userId,
-                    anzeigename: v.name,
-                    ehemalig: v.ehemalig,
-                  })),
+                  trainer: trainerAusgabe(t.termin.trainer),
                   ausgefallen: t.termin.ausgefallen,
                   ausfall_grund: t.termin.ausfallGrund,
                   anstehend: t.termin.anstehend,

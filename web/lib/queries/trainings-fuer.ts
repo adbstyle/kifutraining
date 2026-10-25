@@ -8,7 +8,8 @@ import { JUNIOREN_BLOCK_SLUGS, type Einordnung } from "@/lib/junioren";
 import type { Altersstufe } from "@/lib/altersstufe";
 import { FASSUNG_INHALT_FELDER, FASSUNG_ZUORDNUNG_FELDER } from "@/lib/fassung";
 import type { Variante } from "@/lib/varianten";
-import { kurzeZeit, nachName } from "@/lib/queries/termine-fuer";
+import { kurzeZeit, mapTrainer } from "@/lib/queries/termine-fuer";
+import type { TerminTrainer } from "@/lib/trainer";
 import type { Felder } from "@/lib/termin-felder";
 import type { Spielstand } from "@/lib/spieler";
 import { parseMaterialBasis, parseMaterialListe, type MaterialPosten } from "@/lib/material";
@@ -522,9 +523,8 @@ export type TeamTrainingRow = TrainingListRow & {
     spielstand: Spielstand;
     /** Die Terminserie, zu der der Termin gehört; `null` bei einem einzelnen. */
     serieId: string | null;
-    /** Wer den Termin vorbereitet und leitet (#325 AK 16); `userId` und `name`
-     *  sind bei einem gelöschten Konto `null`, `ehemalig` heisst: nicht mehr im Team. */
-    verantwortliche: { userId: string | null; name: string | null; ehemalig: boolean }[];
+    /** Die eingeladenen Trainer:innen samt Verantwortlicher (#519), wie im Plan. */
+    trainer: TerminTrainer[];
     /** Ein ausgefallener Termin behält sein Training (PO 2026-10-06); die
      *  Felder halten die Gestalt wie im Plan. */
     ausgefallen: boolean;
@@ -534,7 +534,7 @@ export type TeamTrainingRow = TrainingListRow & {
 
 const TEAM_LIST_SELECT =
   `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, serie_id, ausgefallen, ausfall_grund, ` +
-  "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ) )";
+  "termin_trainer ( id, user_id, verantwortlich, trainer_name, trainer_ehemalig ) )";
 
 export type TeamTrainingFilter = {
   /** Sucht im Namen, wie die Trainings-Übersicht (`search_text`). */
@@ -594,11 +594,12 @@ export async function getTeamTrainingsFuer(
       serie_id: string | null;
       ausgefallen: boolean;
       ausfall_grund: string | null;
-      termin_verantwortliche: {
+      termin_trainer: {
         id: string;
         user_id: string | null;
-        verantwortlich_name: string | null;
-        verantwortlich_ehemalig: boolean;
+        verantwortlich: boolean;
+        trainer_name: string | null;
+        trainer_ehemalig: boolean;
       }[];
     };
     const r = raw as unknown as RawListTraining & {
@@ -621,18 +622,8 @@ export async function getTeamTrainingsFuer(
             serieId: termin.serie_id,
             ausgefallen: termin.ausgefallen,
             ausfallGrund: termin.ausfall_grund,
-            // Wie im Plan nach Name geordnet (gleiche Funktion, gleicher
-            // Tiebreak), gelöschte Konten zuletzt.
-            verantwortliche: nachName(
-              (termin.termin_verantwortliche ?? []).map((v) => ({
-                eintragId: v.id,
-                userId: v.user_id,
-                name: v.user_id === null ? null : v.verantwortlich_name,
-                ehemalig: v.verantwortlich_ehemalig,
-              })),
-              (v) => v.name,
-              (v) => v.eintragId,
-            ).map(({ userId, name, ehemalig }) => ({ userId, name, ehemalig })),
+            // Wie im Plan geordnet (gleiche Funktion), gelöschte Konten zuletzt.
+            trainer: mapTrainer(termin.termin_trainer ?? []),
           }
         : null,
     };

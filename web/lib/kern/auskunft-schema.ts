@@ -14,6 +14,7 @@
 import { z } from "zod";
 import { Sichtbarkeit, Wert } from "@/lib/wert";
 import { felderSchema, spielerzahlQuelleSchema, spielerzahlSchema } from "@/lib/termin-felder-ausgabe";
+import { trainerSchema } from "@/lib/trainer-ausgabe";
 import { gesamtMaterialSchema, materialSchema } from "@/lib/material-ausgabe";
 import { UEBEN_ZEILEN } from "@/lib/freitext";
 
@@ -175,11 +176,8 @@ function baueSchema(streng: boolean) {
       spielerzahl: spielerzahlQuelleSchema(),
       /** Die Terminserie, zu der der Termin gehört; `null` bei einem einzelnen (#324). */
       serie_id: z.string().nullable(),
-      /** Wer den Termin vorbereitet und leitet (#325 AK 16); `id` und
-       *  `anzeigename` sind bei einem gelöschten Konto `null`. */
-      verantwortliche: z.array(
-        obj({ id: z.string().nullable(), anzeigename: z.string().nullable(), ehemalig: z.boolean() }),
-      ),
+      /** Die Eingeladenen samt Verantwortlicher (#519 AK 23). */
+      trainer: trainerSchema(streng),
       /** Ein ausgefallener Termin behält sein Training, es ruht dann an ihm
        *  (PO 2026-10-06). */
       ausgefallen: z.boolean(),

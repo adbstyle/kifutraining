@@ -1,35 +1,39 @@
 "use client";
 
+import { ohneVerantwortliche, trainerNameFuer, verantwortlicheVon, type Eingrenzung } from "@/lib/trainer";
 import Link from "next/link";
-import { CalendarPlus } from "lucide-react";
-import { Button, ButtonLink, Kalenderblatt, Lozenge, Meldebalken, OverflowMenu, SectionMessage, TreffpunktListe } from "@/components/ui";
+import { CalendarPlus, Clock, LandPlot, Shirt } from "lucide-react";
+import { Button, ButtonLink, Kalenderblatt, Lozenge, OverflowMenu, SectionMessage, TreffpunktListe, ZeichenZahl } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage } from "@/lib/serie";
 import { zeitText } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
-import { zeitpunktKurz } from "@/lib/spiel";
-import { feldName, feldText } from "@/lib/termin-felder";
-import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
+import { richtwertStufeText, zeitpunktKurz } from "@/lib/spiel";
+import { felderKurz } from "@/lib/termin-felder";
+import { spielerzahlKurz, spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { terminHref } from "@/lib/team-ansicht";
 import { TERMIN_STATUS, blattStand, handlungsMeldung, nachMeldefrist, terminStatus } from "@/lib/termin-status";
-import { verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
+import type { TerminZeile } from "@/lib/queries/termine-fuer";
 import { useTerminAktionen } from "./TerminBereich";
 import { terminMenue } from "./TerminHandgriffe";
 import { KaderLozenges } from "./KaderLozenge";
-import { KartenAbschnitt } from "./KartenAbschnitt";
+import { TrainerLozenge, TrainerZahl } from "./TrainerZeichen";
 
 /* Ein Termin als grosse Karte zuoberst im Trainingsplan (#403; Epic #490,
    Tafeln 2b und 2d): «Als Nächstes» ist der nächste Termin, der stattfindet.
    Grösser als die Zeilen und auf einer höheren Fläche, damit man ihn am
    Spielfeldrand nicht suchen muss.
 
-   Von oben nach unten: der Kopf wie eine Zeile — weisses Kalenderblatt,
-   Status, Name, Zeit und Ort, das Menü —, dann der Abschnitt KADER (wer kommt,
-   als Balken), bei einem Training der Abschnitt PLATZ, bei einem Spiel die
-   TREFFPUNKTE, der späteste zuoberst: Die Trainer:in steht am Treffpunkt nächst
-   am Spiel. Zuunterst die Handgriffe, der wichtigste hell. Bemerkung und
-   Serie stehen am geöffneten Termin.
+   Von oben nach unten (Epic #518, Tafel «Als Nächstes»): der Kopf wie eine
+   Zeile — weisses Kalenderblatt, Status samt Trainer-Lücke, Name, Zeit und
+   Ort, das Menü —, dann EINE Linie mit Zeichen: Spieler:innen und Kader, bei
+   einem Spiel die Meldefrist, die Trainer:innen (dabei/eingeladen), bei einem
+   Training der Platz. Die Einzelheiten stehen im Satz jedes Zeichens und am
+   geöffneten Termin. Bei einem Spiel darunter die Treffpunkte, der späteste
+   zuoberst: Die Trainer:in steht am Treffpunkt nächst am Spiel. Dann die
+   Bemerkung (#403 AK 3), wer verantwortlich ist (#519 AK 24) und zuunterst
+   die Handgriffe, der wichtigste hell. Die Serie steht am geöffneten Termin.
 
    `hervorgehoben`: Der Verweis aus dem Kalender-Abo zielt auf ihn (PC 4) —
    Kontur in Primary, `aria-current` und Sprungziel wie an jeder Zeile. */
@@ -38,7 +42,7 @@ export function NaechsterTermin({
   heute,
   jetzt,
   ich,
-  meine,
+  eingrenzung,
   hervorgehoben,
   naechster = true,
   tagesUeberschrift = false,
@@ -48,7 +52,7 @@ export function NaechsterTermin({
   /** `YYYY-MM-DDTHH:MM` am Trainingsort, für die Meldefrist (#494). */
   jetzt: string;
   ich: string;
-  meine: boolean;
+  eingrenzung: Eingrenzung | null;
   hervorgehoben: boolean;
   /** `false`: ein Spiel nach der Meldefrist in der Liste, nicht «Als Nächstes» (#494). */
   naechster?: boolean;
@@ -66,7 +70,7 @@ export function NaechsterTermin({
   const nachFrist = nachMeldefrist(t, jetzt);
   const handlung = nachFrist ? handlungsMeldung(t) : null;
   const name = t.spiel ? t.spiel.bezeichnung : t.training ? t.training.name : "Noch kein Training";
-  const oeffnen = terminHref(t.teamId, meine, t.id);
+  const oeffnen = terminHref(t.teamId, eingrenzung, t.id);
   // #403 AK 8: Heute oder Morgen über dem Namen des nächsten Termins.
   const relativ = !naechster ? null : t.datum === heute ? "Heute" : t.datum === plusTage(heute, 1) ? "Morgen" : null;
   // Die Karte «Als Nächstes» trägt ihre Überschrift; in der Liste ist das Blatt die des Tages.
@@ -98,7 +102,12 @@ export function NaechsterTermin({
                 {relativ} · {tagOhneJahr(t.datum)}
               </p>
             )}
-            {status && <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>}
+            {(status || ohneVerantwortliche(t, heute)) && (
+              <span className="flex flex-wrap items-center gap-1">
+                {status && <Lozenge appearance={status.appearance}>{status.wort}</Lozenge>}
+                <TrainerLozenge t={t} heute={heute} />
+              </span>
+            )}
             <NameElement className="type-title-large max-w-full text-on-surface">
               <Link href={oeffnen} scroll={false} className="focus-ring rounded-klein hover:underline">
                 <span className="sr-only">{naechster ? "Nächster Termin" : "Spiel nach der Meldefrist"}, {tagOhneJahr(t.datum)}: </span>
@@ -125,42 +134,31 @@ export function NaechsterTermin({
           </SectionMessage>
         )}
 
-        {t.spiel ? (
-          <>
-            <KartenAbschnitt titel="Kader" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
-              <TeamStand t={t} ich={ich} nachFrist={nachFrist} />
-            </KartenAbschnitt>
-            {t.spiel.treffpunkte.length > 0 && (
-              <KartenAbschnitt titel="Treffpunkte">
-                <TreffpunktListe
-                  treffpunkte={[...t.spiel.treffpunkte].reverse()}
-                  spieltag={t.datum}
-                  spielOrt={t.ort}
-                  className="type-body-medium text-on-surface"
-                />
-              </KartenAbschnitt>
-            )}
-          </>
-        ) : (
-          // Beim Training stehen Team und Platz ab Tabletbreite nebeneinander,
-          // auf gleicher Höhe (PO 2026-10-22); schmal untereinander.
-          <div className="grid gap-x-6 gap-y-3.5 sm:grid-cols-2">
-            <KartenAbschnitt titel="Kader" zusatz={<KaderLozenges namen={t.kader.map((k) => k.name)} />}>
-              <TeamStand t={t} ich={ich} nachFrist={nachFrist} />
-            </KartenAbschnitt>
-            <KartenAbschnitt titel="Platz">
-              {t.felder && t.felder.length > 0 ? (
-                <ul className="flex flex-col gap-1 type-body-medium text-on-surface">
-                  {t.felder.map((f, i, alle) => (
-                    <li key={i}>{alle.length > 1 ? `${feldName(i, alle.length)}: ${feldText(f)}` : feldText(f)}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="type-body-medium text-on-surface-mittel">Nicht erfasst</p>
-              )}
-            </KartenAbschnitt>
-          </div>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-linie pt-3 text-on-surface">
+          <SpielerZeichen t={t} nachFrist={nachFrist} />
+          {t.kader.length > 0 && <KaderLozenges namen={t.kader.map((k) => k.name)} />}
+          {t.spiel?.meldefrist && (
+            <ZeichenZahl icon={Clock} label={`Meldefrist ${nachFrist ? "abgelaufen " : ""}${zeitpunktKurz(t.spiel.meldefrist)}`}>
+              Frist {zeitpunktKurz(t.spiel.meldefrist)}
+            </ZeichenZahl>
+          )}
+          <TrainerZahl t={t} ich={ich} />
+          {!t.spiel && (
+            <ZeichenZahl icon={LandPlot} label={`Platz: ${felderKurz(t.felder) ?? "nicht erfasst"}`}>
+              {felderKurz(t.felder) ?? "Platz nicht erfasst"}
+            </ZeichenZahl>
+          )}
+        </div>
+        {t.spiel && t.spiel.treffpunkte.length > 0 && (
+          <TreffpunktListe
+            treffpunkte={[...t.spiel.treffpunkte].reverse()}
+            spieltag={t.datum}
+            spielOrt={t.ort}
+            className="type-body-medium text-on-surface"
+          />
         )}
+        {t.bemerkung && <p className="whitespace-pre-line type-body-medium text-on-surface">{t.bemerkung}</p>}
+        <p className="type-body-small text-on-surface-mittel">{verantwortlichZeile(t, ich)}</p>
 
         <div className="flex flex-wrap gap-2">
           {t.training ? (
@@ -175,8 +173,9 @@ export function NaechsterTermin({
           )}
           {/* Wer kommt (#435) — sobald das Team eine Spielerliste führt. */}
           {t.spielstand && (
-            <ButtonLink variant="outlined" href={terminHref(t.teamId, meine, t.id, "spieler")} scroll={false}>Spieler:innen</ButtonLink>
+            <ButtonLink variant="outlined" href={terminHref(t.teamId, eingrenzung, t.id, "spieler")} scroll={false}>Spieler:innen</ButtonLink>
           )}
+          <ButtonLink variant="outlined" href={terminHref(t.teamId, eingrenzung, t.id, "trainer")} scroll={false}>Trainer:innen</ButtonLink>
           {t.spiel && <ButtonLink variant="outlined" href={oeffnen} scroll={false}>Spiel öffnen</ButtonLink>}
         </div>
       </div>
@@ -185,43 +184,40 @@ export function NaechsterTermin({
 }
 
 
-/** Wer kommt: der Balken, darunter eine ruhige Zeile — beim Training die
- *  Abgemeldeten, bis wann man ändern kann, und wer verantwortlich ist; beim
- *  Spiel, wie viele noch ohne Meldung sind, und die Meldefrist. Ohne
- *  Spielerliste die erwartete Zahl (Training) bzw. dass nicht gemeldet wird
- *  (Spiel). */
-function TeamStand({ t, ich, nachFrist }: { t: TerminZeile; ich: string; nachFrist: boolean }) {
-  const v = verantwortlicheMitDir(t, ich).text;
+/** «du bist verantwortlich», «Anna Keller verantwortlich» oder «niemand verantwortlich» (#519 AK 24). */
+function verantwortlichZeile(t: TerminZeile, ich: string): string {
+  const v = verantwortlicheVon(t.trainer);
+  if (!v) return "niemand verantwortlich";
+  return v.userId === ich ? "du bist verantwortlich" : `${trainerNameFuer(v, ich)} verantwortlich`;
+}
+
+/** Wie viele kommen, als Zahl mit Zeichen; der Satz nennt die Einzelheiten —
+ *  beim Training die Abgemeldeten, beim Spiel den Richtwert und wer noch ohne
+ *  Meldung ist. Ohne Spielerliste die erwartete Zahl (Training) bzw. dass
+ *  nicht gemeldet wird (Spiel). */
+function SpielerZeichen({ t, nachFrist }: { t: TerminZeile; nachFrist: boolean }) {
+  const z = spielerzahlVon(t);
+  const kurz = spielerzahlKurz(z);
   const s = t.spielstand;
-  if (!s) {
-    if (t.spiel)
-      return <p className="type-body-medium text-on-surface-mittel">Das Team führt keine Spielerliste – hier wird nicht gemeldet.</p>;
-    const zeile = [spielerzahlLang(spielerzahlVon(t)), v && `verantwortlich ${v}`].filter(Boolean).join(" · ");
-    return <p className="type-body-medium text-on-surface-mittel">{zeile || "Nicht erfasst"}</p>;
+  if (!kurz) {
+    return (
+      <ZeichenZahl icon={Shirt} label={t.spiel ? "Das Team führt keine Spielerliste – hier wird nicht gemeldet." : "Spielerzahl nicht erfasst"}>
+        –
+      </ZeichenZahl>
+    );
   }
-  const da = s.anwesend ?? null;
-  const zeile = t.spiel
-    ? da !== null
-      ? ["Stand beim Anpfiff"]
-      : [
-        // #496 AK 4: nach der Frist heisst «ohne Meldung» «Meldefrist verpasst».
-        (s.ohne_meldung ?? 0) > 0 ? `${s.ohne_meldung} ${nachFrist ? "Meldefrist verpasst" : "ohne Meldung"}` : "alle haben sich gemeldet",
-        t.spiel.meldefrist && `Meldefrist ${nachFrist ? "abgelaufen " : ""}${zeitpunktKurz(t.spiel.meldefrist)}`,
+  const details = !s
+    ? []
+    : t.spiel
+      ? [
+          richtwertStufeText(s.anwesend ?? s.angemeldet, t.spiel.richtwertMin, t.spiel.richtwertMax),
+          s.anwesend == null && (s.ohne_meldung ?? 0) > 0 && `${s.ohne_meldung} ${nachFrist ? "Meldefrist verpasst" : "ohne Meldung"}`,
         ]
-    : [da === null && `${s.gesamt - s.angemeldet} abgemeldet · änderbar bis zum Beginn`, v && `verantwortlich ${v}`];
-  const wort = da === null ? "angemeldet" : "da";
+      : [s.anwesend == null && `${s.gesamt - s.angemeldet} abgemeldet`];
+  const label = [`Spieler:innen: ${spielerzahlLang(z)}`, ...details].filter(Boolean).join(" · ");
   return (
-    <>
-      {/* Ein Training hat keinen Richtwert: Zahl und Text genügen, der Balken
-          bleibt den Spielen (PO 2026-10-22). */}
-      {t.spiel ? (
-        <Meldebalken zahl={da ?? s.angemeldet} gesamt={s.gesamt} min={t.spiel.richtwertMin} max={t.spiel.richtwertMax} wort={wort} />
-      ) : (
-        <p className="type-body-medium text-on-surface">
-          <span className="font-semibold">{da ?? s.angemeldet}</span> von {s.gesamt} {wort}
-        </p>
-      )}
-      <p className="type-body-small text-on-surface-mittel">{zeile.filter(Boolean).join(" · ")}</p>
-    </>
+    <ZeichenZahl icon={Shirt} label={label}>
+      {kurz}
+    </ZeichenZahl>
   );
 }

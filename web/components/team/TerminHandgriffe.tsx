@@ -1,12 +1,13 @@
 "use client";
 
-import { CalendarOff, CalendarPlus, MessageSquareText, Plus, Pencil, PlayCircle, Trash2, Undo2, Unlink } from "lucide-react";
+import { CalendarOff, CalendarPlus, MessageSquareText, Plus, Pencil, PlayCircle, Trash2, Undo2, Unlink, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { OverflowMenu, type MenuItemDef } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen, type TerminAktionen } from "./TerminBereich";
-import { datumKurz } from "@/lib/zeit";
+import { datumKurz, terminBegonnen } from "@/lib/zeit";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
+import { istEingeladen } from "@/lib/trainer";
 
 /** «+ Training hinzufügen» an einem anstehenden Termin ohne Training — an der
  *  Stelle, wo sonst sein Name steht, in Primary wie ein Link (Epic #490,
@@ -28,9 +29,15 @@ export function TrainingHinzufuegen({ t, className }: { t: TerminZeile; classNam
 }
 
 /** Die Handgriffe eines Termins im Menü «Weitere Aktionen» — dieselben an
- *  jeder Zeile und am nächsten Termin (#402 AK 17, #403 AK 15). */
+ *  jeder Zeile und am nächsten Termin (#402 AK 17, #403 AK 15). Wer zu einem
+ *  bevorstehenden Termin nicht eingeladen ist, lädt sich hier selbst ein —
+ *  an einem Serientermin nur zu diesem (#519 AK 25, PC 12). */
 export function terminMenue(t: TerminZeile, a: TerminAktionen): MenuItemDef[] {
+  const aushelfen = !t.ausgefallen && !terminBegonnen(t.datum, t.beginn) && !istEingeladen(t.trainer, a.ich);
   return [
+    ...(aushelfen
+      ? [{ label: "Ich helfe aus", icon: UserPlus, onSelect: () => a.trainer(t, { einladen: [a.ich] }, "Du bist eingeladen.") }]
+      : []),
     ...(t.ausgefallen
       ? [
           { label: "Grund ändern", icon: MessageSquareText, onSelect: () => a.ausfallen(t) },

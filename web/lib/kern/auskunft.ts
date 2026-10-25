@@ -44,6 +44,7 @@ import { sichtbarkeitVon, wert, wertOderNull } from "@/lib/wert";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings-fuer";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
 import { felderAusgabe, spielerzahlQuelleAusgabe } from "@/lib/termin-felder-ausgabe";
+import { trainerAusgabe } from "@/lib/trainer-ausgabe";
 import { spielerzahlVon } from "@/lib/spieler";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 import { GESAMTDAUER_JUNIOREN, gesamtAbgleich, zeitAbgleich } from "@/lib/junioren";
@@ -258,11 +259,7 @@ export function trainingAuskunft(
           erwartete_spielerzahl: k.termin.spielerzahl,
           spielerzahl: spielerzahlQuelleAusgabe(spielerzahlVon(k.termin)),
           serie_id: k.termin.serie?.id ?? null,
-          verantwortliche: k.termin.verantwortliche.map((v) => ({
-            id: v.userId,
-            anzeigename: v.name,
-            ehemalig: v.ehemalig,
-          })),
+          trainer: trainerAusgabe(k.termin.trainer),
           ausgefallen: k.termin.ausgefallen,
           ausfall_grund: k.termin.ausfallGrund,
           // Dieselbe Grenze wie der Plan (`teilePlan`): der heutige Tag zählt

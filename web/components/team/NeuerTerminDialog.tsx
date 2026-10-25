@@ -8,6 +8,7 @@ import {
   ChoiceChipGroup,
   DateField,
   Dialog,
+  FormAbschnitt,
   InfoKnopf,
   SectionMessage,
   TextArea,
@@ -23,7 +24,8 @@ import { maxEnddatum, serieProblem, wochentagVon, type SerieFeld, type Wochentag
 import { BEMERKUNG_MAX, ORT_MAX, istKalendertag, terminProblem, type TerminFelder } from "@/lib/termin";
 import type { Felder } from "@/lib/termin-felder";
 import type { TeamMitglied } from "@/lib/queries/teams";
-import { VerantwortlicheWahl, type VerantwortlicheWert } from "./VerantwortlicheWahl";
+import { TrainerWahl, trainerVorwahl, type TrainerWert } from "./TrainerWahl";
+import { TRAINER_TEXT } from "@/lib/trainer";
 import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
 import { usePlatzAngaben } from "./usePlatzAngaben";
@@ -39,20 +41,21 @@ export type SerieFelder = {
   ende: string;
   ort: string;
   bemerkung: string;
-  /** Kennungen der Mitglieder, die jeder Termin der Serie trägt (#325 AK 3). */
-  verantwortliche: string[];
   /** Für welche Kader jeder Termin gilt (#453 AK 1, 2); leer = für alle. */
   kaderIds: string[];
 };
 
+/** Die Trainer:innen beim Festlegen (#519 AK 1–4): wer eingeladen und wer verantwortlich ist. */
+export type TrainerFestlegen = { eingeladene: string[]; verantwortlich: string };
+
 /** Was der Dialog festlegt: einen einzelnen Termin (#322 AK 1) oder eine
  *  Terminserie (#324 AK 1), beide mit Feldern und erwarteter Spielerzahl
- *  (#389, #390, #391 AK 1). `verantwortlich` nur, wenn jemand gewählt ist. */
+ *  (#389, #390, #391 AK 1) und mit ihren Trainer:innen (#519). */
 export type NeuerTermin =
-  | { art: "einzeln"; felder: TerminFelder; verantwortlich?: VerantwortlicheWert; kaderIds: string[] }
-  | { art: "serie"; felder: SerieFelder & { felder: Felder | null; spielerzahl: number | null } };
+  | { art: "einzeln"; felder: TerminFelder; trainer: TrainerFestlegen; kaderIds: string[] }
+  | { art: "serie"; felder: SerieFelder & { felder: Felder | null; spielerzahl: number | null } & TrainerFestlegen };
 
-const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: "", ort: "", bemerkung: "", verantwortliche: [], kaderIds: [] };
+const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: "", ort: "", bemerkung: "", kaderIds: [] };
 
 /* Einen neuen Termin erstellen — einzeln oder, mit «Wiederholender Termin»,
    als Terminserie. Ein Einstieg statt zweier: Die Angaben sind dieselben, die
@@ -64,8 +67,10 @@ const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: 
    Die Wochentage folgen dem Datum, bis der USER selbst einen wählt: Wer
    «jeden Dienstag ab dem 6.» meint, kreuzt nur an und wählt das Ende.
 
-   Verantwortliche lassen sich gleich mitgeben (#325 AK 1, 3); gelöschte
-   Konten gibt es bei einem neuen Termin noch nicht, darum ohne `bisher`.
+   Danach zwei Abschnitte (#518, Tafel «Termin erstellen»): «Spieler:innen»
+   mit den Kadern und der Spielerzahl, dann «Trainer:innen» — alle Mitglieder
+   eingeladen, du verantwortlich vorgewählt (#519 AK 1–4). Gelöschte Konten
+   gibt es bei einem neuen Termin noch nicht, darum ohne `bisher`.
 
    Erwartete Spielerzahl (#390 AK 1) und Felder des Platzes (#389 AK 1, 8)
    gelten für den einzelnen Termin wie für jeden Termin einer Serie
@@ -80,6 +85,7 @@ export function NeuerTerminDialog({
   pending,
   fehler: serverFehler,
   mitglieder,
+  ich,
   fuehrtListe,
   kader = [],
   spielerGesamt = 0,
@@ -90,6 +96,8 @@ export function NeuerTerminDialog({
   pending?: boolean;
   fehler?: string;
   mitglieder: readonly TeamMitglied[];
+  /** Das eigene Konto: verantwortlich vorgewählt (#519 AK 4). */
+  ich: string;
   /** Die Kader des Teams (#453) und wie viele Spieler:innen die Liste führt. */
   kader?: readonly Kader[];
   spielerGesamt?: number;
@@ -105,6 +113,8 @@ export function NeuerTerminDialog({
   const [wiederholen, setWiederholen] = useState(false);
   const [tageVonHand, setTageVonHand] = useState(false);
   const [problem, setProblem] = useState<{ feld: SerieFeld; text: string } | null>(null);
+  const [trainer, setTrainer] = useState<TrainerWert>(() => trainerVorwahl(mitglieder, ich));
+  const [trainerFehler, setTrainerFehler] = useState<string>();
   const platz = usePlatzAngaben();
   // Ein Server-Fehler gilt für die Art, mit der gespeichert wurde; schaltet
   // der USER um, ist er verworfen — bis zum nächsten Speichern.
@@ -122,6 +132,8 @@ export function NeuerTerminDialog({
     setWiederholen(false);
     setTageVonHand(false);
     setProblem(null);
+    setTrainer(trainerVorwahl(mitglieder, ich));
+    setTrainerFehler(undefined);
     platz.zuruecksetzen();
     setVerworfen(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -157,6 +169,13 @@ export function NeuerTerminDialog({
     if (a === "spiel") setWiederholen(false);
   }
 
+  /** Genau eine Verantwortliche (#519 AK 3) — sonst der Satz am Feld. */
+  function trainerPruefen(): TrainerFestlegen | null {
+    const v = trainer.verantwortlich;
+    setTrainerFehler(v ? undefined : TRAINER_TEXT.verantwortlichPflicht);
+    return v ? { eingeladene: trainer.eingeladene, verantwortlich: v } : null;
+  }
+
   function speichern() {
     if (!art) {
       setArtFehler(true);
@@ -165,10 +184,11 @@ export function NeuerTerminDialog({
     if (art === "spiel") return speichereSpiel();
     // Felder und Spielerzahl prüfen beide Arten gleich.
     const angaben = platz.pruefe();
+    const besetzung = trainerPruefen();
     if (wiederholen) {
       const p = serieProblem(f);
       setProblem(p);
-      if (!p && angaben) senden({ art: "serie", felder: { ...f, ...angaben } });
+      if (!p && angaben && besetzung) senden({ art: "serie", felder: { ...f, ...angaben, ...besetzung } });
       return;
     }
     const felder: TerminFelder = {
@@ -183,10 +203,9 @@ export function NeuerTerminDialog({
     const p = terminProblem(felder);
     // Das Datum heisst in beiden Fällen `von` — so steht ein Fehler am selben Feld.
     setProblem(p && { feld: p.feld === "datum" ? "von" : p.feld, text: p.text });
-    if (!p && angaben) {
-      const verantwortlich = f.verantwortliche.length > 0 ? { userIds: f.verantwortliche, anonyme: [] } : undefined;
+    if (!p && angaben && besetzung) {
       const begonnen = terminBegonnen(f.von, f.beginn);
-      senden({ art: "einzeln", felder, verantwortlich, kaderIds: begonnen ? [] : f.kaderIds });
+      senden({ art: "einzeln", felder, trainer: besetzung, kaderIds: begonnen ? [] : f.kaderIds });
     }
   }
 
@@ -197,13 +216,13 @@ export function NeuerTerminDialog({
     const p = terminProblem(felder);
     setProblem(p && { feld: p.feld === "datum" ? "von" : p.feld, text: p.text });
     const angaben = spiel.pruefe();
-    if (p || !angaben) return;
+    const besetzung = trainerPruefen();
+    if (p || !angaben || !besetzung) return;
     if (terminBegonnen(f.von, f.beginn)) {
       setProblem({ feld: "beginn", text: SPIEL_MELDUNG.SPIEL_ANPFIFF_VERGANGEN });
       return;
     }
-    const verantwortlich = f.verantwortliche.length > 0 ? { userIds: f.verantwortliche, anonyme: [] } : undefined;
-    senden({ art: "einzeln", felder: { ...felder, ...angaben }, verantwortlich, kaderIds: f.kaderIds });
+    senden({ art: "einzeln", felder: { ...felder, ...angaben }, trainer: besetzung, kaderIds: f.kaderIds });
   }
 
   const istSpiel = art === "spiel";
@@ -280,33 +299,46 @@ export function NeuerTerminDialog({
         {istSpiel && <MeldefristFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <TreffpunkteFelder angaben={spiel} spieltag={f.von} disabled={pending} />}
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={f.bemerkung} onChange={(e) => setze("bemerkung", e.target.value)} info={istSpiel ? TREFFPUNKT_TEXT.bemerkungSichtbar : undefined} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
-        <VerantwortlicheWahl
-          mitglieder={mitglieder}
-          wert={{ userIds: f.verantwortliche, anonyme: [] }}
-          onChange={(w) => setze("verantwortliche", w.userIds)}
-          disabled={pending}
-        />
-        {kader.length > 0 && (
-          <KaderWahl
-            kader={kader}
-            spielerGesamt={spielerGesamt}
-            wert={f.kaderIds}
-            onChange={(ids) => setze("kaderIds", ids)}
-            // Kader gelten nur an anstehenden Terminen (#453 AK 1); eine Serie legt nur anstehende an.
-            begonnen={!wiederholen && !!f.von && !!f.beginn && terminBegonnen(f.von, f.beginn)}
+        {(kader.length > 0 || !istSpiel) && (
+          <FormAbschnitt titel="Spieler:innen" untertitel="Für wen der Termin gilt und mit wie vielen gerechnet wird." imDialog>
+            {kader.length > 0 && (
+              <KaderWahl
+                kader={kader}
+                spielerGesamt={spielerGesamt}
+                wert={f.kaderIds}
+                onChange={(ids) => setze("kaderIds", ids)}
+                // Kader gelten nur an anstehenden Terminen (#453 AK 1); eine Serie legt nur anstehende an.
+                begonnen={!wiederholen && !!f.von && !!f.beginn && terminBegonnen(f.von, f.beginn)}
+                disabled={pending}
+              />
+            )}
+            {/* Ein einzelner Termin, der schon begonnen hat, nimmt die erwartete Zahl an (Migration spielerliste). */}
+            {!istSpiel && (
+              <SpielerzahlField
+                {...platz.spielerzahlProps}
+                disabled={pending}
+                ausListe={!!fuehrtListe && (wiederholen || !f.von || !f.beginn || !terminBegonnen(f.von, f.beginn))}
+              />
+            )}
+          </FormAbschnitt>
+        )}
+        <FormAbschnitt titel="Trainer:innen" untertitel={TRAINER_TEXT.eingeladenHinweis} imDialog>
+          <TrainerWahl
+            mitglieder={mitglieder}
+            ich={ich}
+            wert={trainer}
+            onChange={(w) => {
+              setTrainer(w);
+              setTrainerFehler(undefined);
+            }}
+            fehler={trainerFehler}
             disabled={pending}
           />
-        )}
-        {/* Ein einzelner Termin, der schon begonnen hat, nimmt die erwartete Zahl an (Migration spielerliste). */}
+        </FormAbschnitt>
         {!istSpiel && (
-          <>
-            <SpielerzahlField
-              {...platz.spielerzahlProps}
-              disabled={pending}
-              ausListe={!!fuehrtListe && (wiederholen || !f.von || !f.beginn || !terminBegonnen(f.von, f.beginn))}
-            />
+          <div className="border-t border-linie pt-4">
             <FelderField {...platz.felderProps} disabled={pending} />
-          </>
+          </div>
         )}
       </div>
     </Dialog>

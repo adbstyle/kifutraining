@@ -16,8 +16,6 @@ export {
   type Plan,
   type TerminSerie,
   type TerminZeile,
-  type Verantwortlicher,
-  verantwortlichenNamen,
 } from "@/lib/queries/termine-fuer";
 
 /** Der Trainingsplan eines Teams mit der Anmeldung aus den Cookies —

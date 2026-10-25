@@ -20,7 +20,7 @@ import {
   type SerienFolge,
 } from "@/lib/kern/serien";
 import { teamPlan } from "@/lib/kern/team";
-import { setzeVerantwortliche } from "@/lib/kern/verantwortliche";
+import { aendereTrainer, type TrainerAendern } from "@/lib/kern/trainer";
 import type { KernErgebnis } from "@/lib/kern/ergebnis";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Reichweite, Wochentag } from "@/lib/serie";
@@ -59,7 +59,9 @@ export async function legeTerminFestAktion(
   teamId: string,
   felder: TerminFelder,
   /** Für welche Kader der Termin gilt (#453 AK 1); leer = für alle. */
-  kaderIds: string[] = [],
+  kaderIds: string[],
+  /** Die Eingeladenen und die Verantwortliche (#519 AK 1). */
+  trainer: { eingeladene: string[]; verantwortlich: string | null },
 ): Promise<{ ok: true; terminId: string } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
@@ -79,6 +81,8 @@ export async function legeTerminFestAktion(
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
     kaderIds,
+    eingeladene: trainer.eingeladene,
+    verantwortlich: trainer.verantwortlich,
   });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
@@ -215,7 +219,7 @@ export async function loeseTrainingAktion(
 }
 
 /** Eine Terminserie festlegen (#324): die Termine entstehen ohne Training,
- *  aber mit den Verantwortlichen (#325 AK 3, PC 1), Feldern und erwarteter
+ *  aber mit den Eingeladenen und der Verantwortlichen (#519 AK 2), Feldern und erwarteter
  *  Spielerzahl der Serie (#391 AK 1, PC 1); die Oberfläche
  *  bestätigt ohne Anzahl (Story 3 PC 4). */
 export async function legeSerieFestAktion(
@@ -228,7 +232,8 @@ export async function legeSerieFestAktion(
     ende: string;
     ort: string;
     bemerkung: string;
-    verantwortliche: string[];
+    eingeladene: string[];
+    verantwortlich: string | null;
     /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1). */
     felder: Felder | null;
     spielerzahl: number | null;
@@ -244,25 +249,20 @@ export async function legeSerieFestAktion(
   return { ok: true };
 }
 
-/** Die Verantwortlichen eines Termins festlegen (#325 AK 1, 2, 5, 9). Die
- *  Oberfläche nimmt diesen Weg für einen einzelnen Termin (`reichweite`
- *  fehlt) und für «nur dieser» an einem Serientermin; für folgende und alle
- *  gehen die Verantwortlichen mit der Serienänderung durch Vorschau und
- *  Ausführung (`aendereSerieAktion`, PC 3, 11). `anonyme` sind die Einträge
- *  gelöschter Konten, die bleiben sollen (PC 8). */
-export async function setzeVerantwortlicheAktion(
+/** Trainer:innen eines Termins einladen, ausladen und die Verantwortung
+ *  übertragen (#519 AK 5–10). Die Oberfläche nimmt diesen Weg für einen
+ *  einzelnen Termin (`reichweite` fehlt) und für «nur dieser» an einem
+ *  Serientermin; für folgende und alle gehen die Eingeladenen und die
+ *  Verantwortung mit der Serienänderung durch Vorschau und Ausführung
+ *  (`aendereSerieAktion`). */
+export async function aendereTrainerAktion(
   terminId: string,
-  wert: { userIds: string[]; anonyme: string[] },
+  aenderung: Pick<TrainerAendern, "einladen" | "ausladen" | "ausladenEintraege" | "verantwortlich">,
   reichweite: Reichweite | undefined,
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await setzeVerantwortliche(a.supabase, a.userId, {
-    terminId,
-    userIds: wert.userIds,
-    anonyme: wert.anonyme,
-    reichweite,
-  });
+  const r = await aendereTrainer(a.supabase, a.userId, { ...aenderung, terminId, reichweite });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
   return { ok: true };

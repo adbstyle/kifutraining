@@ -14,6 +14,7 @@ import { trainingAuskunft, type TrainingAuskunft } from "@/lib/kern/auskunft";
 import { hinweiseFuer, type Hinweis } from "@/lib/hinweise";
 import { NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
 import type { Spielstand } from "@/lib/spieler";
+import type { TerminTrainer } from "@/lib/trainer";
 
 /**
  * Trainings lesen (#193 AK 1/2, #195, #198 AK 2) — für die KI-Werkzeuge «training_abrufen»,
@@ -104,8 +105,8 @@ export type TrefferTermin = {
   spielstand: Spielstand;
   /** Die Terminserie des Termins; `null` bei einem einzelnen (#324). */
   serieId: string | null;
-  /** Wer den Termin vorbereitet und leitet (#325 AK 16). */
-  verantwortliche: { userId: string | null; name: string | null; ehemalig: boolean }[];
+  /** Die eingeladenen Trainer:innen samt Verantwortlicher (#519). */
+  trainer: TerminTrainer[];
   /** Bei einem Training immer `false`/`null` (#327 AK 9) — die Gestalt bleibt wie im Plan. */
   ausgefallen: boolean;
   ausfallGrund: string | null;

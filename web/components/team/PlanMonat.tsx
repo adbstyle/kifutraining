@@ -1,5 +1,6 @@
 "use client";
 
+import type { Eingrenzung } from "@/lib/trainer";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { MiniMonat, type Marke, type StatusTon } from "@/components/ui";
 import { terminStatus } from "@/lib/termin-status";
@@ -29,7 +30,7 @@ export function PlanMonat({
   termine,
   heute,
   belegt,
-  meine,
+  eingrenzung,
   anfang,
   liste,
   onWahl,
@@ -38,7 +39,7 @@ export function PlanMonat({
   heute: string;
   /** Tage mit Terminen, die die Eingrenzung ausblendet. */
   belegt: readonly string[];
-  meine: boolean;
+  eingrenzung: Eingrenzung | null;
   /** Der Monat beim ersten Rendern — derselbe auf Server und Browser. */
   anfang: string;
   liste: RefObject<HTMLElement | null>;
@@ -126,7 +127,7 @@ export function PlanMonat({
       belegt={(tag) => belegteTage.has(tag)}
       onWahl={waehle}
       onMonat={setGewaehlt}
-      hinweis={meine ? "Nur deine Termine" : undefined}
+      hinweis={eingrenzung ? "Nur deine Termine" : undefined}
     />
   );
 }

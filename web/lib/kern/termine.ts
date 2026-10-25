@@ -42,6 +42,7 @@ import {
 import { kurzeZeit } from "@/lib/queries/termine-fuer";
 import { heuteAmTrainingsort, jetztAmTrainingsort, terminBegonnen } from "@/lib/zeit";
 import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugriff";
+import { trainerBeimFestlegen, type TrainerWahl } from "@/lib/kern/trainer";
 import { HINWEIS_NICHTS_ENTSTANDEN, hinweisRest, kopiereTraining, type KopieErgebnis } from "@/lib/kern/kopie";
 import { gibtEsTraining, loescheTrainingMitBildern, raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
 import {
@@ -108,18 +109,6 @@ export type TerminRoh = {
   ausgefallen: boolean;
   ausfall_grund: string | null;
 };
-
-/** Kennungen von Verantwortlichen vorab prüfen und von Doppelten befreien
- *  (#325): Jede muss eine UUID sein, sonst wiese Postgres mit einem rohen
- *  Fehler ab. Geteilt von Einzeltermin, Serie und Festlegen. */
-export function bereinigeVerantwortliche(ids: readonly unknown[]): { ok: true; ids: string[] } | { ok: false; fehler: KernFehler } {
-  if (!Array.isArray(ids) || !ids.every((x) => istUuid(x)))
-    return {
-      ok: false,
-      fehler: fehlschlag("eingabe", TERMIN_TEXT.verantwortlicheUngueltig, { feld: "verantwortliche" }),
-    };
-  return { ok: true, ids: [...new Set((ids as string[]).map((x) => x.toLowerCase()))] };
-}
 
 function feldFehler(p: TerminProblem | null): KernFehler | null {
   return p ? fehlschlag("eingabe", p.text, { feld: p.feld }) : null;
@@ -217,7 +206,7 @@ export type TerminFestlegen = {
   spielerzahl?: number | null;
   /** Für welche Kader der Termin gilt (#453 AK 1); ohne oder leer: für alle. */
   kaderIds?: string[];
-};
+} & TrainerWahl;
 
 /** Was ein Spiel trägt und ein Training nicht (#459 AK 2, 5, 10, 11, 16) —
  *  und umgekehrt. Geprüft wird die Angabe, wie sie nach dem Schreiben
@@ -303,7 +292,7 @@ function anpfiffFehler(datum: string, beginn: string | null): KernFehler | null 
  *  dessen Bezeichnung und Richtwert und hat seinen Anpfiff noch vor sich. */
 export async function legeTerminFest(
   supabase: SupabaseClient,
-  _userId: string,
+  userId: string,
   e: TerminFestlegen,
 ): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
   if (!istTerminArt(e.art)) return fehlschlag("eingabe", SPIEL_TEXT.art, { feld: "art" });
@@ -329,6 +318,8 @@ export async function legeTerminFest(
     return fehlschlag("regel", KADER_MELDUNG.KADER_TERMIN_BEGONNEN, { feld: "kader_ids" });
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
+  const trainer = await trainerBeimFestlegen(supabase, userId, e.teamId, e);
+  if (!trainer.ok) return trainer;
 
   const { data, error } = await supabase
     .from("training_termine")
@@ -369,6 +360,16 @@ export async function legeTerminFest(
         ? fehlschlag("nicht_gefunden", KADER_MELDUNG.KADER_NICHT_GEFUNDEN, { feld: "kader_ids" })
         : ausDbFehler(k.error);
     }
+  }
+  // Die Besetzung (#519 AK 1): ohne sie soll der Termin nicht stehen bleiben.
+  const b = await supabase.rpc("termin_trainer_aendern", {
+    p_termin: data.id,
+    p_einladen: trainer.wert.eingeladene,
+    p_verantwortlich: trainer.wert.verantwortlich,
+  });
+  if (b.error) {
+    const weg = await supabase.from("training_termine").delete().eq("id", data.id);
+    return weg.error ? ausDbFehler(weg.error) : kalenderFehler(b.error);
   }
   return ok({ terminId: data.id, teamId: e.teamId });
 }

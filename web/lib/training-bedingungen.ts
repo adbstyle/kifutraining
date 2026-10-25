@@ -14,6 +14,7 @@ import { SERIE_MELDUNG } from "@/lib/serie";
 import { SPIELER_CHECKS, SPIELER_MELDUNG } from "@/lib/spieler";
 import { KADER_CHECKS, KADER_MELDUNG } from "@/lib/kader";
 import { SPIEL_CHECKS, SPIEL_MELDUNG } from "@/lib/spiel";
+import { TRAINER_MELDUNG } from "@/lib/trainer";
 import { FELDER_TEXT } from "@/lib/termin-felder";
 import { sichtbareZuordnungen } from "@/lib/varianten";
 
@@ -339,6 +340,8 @@ const TERMIN_MARKER: [string, string][] = [
   ...Object.entries(KADER_MELDUNG),
   // Spiele (#448).
   ...Object.entries(SPIEL_MELDUNG),
+  // Trainer:innen an Terminen (#518).
+  ...Object.entries(TRAINER_MELDUNG),
 ];
 
 /** Die CHECKs am Termin, die die Applikation am Namen erkennt — wie

@@ -11,6 +11,8 @@ import {
 import { TERMIN_TEXT, istKalendertag, leerZuNull, textProblem, zeitProblem } from "@/lib/termin";
 import type { FeldEingabe } from "@/lib/termin-felder";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
+import { bereinigeKennungen, trainerBeimFestlegen, type TrainerWahl } from "@/lib/kern/trainer";
+import { TRAINER_TEXT } from "@/lib/trainer";
 import { raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
 import {
   TERMIN_FELD,
@@ -19,7 +21,6 @@ import {
   spielerzahlFehler,
   entferneTermin,
   type Verlassen,
-  bereinigeVerantwortliche,
   kalenderFehler,
   ladeTermin,
   type TerminAendern,
@@ -56,14 +57,12 @@ export type SerieFestlegen = {
   ende: string;
   ort?: string | null;
   bemerkung?: string | null;
-  /** Kennungen der Mitglieder, die jeder Termin der Serie trägt (#325 AK 3). */
-  verantwortliche?: string[];
   /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1); ohne: unbekannt. */
   felder?: readonly FeldEingabe[] | null;
   spielerzahl?: number | null;
   /** Die Kader jedes Termins der Serie (#453 AK 2); ohne oder leer: für alle. */
   kaderIds?: string[];
-};
+} & TrainerWahl;
 
 /** Kader-Kennungen prüfen — eine falsch geformte ist für niemanden sichtbar. */
 function kaderIdsFehler(ids: readonly string[] | undefined) {
@@ -76,13 +75,11 @@ function kaderIdsFehler(ids: readonly string[] | undefined) {
  *  echter Termin ohne Training; bestehende Termine bleiben unberührt. */
 export async function legeSerieFest(
   supabase: SupabaseClient,
-  _userId: string,
+  userId: string,
   e: SerieFestlegen,
 ): Promise<KernErgebnis<{ serieId: string; teamId: string; termine: number }>> {
   const p = serieProblem(e);
   if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
-  const verantwortliche = bereinigeVerantwortliche(e.verantwortliche ?? []);
-  if (!verantwortliche.ok) return verantwortliche.fehler;
   const felder = pruefeFelder(e.felder);
   if (!felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
@@ -91,6 +88,9 @@ export async function legeSerieFest(
   if (kader) return kader;
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
+  // Jeder Termin der Serie trägt die Eingeladenen und die Verantwortliche (#519 AK 2).
+  const trainer = await trainerBeimFestlegen(supabase, userId, e.teamId, e);
+  if (!trainer.ok) return trainer;
   const { data, error } = await supabase.rpc("terminserie_festlegen", {
     p_team: e.teamId,
     p_wochentage: e.wochentage,
@@ -100,7 +100,8 @@ export async function legeSerieFest(
     p_ende: e.ende,
     p_ort: leerZuNull(e.ort),
     p_bemerkung: leerZuNull(e.bemerkung),
-    p_verantwortliche: verantwortliche.ids,
+    p_eingeladene: trainer.wert.eingeladene,
+    p_verantwortlich: trainer.wert.verantwortlich,
     p_felder: felder.felder,
     p_spielerzahl: e.spielerzahl ?? null,
     p_kader: e.kaderIds ?? [],
@@ -120,8 +121,10 @@ export type SerienAenderung = {
   /** `null` oder `""` = leeren. */
   ort?: string | null;
   bemerkung?: string | null;
-  /** Kennungen der künftigen Verantwortlichen der Serie (#325); `[]` = niemand. */
-  verantwortliche?: string[];
+  /** Die künftigen Eingeladenen der Serie als ganze Liste (#519 AK 12). */
+  eingeladene?: string[];
+  /** Die künftige Verantwortliche der Serie; sie ist damit eingeladen. */
+  verantwortlich?: string;
   /** Die Felder als ganze Liste (#391 AK 7); `null` oder `[]` = keine. */
   felder?: readonly FeldEingabe[] | null;
   /** Die erwartete Spielerzahl; `null` = unbekannt. */
@@ -284,7 +287,8 @@ export async function aendereSerie(
     !hatRegel &&
     a.ort === undefined &&
     a.bemerkung === undefined &&
-    a.verantwortliche === undefined &&
+    a.eingeladene === undefined &&
+    a.verantwortlich === undefined &&
     a.felder === undefined &&
     a.spielerzahl === undefined &&
     a.kaderIds === undefined
@@ -298,8 +302,10 @@ export async function aendereSerie(
   }
   const tp = textProblem(a);
   if (tp) return fehlschlag("eingabe", tp.text, { feld: tp.feld });
-  const verantwortliche = a.verantwortliche === undefined ? null : bereinigeVerantwortliche(a.verantwortliche);
-  if (verantwortliche && !verantwortliche.ok) return verantwortliche.fehler;
+  const eingeladene = a.eingeladene === undefined ? null : bereinigeKennungen(a.eingeladene, "eingeladene");
+  if (eingeladene && !eingeladene.ok) return eingeladene.fehler;
+  if (a.verantwortlich !== undefined && !istUuid(a.verantwortlich))
+    return fehlschlag("eingabe", TRAINER_TEXT.kennungUngueltig, { feld: "verantwortlich" });
   const felder = a.felder === undefined ? null : pruefeFelder(a.felder);
   if (felder && !felder.ok) return felder;
   const zahl = spielerzahlFehler(a.spielerzahl);
@@ -335,7 +341,8 @@ export async function aendereSerie(
   if (hatZeit) Object.assign(aenderung, { beginn: leerZuNull(a.beginn), ende: leerZuNull(a.ende) });
   if (a.ort !== undefined) aenderung.ort = leerZuNull(a.ort);
   if (a.bemerkung !== undefined) aenderung.bemerkung = leerZuNull(a.bemerkung);
-  if (verantwortliche?.ok) aenderung.verantwortliche = verantwortliche.ids;
+  if (eingeladene?.ok) aenderung.eingeladene = eingeladene.ids;
+  if (a.verantwortlich !== undefined) aenderung.verantwortlich = a.verantwortlich.toLowerCase();
   // Schlüssel vorhanden mit null heisst «auf unbekannt setzen» (#391).
   if (felder) aenderung.felder = felder.felder;
   if (a.spielerzahl !== undefined) aenderung.spielerzahl = a.spielerzahl;
@@ -376,11 +383,28 @@ export async function entferneSerie(
   );
 }
 
-export type FolgeAngabe = "zeit" | "ort" | "bemerkung" | "verantwortliche" | "felder" | "spielerzahl" | "kader";
+export type FolgeAngabe =
+  | "zeit"
+  | "ort"
+  | "bemerkung"
+  | "eingeladene"
+  | "verantwortung"
+  | "felder"
+  | "spielerzahl"
+  | "kader";
 /** Auch das Datum lässt sich nennen — die Datenebene weist es ab (PO 3). */
 export type FolgeWunsch = FolgeAngabe | "datum";
 
-const FOLGE_ANGABEN: readonly FolgeAngabe[] = ["zeit", "ort", "bemerkung", "verantwortliche", "felder", "spielerzahl", "kader"];
+const FOLGE_ANGABEN: readonly FolgeAngabe[] = [
+  "zeit",
+  "ort",
+  "bemerkung",
+  "eingeladene",
+  "verantwortung",
+  "felder",
+  "spielerzahl",
+  "kader",
+];
 
 /** Abweichende Angaben wieder der Serie folgen lassen (#326 AK 6; das Datum
  *  nie, PO 3 — «datum» reicht der Kern an die Datenebene durch, die es mit

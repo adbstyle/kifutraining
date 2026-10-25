@@ -125,7 +125,20 @@ import { FELDER_MODELL, FelderEingabe, SPIELERZAHL_MODELL, SpielerzahlEingabe, f
 import { MASS_TEXT } from "../lib/feldmass";
 import { ZEITRAUM_TEXT, kalenderblatt, monatVon, monatsName, monatsRaster, plusMonate, tagOhneJahr, tagText, zeitraumProblem } from "../lib/monat";
 import { nachMonatUndTag } from "../lib/plan-gliederung";
-import { planHref } from "../lib/team-ansicht";
+import { eingrenzungAus, planHref, terminHref } from "../lib/team-ansicht";
+import {
+  TRAINER_MELDUNG,
+  TRAINER_TEXT,
+  dabeiZahl,
+  imFilter,
+  nachTrainerName,
+  ohneVerantwortliche,
+  trainerAenderung,
+  trainerStart,
+  trainerVorwahl,
+  trainerZahlSatz,
+  type TerminTrainer,
+} from "../lib/trainer";
 import { aboDatei, aboPfad, aboUrl, aboTokenAus, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
 import { aboEintrag, aboKalenderName, aboStatus, spielerAboUrl, type AboFeedTermin } from "../lib/spieler-abo";
 import { istVeraltet } from "../lib/veraltet";
@@ -622,14 +635,14 @@ pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit 
 });
 
 pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
-  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], kader: [], ausgefallen: false, ausfallGrund: null };
+  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], kader: [], ausgefallen: false, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
   assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
   assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } }, "2026-10-01"), false);
 });
 
 pruefe("Status eines Termins in einem Wort, Kalenderblatt weiss oder grau (#491)", () => {
-  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-11-03", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], kader: [], ausgefallen: false, ausfallGrund: null };
+  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-11-03", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], kader: [], ausgefallen: false, ausfallGrund: null };
   const mitTraining = { ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } };
   assert.deepEqual(terminStatus(mitTraining, "2026-11-01"), { wort: "Vorbereitet", appearance: "success" });
   assert.deepEqual(terminStatus(t, "2026-11-01"), { wort: "Nicht vorbereitet", appearance: "neutral" });
@@ -679,7 +692,7 @@ pruefe("Ausfall: Grund mit den Regeln der Bemerkung; nicht vorbereitet schliesst
   assert.equal(TERMIN_MELDUNG.NICHT_AUSGEFALLEN, "Dieser Termin ist nicht ausgefallen.");
   assert.ok(!KONFLIKT_MARKER.includes("TERMIN_AUSGEFALLEN"), "eine Regel, kein Konflikt");
   const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null,
-    training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], kader: [], ausgefallen: true, ausfallGrund: null };
+    training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], kader: [], ausgefallen: true, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-01"), false, "AK 8");
   assert.equal(nochNichtVorbereitet({ ...t, ausgefallen: false }, "2026-10-01"), true);
 });
@@ -713,7 +726,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     serie: null,
     serienTag: null,
     abweichungen: [],
-    verantwortliche: [],
+    trainer: [],
     kader: [],
     ausgefallen: false,
     ausfallGrund: null,
@@ -741,7 +754,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     erwartete_spielerzahl: 12,
     spielerzahl: { quelle: "erwartet", zahl: 12, gesamt: null },
     serie_id: null,
-    verantwortliche: [],
+    trainer: [],
     ausgefallen: false,
     ausfall_grund: null,
     anstehend: true,
@@ -801,9 +814,69 @@ pruefe("Monat: tagText schreibt den Tag aus, ohne führende Null", () => {
   assert.equal(tagText("2028-02-29"), "29. Februar 2028");
 });
 
-pruefe("planHref: nur die Eingrenzung reist in der Adresse mit (#325 AK 11, #405)", () => {
-  assert.equal(planHref("t1", false), "/team/t1");
-  assert.equal(planHref("t1", true), "/team/t1?meine=1");
+pruefe("planHref: nur die Eingrenzung reist in der Adresse mit (#405, #518 PO 12)", () => {
+  assert.equal(planHref("t1", null), "/team/t1");
+  assert.equal(planHref("t1", "dabei"), "/team/t1?meine=1");
+  assert.equal(planHref("t1", "eingeladen"), "/team/t1?eingeladen=1");
+  assert.equal(terminHref("t1", "eingeladen", "x", "trainer"), "/team/t1?eingeladen=1&termin=x&tab=trainer");
+  // Alte Links mit `?meine=1` gelten als «dabei»; höchstens eine Eingrenzung, `meine` geht vor.
+  assert.equal(eingrenzungAus({ meine: "1" }), "dabei");
+  assert.equal(eingrenzungAus({ eingeladen: "1" }), "eingeladen");
+  assert.equal(eingrenzungAus({ meine: "1", eingeladen: "1" }), "dabei");
+  assert.equal(eingrenzungAus({}), null);
+});
+
+const tr = (userId: string | null, name: string | null, verantwortlich = false): TerminTrainer => ({
+  eintragId: `e-${userId ?? name ?? "x"}`,
+  userId,
+  name,
+  ehemalig: userId === null,
+  verantwortlich,
+});
+
+pruefe("Trainer: Eingrenzung, Zahl und Satz aus Sicht des USERS (#519 AK 18, 19, 24)", () => {
+  const liste = [tr("a", "Anna Keller", true), tr("b", "Ben Huber"), tr(null, null)];
+  assert.ok(imFilter(liste, "a", "dabei"));
+  assert.ok(imFilter(liste, "b", "eingeladen"));
+  assert.ok(!imFilter(liste, "c", "dabei"));
+  assert.ok(!imFilter(liste, "c", "eingeladen"));
+  // Einträge gelöschter Konten zählen nicht als dabei.
+  assert.equal(dabeiZahl(liste), 2);
+  assert.equal(trainerZahlSatz(liste, "b"), "Trainer:innen: 2 von 3 dabei · Anna Keller verantwortlich · du bist dabei");
+  assert.equal(trainerZahlSatz(liste, "a"), "Trainer:innen: 2 von 3 dabei · du bist verantwortlich · du bist dabei");
+  assert.equal(trainerZahlSatz([], "a"), "Trainer:innen: 0 von 0 dabei · niemand verantwortlich · du bist nicht eingeladen");
+  // AK 18: nur anstehend und nicht ausgefallen.
+  const ohne = { trainer: [tr("b", "Ben")], datum: "2026-10-27", ausgefallen: false };
+  assert.ok(ohneVerantwortliche(ohne, "2026-10-27"));
+  assert.ok(!ohneVerantwortliche(ohne, "2026-10-28"));
+  assert.ok(!ohneVerantwortliche({ ...ohne, ausgefallen: true }, "2026-10-26"));
+  assert.ok(!ohneVerantwortliche({ ...ohne, trainer: liste }, "2026-10-26"));
+  // Nach Name, gelöschte Konten zuletzt, Gleichnamige nach Kennung.
+  const sortiert = nachTrainerName([tr(null, null), tr("z", "Anna"), tr("y", "Anna"), tr("x", "Ben")], (t) => t.eintragId);
+  assert.deepEqual(sortiert.map((t) => t.userId), ["y", "z", "x", null]);
+});
+
+pruefe("Trainer: Wahl im Dialog — Vorwahl, Differenz und namenlose Einträge (#519 AK 1–9)", () => {
+  assert.deepEqual(trainerVorwahl([{ userId: "a" }, { userId: "b" }], "b"), { eingeladene: ["a", "b"], anonyme: [], verantwortlich: "b" });
+  const start = trainerStart([tr("a", "Anna", true), tr("b", "Ben"), tr(null, null)]);
+  assert.deepEqual(start, { eingeladene: ["a", "b"], anonyme: ["e-x"], verantwortlich: "a" });
+  assert.equal(trainerAenderung(start, start), null);
+  // Verantwortung weitergeben und die Bisherige ausladen in einem (AK 7).
+  const weiter = trainerAenderung({ eingeladene: ["b", "c"], anonyme: ["e-x"], verantwortlich: "c" }, start)!;
+  assert.deepEqual(weiter.einladen, ["c"]);
+  assert.deepEqual(weiter.ausladen, ["a"]);
+  assert.equal(weiter.verantwortlich, "c");
+  assert.deepEqual(weiter.eingeladene, ["b", "c"]);
+  assert.equal(weiter.nurNamenlose, false);
+  // Die Verantwortliche ausladen: keine neue Verantwortliche, nur die Eingeladenen (AK 9).
+  const aus = trainerAenderung({ eingeladene: ["b"], anonyme: ["e-x"], verantwortlich: null }, start)!;
+  assert.equal(aus.verantwortlich, undefined);
+  assert.deepEqual(aus.ausladen, ["a"]);
+  // Allein ein Eintrag ohne Namen fällt weg: nur für diesen Termin.
+  const namenlos = trainerAenderung({ ...start, anonyme: [] }, start)!;
+  assert.ok(namenlos.nurNamenlose);
+  assert.deepEqual(namenlos.ausladenEintraege, ["e-x"]);
+  assert.equal(namenlos.eingeladene, undefined);
 });
 
 pruefe("KI-Zeitraum: höchstens bis zum gleichen Kalendertag im Folgejahr (#329 AK 14, Review Focus 2)", () => {
@@ -901,12 +974,14 @@ pruefe("Serie: Reichweiten je nach Änderung (#326 AK 1–4)", () => {
   assert.equal(SERIE_TEXT.datumUndRegel, "Datum und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.");
 });
 
-pruefe("Termin: Wortlaut der Verantwortlichen-Meldungen (#325)", () => {
+pruefe("Termin: Wortlaut der Trainer-Meldungen (#325, #519 AK 11, 23)", () => {
   assert.equal(
     TERMIN_MELDUNG.NICHT_MEHR_MITGLIED,
     "Mindestens eine gewählte Person ist nicht mehr Mitglied des Teams. Sieh dir die Mitglieder noch einmal an.",
   );
-  assert.equal(TERMIN_TEXT.verantwortlicheUngueltig, "Bitte nur Mitglieder des Teams als Verantwortliche wählen.");
+  assert.equal(TRAINER_TEXT.kennungUngueltig, "Bitte nur Mitglieder des Teams als Trainer:innen wählen.");
+  assert.equal(TRAINER_MELDUNG.VERANTWORTUNG_PFLICHT, TRAINER_TEXT.verantwortlichPflicht);
+  for (const [marker, satz] of Object.entries(TRAINER_MELDUNG)) assert.equal(fehlerMeldung(`x ${marker} y`), satz, marker);
 });
 
 pruefe("Serie: namenlose Verantwortliche nur für diesen Termin (#325 PC 8)", () => {
@@ -977,6 +1052,7 @@ pruefe("Serien-Marker: kein Marker steckt in einem anderen (includes-Suche bleib
     ...Object.keys(SERIE_MELDUNG),
     ...Object.keys(SPIELER_MELDUNG),
     ...Object.keys(KADER_MELDUNG),
+    ...Object.keys(TRAINER_MELDUNG),
     // Wird vor der Übersetzung abgefangen (lib/kern/kader.ts), darf aber
     // keinen Satz treffen.
     VERFALL_MARKER,
@@ -1103,7 +1179,7 @@ pruefe("Serie: Felder und Spielerzahl mit denselben Sätzen, jede Reichweite, fo
   assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false }), ["nur_dieser", "dieser_und_folgende", "alle"]);
   assert.equal(
     SERIE_MELDUNG.SERIE_ANGABEN_UNGUELTIG,
-    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Verantwortliche, Felder, Spielerzahl oder Kader.",
+    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Eingeladene, Verantwortung, Felder, Spielerzahl oder Kader.",
   );
 });
 
@@ -1972,7 +2048,8 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#323": ["training_zuordnen", "training_loesen"],
     "#324": ["terminserie_festlegen"],
     "#326": ["termin_der_serie_folgen"],
-    "#325": ["team_mitglieder_abrufen", "termin_verantwortliche_setzen"],
+    "#325": ["team_mitglieder_abrufen"],
+    "#519": ["termin_trainer_aendern"],
     "#327": ["termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen"],
     "#329": ["team_plan_abrufen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],

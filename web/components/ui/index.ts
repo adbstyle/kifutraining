@@ -1,6 +1,7 @@
 export { Button, ButtonLink, buttonClasses } from "./Button";
 export { ButtonGroup } from "./ButtonGroup";
-export { Lozenge, HerkunftLozenge, SichtbarkeitLozenge, KategorieLozenge, Badge } from "./Lozenge";
+export { Lozenge, SecondaryLozenge, HerkunftLozenge, SichtbarkeitLozenge, KategorieLozenge, Badge } from "./Lozenge";
+export { ZeichenZahl } from "./ZeichenZahl";
 export {
   FilterChip,
   ChoiceChip,
