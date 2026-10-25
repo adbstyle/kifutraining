@@ -534,7 +534,7 @@ export type TeamTrainingRow = TrainingListRow & {
 
 const TEAM_LIST_SELECT =
   `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, serie_id, ausgefallen, ausfall_grund, ` +
-  "termin_trainer ( id, user_id, verantwortlich, trainer_name, trainer_ehemalig ) )";
+  "termin_trainer ( id, user_id, verantwortlich, abgesagt_am, trainer_name, trainer_ehemalig ) )";
 
 export type TeamTrainingFilter = {
   /** Sucht im Namen, wie die Trainings-Übersicht (`search_text`). */
@@ -598,6 +598,7 @@ export async function getTeamTrainingsFuer(
         id: string;
         user_id: string | null;
         verantwortlich: boolean;
+        abgesagt_am: string | null;
         trainer_name: string | null;
         trainer_ehemalig: boolean;
       }[];

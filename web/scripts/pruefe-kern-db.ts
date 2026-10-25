@@ -60,7 +60,7 @@ const { legeTerminFest, aendereTermin, entferneTermin, ordneTrainingZu, loeseTra
   "../lib/kern/termine"
 );
 const { TERMIN_MELDUNG, TERMIN_TEXT } = await import("../lib/termin");
-const { TRAINER_MELDUNG, TRAINER_TEXT } = await import("../lib/trainer");
+const { TRAINER_MELDUNG, TRAINER_TEXT, absagenVerfallText } = await import("../lib/trainer");
 const { FELDER_TEXT, felderProblem } = await import("../lib/termin-felder");
 type Feld = import("../lib/termin-felder").Feld;
 type Felder = import("../lib/termin-felder").Felder;
@@ -1483,7 +1483,7 @@ try {
       spielerzahl: null,
       spielstand: null,
       serieId: null,
-      trainer: [{ eintragId: eintrag, userId: a.id, name, ehemalig: false, verantwortlich: true }],
+      trainer: [{ eintragId: eintrag, userId: a.id, name, ehemalig: false, verantwortlich: true, abgesagtAm: null }],
       ausgefallen: false,
       ausfallGrund: null,
       anstehend: true,
@@ -1512,7 +1512,7 @@ try {
       erwartete_spielerzahl: null,
       spielerzahl: { quelle: "unbekannt", zahl: null, gesamt: null },
       serie_id: null,
-      trainer: [{ id: a.id, anzeigename: name, ehemalig: false, verantwortlich: true }],
+      trainer: [{ id: a.id, anzeigename: name, ehemalig: false, verantwortlich: true, abgesagt_am: null }],
       ausgefallen: false,
       ausfall_grund: null,
       anstehend: true,
@@ -1803,7 +1803,8 @@ try {
   });
 
   // ── Kalender: Trainer:innen einladen und Verantwortung (#519) ───────────
-  const { aendereTrainer, teamMitglieder } = await import("../lib/kern/trainer");
+  const { aendereTrainer, setzeAbsage, teamMitglieder } = await import("../lib/kern/trainer");
+  const { trainerAusgabe } = await import("../lib/trainer-ausgabe");
   /** Die Eingeladenen eines Termins, sortiert; `null` = Eintrag eines gelöschten Kontos. */
   const eingeladeneVon = async (terminId: string) =>
     (await admin.from("termin_trainer").select("user_id").eq("termin_id", terminId)).data!.map((x) => x.user_id).sort();
@@ -2016,6 +2017,117 @@ try {
     wert(await aendereTrainer(a.supabase, a.id, { terminId: alt, ohneNamenEntfernen: true }));
     assert.deepEqual(await eingeladeneVon(alt), [a.id, x.id].sort());
     assert.equal(await verantwortlichVon(alt), null);
+  });
+
+  await pruefe("Absagen: für sich und andere, nur bis Beginn, nie am Ausfall, veraltet abgewiesen (#520 AK 1–3, 6, 10)", async () => {
+    const team = await serienTeam("Kern-DB-Absagen");
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", verantwortlich: a.id })).terminId;
+    const absage = async (terminId: string, userId: string) =>
+      (await admin.from("termin_trainer").select("abgesagt_am").eq("termin_id", terminId).eq("user_id", userId).single()).data!.abgesagt_am as string | null;
+    // AK 1: auch für andere. PC 9: mit Zeitpunkt; wieder zusagen entfernt ihn.
+    wert(await setzeAbsage(a.supabase, a.id, { terminId: t, userId: b.id, abgesagt: true }));
+    const erste = await absage(t, b.id);
+    assert.ok(erste, "abgesagt mit Zeitpunkt");
+    wert(await setzeAbsage(b.supabase, b.id, { terminId: t, userId: b.id, abgesagt: true }));
+    assert.equal(await absage(t, b.id), erste, "eine bestehende Absage behält ihren Zeitpunkt");
+    const plan = wert(await teamPlan(b.supabase, b.id, { teamId: team, eingrenzung: "dabei" }));
+    assert.ok(![...plan.kommend, ...plan.vergangen].some((x) => x.id === t), "PC 7: nicht mehr unter «dabei»");
+    const eingeladen = wert(await teamPlan(b.supabase, b.id, { teamId: team, eingrenzung: "eingeladen" }));
+    assert.ok(eingeladen.kommend.some((x) => x.id === t), "PC 7: weiter unter «eingeladen»");
+    wert(await setzeAbsage(b.supabase, b.id, { terminId: t, userId: b.id, abgesagt: false }));
+    assert.equal(await absage(t, b.id), null);
+
+    // AK 10: Was die Oberfläche zeigte, hat sich geändert → veraltet.
+    const gesehen = { datum: tagCh(3), beginn: "18:00", verantwortlich: a.id };
+    wert(await setzeAbsage(b.supabase, b.id, { terminId: t, userId: b.id, abgesagt: true, gesehen }));
+    fehler(await setzeAbsage(b.supabase, b.id, { terminId: t, userId: b.id, abgesagt: false, gesehen: { ...gesehen, verantwortlich: b.id } }), "konflikt", TRAINER_MELDUNG.ABSAGE_VERALTET);
+    fehler(await setzeAbsage(b.supabase, b.id, { terminId: t, userId: b.id, abgesagt: false, gesehen: { ...gesehen, beginn: "17:00" } }), "konflikt", TRAINER_MELDUNG.ABSAGE_VERALTET);
+    // Nicht (mehr) eingeladen.
+    const c = await wegwerfKonto();
+    await admin.from("team_members").insert({ team_id: team, user_id: c.id });
+    fehler(await setzeAbsage(a.supabase, a.id, { terminId: t, userId: c.id, abgesagt: true }), "regel", TRAINER_MELDUNG.TRAINER_NICHT_EINGELADEN);
+
+    // AK 3, 6: Am ausgefallenen Termin ruht die Absage und lässt sich nicht ändern; zurückgenommen gilt sie wieder (PC 5).
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t }));
+    fehler(await setzeAbsage(b.supabase, b.id, { terminId: t, userId: b.id, abgesagt: false }), "regel", TRAINER_MELDUNG.ABSAGE_AUSGEFALLEN);
+    assert.ok(await absage(t, b.id), "ruht");
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
+    assert.ok(await absage(t, b.id), "gilt wieder");
+    // AK 3: ab Beginn nicht mehr.
+    const vorbei = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
+    fehler(await setzeAbsage(a.supabase, a.id, { terminId: vorbei, userId: b.id, abgesagt: true }), "regel", TRAINER_MELDUNG.ABSAGE_BEGONNEN);
+    // Fremde sehen den Termin nicht.
+    fehler(await setzeAbsage(c.supabase, c.id, { terminId: randomUUID(), userId: c.id, abgesagt: true }), "nicht_gefunden");
+  });
+
+  await pruefe("Absagen der Verantwortlichen: erst übergeben, sonst ohne Verantwortliche:n; Verantwortung hebt die Absage auf (#520 AK 4, 5, 19, PC 1, 11)", async () => {
+    const team = await serienTeam("Kern-DB-Absagen-Verantwortung");
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Cup", teamId: team, datum: tagCh(4), beginn: "10:00", ende: "11:00", verantwortlich: a.id })).terminId;
+    // AK 4: B ist dabei → A kann nicht einfach absagen.
+    fehler(await setzeAbsage(a.supabase, a.id, { terminId: t, userId: a.id, abgesagt: true }), "regel", TRAINER_MELDUNG.VERANTWORTUNG_UEBERGEBEN);
+    fehler(await setzeAbsage(a.supabase, a.id, { terminId: t, userId: a.id, abgesagt: true, uebernimmt: a.id }), "regel", TRAINER_MELDUNG.UEBERNAHME_UNGUELTIG);
+    // AK 19: im selben Schritt an B übergeben.
+    wert(await setzeAbsage(a.supabase, a.id, { terminId: t, userId: a.id, abgesagt: true, uebernimmt: b.id }));
+    assert.equal(await verantwortlichVon(t), b.id);
+    // PC 1: B ist die Letzte, die dabei ist → sagt ab, der Termin ist ohne Verantwortliche:n.
+    wert(await setzeAbsage(b.supabase, b.id, { terminId: t, userId: b.id, abgesagt: true }));
+    assert.equal(await verantwortlichVon(t), null);
+    // AK 5, PC 11: Verantwortung an eine, die abgesagt hat — sie ist wieder dabei.
+    wert(await aendereTrainer(a.supabase, a.id, { terminId: t, verantwortlich: a.id }));
+    const zeile = (await admin.from("termin_trainer").select("verantwortlich, abgesagt_am").eq("termin_id", t).eq("user_id", a.id).single()).data!;
+    assert.deepEqual(zeile, { verantwortlich: true, abgesagt_am: null });
+    // PC 6: Ausladen entfernt die Absage mit der Einladung.
+    wert(await aendereTrainer(a.supabase, a.id, { terminId: t, ausladen: [b.id] }));
+    assert.deepEqual(await eingeladeneVon(t), [a.id]);
+  });
+
+  await pruefe("Absagen verfallen beim Verlegen, auch über die Serie, mit Zahl vorher (#520 AK 11, 14, PC 2–4)", async () => {
+    const team = await serienTeam("Kern-DB-Absagen-Verfall");
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    const abgesagte = async (terminId: string) =>
+      (await admin.from("termin_trainer").select("user_id").eq("termin_id", terminId).not("abgesagt_am", "is", null)).data!.length;
+    // Einzeln: Ort ändern lässt sie (PC 4), Beginn ändern verlangt Bestätigung, dann verfallen sie (PC 2).
+    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", verantwortlich: a.id })).terminId;
+    wert(await setzeAbsage(b.supabase, b.id, { terminId: t, userId: b.id, abgesagt: true }));
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t, ort: "Neu" }));
+    assert.equal(await abgesagte(t), 1);
+    const r = fehler(await aendereTermin(a.supabase, a.id, { terminId: t, beginn: "17:00", ende: "19:00" }), "regel") as { verfallend?: number; absagen?: number; meldung: string };
+    assert.equal(r.verfallend, 1);
+    assert.equal(r.absagen, 1);
+    assert.ok(r.meldung.includes(absagenVerfallText(1)), r.meldung);
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t, beginn: "17:00", ende: "19:00", bestaetigt: 1 }));
+    assert.equal(await abgesagte(t), 0);
+    // Ein Spiel: nur mit einem anderen Datum (PC 3).
+    const s = wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Cup", teamId: team, datum: tagCh(5), beginn: "10:00", ende: "11:00", verantwortlich: a.id })).terminId;
+    wert(await setzeAbsage(b.supabase, b.id, { terminId: s, userId: b.id, abgesagt: true }));
+    wert(await aendereTermin(a.supabase, a.id, { terminId: s, beginn: "11:00", ende: "12:00", bestaetigt: true }));
+    assert.equal(await abgesagte(s), 1, "andere Zeit am selben Tag: bleibt");
+    wert(await aendereTermin(a.supabase, a.id, { terminId: s, datum: tagCh(6), bestaetigt: true }));
+    assert.equal(await abgesagte(s), 0, "anderes Datum: verfällt");
+
+    // Serie: Vorschau zählt, Ausführung lässt verfallen (AK 11, 14).
+    const serie = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [wochentagVon(tagCh(1))], von: tagCh(1), bis: tagCh(15), beginn: "18:00", ende: "19:30", verantwortlich: a.id }));
+    const st = await termineDer(serie.serieId);
+    for (const x of st.slice(0, 2)) wert(await setzeAbsage(b.supabase, b.id, { terminId: x.id, userId: b.id, abgesagt: true }));
+    const vorschau = wert(await aendereSerie(a.supabase, a.id, { terminId: st[0].id, reichweite: "alle", aenderung: { beginn: "17:00", ende: "18:30" }, vorschau: true }));
+    assert.equal(vorschau.absagenVerfallend, 2);
+    // KI ohne Bestätigung → abgewiesen, mit → ausgeführt.
+    fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: st[0].id, reichweite: "alle", beginn: "17:00", ende: "18:30" }), "regel");
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: st[0].id, reichweite: "alle", beginn: "17:00", ende: "18:30", bestaetigt: true }));
+    for (const x of st) assert.equal(await abgesagte(x.id), 0, `verfallen ${x.datum}`);
+  });
+
+  await pruefe("Absagen über die KI: termin_trainer_absagen und die Auskunft mit abgesagt_am (#520 AK 12, 13, 23)", async () => {
+    const team = await serienTeam("Kern-DB-Absagen-KI");
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00", verantwortlich: a.id })).terminId;
+    wert(await setzeAbsage(a.supabase, a.id, { terminId: t, userId: b.id, abgesagt: true }));
+    const plan = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
+    const eintrag = plan.kommend.find((x) => x.id === t)!.trainer.find((x) => x.userId === b.id)!;
+    assert.ok(eintrag.abgesagtAm, "der Plan nennt den Zeitpunkt");
+    assert.equal(trainerAusgabe([eintrag])[0].abgesagt_am, eintrag.abgesagtAm);
   });
 
   await pruefe("Trainingsplan eingrenzen: dabei und eingeladen, mit Zeitraum (#519 AK 19, 26, #329)", async () => {

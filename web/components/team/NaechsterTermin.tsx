@@ -1,14 +1,14 @@
 "use client";
 
-import { ohneVerantwortliche, trainerNameFuer, verantwortlicheVon, type Eingrenzung } from "@/lib/trainer";
+import { absageOffen, ohneVerantwortliche, trainerNameFuer, verantwortlicheVon, type Eingrenzung } from "@/lib/trainer";
 import Link from "next/link";
 import { CalendarPlus, Clock, LandPlot, Shirt } from "lucide-react";
-import { Button, ButtonLink, Kalenderblatt, Lozenge, OverflowMenu, SectionMessage, TreffpunktListe, ZeichenZahl } from "@/components/ui";
+import { Button, ButtonLink, Kalenderblatt, Lozenge, OverflowMenu, SectionMessage, Switch, TreffpunktListe, ZeichenZahl } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage } from "@/lib/serie";
 import { zeitText } from "@/lib/termin";
-import { datumKurz } from "@/lib/zeit";
+import { datumKurz, terminBegonnen } from "@/lib/zeit";
 import { richtwertStufeText, zeitpunktKurz } from "@/lib/spiel";
 import { felderKurz } from "@/lib/termin-felder";
 import { spielerzahlKurz, spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
@@ -158,7 +158,7 @@ export function NaechsterTermin({
           />
         )}
         {t.bemerkung && <p className="whitespace-pre-line type-body-medium text-on-surface">{t.bemerkung}</p>}
-        <p className="type-body-small text-on-surface-mittel">{verantwortlichZeile(t, ich)}</p>
+        <IchBinDabei t={t} />
 
         <div className="flex flex-wrap gap-2">
           {t.training ? (
@@ -183,6 +183,34 @@ export function NaechsterTermin({
   );
 }
 
+
+/** Der eigene Stand als Schalter (#520 AK 18, 20; Tafel «Als Nächstes»):
+ *  an = dabei. Wer nicht eingeladen ist, lädt sich mit dem Umlegen ein (wie
+ *  «Ich helfe aus»). Daneben, wer verantwortlich ist (#519 AK 24). Ab Beginn
+ *  und an einem ausgefallenen Termin gesperrt. */
+function IchBinDabei({ t }: { t: TerminZeile }) {
+  const a = useTerminAktionen();
+  const ich = t.trainer.find((x) => x.userId === a.ich);
+  const offen = absageOffen(t, terminBegonnen(t.datum, t.beginn));
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <Switch
+        checked={!!ich && !ich.abgesagtAm}
+        disabled={!offen || a.pending}
+        aria-label="Ich bin dabei"
+        onChange={(e) =>
+          ich ? a.absagen(t, ich, !e.target.checked) : a.trainer(t, { einladen: [a.ich] }, "Du bist eingeladen.")
+        }
+      />
+      <span aria-hidden className="type-body-medium text-on-surface">Ich bin dabei</span>
+      <span className="type-body-small text-on-surface-mittel">
+        {[verantwortlichZeile(t, a.ich), ich?.abgesagtAm && "du hast abgesagt", !ich && "du bist nicht eingeladen"]
+          .filter(Boolean)
+          .join(" · ")}
+      </span>
+    </div>
+  );
+}
 
 /** «du bist verantwortlich», «Anna Keller verantwortlich» oder «niemand verantwortlich» (#519 AK 24). */
 function verantwortlichZeile(t: TerminZeile, ich: string): string {

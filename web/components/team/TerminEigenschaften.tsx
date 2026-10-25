@@ -6,7 +6,7 @@ import { wochentageText } from "@/lib/serie";
 import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { feldName, feldText } from "@/lib/termin-felder";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
-import { verantwortlichText } from "@/lib/trainer";
+import { dabeiZahl, verantwortlichText } from "@/lib/trainer";
 import { FUER_ALLE } from "@/lib/kader";
 import { richtwertStufeText, richtwertText, zeitpunktKurz } from "@/lib/spiel";
 import { KaderLozenges } from "./KaderLozenge";
@@ -57,7 +57,9 @@ export function TerminEigenschaften({
       )}
       {/* #519 AK 17: wer verantwortlich ist, man selbst mit «(du)»; die Namen aller im Reiter «Trainer:innen». */}
       <Eigenschaft label="Verantwortlich">{v ?? "Niemand"}</Eigenschaft>
-      <Eigenschaft label="Trainer:innen">{t.trainer.length} eingeladen</Eigenschaft>
+      <Eigenschaft label="Trainer:innen">
+        {dabeiZahl(t.trainer)} von {t.trainer.length} dabei
+      </Eigenschaft>
       {/* #453 AK 5: für welche Kader er gilt oder dass er für alle gilt. */}
       {(mitKadern || t.kader.length > 0) && (
         <Eigenschaft label="Kader">

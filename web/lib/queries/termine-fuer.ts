@@ -153,6 +153,7 @@ type RawTermin = {
     id: string;
     user_id: string | null;
     verantwortlich: boolean;
+    abgesagt_am: string | null;
     trainer_name: string | null;
     trainer_ehemalig: boolean;
   }[];
@@ -187,7 +188,7 @@ export function kurzeZeit(t: string): string {
 
 const TERMIN_SELECT =
   "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, vorher_datum, vorher_beginn, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, eingeladene_abweichend, verantwortung_abweichend, felder_abweichend, spielerzahl_abweichend, kader_abweichend, ausgefallen, ausfall_grund, " +
-  "termin_trainer ( id, user_id, verantwortlich, trainer_name, trainer_ehemalig ), " +
+  "termin_trainer ( id, user_id, verantwortlich, abgesagt_am, trainer_name, trainer_ehemalig ), " +
   "termin_kader ( kader_id, kader ( name ) ), " +
   "spiel_treffpunkte ( anreise, vorlauf_min, ort ), " +
   "trainings ( id, name, stufen, termin_training ), " +
@@ -211,7 +212,14 @@ export function nachName<T>(liste: T[], name: (x: T) => string | null, schluesse
 
 /** Die Eingeladenen eines Termins aus dem Embed — geteilt mit trainings-fuer.ts. */
 export function mapTrainer(
-  zeilen: readonly { id: string; user_id: string | null; verantwortlich: boolean; trainer_name: string | null; trainer_ehemalig: boolean }[],
+  zeilen: readonly {
+    id: string;
+    user_id: string | null;
+    verantwortlich: boolean;
+    abgesagt_am: string | null;
+    trainer_name: string | null;
+    trainer_ehemalig: boolean;
+  }[],
 ): TerminTrainer[] {
   return nachTrainerName(
     zeilen.map((v) => ({
@@ -220,6 +228,7 @@ export function mapTrainer(
       name: v.user_id === null ? null : v.trainer_name,
       ehemalig: v.trainer_ehemalig,
       verantwortlich: v.verantwortlich,
+      abgesagtAm: v.abgesagt_am,
     })),
     (v) => v.eintragId,
   );

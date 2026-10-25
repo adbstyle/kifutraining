@@ -2,12 +2,12 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
 import { SERIE_MELDUNG, SERIE_TEXT, type Reichweite } from "@/lib/serie";
-import { TRAINER_TEXT } from "@/lib/trainer";
+import { TRAINER_MELDUNG, TRAINER_TEXT } from "@/lib/trainer";
 import { getTeamMitgliederFuer } from "@/lib/queries/teams-fuer";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import { kalenderFehler, ladeTermin } from "@/lib/kern/termine";
 import { aendereSerie, type SerienFolge } from "@/lib/kern/serien";
-import { fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
+import { NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 
 /**
  * Trainer:innen je Termin und Serie (#519): wen ein Termin einlädt und wer
@@ -170,4 +170,42 @@ export async function aendereTrainer(
     bestaetigt: e.bestaetigt,
   });
   return r.ok ? ok({ terminId: t.id, teamId: r.wert.teamId, serie: r.wert }) : r;
+}
+
+export type AbsageSetzen = {
+  terminId: string;
+  /** Wer absagt oder wieder zusagt — man selbst oder eine andere Eingeladene (AK 1). */
+  userId: string;
+  abgesagt: boolean;
+  /** Was die Oberfläche zeigte; hat es sich seither geändert, ist die Wahl veraltet (AK 10). */
+  gesehen?: { datum: string; beginn: string; verantwortlich: string | null };
+  /** Die Verantwortliche sagt ab und gibt im selben Schritt ab (AK 19). */
+  uebernimmt?: string;
+};
+
+/** Eine Trainer:in für einen Termin absagen oder wieder zusagen (#520 AK 1–5,
+ *  10, 19) — immer nur an diesem Termin, auch in einer Serie (PC 10). */
+export async function setzeAbsage(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: AbsageSetzen,
+): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
+  const wer = bereinigeKennung(e.userId, "trainer_id");
+  if (!wer.ok) return wer.fehler;
+  const uebernimmt = bereinigeKennung(e.uebernimmt, "uebernimmt");
+  if (!uebernimmt.ok) return uebernimmt.fehler;
+  if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, { feld: "termin_id" });
+  const { data, error } = await supabase.rpc("termin_trainer_absage_setzen", {
+    p_termin: e.terminId,
+    p_user: wer.id,
+    p_abgesagt: e.abgesagt,
+    p_gesehen: e.gesehen ?? null,
+    p_uebernimmt: uebernimmt.id ?? null,
+  });
+  if (error) {
+    // Die Wahl ist veraltet (AK 10): ein Konflikt, kein Regelverstoss.
+    if (error.message.includes("ABSAGE_VERALTET")) return fehlschlag("konflikt", TRAINER_MELDUNG.ABSAGE_VERALTET);
+    return kalenderFehler(error);
+  }
+  return ok({ terminId: e.terminId, teamId: (data as { team: string }).team });
 }

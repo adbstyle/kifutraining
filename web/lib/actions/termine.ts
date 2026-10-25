@@ -20,7 +20,7 @@ import {
   type SerienFolge,
 } from "@/lib/kern/serien";
 import { teamPlan } from "@/lib/kern/team";
-import { aendereTrainer, type TrainerAendern } from "@/lib/kern/trainer";
+import { aendereTrainer, setzeAbsage, type AbsageSetzen, type TrainerAendern } from "@/lib/kern/trainer";
 import type { KernErgebnis } from "@/lib/kern/ergebnis";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Reichweite, Wochentag } from "@/lib/serie";
@@ -47,6 +47,8 @@ type Fehler = {
   error: string;
   verfallend?: number;
   nachtraege?: number;
+  /** Davon Absagen von Trainer:innen (#520 AK 11). */
+  absagen?: number;
   /** Ein Spiel (#463 AK 26): Die Verlegung rückt die Meldefrist ins Abgelaufene. */
   fristAbgelaufen?: boolean;
   /** Ein Spiel entfernen (#463 AK 27): so viele Meldungen verschwinden. */
@@ -125,6 +127,7 @@ export async function aendereTerminAktion(
       error: r.meldung,
       verfallend: r.verfallend,
       nachtraege: r.nachtraege,
+      absagen: r.absagen,
       fristAbgelaufen: r.fristAbgelaufen,
       kennzeichnungen: r.kennzeichnungen,
     };
@@ -268,6 +271,17 @@ export async function aendereTrainerAktion(
   return { ok: true };
 }
 
+/** Eine Trainer:in für einen Termin absagen oder wieder zusagen (#520 AK 1,
+ *  10, 18, 19) — mit dem, was die Oberfläche zeigte (`gesehen`). */
+export async function setzeAbsageAktion(e: AbsageSetzen): Promise<{ ok: true } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await setzeAbsage(a.supabase, a.userId, e);
+  if (!r.ok) return { ok: false, error: r.meldung };
+  revalidiereTeam(r.wert.teamId);
+  return { ok: true };
+}
+
 // ── Serien mit Reichweite (#326) ──────────────────────────────────────────────
 //
 // «Nur dieser» läuft über `aendereTerminAktion` / `entferneTerminAktion`. Die
@@ -324,7 +338,7 @@ export async function folgeDerSerieAktion(
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await folgeDerSerie(a.supabase, a.userId, { terminId, angaben, bestaetigt });
-  if (!r.ok) return { ok: false, error: r.meldung, verfallend: r.verfallend, nachtraege: r.nachtraege };
+  if (!r.ok) return { ok: false, error: r.meldung, verfallend: r.verfallend, nachtraege: r.nachtraege, absagen: r.absagen };
   revalidiereTeam(r.wert.teamId);
   return { ok: true };
 }

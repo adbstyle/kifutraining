@@ -6,6 +6,7 @@ import { Button, Dialog } from "@/components/ui";
 import { verfallDialogText } from "@/lib/spieler";
 import { kaderVerfallText } from "@/lib/kader";
 import { spielVerfallText } from "@/lib/spiel";
+import { absagenVerfallText } from "@/lib/trainer";
 
 /* Verlegen lässt Abmeldungen verfallen (#437 AK 1, PC 1): Wer sich für den
    alten Zeitpunkt abgemeldet hat, gilt am neuen wieder als angemeldet. Das
@@ -68,6 +69,8 @@ type Antwort = {
   fristAbgelaufen?: boolean;
   /** Davon Kennzeichnungen als nicht aufgeboten (#464 AK 10). */
   kennzeichnungen?: number;
+  /** Davon Absagen von Trainer:innen (#520 AK 11). */
+  absagen?: number;
 };
 
 /**
@@ -96,11 +99,17 @@ export function useVerfallRueckfrage(pending?: boolean) {
   function nachVerlegung(r: Antwort & { verfallend: number }, weiter: () => void) {
     // Ein Spiel (#463 AK 13, 26; #464 AK 10; #487 AK 13): Meldungen,
     // Kennzeichnungen, Nachträge und die Frist.
+    const absagen = r.absagen ?? 0;
     if (r.fristAbgelaufen !== undefined) {
       const k = r.kennzeichnungen ?? 0;
       const n = r.nachtraege ?? 0;
-      const meldungen = r.verfallend - k - n;
-      const text = `${spielVerfallText(meldungen, r.fristAbgelaufen, k, n)}${meldungen > 0 ? " Für den neuen Tag melden sich alle neu." : ""}`;
+      const meldungen = r.verfallend - k - n - absagen;
+      const text = [
+        `${spielVerfallText(meldungen, r.fristAbgelaufen, k, n)}${meldungen > 0 ? " Für den neuen Tag melden sich alle neu." : ""}`,
+        absagenVerfallText(absagen),
+      ]
+        .filter(Boolean)
+        .join(" ");
       const titel =
         meldungen > 0
           ? "Meldungen verfallen"
@@ -108,12 +117,20 @@ export function useVerfallRueckfrage(pending?: boolean) {
             ? "Kennzeichnungen verfallen"
             : n > 0
               ? "Nachträge verfallen"
-              : "Meldefrist abgelaufen";
+              : absagen > 0
+                ? "Absagen verfallen"
+                : "Meldefrist abgelaufen";
       setFrage({ anzahl: r.verfallend, text, titel, weiter });
       return;
     }
     const nachtraege = r.nachtraege ?? 0;
-    setFrage({ anzahl: r.verfallend, text: verfallDialogText(r.verfallend - nachtraege, nachtraege), weiter });
+    const abmeldungen = r.verfallend - nachtraege - absagen;
+    setFrage({
+      anzahl: r.verfallend,
+      text: verfallDialogText(abmeldungen, nachtraege, absagen),
+      titel: abmeldungen + nachtraege > 0 ? undefined : "Absagen verfallen",
+      weiter,
+    });
   }
 
   const dialog = (

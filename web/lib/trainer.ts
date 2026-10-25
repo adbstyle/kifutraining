@@ -3,10 +3,10 @@
  * Termin vorbereitet und leitet. Rein — ohne Server-Importe, damit Oberfläche,
  * Fachkern, KI-Werkzeuge und Prüfskripte dieselben Regeln und Sätze teilen.
  *
- * Modell (PO 2026-10-25): Eingeladene gelten als dabei, bis sie absagen. Genau
- * eine Eingeladene ist verantwortlich — oder keine, wenn die Verantwortliche
- * ausgeladen wurde oder ausgeschieden ist. Wer verantwortlich wird, ist damit
- * eingeladen; Ausladen wirkt immer.
+ * Modell (PO 2026-10-25): Eingeladene gelten als dabei, bis sie absagen (#520).
+ * Höchstens eine Eingeladene ist verantwortlich — keine, wenn die
+ * Verantwortliche ausgeladen wurde, ausgeschieden ist oder als Letzte absagte.
+ * Wer verantwortlich wird, ist damit eingeladen und dabei; Ausladen wirkt immer.
  */
 
 /** Wie ein Eintrag ohne Namen (gelöschtes Konto) überall heisst. */
@@ -23,6 +23,8 @@ export type TerminTrainer = {
   ehemalig: boolean;
   /** Bereitet den Termin vor und leitet ihn (höchstens eine je Termin). */
   verantwortlich: boolean;
+  /** Wann abgesagt wurde (#520 AK 17); `null`: dabei. */
+  abgesagtAm: string | null;
 };
 
 /** Eine Trainer:in in der Vorgabe einer Serie. */
@@ -58,9 +60,26 @@ export function istEingeladen(trainer: readonly TerminTrainer[], userId: string)
   return trainer.some((t) => t.userId === userId);
 }
 
-/** Ist dieses Konto am Termin dabei — eingeladen und (ab #520) nicht abgesagt? */
+/** Ist dieses Konto am Termin dabei — eingeladen und nicht abgesagt (#520 AK 2)? */
 export function istDabei(trainer: readonly TerminTrainer[], userId: string): boolean {
-  return istEingeladen(trainer, userId);
+  return trainer.some((t) => t.userId === userId && !t.abgesagtAm);
+}
+
+/** Hat dieses Konto für den Termin abgesagt? */
+export function hatAbgesagt(trainer: readonly TerminTrainer[], userId: string): boolean {
+  return trainer.some((t) => t.userId === userId && !!t.abgesagtAm);
+}
+
+/** Lassen sich Absagen am Termin noch ändern (#520 AK 3)? Bis zum Beginn bzw.
+ *  Anpfiff und nie an einem ausgefallenen Termin. `begonnen` aus lib/zeit. */
+export function absageOffen(t: { ausgefallen: boolean }, begonnen: boolean): boolean {
+  return !t.ausgefallen && !begonnen;
+}
+
+/** Wer die Verantwortung übernehmen kann, wenn die Verantwortliche absagt
+ *  (#520 AK 4, 19): andere Eingeladene, die dabei sind. */
+export function uebernehmenKoennen(trainer: readonly TerminTrainer[], ohne: string): TerminTrainer[] {
+  return trainer.filter((t) => t.userId && t.userId !== ohne && !t.abgesagtAm);
 }
 
 /** Gehört der Termin in die Eingrenzung dieses Kontos? */
@@ -84,7 +103,7 @@ export function nachTrainerName<T extends { name: string | null }>(liste: readon
 
 /** Wie viele dabei sind (ohne Einträge gelöschter Konten). */
 export function dabeiZahl(trainer: readonly TerminTrainer[]): number {
-  return trainer.filter((t) => t.userId && istDabei(trainer, t.userId)).length;
+  return trainer.filter((t) => t.userId && !t.abgesagtAm).length;
 }
 
 /** Ein anstehender, nicht ausgefallener Termin ohne Verantwortliche:n fällt
@@ -158,6 +177,15 @@ export function trainerAenderung(neu: TrainerWert, alt: TrainerWert) {
 }
 export type TrainerAenderung = NonNullable<ReturnType<typeof trainerAenderung>>;
 
+/** Was beim Verlegen mit den Absagen geschieht (#520 AK 11, PC 2, 3) — ein
+ *  Satz, der an den der Abmeldungen anschliesst; leer ohne Absagen. */
+export function absagenVerfallText(n: number): string {
+  if (n === 0) return "";
+  return n === 1
+    ? "Ausserdem verfällt 1 Absage einer Trainer:in: Sie gilt wieder als dabei."
+    : `Ausserdem verfallen ${n} Absagen von Trainer:innen: Sie gelten wieder als dabei.`;
+}
+
 export const TRAINER_TEXT = {
   /** Eingabe mit einer Kennung, die keine ist. */
   kennungUngueltig: "Bitte nur Mitglieder des Teams als Trainer:innen wählen.",
@@ -175,4 +203,13 @@ export const TRAINER_MELDUNG = {
     "Die Verantwortung lässt sich nur weitergeben. Gib sie einer anderen Trainer:in oder lade die Verantwortliche aus.",
   VERANTWORTUNG_PFLICHT: TRAINER_TEXT.verantwortlichPflicht,
   TRAINER_WIDERSPRUCH: "Wer verantwortlich wird, lässt sich nicht gleichzeitig ausladen.",
+  // Absagen (Migration trainer_absagen, #520).
+  ABSAGE_VERALTET:
+    "Seit deiner Auswahl hat sich der Termin oder seine Verantwortung geändert. Sieh dir die Trainer:innen noch einmal an.",
+  ABSAGE_AUSGEFALLEN: "Der Termin fällt aus: Absagen und Zusagen ruhen, bis der Ausfall zurückgenommen ist.",
+  ABSAGE_BEGONNEN: "Der Termin hat begonnen: Absagen und Zusagen lassen sich nicht mehr ändern.",
+  TRAINER_NICHT_EINGELADEN: "Diese Trainer:in ist zu diesem Termin nicht (mehr) eingeladen.",
+  VERANTWORTUNG_UEBERGEBEN:
+    "Die Verantwortliche kann erst absagen, wenn eine andere Trainer:in, die dabei ist, die Verantwortung übernimmt.",
+  UEBERNAHME_UNGUELTIG: "Übernehmen kann nur eine andere eingeladene Trainer:in, die dabei ist.",
 } as const;

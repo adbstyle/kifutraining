@@ -129,7 +129,12 @@ import { eingrenzungAus, planHref, terminHref } from "../lib/team-ansicht";
 import {
   TRAINER_MELDUNG,
   TRAINER_TEXT,
+  absageOffen,
+  absagenVerfallText,
   dabeiZahl,
+  hatAbgesagt,
+  istDabei,
+  uebernehmenKoennen,
   imFilter,
   nachTrainerName,
   ohneVerantwortliche,
@@ -826,12 +831,13 @@ pruefe("planHref: nur die Eingrenzung reist in der Adresse mit (#405, #518 PO 12
   assert.equal(eingrenzungAus({}), null);
 });
 
-const tr = (userId: string | null, name: string | null, verantwortlich = false): TerminTrainer => ({
+const tr = (userId: string | null, name: string | null, verantwortlich = false, abgesagtAm: string | null = null): TerminTrainer => ({
   eintragId: `e-${userId ?? name ?? "x"}`,
   userId,
   name,
   ehemalig: userId === null,
   verantwortlich,
+  abgesagtAm,
 });
 
 pruefe("Trainer: Eingrenzung, Zahl und Satz aus Sicht des USERS (#519 AK 18, 19, 24)", () => {
@@ -854,6 +860,22 @@ pruefe("Trainer: Eingrenzung, Zahl und Satz aus Sicht des USERS (#519 AK 18, 19,
   // Nach Name, gelöschte Konten zuletzt, Gleichnamige nach Kennung.
   const sortiert = nachTrainerName([tr(null, null), tr("z", "Anna"), tr("y", "Anna"), tr("x", "Ben")], (t) => t.eintragId);
   assert.deepEqual(sortiert.map((t) => t.userId), ["y", "z", "x", null]);
+});
+
+pruefe("Trainer: Absagen — dabei, Zahl, Eingrenzung, wer übernehmen kann, Verfall-Satz (#520)", () => {
+  const liste = [tr("a", "Anna", true), tr("b", "Ben", false, "2026-10-20T10:00:00Z"), tr("c", "Carla"), tr(null, null)];
+  assert.ok(istDabei(liste, "a") && !istDabei(liste, "b") && hatAbgesagt(liste, "b"));
+  assert.equal(dabeiZahl(liste), 2, "gelöschte Konten und Abgesagte zählen nicht");
+  // PC 7: eine Absage nimmt den Termin aus «dabei», nicht aus «eingeladen».
+  assert.ok(!imFilter(liste, "b", "dabei") && imFilter(liste, "b", "eingeladen"));
+  assert.equal(trainerZahlSatz(liste, "b"), "Trainer:innen: 2 von 4 dabei · Anna verantwortlich · du hast abgesagt");
+  assert.deepEqual(uebernehmenKoennen(liste, "a").map((t) => t.userId), ["c"], "nur andere, die dabei sind");
+  assert.ok(absageOffen({ ausgefallen: false }, false));
+  assert.ok(!absageOffen({ ausgefallen: true }, false), "AK 3: nie an einem ausgefallenen Termin");
+  assert.ok(!absageOffen({ ausgefallen: false }, true), "AK 3: nicht ab Beginn");
+  assert.equal(absagenVerfallText(0), "");
+  assert.equal(absagenVerfallText(1), "Ausserdem verfällt 1 Absage einer Trainer:in: Sie gilt wieder als dabei.");
+  assert.equal(absagenVerfallText(3), "Ausserdem verfallen 3 Absagen von Trainer:innen: Sie gelten wieder als dabei.");
 });
 
 pruefe("Trainer: Wahl im Dialog — Vorwahl, Differenz und namenlose Einträge (#519 AK 1–9)", () => {
@@ -2050,6 +2072,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#326": ["termin_der_serie_folgen"],
     "#325": ["team_mitglieder_abrufen"],
     "#519": ["termin_trainer_aendern"],
+    "#520": ["termin_trainer_absagen"],
     "#327": ["termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen"],
     "#329": ["team_plan_abrufen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],

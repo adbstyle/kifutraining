@@ -12,6 +12,9 @@ import { NeuerTerminDialog } from "./NeuerTerminDialog";
 import { spielEntfernenText } from "@/lib/spiel";
 import { TerminDialog } from "./TerminDialog";
 import { TrainingWahlDialog } from "./TrainingWahlDialog";
+import { AbsageDialog } from "./AbsageDialog";
+import { terminHref } from "@/lib/team-ansicht";
+import { uebernehmenKoennen, type TerminTrainer } from "@/lib/trainer";
 import type { TrainerAenderung } from "./TrainerWahl";
 import {
   aendereSerieAktion,
@@ -26,6 +29,7 @@ import {
   nimmAusfallZurueckAktion,
   ordneTrainingZuAktion,
   aendereTrainerAktion,
+  setzeAbsageAktion,
   vorschauSerieAktion,
   vorschauSerieEntfernenAktion,
   type TerminFelder,
@@ -64,6 +68,9 @@ export type TerminAktionen = {
   /** Trainer:innen dieses einen Termins ändern (#519 AK 5–10, 25): auch an
    *  einem Serientermin nur an ihm; `meldung` sagt die Snackbar. */
   trainer: (t: TerminZeile, aenderung: TrainerEinzeln, meldung: string) => void;
+  /** Eine Eingeladene für diesen Termin absagen oder wieder zusagen (#520
+   *  AK 1, 18); sagt die Verantwortliche ab, fragt erst «wer übernimmt?». */
+  absagen: (t: TerminZeile, wer: TerminTrainer, abgesagt: boolean) => void;
   /** Das eigene Konto. */
   ich: string;
   pending: boolean;
@@ -214,6 +221,8 @@ export function TerminBereich({
    *  verfallen (#437 AK 1, #453 AK 10): die Rückfrage samt Fortsetzung. */
   const verfall = useVerfallRueckfrage(pending);
   const [dialogFehler, setDialogFehler] = useState<string | undefined>();
+  /** Die Verantwortliche sagt ab: Wer übernimmt (#520 AK 4, 19)? */
+  const [absage, setAbsage] = useState<{ t: TerminZeile; wer: TerminTrainer } | null>(null);
 
   /** Die Nummer des laufenden Ablaufs in einem Dialog. Öffnen und Abbrechen
    *  (Knopf, Escape, Klick daneben) zählen sie hoch; wer nach einem `await`
@@ -401,7 +410,8 @@ export function TerminBereich({
     const r = b.art === "aendern"
       ? await aendereSerieAktion(b.t.id, b.reichweite, b.aenderung ?? {}, {
           ...erwartet,
-          verfallend: b.folge.abmeldungenVerfallend + b.folge.abmeldungenKader + b.folge.nachtraegeVerfallend,
+          verfallend:
+            b.folge.abmeldungenVerfallend + b.folge.abmeldungenKader + b.folge.nachtraegeVerfallend + b.folge.absagenVerfallend,
         })
       : await entferneSerieAktion(b.t.id, b.reichweite, erwartet);
     if (!r.ok) return serienFehler(b.art, r.error, laufNr.current !== nr);
@@ -502,7 +512,8 @@ export function TerminBereich({
         v.folge.entfallendAnzahl > 0 ||
         v.folge.abmeldungenVerfallend > 0 ||
         v.folge.abmeldungenKader > 0 ||
-        v.folge.nachtraegeVerfallend > 0
+        v.folge.nachtraegeVerfallend > 0 ||
+        v.folge.absagenVerfallend > 0
       )
         setBestaetigen(schritt);
       else await fuehreAus(schritt, nr);
@@ -569,10 +580,36 @@ export function TerminBereich({
       if (pending) return;
       lauf(() => aendereTrainerAktion(t.id, aenderung, t.serie ? "nur_dieser" : undefined), () => meldung, () => {});
     },
+    absagen: (t, wer, abgesagt) => {
+      if (pending || !wer.userId) return;
+      if (abgesagt && wer.verantwortlich) return setAbsage({ t, wer });
+      sageAb(t, wer, abgesagt);
+    },
     ich,
     pending,
     mitKadern: kader.length > 0,
   };
+
+  /** Absagen mit dem, was die Oberfläche zeigte (AK 10). */
+  function sageAb(t: TerminZeile, wer: TerminTrainer, abgesagt: boolean, uebernimmt?: string) {
+    const selbst = wer.userId === ich;
+    const name = wer.name ?? "Die Trainer:in";
+    const meldung = abgesagt
+      ? selbst ? "Du hast abgesagt." : `${name} hat abgesagt.`
+      : selbst ? "Du bist wieder dabei." : `${name} ist wieder dabei.`;
+    lauf(
+      () =>
+        setzeAbsageAktion({
+          terminId: t.id,
+          userId: wer.userId!,
+          abgesagt,
+          uebernimmt,
+          gesehen: { datum: t.datum, beginn: t.beginn, verantwortlich: t.trainer.find((x) => x.verantwortlich)?.userId ?? null },
+        }),
+      () => meldung,
+      () => setAbsage(null),
+    );
+  }
 
   return (
     <Kontext.Provider value={aktionen}>
@@ -634,6 +671,26 @@ export function TerminBereich({
         onSpeichern={(f, regel, trainer, grund, kaderIds) =>
           bearbeiten && speichereBearbeitung(bearbeiten, f, regel, trainer, grund, kaderIds)
         }
+      />
+
+      <AbsageDialog
+        frage={
+          absage && {
+            datum: absage.t.datum,
+            art: absage.t.art,
+            wer: absage.wer,
+            andere: uebernehmenKoennen(absage.t.trainer, absage.wer.userId!),
+          }
+        }
+        ich={ich}
+        pending={pending}
+        onClose={() => setAbsage(null)}
+        onAbsagen={(uebernimmt) => absage && sageAb(absage.t, absage.wer, true, uebernimmt)}
+        onEinladen={() => {
+          if (!absage) return;
+          setAbsage(null);
+          router.push(terminHref(teamId, null, absage.t.id, "trainer"), { scroll: false });
+        }}
       />
 
       <ReichweiteDialog

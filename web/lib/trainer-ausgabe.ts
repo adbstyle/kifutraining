@@ -11,9 +11,9 @@ import type { SerienTrainer, TerminTrainer } from "@/lib/trainer";
 
 /** Was jede Auskunft über die Trainer:innen sagt (#519 AK 23). */
 export const TRAINER_MODELL =
-  "«trainer» sind die eingeladenen Trainer:innen; sie gelten als dabei. Höchstens eine ist " +
-  "«verantwortlich» - sie bereitet den Termin vor und leitet ihn; keine heisst: niemand " +
-  "verantwortlich. Wer verantwortlich wird, ist damit eingeladen.";
+  "«trainer» sind die eingeladenen Trainer:innen; sie gelten als dabei, bis sie absagen («abgesagt_am»: " +
+  "wann, sonst null). Höchstens eine ist «verantwortlich» - sie bereitet den Termin vor und leitet ihn; " +
+  "keine heisst: niemand verantwortlich. Wer verantwortlich wird, ist damit eingeladen und dabei.";
 
 /** Das Ausgabe-Schema; `streng` nimmt `z.strictObject` (siehe lib/kern/auskunft-schema.ts). */
 export function trainerSchema(streng = false) {
@@ -25,13 +25,20 @@ export function trainerSchema(streng = false) {
         anzeigename: z.string().nullable(),
         ehemalig: z.boolean().describe("Nicht mehr im Team."),
         verantwortlich: z.boolean(),
+        abgesagt_am: z.string().nullable().describe("Wann abgesagt wurde (ISO); null: dabei."),
       }),
     )
     .describe(TRAINER_MODELL);
 }
 
 export function trainerAusgabe(trainer: readonly TerminTrainer[]): z.infer<ReturnType<typeof trainerSchema>> {
-  return trainer.map((t) => ({ id: t.userId, anzeigename: t.name, ehemalig: t.ehemalig, verantwortlich: t.verantwortlich }));
+  return trainer.map((t) => ({
+    id: t.userId,
+    anzeigename: t.name,
+    ehemalig: t.ehemalig,
+    verantwortlich: t.verantwortlich,
+    abgesagt_am: t.abgesagtAm,
+  }));
 }
 
 /** Die Vorgabe einer Serie: wen sie einlädt und wer verantwortlich ist. */

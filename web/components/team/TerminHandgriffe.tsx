@@ -1,13 +1,13 @@
 "use client";
 
-import { CalendarOff, CalendarPlus, MessageSquareText, Plus, Pencil, PlayCircle, Trash2, Undo2, Unlink, UserPlus } from "lucide-react";
+import { CalendarOff, CalendarPlus, MessageSquareText, Plus, Pencil, PlayCircle, Trash2, Undo2, Unlink, UserPlus, UserRoundCheck, UserRoundX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { OverflowMenu, type MenuItemDef } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen, type TerminAktionen } from "./TerminBereich";
 import { datumKurz, terminBegonnen } from "@/lib/zeit";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
-import { istEingeladen } from "@/lib/trainer";
+import { absageOffen } from "@/lib/trainer";
 
 /** «+ Training hinzufügen» an einem anstehenden Termin ohne Training — an der
  *  Stelle, wo sonst sein Name steht, in Primary wie ein Link (Epic #490,
@@ -29,15 +29,22 @@ export function TrainingHinzufuegen({ t, className }: { t: TerminZeile; classNam
 }
 
 /** Die Handgriffe eines Termins im Menü «Weitere Aktionen» — dieselben an
- *  jeder Zeile und am nächsten Termin (#402 AK 17, #403 AK 15). Wer zu einem
- *  bevorstehenden Termin nicht eingeladen ist, lädt sich hier selbst ein —
- *  an einem Serientermin nur zu diesem (#519 AK 25, PC 12). */
+ *  jeder Zeile und am nächsten Termin (#402 AK 17, #403 AK 15). Zuoberst der
+ *  eigene Stand an einem bevorstehenden Termin: absagen, wieder zusagen oder,
+ *  wer nicht eingeladen ist, sich selbst einladen — an einem Serientermin
+ *  immer nur an diesem (#519 AK 25, PC 12; #520 AK 18, PC 10). */
 export function terminMenue(t: TerminZeile, a: TerminAktionen): MenuItemDef[] {
-  const aushelfen = !t.ausgefallen && !terminBegonnen(t.datum, t.beginn) && !istEingeladen(t.trainer, a.ich);
-  return [
-    ...(aushelfen
+  const offen = absageOffen(t, terminBegonnen(t.datum, t.beginn));
+  const ich = t.trainer.find((x) => x.userId === a.ich);
+  const eigener: MenuItemDef[] = !offen
+    ? []
+    : !ich
       ? [{ label: "Ich helfe aus", icon: UserPlus, onSelect: () => a.trainer(t, { einladen: [a.ich] }, "Du bist eingeladen.") }]
-      : []),
+      : ich.abgesagtAm
+        ? [{ label: "Wieder zusagen", icon: UserRoundCheck, onSelect: () => a.absagen(t, ich, false) }]
+        : [{ label: "Absagen", icon: UserRoundX, onSelect: () => a.absagen(t, ich, true) }];
+  return [
+    ...eigener,
     ...(t.ausgefallen
       ? [
           { label: "Grund ändern", icon: MessageSquareText, onSelect: () => a.ausfallen(t) },

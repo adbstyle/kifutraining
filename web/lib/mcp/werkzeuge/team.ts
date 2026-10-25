@@ -3,7 +3,7 @@ import { z } from "zod";
 import { kategorieStufe } from "@/lib/labels";
 import { abgebildet } from "@/lib/kern/ergebnis";
 import { meineTeams, teamPlan } from "@/lib/kern/team";
-import { aendereTrainer, teamMitglieder } from "@/lib/kern/trainer";
+import { aendereTrainer, setzeAbsage, teamMitglieder } from "@/lib/kern/trainer";
 import { aendereMitReichweite, entferneMitReichweite, folgeDerSerie, legeSerieFest } from "@/lib/kern/serien";
 import { lasseAusfallen, legeTerminFest, loeseTraining, nimmAusfallZurueck, ordneTrainingZu, type Verlassen } from "@/lib/kern/termine";
 import { KI_WOCHENTAG, alsKiWochentag, alsWochentag } from "@/lib/serie";
@@ -136,6 +136,7 @@ const VERFALL_MODELL =
   "Alle Spieler:innen gelten wieder als angemeldet (auch über die Serie, auch an einem ausgefallenen Termin). " +
   "Verfallen dadurch Abmeldungen, kommt zuerst ein Fehler mit «verfallend» (Anzahl); frag nach und wiederhole den " +
   "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Felder, Trainer:innen und Training lassen sie stehen. " +
+  "Ebenso verfallen die Absagen der Trainer:innen (an einem Spiel nur mit einem anderen Datum); «absagen» im Fehler nennt, wie viele. " +
   "An einem Spiel verfallen die Meldungen nur mit einem anderen Datum (alle sind dann wieder ohne Meldung), samt den " +
   "Kennzeichnungen als nicht aufgeboten - auch wenn nur solche verfallen, kommt zuerst der Fehler mit «verfallend» " +
   "(davon «kennzeichnungen»); rückt die " +
@@ -842,5 +843,39 @@ export const terminTrainerAendern = werkzeug({
         bestaetigt: e.bestaetigt,
       }),
       (w) => ({ termin_id: w.terminId, serie_id: w.serie?.serieId ?? null }),
+    ),
+});
+
+// ── termin_trainer_absagen ──────────────────────────────────────────────────
+
+export const terminTrainerAbsagen = werkzeug({
+  name: "termin_trainer_absagen",
+  titel: "Trainer:in absagen oder wieder zusagen",
+  beschreibung:
+    "Sagt eine eingeladene Trainer:in - dich oder eine andere - für einen einzelnen Termin ab («abgesagt: true») oder " +
+    "wieder zu («abgesagt: false»), auch an einem Termin einer Serie immer nur für diesen. Nur bis zum Beginn bzw. " +
+    "Anpfiff und nie an einem ausgefallenen Termin. Die Verantwortliche kann erst absagen, wenn eine andere Trainer:in, " +
+    "die dabei ist, übernimmt («uebernimmt») - ausser niemand sonst ist dabei; dann ist der Termin danach ohne " +
+    "Verantwortliche:n. Wird ein Termin verlegt, verfallen seine Absagen (ein Training bei neuem Datum oder Beginn, ein " +
+    `Spiel bei neuem Datum). ${TRAINER_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({
+    termin_id: TerminId,
+    trainer_id: MITGLIED.describe("Kennung der eingeladenen Trainer:in, die absagt oder wieder zusagt."),
+    abgesagt: z.boolean(),
+    uebernimmt: MITGLIED.optional().describe(
+      "Nur wenn die Verantwortliche absagt: wer die Verantwortung übernimmt - eine andere Eingeladene, die dabei ist.",
+    ),
+  }),
+  ausgabe: z.object({ termin_id: z.string() }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(
+      await setzeAbsage(zugang.supabase, zugang.userId, {
+        terminId: e.termin_id,
+        userId: e.trainer_id,
+        abgesagt: e.abgesagt,
+        uebernimmt: e.uebernimmt,
+      }),
+      (w) => ({ termin_id: w.terminId }),
     ),
 });

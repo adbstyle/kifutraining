@@ -42,6 +42,7 @@ import {
 import { kurzeZeit } from "@/lib/queries/termine-fuer";
 import { heuteAmTrainingsort, jetztAmTrainingsort, terminBegonnen } from "@/lib/zeit";
 import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugriff";
+import { absagenVerfallText } from "@/lib/trainer";
 import { trainerBeimFestlegen, type TrainerWahl } from "@/lib/kern/trainer";
 import { HINWEIS_NICHTS_ENTSTANDEN, hinweisRest, kopiereTraining, type KopieErgebnis } from "@/lib/kern/kopie";
 import { gibtEsTraining, loescheTrainingMitBildern, raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
@@ -419,6 +420,8 @@ export type TerminAendern = {
 export type Verfallend = {
   abmeldungen: number;
   nachtraege: number;
+  /** Absagen von Trainer:innen (#520 AK 11). */
+  absagen: number;
   summe: number;
   /** Nur an einem Spiel (#463 AK 13, 26; #464 AK 10): verfallende Meldungen
    *  und Kennzeichnungen und ob die Meldefrist danach schon abgelaufen ist. */
@@ -434,33 +437,42 @@ export async function verfallendeAbmeldungen(
   beginn: string | null,
 ): Promise<KernErgebnis<Verfallend>> {
   const p = { p_termin: terminId, p_datum: datum, p_beginn: beginn };
-  const [ab, nach] = await Promise.all([
+  const [ab, nach, absagen] = await Promise.all([
     supabase.rpc("termin_abmeldungen_verfallend", p),
     supabase.rpc("termin_nachtraege_verfallend", p),
+    supabase.rpc("termin_absagen_verfallend", p),
   ]);
   if (ab.error) return ausDbFehler(ab.error);
   if (nach.error) return ausDbFehler(nach.error);
-  return ok(verfallend((ab.data as number | null) ?? 0, (nach.data as number | null) ?? 0));
+  if (absagen.error) return ausDbFehler(absagen.error);
+  return ok(verfallend((ab.data as number | null) ?? 0, (nach.data as number | null) ?? 0, (absagen.data as number | null) ?? 0));
 }
 
-export function verfallend(abmeldungen: number, nachtraege: number): Verfallend {
-  return { abmeldungen, nachtraege, summe: abmeldungen + nachtraege };
+export function verfallend(abmeldungen: number, nachtraege: number, absagen = 0): Verfallend {
+  return { abmeldungen, nachtraege, absagen, summe: abmeldungen + nachtraege + absagen };
 }
 
 /** Ein Fehler, der vor dem Verlegen nach der Bestätigung fragt. */
 export function verfallFehler(v: Verfallend): KernFehler {
+  const absagen = absagenVerfallText(v.absagen);
   if (v.spiel)
-    return fehlschlag("regel", spielBestaetigen(spielVerfallText(v.spiel.meldungen, v.spiel.fristAbgelaufen, v.spiel.kennzeichnungen, v.nachtraege)), {
-      feld: "bestaetigt",
-      verfallend: v.summe,
-      nachtraege: v.nachtraege,
-      fristAbgelaufen: v.spiel.fristAbgelaufen,
-      ...(v.spiel.kennzeichnungen > 0 && { kennzeichnungen: v.spiel.kennzeichnungen }),
-    });
-  return fehlschlag("regel", verfallBestaetigen(v.abmeldungen, v.nachtraege), {
+    return fehlschlag(
+      "regel",
+      spielBestaetigen([spielVerfallText(v.spiel.meldungen, v.spiel.fristAbgelaufen, v.spiel.kennzeichnungen, v.nachtraege), absagen].filter(Boolean).join(" ")),
+      {
+        feld: "bestaetigt",
+        verfallend: v.summe,
+        nachtraege: v.nachtraege,
+        fristAbgelaufen: v.spiel.fristAbgelaufen,
+        ...(v.spiel.kennzeichnungen > 0 && { kennzeichnungen: v.spiel.kennzeichnungen }),
+        ...(v.absagen > 0 && { absagen: v.absagen }),
+      },
+    );
+  return fehlschlag("regel", verfallBestaetigen(v.abmeldungen, v.nachtraege, v.absagen), {
     feld: "bestaetigt",
     verfallend: v.summe,
     nachtraege: v.nachtraege,
+    ...(v.absagen > 0 && { absagen: v.absagen }),
   });
 }
 
@@ -633,11 +645,16 @@ export async function aendereTermin(
     const frist = fristWirdAbgelaufen(t, { datum: neu.datum, beginn: neu.beginn ?? "" }, vorlauf, jetztAmTrainingsort());
     const nachtraege = await spielNachtraegeZahl(supabase, t.id);
     if (!nachtraege.ok) return nachtraege;
+    // #520 PC 3: Mit dem Datum verfallen auch die Absagen der Trainer:innen.
+    const absagen = await supabase.rpc("termin_absagen_verfallend", { p_termin: t.id, p_datum: neu.datum, p_beginn: neu.beginn });
+    if (absagen.error) return ausDbFehler(absagen.error);
     const { meldungen, kennzeichnungen } = zahl.wert;
+    const abgesagt = (absagen.data as number | null) ?? 0;
     const v: Verfallend = {
       abmeldungen: 0,
       nachtraege: nachtraege.wert,
-      summe: meldungen + kennzeichnungen + nachtraege.wert,
+      absagen: abgesagt,
+      summe: meldungen + kennzeichnungen + nachtraege.wert + abgesagt,
       spiel: { meldungen, kennzeichnungen, fristAbgelaufen: frist },
     };
     // #464 AK 10, 13; #487 AK 13, 17: auch wenn nur Kennzeichnungen oder Nachträge verfallen.
