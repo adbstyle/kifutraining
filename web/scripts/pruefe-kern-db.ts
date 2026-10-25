@@ -60,7 +60,8 @@ const { legeTerminFest, aendereTermin, entferneTermin, ordneTrainingZu, loeseTra
   "../lib/kern/termine"
 );
 const { TERMIN_MELDUNG, TERMIN_TEXT } = await import("../lib/termin");
-const { TRAINER_MELDUNG, TRAINER_TEXT, absagenVerfallText } = await import("../lib/trainer");
+const { TRAINER_MELDUNG, TRAINER_TEXT, absagenVerfallText, aboBeschreibung, aboTitel } = await import("../lib/trainer");
+type AboTrainerTermin = import("../lib/trainer").AboTrainerTermin;
 const { BESETZUNG_TEXT } = await import("../lib/besetzung");
 const { FELDER_TEXT, felderProblem } = await import("../lib/termin-felder");
 type Feld = import("../lib/termin-felder").Feld;
@@ -3453,6 +3454,8 @@ try {
         .select("id")
         .single();
       if (error) throw error;
+      // Das Abo nennt nur die Termine, zu denen man eingeladen ist (#522 AK 1).
+      await admin.from("termin_trainer").insert({ termin_id: data.id, user_id: a.id, verantwortlich: true });
       return data.id as string;
     };
     const anstehend = await ins(tagCh(3));
@@ -3470,7 +3473,11 @@ try {
     assert.ok(!ids.includes(zuAlt), "älter als 28 Tage fehlt");
     assert.ok(!ids.includes(ausgefallen) && !ids.includes(ausgefallenVergangen), "Ausgefallene fehlen");
     for (const t of f.termine!)
-      assert.deepEqual(Object.keys(t).sort(), ["art", "beginn", "bezeichnung", "datum", "ende", "geaendert", "id", "ort"], "nur Zeit und Ort - weder Bemerkung noch Verantwortliche noch Training");
+      assert.deepEqual(
+        Object.keys(t).sort(),
+        ["art", "beginn", "besetzung_art", "besetzung_zahl", "bezeichnung", "datum", "ende", "erwartete_spielerzahl", "geaendert", "id", "ort", "spielstand", "stand", "trainer"],
+        "Zeit, Ort und Besetzung (#522) - weder Bemerkung noch Training",
+      );
     const a1 = f.termine!.find((t) => t.id === anstehend)!;
     assert.deepEqual(
       { datum: a1.datum, beginn: a1.beginn, ende: a1.ende, ort: a1.ort },
@@ -3518,6 +3525,45 @@ try {
     assert.deepEqual(await ids(), [aus.terminId, rand.terminId], "Datumsfolge: heute+2, heute+4");
     wert(await entferneTermin(a.supabase, a.id, { terminId: aus.terminId }));
     assert.deepEqual(await ids(), [rand.terminId], "PC 5: entfernt");
+  });
+
+  await pruefe("Abo der Trainer:innen: nur eigene Einladungen, Stand, Namen, Besetzung, LAST-MODIFIED bewegt sich (#522 AK 1–5, PC 1–3)", async () => {
+    const team = await serienTeam("Kern-DB-Abo-Trainer");
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    const tagCh = (d: number) => plusTage(kalendertagAmTrainingsort(), d);
+    const token = (await holen(b, team)).token!;
+    const mit = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", mindestbesetzung: { art: "fest", zahl: 3 } })).terminId;
+    const ohne = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:00", eingeladene: [a.id] })).terminId;
+    type Eintrag = AboTrainerTermin & { id: string; geaendert: string };
+    const eintraege = async () => (await feed(token)).termine as unknown as Eintrag[];
+    // AK 1, PC 3: nur, wozu B eingeladen ist.
+    assert.deepEqual((await eintraege()).map((t) => t.id), [mit]);
+    const e1 = (await eintraege())[0];
+    assert.equal(e1.stand, "dabei");
+    assert.equal(aboTitel(e1, "Training · X"), "Training · X");
+    const text = aboBeschreibung(e1);
+    assert.ok(text.includes("Du bist dabei."), text);
+    assert.ok(/Dabei \(2 von 2\): /.test(text), text);
+    assert.ok(text.includes("Mindestbesetzung 3 – es fehlt 1 Trainer:in."), text);
+    // AK 2, 3, PC 2: absagen bleibt im Abo, «Abgesagt» vorn, LAST-MODIFIED rückt vor.
+    await new Promise((r) => setTimeout(r, 20));
+    wert(await setzeAbsage(b.supabase, b.id, { terminId: mit, userId: b.id, abgesagt: true }));
+    const e2 = (await eintraege())[0];
+    assert.equal(e2.stand, "abgesagt");
+    assert.equal(aboTitel(e2, "Training · X"), "Abgesagt · Training · X");
+    assert.ok(Date.parse(e2.geaendert) > Date.parse(e1.geaendert), "LAST-MODIFIED rückt vor");
+    assert.ok(aboBeschreibung(e2).includes("Abgesagt: "), aboBeschreibung(e2));
+    // Verantwortlich vorn im Titel.
+    wert(await aendereTrainer(a.supabase, a.id, { terminId: mit, verantwortlich: b.id }));
+    const e3 = (await eintraege())[0];
+    assert.equal(aboTitel(e3, "Training · X"), "Verantwortlich · Training · X");
+    // PC 1: eingeladen → erscheint; ausgeladen → verschwindet.
+    wert(await aendereTrainer(a.supabase, a.id, { terminId: ohne, einladen: [b.id] }));
+    assert.deepEqual((await eintraege()).map((t) => t.id), [mit, ohne]);
+    wert(await aendereTrainer(a.supabase, a.id, { terminId: ohne, ausladen: [b.id] }));
+    assert.deepEqual((await eintraege()).map((t) => t.id), [mit]);
+    // Die Stand-Tabelle ist für die API-Rollen gesperrt.
+    assert.ok((await b.supabase.from("termin_trainer_stand").select("termin_id")).error || ((await b.supabase.from("termin_trainer_stand").select("termin_id")).data ?? []).length === 0);
   });
 
   await pruefe("Abo erlischt beim Austritt und lebt bei erneuter Aufnahme nicht wieder auf (#330 AK 9, PC 9, 10)", async () => {
@@ -3804,7 +3850,7 @@ try {
     // OoS 4: Das Abo nennt nur Zeit und Ort.
     const token = (await holen(a, team)).token!;
     const imFeed = (await feed(token)).termine!.find((x) => x.id === t.terminId)!;
-    assert.deepEqual(Object.keys(imFeed).sort(), ["art", "beginn", "bezeichnung", "datum", "ende", "geaendert", "id", "ort"]);
+    assert.ok(!("felder" in imFeed), "die Felder stehen nicht im Abo");
   });
 
   // ── Kalender: erwartete Spielerzahl (#390) ───────────────────────────────
@@ -3881,7 +3927,8 @@ try {
     assert.equal(await zahlVon(t.terminId), 12);
     // OoS 5: Das Abo nennt nur Zeit und Ort.
     const imFeed = (await feed((await holen(a, team)).token!)).termine!.find((x) => x.id === t.terminId)!;
-    assert.deepEqual(Object.keys(imFeed).sort(), ["art", "beginn", "bezeichnung", "datum", "ende", "geaendert", "id", "ort"]);
+    // Die erwartete Zahl liefert der Feed nur für die Mindestbesetzung (#521); der Eintrag nennt sie nicht.
+    assert.ok(!aboBeschreibung(imFeed as unknown as AboTrainerTermin).includes("12"), "die Spielerzahl steht nicht im Eintrag");
   });
 
   // ── Kalender: Felder und Spielerzahl einer Terminserie (#391) ─────────────

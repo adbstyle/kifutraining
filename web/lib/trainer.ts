@@ -211,6 +211,54 @@ export type TrainerAenderung = NonNullable<ReturnType<typeof trainerAenderung>>;
  *  Abmeldungen (lib/spieler.ts), an die er anschliesst. */
 export { absagenVerfallText } from "@/lib/spieler";
 
+// ── Das Kalender-Abo der Trainer:innen (#522) ────────────────────────────────
+
+/** Wie der Feed eines Abos einen Termin liefert (kalender_abo_termine). */
+export type AboTrainerTermin = {
+  stand: "dabei" | "abgesagt" | "verantwortlich";
+  trainer: { name: string | null; ich: boolean; verantwortlich: boolean; abgesagt: boolean }[];
+  besetzung_art: string | null;
+  besetzung_zahl: number | null;
+  erwartete_spielerzahl: number | null;
+  spielstand: Spielstand;
+};
+
+const ABO_STAND: Record<AboTrainerTermin["stand"], string> = {
+  dabei: "",
+  abgesagt: "Abgesagt · ",
+  verantwortlich: "Verantwortlich · ",
+};
+
+/** Der Stand vorn im Titel (#522 AK 3): «Abgesagt · …», «Verantwortlich · …», sonst nichts. */
+export function aboTitel(t: AboTrainerTermin, titel: string): string {
+  return `${ABO_STAND[t.stand]}${titel}`;
+}
+
+/** Der Eintrag (#522 AK 4–6): der eigene Stand, wer dabei ist, abgesagt hat
+ *  und verantwortlich ist, mit Namen; eine Lücke zur Mindestbesetzung; dann
+ *  der Weg in KiFu (der Verweis folgt in `kalenderText`). */
+export function aboBeschreibung(t: AboTrainerTermin): string {
+  const name = (x: AboTrainerTermin["trainer"][number]) => (x.ich ? `${x.name ?? EHEMALIGES_MITGLIED} (du)` : (x.name ?? EHEMALIGES_MITGLIED));
+  const dabei = t.trainer.filter((x) => !x.abgesagt);
+  const abgesagt = t.trainer.filter((x) => x.abgesagt);
+  const v = t.trainer.find((x) => x.verantwortlich);
+  const noetig = noetigeTrainer(
+    t.besetzung_art && t.besetzung_zahl !== null ? ({ art: t.besetzung_art, zahl: t.besetzung_zahl } as Mindestbesetzung) : null,
+    angezeigteSpielerzahl(spielerzahlVon({ spielerzahl: t.erwartete_spielerzahl, spielstand: t.spielstand })),
+  );
+  const fehlen = fehlendeTrainer(noetig, dabei.length);
+  return [
+    t.stand === "verantwortlich" ? "Du bist verantwortlich." : t.stand === "abgesagt" ? "Du hast abgesagt." : "Du bist dabei.",
+    `Dabei (${dabei.length} von ${t.trainer.length}): ${dabei.map(name).join(", ") || "niemand"}`,
+    abgesagt.length > 0 ? `Abgesagt: ${abgesagt.map(name).join(", ")}` : null,
+    t.stand === "verantwortlich" ? null : v ? `Verantwortlich: ${name(v)}` : "Niemand ist verantwortlich.",
+    fehlen > 0 ? `Mindestbesetzung ${noetig} – es ${fehlen === 1 ? "fehlt 1 Trainer:in" : `fehlen ${fehlen} Trainer:innen`}.` : null,
+    "Absagen oder zusagen in KiFu:",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 export const TRAINER_TEXT = {
   /** Eingabe mit einer Kennung, die keine ist. */
   kennungUngueltig: "Bitte nur Mitglieder des Teams als Trainer:innen wählen.",
