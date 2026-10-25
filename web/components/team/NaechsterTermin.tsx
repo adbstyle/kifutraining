@@ -90,10 +90,10 @@ export function NaechsterTermin({
     >
       {/* Die ganze Karte öffnet den Termin daneben (#435), wie eine Zeile des
           Plans. Der Inhalt liegt darüber und lässt Klicks durch — ausser auf
-          seine eigenen Links und Knöpfe. Für Tastatur und Vorlesehilfe öffnet
+          seine eigenen Links, Knöpfe und den Schalter. Für Tastatur und Vorlesehilfe öffnet
           der Name. */}
       <Link href={oeffnen} scroll={false} tabIndex={-1} aria-hidden className="absolute inset-0 rounded-flaeche" />
-      <div className="pointer-events-none relative flex flex-col gap-3.5 [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
+      <div className="pointer-events-none relative flex flex-col gap-3.5 [&_a]:pointer-events-auto [&_button]:pointer-events-auto [&_input]:pointer-events-auto">
         <div className="flex items-start gap-4">
           <Kalenderblatt datum={t.datum} stand={blattStand(t, heute)} as={tagesUeberschrift ? "h5" : "div"} />
           <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
