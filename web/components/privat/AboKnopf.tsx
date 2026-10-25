@@ -134,7 +134,7 @@ export function AboKnopf({ token }: { token: string }) {
               <SectionMessage
                 appearance="error"
                 actions={
-                  <Button variant="text" onClick={holen} disabled={pending}>
+                  <Button variant="link" onClick={holen} disabled={pending}>
                     Nochmals versuchen
                   </Button>
                 }

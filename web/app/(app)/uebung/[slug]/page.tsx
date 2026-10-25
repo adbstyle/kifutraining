@@ -109,12 +109,12 @@ export default async function ExerciseDetailPage({
               actions={
                 <>
                   <form action={behalteMaterial.bind(null, ex.id)}>
-                    <Button type="submit" variant="text">
+                    <Button type="submit" variant="link">
                       {AENDERUNG_BEIBEHALTEN}
                     </Button>
                   </form>
                   <form action={uebernehmeMaterialVorschlag.bind(null, ex.id)}>
-                    <Button type="submit" variant="text">
+                    <Button type="submit" variant="link">
                       {AENDERUNG_UEBERNEHMEN}
                     </Button>
                   </form>

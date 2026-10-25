@@ -219,7 +219,7 @@ export function TeamTrainingsListe({
         title="Aus dem Team entfernen?"
         actions={
           <>
-            <Button variant="text" onClick={() => setEntfernen(null)}>
+            <Button variant="outlined" onClick={() => setEntfernen(null)}>
               Abbrechen
             </Button>
             <Button

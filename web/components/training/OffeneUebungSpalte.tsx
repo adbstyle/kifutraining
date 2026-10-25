@@ -100,7 +100,7 @@ export function VerwerfenRueckfrage({
       title="Änderungen verwerfen?"
       actions={
         <>
-          <Button variant="text" onClick={steuerung.rueckfrage.bleiben}>
+          <Button variant="outlined" onClick={steuerung.rueckfrage.bleiben}>
             Weiter bearbeiten
           </Button>
           <Button variant="danger" onClick={steuerung.rueckfrage.verwerfen}>

@@ -13,7 +13,7 @@ export function AnmeldeHinweis({ className }: { className?: string }) {
       icon={Sparkles}
       className={cn("print:hidden", className)}
       actions={
-        <ButtonLink href="/login" variant="text">
+        <ButtonLink href="/login" variant="link">
           Anmelden
         </ButtonLink>
       }

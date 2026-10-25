@@ -47,7 +47,7 @@ export function TrainingWahlDialog({
       title={bisher ? "Training ersetzen" : "Training zuordnen"}
       actions={
         <>
-          <Button variant="text" onClick={onClose}>Abbrechen</Button>
+          <Button variant="outlined" onClick={onClose}>Abbrechen</Button>
           <Button variant="filled" disabled={!gewaehlt || pending} onClick={() => gewaehlt && onWahl(gewaehlt)}>
             Zuordnen
           </Button>

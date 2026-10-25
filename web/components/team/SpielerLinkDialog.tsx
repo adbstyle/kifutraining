@@ -31,7 +31,7 @@ export function SpielerLinkDialog({
       onClose={onClose}
       title={spieler ? `Privater Link für ${spielerName(spieler)}` : ""}
       actions={
-        <Button variant="text" onClick={onClose}>
+        <Button variant="outlined" onClick={onClose}>
           Schliessen
         </Button>
       }
@@ -81,7 +81,7 @@ function LinkInhalt({ spieler, abholungAktiv }: { spieler: Spieler; abholungAkti
       <SectionMessage
         appearance="warning"
         actions={
-          <Button variant="text" onClick={erneuern} disabled={pending || !url}>
+          <Button variant="link" onClick={erneuern} disabled={pending || !url}>
             Link erneuern
           </Button>
         }

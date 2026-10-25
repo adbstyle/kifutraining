@@ -122,7 +122,7 @@ export function VarianteAnlegenDialog({
       title="Variante hinzufügen"
       actions={
         <>
-          <Button variant="text" onClick={onClose}>
+          <Button variant="outlined" onClick={onClose}>
             Abbrechen
           </Button>
           <Button variant="filled" onClick={anlegen} disabled={laeuft}>

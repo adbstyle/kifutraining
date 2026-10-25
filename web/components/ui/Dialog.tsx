@@ -9,14 +9,14 @@ import { cn } from "@/lib/cn";
    (24dp): ein Dialog liegt über allem, also trägt er die hellste Stufe und
    den weichesten Schatten.
 
-   `actions` nimmt typischerweise Text-/Tonal-Buttons auf; neben einem
-   destruktiven Knopf (`danger`, `dangerOutlined`) steht der Ausweg als
-   Secondary Button (`outlined`), etwa «Abbrechen» oder «Schliessen». Text-Knöpfe bleiben
-   hier Primary, obwohl es auf 24dp knapp unter die 4.5:1 für Fliesstext fällt
-   — Materials eigene Baseline hält es genauso, und ein eigener Farbton nur für
-   Dialoge risse die Handlungsfarbe der App auseinander. Die Zahl steht nicht
-   hier, sondern gerechnet im Styleguide (› Dialog & Snackbar), wo sie auch
-   als bewusste Abweichung begründet ist.
+   In `actions` steht der Ausweg («Abbrechen», «Schliessen», «Verstanden»)
+   immer als Secondary Button (`outlined`) — auch als einzige Aktion, kein
+   Text-Knopf. Links im Inhalt (`variant="link"`) bleiben Primary, obwohl es auf 24dp knapp
+   unter die 4.5:1 für Fliesstext fällt — Materials eigene Baseline hält es
+   genauso, und ein eigener Farbton nur für Dialoge risse die Handlungsfarbe
+   der App auseinander. Die Zahl steht nicht hier, sondern gerechnet im
+   Styleguide (› Dialog & Snackbar), wo sie auch als bewusste Abweichung
+   begründet ist.
 
    Escape schliesst nicht selbst, sondern meldet nur `onClose`: Ob der Dialog
    zugeht, bestimmt allein `open`. Sonst schloss der Browser ihn auch dann,
