@@ -155,8 +155,10 @@ haben wie alle Knöpfe und Felder abgerundete Ecken; ganz rund sind nur die Chip
 und wieder abwählt, und die Schalter. Ein Schalter steht dort, wo eine Ja/Nein-Angabe beim
 Umlegen sofort gilt, ohne dass man speichert — eine Spieler:in an einem Termin angemeldet oder
 abgemeldet, die Selbstabholung ein oder aus; ein Kästchen dagegen gehört in ein Formular, das man
-erst speichert. Damit der Zustand nicht an der Farbe allein hängt, trägt der Knopf des Schalters
-ein Zeichen: an einen Haken in der Akzentfarbe, aus ein Kreuz in Rot. Wo das Aus kein Fehlen
+erst speichert. Die Bahn des Schalters ist nur umrandet; Farbe trägt allein sein Knopf. Damit der
+Zustand nicht an der Farbe allein hängt, trägt der Knopf ein Zeichen: an steht er rechts in der
+Akzentfarbe mit einem Haken, aus links in Grau mit einem Kreuz. Rot gibt es am Schalter nicht,
+auch nicht in langen Listen — ein Fehlen zeigen Status und Kalenderblatt. Wo das Aus kein Fehlen
 bedeutet, wie bei der Selbstabholung, oder wo es nichts zu wählen gibt, wie an einem
 ausgefallenen Termin, ist er grau und ohne Zeichen; ist nichts mehr zu ändern, ist er gesperrt.
 
