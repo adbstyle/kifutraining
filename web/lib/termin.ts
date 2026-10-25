@@ -8,6 +8,7 @@
 //
 // REIN: importiert nur lib/termin-felder.ts und lib/spiel.ts (ebenfalls
 // rein) — `check:kern` lädt diese Datei mit tsx.
+import { gleicheBesetzung, type Mindestbesetzung } from "@/lib/besetzung";
 import { gleicheFelder, type Felder } from "@/lib/termin-felder";
 import { treffpunkteNormal, type TerminArt, type Treffpunkt } from "@/lib/spiel";
 
@@ -24,6 +25,8 @@ export type TerminFelder = {
   felder?: Felder | null;
   /** Die erwartete Spielerzahl (#390); `null`: unbekannt. */
   spielerzahl?: number | null;
+  /** Wie viele Trainer:innen mindestens dabei sein sollen (#521); `null`: keine. */
+  mindestbesetzung?: Mindestbesetzung;
   /** Training oder Spiel (#459); nur beim Festlegen, danach fest. */
   art?: TerminArt;
   /** Nur an einem Spiel: Bezeichnung und Richtwert (#459). */
@@ -56,7 +59,6 @@ export const TERMIN_TEXT = {
   ortLang: `Der Ort darf höchstens ${ORT_MAX} Zeichen lang sein.`,
   bemerkungLang: `Die Bemerkung darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
   grundLang: `Der Grund darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
-  verantwortlicheUngueltig: "Bitte nur Mitglieder des Teams als Verantwortliche wählen.",
   spielerzahl: `Die erwartete Spielerzahl ist eine ganze Zahl von ${SPIELERZAHL_MIN} bis ${SPIELERZAHL_MAX}.`,
   /** Was die Zahl zählt (PO 7) — als Hinweis am Feld und im KI-Werkzeug. */
   spielerzahlZaehlt: "Alle erwarteten Kinder einschliesslich Torhüter:innen, ohne Trainer:innen.",
@@ -172,6 +174,8 @@ export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partia
   if (!gleich(neu.bemerkung, start.bemerkung)) aenderung.bemerkung = neu.bemerkung ?? "";
   if (!gleicheFelder(neu.felder, start.felder)) aenderung.felder = neu.felder ?? null;
   if ((neu.spielerzahl ?? null) !== (start.spielerzahl ?? null)) aenderung.spielerzahl = neu.spielerzahl ?? null;
+  if (neu.mindestbesetzung !== undefined && !gleicheBesetzung(neu.mindestbesetzung, start.mindestbesetzung ?? null))
+    aenderung.mindestbesetzung = neu.mindestbesetzung;
   if (!gleich(neu.bezeichnung, start.bezeichnung)) aenderung.bezeichnung = neu.bezeichnung ?? "";
   if ((neu.richtwertMin ?? null) !== (start.richtwertMin ?? null)) aenderung.richtwertMin = neu.richtwertMin ?? null;
   if ((neu.richtwertMax ?? null) !== (start.richtwertMax ?? null)) aenderung.richtwertMax = neu.richtwertMax ?? null;

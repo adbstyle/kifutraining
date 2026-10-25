@@ -1,6 +1,7 @@
 import { createAnonClient } from "@/lib/supabase/anon";
 import { ABO_ERLOSCHEN, aboTokenAus, kalenderAntwort, kalenderNichtErreichbar, kalenderText, type AboTermin } from "@/lib/ical";
 import { oeffentlicherOriginAus } from "@/lib/origin";
+import { aboBeschreibung, aboTitel, type AboTrainerTermin } from "@/lib/trainer";
 
 /* Der Feed eines Kalender-Abos (#330). Jeder Abruf liefert den aktuellen Stand
    (PC 6). Ein ungültiger oder erloschener Link liefert einen leeren Kalender
@@ -14,7 +15,7 @@ export const dynamic = "force-dynamic";
 type Feed = {
   gueltig: boolean;
   team?: { id: string; name: string };
-  termine?: (Omit<AboTermin, "titel"> & { art: "training" | "spiel"; bezeichnung: string | null })[];
+  termine?: (Omit<AboTermin, "titel"> & { art: "training" | "spiel"; bezeichnung: string | null } & AboTrainerTermin)[];
 };
 
 export async function GET(req: Request, { params }: { params: Promise<{ datei: string }> }) {
@@ -29,11 +30,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ datei: s
   }
   // Ein Spiel heisst nach seiner Bezeichnung (#459 PC 1), sonst
   // «Training · Teamname» (PC 2); der Kalender nennt Trainings und Spiele (PC 6).
+  // Nur die eigenen Einladungen, mit dem eigenen Stand vorn im Titel und der
+  // Besetzung im Eintrag (#522); abgesagte als «frei».
   const termine: AboTermin[] = feed.gueltig
-    ? feed.termine!.map(({ art, bezeichnung, ...t }) => ({
-        ...t,
-        titel: `${art === "spiel" && bezeichnung ? bezeichnung : "Training"} · ${feed.team!.name}`,
-      }))
+    ? feed.termine!.map(({ art, bezeichnung, stand, trainer, besetzung_art, besetzung_zahl, erwartete_spielerzahl, spielstand, ...t }) => {
+        const besetzung = { stand, trainer, besetzung_art, besetzung_zahl, erwartete_spielerzahl, spielstand };
+        return {
+          ...t,
+          titel: aboTitel(besetzung, `${art === "spiel" && bezeichnung ? bezeichnung : "Training"} · ${feed.team!.name}`),
+          beschreibung: aboBeschreibung(besetzung),
+          frei: stand === "abgesagt",
+        };
+      })
     : [];
   return kalenderAntwort(
     kalenderText({

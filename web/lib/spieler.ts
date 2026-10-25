@@ -347,16 +347,25 @@ export function verfallText(n: number, nachtraege = 0): string {
   return [abmeldungen, nachtrag].filter(Boolean).join(" ");
 }
 
+/** Was beim Verlegen mit den Absagen der Trainer:innen geschieht (#520 AK 11,
+ *  PC 2, 3) — ein Satz, der an den der Abmeldungen anschliesst; leer ohne. */
+export function absagenVerfallText(n: number): string {
+  if (n === 0) return "";
+  return n === 1
+    ? "Ausserdem verfällt 1 Absage einer Trainer:in: Sie gilt wieder als dabei."
+    : `Ausserdem verfallen ${n} Absagen von Trainer:innen: Sie gelten wieder als dabei.`;
+}
+
 /** Dasselbe in der Rückfrage der Oberfläche, mit dem Weg danach. */
-export function verfallDialogText(n: number, nachtraege = 0): string {
-  return n > 0
-    ? `${verfallText(n, nachtraege)} Wer am neuen Zeitpunkt nicht kann, meldet sich neu ab.`
-    : verfallText(n, nachtraege);
+export function verfallDialogText(n: number, nachtraege = 0, absagen = 0): string {
+  const text = n > 0 ? `${verfallText(n, nachtraege)} Wer am neuen Zeitpunkt nicht kann, meldet sich neu ab.` : verfallText(n, nachtraege);
+  return [text, absagenVerfallText(absagen)].filter(Boolean).join(" ");
 }
 
 /** Dasselbe für den KI-Weg, mit dem Weg zur Bestätigung. */
-export function verfallBestaetigen(n: number, nachtraege = 0): string {
-  return `${verfallText(n, nachtraege)} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
+export function verfallBestaetigen(n: number, nachtraege = 0, absagen = 0): string {
+  const text = [verfallText(n, nachtraege), absagenVerfallText(absagen)].filter(Boolean).join(" ");
+  return `${text} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
 }
 
 /** Am privaten Link: Der Termin wurde verlegt, seit sie abgemeldet wurde (AK 2). */

@@ -1,6 +1,7 @@
 export { Button, ButtonLink, buttonClasses } from "./Button";
 export { ButtonGroup } from "./ButtonGroup";
-export { Lozenge, HerkunftLozenge, SichtbarkeitLozenge, KategorieLozenge, Badge } from "./Lozenge";
+export { Lozenge, SecondaryLozenge, HerkunftLozenge, SichtbarkeitLozenge, KategorieLozenge, Badge } from "./Lozenge";
+export { ZeichenZahl } from "./ZeichenZahl";
 export {
   FilterChip,
   ChoiceChip,
@@ -13,7 +14,6 @@ export {
 export { Card } from "./Card";
 export { Gefahrenzone } from "./Gefahrenzone";
 export { Kalenderblatt } from "./Kalenderblatt";
-export { Meldebalken } from "./Meldebalken";
 export { MiniMonat } from "./MiniMonat";
 export type { Marke, StatusTon } from "./MiniMonat";
 export { AuswahlListe } from "./AuswahlListe";

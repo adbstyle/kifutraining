@@ -20,7 +20,7 @@ import {
   type SerienFolge,
 } from "@/lib/kern/serien";
 import { teamPlan } from "@/lib/kern/team";
-import { setzeVerantwortliche } from "@/lib/kern/verantwortliche";
+import { aendereTrainer, setzeAbsage, type AbsageSetzen, type TrainerAendern } from "@/lib/kern/trainer";
 import type { KernErgebnis } from "@/lib/kern/ergebnis";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Reichweite, Wochentag } from "@/lib/serie";
@@ -28,6 +28,7 @@ import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
 import type { TerminFelder } from "@/lib/termin";
 import type { Felder } from "@/lib/termin-felder";
+import type { Mindestbesetzung } from "@/lib/besetzung";
 import type { TerminZeile } from "@/lib/queries/termine";
 
 /**
@@ -47,6 +48,8 @@ type Fehler = {
   error: string;
   verfallend?: number;
   nachtraege?: number;
+  /** Davon Absagen von Trainer:innen (#520 AK 11). */
+  absagen?: number;
   /** Ein Spiel (#463 AK 26): Die Verlegung rückt die Meldefrist ins Abgelaufene. */
   fristAbgelaufen?: boolean;
   /** Ein Spiel entfernen (#463 AK 27): so viele Meldungen verschwinden. */
@@ -59,7 +62,9 @@ export async function legeTerminFestAktion(
   teamId: string,
   felder: TerminFelder,
   /** Für welche Kader der Termin gilt (#453 AK 1); leer = für alle. */
-  kaderIds: string[] = [],
+  kaderIds: string[],
+  /** Die Eingeladenen und die Verantwortliche (#519 AK 1). */
+  trainer: { eingeladene: string[]; verantwortlich: string | null },
 ): Promise<{ ok: true; terminId: string } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
@@ -78,7 +83,10 @@ export async function legeTerminFestAktion(
     bemerkung: felder.bemerkung,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
+    mindestbesetzung: felder.mindestbesetzung ?? null,
     kaderIds,
+    eingeladene: trainer.eingeladene,
+    verantwortlich: trainer.verantwortlich,
   });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
@@ -108,6 +116,7 @@ export async function aendereTerminAktion(
     bemerkung: felder.bemerkung,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
+    mindestbesetzung: felder.mindestbesetzung,
     bezeichnung: felder.bezeichnung ?? undefined,
     richtwertMin: felder.richtwertMin,
     richtwertMax: felder.richtwertMax,
@@ -121,6 +130,7 @@ export async function aendereTerminAktion(
       error: r.meldung,
       verfallend: r.verfallend,
       nachtraege: r.nachtraege,
+      absagen: r.absagen,
       fristAbgelaufen: r.fristAbgelaufen,
       kennzeichnungen: r.kennzeichnungen,
     };
@@ -215,7 +225,7 @@ export async function loeseTrainingAktion(
 }
 
 /** Eine Terminserie festlegen (#324): die Termine entstehen ohne Training,
- *  aber mit den Verantwortlichen (#325 AK 3, PC 1), Feldern und erwarteter
+ *  aber mit den Eingeladenen und der Verantwortlichen (#519 AK 2), Feldern und erwarteter
  *  Spielerzahl der Serie (#391 AK 1, PC 1); die Oberfläche
  *  bestätigt ohne Anzahl (Story 3 PC 4). */
 export async function legeSerieFestAktion(
@@ -228,12 +238,15 @@ export async function legeSerieFestAktion(
     ende: string;
     ort: string;
     bemerkung: string;
-    verantwortliche: string[];
+    eingeladene: string[];
+    verantwortlich: string | null;
     /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1). */
     felder: Felder | null;
     spielerzahl: number | null;
     /** Für welche Kader jeder Termin gilt (#453 AK 2). */
     kaderIds: string[];
+    /** Die Mindestbesetzung jedes Termins (#521 AK 1, 2). */
+    mindestbesetzung: Mindestbesetzung;
   },
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
@@ -244,25 +257,31 @@ export async function legeSerieFestAktion(
   return { ok: true };
 }
 
-/** Die Verantwortlichen eines Termins festlegen (#325 AK 1, 2, 5, 9). Die
- *  Oberfläche nimmt diesen Weg für einen einzelnen Termin (`reichweite`
- *  fehlt) und für «nur dieser» an einem Serientermin; für folgende und alle
- *  gehen die Verantwortlichen mit der Serienänderung durch Vorschau und
- *  Ausführung (`aendereSerieAktion`, PC 3, 11). `anonyme` sind die Einträge
- *  gelöschter Konten, die bleiben sollen (PC 8). */
-export async function setzeVerantwortlicheAktion(
+/** Trainer:innen eines Termins einladen, ausladen und die Verantwortung
+ *  übertragen (#519 AK 5–10). Die Oberfläche nimmt diesen Weg für einen
+ *  einzelnen Termin (`reichweite` fehlt) und für «nur dieser» an einem
+ *  Serientermin; für folgende und alle gehen die Eingeladenen und die
+ *  Verantwortung mit der Serienänderung durch Vorschau und Ausführung
+ *  (`aendereSerieAktion`). */
+export async function aendereTrainerAktion(
   terminId: string,
-  wert: { userIds: string[]; anonyme: string[] },
+  aenderung: Pick<TrainerAendern, "einladen" | "ausladen" | "ausladenEintraege" | "verantwortlich">,
   reichweite: Reichweite | undefined,
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await setzeVerantwortliche(a.supabase, a.userId, {
-    terminId,
-    userIds: wert.userIds,
-    anonyme: wert.anonyme,
-    reichweite,
-  });
+  const r = await aendereTrainer(a.supabase, a.userId, { ...aenderung, terminId, reichweite });
+  if (!r.ok) return { ok: false, error: r.meldung };
+  revalidiereTeam(r.wert.teamId);
+  return { ok: true };
+}
+
+/** Eine Trainer:in für einen Termin absagen oder wieder zusagen (#520 AK 1,
+ *  10, 18, 19) — mit dem, was die Oberfläche zeigte (`gesehen`). */
+export async function setzeAbsageAktion(e: AbsageSetzen): Promise<{ ok: true } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await setzeAbsage(a.supabase, a.userId, e);
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
   return { ok: true };
@@ -324,7 +343,7 @@ export async function folgeDerSerieAktion(
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await folgeDerSerie(a.supabase, a.userId, { terminId, angaben, bestaetigt });
-  if (!r.ok) return { ok: false, error: r.meldung, verfallend: r.verfallend, nachtraege: r.nachtraege };
+  if (!r.ok) return { ok: false, error: r.meldung, verfallend: r.verfallend, nachtraege: r.nachtraege, absagen: r.absagen };
   revalidiereTeam(r.wert.teamId);
   return { ok: true };
 }

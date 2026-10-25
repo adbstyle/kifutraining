@@ -7,6 +7,8 @@ import {
   ButtonGroup,
   Badge,
   Lozenge,
+  SecondaryLozenge,
+  ZeichenZahl,
   HerkunftLozenge,
   SichtbarkeitLozenge,
   TreffpunktListe,
@@ -18,7 +20,6 @@ import {
   IconButtonLink,
   ZeichenPunkt,
   Kalenderblatt,
-  Meldebalken,
   KategorieLozenge,
   TabNav,
   Tooltip,
@@ -101,6 +102,9 @@ import {
   Tag,
   Shield,
   UserRound,
+  UserRoundCheck,
+  UserRoundX,
+  UserPen,
   Users,
   Group,
   Shirt,
@@ -271,7 +275,6 @@ const GLIEDERUNG = [
           { id: "material", titel: "Material" },
           { id: "kalenderblatt", titel: "Kalenderblatt" },
           { id: "mini-monat", titel: "Mini-Monat" },
-          { id: "meldebalken", titel: "Meldebalken" },
           { id: "platz-spielerzahl", titel: "Platz und Spielerzahl eines Termins" },
         ],
       },
@@ -608,7 +611,8 @@ const iconSet = [
 const zeichenJeSache: [LucideIcon[], string, string][] = [
   [[Shield], "Shield", "Team"],
   [[UserRound], "UserRound", "Mitglied"],
-  [[Users], "Users", "Trainer:innen am Termin - heute die Verantwortlichen"],
+  [[Users, UserRoundCheck, UserRoundX], "Users · UserRoundCheck · UserRoundX", "Trainer:innen am Termin - davor der eigene Stand: nicht eingeladen, dabei, abgesagt"],
+  [[UserPen], "UserPen", "Verantwortung für einen Termin (wer vorbereitet und leitet)"],
   [[Group], "Group", "Gruppe im Hauptteil eines Trainings"],
   [[Shirt], "Shirt", "Spieler:in, Spielerliste, Spielerzahl"],
   [[Tag], "Tag", "Kader - nur in Überschriften, die Kader-Lozenges bleiben ohne Zeichen"],
@@ -862,7 +866,16 @@ export default async function Styleguide() {
             Überschrift für <code>aria-labelledby</code>, statt den Namen doppelt
             zu zeigen.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            In einem Dialog die kleinere Form (<code>imDialog</code>, Epic #518): eine Linie darüber, die Überschrift in{" "}
+            <code>type-label-medium</code> und darunter ein Satz, wozu der Abschnitt dient (<code>untertitel</code>) -
+            so muss nicht jedes Feld darunter sich selbst erklären. «Termin erstellen» gliedert so Spieler:innen und
+            Trainer:innen.
+          </p>
           <div className="mb-8 grid max-w-md gap-8">
+            <FormAbschnitt titel="Trainer:innen" untertitel="Wer eingeladen ist, gilt als dabei, bis sie oder er absagt." imDialog>
+              <TextField label="Eingeladen" />
+            </FormAbschnitt>
             <FormAbschnitt titel="Durchführung">
               <TextField label="Ablauf" />
             </FormAbschnitt>
@@ -1965,7 +1978,11 @@ export default async function Styleguide() {
             <code>neutral</code> mit kleinem grauem Knopf ohne Zeichen, wenn es
             nichts zu wählen gibt (er fällt aus) - und für die Aus-Lage eines
             Schalters, dessen Aus kein Fehlen bedeutet (die Selbstabholung eines
-            Teams). Darunter liegt ein echtes{" "}
+            Teams). <code>ton=&quot;ruhig&quot;</code> (Epic #490, wieder seit PO 2026-10-25) für «angemeldet» und
+            «da» von Spieler:innen an Trainings, am privaten Link und in der Spielerliste am Termin: Der Schalter zeigt
+            den Stand, ohne ihn zu bewerten - an eine durchsichtige Bahn mit heller Kontur und grossem hellem Knopf
+            rechts, aus eine dunkle Bahn mit grauer Kontur und kleinem grauem Knopf links, ohne Zeichen. Die Form nach
+            Proton bleibt für «dabei» der Trainer:innen. Darunter liegt ein echtes{" "}
             <code>&lt;input type=&quot;checkbox&quot; role=&quot;switch&quot;&gt;</code>.
           </p>
           <SwitchDemo />
@@ -2193,7 +2210,7 @@ export default async function Styleguide() {
             vorgelesen wird («Wert, Gruppe») - sonst hörte man eine lange Liste
             ohne jede Gliederung. <code>zusatz</code> setzt unter den Namen einer
             Option eine gedämpfte zweite Zeile - nötig, wo der Name allein eine
-            Option nicht erkennen lässt (in der Anwendung: die Verantwortlichen
+            Option nicht erkennen lässt (in der Anwendung: die Eingeladenen
             eines Termins, deren Anzeigename gleich lauten oder eine
             automatische Kennung sein kann, darunter die E-Mail-Adresse). Die
             Zeile bricht an jeder Stelle um statt zu kürzen, weil gerade der
@@ -2493,6 +2510,32 @@ export default async function Styleguide() {
             <Lozenge appearance="danger">Zu viel</Lozenge>
             <Lozenge>Fällt aus</Lozenge>
             <Lozenge appearance="danger">Meldefrist verpasst</Lozenge>
+          </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>SecondaryLozenge</strong> (Epic #518, PO 2026-10-25): dieselbe Form, nur die Kontur - wie
+            Atlassians «Tag» und die Secondary Buttons. Sie steht NEBEN dem Status, nie an seiner Stelle: Den Status
+            trägt höchstens eine gefüllte Lozenge. Kontur in der Zeichenfarbe der Section Message. Ohne Text nur das
+            Zeichen; der Satz steht dann für Vorlesehilfe und Tooltip (<code>label</code>). Im Trainingsplan meldet sie
+            Trainer-Lücken: Niemand verantwortlich gelb.
+          </p>
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <span className="flex items-center gap-1">
+              <Lozenge>Nicht vorbereitet</Lozenge>
+              <SecondaryLozenge appearance="warning" iconBefore={UserPen} label="Niemand verantwortlich" />
+            </span>
+            <SecondaryLozenge appearance="warning" iconBefore={UserPen}>Niemand verantwortlich</SecondaryLozenge>
+            <SecondaryLozenge>Neutral</SecondaryLozenge>
+          </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>ZeichenZahl</strong> (Epic #518): eine knappe Angabe mit Zeichen davor - mehrere auf einer Linie
+            ersetzen Abschnitte mit Überschriften (Karte «Als Nächstes», Terminzeile). Ungefärbt; der ganze Satz ist
+            ihr Name für die Vorlesehilfe und steht beim Überfahren da. <code>klein</code> in der Terminzeile.
+          </p>
+          <div className="mb-6 flex flex-wrap items-center gap-5 text-on-surface">
+            <ZeichenZahl icon={Shirt} label="Spieler:innen: 34 von 36 angemeldet · 2 abgemeldet">34/36</ZeichenZahl>
+            <ZeichenZahl icon={UserRoundCheck} label="Trainer:innen: 3 von 3 dabei · Anna verantwortlich · du bist dabei">3/3</ZeichenZahl>
+            <ZeichenZahl icon={LandPlot} label="Platz: 40 × 30 m · Kunstrasen">40 × 30 m · Kunstrasen</ZeichenZahl>
+            <ZeichenZahl icon={Users} label="Trainer:innen: 2 von 2 dabei · du bist nicht eingeladen" klein>2/2</ZeichenZahl>
           </div>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>LozengeAuswahl</strong> (Epic #490): eine Lozenge, die zugleich der Knopf für ein Menü ist - wie
@@ -3822,22 +3865,6 @@ export default async function Styleguide() {
             </li>
           </ul>
           <MiniMonatDemo />
-        </Section>
-
-        <Section id="meldebalken">
-          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Wie viele kommen, als Balken (<code>Meldebalken</code>, Epic #490): im Abschnitt TEAM der grossen
-            Karten im Trainingsplan und am privaten Link. Neu, weil keine Anzeige eine Menge gegen einen Bereich
-            zeigt. Der helle Anteil sind die Angemeldeten (ab Beginn: die Anwesenden) von allen, für die der
-            Termin gilt; ein Richtwert liegt als hellere Zone darunter, mit nur einer Mindestzahl bis ans Ende,
-            mit nur einer Höchstzahl ab dem Anfang. Der Balken bewertet nicht und bleibt ungefärbt - die
-            Bewertung sagt allein der Status in einem Wort. Vorgelesen wird beides in einem Satz.
-          </p>
-          <div className="flex max-w-md flex-col gap-6">
-            <Meldebalken zahl={7} gesamt={14} min={9} max={12} />
-            <Meldebalken zahl={11} gesamt={16} min={9} />
-            <Meldebalken zahl={12} gesamt={14} />
-          </div>
         </Section>
 
         <Section id="platz-spielerzahl">

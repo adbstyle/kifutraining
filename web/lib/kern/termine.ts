@@ -42,6 +42,9 @@ import {
 import { kurzeZeit } from "@/lib/queries/termine-fuer";
 import { heuteAmTrainingsort, jetztAmTrainingsort, terminBegonnen } from "@/lib/zeit";
 import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugriff";
+import { absagenVerfallText } from "@/lib/trainer";
+import { besetzungProblem, type Mindestbesetzung } from "@/lib/besetzung";
+import { trainerBeimFestlegen, type TrainerWahl } from "@/lib/kern/trainer";
 import { HINWEIS_NICHTS_ENTSTANDEN, hinweisRest, kopiereTraining, type KopieErgebnis } from "@/lib/kern/kopie";
 import { gibtEsTraining, loescheTrainingMitBildern, raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
 import {
@@ -75,7 +78,7 @@ import {
 export const TERMIN_FELD = { feld: "termin_id" } as const;
 
 export const TERMIN_ROH =
-  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, training_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
+  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, training_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
 
 export type TerminRoh = {
   id: string;
@@ -98,6 +101,9 @@ export type TerminRoh = {
   felder: Felder | null;
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
   erwartete_spielerzahl: number | null;
+  /** Die Mindestbesetzung (#521). */
+  besetzung_art: string | null;
+  besetzung_zahl: number | null;
   /** Nur Serientermine tragen eine Serie; die Flags zeigen, welche Angaben
    *  von ihr abweichen. */
   serie_id: string | null;
@@ -108,18 +114,6 @@ export type TerminRoh = {
   ausgefallen: boolean;
   ausfall_grund: string | null;
 };
-
-/** Kennungen von Verantwortlichen vorab prüfen und von Doppelten befreien
- *  (#325): Jede muss eine UUID sein, sonst wiese Postgres mit einem rohen
- *  Fehler ab. Geteilt von Einzeltermin, Serie und Festlegen. */
-export function bereinigeVerantwortliche(ids: readonly unknown[]): { ok: true; ids: string[] } | { ok: false; fehler: KernFehler } {
-  if (!Array.isArray(ids) || !ids.every((x) => istUuid(x)))
-    return {
-      ok: false,
-      fehler: fehlschlag("eingabe", TERMIN_TEXT.verantwortlicheUngueltig, { feld: "verantwortliche" }),
-    };
-  return { ok: true, ids: [...new Set((ids as string[]).map((x) => x.toLowerCase()))] };
-}
 
 function feldFehler(p: TerminProblem | null): KernFehler | null {
   return p ? fehlschlag("eingabe", p.text, { feld: p.feld }) : null;
@@ -140,6 +134,12 @@ export function pruefeFelder(
 
 /** Die erwartete Spielerzahl prüfen (#390 AK 3, 7) — mit dem Satz der
  *  Oberfläche und dem Eingabenamen des Werkzeugs. */
+/** Die Mindestbesetzung vorab prüfen (#521 AK 5) — mit dem Satz der Oberfläche. */
+export function besetzungFehler(m: Mindestbesetzung | undefined): KernFehler | null {
+  const p = m === undefined ? null : besetzungProblem(m);
+  return p ? fehlschlag("eingabe", p, { feld: "mindestbesetzung" }) : null;
+}
+
 export function spielerzahlFehler(n: number | null | undefined): KernFehler | null {
   const p = n === undefined ? null : spielerzahlProblem(n);
   return p ? fehlschlag("eingabe", p.text, { feld: p.feld }) : null;
@@ -217,7 +217,9 @@ export type TerminFestlegen = {
   spielerzahl?: number | null;
   /** Für welche Kader der Termin gilt (#453 AK 1); ohne oder leer: für alle. */
   kaderIds?: string[];
-};
+  /** Wie viele Trainer:innen mindestens dabei sein sollen (#521); ohne: keine. */
+  mindestbesetzung?: Mindestbesetzung;
+} & TrainerWahl;
 
 /** Was ein Spiel trägt und ein Training nicht (#459 AK 2, 5, 10, 11, 16) —
  *  und umgekehrt. Geprüft wird die Angabe, wie sie nach dem Schreiben
@@ -303,7 +305,7 @@ function anpfiffFehler(datum: string, beginn: string | null): KernFehler | null 
  *  dessen Bezeichnung und Richtwert und hat seinen Anpfiff noch vor sich. */
 export async function legeTerminFest(
   supabase: SupabaseClient,
-  _userId: string,
+  userId: string,
   e: TerminFestlegen,
 ): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
   if (!istTerminArt(e.art)) return fehlschlag("eingabe", SPIEL_TEXT.art, { feld: "art" });
@@ -323,12 +325,16 @@ export async function legeTerminFest(
   if (!felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
   if (zahl) return zahl;
+  const besetzung = besetzungFehler(e.mindestbesetzung);
+  if (besetzung) return besetzung;
   // Kader nur an einem anstehenden Termin (#453 AK 1, 13) — vorab, damit
   // kein Termin ohne die gewählten Kader stehen bleibt.
   if (e.kaderIds?.length && terminBegonnen(e.datum, e.beginn))
     return fehlschlag("regel", KADER_MELDUNG.KADER_TERMIN_BEGONNEN, { feld: "kader_ids" });
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
+  const trainer = await trainerBeimFestlegen(supabase, userId, e.teamId, e);
+  if (!trainer.ok) return trainer;
 
   const { data, error } = await supabase
     .from("training_termine")
@@ -346,6 +352,8 @@ export async function legeTerminFest(
       bemerkung: leerZuNull(e.bemerkung),
       felder: felder.felder,
       erwartete_spielerzahl: e.spielerzahl ?? null,
+      besetzung_art: e.mindestbesetzung?.art ?? null,
+      besetzung_zahl: e.mindestbesetzung?.zahl ?? null,
     })
     .select("id")
     .single<{ id: string }>();
@@ -370,6 +378,16 @@ export async function legeTerminFest(
         : ausDbFehler(k.error);
     }
   }
+  // Die Besetzung (#519 AK 1): ohne sie soll der Termin nicht stehen bleiben.
+  const b = await supabase.rpc("termin_trainer_aendern", {
+    p_termin: data.id,
+    p_einladen: trainer.wert.eingeladene,
+    p_verantwortlich: trainer.wert.verantwortlich,
+  });
+  if (b.error) {
+    const weg = await supabase.from("training_termine").delete().eq("id", data.id);
+    return weg.error ? ausDbFehler(weg.error) : kalenderFehler(b.error);
+  }
   return ok({ terminId: data.id, teamId: e.teamId });
 }
 
@@ -389,6 +407,8 @@ export type TerminAendern = {
   /** Die erwartete Spielerzahl (#390 AK 2): `undefined` = unverändert,
    *  `null` = entfernen. */
   spielerzahl?: number | null;
+  /** Die Mindestbesetzung (#521 AK 1, 2): `undefined` = unverändert, `null` = entfernen. */
+  mindestbesetzung?: Mindestbesetzung;
   /** Nur an einem Spiel (#459 AK 3, 5): `undefined` = unverändert; der
    *  Richtwert je Grenze `null` = entfernen. */
   bezeichnung?: string;
@@ -418,6 +438,8 @@ export type TerminAendern = {
 export type Verfallend = {
   abmeldungen: number;
   nachtraege: number;
+  /** Absagen von Trainer:innen (#520 AK 11). */
+  absagen: number;
   summe: number;
   /** Nur an einem Spiel (#463 AK 13, 26; #464 AK 10): verfallende Meldungen
    *  und Kennzeichnungen und ob die Meldefrist danach schon abgelaufen ist. */
@@ -433,33 +455,42 @@ export async function verfallendeAbmeldungen(
   beginn: string | null,
 ): Promise<KernErgebnis<Verfallend>> {
   const p = { p_termin: terminId, p_datum: datum, p_beginn: beginn };
-  const [ab, nach] = await Promise.all([
+  const [ab, nach, absagen] = await Promise.all([
     supabase.rpc("termin_abmeldungen_verfallend", p),
     supabase.rpc("termin_nachtraege_verfallend", p),
+    supabase.rpc("termin_absagen_verfallend", p),
   ]);
   if (ab.error) return ausDbFehler(ab.error);
   if (nach.error) return ausDbFehler(nach.error);
-  return ok(verfallend((ab.data as number | null) ?? 0, (nach.data as number | null) ?? 0));
+  if (absagen.error) return ausDbFehler(absagen.error);
+  return ok(verfallend((ab.data as number | null) ?? 0, (nach.data as number | null) ?? 0, (absagen.data as number | null) ?? 0));
 }
 
-export function verfallend(abmeldungen: number, nachtraege: number): Verfallend {
-  return { abmeldungen, nachtraege, summe: abmeldungen + nachtraege };
+export function verfallend(abmeldungen: number, nachtraege: number, absagen = 0): Verfallend {
+  return { abmeldungen, nachtraege, absagen, summe: abmeldungen + nachtraege + absagen };
 }
 
 /** Ein Fehler, der vor dem Verlegen nach der Bestätigung fragt. */
 export function verfallFehler(v: Verfallend): KernFehler {
+  const absagen = absagenVerfallText(v.absagen);
   if (v.spiel)
-    return fehlschlag("regel", spielBestaetigen(spielVerfallText(v.spiel.meldungen, v.spiel.fristAbgelaufen, v.spiel.kennzeichnungen, v.nachtraege)), {
-      feld: "bestaetigt",
-      verfallend: v.summe,
-      nachtraege: v.nachtraege,
-      fristAbgelaufen: v.spiel.fristAbgelaufen,
-      ...(v.spiel.kennzeichnungen > 0 && { kennzeichnungen: v.spiel.kennzeichnungen }),
-    });
-  return fehlschlag("regel", verfallBestaetigen(v.abmeldungen, v.nachtraege), {
+    return fehlschlag(
+      "regel",
+      spielBestaetigen([spielVerfallText(v.spiel.meldungen, v.spiel.fristAbgelaufen, v.spiel.kennzeichnungen, v.nachtraege), absagen].filter(Boolean).join(" ")),
+      {
+        feld: "bestaetigt",
+        verfallend: v.summe,
+        nachtraege: v.nachtraege,
+        fristAbgelaufen: v.spiel.fristAbgelaufen,
+        ...(v.spiel.kennzeichnungen > 0 && { kennzeichnungen: v.spiel.kennzeichnungen }),
+        ...(v.absagen > 0 && { absagen: v.absagen }),
+      },
+    );
+  return fehlschlag("regel", verfallBestaetigen(v.abmeldungen, v.nachtraege, v.absagen), {
     feld: "bestaetigt",
     verfallend: v.summe,
     nachtraege: v.nachtraege,
+    ...(v.absagen > 0 && { absagen: v.absagen }),
   });
 }
 
@@ -570,11 +601,15 @@ export async function aendereTermin(
   if (felder && !felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
   if (zahl) return zahl;
+  const besetzung = besetzungFehler(e.mindestbesetzung);
+  if (besetzung) return besetzung;
 
   const aenderung: Partial<
     typeof neu & {
       felder: Felder | null;
       erwartete_spielerzahl: number | null;
+      besetzung_art: string | null;
+      besetzung_zahl: number | null;
       bezeichnung: string | null;
       richtwert_min: number | null;
       richtwert_max: number | null;
@@ -591,6 +626,10 @@ export async function aendereTermin(
   // Die Felder sind EINE Angabe und gehen als ganze Liste (#389 AK 7).
   if (felder) aenderung.felder = felder.felder;
   if (e.spielerzahl !== undefined) aenderung.erwartete_spielerzahl = e.spielerzahl;
+  if (e.mindestbesetzung !== undefined) {
+    aenderung.besetzung_art = e.mindestbesetzung?.art ?? null;
+    aenderung.besetzung_zahl = e.mindestbesetzung?.zahl ?? null;
+  }
   if (t.art === "spiel") {
     if (e.bezeichnung !== undefined) aenderung.bezeichnung = leerZuNull(e.bezeichnung);
     if (e.richtwertMin !== undefined) aenderung.richtwert_min = e.richtwertMin;
@@ -612,6 +651,11 @@ export async function aendereTermin(
     if ("bemerkung" in aenderung && neu.bemerkung !== t.bemerkung) flags.bemerkung_abweichend = true;
     if (felder && !gleicheFelder(felder.felder, t.felder)) flags.felder_abweichend = true;
     if (e.spielerzahl !== undefined && e.spielerzahl !== t.erwartete_spielerzahl) flags.spielerzahl_abweichend = true;
+    if (
+      e.mindestbesetzung !== undefined &&
+      ((e.mindestbesetzung?.art ?? null) !== t.besetzung_art || (e.mindestbesetzung?.zahl ?? null) !== t.besetzung_zahl)
+    )
+      flags.besetzung_abweichend = true;
   }
 
   // #327 PO 6, PC 4: Ein einzeln auf heute oder später verlegter Termin findet
@@ -632,11 +676,16 @@ export async function aendereTermin(
     const frist = fristWirdAbgelaufen(t, { datum: neu.datum, beginn: neu.beginn ?? "" }, vorlauf, jetztAmTrainingsort());
     const nachtraege = await spielNachtraegeZahl(supabase, t.id);
     if (!nachtraege.ok) return nachtraege;
+    // #520 PC 3: Mit dem Datum verfallen auch die Absagen der Trainer:innen.
+    const absagen = await supabase.rpc("termin_absagen_verfallend", { p_termin: t.id, p_datum: neu.datum, p_beginn: neu.beginn });
+    if (absagen.error) return ausDbFehler(absagen.error);
     const { meldungen, kennzeichnungen } = zahl.wert;
+    const abgesagt = (absagen.data as number | null) ?? 0;
     const v: Verfallend = {
       abmeldungen: 0,
       nachtraege: nachtraege.wert,
-      summe: meldungen + kennzeichnungen + nachtraege.wert,
+      absagen: abgesagt,
+      summe: meldungen + kennzeichnungen + nachtraege.wert + abgesagt,
       spiel: { meldungen, kennzeichnungen, fristAbgelaufen: frist },
     };
     // #464 AK 10, 13; #487 AK 13, 17: auch wenn nur Kennzeichnungen oder Nachträge verfallen.

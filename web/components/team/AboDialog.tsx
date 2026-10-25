@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, ShieldAlert } from "lucide-react";
+import { Check, Copy, Info, ShieldAlert } from "lucide-react";
 import { SectionMessage, Button, Dialog, TextField } from "@/components/ui";
 import { AboAnleitung } from "./AboAnleitung";
 
@@ -76,7 +76,12 @@ function AboInhalt({ url }: { url: string }) {
     <>
       <SectionMessage icon={ShieldAlert}>
         Dieser Link ist persönlich. Gib ihn nicht weiter: Wer ihn hat, sieht Zeit und Ort der
-        Trainings und Spiele dieses Teams.
+        Trainings und Spiele dieses Teams, zu denen du eingeladen bist.
+      </SectionMessage>
+      {/* #522 AK 7: die Namen gehen an den Anbieter des Kalenderprogramms. */}
+      <SectionMessage appearance="information" icon={Info} className="mt-3">
+        Die Einträge nennen die Namen der eingeladenen Trainer:innen. Sie liegen damit auch beim Anbieter deines
+        Kalenderprogramms.
       </SectionMessage>
       {fehler && (
         <SectionMessage appearance="error" className="mt-3">
@@ -106,6 +111,10 @@ function AboInhalt({ url }: { url: string }) {
         <AboAnleitung />
       </div>
       <p className="type-body-small mt-4">
+        Abgesagte Termine bleiben im Kalender und tragen «Abgesagt» im Titel. Wirst du ausgeladen,
+        verschwindet der Termin beim nächsten Abgleich.
+      </p>
+      <p className="type-body-small mt-2">
         Unter «Konto» findest du deine Abos wieder und kannst sie widerrufen. Wie oft dein
         Kalenderprogramm nachsieht, bestimmt es selbst.
       </p>

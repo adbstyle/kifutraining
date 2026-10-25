@@ -12,7 +12,12 @@ import { NeuerTerminDialog } from "./NeuerTerminDialog";
 import { spielEntfernenText } from "@/lib/spiel";
 import { TerminDialog } from "./TerminDialog";
 import { TrainingWahlDialog } from "./TrainingWahlDialog";
-import { nurNamenloseGeaendert, verantwortlicheStart, type VerantwortlicheWert } from "./VerantwortlicheWahl";
+import { angezeigteSpielerzahl } from "@/lib/besetzung";
+import { spielerzahlVon } from "@/lib/spieler";
+import { AbsageDialog } from "./AbsageDialog";
+import { terminHref } from "@/lib/team-ansicht";
+import { uebernehmenKoennen, type TerminTrainer } from "@/lib/trainer";
+import type { TrainerAenderung } from "./TrainerWahl";
 import {
   aendereSerieAktion,
   aendereTerminAktion,
@@ -25,7 +30,8 @@ import {
   loeseTrainingAktion,
   nimmAusfallZurueckAktion,
   ordneTrainingZuAktion,
-  setzeVerantwortlicheAktion,
+  aendereTrainerAktion,
+  setzeAbsageAktion,
   vorschauSerieAktion,
   vorschauSerieEntfernenAktion,
   type TerminFelder,
@@ -61,10 +67,21 @@ export type TerminAktionen = {
   /** Ausfall markieren oder, bei einem ausgefallenen Termin, den Grund ändern (#327). */
   ausfallen: (t: TerminZeile) => void;
   ausfallZuruecknehmen: (t: TerminZeile) => void;
+  /** Trainer:innen dieses einen Termins ändern (#519 AK 5–10, 25): auch an
+   *  einem Serientermin nur an ihm; `meldung` sagt die Snackbar. */
+  trainer: (t: TerminZeile, aenderung: TrainerEinzeln, meldung: string) => void;
+  /** Eine Eingeladene für diesen Termin absagen oder wieder zusagen (#520
+   *  AK 1, 18); sagt die Verantwortliche ab, fragt erst «wer übernimmt?». */
+  absagen: (t: TerminZeile, wer: TerminTrainer, abgesagt: boolean) => void;
+  /** Das eigene Konto. */
+  ich: string;
   pending: boolean;
   /** Das Team führt Kader (#453). */
   mitKadern: boolean;
 };
+
+/** Eine Änderung an den Trainer:innen eines Termins, als Differenz. */
+export type TrainerEinzeln = { einladen?: string[]; ausladen?: string[]; ausladenEintraege?: string[]; verantwortlich?: string };
 
 const Kontext = createContext<TerminAktionen | null>(null);
 
@@ -86,6 +103,7 @@ function startWerte(t: TerminZeile): TerminFelder {
     bemerkung: t.bemerkung ?? "",
     felder: t.felder,
     spielerzahl: t.spielerzahl,
+    mindestbesetzung: t.mindestbesetzung,
     // Ein Spiel (#459): Bezeichnung und Richtwert statt Feldern und Zahl.
     ...(t.spiel
       ? {
@@ -108,23 +126,25 @@ const FOLGT_WIEDER: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit folgt wieder der Serie.",
   ort: "Der Ort folgt wieder der Serie.",
   bemerkung: "Die Bemerkung folgt wieder der Serie.",
-  verantwortliche: "Die Verantwortlichen folgen wieder der Serie.",
+  eingeladene: "Die Eingeladenen folgen wieder der Serie.",
+  verantwortung: "Die Verantwortung folgt wieder der Serie.",
+  besetzung: "Die Mindestbesetzung folgt wieder der Serie.",
   felder: "Die Felder folgen wieder der Serie.",
   spielerzahl: "Die erwartete Spielerzahl folgt wieder der Serie.",
   kader: "Die Kader folgen wieder der Serie.",
 };
 
 /** Die offene Frage nach der Reichweite (#326 AK 1–4, 7). Beim Ändern stehen
- *  die geänderten Felder und Verantwortlichen für «nur dieser» (`geaendert`,
- *  `verantwortlich`, wie beim einzelnen Termin) und die Änderung für die Serie
- *  (`aenderung`, ohne Datum, die Verantwortlichen als Konten) bereit. */
+ *  die geänderten Felder und Trainer:innen für «nur dieser» (`geaendert`,
+ *  `trainer`, wie beim einzelnen Termin) und die Änderung für die Serie
+ *  (`aenderung`, ohne Datum, die Eingeladenen als ganze Liste) bereit. */
 type ReichweiteFrage = {
   art: SerienArt;
   t: TerminZeile;
   erlaubt: readonly Reichweite[];
   hinweis?: string;
   geaendert?: Partial<TerminFelder> | null;
-  verantwortlich?: VerantwortlicheWert;
+  trainer?: TrainerAenderung;
   /** Die geänderten Kader (#453), für «nur dieser». */
   kader?: string[];
   aenderung?: SerienAenderung;
@@ -132,9 +152,9 @@ type ReichweiteFrage = {
   grund?: string;
 };
 
-/** Die Felder sind gespeichert, die Verantwortlichen nicht — weil der USER
- *  zwischen den beiden Schritten abbrach oder der zweite scheiterte (#325). */
-const NUR_FELDER_GEAENDERT = "Termin geändert. Die Verantwortlichen blieben unverändert.";
+/** Die Felder sind gespeichert, die Trainer:innen nicht — weil der USER
+ *  zwischen den beiden Schritten abbrach oder der zweite scheiterte (#519). */
+const NUR_FELDER_GEAENDERT = "Termin geändert. Die Trainer:innen blieben unverändert.";
 /** Dasselbe für den Ausfallgrund, den letzten Schritt (#402 AK 13). */
 const GRUND_UNVERAENDERT = "Termin geändert. Der Grund des Ausfalls blieb unverändert.";
 /** Dasselbe für die Kader (#453). */
@@ -157,6 +177,7 @@ export function TerminBereich({
   trainings,
   persoenliche,
   mitglieder,
+  ich,
   heute,
   fuehrtListe,
   kader = [],
@@ -167,8 +188,10 @@ export function TerminBereich({
   trainings: TeamTrainingRow[];
   /** Die eigenen persönlichen Trainings des USERS (#328). */
   persoenliche: TrainingListRow[];
-  /** Wer als Verantwortliche:r zur Wahl steht (#325). */
+  /** Wer als Trainer:in zur Wahl steht (#519). */
   mitglieder: TeamMitglied[];
+  /** Das eigene Konto: beim Festlegen verantwortlich vorgewählt (#519 AK 4). */
+  ich: string;
   heute: string;
   /** Das Team führt eine Spielerliste (#434). */
   fuehrtListe: boolean;
@@ -202,6 +225,8 @@ export function TerminBereich({
    *  verfallen (#437 AK 1, #453 AK 10): die Rückfrage samt Fortsetzung. */
   const verfall = useVerfallRueckfrage(pending);
   const [dialogFehler, setDialogFehler] = useState<string | undefined>();
+  /** Die Verantwortliche sagt ab: Wer übernimmt (#520 AK 4, 19)? */
+  const [absage, setAbsage] = useState<{ t: TerminZeile; wer: TerminTrainer } | null>(null);
 
   /** Die Nummer des laufenden Ablaufs in einem Dialog. Öffnen und Abbrechen
    *  (Knopf, Escape, Klick daneben) zählen sie hoch; wer nach einem `await`
@@ -254,30 +279,19 @@ export function TerminBereich({
     });
   }
 
-  /** Einen neuen Termin erstellen, danach seine Verantwortlichen (#325 AK 1).
-   *  Zwei Aufrufe, weil das Erstellen keine Verantwortlichen kennt. Scheitert
-   *  erst der zweite, steht der Termin schon: Dann schliesst der Dialog (ein
-   *  erneutes «Erstellen» legte ihn doppelt an), und die Snackbar sagt beides. */
-  async function legeNeuFest(f: TerminFelder, verantwortlich?: VerantwortlicheWert, kaderIds: string[] = []) {
-    const r = await legeTerminFestAktion(teamId, f, kaderIds);
-    if (!r.ok || !verantwortlich) return r;
-    const v = await setzeVerantwortlicheAktion(r.terminId, verantwortlich, undefined);
-    return v.ok ? v : { ok: true as const, meldung: `Termin erstellt. ${v.error}` };
-  }
-
   /** Einen Termin einzeln ändern — einen einzelnen oder einen Serientermin mit
-   *  «nur dieser»: erst die Felder, dann die Verantwortlichen (#325 AK 2, 5).
+   *  «nur dieser»: erst die Felder, dann die Trainer:innen (#519 AK 5–10).
    *  Jeder Aufruf läuft nur, wenn sich bei ihm etwas geändert hat (PO 17);
    *  scheitert der erste, läuft der zweite nicht. Hat der USER nach dem
    *  ersten abgebrochen, läuft der zweite auch nicht: Die Dialoge bleiben
    *  unberührt, die Snackbar sagt, dass nur die Felder gespeichert sind.
-   *  Die Kader (#453) folgen den Verantwortlichen; lassen sie Abmeldungen
+   *  Die Kader (#453) folgen den Trainer:innen; lassen sie Abmeldungen
    *  verfallen, fragt der Ablauf nach und setzt danach mit den Kadern fort.
    *  Ein geänderter Ausfallgrund (#402 AK 13) folgt als letzter Schritt. */
   function aendereEinzeln(
     t: TerminZeile,
     geaendert: Partial<TerminFelder> | null | undefined,
-    verantwortlich?: VerantwortlicheWert,
+    trainer?: TrainerAenderung,
     grund?: string,
     bestaetigt: number | false = false,
     kaderIds?: string[],
@@ -294,23 +308,28 @@ export function TerminBereich({
           const anzahl = r.verfallend ?? 0;
           if (gilt())
             return verfall.nachVerlegung({ ...r, verfallend: anzahl }, () =>
-              aendereEinzeln(t, geaendert, verantwortlich, grund, anzahl, kaderIds),
+              aendereEinzeln(t, geaendert, trainer, grund, anzahl, kaderIds),
             );
           // Abgebrochen, bevor die Rückfrage kam: Gespeichert ist nichts.
           return melde(NICHT_GEAENDERT);
         }
         if (!r.ok) return einzelnGescheitert(r.error, gilt());
       }
-      if (verantwortlich) {
-        if (!gilt()) {
+      if (trainer) {
+        if (geaendert && !gilt()) {
           router.refresh();
           return melde(NUR_FELDER_GEAENDERT);
         }
-        const v = await setzeVerantwortlicheAktion(t.id, verantwortlich, t.serie ? "nur_dieser" : undefined);
+        const { einladen, ausladen, ausladenEintraege, verantwortlich } = trainer;
+        const v = await aendereTrainerAktion(
+          t.id,
+          { einladen, ausladen, ausladenEintraege, verantwortlich },
+          t.serie ? "nur_dieser" : undefined,
+        );
         if (!v.ok) return einzelnGescheitert(v.error, gilt(), geaendert ? NUR_FELDER_GEAENDERT : undefined);
       }
       if (kaderIds) {
-        const davor = geaendert || verantwortlich ? KADER_UNVERAENDERT : undefined;
+        const davor = geaendert || trainer ? KADER_UNVERAENDERT : undefined;
         if (davor && !gilt()) {
           router.refresh();
           return melde(davor);
@@ -328,7 +347,7 @@ export function TerminBereich({
         if (!k.ok) return einzelnGescheitert(k.error, gilt(), davor);
       }
       if (grund !== undefined) {
-        const vorher = geaendert || verantwortlich ? GRUND_UNVERAENDERT : undefined;
+        const vorher = geaendert || trainer ? GRUND_UNVERAENDERT : undefined;
         if (vorher && !gilt()) {
           router.refresh();
           return melde(vorher);
@@ -395,7 +414,8 @@ export function TerminBereich({
     const r = b.art === "aendern"
       ? await aendereSerieAktion(b.t.id, b.reichweite, b.aenderung ?? {}, {
           ...erwartet,
-          verfallend: b.folge.abmeldungenVerfallend + b.folge.abmeldungenKader + b.folge.nachtraegeVerfallend,
+          verfallend:
+            b.folge.abmeldungenVerfallend + b.folge.abmeldungenKader + b.folge.nachtraegeVerfallend + b.folge.absagenVerfallend,
         })
       : await entferneSerieAktion(b.t.id, b.reichweite, erwartet);
     if (!r.ok) return serienFehler(b.art, r.error, laufNr.current !== nr);
@@ -408,27 +428,27 @@ export function TerminBereich({
 
   /** Speichern im Termin-Dialog. Ein einzelner Termin geht direkt; ein
    *  Serientermin fragt erst, wofür die Änderung gilt — auch, wenn sich nur
-   *  die Verantwortlichen geändert haben (#325 AK 4). Gesendet wird in jedem
+   *  die Trainer:innen geändert haben (#519 AK 12). Gesendet wird in jedem
    *  Fall nur, was sich geändert hat (PO 17); nichts geändert: kein Aufruf.
-   *  `verantwortlich` kommt nur, wenn sich die Wahl geändert hat. */
+   *  `trainer` kommt nur, wenn sich die Wahl geändert hat. */
   function speichereBearbeitung(
     t: TerminZeile,
     f: TerminFelder,
     regel?: SerienRegel,
-    verantwortlich?: VerantwortlicheWert,
+    trainer?: TrainerAenderung,
     grund?: string,
     kaderIds?: string[],
   ) {
     const geaendert = geaenderteFelder(f, startWerte(t));
     const regelNeu = t.serie && regel ? regelAenderung(t.serie, regel) : null;
-    if (!geaendert && !regelNeu && !verantwortlich && !kaderIds) {
+    if (!geaendert && !regelNeu && !trainer && !kaderIds) {
       if (grund === undefined) return setBearbeiten(null);
       // Nur der Grund: Er gilt für diesen Termin, eine Reichweite gibt es nicht (#402 PC 4).
       return lauf(() => lasseAusfallenAktion(t.id, grund, true), () => "Grund gespeichert.", () => setBearbeiten(null), true, laufNr.current);
     }
-    if (!t.serie) return aendereEinzeln(t, geaendert, verantwortlich, grund, false, kaderIds);
+    if (!t.serie) return aendereEinzeln(t, geaendert, trainer, grund, false, kaderIds);
     const datum = geaendert?.datum !== undefined;
-    const namenlose = !!verantwortlich && nurNamenloseGeaendert(verantwortlich, verantwortlicheStart(t.verantwortliche));
+    const namenlose = !!trainer?.nurNamenlose;
     const erlaubt = erlaubteReichweiten({ datum, regel: !!regelNeu, namenlose });
     // Der Dialog prüft das schon; hier nur als Rückhalt.
     if (!erlaubt) return setDialogFehler(datum ? SERIE_TEXT.datumUndRegel : SERIE_TEXT.namenloseUndRegel);
@@ -448,18 +468,20 @@ export function TerminBereich({
             ? SERIE_MELDUNG.REGEL_NUR_SERIE
             : undefined,
       geaendert,
-      verantwortlich,
+      trainer,
       kader: kaderIds,
       grund,
-      // Für folgende und alle gehen die Verantwortlichen mit der übrigen
-      // Änderung in EINE Serienänderung (PC 3, 11). Die Serienrechnung
-      // (terminserie_rechnen) ersetzt damit an jedem erfassten Termin ALLE
-      // Einträge durch diese Konten, auch die namenlosen gelöschter Konten.
-      // Ändern sich allein diese, bleibt darum nur «nur dieser» (`namenlose`).
+      // Für folgende und alle gehen die Trainer:innen mit der übrigen
+      // Änderung in EINE Serienänderung (#519 AK 12). Die Serienrechnung
+      // ersetzt damit an jedem erfassten Termin ALLE Eingeladenen durch diese
+      // Konten, auch die namenlosen gelöschter Konten. Ändern sich allein
+      // diese, bleibt darum nur «nur dieser» (`namenlose`).
       aenderung: {
         ...werte,
         ...regelNeu,
-        ...(verantwortlich && { verantwortliche: verantwortlich.userIds }),
+        // Nur aktuelle Mitglieder: Ehemalige eines vergangenen Termins lassen sich nicht neu einladen (#519 AK 11).
+        ...(trainer?.eingeladene && { eingeladene: trainer.eingeladene.filter((u) => mitglieder.some((m) => m.userId === u)) }),
+        ...(trainer?.verantwortlich && { verantwortlich: trainer.verantwortlich }),
         ...(kaderIds && { kaderIds }),
       },
     });
@@ -474,8 +496,8 @@ export function TerminBereich({
       // Einzeln entfernen geht durch die Bestätigung aus Teil A: Sie sagt, was
       // mit dem Training geschieht (#322; PO 2026-10-06).
       if (art === "entfernen") return setEntfernen(t);
-      if (!frage.geaendert && !frage.verantwortlich && !frage.kader) return;
-      return aendereEinzeln(t, frage.geaendert, frage.verantwortlich, frage.grund, false, frage.kader);
+      if (!frage.geaendert && !frage.trainer && !frage.kader) return;
+      return aendereEinzeln(t, frage.geaendert, frage.trainer, frage.grund, false, frage.kader);
     }
     const version = t.serie?.version ?? 0;
     const nr = laufNr.current;
@@ -495,7 +517,8 @@ export function TerminBereich({
         v.folge.entfallendAnzahl > 0 ||
         v.folge.abmeldungenVerfallend > 0 ||
         v.folge.abmeldungenKader > 0 ||
-        v.folge.nachtraegeVerfallend > 0
+        v.folge.nachtraegeVerfallend > 0 ||
+        v.folge.absagenVerfallend > 0
       )
         setBestaetigen(schritt);
       else await fuehreAus(schritt, nr);
@@ -558,9 +581,40 @@ export function TerminBereich({
       if (pending) return;
       lauf(() => nimmAusfallZurueckAktion(t.id), () => "Ausfall zurückgenommen.", () => {});
     },
+    trainer: (t, aenderung, meldung) => {
+      if (pending) return;
+      lauf(() => aendereTrainerAktion(t.id, aenderung, t.serie ? "nur_dieser" : undefined), () => meldung, () => {});
+    },
+    absagen: (t, wer, abgesagt) => {
+      if (pending || !wer.userId) return;
+      if (abgesagt && wer.verantwortlich) return setAbsage({ t, wer });
+      sageAb(t, wer, abgesagt);
+    },
+    ich,
     pending,
     mitKadern: kader.length > 0,
   };
+
+  /** Absagen mit dem, was die Oberfläche zeigte (AK 10). */
+  function sageAb(t: TerminZeile, wer: TerminTrainer, abgesagt: boolean, uebernimmt?: string) {
+    const selbst = wer.userId === ich;
+    const name = wer.name ?? "Die Trainer:in";
+    const meldung = abgesagt
+      ? selbst ? "Du hast abgesagt." : `${name} hat abgesagt.`
+      : selbst ? "Du bist wieder dabei." : `${name} ist wieder dabei.`;
+    lauf(
+      () =>
+        setzeAbsageAktion({
+          terminId: t.id,
+          userId: wer.userId!,
+          abgesagt,
+          uebernimmt,
+          gesehen: { datum: t.datum, beginn: t.beginn, verantwortlich: t.trainer.find((x) => x.verantwortlich)?.userId ?? null },
+        }),
+      () => meldung,
+      () => setAbsage(null),
+    );
+  }
 
   return (
     <Kontext.Provider value={aktionen}>
@@ -571,6 +625,7 @@ export function TerminBereich({
         pending={pending}
         fehler={dialogFehler}
         mitglieder={mitglieder}
+        ich={ich}
         fuehrtListe={fuehrtListe}
         kader={kader}
         spielerGesamt={spielerGesamt}
@@ -583,8 +638,8 @@ export function TerminBereich({
           t.art === "serie"
             ? lauf(() => legeSerieFestAktion(teamId, t.felder), () => "Terminserie erstellt.", () => setNeu(false), true, laufNr.current)
             : lauf(
-                () => legeNeuFest(t.felder, t.verantwortlich, t.kaderIds),
-                (r) => ("meldung" in r && r.meldung) || "Termin erstellt.",
+                () => legeTerminFestAktion(teamId, { ...t.felder, mindestbesetzung: t.trainer.mindestbesetzung }, t.kaderIds, t.trainer),
+                () => "Termin erstellt.",
                 () => setNeu(false),
                 true,
                 laufNr.current,
@@ -601,7 +656,9 @@ export function TerminBereich({
         serienTag={bearbeiten?.serienTag}
         abweichungen={bearbeiten?.abweichungen}
         mitglieder={mitglieder}
-        verantwortliche={bearbeiten?.verantwortliche}
+        ich={ich}
+        trainer={bearbeiten?.trainer}
+        spielerzahlAktuell={bearbeiten ? angezeigteSpielerzahl(spielerzahlVon(bearbeiten)) : null}
         ausfall={bearbeiten?.ausgefallen ? { grund: bearbeiten.ausfallGrund } : null}
         heute={heute}
         fuehrtListe={fuehrtListe}
@@ -617,9 +674,29 @@ export function TerminBereich({
           neuerLauf();
           setBearbeiten(null);
         }}
-        onSpeichern={(f, regel, verantwortlich, grund, kaderIds) =>
-          bearbeiten && speichereBearbeitung(bearbeiten, f, regel, verantwortlich, grund, kaderIds)
+        onSpeichern={(f, regel, trainer, grund, kaderIds) =>
+          bearbeiten && speichereBearbeitung(bearbeiten, f, regel, trainer, grund, kaderIds)
         }
+      />
+
+      <AbsageDialog
+        frage={
+          absage && {
+            datum: absage.t.datum,
+            art: absage.t.art,
+            wer: absage.wer,
+            andere: uebernehmenKoennen(absage.t.trainer, absage.wer.userId!),
+          }
+        }
+        ich={ich}
+        pending={pending}
+        onClose={() => setAbsage(null)}
+        onAbsagen={(uebernimmt) => absage && sageAb(absage.t, absage.wer, true, uebernimmt)}
+        onEinladen={() => {
+          if (!absage) return;
+          setAbsage(null);
+          router.push(terminHref(teamId, null, absage.t.id, "trainer"), { scroll: false });
+        }}
       />
 
       <ReichweiteDialog

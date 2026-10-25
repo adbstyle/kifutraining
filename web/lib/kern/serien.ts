@@ -11,6 +11,9 @@ import {
 import { TERMIN_TEXT, istKalendertag, leerZuNull, textProblem, zeitProblem } from "@/lib/termin";
 import type { FeldEingabe } from "@/lib/termin-felder";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
+import type { Mindestbesetzung } from "@/lib/besetzung";
+import { bereinigeKennungen, trainerBeimFestlegen, type TrainerWahl } from "@/lib/kern/trainer";
+import { TRAINER_TEXT } from "@/lib/trainer";
 import { raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
 import {
   TERMIN_FELD,
@@ -19,7 +22,7 @@ import {
   spielerzahlFehler,
   entferneTermin,
   type Verlassen,
-  bereinigeVerantwortliche,
+  besetzungFehler,
   kalenderFehler,
   ladeTermin,
   type TerminAendern,
@@ -56,14 +59,14 @@ export type SerieFestlegen = {
   ende: string;
   ort?: string | null;
   bemerkung?: string | null;
-  /** Kennungen der Mitglieder, die jeder Termin der Serie trägt (#325 AK 3). */
-  verantwortliche?: string[];
   /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1); ohne: unbekannt. */
   felder?: readonly FeldEingabe[] | null;
   spielerzahl?: number | null;
   /** Die Kader jedes Termins der Serie (#453 AK 2); ohne oder leer: für alle. */
   kaderIds?: string[];
-};
+  /** Die Mindestbesetzung jedes Termins der Serie (#521 AK 1, 2); ohne: keine. */
+  mindestbesetzung?: Mindestbesetzung;
+} & TrainerWahl;
 
 /** Kader-Kennungen prüfen — eine falsch geformte ist für niemanden sichtbar. */
 function kaderIdsFehler(ids: readonly string[] | undefined) {
@@ -76,21 +79,24 @@ function kaderIdsFehler(ids: readonly string[] | undefined) {
  *  echter Termin ohne Training; bestehende Termine bleiben unberührt. */
 export async function legeSerieFest(
   supabase: SupabaseClient,
-  _userId: string,
+  userId: string,
   e: SerieFestlegen,
 ): Promise<KernErgebnis<{ serieId: string; teamId: string; termine: number }>> {
   const p = serieProblem(e);
   if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
-  const verantwortliche = bereinigeVerantwortliche(e.verantwortliche ?? []);
-  if (!verantwortliche.ok) return verantwortliche.fehler;
   const felder = pruefeFelder(e.felder);
   if (!felder.ok) return felder;
   const zahl = spielerzahlFehler(e.spielerzahl);
   if (zahl) return zahl;
   const kader = kaderIdsFehler(e.kaderIds);
   if (kader) return kader;
+  const besetzung = besetzungFehler(e.mindestbesetzung);
+  if (besetzung) return besetzung;
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
+  // Jeder Termin der Serie trägt die Eingeladenen und die Verantwortliche (#519 AK 2).
+  const trainer = await trainerBeimFestlegen(supabase, userId, e.teamId, e);
+  if (!trainer.ok) return trainer;
   const { data, error } = await supabase.rpc("terminserie_festlegen", {
     p_team: e.teamId,
     p_wochentage: e.wochentage,
@@ -100,10 +106,12 @@ export async function legeSerieFest(
     p_ende: e.ende,
     p_ort: leerZuNull(e.ort),
     p_bemerkung: leerZuNull(e.bemerkung),
-    p_verantwortliche: verantwortliche.ids,
+    p_eingeladene: trainer.wert.eingeladene,
+    p_verantwortlich: trainer.wert.verantwortlich,
     p_felder: felder.felder,
     p_spielerzahl: e.spielerzahl ?? null,
     p_kader: e.kaderIds ?? [],
+    p_besetzung: e.mindestbesetzung ?? null,
   });
   if (error) return kalenderFehler(error);
   const r = data as { serie: string; termine: number };
@@ -120,14 +128,18 @@ export type SerienAenderung = {
   /** `null` oder `""` = leeren. */
   ort?: string | null;
   bemerkung?: string | null;
-  /** Kennungen der künftigen Verantwortlichen der Serie (#325); `[]` = niemand. */
-  verantwortliche?: string[];
+  /** Die künftigen Eingeladenen der Serie als ganze Liste (#519 AK 12). */
+  eingeladene?: string[];
+  /** Die künftige Verantwortliche der Serie; sie ist damit eingeladen. */
+  verantwortlich?: string;
   /** Die Felder als ganze Liste (#391 AK 7); `null` oder `[]` = keine. */
   felder?: readonly FeldEingabe[] | null;
   /** Die erwartete Spielerzahl; `null` = unbekannt. */
   spielerzahl?: number | null;
   /** Die Kader der Serie und der Termine, die ihr folgen (#453 AK 2); `[]` = für alle. */
   kaderIds?: string[];
+  /** Die Mindestbesetzung der Serie (#521 AK 3); `null` = entfernen. */
+  mindestbesetzung?: Mindestbesetzung;
 };
 
 export type EntfallenderTermin = {
@@ -157,6 +169,8 @@ export type SerienFolge = {
   /** Wie viele Nachträge zur Anwesenheit verfallen, weil die Änderung
    *  begonnene Termine wieder öffnet (#475 AK 12). */
   nachtraegeVerfallend: number;
+  /** Wie viele Absagen von Trainer:innen die Verlegung verfallen lässt (#520 AK 11). */
+  absagenVerfallend: number;
   teamId: string;
 };
 
@@ -170,6 +184,7 @@ type Roh = {
   abmeldungen_verfallend?: number;
   abmeldungen_kader?: number;
   nachtraege_verfallend?: number;
+  absagen_verfallend?: number;
 };
 
 function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): SerienFolge {
@@ -187,6 +202,7 @@ function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): Se
     abmeldungenVerfallend: r.abmeldungen_verfallend ?? 0,
     abmeldungenKader: r.abmeldungen_kader ?? 0,
     nachtraegeVerfallend: r.nachtraege_verfallend ?? 0,
+    absagenVerfallend: r.absagen_verfallend ?? 0,
     teamId,
   };
 }
@@ -240,7 +256,7 @@ async function laufe(
     if (vorschau.vergangene > 0 && !lauf.bestaetigt)
       return fehlschlag("regel", vergangeneBestaetigen(vorschau.vergangene), { feld: "bestaetigt" });
     // #437 AK 1, #475 AK 12: verfallende Abmeldungen und Nachträge ebenso erst nach Bestätigung.
-    const verfall = verfallend(vorschau.abmeldungenVerfallend, vorschau.nachtraegeVerfallend);
+    const verfall = verfallend(vorschau.abmeldungenVerfallend, vorschau.nachtraegeVerfallend, vorschau.absagenVerfallend);
     if (verfall.summe > 0 && !lauf.bestaetigt) return verfallFehler(verfall);
     // #453 AK 16: ebenso, wenn Termine für Spieler:innen nicht mehr gelten.
     if (vorschau.abmeldungenKader > 0 && !lauf.bestaetigt)
@@ -253,7 +269,8 @@ async function laufe(
     erwartet = {
       version: vorschau.versionVorher,
       entfallend: vorschau.entfallend.map((x) => x.terminId),
-      verfallend: vorschau.abmeldungenVerfallend + vorschau.abmeldungenKader + vorschau.nachtraegeVerfallend,
+      verfallend:
+        vorschau.abmeldungenVerfallend + vorschau.abmeldungenKader + vorschau.nachtraegeVerfallend + vorschau.absagenVerfallend,
     };
   }
   const terminTrainings = await terminTrainingsDerTermine(supabase, erwartet.entfallend);
@@ -284,9 +301,11 @@ export async function aendereSerie(
     !hatRegel &&
     a.ort === undefined &&
     a.bemerkung === undefined &&
-    a.verantwortliche === undefined &&
+    a.eingeladene === undefined &&
+    a.verantwortlich === undefined &&
     a.felder === undefined &&
     a.spielerzahl === undefined &&
+    a.mindestbesetzung === undefined &&
     a.kaderIds === undefined
   )
     return fehlschlag("eingabe", SERIE_MELDUNG.KEINE_AENDERUNG);
@@ -298,14 +317,18 @@ export async function aendereSerie(
   }
   const tp = textProblem(a);
   if (tp) return fehlschlag("eingabe", tp.text, { feld: tp.feld });
-  const verantwortliche = a.verantwortliche === undefined ? null : bereinigeVerantwortliche(a.verantwortliche);
-  if (verantwortliche && !verantwortliche.ok) return verantwortliche.fehler;
+  const eingeladene = a.eingeladene === undefined ? null : bereinigeKennungen(a.eingeladene, "eingeladene");
+  if (eingeladene && !eingeladene.ok) return eingeladene.fehler;
+  if (a.verantwortlich !== undefined && !istUuid(a.verantwortlich))
+    return fehlschlag("eingabe", TRAINER_TEXT.kennungUngueltig, { feld: "verantwortlich" });
   const felder = a.felder === undefined ? null : pruefeFelder(a.felder);
   if (felder && !felder.ok) return felder;
   const zahl = spielerzahlFehler(a.spielerzahl);
   if (zahl) return zahl;
   const kader = kaderIdsFehler(a.kaderIds);
   if (kader) return kader;
+  const besetzung = besetzungFehler(a.mindestbesetzung);
+  if (besetzung) return besetzung;
 
   // Die Regel vorab prüfen, mit den Feldnamen des Werkzeugs (AK 5, PC 19) —
   // nur wenn sie sich ändert: Eine reine Werteänderung an einem verlegten
@@ -335,11 +358,13 @@ export async function aendereSerie(
   if (hatZeit) Object.assign(aenderung, { beginn: leerZuNull(a.beginn), ende: leerZuNull(a.ende) });
   if (a.ort !== undefined) aenderung.ort = leerZuNull(a.ort);
   if (a.bemerkung !== undefined) aenderung.bemerkung = leerZuNull(a.bemerkung);
-  if (verantwortliche?.ok) aenderung.verantwortliche = verantwortliche.ids;
+  if (eingeladene?.ok) aenderung.eingeladene = eingeladene.ids;
+  if (a.verantwortlich !== undefined) aenderung.verantwortlich = a.verantwortlich.toLowerCase();
   // Schlüssel vorhanden mit null heisst «auf unbekannt setzen» (#391).
   if (felder) aenderung.felder = felder.felder;
   if (a.spielerzahl !== undefined) aenderung.spielerzahl = a.spielerzahl;
   if (a.kaderIds !== undefined) aenderung.kader = [...new Set(a.kaderIds)];
+  if (a.mindestbesetzung !== undefined) aenderung.besetzung = a.mindestbesetzung;
 
   return laufe(supabase, t.team_id, e, async (ausfuehren, erwartet) =>
     supabase.rpc("terminserie_aendern", {
@@ -376,11 +401,30 @@ export async function entferneSerie(
   );
 }
 
-export type FolgeAngabe = "zeit" | "ort" | "bemerkung" | "verantwortliche" | "felder" | "spielerzahl" | "kader";
+export type FolgeAngabe =
+  | "zeit"
+  | "ort"
+  | "bemerkung"
+  | "eingeladene"
+  | "verantwortung"
+  | "besetzung"
+  | "felder"
+  | "spielerzahl"
+  | "kader";
 /** Auch das Datum lässt sich nennen — die Datenebene weist es ab (PO 3). */
 export type FolgeWunsch = FolgeAngabe | "datum";
 
-const FOLGE_ANGABEN: readonly FolgeAngabe[] = ["zeit", "ort", "bemerkung", "verantwortliche", "felder", "spielerzahl", "kader"];
+const FOLGE_ANGABEN: readonly FolgeAngabe[] = [
+  "zeit",
+  "ort",
+  "bemerkung",
+  "eingeladene",
+  "verantwortung",
+  "besetzung",
+  "felder",
+  "spielerzahl",
+  "kader",
+];
 
 /** Abweichende Angaben wieder der Serie folgen lassen (#326 AK 6; das Datum
  *  nie, PO 3 — «datum» reicht der Kern an die Datenebene durch, die es mit
@@ -473,6 +517,7 @@ export async function aendereMitReichweite(
         felder.bemerkung,
         felder.felder,
         felder.spielerzahl,
+        felder.mindestbesetzung,
         felder.bezeichnung,
         felder.richtwertMin,
         felder.richtwertMax,
@@ -508,6 +553,7 @@ export async function aendereMitReichweite(
       bemerkung: e.bemerkung,
       felder: e.felder,
       spielerzahl: e.spielerzahl,
+      mindestbesetzung: e.mindestbesetzung,
       kaderIds: e.kaderIds,
     },
     bestaetigt: e.bestaetigt === true,

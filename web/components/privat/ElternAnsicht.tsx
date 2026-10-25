@@ -226,8 +226,10 @@ function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }
             t.ort && <span className="max-w-full truncate type-body-small text-on-surface-mittel">{t.ort}</span>
           )}
           <TeamZeile t={t} zahl={zahl} />
+          {t.verantwortlich && <span className="type-body-small text-on-surface-mittel">Verantwortlich: {t.verantwortlich}</span>}
         </div>
         <Switch
+          ton="ruhig"
           checked={!t.ausgefallen && !ab}
           neutral={t.ausgefallen}
           disabled={t.ausgefallen || t.begonnen || pending}
