@@ -14,7 +14,6 @@ export {
 export { Card } from "./Card";
 export { Gefahrenzone } from "./Gefahrenzone";
 export { Kalenderblatt } from "./Kalenderblatt";
-export { Meldebalken } from "./Meldebalken";
 export { MiniMonat } from "./MiniMonat";
 export type { Marke, StatusTon } from "./MiniMonat";
 export { AuswahlListe } from "./AuswahlListe";

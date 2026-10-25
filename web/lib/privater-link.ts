@@ -65,6 +65,9 @@ export type LinkTermin = {
   /** Die Kader der Spieler:in, über die der Termin für sie gilt (#454 AK 2);
    *  leer bei einem Termin für alle. Fremde Kader nennt der Link nie (AK 3). */
   kader: string[];
+  /** Wer den Termin vorbereitet und leitet (#523), mit Anzeigenamen; `null`
+   *  ohne Verantwortliche:n oder an einem ausgefallenen Termin. */
+  verantwortlich: string | null;
 };
 
 export type LinkAnsicht =

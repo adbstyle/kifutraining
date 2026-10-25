@@ -4299,7 +4299,20 @@ try {
       art: "training", bezeichnung: null, richtwert_min: null, richtwert_max: null,
       // Spielangaben (#463) bleiben an einem Training leer.
       meldung: null, meldung_verfallen: false, frist: null, frist_abgelaufen: false, vorher: null, bemerkung: null, treffpunkte: null, nicht_aufgeboten: false, aufgebot_verfallen: false, nicht_aufgeboten_zahl: null,
+      // #523 AK 1, 2: die Verantwortliche mit Anzeigenamen (festgelegt hat a).
+      verantwortlich: (await admin.rpc("anzeige_name", { p_user: a.id })).data as string,
     });
+    // #523 AK 3, PC 1: nur sie, keine weiteren; ohne Verantwortliche:n null, ausgefallen null.
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    wert(await aendereTrainer(a.supabase, a.id, { terminId: t, einladen: [b.id] }));
+    const mitB = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0];
+    assert.ok(!JSON.stringify(mitB).includes("trainer"), "keine weiteren Trainer:innen am Link");
+    wert(await aendereTrainer(a.supabase, a.id, { terminId: t, ausladen: [a.id] }));
+    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].verantwortlich, null);
+    wert(await aendereTrainer(a.supabase, a.id, { terminId: t, verantwortlich: b.id }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t }));
+    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].verantwortlich, null, "ausgefallen: keine");
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
 
     const abmelden = (token: string, abgemeldet: boolean) =>
       feldAnon.rpc("spieler_link_abmelden", { p_token: token, p_termin: t, p_abgemeldet: abgemeldet, p_gesehen_datum: tagCh(2), p_gesehen_beginn: "18:00" });
