@@ -42,7 +42,7 @@ export function Switch({
         {...rest}
       />
       {neutral ? (
-        <span aria-hidden className="pointer-events-none absolute left-2 size-4 rounded-full bg-on-surface-mittel" />
+        <span aria-hidden className="pointer-events-none absolute left-2 size-4 rounded-full bg-on-surface-mittel peer-checked:left-7" />
       ) : (
         <>
           <span

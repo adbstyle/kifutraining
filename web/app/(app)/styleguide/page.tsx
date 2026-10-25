@@ -89,7 +89,6 @@ import {
   Globe,
   BookOpen,
   Trash2,
-  User,
   Pencil,
   Info,
   SearchX,
@@ -599,12 +598,13 @@ const iconSet = [
   Globe,
   BookOpen,
   Trash2,
-  User,
+  UserRound,
 ];
 
 /* Eine Entität, ein Zeichen (PO 2026-10-25, Designsystem «Ikonografie»):
    Wer ein Zeichen für eine dieser Sachen braucht, nimmt dieses und kein
-   anderes - und ein Zeichen meint keine zweite Sache. */
+   anderes - und ein Zeichen meint keine zweite Sache. Was davon heute noch
+   abweicht, nennt die Zeile selbst. */
 const zeichenJeSache: [LucideIcon[], string, string][] = [
   [[Shield], "Shield", "Team"],
   [[UserRound], "UserRound", "Mitglied"],
@@ -1352,7 +1352,8 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             Jede Sache der Anwendung hat genau ein Zeichen, und ein Zeichen
             meint keine zweite Sache - so erkennt man auf dem Platz, wovon
-            eine Zeile spricht, bevor man sie liest. Teams, Mitglieder,
+            eine Zeile spricht, bevor man sie liest. Wo die Anwendung davon
+            noch abweicht, steht es in der Zeile. Teams, Mitglieder,
             Spieler:innen und Kader tragen ihr Zeichen auch vor der
             Überschrift ihres Abschnitts (20 px, <code>on-surface-mittel</code>).
           </p>
@@ -3895,9 +3896,9 @@ export default async function Styleguide() {
               Touch-Geräten auch unter dem Feld, <code>infoAufTouch</code>); sonst
               steht unter dem Feld nur ein Fehler. Es heisst «Erwartete
               Spielerzahl» wie in der Auskunft des Assistenten. Im Trainingsplan
-              steht sie in derselben Zeile wie die Felder, mit dem Zeichen{" "}
-              <code>Shirt</code> - <code>Users</code>{" "}
-              trägt schon die Verantwortlichen.
+              steht sie knapp und ohne Zeichen rechts in der Terminzeile, in der
+              Durchführen-Ansicht ausgeschrieben mit dem Zeichen{" "}
+              <code>Shirt</code> (Spieler:in).
             </li>
           </ul>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
