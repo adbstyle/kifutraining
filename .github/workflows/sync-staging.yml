@@ -62,7 +62,7 @@ env:
   # Sortierung im Guard-Query entsprechen. Neue public-Tabelle in einer
   # Migration? -> hier ergänzen, sonst bricht der Guard den Sync bewusst ab
   # (statt die Tabelle still leer zu lassen).
-  PUBLIC_TABLES: "abholung_sperren exercise_favorites exercises kader kader_spieler kalender_abos ki_aufrufe ki_zugang_namen profiles spiel_meldungen spiel_teilnahmen spiel_treffpunkte spieler spieler_abos team_abholung team_members teams termin_abmeldungen termin_eingefroren termin_kader termin_serien termin_serien_kader termin_serien_luecken termin_serien_verantwortliche termin_statuswechsel termin_teilnahmen termin_verantwortliche trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings"
+  PUBLIC_TABLES: "abholung_sperren exercise_favorites exercises kader kader_spieler kalender_abos ki_aufrufe ki_zugang_namen profiles spiel_meldungen spiel_teilnahmen spiel_treffpunkte spieler spieler_abos team_abholung team_members teams termin_abmeldungen termin_eingefroren termin_kader termin_serien termin_serien_kader termin_serien_luecken termin_serien_trainer termin_serien_verantwortliche termin_statuswechsel termin_teilnahmen termin_trainer termin_trainer_stand termin_verantwortliche trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings"
 
 jobs:
   sync:
