@@ -99,7 +99,8 @@ export function Lozenge({
    Dieselbe Form, aber nur die Kontur (wie Atlassians «Tag» und die
    «secondary»-Knöpfe, PO 2026-10-25): ein Hinweis NEBEN dem Status, nie der
    Status selbst — den trägt höchstens eine gefüllte Lozenge. Kontur in der
-   Zeichenfarbe der Section Message (`icon-*`), Schrift wie die gefüllte.
+   Füllfarbe der gefüllten Lozenge (`lozenge-*`, PO 2026-10-25: die
+   Zeichenfarbe war neben dem Status zu laut), Schrift wie die gefüllte.
 
    `label` ohne `children`: nur das Zeichen (Trainer-Lücken im Trainingsplan,
    Epic #518). Der Satz steht dann für die Vorlesehilfe und beim Überfahren
@@ -107,11 +108,11 @@ export function Lozenge({
 type SekundaerTon = "neutral" | "success" | "warning" | "danger" | "information" | "discovery";
 const SEKUNDAER: Record<SekundaerTon, string> = {
   neutral: "border-kante text-on-lozenge-neutral",
-  success: "border-icon-success text-on-lozenge-success",
-  warning: "border-icon-warning text-on-lozenge-warning",
-  danger: "border-icon-danger text-on-lozenge-danger",
-  information: "border-icon-information text-on-lozenge-information",
-  discovery: "border-icon-discovery text-on-lozenge-discovery",
+  success: "border-lozenge-success text-on-lozenge-success",
+  warning: "border-lozenge-warning text-on-lozenge-warning",
+  danger: "border-lozenge-danger text-on-lozenge-danger",
+  information: "border-lozenge-information text-on-lozenge-information",
+  discovery: "border-lozenge-discovery text-on-lozenge-discovery",
 };
 
 export function SecondaryLozenge({

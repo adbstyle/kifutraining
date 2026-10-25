@@ -42,7 +42,7 @@ import {
 import { kurzeZeit } from "@/lib/queries/termine-fuer";
 import { heuteAmTrainingsort, jetztAmTrainingsort, terminBegonnen } from "@/lib/zeit";
 import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugriff";
-import { absagenVerfallText } from "@/lib/trainer";
+import { mitAbsagen } from "@/lib/trainer";
 import { besetzungProblem, type Mindestbesetzung } from "@/lib/besetzung";
 import { trainerBeimFestlegen, type TrainerWahl } from "@/lib/kern/trainer";
 import { HINWEIS_NICHTS_ENTSTANDEN, hinweisRest, kopiereTraining, type KopieErgebnis } from "@/lib/kern/kopie";
@@ -472,11 +472,10 @@ export function verfallend(abmeldungen: number, nachtraege: number, absagen = 0)
 
 /** Ein Fehler, der vor dem Verlegen nach der Bestätigung fragt. */
 export function verfallFehler(v: Verfallend): KernFehler {
-  const absagen = absagenVerfallText(v.absagen);
   if (v.spiel)
     return fehlschlag(
       "regel",
-      spielBestaetigen([spielVerfallText(v.spiel.meldungen, v.spiel.fristAbgelaufen, v.spiel.kennzeichnungen, v.nachtraege), absagen].filter(Boolean).join(" ")),
+      spielBestaetigen(mitAbsagen(spielVerfallText(v.spiel.meldungen, v.spiel.fristAbgelaufen, v.spiel.kennzeichnungen, v.nachtraege), v.absagen)),
       {
         feld: "bestaetigt",
         verfallend: v.summe,

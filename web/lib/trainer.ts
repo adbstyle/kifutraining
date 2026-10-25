@@ -215,7 +215,7 @@ export type TrainerAenderung = NonNullable<ReturnType<typeof trainerAenderung>>;
 
 /** Der Satz zu verfallenden Absagen steht bei den Verfall-Sätzen der
  *  Abmeldungen (lib/spieler.ts), an die er anschliesst. */
-export { absagenVerfallText } from "@/lib/spieler";
+export { mitAbsagen } from "@/lib/spieler";
 
 // ── Das Kalender-Abo der Trainer:innen (#522) ────────────────────────────────
 

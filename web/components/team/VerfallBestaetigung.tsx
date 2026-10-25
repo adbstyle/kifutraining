@@ -6,7 +6,7 @@ import { Button, Dialog } from "@/components/ui";
 import { verfallDialogText } from "@/lib/spieler";
 import { kaderVerfallText } from "@/lib/kader";
 import { spielVerfallText } from "@/lib/spiel";
-import { absagenVerfallText } from "@/lib/trainer";
+import { mitAbsagen } from "@/lib/trainer";
 
 /* Verlegen lässt Abmeldungen verfallen (#437 AK 1, PC 1): Wer sich für den
    alten Zeitpunkt abgemeldet hat, gilt am neuen wieder als angemeldet. Das
@@ -104,12 +104,10 @@ export function useVerfallRueckfrage(pending?: boolean) {
       const k = r.kennzeichnungen ?? 0;
       const n = r.nachtraege ?? 0;
       const meldungen = r.verfallend - k - n - absagen;
-      const text = [
+      const text = mitAbsagen(
         `${spielVerfallText(meldungen, r.fristAbgelaufen, k, n)}${meldungen > 0 ? " Für den neuen Tag melden sich alle neu." : ""}`,
-        absagenVerfallText(absagen),
-      ]
-        .filter(Boolean)
-        .join(" ");
+        absagen,
+      );
       const titel =
         meldungen > 0
           ? "Meldungen verfallen"

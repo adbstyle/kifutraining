@@ -131,7 +131,7 @@ import {
   TRAINER_MELDUNG,
   TRAINER_TEXT,
   absageOffen,
-  absagenVerfallText,
+  mitAbsagen,
   dabeiZahl,
   hatAbgesagt,
   istDabei,
@@ -913,9 +913,9 @@ pruefe("Trainer: Absagen — dabei, Zahl, Eingrenzung, wer übernehmen kann, Ver
   assert.ok(absageOffen({ ausgefallen: false }, false));
   assert.ok(!absageOffen({ ausgefallen: true }, false), "AK 3: nie an einem ausgefallenen Termin");
   assert.ok(!absageOffen({ ausgefallen: false }, true), "AK 3: nicht ab Beginn");
-  assert.equal(absagenVerfallText(0), "");
-  assert.equal(absagenVerfallText(1), "Ausserdem verfällt 1 Absage einer Trainer:in: Sie gilt wieder als dabei.");
-  assert.equal(absagenVerfallText(3), "Ausserdem verfallen 3 Absagen von Trainer:innen: Sie gelten wieder als dabei.");
+  assert.equal(mitAbsagen("Vorher.", 0), "Vorher.");
+  assert.equal(mitAbsagen("Vorher.", 1), "Vorher. Ausserdem verfällt 1 Absage einer Trainer:in: Sie gilt wieder als dabei.");
+  assert.equal(mitAbsagen("", 3), "Damit verfallen 3 Absagen von Trainer:innen: Sie gelten wieder als dabei.", "ohne Satz davor kein «Ausserdem»");
 });
 
 pruefe("Trainer: Wahl im Dialog — Vorwahl, Differenz und namenlose Einträge (#519 AK 1–9)", () => {

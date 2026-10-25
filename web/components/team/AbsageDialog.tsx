@@ -51,8 +51,7 @@ export function AbsageDialog({
         }
       >
         <p>
-          {selbst ? "Du bist" : `${trainerName(frage.wer)} ist`} für {termin} verantwortlich, und alle anderen Eingeladenen haben
-          abgesagt.
+          {selbst ? "Du bist" : `${trainerName(frage.wer)} ist`} für {termin} verantwortlich, und sonst ist niemand dabei.
         </p>
         <p className="mt-3">
           {selbst ? "Sagst du" : "Sagt sie"} ab, ist niemand verantwortlich und niemand dabei. Der Termin fällt im Trainingsplan

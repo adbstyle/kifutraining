@@ -2514,7 +2514,7 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>SecondaryLozenge</strong> (Epic #518, PO 2026-10-25): dieselbe Form, nur die Kontur - wie
             Atlassians «Tag» und die Secondary Buttons. Sie steht NEBEN dem Status, nie an seiner Stelle: Den Status
-            trägt höchstens eine gefüllte Lozenge. Kontur in der Zeichenfarbe der Section Message. Ohne Text nur das
+            trägt höchstens eine gefüllte Lozenge. Kontur in der Füllfarbe der gefüllten Lozenge - die Zeichenfarbe war neben dem Status zu laut. Ohne Text nur das
             Zeichen; der Satz steht dann für Vorlesehilfe und Tooltip (<code>label</code>). Im Trainingsplan meldet sie
             Trainer-Lücken: Niemand verantwortlich gelb.
           </p>

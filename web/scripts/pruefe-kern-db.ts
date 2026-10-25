@@ -60,7 +60,7 @@ const { legeTerminFest, aendereTermin, entferneTermin, ordneTrainingZu, loeseTra
   "../lib/kern/termine"
 );
 const { TERMIN_MELDUNG, TERMIN_TEXT } = await import("../lib/termin");
-const { TRAINER_MELDUNG, TRAINER_TEXT, absagenVerfallText, aboBeschreibung, aboTitel } = await import("../lib/trainer");
+const { TRAINER_MELDUNG, TRAINER_TEXT, mitAbsagen, aboBeschreibung, aboTitel } = await import("../lib/trainer");
 type AboTrainerTermin = import("../lib/trainer").AboTrainerTermin;
 const { BESETZUNG_TEXT } = await import("../lib/besetzung");
 const { FELDER_TEXT, felderProblem } = await import("../lib/termin-felder");
@@ -2103,7 +2103,7 @@ try {
     const r = fehler(await aendereTermin(a.supabase, a.id, { terminId: t, beginn: "17:00", ende: "19:00" }), "regel") as { verfallend?: number; absagen?: number; meldung: string };
     assert.equal(r.verfallend, 1);
     assert.equal(r.absagen, 1);
-    assert.ok(r.meldung.includes(absagenVerfallText(1)), r.meldung);
+    assert.ok(r.meldung.startsWith(mitAbsagen("", 1)), r.meldung);
     wert(await aendereTermin(a.supabase, a.id, { terminId: t, beginn: "17:00", ende: "19:00", bestaetigt: 1 }));
     assert.equal(await abgesagte(t), 0);
     // Ein Spiel: nur mit einem anderen Datum (PC 3).
