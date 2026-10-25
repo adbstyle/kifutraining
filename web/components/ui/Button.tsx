@@ -72,7 +72,8 @@ const variants: Record<Variant, string> = {
   hell: "umkehr",
   // Ohne `base`: Der Link teilt mit den Knöpfen nur Fokus-Ring und Abschalten.
   // Keine Schriftklasse — er erbt den Schnitt des Texts, in dem er steht.
-  link: "focus-ring inline-flex items-center gap-1 rounded-klein text-primary underline decoration-1 underline-offset-[3px] hover:decoration-2 disabled:opacity-40 disabled:pointer-events-none",
+  // Die Hand wie bei jedem Link, auch wo er technisch ein <button> ist.
+  link: "focus-ring cursor-pointer inline-flex items-center gap-1 rounded-klein text-primary underline decoration-1 underline-offset-[3px] hover:decoration-2 disabled:opacity-40 disabled:pointer-events-none",
 };
 
 /** Gemeinsame Button-Klassen — geteilt von Button und ButtonLink, damit ein
