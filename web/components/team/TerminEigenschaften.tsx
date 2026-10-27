@@ -1,5 +1,5 @@
 import { Repeat } from "lucide-react";
-import { Eigenschaft, EigenschaftFehlt, Lozenge, TreffpunktListe } from "@/components/ui";
+import { Eigenschaft, EigenschaftFehlt, ExternerLink, Lozenge, TreffpunktListe } from "@/components/ui";
 import { spielStatus } from "@/lib/termin-status";
 import { cn } from "@/lib/cn";
 import { wochentageText } from "@/lib/serie";
@@ -50,7 +50,15 @@ export function TerminEigenschaften({
   const zahlText = spielerzahlLang(spielerzahlVon(t));
   return (
     <dl className={cn("grid grid-cols-[6.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 sm:grid-cols-[8rem_minmax(0,1fr)]", className)}>
-      {t.ort && <Eigenschaft label="Ort">{t.ort}</Eigenschaft>}
+      {t.ort && (
+        <Eigenschaft label="Ort">
+          <span className="flex flex-col items-start gap-0.5">
+            <span>{t.ort}</span>
+            {/* #533 AK 8: den Kartenlink öffnen, um ihn zu prüfen. */}
+            {t.ortLink && <ExternerLink href={t.ortLink}>Auf der Karte öffnen</ExternerLink>}
+          </span>
+        </Eigenschaft>
+      )}
       {t.spiel && t.spiel.treffpunkte.length > 0 && (
         <Eigenschaft label="Treffpunkte">
           <TreffpunktListe treffpunkte={t.spiel.treffpunkte} spieltag={t.datum} spielOrt={t.ort} />

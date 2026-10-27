@@ -33,7 +33,7 @@ import {
 } from "@/lib/trainer-ausgabe";
 import { angezeigteSpielerzahl, noetigeTrainer } from "@/lib/besetzung";
 import { spielerzahlVon } from "@/lib/spieler";
-import { TERMIN_TEXT } from "@/lib/termin";
+import { KARTENLINK_MAX, TERMIN_TEXT } from "@/lib/termin";
 import {
   KENNUNG_FEHLER,
   TEAM_KENNUNG_FEHLER,
@@ -126,6 +126,11 @@ const DATUM = z.string().describe("Datum als JJJJ-MM-TT, etwa 2026-10-07.");
 const UHRZEIT = z.string().describe("Uhrzeit als HH:MM (24 Stunden), etwa 18:30.");
 const ORT = z.string().describe("Ort, frei formuliert, höchstens 100 Zeichen, etwa «Sportplatz Allmend, Feld 2».");
 const BEMERKUNG = z.string().describe("Bemerkung, frei formuliert, höchstens 500 Zeichen.");
+const KARTENLINK_MODELL =
+  `Eine vollständige Webadresse mit https://, höchstens ${KARTENLINK_MAX} Zeichen, meist ein geteilter Link aus einer ` +
+  "Karten-App. Nur zusammen mit einem Ort; ändert sich der Ort ohne neuen Kartenlink, fällt der bisherige weg. " +
+  TERMIN_TEXT.kartenlinkSichtbar;
+const KARTENLINK = z.string().describe(`Kartenlink zum Ort. ${KARTENLINK_MODELL}`);
 
 const Wochentage = z
   .array(z.enum(KI_WOCHENTAG))
@@ -245,6 +250,8 @@ const PlanEintrag = z.object({
   beginn: z.string(),
   ende: z.string(),
   ort: z.string().nullable(),
+  /** Der Kartenlink zum Ort (#533 AK 3); `null` ohne. */
+  kartenlink: z.string().nullable(),
   bemerkung: z.string().nullable(),
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: felderSchema(),
@@ -291,6 +298,7 @@ function planEintrag(t: TerminZeile, zugang: Zugang) {
     beginn: t.beginn,
     ende: t.ende,
     ort: t.ort,
+    kartenlink: t.ortLink,
     bemerkung: t.bemerkung,
     felder: felderAusgabe(t.felder),
     erwartete_spielerzahl: t.spielerzahl,
@@ -322,6 +330,7 @@ const PlanSerie = z.object({
   beginn: z.string(),
   ende: z.string(),
   ort: z.string().nullable(),
+  kartenlink: z.string().nullable(),
   bemerkung: z.string().nullable(),
   /** Wen die Serie einlädt und wer verantwortlich ist (#519). */
   trainer: serienTrainerSchema(),
@@ -347,6 +356,7 @@ function planSerien(termine: TerminZeile[]) {
         beginn: t.serie.beginn,
         ende: t.serie.ende,
         ort: t.serie.ort,
+        kartenlink: t.serie.ortLink,
         bemerkung: t.serie.bemerkung,
         trainer: serienTrainerAusgabe(t.serie.trainer),
         mindestbesetzung: t.serie.mindestbesetzung,
@@ -436,6 +446,7 @@ export const terminFestlegen = werkzeug({
     beginn: UHRZEIT.describe("Beginn als HH:MM, etwa 18:30; bei einem Spiel der Anpfiff."),
     ende: UHRZEIT.describe("Ende als HH:MM am selben Tag, etwa 20:00."),
     ort: ORT.optional(),
+    kartenlink: KARTENLINK.optional(),
     bemerkung: BEMERKUNG.optional(),
     felder: FelderEingabe.optional().describe(`Die Felder des Platzes; ohne Angabe ist der Platz unbekannt. ${FELDER_MODELL}`),
     erwartete_spielerzahl: SpielerzahlEingabe.optional().describe(
@@ -461,6 +472,7 @@ export const terminFestlegen = werkzeug({
         beginn: e.beginn,
         ende: e.ende,
         ort: e.ort,
+        ortLink: e.kartenlink,
         bemerkung: e.bemerkung,
         felder: e.felder,
         spielerzahl: e.erwartete_spielerzahl,
@@ -490,6 +502,9 @@ export const AendernEingabe = z.object({
       "leeren; «null» wird abgewiesen.",
   ),
   ort: ORT.nullable().optional().describe("Neuer Ort; null leert ihn, ohne Angabe unverändert."),
+  kartenlink: KARTENLINK.nullable()
+    .optional()
+    .describe(`Neuer Kartenlink; null entfernt ihn, ohne Angabe unverändert, solange der Ort bleibt. ${KARTENLINK_MODELL}`),
   bemerkung: BEMERKUNG.nullable().optional().describe("Neue Bemerkung; null leert sie, ohne Angabe unverändert."),
   bezeichnung: BEZEICHNUNG.optional().describe("Nur bei einem Spiel: neue Bezeichnung; ohne Angabe unverändert."),
   mindestzahl: RICHTWERT_ZAHL.nullable().optional().describe("Nur bei einem Spiel: neue Mindestzahl; null entfernt sie, ohne Angabe unverändert."),
@@ -578,6 +593,9 @@ export const terminAendern = werkzeug({
     serie_id: z.string().nullable().describe("Bei «dieser_und_folgende» die neue Teilserie."),
     entfallen_mit_training: EntfallenMitTraining,
     abmeldungen_verfallen: z.number().int().describe("Wie viele Abmeldungen die Änderung verfallen liess."),
+    kartenlink_entfallen: z
+      .boolean()
+      .describe("Der Kartenlink fiel weg, weil sich der Ort ohne neuen Kartenlink änderte."),
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
@@ -587,6 +605,7 @@ export const terminAendern = werkzeug({
         beginn: e.beginn,
         ende: e.ende,
         ort: e.ort,
+        ortLink: e.kartenlink,
         bemerkung: e.bemerkung,
         felder: e.felder,
         spielerzahl: e.erwartete_spielerzahl,
@@ -608,6 +627,7 @@ export const terminAendern = werkzeug({
         serie_id: w.serie?.serieId ?? null,
         entfallen_mit_training: entfallenMitTraining(w.serie),
         abmeldungen_verfallen: w.abmeldungenVerfallen,
+        kartenlink_entfallen: w.kartenlinkEntfallen,
       }),
     ),
 });
@@ -663,6 +683,7 @@ export const terminserieFestlegen = werkzeug({
     beginn: UHRZEIT,
     ende: UHRZEIT,
     ort: ORT.optional(),
+    kartenlink: KARTENLINK.optional(),
     bemerkung: BEMERKUNG.optional(),
     eingeladene: EINGELADENE.optional(),
     verantwortlich: VERANTWORTLICH.optional(),
@@ -684,6 +705,7 @@ export const terminserieFestlegen = werkzeug({
         beginn: e.beginn,
         ende: e.ende,
         ort: e.ort,
+        ortLink: e.kartenlink,
         bemerkung: e.bemerkung,
         eingeladene: e.eingeladene,
         verantwortlich: e.verantwortlich,
@@ -718,6 +740,9 @@ export const terminDerSerieFolgen = werkzeug({
   ausgabe: z.object({
     termin_id: z.string(),
     abmeldungen_verfallen: z.number().int().describe("Wie viele Abmeldungen wegen der Kader verfielen."),
+    kartenlink_entfallen: z
+      .boolean()
+      .describe("Mit «ort» fiel der eigene Kartenlink des Termins weg; es gilt der der Serie."),
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
@@ -726,7 +751,7 @@ export const terminDerSerieFolgen = werkzeug({
         angaben: e.angaben,
         bestaetigt: e.bestaetigt ? true : undefined,
       }),
-      (w) => ({ termin_id: w.terminId, abmeldungen_verfallen: w.verfallen }),
+      (w) => ({ termin_id: w.terminId, abmeldungen_verfallen: w.verfallen, kartenlink_entfallen: w.kartenlinkEntfallen }),
     ),
 });
 

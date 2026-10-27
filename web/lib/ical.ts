@@ -17,6 +17,9 @@ export type AboTermin = {
   beginn: string;
   ende: string;
   ort: string | null;
+  /** Der Kartenlink zum Ort (#533 PC 4); steht in der Beschreibung, weil
+   *  `URL` der Verweis in die Anwendung ist. */
+  ortLink?: string | null;
   /** Zeitpunkt der letzten Änderung (timestamptz, ISO). Ohne ihn keine
    *  LAST-MODIFIED: Der Stand einer Spieler:in ändert sich, ohne dass der
    *  Termin es tut (#506). */
@@ -149,7 +152,7 @@ export function kalenderText(k: {
     if (t.status) z.push(`STATUS:${t.status}`);
     if (t.frei) z.push("TRANSP:TRANSPARENT");
     if (verweis) z.push(`URL:${verweis}`);
-    const beschreibung = [t.beschreibung, verweis].filter(Boolean).join("\n\n");
+    const beschreibung = [t.beschreibung, t.ortLink ? `Karte: ${t.ortLink}` : null, verweis].filter(Boolean).join("\n\n");
     if (beschreibung) z.push(`DESCRIPTION:${textEscape(beschreibung)}`);
     z.push("END:VEVENT");
   }

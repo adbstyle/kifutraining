@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CalendarX2 } from "lucide-react";
-import { Kalenderblatt, Leerzustand, Lozenge, SectionMessage, Switch } from "@/components/ui";
+import { ExternerLink, Kalenderblatt, Leerzustand, Lozenge, SectionMessage, Switch } from "@/components/ui";
 import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
 import type { Meldung } from "@/lib/spiel";
 import { SpielKarte } from "./SpielKarte";
@@ -221,8 +221,16 @@ function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }
           <span className={cn("type-body-medium", gedaempft ? "text-on-surface-mittel" : "text-on-surface")}>
             {t.beginn}–{t.ende}
           </span>
-          {/* Der Ort steht ganz und auch nach Beginn (#534 AK 1, 2). */}
-          {t.ort && <span className="max-w-full break-words type-body-small text-on-surface-mittel">{t.ort}</span>}
+          {/* Der Ort steht ganz und auch nach Beginn (#534 AK 1, 2); mit
+              Kartenlink als Link auf einer Zeile (#533 AK 6, 10, 11; PC 5). */}
+          {t.ort &&
+            (t.ort_link && !t.ausgefallen ? (
+              <ExternerLink href={t.ort_link} einzeilig className="type-body-small">
+                {t.ort}
+              </ExternerLink>
+            ) : (
+              <span className="max-w-full break-words type-body-small text-on-surface-mittel">{t.ort}</span>
+            ))}
           {zweite && <span className="type-body-small text-on-surface-mittel">{zweite}</span>}
           <AusfallGrund grund={t.ausfall_grund} />
           <TeamZeile t={t} zahl={zahl} />

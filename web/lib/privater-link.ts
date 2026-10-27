@@ -51,6 +51,9 @@ export type LinkTermin = {
   beginn: string;
   ende: string;
   ort: string | null;
+  /** Der Kartenlink zum Ort (#533 AK 6, 7); `null` ohne und an einem
+   *  ausgefallenen Termin. Fehlt bei einer Datenebene vor der Migration. */
+  ort_link?: string | null;
   ausgefallen: boolean;
   /** Der Grund eines Ausfalls, vollständig (#530 AK 1, 2, 4); `null` ohne
    *  Grund und an einem Termin, der stattfindet. */

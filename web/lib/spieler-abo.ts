@@ -31,6 +31,7 @@ export type AboFeedTermin = Pick<
   | "beginn"
   | "ende"
   | "ort"
+  | "ort_link"
   | "art"
   | "bezeichnung"
   | "begonnen"
@@ -72,6 +73,7 @@ export function aboEintrag(t: AboFeedTermin, team: string): AboTermin {
     beginn: t.beginn,
     ende: t.ende,
     ort: t.ort,
+    ortLink: t.ort_link ?? null,
     titel: `${zeichen} ${art} · ${team}`,
     beschreibung: [wort, ...spielAbschnitte(t, status)].join("\n\n"),
     status: status === "vielleicht" ? "TENTATIVE" : "CONFIRMED",

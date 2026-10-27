@@ -78,7 +78,7 @@ import {
 export const TERMIN_FELD = { feld: "termin_id" } as const;
 
 export const TERMIN_ROH =
-  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, training_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
+  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, training_id, datum, beginn, ende, ort, ort_link, bemerkung, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
 
 export type TerminRoh = {
   id: string;
@@ -96,6 +96,8 @@ export type TerminRoh = {
   beginn: string;
   ende: string;
   ort: string | null;
+  /** Der Kartenlink zum Ort (#533); nur mit Ort. */
+  ort_link: string | null;
   bemerkung: string | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: Felder | null;
@@ -210,6 +212,8 @@ export type TerminFestlegen = {
   beginn: string;
   ende: string;
   ort?: string | null;
+  /** Der Kartenlink zum Ort (#533 AK 1); nur mit Ort. */
+  ortLink?: string | null;
   bemerkung?: string | null;
   /** Die Felder des Platzes (#389); ohne Angabe oder leer: keine. */
   felder?: readonly FeldEingabe[] | null;
@@ -349,6 +353,7 @@ export async function legeTerminFest(
       beginn: leerZuNull(e.beginn),
       ende: leerZuNull(e.ende),
       ort: leerZuNull(e.ort),
+      ort_link: leerZuNull(e.ortLink),
       bemerkung: leerZuNull(e.bemerkung),
       felder: felder.felder,
       erwartete_spielerzahl: e.spielerzahl ?? null,
@@ -400,6 +405,9 @@ export type TerminAendern = {
   ende?: string | null;
   /** `undefined` = unverändert, `null` oder `""` = leeren. */
   ort?: string | null;
+  /** Der Kartenlink zum Ort (#533): `undefined` = unverändert, solange der
+   *  Ort bleibt — ändert sich der Ort ohne ihn, fällt er weg (PC 1). */
+  ortLink?: string | null;
   bemerkung?: string | null;
   /** Die Felder als ganze Liste (#389 AK 7): `undefined` = unverändert,
    *  `null` oder `[]` = entfernen. */
@@ -550,16 +558,28 @@ export async function aendereTermin(
   supabase: SupabaseClient,
   _userId: string,
   e: TerminAendern,
-): Promise<KernErgebnis<{ terminId: string; teamId: string; trainingId: string | null; abmeldungenVerfallen: number }>> {
+): Promise<
+  KernErgebnis<{
+    terminId: string;
+    teamId: string;
+    trainingId: string | null;
+    abmeldungenVerfallen: number;
+    /** Der Kartenlink fiel mit dem Ort weg (#533 AK 14). */
+    kartenlinkEntfallen: boolean;
+  }>
+> {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
   const t = geladen.wert;
 
+  const ort = e.ort !== undefined ? leerZuNull(e.ort) : t.ort;
   const neu = {
     datum: e.datum ?? t.datum,
     beginn: e.beginn !== undefined ? leerZuNull(e.beginn) : t.beginn,
     ende: e.ende !== undefined ? leerZuNull(e.ende) : t.ende,
-    ort: e.ort !== undefined ? leerZuNull(e.ort) : t.ort,
+    ort,
+    // #533 PC 1: Der Link gehört zum Ort — ändert sich der Ort ohne ihn, fällt er weg.
+    ortLink: e.ortLink !== undefined ? leerZuNull(e.ortLink) : ort !== t.ort ? null : t.ort_link,
     bemerkung: e.bemerkung !== undefined ? leerZuNull(e.bemerkung) : t.bemerkung,
   };
   const problem = feldFehler(terminProblem(neu));
@@ -604,7 +624,8 @@ export async function aendereTermin(
   if (besetzung) return besetzung;
 
   const aenderung: Partial<
-    typeof neu & {
+    Omit<typeof neu, "ortLink"> & {
+      ort_link: string | null;
       felder: Felder | null;
       erwartete_spielerzahl: number | null;
       besetzung_art: string | null;
@@ -621,6 +642,7 @@ export async function aendereTermin(
     aenderung.ende = neu.ende;
   }
   if (e.ort !== undefined) aenderung.ort = neu.ort;
+  if (neu.ortLink !== t.ort_link) aenderung.ort_link = neu.ortLink;
   if (e.bemerkung !== undefined) aenderung.bemerkung = neu.bemerkung;
   // Die Felder sind EINE Angabe und gehen als ganze Liste (#389 AK 7).
   if (felder) aenderung.felder = felder.felder;
@@ -646,7 +668,8 @@ export async function aendereTermin(
   const flags: Record<string, boolean> = {};
   if (t.serie_id) {
     if ("beginn" in aenderung && (neu.beginn !== t.beginn || neu.ende !== t.ende)) flags.zeit_abweichend = true;
-    if ("ort" in aenderung && neu.ort !== t.ort) flags.ort_abweichend = true;
+    // Ort und Kartenlink weichen gemeinsam ab (#533 PC 2).
+    if (("ort" in aenderung && neu.ort !== t.ort) || "ort_link" in aenderung) flags.ort_abweichend = true;
     if ("bemerkung" in aenderung && neu.bemerkung !== t.bemerkung) flags.bemerkung_abweichend = true;
     if (felder && !gleicheFelder(felder.felder, t.felder)) flags.felder_abweichend = true;
     if (e.spielerzahl !== undefined && e.spielerzahl !== t.erwartete_spielerzahl) flags.spielerzahl_abweichend = true;
@@ -725,7 +748,13 @@ export async function aendereTermin(
       return error ? ausDbFehler(error) : warumNichtGeschrieben(supabase, t.id, e.erwartetesTraining === undefined);
     }
   }
-  return ok({ terminId: t.id, teamId: t.team_id, trainingId: erwartet, abmeldungenVerfallen: verfallen });
+  return ok({
+    terminId: t.id,
+    teamId: t.team_id,
+    trainingId: erwartet,
+    abmeldungenVerfallen: verfallen,
+    kartenlinkEntfallen: t.ort_link !== null && neu.ortLink === null && e.ortLink === undefined,
+  });
 }
 
 /** Was mit dem Training geschah, das einen Termin verliess: Ein

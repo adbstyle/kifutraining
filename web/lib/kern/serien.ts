@@ -8,7 +8,7 @@ import {
   type Reichweite,
   type Wochentag,
 } from "@/lib/serie";
-import { TERMIN_TEXT, istKalendertag, leerZuNull, textProblem, zeitProblem } from "@/lib/termin";
+import { TERMIN_TEXT, istKalendertag, kartenlinkOhneOrt, leerZuNull, textProblem, zeitProblem } from "@/lib/termin";
 import type { FeldEingabe } from "@/lib/termin-felder";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import type { Mindestbesetzung } from "@/lib/besetzung";
@@ -58,6 +58,8 @@ export type SerieFestlegen = {
   beginn: string;
   ende: string;
   ort?: string | null;
+  /** Der Kartenlink zum Ort der Serie (#533 AK 2); nur mit Ort. */
+  ortLink?: string | null;
   bemerkung?: string | null;
   /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1); ohne: unbekannt. */
   felder?: readonly FeldEingabe[] | null;
@@ -112,6 +114,7 @@ export async function legeSerieFest(
     p_spielerzahl: e.spielerzahl ?? null,
     p_kader: e.kaderIds ?? [],
     p_besetzung: e.mindestbesetzung ?? null,
+    p_ort_link: leerZuNull(e.ortLink),
   });
   if (error) return kalenderFehler(error);
   const r = data as { serie: string; termine: number };
@@ -127,6 +130,9 @@ export type SerienAenderung = {
   ende?: string | null;
   /** `null` oder `""` = leeren. */
   ort?: string | null;
+  /** Der Kartenlink zum Ort (#533): `undefined` = unverändert, solange der
+   *  Ort bleibt — ändert sich der Ort ohne ihn, fällt er weg (PC 1). */
+  ortLink?: string | null;
   bemerkung?: string | null;
   /** Die künftigen Eingeladenen der Serie als ganze Liste (#519 AK 12). */
   eingeladene?: string[];
@@ -172,6 +178,8 @@ export type SerienFolge = {
   /** Wie viele Absagen von Trainer:innen die Verlegung verfallen lässt (#520 AK 11). */
   absagenVerfallend: number;
   teamId: string;
+  /** Der Kartenlink der Serie fiel mit dem Ort weg (#533 AK 14). */
+  kartenlinkEntfallen?: boolean;
 };
 
 type Roh = {
@@ -300,6 +308,7 @@ export async function aendereSerie(
     !hatZeit &&
     !hatRegel &&
     a.ort === undefined &&
+    a.ortLink === undefined &&
     a.bemerkung === undefined &&
     a.eingeladene === undefined &&
     a.verantwortlich === undefined &&
@@ -317,6 +326,22 @@ export async function aendereSerie(
   }
   const tp = textProblem(a);
   if (tp) return fehlschlag("eingabe", tp.text, { feld: tp.feld });
+  // Ort und Kartenlink als Paar (#533): Die Datenebene erhält beide, der Link
+  // fällt weg, wenn sich der Ort ohne ihn ändert (PC 1).
+  let ortPaar: { ort: string | null; ortLink: string | null; entfallen: boolean } | null = null;
+  if (a.ort !== undefined || a.ortLink !== undefined) {
+    const { data: so, error: soFehler } = await supabase
+      .from("termin_serien")
+      .select("ort, ort_link")
+      .eq("id", t.serie_id)
+      .maybeSingle<{ ort: string | null; ort_link: string | null }>();
+    if (soFehler) return kalenderFehler(soFehler);
+    const ort = a.ort !== undefined ? leerZuNull(a.ort) : (so?.ort ?? null);
+    const ortLink = a.ortLink !== undefined ? leerZuNull(a.ortLink) : ort === (so?.ort ?? null) ? (so?.ort_link ?? null) : null;
+    const ohne = kartenlinkOhneOrt({ ort, ortLink });
+    if (ohne) return fehlschlag("eingabe", ohne.text, { feld: ohne.feld });
+    ortPaar = { ort, ortLink, entfallen: !!so?.ort_link && ortLink === null && a.ortLink === undefined };
+  }
   const eingeladene = a.eingeladene === undefined ? null : bereinigeKennungen(a.eingeladene, "eingeladene");
   if (eingeladene && !eingeladene.ok) return eingeladene.fehler;
   if (a.verantwortlich !== undefined && !istUuid(a.verantwortlich))
@@ -356,7 +381,7 @@ export async function aendereSerie(
   if (a.von) aenderung.beginn_datum = a.von;
   if (a.bis) aenderung.end_datum = a.bis;
   if (hatZeit) Object.assign(aenderung, { beginn: leerZuNull(a.beginn), ende: leerZuNull(a.ende) });
-  if (a.ort !== undefined) aenderung.ort = leerZuNull(a.ort);
+  if (ortPaar) Object.assign(aenderung, { ort: ortPaar.ort, ort_link: ortPaar.ortLink });
   if (a.bemerkung !== undefined) aenderung.bemerkung = leerZuNull(a.bemerkung);
   if (eingeladene?.ok) aenderung.eingeladene = eingeladene.ids;
   if (a.verantwortlich !== undefined) aenderung.verantwortlich = a.verantwortlich.toLowerCase();
@@ -366,7 +391,7 @@ export async function aendereSerie(
   if (a.kaderIds !== undefined) aenderung.kader = [...new Set(a.kaderIds)];
   if (a.mindestbesetzung !== undefined) aenderung.besetzung = a.mindestbesetzung;
 
-  return laufe(supabase, t.team_id, e, async (ausfuehren, erwartet) =>
+  const r = await laufe(supabase, t.team_id, e, async (ausfuehren, erwartet) =>
     supabase.rpc("terminserie_aendern", {
       p_termin: t.id,
       p_reichweite: e.reichweite,
@@ -377,6 +402,7 @@ export async function aendereSerie(
       p_verfallend: ausfuehren ? (erwartet?.verfallend ?? null) : null,
     }),
   );
+  return r.ok ? ok({ ...r.wert, kartenlinkEntfallen: ortPaar?.entfallen ?? false }) : r;
 }
 
 /** Einen Serientermin und alle folgenden oder alle Termine der Serie
@@ -440,7 +466,7 @@ export async function folgeDerSerie(
      *  bestätigt mit `true` beides. */
     bestaetigt?: VerfallBestaetigt | false;
   },
-): Promise<KernErgebnis<{ terminId: string; teamId: string; verfallen: number }>> {
+): Promise<KernErgebnis<{ terminId: string; teamId: string; verfallen: number; kartenlinkEntfallen: boolean }>> {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   if (e.angaben.length === 0 || e.angaben.some((x) => x !== "datum" && !FOLGE_ANGABEN.includes(x)))
     return fehlschlag("eingabe", SERIE_MELDUNG.SERIE_ANGABEN_UNGUELTIG, {
@@ -462,12 +488,20 @@ export async function folgeDerSerie(
     }
   }
   // #453: Folgen die Kader, zählt und bestätigt die Datenebene den Verfall.
-  const r = await mitVerfall<{ team: string; verfallen: number }>(
+  const r = await mitVerfall<{ team: string; verfallen: number; kartenlink_entfallen?: boolean }>(
     e.bestaetigt === false ? undefined : e.bestaetigt,
     (zahl) => supabase.rpc("termin_der_serie_folgen", { p_termin: e.terminId, p_angaben: e.angaben, p_bestaetigt: zahl }),
     (f) => kalenderFehler(f),
   );
-  return r.ok ? ok({ terminId: e.terminId, teamId: r.wert.team, verfallen: r.wert.verfallen }) : r;
+  return r.ok
+    ? ok({
+        terminId: e.terminId,
+        teamId: r.wert.team,
+        verfallen: r.wert.verfallen,
+        // #533 AK 13, 14: Ein eigener Kartenlink des Termins fiel mit dem Ort weg.
+        kartenlinkEntfallen: r.wert.kartenlink_entfallen === true,
+      })
+    : r;
 }
 
 // ── Der KI-Weg: ein Werkzeug, die Reichweite als Angabe (#326 AK 10, 11) ──────
@@ -488,7 +522,15 @@ export async function aendereMitReichweite(
   supabase: SupabaseClient,
   userId: string,
   e: MitReichweite,
-): Promise<KernErgebnis<{ terminId: string; teamId: string; serie: SerienFolge | null; abmeldungenVerfallen: number }>> {
+): Promise<
+  KernErgebnis<{
+    terminId: string;
+    teamId: string;
+    serie: SerienFolge | null;
+    abmeldungenVerfallen: number;
+    kartenlinkEntfallen: boolean;
+  }>
+> {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
   const t = geladen.wert;
@@ -514,6 +556,7 @@ export async function aendereMitReichweite(
         felder.beginn,
         felder.ende,
         felder.ort,
+        felder.ortLink,
         felder.bemerkung,
         felder.felder,
         felder.spielerzahl,
@@ -526,18 +569,20 @@ export async function aendereMitReichweite(
       ].every((x) => x === undefined);
     let verfallen = 0;
     let teamId = t.team_id;
+    let kartenlinkEntfallen = false;
     if (!nurKader) {
       const r = await aendereTermin(supabase, userId, felder);
       if (!r.ok) return r;
       verfallen = r.wert.abmeldungenVerfallen;
       teamId = r.wert.teamId;
+      kartenlinkEntfallen = r.wert.kartenlinkEntfallen;
     }
     if (kaderIds !== undefined) {
       const k = await setzeTerminKader(supabase, userId, { terminId: t.id, kaderIds, bestaetigt: e.bestaetigt === true ? true : undefined });
       if (!k.ok) return k;
       verfallen += k.wert.verfallen;
     }
-    return ok({ terminId: t.id, teamId, serie: null, abmeldungenVerfallen: verfallen });
+    return ok({ terminId: t.id, teamId, serie: null, abmeldungenVerfallen: verfallen, kartenlinkEntfallen });
   }
   if (e.datum !== undefined) return fehlschlag("regel", SERIE_MELDUNG.DATUM_NUR_EINZELN, { feld: "datum" });
   const r = await aendereSerie(supabase, userId, {
@@ -550,6 +595,7 @@ export async function aendereMitReichweite(
       beginn: e.beginn,
       ende: e.ende,
       ort: e.ort,
+      ortLink: e.ortLink,
       bemerkung: e.bemerkung,
       felder: e.felder,
       spielerzahl: e.spielerzahl,
@@ -564,6 +610,7 @@ export async function aendereMitReichweite(
         teamId: r.wert.teamId,
         serie: r.wert,
         abmeldungenVerfallen: r.wert.abmeldungenVerfallend + r.wert.abmeldungenKader,
+        kartenlinkEntfallen: r.wert.kartenlinkEntfallen ?? false,
       })
     : r;
 }
