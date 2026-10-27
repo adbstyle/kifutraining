@@ -191,7 +191,7 @@ export function ElternAnsicht({
 type KarteProps = {
   t: LinkTermin;
   ab: boolean;
-  /** Statt des Orts: begonnen und nicht mehr änderbar. */
+  /** Unter dem Ort: begonnen und nicht mehr änderbar. */
   zweite: string | null;
   zahl: Spielerzahl | null;
   name: string;
@@ -221,11 +221,9 @@ function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }
           <span className={cn("type-body-medium", gedaempft ? "text-on-surface-mittel" : "text-on-surface")}>
             {t.beginn}–{t.ende}
           </span>
-          {zweite ? (
-            <span className="type-body-small text-on-surface-mittel">{zweite}</span>
-          ) : (
-            t.ort && <span className="max-w-full truncate type-body-small text-on-surface-mittel">{t.ort}</span>
-          )}
+          {/* Der Ort steht ganz und auch nach Beginn (#534 AK 1, 2). */}
+          {t.ort && <span className="max-w-full break-words type-body-small text-on-surface-mittel">{t.ort}</span>}
+          {zweite && <span className="type-body-small text-on-surface-mittel">{zweite}</span>}
           <AusfallGrund grund={t.ausfall_grund} />
           <TeamZeile t={t} zahl={zahl} />
           {t.verantwortlich && <span className="type-body-small text-on-surface-mittel">Verantwortlich: {t.verantwortlich}</span>}
