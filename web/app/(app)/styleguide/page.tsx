@@ -15,6 +15,8 @@ import {
   Card,
   ExerciseCard,
   FormAbschnitt,
+  Feldgruppe,
+  ExternerLink,
   PrintButton,
   IconButton,
   IconButtonLink,
@@ -222,6 +224,8 @@ const GLIEDERUNG = [
         eintraege: [
           { id: "knoepfe", titel: "Knöpfe" },
           { id: "textfelder", titel: "Textfelder, Text-Area, Datum & Zeit" },
+          { id: "feldgruppe", titel: "Feldgruppe" },
+          { id: "externer-link", titel: "Externer Link" },
           { id: "offene-einfachauswahl", titel: "Offene Einfachauswahl" },
           { id: "einfachauswahl-panel", titel: "Einfachauswahl mit Panel" },
           { id: "mehrfachauswahl", titel: "Mehrfachauswahl" },
@@ -1418,6 +1422,24 @@ export default async function Styleguide() {
             <Button variant="dangerOutlined">Abo widerrufen</Button>
           </div>
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
+            Link (<code>variant=&quot;link&quot;</code>) - im Fliesstext
+          </p>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            Kein Knopf, sondern ein klassischer Link (PO 2026-10-25): Primary,
+            unterstrichen, beim Überfahren dicker unterstrichen. Er hat keine
+            Höhe, keine Polsterung und keine Zustands-Ebene und setzt keine
+            eigene Schrift - er erbt den Schnitt des Texts, in dem er steht. Er
+            gilt für Handlungen, die <strong>im Inhalt mitlaufen</strong>: die
+            Aktionen einer Section Message (<Siehe id="meldungen" />), der
+            Weg aus einem Leerzustand, eine Zeilenaktion wie «Der Serie folgen».
+            Wechselt er die Seite, steht er als <code>ButtonLink</code>, sonst
+            bleibt er ein <code>&lt;button&gt;</code>.
+          </p>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface">
+            Ort weicht von der Serie ab.{" "}
+            <Button variant="link">Der Serie folgen</Button>
+          </p>
+          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Leiser Knopf (<code>variant=&quot;quiet&quot;</code>) - eine Stufe unter{" "}
             <code>text</code>
           </p>
@@ -1431,9 +1453,10 @@ export default async function Styleguide() {
             einer Leiste aus Chips, auf deren Linie er sitzen soll. Er gilt{" "}
             <strong>nicht</strong> für
             Knöpfe, die einen Vorgang abschliessen oder abbrechen -
-            Dialog-Knöpfe, Formularfüsse und alles, was neben einem{" "}
-            <code>filled</code> steht, bleibt <code>text</code> - neben einem
-            destruktiven Knopf als Secondary Button (<code>outlined</code>).
+            Formularfüsse und alles, was neben einem <code>filled</code> steht,
+            bleibt <code>text</code>. Im Fuss eines Dialogs steht der Ausweg
+            («Abbrechen», «Schliessen», «Verstanden») immer als Secondary Button
+            (<code>outlined</code>) - auch als einzige Aktion.
           </p>
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Heller Knopf (<code>variant=&quot;hell&quot;</code>) - auf einer Fläche im Fehlerton
@@ -1681,7 +1704,8 @@ export default async function Styleguide() {
             sich <strong>nur beim Überfahren</strong> der Angabe - nicht ruhend,
             nicht während man im Feld arbeitet, und auf Touch-Geräten gar nicht
             (PO 2026-10-04). Muss man den Hinweis auch dort lesen, bevor man
-            weitermacht - dass die Altersstufe eines Trainings lebenslang bindet -,
+            weitermacht - dass die Altersstufe eines Trainings lebenslang bindet
+            oder dass die Eltern den Grund eines Ausfalls sehen -,
             zeigt <code>infoAufTouch</code> ihn auf Touch-Geräten als Hinweis
             unter dem Feld. Das ⓘ steht senkrecht mittig auf der ganzen Angabe,
             zwischen Name und Wert. Die Tastatur erreicht es weiterhin und macht
@@ -2002,6 +2026,46 @@ export default async function Styleguide() {
           </p>
           <div className="max-w-md">
             <KopierFeld label="Privater Link" value="https://ki-fu.ch/abmelden/5764a2e8a97f4895aea125a811bda390" />
+          </div>
+        </Section>
+
+        <Section id="feldgruppe">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Felder, die voneinander abhängen, in einem Rahmen mit gemeinsamer Legende
+            (<code>Feldgruppe</code>). Neu, weil kein Baustein Felder umrandet
+            zusammenfasst: Anlass waren Ort und Kartenlink eines Termins (#533) - der
+            Link gehört zum Ort und fällt mit ihm weg. Der Rahmen zeigt das Paar auf
+            einen Blick, stärker als eine Abschnittsüberschrift, die nur trennt
+            (<code>FormAbschnitt</code>, siehe <Siehe id="layout" />). Nur für Felder,
+            die zusammengehören, nicht für lose verwandte. Die Legende sitzt auf der
+            Kontur in <code>type-label-medium</code>, die Kontur ist die eines Felds
+            (<code>kante</code>); die Vorlesehilfe liest die Felder als eine Gruppe.
+            Ein abhängiges Feld bleibt sichtbar und ist gesperrt, solange es nicht
+            gilt - es erscheint nicht erst später (PO 2026-10-27).
+          </p>
+          <div className="max-w-md">
+            <Feldgruppe legende="Ort">
+              <TextField label="Ort (optional)" defaultValue="Turnhalle Wankdorf I & II, Morgartenstrasse 2b, Bern" />
+              <TextField label="Kartenlink (optional)" defaultValue="https://maps.app.goo.gl/MRWFZj3ZQtsYGBFi9" />
+            </Feldgruppe>
+          </div>
+        </Section>
+
+        <Section id="externer-link">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Ein Verweis, der KiFu verlässt (<code>ExternerLink</code>): wie ein Link im
+            Fliesstext - Primary, unterstrichen - und am Textende das Zeichen «extern»,
+            damit man vor dem Antippen sieht, dass sich etwas ausserhalb öffnet. Öffnet
+            in einem neuen Tab und gibt weder die Herkunftsseite noch das Fenster preis.
+            Neu, weil <code>ButtonLink</code> nur innerhalb der Anwendung führt. Mit
+            <code> einzeilig</code> kürzt ein langer Text mit «…», das Zeichen bleibt
+            stehen - so steht der Ort mit Kartenlink auf der Karte der Eltern (#533).
+          </p>
+          <div className="flex max-w-xs flex-col items-start gap-3 type-body-medium">
+            <ExternerLink href="https://maps.app.goo.gl/MRWFZj3ZQtsYGBFi9">Auf der Karte öffnen</ExternerLink>
+            <ExternerLink href="https://maps.app.goo.gl/MRWFZj3ZQtsYGBFi9" einzeilig>
+              Turnhalle Wankdorf I &amp; II, Morgartenstrasse 2b, Bern
+            </ExternerLink>
           </div>
         </Section>
 
@@ -2772,7 +2836,7 @@ export default async function Styleguide() {
             Die dritte Sorte Zeile: keine Auskunft über den Bestand, sondern eine{" "}
             <strong>Nachricht an den Nutzer</strong> - das Speichern ist
             gescheitert, die Mail ist unterwegs, das Feld-Diagramm zeigt anderes
-            Material. Ohne Knöpfe meldet sie bloss; mit ein oder zwei Knöpfen
+            Material. Ohne Aktion meldet sie bloss; mit ein oder zwei Aktionen
             verlangt sie eine Antwort und bleibt stehen, bis eine gewählt ist.
             Baustein und Name stammen von Atlassian wie in Jira. Nicht Atlassians{" "}
             <em>Banner</em>: Der ist ein kräftig gefüllter, einzeiliger Streifen
@@ -2785,9 +2849,10 @@ export default async function Styleguide() {
             <code>rounded-dialog</code>, das Zeichen 16 px (im 24-px-Feld) in{" "}
             <code>icon-*</code> links, 16 px zum Text. Der Text steht in{" "}
             <code>type-body-medium</code> und <code>on-surface</code>; den Ton
-            tragen Fläche und Zeichen. Die Knöpfe (<code>text</code>) stehen wie
-            Atlassians Aktionen <strong>unter</strong> dem Text und fluchten mit
-            ihm, abweisend zuerst.
+            tragen Fläche und Zeichen. Die Aktionen stehen wie bei Atlassian{" "}
+            <strong>unter</strong> dem Text, als Links (<code>link</code>, PO
+            2026-10-25) in seinem Schriftschnitt; sie fluchten mit ihm, abweisend
+            zuerst.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Die Darstellungen tragen Atlassians Namen: <code>error</code> meldet,
@@ -2795,7 +2860,7 @@ export default async function Styleguide() {
             andere; <code>warning</code>, <code>success</code> und{" "}
             <code>discovery</code> stehen im Kit bereit. Das Zeichen lässt sich
             überschreiben, die Farbe bleibt die der Darstellung. Die Vorlesehilfe
-            erfährt den Ton über <code>role</code>: ein Fehler ohne Knöpfe
+            erfährt den Ton über <code>role</code>: ein Fehler ohne Aktion
             unterbricht (<code>alert</code>), alles andere reiht sich ein (
             <code>status</code>).
           </p>
@@ -2823,10 +2888,10 @@ export default async function Styleguide() {
               icon={RefreshCw}
               actions={
                 <>
-                  <Button type="button" variant="text">
+                  <Button type="button" variant="link">
                     Material beibehalten
                   </Button>
-                  <Button type="button" variant="text">
+                  <Button type="button" variant="link">
                     Neuen Vorschlag übernehmen
                   </Button>
                 </>
@@ -2875,14 +2940,17 @@ export default async function Styleguide() {
             von unten ein; bei reduzierter Bewegung blendet sie nur ein.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            <strong>Bewusste Abweichung:</strong> Die Textknöpfe im Dialog bleiben
-            Primary und kommen auf 24dp damit auf{" "}
+            Im Fuss eines Dialogs steht kein Textknopf: Der Ausweg ist ein
+            Secondary Button (<code>outlined</code>), seine Schrift ist{" "}
+            <code>on-surface</code>. <strong>Bewusste Abweichung:</strong>{" "}
+            Links im Inhalt eines Dialogs («Der Serie folgen», «Übung
+            erfassen») bleiben Primary und kommen auf 24dp damit auf{" "}
             {v(kontrast(PRIMARY, elev(24)))} - knapp unter 4.5:1. Materials
             eigene Baseline tut dasselbe, und die Alternative wäre schlechter:
-            Weisse Knopfschrift wäre von der Fliesstextzeile darüber nicht mehr zu
-            unterscheiden. Die Knöpfe sind gross gesetzt, stehen abgesetzt am Fuss
-            und tragen den Ring; wer sie nicht als Knöpfe liest, verliert nichts,
-            denn der Dialog nennt seine Handlung auch im Text.
+            Weisse Linkschrift wäre von der Fliesstextzeile daneben nicht mehr zu
+            unterscheiden. Die Links sind unterstrichen und tragen den Ring; wer
+            sie nicht als Links liest, verliert nichts, denn der Dialog nennt
+            seine Handlung auch im Text.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Die Snackbar meldet einen <strong>Vorgang</strong>, die Section

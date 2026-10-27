@@ -30,9 +30,10 @@ export type LinkTermin = {
   frist: string | null;
   frist_abgelaufen: boolean;
   vorher: { datum: string; beginn: string } | null;
-  /** Nur an einem Spiel (#465 AK 10, 11): die Bemerkung und die Treffpunkte,
-   *  frühester zuerst — an einem ausgefallenen keine (`null`). Die Bemerkung
-   *  eines Trainings sieht die Spielervertretung nicht (PC 4). */
+  /** Nur an einem Spiel (#465 AK 10): die Bemerkung und die Treffpunkte,
+   *  frühester zuerst — an einem ausgefallenen keine (`null`), dort spricht
+   *  der Grund (#530, PO 2026-10-27). Die Bemerkung eines Trainings sieht die
+   *  Spielervertretung nicht (PC 4). */
   bemerkung: string | null;
   treffpunkte: Treffpunkt[] | null;
   /** Nur an einem Spiel (#464 AK 8, 9; PC 3): ob sie nicht aufgeboten ist,
@@ -50,7 +51,13 @@ export type LinkTermin = {
   beginn: string;
   ende: string;
   ort: string | null;
+  /** Der Kartenlink zum Ort (#533 AK 6, 7); `null` ohne und an einem
+   *  ausgefallenen Termin. Fehlt bei einer Datenebene vor der Migration. */
+  ort_link?: string | null;
   ausgefallen: boolean;
+  /** Der Grund eines Ausfalls, vollständig (#530 AK 1, 2, 4); `null` ohne
+   *  Grund und an einem Termin, der stattfindet. */
+  ausfall_grund: string | null;
   /** Begonnen: sichtbar bis Ende des Tages, nicht mehr änderbar (AK 9). */
   begonnen: boolean;
   /** `null` an einem ausgefallenen Termin. */

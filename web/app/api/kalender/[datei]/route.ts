@@ -15,7 +15,12 @@ export const dynamic = "force-dynamic";
 type Feed = {
   gueltig: boolean;
   team?: { id: string; name: string };
-  termine?: (Omit<AboTermin, "titel"> & { art: "training" | "spiel"; bezeichnung: string | null } & AboTrainerTermin)[];
+  termine?: (Omit<AboTermin, "titel" | "ortLink"> & {
+    art: "training" | "spiel";
+    bezeichnung: string | null;
+    /** Der Kartenlink zum Ort (#533 PC 4); fehlt vor der Migration. */
+    ort_link?: string | null;
+  } & AboTrainerTermin)[];
 };
 
 export async function GET(req: Request, { params }: { params: Promise<{ datei: string }> }) {
@@ -33,10 +38,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ datei: s
   // Nur die eigenen Einladungen, mit dem eigenen Stand vorn im Titel und der
   // Besetzung im Eintrag (#522); abgesagte als «frei».
   const termine: AboTermin[] = feed.gueltig
-    ? feed.termine!.map(({ art, bezeichnung, stand, trainer, besetzung_art, besetzung_zahl, erwartete_spielerzahl, spielstand, ...t }) => {
+    ? feed.termine!.map(({ art, bezeichnung, stand, trainer, besetzung_art, besetzung_zahl, erwartete_spielerzahl, spielstand, ort_link, ...t }) => {
         const besetzung = { stand, trainer, besetzung_art, besetzung_zahl, erwartete_spielerzahl, spielstand };
         return {
           ...t,
+          ortLink: ort_link ?? null,
           titel: aboTitel(besetzung, `${art === "spiel" && bezeichnung ? bezeichnung : "Training"} · ${feed.team!.name}`),
           beschreibung: aboBeschreibung(besetzung),
           frei: stand === "abgesagt",

@@ -37,6 +37,8 @@ export type TerminSerie = {
   beginn: string;
   ende: string;
   ort: string | null;
+  /** Der Kartenlink zum Ort der Serie (#533). */
+  ortLink: string | null;
   bemerkung: string | null;
   /** Felder und erwartete Spielerzahl, die die Serie vorgibt (#391); `null` = unbekannt. */
   felder: Felder | null;
@@ -91,6 +93,8 @@ export type TerminZeile = {
   beginn: string;
   ende: string;
   ort: string | null;
+  /** Der Kartenlink zum Ort (#533); nur mit Ort. */
+  ortLink: string | null;
   bemerkung: string | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: Felder | null;
@@ -139,6 +143,7 @@ type RawTermin = {
   beginn: string;
   ende: string;
   ort: string | null;
+  ort_link: string | null;
   bemerkung: string | null;
   felder: Felder | null;
   erwartete_spielerzahl: number | null;
@@ -177,6 +182,7 @@ type RawTermin = {
     beginn: string;
     ende: string;
     ort: string | null;
+    ort_link: string | null;
     bemerkung: string | null;
     felder: Felder | null;
     erwartete_spielerzahl: number | null;
@@ -198,12 +204,12 @@ export function kurzeZeit(t: string): string {
 }
 
 const TERMIN_SELECT =
-  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, vorher_datum, vorher_beginn, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, eingeladene_abweichend, verantwortung_abweichend, felder_abweichend, spielerzahl_abweichend, kader_abweichend, besetzung_art, besetzung_zahl, besetzung_abweichend, ausgefallen, ausfall_grund, " +
+  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, vorher_datum, vorher_beginn, datum, beginn, ende, ort, ort_link, bemerkung, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, eingeladene_abweichend, verantwortung_abweichend, felder_abweichend, spielerzahl_abweichend, kader_abweichend, besetzung_art, besetzung_zahl, besetzung_abweichend, ausgefallen, ausfall_grund, " +
   "termin_trainer ( id, user_id, verantwortlich, abgesagt_am, trainer_name, trainer_ehemalig ), " +
   "termin_kader ( kader_id, kader ( name ) ), " +
   "spiel_treffpunkte ( anreise, vorlauf_min, ort ), " +
   "trainings ( id, name, stufen, termin_training ), " +
-  "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, " +
+  "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, ort_link, bemerkung, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, " +
   "termin_serien_trainer ( user_id, verantwortlich, trainer_name ), termin_serien_kader ( kader_id, kader ( name ) ) )";
 
 /** Nach Anzeigename ordnen, unbenannte (gelöschte Konten) zuletzt. Der Schlüssel
@@ -267,6 +273,7 @@ function mapTermin(t: RawTermin): TerminZeile {
     beginn: kurzeZeit(t.beginn),
     ende: kurzeZeit(t.ende),
     ort: t.ort,
+    ortLink: t.ort_link,
     bemerkung: t.bemerkung,
     felder: t.felder,
     spielerzahl: t.erwartete_spielerzahl,
@@ -290,6 +297,7 @@ function mapTermin(t: RawTermin): TerminZeile {
           beginn: kurzeZeit(t.termin_serien.beginn),
           ende: kurzeZeit(t.termin_serien.ende),
           ort: t.termin_serien.ort,
+          ortLink: t.termin_serien.ort_link,
           bemerkung: t.termin_serien.bemerkung,
           felder: t.termin_serien.felder,
           spielerzahl: t.termin_serien.erwartete_spielerzahl,

@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { CalendarX2 } from "lucide-react";
-import { Kalenderblatt, Leerzustand, Lozenge, SectionMessage, Switch } from "@/components/ui";
+import { ExternerLink, Kalenderblatt, Leerzustand, Lozenge, SectionMessage, Switch } from "@/components/ui";
 import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
 import type { Meldung } from "@/lib/spiel";
 import { SpielKarte } from "./SpielKarte";
+import { AusfallGrund } from "./AusfallGrund";
 import { AboKnopf } from "./AboKnopf";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
@@ -113,7 +114,7 @@ export function ElternAnsicht({
       t.angemeldet == null || t.gesamt == null
         ? null
         : { quelle: "liste" as const, angemeldet: t.angemeldet + Number(t.abgemeldet) - Number(ab), gesamt: t.gesamt, anwesend: null }; // Eltern sehen den Stand bei Beginn (#475 AK 16).
-    // «Fällt aus» sagt schon die Lozenge; ausgefallen bleibt der Ort stehen.
+    // «Fällt aus» sagt schon die Lozenge; ausgefallen bleibt der Ort stehen (#530 AK 5).
     const zweite = !t.ausgefallen && t.begonnen ? "Hat begonnen · nicht mehr änderbar" : null;
     return { ab, zweite, zahl };
   }
@@ -190,7 +191,7 @@ export function ElternAnsicht({
 type KarteProps = {
   t: LinkTermin;
   ab: boolean;
-  /** Statt des Orts: begonnen und nicht mehr änderbar. */
+  /** Unter dem Ort: begonnen und nicht mehr änderbar. */
   zweite: string | null;
   zahl: Spielerzahl | null;
   name: string;
@@ -220,11 +221,18 @@ function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }
           <span className={cn("type-body-medium", gedaempft ? "text-on-surface-mittel" : "text-on-surface")}>
             {t.beginn}–{t.ende}
           </span>
-          {zweite ? (
-            <span className="type-body-small text-on-surface-mittel">{zweite}</span>
-          ) : (
-            t.ort && <span className="max-w-full truncate type-body-small text-on-surface-mittel">{t.ort}</span>
-          )}
+          {/* Der Ort steht ganz und auch nach Beginn (#534 AK 1, 2); mit
+              Kartenlink als Link auf einer Zeile (#533 AK 6, 10, 11; PC 5). */}
+          {t.ort &&
+            (t.ort_link && !t.ausgefallen ? (
+              <ExternerLink href={t.ort_link} einzeilig className="type-body-small">
+                {t.ort}
+              </ExternerLink>
+            ) : (
+              <span className="max-w-full break-words type-body-small text-on-surface-mittel">{t.ort}</span>
+            ))}
+          {zweite && <span className="type-body-small text-on-surface-mittel">{zweite}</span>}
+          <AusfallGrund grund={t.ausfall_grund} />
           <TeamZeile t={t} zahl={zahl} />
           {t.verantwortlich && <span className="type-body-small text-on-surface-mittel">Verantwortlich: {t.verantwortlich}</span>}
         </div>

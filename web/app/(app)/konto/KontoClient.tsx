@@ -22,7 +22,7 @@ export function KontoClient() {
         title="Konto wirklich löschen?"
         actions={
           <>
-            <Button variant="text" onClick={() => setOpen(false)}>
+            <Button variant="outlined" onClick={() => setOpen(false)}>
               Abbrechen
             </Button>
             <form action={deleteAccount}>

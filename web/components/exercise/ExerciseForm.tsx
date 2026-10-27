@@ -668,10 +668,10 @@ export function ExerciseForm({
                   aenderungen={aenderungen}
                   actions={
                     <>
-                      <Button type="button" variant="text" onClick={() => setQuittiert(vorschlag)}>
+                      <Button type="button" variant="link" onClick={() => setQuittiert(vorschlag)}>
                         {AENDERUNG_BEIBEHALTEN}
                       </Button>
-                      <Button type="button" variant="text" onClick={uebernehmeVorschlag}>
+                      <Button type="button" variant="link" onClick={uebernehmeVorschlag}>
                         {AENDERUNG_UEBERNEHMEN}
                       </Button>
                     </>

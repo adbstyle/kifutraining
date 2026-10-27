@@ -77,7 +77,7 @@ export function AbosListe({ abos }: { abos: MeinAbo[] }) {
         title="Abo widerrufen?"
         actions={
           <>
-            <Button variant="text" onClick={() => setWiderrufen(null)}>
+            <Button variant="outlined" onClick={() => setWiderrufen(null)}>
               Abbrechen
             </Button>
             <Button variant="danger" onClick={() => widerrufen && widerrufAusfuehren(widerrufen)} disabled={pending}>

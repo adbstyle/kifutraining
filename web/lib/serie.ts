@@ -6,7 +6,7 @@
 // als Rückhalt und meldet mit den Markern aus SERIE_MELDUNG.
 //
 // REIN: importiert nur lib/termin.ts (ebenfalls rein) — `check:kern` lädt sie mit tsx.
-import { TERMIN_TEXT, istKalendertag, textProblem, zeitProblem } from "@/lib/termin";
+import { TERMIN_TEXT, istKalendertag, kartenlinkOhneOrt, textProblem, zeitProblem } from "@/lib/termin";
 
 /** ISO-Wochentag: 1 = Montag … 7 = Sonntag (Zwilling: `extract(isodow …)`). */
 export type Wochentag = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -151,7 +151,7 @@ export function erlaubteReichweiten(g: { datum: boolean; regel: boolean; namenlo
   return ["nur_dieser", "dieser_und_folgende", "alle"];
 }
 
-export type SerieFeld = "wochentage" | "von" | "bis" | "beginn" | "ende" | "ort" | "bemerkung";
+export type SerieFeld = "wochentage" | "von" | "bis" | "beginn" | "ende" | "ort" | "ortLink" | "bemerkung";
 
 /** Was an einer Serie nicht stimmt, sonst `null` (#324 AK 2, 4–6; #326 AK 5:
  *  beim Ändern mit dem aktuellen Beginndatum der jeweiligen Serie). */
@@ -162,6 +162,7 @@ export function serieProblem(f: {
   beginn?: string | null;
   ende?: string | null;
   ort?: string | null;
+  ortLink?: string | null;
   bemerkung?: string | null;
 }): { feld: SerieFeld; text: string } | null {
   const w = f.wochentage;
@@ -174,7 +175,7 @@ export function serieProblem(f: {
   if (serienTage(w as Wochentag[], f.von, f.bis).length === 0) return { feld: "wochentage", text: SERIE_TEXT.ohneTag };
   const z = zeitProblem(f.beginn, f.ende);
   if (z) return z;
-  return textProblem(f);
+  return textProblem(f) ?? kartenlinkOhneOrt(f);
 }
 
 /** Die Sätze zu den Markern der Datenebene (Migrationen terminserien und

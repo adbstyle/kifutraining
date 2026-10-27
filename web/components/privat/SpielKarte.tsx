@@ -1,13 +1,14 @@
 "use client";
 
 import { Clock, Shirt } from "lucide-react";
-import { Button, Kalenderblatt, Lozenge, SectionMessage, TreffpunktListe, ZeichenZahl } from "@/components/ui";
+import { Button, ExternerLink, Kalenderblatt, Lozenge, SectionMessage, TreffpunktListe, ZeichenZahl } from "@/components/ui";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr, tagText } from "@/lib/monat";
 import type { LinkTermin } from "@/lib/privater-link";
 import { AUFGEBOT_TEXT, richtwertText, zeitpunktKurz, type Meldung } from "@/lib/spiel";
 import { TERMIN_STATUS, meldeStatus } from "@/lib/termin-status";
+import { AusfallGrund } from "./AusfallGrund";
 
 /* Ein Spiel am privaten Link (#459, #463, #464, #465; Epic #490, Tafel 9;
    kompakt mit #523, Tafel «Vergleich» 1c). Von oben nach unten:
@@ -26,7 +27,8 @@ import { TERMIN_STATUS, meldeStatus } from "@/lib/termin-status";
      Karte tritt gedämpft zurück, das Kalenderblatt grau und durchgestrichen.
    - Treffpunkte nur, solange das Spiel nicht begonnen hat und die
      Spieler:in dabei sein kann.
-   - Ein ausgefallenes Spiel zeigt nur Kopf und Bemerkung (#465 AK 10, 11). */
+   - Ein ausgefallenes Spiel zeigt nur den Kopf mit dem Grund (#530; ohne
+     Bemerkung, PO 2026-10-27). */
 export function SpielKarte({
   t,
   meldung,
@@ -77,7 +79,16 @@ export function SpielKarte({
           <span className="type-body-medium text-on-surface-mittel">
             {t.beginn}–{t.ende}
           </span>
-          {t.ort && <span className="type-body-medium text-on-surface-mittel">{t.ort}</span>}
+          {/* #533 AK 6, 10, 11; PC 5: mit Kartenlink als Link auf einer Zeile. */}
+          {t.ort &&
+            (t.ort_link && !t.ausgefallen ? (
+              <ExternerLink href={t.ort_link} einzeilig className="type-body-medium">
+                {t.ort}
+              </ExternerLink>
+            ) : (
+              <span className="max-w-full break-words type-body-medium text-on-surface-mittel">{t.ort}</span>
+            ))}
+          <AusfallGrund grund={t.ausfall_grund} />
           {t.verantwortlich && <span className="type-body-small text-on-surface-mittel">Verantwortlich: {t.verantwortlich}</span>}
         </div>
       </div>
@@ -131,7 +142,7 @@ export function SpielKarte({
       {treffpunkte && (
         <TreffpunktListe treffpunkte={treffpunkte} spieltag={t.datum} spielOrt={t.ort} className="type-body-medium text-on-surface" />
       )}
-      {t.bemerkung && <p className="type-body-medium whitespace-pre-line text-on-surface">{t.bemerkung}</p>}
+      {t.bemerkung && !t.ausgefallen && <p className="type-body-medium whitespace-pre-line text-on-surface">{t.bemerkung}</p>}
     </li>
   );
 }

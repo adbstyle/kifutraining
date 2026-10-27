@@ -100,6 +100,7 @@ function startWerte(t: TerminZeile): TerminFelder {
     beginn: t.beginn,
     ende: t.ende,
     ort: t.ort ?? "",
+    ortLink: t.ortLink ?? "",
     bemerkung: t.bemerkung ?? "",
     felder: t.felder,
     spielerzahl: t.spielerzahl,
@@ -840,7 +841,7 @@ export function TerminBereich({
         title="Training lösen?"
         actions={
           <>
-            <Button variant="text" onClick={() => setLoesen(null)}>Abbrechen</Button>
+            <Button variant="outlined" onClick={() => setLoesen(null)}>Abbrechen</Button>
             <Button variant="danger" disabled={pending} onClick={() => loesen && loeseSofort(loesen)}>
               Lösen und löschen
             </Button>

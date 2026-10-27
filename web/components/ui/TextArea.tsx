@@ -8,6 +8,8 @@ export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
   supportingText?: string;
   /** Fester Hinweis hinter einem ⓘ (siehe `Feld`). */
   info?: ReactNode;
+  /** Den festen Hinweis auf Touch-Geräten unter dem Feld zeigen (siehe `Feld`). */
+  infoAufTouch?: boolean;
   error?: boolean;
   /** Den Namen nur der Vorlesehilfe geben (siehe `Feld`) — wo er schon
    *  daneben steht, etwa in einer bearbeitbaren Eigenschaft. */
@@ -21,7 +23,7 @@ export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
    rund zehn Zeilen, danach scrollt sie. Leer steht der Name als Platzhalter
    im Feld (siehe `Feld`). */
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
-  ({ label, supportingText, info, error = false, labelVersteckt, id, className, ...props }, ref) => {
+  ({ label, supportingText, info, infoAufTouch, error = false, labelVersteckt, id, className, ...props }, ref) => {
     const fid = useFeldId(id);
     return (
       <Feld
@@ -30,6 +32,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
         labelVersteckt={labelVersteckt}
         hinweis={supportingText}
         info={info}
+        infoAufTouch={infoAufTouch}
         error={error}
         className={className}
       >

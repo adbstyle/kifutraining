@@ -93,7 +93,7 @@ export function SichtbarkeitDialoge({
         title="Training veröffentlichen?"
         actions={
           <>
-            <Button variant="text" onClick={onClose}>
+            <Button variant="outlined" onClick={onClose}>
               Abbrechen
             </Button>
             <Button variant="filled" onClick={onVeroeffentlichen} disabled={pending}>
@@ -119,7 +119,7 @@ export function SichtbarkeitDialoge({
         title="Auf Entwurf setzen?"
         actions={
           <>
-            <Button variant="text" onClick={onClose}>
+            <Button variant="outlined" onClick={onClose}>
               Abbrechen
             </Button>
             <Button variant="filled" onClick={onAufEntwurf} disabled={pending}>

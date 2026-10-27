@@ -149,7 +149,7 @@ export function TeamGefahrenzone({
         title="Team verlassen?"
         actions={
           <>
-            <Button variant="text" onClick={() => schliessen("verlassen")}>
+            <Button variant="outlined" onClick={() => schliessen("verlassen")}>
               Abbrechen
             </Button>
             <Button variant="filled" onClick={verlassen} disabled={pending}>
@@ -242,7 +242,7 @@ function NamensBestaetigung({
       title={austritt ? "Team verlassen und auflösen?" : "Team auflösen?"}
       actions={
         <>
-          <Button variant="text" onClick={onClose}>
+          <Button variant="outlined" onClick={onClose}>
             Abbrechen
           </Button>
           <Button type="submit" form={formId} variant="danger" disabled={!passt || pending}>

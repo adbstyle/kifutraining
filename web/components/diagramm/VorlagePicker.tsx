@@ -147,7 +147,7 @@ export function VorlagePicker({
         title="Bestehendes Diagramm ersetzen?"
         actions={
           <>
-            <Button type="button" variant="text" onClick={() => setBestaetigen(null)} disabled={busy}>
+            <Button type="button" variant="outlined" onClick={() => setBestaetigen(null)} disabled={busy}>
               Abbrechen
             </Button>
             <Button

@@ -32,7 +32,7 @@ export function AboDialog({
       onClose={onClose}
       title={`Kalender abonnieren · ${teamName}`}
       actions={
-        <Button variant="text" onClick={onClose}>
+        <Button variant="outlined" onClick={onClose}>
           Schliessen
         </Button>
       }

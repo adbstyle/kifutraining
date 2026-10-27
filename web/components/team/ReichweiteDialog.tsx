@@ -50,7 +50,7 @@ export function ReichweiteDialog({
       title={titel}
       actions={
         <>
-          <Button variant="text" onClick={onClose}>Abbrechen</Button>
+          <Button variant="outlined" onClick={onClose}>Abbrechen</Button>
           <Button variant="filled" disabled={!wahl || pending} onClick={() => wahl && onWahl(wahl)}>Weiter</Button>
         </>
       }

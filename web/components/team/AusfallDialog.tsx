@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Dialog, SectionMessage, TextArea } from "@/components/ui";
-import { BEMERKUNG_MAX, ausfallProblem } from "@/lib/termin";
+import { BEMERKUNG_MAX, TERMIN_TEXT, ausfallProblem } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { TerminZeile } from "@/lib/queries/termine";
 
@@ -40,7 +40,7 @@ export function AusfallDialog({
       title={istAusfall ? "Grund des Ausfalls" : "Termin ausfallen lassen"}
       actions={
         <>
-          <Button variant="text" onClick={onClose}>Abbrechen</Button>
+          <Button variant="outlined" onClick={onClose}>Abbrechen</Button>
           <Button
             variant="filled"
             disabled={pending}
@@ -61,6 +61,8 @@ export function AusfallDialog({
         label="Grund (optional)"
         rows={3}
         maxLength={BEMERKUNG_MAX}
+        info={TERMIN_TEXT.grundSichtbar}
+        infoAufTouch
         value={grund}
         onChange={(e) => {
           setGrund(e.target.value);

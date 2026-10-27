@@ -20,6 +20,8 @@ export type TerminFelder = {
   beginn?: string | null;
   ende?: string | null;
   ort?: string | null;
+  /** Der Kartenlink zum Ort (#533); leer = keiner. */
+  ortLink?: string | null;
   bemerkung?: string | null;
   /** `null`: ohne Felder (Platz unbekannt). */
   felder?: Felder | null;
@@ -39,12 +41,14 @@ export type TerminFelder = {
   treffpunkte?: Treffpunkt[];
 };
 
-export type TerminFeld = "datum" | "beginn" | "ende" | "ort" | "bemerkung";
+export type TerminFeld = "datum" | "beginn" | "ende" | "ort" | "ortLink" | "bemerkung";
 export type TerminProblem = { feld: TerminFeld; text: string };
 
 /** Zwillinge der Checks `tt_ort_laenge` und `tt_bemerkung_laenge`. */
 export const ORT_MAX = 100;
 export const BEMERKUNG_MAX = 500;
+/** Zwilling der Checks `tt_ort_link` und `ts_ort_link` (#533 AK 5). */
+export const KARTENLINK_MAX = 500;
 
 /** Die erwartete Spielerzahl (#390, PO 7): ganze Zahl von 1 bis 200 wie der
  *  Kinder-Filter der Übungssuche. Zwilling des Checks `tt_spielerzahl`. */
@@ -59,6 +63,16 @@ export const TERMIN_TEXT = {
   ortLang: `Der Ort darf höchstens ${ORT_MAX} Zeichen lang sein.`,
   bemerkungLang: `Die Bemerkung darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
   grundLang: `Der Grund darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
+  /** Wer den Grund liest (#530 AK 6, 7) — als Hinweis am Feld und im KI-Werkzeug. */
+  grundSichtbar: "Die Eltern sehen den Grund des Ausfalls über ihren privaten Link.",
+  kartenlinkUngueltig: "Füge den ganzen Link ein, er beginnt mit https://.",
+  kartenlinkLang: `Der Kartenlink darf höchstens ${KARTENLINK_MAX} Zeichen lang sein.`,
+  kartenlinkOhneOrt: "Gib zuerst einen Ort an.",
+  /** Wer den Link öffnet (#533) — als Hinweis am Feld und im KI-Werkzeug. */
+  kartenlinkSichtbar: "Die Eltern öffnen den Kartenlink über ihren privaten Link.",
+  /** #533 AK 12, 13: vor dem Speichern, wenn der Link mit dem Ort wegfällt. */
+  kartenlinkFaelltWeg: "Der Kartenlink gehörte zum bisherigen Ort und fällt weg. Füge den Link zum neuen Ort ein.",
+  kartenlinkFolgtSerie: "Mit dem Ort der Serie gilt auch ihr Kartenlink, der eigene Kartenlink dieses Termins fällt weg.",
   spielerzahl: `Die erwartete Spielerzahl ist eine ganze Zahl von ${SPIELERZAHL_MIN} bis ${SPIELERZAHL_MAX}.`,
   /** Was die Zahl zählt (PO 7) — als Hinweis am Feld und im KI-Werkzeug. */
   spielerzahlZaehlt: "Alle erwarteten Kinder einschliesslich Torhüter:innen, ohne Trainer:innen.",
@@ -103,12 +117,40 @@ export function zeitProblem(
   return null;
 }
 
-/** Ort und Bemerkung sind frei, aber begrenzt (AK 6). */
+/** Ein Kartenlink ist eine vollständige https-Adresse ohne Leerraum, höchstens
+ *  500 Zeichen (#533 AK 5) — gezählt in Zeichen wie `char_length`. Zwilling der
+ *  Checks `tt_ort_link` und `ts_ort_link`; die Prüfung hier ist strenger (eine
+ *  gültige Adresse), die Datenebene die Untergrenze. Leer ist kein Link. */
+export function kartenlinkProblem(v: string | null | undefined): { feld: "ortLink"; text: string } | null {
+  const link = leerZuNull(v);
+  if (link === null) return null;
+  if ([...link].length > KARTENLINK_MAX) return { feld: "ortLink", text: TERMIN_TEXT.kartenlinkLang };
+  if (!/^https:\/\/\S+$/.test(link)) return { feld: "ortLink", text: TERMIN_TEXT.kartenlinkUngueltig };
+  try {
+    if (new URL(link).protocol !== "https:") throw new Error();
+  } catch {
+    return { feld: "ortLink", text: TERMIN_TEXT.kartenlinkUngueltig };
+  }
+  return null;
+}
+
+/** Kein Kartenlink ohne Ort (#533 AK 4) — am ganzen Stand, nicht an einer
+ *  Teiländerung. */
+export function kartenlinkOhneOrt(f: { ort?: string | null; ortLink?: string | null }): { feld: "ortLink"; text: string } | null {
+  return leerZuNull(f.ortLink) !== null && leerZuNull(f.ort) === null
+    ? { feld: "ortLink", text: TERMIN_TEXT.kartenlinkOhneOrt }
+    : null;
+}
+
+/** Ort, Kartenlink und Bemerkung sind frei, aber begrenzt (AK 6; #533 AK 5). */
 export function textProblem(f: {
   ort?: string | null;
+  ortLink?: string | null;
   bemerkung?: string | null;
-}): { feld: "ort" | "bemerkung"; text: string } | null {
+}): { feld: "ort" | "ortLink" | "bemerkung"; text: string } | null {
   if ((leerZuNull(f.ort) ?? "").length > ORT_MAX) return { feld: "ort", text: TERMIN_TEXT.ortLang };
+  const link = kartenlinkProblem(f.ortLink);
+  if (link) return link;
   if ((leerZuNull(f.bemerkung) ?? "").length > BEMERKUNG_MAX)
     return { feld: "bemerkung", text: TERMIN_TEXT.bemerkungLang };
   return null;
@@ -118,10 +160,17 @@ export function textProblem(f: {
  *  sind an jedem Termin Pflicht (AK 2; Zwilling: NOT NULL und
  *  `tt_ende_nach_beginn`). */
 export function terminProblem(
-  f: { datum?: string | null; beginn?: string | null; ende?: string | null; ort?: string | null; bemerkung?: string | null },
+  f: {
+    datum?: string | null;
+    beginn?: string | null;
+    ende?: string | null;
+    ort?: string | null;
+    ortLink?: string | null;
+    bemerkung?: string | null;
+  },
 ): TerminProblem | null {
   if (!istKalendertag(f.datum ?? "")) return { feld: "datum", text: TERMIN_TEXT.datum };
-  return zeitProblem(f.beginn, f.ende) ?? textProblem(f);
+  return zeitProblem(f.beginn, f.ende) ?? textProblem(f) ?? kartenlinkOhneOrt(f);
 }
 
 /** Die erwartete Spielerzahl (#390 AK 3): `null` heisst unbekannt, sonst eine
@@ -170,7 +219,12 @@ export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partia
     aenderung.beginn = neu.beginn ?? "";
     aenderung.ende = neu.ende ?? "";
   }
-  if (!gleich(neu.ort, start.ort)) aenderung.ort = neu.ort ?? "";
+  // Ort und Kartenlink gehen als Paar (#533): Der Kern leert den Link, wenn
+  // sich der Ort ohne ihn ändert, und die Serie braucht beide zusammen.
+  if (!gleich(neu.ort, start.ort) || !gleich(neu.ortLink, start.ortLink)) {
+    aenderung.ort = neu.ort ?? "";
+    aenderung.ortLink = neu.ortLink ?? "";
+  }
   if (!gleich(neu.bemerkung, start.bemerkung)) aenderung.bemerkung = neu.bemerkung ?? "";
   if (!gleicheFelder(neu.felder, start.felder)) aenderung.felder = neu.felder ?? null;
   if ((neu.spielerzahl ?? null) !== (start.spielerzahl ?? null)) aenderung.spielerzahl = neu.spielerzahl ?? null;

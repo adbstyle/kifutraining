@@ -49,7 +49,7 @@ export function OverlaysDemo() {
         title="Übung löschen?"
         actions={
           <>
-            <Button variant="text" onClick={() => setDialogOpen(false)}>
+            <Button variant="outlined" onClick={() => setDialogOpen(false)}>
               Abbrechen
             </Button>
             <Button variant="filled" onClick={() => setDialogOpen(false)}>

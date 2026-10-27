@@ -80,6 +80,7 @@ export async function legeTerminFestAktion(
     beginn: felder.beginn ?? "",
     ende: felder.ende ?? "",
     ort: felder.ort,
+    ortLink: felder.ortLink,
     bemerkung: felder.bemerkung,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
@@ -113,6 +114,7 @@ export async function aendereTerminAktion(
     beginn: felder.beginn,
     ende: felder.ende,
     ort: felder.ort,
+    ortLink: felder.ortLink,
     bemerkung: felder.bemerkung,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
@@ -237,6 +239,8 @@ export async function legeSerieFestAktion(
     beginn: string;
     ende: string;
     ort: string;
+    /** Der Kartenlink zum Ort (#533 AK 2). */
+    ortLink: string;
     bemerkung: string;
     eingeladene: string[];
     verantwortlich: string | null;

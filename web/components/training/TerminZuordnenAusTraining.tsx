@@ -93,7 +93,7 @@ export function TerminZuordnenAusTraining({
         open
         onClose={schliessen}
         title="Einem Team-Termin zuordnen"
-        actions={<Button variant="text" onClick={schliessen}>Abbrechen</Button>}
+        actions={<Button variant="outlined" onClick={schliessen}>Abbrechen</Button>}
       >
         {fehler && <SectionMessage appearance="error" className="mb-4">{fehler}</SectionMessage>}
         {/* Wie `TrainingZielDialog`: Teamnamen als Einfachauswahl, `nutzertext`,

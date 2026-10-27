@@ -72,7 +72,7 @@ export function TrainingZielDialog({
       title={uebernehmen ? "Training übernehmen?" : "Kopie ins Team stellen?"}
       actions={
         <>
-          <Button variant="text" onClick={onClose}>
+          <Button variant="outlined" onClick={onClose}>
             Abbrechen
           </Button>
           <Button

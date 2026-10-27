@@ -1288,7 +1288,7 @@ try {
     // KI-Weg ohne erwartetes Training: geprüft wird gegen den gelesenen Stand.
     assert.deepEqual(
       wert(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, ort: "KI-Ort" })),
-      { terminId: t1.terminId, teamId: team.id, trainingId: c2, abmeldungenVerfallen: 0 },
+      { terminId: t1.terminId, teamId: team.id, trainingId: c2, abmeldungenVerfallen: 0, kartenlinkEntfallen: false },
     );
     assert.equal((await zeile(t1.terminId))!.ort, "KI-Ort");
     const t3 = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team.id, datum: tag(9), beginn: "18:00", ende: "19:00" }));
@@ -1582,6 +1582,57 @@ try {
     assert.equal(wert(await teamPlan(a.supabase, a.id, { teamId: team, von: "2031-06-01", bis: "2031-06-30" })).kommend.length, 0, "PC 7: leer");
     fehler(await teamPlan(a.supabase, a.id, { teamId: team, von: "2030-01-01", bis: "2031-01-02" }), "eingabe", ZEITRAUM_TEXT.zuLang);
     fehler(await teamPlan(a.supabase, a.id, { teamId: team, von: "2030-01-01" }), "eingabe", ZEITRAUM_TEXT.beideTage);
+  });
+
+  await pruefe("Kartenlink: nur mit Ort, fällt mit dem Ort weg, folgt der Serie, am privaten Link (#533)", async () => {
+    const team = await serienTeam("Kern-DB-Kartenlink");
+    const L1 = "https://maps.app.goo.gl/eins";
+    const L2 = "https://maps.app.goo.gl/zwei";
+    const link = async (id: string) =>
+      (await admin.from("training_termine").select("ort, ort_link, ort_abweichend").eq("id", id).single()).data!;
+
+    // AK 1, 4, 5: einzelner Termin, nur mit Ort, nur https, bis 500 Zeichen.
+    fehler(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", ortLink: L1 }), "eingabe", TERMIN_TEXT.kartenlinkOhneOrt);
+    fehler(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", ort: "Halle", ortLink: "maps.app.goo.gl/x" }), "eingabe", TERMIN_TEXT.kartenlinkUngueltig);
+    const e = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", ort: "Halle", ortLink: L1 })).terminId;
+    assert.deepEqual(await link(e), { ort: "Halle", ort_link: L1, ort_abweichend: false });
+    // Die Datenebene als Untergrenze: kein http, kein Link ohne Ort (Trigger).
+    assert.ok((await admin.from("training_termine").update({ ort_link: "http://x.ch" }).eq("id", e)).error, "tt_ort_link");
+    wert(await aendereTermin(a.supabase, a.id, { terminId: e, bemerkung: "x" }));
+    assert.equal((await link(e)).ort_link, L1, "eine andere Angabe lässt den Link stehen");
+    // PC 1, AK 14: Ort ändern ohne Link nimmt ihn mit und meldet es.
+    assert.equal(wert(await aendereTermin(a.supabase, a.id, { terminId: e, ort: "Aula" })).kartenlinkEntfallen, true);
+    assert.deepEqual(await link(e), { ort: "Aula", ort_link: null, ort_abweichend: false });
+    assert.equal(wert(await aendereTermin(a.supabase, a.id, { terminId: e, ort: "Halle", ortLink: L2 })).kartenlinkEntfallen, false);
+    assert.equal((await link(e)).ort_link, L2);
+    await admin.from("training_termine").update({ ort: null }).eq("id", e);
+    assert.deepEqual(await link(e), { ort: null, ort_link: null, ort_abweichend: false }, "geleerter Ort nimmt den Link mit");
+
+    // AK 2: Serie mit Link, jeder Termin trägt ihn.
+    const von = tagCh(7), bis = tagCh(27);
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [wochentagVon(von)], von, bis, beginn: "18:00", ende: "19:30", ort: "Wyler", ortLink: L1 }));
+    let t = await termineDer(s.serieId);
+    assert.equal(t.length, 3);
+    for (const x of t) assert.equal((await link(x.id)).ort_link, L1);
+    // AK 3 (nur dieser): eigener Link weicht mit dem Ort ab.
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t[1].id, ort: "Wyler", ortLink: L2 }));
+    assert.deepEqual(await link(t[1].id), { ort: "Wyler", ort_link: L2, ort_abweichend: true });
+    // Serie ändern (alle): neuer Ort ohne Link — der Link der Serie fällt weg,
+    // der abweichende Termin behält seinen (PC 2).
+    const r = wert(await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { ort: "Allmend" } }));
+    assert.equal(r.kartenlinkEntfallen, true);
+    assert.equal((await admin.from("termin_serien").select("ort_link").eq("id", s.serieId).single()).data!.ort_link, null);
+    assert.deepEqual(await link(t[0].id), { ort: "Allmend", ort_link: null, ort_abweichend: false });
+    assert.deepEqual(await link(t[1].id), { ort: "Wyler", ort_link: L2, ort_abweichend: true });
+    // Nur der Link der Serie, über den KI-Weg.
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t[2].id, reichweite: "alle", ortLink: L1 }));
+    assert.deepEqual(await link(t[2].id), { ort: "Allmend", ort_link: L1, ort_abweichend: false });
+    assert.equal((await link(t[1].id)).ort_link, L2, "abweichend bleibt");
+    // PC 3, AK 13: wieder der Serie folgen übernimmt Ort und Link.
+    const g = wert(await folgeDerSerie(a.supabase, a.id, { terminId: t[1].id, angaben: ["ort"] }));
+    assert.equal(g.kartenlinkEntfallen, true);
+    assert.deepEqual(await link(t[1].id), { ort: "Allmend", ort_link: L1, ort_abweichend: false });
+
   });
 
   await pruefe("Serie ändern: nur dieser, folgende teilt, alle erfasst Vergangenes, Abweichungen bleiben (#326)", async () => {
@@ -3477,8 +3528,8 @@ try {
     for (const t of f.termine!)
       assert.deepEqual(
         Object.keys(t).sort(),
-        ["art", "beginn", "besetzung_art", "besetzung_zahl", "bezeichnung", "datum", "ende", "erwartete_spielerzahl", "geaendert", "id", "ort", "spielstand", "stand", "trainer"],
-        "Zeit, Ort und Besetzung (#522) - weder Bemerkung noch Training",
+        ["art", "beginn", "besetzung_art", "besetzung_zahl", "bezeichnung", "datum", "ende", "erwartete_spielerzahl", "geaendert", "id", "ort", "ort_link", "spielstand", "stand", "trainer"],
+        "Zeit, Ort samt Kartenlink (#533 PC 4) und Besetzung (#522) - weder Bemerkung noch Training",
       );
     const a1 = f.termine!.find((t) => t.id === anstehend)!;
     assert.deepEqual(
@@ -4296,7 +4347,7 @@ try {
     assert.deepEqual(ansicht.termine.map((x: { id: string }) => x.id), [t], "nichts Vergangenes (OoS 2)");
     assert.ok(!ansicht.termine.some((x: { id: string }) => x.id === gestern));
     assert.deepEqual(ansicht.termine[0], {
-      id: t, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler", ausgefallen: false, begonnen: false, angemeldet: 2, gesamt: 2, abgemeldet: false, verfallen: null, kader: [],
+      id: t, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler", ort_link: null, ausgefallen: false, ausfall_grund: null, begonnen: false, angemeldet: 2, gesamt: 2, abgemeldet: false, verfallen: null, kader: [],
       // Ein Training: keine Spielangaben (#459 AK 17).
       art: "training", bezeichnung: null, richtwert_min: null, richtwert_max: null,
       // Spielangaben (#463) bleiben an einem Training leer.
@@ -4312,9 +4363,20 @@ try {
     wert(await aendereTrainer(a.supabase, a.id, { terminId: t, ausladen: [a.id] }));
     assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].verantwortlich, null);
     wert(await aendereTrainer(a.supabase, a.id, { terminId: t, verantwortlich: b.id }));
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t }));
-    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].verantwortlich, null, "ausgefallen: keine");
+    // #533 AK 6: der Kartenlink zum Ort am privaten Link.
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t, ortLink: "https://maps.app.goo.gl/wyler" }));
+    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].ort_link, "https://maps.app.goo.gl/wyler");
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Platz gesperrt\nNachholen offen" }));
+    const ausgefallen = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0];
+    assert.equal(ausgefallen.verantwortlich, null, "ausgefallen: keine");
+    assert.equal(ausgefallen.ort_link, null, "#533 AK 7: ausgefallen kein Kartenlink");
+    // #530 AK 1, 4: der Grund ganz, samt Zeilenumbruch.
+    assert.equal(ausgefallen.ausfall_grund, "Platz gesperrt\nNachholen offen");
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: null }));
+    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].ausfall_grund, null, "#530 PC 1, 2: geleert");
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Regen" }));
     wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
+    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].ausfall_grund, null, "#530 PC 3: zurückgenommen");
 
     const abmelden = (token: string, abgemeldet: boolean) =>
       feldAnon.rpc("spieler_link_abmelden", { p_token: token, p_termin: t, p_abgemeldet: abgemeldet, p_gesehen_datum: tagCh(2), p_gesehen_beginn: "18:00" });
@@ -4398,7 +4460,7 @@ try {
     assert.ok(!JSON.stringify(f).includes("Lena") && !JSON.stringify(f).includes(link));
     assert.deepEqual(Object.keys(f.termine![0]).sort(), [
       "abgemeldet", "art", "beginn", "begonnen", "bemerkung", "bezeichnung", "datum", "ende", "frist_abgelaufen",
-      "id", "meldung", "nicht_aufgeboten", "ort", "treffpunkte",
+      "id", "meldung", "nicht_aufgeboten", "ort", "ort_link", "treffpunkte",
     ]);
     assert.deepEqual(await aboFeed("f".repeat(64)), { gueltig: false });
   });
@@ -5541,12 +5603,14 @@ try {
     ).terminId;
     const tr = await imLink(training);
     assert.deepEqual([tr.bemerkung, tr.treffpunkte], [null, null], "PC 4: keine Bemerkung eines Trainings");
-    // AK 11, PC 3: ausgefallen nur die Bemerkung; der Ausfall endet, die Treffpunkte sind wieder da.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t }));
+    // PC 3; #530 (PO 2026-10-27): ausgefallen nur der Grund, keine Bemerkung und keine
+    // Treffpunkte; der Ausfall endet, Bemerkung und Treffpunkte sind wieder da.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Platz gesperrt" }));
     const aus = await imLink(t);
-    assert.deepEqual([aus.bemerkung, aus.treffpunkte], ["Schienbeinschoner mitnehmen.", null]);
+    assert.deepEqual([aus.ausfall_grund, aus.bemerkung, aus.treffpunkte], ["Platz gesperrt", null, null]);
     wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
-    assert.equal((await imLink(t)).treffpunkte.length, 2);
+    const wieder = await imLink(t);
+    assert.deepEqual([wieder.ausfall_grund, wieder.bemerkung, wieder.treffpunkte.length], [null, "Schienbeinschoner mitnehmen.", 2]);
 
     // Nur Mitglieder schreiben; die Datenebene weist doppelte Arten und Trainings ab.
     const fremd = await b.supabase.rpc("spiel_treffpunkte_setzen", { p_termin: t, p_liste: [] });

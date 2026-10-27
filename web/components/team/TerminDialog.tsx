@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { Button, DateField, Dialog, FormAbschnitt, SectionMessage, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
+import { Button, DateField, Dialog, FormAbschnitt, SectionMessage, TextArea, TimeField, WochentagWahl } from "@/components/ui";
 import {
   BEMERKUNG_MAX,
-  ORT_MAX,
+  TERMIN_TEXT,
   ausfallProblem,
+  leerZuNull,
   spielerzahlText,
   terminProblem,
   type TerminFeld,
@@ -46,6 +47,7 @@ import {
 } from "./SpielFelder";
 import type { Kader, TerminKader } from "@/lib/kader";
 import { KaderWahl } from "./KaderWahl";
+import { OrtFelder } from "./OrtFelder";
 
 const ANGABE: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit",
@@ -212,6 +214,7 @@ export function TerminDialog({
       beginn: start?.beginn ?? "",
       ende: start?.ende ?? "",
       ort: start?.ort ?? "",
+      ortLink: start?.ortLink ?? "",
       bemerkung: start?.bemerkung ?? "",
     });
     platz.zuruecksetzen(start);
@@ -238,6 +241,27 @@ export function TerminDialog({
   }, [open]);
 
   const setze = (k: keyof TerminFelder) => (v: string) => setFelder((f) => ({ ...f, [k]: v }));
+  // #533 PC 1: Der Kartenlink gehört zum Ort. Ändert sich der Ort, fällt der
+  // bisherige Link weg (sichtbar vor dem Speichern, AK 12); kehrt der Ort
+  // zurück, gilt der Link wieder.
+  const startOrt = leerZuNull(start?.ort);
+  const startLink = start?.ortLink ?? "";
+  function ortGeaendert(v: string) {
+    setFelder((f) => {
+      const zurueck = leerZuNull(v) === startOrt;
+      const linkUnberuehrt = (f.ortLink ?? "") === (zurueck ? "" : startLink);
+      // AK 4: Ohne Ort kein Kartenlink.
+      if (leerZuNull(v) === null) return { ...f, ort: v, ortLink: "" };
+      return { ...f, ort: v, ...(linkUnberuehrt ? { ortLink: zurueck ? startLink : "" } : {}) };
+    });
+  }
+  // Auch der Link der Serie fällt weg, wenn der neue Ort für sie gilt
+  // (Reichweite «alle» oder «dieser und folgende»), und ein geleerter Ort
+  // nimmt ihn ebenso mit (AK 12).
+  const bisherigerLink = startLink || serie?.ortLink;
+  const kartenlinkWeg = !!bisherigerLink && leerZuNull(felder.ort) !== startOrt && !leerZuNull(felder.ortLink);
+  // #533 AK 13: Folgt der Ort wieder der Serie, fällt ein eigener Link weg.
+  const eigenerLinkWeg = !!startLink && startLink !== (serie?.ortLink ?? "");
   const fehlerAn = (k: TerminFeld) => (problem?.feld === k ? problem.text : undefined);
 
   const regelFehlerAn = (k: SerieFeld) => (regelProblem?.feld === k ? regelProblem.text : undefined);
@@ -327,6 +351,8 @@ export function TerminDialog({
               label="Grund des Ausfalls (optional)"
               rows={2}
               maxLength={BEMERKUNG_MAX}
+              info={TERMIN_TEXT.grundSichtbar}
+              infoAufTouch
               value={grund}
               onChange={(e) => {
                 setGrund(e.target.value);
@@ -346,7 +372,16 @@ export function TerminDialog({
           <TimeField label={istSpiel ? "Anpfiff" : "Beginn"} className="flex-1" value={felder.beginn ?? ""} onChange={(e) => setze("beginn")(e.target.value)} error={!!fehlerAn("beginn")} supportingText={fehlerAn("beginn")} />
           <TimeField label="Ende" className="flex-1" value={felder.ende ?? ""} onChange={(e) => setze("ende")(e.target.value)} error={!!fehlerAn("ende")} supportingText={fehlerAn("ende")} />
         </div>
-        <TextField label="Ort (optional)" maxLength={ORT_MAX} value={felder.ort ?? ""} onChange={(e) => setze("ort")(e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
+        <OrtFelder
+          ort={felder.ort ?? ""}
+          ortLink={felder.ortLink ?? ""}
+          onOrt={ortGeaendert}
+          onOrtLink={setze("ortLink")}
+          fehlerOrt={fehlerAn("ort")}
+          fehlerLink={fehlerAn("ortLink")}
+          hinweis={kartenlinkWeg ? TERMIN_TEXT.kartenlinkFaelltWeg : undefined}
+          disabled={pending}
+        />
         {istSpiel && <RichtwertFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <MeldefristFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <TreffpunkteFelder angaben={spiel} spieltag={felder.datum} disabled={pending} />}
@@ -426,8 +461,11 @@ export function TerminDialog({
               {verschoben && <li>Verschoben - ursprünglich am {datumKurz(serienTag!)}.</li>}
               {folgenKann.map((a) => (
                 <li key={a} className="flex flex-wrap items-center justify-between gap-x-2">
-                  <span>{ANGABE[a]} {MEHRZAHL.includes(a) ? "weichen" : "weicht"} von der Serie ab.</span>
-                  <Button variant="text" aria-label={FOLGEN_LABEL[a]} disabled={pending} onClick={() => onFolgen?.(a)}>Der Serie folgen</Button>
+                  <span>
+                    {ANGABE[a]} {MEHRZAHL.includes(a) ? "weichen" : "weicht"} von der Serie ab.
+                    {a === "ort" && eigenerLinkWeg && <> {TERMIN_TEXT.kartenlinkFolgtSerie}</>}
+                  </span>
+                  <Button variant="link" aria-label={FOLGEN_LABEL[a]} disabled={pending} onClick={() => onFolgen?.(a)}>Der Serie folgen</Button>
                 </li>
               ))}
             </ul>

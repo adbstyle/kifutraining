@@ -68,7 +68,7 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
         title="Training im Team erstellen"
         actions={
           <>
-            <Button variant="text" onClick={() => setOpen(false)}>
+            <Button variant="outlined" onClick={() => setOpen(false)}>
               Abbrechen
             </Button>
             <Button variant="filled" onClick={anlegen} disabled={pending}>

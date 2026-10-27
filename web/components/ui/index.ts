@@ -19,6 +19,8 @@ export type { Marke, StatusTon } from "./MiniMonat";
 export { AuswahlListe } from "./AuswahlListe";
 export type { AuswahlEintrag } from "./AuswahlListe";
 export { FormAbschnitt } from "./FormAbschnitt";
+export { Feldgruppe } from "./Feldgruppe";
+export { ExternerLink } from "./ExternerLink";
 export { Leerzustand } from "./Leerzustand";
 export { SectionMessage } from "./SectionMessage";
 export { UebungsBild } from "./UebungsBild";

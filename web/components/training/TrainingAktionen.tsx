@@ -352,7 +352,7 @@ export function TrainingAktionen({
           title="Training löschen?"
           actions={
             <>
-              <Button variant="text" onClick={() => setLoeschen(false)}>
+              <Button variant="outlined" onClick={() => setLoeschen(false)}>
                 Abbrechen
               </Button>
               <form action={deleteTraining.bind(null, trainingId)}>

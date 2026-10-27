@@ -76,7 +76,7 @@ export function KiZugaengeListe({ zugaenge }: { zugaenge: KiZugang[] }) {
         title="Zugang widerrufen?"
         actions={
           <>
-            <Button variant="text" onClick={() => setWiderrufen(null)}>
+            <Button variant="outlined" onClick={() => setWiderrufen(null)}>
               Abbrechen
             </Button>
             <Button

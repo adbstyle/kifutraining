@@ -83,6 +83,9 @@ import {
   TERMIN_TEXT,
   ZUORDNEN_ERFOLG,
   geaenderteFelder,
+  KARTENLINK_MAX,
+  kartenlinkOhneOrt,
+  kartenlinkProblem,
   kopieGebliebenText,
   leerZuNull,
   spielerzahlProblem,
@@ -642,14 +645,14 @@ pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit 
 });
 
 pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
-  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], mindestbesetzung: null, kader: [], ausgefallen: false, ausfallGrund: null };
+  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, ortLink: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], mindestbesetzung: null, kader: [], ausgefallen: false, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
   assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
   assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } }, "2026-10-01"), false);
 });
 
 pruefe("Status eines Termins in einem Wort, Kalenderblatt weiss oder grau (#491)", () => {
-  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-11-03", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], mindestbesetzung: null, kader: [], ausgefallen: false, ausfallGrund: null };
+  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-11-03", beginn: "18:00", ende: "19:30", ort: null, ortLink: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], mindestbesetzung: null, kader: [], ausgefallen: false, ausfallGrund: null };
   const mitTraining = { ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } };
   assert.deepEqual(terminStatus(mitTraining, "2026-11-01"), { wort: "Vorbereitet", appearance: "success" });
   assert.deepEqual(terminStatus(t, "2026-11-01"), { wort: "Nicht vorbereitet", appearance: "neutral" });
@@ -698,7 +701,7 @@ pruefe("Ausfall: Grund mit den Regeln der Bemerkung; nicht vorbereitet schliesst
   assert.equal(TERMIN_TEXT.grundLang, "Der Grund darf höchstens 500 Zeichen lang sein.");
   assert.equal(TERMIN_MELDUNG.NICHT_AUSGEFALLEN, "Dieser Termin ist nicht ausgefallen.");
   assert.ok(!KONFLIKT_MARKER.includes("TERMIN_AUSGEFALLEN"), "eine Regel, kein Konflikt");
-  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null,
+  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, ortLink: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null,
     training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], mindestbesetzung: null, kader: [], ausgefallen: true, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-01"), false, "AK 8");
   assert.equal(nochNichtVorbereitet({ ...t, ausgefallen: false }, "2026-10-01"), true);
@@ -722,6 +725,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     beginn: "18:30",
     ende: "20:00",
     ort: "Allmend",
+    ortLink: null,
     bemerkung: null,
     felder: [
       { laenge_m: 30, breite_m: 25, tore: { minitor: 2, tor_5m: 0, tor_7m: null }, untergrund: "kunstrasen" as const },
@@ -975,6 +979,34 @@ pruefe("terminProblem: Beginn und Ende sind immer Pflicht und lassen sich nicht 
   assert.equal(leerZuNull(" Allmend "), "Allmend");
 });
 
+pruefe("Kartenlink: vollständige https-Adresse bis 500 Zeichen, nur mit Ort (#533 AK 4, 5)", () => {
+  const ok = { datum: "2026-10-08", beginn: "18:30", ende: "20:00", ort: "Turnhalle Wankdorf" };
+  assert.equal(kartenlinkProblem(null), null, "keiner");
+  assert.equal(kartenlinkProblem("   "), null, "leer ist keiner");
+  assert.equal(kartenlinkProblem(" https://maps.app.goo.gl/MRWFZj3ZQtsYGBFi9 "), null, "Leerraum am Rand");
+  for (const falsch of ["maps.app.goo.gl/MRWF", "http://maps.app.goo.gl/x", "javascript:alert(1)", "https://", "https://a b", "ftp://x"])
+    assert.deepEqual(kartenlinkProblem(falsch), { feld: "ortLink", text: TERMIN_TEXT.kartenlinkUngueltig }, falsch);
+  const vorn = "https://x.ch/";
+  const rand = vorn + "a".repeat(KARTENLINK_MAX - vorn.length);
+  assert.equal(kartenlinkProblem(rand), null, "genau 500");
+  assert.deepEqual(kartenlinkProblem(rand + "a"), { feld: "ortLink", text: TERMIN_TEXT.kartenlinkLang }, "501");
+  // In Zeichen gezählt wie char_length: 500 Umlaute sind 500, nicht 1000.
+  assert.equal(kartenlinkProblem(vorn + "ä".repeat(KARTENLINK_MAX - vorn.length)), null);
+  assert.deepEqual(kartenlinkOhneOrt({ ort: " ", ortLink: "https://x.ch" }), { feld: "ortLink", text: TERMIN_TEXT.kartenlinkOhneOrt });
+  assert.equal(kartenlinkOhneOrt({ ort: "Halle", ortLink: "https://x.ch" }), null);
+  assert.equal(terminProblem({ ...ok, ortLink: "https://x.ch" }), null);
+  assert.deepEqual(terminProblem({ ...ok, ort: "", ortLink: "https://x.ch" }), { feld: "ortLink", text: TERMIN_TEXT.kartenlinkOhneOrt });
+  assert.deepEqual(terminProblem({ ...ok, ortLink: "x.ch" }), { feld: "ortLink", text: TERMIN_TEXT.kartenlinkUngueltig });
+});
+
+pruefe("geaenderteFelder: Ort und Kartenlink gehen als Paar (#533)", () => {
+  const start = { datum: "2026-10-08", beginn: "18:30", ende: "20:00", ort: "Allmend", ortLink: "https://x.ch/a", bemerkung: "" };
+  assert.equal(geaenderteFelder({ ...start }, start), null);
+  assert.deepEqual(geaenderteFelder({ ...start, ortLink: "https://x.ch/b" }, start), { ort: "Allmend", ortLink: "https://x.ch/b" }, "nur der Link");
+  assert.deepEqual(geaenderteFelder({ ...start, ortLink: "" }, start), { ort: "Allmend", ortLink: "" }, "Link entfernen");
+  assert.deepEqual(geaenderteFelder({ ...start, ort: "Halle", ortLink: "" }, start), { ort: "Halle", ortLink: "" }, "Ort neu, Link weg");
+});
+
 pruefe("Termin-Anzeige und -Marker: derselbe Satz vorab und aus der Datenbank", () => {
   assert.equal(zeitText("18:30", "20:00"), "18:30–20:00");
   for (const [marker, satz] of Object.entries(TERMIN_MELDUNG)) {
@@ -1128,15 +1160,15 @@ pruefe("geaenderteFelder: nur Geändertes, Beginn und Ende als Paar, nichts geä
   const start = { datum: "2026-10-08", beginn: "18:30", ende: "20:00", ort: "Allmend", bemerkung: "" };
   assert.equal(geaenderteFelder({ ...start }, start), null, "unverändert");
   assert.equal(geaenderteFelder({ ...start, ort: " Allmend " }, start), null, "Leerraum ist keine Änderung");
-  assert.deepEqual(geaenderteFelder({ ...start, ort: "Halle" }, start), { ort: "Halle" });
-  assert.deepEqual(geaenderteFelder({ ...start, ort: "" }, start), { ort: "" }, "leeren");
+  assert.deepEqual(geaenderteFelder({ ...start, ort: "Halle" }, start), { ort: "Halle", ortLink: "" }, "Ort und Kartenlink als Paar (#533)");
+  assert.deepEqual(geaenderteFelder({ ...start, ort: "" }, start), { ort: "", ortLink: "" }, "leeren");
   assert.deepEqual(geaenderteFelder({ ...start, bemerkung: "Bälle" }, start), { bemerkung: "Bälle" });
   assert.deepEqual(geaenderteFelder({ ...start, datum: "2026-10-09" }, start), { datum: "2026-10-09" });
   assert.deepEqual(geaenderteFelder({ ...start, ende: "20:30" }, start), { beginn: "18:30", ende: "20:30" }, "Paar");
   assert.deepEqual(geaenderteFelder({ ...start, beginn: "18:00" }, start), { beginn: "18:00", ende: "20:00" }, "Paar");
   assert.deepEqual(
     geaenderteFelder({ ...start, datum: "2026-10-09", ort: "Halle" }, start),
-    { datum: "2026-10-09", ort: "Halle" },
+    { datum: "2026-10-09", ort: "Halle", ortLink: "" },
     "Zeit bleibt draussen",
   );
 });
@@ -1203,6 +1235,7 @@ pruefe("Felder: Normalform, Vergleich, geänderte Felder (#389 AK 5, 7)", () => 
   assert.deepEqual(geaenderteFelder({ ...start, felder: null }, start), { felder: null }, "entfernen");
   assert.deepEqual(geaenderteFelder({ ...start, felder: [{ ...KUNSTRASEN, untergrund: null }], ort: "Allmend" }, start), {
     ort: "Allmend",
+    ortLink: "",
     felder: [{ ...KUNSTRASEN, untergrund: null }],
   });
   const ohne = { ...start, felder: null };
@@ -2255,6 +2288,27 @@ const feedTermin = (t: Partial<AboFeedTermin> & { id: string }): AboFeedTermin =
 });
 const elternAbo = (termine: AboFeedTermin[]) =>
   kalenderText({ kalenderName: aboKalenderName("FC Test"), uidZusatz: "abo1", jetzt: ABO_JETZT, termine: termine.map((t) => aboEintrag(t, "FC Test")) });
+/** Ein Feed ohne Zeilenfaltung, damit Prüfungen ganze Zeilen sehen. */
+const ungefaltet = (text: string) => text.split("\r\n ").join("");
+
+pruefe("Abos: der Kartenlink steht in der Beschreibung, nie als Verweis (#533 PC 4)", () => {
+  const link = "https://maps.app.goo.gl/MRWFZj3ZQtsYGBFi9";
+  const eltern = ungefaltet(elternAbo([feedTermin({ id: "a", ort_link: link })]));
+  assert.ok(eltern.includes(`DESCRIPTION:Zugesagt\\n\\nKarte: ${link}`), "Karte nach dem Status");
+  assert.ok(!eltern.includes("URL:"), "kein Verweis, der den privaten Link verriete");
+  assert.ok(!elternAbo([feedTermin({ id: "a" })]).includes("Karte:"), "ohne Link keine Zeile");
+  const verweis = "https://ki-fu.ch/team/t/termin/a";
+  const mitglieder = ungefaltet(
+    kalenderText({
+      kalenderName: "K",
+      verweis: () => verweis,
+      jetzt: ABO_JETZT,
+      termine: [aboTermin({ id: "a", ortLink: link, beschreibung: "Du bist dabei." })],
+    }),
+  );
+  assert.ok(mitglieder.includes(`DESCRIPTION:Du bist dabei.\\n\\nKarte: ${link}\\n\\n${verweis}`), "Karte vor dem Verweis");
+  assert.ok(mitglieder.includes(`URL:${verweis}`), "URL bleibt der Verweis in die Anwendung");
+});
 
 pruefe("Abo Spielervertretung: Training angemeldet = zugesagt, abgemeldet = abgesagt (#507 PC 3, AK 6)", () => {
   assert.equal(aboStatus(feedTermin({ id: "a" })), "zugesagt");

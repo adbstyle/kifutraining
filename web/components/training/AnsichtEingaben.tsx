@@ -54,7 +54,7 @@ export function AnsichtStufen({
           onClose={() => s.setAbweichend(null)}
           title="Übungen ausserhalb der Stufen"
           actions={
-            <Button variant="text" onClick={() => s.setAbweichend(null)}>
+            <Button variant="outlined" onClick={() => s.setAbweichend(null)}>
               Verstanden
             </Button>
           }
