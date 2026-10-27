@@ -5,6 +5,7 @@ import { Button, DateField, Dialog, FormAbschnitt, SectionMessage, TextArea, Tex
 import {
   BEMERKUNG_MAX,
   ORT_MAX,
+  TERMIN_TEXT,
   ausfallProblem,
   spielerzahlText,
   terminProblem,
@@ -327,6 +328,8 @@ export function TerminDialog({
               label="Grund des Ausfalls (optional)"
               rows={2}
               maxLength={BEMERKUNG_MAX}
+              info={TERMIN_TEXT.grundSichtbar}
+              infoAufTouch
               value={grund}
               onChange={(e) => {
                 setGrund(e.target.value);

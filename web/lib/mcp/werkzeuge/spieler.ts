@@ -561,7 +561,8 @@ const LINK_MODELL =
   "Spieler:in und die anstehenden Termine des Teams, die für sie gelten (bei Terminen mit Kadern nur die ihrer Kader, samt " +
   "dieser Kader), mit der Zahl der Angemeldeten und derer, für die er gilt, und meldet sie bis zum Beginn ab und " +
   "wieder an. Spiele meldet sie an oder ab bis zur Meldefrist (ohne Frist bis zum Anpfiff) und sieht dort Bezeichnung, " +
-  "Richtwert, Meldefrist, Treffpunkte, Bemerkung und ob die Spieler:in nicht aufgeboten ist — keine Namen anderer, kein " +
+  "Richtwert, Meldefrist, Treffpunkte, Bemerkung und ob die Spieler:in nicht aufgeboten ist. An einem ausgefallenen Training " +
+  "oder Spiel sieht sie den Grund des Ausfalls, ganz, und keine Bemerkung — keine Namen anderer, kein " +
   "Training, keine Nachträge, nichts Vergangenes. Über den Link holen Eltern auch ein Kalender-Abo der Termine; das " +
   "kannst du weder holen noch einsehen noch widerrufen. KiFu verschickt den Link nicht. Gib ihn nur der " +
   `Person weiter, die ihn verlangt, und nie in einer Gruppe. ${LINK_TEXT.warnung}`;

@@ -6,6 +6,7 @@ import { Kalenderblatt, Leerzustand, Lozenge, SectionMessage, Switch } from "@/c
 import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
 import type { Meldung } from "@/lib/spiel";
 import { SpielKarte } from "./SpielKarte";
+import { AusfallGrund } from "./AusfallGrund";
 import { AboKnopf } from "./AboKnopf";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
@@ -113,7 +114,7 @@ export function ElternAnsicht({
       t.angemeldet == null || t.gesamt == null
         ? null
         : { quelle: "liste" as const, angemeldet: t.angemeldet + Number(t.abgemeldet) - Number(ab), gesamt: t.gesamt, anwesend: null }; // Eltern sehen den Stand bei Beginn (#475 AK 16).
-    // «Fällt aus» sagt schon die Lozenge; ausgefallen bleibt der Ort stehen.
+    // «Fällt aus» sagt schon die Lozenge; ausgefallen bleibt der Ort stehen (#530 AK 5).
     const zweite = !t.ausgefallen && t.begonnen ? "Hat begonnen · nicht mehr änderbar" : null;
     return { ab, zweite, zahl };
   }
@@ -225,6 +226,7 @@ function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }
           ) : (
             t.ort && <span className="max-w-full truncate type-body-small text-on-surface-mittel">{t.ort}</span>
           )}
+          <AusfallGrund grund={t.ausfall_grund} />
           <TeamZeile t={t} zahl={zahl} />
           {t.verantwortlich && <span className="type-body-small text-on-surface-mittel">Verantwortlich: {t.verantwortlich}</span>}
         </div>
