@@ -330,6 +330,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Kann: Übungen suchen/abrufen; eigene Übungen anlegen, ändern, kopieren, öffentlich schalten, Diagramm setzen (als Ganzes) und Diagramm-Mängel abrufen; Trainings anlegen, Übungen zuordnen, überarbeiten (Name, Ziel, Kategorien, Dauer, Notiz, Reihenfolge eines ganzen Abschnitts in einem Zug, Entfernen), Gruppen/Durchlauf, Varianten, Hinweise abrufen, veröffentlichen/zurückziehen, übernehmen, löschen; Team-Trainings; Kalender (Termine, Serien, Spiele, Zuordnen, Trainer:innen, Ausfälle); Spielerliste, Kader, Ab-/Anmeldungen, Meldungen, Nachträge, private Links, Selbstabholung.
 - Kann **nicht**: Favoriten, Teams gründen/umbenennen/auflösen, Mitglieder verwalten, Konto (Name, Passwort, Löschen), Kalender-Abos, Fotos hochladen, Übungen löschen, Übung in andere Altersstufe überführen, Übung aus Training in Bibliothek kopieren, einzelne Diagramm-Elemente ändern, Diagramm entfernen, Gruppenreihenfolge ändern, CSV-Import, E-Mail-Adressen sehen.
 - Strenger als das Formular: Werte, die das Formular gar nicht anbietet, werden **abgelehnt** (mit Liste aller Verstösse), nicht still verworfen.
+- Kartenlink zum Ort setzt er wie die App (nur mit Ort, https://, ≤ 500 Zeichen). Ändert er den Ort ohne neuen Link, fällt der bisherige weg – die Antwort sagt es ihm; ebenso, wenn ein Serientermin wieder der Serie folgt und seinen eigenen Link verliert.
 - Fragt bei Löschen/Entfernen/Ersetzen nicht nach; Bestätigung im Aufruf nur bei Serienänderungen mit vergangenen Terminen und bei verfallenden Abmeldungen/Meldungen/Nachträgen.
 - Bekannt: neue Fähigkeiten kennt ein verbundener Assistent erst nach Neuverbinden; offener Browser-Tab zeigt Änderungen des Assistenten erst nach Neuladen; Abbruch mitten im Kopieren kann eine unvollständige Kopie hinterlassen; die gemeldeten Diagramm-Mängel erscheinen in der App nirgends; Platz-/Spielerzahl-Passung beurteilt der Assistent selbst (Richtmasse SFV 2026/27: Kleinfeld G ~20×15, F ~25×20, E 25–30×20–25; Grossfeld F ~30×25, E 43–48×25–30 m).
 
@@ -342,7 +343,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 | Ohne Konto | Übungsbestand, öffentliche Trainings (ansehen, drucken, durchführen), Versionen, Styleguide, Cookies |
 | Angemeldet | + eigene Übungen/Trainings, Favoriten, Übernehmen, Teams |
 | Team-Mitglied | alles im Team, gleichberechtigt; E-Mails der Mitglieder; alle Termine (unabhängig von Kadern) |
-| Eltern (privater Link) | nur eigene Spieler:in: anstehende Termine ihrer Kader, eigener Status, Spielerzahl, Verantwortliche:r, Ausfallgrund, Spiel-Bemerkung, Treffpunkte; keine anderen Namen, keine Trainingsinhalte |
+| Eltern (privater Link) | nur eigene Spieler:in: anstehende Termine ihrer Kader, eigener Status, Spielerzahl, Verantwortliche:r, Ort samt Kartenlink (Linkziel verantwortet das Team), Ausfallgrund, Spiel-Bemerkung, Treffpunkte; keine anderen Namen, keine Trainingsinhalte |
 | Mit Abholadresse | Link einer Spieler:in bei exaktem Vorname+Nachname+Jahrgang |
 | KI-Assistent | wie Konto, eingeschränkt auf angebotene Werkzeuge; keine E-Mails |
 
