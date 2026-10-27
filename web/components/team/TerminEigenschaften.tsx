@@ -118,7 +118,8 @@ export function TerminEigenschaften({
         </>
       )}
       {t.bemerkung && (
-        <Eigenschaft label={t.spiel ? "Bemerkung · sichtbar für Eltern" : "Bemerkung"}>
+        // Ausgefallen sehen die Eltern statt der Bemerkung nur den Grund (#530).
+        <Eigenschaft label={t.spiel && !t.ausgefallen ? "Bemerkung · sichtbar für Eltern" : "Bemerkung"}>
           <span className="whitespace-pre-line">{t.bemerkung}</span>
         </Eigenschaft>
       )}
