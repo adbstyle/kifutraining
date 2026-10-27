@@ -100,6 +100,7 @@ function startWerte(t: TerminZeile): TerminFelder {
     beginn: t.beginn,
     ende: t.ende,
     ort: t.ort ?? "",
+    ortLink: t.ortLink ?? "",
     bemerkung: t.bemerkung ?? "",
     felder: t.felder,
     spielerzahl: t.spielerzahl,

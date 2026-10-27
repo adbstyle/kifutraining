@@ -12,7 +12,6 @@ import {
   InfoKnopf,
   SectionMessage,
   TextArea,
-  TextField,
   TimeField,
   WochentagWahl,
   feldNameKlasse,
@@ -21,7 +20,7 @@ import { cn } from "@/lib/cn";
 import { SPIEL_MELDUNG, SPIEL_TEXT, TREFFPUNKT_TEXT, type TerminArt } from "@/lib/spiel";
 import { BezeichnungFeld, MeldefristFelder, RichtwertFelder, TreffpunkteFelder, useSpielAngaben } from "./SpielFelder";
 import { maxEnddatum, serieProblem, wochentagVon, type SerieFeld, type Wochentag } from "@/lib/serie";
-import { BEMERKUNG_MAX, ORT_MAX, istKalendertag, terminProblem, type TerminFelder } from "@/lib/termin";
+import { BEMERKUNG_MAX, istKalendertag, terminProblem, type TerminFelder } from "@/lib/termin";
 import type { Felder } from "@/lib/termin-felder";
 import type { TeamMitglied } from "@/lib/queries/teams";
 import { TrainerWahl, trainerVorwahl, type TrainerWert } from "./TrainerWahl";
@@ -35,6 +34,7 @@ import { usePlatzAngaben } from "./usePlatzAngaben";
 import { terminBegonnen } from "@/lib/zeit";
 import type { Kader } from "@/lib/kader";
 import { KaderWahl } from "./KaderWahl";
+import { OrtFelder } from "./OrtFelder";
 
 export type SerieFelder = {
   wochentage: Wochentag[];
@@ -43,6 +43,8 @@ export type SerieFelder = {
   beginn: string;
   ende: string;
   ort: string;
+  /** Der Kartenlink zum Ort (#533 AK 1, 2); leer = keiner. */
+  ortLink: string;
   bemerkung: string;
   /** Für welche Kader jeder Termin gilt (#453 AK 1, 2); leer = für alle. */
   kaderIds: string[];
@@ -58,7 +60,7 @@ export type NeuerTermin =
   | { art: "einzeln"; felder: TerminFelder; trainer: TrainerFestlegen; kaderIds: string[] }
   | { art: "serie"; felder: SerieFelder & { felder: Felder | null; spielerzahl: number | null } & TrainerFestlegen };
 
-const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: "", ort: "", bemerkung: "", kaderIds: [] };
+const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: "", ort: "", ortLink: "", bemerkung: "", kaderIds: [] };
 
 /* Einen neuen Termin erstellen — einzeln oder, mit «Wiederholender Termin»,
    als Terminserie. Ein Einstieg statt zweier: Die Angaben sind dieselben, die
@@ -207,6 +209,7 @@ export function NeuerTerminDialog({
       beginn: f.beginn,
       ende: f.ende,
       ort: f.ort,
+      ortLink: f.ortLink,
       bemerkung: f.bemerkung,
       ...angaben,
     };
@@ -222,7 +225,15 @@ export function NeuerTerminDialog({
   /** Ein Spiel: Bezeichnung und Richtwert statt Feldern und Spielerzahl, nur
    *  einzeln, mit bevorstehendem Anpfiff. */
   function speichereSpiel() {
-    const felder: TerminFelder = { art: "spiel", datum: f.von, beginn: f.beginn, ende: f.ende, ort: f.ort, bemerkung: f.bemerkung };
+    const felder: TerminFelder = {
+      art: "spiel",
+      datum: f.von,
+      beginn: f.beginn,
+      ende: f.ende,
+      ort: f.ort,
+      ortLink: f.ortLink,
+      bemerkung: f.bemerkung,
+    };
     const p = terminProblem(felder);
     setProblem(p && { feld: p.feld === "datum" ? "von" : p.feld, text: p.text });
     const angaben = spiel.pruefe();
@@ -304,7 +315,15 @@ export function NeuerTerminDialog({
             />
           </>
         )}
-        <TextField label="Ort (optional)" maxLength={ORT_MAX} value={f.ort} onChange={(e) => setze("ort", e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
+        <OrtFelder
+          ort={f.ort}
+          ortLink={f.ortLink}
+          // #533 AK 4: Ohne Ort kein Kartenlink — ein geleerter Ort nimmt ihn mit.
+          onOrt={(v) => setF((x) => ({ ...x, ort: v, ...(v.trim() === "" ? { ortLink: "" } : {}) }))}
+          onOrtLink={(v) => setze("ortLink", v)}
+          fehlerOrt={fehlerAn("ort")}
+          fehlerLink={fehlerAn("ortLink")}
+        />
         {istSpiel && <RichtwertFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <MeldefristFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <TreffpunkteFelder angaben={spiel} spieltag={f.von} disabled={pending} />}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Clock, Shirt } from "lucide-react";
-import { Button, Kalenderblatt, Lozenge, SectionMessage, TreffpunktListe, ZeichenZahl } from "@/components/ui";
+import { Button, ExternerLink, Kalenderblatt, Lozenge, SectionMessage, TreffpunktListe, ZeichenZahl } from "@/components/ui";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr, tagText } from "@/lib/monat";
@@ -79,7 +79,15 @@ export function SpielKarte({
           <span className="type-body-medium text-on-surface-mittel">
             {t.beginn}–{t.ende}
           </span>
-          {t.ort && <span className="type-body-medium text-on-surface-mittel">{t.ort}</span>}
+          {/* #533 AK 6, 10, 11; PC 5: mit Kartenlink als Link auf einer Zeile. */}
+          {t.ort &&
+            (t.ort_link && !t.ausgefallen ? (
+              <ExternerLink href={t.ort_link} einzeilig className="type-body-medium">
+                {t.ort}
+              </ExternerLink>
+            ) : (
+              <span className="type-body-medium text-on-surface-mittel">{t.ort}</span>
+            ))}
           <AusfallGrund grund={t.ausfall_grund} />
           {t.verantwortlich && <span className="type-body-small text-on-surface-mittel">Verantwortlich: {t.verantwortlich}</span>}
         </div>
