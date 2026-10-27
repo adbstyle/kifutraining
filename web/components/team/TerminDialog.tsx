@@ -255,8 +255,11 @@ export function TerminDialog({
       return { ...f, ort: v, ...(linkUnberuehrt ? { ortLink: zurueck ? startLink : "" } : {}) };
     });
   }
-  const kartenlinkWeg =
-    !!startLink && leerZuNull(felder.ort) !== null && leerZuNull(felder.ort) !== startOrt && !leerZuNull(felder.ortLink);
+  // Auch der Link der Serie fällt weg, wenn der neue Ort für sie gilt
+  // (Reichweite «alle» oder «dieser und folgende»), und ein geleerter Ort
+  // nimmt ihn ebenso mit (AK 12).
+  const bisherigerLink = startLink || serie?.ortLink;
+  const kartenlinkWeg = !!bisherigerLink && leerZuNull(felder.ort) !== startOrt && !leerZuNull(felder.ortLink);
   // #533 AK 13: Folgt der Ort wieder der Serie, fällt ein eigener Link weg.
   const eigenerLinkWeg = !!startLink && startLink !== (serie?.ortLink ?? "");
   const fehlerAn = (k: TerminFeld) => (problem?.feld === k ? problem.text : undefined);

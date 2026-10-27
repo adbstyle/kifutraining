@@ -65,7 +65,7 @@ export function OrtFelder({
         onChange={(e) => onOrtLink(e.target.value)}
         info={TERMIN_TEXT.kartenlinkSichtbar}
         error={!!fehlerLink}
-        supportingText={fehlerLink ?? (ohneOrt ? TERMIN_TEXT.kartenlinkOhneOrt : hinweis)}
+        supportingText={fehlerLink ?? hinweis ?? (ohneOrt ? TERMIN_TEXT.kartenlinkOhneOrt : undefined)}
         disabled={disabled || ohneOrt}
         trailing={oeffnen}
       />
