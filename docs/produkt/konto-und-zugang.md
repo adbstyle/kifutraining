@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-10-25. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-10-27. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -254,13 +254,13 @@ Schweiz, die Einheit von heute zählt noch zum Anstehenden, und der Assistent mu
 rechnen. Auf Wunsch beschränkt er die Auskunft auf einen Zeitraum, dessen Von- und Bis-Tag
 beide mitzählen und der höchstens bis zum gleichen Kalendertag im Folgejahr reicht, und auf die
 Termine, an denen man dabei ist, oder auf alle, zu denen man eingeladen ist; ein Zeitraum ohne Termine ergibt eine leere
-Auskunft. Jeder Termin nennt Datum, Beginn, Ende, Ort und Bemerkung, die Felder des Platzes je
+Auskunft. Jeder Termin nennt Datum, Beginn, Ende, Ort samt Kartenlink und Bemerkung, die Felder des Platzes je
 mit Grösse, Toren je Torart und Untergrund, die erwartete Spielerzahl, sein Training oder dass er
 keines trägt, seine Trainer:innen — wer eingeladen, wer dabei ist, wer wann abgesagt hat und wer
 verantwortlich ist —, die Mindestbesetzung und wie viele sie verlangt, ob er ausgefallen ist und
 aus welchem Grund, und bei
 einem Serientermin die Serie und die Angaben, in denen er von ihr abweicht — Felder und
-Spielerzahl eingeschlossen. Zu jeder Serie erfährt er Wochentage, Zeitraum, Zeit, Ort,
+Spielerzahl eingeschlossen. Zu jeder Serie erfährt er Wochentage, Zeitraum, Zeit, Ort samt Kartenlink,
 Bemerkung, Trainer:innen, Mindestbesetzung, Felder und erwartete Spielerzahl. Dabei unterscheidet er bei jeder
 Angabe zu Platz und Spielerzahl, ob sie unbekannt ist oder ob ausdrücklich nichts da ist: Ein
 Termin ohne Felder hat einen unbekannten Platz, eine leere Grösse, Toranzahl oder
@@ -276,10 +276,12 @@ Spielerzahl wie in der Anwendung freiwillig, und jeder neue Termin nennt, ob er 
 ein Spiel ist. Ein Spiel legt er wie in der Anwendung mit Bezeichnung und einem Anpfiff fest, der
 noch bevorsteht, auf Wunsch mit Mindest- und Höchstzahl, Meldefrist und Treffpunkten, die er stets
 als ganze Liste angibt; Felder und erwartete Spielerzahl weist die Anwendung an einem Spiel ab. Dazu
-kommen wöchentliche Terminserien, immer aus Trainings, mit Wochentagen, Zeitraum, Zeit, Ort,
+kommen wöchentliche Terminserien, immer aus Trainings, mit Wochentagen, Zeitraum, Zeit, Ort samt Kartenlink,
 Bemerkung, Trainer:innen, Mindestbesetzung, Feldern und erwarteter Spielerzahl; eine erwartete Zahl weist die
 Anwendung wie dort ab, solange das Team eine Spielerliste führt, ausser an einem Termin, der schon
-begonnen hat. Er ändert und entfernt Termine; bei einem Serientermin muss er sagen, ob es nur für
+begonnen hat. Den Kartenlink gibt er wie in der Anwendung nur mit einem Ort an, mit https:// und
+höchstens 500 Zeichen; ändert er den Ort ohne neuen Link, fällt der bisherige weg, und die Antwort
+sagt ihm das, ebenso wenn ein Termin, der wieder der Serie folgt, seinen eigenen Link verliert. Er ändert und entfernt Termine; bei einem Serientermin muss er sagen, ob es nur für
 diesen, für diesen und alle folgenden oder für alle Termine der Serie gilt, sonst lehnt die
 Anwendung ab. Felder gibt er dabei stets als ganze Liste an, die die bisherige ersetzt; Felder und
 Spielerzahl entfernt er auch wieder, an einem einzelnen Serientermin mit derselben Wirkung wie in

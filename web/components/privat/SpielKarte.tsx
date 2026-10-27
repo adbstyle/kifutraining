@@ -86,7 +86,7 @@ export function SpielKarte({
                 {t.ort}
               </ExternerLink>
             ) : (
-              <span className="type-body-medium text-on-surface-mittel">{t.ort}</span>
+              <span className="max-w-full break-words type-body-medium text-on-surface-mittel">{t.ort}</span>
             ))}
           <AusfallGrund grund={t.ausfall_grund} />
           {t.verantwortlich && <span className="type-body-small text-on-surface-mittel">Verantwortlich: {t.verantwortlich}</span>}
