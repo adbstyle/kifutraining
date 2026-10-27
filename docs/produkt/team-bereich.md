@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-10-25. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-27. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -70,7 +70,7 @@ die persönliche Kopie, die beim Übernehmen eines Team-Trainings entsteht.
 Jedes Team führt einen Kalender. Er besteht aus Terminen, und jeder Termin ist ein Training oder ein
 Spiel. Was dieser Abschnitt und die folgenden beschreiben, gilt für Trainings; was bei Spielen
 anders ist, steht unter „Spiele". Ein Training ist zunächst nur ein Zeitrahmen: Datum, Beginn, Ende,
-auf Wunsch ein Ort, eine Bemerkung, die Felder des Platzes und die erwartete Spielerzahl. Welches
+auf Wunsch ein Ort samt Kartenlink, eine Bemerkung, die Felder des Platzes und die erwartete Spielerzahl. Welches
 Training dort stattfindet, wird getrennt davon entschieden — oft erst Tage später. So steht die
 Trainingszeit des nächsten Dienstags schon im Plan, auch wenn noch niemand weiss, was geübt wird.
 
@@ -82,6 +82,18 @@ lang sein, die Bemerkung höchstens 500. Trainings in der Vergangenheit sind erl
 Durchgeführtes nachtragen lässt. Beim Erstellen wählt man gleich, wer eingeladen und wer
 verantwortlich ist (siehe „Trainer:innen"). Wie viele Termine ein Tag trägt, ist nicht begrenzt; sie stehen nach
 ihrem Beginn geordnet, bei gleichem Beginn in der Reihenfolge, in der sie angelegt wurden.
+
+Zum Ort lässt sich ein Kartenlink hinterlegen — etwa der geteilte Link aus Google Maps oder Apple
+Karten —, damit die Eltern den Platz finden. Ort und Kartenlink stehen im Dialog umrandet
+zusammen unter „Ort", beide freiwillig. Der Link gilt nur mit einem Ort: Ohne Ort ist das Feld
+gesperrt mit „Gib zuerst einen Ort an.". Er beginnt mit https:// und ist höchstens 500 Zeichen
+lang; was davon abweicht, weist der Dialog mit „Füge den ganzen Link ein, er beginnt mit
+https://." ab. Wohin der Link führt, prüft die Anwendung nicht — dafür ist das Team
+verantwortlich; ein gültiger Link lässt sich deshalb gleich am Feld öffnen. Der Hinweis hinter
+dem ⓘ sagt, dass die Eltern den Kartenlink über ihren privaten Link öffnen. Der Link gehört zum
+Ort: Wer den Ort ändert oder leert, ohne einen neuen Link anzugeben, verliert den bisherigen, und
+der Dialog sagt das vor dem Speichern unter dem Link — „Der Kartenlink gehörte zum bisherigen Ort
+und fällt weg. Füge den Link zum neuen Ort ein."
 
 Auf welchem Platz trainiert wird, hält ein Termin auf Wunsch in seinen Feldern fest — einem oder mehreren
 getrennten Feldern, die gleichzeitig nutzbar sind, etwa zwei Hälften eines Platzes. Je Feld gibt
@@ -103,7 +115,7 @@ Spielerliste, tritt an anstehenden Terminen die Zahl der angemeldeten Spieler:in
 der erwarteten, und das Feld dafür entfällt (siehe „Spielerliste"). Zuordnen, Ersetzen und Lösen eines Trainings und ein Ausfall lassen
 Felder und Spielerzahl stehen.
 
-Ändern lassen sich Datum, Beginn, Ende, Ort, Bemerkung, Felder und — ohne Spielerliste —
+Ändern lassen sich Datum, Beginn, Ende, Ort samt Kartenlink, Bemerkung, Felder und — ohne Spielerliste —
 erwartete Spielerzahl jederzeit, auch an vergangenen Terminen; Felder und Spielerzahl lassen sich auch wieder
 entfernen. Beginn und Ende hat jeder Termin; sie lassen sich ändern, aber nicht leeren. Termine
 aus der Zeit vor dem Kalender, die ohne Ende übernommen worden waren, dauern seit dem 6. Oktober
@@ -164,7 +176,7 @@ Wer jede Woche zur selben Zeit trainiert, legt die Termine einer ganzen Saison i
 an: Im selben Dialog wie der einzelne Termin („Termin erstellen") macht das Ankreuzen von
 „Wiederholender Termin" daraus eine Serie. Das Datum wird zum Beginndatum, dazu kommen ein oder
 mehrere Wochentage und ein Enddatum; vorgewählt ist der Wochentag des Datums, und er folgt
-einem geänderten Datum, bis man selbst Wochentage wählt. Beginn, Ende, Ort, Bemerkung,
+einem geänderten Datum, bis man selbst Wochentage wählt. Beginn, Ende, Ort samt Kartenlink, Bemerkung,
 Trainer:innen, Mindestbesetzung, erwartete Spielerzahl und Felder sind dieselben Angaben wie beim einzelnen
 Termin, und die Serie gibt sie jedem ihrer Termine mit. Es gelten
 dieselben Regeln wie für einen einzelnen Termin. Das Enddatum liegt frühestens am Beginndatum
@@ -195,7 +207,8 @@ Verantwortliche, Mindestbesetzung, erwartete Spielerzahl, Felder — und behält
 zählen dabei als Ganzes als eine Angabe, wie viele es auch sind; die Spielerzahl ist eine
 zweite. Wer an nur einem Serientermin Felder oder Spielerzahl entfernt, obwohl die Serie sie
 vorgibt, macht ihn bewusst leer: Der Termin weicht ab und gilt als unbekannt, bis er wieder der
-Serie folgt. Ein zugeordnetes Training und ein Ausfall
+Serie folgt. Der Kartenlink weicht mit seinem Ort ab und folgt mit ihm wieder der Serie;
+hatte der Termin einen eigenen, sagt der Dialog, dass er dann wegfällt. Ein zugeordnetes Training und ein Ausfall
 zählen nicht als Abweichung. Der Dialog „Termin ändern" nennt unter „Terminserie" die Serie mit
 Wochentagen, Zeitraum, Zeit, Ort, Eingeladenen, Verantwortlicher und Mindestbesetzung, mit der
 erwarteten Spielerzahl und den
@@ -455,7 +468,9 @@ Schmaler nimmt er die ganze Breite ein, bis man ihn schliesst. Zuoberst stehen T
 daneben das Kreuz zum Schliessen, darunter vier Reiter — ein Spiel drei (siehe „Spiele").
 „Termin" bietet „Ausfallen lassen" bzw. „Ausfall zurücknehmen", „Ändern" — das bekannte „Termin
 ändern" — und im Menü die übrigen Handgriffe der Zeile; darunter die Eckdaten in derselben Form wie
-am nächsten Termin, bei einem ausgefallenen samt Grund. „Training" zeigt das Training des Termins
+am nächsten Termin, bei einem ausgefallenen samt Grund. Hat der Ort einen Kartenlink, steht
+unter ihm „Auf der Karte öffnen", das den Link in einem neuen Fenster öffnet, damit sich prüfen
+lässt, wohin er führt. „Training" zeigt das Training des Termins
 so, wie es die Trainingsansicht liest — Name, Altersstufe, Alterskategorien, Dauer, Ziel und die
 Übungen je Trainingsteil, beim Hauptteil die erste Variante —, mit „Ersetzen", „Durchführen" und
 „Training öffnen" — ausgefallen nur mit Letzterem —, ohne Training „Training hinzufügen".
@@ -488,7 +503,8 @@ Termin bleibt und trägt „Abgesagt · " vorn im Titel, einer, für den man ver
 „Verantwortlich · ". Von einem Termin gelangen der Titel — „Training · Teamname", bei einem Spiel
 „Bezeichnung · Teamname" —, Beginn, Ende, Ort, ein Verweis in die Anwendung und eine
 Beschreibung ins Kalenderprogramm. Die Beschreibung nennt den eigenen Stand, wer dabei ist, wer
-abgesagt hat und wer verantwortlich ist, mit Namen, und eine Lücke zur Mindestbesetzung — keinen
+abgesagt hat und wer verantwortlich ist, mit Namen, eine Lücke zur Mindestbesetzung und, hat der
+Ort einen Kartenlink, diesen als „Karte: …" — keinen
 Trainingsnamen, keine Bemerkung, weder Felder noch Spielerzahl, keine Namen von Spieler:innen und
 bei Spielen weder Treffpunkte noch Meldefrist noch Richtwert. Die Zeiten
 gelten als Schweizer Zeit, auch über die Zeitumstellung hinweg und auf einem Gerät in einer anderen
@@ -929,11 +945,17 @@ durchgestrichener Zahl. Die Spielerzahl
 steht knapp und ungefärbt, etwa „24/33": angemeldet von allen, für die der Termin gilt, gezählt wie
 für die Mitglieder — bei einem Termin mit Kadern auch über Kader, die nicht die der Spieler:in sind,
 ohne sie zu nennen. „Angemeldet" und „abgemeldet" meinen auf der Seite nur die eigene Spieler:in.
-Ein begonnener Termin ist gesperrt mit „Hat begonnen · nicht mehr änderbar". Wurde ein Termin
+Ein begonnener Termin ist gesperrt mit „Hat begonnen · nicht mehr änderbar"; der Satz steht unter
+dem Ort, der auch dann stehen bleibt. Wurde ein Termin
 verlegt, seit sie abgemeldet war, steht bei ihm etwa „Verlegt, vorher Dienstag, 20. Oktober um
 18:00. Deine Abmeldung gilt nicht mehr.", bis man neu wählt oder der Termin beginnt. Namen anderer
 Spieler:innen, fremde Kader, Termine für andere Kader, Trainings und vergangene Termine zeigt die
 Seite nicht.
+
+Den Ort zeigt jede Karte ganz, auch wenn er lang ist, und umbricht ihn dafür. Hat der Ort einen
+Kartenlink, ist er selbst der Link: violett und unterstrichen, mit einem Zeichen am Ende, das sagt,
+dass er die Karte ausserhalb der Anwendung öffnet. Ein langer Ort mit Link steht dafür auf einer
+Zeile und ist mit „…" gekürzt. Fällt ein Termin aus, steht der Ort ohne Link.
 
 Ein Spiel steht in derselben Liste als eigene Karte: Kalenderblatt, der Status der Spieler:in als
 Plakette — „Ohne Meldung" gelb, „Angemeldet" grün, „Abgemeldet", „Nicht aufgeboten" und
@@ -989,7 +1011,8 @@ vorn den Status, dann „Training" oder die Bezeichnung des Spiels und den Teamn
 Vielleicht steht im Kalender als vorläufig, abgesagt als frei. Die Beschreibung nennt den Status
 als Wort, bei einem Spiel dazu die Treffpunkte — wie am Link nur, solange es nicht begonnen hat und
 nicht abgesagt ist — und die Bemerkung, so wie das Team sie geschrieben hat. Weiter gelangen nur
-Beginn, Ende und Ort ins Kalenderprogramm; kein Name der Spieler:in, keine Meldefrist, kein
+Beginn, Ende und Ort ins Kalenderprogramm, dazu in der Beschreibung der Kartenlink zum Ort als
+„Karte: …"; kein Name der Spieler:in, keine Meldefrist, kein
 Richtwert, keine Spielerzahl, kein Grund einer Absage und kein Verweis, der den privaten Link
 verriete. Der Kalender heisst „Trainings und Spiele · Teamname"; wer mehrere Abos hat, benennt sie
 im Kalenderprogramm selbst. Die Zeiten gelten als Schweizer Zeit.
@@ -1180,7 +1203,12 @@ nicht fest; mit ihr ist sie bei Trainings bis zum Beginn eine Obergrenze. Einen 
 für weitere Termine hinterlegen lässt sich nicht; Felder werden je Termin oder Terminserie erfasst.
 Ändern sich Platz oder Spielerzahl, wirkt das nicht auf ein bereits zugeordnetes Training zurück.
 
-Eine Terminserie wiederholt sich nur wöchentlich, mit denselben Zeiten, demselben Ort,
+Den Kartenlink prüft die Anwendung nur auf seine Form: Ob er auf den richtigen Platz zeigt oder
+noch gilt, weiss sie nicht, und eine Karte oder Vorschau zeigt sie nicht. Einen Ort samt Link als
+Vorlage für weitere Termine hinterlegen lässt sich nicht; beides wird je Termin oder Terminserie
+eingegeben. Ein Kartenlink kommt nur mit dem Ort eines Termins, nicht mit einem Treffpunkt.
+
+Eine Terminserie wiederholt sich nur wöchentlich, mit denselben Zeiten, demselben Ort samt Kartenlink,
 denselben Feldern und derselben erwarteten Spielerzahl an allen ihren Wochentagen, und läuft
 höchstens ein Jahr. Ferien und Feiertage nimmt sie nicht
 aus; mehrere Termine lassen sich nicht in einem Schritt als ausgefallen markieren, auch nicht
