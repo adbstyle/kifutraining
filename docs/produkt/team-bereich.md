@@ -756,7 +756,8 @@ trägt Datum und Uhrzeit, das Datum vorbelegt mit dem Tag des Spiels; er darf an
 oder nach dem Anpfiff liegen, höchstens ein Jahr davon entfernt. Jeder ausser vor Ort braucht
 einen Ort von höchstens 100 Zeichen; vor Ort gilt immer der aktuelle Ort des Spiels. Die Bemerkung
 eines Spiels sehen die Eltern über ihren Link, anders als die eines Trainings; das sagt der Hinweis
-hinter ihrem ⓘ, und die Eckdaten nennen sie „Bemerkung · sichtbar für Eltern". Was Richtwert,
+hinter ihrem ⓘ, und die Eckdaten nennen sie „Bemerkung · sichtbar für Eltern" — ausser das Spiel
+fällt aus, dann sehen die Eltern statt ihrer nur den Grund. Was Richtwert,
 Meldefrist und Treffpunkte heissen, sagt ebenso je ein Hinweis hinter dem ⓘ. Geändert wird ein
 Spiel im Dialog „Spiel ändern" mit denselben Angaben.
 
