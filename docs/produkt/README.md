@@ -23,6 +23,10 @@ Das gilt in beide Richtungen: Neue Fähigkeiten kommen dazu, entfallene verschwi
 sich anders verhält als beschrieben, wird berichtigt. Auch der Abschnitt „Bekannte Grenzen"
 gehört gepflegt — er ist oft der ehrlichste Teil einer Seite.
 
+Im selben Zug wird die [Feedback-Triage](../feedback-triage.md) nachgeführt: eine verdichtete
+Fassung dieser Seiten, mit der ein kleines Modell Fehlermeldungen und Feature-Wünsche von
+Nutzer:innen einordnet. Wo sie und diese Dokumentation auseinandergehen, gilt diese.
+
 ## Verhältnis zu den Stories
 
 Die Stories unter `../superpowers/specs/` sind **Aufträge**. Ist ein Auftrag umgesetzt, wird
