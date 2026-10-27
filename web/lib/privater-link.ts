@@ -30,9 +30,10 @@ export type LinkTermin = {
   frist: string | null;
   frist_abgelaufen: boolean;
   vorher: { datum: string; beginn: string } | null;
-  /** Nur an einem Spiel (#465 AK 10, 11): die Bemerkung und die Treffpunkte,
-   *  frühester zuerst — an einem ausgefallenen keine (`null`). Die Bemerkung
-   *  eines Trainings sieht die Spielervertretung nicht (PC 4). */
+  /** Nur an einem Spiel (#465 AK 10): die Bemerkung und die Treffpunkte,
+   *  frühester zuerst — an einem ausgefallenen keine (`null`), dort spricht
+   *  der Grund (#530, PO 2026-10-27). Die Bemerkung eines Trainings sieht die
+   *  Spielervertretung nicht (PC 4). */
   bemerkung: string | null;
   treffpunkte: Treffpunkt[] | null;
   /** Nur an einem Spiel (#464 AK 8, 9; PC 3): ob sie nicht aufgeboten ist,

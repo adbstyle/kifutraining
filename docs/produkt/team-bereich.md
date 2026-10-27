@@ -873,8 +873,8 @@ Zeitpunkt, die Eltern zudem, ob ihre Meldung noch gilt.
 
 Ein Spiel fällt aus wie ein Training, auf Wunsch mit Grund: Meldungen, Kennzeichnungen und
 Nachträge ruhen, der Reiter „Spieler:innen" zeigt nur „Fällt aus" und den Satz „Das Spiel fällt
-aus. Für es lässt sich niemand an- oder abmelden.", und die Eltern sehen nur noch Kopf, Grund und
-Bemerkung. Wird der Ausfall zurückgenommen, gilt alles wieder. Anders als ein Training findet ein
+aus. Für es lässt sich niemand an- oder abmelden.", und die Eltern sehen nur noch den Kopf mit dem
+Grund, ohne Bemerkung. Wird der Ausfall zurückgenommen, gilt alles wieder. Anders als ein Training findet ein
 ausgefallenes Spiel wieder statt, sobald es verlegt wird, auch nur auf eine andere Zeit; der
 Dialog sagt das vor dem Speichern. „Spiel entfernen" fragt nach und nennt, wie viele Meldungen und
 Kennzeichnungen mit dem Spiel verschwinden.
@@ -947,7 +947,7 @@ dessen „… ist für dieses Spiel nicht aufgeboten. Fragen dazu ans Team." mit
 ohne Knöpfe. Es folgen die Treffpunkte, frühester zuerst, und die Bemerkung. Abgemeldet, nicht aufgeboten, mit verpasster Meldefrist oder ausgefallen tritt die Karte
 gedämpft zurück, das Kalenderblatt grau und durchgestrichen, und die Treffpunkte entfallen, ebenso
 ab dem Anpfiff; ein ausgefallenes Spiel zeigt nur den Kopf, darin den Grund wie bei einem
-Training, und unten die Bemerkung. Wurde ein Spiel verlegt,
+Training, und keine Bemerkung. Wurde ein Spiel verlegt,
 steht etwa „Verlegt, vorher Dienstag, 20. Oktober um 18:00." dabei, auch wenn sich nur die Zeit
 änderte, mit „Deine Meldung gilt nicht mehr - melde neu." oder „Die Meldung gilt weiter." und
 gegebenenfalls „Die Kennzeichnung als nicht aufgeboten gilt nicht mehr." Ab dem Anpfiff zeigt die

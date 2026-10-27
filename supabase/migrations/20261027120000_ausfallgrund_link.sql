@@ -4,6 +4,8 @@
 -- den ein Mitglied beim Ausfallenlassen angegeben hat — vollständig, auch einer
 -- von 500 Zeichen (AK 1, 2, 4). Auch vorher erfasste Gründe (PC 4). Nach dem
 -- Zurücknehmen oder einer Verlegung ist der Grund ohnehin geleert (PC 3).
+-- Ausgefallen zeigt ein Spiel keine Bemerkung mehr, nur noch den Grund
+-- (PO 2026-10-27, hebt #465 AK 11 auf).
 -- Rumpf wie in eltern_verantwortliche; neu ist `ausfall_grund`.
 
 set lock_timeout = '5s';
@@ -69,8 +71,9 @@ begin
                                      and coalesce((select m.aufgebot_verfallen from spiel_meldungen m
                                                     where m.termin_id = t.id and m.spieler_id = s.id), false),
                'nicht_aufgeboten_zahl', case when t.art = 'spiel' and not t.ausgefallen then (x.stand ->> 'nicht_aufgeboten')::int end,
-               -- #465 AK 10, 11; PC 4: bei Spielen die Bemerkung, Treffpunkte nur, wenn es stattfindet.
-               'bemerkung', case when t.art = 'spiel' then t.bemerkung end,
+               -- #465 AK 10; PC 4: bei Spielen die Bemerkung und die Treffpunkte, nur wenn es
+               -- stattfindet — ausgefallen spricht der Grund (PO 2026-10-27).
+               'bemerkung', case when t.art = 'spiel' and not t.ausgefallen then t.bemerkung end,
                'treffpunkte', case when t.art = 'spiel' and not t.ausgefallen then coalesce((
                  select jsonb_agg(jsonb_build_object(
                           'anreise', tp.anreise,

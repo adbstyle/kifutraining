@@ -4296,7 +4296,7 @@ try {
     assert.deepEqual(ansicht.termine.map((x: { id: string }) => x.id), [t], "nichts Vergangenes (OoS 2)");
     assert.ok(!ansicht.termine.some((x: { id: string }) => x.id === gestern));
     assert.deepEqual(ansicht.termine[0], {
-      id: t, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler", ausgefallen: false, begonnen: false, angemeldet: 2, gesamt: 2, abgemeldet: false, verfallen: null, kader: [],
+      id: t, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler", ausgefallen: false, ausfall_grund: null, begonnen: false, angemeldet: 2, gesamt: 2, abgemeldet: false, verfallen: null, kader: [],
       // Ein Training: keine Spielangaben (#459 AK 17).
       art: "training", bezeichnung: null, richtwert_min: null, richtwert_max: null,
       // Spielangaben (#463) bleiben an einem Training leer.
@@ -4312,9 +4312,16 @@ try {
     wert(await aendereTrainer(a.supabase, a.id, { terminId: t, ausladen: [a.id] }));
     assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].verantwortlich, null);
     wert(await aendereTrainer(a.supabase, a.id, { terminId: t, verantwortlich: b.id }));
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t }));
-    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].verantwortlich, null, "ausgefallen: keine");
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Platz gesperrt\nNachholen offen" }));
+    const ausgefallen = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0];
+    assert.equal(ausgefallen.verantwortlich, null, "ausgefallen: keine");
+    // #530 AK 1, 4: der Grund ganz, samt Zeilenumbruch.
+    assert.equal(ausgefallen.ausfall_grund, "Platz gesperrt\nNachholen offen");
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: null }));
+    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].ausfall_grund, null, "#530 PC 1, 2: geleert");
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Regen" }));
     wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
+    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].ausfall_grund, null, "#530 PC 3: zurückgenommen");
 
     const abmelden = (token: string, abgemeldet: boolean) =>
       feldAnon.rpc("spieler_link_abmelden", { p_token: token, p_termin: t, p_abgemeldet: abgemeldet, p_gesehen_datum: tagCh(2), p_gesehen_beginn: "18:00" });
@@ -5541,12 +5548,14 @@ try {
     ).terminId;
     const tr = await imLink(training);
     assert.deepEqual([tr.bemerkung, tr.treffpunkte], [null, null], "PC 4: keine Bemerkung eines Trainings");
-    // AK 11, PC 3: ausgefallen nur die Bemerkung; der Ausfall endet, die Treffpunkte sind wieder da.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t }));
+    // PC 3; #530 (PO 2026-10-27): ausgefallen nur der Grund, keine Bemerkung und keine
+    // Treffpunkte; der Ausfall endet, Bemerkung und Treffpunkte sind wieder da.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Platz gesperrt" }));
     const aus = await imLink(t);
-    assert.deepEqual([aus.bemerkung, aus.treffpunkte], ["Schienbeinschoner mitnehmen.", null]);
+    assert.deepEqual([aus.ausfall_grund, aus.bemerkung, aus.treffpunkte], ["Platz gesperrt", null, null]);
     wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
-    assert.equal((await imLink(t)).treffpunkte.length, 2);
+    const wieder = await imLink(t);
+    assert.deepEqual([wieder.ausfall_grund, wieder.bemerkung, wieder.treffpunkte.length], [null, "Schienbeinschoner mitnehmen.", 2]);
 
     // Nur Mitglieder schreiben; die Datenebene weist doppelte Arten und Trainings ab.
     const fremd = await b.supabase.rpc("spiel_treffpunkte_setzen", { p_termin: t, p_liste: [] });
