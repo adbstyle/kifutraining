@@ -87,8 +87,8 @@ Zum Ort lässt sich ein Kartenlink hinterlegen — etwa der geteilte Link aus Go
 Karten —, damit die Eltern den Platz finden. Ort und Kartenlink stehen im Dialog umrandet
 zusammen unter „Ort", beide freiwillig. Der Link gilt nur mit einem Ort: Ohne Ort ist das Feld
 gesperrt mit „Gib zuerst einen Ort an.". Er beginnt mit https:// und ist höchstens 500 Zeichen
-lang; was davon abweicht, weist der Dialog mit „Füge den ganzen Link ein, er beginnt mit
-https://." ab. Wohin der Link führt, prüft die Anwendung nicht — dafür ist das Team
+lang; einen Link ohne https:// weist der Dialog mit „Füge den ganzen Link ein, er beginnt mit
+https://." ab, einen zu langen mit dem Hinweis auf die 500 Zeichen. Wohin der Link führt, prüft die Anwendung nicht — dafür ist das Team
 verantwortlich; ein gültiger Link lässt sich deshalb gleich am Feld öffnen. Der Hinweis hinter
 dem ⓘ sagt, dass die Eltern den Kartenlink über ihren privaten Link öffnen. Der Link gehört zum
 Ort: Wer den Ort ändert oder leert, ohne einen neuen Link anzugeben, verliert den bisherigen, und
