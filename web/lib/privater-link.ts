@@ -51,6 +51,9 @@ export type LinkTermin = {
   ende: string;
   ort: string | null;
   ausgefallen: boolean;
+  /** Der Grund eines Ausfalls, vollständig (#530 AK 1, 2, 4); `null` ohne
+   *  Grund und an einem Termin, der stattfindet. */
+  ausfall_grund: string | null;
   /** Begonnen: sichtbar bis Ende des Tages, nicht mehr änderbar (AK 9). */
   begonnen: boolean;
   /** `null` an einem ausgefallenen Termin. */

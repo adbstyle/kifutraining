@@ -1700,7 +1700,8 @@ export default async function Styleguide() {
             sich <strong>nur beim Überfahren</strong> der Angabe - nicht ruhend,
             nicht während man im Feld arbeitet, und auf Touch-Geräten gar nicht
             (PO 2026-10-04). Muss man den Hinweis auch dort lesen, bevor man
-            weitermacht - dass die Altersstufe eines Trainings lebenslang bindet -,
+            weitermacht - dass die Altersstufe eines Trainings lebenslang bindet
+            oder dass die Eltern den Grund eines Ausfalls sehen -,
             zeigt <code>infoAufTouch</code> ihn auf Touch-Geräten als Hinweis
             unter dem Feld. Das ⓘ steht senkrecht mittig auf der ganzen Angabe,
             zwischen Name und Wert. Die Tastatur erreicht es weiterhin und macht

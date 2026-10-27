@@ -33,6 +33,7 @@ import {
 } from "@/lib/trainer-ausgabe";
 import { angezeigteSpielerzahl, noetigeTrainer } from "@/lib/besetzung";
 import { spielerzahlVon } from "@/lib/spieler";
+import { TERMIN_TEXT } from "@/lib/termin";
 import {
   KENNUNG_FEHLER,
   TEAM_KENNUNG_FEHLER,
@@ -790,7 +791,7 @@ export const terminAusfallenLassen = werkzeug({
   beschreibung:
     "Markiert einen Termin als ausgefallen - wie ein abgesagter Kalendereintrag - oder ändert den " +
     "Grund eines schon ausgefallenen. Ohne «grund» bleibt ein vorhandener Grund stehen; «grund»: " +
-    "null (oder leer) leert ihn. Trägt der Termin ein Training, ruht es am Termin und ist wieder da, " +
+    `null (oder leer) leert ihn. ${TERMIN_TEXT.grundSichtbar} Trägt der Termin ein Training, ruht es am Termin und ist wieder da, ` +
     "wenn der Ausfall zurückgenommen wird. Ein ausgefallener Termin gilt nicht als unvorbereitet " +
     `und nimmt kein neues Training an. Einzeln auf heute oder später verlegt, findet er wieder statt. ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,

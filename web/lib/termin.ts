@@ -59,6 +59,8 @@ export const TERMIN_TEXT = {
   ortLang: `Der Ort darf höchstens ${ORT_MAX} Zeichen lang sein.`,
   bemerkungLang: `Die Bemerkung darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
   grundLang: `Der Grund darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
+  /** Wer den Grund liest (#530 AK 6, 7) — als Hinweis am Feld und im KI-Werkzeug. */
+  grundSichtbar: "Die Eltern sehen den Grund des Ausfalls über ihren privaten Link.",
   spielerzahl: `Die erwartete Spielerzahl ist eine ganze Zahl von ${SPIELERZAHL_MIN} bis ${SPIELERZAHL_MAX}.`,
   /** Was die Zahl zählt (PO 7) — als Hinweis am Feld und im KI-Werkzeug. */
   spielerzahlZaehlt: "Alle erwarteten Kinder einschliesslich Torhüter:innen, ohne Trainer:innen.",

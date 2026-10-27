@@ -338,7 +338,8 @@ aber nirgends, auch keine erwartete, und Abmeldungen ruhen an ihm (siehe „Ab- 
 
 Den Grund kann man ergänzen, ändern oder leeren, ohne den Ausfall zurückzunehmen — über „Grund
 ändern" oder direkt beim Ändern des Termins. Er gilt immer nur für diesen Termin, auch in einer
-Serie. Wird der Ausfall
+Serie. Die Eltern sehen ihn ganz am privaten Link (siehe „Privater Link"); das sagt ein Hinweis am Feld — „Die Eltern sehen den Grund des Ausfalls
+über ihren privaten Link." —, auf dem Telefon unter dem Feld, und ebenso der KI-Assistent. Wird der Ausfall
 zurückgenommen, ist der Termin wieder ein gewöhnlicher Termin ohne Grund, mit dem Training und
 den Abmeldungen, die an ihm ruhten. Einzeln auf heute oder später verlegt,
 findet ein ausgefallener Termin ebenfalls wieder statt, und der Dialog sagt das vor dem
@@ -872,7 +873,7 @@ Zeitpunkt, die Eltern zudem, ob ihre Meldung noch gilt.
 
 Ein Spiel fällt aus wie ein Training, auf Wunsch mit Grund: Meldungen, Kennzeichnungen und
 Nachträge ruhen, der Reiter „Spieler:innen" zeigt nur „Fällt aus" und den Satz „Das Spiel fällt
-aus. Für es lässt sich niemand an- oder abmelden.", und die Eltern sehen nur noch Kopf und
+aus. Für es lässt sich niemand an- oder abmelden.", und die Eltern sehen nur noch Kopf, Grund und
 Bemerkung. Wird der Ausfall zurückgenommen, gilt alles wieder. Anders als ein Training findet ein
 ausgefallenes Spiel wieder statt, sobald es verlegt wird, auch nur auf eine andere Zeit; der
 Dialog sagt das vor dem Speichern. „Spiel entfernen" fragt nach und nennt, wie viele Meldungen und
@@ -916,7 +917,10 @@ aus" grau —, Beginn und Ende, Ort, bei einem Termin mit Kadern den Kadern der 
 er für sie gilt, der Spielerzahl, wer verantwortlich ist — etwa „Verantwortlich: Anna Keller", ohne
 Verantwortliche:n nichts — und einem Schalter. Der Schalter ist derselbe ruhige wie im Reiter
 „Spieler:innen": angemeldet ein grosser heller Knopf rechts, abgemeldet ein kleiner grauer links,
-ohne Farbe und ohne Zeichen; an einem ausgefallenen Termin ist er grau. Der Name der
+ohne Farbe und ohne Zeichen; an einem ausgefallenen Termin ist er grau. Fällt ein Termin mit
+Grund aus, steht der Grund unter dem Ort, ganz und mit „Grund:" davor, etwa „Grund: Platz nach dem
+Regen gesperrt"; ohne Grund sagt die Karte nur, dass er ausfällt. Ein geänderter Grund ist beim
+nächsten Öffnen zu sehen, ohne als Änderung gekennzeichnet zu sein. Der Name der
 Verantwortlichen ist eine Auskunft, kein Kontakt: Wer sie ist, erfahren die Eltern so, erreichen
 lässt sie sich über die Anwendung nicht. Ist die Spieler:in
 abgemeldet oder fällt der Termin aus, tritt die Karte gedämpft zurück, das Kalenderblatt grau mit
@@ -942,7 +946,8 @@ Anpfiff „Hat begonnen · nicht mehr änderbar". Ist die Spieler:in nicht aufge
 dessen „… ist für dieses Spiel nicht aufgeboten. Fragen dazu ans Team." mit ihrem Namen, ebenfalls
 ohne Knöpfe. Es folgen die Treffpunkte, frühester zuerst, und die Bemerkung. Abgemeldet, nicht aufgeboten, mit verpasster Meldefrist oder ausgefallen tritt die Karte
 gedämpft zurück, das Kalenderblatt grau und durchgestrichen, und die Treffpunkte entfallen, ebenso
-ab dem Anpfiff; ein ausgefallenes Spiel zeigt nur Kopf und Bemerkung. Wurde ein Spiel verlegt,
+ab dem Anpfiff; ein ausgefallenes Spiel zeigt nur den Kopf, darin den Grund wie bei einem
+Training, und unten die Bemerkung. Wurde ein Spiel verlegt,
 steht etwa „Verlegt, vorher Dienstag, 20. Oktober um 18:00." dabei, auch wenn sich nur die Zeit
 änderte, mit „Deine Meldung gilt nicht mehr - melde neu." oder „Die Meldung gilt weiter." und
 gegebenenfalls „Die Kennzeichnung als nicht aufgeboten gilt nicht mehr." Ab dem Anpfiff zeigt die

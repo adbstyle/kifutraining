@@ -26,7 +26,8 @@ import { TERMIN_STATUS, meldeStatus } from "@/lib/termin-status";
      Karte tritt gedämpft zurück, das Kalenderblatt grau und durchgestrichen.
    - Treffpunkte nur, solange das Spiel nicht begonnen hat und die
      Spieler:in dabei sein kann.
-   - Ein ausgefallenes Spiel zeigt nur Kopf und Bemerkung (#465 AK 10, 11). */
+   - Ein ausgefallenes Spiel zeigt nur Kopf, Grund und Bemerkung (#465 AK 10,
+     11; #530 AK 2). */
 export function SpielKarte({
   t,
   meldung,
@@ -78,6 +79,7 @@ export function SpielKarte({
             {t.beginn}–{t.ende}
           </span>
           {t.ort && <span className="type-body-medium text-on-surface-mittel">{t.ort}</span>}
+          <AusfallGrund grund={t.ausfall_grund} />
           {t.verantwortlich && <span className="type-body-small text-on-surface-mittel">Verantwortlich: {t.verantwortlich}</span>}
         </div>
       </div>
@@ -146,4 +148,12 @@ function zahlSatz(angemeldet: number, t: LinkTermin): string {
   ]
     .filter(Boolean)
     .join(" · ");
+}
+
+/** Der Grund eines Ausfalls am Link (#530) — an Training und Spiel gleich:
+ *  im Kopf unter dem Ort, mit «Grund:» davor, damit er sich an einem Spiel
+ *  von der Bemerkung unten abhebt (AK 3), und vollständig, ohne Kürzung (AK 4). */
+export function AusfallGrund({ grund }: { grund: string | null }) {
+  if (!grund) return null;
+  return <p className="max-w-full whitespace-pre-line break-words type-body-small text-on-surface">Grund: {grund}</p>;
 }
