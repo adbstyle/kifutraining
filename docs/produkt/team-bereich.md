@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-10-27. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-28. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -923,7 +923,8 @@ holen ist. Ist die Selbstabholung eingeschaltet, sagt der Dialog dazu, dass die 
 abholen. Je Spieler:in und Team gibt es genau einen Link.
 
 Wer den Link öffnet, braucht weder Konto noch Anmeldung. Die Seite ist fürs Telefon gebaut, kommt
-ohne Seitenleiste aus und nennt Teamname und Name der Spieler:in mit dem Satz, dass sie für jedes
+ohne Seitenleiste aus — unten am Bildschirmrand klebt nur eine schmale Leiste mit „Fragen und
+Feedback" (siehe [Navigation](navigation.md#fragen-und-feedback)) — und nennt Teamname und Name der Spieler:in mit dem Satz, dass sie für jedes
 Training zuerst angemeldet ist und man sie abmeldet, wenn sie nicht kann, und bis zum Beginn wieder
 anmeldet, und dass sie für ein Spiel erst angemeldet ist, wenn man sie anmeldet. Eine Karte „Als
 Nächstes" gibt es hier nicht: Ein Termin von heute, der schon begonnen hat, steht zuoberst unter
