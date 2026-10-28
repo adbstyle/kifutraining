@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { FigurenSprite } from "@/components/diagramm/figur";
+import { FeedbackProvider } from "@/components/feedback/FeedbackKontext";
 import { AppNav } from "@/components/layout/AppNav";
 import { AppInhalt, AppRahmen } from "@/components/layout/AppRahmen";
 import { SnackbarProvider } from "@/components/layout/SnackbarKontext";
@@ -31,14 +32,19 @@ export default async function AppLayout({
       >
         <TeamKontextProvider>
           <AppRahmen anfangsSlim={slim} anfangsSpalte={spalte}>
-            <AppNav />
-            {/* Der eine Platz für Snackbars am unteren Rand überdauert ebenfalls
-                die einzelne Seite — siehe SnackbarKontext (#234). Er liegt im
-                Rahmen, damit er dessen Leistenbreite erbt. Seiten bringen ihren
-                Seitenrahmen (Breite + Kopfzeile) selbst mit. */}
-            <SnackbarProvider>
-              <AppInhalt>{children}</AppInhalt>
-            </SnackbarProvider>
+            {/* «Fragen und Feedback» (#542) überdauert die Seite ebenfalls: Der
+                Dialog bleibt beim Seitenwechsel offen, am Desktop als Spalte
+                rechts im Rahmen. */}
+            <FeedbackProvider>
+              <AppNav />
+              {/* Der eine Platz für Snackbars am unteren Rand überdauert ebenfalls
+                  die einzelne Seite — siehe SnackbarKontext (#234). Er liegt im
+                  Rahmen, damit er dessen Leistenbreite erbt. Seiten bringen ihren
+                  Seitenrahmen (Breite + Kopfzeile) selbst mit. */}
+              <SnackbarProvider>
+                <AppInhalt>{children}</AppInhalt>
+              </SnackbarProvider>
+            </FeedbackProvider>
           </AppRahmen>
         </TeamKontextProvider>
       </VersionenProvider>

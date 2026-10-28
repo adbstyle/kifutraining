@@ -29,6 +29,8 @@ name: Sync Staging (Prod-Spiegel, manuell)
 #   neue Werte (private Links der Spieler:innen #436, Abholadressen #438):
 #   Prod-Links gelten auf Staging nicht; «bezogen» fällt damit zurück.
 #   `abholung_sperren` (Fehlversuche je Anschluss) wird geleert.
+# - `feedback` und `feedback_dialoge` werden geleert (#542 PC 9): Feedback aus
+#   der Produktion gelangt nie in eine Testumgebung.
 #
 # Voraussetzung: Staging-Schema ist per deploy-staging.yml aktuell (develop >= main).
 # Das deckt nur ADDITIVE Migrationen ab. Trägt develop eine Migration, die eine
@@ -62,7 +64,7 @@ env:
   # Sortierung im Guard-Query entsprechen. Neue public-Tabelle in einer
   # Migration? -> hier ergänzen, sonst bricht der Guard den Sync bewusst ab
   # (statt die Tabelle still leer zu lassen).
-  PUBLIC_TABLES: "abholung_sperren exercise_favorites exercises kader kader_spieler kalender_abos ki_aufrufe ki_zugang_namen profiles spiel_meldungen spiel_teilnahmen spiel_treffpunkte spieler spieler_abos team_abholung team_members teams termin_abmeldungen termin_eingefroren termin_kader termin_serien termin_serien_kader termin_serien_luecken termin_serien_trainer termin_serien_verantwortliche termin_statuswechsel termin_teilnahmen termin_trainer termin_trainer_stand termin_verantwortliche trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings"
+  PUBLIC_TABLES: "abholung_sperren exercise_favorites exercises feedback feedback_dialoge kader kader_spieler kalender_abos ki_aufrufe ki_zugang_namen profiles spiel_meldungen spiel_teilnahmen spiel_treffpunkte spieler spieler_abos team_abholung team_members teams termin_abmeldungen termin_eingefroren termin_kader termin_serien termin_serien_kader termin_serien_luecken termin_serien_trainer termin_serien_verantwortliche termin_statuswechsel termin_teilnahmen termin_trainer termin_trainer_stand termin_verantwortliche trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings"
 
 jobs:
   sync:
@@ -201,6 +203,9 @@ jobs:
           update public.team_abholung
           set token = replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
           delete from public.abholung_sperren;
+          -- Feedback aus der Produktion gehört nicht auf Staging (#542 PC 9).
+          delete from public.feedback;
+          delete from public.feedback_dialoge;
           select set_config('sync.staging_ref', :'staging_ref', true);
           update public.exercises
           set bild_url = replace(bild_url,

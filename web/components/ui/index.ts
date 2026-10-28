@@ -68,6 +68,7 @@ export type {
   SeitenleisteKonto,
   SeitenleisteVersion,
   SeitenleisteStyleguide,
+  SeitenleisteFeedback,
 } from "./Seitenleiste";
 export { Ziehgriff } from "./Ziehgriff";
 export { Verzeichnis } from "./Verzeichnis";
