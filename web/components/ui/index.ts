@@ -1,5 +1,4 @@
 export { Button, ButtonLink, buttonClasses } from "./Button";
-export { ButtonGroup } from "./ButtonGroup";
 export { Lozenge, SecondaryLozenge, HerkunftLozenge, SichtbarkeitLozenge, KategorieLozenge, Badge } from "./Lozenge";
 export { ZeichenZahl } from "./ZeichenZahl";
 export {
