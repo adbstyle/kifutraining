@@ -61,7 +61,7 @@ export function AbholSeite({ token, team }: { token: string; team: string }) {
   });
 
   return (
-    <>
+    <div className="pb-6">
       <header className="flex flex-col gap-0.5 border-b border-linie px-4 pb-4 pt-6">
         <p className="type-body-small text-on-surface-mittel">{team}</p>
         <h1 className="type-headline-small text-on-surface">{erhalt ? `Link für ${erhalt.name}` : ABHOLUNG_TEXT.titel}</h1>
@@ -100,7 +100,7 @@ export function AbholSeite({ token, team }: { token: string; team: string }) {
           </SectionMessage>
         </form>
       )}
-    </>
+    </div>
   );
 }
 

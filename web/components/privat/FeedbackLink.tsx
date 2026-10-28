@@ -23,13 +23,17 @@ const DRINGEND = "Bei Dringendem wende dich an die Trainer:innen des Teams.";
 export function FeedbackLink({ token }: { token: string }) {
   const { offen, lauf, oeffnen, schliessen } = useFeedbackOffen();
   return (
-    <div className="sticky bottom-0 z-10 mt-auto border-t border-linie bg-elev-00 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] print:hidden">
-      <Button variant="link" onClick={oeffnen} className="type-body-medium">
-        <MessageSquare size={16} strokeWidth={2} aria-hidden />
-        {FEEDBACK_TITEL}
-      </Button>
+    <>
+      <div className="sticky bottom-0 z-10 mt-auto border-t border-linie bg-elev-00 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] print:hidden">
+        <Button variant="link" onClick={oeffnen} className="type-body-medium">
+          <MessageSquare size={16} strokeWidth={2} aria-hidden />
+          {FEEDBACK_TITEL}
+        </Button>
+      </div>
+      {/* Ausserhalb der Leiste: Ihr z-10 begrenzte sonst die Ebene des
+          bildschirmfüllenden Dialogs. */}
       {offen && <Gespraech key={lauf} token={token} onSchliessen={schliessen} />}
-    </div>
+    </>
   );
 }
 
