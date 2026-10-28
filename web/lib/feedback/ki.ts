@@ -16,6 +16,7 @@ import {
   ANTWORT_MAX,
   BEZEICHNUNG_MAX,
   EINORDNUNGEN,
+  mitEinerFrage,
   PUNKT_TEXT_MAX,
   PUNKTE_MAX,
   TITEL_MAX,
@@ -28,9 +29,14 @@ const MODELL = "claude-haiku-5-5";
 
 /* Die Form, die das Modell liefern muss. Ohne Längen- und Mengengrenzen:
    Die prüft `zusammenfassungSchema` danach, damit eine zu lange Antwort
-   gekürzt statt verworfen werden kann. */
+   gekürzt statt verworfen werden kann.
+
+   Die Rückfrage steht in einem eigenen Feld: Als Fliesstext hielt sich Haiku
+   weder an «genau eine Frage» noch an «Rückfrage oder Zusammenfassung, nie
+   beides» (Staging-Test 2026-10-28). Getrennt setzt der Server beides durch. */
 const antwortFormat = z.object({
   antwort: z.string(),
+  rueckfrage: z.string().nullable(),
   zusammenfassung: z
     .object({
       einordnung: z.enum(EINORDNUNGEN),
@@ -68,7 +74,7 @@ export async function naechsteAntwort(verlauf: Nachricht[], lage: Lage): Promise
       max_tokens: 1500,
       // Ohne Nachdenken: Die Antworten sind kurz, und es zählt das Tempo.
       thinking: { type: "disabled" },
-      output_config: { effort: "low", format: zodOutputFormat(antwortFormat) },
+      output_config: { effort: "medium", format: zodOutputFormat(antwortFormat) },
       system: systemBloecke(lage),
       messages: verlauf.map((n) => ({
         role: n.von === "person" ? ("user" as const) : ("assistant" as const),
@@ -77,9 +83,12 @@ export async function naechsteAntwort(verlauf: Nachricht[], lage: Lage): Promise
     });
     const roh = r.parsed_output;
     if (r.stop_reason !== "end_turn" || !roh) return null;
-    const antwort = roh.antwort.trim().slice(0, ANTWORT_MAX);
+    const { text, gefragt } = mitEinerFrage(roh.antwort, roh.rueckfrage, roh.zusammenfassung !== null);
+    const antwort = text.slice(0, ANTWORT_MAX);
     if (!antwort) return null;
-    const z = roh.zusammenfassung ? zusammenfassungSchema.safeParse(gekuerzt(roh.zusammenfassung)) : null;
+    // Wer noch fragt, fasst nicht zusammen: Sonst zählten die Korrekturen ab
+    // einer Karte, die noch nicht fertig ist.
+    const z = !gefragt && roh.zusammenfassung ? zusammenfassungSchema.safeParse(gekuerzt(roh.zusammenfassung)) : null;
     return { antwort, zusammenfassung: z?.success ? z.data : null };
   } catch (e) {
     // Ausfall, Zeitüberschreitung, Ausgabenlimit (400/429): für die Person

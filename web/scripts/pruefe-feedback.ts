@@ -26,6 +26,7 @@ import {
   NACHRICHTEN_MAX,
   TITEL_MAX,
   dialogStand,
+  mitEinerFrage,
   seiteAus,
   verlaufSchema,
 } from "../lib/feedback/regeln";
@@ -88,6 +89,31 @@ assert.ok(
   !verlaufSchema.safeParse(Array.from({ length: 2 * (NACHRICHTEN_MAX + KORREKTUREN_MAX) + 2 }, (_, i) => (i % 2 ? k("b") : p("a")))).success,
   "Mehr Nachrichten, als die Grenzen erlauben",
 );
+
+// ── Genau eine Frage ────────────────────────────────────────────────────────
+const eine = (a: string, r: string | null, z = false) => mitEinerFrage(a, r, z);
+assert.deepEqual(eine("Danke. Wann? Und wo?", "Passiert es immer? Und überall?"), {
+  text: "Danke. Passiert es immer?",
+  gefragt: true,
+}, "Fragen im Text fallen weg, die Rückfrage endet am ersten Fragezeichen");
+assert.deepEqual(eine("Verstanden. Wie löst du es heute? Und wie oft?", null), {
+  text: "Verstanden. Wie löst du es heute?",
+  gefragt: true,
+}, "Ohne Rückfrage rückt die erste Frage aus dem Text nach");
+assert.deepEqual(eine("Ich habe zusammengefasst. Stimmt das so?", null, true), {
+  text: "Ich habe zusammengefasst.",
+  gefragt: false,
+}, "Neben einer Zusammenfassung ist eine Frage im Text keine Rückfrage");
+assert.deepEqual(eine("Ich fasse zusammen.", "keine", true), { text: "Ich fasse zusammen.", gefragt: false }, "«keine» ist keine Frage");
+assert.deepEqual(eine("Danke. Schickst du es z. B. per WhatsApp?", null), {
+  text: "Danke. Schickst du es z. B. per WhatsApp?",
+  gefragt: true,
+}, "Abkürzungen teilen keinen Satz");
+assert.deepEqual(eine("Um 18.00 Uhr? Danke.", "Hast du «nur diesen Termin» gewählt?"), {
+  text: "Danke. Hast du «nur diesen Termin» gewählt?",
+  gefragt: true,
+});
+assert.deepEqual(eine("Hast du «nur diesen?» Danke.", null).text, "Danke. Hast du «nur diesen?»", "Frage mit schliessendem Anführungszeichen");
 
 // ── Seite ───────────────────────────────────────────────────────────────────
 assert.equal(seiteAus("/team/abc/termine?suche=Muster#x"), "/team/abc/termine", "Ohne Suche und Anker");

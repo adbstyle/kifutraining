@@ -18,6 +18,9 @@ export const NACHRICHTEN_MAX = 10;
 /** Nach der ersten Zusammenfassung noch so viele Nachrichten zum Korrigieren
  *  oder Bestätigen (PO 13). SQL-Zwilling: `korrekturen`. */
 export const KORREKTUREN_MAX = 2;
+/** Nach etwa so vielen Nachrichten strebt der Dialog die Zusammenfassung an
+ *  (PO 18) — ein Anstoss ans Modell, keine Grenze. */
+export const RUECKFRAGEN_ZIEL = 5;
 /** Höchstens so viele Zeichen je Nachricht (PO 22). Das Feld nimmt nicht mehr
  *  an; die Server Action prüft es trotzdem. */
 export const NACHRICHT_MAX = 1000;
@@ -103,6 +106,44 @@ export function seiteAus(eingabe: unknown): string {
   const roh = typeof eingabe === "string" ? eingabe : "";
   const pfad = roh.split(/[?#]/)[0];
   return pfad.startsWith("/") ? pfad.slice(0, 500) : "/";
+}
+
+/** Abkürzungen, an deren Punkt kein Satz endet. */
+const ABKUERZUNG = /\b(?:z\. ?B|d\. ?h|u\. ?a|bzw|ca|evtl|inkl|usw|etc|Nr)\./g;
+const PUNKT = "\u2024";
+
+/** Teilt einen Text in Sätze: nach . ! ? (samt schliessendem Anführungszeichen),
+ *  wenn danach ein neuer Satz beginnt. Abkürzungen und Zahlen wie 18.00
+ *  bleiben ganz. */
+function saetze(text: string): string[] {
+  const geschuetzt = text.trim().replace(ABKUERZUNG, (a) => a.replaceAll(".", PUNKT));
+  return geschuetzt
+    .split(/(?<=[.!?]["»«“”]?)\s+(?=[A-ZÄÖÜ«"„])/)
+    .map((x) => x.replaceAll(PUNKT, ".").trim())
+    .filter(Boolean);
+}
+
+const istFrage = (satz: string) => /\?["»«“”]?$/.test(satz);
+
+/** Die Antwort an die Person mit genau einer Frage. Die Rückfrage gilt bis zu
+ *  ihrem ersten Fragezeichen; Fragen im Text fallen weg. Fehlt eine Rückfrage,
+ *  rückt die erste Frage aus dem Text nach — ausser neben einer
+ *  Zusammenfassung: Dort ist sie die Bitte, sie zu prüfen, und fällt weg.
+ *  `gefragt` sagt, ob das Modell wirklich nachfragt; nur dann gilt eine
+ *  mitgelieferte Zusammenfassung nicht. Das Modell hielt sich als Fliesstext
+ *  nicht an «genau eine Frage» (Staging-Test 2026-10-28). */
+export function mitEinerFrage(
+  antwort: string,
+  rueckfrage: string | null,
+  mitZusammenfassung: boolean,
+): { text: string; gefragt: boolean } {
+  const s = saetze(antwort);
+  // Nur eine echte Frage zählt — «keine» oder «-» statt null nicht.
+  const r = rueckfrage?.trim() ?? "";
+  const rf = r.includes("?") ? r.slice(0, r.indexOf("?") + 1) : null;
+  const frage = rf ?? (mitZusammenfassung ? null : (s.find(istFrage) ?? null));
+  const aussage = s.filter((x) => !istFrage(x)).join(" ");
+  return { text: [aussage, frage].filter(Boolean).join(" "), gefragt: frage !== null };
 }
 
 /* ── Meldungen ─────────────────────────────────────────────────────────── */
