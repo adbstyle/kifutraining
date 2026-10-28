@@ -2816,7 +2816,7 @@ export default async function Styleguide() {
             <Leerzustand
               icon={SearchX}
               titel="Keine Übung gefunden"
-              aktion={<Button variant="text">Filter zurücksetzen</Button>}
+              aktion={<Button variant="link">Filter zurücksetzen</Button>}
             >
               Keine Übung erfüllt alle gesetzten Filter. Entferne einzelne Filter
               oder setze sie zurück.
