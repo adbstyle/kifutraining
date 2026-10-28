@@ -19,6 +19,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  AUFBEWAHRUNG_MONATE,
   DIALOGE_JE_TAG,
   KORREKTUREN_MAX,
   NACHRICHT_MAX,
@@ -42,6 +43,16 @@ assert.deepEqual(
   grenzen.slice(1).map(Number),
   [DIALOGE_JE_TAG, NACHRICHTEN_MAX, KORREKTUREN_MAX],
   "feedback_grenzen() und lib/feedback/regeln.ts tragen verschiedene Grenzen",
+);
+
+// Die Frist (#545): Was die Person nach dem Abgeben liest, muss der Job tun.
+const frist = readdirSync(migrationen).filter((d) => d.endsWith("_feedback_frist.sql"));
+assert.equal(frist.length, 1, "Erwartet genau eine Migration «*_feedback_frist.sql»");
+const fristSql = readFileSync(join(migrationen, frist[0]), "utf8");
+assert.match(
+  fristSql,
+  new RegExp(`interval '${AUFBEWAHRUNG_MONATE} months'`),
+  "feedback_frist_loeschen() und AUFBEWAHRUNG_MONATE tragen verschiedene Fristen",
 );
 
 // ── Produktwissen ───────────────────────────────────────────────────────────

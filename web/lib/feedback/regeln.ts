@@ -25,6 +25,10 @@ export const NACHRICHT_MAX = 1000;
  *  Server. Hält auch einen Verlauf aus dem Browser klein. */
 export const ANTWORT_MAX = 2000;
 
+/** So viele Monate nach dem Eingang löscht KiFu ein Feedback (#545).
+ *  SQL-Zwilling: `feedback_frist_loeschen()`. */
+export const AUFBEWAHRUNG_MONATE = 12;
+
 /** Was die Person schickt, wenn sie die Zusammenfassung verlangt (PO 29). Es
  *  ist eine gewöhnliche Nachricht und zählt wie jede andere. */
 export const ZUSAMMENFASSUNG_VERLANGEN = "Bitte fass jetzt zusammen.";

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUp, CircleCheck, X } from "lucide-react";
 import { Button, Card, IconButton, SectionMessage, TextArea } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { NACHRICHT_MAX } from "@/lib/feedback/regeln";
+import { AUFBEWAHRUNG_MONATE, NACHRICHT_MAX } from "@/lib/feedback/regeln";
 import type { FeedbackGespraech as Gespraech } from "./useFeedbackGespraech";
 
 /** Der Name des Dialogs — in der Seitenleiste, im Kopf und am privaten Link. */
@@ -92,6 +92,9 @@ export function FeedbackGespraech({
           Das Feedback wird gelesen und von der Entwicklung priorisiert. Eine Antwort bekommst du über
           KiFu nicht.
           {dringend && ` ${dringend}`}
+        </p>
+        <p className="type-body-small max-w-xs text-on-surface-mittel">
+          Nach {AUFBEWAHRUNG_MONATE} Monaten wird dein Feedback automatisch gelöscht.
         </p>
         <div className="flex-1" />
         <Button variant="outlined" onClick={onSchliessen}>
