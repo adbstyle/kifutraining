@@ -29,7 +29,7 @@ export function VorlagePicker({
    *  Fehlertext, der im Dialog angezeigt wird (statt blind zu schliessen). */
   onPick: (vorlage: VorlageItem) => Promise<string | null> | string | null;
   triggerLabel: string;
-  triggerVariant?: "tonal" | "outlined" | "text";
+  triggerVariant?: "outlined" | "text";
 }) {
   const [offen, setOffen] = useState(false);
   const [bestaetigen, setBestaetigen] = useState<VorlageItem | null>(null);

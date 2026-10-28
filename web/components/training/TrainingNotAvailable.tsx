@@ -16,7 +16,7 @@ export function TrainingNotAvailable() {
         titel="Training nicht verfügbar"
         ueberschrift="h1"
         aktion={
-          <ButtonLink href="/trainings" variant="tonal">
+          <ButtonLink href="/trainings" variant="link">
             Öffentliche Trainings entdecken
           </ButtonLink>
         }

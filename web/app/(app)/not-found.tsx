@@ -16,7 +16,7 @@ export default function NichtGefunden() {
         titel="Diese Seite gibt es nicht"
         ueberschrift="h1"
         aktion={
-          <ButtonLink href="/" variant="tonal">
+          <ButtonLink href="/" variant="link">
             Zu den Übungen
           </ButtonLink>
         }

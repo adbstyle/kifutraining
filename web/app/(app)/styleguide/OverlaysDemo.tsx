@@ -20,7 +20,7 @@ export function OverlaysDemo() {
         {/* Mit Aktion: Material erlaubt genau eine, etwa Rückgängig oder
             Erneut versuchen — nie ein blosses «OK», dafür gibt es das X. */}
         <Button
-          variant="tonal"
+          variant="outlined"
           onClick={() =>
             melde("Übung in den Papierkorb verschoben.", {
               label: "Rückgängig",
@@ -33,7 +33,7 @@ export function OverlaysDemo() {
         {/* Zwei Stellen auf einmal: Die zweite wartet, bis die erste weg ist,
             und ihre Zeit läuft erst ab dann. */}
         <Button
-          variant="tonal"
+          variant="outlined"
           onClick={() => {
             melde("Termin geändert.");
             meldeAndere("Ein öffentliches Training braucht mindestens eine Übung im freien Spiel.");

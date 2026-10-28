@@ -1394,9 +1394,8 @@ export default async function Styleguide() {
 
         <Section id="knoepfe">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Sieben Varianten (und der helle Knopf weiter unten), eine Regel: <strong>Gefüllt trägt Schwarz</strong>{" "}
-            - ausser Rot. <code>filled</code> ist Primary-Fläche, <code>tonal</code> eine
-            Höhenstufe (08dp), <code>outlined</code> Kontur
+            Sechs Varianten (und der helle Knopf weiter unten), eine Regel: <strong>Gefüllt trägt Schwarz</strong>{" "}
+            - ausser Rot. <code>filled</code> ist Primary-Fläche, <code>outlined</code> Kontur
             auf der Kante - der <strong>Secondary Button</strong>, wenn von ihm die
             Rede ist, <code>text</code> nur Schrift, <code>danger</code>{" "}
             gefüllt in <code>danger</code> mit weisser Schrift - Löschen soll
@@ -1415,7 +1414,6 @@ export default async function Styleguide() {
           </p>
           <div className="flex flex-wrap items-end gap-3">
             <Button variant="filled">Training erstellen</Button>
-            <Button variant="tonal">Duplizieren</Button>
             <Button variant="outlined">Filter zurücksetzen</Button>
             <Button variant="text">Abbrechen</Button>
             <Button variant="danger">Übung löschen</Button>
@@ -1489,7 +1487,7 @@ export default async function Styleguide() {
           </p>
           <div className="flex flex-wrap items-end gap-3">
             <ButtonLink href="#" variant="filled">Neue Übung</ButtonLink>
-            <ButtonLink href="#" variant="tonal">Bearbeiten</ButtonLink>
+            <ButtonLink href="#" variant="outlined">Bearbeiten</ButtonLink>
           </div>
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Verbundene Knopfgruppe
@@ -2818,7 +2816,7 @@ export default async function Styleguide() {
             <Leerzustand
               icon={SearchX}
               titel="Keine Übung gefunden"
-              aktion={<Button variant="text">Filter zurücksetzen</Button>}
+              aktion={<Button variant="link">Filter zurücksetzen</Button>}
             >
               Keine Übung erfüllt alle gesetzten Filter. Entferne einzelne Filter
               oder setze sie zurück.
@@ -2982,7 +2980,7 @@ export default async function Styleguide() {
             Ein <strong>Link zum Kopieren</strong> (Kalender-Abo,{" "}
             <code>AboDialog</code>) ist kein neuer Baustein, sondern eine
             Zeile aus dem Kit: ein <code>TextField</code> mit{" "}
-            <code>readOnly</code> und ein tonaler <code>Button</code> daneben.
+            <code>readOnly</code> und ein Secondary Button daneben.
             Das Feld wählt beim Fokus alles aus, damit sich der Link auch von
             Hand kopieren lässt. Das Ergebnis des Knopfes erscheint{" "}
             <strong>im Dialog</strong>, nicht in der Snackbar - die liegt unter

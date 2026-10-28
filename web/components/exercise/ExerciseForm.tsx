@@ -806,7 +806,7 @@ export function ExerciseForm({
           <div className="flex items-center gap-3">
             <Button
               type="button"
-              variant="tonal"
+              variant="outlined"
               aria-labelledby={`${titelId} ${bildKnopfId}`}
               aria-describedby={bildNameId}
               onClick={() => bildRef.current?.click()}
