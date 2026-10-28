@@ -180,7 +180,7 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
           <p>Wähle eine CSV-Datei mit deinen Spieler:innen. Du siehst zuerst eine Vorschau; übernommen wird erst, wenn du bestätigst.</p>
           <div>
             <div className="flex items-center gap-3">
-              <Button type="button" variant="tonal" onClick={() => datei.current?.click()}>
+              <Button type="button" variant="outlined" onClick={() => datei.current?.click()}>
                 <FileUp size={18} aria-hidden />
                 {dateiFehler ? "Andere Datei wählen" : "Datei wählen"}
               </Button>

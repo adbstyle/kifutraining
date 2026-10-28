@@ -1248,7 +1248,7 @@ export function DiagrammZeichnen({
                 zielHatDiagramm={false}
                 onPick={vorlageKopieren}
                 triggerLabel="Aus Vorlage kopieren"
-                triggerVariant="tonal"
+                triggerVariant="outlined"
               />
             </div>
           </div>

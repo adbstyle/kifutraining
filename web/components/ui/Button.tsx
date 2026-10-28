@@ -31,7 +31,7 @@ import { cn } from "@/lib/cn";
 // die Aktionen einer Section Message, der Weg aus einem Leerzustand, eine
 // Zeilenaktion —, wo ein Knopf zu schwer wöge. Was die Seite wechselt, steht
 // als `ButtonLink`, alles andere bleibt technisch ein <button>.
-type Variant = "filled" | "tonal" | "outlined" | "text" | "danger" | "dangerOutlined" | "quiet" | "hell" | "link";
+type Variant = "filled" | "outlined" | "text" | "danger" | "dangerOutlined" | "quiet" | "hell" | "link";
 
 // `state` gehört in die Basis und nicht an die Varianten: Die Zustands-Ebene
 // färbt sich in der Farbe des Inhalts ein und gilt darum für jede Variante
@@ -47,8 +47,6 @@ const base =
 const variants: Record<Variant, string> = {
   // Höchste Emphase: die einzige Variante, die den Akzent als FLÄCHE trägt.
   filled: "bg-primary text-on-primary",
-  // Mittlere Emphase — eine Höhenstufe statt einer Akzentfläche.
-  tonal: "bg-elev-08 text-on-surface",
   // Mittlere Emphase — nur Kontur, die Fläche bleibt der Grund. Heisst in
   // Gesprächen und im Styleguide «Secondary Button» (PO 2026-10-24).
   outlined: "bg-transparent text-on-surface kontur border-kante",
