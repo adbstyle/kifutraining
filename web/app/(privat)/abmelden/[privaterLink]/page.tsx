@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ElternAnsicht } from "@/components/privat/ElternAnsicht";
+import { FeedbackLink } from "@/components/privat/FeedbackLink";
 import { GiltNicht } from "@/components/privat/GiltNicht";
 import { ladeLinkAnsicht } from "@/lib/privater-link";
 import { LINK_TEXT } from "@/lib/spieler";
@@ -26,11 +27,15 @@ export default async function SpielerLinkSeite({ params }: { params: Promise<{ p
   const ansicht = await ladeLinkAnsicht(privaterLink);
   if (!ansicht.gueltig) return <GiltNicht titel={LINK_TEXT.ungueltigTitel} text={LINK_TEXT.ungueltig} />;
   return (
-    <ElternAnsicht
-      token={privaterLink}
-      team={ansicht.team}
-      spieler={ansicht.spieler}
-      termine={ansicht.termine}
-    />
+    <>
+      <ElternAnsicht
+        token={privaterLink}
+        team={ansicht.team}
+        spieler={ansicht.spieler}
+        termine={ansicht.termine}
+      />
+      {/* Fragen und Feedback ohne Konto (#544), am Ende der Seite. */}
+      <FeedbackLink token={privaterLink} />
+    </>
   );
 }

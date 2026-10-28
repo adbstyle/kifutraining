@@ -67,6 +67,7 @@ import { CheckboxDemo } from "./CheckboxDemo";
 import { SwitchDemo } from "./SwitchDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
+import { FeedbackDemo } from "./FeedbackDemo";
 import { TabelleAuswahlDemo } from "./TabelleAuswahlDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
@@ -244,6 +245,7 @@ const GLIEDERUNG = [
         eintraege: [
           { id: "meldungen", titel: "Leerzustand, Hinweiszeile & Section Message" },
           { id: "dialog-snackbar", titel: "Dialog & Snackbar" },
+          { id: "feedback-dialog", titel: "Fragen und Feedback" },
         ],
       },
       {
@@ -3024,13 +3026,41 @@ export default async function Styleguide() {
           <OverlaysDemo />
         </Section>
 
+        <Section id="feedback-dialog">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Fragen und Feedback</strong> (Epic #541) ist ein Gespräch mit
+            einem KI-Modell, kein Dialog im Sinn oben: Am Desktop steht es als
+            Spalte rechts neben dem Inhalt (24 rem, Fläche 01dp mit Haarlinie wie
+            die Seitenleiste, ohne Schatten) und bleibt beim Seitenwechsel offen,
+            damit die Person die Seite, um die es geht, daneben anschauen kann.
+            Unter <code>lg</code> und am privaten Link füllt es den Bildschirm.
+            Geöffnet wird es aus der Seitenleiste über einen Knopf, nicht einen
+            Link - es wechselt die Seite nicht.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Der Chat folgt der Regel «Farbe füllt nur, wo eine Fläche gemeint
+            ist»: Die KI schreibt auf den Grund, die eigenen Nachrichten stehen
+            rechts auf <code>elev-02</code>, keine farbigen Sprechblasen. Die
+            Zusammenfassung ist eine <code>Card</code> mit Bezeichnung und Wert
+            untereinander; darunter «Bestätigen und senden» und der Ausweg
+            «Verwerfen» als Secondary Button. Unter dem Feld steht der Zähler
+            der Nachrichten, rechts die Zeichen - das Feld nimmt wie jedes in
+            KiFu nicht mehr als die Grenze an. Fehler stehen als Section Message
+            im Gespräch, nicht in der Snackbar: Die gehört zur Seite und fiele
+            beim Wechsel weg.
+          </p>
+          <FeedbackDemo />
+        </Section>
+
         <Section id="navigation">
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             <strong>Seitenleiste</strong> am linken Rand, auf{" "}
             <code>bg-elev-01</code> mit <code>border-linie</code> zum Inhalt. Sie
             ist Rahmen, keine schwebende Fläche, und trägt darum keinen Schatten.
             Oben die Marke (Fussball im Primary-Quadrat, zugleich das Favicon), darunter die Einträge in
-            Gruppen, unten die Versionszeile, der Styleguide und die Konto-Karte: Avatar, Anzeigename
+            Gruppen, unten «Fragen und Feedback» (nur angemeldet; ein Knopf, kein Link - er öffnet
+            den Dialog neben der Seite, siehe <Siehe id="feedback-dialog" />), die Versionszeile,
+            der Styleguide und die Konto-Karte: Avatar, Anzeigename
             und E-Mail führen als Ganzes ins Konto. Die Versionszeile (Zeichen und Nummer, ruhiger als
             ein Eintrag) führt zur Release-History, die Zeile darunter (Palette, gleich ruhig) zu
             dieser Seite; schmal bleibt je das Zeichen. Ist ein Release

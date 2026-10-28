@@ -6,6 +6,8 @@ on:
       - "web/**"
       - "supabase/**"
       - ".github/workflows/**"
+      # Quelle des generierten Produktwissens im Feedback-Dialog (#541).
+      - "docs/feedback-triage.md"
 
 jobs:
   web:
@@ -81,6 +83,11 @@ jobs:
       # Freitext mit einfachen Listen (Story #282): Regeln für Ablauf und
       # Varianten, dazu die Listenzeichen der SQL-Suchfunktion.
       - run: npm run check:freitext
+      # Feedback-Dialog (Epic #541): Das Produktwissen reist als generiertes
+      # Modul mit (Vercel baut nur web/) — es muss docs/feedback-triage.md
+      # entsprechen. Dazu die Grenzen und ihr SQL-Zwilling.
+      - run: npm run gen:feedback-wissen && git diff --exit-code lib/feedback/wissen.ts
+      - run: npm run check:feedback
 
   migrations:
     name: Migrationen + Seed (Wegwerf-DB)

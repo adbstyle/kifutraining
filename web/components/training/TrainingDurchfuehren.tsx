@@ -321,7 +321,13 @@ export function TrainingDurchfuehren({
           (Breite vom AppRahmen). Durch eine schwebende Leiste darf der Inhalt
           nicht durchscheinen, sonst trägt die Höhe die Trennung nicht mehr
           (kein Blur über der Höhenleiter). */}
-      <nav className={cn("fixed right-0 bottom-0 z-10 border-t border-linie bg-elev-04", nebenLeiste)}>
+      {/* Rechts rückt sie neben die offene Spalte «Fragen und Feedback» (#542). */}
+      <nav
+        className={cn(
+          "fixed right-0 bottom-0 z-10 border-t border-linie bg-elev-04 lg:right-[var(--feedback-breite,0px)]",
+          nebenLeiste,
+        )}
+      >
         <div className="flex max-w-2xl items-center gap-2 px-4 py-2 sm:px-6">
           <Button
             type="button"

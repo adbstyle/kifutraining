@@ -33,9 +33,12 @@
     "check:freitext": "tsx scripts/pruefe-freitext.ts",
     "check:hinweise": "tsx scripts/pruefe-hinweise.ts",
     "check:kern-db": "tsx --conditions=react-server scripts/pruefe-kern-db.ts",
-    "sync:storage": "tsx scripts/sync-storage-staging.ts"
+    "sync:storage": "tsx scripts/sync-storage-staging.ts",
+    "gen:feedback-wissen": "node scripts/gen-feedback-wissen.mjs",
+    "check:feedback": "tsx scripts/pruefe-feedback.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0",
     "@modelcontextprotocol/server": "^2.0.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.106.2",
