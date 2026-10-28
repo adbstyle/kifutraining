@@ -7,6 +7,7 @@
 // öffentlichen Endpunkte, diese Datei ist ihr gemeinsamer Teil.
 import "server-only";
 import { headers } from "next/headers";
+import { LINK_TEXT } from "@/lib/spieler";
 import { APP_VERSION } from "@/lib/version";
 import { kiVerfuegbar, naechsteAntwort } from "./ki";
 import type { Rolle } from "./prompt";
@@ -28,6 +29,9 @@ type RpcAntwort = { status: string; dialog?: string; nachricht?: number; vorschl
 /** Die Verbindung eines Zugangs zur Datenbank. */
 export type Weg = {
   rolle: Rolle;
+  /** Die Seite, die statt der gemeldeten gilt — am privaten Link, dessen
+   *  Pfad das Geheimnis trägt (#544 PC 3). */
+  seiteFest?: string;
   beginnen: () => Promise<RpcAntwort | null>;
   zaehlen: (dialog: string) => Promise<RpcAntwort | null>;
   vermerken: (dialog: string) => Promise<void>;
@@ -75,6 +79,9 @@ async function geraet(): Promise<string> {
 
 const umgebung = () => process.env.VERCEL_ENV ?? "lokal";
 
+/** Ein privater Link, der nicht mehr gilt (#544 AK 5): wie auf der Seite selbst. */
+const LINK_UNGUELTIG = `${LINK_TEXT.ungueltigTitel}. ${LINK_TEXT.ungueltig}`;
+
 /** Eine Nachricht der Person: zählen, das Modell fragen, antworten. Jeder
  *  Fehlschlag beendet den Dialog (`ende`), ausser einer zu langen Eingabe. */
 export async function sendeNachricht(weg: Weg, e: NachrichtEingabe): Promise<NachrichtErgebnis> {
@@ -94,10 +101,12 @@ export async function sendeNachricht(weg: Weg, e: NachrichtEingabe): Promise<Nac
     if (verlauf.data.length > 0) return nichtMoeglich;
     const b = await weg.beginnen();
     if (b?.status === "tageslimit") return { ok: false, error: MELDUNG_TAGESLIMIT, ende: true };
+    if (b?.status === "ungueltig") return { ok: false, error: LINK_UNGUELTIG, ende: true };
     if (b?.status !== "ok" || !b.dialog) return nichtMoeglich;
     dialog = b.dialog;
   }
   const z = await weg.zaehlen(dialog);
+  if (z?.status === "ungueltig") return { ok: false, error: LINK_UNGUELTIG, ende: true };
   if (z?.status !== "ok" || typeof z.nachricht !== "number") return nichtMoeglich;
   // Der Browser kann den Verlauf nicht verlängern, ohne dass die Datenbank
   // mitzählt: Jede Nachricht der Person darin ist schon gezählt.
@@ -106,7 +115,7 @@ export async function sendeNachricht(weg: Weg, e: NachrichtEingabe): Promise<Nac
   const vorschlagBei = z.vorschlag_bei ?? null;
   const k = await naechsteAntwort([...verlauf.data, { von: "person", text }], {
     rolle: weg.rolle,
-    seite: seiteAus(e.seite),
+    seite: weg.seiteFest ?? seiteAus(e.seite),
     version: APP_VERSION,
     geraet: await geraet(),
     nachricht: z.nachricht,
@@ -133,9 +142,11 @@ export type AblageEingabe = {
   seite: unknown;
 };
 
+export type AblageErgebnis = { ok: true } | { ok: false; error: string; ende?: boolean };
+
 /** Das bestätigte Feedback ablegen. Ein erneuter Versuch nach einem Fehler
  *  legt nichts doppelt ab (die RPC kennt den gespeicherten Dialog). */
-export async function legeAb(weg: Weg, e: AblageEingabe): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function legeAb(weg: Weg, e: AblageEingabe): Promise<AblageErgebnis> {
   const z = zusammenfassungSchema.safeParse(e.zusammenfassung);
   const verlauf = verlaufSchema.safeParse(e.verlauf);
   if (typeof e.dialog !== "string" || !z.success || !verlauf.success || verlauf.data.length === 0) {
@@ -146,10 +157,11 @@ export async function legeAb(weg: Weg, e: AblageEingabe): Promise<{ ok: true } |
     titel: z.data.titel,
     punkte: z.data.punkte,
     verlauf: verlauf.data,
-    seite: seiteAus(e.seite),
+    seite: weg.seiteFest ?? seiteAus(e.seite),
     version: APP_VERSION,
     umgebung: umgebung(),
     geraet: await geraet(),
   });
+  if (r?.status === "ungueltig") return { ok: false, error: LINK_UNGUELTIG, ende: true };
   return r?.status === "ok" ? { ok: true } : { ok: false, error: MELDUNG_SPEICHERN };
 }

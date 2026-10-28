@@ -6,6 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { angemeldet, NICHT_ANGEMELDET } from "@/lib/actions/adapter";
 import {
   legeAb,
+  type AblageErgebnis,
   sendeNachricht,
   type AblageEingabe,
   type NachrichtEingabe,
@@ -46,7 +47,7 @@ export async function feedbackNachrichtAktion(e: NachrichtEingabe): Promise<Nach
   return sendeNachricht(kontoWeg(a.supabase), e);
 }
 
-export async function feedbackAblegenAktion(e: AblageEingabe): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function feedbackAblegenAktion(e: AblageEingabe): Promise<AblageErgebnis> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   return legeAb(kontoWeg(a.supabase), e);

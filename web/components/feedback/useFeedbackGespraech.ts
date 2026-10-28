@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState, useTransition } from "react";
-import type { NachrichtEingabe, NachrichtErgebnis } from "@/lib/feedback/dialog";
+import type { AblageErgebnis, NachrichtEingabe, NachrichtErgebnis } from "@/lib/feedback/dialog";
 import {
   ZUSAMMENFASSUNG_VERLANGEN,
   dialogStand,
@@ -17,7 +17,7 @@ export type FeedbackAktionen = {
     zusammenfassung: Zusammenfassung;
     verlauf: Nachricht[];
     seite: string;
-  }) => Promise<{ ok: true } | { ok: false; error: string }>;
+  }) => Promise<AblageErgebnis>;
 };
 
 type Phase = "gespraech" | "gesendet" | "beendet";
@@ -80,8 +80,11 @@ export function useFeedbackGespraech(aktionen: FeedbackAktionen) {
         const r = await aktionen
           .ablegen({ dialog, zusammenfassung, verlauf, seite })
           .catch(() => ({ ok: false as const, error: "Dein Feedback liess sich nicht speichern. Versuch es nochmals." }));
-        if (r.ok) setPhase("gesendet");
-        else setFehler(r.error);
+        if (r.ok) return setPhase("gesendet");
+        setFehler(r.error);
+        // Ein Link, der nicht mehr gilt, beendet den Dialog; sonst geht ein
+        // neuer Versuch (#542 AK 18).
+        if ("ende" in r && r.ende) setPhase("beendet");
       });
     },
     [aktionen, dialog, verlauf, wartet, zusammenfassung],
