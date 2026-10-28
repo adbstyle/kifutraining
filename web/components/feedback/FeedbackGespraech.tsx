@@ -166,7 +166,9 @@ export function FeedbackGespraech({
 
   const senden = () => {
     const t = text.trim();
-    if (!t) return;
+    // Solange eine Antwort aussteht, bleibt der Text stehen — auch für
+    // Cmd/Ctrl+Enter, das am gesperrten Knopf vorbeigeht.
+    if (!t || g.wartet || !g.stand.offen) return;
     g.senden(t, seite);
     setText("");
   };

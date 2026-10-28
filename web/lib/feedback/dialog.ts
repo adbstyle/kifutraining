@@ -209,6 +209,12 @@ export async function legeAb(weg: Weg, e: AblageEingabe): Promise<AblageErgebnis
     umgebung: umgebung(),
     geraet: await geraet(),
   });
+  if (r?.status === "ok") return { ok: true };
   if (r?.status === "ungueltig") return { ok: false, error: LINK_UNGUELTIG, ende: true };
-  return r?.status === "ok" ? { ok: true } : { ok: false, error: MELDUNG_SPEICHERN };
+  // Ein Dialog, den die Datenbank nicht (mehr) kennt oder ohne vermerkten
+  // Vorschlag, wird auch beim nächsten Versuch nicht gespeichert.
+  if (r?.status === "unbekannt" || r?.status === "ohne_vorschlag") {
+    return { ok: false, error: MELDUNG_NICHT_MOEGLICH, ende: true };
+  }
+  return { ok: false, error: MELDUNG_SPEICHERN };
 }
