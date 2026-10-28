@@ -108,21 +108,42 @@ export function seiteAus(eingabe: unknown): string {
   return pfad.startsWith("/") ? pfad.slice(0, 500) : "/";
 }
 
-/** Die Antwort an die Person mit genau einer Frage: Fragen im Text fallen
- *  weg, die Rückfrage gilt bis zu ihrem ersten Fragezeichen; fehlt sie, rückt
- *  die erste Frage aus dem Text nach. Das Modell hielt sich als Fliesstext
+/** Abkürzungen, an deren Punkt kein Satz endet. */
+const ABKUERZUNG = /\b(?:z\. ?B|d\. ?h|u\. ?a|bzw|ca|evtl|inkl|usw|etc|Nr)\./g;
+const PUNKT = "\u2024";
+
+/** Teilt einen Text in Sätze: nach . ! ? (samt schliessendem Anführungszeichen),
+ *  wenn danach ein neuer Satz beginnt. Abkürzungen und Zahlen wie 18.00
+ *  bleiben ganz. */
+function saetze(text: string): string[] {
+  const geschuetzt = text.trim().replace(ABKUERZUNG, (a) => a.replaceAll(".", PUNKT));
+  return geschuetzt
+    .split(/(?<=[.!?]["»«“”]?)\s+(?=[A-ZÄÖÜ«"„])/)
+    .map((x) => x.replaceAll(PUNKT, ".").trim())
+    .filter(Boolean);
+}
+
+const istFrage = (satz: string) => /\?["»«“”]?$/.test(satz);
+
+/** Die Antwort an die Person mit genau einer Frage. Die Rückfrage gilt bis zu
+ *  ihrem ersten Fragezeichen; Fragen im Text fallen weg. Fehlt eine Rückfrage,
+ *  rückt die erste Frage aus dem Text nach — ausser neben einer
+ *  Zusammenfassung: Dort ist sie die Bitte, sie zu prüfen, und fällt weg.
+ *  `gefragt` sagt, ob das Modell wirklich nachfragt; nur dann gilt eine
+ *  mitgelieferte Zusammenfassung nicht. Das Modell hielt sich als Fliesstext
  *  nicht an «genau eine Frage» (Staging-Test 2026-10-28). */
-export function mitEinerFrage(antwort: string, rueckfrage: string | null): { text: string; frage: string | null } {
-  const saetze = antwort.trim().match(/[^.!?]+[.!?]+["»«]?|[^.!?]+$/g) ?? [];
-  const istFrage = (x: string) => x.trim().endsWith("?");
+export function mitEinerFrage(
+  antwort: string,
+  rueckfrage: string | null,
+  mitZusammenfassung: boolean,
+): { text: string; gefragt: boolean } {
+  const s = saetze(antwort);
+  // Nur eine echte Frage zählt — «keine» oder «-» statt null nicht.
   const r = rueckfrage?.trim() ?? "";
-  const ende = r.indexOf("?");
-  const frage = (r ? (ende === -1 ? r : r.slice(0, ende + 1)) : null) ?? saetze.find(istFrage)?.trim() ?? null;
-  const aussage = saetze
-    .filter((x) => !istFrage(x))
-    .map((x) => x.trim())
-    .join(" ");
-  return { text: [aussage, frage].filter(Boolean).join(" "), frage };
+  const rf = r.includes("?") ? r.slice(0, r.indexOf("?") + 1) : null;
+  const frage = rf ?? (mitZusammenfassung ? null : (s.find(istFrage) ?? null));
+  const aussage = s.filter((x) => !istFrage(x)).join(" ");
+  return { text: [aussage, frage].filter(Boolean).join(" "), gefragt: frage !== null };
 }
 
 /* ── Meldungen ─────────────────────────────────────────────────────────── */

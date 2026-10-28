@@ -83,12 +83,12 @@ export async function naechsteAntwort(verlauf: Nachricht[], lage: Lage): Promise
     });
     const roh = r.parsed_output;
     if (r.stop_reason !== "end_turn" || !roh) return null;
-    const { text, frage } = mitEinerFrage(roh.antwort, roh.rueckfrage);
+    const { text, gefragt } = mitEinerFrage(roh.antwort, roh.rueckfrage, roh.zusammenfassung !== null);
     const antwort = text.slice(0, ANTWORT_MAX);
     if (!antwort) return null;
     // Wer noch fragt, fasst nicht zusammen: Sonst zählten die Korrekturen ab
     // einer Karte, die noch nicht fertig ist.
-    const z = !frage && roh.zusammenfassung ? zusammenfassungSchema.safeParse(gekuerzt(roh.zusammenfassung)) : null;
+    const z = !gefragt && roh.zusammenfassung ? zusammenfassungSchema.safeParse(gekuerzt(roh.zusammenfassung)) : null;
     return { antwort, zusammenfassung: z?.success ? z.data : null };
   } catch (e) {
     // Ausfall, Zeitüberschreitung, Ausgabenlimit (400/429): für die Person
