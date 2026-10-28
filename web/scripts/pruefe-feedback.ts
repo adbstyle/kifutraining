@@ -26,6 +26,7 @@ import {
   NACHRICHTEN_MAX,
   TITEL_MAX,
   dialogStand,
+  mitEinerFrage,
   seiteAus,
   verlaufSchema,
 } from "../lib/feedback/regeln";
@@ -88,6 +89,17 @@ assert.ok(
   !verlaufSchema.safeParse(Array.from({ length: 2 * (NACHRICHTEN_MAX + KORREKTUREN_MAX) + 2 }, (_, i) => (i % 2 ? k("b") : p("a")))).success,
   "Mehr Nachrichten, als die Grenzen erlauben",
 );
+
+// ── Genau eine Frage ────────────────────────────────────────────────────────
+assert.deepEqual(mitEinerFrage("Danke. Wann? Und wo?", "Passiert es immer? Und überall?"), {
+  text: "Danke. Passiert es immer?",
+  frage: "Passiert es immer?",
+}, "Fragen im Text fallen weg, die Rückfrage endet am ersten Fragezeichen");
+assert.deepEqual(mitEinerFrage("Verstanden. Wie löst du es heute? Und wie oft?", null), {
+  text: "Verstanden. Wie löst du es heute?",
+  frage: "Wie löst du es heute?",
+}, "Ohne Rückfrage rückt die erste Frage aus dem Text nach");
+assert.deepEqual(mitEinerFrage("Ich fasse zusammen.", null), { text: "Ich fasse zusammen.", frage: null });
 
 // ── Seite ───────────────────────────────────────────────────────────────────
 assert.equal(seiteAus("/team/abc/termine?suche=Muster#x"), "/team/abc/termine", "Ohne Suche und Anker");

@@ -18,6 +18,9 @@ export const NACHRICHTEN_MAX = 10;
 /** Nach der ersten Zusammenfassung noch so viele Nachrichten zum Korrigieren
  *  oder Bestätigen (PO 13). SQL-Zwilling: `korrekturen`. */
 export const KORREKTUREN_MAX = 2;
+/** Nach etwa so vielen Nachrichten strebt der Dialog die Zusammenfassung an
+ *  (PO 18) — ein Anstoss ans Modell, keine Grenze. */
+export const RUECKFRAGEN_ZIEL = 5;
 /** Höchstens so viele Zeichen je Nachricht (PO 22). Das Feld nimmt nicht mehr
  *  an; die Server Action prüft es trotzdem. */
 export const NACHRICHT_MAX = 1000;
@@ -103,6 +106,23 @@ export function seiteAus(eingabe: unknown): string {
   const roh = typeof eingabe === "string" ? eingabe : "";
   const pfad = roh.split(/[?#]/)[0];
   return pfad.startsWith("/") ? pfad.slice(0, 500) : "/";
+}
+
+/** Die Antwort an die Person mit genau einer Frage: Fragen im Text fallen
+ *  weg, die Rückfrage gilt bis zu ihrem ersten Fragezeichen; fehlt sie, rückt
+ *  die erste Frage aus dem Text nach. Das Modell hielt sich als Fliesstext
+ *  nicht an «genau eine Frage» (Staging-Test 2026-10-28). */
+export function mitEinerFrage(antwort: string, rueckfrage: string | null): { text: string; frage: string | null } {
+  const saetze = antwort.trim().match(/[^.!?]+[.!?]+["»«]?|[^.!?]+$/g) ?? [];
+  const istFrage = (x: string) => x.trim().endsWith("?");
+  const r = rueckfrage?.trim() ?? "";
+  const ende = r.indexOf("?");
+  const frage = (r ? (ende === -1 ? r : r.slice(0, ende + 1)) : null) ?? saetze.find(istFrage)?.trim() ?? null;
+  const aussage = saetze
+    .filter((x) => !istFrage(x))
+    .map((x) => x.trim())
+    .join(" ");
+  return { text: [aussage, frage].filter(Boolean).join(" "), frage };
 }
 
 /* ── Meldungen ─────────────────────────────────────────────────────────── */
