@@ -3981,7 +3981,14 @@ try {
     // OoS 5: Das Abo nennt nur Zeit und Ort.
     const imFeed = (await feed((await holen(a, team)).token!)).termine!.find((x) => x.id === t.terminId)!;
     // Die erwartete Zahl liefert der Feed nur für die Mindestbesetzung (#521); der Eintrag nennt sie nicht.
-    assert.ok(!aboBeschreibung(imFeed as unknown as AboTrainerTermin).includes("12"), "die Spielerzahl steht nicht im Eintrag");
+    // Verglichen mit demselben Eintrag ohne Zahl statt nach «12» gesucht: Die
+    // Namen der Wegwerf-Konten sind zufälliges Hex und enthalten manchmal «12».
+    const eintrag = imFeed as unknown as AboTrainerTermin;
+    assert.equal(
+      aboBeschreibung(eintrag),
+      aboBeschreibung({ ...eintrag, erwartete_spielerzahl: null }),
+      "die Spielerzahl steht nicht im Eintrag",
+    );
   });
 
   // ── Kalender: Felder und Spielerzahl einer Terminserie (#391) ─────────────

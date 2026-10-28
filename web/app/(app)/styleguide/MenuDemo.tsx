@@ -19,7 +19,7 @@ export function MenuDemo() {
   return (
     <div className="flex items-center gap-4">
       <div className="relative">
-        <Button ref={triggerRef} variant="tonal" onClick={() => setOpen((o) => !o)}>
+        <Button ref={triggerRef} variant="outlined" onClick={() => setOpen((o) => !o)}>
           Aktionen
           <ChevronDown size={18} strokeWidth={2} aria-hidden />
         </Button>

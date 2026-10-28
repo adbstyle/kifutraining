@@ -9,6 +9,7 @@ import {
   History,
   LogIn,
   Menu as MenuIcon,
+  MessageSquare,
   Palette,
   PanelLeftClose,
   PanelLeftOpen,
@@ -74,6 +75,15 @@ export interface SeitenleisteStyleguide {
   current?: boolean;
 }
 
+/** «Fragen und Feedback» unten in der Leiste (#542): kein Link, sondern ein
+ *  Knopf — er öffnet den Dialog neben der Seite, statt sie zu wechseln. */
+export interface SeitenleisteFeedback {
+  label: string;
+  /** Der Dialog steht offen → der Eintrag ist hervorgehoben. */
+  offen: boolean;
+  onOeffnen: () => void;
+}
+
 export interface SeitenleisteProps {
   gruppen: SeitenleisteGruppe[];
   /** Angemeldet: Konto-Karte unten. Sonst `anmeldenHref`. */
@@ -83,6 +93,8 @@ export interface SeitenleisteProps {
   version?: SeitenleisteVersion;
   /** Styleguide unter der Version. */
   styleguide?: SeitenleisteStyleguide;
+  /** «Fragen und Feedback» über der Version; nur angemeldet. */
+  feedback?: SeitenleisteFeedback;
   /** Schmal (nur Zeichen). Wirkt ab `lg`; darunter ist die Leiste ein Drawer
    *  und zeigt immer alles. */
   slim: boolean;
@@ -206,6 +218,7 @@ export function Seitenleiste({
   anmeldenHref = "/login",
   version,
   styleguide,
+  feedback,
   slim,
   drawerOffen = false,
   onDrawerOffenChange = keineAktion,
@@ -397,8 +410,33 @@ export function Seitenleiste({
         {/* Die Version führt zur Release-History (#408), der Styleguide
             darunter zum Designsystem: beide gleich über der Linie zum Konto.
             Schmal bleibt das Zeichen, der Name steht dann im Hinweis daneben. */}
-        {(version || styleguide) && (
+        {(version || styleguide || feedback) && (
           <div className="flex shrink-0 flex-col gap-0.5 px-4 pb-2">
+            {feedback && (
+              <button
+                type="button"
+                aria-expanded={feedback.offen}
+                data-hinweis={feedback.label}
+                onClick={() => {
+                  schliessen();
+                  feedback.onOeffnen();
+                }}
+                className={cn(
+                  zeile,
+                  "type-body-small h-9 gap-3 px-2.5 text-left",
+                  k?.mitte,
+                  feedback.offen ? zeileAktiv : zeileRuhe,
+                )}
+              >
+                <MessageSquare
+                  size={18}
+                  strokeWidth={2}
+                  aria-hidden
+                  className={cn("shrink-0", feedback.offen && "text-primary")}
+                />
+                <span className={cn("truncate", k?.textWeg)}>{feedback.label}</span>
+              </button>
+            )}
             {version && (
               <Link
                 href={version.href}

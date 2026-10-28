@@ -16,7 +16,9 @@ import { nebenLeiste } from "./Seitenleiste";
 /** Lage und Verhalten des Platzes, ohne `bottom` und Ebene. `m-0`: Ein
  *  `space-y-*` rundum verschöbe sonst den festen Platz. */
 export const unterRand = cn(
-  "pointer-events-none fixed right-0 m-0 flex justify-center px-4 print:hidden",
+  // Rechts rückt er neben die Spalte «Fragen und Feedback», solange sie am
+  // Desktop offen steht (`--feedback-breite`, FeedbackProvider).
+  "pointer-events-none fixed right-0 m-0 flex justify-center px-4 print:hidden lg:right-[var(--feedback-breite,0px)]",
   nebenLeiste,
 );
 

@@ -22,4 +22,7 @@ export const env = {
   /** Geheimer Wert, mit dem die Abholung den Anschluss zur Sperre verschlüsselt
    *  (#438 AK 15). Je Umgebung ein anderer; fehlt er, holt niemand ab. */
   abholSchluessel: () => process.env.ABHOL_SPERRE_SCHLUESSEL || null,
+  /** Schlüssel für das Gesprächsmodell des Feedback-Dialogs (Epic #541).
+   *  Fehlt er, ist Feedback nicht möglich; der Rest der App läuft weiter. */
+  anthropicApiKey: () => process.env.ANTHROPIC_API_KEY || null,
 };

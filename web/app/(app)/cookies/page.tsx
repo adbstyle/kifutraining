@@ -35,6 +35,10 @@ export default async function CookiesPage() {
           Land und den Gerätetyp.
         </p>
         <p>
+          Was du unter «Fragen und Feedback» schreibst, geht an Anthropic in den USA: Dort läuft
+          Haiku, das KI-Modell, das dieses Gespräch führt. Auch dafür liegt nichts in deinem Browser.
+        </p>
+        <p>
           Du kannst diese Cookies in den Einstellungen deines Browsers für ki-fu.ch sperren oder
           löschen. Was dann nicht mehr geht, steht bei jedem Eintrag.
         </p>

@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-10-25. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-10-28. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Seitenleiste
 
@@ -14,6 +14,9 @@ neues, umbenanntes oder aufgelöstes Team erscheint dort ohne Neuladen.
 
 Hervorgehoben ist, wo man gerade steht. Ein geöffnetes Team-Training hält „Teams" hervor,
 wie im Team-Bereich beschrieben.
+
+Angemeldet steht darüber „Fragen und Feedback" (siehe unten). Es ist ein Knopf, kein Link: Er
+öffnet das Gespräch neben der Seite, statt die Seite zu wechseln.
 
 Über dem Konto steht die Version, die gerade läuft. Ein Klick darauf öffnet „Versionen" (siehe
 unten); in der schmalen Leiste bleibt ihr Zeichen, die Nummer zeigt der Hinweis daneben. Gleich
@@ -84,7 +87,9 @@ Breite der Seitenleiste, die gezogene Breite der Spalte und des Verzeichnisses u
 Sie nennt auch die Besucherstatistik: KiFu zählt auf ki-fu.ch Seitenaufrufe mit Vercel Web
 Analytics nach Seite, Herkunft, Land und Gerätetyp. Diese legt nichts im Browser ab, kennt keine
 Personen und erhält die Adresse ohne Suchbegriffe und Filter; eine unbekannte Adresse zählt sie
-nicht. Ausserdem sagt die Seite, wie man Cookies in den
+nicht. Was man unter „Fragen und Feedback" schreibt, geht an Anthropic in den USA, wo das
+KI-Modell Haiku läuft, das das Gespräch führt; auch dafür liegt nichts im Browser. Ausserdem sagt
+die Seite, wie man Cookies in den
 Einstellungen des Browsers sperrt oder löscht. Sie hängt
 am Konto (Brotkrume „Konto › Cookies") und ist ohne Anmeldung über einen Verweis unten auf den
 Seiten ohne Leiste erreichbar, etwa beim Anmelden und Registrieren — nicht aber auf den Seiten
@@ -219,11 +224,45 @@ ebenso die Bestätigung beim Verbinden eines KI-Assistenten.
 Die Seite, über die Eltern eine Spieler:in ab- und anmelden, und die Abholseite eines Teams (siehe
 [Team-Bereich](team-bereich.md#privater-link)) sind für Menschen ohne Konto gedacht und fürs
 Telefon gebaut: eine schmale Spalte ohne Seitenleiste, ohne Brotkrumen und ohne Meldungen am
-Bildschirmrand, unten nur die Zeile „KiFu · Trainings für Kinder- und Juniorenfussball". In den
+Bildschirmrand. Auf der Seite der Spieler:in klebt unten am Bildschirmrand eine schmale Leiste mit
+dem Link „Fragen und Feedback"; die Abholseite hat unten nichts. In den
 übrigen Teil der Anwendung führen sie nicht. Eine Anmeldung kennen sie nicht — auch wer ein Konto
 hat, ist dort niemand Bestimmtes —, und sie legen nichts im Browser ab. Ihr Titel ist fest und nennt weder Team noch Kind,
 damit ein Chat beim Teilen keine Namen in die Vorschau setzt; Suchmaschinen nehmen sie nicht auf,
 die Besucherstatistik zählt sie nicht, und in eine fremde Seite einbetten lassen sie sich nicht.
+
+## Fragen und Feedback
+
+Wer angemeldet ist, meldet über „Fragen und Feedback" in der Seitenleiste einen Fehler, einen
+Wunsch oder eine Frage zu KiFu, von jeder Seite aus. Eltern und Spieler:innen erreichen dasselbe
+über einen Link am unteren Rand der Seite hinter ihrem privaten Link. Das Gespräch führt Haiku, ein
+KI-Modell von Anthropic in den USA; das steht zu Beginn, zusammen mit der Bitte, keine sensiblen
+Angaben einzugeben. Am Desktop steht es als Spalte rechts neben der Seite und bleibt beim
+Seitenwechsel offen, damit man nachschauen kann; auf schmalen Bildschirmen und am privaten Link
+füllt es den Bildschirm.
+
+Das Gespräch fragt gezielt nach: bei einem Fehler nach Absicht, Schritten, Ergebnis, Erwartung
+und ob er wieder auftritt, bei einem falschen Inhalt nach der Stelle; bei einem Wunsch nach dem
+Problem dahinter, dem heutigen Weg, der Häufigkeit und wer betroffen ist. Eine Frage beantwortet
+es aus dem Wissen über die Anwendung, und es sagt, wenn ein gemeldetes Verhalten so gewollt oder
+eine bekannte Grenze ist. Bei einem Wunsch erklärt es nichts, es versteht nur. Eltern erklärt es
+nur, was sie hinter dem privaten Link sehen, und verweist bei Dringendem an die Trainer:innen.
+Wer das Verhalten von Personen im Verein anspricht, wird an die Vereinsleitung oder an Swiss
+Sport Integrity verwiesen; daraus wird kein Feedback. Pro Nachricht stellt es eine Frage.
+
+Hat es genug erfahren — oder verlangt man es mit „Jetzt zusammenfassen" —, legt es eine
+Zusammenfassung vor. Gespeichert wird nur, was man mit „Bestätigen und senden" bestätigt; wer
+verwirft oder schliesst, bricht ab, und nichts bleibt. Danach kommt keine Antwort über KiFu; das
+Feedback wird gelesen und von der Entwicklung priorisiert und nach 12 Monaten automatisch gelöscht.
+Mit dem Feedback gehen die Seite beim Bestätigen, die Version, Gerät und Browser mit. Bei
+Trainer:innen ist es mit dem Konto verbunden; wer das Konto löscht, dessen Feedback bleibt ohne
+diesen Bezug. Am privaten Link kennt es nur das Team, nie die Spieler:in und nie den Link selbst.
+
+Eine Nachricht hat höchstens 1000 Zeichen; der Zähler zeigt, die wievielte von zehn es ist. Nach
+der Zusammenfassung sind noch zwei Korrekturen möglich, danach bleibt Bestätigen oder Verwerfen.
+Pro Konto und pro privatem Link lassen sich am Tag (Schweizer Zeit) fünf Gespräche beginnen. Ist
+die KI nicht erreichbar oder ihr Monatsbudget aufgebraucht, sagt der Dialog nur, dass Feedback
+gerade nicht möglich ist.
 
 ## Bekannte Grenzen
 
@@ -258,3 +297,12 @@ Hinweise, die man vor der Eingabe kennen muss — dass die Altersstufe eines Tra
 feststeht, wen die erwartete Spielerzahl eines Termins zählt und dass 0 Tore keine heisst —:
 Sie stehen dort unter dem Feld. Die Bedienflächen sind dort
 ebenfalls 36 Pixel hoch und damit kleiner als die sonst für Finger empfohlene Grösse.
+
+„Fragen und Feedback": Die Erklärungen der KI können falsch sein, und sie hält sich nicht
+immer an ihre Regeln — etwa fragt sie gelegentlich zwei Dinge in einem Satz. Das Gespräch lebt
+nur im offenen Fenster: Wer neu lädt, die Anwendung verlässt oder den Dialog schliesst, verliert
+es. Einen anderen Weg, Feedback zu geben, gibt es nicht, auch nicht, wenn die KI ausfällt. Ein
+abgegebenes Feedback lässt sich vor Ablauf der 12 Monate nicht löschen lassen. Ohne Anmeldung und
+ohne privaten Link ist kein Feedback möglich, auch nicht zu Problemen beim Anmelden. Weitere
+Angaben zur Datenverarbeitung als den Hinweis zu Beginn und den Satz auf der Seite „Cookies" gibt
+es nicht.

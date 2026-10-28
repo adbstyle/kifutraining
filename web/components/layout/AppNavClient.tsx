@@ -6,6 +6,8 @@ import { ClipboardList, LayoutGrid, Shield } from "lucide-react";
 import { Seitenleiste } from "@/components/ui";
 import type { SeitenleisteGruppe } from "@/components/ui";
 import { aktiveBereiche, teamOffen } from "@/lib/navigation";
+import { useFeedback } from "@/components/feedback/FeedbackKontext";
+import { FEEDBACK_TITEL } from "@/components/feedback/FeedbackGespraech";
 import { useSeitenleiste } from "./AppRahmen";
 import { useTeamBereich } from "./TeamKontext";
 import { useVersionen } from "./VersionenKontext";
@@ -44,6 +46,7 @@ export function AppNavClient({
   useEffect(() => setzeDrawerOffen(false), [adresse, setzeDrawerOffen]);
 
   const { neu } = useVersionen();
+  const feedback = useFeedback();
 
   const aktiv = aktiveBereiche(pfad, mine, imTeamBereich);
 
@@ -90,6 +93,10 @@ export function AppNavClient({
       konto={konto ? { ...konto, href: "/konto", current: pfad === "/konto" } : undefined}
       version={{ nummer: version, href: "/versionen", current: pfad === "/versionen", neu }}
       styleguide={{ href: "/styleguide", current: pfad === "/styleguide" }}
+      // Feedback nur mit Konto (#542); Spielervertretungen melden am privaten Link.
+      feedback={
+        konto ? { label: FEEDBACK_TITEL, offen: feedback.offen, onOeffnen: feedback.oeffnen } : undefined
+      }
       slim={slim}
       drawerOffen={drawerOffen}
       onDrawerOffenChange={setzeDrawerOffen}

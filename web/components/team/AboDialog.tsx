@@ -97,7 +97,7 @@ function AboInhalt({ url }: { url: string }) {
           readOnly
           onFocus={(e) => e.currentTarget.select()}
         />
-        <Button variant="tonal" onClick={kopieren}>
+        <Button variant="outlined" onClick={kopieren}>
           {kopiert ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
           {kopiert ? "Kopiert" : "Kopieren"}
         </Button>
