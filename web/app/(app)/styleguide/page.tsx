@@ -4,7 +4,6 @@ import { ReleaseText } from "@/components/versionen/ReleaseText";
 import {
   Button,
   ButtonLink,
-  ButtonGroup,
   Badge,
   Lozenge,
   SecondaryLozenge,
@@ -581,7 +580,7 @@ const hoehen: [string, string][] = [
   ["h-5 · 20 px", "Lozenge, auch als Alterskategorie (Atlassian)."],
   [
     "h-9 · 36 px",
-    "Das eine Mass alles Bedienbaren (Epic #363): Feldkasten, Knopf, Icon-Knopf, Glied der Knopfgruppe, jeder Chip samt geteiltem Chip und Menühälfte, Reiter, Zeile in Menü und Auswahlpanel, Kontrollkästchen, Eintrag der Seitenleiste, Werkzeug im Diagramm-Editor - auf dem Platz wie am Schreibtisch. Weil alles gleich hoch ist, fluchtet jede Leiste von selbst.",
+    "Das eine Mass alles Bedienbaren (Epic #363): Feldkasten, Knopf, Icon-Knopf, jeder Chip samt geteiltem Chip und Menühälfte, Reiter, Zeile in Menü und Auswahlpanel, Kontrollkästchen, Eintrag der Seitenleiste, Werkzeug im Diagramm-Editor - auf dem Platz wie am Schreibtisch. Weil alles gleich hoch ist, fluchtet jede Leiste von selbst.",
   ],
   ["h-12 · 48 px", "Kopfzeile mit Menüknopf unter lg."],
 ];
@@ -1491,14 +1490,6 @@ export default async function Styleguide() {
             <ButtonLink href="#" variant="filled">Neue Übung</ButtonLink>
             <ButtonLink href="#" variant="outlined">Bearbeiten</ButtonLink>
           </div>
-          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
-            Verbundene Knopfgruppe
-          </p>
-          <ButtonGroup ariaLabel="Ansicht wählen">
-            <Button variant="outlined">Liste</Button>
-            <Button variant="outlined">Raster</Button>
-            <Button variant="outlined">Karte</Button>
-          </ButtonGroup>
 
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Icon-Knöpfe - Zeichen plus Zustands-Ebene, aktiv in Primary; die
@@ -2699,8 +2690,7 @@ export default async function Styleguide() {
             Primary-Kontur, Primary-Schrift, keine Fläche, kein Häkchen) sind der{" "}
             <strong>Filter</strong> und der Chip, der{" "}
             <strong>Nutzertext</strong> trägt - eine Variante, ein Gruppenname.
-            Dasselbe trägt das gewählte Glied der verbundenen Knopfgruppe (<Siehe id="knoepfe" />) und
-            der eingrenzende <Siehe id="filterknopf" />. Ohne Fläche steht die
+            Dasselbe trägt der eingrenzende <Siehe id="filterknopf" />. Ohne Fläche steht die
             Primary-Schrift auf dem dunklen Grund am klarsten (Epic #363); eine
             getönte Fläche nahm ihr Kontrast. Ein Filter steht neben Suchfeld, Auswahl und
             Knöpfen; gefüllt wäre er lauter als die Handlung daneben, und der
