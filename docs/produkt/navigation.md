@@ -219,7 +219,8 @@ ebenso die Bestätigung beim Verbinden eines KI-Assistenten.
 Die Seite, über die Eltern eine Spieler:in ab- und anmelden, und die Abholseite eines Teams (siehe
 [Team-Bereich](team-bereich.md#privater-link)) sind für Menschen ohne Konto gedacht und fürs
 Telefon gebaut: eine schmale Spalte ohne Seitenleiste, ohne Brotkrumen und ohne Meldungen am
-Bildschirmrand, unten nur die Zeile „KiFu · Trainings für Kinder- und Juniorenfussball". In den
+Bildschirmrand. Auf der Seite der Spieler:in klebt unten am Bildschirmrand eine schmale Leiste mit
+dem Link „Fragen und Feedback"; die Abholseite hat unten nichts. In den
 übrigen Teil der Anwendung führen sie nicht. Eine Anmeldung kennen sie nicht — auch wer ein Konto
 hat, ist dort niemand Bestimmtes —, und sie legen nichts im Browser ab. Ihr Titel ist fest und nennt weder Team noch Kind,
 damit ein Chat beim Teilen keine Namen in die Vorschau setzt; Suchmaschinen nehmen sie nicht auf,

@@ -3035,7 +3035,12 @@ export default async function Styleguide() {
             damit die Person die Seite, um die es geht, daneben anschauen kann.
             Unter <code>lg</code> und am privaten Link füllt es den Bildschirm.
             Geöffnet wird es aus der Seitenleiste über einen Knopf, nicht einen
-            Link - es wechselt die Seite nicht.
+            Link - es wechselt die Seite nicht. Am privaten Link, der keine
+            Seitenleiste hat, steht der Knopf als Link mit Zeichen in einer
+            schmalen Leiste (<code>elev-00</code>, Haarlinie oben), die beim
+            Scrollen am unteren Bildschirmrand klebt und bei einer kurzen Seite
+            am unteren Rand steht - so ist er auch in einer langen Terminliste
+            erreichbar.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Der Chat folgt der Regel «Farbe füllt nur, wo eine Fläche gemeint
