@@ -12,7 +12,17 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import { env } from "@/lib/env";
 import { systemBloecke, type Lage } from "./prompt";
-import { ANTWORT_MAX, EINORDNUNGEN, zusammenfassungSchema, type Nachricht, type Zusammenfassung } from "./regeln";
+import {
+  ANTWORT_MAX,
+  BEZEICHNUNG_MAX,
+  EINORDNUNGEN,
+  PUNKT_TEXT_MAX,
+  PUNKTE_MAX,
+  TITEL_MAX,
+  zusammenfassungSchema,
+  type Nachricht,
+  type Zusammenfassung,
+} from "./regeln";
 
 const MODELL = "claude-haiku-5-5";
 
@@ -83,10 +93,13 @@ export async function naechsteAntwort(verlauf: Nachricht[], lage: Lage): Promise
 function gekuerzt(z: z.infer<typeof antwortFormat>["zusammenfassung"] & object) {
   return {
     einordnung: z.einordnung,
-    titel: z.titel.trim().slice(0, 200),
+    titel: z.titel.trim().slice(0, TITEL_MAX),
     punkte: z.punkte
-      .slice(0, 8)
-      .map((p) => ({ bezeichnung: p.bezeichnung.trim().slice(0, 60), text: p.text.trim().slice(0, 1000) }))
+      .slice(0, PUNKTE_MAX)
+      .map((p) => ({
+        bezeichnung: p.bezeichnung.trim().slice(0, BEZEICHNUNG_MAX),
+        text: p.text.trim().slice(0, PUNKT_TEXT_MAX),
+      }))
       .filter((p) => p.bezeichnung && p.text),
   };
 }

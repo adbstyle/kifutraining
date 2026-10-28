@@ -3058,7 +3058,9 @@ export default async function Styleguide() {
             <code>bg-elev-01</code> mit <code>border-linie</code> zum Inhalt. Sie
             ist Rahmen, keine schwebende Fläche, und trägt darum keinen Schatten.
             Oben die Marke (Fussball im Primary-Quadrat, zugleich das Favicon), darunter die Einträge in
-            Gruppen, unten die Versionszeile, der Styleguide und die Konto-Karte: Avatar, Anzeigename
+            Gruppen, unten «Fragen und Feedback» (nur angemeldet; ein Knopf, kein Link - er öffnet
+            den Dialog neben der Seite, siehe <Siehe id="feedback-dialog" />), die Versionszeile,
+            der Styleguide und die Konto-Karte: Avatar, Anzeigename
             und E-Mail führen als Ganzes ins Konto. Die Versionszeile (Zeichen und Nummer, ruhiger als
             ein Eintrag) führt zur Release-History, die Zeile darunter (Palette, gleich ruhig) zu
             dieser Seite; schmal bleibt je das Zeichen. Ist ein Release

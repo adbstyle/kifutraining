@@ -47,6 +47,13 @@ export const verlaufSchema = z
   .refine((v) => v.every((n, i) => n.von === (i % 2 === 0 ? "person" : "ki")), "Verlauf ungültig")
   .refine((v) => v.every((n) => n.von === "ki" || n.text.length <= NACHRICHT_MAX), "Nachricht zu lang");
 
+/** Grenzen der Zusammenfassung — der Titel hat einen SQL-Zwilling (CHECK an
+ *  `feedback.titel`). Was das Modell länger liefert, kürzt der Server. */
+export const TITEL_MAX = 200;
+export const PUNKTE_MAX = 8;
+export const BEZEICHNUNG_MAX = 60;
+export const PUNKT_TEXT_MAX = 1000;
+
 export const EINORDNUNGEN = ["fehler", "wunsch", "frage"] as const;
 export type Einordnung = (typeof EINORDNUNGEN)[number];
 
@@ -55,11 +62,16 @@ export type Einordnung = (typeof EINORDNUNGEN)[number];
  *  Ergebnis, Erwartung, Wiederholbarkeit). Was fehlt, steht als «Unbekannt». */
 export const zusammenfassungSchema = z.object({
   einordnung: z.enum(EINORDNUNGEN),
-  titel: z.string().min(1).max(200),
+  titel: z.string().min(1).max(TITEL_MAX),
   punkte: z
-    .array(z.object({ bezeichnung: z.string().min(1).max(60), text: z.string().min(1).max(1000) }))
+    .array(
+      z.object({
+        bezeichnung: z.string().min(1).max(BEZEICHNUNG_MAX),
+        text: z.string().min(1).max(PUNKT_TEXT_MAX),
+      }),
+    )
     .min(1)
-    .max(8),
+    .max(PUNKTE_MAX),
 });
 export type Zusammenfassung = z.infer<typeof zusammenfassungSchema>;
 
@@ -75,7 +87,10 @@ export function dialogStand(nachricht: number, vorschlagBei: number | null) {
     const offen = nachricht < NACHRICHTEN_MAX + KORREKTUREN_MAX;
     return { offen, zaehler: `Nachricht ${Math.min(nachricht + 1, NACHRICHTEN_MAX)} von ${NACHRICHTEN_MAX}` };
   }
-  const rest = Math.max(0, vorschlagBei + KORREKTUREN_MAX - nachricht);
+  // Kam die Zusammenfassung spät, kappt die feste Obergrenze die Korrekturen
+  // — wie in der Datenbank.
+  const ende = Math.min(vorschlagBei + KORREKTUREN_MAX, NACHRICHTEN_MAX + KORREKTUREN_MAX);
+  const rest = Math.max(0, ende - nachricht);
   return {
     offen: rest > 0,
     zaehler: rest === 0 ? "Keine Korrektur mehr möglich" : `Noch ${rest === 1 ? "1 Korrektur" : `${rest} Korrekturen`} möglich`,

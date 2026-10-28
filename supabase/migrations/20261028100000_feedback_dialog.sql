@@ -8,6 +8,8 @@
 -- Limits (PO 13/15/29). Lesen kann ausschliesslich der Betreiber, direkt per
 -- SQL (PO 2) — die Tabellen haben weder Policy noch Grant.
 -- ============================================================================
+-- Die Fremdschlüssel auf auth.users und teams sperren diese kurz.
+set lock_timeout = '5s';
 
 -- Einordnung (PO 6): Ein fehlerhafter Inhalt gilt als Fehler. Die Person
 -- sieht sie nicht; das Modell legt sie mit der Zusammenfassung fest.
@@ -81,7 +83,9 @@ declare
   v_id    uuid;
 begin
   perform pg_advisory_xact_lock(hashtextextended('feedback_dialoge:' || p_schluessel, 0));
-  delete from feedback_dialoge where tag < v_tag;
+  -- Gestern begonnene Dialoge laufen über Mitternacht weiter; erst die von
+  -- vorgestern sind sicher vorbei.
+  delete from feedback_dialoge where tag < v_tag - 1;
   select count(*) into v_zahl from feedback_dialoge where schluessel = p_schluessel and tag = v_tag;
   if v_zahl >= (feedback_grenzen() ->> 'dialoge_je_tag')::int then
     return jsonb_build_object('status', 'tageslimit');
@@ -210,3 +214,5 @@ end;
 $$;
 revoke all on function feedback_ablegen(uuid, feedback_einordnung, text, jsonb, jsonb, text, text, text, text) from public, anon;
 grant execute on function feedback_ablegen(uuid, feedback_einordnung, text, jsonb, jsonb, text, text, text, text) to authenticated;
+
+reset lock_timeout;

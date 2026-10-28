@@ -6,53 +6,37 @@
 // Feedback: Als Seite gilt ein fester Platzhalter (PC 3).
 import { createAnonClient } from "@/lib/supabase/anon";
 import { istLinkToken } from "@/lib/spieler";
+import { MELDUNG_NICHT_MOEGLICH } from "@/lib/feedback/regeln";
 import {
   legeAb,
+  rpcWeg,
   sendeNachricht,
   type AblageEingabe,
   type AblageErgebnis,
   type NachrichtEingabe,
   type NachrichtErgebnis,
-  type Weg,
 } from "@/lib/feedback/dialog";
 
-function linkWeg(token: string): Weg {
-  const supabase = createAnonClient();
-  const rpc = async (name: string, args: Record<string, unknown>) => {
-    const { data, error } = await supabase.rpc(name, { p_token: token, ...args });
-    return error ? null : data;
-  };
-  return {
+const linkWeg = (token: string) =>
+  rpcWeg({
+    supabase: createAnonClient(),
     rolle: "spielervertretung",
     seiteFest: "/abmelden/[privater Link]",
-    beginnen: () => rpc("feedback_link_beginnen", {}),
-    zaehlen: (dialog) => rpc("feedback_link_zaehlen", { p_dialog: dialog }),
-    vermerken: async (dialog) => {
-      await rpc("feedback_link_vermerken", { p_dialog: dialog });
+    rpc: {
+      beginnen: "feedback_link_beginnen",
+      zaehlen: "feedback_link_zaehlen",
+      vermerken: "feedback_link_vermerken",
+      ablegen: "feedback_link_ablegen",
     },
-    ablegen: (dialog, f) =>
-      rpc("feedback_link_ablegen", {
-        p_dialog: dialog,
-        p_einordnung: f.einordnung,
-        p_titel: f.titel,
-        p_zusammenfassung: f.punkte,
-        p_verlauf: f.verlauf,
-        p_seite: f.seite,
-        p_version: f.version,
-        p_umgebung: f.umgebung,
-        p_geraet: f.geraet,
-      }),
-  };
-}
-
-const UNGUELTIG = "Feedback ist gerade nicht möglich. Versuch es später nochmals.";
+    args: { p_token: token },
+  });
 
 export async function feedbackLinkNachrichtAktion(token: string, e: NachrichtEingabe): Promise<NachrichtErgebnis> {
-  if (!istLinkToken(token)) return { ok: false, error: UNGUELTIG, ende: true };
+  if (!istLinkToken(token)) return { ok: false, error: MELDUNG_NICHT_MOEGLICH, ende: true };
   return sendeNachricht(linkWeg(token), e);
 }
 
 export async function feedbackLinkAblegenAktion(token: string, e: AblageEingabe): Promise<AblageErgebnis> {
-  if (!istLinkToken(token)) return { ok: false, error: UNGUELTIG, ende: true };
+  if (!istLinkToken(token)) return { ok: false, error: MELDUNG_NICHT_MOEGLICH, ende: true };
   return legeAb(linkWeg(token), e);
 }

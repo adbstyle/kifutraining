@@ -95,9 +95,7 @@ export function AppNavClient({
       styleguide={{ href: "/styleguide", current: pfad === "/styleguide" }}
       // Feedback nur mit Konto (#542); Spielervertretungen melden am privaten Link.
       feedback={
-        konto && feedback
-          ? { label: FEEDBACK_TITEL, offen: feedback.offen, onOeffnen: feedback.oeffnen }
-          : undefined
+        konto ? { label: FEEDBACK_TITEL, offen: feedback.offen, onOeffnen: feedback.oeffnen } : undefined
       }
       slim={slim}
       drawerOffen={drawerOffen}

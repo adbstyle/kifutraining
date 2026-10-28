@@ -1,14 +1,14 @@
 "use client";
 
 import { FeedbackFlaeche, FeedbackGespraech } from "@/components/feedback/FeedbackGespraech";
-import type { FeedbackGespraech as Gespraech } from "@/components/feedback/useFeedbackGespraech";
+import type { GespraechZustand } from "@/components/feedback/useFeedbackGespraech";
 import { dialogStand } from "@/lib/feedback/regeln";
 
 const keineAktion = () => {};
 
 /* «Fragen und Feedback» im Stand nach der Zusammenfassung — gerendert aus den
    Bausteinen der App, mit einem festen Gespräch statt des Modells. */
-const BEISPIEL: Gespraech = {
+const BEISPIEL: GespraechZustand = {
   phase: "gespraech",
   verlauf: [
     { von: "person", text: "Ich hab einen Termin verschoben, jetzt stehen alle Donnerstage auf 18 Uhr." },
@@ -43,7 +43,7 @@ export function FeedbackDemo() {
       <FeedbackFlaeche form="eingebettet" onSchliessen={keineAktion}>
         <FeedbackGespraech
           g={BEISPIEL}
-          seite={() => "/styleguide"}
+          seite="/styleguide"
           onSchliessen={keineAktion}
           fokussieren={false}
         />

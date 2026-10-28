@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ArrowUp, CircleCheck, X } from "lucide-react";
 import { Button, Card, IconButton, SectionMessage, TextArea } from "@/components/ui";
+import { AB_LG } from "@/lib/breite";
 import { cn } from "@/lib/cn";
+import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
 import { AUFBEWAHRUNG_MONATE, NACHRICHT_MAX } from "@/lib/feedback/regeln";
-import type { FeedbackGespraech as Gespraech } from "./useFeedbackGespraech";
+import type { GespraechZustand } from "./useFeedbackGespraech";
 
 /** Der Name des Dialogs — in der Seitenleiste, im Kopf und am privaten Link. */
 export const FEEDBACK_TITEL = "Fragen und Feedback";
@@ -16,7 +18,11 @@ export const FEEDBACK_TITEL = "Fragen und Feedback";
    geht, bleibt daneben sichtbar und bedienbar. Unter `lg` und am privaten
    Link (`vollbild`) füllt sie den Bildschirm. Die Spalte ist Rahmen wie die
    Seitenleiste: Fläche 01dp mit Haarlinie, ohne Schatten. `eingebettet`
-   füllt den umgebenden Rahmen (Styleguide). */
+   füllt den umgebenden Rahmen (Styleguide).
+
+   Bildschirmfüllend ist sie modal wie der Drawer der Seitenleiste: Alles
+   daneben ist `inert`, die Seite scrollt nicht mit, Escape schliesst. Wächst
+   oder schrumpft das Fenster über `lg`, folgt das mit. */
 export function FeedbackFlaeche({
   form,
   onSchliessen,
@@ -26,10 +32,51 @@ export function FeedbackFlaeche({
   onSchliessen: () => void;
   children: React.ReactNode;
 }) {
-  const titelId = "feedback-titel";
+  const titelId = useId();
+  const ref = useRef<HTMLElement>(null);
+  const abLg = useAbLg();
+  const modal = form === "vollbild" || (form === "panel" && !abLg);
+
+  // Als Layout-Effekt: Beim Schliessen muss die Seite wieder bedienbar sein,
+  // bevor der Fokus auf den Auslöser zurückgeht (useFeedbackOffen).
+  useIsomorpherEffekt(() => {
+    const el = ref.current;
+    if (!modal || !el) return;
+    // Alles ausser dem Dialog stilllegen: auf jeder Stufe bis zum body die
+    // Geschwister — so erreichen weder Tab noch Vorlesehilfe die Seite dahinter.
+    const stillgelegt: HTMLElement[] = [];
+    for (let k: HTMLElement | null = el; k && k !== document.body; k = k.parentElement) {
+      for (const g of k.parentElement?.children ?? []) {
+        if (g !== k && g instanceof HTMLElement && !g.inert) {
+          g.inert = true;
+          stillgelegt.push(g);
+        }
+      }
+    }
+    return () => {
+      for (const g of stillgelegt) g.inert = false;
+    };
+  }, [modal]);
+
+  // Scroll-Sperre und Escape als gewöhnlicher Effekt: Öffnet der Dialog aus
+  // dem Drawer, gibt dieser seine Sperre erst in seinem Effekt frei — danach
+  // sperrt hier, sonst scrollte die Seite unter dem Dialog.
+  useEffect(() => {
+    if (!modal) return;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onSchliessen();
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [modal, onSchliessen]);
+
   return (
     <section
+      ref={ref}
       role="dialog"
+      aria-modal={modal || undefined}
       aria-labelledby={titelId}
       className={cn(
         "flex flex-col bg-elev-00 print:hidden",
@@ -42,11 +89,24 @@ export function FeedbackFlaeche({
         <h2 id={titelId} className="type-title-medium flex-1 truncate text-on-surface">
           {FEEDBACK_TITEL}
         </h2>
-        <IconButton icon={X} label="Fragen und Feedback schliessen" onClick={onSchliessen} />
+        <IconButton icon={X} label={`${FEEDBACK_TITEL} schliessen`} onClick={onSchliessen} />
       </header>
       {children}
     </section>
   );
+}
+
+/** Ob das Fenster mindestens `lg` breit ist — und bleibt es beim Ändern. */
+function useAbLg(): boolean {
+  // Ohne Fenster (Styleguide auf dem Server) nie modal — dort ist sie eingebettet.
+  const [abLg, setAbLg] = useState(() => typeof window === "undefined" || window.matchMedia(AB_LG).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(AB_LG);
+    const onChange = () => setAbLg(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return abLg;
 }
 
 /* ── Gespräch ───────────────────────────────────────────────────
@@ -61,11 +121,11 @@ export function FeedbackGespraech({
   dringend,
   fokussieren = true,
 }: {
-  g: Gespraech;
+  g: GespraechZustand;
   /** Beim Öffnen ins Feld springen; nicht im Styleguide, der sonst dorthin scrollte. */
   fokussieren?: boolean;
   /** Die Seite, auf der die Person gerade ist (nur der Pfad). */
-  seite: () => string;
+  seite: string;
   onSchliessen: () => void;
   /** Am privaten Link: wohin mit Dringendem (#544). */
   dringend?: string;
@@ -107,7 +167,7 @@ export function FeedbackGespraech({
   const senden = () => {
     const t = text.trim();
     if (!t) return;
-    g.senden(t, seite());
+    g.senden(t, seite);
     setText("");
   };
   const zeigeEingabe = g.phase === "gespraech" && g.stand.offen;
@@ -133,7 +193,8 @@ export function FeedbackGespraech({
         {g.unterwegs && <Tippt />}
 
         {g.zusammenfassung && !g.unterwegs && g.phase === "gespraech" && (
-          <Card aria-label="Zusammenfassung" className="flex flex-col gap-3 p-4">
+          // Mit Haarlinie: Am Desktop steht die Karte auf derselben Stufe wie die Spalte.
+          <Card role="group" aria-label="Zusammenfassung" className="flex flex-col gap-3 border border-linie p-4">
             <h3 className="type-title-small text-on-surface">{g.zusammenfassung.titel}</h3>
             <dl className="flex flex-col gap-2.5">
               {g.zusammenfassung.punkte.map((p) => (
@@ -144,7 +205,7 @@ export function FeedbackGespraech({
               ))}
             </dl>
             <div className="flex flex-wrap gap-2 pt-1">
-              <Button onClick={() => g.bestaetigen(seite())} disabled={g.wartet}>
+              <Button onClick={() => g.bestaetigen(seite)} disabled={g.wartet}>
                 Bestätigen und senden
               </Button>
               <Button variant="outlined" onClick={onSchliessen} disabled={g.wartet}>
@@ -199,7 +260,7 @@ export function FeedbackGespraech({
           <div className="type-body-small flex items-center justify-between gap-3 px-0.5 text-on-surface-mittel tabular-nums">
             <span>{g.stand.zaehler}</span>
             {g.kannZusammenfassen ? (
-              <Button variant="link" onClick={() => g.zusammenfassen(seite())} disabled={g.wartet}>
+              <Button variant="link" onClick={() => g.zusammenfassen(seite)} disabled={g.wartet}>
                 Jetzt zusammenfassen
               </Button>
             ) : (

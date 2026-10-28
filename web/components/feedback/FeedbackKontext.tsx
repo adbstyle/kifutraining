@@ -1,12 +1,11 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext } from "react";
 import type { CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 import { feedbackAblegenAktion, feedbackNachrichtAktion } from "@/lib/actions/feedback";
-import { AB_LG } from "@/lib/breite";
 import { FeedbackFlaeche, FeedbackGespraech } from "./FeedbackGespraech";
-import { useFeedbackGespraech, type FeedbackAktionen } from "./useFeedbackGespraech";
+import { useFeedbackGespraech, useFeedbackOffen, type FeedbackAktionen } from "./useFeedbackGespraech";
 
 /** Breite der Spalte am Desktop; Snackbar und Auswahlleiste rücken um sie
  *  nach links (`unterRand`). */
@@ -29,21 +28,7 @@ const FeedbackKontext = createContext<FeedbackZustand | null>(null);
  * `display: contents`-Wrapper, damit der feste Platz am unteren Rand sie erbt.
  */
 export function FeedbackProvider({ children }: { children: React.ReactNode }) {
-  const [offen, setOffen] = useState(false);
-  // Jedes Öffnen beginnt ein neues Gespräch.
-  const [lauf, setLauf] = useState(0);
-  const ausloeser = useRef<HTMLElement | null>(null);
-
-  const oeffnen = useCallback(() => {
-    ausloeser.current = document.activeElement as HTMLElement | null;
-    setOffen(true);
-  }, []);
-  const schliessen = useCallback(() => {
-    setOffen(false);
-    setLauf((l) => l + 1);
-    ausloeser.current?.focus();
-  }, []);
-
+  const { offen, lauf, oeffnen, schliessen } = useFeedbackOffen();
   const stil = { "--feedback-breite": offen ? BREITE : "0px" } as CSSProperties;
   return (
     <FeedbackKontext.Provider value={{ offen, oeffnen }}>
@@ -57,33 +42,15 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
 
 function Spalte({ onSchliessen }: { onSchliessen: () => void }) {
   const g = useFeedbackGespraech(AKTIONEN);
-  const pfad = usePathname();
-  const pfadRef = useRef(pfad);
-  pfadRef.current = pfad;
-
-  // Unter lg liegt der Dialog über der Seite: Escape schliesst, und die
-  // Seite dahinter scrollt nicht mit. Am Desktop steht er daneben und lässt
-  // die Seite in Ruhe.
-  useEffect(() => {
-    const mq = window.matchMedia(AB_LG);
-    if (mq.matches) return;
-    const vorher = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onSchliessen();
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = vorher;
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [onSchliessen]);
-
   return (
     <FeedbackFlaeche form="panel" onSchliessen={onSchliessen}>
-      <FeedbackGespraech g={g} seite={() => pfadRef.current} onSchliessen={onSchliessen} />
+      <FeedbackGespraech g={g} seite={usePathname()} onSchliessen={onSchliessen} />
     </FeedbackFlaeche>
   );
 }
 
-export function useFeedback(): FeedbackZustand | null {
-  return useContext(FeedbackKontext);
+export function useFeedback(): FeedbackZustand {
+  const zustand = useContext(FeedbackKontext);
+  if (!zustand) throw new Error("useFeedback braucht den FeedbackProvider im (app)-Layout.");
+  return zustand;
 }

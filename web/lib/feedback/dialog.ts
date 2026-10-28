@@ -3,9 +3,11 @@
 // fragen, das Bestätigte ablegen. Was je Zugang anders ist — welche RPC,
 // mit welchem Schlüssel, welche Rolle —, steckt im `Weg`.
 //
-// Bewusst OHNE "use server": Die Actions in lib/actions/feedback.ts sind die
-// öffentlichen Endpunkte, diese Datei ist ihr gemeinsamer Teil.
+// Bewusst OHNE "use server": Die Actions in lib/actions/feedback.ts und
+// feedback-link.ts sind die öffentlichen Endpunkte, diese Datei ist ihr
+// gemeinsamer Teil.
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { headers } from "next/headers";
 import { LINK_TEXT } from "@/lib/spieler";
 import { APP_VERSION } from "@/lib/version";
@@ -29,14 +31,56 @@ type RpcAntwort = { status: string; dialog?: string; nachricht?: number; vorschl
 /** Die Verbindung eines Zugangs zur Datenbank. */
 export type Weg = {
   rolle: Rolle;
-  /** Die Seite, die statt der gemeldeten gilt — am privaten Link, dessen
-   *  Pfad das Geheimnis trägt (#544 PC 3). */
   seiteFest?: string;
   beginnen: () => Promise<RpcAntwort | null>;
   zaehlen: (dialog: string) => Promise<RpcAntwort | null>;
-  vermerken: (dialog: string) => Promise<void>;
+  /** `false`, wenn die Datenbank den Vorschlag nicht vermerken konnte. */
+  vermerken: (dialog: string) => Promise<boolean>;
   ablegen: (dialog: string, f: Ablage) => Promise<RpcAntwort | null>;
 };
+
+/** Der Weg eines Zugangs über seine vier RPCs: Konto (#542) oder privater
+ *  Link (#544). `args` gehen an jede RPC mit (etwa der Link). */
+export function rpcWeg(o: {
+  supabase: SupabaseClient;
+  rolle: Rolle;
+  /** Die Seite, die statt der gemeldeten gilt — am privaten Link, dessen
+   *  Pfad das Geheimnis trägt (#544 PC 3). */
+  seiteFest?: string;
+  rpc: { beginnen: string; zaehlen: string; vermerken: string; ablegen: string };
+  args?: Record<string, unknown>;
+}): Weg {
+  const rufe = async (name: string, args: Record<string, unknown> = {}) => {
+    const { data, error } = await o.supabase.rpc(name, { ...o.args, ...args });
+    // Für die Person heisst jeder Fehler «nicht möglich»; der Betreiber
+    // findet den Grund im Funktions-Log — ohne Inhalt des Gesprächs.
+    if (error) console.error(`Feedback-Dialog: ${name} gescheitert`, error.code, error.message);
+    return error ? null : (data as RpcAntwort | null);
+  };
+  return {
+    rolle: o.rolle,
+    seiteFest: o.seiteFest,
+    beginnen: () => rufe(o.rpc.beginnen),
+    zaehlen: (dialog) => rufe(o.rpc.zaehlen, { p_dialog: dialog }),
+    vermerken: async (dialog) => {
+      const { error } = await o.supabase.rpc(o.rpc.vermerken, { ...o.args, p_dialog: dialog });
+      if (error) console.error(`Feedback-Dialog: ${o.rpc.vermerken} gescheitert`, error.code, error.message);
+      return !error;
+    },
+    ablegen: (dialog, f) =>
+      rufe(o.rpc.ablegen, {
+        p_dialog: dialog,
+        p_einordnung: f.einordnung,
+        p_titel: f.titel,
+        p_zusammenfassung: f.punkte,
+        p_verlauf: f.verlauf,
+        p_seite: f.seite,
+        p_version: f.version,
+        p_umgebung: f.umgebung,
+        p_geraet: f.geraet,
+      }),
+  };
+}
 
 /** Was ein bestätigtes Feedback in die Datenbank mitnimmt. */
 export type Ablage = {
@@ -77,7 +121,9 @@ async function geraet(): Promise<string> {
   return ((await headers()).get("user-agent") ?? "").slice(0, 500);
 }
 
-const umgebung = () => process.env.VERCEL_ENV ?? "lokal";
+function umgebung(): string {
+  return process.env.VERCEL_ENV ?? "lokal";
+}
 
 /** Ein privater Link, der nicht mehr gilt (#544 AK 5): wie auf der Seite selbst. */
 const LINK_UNGUELTIG = `${LINK_TEXT.ungueltigTitel}. ${LINK_TEXT.ungueltig}`;
@@ -123,7 +169,8 @@ export async function sendeNachricht(weg: Weg, e: NachrichtEingabe): Promise<Nac
     zusammenfassung: vorher?.success ? vorher.data : null,
   });
   if (!k) return nichtMoeglich;
-  if (k.zusammenfassung && vorschlagBei === null) await weg.vermerken(dialog);
+  // Ohne Vermerk liesse sich die Zusammenfassung später nicht ablegen.
+  if (k.zusammenfassung && vorschlagBei === null && !(await weg.vermerken(dialog))) return nichtMoeglich;
   return {
     ok: true,
     dialog,

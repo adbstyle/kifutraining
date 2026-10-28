@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useState, useTransition } from "react";
-import type { AblageErgebnis, NachrichtEingabe, NachrichtErgebnis } from "@/lib/feedback/dialog";
+import { useCallback, useRef, useState, useTransition } from "react";
+import type { AblageEingabe, AblageErgebnis, NachrichtEingabe, NachrichtErgebnis } from "@/lib/feedback/dialog";
 import {
+  MELDUNG_NICHT_MOEGLICH,
+  MELDUNG_SPEICHERN,
   ZUSAMMENFASSUNG_VERLANGEN,
   dialogStand,
   type Nachricht,
@@ -12,12 +14,7 @@ import {
 /** Die Server Actions eines Zugangs — Konto (#542) oder privater Link (#544). */
 export type FeedbackAktionen = {
   nachricht: (e: NachrichtEingabe) => Promise<NachrichtErgebnis>;
-  ablegen: (e: {
-    dialog: string;
-    zusammenfassung: Zusammenfassung;
-    verlauf: Nachricht[];
-    seite: string;
-  }) => Promise<AblageErgebnis>;
+  ablegen: (e: AblageEingabe) => Promise<AblageErgebnis>;
 };
 
 type Phase = "gespraech" | "gesendet" | "beendet";
@@ -44,51 +41,47 @@ export function useFeedbackGespraech(aktionen: FeedbackAktionen) {
 
   const stand = dialogStand(nachricht, vorschlagBei);
 
-  const senden = useCallback(
-    (text: string, seite: string) => {
-      if (wartet || !stand.offen || phase !== "gespraech") return;
-      setUnterwegs(text);
-      setFehler(null);
-      starte(async () => {
-        const r = await aktionen.nachricht({ dialog, verlauf, text, zusammenfassung, seite }).catch(() => null);
-        setUnterwegs(null);
-        if (!r) {
-          setPhase("beendet");
-          setFehler("Feedback ist gerade nicht möglich. Versuch es später nochmals.");
-          return;
-        }
-        if (!r.ok) {
-          setFehler(r.error);
-          if (r.ende) setPhase("beendet");
-          return;
-        }
-        setDialog(r.dialog);
-        setVerlauf((v) => [...v, { von: "person", text }, { von: "ki", text: r.antwort }]);
-        setZusammenfassung(r.zusammenfassung);
-        setNachricht(r.nachricht);
-        setVorschlagBei(r.vorschlagBei);
-      });
-    },
-    [aktionen, dialog, phase, stand.offen, verlauf, wartet, zusammenfassung],
-  );
-
-  const bestaetigen = useCallback(
-    (seite: string) => {
-      if (!dialog || !zusammenfassung || wartet) return;
-      setFehler(null);
-      starte(async () => {
-        const r = await aktionen
-          .ablegen({ dialog, zusammenfassung, verlauf, seite })
-          .catch(() => ({ ok: false as const, error: "Dein Feedback liess sich nicht speichern. Versuch es nochmals." }));
-        if (r.ok) return setPhase("gesendet");
+  function senden(text: string, seite: string) {
+    if (wartet || !stand.offen || phase !== "gespraech") return;
+    setUnterwegs(text);
+    setFehler(null);
+    starte(async () => {
+      const r: NachrichtErgebnis = await aktionen
+        .nachricht({ dialog, verlauf, text, zusammenfassung, seite })
+        .catch(() => ({ ok: false, error: MELDUNG_NICHT_MOEGLICH, ende: true }));
+      setUnterwegs(null);
+      if (!r.ok) {
         setFehler(r.error);
-        // Ein Link, der nicht mehr gilt, beendet den Dialog; sonst geht ein
-        // neuer Versuch (#542 AK 18).
-        if ("ende" in r && r.ende) setPhase("beendet");
-      });
-    },
-    [aktionen, dialog, verlauf, wartet, zusammenfassung],
-  );
+        if (r.ende) setPhase("beendet");
+        return;
+      }
+      setDialog(r.dialog);
+      setVerlauf((v) => [...v, { von: "person", text }, { von: "ki", text: r.antwort }]);
+      setZusammenfassung(r.zusammenfassung);
+      setNachricht(r.nachricht);
+      setVorschlagBei(r.vorschlagBei);
+      // Am Limit ohne Zusammenfassung ginge es nicht weiter.
+      if (!r.zusammenfassung && !dialogStand(r.nachricht, r.vorschlagBei).offen) {
+        setFehler(MELDUNG_NICHT_MOEGLICH);
+        setPhase("beendet");
+      }
+    });
+  }
+
+  function bestaetigen(seite: string) {
+    if (!dialog || !zusammenfassung || wartet) return;
+    setFehler(null);
+    starte(async () => {
+      const r: AblageErgebnis = await aktionen
+        .ablegen({ dialog, zusammenfassung, verlauf, seite })
+        .catch(() => ({ ok: false, error: MELDUNG_SPEICHERN }));
+      if (r.ok) return setPhase("gesendet");
+      setFehler(r.error);
+      // Ein Link, der nicht mehr gilt, beendet den Dialog; sonst geht ein
+      // neuer Versuch (#542 AK 18).
+      if (r.ende) setPhase("beendet");
+    });
+  }
 
   return {
     phase,
@@ -106,4 +99,33 @@ export function useFeedbackGespraech(aktionen: FeedbackAktionen) {
   };
 }
 
-export type FeedbackGespraech = ReturnType<typeof useFeedbackGespraech>;
+export type GespraechZustand = ReturnType<typeof useFeedbackGespraech>;
+
+/**
+ * Offen oder zu, für die beiden Auslöser (Seitenleiste, Link am privaten
+ * Link). Schliessen bricht ab: `lauf` gibt dem Gespräch einen neuen Schlüssel,
+ * das nächste Öffnen beginnt von vorn. Der Fokus geht zurück auf den Auslöser
+ * — oder, lag der im Drawer, der beim Öffnen zugeht, auf dessen Menüknopf.
+ */
+export function useFeedbackOffen() {
+  const [offen, setOffen] = useState(false);
+  const [lauf, setLauf] = useState(0);
+  const ausloeser = useRef<HTMLElement | null>(null);
+  const oeffnen = useCallback(() => {
+    const aktiv = document.activeElement as HTMLElement | null;
+    // Der Menüknopf, nicht der Umschalter der schmalen Leiste: Beide tragen
+    // dasselbe aria-controls, sichtbar ist nur der, der den Drawer öffnet.
+    const menue = [...document.querySelectorAll<HTMLElement>('[aria-controls="seitenleiste"]')].find((el) =>
+      el.checkVisibility(),
+    );
+    ausloeser.current = aktiv?.closest('[aria-modal="true"]') ? (menue ?? null) : aktiv;
+    setOffen(true);
+  }, []);
+  const schliessen = useCallback(() => {
+    setOffen(false);
+    setLauf((l) => l + 1);
+    // Erst nach dem Schliessen: Bis dahin ist die Seite dahinter noch inert.
+    setTimeout(() => ausloeser.current?.focus(), 0);
+  }, []);
+  return { offen, lauf, oeffnen, schliessen };
+}

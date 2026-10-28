@@ -6,6 +6,8 @@ on:
       - "web/**"
       - "supabase/**"
       - ".github/workflows/**"
+      # Quelle des generierten Produktwissens im Feedback-Dialog (#541).
+      - "docs/feedback-triage.md"
 
 jobs:
   web:

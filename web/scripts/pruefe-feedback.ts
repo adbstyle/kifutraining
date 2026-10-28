@@ -24,6 +24,7 @@ import {
   KORREKTUREN_MAX,
   NACHRICHT_MAX,
   NACHRICHTEN_MAX,
+  TITEL_MAX,
   dialogStand,
   seiteAus,
   verlaufSchema,
@@ -39,6 +40,7 @@ assert.equal(datei.length, 1, "Erwartet genau eine Migration «*_feedback_dialog
 const sql = readFileSync(join(migrationen, datei[0]), "utf8");
 const grenzen = sql.match(/'dialoge_je_tag', (\d+), 'nachrichten', (\d+), 'korrekturen', (\d+)/);
 assert.ok(grenzen, "feedback_grenzen() nicht gefunden");
+assert.match(sql, new RegExp(`length\\(titel\\) between 1 and ${TITEL_MAX}\\)`), "CHECK an feedback.titel und TITEL_MAX verschieden");
 assert.deepEqual(
   grenzen.slice(1).map(Number),
   [DIALOGE_JE_TAG, NACHRICHTEN_MAX, KORREKTUREN_MAX],
@@ -71,6 +73,8 @@ assert.deepEqual(dialogStand(4, 4), { offen: true, zaehler: "Noch 2 Korrekturen 
 assert.deepEqual(dialogStand(5, 4), { offen: true, zaehler: "Noch 1 Korrektur möglich" });
 assert.equal(dialogStand(6, 4).offen, false, "Nach zwei Korrekturen bleibt nur Bestätigen oder Verwerfen");
 assert.equal(dialogStand(12, 10).offen, false);
+assert.deepEqual(dialogStand(11, 11), { offen: true, zaehler: "Noch 1 Korrektur möglich" }, "Späte Zusammenfassung: die Obergrenze kappt");
+assert.equal(dialogStand(12, 12).offen, false, "Mit der zwölften Nachricht ist Schluss, auch nach einer späten Zusammenfassung");
 
 // ── Verlauf ─────────────────────────────────────────────────────────────────
 const p = (text: string) => ({ von: "person" as const, text });

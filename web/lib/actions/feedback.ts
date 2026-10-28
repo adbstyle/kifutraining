@@ -6,40 +6,25 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { angemeldet, NICHT_ANGEMELDET } from "@/lib/actions/adapter";
 import {
   legeAb,
-  type AblageErgebnis,
+  rpcWeg,
   sendeNachricht,
   type AblageEingabe,
+  type AblageErgebnis,
   type NachrichtEingabe,
   type NachrichtErgebnis,
-  type Weg,
 } from "@/lib/feedback/dialog";
 
-function kontoWeg(supabase: SupabaseClient): Weg {
-  const rpc = async (name: string, args?: Record<string, unknown>) => {
-    const { data, error } = await supabase.rpc(name, args);
-    return error ? null : data;
-  };
-  return {
+const kontoWeg = (supabase: SupabaseClient) =>
+  rpcWeg({
+    supabase,
     rolle: "trainer",
-    beginnen: () => rpc("feedback_dialog_beginnen"),
-    zaehlen: (dialog) => rpc("feedback_nachricht_zaehlen", { p_dialog: dialog }),
-    vermerken: async (dialog) => {
-      await rpc("feedback_vorschlag_vermerken", { p_dialog: dialog });
+    rpc: {
+      beginnen: "feedback_dialog_beginnen",
+      zaehlen: "feedback_nachricht_zaehlen",
+      vermerken: "feedback_vorschlag_vermerken",
+      ablegen: "feedback_ablegen",
     },
-    ablegen: (dialog, f) =>
-      rpc("feedback_ablegen", {
-        p_dialog: dialog,
-        p_einordnung: f.einordnung,
-        p_titel: f.titel,
-        p_zusammenfassung: f.punkte,
-        p_verlauf: f.verlauf,
-        p_seite: f.seite,
-        p_version: f.version,
-        p_umgebung: f.umgebung,
-        p_geraet: f.geraet,
-      }),
-  };
-}
+  });
 
 export async function feedbackNachrichtAktion(e: NachrichtEingabe): Promise<NachrichtErgebnis> {
   const a = await angemeldet();
@@ -49,6 +34,6 @@ export async function feedbackNachrichtAktion(e: NachrichtEingabe): Promise<Nach
 
 export async function feedbackAblegenAktion(e: AblageEingabe): Promise<AblageErgebnis> {
   const a = await angemeldet();
-  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET, ende: true };
   return legeAb(kontoWeg(a.supabase), e);
 }
