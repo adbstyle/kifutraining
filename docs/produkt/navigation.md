@@ -254,8 +254,9 @@ Hat es genug erfahren — oder verlangt man es mit „Jetzt zusammenfassen" —,
 Zusammenfassung vor. Gespeichert wird nur, was man mit „Bestätigen und senden" bestätigt; wer
 verwirft oder schliesst, bricht ab, und nichts bleibt. Danach kommt keine Antwort über KiFu; das
 Feedback wird gelesen und von der Entwicklung priorisiert und nach 12 Monaten automatisch gelöscht.
-Mit dem Feedback gehen die Seite beim Bestätigen, die Version, Gerät und Browser mit, am privaten
-Link nur das Team, nie der Link selbst.
+Mit dem Feedback gehen die Seite beim Bestätigen, die Version, Gerät und Browser mit. Bei
+Trainer:innen ist es mit dem Konto verbunden; wer das Konto löscht, dessen Feedback bleibt ohne
+diesen Bezug. Am privaten Link kennt es nur das Team, nie die Spieler:in und nie den Link selbst.
 
 Eine Nachricht hat höchstens 1000 Zeichen; der Zähler zeigt, die wievielte von zehn es ist. Nach
 der Zusammenfassung sind noch zwei Korrekturen möglich, danach bleibt Bestätigen oder Verwerfen.

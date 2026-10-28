@@ -469,6 +469,9 @@ steht nicht in der Bestätigung.
 
 Alle KI-Zugänge werden entzogen; ein verbundener Assistent kommt danach nicht mehr ins Konto.
 
+Abgegebenes Feedback (siehe [Navigation](navigation.md#fragen-und-feedback)) bleibt bestehen,
+verliert aber den Bezug zum Konto; nach 12 Monaten wird es wie jedes Feedback gelöscht.
+
 ## Bekannte Grenzen
 
 Es gibt keine Rollen und keine Rechteabstufung, weder anwendungsweit noch innerhalb eines
