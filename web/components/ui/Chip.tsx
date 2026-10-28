@@ -60,8 +60,9 @@ export const chipTextHuelle =
 export const chipTextBase = `${chipTextHuelle} state focus-ring items-center gap-1.5 px-3`;
 export const chipTextOutlined = "border-kante text-on-surface";
 /* Gewählt: umrandet und beschriftet in Primary, ohne Fläche (Epic #363) —
-   für jeden gewählten Chip und den Filterknopf. Ohne Grund steht die Primary-Schrift auf dem dunklen Grund am
-   klarsten; eine getönte Fläche nahm ihr Kontrast, und gefüllt kehrte sie
+   für jeden gewählten Chip und den Filterknopf. Ohne Grund steht die
+   Primary-Schrift auf dem dunklen Grund am klarsten; eine getönte Fläche
+   nahm ihr Kontrast, und gefüllt kehrte sie
    den Nutzertext in schwarze Schrift — der Name, den die Trainerin vergeben
    hat, soll auch gewählt wie ihr Name aussehen. */
 export const chipTextSelected = "border-primary text-primary";
