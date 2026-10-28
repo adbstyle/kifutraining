@@ -1,6 +1,6 @@
 # KiFu – Produktwissen für die Einordnung von User-Feedback
 
-Stand 2026-10-27 (Release 1.42.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
+Stand 2026-10-28 (Release 1.43.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
 gedacht als Kontext für ein kleines Modell (z. B. Haiku), das Rückmeldungen von Nutzer:innen
 einordnet. Rückmeldungen sind **Fehlermeldungen ebenso wie Feature-Wünsche**: Das Modell erkennt,
 was die Person meint, gleicht es mit dem heutigen Stand ab und stellt die Rückfragen, mit denen sich
@@ -104,7 +104,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 ## 3. Oberfläche und Navigation
 
-**Seitenleiste (links):** Marke KiFu → Übungsbestand. Gruppen „Bibliothek" (Übungen, Trainings) und „Mein Bereich" (Meine Übungen, Meine Trainings, Teams mit aufklappbaren Teamnamen). Unten: Version (Klick → „Versionen"), „Styleguide", Konto. Ohne Anmeldung: „Anmelden" statt Konto, „Mein Bereich" fehlt.
+**Seitenleiste (links):** Marke KiFu → Übungsbestand. Gruppen „Bibliothek" (Übungen, Trainings) und „Mein Bereich" (Meine Übungen, Meine Trainings, Teams mit aufklappbaren Teamnamen). Unten: „Fragen und Feedback" (nur angemeldet; öffnet diesen Dialog), Version (Klick → „Versionen"), „Styleguide", Konto. Ohne Anmeldung: „Anmelden" statt Konto, „Mein Bereich" fehlt.
 - Breit/schmal nur per Knopf links vor den Brotkrumen; Wahl merkt sich der **Browser**, nicht das Konto.
 - Telefon: Menüknopf oben öffnet die Leiste als Überlagerung; kein Verkleinern-Knopf.
 - Neue Version: Plakette „Neu" an der Versionszeile (schmal: Punkt), bis „Versionen" angesehen wurde. Pro Browser gemerkt. Neue Version erscheint spätestens 1 h nach Veröffentlichung, beim nächsten Seitenwechsel.
@@ -129,6 +129,8 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Seiten hinter privatem Link: keine Zeile am Rand; Schalter springt zurück, Grund steht an der Terminkarte.
 
 **Weitere Seiten:** „Versionen" (Release-Texte von GitHub, 30 neueste sofort, ältere auf Knopf; ohne Anmeldung; Cache bis 1 h; bei GitHub-Ausfall letzter Stand + Hinweis). „Styleguide" (Designsystem, ohne Anmeldung). „Cookies" (was im Browser liegt + Besucherstatistik Vercel Web Analytics; ohne Anmeldung erreichbar). Falsche Adresse → Hinweisseite mit Weg zu den Übungen. Anmelde-Seiten ohne Leiste.
+
+**Fragen und Feedback:** Gespräch mit Haiku (Anthropic, USA) über Fehler, Wünsche und Fragen; Trainer:innen über die Seitenleiste, Eltern über eine am unteren Rand klebende Leiste auf der Seite hinter dem privaten Link. Desktop: Spalte rechts, bleibt beim Seitenwechsel offen; Telefon und privater Link: Vollbild. Gespeichert wird nur die bestätigte Zusammenfassung samt Gespräch (Trainer:innen mit Konto, Eltern nur mit Team); keine Antwort über KiFu, Löschung nach 12 Monaten; bei Konto-Löschung bleibt es ohne Kontobezug. Fällt die KI aus oder ist ihr Budget aufgebraucht: nur „Feedback ist gerade nicht möglich", kein anderer Weg.
 
 **Plakettenfarben:** grau = benennt (Herkunft, Entwurf, Altersstufe), blau = gilt nach aussen, violett = Zusatz (mehrere Varianten, neue Version), orange = braucht Aufmerksamkeit (Termin ohne Training).
 
@@ -402,6 +404,12 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Einstellungen (Leistenbreite, Spaltenbreite, „Versionen gesehen") pro Browser, nicht pro Konto.
 - Touch: 36-px-Bedienflächen, keine ⓘ-Hinweise, Diagramm nicht per Touch.
 
+**Fragen und Feedback**
+- Erklärungen der KI können falsch sein; sie fragt gelegentlich zwei Dinge in einem Satz.
+- Gespräch nur im offenen Fenster: Neuladen, Verlassen oder Schliessen verwirft es.
+- Kein anderer Weg als dieser Dialog, auch nicht bei Ausfall der KI; ohne Anmeldung und ohne privaten Link kein Feedback (also keins zu Anmeldeproblemen).
+- Kein Löschen vor Ablauf der 12 Monate; keine Antwort und keine Rückmeldung zum Stand.
+
 **Benachrichtigungen**
 - **Keinerlei Erinnerungen oder Benachrichtigungen** (kein E-Mail, kein Push): weder für Trainer:innen (neue/geänderte/ausgefallene Termine, Einladungen, Absagen, Mindestbesetzung) noch für Eltern (Verlegung, Ausfall, verfallene Abmeldung, fehlende Meldung, Meldefrist).
 
@@ -472,4 +480,5 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 | Meldung am unteren Rand | 6 s |
 | Kalender-Abo Mitglieder | anstehend + letzte 28 Tage |
 | Neue Version sichtbar | spätestens 1 h |
+| Fragen und Feedback | 1000 Zeichen je Nachricht; 10 Nachrichten bis zur Zusammenfassung, danach 2 Korrekturen; 5 Gespräche je Konto bzw. privatem Link und Tag; Löschung nach 12 Monaten |
 | Zeitzone aller Regeln | Schweizer Zeit |
