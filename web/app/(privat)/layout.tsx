@@ -1,12 +1,11 @@
 /* Seiten hinter einem privaten Link (Epic #433): ohne Konto, ohne Sitzung und
    ohne das App-Chrome — kein Menü, kein Team-Kontext, keine Snackbar. Fürs
    Handy gebaut, eine schmale Spalte. Die Middleware lässt diese Pfade aus
-   (keine Sitzung, kein Cookie), die Besucherstatistik zählt sie nicht. */
+   (keine Sitzung, kein Cookie), die Besucherstatistik zählt sie nicht.
+
+   Die Spalte ist ein Flex-Stapel über die ganze Höhe: Was am Seitenende
+   stehen soll («Fragen und Feedback», #544), schiebt sich mit `mt-auto` an
+   den unteren Rand, auch wenn die Seite kurz ist. */
 export default function PrivatLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col">
-      <div className="flex-1">{children}</div>
-      <p className="type-body-small px-4 py-6 text-on-surface-tief">KiFu · Trainings für Kinder- und Juniorenfussball</p>
-    </main>
-  );
+  return <main className="mx-auto flex min-h-dvh max-w-md flex-col">{children}</main>;
 }
