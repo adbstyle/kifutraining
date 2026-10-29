@@ -205,9 +205,9 @@ function alleVergeben(n: number | null): string {
 
 export function linkProbeZaehler(s: ProbeStand): string {
   if (s.anzahl === null) return `${s.besucht} besucht · ${s.angemeldet} angemeldet`;
-  return s.moeglich > 0
-    ? `Noch ${s.moeglich} von ${probetrainings(s.anzahl)} möglich`
-    : alleVergeben(s.anzahl);
+  // Die Kopfzeile knapp wie im Entwurf: «Alle 4 Probetrainings vergeben».
+  if (s.moeglich > 0) return `Noch ${s.moeglich} von ${probetrainings(s.anzahl)} möglich`;
+  return s.anzahl === 1 ? "Das Probetraining ist vergeben" : `Alle ${s.anzahl} Probetrainings vergeben`;
 }
 
 export function linkProbeStand(s: ProbeStand): string {
