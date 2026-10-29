@@ -671,12 +671,13 @@ export default async function Styleguide() {
 
         <Section id="grundsatz">
           <p className="type-body-large mb-6 max-w-2xl text-on-surface-mittel">
-            KiFu folgt <strong>Material 2 im dunklen Thema</strong>. Eine einzige Fläche trägt die
+            KiFu folgt <strong>Material 2</strong>, in zwei Erscheinungsbildern mit denselben
+            Rollen (<Siehe id="erscheinungsbild" />). Im Dunkeln trägt eine einzige Fläche die
             ganze Anwendung: {GRUND} - Materials Dunkelgrau mit so viel Grün, dass der Platz im
-            Bild bleibt. Höhe entsteht nicht durch eine zweite Farbe, sondern durch ein weisses
-            Overlay auf eben dieser Fläche (<Siehe id="hoehe" />). Akzent ist ein Lila, das im
-            Dunkeln hell genug ist, um selbst Text zu sein; Schwarz steht darauf, nicht Weiss
-            (<Siehe id="farbrollen" />). Farbe umrandet und beschriftet - sie füllt nur dort, wo
+            Bild bleibt. Höhe entsteht dort nicht durch eine zweite Farbe, sondern durch ein weisses
+            Overlay auf eben dieser Fläche (<Siehe id="hoehe" />). Im Hellen tragen Fläche und
+            Schatten die Höhe. Akzent ist das Violett der Marke, im Dunkeln so hell, dass es selbst
+            Text sein kann (<Siehe id="farbrollen" />). Farbe umrandet und beschriftet - sie füllt nur dort, wo
             eine Fläche wirklich gemeint ist. Ausgenommen sind die drei Bausteine von Atlassian
             (unten): Lozenge und Section Message tragen eine getönte Fläche, die Badge eine
             gefüllte.
@@ -701,10 +702,11 @@ export default async function Styleguide() {
                   beim Umschalten (siehe <Siehe id="navigation" />).
                 </li>
                 <li>
-                  <strong>Primary Variant.</strong> Das dunkle Zweit-Lila der
+                  <strong>Primary Variant.</strong> Das dunkle Zweit-Violett der
                   Baseline stammt aus dem hellen Thema; auf dem Grund käme es auf{" "}
                   {v(kontrast("#3700b3", GRUND))}. Eine Rolle mit genau einem
-                  möglichen Ort lädt zum Missgriff ein - das System kennt ein Lila.
+                  möglichen Ort lädt zum Missgriff ein - das System kennt je
+                  Erscheinungsbild ein Violett.
                 </li>
                 <li>
                   <strong>Secondary.</strong> Der zweite Akzent der Baseline
@@ -1113,7 +1115,8 @@ export default async function Styleguide() {
             Atlassian - Lozenge und Section Message
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
-            Je Darstellung ein Paar aus Atlassians Dark-Theme: Die Lozenge trägt
+            Je Darstellung ein Paar aus Atlassians Dark-Theme (hier gezeigt; im
+            Hellen gilt das Gegenstück aus dem Light-Theme): Die Lozenge trägt
             die zarte Tönung (<code>lozenge-*</code> = ADS{" "}
             <code>background.&lt;x&gt;.subtler</code>) mit kräftiger Schrift (
             <code>on-lozenge-*</code> = <code>text.&lt;x&gt;.bolder</code>), die
@@ -2707,7 +2710,7 @@ export default async function Styleguide() {
             auf die ein Kader-Chip eingrenzt). Anatomie wie{" "}
             <code>@atlaskit/badge</code>: <code>rounded-klein</code>, 4 px
             seitlich, mindestens 24 px breit, <code>type-lozenge</code>. Gefüllt
-            in Primary - Atlassians Markenfarbe ist bei uns das Lila -, weil sie
+            in Primary - Atlassians Markenfarbe ist bei uns das Violett -, weil sie
             als Teil des Knopfes gelesen wird, nicht als eigene Aussage über den
             Inhalt. Für die Vorlesehilfe stumm: Der Knopf sagt die Zahl in Worten.{" "}
             <code>appearance=&quot;neutral&quot;</code> (hell, <code>umkehr</code>) trägt ein Filter-Chip in Ruhe;
@@ -2963,15 +2966,11 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Im Fuss eines Dialogs steht kein Textknopf: Der Ausweg ist ein
             Secondary Button (<code>outlined</code>), seine Schrift ist{" "}
-            <code>on-surface</code>. <strong>Bewusste Abweichung:</strong>{" "}
-            Links im Inhalt eines Dialogs («Der Serie folgen», «Übung
-            erfassen») bleiben Primary und kommen auf 24dp damit auf{" "}
-            {v(kontrast(PRIMARY, elev(24)))} - knapp unter 4.5:1. Materials
-            eigene Baseline tut dasselbe, und die Alternative wäre schlechter:
-            Weisse Linkschrift wäre von der Fliesstextzeile daneben nicht mehr zu
-            unterscheiden. Die Links sind unterstrichen und tragen den Ring; wer
-            sie nicht als Links liest, verliert nichts, denn der Dialog nennt
-            seine Handlung auch im Text.
+            <code>on-surface</code>. Links im Inhalt eines Dialogs («Der Serie
+            folgen», «Übung erfassen») bleiben Primary und kommen auf 24dp auf{" "}
+            {v(kontrast(PRIMARY, elev(24)))}. Weisse Linkschrift wäre von der
+            Fliesstextzeile daneben nicht mehr zu unterscheiden; die Links sind
+            zudem unterstrichen und tragen den Ring.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Die Snackbar meldet einen <strong>Vorgang</strong>, die Section
