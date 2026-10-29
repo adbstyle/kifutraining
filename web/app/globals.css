@@ -111,7 +111,7 @@
   --color-on-lozenge-accent-magenta: light-dark(#50253f, #fdd0ec);
   --color-lozenge-accent-purple: light-dark(#eed7fc, #48245d);
   --color-on-lozenge-accent-purple: light-dark(#48245d, #eed7fc);
-  --color-lozenge-accent-gray: light-dark(#f0f1f2, #303134);
+  --color-lozenge-accent-gray: light-dark(#dddee1, #303134);
   --color-on-lozenge-accent-gray: light-dark(#1e1f21, #e2e3e4);
 
   --color-section-information: light-dark(#e9f2fe, #1c2b42);
@@ -811,7 +811,7 @@
     --color-on-lozenge-accent-magenta: #50253f;
     --color-lozenge-accent-purple: #eed7fc;
     --color-on-lozenge-accent-purple: #48245d;
-    --color-lozenge-accent-gray: #f0f1f2;
+    --color-lozenge-accent-gray: #dddee1;
     --color-on-lozenge-accent-gray: #1e1f21;
 
     --color-section-information: #e9f2fe;

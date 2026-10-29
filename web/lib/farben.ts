@@ -139,7 +139,8 @@ export const UMKEHR = {
  * soll dieselben Töne wiedererkennen.
  *
  * Lozenge: `flaeche` ist ADS `color.background.<x>.subtler` (bei `neutral`
- * `color.background.neutral`, bei `accent-gray` `…accent.gray.subtlest`),
+ * `color.background.neutral`, bei `accent-gray` im Dunkeln `…accent.gray.subtlest`,
+ * im Hellen `…subtler` — das leiseste Grau verschwände auf dem hellen Grund),
  * `schrift` ist `color.text.<x>.bolder` (bei `neutral` `color.text`).
  * Die Akzente tragen die Alterskategorien; geführt sind nur die sieben, die
  * eine Kategorie belegt.
@@ -176,7 +177,7 @@ export const LOZENGE_HELL: Record<LozengeAppearance, { flaeche: string; schrift:
   "accent-green": { flaeche: "#baf3db", schrift: "#164b35" },
   "accent-magenta": { flaeche: "#fdd0ec", schrift: "#50253f" },
   "accent-purple": { flaeche: "#eed7fc", schrift: "#48245d" },
-  "accent-gray": { flaeche: "#f0f1f2", schrift: "#1e1f21" },
+  "accent-gray": { flaeche: "#dddee1", schrift: "#1e1f21" },
 };
 
 /**
