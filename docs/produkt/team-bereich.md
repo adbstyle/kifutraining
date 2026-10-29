@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-10-28. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-29. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -536,7 +536,8 @@ Eingabetaste nimmt auf, der Dialog sagt, wer dazukam, und bleibt für die nächs
 „Abbrechen" ihn ohne Speichern schliesst. Die Liste ist nach Vor-
 und Nachname geordnet; jede Zeile nennt Name, Jahrgang, J+S-Nummer und, sobald das Team Kader führt, ihre Kader,
 dazu Knöpfe für den privaten Link, „Ändern" — derselbe Dialog mit den bisherigen Angaben —
-und „Entfernen". Auf dem Telefon stehen Jahrgang und J+S-Nummer unter dem Namen.
+und „Entfernen". Auf dem Telefon stehen Jahrgang und J+S-Nummer unter dem Namen. Eine
+Spieler:in im Probe-Modus trägt neben dem Namen die Plakette „Probe 1/4" (siehe „Probetraining").
 
 Dieselbe Spieler:in steht nur einmal auf der Liste: Vorname, Nachname und Jahrgang zusammen sind
 im Team eindeutig, wobei Gross- und Kleinschreibung, überzählige Leerzeichen, Bindestrich gegen
@@ -660,10 +661,59 @@ dazugehörte und wer abgemeldet war —, auch wenn sich Kader oder Zuteilungen d
 entfernter Kader steht dort als „Ehemaliger Kader". Wird das Team aufgelöst, gehen seine Kader
 mit. Ein Team ohne Kader plant unverändert.
 
+## Probetraining
+
+Ein Team kann neue Spieler:innen zuerst einige Trainings auf Probe besuchen lassen. Die Karte
+„Probetraining" steht unter „Team" zwischen Spielerliste und Kadern. Solange das Team nichts
+festgelegt hat, zeigt sie „Noch kein Probetraining" mit dem Link „Probetraining konfigurieren";
+danach nennt ihr Kopf, wie viele Spieler:innen im Probe-Modus sind, etwa „2 Spieler:innen im
+Probe-Modus", und sie zeigt die Anzahl Probetrainings, das Info-Schreiben — gekürzt auf drei Zeilen
+mit „Ganz lesen" — und wer im Probe-Modus ist, je mit Plakette. Der Stift öffnet den Dialog
+„Probetraining bearbeiten". Die Anzahl Probetrainings ist eine ganze Zahl von 1 bis 20 und zählt
+besuchte und angemeldete Trainings; sie gilt für alle Probe-Spieler:innen des Teams und lässt sich
+ändern, aber nicht mehr entfernen. Das Info-Schreiben ist optional, reiner Text mit höchstens 2000
+Zeichen und einem Zähler darunter; das ⓘ sagt, dass es die Eltern aller Probe-Spieler:innen oben in
+ihrem Link sehen. Zeilenumbrüche bleiben, Webadressen werden im Link anklickbar, leer gespeichert
+ist es entfernt. Eine Änderung sehen die Eltern beim nächsten Öffnen.
+
+Den Probe-Modus schaltet ein Mitglied im Dialog „Spieler:in ändern" mit der Checkbox „Im
+Probetraining" ein und aus; beim Hinzufügen und beim Import gibt es sie nicht. Solange das Team
+keine Anzahl festgelegt hat, ist sie gesperrt und sagt, wo man das tut. Darunter steht, was der
+Modus bedeutet, etwa „Mia meldet sich selbst für Trainings an, höchstens für 4. Spiele sieht Mia
+nicht." Verfallen beim Einschalten Abmeldungen von kommenden Trainings, Meldungen zu kommenden
+Spielen oder Kennzeichnungen als nicht aufgeboten, warnt der Dialog vor dem Speichern mit ihrer
+Zahl, etwa „Damit verfällt 1 Abmeldung von einem Training", und der Knopf heisst „Probetraining
+einschalten"; hat sich die Zahl inzwischen geändert, nennt er den neuen Stand. Beim Ausschalten
+sagt er, dass die Spieler:in danach an allen kommenden Trainings angemeldet ist und Spiele wie alle
+sieht und dass das Probetraining bei erneutem Einschalten wieder ab null zählt. Der private Link
+bleibt in beiden Fällen derselbe.
+
+Eine Probe-Spieler:in ist an jedem noch nicht begonnenen Training zuerst nicht angemeldet und wird
+angemeldet — über ihren Link durch die Eltern (siehe „Privater Link"), durch ein Mitglied im
+geöffneten Termin oder über den KI-Assistenten. Über den Link geht das nur, solange besuchte und
+künftig angemeldete Probetrainings samt dieser Anmeldung die Anzahl nicht übersteigen. Ein Mitglied
+darf darüber hinaus anmelden und erhält dann einen kurzen Hinweis, etwa „Mia Keller ist damit über
+der Anzahl Probetrainings: 0 besucht und 3 angemeldet, vorgesehen sind 2." Als besucht zählt jedes
+Training, das nach dem Einschalten begonnen hat und bei dem sie bei Beginn angemeldet war oder als
+doch erschienen nachgetragen ist, ausser sie ist als nicht erschienen nachgetragen. Ein
+ausgefallenes Training zählt weder als besucht noch als angemeldet; die Anmeldung ruht, bis der
+Ausfall zurückgenommen wird. Wird die Anzahl gesenkt, bleiben bestehende Anmeldungen. In der
+Spielerliste trägt sie neben dem Namen die violette Plakette „Probe 1/4" — besuchte von der Anzahl;
+für welche Trainings sie angemeldet ist, steht am jeweiligen Training, und ein Satz unter der Liste
+erklärt das. Am Training zählt sie unter allen, für die es gilt, und unter den Angemeldeten nur,
+wenn sie angemeldet ist; nicht angemeldet steht sie dort wie eine abgemeldete, ohne eigene
+Kennzeichnung. Spiele gelten für sie nicht: Sie steht in keinem Spiel und zählt dort nicht mit.
+
+Wird ein Training verlegt — einzeln oder über die Serie — oder gilt es durch eine Kader-Änderung
+nicht mehr für sie, verfällt ihre Anmeldung wie eine Abmeldung. Die Rückfrage vor dem Speichern
+nennt verfallende Anmeldungen eigens, etwa „Damit verfällt 1 Anmeldung einer Probe-Spieler:in: Sie
+gilt wieder als nicht angemeldet.", und heisst „Anmeldungen verfallen", wenn nur solche verfallen.
+Gilt ein Training durch Kader wieder für sie, ist sie dort nicht angemeldet.
+
 ## Ab- und Anmelden
 
 Jede Spieler:in der Liste ist für jedes Training, das für sie gilt (siehe „Kader"), angemeldet,
-bis sie abgemeldet wird; einen Zustand wie „keine Rückmeldung" gibt es bei Trainings nicht. Für
+bis sie abgemeldet wird — ausser im Probe-Modus, wo es umgekehrt ist (siehe „Probetraining"); einen Zustand wie „keine Rückmeldung" gibt es bei Trainings nicht. Für
 Spiele melden sich die Spieler:innen dagegen ausdrücklich (siehe „Spiele"); was hier steht, gilt
 für Trainings. Wer fehlt, ohne sich abzumelden, zählt bis zum Beginn mit —
 die Zahl ist darum eine Obergrenze; danach lässt es sich nachtragen (siehe „Nachtragen, wer da
@@ -953,6 +1003,23 @@ verlegt, seit sie abgemeldet war, steht bei ihm etwa „Verlegt, vorher Dienstag
 Spieler:innen, fremde Kader, Termine für andere Kader, Trainings und vergangene Termine zeigt die
 Seite nicht.
 
+Ist die Spieler:in im Probe-Modus (siehe „Probetraining"), sagt der Kopf statt dessen etwa „Mia ist
+im Probetraining. Melde Mia für die Trainings an, an denen Mia teilnimmt, und bis zum Beginn wieder
+ab." Darunter steht, wie viele Probetrainings noch möglich sind, etwa „Noch 2 von 4 Probetrainings
+möglich", mit einem Balken je Probetraining — besucht gefüllt, angemeldet umrandet — und darunter
+„1 besucht · 1 angemeldet". Führt das Team ein Info-Schreiben, folgt es unter „Infos zum
+Probetraining", auf vier Zeilen gekürzt mit „Ganz lesen", mit seinen Zeilenumbrüchen und mit
+Webadressen als Links, die ausserhalb der Anwendung öffnen. Spiele zeigt die Seite nicht. Jedes
+Training steht zuerst als „Nicht angemeldet" in Grau, ohne dass die Karte zurücktritt, und der
+Schalter meldet an. Sind alle Probetrainings vergeben, sagt der Kopf „Alle 4 Probetrainings
+vergeben" — bei einem einzigen „Das Probetraining ist vergeben" —, über den Trainings steht etwa
+„Alle 4 Probetrainings sind vergeben. Meldest du Mia von einem Training ab, wird der Platz wieder
+frei. Für weitere Trainings wende dich an das Team." — ist schon alles besucht, ohne den mittleren
+Satz —, und die Schalter der übrigen Trainings sind mit „Probetrainings vergeben" gesperrt;
+abmelden geht weiterhin. Ist eine Anmeldung mit einer Verlegung verfallen, steht dort „… Deine
+Anmeldung gilt nicht mehr." Schaltet ein Mitglied den Probe-Modus aus, zeigt derselbe Link wieder
+die gewohnte Seite.
+
 Den Ort zeigt jede Karte ganz, auch wenn er lang ist, und umbricht ihn dafür. Hat der Ort einen
 Kartenlink, ist er selbst der Link: violett und unterstrichen, mit einem Zeichen am Ende, das sagt,
 dass er die Karte ausserhalb der Anwendung öffnet. Ein langer Ort mit Link steht dafür auf einer
@@ -989,7 +1056,7 @@ im Browser legt sie nichts ab.
 Über das Kalender-Zeichen gleich hinter dem Namen der Spieler:in holen Eltern oder die Spieler:in selbst eine
 Abo-Adresse, mit der ihr Kalenderprogramm die Termine der Spieler:in abruft. Der Dialog „Im
 Kalender abonnieren" erklärt die Zeichen — „Im Kalender steht vor jedem Termin ✅ zugesagt, ❔
-vielleicht (Spiel ohne Meldung) oder ❌ abgesagt." —, sagt, dass das Abo nur anzeigt und weiterhin
+vielleicht (noch nicht angemeldet) oder ❌ abgesagt." —, sagt, dass das Abo nur anzeigt und weiterhin
 über den Link ab- und angemeldet wird, und dass das Kalenderprogramm Änderungen erst nach einer
 Weile übernimmt. Er bietet die Adresse zum Kopieren an und sagt, wie sie in Apple Kalender auf
 iPhone und Mac, Google Kalender — nur im Browser auf calendar.google.com, danach erscheint sie auch
@@ -1004,7 +1071,9 @@ Zeitpunkt, ein ausgefallener fehlt; vergangene Tage fallen heraus wie am Link. D
 vorn den Status, dann „Training" oder die Bezeichnung des Spiels und den Teamnamen, etwa
 „✅ Training · FC Beispiel" oder „❔ Cup gegen Thun · FC Beispiel":
 
-- Training: angemeldet ✅ zugesagt, abgemeldet ❌ abgesagt.
+- Training: angemeldet ✅ zugesagt, abgemeldet ❌ abgesagt; im Probe-Modus nicht angemeldet ❔
+  vielleicht, auch wenn sich keines mehr anmelden lässt. Spiele enthält das Abo einer
+  Probe-Spieler:in nicht, das Info-Schreiben ebenso wenig.
 - Spiel: angemeldet ✅ zugesagt; ohne Meldung ❔ vielleicht, bis die Meldefrist abläuft — ohne
   Meldefrist bis zum Anpfiff —, danach ❌ abgesagt; abgemeldet oder nicht aufgeboten ❌ abgesagt,
   nicht aufgeboten auch dann, wenn die Spieler:in angemeldet ist.
@@ -1298,6 +1367,15 @@ verfallene Abmeldung kehrt nicht zurück, und Eltern erfahren nicht von selbst, 
 nicht mehr für ihr Kind gilt. Wer über die Abholadresse den Link eines fremden Kindes holt, sieht
 auch dessen Kader. Die Selbstabholung lässt sich nicht auf einzelne Kader beschränken, und ihr
 Hinweis, was KiFu speichert, nennt die Kader nicht.
+
+Das Probetraining beschränkt nicht, welche Trainings eine Probe-Spieler:in sieht, und endet nicht
+von selbst, auch nicht beim Erreichen der Anzahl. Die Anzahl gilt für das ganze Team, nicht je
+Spieler:in, und lässt sich nicht mehr entfernen. Den Probe-Modus gibt es nicht beim Hinzufügen
+oder beim Import, die Spielerliste lässt sich nicht auf Probe-Spieler:innen eingrenzen, und am
+Training ist eine Probe-Spieler:in nicht eigens gekennzeichnet. Das Info-Schreiben kennt keine
+Formatierung wie Fett, Listen oder Bilder, gilt für das ganze Team statt je Spieler:in oder Kader
+und steht weder im Kalender-Abo noch bei der Selbstabholung. Fällt ein Training durch eine
+Kader-Änderung für eine Probe-Spieler:in weg, verschwindet es am Link ohne Hinweis.
 
 Der Import liest nur CSV, keine Excel-Dateien, und nur mit Kopfzeile. Er ändert Vor- und Nachnamen
 und Jahrgänge bestehender Spieler:innen nicht: Wer nach einem Import auf den Rufnamen gekürzt wurde,

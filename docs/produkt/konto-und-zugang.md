@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-10-27. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-10-29. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -312,6 +312,17 @@ Stand bei Beginn ist und ab Beginn, wer nicht erschienen oder doch erschienen is
 da waren. Er meldet ab und wieder an und trägt ab Beginn nach, ob eine Spieler:in da war, und
 nennt dafür Datum und Beginn, wie er den Termin zuletzt gelesen hat; wurde er inzwischen
 verlegt, weist die Anwendung mit dem neuen Stand ab.
+
+Das Probetraining führt der Assistent nach denselben Regeln (siehe
+[Team-Bereich](team-bereich.md#probetraining)): Er liest die Anzahl Probetrainings und das
+Info-Schreiben eines Teams, legt beides fest oder ändert es — ein leeres Info-Schreiben entfernt
+es, ohne Angabe bleibt es stehen — und schaltet den Probe-Modus einer Spieler:in ein und aus. Lässt
+das Einschalten Abmeldungen, Meldungen oder Kennzeichnungen verfallen, kommt zuerst eine Rückfrage
+mit ihrer Zahl, und er muss das Einschalten ausdrücklich bestätigen. In der Spielerliste erfährt er
+je Probe-Spieler:in die Anzahl, wie viele Probetrainings sie besucht hat, für wie viele sie
+angemeldet ist und wie viele über den Link noch möglich sind, am Termin, wer im Probe-Modus ist.
+Meldet er eine Probe-Spieler:in über die Anzahl hinaus an, erhält er denselben Hinweis wie die
+Oberfläche.
 
 An einem Spiel erfährt der Assistent für jede Spieler:in ihre Meldung oder dass sie noch ohne
 Meldung ist, ob sie als nicht aufgeboten gekennzeichnet ist und ob sie die Meldefrist verpasst
