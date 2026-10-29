@@ -12,6 +12,9 @@ import type { GespraechZustand } from "./useFeedbackGespraech";
 /** Der Name des Dialogs — in der Seitenleiste, im Kopf und am privaten Link. */
 export const FEEDBACK_TITEL = "Fragen und Feedback";
 
+/** Mit Zeiger (Maus, Trackpad) — dieselbe Weiche wie `hover: hover` in globals.css. */
+const MIT_ZEIGER = "(hover: hover)";
+
 /* ── Fläche ─────────────────────────────────────────────────────
    Der Rahmen um das Gespräch. Am Desktop (`panel`) eine Spalte rechts neben
    dem Inhalt, die beim Seitenwechsel stehen bleibt — die Seite, um die es
@@ -53,6 +56,9 @@ export function FeedbackFlaeche({
         }
       }
     }
+    // Der Auslöser ist jetzt inert: Der Fokus gehört in den Dialog, damit die
+    // Vorlesehilfe ihn ansagt. Das Feld holt ihn sich danach nur mit Zeiger.
+    if (!el.contains(document.activeElement)) el.focus({ preventScroll: true });
     return () => {
       for (const g of stillgelegt) g.inert = false;
     };
@@ -78,8 +84,9 @@ export function FeedbackFlaeche({
       role="dialog"
       aria-modal={modal || undefined}
       aria-labelledby={titelId}
+      tabIndex={-1}
       className={cn(
-        "flex flex-col bg-elev-00 print:hidden",
+        "flex flex-col bg-elev-00 outline-none print:hidden",
         form === "eingebettet" ? "h-full border border-linie bg-elev-01" : "fixed inset-0 z-50",
         form === "panel" &&
           "lg:sticky lg:top-0 lg:z-auto lg:h-dvh lg:w-(--feedback-breite) lg:shrink-0 lg:self-start lg:border-l lg:border-linie lg:bg-elev-01",
@@ -134,10 +141,10 @@ export function FeedbackGespraech({
   const feldRef = useRef<HTMLTextAreaElement>(null);
   const endeRef = useRef<HTMLDivElement>(null);
 
-  // Nur mit Zeiger (`hover: hover`, wie in globals.css): Auf Touch blendete der
-  // Fokus sofort die Tastatur ein und verdeckte Hinweis und Begrüssung.
+  // Nur mit Zeiger: Auf Touch blendete der Fokus sofort die Tastatur ein und
+  // verdeckte Hinweis und Begrüssung. Dort bleibt er auf dem Dialog.
   useEffect(() => {
-    if (fokussieren && window.matchMedia("(hover: hover)").matches) feldRef.current?.focus();
+    if (fokussieren && window.matchMedia(MIT_ZEIGER).matches) feldRef.current?.focus();
   }, [fokussieren]);
   useEffect(() => {
     if (fokussieren) endeRef.current?.scrollIntoView({ block: "end" });
