@@ -15,6 +15,7 @@ import { SPIELER_CHECKS, SPIELER_MELDUNG } from "@/lib/spieler";
 import { KADER_CHECKS, KADER_MELDUNG } from "@/lib/kader";
 import { SPIEL_CHECKS, SPIEL_MELDUNG } from "@/lib/spiel";
 import { TRAINER_MELDUNG } from "@/lib/trainer";
+import { PROBE_CHECKS, PROBE_MELDUNG } from "@/lib/probe";
 import { FELDER_TEXT } from "@/lib/termin-felder";
 import { sichtbareZuordnungen } from "@/lib/varianten";
 
@@ -342,6 +343,8 @@ const TERMIN_MARKER: [string, string][] = [
   ...Object.entries(SPIEL_MELDUNG),
   // Trainer:innen an Terminen (#518).
   ...Object.entries(TRAINER_MELDUNG),
+  // Probetraining (#555).
+  ...Object.entries(PROBE_MELDUNG),
 ];
 
 /** Die CHECKs am Termin, die die Applikation am Namen erkennt — wie
@@ -359,6 +362,7 @@ const TERMIN_CHECKS: [string, string][] = [
   ...SPIELER_CHECKS,
   ...KADER_CHECKS,
   ...SPIEL_CHECKS,
+  ...PROBE_CHECKS,
 ];
 
 /** Die Meldung zu einem Marker aus Übungsfolge, Variantenfolge oder Termin,

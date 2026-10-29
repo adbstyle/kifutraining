@@ -21,9 +21,25 @@ import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
  * zurück. Stimmt sie inzwischen nicht mehr, kommt die neue (AK 12).
  */
 
-type Fehler = { ok: false; error: string; feld?: string; verfallend?: number; verfallendSpiele?: number; kennzeichnungen?: number };
+type Fehler = {
+  ok: false;
+  error: string;
+  feld?: string;
+  verfallend?: number;
+  verfallendSpiele?: number;
+  kennzeichnungen?: number;
+  /** Davon Anmeldungen von Probe-Spieler:innen (#555 AK 14). */
+  anmeldungen?: number;
+};
 
-function fehler(r: { meldung: string; feld?: string; verfallend?: number; verfallendSpiele?: number; kennzeichnungen?: number }): Fehler {
+function fehler(r: {
+  meldung: string;
+  feld?: string;
+  verfallend?: number;
+  verfallendSpiele?: number;
+  kennzeichnungen?: number;
+  anmeldungen?: number;
+}): Fehler {
   return {
     ok: false,
     error: r.meldung,
@@ -31,6 +47,7 @@ function fehler(r: { meldung: string; feld?: string; verfallend?: number; verfal
     verfallend: r.verfallend,
     verfallendSpiele: r.verfallendSpiele,
     kennzeichnungen: r.kennzeichnungen,
+    anmeldungen: r.anmeldungen,
   };
 }
 

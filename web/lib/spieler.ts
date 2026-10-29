@@ -12,6 +12,7 @@
 import { datumKurz } from "@/lib/zeit";
 import { tagOhneJahr } from "@/lib/monat";
 import { SPIEL_TEXT } from "@/lib/spiel";
+import { PROBE_TEXT, type ProbeStand } from "@/lib/probe";
 
 /** Zwillinge der Checks `spieler_vorname`, `spieler_nachname`, `spieler_js`,
  *  `spieler_jahrgang` und der Obergrenze im Trigger `spieler_vorher`. */
@@ -109,6 +110,8 @@ export type Spieler = {
   linkBezogen: boolean;
   /** Die Kader, denen sie angehört (#452 AK 5). */
   kaderIds: string[];
+  /** Im Probe-Modus: ihr Stand (#555 AK 6, 7); sonst `null`. */
+  probe: ProbeStand | null;
 };
 
 /** Überall Vor- und Nachname (Epic PO 2). */
@@ -197,7 +200,9 @@ export type AbmeldeGrund =
   | "nicht_begonnen"
   | "nicht_dabei"
   /** Ein Spiel (#448): Für Spiele gilt diese Abmeldung nicht. */
-  | "ist_spiel";
+  | "ist_spiel"
+  /** Über den Link: Alle Probetrainings sind vergeben (#555 AK 10, 12). */
+  | "probe_voll";
 
 /** Der Stand des Termins, gegen den abgewiesen wurde. */
 export type AbmeldeStand = { datum: string; beginn: string; ende: string; ausgefallen: boolean };
@@ -216,6 +221,8 @@ export const ABMELDUNG_TEXT = {
   nichtDabei: "Diese Spieler:in gehörte bei Beginn nicht zu diesem Termin. Nachtragen lässt sich nur, wer da auf der Liste stand.",
   /** An einem ausgefallenen Termin (#475 AK 6). */
   ausgefallenNachtrag: "Der Termin fällt aus. Für ihn lässt sich nicht nachtragen, wer da war.",
+  /** Über den Link einer Probe-Spieler:in (#555 AK 12). */
+  probeVoll: PROBE_TEXT.voll,
 } as const;
 
 /** Die Abweisung mit dem aktuellen Stand (#435 AK 4, #437 AK 5) — an
@@ -229,6 +236,7 @@ export function abweisungText(grund: AbmeldeGrund, stand?: AbmeldeStand): string
   if (grund === "nicht_begonnen") return ABMELDUNG_TEXT.nichtBegonnen;
   if (grund === "nicht_dabei") return ABMELDUNG_TEXT.nichtDabei;
   if (grund === "ist_spiel") return SPIEL_TEXT.istSpiel;
+  if (grund === "probe_voll") return ABMELDUNG_TEXT.probeVoll;
   return ABMELDUNG_TEXT.nichtGefunden;
 }
 
@@ -248,6 +256,8 @@ export type Teilnehmer = {
   /** Ab Beginn: Ihre Anwesenheit weicht vom Stand bei Beginn ab (#475) —
    *  angemeldet heisst dann nicht erschienen, abgemeldet doch erschienen. */
   nachgetragen: boolean;
+  /** Im Probe-Modus (#555): zuerst nicht angemeldet. */
+  probe: boolean;
 };
 
 /** Der Stand einer Spieler:in an einem Termin, samt Nachtrag (#475 AK 8). */
@@ -359,21 +369,33 @@ export function mitAbsagen(text: string, n: number): string {
   return text ? `${text} Ausserdem ${satz}` : `Damit ${satz}`;
 }
 
+/** Was mit den Anmeldungen von Probe-Spieler:innen geschieht (#555 AK 14,
+ *  PC 5) — als Satz an `text` gehängt wie `mitAbsagen`. */
+export function mitAnmeldungen(text: string, n: number): string {
+  if (n === 0) return text;
+  const satz =
+    n === 1
+      ? "verfällt 1 Anmeldung einer Probe-Spieler:in: Sie gilt wieder als nicht angemeldet."
+      : `verfallen ${n} Anmeldungen von Probe-Spieler:innen: Sie gelten wieder als nicht angemeldet.`;
+  return text ? `${text} Ausserdem ${satz}` : `Damit ${satz}`;
+}
+
 /** Dasselbe in der Rückfrage der Oberfläche, mit dem Weg danach. */
-export function verfallDialogText(n: number, nachtraege = 0, absagen = 0): string {
+export function verfallDialogText(n: number, nachtraege = 0, absagen = 0, anmeldungen = 0): string {
   const text = n > 0 ? `${verfallText(n, nachtraege)} Wer am neuen Zeitpunkt nicht kann, meldet sich neu ab.` : verfallText(n, nachtraege);
-  return mitAbsagen(text, absagen);
+  return mitAnmeldungen(mitAbsagen(text, absagen), anmeldungen);
 }
 
 /** Dasselbe für den KI-Weg, mit dem Weg zur Bestätigung. */
-export function verfallBestaetigen(n: number, nachtraege = 0, absagen = 0): string {
-  const text = mitAbsagen(verfallText(n, nachtraege), absagen);
+export function verfallBestaetigen(n: number, nachtraege = 0, absagen = 0, anmeldungen = 0): string {
+  const text = mitAnmeldungen(mitAbsagen(verfallText(n, nachtraege), absagen), anmeldungen);
   return `${text} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
 }
 
-/** Am privaten Link: Der Termin wurde verlegt, seit sie abgemeldet wurde (AK 2). */
-export function verfallenHinweis(vorher: { datum: string; beginn: string }): string {
-  return `Verlegt, vorher ${tagOhneJahr(vorher.datum)} um ${vorher.beginn}. Deine Abmeldung gilt nicht mehr.`;
+/** Am privaten Link: Der Termin wurde verlegt, seit sie abgemeldet — bzw. als
+ *  Probe-Spieler:in angemeldet (#555 PC 5) — wurde (AK 2). */
+export function verfallenHinweis(vorher: { datum: string; beginn: string; anmeldung?: boolean }): string {
+  return `Verlegt, vorher ${tagOhneJahr(vorher.datum)} um ${vorher.beginn}. Deine ${vorher.anmeldung ? "Anmeldung" : "Abmeldung"} gilt nicht mehr.`;
 }
 
 // ── Selbstabholung (#438) ───────────────────────────────────────────────────

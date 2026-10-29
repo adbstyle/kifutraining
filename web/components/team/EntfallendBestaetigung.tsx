@@ -39,7 +39,8 @@ export function EntfallendBestaetigung({
   const nachtraege = folge?.nachtraegeVerfallend ?? 0;
   const absagen = folge?.absagenVerfallend ?? 0;
   const abmeldungen = folge?.abmeldungenVerfallend ?? 0;
-  const verfall = abmeldungen + nachtraege + absagen;
+  const anmeldungen = folge?.anmeldungenVerfallend ?? 0;
+  const verfall = abmeldungen + nachtraege + absagen + anmeldungen;
   const kaderVerfall = folge?.abmeldungenKader ?? 0;
   return (
     <Dialog
@@ -52,7 +53,9 @@ export function EntfallendBestaetigung({
             ? "Termine fallen weg"
             : abmeldungen + nachtraege + (folge?.abmeldungenKader ?? 0) > 0
               ? "Abmeldungen verfallen"
-              : "Absagen verfallen"
+              : anmeldungen > 0
+                ? "Anmeldungen verfallen"
+                : "Absagen verfallen"
       }
       actions={
         <>
@@ -85,7 +88,7 @@ export function EntfallendBestaetigung({
       {verfall > 0 && (
         <p className={wegfall ? "mt-3" : "flex items-start gap-2"}>
           {!wegfall && <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0 text-icon-warning" />}
-          <span>{verfallDialogText(abmeldungen, nachtraege, absagen)}</span>
+          <span>{verfallDialogText(abmeldungen, nachtraege, absagen, anmeldungen)}</span>
         </p>
       )}
       {kaderVerfall > 0 && (

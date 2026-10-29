@@ -32,6 +32,8 @@ export default async function SpielerLinkSeite({ params }: { params: Promise<{ p
         token={privaterLink}
         team={ansicht.team}
         spieler={ansicht.spieler}
+        probe={ansicht.probe ?? null}
+        probeInfo={ansicht.probe_info ?? null}
         termine={ansicht.termine}
       />
       {/* Fragen und Feedback ohne Konto (#544), am Ende der Seite. */}

@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-10-27. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-10-29. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -313,6 +313,17 @@ da waren. Er meldet ab und wieder an und trägt ab Beginn nach, ob eine Spieler:
 nennt dafür Datum und Beginn, wie er den Termin zuletzt gelesen hat; wurde er inzwischen
 verlegt, weist die Anwendung mit dem neuen Stand ab.
 
+Das Probetraining führt der Assistent nach denselben Regeln (siehe
+[Team-Bereich](team-bereich.md#probetraining)): Er liest die Anzahl Probetrainings und das
+Info-Schreiben eines Teams, legt beides fest oder ändert es — ein leeres Info-Schreiben entfernt
+es, ohne Angabe bleibt es stehen — und schaltet den Probe-Modus einer Spieler:in ein und aus. Lässt
+das Einschalten Abmeldungen, Meldungen oder Kennzeichnungen verfallen, kommt zuerst eine Rückfrage
+mit ihrer Zahl, und er muss das Einschalten ausdrücklich bestätigen. In der Spielerliste erfährt er
+je Probe-Spieler:in die Anzahl, wie viele Probetrainings sie besucht hat, für wie viele sie
+angemeldet ist und wie viele über den Link noch möglich sind, am Termin, wer im Probe-Modus ist.
+Meldet er eine Probe-Spieler:in über die Anzahl hinaus an, erhält er denselben Hinweis wie die
+Oberfläche.
+
 An einem Spiel erfährt der Assistent für jede Spieler:in ihre Meldung oder dass sie noch ohne
 Meldung ist, ob sie als nicht aufgeboten gekennzeichnet ist und ob sie die Meldefrist verpasst
 hat, dazu die Zahl der Angemeldeten, der noch ohne Meldung, der mit verpasster Meldefrist und der
@@ -383,7 +394,8 @@ wieder lösen, Trainer:innen einladen, ausladen, absagen und wieder zusagen und 
 verantwortlich ist, Ausfälle festhalten und zurücknehmen sowie die Termine eines Zeitraums
 abrufen"; „die Anzeigenamen der Mitglieder deiner Teams lesen (ohne
 E-Mail-Adressen)"; „die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen
-und führen, Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen
+und führen, Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins
+Probetraining nehmen und die Anzahl Probetrainings samt Info-Schreiben festlegen, Spieler:innen
 für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten
 kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab
 Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link
@@ -392,7 +404,7 @@ und erneuern und sehen, welche Links bezogen wurden". Nie erreichbar sind „dei
 Verwaltung deiner Teams (gründen, umbenennen, Mitglieder aufnehmen oder entfernen)" und „dein Konto
 selbst (Anzeigename, Passwort, Löschen)". Kommt eine dieser Fähigkeiten dazu, muss man nicht erneut
 zustimmen; auch wer seinen Zugang erlaubt hat, bevor der Kalender, Platz und Spielerzahl der
-Termine, die Spielerliste samt Abmeldungen, Links und Selbstabholung oder die Kader oder die Spiele
+Termine, die Spielerliste samt Abmeldungen, Links und Selbstabholung, die Kader, die Spiele oder das Probetraining
 dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt
 die Seite, nur zu erlauben, wenn man das Verbinden eben selbst gestartet hat.
 

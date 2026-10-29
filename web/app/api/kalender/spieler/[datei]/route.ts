@@ -26,7 +26,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ datei: 
     kalenderText({
       kalenderName: feed.gueltig ? aboKalenderName(feed.team) : ABO_ERLOSCHEN,
       uidZusatz: feed.gueltig ? feed.abo : undefined,
-      termine: feed.gueltig ? feed.termine.map((t) => aboEintrag(t, feed.team)) : [],
+      termine: feed.gueltig ? feed.termine.map((t) => aboEintrag(t, feed.team, feed.probe ?? false)) : [],
       jetzt: new Date(),
     }),
   );

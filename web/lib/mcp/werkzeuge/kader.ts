@@ -22,7 +22,7 @@ export const KADER_MODELL =
   "Kleinschreibung und überzählige Leerzeichen unterscheiden nicht. Ein Termin oder eine Terminserie mit Kadern gilt für " +
   "die Spieler:innen, die mindestens einem davon angehören, ohne Kader für alle; nur sie zählen, sehen ihn am privaten " +
   "Link und lassen sich dafür ab- und anmelden. Fällt eine Spieler:in durch eine Änderung aus einem anstehenden Termin, " +
-  "für den sie abgemeldet war, verfällt die Abmeldung: Dann kommt zuerst ein Fehler mit «verfallend» (Anzahl); frag " +
+  "für den sie abgemeldet war, verfällt die Abmeldung (bei einer Probe-Spieler:in die Anmeldung): Dann kommt zuerst ein Fehler mit «verfallend» (Anzahl); frag " +
   "nach und wiederhole den Aufruf mit «bestaetigt: true». Begonnene Termine behalten den Stand bei Beginn. " +
   `${KADER_TEXT.heikel}`;
 

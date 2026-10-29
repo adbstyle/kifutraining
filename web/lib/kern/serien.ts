@@ -177,6 +177,9 @@ export type SerienFolge = {
   nachtraegeVerfallend: number;
   /** Wie viele Absagen von Trainer:innen die Verlegung verfallen lässt (#520 AK 11). */
   absagenVerfallend: number;
+  /** Wie viele Anmeldungen von Probe-Spieler:innen verfallen — durch Verlegung
+   *  oder weil ein Termin nicht mehr für sie gilt (#555 AK 14). */
+  anmeldungenVerfallend: number;
   teamId: string;
   /** Der Kartenlink der Serie fiel mit dem Ort weg (#533 AK 14). */
   kartenlinkEntfallen?: boolean;
@@ -193,6 +196,7 @@ type Roh = {
   abmeldungen_kader?: number;
   nachtraege_verfallend?: number;
   absagen_verfallend?: number;
+  anmeldungen_verfallend?: number;
 };
 
 function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): SerienFolge {
@@ -211,6 +215,7 @@ function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): Se
     abmeldungenKader: r.abmeldungen_kader ?? 0,
     nachtraegeVerfallend: r.nachtraege_verfallend ?? 0,
     absagenVerfallend: r.absagen_verfallend ?? 0,
+    anmeldungenVerfallend: r.anmeldungen_verfallend ?? 0,
     teamId,
   };
 }
@@ -264,7 +269,12 @@ async function laufe(
     if (vorschau.vergangene > 0 && !lauf.bestaetigt)
       return fehlschlag("regel", vergangeneBestaetigen(vorschau.vergangene), { feld: "bestaetigt" });
     // #437 AK 1, #475 AK 12: verfallende Abmeldungen und Nachträge ebenso erst nach Bestätigung.
-    const verfall = verfallend(vorschau.abmeldungenVerfallend, vorschau.nachtraegeVerfallend, vorschau.absagenVerfallend);
+    const verfall = verfallend(
+      vorschau.abmeldungenVerfallend,
+      vorschau.nachtraegeVerfallend,
+      vorschau.absagenVerfallend,
+      vorschau.anmeldungenVerfallend,
+    );
     if (verfall.summe > 0 && !lauf.bestaetigt) return verfallFehler(verfall);
     // #453 AK 16: ebenso, wenn Termine für Spieler:innen nicht mehr gelten.
     if (vorschau.abmeldungenKader > 0 && !lauf.bestaetigt)
@@ -278,7 +288,11 @@ async function laufe(
       version: vorschau.versionVorher,
       entfallend: vorschau.entfallend.map((x) => x.terminId),
       verfallend:
-        vorschau.abmeldungenVerfallend + vorschau.abmeldungenKader + vorschau.nachtraegeVerfallend + vorschau.absagenVerfallend,
+        vorschau.abmeldungenVerfallend +
+        vorschau.abmeldungenKader +
+        vorschau.nachtraegeVerfallend +
+        vorschau.absagenVerfallend +
+        vorschau.anmeldungenVerfallend,
     };
   }
   const terminTrainings = await terminTrainingsDerTermine(supabase, erwartet.entfallend);

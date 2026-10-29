@@ -19,6 +19,8 @@ import {
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { aendereSpielerAktion, entferneSpielerAktion, nimmSpielerAufAktion } from "@/lib/actions/spieler";
 import { aendereZuteilungAktion } from "@/lib/actions/kader";
+import { probeFolgenAktion, schalteProbeAktion } from "@/lib/actions/probe";
+import { PROBE_TEXT, probeAusschaltenText, probeEinschaltenText, probeFolgenSumme, probeVerfallFolge, probeVerfallTitel, type ProbeFolgen } from "@/lib/probe";
 import { KADER_TEXT, kaderVon, type Kader } from "@/lib/kader";
 import { JAHRGANG_STELLEN, JS_MAX, nurZiffern, spielerName, type Spieler, type SpielerFeld } from "@/lib/spieler";
 import { SpielerLinkDialog } from "./SpielerLinkDialog";
@@ -28,6 +30,7 @@ import { KaderLozenges } from "./KaderLozenge";
 import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
 import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
+import { ProbeLozenge } from "./ProbeLozenge";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
    Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet einen
@@ -49,20 +52,26 @@ import { useVerfallRueckfrage } from "./VerfallBestaetigung";
    über die Auswahl mehreren in einem Schritt zu (AK 6). Der Dialog führt die
    Kader einer Spieler:in als Mehrfachauswahl (AK 5). Nimmt eine Änderung
    Spieler:innen aus Terminen, für die sie abgemeldet waren, fragt sie vorher
-   nach (#453 AK 10). */
+   nach (#453 AK 10).
 
-type Form = { vorname: string; nachname: string; jahrgang: string; jsNummer: string; kaderIds: string[] };
-const LEER: Form = { vorname: "", nachname: "", jahrgang: "", jsNummer: "", kaderIds: [] };
+   Probetraining (#555): Eine Probe-Spieler:in trägt die Plakette «Probe 1/4»
+   neben dem Namen. Den Probe-Modus schaltet die Checkbox im Dialog «Spieler:in
+   ändern» — gesperrt, solange das Team keine Anzahl festgelegt hat. Was das
+   Einschalten verfallen liesse, steht vor dem Speichern als Warnung im Dialog;
+   was das Ausschalten bewirkt, als Information. */
+
+type Form = { vorname: string; nachname: string; jahrgang: string; jsNummer: string; kaderIds: string[]; probe: boolean };
+const LEER: Form = { vorname: "", nachname: "", jahrgang: "", jsNummer: "", kaderIds: [], probe: false };
 
 /** Die Eingrenzung auf Spieler:innen ohne Kader; sonst die id eines Kaders. */
 const OHNE = "ohne";
-
 
 export function SpielerListe({
   teamId,
   spieler,
   kader,
   abholung,
+  probeAnzahl,
 }: {
   teamId: string;
   spieler: Spieler[];
@@ -70,12 +79,15 @@ export function SpielerListe({
   kader: Kader[];
   /** Die Selbstabholung des Teams (#438); `url` fehlt, solange es keine Adresse gibt. */
   abholung: { url: string | null; aktiv: boolean };
+  /** Die Anzahl Probetrainings des Teams (#555); `null`, solange keine festgelegt ist. */
+  probeAnzahl: number | null;
 }) {
   const router = useRouter();
   const melde = useSnackbar();
   const [pending, startTransition] = useTransition();
   // `null`: zu; sonst neu (`id` leer) oder die geänderte Spieler:in.
-  const [offen, setOffen] = useState<{ id: string | null } | null>(null);
+  // `probe`: ihr Probe-Modus beim Öffnen — dagegen zählt, was sich ändert.
+  const [offen, setOffen] = useState<{ id: string | null; probe: boolean } | null>(null);
   const [form, setForm] = useState<Form>(LEER);
   const [fehler, setFehler] = useState<{ feld?: SpielerFeld; text: string } | null>(null);
   const [entfernen, setEntfernen] = useState<Spieler | null>(null);
@@ -93,6 +105,9 @@ export function SpielerListe({
   const [auswahl, setAuswahl] = useState<string[]>([]);
   const [zuteilenOffen, setZuteilenOffen] = useState(false);
   const verfall = useVerfallRueckfrage(pending);
+  // Was das Einschalten des Probe-Modus verfallen liesse (#555 AK 5), sobald die Checkbox an ist.
+  const [probeFolgen, setProbeFolgen] = useState<ProbeFolgen | null>(null);
+  const [probeFehler, setProbeFehler] = useState<string | null>(null);
 
   const mitKadern = kader.length > 0;
   const sichtbar = useMemo(() => {
@@ -119,12 +134,35 @@ export function SpielerListe({
   function oeffnen(s?: Spieler) {
     setFehler(null);
     setAufgenommen(null);
-    setOffen({ id: s?.id ?? null });
+    setProbeFolgen(null);
+    setProbeFehler(null);
+    setOffen({ id: s?.id ?? null, probe: !!s?.probe });
     setForm(
       s
-        ? { vorname: s.vorname, nachname: s.nachname, jahrgang: String(s.jahrgang), jsNummer: s.jsNummer ?? "", kaderIds: s.kaderIds }
+        ? {
+            vorname: s.vorname,
+            nachname: s.nachname,
+            jahrgang: String(s.jahrgang),
+            jsNummer: s.jsNummer ?? "",
+            kaderIds: s.kaderIds,
+            probe: s.probe !== null,
+          }
         : LEER,
     );
+  }
+
+  /** Die Checkbox «Im Probetraining»: beim Einschalten erst holen, was
+   *  verfiele (AK 5, 16) — die Warnung steht vor dem Speichern. */
+  function probeSchalten(id: string, an: boolean) {
+    setForm((f) => ({ ...f, probe: an }));
+    setProbeFehler(null);
+    setProbeFolgen(null);
+    if (!an || offen?.probe) return;
+    startTransition(async () => {
+      const r = await probeFolgenAktion(id);
+      if (!r.ok) return setProbeFehler(r.error);
+      setProbeFolgen(r.folgen);
+    });
   }
 
   function schliessen() {
@@ -132,6 +170,8 @@ export function SpielerListe({
     setForm(LEER);
     setFehler(null);
     setAufgenommen(null);
+    setProbeFolgen(null);
+    setProbeFehler(null);
   }
 
   function speichern() {
@@ -141,9 +181,33 @@ export function SpielerListe({
     startTransition(async () => {
       if (offen.id) {
         const id = offen.id;
+        const probeWechsel = form.probe !== offen.probe;
+        // Einschalten nur mit der Zahl, die die Warnung zeigte (#555 AK 5):
+        // Fehlt sie noch, erst holen — verfällt etwas, steht die Warnung da,
+        // und erst der nächste Klick schaltet.
+        let folgen = probeFolgen;
+        if (probeWechsel && form.probe && !folgen) {
+          const f = await probeFolgenAktion(id);
+          if (!f.ok) return setProbeFehler(f.error);
+          folgen = f.folgen;
+          setProbeFehler(null);
+          setProbeFolgen(folgen);
+          if (probeFolgenSumme(folgen) > 0) return;
+        }
         const r = await aendereSpielerAktion(id, eingabe);
         if (!r.ok) return setFehler({ feld: r.feld, text: r.error });
-        const bisher = spieler.find((s) => s.id === id)?.kaderIds ?? [];
+        const vorher = spieler.find((s) => s.id === id);
+        // Stimmt die Zahl nicht mehr, steht der neue Stand im offenen Dialog.
+        if (probeWechsel) {
+          const p = await schalteProbeAktion(teamId, id, form.probe, form.probe && folgen ? probeFolgenSumme(folgen) : null);
+          if (!p.ok) {
+            router.refresh();
+            const f = await probeFolgenAktion(id);
+            if (f.ok) setProbeFolgen(f.folgen);
+            return setProbeFehler(p.error);
+          }
+        }
+        const bisher = vorher?.kaderIds ?? [];
         zuteilen([id], kaderAenderung(bisher, form.kaderIds), () => {
           schliessen();
           router.refresh();
@@ -181,7 +245,7 @@ export function SpielerListe({
     });
   }
 
-  const feld = (k: Exclude<keyof Form, "kaderIds">) => ({
+  const feld = (k: Exclude<keyof Form, "kaderIds" | "probe">) => ({
     value: form[k],
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
       setForm((f) => ({ ...f, [k]: k === "jahrgang" ? nurZiffern(e.target.value) : e.target.value }));
@@ -199,6 +263,8 @@ export function SpielerListe({
     gewaehlteNamen.length === 0
       ? `${wer} sieht nur Termine ohne Kader.`
       : `${wer} sieht Termine ohne Kader und die Termine von ${aufzaehlung(gewaehlteNamen)}.`;
+  const probeVorher = !!offen?.probe;
+  const mitProbe = spieler.some((s) => s.probe);
   const spalten = mitKadern
     ? "sm:grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_7.5rem]"
     : "sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem]";
@@ -243,7 +309,7 @@ export function SpielerListe({
               Abbrechen
             </Button>
             <Button type="submit" form={formId} variant="filled" disabled={pending}>
-              {offen?.id ? "Speichern" : "Hinzufügen"}
+              {!offen?.id ? "Hinzufügen" : form.probe && !probeVorher ? PROBE_TEXT.einschalten : "Speichern"}
             </Button>
           </>
         }
@@ -271,6 +337,18 @@ export function SpielerListe({
               searchable={kader.length > 8}
               actions={false}
               supportingText={kaderHinweis}
+            />
+          )}
+          {offen?.id && (
+            <ProbeFeld
+              vorname={form.vorname.trim() || "Die Spieler:in"}
+              anzahl={probeAnzahl}
+              an={form.probe}
+              vorher={probeVorher}
+              folgen={probeFolgen}
+              fehler={probeFehler}
+              disabled={pending}
+              onChange={(an) => offen.id && probeSchalten(offen.id, an)}
             />
           )}
         </form>
@@ -315,7 +393,10 @@ export function SpielerListe({
                 />
               )}
               <span className="min-w-0 flex-1">
-                <span className="type-body-medium block truncate text-on-surface">{spielerName(s)}</span>
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="type-body-medium truncate text-on-surface">{spielerName(s)}</span>
+                  {s.probe && <ProbeLozenge stand={s.probe} />}
+                </span>
                 {/* Schmal stehen Jahrgang, J+S-Nummer und Kader unter dem Namen. */}
                 <span className="type-body-small block text-on-surface-mittel sm:hidden">
                   {[s.jahrgang, s.jsNummer && `J+S ${s.jsNummer}`].filter(Boolean).join(" · ")}
@@ -360,6 +441,8 @@ export function SpielerListe({
           Mannschaft übernimmst du aus einer CSV-Datei.
         </p>
       )}
+
+      {mitProbe && <p className="type-body-small mt-3 max-w-2xl text-on-surface-mittel">{PROBE_TEXT.listeHinweis}</p>}
 
       {/* Schwebt unten am Platz der Snackbar, solange jemand ausgewählt ist;
           im DOM nach der Liste, damit Tab aus der Zeile vorwärts zu ihr führt. */}
@@ -424,4 +507,58 @@ function kaderAenderung(bisher: readonly string[], neu: readonly string[]): Zute
 /** «A», «A und B», «A, B und C». */
 function aufzaehlung(namen: string[]): string {
   return namen.length <= 1 ? (namen[0] ?? "") : `${namen.slice(0, -1).join(", ")} und ${namen[namen.length - 1]}`;
+}
+
+/** Die Checkbox «Im Probetraining» im Dialog «Spieler:in ändern» (#555 AK 3–5,
+ *  16, 18, 19): darunter, was der Probe-Modus bedeutet; ohne Anzahl gesperrt
+ *  mit dem Weg dahin; beim Einschalten die Warnung, was verfällt, beim
+ *  Ausschalten, was danach gilt. */
+function ProbeFeld({
+  vorname,
+  anzahl,
+  an,
+  vorher,
+  folgen,
+  fehler,
+  disabled,
+  onChange,
+}: {
+  vorname: string;
+  anzahl: number | null;
+  an: boolean;
+  vorher: boolean;
+  folgen: ProbeFolgen | null;
+  fehler: string | null;
+  disabled: boolean;
+  onChange: (an: boolean) => void;
+}) {
+  const gesperrt = anzahl === null && !vorher;
+  const verfaellt = an && !vorher && folgen && probeFolgenSumme(folgen) > 0 ? folgen : null;
+  return (
+    <>
+      <hr className="my-1 border-kante" />
+      <Checkbox
+        className="items-start"
+        checked={an}
+        disabled={gesperrt || disabled}
+        onChange={(e) => onChange(e.target.checked)}
+        label={
+          <span className="flex flex-col gap-0.5">
+            <span>{PROBE_TEXT.checkbox}</span>
+            <span className="type-body-small text-on-surface-mittel">
+              {gesperrt ? PROBE_TEXT.anzahlFehlt : probeEinschaltenText(vorname, anzahl)}
+            </span>
+          </span>
+        }
+      />
+      {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
+      {!fehler && verfaellt && (
+        <SectionMessage appearance="warning">
+          <strong className="type-title-small block">{probeVerfallTitel(verfaellt)}</strong>
+          {probeVerfallFolge(vorname)}
+        </SectionMessage>
+      )}
+      {!an && vorher && <SectionMessage appearance="information">{probeAusschaltenText(vorname)}</SectionMessage>}
+    </>
+  );
 }

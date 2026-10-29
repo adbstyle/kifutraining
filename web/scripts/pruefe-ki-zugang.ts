@@ -672,6 +672,7 @@ pruefe("fehlerErgebnis: jedes gesetzte Feld eines Kern-Fehlers kommt an", () => 
     verschwindend: 3,
     verfallendSpiele: 1,
     kennzeichnungen: 1,
+    anmeldungen: 1,
   };
   const SNAKE: Record<string, string> = {
     retryAfter: "retry_after",
