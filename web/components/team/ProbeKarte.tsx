@@ -80,7 +80,7 @@ export function ProbeKarte({
             {PROBE_TEXT.titel}
             {konfiguriert && (
               <span className="type-label-small ml-2 text-on-surface-mittel">
-                {probe.length === 1 ? "1 Spieler:in" : `${probe.length} Spieler:innen`} im Probe-Modus
+                {PROBE_TEXT.imProbeModusZahl(probe.length)}
               </span>
             )}
           </span>
@@ -114,7 +114,7 @@ export function ProbeKarte({
                 {probe.map((s) => (
                   <li key={s.id} className="inline-flex items-center gap-2">
                     {spielerName(s)}
-                    <ProbeLozenge stand={s.probe} />
+                    {s.probe && <ProbeLozenge stand={s.probe} />}
                   </li>
                 ))}
               </ul>

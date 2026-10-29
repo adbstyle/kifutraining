@@ -12,7 +12,7 @@
 import { datumKurz } from "@/lib/zeit";
 import { tagOhneJahr } from "@/lib/monat";
 import { SPIEL_TEXT } from "@/lib/spiel";
-import type { ProbeStand } from "@/lib/probe";
+import { PROBE_TEXT, type ProbeStand } from "@/lib/probe";
 
 /** Zwillinge der Checks `spieler_vorname`, `spieler_nachname`, `spieler_js`,
  *  `spieler_jahrgang` und der Obergrenze im Trigger `spieler_vorher`. */
@@ -222,7 +222,7 @@ export const ABMELDUNG_TEXT = {
   /** An einem ausgefallenen Termin (#475 AK 6). */
   ausgefallenNachtrag: "Der Termin fällt aus. Für ihn lässt sich nicht nachtragen, wer da war.",
   /** Über den Link einer Probe-Spieler:in (#555 AK 12). */
-  probeVoll: "Alle Probetrainings sind vergeben. Meldest du von einem Training ab, wird der Platz wieder frei. Für weitere Trainings wende dich an das Team.",
+  probeVoll: PROBE_TEXT.voll,
 } as const;
 
 /** Die Abweisung mit dem aktuellen Stand (#435 AK 4, #437 AK 5) — an

@@ -97,13 +97,16 @@ as $$
                  case when e.fest then e.mit_liste
                       else exists (select 1 from spieler s where s.team_id = t.team_id) end as liste,
                  case when e.fest then (select count(*) from termin_teilnahmen p where p.termin_id = t.id)
-                      else (select count(*) from training_meldestand(t.id)) end as n,
+                      else m.n end as n,
                  case when e.fest then (select count(*) from termin_teilnahmen p where p.termin_id = t.id and p.abgemeldet)
-                      else (select count(*) from training_meldestand(t.id) m where m.abgemeldet) end as ab,
+                      else m.ab end as ab,
                  case when e.fest then (select count(*) from termin_teilnahmen p
                                          where p.termin_id = t.id and p.abgemeldet = p.nachgetragen) end as da
             from (select f.termin_id is not null as fest, coalesce(f.mit_liste, false) as mit_liste
-                    from (select 1) d left join termin_eingefroren f on f.termin_id = t.id) e) z;
+                    from (select 1) d left join termin_eingefroren f on f.termin_id = t.id) e
+            -- Offen den Meldestand einmal auswerten, nicht je Zahl.
+            cross join lateral (select count(*) as n, count(*) filter (where x.abgemeldet) as ab
+                                  from training_meldestand(t.id) x where not e.fest) m) z;
 $$;
 
 -- Rumpf wie in 20261020100000_nachtrag_anwesenheit.sql; offen liest der
@@ -226,6 +229,7 @@ begin
     return jsonb_build_object('status', 'abgewiesen', 'grund', 'gilt_nicht', 'stand', v_stand);
   end if;
   -- Eine verfallene Meldung gilt nicht: Wer sie trägt, hat den Grundstand.
+  if p_abgemeldet is null then raise exception 'ABGEMELDET_FEHLT'; end if;
   v_vorher := training_abgemeldet(p_termin, p_spieler);
   select training_grundstand(s.probe_seit) into v_grundstand from spieler s where s.id = p_spieler;
   if (not p_abgemeldet) = v_grundstand then

@@ -14,7 +14,6 @@ import { leseProbetraining } from "@/lib/kern/probe";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { abholUrl } from "@/lib/spieler";
 
-
 /* Die Teamverwaltung: wie das Team heisst, wer dabei ist — Mitglieder und
  * Spieler:innen (#434) — und wie man wieder herauskommt: in der Gefahrenzone
  * am Ende (Story 17, #480).

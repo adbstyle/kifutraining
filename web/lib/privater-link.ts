@@ -108,14 +108,14 @@ export async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
 export type LinkAbmeldung = { terminId: string; abgemeldet: boolean; gesehen: { datum: string; beginn: string } };
 
 export type LinkAbmeldeErgebnis =
-  | { ok: true; abgemeldet: boolean; angemeldet: number; probe?: ProbeStand | null }
+  | { ok: true; abgemeldet: boolean; angemeldet: number }
   | { ok: false; ungueltig: true }
-  | { ok: false; ungueltig?: false; error: string; probe?: ProbeStand | null };
+  | { ok: false; ungueltig?: false; error: string };
 
 type Antwort =
   | { status: "ungueltig" }
-  | { status: "ok"; abgemeldet: boolean; stand: Spielstand; probe?: ProbeStand }
-  | { status: "abgewiesen"; grund: AbmeldeGrund; stand?: AbmeldeStand; probe?: ProbeStand };
+  | { status: "ok"; abgemeldet: boolean; stand: Spielstand }
+  | { status: "abgewiesen"; grund: AbmeldeGrund; stand?: AbmeldeStand };
 
 /** Über den Link ab- oder wieder anmelden (AK 8) — dieselbe Regel wie für
  *  Mitglieder, die Spieler:in ergibt sich aus dem Link. */
@@ -133,8 +133,8 @@ export async function meldeUeberLink(token: string, e: LinkAbmeldung): Promise<L
   if (error || !data) return { ok: false, error: LINK_FEHLER };
   const r = data as Antwort;
   if (r.status === "ungueltig") return { ok: false, ungueltig: true };
-  if (r.status === "abgewiesen") return { ok: false, error: abweisungText(r.grund, r.stand), probe: r.probe ?? null };
-  return { ok: true, abgemeldet: r.abgemeldet, angemeldet: r.stand?.angemeldet ?? 0, probe: r.probe ?? null };
+  if (r.status === "abgewiesen") return { ok: false, error: abweisungText(r.grund, r.stand) };
+  return { ok: true, abgemeldet: r.abgemeldet, angemeldet: r.stand?.angemeldet ?? 0 };
 }
 
 export type LinkMeldung = { terminId: string; angemeldet: boolean; gesehen: { datum: string; beginn: string } };

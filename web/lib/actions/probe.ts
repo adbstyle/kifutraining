@@ -30,7 +30,7 @@ export async function legeProbetrainingFestAktion(
 /** Was das Einschalten verfallen liesse — vor dem Speichern (AK 5, 16). */
 export async function probeFolgenAktion(
   spielerId: string,
-): Promise<{ ok: true; folgen: ProbeFolgen & { anzahlFestgelegt: boolean; probe: boolean } } | Fehler> {
+): Promise<{ ok: true; folgen: ProbeFolgen } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await probeFolgen(a.supabase, a.userId, { spielerId });

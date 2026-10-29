@@ -50,6 +50,9 @@ export const PROBE_TEXT = {
   einschalten: "Probetraining einschalten",
   /** Am privaten Link: nach Ablauf der Anzahl (AK 12). */
   vergeben: "Probetrainings vergeben",
+  /** Die Abweisung am Link, wenn die Anzahl erreicht ist (AK 12). */
+  voll: "Alle Probetrainings sind vergeben. Meldest du von einem anderen Training ab, wird ein Platz frei. Für weitere Trainings wende dich an das Team.",
+  imProbeModusZahl: (n: number) => `${n === 1 ? "1 Spieler:in" : `${n} Spieler:innen`} im Probe-Modus`,
   nichtAngemeldet: "Nicht angemeldet",
   // ── Info-Schreiben (#556) ──
   info: "Info-Schreiben",
@@ -63,7 +66,7 @@ export const PROBE_TEXT = {
   linkInfoTitel: "Infos zum Probetraining",
   /** Unter der Spielerliste, sobald jemand im Probe-Modus ist. */
   listeHinweis:
-    "«Probe 1/4»: 1 von 4 Probetrainings besucht. Für welche Trainings sie angemeldet ist, steht am jeweiligen Training. Probe-Spieler:innen zählen bei den Angemeldeten eines Trainings nur, wenn sie angemeldet sind.",
+    "«Probe 1/4»: 1 von 4 Probetrainings besucht. Für welche Trainings jemand angemeldet ist, steht am jeweiligen Training. Probe-Spieler:innen zählen bei den Angemeldeten eines Trainings nur, wenn sie angemeldet sind.",
 } as const;
 
 /** Was an einer Anzahl nicht stimmt, sonst `null` (AK 2). */
@@ -201,7 +204,9 @@ export function linkProbeStand(s: ProbeStand): string {
   return `${s.besucht} besucht · ${s.angemeldet} angemeldet`;
 }
 
-/** Ist die Anzahl erreicht, steht das über den Trainings. */
+/** Ist die Anzahl erreicht, steht das über den Trainings (AK 12). */
 export function linkProbeVoll(vorname: string, s: ProbeStand): string {
-  return `Alle ${s.anzahl} Probetrainings sind vergeben. Meldest du ${vorname} von einem Training ab, wird der Platz wieder frei. Für weitere Trainings wende dich an das Team.`;
+  // Ist alles schon besucht, gibt es nichts abzumelden.
+  const frei = s.angemeldet > 0 ? ` Meldest du ${vorname} von einem Training ab, wird der Platz wieder frei.` : "";
+  return `Alle ${s.anzahl} Probetrainings sind vergeben.${frei} Für weitere Trainings wende dich an das Team.`;
 }

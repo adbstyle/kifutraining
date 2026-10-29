@@ -66,7 +66,6 @@ const LEER: Form = { vorname: "", nachname: "", jahrgang: "", jsNummer: "", kade
 /** Die Eingrenzung auf Spieler:innen ohne Kader; sonst die id eines Kaders. */
 const OHNE = "ohne";
 
-
 export function SpielerListe({
   teamId,
   spieler,
@@ -87,7 +86,8 @@ export function SpielerListe({
   const melde = useSnackbar();
   const [pending, startTransition] = useTransition();
   // `null`: zu; sonst neu (`id` leer) oder die geänderte Spieler:in.
-  const [offen, setOffen] = useState<{ id: string | null } | null>(null);
+  // `probe`: ihr Probe-Modus beim Öffnen — dagegen zählt, was sich ändert.
+  const [offen, setOffen] = useState<{ id: string | null; probe: boolean } | null>(null);
   const [form, setForm] = useState<Form>(LEER);
   const [fehler, setFehler] = useState<{ feld?: SpielerFeld; text: string } | null>(null);
   const [entfernen, setEntfernen] = useState<Spieler | null>(null);
@@ -136,7 +136,7 @@ export function SpielerListe({
     setAufgenommen(null);
     setProbeFolgen(null);
     setProbeFehler(null);
-    setOffen({ id: s?.id ?? null });
+    setOffen({ id: s?.id ?? null, probe: !!s?.probe });
     setForm(
       s
         ? {
@@ -157,7 +157,7 @@ export function SpielerListe({
     setForm((f) => ({ ...f, probe: an }));
     setProbeFehler(null);
     setProbeFolgen(null);
-    if (!an || spieler.find((s) => s.id === id)?.probe) return;
+    if (!an || offen?.probe) return;
     startTransition(async () => {
       const r = await probeFolgenAktion(id);
       if (!r.ok) return setProbeFehler(r.error);
@@ -181,13 +181,25 @@ export function SpielerListe({
     startTransition(async () => {
       if (offen.id) {
         const id = offen.id;
+        const probeWechsel = form.probe !== offen.probe;
+        // Einschalten nur mit der Zahl, die die Warnung zeigte (#555 AK 5):
+        // Fehlt sie noch, erst holen — verfällt etwas, steht die Warnung da,
+        // und erst der nächste Klick schaltet.
+        let folgen = probeFolgen;
+        if (probeWechsel && form.probe && !folgen) {
+          const f = await probeFolgenAktion(id);
+          if (!f.ok) return setProbeFehler(f.error);
+          folgen = f.folgen;
+          setProbeFehler(null);
+          setProbeFolgen(folgen);
+          if (probeFolgenSumme(folgen) > 0) return;
+        }
         const r = await aendereSpielerAktion(id, eingabe);
         if (!r.ok) return setFehler({ feld: r.feld, text: r.error });
         const vorher = spieler.find((s) => s.id === id);
-        // Der Probe-Modus (#555): mit der Zahl, die die Warnung zeigte; stimmt
-        // sie nicht mehr, steht der neue Stand im offenen Dialog.
-        if (vorher && form.probe !== (vorher.probe !== null)) {
-          const p = await schalteProbeAktion(teamId, id, form.probe, form.probe && probeFolgen ? probeFolgenSumme(probeFolgen) : null);
+        // Stimmt die Zahl nicht mehr, steht der neue Stand im offenen Dialog.
+        if (probeWechsel) {
+          const p = await schalteProbeAktion(teamId, id, form.probe, form.probe && folgen ? probeFolgenSumme(folgen) : null);
           if (!p.ok) {
             router.refresh();
             const f = await probeFolgenAktion(id);
@@ -251,7 +263,7 @@ export function SpielerListe({
     gewaehlteNamen.length === 0
       ? `${wer} sieht nur Termine ohne Kader.`
       : `${wer} sieht Termine ohne Kader und die Termine von ${aufzaehlung(gewaehlteNamen)}.`;
-  const probeVorher = !!offen?.id && !!spieler.find((s) => s.id === offen.id)?.probe;
+  const probeVorher = !!offen?.probe;
   const mitProbe = spieler.some((s) => s.probe);
   const spalten = mitKadern
     ? "sm:grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_7.5rem]"

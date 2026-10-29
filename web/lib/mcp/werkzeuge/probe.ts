@@ -24,7 +24,7 @@ export const PROBE_MODELL =
   "Kennzeichnungen als nicht aufgeboten verfallen - dann kommt zuerst ein Fehler mit «verfallend» (Anzahl); frag nach " +
   "und wiederhole den Aufruf mit «bestaetigt: true». Ausschalten macht sie an allen kommenden Trainings angemeldet und " +
   "lässt Spiele wieder für sie gelten; schaltet man später wieder ein, zählt es ab null. Begonnene Termine behalten " +
-  "den Stand bei Beginn. Zur Anzahl kann das Team ein Info-Schreiben führen (#556): reiner Text, höchstens " +
+  "den Stand bei Beginn. Zur Anzahl kann das Team ein Info-Schreiben führen: reiner Text, höchstens " +
   `${PROBE_INFO_MAX} Zeichen, Zeilenumbrüche bleiben, Webadressen werden im Link anklickbar. Es steht im privaten Link ` +
   "jeder Probe-Spieler:in, sonst nirgends - nicht im Kalender-Abo, nicht bei der Selbstabholung.";
 

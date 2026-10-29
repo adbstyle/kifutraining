@@ -14,7 +14,7 @@
 -- «nicht erschienen» (PC 4).
 --
 -- Forward-only: eine neue Tabelle (team_probetraining, steht in
--- PUBLIC_TABLES), neue Funktionen, neu gefasste Funktionen; drei fallen und
+-- PUBLIC_TABLES), neue Funktionen, neu gefasste Funktionen; zwei fallen und
 -- entstehen neu (neue Rückgabe): termin_teilnehmer, kader_bereinigen_training.
 -- ============================================================================
 set lock_timeout = '5s';
@@ -164,8 +164,6 @@ begin
   select team_id into v_team from spieler where id = p_spieler;
   if v_team is null or not ist_team_mitglied(v_team) then raise exception 'SPIELER_NICHT_GEFUNDEN'; end if;
   return jsonb_build_object(
-    'anzahl_festgelegt', exists (select 1 from team_probetraining where team_id = v_team),
-    'probe', (select probe_seit is not null from spieler where id = p_spieler),
     'abmeldungen', (select count(*) from termin_abmeldungen a join training_termine t on t.id = a.termin_id
                      where a.spieler_id = p_spieler and a.verfallen_am is null and not a.angemeldet
                        and not termin_begonnen(t.datum, t.beginn)),
@@ -279,12 +277,15 @@ as $$
 declare
   s spieler;
   t training_termine;
-  v jsonb;
 begin
   select * into s from spieler where link_token = p_token;
   if not found then return jsonb_build_object('status', 'ungueltig'); end if;
+  -- Erst unter der Sperre gelesen, gilt der Probe-Modus: Ein Mitglied, das ihn
+  -- gleichzeitig einschaltet, kann die Grenze nicht unterlaufen.
+  perform pg_advisory_xact_lock(hashtextextended('spieler:' || s.team_id::text, 0));
+  select * into s from spieler where id = s.id;
+  if not found then return jsonb_build_object('status', 'ungueltig'); end if;
   if s.probe_seit is not null and not p_abgemeldet then
-    perform pg_advisory_xact_lock(hashtextextended('spieler:' || s.team_id::text, 0));
     select * into t from training_termine where id = p_termin and team_id = s.team_id;
     if found and t.art = 'training' and not t.ausgefallen and not termin_begonnen(t.datum, t.beginn)
        and (p_gesehen_datum is null or p_gesehen_datum = t.datum)
@@ -293,15 +294,10 @@ begin
        and (probe_stand(s.id) ->> 'moeglich')::int < 1 then
       return jsonb_build_object('status', 'abgewiesen', 'grund', 'probe_voll',
         'stand', jsonb_build_object('datum', t.datum, 'beginn', to_char(t.beginn, 'HH24:MI'),
-                                    'ende', to_char(t.ende, 'HH24:MI'), 'ausgefallen', t.ausgefallen),
-        'probe', probe_stand(s.id));
+                                    'ende', to_char(t.ende, 'HH24:MI'), 'ausgefallen', t.ausgefallen));
     end if;
   end if;
-  v := abmeldung_anwenden(p_termin, s.id, p_abgemeldet, p_gesehen_datum, p_gesehen_beginn);
-  if s.probe_seit is not null then
-    v := v || jsonb_build_object('probe', probe_stand(s.id));
-  end if;
-  return v;
+  return abmeldung_anwenden(p_termin, s.id, p_abgemeldet, p_gesehen_datum, p_gesehen_beginn);
 end;
 $$;
 

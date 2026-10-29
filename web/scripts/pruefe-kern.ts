@@ -2865,6 +2865,11 @@ pruefe("Probetraining: Anzahl, Plakette, Stand am Link, Hinweis über der Anzahl
   assert.equal(linkProbeZaehler(stand), "Noch 1 von 4 Probetrainings möglich");
   assert.equal(linkProbeZaehler({ ...stand, angemeldet: 3, moeglich: 0 }), "Alle 4 Probetrainings vergeben");
   assert.ok(linkProbeVoll("Mia", stand).startsWith("Alle 4 Probetrainings sind vergeben. Meldest du Mia"));
+  assert.equal(
+    linkProbeVoll("Mia", { anzahl: 4, besucht: 4, angemeldet: 0, moeglich: 0 }),
+    "Alle 4 Probetrainings sind vergeben. Für weitere Trainings wende dich an das Team.",
+    "alles besucht: nichts abzumelden",
+  );
   // Zusatzentscheid PO 2026-10-29: über der Anzahl ein Hinweis, kein Verbot.
   assert.equal(ueberAnzahl(stand), false);
   assert.equal(ueberAnzahl({ ...stand, angemeldet: 3 }), false, "genau die Anzahl");

@@ -5782,7 +5782,6 @@ try {
       (await feldAnon.rpc("spieler_link_abmelden", { p_token: tok, p_termin: terminId, p_abgemeldet: abgemeldet, p_gesehen_datum: tagCh(tage), p_gesehen_beginn: "18:00" })).data as {
         status: string;
         grund?: string;
-        probe?: { anzahl: number; besucht: number; angemeldet: number; moeglich: number };
       };
     const ansicht = async (tok: string) =>
       (await feldAnon.rpc("spieler_link_ansicht", { p_token: tok })).data as {
@@ -5799,7 +5798,6 @@ try {
     assert.deepEqual(wert(await leseProbetraining(a.supabase, a.id, { teamId: k.team })).anzahl, null, "AK 18: noch keine");
     // AK 4: ohne Anzahl lässt sich nichts einschalten.
     fehler(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: true }), "regel", PROBE_TEXT.anzahlFehlt);
-    assert.equal(wert(await probeFolgen(a.supabase, a.id, { spielerId: k.mia })).anzahlFestgelegt, false);
     for (const n of [0, 21, 2.5]) fehler(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: n, info: null }), "eingabe", PROBE_TEXT.anzahlProblem);
     // Auch an der Kernprüfung vorbei weist die Datenebene ab.
     assert.match((await a.supabase.rpc("team_probetraining_festlegen", { p_team: k.team, p_anzahl: 21, p_info: null })).error?.message ?? "", /PROBE_ANZAHL_UNGUELTIG|team_probetraining_anzahl/);
@@ -5825,7 +5823,7 @@ try {
     wert(await setzeMeldung(a.supabase, a.id, { terminId: sp, spielerId: k.mia, angemeldet: true }));
     wert(await setzeAufgebot(a.supabase, a.id, { terminId: sp, spielerId: k.mia, nichtAufgeboten: true }));
     const f = wert(await probeFolgen(a.supabase, a.id, { spielerId: k.mia }));
-    assert.deepEqual([f.anzahlFestgelegt, f.probe, f.abmeldungen, f.meldungen, f.kennzeichnungen], [true, false, 1, 1, 1]);
+    assert.deepEqual([f.abmeldungen, f.meldungen, f.kennzeichnungen], [1, 1, 1]);
     // Ohne Bestätigung nichts geschrieben; die KI erhält den Weg dazu.
     const r = fehler(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: true }), "regel", probeVerfallBestaetigen("Mia", f)) as { verfallend?: number };
     assert.equal(r.verfallend, 3);
@@ -5857,11 +5855,12 @@ try {
     wert(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: true, bestaetigt: true }));
     const tok = await k.token(k.mia);
     const an1 = await k.ueberLink(tok, t1, 2, false);
-    assert.deepEqual([an1.status, an1.probe], ["ok", { anzahl: 2, besucht: 0, angemeldet: 1, moeglich: 1 }]);
+    assert.equal(an1.status, "ok");
+    assert.deepEqual((await k.ansicht(tok)).probe, { anzahl: 2, besucht: 0, angemeldet: 1, moeglich: 1 });
     assert.equal((await k.ueberLink(tok, t2, 3, false)).status, "ok");
     // AK 10, 12: die dritte geht über die Anzahl - abgewiesen, mit Stand.
     const voll = await k.ueberLink(tok, t3, 4, false);
-    assert.deepEqual([voll.status, voll.grund, voll.probe?.moeglich], ["abgewiesen", "probe_voll", 0]);
+    assert.deepEqual([voll.status, voll.grund], ["abgewiesen", "probe_voll"]);
     assert.deepEqual((await k.ansicht(tok)).probe, { anzahl: 2, besucht: 0, angemeldet: 2, moeglich: 0 });
     // Abmelden gibt den Platz frei (AK 9).
     assert.equal((await k.ueberLink(tok, t2, 3, true)).status, "ok");

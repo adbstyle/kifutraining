@@ -84,14 +84,12 @@ export async function probeFolgen(
   supabase: SupabaseClient,
   _userId: string,
   e: { spielerId: string },
-): Promise<KernErgebnis<ProbeFolgen & { anzahlFestgelegt: boolean; probe: boolean }>> {
+): Promise<KernErgebnis<ProbeFolgen>> {
   if (!istUuid(e.spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
   const { data, error } = await supabase.rpc("spieler_probe_folgen", { p_spieler: e.spielerId });
   if (error) return probeFehler(error);
-  const r = data as { anzahl_festgelegt: boolean; probe: boolean; abmeldungen: number; meldungen: number; kennzeichnungen: number };
+  const r = data as ProbeFolgen;
   return ok({
-    anzahlFestgelegt: r.anzahl_festgelegt,
-    probe: r.probe,
     abmeldungen: r.abmeldungen,
     meldungen: r.meldungen,
     kennzeichnungen: r.kennzeichnungen,

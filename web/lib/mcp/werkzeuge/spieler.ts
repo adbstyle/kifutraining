@@ -80,7 +80,7 @@ const SpielerAusgabe = z.object({
       moeglich: z.number().int().describe("Wie viele sie über ihren Link noch dazu anmelden kann."),
     })
     .nullable()
-    .describe("Nur im Probe-Modus (#555), sonst null."),
+    .describe("Nur im Probe-Modus, sonst null."),
 });
 
 // ── spielerliste_abrufen ────────────────────────────────────────────────────
@@ -206,7 +206,7 @@ export const spielerEntfernen = werkzeug({
 
 /** Was jede Beschreibung eines Abmelde-Werkzeugs über das Modell sagt. */
 const ABMELDE_MODELL =
-"Jede Spieler:in der Spielerliste ist für jedes Training angemeldet, bis sie abgemeldet wird; «keine Rückmeldung» gibt " +
+  "Jede Spieler:in der Spielerliste ist für jedes Training angemeldet, bis sie abgemeldet wird; «keine Rückmeldung» gibt " +
   "es nicht. Eine Spieler:in im Probe-Modus («probe: true») ist umgekehrt zuerst nicht angemeldet («meldung: " +
   "abgemeldet»), bis sie angemeldet wird; Spiele gelten für sie nicht («probetraining_abrufen» erklärt das Modell). Ab- und anmelden geht bis zum Beginn des Termins (Uhr am Trainingsort, Schweiz), nicht an einem " +
   "ausgefallenen. Ab Beginn gilt der Stand bei Beginn; dann tragen Mitglieder nach, wer trotz Anmeldung nicht erschienen " +
