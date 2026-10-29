@@ -317,8 +317,21 @@ function BereichKopf({ titel }: { titel: Bereich["titel"] }) {
 /* Ein Sprung hält ab lg global 6rem Abstand zur klebenden Kopfzeile
    (globals.css). Ein Abschnitt rückt so weit höher, dass sein Untertitel auf
    der Höhe des Verzeichnisses steht (top-16): 4.5rem = 6rem - 4rem + die
-   Polsterung oben (2.5rem). */
-function Section({ id, children }: { id: AbschnittId; children: React.ReactNode }) {
+   Polsterung oben (2.5rem).
+
+   `dunkel`: Der Abschnitt legt lebende Flächen neben Zahlen, die
+   `lib/farben.ts` für das dunkle Erscheinungsbild rechnet. Damit Fläche und
+   Wert auch im Hellen zusammenpassen, steht sein Inhalt fest auf einer
+   dunklen Tafel; das helle Gegenstück zeigt «Hell und Dunkel». */
+function Section({
+  id,
+  dunkel = false,
+  children,
+}: {
+  id: AbschnittId;
+  dunkel?: boolean;
+  children: React.ReactNode;
+}) {
   const { titel, gruppe } = ABSCHNITTE.get(id)!;
   return (
     <section
@@ -330,7 +343,17 @@ function Section({ id, children }: { id: AbschnittId; children: React.ReactNode 
       <h3 id={`${id}-titel`} className="type-headline-small text-on-surface">
         {titel}
       </h3>
-      <div className="mt-6">{children}</div>
+      {dunkel ? (
+        <div
+          style={{ colorScheme: "dark" }}
+          className="mt-6 rounded-dialog kontur border-linie bg-elev-00 p-5 text-on-surface"
+        >
+          <p className="type-label-medium mb-4 text-on-surface-mittel">Dunkel</p>
+          {children}
+        </div>
+      ) : (
+        <div className="mt-6">{children}</div>
+      )}
     </section>
   );
 }
@@ -736,7 +759,7 @@ export default async function Styleguide() {
           </div>
         </Section>
 
-        <Section id="zustaende">
+        <Section id="zustaende" dunkel>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Jede bedienbare Fläche legt beim Überfahren, Fokussieren und Drücken
             eine Ebene auf - <strong>in der Farbe ihres eigenen Inhalts</strong>,
@@ -980,7 +1003,10 @@ export default async function Styleguide() {
               <div key={name} className="rounded-flaeche kontur border-kante p-3">
                 <div
                   className="mb-2 flex h-14 w-full items-end rounded-klein border border-linie p-2"
-                  style={{ backgroundColor: hex, color: DRUCK["on-surface"] }}
+                  style={{
+                    backgroundColor: hex,
+                    color: kontrast(DRUCK["on-surface"], hex) >= 4.5 ? DRUCK["on-surface"] : DRUCK["elev-00"],
+                  }}
                 >
                   <span className="type-label-small">{hex.toUpperCase()}</span>
                 </div>
@@ -1042,7 +1068,7 @@ export default async function Styleguide() {
           <ErscheinungsbildDemo />
         </Section>
 
-        <Section id="farbrollen">
+        <Section id="farbrollen" dunkel>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Material vergibt <strong>Rollen</strong>, keine Bedeutungen: Es gibt
             einen Akzent, eine Fehlerfarbe und Schrift in Deckungen - was davon
@@ -1215,7 +1241,7 @@ export default async function Styleguide() {
           </p>
         </Section>
 
-        <Section id="hoehe">
+        <Section id="hoehe" dunkel>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Im Dunkeln trägt nicht der Schatten die Höhe, sondern die Helligkeit:
             Jede Stufe legt ein weisses Overlay über denselben Grund. Die Werte
@@ -1416,13 +1442,14 @@ export default async function Styleguide() {
 
         <Section id="knoepfe">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Sechs Varianten (und der helle Knopf weiter unten), eine Regel: <strong>Gefüllt trägt Schwarz</strong>{" "}
-            - ausser Rot. <code>filled</code> ist Primary-Fläche, <code>outlined</code> Kontur
+            Sechs Varianten (und der umgekehrte Knopf weiter unten), eine Regel: <strong>Gefüllt trägt
+            die Schrift, die auf dem Violett am stärksten ist</strong> - im Dunkeln Schwarz, im Hellen
+            Weiss; Rot trägt immer Weiss. <code>filled</code> ist Primary-Fläche, <code>outlined</code> Kontur
             auf der Kante - der <strong>Secondary Button</strong>, wenn von ihm die
             Rede ist, <code>text</code> nur Schrift, <code>danger</code>{" "}
             gefüllt in <code>danger</code> mit weisser Schrift - Löschen soll
-            man nicht übersehen (PO 2026-10-06). Das helle Error-Rot trüge
-            Weiss nicht, darum hat die Fläche ihre eigene, dunklere Rolle. Steht
+            man nicht übersehen (PO 2026-10-06). Das helle Error-Rot des Dunkeln
+            trüge Weiss nicht, darum hat die Fläche ihre eigene, dunklere Rolle. Steht
             Destruktives als Nebenaktion neben dem Hauptweg eines Dialogs, trägt es{" "}
             <code>dangerOutlined</code>, den <strong>Error-Secondary-Button</strong>: die Bauform von <code>outlined</code> mit
             Kontur und Schrift in Error - die Rückfrage danach bleibt{" "}
@@ -1479,10 +1506,10 @@ export default async function Styleguide() {
             (<code>outlined</code>) - auch als einzige Aktion.
           </p>
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
-            Heller Knopf (<code>variant=&quot;hell&quot;</code>) - auf einer Fläche im Fehlerton
+            Umgekehrter Knopf (<code>variant=&quot;umkehr&quot;</code>) - auf einer Fläche im Fehlerton
           </p>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-            Die umgekehrte, helle Fläche der Snackbar mit der Farbe des Grunds als
+            Die umgekehrte Fläche der Snackbar mit der Farbe des Grunds als
             Schrift. Neu, weil auf einer Fläche im Fehlerton <code>filled</code>{" "}
             (Violett auf Rot) zu laut wäre und <code>outlined</code> unterginge: die eine
             Handlung «Wieder anmelden» am abgemeldeten nächsten Termin hinter dem
@@ -1490,7 +1517,7 @@ export default async function Styleguide() {
           </p>
           <div className="flex flex-wrap items-center gap-3 rounded-flaeche kontur border-kante bg-section-danger/60 p-4">
             <span className="type-body-medium text-on-surface">Lena Meier ist abgemeldet.</span>
-            <Button variant="hell">Wieder anmelden</Button>
+            <Button variant="umkehr">Wieder anmelden</Button>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">

@@ -69,8 +69,8 @@
   /* Kontur von Feld, Chip, Knopf, 1.5 px — im Hellen 50 %, damit sie 3:1 trägt. */
   --color-kante: light-dark(#141a1780, #ffffff47);
 
-  /* ─── Umgekehrte Fläche — die Snackbar (#234), der helle Knopf
-     (`variant="hell"`), Kalenderblatt und Mini-Monat. Im Dunkeln hell (Weiss
+  /* ─── Umgekehrte Fläche — die Snackbar (#234), der umgekehrte Knopf
+     (`variant="umkehr"`), Kalenderblatt und Mini-Monat. Im Dunkeln hell (Weiss
      87 % über dem Grund) mit dem Grund als Schrift und tiefem Violett als
      Akzent; im Hellen dunkel (die Menüstufe des Dunkeln) mit dem hellen Grund
      als Schrift und dem hellen Violett als Akzent. Angewandt über
@@ -396,9 +396,10 @@
 }
 
 /* Umgekehrte Fläche (Snackbar, #234). Innerhalb gelten die Rollen umgekehrt:
-   Schrift ist der Grund, Primary das dunkle Violett. So stehen Textknopf,
+   Schrift ist der Grund, Primary das Violett des anderen Erscheinungsbilds
+   (im Dunkeln das dunkle, im Hellen das helle). So stehen Textknopf,
    Zustands-Ebene und Fokus-Ring darin richtig, ohne dass ein Baustein eine
-   Sonderklasse kennen müsste — `#bb86fc` hätte auf der hellen Fläche nur 2:1. */
+   Sonderklasse kennen müsste. */
 @utility umkehr {
   --color-on-surface: var(--color-on-umkehr);
   --color-primary: var(--color-umkehr-akzent);
@@ -711,15 +712,16 @@
 }
 
 @layer base {
-  /* Die Anwendung ist dunkel (Material Dark) — das sagt sie auch dem
-     Browser. Ohne diese Angabe zeichnet er seine eigenen Bedienteile im
-     hellen Schema: das Uhr- und Kalender-Zeichen in Zeit- und Datumsfeldern
-     schwarz auf unserem dunklen Grund, dazu Auswahlfenster, Scrollbalken und
-     Autofill-Flächen hell. Zwilling ist `viewport.colorScheme` im
-     Wurzel-Layout, das schon vor diesem CSS gilt. Der Druck schaltet auf
-     hell um (siehe Druck-Ansicht unten). */
+  /* Erscheinungsbild (Epic #563): Die Anwendung folgt dem Gerät; ohne
+     Angabe des Geräts ist sie hell (die erste Nennung gewinnt). Dieselbe
+     Angabe wählt in jedem Token die Hälfte von `light-dark()` und sagt dem
+     Browser, wie er seine eigenen Bedienteile zeichnet — Uhr- und
+     Kalender-Zeichen, Auswahlfenster, Scrollbalken, Autofill. Wechselt das
+     Gerät, geht die Seite ohne Skript mit. Zwilling ist
+     `viewport.colorScheme` im Wurzel-Layout, das schon vor diesem CSS gilt.
+     Der Druck schaltet auf hell um (siehe Druck-Ansicht unten). */
   :root {
-    color-scheme: dark;
+    color-scheme: light dark;
   }
 
   /* Klebt die Kopfzeile oben (ab `lg`, Epic #350): Springt der Browser zu
@@ -755,10 +757,11 @@
 
 /* ============================================================================
    Druck-Ansicht (Story #18): helles, tintensparendes Layout, unabhängig vom
-   dunklen Bildschirm-Farbschema. Die Höhenleiter kippt um — aus dem
-   aufgehellten Dunkel wird ein abgedunkeltes Weiss, die Reihenfolge der
-   Stufen bleibt. Primary wird zu einem dunklen Violett, weil #bb86fc auf
-   Papier nicht trägt. App-Chrome ist via print:hidden ausgeblendet.
+   Erscheinungsbild am Schirm. Die Höhenleiter ist ein abgedunkeltes Weiss
+   in der Reihenfolge der dunklen Stufen — anders als im Hellen, wo Karten
+   weiss auf getöntem Grund liegen: Papier ist der Grund. Primary wird zu
+   einem dunklen Violett, das auf Papier trägt. App-Chrome ist via
+   print:hidden ausgeblendet.
    Gilt für jede Druckausgabe der App.
    ============================================================================ */
 @media print {

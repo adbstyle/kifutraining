@@ -33,7 +33,7 @@ import { TrainerLozenge, TrainerZahl } from "./TrainerZeichen";
    geöffneten Termin. Bei einem Spiel darunter die Treffpunkte, der späteste
    zuoberst: Die Trainer:in steht am Treffpunkt nächst am Spiel. Dann die
    Bemerkung (#403 AK 3), wer verantwortlich ist (#519 AK 24) und zuunterst
-   die Handgriffe, der wichtigste hell. Die Serie steht am geöffneten Termin.
+   die Handgriffe, der wichtigste umgekehrt. Die Serie steht am geöffneten Termin.
 
    `hervorgehoben`: Der Verweis aus dem Kalender-Abo zielt auf ihn (PC 4) —
    Kontur in Primary, `aria-current` und Sprungziel wie an jeder Zeile. */
@@ -163,12 +163,12 @@ export function NaechsterTermin({
         <div className="flex flex-wrap gap-2">
           {t.training ? (
             <>
-              <ButtonLink variant="hell" href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`}>Durchführen</ButtonLink>
+              <ButtonLink variant="umkehr" href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`}>Durchführen</ButtonLink>
               <ButtonLink variant="outlined" href={`/training/${t.training.id}`}>Training öffnen</ButtonLink>
             </>
           ) : (
             !t.spiel && (
-              <Button variant="hell" aria-haspopup="dialog" onClick={() => a.zuordnen(t)}>Training hinzufügen</Button>
+              <Button variant="umkehr" aria-haspopup="dialog" onClick={() => a.zuordnen(t)}>Training hinzufügen</Button>
             )
           )}
           {/* Wer kommt (#435) — sobald das Team eine Spielerliste führt. */}
