@@ -16,6 +16,7 @@ import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import type { LinkTermin } from "@/lib/privater-link";
 import { spielerName, spielerzahlKurz, verfallenHinweis, type Spielerzahl } from "@/lib/spieler";
 import { useLokalerStand } from "@/lib/use-lokaler-stand";
+import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaehler, type ProbeStand } from "@/lib/probe";
 
 /* Was die Spielervertretung über den privaten Link sieht (#436 AK 5–9): ihre
    Spieler:in, das Team und die anstehenden Termine. Angemeldet ist der
@@ -32,16 +33,26 @@ import { useLokalerStand } from "@/lib/use-lokaler-stand";
 
    Die Spielerzahl steht knapp wie im Trainingsplan, «24/33» mit dem Shirt
    (#472): «angemeldet» und «abgemeldet» meinen auf dieser Seite nur die
-   eigene Spieler:in. */
+   eigene Spieler:in.
+
+   Im Probe-Modus (#555 AK 9–12) ist es umgekehrt: Die Spieler:in ist an
+   Trainings zuerst nicht angemeldet, Spiele stehen keine da. Der Kopf nennt,
+   wie viele Probetrainings noch möglich sind, mit einem Balken je
+   Probetraining (besucht gefüllt, angemeldet umrandet). Ist die Anzahl
+   erreicht, sagt das eine Meldung über den Trainings, und die Schalter der
+   übrigen sind gesperrt, bis ein Platz frei wird. */
 export function ElternAnsicht({
   token,
   team,
   spieler,
+  probe,
   termine,
 }: {
   token: string;
   team: string;
   spieler: { vorname: string; nachname: string };
+  /** Im Probe-Modus ihr Stand, sonst `null`. */
+  probe: ProbeStand | null;
   termine: LinkTermin[];
 }) {
   // Was gerade umgelegt wird, steht sofort so da; scheitert es, zurück. Bei
@@ -60,6 +71,19 @@ export function ElternAnsicht({
   // gesperrt bis Ende des Tages.
   const begonnen = termine.filter((t) => t.begonnen);
   const uebrige = termine.filter((t) => !t.begonnen);
+
+  // Der Probe-Stand folgt den lokalen Schaltern, bevor der Server antwortet.
+  const probeLokal = probe && {
+    ...probe,
+    angemeldet:
+      probe.angemeldet +
+      termine
+        .filter((t) => t.art !== "spiel" && !t.begonnen && !t.ausgefallen)
+        .reduce((n, t) => n + Number(t.abgemeldet) - Number(abmeldungen.wert(t.id, t.abgemeldet)), 0),
+  };
+  if (probeLokal && probeLokal.anzahl !== null)
+    probeLokal.moeglich = Math.max(0, probeLokal.anzahl - probeLokal.besucht - probeLokal.angemeldet);
+  const voll = !!probeLokal && probeLokal.anzahl !== null && probeLokal.moeglich === 0;
 
   function umlegen(t: LinkTermin, an: boolean) {
     setFehler(null);
@@ -116,14 +140,16 @@ export function ElternAnsicht({
         : { quelle: "liste" as const, angemeldet: t.angemeldet + Number(t.abgemeldet) - Number(ab), gesamt: t.gesamt, anwesend: null }; // Eltern sehen den Stand bei Beginn (#475 AK 16).
     // «Fällt aus» sagt schon die Lozenge; ausgefallen bleibt der Ort stehen (#530 AK 5).
     const zweite = !t.ausgefallen && t.begonnen ? "Hat begonnen · nicht mehr änderbar" : null;
-    return { ab, zweite, zahl };
+    // Probe: Ist die Anzahl erreicht, lässt sich nur noch abmelden (AK 10, 12).
+    const vergeben = voll && ab && !t.ausgefallen && !t.begonnen;
+    return { ab, zweite, zahl, probe: !!probe, vergeben };
   }
 
   /** Hinweis bei verfallener Abmeldung und Fehler — unter jeder Karte gleich. */
   function hinweise(t: LinkTermin, ab: boolean) {
     return (
       <>
-        {t.verfallen && !ab && !t.ausgefallen && !t.begonnen && (
+        {t.verfallen && ab === !!t.verfallen.anmeldung && !t.ausgefallen && !t.begonnen && (
           <SectionMessage>{verfallenHinweis(t.verfallen)}</SectionMessage>
         )}
         {fehler?.terminId === t.id && <SectionMessage appearance="error">{fehler.text}</SectionMessage>}
@@ -141,11 +167,23 @@ export function ElternAnsicht({
           <h1 className="min-w-0 type-headline-small text-on-surface">{name}</h1>
           <AboKnopf token={token} />
         </div>
-        <p className="type-body-medium text-on-surface-mittel">
-          {name} ist für jedes Training zuerst angemeldet. Kann {spieler.vorname} nicht, melde ab - und bis zum
-          Beginn wieder an. Für ein Spiel ist {spieler.vorname} erst angemeldet, wenn du anmeldest.
-        </p>
+        {probeLokal ? (
+          <>
+            <p className="type-body-medium text-on-surface-mittel">{linkProbeKopf(spieler.vorname)}</p>
+            <ProbeZaehler stand={probeLokal} />
+          </>
+        ) : (
+          <p className="type-body-medium text-on-surface-mittel">
+            {name} ist für jedes Training zuerst angemeldet. Kann {spieler.vorname} nicht, melde ab - und bis zum
+            Beginn wieder an. Für ein Spiel ist {spieler.vorname} erst angemeldet, wenn du anmeldest.
+          </p>
+        )}
       </header>
+      {voll && probeLokal && (
+        <div className="px-4 pt-4">
+          <SectionMessage>{linkProbeVoll(spieler.vorname, probeLokal)}</SectionMessage>
+        </div>
+      )}
       {termine.length === 0 ? (
         <div className="px-4 py-6">
           <Leerzustand icon={CalendarX2} titel="Keine anstehenden Termine" dicht>
@@ -194,6 +232,10 @@ type KarteProps = {
   /** Unter dem Ort: begonnen und nicht mehr änderbar. */
   zweite: string | null;
   zahl: Spielerzahl | null;
+  /** Im Probe-Modus: zuerst nicht angemeldet (#555). */
+  probe: boolean;
+  /** Probe: Die Anzahl ist erreicht, anmelden geht hier nicht (AK 12). */
+  vergeben: boolean;
   name: string;
   pending: boolean;
   onUmlegen: (an: boolean) => void;
@@ -202,16 +244,20 @@ type KarteProps = {
 
 /** Der Status der eigenen Spieler:in an einem Training (Epic #490): grün
  *  angemeldet, rot abgemeldet, grau, wenn er ausfällt. */
-function trainingStatus(t: LinkTermin, ab: boolean) {
-  return t.ausgefallen ? TERMIN_STATUS.faelltAus : ab ? MELDE_STATUS.abgemeldet : MELDE_STATUS.angemeldet;
+function trainingStatus(t: LinkTermin, ab: boolean, probe: boolean) {
+  if (t.ausgefallen) return TERMIN_STATUS.faelltAus;
+  if (!ab) return MELDE_STATUS.angemeldet;
+  // Probe: nicht angemeldet ist der Ausgangsstand, kein Absagen (#555).
+  return probe ? { wort: PROBE_TEXT.nichtAngemeldet, appearance: "neutral" as const } : MELDE_STATUS.abgemeldet;
 }
 
 /* Ein Training in der Liste (Epic #490, Tafel 9 Gruppe 4): Kalenderblatt,
    der Status als Lozenge, Zeit, Ort, Kader und Spielerzahl, rechts der
    Schalter. Abgemeldet oder ausgefallen tritt die Karte gedämpft zurück. */
-function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }: KarteProps) {
-  const status = trainingStatus(t, ab);
-  const gedaempft = t.ausgefallen || ab;
+function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUmlegen, hinweise }: KarteProps) {
+  const status = trainingStatus(t, ab, probe);
+  // Probe: nicht angemeldet ist der Ausgangsstand, keine Absage - die Karte bleibt.
+  const gedaempft = t.ausgefallen || (ab && !probe);
   return (
     <li className={cn("flex flex-col gap-2 rounded-flaeche px-3 py-3", gedaempft ? "kontur border-linie" : "bg-elev-01")}>
       <div className="flex items-start gap-3">
@@ -233,14 +279,14 @@ function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }
             ))}
           {zweite && <span className="type-body-small text-on-surface-mittel">{zweite}</span>}
           <AusfallGrund grund={t.ausfall_grund} />
-          <TeamZeile t={t} zahl={zahl} />
+          <TeamZeile t={t} zahl={zahl} zusatz={vergeben ? PROBE_TEXT.vergeben : null} />
           {t.verantwortlich && <span className="type-body-small text-on-surface-mittel">Verantwortlich: {t.verantwortlich}</span>}
         </div>
         <Switch
           ton="ruhig"
           checked={!t.ausgefallen && !ab}
           neutral={t.ausgefallen}
-          disabled={t.ausgefallen || t.begonnen || pending}
+          disabled={t.ausgefallen || t.begonnen || vergeben || pending}
           onChange={(e) => onUmlegen(e.target.checked)}
           aria-label={`${name} am ${tagText(t.datum)} dabei`}
         />
@@ -252,8 +298,8 @@ function TerminKarte({ t, ab, zweite, zahl, name, pending, onUmlegen, hinweise }
 
 /* Kader und Spielerzahl knapp: «S1 15/16». Die Zahl wird nie gekürzt (#472
    NFR 1) und bleibt ungefärbt. */
-function TeamZeile({ t, zahl }: { t: LinkTermin; zahl: Spielerzahl | null }) {
-  if (t.kader.length === 0 && zahl?.quelle !== "liste") return null;
+function TeamZeile({ t, zahl, zusatz }: { t: LinkTermin; zahl: Spielerzahl | null; zusatz: string | null }) {
+  if (t.kader.length === 0 && zahl?.quelle !== "liste" && !zusatz) return null;
   return (
     <span className="flex flex-wrap items-center gap-2 type-body-small text-on-surface-mittel">
       <KaderLozenges namen={t.kader} />
@@ -266,6 +312,36 @@ function TeamZeile({ t, zahl }: { t: LinkTermin; zahl: Spielerzahl | null }) {
           </span>
         </>
       )}
+      {zusatz && <span>{zahl?.quelle === "liste" ? `· ${zusatz}` : zusatz}</span>}
     </span>
+  );
+}
+
+/** Wie viele Probetrainings noch möglich sind (#555 AK 11; PC 13): ein Balken
+ *  je Probetraining — besucht gefüllt, künftig angemeldet umrandet, frei leer. */
+function ProbeZaehler({ stand }: { stand: ProbeStand }) {
+  const n = stand.anzahl ?? 0;
+  return (
+    <div className="mt-3 flex flex-col gap-1.5">
+      <span className="type-title-small text-on-surface">{linkProbeZaehler(stand)}</span>
+      {n > 0 && (
+        <span aria-hidden className="flex gap-1">
+          {Array.from({ length: n }, (_, i) => (
+            <span
+              key={i}
+              className={cn(
+                "h-1.5 flex-1 rounded-klein",
+                i < stand.besucht
+                  ? "bg-on-lozenge-discovery"
+                  : i < stand.besucht + stand.angemeldet
+                    ? "kontur border-on-lozenge-discovery"
+                    : "bg-linie",
+              )}
+            />
+          ))}
+        </span>
+      )}
+      <span className="type-body-small tabular-nums text-on-surface-mittel">{linkProbeStand(stand)}</span>
+    </div>
   );
 }

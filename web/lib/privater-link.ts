@@ -5,6 +5,7 @@ import { LINK_FEHLER, abweisungText, istLinkToken, type AbmeldeGrund, type Abmel
 import { meldungAbweisungText, type Meldung, type Treffpunkt } from "@/lib/spiel";
 import type { MeldeAntwort } from "@/lib/kern/spiele";
 import { spielerAboUrl } from "@/lib/spieler-abo";
+import type { ProbeStand } from "@/lib/probe";
 
 /**
  * Die Seite hinter dem privaten Link einer Spieler:in (Epic #433, Story #436)
@@ -67,8 +68,9 @@ export type LinkTermin = {
   gesamt: number | null;
   abgemeldet: boolean;
   /** Verlegt, seit sie abgemeldet wurde (#437 AK 2): der Zeitpunkt vorher —
-   *  die Abmeldung gilt nicht mehr. */
-  verfallen: { datum: string; beginn: string } | null;
+   *  die Abmeldung gilt nicht mehr. `anmeldung`: Es war die Anmeldung einer
+   *  Probe-Spieler:in (#555 PC 5). */
+  verfallen: { datum: string; beginn: string; anmeldung?: boolean } | null;
   /** Die Kader der Spieler:in, über die der Termin für sie gilt (#454 AK 2);
    *  leer bei einem Termin für alle. Fremde Kader nennt der Link nie (AK 3). */
   kader: string[];
@@ -78,7 +80,15 @@ export type LinkTermin = {
 };
 
 export type LinkAnsicht =
-  | { gueltig: true; team: string; spieler: { vorname: string; nachname: string }; termine: LinkTermin[] }
+  | {
+      gueltig: true;
+      team: string;
+      spieler: { vorname: string; nachname: string };
+      /** Im Probe-Modus ihr Stand (#555 AK 11), sonst `null`; fehlt bei einer
+       *  Datenebene vor der Migration. */
+      probe?: ProbeStand | null;
+      termine: LinkTermin[];
+    }
   | { gueltig: false };
 
 const UNGUELTIG = { gueltig: false } as const;
@@ -96,14 +106,14 @@ export async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
 export type LinkAbmeldung = { terminId: string; abgemeldet: boolean; gesehen: { datum: string; beginn: string } };
 
 export type LinkAbmeldeErgebnis =
-  | { ok: true; abgemeldet: boolean; angemeldet: number }
+  | { ok: true; abgemeldet: boolean; angemeldet: number; probe?: ProbeStand | null }
   | { ok: false; ungueltig: true }
-  | { ok: false; ungueltig?: false; error: string };
+  | { ok: false; ungueltig?: false; error: string; probe?: ProbeStand | null };
 
 type Antwort =
   | { status: "ungueltig" }
-  | { status: "ok"; abgemeldet: boolean; stand: Spielstand }
-  | { status: "abgewiesen"; grund: AbmeldeGrund; stand?: AbmeldeStand };
+  | { status: "ok"; abgemeldet: boolean; stand: Spielstand; probe?: ProbeStand }
+  | { status: "abgewiesen"; grund: AbmeldeGrund; stand?: AbmeldeStand; probe?: ProbeStand };
 
 /** Über den Link ab- oder wieder anmelden (AK 8) — dieselbe Regel wie für
  *  Mitglieder, die Spieler:in ergibt sich aus dem Link. */
@@ -121,8 +131,8 @@ export async function meldeUeberLink(token: string, e: LinkAbmeldung): Promise<L
   if (error || !data) return { ok: false, error: LINK_FEHLER };
   const r = data as Antwort;
   if (r.status === "ungueltig") return { ok: false, ungueltig: true };
-  if (r.status === "abgewiesen") return { ok: false, error: abweisungText(r.grund, r.stand) };
-  return { ok: true, abgemeldet: r.abgemeldet, angemeldet: r.stand?.angemeldet ?? 0 };
+  if (r.status === "abgewiesen") return { ok: false, error: abweisungText(r.grund, r.stand), probe: r.probe ?? null };
+  return { ok: true, abgemeldet: r.abgemeldet, angemeldet: r.stand?.angemeldet ?? 0, probe: r.probe ?? null };
 }
 
 export type LinkMeldung = { terminId: string; angemeldet: boolean; gesehen: { datum: string; beginn: string } };

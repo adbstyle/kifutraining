@@ -151,6 +151,7 @@ import {
 } from "@/lib/farben";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { KaderLozenge } from "@/components/team/KaderLozenge";
+import { ProbeLozenge } from "@/components/team/ProbeLozenge";
 import { VERZEICHNIS_COOKIE, leseVerzeichnis } from "@/lib/verzeichnis";
 
 export const metadata: Metadata = {
@@ -2633,6 +2634,19 @@ export default async function Styleguide() {
             <KaderLozenge name="Stärkeklasse 1" />
             <KaderLozenge name="Torhüterinnen" />
             <KaderLozenge name={null} />
+          </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>Probe</strong> (<code>ProbeLozenge</code>, #555): eine
+            Spieler:in im Probe-Modus, neben dem Namen in der Spielerliste und in
+            der Karte «Probetraining». <code>discovery</code> - etwas Zusätzliches,
+            kein Status. Die Zahl nennt besuchte Probetrainings von der Anzahl
+            des Teams (PO 2026-10-29); angemeldete stehen am jeweiligen Training.
+            Derselbe Ton trägt am privaten Link den Balken der Probetrainings:
+            besucht gefüllt, angemeldet umrandet.
+          </p>
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <ProbeLozenge stand={{ anzahl: 4, besucht: 1, angemeldet: 2, moeglich: 1 }} />
+            <ProbeLozenge stand={{ anzahl: 4, besucht: 3, angemeldet: 0, moeglich: 1 }} />
           </div>
           <div className="mb-6 flex flex-wrap items-center gap-3 rounded-flaeche bg-[linear-gradient(135deg,#f5f5f0,#9aa79c)] p-3">
             <HerkunftLozenge herkunft="manual" aufBild />

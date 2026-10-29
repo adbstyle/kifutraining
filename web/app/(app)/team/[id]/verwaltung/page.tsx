@@ -9,6 +9,8 @@ import { createClient } from "@/lib/supabase/server";
 import { ladeSpielerliste, leseAbholung } from "@/lib/kern/spieler";
 import { ladeKader } from "@/lib/kern/kader";
 import { KaderKarte } from "@/components/team/KaderKarte";
+import { ProbeKarte } from "@/components/team/ProbeKarte";
+import { leseProbetraining } from "@/lib/kern/probe";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { abholUrl } from "@/lib/spieler";
 
@@ -17,8 +19,8 @@ import { abholUrl } from "@/lib/spieler";
  * Spieler:innen (#434) — und wie man wieder herauskommt: in der Gefahrenzone
  * am Ende (Story 17, #480).
  *
- * Die Kader (#452) stehen unter der Spielerliste: Sie teilen deren
- * Spieler:innen ein.
+ * Das Probetraining (#555) und die Kader (#452) stehen unter der
+ * Spielerliste: Sie betreffen deren Spieler:innen.
  *
  * Das gehört zusammen, weil es das Team selbst betrifft und nicht die
  * Trainingsarbeit. Die Zahlen für den Auflösen-Dialog werden nur
@@ -40,17 +42,19 @@ export default async function TeamVerwaltungPage({
 
   // Der Rahmen hat das Team bereits geladen und die Zugehörigkeit geprüft;
   // `getTeam` antwortet hier aus dem Request-Cache.
-  const [team, aufloesung, liste, kader, abholung, origin] = await Promise.all([
+  const [team, aufloesung, liste, kader, abholung, origin, probe] = await Promise.all([
     getTeam(id),
     getTeamAufloesungsInfo(id),
     ladeSpielerliste(supabase, user.id, { teamId: id }),
     ladeKader(supabase, user.id, { teamId: id }),
     leseAbholung(supabase, user.id, { teamId: id }),
     oeffentlicherOrigin(),
+    leseProbetraining(supabase, user.id, { teamId: id }),
   ]);
   if (!team) redirect("/teams");
   if (!liste.ok) throw new Error(liste.meldung);
   if (!kader.ok) throw new Error(kader.meldung);
+  if (!probe.ok) throw new Error(probe.meldung);
 
   return (
     <div className="flex flex-col gap-4">
@@ -67,7 +71,12 @@ export default async function TeamVerwaltungPage({
             url: abholung.ok && abholung.wert.token ? abholUrl(origin, abholung.wert.token) : null,
             aktiv: abholung.ok && abholung.wert.aktiv,
           }}
+          probeAnzahl={probe.wert.anzahl}
         />
+      </Card>
+
+      <Card className="p-5 sm:p-6">
+        <ProbeKarte teamId={team.id} probetraining={probe.wert} spieler={liste.wert.spieler} />
       </Card>
 
       <Card className="p-5 sm:p-6">

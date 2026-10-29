@@ -416,7 +416,11 @@ export function TerminBereich({
       ? await aendereSerieAktion(b.t.id, b.reichweite, b.aenderung ?? {}, {
           ...erwartet,
           verfallend:
-            b.folge.abmeldungenVerfallend + b.folge.abmeldungenKader + b.folge.nachtraegeVerfallend + b.folge.absagenVerfallend,
+            b.folge.abmeldungenVerfallend +
+            b.folge.abmeldungenKader +
+            b.folge.nachtraegeVerfallend +
+            b.folge.absagenVerfallend +
+            b.folge.anmeldungenVerfallend,
         })
       : await entferneSerieAktion(b.t.id, b.reichweite, erwartet);
     if (!r.ok) return serienFehler(b.art, r.error, laufNr.current !== nr);
@@ -519,7 +523,8 @@ export function TerminBereich({
         v.folge.abmeldungenVerfallend > 0 ||
         v.folge.abmeldungenKader > 0 ||
         v.folge.nachtraegeVerfallend > 0 ||
-        v.folge.absagenVerfallend > 0
+        v.folge.absagenVerfallend > 0 ||
+        v.folge.anmeldungenVerfallend > 0
       )
         setBestaetigen(schritt);
       else await fuehreAus(schritt, nr);

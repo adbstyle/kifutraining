@@ -4557,7 +4557,7 @@ try {
   // ── Verlegen und Ausfall (#437) ──────────────────────────────────────────
   const linkAnsicht = async (spielerId: string) =>
     (await feldAnon.rpc("spieler_link_ansicht", { p_token: wert(await holeSpielerLink(a.supabase, a.id, { spielerId })).token })).data as {
-      termine: { id: string; abgemeldet: boolean; angemeldet: number | null; gesamt: number | null; verfallen: { datum: string; beginn: string } | null }[];
+      termine: { id: string; abgemeldet: boolean; angemeldet: number | null; gesamt: number | null; verfallen: { datum: string; beginn: string; anmeldung: boolean } | null }[];
     };
 
   await pruefe("Verlegen: Bestätigung nennt die Zahl, danach alle angemeldet, Link zeigt den Zeitpunkt vorher (#437 AK 1, 2, 6; PC 1, 3)", async () => {
@@ -4581,10 +4581,10 @@ try {
     assert.equal((await standVon(team, t)).spielstand?.angemeldet, 2);
     assert.deepEqual(wert(await terminSpieler(a.supabase, a.id, { terminId: t })).spieler.map((s) => s.abgemeldet), [false, false]);
     const termin = (await linkAnsicht(lena)).termine.find((x) => x.id === t)!;
-    assert.deepEqual([termin.abgemeldet, termin.verfallen], [false, { datum: tagCh(3), beginn: "18:00" }]);
+    assert.deepEqual([termin.abgemeldet, termin.verfallen], [false, { datum: tagCh(3), beginn: "18:00", anmeldung: false }]);
     // Ein zweites Verlegen behält den ursprünglichen Zeitpunkt und fragt nicht mehr.
     assert.equal(wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(5) })).abmeldungenVerfallen, 0);
-    assert.deepEqual((await linkAnsicht(lena)).termine.find((x) => x.id === t)!.verfallen, { datum: tagCh(3), beginn: "18:00" });
+    assert.deepEqual((await linkAnsicht(lena)).termine.find((x) => x.id === t)!.verfallen, { datum: tagCh(3), beginn: "18:00", anmeldung: false });
     // Neu abmelden ersetzt die Markierung; danach zählt die Abmeldung wieder.
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
     assert.deepEqual((await linkAnsicht(lena)).termine.find((x) => x.id === t)!.verfallen, null);
@@ -4610,7 +4610,7 @@ try {
     assert.equal(f.verfallend, 1);
     wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(2), bestaetigt: true }));
     assert.deepEqual((await standVon(team, t)).spielstand, { gesamt: 2, angemeldet: 2, eingefroren: false, anwesend: null });
-    assert.deepEqual((await linkAnsicht(lena)).termine.find((x) => x.id === t)!.verfallen, { datum: tagCh(-1), beginn: "18:00" });
+    assert.deepEqual((await linkAnsicht(lena)).termine.find((x) => x.id === t)!.verfallen, { datum: tagCh(-1), beginn: "18:00", anmeldung: false });
 
     // PC 4: Ein Ausfall lässt die Abmeldung ruhen; zurückgenommen gilt sie wieder.
     const u = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
@@ -5092,7 +5092,7 @@ try {
 
   await pruefe("Statuswechsel: Die KI erhält die Zeit als Uhr am Trainingsort (#467 AK 12)", async () => {
     const kiZeit = (gewechseltAm: string | null) =>
-      teilnehmerAusgabe({ spielerId: "x", vorname: "Lena", nachname: "M", abgemeldet: true, ehemalig: false, kader: [], gewechseltAm, nachgetragen: false }).zuletzt_gewechselt;
+      teilnehmerAusgabe({ spielerId: "x", vorname: "Lena", nachname: "M", abgemeldet: true, ehemalig: false, kader: [], gewechseltAm, nachgetragen: false, probe: false }).zuletzt_gewechselt;
     assert.equal(kiZeit("2026-10-19T12:05:00Z"), "2026-10-19T14:05", "Sommerzeit");
     assert.equal(kiZeit("2026-12-01T23:30:00Z"), "2026-12-02T00:30", "Winterzeit, nach Mitternacht");
     assert.equal(kiZeit(null), null);
@@ -5766,6 +5766,206 @@ try {
     };
     assert.deepEqual([e.verschwindend, e.kennzeichnungen], [2, 1]);
     wert(await entferneTermin(a.supabase, a.id, { terminId: t, bestaetigt: true }));
+  });
+
+
+  // ── Probetraining (#555) ─────────────────────────────────────────────────
+  const { leseProbetraining, legeProbetrainingFest, probeFolgen, schalteProbe } = await import("../lib/kern/probe");
+  const { PROBE_TEXT, probeVerfallBestaetigen, ueberAnzahlText } = await import("../lib/probe");
+  const probeTeam = async (name: string, anzahl: number | null = 2) => {
+    const k = await spielTeam(name);
+    if (anzahl !== null) wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl }));
+    const training = async (tage: number, kaderIds: string[] = []) =>
+      wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: k.team, datum: tagCh(tage), beginn: "18:00", ende: "19:30", kaderIds })).terminId;
+    const token = async (spielerId: string) => wert(await holeSpielerLink(a.supabase, a.id, { spielerId })).token;
+    const ueberLink = async (tok: string, terminId: string, tage: number, abgemeldet: boolean) =>
+      (await feldAnon.rpc("spieler_link_abmelden", { p_token: tok, p_termin: terminId, p_abgemeldet: abgemeldet, p_gesehen_datum: tagCh(tage), p_gesehen_beginn: "18:00" })).data as {
+        status: string;
+        grund?: string;
+        probe?: { anzahl: number; besucht: number; angemeldet: number; moeglich: number };
+      };
+    const ansicht = async (tok: string) =>
+      (await feldAnon.rpc("spieler_link_ansicht", { p_token: tok })).data as {
+        probe: { anzahl: number; besucht: number; angemeldet: number; moeglich: number } | null;
+        termine: { id: string; art: string; abgemeldet: boolean; verfallen: { anmeldung: boolean } | null }[];
+      };
+    const probeVon = async (spielerId: string) =>
+      wert(await ladeSpielerliste(a.supabase, a.id, { teamId: k.team })).spieler.find((x) => x.id === spielerId)!.probe;
+    return { ...k, training, token, ueberLink, ansicht, probeVon };
+  };
+
+  await pruefe("Probetraining: Anzahl festlegen und ändern, 1 bis 20, nur Mitglieder, nicht entfernbar (#555 AK 1, 2, 4, 17, 18)", async () => {
+    const k = await probeTeam("Kern-DB-Probe-Anzahl", null);
+    assert.deepEqual(wert(await leseProbetraining(a.supabase, a.id, { teamId: k.team })).anzahl, null, "AK 18: noch keine");
+    // AK 4: ohne Anzahl lässt sich nichts einschalten.
+    fehler(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: true }), "regel", PROBE_TEXT.anzahlFehlt);
+    assert.equal(wert(await probeFolgen(a.supabase, a.id, { spielerId: k.mia })).anzahlFestgelegt, false);
+    for (const n of [0, 21, 2.5]) fehler(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: n }), "eingabe", PROBE_TEXT.anzahlProblem);
+    // Auch an der Kernprüfung vorbei weist die Datenebene ab.
+    assert.match((await a.supabase.rpc("team_probetraining_festlegen", { p_team: k.team, p_anzahl: 21 })).error?.message ?? "", /PROBE_ANZAHL_UNGUELTIG|team_probetraining_anzahl/);
+    wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 4 }));
+    wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 3 }));
+    assert.equal(wert(await leseProbetraining(a.supabase, a.id, { teamId: k.team })).anzahl, 3);
+    // Fremde sehen und ändern nichts; direktes Schreiben geht nicht.
+    fehler(await legeProbetrainingFest(b.supabase, b.id, { teamId: k.team, anzahl: 5 }), "nicht_gefunden");
+    fehler(await leseProbetraining(b.supabase, b.id, { teamId: k.team }), "nicht_gefunden");
+    await a.supabase.from("team_probetraining").update({ anzahl: 9 }).eq("team_id", k.team);
+    assert.equal((await admin.from("team_probetraining").select("anzahl").eq("team_id", k.team).single()).data?.anzahl, 3);
+    await a.supabase.from("team_probetraining").delete().eq("team_id", k.team);
+    assert.equal((await admin.from("team_probetraining").select("anzahl").eq("team_id", k.team).single()).data?.anzahl, 3, "OoS 6: nicht entfernbar");
+    assert.deepEqual((await feldAnon.from("team_probetraining").select("anzahl").eq("team_id", k.team)).data ?? [], []);
+  });
+
+  await pruefe("Probetraining: Einschalten lässt Abmeldungen, Meldungen und Kennzeichnungen verfallen - nur mit der Zahl (#555 AK 3, 5; PC 1, 3)", async () => {
+    const k = await probeTeam("Kern-DB-Probe-Ein");
+    const t1 = await k.training(3);
+    const t2 = await k.training(5);
+    const sp = wert(await k.spiel(4)).terminId;
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t1, spielerId: k.mia, abgemeldet: true }));
+    wert(await setzeMeldung(a.supabase, a.id, { terminId: sp, spielerId: k.mia, angemeldet: true }));
+    wert(await setzeAufgebot(a.supabase, a.id, { terminId: sp, spielerId: k.mia, nichtAufgeboten: true }));
+    const f = wert(await probeFolgen(a.supabase, a.id, { spielerId: k.mia }));
+    assert.deepEqual([f.anzahlFestgelegt, f.probe, f.abmeldungen, f.meldungen, f.kennzeichnungen], [true, false, 1, 1, 1]);
+    // Ohne Bestätigung nichts geschrieben; die KI erhält den Weg dazu.
+    const r = fehler(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: true }), "regel", probeVerfallBestaetigen("Mia", f)) as { verfallend?: number };
+    assert.equal(r.verfallend, 3);
+    fehler(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: true, bestaetigt: 2 }), "regel", /^Inzwischen hat sich etwas geändert/);
+    assert.equal(await k.probeVon(k.mia), null, "nichts geschrieben");
+    assert.equal(wert(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: true, bestaetigt: 3 })).verfallen, 3);
+    // PC 1: an allen kommenden Trainings nicht angemeldet; die übrigen zählen weiter.
+    for (const t of [t1, t2]) {
+      const l = wert(await terminSpieler(a.supabase, a.id, { terminId: t }));
+      assert.deepEqual(l.spieler.map((x) => [x.vorname, x.abgemeldet, x.probe]), [["Lena", false, false], ["Mia", true, true], ["Noah", false, false]]);
+      assert.deepEqual([l.angemeldet, l.gesamt], [2, 3], "PC 2: zählt unter allen, unter den Angemeldeten nur angemeldet");
+    }
+    // PC 3: Spiele gelten für sie nicht - weder für Mitglieder noch am Link.
+    assert.deepEqual(wert(await spielSpieler(a.supabase, a.id, { terminId: sp })).spieler.map((x) => x.vorname), ["Lena", "Noah"]);
+    const tok = await k.token(k.mia);
+    const v = await k.ansicht(tok);
+    assert.deepEqual(v.termine.map((x) => x.art), ["training", "training"]);
+    assert.deepEqual(v.probe, { anzahl: 2, besucht: 0, angemeldet: 0, moeglich: 2 });
+    assert.equal((await k.ueberLink(tok, sp, 4, false)).status, "abgewiesen");
+    // Eine Probe-Spieler:in ohne Abmeldungen schaltet ohne Rückfrage; die KI mit «true».
+    assert.equal(wert(await schalteProbe(a.supabase, a.id, { spielerId: k.noah, probe: true })).verfallen, 0);
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t1, spielerId: k.lena, abgemeldet: true }));
+    assert.equal(wert(await schalteProbe(a.supabase, a.id, { spielerId: k.lena, probe: true, bestaetigt: true })).verfallen, 1);
+  });
+
+  await pruefe("Probetraining: Anmelden über den Link bis zur Anzahl, Mitglieder darüber mit Hinweis (#555 AK 8–12; PC 8, 13)", async () => {
+    const k = await probeTeam("Kern-DB-Probe-Link");
+    const [t1, t2, t3] = [await k.training(2), await k.training(3), await k.training(4)];
+    wert(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: true, bestaetigt: true }));
+    const tok = await k.token(k.mia);
+    const an1 = await k.ueberLink(tok, t1, 2, false);
+    assert.deepEqual([an1.status, an1.probe], ["ok", { anzahl: 2, besucht: 0, angemeldet: 1, moeglich: 1 }]);
+    assert.equal((await k.ueberLink(tok, t2, 3, false)).status, "ok");
+    // AK 10, 12: die dritte geht über die Anzahl - abgewiesen, mit Stand.
+    const voll = await k.ueberLink(tok, t3, 4, false);
+    assert.deepEqual([voll.status, voll.grund, voll.probe?.moeglich], ["abgewiesen", "probe_voll", 0]);
+    assert.deepEqual((await k.ansicht(tok)).probe, { anzahl: 2, besucht: 0, angemeldet: 2, moeglich: 0 });
+    // Abmelden gibt den Platz frei (AK 9).
+    assert.equal((await k.ueberLink(tok, t2, 3, true)).status, "ok");
+    assert.equal((await k.ueberLink(tok, t3, 4, false)).status, "ok");
+    assert.deepEqual((await k.ansicht(tok)).termine.map((x) => x.abgemeldet), [false, true, false]);
+    // AK 8: Mitglieder melden darüber hinaus an, mit Hinweis (Zusatzentscheid PO 2026-10-29).
+    const ueber = wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t2, spielerId: k.mia, abgemeldet: false }));
+    assert.deepEqual(ueber.probe, { anzahl: 2, besucht: 0, angemeldet: 3, moeglich: 0 });
+    assert.equal(ueber.hinweis, ueberAnzahlText("Mia Muster", ueber.probe!));
+    assert.equal(wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t2, spielerId: k.mia, abgemeldet: true })).hinweis, null, "abmelden ohne Hinweis");
+    // PC 8: Senken der Anzahl belässt bestehende Anmeldungen.
+    wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 1 }));
+    assert.deepEqual((await k.ansicht(tok)).probe, { anzahl: 1, besucht: 0, angemeldet: 2, moeglich: 0 });
+    assert.deepEqual((await k.probeVon(k.mia)), { anzahl: 1, besucht: 0, angemeldet: 2, moeglich: 0 }, "AK 7: dieselbe Zahl in der Spielerliste");
+    // Abmelden geht auch über der Anzahl; anmelden erst wieder mit Platz.
+    assert.equal((await k.ueberLink(tok, t3, 4, true)).status, "ok");
+    assert.equal((await k.ueberLink(tok, t3, 4, false)).grund, "probe_voll");
+  });
+
+  await pruefe("Probetraining: besucht zählt Begonnene seit dem Einschalten, Nachtrag wirkt, Ausfall ruht (#555 AK 13; PC 4, 7)", async () => {
+    const k = await probeTeam("Kern-DB-Probe-Besucht", 4);
+    const frueher = await k.training(-4);
+    const morgen = await k.training(1);
+    wert(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: true, bestaetigt: true }));
+    // Eingeschaltet vor drei Tagen: die danach Begonnenen fallen in die Probezeit,
+    // das vorher Begonnene nicht (es hielt sie beim Einschalten als angemeldet fest).
+    await admin.from("spieler").update({ probe_seit: new Date(Date.now() - 3 * 864e5).toISOString() }).eq("id", k.mia);
+    const gestern = await k.training(-1);
+    const vorgestern = await k.training(-2);
+    assert.equal(wert(await terminSpieler(a.supabase, a.id, { terminId: frueher })).spieler.find((x) => x.spielerId === k.mia)!.abgemeldet, false);
+    assert.equal((await k.probeVon(k.mia))!.besucht, 0, "nicht angemeldet bei Beginn: nicht besucht");
+    // AK 13: doch erschienen zählt als besucht, nicht erschienen nicht.
+    wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: gestern, spielerId: k.mia, da: true }));
+    assert.equal((await k.probeVon(k.mia))!.besucht, 1);
+    wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: vorgestern, spielerId: k.mia, da: true }));
+    wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: vorgestern, spielerId: k.mia, da: false }));
+    assert.equal((await k.probeVon(k.mia))!.besucht, 1);
+    // PC 7: ein ausgefallenes Training zählt weder als angemeldet noch als besucht und ruht.
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: morgen, spielerId: k.mia, abgemeldet: false }));
+    assert.equal((await k.probeVon(k.mia))!.angemeldet, 1);
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: morgen, grund: null }));
+    assert.equal((await k.probeVon(k.mia))!.angemeldet, 0);
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: morgen }));
+    assert.equal((await k.probeVon(k.mia))!.angemeldet, 1, "die Anmeldung kehrt zurück");
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: gestern, grund: null }));
+    assert.equal((await k.probeVon(k.mia))!.besucht, 0);
+  });
+
+  await pruefe("Probetraining: Verlegen und Kader lassen Anmeldungen verfallen, mit Zahl vorher; Link nennt es (#555 AK 14; PC 5, 6)", async () => {
+    const k = await probeTeam("Kern-DB-Probe-Verfall", 4);
+    const s1 = await neuerKader(k.team, "S1");
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.mia, k.lena], dazu: [s1] }));
+    const t = await k.training(3);
+    const kt = await k.training(5, [s1]);
+    wert(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: true, bestaetigt: true }));
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: k.mia, abgemeldet: false }));
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: k.lena, abgemeldet: true }));
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: kt, spielerId: k.mia, abgemeldet: false }));
+    // Verlegen: die Rückfrage nennt Abmeldungen und Anmeldungen.
+    const v = fehler(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(4) }), "regel") as { verfallend?: number; anmeldungen?: number };
+    assert.deepEqual([v.verfallend, v.anmeldungen], [2, 1]);
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t, datum: tagCh(4), bestaetigt: true }));
+    const tok = await k.token(k.mia);
+    const nachher = (await k.ansicht(tok)).termine.find((x) => x.id === t)!;
+    assert.deepEqual([nachher.abgemeldet, nachher.verfallen?.anmeldung], [true, true], "PC 5: nicht angemeldet, Link nennt die Anmeldung");
+    assert.deepEqual(wert(await terminSpieler(a.supabase, a.id, { terminId: t })).spieler.map((x) => x.abgemeldet), [false, true, false], "Lena wieder angemeldet");
+    // Kader: fällt das Training für sie weg, verfällt die Anmeldung (PC 5).
+    const kf = fehler(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.mia], weg: [s1] }), "regel") as { verfallend?: number; anmeldungen?: number };
+    assert.deepEqual([kf.verfallend, kf.anmeldungen], [1, 1]);
+    // Entfernen des Kaders lässt das Training für alle gelten: nichts verfällt.
+    assert.equal(wert(await kaderEntfernenFolgen(a.supabase, a.id, { kaderId: s1 })).verfallendAnmeldungen, 0);
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.mia], weg: [s1], bestaetigt: 1 }));
+    // PC 6: gilt es wieder für sie, ist sie nicht angemeldet.
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.mia], dazu: [s1] }));
+    assert.equal(wert(await terminSpieler(a.supabase, a.id, { terminId: kt })).spieler.find((x) => x.spielerId === k.mia)!.abgemeldet, true);
+  });
+
+  await pruefe("Probetraining: Ausschalten - alle Trainings angemeldet, Spiele gelten wieder, neu einschalten zählt ab null (#555 AK 19; PC 9, 10, 11)", async () => {
+    const k = await probeTeam("Kern-DB-Probe-Aus", 3);
+    const t = await k.training(2);
+    const sp = wert(await k.spiel(4)).terminId;
+    wert(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: true, bestaetigt: true }));
+    await admin.from("spieler").update({ probe_seit: new Date(Date.now() - 3 * 864e5).toISOString() }).eq("id", k.mia);
+    const vorbei = await k.training(-1);
+    wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: vorbei, spielerId: k.mia, da: true }));
+    const tok = await k.token(k.mia);
+    // PC 11: im Abo der Probe-Spieler:in gilt «nicht angemeldet» als vielleicht.
+    const abo = (await aboHolen(tok))!;
+    const feed = (await aboFeed(abo)) as unknown as { probe?: boolean; termine: { id: string; abgemeldet: boolean }[] };
+    assert.equal(feed.probe, true);
+    assert.deepEqual(feed.termine.map((x) => x.id), [t], "PC 11: dieselben Trainings wie der Link, kein Spiel");
+    assert.equal((await k.probeVon(k.mia))!.besucht, 1);
+    wert(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: false }));
+    assert.equal(await k.probeVon(k.mia), null);
+    assert.equal(wert(await terminSpieler(a.supabase, a.id, { terminId: t })).spieler.find((x) => x.spielerId === k.mia)!.abgemeldet, false, "PC 9: angemeldet");
+    assert.ok(wert(await spielSpieler(a.supabase, a.id, { terminId: sp })).spieler.some((x) => x.spielerId === k.mia), "PC 9: Spiele gelten wieder");
+    assert.equal((await k.ansicht(tok)).probe, null, "derselbe Link, ohne Probe");
+    // Begonnene behalten den Stand bei Beginn samt Nachtrag.
+    assert.equal(wert(await terminSpieler(a.supabase, a.id, { terminId: vorbei })).spieler.find((x) => x.spielerId === k.mia)!.nachgetragen, true);
+    // PC 10: erneut eingeschaltet zählt es ab null.
+    wert(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: true, bestaetigt: true }));
+    assert.deepEqual(await k.probeVon(k.mia), { anzahl: 3, besucht: 0, angemeldet: 0, moeglich: 3 });
+    // Entfernen geht wie bei allen; Fremde schalten nichts.
+    fehler(await schalteProbe(b.supabase, b.id, { spielerId: k.lena, probe: true }), "nicht_gefunden");
   });
 
 } finally {
