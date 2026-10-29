@@ -8,7 +8,7 @@
 // (KADER_MELDUNG), wenn sie trotzdem abweist.
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
-import { bereinigeName } from "@/lib/spieler";
+import { bereinigeName, mitAnmeldungen } from "@/lib/spieler";
 
 /** Zwillinge des Checks `kader_name` und des Triggers `kader_grenze`. */
 export const KADER_NAME_MAX = 30;
@@ -94,11 +94,21 @@ export function verfallKennzeichnungenAusFehler(message: string): number {
   return m ? Number(m[1]) : 0;
 }
 
+/** Wie viele der verfallenden Anmeldungen von Probe-Spieler:innen sind
+ *  (#555 AK 14): die vierte Zahl hinter dem Marker, sonst 0. */
+export function verfallAnmeldungenAusFehler(message: string): number {
+  const m = message.match(new RegExp(`${VERFALL_MARKER} \\d+ \\d+ \\d+ (\\d+)`));
+  return m ? Number(m[1]) : 0;
+}
+
 /** Was eine Änderung an Kadern mit den Abmeldungen tut — vor dem Speichern.
  *  `spiele`: davon Meldungen zu Spielen (#463 AK 14); sie sind danach ohne
  *  Meldung, wenn das Spiel wieder für sie gilt. `kennzeichnungen`: davon
  *  Kennzeichnungen als nicht aufgeboten (#464 AK 10). */
-export function kaderVerfallText(n: number, spiele = 0, kennzeichnungen = 0): string {
+export function kaderVerfallText(n: number, spiele = 0, kennzeichnungen = 0, anmeldungen = 0): string {
+  // Anmeldungen von Probe-Spieler:innen (#555 AK 14) als eigener Satz.
+  if (anmeldungen > 0)
+    return mitAnmeldungen(n - anmeldungen > 0 ? kaderVerfallText(n - anmeldungen, spiele, kennzeichnungen) : "", anmeldungen);
   const ab = n - spiele - kennzeichnungen;
   if (spiele === 0 && kennzeichnungen === 0)
     return ab === 1
@@ -119,13 +129,13 @@ export function kaderVerfallText(n: number, spiele = 0, kennzeichnungen = 0): st
 }
 
 /** Die vorab genannte Zahl stimmt nicht mehr (AK 12): der aktuelle Stand. */
-export function kaderVerfallGeaendert(n: number, spiele = 0, kennzeichnungen = 0): string {
-  return `Inzwischen hat sich etwas geändert. ${kaderVerfallText(n, spiele, kennzeichnungen)}`;
+export function kaderVerfallGeaendert(n: number, spiele = 0, kennzeichnungen = 0, anmeldungen = 0): string {
+  return `Inzwischen hat sich etwas geändert. ${kaderVerfallText(n, spiele, kennzeichnungen, anmeldungen)}`;
 }
 
 /** Dasselbe für den KI-Weg, mit dem Weg zur Bestätigung (AK 16). */
-export function kaderVerfallBestaetigen(n: number, spiele = 0, kennzeichnungen = 0): string {
-  return `${kaderVerfallText(n, spiele, kennzeichnungen)} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
+export function kaderVerfallBestaetigen(n: number, spiele = 0, kennzeichnungen = 0, anmeldungen = 0): string {
+  return `${kaderVerfallText(n, spiele, kennzeichnungen, anmeldungen)} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
 }
 
 // ── Termine für Kader (#453) ─────────────────────────────────────────────────

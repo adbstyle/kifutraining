@@ -383,7 +383,8 @@ wieder lösen, Trainer:innen einladen, ausladen, absagen und wieder zusagen und 
 verantwortlich ist, Ausfälle festhalten und zurücknehmen sowie die Termine eines Zeitraums
 abrufen"; „die Anzeigenamen der Mitglieder deiner Teams lesen (ohne
 E-Mail-Adressen)"; „die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen
-und führen, Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen
+und führen, Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins
+Probetraining nehmen und die Anzahl Probetrainings samt Info-Schreiben festlegen, Spieler:innen
 für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten
 kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab
 Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link
@@ -392,7 +393,7 @@ und erneuern und sehen, welche Links bezogen wurden". Nie erreichbar sind „dei
 Verwaltung deiner Teams (gründen, umbenennen, Mitglieder aufnehmen oder entfernen)" und „dein Konto
 selbst (Anzeigename, Passwort, Löschen)". Kommt eine dieser Fähigkeiten dazu, muss man nicht erneut
 zustimmen; auch wer seinen Zugang erlaubt hat, bevor der Kalender, Platz und Spielerzahl der
-Termine, die Spielerliste samt Abmeldungen, Links und Selbstabholung oder die Kader oder die Spiele
+Termine, die Spielerliste samt Abmeldungen, Links und Selbstabholung, die Kader, die Spiele oder das Probetraining
 dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt
 die Seite, nur zu erlauben, wenn man das Verbinden eben selbst gestartet hat.
 

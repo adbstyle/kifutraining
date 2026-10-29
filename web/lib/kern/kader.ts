@@ -8,6 +8,7 @@ import {
   kaderVerfallGeaendert,
   nachKaderName,
   verfallAusFehler,
+  verfallAnmeldungenAusFehler,
   verfallKennzeichnungenAusFehler,
   verfallSpieleAusFehler,
   type Kader,
@@ -78,24 +79,34 @@ export async function mitVerfall<T>(
   if (n === null) return fehler(erst.error);
   const sp = verfallSpieleAusFehler(erst.error.message);
   const kz = verfallKennzeichnungenAusFehler(erst.error.message);
+  const an = verfallAnmeldungenAusFehler(erst.error.message);
   // Eine Zahl, die nicht mehr stimmt: der aktuelle Stand (AK 12).
-  if (zahl !== null) return verfallNachfrage(kaderVerfallGeaendert(n, sp, kz), n, sp, kz);
-  if (bestaetigt !== true) return verfallNachfrage(kaderVerfallBestaetigen(n, sp, kz), n, sp, kz);
+  if (zahl !== null) return verfallNachfrage(kaderVerfallGeaendert(n, sp, kz, an), n, sp, kz, an);
+  if (bestaetigt !== true) return verfallNachfrage(kaderVerfallBestaetigen(n, sp, kz, an), n, sp, kz, an);
   // Die KI bestätigt, was es ist: einmal mit der gemeldeten Zahl.
   const dann = await aufruf(n);
   if (!dann.error) return ok(dann.data as T);
   const m = verfallAusFehler(dann.error.message);
   const msp = verfallSpieleAusFehler(dann.error.message);
   const mkz = verfallKennzeichnungenAusFehler(dann.error.message);
-  return m === null ? fehler(dann.error) : verfallNachfrage(kaderVerfallBestaetigen(m, msp, mkz), m, msp, mkz, true);
+  const man = verfallAnmeldungenAusFehler(dann.error.message);
+  return m === null ? fehler(dann.error) : verfallNachfrage(kaderVerfallBestaetigen(m, msp, mkz, man), m, msp, mkz, man, true);
 }
 
-function verfallNachfrage(meldung: string, n: number, spiele: number, kennzeichnungen: number, wiederholbar = false): KernFehler {
+function verfallNachfrage(
+  meldung: string,
+  n: number,
+  spiele: number,
+  kennzeichnungen: number,
+  anmeldungen: number,
+  wiederholbar = false,
+): KernFehler {
   return fehlschlag("regel", meldung, {
     feld: "bestaetigt",
     verfallend: n,
     ...(spiele > 0 && { verfallendSpiele: spiele }),
     ...(kennzeichnungen > 0 && { kennzeichnungen }),
+    ...(anmeldungen > 0 && { anmeldungen }),
     ...(wiederholbar && { wiederholbar }),
   });
 }
@@ -238,6 +249,8 @@ export type KaderEntfernenFolgen = {
   verfallendSpiele: number;
   /** Davon Kennzeichnungen als nicht aufgeboten (#464 AK 10). */
   verfallendKennzeichnungen: number;
+  /** Davon Anmeldungen von Probe-Spieler:innen (#555 AK 14). */
+  verfallendAnmeldungen: number;
 };
 
 export async function kaderEntfernenFolgen(
@@ -255,6 +268,7 @@ export async function kaderEntfernenFolgen(
     verfallend: number;
     verfallend_spiele?: number;
     verfallend_kennzeichnungen?: number;
+    verfallend_anmeldungen?: number;
   };
   return ok({
     spieler: r.spieler,
@@ -263,5 +277,6 @@ export async function kaderEntfernenFolgen(
     verfallend: r.verfallend,
     verfallendSpiele: r.verfallend_spiele ?? 0,
     verfallendKennzeichnungen: r.verfallend_kennzeichnungen ?? 0,
+    verfallendAnmeldungen: r.verfallend_anmeldungen ?? 0,
   });
 }

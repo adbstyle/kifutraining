@@ -72,6 +72,15 @@ const SpielerAusgabe = z.object({
   js_nummer: z.string().nullable(),
   link_bezogen: z.boolean().describe("Der aktuelle private Link wurde über die Selbstabholung herausgegeben."),
   kader_ids: z.array(z.string()).describe("Die Kader, denen sie angehört («kader_abrufen» nennt die Namen)."),
+  probe: z
+    .object({
+      anzahl: z.number().int().nullable().describe("Die Anzahl Probetrainings des Teams; null, solange keine festgelegt ist."),
+      besucht: z.number().int().describe("Begonnene Trainings seit dem Einschalten, an denen sie angemeldet war."),
+      angemeldet: z.number().int().describe("Kommende Trainings, für die sie angemeldet ist."),
+      moeglich: z.number().int().describe("Wie viele sie über ihren Link noch dazu anmelden kann."),
+    })
+    .nullable()
+    .describe("Nur im Probe-Modus, sonst null."),
 });
 
 // ── spielerliste_abrufen ────────────────────────────────────────────────────
@@ -101,6 +110,7 @@ export const spielerlisteAbrufen = werkzeug({
         js_nummer: s.jsNummer,
         link_bezogen: s.linkBezogen,
         kader_ids: s.kaderIds,
+        probe: s.probe,
       })),
     })),
 });
@@ -196,8 +206,9 @@ export const spielerEntfernen = werkzeug({
 
 /** Was jede Beschreibung eines Abmelde-Werkzeugs über das Modell sagt. */
 const ABMELDE_MODELL =
-  "Jede Spieler:in der Spielerliste ist für jeden Termin angemeldet, bis sie abgemeldet wird; «keine Rückmeldung» gibt " +
-  "es nicht. Ab- und anmelden geht bis zum Beginn des Termins (Uhr am Trainingsort, Schweiz), nicht an einem " +
+  "Jede Spieler:in der Spielerliste ist für jedes Training angemeldet, bis sie abgemeldet wird; «keine Rückmeldung» gibt " +
+  "es nicht. Eine Spieler:in im Probe-Modus («probe: true») ist umgekehrt zuerst nicht angemeldet («meldung: " +
+  "abgemeldet»), bis sie angemeldet wird; Spiele gelten für sie nicht («probetraining_abrufen» erklärt das Modell). Ab- und anmelden geht bis zum Beginn des Termins (Uhr am Trainingsort, Schweiz), nicht an einem " +
   "ausgefallenen. Ab Beginn gilt der Stand bei Beginn; dann tragen Mitglieder nach, wer trotz Anmeldung nicht erschienen " +
   "und wer trotz Abmeldung doch erschienen ist (termin_anwesenheit_setzen), unbefristet. Ohne Nachtrag gilt der Stand " +
   "bei Beginn als Anwesenheit - ob jemand geprüft hat, hält KiFu nicht fest. Wer aus der Liste fällt, steht an " +
@@ -290,6 +301,7 @@ export const terminSpielerAbrufen = werkzeug({
           .boolean()
           .describe("Nur an einem Spiel: nach Ablauf der Meldefrist ohne Meldung (und nicht als nicht aufgeboten gekennzeichnet), auch wer erst danach dazukam; zählt nicht als angemeldet. Ohne Meldefrist und bei Trainings false."),
         ehemalig: z.boolean(),
+        probe: z.boolean().describe("Im Probe-Modus: an einem Training zuerst nicht angemeldet. An Spielen nie true."),
         kader: z.array(z.string()).describe("Die Kader, über die der Termin für sie gilt; leer bei einem Termin für alle."),
         anwesenheit: z.enum(["nicht_erschienen", "doch_erschienen"]).nullable().describe(ANWESENHEIT_BESCHREIBUNG),
         zuletzt_gewechselt: z
@@ -371,6 +383,7 @@ function spielTeilnehmerAusgabe(s: SpielTeilnehmer, fristAbgelaufen: boolean) {
     nicht_aufgeboten: s.nichtAufgeboten,
     meldefrist_verpasst: meldefristVerpasst(s.meldung, s.nichtAufgeboten, fristAbgelaufen),
     ehemalig: s.ehemalig,
+    probe: false,
     kader: s.kader,
     // #487 AK 14: der Nachtrag gegen den Stand beim Anpfiff.
     anwesenheit: s.nachgetragen
@@ -394,6 +407,7 @@ export function teilnehmerAusgabe(s: Teilnehmer) {
     nicht_aufgeboten: false,
     meldefrist_verpasst: false,
     ehemalig: s.ehemalig,
+    probe: s.probe,
     kader: s.kader,
     anwesenheit: anwesenheitAusgabe(s),
     zuletzt_gewechselt: s.gewechseltAm && jetztAmTrainingsort(new Date(s.gewechseltAm)),
@@ -429,6 +443,10 @@ export const terminAbmeldungSetzen = werkzeug({
     abgemeldet: z.boolean(),
     angemeldet: z.number().int().nullable(),
     gesamt: z.number().int().nullable(),
+    hinweis: z
+      .string()
+      .nullable()
+      .describe("Nur wenn eine Probe-Spieler:in damit über der Anzahl Probetrainings ist: der Stand als Satz für das Mitglied."),
   }),
   ausfuehren: async (e, zugang) => {
     const gesehen = { datum: e.termin_datum, beginn: e.termin_beginn };
@@ -453,6 +471,7 @@ export const terminAbmeldungSetzen = werkzeug({
           abgemeldet: !w.angemeldet,
           angemeldet: w.stand?.angemeldet ?? null,
           gesamt: w.stand?.gesamt ?? null,
+          hinweis: null,
         }),
       );
     return abgebildet(training, (w) => ({
@@ -460,6 +479,7 @@ export const terminAbmeldungSetzen = werkzeug({
       abgemeldet: w.abgemeldet,
       angemeldet: w.stand?.angemeldet ?? null,
       gesamt: w.stand?.gesamt ?? null,
+      hinweis: w.hinweis,
     }));
   },
 });
@@ -563,7 +583,8 @@ const LINK_MODELL =
   "wieder an. Spiele meldet sie an oder ab bis zur Meldefrist (ohne Frist bis zum Anpfiff) und sieht dort Bezeichnung, " +
   "Richtwert, Meldefrist, Treffpunkte, Bemerkung und ob die Spieler:in nicht aufgeboten ist. An einem ausgefallenen Training " +
   "oder Spiel sieht sie den Grund des Ausfalls, ganz, und keine Bemerkung — keine Namen anderer, kein " +
-  "Training, keine Nachträge, nichts Vergangenes. Über den Link holen Eltern auch ein Kalender-Abo der Termine; das " +
+  "Training, keine Nachträge, nichts Vergangenes. Im Probe-Modus sieht sie keine Spiele, meldet die Spieler:in für " +
+  "Trainings an statt ab und das nur bis zur Anzahl Probetrainings, und sieht, wie viele noch möglich sind. Über den Link holen Eltern auch ein Kalender-Abo der Termine; das " +
   "kannst du weder holen noch einsehen noch widerrufen. KiFu verschickt den Link nicht. Gib ihn nur der " +
   `Person weiter, die ihn verlangt, und nie in einer Gruppe. ${LINK_TEXT.warnung}`;
 

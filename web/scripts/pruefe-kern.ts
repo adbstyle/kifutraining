@@ -227,6 +227,7 @@ import {
   kaderVon,
   nachKaderName,
   verfallAusFehler,
+  verfallAnmeldungenAusFehler,
   verfallKennzeichnungenAusFehler,
   verfallSpieleAusFehler,
   zugehoerigkeit,
@@ -242,6 +243,27 @@ import {
   leseDatei,
 } from "../lib/spieler-import";
 import { seitWann, terminBegonnen } from "../lib/zeit";
+import {
+  PROBE_TEXT,
+  PROBE_VERFALL_MARKER,
+  linkProbeVoll,
+  linkProbeZaehler,
+  probeAnzahlProblem,
+  probeEinschaltenText,
+  probeFolgenAusFehler,
+  probeInfoBereinigt,
+  probeInfoLaenge,
+  probeInfoProblem,
+  PROBE_INFO_MAX,
+  probeKurz,
+  probeLang,
+  probeVerfallBestaetigen,
+  probeVerfallText,
+  probeVerfallTitel,
+  ueberAnzahl,
+  ueberAnzahlText,
+} from "../lib/probe";
+import { textMitLinks } from "../lib/text-links";
 
 let gelaufen = 0;
 
@@ -2159,6 +2181,8 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#459": ["termin_festlegen", "termin_aendern", "termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen", "termin_entfernen", "team_plan_abrufen"],
     "#464": ["termin_spieler_abrufen", "termin_aufgebot_setzen"],
     "#487": ["termin_spieler_abrufen", "termin_anwesenheit_setzen", "team_plan_abrufen"],
+    "#556": ["probetraining_abrufen", "probetraining_festlegen"],
+    "#555": ["probetraining_abrufen", "probetraining_festlegen", "spieler_probe_setzen", "spielerliste_abrufen", "termin_spieler_abrufen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
@@ -2829,6 +2853,81 @@ pruefe("Spiele: Nachtrag - wer beim Anpfiff zählte, Verfall-Text (#487)", () =>
     "Damit verfallen 2 Meldungen: Diese Spieler:innen sind wieder ohne Meldung. Ausserdem verfallen 1 Kennzeichnung als nicht aufgeboten und 3 Nachträge zur Anwesenheit.",
   );
   assert.equal(NACHTRAG_TEXT.zurueck, "Nachtrag zurücknehmen");
+});
+
+pruefe("Probetraining: Anzahl, Plakette, Stand am Link, Hinweis über der Anzahl (#555 AK 2, 6, 7, 11, 12; PC 13)", () => {
+  for (const n of [0, 21, 1.5, -1, null, undefined, Number.NaN]) assert.equal(probeAnzahlProblem(n as number), PROBE_TEXT.anzahlProblem, String(n));
+  for (const n of [1, 4, 20]) assert.equal(probeAnzahlProblem(n), null);
+  const stand = { anzahl: 4, besucht: 1, angemeldet: 2, moeglich: 1 };
+  assert.equal(probeKurz(stand), "Probe 1/4", "besuchte von der Anzahl, ohne Angemeldete");
+  assert.equal(probeLang(stand), "Probe: 1 von 4 Probetrainings besucht");
+  assert.equal(probeKurz({ ...stand, anzahl: null }), "Probe");
+  assert.equal(linkProbeZaehler(stand), "Noch 1 von 4 Probetrainings möglich");
+  assert.equal(linkProbeZaehler({ ...stand, angemeldet: 3, moeglich: 0 }), "Alle 4 Probetrainings vergeben");
+  assert.ok(linkProbeVoll("Mia", stand).startsWith("Alle 4 Probetrainings sind vergeben. Meldest du Mia"));
+  assert.equal(
+    linkProbeVoll("Mia", { anzahl: 4, besucht: 4, angemeldet: 0, moeglich: 0 }),
+    "Alle 4 Probetrainings sind vergeben. Für weitere Trainings wende dich an das Team.",
+    "alles besucht: nichts abzumelden",
+  );
+  // Zusatzentscheid PO 2026-10-29: über der Anzahl ein Hinweis, kein Verbot.
+  assert.equal(ueberAnzahl(stand), false);
+  assert.equal(ueberAnzahl({ ...stand, angemeldet: 3 }), false, "genau die Anzahl");
+  assert.equal(ueberAnzahl({ ...stand, angemeldet: 4, moeglich: 0 }), true);
+  assert.equal(ueberAnzahl(null), false);
+  assert.equal(
+    ueberAnzahlText("Mia Keller", { ...stand, angemeldet: 4, moeglich: 0 }),
+    "Mia Keller ist damit über der Anzahl Probetrainings: 1 besucht und 4 angemeldet, vorgesehen sind 4.",
+  );
+});
+
+pruefe("Probetraining: Einschalten - Bedeutung, Verfall aus der Datenebene, Texte (#555 AK 5, 16)", () => {
+  assert.equal(probeEinschaltenText("Mia", 4), "Mia meldet sich selbst für Trainings an, höchstens für 4. Spiele sieht Mia nicht.");
+  assert.deepEqual(probeFolgenAusFehler(`${PROBE_VERFALL_MARKER} 4 2 1 1`), { abmeldungen: 2, meldungen: 1, kennzeichnungen: 1 });
+  assert.equal(probeFolgenAusFehler("PROBE_ANZAHL_FEHLT"), null);
+  assert.equal(probeVerfallTitel({ abmeldungen: 1, meldungen: 0, kennzeichnungen: 0 }), "Damit verfällt 1 Abmeldung von einem Training");
+  assert.equal(
+    probeVerfallTitel({ abmeldungen: 2, meldungen: 1, kennzeichnungen: 1 }),
+    "Damit verfallen 2 Abmeldungen von Trainings, 1 Meldung zu einem Spiel und 1 Kennzeichnung als nicht aufgeboten",
+  );
+  const f = { abmeldungen: 2, meldungen: 0, kennzeichnungen: 0 };
+  assert.ok(probeVerfallText("Mia", f).endsWith("Mia ist danach an allen kommenden Trainings nicht angemeldet."));
+  assert.ok(probeVerfallBestaetigen("Mia", f).includes("«bestaetigt: true»"));
+  // Der Kader- und Verlegen-Marker trägt verfallende Anmeldungen als vierte Zahl (#555 AK 14).
+  assert.equal(verfallAnmeldungenAusFehler(`${VERFALL_MARKER} 3 0 0 1`), 1);
+  assert.equal(verfallAnmeldungenAusFehler(`${VERFALL_MARKER} 3`), 0);
+});
+
+pruefe("Probetraining: Link-Abweisung, verfallene Anmeldung, Abo «vielleicht» (#555 AK 12; PC 5, 11)", () => {
+  assert.equal(abweisungText("probe_voll"), ABMELDUNG_TEXT.probeVoll);
+  assert.equal(verfallenHinweis({ datum: "2026-11-09", beginn: "17:30", anmeldung: true }), "Verlegt, vorher Montag, 9. November um 17:30. Deine Anmeldung gilt nicht mehr.");
+  assert.ok(verfallenHinweis({ datum: "2026-11-09", beginn: "17:30" }).endsWith("Deine Abmeldung gilt nicht mehr."));
+  assert.equal(aboStatus(feedTermin({ id: "a", abgemeldet: true }), true), "vielleicht", "nicht angemeldet");
+  assert.equal(aboStatus(feedTermin({ id: "a" }), true), "zugesagt");
+});
+
+pruefe("Info-Schreiben: bereinigt wie die Datenebene, höchstens 2000 Zeichen als Codepunkte (#556 AK 1, 2; PC 2)", () => {
+  assert.equal(probeInfoBereinigt("  \r\nHallo\r\n\r\nWelt \n "), "Hallo\n\nWelt", "Umbrüche bleiben, Rand fällt");
+  assert.equal(probeInfoBereinigt(" \n\t "), null, "leer = keines");
+  assert.equal(probeInfoBereinigt(null), null);
+  assert.equal(PROBE_INFO_MAX, 2000);
+  assert.equal(probeInfoProblem("x".repeat(2000)), null);
+  assert.equal(probeInfoProblem("x".repeat(2001)), PROBE_TEXT.infoZuLang);
+  assert.equal(probeInfoLaenge("⚽".repeat(3)), 3, "ein Emoji ist ein Zeichen wie in char_length");
+  assert.equal(probeInfoProblem("⚽".repeat(2000)), null);
+  assert.equal(probeInfoProblem(`  ${"x".repeat(2000)}  `), null, "Rand zählt nicht");
+});
+
+pruefe("Info-Schreiben: Webadressen werden Links, der Rest bleibt Text (#556 AK 5)", () => {
+  const ganz = (t: string) => textMitLinks(t).map((x) => x.text).join("");
+  const links = (t: string) => textMitLinks(t).filter((x) => x.art === "link").map((x) => (x.art === "link" ? x.href : ""));
+  const t = "Mehr: https://fc-beispiel.ch/junioren. Oder www.fc.ch, (siehe https://de.wikipedia.org/wiki/Fussball_(Sport)).";
+  assert.equal(ganz(t), t, "die Teile ergeben den ganzen Text");
+  assert.deepEqual(links(t), ["https://fc-beispiel.ch/junioren", "https://www.fc.ch", "https://de.wikipedia.org/wiki/Fussball_(Sport)"]);
+  assert.deepEqual(links("javascript:alert(1) mailto:a@b.ch ftp://x.ch"), [], "andere Schemata bleiben Text");
+  assert.deepEqual(links("www. und https://localhost"), [], "ohne Domain kein Link");
+  assert.deepEqual(textMitLinks("Ohne Adresse"), [{ art: "text", text: "Ohne Adresse" }]);
+  assert.deepEqual(links("Zeile1\nhttp://a.ch\nZeile3"), ["http://a.ch"]);
 });
 
 pruefe("Status einer Spieler:in und Meldefrist verpasst (#495, #496)", () => {

@@ -448,6 +448,8 @@ export type Verfallend = {
   nachtraege: number;
   /** Absagen von Trainer:innen (#520 AK 11). */
   absagen: number;
+  /** Anmeldungen von Probe-Spieler:innen (#555 AK 14, PC 5). */
+  anmeldungen: number;
   summe: number;
   /** Nur an einem Spiel (#463 AK 13, 26; #464 AK 10): verfallende Meldungen
    *  und Kennzeichnungen und ob die Meldefrist danach schon abgelaufen ist. */
@@ -463,19 +465,28 @@ export async function verfallendeAbmeldungen(
   beginn: string | null,
 ): Promise<KernErgebnis<Verfallend>> {
   const p = { p_termin: terminId, p_datum: datum, p_beginn: beginn };
-  const [ab, nach, absagen] = await Promise.all([
+  const [ab, nach, absagen, an] = await Promise.all([
     supabase.rpc("termin_abmeldungen_verfallend", p),
     supabase.rpc("termin_nachtraege_verfallend", p),
     supabase.rpc("termin_absagen_verfallend", p),
+    supabase.rpc("termin_anmeldungen_verfallend", p),
   ]);
   if (ab.error) return ausDbFehler(ab.error);
   if (nach.error) return ausDbFehler(nach.error);
   if (absagen.error) return ausDbFehler(absagen.error);
-  return ok(verfallend((ab.data as number | null) ?? 0, (nach.data as number | null) ?? 0, (absagen.data as number | null) ?? 0));
+  if (an.error) return ausDbFehler(an.error);
+  return ok(
+    verfallend(
+      (ab.data as number | null) ?? 0,
+      (nach.data as number | null) ?? 0,
+      (absagen.data as number | null) ?? 0,
+      (an.data as number | null) ?? 0,
+    ),
+  );
 }
 
-export function verfallend(abmeldungen: number, nachtraege: number, absagen = 0): Verfallend {
-  return { abmeldungen, nachtraege, absagen, summe: abmeldungen + nachtraege + absagen };
+export function verfallend(abmeldungen: number, nachtraege: number, absagen = 0, anmeldungen = 0): Verfallend {
+  return { abmeldungen, nachtraege, absagen, anmeldungen, summe: abmeldungen + nachtraege + absagen + anmeldungen };
 }
 
 /** Ein Fehler, der vor dem Verlegen nach der Bestätigung fragt. */
@@ -493,11 +504,12 @@ export function verfallFehler(v: Verfallend): KernFehler {
         ...(v.absagen > 0 && { absagen: v.absagen }),
       },
     );
-  return fehlschlag("regel", verfallBestaetigen(v.abmeldungen, v.nachtraege, v.absagen), {
+  return fehlschlag("regel", verfallBestaetigen(v.abmeldungen, v.nachtraege, v.absagen, v.anmeldungen), {
     feld: "bestaetigt",
     verfallend: v.summe,
     nachtraege: v.nachtraege,
     ...(v.absagen > 0 && { absagen: v.absagen }),
+    ...(v.anmeldungen > 0 && { anmeldungen: v.anmeldungen }),
   });
 }
 
@@ -707,6 +719,7 @@ export async function aendereTermin(
       abmeldungen: 0,
       nachtraege: nachtraege.wert,
       absagen: abgesagt,
+      anmeldungen: 0,
       summe: meldungen + kennzeichnungen + nachtraege.wert + abgesagt,
       spiel: { meldungen, kennzeichnungen, fristAbgelaufen: frist },
     };

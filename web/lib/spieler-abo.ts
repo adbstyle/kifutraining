@@ -43,17 +43,23 @@ export type AboFeedTermin = Pick<
   | "treffpunkte"
 >;
 
-export type AboFeed = { gueltig: false } | { gueltig: true; abo: string; team: string; termine: AboFeedTermin[] };
+/** `probe`: Die Spieler:in ist im Probe-Modus (#555 PC 11); fehlt bei einer
+ *  Datenebene vor der Migration. */
+export type AboFeed =
+  | { gueltig: false }
+  | { gueltig: true; abo: string; team: string; probe?: boolean; termine: AboFeedTermin[] };
 
 /** Der Status der Spieler:in an einem Termin.
  *  - Training (#507 PC 3): angemeldet = zugesagt, abgemeldet = abgesagt;
- *    «vielleicht» gibt es nicht.
+ *    «vielleicht» gibt es nicht — ausser im Probe-Modus (#555 PC 11): Dort
+ *    heisst nicht angemeldet vielleicht, auch wenn sie sich nicht mehr
+ *    anmelden kann.
  *  - Spiel (#508 PC 3–6): nicht aufgeboten = abgesagt, auch wenn angemeldet;
  *    angemeldet = zugesagt; ohne Meldung = vielleicht, bis die Meldefrist
  *    abläuft (`frist_abgelaufen`, ohne Frist nie) — ohne Frist gilt der
  *    Anpfiff; sonst abgesagt. */
-export function aboStatus(t: AboFeedTermin): AboStatus {
-  if (t.art !== "spiel") return t.abgemeldet ? "abgesagt" : "zugesagt";
+export function aboStatus(t: AboFeedTermin, probe = false): AboStatus {
+  if (t.art !== "spiel") return t.abgemeldet ? (probe ? "vielleicht" : "abgesagt") : "zugesagt";
   if (t.nicht_aufgeboten || t.meldung === "abgemeldet") return "abgesagt";
   if (t.meldung === "angemeldet") return "zugesagt";
   return t.begonnen || t.frist_abgelaufen ? "abgesagt" : "vielleicht";
@@ -63,8 +69,8 @@ export function aboStatus(t: AboFeedTermin): AboStatus {
  *  Bezeichnung, Teamname, Beginn, Ende, Ort und der Status — im Titel als
  *  Zeichen, in der Beschreibung als Wort. Bei Spielen dazu Treffpunkte und
  *  Bemerkung. Vielleicht ist vorläufig, abgesagt belegt keine Zeit. */
-export function aboEintrag(t: AboFeedTermin, team: string): AboTermin {
-  const status = aboStatus(t);
+export function aboEintrag(t: AboFeedTermin, team: string, probe = false): AboTermin {
+  const status = aboStatus(t, probe);
   const { zeichen, wort } = ABO_STATUS[status];
   const art = t.art === "spiel" ? (t.bezeichnung ?? "Spiel") : "Training";
   return {
@@ -109,7 +115,7 @@ export const spielerAboUrl = (origin: string, token: string) => aboUrl(origin, t
 
 export const ABO_TEXT = {
   /** Was die Zeichen im Titel bedeuten — damit die Spielervertretung sie im Kalender liest. */
-  legende: `Im Kalender steht vor jedem Termin ${ABO_STATUS.zugesagt.zeichen} zugesagt, ${ABO_STATUS.vielleicht.zeichen} vielleicht (Spiel ohne Meldung) oder ${ABO_STATUS.abgesagt.zeichen} abgesagt.`,
+  legende: `Im Kalender steht vor jedem Termin ${ABO_STATUS.zugesagt.zeichen} zugesagt, ${ABO_STATUS.vielleicht.zeichen} vielleicht (noch nicht angemeldet) oder ${ABO_STATUS.abgesagt.zeichen} abgesagt.`,
   /** #507 AK 2. */
   nurAnzeigen: "Das Abo zeigt nur an: Ab- und anmelden geht weiterhin hier über diesen Link.",
   /** #507 AK 3. */

@@ -6,6 +6,7 @@ import {
   abweisungText,
   istAnwesend,
   nachTeilnehmer,
+  spielerName,
   type AbmeldeGrund,
   type AbmeldeStand,
   type Spielstand,
@@ -16,6 +17,7 @@ import { ladeTerminMitStand, TERMIN_FELD, type TerminMitStand } from "@/lib/kern
 import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 import { nachTerminKader, type TerminKader } from "@/lib/kader";
 import { SPIEL_TEXT } from "@/lib/spiel";
+import { ueberAnzahl, ueberAnzahlText, type ProbeStand } from "@/lib/probe";
 
 /**
  * Ab- und Anmelden für einen Termin (Epic #433, Story #435) — dieselben
@@ -96,6 +98,7 @@ export async function terminSpielerVon(
         kader: string[] | null;
         gewechselt_am: string | null;
         nachgetragen: boolean;
+        probe: boolean;
       }[]
     ).map((r) => ({
       spielerId: r.spieler_id,
@@ -107,6 +110,7 @@ export async function terminSpielerVon(
       gewechseltAm: r.gewechselt_am,
       // Ein ausgefallener Termin zeigt keine Nachträge, auch der KI nicht (#475 AK 11).
       nachgetragen: r.nachgetragen && !t.ausgefallen,
+      probe: r.probe ?? false,
     })),
   );
   const begonnen = terminBegonnen(t.datum, t.beginn, jetzt);
@@ -148,15 +152,20 @@ export type AbmeldungSetzen = {
 };
 
 type Antwort =
-  | { status: "ok"; abgemeldet: boolean; stand: Spielstand }
+  | { status: "ok"; abgemeldet: boolean; stand: Spielstand; probe?: ProbeStand }
   | { status: "abgewiesen"; grund: AbmeldeGrund; stand?: AbmeldeStand };
 
-/** Eine Spieler:in für einen Termin ab- oder wieder anmelden (AK 1, 2, 9). */
+/** Eine Spieler:in für einen Termin ab- oder wieder anmelden (AK 1, 2, 9).
+ *  Bei einer Probe-Spieler:in dazu ihr Stand (#555); meldet ein Mitglied
+ *  oder die KI sie über die Anzahl hinaus an, trägt `hinweis` den Satz dazu
+ *  (Zusatzentscheid PO 2026-10-29) — an Oberfläche und KI wortgleich. */
 export async function setzeAbmeldung(
   supabase: SupabaseClient,
   _userId: string,
   e: AbmeldungSetzen,
-): Promise<KernErgebnis<{ terminId: string; abgemeldet: boolean; stand: Spielstand }>> {
+): Promise<
+  KernErgebnis<{ terminId: string; abgemeldet: boolean; stand: Spielstand; probe: ProbeStand | null; hinweis: string | null }>
+> {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   if (!istUuid(e.spielerId)) return abweisung("nicht_gefunden");
   const { data, error } = await supabase.rpc("termin_abmeldung_setzen", {
@@ -169,7 +178,13 @@ export async function setzeAbmeldung(
   if (error) return ausDbFehler(error);
   const r = data as Antwort;
   if (r.status !== "ok") return abweisung(r.grund, r.stand);
-  return ok({ terminId: e.terminId, abgemeldet: r.abgemeldet, stand: r.stand });
+  const probe = r.probe ?? null;
+  let hinweis: string | null = null;
+  if (!e.abgemeldet && probe && ueberAnzahl(probe)) {
+    const s = await supabase.from("spieler").select("vorname, nachname").eq("id", e.spielerId).maybeSingle();
+    if (s.data) hinweis = ueberAnzahlText(spielerName(s.data), probe);
+  }
+  return ok({ terminId: e.terminId, abgemeldet: r.abgemeldet, stand: r.stand, probe, hinweis });
 }
 
 export type AnwesenheitSetzen = {

@@ -14,13 +14,14 @@ import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
 export async function setzeAbmeldungAktion(
   teamId: string,
   e: AbmeldungSetzen,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true; hinweis: string | null } | { ok: false; error: string }> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await setzeAbmeldung(a.supabase, a.userId, e);
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(teamId);
-  return { ok: true };
+  // Eine Probe-Spieler:in über der Anzahl (#555, Zusatzentscheid): ein Hinweis.
+  return { ok: true, hinweis: r.wert.hinweis };
 }
 
 /** Eine Spieler:in für ein Spiel an- oder abmelden (#463 AK 2) — derselbe

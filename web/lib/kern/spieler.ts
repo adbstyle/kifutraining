@@ -11,6 +11,7 @@ import {
   type Spieler,
   type SpielerEingabe,
 } from "@/lib/spieler";
+import type { ProbeStand } from "@/lib/probe";
 import {
   IMPORT_TEXT,
   IMPORT_ZEILEN_MAX,
@@ -35,7 +36,7 @@ import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type 
 
 export const SPIELER_FELD = { feld: "spieler_id" } as const;
 
-const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, kader_spieler(kader_id)";
+const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, probe_seit, kader_spieler(kader_id)";
 
 type SpielerRoh = {
   id: string;
@@ -44,6 +45,7 @@ type SpielerRoh = {
   jahrgang: number;
   js_nummer: string | null;
   link_bezogen: boolean;
+  probe_seit: string | null;
   kader_spieler: { kader_id: string }[] | null;
 };
 
@@ -56,7 +58,24 @@ function ausRoh(s: SpielerRoh): Spieler {
     jsNummer: s.js_nummer,
     linkBezogen: s.link_bezogen,
     kaderIds: (s.kader_spieler ?? []).map((k) => k.kader_id),
+    // Den Stand liest `mitProbeStand` nach (#555 AK 6, 7).
+    probe: s.probe_seit ? { anzahl: null, besucht: 0, angemeldet: 0, moeglich: 0 } : null,
   };
+}
+
+/** Die Stände der Probe-Spieler:innen eines Teams (#555 AK 7), aus der
+ *  Datenebene (`team_probe_staende`): besucht seit dem Einschalten, künftig
+ *  angemeldet, noch möglich. */
+async function mitProbeStand(
+  supabase: SupabaseClient,
+  teamId: string,
+  spieler: Spieler[],
+): Promise<KernErgebnis<Spieler[]>> {
+  if (!spieler.some((s) => s.probe)) return ok(spieler);
+  const { data, error } = await supabase.rpc("team_probe_staende", { p_team: teamId });
+  if (error) return ausDbFehler(error);
+  const staende = new Map(((data ?? []) as { spieler_id: string; stand: ProbeStand }[]).map((z) => [z.spieler_id, z.stand]));
+  return ok(spieler.map((s) => (s.probe ? { ...s, probe: staende.get(s.id) ?? s.probe } : s)));
 }
 
 /** Ein Fehler der Spieler-RPCs als Kern-Fehler: «nicht gefunden» ordnet nur
@@ -97,7 +116,9 @@ export async function ladeSpielerliste(
   if (!team.ok) return team;
   const { data, error } = await supabase.from("spieler").select(SPIELER_SPALTEN).eq("team_id", e.teamId);
   if (error) return ausDbFehler(error);
-  return ok({ team: team.wert, spieler: nachSpielerName(((data ?? []) as SpielerRoh[]).map(ausRoh)) });
+  const spieler = await mitProbeStand(supabase, e.teamId, nachSpielerName(((data ?? []) as SpielerRoh[]).map(ausRoh)));
+  if (!spieler.ok) return spieler;
+  return ok({ team: team.wert, spieler: spieler.wert });
 }
 
 /** Eine Spieler:in aufnehmen (AK 1, 6, 7, 14). `ersetzt`: Wie viele

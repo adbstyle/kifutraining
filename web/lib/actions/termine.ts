@@ -56,6 +56,8 @@ type Fehler = {
   verschwindend?: number;
   /** Davon Kennzeichnungen als nicht aufgeboten (#464 AK 10). */
   kennzeichnungen?: number;
+  /** Davon Anmeldungen von Probe-Spieler:innen (#555 AK 14). */
+  anmeldungen?: number;
 };
 
 export async function legeTerminFestAktion(
@@ -135,6 +137,7 @@ export async function aendereTerminAktion(
       absagen: r.absagen,
       fristAbgelaufen: r.fristAbgelaufen,
       kennzeichnungen: r.kennzeichnungen,
+      anmeldungen: r.anmeldungen,
     };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.trainingId) revalidiereTraining(r.wert.trainingId);

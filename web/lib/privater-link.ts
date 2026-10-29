@@ -5,6 +5,7 @@ import { LINK_FEHLER, abweisungText, istLinkToken, type AbmeldeGrund, type Abmel
 import { meldungAbweisungText, type Meldung, type Treffpunkt } from "@/lib/spiel";
 import type { MeldeAntwort } from "@/lib/kern/spiele";
 import { spielerAboUrl } from "@/lib/spieler-abo";
+import type { ProbeStand } from "@/lib/probe";
 
 /**
  * Die Seite hinter dem privaten Link einer Spieler:in (Epic #433, Story #436)
@@ -67,8 +68,9 @@ export type LinkTermin = {
   gesamt: number | null;
   abgemeldet: boolean;
   /** Verlegt, seit sie abgemeldet wurde (#437 AK 2): der Zeitpunkt vorher —
-   *  die Abmeldung gilt nicht mehr. */
-  verfallen: { datum: string; beginn: string } | null;
+   *  die Abmeldung gilt nicht mehr. `anmeldung`: Es war die Anmeldung einer
+   *  Probe-Spieler:in (#555 PC 5). */
+  verfallen: { datum: string; beginn: string; anmeldung?: boolean } | null;
   /** Die Kader der Spieler:in, über die der Termin für sie gilt (#454 AK 2);
    *  leer bei einem Termin für alle. Fremde Kader nennt der Link nie (AK 3). */
   kader: string[];
@@ -78,7 +80,17 @@ export type LinkTermin = {
 };
 
 export type LinkAnsicht =
-  | { gueltig: true; team: string; spieler: { vorname: string; nachname: string }; termine: LinkTermin[] }
+  | {
+      gueltig: true;
+      team: string;
+      spieler: { vorname: string; nachname: string };
+      /** Im Probe-Modus ihr Stand (#555 AK 11), sonst `null`; fehlt bei einer
+       *  Datenebene vor der Migration. */
+      probe?: ProbeStand | null;
+      /** Das Info-Schreiben des Teams, nur im Probe-Modus (#556 AK 4). */
+      probe_info?: string | null;
+      termine: LinkTermin[];
+    }
   | { gueltig: false };
 
 const UNGUELTIG = { gueltig: false } as const;
