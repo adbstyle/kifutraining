@@ -2086,7 +2086,7 @@ export default async function Styleguide() {
             <code>role=radio</code>, <code>aria-checked</code>) - es ist ein
             Eingabefeld, keine Ansicht, und darum keine Tabs. Optik aus den
             Chip-Bündeln, ausgewählt umrandet in Primary wie ein Filter
-            (<code>chipTextSelected</code>, <Siehe id="plaketten" />) und{" "}
+            (<code>chipSelected</code>, <Siehe id="plaketten" />) und{" "}
             <strong>ohne Häkchen</strong>: Einfachauswahl ist kein
             Ein/Aus-Zustand, und der Wechsel der Kontur trägt die Aussage bereits.
             Die Chips <strong>umbrechen</strong> - das ist ihr eigentlicher
@@ -2352,8 +2352,8 @@ export default async function Styleguide() {
             Suchparameter, jede Variante hat damit eine eigene{" "}
             <strong>Adresse</strong>. <code>VariantenLinks</code> rendert darum{" "}
             <code>&lt;nav&gt;</code> mit Links und <code>aria-current=&quot;page&quot;</code>,
-            leiht sich aber die Nutzertext-Pille der <Siehe id="offene-einfachauswahl" /> (<code>chipTextBase</code>,{" "}
-            <code>chipTextOutlined</code>, <code>chipTextSelected</code>): gleiche
+            leiht sich aber die Pille der <Siehe id="offene-einfachauswahl" /> (<code>chipBase</code>,{" "}
+            <code>chipOutlined</code>, <code>chipSelected</code>): gleiche
             Sache, gleiches Bild. Kein wandernder Tabstopp - durch Links tabbt man,
             Pfeiltasten gehören der Radiogroup. Nicht <code>TabNav</code> (<Siehe id="knoepfe" />): Die
             wechselt die <em>Sicht</em> auf einen Gegenstand; hier bleibt die Sicht
@@ -2694,7 +2694,7 @@ export default async function Styleguide() {
           <p className="type-label-small mb-2 text-on-surface-mittel">Chips</p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             Ungewählt steht jeder Chip auf der Kante. <strong>Gewählt heisst
-            umrandet</strong> (<code>chipTextSelected</code> - Primary-Kontur,
+            umrandet</strong> (<code>chipSelected</code> - Primary-Kontur,
             Primary-Schrift, keine Fläche, kein Häkchen), beim{" "}
             <strong>Filter</strong> wie bei der <Siehe id="offene-einfachauswahl" />.
             Dasselbe trägt der eingrenzende <Siehe id="filterknopf" />. Ohne Fläche steht die

@@ -22,28 +22,28 @@ import { cn } from "@/lib/cn";
    versetzt. Ein Mass für jeden Chip (36 px, Epic #363) — dasselbe wie Knopf,
    Feld und Filterknopf, darum fluchtet er in jeder Leiste ohne eigene Stufe.
 
-   ZWEI Bündel, weil der geteilte Chip die Pille anders füllt: `chipTextHuelle`
+   ZWEI Bündel, weil der geteilte Chip die Pille anders füllt: `chipHuelle`
    ist der Umriss — Schrift, Höhe, Rundung, Rahmen —, den er als Gruppe um
    seine beiden Hälften legt (dort `items-stretch`, damit jede die volle
    Trefferhöhe bekommt, und die Polsterung sitzt je Hälfte). Die Zustands-Ebene
    gehört dort nicht an die Gruppe, sondern an jede Hälfte einzeln — sonst
    leuchtete der ganze Chip auf, wenn nur eine Hälfte überfahren wird. Alles
-   Einteilige nimmt `chipTextBase`: dieselbe Hülle plus `state`, Fokusring,
+   Einteilige nimmt `chipBase`: dieselbe Hülle plus `state`, Fokusring,
    Ausrichtung und Polsterung. So ändert sich die Pille an EINER Stelle. */
-export const chipTextHuelle =
+export const chipHuelle =
   "type-body-medium inline-flex h-9 rounded-full kontur normal-case transition-colors";
-export const chipTextBase = `${chipTextHuelle} state focus-ring items-center gap-1.5 px-3`;
-export const chipTextOutlined = "border-kante text-on-surface";
+export const chipBase = `${chipHuelle} state focus-ring items-center gap-1.5 px-3`;
+export const chipOutlined = "border-kante text-on-surface";
 /* Gewählt: umrandet und beschriftet in Primary, ohne Fläche (Epic #363) —
    für jeden gewählten Chip und den Filterknopf. Ohne Grund steht die
    Primary-Schrift auf dem dunklen Grund am klarsten; eine getönte Fläche
    nahm ihr Kontrast, und gefüllt kehrte sie
    den Nutzertext in schwarze Schrift — der Name, den die Trainerin vergeben
    hat, soll auch gewählt wie ihr Name aussehen. */
-export const chipTextSelected = "border-primary text-primary";
+export const chipSelected = "border-primary text-primary";
 
 /* Filter-Chip (toggelbar) — gewählt: Kontur und Schrift in Primary, ohne
-   Fläche und ohne Häkchen (`chipTextSelected`). Ein Filter steht neben Suchfeld, Auswahl und Knöpfen; gefüllt
+   Fläche und ohne Häkchen (`chipSelected`). Ein Filter steht neben Suchfeld, Auswahl und Knöpfen; gefüllt
    wäre er lauter als die Handlung daneben, und der Farbwechsel von Kontur
    und Schrift sagt «an» bereits — für Screenreader `aria-pressed`.
    Optionales führendes Icon, gewählt wie ungewählt. */
@@ -66,8 +66,8 @@ export function FilterChip({
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        chipTextBase,
-        selected ? chipTextSelected : chipTextOutlined,
+        chipBase,
+        selected ? chipSelected : chipOutlined,
         className,
       )}
     >
@@ -139,8 +139,8 @@ export function ChoiceChip({
       onClick={onSelect}
       onKeyDown={handleKey}
       className={cn(
-        chipTextBase,
-        selected ? chipTextSelected : chipTextOutlined,
+        chipBase,
+        selected ? chipSelected : chipOutlined,
         className,
       )}
     >
@@ -205,7 +205,7 @@ export function AssistChip({
       aria-label={ariaLabel}
       aria-haspopup={ariaHasPopup}
       aria-expanded={ariaHasPopup ? ariaExpanded : undefined}
-      className={cn(chipTextBase, chipTextOutlined, className)}
+      className={cn(chipBase, chipOutlined, className)}
     >
       {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
       {children}

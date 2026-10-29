@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Layers } from "lucide-react";
-import { chipTextBase, chipTextOutlined, chipTextSelected } from "@/components/ui";
+import { chipBase, chipOutlined, chipSelected } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import type { Variante } from "@/lib/varianten";
 
@@ -11,7 +11,7 @@ import type { Variante } from "@/lib/varianten";
  * Das Gegenstück zu `VariantenWahl`: dieselbe Optik, dieselbe Schranke bei
  * einer Variante, aber Links statt Chips mit Zustand.
  *
- * Die Optik kommt aus denselben Klassenbündeln wie dort — `chipText*`. So
+ * Die Optik kommt aus denselben Klassenbündeln wie dort — `chip*`. So
  * tragen Ansehen, Druck und Durchführen dieselbe Schreibweise wie der Editor,
  * und in Primary umrandet heisst überall dasselbe: das ist die angezeigte
  * Variante. Was
@@ -67,8 +67,8 @@ export function VariantenLinks({
           href={hrefFuer(v.id)}
           aria-current={v.id === aktiv ? "page" : undefined}
           className={cn(
-            chipTextBase,
-            v.id === aktiv ? chipTextSelected : chipTextOutlined,
+            chipBase,
+            v.id === aktiv ? chipSelected : chipOutlined,
           )}
         >
           {v.name}
