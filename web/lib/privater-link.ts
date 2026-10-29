@@ -87,6 +87,8 @@ export type LinkAnsicht =
       /** Im Probe-Modus ihr Stand (#555 AK 11), sonst `null`; fehlt bei einer
        *  Datenebene vor der Migration. */
       probe?: ProbeStand | null;
+      /** Das Info-Schreiben des Teams, nur im Probe-Modus (#556 AK 4). */
+      probe_info?: string | null;
       termine: LinkTermin[];
     }
   | { gueltig: false };

@@ -35,6 +35,7 @@ import {
   Select,
   MethodischerFahrplan,
   Freitext,
+  KuerzbarerText,
   MaterialListe,
   Eigenschaften,
   Eigenschaft,
@@ -3615,6 +3616,25 @@ export default async function Styleguide() {
             <Freitext
               text={
                 "4 gegen 4 mit je 2 Zielspieler:innen pro Team.\nAlle bleiben in ihren Zonen.\n- Zeitdruck: Ball muss nach 4 Sekunden die Zone verlassen\n- Nur Direktpässe\n\nWertung:\n1. Vertikaler Ball ins Ziel: 1 Punkt\n2. Tor nach vertikalem Ball: 3 Punkte"
+              }
+            />
+          </Card>
+          <p className="type-body-medium mb-3 mt-8 max-w-2xl text-on-surface-mittel">
+            <strong>Kürzbarer Text</strong> - <code>KuerzbarerText</code>: ein längerer
+            Freitext ohne Formatierung, gekürzt auf wenige Zeilen (Vorgabe drei) mit
+            «Ganz lesen» als Link darunter - das Info-Schreiben in der Karte
+            «Probetraining» und am privaten Link (#556). Der Link steht nur, wenn der
+            Text wirklich länger ist (gemessen); aufgeklappt heisst er «Weniger
+            anzeigen». Zeilenumbrüche bleiben, Webadressen (http, https, www.) werden
+            zu externen Links (<code>ExternerLink</code>). Neu, weil{" "}
+            <code>Freitext</code> immer ganz steht und <code>line-clamp</code> allein
+            nicht aufklappt.
+          </p>
+          <Card className="max-w-xl p-6">
+            <KuerzbarerText
+              className="type-body-medium text-on-surface"
+              text={
+                "Schön, dass du bei uns reinschaust!\n\nWir trainieren auf der Allmend, Feld 3. Komm 10 Minuten vor Beginn, in Sportkleidung, mit Fussballschuhen, Schienbeinschonern und einer Trinkflasche.\n\nMelde dich unten für die Trainings an, bei denen du mitmachen willst.\nMehr zum Verein: www.fc-beispiel.ch"
               }
             />
           </Card>

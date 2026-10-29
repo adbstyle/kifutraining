@@ -4,6 +4,8 @@ import { istUuid } from "@/lib/kennung";
 import {
   PROBE_TEXT,
   probeAnzahlProblem,
+  probeInfoBereinigt,
+  probeInfoProblem,
   probeFolgenAusFehler,
   probeFolgenSumme,
   probeVerfallBestaetigen,
@@ -33,10 +35,13 @@ function probeFehler(e: { message: string; code?: string }): KernFehler {
     return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
   if (e.message.includes("PROBE_ANZAHL_FEHLT")) return fehlschlag("regel", PROBE_TEXT.anzahlFehlt, { feld: "probe" });
   if (e.message.includes("PROBE_ANZAHL_UNGUELTIG")) return fehlschlag("eingabe", PROBE_TEXT.anzahlProblem, { feld: "anzahl" });
+  if (e.message.includes("PROBE_INFO_ZU_LANG") || e.message.includes("team_probetraining_info"))
+    return fehlschlag("eingabe", PROBE_TEXT.infoZuLang, { feld: "info" });
   return ausDbFehler(e);
 }
 
-/** Die Einstellung des Teams (AK 17, 18): `anzahl` leer = nicht konfiguriert. */
+/** Die Einstellung des Teams (AK 17, 18): `anzahl` leer = nicht konfiguriert;
+ *  dazu das Info-Schreiben (#556 AK 7). */
 export async function leseProbetraining(
   supabase: SupabaseClient,
   _userId: string,
@@ -46,25 +51,32 @@ export async function leseProbetraining(
   if (!team.ok) return team;
   const { data, error } = await supabase
     .from("team_probetraining")
-    .select("anzahl")
+    .select("anzahl, info")
     .eq("team_id", e.teamId)
-    .maybeSingle<{ anzahl: number }>();
+    .maybeSingle<{ anzahl: number; info: string | null }>();
   if (error) return ausDbFehler(error);
-  return ok({ teamId: e.teamId, anzahl: data?.anzahl ?? null });
+  return ok({ teamId: e.teamId, anzahl: data?.anzahl ?? null, info: data?.info ?? null });
 }
 
-/** Die Anzahl Probetrainings festlegen oder ändern (AK 1, 2). */
+/** Die Anzahl Probetrainings und das Info-Schreiben festlegen oder ändern
+ *  (#555 AK 1, 2; #556 AK 1, 2) — immer beide; leeres `info` entfernt es. */
 export async function legeProbetrainingFest(
   supabase: SupabaseClient,
   _userId: string,
-  e: { teamId: string; anzahl: number },
+  e: { teamId: string; anzahl: number; info: string | null },
 ): Promise<KernErgebnis<Probetraining & { teamId: string }>> {
   const problem = probeAnzahlProblem(e.anzahl);
   if (problem) return fehlschlag("eingabe", problem, { feld: "anzahl" });
+  const infoProblem = probeInfoProblem(e.info);
+  if (infoProblem) return fehlschlag("eingabe", infoProblem, { feld: "info" });
   if (!istUuid(e.teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
-  const { error } = await supabase.rpc("team_probetraining_festlegen", { p_team: e.teamId, p_anzahl: e.anzahl });
+  const { error } = await supabase.rpc("team_probetraining_festlegen", {
+    p_team: e.teamId,
+    p_anzahl: e.anzahl,
+    p_info: probeInfoBereinigt(e.info),
+  });
   if (error) return probeFehler(error);
-  return ok({ teamId: e.teamId, anzahl: e.anzahl });
+  return ok({ teamId: e.teamId, anzahl: e.anzahl, info: probeInfoBereinigt(e.info) });
 }
 
 /** Was das Einschalten verfallen liesse, vor dem Speichern (AK 5, 16). */

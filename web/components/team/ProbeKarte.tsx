@@ -3,10 +3,18 @@
 import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Sprout } from "lucide-react";
-import { Button, Dialog, IconButton, Leerzustand, TextField, Tooltip } from "@/components/ui";
+import { Button, Dialog, IconButton, KuerzbarerText, Leerzustand, TextArea, TextField, Tooltip } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { legeProbetrainingFestAktion } from "@/lib/actions/probe";
-import { PROBE_ANZAHL_MAX, PROBE_TEXT, probeAnzahlProblem, type Probetraining } from "@/lib/probe";
+import {
+  PROBE_ANZAHL_MAX,
+  PROBE_INFO_MAX,
+  PROBE_TEXT,
+  probeAnzahlProblem,
+  probeInfoLaenge,
+  probeInfoProblem,
+  type Probetraining,
+} from "@/lib/probe";
 import { nurZiffern, spielerName, type Spieler } from "@/lib/spieler";
 import { ProbeLozenge } from "./ProbeLozenge";
 
@@ -14,7 +22,11 @@ import { ProbeLozenge } from "./ProbeLozenge";
    Karte, bearbeitet im Dialog (PO 2026-10-29). Ohne Anzahl steht das
    Leerfeld mit dem einen Weg heraus — «Probetraining konfigurieren»; danach
    nennt die Karte die Anzahl und wer im Probe-Modus ist, je mit Plakette.
-   Den Probe-Modus selbst schaltet man im Dialog «Spieler:in ändern». */
+   Den Probe-Modus selbst schaltet man im Dialog «Spieler:in ändern».
+
+   Das Info-Schreiben (#556) steht im selben Dialog unter der Anzahl: wer es
+   sieht hinter dem ⓘ (AK 3), darunter, dass es nur Text ist, und der Zähler
+   (AK 2). In der Karte steht es gekürzt mit «Ganz lesen» (AK 7). */
 export function ProbeKarte({
   teamId,
   probetraining,
@@ -30,13 +42,15 @@ export function ProbeKarte({
   const [pending, startTransition] = useTransition();
   const [offen, setOffen] = useState(false);
   const [anzahl, setAnzahl] = useState("");
-  const [fehler, setFehler] = useState<string | null>(null);
+  const [info, setInfo] = useState("");
+  const [fehler, setFehler] = useState<{ feld: "anzahl" | "info"; text: string } | null>(null);
   const formId = useId();
   const konfiguriert = probetraining.anzahl !== null;
   const probe = spieler.filter((s) => s.probe);
 
   function oeffnen() {
     setAnzahl(probetraining.anzahl === null ? "" : String(probetraining.anzahl));
+    setInfo(probetraining.info ?? "");
     setFehler(null);
     setOffen(true);
   }
@@ -45,10 +59,12 @@ export function ProbeKarte({
     if (pending) return;
     const n = anzahl === "" ? null : Number(anzahl);
     const problem = probeAnzahlProblem(n);
-    if (problem) return setFehler(problem);
+    if (problem) return setFehler({ feld: "anzahl", text: problem });
+    const infoProblem = probeInfoProblem(info);
+    if (infoProblem) return setFehler({ feld: "info", text: infoProblem });
     startTransition(async () => {
-      const r = await legeProbetrainingFestAktion(teamId, n!);
-      if (!r.ok) return setFehler(r.error);
+      const r = await legeProbetrainingFestAktion(teamId, n!, info);
+      if (!r.ok) return setFehler({ feld: r.feld === "info" ? "info" : "anzahl", text: r.error });
       setOffen(false);
       router.refresh();
       melde(PROBE_TEXT.festgelegt);
@@ -81,6 +97,14 @@ export function ProbeKarte({
         <dl className="mt-4 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-y-3">
           <dt className="type-body-small text-on-surface-mittel sm:leading-[21px]">{PROBE_TEXT.anzahl}</dt>
           <dd className="type-body-medium mb-2 text-on-surface sm:mb-0">{probetraining.anzahl}</dd>
+          <dt className="type-body-small text-on-surface-mittel sm:leading-[21px]">{PROBE_TEXT.info}</dt>
+          <dd className="type-body-medium mb-2 text-on-surface sm:mb-0">
+            {probetraining.info ? (
+              <KuerzbarerText text={probetraining.info} />
+            ) : (
+              <span className="text-on-surface-tief">{PROBE_TEXT.infoKeines}</span>
+            )}
+          </dd>
           <dt className="type-body-small text-on-surface-mittel sm:leading-[21px]">{PROBE_TEXT.imProbeModus}</dt>
           <dd className="type-body-medium text-on-surface">
             {probe.length === 0 ? (
@@ -151,9 +175,28 @@ export function ProbeKarte({
               setAnzahl(nurZiffern(e.target.value));
               setFehler(null);
             }}
-            error={!!fehler}
-            supportingText={fehler ?? PROBE_TEXT.anzahlHinweis}
+            error={fehler?.feld === "anzahl"}
+            supportingText={fehler?.feld === "anzahl" ? fehler.text : PROBE_TEXT.anzahlHinweis}
           />
+          <div className="flex flex-col gap-1">
+            <TextArea
+              label={PROBE_TEXT.infoFeld}
+              info={PROBE_TEXT.infoWer}
+              value={info}
+              rows={6}
+              onChange={(e) => {
+                setInfo(e.target.value);
+                if (fehler?.feld === "info") setFehler(null);
+              }}
+              error={fehler?.feld === "info"}
+              supportingText={fehler?.feld === "info" ? fehler.text : PROBE_TEXT.infoUnter}
+            />
+            <span
+              className={`type-body-small self-end px-3 tabular-nums ${probeInfoLaenge(info) > PROBE_INFO_MAX ? "text-error" : "text-on-surface-mittel"}`}
+            >
+              {probeInfoLaenge(info)} / {PROBE_INFO_MAX}
+            </span>
+          </div>
         </form>
       </Dialog>
     </>

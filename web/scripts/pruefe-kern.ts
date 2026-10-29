@@ -251,6 +251,10 @@ import {
   probeAnzahlProblem,
   probeEinschaltenText,
   probeFolgenAusFehler,
+  probeInfoBereinigt,
+  probeInfoLaenge,
+  probeInfoProblem,
+  PROBE_INFO_MAX,
   probeKurz,
   probeLang,
   probeVerfallBestaetigen,
@@ -259,6 +263,7 @@ import {
   ueberAnzahl,
   ueberAnzahlText,
 } from "../lib/probe";
+import { textMitLinks } from "../lib/text-links";
 
 let gelaufen = 0;
 
@@ -2176,6 +2181,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#459": ["termin_festlegen", "termin_aendern", "termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen", "termin_entfernen", "team_plan_abrufen"],
     "#464": ["termin_spieler_abrufen", "termin_aufgebot_setzen"],
     "#487": ["termin_spieler_abrufen", "termin_anwesenheit_setzen", "team_plan_abrufen"],
+    "#556": ["probetraining_abrufen", "probetraining_festlegen"],
     "#555": ["probetraining_abrufen", "probetraining_festlegen", "spieler_probe_setzen", "spielerliste_abrufen", "termin_spieler_abrufen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
@@ -2893,6 +2899,30 @@ pruefe("Probetraining: Link-Abweisung, verfallene Anmeldung, Abo «vielleicht» 
   assert.ok(verfallenHinweis({ datum: "2026-11-09", beginn: "17:30" }).endsWith("Deine Abmeldung gilt nicht mehr."));
   assert.equal(aboStatus(feedTermin({ id: "a", abgemeldet: true }), true), "vielleicht", "nicht angemeldet");
   assert.equal(aboStatus(feedTermin({ id: "a" }), true), "zugesagt");
+});
+
+pruefe("Info-Schreiben: bereinigt wie die Datenebene, höchstens 2000 Zeichen als Codepunkte (#556 AK 1, 2; PC 2)", () => {
+  assert.equal(probeInfoBereinigt("  \r\nHallo\r\n\r\nWelt \n "), "Hallo\n\nWelt", "Umbrüche bleiben, Rand fällt");
+  assert.equal(probeInfoBereinigt(" \n\t "), null, "leer = keines");
+  assert.equal(probeInfoBereinigt(null), null);
+  assert.equal(PROBE_INFO_MAX, 2000);
+  assert.equal(probeInfoProblem("x".repeat(2000)), null);
+  assert.equal(probeInfoProblem("x".repeat(2001)), PROBE_TEXT.infoZuLang);
+  assert.equal(probeInfoLaenge("⚽".repeat(3)), 3, "ein Emoji ist ein Zeichen wie in char_length");
+  assert.equal(probeInfoProblem("⚽".repeat(2000)), null);
+  assert.equal(probeInfoProblem(`  ${"x".repeat(2000)}  `), null, "Rand zählt nicht");
+});
+
+pruefe("Info-Schreiben: Webadressen werden Links, der Rest bleibt Text (#556 AK 5)", () => {
+  const ganz = (t: string) => textMitLinks(t).map((x) => x.text).join("");
+  const links = (t: string) => textMitLinks(t).filter((x) => x.art === "link").map((x) => (x.art === "link" ? x.href : ""));
+  const t = "Mehr: https://fc-beispiel.ch/junioren. Oder www.fc.ch, (siehe https://de.wikipedia.org/wiki/Fussball_(Sport)).";
+  assert.equal(ganz(t), t, "die Teile ergeben den ganzen Text");
+  assert.deepEqual(links(t), ["https://fc-beispiel.ch/junioren", "https://www.fc.ch", "https://de.wikipedia.org/wiki/Fussball_(Sport)"]);
+  assert.deepEqual(links("javascript:alert(1) mailto:a@b.ch ftp://x.ch"), [], "andere Schemata bleiben Text");
+  assert.deepEqual(links("www. und https://localhost"), [], "ohne Domain kein Link");
+  assert.deepEqual(textMitLinks("Ohne Adresse"), [{ art: "text", text: "Ohne Adresse" }]);
+  assert.deepEqual(links("Zeile1\nhttp://a.ch\nZeile3"), ["http://a.ch"]);
 });
 
 pruefe("Status einer Spieler:in und Meldefrist verpasst (#495, #496)", () => {

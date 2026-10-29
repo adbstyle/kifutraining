@@ -12,6 +12,8 @@
 /** Zwilling des Checks `team_probetraining_anzahl`. */
 export const PROBE_ANZAHL_MIN = 1;
 export const PROBE_ANZAHL_MAX = 20;
+/** Zwilling des Checks `team_probetraining_info` (#556 AK 2). */
+export const PROBE_INFO_MAX = 2000;
 
 /** Der Stand einer Probe-Spieler:in (`probe_stand`). `anzahl` ist leer, solange
  *  das Team keine festgelegt hat; `moeglich` wird nie kleiner als null. */
@@ -22,8 +24,9 @@ export type ProbeStand = {
   moeglich: number;
 };
 
-/** Die Probetraining-Einstellung des Teams; `anzahl` leer = nicht konfiguriert. */
-export type Probetraining = { anzahl: number | null };
+/** Die Probetraining-Einstellung des Teams; `anzahl` leer = nicht konfiguriert,
+ *  `info` leer = kein Info-Schreiben (#556). */
+export type Probetraining = { anzahl: number | null; info: string | null };
 
 export const PROBE_TEXT = {
   titel: "Probetraining",
@@ -48,6 +51,16 @@ export const PROBE_TEXT = {
   /** Am privaten Link: nach Ablauf der Anzahl (AK 12). */
   vergeben: "Probetrainings vergeben",
   nichtAngemeldet: "Nicht angemeldet",
+  // ── Info-Schreiben (#556) ──
+  info: "Info-Schreiben",
+  infoFeld: "Info-Schreiben (optional)",
+  /** AK 3: wer es sieht — fest hinter dem ⓘ. */
+  infoWer: "Das sehen die Eltern aller Probe-Spieler:innen oben in ihrem Link.",
+  infoUnter: "Nur Text. Webadressen werden im Link anklickbar.",
+  infoZuLang: `Das Info-Schreiben darf höchstens ${PROBE_INFO_MAX} Zeichen lang sein.`,
+  infoKeines: "Keines",
+  /** Am privaten Link (AK 4). */
+  linkInfoTitel: "Infos zum Probetraining",
   /** Unter der Spielerliste, sobald jemand im Probe-Modus ist. */
   listeHinweis:
     "«Probe 1/4»: 1 von 4 Probetrainings besucht. Für welche Trainings sie angemeldet ist, steht am jeweiligen Training. Probe-Spieler:innen zählen bei den Angemeldeten eines Trainings nur, wenn sie angemeldet sind.",
@@ -123,10 +136,32 @@ export function probeFolgenAusFehler(message: string): ProbeFolgen | null {
 export const PROBE_MELDUNG = {
   PROBE_ANZAHL_FEHLT: PROBE_TEXT.anzahlFehlt,
   PROBE_ANZAHL_UNGUELTIG: PROBE_TEXT.anzahlProblem,
+  PROBE_INFO_ZU_LANG: PROBE_TEXT.infoZuLang,
 } as const;
 
-/** Der CHECK der Anzahl, samt Anführungszeichen gesucht (wie `SPIELER_CHECKS`). */
-export const PROBE_CHECKS: [string, string][] = [['"team_probetraining_anzahl"', PROBE_TEXT.anzahlProblem]];
+/** Die CHECKs, samt Anführungszeichen gesucht (wie `SPIELER_CHECKS`). */
+export const PROBE_CHECKS: [string, string][] = [
+  ['"team_probetraining_anzahl"', PROBE_TEXT.anzahlProblem],
+  ['"team_probetraining_info"', PROBE_TEXT.infoZuLang],
+];
+
+/** Das Info-Schreiben, wie die Datenebene es speichert: Zeilenenden als \n,
+ *  Leerraum am Anfang und Ende weg, leer = keines (Zwilling von
+ *  `team_probetraining_festlegen`). */
+export function probeInfoBereinigt(text: string | null | undefined): string | null {
+  const t = (text ?? "").replace(/\r\n/g, "\n").replace(/^[ \t\n\r]+|[ \t\n\r]+$/g, "");
+  return t === "" ? null : t;
+}
+
+/** Zeichen wie `char_length`: Codepunkte, nicht UTF-16-Einheiten. */
+export function probeInfoLaenge(text: string | null | undefined): number {
+  return [...(probeInfoBereinigt(text) ?? "")].length;
+}
+
+/** Was am Info-Schreiben nicht stimmt, sonst `null` (AK 2). */
+export function probeInfoProblem(text: string | null | undefined): string | null {
+  return probeInfoLaenge(text) > PROBE_INFO_MAX ? PROBE_TEXT.infoZuLang : null;
+}
 
 /** Die Plakette in der Spielerliste: «Probe 1/4» — besuchte von der Anzahl
  *  (PO 2026-10-29); ohne Anzahl nur «Probe». */

@@ -5774,7 +5774,7 @@ try {
   const { PROBE_TEXT, probeVerfallBestaetigen, ueberAnzahlText } = await import("../lib/probe");
   const probeTeam = async (name: string, anzahl: number | null = 2) => {
     const k = await spielTeam(name);
-    if (anzahl !== null) wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl }));
+    if (anzahl !== null) wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl, info: null }));
     const training = async (tage: number, kaderIds: string[] = []) =>
       wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: k.team, datum: tagCh(tage), beginn: "18:00", ende: "19:30", kaderIds })).terminId;
     const token = async (spielerId: string) => wert(await holeSpielerLink(a.supabase, a.id, { spielerId })).token;
@@ -5800,14 +5800,14 @@ try {
     // AK 4: ohne Anzahl lässt sich nichts einschalten.
     fehler(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: true }), "regel", PROBE_TEXT.anzahlFehlt);
     assert.equal(wert(await probeFolgen(a.supabase, a.id, { spielerId: k.mia })).anzahlFestgelegt, false);
-    for (const n of [0, 21, 2.5]) fehler(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: n }), "eingabe", PROBE_TEXT.anzahlProblem);
+    for (const n of [0, 21, 2.5]) fehler(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: n, info: null }), "eingabe", PROBE_TEXT.anzahlProblem);
     // Auch an der Kernprüfung vorbei weist die Datenebene ab.
-    assert.match((await a.supabase.rpc("team_probetraining_festlegen", { p_team: k.team, p_anzahl: 21 })).error?.message ?? "", /PROBE_ANZAHL_UNGUELTIG|team_probetraining_anzahl/);
-    wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 4 }));
-    wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 3 }));
+    assert.match((await a.supabase.rpc("team_probetraining_festlegen", { p_team: k.team, p_anzahl: 21, p_info: null })).error?.message ?? "", /PROBE_ANZAHL_UNGUELTIG|team_probetraining_anzahl/);
+    wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 4, info: null }));
+    wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 3, info: null }));
     assert.equal(wert(await leseProbetraining(a.supabase, a.id, { teamId: k.team })).anzahl, 3);
     // Fremde sehen und ändern nichts; direktes Schreiben geht nicht.
-    fehler(await legeProbetrainingFest(b.supabase, b.id, { teamId: k.team, anzahl: 5 }), "nicht_gefunden");
+    fehler(await legeProbetrainingFest(b.supabase, b.id, { teamId: k.team, anzahl: 5, info: null }), "nicht_gefunden");
     fehler(await leseProbetraining(b.supabase, b.id, { teamId: k.team }), "nicht_gefunden");
     await a.supabase.from("team_probetraining").update({ anzahl: 9 }).eq("team_id", k.team);
     assert.equal((await admin.from("team_probetraining").select("anzahl").eq("team_id", k.team).single()).data?.anzahl, 3);
@@ -5873,7 +5873,7 @@ try {
     assert.equal(ueber.hinweis, ueberAnzahlText("Mia Muster", ueber.probe!));
     assert.equal(wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t2, spielerId: k.mia, abgemeldet: true })).hinweis, null, "abmelden ohne Hinweis");
     // PC 8: Senken der Anzahl belässt bestehende Anmeldungen.
-    wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 1 }));
+    wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 1, info: null }));
     assert.deepEqual((await k.ansicht(tok)).probe, { anzahl: 1, besucht: 0, angemeldet: 2, moeglich: 0 });
     assert.deepEqual((await k.probeVon(k.mia)), { anzahl: 1, besucht: 0, angemeldet: 2, moeglich: 0 }, "AK 7: dieselbe Zahl in der Spielerliste");
     // Abmelden geht auch über der Anzahl; anmelden erst wieder mit Platz.
@@ -5966,6 +5966,41 @@ try {
     assert.deepEqual(await k.probeVon(k.mia), { anzahl: 3, besucht: 0, angemeldet: 0, moeglich: 3 });
     // Entfernen geht wie bei allen; Fremde schalten nichts.
     fehler(await schalteProbe(b.supabase, b.id, { spielerId: k.lena, probe: true }), "nicht_gefunden");
+  });
+
+
+  await pruefe("Info-Schreiben: verfassen, ändern, entfernen, 2000 Zeichen, nur im Link von Probe-Spieler:innen (#556 AK 1, 2, 4, 7; PC 1-3; OoS 3)", async () => {
+    const k = await probeTeam("Kern-DB-Probe-Info", 3);
+    const t = await k.training(2);
+    wert(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: true, bestaetigt: true }));
+    const [mia, lena] = [await k.token(k.mia), await k.token(k.lena)];
+    assert.equal((await k.ansicht(mia) as { probe_info?: string | null }).probe_info, null, "noch keines");
+    const text = "Willkommen!\n\nKomm 10 Minuten vorher.\nMehr: https://fc.ch";
+    assert.equal(wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 3, info: `  ${text}\r\n` })).info, text);
+    assert.deepEqual(wert(await leseProbetraining(a.supabase, a.id, { teamId: k.team })), { teamId: k.team, anzahl: 3, info: text }, "AK 7");
+    // PC 1, 2: im Link der Probe-Spieler:in mit Zeilenumbrüchen, bei den übrigen nie.
+    assert.equal((await k.ansicht(mia) as { probe_info?: string | null }).probe_info, text);
+    assert.equal((await k.ansicht(lena) as { probe_info?: string | null }).probe_info, null);
+    // OoS 3: nicht im Abo.
+    const abo = (await aboHolen(mia))!;
+    assert.ok(!JSON.stringify(await aboFeed(abo)).includes("Willkommen"));
+    // AK 2: höchstens 2000 Zeichen, auch an der Kernprüfung vorbei.
+    fehler(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 3, info: "x".repeat(2001) }), "eingabe", PROBE_TEXT.infoZuLang);
+    assert.match(
+      (await a.supabase.rpc("team_probetraining_festlegen", { p_team: k.team, p_anzahl: 3, p_info: "x".repeat(2001) })).error?.message ?? "",
+      /PROBE_INFO_ZU_LANG/,
+    );
+    wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 3, info: "⚽".repeat(2000) }));
+    // PC 3: eine Änderung steht beim nächsten Öffnen; leer entfernt es (AK 1).
+    wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 3, info: "Neu" }));
+    assert.equal((await k.ansicht(mia) as { probe_info?: string | null }).probe_info, "Neu");
+    wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 3, info: " \n " }));
+    assert.equal(wert(await leseProbetraining(a.supabase, a.id, { teamId: k.team })).info, null);
+    // Ausgeschaltet: kein Info-Schreiben mehr am Link.
+    wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl: 3, info: "Wieder da" }));
+    wert(await schalteProbe(a.supabase, a.id, { spielerId: k.mia, probe: false }));
+    assert.equal((await k.ansicht(mia) as { probe_info?: string | null }).probe_info, null);
+    assert.ok(t);
   });
 
 } finally {

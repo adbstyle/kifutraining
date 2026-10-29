@@ -384,7 +384,7 @@ verantwortlich ist, Ausfälle festhalten und zurücknehmen sowie die Termine ein
 abrufen"; „die Anzeigenamen der Mitglieder deiner Teams lesen (ohne
 E-Mail-Adressen)"; „die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen
 und führen, Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins
-Probetraining nehmen und die Anzahl Probetrainings festlegen, Spieler:innen
+Probetraining nehmen und die Anzahl Probetrainings samt Info-Schreiben festlegen, Spieler:innen
 für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten
 kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab
 Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link

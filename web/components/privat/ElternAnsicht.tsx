@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CalendarX2 } from "lucide-react";
-import { ExternerLink, Kalenderblatt, Leerzustand, Lozenge, SectionMessage, Switch } from "@/components/ui";
+import { ExternerLink, Kalenderblatt, KuerzbarerText, Leerzustand, Lozenge, SectionMessage, Switch } from "@/components/ui";
 import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
 import type { Meldung } from "@/lib/spiel";
 import { SpielKarte } from "./SpielKarte";
@@ -40,12 +40,15 @@ import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaeh
    wie viele Probetrainings noch möglich sind, mit einem Balken je
    Probetraining (besucht gefüllt, angemeldet umrandet). Ist die Anzahl
    erreicht, sagt das eine Meldung über den Trainings, und die Schalter der
-   übrigen sind gesperrt, bis ein Platz frei wird. */
+   übrigen sind gesperrt, bis ein Platz frei wird. Das Info-Schreiben des
+   Teams (#556) steht davor, gekürzt mit «Ganz lesen» — man liest es, bevor
+   man anmeldet (AK 4); Webadressen darin öffnen sich (AK 5). */
 export function ElternAnsicht({
   token,
   team,
   spieler,
   probe,
+  probeInfo,
   termine,
 }: {
   token: string;
@@ -53,6 +56,8 @@ export function ElternAnsicht({
   spieler: { vorname: string; nachname: string };
   /** Im Probe-Modus ihr Stand, sonst `null`. */
   probe: ProbeStand | null;
+  /** Das Info-Schreiben des Teams, nur im Probe-Modus (#556). */
+  probeInfo: string | null;
   termine: LinkTermin[];
 }) {
   // Was gerade umgelegt wird, steht sofort so da; scheitert es, zurück. Bei
@@ -179,6 +184,14 @@ export function ElternAnsicht({
           </p>
         )}
       </header>
+      {probeLokal && probeInfo && (
+        <section aria-labelledby="probe-info" className="mx-4 mt-4 rounded-flaeche bg-elev-01 px-3 py-3">
+          <h2 id="probe-info" className="type-title-small text-on-surface">
+            {PROBE_TEXT.linkInfoTitel}
+          </h2>
+          <KuerzbarerText text={probeInfo} zeilen={4} className="mt-1 type-body-medium text-on-surface" />
+        </section>
+      )}
       {voll && probeLokal && (
         <div className="px-4 pt-4">
           <SectionMessage>{linkProbeVoll(spieler.vorname, probeLokal)}</SectionMessage>

@@ -12,11 +12,16 @@ import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
 
 type Fehler = { ok: false; error: string; feld?: string; verfallend?: number };
 
-/** Die Anzahl Probetrainings des Teams festlegen oder ändern (AK 1, 2). */
-export async function legeProbetrainingFestAktion(teamId: string, anzahl: number): Promise<{ ok: true } | Fehler> {
+/** Die Anzahl Probetrainings und das Info-Schreiben des Teams festlegen oder
+ *  ändern (#555 AK 1, 2; #556 AK 1, 2). */
+export async function legeProbetrainingFestAktion(
+  teamId: string,
+  anzahl: number,
+  info: string | null,
+): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await legeProbetrainingFest(a.supabase, a.userId, { teamId, anzahl });
+  const r = await legeProbetrainingFest(a.supabase, a.userId, { teamId, anzahl, info });
   if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld };
   revalidiereTeam(teamId);
   return { ok: true };
