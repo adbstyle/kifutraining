@@ -1,41 +1,54 @@
 @import "tailwindcss";
 
 /* ───────────────────────────────────────────────────────────
-   KiFu — Material 2 Dark
-   Eine einzige Fläche (#101613, entsättigtes Rasengrün) trägt die
-   ganze App; Höhe entsteht nicht durch eine zweite Farbe, sondern
-   durch ein weisses Overlay auf derselben Fläche. Akzent ist
-   Primary #bb86fc — Material 2 Baseline, im Dunkeln hell genug,
-   um Text zu tragen. Farbe umrandet und beschriftet, sie füllt
-   nur dort, wo eine Fläche wirklich gemeint ist — ausgenommen die
-   drei Atlassian-Bausteine Lozenge, Badge und Section Message.
+   Zwei Erscheinungsbilder, ein Satz Tokens (Epic #563)
+   Jede Farbrolle steht als `light-dark(hell, dunkel)`. Welches
+   der beiden gilt, entscheidet allein `color-scheme` (siehe
+   «Erscheinungsbild» in @layer base) — dieselbe Eigenschaft, die
+   auch dem Browser sagt, wie er seine eigenen Bedienteile zeichnet.
+   Kein Skript, kein zweiter Block: Folgt die Seite dem Gerät, geht
+   sie bei einem Wechsel von selbst mit.
+
+   Dunkel: Eine einzige Fläche (#101613, entsättigtes Rasengrün)
+   trägt die ganze App; Höhe entsteht durch ein weisses Overlay auf
+   derselben Fläche. Hell: ein leises Rasengrau als Grund, weisse
+   Karten, und das Schwebende hebt sich über den Schatten ab. Akzent
+   ist in beiden das Violett der Marke. Farbe umrandet und
+   beschriftet, sie füllt nur dort, wo eine Fläche wirklich gemeint
+   ist — ausgenommen die drei Atlassian-Bausteine Lozenge, Badge und
+   Section Message.
    ─────────────────────────────────────────────────────────── */
 
 @theme {
-  /* ─── Höhe: Grund + weisses Overlay, vorab verrechnet ───
-     Literale Hex-Werte, keine Rechnung zur Laufzeit — so kann
-     `scripts/pruefe-farben.ts` die Palette per Regex mitlesen. */
-  --color-elev-00: #101613; /* 0 % */
-  --color-elev-01: #1c221f; /* 5 % */
-  --color-elev-02: #212624; /* 7 % */
-  --color-elev-03: #232926; /* 8 % */
-  --color-elev-04: #262b28; /* 9 % */
-  --color-elev-06: #2a302d; /* 11 % */
-  --color-elev-08: #2d322f; /* 12 % */
-  --color-elev-12: #313734; /* 14 % */
-  --color-elev-16: #343936; /* 15 % */
-  --color-elev-24: #363b39; /* 16 % */
+  /* ─── Höhe ───
+     Dunkel: Grund + weisses Overlay, vorab verrechnet (in Klammern die
+     Deckung). Hell: getönter Grund, weisse Karte, getönt was in der Karte
+     liegt, weiss alles Schwebende. Literale Hex-Werte, keine Rechnung zur
+     Laufzeit — so kann `scripts/pruefe-farben.ts` die Palette per Regex
+     mitlesen. */
+  --color-elev-00: light-dark(#f5f6f5, #101613); /* 0 % */
+  --color-elev-01: light-dark(#ffffff, #1c221f); /* 5 % */
+  --color-elev-02: light-dark(#f5f6f5, #212624); /* 7 % */
+  --color-elev-03: light-dark(#f2f4f2, #232926); /* 8 % */
+  --color-elev-04: light-dark(#f0f2f0, #262b28); /* 9 % */
+  --color-elev-06: light-dark(#eef0ee, #2a302d); /* 11 % */
+  --color-elev-08: light-dark(#ffffff, #2d322f); /* 12 % */
+  --color-elev-12: light-dark(#ffffff, #313734); /* 14 % */
+  --color-elev-16: light-dark(#ffffff, #343936); /* 15 % */
+  --color-elev-24: light-dark(#ffffff, #363b39); /* 16 % */
 
-  /* ─── Akzente ─── */
-  --color-primary: #bb86fc;
-  --color-on-primary: #000000;
-  /* Eine Stufe heller als Materials Baseline (#cf6679). Die Baseline ist als
-     FLÄCHE gedacht und trägt als Schrift nur auf dem Grund (5.09) — im Dialog
-     fällt sie auf 3.17. Diese Anwendung setzt Error aber fast überall als
-     SCHRIFT: auf Karten, in Menüzeilen, in Dialogen. #e58a95 trägt dort
-     durchweg über 4.5:1 (00dp 7.33 · 01dp 6.47 · 08dp 5.22 · 24dp 4.56),
+  /* ─── Akzente ───
+     Das Violett der Marke; im Dunkeln eine hellere Stufe, die als Schrift
+     auf jeder Höhenstufe über 4.5:1 trägt. */
+  --color-primary: light-dark(#6d4aff, #b29cff);
+  --color-on-primary: light-dark(#ffffff, #000000);
+  /* Im Dunkeln eine Stufe heller als Materials Baseline (#cf6679). Die
+     Baseline ist als FLÄCHE gedacht und trägt als Schrift nur auf dem Grund
+     (5.09) — im Dialog fällt sie auf 3.17. Diese Anwendung setzt Error aber
+     fast überall als SCHRIFT: auf Karten, in Menüzeilen, in Dialogen.
+     #e58a95 trägt dort durchweg über 4.5:1, im Hellen #b42a37 über 5.5:1 —
      nachgerechnet in scripts/pruefe-farben.ts auf jeder Stufe. */
-  --color-error: #e58a95;
+  --color-error: light-dark(#b42a37, #e58a95);
   /* Die Fläche des destruktiven Knopfs — dunkler als Error, weil sie Weiss
      trägt (5.16:1); Error selbst käme mit Weiss nur auf 2.50:1. Atlassians
      danger.bold (helles Theme). PO 2026-10-06. */
@@ -43,69 +56,74 @@
   --color-on-danger: #ffffff;
   --color-scrim: #000000;
 
-  /* ─── Schrift und Striche: Weiss in vier Deckungen ───
-     Hex8 statt eigener Grautöne — so trägt jede Höhenstufe denselben
-     Text, ohne dass er pro Fläche neu gemischt werden müsste. */
-  --color-on-surface: #ffffff; /* 100 % */
-  --color-on-surface-mittel: #ffffffbd; /* 74 % */
-  /* 38 % reicht auf 00dp nur für 3.6:1 — darum ausschliesslich für
-     Deaktiviertes, wo Material den Kontrast bewusst preisgibt. */
-  --color-on-surface-tief: #ffffff61; /* 38 % */
-  --color-linie: #ffffff1f; /* 12 % — Trenner und Haarlinie, 1 px */
-  --color-kante: #ffffff47; /* 28 % — Kontur von Feld, Chip, Knopf, 1.5 px */
+  /* ─── Schrift und Striche: eine Schriftfarbe in vier Deckungen ───
+     Dunkel Weiss, hell die Tinte (#141a17). Hex8 statt eigener Grautöne —
+     so trägt jede Höhenstufe denselben Text, ohne dass er pro Fläche neu
+     gemischt werden müsste. */
+  --color-on-surface: light-dark(#141a17, #ffffff); /* 100 % */
+  --color-on-surface-mittel: light-dark(#141a17bd, #ffffffbd); /* 74 % */
+  /* Ausschliesslich für Deaktiviertes, wo der Kontrast bewusst preisgegeben
+     ist: im Dunkeln 38 % (3.6:1), im Hellen 50 % (3.3:1). */
+  --color-on-surface-tief: light-dark(#141a1780, #ffffff61);
+  --color-linie: light-dark(#141a171f, #ffffff1f); /* 12 % — Trenner und Haarlinie, 1 px */
+  /* Kontur von Feld, Chip, Knopf, 1.5 px — im Hellen 50 %, damit sie 3:1 trägt. */
+  --color-kante: light-dark(#141a1780, #ffffff47);
 
-  /* ─── Umgekehrte Fläche — die Snackbar (#234) und der helle Knopf
-     (`variant="hell"`). Weiss 87 % über dem
-     Grund; darauf der Grund als Schrift und das dunkle Violett als Akzent.
-     Angewandt über @utility umkehr, nie als einzelne Klasse. ─── */
-  --color-umkehr: #e0e1e0;
-  --color-on-umkehr: #101613;
-  --color-umkehr-akzent: #4527a0;
+  /* ─── Umgekehrte Fläche — die Snackbar (#234), der helle Knopf
+     (`variant="hell"`), Kalenderblatt und Mini-Monat. Im Dunkeln hell (Weiss
+     87 % über dem Grund) mit dem Grund als Schrift und tiefem Violett als
+     Akzent; im Hellen dunkel (die Menüstufe des Dunkeln) mit dem hellen Grund
+     als Schrift und dem hellen Violett als Akzent. Angewandt über
+     @utility umkehr, nie als einzelne Klasse. ─── */
+  --color-umkehr: light-dark(#2d322f, #e0e1e0);
+  --color-on-umkehr: light-dark(#f5f6f5, #101613);
+  --color-umkehr-akzent: light-dark(#b29cff, #5b38eb);
 
   /* ─── Atlassian — Lozenge (Plakette), Badge (Zähler), Section Message ───
      Diese drei Bausteine folgen dem Atlassian Design System wie Jira, nicht
-     Material. Die Werte stehen wörtlich aus @atlaskit/tokens (Theme
-     atlassian-dark); Herleitung und Zuordnung in lib/farben.ts.
+     Material. Die Werte stehen wörtlich aus @atlaskit/tokens (hell aus
+     atlassian-light, dunkel aus atlassian-dark); Herleitung und Zuordnung
+     in lib/farben.ts.
      lozenge-* = background.<x>.subtler, on-lozenge-* = text.<x>.bolder;
      section-* = background.<x>, icon-* = icon.<x>. Die Akzente tragen die
      Alterskategorien G bis A (KategorieLozenge). ─── */
-  --color-lozenge-neutral: #ceced912;
-  --color-on-lozenge-neutral: #cecfd2;
-  --color-lozenge-success: #37471f;
-  --color-on-lozenge-success: #d3f1a7;
-  --color-lozenge-warning: #693200;
-  --color-on-lozenge-warning: #fce4a6;
-  --color-lozenge-danger: #5d1f1a;
-  --color-on-lozenge-danger: #ffd5d2;
-  --color-lozenge-information: #123263;
-  --color-on-lozenge-information: #cfe1fd;
-  --color-lozenge-discovery: #48245d;
-  --color-on-lozenge-discovery: #eed7fc;
-  --color-lozenge-accent-blue: #123263;
-  --color-on-lozenge-accent-blue: #cfe1fd;
-  --color-lozenge-accent-yellow: #533f04;
-  --color-on-lozenge-accent-yellow: #f5e989;
-  --color-lozenge-accent-orange: #693200;
-  --color-on-lozenge-accent-orange: #fce4a6;
-  --color-lozenge-accent-green: #164b35;
-  --color-on-lozenge-accent-green: #baf3db;
-  --color-lozenge-accent-magenta: #50253f;
-  --color-on-lozenge-accent-magenta: #fdd0ec;
-  --color-lozenge-accent-purple: #48245d;
-  --color-on-lozenge-accent-purple: #eed7fc;
-  --color-lozenge-accent-gray: #303134;
-  --color-on-lozenge-accent-gray: #e2e3e4;
+  --color-lozenge-neutral: light-dark(#0515240f, #ceced912);
+  --color-on-lozenge-neutral: light-dark(#292a2e, #cecfd2);
+  --color-lozenge-success: light-dark(#d3f1a7, #37471f);
+  --color-on-lozenge-success: light-dark(#37471f, #d3f1a7);
+  --color-lozenge-warning: light-dark(#fce4a6, #693200);
+  --color-on-lozenge-warning: light-dark(#693200, #fce4a6);
+  --color-lozenge-danger: light-dark(#ffd5d2, #5d1f1a);
+  --color-on-lozenge-danger: light-dark(#5d1f1a, #ffd5d2);
+  --color-lozenge-information: light-dark(#cfe1fd, #123263);
+  --color-on-lozenge-information: light-dark(#123263, #cfe1fd);
+  --color-lozenge-discovery: light-dark(#eed7fc, #48245d);
+  --color-on-lozenge-discovery: light-dark(#48245d, #eed7fc);
+  --color-lozenge-accent-blue: light-dark(#cfe1fd, #123263);
+  --color-on-lozenge-accent-blue: light-dark(#123263, #cfe1fd);
+  --color-lozenge-accent-yellow: light-dark(#f5e989, #533f04);
+  --color-on-lozenge-accent-yellow: light-dark(#533f04, #f5e989);
+  --color-lozenge-accent-orange: light-dark(#fce4a6, #693200);
+  --color-on-lozenge-accent-orange: light-dark(#693200, #fce4a6);
+  --color-lozenge-accent-green: light-dark(#baf3db, #164b35);
+  --color-on-lozenge-accent-green: light-dark(#164b35, #baf3db);
+  --color-lozenge-accent-magenta: light-dark(#fdd0ec, #50253f);
+  --color-on-lozenge-accent-magenta: light-dark(#50253f, #fdd0ec);
+  --color-lozenge-accent-purple: light-dark(#eed7fc, #48245d);
+  --color-on-lozenge-accent-purple: light-dark(#48245d, #eed7fc);
+  --color-lozenge-accent-gray: light-dark(#f0f1f2, #303134);
+  --color-on-lozenge-accent-gray: light-dark(#1e1f21, #e2e3e4);
 
-  --color-section-information: #1c2b42;
-  --color-icon-information: #4688ec;
-  --color-section-warning: #3a2c1f;
-  --color-icon-warning: #fbc828;
-  --color-section-danger: #42221f;
-  --color-icon-danger: #f15b50;
-  --color-section-success: #28311b;
-  --color-icon-success: #82b536;
-  --color-section-discovery: #35243f;
-  --color-icon-discovery: #bf63f3;
+  --color-section-information: light-dark(#e9f2fe, #1c2b42);
+  --color-icon-information: light-dark(#357de8, #4688ec);
+  --color-section-warning: light-dark(#fff5db, #3a2c1f);
+  --color-icon-warning: light-dark(#e06c00, #fbc828);
+  --color-section-danger: light-dark(#ffeceb, #42221f);
+  --color-icon-danger: light-dark(#c9372c, #f15b50);
+  --color-section-success: light-dark(#efffd6, #28311b);
+  --color-icon-success: light-dark(#6a9a23, #82b536);
+  --color-section-discovery: light-dark(#f8eefe, #35243f);
+  --color-icon-discovery: light-dark(#af59e1, #bf63f3);
 
   /* ─── Zustände: Deckung der Overlay-Ebene (siehe @utility state) ─── */
   --state-hover: 0.04;
@@ -124,10 +142,11 @@
 
   /* ─── Schatten — nur wo etwas wirklich schwebt. Im Dunkeln trägt die
      Helligkeit die Höhe, der Schatten trennt bloss das Schwebende vom
-     Grund darunter. ─── */
-  --shadow-dp-06: 0 4px 12px rgb(0 0 0 / 0.55);
-  --shadow-dp-08: 0 4px 12px rgb(0 0 0 / 0.6);
-  --shadow-dp-24: 0 8px 24px rgb(0 0 0 / 0.6);
+     Grund darunter. Im Hellen ist er es, der die Höhe trägt — weiss auf
+     weiss hebt sich das Menü nur über ihn ab, darum leise, aber weit. ─── */
+  --shadow-dp-06: 0 4px 12px light-dark(rgb(20 26 23 / 0.14), rgb(0 0 0 / 0.55));
+  --shadow-dp-08: 0 4px 16px light-dark(rgb(20 26 23 / 0.16), rgb(0 0 0 / 0.6));
+  --shadow-dp-24: 0 12px 32px light-dark(rgb(20 26 23 / 0.2), rgb(0 0 0 / 0.6));
 
   /* ─── Schrift: eine Familie für alles — Gelesenes wie Gezähltes.
      Unterschieden wird über Gewicht, Versalien und Sperrung, nicht über
@@ -599,12 +618,13 @@
   visibility: visible;
 }
 
-/* Diagramm-Platzhalter: 45°-Schraffur, sehr leise. */
+/* Diagramm-Platzhalter: 45°-Schraffur, sehr leise — in der Schriftfarbe, damit
+   sie in beiden Erscheinungsbildern gleich leise steht. */
 @utility schraffur {
   background-image: repeating-linear-gradient(
     45deg,
-    rgb(255 255 255 / 0.07) 0,
-    rgb(255 255 255 / 0.07) 1px,
+    color-mix(in srgb, var(--color-on-surface) 7%, transparent) 0,
+    color-mix(in srgb, var(--color-on-surface) 7%, transparent) 1px,
     transparent 1px,
     transparent 10px
   );

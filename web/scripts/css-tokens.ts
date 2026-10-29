@@ -54,6 +54,41 @@ export function normalisiere(wert: string): string {
   return /^#[0-9a-f]{6}ff$/.test(roh) ? roh.slice(0, 7) : roh;
 }
 
+/** Einen Wert in seine zwei Erscheinungsbilder teilen: `light-dark(a, b)` wird
+ *  zu `{ hell: a, dunkel: b }` (normalisiert), alles andere gilt für beide.
+ *  Geteilt wird am obersten Komma — `rgb(0 0 0 / 0.5)` darin bleibt ganz. */
+export function hellDunkel(wert: string): { hell: string; dunkel: string } {
+  const roh = wert.replace(/\/\*[\s\S]*?\*\//g, "").trim();
+  const treffer = /^light-dark\(([\s\S]*)\)$/i.exec(roh);
+  if (!treffer) {
+    const beide = normalisiere(roh);
+    return { hell: beide, dunkel: beide };
+  }
+  let tiefe = 0;
+  for (let i = 0; i < treffer[1].length; i++) {
+    const zeichen = treffer[1][i];
+    if (zeichen === "(") tiefe++;
+    else if (zeichen === ")") tiefe--;
+    else if (zeichen === "," && tiefe === 0) {
+      return {
+        hell: normalisiere(treffer[1].slice(0, i)),
+        dunkel: normalisiere(treffer[1].slice(i + 1)),
+      };
+    }
+  }
+  throw new Error(`light-dark() ohne zwei Werte: ${wert}`);
+}
+
+/** Wie `tokens`, aber jede Rolle in ihre zwei Erscheinungsbilder geteilt. */
+export function tokenPaare(block: string, praefix: string): Map<string, { hell: string; dunkel: string }> {
+  const gefunden = new Map<string, { hell: string; dunkel: string }>();
+  const muster = new RegExp(`--${praefix}-([a-z0-9-]+)\\s*:\\s*([^;]+);`, "gi");
+  for (const treffer of block.matchAll(muster)) {
+    gefunden.set(treffer[1].toLowerCase(), hellDunkel(treffer[2]));
+  }
+  return gefunden;
+}
+
 /** Alle `--<praefix>-*`-Zuweisungen eines Blocks als Rolle → Wert. Werte, die
  *  keine Farbe sind (die Strichstärke des Balls), gehen unverändert durch —
  *  `normalisiere` lässt alles liegen, was es nicht als Farbe erkennt. */

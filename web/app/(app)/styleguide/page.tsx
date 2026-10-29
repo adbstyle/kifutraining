@@ -77,6 +77,7 @@ import { FelderDemo } from "./FelderDemo";
 import { MiniMonatDemo } from "./MiniMonatDemo";
 import { LozengeAuswahlDemo } from "./LozengeAuswahlDemo";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
+import { ErscheinungsbildDemo } from "./ErscheinungsbildDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import { TrainingCard } from "@/components/training/TrainingCard";
 import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
@@ -208,6 +209,7 @@ const GLIEDERUNG = [
     gruppen: [
       {
         eintraege: [
+          { id: "erscheinungsbild", titel: "Hell und Dunkel" },
           { id: "farbrollen", titel: "Farbrollen" },
           { id: "typografie", titel: "Typografie" },
           { id: "hoehe", titel: "Höhe" },
@@ -1023,6 +1025,20 @@ export default async function Styleguide() {
         </Section>
 
         <BereichKopf titel="Stile" />
+
+        <Section id="erscheinungsbild">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            KiFu hat zwei Erscheinungsbilder mit denselben Rollen (Epic #563). Jede Farbe steht im
+            CSS als <code>light-dark(hell, dunkel)</code>; welches gilt, entscheidet allein{" "}
+            <code>color-scheme</code>. Hell trägt die Höhe über Fläche und Schatten: ein leises
+            Rasengrau als Grund, weisse Karten, getönt was in einer Karte liegt, weiss alles
+            Schwebende. Dunkel bleibt der Nachtgrund mit weissem Overlay. Akzent ist in beiden das
+            Violett der Marke, im Dunkeln eine hellere Stufe. Beide Tafeln unten sind die lebenden
+            Klassen und echten Bausteine; geprüft gegen WCAG 2.2 AA in{" "}
+            <code>npm run check:farben</code>.
+          </p>
+          <ErscheinungsbildDemo />
+        </Section>
 
         <Section id="farbrollen">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
