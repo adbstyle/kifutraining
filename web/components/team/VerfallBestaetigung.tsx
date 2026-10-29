@@ -94,7 +94,15 @@ export function useVerfallRueckfrage(pending?: boolean) {
   function nachKader(r: Antwort, bestaetigt: number | false, weiter: (anzahl: number) => void): boolean {
     if (r.ok || !r.verfallend) return false;
     const n = r.verfallend;
-    setFrage({ anzahl: n, text: bestaetigt === false ? kaderVerfallText(n, r.verfallendSpiele, r.kennzeichnungen, r.anmeldungen) : r.error, weiter: () => weiter(n) });
+    // Verfallen nur Anmeldungen von Probe-Spieler:innen, heisst der Dialog so (#555).
+    const nurAnmeldungen =
+      (r.anmeldungen ?? 0) > 0 && n === (r.anmeldungen ?? 0) && !r.verfallendSpiele && !r.kennzeichnungen;
+    setFrage({
+      anzahl: n,
+      text: bestaetigt === false ? kaderVerfallText(n, r.verfallendSpiele, r.kennzeichnungen, r.anmeldungen) : r.error,
+      titel: nurAnmeldungen ? "Anmeldungen verfallen" : undefined,
+      weiter: () => weiter(n),
+    });
     return true;
   }
 

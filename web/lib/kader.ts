@@ -18,7 +18,7 @@ export const KADER_TEXT = {
   name: `Bitte einen Namen mit höchstens ${KADER_NAME_MAX} Zeichen angeben.`,
   /** AK 13: beim Anlegen und Umbenennen — KiFu prüft die Namen nicht (OoS 7). */
   heikel:
-    "Eltern sehen die Kader ihres Kindes. Nenne darum keine Angaben zur Gesundheit oder vergleichbar heikle Einstufungen wie «verletzt» oder «Förderbedarf».",
+    "Eltern sehen die Kader ihrer Spieler:in. Nenne darum keine Angaben zur Gesundheit oder vergleichbar heikle Einstufungen wie «verletzt» oder «Förderbedarf».",
   /** Was ein Kader bewirkt — über der Liste der Kader. */
   wirkung:
     "Ein Termin mit Kadern gilt für die Spieler:innen seiner Kader, ein Termin ohne Kader für alle. Wer keinem Kader angehört, sieht nur Termine ohne Kader.",

@@ -637,7 +637,7 @@ export const spielerLinkErneuern = werkzeug({
 // ── Selbstabholung (#438) ───────────────────────────────────────────────────
 
 const ABHOL_MODELL =
-  "Mit der Selbstabholung holen Eltern den privaten Link ihres Kindes selbst ab: Sie öffnen die Abholadresse des Teams " +
+  "Mit der Selbstabholung holen Eltern den privaten Link ihrer Spieler:in selbst ab: Sie öffnen die Abholadresse des Teams " +
   "ohne Konto und geben Vorname, Nachname und Jahrgang ein; passt die Eingabe (wie die Eindeutigkeit der Liste: Gross- " +
   "und Kleinschreibung, Leerzeichen, Bindestrich und Apostroph-Varianten zählen nicht), erhalten sie den Link, und er " +
   `gilt als bezogen («link_bezogen» in «spielerliste_abrufen»). Nach ${ABHOL_VERSUCHE} nicht passenden Eingaben ist die ` +

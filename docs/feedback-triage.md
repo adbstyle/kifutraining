@@ -290,7 +290,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Entfernen: Link ungültig, an vergangenen Terminen „Ehemalige Spieler:in".
 - Begonnener Termin behält „Stand bei Beginn" (minutengenau, Schweizer Zeit).
 
-**Kader:** max. 20 je Team, Name 1–30, eindeutig (Bindestrich/Apostroph unterscheiden hier!). Hinweis: Eltern sehen die Kader ihres Kindes → nichts Heikles in den Namen. Zuteilung im Spieler-Dialog oder per Mehrfachauswahl („Kader zuteilen", Leiste unten). Termin/Serie mit Kadern gilt nur für deren Mitglieder; ohne Kader für alle. Kader schliessen nichts aus. Termin für niemanden → „0 von 0".
+**Kader:** max. 20 je Team, Name 1–30, eindeutig (Bindestrich/Apostroph unterscheiden hier!). Hinweis: Eltern sehen die Kader ihrer Spieler:in → nichts Heikles in den Namen. Zuteilung im Spieler-Dialog oder per Mehrfachauswahl („Kader zuteilen", Leiste unten). Termin/Serie mit Kadern gilt nur für deren Mitglieder; ohne Kader für alle. Kader schliessen nichts aus. Termin für niemanden → „0 von 0".
 - Termin gilt durch Kader-Änderung nicht mehr für jemanden → Abmeldung/Meldung/Kennzeichnung **verfällt** (Rückfrage mit Zahl); gilt später wieder → angemeldet (Spiel: ohne Meldung).
 - Mitglieder sehen immer alle Termine (Kader filtern nur Spieler:innen).
 

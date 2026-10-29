@@ -193,11 +193,21 @@ export function linkProbeKopf(vorname: string): string {
   return `${vorname} ist im Probetraining. Melde ${vorname} für die Trainings an, an denen ${vorname} teilnimmt, und bis zum Beginn wieder ab.`;
 }
 
+/** «1 Probetraining», «4 Probetrainings». */
+function probetrainings(n: number): string {
+  return n === 1 ? "1 Probetraining" : `${n} Probetrainings`;
+}
+
+/** Was vergeben ist: «Das Probetraining», «Alle 4 Probetrainings» (ohne «Alle 1»). */
+function alleVergeben(n: number | null): string {
+  return n === 1 ? "Das Probetraining ist vergeben" : `Alle ${n} Probetrainings sind vergeben`;
+}
+
 export function linkProbeZaehler(s: ProbeStand): string {
   if (s.anzahl === null) return `${s.besucht} besucht · ${s.angemeldet} angemeldet`;
-  return s.moeglich > 0
-    ? `Noch ${s.moeglich} von ${s.anzahl} Probetrainings möglich`
-    : `Alle ${s.anzahl} Probetrainings vergeben`;
+  // Die Kopfzeile knapp wie im Entwurf: «Alle 4 Probetrainings vergeben».
+  if (s.moeglich > 0) return `Noch ${s.moeglich} von ${probetrainings(s.anzahl)} möglich`;
+  return s.anzahl === 1 ? "Das Probetraining ist vergeben" : `Alle ${s.anzahl} Probetrainings vergeben`;
 }
 
 export function linkProbeStand(s: ProbeStand): string {
@@ -208,5 +218,5 @@ export function linkProbeStand(s: ProbeStand): string {
 export function linkProbeVoll(vorname: string, s: ProbeStand): string {
   // Ist alles schon besucht, gibt es nichts abzumelden.
   const frei = s.angemeldet > 0 ? ` Meldest du ${vorname} von einem Training ab, wird der Platz wieder frei.` : "";
-  return `Alle ${s.anzahl} Probetrainings sind vergeben.${frei} Für weitere Trainings wende dich an das Team.`;
+  return `${alleVergeben(s.anzahl)}.${frei} Für weitere Trainings wende dich an das Team.`;
 }

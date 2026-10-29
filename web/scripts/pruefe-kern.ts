@@ -2864,6 +2864,11 @@ pruefe("Probetraining: Anzahl, Plakette, Stand am Link, Hinweis über der Anzahl
   assert.equal(probeKurz({ ...stand, anzahl: null }), "Probe");
   assert.equal(linkProbeZaehler(stand), "Noch 1 von 4 Probetrainings möglich");
   assert.equal(linkProbeZaehler({ ...stand, angemeldet: 3, moeglich: 0 }), "Alle 4 Probetrainings vergeben");
+  // Bei einem Probetraining kein «Alle 1 Probetrainings».
+  const eins = { anzahl: 1, besucht: 0, angemeldet: 0, moeglich: 1 };
+  assert.equal(linkProbeZaehler(eins), "Noch 1 von 1 Probetraining möglich");
+  assert.equal(linkProbeZaehler({ ...eins, angemeldet: 1, moeglich: 0 }), "Das Probetraining ist vergeben");
+  assert.ok(linkProbeVoll("Mia", { ...eins, angemeldet: 1, moeglich: 0 }).startsWith("Das Probetraining ist vergeben. Meldest du Mia"));
   assert.ok(linkProbeVoll("Mia", stand).startsWith("Alle 4 Probetrainings sind vergeben. Meldest du Mia"));
   assert.equal(
     linkProbeVoll("Mia", { anzahl: 4, besucht: 4, angemeldet: 0, moeglich: 0 }),
