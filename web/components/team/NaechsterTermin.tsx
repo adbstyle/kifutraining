@@ -244,7 +244,8 @@ function SpielerZeichen({ t, nachFrist }: { t: TerminZeile; nachFrist: boolean }
           richtwertStufeText(s.anwesend ?? s.angemeldet, t.spiel.richtwertMin, t.spiel.richtwertMax),
           s.anwesend == null && (s.ohne_meldung ?? 0) > 0 && `${s.ohne_meldung} ${nachFrist ? "Meldefrist verpasst" : "ohne Meldung"}`,
         ]
-      : [s.anwesend == null && `${s.gesamt - s.angemeldet} abgemeldet`];
+      : // «nicht angemeldet» statt «abgemeldet»: Probe-Spieler:innen haben sich nicht abgemeldet (#555).
+        [s.anwesend == null && `${s.gesamt - s.angemeldet} nicht angemeldet`];
   const label = [`Spieler:innen: ${spielerzahlLang(z)}`, ...details].filter(Boolean).join(" · ");
   return (
     <ZeichenZahl icon={Shirt} label={label}>

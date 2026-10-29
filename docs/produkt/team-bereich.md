@@ -603,7 +603,7 @@ Ein Team kann Teile seiner Spielerliste als Kader benennen, etwa „Stärkeklass
 angehören, dazu Knöpfe zum Umbenennen und Entfernen. Ein Name hat 1 bis 30 Zeichen und steht im
 Team nur einmal, wobei Gross- und Kleinschreibung und überzählige Leerzeichen nicht unterscheiden —
 anders als bei Spieler:innen unterscheiden Bindestrich und Apostroph. Ein Team führt höchstens 20
-Kader. Beim Anlegen und Umbenennen sagt der Hinweis unter dem Namensfeld, dass Eltern die Kader ihres Kindes sehen und
+Kader. Beim Anlegen und Umbenennen sagt der Hinweis unter dem Namensfeld, dass Eltern die Kader ihrer Spieler:in sehen und
 ein Name darum nichts zur Gesundheit oder vergleichbar Heikles nennen soll; geprüft werden die
 Namen nicht. Ein neuer Name gilt sofort überall, auch an vergangenen Terminen. Einsehen und führen
 können Kader nur die Mitglieder des Teams.
