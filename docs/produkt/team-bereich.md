@@ -599,7 +599,7 @@ eine Liste führt. Wie ein begonnenes Spiel wieder offen wird, steht unter „Sp
 
 Ein Team kann Teile seiner Spielerliste als Kader benennen, etwa „Stärkeklasse 1", „Torhüterinnen",
 „Schnupperlis" oder „Aushilfe", und Termine auf sie beschränken. Die Karte „Kader" steht unter
-„Team" zwischen Spielerliste und Mitgliedern; ihr Kopf zählt, wie viele Kader das Team führt, etwa
+„Team" zwischen Probetraining und Mitgliedern; ihr Kopf zählt, wie viele Kader das Team führt, etwa
 „4 von 20", das Plus legt einen an. Jede Zeile nennt den Namen und wie viele Spieler:innen ihm
 angehören, dazu Knöpfe zum Umbenennen und Entfernen. Ein Name hat 1 bis 30 Zeichen und steht im
 Team nur einmal, wobei Gross- und Kleinschreibung und überzählige Leerzeichen nicht unterscheiden —
@@ -680,10 +680,10 @@ Den Probe-Modus schaltet ein Mitglied im Dialog „Spieler:in ändern" mit der C
 Probetraining" ein und aus; beim Hinzufügen und beim Import gibt es sie nicht. Solange das Team
 keine Anzahl festgelegt hat, ist sie gesperrt und sagt, wo man das tut. Darunter steht, was der
 Modus bedeutet, etwa „Mia meldet sich selbst für Trainings an, höchstens für 4. Spiele sieht Mia
-nicht." Verfallen beim Einschalten Abmeldungen von kommenden Trainings, Meldungen zu kommenden
-Spielen oder Kennzeichnungen als nicht aufgeboten, warnt der Dialog vor dem Speichern mit ihrer
-Zahl, etwa „Damit verfällt 1 Abmeldung von einem Training", und der Knopf heisst „Probetraining
-einschalten"; hat sich die Zahl inzwischen geändert, nennt er den neuen Stand. Beim Ausschalten
+nicht." Beim Einschalten heisst der Knopf „Probetraining einschalten". Verfallen dabei Abmeldungen
+von kommenden Trainings, Meldungen zu kommenden Spielen oder Kennzeichnungen als nicht
+aufgeboten, warnt der Dialog vor dem Speichern mit ihrer Zahl, etwa „Damit verfällt 1 Abmeldung
+von einem Training"; hat sich die Zahl inzwischen geändert, nennt er den neuen Stand. Beim Ausschalten
 sagt er, dass die Spieler:in danach an allen kommenden Trainings angemeldet ist und Spiele wie alle
 sieht und dass das Probetraining bei erneutem Einschalten wieder ab null zählt. Der private Link
 bleibt in beiden Fällen derselbe.
@@ -707,7 +707,7 @@ Kennzeichnung. Spiele gelten für sie nicht: Sie steht in keinem Spiel und zähl
 Wird ein Training verlegt — einzeln oder über die Serie — oder gilt es durch eine Kader-Änderung
 nicht mehr für sie, verfällt ihre Anmeldung wie eine Abmeldung. Die Rückfrage vor dem Speichern
 nennt verfallende Anmeldungen eigens, etwa „Damit verfällt 1 Anmeldung einer Probe-Spieler:in: Sie
-gilt wieder als nicht angemeldet.", und heisst „Anmeldungen verfallen", wenn nur solche verfallen.
+gilt wieder als nicht angemeldet."
 Gilt ein Training durch Kader wieder für sie, ist sie dort nicht angemeldet.
 
 ## Ab- und Anmelden
