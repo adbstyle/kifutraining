@@ -134,8 +134,10 @@ export function FeedbackGespraech({
   const feldRef = useRef<HTMLTextAreaElement>(null);
   const endeRef = useRef<HTMLDivElement>(null);
 
+  // Nur mit Zeiger (`hover: hover`, wie in globals.css): Auf Touch blendete der
+  // Fokus sofort die Tastatur ein und verdeckte Hinweis und Begrüssung.
   useEffect(() => {
-    if (fokussieren) feldRef.current?.focus();
+    if (fokussieren && window.matchMedia("(hover: hover)").matches) feldRef.current?.focus();
   }, [fokussieren]);
   useEffect(() => {
     if (fokussieren) endeRef.current?.scrollIntoView({ block: "end" });
