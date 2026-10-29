@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-10-28. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-10-29. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Seitenleiste
 
@@ -239,7 +239,9 @@ Wunsch oder eine Frage zu KiFu, von jeder Seite aus. Eltern und Spieler:innen er
 KI-Modell von Anthropic in den USA; das steht zu Beginn, zusammen mit der Bitte, keine sensiblen
 Angaben einzugeben. Am Desktop steht es als Spalte rechts neben der Seite und bleibt beim
 Seitenwechsel offen, damit man nachschauen kann; auf schmalen Bildschirmen und am privaten Link
-füllt es den Bildschirm.
+füllt es den Bildschirm. Mit Maus und Tastatur steht der Cursor beim Öffnen im Eingabefeld; auf
+Touch-Geräten bleibt die Bildschirmtastatur zu, bis man ins Feld tippt, damit Hinweis und
+Begrüssung sichtbar bleiben.
 
 Das Gespräch fragt gezielt nach: bei einem Fehler nach Absicht, Schritten, Ergebnis, Erwartung
 und ob er wieder auftritt, bei einem falschen Inhalt nach der Stelle; bei einem Wunsch nach dem

@@ -1,6 +1,6 @@
 # KiFu – Produktwissen für die Einordnung von User-Feedback
 
-Stand 2026-10-28 (Release 1.43.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
+Stand 2026-10-29 (Release 1.44.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
 gedacht als Kontext für ein kleines Modell (z. B. Haiku), das Rückmeldungen von Nutzer:innen
 einordnet. Rückmeldungen sind **Fehlermeldungen ebenso wie Feature-Wünsche**: Das Modell erkennt,
 was die Person meint, gleicht es mit dem heutigen Stand ab und stellt die Rückfragen, mit denen sich
@@ -91,6 +91,8 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - **Mindestbesetzung** – nötige Trainer:innen: feste Zahl oder Verhältnis (1 je n Spieler:innen).
 - **Spielerliste** – Spieler:innen des Teams (Vorname, Nachname, Jahrgang, optional J+S-Nummer).
 - **Kader** – benannte Teilmenge der Spielerliste (z. B. „Torhüterinnen"); Termine lassen sich auf Kader beschränken.
+- **Probetraining / Probe-Modus** – Spieler:in auf Probe: an Trainings zuerst nicht angemeldet, meldet sich über den Link selbst an, höchstens für die Anzahl Probetrainings des Teams; Spiele gelten für sie nicht.
+- **Info-Schreiben** – Text des Teams für Probe-Spieler:innen, steht oben in ihrem privaten Link.
 - **Privater Link** – Link je Spieler:in, über den Eltern ohne Konto ab-/anmelden und Termine abonnieren.
 - **Selbstabholung / Abholadresse** – Team-Adresse, über die Eltern mit Vorname+Nachname+Jahrgang den privaten Link selbst holen.
 - **Bezogen** – der aktuelle private Link wurde über die Abholadresse herausgegeben (grüner Punkt).
@@ -294,6 +296,14 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Termin gilt durch Kader-Änderung nicht mehr für jemanden → Abmeldung/Meldung/Kennzeichnung **verfällt** (Rückfrage mit Zahl); gilt später wieder → angemeldet (Spiel: ohne Meldung).
 - Mitglieder sehen immer alle Termine (Kader filtern nur Spieler:innen).
 
+**Probetraining:** Karte unter „Team" zwischen Spielerliste und Kadern; ohne Einstellung „Noch kein Probetraining" + Link „Probetraining konfigurieren", sonst Anzahl, Info-Schreiben (3 Zeilen, „Ganz lesen"), wer im Probe-Modus ist. Dialog „Probetraining konfigurieren" bzw. „… bearbeiten": **Anzahl 1–20** (zählt besuchte + angemeldete Trainings, gilt fürs ganze Team, nicht entfernbar), **Info-Schreiben optional, ≤ 2000 Zeichen**, nur Text, Zeilenumbrüche bleiben, Webadressen im Link anklickbar, leer = entfernt.
+- Ein-/Ausschalten nur im Dialog „Spieler:in ändern" (Checkbox „Im Probetraining"); nicht beim Hinzufügen/Import. Ohne Anzahl gesperrt. Einschalten lässt Abmeldungen kommender Trainings, Meldungen und Kennzeichnungen kommender Spiele **verfallen** (Knopf beim Einschalten „Probetraining einschalten"; verfällt etwas, Warnung mit Zahl). Ausschalten → an allen kommenden Trainings angemeldet, Spiele wieder sichtbar; erneutes Einschalten zählt ab null. Link bleibt derselbe.
+- Plakette „Probe 1/4" in Spielerliste und Karte = **besuchte** von der Anzahl (nicht die angemeldeten).
+- Besucht = nach dem Einschalten begonnenes Training, bei Beginn angemeldet oder „doch erschienen" nachgetragen (nicht „nicht erschienen"). Ausgefallenes zählt nicht, Anmeldung ruht bis Rücknahme.
+- Eltern melden über den Link nur bis zur Anzahl an; **Mitglieder (und KI) dürfen darüber hinaus** anmelden, mit Hinweis „… ist damit über der Anzahl Probetrainings …". Anzahl senken lässt bestehende Anmeldungen stehen.
+- Am Training zählt sie nur, wenn angemeldet; nicht angemeldet steht sie wie abgemeldet da, ohne eigene Kennzeichnung. In keinem Spiel.
+- Verlegen oder Kader-Wegfall → ihre Anmeldung **verfällt** (Rückfrage nennt „Anmeldung einer Probe-Spieler:in"); gilt das Training wieder → nicht angemeldet.
+
 **Ab- und Anmelden (Trainings):** Jede Spieler:in ist **standardmässig angemeldet**, bis abgemeldet. Kein „keine Rückmeldung". Bis Beginn, nie an ausgefallenem Termin. Durch Mitglieder (Reiter „Spieler:innen", Schalter) oder Eltern (privater Link). Wer gesetzt hat, wird nicht festgehalten; letzte gilt. Kein Grund.
 - Zeitangabe links vom Schalter: seit wann der Status gilt („gerade eben", „vor 3 Stunden", „gestern", …); nur bei echtem Wechsel.
 - **Datum oder Beginn geändert** (noch nicht begonnen) → **alle Abmeldungen verfallen**, alle wieder angemeldet (Rückfrage mit Zahl; Eltern sehen „Deine Abmeldung gilt nicht mehr"). Ende/Ort/Bemerkung/Felder/Training ändern lässt sie stehen.
@@ -313,8 +323,9 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Seite: fürs Telefon, ohne Konto, ohne Leiste, keine Cookies, fester Titel ohne Namen. Teamname, Name der Spieler:in. „Heute" (begonnen, gesperrt) + anstehende Termine nach Monat. Trainingskarte: Status „Angemeldet"/„Abgemeldet"/„Fällt aus", Zeit, Ort, Kader, Spielerzahl („24/33", alle für die der Termin gilt), Verantwortliche:r, Schalter. Ort immer ganz (bricht um), auch nach Beginn; mit Kartenlink ist der Ort selbst der Link (violett, unterstrichen, Zeichen für extern; lang dann einzeilig mit „…"); bei Ausfall ohne Link. Ausfallgrund mit „Grund:". Verlegt → „Verlegt, vorher … Deine Abmeldung gilt nicht mehr."
 - Spielkarte: Status inkl. „Ohne Meldung", „Nicht aufgeboten", „Meldefrist verpasst"; „Bitte melden bis …", „7/14 · gesucht 9 bis 12", Knöpfe Anmelden/Abmelden; nach Frist „Meldefrist abgelaufen · Änderung übers Team". Treffpunkte, Bemerkung. Nachträge und Status des Spiels sehen Eltern nicht.
 - Zeigt **nicht**: andere Namen, fremde Kader, Termine anderer Kader, Trainingsinhalte, vergangene Termine.
+- **Im Probe-Modus:** Kopf „… ist im Probetraining. Melde … an …", „Noch 2 von 4 Probetrainings möglich" mit Balken (besucht gefüllt, angemeldet umrandet), „x besucht · y angemeldet"; „Infos zum Probetraining" (Info-Schreiben, 4 Zeilen, „Ganz lesen", Links öffnen extern). Keine Spiele. Trainings zuerst „Nicht angemeldet" (grau, nicht gedämpft). Anzahl erreicht → „Alle 4 Probetrainings vergeben" (bei 1: „Das Probetraining ist vergeben"), Meldung über den Trainings, übrige Schalter gesperrt „Probetrainings vergeben"; abmelden geht immer. Verfallene Anmeldung: „… Deine Anmeldung gilt nicht mehr."
 - Ungültig/unbekannt → neutrale Seite „Dieser Link gilt nicht mehr".
-- **Kalender-Abo am Link:** Kalender-Zeichen hinter dem Namen. Titel mit ✅ zugesagt / ❔ vielleicht (Spiel ohne Meldung bis Frist) / ❌ abgesagt. Nur Anzeige, gemeldet wird über den Link. Kartenlink in der Beschreibung als „Karte: …". Kein Spielername, keine Frist, kein Richtwert. Erlischt bei Link-Erneuerung, Entfernung, Auflösung oder Widerruf durch Eltern (trifft alle mit derselben Adresse).
+- **Kalender-Abo am Link:** Kalender-Zeichen hinter dem Namen. Titel mit ✅ zugesagt / ❔ vielleicht (Spiel ohne Meldung bis Frist; im Probe-Modus nicht angemeldetes Training) / ❌ abgesagt. Nur Anzeige, gemeldet wird über den Link. Kartenlink in der Beschreibung als „Karte: …". Kein Spielername, keine Frist, kein Richtwert. Erlischt bei Link-Erneuerung, Entfernung, Auflösung oder Widerruf durch Eltern (trifft alle mit derselben Adresse).
 
 **Selbstabholung:** Schalter in der Spielerliste (Standard aus). An → Abholadresse zum Kopieren; nur teamintern teilen. Erneuern macht alte Adresse ungültig; Aus stoppt neue Abholungen. Bereits bezogene Links bleiben gültig.
 - Abholseite: Vorname, Nachname, Jahrgang exakt (Umlaute/Akzente müssen stimmen; „ue" ≠ „ü"). Treffer → Link. Kein Treffer → immer „Dazu finden wir keinen Link. Prüf die Schreibweise oder frag beim Team nach."
@@ -329,7 +340,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 - Verbinden: Adresse `https://ki-fu.ch/api/mcp` im Client eintragen (Claude Desktop/claude.ai: Einstellungen → Connectors → Custom connector; Claude Code per Befehl). Browser öffnet Erlauben-Seite (vorher ggf. anmelden). Zugangsname max. 40. Kein Passwort/Schlüssel an den Assistenten.
 - **Max. 5 Zugänge je Konto**, zusammen **600 Aufrufe/Stunde** (darüber Meldung mit Wartezeit). Widerruf unter „KI-Zugänge" wirkt sofort. Verfällt nie von selbst.
-- Kann: Übungen suchen/abrufen; eigene Übungen anlegen, ändern, kopieren, öffentlich schalten, Diagramm setzen (als Ganzes) und Diagramm-Mängel abrufen; Trainings anlegen, Übungen zuordnen, überarbeiten (Name, Ziel, Kategorien, Dauer, Notiz, Reihenfolge eines ganzen Abschnitts in einem Zug, Entfernen), Gruppen/Durchlauf, Varianten, Hinweise abrufen, veröffentlichen/zurückziehen, übernehmen, löschen; Team-Trainings; Kalender (Termine, Serien, Spiele, Zuordnen, Trainer:innen, Ausfälle); Spielerliste, Kader, Ab-/Anmeldungen, Meldungen, Nachträge, private Links, Selbstabholung.
+- Kann: Übungen suchen/abrufen; eigene Übungen anlegen, ändern, kopieren, öffentlich schalten, Diagramm setzen (als Ganzes) und Diagramm-Mängel abrufen; Trainings anlegen, Übungen zuordnen, überarbeiten (Name, Ziel, Kategorien, Dauer, Notiz, Reihenfolge eines ganzen Abschnitts in einem Zug, Entfernen), Gruppen/Durchlauf, Varianten, Hinweise abrufen, veröffentlichen/zurückziehen, übernehmen, löschen; Team-Trainings; Kalender (Termine, Serien, Spiele, Zuordnen, Trainer:innen, Ausfälle); Spielerliste, Kader, Probetraining (Anzahl, Info-Schreiben, Probe-Modus ein/aus), Ab-/Anmeldungen, Meldungen, Nachträge, private Links, Selbstabholung.
 - Kann **nicht**: Favoriten, Teams gründen/umbenennen/auflösen, Mitglieder verwalten, Konto (Name, Passwort, Löschen), Kalender-Abos, Fotos hochladen, Übungen löschen, Übung in andere Altersstufe überführen, Übung aus Training in Bibliothek kopieren, einzelne Diagramm-Elemente ändern, Diagramm entfernen, Gruppenreihenfolge ändern, CSV-Import, E-Mail-Adressen sehen.
 - Strenger als das Formular: Werte, die das Formular gar nicht anbietet, werden **abgelehnt** (mit Liste aller Verstösse), nicht still verworfen.
 - Kartenlink zum Ort setzt er wie die App (nur mit Ort, https://, ≤ 500 Zeichen). Ändert er den Ort ohne neuen Link, fällt der bisherige weg – die Antwort sagt es ihm; ebenso, wenn ein Serientermin wieder der Serie folgt und seinen eigenen Link verliert.
@@ -359,7 +370,10 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Anmeldefehler nennt nicht, ob Adresse oder Passwort falsch ist.
 - Anzeigename lässt sich nicht mehr leeren.
 - Abmeldungen/Absagen/Meldungen sind nach einer **Verlegung** weg (Training: Datum oder Beginn; Spiel: nur Datum).
-- Abmeldung weg, weil der Termin durch eine **Kader-Änderung** nicht mehr für das Kind gilt.
+- Abmeldung weg, weil der Termin durch eine **Kader-Änderung** nicht mehr für die Spieler:in gilt.
+- Probe-Spieler:in an allen Trainings „nicht angemeldet" / sieht keine Spiele → Probe-Modus ist so gedacht; Abmeldungen und Meldungen verfielen beim Einschalten.
+- Eltern können nicht mehr anmelden, Mitglieder schon → Anzahl Probetrainings erreicht; Mitglieder dürfen darüber hinaus.
+- Plakette „Probe 0/4", obwohl angemeldet → zählt nur besuchte Trainings.
 - Erwartete Spielerzahl verschwunden → Team hat eine Spielerliste angelegt.
 - Ausgefallener Termin zeigt keine Spielerzahl.
 - Spieler:innen bei Trainings sind automatisch angemeldet; bei Spielen „ohne Meldung".
@@ -447,6 +461,7 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Abmeldung ohne Grund, je Termin einzeln, Frist = Beginn (nicht einstellbar); nicht erkennbar, wer sich zu einem Training nicht geäussert hat.
 - Nachtrag ohne Grund, kein entschuldigt/unentschuldigt, keine Teilanwesenheit, keine Präsenzauswertung, keine J+S-Übermittlung.
 - Spiele: keine Resultate/Tabellen/Gegnerdaten, kein Import aus ClubCorner/Matchcenter, keine Serie, kein Nachtragen vergangener Spiele, keine Art „Turnier", Meldung nicht auf „ohne Meldung" zurücksetzbar, keine Fahrgemeinschaften, keine Rückkehrzeit, geänderte Treffpunkte nicht gekennzeichnet.
+- Probetraining: Anzahl nur je Team (nicht je Spieler:in), nicht entfernbar; endet nicht von selbst; nicht beim Hinzufügen/Import; keine Eingrenzung der Liste auf Probe-Spieler:innen; keine eigene Kennzeichnung am Training; Info-Schreiben ohne Formatierung, nicht je Kader, nicht im Abo/bei der Selbstabholung; Kader-Wegfall ohne Hinweis am Link; keine Benachrichtigung.
 - Link: Weitergabe nicht erkennbar; wer meldet (Eltern/Kind) nicht unterscheidbar; Sperren nur durch Erneuern, einzeln.
 - Selbstabholung für alle oder keine; Sperre trifft Internetanschluss.
 
@@ -471,6 +486,7 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 | Mindestbesetzung | 1–99 |
 | Spielerliste | ≤ 200 Spieler:innen; Vor-/Nachname 1–60; J+S ≤ 20 |
 | Kader | ≤ 20 je Team; Name 1–30 |
+| Probetraining | Anzahl 1–20 je Team; Info-Schreiben ≤ 2000 Zeichen |
 | Treffpunkte | ≤ 5 (je Anreiseart 1) |
 | Terminserie / Meldefrist / Treffpunkt-Abstand | ≤ 1 Jahr |
 | KI-Zugänge | ≤ 5 je Konto, 600 Aufrufe/h gesamt |
