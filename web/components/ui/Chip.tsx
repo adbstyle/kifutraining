@@ -2,49 +2,25 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 /* ── Chips ────────────────────────────────────────────────────
-   Eine gemeinsame Basis, drei Typen: Assist · Filter · Einfachauswahl.
-   Die Rollen stehen direkt in den Bündeln — gewählt füllt Primary (die
-   Einfachauswahl) oder umrandet es (der Filter), ungewählt umrandet die
-   Kante, und `state` in der Basis trägt Überfahren, Fokus und Druck. Darum trägt kein Bündel mehr eine eigene Überfahr-Fläche: Die
-   Zustands-Ebene färbt sich in der Farbe des Chip-Inhalts ein und passt so
-   auf jede Variante.
+   Eine Pille für jeden Chip: Assist · Filter · Einfachauswahl, dazu die
+   Varianten-Links und der geteilte Chip. Ungewählt umrandet die Kante,
+   gewählt umrandet Primary, und `state` trägt Überfahren, Fokus und Druck —
+   die Zustands-Ebene färbt sich in der Farbe des Chip-Inhalts ein und passt
+   so auf jede Lage.
 
-   Die beiden Bündel bleiben modul-lokal: Jeder Chip mit Vokabular-Beschriftung
-   ist in dieser Datei gebaut, und ein Bündel nach aussen zu geben lüde dazu
-   ein, die Chip-Optik anderswo neu zusammenzusetzen. Exportiert sind nur die
-   Nutzertext-Bündel weiter unten — die tragen auch Links und den geteilten
-   Chip, die hier nicht wohnen.
+   Schrift `type-body-medium`, normal gesetzt — nie versal (PO 2026-10-29).
+   Die Label-Typo verfälschte Nutzertext («21 Kinder, zwei Trainer» in
+   Versalien liest sich als Rubrik, nicht als Bezeichnung der Trainerin), und
+   ein Chip steht in Leisten neben Suchfeld, Auswahl und Knöpfen: Dort liest
+   er sich als Wort («Meine Termine»), nicht als Rubrik, und bleibt leiser als
+   der halbfette Knopf daneben, der die Handlung trägt.
 
+   Exportiert — die Server-Seiten (`VariantenLinks`) tragen die Optik auf
+   einem <a>, und der geteilte Chip (`ChipMenu`) baut sie auf zwei Hälften auf.
    Höhe fest gesetzt statt über die Polsterung: Aus der Polsterung folgten
    krumme Masse, und der Chip stünde neben dem Knopf um ein, zwei Pixel
    versetzt. Ein Mass für jeden Chip (36 px, Epic #363) — dasselbe wie Knopf,
-   Feld und Filterknopf, darum fluchtet er in jeder Leiste ohne eigene Stufe. */
-const chipBase =
-  "state focus-ring inline-flex h-9 items-center gap-1.5 rounded-full kontur px-3 transition-colors";
-
-/* Die Schrift ist wie die Höhe ein eigener Slot (`cn` ist ein reiner Joiner).
-   Assist und die Einfachauswahl tragen das Vokabular
-   versal (`type-label-medium`). Der FILTER steht normal gesetzt in
-   `type-body-medium`: Er sitzt in Leisten neben Suchfeld, Auswahl und
-   Knöpfen und liest sich dort als Wort («Meine Termine»), nicht als Rubrik —
-   dieselbe Schrift wie der Nutzertext-Chip. Leiser als der Knopf daneben
-   (`type-title-small`, halbfett), der die Handlung trägt. */
-const chipLabel = "type-label-medium";
-const chipFilterTypo = "type-body-medium";
-
-const chipOutlined = "border-kante bg-transparent text-on-surface";
-const chipSelected = "border-transparent bg-primary text-on-primary";
-
-/* ── Chip-Optik für NUTZERTEXT ────────────────────────────────
-   Dieselbe Pille, aber normal gesetzt statt versal: `type-label-medium`
-   verfälscht, was die Trainerin selbst geschrieben hat («21 Kinder, zwei
-   Trainer» in Versalien liest sich als Rubrik, nicht als ihre Bezeichnung).
-   Dieselbe Regel, aus der schon `ChipMenu` `type-body-medium` trägt.
-
-   Auch exportiert — die Server-Seiten (`VariantenLinks`) tragen die Optik auf
-   einem <a>, und der geteilte Chip (`ChipMenu`) baut sie auf zwei Hälften auf.
-   Höhe fest auf h-9, damit Chip, geteilter Chip und leiser Knopf in einer
-   Leiste auf derselben Linie sitzen.
+   Feld und Filterknopf, darum fluchtet er in jeder Leiste ohne eigene Stufe.
 
    ZWEI Bündel, weil der geteilte Chip die Pille anders füllt: `chipTextHuelle`
    ist der Umriss — Schrift, Höhe, Rundung, Rahmen —, den er als Gruppe um
@@ -53,8 +29,7 @@ const chipSelected = "border-transparent bg-primary text-on-primary";
    gehört dort nicht an die Gruppe, sondern an jede Hälfte einzeln — sonst
    leuchtete der ganze Chip auf, wenn nur eine Hälfte überfahren wird. Alles
    Einteilige nimmt `chipTextBase`: dieselbe Hülle plus `state`, Fokusring,
-   Ausrichtung und Polsterung. So ändert sich die Nutzertext-Pille an EINER
-   Stelle. */
+   Ausrichtung und Polsterung. So ändert sich die Pille an EINER Stelle. */
 export const chipTextHuelle =
   "type-body-medium inline-flex h-9 rounded-full kontur normal-case transition-colors";
 export const chipTextBase = `${chipTextHuelle} state focus-ring items-center gap-1.5 px-3`;
@@ -91,9 +66,8 @@ export function FilterChip({
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        chipBase,
-        chipFilterTypo,
-        selected ? chipTextSelected : chipOutlined,
+        chipTextBase,
+        selected ? chipTextSelected : chipTextOutlined,
         className,
       )}
     >
@@ -111,10 +85,9 @@ export function FilterChip({
    (role=radiogroup / role=radio, aria-checked) — es ist ein Eingabefeld und
    keine Ansicht —, mit Pfeiltasten-Navigation und wanderndem Tabstopp.
 
-   Optik: dieselben Chip-Bündel, ausgewählt gefüllt in Primary — mit
-   `look="nutzertext"` umrandet wie der Filter. Kein Häkchen — es ist eine
-   Einfachauswahl, nicht ein Ein/Aus-Zustand, und der Wechsel von Fläche
-   bzw. Kontur trägt die Aussage bereits.
+   Optik: dieselben Chip-Bündel, ausgewählt umrandet in Primary wie der
+   Filter. Kein Häkchen — es ist eine Einfachauswahl, nicht ein
+   Ein/Aus-Zustand, und der Wechsel der Kontur trägt die Aussage bereits.
 
    Bewusst hook-frei: Chip.tsx wird auch von Server-Komponenten importiert.
    Der Fokus wandert darum über das DOM statt über Refs. */
@@ -122,7 +95,6 @@ export function ChoiceChip({
   selected = false,
   tabStop = false,
   onSelect,
-  look = "label",
   children,
   className,
 }: {
@@ -132,12 +104,6 @@ export function ChoiceChip({
    *  Chip. */
   tabStop?: boolean;
   onSelect?: () => void;
-  /** `label` (Vorgabe): mono/versal, für Werte aus dem Vokabular.
-   *  `nutzertext`: normal gesetzt, für Beschriftungen, die der Trainer selbst
-   *  vergibt — Versalien verfälschten sie (dieselbe Regel wie in ChipMenu.tsx).
-   *  Bewusst eine Prop statt `className`: `cn` merged nicht, eine Typo-Klasse
-   *  von aussen liesse sich also nicht überschreiben. */
-  look?: "label" | "nutzertext";
   children: React.ReactNode;
   className?: string;
 }) {
@@ -173,16 +139,8 @@ export function ChoiceChip({
       onClick={onSelect}
       onKeyDown={handleKey}
       className={cn(
-        // Der Nutzertext-Chip trägt seine Höhe (h-9) in der eigenen Hülle —
-        // er fluchtet mit dem leisen Knopf, nicht mit dem Label-Chip.
-        look === "nutzertext" ? chipTextBase : `${chipBase} ${chipLabel}`,
-        look === "nutzertext"
-          ? selected
-            ? chipTextSelected
-            : chipTextOutlined
-          : selected
-            ? chipSelected
-            : chipOutlined,
+        chipTextBase,
+        selected ? chipTextSelected : chipTextOutlined,
         className,
       )}
     >
@@ -247,7 +205,7 @@ export function AssistChip({
       aria-label={ariaLabel}
       aria-haspopup={ariaHasPopup}
       aria-expanded={ariaHasPopup ? ariaExpanded : undefined}
-      className={cn(chipBase, chipLabel, chipOutlined, className)}
+      className={cn(chipTextBase, chipTextOutlined, className)}
     >
       {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
       {children}

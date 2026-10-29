@@ -2085,11 +2085,10 @@ export default async function Styleguide() {
             Radiogroup-Semantik (<code>role=radiogroup</code> /{" "}
             <code>role=radio</code>, <code>aria-checked</code>) - es ist ein
             Eingabefeld, keine Ansicht, und darum keine Tabs. Optik aus den
-            Chip-Bündeln, ausgewählt gefüllt in Primary
-            (<code>chipSelected</code>) und <strong>ohne Häkchen</strong>:
-            Einfachauswahl ist kein Ein/Aus-Zustand, und der Flächenwechsel trägt
-            die Aussage bereits. Mit <code>look=&quot;nutzertext&quot;</code>
-            steht die Wahl dagegen umrandet wie ein Filter (<Siehe id="plaketten" />).
+            Chip-Bündeln, ausgewählt umrandet in Primary wie ein Filter
+            (<code>chipTextSelected</code>, <Siehe id="plaketten" />) und{" "}
+            <strong>ohne Häkchen</strong>: Einfachauswahl ist kein
+            Ein/Aus-Zustand, und der Wechsel der Kontur trägt die Aussage bereits.
             Die Chips <strong>umbrechen</strong> - das ist ihr eigentlicher
             Vorzug: Eine Reihe, die stattdessen seitlich scrollte, zeigte dem
             Nutzer seine Optionen nicht mehr nebeneinander. In Gebrauch ist der
@@ -2358,12 +2357,9 @@ export default async function Styleguide() {
             Sache, gleiches Bild. Kein wandernder Tabstopp - durch Links tabbt man,
             Pfeiltasten gehören der Radiogroup. Nicht <code>TabNav</code> (<Siehe id="knoepfe" />): Die
             wechselt die <em>Sicht</em> auf einen Gegenstand; hier bleibt die Sicht
-            dieselbe und der <em>Inhalt</em> wechselt. Weil Nutzertext versal
-            verfälscht stünde, kennt <code>ChoiceChip</code> seit dem Chip-Umbau
-            ein <code>look=&quot;nutzertext&quot;</code> mit
-            denselben Bündeln: dieselbe Pille, aber normal gesetzt und h-9 hoch,
-            damit sie neben dem geteilten <Siehe id="chip-menue" /> und dem leisen Knopf (<Siehe id="knoepfe" />)
-            auf einer Linie sitzt.
+            dieselbe und der <em>Inhalt</em> wechselt. Dieselbe Pille, normal
+            gesetzt und h-9 hoch, sitzt neben dem geteilten <Siehe id="chip-menue" /> und dem leisen Knopf (<Siehe id="knoepfe" />)
+            auf einer Linie.
           </p>
           <p className="type-label-small mb-2 text-on-surface-mittel">
             drei Varianten als Links - die offene trägt <code>aria-current</code>
@@ -2465,10 +2461,7 @@ export default async function Styleguide() {
             umsortieren oder herausnehmen können muss.{" "}
             <strong>Warum der Assist-Chip nicht reicht:</strong> Der{" "}
             <code>AssistChip</code> löst genau eine Aktion aus, nicht mehrere zur
-            Wahl. Er trägt ausserdem <code>type-label-medium</code>, also
-            versal: ein Gruppenname stünde dort verfälscht (siehe Regel
-            unter <Siehe id="typografie" />). Der Chip mit Menü trägt darum{" "}
-            <code>type-body-medium</code> und ist <strong>ein</strong>{" "}
+            Wahl. Der Chip mit Menü ist <strong>ein</strong>{" "}
             Bedienelement mit <strong>einem</strong> Tabstopp - kein Chip plus
             angehängter Knopf.
           </p>
@@ -2700,30 +2693,27 @@ export default async function Styleguide() {
 
           <p className="type-label-small mb-2 text-on-surface-mittel">Chips</p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
-            Ungewählt steht jeder Chip auf der Kante. <strong>Gewählt gibt es
-            zweimal.</strong> Umrandet (<code>chipTextSelected</code> -
-            Primary-Kontur, Primary-Schrift, keine Fläche, kein Häkchen) sind der{" "}
-            <strong>Filter</strong> und der Chip, der{" "}
-            <strong>Nutzertext</strong> trägt - eine Variante, ein Gruppenname.
+            Ungewählt steht jeder Chip auf der Kante. <strong>Gewählt heisst
+            umrandet</strong> (<code>chipTextSelected</code> - Primary-Kontur,
+            Primary-Schrift, keine Fläche, kein Häkchen), beim{" "}
+            <strong>Filter</strong> wie bei der <Siehe id="offene-einfachauswahl" />.
             Dasselbe trägt der eingrenzende <Siehe id="filterknopf" />. Ohne Fläche steht die
             Primary-Schrift auf dem dunklen Grund am klarsten (Epic #363); eine
             getönte Fläche nahm ihr Kontrast. Ein Filter steht neben Suchfeld, Auswahl und
             Knöpfen; gefüllt wäre er lauter als die Handlung daneben, und der
             Farbwechsel sagt «an» bereits. Eine gefüllte Fläche schriee zudem den
-            Namen an, den die Trainerin selbst vergeben hat. Gefüllt
-            (<code>chipSelected</code> - Primary-Fläche, schwarze Schrift) bleibt
-            allein die <Siehe id="offene-einfachauswahl" />. Im geteilten Chip folgt der
+            Namen an, den die Trainerin selbst vergeben hat. Im geteilten Chip folgt der
             Trennstrich dem Zustand (<code>border-primary/50</code> gewählt,{" "}
             <code>border-kante</code> sonst).
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
-            <strong>Schrift.</strong> Der <strong>Filter</strong> steht normal
-            gesetzt in <code>type-body-medium</code>, wie der Nutzertext-Chip -
-            er sitzt in Leisten neben Suchfeld, Auswahl und Knöpfen und liest
-            sich dort als Wort («Meine Termine»), nicht als Rubrik, und bleibt
-            leiser als der halbfette Knopf daneben, der die Handlung trägt.
-            Der Assist-Chip und die offene Einfachauswahl bleiben versal in{" "}
-            <code>type-label-medium</code>.
+            <strong>Schrift.</strong> Jeder Chip steht normal gesetzt in{" "}
+            <code>type-body-medium</code>, nie versal (PO 2026-10-29). Er sitzt
+            in Leisten neben Suchfeld, Auswahl und Knöpfen und liest sich dort
+            als Wort («Meine Termine»), nicht als Rubrik, und bleibt leiser als
+            der halbfette Knopf daneben, der die Handlung trägt. Trägt er
+            Nutzertext, bliebe der in Versalien ohnehin nicht, was die Trainerin
+            geschrieben hat (Regel unter <Siehe id="typografie" />).
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             <strong>Eine Höhe.</strong> Jeder Chip ist 36 px hoch, im Fliesstext

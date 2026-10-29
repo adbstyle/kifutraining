@@ -13,9 +13,7 @@ import { cn } from "@/lib/cn";
 
    Warum kein bestehender Chip: `AssistChip` löst genau eine Aktion aus und
    kann „nach vorne/nach hinten schieben" und „entfernen" nicht zur Wahl
-   stellen. Er trägt ausserdem `type-label-medium` — versal —, was einen
-   Gruppennamen verfälscht.
-   Darum hier `type-body-medium normal-case`.
+   stellen.
 
    ZWEI Bauformen, je nachdem, wie viele Aufgaben an dem Wert hängen:
 
@@ -229,10 +227,10 @@ export function ChipMenu({
         <button
           {...menuProps}
           aria-label={ariaLabel}
-          // Dieselbe Optik-Quelle wie `ChoiceChip look="nutzertext"` und die
-          // Links der Leseseiten (`chipTextBase` in Chip.tsx): ändert sich die
-          // Nutzertext-Pille, ändern sich alle vier Bauformen zusammen — der
-          // geteilte Chip oben inbegriffen, er trägt dieselbe Hülle.
+          // Dieselbe Optik-Quelle wie jeder Chip und die Links der Leseseiten
+          // (`chipTextBase` in Chip.tsx): ändert sich die Pille, ändern sich
+          // alle Bauformen zusammen — der geteilte Chip oben inbegriffen, er
+          // trägt dieselbe Hülle.
           className={cn(
             chipTextBase,
             randfarbe,

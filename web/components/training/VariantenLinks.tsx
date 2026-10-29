@@ -11,9 +11,7 @@ import type { Variante } from "@/lib/varianten";
  * Das Gegenstück zu `VariantenWahl`: dieselbe Optik, dieselbe Schranke bei
  * einer Variante, aber Links statt Chips mit Zustand.
  *
- * Die Optik kommt aus denselben Klassenbündeln wie dort — `chipText*`, also
- * die Pille für NUTZERTEXT: normal gesetzt statt mono/versal, weil auf den
- * Chips die Bezeichnung steht, die die Trainerin selbst vergeben hat. So
+ * Die Optik kommt aus denselben Klassenbündeln wie dort — `chipText*`. So
  * tragen Ansehen, Druck und Durchführen dieselbe Schreibweise wie der Editor,
  * und in Primary umrandet heisst überall dasselbe: das ist die angezeigte
  * Variante. Was
