@@ -37,6 +37,13 @@ export function DarstellungProvider({
   children: React.ReactNode;
 }) {
   const [darstellung, setzeDarstellung] = useState(anfang);
+  // Das Layout bleibt beim Ab- und Anmelden stehen, rendert aber neu: Dann
+  // gilt, was der Server jetzt liefert (anonym immer hell, #569).
+  const [vorgabe, setzeVorgabe] = useState(anfang);
+  if (anfang !== vorgabe) {
+    setzeVorgabe(anfang);
+    setzeDarstellung(anfang);
+  }
   const waehle = useCallback((neu: Darstellung) => {
     document.cookie = darstellungCookie(neu);
     setzeDarstellung(neu);

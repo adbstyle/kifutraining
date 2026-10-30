@@ -8,6 +8,7 @@ import { SnackbarProvider } from "@/components/layout/SnackbarKontext";
 import { TeamKontextProvider } from "@/components/layout/TeamKontext";
 import { VersionenProvider } from "@/components/layout/VersionenKontext";
 import { getNeuesteVeroeffentlichung } from "@/lib/releases";
+import { getUserImRequest } from "@/lib/supabase/server";
 import { GESEHEN_COOKIE, leseGesehen } from "@/lib/versionen-gesehen";
 import { DARSTELLUNG_COOKIE, leseDarstellung } from "@/lib/darstellung";
 import { LEISTE_COOKIE, leseLeiste } from "@/lib/seitenleiste";
@@ -18,10 +19,16 @@ import { SPALTE_COOKIE, leseSpalte } from "@/lib/spalte";
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [jar, neueste] = await Promise.all([cookies(), getNeuesteVeroeffentlichung()]);
+  const [jar, neueste, user] = await Promise.all([
+    cookies(),
+    getNeuesteVeroeffentlichung(),
+    getUserImRequest(),
+  ]);
   const slim = leseLeiste(jar.get(LEISTE_COOKIE)?.value);
   const spalte = leseSpalte(jar.get(SPALTE_COOKIE)?.value);
-  const darstellung = leseDarstellung(jar.get(DARSTELLUNG_COOKIE)?.value);
+  // Ohne Anmeldung tritt KiFu nach aussen immer hell auf (#569); die eigene
+  // Wahl gilt, sobald jemand angemeldet ist.
+  const darstellung = user ? leseDarstellung(jar.get(DARSTELLUNG_COOKIE)?.value) : "hell";
   return (
     <DarstellungProvider anfang={darstellung}>
       {/* Die Figurteile aller Feld-Diagramme, einmal pro Seite (siehe figur.tsx). */}
