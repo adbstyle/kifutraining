@@ -24,13 +24,12 @@ import { cn } from "@/lib/cn";
    nichts zu wählen gibt (ausgefallen), und für die Aus-Lage eines Schalters,
    dessen Aus kein Fehlen bedeutet (die Selbstabholung, #438).
 
-   `ton="ruhig"` (Epic #490, #498; wieder seit PO 2026-10-25): für
-   «angemeldet» und «da» von Spieler:innen an Trainings — am privaten Link und
-   in der Spielerliste am Termin. Der Schalter zeigt den Stand, ohne ihn zu
-   bewerten: an eine durchsichtige Bahn mit heller Kontur und grossem hellem
-   Knopf rechts (wie ein Ghost-Knopf), aus eine dunkle Bahn mit grauer Kontur
-   und kleinem grauem Knopf links. Ohne Zeichen — Lage und Grösse des Knopfs
-   sagen den Stand, nicht die Farbe. */
+   `ton="ruhig"` (Epic #490, #498; Form seit PO 2026-10-30): für «angemeldet»
+   und «da» von Spieler:innen an Trainings — am privaten Link und in der
+   Spielerliste am Termin. Der Schalter zeigt den Stand, ohne ihn zu
+   bewerten: dieselbe Form wie Primary, aber der Knopf bleibt in beiden Lagen
+   grau — an rechts mit Haken, aus links mit Kreuz. Den Stand tragen Lage und
+   Zeichen, nicht die Farbe. */
 export function Switch({
   className,
   disabled,
@@ -40,25 +39,9 @@ export function Switch({
 }: Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "role"> & {
   /** Ohne Bedeutung von an/aus: grau, ohne Zeichen. */
   neutral?: boolean;
-  /** Primary nach Proton oder ruhig ohne Farbe (Spieler:innen an Trainings). */
+  /** Primary nach Proton oder ruhig: dieselbe Form, Knopf immer grau (Spieler:innen an Trainings). */
   ton?: "primary" | "ruhig";
 }) {
-  if (ton === "ruhig" && !neutral)
-    return (
-      <span className={cn("relative inline-flex h-8 w-[52px] shrink-0 items-center", disabled && "opacity-40", className)}>
-        <input
-          type="checkbox"
-          role="switch"
-          disabled={disabled}
-          className="peer focus-ring absolute inset-0 m-0 h-full w-full cursor-pointer appearance-none rounded-full border-2 border-on-surface-mittel bg-elev-08 transition-colors checked:border-on-surface/60 checked:bg-transparent disabled:cursor-not-allowed motion-reduce:transition-none"
-          {...rest}
-        />
-        <span
-          aria-hidden
-          className="pointer-events-none absolute left-2 size-4 rounded-full bg-on-surface-mittel transition-[left,width,height,background-color] peer-checked:left-[26px] peer-checked:size-5 peer-checked:bg-on-surface motion-reduce:transition-none"
-        />
-      </span>
-    );
   return (
     <span className={cn("relative inline-flex h-8 w-[52px] shrink-0 items-center", disabled && "opacity-40", className)}>
       <input
@@ -74,10 +57,21 @@ export function Switch({
         <>
           <span
             aria-hidden
-            className="pointer-events-none absolute left-[3px] size-[26px] rounded-full bg-on-surface-mittel transition-[left,background-color] motion-reduce:transition-none peer-checked:left-[23px] peer-checked:bg-primary"
+            className={cn(
+              "pointer-events-none absolute left-[3px] size-[26px] rounded-full bg-on-surface-mittel transition-[left,background-color] motion-reduce:transition-none peer-checked:left-[23px]",
+              ton === "primary" && "peer-checked:bg-primary",
+            )}
           />
           <X aria-hidden size={14} strokeWidth={3} className="pointer-events-none absolute left-[9px] text-elev-01 peer-checked:hidden" />
-          <Check aria-hidden size={14} strokeWidth={3} className="pointer-events-none absolute left-[29px] hidden text-on-primary peer-checked:block" />
+          <Check
+            aria-hidden
+            size={14}
+            strokeWidth={3}
+            className={cn(
+              "pointer-events-none absolute left-[29px] hidden peer-checked:block",
+              ton === "primary" ? "text-on-primary" : "text-elev-01",
+            )}
+          />
         </>
       )}
     </span>
