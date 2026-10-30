@@ -1077,8 +1077,9 @@ export default async function Styleguide() {
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Browser ohne <code>light-dark()</code> (Safari vor 17.5, also iOS 16 und frühe 17er)
-            bekommen fest das Helle: ein Ersatz-Block mit den hellen Hälften, den{" "}
-            <code>check:farben</code> gleich hält. Umschalten gibt es dort nicht.
+            bekommen fest das Helle: ein Ersatz-Block mit den hellen Hälften, geschrieben von{" "}
+            <code>gen:farb-ersatz</code> und geprüft von <code>check:farben</code>. Die Zeile
+            «Darstellung» fehlt dort in der Seitenleiste - umschalten liesse sich nichts.
           </p>
           <ErscheinungsbildDemo />
         </Section>

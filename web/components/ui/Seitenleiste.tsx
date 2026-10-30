@@ -247,7 +247,12 @@ export function Seitenleiste({
     if (!offen) return;
     schliessenRef.current?.focus();
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") return onDrawerOffenChange(false);
+      // Escape in einem offenen Menü der Leiste (Darstellung) schliesst nur
+      // das Menü — das Menü hört selbst darauf und gibt den Fokus zurück.
+      if (e.key === "Escape") {
+        if ((e.target as Element | null)?.closest?.('[role="menu"]')) return;
+        return onDrawerOffenChange(false);
+      }
       if (e.key !== "Tab" || !navRef.current) return;
       const ziele = [...navRef.current.querySelectorAll<HTMLElement>("a[href], button")].filter(
         (el) => el.offsetParent !== null,

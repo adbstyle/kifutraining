@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useState, useSyncExternalStore } from "react";
 import { darstellungCookie, type Darstellung } from "@/lib/darstellung";
 
 /* Gewählte Darstellung (#567): Die Seitenleiste zeigt und ändert sie, die
@@ -14,12 +14,22 @@ import { darstellungCookie, type Darstellung } from "@/lib/darstellung";
 interface DarstellungWert {
   darstellung: Darstellung;
   waehle: (darstellung: Darstellung) => void;
+  /** Kann dieser Browser umschalten? Ohne `light-dark()` (Safari vor 17.5)
+   *  gilt fest der helle Ersatz aus globals.css — eine Wahl bewirkte nichts. */
+  umschaltbar: boolean;
 }
 
 const DarstellungKontext = createContext<DarstellungWert>({
   darstellung: "geraet",
   waehle: () => {},
+  umschaltbar: false,
 });
+
+const nieAenderung = () => () => {};
+const kannLightDark = () => CSS.supports("color", "light-dark(#000, #fff)");
+/** Auf dem Server wird angenommen, dass es geht — so fehlt die Zeile im
+ *  ersten HTML nicht und verschwindet nur dort, wo es nicht geht. */
+const amServer = () => true;
 
 /** Die Marke, nach der `globals.css` das `color-scheme` wählt
  *  (`:root:has([data-darstellung=…])`). «Wie das Gerät» setzt keine: Dann
@@ -55,9 +65,10 @@ export function DarstellungProvider({
     setzeWahl(neu);
   }, []);
   const darstellung = anonym ? "hell" : wahl;
+  const umschaltbar = useSyncExternalStore(nieAenderung, kannLightDark, amServer);
 
   return (
-    <DarstellungKontext.Provider value={{ darstellung, waehle }}>
+    <DarstellungKontext.Provider value={{ darstellung, waehle, umschaltbar }}>
       <DarstellungsMarke darstellung={darstellung} />
       {children}
     </DarstellungKontext.Provider>

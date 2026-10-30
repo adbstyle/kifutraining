@@ -43,16 +43,7 @@ import {
   ueberlagern,
   type Erscheinungsbild,
 } from "../lib/farben";
-import {
-  blockAb,
-  blockVon,
-  hellerTeil,
-  normalisiere,
-  tokenPaare,
-  tokens,
-  zuweisungen,
-  zweiteilige,
-} from "./css-tokens";
+import { blockVon, ersatzIst, ersatzSoll, normalisiere, tokenPaare, tokens } from "./css-tokens";
 
 const WEB = resolve(fileURLToPath(import.meta.url), "../..");
 
@@ -120,18 +111,16 @@ pruefe("Der Ersatz ohne light-dark() führt jede helle Hälfte, und nur sie", ()
   // Browser ohne light-dark() (Safari vor 17.5) bekommen fest das Helle. Jede
   // zweiteilige Zuweisung davor — Farben, Schatten, Diagramm — muss dort mit
   // ihrer hellen Hälfte stehen, sonst bleibt sie dort ungültig und farblos.
-  const ersatzAb = CSS.indexOf("@supports not (color: light-dark(");
-  assert.ok(ersatzAb >= 0, "Ersatz-Block fehlt in globals.css");
-  const ersatz = zuweisungen(blockAb(CSS, ersatzAb, "Ersatz-Block"));
-  const soll = zweiteilige(CSS.slice(0, ersatzAb));
+  const soll = ersatzSoll(CSS);
+  const ist = ersatzIst(CSS);
   const abweichend: string[] = [];
-  for (const [name, roh] of soll) {
-    const hell = hellerTeil(roh);
-    if (ersatz.get(name) !== hell) abweichend.push(`${name}: Ersatz ${ersatz.get(name)}, hell ${hell}`);
+  for (const [name, hell] of soll) {
+    if (ist.get(name) !== hell) abweichend.push(`${name}: Ersatz ${ist.get(name)}, hell ${hell}`);
   }
-  for (const name of ersatz.keys()) {
-    if (name.startsWith("--") && !soll.has(name)) abweichend.push(`${name} steht nur im Ersatz`);
+  for (const name of ist.keys()) {
+    if (!soll.has(name)) abweichend.push(`${name} steht nur im Ersatz`);
   }
+  if (abweichend.length) abweichend.push("→ npm run gen:farb-ersatz");
   assert.deepEqual(abweichend, []);
 });
 

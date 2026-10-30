@@ -795,8 +795,9 @@
    frühe 17er; Chrome vor 123, Firefox vor 120). Dort wäre jede Zuweisung
    oben ungültig, und die Anwendung stünde ohne Farben da. Sie bekommen fest
    das helle Erscheinungsbild — die Vorgabe ohne Angabe des Geräts — ohne
-   Umschalten. Die Werte sind die hellen Hälften von oben; `npm run
-   check:farben` und `check:diagramm-farben` halten sie gleich.
+   Umschalten. Die Werte sind die hellen Hälften von oben, geschrieben von
+   `npm run gen:farb-ersatz` und geprüft von `npm run check:farben` — nie
+   von Hand nachführen.
    Ausserhalb jeder Ebene, damit er die `@theme`-Werte schlägt; vor dem
    Druck, damit der ihn wiederum schlägt.
    ============================================================================ */

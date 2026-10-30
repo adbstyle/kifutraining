@@ -48,7 +48,7 @@ export function AppNavClient({
 
   const { neu } = useVersionen();
   const feedback = useFeedback();
-  const { darstellung, waehle } = useDarstellung();
+  const { darstellung, waehle, umschaltbar } = useDarstellung();
 
   const aktiv = aktiveBereiche(pfad, mine, imTeamBereich);
 
@@ -98,8 +98,8 @@ export function AppNavClient({
       feedback={
         konto ? { label: FEEDBACK_TITEL, offen: feedback.offen, onOeffnen: feedback.oeffnen } : undefined
       }
-      // Wählen nur mit Konto (#567); die Wahl gilt danach auch abgemeldet.
-      darstellung={konto ? { wahl: darstellung, onWahl: waehle } : undefined}
+      // Wählen nur mit Konto (#567) und nur, wo der Browser umschalten kann.
+      darstellung={konto && umschaltbar ? { wahl: darstellung, onWahl: waehle } : undefined}
       slim={slim}
       drawerOffen={drawerOffen}
       onDrawerOffenChange={setzeDrawerOffen}

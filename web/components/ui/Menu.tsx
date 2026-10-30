@@ -152,6 +152,7 @@ export function Menu({
       ref={ref}
       role="menu"
       aria-label={label}
+      aria-describedby={fuss ? `${menuId}-fuss` : undefined}
       onKeyDown={onNavKey}
       className={cn(
         "absolute z-50 mt-1 min-w-48 rounded-flaeche border border-linie bg-elev-08 py-1 shadow-dp-08",
@@ -212,7 +213,11 @@ export function Menu({
           </Fragment>
         );
       })}
-      {fuss && <p className="px-3 pt-1 pb-2 type-body-small text-on-surface-mittel">{fuss}</p>}
+      {fuss && (
+        <p id={`${menuId}-fuss`} className="px-3 pt-1 pb-2 type-body-small text-on-surface-mittel">
+          {fuss}
+        </p>
+      )}
     </div>
   );
 }
