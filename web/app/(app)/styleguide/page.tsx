@@ -1071,9 +1071,9 @@ export default async function Styleguide() {
             Zeile in Leiste und Verzeichnis, vergangenes Kalenderblatt, ausgefallener Tag, Avatar,
             Code), trägt darum <code>betont</code>: die Schrift zu 8 % über der Fläche darunter. Das
             hebt auf jeder Stufe und in beiden Erscheinungsbildern ab und entspricht im Dunkeln
-            ziemlich genau der früheren Menüstufe. Eine hervorgehobene Karte (der nächste Termin)
-            steht im Dunkeln eine Stufe höher und trägt im Hellen <code>shadow-dp-04</code>, den
-            einzigen Schatten auf einer liegenden Fläche; im Dunkeln ist er durchsichtig.
+            ziemlich genau der früheren Menüstufe. Schatten bleiben dem Schwebenden vorbehalten:
+            Eine hervorgehobene Karte (der nächste Termin) hebt sich über ihre Kontur ab, die im
+            Hellen 3:1 trägt - im Dunkeln steht sie dazu eine Stufe höher.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Browser ohne <code>light-dark()</code> (Safari vor 17.5, also iOS 16 und frühe 17er)

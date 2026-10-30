@@ -144,12 +144,7 @@
   /* ─── Schatten — nur wo etwas wirklich schwebt. Im Dunkeln trägt die
      Helligkeit die Höhe, der Schatten trennt bloss das Schwebende vom
      Grund darunter. Im Hellen ist er es, der die Höhe trägt — weiss auf
-     weiss hebt sich das Menü nur über ihn ab, darum leise, aber weit.
-     `dp-04` ist der einzige Schatten auf liegenden Flächen: die
-     hervorgehobene Karte (nächster Termin), die im Dunkeln über ihre
-     hellere Stufe abhebt und im Hellen, wo jede Karte weiss ist, über ihn.
-     Im Dunkeln bleibt er darum durchsichtig. ─── */
-  --shadow-dp-04: 0 2px 8px light-dark(rgb(20 26 23 / 0.14), transparent);
+     weiss hebt sich das Menü nur über ihn ab, darum leise, aber weit. ─── */
   --shadow-dp-06: 0 4px 12px light-dark(rgb(20 26 23 / 0.14), rgb(0 0 0 / 0.55));
   --shadow-dp-08: 0 4px 16px light-dark(rgb(20 26 23 / 0.16), rgb(0 0 0 / 0.6));
   --shadow-dp-24: 0 12px 32px light-dark(rgb(20 26 23 / 0.2), rgb(0 0 0 / 0.6));
@@ -865,7 +860,6 @@
     --color-icon-success: #6a9a23;
     --color-section-discovery: #f8eefe;
     --color-icon-discovery: #af59e1;
-    --shadow-dp-04: 0 2px 8px rgb(20 26 23 / 0.14);
     --shadow-dp-06: 0 4px 12px rgb(20 26 23 / 0.14);
     --shadow-dp-08: 0 4px 16px rgb(20 26 23 / 0.16);
     --shadow-dp-24: 0 12px 32px rgb(20 26 23 / 0.2);

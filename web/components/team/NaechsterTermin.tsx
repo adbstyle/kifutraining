@@ -82,9 +82,10 @@ export function NaechsterTermin({
       aria-current={hervorgehoben ? "true" : undefined}
       tabIndex={-1}
       className={cn(
-        // Eine Stufe höher als die Karten der Tage darunter: abgehoben (AK 1) —
-        // im Dunkeln über die hellere Stufe, im Hellen über den Schatten.
-        "relative rounded-flaeche bg-elev-04 shadow-dp-04 p-4 outline-none focus:border-primary",
+        // Abgehoben von den Karten der Tage darunter (AK 1): durch die Kontur,
+        // die jene nicht tragen — im Dunkeln dazu eine Stufe höher. Im Hellen
+        // ist jede Karte weiss, dort trägt die Kante allein (3:1).
+        "relative rounded-flaeche bg-elev-04 p-4 outline-none focus:border-primary",
         naechster && "mt-2",
         hervorgehoben ? "kontur border-primary" : "kontur border-kante",
       )}
