@@ -170,32 +170,10 @@ function initialen(name: string) {
   return roh.toUpperCase();
 }
 
-/** Marke: ein Fussball, gezeichnet wie ein Lucide-Zeichen (Strich, keine
- *  Füllung), damit er neben den übrigen Zeichen nicht aus der Reihe fällt.
- *  Lucide selbst kennt keinen Fussball. */
-function FussballZeichen({ size = 18 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="m12 7 4.2 3-1.6 5H9.4l-1.6-5z" />
-      <path d="M12 2v5M21.5 9.5 16.2 10M18 20l-3.4-5M6 20l3.4-5M2.5 9.5 7.8 10" />
-    </svg>
-  );
-}
-
 /* Zeile: Zustands-Ebene + Fokus-Ring nach innen (der Scrollbereich der Liste
-   schnitte einen äusseren ab). Aktiv steht die Zeile eine Stufe höher als
-   ihr Grund — am Desktop 08dp auf 01dp, im Drawer (selbst 08dp) 12dp. */
+   schnitte einen äusseren ab). Aktiv ist die Zeile betont (`betont`): die
+   Schrift zu 8 % über der Leiste — auf jeder Stufe und in beiden
+   Erscheinungsbildern sichtbar. */
 const zeile =
   "focus-ring-inset state flex items-center rounded-flaeche transition-colors";
 const zeileAktiv = "betont text-on-surface";
@@ -653,7 +631,7 @@ function DarstellungZeile({
   );
 }
 
-/* Marke: Fussball im Primary-Quadrat + Wortmarke. Schmal bleibt das Quadrat. */
+/* Marke: Bildmarke + Name. Schmal bleibt die Bildmarke. */
 function Marke({ textKlasse }: { textKlasse?: string }) {
   return (
     <Link
@@ -661,9 +639,12 @@ function Marke({ textKlasse }: { textKlasse?: string }) {
       data-hinweis="KiFu"
       className="focus-ring-inset flex items-center gap-2.5 rounded-flaeche p-1.5 text-on-surface"
     >
-      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-flaeche bg-primary text-on-primary">
-        <FussballZeichen />
-      </span>
+      {/* Die Bildmarke (FutAssist, Variante F) ist dieselbe Datei wie das
+          Favicon: eine Quelle für Tab, Homescreen und Leiste. Ihr Verlauf
+          trägt sich auf hellem wie dunklem Grund. Den Namen sagt der Text
+          daneben, darum stumm. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- SVG, nichts zu optimieren */}
+      <img src="/icon.svg" alt="" width={32} height={32} className="h-8 w-8 shrink-0" />
       <span className={cn("type-title-large", textKlasse)}>KiFu</span>
     </Link>
   );

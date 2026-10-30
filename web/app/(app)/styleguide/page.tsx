@@ -3129,7 +3129,7 @@ export default async function Styleguide() {
             <strong>Seitenleiste</strong> am linken Rand, auf{" "}
             <code>bg-elev-01</code> mit <code>border-linie</code> zum Inhalt. Sie
             ist Rahmen, keine schwebende Fläche, und trägt darum keinen Schatten.
-            Oben die Marke (Fussball im Primary-Quadrat, zugleich das Favicon), darunter die Einträge in
+            Oben die Marke (die Bildmarke F mit Punkt, dieselbe Datei wie das Favicon, und der Name), darunter die Einträge in
             Gruppen, unten «Fragen und Feedback» (nur angemeldet; ein Knopf, kein Link - er öffnet
             den Dialog neben der Seite, siehe <Siehe id="feedback-dialog" />), «Darstellung», die
             Versionszeile und die Konto-Karte: Avatar, Anzeigename
