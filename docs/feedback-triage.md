@@ -1,6 +1,6 @@
 # KiFu – Produktwissen für die Einordnung von User-Feedback
 
-Stand 2026-10-29 (Release 1.44.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
+Stand 2026-10-30 (Release 1.45.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
 gedacht als Kontext für ein kleines Modell (z. B. Haiku), das Rückmeldungen von Nutzer:innen
 einordnet. Rückmeldungen sind **Fehlermeldungen ebenso wie Feature-Wünsche**: Das Modell erkennt,
 was die Person meint, gleicht es mit dem heutigen Stand ab und stellt die Rückfragen, mit denen sich
@@ -106,9 +106,11 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 ## 3. Oberfläche und Navigation
 
-**Seitenleiste (links):** Marke KiFu → Übungsbestand. Gruppen „Bibliothek" (Übungen, Trainings) und „Mein Bereich" (Meine Übungen, Meine Trainings, Teams mit aufklappbaren Teamnamen). Unten: „Fragen und Feedback" (nur angemeldet; öffnet diesen Dialog), Version (Klick → „Versionen"), „Styleguide", Konto. Ohne Anmeldung: „Anmelden" statt Konto, „Mein Bereich" fehlt.
+**Seitenleiste (links):** Marke (Zeichen F mit Punkt, Name KiFu) → Übungsbestand. Gruppen „Bibliothek" (Übungen, Trainings) und „Mein Bereich" (Meine Übungen, Meine Trainings, Teams mit aufklappbaren Teamnamen). Unten: „Fragen und Feedback" (nur angemeldet; öffnet diesen Dialog), „Darstellung" (nur angemeldet), Version (Klick → „Versionen"), Konto. Den Styleguide führt die Leiste nicht mehr. Ohne Anmeldung: „Anmelden" statt Konto, „Mein Bereich" fehlt.
 - Breit/schmal nur per Knopf links vor den Brotkrumen; Wahl merkt sich der **Browser**, nicht das Konto.
 - Telefon: Menüknopf oben öffnet die Leiste als Überlagerung; kein Verkleinern-Knopf.
+
+**Hell und dunkel:** KiFu folgt der Einstellung des Geräts (ohne Angabe: hell), wechselt beim Umstellen des Geräts sofort mit. Angemeldet unter „Darstellung": „Wie das Gerät", „Hell", „Dunkel" — wirkt sofort, ohne Neuladen, Eingaben bleiben. Wahl gilt **pro Browser** (nicht pro Konto), auch abgemeldet auf Anmelde-, Registrier- und Passwortseiten. **Ohne Anmeldung** sind alle Seiten mit Leiste immer hell. Seiten hinter privatem Link folgen nur dem Gerät (keine Wahl). Druck immer hell.
 - Neue Version: Plakette „Neu" an der Versionszeile (schmal: Punkt), bis „Versionen" angesehen wurde. Pro Browser gemerkt. Neue Version erscheint spätestens 1 h nach Veröffentlichung, beim nächsten Seitenwechsel.
 
 **Seiten:** Brotkrumen zuoberst, rechts davon die Aktionen der Seite. Übersichten ohne sichtbare Überschrift (Name steht in der Brotkrume). Ab Laptop-Breite klebt die Kopfzeile; auf dem Telefon nur die Menüzeile.
@@ -119,7 +121,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Alle Bedienelemente 36 px hoch, auch auf dem Telefon (bekannt: kleiner als für Finger empfohlen).
 - Felder ohne Rahmen im Ruhezustand; Name klein über dem Wert. Erklärungen hinter **ⓘ** (erscheint nur bei Maus-Hover; auf Touch-Geräten nie – ausser 3 Hinweise, die dort unter dem Feld stehen: feste Altersstufe eines Trainings, wen die erwartete Spielerzahl zählt, „0 Tore = keine").
 - Fehler beim Speichern rot unter dem Feld. Felder, die beim Verlassen speichern, fallen bei Fehler auf den gespeicherten Wert zurück + Meldung am unteren Rand.
-- **Schalter** = sofort wirksame Ja/Nein-Angabe (Trainer:in dabei, Spieler:in angemeldet, Selbstabholung). Kästchen = Formular, das erst gespeichert wird. Spieler:innen-Schalter sind bewusst farblos/ruhig.
+- **Schalter** = sofort wirksame Ja/Nein-Angabe (Trainer:in dabei, Spieler:in angemeldet, Selbstabholung). Kästchen = Formular, das erst gespeichert wird. Spieler:innen-Schalter und Selbstabholung sind bewusst ruhig: grauer Knopf, an rechts mit Haken, aus links mit Kreuz (Trainer:in dabei: violetter Knopf). Am privaten Link steht an einem ausgefallenen Termin kein Schalter.
 - Filter als Knöpfe mit Zähler; Mehrfachwahl; gleiche Art = ODER, verschiedene Arten = UND.
 - Wiederholbare Einträge (Felder eines Termins, Material) über eine Zeile, die wie ein leeres Feld aussieht („Feld hinzufügen (optional)").
 
@@ -130,7 +132,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Zustand → Hinweis im Seiteninhalt (rötlich = ging nicht, bläulich = sonst), bleibt bis erledigt.
 - Seiten hinter privatem Link: keine Zeile am Rand; Schalter springt zurück, Grund steht an der Terminkarte.
 
-**Weitere Seiten:** „Versionen" (Release-Texte von GitHub, 30 neueste sofort, ältere auf Knopf; ohne Anmeldung; Cache bis 1 h; bei GitHub-Ausfall letzter Stand + Hinweis). „Styleguide" (Designsystem, ohne Anmeldung). „Cookies" (was im Browser liegt + Besucherstatistik Vercel Web Analytics; ohne Anmeldung erreichbar). Falsche Adresse → Hinweisseite mit Weg zu den Übungen. Anmelde-Seiten ohne Leiste.
+**Weitere Seiten:** „Versionen" (Release-Texte von GitHub, 30 neueste sofort, ältere auf Knopf; ohne Anmeldung; Cache bis 1 h; bei GitHub-Ausfall letzter Stand + Hinweis). „Styleguide" (Designsystem, ohne Anmeldung, nur direkt unter ki-fu.ch/styleguide, nicht in der Leiste). „Cookies" (was im Browser liegt + Besucherstatistik Vercel Web Analytics; ohne Anmeldung erreichbar). Falsche Adresse → Hinweisseite mit Weg zu den Übungen. Anmelde-Seiten ohne Leiste.
 
 **Fragen und Feedback:** Gespräch mit Haiku (Anthropic, USA) über Fehler, Wünsche und Fragen; Trainer:innen über die Seitenleiste, Eltern über eine am unteren Rand klebende Leiste auf der Seite hinter dem privaten Link. Desktop: Spalte rechts, bleibt beim Seitenwechsel offen; Telefon und privater Link: Vollbild. Gespeichert wird nur die bestätigte Zusammenfassung samt Gespräch (Trainer:innen mit Konto, Eltern nur mit Team); keine Antwort über KiFu, Löschung nach 12 Monaten; bei Konto-Löschung bleibt es ohne Kontobezug. Fällt die KI aus oder ist ihr Budget aufgebraucht: nur „Feedback ist gerade nicht möglich", kein anderer Weg.
 
@@ -174,7 +176,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - **Zum Zeichnen braucht es mehr als Telefonbreite**; auf dem Telefon Hinweis statt Fläche. Für Maus/Tastatur gebaut, **nicht für Touch** (bekannt).
 - Speicherprüfung: nur bekannte Elemente/Farben/Posen/Drehungen, jedes Element auf der Fläche, **max. 300 Elemente**, eindeutige Kennung. Sonst Meldung mit Art/Zahl der Problem-Elemente (z. B. „?"-Platzhalter aus alter Zeichnung). Unveränderte alte Zeichnung wird nicht neu beanstandet.
 - Kreuzende Pfeile: der später gezeichnete läuft durch, der frühere ist ausgespart. Reihenfolge nicht änderbar (bekannt). Pfeile in Manual-Farbe oder per Palette einfärbbar.
-- Bildschirm: dunkler Rasen, helle Pfeile. Druck: weisser Grund, schwarze Pfeile, dunklere Farben (Absicht).
+- Dunkel: dunkler Rasen, helle Pfeile. Hell: blasser Rasen mit Kante, schwarze Pfeile, kräftige dunkle Farben, «weiss» erscheint als Graphit. Druck: weisser Grund, schwarze Pfeile, dunklere Farben (Absicht).
 - Diagramm als **Vorlage** kopieren: eigene + alle Manual-Diagramme (keine fremden Trainer-Diagramme), Ersetzen nach Rückfrage, per Rückgängig umkehrbar, wirksam erst beim Speichern.
 - **Foto:** „Foto wählen", gängige Formate inkl. HEIC; Verkleinerung im Browser auf max. 2000 px. Bei Diagramm + Foto zeigt die Übung das Diagramm.
 
@@ -398,6 +400,11 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Durchführen zeigt keine Erscheinungsform; Druck einer Übung zeigt keine Dauer.
 - Übungen ohne Erscheinungsform/Feldtyp/Übungstyp tauchen bei diesen Filtern nicht auf.
 - Zeile beginnend mit „2. " / „- " wird zum Listenpunkt.
+- KiFu ist plötzlich hell/dunkel → folgt der Einstellung des Geräts (auch Wechsel nach Tageszeit), ausser es wurde unter „Darstellung" gewählt.
+- Abgemeldet ist KiFu hell, obwohl „Dunkel" gewählt → ohne Anmeldung sind die Seiten mit Leiste immer hell; die Anmeldeseiten zeigen die Wahl.
+- „Darstellung" fehlt in der Leiste → nicht angemeldet, oder älterer Browser (Safari vor 17.5), der fest hell zeigt.
+- Diagramm: weisse Leibchen erscheinen im Hellen grau (Graphit) → Absicht, sonst auf hellem Rasen unsichtbar.
+- Kein Schalter an einem ausgefallenen Termin am privaten Link → Absicht; Plakette „Fällt aus" und Grund sagen es.
 
 ---
 
@@ -415,7 +422,8 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Keine Rollen/Rechteabstufung; keine Einladung an Personen ohne Konto.
 - Kein Profilbild; Anzeigename nicht zurücksetzbar; E-Mail vor Teammitgliedern nicht verbergbar.
 - Keine vollständige Datenschutzerklärung, kein Impressum; Besucherstatistik nicht abwählbar.
-- Einstellungen (Leistenbreite, Spaltenbreite, „Versionen gesehen") pro Browser, nicht pro Konto.
+- Einstellungen (Leistenbreite, Spaltenbreite, Darstellung, „Versionen gesehen") pro Browser, nicht pro Konto.
+- Darstellung: ohne Anmeldung nicht wählbar; ältere Browser (Safari vor 17.5, iOS 16/frühes iOS 17) immer hell, ohne Wahl; privater Link nur nach Gerät.
 - Touch: 36-px-Bedienflächen, keine ⓘ-Hinweise, Diagramm nicht per Touch.
 
 **Fragen und Feedback**

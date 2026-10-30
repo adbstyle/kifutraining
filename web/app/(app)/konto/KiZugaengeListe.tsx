@@ -46,7 +46,7 @@ export function KiZugaengeListe({ zugaenge }: { zugaenge: KiZugang[] }) {
               key={z.clientId}
               className="flex items-center gap-3 rounded-flaeche bg-elev-01 px-4 py-3"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full betont text-on-surface">
                 <Bot size={18} strokeWidth={2} aria-hidden />
               </span>
               <span className="min-w-0 flex-1">

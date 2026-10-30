@@ -3,11 +3,14 @@ import { FigurenSprite } from "@/components/diagramm/figur";
 import { FeedbackProvider } from "@/components/feedback/FeedbackKontext";
 import { AppNav } from "@/components/layout/AppNav";
 import { AppInhalt, AppRahmen } from "@/components/layout/AppRahmen";
+import { DarstellungProvider } from "@/components/layout/DarstellungKontext";
 import { SnackbarProvider } from "@/components/layout/SnackbarKontext";
 import { TeamKontextProvider } from "@/components/layout/TeamKontext";
 import { VersionenProvider } from "@/components/layout/VersionenKontext";
 import { getNeuesteVeroeffentlichung } from "@/lib/releases";
+import { getUserImRequest } from "@/lib/supabase/server";
 import { GESEHEN_COOKIE, leseGesehen } from "@/lib/versionen-gesehen";
+import { DARSTELLUNG_COOKIE, leseDarstellung } from "@/lib/darstellung";
 import { LEISTE_COOKIE, leseLeiste } from "@/lib/seitenleiste";
 import { SPALTE_COOKIE, leseSpalte } from "@/lib/spalte";
 
@@ -16,11 +19,16 @@ import { SPALTE_COOKIE, leseSpalte } from "@/lib/spalte";
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [jar, neueste] = await Promise.all([cookies(), getNeuesteVeroeffentlichung()]);
+  const [jar, neueste, user] = await Promise.all([
+    cookies(),
+    getNeuesteVeroeffentlichung(),
+    getUserImRequest(),
+  ]);
   const slim = leseLeiste(jar.get(LEISTE_COOKIE)?.value);
   const spalte = leseSpalte(jar.get(SPALTE_COOKIE)?.value);
+  const darstellung = leseDarstellung(jar.get(DARSTELLUNG_COOKIE)?.value);
   return (
-    <>
+    <DarstellungProvider wahl={darstellung} anonym={!user}>
       {/* Die Figurteile aller Feld-Diagramme, einmal pro Seite (siehe figur.tsx). */}
       <FigurenSprite />
       {/* Der Team-Kontext des geöffneten Trainings überdauert die einzelne
@@ -48,6 +56,6 @@ export default async function AppLayout({
           </AppRahmen>
         </TeamKontextProvider>
       </VersionenProvider>
-    </>
+    </DarstellungProvider>
   );
 }

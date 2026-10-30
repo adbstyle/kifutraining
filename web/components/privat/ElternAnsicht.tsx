@@ -295,14 +295,18 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
           <TeamZeile t={t} zahl={zahl} zusatz={vergeben ? PROBE_TEXT.vergeben : null} />
           {t.verantwortlich && <span className="type-body-small text-on-surface-mittel">Verantwortlich: {t.verantwortlich}</span>}
         </div>
-        <Switch
-          ton="ruhig"
-          checked={!t.ausgefallen && !ab}
-          neutral={t.ausgefallen}
-          disabled={t.ausgefallen || t.begonnen || vergeben || pending}
-          onChange={(e) => onUmlegen(e.target.checked)}
-          aria-label={`${name} am ${tagText(t.datum)} dabei`}
-        />
+        {/* Fällt der Termin aus, gibt es nichts zu wählen: kein Schalter — ein
+            gesperrter auf ✕ läse sich als «abgemeldet». Den Ausfall sagen
+            Kalenderblatt und Grund. */}
+        {!t.ausgefallen && (
+          <Switch
+            ton="ruhig"
+            checked={!ab}
+            disabled={t.begonnen || vergeben || pending}
+            onChange={(e) => onUmlegen(e.target.checked)}
+            aria-label={`${name} am ${tagText(t.datum)} dabei`}
+          />
+        )}
       </div>
       {hinweise}
     </li>

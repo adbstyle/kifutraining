@@ -1,6 +1,6 @@
 {
   "name": "kifu-web",
-  "version": "1.44.0",
+  "version": "1.45.0",
   "license": "CC-BY-SA-4.0",
   "private": true,
   "type": "module",
@@ -35,6 +35,7 @@
     "check:kern-db": "tsx --conditions=react-server scripts/pruefe-kern-db.ts",
     "sync:storage": "tsx scripts/sync-storage-staging.ts",
     "gen:feedback-wissen": "node scripts/gen-feedback-wissen.mjs",
+    "gen:farb-ersatz": "tsx scripts/gen-farb-ersatz.ts",
     "check:feedback": "tsx scripts/pruefe-feedback.ts"
   },
   "dependencies": {

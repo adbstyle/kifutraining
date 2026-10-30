@@ -1,3 +1,4 @@
+import { DARSTELLUNG_COOKIE } from "@/lib/darstellung";
 import { LEISTE_COOKIE } from "@/lib/seitenleiste";
 import { SPALTE_COOKIE } from "@/lib/spalte";
 import { VERZEICHNIS_COOKIE } from "@/lib/verzeichnis";
@@ -52,6 +53,13 @@ export const SPEICHERUNGEN: Speicherung[] = [
     zweck: "Merkt sich, wie breit du das Verzeichnis neben den Versionen und im Styleguide gezogen hast.",
     dauer: "Ein Jahr.",
     ohne: "Das Verzeichnis steht bei jedem Besuch wieder in der üblichen Breite.",
+  },
+  {
+    name: DARSTELLUNG_COOKIE,
+    titel: "Darstellung",
+    zweck: "Merkt sich, ob du KiFu hell oder dunkel gewählt hast, auch für die Anmeldeseiten. Solange KiFu wie das Gerät erscheint, wird nichts gespeichert.",
+    dauer: "Ein Jahr, oder bis du wieder «Wie das Gerät» wählst.",
+    ohne: "KiFu folgt der Einstellung des Geräts.",
   },
   {
     name: GESEHEN_COOKIE,

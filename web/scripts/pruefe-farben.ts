@@ -11,7 +11,7 @@
 // - **Herleitung.** Die Höhenleiter ist definitionsgemäss weisses Overlay über
 //   dem Grund. Im CSS steht davon nur das Ergebnis; hier wird es nachgerechnet,
 //   damit ein vertippter Hex-Wert nicht als Designentscheid durchgeht.
-// - **Lesbarkeit.** Kontrast ist eine Rechnung nach WCAG 2.1, keine Meinung.
+// - **Lesbarkeit.** Kontrast ist eine Rechnung nach WCAG 2.2, keine Meinung.
 //   Jede Paarung, die die Anwendung tatsächlich zeigt, wird hier geprüft.
 // - **Altlasten.** Tailwind v4 meldet unbekannte Utilities NICHT — `text-chalk`
 //   erzeugt einfach keine Regel, und der Text erbt still die Elternfarbe. Eine
@@ -24,31 +24,26 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  BILDSCHIRM,
+  BETONT,
   DRUCK,
   DRUCK_SCHRIFT,
+  DUNKEL,
   ELEV,
-  ERROR,
   GRUND,
-  LOZENGE,
-  LOZENGE_DRUCK,
-  DANGER,
-  ON_DANGER,
-  ON_PRIMARY,
-  SECTION,
-  SECTION_DRUCK,
-  PRIMARY,
-  SCHRIFT,
+  HELL,
+  LOZENGE_HELL,
+  SECTION_HELL,
+  THEMEN,
   UMKEHR,
   deckend,
-  elev,
   elevName,
   hex8,
   kontrast,
   relativeLuminanz,
   ueberlagern,
+  type Erscheinungsbild,
 } from "../lib/farben";
-import { blockVon, normalisiere, tokens } from "./css-tokens";
+import { blockVon, ersatzIst, ersatzSoll, normalisiere, tokenPaare, tokens } from "./css-tokens";
 
 const WEB = resolve(fileURLToPath(import.meta.url), "../..");
 
@@ -74,34 +69,63 @@ const z = (wert: number) => wert.toFixed(2);
 // greifen, wenn niemand `next build` laufen lässt.
 const CSS = readFileSync(join(WEB, "app/globals.css"), "utf8");
 
-const THEME = tokens(blockVon(CSS, /@theme\b/, "@theme-Block"), "color");
+// Jede Farbrolle im @theme steht als `light-dark(hell, dunkel)`; Rollen, die
+// in beiden gleich sind (`danger`, `scrim`), stehen einfach.
+const THEME = tokenPaare(blockVon(CSS, /@theme\b/, "@theme-Block"), "color");
 const PRINT = tokens(
   blockVon(blockVon(CSS, /@media\s+print\b/, "@media print"), /:root\b/, "print :root"),
   "color",
 );
 
 // ── 1. Zwilling: farben.ts und globals.css sagen dasselbe ───────────────────
-pruefe("Jede Rolle aus farben.ts steht gleichlautend in globals.css", () => {
+pruefe("Jede Rolle aus farben.ts steht in beiden Erscheinungsbildern gleichlautend in globals.css", () => {
   const abweichend: string[] = [];
-  for (const [rolle, wert] of Object.entries(BILDSCHIRM)) {
+  for (const [rolle, dunkel] of Object.entries(DUNKEL)) {
     const imCss = THEME.get(rolle);
-    if (imCss === undefined) abweichend.push(`--color-${rolle} fehlt im @theme`);
-    else if (imCss !== normalisiere(wert)) {
-      abweichend.push(`--color-${rolle}: CSS ${imCss}, farben.ts ${wert}`);
+    if (imCss === undefined) {
+      abweichend.push(`--color-${rolle} fehlt im @theme`);
+      continue;
+    }
+    if (imCss.hell !== normalisiere(HELL[rolle])) {
+      abweichend.push(`--color-${rolle} hell: CSS ${imCss.hell}, farben.ts ${HELL[rolle]}`);
+    }
+    if (imCss.dunkel !== normalisiere(dunkel)) {
+      abweichend.push(`--color-${rolle} dunkel: CSS ${imCss.dunkel}, farben.ts ${dunkel}`);
     }
   }
   assert.deepEqual(abweichend, []);
 });
 
+pruefe("Hell und Dunkel führen dieselben Rollen", () => {
+  assert.deepEqual(Object.keys(HELL).sort(), Object.keys(DUNKEL).sort());
+});
+
 pruefe("globals.css führt keine Farbrolle, die farben.ts nicht kennt", () => {
   // Die Gegenrichtung fängt tote Tokens: eine Rolle, die nach einem Umbau
   // niemand mehr anwendet, bleibt sonst als scheinbar gültige Klasse stehen.
-  const unbekannt = [...THEME.keys()].filter((rolle) => !(rolle in BILDSCHIRM));
+  const unbekannt = [...THEME.keys()].filter((rolle) => !(rolle in DUNKEL));
   assert.deepEqual(unbekannt, []);
 });
 
-// ── 2. Overlay-Rechnung: die Höhenleiter ist hergeleitet, nicht geraten ─────
-pruefe("Jede Höhenstufe ist Weiss über dem Grund in ihrer Deckung", () => {
+pruefe("Der Ersatz ohne light-dark() führt jede helle Hälfte, und nur sie", () => {
+  // Browser ohne light-dark() (Safari vor 17.5) bekommen fest das Helle. Jede
+  // zweiteilige Zuweisung davor — Farben, Schatten, Diagramm — muss dort mit
+  // ihrer hellen Hälfte stehen, sonst bleibt sie dort ungültig und farblos.
+  const soll = ersatzSoll(CSS);
+  const ist = ersatzIst(CSS);
+  const abweichend: string[] = [];
+  for (const [name, hell] of soll) {
+    if (ist.get(name) !== hell) abweichend.push(`${name}: Ersatz ${ist.get(name)}, hell ${hell}`);
+  }
+  for (const name of ist.keys()) {
+    if (!soll.has(name)) abweichend.push(`${name} steht nur im Ersatz`);
+  }
+  if (abweichend.length) abweichend.push("→ npm run gen:farb-ersatz");
+  assert.deepEqual(abweichend, []);
+});
+
+// ── 2. Overlay-Rechnung: die dunkle Höhenleiter ist hergeleitet ─────────────
+pruefe("Dunkel: Jede Höhenstufe ist Weiss über dem Grund in ihrer Deckung", () => {
   for (const stufe of ELEV) {
     assert.equal(
       stufe.hex,
@@ -116,10 +140,12 @@ pruefe("Die unterste Stufe IST der Grund", () => {
   assert.equal(ELEV[0].hex, GRUND);
 });
 
-// ── 3. Monotonie: höher heisst heller ──────────────────────────────────────
-pruefe("Die Luminanz steigt über die ganze Leiter streng an", () => {
+// ── 3. Monotonie: im Dunkeln heisst höher heller ───────────────────────────
+pruefe("Dunkel: Die Luminanz steigt über die ganze Leiter streng an", () => {
   // Zwei Stufen mit derselben Helligkeit wären zwei Tokens für eine Farbe —
   // dann liesse sich ein Menü nicht mehr von der Karte darunter unterscheiden.
+  // Im Hellen gilt das nicht: Dort trägt der Schatten die Höhe, und Karte wie
+  // Menü sind weiss (lib/farben.ts, ELEV_HELL).
   for (let i = 1; i < ELEV.length; i++) {
     const vorher = relativeLuminanz(ELEV[i - 1].hex);
     const jetzt = relativeLuminanz(ELEV[i].hex);
@@ -131,168 +157,175 @@ pruefe("Die Luminanz steigt über die ganze Leiter streng an", () => {
   }
 });
 
-// ── 4. Kontrast der Schrift ────────────────────────────────────────────────
-// Schrift liegt in der Anwendung auf jeder Höhenstufe — Karte, Menü, Dialog.
-// Geprüft wird gegen das Kompositergebnis, weil `#ffffffbd` durchscheint.
-pruefe("Volle Schrift erreicht auf jeder Stufe 4.5:1", () => {
-  for (const stufe of ELEV) {
-    const wert = kontrast("#ffffff", stufe.hex);
-    assert.ok(wert >= 4.5, `${elevName(stufe.dp)}: ${z(wert)}:1`);
-  }
+pruefe("Hell: Die Karte hebt sich vom Grund ab, und was in ihr liegt, von ihr", () => {
+  const [grund, karte, inKarte] = [0, 1, 2].map((dp) => stufeVon(THEMEN[0], dp));
+  assert.notEqual(karte, grund, "Karte (elev-01) gleich dem Grund");
+  assert.notEqual(inKarte, karte, "Block in der Karte (elev-02) gleich der Karte");
 });
 
-pruefe("Mittlere Schrift (74 %) erreicht auf jeder Stufe 4.5:1", () => {
-  for (const stufe of ELEV) {
-    const wert = kontrast(ueberlagern("#ffffff", SCHRIFT.mittel, stufe.hex), stufe.hex);
-    assert.ok(wert >= 4.5, `${elevName(stufe.dp)}: ${z(wert)}:1`);
-  }
-});
+/** Der Hex einer Höhenstufe eines Erscheinungsbilds. */
+function stufeVon(t: Erscheinungsbild, dp: number): string {
+  const stufe = t.elev.find((s) => s.dp === dp);
+  if (!stufe) throw new Error(`${t.name}: keine Höhenstufe ${dp} dp.`);
+  return stufe.hex;
+}
 
-pruefe("Tiefe Schrift (38 %) erreicht 3:1 - sie ist nur für Deaktiviertes", () => {
-  // Deaktivierter Text ist unwesentlicher Inhalt (WCAG 1.4.3): Er muss
-  // erkennbar bleiben, aber gerade NICHT wie lesbarer Text wirken.
-  for (const stufe of ELEV) {
-    const wert = kontrast(ueberlagern("#ffffff", SCHRIFT.tief, stufe.hex), stufe.hex);
-    assert.ok(wert >= 3.0, `${elevName(stufe.dp)}: ${z(wert)}:1`);
-  }
-});
+/** Schrift in einer Deckung über einer Fläche, deckend gemischt. */
+const schriftAuf = (t: Erscheinungsbild, deckung: number, flaeche: string) =>
+  ueberlagern(t.schrift, deckung, flaeche);
 
-// ── 5. Kontrast der Akzente ────────────────────────────────────────────────
-pruefe("Primary trägt als Schrift auf elev-00 bis elev-12", () => {
-  for (const stufe of ELEV.filter((s) => s.dp <= 12)) {
-    const wert = kontrast(PRIMARY, stufe.hex);
-    assert.ok(wert >= 4.5, `${elevName(stufe.dp)}: ${z(wert)}:1`);
-  }
-});
+// ── 4.–6. Kontraste, in BEIDEN Erscheinungsbildern ─────────────────────────
+// Dieselben Paarungen, dieselben Schwellen (WCAG 2.2 AA): Schrift 4.5:1,
+// grafische Objekte und Konturen 3:1 (1.4.11), Deaktiviertes 3:1.
+for (const t of THEMEN) {
+  const T = t.name === "hell" ? "Hell" : "Dunkel";
 
-pruefe("Primary auf den obersten Stufen bleibt über 4.2:1", () => {
-  // Bewusste Abweichung: Text-Knöpfe im Dialog (elev-24) landen bei 4.3:1.
-  // Materials eigene Baseline tut dasselbe — Primary hell genug für 4.5:1 auf
-  // 24 dp zu machen, hiesse, es auf dem Seitengrund (elev-00) grell zu machen,
-  // wo es zehnmal häufiger steht. Der Styleguide nennt die Abweichung.
-  for (const stufe of ELEV.filter((s) => s.dp > 12)) {
-    const wert = kontrast(PRIMARY, stufe.hex);
-    assert.ok(wert >= 4.2, `${elevName(stufe.dp)}: ${z(wert)}:1`);
-  }
-});
-
-// Error auf JEDER Stufe, nicht nur auf dem Grund: Das war die Lücke, durch
-// die die Kontrast-Regression kam. Materials Baseline #cf6679 trug auf elev-00
-// (5.09) und fiel im Menü auf 3.62, im Dialog auf 3.17 — die Prüfung sah nur
-// den Grund und schwieg. Error steht in dieser Anwendung aber fast nie als
-// Fläche, sondern als Schrift auf Karte, Menüzeile und Dialog.
-pruefe("Error trägt als Schrift auf JEDER Höhenstufe", () => {
-  for (const stufe of ELEV) {
-    const wert = kontrast(ERROR, stufe.hex);
-    assert.ok(wert >= 4.5, `error auf ${elevName(stufe.dp)}: ${z(wert)}:1`);
-  }
-});
-
-pruefe("Error trägt als Kontur auf jeder Höhenstufe", () => {
-  // Die 1.5-px-Kontur (Feld im Fehler, destruktiver Knopf) ist ein
-  // grafisches Objekt: 3:1 nach WCAG 1.4.11, nicht 4.5:1. Geprüft wird die
-  // VOLLE Rolle — eine Kontur mit Alpha fällt darunter (siehe Wächter unten)
-  // und ist darum in Klassenstrings verboten, nicht hier wegdefiniert.
-  for (const stufe of ELEV) {
-    const wert = kontrast(ERROR, stufe.hex);
-    assert.ok(wert >= 3.0, `error-Kontur auf ${elevName(stufe.dp)}: ${z(wert)}:1`);
-  }
-});
-
-pruefe("Die Aufschrift gefüllter Flächen trägt", () => {
-  // Gefüllter und destruktiver Knopf: Hier liegt on-* auf der Fläche selbst.
-  const aufPrimary = kontrast(ON_PRIMARY, PRIMARY);
-  assert.ok(aufPrimary >= 4.5, `on-primary auf primary: ${z(aufPrimary)}:1`);
-  const aufDanger = kontrast(ON_DANGER, DANGER);
-  assert.ok(aufDanger >= 4.5, `on-danger auf danger: ${z(aufDanger)}:1`);
-  const aufDangerDruck = kontrast(DRUCK["on-danger"], DRUCK.danger);
-  assert.ok(aufDangerDruck >= 4.5, `on-danger auf danger (Druck): ${z(aufDangerDruck)}:1`);
-});
-
-pruefe("Schalter: Knopf und Zeichen tragen (WCAG 1.4.11)", () => {
-  // Die Bahn ist nur Kontur; den Stand tragen Lage, Farbe und Zeichen des
-  // Knopfs — beides grafische Objekte, also 3:1. Der Schalter steht in
-  // Listen auf Seite, Karte und Menüfläche (bis elev-08).
-  for (const stufe of ELEV.filter((s) => s.dp <= 8)) {
-    const an = kontrast(PRIMARY, stufe.hex);
-    assert.ok(an >= 3.0, `Knopf an (primary) auf ${elevName(stufe.dp)}: ${z(an)}:1`);
-    const knopfAus = ueberlagern("#ffffff", SCHRIFT.mittel, stufe.hex);
-    const aus = kontrast(knopfAus, stufe.hex);
-    assert.ok(aus >= 3.0, `Knopf aus (on-surface-mittel) auf ${elevName(stufe.dp)}: ${z(aus)}:1`);
-    const kreuz = kontrast(elev(1), knopfAus);
-    assert.ok(kreuz >= 3.0, `Kreuz (elev-01) auf dem Knopf über ${elevName(stufe.dp)}: ${z(kreuz)}:1`);
-  }
-  const haken = kontrast(ON_PRIMARY, PRIMARY);
-  assert.ok(haken >= 3.0, `Haken (on-primary) auf primary: ${z(haken)}:1`);
-});
-
-// ── Umgekehrte Fläche (Snackbar) ───────────────────────────────────────────
-pruefe("Die umgekehrte Fläche ist Weiss über dem Grund in ihrer Deckung", () => {
-  assert.equal(UMKEHR.flaeche, ueberlagern("#ffffff", UMKEHR.deckung, GRUND));
-});
-
-pruefe("Die umgekehrte Fläche hebt sich von jeder Höhenstufe ab", () => {
-  // Sie ist selbst das grafische Objekt, das auffallen soll: 3:1 nach
-  // WCAG 1.4.11 gegen alles, worüber sie schweben kann.
-  for (const stufe of ELEV) {
-    const wert = kontrast(UMKEHR.flaeche, stufe.hex);
-    assert.ok(wert >= 3.0, `umkehr über ${elevName(stufe.dp)}: ${z(wert)}:1`);
-  }
-});
-
-pruefe("Schrift und Akzent tragen auf der umgekehrten Fläche", () => {
-  const schrift = kontrast(UMKEHR.schrift, UMKEHR.flaeche);
-  assert.ok(schrift >= 4.5, `on-umkehr auf umkehr: ${z(schrift)}:1`);
-  // Der Akzent ist Textknopf UND Fokus-Ring — für beides reicht 4.5:1.
-  const akzent = kontrast(UMKEHR.akzent, UMKEHR.flaeche);
-  assert.ok(akzent >= 4.5, `umkehr-akzent auf umkehr: ${z(akzent)}:1`);
-});
-
-// ── 6. Atlassian: Lozenge und Section Message ──────────────────────────────
-// Die Werte sind Atlassians eigene (lib/farben.ts) — geprüft wird trotzdem,
-// denn sie liegen hier auf UNSEREM Grund. Die Lozenge steht auf der Seite, auf
-// der Karte und im Dialog (Übungsauswahl), also auf jeder Höhenstufe; ihre
-// neutrale Fläche ist halbtransparent und wird darum je Stufe neu gemischt.
-pruefe("Jede Lozenge trägt ihre Schrift auf jeder Höhenstufe", () => {
-  for (const [darstellung, { flaeche, schrift }] of Object.entries(LOZENGE)) {
-    for (const stufe of ELEV) {
-      const wert = kontrast(schrift, deckend(flaeche, stufe.hex));
-      assert.ok(wert >= 4.5, `lozenge-${darstellung} auf ${elevName(stufe.dp)}: ${z(wert)}:1`);
+  // Schrift liegt in der Anwendung auf jeder Höhenstufe — Karte, Menü, Dialog.
+  // Geprüft wird gegen das Kompositergebnis, weil die Deckungen durchscheinen.
+  pruefe(`${T}: Volle und mittlere Schrift erreichen auf jeder Stufe 4.5:1`, () => {
+    for (const stufe of t.elev) {
+      for (const [name, deckung] of [["voll", t.deckung.hoch], ["mittel", t.deckung.mittel]] as const) {
+        const wert = kontrast(schriftAuf(t, deckung, stufe.hex), stufe.hex);
+        assert.ok(wert >= 4.5, `${name} auf ${elevName(stufe.dp)}: ${z(wert)}:1`);
+      }
     }
-  }
-});
+  });
 
-pruefe("Kalenderblatt: Schrift trägt auf weissem und grauem Blatt (4.5:1)", () => {
-  // Epic #490: Bevorstehend ist das Blatt die umgekehrte Fläche (`umkehr`)
-  // mit ihrer Schrift; vergangen und gestrichen grau (elev-08) mit der leisen
-  // Schrift. Dieselben Flächen hinterlegen die Tage im Mini-Monat.
-  const weiss = kontrast(UMKEHR.schrift, UMKEHR.flaeche);
-  assert.ok(weiss >= 4.5, `weisses Blatt: ${z(weiss)}:1`);
-  const grau = elev(8);
-  const leise = kontrast(deckend(hex8("#ffffff", SCHRIFT.mittel), grau), grau);
-  assert.ok(leise >= 4.5, `graues Blatt: ${z(leise)}:1`);
-});
+  pruefe(`${T}: Tiefe Schrift erreicht 3:1 - sie ist nur für Deaktiviertes`, () => {
+    // Deaktivierter Text ist unwesentlicher Inhalt (WCAG 1.4.3): Er muss
+    // erkennbar bleiben, aber gerade NICHT wie lesbarer Text wirken.
+    for (const stufe of t.elev) {
+      const wert = kontrast(schriftAuf(t, t.deckung.tief, stufe.hex), stufe.hex);
+      assert.ok(wert >= 3.0, `${elevName(stufe.dp)}: ${z(wert)}:1`);
+    }
+  });
 
-pruefe("Mini-Monat: ein Tag mit Termin hebt sich von der Fläche ab (WCAG 1.4.11)", () => {
-  // Die helle Hinterlegung trägt «hier findet etwas statt» als Grafik (3:1)
-  // auf der Fläche des Monats (elev-01). Ein ausgefallener Tag sagt es mit
-  // dem Strich und beim Vorlesen, nicht mit seinem Grau allein.
-  const wert = kontrast(UMKEHR.flaeche, elev(1));
-  assert.ok(wert >= 3, `Termin auf ${elevName(1)}: ${z(wert)}:1`);
-});
+  pruefe(`${T}: Primary trägt als Schrift auf jeder Höhenstufe`, () => {
+    for (const stufe of t.elev) {
+      const wert = kontrast(t.primary, stufe.hex);
+      assert.ok(wert >= 4.5, `${elevName(stufe.dp)}: ${z(wert)}:1`);
+    }
+  });
 
-pruefe("Jede Section Message trägt Schrift und Zeichen", () => {
-  // Die Schrift ist die gewöhnliche (on-surface, 4.5:1); das Zeichen ist ein
-  // grafisches Objekt (3:1 nach WCAG 1.4.11) und trägt den Ton.
-  for (const [rolle, { flaeche, icon }] of Object.entries(SECTION)) {
-    const schrift = kontrast("#ffffff", flaeche);
-    assert.ok(schrift >= 4.5, `on-surface auf section-${rolle}: ${z(schrift)}:1`);
-    const zeichen = kontrast(icon, flaeche);
-    assert.ok(zeichen >= 3.0, `icon-${rolle} auf section-${rolle}: ${z(zeichen)}:1`);
-    // Ihre Knöpfe sind Textknöpfe in Primary und stehen auf derselben Fläche.
-    const knopf = kontrast(PRIMARY, flaeche);
-    assert.ok(knopf >= 4.5, `primary auf section-${rolle}: ${z(knopf)}:1`);
-  }
+  // Error auf JEDER Stufe, nicht nur auf dem Grund: Das war die Lücke, durch
+  // die einst eine Kontrast-Regression kam (Materials Baseline trug auf dem
+  // Grund und fiel im Dialog auf 3.17). Error steht als Schrift auf Karte,
+  // Menüzeile und Dialog — und als 1.5-px-Kontur, für die 4.5:1 mitreicht.
+  pruefe(`${T}: Error trägt als Schrift und Kontur auf jeder Höhenstufe`, () => {
+    for (const stufe of t.elev) {
+      const wert = kontrast(t.error, stufe.hex);
+      assert.ok(wert >= 4.5, `error auf ${elevName(stufe.dp)}: ${z(wert)}:1`);
+    }
+  });
+
+  pruefe(`${T}: Die Kontur trägt auf Grund, Karte und Menü (WCAG 1.4.11)`, () => {
+    // Umrandeter Knopf, Chip, umrandetes Feld: die Kontur ist das Einzige,
+    // was sie begrenzt. Im Dunkeln steht sie seit je unter 3:1 und wird dort
+    // vom Fokus und der Beschriftung getragen; im Hellen muss sie selbst tragen.
+    if (t.name === "dunkel") return;
+    for (const dp of [0, 1, 8]) {
+      const flaeche = stufeVon(t, dp);
+      const wert = kontrast(schriftAuf(t, t.kante, flaeche), flaeche);
+      assert.ok(wert >= 3.0, `kante auf ${elevName(dp)}: ${z(wert)}:1`);
+    }
+  });
+
+  pruefe(`${T}: Die Aufschrift gefüllter Flächen trägt`, () => {
+    // Gefüllter und destruktiver Knopf: Hier liegt on-* auf der Fläche selbst.
+    const aufPrimary = kontrast(t.onPrimary, t.primary);
+    assert.ok(aufPrimary >= 4.5, `on-primary auf primary: ${z(aufPrimary)}:1`);
+    const aufDanger = kontrast(t.onDanger, t.danger);
+    assert.ok(aufDanger >= 4.5, `on-danger auf danger: ${z(aufDanger)}:1`);
+  });
+
+  pruefe(`${T}: Schalter - Knopf und Zeichen tragen (WCAG 1.4.11)`, () => {
+    // Die Bahn ist nur Kontur; den Stand tragen Lage, Farbe und Zeichen des
+    // Knopfs — beides grafische Objekte, also 3:1. Der Schalter steht in
+    // Listen auf Seite, Karte und Menüfläche (bis elev-08).
+    for (const stufe of t.elev.filter((s) => s.dp <= 8)) {
+      const an = kontrast(t.primary, stufe.hex);
+      assert.ok(an >= 3.0, `Knopf an (primary) auf ${elevName(stufe.dp)}: ${z(an)}:1`);
+      const knopfAus = schriftAuf(t, t.deckung.mittel, stufe.hex);
+      const aus = kontrast(knopfAus, stufe.hex);
+      assert.ok(aus >= 3.0, `Knopf aus (on-surface-mittel) auf ${elevName(stufe.dp)}: ${z(aus)}:1`);
+      const kreuz = kontrast(stufeVon(t, 1), knopfAus);
+      assert.ok(kreuz >= 3.0, `Kreuz (elev-01) auf dem Knopf über ${elevName(stufe.dp)}: ${z(kreuz)}:1`);
+    }
+    const haken = kontrast(t.onPrimary, t.primary);
+    assert.ok(haken >= 3.0, `Haken (on-primary) auf primary: ${z(haken)}:1`);
+  });
+
+  // ── Umgekehrte Fläche (Snackbar, Kalenderblatt, Mini-Monat) ──
+  pruefe(`${T}: Die umgekehrte Fläche hebt sich von jeder Höhenstufe ab`, () => {
+    // Sie ist selbst das grafische Objekt, das auffallen soll: 3:1 nach
+    // WCAG 1.4.11 gegen alles, worüber sie schweben kann.
+    for (const stufe of t.elev) {
+      const wert = kontrast(t.umkehr.flaeche, stufe.hex);
+      assert.ok(wert >= 3.0, `umkehr über ${elevName(stufe.dp)}: ${z(wert)}:1`);
+    }
+  });
+
+  pruefe(`${T}: Schrift und Akzent tragen auf der umgekehrten Fläche`, () => {
+    const schrift = kontrast(t.umkehr.schrift, t.umkehr.flaeche);
+    assert.ok(schrift >= 4.5, `on-umkehr auf umkehr: ${z(schrift)}:1`);
+    // Der Akzent ist Textknopf UND Fokus-Ring — für beides reicht 4.5:1.
+    const akzent = kontrast(t.umkehr.akzent, t.umkehr.flaeche);
+    assert.ok(akzent >= 4.5, `umkehr-akzent auf umkehr: ${z(akzent)}:1`);
+  });
+
+  pruefe(`${T}: Kalenderblatt - Schrift trägt auf dem bevorstehenden und dem vergangenen Blatt`, () => {
+    // Epic #490: Bevorstehend ist das Blatt die umgekehrte Fläche mit ihrer
+    // Schrift; vergangen und gestrichen die Betonung an Ort (`betont`) mit der
+    // leisen Schrift. Dieselben Flächen hinterlegen die Tage im Mini-Monat.
+    // Das Blatt steht auf der Seite, auf der Karte und im Panel.
+    const bevorstehend = kontrast(t.umkehr.schrift, t.umkehr.flaeche);
+    assert.ok(bevorstehend >= 4.5, `bevorstehendes Blatt: ${z(bevorstehend)}:1`);
+    for (const dp of [0, 1, 8]) {
+      const vergangen = schriftAuf(t, BETONT, stufeVon(t, dp));
+      const leise = kontrast(schriftAuf(t, t.deckung.mittel, vergangen), vergangen);
+      assert.ok(leise >= 4.5, `vergangenes Blatt auf ${elevName(dp)}: ${z(leise)}:1`);
+    }
+  });
+
+  pruefe(`${T}: Mini-Monat - ein Tag mit Termin hebt sich von der Fläche ab (WCAG 1.4.11)`, () => {
+    // Die Hinterlegung trägt «hier findet etwas statt» als Grafik (3:1) auf
+    // der Fläche des Monats (elev-01). Ein ausgefallener Tag sagt es mit dem
+    // Strich und beim Vorlesen, nicht mit seinem Grau allein.
+    const wert = kontrast(t.umkehr.flaeche, stufeVon(t, 1));
+    assert.ok(wert >= 3, `Termin auf elev-01: ${z(wert)}:1`);
+  });
+
+  // ── Atlassian: Lozenge und Section Message ──
+  // Die Werte sind Atlassians eigene (lib/farben.ts) — geprüft wird trotzdem,
+  // denn sie liegen hier auf UNSEREM Grund. Die Lozenge steht auf der Seite,
+  // auf der Karte und im Dialog, also auf jeder Höhenstufe; ihre neutrale
+  // Fläche ist halbtransparent und wird darum je Stufe neu gemischt.
+  pruefe(`${T}: Jede Lozenge trägt ihre Schrift auf jeder Höhenstufe`, () => {
+    for (const [darstellung, { flaeche, schrift }] of Object.entries(t.lozenge)) {
+      for (const stufe of t.elev) {
+        const wert = kontrast(schrift, deckend(flaeche, stufe.hex));
+        assert.ok(wert >= 4.5, `lozenge-${darstellung} auf ${elevName(stufe.dp)}: ${z(wert)}:1`);
+      }
+    }
+  });
+
+  pruefe(`${T}: Jede Section Message trägt Schrift, Zeichen und Knöpfe`, () => {
+    // Die Schrift ist die gewöhnliche (on-surface, 4.5:1); das Zeichen ist ein
+    // grafisches Objekt (3:1 nach WCAG 1.4.11) und trägt den Ton. Ihre Knöpfe
+    // sind Textknöpfe in Primary und stehen auf derselben Fläche.
+    for (const [rolle, { flaeche, icon }] of Object.entries(t.section)) {
+      const schrift = kontrast(t.schrift, flaeche);
+      assert.ok(schrift >= 4.5, `on-surface auf section-${rolle}: ${z(schrift)}:1`);
+      const zeichen = kontrast(icon, flaeche);
+      assert.ok(zeichen >= 3.0, `icon-${rolle} auf section-${rolle}: ${z(zeichen)}:1`);
+      const knopf = kontrast(t.primary, flaeche);
+      assert.ok(knopf >= 4.5, `primary auf section-${rolle}: ${z(knopf)}:1`);
+    }
+  });
+}
+
+pruefe("Dunkel: Die umgekehrte Fläche ist Weiss über dem Grund in ihrer Deckung", () => {
+  assert.equal(UMKEHR.flaeche, ueberlagern("#ffffff", UMKEHR.deckung, GRUND));
 });
 
 // ── 7. Druck ───────────────────────────────────────────────────────────────
@@ -301,6 +334,8 @@ pruefe("Die Druckfarben tragen auf weissem Papier", () => {
     const wert = kontrast(DRUCK[rolle], "#ffffff");
     assert.ok(wert >= 4.5, `Druck ${rolle} auf Papier: ${z(wert)}:1`);
   }
+  const aufDanger = kontrast(DRUCK["on-danger"], DRUCK.danger);
+  assert.ok(aufDanger >= 4.5, `on-danger auf danger (Druck): ${z(aufDanger)}:1`);
 });
 
 pruefe("Der @media-print-Block ist der Zwilling von DRUCK", () => {
@@ -335,7 +370,7 @@ pruefe("Jede Rolle, die im Druck sichtbar wird, hat einen Override", () => {
     "on-danger",
     // Lozenge und Section Message wechseln auf Papier vollständig ins helle
     // Atlassian-Theme — jede ihrer Rollen braucht darum einen Override.
-    ...Object.keys(BILDSCHIRM).filter((rolle) => /^(on-)?lozenge-|^section-|^icon-/.test(rolle)),
+    ...Object.keys(DUNKEL).filter((rolle) => /^(on-)?lozenge-|^section-|^icon-/.test(rolle)),
   ];
   assert.deepEqual(
     pflicht.filter((rolle) => !(rolle in DRUCK)),
@@ -346,13 +381,13 @@ pruefe("Jede Rolle, die im Druck sichtbar wird, hat einen Override", () => {
 pruefe("Lozenge und Section Message tragen auf Papier", () => {
   // Gedruckt wird die Lozenge vor allem als Alterskategorie (Druckansicht des
   // Trainings): Papier und die hellste Kartenstufe des Drucks.
-  for (const [darstellung, { flaeche, schrift }] of Object.entries(LOZENGE_DRUCK)) {
+  for (const [darstellung, { flaeche, schrift }] of Object.entries(LOZENGE_HELL)) {
     for (const papier of [DRUCK["elev-00"], DRUCK["elev-01"]]) {
       const wert = kontrast(schrift, deckend(flaeche, papier));
       assert.ok(wert >= 4.5, `Druck lozenge-${darstellung} auf ${papier}: ${z(wert)}:1`);
     }
   }
-  for (const [rolle, { flaeche, icon }] of Object.entries(SECTION_DRUCK)) {
+  for (const [rolle, { flaeche, icon }] of Object.entries(SECTION_HELL)) {
     const schrift = kontrast(DRUCK_SCHRIFT, flaeche);
     assert.ok(schrift >= 4.5, `Druckschrift auf section-${rolle}: ${z(schrift)}:1`);
     const zeichen = kontrast(icon, flaeche);
@@ -450,29 +485,23 @@ pruefe(`Keine Altlast der alten Palette (${DATEIEN.length} Dateien)`, () => {
 
 // ── Messwerte ──────────────────────────────────────────────────────────────
 // Nicht geprüft, sondern berichtet: die Zahlen, die im Styleguide stehen.
-console.log("\nMesswerte (Kontrast nach WCAG 2.1):");
-for (const stufe of ELEV) {
-  const name = elevName(stufe.dp);
+console.log("\nMesswerte (Kontrast nach WCAG 2.2):");
+for (const t of THEMEN) {
+  console.log(`  ${t.name}:`);
+  for (const stufe of t.elev) {
+    console.log(
+      `    ${elevName(stufe.dp)}  ${stufe.hex}  ` +
+        `voll ${z(kontrast(t.schrift, stufe.hex))}  ` +
+        `mittel ${z(kontrast(ueberlagern(t.schrift, t.deckung.mittel, stufe.hex), stufe.hex))}  ` +
+        `tief ${z(kontrast(ueberlagern(t.schrift, t.deckung.tief, stufe.hex), stufe.hex))}  ` +
+        `primary ${z(kontrast(t.primary, stufe.hex))}  ` +
+        `error ${z(kontrast(t.error, stufe.hex))}`,
+    );
+  }
   console.log(
-    `  ${name}  ${stufe.hex}  ` +
-      `weiss ${z(kontrast("#ffffff", stufe.hex))}  ` +
-      `mittel ${z(kontrast(ueberlagern("#ffffff", SCHRIFT.mittel, stufe.hex), stufe.hex))}  ` +
-      `tief ${z(kontrast(ueberlagern("#ffffff", SCHRIFT.tief, stufe.hex), stufe.hex))}  ` +
-      `primary ${z(kontrast(PRIMARY, stufe.hex))}  ` +
-      `error ${z(kontrast(ERROR, stufe.hex))}`,
-  );
-}
-console.log("  Lozenge (Schrift auf Fläche, über elev-00 / elev-24):");
-for (const [darstellung, { flaeche, schrift }] of Object.entries(LOZENGE)) {
-  console.log(
-    `    ${darstellung.padEnd(15)}  ${z(kontrast(schrift, deckend(flaeche, elev(0))))}  ` +
-      `${z(kontrast(schrift, deckend(flaeche, elev(24))))}`,
-  );
-}
-console.log("  Section Message (Schrift / Zeichen auf Fläche):");
-for (const [rolle, { flaeche, icon }] of Object.entries(SECTION)) {
-  console.log(
-    `    ${rolle.padEnd(12)}  ${z(kontrast("#ffffff", flaeche))}  ${z(kontrast(icon, flaeche))}`,
+    `    umkehr: Schrift ${z(kontrast(t.umkehr.schrift, t.umkehr.flaeche))}  ` +
+      `Akzent ${z(kontrast(t.umkehr.akzent, t.umkehr.flaeche))}  ` +
+      `Hex8 mittel ${hex8(t.schrift, t.deckung.mittel)}  tief ${hex8(t.schrift, t.deckung.tief)}`,
   );
 }
 console.log(
@@ -481,7 +510,6 @@ console.log(
     `mittel ${z(kontrast(DRUCK["on-surface-mittel"], "#ffffff"))}  ` +
     `tief ${z(kontrast(DRUCK["on-surface-tief"], "#ffffff"))}`,
 );
-console.log(`  Hex8-Proben: mittel ${hex8("#ffffff", SCHRIFT.mittel)}  tief ${hex8("#ffffff", SCHRIFT.tief)}`);
 
 console.log(
   `\n${gelaufen} Prüfungen bestanden` +
