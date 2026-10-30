@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserImRequest } from "@/lib/supabase/server";
 import { PFAD_HEADER } from "@/lib/pfad";
 import { APP_VERSION } from "@/lib/version";
 import { getAnzeigenameFuer } from "@/lib/queries/profil";
@@ -27,10 +27,7 @@ const TRAINING_PFAD = /^\/training\/([0-9a-f-]{36})(\/|$)/i;
    siehe `TeamKontext`. Teams und Name werden mit jeder Server Action neu
    gelesen, die `revalidatePath` ruft. */
 export async function AppNav() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [supabase, user] = await Promise.all([createClient(), getUserImRequest()]);
 
   const pfad = (await headers()).get(PFAD_HEADER) ?? "";
   const trainingId = pfad.match(TRAINING_PFAD)?.[1];

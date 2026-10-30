@@ -77,7 +77,7 @@ export const HeadlineField = forwardRef<HTMLInputElement, HeadlineFieldProps>(
         "-mx-2 w-[calc(100%+1rem)] rounded-flaeche kontur bg-transparent px-2 py-1 text-on-surface outline-none",
         "placeholder:text-on-surface-mittel",
         "transition-colors duration-150",
-        "hover:bg-elev-04 focus:bg-transparent",
+        "hover:betont focus:bg-transparent",
         error ? "border-error" : "border-transparent focus:border-primary",
         className,
       )}

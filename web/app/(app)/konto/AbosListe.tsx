@@ -49,7 +49,7 @@ export function AbosListe({ abos }: { abos: MeinAbo[] }) {
           <ul className="flex flex-col gap-2">
             {abos.map((a) => (
               <li key={a.id} className="flex items-center gap-3 rounded-flaeche bg-elev-01 px-4 py-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full betont text-on-surface">
                   <CalendarDays size={18} strokeWidth={2} aria-hidden />
                 </span>
                 <span className="type-body-large min-w-0 flex-1 truncate text-on-surface">{a.team.name}</span>

@@ -211,7 +211,7 @@ function EntfernenFolgen({ name, folgen }: { name: string; folgen: KaderEntferne
       {fuerAlle > 0 && (
         <>
           <p className="mt-3">Diese anstehenden Termine und Serien tragen nur «{name}» und gelten danach für alle:</p>
-          <ul className="mt-2 flex flex-col gap-1.5 rounded-flaeche bg-elev-08 p-3 type-body-small text-on-surface">
+          <ul className="mt-2 flex flex-col gap-1.5 rounded-flaeche betont p-3 type-body-small text-on-surface">
             {folgen.serien.map((s) => (
               <li key={s.id}>
                 Terminserie {wochentageText(s.wochentage as Wochentag[])} · {s.beginn}–{s.ende} Uhr · bis {datumKurz(s.bis)}

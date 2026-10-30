@@ -20,7 +20,7 @@ import { AusfallGrund } from "./AusfallGrund";
    Treffpunkte mit Anreise, Zeit und Ort, frühester zuerst (AK 5); die
    Bemerkung.
 
-   - Ohne Meldung «Anmelden» hell und «Abmelden» umrandet, sonst nur der eine
+   - Ohne Meldung «Anmelden» umgekehrt und «Abmelden» umrandet, sonst nur der eine
      mögliche Wechsel umrandet. Nach der Meldefrist, ab dem Anpfiff und bei
      nicht aufgeboten keine Knöpfe, nur der Satz dazu.
    - Abgemeldet, nicht aufgeboten, Meldefrist verpasst und ausgefallen: Die
@@ -116,7 +116,7 @@ export function SpielKarte({
         <div className="flex flex-wrap gap-2">
           {meldung !== "angemeldet" && (
             <Button
-              variant={meldung === null ? "hell" : "outlined"}
+              variant={meldung === null ? "umkehr" : "outlined"}
               disabled={pending}
               onClick={() => onMelden(true)}
               aria-label={`${name} am ${tagText(t.datum)} anmelden`}

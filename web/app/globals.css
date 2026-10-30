@@ -1,41 +1,55 @@
 @import "tailwindcss";
 
 /* ───────────────────────────────────────────────────────────
-   KiFu — Material 2 Dark
-   Eine einzige Fläche (#101613, entsättigtes Rasengrün) trägt die
-   ganze App; Höhe entsteht nicht durch eine zweite Farbe, sondern
-   durch ein weisses Overlay auf derselben Fläche. Akzent ist
-   Primary #bb86fc — Material 2 Baseline, im Dunkeln hell genug,
-   um Text zu tragen. Farbe umrandet und beschriftet, sie füllt
-   nur dort, wo eine Fläche wirklich gemeint ist — ausgenommen die
-   drei Atlassian-Bausteine Lozenge, Badge und Section Message.
+   Zwei Erscheinungsbilder, ein Satz Tokens (Epic #563)
+   Jede Farbrolle steht als `light-dark(hell, dunkel)`. Welches
+   der beiden gilt, entscheidet allein `color-scheme` (siehe
+   «Erscheinungsbild» in @layer base) — dieselbe Eigenschaft, die
+   auch dem Browser sagt, wie er seine eigenen Bedienteile zeichnet.
+   Kein Skript, kein zweiter Block: Folgt die Seite dem Gerät, geht
+   sie bei einem Wechsel von selbst mit.
+
+   Dunkel: Eine einzige Fläche (#101613, entsättigtes Rasengrün)
+   trägt die ganze App; Höhe entsteht durch ein weisses Overlay auf
+   derselben Fläche. Hell: ein leises Rasengrau als Grund, weisse
+   Karten, und das Schwebende hebt sich über den Schatten ab. Akzent
+   ist in beiden das Violett der Marke. Farbe umrandet und
+   beschriftet, sie füllt nur dort, wo eine Fläche wirklich gemeint
+   ist — ausgenommen die drei Atlassian-Bausteine Lozenge, Badge und
+   Section Message.
    ─────────────────────────────────────────────────────────── */
 
 @theme {
-  /* ─── Höhe: Grund + weisses Overlay, vorab verrechnet ───
-     Literale Hex-Werte, keine Rechnung zur Laufzeit — so kann
-     `scripts/pruefe-farben.ts` die Palette per Regex mitlesen. */
-  --color-elev-00: #101613; /* 0 % */
-  --color-elev-01: #1c221f; /* 5 % */
-  --color-elev-02: #212624; /* 7 % */
-  --color-elev-03: #232926; /* 8 % */
-  --color-elev-04: #262b28; /* 9 % */
-  --color-elev-06: #2a302d; /* 11 % */
-  --color-elev-08: #2d322f; /* 12 % */
-  --color-elev-12: #313734; /* 14 % */
-  --color-elev-16: #343936; /* 15 % */
-  --color-elev-24: #363b39; /* 16 % */
+  /* ─── Höhe ───
+     Dunkel: Grund + weisses Overlay, vorab verrechnet (in Klammern die
+     Deckung). Hell: getönter Grund, weiss alles darauf, getönt nur was in
+     der Karte liegt (elev-02). Betonung an Ort ist keine Stufe, sondern
+     `betont` (unten). Literale Hex-Werte, keine Rechnung zur
+     Laufzeit — so kann `scripts/pruefe-farben.ts` die Palette per Regex
+     mitlesen. */
+  --color-elev-00: light-dark(#f5f6f5, #101613); /* 0 % */
+  --color-elev-01: light-dark(#ffffff, #1c221f); /* 5 % */
+  --color-elev-02: light-dark(#f5f6f5, #212624); /* 7 % */
+  --color-elev-03: light-dark(#ffffff, #232926); /* 8 % */
+  --color-elev-04: light-dark(#ffffff, #262b28); /* 9 % */
+  --color-elev-06: light-dark(#ffffff, #2a302d); /* 11 % */
+  --color-elev-08: light-dark(#ffffff, #2d322f); /* 12 % */
+  --color-elev-12: light-dark(#ffffff, #313734); /* 14 % */
+  --color-elev-16: light-dark(#ffffff, #343936); /* 15 % */
+  --color-elev-24: light-dark(#ffffff, #363b39); /* 16 % */
 
-  /* ─── Akzente ─── */
-  --color-primary: #bb86fc;
-  --color-on-primary: #000000;
-  /* Eine Stufe heller als Materials Baseline (#cf6679). Die Baseline ist als
-     FLÄCHE gedacht und trägt als Schrift nur auf dem Grund (5.09) — im Dialog
-     fällt sie auf 3.17. Diese Anwendung setzt Error aber fast überall als
-     SCHRIFT: auf Karten, in Menüzeilen, in Dialogen. #e58a95 trägt dort
-     durchweg über 4.5:1 (00dp 7.33 · 01dp 6.47 · 08dp 5.22 · 24dp 4.56),
+  /* ─── Akzente ───
+     Das Violett der Marke; im Dunkeln eine hellere Stufe, die als Schrift
+     auf jeder Höhenstufe über 4.5:1 trägt. */
+  --color-primary: light-dark(#6d4aff, #b29cff);
+  --color-on-primary: light-dark(#ffffff, #000000);
+  /* Im Dunkeln eine Stufe heller als Materials Baseline (#cf6679). Die
+     Baseline ist als FLÄCHE gedacht und trägt als Schrift nur auf dem Grund
+     (5.09) — im Dialog fällt sie auf 3.17. Diese Anwendung setzt Error aber
+     fast überall als SCHRIFT: auf Karten, in Menüzeilen, in Dialogen.
+     #e58a95 trägt dort durchweg über 4.5:1, im Hellen #b42a37 über 5.5:1 —
      nachgerechnet in scripts/pruefe-farben.ts auf jeder Stufe. */
-  --color-error: #e58a95;
+  --color-error: light-dark(#b42a37, #e58a95);
   /* Die Fläche des destruktiven Knopfs — dunkler als Error, weil sie Weiss
      trägt (5.16:1); Error selbst käme mit Weiss nur auf 2.50:1. Atlassians
      danger.bold (helles Theme). PO 2026-10-06. */
@@ -43,69 +57,74 @@
   --color-on-danger: #ffffff;
   --color-scrim: #000000;
 
-  /* ─── Schrift und Striche: Weiss in vier Deckungen ───
-     Hex8 statt eigener Grautöne — so trägt jede Höhenstufe denselben
-     Text, ohne dass er pro Fläche neu gemischt werden müsste. */
-  --color-on-surface: #ffffff; /* 100 % */
-  --color-on-surface-mittel: #ffffffbd; /* 74 % */
-  /* 38 % reicht auf 00dp nur für 3.6:1 — darum ausschliesslich für
-     Deaktiviertes, wo Material den Kontrast bewusst preisgibt. */
-  --color-on-surface-tief: #ffffff61; /* 38 % */
-  --color-linie: #ffffff1f; /* 12 % — Trenner und Haarlinie, 1 px */
-  --color-kante: #ffffff47; /* 28 % — Kontur von Feld, Chip, Knopf, 1.5 px */
+  /* ─── Schrift und Striche: eine Schriftfarbe in vier Deckungen ───
+     Dunkel Weiss, hell die Tinte (#141a17). Hex8 statt eigener Grautöne —
+     so trägt jede Höhenstufe denselben Text, ohne dass er pro Fläche neu
+     gemischt werden müsste. */
+  --color-on-surface: light-dark(#141a17, #ffffff); /* 100 % */
+  --color-on-surface-mittel: light-dark(#141a17bd, #ffffffbd); /* 74 % */
+  /* Ausschliesslich für Deaktiviertes, wo der Kontrast bewusst preisgegeben
+     ist: im Dunkeln 38 % (3.6:1), im Hellen 50 % (3.3:1). */
+  --color-on-surface-tief: light-dark(#141a1780, #ffffff61);
+  --color-linie: light-dark(#141a171f, #ffffff1f); /* 12 % — Trenner und Haarlinie, 1 px */
+  /* Kontur von Feld, Chip, Knopf, 1.5 px — im Hellen 50 %, damit sie 3:1 trägt. */
+  --color-kante: light-dark(#141a1780, #ffffff47);
 
-  /* ─── Umgekehrte Fläche — die Snackbar (#234) und der helle Knopf
-     (`variant="hell"`). Weiss 87 % über dem
-     Grund; darauf der Grund als Schrift und das dunkle Violett als Akzent.
-     Angewandt über @utility umkehr, nie als einzelne Klasse. ─── */
-  --color-umkehr: #e0e1e0;
-  --color-on-umkehr: #101613;
-  --color-umkehr-akzent: #4527a0;
+  /* ─── Umgekehrte Fläche — die Snackbar (#234), der umgekehrte Knopf
+     (`variant="umkehr"`), Kalenderblatt und Mini-Monat. Im Dunkeln hell (Weiss
+     87 % über dem Grund) mit dem Grund als Schrift und tiefem Violett als
+     Akzent; im Hellen dunkel (die Menüstufe des Dunkeln) mit dem hellen Grund
+     als Schrift und dem hellen Violett als Akzent. Angewandt über
+     @utility umkehr, nie als einzelne Klasse. ─── */
+  --color-umkehr: light-dark(#2d322f, #e0e1e0);
+  --color-on-umkehr: light-dark(#f5f6f5, #101613);
+  --color-umkehr-akzent: light-dark(#b29cff, #5b38eb);
 
   /* ─── Atlassian — Lozenge (Plakette), Badge (Zähler), Section Message ───
      Diese drei Bausteine folgen dem Atlassian Design System wie Jira, nicht
-     Material. Die Werte stehen wörtlich aus @atlaskit/tokens (Theme
-     atlassian-dark); Herleitung und Zuordnung in lib/farben.ts.
+     Material. Die Werte stehen wörtlich aus @atlaskit/tokens (hell aus
+     atlassian-light, dunkel aus atlassian-dark); Herleitung und Zuordnung
+     in lib/farben.ts.
      lozenge-* = background.<x>.subtler, on-lozenge-* = text.<x>.bolder;
      section-* = background.<x>, icon-* = icon.<x>. Die Akzente tragen die
      Alterskategorien G bis A (KategorieLozenge). ─── */
-  --color-lozenge-neutral: #ceced912;
-  --color-on-lozenge-neutral: #cecfd2;
-  --color-lozenge-success: #37471f;
-  --color-on-lozenge-success: #d3f1a7;
-  --color-lozenge-warning: #693200;
-  --color-on-lozenge-warning: #fce4a6;
-  --color-lozenge-danger: #5d1f1a;
-  --color-on-lozenge-danger: #ffd5d2;
-  --color-lozenge-information: #123263;
-  --color-on-lozenge-information: #cfe1fd;
-  --color-lozenge-discovery: #48245d;
-  --color-on-lozenge-discovery: #eed7fc;
-  --color-lozenge-accent-blue: #123263;
-  --color-on-lozenge-accent-blue: #cfe1fd;
-  --color-lozenge-accent-yellow: #533f04;
-  --color-on-lozenge-accent-yellow: #f5e989;
-  --color-lozenge-accent-orange: #693200;
-  --color-on-lozenge-accent-orange: #fce4a6;
-  --color-lozenge-accent-green: #164b35;
-  --color-on-lozenge-accent-green: #baf3db;
-  --color-lozenge-accent-magenta: #50253f;
-  --color-on-lozenge-accent-magenta: #fdd0ec;
-  --color-lozenge-accent-purple: #48245d;
-  --color-on-lozenge-accent-purple: #eed7fc;
-  --color-lozenge-accent-gray: #303134;
-  --color-on-lozenge-accent-gray: #e2e3e4;
+  --color-lozenge-neutral: light-dark(#0515240f, #ceced912);
+  --color-on-lozenge-neutral: light-dark(#292a2e, #cecfd2);
+  --color-lozenge-success: light-dark(#d3f1a7, #37471f);
+  --color-on-lozenge-success: light-dark(#37471f, #d3f1a7);
+  --color-lozenge-warning: light-dark(#fce4a6, #693200);
+  --color-on-lozenge-warning: light-dark(#693200, #fce4a6);
+  --color-lozenge-danger: light-dark(#ffd5d2, #5d1f1a);
+  --color-on-lozenge-danger: light-dark(#5d1f1a, #ffd5d2);
+  --color-lozenge-information: light-dark(#cfe1fd, #123263);
+  --color-on-lozenge-information: light-dark(#123263, #cfe1fd);
+  --color-lozenge-discovery: light-dark(#eed7fc, #48245d);
+  --color-on-lozenge-discovery: light-dark(#48245d, #eed7fc);
+  --color-lozenge-accent-blue: light-dark(#cfe1fd, #123263);
+  --color-on-lozenge-accent-blue: light-dark(#123263, #cfe1fd);
+  --color-lozenge-accent-yellow: light-dark(#f5e989, #533f04);
+  --color-on-lozenge-accent-yellow: light-dark(#533f04, #f5e989);
+  --color-lozenge-accent-orange: light-dark(#fce4a6, #693200);
+  --color-on-lozenge-accent-orange: light-dark(#693200, #fce4a6);
+  --color-lozenge-accent-green: light-dark(#baf3db, #164b35);
+  --color-on-lozenge-accent-green: light-dark(#164b35, #baf3db);
+  --color-lozenge-accent-magenta: light-dark(#fdd0ec, #50253f);
+  --color-on-lozenge-accent-magenta: light-dark(#50253f, #fdd0ec);
+  --color-lozenge-accent-purple: light-dark(#eed7fc, #48245d);
+  --color-on-lozenge-accent-purple: light-dark(#48245d, #eed7fc);
+  --color-lozenge-accent-gray: light-dark(#dddee1, #303134);
+  --color-on-lozenge-accent-gray: light-dark(#1e1f21, #e2e3e4);
 
-  --color-section-information: #1c2b42;
-  --color-icon-information: #4688ec;
-  --color-section-warning: #3a2c1f;
-  --color-icon-warning: #fbc828;
-  --color-section-danger: #42221f;
-  --color-icon-danger: #f15b50;
-  --color-section-success: #28311b;
-  --color-icon-success: #82b536;
-  --color-section-discovery: #35243f;
-  --color-icon-discovery: #bf63f3;
+  --color-section-information: light-dark(#e9f2fe, #1c2b42);
+  --color-icon-information: light-dark(#357de8, #4688ec);
+  --color-section-warning: light-dark(#fff5db, #3a2c1f);
+  --color-icon-warning: light-dark(#e06c00, #fbc828);
+  --color-section-danger: light-dark(#ffeceb, #42221f);
+  --color-icon-danger: light-dark(#c9372c, #f15b50);
+  --color-section-success: light-dark(#efffd6, #28311b);
+  --color-icon-success: light-dark(#6a9a23, #82b536);
+  --color-section-discovery: light-dark(#f8eefe, #35243f);
+  --color-icon-discovery: light-dark(#af59e1, #bf63f3);
 
   /* ─── Zustände: Deckung der Overlay-Ebene (siehe @utility state) ─── */
   --state-hover: 0.04;
@@ -124,10 +143,11 @@
 
   /* ─── Schatten — nur wo etwas wirklich schwebt. Im Dunkeln trägt die
      Helligkeit die Höhe, der Schatten trennt bloss das Schwebende vom
-     Grund darunter. ─── */
-  --shadow-dp-06: 0 4px 12px rgb(0 0 0 / 0.55);
-  --shadow-dp-08: 0 4px 12px rgb(0 0 0 / 0.6);
-  --shadow-dp-24: 0 8px 24px rgb(0 0 0 / 0.6);
+     Grund darunter. Im Hellen ist er es, der die Höhe trägt — weiss auf
+     weiss hebt sich das Menü nur über ihn ab, darum leise, aber weit. ─── */
+  --shadow-dp-06: 0 4px 12px light-dark(rgb(20 26 23 / 0.14), rgb(0 0 0 / 0.55));
+  --shadow-dp-08: 0 4px 16px light-dark(rgb(20 26 23 / 0.16), rgb(0 0 0 / 0.6));
+  --shadow-dp-24: 0 12px 32px light-dark(rgb(20 26 23 / 0.2), rgb(0 0 0 / 0.6));
 
   /* ─── Schrift: eine Familie für alles — Gelesenes wie Gezähltes.
      Unterschieden wird über Gewicht, Versalien und Sperrung, nicht über
@@ -161,45 +181,57 @@
    ein Gegenstand, keine Oberfläche. Es hat eine eigene Palette, und diese
    Trennung ist hier in der Schreibweise festgehalten, nicht nur im Text.
 
-   Dieselbe Zeichnung, mehrere Sätze: Der Browser löst `var()` beim Malen
+   Dieselbe Zeichnung, drei Sätze: Der Browser löst `var()` beim Malen
    auf, deshalb rendert dieselbe Server Component Bildschirm und Papier,
-   ohne je zu wissen, welches Medium gerade gilt. Ein weiterer Satz (der
-   angekündigte Light-Modus) ist ein weiterer Block mit denselben Rollen —
-   keine Zeichenkomponente wird dafür noch einmal angefasst.
+   ohne je zu wissen, welches Medium gerade gilt. Hell und Dunkel stehen
+   wie die Oberfläche als `light-dark(hell, dunkel)` (Epic #563, #568) —
+   wo nur ein Wert steht, gilt er in beiden. Der Druck überschreibt unten;
+   er ist hell, was er nicht überschreibt, kommt also aus dem hellen Satz.
+   Zahlen (Masse) kennt `light-dark()` nicht; sie sind am Bildschirm in
+   beiden Erscheinungsbildern gleich.
+
+   Hell liegt der Rasen als frisches, blasses Grün auf der Seite. Daraus
+   folgt dieselbe Umkehrung wie auf Papier: Was im Dunkeln hell gezeichnet
+   ist, kippt ins Dunkle — die Palette wird kräftig, «weiss» wird Graphit,
+   Laufwege werden wieder schwarz wie im Manual. Nur der Ball bleibt weiss
+   und wird von seiner Zeichnung getragen.
 
    Die Rollennamen führt `lib/diagramm-farben.ts`; `dv("rasen")` ist die
    einzige Stelle im Code, die eine dieser Referenzen erzeugen darf.
    Geprüft von `npm run check:diagramm-farben`. ═══════════════════════ */
 :root {
   /* ─── Das Feld ─── */
-  --diagramm-rasen: #1b271f;
-  --diagramm-rasen-streifen: #212f26;
+  --diagramm-rasen: light-dark(#e3eee2, #1b271f);
+  --diagramm-rasen-streifen: light-dark(#d8e7d7, #212f26);
   /* Der Rasen liegt mit 1.05:1 auf der Karte (elev-01) und mit 1.01:1 in der
      Übungszeile (elev-02) — ohne Umriss verlöre das Feld dort seine Gestalt
      und die Figuren stünden frei auf der Karte. Dieselbe Deckung wie die
      Kontur der Oberfläche (--color-kante), aber als eigener Wert: Das
      Diagramm borgt sich keine Rolle, es hat seine eigene. Auf Papier trägt
      die Kante dasselbe Amt gegen das weisse Blatt. */
-  --diagramm-feldkante: rgba(255, 255, 255, 0.28);
+  --diagramm-feldkante: light-dark(rgb(20 26 23 / 0.28), rgba(255, 255, 255, 0.28));
 
   /* ─── Die wählbare Palette (ein Eintrag je Slug aus lib/diagramm.ts) ───
      Angehoben gegenüber der Manual-Palette: auf dem Nachtrasen kam das
      ursprüngliche Rot auf 2.6:1 und das Blau auf 2.2:1 — zwei Mannschaften,
      die sich nicht mehr unterscheiden liessen. */
-  --diagramm-rot: #ef5350;
-  --diagramm-blau: #42a5f5;
-  --diagramm-gelb: #ffd54f;
-  --diagramm-gruen: #81c784;
-  --diagramm-orange: #ffa726;
-  --diagramm-weiss: #ffffff;
+  --diagramm-rot: light-dark(#d32f2f, #ef5350);
+  --diagramm-blau: light-dark(#1565c0, #42a5f5);
+  --diagramm-gelb: light-dark(#8a6d00, #ffd54f);
+  --diagramm-gruen: light-dark(#2e7d32, #81c784);
+  --diagramm-orange: light-dark(#b84f00, #ffa726);
+  --diagramm-weiss: light-dark(#5b6560, #ffffff);
   /* «schwarz» kann auf dem Nachtrasen nicht schwarz sein — #212121 läge bei
-     1.3:1. Der Slug bleibt, weil er gespeichert ist; gezeigt wird Graphit. */
-  --diagramm-schwarz: #90a4ae;
+     1.3:1. Der Slug bleibt, weil er gespeichert ist; gezeigt wird Graphit.
+     Auf dem hellen Rasen gilt das Umgekehrte für «weiss»: Es wird Graphit,
+     «schwarz» bleibt fast schwarz — so bleiben beide Mannschaften
+     auseinanderzuhalten. */
+  --diagramm-schwarz: light-dark(#1f2421, #90a4ae);
 
   /* ─── Bewegung ───
      Das Manual zeichnet Laufweg, Pass und Dribbling schwarz (Abb. 24). Auf
      diesem Grund trägt Schwarz nicht mehr; der Druck bekommt es zurück. */
-  --diagramm-bewegung: #e8eae6;
+  --diagramm-bewegung: light-dark(#1b1b1b, #e8eae6);
 
   /* ─── Textbox ─── */
   --diagramm-textbox-grund: rgba(255, 255, 255, 0.88);
@@ -207,16 +239,16 @@
   --diagramm-textbox-schrift: #212121;
 
   /* ─── Geräte ─── */
-  --diagramm-geraet: #fafafa;
-  --diagramm-tornetz: rgba(255, 255, 255, 0.75);
-  --diagramm-minitor-netz: #ffffff;
+  --diagramm-geraet: light-dark(#5c6460, #fafafa);
+  --diagramm-tornetz: light-dark(rgb(18 26 22 / 0.3), rgba(255, 255, 255, 0.75));
+  --diagramm-minitor-netz: light-dark(#5c6460, #ffffff);
   --diagramm-minitor-schnur: #646161;
-  --diagramm-stange-stab: #eceff1;
-  --diagramm-huerde-latte: #ffb300;
+  --diagramm-stange-stab: light-dark(#8f9693, #eceff1);
+  --diagramm-huerde-latte: light-dark(#c98500, #ffb300);
 
   /* ─── Bälle ─── */
-  --diagramm-ball-koerper: #fafafa;
-  --diagramm-ball-zeichnung: #424242;
+  --diagramm-ball-koerper: light-dark(#ffffff, #fafafa);
+  --diagramm-ball-zeichnung: light-dark(#1f2421, #424242);
   --diagramm-handball: #ef6c00;
   --diagramm-handball-naht: #fff3e0;
   --diagramm-tennisball: #cddc39;
@@ -250,11 +282,11 @@
   --diagramm-figur-tinte: #26201c;
   --diagramm-figur-rouge: #ff8f8f;
   --diagramm-figur-hose: #37474f;
-  --diagramm-figur-stutzen: #fafafa;
+  --diagramm-figur-stutzen: light-dark(#9ea6a1, #fafafa);
   --diagramm-figur-schuh: #222222;
   --diagramm-figur-band: #fafafa;
   --diagramm-figur-zopfband: #e53935;
-  --diagramm-torwart-trikot: #c0ca33;
+  --diagramm-torwart-trikot: light-dark(#6f6614, #c0ca33);
   --diagramm-torwart-hose: #212121;
   --diagramm-torwart-handschuh: #eceff1;
   --diagramm-torwart-handschuh-rand: #b0bec5;
@@ -377,14 +409,26 @@
 }
 
 /* Umgekehrte Fläche (Snackbar, #234). Innerhalb gelten die Rollen umgekehrt:
-   Schrift ist der Grund, Primary das dunkle Violett. So stehen Textknopf,
+   Schrift ist der Grund, Primary das Violett des anderen Erscheinungsbilds
+   (im Dunkeln das dunkle, im Hellen das helle). So stehen Textknopf,
    Zustands-Ebene und Fokus-Ring darin richtig, ohne dass ein Baustein eine
-   Sonderklasse kennen müsste — `#bb86fc` hätte auf der hellen Fläche nur 2:1. */
+   Sonderklasse kennen müsste. */
 @utility umkehr {
   --color-on-surface: var(--color-on-umkehr);
   --color-primary: var(--color-umkehr-akzent);
   background-color: var(--color-umkehr);
   color: var(--color-on-surface);
+}
+
+/* Betonung an Ort (Epic #563): aktive Zeile in Leiste und Verzeichnis,
+   vergangenes Kalenderblatt, ausgefallener Tag, Avatar, Code. Keine
+   Höhenstufe — im Hellen ist alles über dem Grund weiss, eine Stufe höbe
+   dort nichts ab —, sondern die Schrift in 8 % Deckung über der Fläche
+   darunter (Zwilling: BETONT in lib/farben.ts). So hebt sie auf jeder Stufe
+   und in beiden Erscheinungsbildern ab; im Dunkeln entspricht sie auf der
+   Karte ziemlich genau der früheren Menüstufe. */
+@utility betont {
+  background-color: color-mix(in srgb, var(--color-on-surface) 8%, transparent);
 }
 
 /* Kontur: 1.5 px trägt im Dunkeln, 1 px verschwindet gegen den Grund.
@@ -599,12 +643,13 @@
   visibility: visible;
 }
 
-/* Diagramm-Platzhalter: 45°-Schraffur, sehr leise. */
+/* Diagramm-Platzhalter: 45°-Schraffur, sehr leise — in der Schriftfarbe, damit
+   sie in beiden Erscheinungsbildern gleich leise steht. */
 @utility schraffur {
   background-image: repeating-linear-gradient(
     45deg,
-    rgb(255 255 255 / 0.07) 0,
-    rgb(255 255 255 / 0.07) 1px,
+    color-mix(in srgb, var(--color-on-surface) 7%, transparent) 0,
+    color-mix(in srgb, var(--color-on-surface) 7%, transparent) 1px,
     transparent 1px,
     transparent 10px
   );
@@ -691,14 +736,26 @@
 }
 
 @layer base {
-  /* Die Anwendung ist dunkel (Material Dark) — das sagt sie auch dem
-     Browser. Ohne diese Angabe zeichnet er seine eigenen Bedienteile im
-     hellen Schema: das Uhr- und Kalender-Zeichen in Zeit- und Datumsfeldern
-     schwarz auf unserem dunklen Grund, dazu Auswahlfenster, Scrollbalken und
-     Autofill-Flächen hell. Zwilling ist `viewport.colorScheme` im
-     Wurzel-Layout, das schon vor diesem CSS gilt. Der Druck schaltet auf
-     hell um (siehe Druck-Ansicht unten). */
+  /* Erscheinungsbild (Epic #563): Die Anwendung folgt dem Gerät; ohne
+     Angabe des Geräts ist sie hell (die erste Nennung gewinnt). Dieselbe
+     Angabe wählt in jedem Token die Hälfte von `light-dark()` und sagt dem
+     Browser, wie er seine eigenen Bedienteile zeichnet — Uhr- und
+     Kalender-Zeichen, Auswahlfenster, Scrollbalken, Autofill. Wechselt das
+     Gerät, geht die Seite ohne Skript mit. Zwilling ist
+     `viewport.colorScheme` im Wurzel-Layout, das schon vor diesem CSS gilt.
+     Der Druck schaltet auf hell um (siehe Druck-Ansicht unten). */
   :root {
+    color-scheme: light dark;
+  }
+  /* Selbst gewählt (#567): Die Layouts setzen eine Marke aus dem Cookie
+     (DarstellungsMarke). Seiten ohne Marke — die Eltern-Seiten hinter dem
+     privaten Link — folgen weiter dem Gerät. Den Druck berührt das nicht:
+     Seine Werte stehen ausserhalb jeder Ebene und schlagen diese hier,
+     gleich wie spezifisch sie sind. */
+  :root:has([data-darstellung="hell"]) {
+    color-scheme: light;
+  }
+  :root:has([data-darstellung="dunkel"]) {
     color-scheme: dark;
   }
 
@@ -734,11 +791,109 @@
 }
 
 /* ============================================================================
+   Ersatz für Browser ohne light-dark() (Safari vor 17.5, also iOS 16 und
+   frühe 17er; Chrome vor 123, Firefox vor 120). Dort wäre jede Zuweisung
+   oben ungültig, und die Anwendung stünde ohne Farben da. Sie bekommen fest
+   das helle Erscheinungsbild — die Vorgabe ohne Angabe des Geräts — ohne
+   Umschalten. Die Werte sind die hellen Hälften von oben, geschrieben von
+   `npm run gen:farb-ersatz` und geprüft von `npm run check:farben` — nie
+   von Hand nachführen.
+   Ausserhalb jeder Ebene, damit er die `@theme`-Werte schlägt; vor dem
+   Druck, damit der ihn wiederum schlägt.
+   ============================================================================ */
+@supports not (color: light-dark(#000, #fff)) {
+  :root {
+    color-scheme: light;
+    --color-elev-00: #f5f6f5;
+    --color-elev-01: #ffffff;
+    --color-elev-02: #f5f6f5;
+    --color-elev-03: #ffffff;
+    --color-elev-04: #ffffff;
+    --color-elev-06: #ffffff;
+    --color-elev-08: #ffffff;
+    --color-elev-12: #ffffff;
+    --color-elev-16: #ffffff;
+    --color-elev-24: #ffffff;
+    --color-primary: #6d4aff;
+    --color-on-primary: #ffffff;
+    --color-error: #b42a37;
+    --color-on-surface: #141a17;
+    --color-on-surface-mittel: #141a17bd;
+    --color-on-surface-tief: #141a1780;
+    --color-linie: #141a171f;
+    --color-kante: #141a1780;
+    --color-umkehr: #2d322f;
+    --color-on-umkehr: #f5f6f5;
+    --color-umkehr-akzent: #b29cff;
+    --color-lozenge-neutral: #0515240f;
+    --color-on-lozenge-neutral: #292a2e;
+    --color-lozenge-success: #d3f1a7;
+    --color-on-lozenge-success: #37471f;
+    --color-lozenge-warning: #fce4a6;
+    --color-on-lozenge-warning: #693200;
+    --color-lozenge-danger: #ffd5d2;
+    --color-on-lozenge-danger: #5d1f1a;
+    --color-lozenge-information: #cfe1fd;
+    --color-on-lozenge-information: #123263;
+    --color-lozenge-discovery: #eed7fc;
+    --color-on-lozenge-discovery: #48245d;
+    --color-lozenge-accent-blue: #cfe1fd;
+    --color-on-lozenge-accent-blue: #123263;
+    --color-lozenge-accent-yellow: #f5e989;
+    --color-on-lozenge-accent-yellow: #533f04;
+    --color-lozenge-accent-orange: #fce4a6;
+    --color-on-lozenge-accent-orange: #693200;
+    --color-lozenge-accent-green: #baf3db;
+    --color-on-lozenge-accent-green: #164b35;
+    --color-lozenge-accent-magenta: #fdd0ec;
+    --color-on-lozenge-accent-magenta: #50253f;
+    --color-lozenge-accent-purple: #eed7fc;
+    --color-on-lozenge-accent-purple: #48245d;
+    --color-lozenge-accent-gray: #dddee1;
+    --color-on-lozenge-accent-gray: #1e1f21;
+    --color-section-information: #e9f2fe;
+    --color-icon-information: #357de8;
+    --color-section-warning: #fff5db;
+    --color-icon-warning: #e06c00;
+    --color-section-danger: #ffeceb;
+    --color-icon-danger: #c9372c;
+    --color-section-success: #efffd6;
+    --color-icon-success: #6a9a23;
+    --color-section-discovery: #f8eefe;
+    --color-icon-discovery: #af59e1;
+    --shadow-dp-06: 0 4px 12px rgb(20 26 23 / 0.14);
+    --shadow-dp-08: 0 4px 16px rgb(20 26 23 / 0.16);
+    --shadow-dp-24: 0 12px 32px rgb(20 26 23 / 0.2);
+    --diagramm-rasen: #e3eee2;
+    --diagramm-rasen-streifen: #d8e7d7;
+    --diagramm-feldkante: rgb(20 26 23 / 0.28);
+    --diagramm-rot: #d32f2f;
+    --diagramm-blau: #1565c0;
+    --diagramm-gelb: #8a6d00;
+    --diagramm-gruen: #2e7d32;
+    --diagramm-orange: #b84f00;
+    --diagramm-weiss: #5b6560;
+    --diagramm-schwarz: #1f2421;
+    --diagramm-bewegung: #1b1b1b;
+    --diagramm-geraet: #5c6460;
+    --diagramm-tornetz: rgb(18 26 22 / 0.3);
+    --diagramm-minitor-netz: #5c6460;
+    --diagramm-stange-stab: #8f9693;
+    --diagramm-huerde-latte: #c98500;
+    --diagramm-ball-koerper: #ffffff;
+    --diagramm-ball-zeichnung: #1f2421;
+    --diagramm-figur-stutzen: #9ea6a1;
+    --diagramm-torwart-trikot: #6f6614;
+  }
+}
+
+/* ============================================================================
    Druck-Ansicht (Story #18): helles, tintensparendes Layout, unabhängig vom
-   dunklen Bildschirm-Farbschema. Die Höhenleiter kippt um — aus dem
-   aufgehellten Dunkel wird ein abgedunkeltes Weiss, die Reihenfolge der
-   Stufen bleibt. Primary wird zu einem dunklen Violett, weil #bb86fc auf
-   Papier nicht trägt. App-Chrome ist via print:hidden ausgeblendet.
+   Erscheinungsbild am Schirm. Die Höhenleiter ist ein abgedunkeltes Weiss
+   in der Reihenfolge der dunklen Stufen — anders als im Hellen, wo Karten
+   weiss auf getöntem Grund liegen: Papier ist der Grund. Primary wird zu
+   einem dunklen Violett, das auf Papier trägt. App-Chrome ist via
+   print:hidden ausgeblendet.
    Gilt für jede Druckausgabe der App.
    ============================================================================ */
 @media print {
@@ -791,7 +946,7 @@
     --color-on-lozenge-accent-magenta: #50253f;
     --color-lozenge-accent-purple: #eed7fc;
     --color-on-lozenge-accent-purple: #48245d;
-    --color-lozenge-accent-gray: #f0f1f2;
+    --color-lozenge-accent-gray: #dddee1;
     --color-on-lozenge-accent-gray: #1e1f21;
 
     --color-section-information: #e9f2fe;

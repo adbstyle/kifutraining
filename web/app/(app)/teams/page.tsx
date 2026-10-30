@@ -52,7 +52,7 @@ export default async function TeamsPage({
               className="state focus-ring group block rounded-flaeche"
             >
               <Card className="flex h-full items-center gap-4 p-5">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full betont text-on-surface">
                   <Shield size={22} strokeWidth={2} aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1">

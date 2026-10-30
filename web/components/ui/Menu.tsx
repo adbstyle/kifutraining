@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useId, useRef } from "react";
 import type { ReactNode, RefObject } from "react";
+import { Check } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -17,7 +18,7 @@ export const bedienzeile = "state type-body-medium flex min-h-9 items-center gap
  *  zwischen zwei Renders wechselt. */
 function eintraege(wurzel: HTMLElement | null) {
   return Array.from(
-    wurzel?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [],
+    wurzel?.querySelectorAll<HTMLButtonElement>('[role^="menuitem"]') ?? [],
   );
 }
 
@@ -32,6 +33,9 @@ export interface MenuItemDef {
   trenner?: boolean;
   /** Ein leiser Satz unter der Zeile, etwa wohin ein Rückgängig führt. */
   hinweis?: string;
+  /** Eine von mehreren Möglichkeiten (#567, Darstellung): Gesetzt wird die
+   *  Zeile zur Auswahl (`menuitemradio`), die gewählte trägt den Haken. */
+  gewaehlt?: boolean;
   onSelect?: () => void;
 }
 
@@ -57,12 +61,18 @@ export function Menu({
   items,
   className,
   triggerRef,
+  label,
+  fuss,
 }: {
   open: boolean;
   onClose: () => void;
   items: MenuItemDef[];
   className?: string;
   triggerRef?: RefObject<HTMLElement | null>;
+  /** Name des Menüs für die Vorlesehilfe, wo der Auslöser ihn nicht schon nennt. */
+  label?: string;
+  /** Ein leiser Satz am Fuss, der für alle Einträge gilt («Gilt in diesem Browser.»). */
+  fuss?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -141,6 +151,8 @@ export function Menu({
     <div
       ref={ref}
       role="menu"
+      aria-label={label}
+      aria-describedby={fuss ? `${menuId}-fuss` : undefined}
       onKeyDown={onNavKey}
       className={cn(
         "absolute z-50 mt-1 min-w-48 rounded-flaeche border border-linie bg-elev-08 py-1 shadow-dp-08",
@@ -153,7 +165,8 @@ export function Menu({
           <Fragment key={i}>
           {item.trenner && <div role="separator" className="my-1 h-px bg-linie" />}
           <button
-            role="menuitem"
+            role={item.gewaehlt === undefined ? "menuitem" : "menuitemradio"}
+            aria-checked={item.gewaehlt}
             aria-describedby={item.hinweis ? `${menuId}-${i}` : undefined}
             type="button"
             onClick={() => {
@@ -188,6 +201,9 @@ export function Menu({
                 {item.trailing}
               </span>
             )}
+            {item.gewaehlt && (
+              <Check size={16} strokeWidth={2.5} className="text-primary" aria-hidden />
+            )}
           </button>
           {item.hinweis && (
             <p id={`${menuId}-${i}`} className="px-3 pb-2 type-body-small text-on-surface-mittel">
@@ -197,6 +213,11 @@ export function Menu({
           </Fragment>
         );
       })}
+      {fuss && (
+        <p id={`${menuId}-fuss`} className="px-3 pt-1 pb-2 type-body-small text-on-surface-mittel">
+          {fuss}
+        </p>
+      )}
     </div>
   );
 }

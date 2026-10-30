@@ -1,7 +1,11 @@
 /**
  * Die Farbpalette des Designsystems als TypeScript-Zwilling von
- * `app/globals.css` (Material 2 Dark: Grund plus weisses Overlay je Höhe;
- * dazu die Rollen der Atlassian-Bausteine Lozenge und Section Message).
+ * `app/globals.css`, für beide Erscheinungsbilder (Epic #563): das dunkle
+ * (Material 2 Dark: Grund plus weisses Overlay je Höhe) und das helle
+ * (getönter Grund, weisse Karten, Höhe des Schwebenden über den Schatten);
+ * dazu die Rollen der Atlassian-Bausteine Lozenge und Section Message. Im CSS
+ * steht jede Rolle als `light-dark(hell, dunkel)`, hier als zwei Sätze
+ * (`HELL`, `DUNKEL`), und `THEMEN` führt beide für die Prüfung zusammen.
  *
  * Warum es diese Datei gibt, obwohl die Farben schon im CSS stehen:
  *
@@ -63,10 +67,13 @@ export function elev(dp: ElevStufe["dp"]): string {
 }
 
 // ── Akzente ────────────────────────────────────────────────────────────────
-// Aus der Baseline-Palette von Material 2 Dark nur der eine Akzent: Secondary
-// ist entfallen — ein zweiter Akzent neben Primary konkurrierte nur, ohne
-// etwas zu benennen.
-export const PRIMARY = "#bb86fc";
+// Ein Akzent, kein zweiter: Secondary ist entfallen — er konkurrierte nur,
+// ohne etwas zu benennen. Seit der neuen Marke (Epic #563) ist er das Violett
+// der Marke; im Dunkeln eine hellere Stufe davon, weil das Markenviolett
+// #6d4aff auf dem Nachtgrund nur 3.4:1 erreicht. #b29cff trägt als Schrift auf
+// JEDER Höhenstufe über 4.5:1 — die frühere Ausnahme für 16 und 24 dp (4.3:1)
+// ist damit entfallen.
+export const PRIMARY = "#b29cff";
 export const ON_PRIMARY = "#000000";
 /**
  * Eine Stufe heller als Materials Baseline (#cf6679): Die ist als Fläche
@@ -112,14 +119,14 @@ export const KANTE = 0.28;
  *
  * Die Fläche ist Weiss in `deckung` über dem Grund — dieselbe Herleitung wie
  * die Höhenleiter, nur am anderen Ende. Die Schrift darauf ist der Grund
- * selbst, der Akzent das dunkle Violett, das auch auf Papier trägt: Auf der
- * hellen Fläche hätte `PRIMARY` nur 2:1.
+ * selbst, der Akzent ein tiefes Markenviolett: Auf der hellen Fläche hätte
+ * `PRIMARY` nur 2:1.
  */
 export const UMKEHR = {
   deckung: 0.87,
   flaeche: "#e0e1e0",
   schrift: GRUND,
-  akzent: "#4527a0",
+  akzent: "#5b38eb",
 } as const;
 
 // ── Atlassian: Lozenge, Badge, Section Message ────────────────────────────
@@ -127,12 +134,13 @@ export const UMKEHR = {
  * Drei Bausteine folgen nicht Material, sondern dem Atlassian Design System
  * (wie Jira): die Lozenge (Plakette), die Badge (Zähler) und die Section
  * Message (Meldung im Fluss der Seite). Ihre Farben stehen hier WÖRTLICH aus
- * `@atlaskit/tokens` (20.2.0) — der Bildschirm aus dem Theme `atlassian-dark`,
- * der Druck aus `atlassian-light`. Nachgemischt wird nichts: Wer Jira kennt,
+ * `@atlaskit/tokens` (20.2.0) — das dunkle Erscheinungsbild aus `atlassian-dark`,
+ * das helle und der Druck aus `atlassian-light`. Nachgemischt wird nichts: Wer Jira kennt,
  * soll dieselben Töne wiedererkennen.
  *
  * Lozenge: `flaeche` ist ADS `color.background.<x>.subtler` (bei `neutral`
- * `color.background.neutral`, bei `accent-gray` `…accent.gray.subtlest`),
+ * `color.background.neutral`, bei `accent-gray` im Dunkeln `…accent.gray.subtlest`,
+ * im Hellen `…subtler` — das leiseste Grau verschwände auf dem hellen Grund),
  * `schrift` ist `color.text.<x>.bolder` (bei `neutral` `color.text`).
  * Die Akzente tragen die Alterskategorien; geführt sind nur die sieben, die
  * eine Kategorie belegt.
@@ -155,8 +163,8 @@ export const LOZENGE = {
 
 export type LozengeAppearance = keyof typeof LOZENGE;
 
-/** Dieselben Rollen aus `atlassian-light` — die Lozenge auf Papier. */
-export const LOZENGE_DRUCK: Record<LozengeAppearance, { flaeche: string; schrift: string }> = {
+/** Dieselben Rollen aus `atlassian-light` — die Lozenge im Hellen und auf Papier. */
+export const LOZENGE_HELL: Record<LozengeAppearance, { flaeche: string; schrift: string }> = {
   neutral: { flaeche: "#0515240f", schrift: "#292a2e" },
   success: { flaeche: "#d3f1a7", schrift: "#37471f" },
   warning: { flaeche: "#fce4a6", schrift: "#693200" },
@@ -169,7 +177,7 @@ export const LOZENGE_DRUCK: Record<LozengeAppearance, { flaeche: string; schrift
   "accent-green": { flaeche: "#baf3db", schrift: "#164b35" },
   "accent-magenta": { flaeche: "#fdd0ec", schrift: "#50253f" },
   "accent-purple": { flaeche: "#eed7fc", schrift: "#48245d" },
-  "accent-gray": { flaeche: "#f0f1f2", schrift: "#1e1f21" },
+  "accent-gray": { flaeche: "#dddee1", schrift: "#1e1f21" },
 };
 
 /**
@@ -188,8 +196,8 @@ export const SECTION = {
 
 export type SectionRolle = keyof typeof SECTION;
 
-/** Dieselben Rollen aus `atlassian-light` — die Section Message auf Papier. */
-export const SECTION_DRUCK: Record<SectionRolle, { flaeche: string; icon: string }> = {
+/** Dieselben Rollen aus `atlassian-light` — die Section Message im Hellen und auf Papier. */
+export const SECTION_HELL: Record<SectionRolle, { flaeche: string; icon: string }> = {
   information: { flaeche: "#e9f2fe", icon: "#357de8" },
   warning: { flaeche: "#fff5db", icon: "#e06c00" },
   danger: { flaeche: "#ffeceb", icon: "#c9372c" },
@@ -233,31 +241,157 @@ export const ZUSTAND = {
   pressed: 0.1,
 } as const;
 
-// ── Rollen-Tabellen (der eigentliche Zwilling) ─────────────────────────────
+// ── Helles Erscheinungsbild (Epic #563) ────────────────────────────────────
 /**
- * Alle `--color-*`-Rollen des Bildschirms mit ihrem literalen Wert — aus den
- * Einzelwerten oben zusammengesetzt, damit es keine dritte Stelle gibt, an
- * der eine Farbe steht.
+ * Im Hellen trägt nicht die Helligkeit die Höhe, sondern die Fläche und der
+ * Schatten: Der Grund ist ein leises Rasengrau, alles darauf ist weiss —
+ * Karte, hervorgehobene Karte (nächster Termin), Leisten, Menü, Dialog — und
+ * hebt sich über Fläche und Schatten ab. Nur was IN einer Karte liegt
+ * (Übungszeile, Block, `elev-02`), ist wieder getönt wie der Grund. Eine
+ * streng steigende Leiter wie im Dunkeln gibt es darum nicht; dieselben
+ * Tokennamen meinen dieselbe Aufgabe, nicht dieselbe Helligkeitsfolge.
+ *
+ * Betonung an Ort (aktive Zeile, vergangenes Kalenderblatt, Avatar) ist
+ * darum keine Höhenstufe, sondern `betont`: die Schrift in `BETONT` Deckung
+ * über der Fläche darunter — sie hebt in beiden Erscheinungsbildern ab, auf
+ * jeder Stufe (globals.css, @utility betont).
  */
-export const BILDSCHIRM: Readonly<Record<string, string>> = {
-  ...Object.fromEntries(ELEV.map((s) => [elevName(s.dp), s.hex])),
+export const GRUND_HELL = "#f5f6f5";
+
+export const ELEV_HELL = [
+  { dp: 0, hex: GRUND_HELL },
+  { dp: 1, hex: "#ffffff" },
+  { dp: 2, hex: GRUND_HELL },
+  { dp: 3, hex: "#ffffff" },
+  { dp: 4, hex: "#ffffff" },
+  { dp: 6, hex: "#ffffff" },
+  { dp: 8, hex: "#ffffff" },
+  { dp: 12, hex: "#ffffff" },
+  { dp: 16, hex: "#ffffff" },
+  { dp: 24, hex: "#ffffff" },
+] as const satisfies readonly { dp: ElevStufe["dp"]; hex: string }[];
+
+/**
+ * Die Schrift im Hellen: fast Schwarz mit dem Grün des Nachtgrunds, in
+ * denselben Deckungen wie das Weiss im Dunkeln. Nur `tief` liegt höher (50 %
+ * statt 38 %), weil Grau auf Weiss schneller zerfällt als Weiss auf Grau —
+ * auch Deaktiviertes soll seine 3:1 halten. Die Kontur ebenso: Sie umreisst
+ * Knopf und Chip und muss im Hellen 3:1 tragen (WCAG 1.4.11).
+ */
+export const TINTE = "#141a17";
+export const SCHRIFT_HELL = { hoch: 1, mittel: 0.74, tief: 0.5 } as const;
+export const LINIE_HELL = 0.12;
+
+/** Deckung der Betonung an Ort (`betont`), in beiden Erscheinungsbildern. */
+export const BETONT = 0.08;
+export const KANTE_HELL = 0.5;
+
+/** Das Violett der Marke selbst: auf Weiss 5.15:1, auf jeder Tönung über 4.5:1. */
+export const PRIMARY_HELL = "#6d4aff";
+export const ON_PRIMARY_HELL = "#ffffff";
+/** Atlassians `text.danger` des hellen Themes liegt nahe; dieser Ton trägt auf
+ *  jeder Fläche des Hellen über 5.5:1. */
+export const ERROR_HELL = "#b42a37";
+
+/**
+ * Im Hellen kehrt sich die umgekehrte Fläche um: Sie ist dunkel (die Menüstufe
+ * des Dunkeln) und trägt den hellen Grund als Schrift und den hellen Akzent
+ * des Dunkeln — so bleiben Snackbar, Kalenderblatt und Mini-Monat in beiden
+ * Erscheinungsbildern das, was am stärksten heraussticht.
+ */
+export const UMKEHR_HELL = {
+  flaeche: "#2d322f",
+  schrift: GRUND_HELL,
+  akzent: PRIMARY,
+} as const;
+
+// ── Die zwei Erscheinungsbilder ────────────────────────────────────────────
+/** Was die Prüfung je Erscheinungsbild braucht — dieselbe Gestalt für beide. */
+export interface Erscheinungsbild {
+  name: "hell" | "dunkel";
+  elev: readonly { dp: number; hex: string }[];
+  /** Deckende Grundfarbe der Schrift; `deckung` mischt sie je Stufe. */
+  schrift: string;
+  deckung: { hoch: number; mittel: number; tief: number };
+  linie: number;
+  kante: number;
+  primary: string;
+  onPrimary: string;
+  error: string;
+  danger: string;
+  onDanger: string;
+  umkehr: { flaeche: string; schrift: string; akzent: string };
+  lozenge: Record<LozengeAppearance, { flaeche: string; schrift: string }>;
+  section: Record<SectionRolle, { flaeche: string; icon: string }>;
+}
+
+export const DUNKEL_THEMA: Erscheinungsbild = {
+  name: "dunkel",
+  elev: ELEV,
+  schrift: "#ffffff",
+  deckung: SCHRIFT,
+  linie: LINIE,
+  kante: KANTE,
   primary: PRIMARY,
-  "on-primary": ON_PRIMARY,
+  onPrimary: ON_PRIMARY,
   error: ERROR,
   danger: DANGER,
-  "on-danger": ON_DANGER,
-  scrim: SCRIM,
-  // Deckend — `SCHRIFT.hoch` ist 1, ein Alphakanal wäre nur Rauschen.
-  "on-surface": "#ffffff",
-  "on-surface-mittel": hex8("#ffffff", SCHRIFT.mittel),
-  "on-surface-tief": hex8("#ffffff", SCHRIFT.tief),
-  linie: hex8("#ffffff", LINIE),
-  kante: hex8("#ffffff", KANTE),
-  umkehr: UMKEHR.flaeche,
-  "on-umkehr": UMKEHR.schrift,
-  "umkehr-akzent": UMKEHR.akzent,
-  ...atlassianRollen(LOZENGE, SECTION),
+  onDanger: ON_DANGER,
+  umkehr: UMKEHR,
+  lozenge: LOZENGE,
+  section: SECTION,
 };
+
+export const HELL_THEMA: Erscheinungsbild = {
+  name: "hell",
+  elev: ELEV_HELL,
+  schrift: TINTE,
+  deckung: SCHRIFT_HELL,
+  linie: LINIE_HELL,
+  kante: KANTE_HELL,
+  primary: PRIMARY_HELL,
+  onPrimary: ON_PRIMARY_HELL,
+  error: ERROR_HELL,
+  danger: DANGER,
+  onDanger: ON_DANGER,
+  umkehr: UMKEHR_HELL,
+  lozenge: LOZENGE_HELL,
+  section: SECTION_HELL,
+};
+
+export const THEMEN = [HELL_THEMA, DUNKEL_THEMA] as const;
+
+// ── Rollen-Tabellen (der eigentliche Zwilling) ─────────────────────────────
+/**
+ * Alle `--color-*`-Rollen eines Erscheinungsbilds mit ihrem literalen Wert —
+ * aus den Einzelwerten oben zusammengesetzt, damit es keine dritte Stelle
+ * gibt, an der eine Farbe steht. Im CSS steht jede Rolle als
+ * `light-dark(HELL[rolle], DUNKEL[rolle])`.
+ */
+function rollen(t: Erscheinungsbild): Readonly<Record<string, string>> {
+  return {
+    ...Object.fromEntries(t.elev.map((s) => [elevName(s.dp), s.hex])),
+    primary: t.primary,
+    "on-primary": t.onPrimary,
+    error: t.error,
+    danger: t.danger,
+    "on-danger": t.onDanger,
+    scrim: SCRIM,
+    // Deckend — `hoch` ist 1, ein Alphakanal wäre nur Rauschen.
+    "on-surface": t.schrift,
+    "on-surface-mittel": hex8(t.schrift, t.deckung.mittel),
+    "on-surface-tief": hex8(t.schrift, t.deckung.tief),
+    linie: hex8(t.schrift, t.linie),
+    kante: hex8(t.schrift, t.kante),
+    umkehr: t.umkehr.flaeche,
+    "on-umkehr": t.umkehr.schrift,
+    "umkehr-akzent": t.umkehr.akzent,
+    ...atlassianRollen(t.lozenge, t.section),
+  };
+}
+
+export const HELL = rollen(HELL_THEMA);
+export const DUNKEL = rollen(DUNKEL_THEMA);
 
 /**
  * Die Überschreibungen im `@media print`. Papier ist weiss und hat keine
@@ -289,7 +423,7 @@ export const DRUCK = {
   error: "#a32036",
   danger: "#a32036",
   "on-danger": "#ffffff",
-  ...atlassianRollen(LOZENGE_DRUCK, SECTION_DRUCK),
+  ...atlassianRollen(LOZENGE_HELL, SECTION_HELL),
 } as const;
 
 /** Die Schriftfarbe des Drucks — sie liegt auf jeder gedruckten Fläche. */

@@ -77,6 +77,7 @@ import { FelderDemo } from "./FelderDemo";
 import { MiniMonatDemo } from "./MiniMonatDemo";
 import { LozengeAuswahlDemo } from "./LozengeAuswahlDemo";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
+import { ErscheinungsbildDemo } from "./ErscheinungsbildDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import { TrainingCard } from "@/components/training/TrainingCard";
 import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
@@ -208,6 +209,7 @@ const GLIEDERUNG = [
     gruppen: [
       {
         eintraege: [
+          { id: "erscheinungsbild", titel: "Hell und Dunkel" },
           { id: "farbrollen", titel: "Farbrollen" },
           { id: "typografie", titel: "Typografie" },
           { id: "hoehe", titel: "Höhe" },
@@ -315,8 +317,21 @@ function BereichKopf({ titel }: { titel: Bereich["titel"] }) {
 /* Ein Sprung hält ab lg global 6rem Abstand zur klebenden Kopfzeile
    (globals.css). Ein Abschnitt rückt so weit höher, dass sein Untertitel auf
    der Höhe des Verzeichnisses steht (top-16): 4.5rem = 6rem - 4rem + die
-   Polsterung oben (2.5rem). */
-function Section({ id, children }: { id: AbschnittId; children: React.ReactNode }) {
+   Polsterung oben (2.5rem).
+
+   `dunkel`: Der Abschnitt legt lebende Flächen neben Zahlen, die
+   `lib/farben.ts` für das dunkle Erscheinungsbild rechnet. Damit Fläche und
+   Wert auch im Hellen zusammenpassen, steht sein Inhalt fest auf einer
+   dunklen Tafel; das helle Gegenstück zeigt «Hell und Dunkel». */
+function Section({
+  id,
+  dunkel = false,
+  children,
+}: {
+  id: AbschnittId;
+  dunkel?: boolean;
+  children: React.ReactNode;
+}) {
   const { titel, gruppe } = ABSCHNITTE.get(id)!;
   return (
     <section
@@ -328,7 +343,17 @@ function Section({ id, children }: { id: AbschnittId; children: React.ReactNode 
       <h3 id={`${id}-titel`} className="type-headline-small text-on-surface">
         {titel}
       </h3>
-      <div className="mt-6">{children}</div>
+      {dunkel ? (
+        <div
+          style={{ colorScheme: "dark" }}
+          className="mt-6 rounded-dialog kontur border-linie bg-elev-00 p-5 text-on-surface"
+        >
+          <p className="type-label-medium mb-4 text-on-surface-mittel">Dunkel</p>
+          {children}
+        </div>
+      ) : (
+        <div className="mt-6">{children}</div>
+      )}
     </section>
   );
 }
@@ -669,12 +694,13 @@ export default async function Styleguide() {
 
         <Section id="grundsatz">
           <p className="type-body-large mb-6 max-w-2xl text-on-surface-mittel">
-            KiFu folgt <strong>Material 2 im dunklen Thema</strong>. Eine einzige Fläche trägt die
+            KiFu folgt <strong>Material 2</strong>, in zwei Erscheinungsbildern mit denselben
+            Rollen (<Siehe id="erscheinungsbild" />). Im Dunkeln trägt eine einzige Fläche die
             ganze Anwendung: {GRUND} - Materials Dunkelgrau mit so viel Grün, dass der Platz im
-            Bild bleibt. Höhe entsteht nicht durch eine zweite Farbe, sondern durch ein weisses
-            Overlay auf eben dieser Fläche (<Siehe id="hoehe" />). Akzent ist ein Lila, das im
-            Dunkeln hell genug ist, um selbst Text zu sein; Schwarz steht darauf, nicht Weiss
-            (<Siehe id="farbrollen" />). Farbe umrandet und beschriftet - sie füllt nur dort, wo
+            Bild bleibt. Höhe entsteht dort nicht durch eine zweite Farbe, sondern durch ein weisses
+            Overlay auf eben dieser Fläche (<Siehe id="hoehe" />). Im Hellen tragen Fläche und
+            Schatten die Höhe. Akzent ist das Violett der Marke, im Dunkeln so hell, dass es selbst
+            Text sein kann (<Siehe id="farbrollen" />). Farbe umrandet und beschriftet - sie füllt nur dort, wo
             eine Fläche wirklich gemeint ist. Ausgenommen sind die drei Bausteine von Atlassian
             (unten): Lozenge und Section Message tragen eine getönte Fläche, die Badge eine
             gefüllte.
@@ -699,10 +725,11 @@ export default async function Styleguide() {
                   beim Umschalten (siehe <Siehe id="navigation" />).
                 </li>
                 <li>
-                  <strong>Primary Variant.</strong> Das dunkle Zweit-Lila der
+                  <strong>Primary Variant.</strong> Das dunkle Zweit-Violett der
                   Baseline stammt aus dem hellen Thema; auf dem Grund käme es auf{" "}
                   {v(kontrast("#3700b3", GRUND))}. Eine Rolle mit genau einem
-                  möglichen Ort lädt zum Missgriff ein - das System kennt ein Lila.
+                  möglichen Ort lädt zum Missgriff ein - das System kennt je
+                  Erscheinungsbild ein Violett.
                 </li>
                 <li>
                   <strong>Secondary.</strong> Der zweite Akzent der Baseline
@@ -732,7 +759,7 @@ export default async function Styleguide() {
           </div>
         </Section>
 
-        <Section id="zustaende">
+        <Section id="zustaende" dunkel>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Jede bedienbare Fläche legt beim Überfahren, Fokussieren und Drücken
             eine Ebene auf - <strong>in der Farbe ihres eigenen Inhalts</strong>,
@@ -976,7 +1003,10 @@ export default async function Styleguide() {
               <div key={name} className="rounded-flaeche kontur border-kante p-3">
                 <div
                   className="mb-2 flex h-14 w-full items-end rounded-klein border border-linie p-2"
-                  style={{ backgroundColor: hex, color: DRUCK["on-surface"] }}
+                  style={{
+                    backgroundColor: hex,
+                    color: kontrast(DRUCK["on-surface"], hex) >= 4.5 ? DRUCK["on-surface"] : DRUCK["elev-00"],
+                  }}
                 >
                   <span className="type-label-small">{hex.toUpperCase()}</span>
                 </div>
@@ -1024,7 +1054,37 @@ export default async function Styleguide() {
 
         <BereichKopf titel="Stile" />
 
-        <Section id="farbrollen">
+        <Section id="erscheinungsbild">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            KiFu hat zwei Erscheinungsbilder mit denselben Rollen (Epic #563). Jede Farbe steht im
+            CSS als <code>light-dark(hell, dunkel)</code>; welches gilt, entscheidet allein{" "}
+            <code>color-scheme</code>. Hell trägt die Höhe über Fläche und Schatten: ein leises
+            Rasengrau als Grund, weisse Karten, getönt was in einer Karte liegt, weiss alles
+            Schwebende. Dunkel bleibt der Nachtgrund mit weissem Overlay. Akzent ist in beiden das
+            Violett der Marke, im Dunkeln eine hellere Stufe. Beide Tafeln unten sind die lebenden
+            Klassen und echten Bausteine; geprüft gegen WCAG 2.2 AA in{" "}
+            <code>npm run check:farben</code>.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Betonung an Ort ist keine Höhe.</strong> Im Hellen ist alles über dem Grund
+            weiss - eine höhere Stufe hebt dort nichts ab. Was an seinem Platz hervortritt (aktive
+            Zeile in Leiste und Verzeichnis, vergangenes Kalenderblatt, ausgefallener Tag, Avatar,
+            Code), trägt darum <code>betont</code>: die Schrift zu 8 % über der Fläche darunter. Das
+            hebt auf jeder Stufe und in beiden Erscheinungsbildern ab und entspricht im Dunkeln
+            ziemlich genau der früheren Menüstufe. Schatten bleiben dem Schwebenden vorbehalten:
+            Eine hervorgehobene Karte (der nächste Termin) hebt sich über ihre Kontur ab, die im
+            Hellen 3:1 trägt - im Dunkeln steht sie dazu eine Stufe höher.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Browser ohne <code>light-dark()</code> (Safari vor 17.5, also iOS 16 und frühe 17er)
+            bekommen fest das Helle: ein Ersatz-Block mit den hellen Hälften, geschrieben von{" "}
+            <code>gen:farb-ersatz</code> und geprüft von <code>check:farben</code>. Die Zeile
+            «Darstellung» fehlt dort in der Seitenleiste - umschalten liesse sich nichts.
+          </p>
+          <ErscheinungsbildDemo />
+        </Section>
+
+        <Section id="farbrollen" dunkel>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Material vergibt <strong>Rollen</strong>, keine Bedeutungen: Es gibt
             einen Akzent, eine Fehlerfarbe und Schrift in Deckungen - was davon
@@ -1097,7 +1157,8 @@ export default async function Styleguide() {
             Atlassian - Lozenge und Section Message
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
-            Je Darstellung ein Paar aus Atlassians Dark-Theme: Die Lozenge trägt
+            Je Darstellung ein Paar aus Atlassians Dark-Theme (hier gezeigt; im
+            Hellen gilt das Gegenstück aus dem Light-Theme): Die Lozenge trägt
             die zarte Tönung (<code>lozenge-*</code> = ADS{" "}
             <code>background.&lt;x&gt;.subtler</code>) mit kräftiger Schrift (
             <code>on-lozenge-*</code> = <code>text.&lt;x&gt;.bolder</code>), die
@@ -1196,7 +1257,7 @@ export default async function Styleguide() {
           </p>
         </Section>
 
-        <Section id="hoehe">
+        <Section id="hoehe" dunkel>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Im Dunkeln trägt nicht der Schatten die Höhe, sondern die Helligkeit:
             Jede Stufe legt ein weisses Overlay über denselben Grund. Die Werte
@@ -1397,13 +1458,14 @@ export default async function Styleguide() {
 
         <Section id="knoepfe">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Sechs Varianten (und der helle Knopf weiter unten), eine Regel: <strong>Gefüllt trägt Schwarz</strong>{" "}
-            - ausser Rot. <code>filled</code> ist Primary-Fläche, <code>outlined</code> Kontur
+            Sechs Varianten (und der umgekehrte Knopf weiter unten), eine Regel: <strong>Gefüllt trägt
+            die Schrift, die auf dem Violett am stärksten ist</strong> - im Dunkeln Schwarz, im Hellen
+            Weiss; Rot trägt immer Weiss. <code>filled</code> ist Primary-Fläche, <code>outlined</code> Kontur
             auf der Kante - der <strong>Secondary Button</strong>, wenn von ihm die
             Rede ist, <code>text</code> nur Schrift, <code>danger</code>{" "}
             gefüllt in <code>danger</code> mit weisser Schrift - Löschen soll
-            man nicht übersehen (PO 2026-10-06). Das helle Error-Rot trüge
-            Weiss nicht, darum hat die Fläche ihre eigene, dunklere Rolle. Steht
+            man nicht übersehen (PO 2026-10-06). Das helle Error-Rot des Dunkeln
+            trüge Weiss nicht, darum hat die Fläche ihre eigene, dunklere Rolle. Steht
             Destruktives als Nebenaktion neben dem Hauptweg eines Dialogs, trägt es{" "}
             <code>dangerOutlined</code>, den <strong>Error-Secondary-Button</strong>: die Bauform von <code>outlined</code> mit
             Kontur und Schrift in Error - die Rückfrage danach bleibt{" "}
@@ -1460,10 +1522,10 @@ export default async function Styleguide() {
             (<code>outlined</code>) - auch als einzige Aktion.
           </p>
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
-            Heller Knopf (<code>variant=&quot;hell&quot;</code>) - auf einer Fläche im Fehlerton
+            Umgekehrter Knopf (<code>variant=&quot;umkehr&quot;</code>) - auf einer Fläche im Fehlerton
           </p>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-            Die umgekehrte, helle Fläche der Snackbar mit der Farbe des Grunds als
+            Die umgekehrte Fläche der Snackbar mit der Farbe des Grunds als
             Schrift. Neu, weil auf einer Fläche im Fehlerton <code>filled</code>{" "}
             (Violett auf Rot) zu laut wäre und <code>outlined</code> unterginge: die eine
             Handlung «Wieder anmelden» am abgemeldeten nächsten Termin hinter dem
@@ -1471,7 +1533,7 @@ export default async function Styleguide() {
           </p>
           <div className="flex flex-wrap items-center gap-3 rounded-flaeche kontur border-kante bg-section-danger/60 p-4">
             <span className="type-body-medium text-on-surface">Lena Meier ist abgemeldet.</span>
-            <Button variant="hell">Wieder anmelden</Button>
+            <Button variant="umkehr">Wieder anmelden</Button>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -2427,7 +2489,11 @@ export default async function Styleguide() {
             <code>rounded-flaeche</code> und <code>shadow-dp-08</code>: Es
             schwebt, also trägt es beides - Höhe und Schatten. Jede Zeile trägt{" "}
             <code>state</code>, Destruktives steht zuunterst und trägt Error als
-            Schrift, nie als Fläche.
+            Schrift, nie als Fläche. Steht das Menü für eine Wahl unter wenigen
+            Möglichkeiten (Darstellung, #567), tragen die Einträge{" "}
+            <code>gewaehlt</code>: Sie werden zu <code>menuitemradio</code>, die
+            gewählte zeigt rechts den Haken in Primary. Ein Satz, der für alle
+            Einträge gilt, steht als <code>fuss</code> leise darunter.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Error trägt hier als Fliesstext: Das Panel liegt auf 08dp, und dort
@@ -2691,7 +2757,7 @@ export default async function Styleguide() {
             auf die ein Kader-Chip eingrenzt). Anatomie wie{" "}
             <code>@atlaskit/badge</code>: <code>rounded-klein</code>, 4 px
             seitlich, mindestens 24 px breit, <code>type-lozenge</code>. Gefüllt
-            in Primary - Atlassians Markenfarbe ist bei uns das Lila -, weil sie
+            in Primary - Atlassians Markenfarbe ist bei uns das Violett -, weil sie
             als Teil des Knopfes gelesen wird, nicht als eigene Aussage über den
             Inhalt. Für die Vorlesehilfe stumm: Der Knopf sagt die Zahl in Worten.{" "}
             <code>appearance=&quot;neutral&quot;</code> (hell, <code>umkehr</code>) trägt ein Filter-Chip in Ruhe;
@@ -2947,15 +3013,11 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Im Fuss eines Dialogs steht kein Textknopf: Der Ausweg ist ein
             Secondary Button (<code>outlined</code>), seine Schrift ist{" "}
-            <code>on-surface</code>. <strong>Bewusste Abweichung:</strong>{" "}
-            Links im Inhalt eines Dialogs («Der Serie folgen», «Übung
-            erfassen») bleiben Primary und kommen auf 24dp damit auf{" "}
-            {v(kontrast(PRIMARY, elev(24)))} - knapp unter 4.5:1. Materials
-            eigene Baseline tut dasselbe, und die Alternative wäre schlechter:
-            Weisse Linkschrift wäre von der Fliesstextzeile daneben nicht mehr zu
-            unterscheiden. Die Links sind unterstrichen und tragen den Ring; wer
-            sie nicht als Links liest, verliert nichts, denn der Dialog nennt
-            seine Handlung auch im Text.
+            <code>on-surface</code>. Links im Inhalt eines Dialogs («Der Serie
+            folgen», «Übung erfassen») bleiben Primary und kommen auf 24dp auf{" "}
+            {v(kontrast(PRIMARY, elev(24)))}. Weisse Linkschrift wäre von der
+            Fliesstextzeile daneben nicht mehr zu unterscheiden; die Links sind
+            zudem unterstrichen und tragen den Ring.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Die Snackbar meldet einen <strong>Vorgang</strong>, die Section
@@ -3067,21 +3129,31 @@ export default async function Styleguide() {
             <strong>Seitenleiste</strong> am linken Rand, auf{" "}
             <code>bg-elev-01</code> mit <code>border-linie</code> zum Inhalt. Sie
             ist Rahmen, keine schwebende Fläche, und trägt darum keinen Schatten.
-            Oben die Marke (Fussball im Primary-Quadrat, zugleich das Favicon), darunter die Einträge in
+            Oben die Marke (die Bildmarke F mit Punkt, dieselbe Datei wie das Favicon, und der Name), darunter die Einträge in
             Gruppen, unten «Fragen und Feedback» (nur angemeldet; ein Knopf, kein Link - er öffnet
-            den Dialog neben der Seite, siehe <Siehe id="feedback-dialog" />), die Versionszeile,
-            der Styleguide und die Konto-Karte: Avatar, Anzeigename
+            den Dialog neben der Seite, siehe <Siehe id="feedback-dialog" />), «Darstellung», die
+            Versionszeile und die Konto-Karte: Avatar, Anzeigename
             und E-Mail führen als Ganzes ins Konto. Die Versionszeile (Zeichen und Nummer, ruhiger als
-            ein Eintrag) führt zur Release-History, die Zeile darunter (Palette, gleich ruhig) zu
-            dieser Seite; schmal bleibt je das Zeichen. Ist ein Release
+            ein Eintrag) führt zur Release-History; schmal bleibt das Zeichen. Diese Seite führt die
+            Leiste nicht (PO 2026-10-30): Sie ist Werkzeug fürs Entwickeln, nicht für Nutzer:innen,
+            und bleibt unter <code>/styleguide</code> erreichbar. Ist ein Release
             erschienen, den dieser Browser noch nicht gesehen hat, trägt die Versionszeile die Plakette «Neu»
             (<code>discovery</code>: etwas Zusätzliches) - schmal stattdessen einen Punkt in Primary
             am Zeichen, die einzige Punkt-Markierung im Kit. Sie drängt sich nicht auf und
             verschwindet, sobald die Versionen angezeigt wurden. Abmelden steht im Konto, nicht in der
-            Leiste. Der offene Eintrag steht eine Stufe höher als sein Grund
-            (08dp auf 01dp) und trägt sein Zeichen in Primary; aufklappbare
+            Leiste. Der offene Eintrag ist betont (<code>betont</code>, die Schrift
+            zu 8 % über der Leiste) und trägt sein Zeichen in Primary; aufklappbare
             Einträge (Teams) haben einen eigenen Pfeil, damit der Name selbst
             zur Übersicht führen kann.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            <strong>Darstellung</strong> (#567) steht angemeldet zwischen «Fragen und Feedback» und
+            der Version: das Zeichen der aktuellen Wahl (Bildschirm, Sonne, Mond), breit dazu ihr
+            Name. Die Zeile öffnet ein Menü mit «Wie das Gerät», «Hell» und «Dunkel»; die gewählte
+            Zeile trägt den Haken (<code>menuitemradio</code>), am Fuss steht, dass die Wahl in diesem
+            Browser gilt. Breit klappt es über der Zeile auf, schmal rechts neben der Leiste - es steht
+            darum <code>fixed</code> und ragt aus der Leiste hinaus. Umgeschaltet wird sofort und ohne
+            Neuladen; Ungespeichertes auf der Seite bleibt stehen.
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             <strong>Breit oder schmal</strong> - 280 px mit Namen, 72 px nur mit
@@ -3100,7 +3172,7 @@ export default async function Styleguide() {
             links</strong> auf 08dp, geöffnet über eine schmale Kopfzeile
             (04dp, deckend) mit Hamburger. Scrim, Escape und Scroll-Sperre wie
             bei jedem Overlay; dort ist die Leiste immer breit, die aktive Zeile
-            steht auf 12dp.
+            ebenso betont.
           </p>
           <SeitenleisteDemo />
         </Section>
@@ -3125,7 +3197,7 @@ export default async function Styleguide() {
             (<code>Verzeichnis</code> in <code>VerzeichnisFlaeche</code>): «Versionen» und diese
             Seite - das Verzeichnis links ist das Beispiel. Es klebt unter der Kopfzeile, scrollt
             für sich und führt mit jedem Eintrag zu einem Abschnitt. Der Abschnitt, der oben im
-            Fenster steht, trägt seine Zeile auf 08dp (<code>aria-current=&quot;location&quot;</code>);
+            Fenster steht, trägt seine Zeile betont (<code>aria-current=&quot;location&quot;</code>);
             das Verzeichnis scrollt so, dass sie sichtbar bleibt.
           </p>
           <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-1 pl-5 text-on-surface-mittel">
@@ -3415,7 +3487,7 @@ export default async function Styleguide() {
             «Auf GitHub ansehen»), dann der Text, wie er auf GitHub steht. Er ist Markdown und
             erscheint mit seiner Gliederung in der Schrift der Anwendung: Überschriften eine Stufe
             unter dem Titel (<code>type-title-medium</code>), Listen wie im Freitext, Fettes,
-            Links in Primary, Code auf 08dp. Eingebettetes HTML und Bilder fallen weg. Einträge
+            Links in Primary, Code betont. Eingebettetes HTML und Bilder fallen weg. Einträge
             trennt eine Haarlinie. Ab <code>lg</code> steht links das{" "}
             <Siehe id="verzeichnis" />, flach: je Version Nummer und Thema. Die Texte der neuesten
             30 Versionen stehen gleich da,
@@ -3659,8 +3731,8 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Das Diagramm ist Gegenstand, nicht Oberfläche</strong> - es
             folgt weiterhin nicht der Palette der Anwendung. Es hat aber eine
-            <strong> eigene</strong>, und die kennt mehr als einen Satz: dieselbe gespeicherte Zeichnung erscheint am Bildschirm auf
-            einem Nachtrasen und kommt auf Papier weiss aus dem Drucker. Die
+            <strong> eigene</strong>, und die kennt mehr als einen Satz: dieselbe gespeicherte Zeichnung erscheint im Dunkeln auf
+            einem Nachtrasen, im Hellen auf einem blassen Rasen und kommt auf Papier weiss aus dem Drucker. Die
             Rollen heissen <code>--diagramm-*</code> und stehen bewusst neben dem{" "}
             <code>@theme</code>-Block, ohne <code>--color-</code>-Präfix: Tailwind
             macht aus jeder Farbrolle des Themes eine Utility, und{" "}
@@ -3674,8 +3746,8 @@ export default async function Styleguide() {
             davor legte nur eine Linie auf die andere.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Zwei Sätze, ein Bestand: Gespeichert wird nur der Farb-Slug, was er
-            zeigt, entscheidet das Medium. Am Bildschirm liegt der Rasen
+            Drei Sätze, ein Bestand: Gespeichert wird nur der Farb-Slug, was er
+            zeigt, entscheiden Medium und Erscheinungsbild. Im Dunkeln liegt der Rasen
             tief im entsättigten Grün des App-Grunds, die Bewegungspfeile werden
             hell und die Elementfarben sind angehoben - die Manual-Palette kam auf dem dunklen
             Grund bei Rot auf 2.6:1 und bei Blau auf 2.2:1, zwei Mannschaften, die
@@ -3685,9 +3757,16 @@ export default async function Styleguide() {
             gezeichnet ist, kippt ins Graue, weil Weiss auf Papier nicht
             existiert. Einzige Ausnahme ist der Ball - er bleibt weiss und bekommt
             eine kräftigere Kontur, sonst wäre er ein grauer Fleck unter lauter
-            grauen Flecken. Die Werte stehen in <code>app/globals.css</code>, die
+            grauen Flecken. Im Hellen (Epic #563) liegt der Rasen als blasses,
+            frisches Grün auf der Seite, und es gilt dieselbe Umkehrung wie auf
+            Papier: kräftige Palette, schwarze Pfeile, «weiss» wird Graphit und bleibt
+            so von «schwarz» unterscheidbar; den Rand des Felds zieht wieder die
+            Feldkante. Hell und Dunkel stehen wie die Oberfläche als{" "}
+            <code>light-dark()</code>; die Auswahl im Editor trägt die Schrift der
+            Anwendung, damit sie auf beiden Rasen sichtbar bleibt. Die Werte stehen in{" "}
+            <code>app/globals.css</code>, die
             Rollennamen in <code>lib/diagramm-farben.ts</code>;{" "}
-            <code>npm run check:diagramm-farben</code> rechnet beide Sätze nach
+            <code>npm run check:diagramm-farben</code> rechnet alle drei Sätze nach
             (3:1 nach WCAG 1.4.11 - auf dem Rasen steht kein Text) und verbietet
             im Zeichencode jeden rohen Farbwert.
           </p>

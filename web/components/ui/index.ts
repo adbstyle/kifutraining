@@ -67,8 +67,8 @@ export type {
   SeitenleisteUnterpunkt,
   SeitenleisteKonto,
   SeitenleisteVersion,
-  SeitenleisteStyleguide,
   SeitenleisteFeedback,
+  SeitenleisteDarstellung,
 } from "./Seitenleiste";
 export { Ziehgriff } from "./Ziehgriff";
 export { Verzeichnis } from "./Verzeichnis";

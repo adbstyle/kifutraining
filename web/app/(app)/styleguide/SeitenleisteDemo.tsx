@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ClipboardList, LayoutGrid, Shield } from "lucide-react";
 import { Breadcrumbs, ChoiceChip, ChoiceChipGroup, Seitenleiste, SeitenleistenKnopf, leisteStil } from "@/components/ui";
 import type { SeitenleisteGruppe } from "@/components/ui";
+import type { Darstellung } from "@/lib/darstellung";
 
 /* Beispieldaten; die Ziele bleiben auf der Seite. */
 function gruppen(angemeldet: boolean): SeitenleisteGruppe[] {
@@ -45,6 +46,8 @@ function gruppen(angemeldet: boolean): SeitenleisteGruppe[] {
 export function SeitenleisteDemo() {
   const [slim, setSlim] = useState(false);
   const [angemeldet, setAngemeldet] = useState(true);
+  // Nur die Demo: Die Wahl hier schaltet die Anwendung nicht um.
+  const [darstellung, setDarstellung] = useState<Darstellung>("geraet");
 
   return (
     <div className="flex flex-col gap-4">
@@ -71,8 +74,8 @@ export function SeitenleisteDemo() {
           }
           anmeldenHref="#anmelden"
           version={{ nummer: "1.27.0", href: "#versionen", neu: true }}
-          styleguide={{ href: "#styleguide" }}
           feedback={angemeldet ? { label: "Fragen und Feedback", offen: false, onOeffnen: () => {} } : undefined}
+          darstellung={angemeldet ? { wahl: darstellung, onWahl: setDarstellung } : undefined}
           slim={slim}
         />
         <div className="schraffur flex min-w-0 flex-1 flex-col p-4">
