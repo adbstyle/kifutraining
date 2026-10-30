@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-10-06. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-10-30. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -325,14 +325,18 @@ sich also weiterhin umbenennen. Der Assistent kann das Diagramm einer eigenen Ü
 setzen und sich seine inhaltlichen Mängel melden lassen; die Anwendung selbst zeigt diese Mängel
 nicht an (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
 
-Dasselbe Diagramm sieht am Bildschirm anders aus als auf Papier, und beides ist Absicht. Am
-Bildschirm liegt es auf einem dunklen Rasen, passend zur übrigen Anwendung, mit hellen
-Bewegungspfeilen und kräftigeren Farben für Leibchen und Material. Auf Papier kommt dieselbe
+Dasselbe Diagramm sieht im Dunkeln, im Hellen und auf Papier verschieden aus, und das ist Absicht.
+Im dunklen Erscheinungsbild liegt es auf einem dunklen Rasen mit hellen Bewegungspfeilen und
+kräftig aufgehellten Farben für Leibchen und Material. Im hellen liegt es auf einem blassen,
+frischen Rasen mit einer feinen Kante, die Pfeile sind schwarz und die Farben kräftig und dunkel;
+«weiss» erscheint dort als Graphit, damit es auf dem hellen Rasen sichtbar und von «schwarz»
+unterscheidbar bleibt. Der Ball bleibt in jedem Fall weiss mit dunkler Zeichnung. Auf Papier kommt dieselbe
 Zeichnung auf weissem Grund mit angedeuteten Mähstreifen, schwarzen Pfeilen wie in der
 Zeichenerklärung des Manuals und dunkleren Farben. Das spart Druckfarbe — der grüne Rasen füllte
 bisher das ganze Blatt — und bleibt auf einem einfachen Bürodrucker lesbar. Wer eine Farbe wählt,
 wählt nicht einen Farbton, sondern «rot» oder «blau»; wie kräftig der ausfällt, entscheidet die
-Anwendung je nach Bildschirm oder Papier.
+Anwendung je nach Erscheinungsbild oder Papier. Die Auswahl beim Zeichnen ist im Hellen dunkel,
+im Dunkeln weiss umrandet.
 
 Ein vorhandenes Diagramm kann als Vorlage in eine andere eigene Übung oder eine Übung im Training
 kopiert werden. Zur Auswahl stehen die eigenen Diagramme und alle Manual-Diagramme, durchsuchbar

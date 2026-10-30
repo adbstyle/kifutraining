@@ -1,11 +1,12 @@
 # Navigation
 
-Stand 2026-10-29. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-10-30. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Seitenleiste
 
-Die Hauptnavigation steht als Leiste am linken Rand. Oben steht die Marke — ein Fussball mit
-dem Namen KiFu —, die zum Übungsbestand führt. Darunter folgen zwei Gruppen. Unter
+Die Hauptnavigation steht als Leiste am linken Rand. Oben steht die Marke — das Zeichen von
+FutAssist, ein F mit einem Punkt darüber, mit dem Namen KiFu —, die zum Übungsbestand führt.
+Dasselbe Zeichen steht im Tab des Browsers und auf dem Home-Bildschirm. Darunter folgen zwei Gruppen. Unter
 „Bibliothek" stehen „Übungen" und „Trainings", der ganze Bestand. Unter „Mein Bereich" stehen
 „Meine Übungen" und „Meine Trainings", also derselbe Bestand, eingegrenzt auf das Eigene, und
 „Teams". Unter „Teams" sind die eigenen Teams als Unterpunkte aufgeführt. Ein Klick auf
@@ -16,11 +17,11 @@ Hervorgehoben ist, wo man gerade steht. Ein geöffnetes Team-Training hält „T
 wie im Team-Bereich beschrieben.
 
 Angemeldet steht darüber „Fragen und Feedback" (siehe unten). Es ist ein Knopf, kein Link: Er
-öffnet das Gespräch neben der Seite, statt die Seite zu wechseln.
+öffnet das Gespräch neben der Seite, statt die Seite zu wechseln. Darunter steht, ebenfalls nur
+angemeldet, „Darstellung" mit der gewählten Darstellung (siehe „Hell und dunkel").
 
 Über dem Konto steht die Version, die gerade läuft. Ein Klick darauf öffnet „Versionen" (siehe
-unten); in der schmalen Leiste bleibt ihr Zeichen, die Nummer zeigt der Hinweis daneben. Gleich
-darunter führt „Styleguide" zum Designsystem (siehe unten), auch ohne Anmeldung.
+unten); in der schmalen Leiste bleibt ihr Zeichen, die Nummer zeigt der Hinweis daneben.
 
 Ist seit dem letzten Blick in „Versionen" eine neue Version erschienen, trägt die Versionszeile
 die Plakette „Neu", in der schmalen Leiste einen Punkt am Zeichen. Sie unterbricht nichts und
@@ -42,6 +43,27 @@ Namen eines Eintrags zeigt ein Hinweis daneben, sobald man ihn mit dem Zeiger ü
 mit der Tastatur ansteuert. Umgeschaltet wird nur von Hand, über den Knopf links vor den
 Brotkrumen. Beim Überfahren öffnet sich die schmale Leiste nicht von selbst. Die Wahl merkt
 sich der Browser und behält sie beim nächsten Besuch.
+
+## Hell und dunkel
+
+KiFu erscheint hell oder dunkel und folgt dabei der Einstellung des Geräts: Ist das Telefon oder
+der Rechner auf dunkel gestellt, ist KiFu dunkel, sonst hell — auch wenn das Gerät gar nichts
+angibt. Stellt man das Gerät um, geht KiFu sofort mit, ohne Neuladen. Beide Erscheinungsbilder
+haben dieselben Farben der Marke mit dem Violett als Akzent; hell liegen weisse Karten auf einem
+leise grünlich-grauen Grund, dunkel bleibt der Grund das dunkle Rasengrün. Gedruckt wird immer
+hell, wie bisher.
+
+Angemeldet lässt sich die Darstellung selbst wählen: „Darstellung" unten in der Leiste öffnet ein
+Menü mit „Wie das Gerät", „Hell" und „Dunkel"; die gewählte trägt einen Haken. In der schmalen Leiste
+klappt das Menü rechts neben der Leiste auf. Umgeschaltet wird sofort und ohne Neuladen — was man
+auf der Seite gerade eingibt, bleibt stehen. Die Wahl gilt in diesem Browser für alle, die ihn
+benutzen, auch abgemeldet auf den Seiten zum Anmelden, Registrieren und Zurücksetzen des
+Passworts; sie bleibt beim nächsten Besuch. „Wie das Gerät" stellt den Anfang wieder her.
+
+Ohne Anmeldung erscheinen alle Seiten mit Leiste — Übungen, öffentliche Trainings, „Versionen",
+„Cookies" — immer hell, gleich wie das Gerät eingestellt ist; nach dem Anmelden gilt wieder die
+eigene Wahl. Die Seiten hinter einem privaten Link folgen allein dem Gerät: Dort gibt es keine
+Wahl, und es wird nichts gespeichert.
 
 ## Versionen
 
@@ -76,13 +98,15 @@ links ein Verzeichnis in derselben Gliederung: Ein Klick springt zum Abschnitt, 
 der Abschnitt, der gerade oben steht, und die drei Obertitel lassen sich auf- und zuklappen.
 Breiter oder schmaler zieht man es wie unter „Versionen"; die Breite gilt für beide Seiten. Wo
 ein Abschnitt auf einen anderen verweist, führt ein Link mit dessen Namen dorthin. Auf schmalen
-Bildschirmen stehen nur die Abschnitte. Die Seite ist ohne Anmeldung zugänglich.
+Bildschirmen stehen nur die Abschnitte. Die Seitenleiste führt nicht dorthin — der Styleguide ist
+ein Werkzeug für die Entwicklung —, erreichbar ist er unter ki-fu.ch/styleguide, auch ohne
+Anmeldung. Er zeigt die Farben beider Erscheinungsbilder nebeneinander.
 
 ## Cookies
 
 Die Seite „Cookies" nennt alles, was KiFu im Browser ablegt: die Anmeldung, die gewählte
 Breite der Seitenleiste, die gezogene Breite der Spalte und des Verzeichnisses unter
-„Versionen" und im Styleguide und bis zu welcher Version man
+„Versionen" und im Styleguide, die gewählte Darstellung und bis zu welcher Version man
 „Versionen" gesehen hat — je mit Zweck, Dauer, Namen und dem, was ohne sie nicht mehr geht.
 Sie nennt auch die Besucherstatistik: KiFu zählt auf ki-fu.ch Seitenaufrufe mit Vercel Web
 Analytics nach Seite, Herkunft, Land und Gerätetyp. Diese legt nichts im Browser ab, kennt keine
@@ -165,10 +189,10 @@ umrandet; Farbe trägt allein sein Knopf. Damit der Zustand nicht an der Farbe a
 der Knopf ein Zeichen: an steht er rechts in der Akzentfarbe mit einem Haken, aus links in Grau mit
 einem Kreuz. Rot gibt es am Schalter nicht, auch nicht in langen Listen — ein Fehlen zeigen Status
 und Kalenderblatt. Für Spieler:innen an Terminen — im Reiter „Spieler:innen" und am privaten Link
-— ist er ruhiger und ohne Farbe: an ein grosser heller Knopf auf durchsichtiger Bahn, aus ein
-kleiner grauer auf dunkler, beides ohne Zeichen. Wo das Aus kein Fehlen bedeutet, wie bei der
-Selbstabholung, oder wo es nichts zu wählen gibt, wie an einem ausgefallenen Termin, ist er grau
-und ohne Zeichen; ist nichts mehr zu ändern, ist er gesperrt.
+— und für die Selbstabholung, deren Aus kein Fehlen bedeutet, ist er ruhiger: dieselbe Form, aber
+der Knopf bleibt in beiden Lagen grau, an rechts mit Haken, aus links mit Kreuz. Ist nichts mehr
+zu ändern, ist er gesperrt; an einem ausgefallenen Termin steht am privaten Link gar kein
+Schalter.
 
 Ein Formular liest sich als Liste aus Namen und Werten. Jede Angabe steht als eigenes Feld in
 einer eigenen Zeile, auch wo zwei Angaben zusammengehören wie Länge und Breite oder Mindest- und
@@ -184,7 +208,7 @@ fehlerhaft, steht sein Name oben und nicht zusätzlich im Feld. Wo sich in einem
 wiederholen — Felder eines Termins, Material einer Übung —, steht zum Hinzufügen kein Knopf,
 sondern eine Zeile, die aussieht wie ein leeres Feld, etwa „Feld hinzufügen (optional)"; ein
 Klick fügt einen Eintrag an. Die Bedienteile des Browsers selbst, etwa das Auswahlfenster für ein
-Datum, erscheinen dunkel wie die Anwendung.
+Datum, erscheinen hell oder dunkel wie die Anwendung.
 
 Was ein Feld nur erklärt, steht nicht dauernd darunter, sondern hinter einem kleinen ⓘ rechts im
 Feld. Es erscheint erst, wenn man mit der Maus über die Angabe fährt; ein Klick darauf öffnet den
@@ -267,6 +291,12 @@ die KI nicht erreichbar oder ihr Monatsbudget aufgebraucht, sagt der Dialog nur,
 gerade nicht möglich ist.
 
 ## Bekannte Grenzen
+
+Die gewählte Darstellung merkt sich der Browser, nicht das Konto: Auf einem anderen Gerät gilt
+wieder die Einstellung des Geräts, und wer einen Browser teilt, teilt auch die Wahl. Ältere
+Browser — etwa Safari vor Version 17.5, also iPhones mit iOS 16 oder einem frühen iOS 17 —
+zeigen KiFu immer hell; dort fehlt „Darstellung" in der Leiste. Ohne Anmeldung lässt sich die
+Darstellung nicht wählen, und die Seiten hinter einem privaten Link kennen keine eigene Wahl.
 
 Wird jemand von einem anderen Konto in ein Team aufgenommen, erscheint das Team in der Leiste
 erst beim nächsten Neuladen oder nach der nächsten eigenen Aktion. Breit oder schmal merkt

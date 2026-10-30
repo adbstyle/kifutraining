@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-10-29. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-30. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -387,8 +387,8 @@ Trainer:innen als „dabei/eingeladen" mit dem eigenen Stand als Zeichen davor u
 Felder „Platz nicht erfasst"; die Einzelheiten nennt jedes Zeichen beim Darüberfahren und für die
 Vorlesehilfe. Dann die Bemerkung und der Schalter „Ich bin dabei" mit dem Satz, wer verantwortlich
 ist, und — wenn das zutrifft — „du hast abgesagt" oder „du bist nicht eingeladen"; ab Beginn und an
-einem ausgefallenen Termin ist er gesperrt. Zuunterst „Durchführen" als heller Knopf und „Training
-öffnen", ohne Training „Training hinzufügen" als heller Knopf; dazu „Spieler:innen", sofern das Team
+einem ausgefallenen Termin ist er gesperrt. Zuunterst „Durchführen" als hervorgehobener Knopf und „Training
+öffnen", ohne Training „Training hinzufügen" als hervorgehobener Knopf; dazu „Spieler:innen", sofern das Team
 eine Spielerliste führt, und „Trainer:innen", die den Termin bei diesem Reiter öffnen (siehe „Der
 geöffnete Termin"). Ein Klick auf die Karte oder den Namen öffnet den Termin. Die Namen der
 Trainer:innen und die Wochentage der Serie zeigt erst der geöffnete Termin. In der Liste darunter steht er
@@ -725,9 +725,8 @@ fest, es gilt die zuletzt gesetzte. Einen Grund trägt eine Abmeldung nicht.
 
 Im Reiter „Spieler:innen" des geöffneten Termins steht jede Spieler:in mit einem Schalter, der beim
 Umlegen sofort speichert: an heisst angemeldet, aus abgemeldet, und abgemeldete Namen stehen
-gedämpft. Der Schalter ist hier ruhig gehalten und bewertet nicht: angemeldet eine durchsichtige
-Bahn mit heller Kontur und einem grossen hellen Knopf rechts, abgemeldet eine dunkle Bahn mit
-grauer Kontur und einem kleinen grauen Knopf links, beides ohne Zeichen. Darüber steht „12 von 15 angemeldet" und bis wann sich das ändern lässt, etwa „Änderbar
+gedämpft. Der Schalter ist hier ruhig gehalten und bewertet nicht: Sein Knopf bleibt grau,
+angemeldet steht er rechts mit einem Haken, abgemeldet links mit einem Kreuz. Darüber steht „12 von 15 angemeldet" und bis wann sich das ändern lässt, etwa „Änderbar
 bis 18:00". Ab Beginn gilt der „Stand bei Beginn", die Schalter sagen dann, wer da war (siehe
 „Nachtragen, wer da war"), und ehemalige Spieler:innen stehen ohne Namen am Ende, ihr Schalter
 gesperrt. Links vom Schalter steht, seit wann der Status einer
@@ -984,8 +983,9 @@ Kalenderblatt, dem Status der Spieler:in als Plakette — „Angemeldet" grün, 
 aus" grau —, Beginn und Ende, Ort, bei einem Termin mit Kadern den Kadern der Spieler:in, über die
 er für sie gilt, der Spielerzahl, wer verantwortlich ist — etwa „Verantwortlich: Anna Keller", ohne
 Verantwortliche:n nichts — und einem Schalter. Der Schalter ist derselbe ruhige wie im Reiter
-„Spieler:innen": angemeldet ein grosser heller Knopf rechts, abgemeldet ein kleiner grauer links,
-ohne Farbe und ohne Zeichen; an einem ausgefallenen Termin ist er grau. Fällt ein Termin mit
+„Spieler:innen": ein grauer Knopf, angemeldet rechts mit Haken, abgemeldet links mit Kreuz. An einem
+ausgefallenen Termin steht kein Schalter; den Ausfall sagen das gestrichene Kalenderblatt, die
+Plakette und der Grund. Fällt ein Termin mit
 Grund aus, steht der Grund unter dem Ort, ganz und mit „Grund:" davor, etwa „Grund: Platz nach dem
 Regen gesperrt"; ohne Grund sagt die Karte nur, dass er ausfällt. Ein geänderter Grund ist beim
 nächsten Öffnen zu sehen, ohne als Änderung gekennzeichnet zu sein. Der Name der
@@ -1031,7 +1031,7 @@ Plakette — „Ohne Meldung" gelb, „Angemeldet" grün, „Abgemeldet", „Nic
 verantwortlich ist. Darunter steht eine Zeile mit Zeichen: bis wann sich melden lässt — ohne
 Meldung etwa „Bitte melden bis Do., 29.10., 20:00", sonst „Änderbar bis …", ohne Meldefrist
 „Änderbar bis zum Anpfiff" —, die Angemeldeten von allen samt dem gesuchten Bereich, etwa „7/14 ·
-gesucht 9 bis 12", und die Kader der Spieler:in; darunter die Knöpfe: ohne Meldung „Anmelden" hell und „Abmelden", sonst nur der eine mögliche Wechsel. Nach der
+gesucht 9 bis 12", und die Kader der Spieler:in; darunter die Knöpfe: ohne Meldung „Anmelden" hervorgehoben und „Abmelden", sonst nur der eine mögliche Wechsel. Nach der
 Meldefrist gibt es keine Knöpfe mehr, nur „Meldefrist abgelaufen · Änderung übers Team", ab dem
 Anpfiff „Hat begonnen · nicht mehr änderbar". Ist die Spieler:in nicht aufgeboten, steht statt
 dessen „… ist für dieses Spiel nicht aufgeboten. Fragen dazu ans Team." mit ihrem Namen, ebenfalls
