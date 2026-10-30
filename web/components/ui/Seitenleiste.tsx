@@ -12,7 +12,6 @@ import {
   MessageSquare,
   Monitor,
   Moon,
-  Palette,
   PanelLeftClose,
   PanelLeftOpen,
   Sun,
@@ -74,12 +73,6 @@ export interface SeitenleisteVersion {
   neu?: boolean;
 }
 
-/** Der Styleguide unten in der Leiste, gleich unter der Version. */
-export interface SeitenleisteStyleguide {
-  href: string;
-  current?: boolean;
-}
-
 /** «Fragen und Feedback» unten in der Leiste (#542): kein Link, sondern ein
  *  Knopf — er öffnet den Dialog neben der Seite, statt sie zu wechseln. */
 export interface SeitenleisteFeedback {
@@ -103,8 +96,6 @@ export interface SeitenleisteProps {
   anmeldenHref?: string;
   /** Laufende Version über der Konto-Karte. */
   version?: SeitenleisteVersion;
-  /** Styleguide unter der Version. */
-  styleguide?: SeitenleisteStyleguide;
   /** «Fragen und Feedback» über der Version; nur angemeldet. */
   feedback?: SeitenleisteFeedback;
   /** «Darstellung» zwischen Feedback und Version; nur angemeldet. */
@@ -231,7 +222,6 @@ export function Seitenleiste({
   konto,
   anmeldenHref = "/login",
   version,
-  styleguide,
   feedback,
   darstellung,
   slim,
@@ -422,10 +412,12 @@ export function Seitenleiste({
           ))}
         </div>
 
-        {/* Die Version führt zur Release-History (#408), der Styleguide
-            darunter zum Designsystem: beide gleich über der Linie zum Konto.
-            Schmal bleibt das Zeichen, der Name steht dann im Hinweis daneben. */}
-        {(version || styleguide || feedback || darstellung) && (
+        {/* Feedback, Darstellung und Version (führt zur Release-History,
+            #408) stehen gleich über der Linie zum Konto. Schmal bleibt das
+            Zeichen, der Name steht dann im Hinweis daneben. Den Styleguide
+            führt die Leiste nicht: Er ist Werkzeug fürs Entwickeln, nicht für
+            Nutzer:innen, und bleibt unter /styleguide erreichbar. */}
+        {(version || feedback || darstellung) && (
           <div className="flex shrink-0 flex-col gap-0.5 px-4 pb-2">
             {feedback && (
               <button
@@ -493,28 +485,6 @@ export function Seitenleiste({
                     <span className="sr-only">, neue Version erschienen</span>
                   </>
                 )}
-              </Link>
-            )}
-            {styleguide && (
-              <Link
-                href={styleguide.href}
-                aria-current={styleguide.current ? "page" : undefined}
-                data-hinweis="Styleguide"
-                onClick={schliessen}
-                className={cn(
-                  zeile,
-                  "type-body-small h-9 gap-3 px-2.5",
-                  k?.mitte,
-                  styleguide.current ? zeileAktiv : zeileRuhe,
-                )}
-              >
-                <Palette
-                  size={18}
-                  strokeWidth={2}
-                  aria-hidden
-                  className={cn("shrink-0", styleguide.current && "text-primary")}
-                />
-                <span className={cn("truncate", k?.textWeg)}>Styleguide</span>
               </Link>
             )}
           </div>
@@ -585,7 +555,7 @@ const DARSTELLUNGEN: { wert: Darstellung; label: string; kurz: string; icon: Luc
   { wert: "dunkel", label: "Dunkel", kurz: "Dunkel", icon: Moon },
 ];
 
-/* Darstellung (#567, Entwurf A): eine Zeile wie Version und Styleguide, die
+/* Darstellung (#567, Entwurf A): eine Zeile wie Feedback und Version, die
    ein Menü öffnet. Breit klappt es über der Zeile auf, schmal rechts neben
    der Leiste. Das Menü steht `fixed`, weil die Leiste ihren Inhalt
    abschneidet (`overflow-hidden`) — schmal ragte es sonst nicht hinaus. Die

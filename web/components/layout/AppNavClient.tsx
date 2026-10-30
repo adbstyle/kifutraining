@@ -94,7 +94,6 @@ export function AppNavClient({
       gruppen={gruppen}
       konto={konto ? { ...konto, href: "/konto", current: pfad === "/konto" } : undefined}
       version={{ nummer: version, href: "/versionen", current: pfad === "/versionen", neu }}
-      styleguide={{ href: "/styleguide", current: pfad === "/styleguide" }}
       // Feedback nur mit Konto (#542); Spielervertretungen melden am privaten Link.
       feedback={
         konto ? { label: FEEDBACK_TITEL, offen: feedback.offen, onOeffnen: feedback.oeffnen } : undefined

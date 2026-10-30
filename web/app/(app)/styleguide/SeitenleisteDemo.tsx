@@ -74,7 +74,6 @@ export function SeitenleisteDemo() {
           }
           anmeldenHref="#anmelden"
           version={{ nummer: "1.27.0", href: "#versionen", neu: true }}
-          styleguide={{ href: "#styleguide" }}
           feedback={angemeldet ? { label: "Fragen und Feedback", offen: false, onOeffnen: () => {} } : undefined}
           darstellung={angemeldet ? { wahl: darstellung, onWahl: setDarstellung } : undefined}
           slim={slim}

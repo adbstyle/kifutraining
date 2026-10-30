@@ -67,7 +67,6 @@ export type {
   SeitenleisteUnterpunkt,
   SeitenleisteKonto,
   SeitenleisteVersion,
-  SeitenleisteStyleguide,
   SeitenleisteFeedback,
   SeitenleisteDarstellung,
 } from "./Seitenleiste";

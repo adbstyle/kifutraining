@@ -3130,11 +3130,12 @@ export default async function Styleguide() {
             ist Rahmen, keine schwebende Fläche, und trägt darum keinen Schatten.
             Oben die Marke (Fussball im Primary-Quadrat, zugleich das Favicon), darunter die Einträge in
             Gruppen, unten «Fragen und Feedback» (nur angemeldet; ein Knopf, kein Link - er öffnet
-            den Dialog neben der Seite, siehe <Siehe id="feedback-dialog" />), die Versionszeile,
-            der Styleguide und die Konto-Karte: Avatar, Anzeigename
+            den Dialog neben der Seite, siehe <Siehe id="feedback-dialog" />), «Darstellung», die
+            Versionszeile und die Konto-Karte: Avatar, Anzeigename
             und E-Mail führen als Ganzes ins Konto. Die Versionszeile (Zeichen und Nummer, ruhiger als
-            ein Eintrag) führt zur Release-History, die Zeile darunter (Palette, gleich ruhig) zu
-            dieser Seite; schmal bleibt je das Zeichen. Ist ein Release
+            ein Eintrag) führt zur Release-History; schmal bleibt das Zeichen. Diese Seite führt die
+            Leiste nicht (PO 2026-10-30): Sie ist Werkzeug fürs Entwickeln, nicht für Nutzer:innen,
+            und bleibt unter <code>/styleguide</code> erreichbar. Ist ein Release
             erschienen, den dieser Browser noch nicht gesehen hat, trägt die Versionszeile die Plakette «Neu»
             (<code>discovery</code>: etwas Zusätzliches) - schmal stattdessen einen Punkt in Primary
             am Zeichen, die einzige Punkt-Markierung im Kit. Sie drängt sich nicht auf und
