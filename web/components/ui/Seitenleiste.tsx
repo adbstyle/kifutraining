@@ -305,8 +305,12 @@ export function Seitenleiste({
         offen
           ? "max-lg:transition-[translate]"
           : "max-lg:invisible max-lg:-translate-x-full max-lg:transition-[translate,visibility]",
-        // Ab lg: feste Spalte, klebt beim Scrollen.
-        "lg:sticky lg:top-0 lg:h-dvh lg:w-(--leiste-breite) lg:shrink-0 lg:self-start lg:overflow-hidden lg:border-r lg:border-linie lg:bg-elev-01 lg:transition-[width] lg:duration-200",
+        // Ab lg: feste Spalte, klebt beim Scrollen. `sticky` bildet einen
+        // eigenen Stapelkontext — ohne Ebene malte später folgender Inhalt
+        // (Karten, Seitenkopf z-20) über alles, was aus der Leiste ragt, etwa
+        // das Menü «Darstellung» der schmalen Leiste. z-30: über dem Inhalt,
+        // unter Snackbar und Auswahlleiste.
+        "lg:sticky lg:top-0 lg:z-30 lg:h-dvh lg:w-(--leiste-breite) lg:shrink-0 lg:self-start lg:overflow-hidden lg:border-r lg:border-linie lg:bg-elev-01 lg:transition-[width] lg:duration-200",
       );
 
   return (
