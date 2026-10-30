@@ -20,25 +20,20 @@ import { cn } from "@/lib/cn";
    auffallen soll, zeigen Lozenge und Kalenderblatt. Diese Form löst die gefüllte
    (an Lila, aus Rot) ab.
 
-   `neutral`: kleiner grauer Knopf, ohne Zeichen — für einen Termin, an dem es
-   nichts zu wählen gibt (ausgefallen), und für die Aus-Lage eines Schalters,
-   dessen Aus kein Fehlen bedeutet (die Selbstabholung, #438).
-
    `ton="ruhig"` (Epic #490, #498; Form seit PO 2026-10-30): für «angemeldet»
    und «da» von Spieler:innen an Trainings — am privaten Link und in der
-   Spielerliste am Termin. Der Schalter zeigt den Stand, ohne ihn zu
+   Spielerliste am Termin — und für die Selbstabholung, deren Aus kein Fehlen
+   bedeutet. Die frühere Form `neutral` (kleiner Knopf ohne Zeichen) entfällt
+   (PO 2026-10-30). Der Schalter zeigt den Stand, ohne ihn zu
    bewerten: dieselbe Form wie Primary, aber der Knopf bleibt in beiden Lagen
    grau — an rechts mit Haken, aus links mit Kreuz. Den Stand tragen Lage und
    Zeichen, nicht die Farbe. */
 export function Switch({
   className,
   disabled,
-  neutral = false,
   ton = "primary",
   ...rest
 }: Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "role"> & {
-  /** Ohne Bedeutung von an/aus: grau, ohne Zeichen. */
-  neutral?: boolean;
   /** Primary nach Proton oder ruhig: dieselbe Form, Knopf immer grau (Spieler:innen an Trainings). */
   ton?: "primary" | "ruhig";
 }) {
@@ -51,29 +46,23 @@ export function Switch({
         className="peer focus-ring kontur absolute inset-0 m-0 h-full w-full cursor-pointer appearance-none rounded-full border-kante bg-transparent disabled:cursor-not-allowed"
         {...rest}
       />
-      {neutral ? (
-        <span aria-hidden className="pointer-events-none absolute left-2 size-4 rounded-full bg-on-surface-mittel peer-checked:left-7" />
-      ) : (
-        <>
-          <span
-            aria-hidden
-            className={cn(
-              "pointer-events-none absolute left-[3px] size-[26px] rounded-full bg-on-surface-mittel transition-[left,background-color] motion-reduce:transition-none peer-checked:left-[23px]",
-              ton === "primary" && "peer-checked:bg-primary",
-            )}
-          />
-          <X aria-hidden size={14} strokeWidth={3} className="pointer-events-none absolute left-[9px] text-elev-01 peer-checked:hidden" />
-          <Check
-            aria-hidden
-            size={14}
-            strokeWidth={3}
-            className={cn(
-              "pointer-events-none absolute left-[29px] hidden peer-checked:block",
-              ton === "primary" ? "text-on-primary" : "text-elev-01",
-            )}
-          />
-        </>
-      )}
+      <span
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute left-[3px] size-[26px] rounded-full bg-on-surface-mittel transition-[left,background-color] motion-reduce:transition-none peer-checked:left-[23px]",
+          ton === "primary" && "peer-checked:bg-primary",
+        )}
+      />
+      <X aria-hidden size={14} strokeWidth={3} className="pointer-events-none absolute left-[9px] text-elev-01 peer-checked:hidden" />
+      <Check
+        aria-hidden
+        size={14}
+        strokeWidth={3}
+        className={cn(
+          "pointer-events-none absolute left-[29px] hidden peer-checked:block",
+          ton === "primary" ? "text-on-primary" : "text-elev-01",
+        )}
+      />
     </span>
   );
 }

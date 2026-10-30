@@ -2053,12 +2053,11 @@ export default async function Styleguide() {
             damit der Zustand nicht an der Farbe allein hängt. Rot gibt es am
             Schalter nicht, auch nicht in langen Listen: Ein Fehlen, das
             auffallen soll, zeigen Lozenge und Kalenderblatt. Gesperrt, wenn es
-            nichts mehr zu ändern gibt (der Termin hat begonnen);{" "}
-            <code>neutral</code> mit kleinem grauem Knopf ohne Zeichen, wenn es
-            nichts zu wählen gibt (er fällt aus) - und für die Aus-Lage eines
-            Schalters, dessen Aus kein Fehlen bedeutet (die Selbstabholung eines
-            Teams). <code>ton=&quot;ruhig&quot;</code> (Epic #490, Form seit PO 2026-10-30) für «angemeldet» und
-            «da» von Spieler:innen an Trainings, am privaten Link und in der Spielerliste am Termin: Der Schalter zeigt
+            nichts mehr zu ändern gibt (der Termin hat begonnen oder fällt aus).{" "}
+            <code>ton=&quot;ruhig&quot;</code> (Epic #490, Form seit PO 2026-10-30) für «angemeldet» und
+            «da» von Spieler:innen an Trainings, am privaten Link und in der Spielerliste am Termin, und für die
+            Selbstabholung eines Teams, deren Aus kein Fehlen bedeutet. Die frühere Form <code>neutral</code>{" "}
+            (kleiner Knopf ohne Zeichen) entfällt. Der Schalter zeigt
             den Stand, ohne ihn zu bewerten - dieselbe Form wie Primary, aber der Knopf bleibt in beiden Lagen grau:
             an rechts mit Haken, aus links mit Kreuz. Den Stand tragen Lage und Zeichen, nicht die Farbe. Primary mit
             dem violetten Knopf bleibt für «dabei» der Trainer:innen. Darunter liegt ein echtes{" "}

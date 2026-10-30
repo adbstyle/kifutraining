@@ -298,7 +298,6 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
         <Switch
           ton="ruhig"
           checked={!t.ausgefallen && !ab}
-          neutral={t.ausgefallen}
           disabled={t.ausgefallen || t.begonnen || vergeben || pending}
           onChange={(e) => onUmlegen(e.target.checked)}
           aria-label={`${name} am ${tagText(t.datum)} dabei`}
