@@ -37,6 +37,7 @@ export function Switch({
   /** Primary nach Proton oder ruhig: dieselbe Form, Knopf immer grau (Spieler:innen an Trainings). */
   ton?: "primary" | "ruhig";
 }) {
+  const primary = ton === "primary";
   return (
     <span className={cn("relative inline-flex h-8 w-[52px] shrink-0 items-center", disabled && "opacity-40", className)}>
       <input
@@ -50,7 +51,7 @@ export function Switch({
         aria-hidden
         className={cn(
           "pointer-events-none absolute left-[3px] size-[26px] rounded-full bg-on-surface-mittel transition-[left,background-color] motion-reduce:transition-none peer-checked:left-[23px]",
-          ton === "primary" && "peer-checked:bg-primary",
+          primary && "peer-checked:bg-primary",
         )}
       />
       <X aria-hidden size={14} strokeWidth={3} className="pointer-events-none absolute left-[9px] text-elev-01 peer-checked:hidden" />
@@ -60,7 +61,7 @@ export function Switch({
         strokeWidth={3}
         className={cn(
           "pointer-events-none absolute left-[29px] hidden peer-checked:block",
-          ton === "primary" ? "text-on-primary" : "text-elev-01",
+          primary ? "text-on-primary" : "text-elev-01",
         )}
       />
     </span>
