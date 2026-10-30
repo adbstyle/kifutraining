@@ -30,24 +30,31 @@ export function DarstellungsMarke({ darstellung }: { darstellung: Darstellung })
 }
 
 export function DarstellungProvider({
-  anfang,
+  wahl: wahlVomServer,
+  anonym,
   children,
 }: {
-  anfang: Darstellung;
+  /** Die gespeicherte Wahl aus dem Cookie. */
+  wahl: Darstellung;
+  /** Ohne Anmeldung tritt KiFu nach aussen immer hell auf (#569). */
+  anonym: boolean;
   children: React.ReactNode;
 }) {
-  const [darstellung, setzeDarstellung] = useState(anfang);
-  // Das Layout bleibt beim Ab- und Anmelden stehen, rendert aber neu: Dann
-  // gilt, was der Server jetzt liefert (anonym immer hell, #569).
-  const [vorgabe, setzeVorgabe] = useState(anfang);
-  if (anfang !== vorgabe) {
-    setzeVorgabe(anfang);
-    setzeDarstellung(anfang);
+  const [wahl, setzeWahl] = useState(wahlVomServer);
+  // Das Layout bleibt beim Ab- und Anmelden stehen, rendert aber neu. Nur
+  // dann gilt wieder das Cookie: Bei jedem anderen Neurendern (Server Action,
+  // revalidatePath) könnte der Server noch das Cookie von vor dem Umschalten
+  // gelesen haben und die eben getroffene Wahl zurückdrehen.
+  const [warAnonym, setzeWarAnonym] = useState(anonym);
+  if (anonym !== warAnonym) {
+    setzeWarAnonym(anonym);
+    setzeWahl(wahlVomServer);
   }
   const waehle = useCallback((neu: Darstellung) => {
     document.cookie = darstellungCookie(neu);
-    setzeDarstellung(neu);
+    setzeWahl(neu);
   }, []);
+  const darstellung = anonym ? "hell" : wahl;
 
   return (
     <DarstellungKontext.Provider value={{ darstellung, waehle }}>

@@ -100,3 +100,47 @@ export function tokens(block: string, praefix: string): Map<string, string> {
   }
   return gefunden;
 }
+
+/** Ersetzt jedes `light-dark(a, b)` in einem Wert durch `a` — auch mitten in
+ *  einem Schatten (`0 4px 12px light-dark(…, …)`). Für den Ersatz-Block der
+ *  Browser ohne `light-dark()`. */
+export function hellerTeil(wert: string): string {
+  let rest = wert.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\s+/g, " ").trim();
+  for (let i = rest.indexOf("light-dark("); i >= 0; i = rest.indexOf("light-dark(")) {
+    const anfang = i + "light-dark(".length;
+    let tiefe = 0;
+    let komma = -1;
+    let ende = -1;
+    for (let k = anfang; k < rest.length && ende < 0; k++) {
+      const zeichen = rest[k];
+      if (zeichen === "(") tiefe++;
+      else if (zeichen === ")") {
+        if (tiefe === 0) ende = k;
+        else tiefe--;
+      } else if (zeichen === "," && tiefe === 0 && komma < 0) komma = k;
+    }
+    if (komma < 0 || ende < 0) throw new Error(`light-dark() ohne zwei Werte: ${wert}`);
+    rest = rest.slice(0, i) + rest.slice(anfang, komma).trim() + rest.slice(ende + 1);
+  }
+  return rest;
+}
+
+/** Alle Zuweisungen eines Blocks, deren Wert `light-dark()` enthält: voller
+ *  Name (`--color-primary`) → roher Wert. */
+export function zweiteilige(block: string): Map<string, string> {
+  const gefunden = new Map<string, string>();
+  for (const treffer of block.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/gi)) {
+    if (/light-dark\(/i.test(treffer[2])) gefunden.set(treffer[1].toLowerCase(), treffer[2]);
+  }
+  return gefunden;
+}
+
+/** Alle Zuweisungen eines Blocks: voller Name → roher Wert, ohne Kommentare. */
+export function zuweisungen(block: string): Map<string, string> {
+  const gefunden = new Map<string, string>();
+  const ohne = block.replace(/\/\*[\s\S]*?\*\//g, "");
+  for (const treffer of ohne.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/gi)) {
+    gefunden.set(treffer[1].toLowerCase(), treffer[2].replace(/\s+/g, " ").trim());
+  }
+  return gefunden;
+}

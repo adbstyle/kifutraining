@@ -26,11 +26,9 @@ export default async function AppLayout({
   ]);
   const slim = leseLeiste(jar.get(LEISTE_COOKIE)?.value);
   const spalte = leseSpalte(jar.get(SPALTE_COOKIE)?.value);
-  // Ohne Anmeldung tritt KiFu nach aussen immer hell auf (#569); die eigene
-  // Wahl gilt, sobald jemand angemeldet ist.
-  const darstellung = user ? leseDarstellung(jar.get(DARSTELLUNG_COOKIE)?.value) : "hell";
+  const darstellung = leseDarstellung(jar.get(DARSTELLUNG_COOKIE)?.value);
   return (
-    <DarstellungProvider anfang={darstellung}>
+    <DarstellungProvider wahl={darstellung} anonym={!user}>
       {/* Die Figurteile aller Feld-Diagramme, einmal pro Seite (siehe figur.tsx). */}
       <FigurenSprite />
       {/* Der Team-Kontext des geöffneten Trainings überdauert die einzelne

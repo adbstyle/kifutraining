@@ -56,6 +56,16 @@ function Tafel({ t }: { t: Erscheinungsbild }) {
         </div>
       </div>
 
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        <span className="type-body-medium rounded-flaeche betont px-3 py-1.5">Aktive Zeile</span>
+        <span className="rounded-flaeche bg-elev-01 p-1.5">
+          <span className="type-body-medium block rounded-klein betont px-2 py-1">Betont in der Karte</span>
+        </span>
+        <span className="type-body-medium rounded-flaeche kontur border-kante bg-elev-04 px-3 py-1.5 shadow-dp-04">
+          Nächster Termin
+        </span>
+      </div>
+
       <div className="mb-5 flex flex-wrap gap-2">
         <Button>Gefüllt</Button>
         <Button variant="outlined">Umrandet</Button>

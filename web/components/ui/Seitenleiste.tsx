@@ -589,8 +589,8 @@ const DARSTELLUNGEN: { wert: Darstellung; label: string; kurz: string; icon: Luc
    ein Menü öffnet. Breit klappt es über der Zeile auf, schmal rechts neben
    der Leiste. Das Menü steht `fixed`, weil die Leiste ihren Inhalt
    abschneidet (`overflow-hidden`) — schmal ragte es sonst nicht hinaus. Die
-   Lage wird beim Öffnen aus der Zeile gerechnet; ändert sich das Fenster,
-   geht es zu. Die Wahl lässt den Drawer offen: Wer umschaltet, will sehen,
+   Lage wird beim Öffnen aus der Zeile gerechnet; ändert sich das Fenster
+   oder scrollt etwas darunter, geht es zu, statt von der Zeile abzureissen. Die Wahl lässt den Drawer offen: Wer umschaltet, will sehen,
    wie es aussieht. */
 function DarstellungZeile({
   wahl,
@@ -611,7 +611,13 @@ function DarstellungZeile({
     if (!lage) return;
     const zu = () => setLage(null);
     window.addEventListener("resize", zu);
-    return () => window.removeEventListener("resize", zu);
+    // Capture: Auch ein Scrollbereich ausserhalb des Fensters (Styleguide)
+    // verschiebt die Zeile.
+    window.addEventListener("scroll", zu, true);
+    return () => {
+      window.removeEventListener("resize", zu);
+      window.removeEventListener("scroll", zu, true);
+    };
   }, [lage]);
 
   function oeffnen() {

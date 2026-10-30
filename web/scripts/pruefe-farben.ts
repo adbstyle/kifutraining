@@ -43,7 +43,16 @@ import {
   ueberlagern,
   type Erscheinungsbild,
 } from "../lib/farben";
-import { blockVon, normalisiere, tokenPaare, tokens } from "./css-tokens";
+import {
+  blockAb,
+  blockVon,
+  hellerTeil,
+  normalisiere,
+  tokenPaare,
+  tokens,
+  zuweisungen,
+  zweiteilige,
+} from "./css-tokens";
 
 const WEB = resolve(fileURLToPath(import.meta.url), "../..");
 
@@ -105,6 +114,25 @@ pruefe("globals.css führt keine Farbrolle, die farben.ts nicht kennt", () => {
   // niemand mehr anwendet, bleibt sonst als scheinbar gültige Klasse stehen.
   const unbekannt = [...THEME.keys()].filter((rolle) => !(rolle in DUNKEL));
   assert.deepEqual(unbekannt, []);
+});
+
+pruefe("Der Ersatz ohne light-dark() führt jede helle Hälfte, und nur sie", () => {
+  // Browser ohne light-dark() (Safari vor 17.5) bekommen fest das Helle. Jede
+  // zweiteilige Zuweisung davor — Farben, Schatten, Diagramm — muss dort mit
+  // ihrer hellen Hälfte stehen, sonst bleibt sie dort ungültig und farblos.
+  const ersatzAb = CSS.indexOf("@supports not (color: light-dark(");
+  assert.ok(ersatzAb >= 0, "Ersatz-Block fehlt in globals.css");
+  const ersatz = zuweisungen(blockAb(CSS, ersatzAb, "Ersatz-Block"));
+  const soll = zweiteilige(CSS.slice(0, ersatzAb));
+  const abweichend: string[] = [];
+  for (const [name, roh] of soll) {
+    const hell = hellerTeil(roh);
+    if (ersatz.get(name) !== hell) abweichend.push(`${name}: Ersatz ${ersatz.get(name)}, hell ${hell}`);
+  }
+  for (const name of ersatz.keys()) {
+    if (name.startsWith("--") && !soll.has(name)) abweichend.push(`${name} steht nur im Ersatz`);
+  }
+  assert.deepEqual(abweichend, []);
 });
 
 // ── 2. Overlay-Rechnung: die dunkle Höhenleiter ist hergeleitet ─────────────

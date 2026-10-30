@@ -1065,6 +1065,21 @@ export default async function Styleguide() {
             Klassen und echten Bausteine; geprüft gegen WCAG 2.2 AA in{" "}
             <code>npm run check:farben</code>.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Betonung an Ort ist keine Höhe.</strong> Im Hellen ist alles über dem Grund
+            weiss - eine höhere Stufe hebt dort nichts ab. Was an seinem Platz hervortritt (aktive
+            Zeile in Leiste und Verzeichnis, vergangenes Kalenderblatt, ausgefallener Tag, Avatar,
+            Code), trägt darum <code>betont</code>: die Schrift zu 8 % über der Fläche darunter. Das
+            hebt auf jeder Stufe und in beiden Erscheinungsbildern ab und entspricht im Dunkeln
+            ziemlich genau der früheren Menüstufe. Eine hervorgehobene Karte (der nächste Termin)
+            steht im Dunkeln eine Stufe höher und trägt im Hellen <code>shadow-dp-04</code>, den
+            einzigen Schatten auf einer liegenden Fläche; im Dunkeln ist er durchsichtig.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Browser ohne <code>light-dark()</code> (Safari vor 17.5, also iOS 16 und frühe 17er)
+            bekommen fest das Helle: ein Ersatz-Block mit den hellen Hälften, den{" "}
+            <code>check:farben</code> gleich hält. Umschalten gibt es dort nicht.
+          </p>
           <ErscheinungsbildDemo />
         </Section>
 

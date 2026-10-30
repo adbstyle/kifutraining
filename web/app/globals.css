@@ -144,7 +144,12 @@
   /* ─── Schatten — nur wo etwas wirklich schwebt. Im Dunkeln trägt die
      Helligkeit die Höhe, der Schatten trennt bloss das Schwebende vom
      Grund darunter. Im Hellen ist er es, der die Höhe trägt — weiss auf
-     weiss hebt sich das Menü nur über ihn ab, darum leise, aber weit. ─── */
+     weiss hebt sich das Menü nur über ihn ab, darum leise, aber weit.
+     `dp-04` ist der einzige Schatten auf liegenden Flächen: die
+     hervorgehobene Karte (nächster Termin), die im Dunkeln über ihre
+     hellere Stufe abhebt und im Hellen, wo jede Karte weiss ist, über ihn.
+     Im Dunkeln bleibt er darum durchsichtig. ─── */
+  --shadow-dp-04: 0 2px 8px light-dark(rgb(20 26 23 / 0.14), transparent);
   --shadow-dp-06: 0 4px 12px light-dark(rgb(20 26 23 / 0.14), rgb(0 0 0 / 0.55));
   --shadow-dp-08: 0 4px 16px light-dark(rgb(20 26 23 / 0.16), rgb(0 0 0 / 0.6));
   --shadow-dp-24: 0 12px 32px light-dark(rgb(20 26 23 / 0.2), rgb(0 0 0 / 0.6));
@@ -749,15 +754,14 @@
   }
   /* Selbst gewählt (#567): Die Layouts setzen eine Marke aus dem Cookie
      (DarstellungsMarke). Seiten ohne Marke — die Eltern-Seiten hinter dem
-     privaten Link — folgen weiter dem Gerät. Nur am Bildschirm: Die Regel
-     ist spezifischer als `:root` im Druck und hielte Papier sonst dunkel. */
-  @media screen {
-    :root:has([data-darstellung="hell"]) {
-      color-scheme: light;
-    }
-    :root:has([data-darstellung="dunkel"]) {
-      color-scheme: dark;
-    }
+     privaten Link — folgen weiter dem Gerät. Den Druck berührt das nicht:
+     Seine Werte stehen ausserhalb jeder Ebene und schlagen diese hier,
+     gleich wie spezifisch sie sind. */
+  :root:has([data-darstellung="hell"]) {
+    color-scheme: light;
+  }
+  :root:has([data-darstellung="dunkel"]) {
+    color-scheme: dark;
   }
 
   /* Klebt die Kopfzeile oben (ab `lg`, Epic #350): Springt der Browser zu
@@ -788,6 +792,103 @@
   ::selection {
     background: var(--color-primary);
     color: var(--color-on-primary);
+  }
+}
+
+/* ============================================================================
+   Ersatz für Browser ohne light-dark() (Safari vor 17.5, also iOS 16 und
+   frühe 17er; Chrome vor 123, Firefox vor 120). Dort wäre jede Zuweisung
+   oben ungültig, und die Anwendung stünde ohne Farben da. Sie bekommen fest
+   das helle Erscheinungsbild — die Vorgabe ohne Angabe des Geräts — ohne
+   Umschalten. Die Werte sind die hellen Hälften von oben; `npm run
+   check:farben` und `check:diagramm-farben` halten sie gleich.
+   Ausserhalb jeder Ebene, damit er die `@theme`-Werte schlägt; vor dem
+   Druck, damit der ihn wiederum schlägt.
+   ============================================================================ */
+@supports not (color: light-dark(#000, #fff)) {
+  :root {
+    color-scheme: light;
+    --color-elev-00: #f5f6f5;
+    --color-elev-01: #ffffff;
+    --color-elev-02: #f5f6f5;
+    --color-elev-03: #ffffff;
+    --color-elev-04: #ffffff;
+    --color-elev-06: #ffffff;
+    --color-elev-08: #ffffff;
+    --color-elev-12: #ffffff;
+    --color-elev-16: #ffffff;
+    --color-elev-24: #ffffff;
+    --color-primary: #6d4aff;
+    --color-on-primary: #ffffff;
+    --color-error: #b42a37;
+    --color-on-surface: #141a17;
+    --color-on-surface-mittel: #141a17bd;
+    --color-on-surface-tief: #141a1780;
+    --color-linie: #141a171f;
+    --color-kante: #141a1780;
+    --color-umkehr: #2d322f;
+    --color-on-umkehr: #f5f6f5;
+    --color-umkehr-akzent: #b29cff;
+    --color-lozenge-neutral: #0515240f;
+    --color-on-lozenge-neutral: #292a2e;
+    --color-lozenge-success: #d3f1a7;
+    --color-on-lozenge-success: #37471f;
+    --color-lozenge-warning: #fce4a6;
+    --color-on-lozenge-warning: #693200;
+    --color-lozenge-danger: #ffd5d2;
+    --color-on-lozenge-danger: #5d1f1a;
+    --color-lozenge-information: #cfe1fd;
+    --color-on-lozenge-information: #123263;
+    --color-lozenge-discovery: #eed7fc;
+    --color-on-lozenge-discovery: #48245d;
+    --color-lozenge-accent-blue: #cfe1fd;
+    --color-on-lozenge-accent-blue: #123263;
+    --color-lozenge-accent-yellow: #f5e989;
+    --color-on-lozenge-accent-yellow: #533f04;
+    --color-lozenge-accent-orange: #fce4a6;
+    --color-on-lozenge-accent-orange: #693200;
+    --color-lozenge-accent-green: #baf3db;
+    --color-on-lozenge-accent-green: #164b35;
+    --color-lozenge-accent-magenta: #fdd0ec;
+    --color-on-lozenge-accent-magenta: #50253f;
+    --color-lozenge-accent-purple: #eed7fc;
+    --color-on-lozenge-accent-purple: #48245d;
+    --color-lozenge-accent-gray: #dddee1;
+    --color-on-lozenge-accent-gray: #1e1f21;
+    --color-section-information: #e9f2fe;
+    --color-icon-information: #357de8;
+    --color-section-warning: #fff5db;
+    --color-icon-warning: #e06c00;
+    --color-section-danger: #ffeceb;
+    --color-icon-danger: #c9372c;
+    --color-section-success: #efffd6;
+    --color-icon-success: #6a9a23;
+    --color-section-discovery: #f8eefe;
+    --color-icon-discovery: #af59e1;
+    --shadow-dp-04: 0 2px 8px rgb(20 26 23 / 0.14);
+    --shadow-dp-06: 0 4px 12px rgb(20 26 23 / 0.14);
+    --shadow-dp-08: 0 4px 16px rgb(20 26 23 / 0.16);
+    --shadow-dp-24: 0 12px 32px rgb(20 26 23 / 0.2);
+    --diagramm-rasen: #e3eee2;
+    --diagramm-rasen-streifen: #d8e7d7;
+    --diagramm-feldkante: rgb(20 26 23 / 0.28);
+    --diagramm-rot: #d32f2f;
+    --diagramm-blau: #1565c0;
+    --diagramm-gelb: #8a6d00;
+    --diagramm-gruen: #2e7d32;
+    --diagramm-orange: #b84f00;
+    --diagramm-weiss: #5b6560;
+    --diagramm-schwarz: #1f2421;
+    --diagramm-bewegung: #1b1b1b;
+    --diagramm-geraet: #5c6460;
+    --diagramm-tornetz: rgb(18 26 22 / 0.3);
+    --diagramm-minitor-netz: #5c6460;
+    --diagramm-stange-stab: #8f9693;
+    --diagramm-huerde-latte: #c98500;
+    --diagramm-ball-koerper: #ffffff;
+    --diagramm-ball-zeichnung: #1f2421;
+    --diagramm-figur-stutzen: #9ea6a1;
+    --diagramm-torwart-trikot: #6f6614;
   }
 }
 
