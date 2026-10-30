@@ -4,7 +4,7 @@
 // Warum ein eigener Wächter neben `pruefe-farben.ts`:
 //
 // - **Andere Schwelle.** Die Oberfläche zeigt Schrift, und Schrift will nach
-//   WCAG 2.1 ihre 4.5:1. Auf dem Rasen steht kein Text, sondern ein
+//   WCAG 2.2 ihre 4.5:1. Auf dem Rasen steht kein Text, sondern ein
 //   gezeichneter Gegenstand — dafür gilt 1.4.11 mit 3:1. Dieselbe Rechnung,
 //   ein anderer Massstab; das gehört nicht in dieselbe Datei.
 // - **Andere Quelle.** Die Oberfläche hat einen Zwilling in `lib/farben.ts`,
@@ -13,9 +13,9 @@
 //   Geprüft wird hier deshalb nicht die Übereinstimmung zweier Tabellen,
 //   sondern dass jede Rolle da ist und trägt.
 // - **Eine eigene Altlast.** Der Zeichencode war voller Hex-Literale. Dass
-//   keines zurückkommt, ist die Bedingung dafür, dass der angekündigte
-//   Light-Modus ein Block mit Werten bleibt und keine Nacharbeit in vier
-//   Dateien wird.
+//   keines zurückkommt, ist die Bedingung dafür, dass das helle
+//   Erscheinungsbild ein Satz Werte blieb und keine Nacharbeit in vier
+//   Dateien wurde.
 //
 //   npm run check:diagramm-farben
 import assert from "node:assert/strict";
@@ -28,7 +28,7 @@ import {
   DIAGRAMM_MASSROLLEN,
   type DiagrammFarbrolle,
 } from "../lib/diagramm-farben";
-import { blockVon, tokens } from "./css-tokens";
+import { blockVon, tokenPaare, tokens } from "./css-tokens";
 
 const WEB = resolve(fileURLToPath(import.meta.url), "../..");
 
@@ -56,7 +56,7 @@ const CSS = readFileSync(join(WEB, "app/globals.css"), "utf8");
 const DRUCK_BLOCK = blockVon(CSS, /@media\s+print\b/, "@media print");
 const DRUCK_ROH = tokens(blockVon(DRUCK_BLOCK, /:root\b/, "print :root"), "diagramm");
 
-/** Der Bildschirm-Satz ist der Diagramm-Block, der NICHT im Druck steht.
+/** Die Bildschirm-Sätze stehen im Diagramm-Block, der NICHT im Druck steht.
  *
  *  Beide passen auf dasselbe Muster (`:root` mit `--diagramm-`), und welcher
  *  zuerst käme, entschiede allein die Reihenfolge in der Datei. Darum wird der
@@ -64,29 +64,36 @@ const DRUCK_ROH = tokens(blockVon(DRUCK_BLOCK, /:root\b/, "print :root"), "diagr
  *  Blöcke — etwa wenn der Light-Satz dazukommt —, prüft der Wächter weiterhin
  *  zwei verschiedene Sätze und nicht zweimal denselben. */
 const OHNE_DRUCK = CSS.replace(DRUCK_BLOCK, "");
-const BILDSCHIRM = tokens(
+/** Hell und Dunkel teilen sich den Block: Jede Rolle steht als
+ *  `light-dark(hell, dunkel)` oder mit einem Wert für beide (Epic #563). */
+const PAARE = tokenPaare(
   blockVon(OHNE_DRUCK, /:root\s*\{[^}]*--diagramm-/, "Diagramm-Block in :root"),
   "diagramm",
 );
-const DRUCK = new Map([...BILDSCHIRM, ...DRUCK_ROH]);
+const HELL = new Map([...PAARE].map(([rolle, { hell }]) => [rolle, hell]));
+const DUNKEL = new Map([...PAARE].map(([rolle, { dunkel }]) => [rolle, dunkel]));
+/** Papier ist hell (`color-scheme: light` im Druck): Was der Druck nicht
+ *  überschreibt, kommt aus dem hellen Satz. */
+const DRUCK = new Map([...HELL, ...DRUCK_ROH]);
 
 const SAETZE = [
-  { name: "Bildschirm", werte: BILDSCHIRM },
+  { name: "Hell", werte: HELL },
+  { name: "Dunkel", werte: DUNKEL },
   { name: "Druck", werte: DRUCK },
 ] as const;
 
 const ALLE_ROLLEN: string[] = [...DIAGRAMM_FARBROLLEN, ...DIAGRAMM_MASSROLLEN];
 
 // ── 1. Vollständigkeit ─────────────────────────────────────────────────────
-pruefe("Jede Rolle aus diagramm-farben.ts steht im Bildschirm-Satz", () => {
-  const fehlend = ALLE_ROLLEN.filter((rolle) => !BILDSCHIRM.has(rolle));
+pruefe("Jede Rolle aus diagramm-farben.ts steht im Bildschirm-Block", () => {
+  const fehlend = ALLE_ROLLEN.filter((rolle) => !PAARE.has(rolle));
   assert.deepEqual(fehlend, []);
 });
 
 pruefe("globals.css führt keine Diagramm-Rolle, die das Modul nicht kennt", () => {
   // Die Gegenrichtung fängt tote Tokens: eine Rolle, die nach einem Umbau
   // niemand mehr zeichnet, bliebe sonst als scheinbar gültige stehen.
-  const unbekannt = [...BILDSCHIRM.keys()].filter((rolle) => !ALLE_ROLLEN.includes(rolle));
+  const unbekannt = [...PAARE.keys()].filter((rolle) => !ALLE_ROLLEN.includes(rolle));
   assert.deepEqual(unbekannt, []);
 });
 
@@ -95,7 +102,7 @@ pruefe("Der Druck überschreibt nur bekannte Rollen", () => {
   assert.deepEqual(unbekannt, []);
 });
 
-pruefe("Jedes Mass ist in beiden Sätzen eine Zahl", () => {
+pruefe("Jedes Mass ist in jedem Satz eine Zahl", () => {
   for (const { name, werte } of SAETZE) {
     for (const rolle of DIAGRAMM_MASSROLLEN) {
       const wert = werte.get(rolle);
@@ -114,7 +121,7 @@ pruefe("Eine gefüllte Zone bleibt eine Fläche, kein Nebel", () => {
 });
 
 // ── 2. Lesbarkeit auf der Spielfläche ──────────────────────────────────────
-// Schwelle 3:1 nach WCAG 2.1 §1.4.11 (grafische Objekte) — nicht die 4.5:1 der
+// Schwelle 3:1 nach WCAG 2.2 §1.4.11 (grafische Objekte) — nicht die 4.5:1 der
 // Schrift: auf dem Rasen steht kein Text.
 
 /** Der ungünstigere der beiden Flächenwerte — ein Symbol kann auf dem Grund
@@ -191,8 +198,8 @@ pruefe("Helles Beiwerk verschmilzt nicht mit der Spielfläche (1.5:1)", () => {
 
 pruefe("Zwei wählbare Farben sind nie verwechselbar", () => {
   // Zwei Mannschaften müssen auf einen Blick auseinandergehen. Schwelle 40 im
-  // RGB-Würfel, mit Luft: der engste Abstand liegt heute bei 56 (Bildschirm
-  // grün/schwarz, Druck gelb/orange).
+  // RGB-Würfel, mit Luft: der engste Abstand liegt heute bei 55 (Hell
+  // gelb/orange), 56 (Dunkel grün/schwarz, Druck gelb/orange).
   for (const { name, werte } of SAETZE) {
     for (let i = 0; i < PALETTE.length; i++) {
       for (let j = i + 1; j < PALETTE.length; j++) {
@@ -204,11 +211,21 @@ pruefe("Zwei wählbare Farben sind nie verwechselbar", () => {
   }
 });
 
-pruefe("Auf Papier begrenzt eine Kante das weisse Feld", () => {
-  // Am Bildschirm trägt der Rasen sich selbst; auf Papier ginge das Feld ohne
-  // Umriss nahtlos ins Blatt über.
-  const kante = DRUCK.get("feldkante");
-  assert.ok(kante && kante !== "transparent", `Feldkante im Druck: "${kante}"`);
+pruefe("Eine Kante begrenzt das Feld auf Karte und Papier", () => {
+  // Der Rasen liegt in keinem Satz mit genug Abstand auf seiner Unterlage
+  // (Karte, Übungszeile, Blatt) — ohne Umriss verlöre das Feld seine Gestalt.
+  for (const { name, werte } of SAETZE) {
+    const kante = werte.get("feldkante");
+    assert.ok(kante && kante !== "transparent", `Feldkante ${name}: "${kante}"`);
+  }
+});
+
+pruefe("Hell und Dunkel unterscheiden sich, wo es die Fläche verlangt", () => {
+  // Ein helles Feld mit den Farben des Nachtrasens wäre die verwechselte
+  // Hälfte von light-dark(): Weiss auf Hellgrün, Gelb auf Hellgrün.
+  for (const rolle of ["rasen", ...PALETTE, "bewegung", "geraet"]) {
+    assert.notEqual(HELL.get(rolle), DUNKEL.get(rolle), `${rolle} ist in Hell und Dunkel gleich`);
+  }
 });
 
 // ── 3. Kein roher Farbwert mehr im Zeichencode ─────────────────────────────
@@ -319,7 +336,7 @@ pruefe("Jede Rolle wird auch gezeichnet", () => {
 
 // ── Messwerte ──────────────────────────────────────────────────────────────
 // Nicht geprüft, sondern berichtet — die Zahlen, mit denen entschieden wurde.
-console.log("\nMesswerte (Kontrast nach WCAG 2.1, schlechterer Wert von Grund und Streifen):");
+console.log("\nMesswerte (Kontrast nach WCAG 2.2, schlechterer Wert von Grund und Streifen):");
 for (const { name, werte } of SAETZE) {
   console.log(`  ${name} - Rasen ${werte.get("rasen")} / ${werte.get("rasen-streifen")}`);
   const zeile = (rolle: string) =>

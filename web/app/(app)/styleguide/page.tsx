@@ -3714,8 +3714,8 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Das Diagramm ist Gegenstand, nicht Oberfläche</strong> - es
             folgt weiterhin nicht der Palette der Anwendung. Es hat aber eine
-            <strong> eigene</strong>, und die kennt mehr als einen Satz: dieselbe gespeicherte Zeichnung erscheint am Bildschirm auf
-            einem Nachtrasen und kommt auf Papier weiss aus dem Drucker. Die
+            <strong> eigene</strong>, und die kennt mehr als einen Satz: dieselbe gespeicherte Zeichnung erscheint im Dunkeln auf
+            einem Nachtrasen, im Hellen auf einem blassen Rasen und kommt auf Papier weiss aus dem Drucker. Die
             Rollen heissen <code>--diagramm-*</code> und stehen bewusst neben dem{" "}
             <code>@theme</code>-Block, ohne <code>--color-</code>-Präfix: Tailwind
             macht aus jeder Farbrolle des Themes eine Utility, und{" "}
@@ -3729,8 +3729,8 @@ export default async function Styleguide() {
             davor legte nur eine Linie auf die andere.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Zwei Sätze, ein Bestand: Gespeichert wird nur der Farb-Slug, was er
-            zeigt, entscheidet das Medium. Am Bildschirm liegt der Rasen
+            Drei Sätze, ein Bestand: Gespeichert wird nur der Farb-Slug, was er
+            zeigt, entscheiden Medium und Erscheinungsbild. Im Dunkeln liegt der Rasen
             tief im entsättigten Grün des App-Grunds, die Bewegungspfeile werden
             hell und die Elementfarben sind angehoben - die Manual-Palette kam auf dem dunklen
             Grund bei Rot auf 2.6:1 und bei Blau auf 2.2:1, zwei Mannschaften, die
@@ -3740,9 +3740,16 @@ export default async function Styleguide() {
             gezeichnet ist, kippt ins Graue, weil Weiss auf Papier nicht
             existiert. Einzige Ausnahme ist der Ball - er bleibt weiss und bekommt
             eine kräftigere Kontur, sonst wäre er ein grauer Fleck unter lauter
-            grauen Flecken. Die Werte stehen in <code>app/globals.css</code>, die
+            grauen Flecken. Im Hellen (Epic #563) liegt der Rasen als blasses,
+            frisches Grün auf der Seite, und es gilt dieselbe Umkehrung wie auf
+            Papier: kräftige Palette, schwarze Pfeile, «weiss» wird Graphit und bleibt
+            so von «schwarz» unterscheidbar; den Rand des Felds zieht wieder die
+            Feldkante. Hell und Dunkel stehen wie die Oberfläche als{" "}
+            <code>light-dark()</code>; die Auswahl im Editor trägt die Schrift der
+            Anwendung, damit sie auf beiden Rasen sichtbar bleibt. Die Werte stehen in{" "}
+            <code>app/globals.css</code>, die
             Rollennamen in <code>lib/diagramm-farben.ts</code>;{" "}
-            <code>npm run check:diagramm-farben</code> rechnet beide Sätze nach
+            <code>npm run check:diagramm-farben</code> rechnet alle drei Sätze nach
             (3:1 nach WCAG 1.4.11 - auf dem Rasen steht kein Text) und verbietet
             im Zeichencode jeden rohen Farbwert.
           </p>
