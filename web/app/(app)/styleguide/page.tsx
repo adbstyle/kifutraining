@@ -2473,7 +2473,11 @@ export default async function Styleguide() {
             <code>rounded-flaeche</code> und <code>shadow-dp-08</code>: Es
             schwebt, also trägt es beides - Höhe und Schatten. Jede Zeile trägt{" "}
             <code>state</code>, Destruktives steht zuunterst und trägt Error als
-            Schrift, nie als Fläche.
+            Schrift, nie als Fläche. Steht das Menü für eine Wahl unter wenigen
+            Möglichkeiten (Darstellung, #567), tragen die Einträge{" "}
+            <code>gewaehlt</code>: Sie werden zu <code>menuitemradio</code>, die
+            gewählte zeigt rechts den Haken in Primary. Ein Satz, der für alle
+            Einträge gilt, steht als <code>fuss</code> leise darunter.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Error trägt hier als Fliesstext: Das Panel liegt auf 08dp, und dort
@@ -3120,10 +3124,19 @@ export default async function Styleguide() {
             (<code>discovery</code>: etwas Zusätzliches) - schmal stattdessen einen Punkt in Primary
             am Zeichen, die einzige Punkt-Markierung im Kit. Sie drängt sich nicht auf und
             verschwindet, sobald die Versionen angezeigt wurden. Abmelden steht im Konto, nicht in der
-            Leiste. Der offene Eintrag steht eine Stufe höher als sein Grund
-            (08dp auf 01dp) und trägt sein Zeichen in Primary; aufklappbare
+            Leiste. Der offene Eintrag ist betont (<code>betont</code>, die Schrift
+            zu 8 % über der Leiste) und trägt sein Zeichen in Primary; aufklappbare
             Einträge (Teams) haben einen eigenen Pfeil, damit der Name selbst
             zur Übersicht führen kann.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            <strong>Darstellung</strong> (#567) steht angemeldet zwischen «Fragen und Feedback» und
+            der Version: das Zeichen der aktuellen Wahl (Bildschirm, Sonne, Mond), breit dazu ihr
+            Name. Die Zeile öffnet ein Menü mit «Wie das Gerät», «Hell» und «Dunkel»; die gewählte
+            Zeile trägt den Haken (<code>menuitemradio</code>), am Fuss steht, dass die Wahl in diesem
+            Browser gilt. Breit klappt es über der Zeile auf, schmal rechts neben der Leiste - es steht
+            darum <code>fixed</code> und ragt aus der Leiste hinaus. Umgeschaltet wird sofort und ohne
+            Neuladen; Ungespeichertes auf der Seite bleibt stehen.
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             <strong>Breit oder schmal</strong> - 280 px mit Namen, 72 px nur mit
@@ -3142,7 +3155,7 @@ export default async function Styleguide() {
             links</strong> auf 08dp, geöffnet über eine schmale Kopfzeile
             (04dp, deckend) mit Hamburger. Scrim, Escape und Scroll-Sperre wie
             bei jedem Overlay; dort ist die Leiste immer breit, die aktive Zeile
-            steht auf 12dp.
+            ebenso betont.
           </p>
           <SeitenleisteDemo />
         </Section>
@@ -3167,7 +3180,7 @@ export default async function Styleguide() {
             (<code>Verzeichnis</code> in <code>VerzeichnisFlaeche</code>): «Versionen» und diese
             Seite - das Verzeichnis links ist das Beispiel. Es klebt unter der Kopfzeile, scrollt
             für sich und führt mit jedem Eintrag zu einem Abschnitt. Der Abschnitt, der oben im
-            Fenster steht, trägt seine Zeile auf 08dp (<code>aria-current=&quot;location&quot;</code>);
+            Fenster steht, trägt seine Zeile betont (<code>aria-current=&quot;location&quot;</code>);
             das Verzeichnis scrollt so, dass sie sichtbar bleibt.
           </p>
           <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-1 pl-5 text-on-surface-mittel">
@@ -3457,7 +3470,7 @@ export default async function Styleguide() {
             «Auf GitHub ansehen»), dann der Text, wie er auf GitHub steht. Er ist Markdown und
             erscheint mit seiner Gliederung in der Schrift der Anwendung: Überschriften eine Stufe
             unter dem Titel (<code>type-title-medium</code>), Listen wie im Freitext, Fettes,
-            Links in Primary, Code auf 08dp. Eingebettetes HTML und Bilder fallen weg. Einträge
+            Links in Primary, Code betont. Eingebettetes HTML und Bilder fallen weg. Einträge
             trennt eine Haarlinie. Ab <code>lg</code> steht links das{" "}
             <Siehe id="verzeichnis" />, flach: je Version Nummer und Thema. Die Texte der neuesten
             30 Versionen stehen gleich da,

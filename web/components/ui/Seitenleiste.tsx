@@ -10,14 +10,19 @@ import {
   LogIn,
   Menu as MenuIcon,
   MessageSquare,
+  Monitor,
+  Moon,
   Palette,
   PanelLeftClose,
   PanelLeftOpen,
+  Sun,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import type { Darstellung } from "@/lib/darstellung";
 import { ButtonLink } from "./Button";
+import { Menu } from "./Menu";
 import { Lozenge } from "./Lozenge";
 import { IconButton } from "./IconButton";
 import { ZeichenPunkt } from "./ZeichenPunkt";
@@ -84,6 +89,13 @@ export interface SeitenleisteFeedback {
   onOeffnen: () => void;
 }
 
+/** «Darstellung» unten in der Leiste (#567): öffnet ein Menü mit «Wie das
+ *  Gerät», «Hell» und «Dunkel»; nur angemeldet. */
+export interface SeitenleisteDarstellung {
+  wahl: Darstellung;
+  onWahl: (darstellung: Darstellung) => void;
+}
+
 export interface SeitenleisteProps {
   gruppen: SeitenleisteGruppe[];
   /** Angemeldet: Konto-Karte unten. Sonst `anmeldenHref`. */
@@ -95,6 +107,8 @@ export interface SeitenleisteProps {
   styleguide?: SeitenleisteStyleguide;
   /** «Fragen und Feedback» über der Version; nur angemeldet. */
   feedback?: SeitenleisteFeedback;
+  /** «Darstellung» zwischen Feedback und Version; nur angemeldet. */
+  darstellung?: SeitenleisteDarstellung;
   /** Schmal (nur Zeichen). Wirkt ab `lg`; darunter ist die Leiste ein Drawer
    *  und zeigt immer alles. */
   slim: boolean;
@@ -193,7 +207,7 @@ function FussballZeichen({ size = 18 }: { size?: number }) {
    ihr Grund — am Desktop 08dp auf 01dp, im Drawer (selbst 08dp) 12dp. */
 const zeile =
   "focus-ring-inset state flex items-center rounded-flaeche transition-colors";
-const zeileAktiv = "bg-elev-08 text-on-surface max-lg:bg-elev-12";
+const zeileAktiv = "betont text-on-surface";
 const zeileRuhe = "text-on-surface-mittel hover:text-on-surface";
 
 /* ── Seitenleiste ───────────────────────────────────────────────
@@ -219,6 +233,7 @@ export function Seitenleiste({
   version,
   styleguide,
   feedback,
+  darstellung,
   slim,
   drawerOffen = false,
   onDrawerOffenChange = keineAktion,
@@ -410,7 +425,7 @@ export function Seitenleiste({
         {/* Die Version führt zur Release-History (#408), der Styleguide
             darunter zum Designsystem: beide gleich über der Linie zum Konto.
             Schmal bleibt das Zeichen, der Name steht dann im Hinweis daneben. */}
-        {(version || styleguide || feedback) && (
+        {(version || styleguide || feedback || darstellung) && (
           <div className="flex shrink-0 flex-col gap-0.5 px-4 pb-2">
             {feedback && (
               <button
@@ -436,6 +451,13 @@ export function Seitenleiste({
                 />
                 <span className={cn("truncate", k?.textWeg)}>{feedback.label}</span>
               </button>
+            )}
+            {darstellung && (
+              <DarstellungZeile
+                {...darstellung}
+                schmalAb={schmalAb}
+                navRef={navRef}
+              />
             )}
             {version && (
               <Link
@@ -515,7 +537,7 @@ export function Seitenleiste({
               <span
                 aria-hidden
                 className={cn(
-                  "type-label-medium grid h-10 w-10 shrink-0 place-items-center rounded-full bg-elev-12 text-on-surface",
+                  "type-label-medium grid h-10 w-10 shrink-0 place-items-center rounded-full betont text-on-surface",
                   konto.current && "outline-2 outline-primary",
                 )}
               >
@@ -552,6 +574,99 @@ export function Seitenleiste({
         >
           {hinweis.label}
         </span>
+      )}
+    </>
+  );
+}
+
+const DARSTELLUNGEN: { wert: Darstellung; label: string; kurz: string; icon: LucideIcon }[] = [
+  { wert: "geraet", label: "Wie das Gerät", kurz: "Gerät", icon: Monitor },
+  { wert: "hell", label: "Hell", kurz: "Hell", icon: Sun },
+  { wert: "dunkel", label: "Dunkel", kurz: "Dunkel", icon: Moon },
+];
+
+/* Darstellung (#567, Entwurf A): eine Zeile wie Version und Styleguide, die
+   ein Menü öffnet. Breit klappt es über der Zeile auf, schmal rechts neben
+   der Leiste. Das Menü steht `fixed`, weil die Leiste ihren Inhalt
+   abschneidet (`overflow-hidden`) — schmal ragte es sonst nicht hinaus. Die
+   Lage wird beim Öffnen aus der Zeile gerechnet; ändert sich das Fenster,
+   geht es zu. Die Wahl lässt den Drawer offen: Wer umschaltet, will sehen,
+   wie es aussieht. */
+function DarstellungZeile({
+  wahl,
+  onWahl,
+  schmalAb,
+  navRef,
+}: SeitenleisteDarstellung & {
+  schmalAb: SchmalAb | null;
+  navRef: React.RefObject<HTMLElement | null>;
+}) {
+  const knopfRef = useRef<HTMLButtonElement>(null);
+  const [lage, setLage] = useState<CSSProperties | null>(null);
+  const k = schmalAb ? SCHMAL_KLASSEN[schmalAb] : null;
+  const aktuell = DARSTELLUNGEN.find((d) => d.wert === wahl) ?? DARSTELLUNGEN[0];
+  const Icon = aktuell.icon;
+
+  useEffect(() => {
+    if (!lage) return;
+    const zu = () => setLage(null);
+    window.addEventListener("resize", zu);
+    return () => window.removeEventListener("resize", zu);
+  }, [lage]);
+
+  function oeffnen() {
+    const r = knopfRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const schmal =
+      schmalAb === "immer" || (schmalAb === "lg" && window.matchMedia(AB_LG).matches);
+    const kante = navRef.current?.getBoundingClientRect().right ?? r.right;
+    setLage(
+      schmal
+        ? { left: kante + 8, bottom: window.innerHeight - r.bottom }
+        : { left: r.left, bottom: window.innerHeight - r.top + 4, width: r.width },
+    );
+  }
+
+  return (
+    <>
+      <button
+        ref={knopfRef}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={!!lage}
+        data-hinweis={`Darstellung: ${aktuell.kurz}`}
+        onClick={() => (lage ? setLage(null) : oeffnen())}
+        className={cn(
+          zeile,
+          "type-body-small h-9 gap-3 px-2.5 text-left",
+          k?.mitte,
+          lage ? zeileAktiv : zeileRuhe,
+        )}
+      >
+        <Icon size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+        <span className={cn("flex-1 truncate", k?.textWeg)}>Darstellung</span>
+        <span className={cn("text-on-surface-mittel", k?.nurBreit)}>
+          <span className="sr-only">: </span>
+          {aktuell.kurz}
+        </span>
+      </button>
+      {lage && (
+        <div className="fixed z-50" style={lage}>
+          <Menu
+            open
+            onClose={() => setLage(null)}
+            triggerRef={knopfRef}
+            label="Darstellung"
+            fuss="Gilt in diesem Browser."
+            className="bottom-0 left-0 mt-0 w-full"
+            items={DARSTELLUNGEN.map((d) => ({
+              label: d.label,
+              icon: d.icon,
+              gewaehlt: d.wert === wahl,
+              onSelect: () => onWahl(d.wert),
+            }))}
+          />
+        </div>
       )}
     </>
   );
@@ -612,7 +727,7 @@ function Eintrag({
             zeile,
             "type-title-small h-9 min-w-0 flex-1 gap-3 px-2.5",
             k?.mitte,
-            hervor ? zeileAktiv : cn(zeileRuhe, nurAbLg && "lg:bg-elev-08 lg:text-on-surface"),
+            hervor ? zeileAktiv : cn(zeileRuhe, nurAbLg && "lg:betont lg:text-on-surface"),
           )}
         >
           <Icon

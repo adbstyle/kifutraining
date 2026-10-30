@@ -37,7 +37,7 @@ function KontoLink({
       href={href}
       className="focus-ring state group mb-4 flex items-center gap-4 rounded-flaeche bg-elev-01 p-5"
     >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full betont text-on-surface">
         <Icon size={22} strokeWidth={2} aria-hidden />
       </span>
       <span className="min-w-0 flex-1">

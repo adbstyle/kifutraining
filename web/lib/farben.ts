@@ -244,12 +244,17 @@ export const ZUSTAND = {
 // ── Helles Erscheinungsbild (Epic #563) ────────────────────────────────────
 /**
  * Im Hellen trägt nicht die Helligkeit die Höhe, sondern die Fläche und der
- * Schatten: Der Grund ist ein leises Rasengrau, Karten liegen weiss darauf,
- * was IN einer Karte liegt (Übungszeile, Block, nächster Termin), ist wieder
- * leise getönt — und alles Schwebende (Menü, Seitenleiste, Dialog, Tooltip)
- * ist weiss und hebt sich über seinen Schatten ab. Eine streng steigende
- * Leiter wie im Dunkeln gibt es darum nicht; dieselben Tokennamen meinen
- * dieselbe Aufgabe, nicht dieselbe Helligkeitsfolge.
+ * Schatten: Der Grund ist ein leises Rasengrau, alles darauf ist weiss —
+ * Karte, hervorgehobene Karte (nächster Termin), Leisten, Menü, Dialog — und
+ * hebt sich über Fläche und Schatten ab. Nur was IN einer Karte liegt
+ * (Übungszeile, Block, `elev-02`), ist wieder getönt wie der Grund. Eine
+ * streng steigende Leiter wie im Dunkeln gibt es darum nicht; dieselben
+ * Tokennamen meinen dieselbe Aufgabe, nicht dieselbe Helligkeitsfolge.
+ *
+ * Betonung an Ort (aktive Zeile, vergangenes Kalenderblatt, Avatar) ist
+ * darum keine Höhenstufe, sondern `betont`: die Schrift in `BETONT` Deckung
+ * über der Fläche darunter — sie hebt in beiden Erscheinungsbildern ab, auf
+ * jeder Stufe (globals.css, @utility betont).
  */
 export const GRUND_HELL = "#f5f6f5";
 
@@ -257,9 +262,9 @@ export const ELEV_HELL = [
   { dp: 0, hex: GRUND_HELL },
   { dp: 1, hex: "#ffffff" },
   { dp: 2, hex: GRUND_HELL },
-  { dp: 3, hex: "#f2f4f2" },
-  { dp: 4, hex: "#f0f2f0" },
-  { dp: 6, hex: "#eef0ee" },
+  { dp: 3, hex: "#ffffff" },
+  { dp: 4, hex: "#ffffff" },
+  { dp: 6, hex: "#ffffff" },
   { dp: 8, hex: "#ffffff" },
   { dp: 12, hex: "#ffffff" },
   { dp: 16, hex: "#ffffff" },
@@ -276,6 +281,9 @@ export const ELEV_HELL = [
 export const TINTE = "#141a17";
 export const SCHRIFT_HELL = { hoch: 1, mittel: 0.74, tief: 0.5 } as const;
 export const LINIE_HELL = 0.12;
+
+/** Deckung der Betonung an Ort (`betont`), in beiden Erscheinungsbildern. */
+export const BETONT = 0.08;
 export const KANTE_HELL = 0.5;
 
 /** Das Violett der Marke selbst: auf Weiss 5.15:1, auf jeder Tönung über 4.5:1. */

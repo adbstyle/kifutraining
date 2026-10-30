@@ -24,6 +24,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  BETONT,
   DRUCK,
   DRUCK_SCHRIFT,
   DUNKEL,
@@ -257,13 +258,16 @@ for (const t of THEMEN) {
 
   pruefe(`${T}: Kalenderblatt - Schrift trägt auf dem bevorstehenden und dem vergangenen Blatt`, () => {
     // Epic #490: Bevorstehend ist das Blatt die umgekehrte Fläche mit ihrer
-    // Schrift; vergangen und gestrichen die Menüstufe (elev-08) mit der leisen
-    // Schrift. Dieselben Flächen hinterlegen die Tage im Mini-Monat.
+    // Schrift; vergangen und gestrichen die Betonung an Ort (`betont`) mit der
+    // leisen Schrift. Dieselben Flächen hinterlegen die Tage im Mini-Monat.
+    // Das Blatt steht auf der Seite, auf der Karte und im Panel.
     const bevorstehend = kontrast(t.umkehr.schrift, t.umkehr.flaeche);
     assert.ok(bevorstehend >= 4.5, `bevorstehendes Blatt: ${z(bevorstehend)}:1`);
-    const vergangen = stufeVon(t, 8);
-    const leise = kontrast(schriftAuf(t, t.deckung.mittel, vergangen), vergangen);
-    assert.ok(leise >= 4.5, `vergangenes Blatt: ${z(leise)}:1`);
+    for (const dp of [0, 1, 8]) {
+      const vergangen = schriftAuf(t, BETONT, stufeVon(t, dp));
+      const leise = kontrast(schriftAuf(t, t.deckung.mittel, vergangen), vergangen);
+      assert.ok(leise >= 4.5, `vergangenes Blatt auf ${elevName(dp)}: ${z(leise)}:1`);
+    }
   });
 
   pruefe(`${T}: Mini-Monat - ein Tag mit Termin hebt sich von der Fläche ab (WCAG 1.4.11)`, () => {

@@ -22,16 +22,17 @@
 @theme {
   /* ─── Höhe ───
      Dunkel: Grund + weisses Overlay, vorab verrechnet (in Klammern die
-     Deckung). Hell: getönter Grund, weisse Karte, getönt was in der Karte
-     liegt, weiss alles Schwebende. Literale Hex-Werte, keine Rechnung zur
+     Deckung). Hell: getönter Grund, weiss alles darauf, getönt nur was in
+     der Karte liegt (elev-02). Betonung an Ort ist keine Stufe, sondern
+     `betont` (unten). Literale Hex-Werte, keine Rechnung zur
      Laufzeit — so kann `scripts/pruefe-farben.ts` die Palette per Regex
      mitlesen. */
   --color-elev-00: light-dark(#f5f6f5, #101613); /* 0 % */
   --color-elev-01: light-dark(#ffffff, #1c221f); /* 5 % */
   --color-elev-02: light-dark(#f5f6f5, #212624); /* 7 % */
-  --color-elev-03: light-dark(#f2f4f2, #232926); /* 8 % */
-  --color-elev-04: light-dark(#f0f2f0, #262b28); /* 9 % */
-  --color-elev-06: light-dark(#eef0ee, #2a302d); /* 11 % */
+  --color-elev-03: light-dark(#ffffff, #232926); /* 8 % */
+  --color-elev-04: light-dark(#ffffff, #262b28); /* 9 % */
+  --color-elev-06: light-dark(#ffffff, #2a302d); /* 11 % */
   --color-elev-08: light-dark(#ffffff, #2d322f); /* 12 % */
   --color-elev-12: light-dark(#ffffff, #313734); /* 14 % */
   --color-elev-16: light-dark(#ffffff, #343936); /* 15 % */
@@ -407,6 +408,17 @@
   color: var(--color-on-surface);
 }
 
+/* Betonung an Ort (Epic #563): aktive Zeile in Leiste und Verzeichnis,
+   vergangenes Kalenderblatt, ausgefallener Tag, Avatar, Code. Keine
+   Höhenstufe — im Hellen ist alles über dem Grund weiss, eine Stufe höbe
+   dort nichts ab —, sondern die Schrift in 8 % Deckung über der Fläche
+   darunter (Zwilling: BETONT in lib/farben.ts). So hebt sie auf jeder Stufe
+   und in beiden Erscheinungsbildern ab; im Dunkeln entspricht sie auf der
+   Karte ziemlich genau der früheren Menüstufe. */
+@utility betont {
+  background-color: color-mix(in srgb, var(--color-on-surface) 8%, transparent);
+}
+
 /* Kontur: 1.5 px trägt im Dunkeln, 1 px verschwindet gegen den Grund.
    Die Farbe kommt separat (border-kante / border-primary / border-error). */
 @utility kontur {
@@ -722,6 +734,18 @@
      Der Druck schaltet auf hell um (siehe Druck-Ansicht unten). */
   :root {
     color-scheme: light dark;
+  }
+  /* Selbst gewählt (#567): Die Layouts setzen eine Marke aus dem Cookie
+     (DarstellungsMarke). Seiten ohne Marke — die Eltern-Seiten hinter dem
+     privaten Link — folgen weiter dem Gerät. Nur am Bildschirm: Die Regel
+     ist spezifischer als `:root` im Druck und hielte Papier sonst dunkel. */
+  @media screen {
+    :root:has([data-darstellung="hell"]) {
+      color-scheme: light;
+    }
+    :root:has([data-darstellung="dunkel"]) {
+      color-scheme: dark;
+    }
   }
 
   /* Klebt die Kopfzeile oben (ab `lg`, Epic #350): Springt der Browser zu

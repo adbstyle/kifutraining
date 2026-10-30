@@ -9,6 +9,7 @@ import { aktiveBereiche, teamOffen } from "@/lib/navigation";
 import { useFeedback } from "@/components/feedback/FeedbackKontext";
 import { FEEDBACK_TITEL } from "@/components/feedback/FeedbackGespraech";
 import { useSeitenleiste } from "./AppRahmen";
+import { useDarstellung } from "./DarstellungKontext";
 import { useTeamBereich } from "./TeamKontext";
 import { useVersionen } from "./VersionenKontext";
 
@@ -47,6 +48,7 @@ export function AppNavClient({
 
   const { neu } = useVersionen();
   const feedback = useFeedback();
+  const { darstellung, waehle } = useDarstellung();
 
   const aktiv = aktiveBereiche(pfad, mine, imTeamBereich);
 
@@ -97,6 +99,8 @@ export function AppNavClient({
       feedback={
         konto ? { label: FEEDBACK_TITEL, offen: feedback.offen, onOeffnen: feedback.oeffnen } : undefined
       }
+      // Wählen nur mit Konto (#567); die Wahl gilt danach auch abgemeldet.
+      darstellung={konto ? { wahl: darstellung, onWahl: waehle } : undefined}
       slim={slim}
       drawerOffen={drawerOffen}
       onDrawerOffenChange={setzeDrawerOffen}
