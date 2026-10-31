@@ -389,7 +389,7 @@ steht für die nächsten Tage „Heute" oder „Morgen" mit dem Tag, neben dem S
 Spielerliste die Angemeldeten von allen, etwa „12/14", sonst die erwartete —, die Kader, die
 Trainer:innen als „dabei/eingeladen" mit dem eigenen Stand als Zeichen davor und der Platz, ohne
 Felder „Platz nicht erfasst"; die Einzelheiten nennt jedes Zeichen beim Darüberfahren und für die
-Vorlesehilfe. Dann die Bemerkung und der Schalter „Ich bin dabei" mit dem Satz, wer verantwortlich
+Vorlesehilfe. Dann der Hinweis für Eltern mit „Für Eltern:" davor, die Bemerkung und der Schalter „Ich bin dabei" mit dem Satz, wer verantwortlich
 ist, und — wenn das zutrifft — „du hast abgesagt" oder „du bist nicht eingeladen"; ab Beginn und an
 einem ausgefallenen Termin ist er gesperrt. Zuunterst „Durchführen" als hervorgehobener Knopf und „Training
 öffnen", ohne Training „Training hinzufügen" als hervorgehobener Knopf; dazu „Spieler:innen", sofern das Team
@@ -431,8 +431,8 @@ lösen, Ausfallen lassen oder — bei einem ausgefallenen — Grund ändern und 
 und Termin entfernen; ein Spiel bietet nur „Spiel ändern", die Handgriffe zum Ausfall und „Spiel
 entfernen". Die Durchführen-Ansicht zeigt, aus
 dem Plan geöffnet, zuoberst Datum, Zeit, Ort, wer verantwortlich ist, wer dabei ist und wer
-abgesagt hat, Spielerzahl, Felder
-und Bemerkung des Termins, jedes Feld mit Grösse, Toren je Torart und Untergrund; was zu einem
+abgesagt hat, Spielerzahl, Felder,
+Hinweis für Eltern („Für Eltern: …") und Bemerkung des Termins, jedes Feld mit Grösse, Toren je Torart und Untergrund; was zu einem
 Feld nicht erfasst ist, steht dort ausdrücklich als unbekannt.
 
 Eine eigene Überschrift trägt der Trainingsplan nicht, sie steht schon im Umschalter der
@@ -844,7 +844,7 @@ Zeichen stehen die Angemeldeten von allen, etwa „7/14", die Kader, die Meldefr
 Trainer:innen, und beim Darüberfahren nennt die Spielerzahl den Richtwert und wie viele noch ohne
 Meldung sind. Führt das Team keine Spielerliste, steht dort ein Strich, und das Zeichen sagt „Das
 Team führt keine Spielerliste – hier wird nicht gemeldet." Dann folgen die Treffpunkte, der
-späteste — der dem Anpfiff nächste — zuoberst, die Bemerkung und der Schalter „Ich bin dabei".
+späteste — der dem Anpfiff nächste — zuoberst, der Hinweis für Eltern, die Bemerkung und der Schalter „Ich bin dabei".
 Zuunterst stehen „Spieler:innen", sofern das Team eine Liste führt, „Trainer:innen" und „Spiel
 öffnen". Ab dem Anpfiff zählt die Zahl die Anwesenden.
 

@@ -3,8 +3,8 @@ import { cn } from "@/lib/cn";
 
 /** Der Hinweis für Eltern am privaten Link (#590 AK 9, 11) — an Training und
  *  Spiel gleich: unter einer Linie am Fuss der Karte, auf vier Zeilen gekürzt
- *  mit «Ganz lesen», Webadressen als Link. Ohne Hinweis nichts; die
- *  Datenebene liefert an einem ausgefallenen Termin keinen. An einer
+ *  mit «Ganz lesen», Webadressen als Link. Ohne Hinweis nichts; an einem
+ *  ausgefallenen Termin liefert die Datenebene keinen (AK 11). An einer
  *  gedämpften Karte tritt er mit ihr zurück. */
 export function HinweisEltern({ text, gedaempft }: { text: string | null; gedaempft: boolean }) {
   if (!text) return null;

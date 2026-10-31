@@ -230,7 +230,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Fassungen:** Jede Übung im Training ist vollständige, unabhängige Kopie. Änderungen in Training und Bibliothek wirken nie gegenseitig. Herkunft wird nicht festgehalten (Manual-Plakette im Training nicht sichtbar).
 
-**Durchführen & Drucken:** für jedes sichtbare Training, auch fremde. Durchführen: Teil für Teil, Bildschirm bleibt wach, Ziel oben, je Übung Diagramm, Feld, Spieler:innen, Material, Dauer, Ablauf, Varianten, Übungstyp (keine Erscheinungsform). Leere Blöcke ausgeblendet. Aus dem Teamplan geöffnet: Termin-Kopf (Datum, Zeit, Ort, Verantwortlich, dabei/abgesagt, Spielerzahl, Felder, Bemerkung). Durchlauf + Notiz unter dem Übungstitel als Text. Variante per Chip wechseln.
+**Durchführen & Drucken:** für jedes sichtbare Training, auch fremde. Durchführen: Teil für Teil, Bildschirm bleibt wach, Ziel oben, je Übung Diagramm, Feld, Spieler:innen, Material, Dauer, Ablauf, Varianten, Übungstyp (keine Erscheinungsform). Leere Blöcke ausgeblendet. Aus dem Teamplan geöffnet: Termin-Kopf (Datum, Zeit, Ort, Verantwortlich, dabei/abgesagt, Spielerzahl, Felder, Hinweis für Eltern, Bemerkung). Durchlauf + Notiz unter dem Übungstitel als Text. Variante per Chip wechseln.
 - **Materialliste des Trainings** = höchster **gleichzeitiger** Bedarf (nicht Summe); parallele Gruppen im selben Wechsel zählen zusammen; Varianten mit ihrem Maximum. Freie Ergänzungen einzeln, nicht zusammengezählt (bekannt: „Pfeife" kann doppelt stehen).
 
 **Veröffentlichen:** Entwurf ↔ öffentlich, keine Kopie, bleibt bearbeitbar; Anzeigename als Urheber; Tragweite bestätigen. **Bedingungen gelten dauerhaft** (auch bei späteren Änderungen):

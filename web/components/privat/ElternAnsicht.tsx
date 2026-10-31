@@ -309,7 +309,7 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
           />
         )}
       </div>
-      <HinweisEltern text={t.ausgefallen ? null : t.hinweis_eltern} gedaempft={gedaempft} />
+      <HinweisEltern text={t.hinweis_eltern} gedaempft={gedaempft} />
       {hinweise}
     </li>
   );

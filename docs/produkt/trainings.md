@@ -439,8 +439,8 @@ erscheinen in beiden Ansichten nicht. Aus dem Trainingsplan eines Teams geöffne
 Durchführen-Ansicht zuoberst den Termin: Datum, Beginn und Ende, Ort, wer verantwortlich ist, wer
 dabei ist und wer abgesagt hat, die
 Spielerzahl — führt das Team eine Spielerliste, die angemeldeten von allen, etwa „12 von 15
-angemeldet", sonst die erwartete —, die Felder des Platzes je mit Grösse, Toren und Untergrund
-und die Bemerkung; was zu einem Feld nicht erfasst ist, steht als
+angemeldet", sonst die erwartete —, die Felder des Platzes je mit Grösse, Toren und Untergrund,
+den Hinweis für Eltern („Für Eltern: …") und die Bemerkung; was zu einem Feld nicht erfasst ist, steht als
 unbekannt da. Wer angemeldet ist, steht nicht dort, sondern am Termin im Trainingsplan (siehe
 [Team-Bereich](team-bereich.md#ab--und-anmelden)).
 

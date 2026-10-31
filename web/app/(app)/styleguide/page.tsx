@@ -52,6 +52,7 @@ import {
   TabellenZeile,
   Gefahrenzone,
 } from "@/components/ui";
+import { HinweisEltern } from "@/components/privat/HinweisEltern";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { uebungEckdaten } from "@/lib/eckdaten";
 import { ChipsDemo } from "./ChipsDemo";
@@ -3708,6 +3709,18 @@ export default async function Styleguide() {
                 "Schön, dass du bei uns reinschaust!\n\nWir trainieren auf der Allmend, Feld 3. Komm 10 Minuten vor Beginn, in Sportkleidung, mit Fussballschuhen, Schienbeinschonern und einer Trinkflasche.\n\nMelde dich unten für die Trainings an, bei denen du mitmachen willst.\nMehr zum Verein: www.fc-beispiel.ch"
               }
             />
+          </Card>
+          <p className="type-body-medium mb-3 mt-8 max-w-2xl text-on-surface-mittel">
+            <strong>Hinweis für Eltern</strong> - <code>HinweisEltern</code>: der Fuss
+            einer Termin- oder Spielkarte am privaten Link (#590). Eine Haarlinie trennt
+            ihn vom Kopf der Karte, darunter ein <code>KuerzbarerText</code> auf vier
+            Zeilen. An einer gedämpften Karte (abgemeldet) tritt er gedämpft zurück.
+            Neu, weil Training und Spiel denselben Fuss brauchen und der Text, anders
+            als der Ausfallgrund, mehrere Zeilen lang sein darf.
+          </p>
+          <Card className="flex max-w-sm flex-col gap-3 p-3">
+            <span className="type-body-small text-on-surface-mittel">Verantwortlich: Anna Keller</span>
+            <HinweisEltern text={"Pincode: 4702\nEintritt frühestens 15 min vor Trainingsbeginn"} gedaempft={false} />
           </Card>
         </Section>
 

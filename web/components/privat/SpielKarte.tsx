@@ -143,7 +143,7 @@ export function SpielKarte({
       {treffpunkte && (
         <TreffpunktListe treffpunkte={treffpunkte} spieltag={t.datum} spielOrt={t.ort} className="type-body-medium text-on-surface" />
       )}
-      <HinweisEltern text={t.ausgefallen ? null : t.hinweis_eltern} gedaempft={gedaempft} />
+      <HinweisEltern text={t.hinweis_eltern} gedaempft={gedaempft} />
     </li>
   );
 }

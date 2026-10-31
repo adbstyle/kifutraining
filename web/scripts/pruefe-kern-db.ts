@@ -1481,6 +1481,7 @@ try {
       ende: "20:00",
       ort: "Allmend",
       bemerkung: "Leibchen",
+      hinweisEltern: null,
       felder: null,
       spielerzahl: null,
       spielstand: null,
@@ -1511,6 +1512,7 @@ try {
       ende: "20:00",
       ort: "Allmend",
       bemerkung: "Leibchen",
+      hinweis_eltern: null,
       felder: null,
       erwartete_spielerzahl: null,
       spielerzahl: { quelle: "unbekannt", zahl: null, gesamt: null },
@@ -1679,11 +1681,16 @@ try {
     const teil = (await admin.from("training_termine").select("serie_id").eq("id", t[2].id).single()).data!.serie_id as string;
     assert.notEqual(teil, s.serieId);
     assert.equal(await vonSerie(teil), "Pincode 6000");
+    // Teilen samt neuem Hinweis: die Teilserie und ihre Termine bekommen ihn, die alte Serie behält ihren.
+    wert(await aendereSerie(a.supabase, a.id, { terminId: t[3].id, reichweite: "dieser_und_folgende", aenderung: { hinweisEltern: "Ab Dezember: Halle Nord" } }));
+    const zweite = (await admin.from("training_termine").select("serie_id").eq("id", t[3].id).single()).data!.serie_id as string;
+    assert.deepEqual([await vonSerie(zweite), await vonSerie(teil), await vonSerie(s.serieId)], ["Ab Dezember: Halle Nord", "Pincode 6000", "Pincode 6000"]);
+    assert.deepEqual([(await hinweis(t[2].id)).hinweis_eltern, (await hinweis(t[3].id)).hinweis_eltern], ["Pincode 6000", "Ab Dezember: Halle Nord"]);
     // Lesepfad und KI: der Hinweis am Termin und an der Serie, die Abweichung benannt.
     wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t[3].id, reichweite: "nur_dieser", hinweisEltern: "Eigener" }));
     const plan = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
     const z = plan.kommend.find((x) => x.id === t[3].id)!;
-    assert.deepEqual([z.hinweisEltern, z.serie?.hinweisEltern, z.abweichungen.includes("hinweis_eltern")], ["Eigener", "Pincode 6000", true]);
+    assert.deepEqual([z.hinweisEltern, z.serie?.hinweisEltern, z.abweichungen.includes("hinweis_eltern")], ["Eigener", "Ab Dezember: Halle Nord", true]);
   });
 
   await pruefe("Serie ändern: nur dieser, folgende teilt, alle erfasst Vergangenes, Abweichungen bleiben (#326)", async () => {

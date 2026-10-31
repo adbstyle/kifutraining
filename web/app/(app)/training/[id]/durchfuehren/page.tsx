@@ -54,6 +54,7 @@ export default async function TrainingDurchfuehrenPage({
               ende: termin.ende,
               ort: termin.ort,
               bemerkung: termin.bemerkung,
+              hinweisEltern: termin.hinweisEltern,
               verantwortlich: verantwortlichText(termin.trainer, ich),
               dabei: termin.trainer.filter((tr) => !tr.abgesagtAm).map((tr) => trainerNameFuer(tr, ich)),
               abgesagt: termin.trainer.filter((tr) => tr.abgesagtAm).map((tr) => trainerNameFuer(tr, ich)),
