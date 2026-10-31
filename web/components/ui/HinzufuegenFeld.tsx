@@ -15,9 +15,10 @@ import { InfoKnopf } from "./InfoKnopf";
    wo in einem leeren Feld sein Name stünde.
 
    `info` ist der fachliche Hinweis zur ganzen Liste — was ein Eintrag ist —
-   hinter einem ⓘ rechts in der Zeile, sichtbar nur beim Überfahren wie bei
-   einem Feld (Styleguide, Formularfelder › Hinweise); die Vorlesehilfe hört
-   ihn mit dem Knopf. */
+   hinter einem ⓘ direkt nach dem Text, wie im leeren Feld hinter dessen
+   Namen (`.feld-info-am-namen`), sichtbar nur beim Überfahren wie bei einem
+   Feld (Styleguide, Formularfelder › Hinweise); die Vorlesehilfe hört ihn mit
+   dem Knopf. */
 export function HinzufuegenFeld({
   children,
   info,
@@ -38,7 +39,6 @@ export function HinzufuegenFeld({
           "hinzufuegen-feld focus-ring type-body-large flex h-9 w-full items-center rounded-flaeche",
           "px-3.5 text-left text-on-surface-mittel",
           "disabled:cursor-not-allowed disabled:opacity-50",
-          info ? "pr-11" : undefined,
         )}
         {...props}
       >
@@ -46,7 +46,10 @@ export function HinzufuegenFeld({
       </button>
       {info && (
         <>
-          <div className="feld-info absolute inset-y-0 right-0 flex items-center">
+          <div className="feld-info feld-info-am-namen">
+            <span aria-hidden className="feld-info-leer type-body-large">
+              {children}
+            </span>
             <InfoKnopf label={children}>{info}</InfoKnopf>
           </div>
           <span id={infoId} className="sr-only">

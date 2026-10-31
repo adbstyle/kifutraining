@@ -10,6 +10,7 @@ import { nachKaderName, nachTerminKader, type TerminKader } from "@/lib/kader";
 import { meldefristZeitpunkt, treffpunkteZu, type TerminArt, type Treffpunkt, type TreffpunktZeile } from "@/lib/spiel";
 import { imFilter, nachTrainerName, type Eingrenzung, type SerienTrainer, type TerminTrainer } from "@/lib/trainer";
 import { besetzungAus, type Mindestbesetzung } from "@/lib/besetzung";
+import { treffpunktZeit, type TerminTreffpunkt } from "@/lib/termin";
 
 /**
  * Termine lesen für einen Client, der bereits als Nutzer spricht (Cookie-
@@ -40,6 +41,10 @@ export type TerminSerie = {
   /** Der Kartenlink zum Ort der Serie (#533). */
   ortLink: string | null;
   bemerkung: string | null;
+  /** Der Hinweis für Eltern, den die Serie vorgibt (#590). */
+  hinweisEltern: string | null;
+  /** Der Treffpunkt, den die Serie vorgibt (#561), zu ihrem Beginn. */
+  treffpunkt: TerminTreffpunkt | null;
   /** Felder und erwartete Spielerzahl, die die Serie vorgibt (#391); `null` = unbekannt. */
   felder: Felder | null;
   spielerzahl: number | null;
@@ -59,6 +64,8 @@ export type Abweichung =
   | "zeit"
   | "ort"
   | "bemerkung"
+  | "hinweis_eltern"
+  | "treffpunkt"
   | "eingeladene"
   | "verantwortung"
   | "besetzung"
@@ -96,6 +103,10 @@ export type TerminZeile = {
   /** Der Kartenlink zum Ort (#533); nur mit Ort. */
   ortLink: string | null;
   bemerkung: string | null;
+  /** Der Hinweis für Eltern (#590): Die Spielervertretung sieht ihn, die Bemerkung nicht. */
+  hinweisEltern: string | null;
+  /** Nur an einem Training: der Treffpunkt zum aktuellen Beginn (#561); `null`: keiner. */
+  treffpunkt: TerminTreffpunkt | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: Felder | null;
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. Führt das Team
@@ -145,6 +156,9 @@ type RawTermin = {
   ort: string | null;
   ort_link: string | null;
   bemerkung: string | null;
+  hinweis_eltern: string | null;
+  treffpunkt_vorlauf_min: number | null;
+  treffpunkt_ort: string | null;
   felder: Felder | null;
   erwartete_spielerzahl: number | null;
   spielstand: Spielstand;
@@ -153,6 +167,8 @@ type RawTermin = {
   zeit_abweichend: boolean;
   ort_abweichend: boolean;
   bemerkung_abweichend: boolean;
+  hinweis_eltern_abweichend: boolean;
+  treffpunkt_abweichend: boolean;
   eingeladene_abweichend: boolean;
   verantwortung_abweichend: boolean;
   felder_abweichend: boolean;
@@ -184,6 +200,9 @@ type RawTermin = {
     ort: string | null;
     ort_link: string | null;
     bemerkung: string | null;
+    hinweis_eltern: string | null;
+    treffpunkt_vorlauf_min: number | null;
+    treffpunkt_ort: string | null;
     felder: Felder | null;
     erwartete_spielerzahl: number | null;
     besetzung_art: string | null;
@@ -204,13 +223,20 @@ export function kurzeZeit(t: string): string {
 }
 
 const TERMIN_SELECT =
-  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, vorher_datum, vorher_beginn, datum, beginn, ende, ort, ort_link, bemerkung, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, eingeladene_abweichend, verantwortung_abweichend, felder_abweichend, spielerzahl_abweichend, kader_abweichend, besetzung_art, besetzung_zahl, besetzung_abweichend, ausgefallen, ausfall_grund, " +
+  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, vorher_datum, vorher_beginn, datum, beginn, ende, ort, ort_link, bemerkung, hinweis_eltern, treffpunkt_vorlauf_min, treffpunkt_ort, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, hinweis_eltern_abweichend, treffpunkt_abweichend, eingeladene_abweichend, verantwortung_abweichend, felder_abweichend, spielerzahl_abweichend, kader_abweichend, besetzung_art, besetzung_zahl, besetzung_abweichend, ausgefallen, ausfall_grund, " +
   "termin_trainer ( id, user_id, verantwortlich, abgesagt_am, trainer_name, trainer_ehemalig ), " +
   "termin_kader ( kader_id, kader ( name ) ), " +
   "spiel_treffpunkte ( anreise, vorlauf_min, ort ), " +
   "trainings ( id, name, stufen, termin_training ), " +
-  "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, ort_link, bemerkung, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, " +
+  "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, ort_link, bemerkung, hinweis_eltern, treffpunkt_vorlauf_min, treffpunkt_ort, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, " +
   "termin_serien_trainer ( user_id, verantwortlich, trainer_name ), termin_serien_kader ( kader_id, kader ( name ) ) )";
+
+/** Der Treffpunkt eines Trainings zu seinem Beginn (#561), sonst `null`. */
+export function treffpunktZu(vorlauf: number | null, ort: string | null, beginn: string): TerminTreffpunkt | null {
+  if (vorlauf === null || ort === null) return null;
+  const zeit = treffpunktZeit(kurzeZeit(beginn), vorlauf);
+  return zeit === null ? null : { zeit, ort };
+}
 
 /** Nach Anzeigename ordnen, unbenannte (gelöschte Konten) zuletzt. Der Schlüssel
  *  (Eintrags- bzw. Konto-Kennung) macht die Reihenfolge bei gleichem Namen stabil. */
@@ -275,6 +301,8 @@ function mapTermin(t: RawTermin): TerminZeile {
     ort: t.ort,
     ortLink: t.ort_link,
     bemerkung: t.bemerkung,
+    hinweisEltern: t.hinweis_eltern,
+    treffpunkt: treffpunktZu(t.treffpunkt_vorlauf_min, t.treffpunkt_ort, t.beginn),
     felder: t.felder,
     spielerzahl: t.erwartete_spielerzahl,
     mindestbesetzung: besetzungAus(t.besetzung_art, t.besetzung_zahl),
@@ -299,6 +327,8 @@ function mapTermin(t: RawTermin): TerminZeile {
           ort: t.termin_serien.ort,
           ortLink: t.termin_serien.ort_link,
           bemerkung: t.termin_serien.bemerkung,
+          hinweisEltern: t.termin_serien.hinweis_eltern,
+          treffpunkt: treffpunktZu(t.termin_serien.treffpunkt_vorlauf_min, t.termin_serien.treffpunkt_ort, t.termin_serien.beginn),
           felder: t.termin_serien.felder,
           spielerzahl: t.termin_serien.erwartete_spielerzahl,
           mindestbesetzung: besetzungAus(t.termin_serien.besetzung_art, t.termin_serien.besetzung_zahl),
@@ -320,6 +350,8 @@ function mapTermin(t: RawTermin): TerminZeile {
           t.zeit_abweichend && "zeit",
           t.ort_abweichend && "ort",
           t.bemerkung_abweichend && "bemerkung",
+          t.hinweis_eltern_abweichend && "hinweis_eltern",
+          t.treffpunkt_abweichend && "treffpunkt",
           t.eingeladene_abweichend && "eingeladene",
           t.verantwortung_abweichend && "verantwortung",
           t.besetzung_abweichend && "besetzung",

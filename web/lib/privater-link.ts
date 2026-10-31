@@ -31,12 +31,18 @@ export type LinkTermin = {
   frist: string | null;
   frist_abgelaufen: boolean;
   vorher: { datum: string; beginn: string } | null;
-  /** Nur an einem Spiel (#465 AK 10): die Bemerkung und die Treffpunkte,
-   *  frühester zuerst — an einem ausgefallenen keine (`null`), dort spricht
-   *  der Grund (#530, PO 2026-10-27). Die Bemerkung eines Trainings sieht die
-   *  Spielervertretung nicht (PC 4). */
-  bemerkung: string | null;
+  /** Der Hinweis für Eltern eines Trainings oder Spiels (#590 AK 9–11) — an
+   *  einem ausgefallenen keiner (`null`), dort spricht der Grund. Die
+   *  Bemerkung sieht die Spielervertretung nie (AK 13). */
+  hinweis_eltern: string | null;
+  /** Nur an einem Spiel (#465 AK 10): die Treffpunkte, frühester zuerst — an
+   *  einem ausgefallenen keine (`null`), dort spricht der Grund (#530). */
   treffpunkte: Treffpunkt[] | null;
+  /** Nur an einem Training (#561 AK 12): der Treffpunkt mit Uhrzeit am
+   *  Trainingstag — an einem ausgefallenen keiner (`null`). Ab Beginn und bei
+   *  einer Abmeldung blendet die Ansicht ihn aus. Optional, bis die Migration
+   *  läuft (Deploy-Reihenfolge). */
+  treffpunkt?: { zeit: string; ort: string } | null;
   /** Nur an einem Spiel (#464 AK 8, 9; PC 3): ob sie nicht aufgeboten ist,
    *  ob die Kennzeichnung mit einer Verlegung verfallen ist, und wie viele
    *  nicht aufgeboten sind (`null` an einem ausgefallenen und bei Trainings). */

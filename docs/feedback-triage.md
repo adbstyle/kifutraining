@@ -1,6 +1,6 @@
 # KiFu – Produktwissen für die Einordnung von User-Feedback
 
-Stand 2026-10-30 (Release 1.45.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
+Stand 2026-10-31 (Release 1.46.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
 gedacht als Kontext für ein kleines Modell (z. B. Haiku), das Rückmeldungen von Nutzer:innen
 einordnet. Rückmeldungen sind **Fehlermeldungen ebenso wie Feature-Wünsche**: Das Modell erkennt,
 was die Person meint, gleicht es mit dem heutigen Stand ab und stellt die Rückfragen, mit denen sich
@@ -96,7 +96,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - **Privater Link** – Link je Spieler:in, über den Eltern ohne Konto ab-/anmelden und Termine abonnieren.
 - **Selbstabholung / Abholadresse** – Team-Adresse, über die Eltern mit Vorname+Nachname+Jahrgang den privaten Link selbst holen.
 - **Bezogen** – der aktuelle private Link wurde über die Abholadresse herausgegeben (grüner Punkt).
-- **Richtwert** (Spiel) – Mindest- und Höchstzahl. **Meldefrist** – bis wann Eltern für ein Spiel melden. **Treffpunkt** – je Anreiseart (vor Ort, öV, Auto, Velo, Car/Vereinsbus).
+- **Richtwert** (Spiel) – Mindest- und Höchstzahl. **Meldefrist** – bis wann Eltern für ein Spiel melden. **Treffpunkte** (Spiel) – je Anreiseart (vor Ort, öV, Auto, Velo, Car/Vereinsbus). **Treffpunkt** (Training) – höchstens einer, Uhrzeit + Ort, ohne Anreiseart.
 - **Nicht aufgeboten** – Kennzeichnung einer Spieler:in für ein Spiel durch Mitglieder.
 - **Stand bei Beginn / beim Anpfiff** – eingefrorener Stand der Anmeldungen ab Terminbeginn. **Nachtrag** – „nicht erschienen" / „doch erschienen".
 - **KI-Zugang / MCP** – ein KI-Assistent (z. B. Claude) verbunden über `https://ki-fu.ch/api/mcp`.
@@ -119,7 +119,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Bedienung:**
 - Alle Bedienelemente 36 px hoch, auch auf dem Telefon (bekannt: kleiner als für Finger empfohlen).
-- Felder ohne Rahmen im Ruhezustand; Name klein über dem Wert. Erklärungen hinter **ⓘ** (erscheint nur bei Maus-Hover; auf Touch-Geräten nie – ausser 3 Hinweise, die dort unter dem Feld stehen: feste Altersstufe eines Trainings, wen die erwartete Spielerzahl zählt, „0 Tore = keine").
+- Felder ohne Rahmen im Ruhezustand; Name klein über dem Wert. Maus-Hover hellt Name, Feld und Hinweis/Fehler darunter gemeinsam auf; Klick auf den Hinweis führt ins Feld. Erklärungen hinter **ⓘ** direkt nach dem Namen (erscheint nur bei Maus-Hover; auf Touch-Geräten nie – ausser 3 Hinweise, die dort unter dem Feld stehen: feste Altersstufe eines Trainings, wen die erwartete Spielerzahl zählt, „0 Tore = keine").
 - Fehler beim Speichern rot unter dem Feld. Felder, die beim Verlassen speichern, fallen bei Fehler auf den gespeicherten Wert zurück + Meldung am unteren Rand.
 - **Schalter** = sofort wirksame Ja/Nein-Angabe (Trainer:in dabei, Spieler:in angemeldet, Selbstabholung). Kästchen = Formular, das erst gespeichert wird. Spieler:innen-Schalter und Selbstabholung sind bewusst ruhig: grauer Knopf, an rechts mit Haken, aus links mit Kreuz (Trainer:in dabei: violetter Knopf). Am privaten Link steht an einem ausgefallenen Termin kein Schalter.
 - Filter als Knöpfe mit Zähler; Mehrfachwahl; gleiche Art = ODER, verschiedene Arten = UND.
@@ -230,7 +230,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Fassungen:** Jede Übung im Training ist vollständige, unabhängige Kopie. Änderungen in Training und Bibliothek wirken nie gegenseitig. Herkunft wird nicht festgehalten (Manual-Plakette im Training nicht sichtbar).
 
-**Durchführen & Drucken:** für jedes sichtbare Training, auch fremde. Durchführen: Teil für Teil, Bildschirm bleibt wach, Ziel oben, je Übung Diagramm, Feld, Spieler:innen, Material, Dauer, Ablauf, Varianten, Übungstyp (keine Erscheinungsform). Leere Blöcke ausgeblendet. Aus dem Teamplan geöffnet: Termin-Kopf (Datum, Zeit, Ort, Verantwortlich, dabei/abgesagt, Spielerzahl, Felder, Bemerkung). Durchlauf + Notiz unter dem Übungstitel als Text. Variante per Chip wechseln.
+**Durchführen & Drucken:** für jedes sichtbare Training, auch fremde. Durchführen: Teil für Teil, Bildschirm bleibt wach, Ziel oben, je Übung Diagramm, Feld, Spieler:innen, Material, Dauer, Ablauf, Varianten, Übungstyp (keine Erscheinungsform). Leere Blöcke ausgeblendet. Aus dem Teamplan geöffnet: Termin-Kopf (Datum, Zeit, Ort, Verantwortlich, dabei/abgesagt, Spielerzahl, Felder, Hinweis für Eltern, Bemerkung). Durchlauf + Notiz unter dem Übungstitel als Text. Variante per Chip wechseln.
 - **Materialliste des Trainings** = höchster **gleichzeitiger** Bedarf (nicht Summe); parallele Gruppen im selben Wechsel zählen zusammen; Varianten mit ihrem Maximum. Freie Ergänzungen einzeln, nicht zusammengezählt (bekannt: „Pfeife" kann doppelt stehen).
 
 **Veröffentlichen:** Entwurf ↔ öffentlich, keine Kopie, bleibt bearbeitbar; Anzeigename als Urheber; Tragweite bestätigen. **Bedingungen gelten dauerhaft** (auch bei späteren Änderungen):
@@ -256,8 +256,10 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Trainings im Team:** gehören Person **oder** Team, nie beiden. Immer Kopie (Ins Team stellen, Zu sich übernehmen), vollständig (Ziel, Gruppen, Verteilung, Notizen, alle Varianten). Direkt im Team anlegen möglich. Team-Trainings nur im Team-Bereich; Leiste hält „Teams" hervorgehoben.
 
-**Termine (Kalender):** Art „Training" oder „Spiel" (vorher wählen, danach unveränderbar). Training: Datum, Beginn, Ende (Pflicht, gleicher Tag), Ort (max. 100) samt Kartenlink, Bemerkung (max. 500), Felder, erwartete Spielerzahl, Trainer:innen, Mindestbesetzung, Kader. Vergangene Trainings erlaubt.
+**Termine (Kalender):** Art „Training" oder „Spiel" (vorher wählen, danach unveränderbar). Training: Datum, Beginn, Ende (Pflicht, gleicher Tag), Ort (max. 100) samt Kartenlink, Treffpunkt, Bemerkung (max. 500, nur fürs Team), Hinweis für Eltern (max. 500, Eltern sehen ihn am Link und im Abo, ausser bei Ausfall), Felder, erwartete Spielerzahl, Trainer:innen, Mindestbesetzung, Kader. Vergangene Trainings erlaubt.
 - **Kartenlink zum Ort** (z. B. geteilter Link aus Google Maps/Apple Karten): optional, nur mit Ort (ohne Ort gesperrt: „Gib zuerst einen Ort an."), muss mit https:// beginnen, max. 500 Zeichen. Ziel wird nicht geprüft (Team verantwortlich). **Ort geändert oder geleert ohne neuen Link → bisheriger Link fällt weg** (Dialog sagt es vorher). Im geöffneten Termin „Auf der Karte öffnen". An einem Serientermin weicht der Link mit dem Ort ab und folgt mit ihm wieder der Serie (eigener Link fällt dann weg).
+- **Treffpunkt (Training):** optional, höchstens einer, Uhrzeit + Ort (beide Pflicht: „Bitte für den Treffpunkt Uhrzeit und Ort angeben."; Ort max. 100). Am Trainingstag, **nicht nach dem Beginn** (gleich erlaubt): „Der Treffpunkt liegt nach dem Beginn. Wähle eine Uhrzeit bis 18:00." Dialog: Feldgruppe „Treffpunkt" (Uhrzeit, Ort, ✕ entfernt), ohne Treffpunkt „Treffpunkt hinzufügen (optional)"; unter der Uhrzeit „15 Minuten vor Beginn"; ⓘ: Eltern sehen ihn am Link und im Abo, beim Verlegen bleibt der Abstand. Gespeichert als **Abstand zum Beginn**: Verlegen oder neue Serienzeit → wandert mit (im Dialog sichtbar); geänderter Ort des Termins lässt ihn stehen. Kein Kartenlink, keine Anreiseart. Anzeige: Karte „Als Nächstes" (Zeile „Treffpunkt  17:45  Ort") und Eckdaten des geöffneten Termins (auch nach Beginn/bei Ausfall); **nicht** in der Terminliste-Zeile und nicht in „Durchführen". Nicht im Mitglieder-Abo.
+  - **Läge er nach einer Zeitänderung am Vortag → entfällt er** an denselben Terminen, für die die Änderung gilt. Oberfläche fragt vorher (einzeln: Dialog „Treffpunkt entfällt"; Serie: Bestätigung nennt die betroffenen anstehenden Termine; auch bei „Zeit folgt der Serie"). KI fragt nicht, nennt die Termine im Ergebnis.
 - **Felder:** je Feld Länge+Breite 5–120 m (nur zusammen), Tore je Torart (Minitore, 5-m, 7-m), Untergrund (Naturrasen, Kunstrasen, Hartplatz, Halle, Unbekannt). Leer = unbekannt, **0 Tore = keine**.
 - **Erwartete Spielerzahl** 1–200 (inkl. Torhüter:innen, ohne Trainer:innen) – nur ohne Spielerliste.
 - Termin entfernen: Rückfrage nennt Training; Termin-Training wird mitgelöscht, altes Bestands-Training bleibt.
@@ -267,6 +269,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Terminserien:** „Wiederholender Termin" im selben Dialog; Wochentag(e), Beginn- und Enddatum (max. gleicher Kalendertag Folgejahr). Nur Trainings. Legt je Wochentag einen Termin ohne Training an; bestehende Termine bleiben daneben.
 - Ändern: „Nur dieser Termin" (→ Abweichung), „Dieser und alle folgenden" (teilt die Serie), „Alle Termine der Serie" (inkl. vergangener). Datum nur „nur dieser"; Wochentage/Zeitraum nur „folgende/alle".
+- Serie gibt ihren Treffpunkt allen Terminen mit; Dialog „Termin ändern" nennt ihn unter „Terminserie" („Treffpunkt: 17:45 · Ort"). Treffpunkt (Uhrzeit+Ort = eine Angabe) kann an einem Serientermin abweichen, auch **bewusst ohne**; zurück mit „Der Serie folgen". Abweichende Termine behalten ihn bei Serienänderungen.
 - Wochentag/Zeitraum verkleinert → Termine entfallen **inkl. solcher mit Training** (Rückfrage nennt nur Termine mit Training). Genau ein Wochentag getauscht → Termine wandern innerhalb der Woche. Entfernte Termine kommen nie zurück.
 - „Der Serie folgen" wirkt sofort und schliesst den Dialog – andere ungespeicherte Änderungen im Dialog gehen verloren (bekannt).
 
@@ -279,14 +282,14 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 **Ausfälle:** Termin bleibt, Plakette „Ausgefallen", optionaler Grund (max. 500; Eltern sehen ihn am Link). Auch nachträglich. Training ruht (öffnen ja, durchführen nein). Abmeldungen/Absagen/Nachträge ruhen; **keine Spielerzahl** angezeigt. Rücknahme stellt alles her. Training: auf heute/später verlegt → findet wieder statt; Spiel: jede Verlegung → findet wieder statt. Kein Massen-Ausfall (z. B. Ferienwoche) möglich.
 
 **Trainingsplan:** Anstehend (aufsteigend) oben, Rückblick (zusammengeklappt, neueste zuerst) unten. Grenze = **Tagesende Schweizer Zeit** (heutiger Termin bleibt den ganzen Tag oben, auch nach Ende).
-- **„Als Nächstes"**-Karte: erster anstehender, nicht ausgefallener Termin. Status „Vorbereitet" (grün) / „Nicht vorbereitet" (gelb, nur hier). Zeile mit Spielerzahl („12/14"), Kader, Trainer:innen („dabei/eingeladen"), Platz. Schalter „Ich bin dabei" (gesperrt ab Beginn/bei Ausfall). Knöpfe Durchführen, Training öffnen bzw. Training hinzufügen, Spieler:innen, Trainer:innen.
+- **„Als Nächstes"**-Karte: erster anstehender, nicht ausgefallener Termin. Status „Vorbereitet" (grün) / „Nicht vorbereitet" (gelb, nur hier). Zeile mit Spielerzahl („12/14"), Kader, Trainer:innen („dabei/eingeladen"), Platz. Treffpunkt eines Trainings als Zeile „Treffpunkt  17:45  Ort". Schalter „Ich bin dabei" (gesperrt ab Beginn/bei Ausfall). Knöpfe Durchführen, Training öffnen bzw. Training hinzufügen, Spieler:innen, Trainer:innen.
 - Übrige Termine nach Monaten (mit Jahr), je Tag eine Karte. Status-Wort: „Vorbereitet" grün, „Nicht vorbereitet" grau, „Fällt aus" grau; Spiel: Status zum Richtwert. Ohne Training anstehend: violett „+ Training hinzufügen". Vergangen ohne Training: „Kein Training eingetragen".
 - Rechts klein: Spielerzahl (mit Liste „12/15", ab Beginn Anwesende, ausgefallen keine), Trainer:innen „2/3" mit eigenem Stand.
 - **Mini-Monat** rechts (nur ab Tablet quer): folgt der Liste (Monat des obersten sichtbaren Termins); Pfeile/„Heute" wechseln nur den Monat. Punkte für farbige Status (max. 2 + „+n"). Klick auf Tag springt in die Liste. Kein Anlegen aus dem Monat. **Am Handy kein Monat.**
 - **Geöffneter Termin**: rechts neben der Liste (schmal: ersetzt die Liste). Reiter **Termin / Training / Spieler:innen / Trainer:innen** (Spiel: Spiel / Spieler:innen / Trainer:innen). Eigene Adresse inkl. Reiter.
 - Eigene Änderungen erscheinen sofort; **Änderungen anderer erst nach Neuladen**.
 
-**Kalender-Abo (Mitglieder):** Menü neben „Termin erstellen" → persönlicher Link je Team (Warnung: persönlich, nicht weitergeben). Anleitung für Apple, Google (nur im Browser hinzufügen), Outlook, Proton. Liefert anstehende + letzte 28 Tage, **nur Termine, zu denen man eingeladen ist**; ausgefallene/entfernte fehlen. Titel „Training · Teamname" bzw. „Bezeichnung · Teamname", Präfix „Abgesagt · " / „Verantwortlich · ". Beschreibung: eigener Stand, wer dabei/abgesagt/verantwortlich, Lücke Mindestbesetzung, Kartenlink als „Karte: …". Keine Trainingsnamen, Bemerkung, Felder, Spieler:innen. Schweizer Zeit. Erlischt bei Widerruf, Austritt, Entfernung, Kontolöschung, Teamauflösung; bleibt erloschen (neuer Link nötig). Kalenderprogramm bestimmt Abrufhäufigkeit (Änderungen kommen verzögert – kein Fehler).
+**Kalender-Abo (Mitglieder):** Menü neben „Termin erstellen" → persönlicher Link je Team (Warnung: persönlich, nicht weitergeben). Anleitung für Apple, Google (nur im Browser hinzufügen), Outlook, Proton. Liefert anstehende + letzte 28 Tage, **nur Termine, zu denen man eingeladen ist**; ausgefallene/entfernte fehlen. Titel „Training · Teamname" bzw. „Bezeichnung · Teamname", Präfix „Abgesagt · " / „Verantwortlich · ". Beschreibung: eigener Stand, wer dabei/abgesagt/verantwortlich, Lücke Mindestbesetzung, Kartenlink als „Karte zum Ort: …". Keine Trainingsnamen, Bemerkung, Felder, Spieler:innen, kein Treffpunkt. Schweizer Zeit. Erlischt bei Widerruf, Austritt, Entfernung, Kontolöschung, Teamauflösung; bleibt erloschen (neuer Link nötig). Kalenderprogramm bestimmt Abrufhäufigkeit (Änderungen kommen verzögert – kein Fehler).
 
 **Spielerliste:** Karte unter „Team". Vorname/Nachname je 1–60, Jahrgang 4-stellig, J+S-Nr. max. 20, **max. 200 Spieler:innen**. Eindeutig: Vorname+Nachname+Jahrgang (Gross/klein, Mehrfach-Leerzeichen, Bindestrich vs. Leerzeichen, Apostroph-Varianten egal; „Müller" ≠ „Mueller"). Dialog bleibt nach „Hinzufügen" offen.
 - **CSV-Import:** Semikolon/Komma, UTF-8 oder Windows-Zeichensatz, Kopfzeile Pflicht (ClubCorner-Export). Nur Vorname, Nachname, Jahrgang, J+S-Nr. verlassen das Gerät. Spalten per Kopf erkannt. Aus Geburtsdatum nur 4-stelliges Jahr (2-stellig → Zeile ausgelassen). J+S nur Ziffern („k.A." = leer). Vorschau: neu / neue J+S / unverändert / ausgelassen mit Grund. Gleiche Angaben mehrfach → letzte Zeile gewinnt. Wer fehlt, bleibt. Ganz oder gar nicht. Keine Excel-Dateien. Namen bestehender werden nicht geändert (gekürzter Rufname → beim nächsten Import Duplikat).
@@ -308,11 +311,11 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Ab- und Anmelden (Trainings):** Jede Spieler:in ist **standardmässig angemeldet**, bis abgemeldet. Kein „keine Rückmeldung". Bis Beginn, nie an ausgefallenem Termin. Durch Mitglieder (Reiter „Spieler:innen", Schalter) oder Eltern (privater Link). Wer gesetzt hat, wird nicht festgehalten; letzte gilt. Kein Grund.
 - Zeitangabe links vom Schalter: seit wann der Status gilt („gerade eben", „vor 3 Stunden", „gestern", …); nur bei echtem Wechsel.
-- **Datum oder Beginn geändert** (noch nicht begonnen) → **alle Abmeldungen verfallen**, alle wieder angemeldet (Rückfrage mit Zahl; Eltern sehen „Deine Abmeldung gilt nicht mehr"). Ende/Ort/Bemerkung/Felder/Training ändern lässt sie stehen.
+- **Datum oder Beginn geändert** (noch nicht begonnen) → **alle Abmeldungen verfallen**, alle wieder angemeldet (Rückfrage mit Zahl; Eltern sehen „Deine Abmeldung gilt nicht mehr"). Ende/Ort/Treffpunkt/Bemerkung/Hinweis für Eltern/Felder/Training ändern lässt sie stehen (reine Treffpunktänderung = keine Verlegung).
 - Ab- oder Anmelden an inzwischen verlegtem/ausgefallenem/begonnenem Termin → abgewiesen mit aktuellem Stand („Der Termin wurde inzwischen verlegt …").
 - **Nachtragen** ab Beginn (unbefristet, nur Mitglieder): „nicht erschienen" / „doch erschienen". Zahl wird „11 von 15 da". Eltern sehen Nachträge nie. Ohne Nachtrag = Stand bei Beginn gilt als Anwesenheit.
 
-**Spiele:** Art „Spiel"; Bezeichnung Pflicht (max. 120); Anpfiff muss **in der Zukunft** liegen (kein Nachtragen vergangener Spiele, keine Verlegung in die Vergangenheit). Kein Training, keine Felder, keine erwartete Zahl, keine Serie. Optional: Ort, Bemerkung (**für Eltern sichtbar**, ausser bei Ausfall), Kader, Mindestbesetzung, Mindest-/Höchstzahl (1–200, begrenzt Anmeldungen nicht), Meldefrist (vor Anpfiff, max. 1 Jahr, vergangene erlaubt), Treffpunkte (je Anreiseart max. 1, total max. 5; „vor Ort" ohne eigenen Ort).
+**Spiele:** Art „Spiel"; Bezeichnung Pflicht (max. 120); Anpfiff muss **in der Zukunft** liegen (kein Nachtragen vergangener Spiele, keine Verlegung in die Vergangenheit). Kein Training, keine Felder, keine erwartete Zahl, keine Serie. Optional: Ort, Bemerkung (nur fürs Team), Hinweis für Eltern (**für Eltern sichtbar**, ausser bei Ausfall; frühere Spiel-Bemerkungen sind seit #590 dorthin umgezogen), Kader, Mindestbesetzung, Mindest-/Höchstzahl (1–200, begrenzt Anmeldungen nicht), Meldefrist (vor Anpfiff, max. 1 Jahr, vergangene erlaubt), Treffpunkte (je Anreiseart max. 1, total max. 5; „vor Ort" ohne eigenen Ort).
 - **Status** (Plan): „Zu wenig" rot (< Min), „Knapp" gelb (= Min), „Genügend" grün (bis Max), „Zu viel" rot (> Max). Ohne Richtwert oder ohne Spielerliste kein Status.
 - **Melden:** Jede Spieler:in **zuerst ohne Meldung**; gezählt nur Angemeldete. Zurück auf „ohne Meldung" unmöglich. Mitglieder bis Anpfiff (auch nach Frist), Eltern bis Meldefrist (ohne Frist bis Anpfiff). Plaketten: „Ohne Meldung" gelb, „Angemeldet" grün, „Abgemeldet" rot, „Nicht aufgeboten" rot; nach Frist „Meldefrist verpasst" rot. Menü auf der Plakette.
 - **Nicht aufbieten** (nur Mitglieder): Meldung bleibt darunter, zählt nicht als angemeldet; Eltern sehen die Kennzeichnung.
@@ -322,12 +325,12 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Ausfall: alles ruht; Eltern sehen nur Kopf mit Grund. Entfernen nennt Zahl der Meldungen.
 
 **Privater Link (Eltern):** je Spieler:in genau einer; Mitglied holt ihn über Kettenglied in der Spielerliste. Anwendung verschickt nichts. „Link erneuern" → alter sofort ungültig, Abmeldungen bleiben, Kalender-Abo der Spieler:in erlischt.
-- Seite: fürs Telefon, ohne Konto, ohne Leiste, keine Cookies, fester Titel ohne Namen. Teamname, Name der Spieler:in. „Heute" (begonnen, gesperrt) + anstehende Termine nach Monat. Trainingskarte: Status „Angemeldet"/„Abgemeldet"/„Fällt aus", Zeit, Ort, Kader, Spielerzahl („24/33", alle für die der Termin gilt), Verantwortliche:r, Schalter. Ort immer ganz (bricht um), auch nach Beginn; mit Kartenlink ist der Ort selbst der Link (violett, unterstrichen, Zeichen für extern; lang dann einzeilig mit „…"); bei Ausfall ohne Link. Ausfallgrund mit „Grund:". Verlegt → „Verlegt, vorher … Deine Abmeldung gilt nicht mehr."
-- Spielkarte: Status inkl. „Ohne Meldung", „Nicht aufgeboten", „Meldefrist verpasst"; „Bitte melden bis …", „7/14 · gesucht 9 bis 12", Knöpfe Anmelden/Abmelden; nach Frist „Meldefrist abgelaufen · Änderung übers Team". Treffpunkte, Bemerkung. Nachträge und Status des Spiels sehen Eltern nicht.
+- Seite: fürs Telefon, ohne Konto, ohne Leiste, keine Cookies, fester Titel ohne Namen. Teamname, Name der Spieler:in. „Heute" (begonnen, gesperrt) + anstehende Termine nach Monat. Trainingskarte: Status „Angemeldet"/„Abgemeldet"/„Fällt aus", Zeit, Ort, Kader, Spielerzahl („24/33", alle für die der Termin gilt), Verantwortliche:r, Schalter. Ort immer ganz (bricht um), auch nach Beginn; mit Kartenlink ist der Ort selbst der Link (violett, unterstrichen, Zeichen für extern; lang dann einzeilig mit „…"); bei Ausfall ohne Link. Ausfallgrund mit „Grund:". Treffpunkt eines Trainings als Zeile „Treffpunkt  17:45  Ort" – nicht bei Abmeldung, Ausfall und ab Beginn; nicht angemeldete Probe-Spieler:in sieht ihn. Hinweis für Eltern unter einer Linie am Fuss der Karte, ab vier Zeilen gekürzt mit „Ganz lesen"; auch abgemeldet und nach Beginn, nicht bei Ausfall. Verlegt → „Verlegt, vorher … Deine Abmeldung gilt nicht mehr."
+- Spielkarte: Status inkl. „Ohne Meldung", „Nicht aufgeboten", „Meldefrist verpasst"; „Bitte melden bis …", „7/14 · gesucht 9 bis 12", Knöpfe Anmelden/Abmelden; nach Frist „Meldefrist abgelaufen · Änderung übers Team". Treffpunkte, Hinweis für Eltern. Nachträge und Status des Spiels sehen Eltern nicht.
 - Zeigt **nicht**: andere Namen, fremde Kader, Termine anderer Kader, Trainingsinhalte, vergangene Termine.
 - **Im Probe-Modus:** Kopf „… ist im Probetraining. Melde … an …", „Noch 2 von 4 Probetrainings möglich" mit Balken (besucht gefüllt, angemeldet umrandet), „x besucht · y angemeldet"; „Infos zum Probetraining" (Info-Schreiben, 4 Zeilen, „Ganz lesen", Links öffnen extern). Keine Spiele. Trainings zuerst „Nicht angemeldet" (grau, nicht gedämpft). Anzahl erreicht → „Alle 4 Probetrainings vergeben" (bei 1: „Das Probetraining ist vergeben"), Meldung über den Trainings, übrige Schalter gesperrt „Probetrainings vergeben"; abmelden geht immer. Verfallene Anmeldung: „… Deine Anmeldung gilt nicht mehr."
 - Ungültig/unbekannt → neutrale Seite „Dieser Link gilt nicht mehr".
-- **Kalender-Abo am Link:** Kalender-Zeichen hinter dem Namen. Titel mit ✅ zugesagt / ❔ vielleicht (Spiel ohne Meldung bis Frist; im Probe-Modus nicht angemeldetes Training) / ❌ abgesagt. Nur Anzeige, gemeldet wird über den Link. Kartenlink in der Beschreibung als „Karte: …". Kein Spielername, keine Frist, kein Richtwert. Erlischt bei Link-Erneuerung, Entfernung, Auflösung oder Widerruf durch Eltern (trifft alle mit derselben Adresse).
+- **Kalender-Abo am Link:** Kalender-Zeichen hinter dem Namen. Titel mit ✅ zugesagt / ❔ vielleicht (Spiel ohne Meldung bis Frist; im Probe-Modus nicht angemeldetes Training) / ❌ abgesagt. Nur Anzeige, gemeldet wird über den Link. Beschreibung: Status, Treffpunkt eines Trainings („Treffpunkt" + „17:45 · Ort", gleiche Bedingungen wie am Link), Hinweis für Eltern, Kartenlink als „Karte zum Ort: …" (führt zum Ort, nicht zum Treffpunkt). Eintrag beginnt zum Beginn, nicht zum Treffpunkt. Kein Spielername, keine Frist, kein Richtwert. Erlischt bei Link-Erneuerung, Entfernung, Auflösung oder Widerruf durch Eltern (trifft alle mit derselben Adresse).
 
 **Selbstabholung:** Schalter in der Spielerliste (Standard aus). An → Abholadresse zum Kopieren; nur teamintern teilen. Erneuern macht alte Adresse ungültig; Aus stoppt neue Abholungen. Bereits bezogene Links bleiben gültig.
 - Abholseite: Vorname, Nachname, Jahrgang exakt (Umlaute/Akzente müssen stimmen; „ue" ≠ „ü"). Treffer → Link. Kein Treffer → immer „Dazu finden wir keinen Link. Prüf die Schreibweise oder frag beim Team nach."
@@ -342,10 +345,11 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 - Verbinden: Adresse `https://ki-fu.ch/api/mcp` im Client eintragen (Claude Desktop/claude.ai: Einstellungen → Connectors → Custom connector; Claude Code per Befehl). Browser öffnet Erlauben-Seite (vorher ggf. anmelden). Zugangsname max. 40. Kein Passwort/Schlüssel an den Assistenten.
 - **Max. 5 Zugänge je Konto**, zusammen **600 Aufrufe/Stunde** (darüber Meldung mit Wartezeit). Widerruf unter „KI-Zugänge" wirkt sofort. Verfällt nie von selbst.
-- Kann: Übungen suchen/abrufen; eigene Übungen anlegen, ändern, kopieren, öffentlich schalten, Diagramm setzen (als Ganzes) und Diagramm-Mängel abrufen; Trainings anlegen, Übungen zuordnen, überarbeiten (Name, Ziel, Kategorien, Dauer, Notiz, Reihenfolge eines ganzen Abschnitts in einem Zug, Entfernen), Gruppen/Durchlauf, Varianten, Hinweise abrufen, veröffentlichen/zurückziehen, übernehmen, löschen; Team-Trainings; Kalender (Termine, Serien, Spiele, Zuordnen, Trainer:innen, Ausfälle); Spielerliste, Kader, Probetraining (Anzahl, Info-Schreiben, Probe-Modus ein/aus), Ab-/Anmeldungen, Meldungen, Nachträge, private Links, Selbstabholung.
+- Kann: Übungen suchen/abrufen; eigene Übungen anlegen, ändern, kopieren, öffentlich schalten, Diagramm setzen (als Ganzes) und Diagramm-Mängel abrufen; Trainings anlegen, Übungen zuordnen, überarbeiten (Name, Ziel, Kategorien, Dauer, Notiz, Reihenfolge eines ganzen Abschnitts in einem Zug, Entfernen), Gruppen/Durchlauf, Varianten, Hinweise abrufen, veröffentlichen/zurückziehen, übernehmen, löschen; Team-Trainings; Kalender (Termine, Serien samt Treffpunkt eines Trainings, Spiele, Zuordnen, Trainer:innen, Ausfälle); Spielerliste, Kader, Probetraining (Anzahl, Info-Schreiben, Probe-Modus ein/aus), Ab-/Anmeldungen, Meldungen, Nachträge, private Links, Selbstabholung.
 - Kann **nicht**: Favoriten, Teams gründen/umbenennen/auflösen, Mitglieder verwalten, Konto (Name, Passwort, Löschen), Kalender-Abos, Fotos hochladen, Übungen löschen, Übung in andere Altersstufe überführen, Übung aus Training in Bibliothek kopieren, einzelne Diagramm-Elemente ändern, Diagramm entfernen, Gruppenreihenfolge ändern, CSV-Import, E-Mail-Adressen sehen.
 - Strenger als das Formular: Werte, die das Formular gar nicht anbietet, werden **abgelehnt** (mit Liste aller Verstösse), nicht still verworfen.
 - Kartenlink zum Ort setzt er wie die App (nur mit Ort, https://, ≤ 500 Zeichen). Ändert er den Ort ohne neuen Link, fällt der bisherige weg – die Antwort sagt es ihm; ebenso, wenn ein Serientermin wieder der Serie folgt und seinen eigenen Link verliert.
+- Treffpunkt eines Trainings (`treffpunkt` {uhrzeit, ort}, null entfernt) nach denselben Regeln und mit denselben Meldungen wie die App. Läge er nach einer Zeitänderung am Vortag, entfällt er **ohne Rückfrage**; das Ergebnis nennt die Daten (`treffpunkt_entfallen`).
 - Fragt bei Löschen/Entfernen/Ersetzen nicht nach; Bestätigung im Aufruf nur bei Serienänderungen mit vergangenen Terminen und bei verfallenden Abmeldungen/Meldungen/Nachträgen.
 - Bekannt: neue Fähigkeiten kennt ein verbundener Assistent erst nach Neuverbinden; offener Browser-Tab zeigt Änderungen des Assistenten erst nach Neuladen; Abbruch mitten im Kopieren kann eine unvollständige Kopie hinterlassen; die gemeldeten Diagramm-Mängel erscheinen in der App nirgends; Platz-/Spielerzahl-Passung beurteilt der Assistent selbst (Richtmasse SFV 2026/27: Kleinfeld G ~20×15, F ~25×20, E 25–30×20–25; Grossfeld F ~30×25, E 43–48×25–30 m).
 
@@ -358,7 +362,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 | Ohne Konto | Übungsbestand, öffentliche Trainings (ansehen, drucken, durchführen), Versionen, Styleguide, Cookies |
 | Angemeldet | + eigene Übungen/Trainings, Favoriten, Übernehmen, Teams |
 | Team-Mitglied | alles im Team, gleichberechtigt; E-Mails der Mitglieder; alle Termine (unabhängig von Kadern) |
-| Eltern (privater Link) | nur eigene Spieler:in: anstehende Termine ihrer Kader, eigener Status, Spielerzahl, Verantwortliche:r, Ort samt Kartenlink (Linkziel verantwortet das Team), Ausfallgrund, Spiel-Bemerkung, Treffpunkte; keine anderen Namen, keine Trainingsinhalte |
+| Eltern (privater Link) | nur eigene Spieler:in: anstehende Termine ihrer Kader, eigener Status, Spielerzahl, Verantwortliche:r, Ort samt Kartenlink (Linkziel verantwortet das Team), Ausfallgrund, Hinweis für Eltern (Trainings und Spiele), Treffpunkte (Spiele) bzw. Treffpunkt (Trainings); nie die Bemerkung; keine anderen Namen, keine Trainingsinhalte |
 | Mit Abholadresse | Link einer Spieler:in bei exaktem Vorname+Nachname+Jahrgang |
 | KI-Assistent | wie Konto, eingeschränkt auf angebotene Werkzeuge; keine E-Mails |
 
@@ -381,6 +385,7 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Spieler:innen bei Trainings sind automatisch angemeldet; bei Spielen „ohne Meldung".
 - Eltern können nach der Meldefrist nicht mehr melden; Mitglieder schon.
 - Eltern sehen Nachträge/Anwesenheit nicht und keinen Spiel-Status (nur Zahl).
+- Eltern sehen die Bemerkung eines Termins nicht (auch nicht am Spiel) → sie ist fürs Team; was Eltern wissen sollen, gehört in den „Hinweis für Eltern". An einem ausgefallenen Termin fehlt auch der Hinweis, dort steht der Grund.
 - Spielerzahl „0 von 0" → Termin gilt wegen Kadern für niemanden.
 - Training öffnet immer die erste Variante, nicht die zuletzt gesehene.
 - Termin-Training wurde gelöscht, nachdem es vom Termin gelöst/ersetzt oder der Termin entfernt wurde.
@@ -395,6 +400,8 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Abholseite sagt bei falscher Eingabe nie, was falsch ist; Sperre nach 5 Fehlversuchen trifft das ganze WLAN.
 - Kalender-Abo zeigt Änderungen verzögert; zeigt nur Termine, zu denen man eingeladen ist.
 - Kartenlink verschwunden, nachdem der Ort geändert wurde (Link gehört zum Ort).
+- Treffpunkt eines Trainings hat sich beim Verlegen mitverschoben → Absicht, er behält seinen Abstand zum Beginn. Treffpunkt verschwunden nach Zeitänderung → er läge am Vortag und entfiel (Rückfrage nannte es).
+- Eltern sehen den Treffpunkt nicht → Spieler:in abgemeldet, Training ausgefallen oder begonnen; die Bemerkung sehen sie nie.
 - Neues Teammitglied ist zu bestehenden Terminen nicht eingeladen.
 - Ein „Erledigt"-Zustand für vergangene Termine existiert nicht („Kein Training eingetragen" heisst nicht „hat nicht stattgefunden").
 - Durchführen zeigt keine Erscheinungsform; Druck einer Übung zeigt keine Dauer.
@@ -454,8 +461,9 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 
 **Team / Kalender**
 - Keine anderen Anlässe als Training/Spiel; keine teamübergreifende Ansicht; keine Doppelbelegungs-/Platzprüfung; keine Prüfung, ob Training zu Platz/Spielerzahl passt.
-- Kartenlink nur auf Form geprüft (nicht, ob er auf den richtigen Platz zeigt); keine Karte/Vorschau in der App; kein Kartenlink für Treffpunkte; Ort samt Link nicht als Vorlage speicherbar.
+- Kartenlink nur auf Form geprüft (nicht, ob er auf den richtigen Platz zeigt); keine Karte/Vorschau in der App; kein Kartenlink für Treffpunkte (Spiel wie Training); Ort samt Link nicht als Vorlage speicherbar.
 - Serien nur wöchentlich, max. 1 Jahr, keine Ferien/Feiertage, kein Massen-Ausfall, keine Serienübersicht, Termin nicht aus Serie lösbar, entfernte Termine nicht wiederherstellbar.
+- Treffpunkt eines Trainings: höchstens einer, ohne Anreiseart, gilt für alle Kader gleich, wandert beim Kopieren/Zuordnen eines Trainings nicht mit, Änderung für Eltern nicht gekennzeichnet; einmal entfallen, kommt er nicht zurück.
 - Neues Mitglied nicht auf einmal zu allen Terminen einladbar.
 - Keine Tages-/Wochenansicht; Liste nicht durchsuchbar, nicht nach Zeitraum filterbar; kein Archiv.
 - „Verantwortlich" ≠ J+S-Leitperson; keine Einsatz-Nachweise; Absage ohne Grund.
@@ -483,8 +491,8 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 | Anzeigename, Gruppen-, Varianten-, KI-Zugangsname | ≤ 40 Zeichen |
 | Trainingsname | ≤ 80 Zeichen |
 | Ziel eines Trainings | ≤ 200 Zeichen |
-| Notiz je Übung, Bemerkung, Ausfallgrund | ≤ 500 Zeichen |
-| Ort, Treffpunkt-Ort | ≤ 100 Zeichen |
+| Notiz je Übung, Bemerkung, Hinweis für Eltern, Ausfallgrund | ≤ 500 Zeichen |
+| Ort, Treffpunkt-Ort (Spiel und Training) | ≤ 100 Zeichen |
 | Kartenlink zum Ort | https://, ≤ 500 Zeichen |
 | Spielbezeichnung | ≤ 120 Zeichen |
 | Diagramm | ≤ 300 Elemente |
@@ -495,8 +503,8 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 | Spielerliste | ≤ 200 Spieler:innen; Vor-/Nachname 1–60; J+S ≤ 20 |
 | Kader | ≤ 20 je Team; Name 1–30 |
 | Probetraining | Anzahl 1–20 je Team; Info-Schreiben ≤ 2000 Zeichen |
-| Treffpunkte | ≤ 5 (je Anreiseart 1) |
-| Terminserie / Meldefrist / Treffpunkt-Abstand | ≤ 1 Jahr |
+| Treffpunkte | Spiel ≤ 5 (je Anreiseart 1); Training ≤ 1, am Trainingstag, nicht nach dem Beginn |
+| Terminserie / Meldefrist / Treffpunkt-Abstand (Spiel) | ≤ 1 Jahr |
 | KI-Zugänge | ≤ 5 je Konto, 600 Aufrufe/h gesamt |
 | Mitglieder-Suche | 10 erfolglose/h |
 | Abholseite | 5 Fehlversuche/15 min → 15 min Sperre je Anschluss |

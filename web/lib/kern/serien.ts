@@ -4,11 +4,23 @@ import { istUuid } from "@/lib/kennung";
 import {
   SERIE_MELDUNG,
   serieProblem,
+  verfallSumme,
   vergangeneBestaetigen,
   type Reichweite,
   type Wochentag,
 } from "@/lib/serie";
-import { TERMIN_TEXT, istKalendertag, kartenlinkOhneOrt, leerZuNull, textProblem, zeitProblem } from "@/lib/termin";
+import {
+  TERMIN_TEXT,
+  istKalendertag,
+  kartenlinkOhneOrt,
+  leerZuNull,
+  textProblem,
+  treffpunktGespeichert,
+  treffpunktPasst,
+  treffpunktProblem,
+  zeitProblem,
+  type TerminTreffpunkt,
+} from "@/lib/termin";
 import type { FeldEingabe } from "@/lib/termin-felder";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import type { Mindestbesetzung } from "@/lib/besetzung";
@@ -61,6 +73,10 @@ export type SerieFestlegen = {
   /** Der Kartenlink zum Ort der Serie (#533 AK 2); nur mit Ort. */
   ortLink?: string | null;
   bemerkung?: string | null;
+  /** Der Hinweis für Eltern jedes Termins der Serie (#590 AK 2); ohne: keiner. */
+  hinweisEltern?: string | null;
+  /** Der Treffpunkt jedes Termins der Serie (#561 AK 2); ohne: keiner. */
+  treffpunkt?: TerminTreffpunkt | null;
   /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1); ohne: unbekannt. */
   felder?: readonly FeldEingabe[] | null;
   spielerzahl?: number | null;
@@ -115,6 +131,8 @@ export async function legeSerieFest(
     p_kader: e.kaderIds ?? [],
     p_besetzung: e.mindestbesetzung ?? null,
     p_ort_link: leerZuNull(e.ortLink),
+    p_hinweis_eltern: leerZuNull(e.hinweisEltern),
+    p_treffpunkt: e.treffpunkt ? treffpunktGespeichert(e.treffpunkt, e.beginn) : null,
   });
   if (error) return kalenderFehler(error);
   const r = data as { serie: string; termine: number };
@@ -134,6 +152,11 @@ export type SerienAenderung = {
    *  Ort bleibt — ändert sich der Ort ohne ihn, fällt er weg (PC 1). */
   ortLink?: string | null;
   bemerkung?: string | null;
+  /** Der Hinweis für Eltern (#590): `null` oder `""` = leeren. */
+  hinweisEltern?: string | null;
+  /** Der Treffpunkt (#561): `null` = entfernen; die Uhrzeit gilt zum Beginn
+   *  des gewählten Termins nach der Änderung. */
+  treffpunkt?: TerminTreffpunkt | null;
   /** Die künftigen Eingeladenen der Serie als ganze Liste (#519 AK 12). */
   eingeladene?: string[];
   /** Die künftige Verantwortliche der Serie; sie ist damit eingeladen. */
@@ -180,6 +203,9 @@ export type SerienFolge = {
   /** Wie viele Anmeldungen von Probe-Spieler:innen verfallen — durch Verlegung
    *  oder weil ein Termin nicht mehr für sie gilt (#555 AK 14). */
   anmeldungenVerfallend: number;
+  /** Die anstehenden Termine, deren Treffpunkt die Zeitänderung nimmt, weil
+   *  er am Vortag läge (#561 PC 4, 5). */
+  treffpunktEntfallend: { terminId: string; datum: string }[];
   teamId: string;
   /** Der Kartenlink der Serie fiel mit dem Ort weg (#533 AK 14). */
   kartenlinkEntfallen?: boolean;
@@ -191,6 +217,8 @@ type Roh = {
   entfallend: { id: string; datum: string; beginn: string; training: { id: string; name: string } }[];
   entfallend_anzahl: number;
   vergangene: number;
+  /** Nur beim Ändern (`terminserie_rechnen`). */
+  treffpunkt_entfallend?: { id: string; datum: string }[];
   /** Nur beim Ändern (`terminserie_aendern`). */
   abmeldungen_verfallend?: number;
   abmeldungen_kader?: number;
@@ -216,6 +244,7 @@ function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): Se
     nachtraegeVerfallend: r.nachtraege_verfallend ?? 0,
     absagenVerfallend: r.absagen_verfallend ?? 0,
     anmeldungenVerfallend: r.anmeldungen_verfallend ?? 0,
+    treffpunktEntfallend: (r.treffpunkt_entfallend ?? []).map((x) => ({ terminId: x.id, datum: x.datum })),
     teamId,
   };
 }
@@ -233,6 +262,7 @@ type Lauf = {
 type Erwartet = { version: number; entfallend: string[]; verfallend?: number };
 
 type RpcAntwort = { data: unknown; error: { message: string; code?: string } | null };
+
 
 /** Welche Trainings dieser Termine Termin-Trainings sind — sie gehen mit
  *  ihrem Termin (PO 2026-10-06), die übrigen bleiben im Bestand. */
@@ -284,15 +314,11 @@ async function laufe(
       });
     // Auch die Zahl verfallender Abmeldungen: Ändert sie sich bis zur
     // Ausführung, weist die Datenebene ab (#453 AK 12), der Lauf ist wiederholbar.
+    // Entfallende Treffpunkte zählen mit, fragen aber nicht nach (#561 PC 6).
     erwartet = {
       version: vorschau.versionVorher,
       entfallend: vorschau.entfallend.map((x) => x.terminId),
-      verfallend:
-        vorschau.abmeldungenVerfallend +
-        vorschau.abmeldungenKader +
-        vorschau.nachtraegeVerfallend +
-        vorschau.absagenVerfallend +
-        vorschau.anmeldungenVerfallend,
+      verfallend: verfallSumme(vorschau),
     };
   }
   const terminTrainings = await terminTrainingsDerTermine(supabase, erwartet.entfallend);
@@ -324,6 +350,8 @@ export async function aendereSerie(
     a.ort === undefined &&
     a.ortLink === undefined &&
     a.bemerkung === undefined &&
+    a.hinweisEltern === undefined &&
+    a.treffpunkt === undefined &&
     a.eingeladene === undefined &&
     a.verantwortlich === undefined &&
     a.felder === undefined &&
@@ -368,6 +396,21 @@ export async function aendereSerie(
   if (kader) return kader;
   const besetzung = besetzungFehler(a.mindestbesetzung);
   if (besetzung) return besetzung;
+  // Der Treffpunkt (#561): zum Beginn des gewählten Termins nach der Änderung
+  // eingegeben, an der Serie gegen ihren Beginn danach geprüft (AK 5).
+  let treffpunkt: { vorlauf_min: number; ort: string | null } | null | undefined;
+  if (a.treffpunkt !== undefined) {
+    if (t.art === "spiel") return fehlschlag("eingabe", TERMIN_TEXT.treffpunktNurTraining, { feld: "treffpunkt" });
+    const beginn = leerZuNull(a.beginn) ?? t.beginn;
+    const p = treffpunktProblem(a.treffpunkt, beginn);
+    if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
+    treffpunkt = a.treffpunkt ? treffpunktGespeichert(a.treffpunkt, beginn) : null;
+    if (treffpunkt && !hatZeit) {
+      const { data: sb } = await supabase.from("termin_serien").select("beginn").eq("id", t.serie_id).maybeSingle<{ beginn: string }>();
+      if (sb && !treffpunktPasst(treffpunkt.vorlauf_min, sb.beginn))
+        return fehlschlag("eingabe", TERMIN_TEXT.treffpunktTermintag, { feld: "treffpunkt" });
+    }
+  }
 
   // Die Regel vorab prüfen, mit den Feldnamen des Werkzeugs (AK 5, PC 19) —
   // nur wenn sie sich ändert: Eine reine Werteänderung an einem verlegten
@@ -397,6 +440,8 @@ export async function aendereSerie(
   if (hatZeit) Object.assign(aenderung, { beginn: leerZuNull(a.beginn), ende: leerZuNull(a.ende) });
   if (ortPaar) Object.assign(aenderung, { ort: ortPaar.ort, ort_link: ortPaar.ortLink });
   if (a.bemerkung !== undefined) aenderung.bemerkung = leerZuNull(a.bemerkung);
+  if (a.hinweisEltern !== undefined) aenderung.hinweis_eltern = leerZuNull(a.hinweisEltern);
+  if (treffpunkt !== undefined) aenderung.treffpunkt = treffpunkt;
   if (eingeladene?.ok) aenderung.eingeladene = eingeladene.ids;
   if (a.verantwortlich !== undefined) aenderung.verantwortlich = a.verantwortlich.toLowerCase();
   // Schlüssel vorhanden mit null heisst «auf unbekannt setzen» (#391).
@@ -445,6 +490,8 @@ export type FolgeAngabe =
   | "zeit"
   | "ort"
   | "bemerkung"
+  | "hinweis_eltern"
+  | "treffpunkt"
   | "eingeladene"
   | "verantwortung"
   | "besetzung"
@@ -458,6 +505,8 @@ const FOLGE_ANGABEN: readonly FolgeAngabe[] = [
   "zeit",
   "ort",
   "bemerkung",
+  "hinweis_eltern",
+  "treffpunkt",
   "eingeladene",
   "verantwortung",
   "besetzung",
@@ -479,30 +528,50 @@ export async function folgeDerSerie(
      *  Abmeldungen durch Kader mit deren Zahl (#453 AK 10, 12); die KI
      *  bestätigt mit `true` beides. */
     bestaetigt?: VerfallBestaetigt | false;
+    /** Entfällt mit der Zeit der Serie ein eigener Treffpunkt (#561 PC 4),
+     *  fragt der Kern nach — die KI nicht (`true`, PC 6). */
+    treffpunktWeg?: boolean;
   },
-): Promise<KernErgebnis<{ terminId: string; teamId: string; verfallen: number; kartenlinkEntfallen: boolean }>> {
+): Promise<
+  KernErgebnis<{ terminId: string; teamId: string; verfallen: number; kartenlinkEntfallen: boolean; treffpunktEntfallen: boolean }>
+> {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   if (e.angaben.length === 0 || e.angaben.some((x) => x !== "datum" && !FOLGE_ANGABEN.includes(x)))
     return fehlschlag("eingabe", SERIE_MELDUNG.SERIE_ANGABEN_UNGUELTIG, {
       feld: "angaben",
       zulaessig: FOLGE_ANGABEN,
     });
+  // #561 AK 9: Folgt nur der Treffpunkt und läge der der Serie mit der eigenen
+  // Zeit des Termins am Vortag, sagt der Kern, was zuerst folgen muss.
+  if (e.angaben.includes("treffpunkt") && !e.angaben.includes("zeit")) {
+    const { data: z } = await supabase
+      .from("training_termine")
+      .select("beginn, termin_serien ( treffpunkt_vorlauf_min )")
+      .eq("id", e.terminId)
+      .maybeSingle<{ beginn: string; termin_serien: { treffpunkt_vorlauf_min: number | null } | null }>();
+    if (z?.termin_serien && !treffpunktPasst(z.termin_serien.treffpunkt_vorlauf_min, z.beginn))
+      return fehlschlag("regel", TERMIN_TEXT.treffpunktFolgtNicht, { feld: "angaben" });
+  }
   // #437 AK 1: Folgt die Zeit wieder der Serie, ändert sich womöglich der
   // Beginn — verfallende Abmeldungen erst nach Bestätigung.
+  // #561 PC 4, 5: Läge ein eigener Treffpunkt mit der Zeit der Serie am
+  // Vortag, entfällt er — in derselben Rückfrage.
   if (e.angaben.includes("zeit") && !e.bestaetigt) {
     const { data: z } = await supabase
       .from("training_termine")
-      .select("datum, termin_serien ( beginn )")
+      .select("datum, treffpunkt_vorlauf_min, termin_serien ( beginn )")
       .eq("id", e.terminId)
-      .maybeSingle<{ datum: string; termin_serien: { beginn: string } | null }>();
+      .maybeSingle<{ datum: string; treffpunkt_vorlauf_min: number | null; termin_serien: { beginn: string } | null }>();
     if (z?.termin_serien) {
       const n = await verfallendeAbmeldungen(supabase, e.terminId, z.datum, z.termin_serien.beginn);
       if (!n.ok) return n;
-      if (n.wert.summe > 0) return verfallFehler(n.wert);
+      const treffpunktEntfaellt =
+        !e.treffpunktWeg && !e.angaben.includes("treffpunkt") && !treffpunktPasst(z.treffpunkt_vorlauf_min, z.termin_serien.beginn);
+      if (n.wert.summe > 0 || treffpunktEntfaellt) return verfallFehler(n.wert, treffpunktEntfaellt);
     }
   }
   // #453: Folgen die Kader, zählt und bestätigt die Datenebene den Verfall.
-  const r = await mitVerfall<{ team: string; verfallen: number; kartenlink_entfallen?: boolean }>(
+  const r = await mitVerfall<{ team: string; verfallen: number; kartenlink_entfallen?: boolean; treffpunkt_entfallen?: boolean }>(
     e.bestaetigt === false ? undefined : e.bestaetigt,
     (zahl) => supabase.rpc("termin_der_serie_folgen", { p_termin: e.terminId, p_angaben: e.angaben, p_bestaetigt: zahl }),
     (f) => kalenderFehler(f),
@@ -514,6 +583,8 @@ export async function folgeDerSerie(
         verfallen: r.wert.verfallen,
         // #533 AK 13, 14: Ein eigener Kartenlink des Termins fiel mit dem Ort weg.
         kartenlinkEntfallen: r.wert.kartenlink_entfallen === true,
+        // #561 PC 6: Ein eigener Treffpunkt fiel mit der Zeit der Serie weg.
+        treffpunktEntfallen: r.wert.treffpunkt_entfallen === true,
       })
     : r;
 }
@@ -543,6 +614,8 @@ export async function aendereMitReichweite(
     serie: SerienFolge | null;
     abmeldungenVerfallen: number;
     kartenlinkEntfallen: boolean;
+    /** Die Daten der Termine, deren Treffpunkt die Zeitänderung nahm (#561 PC 6). */
+    treffpunktEntfallen: string[];
   }>
 > {
   const geladen = await ladeTermin(supabase, e.terminId);
@@ -572,6 +645,7 @@ export async function aendereMitReichweite(
         felder.ort,
         felder.ortLink,
         felder.bemerkung,
+        felder.hinweisEltern,
         felder.felder,
         felder.spielerzahl,
         felder.mindestbesetzung,
@@ -580,23 +654,27 @@ export async function aendereMitReichweite(
         felder.richtwertMax,
         felder.meldefrist,
         felder.treffpunkte,
+        felder.treffpunkt,
       ].every((x) => x === undefined);
     let verfallen = 0;
     let teamId = t.team_id;
     let kartenlinkEntfallen = false;
+    const treffpunktEntfallen: string[] = [];
     if (!nurKader) {
-      const r = await aendereTermin(supabase, userId, felder);
+      // #561 PC 6: Die KI fragt nach keinem entfallenden Treffpunkt; das Ergebnis nennt ihn.
+      const r = await aendereTermin(supabase, userId, { ...felder, treffpunktWeg: true });
       if (!r.ok) return r;
       verfallen = r.wert.abmeldungenVerfallen;
       teamId = r.wert.teamId;
       kartenlinkEntfallen = r.wert.kartenlinkEntfallen;
+      if (r.wert.treffpunktEntfallen) treffpunktEntfallen.push(felder.datum ?? t.datum);
     }
     if (kaderIds !== undefined) {
       const k = await setzeTerminKader(supabase, userId, { terminId: t.id, kaderIds, bestaetigt: e.bestaetigt === true ? true : undefined });
       if (!k.ok) return k;
       verfallen += k.wert.verfallen;
     }
-    return ok({ terminId: t.id, teamId, serie: null, abmeldungenVerfallen: verfallen, kartenlinkEntfallen });
+    return ok({ terminId: t.id, teamId, serie: null, abmeldungenVerfallen: verfallen, kartenlinkEntfallen, treffpunktEntfallen });
   }
   if (e.datum !== undefined) return fehlschlag("regel", SERIE_MELDUNG.DATUM_NUR_EINZELN, { feld: "datum" });
   const r = await aendereSerie(supabase, userId, {
@@ -611,6 +689,8 @@ export async function aendereMitReichweite(
       ort: e.ort,
       ortLink: e.ortLink,
       bemerkung: e.bemerkung,
+      hinweisEltern: e.hinweisEltern,
+      treffpunkt: e.treffpunkt,
       felder: e.felder,
       spielerzahl: e.spielerzahl,
       mindestbesetzung: e.mindestbesetzung,
@@ -625,6 +705,7 @@ export async function aendereMitReichweite(
         serie: r.wert,
         abmeldungenVerfallen: r.wert.abmeldungenVerfallend + r.wert.abmeldungenKader,
         kartenlinkEntfallen: r.wert.kartenlinkEntfallen ?? false,
+        treffpunktEntfallen: r.wert.treffpunktEntfallend.map((x) => x.datum),
       })
     : r;
 }

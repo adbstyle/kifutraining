@@ -70,7 +70,7 @@ die persönliche Kopie, die beim Übernehmen eines Team-Trainings entsteht.
 Jedes Team führt einen Kalender. Er besteht aus Terminen, und jeder Termin ist ein Training oder ein
 Spiel. Was dieser Abschnitt und die folgenden beschreiben, gilt für Trainings; was bei Spielen
 anders ist, steht unter „Spiele". Ein Training ist zunächst nur ein Zeitrahmen: Datum, Beginn, Ende,
-auf Wunsch ein Ort samt Kartenlink, eine Bemerkung, die Felder des Platzes und die erwartete Spielerzahl. Welches
+auf Wunsch ein Ort samt Kartenlink, ein Treffpunkt, eine Bemerkung, ein Hinweis für Eltern, die Felder des Platzes und die erwartete Spielerzahl. Welches
 Training dort stattfindet, wird getrennt davon entschieden — oft erst Tage später. So steht die
 Trainingszeit des nächsten Dienstags schon im Plan, auch wenn noch niemand weiss, was geübt wird.
 
@@ -78,8 +78,12 @@ Ein einzelner Termin entsteht im Trainingsplan über „Termin erstellen". Zuers
 „Art", ob er ein Training oder ein Spiel ist; vorgewählt ist nichts, und danach lässt sich die
 Art nicht mehr ändern. Datum, Beginn und Ende
 sind Pflicht, das Ende liegt am selben Tag nach dem Beginn; der Ort darf höchstens 100 Zeichen
-lang sein, die Bemerkung höchstens 500. Trainings in der Vergangenheit sind erlaubt, damit sich
-Durchgeführtes nachtragen lässt. Beim Erstellen wählt man gleich, wer eingeladen und wer
+lang sein, die Bemerkung und der Hinweis für Eltern je höchstens 500. Die Bemerkung ist für das
+Team; den Hinweis für Eltern sehen die Eltern über ihren privaten Link und im Kalender-Abo,
+ausser der Termin fällt aus (siehe „Privater Link"). Das sagt je ein Hinweis hinter dem ⓘ der
+beiden Felder, beim Hinweis für Eltern auf dem Telefon unter dem Feld; was die Eltern wissen
+sollen, etwa ein Zugangscode zur Halle, gehört in den Hinweis. Trainings in der Vergangenheit
+sind erlaubt, damit sich Durchgeführtes nachtragen lässt. Beim Erstellen wählt man gleich, wer eingeladen und wer
 verantwortlich ist (siehe „Trainer:innen"). Wie viele Termine ein Tag trägt, ist nicht begrenzt; sie stehen nach
 ihrem Beginn geordnet, bei gleichem Beginn in der Reihenfolge, in der sie angelegt wurden.
 
@@ -94,6 +98,35 @@ dem ⓘ sagt, dass die Eltern den Kartenlink über ihren privaten Link öffnen. 
 Ort: Wer den Ort ändert oder leert, ohne einen neuen Link anzugeben, verliert den bisherigen, und
 der Dialog sagt das vor dem Speichern unter dem Link — „Der Kartenlink gehörte zum bisherigen Ort
 und fällt weg. Füge den Link zum neuen Ort ein."
+
+Wann und wo sich das Team vor dem Beginn trifft — etwa bei den Garderoben, wenn sie nicht beim
+Platz liegen —, hält ein Training auf Wunsch in seinem Treffpunkt fest. Unter dem Ort steht dafür
+„Treffpunkt hinzufügen (optional)"; es öffnet die umrandete Feldgruppe „Treffpunkt" mit „Uhrzeit"
+und „Ort", und das ✕ daneben entfernt den Treffpunkt wieder. Ein Training hat höchstens einen
+Treffpunkt; hat es einen, sind Uhrzeit und Ort Pflicht — sonst „Bitte für den Treffpunkt Uhrzeit
+und Ort angeben." —, und der Ort ist höchstens 100 Zeichen lang. Der Treffpunkt liegt am Tag des
+Trainings und nicht nach dem Beginn; genau zum Beginn ist er erlaubt. Eine spätere Uhrzeit weist der
+Dialog ab, etwa mit „Der Treffpunkt liegt nach dem Beginn. Wähle eine Uhrzeit bis 18:00.". Unter
+der Uhrzeit steht, wie lange er vor dem Beginn liegt, etwa „15 Minuten vor Beginn" oder „1 Stunde
+30 Minuten vor Beginn", bei gleicher Zeit „Zum Beginn". Der Hinweis hinter dem ⓘ sagt, wann und wo
+sich das Team trifft, dass die Eltern den Treffpunkt über ihren privaten Link und im Kalender-Abo
+sehen und dass er beim Verlegen seinen Abstand zum Beginn behält. Gespeichert ist er nämlich als
+Abstand zum Beginn: Wird der Termin verlegt oder ändert sich die Zeit seiner Serie, wandert er im
+selben Abstand mit, und im Dialog wandert die Uhrzeit schon beim Ändern des Beginns sichtbar mit.
+Ein geänderter Ort des Termins lässt den Treffpunkt stehen. Einen Kartenlink oder eine Anreiseart
+hat er nicht; der Kartenlink gehört zum Ort des Termins. Ein Spiel hat statt dessen Treffpunkte je
+Anreiseart (siehe „Spiele").
+
+Läge der Treffpunkt nach einer Zeitänderung am Vortag, entfällt er, und zwar an denselben Terminen,
+für die die Änderung gilt; das Training hat danach keinen Treffpunkt. Im Dialog steht dann unter
+der Uhrzeit „Mit dem neuen Beginn läge der Treffpunkt am Vortag. Er entfällt, das Training hat
+danach keinen Treffpunkt."; beim Ändern fragt die Anwendung vor dem Speichern mit demselben Satz
+nach — im Dialog „Treffpunkt entfällt", wenn sonst nichts verfällt, sonst in der Rückfrage zu
+verfallenden Abmeldungen —, ebenso, wenn die Zeit eines Termins wieder der Serie folgt. Bei einer
+Serienänderung nennt die Bestätigung jeden anstehenden Termin, dessen Treffpunkt entfällt, unter
+„Mit dem neuen Beginn läge der Treffpunkt am Vortag. An diesen Terminen hat das Training danach
+keinen Treffpunkt:". Ein KI-Assistent fragt nicht nach; sein Ergebnis nennt die Termine, deren
+Treffpunkt entfallen ist.
 
 Auf welchem Platz trainiert wird, hält ein Termin auf Wunsch in seinen Feldern fest — einem oder mehreren
 getrennten Feldern, die gleichzeitig nutzbar sind, etwa zwei Hälften eines Platzes. Je Feld gibt
@@ -115,8 +148,8 @@ Spielerliste, tritt an anstehenden Terminen die Zahl der angemeldeten Spieler:in
 der erwarteten, und das Feld dafür entfällt (siehe „Spielerliste"). Zuordnen, Ersetzen und Lösen eines Trainings und ein Ausfall lassen
 Felder und Spielerzahl stehen.
 
-Ändern lassen sich Datum, Beginn, Ende, Ort samt Kartenlink, Bemerkung, Felder und — ohne Spielerliste —
-erwartete Spielerzahl jederzeit, auch an vergangenen Terminen; Felder und Spielerzahl lassen sich auch wieder
+Ändern lassen sich Datum, Beginn, Ende, Ort samt Kartenlink, Treffpunkt, Bemerkung, Hinweis für Eltern, Felder und — ohne Spielerliste —
+erwartete Spielerzahl jederzeit, auch an vergangenen und ausgefallenen Terminen; Treffpunkt, Felder und Spielerzahl lassen sich auch wieder
 entfernen. Beginn und Ende hat jeder Termin; sie lassen sich ändern, aber nicht leeren. Termine
 aus der Zeit vor dem Kalender, die ohne Ende übernommen worden waren, dauern seit dem 6. Oktober
 2026 90 Minuten ab ihrem Beginn; die wenigen ganz ohne Zeit stehen von 18:00 bis 19:30.
@@ -176,8 +209,8 @@ Wer jede Woche zur selben Zeit trainiert, legt die Termine einer ganzen Saison i
 an: Im selben Dialog wie der einzelne Termin („Termin erstellen") macht das Ankreuzen von
 „Wiederholender Termin" daraus eine Serie. Das Datum wird zum Beginndatum, dazu kommen ein oder
 mehrere Wochentage und ein Enddatum; vorgewählt ist der Wochentag des Datums, und er folgt
-einem geänderten Datum, bis man selbst Wochentage wählt. Beginn, Ende, Ort samt Kartenlink, Bemerkung,
-Trainer:innen, Mindestbesetzung, erwartete Spielerzahl und Felder sind dieselben Angaben wie beim einzelnen
+einem geänderten Datum, bis man selbst Wochentage wählt. Beginn, Ende, Ort samt Kartenlink, Treffpunkt, Bemerkung,
+Hinweis für Eltern, Trainer:innen, Mindestbesetzung, erwartete Spielerzahl und Felder sind dieselben Angaben wie beim einzelnen
 Termin, und die Serie gibt sie jedem ihrer Termine mit. Es gelten
 dieselben Regeln wie für einen einzelnen Termin. Das Enddatum liegt frühestens am Beginndatum
 und spätestens am gleichen Kalendertag des Folgejahres — nach einem 29. Februar am 28. Februar
@@ -194,7 +227,7 @@ Training, seine Absagen und seinen Ausfall einzeln.
 
 Ändert man einen Serientermin, fragt die Anwendung wie gängige Kalender, wofür die Änderung
 gilt: „Nur dieser Termin", „Dieser und alle folgenden" oder „Alle Termine der Serie". Zeit, Ort,
-Bemerkung, Eingeladene, Verantwortliche, Mindestbesetzung, erwartete Spielerzahl und Felder gelten
+Treffpunkt, Bemerkung, Hinweis für Eltern, Eingeladene, Verantwortliche, Mindestbesetzung, erwartete Spielerzahl und Felder gelten
 für jede der drei Wahlen. Das Datum ändert sich nur für
 diesen einen Termin. Wochentage und Zeitraum stehen im selben Dialog unter „Terminserie" und
 gelten dagegen nur für folgende oder alle — Datum und Wochentage zugleich lassen sich nicht in
@@ -202,15 +235,21 @@ einem Schritt ändern. Ist die Wahl eingeschränkt, sagt ein Satz warum; bleibt 
 vorgewählt.
 
 „Nur dieser Termin" macht die geänderte Angabe zu einer Abweichung. Ein Termin weicht je
-Angabe ab — Datum, Zeit (Beginn und Ende zusammen), Ort, Bemerkung, Eingeladene,
+Angabe ab — Datum, Zeit (Beginn und Ende zusammen), Ort, Treffpunkt, Bemerkung, Hinweis für Eltern, Eingeladene,
 Verantwortliche, Mindestbesetzung, erwartete Spielerzahl, Felder — und behält die Abweichung bei späteren Änderungen der Serie. Die Felder
 zählen dabei als Ganzes als eine Angabe, wie viele es auch sind; die Spielerzahl ist eine
 zweite. Wer an nur einem Serientermin Felder oder Spielerzahl entfernt, obwohl die Serie sie
 vorgibt, macht ihn bewusst leer: Der Termin weicht ab und gilt als unbekannt, bis er wieder der
-Serie folgt. Der Kartenlink weicht mit seinem Ort ab und folgt mit ihm wieder der Serie;
+Serie folgt. Beim Treffpunkt zählen Uhrzeit und Ort zusammen als eine Angabe; wer ihn an nur einem
+Serientermin ändert oder entfernt, obwohl die Serie einen vorgibt, macht ihn abweichend, im zweiten
+Fall bewusst ohne Treffpunkt, ebenso, wenn er durch eine Zeitänderung nur dieses Termins entfällt.
+Ein abweichender Termin behält seinen eigenen oder keinen Treffpunkt, auch wenn sich der der Serie
+ändert, bis er wieder der Serie folgt. Weicht nur die Zeit eines Termins ab, gilt der Treffpunkt der
+Serie im selben Abstand zu seinem eigenen Beginn. Der Kartenlink weicht mit seinem Ort ab und folgt mit ihm wieder der Serie;
 hatte der Termin einen eigenen, sagt der Dialog, dass er dann wegfällt. Ein zugeordnetes Training und ein Ausfall
 zählen nicht als Abweichung. Der Dialog „Termin ändern" nennt unter „Terminserie" die Serie mit
-Wochentagen, Zeitraum, Zeit, Ort, Eingeladenen, Verantwortlicher und Mindestbesetzung, mit der
+Wochentagen, Zeitraum, Zeit, Ort, Treffpunkt — etwa „Treffpunkt: 17:45 · Garderoben Schulhaus" —,
+Eingeladenen, Verantwortlicher und Mindestbesetzung, mit der
 erwarteten Spielerzahl und den
 Feldern samt Grösse, Toren und Untergrund, soweit die Serie sie vorgibt, und darunter jede
 Angabe, die abweicht,
@@ -345,7 +384,7 @@ Termin. Im Plan steht er mit der Plakette „Ausgefallen" und dem Grund daneben,
 lang ist; ganz steht er am nächsten Termin und beim Ändern des Termins. Ein
 ausgefallener Termin gilt nicht als unvorbereitet und nimmt kein neues Training an. Trug er
 eines, ruht es am Termin: Der Plan nennt es leise neben dem Ausfall, und es lässt sich öffnen,
-aber nicht durchführen. Eingeladene samt Absagen, Verantwortliche, Bemerkung, Felder,
+aber nicht durchführen. Eingeladene samt Absagen, Verantwortliche, Treffpunkt, Bemerkung, Hinweis für Eltern, Felder,
 erwartete Spielerzahl und Serienzugehörigkeit bleiben ebenfalls am Termin; Absagen und Zusagen ruhen. Eine Spielerzahl zeigt ein ausgefallener Termin
 aber nirgends, auch keine erwartete, und Abmeldungen ruhen an ihm (siehe „Ab- und Anmelden").
 
@@ -385,7 +424,8 @@ steht für die nächsten Tage „Heute" oder „Morgen" mit dem Tag, neben dem S
 Spielerliste die Angemeldeten von allen, etwa „12/14", sonst die erwartete —, die Kader, die
 Trainer:innen als „dabei/eingeladen" mit dem eigenen Stand als Zeichen davor und der Platz, ohne
 Felder „Platz nicht erfasst"; die Einzelheiten nennt jedes Zeichen beim Darüberfahren und für die
-Vorlesehilfe. Dann die Bemerkung und der Schalter „Ich bin dabei" mit dem Satz, wer verantwortlich
+Vorlesehilfe. Hat das Training einen Treffpunkt, folgt eine Zeile wie bei den Treffpunkten eines
+Spiels: „Treffpunkt", die Uhrzeit und der Ort, etwa „Treffpunkt  17:45  Garderoben Schulhaus". Dann der Hinweis für Eltern mit „Für Eltern:" davor, die Bemerkung und der Schalter „Ich bin dabei" mit dem Satz, wer verantwortlich
 ist, und — wenn das zutrifft — „du hast abgesagt" oder „du bist nicht eingeladen"; ab Beginn und an
 einem ausgefallenen Termin ist er gesperrt. Zuunterst „Durchführen" als hervorgehobener Knopf und „Training
 öffnen", ohne Training „Training hinzufügen" als hervorgehobener Knopf; dazu „Spieler:innen", sofern das Team
@@ -415,8 +455,8 @@ Anwesenden, sonst die erwartete, ausgefallen keine — und die Trainer:innen als
 etwa „2/3", davor der eigene Stand: dabei, abgesagt oder nicht eingeladen; ein ausgefallener Termin
 nennt keine Trainer:innen. Namen stehen in der Zeile keine. Vergangene und
 ausgefallene Termine stehen gedämpft, ein ausgefallener mit durchgestrichenem Namen. Was zu lang
-ist, endet in „…" und steht ganz im Hinweis beim Darüberfahren. Bemerkung, Serie, Platz und
-Alterskategorien stehen nicht in der Zeile; Bemerkung, Serie und Platz zeigt der geöffnete Termin,
+ist, endet in „…" und steht ganz im Hinweis beim Darüberfahren. Treffpunkt, Bemerkung, Serie, Platz und
+Alterskategorien stehen nicht in der Zeile; Treffpunkt, Bemerkung, Serie und Platz zeigt der geöffnete Termin,
 die Alterskategorien das Training selbst. Der Rückblick sieht genauso aus.
 
 Ein Klick auf die Zeile öffnet den Termin neben der Liste (siehe „Der geöffnete Termin"), ein
@@ -427,9 +467,9 @@ lösen, Ausfallen lassen oder — bei einem ausgefallenen — Grund ändern und 
 und Termin entfernen; ein Spiel bietet nur „Spiel ändern", die Handgriffe zum Ausfall und „Spiel
 entfernen". Die Durchführen-Ansicht zeigt, aus
 dem Plan geöffnet, zuoberst Datum, Zeit, Ort, wer verantwortlich ist, wer dabei ist und wer
-abgesagt hat, Spielerzahl, Felder
-und Bemerkung des Termins, jedes Feld mit Grösse, Toren je Torart und Untergrund; was zu einem
-Feld nicht erfasst ist, steht dort ausdrücklich als unbekannt.
+abgesagt hat, Spielerzahl, Felder,
+Hinweis für Eltern („Für Eltern: …") und Bemerkung des Termins, jedes Feld mit Grösse, Toren je Torart und Untergrund; was zu einem
+Feld nicht erfasst ist, steht dort ausdrücklich als unbekannt. Den Treffpunkt nennt sie nicht.
 
 Eine eigene Überschrift trägt der Trainingsplan nicht, sie steht schon im Umschalter der
 Team-Ansichten. Über den Terminen liegt eine Zeile: links die Eingrenzungen „Meine Termine" und „Eingeladen",
@@ -468,7 +508,10 @@ Schmaler nimmt er die ganze Breite ein, bis man ihn schliesst. Zuoberst stehen T
 daneben das Kreuz zum Schliessen, darunter vier Reiter — ein Spiel drei (siehe „Spiele").
 „Termin" bietet „Ausfallen lassen" bzw. „Ausfall zurücknehmen", „Ändern" — das bekannte „Termin
 ändern" — und im Menü die übrigen Handgriffe der Zeile; darunter die Eckdaten in derselben Form wie
-am nächsten Termin, bei einem ausgefallenen samt Grund. Hat der Ort einen Kartenlink, steht
+am nächsten Termin, bei einem ausgefallenen samt Grund; „Hinweis für Eltern" und „Bemerkung"
+stehen darin je für sich, damit erkennbar bleibt, was die Eltern lesen. Hat ein Training einen
+Treffpunkt, steht er unter dem Ort als eigene Angabe „Treffpunkt" mit Uhrzeit und Ort, auch nach
+dem Beginn und bei einem Ausfall. Hat der Ort einen Kartenlink, steht
 unter ihm „Auf der Karte öffnen", das den Link in einem neuen Fenster öffnet, damit sich prüfen
 lässt, wohin er führt. „Training" zeigt das Training des Termins
 so, wie es die Trainingsansicht liest — Name, Altersstufe, Alterskategorien, Dauer, Ziel und die
@@ -504,9 +547,9 @@ Termin bleibt und trägt „Abgesagt · " vorn im Titel, einer, für den man ver
 „Bezeichnung · Teamname" —, Beginn, Ende, Ort, ein Verweis in die Anwendung und eine
 Beschreibung ins Kalenderprogramm. Die Beschreibung nennt den eigenen Stand, wer dabei ist, wer
 abgesagt hat und wer verantwortlich ist, mit Namen, eine Lücke zur Mindestbesetzung und, hat der
-Ort einen Kartenlink, diesen als „Karte: …" — keinen
-Trainingsnamen, keine Bemerkung, weder Felder noch Spielerzahl, keine Namen von Spieler:innen und
-bei Spielen weder Treffpunkte noch Meldefrist noch Richtwert. Die Zeiten
+Ort einen Kartenlink, diesen als „Karte zum Ort: …" — keinen
+Trainingsnamen, keine Bemerkung, weder Felder noch Spielerzahl, keine Namen von Spieler:innen, bei
+Trainings keinen Treffpunkt und bei Spielen weder Treffpunkte noch Meldefrist noch Richtwert. Die Zeiten
 gelten als Schweizer Zeit, auch über die Zeitumstellung hinweg und auf einem Gerät in einer anderen
 Zeitzone.
 
@@ -748,8 +791,9 @@ wieder als angemeldet — auch wenn die Änderung über die Serie kommt oder die
 folgt, und auch während der Termin ausfällt. Vor dem Speichern fragt die Anwendung nach und nennt
 die Zahl, etwa „Damit verfallen 3 Abmeldungen: Diese Spieler:innen gelten wieder als angemeldet.";
 bei einer Serienänderung steht das in der Rückfrage zu wegfallenden Terminen oder, fallen keine
-weg, in einer eigenen. Ein geändertes Ende, Ort, Bemerkung, Felder, Trainer:innen oder Training
-lassen die Abmeldungen stehen. Absagen von Trainer:innen verfallen mit (siehe „Trainer:innen"). Hat der Termin durch die Verlegung schon begonnen, bleibt sein Stand
+weg, in einer eigenen. Ein geändertes Ende, Ort, Treffpunkt, Bemerkung, Hinweis für Eltern, Felder, Trainer:innen oder Training
+lassen die Abmeldungen stehen; eine Änderung nur des Treffpunkts ist keine Verlegung. Abmeldungen
+und der Stand bei Beginn beziehen sich immer auf den Beginn, auch wenn der Treffpunkt früher liegt. Absagen von Trainer:innen verfallen mit (siehe „Trainer:innen"). Hat der Termin durch die Verlegung schon begonnen, bleibt sein Stand
 samt Abmeldungen. Die Eltern sehen am Link, dass ihre Abmeldung verfallen ist.
 
 Fällt ein Termin aus, ruhen seine Abmeldungen: Weder Zahl noch Abmeldungen sind zu sehen, und
@@ -806,7 +850,7 @@ einer Serie; der Dialog bietet dafür weder „Wiederholender Termin" noch Felde
 Tritt das Team an einem Turnier mit mehreren Mannschaften zu verschiedenen Zeiten an, erfasst es
 je Mannschaft ein Spiel mit deren Kader.
 
-Wie bei einem Training sind Ort, Bemerkung, Kader und Mindestbesetzung freiwillig, und das Spiel
+Wie bei einem Training sind Ort, Bemerkung, Hinweis für Eltern, Kader und Mindestbesetzung freiwillig, und das Spiel
 lädt Trainer:innen ein (siehe „Trainer:innen"). Dazu kommen drei
 Angaben nur für Spiele, alle ebenfalls freiwillig. „Mindestzahl (optional)" und „Höchstzahl
 (optional)" bilden zusammen den Richtwert: wie viele Spieler:innen das Team für das Spiel
@@ -819,10 +863,9 @@ Treffpunkte dazu, je einer pro Anreiseart — vor Ort, öV, Auto, Velo sowie Car
 also höchstens fünf; eine Art, die schon vergeben ist, steht nicht mehr zur Wahl. Jeder Treffpunkt
 trägt Datum und Uhrzeit, das Datum vorbelegt mit dem Tag des Spiels; er darf an einem anderen Tag
 oder nach dem Anpfiff liegen, höchstens ein Jahr davon entfernt. Jeder ausser vor Ort braucht
-einen Ort von höchstens 100 Zeichen; vor Ort gilt immer der aktuelle Ort des Spiels. Die Bemerkung
-eines Spiels sehen die Eltern über ihren Link, anders als die eines Trainings; das sagt der Hinweis
-hinter ihrem ⓘ, und die Eckdaten nennen sie „Bemerkung · sichtbar für Eltern" — ausser das Spiel
-fällt aus, dann sehen die Eltern statt ihrer nur den Grund. Was Richtwert,
+einen Ort von höchstens 100 Zeichen; vor Ort gilt immer der aktuelle Ort des Spiels. Wie bei einem
+Training sehen die Eltern den Hinweis für Eltern, nicht die Bemerkung; eine Rückkehrzeit gehört
+darum in den Hinweis. Fällt das Spiel aus, sehen die Eltern statt des Hinweises nur den Grund. Was Richtwert,
 Meldefrist und Treffpunkte heissen, sagt ebenso je ein Hinweis hinter dem ⓘ. Geändert wird ein
 Spiel im Dialog „Spiel ändern" mit denselben Angaben.
 
@@ -840,7 +883,7 @@ Zeichen stehen die Angemeldeten von allen, etwa „7/14", die Kader, die Meldefr
 Trainer:innen, und beim Darüberfahren nennt die Spielerzahl den Richtwert und wie viele noch ohne
 Meldung sind. Führt das Team keine Spielerliste, steht dort ein Strich, und das Zeichen sagt „Das
 Team führt keine Spielerliste – hier wird nicht gemeldet." Dann folgen die Treffpunkte, der
-späteste — der dem Anpfiff nächste — zuoberst, die Bemerkung und der Schalter „Ich bin dabei".
+späteste — der dem Anpfiff nächste — zuoberst, der Hinweis für Eltern, die Bemerkung und der Schalter „Ich bin dabei".
 Zuunterst stehen „Spieler:innen", sofern das Team eine Liste führt, „Trainer:innen" und „Spiel
 öffnen". Ab dem Anpfiff zählt die Zahl die Anwesenden.
 
@@ -859,7 +902,7 @@ Reiter, „Spiel", „Spieler:innen" und „Trainer:innen"; einen Reiter „Trai
 darunter die Eckdaten: Ort, Treffpunkte, Verantwortlich, Trainer:innen, Kader, die Spieler:innen mit dem Status
 samt einem Detail wie „noch 2 bis Mindestzahl 9" oder „3 über Höchstzahl 12" und der Zahl der
 Angemeldeten — ab dem Anpfiff der Anwesenden — sowie der nicht Aufgebotenen, der Richtwert, die
-Meldefrist, etwa „Eltern bis Do., 29.10., 20:00" oder „Bis zum Anpfiff", und die Bemerkung. Die
+Meldefrist, etwa „Eltern bis Do., 29.10., 20:00" oder „Bis zum Anpfiff", der Hinweis für Eltern und die Bemerkung. Die
 Treffpunkte stehen hier und für die Eltern frühester zuerst, jeder mit Anreiseart, Zeit und Ort;
 das Datum steht nur, wenn er nicht am Tag des Spiels liegt, und vor Ort nennt den aktuellen Ort des
 Spiels oder, solange es keinen hat, nur die Zeit. Wurde ein anstehendes Spiel verlegt, sagt ein
@@ -940,7 +983,7 @@ Zeitpunkt, die Eltern zudem, ob ihre Meldung noch gilt.
 Ein Spiel fällt aus wie ein Training, auf Wunsch mit Grund: Meldungen, Kennzeichnungen und
 Nachträge ruhen, der Reiter „Spieler:innen" zeigt nur „Fällt aus" und den Satz „Das Spiel fällt
 aus. Für es lässt sich niemand an- oder abmelden.", und die Eltern sehen nur noch den Kopf mit dem
-Grund, ohne Bemerkung. Wird der Ausfall zurückgenommen, gilt alles wieder. Anders als ein Training findet ein
+Grund, ohne Hinweis für Eltern. Wird der Ausfall zurückgenommen, gilt alles wieder. Anders als ein Training findet ein
 ausgefallenes Spiel wieder statt, sobald es verlegt wird, auch nur auf eine andere Zeit; der
 Dialog sagt das vor dem Speichern. „Spiel entfernen" fragt nach und nennt, wie viele Meldungen und
 Kennzeichnungen mit dem Spiel verschwinden.
@@ -949,7 +992,7 @@ Kennzeichnungen mit dem Spiel verschwinden.
 
 Im Kalender-Abo der Mitglieder erscheint ein Spiel, zu dem man eingeladen ist, mit dem Titel
 „Bezeichnung · Teamname", ohne Treffpunkte, Meldefrist und Richtwert (siehe „Kalender-Abo"); im Abo am privaten Link dazu mit dem
-Status der Spieler:in, den Treffpunkten und der Bemerkung (siehe „Kalender-Abo am privaten
+Status der Spieler:in, den Treffpunkten und dem Hinweis für Eltern (siehe „Kalender-Abo am privaten
 Link"). Ein verbundener KI-Assistent führt Spiele nach
 denselben Regeln (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)): Er legt sie
 samt Richtwert, Meldefrist und Treffpunkten fest, ändert und entfernt sie, meldet an und ab,
@@ -997,7 +1040,18 @@ steht knapp und ungefärbt, etwa „24/33": angemeldet von allen, für die der T
 für die Mitglieder — bei einem Termin mit Kadern auch über Kader, die nicht die der Spieler:in sind,
 ohne sie zu nennen. „Angemeldet" und „abgemeldet" meinen auf der Seite nur die eigene Spieler:in.
 Ein begonnener Termin ist gesperrt mit „Hat begonnen · nicht mehr änderbar"; der Satz steht unter
-dem Ort, der auch dann stehen bleibt. Wurde ein Termin
+dem Ort, der auch dann stehen bleibt. Hat ein Training einen Treffpunkt, steht auf der Karte, vor
+einem Hinweis für Eltern, eine Zeile wie bei den Treffpunkten eines Spiels, etwa „Treffpunkt  17:45  Garderoben Schulhaus" — nur,
+solange der Termin nicht begonnen hat, nicht ausfällt und die Spieler:in nicht abgemeldet ist; eine
+Probe-Spieler:in, die nicht angemeldet ist, sieht ihn. Wird ein Ausfall zurückgenommen, steht er
+wieder da. Ein neuer oder geänderter Treffpunkt ist beim nächsten Öffnen zu sehen, ohne als
+Änderung gekennzeichnet zu sein; ohne Treffpunkt sagt die Karte dazu nichts, und es gelten Ort und
+Beginn. Trägt ein Termin einen Hinweis für Eltern, steht er unter
+einer Linie am Fuss der Karte, so wie das Team ihn geschrieben hat, mit seinen Zeilenumbrüchen —
+auch wenn die Spieler:in abgemeldet ist oder der Termin begonnen hat, nicht aber an einem
+ausgefallenen. Ist er länger als vier Zeilen, steht er gekürzt mit „Ganz lesen"; Webadressen darin
+sind Links. Ein geänderter Hinweis ist beim nächsten Öffnen zu sehen, ohne als Änderung
+gekennzeichnet zu sein. Die Bemerkung eines Termins sehen die Eltern nie. Wurde ein Termin
 verlegt, seit sie abgemeldet war, steht bei ihm etwa „Verlegt, vorher Dienstag, 20. Oktober um
 18:00. Deine Abmeldung gilt nicht mehr.", bis man neu wählt oder der Termin beginnt. Namen anderer
 Spieler:innen, fremde Kader, Termine für andere Kader, Trainings und vergangene Termine zeigt die
@@ -1035,10 +1089,10 @@ gesucht 9 bis 12", und die Kader der Spieler:in; darunter die Knöpfe: ohne Meld
 Meldefrist gibt es keine Knöpfe mehr, nur „Meldefrist abgelaufen · Änderung übers Team", ab dem
 Anpfiff „Hat begonnen · nicht mehr änderbar". Ist die Spieler:in nicht aufgeboten, steht statt
 dessen „… ist für dieses Spiel nicht aufgeboten. Fragen dazu ans Team." mit ihrem Namen, ebenfalls
-ohne Knöpfe. Es folgen die Treffpunkte, frühester zuerst, und die Bemerkung. Abgemeldet, nicht aufgeboten, mit verpasster Meldefrist oder ausgefallen tritt die Karte
+ohne Knöpfe. Es folgen die Treffpunkte, frühester zuerst, und der Hinweis für Eltern wie bei einem Training. Abgemeldet, nicht aufgeboten, mit verpasster Meldefrist oder ausgefallen tritt die Karte
 gedämpft zurück, das Kalenderblatt grau und durchgestrichen, und die Treffpunkte entfallen, ebenso
 ab dem Anpfiff; ein ausgefallenes Spiel zeigt nur den Kopf, darin den Grund wie bei einem
-Training, und keine Bemerkung. Wurde ein Spiel verlegt,
+Training, und keinen Hinweis. Wurde ein Spiel verlegt,
 steht etwa „Verlegt, vorher Dienstag, 20. Oktober um 18:00." dabei, auch wenn sich nur die Zeit
 änderte, mit „Deine Meldung gilt nicht mehr - melde neu." oder „Die Meldung gilt weiter." und
 gegebenenfalls „Die Kennzeichnung als nicht aufgeboten gilt nicht mehr." Ab dem Anpfiff zeigt die
@@ -1080,9 +1134,12 @@ vorn den Status, dann „Training" oder die Bezeichnung des Spiels und den Teamn
 
 Vielleicht steht im Kalender als vorläufig, abgesagt als frei. Die Beschreibung nennt den Status
 als Wort, bei einem Spiel dazu die Treffpunkte — wie am Link nur, solange es nicht begonnen hat und
-nicht abgesagt ist — und die Bemerkung, so wie das Team sie geschrieben hat. Weiter gelangen nur
+nicht abgesagt ist —, bei einem Training unter denselben Bedingungen seinen Treffpunkt als
+„Treffpunkt" und darunter Uhrzeit und Ort, etwa „17:45 · Garderoben Schulhaus", und bei Trainings
+und Spielen den Hinweis für Eltern, so wie das Team ihn geschrieben hat. Der Eintrag eines Trainings
+beginnt weiterhin zum Beginn, nicht zum Treffpunkt. Weiter gelangen nur
 Beginn, Ende und Ort ins Kalenderprogramm, dazu in der Beschreibung der Kartenlink zum Ort als
-„Karte: …"; kein Name der Spieler:in, keine Meldefrist, kein
+„Karte zum Ort: …" — er führt zum Ort des Termins, nicht zum Treffpunkt; kein Name der Spieler:in, keine Meldefrist, kein
 Richtwert, keine Spielerzahl, kein Grund einer Absage und kein Verweis, der den privaten Link
 verriete. Der Kalender heisst „Trainings und Spiele · Teamname"; wer mehrere Abos hat, benennt sie
 im Kalenderprogramm selbst. Die Zeiten gelten als Schweizer Zeit.
@@ -1150,7 +1207,7 @@ Beim Ab- und Anmelden gilt die Regel unter „Ab- und Anmelden": Ein inzwischen 
 ausgefallener oder begonnener Termin weist ab, sonst gilt die zuletzt gesetzte Angabe.
 
 Termine, Serien, Zuordnungen, Trainer:innen samt Absagen und Mindestbesetzung und Ausfälle lassen
-sich auch über einen verbundenen KI-Assistenten führen, samt Feldern und erwarteter Spielerzahl (siehe [Konto und
+sich auch über einen verbundenen KI-Assistenten führen, samt Treffpunkt, Feldern und erwarteter Spielerzahl (siehe [Konto und
 Zugang](konto-und-zugang.md#ki-assistent-verbinden)), ebenso Spiele samt Richtwert, Meldefrist und
 Treffpunkten, die Spielerliste, die Kader samt Zuteilung und den Kadern von Terminen und Serien, die
 Ab- und Anmeldungen, die Meldungen zu Spielen und die Kennzeichnungen als nicht aufgeboten, die
@@ -1278,6 +1335,13 @@ noch gilt, weiss sie nicht, und eine Karte oder Vorschau zeigt sie nicht. Einen 
 Vorlage für weitere Termine hinterlegen lässt sich nicht; beides wird je Termin oder Terminserie
 eingegeben. Ein Kartenlink kommt nur mit dem Ort eines Termins, nicht mit einem Treffpunkt.
 
+Der Treffpunkt eines Trainings hat weder Kartenlink noch Anreiseart, und ein Training hat höchstens
+einen; er gilt für alle Kader des Termins gleich. Er gehört zum Termin, nicht zum Trainingsinhalt,
+und wandert beim Kopieren oder Zuordnen eines Trainings nicht mit. Einen neuen oder geänderten
+Treffpunkt kennzeichnet die Anwendung für die Eltern nicht als Änderung; darauf weist das Team selbst
+hin. Läge er nach einer Zeitänderung am Vortag, entfällt er und kommt auch mit einer späteren
+Zeitänderung nicht zurück.
+
 Eine Terminserie wiederholt sich nur wöchentlich, mit denselben Zeiten, demselben Ort samt Kartenlink,
 denselben Feldern und derselben erwarteten Spielerzahl an allen ihren Wochentagen, und läuft
 höchstens ein Jahr. Ferien und Feiertage nimmt sie nicht
@@ -1341,8 +1405,10 @@ Spieler:innen oder Teams zusammen. Ob eine Abo-Adresse weitergegeben wurde, erke
 nicht; alle, die denselben Link haben, teilen sich dieselbe Adresse, und ein Widerruf trifft sie
 alle. Dass ein Abo erloschen ist, erfahren Eltern nicht von selbst. Wie die Zeichen im Titel
 aussehen und ob ein Programm vorläufige oder freie Einträge eigens darstellt, bestimmt das
-Programm; abgesagte Termine stehen weiterhin im Kalender. Treffpunkte und Bemerkung gelangen so ins
-Abo, wie Mitglieder sie geschrieben haben, auch mit Namen darin. Über einen KI-Assistenten lassen
+Programm; abgesagte Termine stehen weiterhin im Kalender. Treffpunkte von Spielen und Trainings und der Hinweis für Eltern gelangen so ins
+Abo, wie Mitglieder sie geschrieben haben, auch mit Namen oder einem Zugangscode darin; einen
+geänderten Hinweis oder Treffpunkt zeigt das Kalenderprogramm erst nach seinem nächsten Abruf. Der
+Eintrag eines Trainings beginnt zum Beginn, auch wenn der Treffpunkt früher liegt. Über einen KI-Assistenten lassen
 sich Abos am privaten Link weder holen noch einsehen noch widerrufen.
 
 Die Spielerliste führt nur Vorname, Nachname, Jahrgang und J+S-Nummer — weder Geburtsdatum noch
@@ -1420,7 +1486,7 @@ wird Spieler:in für Spieler:in. Die Meldefrist gilt nur für die Eltern und wir
 eine Vorgabe für alle Spiele gibt es nicht. Eine Kennzeichnung als nicht aufgeboten trägt keinen
 Grund. Ein Spiel hat höchstens fünf Treffpunkte, je Anreiseart einen; Eltern wählen keinen
 Treffpunkt und bieten keine Fahrgemeinschaften an, und eine Rückkehrzeit hat kein eigenes Feld.
-Geänderte Treffpunkte oder eine geänderte Bemerkung kennzeichnet die Anwendung für die Eltern
+Geänderte Treffpunkte oder einen geänderten Hinweis für Eltern kennzeichnet die Anwendung für die Eltern
 nicht, und von mehreren Verlegungen nennt sie nur den zuletzt gültigen Zeitpunkt. Den Status eines
 Spiels sehen die Eltern nicht, nur die Zahl der Angemeldeten und den gesuchten Bereich. Ohne Spielerliste führt ein Spiel weder
 Meldungen noch Spielerzahl, und eine erwartete Zahl lässt sich an einem Spiel nicht festhalten.

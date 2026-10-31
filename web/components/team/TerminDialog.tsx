@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from "react";
 import { Button, DateField, Dialog, FormAbschnitt, SectionMessage, TextArea, TimeField, WochentagWahl } from "@/components/ui";
 import {
   BEMERKUNG_MAX,
+  HINWEIS_ELTERN_MAX,
   TERMIN_TEXT,
   ausfallProblem,
   leerZuNull,
@@ -35,7 +36,7 @@ import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
 import { terminBegonnen } from "@/lib/zeit";
 import { usePlatzAngaben } from "./usePlatzAngaben";
-import { SPIEL_MELDUNG, TREFFPUNKT_TEXT } from "@/lib/spiel";
+import { SPIEL_MELDUNG } from "@/lib/spiel";
 import {
   BezeichnungFeld,
   MeldefristFelder,
@@ -48,11 +49,14 @@ import {
 import type { Kader, TerminKader } from "@/lib/kader";
 import { KaderWahl } from "./KaderWahl";
 import { OrtFelder } from "./OrtFelder";
+import { TreffpunktFelder, treffpunktAusEingabe, treffpunktEingabe, type TrainingsTreffpunktEingabe } from "./TreffpunktFelder";
 
 const ANGABE: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit",
   ort: "Der Ort",
   bemerkung: "Die Bemerkung",
+  hinweis_eltern: "Der Hinweis für Eltern",
+  treffpunkt: "Der Treffpunkt",
   eingeladene: "Die Eingeladenen",
   verantwortung: "Die Verantwortung",
   besetzung: "Die Mindestbesetzung",
@@ -66,6 +70,8 @@ const MEHRZAHL: readonly FolgeAngabe[] = ["eingeladene", "felder", "kader"];
 const FOLGEN_KANN: readonly FolgeAngabe[] = [
   "zeit",
   "ort",
+  "treffpunkt",
+  "hinweis_eltern",
   "bemerkung",
   "kader",
   "spielerzahl",
@@ -78,6 +84,8 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   zeit: "Zeit wieder der Serie folgen lassen",
   ort: "Ort wieder der Serie folgen lassen",
   bemerkung: "Bemerkung wieder der Serie folgen lassen",
+  hinweis_eltern: "Hinweis für Eltern wieder der Serie folgen lassen",
+  treffpunkt: "Treffpunkt wieder der Serie folgen lassen",
   eingeladene: "Eingeladene wieder der Serie folgen lassen",
   verantwortung: "Verantwortung wieder der Serie folgen lassen",
   besetzung: "Mindestbesetzung wieder der Serie folgen lassen",
@@ -198,6 +206,7 @@ export function TerminDialog({
   const [grundFehler, setGrundFehler] = useState<string>();
   const kaderStart = terminKader.flatMap((k) => (k.id ? [k.id] : []));
   const [kaderWahl, setKaderWahl] = useState<string[]>([]);
+  const [treffpunkt, setTreffpunkt] = useState<TrainingsTreffpunktEingabe>(null);
   const platz = usePlatzAngaben();
   const istSpiel = start?.art === "spiel";
   const spiel = useSpielAngaben(felder.datum, felder.beginn ?? "");
@@ -216,7 +225,9 @@ export function TerminDialog({
       ort: start?.ort ?? "",
       ortLink: start?.ortLink ?? "",
       bemerkung: start?.bemerkung ?? "",
+      hinweisEltern: start?.hinweisEltern ?? "",
     });
+    setTreffpunkt(treffpunktEingabe(start?.treffpunkt, start?.beginn ?? ""));
     platz.zuruecksetzen(start);
     spiel.zuruecksetzen(
       {
@@ -299,7 +310,10 @@ export function TerminDialog({
    *  Treffpunkte statt Feldern und Spielerzahl, hat nie eine Serie, und ein
    *  verlegter Anpfiff liegt nur in der Zukunft. */
   function speichern() {
-    const p = terminProblem(felder);
+    // #561: Der Treffpunkt eines Trainings zum Beginn im Dialog; entfiele er,
+    // bleibt er unverändert und der Kern fragt nach (PC 5).
+    const tp = istSpiel ? undefined : treffpunktAusEingabe(treffpunkt, felder.beginn ?? "");
+    const p = terminProblem({ ...felder, treffpunkt: tp });
     setProblem(p);
     const angaben = istSpiel ? spiel.pruefe() : platz.pruefe();
     const regelOk = regelPruefen();
@@ -316,7 +330,7 @@ export function TerminDialog({
     onSpeichern(
       istSpiel
         ? { ...felder, art: "spiel", ...angaben, mindestbesetzung: m.wert }
-        : { ...felder, ...angaben, mindestbesetzung: m.wert },
+        : { ...felder, ...angaben, mindestbesetzung: m.wert, treffpunkt: tp },
       serie ? regel : undefined,
       trainerAenderung(besetzung, besetzungStart) ?? undefined,
       grundNeu,
@@ -382,10 +396,23 @@ export function TerminDialog({
           hinweis={kartenlinkWeg ? TERMIN_TEXT.kartenlinkFaelltWeg : undefined}
           disabled={pending}
         />
+        {!istSpiel && (
+          <TreffpunktFelder
+            wert={treffpunkt}
+            onChange={(w) => {
+              setTreffpunkt(w);
+              if (problem?.feld === "treffpunkt") setProblem(null);
+            }}
+            beginn={felder.beginn ?? ""}
+            fehler={fehlerAn("treffpunkt")}
+            disabled={pending}
+          />
+        )}
         {istSpiel && <RichtwertFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <MeldefristFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <TreffpunkteFelder angaben={spiel} spieltag={felder.datum} disabled={pending} />}
-        <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} info={istSpiel ? TREFFPUNKT_TEXT.bemerkungSichtbar : undefined} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
+        <TextArea label="Hinweis für Eltern (optional)" rows={3} maxLength={HINWEIS_ELTERN_MAX} value={felder.hinweisEltern ?? ""} onChange={(e) => setze("hinweisEltern")(e.target.value)} info={TERMIN_TEXT.hinweisElternSichtbar} infoAufTouch error={!!fehlerAn("hinweisEltern")} supportingText={fehlerAn("hinweisEltern")} />
+        <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} info={TERMIN_TEXT.bemerkungIntern} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         {(kader.length > 0 || terminKader.length > 0 || !istSpiel) && (
           <FormAbschnitt titel="Spieler:innen" untertitel="Für wen der Termin gilt und mit wie vielen gerechnet wird." imDialog>
             {(kader.length > 0 || terminKader.length > 0) && (
@@ -434,6 +461,11 @@ export function TerminDialog({
             {wochentageText(serie.wochentage)} · {datumKurz(serie.beginnDatum)} bis {datumKurz(serie.endDatum)} · {serie.beginn}–{serie.ende} Uhr
             {serie.ort ? <> · {serie.ort}</> : null}
           </p>
+          {serie.treffpunkt && (
+            <p className="type-body-small">
+              Treffpunkt: {serie.treffpunkt.zeit} · {serie.treffpunkt.ort}
+            </p>
+          )}
           {serie.trainer.length > 0 && (
             <p className="type-body-small">Eingeladen: {serie.trainer.map((v) => v.name).join(", ")}</p>
           )}

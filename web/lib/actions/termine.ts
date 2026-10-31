@@ -26,7 +26,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Reichweite, Wochentag } from "@/lib/serie";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
-import type { TerminFelder } from "@/lib/termin";
+import type { TerminFelder, TerminTreffpunkt } from "@/lib/termin";
 import type { Felder } from "@/lib/termin-felder";
 import type { Mindestbesetzung } from "@/lib/besetzung";
 import type { TerminZeile } from "@/lib/queries/termine";
@@ -58,6 +58,8 @@ type Fehler = {
   kennzeichnungen?: number;
   /** Davon Anmeldungen von Probe-Spieler:innen (#555 AK 14). */
   anmeldungen?: number;
+  /** Ein Training (#561 PC 5): Mit dem neuen Beginn entfiele der Treffpunkt. */
+  treffpunktEntfaellt?: boolean;
 };
 
 export async function legeTerminFestAktion(
@@ -84,6 +86,8 @@ export async function legeTerminFestAktion(
     ort: felder.ort,
     ortLink: felder.ortLink,
     bemerkung: felder.bemerkung,
+    hinweisEltern: felder.hinweisEltern,
+    treffpunkt: felder.treffpunkt,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
     mindestbesetzung: felder.mindestbesetzung ?? null,
@@ -104,13 +108,15 @@ export async function aendereTerminAktion(
   terminId: string,
   felder: Partial<TerminFelder>,
   erwartetesTraining: string | null,
-  /** Die bestätigte Zahl verfallender Abmeldungen (#437 AK 1). */
+  /** Die bestätigte Zahl verfallender Abmeldungen (#437 AK 1); sie
+   *  bestätigt auch einen entfallenden Treffpunkt (#561 PC 5). */
   bestaetigt: number | false = false,
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await aendereTermin(a.supabase, a.userId, {
     bestaetigt,
+    treffpunktWeg: bestaetigt !== false,
     terminId,
     datum: felder.datum,
     beginn: felder.beginn,
@@ -118,6 +124,7 @@ export async function aendereTerminAktion(
     ort: felder.ort,
     ortLink: felder.ortLink,
     bemerkung: felder.bemerkung,
+    hinweisEltern: felder.hinweisEltern,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
     mindestbesetzung: felder.mindestbesetzung,
@@ -126,6 +133,7 @@ export async function aendereTerminAktion(
     richtwertMax: felder.richtwertMax,
     meldefrist: felder.meldefrist,
     treffpunkte: felder.treffpunkte,
+    treffpunkt: felder.treffpunkt,
     erwartetesTraining,
   });
   if (!r.ok)
@@ -138,6 +146,7 @@ export async function aendereTerminAktion(
       fristAbgelaufen: r.fristAbgelaufen,
       kennzeichnungen: r.kennzeichnungen,
       anmeldungen: r.anmeldungen,
+      treffpunktEntfaellt: r.treffpunktEntfaellt,
     };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.trainingId) revalidiereTraining(r.wert.trainingId);
@@ -245,6 +254,10 @@ export async function legeSerieFestAktion(
     /** Der Kartenlink zum Ort (#533 AK 2). */
     ortLink: string;
     bemerkung: string;
+    /** Der Hinweis für Eltern jedes Termins (#590 AK 2). */
+    hinweisEltern: string;
+    /** Der Treffpunkt jedes Termins (#561 AK 2); `null`: keiner. */
+    treffpunkt: TerminTreffpunkt | null;
     eingeladene: string[];
     verantwortlich: string | null;
     /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1). */
@@ -302,7 +315,8 @@ export async function setzeAbsageAktion(e: AbsageSetzen): Promise<{ ok: true } |
 // Serie und die entfallenden Termine mit Training.
 
 type Serienweit = "dieser_und_folgende" | "alle";
-/** `verfallend`: die Summe verfallender Abmeldungen aus der Vorschau (#453 AK 12). */
+/** `verfallend`: die Summe verfallender Abmeldungen aus der Vorschau (#453
+ *  AK 12) und der Termine, deren Treffpunkt entfällt (#561 PC 5). */
 type Erwartet = { version: number; entfallend: string[]; verfallend?: number };
 
 async function serienLauf(
@@ -350,7 +364,15 @@ export async function folgeDerSerieAktion(
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await folgeDerSerie(a.supabase, a.userId, { terminId, angaben, bestaetigt });
-  if (!r.ok) return { ok: false, error: r.meldung, verfallend: r.verfallend, nachtraege: r.nachtraege, absagen: r.absagen };
+  if (!r.ok)
+    return {
+      ok: false,
+      error: r.meldung,
+      verfallend: r.verfallend,
+      nachtraege: r.nachtraege,
+      absagen: r.absagen,
+      treffpunktEntfaellt: r.treffpunktEntfaellt,
+    };
   revalidiereTeam(r.wert.teamId);
   return { ok: true };
 }

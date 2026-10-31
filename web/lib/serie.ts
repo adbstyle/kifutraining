@@ -6,7 +6,15 @@
 // als Rückhalt und meldet mit den Markern aus SERIE_MELDUNG.
 //
 // REIN: importiert nur lib/termin.ts (ebenfalls rein) — `check:kern` lädt sie mit tsx.
-import { TERMIN_TEXT, istKalendertag, kartenlinkOhneOrt, textProblem, zeitProblem } from "@/lib/termin";
+import {
+  TERMIN_TEXT,
+  istKalendertag,
+  kartenlinkOhneOrt,
+  textProblem,
+  treffpunktProblem,
+  zeitProblem,
+  type TerminTreffpunkt,
+} from "@/lib/termin";
 
 /** ISO-Wochentag: 1 = Montag … 7 = Sonntag (Zwilling: `extract(isodow …)`). */
 export type Wochentag = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -132,7 +140,8 @@ export function regelProblemVorab(
 
 /** Für welche Reichweiten eine Änderung an einem Serientermin gilt
  *  (#326 AK 1–4): das Datum nur für diesen Termin, Wochentage und Zeitraum nur
- *  für diesen und folgende oder für alle; Zeit, Ort, Bemerkung,
+ *  für diesen und folgende oder für alle; Zeit, Ort, Bemerkung, Hinweis für
+ *  Eltern (#590),
  *  Verantwortliche (#325), Felder und erwartete Spielerzahl (#391) für jede.
  *  `null`, wenn Datum und Regel zugleich
  *  geändert werden — das schliesst sich aus (`SERIE_TEXT.datumUndRegel`).
@@ -151,7 +160,17 @@ export function erlaubteReichweiten(g: { datum: boolean; regel: boolean; namenlo
   return ["nur_dieser", "dieser_und_folgende", "alle"];
 }
 
-export type SerieFeld = "wochentage" | "von" | "bis" | "beginn" | "ende" | "ort" | "ortLink" | "bemerkung";
+export type SerieFeld =
+  | "wochentage"
+  | "von"
+  | "bis"
+  | "beginn"
+  | "ende"
+  | "ort"
+  | "ortLink"
+  | "bemerkung"
+  | "hinweisEltern"
+  | "treffpunkt";
 
 /** Was an einer Serie nicht stimmt, sonst `null` (#324 AK 2, 4–6; #326 AK 5:
  *  beim Ändern mit dem aktuellen Beginndatum der jeweiligen Serie). */
@@ -164,6 +183,8 @@ export function serieProblem(f: {
   ort?: string | null;
   ortLink?: string | null;
   bemerkung?: string | null;
+  hinweisEltern?: string | null;
+  treffpunkt?: TerminTreffpunkt | null;
 }): { feld: SerieFeld; text: string } | null {
   const w = f.wochentage;
   if (w.length === 0 || w.length > 7 || new Set(w).size !== w.length || w.some((x) => !Number.isInteger(x) || x < 1 || x > 7))
@@ -175,7 +196,7 @@ export function serieProblem(f: {
   if (serienTage(w as Wochentag[], f.von, f.bis).length === 0) return { feld: "wochentage", text: SERIE_TEXT.ohneTag };
   const z = zeitProblem(f.beginn, f.ende);
   if (z) return z;
-  return textProblem(f) ?? kartenlinkOhneOrt(f);
+  return textProblem(f) ?? kartenlinkOhneOrt(f) ?? treffpunktProblem(f.treffpunkt, f.beginn);
 }
 
 /** Die Sätze zu den Markern der Datenebene (Migrationen terminserien und
@@ -208,11 +229,32 @@ export const SERIE_MELDUNG = {
     "Seit deiner Auswahl hat sich geändert, welche wegfallenden Termine ein Training tragen. Sieh dir die Änderung noch einmal an.",
   /** Seit der Vorschau verfallen andere Abmeldungen (#453 AK 12). */
   SERIE_VERFALL_GEAENDERT:
-    "Seit deiner Auswahl hat sich geändert, wie viele Abmeldungen verfallen. Sieh dir die Änderung noch einmal an.",
+    "Seit deiner Auswahl hat sich geändert, wie viele Abmeldungen verfallen oder Treffpunkte entfallen. Sieh dir die Änderung noch einmal an.",
   KEINE_AENDERUNG: "Gib mindestens eine Angabe an, die sich ändern soll.",
   SERIE_ANGABEN_UNGUELTIG:
-    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.",
+    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Hinweis für Eltern, Treffpunkt, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.",
 } as const;
+
+/** Was die Vorschau einer Serienänderung verfallen oder entfallen lässt — die
+ *  Zahl, die die Oberfläche bestätigt und gegen die die Datenebene beim
+ *  Ausführen prüft (`SERIE_VERFALL_GEAENDERT`; #453 AK 12, #561 PC 5). */
+export function verfallSumme(f: {
+  abmeldungenVerfallend: number;
+  abmeldungenKader: number;
+  nachtraegeVerfallend: number;
+  absagenVerfallend: number;
+  anmeldungenVerfallend: number;
+  treffpunktEntfallend: readonly unknown[];
+}): number {
+  return (
+    f.abmeldungenVerfallend +
+    f.abmeldungenKader +
+    f.nachtraegeVerfallend +
+    f.absagenVerfallend +
+    f.anmeldungenVerfallend +
+    f.treffpunktEntfallend.length
+  );
+}
 
 /** Der KI-Weg verlangt eine ausdrückliche Bestätigung, wenn «dieser und
  *  folgende» oder «alle» vergangene Termine erfasst oder entfallen lässt
