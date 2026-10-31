@@ -88,6 +88,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
         infoAufTouch={infoAufTouch}
         aktion={aktion}
         error={error}
+        schrift={schrift}
         className={className}
       >
         <div className="relative">

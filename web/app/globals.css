@@ -634,15 +634,20 @@
      steht der Wert, und Fläche und Schrift halten mindestens 2 px Abstand. */
   align-items: flex-end;
   padding-left: 0.875rem;
+  /* Nie über das Feld hinaus: Ist der Name länger als eine Zeile, endet die
+     Kopie am Rand, und das ⓘ steht dort statt daneben. */
+  max-width: 100%;
   /* Nur die Kopie des Namens bleibt auf einer Zeile — nicht das Panel des
      ⓘ, das sonst seinen Hinweis nicht umbräche. */
-  & > [aria-hidden] {
+  & :is(.feld-info-oben, .feld-info-leer) {
     visibility: hidden;
     white-space: nowrap;
+    min-width: 0;
+    overflow: hidden;
   }
   /* 24 px statt der üblichen 36: So passt die Fläche neben den Namen, mit
      2 px Abstand zu seiner Schrift. */
-  & > :last-child {
+  & .info-knopf {
     display: flex;
     margin-left: 0.125rem;
     margin-bottom: -3px;
@@ -681,7 +686,9 @@
   bottom: 0;
   height: auto;
   align-items: center;
-  & > :last-child {
+  /* Rechts im Kasten bleibt das Zeichen des Felds frei (Pfeil, Auge, 40 px). */
+  max-width: calc(100% - 2.5rem);
+  & .info-knopf {
     margin-bottom: 0;
   }
   & button {

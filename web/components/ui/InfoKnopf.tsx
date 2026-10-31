@@ -27,7 +27,7 @@ export function InfoKnopf({ label, children }: { label: string; children: ReactN
   return (
     <div
       ref={wurzelRef}
-      className="relative shrink-0"
+      className="info-knopf relative shrink-0"
       onKeyDown={(e) => {
         if (e.key === "Escape" && offen) {
           e.preventDefault();

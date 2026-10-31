@@ -67,6 +67,7 @@ export function Feld({
   infoAufTouch = false,
   aktion,
   error = false,
+  schrift,
   className,
   onLabelClick,
   children,
@@ -86,7 +87,9 @@ export function Feld({
   hinweis?: ReactNode;
   /** Ein fester Hinweis, der das Feld erklärt — hinter einem ⓘ direkt nach
    *  dem Namen (`InfoKnopf`), damit er das Formular nicht dauernd füllt. Das
-   *  ⓘ zeigt sich nur beim Überfahren (siehe `.feld-info` in globals.css). */
+   *  ⓘ zeigt sich nur beim Überfahren (siehe `.feld-info` in globals.css).
+   *  Ohne sichtbaren Namen (`labelVersteckt`) steht kein ⓘ — es hätte nichts,
+   *  woran es hängt; die Vorlesehilfe hört den Hinweis trotzdem. */
   info?: ReactNode;
   /** Auf Touch-Geräten bleibt das ⓘ verborgen (PO-Entscheid). Muss man den
    *  festen Hinweis trotzdem lesen, bevor man weitermacht — etwa dass die
@@ -98,6 +101,10 @@ export function Feld({
    *  Linie stehen, ob der Name darüber steht oder (leer) ausgeblendet ist. */
   aktion?: ReactNode;
   error?: boolean;
+  /** Die Schrift des Werts, wenn sie nicht die gewöhnliche ist (siehe
+   *  `TextField`) — im leeren Feld steht der Name in ihr, und das ⓘ dahinter
+   *  braucht ihre Breite. */
+  schrift?: "title";
   className?: string;
   /** Für Eingabe-Elemente, die kein <label> beschriften kann (ein <div> als
    *  Auslöser): was ein Klick auf den Namen auslösen soll. */
@@ -132,15 +139,20 @@ export function Feld({
                   Platz davor frei — in der Schrift, in der der Name gerade
                   steht (`.feld-info-am-namen`). So stösst es nie an ein
                   Zeichen am rechten Rand: Uhr, Kalender, Pfeil. */}
-              <div className="feld-info feld-info-am-namen">
-                <span aria-hidden className="feld-info-oben type-body-small leading-3">
-                  {label}
-                </span>
-                <span aria-hidden className="feld-info-leer type-body-large">
-                  {label}
-                </span>
-                <InfoKnopf label={label}>{info}</InfoKnopf>
-              </div>
+              {!labelVersteckt && (
+                <div className="feld-info feld-info-am-namen">
+                  <span aria-hidden className="feld-info-oben type-body-small leading-3">
+                    {label}
+                  </span>
+                  <span
+                    aria-hidden
+                    className={cn("feld-info-leer", schrift === "title" ? "type-title-large" : "type-body-large")}
+                  >
+                    {label}
+                  </span>
+                  <InfoKnopf label={label}>{info}</InfoKnopf>
+                </div>
+              )}
               <span id={`${id}-info`} className="sr-only">
                 {info}
               </span>
