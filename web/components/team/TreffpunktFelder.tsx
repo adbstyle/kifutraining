@@ -25,7 +25,10 @@ export function treffpunktEingabe(t: TerminTreffpunkt | null | undefined, beginn
  *  Vortag läge (PC 4) — gespeichert entscheidet der Kern samt Rückfrage. */
 function zumBeginn(e: NonNullable<TreffpunktEingabe>, beginn: string): { zeit: string; entfaellt: boolean } {
   if (!istUhrzeit(e.zeit) || !istUhrzeit(e.beginn) || !istUhrzeit(beginn)) return { zeit: e.zeit, entfaellt: false };
-  const zeit = treffpunktZeit(beginn, treffpunktVorlauf(e.beginn, e.zeit));
+  const vorlauf = treffpunktVorlauf(e.beginn, e.zeit);
+  // Nach dem Beginn eingegeben: Sie bleibt stehen, die Prüfung meldet es (AK 5).
+  if (vorlauf < 0) return { zeit: e.zeit, entfaellt: false };
+  const zeit = treffpunktZeit(beginn, vorlauf);
   return zeit === null ? { zeit: e.zeit, entfaellt: true } : { zeit, entfaellt: false };
 }
 
