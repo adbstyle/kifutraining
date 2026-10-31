@@ -254,14 +254,15 @@ Schweiz, die Einheit von heute zählt noch zum Anstehenden, und der Assistent mu
 rechnen. Auf Wunsch beschränkt er die Auskunft auf einen Zeitraum, dessen Von- und Bis-Tag
 beide mitzählen und der höchstens bis zum gleichen Kalendertag im Folgejahr reicht, und auf die
 Termine, an denen man dabei ist, oder auf alle, zu denen man eingeladen ist; ein Zeitraum ohne Termine ergibt eine leere
-Auskunft. Jeder Termin nennt Datum, Beginn, Ende, Ort samt Kartenlink, Bemerkung und Hinweis für Eltern, die Felder des Platzes je
+Auskunft. Jeder Termin nennt Datum, Beginn, Ende, Ort samt Kartenlink, Bemerkung und Hinweis für Eltern, bei einem Training den
+Treffpunkt mit Uhrzeit und Ort, die Felder des Platzes je
 mit Grösse, Toren je Torart und Untergrund, die erwartete Spielerzahl, sein Training oder dass er
 keines trägt, seine Trainer:innen — wer eingeladen, wer dabei ist, wer wann abgesagt hat und wer
 verantwortlich ist —, die Mindestbesetzung und wie viele sie verlangt, ob er ausgefallen ist und
 aus welchem Grund, und bei
-einem Serientermin die Serie und die Angaben, in denen er von ihr abweicht — Felder und
-Spielerzahl eingeschlossen. Zu jeder Serie erfährt er Wochentage, Zeitraum, Zeit, Ort samt Kartenlink,
-Bemerkung, Hinweis für Eltern, Trainer:innen, Mindestbesetzung, Felder und erwartete Spielerzahl. Dabei unterscheidet er bei jeder
+einem Serientermin die Serie und die Angaben, in denen er von ihr abweicht — Felder,
+Spielerzahl und Treffpunkt eingeschlossen. Zu jeder Serie erfährt er Wochentage, Zeitraum, Zeit, Ort samt Kartenlink,
+Treffpunkt, Bemerkung, Hinweis für Eltern, Trainer:innen, Mindestbesetzung, Felder und erwartete Spielerzahl. Dabei unterscheidet er bei jeder
 Angabe zu Platz und Spielerzahl, ob sie unbekannt ist oder ob ausdrücklich nichts da ist: Ein
 Termin ohne Felder hat einen unbekannten Platz, eine leere Grösse, Toranzahl oder
 Untergrundangabe gilt als unbekannt, ebenso eine nicht erfasste Spielerzahl; 0 Tore einer
@@ -277,19 +278,26 @@ ein Spiel ist. Ein Spiel legt er wie in der Anwendung mit Bezeichnung und einem 
 noch bevorsteht, auf Wunsch mit Mindest- und Höchstzahl, Meldefrist und Treffpunkten, die er stets
 als ganze Liste angibt; Felder und erwartete Spielerzahl weist die Anwendung an einem Spiel ab. Dazu
 kommen wöchentliche Terminserien, immer aus Trainings, mit Wochentagen, Zeitraum, Zeit, Ort samt Kartenlink,
-Bemerkung, Hinweis für Eltern, Trainer:innen, Mindestbesetzung, Feldern und erwarteter Spielerzahl; eine erwartete Zahl weist die
+Treffpunkt, Bemerkung, Hinweis für Eltern, Trainer:innen, Mindestbesetzung, Feldern und erwarteter Spielerzahl; eine erwartete Zahl weist die
 Anwendung wie dort ab, solange das Team eine Spielerliste führt, ausser an einem Termin, der schon
 begonnen hat. Den Kartenlink gibt er wie in der Anwendung nur mit einem Ort an, mit https:// und
 höchstens 500 Zeichen; ändert er den Ort ohne neuen Link, fällt der bisherige weg, und die Antwort
 sagt ihm das, ebenso wenn ein Termin, der wieder der Serie folgt, seinen eigenen Link verliert.
 Dass die Eltern den Hinweis für Eltern sehen und die Bemerkung nicht, sagen ihm die Werkzeuge wie
 die Hinweise in der Anwendung; einen Hinweis entfernt er wie dort, an einem einzelnen Serientermin
-mit derselben Wirkung: Der Termin weicht ab und ist bewusst ohne. Er ändert und entfernt Termine; bei einem Serientermin muss er sagen, ob es nur für
+mit derselben Wirkung: Der Termin weicht ab und ist bewusst ohne.
+Einem Training und einer Serie gibt er wie in der Anwendung einen Treffpunkt aus Uhrzeit und Ort,
+am Tag des Trainings und nicht nach dem Beginn, den Ort höchstens 100 Zeichen lang; er ändert ihn und
+entfernt ihn, an einem einzelnen Serientermin ebenfalls als bewusst ohne. Die Werkzeuge sagen ihm wie
+der Hinweis hinter dem ⓘ, dass die Eltern den Treffpunkt sehen und dass er beim Verlegen seinen
+Abstand zum Beginn behält; einem Spiel gibt er statt dessen Treffpunkte je Anreiseart. Läge der
+Treffpunkt nach einer Zeitänderung am Vortag, entfällt er an denselben Terminen wie in der
+Anwendung, aber ohne Rückfrage; die Antwort nennt die Daten dieser Termine. Er ändert und entfernt Termine; bei einem Serientermin muss er sagen, ob es nur für
 diesen, für diesen und alle folgenden oder für alle Termine der Serie gilt, sonst lehnt die
 Anwendung ab. Felder gibt er dabei stets als ganze Liste an, die die bisherige ersetzt; Felder und
 Spielerzahl entfernt er auch wieder, an einem einzelnen Serientermin mit derselben Wirkung wie in
 der Anwendung: Der Termin weicht dann ab und gilt als unbekannt. Eine abweichende Angabe lässt er
-wieder der Serie folgen, Felder, Spielerzahl und Hinweis für Eltern eingeschlossen, das Datum ausgenommen. Er ordnet
+wieder der Serie folgen, Felder, Spielerzahl, Hinweis für Eltern und Treffpunkt eingeschlossen, das Datum ausgenommen. Er ordnet
 Terminen Trainings zu — aus dem Bestand des Teams, das Training eines anderen Termins oder ein
 eigenes persönliches Training jeder Altersstufe —, ersetzt und löst sie. Wie in der Anwendung
 bekommt der Termin dabei immer still eine eigene Kopie, ein Termin-Training, das nicht in den
@@ -390,8 +398,8 @@ was erst mit späteren Erweiterungen dazukommt und heute noch nicht geht —, im
 „Übungen suchen und abrufen - den ganzen Bestand, den du auch in KiFu siehst"; „eigene Übungen samt
 Feld-Diagramm anlegen, kopieren, ändern, öffentlich schalten und zurückziehen"; „Trainings anlegen,
 überarbeiten, veröffentlichen, zurückziehen, übernehmen und löschen"; „Team-Trainings deiner Teams
-führen und im Kalender deiner Teams Termine und Terminserien samt Platz, erwarteter Spielerzahl und
-Kadern sowie Spiele mit Bezeichnung, Richtwert, Meldefrist und Treffpunkten festlegen, ändern und
+führen und im Kalender deiner Teams Termine und Terminserien samt Platz, Treffpunkt, erwarteter
+Spielerzahl, Kadern und Mindestbesetzung sowie Spiele mit Bezeichnung, Richtwert, Meldefrist und Treffpunkten festlegen, ändern und
 entfernen, ihnen als Kopie Trainings aus dem Team oder deine persönlichen Trainings zuordnen und sie
 wieder lösen, Trainer:innen einladen, ausladen, absagen und wieder zusagen und bestimmen, wer
 verantwortlich ist, Ausfälle festhalten und zurücknehmen sowie die Termine eines Zeitraums
@@ -406,7 +414,7 @@ einer Spieler:in holen und erneuern, die Selbstabholung ein- und ausschalten, di
 und erneuern und sehen, welche Links bezogen wurden". Nie erreichbar sind „deine Favoriten", „die
 Verwaltung deiner Teams (gründen, umbenennen, Mitglieder aufnehmen oder entfernen)" und „dein Konto
 selbst (Anzeigename, Passwort, Löschen)". Kommt eine dieser Fähigkeiten dazu, muss man nicht erneut
-zustimmen; auch wer seinen Zugang erlaubt hat, bevor der Kalender, Platz und Spielerzahl der
+zustimmen; auch wer seinen Zugang erlaubt hat, bevor der Kalender, Platz, Spielerzahl und Treffpunkt der
 Termine, die Spielerliste samt Abmeldungen, Links und Selbstabholung, die Kader, die Spiele oder das Probetraining
 dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt
 die Seite, nur zu erlauben, wenn man das Verbinden eben selbst gestartet hat.
