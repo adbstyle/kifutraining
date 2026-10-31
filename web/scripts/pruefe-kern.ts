@@ -2197,6 +2197,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#487": ["termin_spieler_abrufen", "termin_anwesenheit_setzen", "team_plan_abrufen"],
     "#556": ["probetraining_abrufen", "probetraining_festlegen"],
     "#555": ["probetraining_abrufen", "probetraining_festlegen", "spieler_probe_setzen", "spielerliste_abrufen", "termin_spieler_abrufen"],
+    "#561": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "team_plan_abrufen", "spieler_link_abrufen"],
     "#590": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "team_plan_abrufen", "spieler_link_abrufen", "training_abrufen", "trainings_suchen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))

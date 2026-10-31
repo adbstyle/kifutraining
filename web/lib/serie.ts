@@ -235,6 +235,27 @@ export const SERIE_MELDUNG = {
     "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Hinweis für Eltern, Treffpunkt, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.",
 } as const;
 
+/** Was die Vorschau einer Serienänderung verfallen oder entfallen lässt — die
+ *  Zahl, die die Oberfläche bestätigt und gegen die die Datenebene beim
+ *  Ausführen prüft (`SERIE_VERFALL_GEAENDERT`; #453 AK 12, #561 PC 5). */
+export function verfallSumme(f: {
+  abmeldungenVerfallend: number;
+  abmeldungenKader: number;
+  nachtraegeVerfallend: number;
+  absagenVerfallend: number;
+  anmeldungenVerfallend: number;
+  treffpunktEntfallend: readonly unknown[];
+}): number {
+  return (
+    f.abmeldungenVerfallend +
+    f.abmeldungenKader +
+    f.nachtraegeVerfallend +
+    f.absagenVerfallend +
+    f.anmeldungenVerfallend +
+    f.treffpunktEntfallend.length
+  );
+}
+
 /** Der KI-Weg verlangt eine ausdrückliche Bestätigung, wenn «dieser und
  *  folgende» oder «alle» vergangene Termine erfasst oder entfallen lässt
  *  (PO 16, #326 AK 11, #325 AK 20). */

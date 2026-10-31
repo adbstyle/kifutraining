@@ -42,6 +42,7 @@ import {
   SERIE_TEXT,
   erlaubteReichweiten,
   regelAenderung,
+  verfallSumme,
   type Reichweite,
   type SerienRegel,
 } from "@/lib/serie";
@@ -421,13 +422,7 @@ export function TerminBereich({
     const r = b.art === "aendern"
       ? await aendereSerieAktion(b.t.id, b.reichweite, b.aenderung ?? {}, {
           ...erwartet,
-          verfallend:
-            b.folge.abmeldungenVerfallend +
-            b.folge.abmeldungenKader +
-            b.folge.nachtraegeVerfallend +
-            b.folge.absagenVerfallend +
-            b.folge.anmeldungenVerfallend +
-            b.folge.treffpunktEntfallend.length,
+          verfallend: verfallSumme(b.folge),
         })
       : await entferneSerieAktion(b.t.id, b.reichweite, erwartet);
     if (!r.ok) return serienFehler(b.art, r.error, laufNr.current !== nr);
@@ -523,18 +518,8 @@ export function TerminBereich({
       setReichweite(null);
       const schritt: SerienSchritt = { art, t, reichweite: r, aenderung: frage.aenderung, folge: v.folge, grund: frage.grund };
       // AK 8: bestätigen, wenn Termine wegfallen — beim Entfernen immer; ebenso,
-      // wenn Abmeldungen verfallen (#437 AK 1).
-      if (
-        art === "entfernen" ||
-        v.folge.entfallendAnzahl > 0 ||
-        v.folge.abmeldungenVerfallend > 0 ||
-        v.folge.abmeldungenKader > 0 ||
-        v.folge.nachtraegeVerfallend > 0 ||
-        v.folge.absagenVerfallend > 0 ||
-        v.folge.anmeldungenVerfallend > 0 ||
-        // #561 PC 5: ebenso, wenn Treffpunkte entfallen.
-        v.folge.treffpunktEntfallend.length > 0
-      )
+      // wenn Abmeldungen verfallen (#437 AK 1) oder Treffpunkte entfallen (#561 PC 5).
+      if (art === "entfernen" || v.folge.entfallendAnzahl > 0 || verfallSumme(v.folge) > 0)
         setBestaetigen(schritt);
       else await fuehreAus(schritt, nr);
     });

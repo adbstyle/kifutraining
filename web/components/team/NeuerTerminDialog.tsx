@@ -43,7 +43,7 @@ import { terminBegonnen } from "@/lib/zeit";
 import type { Kader } from "@/lib/kader";
 import { KaderWahl } from "./KaderWahl";
 import { OrtFelder } from "./OrtFelder";
-import { TreffpunktFelder, treffpunktAusEingabe, type TreffpunktEingabe } from "./TreffpunktFelder";
+import { TreffpunktFelder, treffpunktAusEingabe, type TrainingsTreffpunktEingabe } from "./TreffpunktFelder";
 
 export type SerieFelder = {
   wochentage: Wochentag[];
@@ -137,7 +137,7 @@ export function NeuerTerminDialog({
   const [besetzung, setBesetzung] = useState<BesetzungEingabe>(KEINE_BESETZUNG);
   const [besetzungFehler, setBesetzungFehler] = useState<string>();
   const platz = usePlatzAngaben();
-  const [treffpunkt, setTreffpunkt] = useState<TreffpunktEingabe>(null);
+  const [treffpunkt, setTreffpunkt] = useState<TrainingsTreffpunktEingabe>(null);
   // Ein Server-Fehler gilt für die Art, mit der gespeichert wurde; schaltet
   // der USER um, ist er verworfen — bis zum nächsten Speichern.
   const [verworfen, setVerworfen] = useState<string | undefined>();

@@ -49,7 +49,7 @@ import {
 import type { Kader, TerminKader } from "@/lib/kader";
 import { KaderWahl } from "./KaderWahl";
 import { OrtFelder } from "./OrtFelder";
-import { TreffpunktFelder, treffpunktAusEingabe, treffpunktEingabe, type TreffpunktEingabe } from "./TreffpunktFelder";
+import { TreffpunktFelder, treffpunktAusEingabe, treffpunktEingabe, type TrainingsTreffpunktEingabe } from "./TreffpunktFelder";
 
 const ANGABE: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit",
@@ -206,7 +206,7 @@ export function TerminDialog({
   const [grundFehler, setGrundFehler] = useState<string>();
   const kaderStart = terminKader.flatMap((k) => (k.id ? [k.id] : []));
   const [kaderWahl, setKaderWahl] = useState<string[]>([]);
-  const [treffpunkt, setTreffpunkt] = useState<TreffpunktEingabe>(null);
+  const [treffpunkt, setTreffpunkt] = useState<TrainingsTreffpunktEingabe>(null);
   const platz = usePlatzAngaben();
   const istSpiel = start?.art === "spiel";
   const spiel = useSpielAngaben(felder.datum, felder.beginn ?? "");

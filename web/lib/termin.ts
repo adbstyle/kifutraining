@@ -137,6 +137,12 @@ export function treffpunktZeit(beginn: string, vorlauf: number): string | null {
   return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 }
 
+/** Der Treffpunkt, wie er gespeichert wird (#561 PC 1): Abstand zum Beginn
+ *  und Ort, beides getrimmt. Vorher mit `treffpunktProblem` geprüft. */
+export function treffpunktGespeichert(t: TerminTreffpunkt, beginn: string): { vorlauf_min: number; ort: string | null } {
+  return { vorlauf_min: treffpunktVorlauf(beginn.trim(), t.zeit.trim()), ort: leerZuNull(t.ort) };
+}
+
 /** Was am Treffpunkt eines Trainings nicht stimmt, sonst `null` (#561 AK 3, 5,
  *  6). Ohne Treffpunkt stimmt alles; der Beginn ist vorher geprüft. */
 export function treffpunktProblem(

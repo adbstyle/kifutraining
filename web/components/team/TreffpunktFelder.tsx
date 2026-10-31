@@ -13,17 +13,17 @@ import {
 
 /** Der Treffpunkt eines Trainings im Dialog (#561), solange getippt wird:
  *  Die Uhrzeit gilt zum Beginn, zu dem sie eingegeben wurde (`beginn`). */
-export type TreffpunktEingabe = { zeit: string; ort: string; beginn: string } | null;
+export type TrainingsTreffpunktEingabe = { zeit: string; ort: string; beginn: string } | null;
 
 /** Die Eingabe eines gespeicherten Treffpunkts zum Beginn des Termins. */
-export function treffpunktEingabe(t: TerminTreffpunkt | null | undefined, beginn: string): TreffpunktEingabe {
+export function treffpunktEingabe(t: TerminTreffpunkt | null | undefined, beginn: string): TrainingsTreffpunktEingabe {
   return t ? { zeit: t.zeit, ort: t.ort, beginn } : null;
 }
 
 /** Die Uhrzeit zum aktuellen Beginn im Dialog: Wird er verlegt, wandert der
  *  Treffpunkt im selben Abstand mit (#561 PC 1). `entfaellt`, wenn er dann am
  *  Vortag läge (PC 4) — gespeichert entscheidet der Kern samt Rückfrage. */
-function zumBeginn(e: NonNullable<TreffpunktEingabe>, beginn: string): { zeit: string; entfaellt: boolean } {
+function zumBeginn(e: NonNullable<TrainingsTreffpunktEingabe>, beginn: string): { zeit: string; entfaellt: boolean } {
   if (!istUhrzeit(e.zeit) || !istUhrzeit(e.beginn) || !istUhrzeit(beginn)) return { zeit: e.zeit, entfaellt: false };
   const vorlauf = treffpunktVorlauf(e.beginn, e.zeit);
   // Nach dem Beginn eingegeben: Sie bleibt stehen, die Prüfung meldet es (AK 5).
@@ -35,7 +35,7 @@ function zumBeginn(e: NonNullable<TreffpunktEingabe>, beginn: string): { zeit: s
 /** Was der Dialog sendet: `null` ohne Treffpunkt; `undefined`, wenn er mit
  *  dem neuen Beginn entfiele — dann lässt der Dialog ihn unverändert, und der
  *  Kern fragt vor dem Speichern nach (PC 5). */
-export function treffpunktAusEingabe(e: TreffpunktEingabe, beginn: string): TerminTreffpunkt | null | undefined {
+export function treffpunktAusEingabe(e: TrainingsTreffpunktEingabe, beginn: string): TerminTreffpunkt | null | undefined {
   if (!e) return null;
   const z = zumBeginn(e, beginn);
   return z.entfaellt ? undefined : { zeit: z.zeit, ort: e.ort };
@@ -64,8 +64,8 @@ export function TreffpunktFelder({
   fehler,
   disabled,
 }: {
-  wert: TreffpunktEingabe;
-  onChange: (w: TreffpunktEingabe) => void;
+  wert: TrainingsTreffpunktEingabe;
+  onChange: (w: TrainingsTreffpunktEingabe) => void;
   /** Der Beginn im Dialog `HH:MM`. */
   beginn: string;
   fehler?: string;

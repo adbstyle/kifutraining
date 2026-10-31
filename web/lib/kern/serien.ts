@@ -4,6 +4,7 @@ import { istUuid } from "@/lib/kennung";
 import {
   SERIE_MELDUNG,
   serieProblem,
+  verfallSumme,
   vergangeneBestaetigen,
   type Reichweite,
   type Wochentag,
@@ -14,9 +15,9 @@ import {
   kartenlinkOhneOrt,
   leerZuNull,
   textProblem,
+  treffpunktGespeichert,
   treffpunktPasst,
   treffpunktProblem,
-  treffpunktVorlauf,
   zeitProblem,
   type TerminTreffpunkt,
 } from "@/lib/termin";
@@ -131,16 +132,11 @@ export async function legeSerieFest(
     p_besetzung: e.mindestbesetzung ?? null,
     p_ort_link: leerZuNull(e.ortLink),
     p_hinweis_eltern: leerZuNull(e.hinweisEltern),
-    p_treffpunkt: e.treffpunkt ? treffpunktAenderung(e.treffpunkt, e.beginn) : null,
+    p_treffpunkt: e.treffpunkt ? treffpunktGespeichert(e.treffpunkt, e.beginn) : null,
   });
   if (error) return kalenderFehler(error);
   const r = data as { serie: string; termine: number };
   return ok({ serieId: r.serie, teamId: e.teamId, termine: r.termine });
-}
-
-/** Der Treffpunkt, wie ihn die Datenebene der Serie gibt: Abstand zum Beginn und Ort. */
-function treffpunktAenderung(t: TerminTreffpunkt, beginn: string): { vorlauf_min: number; ort: string | null } {
-  return { vorlauf_min: treffpunktVorlauf(beginn, t.zeit), ort: leerZuNull(t.ort) };
 }
 
 export type SerienAenderung = {
@@ -267,18 +263,6 @@ type Erwartet = { version: number; entfallend: string[]; verfallend?: number };
 
 type RpcAntwort = { data: unknown; error: { message: string; code?: string } | null };
 
-/** Was die Vorschau verfallen oder entfallen lässt — die Zahl, gegen die die
- *  Datenebene beim Ausführen prüft (`SERIE_VERFALL_GEAENDERT`). */
-export function verfallSumme(f: SerienFolge): number {
-  return (
-    f.abmeldungenVerfallend +
-    f.abmeldungenKader +
-    f.nachtraegeVerfallend +
-    f.absagenVerfallend +
-    f.anmeldungenVerfallend +
-    f.treffpunktEntfallend.length
-  );
-}
 
 /** Welche Trainings dieser Termine Termin-Trainings sind — sie gehen mit
  *  ihrem Termin (PO 2026-10-06), die übrigen bleiben im Bestand. */
@@ -420,7 +404,7 @@ export async function aendereSerie(
     const beginn = leerZuNull(a.beginn) ?? t.beginn;
     const p = treffpunktProblem(a.treffpunkt, beginn);
     if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
-    treffpunkt = a.treffpunkt ? treffpunktAenderung(a.treffpunkt, beginn) : null;
+    treffpunkt = a.treffpunkt ? treffpunktGespeichert(a.treffpunkt, beginn) : null;
     if (treffpunkt && !hatZeit) {
       const { data: sb } = await supabase.from("termin_serien").select("beginn").eq("id", t.serie_id).maybeSingle<{ beginn: string }>();
       if (sb && !treffpunktPasst(treffpunkt.vorlauf_min, sb.beginn))

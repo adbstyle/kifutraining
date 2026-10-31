@@ -12,8 +12,8 @@ import {
   leerZuNull,
   spielerzahlProblem,
   terminProblem,
+  treffpunktGespeichert,
   treffpunktPasst,
-  treffpunktVorlauf,
   type TerminProblem,
   type TerminTreffpunkt,
 } from "@/lib/termin";
@@ -303,9 +303,9 @@ export function treffpunktSpalten(
   t: TerminTreffpunkt | null | undefined,
   beginn: string | null | undefined,
 ): { treffpunkt_vorlauf_min: number | null; treffpunkt_ort: string | null } {
-  return t
-    ? { treffpunkt_vorlauf_min: treffpunktVorlauf(beginn ?? "", t.zeit), treffpunkt_ort: leerZuNull(t.ort) }
-    : { treffpunkt_vorlauf_min: null, treffpunkt_ort: null };
+  if (!t) return { treffpunkt_vorlauf_min: null, treffpunkt_ort: null };
+  const g = treffpunktGespeichert(t, beginn ?? "");
+  return { treffpunkt_vorlauf_min: g.vorlauf_min, treffpunkt_ort: g.ort };
 }
 
 /** Die Meldefrist eines Spiels prüfen (#463 AK 8): leer heisst keine. */
