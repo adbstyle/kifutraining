@@ -14,8 +14,6 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   info?: ReactNode;
   /** Den festen Hinweis auf Touch-Geräten unter dem Feld zeigen (siehe `Feld`). */
   infoAufTouch?: boolean;
-  /** Ein Knopf neben dem Feld, auf einer Linie mit dem Feldkasten (siehe `Feld`). */
-  aktion?: ReactNode;
   error?: boolean;
   /** Ein BEFUND am Feld, keine Fehleingabe — der Wert ist gespeichert und
       richtig erfasst, geht aber mit anderen nicht auf (Story #151: ungleich
@@ -59,7 +57,6 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       supportingText,
       info,
       infoAufTouch,
-      aktion,
       error = false,
       befund = false,
       labelVersteckt = false,
@@ -86,7 +83,6 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
         hinweis={supportingText}
         info={info}
         infoAufTouch={infoAufTouch}
-        aktion={aktion}
         error={error}
         schrift={schrift}
         className={className}

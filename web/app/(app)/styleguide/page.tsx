@@ -1723,18 +1723,15 @@ export default async function Styleguide() {
             Namen: Zwei zusammengehörige Werte (Länge und Breite, Mindest- und
             Höchstanzahl) sind zwei Felder untereinander, nicht ein gemeinsamer
             Name über zwei Teilnamen - zwei Namensstufen brächen die ruhige
-            Liste aus Namen und Werten (PO 2026-10-04). Bildet ein Knopf mit
-            dem Feld eine Handlung (Mitglied suchen),
-            steht er in <code>aktion</code>: in derselben Zeile wie der
-            Feldkasten, auf einer Linie mit ihm - ob der Name darüber steht oder
-            das leere Feld ihn ausblendet.
+            Liste aus Namen und Werten (PO 2026-10-04).
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Der Feldkasten ist ruhend leer:</strong> keine Kontur, keine
             Fläche (Utility <code>feldkasten</code>). Ein Formular liest sich so
             als Text statt als Stapel von Kästen. Beim Überfahren hellt die ganze
-            Angabe auf, Name und Kasten zusammen, mit einer leisen Ebene in der
-            Schriftfarbe (6 %), die ringsum 6 px über den Kasten hinausragt -
+            Angabe auf - Name, Kasten und Hinweis oder Fehler darunter zusammen,
+            denn alles drei gehört zum Feld (PO 2026-10-31) -, mit einer leisen
+            Ebene in der Schriftfarbe (6 %), die ringsum 6 px hinausragt -
             gerade ein leeres Feld gibt sich so deutlich als Feld zu erkennen,
             ohne dass sich etwas verschiebt. Im Fokus trägt die Kontur Primary,
             bei Fehler und Befund Error. Die Stärke bleibt dabei immer

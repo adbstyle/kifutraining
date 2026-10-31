@@ -557,18 +557,17 @@
 /* Im Feld steht der Name dann nicht ein zweites Mal: Wer hineinklickt, sieht
    ihn darüber und darunter ein leeres Feld. Nur wo der Name unsichtbar ist
    (Suche in der Filterleiste), bleibt der Platzhalter auch beim Tippen stehen. */
-/* Überfahren (nach dem Vorbild von Jira): Die ganze Angabe hellt auf — Name
-   und Feldkasten zusammen — und die Fläche ragt ringsum 6 px über den Kasten
-   hinaus, ohne dass sich etwas verschiebt (Schatten statt Polster). Gerade
+/* Überfahren (nach dem Vorbild von Jira): Die ganze Angabe hellt auf — Name,
+   Feldkasten und Hinweis oder Fehler darunter zusammen (PO 2026-10-31) — und
+   die Fläche ragt ringsum 6 px darüber hinaus, ohne dass sich etwas
+   verschiebt (Schatten statt Polster). Gerade
    ein leeres Feld, das ruhend nur seinen Namen zeigt, gibt sich so deutlich
    als Feld zu erkennen. Eine leise Ebene in der Schriftfarbe (6 %): auf jeder
    Höhenstufe dieselbe Aussage, und im Druck kippt sie mit der Schrift. Nicht
    während man im Feld arbeitet — dann trägt die Kontur —, nicht an einem
    gesperrten Feld (nativ `:disabled` oder, bei Auslösern ohne Eingabe-Element,
    `aria-disabled`) und nicht an der umrandeten Suche der Filterleiste, die
-   neben Knöpfen steht und sich schon über ihre Kante zeigt. Die Fläche liegt
-   auf der Angabe (`.feld-angabe`), nicht auf dem ganzen Rahmen: Ein Knopf
-   daneben (`aktion`) ist eine eigene Handlung und hellt nicht mit auf. */
+   neben Knöpfen steht und sich schon über ihre Kante zeigt. */
 @media (hover: hover) {
   /* «… hinzufügen» in Feldgestalt (`HinzufuegenFeld`) hellt auf wie eine
      leere Angabe — es sieht aus wie ein Feld und verhält sich beim

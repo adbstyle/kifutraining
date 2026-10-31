@@ -65,7 +65,6 @@ export function Feld({
   hinweis,
   info,
   infoAufTouch = false,
-  aktion,
   error = false,
   schrift,
   className,
@@ -96,10 +95,6 @@ export function Feld({
    *  Altersstufe eines Trainings lebenslang bindet —, steht er dort als
    *  Hinweis unter dem Feld, solange kein anderer dasteht. */
   infoAufTouch?: boolean;
-  /** Ein Knopf, der mit dem Feld zusammen eine Handlung bildet (Speichern,
-   *  Suchen) — in derselben Zeile wie der Feldkasten, damit beide auf einer
-   *  Linie stehen, ob der Name darüber steht oder (leer) ausgeblendet ist. */
-  aktion?: ReactNode;
   error?: boolean;
   /** Die Schrift des Werts, wenn sie nicht die gewöhnliche ist (siehe
    *  `TextField`) — im leeren Feld steht der Name in ihr, und das ⓘ dahinter
@@ -118,10 +113,13 @@ export function Feld({
       data-fehler={error || undefined}
       data-name-versteckt={labelVersteckt || undefined}
     >
-      <div className={cn(!!aktion && "flex items-end gap-3")}>
-        {/* Name und Feldkasten — die «Angabe»; sie hellt beim Überfahren auf
-            (`.feld-angabe` in globals.css), ein Knopf daneben nicht. */}
-        <div className={cn("feld-angabe relative", !!aktion && "min-w-0 flex-1")}>
+      {/* Name, Feldkasten und Hinweis darunter — die «Angabe»; sie hellt beim
+          Überfahren als Ganzes auf (`.feld-angabe` in globals.css): Was über
+          und unter dem Kasten steht, gehört zum Feld (PO 2026-10-31). */}
+      <div className="feld-angabe">
+        {/* Name und Kasten allein: Auf sie bezieht sich das ⓘ, im leeren Feld
+            mittig zum Kasten — nicht zum Hinweis darunter. */}
+        <div className="relative">
           <label
             id={`${id}-label`}
             htmlFor={id}
@@ -159,21 +157,18 @@ export function Feld({
             </>
           )}
         </div>
-        {/* Unten bündig: Der Knopf steht auf einer Linie mit dem Kasten, ob
-            der Name darüber steht oder (leer) ausgeblendet ist. */}
-        {aktion && <div className="shrink-0">{aktion}</div>}
+        {hinweis && (
+          <p id={`${id}-hinweis`} className={hinweisKlasse(error)}>
+            {hinweis}
+          </p>
+        )}
+        {/* Vorgelesen wird der Hinweis schon mit dem ⓘ (`${id}-info`). */}
+        {info && infoAufTouch && !hinweis && (
+          <p aria-hidden className={cn(hinweisKlasse(), "[@media(hover:hover)]:hidden")}>
+            {info}
+          </p>
+        )}
       </div>
-      {hinweis && (
-        <p id={`${id}-hinweis`} className={hinweisKlasse(error)}>
-          {hinweis}
-        </p>
-      )}
-      {/* Vorgelesen wird der Hinweis schon mit dem ⓘ (`${id}-info`). */}
-      {info && infoAufTouch && !hinweis && (
-        <p aria-hidden className={cn(hinweisKlasse(), "[@media(hover:hover)]:hidden")}>
-          {info}
-        </p>
-      )}
     </div>
   );
 }
