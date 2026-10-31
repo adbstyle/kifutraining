@@ -12,7 +12,10 @@ import {
   leerZuNull,
   spielerzahlProblem,
   terminProblem,
+  treffpunktGespeichert,
+  treffpunktPasst,
   type TerminProblem,
+  type TerminTreffpunkt,
 } from "@/lib/termin";
 import {
   felderPfad,
@@ -78,7 +81,7 @@ import {
 export const TERMIN_FELD = { feld: "termin_id" } as const;
 
 export const TERMIN_ROH =
-  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, training_id, datum, beginn, ende, ort, ort_link, bemerkung, hinweis_eltern, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, hinweis_eltern_abweichend, ausgefallen, ausfall_grund";
+  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, training_id, datum, beginn, ende, ort, ort_link, bemerkung, hinweis_eltern, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, treffpunkt_vorlauf_min, treffpunkt_ort, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, hinweis_eltern_abweichend, treffpunkt_abweichend, ausgefallen, ausfall_grund";
 
 export type TerminRoh = {
   id: string;
@@ -108,6 +111,9 @@ export type TerminRoh = {
   /** Die Mindestbesetzung (#521). */
   besetzung_art: string | null;
   besetzung_zahl: number | null;
+  /** Nur an einem Training: der Treffpunkt als Minuten vor dem Beginn und Ort (#561). */
+  treffpunkt_vorlauf_min: number | null;
+  treffpunkt_ort: string | null;
   /** Nur Serientermine tragen eine Serie; die Flags zeigen, welche Angaben
    *  von ihr abweichen. */
   serie_id: string | null;
@@ -115,6 +121,7 @@ export type TerminRoh = {
   ort_abweichend: boolean;
   bemerkung_abweichend: boolean;
   hinweis_eltern_abweichend: boolean;
+  treffpunkt_abweichend: boolean;
   /** Ein ausgefallener Termin behält sein Training; es ruht (PO 2026-10-06). */
   ausgefallen: boolean;
   ausfall_grund: string | null;
@@ -220,6 +227,8 @@ export type TerminFestlegen = {
   bemerkung?: string | null;
   /** Der Hinweis für Eltern (#590 AK 1); ohne Angabe oder leer: keiner. */
   hinweisEltern?: string | null;
+  /** Nur an einem Training: der Treffpunkt (#561 AK 1); ohne Angabe: keiner. */
+  treffpunkt?: TerminTreffpunkt | null;
   /** Die Felder des Platzes (#389); ohne Angabe oder leer: keine. */
   felder?: readonly FeldEingabe[] | null;
   /** Die erwartete Spielerzahl (#390); ohne Angabe: unbekannt. */
@@ -243,12 +252,14 @@ function artFehler(
     spielerzahl?: number | null;
     meldefrist?: string | null;
     treffpunkte?: readonly TreffpunktEingabe[] | null;
+    treffpunkt?: TerminTreffpunkt | null;
   },
   pruefeBezeichnung: boolean,
 ): KernFehler | null {
   if (art === "spiel") {
     if ((a.felder?.length ?? 0) > 0 || (a.spielerzahl !== undefined && a.spielerzahl !== null))
       return fehlschlag("eingabe", SPIEL_TEXT.nurTraining, { feld: a.spielerzahl != null ? "erwartete_spielerzahl" : "felder" });
+    if (a.treffpunkt) return fehlschlag("eingabe", TERMIN_TEXT.treffpunktNurTraining, { feld: "treffpunkt" });
     if (pruefeBezeichnung) {
       const b = bezeichnungProblem(a.bezeichnung);
       if (b) return fehlschlag("eingabe", b.text, { feld: b.feld });
@@ -286,6 +297,17 @@ async function setzeTreffpunkte(supabase: SupabaseClient, terminId: string, zeil
   return error ? ausDbFehler(error) : ok(undefined);
 }
 
+/** Der Treffpunkt eines Trainings, wie er gespeichert wird (#561): Abstand
+ *  zum Beginn und Ort; ohne Treffpunkt beide `null`. Vorher geprüft. */
+export function treffpunktSpalten(
+  t: TerminTreffpunkt | null | undefined,
+  beginn: string | null | undefined,
+): { treffpunkt_vorlauf_min: number | null; treffpunkt_ort: string | null } {
+  if (!t) return { treffpunkt_vorlauf_min: null, treffpunkt_ort: null };
+  const g = treffpunktGespeichert(t, beginn ?? "");
+  return { treffpunkt_vorlauf_min: g.vorlauf_min, treffpunkt_ort: g.ort };
+}
+
 /** Die Meldefrist eines Spiels prüfen (#463 AK 8): leer heisst keine. */
 function fristFehler(datum: string, beginn: string | null | undefined, frist: string | null | undefined): KernFehler | null {
   const f = leerZuNull(frist);
@@ -318,7 +340,8 @@ export async function legeTerminFest(
   e: TerminFestlegen,
 ): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
   if (!istTerminArt(e.art)) return fehlschlag("eingabe", SPIEL_TEXT.art, { feld: "art" });
-  const problem = feldFehler(terminProblem(e));
+  // Den Treffpunkt prüft beim Spiel `artFehler` (nur an einem Training).
+  const problem = feldFehler(terminProblem(e.art === "spiel" ? { ...e, treffpunkt: undefined } : e));
   if (problem) return problem;
   const art = artFehler(e.art, e, true);
   if (art) return art;
@@ -361,6 +384,7 @@ export async function legeTerminFest(
       ort_link: leerZuNull(e.ortLink),
       bemerkung: leerZuNull(e.bemerkung),
       hinweis_eltern: leerZuNull(e.hinweisEltern),
+      ...treffpunktSpalten(e.treffpunkt, e.beginn),
       felder: felder.felder,
       erwartete_spielerzahl: e.spielerzahl ?? null,
       besetzung_art: e.mindestbesetzung?.art ?? null,
@@ -439,6 +463,10 @@ export type TerminAendern = {
    *  `null` oder `[]` = alle entfernen. Die Zeitpunkte gelten zum neuen
    *  Anpfiff. */
   treffpunkte?: readonly TreffpunktEingabe[] | null;
+  /** Nur an einem Training (#561): `undefined` = unverändert (eine Verlegung
+   *  nimmt ihn im selben Abstand mit, PC 1), `null` = entfernen. Die Uhrzeit
+   *  gilt zum neuen Beginn. */
+  treffpunkt?: TerminTreffpunkt | null;
   /** Das Training, das der Termin bei der Auswahl trug (AK 23). `undefined`
    *  beim KI-Weg: geprüft wird dann gegen den eben gelesenen Stand. */
   erwartetesTraining?: string | null;
@@ -446,6 +474,10 @@ export type TerminAendern = {
    *  Bestätigung — sonst kommt ein Fehler mit `verfallend`. Die Oberfläche
    *  sendet die bestätigte Zahl, die KI `true`. */
   bestaetigt?: boolean | number;
+  /** Läge der Treffpunkt mit dem neuen Beginn am Vortag, entfällt er (#561
+   *  PC 4) — nur mit `true`, sonst kommt ein Fehler mit `treffpunktEntfaellt`
+   *  (PC 5). Die KI fragt nicht nach und sendet `true` (PC 6). */
+  treffpunktWeg?: boolean;
 };
 
 /** Was eine Verlegung verfallen lässt: Abmeldungen (#437 AK 1) und, wird
@@ -497,8 +529,17 @@ export function verfallend(abmeldungen: number, nachtraege: number, absagen = 0,
   return { abmeldungen, nachtraege, absagen, anmeldungen, summe: abmeldungen + nachtraege + absagen + anmeldungen };
 }
 
-/** Ein Fehler, der vor dem Verlegen nach der Bestätigung fragt. */
-export function verfallFehler(v: Verfallend): KernFehler {
+/** Ein Fehler, der vor dem Verlegen nach der Bestätigung fragt — auch, wenn
+ *  nur der Treffpunkt entfiele (#561 PC 5). */
+export function verfallFehler(v: Verfallend, treffpunktEntfaellt = false): KernFehler {
+  if (!treffpunktEntfaellt) return verfallFehlerOhneTreffpunkt(v);
+  if (v.summe === 0)
+    return fehlschlag("regel", TERMIN_TEXT.treffpunktEntfaellt, { feld: "bestaetigt", verfallend: 0, treffpunktEntfaellt: true });
+  const f = verfallFehlerOhneTreffpunkt(v);
+  return { ...f, meldung: `${TERMIN_TEXT.treffpunktEntfaellt} ${f.meldung}`, treffpunktEntfaellt: true };
+}
+
+function verfallFehlerOhneTreffpunkt(v: Verfallend): KernFehler {
   if (v.spiel)
     return fehlschlag(
       "regel",
@@ -586,6 +627,8 @@ export async function aendereTermin(
     abmeldungenVerfallen: number;
     /** Der Kartenlink fiel mit dem Ort weg (#533 AK 14). */
     kartenlinkEntfallen: boolean;
+    /** Der Treffpunkt fiel mit dem neuen Beginn weg (#561 PC 6). */
+    treffpunktEntfallen: boolean;
   }>
 > {
   const geladen = await ladeTermin(supabase, e.terminId);
@@ -603,7 +646,7 @@ export async function aendereTermin(
     bemerkung: e.bemerkung !== undefined ? leerZuNull(e.bemerkung) : t.bemerkung,
     hinweisEltern: e.hinweisEltern !== undefined ? leerZuNull(e.hinweisEltern) : t.hinweis_eltern,
   };
-  const problem = feldFehler(terminProblem(neu));
+  const problem = feldFehler(terminProblem({ ...neu, treffpunkt: t.art === "spiel" ? undefined : e.treffpunkt }));
   if (problem) return problem;
   // Die Spielangaben, wie sie nach dem Schreiben dastünden (#459).
   const spiel = {
@@ -612,6 +655,7 @@ export async function aendereTermin(
     richtwertMax: e.richtwertMax !== undefined ? e.richtwertMax : t.richtwert_max,
     felder: e.felder,
     spielerzahl: e.spielerzahl,
+    treffpunkt: e.treffpunkt,
   };
   const artProblem =
     t.art === "spiel"
@@ -656,6 +700,8 @@ export async function aendereTermin(
       richtwert_min: number | null;
       richtwert_max: number | null;
       meldefrist_vorlauf_min: number | null;
+      treffpunkt_vorlauf_min: number | null;
+      treffpunkt_ort: string | null;
     }
   > = {};
   if (e.datum !== undefined) aenderung.datum = neu.datum;
@@ -680,6 +726,15 @@ export async function aendereTermin(
     if (e.richtwertMax !== undefined) aenderung.richtwert_max = e.richtwertMax;
     if (e.meldefrist !== undefined) aenderung.meldefrist_vorlauf_min = vorlaufAus(neu.datum, neu.beginn, e.meldefrist);
   }
+  // Der Treffpunkt eines Trainings (#561): gesetzt zum neuen Beginn, sonst
+  // wandert er im selben Abstand mit (PC 1) — ausser er läge dann am Vortag:
+  // Dann entfällt er (PC 4), erst nach Bestätigung (PC 5).
+  const treffpunktEntfaellt =
+    e.treffpunkt === undefined &&
+    "beginn" in aenderung &&
+    !treffpunktPasst(t.treffpunkt_vorlauf_min, neu.beginn ?? "");
+  if (e.treffpunkt !== undefined) Object.assign(aenderung, treffpunktSpalten(e.treffpunkt, neu.beginn));
+  else if (treffpunktEntfaellt) Object.assign(aenderung, treffpunktSpalten(null, null));
 
   // «Nur dieser» (#326 AK 1, PC 1): Jede Angabe eines Serientermins, die sich
   // ändert, weicht danach ab — bis man sie wieder der Serie folgen lässt. Nur
@@ -696,6 +751,13 @@ export async function aendereTermin(
     if ("bemerkung" in aenderung && neu.bemerkung !== t.bemerkung) flags.bemerkung_abweichend = true;
     // #590 AK 4: auch ein entfernter Hinweis weicht ab — der Termin ist dann bewusst ohne.
     if ("hinweis_eltern" in aenderung && neu.hinweisEltern !== t.hinweis_eltern) flags.hinweis_eltern_abweichend = true;
+    // #561 PC 2: Zeit und Ort des Treffpunkts sind eine Angabe; auch ein
+    // entfernter oder entfallener weicht ab — der Termin ist dann bewusst ohne.
+    if (
+      "treffpunkt_vorlauf_min" in aenderung &&
+      (aenderung.treffpunkt_vorlauf_min !== t.treffpunkt_vorlauf_min || aenderung.treffpunkt_ort !== t.treffpunkt_ort)
+    )
+      flags.treffpunkt_abweichend = true;
     if (felder && !gleicheFelder(felder.felder, t.felder)) flags.felder_abweichend = true;
     if (e.spielerzahl !== undefined && e.spielerzahl !== t.erwartete_spielerzahl) flags.spielerzahl_abweichend = true;
     if (
@@ -743,8 +805,13 @@ export async function aendereTermin(
     const n = await verfallendeAbmeldungen(supabase, t.id, neu.datum, neu.beginn);
     if (!n.ok) return n;
     // Eine Zahl bestätigt genau so viele (Oberfläche); sind es inzwischen
-    // andere, fragt der Kern neu. `true` (KI) bestätigt, was es ist.
-    if (n.wert.summe > 0 && e.bestaetigt !== true && e.bestaetigt !== n.wert.summe) return verfallFehler(n.wert);
+    // andere, fragt der Kern neu. `true` (KI) bestätigt, was es ist. Ein
+    // entfallender Treffpunkt fragt in derselben Rückfrage mit (#561 PC 5).
+    if (
+      (n.wert.summe > 0 && e.bestaetigt !== true && e.bestaetigt !== n.wert.summe) ||
+      (treffpunktEntfaellt && e.treffpunktWeg !== true)
+    )
+      return verfallFehler(n.wert, treffpunktEntfaellt);
     verfallen = n.wert.abmeldungen;
   }
 
@@ -780,6 +847,7 @@ export async function aendereTermin(
     trainingId: erwartet,
     abmeldungenVerfallen: verfallen,
     kartenlinkEntfallen: t.ort_link !== null && neu.ortLink === null && e.ortLink === undefined,
+    treffpunktEntfallen: treffpunktEntfaellt,
   });
 }
 

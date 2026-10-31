@@ -1,5 +1,5 @@
 import { Repeat } from "lucide-react";
-import { Eigenschaft, EigenschaftFehlt, ExternerLink, Lozenge, TreffpunktListe } from "@/components/ui";
+import { Eigenschaft, EigenschaftFehlt, ExternerLink, Lozenge, TrainingsTreffpunkt, TreffpunktListe } from "@/components/ui";
 import { spielStatus } from "@/lib/termin-status";
 import { cn } from "@/lib/cn";
 import { wochentageText } from "@/lib/serie";
@@ -63,6 +63,12 @@ export function TerminEigenschaften({
       {t.spiel && t.spiel.treffpunkte.length > 0 && (
         <Eigenschaft label="Treffpunkte">
           <TreffpunktListe treffpunkte={t.spiel.treffpunkte} spieltag={t.datum} spielOrt={t.ort} />
+        </Eigenschaft>
+      )}
+      {/* #561 AK 10: der Treffpunkt eines Trainings, auch nach Beginn und bei einem Ausfall. */}
+      {t.treffpunkt && (
+        <Eigenschaft label="Treffpunkt">
+          <TrainingsTreffpunkt treffpunkt={t.treffpunkt} bezeichnung={false} />
         </Eigenschaft>
       )}
       {/* #519 AK 17: wer verantwortlich ist, man selbst mit «(du)»; die Namen aller im Reiter «Trainer:innen». */}

@@ -3,7 +3,7 @@
 import { absageOffen, trainerLuecke, trainerNameFuer, verantwortlicheVon, type Eingrenzung } from "@/lib/trainer";
 import Link from "next/link";
 import { CalendarPlus, Clock, LandPlot, Shirt } from "lucide-react";
-import { Button, ButtonLink, Kalenderblatt, Lozenge, OverflowMenu, SectionMessage, Switch, TreffpunktListe, ZeichenZahl } from "@/components/ui";
+import { Button, ButtonLink, Kalenderblatt, Lozenge, OverflowMenu, SectionMessage, Switch, TrainingsTreffpunkt, TreffpunktListe, ZeichenZahl } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage } from "@/lib/serie";
@@ -159,6 +159,8 @@ export function NaechsterTermin({
             className="type-body-medium text-on-surface"
           />
         )}
+        {/* #561 AK 10: der Treffpunkt eines Trainings wie die eines Spiels. */}
+        <TrainingsTreffpunkt treffpunkt={t.treffpunkt} className="type-body-medium text-on-surface" />
         {/* #590: der Hinweis für Eltern mit «Für Eltern:» davor, damit er sich von der Bemerkung abhebt. */}
         {t.hinweisEltern && (
           <p className="whitespace-pre-line type-body-medium text-on-surface">

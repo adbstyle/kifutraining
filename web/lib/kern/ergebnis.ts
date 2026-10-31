@@ -116,6 +116,9 @@ export type KernFehler = {
   /** Nur an einem Spiel (#463 AK 13, 26): Die Verlegung rückt die Meldefrist
    *  ins Abgelaufene — auch ohne verfallende Meldungen eine Rückfrage. */
   fristAbgelaufen?: boolean;
+  /** Nur an einem Training (#561 PC 5): Mit dem neuen Beginn läge der
+   *  Treffpunkt am Vortag und entfiele — auch ohne Verfall eine Rückfrage. */
+  treffpunktEntfaellt?: boolean;
   /** Nur beim Entfernen eines Spiels (#463 AK 27): wie viele Meldungen mit
    *  ihm verschwinden; erneut mit dieser Zahl als `bestaetigt` senden. */
   verschwindend?: number;

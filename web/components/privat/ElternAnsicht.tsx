@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CalendarX2 } from "lucide-react";
-import { ExternerLink, Kalenderblatt, KuerzbarerText, Leerzustand, Lozenge, SectionMessage, Switch } from "@/components/ui";
+import { ExternerLink, Kalenderblatt, KuerzbarerText, Leerzustand, Lozenge, SectionMessage, Switch, TrainingsTreffpunkt } from "@/components/ui";
 import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
 import type { Meldung } from "@/lib/spiel";
 import { SpielKarte } from "./SpielKarte";
@@ -309,6 +309,11 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
           />
         )}
       </div>
+      {/* #561 AK 12: der Treffpunkt wie bei einem Spiel — nicht abgemeldet,
+          ausgefallen oder ab Beginn; nicht angemeldet auf Probe sieht ihn. */}
+      {!t.begonnen && !gedaempft && (
+        <TrainingsTreffpunkt treffpunkt={t.treffpunkt ?? null} className="type-body-medium text-on-surface" />
+      )}
       <HinweisEltern text={t.hinweis_eltern} gedaempft={gedaempft} />
       {hinweise}
     </li>

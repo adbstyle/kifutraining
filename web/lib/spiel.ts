@@ -64,7 +64,8 @@ export function istAnreise(x: unknown): x is Anreise {
 }
 
 /** Je Anreiseart einer, also höchstens fünf (AK 6); Ort höchstens 100
- *  Zeichen (AK 7). Zwillinge der Checks `stp_*`. */
+ *  Zeichen (AK 7). Zwillinge der Checks `stp_*`; der Ort auch von
+ *  `tt_`/`ts_treffpunkt_angabe` (Treffpunkt eines Trainings, #561). */
 export const TREFFPUNKTE_MAX = 5;
 export const TREFFPUNKT_ORT_MAX = 100;
 /** Höchstens ein Jahr vor oder nach dem Anpfiff (Check `stp_vorlauf`). */

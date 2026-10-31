@@ -673,12 +673,14 @@ pruefe("fehlerErgebnis: jedes gesetzte Feld eines Kern-Fehlers kommt an", () => 
     verfallendSpiele: 1,
     kennzeichnungen: 1,
     anmeldungen: 1,
+    treffpunktEntfaellt: true,
   };
   const SNAKE: Record<string, string> = {
     retryAfter: "retry_after",
     varianteId: "variante_id",
     fristAbgelaufen: "frist_abgelaufen",
     verfallendSpiele: "verfallend_spiele",
+    treffpunktEntfaellt: "treffpunkt_entfaellt",
   };
   const aussen = (k: string) => SNAKE[k] ?? k;
   const f = fehlerVon(fehlerErgebnis(voll));
