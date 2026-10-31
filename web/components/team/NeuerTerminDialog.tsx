@@ -20,7 +20,15 @@ import { cn } from "@/lib/cn";
 import { SPIEL_MELDUNG, SPIEL_TEXT, type TerminArt } from "@/lib/spiel";
 import { BezeichnungFeld, MeldefristFelder, RichtwertFelder, TreffpunkteFelder, useSpielAngaben } from "./SpielFelder";
 import { maxEnddatum, serieProblem, wochentagVon, type SerieFeld, type Wochentag } from "@/lib/serie";
-import { BEMERKUNG_MAX, HINWEIS_ELTERN_MAX, TERMIN_TEXT, istKalendertag, terminProblem, type TerminFelder } from "@/lib/termin";
+import {
+  BEMERKUNG_MAX,
+  HINWEIS_ELTERN_MAX,
+  TERMIN_TEXT,
+  istKalendertag,
+  terminProblem,
+  type TerminFelder,
+  type TerminTreffpunkt,
+} from "@/lib/termin";
 import type { Felder } from "@/lib/termin-felder";
 import type { TeamMitglied } from "@/lib/queries/teams";
 import { TrainerWahl, trainerVorwahl, type TrainerWert } from "./TrainerWahl";
@@ -35,6 +43,7 @@ import { terminBegonnen } from "@/lib/zeit";
 import type { Kader } from "@/lib/kader";
 import { KaderWahl } from "./KaderWahl";
 import { OrtFelder } from "./OrtFelder";
+import { TreffpunktFelder, treffpunktAusEingabe, type TreffpunktEingabe } from "./TreffpunktFelder";
 
 export type SerieFelder = {
   wochentage: Wochentag[];
@@ -60,7 +69,10 @@ export type TrainerFestlegen = { eingeladene: string[]; verantwortlich: string; 
  *  (#389, #390, #391 AK 1) und mit ihren Trainer:innen (#519). */
 export type NeuerTermin =
   | { art: "einzeln"; felder: TerminFelder; trainer: TrainerFestlegen; kaderIds: string[] }
-  | { art: "serie"; felder: SerieFelder & { felder: Felder | null; spielerzahl: number | null } & TrainerFestlegen };
+  | {
+      art: "serie";
+      felder: SerieFelder & { felder: Felder | null; spielerzahl: number | null; treffpunkt: TerminTreffpunkt | null } & TrainerFestlegen;
+    };
 
 const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: "", ort: "", ortLink: "", bemerkung: "", hinweisEltern: "", kaderIds: [] };
 
@@ -125,6 +137,7 @@ export function NeuerTerminDialog({
   const [besetzung, setBesetzung] = useState<BesetzungEingabe>(KEINE_BESETZUNG);
   const [besetzungFehler, setBesetzungFehler] = useState<string>();
   const platz = usePlatzAngaben();
+  const [treffpunkt, setTreffpunkt] = useState<TreffpunktEingabe>(null);
   // Ein Server-Fehler gilt für die Art, mit der gespeichert wurde; schaltet
   // der USER um, ist er verworfen — bis zum nächsten Speichern.
   const [verworfen, setVerworfen] = useState<string | undefined>();
@@ -146,6 +159,7 @@ export function NeuerTerminDialog({
     setBesetzung(KEINE_BESETZUNG);
     setBesetzungFehler(undefined);
     platz.zuruecksetzen();
+    setTreffpunkt(null);
     setVerworfen(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -199,10 +213,12 @@ export function NeuerTerminDialog({
     // Felder und Spielerzahl prüfen beide Arten gleich.
     const angaben = platz.pruefe();
     const besetzung = trainerPruefen();
+    // #561: Der Treffpunkt zum Beginn im Dialog; entfiele er, gibt es keinen.
+    const tp = treffpunktAusEingabe(treffpunkt, f.beginn) ?? null;
     if (wiederholen) {
-      const p = serieProblem(f);
+      const p = serieProblem({ ...f, treffpunkt: tp });
       setProblem(p);
-      if (!p && angaben && besetzung) senden({ art: "serie", felder: { ...f, ...angaben, ...besetzung } });
+      if (!p && angaben && besetzung) senden({ art: "serie", felder: { ...f, ...angaben, ...besetzung, treffpunkt: tp } });
       return;
     }
     const felder: TerminFelder = {
@@ -214,6 +230,7 @@ export function NeuerTerminDialog({
       ortLink: f.ortLink,
       bemerkung: f.bemerkung,
       hinweisEltern: f.hinweisEltern,
+      treffpunkt: tp,
       ...angaben,
     };
     const p = terminProblem(felder);
@@ -328,6 +345,18 @@ export function NeuerTerminDialog({
           fehlerOrt={fehlerAn("ort")}
           fehlerLink={fehlerAn("ortLink")}
         />
+        {!istSpiel && (
+          <TreffpunktFelder
+            wert={treffpunkt}
+            onChange={(w) => {
+              setTreffpunkt(w);
+              if (problem?.feld === "treffpunkt") setProblem(null);
+            }}
+            beginn={f.beginn}
+            fehler={fehlerAn("treffpunkt")}
+            disabled={pending}
+          />
+        )}
         {istSpiel && <RichtwertFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <MeldefristFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <TreffpunkteFelder angaben={spiel} spieltag={f.von} disabled={pending} />}

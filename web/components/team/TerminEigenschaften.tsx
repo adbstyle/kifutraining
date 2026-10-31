@@ -65,6 +65,15 @@ export function TerminEigenschaften({
           <TreffpunktListe treffpunkte={t.spiel.treffpunkte} spieltag={t.datum} spielOrt={t.ort} />
         </Eigenschaft>
       )}
+      {/* #561 AK 10: der Treffpunkt eines Trainings, auch nach Beginn und bei einem Ausfall. */}
+      {t.treffpunkt && (
+        <Eigenschaft label="Treffpunkt">
+          <span className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
+            <span className="tabular-nums">{t.treffpunkt.zeit}</span>
+            <span className="min-w-0 break-words">{t.treffpunkt.ort}</span>
+          </span>
+        </Eigenschaft>
+      )}
       {/* #519 AK 17: wer verantwortlich ist, man selbst mit «(du)»; die Namen aller im Reiter «Trainer:innen». */}
       <Eigenschaft label="Verantwortlich">{v ?? "Niemand"}</Eigenschaft>
       <Eigenschaft label="Trainer:innen">

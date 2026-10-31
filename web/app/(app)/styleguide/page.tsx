@@ -10,6 +10,7 @@ import {
   ZeichenZahl,
   HerkunftLozenge,
   SichtbarkeitLozenge,
+  TrainingsTreffpunkt,
   TreffpunktListe,
   Card,
   ExerciseCard,
@@ -2687,6 +2688,16 @@ export default async function Styleguide() {
               { anreise: "oev", zeitpunkt: "2026-10-31T08:20", ort: "Bahnhof Bern, Treffpunkt" },
               { anreise: "vor_ort", zeitpunkt: "2026-10-31T09:15", ort: null },
             ]}
+          />
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>Treffpunkt eines Trainings</strong> (<code>TrainingsTreffpunkt</code>, #561): eine Zeile im selben
+            Raster wie die Treffpunkte eines Spiels - «Treffpunkt», Uhrzeit, Ort. Er liegt immer am Trainingstag, darum
+            ohne Datum. Neu neben <code>TreffpunktListe</code>, weil ein Training keine Anreiseart kennt und nur einen
+            Treffpunkt hat; das gleiche Raster hält beide Karten im Trainingsplan und am privaten Link gleich.
+          </p>
+          <TrainingsTreffpunkt
+            className="type-body-medium mb-6 max-w-md text-on-surface"
+            treffpunkt={{ zeit: "17:15", ort: "Garderoben Schulhaus Rain" }}
           />
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Kader</strong> (<code>KaderLozenge</code>, Epic #447): ein

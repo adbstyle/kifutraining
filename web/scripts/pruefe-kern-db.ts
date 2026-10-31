@@ -1288,7 +1288,7 @@ try {
     // KI-Weg ohne erwartetes Training: geprüft wird gegen den gelesenen Stand.
     assert.deepEqual(
       wert(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, ort: "KI-Ort" })),
-      { terminId: t1.terminId, teamId: team.id, trainingId: c2, abmeldungenVerfallen: 0, kartenlinkEntfallen: false },
+      { terminId: t1.terminId, teamId: team.id, trainingId: c2, abmeldungenVerfallen: 0, kartenlinkEntfallen: false, treffpunktEntfallen: false },
     );
     assert.equal((await zeile(t1.terminId))!.ort, "KI-Ort");
     const t3 = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team.id, datum: tag(9), beginn: "18:00", ende: "19:00" }));
@@ -1691,6 +1691,78 @@ try {
     const plan = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
     const z = plan.kommend.find((x) => x.id === t[3].id)!;
     assert.deepEqual([z.hinweisEltern, z.serie?.hinweisEltern, z.abweichungen.includes("hinweis_eltern")], ["Eigener", "Ab Dezember: Halle Nord", true]);
+  });
+
+  await pruefe("Treffpunkt eines Trainings: Abstand zum Beginn, Serie, Abweichung, Wegfall am Vortag (#561)", async () => {
+    const team = await serienTeam("Kern-DB-Treffpunkt");
+    const tp = async (id: string) =>
+      (await admin.from("training_termine").select("beginn, treffpunkt_vorlauf_min, treffpunkt_ort, treffpunkt_abweichend").eq("id", id).single()).data!;
+    const vonSerie = async (id: string) =>
+      (await admin.from("termin_serien").select("treffpunkt_vorlauf_min, treffpunkt_ort").eq("id", id).single()).data!;
+    const garderobe = { zeit: "17:15", ort: "Garderoben Schulhaus Rain" };
+
+    // AK 3, 5, 6: nicht nach dem Beginn, Ort Pflicht; gespeichert als Abstand.
+    fehler(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "17:30", ende: "19:00", treffpunkt: { zeit: "17:45", ort: "G" } }), "eingabe");
+    fehler(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "17:30", ende: "19:00", treffpunkt: { zeit: "17:15", ort: "" } }), "eingabe", TERMIN_TEXT.treffpunktPflicht);
+    fehler(await legeTerminFest(a.supabase, a.id, { art: "spiel", teamId: team, bezeichnung: "Cup", datum: tagCh(3), beginn: "17:30", ende: "19:00", treffpunkt: garderobe }), "eingabe", TERMIN_TEXT.treffpunktNurTraining);
+    const e = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "17:30", ende: "19:00", ort: "Allmend", treffpunkt: garderobe })).terminId;
+    assert.deepEqual(await tp(e), { beginn: "17:30:00", treffpunkt_vorlauf_min: 15, treffpunkt_ort: "Garderoben Schulhaus Rain", treffpunkt_abweichend: false });
+    assert.ok((await admin.from("training_termine").update({ treffpunkt_vorlauf_min: 2000 }).eq("id", e)).error, "tt_treffpunkt_termintag");
+    assert.ok((await admin.from("training_termine").update({ treffpunkt_ort: null }).eq("id", e)).error, "tt_treffpunkt_angabe");
+    // PC 1, 7: Verlegt wandert er mit; ein anderer Ort lässt ihn stehen.
+    const v = wert(await aendereTermin(a.supabase, a.id, { terminId: e, beginn: "18:00", ende: "19:30", ort: "Wyler" }));
+    assert.equal(v.treffpunktEntfallen, false);
+    assert.deepEqual(await tp(e), { beginn: "18:00:00", treffpunkt_vorlauf_min: 15, treffpunkt_ort: "Garderoben Schulhaus Rain", treffpunkt_abweichend: false });
+    const plan = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
+    assert.deepEqual(plan.kommend.find((x) => x.id === e)!.treffpunkt, { zeit: "17:45", ort: "Garderoben Schulhaus Rain" });
+    // PC 4, 5: Läge er am Vortag, fragt die Oberfläche zuerst; bestätigt entfällt er (PC 6: so meldet es auch die KI).
+    const frage = await aendereTermin(a.supabase, a.id, { terminId: e, beginn: "00:10", ende: "01:00", bestaetigt: false });
+    assert.equal(frage.ok, false);
+    assert.equal(!frage.ok && frage.treffpunktEntfaellt, true);
+    assert.equal((await tp(e)).treffpunkt_vorlauf_min, 15, "vor der Bestätigung unverändert");
+    assert.equal(wert(await aendereTermin(a.supabase, a.id, { terminId: e, beginn: "00:10", ende: "01:00", bestaetigt: 0, treffpunktWeg: true })).treffpunktEntfallen, true);
+    assert.deepEqual(await tp(e), { beginn: "00:10:00", treffpunkt_vorlauf_min: null, treffpunkt_ort: null, treffpunkt_abweichend: false });
+    // AK 1: entfernen und neu setzen, auch an einem ausgefallenen Termin.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: e }));
+    wert(await aendereTermin(a.supabase, a.id, { terminId: e, treffpunkt: { zeit: "00:00", ort: "Eingang" } }));
+    assert.equal((await tp(e)).treffpunkt_vorlauf_min, 10);
+
+    // AK 2: Die Serie gibt ihn jedem Termin mit.
+    const von = tagCh(7), bis = tagCh(34);
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [wochentagVon(von)], von, bis, beginn: "17:30", ende: "19:00", treffpunkt: garderobe }));
+    const t = await termineDer(s.serieId);
+    assert.equal(t.length, 4);
+    for (const x of t) assert.equal((await tp(x.id)).treffpunkt_vorlauf_min, 15);
+    // AK 7, 8; PC 2: nur dieser weicht ab, auch entfernt; eine andere Angabe lässt ihn folgen.
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t[1].id, reichweite: "nur_dieser", treffpunkt: { zeit: "17:00", ort: "Parkplatz" } }));
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t[2].id, reichweite: "nur_dieser", treffpunkt: null }));
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t[3].id, reichweite: "nur_dieser", bemerkung: "Bälle" }));
+    assert.deepEqual((await Promise.all(t.map((x) => tp(x.id)))).map((x) => [x.treffpunkt_vorlauf_min, x.treffpunkt_abweichend]), [[15, false], [30, true], [null, true], [15, false]]);
+    // PC 3: «alle» ändert die Serie und die Folgenden; abweichende bleiben, auch die bewusst ohne.
+    wert(await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { treffpunkt: { zeit: "17:20", ort: "Garderoben" } } }));
+    assert.deepEqual(await vonSerie(s.serieId), { treffpunkt_vorlauf_min: 10, treffpunkt_ort: "Garderoben" });
+    assert.deepEqual((await Promise.all(t.map((x) => tp(x.id)))).map((x) => x.treffpunkt_vorlauf_min), [10, 30, null, 10]);
+    // AK 9: wieder der Serie folgen.
+    wert(await folgeDerSerie(a.supabase, a.id, { terminId: t[2].id, angaben: ["treffpunkt"] }));
+    assert.deepEqual(await tp(t[2].id), { beginn: "17:30:00", treffpunkt_vorlauf_min: 10, treffpunkt_ort: "Garderoben", treffpunkt_abweichend: false });
+    // Lesepfad: Treffpunkt am Termin und an der Serie, die Abweichung benannt.
+    const z = wert(await teamPlan(a.supabase, a.id, { teamId: team })).kommend.find((x) => x.id === t[1].id)!;
+    assert.deepEqual([z.treffpunkt, z.serie?.treffpunkt, z.abweichungen.includes("treffpunkt")], [{ zeit: "17:00", ort: "Parkplatz" }, { zeit: "17:20", ort: "Garderoben" }, true]);
+
+    // PC 4–6: Rückt die Zeit der Serie ihn auf den Vortag, nennt die Vorschau die anstehenden Termine, die ihn verlieren.
+    const vorschau = wert(await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { beginn: "00:05", ende: "01:00" }, vorschau: true }));
+    assert.deepEqual(vorschau.treffpunktEntfallend.map((x) => x.terminId).sort(), [t[0].id, t[1].id, t[2].id, t[3].id].sort());
+    const ki = wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", beginn: "00:05", ende: "01:00" }));
+    assert.equal(ki.treffpunktEntfallen.length, 4);
+    assert.deepEqual(await vonSerie(s.serieId), { treffpunkt_vorlauf_min: null, treffpunkt_ort: null });
+    assert.deepEqual((await Promise.all(t.map((x) => tp(x.id)))).map((x) => [x.treffpunkt_vorlauf_min, x.treffpunkt_abweichend]), [[null, false], [null, true], [null, false], [null, false]]);
+
+    // «Zeit folgt der Serie» nimmt einen eigenen Treffpunkt, der am Vortag läge — erst nach Rückfrage.
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t[3].id, reichweite: "nur_dieser", beginn: "18:00", ende: "19:00", treffpunkt: { zeit: "17:30", ort: "Bahnhof" } }));
+    const f = await folgeDerSerie(a.supabase, a.id, { terminId: t[3].id, angaben: ["zeit"] });
+    assert.equal(!f.ok && f.treffpunktEntfaellt, true);
+    assert.equal(wert(await folgeDerSerie(a.supabase, a.id, { terminId: t[3].id, angaben: ["zeit"], treffpunktWeg: true })).treffpunktEntfallen, true);
+    assert.deepEqual(await tp(t[3].id), { beginn: "00:05:00", treffpunkt_vorlauf_min: null, treffpunkt_ort: null, treffpunkt_abweichend: true });
   });
 
   await pruefe("Serie ändern: nur dieser, folgende teilt, alle erfasst Vergangenes, Abweichungen bleiben (#326)", async () => {
@@ -4416,7 +4488,7 @@ try {
       // Ein Training: keine Spielangaben (#459 AK 17).
       art: "training", bezeichnung: null, richtwert_min: null, richtwert_max: null,
       // Spielangaben (#463) bleiben an einem Training leer.
-      meldung: null, meldung_verfallen: false, frist: null, frist_abgelaufen: false, vorher: null, hinweis_eltern: null, treffpunkte: null, nicht_aufgeboten: false, aufgebot_verfallen: false, nicht_aufgeboten_zahl: null,
+      meldung: null, meldung_verfallen: false, frist: null, frist_abgelaufen: false, vorher: null, hinweis_eltern: null, treffpunkte: null, treffpunkt: null, nicht_aufgeboten: false, aufgebot_verfallen: false, nicht_aufgeboten_zahl: null,
       // #523 AK 1, 2: die Verantwortliche mit Anzeigenamen (festgelegt hat a).
       verantwortlich: (await admin.rpc("anzeige_name", { p_user: a.id })).data as string,
     });
@@ -4525,7 +4597,7 @@ try {
     assert.ok(!JSON.stringify(f).includes("Lena") && !JSON.stringify(f).includes(link));
     assert.deepEqual(Object.keys(f.termine![0]).sort(), [
       "abgemeldet", "art", "beginn", "begonnen", "bezeichnung", "datum", "ende", "frist_abgelaufen", "hinweis_eltern",
-      "id", "meldung", "nicht_aufgeboten", "ort", "ort_link", "treffpunkte",
+      "id", "meldung", "nicht_aufgeboten", "ort", "ort_link", "treffpunkt", "treffpunkte",
     ]);
     assert.deepEqual(await aboFeed("f".repeat(64)), { gueltig: false });
   });
@@ -5703,13 +5775,13 @@ try {
     const offen = wert(await k.spiel(7, { treffpunkte: [{ anreise: "oev", zeitpunkt: `${tagCh(7)}T09:00`, ort: "Bahnhof" }], bemerkung: "Intern", hinweisEltern: "Leibchen" })).terminId;
     const vorbei = wert(await k.spiel(5, { meldefrist: `${tagCh(-1)}T20:00` })).terminId;
     const aus = wert(await k.spiel(6)).terminId;
-    const training = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: k.team, datum: tagCh(4), beginn: "18:00", ende: "19:00", hinweisEltern: "Pincode" })).terminId;
+    const training = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: k.team, datum: tagCh(4), beginn: "18:00", ende: "19:00", hinweisEltern: "Pincode", treffpunkt: { zeit: "17:45", ort: "Garderoben" } })).terminId;
     wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus }));
     wert(await setzeAufgebot(a.supabase, a.id, { terminId: offen, spielerId: k.lena, nichtAufgeboten: true }));
     const link = await linkVon(k.lena);
     const abo = (await aboHolen(link))!;
     const ansicht = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link })).data as { termine: Record<string, unknown>[] };
-    const feld = ["id", "art", "bezeichnung", "meldung", "frist_abgelaufen", "nicht_aufgeboten", "hinweis_eltern", "treffpunkte"];
+    const feld = ["id", "art", "bezeichnung", "meldung", "frist_abgelaufen", "nicht_aufgeboten", "hinweis_eltern", "treffpunkte", "treffpunkt"];
     const auswahl = (x: Record<string, unknown>) => Object.fromEntries(feld.map((f) => [f, x[f]]));
     const termine = (await aboFeed(abo)).termine!;
     // AK 1, PC 1, 2: im selben Abo wie die Trainings, mit denselben Angaben wie der Link, ohne ausgefallene.
@@ -5717,6 +5789,7 @@ try {
     assert.deepEqual(termine.map((x) => x.id), [training, vorbei, offen]);
     const o = termine.find((x) => x.id === offen)!;
     assert.equal(termine.find((x) => x.id === training)!.hinweis_eltern, "Pincode");
+    assert.deepEqual(termine.find((x) => x.id === training)!.treffpunkt, { zeit: "17:45", ort: "Garderoben" }, "#561 AK 13");
     assert.deepEqual([o.nicht_aufgeboten, o.hinweis_eltern, o.treffpunkte], [true, "Leibchen", [{ anreise: "oev", zeitpunkt: `${tagCh(7)}T09:00`, ort: "Bahnhof" }]]);
     assert.equal(termine.find((x) => x.id === vorbei)!.frist_abgelaufen, true);
     // PC 7: Der nächste Abruf zeigt den neuen Stand.

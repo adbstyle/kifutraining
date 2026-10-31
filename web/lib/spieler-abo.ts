@@ -41,6 +41,7 @@ export type AboFeedTermin = Pick<
   | "nicht_aufgeboten"
   | "hinweis_eltern"
   | "treffpunkte"
+  | "treffpunkt"
 >;
 
 /** `probe`: Die Spieler:in ist im Probe-Modus (#555 PC 11); fehlt bei einer
@@ -68,7 +69,8 @@ export function aboStatus(t: AboFeedTermin, probe = false): AboStatus {
 /** Ein Termin, wie er ins Abo geht (#507 PC 2, #508 PC 2): Terminart bzw.
  *  Bezeichnung, Teamname, Beginn, Ende, Ort und der Status — im Titel als
  *  Zeichen, in der Beschreibung als Wort. Bei Spielen dazu die Treffpunkte,
- *  bei Trainings und Spielen der Hinweis für Eltern (#590 AK 12). Vielleicht
+ *  bei Trainings der Treffpunkt (#561 AK 13), bei beiden der Hinweis für
+ *  Eltern (#590 AK 12). Vielleicht
  *  ist vorläufig, abgesagt belegt keine Zeit. */
 export function aboEintrag(t: AboFeedTermin, team: string, probe = false): AboTermin {
   const status = aboStatus(t, probe);
@@ -94,6 +96,9 @@ export function aboEintrag(t: AboFeedTermin, team: string, probe = false): AboTe
  *  Ort von «vor Ort» ist der des Spiels. Der Hinweis für Eltern folgt immer,
  *  so wie das Team ihn geschrieben hat (#590 AK 12; OoS 6). */
 function treffpunktAbschnitt(t: AboFeedTermin, status: AboStatus): string[] {
+  // #561 AK 13: der Treffpunkt eines Trainings unter denselben Bedingungen wie am Link.
+  if (t.art !== "spiel")
+    return t.treffpunkt && !t.begonnen && status !== "abgesagt" ? [`Treffpunkt\n${t.treffpunkt.zeit} · ${t.treffpunkt.ort}`] : [];
   const treffpunkte = t.art === "spiel" && !t.begonnen && status !== "abgesagt" ? (t.treffpunkte ?? []) : [];
   if (treffpunkte.length === 0) return [];
   const zeilen = treffpunkte.map((tp) => {

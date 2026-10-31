@@ -580,7 +580,7 @@ const LINK_MODELL =
   "Jede Spieler:in hat einen privaten Link: Wer ihn öffnet, sieht ohne Konto den Teamnamen, Vor- und Nachnamen dieser " +
   "Spieler:in und die anstehenden Termine des Teams, die für sie gelten (bei Terminen mit Kadern nur die ihrer Kader, samt " +
   "dieser Kader), mit der Zahl der Angemeldeten und derer, für die er gilt, und meldet sie bis zum Beginn ab und " +
-  "wieder an. An Trainings und Spielen sieht sie den Hinweis für Eltern, nie die Bemerkung. Spiele meldet sie an oder ab " +
+  "wieder an. An Trainings und Spielen sieht sie den Hinweis für Eltern, nie die Bemerkung; an einem Training seinen Treffpunkt, solange sie angemeldet ist und es nicht begonnen hat. Spiele meldet sie an oder ab " +
   "bis zur Meldefrist (ohne Frist bis zum Anpfiff) und sieht dort Bezeichnung, " +
   "Richtwert, Meldefrist, Treffpunkte und ob die Spieler:in nicht aufgeboten ist. An einem ausgefallenen Training " +
   "oder Spiel sieht sie den Grund des Ausfalls, ganz, und keinen Hinweis — keine Namen anderer, kein " +

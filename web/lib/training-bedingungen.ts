@@ -359,6 +359,12 @@ const TERMIN_CHECKS: [string, string][] = [
   // An der Serie dieselben Regeln (#391).
   ['"ts_felder"', FELDER_TEXT.ungueltig],
   ['"ts_spielerzahl"', TERMIN_TEXT.spielerzahl],
+  // Der Treffpunkt eines Trainings (#561), am Termin und an der Serie.
+  ['"tt_treffpunkt_angabe"', TERMIN_TEXT.treffpunktPflicht],
+  ['"ts_treffpunkt_angabe"', TERMIN_TEXT.treffpunktPflicht],
+  ['"tt_treffpunkt_termintag"', TERMIN_TEXT.treffpunktTermintag],
+  ['"ts_treffpunkt_termintag"', TERMIN_TEXT.treffpunktTermintag],
+  ['"tt_treffpunkt_art"', TERMIN_TEXT.treffpunktNurTraining],
   ...SPIELER_CHECKS,
   ...KADER_CHECKS,
   ...SPIEL_CHECKS,

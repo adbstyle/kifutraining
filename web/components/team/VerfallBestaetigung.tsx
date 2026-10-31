@@ -7,6 +7,7 @@ import { verfallDialogText } from "@/lib/spieler";
 import { kaderVerfallText } from "@/lib/kader";
 import { spielVerfallText } from "@/lib/spiel";
 import { mitAbsagen } from "@/lib/trainer";
+import { TERMIN_TEXT } from "@/lib/termin";
 
 /* Verlegen lässt Abmeldungen verfallen (#437 AK 1, PC 1): Wer sich für den
    alten Zeitpunkt abgemeldet hat, gilt am neuen wieder als angemeldet. Das
@@ -73,6 +74,8 @@ type Antwort = {
   absagen?: number;
   /** Davon Anmeldungen von Probe-Spieler:innen (#555 AK 14). */
   anmeldungen?: number;
+  /** Ein Training (#561 PC 5): Mit dem neuen Beginn entfällt der Treffpunkt. */
+  treffpunktEntfaellt?: boolean;
 };
 
 /**
@@ -134,10 +137,21 @@ export function useVerfallRueckfrage(pending?: boolean) {
     const nachtraege = r.nachtraege ?? 0;
     const anmeldungen = r.anmeldungen ?? 0;
     const abmeldungen = r.verfallend - nachtraege - absagen - anmeldungen;
+    // #561 PC 5: Ein entfallender Treffpunkt steht zuerst, allein heisst der Dialog nach ihm.
+    const treffpunkt = r.treffpunktEntfaellt ? TERMIN_TEXT.treffpunktEntfaellt : null;
     setFrage({
       anzahl: r.verfallend,
-      text: verfallDialogText(abmeldungen, nachtraege, absagen, anmeldungen),
-      titel: abmeldungen + nachtraege > 0 ? undefined : anmeldungen > 0 ? "Anmeldungen verfallen" : "Absagen verfallen",
+      text: [treffpunkt, r.verfallend > 0 ? verfallDialogText(abmeldungen, nachtraege, absagen, anmeldungen) : null]
+        .filter(Boolean)
+        .join(" "),
+      titel:
+        r.verfallend === 0 && treffpunkt
+          ? "Treffpunkt entfällt"
+          : abmeldungen + nachtraege > 0
+            ? undefined
+            : anmeldungen > 0
+              ? "Anmeldungen verfallen"
+              : "Absagen verfallen",
       weiter,
     });
   }

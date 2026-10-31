@@ -103,6 +103,8 @@ function startWerte(t: TerminZeile): TerminFelder {
     ortLink: t.ortLink ?? "",
     bemerkung: t.bemerkung ?? "",
     hinweisEltern: t.hinweisEltern ?? "",
+    // Ein Training (#561): der Treffpunkt zum Beginn; ein Spiel hat keinen.
+    ...(t.spiel ? {} : { treffpunkt: t.treffpunkt }),
     felder: t.felder,
     spielerzahl: t.spielerzahl,
     mindestbesetzung: t.mindestbesetzung,
@@ -129,6 +131,7 @@ const FOLGT_WIEDER: Record<FolgeAngabe, string> = {
   ort: "Der Ort folgt wieder der Serie.",
   bemerkung: "Die Bemerkung folgt wieder der Serie.",
   hinweis_eltern: "Der Hinweis für Eltern folgt wieder der Serie.",
+  treffpunkt: "Der Treffpunkt folgt wieder der Serie.",
   eingeladene: "Die Eingeladenen folgen wieder der Serie.",
   verantwortung: "Die Verantwortung folgt wieder der Serie.",
   besetzung: "Die Mindestbesetzung folgt wieder der Serie.",
@@ -306,8 +309,9 @@ export function TerminBereich({
       if (geaendert) {
         const r = await aendereTerminAktion(t.id, geaendert, t.training?.id ?? null, bestaetigt);
         // #437 AK 1: Verfallen Abmeldungen, erst nachfragen; der Dialog bleibt offen.
-        // Ein Spiel fragt auch, wenn nur die Frist ins Abgelaufene rückt (#463 AK 26).
-        if (!r.ok && (r.verfallend || r.fristAbgelaufen)) {
+        // Ein Spiel fragt auch, wenn nur die Frist ins Abgelaufene rückt (#463 AK 26),
+        // ein Training, wenn nur der Treffpunkt entfiele (#561 PC 5).
+        if (!r.ok && (r.verfallend || r.fristAbgelaufen || r.treffpunktEntfaellt)) {
           const anzahl = r.verfallend ?? 0;
           if (gilt())
             return verfall.nachVerlegung({ ...r, verfallend: anzahl }, () =>
@@ -422,7 +426,8 @@ export function TerminBereich({
             b.folge.abmeldungenKader +
             b.folge.nachtraegeVerfallend +
             b.folge.absagenVerfallend +
-            b.folge.anmeldungenVerfallend,
+            b.folge.anmeldungenVerfallend +
+            b.folge.treffpunktEntfallend.length,
         })
       : await entferneSerieAktion(b.t.id, b.reichweite, erwartet);
     if (!r.ok) return serienFehler(b.art, r.error, laufNr.current !== nr);
@@ -526,7 +531,9 @@ export function TerminBereich({
         v.folge.abmeldungenKader > 0 ||
         v.folge.nachtraegeVerfallend > 0 ||
         v.folge.absagenVerfallend > 0 ||
-        v.folge.anmeldungenVerfallend > 0
+        v.folge.anmeldungenVerfallend > 0 ||
+        // #561 PC 5: ebenso, wenn Treffpunkte entfallen.
+        v.folge.treffpunktEntfallend.length > 0
       )
         setBestaetigen(schritt);
       else await fuehreAus(schritt, nr);
@@ -547,8 +554,8 @@ export function TerminBereich({
         // gemeldete); die Zeit bestätigt `true`.
         if (angabe === "kader")
           return verfall.nachKader(r, typeof bestaetigt === "number" ? bestaetigt : false, (n) => folgen(t, angabe, n));
-        if (r.ok || !r.verfallend) return false;
-        verfall.nachVerlegung({ ...r, verfallend: r.verfallend }, () => folgen(t, angabe, true));
+        if (r.ok || (!r.verfallend && !r.treffpunktEntfaellt)) return false;
+        verfall.nachVerlegung({ ...r, verfallend: r.verfallend ?? 0 }, () => folgen(t, angabe, true));
         return true;
       },
     );

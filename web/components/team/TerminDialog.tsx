@@ -49,12 +49,14 @@ import {
 import type { Kader, TerminKader } from "@/lib/kader";
 import { KaderWahl } from "./KaderWahl";
 import { OrtFelder } from "./OrtFelder";
+import { TreffpunktFelder, treffpunktAusEingabe, treffpunktEingabe, type TreffpunktEingabe } from "./TreffpunktFelder";
 
 const ANGABE: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit",
   ort: "Der Ort",
   bemerkung: "Die Bemerkung",
   hinweis_eltern: "Der Hinweis für Eltern",
+  treffpunkt: "Der Treffpunkt",
   eingeladene: "Die Eingeladenen",
   verantwortung: "Die Verantwortung",
   besetzung: "Die Mindestbesetzung",
@@ -68,6 +70,7 @@ const MEHRZAHL: readonly FolgeAngabe[] = ["eingeladene", "felder", "kader"];
 const FOLGEN_KANN: readonly FolgeAngabe[] = [
   "zeit",
   "ort",
+  "treffpunkt",
   "hinweis_eltern",
   "bemerkung",
   "kader",
@@ -82,6 +85,7 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   ort: "Ort wieder der Serie folgen lassen",
   bemerkung: "Bemerkung wieder der Serie folgen lassen",
   hinweis_eltern: "Hinweis für Eltern wieder der Serie folgen lassen",
+  treffpunkt: "Treffpunkt wieder der Serie folgen lassen",
   eingeladene: "Eingeladene wieder der Serie folgen lassen",
   verantwortung: "Verantwortung wieder der Serie folgen lassen",
   besetzung: "Mindestbesetzung wieder der Serie folgen lassen",
@@ -202,6 +206,7 @@ export function TerminDialog({
   const [grundFehler, setGrundFehler] = useState<string>();
   const kaderStart = terminKader.flatMap((k) => (k.id ? [k.id] : []));
   const [kaderWahl, setKaderWahl] = useState<string[]>([]);
+  const [treffpunkt, setTreffpunkt] = useState<TreffpunktEingabe>(null);
   const platz = usePlatzAngaben();
   const istSpiel = start?.art === "spiel";
   const spiel = useSpielAngaben(felder.datum, felder.beginn ?? "");
@@ -222,6 +227,7 @@ export function TerminDialog({
       bemerkung: start?.bemerkung ?? "",
       hinweisEltern: start?.hinweisEltern ?? "",
     });
+    setTreffpunkt(treffpunktEingabe(start?.treffpunkt, start?.beginn ?? ""));
     platz.zuruecksetzen(start);
     spiel.zuruecksetzen(
       {
@@ -304,7 +310,10 @@ export function TerminDialog({
    *  Treffpunkte statt Feldern und Spielerzahl, hat nie eine Serie, und ein
    *  verlegter Anpfiff liegt nur in der Zukunft. */
   function speichern() {
-    const p = terminProblem(felder);
+    // #561: Der Treffpunkt eines Trainings zum Beginn im Dialog; entfiele er,
+    // bleibt er unverändert und der Kern fragt nach (PC 5).
+    const tp = istSpiel ? undefined : treffpunktAusEingabe(treffpunkt, felder.beginn ?? "");
+    const p = terminProblem({ ...felder, treffpunkt: tp });
     setProblem(p);
     const angaben = istSpiel ? spiel.pruefe() : platz.pruefe();
     const regelOk = regelPruefen();
@@ -321,7 +330,7 @@ export function TerminDialog({
     onSpeichern(
       istSpiel
         ? { ...felder, art: "spiel", ...angaben, mindestbesetzung: m.wert }
-        : { ...felder, ...angaben, mindestbesetzung: m.wert },
+        : { ...felder, ...angaben, mindestbesetzung: m.wert, treffpunkt: tp },
       serie ? regel : undefined,
       trainerAenderung(besetzung, besetzungStart) ?? undefined,
       grundNeu,
@@ -387,6 +396,18 @@ export function TerminDialog({
           hinweis={kartenlinkWeg ? TERMIN_TEXT.kartenlinkFaelltWeg : undefined}
           disabled={pending}
         />
+        {!istSpiel && (
+          <TreffpunktFelder
+            wert={treffpunkt}
+            onChange={(w) => {
+              setTreffpunkt(w);
+              if (problem?.feld === "treffpunkt") setProblem(null);
+            }}
+            beginn={felder.beginn ?? ""}
+            fehler={fehlerAn("treffpunkt")}
+            disabled={pending}
+          />
+        )}
         {istSpiel && <RichtwertFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <MeldefristFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <TreffpunkteFelder angaben={spiel} spieltag={felder.datum} disabled={pending} />}
@@ -440,6 +461,11 @@ export function TerminDialog({
             {wochentageText(serie.wochentage)} · {datumKurz(serie.beginnDatum)} bis {datumKurz(serie.endDatum)} · {serie.beginn}–{serie.ende} Uhr
             {serie.ort ? <> · {serie.ort}</> : null}
           </p>
+          {serie.treffpunkt && (
+            <p className="type-body-small">
+              Treffpunkt: {serie.treffpunkt.zeit} · {serie.treffpunkt.ort}
+            </p>
+          )}
           {serie.trainer.length > 0 && (
             <p className="type-body-small">Eingeladen: {serie.trainer.map((v) => v.name).join(", ")}</p>
           )}

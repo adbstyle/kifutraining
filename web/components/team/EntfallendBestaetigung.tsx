@@ -4,7 +4,7 @@ import { TriangleAlert } from "lucide-react";
 import { Button, Dialog } from "@/components/ui";
 import { verfallDialogText } from "@/lib/spieler";
 import { kaderVerfallText } from "@/lib/kader";
-import { trainingOhneTermin } from "@/lib/termin";
+import { TERMIN_TEXT, trainingOhneTermin } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { SerienFolge } from "@/lib/kern/serien";
 
@@ -18,7 +18,8 @@ import type { SerienFolge } from "@/lib/kern/serien";
    Dialog — auch, wenn keine Termine wegfallen. Ebenso Abmeldungen, deren
    Termin wegen der Kader nicht mehr für die Spieler:in gilt (#453 AK 10),
    und Nachträge zur Anwesenheit begonnener Termine, die wieder offen
-   werden (#475 AK 12).
+   werden (#475 AK 12). Nimmt die Zeitänderung Treffpunkte, weil sie am
+   Vortag lägen, nennt er jeden dieser Termine (#561 PC 5).
 
    `SerienFolge` ist ein reiner Typ: `import type` zieht nichts aus dem
    server-only Fachkern in das Client-Bundle. */
@@ -42,6 +43,8 @@ export function EntfallendBestaetigung({
   const anmeldungen = folge?.anmeldungenVerfallend ?? 0;
   const verfall = abmeldungen + nachtraege + absagen + anmeldungen;
   const kaderVerfall = folge?.abmeldungenKader ?? 0;
+  const treffpunkte = folge?.treffpunktEntfallend ?? [];
+  const davor = wegfall || verfall > 0 || kaderVerfall > 0;
   return (
     <Dialog
       open={folge !== null}
@@ -55,7 +58,9 @@ export function EntfallendBestaetigung({
               ? "Abmeldungen verfallen"
               : anmeldungen > 0
                 ? "Anmeldungen verfallen"
-                : "Absagen verfallen"
+                : absagen > 0
+                  ? "Absagen verfallen"
+                  : "Treffpunkt entfällt"
       }
       actions={
         <>
@@ -96,6 +101,19 @@ export function EntfallendBestaetigung({
           {!wegfall && verfall === 0 && <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0 text-icon-warning" />}
           <span>{kaderVerfallText(kaderVerfall)}</span>
         </p>
+      )}
+      {treffpunkte.length > 0 && (
+        <>
+          <p className={davor ? "mt-3" : "flex items-start gap-2"}>
+            {!davor && <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0 text-icon-warning" />}
+            <span>{TERMIN_TEXT.treffpunktEntfaelltSerie}</span>
+          </p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            {treffpunkte.map((t) => (
+              <li key={t.terminId}>{datumKurz(t.datum)}</li>
+            ))}
+          </ul>
+        </>
       )}
     </Dialog>
   );

@@ -88,7 +88,7 @@ export { HinzufuegenFeld } from "./HinzufuegenFeld";
 export type { IconButtonProps, IconButtonLinkProps } from "./IconButton";
 export { Tooltip } from "./Tooltip";
 export { InfoKnopf } from "./InfoKnopf";
-export { TreffpunktListe } from "./TreffpunktListe";
+export { TrainingsTreffpunkt, TreffpunktListe } from "./TreffpunktListe";
 export { TabNav } from "./TabNav";
 export type { TabNavItem } from "./TabNav";
 export { Breadcrumbs } from "./Breadcrumbs";
