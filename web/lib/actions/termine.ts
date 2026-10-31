@@ -84,6 +84,7 @@ export async function legeTerminFestAktion(
     ort: felder.ort,
     ortLink: felder.ortLink,
     bemerkung: felder.bemerkung,
+    hinweisEltern: felder.hinweisEltern,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
     mindestbesetzung: felder.mindestbesetzung ?? null,
@@ -118,6 +119,7 @@ export async function aendereTerminAktion(
     ort: felder.ort,
     ortLink: felder.ortLink,
     bemerkung: felder.bemerkung,
+    hinweisEltern: felder.hinweisEltern,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
     mindestbesetzung: felder.mindestbesetzung,
@@ -245,6 +247,8 @@ export async function legeSerieFestAktion(
     /** Der Kartenlink zum Ort (#533 AK 2). */
     ortLink: string;
     bemerkung: string;
+    /** Der Hinweis für Eltern jedes Termins (#590 AK 2). */
+    hinweisEltern: string;
     eingeladene: string[];
     verantwortlich: string | null;
     /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1). */

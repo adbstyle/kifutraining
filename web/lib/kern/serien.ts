@@ -61,6 +61,8 @@ export type SerieFestlegen = {
   /** Der Kartenlink zum Ort der Serie (#533 AK 2); nur mit Ort. */
   ortLink?: string | null;
   bemerkung?: string | null;
+  /** Der Hinweis für Eltern jedes Termins der Serie (#590 AK 2); ohne: keiner. */
+  hinweisEltern?: string | null;
   /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1); ohne: unbekannt. */
   felder?: readonly FeldEingabe[] | null;
   spielerzahl?: number | null;
@@ -115,6 +117,7 @@ export async function legeSerieFest(
     p_kader: e.kaderIds ?? [],
     p_besetzung: e.mindestbesetzung ?? null,
     p_ort_link: leerZuNull(e.ortLink),
+    p_hinweis_eltern: leerZuNull(e.hinweisEltern),
   });
   if (error) return kalenderFehler(error);
   const r = data as { serie: string; termine: number };
@@ -134,6 +137,8 @@ export type SerienAenderung = {
    *  Ort bleibt — ändert sich der Ort ohne ihn, fällt er weg (PC 1). */
   ortLink?: string | null;
   bemerkung?: string | null;
+  /** Der Hinweis für Eltern (#590): `null` oder `""` = leeren. */
+  hinweisEltern?: string | null;
   /** Die künftigen Eingeladenen der Serie als ganze Liste (#519 AK 12). */
   eingeladene?: string[];
   /** Die künftige Verantwortliche der Serie; sie ist damit eingeladen. */
@@ -324,6 +329,7 @@ export async function aendereSerie(
     a.ort === undefined &&
     a.ortLink === undefined &&
     a.bemerkung === undefined &&
+    a.hinweisEltern === undefined &&
     a.eingeladene === undefined &&
     a.verantwortlich === undefined &&
     a.felder === undefined &&
@@ -397,6 +403,7 @@ export async function aendereSerie(
   if (hatZeit) Object.assign(aenderung, { beginn: leerZuNull(a.beginn), ende: leerZuNull(a.ende) });
   if (ortPaar) Object.assign(aenderung, { ort: ortPaar.ort, ort_link: ortPaar.ortLink });
   if (a.bemerkung !== undefined) aenderung.bemerkung = leerZuNull(a.bemerkung);
+  if (a.hinweisEltern !== undefined) aenderung.hinweis_eltern = leerZuNull(a.hinweisEltern);
   if (eingeladene?.ok) aenderung.eingeladene = eingeladene.ids;
   if (a.verantwortlich !== undefined) aenderung.verantwortlich = a.verantwortlich.toLowerCase();
   // Schlüssel vorhanden mit null heisst «auf unbekannt setzen» (#391).
@@ -445,6 +452,7 @@ export type FolgeAngabe =
   | "zeit"
   | "ort"
   | "bemerkung"
+  | "hinweis_eltern"
   | "eingeladene"
   | "verantwortung"
   | "besetzung"
@@ -458,6 +466,7 @@ const FOLGE_ANGABEN: readonly FolgeAngabe[] = [
   "zeit",
   "ort",
   "bemerkung",
+  "hinweis_eltern",
   "eingeladene",
   "verantwortung",
   "besetzung",
@@ -572,6 +581,7 @@ export async function aendereMitReichweite(
         felder.ort,
         felder.ortLink,
         felder.bemerkung,
+        felder.hinweisEltern,
         felder.felder,
         felder.spielerzahl,
         felder.mindestbesetzung,
@@ -611,6 +621,7 @@ export async function aendereMitReichweite(
       ort: e.ort,
       ortLink: e.ortLink,
       bemerkung: e.bemerkung,
+      hinweisEltern: e.hinweisEltern,
       felder: e.felder,
       spielerzahl: e.spielerzahl,
       mindestbesetzung: e.mindestbesetzung,

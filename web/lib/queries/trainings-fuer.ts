@@ -516,6 +516,8 @@ export type TeamTrainingRow = TrainingListRow & {
     ende: string;
     ort: string | null;
     bemerkung: string | null;
+    /** Der Hinweis für Eltern (#590). */
+    hinweisEltern: string | null;
     /** Die Felder des Platzes (#389); `null` = unbekannt. */
     felder: Felder | null;
     /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
@@ -536,7 +538,7 @@ export type TeamTrainingRow = TrainingListRow & {
 };
 
 const TEAM_LIST_SELECT =
-  `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, spielstand, serie_id, ausgefallen, ausfall_grund, ` +
+  `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, hinweis_eltern, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, spielstand, serie_id, ausgefallen, ausfall_grund, ` +
   "termin_trainer ( id, user_id, verantwortlich, abgesagt_am, trainer_name, trainer_ehemalig ) )";
 
 export type TeamTrainingFilter = {
@@ -591,6 +593,7 @@ export async function getTeamTrainingsFuer(
       ende: string;
       ort: string | null;
       bemerkung: string | null;
+      hinweis_eltern: string | null;
       felder: Felder | null;
       erwartete_spielerzahl: number | null;
       besetzung_art: string | null;
@@ -622,6 +625,7 @@ export async function getTeamTrainingsFuer(
             ende: kurzeZeit(termin.ende),
             ort: termin.ort,
             bemerkung: termin.bemerkung,
+            hinweisEltern: termin.hinweis_eltern,
             felder: termin.felder,
             spielerzahl: termin.erwartete_spielerzahl,
             spielstand: termin.spielstand ?? null,

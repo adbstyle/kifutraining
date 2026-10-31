@@ -7,6 +7,7 @@ import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
 import type { Meldung } from "@/lib/spiel";
 import { SpielKarte } from "./SpielKarte";
 import { AusfallGrund } from "./AusfallGrund";
+import { HinweisEltern } from "./HinweisEltern";
 import { AboKnopf } from "./AboKnopf";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
@@ -308,6 +309,7 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
           />
         )}
       </div>
+      <HinweisEltern text={t.hinweis_eltern} gedaempft={gedaempft} />
       {hinweise}
     </li>
   );

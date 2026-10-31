@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from "react";
 import { Button, DateField, Dialog, FormAbschnitt, SectionMessage, TextArea, TimeField, WochentagWahl } from "@/components/ui";
 import {
   BEMERKUNG_MAX,
+  HINWEIS_ELTERN_MAX,
   TERMIN_TEXT,
   ausfallProblem,
   leerZuNull,
@@ -35,7 +36,7 @@ import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
 import { terminBegonnen } from "@/lib/zeit";
 import { usePlatzAngaben } from "./usePlatzAngaben";
-import { SPIEL_MELDUNG, TREFFPUNKT_TEXT } from "@/lib/spiel";
+import { SPIEL_MELDUNG } from "@/lib/spiel";
 import {
   BezeichnungFeld,
   MeldefristFelder,
@@ -53,6 +54,7 @@ const ANGABE: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit",
   ort: "Der Ort",
   bemerkung: "Die Bemerkung",
+  hinweis_eltern: "Der Hinweis für Eltern",
   eingeladene: "Die Eingeladenen",
   verantwortung: "Die Verantwortung",
   besetzung: "Die Mindestbesetzung",
@@ -66,6 +68,7 @@ const MEHRZAHL: readonly FolgeAngabe[] = ["eingeladene", "felder", "kader"];
 const FOLGEN_KANN: readonly FolgeAngabe[] = [
   "zeit",
   "ort",
+  "hinweis_eltern",
   "bemerkung",
   "kader",
   "spielerzahl",
@@ -78,6 +81,7 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   zeit: "Zeit wieder der Serie folgen lassen",
   ort: "Ort wieder der Serie folgen lassen",
   bemerkung: "Bemerkung wieder der Serie folgen lassen",
+  hinweis_eltern: "Hinweis für Eltern wieder der Serie folgen lassen",
   eingeladene: "Eingeladene wieder der Serie folgen lassen",
   verantwortung: "Verantwortung wieder der Serie folgen lassen",
   besetzung: "Mindestbesetzung wieder der Serie folgen lassen",
@@ -216,6 +220,7 @@ export function TerminDialog({
       ort: start?.ort ?? "",
       ortLink: start?.ortLink ?? "",
       bemerkung: start?.bemerkung ?? "",
+      hinweisEltern: start?.hinweisEltern ?? "",
     });
     platz.zuruecksetzen(start);
     spiel.zuruecksetzen(
@@ -385,7 +390,8 @@ export function TerminDialog({
         {istSpiel && <RichtwertFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <MeldefristFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <TreffpunkteFelder angaben={spiel} spieltag={felder.datum} disabled={pending} />}
-        <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} info={istSpiel ? TREFFPUNKT_TEXT.bemerkungSichtbar : undefined} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
+        <TextArea label="Hinweis für Eltern (optional)" rows={3} maxLength={HINWEIS_ELTERN_MAX} value={felder.hinweisEltern ?? ""} onChange={(e) => setze("hinweisEltern")(e.target.value)} info={TERMIN_TEXT.hinweisElternSichtbar} infoAufTouch error={!!fehlerAn("hinweisEltern")} supportingText={fehlerAn("hinweisEltern")} />
+        <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} info={TERMIN_TEXT.bemerkungIntern} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         {(kader.length > 0 || terminKader.length > 0 || !istSpiel) && (
           <FormAbschnitt titel="Spieler:innen" untertitel="Für wen der Termin gilt und mit wie vielen gerechnet wird." imDialog>
             {(kader.length > 0 || terminKader.length > 0) && (

@@ -32,7 +32,8 @@ function spielStatusEcke(zahl: number, min: number | null, max: number | null) {
    Geteilt vom nächsten Termin und dem Reiter «Termin» der Termin-Spalte
    (#435). Ein Spiel (#459) nennt statt Spielerzahl und Feldern seinen
    Richtwert, soweit festgelegt (AK 9), gleich nach dem Ort seine Treffpunkte
-   (#465 AK 8) und an der Bemerkung, dass die Eltern sie sehen (AK 9). */
+   (#465 AK 8). Der Hinweis für Eltern steht vor der Bemerkung und ist als
+   solcher benannt (#590 AK 8): Ihn sehen die Eltern, die Bemerkung nicht. */
 export function TerminEigenschaften({
   t,
   ich,
@@ -125,9 +126,13 @@ export function TerminEigenschaften({
           )}
         </>
       )}
+      {t.hinweisEltern && (
+        <Eigenschaft label="Hinweis für Eltern">
+          <span className="whitespace-pre-line">{t.hinweisEltern}</span>
+        </Eigenschaft>
+      )}
       {t.bemerkung && (
-        // Ausgefallen sehen die Eltern statt der Bemerkung nur den Grund (#530).
-        <Eigenschaft label={t.spiel && !t.ausgefallen ? "Bemerkung · sichtbar für Eltern" : "Bemerkung"}>
+        <Eigenschaft label="Bemerkung">
           <span className="whitespace-pre-line">{t.bemerkung}</span>
         </Eigenschaft>
       )}

@@ -27,6 +27,8 @@ type TerminKontext = {
   ende: string;
   ort: string | null;
   bemerkung: string | null;
+  /** Der Hinweis für Eltern (#590). */
+  hinweisEltern: string | null;
   /** Wer verantwortlich ist (#519 AK 17); `null`: niemand. */
   verantwortlich: string | null;
   /** Die Namen der Eingeladenen, die dabei sind bzw. abgesagt haben (#520 AK 9), man selbst mit «(du)». */
@@ -87,6 +89,9 @@ function TerminKopf({ termin, className }: { termin: TerminKontext; className?: 
             </li>
           ))}
         </ul>
+      )}
+      {termin.hinweisEltern && (
+        <span className="type-body-small basis-full whitespace-pre-line">Für Eltern: {termin.hinweisEltern}</span>
       )}
       {termin.bemerkung && (
         <span className="type-body-small basis-full">{termin.bemerkung}</span>

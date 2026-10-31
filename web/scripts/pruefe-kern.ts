@@ -667,14 +667,14 @@ pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit 
 });
 
 pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
-  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, ortLink: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], mindestbesetzung: null, kader: [], ausgefallen: false, ausfallGrund: null };
+  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, ortLink: null, bemerkung: null, hinweisEltern: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], mindestbesetzung: null, kader: [], ausgefallen: false, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
   assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
   assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } }, "2026-10-01"), false);
 });
 
 pruefe("Status eines Termins in einem Wort, Kalenderblatt weiss oder grau (#491)", () => {
-  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-11-03", beginn: "18:00", ende: "19:30", ort: null, ortLink: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], mindestbesetzung: null, kader: [], ausgefallen: false, ausfallGrund: null };
+  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-11-03", beginn: "18:00", ende: "19:30", ort: null, ortLink: null, bemerkung: null, hinweisEltern: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], mindestbesetzung: null, kader: [], ausgefallen: false, ausfallGrund: null };
   const mitTraining = { ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } };
   assert.deepEqual(terminStatus(mitTraining, "2026-11-01"), { wort: "Vorbereitet", appearance: "success" });
   assert.deepEqual(terminStatus(t, "2026-11-01"), { wort: "Nicht vorbereitet", appearance: "neutral" });
@@ -723,7 +723,7 @@ pruefe("Ausfall: Grund mit den Regeln der Bemerkung; nicht vorbereitet schliesst
   assert.equal(TERMIN_TEXT.grundLang, "Der Grund darf höchstens 500 Zeichen lang sein.");
   assert.equal(TERMIN_MELDUNG.NICHT_AUSGEFALLEN, "Dieser Termin ist nicht ausgefallen.");
   assert.ok(!KONFLIKT_MARKER.includes("TERMIN_AUSGEFALLEN"), "eine Regel, kein Konflikt");
-  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, ortLink: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null,
+  const t = { id: "t", teamId: "x", art: "training" as const, spiel: null, datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, ortLink: null, bemerkung: null, hinweisEltern: null, felder: null, spielerzahl: null, spielstand: null,
     training: null, serie: null, serienTag: null, abweichungen: [], trainer: [], mindestbesetzung: null, kader: [], ausgefallen: true, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-01"), false, "AK 8");
   assert.equal(nochNichtVorbereitet({ ...t, ausgefallen: false }, "2026-10-01"), true);
@@ -749,6 +749,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     ort: "Allmend",
     ortLink: null,
     bemerkung: null,
+    hinweisEltern: null,
     felder: [
       { laenge_m: 30, breite_m: 25, tore: { minitor: 2, tor_5m: 0, tor_7m: null }, untergrund: "kunstrasen" as const },
       { laenge_m: null, breite_m: null, tore: { minitor: null, tor_5m: null, tor_7m: null }, untergrund: null },
@@ -773,6 +774,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     ende: "20:00",
     ort: "Allmend",
     bemerkung: null,
+    hinweis_eltern: null,
     // #389 AK 13, 14: die Felder mit Grösse, Toren und Untergrund; Unbekanntes
     // als null, «keine» als 0, der Untergrund als Wert.
     felder: [
@@ -991,6 +993,9 @@ pruefe("terminProblem: neuer Termin braucht Datum, Beginn und Ende", () => {
   assert.deepEqual(terminProblem({ ...ok, ort: "x".repeat(101) }), { feld: "ort", text: TERMIN_TEXT.ortLang });
   assert.equal(terminProblem({ ...ok, ort: "x".repeat(100) }), null);
   assert.deepEqual(terminProblem({ ...ok, bemerkung: "x".repeat(501) }), { feld: "bemerkung", text: TERMIN_TEXT.bemerkungLang });
+  // #590 AK 16: der Hinweis für Eltern ebenso höchstens 500 Zeichen.
+  assert.equal(terminProblem({ ...ok, hinweisEltern: "x".repeat(500) }), null);
+  assert.deepEqual(terminProblem({ ...ok, hinweisEltern: "x".repeat(501) }), { feld: "hinweisEltern", text: TERMIN_TEXT.hinweisElternLang });
 });
 
 pruefe("terminProblem: Beginn und Ende sind immer Pflicht und lassen sich nicht leeren (AK 2, 8)", () => {
@@ -1185,6 +1190,9 @@ pruefe("geaenderteFelder: nur Geändertes, Beginn und Ende als Paar, nichts geä
   assert.deepEqual(geaenderteFelder({ ...start, ort: "Halle" }, start), { ort: "Halle", ortLink: "" }, "Ort und Kartenlink als Paar (#533)");
   assert.deepEqual(geaenderteFelder({ ...start, ort: "" }, start), { ort: "", ortLink: "" }, "leeren");
   assert.deepEqual(geaenderteFelder({ ...start, bemerkung: "Bälle" }, start), { bemerkung: "Bälle" });
+  // #590: der Hinweis für Eltern für sich, leer heisst leeren.
+  assert.deepEqual(geaenderteFelder({ ...start, hinweisEltern: "Pincode 4702" }, start), { hinweisEltern: "Pincode 4702" });
+  assert.deepEqual(geaenderteFelder(start, { ...start, hinweisEltern: "Pincode 4702" }), { hinweisEltern: "" });
   assert.deepEqual(geaenderteFelder({ ...start, datum: "2026-10-09" }, start), { datum: "2026-10-09" });
   assert.deepEqual(geaenderteFelder({ ...start, ende: "20:30" }, start), { beginn: "18:30", ende: "20:30" }, "Paar");
   assert.deepEqual(geaenderteFelder({ ...start, beginn: "18:00" }, start), { beginn: "18:00", ende: "20:00" }, "Paar");
@@ -1296,7 +1304,7 @@ pruefe("Serie: Felder und Spielerzahl mit denselben Sätzen, jede Reichweite, fo
   assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false }), ["nur_dieser", "dieser_und_folgende", "alle"]);
   assert.equal(
     SERIE_MELDUNG.SERIE_ANGABEN_UNGUELTIG,
-    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.",
+    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Hinweis für Eltern, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.",
   );
 });
 
@@ -2183,6 +2191,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#487": ["termin_spieler_abrufen", "termin_anwesenheit_setzen", "team_plan_abrufen"],
     "#556": ["probetraining_abrufen", "probetraining_festlegen"],
     "#555": ["probetraining_abrufen", "probetraining_festlegen", "spieler_probe_setzen", "spielerliste_abrufen", "termin_spieler_abrufen"],
+    "#590": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "team_plan_abrufen", "spieler_link_abrufen", "training_abrufen", "trainings_suchen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
@@ -2308,7 +2317,7 @@ pruefe("Abo: Eine lange URL-Zeile wird gefaltet und fügt sich wieder zusammen",
 const feedTermin = (t: Partial<AboFeedTermin> & { id: string }): AboFeedTermin => ({
   datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: "Sportplatz", art: "training", bezeichnung: null,
   begonnen: false, abgemeldet: false, meldung: null, frist_abgelaufen: false, nicht_aufgeboten: false,
-  bemerkung: null, treffpunkte: null, ...t,
+  hinweis_eltern: null, treffpunkte: null, ...t,
 });
 const elternAbo = (termine: AboFeedTermin[]) =>
   kalenderText({ kalenderName: aboKalenderName("FC Test"), uidZusatz: "abo1", jetzt: ABO_JETZT, termine: termine.map((t) => aboEintrag(t, "FC Test")) });
@@ -2380,22 +2389,26 @@ pruefe("Abo Spielervertretung: Spiel zugesagt, vielleicht bis zur Frist, sonst a
   assert.equal(aboStatus(feedTermin({ id: "t", meldung: null })), "zugesagt");
 });
 
-pruefe("Abo Spielervertretung: Treffpunkte und Bemerkung wie am Link (#508 PC 2, AK 3; OoS 1, 2)", () => {
+pruefe("Abo Spielervertretung: Treffpunkte und Hinweis für Eltern wie am Link (#508 PC 2, AK 3; OoS 1, 2; #590 AK 12)", () => {
   const treffpunkte = [
     { anreise: "car" as const, zeitpunkt: "2026-10-06T19:00", ort: null },
     { anreise: "oev" as const, zeitpunkt: "2026-10-07T16:30", ort: "Bahnhof; Gleis 3" },
     { anreise: "vor_ort" as const, zeitpunkt: "2026-10-07T17:30", ort: null },
   ];
   const spiel = (t: Partial<AboFeedTermin>) =>
-    feedTermin({ id: "s", art: "spiel", bezeichnung: "Cup", ort: "Wyler", treffpunkte, bemerkung: "Leibchen mitnehmen", ...t });
+    feedTermin({ id: "s", art: "spiel", bezeichnung: "Cup", ort: "Wyler", treffpunkte, hinweis_eltern: "Leibchen mitnehmen", ...t });
   assert.equal(
     aboEintrag(spiel({ meldung: "angemeldet" }), "FC Test").beschreibung,
-    "Zugesagt\n\nTreffpunkte\nDi., 06.10., 19:00 · Car oder Vereinsbus\n16:30 · öV · Bahnhof; Gleis 3\n17:30 · vor Ort · Wyler\n\nBemerkung\nLeibchen mitnehmen",
+    "Zugesagt\n\nTreffpunkte\nDi., 06.10., 19:00 · Car oder Vereinsbus\n16:30 · öV · Bahnhof; Gleis 3\n17:30 · vor Ort · Wyler\n\nLeibchen mitnehmen",
   );
-  // Abgesagt oder begonnen: am Link gedämpft bzw. vorbei — keine Treffpunkte, die Bemerkung bleibt.
-  assert.equal(aboEintrag(spiel({ meldung: "abgemeldet" }), "FC Test").beschreibung, "Abgesagt\n\nBemerkung\nLeibchen mitnehmen");
-  assert.equal(aboEintrag(spiel({ meldung: "angemeldet", begonnen: true }), "FC Test").beschreibung, "Zugesagt\n\nBemerkung\nLeibchen mitnehmen");
-  assert.equal(aboEintrag(spiel({ treffpunkte: [], bemerkung: null }), "FC Test").beschreibung, "Vielleicht");
+  // Abgesagt oder begonnen: am Link gedämpft bzw. vorbei — keine Treffpunkte, der Hinweis bleibt.
+  assert.equal(aboEintrag(spiel({ meldung: "abgemeldet" }), "FC Test").beschreibung, "Abgesagt\n\nLeibchen mitnehmen");
+  assert.equal(aboEintrag(spiel({ meldung: "angemeldet", begonnen: true }), "FC Test").beschreibung, "Zugesagt\n\nLeibchen mitnehmen");
+  assert.equal(aboEintrag(spiel({ treffpunkte: [], hinweis_eltern: null }), "FC Test").beschreibung, "Vielleicht");
+  // #590 AK 12: auch ein Training trägt seinen Hinweis, abgesagt ebenso.
+  const training = feedTermin({ id: "t", hinweis_eltern: "Pincode: 4702\nEintritt frühestens 15 min vorher" });
+  assert.equal(aboEintrag(training, "FC Test").beschreibung, "Zugesagt\n\nPincode: 4702\nEintritt frühestens 15 min vorher");
+  assert.equal(aboEintrag({ ...training, abgemeldet: true }, "FC Test").beschreibung, "Abgesagt\n\nPincode: 4702\nEintritt frühestens 15 min vorher");
   // Weder Meldefrist noch Richtwert noch Zahl der Angemeldeten (OoS 1), kein Grund der Absage (OoS 2).
   const text = elternAbo([spiel({ nicht_aufgeboten: true })]);
   assert.ok(!/frist|aufgeboten|angemeldet|18:00/i.test(text.replace(/DTSTART[^\r]*|DTEND[^\r]*/g, "")));

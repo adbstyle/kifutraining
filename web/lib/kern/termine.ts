@@ -78,7 +78,7 @@ import {
 export const TERMIN_FELD = { feld: "termin_id" } as const;
 
 export const TERMIN_ROH =
-  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, training_id, datum, beginn, ende, ort, ort_link, bemerkung, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
+  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, training_id, datum, beginn, ende, ort, ort_link, bemerkung, hinweis_eltern, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, hinweis_eltern_abweichend, ausgefallen, ausfall_grund";
 
 export type TerminRoh = {
   id: string;
@@ -99,6 +99,8 @@ export type TerminRoh = {
   /** Der Kartenlink zum Ort (#533); nur mit Ort. */
   ort_link: string | null;
   bemerkung: string | null;
+  /** Der Hinweis für Eltern (#590). */
+  hinweis_eltern: string | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: Felder | null;
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
@@ -112,6 +114,7 @@ export type TerminRoh = {
   zeit_abweichend: boolean;
   ort_abweichend: boolean;
   bemerkung_abweichend: boolean;
+  hinweis_eltern_abweichend: boolean;
   /** Ein ausgefallener Termin behält sein Training; es ruht (PO 2026-10-06). */
   ausgefallen: boolean;
   ausfall_grund: string | null;
@@ -215,6 +218,8 @@ export type TerminFestlegen = {
   /** Der Kartenlink zum Ort (#533 AK 1); nur mit Ort. */
   ortLink?: string | null;
   bemerkung?: string | null;
+  /** Der Hinweis für Eltern (#590 AK 1); ohne Angabe oder leer: keiner. */
+  hinweisEltern?: string | null;
   /** Die Felder des Platzes (#389); ohne Angabe oder leer: keine. */
   felder?: readonly FeldEingabe[] | null;
   /** Die erwartete Spielerzahl (#390); ohne Angabe: unbekannt. */
@@ -355,6 +360,7 @@ export async function legeTerminFest(
       ort: leerZuNull(e.ort),
       ort_link: leerZuNull(e.ortLink),
       bemerkung: leerZuNull(e.bemerkung),
+      hinweis_eltern: leerZuNull(e.hinweisEltern),
       felder: felder.felder,
       erwartete_spielerzahl: e.spielerzahl ?? null,
       besetzung_art: e.mindestbesetzung?.art ?? null,
@@ -409,6 +415,8 @@ export type TerminAendern = {
    *  Ort bleibt — ändert sich der Ort ohne ihn, fällt er weg (PC 1). */
   ortLink?: string | null;
   bemerkung?: string | null;
+  /** Der Hinweis für Eltern (#590): `undefined` = unverändert, `null` oder `""` = leeren. */
+  hinweisEltern?: string | null;
   /** Die Felder als ganze Liste (#389 AK 7): `undefined` = unverändert,
    *  `null` oder `[]` = entfernen. */
   felder?: readonly FeldEingabe[] | null;
@@ -561,7 +569,7 @@ async function warumNichtGeschrieben(
     : fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
 }
 
-/** Datum, Zeit, Ort, Bemerkung, Felder (#389) und erwartete Spielerzahl
+/** Datum, Zeit, Ort, Bemerkung, Hinweis für Eltern (#590), Felder (#389) und erwartete Spielerzahl
  *  (#390) eines Termins ändern (AK 7–10, 23). Der Termin wird mit seinem
  *  Stand zusammengeführt und als Ganzes geprüft; geschrieben werden aber nur die übergebenen Felder (Beginn und Ende stets
  *  zusammen). So überschreibt eine gleichzeitige Änderung eines anderen
@@ -593,6 +601,7 @@ export async function aendereTermin(
     // #533 PC 1: Der Link gehört zum Ort — ändert sich der Ort ohne ihn, fällt er weg.
     ortLink: e.ortLink !== undefined ? leerZuNull(e.ortLink) : ort !== t.ort ? null : t.ort_link,
     bemerkung: e.bemerkung !== undefined ? leerZuNull(e.bemerkung) : t.bemerkung,
+    hinweisEltern: e.hinweisEltern !== undefined ? leerZuNull(e.hinweisEltern) : t.hinweis_eltern,
   };
   const problem = feldFehler(terminProblem(neu));
   if (problem) return problem;
@@ -636,8 +645,9 @@ export async function aendereTermin(
   if (besetzung) return besetzung;
 
   const aenderung: Partial<
-    Omit<typeof neu, "ortLink"> & {
+    Omit<typeof neu, "ortLink" | "hinweisEltern"> & {
       ort_link: string | null;
+      hinweis_eltern: string | null;
       felder: Felder | null;
       erwartete_spielerzahl: number | null;
       besetzung_art: string | null;
@@ -656,6 +666,7 @@ export async function aendereTermin(
   if (e.ort !== undefined) aenderung.ort = neu.ort;
   if (neu.ortLink !== t.ort_link) aenderung.ort_link = neu.ortLink;
   if (e.bemerkung !== undefined) aenderung.bemerkung = neu.bemerkung;
+  if (e.hinweisEltern !== undefined) aenderung.hinweis_eltern = neu.hinweisEltern;
   // Die Felder sind EINE Angabe und gehen als ganze Liste (#389 AK 7).
   if (felder) aenderung.felder = felder.felder;
   if (e.spielerzahl !== undefined) aenderung.erwartete_spielerzahl = e.spielerzahl;
@@ -683,6 +694,8 @@ export async function aendereTermin(
     // Ort und Kartenlink weichen gemeinsam ab (#533 PC 2).
     if (("ort" in aenderung && neu.ort !== t.ort) || "ort_link" in aenderung) flags.ort_abweichend = true;
     if ("bemerkung" in aenderung && neu.bemerkung !== t.bemerkung) flags.bemerkung_abweichend = true;
+    // #590 AK 4: auch ein entfernter Hinweis weicht ab — der Termin ist dann bewusst ohne.
+    if ("hinweis_eltern" in aenderung && neu.hinweisEltern !== t.hinweis_eltern) flags.hinweis_eltern_abweichend = true;
     if (felder && !gleicheFelder(felder.felder, t.felder)) flags.felder_abweichend = true;
     if (e.spielerzahl !== undefined && e.spielerzahl !== t.erwartete_spielerzahl) flags.spielerzahl_abweichend = true;
     if (

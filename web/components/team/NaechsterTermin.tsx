@@ -159,6 +159,13 @@ export function NaechsterTermin({
             className="type-body-medium text-on-surface"
           />
         )}
+        {/* #590: der Hinweis für Eltern mit «Für Eltern:» davor, damit er sich von der Bemerkung abhebt. */}
+        {t.hinweisEltern && (
+          <p className="whitespace-pre-line type-body-medium text-on-surface">
+            <span className="text-on-surface-mittel">Für Eltern: </span>
+            {t.hinweisEltern}
+          </p>
+        )}
         {t.bemerkung && <p className="whitespace-pre-line type-body-medium text-on-surface">{t.bemerkung}</p>}
         <IchBinDabei t={t} />
 
