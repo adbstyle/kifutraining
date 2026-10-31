@@ -33,7 +33,7 @@ import {
 } from "@/lib/trainer-ausgabe";
 import { angezeigteSpielerzahl, noetigeTrainer } from "@/lib/besetzung";
 import { spielerzahlVon } from "@/lib/spieler";
-import { KARTENLINK_MAX, TERMIN_TEXT } from "@/lib/termin";
+import { HINWEIS_ELTERN_MAX, KARTENLINK_MAX, TERMIN_TEXT } from "@/lib/termin";
 import {
   KENNUNG_FEHLER,
   TEAM_KENNUNG_FEHLER,
@@ -48,7 +48,7 @@ import { KaderId, KADER_KENNUNG_FEHLER } from "@/lib/mcp/werkzeuge/kader";
 
 /**
  * Teams und Kalender (Stories #198, #322, #323, #324, #326; Felder #389,
- * erwartete Spielerzahl #390, beide an der Serie #391).
+ * erwartete Spielerzahl #390, beide an der Serie #391; Hinweis für Eltern #590).
  *
  * Dünne Adapter über den Fachkern (lib/kern/team.ts, lib/kern/termine.ts) —
  * dieselben Funktionen wie Team-Übersicht, Trainingsplan und Termin-Dialog
@@ -67,7 +67,7 @@ import { KaderId, KADER_KENNUNG_FEHLER } from "@/lib/mcp/werkzeuge/kader";
 
 /** Was jede Beschreibung eines Termin-Werkzeugs über das Modell sagt. */
 const TERMIN_MODELL =
-  "Der Kalender eines Teams besteht aus Terminen: Datum, Beginn, Ende, Ort, Bemerkung, die Felder " +
+  "Der Kalender eines Teams besteht aus Terminen: Datum, Beginn, Ende, Ort, Bemerkung, Hinweis für Eltern, die Felder " +
   "des Platzes und die erwartete Spielerzahl, mit oder ohne Training. Einzelne Termine entstehen mit «termin_festlegen», wöchentliche Serien mit " +
   "«terminserie_festlegen»; ein Training kommt ausschliesslich durch «training_zuordnen» an einen " +
   "bestehenden Termin auf ein Datum. Ein Termin trägt höchstens " +
@@ -84,7 +84,9 @@ const TERMIN_MODELL =
   "Mindest- und Höchstzahl an Spieler:innen als Richtwert (begrenzen keine Anmeldungen), nie ein Training, keine Felder und keine " +
   "erwartete Spielerzahl. Beginn heisst bei einem Spiel Anpfiff; ein Spiel lässt sich nur mit einem noch bevorstehenden Anpfiff " +
   "festlegen und nur auf einen solchen verlegen, und eine Verlegung beendet seinen Ausfall. Treten Mannschaften eines Turniers zu " +
-  "verschiedenen Zeiten an, ist es je Mannschaft ein Spiel.";
+  "verschiedenen Zeiten an, ist es je Mannschaft ein Spiel. " +
+  `Trainings und Spiele tragen einen Hinweis für Eltern («hinweis_eltern»): ${TERMIN_TEXT.hinweisElternSichtbar} ` +
+  `${TERMIN_TEXT.bemerkungIntern} Was die Eltern wissen sollen (etwa ein Zugangscode oder der Einlass), gehört in den Hinweis.`;
 
 const ART = z.enum(TERMIN_ARTEN as ["training", "spiel"]).describe("«training» oder «spiel»; bleibt nach dem Festlegen.");
 const BEZEICHNUNG = z
@@ -115,7 +117,7 @@ const TREFFPUNKTE = z
   .describe(
     `Treffpunkte eines Spiels als GANZE Liste, höchstens ${TREFFPUNKTE_MAX}, je Anreiseart einer. Die Eltern sehen sie über ihren ` +
       "Link (nicht an einem ausgefallenen Spiel). Eine Verlegung nimmt sie im selben Abstand zum Anpfiff mit. Eine Rückkehr gehört " +
-      "in die Bemerkung.",
+      "in den Hinweis für Eltern.",
   );
 const RICHTWERT_ZAHL = z
   .number()
@@ -126,6 +128,9 @@ const DATUM = z.string().describe("Datum als JJJJ-MM-TT, etwa 2026-10-07.");
 const UHRZEIT = z.string().describe("Uhrzeit als HH:MM (24 Stunden), etwa 18:30.");
 const ORT = z.string().describe("Ort, frei formuliert, höchstens 100 Zeichen, etwa «Sportplatz Allmend, Feld 2».");
 const BEMERKUNG = z.string().describe("Bemerkung, frei formuliert, höchstens 500 Zeichen.");
+const HINWEIS_ELTERN = z
+  .string()
+  .describe(`Hinweis für Eltern, frei formuliert, höchstens ${HINWEIS_ELTERN_MAX} Zeichen. ${TERMIN_TEXT.hinweisElternSichtbar}`);
 const KARTENLINK_MODELL =
   `Eine vollständige Webadresse mit https://, höchstens ${KARTENLINK_MAX} Zeichen, meist ein geteilter Link aus einer ` +
   "Karten-App. Nur zusammen mit einem Ort; ändert sich der Ort ohne neuen Kartenlink, fällt der bisherige weg. " +
@@ -152,7 +157,7 @@ const VERFALL_MODELL =
   "Ändern sich Datum oder Beginn eines Trainings und hat es danach noch nicht begonnen, verfallen seine Abmeldungen: " +
   "Alle Spieler:innen gelten wieder als angemeldet (auch über die Serie, auch an einem ausgefallenen Termin). " +
   "Verfallen dadurch Abmeldungen, kommt zuerst ein Fehler mit «verfallend» (Anzahl); frag nach und wiederhole den " +
-  "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Felder, Trainer:innen und Training lassen sie stehen. " +
+  "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Hinweis für Eltern, Felder, Trainer:innen und Training lassen sie stehen. " +
   "Ebenso verfallen die Absagen der Trainer:innen (an einem Spiel nur mit einem anderen Datum); «absagen» im Fehler nennt, wie viele. " +
   "An einem Spiel verfallen die Meldungen nur mit einem anderen Datum (alle sind dann wieder ohne Meldung), samt den " +
   "Kennzeichnungen als nicht aufgeboten - auch wenn nur solche verfallen, kommt zuerst der Fehler mit «verfallend» " +
@@ -193,7 +198,8 @@ const SERIEN_MODELL =
   "Eine Terminserie läuft wöchentlich an einem oder mehreren Wochentagen zwischen Beginn- und " +
   "Enddatum (höchstens bis zum gleichen Kalendertag im Folgejahr) und legt ihre Termine als " +
   "einzelne Termine an. Ein Termin einer Serie kann je Angabe abweichen (Datum, Zeit, Ort, " +
-  "Bemerkung, Eingeladene, Verantwortung, Mindestbesetzung, Felder, erwartete Spielerzahl, Kader) und behält die Abweichung bei späteren Serienänderungen; " +
+  "Bemerkung, Hinweis für Eltern, Eingeladene, Verantwortung, Mindestbesetzung, Felder, erwartete Spielerzahl, Kader) und behält die Abweichung bei späteren Serienänderungen; " +
+  "wer an nur einem Serientermin den Hinweis für Eltern entfernt, führt ihn bewusst ohne, bis er wieder der Serie folgt; " +
   "das Datum gilt immer, wie es ist. Die Felder sind eine Angabe (die ganze Liste), die Spielerzahl eine zweite. " +
   "Wer an nur einem Serientermin Felder oder Spielerzahl entfernt, macht ihn bewusst leer: Er weicht ab und gilt " +
   "als unbekannt, bis er wieder der Serie folgt. Einzeln entfernte Termine legt keine Serienänderung wieder an.";
@@ -253,6 +259,8 @@ const PlanEintrag = z.object({
   /** Der Kartenlink zum Ort (#533 AK 3); `null` ohne. */
   kartenlink: z.string().nullable(),
   bemerkung: z.string().nullable(),
+  /** Der Hinweis für Eltern (#590); `null` ohne. */
+  hinweis_eltern: z.string().nullable(),
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: felderSchema(),
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
@@ -263,7 +271,7 @@ const PlanEintrag = z.object({
   serie_id: z.string().nullable(),
   /** Die Angaben, in denen der Termin von seiner Serie abweicht; leer ohne Serie. */
   abweichungen: z.array(
-    z.enum(["datum", "zeit", "ort", "bemerkung", "eingeladene", "verantwortung", "besetzung", "felder", "spielerzahl", "kader"]),
+    z.enum(["datum", "zeit", "ort", "bemerkung", "hinweis_eltern", "eingeladene", "verantwortung", "besetzung", "felder", "spielerzahl", "kader"]),
   ),
   /** Für wen der Termin gilt (#453); leer = für alle. `id: null` ist ein ehemaliger Kader eines begonnenen Termins. */
   kader: z.array(z.object({ id: z.string().nullable(), name: z.string().nullable() })),
@@ -300,6 +308,7 @@ function planEintrag(t: TerminZeile, zugang: Zugang) {
     ort: t.ort,
     kartenlink: t.ortLink,
     bemerkung: t.bemerkung,
+    hinweis_eltern: t.hinweisEltern,
     felder: felderAusgabe(t.felder),
     erwartete_spielerzahl: t.spielerzahl,
     spielerzahl: spielerzahlQuelleAusgabe(spielerzahlVon(t)),
@@ -332,6 +341,7 @@ const PlanSerie = z.object({
   ort: z.string().nullable(),
   kartenlink: z.string().nullable(),
   bemerkung: z.string().nullable(),
+  hinweis_eltern: z.string().nullable(),
   /** Wen die Serie einlädt und wer verantwortlich ist (#519). */
   trainer: serienTrainerSchema(),
   /** Die Mindestbesetzung, die die Serie vorgibt (#521). */
@@ -358,6 +368,7 @@ function planSerien(termine: TerminZeile[]) {
         ort: t.serie.ort,
         kartenlink: t.serie.ortLink,
         bemerkung: t.serie.bemerkung,
+        hinweis_eltern: t.serie.hinweisEltern,
         trainer: serienTrainerAusgabe(t.serie.trainer),
         mindestbesetzung: t.serie.mindestbesetzung,
         felder: felderAusgabe(t.serie.felder),
@@ -374,11 +385,11 @@ export const teamPlanAbrufen = werkzeug({
     "Liefert den Kalender eines deiner Teams (Trainings und Spiele, je mit «art»), bereits geteilt wie im Team-Bereich: «kommend» (ab " +
     "heute, aufsteigend; der heutige Tag zählt ganz dazu) und «vergangen» (der jüngste zuerst). " +
     "«heute» ist der Tag, an dem geteilt wurde - gemessen am Trainingsort (Schweiz), nicht in deiner " +
-    "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung, die Felder " +
+    "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung, Hinweis für Eltern, die Felder " +
     "des Platzes, die erwartete Spielerzahl, «spielerzahl» (die Zahl, mit der geplant wird, samt Quelle - aus der Spielerliste, " +
     "sobald das Team eine führt) und das zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
     "Training ohne Training-Inhalt, das nicht ausgefallen ist, ist noch nicht vorbereitet; ein Spiel nie. Spiele nennen Bezeichnung, Mindest- und Höchstzahl. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
-    "Ort, Bemerkung, Trainer:innen, Felder, erwartete Spielerzahl und Kader jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
+    "Ort, Bemerkung, Hinweis für Eltern, Trainer:innen, Felder, erwartete Spielerzahl und Kader jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
     "von ihr abweicht. Jeder Eintrag nennt seine Trainer:innen und seine Kader («kader» leer: für alle); «eingrenzung» grenzt auf " +
     "deine Termine ein. " +
     `${TRAINER_MODELL} ` +
@@ -428,7 +439,7 @@ export const terminFestlegen = werkzeug({
   beschreibung:
     "Legt im Kalender eines deiner Teams einen einzelnen Termin fest: ein Training (ohne Training-Inhalt, auch in der " +
     "Vergangenheit) oder ein Spiel - «art» ist Pflicht. Datum, Beginn und Ende sind Pflicht, das Ende liegt am selben Tag nach dem " +
-    "Beginn; Ort, Bemerkung und Kader sind frei. Ohne Angabe sind alle Mitglieder eingeladen und du bist verantwortlich. Ein Training trägt auf Wunsch Felder und erwartete Spielerzahl; einen Inhalt ordnest du " +
+    "Beginn; Ort, Bemerkung, Hinweis für Eltern und Kader sind frei. Ohne Angabe sind alle Mitglieder eingeladen und du bist verantwortlich. Ein Training trägt auf Wunsch Felder und erwartete Spielerzahl; einen Inhalt ordnest du " +
     "danach mit «training_zuordnen» zu. Ein Spiel braucht eine Bezeichnung und trägt auf Wunsch Mindest- und Höchstzahl. " +
     `${TERMIN_MODELL} ${KADER_TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
   nurLesen: false,
@@ -448,6 +459,7 @@ export const terminFestlegen = werkzeug({
     ort: ORT.optional(),
     kartenlink: KARTENLINK.optional(),
     bemerkung: BEMERKUNG.optional(),
+    hinweis_eltern: HINWEIS_ELTERN.optional(),
     felder: FelderEingabe.optional().describe(`Die Felder des Platzes; ohne Angabe ist der Platz unbekannt. ${FELDER_MODELL}`),
     erwartete_spielerzahl: SpielerzahlEingabe.optional().describe(
       `Die erwartete Spielerzahl; ohne Angabe unbekannt. ${SPIELERZAHL_MODELL}`,
@@ -474,6 +486,7 @@ export const terminFestlegen = werkzeug({
         ort: e.ort,
         ortLink: e.kartenlink,
         bemerkung: e.bemerkung,
+        hinweisEltern: e.hinweis_eltern,
         felder: e.felder,
         spielerzahl: e.erwartete_spielerzahl,
         kaderIds: e.kader_ids,
@@ -506,6 +519,9 @@ export const AendernEingabe = z.object({
     .optional()
     .describe(`Neuer Kartenlink; null entfernt ihn, ohne Angabe unverändert, solange der Ort bleibt. ${KARTENLINK_MODELL}`),
   bemerkung: BEMERKUNG.nullable().optional().describe("Neue Bemerkung; null leert sie, ohne Angabe unverändert."),
+  hinweis_eltern: HINWEIS_ELTERN.nullable()
+    .optional()
+    .describe(`Neuer Hinweis für Eltern; null leert ihn, ohne Angabe unverändert. ${TERMIN_TEXT.hinweisElternSichtbar}`),
   bezeichnung: BEZEICHNUNG.optional().describe("Nur bei einem Spiel: neue Bezeichnung; ohne Angabe unverändert."),
   mindestzahl: RICHTWERT_ZAHL.nullable().optional().describe("Nur bei einem Spiel: neue Mindestzahl; null entfernt sie, ohne Angabe unverändert."),
   hoechstzahl: RICHTWERT_ZAHL.nullable().optional().describe("Nur bei einem Spiel: neue Höchstzahl; null entfernt sie, ohne Angabe unverändert."),
@@ -579,7 +595,7 @@ export const terminAendern = werkzeug({
   name: "termin_aendern",
   titel: "Termin ändern",
   beschreibung:
-    "Ändert Datum, Zeit, Ort, Bemerkung, die Felder, die erwartete Spielerzahl oder die Kader eines Termins, bei einem Spiel auch " +
+    "Ändert Datum, Zeit, Ort, Bemerkung, Hinweis für Eltern, die Felder, die erwartete Spielerzahl oder die Kader eines Termins, bei einem Spiel auch " +
     "Bezeichnung, Mindest- und Höchstzahl - nur, was du mitgibst; die Art bleibt. Beginn und Ende " +
     "lassen sich nicht leeren; ändert sich die Zeit, braucht der Termin danach beide. Das " +
     "zugeordnete Training bleibt dasselbe. Für einen Termin einer Serie ist «reichweite» Pflicht; " +
@@ -607,6 +623,7 @@ export const terminAendern = werkzeug({
         ort: e.ort,
         ortLink: e.kartenlink,
         bemerkung: e.bemerkung,
+        hinweisEltern: e.hinweis_eltern,
         felder: e.felder,
         spielerzahl: e.erwartete_spielerzahl,
         mindestbesetzung: alsBesetzung(e.mindestbesetzung),
@@ -670,7 +687,7 @@ export const terminserieFestlegen = werkzeug({
   beschreibung:
     "Legt für eines deiner Teams eine wöchentliche Terminserie fest: je gewähltem Wochentag " +
     "zwischen «von» und «bis» (beide eingeschlossen) einen Termin ohne Training mit Beginn, Ende, " +
-    "Ort, Bemerkung, Eingeladenen, Verantwortlicher, Feldern, erwarteter Spielerzahl und Kadern der Serie - auch ganz oder teilweise in " +
+    "Ort, Bemerkung, Hinweis für Eltern, Eingeladenen, Verantwortlicher, Feldern, erwarteter Spielerzahl und Kadern der Serie - auch ganz oder teilweise in " +
     "der Vergangenheit. Bestehende " +
     "Termine an denselben Tagen bleiben daneben stehen. Ohne Angabe sind alle Mitglieder eingeladen und du bist verantwortlich. " +
     `${SERIEN_MODELL} ${KADER_TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
@@ -685,6 +702,7 @@ export const terminserieFestlegen = werkzeug({
     ort: ORT.optional(),
     kartenlink: KARTENLINK.optional(),
     bemerkung: BEMERKUNG.optional(),
+    hinweis_eltern: HINWEIS_ELTERN.optional(),
     eingeladene: EINGELADENE.optional(),
     verantwortlich: VERANTWORTLICH.optional(),
     mindestbesetzung: BesetzungEingabe.optional().describe(`Die Mindestbesetzung jedes Termins der Serie; ohne Angabe keine. ${BESETZUNG_MODELL}`),
@@ -707,6 +725,7 @@ export const terminserieFestlegen = werkzeug({
         ort: e.ort,
         ortLink: e.kartenlink,
         bemerkung: e.bemerkung,
+        hinweisEltern: e.hinweis_eltern,
         eingeladene: e.eingeladene,
         verantwortlich: e.verantwortlich,
         mindestbesetzung: alsBesetzung(e.mindestbesetzung),
@@ -725,14 +744,14 @@ export const terminDerSerieFolgen = werkzeug({
   titel: "Termin wieder der Serie folgen lassen",
   beschreibung:
     "Lässt abweichende Angaben eines Serientermins wieder seiner Serie folgen: Zeit, Ort, " +
-    "Bemerkung, Eingeladene, Verantwortung, Mindestbesetzung («besetzung»), Felder, erwartete Spielerzahl («spielerzahl») oder Kader übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
+    "Bemerkung, Hinweis für Eltern («hinweis_eltern»), Eingeladene, Verantwortung, Mindestbesetzung («besetzung»), Felder, erwartete Spielerzahl («spielerzahl») oder Kader übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
     `lässt sich nicht zurücksetzen («datum» wird abgewiesen). ${VERFALL_MODELL} ${KADER_TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     termin_id: TerminId,
     angaben: z
       .array(
-        z.enum(["zeit", "ort", "bemerkung", "eingeladene", "verantwortung", "besetzung", "felder", "spielerzahl", "kader", "datum"]),
+        z.enum(["zeit", "ort", "bemerkung", "hinweis_eltern", "eingeladene", "verantwortung", "besetzung", "felder", "spielerzahl", "kader", "datum"]),
       )
       .min(1),
     bestaetigt: z.boolean().optional().describe("Nur nötig, wenn mit «zeit» oder «kader» Abmeldungen verfallen."),

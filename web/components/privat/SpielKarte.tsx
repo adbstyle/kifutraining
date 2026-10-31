@@ -9,6 +9,7 @@ import type { LinkTermin } from "@/lib/privater-link";
 import { AUFGEBOT_TEXT, richtwertText, zeitpunktKurz, type Meldung } from "@/lib/spiel";
 import { TERMIN_STATUS, meldeStatus } from "@/lib/termin-status";
 import { AusfallGrund } from "./AusfallGrund";
+import { HinweisEltern } from "./HinweisEltern";
 
 /* Ein Spiel am privaten Link (#459, #463, #464, #465; Epic #490, Tafel 9;
    kompakt mit #523, Tafel «Vergleich» 1c). Von oben nach unten:
@@ -17,8 +18,8 @@ import { AusfallGrund } from "./AusfallGrund";
    Zeichen — bis wann sich melden lässt und wie viele angemeldet sind, mit dem
    gesuchten Bereich, ohne Überfahren, weil Eltern am Telefon sind (AK 4);
    die Handlung als Knopf; Hinweise zur Verlegung oder zu einem Fehler; die
-   Treffpunkte mit Anreise, Zeit und Ort, frühester zuerst (AK 5); die
-   Bemerkung.
+   Treffpunkte mit Anreise, Zeit und Ort, frühester zuerst (AK 5); der
+   Hinweis für Eltern (#590; die Bemerkung bleibt beim Team).
 
    - Ohne Meldung «Anmelden» umgekehrt und «Abmelden» umrandet, sonst nur der eine
      mögliche Wechsel umrandet. Nach der Meldefrist, ab dem Anpfiff und bei
@@ -28,7 +29,7 @@ import { AusfallGrund } from "./AusfallGrund";
    - Treffpunkte nur, solange das Spiel nicht begonnen hat und die
      Spieler:in dabei sein kann.
    - Ein ausgefallenes Spiel zeigt nur den Kopf mit dem Grund (#530; ohne
-     Bemerkung, PO 2026-10-27). */
+     Hinweis, #590 AK 11). */
 export function SpielKarte({
   t,
   meldung,
@@ -142,7 +143,7 @@ export function SpielKarte({
       {treffpunkte && (
         <TreffpunktListe treffpunkte={treffpunkte} spieltag={t.datum} spielOrt={t.ort} className="type-body-medium text-on-surface" />
       )}
-      {t.bemerkung && !t.ausgefallen && <p className="type-body-medium whitespace-pre-line text-on-surface">{t.bemerkung}</p>}
+      <HinweisEltern text={t.ausgefallen ? null : t.hinweis_eltern} gedaempft={gedaempft} />
     </li>
   );
 }

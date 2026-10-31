@@ -256,7 +256,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Trainings im Team:** gehören Person **oder** Team, nie beiden. Immer Kopie (Ins Team stellen, Zu sich übernehmen), vollständig (Ziel, Gruppen, Verteilung, Notizen, alle Varianten). Direkt im Team anlegen möglich. Team-Trainings nur im Team-Bereich; Leiste hält „Teams" hervorgehoben.
 
-**Termine (Kalender):** Art „Training" oder „Spiel" (vorher wählen, danach unveränderbar). Training: Datum, Beginn, Ende (Pflicht, gleicher Tag), Ort (max. 100) samt Kartenlink, Bemerkung (max. 500), Felder, erwartete Spielerzahl, Trainer:innen, Mindestbesetzung, Kader. Vergangene Trainings erlaubt.
+**Termine (Kalender):** Art „Training" oder „Spiel" (vorher wählen, danach unveränderbar). Training: Datum, Beginn, Ende (Pflicht, gleicher Tag), Ort (max. 100) samt Kartenlink, Bemerkung (max. 500, nur fürs Team), Hinweis für Eltern (max. 500, Eltern sehen ihn am Link und im Abo, ausser bei Ausfall), Felder, erwartete Spielerzahl, Trainer:innen, Mindestbesetzung, Kader. Vergangene Trainings erlaubt.
 - **Kartenlink zum Ort** (z. B. geteilter Link aus Google Maps/Apple Karten): optional, nur mit Ort (ohne Ort gesperrt: „Gib zuerst einen Ort an."), muss mit https:// beginnen, max. 500 Zeichen. Ziel wird nicht geprüft (Team verantwortlich). **Ort geändert oder geleert ohne neuen Link → bisheriger Link fällt weg** (Dialog sagt es vorher). Im geöffneten Termin „Auf der Karte öffnen". An einem Serientermin weicht der Link mit dem Ort ab und folgt mit ihm wieder der Serie (eigener Link fällt dann weg).
 - **Felder:** je Feld Länge+Breite 5–120 m (nur zusammen), Tore je Torart (Minitore, 5-m, 7-m), Untergrund (Naturrasen, Kunstrasen, Hartplatz, Halle, Unbekannt). Leer = unbekannt, **0 Tore = keine**.
 - **Erwartete Spielerzahl** 1–200 (inkl. Torhüter:innen, ohne Trainer:innen) – nur ohne Spielerliste.
@@ -308,11 +308,11 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Ab- und Anmelden (Trainings):** Jede Spieler:in ist **standardmässig angemeldet**, bis abgemeldet. Kein „keine Rückmeldung". Bis Beginn, nie an ausgefallenem Termin. Durch Mitglieder (Reiter „Spieler:innen", Schalter) oder Eltern (privater Link). Wer gesetzt hat, wird nicht festgehalten; letzte gilt. Kein Grund.
 - Zeitangabe links vom Schalter: seit wann der Status gilt („gerade eben", „vor 3 Stunden", „gestern", …); nur bei echtem Wechsel.
-- **Datum oder Beginn geändert** (noch nicht begonnen) → **alle Abmeldungen verfallen**, alle wieder angemeldet (Rückfrage mit Zahl; Eltern sehen „Deine Abmeldung gilt nicht mehr"). Ende/Ort/Bemerkung/Felder/Training ändern lässt sie stehen.
+- **Datum oder Beginn geändert** (noch nicht begonnen) → **alle Abmeldungen verfallen**, alle wieder angemeldet (Rückfrage mit Zahl; Eltern sehen „Deine Abmeldung gilt nicht mehr"). Ende/Ort/Bemerkung/Hinweis für Eltern/Felder/Training ändern lässt sie stehen.
 - Ab- oder Anmelden an inzwischen verlegtem/ausgefallenem/begonnenem Termin → abgewiesen mit aktuellem Stand („Der Termin wurde inzwischen verlegt …").
 - **Nachtragen** ab Beginn (unbefristet, nur Mitglieder): „nicht erschienen" / „doch erschienen". Zahl wird „11 von 15 da". Eltern sehen Nachträge nie. Ohne Nachtrag = Stand bei Beginn gilt als Anwesenheit.
 
-**Spiele:** Art „Spiel"; Bezeichnung Pflicht (max. 120); Anpfiff muss **in der Zukunft** liegen (kein Nachtragen vergangener Spiele, keine Verlegung in die Vergangenheit). Kein Training, keine Felder, keine erwartete Zahl, keine Serie. Optional: Ort, Bemerkung (**für Eltern sichtbar**, ausser bei Ausfall), Kader, Mindestbesetzung, Mindest-/Höchstzahl (1–200, begrenzt Anmeldungen nicht), Meldefrist (vor Anpfiff, max. 1 Jahr, vergangene erlaubt), Treffpunkte (je Anreiseart max. 1, total max. 5; „vor Ort" ohne eigenen Ort).
+**Spiele:** Art „Spiel"; Bezeichnung Pflicht (max. 120); Anpfiff muss **in der Zukunft** liegen (kein Nachtragen vergangener Spiele, keine Verlegung in die Vergangenheit). Kein Training, keine Felder, keine erwartete Zahl, keine Serie. Optional: Ort, Bemerkung (nur fürs Team), Hinweis für Eltern (**für Eltern sichtbar**, ausser bei Ausfall; frühere Spiel-Bemerkungen sind seit #590 dorthin umgezogen), Kader, Mindestbesetzung, Mindest-/Höchstzahl (1–200, begrenzt Anmeldungen nicht), Meldefrist (vor Anpfiff, max. 1 Jahr, vergangene erlaubt), Treffpunkte (je Anreiseart max. 1, total max. 5; „vor Ort" ohne eigenen Ort).
 - **Status** (Plan): „Zu wenig" rot (< Min), „Knapp" gelb (= Min), „Genügend" grün (bis Max), „Zu viel" rot (> Max). Ohne Richtwert oder ohne Spielerliste kein Status.
 - **Melden:** Jede Spieler:in **zuerst ohne Meldung**; gezählt nur Angemeldete. Zurück auf „ohne Meldung" unmöglich. Mitglieder bis Anpfiff (auch nach Frist), Eltern bis Meldefrist (ohne Frist bis Anpfiff). Plaketten: „Ohne Meldung" gelb, „Angemeldet" grün, „Abgemeldet" rot, „Nicht aufgeboten" rot; nach Frist „Meldefrist verpasst" rot. Menü auf der Plakette.
 - **Nicht aufbieten** (nur Mitglieder): Meldung bleibt darunter, zählt nicht als angemeldet; Eltern sehen die Kennzeichnung.
@@ -322,8 +322,8 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Ausfall: alles ruht; Eltern sehen nur Kopf mit Grund. Entfernen nennt Zahl der Meldungen.
 
 **Privater Link (Eltern):** je Spieler:in genau einer; Mitglied holt ihn über Kettenglied in der Spielerliste. Anwendung verschickt nichts. „Link erneuern" → alter sofort ungültig, Abmeldungen bleiben, Kalender-Abo der Spieler:in erlischt.
-- Seite: fürs Telefon, ohne Konto, ohne Leiste, keine Cookies, fester Titel ohne Namen. Teamname, Name der Spieler:in. „Heute" (begonnen, gesperrt) + anstehende Termine nach Monat. Trainingskarte: Status „Angemeldet"/„Abgemeldet"/„Fällt aus", Zeit, Ort, Kader, Spielerzahl („24/33", alle für die der Termin gilt), Verantwortliche:r, Schalter. Ort immer ganz (bricht um), auch nach Beginn; mit Kartenlink ist der Ort selbst der Link (violett, unterstrichen, Zeichen für extern; lang dann einzeilig mit „…"); bei Ausfall ohne Link. Ausfallgrund mit „Grund:". Verlegt → „Verlegt, vorher … Deine Abmeldung gilt nicht mehr."
-- Spielkarte: Status inkl. „Ohne Meldung", „Nicht aufgeboten", „Meldefrist verpasst"; „Bitte melden bis …", „7/14 · gesucht 9 bis 12", Knöpfe Anmelden/Abmelden; nach Frist „Meldefrist abgelaufen · Änderung übers Team". Treffpunkte, Bemerkung. Nachträge und Status des Spiels sehen Eltern nicht.
+- Seite: fürs Telefon, ohne Konto, ohne Leiste, keine Cookies, fester Titel ohne Namen. Teamname, Name der Spieler:in. „Heute" (begonnen, gesperrt) + anstehende Termine nach Monat. Trainingskarte: Status „Angemeldet"/„Abgemeldet"/„Fällt aus", Zeit, Ort, Kader, Spielerzahl („24/33", alle für die der Termin gilt), Verantwortliche:r, Schalter. Ort immer ganz (bricht um), auch nach Beginn; mit Kartenlink ist der Ort selbst der Link (violett, unterstrichen, Zeichen für extern; lang dann einzeilig mit „…"); bei Ausfall ohne Link. Ausfallgrund mit „Grund:". Hinweis für Eltern unter einer Linie am Fuss der Karte, ab vier Zeilen gekürzt mit „Ganz lesen"; auch abgemeldet und nach Beginn, nicht bei Ausfall. Verlegt → „Verlegt, vorher … Deine Abmeldung gilt nicht mehr."
+- Spielkarte: Status inkl. „Ohne Meldung", „Nicht aufgeboten", „Meldefrist verpasst"; „Bitte melden bis …", „7/14 · gesucht 9 bis 12", Knöpfe Anmelden/Abmelden; nach Frist „Meldefrist abgelaufen · Änderung übers Team". Treffpunkte, Hinweis für Eltern. Nachträge und Status des Spiels sehen Eltern nicht.
 - Zeigt **nicht**: andere Namen, fremde Kader, Termine anderer Kader, Trainingsinhalte, vergangene Termine.
 - **Im Probe-Modus:** Kopf „… ist im Probetraining. Melde … an …", „Noch 2 von 4 Probetrainings möglich" mit Balken (besucht gefüllt, angemeldet umrandet), „x besucht · y angemeldet"; „Infos zum Probetraining" (Info-Schreiben, 4 Zeilen, „Ganz lesen", Links öffnen extern). Keine Spiele. Trainings zuerst „Nicht angemeldet" (grau, nicht gedämpft). Anzahl erreicht → „Alle 4 Probetrainings vergeben" (bei 1: „Das Probetraining ist vergeben"), Meldung über den Trainings, übrige Schalter gesperrt „Probetrainings vergeben"; abmelden geht immer. Verfallene Anmeldung: „… Deine Anmeldung gilt nicht mehr."
 - Ungültig/unbekannt → neutrale Seite „Dieser Link gilt nicht mehr".
@@ -358,7 +358,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 | Ohne Konto | Übungsbestand, öffentliche Trainings (ansehen, drucken, durchführen), Versionen, Styleguide, Cookies |
 | Angemeldet | + eigene Übungen/Trainings, Favoriten, Übernehmen, Teams |
 | Team-Mitglied | alles im Team, gleichberechtigt; E-Mails der Mitglieder; alle Termine (unabhängig von Kadern) |
-| Eltern (privater Link) | nur eigene Spieler:in: anstehende Termine ihrer Kader, eigener Status, Spielerzahl, Verantwortliche:r, Ort samt Kartenlink (Linkziel verantwortet das Team), Ausfallgrund, Spiel-Bemerkung, Treffpunkte; keine anderen Namen, keine Trainingsinhalte |
+| Eltern (privater Link) | nur eigene Spieler:in: anstehende Termine ihrer Kader, eigener Status, Spielerzahl, Verantwortliche:r, Ort samt Kartenlink (Linkziel verantwortet das Team), Ausfallgrund, Hinweis für Eltern (Trainings und Spiele), Treffpunkte; nie die Bemerkung; keine anderen Namen, keine Trainingsinhalte |
 | Mit Abholadresse | Link einer Spieler:in bei exaktem Vorname+Nachname+Jahrgang |
 | KI-Assistent | wie Konto, eingeschränkt auf angebotene Werkzeuge; keine E-Mails |
 
@@ -381,6 +381,7 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Spieler:innen bei Trainings sind automatisch angemeldet; bei Spielen „ohne Meldung".
 - Eltern können nach der Meldefrist nicht mehr melden; Mitglieder schon.
 - Eltern sehen Nachträge/Anwesenheit nicht und keinen Spiel-Status (nur Zahl).
+- Eltern sehen die Bemerkung eines Termins nicht (auch nicht am Spiel) → sie ist fürs Team; was Eltern wissen sollen, gehört in den „Hinweis für Eltern". An einem ausgefallenen Termin fehlt auch der Hinweis, dort steht der Grund.
 - Spielerzahl „0 von 0" → Termin gilt wegen Kadern für niemanden.
 - Training öffnet immer die erste Variante, nicht die zuletzt gesehene.
 - Termin-Training wurde gelöscht, nachdem es vom Termin gelöst/ersetzt oder der Termin entfernt wurde.
@@ -483,7 +484,7 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 | Anzeigename, Gruppen-, Varianten-, KI-Zugangsname | ≤ 40 Zeichen |
 | Trainingsname | ≤ 80 Zeichen |
 | Ziel eines Trainings | ≤ 200 Zeichen |
-| Notiz je Übung, Bemerkung, Ausfallgrund | ≤ 500 Zeichen |
+| Notiz je Übung, Bemerkung, Hinweis für Eltern, Ausfallgrund | ≤ 500 Zeichen |
 | Ort, Treffpunkt-Ort | ≤ 100 Zeichen |
 | Kartenlink zum Ort | https://, ≤ 500 Zeichen |
 | Spielbezeichnung | ≤ 120 Zeichen |

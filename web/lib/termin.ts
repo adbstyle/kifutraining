@@ -23,6 +23,8 @@ export type TerminFelder = {
   /** Der Kartenlink zum Ort (#533); leer = keiner. */
   ortLink?: string | null;
   bemerkung?: string | null;
+  /** Der Hinweis für Eltern (#590); leer = keiner. */
+  hinweisEltern?: string | null;
   /** `null`: ohne Felder (Platz unbekannt). */
   felder?: Felder | null;
   /** Die erwartete Spielerzahl (#390); `null`: unbekannt. */
@@ -41,12 +43,14 @@ export type TerminFelder = {
   treffpunkte?: Treffpunkt[];
 };
 
-export type TerminFeld = "datum" | "beginn" | "ende" | "ort" | "ortLink" | "bemerkung";
+export type TerminFeld = "datum" | "beginn" | "ende" | "ort" | "ortLink" | "bemerkung" | "hinweisEltern";
 export type TerminProblem = { feld: TerminFeld; text: string };
 
 /** Zwillinge der Checks `tt_ort_laenge` und `tt_bemerkung_laenge`. */
 export const ORT_MAX = 100;
 export const BEMERKUNG_MAX = 500;
+/** Zwilling der Checks `tt_hinweis_eltern_laenge` und `ts_hinweis_eltern_laenge` (#590 AK 16). */
+export const HINWEIS_ELTERN_MAX = 500;
 /** Zwilling der Checks `tt_ort_link` und `ts_ort_link` (#533 AK 5). */
 export const KARTENLINK_MAX = 500;
 
@@ -62,6 +66,12 @@ export const TERMIN_TEXT = {
   endeNachBeginn: "Das Ende muss am selben Tag nach dem Beginn liegen.",
   ortLang: `Der Ort darf höchstens ${ORT_MAX} Zeichen lang sein.`,
   bemerkungLang: `Die Bemerkung darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
+  hinweisElternLang: `Der Hinweis für Eltern darf höchstens ${HINWEIS_ELTERN_MAX} Zeichen lang sein.`,
+  /** Wer den Hinweis liest und wer die Bemerkung (#590 AK 6, 7, 15) — als
+   *  Hinweis am Feld und im KI-Werkzeug. */
+  hinweisElternSichtbar:
+    "Die Eltern sehen den Hinweis über ihren privaten Link und im Kalender-Abo, ausser der Termin fällt aus.",
+  bemerkungIntern: "Die Bemerkung ist für das Team. Die Eltern sehen sie nicht.",
   grundLang: `Der Grund darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
   /** Wer den Grund liest (#530 AK 6, 7) — als Hinweis am Feld und im KI-Werkzeug. */
   grundSichtbar: "Die Eltern sehen den Grund des Ausfalls über ihren privaten Link.",
@@ -142,17 +152,21 @@ export function kartenlinkOhneOrt(f: { ort?: string | null; ortLink?: string | n
     : null;
 }
 
-/** Ort, Kartenlink und Bemerkung sind frei, aber begrenzt (AK 6; #533 AK 5). */
+/** Ort, Kartenlink, Bemerkung und Hinweis für Eltern sind frei, aber begrenzt
+ *  (AK 6; #533 AK 5; #590 AK 16). */
 export function textProblem(f: {
   ort?: string | null;
   ortLink?: string | null;
   bemerkung?: string | null;
-}): { feld: "ort" | "ortLink" | "bemerkung"; text: string } | null {
+  hinweisEltern?: string | null;
+}): { feld: "ort" | "ortLink" | "bemerkung" | "hinweisEltern"; text: string } | null {
   if ((leerZuNull(f.ort) ?? "").length > ORT_MAX) return { feld: "ort", text: TERMIN_TEXT.ortLang };
   const link = kartenlinkProblem(f.ortLink);
   if (link) return link;
   if ((leerZuNull(f.bemerkung) ?? "").length > BEMERKUNG_MAX)
     return { feld: "bemerkung", text: TERMIN_TEXT.bemerkungLang };
+  if ((leerZuNull(f.hinweisEltern) ?? "").length > HINWEIS_ELTERN_MAX)
+    return { feld: "hinweisEltern", text: TERMIN_TEXT.hinweisElternLang };
   return null;
 }
 
@@ -167,6 +181,7 @@ export function terminProblem(
     ort?: string | null;
     ortLink?: string | null;
     bemerkung?: string | null;
+    hinweisEltern?: string | null;
   },
 ): TerminProblem | null {
   if (!istKalendertag(f.datum ?? "")) return { feld: "datum", text: TERMIN_TEXT.datum };
@@ -226,6 +241,7 @@ export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partia
     aenderung.ortLink = neu.ortLink ?? "";
   }
   if (!gleich(neu.bemerkung, start.bemerkung)) aenderung.bemerkung = neu.bemerkung ?? "";
+  if (!gleich(neu.hinweisEltern, start.hinweisEltern)) aenderung.hinweisEltern = neu.hinweisEltern ?? "";
   if (!gleicheFelder(neu.felder, start.felder)) aenderung.felder = neu.felder ?? null;
   if ((neu.spielerzahl ?? null) !== (start.spielerzahl ?? null)) aenderung.spielerzahl = neu.spielerzahl ?? null;
   if (neu.mindestbesetzung !== undefined && !gleicheBesetzung(neu.mindestbesetzung, start.mindestbesetzung ?? null))

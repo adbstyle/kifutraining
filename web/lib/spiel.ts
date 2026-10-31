@@ -79,8 +79,6 @@ export const TREFFPUNKT_TEXT = {
   ortVorOrt: "Der Treffpunkt vor Ort hat keinen eigenen Ort: Es gilt der Ort des Spiels.",
   doppelt: "Je Anreiseart gibt es höchstens einen Treffpunkt.",
   zuViele: `Ein Spiel hat höchstens ${TREFFPUNKTE_MAX} Treffpunkte.`,
-  /** Beim Schreiben der Bemerkung eines Spiels (AK 9). */
-  bemerkungSichtbar: "Die Eltern sehen die Bemerkung eines Spiels über ihren privaten Link.",
 } as const;
 
 /** Die Sätze zu den Markern der Datenebene — dieselben, die der Fachkern

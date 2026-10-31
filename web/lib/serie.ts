@@ -132,7 +132,8 @@ export function regelProblemVorab(
 
 /** Für welche Reichweiten eine Änderung an einem Serientermin gilt
  *  (#326 AK 1–4): das Datum nur für diesen Termin, Wochentage und Zeitraum nur
- *  für diesen und folgende oder für alle; Zeit, Ort, Bemerkung,
+ *  für diesen und folgende oder für alle; Zeit, Ort, Bemerkung, Hinweis für
+ *  Eltern (#590),
  *  Verantwortliche (#325), Felder und erwartete Spielerzahl (#391) für jede.
  *  `null`, wenn Datum und Regel zugleich
  *  geändert werden — das schliesst sich aus (`SERIE_TEXT.datumUndRegel`).
@@ -151,7 +152,7 @@ export function erlaubteReichweiten(g: { datum: boolean; regel: boolean; namenlo
   return ["nur_dieser", "dieser_und_folgende", "alle"];
 }
 
-export type SerieFeld = "wochentage" | "von" | "bis" | "beginn" | "ende" | "ort" | "ortLink" | "bemerkung";
+export type SerieFeld = "wochentage" | "von" | "bis" | "beginn" | "ende" | "ort" | "ortLink" | "bemerkung" | "hinweisEltern";
 
 /** Was an einer Serie nicht stimmt, sonst `null` (#324 AK 2, 4–6; #326 AK 5:
  *  beim Ändern mit dem aktuellen Beginndatum der jeweiligen Serie). */
@@ -164,6 +165,7 @@ export function serieProblem(f: {
   ort?: string | null;
   ortLink?: string | null;
   bemerkung?: string | null;
+  hinweisEltern?: string | null;
 }): { feld: SerieFeld; text: string } | null {
   const w = f.wochentage;
   if (w.length === 0 || w.length > 7 || new Set(w).size !== w.length || w.some((x) => !Number.isInteger(x) || x < 1 || x > 7))
@@ -211,7 +213,7 @@ export const SERIE_MELDUNG = {
     "Seit deiner Auswahl hat sich geändert, wie viele Abmeldungen verfallen. Sieh dir die Änderung noch einmal an.",
   KEINE_AENDERUNG: "Gib mindestens eine Angabe an, die sich ändern soll.",
   SERIE_ANGABEN_UNGUELTIG:
-    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.",
+    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Hinweis für Eltern, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.",
 } as const;
 
 /** Der KI-Weg verlangt eine ausdrückliche Bestätigung, wenn «dieser und
