@@ -199,7 +199,8 @@ einer eigenen Zeile, auch wo zwei Angaben zusammengehören wie Länge und Breite
 Höchstanzahl. Ein Feld zeigt ruhend weder Rahmen noch Fläche: Über dem Wert steht klein sein
 Name. Ein leeres Feld zeigt nur seinen Namen, gedämpft an der Stelle des Werts. Klickt man
 hinein, springt der Name darüber und das Feld trägt einen farbigen Rahmen. Fährt man mit der Maus
-über eine Angabe, hellt sie auf. Den Pfeil einer Auswahl zeigt das Feld nur, solange man darin
+über eine Angabe, hellt sie als Ganzes auf: Name, Feld und der Hinweis oder Fehler darunter. Ein
+Klick auf den Hinweis führt wie einer auf den Namen ins Feld. Den Pfeil einer Auswahl zeigt das Feld nur, solange man darin
 arbeitet; ruhend steht dort nur der gewählte Wert. Eine Auswahl, die man auch leer lassen darf,
 bietet keinen Eintrag „kein …" an — leer heisst nicht angegeben. Ein leeres Datums- oder
 Zeitfeld zeigt ebenso nur seinen Namen, mit einem Kalender- oder Uhrzeichen davor, statt einer

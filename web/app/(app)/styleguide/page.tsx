@@ -1730,7 +1730,8 @@ export default async function Styleguide() {
             Fläche (Utility <code>feldkasten</code>). Ein Formular liest sich so
             als Text statt als Stapel von Kästen. Beim Überfahren hellt die ganze
             Angabe auf - Name, Kasten und Hinweis oder Fehler darunter zusammen,
-            denn alles drei gehört zum Feld (PO 2026-10-31) -, mit einer leisen
+            denn alles drei gehört zum Feld, und ein Klick auf den Hinweis wirkt
+            wie einer auf den Namen (PO 2026-10-31) -, mit einer leisen
             Ebene in der Schriftfarbe (6 %), die ringsum 6 px hinausragt -
             gerade ein leeres Feld gibt sich so deutlich als Feld zu erkennen,
             ohne dass sich etwas verschiebt. Im Fokus trägt die Kontur Primary,

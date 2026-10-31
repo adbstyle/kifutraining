@@ -1,6 +1,7 @@
 import { useId } from "react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { FeldHinweis } from "./feld-hinweis";
 import { InfoKnopf } from "./InfoKnopf";
 
 /* Der Rahmen jedes Formularfelds (Epic #363, nach dem Vorbild von Jira): Ist
@@ -158,15 +159,15 @@ export function Feld({
           )}
         </div>
         {hinweis && (
-          <p id={`${id}-hinweis`} className={hinweisKlasse(error)}>
+          <FeldHinweis feldId={id} id={`${id}-hinweis`} className={hinweisKlasse(error)}>
             {hinweis}
-          </p>
+          </FeldHinweis>
         )}
         {/* Vorgelesen wird der Hinweis schon mit dem ⓘ (`${id}-info`). */}
         {info && infoAufTouch && !hinweis && (
-          <p aria-hidden className={cn(hinweisKlasse(), "[@media(hover:hover)]:hidden")}>
+          <FeldHinweis feldId={id} aria-hidden className={cn(hinweisKlasse(), "[@media(hover:hover)]:hidden")}>
             {info}
-          </p>
+          </FeldHinweis>
         )}
       </div>
     </div>

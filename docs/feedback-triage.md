@@ -119,7 +119,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Bedienung:**
 - Alle Bedienelemente 36 px hoch, auch auf dem Telefon (bekannt: kleiner als für Finger empfohlen).
-- Felder ohne Rahmen im Ruhezustand; Name klein über dem Wert. Erklärungen hinter **ⓘ** (erscheint nur bei Maus-Hover; auf Touch-Geräten nie – ausser 3 Hinweise, die dort unter dem Feld stehen: feste Altersstufe eines Trainings, wen die erwartete Spielerzahl zählt, „0 Tore = keine").
+- Felder ohne Rahmen im Ruhezustand; Name klein über dem Wert. Maus-Hover hellt Name, Feld und Hinweis/Fehler darunter gemeinsam auf; Klick auf den Hinweis führt ins Feld. Erklärungen hinter **ⓘ** direkt nach dem Namen (erscheint nur bei Maus-Hover; auf Touch-Geräten nie – ausser 3 Hinweise, die dort unter dem Feld stehen: feste Altersstufe eines Trainings, wen die erwartete Spielerzahl zählt, „0 Tore = keine").
 - Fehler beim Speichern rot unter dem Feld. Felder, die beim Verlassen speichern, fallen bei Fehler auf den gespeicherten Wert zurück + Meldung am unteren Rand.
 - **Schalter** = sofort wirksame Ja/Nein-Angabe (Trainer:in dabei, Spieler:in angemeldet, Selbstabholung). Kästchen = Formular, das erst gespeichert wird. Spieler:innen-Schalter und Selbstabholung sind bewusst ruhig: grauer Knopf, an rechts mit Haken, aus links mit Kreuz (Trainer:in dabei: violetter Knopf). Am privaten Link steht an einem ausgefallenen Termin kein Schalter.
 - Filter als Knöpfe mit Zähler; Mehrfachwahl; gleiche Art = ODER, verschiedene Arten = UND.
