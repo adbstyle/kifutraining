@@ -1,6 +1,6 @@
 # KiFu – Produktwissen für die Einordnung von User-Feedback
 
-Stand 2026-10-31 (Release 1.45.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
+Stand 2026-10-31 (Release 1.46.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
 gedacht als Kontext für ein kleines Modell (z. B. Haiku), das Rückmeldungen von Nutzer:innen
 einordnet. Rückmeldungen sind **Fehlermeldungen ebenso wie Feature-Wünsche**: Das Modell erkennt,
 was die Person meint, gleicht es mit dem heutigen Stand ab und stellt die Rückfragen, mit denen sich
