@@ -276,7 +276,7 @@ export function NeuerTerminDialog({
           </legend>
           <ChoiceChipGroup ariaLabel="Art des Termins" className="mt-1.5 px-3.5">
             {(["training", "spiel"] as const).map((a, i) => (
-              <ChoiceChip key={a} look="nutzertext" tabStop={i === 0 && !art} selected={art === a} onSelect={() => artGewaehlt(a)}>
+              <ChoiceChip key={a} tabStop={i === 0 && !art} selected={art === a} onSelect={() => artGewaehlt(a)}>
                 {a === "training" ? "Training" : "Spiel"}
               </ChoiceChip>
             ))}

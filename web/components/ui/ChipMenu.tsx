@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import type { ReactNode, Ref } from "react";
 import { ChevronDown } from "lucide-react";
 import { Menu, type MenuItemDef } from "./Menu";
-import { chipTextBase, chipTextHuelle } from "./Chip";
+import { chipBase, chipHuelle } from "./Chip";
 import { cn } from "@/lib/cn";
 
 /* Chip mit Menü — ein Chip, der auf Klick ein Menü öffnet. Gedacht für Werte,
@@ -13,9 +13,7 @@ import { cn } from "@/lib/cn";
 
    Warum kein bestehender Chip: `AssistChip` löst genau eine Aktion aus und
    kann „nach vorne/nach hinten schieben" und „entfernen" nicht zur Wahl
-   stellen. Er trägt ausserdem `type-label-medium` — versal —, was einen
-   Gruppennamen verfälscht.
-   Darum hier `type-body-medium normal-case`.
+   stellen.
 
    ZWEI Bauformen, je nachdem, wie viele Aufgaben an dem Wert hängen:
 
@@ -154,7 +152,7 @@ export function ChipMenu({
       : selected
         ? "border-primary"
         : "border-kante";
-  // Gewählt wie jeder Chip (`chipTextSelected`): Primary umrandet und
+  // Gewählt wie jeder Chip (`chipSelected`): Primary umrandet und
   // beschriftet, ohne Fläche — gefüllt kippte der selbst vergebene Name in
   // schwarze Schrift.
   const flaeche = selected ? "text-primary" : "text-on-surface";
@@ -184,12 +182,12 @@ export function ChipMenu({
     <div className={cn("relative inline-block", className)}>
       {geteilt ? (
         // Der Umriss gehört der GRUPPE, nicht den Hälften: ein Chip, in der
-        // Mitte geteilt — darum dieselbe `chipTextHuelle` wie am ungeteilten,
+        // Mitte geteilt — darum dieselbe `chipHuelle` wie am ungeteilten,
         // nur mit `items-stretch`, damit beide Hälften die volle Trefferhöhe
         // bekommen; Fokusring und Polsterung sitzen je Hälfte. Kein
         // `overflow-hidden` — das schnitte den Fokusring ab (outline mit
         // offset).
-        <div className={cn(chipTextHuelle, "items-stretch", randfarbe, flaeche)}>
+        <div className={cn(chipHuelle, "items-stretch", randfarbe, flaeche)}>
           <button
             type="button"
             disabled={disabled}
@@ -229,12 +227,12 @@ export function ChipMenu({
         <button
           {...menuProps}
           aria-label={ariaLabel}
-          // Dieselbe Optik-Quelle wie `ChoiceChip look="nutzertext"` und die
-          // Links der Leseseiten (`chipTextBase` in Chip.tsx): ändert sich die
-          // Nutzertext-Pille, ändern sich alle vier Bauformen zusammen — der
-          // geteilte Chip oben inbegriffen, er trägt dieselbe Hülle.
+          // Dieselbe Optik-Quelle wie jeder Chip und die Links der Leseseiten
+          // (`chipBase` in Chip.tsx): ändert sich die Pille, ändern sich
+          // alle Bauformen zusammen — der geteilte Chip oben inbegriffen, er
+          // trägt dieselbe Hülle.
           className={cn(
-            chipTextBase,
+            chipBase,
             randfarbe,
             flaeche,
             disabled && "cursor-not-allowed opacity-50",
