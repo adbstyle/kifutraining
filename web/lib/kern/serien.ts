@@ -541,6 +541,17 @@ export async function folgeDerSerie(
       feld: "angaben",
       zulaessig: FOLGE_ANGABEN,
     });
+  // #561 AK 9: Folgt nur der Treffpunkt und läge der der Serie mit der eigenen
+  // Zeit des Termins am Vortag, sagt der Kern, was zuerst folgen muss.
+  if (e.angaben.includes("treffpunkt") && !e.angaben.includes("zeit")) {
+    const { data: z } = await supabase
+      .from("training_termine")
+      .select("beginn, termin_serien ( treffpunkt_vorlauf_min )")
+      .eq("id", e.terminId)
+      .maybeSingle<{ beginn: string; termin_serien: { treffpunkt_vorlauf_min: number | null } | null }>();
+    if (z?.termin_serien && !treffpunktPasst(z.termin_serien.treffpunkt_vorlauf_min, z.beginn))
+      return fehlschlag("regel", TERMIN_TEXT.treffpunktFolgtNicht, { feld: "angaben" });
+  }
   // #437 AK 1: Folgt die Zeit wieder der Serie, ändert sich womöglich der
   // Beginn — verfallende Abmeldungen erst nach Bestätigung.
   // #561 PC 4, 5: Läge ein eigener Treffpunkt mit der Zeit der Serie am

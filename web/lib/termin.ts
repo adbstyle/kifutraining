@@ -104,6 +104,11 @@ export const TERMIN_TEXT = {
   treffpunktNurTraining: "Einen Treffpunkt mit Uhrzeit und Ort gibt es nur an einem Training; ein Spiel hat Treffpunkte je Anreiseart.",
   /** #561 PC 5, 6: vor dem Speichern und im Ergebnis der KI. */
   treffpunktEntfaellt: "Mit dem neuen Beginn läge der Treffpunkt am Vortag. Er entfällt, das Training hat danach keinen Treffpunkt.",
+  /** #561 AK 9: Der Treffpunkt der Serie läge mit der eigenen Zeit des Termins am Vortag. */
+  treffpunktFolgtNicht:
+    "Mit der eigenen Zeit dieses Termins läge der Treffpunkt der Serie am Vortag. Lass zuerst die Zeit der Serie folgen.",
+  /** #561 PC 4: beim Erstellen — ohne Rückfrage, der Dialog hält an. */
+  treffpunktVortag: "Mit diesem Beginn läge der Treffpunkt am Vortag. Wähle eine andere Uhrzeit oder entferne den Treffpunkt.",
   treffpunktEntfaelltSerie:
     "Mit dem neuen Beginn läge der Treffpunkt am Vortag. An diesen Terminen hat das Training danach keinen Treffpunkt:",
 } as const;

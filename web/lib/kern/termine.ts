@@ -340,7 +340,8 @@ export async function legeTerminFest(
   e: TerminFestlegen,
 ): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
   if (!istTerminArt(e.art)) return fehlschlag("eingabe", SPIEL_TEXT.art, { feld: "art" });
-  const problem = feldFehler(terminProblem(e));
+  // Den Treffpunkt prüft beim Spiel `artFehler` (nur an einem Training).
+  const problem = feldFehler(terminProblem(e.art === "spiel" ? { ...e, treffpunkt: undefined } : e));
   if (problem) return problem;
   const art = artFehler(e.art, e, true);
   if (art) return art;
@@ -645,7 +646,7 @@ export async function aendereTermin(
     bemerkung: e.bemerkung !== undefined ? leerZuNull(e.bemerkung) : t.bemerkung,
     hinweisEltern: e.hinweisEltern !== undefined ? leerZuNull(e.hinweisEltern) : t.hinweis_eltern,
   };
-  const problem = feldFehler(terminProblem({ ...neu, treffpunkt: e.treffpunkt }));
+  const problem = feldFehler(terminProblem({ ...neu, treffpunkt: t.art === "spiel" ? undefined : e.treffpunkt }));
   if (problem) return problem;
   // Die Spielangaben, wie sie nach dem Schreiben dastünden (#459).
   const spiel = {

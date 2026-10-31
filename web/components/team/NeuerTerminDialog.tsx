@@ -213,8 +213,13 @@ export function NeuerTerminDialog({
     // Felder und Spielerzahl prüfen beide Arten gleich.
     const angaben = platz.pruefe();
     const besetzung = trainerPruefen();
-    // #561: Der Treffpunkt zum Beginn im Dialog; entfiele er, gibt es keinen.
-    const tp = treffpunktAusEingabe(treffpunkt, f.beginn) ?? null;
+    // #561: Der Treffpunkt zum Beginn im Dialog. Läge er am Vortag, hält der
+    // Dialog an, statt ihn still zu verwerfen (PC 4).
+    const tp = treffpunktAusEingabe(treffpunkt, f.beginn);
+    if (tp === undefined) {
+      setProblem({ feld: "treffpunkt", text: TERMIN_TEXT.treffpunktVortag });
+      return;
+    }
     if (wiederholen) {
       const p = serieProblem({ ...f, treffpunkt: tp });
       setProblem(p);
