@@ -1723,18 +1723,16 @@ export default async function Styleguide() {
             Namen: Zwei zusammengehörige Werte (Länge und Breite, Mindest- und
             Höchstanzahl) sind zwei Felder untereinander, nicht ein gemeinsamer
             Name über zwei Teilnamen - zwei Namensstufen brächen die ruhige
-            Liste aus Namen und Werten (PO 2026-10-04). Bildet ein Knopf mit
-            dem Feld eine Handlung (Mitglied suchen),
-            steht er in <code>aktion</code>: in derselben Zeile wie der
-            Feldkasten, auf einer Linie mit ihm - ob der Name darüber steht oder
-            das leere Feld ihn ausblendet.
+            Liste aus Namen und Werten (PO 2026-10-04).
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Der Feldkasten ist ruhend leer:</strong> keine Kontur, keine
             Fläche (Utility <code>feldkasten</code>). Ein Formular liest sich so
             als Text statt als Stapel von Kästen. Beim Überfahren hellt die ganze
-            Angabe auf, Name und Kasten zusammen, mit einer leisen Ebene in der
-            Schriftfarbe (6 %), die ringsum 6 px über den Kasten hinausragt -
+            Angabe auf - Name, Kasten und Hinweis oder Fehler darunter zusammen,
+            denn alles drei gehört zum Feld, und ein Klick auf den Hinweis wirkt
+            wie einer auf den Namen (PO 2026-10-31) -, mit einer leisen
+            Ebene in der Schriftfarbe (6 %), die ringsum 6 px hinausragt -
             gerade ein leeres Feld gibt sich so deutlich als Feld zu erkennen,
             ohne dass sich etwas verschiebt. Im Fokus trägt die Kontur Primary,
             bei Fehler und Befund Error. Die Stärke bleibt dabei immer
@@ -1755,17 +1753,23 @@ export default async function Styleguide() {
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Hinweise:</strong> Was ein Feld nur erklärt («Höchstens 200
-            Zeichen»), steht nach dem Vorbild von Jira hinter einem ⓘ rechts
-            im Feld (<code>info</code>, Baustein <code>InfoKnopf</code>): beim
-            Zeigen ein Tooltip, ein Klick öffnet ein kleines Panel. Das ⓘ zeigt
+            Zeichen»), steht nach dem Vorbild von Jira hinter einem ⓘ direkt
+            nach dem Namen (<code>info</code>, Baustein <code>InfoKnopf</code>):
+            Ein Klick öffnet ein kleines Panel; einen Tooltip braucht das ⓘ
+            nicht, es sagt selbst, was es tut (PO 2026-10-31). Das ⓘ zeigt
             sich <strong>nur beim Überfahren</strong> der Angabe - nicht ruhend,
             nicht während man im Feld arbeitet, und auf Touch-Geräten gar nicht
             (PO 2026-10-04). Muss man den Hinweis auch dort lesen, bevor man
             weitermacht - dass die Altersstufe eines Trainings lebenslang bindet
             oder dass die Eltern den Grund eines Ausfalls sehen -,
             zeigt <code>infoAufTouch</code> ihn auf Touch-Geräten als Hinweis
-            unter dem Feld. Das ⓘ steht senkrecht mittig auf der ganzen Angabe,
-            zwischen Name und Wert. Die Tastatur erreicht es weiterhin und macht
+            unter dem Feld. Das ⓘ hängt am Namen (PO 2026-10-31): Steht der
+            Name über dem Feld, steht es oben hinter ihm, mittig zu seiner Zeile
+            und mit 24 px Fläche, die dem Wert darunter nicht zu nahe kommt; im
+            leeren Feld steht es hinter dem Namen im Kasten. Rechts im Kasten
+            lag es früher über dem Zeichen eines Datums- oder Zeitfelds, und
+            ein langer Wert lief darunter. Ein Klick auf den Namen geht wie
+            ohne ⓘ ins Feld. Die Tastatur erreicht es weiterhin und macht
             es dabei sichtbar; die Vorlesehilfe hört den Hinweis ohnehin mit dem
             Feld. Fehler und Hinweise, die
             sich mit der Eingabe ändern, bleiben sichtbar unter dem Feld (
@@ -1981,8 +1985,9 @@ export default async function Styleguide() {
             Überfahren dieselbe leise Aufhellung; ohne Zeichen - der Text sagt,
             was ein Klick tut (PO 2026-10-06). Ein
             fachlicher Hinweis zur ganzen Liste - was ein Eintrag ist - steht
-            über <code>info</code> hinter dem ⓘ rechts in der Zeile, wie bei
-            einem Feld nur beim Überfahren sichtbar.
+            über <code>info</code> hinter dem ⓘ direkt nach dem Text, wie im
+            leeren Feld hinter dessen Namen und wie dort nur beim Überfahren
+            sichtbar.
           </p>
           <div className="grid max-w-md gap-6">
             <HinzufuegenFeld info="Was ein Eintrag dieser Liste ist und was nicht hierher gehört.">

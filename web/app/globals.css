@@ -557,18 +557,17 @@
 /* Im Feld steht der Name dann nicht ein zweites Mal: Wer hineinklickt, sieht
    ihn darüber und darunter ein leeres Feld. Nur wo der Name unsichtbar ist
    (Suche in der Filterleiste), bleibt der Platzhalter auch beim Tippen stehen. */
-/* Überfahren (nach dem Vorbild von Jira): Die ganze Angabe hellt auf — Name
-   und Feldkasten zusammen — und die Fläche ragt ringsum 6 px über den Kasten
-   hinaus, ohne dass sich etwas verschiebt (Schatten statt Polster). Gerade
+/* Überfahren (nach dem Vorbild von Jira): Die ganze Angabe hellt auf — Name,
+   Feldkasten und Hinweis oder Fehler darunter zusammen (PO 2026-10-31) — und
+   die Fläche ragt ringsum 6 px darüber hinaus, ohne dass sich etwas
+   verschiebt (Schatten statt Polster). Gerade
    ein leeres Feld, das ruhend nur seinen Namen zeigt, gibt sich so deutlich
    als Feld zu erkennen. Eine leise Ebene in der Schriftfarbe (6 %): auf jeder
    Höhenstufe dieselbe Aussage, und im Druck kippt sie mit der Schrift. Nicht
    während man im Feld arbeitet — dann trägt die Kontur —, nicht an einem
    gesperrten Feld (nativ `:disabled` oder, bei Auslösern ohne Eingabe-Element,
    `aria-disabled`) und nicht an der umrandeten Suche der Filterleiste, die
-   neben Knöpfen steht und sich schon über ihre Kante zeigt. Die Fläche liegt
-   auf der Angabe (`.feld-angabe`), nicht auf dem ganzen Rahmen: Ein Knopf
-   daneben (`aktion`) ist eine eigene Handlung und hellt nicht mit auf. */
+   neben Knöpfen steht und sich schon über ihre Kante zeigt. */
 @media (hover: hover) {
   /* «… hinzufügen» in Feldgestalt (`HinzufuegenFeld`) hellt auf wie eine
      leere Angabe — es sieht aus wie ein Feld und verhält sich beim
@@ -581,7 +580,7 @@
   /* Sein ⓘ zeigt sich wie das eines Felds nur beim Überfahren der Zeile. */
   .hinzufuegen-zeile:not(:has(:disabled)):hover .feld-info {
     opacity: 1;
-    pointer-events: auto;
+    --info-klick: auto;
   }
   .feld-rahmen:not([data-name-versteckt]):not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not(:has(:disabled, .feldkasten[aria-disabled="true"])) .feld-angabe:hover {
     --feld-hover: color-mix(in srgb, var(--color-on-surface) 6%, transparent);
@@ -598,20 +597,112 @@
    Touch-Geräten bleibt es verborgen (PO-Entscheid); die Vorlesehilfe hört
    den Hinweis ohnehin mit dem Feld. Unsichtbar heisst hier durchsichtig, nicht
    weg: Die Tastatur erreicht das ⓘ weiterhin und macht es dabei sichtbar,
-   ebenso ein offenes Panel. Durchsichtig nimmt es keine Klicks an. */
+   ebenso ein offenes Panel. Durchsichtig nimmt es keine Klicks an. Ob es
+   Klicks annimmt, trägt `--info-klick`: Es gilt nur für das ⓘ selbst, nicht
+   für die Kopie des Namens davor (`.feld-info-am-namen`). */
 .feld-info {
   opacity: 0;
-  pointer-events: none;
+  --info-klick: none;
+  pointer-events: var(--info-klick);
 }
 .feld-info:has(:focus-visible, [aria-expanded="true"]) {
   opacity: 1;
-  pointer-events: auto;
+  --info-klick: auto;
 }
 @media (hover: hover) {
   .feld-rahmen:not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not(:has(:disabled)) .feld-angabe:hover .feld-info {
     opacity: 1;
-    pointer-events: auto;
+    --info-klick: auto;
   }
+}
+
+/* Das ⓘ eines Felds steht hinter seinem Namen (PO 2026-10-31) statt rechts
+   im Kasten: Dort lag es über dem Zeichen eines Datums- oder Zeitfelds. Die
+   Kopie des Namens ist nur Platzhalter, sichtbar ist allein das ⓘ. Klicks
+   gehen durch sie hindurch ans Feld darunter — wer auf den Namen klickt,
+   will hineinschreiben. */
+.feld-info-am-namen {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 0.75rem;
+  display: flex;
+  pointer-events: none;
+  /* Das Zeichen steht mittig zum Namen. Seine 24-px-Fläche reicht nur 3 px
+     unter die Zeile des Namens und wächst sonst nach oben: Unter dem Namen
+     steht der Wert, und Fläche und Schrift halten mindestens 2 px Abstand. */
+  align-items: flex-end;
+  padding-left: 0.875rem;
+  /* Nie über das Feld hinaus: Ist der Name länger als eine Zeile, endet die
+     Kopie am Rand, und das ⓘ steht dort statt daneben. */
+  max-width: 100%;
+  /* Nur die Kopie des Namens bleibt auf einer Zeile — nicht das Panel des
+     ⓘ, das sonst seinen Hinweis nicht umbräche. */
+  & :is(.feld-info-oben, .feld-info-leer) {
+    visibility: hidden;
+    white-space: nowrap;
+    min-width: 0;
+    overflow: hidden;
+  }
+  /* 24 px statt der üblichen 36: So passt die Fläche neben den Namen, mit
+     2 px Abstand zu seiner Schrift. */
+  & .info-knopf {
+    display: flex;
+    margin-left: 0.125rem;
+    margin-bottom: -3px;
+    pointer-events: var(--info-klick);
+  }
+  & button {
+    width: 1.5rem;
+    height: 1.5rem;
+    align-items: flex-end;
+    padding-bottom: 1px;
+  }
+}
+.feld-info-leer {
+  display: none;
+}
+.feld-rahmen:not([data-fehler]):not(
+    :has(.feldkasten:is(:focus, [aria-expanded="true"], [data-befund], [data-umrandet], [aria-invalid="true"]))
+  )
+  .feld-info-am-namen {
+  /* Mit dem Namen nach unten gerückt (`.feld-rahmen .feld-name`) — per
+     `top`, nicht per `translate`: Eine Verschiebung eröffnete einen eigenen
+     Stapel, und das Hinweis-Panel läge dann unter dem nächsten Feld. */
+  top: 0.75rem;
+}
+/* Leer steht das ⓘ mittig im Kasten hinter dem Namen in grosser Schrift —
+   ebenso in einer Zeile «… hinzufügen», die aussieht wie ein leeres Feld. */
+:is(
+    .feld-rahmen:not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not([data-fehler]):is(
+        [data-leer],
+        :has(.feldkasten:placeholder-shown)
+      ),
+    .hinzufuegen-zeile
+  )
+  .feld-info-am-namen {
+  top: 0;
+  bottom: 0;
+  height: auto;
+  align-items: center;
+  /* Rechts im Kasten bleibt das Zeichen des Felds frei (Pfeil, Auge, 40 px). */
+  max-width: calc(100% - 2.5rem);
+  & .info-knopf {
+    margin-bottom: 0;
+  }
+  & button {
+    align-items: center;
+    padding-bottom: 0;
+  }
+  & .feld-info-oben {
+    display: none;
+  }
+  & .feld-info-leer {
+    display: inline;
+  }
+}
+.feld-rahmen:has(.zeitfeld[data-leer]:not(:focus)) .feld-info-am-namen {
+  padding-left: calc(0.875rem + 1.625rem);
 }
 
 .feld-rahmen:not([data-name-versteckt]) .feldkasten:focus::placeholder {
