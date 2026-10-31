@@ -210,8 +210,8 @@ sondern eine Zeile, die aussieht wie ein leeres Feld, etwa „Feld hinzufügen (
 Klick fügt einen Eintrag an. Die Bedienteile des Browsers selbst, etwa das Auswahlfenster für ein
 Datum, erscheinen hell oder dunkel wie die Anwendung.
 
-Was ein Feld nur erklärt, steht nicht dauernd darunter, sondern hinter einem kleinen ⓘ rechts im
-Feld. Es erscheint erst, wenn man mit der Maus über die Angabe fährt; ein Klick darauf öffnet den
+Was ein Feld nur erklärt, steht nicht dauernd darunter, sondern hinter einem kleinen ⓘ direkt nach
+seinem Namen. Es erscheint erst, wenn man mit der Maus über die Angabe fährt; ein Klick darauf öffnet den
 Hinweis. Mit der Tastatur lässt es sich ansteuern, und eine Sprachausgabe liest den Hinweis mit
 dem Feld vor. Fehler dagegen stehen beim Speichern eines Formulars sichtbar rot unter dem Feld;
 ein Feld, das schon beim Verlassen speichert, fällt bei einem Fehler auf den gespeicherten Wert

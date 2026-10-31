@@ -4,15 +4,15 @@ import { useId, useState } from "react";
 import type { ReactNode } from "react";
 import { Info } from "lucide-react";
 import { IconButton } from "./IconButton";
-import { Tooltip } from "./Tooltip";
 import { usePanelAnker } from "./use-panel-anker";
 
 /* Ein fester Hinweis hinter einem ⓘ (Epic #363, nach dem Vorbild von Jira).
    Was ein Feld erklärt, aber nicht meldet — «Die Person braucht bereits ein
    bestätigtes KiFu-Konto.» —, muss nicht jederzeit unter dem Feld stehen; das
-   Formular bleibt so eine ruhige Liste von Namen und Werten. Beim Zeigen sagt
-   ein Tooltip, was das Zeichen tut, ein Klick öffnet ein kleines Panel mit
-   dem Text. Esc oder ein Klick daneben schliesst es.
+   Formular bleibt so eine ruhige Liste von Namen und Werten. Ein Klick öffnet
+   ein kleines Panel mit dem Text; einen Tooltip braucht das ⓘ nicht, es sagt
+   selbst, was es tut (PO 2026-10-31). Esc oder ein Klick daneben schliesst
+   es.
 
    Nur für feste Hinweise: Fehler und Hinweise, die sich mit der Eingabe
    ändern, bleiben sichtbar unter dem Feld (`supportingText`). Die
@@ -36,23 +36,22 @@ export function InfoKnopf({ label, children }: { label: string; children: ReactN
         }
       }}
     >
-      <Tooltip label="Hinweis anzeigen" ende>
-        <IconButton
-          ref={triggerRef}
-          type="button"
-          icon={Info}
-          // Kleiner als die übrigen Zeichen: Der Hinweis ist Beiwerk, die
-          // Trefferfläche bleibt beim Mass aller Knöpfe (36 px).
-          iconProps={{ size: 16 }}
-          label={`Hinweis zu ${label}`}
-          aria-expanded={offen}
-          aria-controls={offen ? panelId : undefined}
-          onClick={() => {
-            if (!offen) messe();
-            setOffen((o) => !o);
-          }}
-        />
-      </Tooltip>
+      <IconButton
+        ref={triggerRef}
+        type="button"
+        icon={Info}
+        // Kleiner als die übrigen Zeichen: Der Hinweis ist Beiwerk. Die
+        // Trefferfläche richtet sich nach dem Ort — am Namen eines Felds
+        // 24 px (`.feld-info-am-namen`), sonst das Mass aller Knöpfe (36 px).
+        iconProps={{ size: 16 }}
+        label={`Hinweis zu ${label}`}
+        aria-expanded={offen}
+        aria-controls={offen ? panelId : undefined}
+        onClick={() => {
+          if (!offen) messe();
+          setOffen((o) => !o);
+        }}
+      />
       {offen && (
         <div
           ref={panelRef}

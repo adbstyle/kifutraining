@@ -84,9 +84,9 @@ export function Feld({
   /** Fehler und Hinweise, die sich mit der Eingabe ändern — sichtbar unter
    *  dem Feld. */
   hinweis?: ReactNode;
-  /** Ein fester Hinweis, der das Feld erklärt — hinter einem ⓘ rechts im
-   *  Feld (`InfoKnopf`), damit er das Formular nicht dauernd füllt. Das ⓘ
-   *  zeigt sich nur beim Überfahren (siehe `.feld-info` in globals.css). */
+  /** Ein fester Hinweis, der das Feld erklärt — hinter einem ⓘ direkt nach
+   *  dem Namen (`InfoKnopf`), damit er das Formular nicht dauernd füllt. Das
+   *  ⓘ zeigt sich nur beim Überfahren (siehe `.feld-info` in globals.css). */
   info?: ReactNode;
   /** Auf Touch-Geräten bleibt das ⓘ verborgen (PO-Entscheid). Muss man den
    *  festen Hinweis trotzdem lesen, bevor man weitermacht — etwa dass die
@@ -113,16 +113,7 @@ export function Feld({
     >
       <div className={cn(!!aktion && "flex items-end gap-3")}>
         {/* Name und Feldkasten — die «Angabe»; sie hellt beim Überfahren auf
-            (`.feld-angabe` in globals.css), ein Knopf daneben nicht. Das ⓘ
-            steht in ihr rechts, senkrecht mittig: zwischen Name und Wert, bei
-            leerem Feld (Name im Feld) mittig im Kasten. Es liegt ÜBER dem
-            Kasten, der so breit bleibt wie jeder andere: Sichtbar ist es nur
-            beim Überfahren, nie während man im Feld arbeitet. Den Platz, damit
-            der Wert nicht darunter läuft, hält der Kasten selbst frei — ein
-            Text-Feld mit Polster, eine Auswahl mit dem Platz ihres Pfeils.
-            Zentriert per Flex, nicht per `translate`: Eine Verschiebung
-            eröffnete einen eigenen Stapel, und das Hinweis-Panel läge dann
-            unter dem nächsten Feld. */}
+            (`.feld-angabe` in globals.css), ein Knopf daneben nicht. */}
         <div className={cn("feld-angabe relative", !!aktion && "min-w-0 flex-1")}>
           <label
             id={`${id}-label`}
@@ -135,7 +126,19 @@ export function Feld({
           {children}
           {info && (
             <>
-              <div className="feld-info absolute inset-y-0 right-0 flex items-center">
+              {/* Das ⓘ hängt am Namen (PO 2026-10-31): oben hinter dem Namen,
+                  solange er über dem Feld steht, im leeren Feld hinter dem
+                  Namen im Kasten. Eine unsichtbare Kopie des Namens hält den
+                  Platz davor frei — in der Schrift, in der der Name gerade
+                  steht (`.feld-info-am-namen`). So stösst es nie an ein
+                  Zeichen am rechten Rand: Uhr, Kalender, Pfeil. */}
+              <div className="feld-info feld-info-am-namen">
+                <span aria-hidden className="feld-info-oben type-body-small leading-3">
+                  {label}
+                </span>
+                <span aria-hidden className="feld-info-leer type-body-large">
+                  {label}
+                </span>
                 <InfoKnopf label={label}>{info}</InfoKnopf>
               </div>
               <span id={`${id}-info`} className="sr-only">
