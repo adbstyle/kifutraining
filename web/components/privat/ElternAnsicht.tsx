@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CalendarX2 } from "lucide-react";
-import { ExternerLink, Kalenderblatt, KuerzbarerText, Leerzustand, Lozenge, SectionMessage, Switch, TrainingsTreffpunkt } from "@/components/ui";
+import { ExternerLink, FilterChip, Kalenderblatt, KuerzbarerText, Leerzustand, Lozenge, SectionMessage, Switch, TrainingsTreffpunkt } from "@/components/ui";
 import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
 import type { Meldung } from "@/lib/spiel";
 import { SpielKarte } from "./SpielKarte";
@@ -15,7 +15,15 @@ import { meldeSpielUeberLinkAktion, meldeUeberLinkAktion } from "@/lib/actions/s
 import { monatsName, tagText } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import type { LinkTermin } from "@/lib/privater-link";
-import { spielerName, spielerzahlKurz, verfallenHinweis, type Spielerzahl } from "@/lib/spieler";
+import {
+  LINK_EINGRENZUNG,
+  linkEingrenzungLeer,
+  linkEingrenzungStand,
+  spielerName,
+  spielerzahlKurz,
+  verfallenHinweis,
+  type Spielerzahl,
+} from "@/lib/spieler";
 import { useLokalerStand } from "@/lib/use-lokaler-stand";
 import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaehler, type ProbeStand } from "@/lib/probe";
 
@@ -73,10 +81,24 @@ export function ElternAnsicht({
   };
 
   const name = spielerName(spieler);
+  // Auf Trainings oder Spiele eingrenzen (#596): Es gilt höchstens eine Art,
+  // ein Klick auf die gewählte hebt sie auf — wie «Meine Termine» im Team.
+  // Bewusst nur im Zustand der Seite: Neu öffnen oder neu laden zeigt wieder
+  // alles (PC 1), ein Melden lädt die Daten neu und lässt die Wahl stehen
+  // (AK 7). Im Probe-Modus stehen keine Spiele da, also keine Wahl (AK 8).
+  const [art, setArt] = useState<LinkTermin["art"] | null>(null);
+  const eingrenzbar = !probe && termine.length > 0;
+  // Verschwinden die Chips (Probe-Modus, keine Termine mehr), fällt die Wahl
+  // weg, statt verdeckt weiterzuleben und beim Wiedererscheinen still zu gelten.
+  if (!eingrenzbar && art) setArt(null);
+  const sichtbar = art ? termine.filter((t) => t.art === art) : termine;
+  // Ein Fehler beim Melden steht an seiner Karte; ist sie weggefiltert, steht
+  // er mit dem Tag über der Liste, damit er nicht ungesehen verschwindet.
+  const fehlerVerdeckt = fehler && !sichtbar.some((t) => t.id === fehler.terminId) ? termine.find((t) => t.id === fehler.terminId) : undefined;
   // Begonnen sind nur Termine von heute: Sie stehen zuoberst unter «Heute»,
   // gesperrt bis Ende des Tages.
-  const begonnen = termine.filter((t) => t.begonnen);
-  const uebrige = termine.filter((t) => !t.begonnen);
+  const begonnen = sichtbar.filter((t) => t.begonnen);
+  const uebrige = sichtbar.filter((t) => !t.begonnen);
 
   // Der Probe-Stand folgt den lokalen Schaltern, bevor der Server antwortet.
   const probeLokal = probe && {
@@ -198,10 +220,38 @@ export function ElternAnsicht({
           <SectionMessage>{linkProbeVoll(spieler.vorname, probeLokal)}</SectionMessage>
         </div>
       )}
+      {eingrenzbar && (
+        <div role="group" aria-label="Termine eingrenzen" className="flex flex-wrap gap-2 px-4 pt-4">
+          {(["training", "spiel"] as const).map((a) => (
+            <FilterChip key={a} selected={art === a} onClick={() => setArt(art === a ? null : a)}>
+              {LINK_EINGRENZUNG[a].chip}
+            </FilterChip>
+          ))}
+          {/* Nach dem Wechsel sagt eine Sprachausgabe, was nun dasteht. */}
+          <p role="status" className="sr-only">
+            {art ? linkEingrenzungStand(art, sichtbar.length) : ""}
+          </p>
+        </div>
+      )}
+      {fehlerVerdeckt && fehler && (
+        <div className="px-4 pt-4">
+          <SectionMessage appearance="error">
+            {tagText(fehlerVerdeckt.datum)}: {fehler.text}
+          </SectionMessage>
+        </div>
+      )}
       {termine.length === 0 ? (
         <div className="px-4 py-6">
           <Leerzustand icon={CalendarX2} titel="Keine anstehenden Termine" dicht>
             Sobald das Team Termine plant, stehen sie hier.
+          </Leerzustand>
+        </div>
+      ) : art && sichtbar.length === 0 ? (
+        // Die Eingrenzung lässt nichts übrig (AK 6); der Weg zurück ist der
+        // gewählte Chip darüber.
+        <div className="px-4 py-6">
+          <Leerzustand icon={CalendarX2} titel={LINK_EINGRENZUNG[art].leer} dicht>
+            {linkEingrenzungLeer(art)}
           </Leerzustand>
         </div>
       ) : (

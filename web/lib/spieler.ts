@@ -332,6 +332,28 @@ export const LINK_TEXT = {
   erneuertAbholen: "Die Eltern holen den neuen Link wieder über die Abholadresse ab.",
 } as const;
 
+// ── Am Link eingrenzen (#596) ────────────────────────────────────────────────
+
+/** Die Arten, auf die sich die Liste am Link eingrenzen lässt: Chip,
+ *  Leerzustand und die Ansage nach dem Wechsel aus einer Quelle. */
+export const LINK_EINGRENZUNG = {
+  training: { chip: "Trainings", leer: "Keine anstehenden Trainings", eins: "Training", viele: "Trainings" },
+  spiel: { chip: "Spiele", leer: "Keine anstehenden Spiele", eins: "Spiel", viele: "Spiele" },
+} as const;
+
+/** Der Weg zurück aus einer leeren Eingrenzung — ohne «Tippe», der Link
+ *  wird auch am Rechner geöffnet. */
+export function linkEingrenzungLeer(art: keyof typeof LINK_EINGRENZUNG): string {
+  return `Hebe die Auswahl «${LINK_EINGRENZUNG[art].chip}» auf, um alle Termine zu sehen.`;
+}
+
+/** Was eine Sprachausgabe nach dem Wechsel sagt (#596): wie viele Termine
+ *  der gewählten Art jetzt stehen. */
+export function linkEingrenzungStand(art: keyof typeof LINK_EINGRENZUNG, n: number): string {
+  const e = LINK_EINGRENZUNG[art];
+  return n === 0 ? e.leer : `${n} ${n === 1 ? e.eins : e.viele}`;
+}
+
 // ── Verlegen lässt Abmeldungen verfallen (#437) ─────────────────────────────
 
 /** Was beim Verlegen mit den Abmeldungen geschieht (AK 1) — vor dem

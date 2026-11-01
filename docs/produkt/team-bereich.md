@@ -1057,6 +1057,19 @@ verlegt, seit sie abgemeldet war, steht bei ihm etwa „Verlegt, vorher Dienstag
 Spieler:innen, fremde Kader, Termine für andere Kader, Trainings und vergangene Termine zeigt die
 Seite nicht.
 
+Über der Liste grenzen die Eltern sie mit den Filter-Chips „Trainings" und „Spiele" auf eine Art
+ein. Es gilt höchstens einer; ein Tipp auf den gewählten hebt ihn auf, und die Liste zeigt wieder
+alle Termine. Der gewählte Chip ist violett umrandet und beschriftet. Ausgefallene und heute
+begonnene Termine stehen unter ihrer Art, Monatsüberschriften ohne passende Termine entfallen.
+Bleibt nichts übrig, sagt die Seite „Keine anstehenden Spiele" bzw. „Keine anstehenden Trainings"
+und dass man die Auswahl aufhebt, um alle Termine zu sehen. Eine Sprachausgabe sagt nach dem
+Wechsel, wie viele Termine der Art nun dastehen. Scheitert eine Meldung an einem Termin, den die
+Eingrenzung gerade ausblendet, steht der Fehler mit dem Tag über der Liste. Die Wahl bleibt beim
+Ab- und Anmelden stehen, gilt aber nur, solange die Seite offen ist: Wer den Link neu öffnet oder die Seite neu
+lädt, sieht wieder alle Termine. Im Probe-Modus gibt es die Chips nicht, weil dort keine Spiele
+stehen; ebenso nicht, solange keine Termine anstehen. Das Kalender-Abo enthält unabhängig davon
+alle Termine, und der Zähler der Probetrainings zählt immer alle Trainings.
+
 Ist die Spieler:in im Probe-Modus (siehe „Probetraining"), sagt der Kopf statt dessen etwa „Mia ist
 im Probetraining. Melde Mia für die Trainings an, an denen Mia teilnimmt, und bis zum Beginn wieder
 ab." Darunter steht, wie viele Probetrainings noch möglich sind, etwa „Noch 2 von 4 Probetrainings
