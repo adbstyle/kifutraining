@@ -2808,6 +2808,14 @@ export default async function Styleguide() {
             <code>type-label-medium</code>.
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            <strong>Eingrenzen.</strong> Schliessen sich Filter aus, gilt
+            höchstens einer: ein Klick auf den gewählten hebt ihn auf, nichts
+            gewählt heisst alles - darum gibt es keinen Chip «Alle». So im Team
+            («Meine Termine», «Eingeladen») und am privaten Link («Trainings»,
+            «Spiele»). Lässt die Eingrenzung nichts übrig, sagt ein{" "}
+            <code>Leerzustand</code>, wie man zurückkommt.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             <strong>Eine Höhe.</strong> Jeder Chip ist 36 px hoch, im Fliesstext
             wie in einer Filterleiste - dasselbe Mass wie Knopf, Feld und
             Filterknopf, darum fluchtet er überall ohne eigene Stufe.

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CalendarX2 } from "lucide-react";
-import { ExternerLink, Kalenderblatt, KuerzbarerText, Leerzustand, Lozenge, SectionMessage, Switch, TrainingsTreffpunkt } from "@/components/ui";
+import { ExternerLink, FilterChip, Kalenderblatt, KuerzbarerText, Leerzustand, Lozenge, SectionMessage, Switch, TrainingsTreffpunkt } from "@/components/ui";
 import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
 import type { Meldung } from "@/lib/spiel";
 import { SpielKarte } from "./SpielKarte";
@@ -73,10 +73,18 @@ export function ElternAnsicht({
   };
 
   const name = spielerName(spieler);
+  // Auf Trainings oder Spiele eingrenzen (#596): Es gilt höchstens eine Art,
+  // ein Klick auf die gewählte hebt sie auf — wie «Meine Termine» im Team.
+  // Bewusst nur im Zustand der Seite: Neu öffnen oder neu laden zeigt wieder
+  // alles (PC 1), ein Melden lädt die Daten neu und lässt die Wahl stehen
+  // (AK 7). Im Probe-Modus stehen keine Spiele da, also keine Wahl (AK 8).
+  const [art, setArt] = useState<LinkTermin["art"] | null>(null);
+  const eingrenzbar = !probe && termine.length > 0;
+  const sichtbar = art && eingrenzbar ? termine.filter((t) => t.art === art) : termine;
   // Begonnen sind nur Termine von heute: Sie stehen zuoberst unter «Heute»,
   // gesperrt bis Ende des Tages.
-  const begonnen = termine.filter((t) => t.begonnen);
-  const uebrige = termine.filter((t) => !t.begonnen);
+  const begonnen = sichtbar.filter((t) => t.begonnen);
+  const uebrige = sichtbar.filter((t) => !t.begonnen);
 
   // Der Probe-Stand folgt den lokalen Schaltern, bevor der Server antwortet.
   const probeLokal = probe && {
@@ -198,10 +206,28 @@ export function ElternAnsicht({
           <SectionMessage>{linkProbeVoll(spieler.vorname, probeLokal)}</SectionMessage>
         </div>
       )}
+      {eingrenzbar && (
+        <div role="group" aria-label="Termine eingrenzen" className="flex flex-wrap gap-2 px-4 pt-4">
+          <FilterChip selected={art === "training"} onClick={() => setArt(art === "training" ? null : "training")}>
+            Trainings
+          </FilterChip>
+          <FilterChip selected={art === "spiel"} onClick={() => setArt(art === "spiel" ? null : "spiel")}>
+            Spiele
+          </FilterChip>
+        </div>
+      )}
       {termine.length === 0 ? (
         <div className="px-4 py-6">
           <Leerzustand icon={CalendarX2} titel="Keine anstehenden Termine" dicht>
             Sobald das Team Termine plant, stehen sie hier.
+          </Leerzustand>
+        </div>
+      ) : sichtbar.length === 0 ? (
+        // Die Eingrenzung lässt nichts übrig (AK 6); der Weg zurück ist der
+        // gewählte Chip darüber.
+        <div className="px-4 py-6">
+          <Leerzustand icon={CalendarX2} titel={art === "spiel" ? "Keine anstehenden Spiele" : "Keine anstehenden Trainings"} dicht>
+            Tippe nochmals auf «{art === "spiel" ? "Spiele" : "Trainings"}», um alle Termine zu sehen.
           </Leerzustand>
         </div>
       ) : (
