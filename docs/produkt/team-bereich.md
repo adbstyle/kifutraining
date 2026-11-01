@@ -1062,8 +1062,10 @@ ein. Es gilt höchstens einer; ein Tipp auf den gewählten hebt ihn auf, und die
 alle Termine. Der gewählte Chip ist violett umrandet und beschriftet. Ausgefallene und heute
 begonnene Termine stehen unter ihrer Art, Monatsüberschriften ohne passende Termine entfallen.
 Bleibt nichts übrig, sagt die Seite „Keine anstehenden Spiele" bzw. „Keine anstehenden Trainings"
-und dass ein nochmaliger Tipp auf den Chip alle Termine zeigt. Die Wahl bleibt beim Ab- und Anmelden
-stehen, gilt aber nur, solange die Seite offen ist: Wer den Link neu öffnet oder die Seite neu
+und dass man die Auswahl aufhebt, um alle Termine zu sehen. Eine Sprachausgabe sagt nach dem
+Wechsel, wie viele Termine der Art nun dastehen. Scheitert eine Meldung an einem Termin, den die
+Eingrenzung gerade ausblendet, steht der Fehler mit dem Tag über der Liste. Die Wahl bleibt beim
+Ab- und Anmelden stehen, gilt aber nur, solange die Seite offen ist: Wer den Link neu öffnet oder die Seite neu
 lädt, sieht wieder alle Termine. Im Probe-Modus gibt es die Chips nicht, weil dort keine Spiele
 stehen; ebenso nicht, solange keine Termine anstehen. Das Kalender-Abo enthält unabhängig davon
 alle Termine, und der Zähler der Probetrainings zählt immer alle Trainings.

@@ -15,7 +15,15 @@ import { meldeSpielUeberLinkAktion, meldeUeberLinkAktion } from "@/lib/actions/s
 import { monatsName, tagText } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import type { LinkTermin } from "@/lib/privater-link";
-import { spielerName, spielerzahlKurz, verfallenHinweis, type Spielerzahl } from "@/lib/spieler";
+import {
+  LINK_EINGRENZUNG,
+  linkEingrenzungLeer,
+  linkEingrenzungStand,
+  spielerName,
+  spielerzahlKurz,
+  verfallenHinweis,
+  type Spielerzahl,
+} from "@/lib/spieler";
 import { useLokalerStand } from "@/lib/use-lokaler-stand";
 import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaehler, type ProbeStand } from "@/lib/probe";
 
@@ -80,7 +88,13 @@ export function ElternAnsicht({
   // (AK 7). Im Probe-Modus stehen keine Spiele da, also keine Wahl (AK 8).
   const [art, setArt] = useState<LinkTermin["art"] | null>(null);
   const eingrenzbar = !probe && termine.length > 0;
-  const sichtbar = art && eingrenzbar ? termine.filter((t) => t.art === art) : termine;
+  // Verschwinden die Chips (Probe-Modus, keine Termine mehr), fällt die Wahl
+  // weg, statt verdeckt weiterzuleben und beim Wiedererscheinen still zu gelten.
+  if (!eingrenzbar && art) setArt(null);
+  const sichtbar = art ? termine.filter((t) => t.art === art) : termine;
+  // Ein Fehler beim Melden steht an seiner Karte; ist sie weggefiltert, steht
+  // er mit dem Tag über der Liste, damit er nicht ungesehen verschwindet.
+  const fehlerVerdeckt = fehler && !sichtbar.some((t) => t.id === fehler.terminId) ? termine.find((t) => t.id === fehler.terminId) : undefined;
   // Begonnen sind nur Termine von heute: Sie stehen zuoberst unter «Heute»,
   // gesperrt bis Ende des Tages.
   const begonnen = sichtbar.filter((t) => t.begonnen);
@@ -208,12 +222,22 @@ export function ElternAnsicht({
       )}
       {eingrenzbar && (
         <div role="group" aria-label="Termine eingrenzen" className="flex flex-wrap gap-2 px-4 pt-4">
-          <FilterChip selected={art === "training"} onClick={() => setArt(art === "training" ? null : "training")}>
-            Trainings
-          </FilterChip>
-          <FilterChip selected={art === "spiel"} onClick={() => setArt(art === "spiel" ? null : "spiel")}>
-            Spiele
-          </FilterChip>
+          {(["training", "spiel"] as const).map((a) => (
+            <FilterChip key={a} selected={art === a} onClick={() => setArt(art === a ? null : a)}>
+              {LINK_EINGRENZUNG[a].chip}
+            </FilterChip>
+          ))}
+          {/* Nach dem Wechsel sagt eine Sprachausgabe, was nun dasteht. */}
+          <p role="status" className="sr-only">
+            {art ? linkEingrenzungStand(art, sichtbar.length) : ""}
+          </p>
+        </div>
+      )}
+      {fehlerVerdeckt && fehler && (
+        <div className="px-4 pt-4">
+          <SectionMessage appearance="error">
+            {tagText(fehlerVerdeckt.datum)}: {fehler.text}
+          </SectionMessage>
         </div>
       )}
       {termine.length === 0 ? (
@@ -222,12 +246,12 @@ export function ElternAnsicht({
             Sobald das Team Termine plant, stehen sie hier.
           </Leerzustand>
         </div>
-      ) : sichtbar.length === 0 ? (
+      ) : art && sichtbar.length === 0 ? (
         // Die Eingrenzung lässt nichts übrig (AK 6); der Weg zurück ist der
         // gewählte Chip darüber.
         <div className="px-4 py-6">
-          <Leerzustand icon={CalendarX2} titel={art === "spiel" ? "Keine anstehenden Spiele" : "Keine anstehenden Trainings"} dicht>
-            Tippe nochmals auf «{art === "spiel" ? "Spiele" : "Trainings"}», um alle Termine zu sehen.
+          <Leerzustand icon={CalendarX2} titel={LINK_EINGRENZUNG[art].leer} dicht>
+            {linkEingrenzungLeer(art)}
           </Leerzustand>
         </div>
       ) : (
