@@ -5,7 +5,7 @@ import type { KeyboardEvent, ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Badge } from "./Lozenge";
-import { chipTextOutlined, chipTextSelected } from "./Chip";
+import { chipOutlined, chipSelected } from "./Chip";
 import { Checkbox } from "./Checkbox";
 import { usePanelAnker } from "./use-panel-anker";
 import { gruppenIdVon, gruppenKopf, gruppenKopfKlasse } from "./gruppen";
@@ -124,7 +124,7 @@ export function FilterKnopf({
         // öffnet statt bloss umzuschalten.
         className={cn(
           "state focus-ring type-body-medium inline-flex h-9 items-center gap-2 rounded-flaeche kontur bg-transparent px-3 transition-colors",
-          aktiv ? chipTextSelected : chipTextOutlined,
+          aktiv ? chipSelected : chipOutlined,
         )}
       >
         {label}
