@@ -1,9 +1,13 @@
 name: Reset Staging (Schema auf main, manuell)
 
 # Setzt das Schema der STAGING-Datenbank auf den Stand von main zurück:
-# Generalprobe des Prod-Wegs im Epic Vereine (AP §6.2). Kennt nur Staging;
-# ein Prod-Ziel gibt es hier nicht (die PR-Checks prüfen per grep, dass die
-# Datei kein Prod-Secret nennt).
+# Generalprobe des Prod-Wegs im Epic Vereine (AP §6.2).
+#
+# Schutz gegen ein falsches Ziel: Der Access-Token gilt fürs ganze
+# Supabase-Konto, also auch für Prod. Ziel ist darum nur, was diese Datei
+# auswählt: ausschliesslich Staging-Secrets (die PR-Checks prüfen per grep,
+# dass kein Prod-Secret vorkommt) und die feste Staging-Ref unten, mit der
+# Secret und verknüpftes Projekt übereinstimmen müssen.
 #
 # Was `supabase db reset --linked` laut Quelltext der CLI v2.122.1 tut
 # (apps/cli/src/command-internal/drop-objects.ts, ein DO-Block, dann alle
@@ -25,8 +29,11 @@ name: Reset Staging (Schema auf main, manuell)
 #
 # Danach braucht Staging einen Sync (sync-staging.yml), sonst ist es leer.
 #
-# Starten lässt sich der Workflow nur, wenn diese Datei auf dem Default-Branch
-# (main) liegt: GitHub bietet workflow_dispatch nur für solche Dateien an.
+# Auslösen: GitHub bietet workflow_dispatch erst an, wenn diese Datei auf dem
+# Default-Branch (main) liegt. Danach lässt sich der Workflow für jeden Branch
+# auslösen, der die Datei enthält — mit der Fassung jenes Branches und
+# denselben Repo-Secrets. Der Ref-Guard unten steht in derselben Datei und
+# schützt davor nicht. Die Härtung dagegen ist Issue #607.
 on:
   workflow_dispatch:
     inputs:
@@ -34,20 +41,36 @@ on:
         description: 'Zum Bestätigen "reset" eintippen (löscht ALLE Staging-Daten samt Konten)'
         required: true
 
+permissions:
+  contents: read
+
+# Dieselbe Gruppe wie deploy-staging.yml und sync-staging.yml: Läufe auf der
+# Staging-DB warten aufeinander, statt sich zu überschneiden. GitHub hält je
+# Gruppe einen laufenden und einen wartenden Lauf; ein neu wartender ersetzt
+# einen älteren wartenden.
+concurrency:
+  group: staging-db
+  cancel-in-progress: false
+
 jobs:
   reset:
     name: supabase db reset --linked (Staging)
     runs-on: ubuntu-latest
     env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_STAGING_DB_PASSWORD }}
-      SUPABASE_STAGING_REF: ${{ secrets.SUPABASE_STAGING_REF }}
+      # Bekannte Ref des Staging-Projekts (steht schon im öffentlichen Repo,
+      # kein Geheimnis). Die Prod-Ref gehört nicht in diese Datei.
+      STAGING_REF_FEST: lcxxfugtuazsqcahrqou
     steps:
+      # Exakter Vergleich in der Shell: `!=` in GitHub-Ausdrücken ignoriert
+      # Gross-/Kleinschreibung.
       - name: Bestätigung prüfen
-        if: ${{ inputs.confirm != 'reset' }}
+        env:
+          CONFIRM: ${{ inputs.confirm }}
         run: |
-          echo '::error::Abgebrochen: Input "confirm" muss exakt "reset" sein.'
-          exit 1
+          if ! [ "$CONFIRM" = "reset" ]; then
+            echo '::error::Abgebrochen: Input "confirm" muss exakt "reset" sein.'
+            exit 1
+          fi
 
       # Der Reset soll das Schema von main herstellen, nie das eines anderen
       # Branches. Deshalb hart abbrechen, wenn nicht von main ausgelöst, und
@@ -58,6 +81,17 @@ jobs:
           echo "::error::reset-staging läuft nur vom main-Branch (aktuell: $GITHUB_REF). Beim Auslösen 'Use workflow from: main' wählen."
           exit 1
 
+      # Vor jedem CLI-Schritt gegen das Projekt: Das Secret muss genau die
+      # feste Staging-Ref tragen.
+      - name: Staging-Ref prüfen
+        env:
+          SUPABASE_STAGING_REF: ${{ secrets.SUPABASE_STAGING_REF }}
+        run: |
+          if [ "$SUPABASE_STAGING_REF" != "$STAGING_REF_FEST" ]; then
+            echo "::error::SUPABASE_STAGING_REF ist nicht die feste Staging-Ref $STAGING_REF_FEST. Abbruch vor jedem Schritt gegen ein Projekt."
+            exit 1
+          fi
+
       - uses: actions/checkout@v6
         with:
           ref: main
@@ -67,29 +101,29 @@ jobs:
           version: 2.122.1
 
       - name: Mit Staging-Projekt verknüpfen
-        run: |
-          if [ -z "$SUPABASE_STAGING_REF" ]; then
-            echo "::error::SUPABASE_STAGING_REF ist leer."
-            exit 1
-          fi
-          supabase link --project-ref "$SUPABASE_STAGING_REF"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_STAGING_DB_PASSWORD }}
+        run: supabase link --project-ref "$STAGING_REF_FEST"
 
       # Die CLI v2.122.1 liest die verknüpfte Ref aus supabase/.temp/project-ref
       # (command-internal/legacy-project-state.paths.ts). SUPABASE_PROJECT_ID
       # ginge der Verknüpfung vor (config/remote-target.layer.ts) und darf darum
       # nicht gesetzt sein.
       - name: Verknüpftes Projekt prüfen (nur Staging)
+        env:
+          SUPABASE_STAGING_REF: ${{ secrets.SUPABASE_STAGING_REF }}
         run: |
           if [ -n "${SUPABASE_PROJECT_ID:-}" ]; then
             echo "::error::SUPABASE_PROJECT_ID ist gesetzt und ginge der Verknüpfung vor."
             exit 1
           fi
           IST="$(cat supabase/.temp/project-ref 2>/dev/null || true)"
-          if [ "$IST" != "$SUPABASE_STAGING_REF" ]; then
-            echo "::error::Verknüpftes Projekt ist nicht Staging. Abbruch vor dem Reset."
+          if [ "$IST" != "$STAGING_REF_FEST" ] || [ "$IST" != "$SUPABASE_STAGING_REF" ]; then
+            echo "::error::Verknüpftes Projekt ist nicht Staging ($STAGING_REF_FEST). Abbruch vor dem Reset."
             exit 1
           fi
-          echo "Verknüpft mit dem Staging-Projekt."
+          echo "Verknüpft mit dem Staging-Projekt $STAGING_REF_FEST."
 
       - name: Stand des Checkouts ins Log
         run: |
@@ -101,4 +135,7 @@ jobs:
       # (command-internal/global-flags.ts) und beantwortet «Do you want to
       # reset the remote database?» mit Ja.
       - name: Staging-Schema zurücksetzen
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_STAGING_DB_PASSWORD }}
         run: supabase db reset --linked --yes

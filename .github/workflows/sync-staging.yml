@@ -69,6 +69,14 @@ on:
         description: 'Zum Bestätigen "sync" eintippen (überschreibt ALLE Staging-Daten)'
         required: true
 
+# Dieselbe Gruppe wie reset-staging.yml und deploy-staging.yml: Läufe auf der
+# Staging-DB warten aufeinander, statt sich zu überschneiden. GitHub hält je
+# Gruppe einen laufenden und einen wartenden Lauf; ein neu wartender ersetzt
+# einen älteren wartenden.
+concurrency:
+  group: staging-db
+  cancel-in-progress: false
+
 env:
   # Single Source für Dump, TRUNCATE und Vollständigkeits-Guard.
   # Bytewise sortiert (collate "C", d. h. '_' vor Buchstaben) — muss der
@@ -188,6 +196,15 @@ jobs:
             echo "::error::SUPABASE_PROD_REF/SUPABASE_STAGING_REF müssen gesetzt sein (leer -> Rewrite liefe ins Leere)."
             exit 1
           fi
+
+          # Ohne pipefail endete der Schritt grün, wenn `cat` eine Datei nicht
+          # findet und psql den Rest trotzdem übernimmt.
+          for F in supabase/sync/vor_restore.sql supabase/sync/nach_restore.sql; do
+            if ! test -f "$F"; then
+              echo "::error::Sync-Baustein $F fehlt im Checkout. Abbruch vor dem Restore."
+              exit 1
+            fi
+          done
 
           TRUNCATE_LIST="auth.users"
           for T in $PUBLIC_TABLES; do
