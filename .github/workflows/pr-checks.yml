@@ -28,6 +28,29 @@ jobs:
             exit 1
           fi
 
+  # Eigener Job, damit die übrigen ihr Ergebnis weiter zeigen: Solange der
+  # Default von vereine_nachziehen der Platzhalter ist, legte der Backfill auf
+  # Prod «FC Wyler» ohne Verwaltung an (AP §6.1 Schritt −1, §6.3). Der Job
+  # «Prod-Weg» merkt das nicht, weil er genau dieses Konto anlegt.
+  konto-platzhalter:
+    name: Verwaltungskonto im Backfill eingesetzt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Default von vereine_nachziehen ist kein Platzhalter
+        run: |
+          DATEI=supabase/migrations/20261113100000_vereine_fundament.sql
+          KONTO=$(sed -n "s/.*p_verwaltung uuid default '\([0-9a-f-]*\)'::uuid.*/\1/p" "$DATEI")
+          if [ -z "$KONTO" ]; then
+            echo "::error file=$DATEI::Default von vereine_nachziehen(p_verwaltung) nicht gefunden."
+            exit 1
+          fi
+          if [ "$KONTO" = "00000000-0000-0000-0000-000000000000" ]; then
+            echo "::error file=$DATEI::Platzhalter statt Konto-ID: Vor dem Merge die auth.users.id des Verwaltungskontos als Default von vereine_nachziehen einsetzen (Zeile mit KONTO_ID_PLATZHALTER, AP §6.1 Schritt −1)."
+            exit 1
+          fi
+          echo "Verwaltungskonto: $KONTO"
+
   web:
     name: Typecheck (web)
     runs-on: ubuntu-latest

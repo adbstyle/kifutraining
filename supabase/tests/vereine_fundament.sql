@@ -6,7 +6,8 @@
 -- - `create_team` nur durch die Verwaltung, im eigenen Verein (Testfall 3)
 -- - `meine_vereinslage()` und die Sichtbarkeit der Vereine
 -- - Grenzen 100 je Team und 1000 je Verein nur für Neues; Bestand darüber
---   bleibt änderbar und löschbar (Testfall 1, Story 1 PC 2)
+--   bleibt änderbar und löschbar (Testfall 1, Story 1 PC 2); Schnuppernde
+--   und bestehende Doppeleinträge zählen mit (Story 1 PC 3)
 -- - `delete_account()`: letzte Verwaltung, KI-Token, Erfolg
 -- - Funktionen ohne API-Zweck für anon und authenticated gesperrt (Testfall 26)
 -- Alles in einer Transaktion mit rollback; hinterlässt nichts. Die Rolle
@@ -49,7 +50,8 @@ begin
 end $$;
 
 create temp table ids (name text primary key, id uuid not null default gen_random_uuid());
-insert into ids (name) values ('verw'), ('verw2'), ('a'), ('ohne'), ('c'), ('v1'), ('v2'), ('team1'), ('teamx');
+insert into ids (name) values ('verw'), ('verw2'), ('a'), ('ohne'), ('c'), ('v1'), ('v2'), ('team1'), ('teamx'),
+  ('team2'), ('schnupper1'), ('schnupper2');
 create function pg_temp.id(p text) returns uuid language sql stable as $$ select id from ids where name = p $$;
 grant select on ids to authenticated;   -- temporär; die Rolle braucht pg_temp.id
 
@@ -156,8 +158,28 @@ with neu as (
   select pg_temp.id('team1'), pg_temp.id('v1'), 'Eins', 'Nr ' || i, 2015 from generate_series(1, 150) i
   returning id)
 insert into team_spieler (team_id, spieler_id, verein_id) select pg_temp.id('team1'), id, pg_temp.id('v1') from neu;
+-- V2 mit genau 1000: 998, eine Altdublette in einem zweiten Team und eine
+-- Schnuppernde (PC 3: alle Einträge zählen).
 insert into spieler (team_id, verein_id, vorname, nachname, jahrgang)
-select pg_temp.id('teamx'), pg_temp.id('v2'), 'Zwei', 'Nr ' || i, 2016 from generate_series(1, 1000) i;
+select pg_temp.id('teamx'), pg_temp.id('v2'), 'Zwei', 'Nr ' || i, 2016 from generate_series(1, 998) i;
+insert into spieler (team_id, verein_id, vorname, nachname, jahrgang)
+select id, pg_temp.id('v2'), 'Zwei', 'Nr 1', 2016 from teams where verein_id = pg_temp.id('v2') and name = 'X 2';
+insert into spieler (id, team_id, verein_id, vorname, nachname, jahrgang)
+values (pg_temp.id('schnupper2'), pg_temp.id('teamx'), pg_temp.id('v2'), 'Zwei', 'Schnupper', 2016);
+insert into team_spieler (team_id, spieler_id, verein_id, probe_seit)
+values (pg_temp.id('teamx'), pg_temp.id('schnupper2'), pg_temp.id('v2'), now());
+-- Team 2 mit genau 100 Zuordnungen, eine davon schnuppernd (PC 3).
+insert into teams (id, name, verein_id) values (pg_temp.id('team2'), 'Team Zwei', pg_temp.id('v1'));
+insert into team_members (team_id, user_id) values (pg_temp.id('team2'), pg_temp.id('a'));
+with neu as (
+  insert into spieler (team_id, verein_id, vorname, nachname, jahrgang)
+  select pg_temp.id('team2'), pg_temp.id('v1'), 'Zwei', 'Nr ' || i, 2016 from generate_series(1, 99) i
+  returning id)
+insert into team_spieler (team_id, spieler_id, verein_id) select pg_temp.id('team2'), id, pg_temp.id('v1') from neu;
+insert into spieler (id, team_id, verein_id, vorname, nachname, jahrgang)
+values (pg_temp.id('schnupper1'), pg_temp.id('team2'), pg_temp.id('v1'), 'Zwei', 'Schnupper', 2016);
+insert into team_spieler (team_id, spieler_id, verein_id, probe_seit)
+values (pg_temp.id('team2'), pg_temp.id('schnupper1'), pg_temp.id('v1'), now());
 set local session_replication_role = origin;
 
 select pg_temp.als(pg_temp.id('a'));
@@ -170,6 +192,9 @@ begin
                               where team_id = pg_temp.id('team1') and spieler_id <> v_spieler limit 1));
 end $$;
 select pg_temp.erwarte(format($$select spieler_aufnehmen(%L, 'Neu', 'Neu', 2015, null)$$, pg_temp.id('team1')),
+                       'SPIELERLISTE_VOLL');
+-- 99 und eine Schnuppernde: das Team ist voll.
+select pg_temp.erwarte(format($$select spieler_aufnehmen(%L, 'Neu', 'Neu', 2016, null)$$, pg_temp.id('team2')),
                        'SPIELERLISTE_VOLL');
 -- Ein Import nur mit J+S-Nummern geht über der Grenze durch, mit einer neuen
 -- Zeile nicht (Story 1 PC 2).
@@ -267,6 +292,17 @@ end $$;
 select pg_temp.als(pg_temp.id('a'));
 select pg_temp.erwarte($$select vereine_nachziehen(null)$$, '42501');
 select pg_temp.erwarte(format('select person_verein(%L)', pg_temp.id('a')), '42501');
+reset role;
+
+-- delete_account eines Teammitglieds ohne Verwaltung: Der Verein ist nur
+-- Kandidat für die Sperre, gelöscht wird ohne Verwaltungszweig.
+select pg_temp.als(pg_temp.id('a'));
+do $$
+begin
+  if delete_account() <> '{"status": "geloescht"}'::jsonb then
+    raise exception 'delete_account eines Teammitglieds: kein Status geloescht';
+  end if;
+end $$;
 reset role;
 
 rollback;

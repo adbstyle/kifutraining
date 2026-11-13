@@ -267,11 +267,22 @@ begin
   end if;
   perform nur_in_der_anwendung();
 
-  v_verein := (select verein_id from verein_verwaltung where user_id = v_uid);   -- höchstens einer
+  -- Erst sperren, dann lesen: Der Verein der Person (Verwaltung oder Team)
+  -- ist nur der Kandidat für die Vereinssperre. Unter beiden Sperren zählt
+  -- die Verwaltungszeile; kam sie seither in einem anderen Verein dazu, bricht
+  -- die RPC ab, statt durchzulaufen und am FK `restrict` zu scheitern.
+  v_verein := person_verein(v_uid);
   if v_verein is not null then
     perform sperre_verein(v_verein);
   end if;
   perform sperre_person(v_uid);                                   -- nach dem Verein (Sperrordnung)
+  if exists (select 1 from verein_verwaltung where user_id = v_uid
+              and verein_id is distinct from v_verein) then
+    raise exception 'VERWALTUNG_GEAENDERT';
+  end if;
+  if not exists (select 1 from verein_verwaltung where user_id = v_uid) then
+    v_verein := null;                                             -- Teammitglied ohne Verwaltung
+  end if;
   if v_verein is not null then
     if not exists (select 1 from verein_verwaltung where verein_id = v_verein and user_id <> v_uid) then
       return jsonb_build_object('status', 'letzte_verwaltung');  -- bevor irgendetwas gelöscht ist

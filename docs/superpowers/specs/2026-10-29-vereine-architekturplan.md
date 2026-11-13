@@ -521,11 +521,17 @@ Die Zahlen vor dem Löschen (Teams, Spieler:innen inklusive ohne Team, AK 11) li
 **Konto löschen:** `delete_account(p_vereinsname text default null)`, drop `delete_account()` + create (Signaturwechsel, Quelle `20261025100000_trainer_einladen.sql:812-847`). Das ist die **einzige** Fassung; Story 1 liefert sie ohne den Zweig der einzigen Person (§3.1), §4.4 verweist hierher. Erste Anweisung nach `auth.uid()` ist `nur_in_der_anwendung()` (ein KI-Token löscht kein Konto, §4.1), danach:
 
 ```sql
-v_verein := (select verein_id from verein_verwaltung where user_id = v_uid);   -- höchstens einer
+v_verein := person_verein(v_uid);                    -- nur Kandidat für die Sperre; erst sperren, dann lesen
 if v_verein is not null then
   perform sperre_verein(v_verein);
 end if;
 perform sperre_person(v_uid);                                   -- nach dem Verein (Sperrordnung §4.1)
+if exists (select 1 from verein_verwaltung where user_id = v_uid and verein_id is distinct from v_verein) then
+  raise exception 'VERWALTUNG_GEAENDERT';                       -- gleichzeitig in eine Verwaltung aufgenommen
+end if;
+if not exists (select 1 from verein_verwaltung where user_id = v_uid) then
+  v_verein := null;                                             -- Teammitglied ohne Verwaltung
+end if;
 if v_verein is not null then
   if not exists (select 1 from verein_verwaltung where verein_id = v_verein and user_id <> v_uid) then
     if exists (select 1 from team_members m join teams t on t.id = m.team_id
@@ -1154,7 +1160,7 @@ select vereine_nachziehen();
 - **Eine Fassung:** `vereine_nachziehen` bleibt ab Story 1 unverändert. Die Eindeutigkeit je Verein (Story 2) prüft ein Trigger nur bei INSERT und Schlüsseländerung (§3.3 a); das Setzen von `verein_id` ändert keinen Schlüssel, und im Sync läuft ohnehin alles unter `replica`.
 - **Schnuppern:** `probe_seit` wandert auf die Zuordnung (§3.2). Das ist eindeutig, weil heute jede Spieler:in genau ein Team hat.
 - **Warum ein Parameter:** Der Test übergibt die ID eines eigenen Testkontos; Migration und `staging_nach_sync` rufen ohne Argument auf.
-- **Warum keine Ausnahme bei fehlendem Konto:** Ohne das Konto (lokal mit Bestand) entsteht FC Wyler ohne Verwaltung. Ein Abbruch legte jede lokale DB mit Teams still. Auf Prod schliessen es drei Schritte aus: Die Konto-ID steht vor dem Merge von Story 1 fest (§6.1 Schritt −1), die Generalprobe auf Staging (gleiche `auth.users`-IDs nach dem Sync) prüft mit `prodweg_pruefen.sql` «kein Verein ohne Verwaltung» (§6.5), und nach dem Release prüft Adrian Verwaltung = 1 (§6.5). Eine falsche ID fällt so in der Generalprobe auf, nicht erst im Fenster. Einen Notweg in der App gibt es nicht (PO 3, Epic OoS 13); lokal hilft ein Insert per SQL.
+- **Warum keine Ausnahme bei fehlendem Konto:** Ohne das Konto (lokal mit Bestand) entsteht FC Wyler ohne Verwaltung. Ein Abbruch legte jede lokale DB mit Teams still. Auf Prod schliessen es drei Schritte aus: Die Konto-ID steht vor dem Merge von Story 1 fest (§6.1 Schritt −1), die Generalprobe auf Staging (gleiche `auth.users`-IDs nach dem Sync) prüft mit `prodweg_pruefen.sql` «kein Verein ohne Verwaltung» (§6.5), und nach dem Release prüft Adrian Verwaltung = 1 (§6.5). Eine falsche ID fällt so in der Generalprobe auf, nicht erst im Fenster; eine fehlende schon vorher: Solange der Default der Platzhalter `00000000-…` ist, scheitert in `pr-checks.yml` der Job «Verwaltungskonto im Backfill eingesetzt». Einen Notweg in der App gibt es nicht (PO 3, Epic OoS 13); lokal hilft ein Insert per SQL.
 - **Trigger auf Prod:** Der Backfill läuft vor den Grenztriggern (Reihenfolge Tabellen → … → Trigger → Backfill gilt je Datei; `team_spieler_vorher` mit Grenze 100 kommt mit Story 1, aber erst in der zweiten Datei `spieler_ueber_zuordnung` nach dem Backfill). Die Eindeutigkeitsprüfung aus Story 2 greift nur bei INSERT und Schlüsseländerung. Teams über 100, ein Verein über 1000 und Altdubletten kommen deshalb durch (Story 1 PC 2, 3, Story 2 PC 1). `team_members_vorher` und `verwaltung_vorher` sind erfüllt, weil es nur einen Verein gibt.
 - **Trigger auf Staging:** Im Sync läuft alles unter `replica`.
 - **CI** (leere DB): keine Teams, also kein Verein, keine Zuordnung, keine Verwaltung. Vollständiges No-op.
