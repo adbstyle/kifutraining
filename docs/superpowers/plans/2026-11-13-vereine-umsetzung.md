@@ -375,7 +375,7 @@ Frühestens zwei Wochen nach R ohne Befund.
 
 ## Präzisierungen gegenüber dem Architekturplan
 
-Diese Punkte legt der Plan fest, weil der AP sie offen lässt oder die Reihenfolge es verlangt. Sie brauchen die Bestätigung der PO; danach wird der AP an den betroffenen Stellen nachgeführt.
+Diese Punkte legt der Plan fest, weil der AP sie offen lässt oder die Reihenfolge es verlangt. Die PO hat sie am 13.11.2026 bestätigt; der AP ist an den betroffenen Stellen nachgeführt (§6.1, §6.2, §7.1, §7.11, §9, §11 F2).
 
 1. **P0 vor allem anderen.** Auf `develop` liegt #596 unveröffentlicht. Ohne P0 käme es erst mit dem Vereine-Release nach Prod.
 2. **V0 geht nach `main`.** Der AP lässt V0 nur auf `develop` (§6.1). `reset-staging.yml` ist aber neu, und `workflow_dispatch` startet nur Workflows, die auf dem Default-Branch liegen.
