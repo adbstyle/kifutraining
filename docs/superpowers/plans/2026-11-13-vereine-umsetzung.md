@@ -210,7 +210,7 @@ Zusätzlich zur Schablone, in dieser Reihenfolge:
 **AP:** §3.3 b–e, §3.7, §4.3 (Zuordnen, Herausnehmen), §4.4, §7.6. **Migrationen:** `zuordnung_invarianten` (FKs `not valid`), `vereine_bestand`. Die Datei `_validieren` gehört **nicht** hierher (Phase A).
 
 Zusätzlich, in dieser Reihenfolge:
-- [ ] Invarianten und Trigger vollständig; `spieler.team_id` wird nullable und nicht mehr geschrieben.
+- [ ] Invarianten und Trigger vollständig; `spieler.team_id` wird nullable und bleibt bis Phase 7/8 als «erstes Team» gepflegt, an einer Stelle (`team_spieler_nachher`), nicht mehr von den RPCs (AP §3.7, berichtigt mit Story 3).
 - [ ] RPCs zum Zuordnen (einzeln und gesammelt) und Herausnehmen mit `p_stand`; `spieler_entfernen(uuid)` fällt.
 - [ ] **MCP im selben PR:** Das Werkzeug `spieler_entfernen` wird durch `spieler_aus_team_nehmen` ersetzt, weil die RPC wegfällt (Muster 3). Die Abnahme der KI-Texte bleibt bei Phase 13.
 - [ ] `termin_teilnehmer` und `spiel_teilnehmer` mit `nicht_mehr_im_team`; Nachtragen an begonnenen Terminen prüft weiter gegen den festgehaltenen Stand.
@@ -221,7 +221,9 @@ Zusätzlich, in dieser Reihenfolge:
 
 **Aus dem Review von Story 1:** `rennen.sql` braucht einen eigenen Fall für die Teamsperre in `team_spieler_vorher` (der heutige Fall beweist nur die Vereinssperre). `ladeSpielerliste` muss `kader_spieler` auf das Kontextteam eingrenzen (`web/lib/kern/spieler.ts`, Kader-Embed), sobald eine Spieler:in in mehreren Teams steht.
 
-**Zwischenstand auf `develop`:** Niemand löscht eine Spieler:in (bis Phase 6). `/verein` leitet auf `/verein/spieler`, Mitglieder ohne Verwaltung auf `/teams` (bis Phase 5). Feedback über den Link einer Spieler:in ohne Team gilt als ungültig (bis Phase 7).
+**Nicht in Phase 3:** Herausnehmen durch die Verwaltung (`verein_spieler_aus_team_nehmen`, AK 11, 17 → Phase 5), Löschen aus dem Verein (Phase 6), Suche und Lesesicht für Mitglieder auf `/verein/spieler` (Phase 4), Schnuppern zuordnen (`p_schnuppern`, Phase 8), die Datei `_validieren` (Phase A).
+
+**Zwischenstand auf `develop`:** Niemand löscht eine Spieler:in (bis Phase 6). Ein aufgelöstes Team lässt seine Spieler:innen ohne dieses Team im Verein. `/verein` leitet auf `/verein/spieler`, Mitglieder ohne Verwaltung auf `/teams` (bis Phase 5). Der private Link zeigt bei mehreren Teams nur die Termine des ersten Teams, eine Spieler:in ohne Team hat einen Link ohne Team, und Feedback über ihren Link gilt als ungültig (bis Phase 7). Link holen und erneuern sowie Schnuppern gehen nur im ersten Team, und `spieler_probe_setzen` prüft «genau ein Team» noch nicht (bis Phase 7/8).
 
 ### Phase 5 – #581 Verwaltung führt Teams und Trainer:innen
 
