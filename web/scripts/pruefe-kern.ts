@@ -2649,6 +2649,7 @@ pruefe("Verein (#577): Marker der Datenebene tragen die Sätze der Oberfläche, 
   assert.equal(VEREIN_MELDUNG.VEREIN_VOLL, "Der Verein hat schon 1000 Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind.");
   assert.equal(VEREIN_MELDUNG.VEREIN_TEAMS_VOLL, "Der Verein hat schon 30 Teams. Ein weiteres kommt erst dazu, wenn es weniger sind.");
   assert.equal(VEREIN_MELDUNG.TEAM_NUR_VERWALTUNG, "Neue Teams legt die Vereinsverwaltung an.");
+  assert.equal(VEREIN_MELDUNG.VEREIN_NICHT_GEFUNDEN, "Verein nicht gefunden.");
   assert.notEqual(SPIELER_MELDUNG.SPIELERLISTE_VOLL, VEREIN_MELDUNG.VEREIN_VOLL, "AK 7: Team- und Vereinsgrenze unterscheiden sich");
   // Die heiklen Paare aus Architekturplan §5.2 sind je als Ganzes eindeutig.
   for (const [a, b] of [["VEREIN_VOLL", "VEREIN_TEAMS_VOLL"], ["TEAM_NUR_VERWALTUNG", "LETZTE_VERWALTUNG"]] as const) {

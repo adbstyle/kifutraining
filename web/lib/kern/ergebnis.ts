@@ -23,6 +23,7 @@
 import { MELDUNG_VERGEBEN } from "@/lib/bezeichnung";
 import { SERIE_MELDUNG } from "@/lib/serie";
 import { TERMIN_MELDUNG } from "@/lib/termin";
+import { VEREIN_MELDUNG } from "@/lib/verein";
 import {
   bedingungAusFehler,
   fachlicheMeldung,
@@ -170,7 +171,7 @@ export const NICHT_GEFUNDEN = {
   team: SERIE_MELDUNG.TEAM_NICHT_GEFUNDEN,
   gruppe: "Gruppe nicht gefunden.",
   /** Ein Verein, dessen Spielerbestand die Verwaltung liest (#579). */
-  verein: "Verein nicht gefunden.",
+  verein: VEREIN_MELDUNG.VEREIN_NICHT_GEFUNDEN,
   /** Ein Termin eines Team-Trainings (#198); sichtbar nur Mitgliedern. */
   termin: TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN,
   /** Eine Variante des Hauptteils (#201, KI-Weg #263). Wortgleich mit den

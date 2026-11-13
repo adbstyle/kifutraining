@@ -6,6 +6,14 @@ import { zuordnenAbweisungText, type ZuordnenAbweisung } from "@/lib/verein";
 import { NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
 import { spielerFehler } from "@/lib/kern/spieler";
 
+/** Ein Fehler der `verein_*`-RPCs: «Verein nicht gefunden» ordnet nur dieser
+ *  Bereich ein, alles übrige `spielerFehler`. */
+function vereinFehler(e: { message: string; code?: string }) {
+  return e.message.includes("VEREIN_NICHT_GEFUNDEN")
+    ? fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.verein, { feld: "verein_id" })
+    : spielerFehler(e);
+}
+
 /**
  * Der Spielerbestand des Vereins am Verein-Ort (Epic Vereine #575, Story
  * #579): die Grundfassung der Liste und das Zuordnen zu einem Team — nur für
@@ -40,7 +48,7 @@ export async function ladeVereinSpielerliste(
 ): Promise<KernErgebnis<{ spieler: VereinSpieler[]; teams: VereinTeam[] }>> {
   if (!istUuid(e.vereinId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.verein, { feld: "verein_id" });
   const { data, error } = await supabase.rpc("verein_spielerliste", { p_verein: e.vereinId });
-  if (error) return spielerFehler(error);
+  if (error) return vereinFehler(error);
   const r = data as { spieler: VereinSpieler[]; teams: VereinTeam[] };
   return ok({
     spieler: nachSpielerName(r.spieler).map((s) => ({ ...s, teams: [...s.teams].sort(nachName) })),
@@ -67,7 +75,7 @@ export async function ordneSpielerZu(
   if (ids.length === 0 || !ids.every(istUuid))
     return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, { feld: "spieler_ids" });
   const { data, error } = await supabase.rpc("verein_spieler_zuordnen", { p_team: e.teamId, p_spieler: ids });
-  if (error) return spielerFehler(error);
+  if (error) return vereinFehler(error);
   const r = data as { status: "zugeordnet"; anzahl: number; ersetzt: number } | ({ status: "abgewiesen" } & ZuordnenAbweisung);
   if (r.status === "abgewiesen") return fehlschlag("regel", zuordnenAbweisungText(r, e.teamName, ids.length), { feld: "spieler_ids" });
   return ok({ anzahl: r.anzahl, ersetzt: r.ersetzt });

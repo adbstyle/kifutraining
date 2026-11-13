@@ -35,6 +35,9 @@ export const VEREIN_MELDUNG = {
   /** Netz; nennt den anderen Verein nie. */
   ANDERER_VEREIN:
     "Diese Person gehört schon einem Verein an. Aufnehmen lässt sie sich erst, wenn sie ihn verlassen hat.",
+  /** Netz der `verein_*`-RPCs (Story #579): Wer nicht zur Verwaltung dieses
+   *  Vereins gehört, erfährt nur dies — nie, ob es ihn gibt. */
+  VEREIN_NICHT_GEFUNDEN: "Verein nicht gefunden.",
   NUR_IN_DER_ANWENDUNG: "Das geht nur in der Anwendung, nicht über einen KI-Assistenten.",
 } as const;
 
