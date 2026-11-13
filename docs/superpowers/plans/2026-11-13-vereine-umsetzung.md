@@ -223,7 +223,7 @@ Zusätzlich, in dieser Reihenfolge:
 
 **Nicht in Phase 3:** Herausnehmen durch die Verwaltung (`verein_spieler_aus_team_nehmen`, AK 11, 17 → Phase 5), Löschen aus dem Verein (Phase 6), Suche und Lesesicht für Mitglieder auf `/verein/spieler` (Phase 4), Schnuppern zuordnen (`p_schnuppern`, Phase 8), die Datei `_validieren` (Phase A).
 
-**Zwischenstand auf `develop`:** Niemand löscht eine Spieler:in (bis Phase 6). Ein aufgelöstes Team lässt seine Spieler:innen ohne dieses Team im Verein. `/verein` leitet auf `/verein/spieler`, Mitglieder ohne Verwaltung auf `/teams` (bis Phase 5). Der private Link zeigt bei mehreren Teams nur die Termine des ersten Teams, eine Spieler:in ohne Team hat einen Link ohne Team, und Feedback über ihren Link gilt als ungültig (bis Phase 7). Link holen und erneuern sowie Schnuppern gehen nur im ersten Team, und `spieler_probe_setzen` prüft «genau ein Team» noch nicht (bis Phase 7/8).
+**Zwischenstand auf `develop`:** Niemand löscht eine Spieler:in (bis Phase 6). Ein aufgelöstes Team lässt seine Spieler:innen ohne dieses Team im Verein. `/verein` leitet auf `/verein/spieler`, Mitglieder ohne Verwaltung auf `/teams` (bis Phase 5). Der private Link zeigt bei mehreren Teams nur die Termine des ersten Teams, eine Spieler:in ohne Team hat einen Link ohne Team, und Feedback über ihren Link gilt als ungültig (bis Phase 7). Link abrufen und erneuern sowie Schnuppern schalten gehen nur im ersten Team; in den weiteren Teams zeigt die Team-Spielerliste darum keinen Link-Knopf (bis Phase 7/8). Ein Mitglied eines weiteren Teams sieht in der `spieler`-Zeile `team_id` = die ID des ersten Teams (hingenommen bis Phase 7/8). Das Einschalten des Schnupperns weist schon jetzt ab, wer mehr als einem Team zugeordnet ist (`SCHNUPPERN_MEHRERE_TEAMS`, AP §5.3, aus Phase 8 vorgezogen); die Team-Spielerliste zeigt dann statt der Checkbox den Satz.
 
 ### Phase 5 – #581 Verwaltung führt Teams und Trainer:innen
 
@@ -364,6 +364,7 @@ Jeder Schritt auf Prod nur mit Freigabe im Moment.
 - [ ] Prüfabfragen aus AP §6.5 auf Prod, nur lesend; Rundgang mit dem eigenen Konto durch die Sperre.
 - [ ] Review Focus 2: in einem vorher geöffneten Tab eine Aktion auslösen und in einem verbundenen KI-Client ein altes Werkzeug aufrufen; beides endet mit einer Meldung, ohne Wirkung.
 - [ ] Review Focus 2, Story 2: Ein altes Bundle oder ein verbundener KI-Client liest während des Einspielens eine Abweisung `{status: 'abgewiesen'}` von `spieler_aufnehmen` als Erfolg (meldet «aufgenommen», obwohl nichts gespeichert ist) und scheitert bei `spieler_aendern` an der alten Signatur. Darum die Schreibwege erst freigeben, wenn die Migrationen **und** der Vercel-Deploy durch sind.
+- [ ] Review Focus 2, Story 3: Die zusammengesetzten Fremdschlüssel aus `zuordnung_invarianten` machen zwei eingebettete Abfragen eines alten Bundles mehrdeutig (PostgREST PGRST201: Trainingsplan, Reiter «Spieler:innen» am Termin), bis das neue Bundle deployt ist. Gleicher Prüfschritt wie bei Story 2: Schreibwege und Seiten erst freigeben, wenn die Migrationen **und** der Vercel-Deploy durch sind.
 - [ ] Firewall-Regel entfernen.
 - [ ] GitHub-Release mit `--target main`, Text aus `docs/releases/`. Stories #577–#585 und #587–#589 als erledigt markieren.
 
