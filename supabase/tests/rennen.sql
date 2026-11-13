@@ -230,9 +230,10 @@ delete from vereine where id = (select id from rennen_test.ids where name = 'ver
 -- Trainer:in A (Team 1) und B (Team 2) desselben Vereins handeln über die RPCs
 -- wie PostgREST (Rolle `authenticated`, `request.jwt.claims`). A erfasst und
 -- hält die Transaktion offen; B erfasst (a) bzw. ändert (b) gleichzeitig zu
--- denselben Angaben und wartet an der Vereinssperre. Nach dem Commit von A
--- antwortet B mit dem Status `doppelt` samt Team 1, und im Verein steht der
--- Schlüssel genau einmal. Die Testzeilen sind committet; ein harter Abbruch
+-- denselben Angaben und wartet an der Vereinssperre. In (c) ändert A zuerst
+-- eine Spieler:in aus Team 1, und B erfasst dieselben Angaben in Team 2. Nach
+-- dem Commit von A antwortet B mit dem Status `doppelt` samt Team 1, und im
+-- Verein steht der Schlüssel genau einmal. Die Testzeilen sind committet; ein harter Abbruch
 -- lässt den Verein «Rennen-Doppelt» samt Teams und die Konten
 -- «rennen-a/-b@rennen.test» stehen (von Hand löschen).
 
@@ -324,6 +325,7 @@ declare
   v_ella uuid := (select id from rennen_test.ids where name = 'd_ella');
   c_erwartet constant jsonb := '{"status": "abgewiesen", "grund": "doppelt", "eigenes_team": false, "teams": ["Rennen-Team-1"], "ohne_team": false}';
   ergebnis text;
+  v_doppelt uuid;
 begin
   -- (a) Erfassen gegen Erfassen, in zwei Teams.
   ergebnis := rennen_test.verschraenkt(ziel,
@@ -347,6 +349,20 @@ begin
   if (select count(*) from spieler where verein_id = v_verein and nachname = 'Zwei') <> 1
      or (select nachname from spieler where id = v_ella) <> 'Rennen' then
     raise exception '(b) Erwartet genau eine «Rennen Zwei» und Ella unverändert';
+  end if;
+
+  -- (c) Ändern gegen Erfassen: A ändert «Rennen Doppelt» aus (a) und hält die
+  -- Vereinssperre; B erfasst dieselben neuen Angaben in Team 2.
+  select id into v_doppelt from spieler where verein_id = v_verein and nachname ilike 'doppelt';
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_a, format($q$select spieler_aendern(%L, %L, 'Rennen', 'Drei', 2015, null)::text$q$, v_team1, v_doppelt),
+    v_b, format($q$select spieler_aufnehmen(%L, 'RENNEN', 'drei', 2015, null)::text$q$, v_team2));
+  if ergebnis is null or left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> c_erwartet then
+    raise exception '(c) B hätte mit dem Status doppelt samt Team 1 abgewiesen werden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from spieler where verein_id = v_verein and nachname ilike 'drei') <> 1
+     or (select nachname from spieler where id = v_doppelt) <> 'Drei' then
+    raise exception '(c) Erwartet genau eine «Rennen Drei», und zwar die von A geänderte';
   end if;
 exception when others or query_canceled then
   perform set_config('rennen.fehler_doppelt', sqlerrm, false);
