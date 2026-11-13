@@ -165,7 +165,12 @@ import {
   SPIELER_MAX,
   SPIELER_MELDUNG,
   SPIELER_TEXT,
+  ABHOLUNG_TEXT,
+  HERAUSNEHMEN_TEXT,
   bereinigeName,
+  herausnehmenFrage,
+  herausnehmenSaetze,
+  herausnehmenTitel,
   imTeam,
   jahrgangAus,
   nachSpielerName,
@@ -173,6 +178,7 @@ import {
   spielerProblem,
   spielerzahlKurz,
   spielerzahlLang,
+  verbleibendeTeams,
   spielerzahlVon,
   istAnwesend,
   teilnahmeStatus,
@@ -274,7 +280,7 @@ import {
   ueberAnzahl,
   ueberAnzahlText,
 } from "../lib/probe";
-import { VEREIN_MELDUNG, VEREIN_SPIELER_MAX, VEREIN_TEAMS_MAX } from "../lib/verein";
+import { VEREIN_MELDUNG, VEREIN_SPIELER_MAX, VEREIN_TEAMS_MAX, zugeordnetText, zuordnenAbweisungText, zuordnenEinleitung } from "../lib/verein";
 import { textMitLinks } from "../lib/text-links";
 
 let gelaufen = 0;
@@ -2195,7 +2201,8 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#327": ["termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen"],
     "#329": ["team_plan_abrufen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
-    "#434": ["spielerliste_abrufen", "spieler_aufnehmen", "spieler_aendern", "spieler_entfernen"],
+    "#434": ["spielerliste_abrufen", "spieler_aufnehmen", "spieler_aendern"],
+    "#579": ["spieler_aus_team_nehmen", "spielerliste_abrufen", "termin_spieler_abrufen", "termin_anwesenheit_setzen"],
     "#435": ["termin_spieler_abrufen", "termin_abmeldung_setzen"],
     "#436": ["spieler_link_abrufen", "spieler_link_erneuern"],
     "#438": ["selbstabholung_abrufen", "selbstabholung_schalten", "abholadresse_erneuern"],
@@ -2212,6 +2219,24 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
+  // Story #579: Das Herausnehmen ersetzt das Entfernen, und gelöscht wird in
+  // keinem KI-Werkzeug (Löschen aus dem Verein nur in der Anwendung).
+  for (const alt of ["spieler_entfernen", "spieler_loeschen"]) assert.ok(!namen.includes(alt), `${alt} gibt es nicht mehr`);
+});
+
+pruefe("Alte Namen abwesend: kein spieler_entfernen, kein spieler_loeschen, kein verein_* im KI-Weg (#579, Architekturplan §5.5)", () => {
+  const treffer: string[] = [];
+  for (const datei of quelldateien(web))
+    if (datei !== fileURLToPath(import.meta.url))
+      readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
+        if (/\bspieler_(entfernen|loeschen)\b/.test(zeile)) treffer.push(`${relative(web, datei)}:${i + 1}`);
+      });
+  assert.deepEqual(treffer, [], `alte Namen stehen noch in: ${treffer.join(", ")}`);
+  // Die Vereinsverwaltung geht nie über die KI (AP §4.1): unter lib/mcp steht keine verein_*-RPC.
+  const ki: string[] = [];
+  for (const datei of quelldateien(join(web, "lib/mcp")))
+    if (/\.rpc\(\s*["`']verein_/.test(readFileSync(datei, "utf8"))) ki.push(relative(web, datei));
+  assert.deepEqual(ki, [], `verein_*-RPC im KI-Weg: ${ki.join(", ")}`);
 });
 
 /** Alle .ts/.tsx-Dateien unter einem Ordner, ohne node_modules und .next. */
@@ -2463,30 +2488,139 @@ pruefe("Spielerliste: Marker der Datenebene tragen die Sätze der Oberfläche", 
   assert.equal(fehlerMeldung('new row violates check constraint "spieler_jahrgang"'), SPIELER_TEXT.jahrgang);
 });
 
-pruefe("Doppelerfassung im Verein (#578): Satz je Lage, Teams nach Namen, Eingabe bereinigt, nie J+S", () => {
+pruefe("Doppelerfassung im Verein (#578, #579 AK 19): Satz je Lage, Teams nach Namen, Eingabe bereinigt, nie J+S", () => {
   assert.equal(imTeam(["A"]), "im Team «A»");
   assert.equal(imTeam(["B", "A"]), "im Team «A» und «B»");
   assert.equal(imTeam(["C", "Ä", "B"]), "im Team «Ä», «B» und «C»");
   const eingabe = { vorname: "  Lina ", nachname: "Muster\u00a0Meier", jahrgang: 2016 };
+  const d = (eigenes_team: boolean, teams: string[], ohne_team = false) => ({ eigenes_team, teams, ohne_team });
   // AK 4: nur in anderen Teams — Eingabe, Jahrgang, Teams, Verweis auf die Verwaltung.
   assert.equal(
-    spielerDoppeltText({ eigenes_team: false, teams: ["Eb", "Ea"] }, eingabe),
+    spielerDoppeltText(d(false, ["Eb", "Ea"]), eingabe),
     "Lina Muster Meier (2016) wird im Verein schon im Team «Ea» und «Eb» geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
   );
   assert.equal(
-    spielerDoppeltText({ eigenes_team: false, teams: ["Ea"] }, eingabe),
+    spielerDoppeltText(d(false, ["Ea"]), eingabe),
     "Lina Muster Meier (2016) wird im Verein schon im Team «Ea» geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
   );
   // AK 3: im eigenen Team der bisherige Satz, auch bei weiteren Teams; beim Ändern ebenso.
-  assert.equal(spielerDoppeltText({ eigenes_team: true, teams: ["Ea", "Eb"] }, eingabe), SPIELER_MELDUNG.SPIELER_DOPPELT);
-  assert.equal(spielerDoppeltText({ eigenes_team: true, teams: ["Ea"] }, null), SPIELER_MELDUNG.SPIELER_DOPPELT);
+  assert.equal(spielerDoppeltText(d(true, ["Ea", "Eb"]), eingabe), SPIELER_MELDUNG.SPIELER_DOPPELT);
+  assert.equal(spielerDoppeltText(d(true, ["Ea"]), null), SPIELER_MELDUNG.SPIELER_DOPPELT);
+  assert.equal(spielerDoppeltText(d(true, [], true), eingabe), SPIELER_MELDUNG.SPIELER_DOPPELT, "im eigenen Team geht vor «ohne Team»");
   // AK 6: Ändern nennt die Teams der anderen Spieler:in (Wortlaut der PO).
   assert.equal(
-    spielerDoppeltText({ eigenes_team: false, teams: ["Eb", "Ea", "D"] }, null),
+    spielerDoppeltText(d(false, ["Eb", "Ea", "D"]), null),
     "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, im Team «D», «Ea» und «Eb».",
   );
-  // Das Netz aus dem Trigger trägt den bisherigen Satz (Rennen).
+  // #579 AK 19: in keinem Team — im Verein geführt, ohne Team, Zuordnung mit der Verwaltung klären (Wortlaut des Boards).
+  assert.equal(
+    spielerDoppeltText(d(false, [], true), { vorname: "Elias", nachname: "Brunner", jahrgang: 2014 }),
+    "Elias Brunner (2014) wird im Verein geführt, ist aber keinem Team zugeordnet. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+  );
+  assert.equal(
+    spielerDoppeltText(d(false, [], true), null),
+    "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, die keinem Team zugeordnet ist. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+  );
+  assert.ok(!spielerDoppeltText(d(false, [], true), eingabe).includes("J+S"), "nie J+S-Nummer");
+  // Das Netz aus dem Trigger trägt den bisherigen Satz (Rennen); `SCHON_ZUGEORDNET` einen eigenen.
   assert.equal(fehlerMeldung("x SPIELER_DOPPELT y"), SPIELER_MELDUNG.SPIELER_DOPPELT);
+  assert.equal(fehlerMeldung("x SCHON_ZUGEORDNET y"), "Diese Spieler:in ist dem Team schon zugeordnet.");
+});
+
+pruefe("Abholseite (#579 PC 12): Herausnehmen lässt die Angaben im Verein, erst das Löschen entfernt sie", () => {
+  assert.ok(ABHOLUNG_TEXT.speichert.includes("bleiben ihre Angaben im Verein"));
+  assert.ok(ABHOLUNG_TEXT.speichert.includes("wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht"));
+  assert.ok(!ABHOLUNG_TEXT.speichert.includes("verschwinden ihre Angaben überall"), "der alte Satz stimmt nicht mehr");
+});
+
+pruefe("Aus dem Team nehmen (#579 AK 13–16): nicht gelöscht, bleibt im Verein, was verfällt — mit weiteren Teams, als letztes Team, schnuppernd", () => {
+  const lage = { vorname: "Noah", nachname: "Keller", team: "Da Junioren", verein: "FC Wyler", verbleibend: ["Ea Junioren"], probe: false };
+  assert.equal(herausnehmenTitel(lage), "Noah Keller aus Da Junioren nehmen", "Titel des Boards");
+  // Mit weiterem Team: Wortlaut des Boards, ohne Pronomen.
+  assert.deepEqual(herausnehmenSaetze(lage), {
+    absaetze: [
+      "Noah wird dadurch nicht gelöscht und bleibt samt privatem Link im FC Wyler und im Team Ea Junioren. Aus dem Verein löscht nur die Vereinsverwaltung.",
+    ],
+    warnung: "Künftige Abmeldungen, Spiel-Meldungen und Kader in Da Junioren verfallen.",
+    zusatz: "Vergangene Anwesenheiten bleiben mit dem Namen stehen.",
+  });
+  // Mehrere verbleibende Teams.
+  assert.match(herausnehmenSaetze({ ...lage, verbleibend: ["Ea Junioren", "Fa Junioren", "FF-15"] }).absaetze[0], /im FC Wyler und in den Teams Ea Junioren, Fa Junioren und FF-15\. Aus dem Verein/);
+  // Letztes Team: keinem Team mehr zugeordnet, nur die Verwaltung führt sie (AK 16).
+  const letzte = herausnehmenSaetze({ ...lage, vorname: "Leon", nachname: "Graf", verbleibend: [] });
+  assert.deepEqual(letzte.absaetze, [
+    "Leon wird dadurch nicht gelöscht und bleibt samt privatem Link im FC Wyler, ist danach aber keinem Team mehr zugeordnet.",
+    "Ändern, einem Team zuordnen oder löschen kann dann nur die Vereinsverwaltung.",
+  ]);
+  assert.equal(letzte.zusatz, null);
+  // Schnuppernd: das Schnuppertraining endet mit (Board).
+  assert.equal(
+    herausnehmenSaetze({ ...lage, verbleibend: [], probe: true }).warnung,
+    "Das Schnuppertraining endet samt Zählung; künftige Abmeldungen, Spiel-Meldungen und Kader in Da Junioren verfallen.",
+  );
+  // Ohne bekannten Verein.
+  assert.match(herausnehmenSaetze({ ...lage, verein: null }).absaetze[0], /im Verein und im Team Ea Junioren/);
+  // Weder «gelöscht werden» noch eine Zahl der verfallenden Meldungen (Out of Scope 4); beides sagt, wer löscht.
+  for (const l of [lage, { ...lage, verbleibend: [] }]) {
+    const text = herausnehmenFrage(l);
+    assert.ok(text.includes("nicht gelöscht") && text.includes("nur die Vereinsverwaltung"), "AK 13");
+    assert.ok(!/\d/.test(text), "keine Zahl verfallender Meldungen");
+  }
+  assert.equal(herausnehmenFrage(lage).startsWith("Noah Keller aus Da Junioren nehmen?"), true);
+  assert.deepEqual(verbleibendeTeams([{ name: "Da Junioren" }, { name: "Ea Junioren" }], "Da Junioren"), ["Ea Junioren"]);
+  assert.equal(HERAUSNEHMEN_TEXT.geaendert, "Inzwischen hat sich etwas geändert. Lies den Hinweis noch einmal und bestätige erneut.");
+});
+
+pruefe("Zuordnen (#579 AK 4–7, 20–23): Abweisung einzeln und gesammelt, Zahl der Termine im Singular und Plural", () => {
+  const p = (vorname: string, nachname: string, jahrgang: number) => ({ id: vorname, vorname, nachname, jahrgang });
+  const leer = { bereits: [], gleich: [], schnuppert: [], ueber_grenze: 0 };
+  // Gleiche Angaben: Wortlaut des Boards; Schluss je nach Auswahl.
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, gleich: [p("Elias", "Brunner", 2014)] }, "Db Junioren", 2),
+    "Db Junioren führt schon eine Spieler:in mit gleichen Angaben wie Elias Brunner, 2014. Ändere die Auswahl und versuche es nochmals.",
+  );
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, gleich: [p("Elias", "Brunner", 2014)] }, "Db Junioren", 1),
+    "Db Junioren führt schon eine Spieler:in mit gleichen Angaben wie Elias Brunner, 2014. Wähle ein anderes Team und versuche es nochmals.",
+  );
+  // Schon zugeordnet, einzeln und mehrere.
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, bereits: [p("Luis", "Ott", 2012)] }, "Da Junioren", 1),
+    "Luis Ott (2012) ist Da Junioren schon zugeordnet. Wähle ein anderes Team und versuche es nochmals.",
+  );
+  assert.match(
+    zuordnenAbweisungText({ ...leer, bereits: [p("Luis", "Ott", 2012), p("Mia", "Graf", 2016)] }, "Da Junioren", 3),
+    /^Luis Ott \(2012\) und Mia Graf \(2016\) sind Da Junioren schon zugeordnet\./,
+  );
+  assert.match(
+    zuordnenAbweisungText({ ...leer, gleich: [p("Luis", "Ott", 2012), p("Mia", "Graf", 2016)] }, "Da Junioren", 3),
+    /^Da Junioren führt schon Spieler:innen mit gleichen Angaben wie Luis Ott \(2012\) und Mia Graf \(2016\)\./,
+  );
+  // Schnuppernd: nennt das Team, in dem sie schnuppert.
+  assert.match(
+    zuordnenAbweisungText({ ...leer, schnuppert: [{ ...p("Leon", "Graf", 2015), team: "Da Junioren" }] }, "Ea Junioren", 1),
+    /^Leon Graf \(2015\) schnuppert im Team Da Junioren und lässt sich keinem weiteren Team zuordnen\./,
+  );
+  // Grenze: Wortlaut des Boards gesammelt («eine zu viel»), einzeln als Grenze des Teams.
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, ueber_grenze: 1 }, "Da Junioren", 2),
+    "Mit allen gewählten wären es 101 von 100, eine zu viel. Ändere die Auswahl und versuche es nochmals.",
+  );
+  assert.match(zuordnenAbweisungText({ ...leer, ueber_grenze: 3 }, "Da Junioren", 5), /^Mit allen gewählten wären es 103 von 100, 3 zu viel\./);
+  assert.match(zuordnenAbweisungText({ ...leer, ueber_grenze: 1 }, "Da Junioren", 1), /^Da Junioren umfasst schon 100 oder mehr Spieler:innen\. Die Grenze des Teams ist erreicht;/);
+  // Gesammelt nennt beides (AK 22), erst die Befunde, dann die Grenze.
+  const beides = zuordnenAbweisungText({ ...leer, gleich: [p("Elias", "Brunner", 2014)], ueber_grenze: 2 }, "Db Junioren", 4);
+  assert.ok(beides.indexOf("gleichen Angaben") < beides.indexOf("zu viel"), "Befunde vor der Grenze");
+  assert.ok(beides.includes("102 von 100, 2 zu viel"));
+  // Meldung nach dem Zuordnen: Namen bis drei, darüber die Zahl; Zahl der Termine Singular und Plural (AK 23).
+  assert.equal(zugeordnetText(["Elias Brunner"], "Da Junioren", 0), "Elias Brunner ist jetzt dem Team Da Junioren zugeordnet.");
+  assert.equal(zugeordnetText(["Elias Brunner", "Luis Ott"], "Da Junioren", 0), "Elias Brunner und Luis Ott sind jetzt dem Team Da Junioren zugeordnet.");
+  assert.equal(zugeordnetText(["A", "B", "C", "D"], "Da Junioren", 0), "4 Spieler:innen sind jetzt dem Team Da Junioren zugeordnet.");
+  assert.match(zugeordnetText(["A"], "Da", 1), /An 1 anstehenden Termin ist die erwartete Spielerzahl weggefallen/);
+  assert.match(zugeordnetText(["A"], "Da", 3), /An 3 anstehenden Terminen ist die erwartete Spielerzahl weggefallen/);
+  assert.ok(!zugeordnetText(["A"], "Da", 0).includes("Spielerzahl"), "ohne ersetzte Termine keine Zahl");
+  assert.equal(zuordnenEinleitung(["Elias Brunner", "Luis Ott"]), "Elias Brunner und Luis Ott kommen ins gewählte Team. Bisherige Teams bleiben bestehen.", "Wortlaut des Boards");
+  assert.equal(zuordnenEinleitung(["Elias Brunner"]), "Elias Brunner kommt ins gewählte Team. Bisherige Teams bleiben bestehen.");
 });
 
 pruefe("Kein Verweis auf den Index spieler_eindeutig (#578, Architekturplan §5.5)", () => {
@@ -2633,7 +2767,7 @@ pruefe("Abmelden: Abweisung nennt den Stand, Liste nach Name mit ehemaligen zule
   assert.equal(abweisungText("begonnen"), ABMELDUNG_TEXT.begonnen);
   assert.equal(abweisungText("ausgefallen"), ABMELDUNG_TEXT.ausgefallen);
   assert.equal(abweisungText("nicht_gefunden"), ABMELDUNG_TEXT.nichtGefunden);
-  const t = (vorname: string | null) => ({ spielerId: vorname, vorname, nachname: vorname && "X", abgemeldet: false, ehemalig: vorname === null, kader: [], gewechseltAm: null, nachgetragen: false });
+  const t = (vorname: string | null) => ({ spielerId: vorname, vorname, nachname: vorname && "X", abgemeldet: false, ehemalig: vorname === null, nichtMehrImTeam: false, kader: [], gewechseltAm: null, nachgetragen: false });
   assert.deepEqual(nachTeilnehmer([t(null), t("Noah"), t("Ayla")]).map((x) => x.vorname ?? EHEMALIGE_SPIELERIN), ["Ayla", "Noah", EHEMALIGE_SPIELERIN]);
 });
 

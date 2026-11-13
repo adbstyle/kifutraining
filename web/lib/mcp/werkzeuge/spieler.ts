@@ -3,7 +3,6 @@ import { z } from "zod";
 import { abgebildet } from "@/lib/kern/ergebnis";
 import {
   aendereSpieler,
-  entferneSpieler,
   erneuereAbholung,
   erneuereSpielerLink,
   holeSpielerLink,
@@ -11,6 +10,7 @@ import {
   ladeSpielerliste,
   leseAbholung,
   nimmSpielerAuf,
+  nimmSpielerAusTeam,
   schalteAbholung,
 } from "@/lib/kern/spieler";
 import { istSpielAbweisung, setzeAbmeldung, setzeAnwesenheit, type TerminSpieler } from "@/lib/kern/abmeldungen";
@@ -51,8 +51,8 @@ const SPIELER_MODELL =
   `der Jahrgang vier Ziffern, die J+S-Nummer höchstens ${JS_MAX} Zeichen. Dieselbe Spieler:in ist im Verein nur einmal ` +
   "erfasst: Gross- und Kleinschreibung, überzählige Leerzeichen, Bindestrich gegen Leerzeichen und Apostroph-Varianten " +
   "unterscheiden nicht, Umlaute schon; zwei Gleichnamige mit gleichem Jahrgang unterscheidet ein Zusatz im Vornamen. " +
-  "Steht sie schon in einem anderen Team des Vereins, nennt die Abweisung dessen Namen; die Zuordnung klärt die " +
-  "Vereinsverwaltung. Die Prüfung kommt vor den Grenzen. " +
+  "Steht sie schon in einem anderen Team des Vereins, nennt die Abweisung dessen Namen, steht sie in keinem, sagt " +
+  "sie das; die Zuordnung klärt in beiden Fällen die Vereinsverwaltung. Die Prüfung kommt vor den Grenzen. " +
   "Sobald die Liste jemanden enthält, kommt die Spielerzahl anstehender Termine aus ihr («spielerzahl» mit Quelle " +
   "«spielerliste» in «team_plan_abrufen») und lässt sich nicht mehr von Hand festlegen; beim ersten Aufnehmen verlieren " +
   "anstehende Termine und Serien ihre erwartete Zahl. Begonnene Termine behalten den Stand bei Beginn. " +
@@ -195,23 +195,48 @@ export const spielerAendern = werkzeug({
   },
 });
 
-// ── spieler_entfernen ───────────────────────────────────────────────────────
+// ── spieler_aus_team_nehmen ─────────────────────────────────────────────────
 
-export const spielerEntfernen = werkzeug({
-  name: "spieler_entfernen",
-  titel: "Spieler:in entfernen",
+export const spielerAusTeamNehmen = werkzeug({
+  name: "spieler_aus_team_nehmen",
+  titel: "Spieler:in aus dem Team nehmen",
   beschreibung:
-    "Entfernt eine Spieler:in aus der Spielerliste ihres Teams. An vergangenen Terminen steht sie danach nur noch als " +
-    "ehemalige Spieler:in ohne Namen, die Spielerzahl dort bleibt; an anstehenden zählt sie nicht mehr. Frag vorher " +
-    `nach, ob die Person wirklich gemeint ist. ${SPIELER_MODELL} ${SPIELER_KENNUNG_FEHLER}`,
+    "Nimmt eine Spieler:in aus einem deiner Teams. Das löscht sie nicht: Sie bleibt samt privatem Link im Verein und in " +
+    "ihren weiteren Teams; aus dem Verein löscht nur die Vereinsverwaltung, in der Anwendung, nicht über einen " +
+    "KI-Assistenten. Im Team verfallen ihre Abmeldungen, Spiel-Meldungen und Kader für noch nicht begonnene Termine; " +
+    "begonnene Termine behalten sie mit Namen («nicht_mehr_im_team»), und ihre Anwesenheit lässt sich dort weiter " +
+    "nachtragen. Ist es ihr letztes Team, ist sie danach keinem Team mehr zugeordnet, und nur die Vereinsverwaltung " +
+    "führt sie, ordnet sie einem Team zu oder löscht sie. Ohne «stand» ändert der Aufruf nichts: Er liefert als " +
+    "Rückfrage, was das Herausnehmen bedeutet, samt dem «stand» der Teams. Frag die Person, ob das so gewollt ist, und " +
+    "wiederhole den Aufruf dann mit diesem «stand». Hat sich die Lage inzwischen geändert (Fehlerart «konflikt»), wurde " +
+    `nichts geändert; rufe dann erneut ohne «stand» auf. ${SPIELER_MODELL} ${SPIELER_KENNUNG_FEHLER} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
-  eingabe: z.object({ spieler_id: SpielerId }),
-  ausgabe: z.object({ team_id: z.string(), name: z.string() }),
+  eingabe: z.object({
+    team_id: TeamId.describe("Das Team, aus dem sie genommen wird («team.id» aus «spielerliste_abrufen»)."),
+    spieler_id: SpielerId,
+    stand: z
+      .string()
+      .optional()
+      .describe("Der «stand» aus der Rückfrage dieses Werkzeugs; ohne ihn ändert der Aufruf nichts."),
+  }),
+  ausgabe: z.object({
+    team_id: z.string(),
+    spieler_id: z.string(),
+    ohne_team: z.boolean().describe("Sie ist danach keinem Team mehr zugeordnet."),
+    letztes_eigenes_team: z
+      .boolean()
+      .describe("Sie ist danach keinem Team mehr zugeordnet, dem du angehörst: Du siehst sie nicht mehr."),
+  }),
   ausfuehren: async (e, zugang) =>
-    abgebildet(await entferneSpieler(zugang.supabase, zugang.userId, { spielerId: e.spieler_id }), (w) => ({
-      team_id: w.teamId,
-      name: w.name,
-    })),
+    abgebildet(
+      await nimmSpielerAusTeam(zugang.supabase, zugang.userId, { teamId: e.team_id, spielerId: e.spieler_id, stand: e.stand }),
+      (w) => ({
+        team_id: w.teamId,
+        spieler_id: w.spielerId,
+        ohne_team: w.ohneTeam,
+        letztes_eigenes_team: w.letztesEigenesTeam,
+      }),
+    ),
 });
 
 // ── termin_spieler_abrufen (#435) ───────────────────────────────────────────
@@ -223,8 +248,8 @@ const ABMELDE_MODELL =
   "abgemeldet»), bis sie angemeldet wird; Spiele gelten für sie nicht («probetraining_abrufen» erklärt das Modell). Ab- und anmelden geht bis zum Beginn des Termins (Uhr am Trainingsort, Schweiz), nicht an einem " +
   "ausgefallenen. Ab Beginn gilt der Stand bei Beginn; dann tragen Mitglieder nach, wer trotz Anmeldung nicht erschienen " +
   "und wer trotz Abmeldung doch erschienen ist (termin_anwesenheit_setzen), unbefristet. Ohne Nachtrag gilt der Stand " +
-  "bei Beginn als Anwesenheit - ob jemand geprüft hat, hält KiFu nicht fest. Wer aus der Liste fällt, steht an " +
-  `begonnenen Terminen als «${EHEMALIGE_SPIELERIN}» ohne Namen, samt Nachtrag. Eine Abmeldung und ein Nachtrag tragen ` +
+  "bei Beginn als Anwesenheit - ob jemand geprüft hat, hält KiFu nicht fest. Wer aus dem Team genommen wird, steht an " +
+  `begonnenen Terminen weiter mit Namen («nicht_mehr_im_team: true») und ihr Nachtrag bleibt möglich; erst wer aus dem Verein gelöscht wird, steht dort als «${EHEMALIGE_SPIELERIN}» ohne Namen. Eine Abmeldung und ein Nachtrag tragen ` +
   "keinen Grund, und KiFu benachrichtigt niemanden. Spiele (art «spiel») sind anders: Jede Spieler:in ist zuerst ohne " +
   "Meldung («meldung: null»), bis sie an- oder abgemeldet wird; danach wechselt sie nur noch zwischen angemeldet und " +
   "abgemeldet. Mitglieder (und du) melden bis zum Anpfiff, auch nach der Meldefrist; Eltern über ihren Link nur bis zur " +
@@ -313,6 +338,9 @@ export const terminSpielerAbrufen = werkzeug({
           .boolean()
           .describe("Nur an einem Spiel: nach Ablauf der Meldefrist ohne Meldung (und nicht als nicht aufgeboten gekennzeichnet), auch wer erst danach dazukam; zählt nicht als angemeldet. Ohne Meldefrist und bei Trainings false."),
         ehemalig: z.boolean(),
+        nicht_mehr_im_team: z
+          .boolean()
+          .describe("Aus dem Team genommen, an diesem begonnenen Termin aber mit Namen geblieben; ihre Anwesenheit lässt sich weiter nachtragen."),
         probe: z.boolean().describe("Im Probe-Modus: an einem Training zuerst nicht angemeldet. An Spielen nie true."),
         kader: z.array(z.string()).describe("Die Kader, über die der Termin für sie gilt; leer bei einem Termin für alle."),
         anwesenheit: z.enum(["nicht_erschienen", "doch_erschienen"]).nullable().describe(ANWESENHEIT_BESCHREIBUNG),
@@ -395,6 +423,7 @@ function spielTeilnehmerAusgabe(s: SpielTeilnehmer, fristAbgelaufen: boolean) {
     nicht_aufgeboten: s.nichtAufgeboten,
     meldefrist_verpasst: meldefristVerpasst(s.meldung, s.nichtAufgeboten, fristAbgelaufen),
     ehemalig: s.ehemalig,
+    nicht_mehr_im_team: s.nichtMehrImTeam,
     probe: false,
     kader: s.kader,
     // #487 AK 14: der Nachtrag gegen den Stand beim Anpfiff.
@@ -419,6 +448,7 @@ export function teilnehmerAusgabe(s: Teilnehmer) {
     nicht_aufgeboten: false,
     meldefrist_verpasst: false,
     ehemalig: s.ehemalig,
+    nicht_mehr_im_team: s.nichtMehrImTeam,
     probe: s.probe,
     kader: s.kader,
     anwesenheit: anwesenheitAusgabe(s),

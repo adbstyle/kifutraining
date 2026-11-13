@@ -76,8 +76,19 @@ const { legeSerieFest, aendereSerie, entferneSerie, folgeDerSerie, aendereMitRei
   await import("../lib/kern/serien");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
 const { getTeamPlanFuer, nochNichtVorbereitet } = await import("../lib/queries/termine-fuer");
-const { ladeSpielerliste, anzahlSpieler, nimmSpielerAuf, aendereSpieler, entferneSpieler, holeSpielerLink, erneuereSpielerLink, leseAbholung, schalteAbholung, erneuereAbholung, pruefeSpielerImport, importiereSpieler } =
+const { ladeSpielerliste, anzahlSpieler, nimmSpielerAuf, aendereSpieler, ladeSpieler, ladeSpielerTeams, nimmSpielerAusTeam, holeSpielerLink, erneuereSpielerLink, leseAbholung, schalteAbholung, erneuereAbholung, pruefeSpielerImport, importiereSpieler } =
   await import("../lib/kern/spieler");
+// Übergang (Story #579): `entferneSpieler` ist im Kern durch das Herausnehmen
+// ersetzt; dieser Helfer ruft es nur typgerecht auf — Team über die Spieler:in,
+// Stand frisch gelesen. Die Tests, die «gelöscht» erwarten, fasst der dritte
+// Lauf fachlich neu (Herausnehmen und Löschen getrennt).
+async function entferneSpieler(supabase: SupabaseClient, userId: string, e: { spielerId: string }) {
+  const s = await ladeSpieler(supabase, e.spielerId);
+  if (!s.ok) return s;
+  const t = await ladeSpielerTeams(supabase, userId, { teamId: s.wert.teamId, spielerId: e.spielerId });
+  if (!t.ok) return t;
+  return nimmSpielerAusTeam(supabase, userId, { teamId: s.wert.teamId, spielerId: e.spielerId, stand: t.wert.stand });
+}
 const { IMPORT_TEXT, erwartetVon } = await import("../lib/spieler-import");
 const { VEREIN_MELDUNG, VEREIN_SPIELER_MAX } = await import("../lib/verein");
 const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, abweisungText, spielerzahlVon, verfallBestaetigen } = await import("../lib/spieler");
@@ -5409,7 +5420,7 @@ try {
 
   await pruefe("Statuswechsel: Die KI erhält die Zeit als Uhr am Trainingsort (#467 AK 12)", async () => {
     const kiZeit = (gewechseltAm: string | null) =>
-      teilnehmerAusgabe({ spielerId: "x", vorname: "Lena", nachname: "M", abgemeldet: true, ehemalig: false, kader: [], gewechseltAm, nachgetragen: false, probe: false }).zuletzt_gewechselt;
+      teilnehmerAusgabe({ spielerId: "x", vorname: "Lena", nachname: "M", abgemeldet: true, ehemalig: false, nichtMehrImTeam: false, kader: [], gewechseltAm, nachgetragen: false, probe: false }).zuletzt_gewechselt;
     assert.equal(kiZeit("2026-10-19T12:05:00Z"), "2026-10-19T14:05", "Sommerzeit");
     assert.equal(kiZeit("2026-12-01T23:30:00Z"), "2026-12-02T00:30", "Winterzeit, nach Mitternacht");
     assert.equal(kiZeit(null), null);

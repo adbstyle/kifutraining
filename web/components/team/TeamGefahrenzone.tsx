@@ -275,12 +275,19 @@ function NamensBestaetigung({
           <li>{n(folgen.trainings, "Team-Training", "Team-Trainings")}</li>
           <li>{n(folgen.termine, "Trainingstermin", "Trainingstermine")} samt Abmeldungen und Anwesenheiten</li>
           <li>{n(folgen.spiele, "Spiel", "Spiele")} samt Meldungen und Aufgeboten</li>
-          <li>die Spielerliste mit {n(folgen.spieler, "Spieler:in", "Spieler:innen")}</li>
+          <li>die Zuordnung von {n(folgen.spieler, "Spieler:in", "Spieler:innen")} zu diesem Team</li>
           <li>{folgen.kader} Kader</li>
         </ul>
         <p>
           Persönliche Trainings der Mitglieder bleiben erhalten - auch Kopien aus diesem Team.
         </p>
+        {folgen.spieler > 0 && (
+          <p>
+            Die Spieler:innen bleiben samt privatem Link im Verein. Wer keinem anderen Team angehört, ist danach
+            keinem Team mehr zugeordnet; ändern, einem Team zuordnen oder löschen kann sie dann nur die
+            Vereinsverwaltung.
+          </p>
+        )}
         <p id={anleitungId}>
           Gib zur Bestätigung den Teamnamen{" "}
           «<span className="select-all font-medium text-on-surface">{name}</span>» ein.

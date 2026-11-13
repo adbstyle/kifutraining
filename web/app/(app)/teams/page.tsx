@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronRight, Shield } from "lucide-react";
-import { Card, Leerzustand, SectionMessage } from "@/components/ui";
+import { ButtonLink, Card, Leerzustand, SectionMessage } from "@/components/ui";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { getMeinVerein } from "@/lib/queries/verein";
 import { VEREIN_MELDUNG } from "@/lib/verein";
@@ -31,7 +31,19 @@ export default async function TeamsPage({
   const [teams, verein] = await Promise.all([getMeineTeams(), getMeinVerein()]);
 
   return (
-    <Seitenrahmen breite="voll" krumen={verein ? [{ label: verein.name }, { label: "Teams" }] : [{ label: "Teams" }]}>
+    <Seitenrahmen
+      breite="voll"
+      krumen={verein ? [{ label: verein.name }, { label: "Teams" }] : [{ label: "Teams" }]}
+      // Den Bereich «Verein» sieht nur die Verwaltung (Story #579); den Bereich-
+      // Wechsler bringt Story #581.
+      aktionen={
+        verein?.istVerwaltung ? (
+          <ButtonLink href="/verein/spieler" variant="outlined">
+            Spieler:innen des Vereins
+          </ButtonLink>
+        ) : undefined
+      }
+    >
       {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
       <h1 className="sr-only">Teams</h1>
       {/* Ein anderes Mitglied hat das Team aufgelöst, während man es offen hatte (#480 PC 5). */}

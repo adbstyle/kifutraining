@@ -16,6 +16,8 @@ const PROTECTED_PREFIXES = [
   // weil der Vergleich am Pfadsegment endet (`/teamwork` ist nicht gemeint).
   "/team",
   "/teams",
+  // Der Bereich «Verein» (Story #579): nur mit Konto.
+  "/verein",
 ];
 
 function isProtected(pathname: string): boolean {

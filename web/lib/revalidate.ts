@@ -15,6 +15,14 @@ export function revalidiereTeam(teamId: string) {
   revalidatePath(`/team/${teamId}`, "layout");
 }
 
+/** Alle Ansichten des Vereins neu validieren — der Spielerbestand und was
+ *  daran hängt. `"layout"` erfasst den Bereich samt aller Unterseiten.
+ *  Nach Aufnahme, Zuordnen, Herausnehmen, Austritt, Gründung und Löschen. */
+export function revalidiereVerein() {
+  revalidatePath("/verein", "layout");
+  revalidatePath("/teams");
+}
+
 /** Alle Ansichten eines Trainings (inkl. der Übersicht) neu validieren; mit
  *  `fassungId` zusätzlich die Bearbeiten-Seite dieser Fassung. */
 export function revalidiereTraining(trainingId: string, fassungId?: string) {
