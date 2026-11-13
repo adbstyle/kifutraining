@@ -7,10 +7,12 @@
 -- Erwartet die psql-Variable `public_tables` (Namen durch Leerzeichen
 -- getrennt, wie PUBLIC_TABLES im Workflow) und läuft in der Restore-
 -- Transaktion: psql ersetzt in `$$…$$` keine Variablen, darum reist die
--- Liste über `set_config(…, true)` (transaktionslokal).
+-- Liste über `set_config(…, true)` (transaktionslokal). `\gset` hält das
+-- Ergebnis aus dem Log (sonst stünde die ganze Liste darin); es wirkt auch,
+-- wenn psql die Datei über stdin liest.
 -- Wird mit N1 (Nachlauf Vereine) als Übergangs-Artefakt entfernt.
 
-select set_config('sync.public_tables', :'public_tables', true);
+select set_config('sync.public_tables', :'public_tables', true) is not null as vor_restore_liste_gesetzt \gset
 
 do $$
 declare
