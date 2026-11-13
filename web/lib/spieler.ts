@@ -183,9 +183,10 @@ export function nachSpielerName<T extends { vorname: string; nachname: string }>
 // ── Aus dem Team nehmen (Story #579) ────────────────────────────────────────
 
 /** Die Teams einer Spieler:in samt Stand, wie `spieler_teams` sie liefert:
- *  `eigen` — die handelnde Person ist Mitglied; `stand` — die Kennung dieser
- *  Teams, die das Herausnehmen mitgibt (AP §4.3). */
-export type SpielerTeams = { teams: { name: string; eigen: boolean }[]; stand: string };
+ *  `eigen` — die handelnde Person ist Mitglied; `dieses` — das Team, in dem
+ *  sie handelt; `stand` — die Kennung dieser Teams, die das Herausnehmen
+ *  mitgibt (AP §4.3). */
+export type SpielerTeams = { teams: { name: string; eigen: boolean; dieses: boolean }[]; stand: string };
 
 /** Was die Bestätigung des Herausnehmens braucht: wen, aus welchem Team, in
  *  welchem Verein und in welchen weiteren Teams sie danach bleibt. */
@@ -201,10 +202,11 @@ export type HerausnehmenLage = {
   probe: boolean;
 };
 
-/** Die Teams, in denen sie nach dem Herausnehmen bleibt: alle ausser dem
- *  eigenen — der Name kommt je Verein nur einmal vor. */
-export function verbleibendeTeams(teams: { name: string }[], team: string): string[] {
-  return teams.map((t) => t.name).filter((n) => n !== team);
+/** Die Teams, in denen sie nach dem Herausnehmen bleibt: alle ausser dem,
+ *  in dem man handelt — über `dieses`, nicht über den Namen: Teamnamen sind
+ *  im Bestand nicht eindeutig. */
+export function verbleibendeTeams(teams: { name: string; dieses: boolean }[]): string[] {
+  return teams.filter((t) => !t.dieses).map((t) => t.name);
 }
 
 export const HERAUSNEHMEN_TEXT = {

@@ -233,7 +233,7 @@ async function herausnehmenLage(
     ...data.spieler,
     team: team.wert.name,
     verein: await vereinsname(supabase),
-    verbleibend: verbleibendeTeams(teams.teams, team.wert.name),
+    verbleibend: verbleibendeTeams(teams.teams),
     probe: data.probe_seit !== null,
   });
 }

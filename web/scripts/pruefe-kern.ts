@@ -2567,7 +2567,9 @@ pruefe("Aus dem Team nehmen (#579 AK 13–16): nicht gelöscht, bleibt im Verein
     assert.ok(!/\d/.test(text), "keine Zahl verfallender Meldungen");
   }
   assert.equal(herausnehmenFrage(lage).startsWith("Noah Keller aus Da Junioren nehmen?"), true);
-  assert.deepEqual(verbleibendeTeams([{ name: "Da Junioren" }, { name: "Ea Junioren" }], "Da Junioren"), ["Ea Junioren"]);
+  assert.deepEqual(verbleibendeTeams([{ name: "Da Junioren", dieses: true }, { name: "Ea Junioren", dieses: false }]), ["Ea Junioren"]);
+  // Gleichnamige Teams gibt es im Bestand: Nur das, in dem man handelt, fällt weg.
+  assert.deepEqual(verbleibendeTeams([{ name: "Da Junioren", dieses: false }, { name: "Da Junioren", dieses: true }]), ["Da Junioren"]);
   assert.equal(HERAUSNEHMEN_TEXT.geaendert, "Inzwischen hat sich etwas geändert. Lies den Hinweis noch einmal und bestätige erneut.");
 });
 

@@ -573,7 +573,7 @@ function HerausnehmenText({
     nachname: spieler.nachname,
     team,
     verein,
-    verbleibend: verbleibendeTeams(teams.teams, team),
+    verbleibend: verbleibendeTeams(teams.teams),
     probe: spieler.probe !== null,
   });
   return (
