@@ -7,8 +7,9 @@
 -- auf Staging, Staging nach einem Sync. Teil B nur, wenn prodweg_bestand.sql
 -- vorher den synthetischen Bestand angelegt hat (Schema `prodweg`): Backfill
 -- dieses Bestands, Gleichwertigkeit der Lesepfade mit dem alten Schema und
--- Testfall 1 (Story 1 PC 2). Teil B ändert nichts bleibend (rollback).
--- Spätere Stories ergänzen ihre Abfragen (Konten ohne Verein mit Story 12).
+-- Testfall 1 (Story 1 PC 2) und die Dublette über zwei Teams (Story 2 PC 1,
+-- AK 7). Teil B ändert nichts bleibend (rollback). Spätere Stories ergänzen
+-- ihre Abfragen (Konten ohne Verein mit Story 12).
 
 \set ON_ERROR_STOP on
 
@@ -136,7 +137,7 @@ declare
   v jsonb;
   f text;
 begin
-  perform spieler_aendern(v_eins, 'Gross', 'Nr 1', 2015, '1234');
+  perform spieler_aendern(v_team, v_eins, 'Gross', 'Nr 1', 2015, '1234');
   perform spieler_entfernen((select id from spieler where team_id = v_team and nachname = 'Nr 3'));
   begin
     perform spieler_aufnehmen(v_team, 'Neu', 'Neu', 2015, null);
@@ -158,13 +159,39 @@ begin
   exception when others then
     if position('SPIELERLISTE_VOLL' in sqlerrm) = 0 then raise; end if;
   end;
+
+  -- Story 2 (PC 1, AK 7): Die Dublette über zwei Teams bleibt ohne
+  -- Schlüsseländerung änderbar; eine dritte Erfassung mit demselben
+  -- Schlüssel weist ab und nennt beide Teams.
+  v := spieler_aendern(prodweg.id('t_f1'), (select id from spieler where team_id = prodweg.id('t_f1') and nachname = 'Dublette'),
+                       'Lea', 'Dublette', 2017, '55');
+  if v <> '{"status": "geaendert"}'::jsonb then raise exception 'Story 2: Dublette nicht änderbar: %', v; end if;
+  v := spieler_aufnehmen(prodweg.id('t_d'), 'Lea', 'Dublette', 2017, null);
+  if v ->> 'status' <> 'abgewiesen' or v ->> 'grund' <> 'doppelt' or (v ->> 'eigenes_team')::boolean
+     or jsonb_array_length(v -> 'teams') <> 2
+     or not v -> 'teams' @> '["Prodweg F-Junioren", "prodweg f junioren"]'::jsonb then
+    raise exception 'Story 2: dritte Erfassung nicht als doppelt abgewiesen: %', v;
+  end if;
 end $$;
 reset role;
+-- Das Netz im Trigger: dieselbe dritte Erfassung ohne RPC.
+do $$
+begin
+  insert into spieler (team_id, verein_id, vorname, nachname, jahrgang)
+  values (prodweg.id('t_d'), (select verein_id from teams where id = prodweg.id('t_d')), 'Lea', 'Dublette', 2017);
+  raise exception 'Story 2: dritte Erfassung ohne RPC angenommen';
+exception when others then
+  if position('SPIELER_DOPPELT' in sqlerrm) = 0 then raise; end if;
+end $$;
 do $$
 begin
   if (select count(*) from team_spieler where team_id = prodweg.id('t_gross')) <> 149
      or (select js_nummer from spieler where team_id = prodweg.id('t_gross') and nachname = 'Nr 2') <> '4711' then
     raise exception 'Testfall 1: Bestand nach Ändern, Löschen und Import falsch';
+  end if;
+  if (select count(*) from spieler where nachname = 'Dublette' and team_id in (prodweg.id('t_f1'), prodweg.id('t_f2'))) <> 2
+     or (select js_nummer from spieler where team_id = prodweg.id('t_f1') and nachname = 'Dublette') <> '55' then
+    raise exception 'Story 2: Dublette nicht als zwei Datensätze erhalten oder Änderung fehlt';
   end if;
 end $$;
 

@@ -187,7 +187,7 @@ do $$
 declare
   v_spieler uuid := (select spieler_id from team_spieler where team_id = pg_temp.id('team1') limit 1);
 begin
-  perform spieler_aendern(v_spieler, 'Geändert', 'Nr 1', 2015, null);
+  perform spieler_aendern(pg_temp.id('team1'), v_spieler, 'Geändert', 'Nr 1', 2015, null);
   perform spieler_entfernen((select spieler_id from team_spieler
                               where team_id = pg_temp.id('team1') and spieler_id <> v_spieler limit 1));
 end $$;
