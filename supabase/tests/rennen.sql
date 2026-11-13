@@ -2,7 +2,8 @@
 -- Selbsttest des dblink-Musters. Er beweist, dass zwei Verbindungen sich in
 -- dieser Datenbank verlässlich verschränken lassen. Danach die fachlichen
 -- Fälle (Story 1: Teamgrenze 100 unter der Vereinssperre; Story 2:
--- Doppelerfassung im Verein beim Erfassen und Ändern).
+-- Doppelerfassung im Verein beim Erfassen und Ändern; Story 3: Zuordnen und
+-- Herausnehmen).
 --
 -- Muster für «gleichzeitig, genau eines gelingt» (spätere Stories bauen ihre
 -- Fälle als weitere Blöcke nach diesem Vorbild):
@@ -222,8 +223,10 @@ exception when others or query_canceled then
   perform set_config('rennen.fehler_grenze', sqlerrm, false);
 end $$;
 
--- Testzeilen entfernen: das Team nimmt Spieler:innen und Zuordnungen mit.
+-- Testzeilen entfernen: das Team nimmt die Zuordnungen mit, die Spieler:innen
+-- bleiben im Verein (Story 3) und gehen eigens.
 delete from teams where id = (select id from rennen_test.ids where name = 'team');
+delete from spieler where verein_id = (select id from rennen_test.ids where name = 'verein');   -- bleiben seit Story 3 im Verein
 delete from vereine where id = (select id from rennen_test.ids where name = 'verein');
 
 -- ── Fall: Doppelerfassung im Verein (Story 2 #578 AK 8, AP §3.3 a, Testfall 6) ──
@@ -369,8 +372,142 @@ exception when others or query_canceled then
 end $$;
 
 delete from teams where id in (select id from rennen_test.ids where name in ('d_team1', 'd_team2'));
+delete from spieler where verein_id = (select id from rennen_test.ids where name = 'd_verein');
 delete from vereine where id = (select id from rennen_test.ids where name = 'd_verein');
 delete from auth.users where id in (select id from rennen_test.ids where name in ('d_a', 'd_b'));
+
+-- ── Fälle: Zuordnen und Herausnehmen (Story 3 #579 AK 8, Testfall 29, AP §3.3 c–e) ──
+-- Verein «Rennen-Zuordnen» mit Verwaltung (ohne Team) und Trainer:in A in
+-- Team 1. Über die RPCs wie PostgREST, mit rennen_test.verschraenkt.
+-- (a) AK 8, Grenze: Team 2 hat 99; die Verwaltung ordnet in zwei Verbindungen
+--     je eine Spieler:in zu. B wartet an der Vereinssperre und wird danach mit
+--     ueber_grenze = 1 abgewiesen; es bleiben 100.
+-- (b) AK 8, dieselbe Spieler:in zweimal ins Team 3: B antwortet mit `bereits`.
+-- (c) Teamsperre in team_spieler_vorher: Team 1 hat 100. A nimmt eine
+--     Spieler:in heraus und hält nur Team- und Zeilensperre; B ordnet direkt
+--     (ohne RPC, ohne eigene Sperre) eine weitere zu und wartet an der
+--     Teamsperre des Triggers. Nach dem Commit von A sieht B 99 und gelingt;
+--     ohne die Sperre sähe B die 100 und scheiterte (bzw. wartete nicht).
+-- (d) Testfall 29: Die Verwaltung ordnet w gleichzeitig Team 3 zu, während A
+--     w mit dem Stand aus der Auskunft aus Team 1 nimmt. A wartet an der
+--     `spieler`-Zeile und antwortet nach dem Zuordnen mit `stand_geaendert`;
+--     w steht danach in Team 1 und Team 3.
+-- Ein harter Abbruch lässt den Verein «Rennen-Zuordnen» samt Teams,
+-- Spieler:innen und die Konten «rennen-z…@rennen.test» stehen (von Hand löschen).
+
+select set_config('rennen.fehler_zuordnen', '', false) is not null as rennen_fehler_zuordnen_leer \gset
+
+begin;
+insert into rennen_test.ids (name) values ('z_verein'), ('z_t1'), ('z_t2'), ('z_t3'), ('z_verw'), ('z_a'),
+  ('z_x1'), ('z_x2'), ('z_y'), ('z_r'), ('z_q'), ('z_w');
+create function rennen_test.z(p text) returns uuid language sql stable as $f$ select id from rennen_test.ids where name = p $f$;
+insert into auth.users (id, email, email_confirmed_at)
+select id, 'rennen-' || replace(name, '_', '-') || '@rennen.test', now() from rennen_test.ids where name in ('z_verw', 'z_a');
+insert into vereine (id, name) values (rennen_test.z('z_verein'), 'Rennen-Zuordnen');
+insert into verein_verwaltung (verein_id, user_id) values (rennen_test.z('z_verein'), rennen_test.z('z_verw'));
+insert into teams (id, name, verein_id) values
+  (rennen_test.z('z_t1'), 'Zuordnen-Team-1', rennen_test.z('z_verein')),
+  (rennen_test.z('z_t2'), 'Zuordnen-Team-2', rennen_test.z('z_verein')),
+  (rennen_test.z('z_t3'), 'Zuordnen-Team-3', rennen_test.z('z_verein'));
+insert into team_members (team_id, user_id) values (rennen_test.z('z_t1'), rennen_test.z('z_a'));
+-- Spieler:in anlegen, optional mit Zuordnung (echte Trigger).
+create function rennen_test.zneu(p_id uuid, p_nachname text, p_team uuid) returns void
+language plpgsql as $f$
+begin
+  insert into public.spieler (id, verein_id, vorname, nachname, jahrgang)
+    values (p_id, rennen_test.z('z_verein'), 'Zuordnen', p_nachname, 2015);
+  if p_team is not null then
+    insert into public.team_spieler (team_id, spieler_id, verein_id) values (p_team, p_id, rennen_test.z('z_verein'));
+  end if;
+end $f$;
+select rennen_test.zneu(gen_random_uuid(), 'Zwei ' || i, rennen_test.z('z_t2')) from generate_series(1, 99) i;
+select rennen_test.zneu(gen_random_uuid(), 'Eins ' || i, rennen_test.z('z_t1')) from generate_series(1, 97) i;
+select rennen_test.zneu(rennen_test.z('z_r'), 'R', rennen_test.z('z_t1'));
+select rennen_test.zneu(rennen_test.z('z_w'), 'W', rennen_test.z('z_t1'));
+select rennen_test.zneu(rennen_test.z('z_x1'), 'X1', null);
+select rennen_test.zneu(rennen_test.z('z_x2'), 'X2', null);
+select rennen_test.zneu(rennen_test.z('z_y'), 'Y', rennen_test.z('z_t1'));   -- Team 1 hat 100
+select rennen_test.zneu(rennen_test.z('z_q'), 'Q', null);
+-- B ohne RPC: Zuordnung direkt, als Eigentümer (DEFINER; nur der Trigger sperrt).
+create function rennen_test.direkt(p_team uuid, p_spieler uuid) returns text
+language plpgsql security definer set search_path = public, pg_temp as $f$
+begin
+  insert into public.team_spieler (team_id, spieler_id, verein_id) values (p_team, p_spieler, rennen_test.z('z_verein'));
+  return 'ok';
+end $f$;
+grant usage on schema rennen_test to authenticated;
+grant execute on function rennen_test.direkt(uuid, uuid), rennen_test.z(text) to authenticated;
+commit;
+
+do $$
+declare
+  ziel   text := format(
+    'host=%s port=%s dbname=%s user=postgres password=postgres connect_timeout=5 options=''-c statement_timeout=30s''',
+    coalesce(host(inet_server_addr()), '127.0.0.1'), inet_server_port(), current_database());
+  v_verw uuid := rennen_test.z('z_verw');
+  v_a uuid := rennen_test.z('z_a');
+  v_t1 uuid := rennen_test.z('z_t1');
+  v_t2 uuid := rennen_test.z('z_t2');
+  v_t3 uuid := rennen_test.z('z_t3');
+  v_stand text;
+  ergebnis text;
+begin
+  -- (a) Grenze.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_verw, format('select verein_spieler_zuordnen(%L, array[%L]::uuid[])::text', v_t2, rennen_test.z('z_x1')),
+    v_verw, format('select verein_spieler_zuordnen(%L, array[%L]::uuid[])::text', v_t2, rennen_test.z('z_x2')));
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'abgewiesen' or ergebnis::jsonb ->> 'ueber_grenze' <> '1' then
+    raise exception '(a) B hätte mit ueber_grenze = 1 abgewiesen werden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from team_spieler where team_id = v_t2) <> 100
+     or not exists (select 1 from team_spieler where team_id = v_t2 and spieler_id = rennen_test.z('z_x1')) then
+    raise exception '(a) Erwartet 100 Zuordnungen samt X1, gefunden: %', (select count(*) from team_spieler where team_id = v_t2);
+  end if;
+
+  -- (b) Dieselbe Spieler:in zweimal.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_verw, format('select verein_spieler_zuordnen(%L, array[%L]::uuid[])::text', v_t3, rennen_test.z('z_x2')),
+    v_verw, format('select verein_spieler_zuordnen(%L, array[%L]::uuid[])::text', v_t3, rennen_test.z('z_x2')));
+  if left(ergebnis, 7) = 'FEHLER:' or jsonb_array_length(ergebnis::jsonb -> 'bereits') <> 1 then
+    raise exception '(b) B hätte mit bereits abgewiesen werden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from team_spieler where team_id = v_t3 and spieler_id = rennen_test.z('z_x2')) <> 1 then
+    raise exception '(b) Zuordnung nicht genau einmal';
+  end if;
+
+  -- (c) Teamsperre im Trigger.
+  v_stand := spieler_teams_stand(rennen_test.z('z_r'));
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_a, format('select spieler_aus_team_nehmen(%L, %L, %L)::text', v_t1, rennen_test.z('z_r'), v_stand),
+    v_a, format('select rennen_test.direkt(%L, %L)', v_t1, rennen_test.z('z_q')));
+  if ergebnis is distinct from 'ok' then
+    raise exception '(c) B hätte nach dem Herausnehmen zuordnen müssen: %', ergebnis;
+  end if;
+  if (select count(*) from team_spieler where team_id = v_t1) <> 100
+     or spieler_im_team(rennen_test.z('z_r'), v_t1) or not spieler_im_team(rennen_test.z('z_q'), v_t1) then
+    raise exception '(c) Erwartet 100 Zuordnungen ohne R und mit Q, gefunden: %', (select count(*) from team_spieler where team_id = v_t1);
+  end if;
+
+  -- (d) Testfall 29: Herausnehmen mit altem Stand während einer Zuordnung.
+  v_stand := spieler_teams_stand(rennen_test.z('z_w'));
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_verw, format('select verein_spieler_zuordnen(%L, array[%L]::uuid[])::text', v_t3, rennen_test.z('z_w')),
+    v_a, format('select spieler_aus_team_nehmen(%L, %L, %L)::text', v_t1, rennen_test.z('z_w'), v_stand));
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'stand_geaendert'
+     or ergebnis::jsonb ->> 'stand' = v_stand then
+    raise exception '(d) B hätte mit stand_geaendert und neuem Stand antworten müssen: %', ergebnis;
+  end if;
+  if not spieler_im_team(rennen_test.z('z_w'), v_t1) or not spieler_im_team(rennen_test.z('z_w'), v_t3) then
+    raise exception '(d) W nicht in Team 1 und Team 3';
+  end if;
+exception when others or query_canceled then
+  perform set_config('rennen.fehler_zuordnen', sqlerrm, false);
+end $$;
+
+delete from teams where verein_id = (select id from rennen_test.ids where name = 'z_verein');
+delete from spieler where verein_id = (select id from rennen_test.ids where name = 'z_verein');
+delete from vereine where id = (select id from rennen_test.ids where name = 'z_verein');
+delete from auth.users where id in (select id from rennen_test.ids where name in ('z_verw', 'z_a'));
 
 -- Aufräumen, auch nach einem Fehler.
 drop schema rennen_test cascade;
@@ -389,5 +526,8 @@ begin
   end if;
   if current_setting('rennen.fehler_doppelt') <> '' then
     raise exception 'Rennen Doppelerfassung: %', current_setting('rennen.fehler_doppelt');
+  end if;
+  if current_setting('rennen.fehler_zuordnen') <> '' then
+    raise exception 'Rennen Zuordnen/Herausnehmen: %', current_setting('rennen.fehler_zuordnen');
   end if;
 end $$;

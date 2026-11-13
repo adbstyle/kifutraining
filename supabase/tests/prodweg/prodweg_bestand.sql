@@ -37,7 +37,7 @@
 --               spiel_anwesenheit_setzen, termin_spielerzahl_regel und
 --               serie_spielerzahl_regel (Insert mit Zahl).
 -- Nicht abgedeckt: die Schreibwege mit eigenem Testfall (spieler_aufnehmen,
--- spieler_importieren, spieler_entfernen: Testfall 1 in prodweg_pruefen.sql;
+-- spieler_importieren, Herausnehmen: Testfall 1 in prodweg_pruefen.sql;
 -- spieler_probe_setzen, kader_entfernen_folgen beim Löschen eines Kaders)
 -- sowie das Festhalten beim Anlegen eines vergangenen Termins (Trigger, nur
 -- im alten Schema ausgelöst). Die Rechteprüfungen laufen nur für trainer_a.
@@ -157,11 +157,38 @@ begin
 end;
 $$;
 
+-- Teilnehmer eines Termins, aufgerufen mit den Claims eines Mitglieds des
+-- Termin-Teams: Seit Story 3 sind termin_teilnehmer und spiel_teilnehmer
+-- DEFINER und prüfen die Mitgliedschaft (trainer_a gehört t_f2 nicht an).
+-- Ohne den Schlüssel `nicht_mehr_im_team` (neu mit Story 3, im Bestand ohne
+-- Herausgenommene immer false). Stellt die Claims danach wieder her.
+create function prodweg.teilnehmer(p_art text, p_termin uuid) returns jsonb
+language plpgsql
+set search_path = public, pg_temp
+as $$
+declare
+  v_claims text := current_setting('request.jwt.claims', true);
+  v jsonb;
+begin
+  perform set_config('request.jwt.claims', jsonb_build_object('sub',
+            (select m.user_id from team_members m join training_termine t on t.team_id = m.team_id
+              where t.id = p_termin order by m.user_id limit 1), 'role', 'authenticated')::text, true);
+  if p_art = 'termin' then
+    select coalesce(jsonb_agg(to_jsonb(r) - 'nicht_mehr_im_team' order by r.spieler_id), '[]') into v from termin_teilnehmer(p_termin) r;
+  else
+    select coalesce(jsonb_agg(to_jsonb(r) - 'nicht_mehr_im_team' order by r.spieler_id), '[]') into v from spiel_teilnehmer(p_termin) r;
+  end if;
+  perform set_config('request.jwt.claims', coalesce(v_claims, ''), true);
+  return v;
+end;
+$$;
+
 -- Ausgaben der Lesepfade über den ganzen Bestand. Läuft im alten wie im
 -- neuen Schema (die Funktionen werden zur Laufzeit aufgelöst) als postgres,
 -- also ohne RLS; wo eine RPC ein Konto verlangt, mit den Claims von
 -- trainer_a (Mitglied von t_gross, t_f1, t_d). Volatil wegen der
--- zurückgerollten Schreibwege.
+-- zurückgerollten Schreibwege. Die Teilnehmer je Termin mit den Claims
+-- eines Mitglieds des Termin-Teams (prodweg.teilnehmer).
 create function prodweg.lesepfade() returns jsonb
 language plpgsql
 set search_path = public, pg_temp
@@ -198,12 +225,8 @@ begin
                      from unnest(v_termine) x),
     'spiel_pruefen', (select jsonb_object_agg(s, spiel_pruefen(prodweg.id('sp_kommend'), s, null, null))
                         from unnest(v_d) s),
-    'termin_teilnehmer', (select jsonb_object_agg(x, (select coalesce(jsonb_agg(to_jsonb(r) order by r.spieler_id), '[]')
-                                                         from termin_teilnehmer(x) r))
-                            from unnest(v_termine) x),
-    'spiel_teilnehmer', (select jsonb_object_agg(x, (select coalesce(jsonb_agg(to_jsonb(r) order by r.spieler_id), '[]')
-                                                        from spiel_teilnehmer(x) r))
-                           from unnest(v_termine) x),
+    'termin_teilnehmer', (select jsonb_object_agg(x, prodweg.teilnehmer('termin', x)) from unnest(v_termine) x),
+    'spiel_teilnehmer', (select jsonb_object_agg(x, prodweg.teilnehmer('spiel', x)) from unnest(v_termine) x),
     'training_meldestand', (select jsonb_object_agg(x, (select coalesce(jsonb_agg(to_jsonb(r) order by r.spieler_id), '[]')
                                                            from training_meldestand(x) r))
                               from unnest(v_termine) x),
