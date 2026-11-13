@@ -17,7 +17,7 @@ export function revalidiereTeam(teamId: string) {
 
 /** Alle Ansichten des Vereins neu validieren — der Spielerbestand und was
  *  daran hängt. `"layout"` erfasst den Bereich samt aller Unterseiten.
- *  Nach Aufnahme, Zuordnen, Herausnehmen, Austritt, Gründung und Löschen. */
+ *  Nach Zuordnen und Herausnehmen. */
 export function revalidiereVerein() {
   revalidatePath("/verein", "layout");
   revalidatePath("/teams");

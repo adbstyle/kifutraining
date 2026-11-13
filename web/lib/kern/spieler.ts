@@ -44,10 +44,12 @@ import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type 
 
 export const SPIELER_FELD = { feld: "spieler_id" } as const;
 
-const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, kader_spieler(kader_id, team_id)";
+const SPIELER_SPALTEN = "id, team_id, vorname, nachname, jahrgang, js_nummer, link_bezogen, kader_spieler(kader_id, team_id)";
 
 type SpielerRoh = {
   id: string;
+  /** Ihr erstes Team (Übergang bis Phase 7/8, Entscheid A.1); `null` ohne Team. */
+  team_id: string | null;
   vorname: string;
   nachname: string;
   jahrgang: number;
@@ -73,6 +75,7 @@ function kopfAusRoh(s: SpielerRoh, teamId: string): Omit<Spieler, "probe" | "wei
     jahrgang: s.jahrgang,
     jsNummer: s.js_nummer,
     linkBezogen: s.link_bezogen,
+    erstesTeam: s.team_id === teamId,
     kaderIds: (s.kader_spieler ?? []).filter((k) => k.team_id === teamId).map((k) => k.kader_id),
   };
 }
@@ -299,12 +302,30 @@ export async function ladeSpieler(
   if (!istUuid(spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
   const { data, error } = await supabase
     .from("spieler")
-    .select(`${SPIELER_SPALTEN}, team_id`)
+    .select(SPIELER_SPALTEN)
     .eq("id", spielerId)
-    .maybeSingle<SpielerRoh & { team_id: string | null }>();
+    .maybeSingle<SpielerRoh>();
   if (error) return ausDbFehler(error);
   if (!data?.team_id) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
   return ok({ ...kopfAusRoh(data, data.team_id), teamId: data.team_id });
+}
+
+/** Das älteste Team der Spieler:in, dem die handelnde Person angehört — für
+ *  einen Aufruf ohne Team (KI-Weg). Die RLS von `team_spieler` zeigt nur
+ *  Zuordnungen zu eigenen Teams. */
+export async function eigenesTeamVon(supabase: SupabaseClient, spielerId: string): Promise<KernErgebnis<string>> {
+  if (!istUuid(spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
+  const { data, error } = await supabase
+    .from("team_spieler")
+    .select("team_id")
+    .eq("spieler_id", spielerId)
+    .order("created_at")
+    .order("team_id")
+    .limit(1)
+    .maybeSingle<{ team_id: string }>();
+  if (error) return ausDbFehler(error);
+  if (!data) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
+  return ok(data.team_id);
 }
 
 /** Wie viele Spieler:innen die Liste des Teams führt. Führt das Team eine,

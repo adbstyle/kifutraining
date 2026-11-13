@@ -76,7 +76,7 @@ const { legeSerieFest, aendereSerie, entferneSerie, folgeDerSerie, aendereMitRei
   await import("../lib/kern/serien");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
 const { getTeamPlanFuer, nochNichtVorbereitet } = await import("../lib/queries/termine-fuer");
-const { ladeSpielerliste, anzahlSpieler, nimmSpielerAuf, aendereSpieler, ladeSpieler, ladeSpielerTeams, nimmSpielerAusTeam, holeSpielerLink, erneuereSpielerLink, leseAbholung, schalteAbholung, erneuereAbholung, pruefeSpielerImport, importiereSpieler } =
+const { ladeSpielerliste, anzahlSpieler, nimmSpielerAuf, aendereSpieler, ladeSpieler, ladeSpielerTeams, eigenesTeamVon, nimmSpielerAusTeam, holeSpielerLink, erneuereSpielerLink, leseAbholung, schalteAbholung, erneuereAbholung, pruefeSpielerImport, importiereSpieler } =
   await import("../lib/kern/spieler");
 const { IMPORT_TEXT, erwartetVon } = await import("../lib/spieler-import");
 const { VEREIN_MELDUNG, VEREIN_SPIELER_MAX, zuordnenAbweisungText, zugeordnetText } = await import("../lib/verein");
@@ -4649,6 +4649,14 @@ try {
     assert.deepEqual(imZiel.map((s) => [s.vorname, s.weitereTeams, s.kaderIds]), [["Elias", [HERKUNFT], []], ["Lena", [HERKUNFT], [kZ]], ["Noah", [], []]]);
     assert.deepEqual((await listeVon(a, herkunft)).map((s) => [s.vorname, s.weitereTeams, s.kaderIds]), [["Elias", [ZIEL], []], ["Lena", [ZIEL], [kH]]]);
     assert.deepEqual((await listeVon(b, herkunft)).find((s) => s.id === lena)!.weitereTeams, [ZIEL], "auch ohne Mitgliedschaft im weiteren Team");
+    // Link-Knopf nur im ersten Team (bis Phase 7): Herkunft ist Lenas erstes.
+    assert.deepEqual([imZiel.find((s) => s.id === lena)!.erstesTeam, imZiel.find((s) => s.id === noah)!.erstesTeam], [false, true]);
+    // MCP «spieler_aendern» ohne team_id: das älteste ihrer Teams, dem man angehört — für c (nur im Ziel)
+    // das Ziel, nicht ihr erstes Team (Herkunft), in dem c «nicht gefunden» bekäme.
+    assert.equal(wert(await eigenesTeamVon(c.supabase, lena)), ziel);
+    assert.equal(wert(await eigenesTeamVon(a.supabase, lena)), herkunft);
+    assert.equal(wert(await aendereSpieler(c.supabase, c.id, { teamId: ziel, spielerId: lena, vorname: "Lena", nachname: "Heraus", jahrgang: 2016, jsNummer: "7654321" })).teamId, ziel);
+    fehler(await eigenesTeamVon(b.supabase, noah), "nicht_gefunden");
 
     // Termine in beiden Teams. PC 3: Eine Abmeldung im Ziel berührt die Herkunft nicht und bleibt dort, wo sie gilt.
     const tH = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: herkunft, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;

@@ -263,7 +263,10 @@ export function SpielerListe({
   function herausnehmenOeffnen(s: Spieler) {
     startTransition(async () => {
       const r = await ladeSpielerTeamsAktion(teamId, s.id);
-      if (!r.ok) return melde(r.error);
+      if (!r.ok) {
+        router.refresh();
+        return melde(r.error);
+      }
       setHerausnehmen({ spieler: s, teams: { teams: r.teams, stand: r.stand } });
     });
   }
@@ -279,10 +282,18 @@ export function SpielerListe({
         router.refresh();
         return melde(`${spielerName(s)} ist nicht mehr im Team ${teamName}.`);
       }
-      if (!r.geaendert) return setHerausnehmen({ ...herausnehmen, fehler: r.error });
+      // Ein Fehler (etwa gleichzeitig herausgenommen): die Liste neu, nur die
+      // Meldung im Dialog, kein früherer Hinweis.
+      if (!r.geaendert) {
+        router.refresh();
+        return setHerausnehmen({ spieler: s, teams, fehler: r.error });
+      }
       // Die Lage hat sich geändert, nichts wurde geschrieben: der neue Stand.
       const neu = await ladeSpielerTeamsAktion(teamId, s.id);
-      if (!neu.ok) return setHerausnehmen({ ...herausnehmen, fehler: neu.error });
+      if (!neu.ok) {
+        router.refresh();
+        return setHerausnehmen({ spieler: s, teams, fehler: neu.error });
+      }
       setHerausnehmen({ spieler: s, teams: { teams: neu.teams, stand: neu.stand }, hinweis: HERAUSNEHMEN_TEXT.geaendert });
     });
   }
@@ -385,6 +396,7 @@ export function SpielerListe({
             <ProbeFeld
               vorname={form.vorname.trim() || "Die Spieler:in"}
               anzahl={probeAnzahl}
+              mehrereTeams={(spieler.find((x) => x.id === offen.id)?.weitereTeams.length ?? 0) > 0}
               an={form.probe}
               vorher={probeVorher}
               folgen={probeFolgen}
@@ -467,14 +479,17 @@ export function SpielerListe({
                 )}
               </span>
               <span className="flex justify-end gap-1">
-                <Tooltip label={s.linkBezogen ? "Privater Link · bezogen" : "Privater Link"}>
-                  <IconButton
-                    icon={Link2}
-                    label={`Privater Link für ${spielerName(s)}${s.linkBezogen ? ", bezogen" : ""}`}
-                    punkt={s.linkBezogen ? "success" : undefined}
-                    onClick={() => setLink(s)}
-                  />
-                </Tooltip>
+                {/* Bis Phase 7 hängt der Link am ersten Team der Spieler:in. */}
+                {s.erstesTeam && (
+                  <Tooltip label={s.linkBezogen ? "Privater Link · bezogen" : "Privater Link"}>
+                    <IconButton
+                      icon={Link2}
+                      label={`Privater Link für ${spielerName(s)}${s.linkBezogen ? ", bezogen" : ""}`}
+                      punkt={s.linkBezogen ? "success" : undefined}
+                      onClick={() => setLink(s)}
+                    />
+                  </Tooltip>
+                )}
                 <Tooltip label="Ändern">
                   <IconButton icon={Pencil} label={`${spielerName(s)} ändern`} onClick={() => oeffnen(s)} />
                 </Tooltip>
@@ -584,7 +599,7 @@ function HerausnehmenText({
         <p key={a}>{a}</p>
       ))}
       <SectionMessage appearance="warning">{s.warnung}</SectionMessage>
-      {s.zusatz && <p>{s.zusatz}</p>}
+      <p>{s.zusatz}</p>
     </div>
   );
 }
@@ -602,10 +617,12 @@ function aufzaehlung(namen: string[]): string {
 /** Die Checkbox «Im Probetraining» im Dialog «Spieler:in ändern» (#555 AK 3–5,
  *  16, 18, 19): darunter, was der Probe-Modus bedeutet; ohne Anzahl gesperrt
  *  mit dem Weg dahin; beim Einschalten die Warnung, was verfällt, beim
- *  Ausschalten, was danach gilt. */
+ *  Ausschalten, was danach gilt. Wer weiteren Teams zugeordnet ist, schnuppert
+ *  nicht (Vereine AP §5.3): statt der Checkbox nur der Hinweis. */
 function ProbeFeld({
   vorname,
   anzahl,
+  mehrereTeams,
   an,
   vorher,
   folgen,
@@ -615,6 +632,7 @@ function ProbeFeld({
 }: {
   vorname: string;
   anzahl: number | null;
+  mehrereTeams: boolean;
   an: boolean;
   vorher: boolean;
   folgen: ProbeFolgen | null;
@@ -624,6 +642,13 @@ function ProbeFeld({
 }) {
   const gesperrt = anzahl === null && !vorher;
   const verfaellt = an && !vorher && folgen && probeFolgenSumme(folgen) > 0 ? folgen : null;
+  if (mehrereTeams && !vorher)
+    return (
+      <>
+        <hr className="my-1 border-kante" />
+        <p className="type-body-small text-on-surface-mittel">{PROBE_TEXT.mehrereTeams}</p>
+      </>
+    );
   return (
     <>
       <hr className="my-1 border-kante" />

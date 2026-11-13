@@ -34,6 +34,7 @@ function probeFehler(e: { message: string; code?: string }): KernFehler {
   if (e.message.includes("TEAM_NICHT_GEFUNDEN"))
     return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
   if (e.message.includes("PROBE_ANZAHL_FEHLT")) return fehlschlag("regel", PROBE_TEXT.anzahlFehlt, { feld: "probe" });
+  if (e.message.includes("SCHNUPPERN_MEHRERE_TEAMS")) return fehlschlag("regel", PROBE_TEXT.mehrereTeams, { feld: "probe" });
   if (e.message.includes("PROBE_ANZAHL_UNGUELTIG")) return fehlschlag("eingabe", PROBE_TEXT.anzahlProblem, { feld: "anzahl" });
   if (e.message.includes("PROBE_INFO_ZU_LANG") || e.message.includes("team_probetraining_info"))
     return fehlschlag("eingabe", PROBE_TEXT.infoZuLang, { feld: "info" });

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { abgebildet } from "@/lib/kern/ergebnis";
 import {
   aendereSpieler,
+  eigenesTeamVon,
   erneuereAbholung,
   erneuereSpielerLink,
   holeSpielerLink,
@@ -163,7 +164,8 @@ export const spielerAendern = werkzeug({
   nurLesen: false,
   eingabe: z.object({
     team_id: TeamId.optional().describe(
-      "Das Team, in dessen Spielerliste du sie änderst («team.id» aus «spielerliste_abrufen»); ohne Angabe ihr Team.",
+      "Das Team, in dessen Spielerliste du sie änderst («team.id» aus «spielerliste_abrufen»); ohne Angabe das " +
+        "älteste ihrer Teams, dem du angehörst.",
     ),
     spieler_id: SpielerId,
     vorname: VORNAME,
@@ -175,11 +177,15 @@ export const spielerAendern = werkzeug({
   ausfuehren: async (e, zugang) => {
     let teamId = e.team_id;
     let js = e.js_nummer;
-    if (teamId === undefined || js === undefined) {
+    if (js === undefined) {
       const bisher = await ladeSpieler(zugang.supabase, e.spieler_id);
       if (!bisher.ok) return bisher;
-      teamId ??= bisher.wert.teamId;
-      js ??= bisher.wert.jsNummer ?? "";
+      js = bisher.wert.jsNummer ?? "";
+    }
+    if (teamId === undefined) {
+      const eigenes = await eigenesTeamVon(zugang.supabase, e.spieler_id);
+      if (!eigenes.ok) return eigenes;
+      teamId = eigenes.wert;
     }
     return abgebildet(
       await aendereSpieler(zugang.supabase, zugang.userId, {

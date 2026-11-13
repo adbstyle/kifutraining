@@ -126,12 +126,12 @@ export function VereinSpielerListe({ spieler, teams }: { spieler: VereinSpieler[
               <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.jahrgang}</span>
               <span className="hidden min-w-0 sm:block">
                 {s.teams.length > 0 ? (
-                  <TeamLozenges namen={s.teams.map((t) => t.name)} />
+                  <TeamLozenges namen={s.teams.map((t) => t.name)} ids={s.teams.map((t) => t.id)} />
                 ) : (
                   <span className="type-body-medium text-on-surface-tief">ohne Team</span>
                 )}
               </span>
-              <TeamLozenges namen={s.teams.map((t) => t.name)} className="mt-1 sm:hidden" />
+              <TeamLozenges namen={s.teams.map((t) => t.name)} ids={s.teams.map((t) => t.id)} className="mt-1 sm:hidden" />
             </span>
             <span className="flex justify-end">
               <Tooltip label="Einem Team zuordnen" ende>

@@ -159,6 +159,10 @@ export type Spieler = {
   jsNummer: string | null;
   /** Der aktuelle Link wurde über die Selbstabholung herausgegeben (#438 PC 2). */
   linkBezogen: boolean;
+  /** Das Team, in dessen Liste sie steht, ist ihr erstes (`spieler.team_id`):
+   *  Nur dort gehen Link abrufen und erneuern bis Phase 7 (Vereine Story #579
+   *  Entscheid A.1). */
+  erstesTeam: boolean;
   /** Die Kader des Teams, in dessen Liste sie steht (#452 AK 5). */
   kaderIds: string[];
   /** Die Namen der weiteren Teams des Vereins, denen sie zugeordnet ist,
@@ -225,11 +229,13 @@ export function herausnehmenTitel(l: Pick<HerausnehmenLage, "vorname" | "nachnam
  *  ohne Team —, `warnung` nennt, was in diesem Team verfällt, `zusatz`, was
  *  bleibt. Die Oberfläche setzt sie in den Dialog, der KI-Weg hängt sie zu
  *  einer Rückfrage zusammen (`herausnehmenFrage`). */
-export function herausnehmenSaetze(l: HerausnehmenLage): { absaetze: string[]; warnung: string; zusatz: string | null } {
+export function herausnehmenSaetze(l: HerausnehmenLage): { absaetze: string[]; warnung: string; zusatz: string } {
   const imVerein = l.verein ? `im ${l.verein}` : "im Verein";
   const wer = l.vorname;
   const verfall = `Abmeldungen, Spiel-Meldungen und Kader in ${l.team} verfallen.`;
   const warnung = l.probe ? `Das Schnuppertraining endet samt Zählung; künftige ${verfall}` : `Künftige ${verfall}`;
+  // Gilt in beiden Fällen (PC 5).
+  const zusatz = "Vergangene Anwesenheiten bleiben mit dem Namen stehen.";
   if (l.verbleibend.length === 0)
     return {
       absaetze: [
@@ -237,7 +243,7 @@ export function herausnehmenSaetze(l: HerausnehmenLage): { absaetze: string[]; w
         "Ändern, einem Team zuordnen oder löschen kann dann nur die Vereinsverwaltung.",
       ],
       warnung,
-      zusatz: null,
+      zusatz,
     };
   const teams =
     l.verbleibend.length === 1
@@ -248,7 +254,7 @@ export function herausnehmenSaetze(l: HerausnehmenLage): { absaetze: string[]; w
       `${wer} wird dadurch nicht gelöscht und bleibt samt privatem Link ${imVerein} und ${teams}. Aus dem Verein löscht nur die Vereinsverwaltung.`,
     ],
     warnung,
-    zusatz: "Vergangene Anwesenheiten bleiben mit dem Namen stehen.",
+    zusatz,
   };
 }
 

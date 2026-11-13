@@ -48,6 +48,8 @@ export const PROBE_TEXT = {
   /** Ohne festgelegte Anzahl lässt sich nichts einschalten (AK 4, 18). */
   anzahlFehlt: "Lege zuerst in der Karte «Probetraining» fest, wie viele Trainings eine Probe-Spieler:in besuchen darf.",
   einschalten: "Probetraining einschalten",
+  /** Wer weiteren Teams zugeordnet ist, schnuppert nicht (Vereine AP §5.3). */
+  mehrereTeams: "Diese Spieler:in ist weiteren Teams zugeordnet und macht darum regulär in deinem Team mit.",
   /** Am privaten Link: nach Ablauf der Anzahl (AK 12). */
   vergeben: "Probetrainings vergeben",
   /** Die Abweisung am Link, wenn die Anzahl erreicht ist (AK 12). */
@@ -140,6 +142,7 @@ export const PROBE_MELDUNG = {
   PROBE_ANZAHL_FEHLT: PROBE_TEXT.anzahlFehlt,
   PROBE_ANZAHL_UNGUELTIG: PROBE_TEXT.anzahlProblem,
   PROBE_INFO_ZU_LANG: PROBE_TEXT.infoZuLang,
+  SCHNUPPERN_MEHRERE_TEAMS: PROBE_TEXT.mehrereTeams,
 } as const;
 
 /** Die CHECKs, samt Anführungszeichen gesucht (wie `SPIELER_CHECKS`). */

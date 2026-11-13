@@ -2552,7 +2552,8 @@ pruefe("Aus dem Team nehmen (#579 AK 13–16): nicht gelöscht, bleibt im Verein
     "Leon wird dadurch nicht gelöscht und bleibt samt privatem Link im FC Wyler, ist danach aber keinem Team mehr zugeordnet.",
     "Ändern, einem Team zuordnen oder löschen kann dann nur die Vereinsverwaltung.",
   ]);
-  assert.equal(letzte.zusatz, null);
+  // Vergangene Anwesenheiten bleiben auch beim letzten Team mit dem Namen stehen (PC 5).
+  assert.equal(letzte.zusatz, "Vergangene Anwesenheiten bleiben mit dem Namen stehen.");
   // Schnuppernd: das Schnuppertraining endet mit (Board).
   assert.equal(
     herausnehmenSaetze({ ...lage, verbleibend: [], probe: true }).warnung,
