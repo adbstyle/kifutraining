@@ -362,6 +362,7 @@ Jeder Schritt auf Prod nur mit Freigabe im Moment.
 
 - [ ] PR auf `develop`: CI-Job «Prod-Weg» samt `prodweg_bestand.sql` entfernen (passt nicht mehr zum Schema von `main`).
 - [ ] Der Sync läuft wieder normal, auch aus `main`.
+- [ ] Danach, als eigener Schritt: Supabase-CLI auf Version 3 heben (#604). Bis dahin bleibt sie auf 2.122.1 festgelegt.
 
 ### N1 – Nachlauf (AP §3.8)
 

@@ -44,6 +44,7 @@ Die `supabase`-CLI läuft aus `web/` heraus mit `--workdir ..` — die `supabase
 - **Migrationen vs. Prod-Daten:** CI prüft Migrationen gegen eine **leere** Wegwerf-DB, Prod hat Daten. Eine Migration, die eine Invariante auf einer bestehenden Tabelle verschärft (neuer `NOT NULL`/`CHECK`), muss `NOT VALID` (+ spätere `VALIDATE`-Migration) nutzen oder vorher backfillen — sonst bricht `supabase db push` an Altzeilen.
 - **Lifecycle-Modus:** Es gibt **echte User** (seit 2026-08) → **forward-only**: keine Prod-Resets, keine destruktiven Migrationen; Invarianten-Verschärfungen auf bestehenden Tabellen via `NOT VALID` (+ spätere `VALIDATE`-Migration) bzw. Backfill.
 - **Node-Version:** Single Source ist `.nvmrc` (Node 22); Workflows binden sie via `node-version-file`. `@supabase/supabase-js` braucht Node ≥22 (natives WebSocket), sonst scheitert `npm run seed`.
+- **Supabase-CLI ist auf 2.122.1 festgelegt** — in den Workflows und in den npm-Skripten (`npx supabase@2.122.1 …`). Nie `latest` und nie ein nacktes `npx supabase`: Version 3 lehnt `[inbucket]` in der `config.toml` ab, und `db push` richtet sich dort ohne Zusatz auf die lokale Datenbank. Der Wechsel auf Version 3 ist #604.
 
 ## CI / Deploy
 
