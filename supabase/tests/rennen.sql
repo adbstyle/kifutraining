@@ -1,7 +1,8 @@
 -- Rennen deterministisch prüfen (Architekturplan Vereine §5.5): zuerst ein
 -- Selbsttest des dblink-Musters. Er beweist, dass zwei Verbindungen sich in
 -- dieser Datenbank verlässlich verschränken lassen. Danach die fachlichen
--- Fälle (ab Story 1: Teamgrenze 100 unter der Vereinssperre).
+-- Fälle (Story 1: Teamgrenze 100 unter der Vereinssperre; Story 2:
+-- Doppelerfassung im Verein beim Erfassen und Ändern).
 --
 -- Muster für «gleichzeitig, genau eines gelingt» (spätere Stories bauen ihre
 -- Fälle als weitere Blöcke nach diesem Vorbild):
@@ -225,6 +226,152 @@ end $$;
 delete from teams where id = (select id from rennen_test.ids where name = 'team');
 delete from vereine where id = (select id from rennen_test.ids where name = 'verein');
 
+-- ── Fall: Doppelerfassung im Verein (Story 2 #578 AK 8, AP §3.3 a, Testfall 6) ──
+-- Trainer:in A (Team 1) und B (Team 2) desselben Vereins handeln über die RPCs
+-- wie PostgREST (Rolle `authenticated`, `request.jwt.claims`). A erfasst und
+-- hält die Transaktion offen; B erfasst (a) bzw. ändert (b) gleichzeitig zu
+-- denselben Angaben und wartet an der Vereinssperre. In (c) ändert A zuerst
+-- eine Spieler:in aus Team 1, und B erfasst dieselben Angaben in Team 2. Nach
+-- dem Commit von A antwortet B mit dem Status `doppelt` samt Team 1, und im
+-- Verein steht der Schlüssel genau einmal. Die Testzeilen sind committet; ein harter Abbruch
+-- lässt den Verein «Rennen-Doppelt» samt Teams und die Konten
+-- «rennen-a/-b@rennen.test» stehen (von Hand löschen).
+
+select set_config('rennen.fehler_doppelt', '', false) is not null as rennen_fehler_doppelt_leer \gset
+
+begin;
+insert into rennen_test.ids (name) values ('d_verein'), ('d_team1'), ('d_team2'), ('d_a'), ('d_b'), ('d_ella');
+insert into auth.users (id, email, email_confirmed_at)
+select id, case name when 'd_a' then 'rennen-a@rennen.test' else 'rennen-b@rennen.test' end, now()
+  from rennen_test.ids where name in ('d_a', 'd_b');
+insert into vereine (id, name) select id, 'Rennen-Doppelt' from rennen_test.ids where name = 'd_verein';
+insert into teams (id, name, verein_id)
+select id, case name when 'd_team1' then 'Rennen-Team-1' else 'Rennen-Team-2' end,
+       (select id from rennen_test.ids where name = 'd_verein')
+  from rennen_test.ids where name in ('d_team1', 'd_team2');
+insert into team_members (team_id, user_id) values
+  ((select id from rennen_test.ids where name = 'd_team1'), (select id from rennen_test.ids where name = 'd_a')),
+  ((select id from rennen_test.ids where name = 'd_team2'), (select id from rennen_test.ids where name = 'd_b'));
+insert into spieler (id, team_id, verein_id, vorname, nachname, jahrgang)
+select (select id from rennen_test.ids where name = 'd_ella'), (select id from rennen_test.ids where name = 'd_team2'),
+       (select id from rennen_test.ids where name = 'd_verein'), 'Ella', 'Rennen', 2015;
+insert into team_spieler (team_id, spieler_id, verein_id)
+select (select id from rennen_test.ids where name = 'd_team2'), (select id from rennen_test.ids where name = 'd_ella'),
+       (select id from rennen_test.ids where name = 'd_verein');
+
+-- A führt p_a aus und hält die Transaktion offen, B setzt p_b ab; sobald B
+-- nachweislich auf eine Sperre wartet, committet A. Liefert das Ergebnis von
+-- B als Text, oder «FEHLER: …». Schliesst die Verbindungen in jedem Fall.
+create function rennen_test.verschraenkt(p_ziel text, p_a uuid, p_sql_a text, p_b uuid, p_sql_b text) returns text
+language plpgsql as $f$
+declare
+  frist timestamptz;
+  ergebnis text;
+  meldung text;
+  n text;
+begin
+  perform extensions.dblink_connect('rennen_a', p_ziel || ' application_name=rennen_a');
+  perform extensions.dblink_connect('rennen_b', p_ziel || ' application_name=rennen_b');
+  perform extensions.dblink_exec('rennen_a', 'begin');
+  perform extensions.dblink_exec('rennen_a', 'set local role authenticated');
+  perform * from extensions.dblink('rennen_a', format($q$select set_config('request.jwt.claims', %L, true)$q$,
+    jsonb_build_object('sub', p_a, 'role', 'authenticated')::text)) as t(x text);
+  perform * from extensions.dblink('rennen_a', p_sql_a) as t(x text);
+
+  perform extensions.dblink_exec('rennen_b', 'begin');
+  perform extensions.dblink_exec('rennen_b', 'set local role authenticated');
+  perform * from extensions.dblink('rennen_b', format($q$select set_config('request.jwt.claims', %L, true)$q$,
+    jsonb_build_object('sub', p_b, 'role', 'authenticated')::text)) as t(x text);
+  perform extensions.dblink_send_query('rennen_b', p_sql_b);
+
+  frist := clock_timestamp() + interval '10 seconds';
+  loop
+    perform pg_stat_clear_snapshot();
+    exit when exists (
+      select 1 from pg_stat_activity
+       where application_name = 'rennen_b' and wait_event_type = 'Lock');
+    if clock_timestamp() > frist then
+      raise exception 'B wartet nach 10 s nicht auf eine Sperre';
+    end if;
+    perform pg_sleep(0.05);
+  end loop;
+
+  perform extensions.dblink_exec('rennen_a', 'commit');
+  select t.x into ergebnis from extensions.dblink_get_result('rennen_b', false) as t(x text);
+  meldung := extensions.dblink_error_message('rennen_b');
+  perform * from extensions.dblink_get_result('rennen_b', false) as t(x text);
+  perform extensions.dblink_exec('rennen_b', case when ergebnis is null then 'rollback' else 'commit' end);
+  perform extensions.dblink_disconnect('rennen_a');
+  perform extensions.dblink_disconnect('rennen_b');
+  return coalesce(ergebnis, 'FEHLER: ' || meldung);
+exception when others or query_canceled then
+  foreach n in array coalesce(extensions.dblink_get_connections(), '{}') loop
+    perform extensions.dblink_disconnect(n);
+  end loop;
+  raise;
+end $f$;
+commit;
+
+do $$
+declare
+  ziel   text := format(
+    'host=%s port=%s dbname=%s user=postgres password=postgres connect_timeout=5 options=''-c statement_timeout=30s''',
+    coalesce(host(inet_server_addr()), '127.0.0.1'), inet_server_port(), current_database());
+  v_verein uuid := (select id from rennen_test.ids where name = 'd_verein');
+  v_team1 uuid := (select id from rennen_test.ids where name = 'd_team1');
+  v_team2 uuid := (select id from rennen_test.ids where name = 'd_team2');
+  v_a uuid := (select id from rennen_test.ids where name = 'd_a');
+  v_b uuid := (select id from rennen_test.ids where name = 'd_b');
+  v_ella uuid := (select id from rennen_test.ids where name = 'd_ella');
+  c_erwartet constant jsonb := '{"status": "abgewiesen", "grund": "doppelt", "eigenes_team": false, "teams": ["Rennen-Team-1"], "ohne_team": false}';
+  ergebnis text;
+  v_doppelt uuid;
+begin
+  -- (a) Erfassen gegen Erfassen, in zwei Teams.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_a, format($q$select spieler_aufnehmen(%L, 'Rennen', 'Doppelt', 2015, null)::text$q$, v_team1),
+    v_b, format($q$select spieler_aufnehmen(%L, 'rennen', 'DOPPELT', 2015, null)::text$q$, v_team2));
+  if ergebnis is null or left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> c_erwartet then
+    raise exception '(a) B hätte mit dem Status doppelt samt Team 1 abgewiesen werden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from spieler where verein_id = v_verein and nachname ilike 'doppelt') <> 1 then
+    raise exception '(a) Erwartet genau eine Spieler:in, gefunden: %',
+      (select count(*) from spieler where verein_id = v_verein and nachname ilike 'doppelt');
+  end if;
+
+  -- (b) Erfassen gegen Ändern: B ändert Ella zu denselben Angaben.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_a, format($q$select spieler_aufnehmen(%L, 'Rennen', 'Zwei', 2015, null)::text$q$, v_team1),
+    v_b, format($q$select spieler_aendern(%L, %L, 'Rennen', 'Zwei', 2015, null)::text$q$, v_team2, v_ella));
+  if ergebnis is null or left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> c_erwartet then
+    raise exception '(b) B hätte mit dem Status doppelt samt Team 1 abgewiesen werden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from spieler where verein_id = v_verein and nachname = 'Zwei') <> 1
+     or (select nachname from spieler where id = v_ella) <> 'Rennen' then
+    raise exception '(b) Erwartet genau eine «Rennen Zwei» und Ella unverändert';
+  end if;
+
+  -- (c) Ändern gegen Erfassen: A ändert «Rennen Doppelt» aus (a) und hält die
+  -- Vereinssperre; B erfasst dieselben neuen Angaben in Team 2.
+  select id into v_doppelt from spieler where verein_id = v_verein and nachname ilike 'doppelt';
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_a, format($q$select spieler_aendern(%L, %L, 'Rennen', 'Drei', 2015, null)::text$q$, v_team1, v_doppelt),
+    v_b, format($q$select spieler_aufnehmen(%L, 'RENNEN', 'drei', 2015, null)::text$q$, v_team2));
+  if ergebnis is null or left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> c_erwartet then
+    raise exception '(c) B hätte mit dem Status doppelt samt Team 1 abgewiesen werden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from spieler where verein_id = v_verein and nachname ilike 'drei') <> 1
+     or (select nachname from spieler where id = v_doppelt) <> 'Drei' then
+    raise exception '(c) Erwartet genau eine «Rennen Drei», und zwar die von A geänderte';
+  end if;
+exception when others or query_canceled then
+  perform set_config('rennen.fehler_doppelt', sqlerrm, false);
+end $$;
+
+delete from teams where id in (select id from rennen_test.ids where name in ('d_team1', 'd_team2'));
+delete from vereine where id = (select id from rennen_test.ids where name = 'd_verein');
+delete from auth.users where id in (select id from rennen_test.ids where name in ('d_a', 'd_b'));
+
 -- Aufräumen, auch nach einem Fehler.
 drop schema rennen_test cascade;
 \if :dblink_vorher
@@ -239,5 +386,8 @@ begin
   end if;
   if current_setting('rennen.fehler_grenze') <> '' then
     raise exception 'Rennen Teamgrenze: %', current_setting('rennen.fehler_grenze');
+  end if;
+  if current_setting('rennen.fehler_doppelt') <> '' then
+    raise exception 'Rennen Doppelerfassung: %', current_setting('rennen.fehler_doppelt');
   end if;
 end $$;

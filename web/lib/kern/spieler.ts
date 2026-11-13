@@ -6,9 +6,11 @@ import {
   bereinigeName,
   jahrgangAus,
   nachSpielerName,
+  spielerDoppeltText,
   spielerName,
   spielerProblem,
   type Spieler,
+  type SpielerDoppelt,
   type SpielerEingabe,
 } from "@/lib/spieler";
 import type { ProbeStand } from "@/lib/probe";
@@ -147,25 +149,32 @@ export async function nimmSpielerAuf(
   const problem = eingabeFehler(e);
   if (problem) return problem;
   if (!istUuid(e.teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
-  const { data, error } = await supabase.rpc("spieler_aufnehmen", { p_team: e.teamId, ...argumente(e) });
+  const args = argumente(e);
+  const { data, error } = await supabase.rpc("spieler_aufnehmen", { p_team: e.teamId, ...args });
   if (error) return spielerFehler(error);
-  const r = data as { id: string; ersetzt: number };
+  const r = data as { id: string; ersetzt: number } | SpielerDoppelt;
+  // Der Jahrgang ist geprüft (eingabeFehler), also gesetzt.
+  if ("status" in r)
+    return fehlschlag("regel", spielerDoppeltText(r, { vorname: args.p_vorname, nachname: args.p_nachname, jahrgang: args.p_jahrgang! }), { feld: "vorname" });
   return ok({ spielerId: r.id, teamId: e.teamId, ersetzt: r.ersetzt });
 }
 
-/** Vorname, Nachname, Jahrgang und J+S-Nummer ändern (AK 2, 14) — als Ganzes. */
+/** Vorname, Nachname, Jahrgang und J+S-Nummer ändern (AK 2, 14) — als Ganzes,
+ *  in der Spielerliste von `teamId` (Rollen nach Ort, #578). */
 export async function aendereSpieler(
   supabase: SupabaseClient,
   _userId: string,
-  e: SpielerEingabe & { spielerId: string },
+  e: SpielerEingabe & { spielerId: string; teamId: string },
 ): Promise<KernErgebnis<{ spielerId: string; teamId: string }>> {
   const problem = eingabeFehler(e);
   if (problem) return problem;
-  const team = await teamDesSpielers(supabase, e.spielerId);
-  if (!team.ok) return team;
-  const { error } = await supabase.rpc("spieler_aendern", { p_spieler: e.spielerId, ...argumente(e) });
+  if (!istUuid(e.spielerId) || !istUuid(e.teamId))
+    return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
+  const { data, error } = await supabase.rpc("spieler_aendern", { p_team: e.teamId, p_spieler: e.spielerId, ...argumente(e) });
   if (error) return spielerFehler(error);
-  return ok({ spielerId: e.spielerId, teamId: team.wert });
+  const r = data as { status: "geaendert" } | SpielerDoppelt;
+  if (r.status === "abgewiesen") return fehlschlag("regel", spielerDoppeltText(r, null), { feld: "vorname" });
+  return ok({ spielerId: e.spielerId, teamId: e.teamId });
 }
 
 /** Eine Spieler:in aus der Liste entfernen (AK 3). An vergangenen Terminen
@@ -199,11 +208,6 @@ export async function ladeSpieler(
   if (error) return ausDbFehler(error);
   if (!data) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
   return ok({ ...kopfAusRoh(data), teamId: data.team_id });
-}
-
-async function teamDesSpielers(supabase: SupabaseClient, spielerId: string): Promise<KernErgebnis<string>> {
-  const s = await ladeSpieler(supabase, spielerId);
-  return s.ok ? ok(s.wert.teamId) : s;
 }
 
 /** Wie viele Spieler:innen die Liste des Teams führt. Führt das Team eine,

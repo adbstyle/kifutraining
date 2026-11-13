@@ -194,7 +194,7 @@ export function SpielerListe({
           setProbeFolgen(folgen);
           if (probeFolgenSumme(folgen) > 0) return;
         }
-        const r = await aendereSpielerAktion(id, eingabe);
+        const r = await aendereSpielerAktion(teamId, id, eingabe);
         if (!r.ok) return setFehler({ feld: r.feld, text: r.error });
         const vorher = spieler.find((s) => s.id === id);
         // Stimmt die Zahl nicht mehr, steht der neue Stand im offenen Dialog.

@@ -361,6 +361,7 @@ Jeder Schritt auf Prod nur mit Freigabe im Moment.
 - [ ] Review Focus 5: Bricht `db push` ab, bleibt die Sperre. Der Fehler wird als neue Migration behoben und erneut ausgerollt. Nur wenn schon die erste Datei scheitert, ist ein Vercel-Rollback eine Option.
 - [ ] Prüfabfragen aus AP §6.5 auf Prod, nur lesend; Rundgang mit dem eigenen Konto durch die Sperre.
 - [ ] Review Focus 2: in einem vorher geöffneten Tab eine Aktion auslösen und in einem verbundenen KI-Client ein altes Werkzeug aufrufen; beides endet mit einer Meldung, ohne Wirkung.
+- [ ] Review Focus 2, Story 2: Ein altes Bundle oder ein verbundener KI-Client liest während des Einspielens eine Abweisung `{status: 'abgewiesen'}` von `spieler_aufnehmen` als Erfolg (meldet «aufgenommen», obwohl nichts gespeichert ist) und scheitert bei `spieler_aendern` an der alten Signatur. Darum die Schreibwege erst freigeben, wenn die Migrationen **und** der Vercel-Deploy durch sind.
 - [ ] Firewall-Regel entfernen.
 - [ ] GitHub-Release mit `--target main`, Text aus `docs/releases/`. Stories #577–#585 und #587–#589 als erledigt markieren.
 

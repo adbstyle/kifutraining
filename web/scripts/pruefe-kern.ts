@@ -166,8 +166,10 @@ import {
   SPIELER_MELDUNG,
   SPIELER_TEXT,
   bereinigeName,
+  imTeam,
   jahrgangAus,
   nachSpielerName,
+  spielerDoppeltText,
   spielerProblem,
   spielerzahlKurz,
   spielerzahlLang,
@@ -2459,6 +2461,47 @@ pruefe("Spielerliste: Namen bereinigt, Grenzen der Angaben (#434 AK 6, 14)", () 
 pruefe("Spielerliste: Marker der Datenebene tragen die Sätze der Oberfläche", () => {
   for (const [marker, satz] of Object.entries(SPIELER_MELDUNG)) assert.equal(fehlerMeldung(`x ${marker} y`), satz, marker);
   assert.equal(fehlerMeldung('new row violates check constraint "spieler_jahrgang"'), SPIELER_TEXT.jahrgang);
+});
+
+pruefe("Doppelerfassung im Verein (#578): Satz je Lage, Teams nach Namen, Eingabe bereinigt, nie J+S", () => {
+  assert.equal(imTeam(["A"]), "im Team «A»");
+  assert.equal(imTeam(["B", "A"]), "im Team «A» und «B»");
+  assert.equal(imTeam(["C", "Ä", "B"]), "im Team «Ä», «B» und «C»");
+  const eingabe = { vorname: "  Lina ", nachname: "Muster\u00a0Meier", jahrgang: 2016 };
+  // AK 4: nur in anderen Teams — Eingabe, Jahrgang, Teams, Verweis auf die Verwaltung.
+  assert.equal(
+    spielerDoppeltText({ eigenes_team: false, teams: ["Eb", "Ea"] }, eingabe),
+    "Lina Muster Meier (2016) wird im Verein schon im Team «Ea» und «Eb» geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+  );
+  assert.equal(
+    spielerDoppeltText({ eigenes_team: false, teams: ["Ea"] }, eingabe),
+    "Lina Muster Meier (2016) wird im Verein schon im Team «Ea» geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+  );
+  // AK 3: im eigenen Team der bisherige Satz, auch bei weiteren Teams; beim Ändern ebenso.
+  assert.equal(spielerDoppeltText({ eigenes_team: true, teams: ["Ea", "Eb"] }, eingabe), SPIELER_MELDUNG.SPIELER_DOPPELT);
+  assert.equal(spielerDoppeltText({ eigenes_team: true, teams: ["Ea"] }, null), SPIELER_MELDUNG.SPIELER_DOPPELT);
+  // AK 6: Ändern nennt die Teams der anderen Spieler:in (Wortlaut der PO).
+  assert.equal(
+    spielerDoppeltText({ eigenes_team: false, teams: ["Eb", "Ea", "D"] }, null),
+    "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, im Team «D», «Ea» und «Eb».",
+  );
+  // Das Netz aus dem Trigger trägt den bisherigen Satz (Rennen).
+  assert.equal(fehlerMeldung("x SPIELER_DOPPELT y"), SPIELER_MELDUNG.SPIELER_DOPPELT);
+});
+
+pruefe("Kein Verweis auf den Index spieler_eindeutig (#578, Architekturplan §5.5)", () => {
+  const repo = join(web, "..");
+  const treffer: string[] = [];
+  const dateien = [
+    ...quelldateien(web),
+    ...[join(repo, "supabase/tests"), join(repo, ".github/workflows")].flatMap((w) =>
+      readdirSync(w, { recursive: true, encoding: "utf8" }).map((d) => join(w, d)).filter((d) => statSync(d).isFile()),
+    ),
+  ];
+  for (const datei of dateien)
+    if (datei !== fileURLToPath(import.meta.url) && /\bspieler_eindeutig\b/.test(readFileSync(datei, "utf8")))
+      treffer.push(relative(repo, datei));
+  assert.deepEqual(treffer, [], `spieler_eindeutig steht noch in: ${treffer.join(", ")}`);
 });
 
 pruefe("Verein (#577): Marker der Datenebene tragen die Sätze der Oberfläche, Team- und Vereinsgrenze bleiben unterscheidbar", () => {
