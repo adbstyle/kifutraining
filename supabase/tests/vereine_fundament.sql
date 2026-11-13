@@ -171,6 +171,21 @@ begin
 end $$;
 select pg_temp.erwarte(format($$select spieler_aufnehmen(%L, 'Neu', 'Neu', 2015, null)$$, pg_temp.id('team1')),
                        'SPIELERLISTE_VOLL');
+-- Ein Import nur mit J+S-Nummern geht über der Grenze durch, mit einer neuen
+-- Zeile nicht (Story 1 PC 2).
+do $$
+declare
+  v_name text := (select s.nachname from spieler s join team_spieler ts on ts.spieler_id = s.id
+                   where ts.team_id = pg_temp.id('team1') and s.vorname = 'Eins' limit 1);
+  v_js jsonb := jsonb_build_array(jsonb_build_object('zeile', 2, 'vorname', 'Eins', 'nachname', v_name, 'jahrgang', 2015, 'js', '4711'));
+begin
+  if spieler_importieren(pg_temp.id('team1'), v_js, '{"neu": [], "js": [2]}') ->> 'js' <> '1' then
+    raise exception 'Testfall 1: Import nur mit J+S-Nummern nicht übernommen';
+  end if;
+  perform pg_temp.erwarte(format($s$select spieler_importieren(%L, %L, '{"neu": [3], "js": []}')$s$, pg_temp.id('team1'),
+                                 v_js || '[{"zeile": 3, "vorname": "Neu", "nachname": "Neu", "jahrgang": 2015}]'::jsonb),
+                          'SPIELERLISTE_VOLL');
+end $$;
 reset role;
 select pg_temp.als(pg_temp.id('c'));
 select pg_temp.erwarte(format($$select spieler_aufnehmen(%L, 'Neu', 'Neu', 2015, null)$$, pg_temp.id('teamx')),
@@ -180,6 +195,7 @@ do $$
 begin
   if (select count(*) from team_spieler where team_id = pg_temp.id('team1')) <> 149
      or not exists (select 1 from spieler where team_id = pg_temp.id('team1') and vorname = 'Geändert')
+     or (select count(*) from spieler where team_id = pg_temp.id('team1') and js_nummer = '4711') <> 1
      or (select count(*) from spieler where verein_id = pg_temp.id('v2')) <> 1000 then
     raise exception 'Testfall 1: Bestand nicht wie erwartet';
   end if;
