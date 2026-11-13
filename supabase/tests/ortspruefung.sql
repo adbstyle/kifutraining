@@ -8,6 +8,8 @@
 -- `verein_verwaltung` direkt.
 -- Nur lesend; hinterlässt nichts.
 
+\set ON_ERROR_STOP on
+
 begin;
 set local statement_timeout = '30s';
 

@@ -34,6 +34,7 @@
 --   Die Verbindungen werden auch im Fehlerfall geschlossen; ein Fehler wird
 --   erst nach dem Aufräumen gemeldet.
 
+\set ON_ERROR_STOP on
 set statement_timeout = '60s';
 
 select exists (select 1 from pg_extension where extname = 'dblink') as dblink_vorher \gset

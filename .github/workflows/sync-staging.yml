@@ -51,6 +51,17 @@ name: Sync Staging (Prod-Spiegel, manuell)
 # Bis zum Release die Datei nach dem Sync gegen Staging erneut ausführen —
 # dafür muss sie wiederholbar geschrieben sein (Vorbild:
 # 20260928100000_fahrplan_freitext).
+#
+# Vorauseilendes develop (Epic Vereine, AP §6.2; fällt mit N1 weg): In der
+# Restore-Transaktion, unter `session_replication_role = replica`, laufen zwei
+# Bausteine aus supabase/sync/ (geprüft von supabase/tests/sync_bausteine.sql):
+# - vor dem Restore `vor_restore.sql`: leert public-Tabellen, die Staging hat,
+#   die aber nicht in PUBLIC_TABLES stehen (Staging-eigene Tabellen), in einem
+#   `truncate … cascade`. Ein zweites `truncate … cascade` nach dem Restore gibt
+#   es bewusst nicht: es risse über die FKs den eben geladenen Bestand mit.
+# - nach dem Restore, vor der Geheimnis-Nachbehandlung, `nach_restore.sql`: ruft
+#   `public.staging_nach_sync()` auf, sofern es die Funktion gibt.
+# Ohne Staging-eigene Tabellen und ohne die Funktion bewirken beide nichts.
 on:
   workflow_dispatch:
     inputs:
@@ -189,7 +200,11 @@ jobs:
           set local session_replication_role = replica;
           SQL
             echo "truncate $TRUNCATE_LIST cascade;"
+            # Staging-eigene public-Tabellen (nicht in PUBLIC_TABLES) leeren.
+            cat supabase/sync/vor_restore.sql
             cat dump.sql
+            # public.staging_nach_sync() aufrufen, sofern vorhanden.
+            cat supabase/sync/nach_restore.sql
             cat <<'SQL'
           -- Abo-Links sind Geheimnisse der Prod-Konten (#330). Auf Staging gelten
           -- sie nicht; wer dort testet, holt sich einen neuen.
@@ -227,6 +242,7 @@ jobs:
           SQL
           } | psql "$SUPABASE_STAGING_DB_URL" \
                 -v ON_ERROR_STOP=1 \
+                -v public_tables="$PUBLIC_TABLES" \
                 -v prod_ref="$SUPABASE_PROD_REF" \
                 -v staging_ref="$SUPABASE_STAGING_REF" \
                 --quiet
