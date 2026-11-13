@@ -1509,6 +1509,9 @@ die Spieler:in selbst abmeldet, unterscheidet sie nicht. Sperren lässt sich ein
 man ihn erneuert, und erneuert wird jeder einzeln, nie alle auf einmal. Was gespeichert ist, sagt
 nur die Abholseite, weder die Spielerliste noch die Seite hinter dem Link. Eine vollständige
 Datenschutzerklärung gibt es nicht (siehe [Navigation](navigation.md#bekannte-grenzen)).
+Die Eingrenzung auf Trainings oder Spiele merkt sich die Seite nicht: Neu geöffnet oder neu geladen
+zeigt sie wieder alle Termine. Sie grenzt nur die Liste ein, nicht das Kalender-Abo, und nur nach
+der Art, nicht nach einem Zeitraum; im Probe-Modus und ohne anstehende Termine gibt es sie nicht.
 
 Die Abholung erkennt keine Schreibvarianten: Umschriebene Umlaute, Rufnamen oder Tippfehler
 passen nicht. Wer die Abholadresse hat und Vorname, Nachname und Jahrgang eines Kindes kennt — im
