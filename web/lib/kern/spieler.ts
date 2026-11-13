@@ -15,6 +15,7 @@ import type { ProbeStand } from "@/lib/probe";
 import {
   IMPORT_TEXT,
   IMPORT_ZEILEN_MAX,
+  importGrenzText,
   jsAus,
   type ImportEintrag,
   type ImportErwartet,
@@ -315,9 +316,13 @@ function importArgumente(teamId: string, zeilen: ImportEintrag[]) {
   };
 }
 
-function importDbFehler(e: { message: string; code?: string }): KernFehler {
+/** `bestand`: die Zahl des Teams, wenn die Teamgrenze der Grund sein kann
+ *  (nur bei der Übernahme; die Vorschau meldet `SPIELERLISTE_VOLL` nur für
+ *  mehr als 1000 Zeilen, die `importFehler` vorher abfängt). */
+function importDbFehler(e: { message: string; code?: string }, bestand?: number): KernFehler {
   if (e.message.includes("SPIELERLISTE_GEAENDERT")) return fehlschlag("konflikt", IMPORT_TEXT.geaendert);
-  if (e.message.includes("SPIELERLISTE_VOLL")) return fehlschlag("regel", IMPORT_TEXT.zuGross);
+  if (e.message.includes("SPIELERLISTE_VOLL"))
+    return fehlschlag("regel", bestand === undefined ? IMPORT_TEXT.zuGross : importGrenzText(bestand));
   return spielerFehler(e);
 }
 
@@ -351,7 +356,8 @@ export async function importiereSpieler(
     ...importArgumente(e.teamId, e.zeilen),
     p_erwartet: { neu: e.erwartet.neu, js: e.erwartet.js },
   });
-  if (error) return importDbFehler(error);
+  if (error)
+    return importDbFehler(error, error.message.includes("SPIELERLISTE_VOLL") ? await anzahlSpieler(supabase, e.teamId) : undefined);
   const r = data as { neu: number; js: number; ersetzt: number };
   return ok({ teamId: e.teamId, ...r });
 }

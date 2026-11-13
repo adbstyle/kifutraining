@@ -278,6 +278,13 @@ export function importZuGross(v: ImportVorschau): boolean {
   return v.neu.length > 0 && v.bestand + v.neu.length > SPIELER_MAX;
 }
 
+/** Der Text, wenn neue Zeilen an die Teamgrenze stossen: Führt das Team
+ *  schon so viele, wie es fassen kann, der Wortlaut der Teamgrenze; sonst
+ *  passt die Datei nicht mehr hinein. In Vorschau und Übernahme gleich. */
+export function importGrenzText(bestand: number): string {
+  return bestand >= SPIELER_MAX ? SPIELER_MELDUNG.SPIELERLISTE_VOLL : IMPORT_TEXT.zuGross;
+}
+
 /** Die Meldung nach der Übernahme (AK 6 der Postconditions). */
 export function importErgebnisText(r: { neu: number; js: number; ersetzt: number }): string {
   const spieler = (n: number) => (n === 1 ? "1 Spieler:in" : `${n} Spieler:innen`);

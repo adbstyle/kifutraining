@@ -244,6 +244,7 @@ import {
   erkenneSpalten,
   importErgebnisText,
   importZeilen,
+  importGrenzText,
   importZuGross,
   jahrgangAusDatum,
   jsAus,
@@ -2488,6 +2489,10 @@ pruefe("Import-Vorprüfung: Bestand und neue Zeilen gegen die Teamgrenze 100 (#5
   assert.equal(importZuGross(vorschau(150, 0)), false, "Bestand über der Grenze, nichts Neues: durchlassen (PC 2)");
   assert.equal(importZuGross(vorschau(150, 1)), true, "über der Grenze zählt jede neue Zeile");
   assert.equal(IMPORT_TEXT.zuGross, `Die Datei ist zu gross. Eine Spielerliste fasst höchstens ${SPIELER_MAX} Spieler:innen.`);
+  // Text: an oder über der Grenze der Wortlaut der Teamgrenze, sonst passt die Datei nicht.
+  assert.equal(importGrenzText(SPIELER_MAX), SPIELER_MELDUNG.SPIELERLISTE_VOLL);
+  assert.equal(importGrenzText(150), SPIELER_MELDUNG.SPIELERLISTE_VOLL);
+  assert.equal(importGrenzText(SPIELER_MAX - 1), IMPORT_TEXT.zuGross);
 });
 
 pruefe("Spielerzahl: Liste vor erwartet, ausgefallen ohne Zahl (#434 AK 8, #435 AK 6, #437 AK 4)", () => {

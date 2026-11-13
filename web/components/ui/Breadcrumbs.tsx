@@ -8,7 +8,9 @@ import { cn } from "@/lib/cn";
 
 export interface BreadcrumbItem {
   label: string;
-  /** Weggelassen ⇒ aktuelle Seite (kein Link, trägt aria-current). */
+  /** Weggelassen ⇒ kein Link. Am Ende die aktuelle Seite (trägt
+   *  aria-current), davor eine gedämpfte Pfadstufe ohne eigene Seite (z. B.
+   *  der Verein vor «Teams»). */
   href?: string;
   /** Optionales führendes Icon (z. B. Home auf der Wurzel). */
   icon?: LucideIcon;
@@ -16,7 +18,9 @@ export interface BreadcrumbItem {
 
 /* ── Brotkrumen ───────────────────────────────────────────────────────
    Sekundäre Pfad-Navigation. Datengetrieben wie Menu und Seitenleiste: ein
-   `items`-Array, das letzte Item ohne `href` ist die aktuelle Seite.
+   `items`-Array, das letzte Item ohne `href` ist die aktuelle Seite; ein
+   Item ohne `href` weiter vorne ist eine Pfadstufe ohne Link (gedämpft, ohne
+   aria-current).
    Lange Pfade kollabieren (maxItems) zu einem aufklappbaren „…"-Button.
    Separator als ChevronRight (kanonisches Icon), per `separator` ersetzbar.
 

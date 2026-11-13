@@ -4434,7 +4434,9 @@ try {
     assert.deepEqual(wert(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen: js, erwartet: erwartetVon(vj) })), { teamId: team, neu: 0, js: 1, ersetzt: 0 });
     const mitNeu = [...js, { ...zeilen[0], zeile: 3 }];
     const vn = wert(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen: mitNeu }));
-    fehler(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen: mitNeu, erwartet: erwartetVon(vn) }), "regel", IMPORT_TEXT.zuGross);
+    // An der Grenze nennt die Übernahme die Teamgrenze, nicht die Datei (wie die Vorschau, importGrenzText).
+    assert.equal(vn.bestand, 100);
+    fehler(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen: mitNeu, erwartet: erwartetVon(vn) }), "regel", SPIELER_MELDUNG.SPIELERLISTE_VOLL);
     assert.equal(await anzahlSpieler(a.supabase, team), 100);
   });
 
