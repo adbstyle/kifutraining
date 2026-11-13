@@ -96,10 +96,11 @@ jobs:
       - uses: actions/checkout@v6
       - uses: supabase/setup-cli@v2
         with:
-          version: latest
-          # Ohne Token löst die Action «latest» anonym auf und scheitert am
-          # API-Limit von GitHub («rate limit exceeded»).
-          github-token: ${{ github.token }}
+          # Fest gepinnt (gleiche Version in deploy.yml und deploy-staging.yml):
+          # «latest» zog am 2026-11-02 still die CLI v3, die [inbucket] ablehnt
+          # und bei 'db push' ohne --remote die lokale DB anpeilt. Wechsel auf v3
+          # nur bewusst, samt Anpassung der Deploy-Befehle.
+          version: 2.122.1
       - name: Lokalen Stack starten und Migrationen + seed.sql anwenden
         run: supabase start
       # 'supabase start' fährt den vollen lokalen Stack hoch und wendet alle
