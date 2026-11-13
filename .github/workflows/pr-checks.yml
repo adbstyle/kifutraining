@@ -18,6 +18,17 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v6
+      # reset-staging.yml löscht alle Daten des Ziels samt Konten und darf nur
+      # Staging kennen: kein Prod-Secret in der Datei.
+      - name: reset-staging.yml ohne Prod-Secrets
+        working-directory: .
+        run: |
+          DATEI=.github/workflows/reset-staging.yml
+          test -f "$DATEI"
+          if grep -nE 'SUPABASE_PROD_|secrets\.SUPABASE_(DB_PASSWORD|URL|SERVICE_ROLE_KEY)\b' "$DATEI"; then
+            echo "::error::$DATEI nennt ein Prod-Secret (siehe Zeilen oben)."
+            exit 1
+          fi
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
