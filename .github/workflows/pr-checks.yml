@@ -106,6 +106,14 @@ jobs:
       # 'supabase start' fährt den vollen lokalen Stack hoch und wendet alle
       # Migrationen + seed.sql an -> schlägt fehl, wenn eine Migration kaputt ist
       # und validiert so die Schema-Änderungen wirklich.
+      # psql-Tests (supabase/tests/): alles mit zwei Verbindungen, Funktionstexten
+      # oder Daten unter replica — Ortsprüfung, Rennen über dblink, Sync-Bausteine.
+      # DB_URL liefert 'supabase status -o env' immer (CLI 2.122.1,
+      # command-internal/status-values.ts); fehlt sie, nimmt run.sh die lokale DB.
+      - name: psql-Tests gegen Wegwerf-DB
+        run: |
+          eval "$(supabase status -o env)"
+          supabase/tests/run.sh "$DB_URL"
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
