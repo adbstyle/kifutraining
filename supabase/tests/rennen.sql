@@ -263,9 +263,11 @@ select (select id from rennen_test.ids where name = 'd_team2'), (select id from 
        (select id from rennen_test.ids where name = 'd_verein');
 
 -- A führt p_a aus und hält die Transaktion offen, B setzt p_b ab; sobald B
--- nachweislich auf eine Sperre wartet, committet A. Liefert das Ergebnis von
--- B als Text, oder «FEHLER: …». Schliesst die Verbindungen in jedem Fall.
-create function rennen_test.verschraenkt(p_ziel text, p_a uuid, p_sql_a text, p_b uuid, p_sql_b text) returns text
+-- nachweislich auf eine Sperre wartet (mit p_warte_auf: auf eine Sperre dieser
+-- Art, `wait_event`), committet A. Liefert das Ergebnis von B als Text, oder
+-- «FEHLER: …». Schliesst die Verbindungen in jedem Fall.
+create function rennen_test.verschraenkt(p_ziel text, p_a uuid, p_sql_a text, p_b uuid, p_sql_b text,
+                                         p_warte_auf text default null) returns text
 language plpgsql as $f$
 declare
   frist timestamptz;
@@ -292,9 +294,10 @@ begin
     perform pg_stat_clear_snapshot();
     exit when exists (
       select 1 from pg_stat_activity
-       where application_name = 'rennen_b' and wait_event_type = 'Lock');
+       where application_name = 'rennen_b' and wait_event_type = 'Lock'
+         and (p_warte_auf is null or wait_event = p_warte_auf));
     if clock_timestamp() > frist then
-      raise exception 'B wartet nach 10 s nicht auf eine Sperre';
+      raise exception 'B wartet nach 10 s nicht auf eine Sperre%', coalesce(' der Art ' || p_warte_auf, '');
     end if;
     perform pg_sleep(0.05);
   end loop;
@@ -392,13 +395,20 @@ delete from auth.users where id in (select id from rennen_test.ids where name in
 --     w mit dem Stand aus der Auskunft aus Team 1 nimmt. A wartet an der
 --     `spieler`-Zeile und antwortet nach dem Zuordnen mit `stand_geaendert`;
 --     w steht danach in Team 1 und Team 3.
+-- (e) Auflösen unter der Teamsperre (Zyklus mit dem Herausnehmen, 40P01): A
+--     hält die Teamsperre von Team 5 und die Zeile seines Termins (wie das
+--     Herausnehmen in termine_einfrieren), B löst Team 5 auf. B muss an der
+--     Teamsperre warten (`advisory`), nicht am Termin: Sonst hätte B die
+--     Termine schon angefasst, bevor es die Teamsperre nimmt.
+-- (f) Dasselbe beim Austritt des letzten Mitglieds aus Team 6
+--     (entferne_team_mitglied, Trigger team_aufloesen_wenn_leer).
 -- Ein harter Abbruch lässt den Verein «Rennen-Zuordnen» samt Teams,
 -- Spieler:innen und die Konten «rennen-z…@rennen.test» stehen (von Hand löschen).
 
 select set_config('rennen.fehler_zuordnen', '', false) is not null as rennen_fehler_zuordnen_leer \gset
 
 begin;
-insert into rennen_test.ids (name) values ('z_verein'), ('z_t1'), ('z_t2'), ('z_t3'), ('z_verw'), ('z_a'),
+insert into rennen_test.ids (name) values ('z_verein'), ('z_t1'), ('z_t2'), ('z_t3'), ('z_t5'), ('z_t6'), ('z_verw'), ('z_a'),
   ('z_x1'), ('z_x2'), ('z_y'), ('z_r'), ('z_q'), ('z_w');
 create function rennen_test.z(p text) returns uuid language sql stable as $f$ select id from rennen_test.ids where name = p $f$;
 insert into auth.users (id, email, email_confirmed_at)
@@ -408,8 +418,11 @@ insert into verein_verwaltung (verein_id, user_id) values (rennen_test.z('z_vere
 insert into teams (id, name, verein_id) values
   (rennen_test.z('z_t1'), 'Zuordnen-Team-1', rennen_test.z('z_verein')),
   (rennen_test.z('z_t2'), 'Zuordnen-Team-2', rennen_test.z('z_verein')),
-  (rennen_test.z('z_t3'), 'Zuordnen-Team-3', rennen_test.z('z_verein'));
-insert into team_members (team_id, user_id) values (rennen_test.z('z_t1'), rennen_test.z('z_a'));
+  (rennen_test.z('z_t3'), 'Zuordnen-Team-3', rennen_test.z('z_verein')),
+  (rennen_test.z('z_t5'), 'Zuordnen-Team-5', rennen_test.z('z_verein')),
+  (rennen_test.z('z_t6'), 'Zuordnen-Team-6', rennen_test.z('z_verein'));
+insert into team_members (team_id, user_id) values (rennen_test.z('z_t1'), rennen_test.z('z_a')),
+  (rennen_test.z('z_t5'), rennen_test.z('z_a')), (rennen_test.z('z_t6'), rennen_test.z('z_a'));
 -- Spieler:in anlegen, optional mit Zuordnung (echte Trigger).
 create function rennen_test.zneu(p_id uuid, p_nachname text, p_team uuid) returns void
 language plpgsql as $f$
@@ -428,6 +441,8 @@ select rennen_test.zneu(rennen_test.z('z_x1'), 'X1', null);
 select rennen_test.zneu(rennen_test.z('z_x2'), 'X2', null);
 select rennen_test.zneu(rennen_test.z('z_y'), 'Y', rennen_test.z('z_t1'));   -- Team 1 hat 100
 select rennen_test.zneu(rennen_test.z('z_q'), 'Q', null);
+insert into training_termine (team_id, datum, beginn, ende)
+select rennen_test.z(t), current_date + 7, '18:00', '19:30' from unnest(array['z_t5', 'z_t6']) t;
 -- B ohne RPC: Zuordnung direkt, als Eigentümer (DEFINER; nur der Trigger sperrt).
 create function rennen_test.direkt(p_team uuid, p_spieler uuid) returns text
 language plpgsql security definer set search_path = public, pg_temp as $f$
@@ -435,8 +450,16 @@ begin
   insert into public.team_spieler (team_id, spieler_id, verein_id) values (p_team, p_spieler, rennen_test.z('z_verein'));
   return 'ok';
 end $f$;
+-- A hält die Teamsperre und die Termine des Teams (Fälle e, f).
+create function rennen_test.sperre(p_team uuid) returns text
+language plpgsql security definer set search_path = public, pg_temp as $f$
+begin
+  perform sperre_teams(array[p_team]);
+  perform 1 from training_termine where team_id = p_team for update;
+  return 'ok';
+end $f$;
 grant usage on schema rennen_test to authenticated;
-grant execute on function rennen_test.direkt(uuid, uuid), rennen_test.z(text) to authenticated;
+grant execute on function rennen_test.direkt(uuid, uuid), rennen_test.sperre(uuid), rennen_test.z(text) to authenticated;
 commit;
 
 do $$
@@ -499,6 +522,24 @@ begin
   end if;
   if not spieler_im_team(rennen_test.z('z_w'), v_t1) or not spieler_im_team(rennen_test.z('z_w'), v_t3) then
     raise exception '(d) W nicht in Team 1 und Team 3';
+  end if;
+
+  -- (e) Auflösen wartet an der Teamsperre.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_a, format('select rennen_test.sperre(%L)', rennen_test.z('z_t5')),
+    v_a, format('select loese_team_auf(%L, %L)::text', rennen_test.z('z_t5'), 'Zuordnen-Team-5'), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'aufgeloest'
+     or exists (select 1 from teams where id = rennen_test.z('z_t5')) then
+    raise exception '(e) B hätte nach der Sperre auflösen müssen: %', ergebnis;
+  end if;
+
+  -- (f) Austritt des letzten Mitglieds wartet an der Teamsperre.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_a, format('select rennen_test.sperre(%L)', rennen_test.z('z_t6')),
+    v_a, format('select entferne_team_mitglied(%L, %L, %L)::text', rennen_test.z('z_t6'), v_a, 'Zuordnen-Team-6'), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'aufgeloest'
+     or exists (select 1 from teams where id = rennen_test.z('z_t6')) then
+    raise exception '(f) B hätte nach der Sperre austreten und auflösen müssen: %', ergebnis;
   end if;
 exception when others or query_canceled then
   perform set_config('rennen.fehler_zuordnen', sqlerrm, false);

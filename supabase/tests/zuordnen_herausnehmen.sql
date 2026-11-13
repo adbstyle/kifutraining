@@ -14,7 +14,11 @@
 --   Meldungen, Kader und Statuswechsel, begonnene Termine bleiben mit Namen
 --   und `nicht_mehr_im_team` (PC 4–6); Sichtbarkeit (PC 7); Nachtragen an
 --   begonnenen Terminen (AK 18); Verlegen schreibt nichts zurück (PC 6);
---   erneutes Zuordnen ohne frühere Kader und Meldungen (PC 9)
+--   erneutes Zuordnen ohne frühere Kader und Meldungen (PC 9); hält einen
+--   begonnenen Termin selbst fest; `letztes_eigenes_team` false bei weiterem
+--   eigenem Team
+-- - Schnuppern einschalten bei mehreren Teams abgewiesen, das andere Team
+--   behält seine Abmeldungen (AP §5.3)
 -- - spieler.team_id = erstes Team (Entscheid A.1)
 -- - Team auflösen: Spieler:innen bleiben, `team_id` rückt nach bzw. wird null
 --   (Entscheid A.2), auch beim Weggang des letzten Mitglieds
@@ -63,7 +67,7 @@ create temp table ids (name text primary key, id uuid not null default gen_rando
 insert into ids (name) values ('verw'), ('a'), ('b'), ('c'), ('v'), ('v2'),
   ('t1'), ('t2'), ('t3'), ('t4'), ('tx'),
   ('s1'), ('s2'), ('s3'), ('sb'), ('d1'), ('d2'), ('d3'), ('sp'), ('frei1'), ('frei2'), ('frei3'), ('px'),
-  ('k1'), ('tp'), ('tf'), ('spp'), ('spf'), ('t3_termin');
+  ('k1'), ('tp'), ('tf'), ('spp'), ('spf'), ('t3_termin'), ('tb'), ('tv');
 create function pg_temp.id(p text) returns uuid language sql stable as $$ select id from ids where name = p $$;
 grant select on ids to authenticated;   -- temporär; die Rolle braucht pg_temp.id
 
@@ -108,9 +112,10 @@ insert into spieler (id, verein_id, team_id, vorname, nachname, jahrgang) values
   (pg_temp.id('d2'), pg_temp.id('v'), null, 'lea', 'DUBLETTE', 2016),
   (pg_temp.id('d3'), pg_temp.id('v'), null, 'LEA', 'dublette', 2016),
   (pg_temp.id('sp'), pg_temp.id('v'), pg_temp.id('t1'), 'Sina', 'Schnupper', 2016);
-insert into team_spieler (team_id, spieler_id, verein_id, probe_seit) values
-  (pg_temp.id('t1'), pg_temp.id('d1'), pg_temp.id('v'), null),
-  (pg_temp.id('t1'), pg_temp.id('sp'), pg_temp.id('v'), now());
+-- d1 ist älter in T1 als später in T4: T1 bleibt ihr erstes Team (A.1).
+insert into team_spieler (team_id, spieler_id, verein_id, probe_seit, created_at) values
+  (pg_temp.id('t1'), pg_temp.id('d1'), pg_temp.id('v'), null, now() - interval '1 day'),
+  (pg_temp.id('t1'), pg_temp.id('sp'), pg_temp.id('v'), now(), now());
 -- T4 mit 97 Zuordnungen.
 insert into spieler (verein_id, team_id, vorname, nachname, jahrgang)
 select pg_temp.id('v'), pg_temp.id('t4'), 'Viele', 'Nr ' || i, 2014 from generate_series(1, 97) i;
@@ -262,6 +267,24 @@ insert into kader (id, team_id, name) values (pg_temp.id('k1'), pg_temp.id('t1')
 select pg_temp.erwarte(format('insert into kader_spieler (kader_id, spieler_id, team_id) values (%L, %L, %L)',
                               pg_temp.id('k1'), pg_temp.id('sb'), pg_temp.id('t1')), 'ks_zuordnung');
 
+-- ── Schnuppern bei mehreren Teams (AP §5.3, vorgezogen) ─────────────────────
+-- d1 steht in T1 (erstes Team, a) und T4 und ist in T4 für ein kommendes
+-- Training abgemeldet. Einschalten in T1 wird abgewiesen, auch mit der Zahl;
+-- die Abmeldung in T4 bleibt. Ausschalten bleibt unverändert (ohne Wirkung).
+insert into team_probetraining (team_id, anzahl) values (pg_temp.id('t1'), 3);
+insert into training_termine (id, team_id, datum, beginn, ende) values
+  (pg_temp.id('tv'), pg_temp.id('t4'), current_date + 7, '18:00', '19:30');
+insert into termin_abmeldungen (termin_id, spieler_id, team_id, angemeldet) values
+  (pg_temp.id('tv'), pg_temp.id('d1'), pg_temp.id('t4'), false);
+select pg_temp.als(pg_temp.id('a'));
+select pg_temp.erwarte(format('select spieler_probe_folgen(%L)', pg_temp.id('d1')), 'SCHNUPPERN_MEHRERE_TEAMS');
+select pg_temp.erwarte(format('select spieler_probe_setzen(%L, true, 1)', pg_temp.id('d1')), 'SCHNUPPERN_MEHRERE_TEAMS');
+select pg_temp.pruefe(spieler_probe_setzen(pg_temp.id('d1'), false) = '{"probe": false, "verfallen": 0}', 'Ausschalten');
+reset role;
+select pg_temp.pruefe(exists (select 1 from termin_abmeldungen where termin_id = pg_temp.id('tv') and spieler_id = pg_temp.id('d1'))
+                      and not exists (select 1 from team_spieler where spieler_id = pg_temp.id('d1') and probe_seit is not null),
+                      'Schnuppern bei zwei Teams schrieb');
+
 -- ── Herausnehmen ────────────────────────────────────────────────────────────
 -- s1 steht in T1 und T2. In T1: Kader, ein begonnenes und ein kommendes
 -- Training, ein begonnenes und ein kommendes Spiel, je mit Meldung von s1.
@@ -388,10 +411,32 @@ select pg_temp.pruefe(not exists (select 1 from kader_spieler where spieler_id =
                       and not exists (select 1 from termin_abmeldungen where spieler_id = pg_temp.id('s1'))
                       and (select team_id from spieler where id = pg_temp.id('s1')) = pg_temp.id('t1'), 'erneut zugeordnet');
 
+-- Das Herausnehmen hält einen begonnenen, noch nicht festgehaltenen Termin
+-- selbst fest (team_spieler_vorher), mit der Spieler:in und ihrer Abmeldung.
+set local session_replication_role = replica;
+insert into training_termine (id, team_id, datum, beginn, ende) values
+  (pg_temp.id('tb'), pg_temp.id('t1'), current_date - 1, '18:00', '19:30');
+insert into termin_abmeldungen (termin_id, spieler_id, team_id, angemeldet) values
+  (pg_temp.id('tb'), pg_temp.id('s2'), pg_temp.id('t1'), false);
+set local session_replication_role = origin;
+select pg_temp.pruefe(not exists (select 1 from termin_eingefroren where termin_id = pg_temp.id('tb')), 'tb schon festgehalten');
+select pg_temp.als(pg_temp.id('a'));
+select pg_temp.pruefe(spieler_aus_team_nehmen(pg_temp.id('t1'), pg_temp.id('s2'),
+                        spieler_teams(pg_temp.id('t1'), pg_temp.id('s2')) ->> 'stand') ->> 'status' = 'herausgenommen', 's2 herausnehmen');
+reset role;
+select pg_temp.pruefe(exists (select 1 from termin_teilnahmen where termin_id = pg_temp.id('tb')
+                               and spieler_id = pg_temp.id('s2') and abgemeldet), 'begonnener Termin nicht selbst festgehalten');
+
 -- ── Team auflösen (Entscheid A.2) ───────────────────────────────────────────
 -- s3 steht in T3 und T2, frei1 nur in T3. Auflösen von T3: beide bleiben,
 -- s3 rückt auf T2, frei1 ohne Team. Dann verlässt b als letztes Mitglied T2
 -- (team_aufloesen_wenn_leer): sb und s3 bleiben ohne Team.
+insert into team_spieler (team_id, spieler_id, verein_id) values (pg_temp.id('t2'), pg_temp.id('s3'), pg_temp.id('v'));
+-- b ist auch Mitglied von T3: Aus T2 genommen bleibt s3 in einem eigenen Team.
+select pg_temp.als(pg_temp.id('b'));
+select pg_temp.pruefe(spieler_aus_team_nehmen(pg_temp.id('t2'), pg_temp.id('s3'), spieler_teams(pg_temp.id('t2'), pg_temp.id('s3')) ->> 'stand')
+                        = '{"status": "herausgenommen", "ohne_team": false, "letztes_eigenes_team": false}', 'letztes_eigenes_team bei weiterem eigenem Team');
+reset role;
 insert into team_spieler (team_id, spieler_id, verein_id) values (pg_temp.id('t2'), pg_temp.id('s3'), pg_temp.id('v'));
 delete from teams where id = pg_temp.id('t3');
 select pg_temp.pruefe((select team_id from spieler where id = pg_temp.id('s3')) = pg_temp.id('t2')

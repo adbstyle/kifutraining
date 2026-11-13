@@ -18,7 +18,11 @@
 -- Die Schreibwege schreiben `spieler.team_id` nicht mehr selbst; das pflegt
 -- `team_spieler_nachher` (20261114100000_zuordnung_invarianten.sql, Entscheid
 -- A.1). Die Leser der Spalte (Link, Abo, Schnuppern, Feedback) bleiben bis
--- Phase 7/8 unverändert.
+-- Phase 7/8 unverändert. Ausnahme: Das Einschalten des Schnupperns weist
+-- ab, wer weiteren Teams zugeordnet ist (AP §5.3, aus Phase 8 vorgezogen).
+--
+-- Auflösen und Austritt nehmen zuerst die Teamsperre (sonst Deadlock mit dem
+-- Herausnehmen).
 --
 -- Rollen nach Ort (AP §4): Team-RPCs prüfen `ist_team_mitglied(p_team)`,
 -- `verein_*` beginnt mit `nur_in_der_anwendung()` und prüft
@@ -394,6 +398,227 @@ begin
 end;
 $$;
 
+-- ── Funktionen: Schnuppern nur in einem Team ────────────────────────────────
+
+-- Rumpf wie in 20261029110000_probetraining.sql; dazu die eine Prüfung aus
+-- Phase 8 (AP §5.3): Wer weiteren Teams zugeordnet ist, schnuppert nicht. Bis
+-- Phase 8 zählt die Vorschau über alle Teams der Spieler:in, also nur
+-- sinnvoll, solange sie in einem ist.
+create or replace function spieler_probe_folgen(p_spieler uuid) returns jsonb
+language plpgsql stable security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_team uuid;
+begin
+  if auth.uid() is null then raise exception 'not authenticated'; end if;
+  select team_id into v_team from spieler where id = p_spieler;
+  if v_team is null or not ist_team_mitglied(v_team) then raise exception 'SPIELER_NICHT_GEFUNDEN'; end if;
+  if (select count(*) from team_spieler where spieler_id = p_spieler) > 1 then
+    raise exception 'SCHNUPPERN_MEHRERE_TEAMS';
+  end if;
+  return jsonb_build_object(
+    'abmeldungen', (select count(*) from termin_abmeldungen a join training_termine t on t.id = a.termin_id
+                     where a.spieler_id = p_spieler and a.verfallen_am is null and not a.angemeldet
+                       and not termin_begonnen(t.datum, t.beginn)),
+    'meldungen', (select count(*) from spiel_meldungen m join training_termine t on t.id = m.termin_id
+                   where m.spieler_id = p_spieler and m.zustand is not null and not termin_begonnen(t.datum, t.beginn)),
+    'kennzeichnungen', (select count(*) from spiel_meldungen m join training_termine t on t.id = m.termin_id
+                         where m.spieler_id = p_spieler and m.nicht_aufgeboten and not termin_begonnen(t.datum, t.beginn)));
+end;
+$$;
+
+-- Rumpf wie in 20261113110000_spieler_ueber_zuordnung.sql; dazu dieselbe
+-- Prüfung beim Einschalten. Sonst löschte es künftige Abmeldungen und
+-- Statuswechsel auch in den weiteren Teams. Geprüft unter Teamsperre und
+-- `spieler`-Zeile in einer neuen Anweisung: Ein gleichzeitiges Zuordnen hält
+-- dieselbe Zeile und kommt ganz vor oder ganz nach der Zählung. Ausschalten
+-- bleibt unverändert.
+create or replace function spieler_probe_setzen(p_spieler uuid, p_probe boolean, p_bestaetigt integer default null)
+returns jsonb
+language plpgsql security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_team uuid;
+  v_jetzt boolean;
+  v_ab integer := 0;
+  v_sp integer := 0;
+  v_kz integer := 0;
+  v integer := 0;
+begin
+  if auth.uid() is null then raise exception 'not authenticated'; end if;
+  select team_id into v_team from spieler where id = p_spieler;
+  if v_team is null or not ist_team_mitglied(v_team) or p_probe is null then
+    raise exception 'SPIELER_NICHT_GEFUNDEN';
+  end if;
+  -- Dieselbe Sperre wie jede Meldung; dann begonnene Trainings festhalten:
+  -- Ihr Stand bei Beginn folgte noch dem bisherigen Grundstand.
+  perform pg_advisory_xact_lock(hashtextextended('spieler:' || v_team::text, 0));
+  perform termine_einfrieren(v_team);
+  perform 1 from spieler where id = p_spieler for update;
+  select probe_seit is not null into v_jetzt from team_spieler where spieler_id = p_spieler and team_id = v_team;
+  if v_jetzt = p_probe then
+    return jsonb_build_object('probe', p_probe, 'verfallen', 0);
+  end if;
+  if p_probe then
+    if (select count(*) from team_spieler where spieler_id = p_spieler) > 1 then
+      raise exception 'SCHNUPPERN_MEHRERE_TEAMS';
+    end if;
+    if not exists (select 1 from team_probetraining where team_id = v_team) then
+      raise exception 'PROBE_ANZAHL_FEHLT';
+    end if;
+    select count(*) into v_ab from termin_abmeldungen a join training_termine t on t.id = a.termin_id
+     where a.spieler_id = p_spieler and a.verfallen_am is null and not a.angemeldet
+       and not termin_begonnen(t.datum, t.beginn);
+    select count(*) filter (where m.zustand is not null), count(*) filter (where m.nicht_aufgeboten)
+      into v_sp, v_kz
+      from spiel_meldungen m join training_termine t on t.id = m.termin_id
+     where m.spieler_id = p_spieler and not termin_begonnen(t.datum, t.beginn);
+    v := v_ab + v_sp + v_kz;
+    if v > 0 and p_bestaetigt is distinct from v then
+      raise exception 'PROBE_VERFALLEN % % % %', v, v_ab, v_sp, v_kz;
+    end if;
+  end if;
+  -- Kommende Trainings beginnen im neuen Grundstand (PC 1, 9); niemand hat
+  -- dort gewechselt.
+  delete from termin_abmeldungen a using training_termine t
+   where a.termin_id = t.id and a.spieler_id = p_spieler and not termin_begonnen(t.datum, t.beginn);
+  delete from termin_statuswechsel w using training_termine t
+   where w.termin_id = t.id and w.spieler_id = p_spieler and not termin_begonnen(t.datum, t.beginn);
+  update team_spieler set probe_seit = case when p_probe then now() end
+   where spieler_id = p_spieler and team_id = v_team;
+  -- Spiele gelten nun nicht mehr: ihre Meldungen und Kennzeichnungen fallen.
+  if p_probe then perform spiel_kader_bereinigen(v_team); end if;
+  return jsonb_build_object('probe', p_probe, 'verfallen', v);
+end;
+$$;
+
+-- ── Funktionen: Team auflösen unter der Teamsperre ──────────────────────────
+
+-- Auflösen löscht die Termine und kaskadiert danach auf team_spieler; das
+-- Herausnehmen hält die Zuordnung und braucht in termine_einfrieren die
+-- Termine (40P01). Darum zuerst die Teamsperre, vor jeder Zeilensperre
+-- (Sperrordnung Teams → Zeilen). Rumpf wie in
+-- 20261024100000_team_aufloesen_namensbestaetigung.sql.
+create or replace function loese_team_auf(p_team uuid, p_teamname text)
+returns jsonb
+language plpgsql security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_name text;
+  v_bilder jsonb;
+begin
+  if v_uid is null then raise exception 'not authenticated'; end if;
+  if not ist_team_mitglied(p_team) then
+    if not exists (select 1 from teams where id = p_team) then
+      return jsonb_build_object('status', 'team_weg');
+    end if;
+    raise exception 'not a member of this team';
+  end if;
+
+  perform sperre_teams(array[p_team]);
+  select name into v_name from teams where id = p_team for update;
+  if not found then return jsonb_build_object('status', 'team_weg'); end if;
+  if not ist_team_mitglied(p_team) then
+    raise exception 'not a member of this team';
+  end if;
+
+  if p_teamname is null
+     or normalize(btrim(p_teamname), nfc) is distinct from normalize(v_name, nfc) then
+    return jsonb_build_object('status', 'name_falsch', 'name', v_name);
+  end if;
+
+  v_bilder := team_bilder(p_team);
+  delete from teams where id = p_team;  -- kaskadiert alle Inhalte des Teams
+  return jsonb_build_object('status', 'aufgeloest', 'bilder', v_bilder);
+end;
+$$;
+
+-- Derselbe Zyklus beim Austritt des letzten Mitglieds und bei der
+-- Konto-Löschung (Trigger team_aufloesen_wenn_leer). Rumpf wie in
+-- 20260824195749_team_datenmodell.sql; die Sperre ist wiedereintrittsfähig.
+create or replace function team_aufloesen_wenn_leer() returns trigger
+language plpgsql security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if not exists (select 1 from team_members where team_id = old.team_id) then
+    perform sperre_teams(array[old.team_id]);
+    delete from teams where id = old.team_id;  -- kaskadiert Trainings + Termine
+  end if;
+  return old;
+end;
+$$;
+
+-- Der Austritt sperrt die Team-Zeile, bevor der Trigger die Teamsperre nähme
+-- (umgekehrte Ordnung zum Zuordnen, das unter der Teamsperre auf die
+-- Team-Zeile wartet). Darum auch hier zuerst die Teamsperre. Rumpf wie in
+-- 20261024100000_team_aufloesen_namensbestaetigung.sql.
+create or replace function entferne_team_mitglied(
+  p_team uuid,
+  p_user uuid,
+  p_teamname text default null)
+returns jsonb
+language plpgsql security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_name text;
+  v_verbleibend int;
+  v_bilder jsonb;
+begin
+  if v_uid is null then raise exception 'not authenticated'; end if;
+  if not ist_team_mitglied(p_team) then
+    -- Mit dem Team ist auch die Mitgliedschaft weg (PC 5).
+    if not exists (select 1 from teams where id = p_team) then
+      return jsonb_build_object('status', 'team_weg');
+    end if;
+    raise exception 'not a member of this team';
+  end if;
+
+  -- Sperren, damit ein gleichzeitiger Austritt oder eine Umbenennung die
+  -- Zählung und den Namensvergleich nicht überholt — und unter der Sperre
+  -- erneut prüfen, was sich bis dahin geändert haben kann.
+  perform sperre_teams(array[p_team]);
+  select name into v_name from teams where id = p_team for update;
+  if not found then return jsonb_build_object('status', 'team_weg'); end if;
+  if not ist_team_mitglied(p_team) then
+    raise exception 'not a member of this team';
+  end if;
+
+  if not exists (select 1 from team_members
+                 where team_id = p_team and user_id = p_user) then
+    -- Schon weg: kein Fehler, der Zielzustand ist erreicht.
+    return jsonb_build_object('status', 'entfernt');
+  end if;
+
+  select count(*) - 1 into v_verbleibend
+    from team_members where team_id = p_team;
+
+  if v_verbleibend > 0 then
+    delete from team_members where team_id = p_team and user_id = p_user;
+    return jsonb_build_object('status', 'entfernt');
+  end if;
+
+  -- Der Vorgang leert das Team: nur mit dem aktuellen Namen.
+  if p_teamname is null then
+    return jsonb_build_object('status', 'aufloesung_noetig', 'name', v_name);
+  end if;
+  if normalize(btrim(p_teamname), nfc) is distinct from normalize(v_name, nfc) then
+    return jsonb_build_object('status', 'name_falsch', 'name', v_name);
+  end if;
+
+  v_bilder := team_bilder(p_team);
+  -- Der Trigger team_aufloesen_wenn_leer entfernt das Team samt Inhalten.
+  delete from team_members where team_id = p_team and user_id = p_user;
+  return jsonb_build_object('status', 'aufgeloest', 'bilder', v_bilder);
+end;
+$$;
+
 -- ── Funktionen: Verein-Ort ──────────────────────────────────────────────────
 
 -- Grundfassung für die Verwaltung (Phase 4 ersetzt sie durch die Fassung für
@@ -560,5 +785,13 @@ revoke all on function verein_spielerliste(uuid) from public, anon;
 grant execute on function verein_spielerliste(uuid) to authenticated;
 revoke all on function verein_spieler_zuordnen(uuid, uuid[]) from public, anon;
 grant execute on function verein_spieler_zuordnen(uuid, uuid[]) to authenticated;
+revoke all on function spieler_probe_folgen(uuid) from public, anon;
+grant execute on function spieler_probe_folgen(uuid) to authenticated;
+revoke all on function spieler_probe_setzen(uuid, boolean, integer) from public, anon;
+grant execute on function spieler_probe_setzen(uuid, boolean, integer) to authenticated;
+revoke all on function loese_team_auf(uuid, text) from public, anon;
+grant execute on function loese_team_auf(uuid, text) to authenticated;
+revoke all on function entferne_team_mitglied(uuid, uuid, text) from public, anon;
+grant execute on function entferne_team_mitglied(uuid, uuid, text) to authenticated;
 
 reset lock_timeout;
