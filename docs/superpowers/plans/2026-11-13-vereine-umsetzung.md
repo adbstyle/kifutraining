@@ -147,8 +147,8 @@ Jede Phase 1–13 läuft nach dieser Schablone. Die Phasen unten nennen nur, was
 
 **Ziel:** `main` enthält alles, was auf `develop` schon fertig ist. Heute liegt dort #596 (Eingrenzung am privaten Link) unveröffentlicht.
 
-- [ ] Produktdoku, `feedback-triage.md` und Release-Text für den offenen Stand nachführen.
-- [ ] Release `develop` → `main` wie gewohnt, mit GitHub-Release.
+- [x] Produktdoku, `feedback-triage.md` und Release-Text für den offenen Stand nachführen.
+- [x] Release `develop` → `main` wie gewohnt, mit GitHub-Release.
 
 **Ausgang:** `git log origin/main..origin/develop` zeigt nur noch Doku zu Vereine.
 
@@ -157,14 +157,14 @@ Jede Phase 1–13 läuft nach dieser Schablone. Die Phasen unten nennen nur, was
 **Ziel:** Staging lässt sich syncen, obwohl `develop` vorauseilt; der Prod-Weg lässt sich proben; psql-Tests laufen in der CI.
 
 Reihenfolge:
-- [ ] psql-Testlauf in `pr-checks.yml` für `supabase/tests/*.sql`, mit `ortspruefung.sql` und einem Selbsttest des `dblink`-Musters in `rennen.sql`.
-- [ ] `sync-staging.yml`: Staging-eigene Tabellen vor dem Restore leeren; nach dem Restore `staging_nach_sync()` aufrufen, sofern vorhanden.
-- [ ] `reset-staging.yml` neu: `workflow_dispatch` mit Bestätigung `reset`, nur gegen Staging.
-- [ ] PR auf `develop`, dann **Release nach `main`**. Grund: GitHub löst `workflow_dispatch` nur aus, wenn die Workflow-Datei auf dem Default-Branch liegt; `reset-staging.yml` wäre sonst nicht startbar. V0 ändert weder Schema noch Anwendung.
-- [ ] Probelauf 1 (Freigabe, liest Prod): `sync-staging.yml` mit `--ref develop` starten und prüfen, dass Secrets und Bestätigung vom Branch aus greifen (AP §11 F2).
-- [ ] Probelauf 2 (mit Ankündigung): `reset-staging.yml`, danach Storage-Objekte und Auth-Konfiguration von Staging mit dem Stand davor vergleichen (AP §11 F6). Danach Sync, damit Staging wieder Daten hat.
+- [x] psql-Testlauf in `pr-checks.yml` für `supabase/tests/*.sql`, mit `ortspruefung.sql` und einem Selbsttest des `dblink`-Musters in `rennen.sql`.
+- [x] `sync-staging.yml`: Staging-eigene Tabellen vor dem Restore leeren; nach dem Restore `staging_nach_sync()` aufrufen, sofern vorhanden.
+- [x] `reset-staging.yml` neu: `workflow_dispatch` mit Bestätigung `reset`, nur gegen Staging.
+- [x] PR auf `develop`, dann **Release nach `main`**. Grund: GitHub löst `workflow_dispatch` nur aus, wenn die Workflow-Datei auf dem Default-Branch liegt; `reset-staging.yml` wäre sonst nicht startbar. V0 ändert weder Schema noch Anwendung.
+- [x] Probelauf 1 (Reset, liest nichts aus Prod): `reset-staging.yml` von `main`, am 13.11.2026 Lauf 43441286569, grün in 49 s; alle 111 Migrationen von `main` wurden neu eingespielt, Storage-Policies und `pg_cron` kamen ohne Rechtefehler zurück, die Auth-Einstellungen im Dashboard blieben bestehen (AP §11 F6).
+- [x] Probelauf 2 (Sync, Freigabe, liest Prod): `sync-staging.yml` mit `--ref develop`, am 13.11.2026 Lauf 43441659454, grün in 3 min 16 s; Secrets und Bestätigung greifen vom Branch aus (AP §11 F2). Reihenfolge Reset, dann Sync: so genügt ein einziger Zugriff auf Prod statt zwei.
 
-**Ausgang:** F2 und F6 sind beantwortet. Fasst der Reset Storage oder Auth an, wird der Weg der Generalprobe **jetzt** neu entschieden, nicht erst in Phase G.
+**Ausgang:** erfüllt am 13.11.2026. F2 und F6 sind beantwortet; der Reset löscht alle Konten in `auth`, nach dem Sync gelten die Konten aus Prod, und das Staging-Testkonto muss neu angelegt werden. Der Weg der Generalprobe bleibt wie geplant.
 
 ### K – Konto-ID (AP §6.1 Schritt −1, §6.4)
 
