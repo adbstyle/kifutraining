@@ -270,9 +270,12 @@ export function erwartetVon(v: ImportVorschau): ImportErwartet {
   return { neu: v.neu, js: v.js.map((j) => j.zeile) };
 }
 
-/** Die Liste würde zu gross (AK 22). */
+/** Die Liste würde zu gross (AK 22). Nur neue Zeilen stossen an die Grenze:
+ *  Ein Bestand über ihr bleibt, und ein Import ohne neue Zeilen — nur J+S-Nummern
+ *  — geht weiter durch (#577 PC 2). Zwilling der Vorprüfung in
+ *  `spieler_importieren`. */
 export function importZuGross(v: ImportVorschau): boolean {
-  return v.bestand + v.neu.length > SPIELER_MAX;
+  return v.neu.length > 0 && v.bestand + v.neu.length > SPIELER_MAX;
 }
 
 /** Die Meldung nach der Übernahme (AK 6 der Postconditions). */

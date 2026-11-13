@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronRight, Shield } from "lucide-react";
-import { Card, Leerzustand } from "@/components/ui";
-import { TeamErstellenButton } from "@/components/team/TeamErstellenButton";
+import { Card, Leerzustand, SectionMessage } from "@/components/ui";
 import { getMeineTeams } from "@/lib/queries/teams";
+import { getMeinVerein } from "@/lib/queries/verein";
+import { VEREIN_MELDUNG } from "@/lib/verein";
 import { createClient } from "@/lib/supabase/server";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { Flash } from "@/components/Flash";
@@ -13,7 +14,8 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Teams - KiFu", robots: { index: false } };
 
 /* Übersicht der eigenen Teams (Story 3, Story 12). Teams sind nur ihren
-   Mitgliedern sichtbar — es gibt keine öffentliche Team-Liste. */
+   Mitgliedern sichtbar — es gibt keine öffentliche Team-Liste. Der Verein
+   steht als erste Krume (#577). */
 export default async function TeamsPage({
   searchParams,
 }: {
@@ -26,20 +28,25 @@ export default async function TeamsPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const teams = await getMeineTeams();
+  const [teams, verein] = await Promise.all([getMeineTeams(), getMeinVerein()]);
 
   return (
-    <Seitenrahmen breite="voll" krumen={[{ label: "Teams" }]} aktionen={<TeamErstellenButton />}>
+    <Seitenrahmen breite="voll" krumen={verein ? [{ label: verein.name }, { label: "Teams" }] : [{ label: "Teams" }]}>
       {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
       <h1 className="sr-only">Teams</h1>
       {/* Ein anderes Mitglied hat das Team aufgelöst, während man es offen hatte (#480 PC 5). */}
       {sp.weg && (
         <Flash message="Dieses Team besteht nicht mehr - ein anderes Mitglied hat es aufgelöst." param="weg" />
       )}
+      {/* Teams legt die Vereinsverwaltung an; ein Konto ohne Verein sieht in
+          Story #577 denselben Hinweis (der eigene kommt mit Story 11, #587). */}
+      <SectionMessage appearance="information" className="mb-4">
+        {VEREIN_MELDUNG.TEAM_NUR_VERWALTUNG}
+      </SectionMessage>
       {teams.length === 0 ? (
         <Leerzustand icon={Shield} titel="Noch kein Team">
-          Lege ein Team an und nimm die Trainer:innen dazu, mit denen du
-          zusammen planst.
+          Du gehörst noch zu keinem Team. Ein Mitglied eines Teams kann dich
+          aufnehmen.
         </Leerzustand>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-3">

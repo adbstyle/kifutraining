@@ -230,8 +230,8 @@ export const teamsAbrufen = werkzeug({
     "Nennt die Teams, in denen du Mitglied bist, alphabetisch mit Name und Zahl der " +
     "Mitglieder. Die «id» ist die Kennung für «team_plan_abrufen», «trainings_suchen» " +
     "(bestand: team) und für «team_id» in «training_anlegen» und «training_kopieren». Teams " +
-    "gründen, umbenennen, auflösen oder Mitglieder verwalten lässt sich über den KI-Client " +
-    "nicht - das geht nur im Team-Bereich von KiFu.",
+    "anlegen, umbenennen, auflösen oder Mitglieder verwalten lässt sich über den KI-Client " +
+    "nicht - neue Teams legt die Vereinsverwaltung in KiFu an, das Übrige geht nur im Team-Bereich von KiFu.",
   nurLesen: true,
   eingabe: z.object({}),
   ausgabe: z.object({

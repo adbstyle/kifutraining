@@ -14,15 +14,19 @@ import { tagOhneJahr } from "@/lib/monat";
 import { SPIEL_TEXT } from "@/lib/spiel";
 import { PROBE_TEXT, type ProbeStand } from "@/lib/probe";
 
-/** Zwillinge der Checks `spieler_vorname`, `spieler_nachname`, `spieler_js`,
- *  `spieler_jahrgang` und der Obergrenze im Trigger `spieler_vorher`. */
+/** Zwillinge der Checks `spieler_vorname`, `spieler_nachname`, `spieler_js`
+ *  und `spieler_jahrgang`. */
 export const NAME_MAX = 60;
 export const JS_MAX = 20;
 export const JAHRGANG_MIN = 1000;
 export const JAHRGANG_MAX = 9999;
 /** So viele Ziffern hat ein Jahrgang — für `maxLength` der Felder. */
 export const JAHRGANG_STELLEN = 4;
-export const SPIELER_MAX = 200;
+/** Zwilling der Obergrenze im Trigger `team_spieler_vorher` (Marker
+ *  `SPIELERLISTE_VOLL`): So viele Zuordnungen führt ein Team höchstens, die
+ *  Schnuppernden mitgezählt. Sie wirkt nur auf neue Zuordnungen. Die Grenze
+ *  des Vereins steht in lib/verein.ts. */
+export const SPIELER_MAX = 100;
 
 export const SPIELER_TEXT = {
   vorname: `Bitte einen Vornamen mit höchstens ${NAME_MAX} Zeichen angeben.`,
@@ -35,7 +39,7 @@ export const SPIELER_TEXT = {
 export const SPIELER_MELDUNG = {
   SPIELER_DOPPELT:
     "Diese Spieler:in steht schon auf der Liste. Unterscheide zwei Gleichnamige mit einem Zusatz im Vornamen.",
-  SPIELERLISTE_VOLL: `Eine Spielerliste fasst höchstens ${SPIELER_MAX} Spieler:innen.`,
+  SPIELERLISTE_VOLL: `Das Team hat schon ${SPIELER_MAX} Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind.`,
   SPIELER_NICHT_GEFUNDEN: "Spieler:in nicht gefunden.",
   SPIELERLISTE_FUEHRT_ZAHL:
     "Das Team führt eine Spielerliste: Die Spielerzahl anstehender Termine kommt aus ihr und lässt sich nicht von Hand festlegen.",

@@ -30,6 +30,7 @@ import {
   teilnahmeStatus,
   type Teilnehmer,
 } from "@/lib/spieler";
+import { VEREIN_SPIELER_MAX } from "@/lib/verein";
 import { kennung } from "@/lib/mcp/bausteine";
 import { TEAM_KENNUNG_FEHLER, TERMIN_KENNUNG_FEHLER, TeamId, TerminId } from "@/lib/mcp/werkzeuge/trainings";
 import { werkzeug } from "@/lib/mcp/werkzeug";
@@ -44,7 +45,9 @@ import { jetztAmTrainingsort } from "@/lib/zeit";
 /** Was jede Beschreibung eines Spieler-Werkzeugs über das Modell sagt. */
 const SPIELER_MODELL =
   "Ein Team kann eine Spielerliste führen: je Spieler:in Vorname, Nachname, Jahrgang und optional die J+S-Nummer, " +
-  `höchstens ${SPIELER_MAX} je Team, jedes Mitglied führt sie. Vor- und Nachname haben je 1 bis ${NAME_MAX} Zeichen, ` +
+  `höchstens ${SPIELER_MAX} je Team und ${VEREIN_SPIELER_MAX} je Verein, jedes Mitglied führt sie. Wer eine Grenze ` +
+  "erreicht, weist das Aufnehmen ab; die Meldung nennt, ob die des Teams oder die des Vereins gilt, und bestehende " +
+  `Einträge bleiben unverändert. Vor- und Nachname haben je 1 bis ${NAME_MAX} Zeichen, ` +
   `der Jahrgang vier Ziffern, die J+S-Nummer höchstens ${JS_MAX} Zeichen. Dieselbe Spieler:in steht nur einmal auf ` +
   "der Liste: Gross- und Kleinschreibung, überzählige Leerzeichen, Bindestrich gegen Leerzeichen und Apostroph-Varianten " +
   "unterscheiden nicht, Umlaute schon; zwei Gleichnamige mit gleichem Jahrgang unterscheidet ein Zusatz im Vornamen. " +
