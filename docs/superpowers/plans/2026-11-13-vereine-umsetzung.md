@@ -235,6 +235,7 @@ Zusätzlich:
 - [ ] **Bereich-Wechsler** in der Seitenleiste kommt hier, weil der Bereich «Verein» ab jetzt für alle Vereinsmitglieder besteht. Die Verwaltung sehen Trainer:innen im Kopf von «Verein › Teams».
 - [ ] Bausteine `PersonAufnehmen` und `NamenBestaetigen` zuerst in den Styleguide.
 - [ ] Review Focus 4: E2E mit einem Konto, das Verwaltung **und** Mitglied ist. Im Team erscheinen keine Verwaltungsaktionen, und die Team-RPCs geben ihm nicht mehr als einem Mitglied.
+- [ ] **Aus dem Review von Story 3:** `termin_kader_setzen` (`supabase/migrations/20261018130000_termin_kader.sql`, letzte Fassung) und `termin_der_serie_folgen` (`supabase/migrations/20261031120000_treffpunkt_training.sql`, letzte Fassung) sperren zuerst die Termin-Zeile und nehmen erst danach über `kader_vorher` die Teamsperre, umgekehrt zur Sperrordnung Verein → Person → Teams → `spieler`-Zeile → Termin. Zusammen mit dem Auflösen eines Teams, dem Austritt des letzten Mitglieds oder der Konto-Löschung kann das einen Deadlock geben (40P01, ein Aufruf bricht ab, keine falschen Daten). Bewusst hingenommen bis hierher; hier beide Funktionen auf «Team vor Termin» umstellen und mit einem Rennen-Fall belegen.
 
 **Testfälle:** 3 (zweiter Teil), 4 (Teil Teams), 14, 16, 27, 31.
 
