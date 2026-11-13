@@ -168,10 +168,12 @@ Reihenfolge:
 
 ### K – Konto-ID (AP §6.1 Schritt −1, §6.4)
 
-- [ ] Mit Freigabe im Moment: nur die Zeile `verwaltung_konto` aus AP §6.4 auf Prod abfragen. Das Ergebnis ist eine Konto-ID, keine Personendaten.
-- [ ] Die ID geht als Default in `vereine_nachziehen` der Fundament-Migration. Eine E-Mail-Adresse steht nirgends im Repo.
+- [x] Mit Freigabe im Moment: nur die Zeile `verwaltung_konto` aus AP §6.4 auf Prod abfragen. Das Ergebnis ist eine Konto-ID, keine Personendaten.
+- [x] Die ID geht als Default in `vereine_nachziehen` der Fundament-Migration. Eine E-Mail-Adresse steht nirgends im Repo.
 
 **Ausgang:** Die ID liegt vor, bevor der PR zu Story 1 gemergt wird.
+
+**Erledigt** am 13.11.2026: Die Konto-ID steht als Default in `vereine_nachziehen`; der Job «Verwaltungskonto im Backfill eingesetzt» wacht weiter gegen einen Rückfall auf den Platzhalter.
 
 ### Phase 1 – #577 FC Wyler als erster Verein
 
@@ -217,6 +219,8 @@ Zusätzlich, in dieser Reihenfolge:
 
 **Testfälle:** 8, 9, 10, 11, 12 (Teil Mitglied), 29.
 
+**Aus dem Review von Story 1:** `rennen.sql` braucht einen eigenen Fall für die Teamsperre in `team_spieler_vorher` (der heutige Fall beweist nur die Vereinssperre). `ladeSpielerliste` muss `kader_spieler` auf das Kontextteam eingrenzen (`web/lib/kern/spieler.ts`, Kader-Embed), sobald eine Spieler:in in mehreren Teams steht.
+
 **Zwischenstand auf `develop`:** Niemand löscht eine Spieler:in (bis Phase 6). `/verein` leitet auf `/verein/spieler`, Mitglieder ohne Verwaltung auf `/teams` (bis Phase 5). Feedback über den Link einer Spieler:in ohne Team gilt als ungültig (bis Phase 7).
 
 ### Phase 5 – #581 Verwaltung führt Teams und Trainer:innen
@@ -231,6 +235,8 @@ Zusätzlich:
 - [ ] Review Focus 4: E2E mit einem Konto, das Verwaltung **und** Mitglied ist. Im Team erscheinen keine Verwaltungsaktionen, und die Team-RPCs geben ihm nicht mehr als einem Mitglied.
 
 **Testfälle:** 3 (zweiter Teil), 4 (Teil Teams), 14, 16, 27, 31.
+
+**Aus dem Review von Story 1:** Der Text `LETZTE_VERWALTUNG` (`web/lib/verein.ts`) verweist auf den Bereich «Verein», den es erst mit dieser Phase gibt; hier prüfen, dass der Verweis dann stimmt.
 
 **Zwischenstand:** Einen neuen Verein kann noch niemand gründen (bis Phase 11).
 
@@ -359,6 +365,8 @@ Jeder Schritt auf Prod nur mit Freigabe im Moment.
 - [ ] GitHub-Release mit `--target main`, Text aus `docs/releases/`. Stories #577–#585 und #587–#589 als erledigt markieren.
 
 ### C – Aufräumen
+
+C folgt unmittelbar auf R: Sobald `main` die Vereine-Migrationen trägt, setzt der Job «Prod-Weg» auf dem neuen Schema auf und wird rot.
 
 - [ ] PR auf `develop`: CI-Job «Prod-Weg» samt `prodweg_bestand.sql` entfernen (passt nicht mehr zum Schema von `main`).
 - [ ] Der Sync läuft wieder normal, auch aus `main`.

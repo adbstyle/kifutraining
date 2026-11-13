@@ -83,7 +83,7 @@ export async function terminSpielerVon(
 ): Promise<KernErgebnis<TerminSpieler>> {
   const [teilnehmer, team] = await Promise.all([
     supabase.rpc("termin_teilnehmer", { p_termin: t.id }),
-    supabase.from("spieler").select("id", { count: "exact", head: true }).eq("team_id", t.team_id),
+    supabase.from("team_spieler").select("spieler_id", { count: "exact", head: true }).eq("team_id", t.team_id),
   ]);
   const { data, error } = teilnehmer;
   if (error) return ausDbFehler(error);

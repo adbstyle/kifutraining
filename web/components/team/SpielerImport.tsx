@@ -9,12 +9,12 @@ import { importiereSpielerAktion, pruefeSpielerImportAktion } from "@/lib/action
 import { spielerName } from "@/lib/spieler";
 import {
   IMPORT_ANGABEN,
-  IMPORT_TEXT,
   beispielVon,
   erkenneSpalten,
   erwartetVon,
   importErgebnisText,
   importZeilen,
+  importGrenzText,
   importZuGross,
   leseDatei,
   zuordnungVollstaendig,
@@ -133,7 +133,7 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
   }
 
   const zuGross = vorschau !== null && importZuGross(vorschau);
-  const meldung = gesperrt ?? (zuGross ? IMPORT_TEXT.zuGross : null);
+  const meldung = gesperrt ?? (zuGross ? importGrenzText(vorschau.bestand) : null);
   const anzahlNeu = vorschau?.neu.length ?? 0;
   const anzahlJs = vorschau?.js.length ?? 0;
   const kann = vorschau !== null && meldung === null && !fehler && !pending && !laedt && anzahlNeu + anzahlJs > 0;

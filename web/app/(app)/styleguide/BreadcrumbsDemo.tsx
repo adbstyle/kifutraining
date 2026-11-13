@@ -36,6 +36,19 @@ export function BreadcrumbsDemo() {
 
       <div>
         <p className="type-label-small mb-2 text-on-surface-mittel">
+          Pfadstufe ohne Link (Verein vor «Teams»)
+        </p>
+        <Breadcrumbs
+          items={[
+            { label: "FC Beispiel" },
+            { label: "Teams", href: "#" },
+            { label: "Ea Junioren" },
+          ]}
+        />
+      </div>
+
+      <div>
+        <p className="type-label-small mb-2 text-on-surface-mittel">
           Kollabiert (maxItems=4) - „…" klappt den Pfad auf
         </p>
         <Breadcrumbs

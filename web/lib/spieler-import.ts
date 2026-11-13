@@ -270,9 +270,19 @@ export function erwartetVon(v: ImportVorschau): ImportErwartet {
   return { neu: v.neu, js: v.js.map((j) => j.zeile) };
 }
 
-/** Die Liste würde zu gross (AK 22). */
+/** Die Liste würde zu gross (AK 22). Nur neue Zeilen stossen an die Grenze:
+ *  Ein Bestand über ihr bleibt, und ein Import ohne neue Zeilen — nur J+S-Nummern
+ *  — geht weiter durch (#577 PC 2). Zwilling der Vorprüfung in
+ *  `spieler_importieren`. */
 export function importZuGross(v: ImportVorschau): boolean {
-  return v.bestand + v.neu.length > SPIELER_MAX;
+  return v.neu.length > 0 && v.bestand + v.neu.length > SPIELER_MAX;
+}
+
+/** Der Text, wenn neue Zeilen an die Teamgrenze stossen: Führt das Team
+ *  schon so viele, wie es fassen kann, der Wortlaut der Teamgrenze; sonst
+ *  passt die Datei nicht mehr hinein. In Vorschau und Übernahme gleich. */
+export function importGrenzText(bestand: number): string {
+  return bestand >= SPIELER_MAX ? SPIELER_MELDUNG.SPIELERLISTE_VOLL : IMPORT_TEXT.zuGross;
 }
 
 /** Die Meldung nach der Übernahme (AK 6 der Postconditions). */

@@ -15,6 +15,7 @@ import type { ProbeStand } from "@/lib/probe";
 import {
   IMPORT_TEXT,
   IMPORT_ZEILEN_MAX,
+  importGrenzText,
   jsAus,
   type ImportEintrag,
   type ImportErwartet,
@@ -36,7 +37,7 @@ import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type 
 
 export const SPIELER_FELD = { feld: "spieler_id" } as const;
 
-const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, probe_seit, kader_spieler(kader_id)";
+const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, kader_spieler(kader_id)";
 
 type SpielerRoh = {
   id: string;
@@ -45,11 +46,14 @@ type SpielerRoh = {
   jahrgang: number;
   js_nummer: string | null;
   link_bezogen: boolean;
-  probe_seit: string | null;
   kader_spieler: { kader_id: string }[] | null;
 };
 
-function ausRoh(s: SpielerRoh): Spieler {
+/** Eine Zuordnung des Kontextteams mit ihrer Spieler:in. Das Schnuppern
+ *  (`probe_seit`) hängt an der Zuordnung, nicht an der Spieler:in. */
+type ZuordnungRoh = { probe_seit: string | null; spieler: SpielerRoh | null };
+
+function kopfAusRoh(s: SpielerRoh): Omit<Spieler, "probe"> {
   return {
     id: s.id,
     vorname: s.vorname,
@@ -58,8 +62,14 @@ function ausRoh(s: SpielerRoh): Spieler {
     jsNummer: s.js_nummer,
     linkBezogen: s.link_bezogen,
     kaderIds: (s.kader_spieler ?? []).map((k) => k.kader_id),
+  };
+}
+
+function ausRoh(z: ZuordnungRoh & { spieler: SpielerRoh }): Spieler {
+  return {
+    ...kopfAusRoh(z.spieler),
     // Den Stand liest `mitProbeStand` nach (#555 AK 6, 7).
-    probe: s.probe_seit ? { anzahl: null, besucht: 0, angemeldet: 0, moeglich: 0 } : null,
+    probe: z.probe_seit ? { anzahl: null, besucht: 0, angemeldet: 0, moeglich: 0 } : null,
   };
 }
 
@@ -114,9 +124,15 @@ export async function ladeSpielerliste(
 ): Promise<KernErgebnis<{ team: { id: string; name: string }; spieler: Spieler[] }>> {
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
-  const { data, error } = await supabase.from("spieler").select(SPIELER_SPALTEN).eq("team_id", e.teamId);
+  // Über die Zuordnungen des Kontextteams, nicht über `spieler.team_id`:
+  // «Zeile sichtbar» heisst nicht «im Team» (Architekturplan §4.2).
+  const { data, error } = await supabase
+    .from("team_spieler")
+    .select(`probe_seit, spieler:spieler!tsp_spieler(${SPIELER_SPALTEN})`)
+    .eq("team_id", e.teamId);
   if (error) return ausDbFehler(error);
-  const spieler = await mitProbeStand(supabase, e.teamId, nachSpielerName(((data ?? []) as SpielerRoh[]).map(ausRoh)));
+  const zeilen = ((data ?? []) as unknown as ZuordnungRoh[]).filter((z): z is ZuordnungRoh & { spieler: SpielerRoh } => z.spieler !== null);
+  const spieler = await mitProbeStand(supabase, e.teamId, nachSpielerName(zeilen.map(ausRoh)));
   if (!spieler.ok) return spieler;
   return ok({ team: team.wert, spieler: spieler.wert });
 }
@@ -166,11 +182,14 @@ export async function entferneSpieler(
   return ok({ teamId: geladen.wert.teamId, name: spielerName(geladen.wert) });
 }
 
-/** Eine Spieler:in samt Team, soweit die RLS sie zeigt. */
+/** Eine Spieler:in samt Team, soweit die RLS sie zeigt — ohne Schnupper-Stand,
+ *  der nur im Kontext eines Teams gilt (`ladeSpielerliste`). Das Team ist in
+ *  Story #577 noch das eine der Zeile (`spieler.team_id`); die Teamliste
+ *  folgt mit Story #579. */
 export async function ladeSpieler(
   supabase: SupabaseClient,
   spielerId: string,
-): Promise<KernErgebnis<Spieler & { teamId: string }>> {
+): Promise<KernErgebnis<Omit<Spieler, "probe"> & { teamId: string }>> {
   if (!istUuid(spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
   const { data, error } = await supabase
     .from("spieler")
@@ -179,7 +198,7 @@ export async function ladeSpieler(
     .maybeSingle<SpielerRoh & { team_id: string }>();
   if (error) return ausDbFehler(error);
   if (!data) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
-  return ok({ ...ausRoh(data), teamId: data.team_id });
+  return ok({ ...kopfAusRoh(data), teamId: data.team_id });
 }
 
 async function teamDesSpielers(supabase: SupabaseClient, spielerId: string): Promise<KernErgebnis<string>> {
@@ -192,7 +211,7 @@ async function teamDesSpielers(supabase: SupabaseClient, spielerId: string): Pro
  *  der Hinweis, für wie viele ein Termin mit Kadern gilt (#453 AK 8). */
 export async function anzahlSpieler(supabase: SupabaseClient, teamId: string): Promise<number> {
   if (!istUuid(teamId)) return 0;
-  const { count } = await supabase.from("spieler").select("id", { count: "exact", head: true }).eq("team_id", teamId);
+  const { count } = await supabase.from("team_spieler").select("spieler_id", { count: "exact", head: true }).eq("team_id", teamId);
   return count ?? 0;
 }
 
@@ -297,9 +316,13 @@ function importArgumente(teamId: string, zeilen: ImportEintrag[]) {
   };
 }
 
-function importDbFehler(e: { message: string; code?: string }): KernFehler {
+/** `bestand`: die Zahl des Teams, wenn die Teamgrenze der Grund sein kann
+ *  (nur bei der Übernahme; die Vorschau meldet `SPIELERLISTE_VOLL` nur für
+ *  mehr als 1000 Zeilen, die `importFehler` vorher abfängt). */
+function importDbFehler(e: { message: string; code?: string }, bestand?: number): KernFehler {
   if (e.message.includes("SPIELERLISTE_GEAENDERT")) return fehlschlag("konflikt", IMPORT_TEXT.geaendert);
-  if (e.message.includes("SPIELERLISTE_VOLL")) return fehlschlag("regel", IMPORT_TEXT.zuGross);
+  if (e.message.includes("SPIELERLISTE_VOLL"))
+    return fehlschlag("regel", bestand === undefined ? IMPORT_TEXT.zuGross : importGrenzText(bestand));
   return spielerFehler(e);
 }
 
@@ -333,7 +356,8 @@ export async function importiereSpieler(
     ...importArgumente(e.teamId, e.zeilen),
     p_erwartet: { neu: e.erwartet.neu, js: e.erwartet.js },
   });
-  if (error) return importDbFehler(error);
+  if (error)
+    return importDbFehler(error, error.message.includes("SPIELERLISTE_VOLL") ? await anzahlSpieler(supabase, e.teamId) : undefined);
   const r = data as { neu: number; js: number; ersetzt: number };
   return ok({ teamId: e.teamId, ...r });
 }

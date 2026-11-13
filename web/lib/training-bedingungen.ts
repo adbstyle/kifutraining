@@ -16,6 +16,7 @@ import { KADER_CHECKS, KADER_MELDUNG } from "@/lib/kader";
 import { SPIEL_CHECKS, SPIEL_MELDUNG } from "@/lib/spiel";
 import { TRAINER_MELDUNG } from "@/lib/trainer";
 import { PROBE_CHECKS, PROBE_MELDUNG } from "@/lib/probe";
+import { VEREIN_MELDUNG } from "@/lib/verein";
 import { FELDER_TEXT } from "@/lib/termin-felder";
 import { sichtbareZuordnungen } from "@/lib/varianten";
 
@@ -345,6 +346,8 @@ const TERMIN_MARKER: [string, string][] = [
   ...Object.entries(TRAINER_MELDUNG),
   // Probetraining (#555).
   ...Object.entries(PROBE_MELDUNG),
+  // Der Verein: Grenzen, Teams nur durch die Verwaltung (#577).
+  ...Object.entries(VEREIN_MELDUNG),
 ];
 
 /** Die CHECKs am Termin, die die Applikation am Namen erkennt — wie

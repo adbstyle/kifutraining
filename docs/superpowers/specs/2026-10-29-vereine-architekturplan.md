@@ -370,9 +370,9 @@ Eine Person gehört dem Verein an, dessen Verwaltung sie angehört oder in desse
 Mengen und Prüfungen lesen `team_spieler` statt `spieler.team_id`. Die vollständige Liste steht in §4.4.
 - Signaturen und Ausgaben bleiben gleich (`create or replace`, Kommentar «Rumpf wie in …; Menge über team_spieler»).
 - **Nicht hier:** Dass `termin_teilnehmer` und `spiel_teilnehmer` DEFINER werden und die Spalte `nicht_mehr_im_team` bekommen, gehört zu Story 3 (`<ts>_vereine_bestand.sql`, §4.4). Erst dort gibt es Herausgenommene, und erst dort verengt sich `sp_select`. In dieser Migration ändern beide nur die Menge auf `team_spieler`.
-- **Schnupper-Status auf die Zuordnung:** In derselben Migration `update team_spieler ts set probe_seit = s.probe_seit from spieler s where s.id = ts.spieler_id and s.probe_seit is not null`. Das ist eindeutig, weil heute jede Spieler:in genau ein Team hat. Alle Leser von `spieler.probe_seit` lesen danach `team_spieler.probe_seit` der Zuordnung zum Termin-Team: `training_grundstand`-Aufrufe (`meldestand.sql:61`, `:75`, `:234`, `:271`, `:304`), `probe_stand`/`team_probe_staende` (`probetraining.sql:114-151`), `termin_gilt_fuer`, der Spiel-Ausschluss (`probetraining.sql:62`) und `probe_info` in `spieler_link_ansicht` (`treffpunkt_training.sql:792`, neueste Fassung). Die Leser joinen `team_spieler` ohnehin schon für die Menge. `spieler.probe_seit` ist ab hier tot und fällt im Contract (§3.8). Der Grant `select (probe_seit) on spieler` (`meldestand.sql:28`) fällt mit.
+- **Schnupper-Status auf die Zuordnung:** In derselben Migration `update team_spieler ts set probe_seit = s.probe_seit from spieler s where s.id = ts.spieler_id and s.probe_seit is not null`. Das ist eindeutig, weil heute jede Spieler:in genau ein Team hat. Alle Leser von `spieler.probe_seit` lesen danach `team_spieler.probe_seit` der Zuordnung zum Termin-Team: `training_grundstand`-Aufrufe (`meldestand.sql:61` `training_meldestand`, `:75` `training_abgemeldet`, `:234` `abmeldung_anwenden_training`, `:271` `termin_zeitpunkt_nachher`, `:304` `termin_abmeldungen_verfallend`), `probe_stand`/`team_probe_staende` (`probetraining.sql:114-151`), `termin_gilt_fuer` mit dem Spiel-Ausschluss (`probetraining.sql:62`), `termin_abmeldung_setzen` (`:260`), `spieler_link_abmelden` (`:288`), `termin_anmeldungen_verfallend` (`:325`), `termin_teilnehmer` (`:550`, `:554`) und `probe_info` in `spieler_link_ansicht` (`treffpunkt_training.sql:792`, neueste Fassung). Einziger Schreiber ist `spieler_probe_setzen` (`probetraining.sql:204` lesen, `:230` schreiben); er setzt ab hier `team_spieler.probe_seit` der Zuordnung zu `spieler.team_id` (Signatur bis Story 8 unverändert). Die Leser joinen `team_spieler` ohnehin schon für die Menge. `spieler.probe_seit` ist ab hier tot und fällt im Contract (§3.8). Der Grant `select (probe_seit) on spieler` (`meldestand.sql:28`) fällt mit.
 - **Web im selben PR:** `ladeSpielerliste`, `anzahlSpieler` (W`lib/kern/spieler.ts:117`, `:195`), `terminSpielerVon` (W`lib/kern/abmeldungen.ts:86`), `spielSpielerVon` (W`lib/kern/spiele.ts:135`) und der Probe-Leser W`lib/kern/spieler.ts:75` zählen bzw. lesen über `team_spieler`.
-- **Nachtragen herausgenommener Spieler:innen** (Story 3 AK 18): `termin_anwesenheit_setzen_training` (`nachtrag_anwesenheit.sql:59`) und `spiel_anwesenheit_setzen` (`spiel_nachtrag.sql:62`) prüfen heute `spieler.team_id = t.team_id`. Ersetzt wird das **nicht** durch `spieler_im_team`, sonst wiese der Nachtrag eine herausgenommene Spieler:in ab. Massgeblich ist allein, ob sie im festgehaltenen Stand steht: `exists (select 1 from termin_teilnahmen where termin_id = p_termin and spieler_id = p_spieler)` bzw. `spiel_teilnahmen`, sonst wie heute `nicht_dabei` (`:80-85`); danach `update termin_teilnahmen … where spieler_id = p_spieler`. Das korrigiert die Vorfassung (dort `spieler_im_team`), §4.4 übernimmt es.
+- **Nachtragen herausgenommener Spieler:innen** (Story 3 AK 18): `termin_anwesenheit_setzen_training` (`nachtrag_anwesenheit.sql:59`) und `spiel_anwesenheit_setzen` (`spiel_nachtrag.sql:62`) prüfen heute `spieler.team_id = t.team_id`. Ersetzt wird das **nicht** durch `spieler_im_team`, sonst wiese der Nachtrag eine herausgenommene Spieler:in ab. Massgeblich ist, ob sie im festgehaltenen Stand steht: Die Vorprüfung lautet `spieler_im_team(p_spieler, t.team_id) or exists (select 1 from termin_teilnahmen where termin_id = p_termin and spieler_id = p_spieler)` bzw. `spiel_teilnahmen`, sonst wie heute `nicht_gefunden`; danach `update termin_teilnahmen … where spieler_id = p_spieler`, ohne Zeile `nicht_dabei` (`:80-85`). Der Teil `spieler_im_team` ist nötig, weil ein begonnener Termin erst in der Funktion festgehalten wird (träge); vorher stünde auch eine zugeordnete Spieler:in nicht in `termin_teilnahmen`. So bleibt die Story-1-Fassung gleichwertig (eine fremde Spieler:in bekommt weiter `nicht_gefunden`), und eine herausgenommene bleibt nachtragbar. Das korrigiert die Vorfassung (dort `spieler_im_team` allein), §4.4 übernimmt es.
 
 ### 3.3 Zuordnungs-Invarianten
 
@@ -453,8 +453,8 @@ alter table spiel_teilnahmen     add constraint st_eingefroren_team foreign key 
 **Geänderte RPCs (gleiche Signatur, Story 1)**
 - `spieler_aufnehmen` sperrt **zuerst den Verein**, dann das Team. Sonst entsteht die Reihenfolge Team → Verein (`spielerliste.sql:315`), während der Trigger Verein → Team sperrt. Sie schreibt `verein_id` aus dem Team und fügt die Zuordnung in `team_spieler` selbst ein. `spieler.team_id` schreibt sie bis Story 3 noch mit (dort noch NOT NULL), danach nicht mehr (§3.7).
 - Das Freigeben der erwarteten Spielerzahl beim ersten Spieler wandert in den Helfer `spielerzahl_freigeben(p_team) returns int` (heute doppelt: `spielerliste.sql:316-322`, `spieler_import.sql:93-99`). Er prüft «Team hat noch keine Zuordnung» und dient `spieler_aufnehmen` und `verein_spieler_zuordnen`, aber nicht mehr dem Import (Story 9 PC 5). `ersetzt` bleibt in der Rückgabe. Ohne API-Recht (DEFINER-Helfer, der fremde Termine ändern würde).
-- Der alte Team-Import `spieler_importieren(p_team, …)` wird in Story 1 nur auf die Grenzen angepasst (`v_bestand` zählt `team_spieler`, Teamgrenze 100 nur bei `neu > 0`, Zeilendeckel `> 1000` mit eigenem Marker `IMPORT_ZU_GROSS`). Er gilt bis Story 9 und fällt dann weg (§3.7).
-- **Web und MCP im selben PR:** Die Marker `VEREIN_VOLL`, `VEREIN_TEAMS_VOLL`, `IMPORT_ZU_GROSS` samt Klartext kommen in `TERMIN_MARKER`/`SPIELER_MELDUNG`. Das MCP-Werkzeug `spieler_aufnehmen` bildet `VEREIN_VOLL` als Fehlerfall «regel» ab (Story 1 AK 6–7). `SPIELER_MODELL` (W`lib/mcp/werkzeuge/spieler.ts:29`, `:45-48`) nennt «höchstens 100 je Team, 1000 je Verein».
+- Der alte Team-Import `spieler_importieren(p_team, …)` wird in Story 1 nur auf die Grenzen angepasst (`v_bestand` zählt `team_spieler`, Teamgrenze 100 nur bei `neu > 0`, Sperre Verein → Team; der Zeilendeckel `> 1000` behält bis Story 9 `SPIELERLISTE_VOLL`, `IMPORT_ZU_GROSS` kommt mit `verein_spieler_importieren`). Er gilt bis Story 9 und fällt dann weg (§3.7).
+- **Web und MCP im selben PR:** Die Marker `VEREIN_VOLL` und `VEREIN_TEAMS_VOLL` samt Klartext kommen in `TERMIN_MARKER`/`SPIELER_MELDUNG` (`IMPORT_ZU_GROSS` mit Story 9). Das MCP-Werkzeug `spieler_aufnehmen` bildet `VEREIN_VOLL` als Fehlerfall «regel» ab (Story 1 AK 6–7). `SPIELER_MODELL` (W`lib/mcp/werkzeuge/spieler.ts:29`, `:45-48`) nennt «höchstens 100 je Team, 1000 je Verein».
 
 #### d) Herausnehmen (Story 3 #579)
 
@@ -521,11 +521,17 @@ Die Zahlen vor dem Löschen (Teams, Spieler:innen inklusive ohne Team, AK 11) li
 **Konto löschen:** `delete_account(p_vereinsname text default null)`, drop `delete_account()` + create (Signaturwechsel, Quelle `20261025100000_trainer_einladen.sql:812-847`). Das ist die **einzige** Fassung; Story 1 liefert sie ohne den Zweig der einzigen Person (§3.1), §4.4 verweist hierher. Erste Anweisung nach `auth.uid()` ist `nur_in_der_anwendung()` (ein KI-Token löscht kein Konto, §4.1), danach:
 
 ```sql
-v_verein := (select verein_id from verein_verwaltung where user_id = v_uid);   -- höchstens einer
+v_verein := person_verein(v_uid);                    -- nur Kandidat für die Sperre; erst sperren, dann lesen
 if v_verein is not null then
   perform sperre_verein(v_verein);
 end if;
 perform sperre_person(v_uid);                                   -- nach dem Verein (Sperrordnung §4.1)
+if exists (select 1 from verein_verwaltung where user_id = v_uid and verein_id is distinct from v_verein) then
+  raise exception 'VERWALTUNG_GEAENDERT';                       -- gleichzeitig in eine Verwaltung aufgenommen
+end if;
+if not exists (select 1 from verein_verwaltung where user_id = v_uid) then
+  v_verein := null;                                             -- Teammitglied ohne Verwaltung
+end if;
 if v_verein is not null then
   if not exists (select 1 from verein_verwaltung where verein_id = v_verein and user_id <> v_uid) then
     if exists (select 1 from team_members m join teams t on t.id = m.team_id
@@ -624,7 +630,7 @@ create policy sp_select on spieler for select to authenticated using (
 - `spieler.team_id` ist ab hier tot: Keine RPC schreibt oder liest die Spalte mehr, ausser `vereine_nachziehen` für Zeilen aus einem Prod-Dump vor dem Release (§6). Sie fällt im Contract (§3.8).
 - **`sp_select` nur für Mitglieder zugeordneter Teams.** Die Verwaltung liest den Spielerbestand ausschliesslich über DEFINER-RPCs mit `ist_verein_verwaltung` (`verein_spielerliste`, `verein_spieler_*`, §4.3), alle Trainer:innen des Vereins Name, Jahrgang und Teams über `verein_spielerliste` mit `ist_verein_mitglied`. Damit summiert keine Policy Mitglied und Verwaltung (Rollen nach Ort, PO 13). Kein Web- oder MCP-Leser schliesst aus «Zeile sichtbar» auf ein Recht im Bereich «Verein».
 - **Spieler:innen ohne Team bleiben unbefristet** (Story 6 PC 1). Es gibt keinen Verfall und keinen Job. Ändern und Link abrufen oder erneuern prüfen die RPCs (§4.4): ohne Team nur die Verwaltung (Story 6 AK 14). Löschen darf ohnehin nur die Verwaltung (Story 3 AK 12).
-- **Feedback über den Link** (mit Story 7, `<ts>_link_mehrere_teams.sql`): neue Prüfung `feedback_link_gueltig(p_token)` über `spieler.link_token` (gleiches Format-Muster). Die drei Gültigkeitsstellen (`feedback_link.sql:39`, `:51`, `:64`) prüfen `feedback_link_gueltig`. `feedback_link_team` entfällt (drop): Es hat keinen weiteren Leser, und gespeichert wird kein Team mehr (Story 7 PC 6). Sonst gälte ein gültiger Link einer Spieler:in ohne Team im Feedback als ungültig (Story 7 AK 18). Zwischen den Merges von Story 3 und Story 7 gilt das auf `develop` noch nicht; auf Prod gibt es den Zwischenstand nicht.
+- **Feedback über den Link** (mit Story 7, `<ts>_link_mehrere_teams.sql`): neue Prüfung `feedback_link_gueltig(p_token)` über `spieler.link_token` (gleiches Format-Muster). Die vier Gültigkeitsstellen (`feedback_link.sql:39`, `:51`, `:64`, `:77` in `feedback_link_ablegen`) prüfen `feedback_link_gueltig`. `feedback_link_ablegen` speichert heute das Team aus `feedback_link_team` in `feedback`; ab Story 7 kein Team mehr (Story 7 PC 6). Danach hat `feedback_link_team` keinen Leser und entfällt (drop). Sonst gälte ein gültiger Link einer Spieler:in ohne Team im Feedback als ungültig (Story 7 AK 18). Zwischen den Merges von Story 3 und Story 7 gilt das auf `develop` noch nicht; auf Prod gibt es den Zwischenstand nicht.
 
 **`<ts>_import_verein.sql` (Story 9 #585)**
 
@@ -846,18 +852,20 @@ Ein eigenes «verschieben» gibt es nicht: Zuordnen und danach Herausnehmen. Sch
 
 ### 4.4 Geänderte RPCs und Funktionen
 
-**Mengen über `team_spieler`, ohne Verhaltensänderung** (Rumpf sonst gleich; Liste per grep über die neuesten Fassungen bis Release 1.46.0 erneut ermitteln, `spiel_meldungen.sql` hat weitere Stellen mit `s.team_id`, z. B. `:154`, `:179`, `:275-277`, `:324`):
+**Mengen über `team_spieler`, ohne Verhaltensänderung** (Rumpf sonst gleich; Stand der neuesten Fassungen bis Release 1.46.0, umgesetzt in `20261113110000_spieler_ueber_zuordnung.sql`; die Stellen aus `spiel_meldungen.sql` sind überholte Fassungen):
 - **Mengen `s.team_id = t.team_id` → `team_spieler`:**
-  - spielerliste: `serie_spielerzahl_regel`, `termin_spielerzahl_regel`, `spielstand`
+  - spielerliste: `serie_spielerzahl_regel`, `termin_spielerzahl_regel` (`spielstand` ist nur noch Hülle um `spielstand_training` und `spiel_stand`)
   - spiel_aufgebot: `spiel_einfrieren`, `spiele_einfrieren`, `spiel_pruefen`
   - spiel_nachtrag: `spiel_teilnehmer`, `spiel_anwesenheit_setzen`
-  - meldestand: `spielstand_training`, `termin_einfrieren_training`, `termine_einfrieren_training`, `training_meldestand`, `termin_abmeldungen_verfallend`, `abmeldung_anwenden_training`
-  - probetraining: `spiel_stand`, `team_probe_staende`, `termin_anmeldungen_verfallend`, `termin_abmeldung_setzen`, `termin_teilnehmer`, `kader_bereinigen_training`
-  - weitere: `spiel_kader_bereinigen`, `kader_entfernen_folgen`, `termin_anwesenheit_setzen_training`, `kader_zuteilung_aendern` (`kader.sql:203`)
+  - meldestand: `spielstand_training`, `termin_einfrieren_training`, `termine_einfrieren_training`, `training_meldestand`, `abmeldung_anwenden_training`
+  - probetraining: `spiel_stand`, `team_probe_staende`
+  - weitere: `abholung_abholen` (`selbstabholung.sql:154`), `termin_anwesenheit_setzen_training`, `kader_zuteilung_aendern` (`kader.sql:203`)
+  - Ohne `spieler.team_id`, an der Menge nichts zu ändern: `termin_abmeldungen_verfallend`, `termin_anmeldungen_verfallend`, `termin_abmeldung_setzen`, `termin_teilnehmer` (sie lesen nur `probe_seit`, §3.2), `kader_bereinigen_training`, `spiel_kader_bereinigen`, `kader_entfernen_folgen` (dort ist `s` die Serie)
 - **Prüfungen `exists(spieler where id = p and team_id = t)` → `spieler_im_team(p, t)`:**
   - `abmeldung_anwenden_training` (`meldestand.sql:213`)
   - `spiel_pruefen` (`spiel_aufgebot.sql:210`)
-- **Nachtragen an begonnenen Terminen, ausdrücklich nicht auf `spieler_im_team` umstellen** (Story 3 AK 18, PC 5): `termin_anwesenheit_setzen_training` (`nachtrag_anwesenheit.sql:59`) und `spiel_anwesenheit_setzen` (`spiel_nachtrag.sql:62`) prüfen heute `spieler.team_id`. Weil Nachtragen nur an begonnenen, also festgehaltenen Terminen geht, prüfen sie künftig den **festgehaltenen Stand des Termins**: `exists(termin_teilnahmen where termin_id = p_termin and spieler_id = p)` bzw. `spiel_teilnahmen`. Eine herausgenommene Spieler:in bleibt so nachtrag- und korrigierbar, eine erst nach Beginn zugeordnete kommt nicht dazu (PC 8).
+  - `kader_zuteilung_aendern` (`kader.sql:207`)
+- **Nachtragen an begonnenen Terminen, ausdrücklich nicht auf `spieler_im_team` umstellen** (Story 3 AK 18, PC 5): `termin_anwesenheit_setzen_training` (`nachtrag_anwesenheit.sql:59`) und `spiel_anwesenheit_setzen` (`spiel_nachtrag.sql:62`) prüfen heute `spieler.team_id`. Weil Nachtragen nur an begonnenen, also festgehaltenen Terminen geht, prüfen sie künftig den **festgehaltenen Stand des Termins**: `spieler_im_team(p, t) or exists(termin_teilnahmen where termin_id = p_termin and spieler_id = p)` bzw. `spiel_teilnahmen` (Begründung des ersten Teils §3.2). Eine herausgenommene Spieler:in bleibt so nachtrag- und korrigierbar, eine erst nach Beginn zugeordnete kommt nicht dazu (PC 8).
 - **Rückschreiben beim Verlegen:** `termin_zeitpunkt_nachher` (`meldestand.sql:262-272`) und `spiel_zeitpunkt_nachher` (`spiel_aufgebot.sql:80-104`) filtern auf `spieler_im_team(p.spieler_id, new.team_id)`. Herausgenommene fallen so weg wie heute Ehemalige, statt das Verlegen mit 23503 abzubrechen.
 - **`termin_teilnehmer` und `spiel_teilnehmer` werden DEFINER** (heute INVOKER, `probetraining.sql:533`), per drop + create mit neuem Grant, **in Story 3** (`<ts>_vereine_bestand.sql`; Vorbild `probetraining.sql:532-560`, `spiel_nachtrag.sql:161-162`):
   - erste Bedingung `ist_team_mitglied(Termin-Team)`
@@ -875,7 +883,7 @@ Ein eigenes «verschieben» gibt es nicht: Zuordnen und danach Herausnehmen. Sch
 | `team_aufloesen_wenn_leer` | 5 | Trigger und Funktion entfallen (`20260824195749_team_datenmodell.sql:282-295`). Ein Team ohne Mitglied bleibt (PC 3); die Verwaltung sieht es über `verein_ansicht` (`ohne_mitglied`). |
 | `finde_trainer`, `add_team_member` | 5, 11 | Prüfung bleibt Mitgliedschaft (`team_rpcs.sql:92`, `:124`). Neu: Personensperre (über den Invarianten-Trigger) und Status `anderer_verein` ohne Vereinsnamen (Story 11 AK 8); `anderer_verein` zählt für die Bremse als erfolgloser Versuch (Zählregel bei `verein_finde_person`, §4.3). Nur bestätigte Konten wie heute (`trainer_per_email`). |
 | `team_mitglieder` | 5 | Prüfung unverändert (`20261014120000_team_mitglieder_email.sql:29`), Rückgabe additiv `ist_verwaltung` je Mitglied (AK 15). E-Mail weiterhin nur für das eigene Team. |
-| `delete_account` | 1, 11 | Ablauf und Code **nur in §3.4** (eine Fassung). Story 1: drop `delete_account()` + create `delete_account()` mit Rückgabe `jsonb` (heute `void`) und Status `letzte_verwaltung`; die Action zeigt ihn ab Story 1 (W`lib/actions/auth.ts:215-216` verschluckt heute Fehler). Story 11: drop + create `delete_account(p_vereinsname text default null)` mit dem Zweig der einzigen Person (`verein_bestaetigen`, `vereinsname_falsch`, `verein_loeschen_kern`; Story 11 AK 12, 14). Teams, deren letztes Mitglied die Person ist, bleiben (Story 5 AK 29). Rückgabe `{status: 'geloescht', bilder}`. Quelle `20261025100000_trainer_einladen.sql:812-844`. |
+| `delete_account` | 1, 11 | Ablauf und Code **nur in §3.4** (eine Fassung). Story 1: drop `delete_account()` + create `delete_account()` mit Rückgabe `jsonb` (heute `void`): `{status: 'letzte_verwaltung'}` oder `{status: 'geloescht'}` (`bilder` erst mit Story 11, wenn `verein_loeschen_kern` dazukommt); die Action zeigt ihn ab Story 1 (W`lib/actions/auth.ts:215-216` verschluckt heute Fehler). Story 11: drop + create `delete_account(p_vereinsname text default null)` mit dem Zweig der einzigen Person (`verein_bestaetigen`, `vereinsname_falsch`, `verein_loeschen_kern`; Story 11 AK 12, 14). Teams, deren letztes Mitglied die Person ist, bleiben (Story 5 AK 29). Rückgabe `{status: 'geloescht', bilder}`. Quelle `20261025100000_trainer_einladen.sql:812-844`. |
 | `spieler_aufnehmen(p_team, …)` | 1, 2 | Prüfung `ist_team_mitglied(p_team)` wie heute. **Vereinssperre zuerst**, dann Team (heute Team zuerst, `spielerliste.sql:315`). Dann `spieler_doppelt` **vor** den Grenzen (Story 2 AK 9): Treffer → `{status: 'abgewiesen', grund: 'doppelt', eigenes_team, teams, ohne_team}` (AK 3, 4; Story 3 AK 19). Danach Insert, Grenzen 100/1000 aus den Triggern mit getrennten Markern (Story 1 AK 6, 7). `spielerzahl_freigeben` statt Inline-Code (`:316-322`). Rückgabe von `raise 'SPIELER_DOPPELT'` (`:328`) auf `jsonb`-Status umgestellt. |
 | `spieler_aendern(p_team, p_spieler, …)` | 2 | drop + create mit `p_team` und Rückgabe `jsonb` (heute `void`, `spielerliste.sql:335-351`). Prüfung `ist_team_mitglied(p_team)` und `spieler_im_team`, sonst `SPIELER_NICHT_GEFUNDEN`. Vereinssperre, Zeile `for update`, Schlüssel geändert und Treffer im Verein → `doppelt` mit Teams (AK 5, 6). Gleicher Schlüssel immer erlaubt (AK 7). |
 | `spieler_entfernen(p_spieler)` | 3, 13 | **entfällt** (drop `(uuid)`, ohne Nachfolger am Team-Ort; PO 01.11.2026). Mitglieder löschen keine Spieler:innen aus dem Verein, auch nicht, wenn alle Teams eigene sind (Story 3 AK 12, OoS 5); auch wer der Verwaltung angehört, löscht am Team-Ort nicht (Rollen nach Ort). Am Team-Ort bleibt nur `spieler_aus_team_nehmen` (§4.3), am Verein-Ort löscht `verein_spieler_entfernen`. Quelle heute `spielerliste.sql:357-376`; das MCP-Werkzeug gleichen Namens entfällt ebenso (§7.10, Story 13 AK 5). |
@@ -889,7 +897,7 @@ Ein eigenes «verschieben» gibt es nicht: Zuordnen und danach Herausnehmen. Sch
 | `spieler_link_abmelden`, `spieler_link_melden` | 7, 8 | Zuerst den Termin lesen und das **Termin-Team** sperren statt `s.team_id` (`probetraining.sql:285-289`, `spiel_meldungen.sql`), **danach** unter dieser Sperre `spieler_im_team(s.id, t.team_id)` prüfen, sonst `{status: 'abgewiesen', grund: 'gilt_nicht'}` (Story 7 AK 7), und `probe_seit` lesen. Ein gleichzeitiges Herausnehmen hält dieselbe Teamsperre (`team_spieler_vorher`); so meldet niemand für eine schon herausgenommene Spieler:in. Meldeweise, Frist und Kader folgen dem Termin-Team (AK 6). |
 | `spieler_link_ansicht`, `spieler_abo_termine` | 4, 7, 11 | neueste Fassung `20261031120000_treffpunkt_training.sql:774`, `:882`. Termine aller Teams über `team_spieler`, Teamname je Termin, Teamliste, Vereinsname als verantwortlich; Einzelheiten §7.7, §7.8. Weiter `anon` über das Token. |
 | `abholung_abholen` | 7 | Suche über `team_spieler` des Abholteams statt `spieler.team_id = v_team` (`selbstabholung.sql:150-155`); liefert denselben Link wie jedes andere Team (AK 11) |
-| `feedback_link_beginnen`, `feedback_link_zaehlen`, `feedback_link_vermerken` | 7 | prüfen `feedback_link_gueltig` statt `feedback_link_team(p_token) is null` (`20261028110000_feedback_link.sql:39`, `:51`, `:64`). `feedback_link_team` entfällt (drop): es hat keinen weiteren Leser und gäbe für Spieler:innen ohne Team null zurück (AK 18). Gespeichert wird weiter weder Spieler:in noch Link noch Team (PC 6). |
+| `feedback_link_beginnen`, `feedback_link_zaehlen`, `feedback_link_vermerken`, `feedback_link_ablegen` | 7 | prüfen `feedback_link_gueltig` statt `feedback_link_team(p_token) is null` (`20261028110000_feedback_link.sql:39`, `:51`, `:64`, `:77`). `feedback_link_ablegen` übergibt das Team heute an `feedback_ablegen_fuer` und speichert es in `feedback`; ab Story 7 ohne Team (null), sonst bliebe `feedback_link_team` nötig. `feedback_link_team` entfällt (drop): danach hat es keinen Leser mehr und gäbe für Spieler:innen ohne Team null zurück (AK 18). Gespeichert wird weder Spieler:in noch Link noch Team (PC 6). |
 | `termin_gilt_fuer` und alle anderen Leser von `probe_seit` | 1 | Signatur und Regel bleiben; `probe_seit` kommt aus `team_spieler` der Zuordnung zum Termin-Team statt aus `spieler.probe_seit` (§3.2) |
 
 **Kontogrenzen (Story 12)**
@@ -1024,6 +1032,20 @@ Alle Trigger gehen mit dem einen Release nach Prod. Die Spalte «Story» nennt d
 
   Hilfsabfrage vor N1: `select proname from pg_proc where pronamespace = 'public'::regnamespace and prosrc ~ 'team_id' and prosrc ~ 'spieler'`. Postgres verfolgt keine Abhängigkeit von Funktionsrümpfen auf Spalten; ein vergessener Leser fiele erst zur Laufzeit auf.
 
+  **Stand nach Story 1** (`20261113100000_vereine_fundament.sql`, `20261113110000_spieler_ueber_zuordnung.sql`; jede Story-PR schreibt die Tabelle fort):
+
+  | # | Stand | offen bis |
+  |---|---|---|
+  | 1 | INVOKER mit `spieler`: `probe_stand`, `spiel_teilnehmer`, `termin_teilnehmer`. INVOKER, die `team_spieler` unter `tsp_select` lesen: dieselben und `training_meldestand`, `training_abgemeldet`, `spielstand_training`, `spiel_stand`, `team_probe_staende`, `termin_gilt_fuer`. Aus DEFINER-Pfaden laufen sie als Eigentümer. | `termin_teilnehmer`, `spiel_teilnehmer` DEFINER: Story 3 |
+  | 2 | `spieler.team_id` als Schlüssel nur noch in: `spieler_aendern`, `spieler_entfernen`, `spieler_link_holen`, `spieler_link_erneuern`, `spieler_probe_folgen`, `spieler_probe_setzen` (Rechteprüfung ohne `p_team`), `spieler_link_abmelden` (Sperre, Termin-Team), `spieler_link_ansicht` (Termine, Teamname, `probe_info`), `feedback_link_team`; geschrieben von `spieler_aufnehmen`, `spieler_importieren`; bewusst `vereine_nachziehen`. | Story 2, 3, 7, 8, 9; `vereine_nachziehen` N1 |
+  | 3 | Rückschreiben aus `*_teilnahmen`: `termin_zeitpunkt_nachher` nur für Zugeordnete des Termin-Teams (Join `team_spieler`); `spiel_zeitpunkt_nachher` unverändert (`termin_gilt_fuer`). | `spiel_zeitpunkt_nachher` mit `spieler_im_team`: Story 3 |
+  | 4 | Termin-Zeile `for update`: `abmeldung_anwenden_training`, `spiel_pruefen`, `spiel_anwesenheit_setzen`, `termin_anwesenheit_setzen_training`, jeweils nach der Teamsperre und ohne `spieler`-Zeile. `spieler`-Zeile `for update`: `team_spieler_vorher`, `spieler_entfernen`, `spieler_probe_setzen`, ohne Termin-Zeile. Keine Funktion sperrt Termin vor `spieler`. | – |
+  | 5 | `spieler.probe_seit` liest nur noch `vereine_nachziehen` (und einmalig der Abgleich am Ende der zweiten Migration); alle Leser aus §3.2 lesen `team_spieler.probe_seit`, der einzige Schreiber `spieler_probe_setzen` schreibt dorthin. | Drop N1 |
+  | 6 | #561/#590: `spieler_link_ansicht` aus `treffpunkt_training.sql` übernommen (nur `probe_info` geändert); `spieler_abo_termine` liest es und bleibt; `hinweis_eltern.sql` liest keine Spieler-Menge. | Story 7 |
+  | 7 | Löschend: `spieler_entfernen` sperrt Verein, Teams, Zeile vor dem DELETE; `delete_account` sperrt Verein, Person vor dem DELETE der eigenen Verwaltungszeile; `loese_team_auf` und `team_aufloesen_wenn_leer` löschen Teams ohne Advisory-Sperre (Kaskade auf `spieler` und `team_spieler`, deren Trigger kehren zurück, weil das Team weg ist). | Story 3 (`spieler_entfernen` entfällt), Story 5 (Auflösen) |
+  | 8 | `nur_in_der_anwendung()` erste Anweisung nach `auth.uid()`: `delete_account`. Noch keine RPC `verein_*`. | ab Story 3 |
+  | 9 | `ortspruefung.sql` grün (lokal, 13.11.2026); MCP-Wächter in `check:kern` (Web-Teil). | jede Story |
+
 ### 5.6 Betriebsregeln
 
 - **Prod-Schritte und lesende Prod-Abfragen nur mit ausdrücklicher Freigabe im Moment.** Dazu zählt auch jeder Sync, denn er liest Prod. Eine Aufzählung im Plan ist keine Freigabe.
@@ -1097,13 +1119,13 @@ Alle Stories gehen gemeinsam in **einem** Release nach `main` (Epic #575). Ein k
 1. Staging-Schema auf `main` zurücksetzen, **über CI**, nicht lokal: neuer Workflow `reset-staging.yml` (V0) mit `workflow_dispatch`, Eingabe-Bestätigung `reset` (Muster `sync-staging.yml`), Checkout von `main`, dann `supabase db reset --linked` gegen das Staging-Projekt mit den Secrets `SUPABASE_STAGING_*`. Er läuft nur gegen Staging; ein Prod-Ziel kennt er nicht. Ob der Reset Storage-Objekte oder Auth-Konfiguration anfasst (F6), klärt ein erster Lauf in V0 auf Staging, vor Story 1; die Auth-Konfiguration liegt ohnehin im Dashboard.
 2. Sync aus `main` (**Freigabe**, liest Prod). Schema und `PUBLIC_TABLES` passen zu Prod, `staging_nach_sync` gibt es dort nicht.
 3. `deploy-staging.yml` aus `develop` auslösen: Alle Release-Migrationen laufen in Reihenfolge auf Prod-Daten, die Laufzeit steht im Log.
-4. `psql -f supabase/tests/prodweg_pruefen.sql` (§6.5) gegen Staging, danach E2E auf staging.ki-fu.ch.
+4. `psql -f supabase/tests/prodweg/prodweg_pruefen.sql` (§6.5) gegen Staging, danach E2E auf staging.ki-fu.ch.
 
 ### 6.3 Backfill «FC Wyler» (Fundament-Migration, idempotent, nur ergänzend)
 
 ```sql
 create function vereine_nachziehen(
-  p_verwaltung uuid default '<auth.users.id des Kontos der Plattform-Admin, vor dem Merge von Story 1 eintragen (§6.1 Schritt −1)>'
+  p_verwaltung uuid default '<auth.users.id des Kontos der Plattform-Admin (§6.1 Schritt −1, erledigt: steht in der Fundament-Migration)>'
 ) returns void
 language plpgsql set search_path = public, pg_temp as $$
 declare
@@ -1138,7 +1160,7 @@ select vereine_nachziehen();
 - **Eine Fassung:** `vereine_nachziehen` bleibt ab Story 1 unverändert. Die Eindeutigkeit je Verein (Story 2) prüft ein Trigger nur bei INSERT und Schlüsseländerung (§3.3 a); das Setzen von `verein_id` ändert keinen Schlüssel, und im Sync läuft ohnehin alles unter `replica`.
 - **Schnuppern:** `probe_seit` wandert auf die Zuordnung (§3.2). Das ist eindeutig, weil heute jede Spieler:in genau ein Team hat.
 - **Warum ein Parameter:** Der Test übergibt die ID eines eigenen Testkontos; Migration und `staging_nach_sync` rufen ohne Argument auf.
-- **Warum keine Ausnahme bei fehlendem Konto:** Ohne das Konto (lokal mit Bestand) entsteht FC Wyler ohne Verwaltung. Ein Abbruch legte jede lokale DB mit Teams still. Auf Prod schliessen es drei Schritte aus: Die Konto-ID steht vor dem Merge von Story 1 fest (§6.1 Schritt −1), die Generalprobe auf Staging (gleiche `auth.users`-IDs nach dem Sync) prüft mit `prodweg_pruefen.sql` «kein Verein ohne Verwaltung» (§6.5), und nach dem Release prüft Adrian Verwaltung = 1 (§6.5). Eine falsche ID fällt so in der Generalprobe auf, nicht erst im Fenster. Einen Notweg in der App gibt es nicht (PO 3, Epic OoS 13); lokal hilft ein Insert per SQL.
+- **Warum keine Ausnahme bei fehlendem Konto:** Ohne das Konto (lokal mit Bestand) entsteht FC Wyler ohne Verwaltung. Ein Abbruch legte jede lokale DB mit Teams still. Auf Prod schliessen es drei Schritte aus: Die Konto-ID steht vor dem Merge von Story 1 fest (§6.1 Schritt −1), die Generalprobe auf Staging (gleiche `auth.users`-IDs nach dem Sync) prüft mit `prodweg_pruefen.sql` «kein Verein ohne Verwaltung» (§6.5), und nach dem Release prüft Adrian Verwaltung = 1 (§6.5). Eine falsche ID fällt so in der Generalprobe auf, nicht erst im Fenster; eine fehlende schon vorher: Fiele der Default auf `00000000-…` zurück, scheiterte in `pr-checks.yml` der Job «Verwaltungskonto im Backfill eingesetzt» (die Konto-ID ist eingesetzt, erledigt am 13.11.2026). Einen Notweg in der App gibt es nicht (PO 3, Epic OoS 13); lokal hilft ein Insert per SQL.
 - **Trigger auf Prod:** Der Backfill läuft vor den Grenztriggern (Reihenfolge Tabellen → … → Trigger → Backfill gilt je Datei; `team_spieler_vorher` mit Grenze 100 kommt mit Story 1, aber erst in der zweiten Datei `spieler_ueber_zuordnung` nach dem Backfill). Die Eindeutigkeitsprüfung aus Story 2 greift nur bei INSERT und Schlüsseländerung. Teams über 100, ein Verein über 1000 und Altdubletten kommen deshalb durch (Story 1 PC 2, 3, Story 2 PC 1). `team_members_vorher` und `verwaltung_vorher` sind erfüllt, weil es nur einen Verein gibt.
 - **Trigger auf Staging:** Im Sync läuft alles unter `replica`.
 - **CI** (leere DB): keine Teams, also kein Verein, keine Zuordnung, keine Verwaltung. Vollständiges No-op.
@@ -1186,7 +1208,7 @@ select
   (select count(*) from public.spieler where probe_seit is not null)           as schnuppernde,
   (select id from auth.users
     where lower(email) = lower('<Adresse der Plattform-Admin>')
-      and email_confirmed_at is not null)                                      as verwaltung_konto;      -- in §6.3 eintragen
+      and email_confirmed_at is not null)                                      as verwaltung_konto;      -- in §6.3 eintragen (erledigt)
 rollback;
 ```
 
@@ -1217,7 +1239,7 @@ Was die Zahlen bedeuten:
 
 ### 6.5 Prüfabfragen nach Rollout
 
-`supabase/tests/prodweg_pruefen.sql` enthält diese Abfragen als DO-Block mit `raise exception` je Verstoss. Er läuft in der Generalprobe (§6.2), im CI-Prod-Weg (§6.7) und auf Staging nach jedem Sync. Auf Prod führt Adrian dieselben Abfragen nach dem Release lesend aus, mit Freigabe.
+`supabase/tests/prodweg/prodweg_pruefen.sql` (eigener Ordner, damit `run.sh` die Datei nicht im gewöhnlichen psql-Lauf ausführt) enthält diese Abfragen als DO-Block mit `raise exception` je Verstoss. Er läuft in der Generalprobe (§6.2), im CI-Prod-Weg (§6.7) und auf Staging nach jedem Sync. Auf Prod führt Adrian dieselben Abfragen nach dem Release lesend aus, mit Freigabe.
 
 ```sql
 select count(*) from teams   where verein_id is null;                                      -- 0
@@ -1244,7 +1266,10 @@ select ts.team_id, spieler_text_schluessel(s.vorname), spieler_text_schluessel(s
   from team_spieler ts join spieler s on s.id = ts.spieler_id
  group by 1, 2, 3, 4 having count(*) > 1;                                                  -- leer
 select conname from pg_constraint
- where connamespace = 'public'::regnamespace and not convalidated;                         -- leer (bis auf §6.1, letzte Datei)
+ where conrelid in ('teams'::regclass, 'spieler'::regclass, 'vereine'::regclass,
+                    'verein_verwaltung'::regclass, 'team_spieler'::regclass)        -- ab Story 3 mit den FK-Tabellen aus §3.3 b
+   and not convalidated;                                                                    -- leer (bis auf §6.1, letzte Datei)
+-- Nicht schemaweit: training_exercises trägt schon vor dem Epic fünf `not valid`-Constraints.
 -- Konten ohne Verein über der Grenze (Zählung über konto_bestand, §3.5); = Werte aus §6.4
 select count(*) filter (where (b->>'uebungen')::int > 50), count(*) filter (where (b->>'trainings')::int > 30)
   from (select konto_bestand(u.id) b from auth.users u
@@ -1270,7 +1295,7 @@ Was mit dem Release für Konten gilt:
 
 - `supabase/seed.sql` bleibt leer; `npm run seed` lädt nur Übungen.
 - **psql-Tests unter `supabase/tests/`** (Lauf aus V0 in `pr-checks.yml`): `vereine_nachziehen.sql` (§6.3), `ortspruefung.sql` und `rennen.sql` (§5.5) und alles, was Daten unter `replica` oder zwei Verbindungen braucht. Alle mit «gleichzeitig» markierten Testfälle unten laufen in `rennen.sql`, nicht in `pruefe-kern-db.ts`. `pruefe-kern-db.ts` spricht nur über supabase-js (`:26-31`) und kann `session_replication_role` nicht setzen.
-- **CI-Prod-Weg** (zusätzlicher Job in `pr-checks.yml`, nur bis zum Release): `supabase start`, `supabase db reset --version <letzte Migration auf origin/main>`, dann `psql -f supabase/tests/prodweg_bestand.sql` (synthetischer Bestand im **alten** Schema wie in §6.3, dazu eine Dublette in zwei Teams, zwei Teams mit gleichem normalisiertem Namen und ein Konto ohne Team mit 60 Übungen), dann `supabase migration up` und `prodweg_pruefen.sql`. Zusätzlich: Die Dublette bleibt nach der Story-2-Migration als zwei Zeilen bestehen und ist ohne Schlüsseländerung änderbar, eine dritte Erfassung mit demselben Schlüssel scheitert mit `SPIELER_DOPPELT`; das Konto ohne Team behält 60 Übungen, die 61. scheitert mit `KONTO_UEBUNGEN_VOLL`. Damit läuft die Kette in CI mit echten Triggern statt unter `replica`. Nach dem Release passt `prodweg_bestand.sql` nicht mehr zum Schema von `main`; ein Aufräum-PR auf `develop` entfernt Job und Datei.
+- **CI-Prod-Weg** (zusätzlicher Job in `pr-checks.yml`, nur bis zum Release): `supabase start`, `supabase db reset --version <letzte Migration auf origin/main>`, dann `psql -f supabase/tests/prodweg/prodweg_bestand.sql` (synthetischer Bestand im **alten** Schema wie in §6.3, dazu eine Dublette in zwei Teams, zwei Teams mit gleichem normalisiertem Namen und ein Konto ohne Team mit 60 Übungen), dann `supabase migration up` und `prodweg_pruefen.sql`. Der Bestand legt das Konto mit der Default-ID von `vereine_nachziehen` bestätigt an (der Job liest sie aus der Fundament-Migration), damit «Vereine ohne Verwaltung = 0» auch in CI gilt; zudem hält er die Ausgaben der Lesepfade im alten Schema fest, und `prodweg_pruefen.sql` vergleicht sie nach der Kette (Gleichwertigkeit, §3.2). Zusätzlich: Die Dublette bleibt nach der Story-2-Migration als zwei Zeilen bestehen und ist ohne Schlüsseländerung änderbar, eine dritte Erfassung mit demselben Schlüssel scheitert mit `SPIELER_DOPPELT`; das Konto ohne Team behält 60 Übungen, die 61. scheitert mit `KONTO_UEBUNGEN_VOLL`. Damit läuft die Kette in CI mit echten Triggern statt unter `replica`. Nach dem Release passt `prodweg_bestand.sql` nicht mehr zum Schema von `main`; ein Aufräum-PR auf `develop` entfernt Job und Datei.
 - **W`scripts/pruefe-kern-db.ts`:**
   - **Teams:** Heute entstehen sie direkt per `admin.from("teams").insert` ohne Verein (u. a. `:796`, `:1183`, `:1324`, `:1327`, `:1422` und im Helfer `serienTeam` `:1543-1544`). Ab Story 1 käme `VEREIN_FEHLT`. Alle Fundstellen per `git grep 'from("teams").insert'` ermitteln, nicht per Zeilenliste.
   - **Ein Test-Verein je Lauf:** Ein Helfer `testVerein()` legt zu Beginn **einen** Verein «Kern-DB» mit eigener Verwaltung an; alle Team-Inserts nutzen ihn. Mehrere Vereine je Lauf scheiterten an «höchstens ein Verein je Person», sobald `a` oder `b` in Teams zweier Vereine käme (`ANDERER_VEREIN`). Für Tests über Vereinsgrenzen gibt es ein eigenes Konto in einem zweiten Verein.

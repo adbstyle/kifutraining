@@ -132,7 +132,7 @@ export async function teilnehmerAmTermin(
 async function spielSpielerVon(supabase: SupabaseClient, t: TerminMitStand, jetzt: string): Promise<KernErgebnis<SpielSpieler>> {
   const [teilnehmer, team] = await Promise.all([
     supabase.rpc("spiel_teilnehmer", { p_termin: t.id }),
-    supabase.from("spieler").select("id", { count: "exact", head: true }).eq("team_id", t.team_id),
+    supabase.from("team_spieler").select("spieler_id", { count: "exact", head: true }).eq("team_id", t.team_id),
   ]);
   if (teilnehmer.error) return ausDbFehler(teilnehmer.error);
   const begonnen = terminBegonnen(t.datum, t.beginn, jetzt);

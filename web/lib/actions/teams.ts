@@ -22,28 +22,6 @@ function pruefeName(name: string): { ok: true; name: string } | { ok: false; err
   return problem ? { ok: false, error: problem } : { ok: true, name: name.trim() };
 }
 
-/** Ein Team anlegen; der Anlegende ist sofort Mitglied (Story 3). Team und
- *  erste Mitgliedschaft entstehen atomar in der RPC — sonst gäbe es bei einem
- *  Abbruch ein Team, das niemand mehr sieht. */
-export async function erstelleTeam(
-  name: string,
-): Promise<{ ok: true; teamId: string } | { ok: false; error: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
-
-  const geprueft = pruefeName(name);
-  if (!geprueft.ok) return geprueft;
-
-  const { data, error } = await supabase.rpc("create_team", { p_name: geprueft.name });
-  if (error) return { ok: false, error: error.message };
-
-  revalidatePath("/teams");
-  return { ok: true, teamId: data as string };
-}
-
 /** Team umbenennen (Story 3 AK 5). Jedes Mitglied darf das — alle sind
  *  gleichberechtigt; die RLS prüft die Mitgliedschaft. */
 export async function benenneTeamUm(teamId: string, name: string): Promise<TeamActionResult> {

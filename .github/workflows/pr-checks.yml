@@ -28,6 +28,30 @@ jobs:
             exit 1
           fi
 
+  # Eigener Job, damit die übrigen ihr Ergebnis weiter zeigen: Fiele der
+  # Default von vereine_nachziehen auf den Platzhalter zurück, legte der
+  # Backfill auf Prod «FC Wyler» ohne Verwaltung an (AP §6.1 Schritt −1, §6.3).
+  # Der Job «Prod-Weg» merkt das nicht, weil er genau dieses Konto anlegt.
+  konto-platzhalter:
+    name: Verwaltungskonto im Backfill eingesetzt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Default von vereine_nachziehen ist eine Konto-ID
+        run: |
+          DATEI=supabase/migrations/20261113100000_vereine_fundament.sql
+          KONTO=$(sed -n "s/.*p_verwaltung uuid default '\([0-9A-Fa-f-]*\)'::uuid.*/\1/p" "$DATEI")
+          if [ "$(printf '%s' "$KONTO" | grep -c .)" -ne 1 ]; then
+            echo "::error file=$DATEI::Default von vereine_nachziehen(p_verwaltung) nicht genau einmal gefunden: '$KONTO'."
+            exit 1
+          fi
+          if ! printf '%s\n' "$KONTO" | grep -Eqix '[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}' \
+             || [ "$KONTO" = "00000000-0000-0000-0000-000000000000" ]; then
+            echo "::error file=$DATEI::Keine Konto-ID als Default von vereine_nachziehen: '$KONTO'. Dort steht die auth.users.id des Verwaltungskontos (AP §6.1 Schritt −1)."
+            exit 1
+          fi
+          echo "Verwaltungskonto: $KONTO"
+
   web:
     name: Typecheck (web)
     runs-on: ubuntu-latest
@@ -169,3 +193,49 @@ jobs:
       - name: Fachkern gegen Wegwerf-DB
         working-directory: web
         run: npm run check:kern-db
+
+  # Prod-Weg der Vereine-Migrationen (Architekturplan Vereine §6.7), nur bis
+  # zum Release; danach entfernt ihn ein Aufräum-PR samt supabase/tests/prodweg/.
+  # Die CI prüft Migrationen sonst nur gegen eine leere DB. Hier: Schema auf
+  # den Stand der letzten Migration auf main, synthetischer Bestand im alten
+  # Schema (mit echten Triggern), dann die neuen Migrationen wie `db push` auf
+  # Prod und die Prüfabfragen samt Gleichwertigkeit der Lesepfade.
+  prodweg:
+    name: Prod-Weg (Migrationskette auf Altbestand)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: supabase/setup-cli@v2
+        with:
+          # Fest gepinnt wie im Job «migrations» und in den Deploy-Workflows.
+          version: 2.122.1
+      # Der Schrägstrich hinter migrations/ ist nötig: ohne ihn listet
+      # ls-tree nur den Ordner selbst.
+      - name: Letzte Migration auf main ermitteln
+        run: |
+          git fetch --depth=1 origin main:refs/remotes/origin/main
+          V=$(git ls-tree --name-only origin/main supabase/migrations/ | sort | tail -1 | xargs basename | cut -d_ -f1)
+          test -n "$V"
+          echo "Letzte Migration auf main: $V"
+          echo "PRODWEG_VERSION=$V" >> "$GITHUB_ENV"
+      - name: Lokalen Stack starten
+        run: supabase start
+      - name: Schema auf den Stand von main zurücksetzen
+        run: supabase db reset --version "$PRODWEG_VERSION"
+      # Das Konto der Verwaltung ist der Default von vereine_nachziehen in der
+      # Fundament-Migration; der Bestand legt es bestätigt an, damit der
+      # Backfill wie auf Prod genau eine Verwaltung einsetzt.
+      - name: Bestand im alten Schema
+        run: |
+          eval "$(supabase status -o env)"
+          KONTO=$(sed -n "s/.*p_verwaltung uuid default '\([0-9A-Fa-f-]*\)'::uuid.*/\1/p" \
+                    supabase/migrations/20261113100000_vereine_fundament.sql)
+          test -n "$KONTO"
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -v verwaltung_konto="$KONTO" \
+            -f supabase/tests/prodweg/prodweg_bestand.sql
+      - name: Neue Migrationen anwenden
+        run: supabase migration up
+      - name: Prüfabfragen
+        run: |
+          eval "$(supabase status -o env)"
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/tests/prodweg/prodweg_pruefen.sql

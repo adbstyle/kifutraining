@@ -8,6 +8,8 @@ import { oeffentlicherOrigin } from "@/lib/origin";
 import { sichererRuecksprung } from "@/lib/weiterleitung";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { eigeneBildPfade } from "@/lib/fassung";
+import { fachlicheMeldung } from "@/lib/training-bedingungen";
+import { VEREIN_MELDUNG } from "@/lib/verein";
 import {
   raeumeGeloeschteFassungsBilder,
   teamBildKandidaten,
@@ -168,14 +170,27 @@ async function teamFassungsKandidaten(
   );
 }
 
+/** Der Zustand des Dialogs «Konto löschen» (`useActionState`): `fehler` ist
+ *  der Klartext, wenn das Konto bleibt — die letzte Verwaltung eines Vereins
+ *  (#577) oder ein technischer Fehler; sonst `null`. Gelingt das Löschen,
+ *  leitet die Action weiter. */
+export type KontoLoeschenZustand = { fehler: string | null };
+
+const KONTO_LOESCHEN_FEHLER = "Das Konto liess sich nicht löschen. Bitte versuche es noch einmal.";
+
 /** Konto löschen (Story 9). Öffentliche Übungen bleiben anonymisiert erhalten,
- *  private werden samt Feld-Diagramm gelöscht, danach der Auth-User. */
-export async function deleteAccount() {
+ *  private werden samt Feld-Diagramm gelöscht, danach der Auth-User. Die letzte
+ *  Verwaltung eines Vereins löscht ihr Konto nicht (#577): Die RPC meldet
+ *  `letzte_verwaltung`, bevor sie etwas anfasst, und das Konto bleibt. */
+export async function deleteAccount(
+  _vorher: KontoLoeschenZustand,
+  _formData: FormData,
+): Promise<KontoLoeschenZustand> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) return { fehler: "Du bist nicht angemeldet." };
   const uid = user.id;
 
   // Bildpfade der privaten Übungen VOR dem Löschen merken (öffentliche bleiben
@@ -212,8 +227,15 @@ export async function deleteAccount() {
   ];
 
   // Daten-Teil: anonymisiert öffentliche, löscht private Übungen + eigene Trainings.
-  const { error } = await supabase.rpc("delete_account");
-  if (error) return;
+  const { data: status, error } = await supabase.rpc("delete_account");
+  if (error) {
+    const fachlich = fachlicheMeldung(error.message);
+    if (!fachlich) console.error("[konto] löschen", error);
+    return { fehler: fachlich ?? KONTO_LOESCHEN_FEHLER };
+  }
+  const geloescht = (status as { status?: string } | null)?.status;
+  if (geloescht === "letzte_verwaltung") return { fehler: VEREIN_MELDUNG.LETZTE_VERWALTUNG };
+  if (geloescht !== "geloescht") return { fehler: KONTO_LOESCHEN_FEHLER };
 
   // Erst nach erfolgreichem RPC die verwaisten Diagramme entfernen.
   if (paths.length) await supabase.storage.from(STORAGE_BUCKET).remove(paths);

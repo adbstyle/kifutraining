@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { TeamAnsichten } from "@/components/team/TeamAnsichten";
 import { getTeam } from "@/lib/queries/teams";
+import { getMeinVerein } from "@/lib/queries/verein";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Team - KiFu", robots: { index: false } };
@@ -25,11 +26,14 @@ export default async function TeamLayout({
   children: React.ReactNode;
 }) {
   const { id } = await params;
-  const team = await getTeam(id);
+  const [team, verein] = await Promise.all([getTeam(id), getMeinVerein()]);
   if (!team) redirect("/teams");
 
+  // Der Verein steht als erste Krume, ohne Link: Einen Bereich «Verein» gibt
+  // es erst mit Story #581. Ohne Verein entfällt sie.
+  const krumen = [{ label: "Teams", href: "/teams" }, { label: team.name }];
   return (
-    <Seitenrahmen breite="voll" krumen={[{ label: "Teams", href: "/teams" }, { label: team.name }]}>
+    <Seitenrahmen breite="voll" krumen={verein ? [{ label: verein.name }, ...krumen] : krumen}>
       {/* Sichtbar nennt die Brotkrume das Team; die Überschrift bleibt für
           Vorlesehilfen, damit die Seite ihre Gliederung behält. Umbenannt
           wird unter „Team". */}

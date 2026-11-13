@@ -162,6 +162,7 @@ import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
 import { blattStand, handlungsMeldung, meldeStatus, nachMeldefrist, spielStatus, terminStatus } from "../lib/termin-status";
 import { meldefristVerpasst } from "../lib/spiel";
 import {
+  SPIELER_MAX,
   SPIELER_MELDUNG,
   SPIELER_TEXT,
   bereinigeName,
@@ -243,12 +244,15 @@ import {
   erkenneSpalten,
   importErgebnisText,
   importZeilen,
+  importGrenzText,
+  importZuGross,
   jahrgangAusDatum,
   jsAus,
   leseDatei,
 } from "../lib/spieler-import";
 import { seitWann, terminBegonnen } from "../lib/zeit";
 import {
+  PROBE_MELDUNG,
   PROBE_TEXT,
   PROBE_VERFALL_MARKER,
   linkProbeVoll,
@@ -268,6 +272,7 @@ import {
   ueberAnzahl,
   ueberAnzahlText,
 } from "../lib/probe";
+import { VEREIN_MELDUNG, VEREIN_SPIELER_MAX, VEREIN_TEAMS_MAX } from "../lib/verein";
 import { textMitLinks } from "../lib/text-links";
 
 let gelaufen = 0;
@@ -1179,7 +1184,10 @@ pruefe("Serien-Marker: kein Marker steckt in einem anderen (includes-Suche bleib
     ...Object.keys(SERIE_MELDUNG),
     ...Object.keys(SPIELER_MELDUNG),
     ...Object.keys(KADER_MELDUNG),
+    ...Object.keys(SPIEL_MELDUNG),
     ...Object.keys(TRAINER_MELDUNG),
+    ...Object.keys(PROBE_MELDUNG),
+    ...Object.keys(VEREIN_MELDUNG),
     // Wird vor der Übersetzung abgefangen (lib/kern/kader.ts), darf aber
     // keinen Satz treffen.
     VERFALL_MARKER,
@@ -2451,6 +2459,40 @@ pruefe("Spielerliste: Namen bereinigt, Grenzen der Angaben (#434 AK 6, 14)", () 
 pruefe("Spielerliste: Marker der Datenebene tragen die Sätze der Oberfläche", () => {
   for (const [marker, satz] of Object.entries(SPIELER_MELDUNG)) assert.equal(fehlerMeldung(`x ${marker} y`), satz, marker);
   assert.equal(fehlerMeldung('new row violates check constraint "spieler_jahrgang"'), SPIELER_TEXT.jahrgang);
+});
+
+pruefe("Verein (#577): Marker der Datenebene tragen die Sätze der Oberfläche, Team- und Vereinsgrenze bleiben unterscheidbar", () => {
+  for (const [marker, satz] of Object.entries(VEREIN_MELDUNG)) assert.equal(fehlerMeldung(`x ${marker} y`), satz, marker);
+  for (const [marker, satz] of Object.entries(VEREIN_MELDUNG)) assert.equal(still(() => ausDbFehler({ message: marker })).meldung, satz, `ausDbFehler ${marker}`);
+  // Wortlaut nach Architekturplan §5.3.
+  assert.equal(SPIELER_MAX, 100);
+  assert.equal(VEREIN_SPIELER_MAX, 1000);
+  assert.equal(VEREIN_TEAMS_MAX, 30);
+  assert.equal(SPIELER_MELDUNG.SPIELERLISTE_VOLL, "Das Team hat schon 100 Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind.");
+  assert.equal(VEREIN_MELDUNG.VEREIN_VOLL, "Der Verein hat schon 1000 Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind.");
+  assert.equal(VEREIN_MELDUNG.VEREIN_TEAMS_VOLL, "Der Verein hat schon 30 Teams. Ein weiteres kommt erst dazu, wenn es weniger sind.");
+  assert.equal(VEREIN_MELDUNG.TEAM_NUR_VERWALTUNG, "Neue Teams legt die Vereinsverwaltung an.");
+  assert.notEqual(SPIELER_MELDUNG.SPIELERLISTE_VOLL, VEREIN_MELDUNG.VEREIN_VOLL, "AK 7: Team- und Vereinsgrenze unterscheiden sich");
+  // Die heiklen Paare aus Architekturplan §5.2 sind je als Ganzes eindeutig.
+  for (const [a, b] of [["VEREIN_VOLL", "VEREIN_TEAMS_VOLL"], ["TEAM_NUR_VERWALTUNG", "LETZTE_VERWALTUNG"]] as const) {
+    assert.equal(fehlerMeldung(`x ${a} y`), VEREIN_MELDUNG[a]);
+    assert.equal(fehlerMeldung(`x ${b} y`), VEREIN_MELDUNG[b]);
+  }
+});
+
+pruefe("Import-Vorprüfung: Bestand und neue Zeilen gegen die Teamgrenze 100 (#577 PC 2)", () => {
+  const vorschau = (bestand: number, neu: number) => ({ neu: Array.from({ length: neu }, (_, i) => i + 1), js: [], gleich: [], bestand });
+  assert.equal(importZuGross(vorschau(90, 10)), false, "genau 100 passt");
+  assert.equal(importZuGross(vorschau(90, 11)), true, "101 passt nicht");
+  assert.equal(importZuGross(vorschau(0, 100)), false);
+  assert.equal(importZuGross(vorschau(0, 101)), true);
+  assert.equal(importZuGross(vorschau(150, 0)), false, "Bestand über der Grenze, nichts Neues: durchlassen (PC 2)");
+  assert.equal(importZuGross(vorschau(150, 1)), true, "über der Grenze zählt jede neue Zeile");
+  assert.equal(IMPORT_TEXT.zuGross, `Die Datei ist zu gross. Eine Spielerliste fasst höchstens ${SPIELER_MAX} Spieler:innen.`);
+  // Text: an oder über der Grenze der Wortlaut der Teamgrenze, sonst passt die Datei nicht.
+  assert.equal(importGrenzText(SPIELER_MAX), SPIELER_MELDUNG.SPIELERLISTE_VOLL);
+  assert.equal(importGrenzText(150), SPIELER_MELDUNG.SPIELERLISTE_VOLL);
+  assert.equal(importGrenzText(SPIELER_MAX - 1), IMPORT_TEXT.zuGross);
 });
 
 pruefe("Spielerzahl: Liste vor erwartet, ausgefallen ohne Zahl (#434 AK 8, #435 AK 6, #437 AK 4)", () => {
