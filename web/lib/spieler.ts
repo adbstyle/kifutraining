@@ -6,7 +6,8 @@
 // Schreiben, und die Datenebene meldet mit denselben Markern
 // (SPIELER_MELDUNG), wenn sie trotzdem abweist. Ob zwei Angaben dieselbe
 // Spieler:in meinen (Gross/Klein, Bindestrich, Apostroph), entscheidet allein
-// die Datenebene (`spieler_text_schluessel`, Unique-Index `spieler_eindeutig`).
+// die Datenebene: je Verein über `spieler_text_schluessel` im Trigger
+// `spieler_vorher` und in `spieler_doppelt` (Story #578).
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
 import { datumKurz } from "@/lib/zeit";
@@ -37,6 +38,8 @@ export const SPIELER_TEXT = {
 
 /** Die Sätze zu den Markern der Datenebene (Migration spielerliste). */
 export const SPIELER_MELDUNG = {
+  /** Im eigenen Team (#578 AK 3) und als Netz aus dem Trigger `spieler_vorher`
+   *  für das Rennen; sonst wählt `spielerDoppeltText` den Satz. */
   SPIELER_DOPPELT:
     "Diese Spieler:in steht schon auf der Liste. Unterscheide zwei Gleichnamige mit einem Zusatz im Vornamen.",
   SPIELERLISTE_VOLL: `Das Team hat schon ${SPIELER_MAX} Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind.`,
@@ -46,6 +49,36 @@ export const SPIELER_MELDUNG = {
   /** Der Import trifft eine andere Liste als seine Vorschau (#455 AK 27). */
   SPIELERLISTE_GEAENDERT: "Die Spielerliste hat sich inzwischen geändert. Wähle die Datei erneut.",
 } as const;
+
+/** «im Team «A»», «im Team «A» und «B»», «im Team «A», «B» und «C»» —
+ *  nach Namen sortiert. */
+export function imTeam(teams: string[]): string {
+  const namen = [...teams].sort((x, y) => x.localeCompare(y, "de")).map((t) => `«${t}»`);
+  const liste = namen.length > 1 ? `${namen.slice(0, -1).join(", ")} und ${namen.at(-1)}` : (namen[0] ?? "");
+  return `im Team ${liste}`;
+}
+
+/** Der Status `doppelt` der RPCs `spieler_aufnehmen` und `spieler_aendern`
+ *  (Story #578, Architekturplan Vereine §4.4): Die bestehende Spieler:in
+ *  steht im Team, in dem man handelt (`eigenes_team`), oder nur in anderen
+ *  Teams des Vereins (`teams`, nur Namen). `ohne_team` liest die Oberfläche
+ *  erst ab Story #579. */
+export type SpielerDoppelt = { status: "abgewiesen"; grund: "doppelt"; eigenes_team: boolean; teams: string[]; ohne_team: boolean };
+
+/** Der Satz zur Abweisung einer Doppelerfassung, gleich in App und KI
+ *  (#578 AK 3, 4, 6, 10). Erfassen nennt die Eingabe, bereinigt wie beim
+ *  Speichern; Ändern nennt nur die Teams. Im eigenen Team — oder ohne
+ *  anderes Team, was es bis Story #579 nicht gibt — der Satz zu
+ *  `SPIELER_DOPPELT`. Nie J+S-Nummer oder Link (PC 3). */
+export function spielerDoppeltText(
+  d: Pick<SpielerDoppelt, "eigenes_team" | "teams">,
+  eingabe: { vorname: string; nachname: string; jahrgang: number } | null,
+): string {
+  if (d.eigenes_team || d.teams.length === 0) return SPIELER_MELDUNG.SPIELER_DOPPELT;
+  if (!eingabe) return `Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, ${imTeam(d.teams)}.`;
+  const name = spielerName({ vorname: bereinigeName(eingabe.vorname), nachname: bereinigeName(eingabe.nachname) });
+  return `${name} (${eingabe.jahrgang}) wird im Verein schon ${imTeam(d.teams)} geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.`;
+}
 
 /** Die CHECKs der Spielerliste, samt Anführungszeichen gesucht (wie
  *  `TERMIN_CHECKS`). Der Fachkern prüft vorab; die Meldung trifft nur, wer

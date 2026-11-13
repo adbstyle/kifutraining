@@ -4328,8 +4328,8 @@ try {
     fehler(await nimmSpielerAuf(a.supabase, a.id, { teamId: team, vorname: "Lena", nachname: "Meier", jahrgang: "17" }), "eingabe", SPIELER_TEXT.jahrgang);
     // Ändern prüft dieselbe Eindeutigkeit; leer entfernt die J+S-Nummer.
     const zweite = (await spielerVon(team)).find((x) => x.jahrgang === 2018)!;
-    fehler(await aendereSpieler(a.supabase, a.id, { spielerId: zweite.id, vorname: "anna lena", nachname: "o'brien", jahrgang: 2017 }), "regel", SPIELER_MELDUNG.SPIELER_DOPPELT);
-    wert(await aendereSpieler(a.supabase, a.id, { spielerId: lena.spielerId, vorname: "Lena", nachname: "Meier", jahrgang: 2017, jsNummer: "" }));
+    fehler(await aendereSpieler(a.supabase, a.id, { teamId: team, spielerId: zweite.id, vorname: "anna lena", nachname: "o'brien", jahrgang: 2017 }), "regel", SPIELER_MELDUNG.SPIELER_DOPPELT);
+    wert(await aendereSpieler(a.supabase, a.id, { teamId: team, spielerId: lena.spielerId, vorname: "Lena", nachname: "Meier", jahrgang: 2017, jsNummer: "" }));
     assert.equal((await spielerVon(team)).find((x) => x.id === lena.spielerId)!.js_nummer, null);
     const liste = wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team }));
     assert.deepEqual(liste.spieler.map((x) => x.vorname), ["Anna-Lena", "Anna-Lena", "Lena"], "nach Vorname");
@@ -4340,7 +4340,7 @@ try {
     const lena = await neuerSpieler(team, "Lena");
     fehler(await ladeSpielerliste(b.supabase, b.id, { teamId: team }), "nicht_gefunden");
     fehler(await nimmSpielerAuf(b.supabase, b.id, { teamId: team, vorname: "X", nachname: "Y", jahrgang: 2017 }), "nicht_gefunden");
-    fehler(await aendereSpieler(b.supabase, b.id, { spielerId: lena.spielerId, vorname: "X", nachname: "Y", jahrgang: 2017 }), "nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN);
+    fehler(await aendereSpieler(b.supabase, b.id, { teamId: team, spielerId: lena.spielerId, vorname: "X", nachname: "Y", jahrgang: 2017 }), "nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN);
     fehler(await entferneSpieler(b.supabase, b.id, { spielerId: lena.spielerId }), "nicht_gefunden");
     assert.equal((await b.supabase.from("spieler").select("id").eq("team_id", team)).data?.length ?? 0, 0, "Fremde sehen nichts");
     assert.ok((await a.supabase.from("spieler").insert({ team_id: team, vorname: "X", nachname: "Y", jahrgang: 2017 })).error, "kein direktes Einfügen");
@@ -4352,17 +4352,102 @@ try {
     await fuelleTeam(team, 99);
     fehler(await nimmSpielerAuf(a.supabase, a.id, { teamId: team, vorname: "Zuviel", nachname: "X", jahrgang: 2017 }), "regel", SPIELER_MELDUNG.SPIELERLISTE_VOLL);
     // PC 2: An der Grenze bleiben Ändern und Entfernen möglich; danach ist wieder Platz.
-    wert(await aendereSpieler(a.supabase, a.id, { spielerId: lena.spielerId, vorname: "Lena", nachname: "Geändert", jahrgang: 2017 }));
+    wert(await aendereSpieler(a.supabase, a.id, { teamId: team, spielerId: lena.spielerId, vorname: "Lena", nachname: "Geändert", jahrgang: 2017 }));
     wert(await entferneSpieler(a.supabase, a.id, { spielerId: lena.spielerId }));
     await neuerSpieler(team, "Wieder", "Platz");
     assert.equal(await anzahlSpieler(a.supabase, team), 100);
   });
 
+  await pruefe("Doppelerfassung im Verein: abgewiesen mit den Teams, ohne J+S, vor der Teamgrenze, fremder Verein stört nicht (#578 AK 1–4, 9, PC 2, 3; Testfall 5)", async () => {
+    const eigenes = await serienTeam("Kern-DB-Doppelt-A");
+    const teamB = await neuesTeam("Kern-DB-Doppelt-B");
+    const teamC = await neuesTeam("Kern-DB-Doppelt-C");
+    assert.equal((await admin.from("team_members").insert({ team_id: teamB, user_id: b.id })).error, null);
+    // B führt Lina mit J+S-Nummer; sie gehört zusätzlich Team C an (Zuordnung
+    // per Admin, wie sie ab Story #579 die Verwaltung setzt).
+    const lina = wert(await nimmSpielerAuf(b.supabase, b.id, { teamId: teamB, vorname: "Lina", nachname: "Doppelt", jahrgang: 2016, jsNummer: "7654321" }));
+    assert.equal((await admin.from("team_spieler").insert({ team_id: teamC, spieler_id: lina.spielerId, verein_id: verein })).error, null);
+    // PC 2: Dieselbe Spieler:in in einem fremden Verein stört nicht und kommt in keiner Meldung vor.
+    const fremd = await wegwerfKonto();
+    const fremdVerein = await testVerein("Kern-DB-Doppelt-Fremd", fremd);
+    const { data: ft, error: ftFehler } = await admin.from("teams").insert({ name: "Kern-DB-Doppelt-Fremd", verein_id: fremdVerein }).select("id").single();
+    assert.equal(ftFehler, null);
+    teams.push(ft!.id);
+    assert.equal((await admin.from("team_members").insert({ team_id: ft!.id, user_id: fremd.id })).error, null);
+    wert(await nimmSpielerAuf(fremd.supabase, fremd.id, { teamId: ft!.id, vorname: "Lina", nachname: "Doppelt", jahrgang: 2016 }));
+
+    // AK 1, 2, 4: in Team A abgewiesen, nach den Vergleichsregeln, mit der
+    // bereinigten Eingabe und beiden Teams in Namensfolge; PC 3: ohne J+S.
+    const r = fehler(
+      await nimmSpielerAuf(a.supabase, a.id, { teamId: eigenes, vorname: " lina ", nachname: "DOPPELT", jahrgang: 2016 }),
+      "regel",
+      "lina DOPPELT (2016) wird im Verein schon im Team «Kern-DB-Doppelt-B» und «Kern-DB-Doppelt-C» geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+    );
+    assert.equal((r as { feld?: string }).feld, "vorname");
+    // PC 3 an der Quelle: Der Status nennt nur Teamnamen, keine J+S-Nummer, keinen Link, keine Kennung.
+    const roh = await a.supabase.rpc("spieler_aufnehmen", { p_team: eigenes, p_vorname: "Lina", p_nachname: "Doppelt", p_jahrgang: 2016, p_js: null });
+    assert.equal(roh.error, null);
+    assert.deepEqual(roh.data, { status: "abgewiesen", grund: "doppelt", eigenes_team: false, teams: ["Kern-DB-Doppelt-B", "Kern-DB-Doppelt-C"], ohne_team: false });
+    // AK 1: auch eine Schnuppernde; ein Team im Text.
+    const nora = wert(await nimmSpielerAuf(b.supabase, b.id, { teamId: teamB, vorname: "Nora", nachname: "Doppelt", jahrgang: 2016 }));
+    assert.equal((await admin.from("team_spieler").update({ probe_seit: new Date().toISOString() }).eq("spieler_id", nora.spielerId)).error, null);
+    fehler(
+      await nimmSpielerAuf(a.supabase, a.id, { teamId: eigenes, vorname: "Nora", nachname: "Doppelt", jahrgang: 2016 }),
+      "regel",
+      "Nora Doppelt (2016) wird im Verein schon im Team «Kern-DB-Doppelt-B» geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+    );
+    // AK 3: im eigenen Team der bisherige Text, auch wenn sie weiteren Teams angehört.
+    fehler(await nimmSpielerAuf(b.supabase, b.id, { teamId: teamB, vorname: "Lina", nachname: "Doppelt", jahrgang: 2016 }), "regel", SPIELER_MELDUNG.SPIELER_DOPPELT);
+    // AK 9: vor der Teamgrenze — im vollen Team A zuerst die Dublette.
+    await fuelleTeam(eigenes, 100);
+    fehler(
+      await nimmSpielerAuf(a.supabase, a.id, { teamId: eigenes, vorname: "Lina", nachname: "Doppelt", jahrgang: 2016 }),
+      "regel",
+      /^Lina Doppelt \(2016\) wird im Verein schon im Team/,
+    );
+    fehler(await nimmSpielerAuf(a.supabase, a.id, { teamId: eigenes, vorname: "Neu", nachname: "Doppelt", jahrgang: 2016 }), "regel", SPIELER_MELDUNG.SPIELERLISTE_VOLL);
+    // Nichts ist halb geschrieben: Lina steht im Verein genau einmal.
+    const { count } = await admin.from("spieler").select("id", { count: "exact", head: true }).eq("verein_id", verein).eq("nachname", "Doppelt").eq("vorname", "Lina");
+    assert.equal(count, 1);
+  });
+
+  await pruefe("Doppelerfassung beim Ändern: abgewiesen mit den Teams, gleicher Schlüssel geht (#578 AK 5–7; Testfall 7 ohne Altdublette)", async () => {
+    const eigenes = await serienTeam("Kern-DB-Aendern-A");
+    const teamB = await neuesTeam("Kern-DB-Aendern-B");
+    const teamC = await neuesTeam("Kern-DB-Aendern-C");
+    assert.equal((await admin.from("team_members").insert({ team_id: teamB, user_id: b.id })).error, null);
+    const lina = wert(await nimmSpielerAuf(b.supabase, b.id, { teamId: teamB, vorname: "Lina", nachname: "Aendern", jahrgang: 2016, jsNummer: "7654321" }));
+    assert.equal((await admin.from("team_spieler").insert({ team_id: teamC, spieler_id: lina.spielerId, verein_id: verein })).error, null);
+    const mia = await neuerSpieler(eigenes, "Mia", "Aendern", 2016);
+    const ella = await neuerSpieler(eigenes, "Ella", "Aendern", 2016);
+    // AK 5, 6: auf eine Spieler:in anderer Teams → deren Teams, ohne J+S.
+    fehler(
+      await aendereSpieler(a.supabase, a.id, { teamId: eigenes, spielerId: mia.spielerId, vorname: "lina", nachname: "aendern", jahrgang: 2016 }),
+      "regel",
+      "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, im Team «Kern-DB-Aendern-B» und «Kern-DB-Aendern-C».",
+    );
+    // Auf eine Spieler:in des eigenen Teams → der bisherige Text.
+    fehler(
+      await aendereSpieler(a.supabase, a.id, { teamId: eigenes, spielerId: mia.spielerId, vorname: "Ella", nachname: "Aendern", jahrgang: 2016 }),
+      "regel",
+      SPIELER_MELDUNG.SPIELER_DOPPELT,
+    );
+    assert.deepEqual((await spielerVon(eigenes)).find((x) => x.id === mia.spielerId), { id: mia.spielerId, vorname: "Mia", nachname: "Aendern", jahrgang: 2016, js_nummer: null }, "unverändert");
+    // AK 7: Schreibvariante desselben Schlüssels und neue J+S-Nummer gehen.
+    wert(await aendereSpieler(a.supabase, a.id, { teamId: eigenes, spielerId: mia.spielerId, vorname: "MIA", nachname: "aendern", jahrgang: 2016, jsNummer: "123" }));
+    assert.equal((await spielerVon(eigenes)).find((x) => x.id === mia.spielerId)!.js_nummer, "123");
+    // Ein Team, dem sie nicht angehört, gilt als nicht gefunden (Rollen nach Ort).
+    fehler(await aendereSpieler(b.supabase, b.id, { teamId: teamB, spielerId: ella.spielerId, vorname: "Ella", nachname: "Aendern", jahrgang: 2017 }), "nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN);
+    fehler(await aendereSpieler(a.supabase, a.id, { teamId: teamB, spielerId: lina.spielerId, vorname: "Lina", nachname: "Aendern", jahrgang: 2017 }), "nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN);
+  });
+
   await pruefe("Verein: die 1001. Spieler:in weist ab, mit eigenem Text, auch in einem Team mit Platz (#577 AK 7, PC 3)", async () => {
     const team = await serienTeam("Kern-DB-Verein-Voll");
     const fuellung = await serienTeam("Kern-DB-Verein-Voll-Bestand");
-    // Bis 1000 im Verein auffüllen, ohne Zuordnung: Alle Einträge zählen, auch
-    // die ohne Team (ab Story #579) — und die Teamgrenze bleibt so unberührt.
+    // Eine mit Zuordnung für die Dublette (#578 AK 9), dann bis 1000 im Verein
+    // auffüllen, ohne Zuordnung: Alle Einträge zählen, auch die ohne Team
+    // (ab Story #579) — und die Teamgrenze bleibt so unberührt.
+    await neuerSpieler(fuellung, "Vorhanden", "Verein", 2016);
     const { count } = await admin.from("spieler").select("id", { count: "exact", head: true }).eq("verein_id", verein);
     const fehlend = VEREIN_SPIELER_MAX - (count ?? 0);
     assert.ok(fehlend > 0);
@@ -4372,6 +4457,12 @@ try {
     }
     const voll = fehler(await nimmSpielerAuf(a.supabase, a.id, { teamId: team, vorname: "Zuviel", nachname: "Verein", jahrgang: 2017 }), "regel", VEREIN_MELDUNG.VEREIN_VOLL);
     assert.notEqual(voll.meldung, SPIELER_MELDUNG.SPIELERLISTE_VOLL, "AK 7: unterscheidbar von der Teamgrenze");
+    // #578 AK 9: Auch im vollen Verein meldet eine Dublette zuerst die Dublette.
+    fehler(
+      await nimmSpielerAuf(a.supabase, a.id, { teamId: team, vorname: "Vorhanden", nachname: "Verein", jahrgang: 2016 }),
+      "regel",
+      "Vorhanden Verein (2016) wird im Verein schon im Team «Kern-DB-Verein-Voll-Bestand» geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+    );
     const zeilen = [{ zeile: 2, vorname: "Zuviel", nachname: "Import", jahrgang: 2016, jsNummer: null }];
     const v = wert(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen }));
     fehler(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen, erwartet: erwartetVon(v) }), "regel", VEREIN_MELDUNG.VEREIN_VOLL);
@@ -4489,7 +4580,7 @@ try {
     wert(await aendereTermin(a.supabase, a.id, { terminId: morgen, datum: tagCh(2) }));
     assert.deepEqual((await standVon(team, morgen)).spielstand, { gesamt: 2, angemeldet: 2, eingefroren: false, anwesend: null });
     // Der Name ändert sich überall (#435 PC 3): Er steht nur in `spieler`.
-    wert(await aendereSpieler(a.supabase, a.id, { spielerId: noah.spielerId, vorname: "Noé", nachname: "Muster", jahrgang: 2017 }));
+    wert(await aendereSpieler(a.supabase, a.id, { teamId: team, spielerId: noah.spielerId, vorname: "Noé", nachname: "Muster", jahrgang: 2017 }));
     assert.equal((await spielerVon(team)).find((x) => x.id === noah.spielerId)!.vorname, "Noé");
     // Team auflösen nimmt alles mit (#434 PC 4).
     assert.equal((await admin.from("teams").delete().eq("id", team)).error, null);

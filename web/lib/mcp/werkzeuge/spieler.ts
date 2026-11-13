@@ -48,9 +48,11 @@ const SPIELER_MODELL =
   `höchstens ${SPIELER_MAX} je Team und ${VEREIN_SPIELER_MAX} je Verein, jedes Mitglied führt sie. Wer eine Grenze ` +
   "erreicht, weist das Aufnehmen ab; die Meldung nennt, ob die des Teams oder die des Vereins gilt, und bestehende " +
   `Einträge bleiben unverändert. Vor- und Nachname haben je 1 bis ${NAME_MAX} Zeichen, ` +
-  `der Jahrgang vier Ziffern, die J+S-Nummer höchstens ${JS_MAX} Zeichen. Dieselbe Spieler:in steht nur einmal auf ` +
-  "der Liste: Gross- und Kleinschreibung, überzählige Leerzeichen, Bindestrich gegen Leerzeichen und Apostroph-Varianten " +
+  `der Jahrgang vier Ziffern, die J+S-Nummer höchstens ${JS_MAX} Zeichen. Dieselbe Spieler:in ist im Verein nur einmal ` +
+  "erfasst: Gross- und Kleinschreibung, überzählige Leerzeichen, Bindestrich gegen Leerzeichen und Apostroph-Varianten " +
   "unterscheiden nicht, Umlaute schon; zwei Gleichnamige mit gleichem Jahrgang unterscheidet ein Zusatz im Vornamen. " +
+  "Steht sie schon in einem anderen Team des Vereins, nennt die Abweisung dessen Namen; die Zuordnung klärt die " +
+  "Vereinsverwaltung. Die Prüfung kommt vor den Grenzen. " +
   "Sobald die Liste jemanden enthält, kommt die Spielerzahl anstehender Termine aus ihr («spielerzahl» mit Quelle " +
   "«spielerliste» in «team_plan_abrufen») und lässt sich nicht mehr von Hand festlegen; beim ersten Aufnehmen verlieren " +
   "anstehende Termine und Serien ihre erwartete Zahl. Begonnene Termine behalten den Stand bei Beginn. " +
@@ -156,9 +158,13 @@ export const spielerAendern = werkzeug({
   beschreibung:
     "Ändert Vorname, Nachname und Jahrgang einer Spieler:in - immer alle drei - und, falls angegeben, die J+S-Nummer " +
     "(«js_nummer» weglassen lässt sie unverändert, leer entfernt sie). Ein neuer Name gilt überall, auch an " +
-    `vergangenen Terminen. ${SPIELER_MODELL} ${SPIELER_KENNUNG_FEHLER}`,
+    "vergangenen Terminen. Bleiben Vorname, Nachname und Jahrgang nach den Vergleichsregeln gleich, geht die Änderung " +
+    `immer durch. ${SPIELER_MODELL} ${SPIELER_KENNUNG_FEHLER} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
+    team_id: TeamId.optional().describe(
+      "Das Team, in dessen Spielerliste du sie änderst («team.id» aus «spielerliste_abrufen»); ohne Angabe ihr Team.",
+    ),
     spieler_id: SpielerId,
     vorname: VORNAME,
     nachname: NACHNAME,
@@ -167,14 +173,17 @@ export const spielerAendern = werkzeug({
   }),
   ausgabe: z.object({ spieler_id: z.string(), team_id: z.string() }),
   ausfuehren: async (e, zugang) => {
+    let teamId = e.team_id;
     let js = e.js_nummer;
-    if (js === undefined) {
+    if (teamId === undefined || js === undefined) {
       const bisher = await ladeSpieler(zugang.supabase, e.spieler_id);
       if (!bisher.ok) return bisher;
-      js = bisher.wert.jsNummer ?? "";
+      teamId ??= bisher.wert.teamId;
+      js ??= bisher.wert.jsNummer ?? "";
     }
     return abgebildet(
       await aendereSpieler(zugang.supabase, zugang.userId, {
+        teamId,
         spielerId: e.spieler_id,
         vorname: e.vorname,
         nachname: e.nachname,
