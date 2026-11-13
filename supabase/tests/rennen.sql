@@ -32,10 +32,23 @@
 --   Wegwerf-DB gedacht.
 -- - Testobjekte liegen im eigenen Schema `rennen_test`, das am Ende fällt.
 --   Die Verbindungen werden auch im Fehlerfall geschlossen; ein Fehler wird
---   erst nach dem Aufräumen gemeldet.
+--   erst nach dem Aufräumen gemeldet. Das gilt auch für einen Abbruch durch
+--   `statement_timeout` oder Ctrl-C (`query_canceled`, das `others` nicht
+--   einschliesst, wird eigens gefangen).
+-- - Zeitgrenzen: innen je Verbindung `connect_timeout=5`, die Warteschleife
+--   10 s, B selbst `statement_timeout=30s`; zusammen höchstens rund 50 s. Das
+--   Sitzungs-`statement_timeout` von 120 s liegt darüber und ist nur die
+--   Notbremse für Unvorhergesehenes; es greift nicht vor den eigenen Grenzen.
+-- - Reste bleiben nur bei hartem Abbruch (Verbindungsverlust, beendeter
+--   psql- oder Runner-Prozess) zwischen Anlegen und Aufräumen: dann bleiben
+--   das Schema `rennen_test` (der nächste Lauf räumt es zu Beginn weg) und
+--   eine vom Test angelegte Extension `dblink` (der nächste Lauf hält sie
+--   für vorher vorhanden und lässt sie stehen; von Hand `drop extension
+--   dblink`). Die dblink-Verbindungen enden mit der Sitzung, eine offene
+--   Transaktion von A rollt dabei zurück.
 
 \set ON_ERROR_STOP on
-set statement_timeout = '60s';
+set statement_timeout = '120s';
 
 select exists (select 1 from pg_extension where extname = 'dblink') as dblink_vorher \gset
 
@@ -46,12 +59,12 @@ create schema rennen_test;
 create table rennen_test.eintraege (schluessel int primary key, von text not null);
 commit;
 
-select set_config('rennen.fehler', '', false);
+select set_config('rennen.fehler', '', false) is not null as rennen_fehler_leer \gset
 
 do $$
 declare
   ziel   text := format(
-    'host=%s port=%s dbname=%s user=postgres password=postgres options=''-c statement_timeout=30s''',
+    'host=%s port=%s dbname=%s user=postgres password=postgres connect_timeout=5 options=''-c statement_timeout=30s''',
     coalesce(host(inet_server_addr()), '127.0.0.1'), inet_server_port(), current_database());
   frist  timestamptz;
   ergebnis text;
@@ -103,7 +116,7 @@ begin
 
   perform extensions.dblink_disconnect('rennen_a');
   perform extensions.dblink_disconnect('rennen_b');
-exception when others then
+exception when others or query_canceled then
   -- Verbindungen schliessen (eine offene Transaktion von A rollt dabei zurück)
   -- und den Fehler für die Meldung nach dem Aufräumen merken.
   foreach n in array coalesce(extensions.dblink_get_connections(), '{}') loop

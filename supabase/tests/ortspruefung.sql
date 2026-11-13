@@ -6,24 +6,64 @@
 -- nicht beide Prädikate in einer Funktion stehen. Eine Ausnahmeliste gibt es
 -- nicht. Funktionen, die beides nur anzeigen, lesen `team_members` und
 -- `verein_verwaltung` direkt.
--- Nur lesend; hinterlässt nichts.
+--
+-- Funktionstext ist `prosrc` und, für Funktionen mit SQL-Standard-Rumpf
+-- (`begin atomic … end`, dort ist `prosrc` leer), `pg_get_function_sqlbody`.
+--
+-- Selbsttest zuerst: zwei Attrappen in `public` (plpgsql und SQL-Standard-
+-- Rumpf), die beide Prädikatnamen tragen, muss die Abfrage finden. Sonst
+-- prüfte sie still nichts. Danach fallen die Attrappen, und die eigentliche
+-- Prüfung läuft. Alles in einer Transaktion mit rollback; hinterlässt nichts.
 
 \set ON_ERROR_STOP on
 
 begin;
 set local statement_timeout = '30s';
 
+-- Die Abfrage, einmal für Selbsttest und Prüfung. pg_temp liegt nicht in
+-- `public` und wird darum selbst nicht erfasst.
+create function pg_temp.ortspruefung_treffer() returns text
+language sql stable as $$
+  select string_agg(p.oid::regprocedure::text, ', ' order by p.oid::regprocedure::text)
+    from pg_catalog.pg_proc p
+    cross join lateral (
+      select p.prosrc || ' ' || coalesce(pg_catalog.pg_get_function_sqlbody(p.oid), '') as rumpf
+    ) t
+   where p.pronamespace = 'public'::regnamespace
+     and t.rumpf ~ '\m(ist_team_mitglied|meine_team_ids)\M'
+     and t.rumpf ~ '\mist_verein_verwaltung\M'
+$$;
+
+create function public.v0_ortspruefung_attrappe_plpgsql() returns void
+language plpgsql as $$
+begin
+  perform 'ist_team_mitglied';
+  perform 'ist_verein_verwaltung';
+end $$;
+
+create function public.v0_ortspruefung_attrappe_sql() returns text
+language sql
+begin atomic
+  select 'meine_team_ids ist_verein_verwaltung';
+end;
+
 do $$
 declare
-  treffer text;
+  treffer text := coalesce(pg_temp.ortspruefung_treffer(), '');
 begin
-  select string_agg(p.oid::regprocedure::text, ', ' order by p.oid::regprocedure::text)
-    into treffer
-    from pg_proc p
-   where p.pronamespace = 'public'::regnamespace
-     and p.prosrc ~ '\m(ist_team_mitglied|meine_team_ids)\M'
-     and p.prosrc ~ '\mist_verein_verwaltung\M';
+  if position('v0_ortspruefung_attrappe_plpgsql()' in treffer) = 0
+     or position('v0_ortspruefung_attrappe_sql()' in treffer) = 0 then
+    raise exception 'Selbsttest der Ortsprüfung: Attrappen nicht gefunden (Treffer: %)', treffer;
+  end if;
+end $$;
 
+drop function public.v0_ortspruefung_attrappe_plpgsql();
+drop function public.v0_ortspruefung_attrappe_sql();
+
+do $$
+declare
+  treffer text := pg_temp.ortspruefung_treffer();
+begin
   if treffer is not null then
     raise exception 'Ortsprüfung: Funktionen kennen beide Rollen (Team und Verein): %', treffer;
   end if;
