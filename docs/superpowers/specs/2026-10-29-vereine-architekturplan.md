@@ -1125,7 +1125,7 @@ Alle Stories gehen gemeinsam in **einem** Release nach `main` (Epic #575). Ein k
 
 ```sql
 create function vereine_nachziehen(
-  p_verwaltung uuid default '<auth.users.id des Kontos der Plattform-Admin, vor dem Merge von Story 1 eintragen (§6.1 Schritt −1)>'
+  p_verwaltung uuid default '<auth.users.id des Kontos der Plattform-Admin (§6.1 Schritt −1, erledigt: steht in der Fundament-Migration)>'
 ) returns void
 language plpgsql set search_path = public, pg_temp as $$
 declare
@@ -1160,7 +1160,7 @@ select vereine_nachziehen();
 - **Eine Fassung:** `vereine_nachziehen` bleibt ab Story 1 unverändert. Die Eindeutigkeit je Verein (Story 2) prüft ein Trigger nur bei INSERT und Schlüsseländerung (§3.3 a); das Setzen von `verein_id` ändert keinen Schlüssel, und im Sync läuft ohnehin alles unter `replica`.
 - **Schnuppern:** `probe_seit` wandert auf die Zuordnung (§3.2). Das ist eindeutig, weil heute jede Spieler:in genau ein Team hat.
 - **Warum ein Parameter:** Der Test übergibt die ID eines eigenen Testkontos; Migration und `staging_nach_sync` rufen ohne Argument auf.
-- **Warum keine Ausnahme bei fehlendem Konto:** Ohne das Konto (lokal mit Bestand) entsteht FC Wyler ohne Verwaltung. Ein Abbruch legte jede lokale DB mit Teams still. Auf Prod schliessen es drei Schritte aus: Die Konto-ID steht vor dem Merge von Story 1 fest (§6.1 Schritt −1), die Generalprobe auf Staging (gleiche `auth.users`-IDs nach dem Sync) prüft mit `prodweg_pruefen.sql` «kein Verein ohne Verwaltung» (§6.5), und nach dem Release prüft Adrian Verwaltung = 1 (§6.5). Eine falsche ID fällt so in der Generalprobe auf, nicht erst im Fenster; eine fehlende schon vorher: Solange der Default der Platzhalter `00000000-…` ist, scheitert in `pr-checks.yml` der Job «Verwaltungskonto im Backfill eingesetzt». Einen Notweg in der App gibt es nicht (PO 3, Epic OoS 13); lokal hilft ein Insert per SQL.
+- **Warum keine Ausnahme bei fehlendem Konto:** Ohne das Konto (lokal mit Bestand) entsteht FC Wyler ohne Verwaltung. Ein Abbruch legte jede lokale DB mit Teams still. Auf Prod schliessen es drei Schritte aus: Die Konto-ID steht vor dem Merge von Story 1 fest (§6.1 Schritt −1), die Generalprobe auf Staging (gleiche `auth.users`-IDs nach dem Sync) prüft mit `prodweg_pruefen.sql` «kein Verein ohne Verwaltung» (§6.5), und nach dem Release prüft Adrian Verwaltung = 1 (§6.5). Eine falsche ID fällt so in der Generalprobe auf, nicht erst im Fenster; eine fehlende schon vorher: Fiele der Default auf `00000000-…` zurück, scheiterte in `pr-checks.yml` der Job «Verwaltungskonto im Backfill eingesetzt» (die Konto-ID ist eingesetzt, erledigt am 13.11.2026). Einen Notweg in der App gibt es nicht (PO 3, Epic OoS 13); lokal hilft ein Insert per SQL.
 - **Trigger auf Prod:** Der Backfill läuft vor den Grenztriggern (Reihenfolge Tabellen → … → Trigger → Backfill gilt je Datei; `team_spieler_vorher` mit Grenze 100 kommt mit Story 1, aber erst in der zweiten Datei `spieler_ueber_zuordnung` nach dem Backfill). Die Eindeutigkeitsprüfung aus Story 2 greift nur bei INSERT und Schlüsseländerung. Teams über 100, ein Verein über 1000 und Altdubletten kommen deshalb durch (Story 1 PC 2, 3, Story 2 PC 1). `team_members_vorher` und `verwaltung_vorher` sind erfüllt, weil es nur einen Verein gibt.
 - **Trigger auf Staging:** Im Sync läuft alles unter `replica`.
 - **CI** (leere DB): keine Teams, also kein Verein, keine Zuordnung, keine Verwaltung. Vollständiges No-op.
@@ -1208,7 +1208,7 @@ select
   (select count(*) from public.spieler where probe_seit is not null)           as schnuppernde,
   (select id from auth.users
     where lower(email) = lower('<Adresse der Plattform-Admin>')
-      and email_confirmed_at is not null)                                      as verwaltung_konto;      -- in §6.3 eintragen
+      and email_confirmed_at is not null)                                      as verwaltung_konto;      -- in §6.3 eintragen (erledigt)
 rollback;
 ```
 

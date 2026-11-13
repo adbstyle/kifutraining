@@ -106,7 +106,9 @@ begin
     raise exception 'Schnupper-Status nicht auf der Zuordnung';
   end if;
 
-  -- Gleichwertigkeit: dieselben Ausgaben wie im alten Schema.
+  -- Gleichwertigkeit: dieselben Ausgaben wie im alten Schema, und die
+  -- Schreibwege, die gelingen sollen, gelingen (vorher prüft prodweg_bestand.sql).
+  perform prodweg.erfolg_pruefen(v_jetzt, 'nachher');
   if v_jetzt is distinct from v_vorher then
     for k in select key from jsonb_each(v_vorher) loop
       if v_jetzt -> k is distinct from v_vorher -> k then

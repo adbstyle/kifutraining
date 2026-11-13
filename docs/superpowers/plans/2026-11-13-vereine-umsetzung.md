@@ -168,10 +168,12 @@ Reihenfolge:
 
 ### K – Konto-ID (AP §6.1 Schritt −1, §6.4)
 
-- [ ] Mit Freigabe im Moment: nur die Zeile `verwaltung_konto` aus AP §6.4 auf Prod abfragen. Das Ergebnis ist eine Konto-ID, keine Personendaten.
-- [ ] Die ID geht als Default in `vereine_nachziehen` der Fundament-Migration. Eine E-Mail-Adresse steht nirgends im Repo.
+- [x] Mit Freigabe im Moment: nur die Zeile `verwaltung_konto` aus AP §6.4 auf Prod abfragen. Das Ergebnis ist eine Konto-ID, keine Personendaten.
+- [x] Die ID geht als Default in `vereine_nachziehen` der Fundament-Migration. Eine E-Mail-Adresse steht nirgends im Repo.
 
 **Ausgang:** Die ID liegt vor, bevor der PR zu Story 1 gemergt wird.
+
+**Erledigt** am 13.11.2026: Die Konto-ID steht als Default in `vereine_nachziehen`; der Job «Verwaltungskonto im Backfill eingesetzt» wacht weiter gegen einen Rückfall auf den Platzhalter.
 
 ### Phase 1 – #577 FC Wyler als erster Verein
 

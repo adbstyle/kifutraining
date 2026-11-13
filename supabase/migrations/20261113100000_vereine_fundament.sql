@@ -348,7 +348,7 @@ $$;
 -- bestätigtes Konto `p_verwaltung` (lokal, CI) entsteht der Verein ohne
 -- Verwaltung; lokal hilft ein Insert per SQL. Fällt mit N1 (AP §3.8).
 create function vereine_nachziehen(
-  p_verwaltung uuid default '00000000-0000-0000-0000-000000000000'::uuid  -- KONTO_ID_PLATZHALTER
+  p_verwaltung uuid default 'f36f563a-64cf-4e02-9ee0-e47c219cb5e1'::uuid  -- Konto der ersten Vereinsverwaltung auf Prod (AP §6.4)
 ) returns void
 language plpgsql
 set search_path = public, pg_temp

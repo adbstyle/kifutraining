@@ -135,7 +135,9 @@ insert into team_abholung (team_id, aktiv) values (prodweg.id('t_d'), true);
 
 -- Führt einen Schreibweg in einer Untertransaktion aus, liest Ergebnis bzw.
 -- Folgezustand und rollt zurück: Vorher und nachher laufen so auf demselben
--- Bestand. Ergebnis {wert, fehler}.
+-- Bestand. Ergebnis {wert, fehler}. Der Vergleich allein hielte einen Weg,
+-- der vorher und nachher mit demselben Fehler scheitert, für gleichwertig;
+-- darum prüft prodweg.erfolg_pruefen zusätzlich `fehler`.
 create function prodweg.zurueck(p_tun text, p_lesen text) returns jsonb
 language plpgsql
 set search_path = public, pg_temp
@@ -264,6 +266,9 @@ begin
                                                prodweg.id('tr_vorbei'), prodweg.id('p1'))),
       'spiel_anwesenheit_setzen', prodweg.zurueck(null, format('select spiel_anwesenheit_setzen(%L, %L, true, null, null)',
                                      prodweg.id('sp_vorbei'), prodweg.id('p2'))),
+      -- Die zwei Spielerzahl-Regeln: Hier ist der Fehler selbst das erwartete
+      -- Ergebnis (SPIELERLISTE_FUEHRT_ZAHL); es zählt nur der Vergleich mit
+      -- vorher (siehe prodweg.erfolg_pruefen).
       'termin_spielerzahl_regel', prodweg.zurueck(
           format($q$insert into training_termine (team_id, datum, beginn, ende, erwartete_spielerzahl)
                     values (%L, current_date + 20, '18:00', '19:30', 12)$q$, prodweg.id('t_d')), 'select null::jsonb'),
@@ -276,6 +281,22 @@ begin
 end;
 $$;
 
+-- Alle Schreibwege ausser den Spielerzahl-Regeln müssen gelingen, im alten
+-- wie im neuen Schema: `fehler` ist null.
+create function prodweg.erfolg_pruefen(p_lesepfade jsonb, p_stand text) returns void
+language plpgsql as $$
+declare
+  x text;
+begin
+  select string_agg(k || ': ' || (v ->> 'fehler'), '; ' order by k) into x
+    from jsonb_each(p_lesepfade -> 'schreibend') e(k, v)
+   where k not in ('termin_spielerzahl_regel', 'serie_spielerzahl_regel')
+     and v ->> 'fehler' is not null;
+  if x is not null then raise exception 'Schreibweg scheitert (%): %', p_stand, x; end if;
+end;
+$$;
+
 create table prodweg.vorher as select prodweg.lesepfade() as lesepfade;
+do $$ begin perform prodweg.erfolg_pruefen((select lesepfade from prodweg.vorher), 'vorher'); end $$;
 
 commit;
