@@ -10,6 +10,24 @@ on:
       - "docs/feedback-triage.md"
 
 jobs:
+  workflow-waechter:
+    name: Workflow-Wächter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      # reset-staging.yml löscht alle Daten des Ziels samt Konten und darf nur
+      # Staging kennen: kein Prod-Secret in der Datei, auch nicht in
+      # Index-Schreibweise (secrets[...]) oder als Ganzes (toJSON(secrets)).
+      # Ohne Gross-/Kleinschreibung, wie GitHub Secret-Namen behandelt.
+      - name: reset-staging.yml ohne Prod-Secrets
+        run: |
+          DATEI=.github/workflows/reset-staging.yml
+          test -f "$DATEI"
+          if grep -niE 'SUPABASE_PROD_|secrets\.SUPABASE_(DB_PASSWORD|URL|SERVICE_ROLE_KEY)\b|secrets[[:space:]]*\[|toJSON[[:space:]]*\([[:space:]]*secrets' "$DATEI"; then
+            echo "::error::$DATEI nennt ein Prod-Secret oder greift auf secrets als Ganzes bzw. per Index zu (siehe Zeilen oben)."
+            exit 1
+          fi
+
   web:
     name: Typecheck (web)
     runs-on: ubuntu-latest
@@ -18,17 +36,6 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v6
-      # reset-staging.yml löscht alle Daten des Ziels samt Konten und darf nur
-      # Staging kennen: kein Prod-Secret in der Datei.
-      - name: reset-staging.yml ohne Prod-Secrets
-        working-directory: .
-        run: |
-          DATEI=.github/workflows/reset-staging.yml
-          test -f "$DATEI"
-          if grep -nE 'SUPABASE_PROD_|secrets\.SUPABASE_(DB_PASSWORD|URL|SERVICE_ROLE_KEY)\b' "$DATEI"; then
-            echo "::error::$DATEI nennt ein Prod-Secret (siehe Zeilen oben)."
-            exit 1
-          fi
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
@@ -112,19 +119,26 @@ jobs:
           # und bei 'db push' ohne --remote die lokale DB anpeilt. Wechsel auf v3
           # nur bewusst, samt Anpassung der Deploy-Befehle.
           version: 2.122.1
-      - name: Lokalen Stack starten und Migrationen + seed.sql anwenden
-        run: supabase start
       # 'supabase start' fährt den vollen lokalen Stack hoch und wendet alle
       # Migrationen + seed.sql an -> schlägt fehl, wenn eine Migration kaputt ist
       # und validiert so die Schema-Änderungen wirklich.
-      # psql-Tests (supabase/tests/): alles mit zwei Verbindungen, Funktionstexten
-      # oder Daten unter replica — Ortsprüfung, Rennen über dblink, Sync-Bausteine.
-      # DB_URL liefert 'supabase status -o env' immer (CLI 2.122.1,
-      # command-internal/status-values.ts); fehlt sie, nimmt run.sh die lokale DB.
+      - name: Lokalen Stack starten und Migrationen + seed.sql anwenden
+        run: supabase start
+      # psql-Tests (supabase/tests/run.sh): Ortsprüfung, Rennen über dblink,
+      # Sync-Bausteine. run.sh lässt nur lokale Ziele zu. Dazu vor_restore.sql
+      # wie im Sync über stdin (zurückgerollt): muss still bleiben, also ohne
+      # die Tabellenliste im Log.
       - name: psql-Tests gegen Wegwerf-DB
         run: |
           eval "$(supabase status -o env)"
           supabase/tests/run.sh "$DB_URL"
+          LISTE=$(psql "$DB_URL" -X -t -A -c "select string_agg(tablename, ' ') from pg_tables where schemaname = 'public'")
+          if ! AUSGABE=$({ echo 'begin;'; cat supabase/sync/vor_restore.sql; echo 'rollback;'; } \
+                 | psql "$DB_URL" -X --quiet -v ON_ERROR_STOP=1 -v public_tables="$LISTE" 2>&1) \
+             || [ -n "$AUSGABE" ]; then
+            echo "::error::vor_restore.sql über stdin fehlgeschlagen oder nicht still: $AUSGABE"
+            exit 1
+          fi
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
