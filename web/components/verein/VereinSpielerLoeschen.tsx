@@ -15,7 +15,12 @@ import { spielerLoeschenSaetze, spielerLoeschenTitel, zielWeg } from "@/lib/vere
    sagt, dass Link und Meldungen endgültig entfallen und die Spieler:in an
    vergangenen Terminen ohne Namen erscheint. Gelöscht wird erst mit dem
    Knopf; vorher ändert nichts etwas. Löschen kann nur die Verwaltung, und
-   nur hier: Am Team-Ort gibt es es nicht (Rollen nach Ort). */
+   nur hier: Am Team-Ort gibt es es nicht (Rollen nach Ort).
+
+   Der Dialog zeigt nie den Stand einer anderen Spieler:in: Wechselt sie
+   (oder schliesst er), fallen Teams und Fehler noch im selben Render weg.
+   Solange die Teams laden, steht ein Ladehinweis; ist die Spieler:in
+   inzwischen gelöscht, bleibt nur der Satz dazu stehen. */
 export function VereinSpielerLoeschen({ spieler, onClose }: { spieler: VereinSpieler | null; onClose: () => void }) {
   const router = useRouter();
   const melde = useSnackbar();
@@ -23,12 +28,19 @@ export function VereinSpielerLoeschen({ spieler, onClose }: { spieler: VereinSpi
   // Die Namen der Teams, frisch gelesen; `null`, solange sie laden.
   const [teams, setTeams] = useState<string[] | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
+  // Beim Wechsel der Spieler:in den Stand im selben Render verwerfen
+  // (Zustand an die Eigenschaft anpassen, wie React es vorsieht) — sonst
+  // stünden für einen Frame die Teams oder der Fehler der vorigen da.
+  const [zuletzt, setZuletzt] = useState(spieler);
+  if (spieler !== zuletzt) {
+    setZuletzt(spieler);
+    setTeams(null);
+    setFehler(null);
+  }
 
   useEffect(() => {
     if (!spieler) return;
     let aktiv = true;
-    setTeams(null);
-    setFehler(null);
     ladeVereinSpielerTeamsAktion(spieler.id).then((r) => {
       if (!aktiv) return;
       if (r.ok) return setTeams(r.teams.map((t) => t.name));
@@ -47,7 +59,11 @@ export function VereinSpielerLoeschen({ spieler, onClose }: { spieler: VereinSpi
       const r = await loescheSpielerImVereinAktion(spieler.id);
       if (!r.ok) {
         setFehler(r.error);
-        if (zielWeg(r.feld)) router.refresh();
+        // Inzwischen gelöscht: Der Satz zu den Teams gilt nicht mehr.
+        if (zielWeg(r.feld)) {
+          setTeams(null);
+          router.refresh();
+        }
         return;
       }
       onClose();
@@ -76,6 +92,11 @@ export function VereinSpielerLoeschen({ spieler, onClose }: { spieler: VereinSpi
     >
       <div className="flex flex-col gap-3">
         {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
+        {!fehler && !saetze && (
+          <p role="status" className="type-body-medium text-on-surface-mittel">
+            Teams werden geladen …
+          </p>
+        )}
         {saetze && (
           <>
             <p>{saetze.zuordnung}</p>

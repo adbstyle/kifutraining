@@ -160,6 +160,7 @@ export function VereinSpielerListe({
                 {s.jahrgang}
                 {s.js && ` · J+S ${s.js}`}
                 {s.teams.length === 0 && " · ohne Team"}
+                {` · Link ${s.linkBezogen ? "bezogen" : "offen"}`}
               </span>
               <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.jahrgang}</span>
               <span className="hidden min-w-0 sm:block">

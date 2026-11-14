@@ -26,7 +26,7 @@ import { oeffentlicherOrigin } from "@/lib/origin";
 import { revalidiereAlleTeams, revalidiereMitgliedschaften, revalidiereTeam, revalidiereVerein } from "@/lib/revalidate";
 import { raeumeVerwaisteBilder } from "@/lib/storage-aufraeumen";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
-import type { KernFehler } from "@/lib/kern/ergebnis";
+import type { FehlerArt, KernFehler } from "@/lib/kern/ergebnis";
 import { spielerLinkUrl, type SpielerEingabe } from "@/lib/spieler";
 import type { PersonSchritt } from "@/lib/verein";
 
@@ -57,8 +57,10 @@ export async function ordneSpielerZuAktion(
 /** Ergebnis einer Action der Vereinsverwaltung: `error` ist der fertige Satz;
  *  `feld` nennt, wo er hingehört (`name`, `teamname`) — `team_id` bzw.
  *  `verein_id` heisst: das Ziel ist nicht mehr zu finden (Team aufgelöst,
- *  Recht weg), die offene Seite ist überholt. */
-type Fehler = { ok: false; error: string; feld?: string };
+ *  Recht weg), die offene Seite ist überholt. `art` (wo mitgegeben) ist die
+ *  Art des Fehlers aus dem Kern: Nur eine `eingabe` gehört an ein Feld, eine
+ *  Regel-Abweisung steht über den Feldern. */
+type Fehler = { ok: false; error: string; feld?: string; art?: FehlerArt };
 
 const keinKonto: Fehler = { ok: false, error: NICHT_ANGEMELDET };
 
@@ -249,7 +251,7 @@ export async function legeSpielerImVereinAnAktion(
   const a = await angemeldet();
   if (!a) return keinKonto;
   const r = await legeSpielerImVereinAn(a.supabase, a.userId, { ...e, vereinId, vereinName });
-  if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld };
+  if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld, art: r.art };
   revalidiereVerein();
   return { ok: true, spielerId: r.wert.spielerId };
 }
@@ -260,7 +262,7 @@ export async function aendereSpielerImVereinAktion(spielerId: string, e: Spieler
   const a = await angemeldet();
   if (!a) return keinKonto;
   const r = await aendereSpielerImVerein(a.supabase, a.userId, { ...e, spielerId });
-  if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld };
+  if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld, art: r.art };
   revalidiereAlleTeams();
   revalidiereVerein();
   return { ok: true };

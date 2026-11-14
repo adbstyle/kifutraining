@@ -4,10 +4,10 @@ import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Dialog, SectionMessage } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
-import { LEERE_ANGABEN, SpielerFelder, type SpielerAngaben, type SpielerFehler } from "@/components/spieler/SpielerFelder";
+import { LEERE_ANGABEN, SpielerFelder, istFeldFehler, type SpielerAngaben, type SpielerFehler } from "@/components/spieler/SpielerFelder";
 import { aendereSpielerImVereinAktion, legeSpielerImVereinAnAktion } from "@/lib/actions/verein";
 import type { VereinSpieler } from "@/lib/kern/verein";
-import { SPIELER_TEXT, bereinigeName } from "@/lib/spieler";
+import { bereinigeName } from "@/lib/spieler";
 import { spielerErfassenEinleitung, zielWeg } from "@/lib/verein";
 
 /* Erfassen und Ändern einer Spieler:in im Spielerbestand des Vereins (Story
@@ -16,9 +16,14 @@ import { spielerErfassenEinleitung, zielWeg } from "@/lib/verein";
    Dialog, und die Snackbar sagt, wer erfasst ist. Eine Abweisung — gleiche
    Angaben schon im Verein, Grenze des Vereins, gelöscht — steht als Meldung im
    Dialog; nur die Prüfung eines Feldes («Bitte einen Vornamen …») steht am
-   Feld. Ist die Spieler:in inzwischen gelöscht, lädt die Liste neu. */
+   Feld. Das entscheidet die Art des Fehlers aus dem Kern, nicht sein
+   Wortlaut: eine Eingabe (`art: "eingabe"`) an ihrem Feld, alles andere —
+   Regel-Abweisung, «nicht gefunden», ein Netz der Datenebene — als Band
+   über den Feldern. Ist die Spieler:in inzwischen gelöscht, lädt die Liste
+   neu. */
 
-const FELD_TEXTE: string[] = Object.values(SPIELER_TEXT);
+/** Ein Fehler der Action samt Art (`eingabe`, `regel`, …). */
+type Fehler = SpielerFehler & { art?: string };
 
 const ausSpieler = (s: VereinSpieler | null): SpielerAngaben =>
   s ? { vorname: s.vorname, nachname: s.nachname, jahrgang: String(s.jahrgang), jsNummer: s.js ?? "" } : LEERE_ANGABEN;
@@ -40,7 +45,7 @@ export function VereinSpielerFormular({
   const formId = useId();
   const [pending, startTransition] = useTransition();
   const [wert, setWert] = useState<SpielerAngaben>(LEERE_ANGABEN);
-  const [fehler, setFehler] = useState<SpielerFehler | null>(null);
+  const [fehler, setFehler] = useState<Fehler | null>(null);
   // Beim Öffnen die Angaben der Spieler:in setzen (Zustand an die Eigenschaft
   // anpassen, wie React es für diesen Fall vorsieht).
   const [zuletzt, setZuletzt] = useState(offen);
@@ -60,7 +65,7 @@ export function VereinSpielerFormular({
     startTransition(async () => {
       const r = spieler ? await aendereSpielerImVereinAktion(spieler.id, wert) : await legeSpielerImVereinAnAktion(vereinId, vereinName, wert);
       if (!r.ok) {
-        setFehler({ feld: r.feld, text: r.error });
+        setFehler({ feld: r.feld, text: r.error, art: r.art });
         // Gelöscht, solange der Dialog offen war: Die Liste lädt neu.
         if (zielWeg(r.feld)) router.refresh();
         return;
@@ -71,7 +76,7 @@ export function VereinSpielerFormular({
     });
   }
 
-  const amFeld = fehler !== null && FELD_TEXTE.includes(fehler.text);
+  const amFeld = fehler?.art === "eingabe" && fehler.feld !== undefined && istFeldFehler(fehler);
 
   return (
     <Dialog

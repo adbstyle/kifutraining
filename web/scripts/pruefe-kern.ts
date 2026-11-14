@@ -2351,8 +2351,29 @@ pruefe("Spielerbestand der Verwaltung (#582): Sätze zum Erfassen und Ändern, D
   );
   for (const satz of [ohne, spielerAendernAbgewiesenText({ teams: [], ohne_team: true })])
     assert.ok(!/dein|Vereinsverwaltung/.test(satz), `die Verwaltung wird nicht an sich selbst verwiesen: ${satz}`);
-  // Der Team-Ort und die KI behalten ihre Sätze: Die Trainer:in wird weiter an die Verwaltung verwiesen.
-  assert.match(spielerDoppeltText({ eigenes_team: false, teams: [], ohne_team: true }, null), /Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung\./);
+  // Der Team-Ort und die KI behalten ihre Sätze, Wort für Wort: Die Trainer:in wird weiter an die Verwaltung verwiesen.
+  const kenn = { vorname: "Noah", nachname: "Keller", jahrgang: 2015 };
+  assert.equal(spielerDoppeltText({ eigenes_team: true, teams: ["Da"], ohne_team: false }, kenn), SPIELER_MELDUNG.SPIELER_DOPPELT);
+  assert.equal(
+    SPIELER_MELDUNG.SPIELER_DOPPELT,
+    "Diese Spieler:in steht schon auf der Liste. Unterscheide zwei Gleichnamige mit einem Zusatz im Vornamen.",
+  );
+  assert.equal(
+    spielerDoppeltText({ eigenes_team: false, teams: ["Eb", "Ea"], ohne_team: false }, kenn),
+    "Noah Keller (2015) wird im Verein schon im Team «Ea» und «Eb» geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+  );
+  assert.equal(
+    spielerDoppeltText({ eigenes_team: false, teams: [], ohne_team: true }, kenn),
+    "Noah Keller (2015) wird im Verein geführt, ist aber keinem Team zugeordnet. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+  );
+  assert.equal(
+    spielerDoppeltText({ eigenes_team: false, teams: ["Ea"], ohne_team: false }, null),
+    "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, im Team «Ea».",
+  );
+  assert.equal(
+    spielerDoppeltText({ eigenes_team: false, teams: [], ohne_team: true }, null),
+    "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, die keinem Team zugeordnet ist. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+  );
   // Grenze (AK 7): der Satz zu VEREIN_VOLL, eine Quelle für App und KI — kein eigener Satz der Verwaltung.
   assert.equal(fehlerMeldung("x VEREIN_VOLL y"), VEREIN_MELDUNG.VEREIN_VOLL);
   assert.match(spielerErfassenEinleitung("FC Wyler"), /^Die Spieler:in kommt ohne Team in den FC Wyler\. Einem Team ordnest du sie danach zu\.$/);
@@ -2364,7 +2385,22 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
     linkOhneTeamText("Elias"),
     "Elias ist keinem Team zugeordnet. Die Spielervertretung sieht erst Termine, wenn Elias einem Team zugeordnet ist; der Link bleibt danach derselbe.",
   );
-  assert.ok(!Object.keys(LINK_TEXT).some((k) => /team/i.test(k)), "LINK_TEXT bleibt, wie es ist");
+  // LINK_TEXT bleibt, wie es ist — Schlüssel und Wortlaut (er fliesst in die KI-Beschreibungen).
+  assert.deepEqual(
+    LINK_TEXT,
+    {
+      warnung:
+        "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
+      erneuern:
+        "Erneuern macht den bisherigen Link sofort ungültig. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen.",
+      ungueltigTitel: "Dieser Link gilt nicht mehr",
+      ungueltig:
+        "Vielleicht hat das Trainerteam ihn erneuert. Hol den aktuellen Link über die Abholadresse deines Teams ab oder frag deine Trainerin oder deinen Trainer.",
+      erneuert: "Link erneuert. Der bisherige gilt nicht mehr.",
+      erneuertAbholen: "Die Eltern holen den neuen Link wieder über die Abholadresse ab.",
+    },
+    "LINK_TEXT bleibt, wie es ist",
+  );
   // Löschen: ein, mehrere, kein Team.
   assert.equal(spielerLoeschenTitel("Lina Meier"), "Lina Meier aus dem Verein löschen");
   assert.deepEqual(spielerLoeschenSaetze("Lina", ["Ca"]), {
@@ -2403,8 +2439,13 @@ pruefe("Spielerbestand der Verwaltung (#582): Löschen, Verein-Import und Verein
         if (/\b(loescheSpielerImVerein\w*|verein_spieler_\w+|VereinSpieler(Formular|LinkDialog|Loeschen|Liste))\b/.test(zeile)) treffer.push(`${relative(web, datei)}:${i + 1}`);
       });
   assert.deepEqual(treffer, [], `Verein-Weg am Team-Ort: ${treffer.join(", ")}`);
-  // Die Spielerliste eines Teams bietet kein Löschen und keine Spieler:in ohne Team (eine Zeile je Zuordnung des Teams).
+  // Die Spielerliste eines Teams bietet kein Löschen.
   assert.ok(!/loesche|Löschen["'`]/.test(lies("components/team/SpielerListe.tsx").replace(/\/\*[\s\S]*?\*\//g, "")), "Löschen gibt es im Team nicht");
+  // … und keine Spieler:in ohne Team: Sie liest nur die Zuordnungen des Kontextteams (eine Zeile je Zuordnung),
+  // nie `spieler` direkt. Dass auch kein Team-Weg sie erreicht, belegt supabase/tests/spielerbestand_verwaltung.sql (AK 14).
+  const liste = lies("lib/kern/spieler.ts").match(/export async function ladeSpielerliste[\s\S]*?\n}\n/)?.[0] ?? "";
+  assert.match(liste, /\.from\("team_spieler"\)[\s\S]*?\.eq\("team_id", e\.teamId\)/, "Team-Spielerliste über die Zuordnungen des Teams");
+  assert.ok(!/\.from\("spieler"\)/.test(liste), "Team-Spielerliste liest spieler direkt");
   // Der Verein-Ort importiert nicht den Team-Import (CSV folgt in Story 9, nicht hier).
   for (const datei of quelldateien(join(web, "components/verein")))
     assert.ok(!/SpielerImport|importiereSpieler/.test(readFileSync(datei, "utf8")), `Verein-Import: ${relative(web, datei)}`);
@@ -2420,6 +2461,9 @@ pruefe("Spielerbestand der Verwaltung (#582): Löschen, Verein-Import und Verein
   // Die geteilten Bausteine hängen an keiner Rolle: keine Actions, kein Kern.
   for (const datei of quelldateien(join(web, "components/spieler")))
     assert.ok(!/lib\/(actions|kern)\//.test(readFileSync(datei, "utf8")), `geteilter Baustein importiert Actions oder Kern: ${relative(web, datei)}`);
+  // Ob eine Meldung am Feld oder als Band steht, entscheidet die Art des Fehlers, nicht sein Wortlaut.
+  assert.ok(!/SPIELER_TEXT|FELD_TEXTE/.test(lies("components/verein/VereinSpielerFormular.tsx")), "Formular vergleicht Wortlaute");
+  assert.equal((lies("lib/actions/verein.ts").match(/feld: r\.feld, art: r\.art \}/g) ?? []).length, 2, "Erfassen und Ändern geben die Art weiter");
   // Die Verein-Actions für Spieler:innen kommen aus der Datenebene, nicht aus der Liste: Teams für das Revalidieren aus der Antwort.
   assert.match(lies("lib/actions/verein.ts"), /for \(const t of r\.wert\.teams\) revalidiereTeam\(t\.id\)/);
 });

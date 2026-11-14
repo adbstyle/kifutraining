@@ -22,9 +22,11 @@ import { LINK_TEXT } from "@/lib/spieler";
 
 /** Was Holen liefert: die Adresse; `bezogen` und `hinweis` nur, wo die
  *  Datenebene sie mitgibt (Verein-Ort: der Hinweis für eine Spieler:in ohne
- *  Team, #582 AK 10). */
-export type LinkHolen = { ok: true; url: string; bezogen?: boolean; hinweis?: string } | { ok: false; error: string };
-export type LinkErneuern = { ok: true; url: string } | { ok: false; error: string };
+ *  Team, #582 AK 10). Ein Fehler mit `weg`: Die Spieler:in ist nicht mehr da
+ *  (gelöscht); dann bleibt nur der Satz stehen, nicht der alte Link. */
+type LinkFehler = { ok: false; error: string; weg?: boolean };
+export type LinkHolen = { ok: true; url: string; bezogen?: boolean; hinweis?: string } | LinkFehler;
+export type LinkErneuern = { ok: true; url: string } | LinkFehler;
 
 export function LinkDialog({
   spieler,
@@ -74,13 +76,17 @@ function LinkInhalt({
   const [meldung, setMeldung] = useState<{ art: "error" | "success"; text: string } | null>(null);
   const [bezogen, setBezogen] = useState(spieler.bezogen);
   const [hinweis, setHinweis] = useState<string | null>(null);
+  const [weg, setWeg] = useState(false);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
     let aktiv = true;
     holen(spieler.id).then((r) => {
       if (!aktiv) return;
-      if (!r.ok) return setMeldung({ art: "error", text: r.error });
+      if (!r.ok) {
+        setWeg(!!r.weg);
+        return setMeldung({ art: "error", text: r.error });
+      }
       setUrl(r.url);
       if (r.bezogen !== undefined) setBezogen(r.bezogen);
       setHinweis(r.hinweis ?? null);
@@ -95,7 +101,10 @@ function LinkInhalt({
   function neu() {
     startTransition(async () => {
       const r = await erneuern(spieler.id);
-      if (!r.ok) return setMeldung({ art: "error", text: r.error });
+      if (!r.ok) {
+        setWeg(!!r.weg);
+        return setMeldung({ art: "error", text: r.error });
+      }
       setUrl(r.url);
       setBezogen(false);
       setMeldung({ art: "success", text: LINK_TEXT.erneuert });
@@ -103,6 +112,9 @@ function LinkInhalt({
   }
 
   const oben: ReactNode = hinweis && <SectionMessage appearance="information">{hinweis}</SectionMessage>;
+
+  // Die Spieler:in ist nicht mehr da: kein Link, kein Stand, nur der Satz.
+  if (weg && meldung) return <SectionMessage appearance="error">{meldung.text}</SectionMessage>;
 
   return (
     <div className="flex flex-col gap-4">

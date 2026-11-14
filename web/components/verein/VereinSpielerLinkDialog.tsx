@@ -11,15 +11,17 @@ import { linkOhneTeamText, zielWeg } from "@/lib/verein";
    gemeinsame Baustein `LinkDialog` mit den Verein-Actions als Rückrufen.
    Ohne Team steht über dem Link der Hinweis, dass die Spielervertretung erst
    mit einem Team Termine sieht. Ohne Teams und Abholadresse: das kommt mit
-   Story #583. Ist die Spieler:in inzwischen gelöscht, lädt die Liste neu. */
+   Story #583. Ist die Spieler:in inzwischen gelöscht, lädt die Liste neu,
+   und der Dialog zeigt den alten Link nicht mehr. */
 export function VereinSpielerLinkDialog({ spieler, onClose }: { spieler: VereinSpieler | null; onClose: () => void }) {
   const router = useRouter();
 
   async function holen(id: string): Promise<LinkHolen> {
     const r = await holeVereinSpielerLinkAktion(id);
     if (!r.ok) {
-      if (zielWeg(r.feld)) router.refresh();
-      return r;
+      const weg = zielWeg(r.feld);
+      if (weg) router.refresh();
+      return { ok: false, error: r.error, weg };
     }
     return {
       ok: true,
@@ -31,8 +33,10 @@ export function VereinSpielerLinkDialog({ spieler, onClose }: { spieler: VereinS
 
   async function erneuern(id: string): Promise<LinkErneuern> {
     const r = await erneuereVereinSpielerLinkAktion(id);
-    if (!r.ok && zielWeg(r.feld)) router.refresh();
-    return r.ok ? { ok: true, url: r.url } : { ok: false, error: r.error };
+    if (r.ok) return { ok: true, url: r.url };
+    const weg = zielWeg(r.feld);
+    if (weg) router.refresh();
+    return { ok: false, error: r.error, weg };
   }
 
   return (
