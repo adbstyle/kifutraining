@@ -167,6 +167,7 @@ import {
   SPIELER_TEXT,
   ABHOLUNG_TEXT,
   HERAUSNEHMEN_TEXT,
+  aufzaehlung,
   bereinigeName,
   herausnehmenFrage,
   herausnehmenSaetze,
@@ -174,6 +175,8 @@ import {
   imTeam,
   jahrgangAus,
   LINK_TEXT,
+  linkErneuernSaetze,
+  linkTeamsText,
   nachSpielerName,
   spielerDoppeltText,
   spielerProblem,
@@ -2385,22 +2388,22 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
     linkOhneTeamText("Elias"),
     "Elias ist keinem Team zugeordnet. Die Spielervertretung sieht erst Termine, wenn Elias einem Team zugeordnet ist; der Link bleibt danach derselbe.",
   );
-  // LINK_TEXT bleibt, wie es ist — Schlüssel und Wortlaut (er fliesst in die KI-Beschreibungen).
+  // LINK_TEXT (Story #583): Wortlaut eingefroren, die geänderten Schlüssel bewusst neu festgehalten (warnung, erneuern, erneuertAbholen).
+  const { erneuertAbholen, ...linkStatisch } = LINK_TEXT;
   assert.deepEqual(
-    LINK_TEXT,
+    linkStatisch,
     {
       warnung:
-        "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
+        "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Er zeigt die Termine aller Teams der Spieler:in. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
       erneuern:
-        "Erneuern macht den bisherigen Link sofort ungültig. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen.",
+        "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen.",
       ungueltigTitel: "Dieser Link gilt nicht mehr",
-      ungueltig:
-        "Vielleicht hat das Trainerteam ihn erneuert. Hol den aktuellen Link über die Abholadresse deines Teams ab oder frag deine Trainerin oder deinen Trainer.",
+      ungueltig: "Den aktuellen erhältst du über eine Abholadresse, bei den Trainer:innen oder bei der Vereinsverwaltung.",
       erneuert: "Link erneuert. Der bisherige gilt nicht mehr.",
-      erneuertAbholen: "Die Eltern holen den neuen Link wieder über die Abholadresse ab.",
     },
-    "LINK_TEXT bleibt, wie es ist",
+    "LINK_TEXT: Schlüssel und Wortlaut eingefroren",
   );
+  assert.equal(erneuertAbholen(["A"]), "Die Eltern holen den neuen Link über die Abholadresse von A ab.");
   // Löschen: ein, mehrere, kein Team.
   assert.equal(spielerLoeschenTitel("Lina Meier"), "Lina Meier aus dem Verein löschen");
   assert.deepEqual(spielerLoeschenSaetze("Lina", ["Ca"]), {
@@ -2762,6 +2765,53 @@ pruefe("Spielerliste: Namen bereinigt, Grenzen der Angaben (#434 AK 6, 14)", () 
     nachSpielerName([{ vorname: "Mia", nachname: "Kunz" }, { vorname: "Ayla", nachname: "Demir" }, { vorname: "Mia", nachname: "Bauer" }]).map((s) => s.nachname),
     ["Demir", "Bauer", "Kunz"],
   );
+});
+
+pruefe("Aufzählung von Teamnamen (#583): ein, zwei, drei Teams; bestehende Sätze unverändert", () => {
+  assert.equal(aufzaehlung([]), "");
+  assert.equal(aufzaehlung(["A"]), "A");
+  assert.equal(aufzaehlung(["A", "B"]), "A und B");
+  assert.equal(aufzaehlung(["A", "B", "C"]), "A, B und C");
+  assert.equal(aufzaehlung(["A", "B"], "oder"), "A oder B");
+  assert.equal(aufzaehlung(["A", "B", "C"], "oder"), "A, B oder C");
+  // Die bestehenden Sätze, die sie nutzen, ändern sich im Wortlaut nicht.
+  assert.equal(imTeam(["A"]), "im Team «A»");
+  assert.equal(imTeam(["B", "A"]), "im Team «A» und «B»");
+  assert.equal(imTeam(["C", "A", "B"]), "im Team «A», «B» und «C»");
+  assert.equal(spielerLoeschenSaetze("Lina", ["Ca", "FF-15"]).zuordnung, "Lina ist den Teams Ca und FF-15 zugeordnet und verschwindet aus allen.");
+  assert.equal(spielerLoeschenSaetze("Lina", ["A", "B", "C"]).zuordnung, "Lina ist den Teams A, B und C zugeordnet und verschwindet aus allen.");
+});
+
+pruefe("Link am Team-Ort und Verein-Ort (#583 AK 13, 15, 16): Hinweis und Erneuern-Text je Lage", () => {
+  const ab = (name: string, abholbar: boolean) => ({ name, abholbar });
+  // Hinweis: ein Team ohne den zweiten Satz, mehrere mit; Verein-Ort nie mit; ohne Team keiner.
+  assert.equal(linkTeamsText("Lina", [ab("Ca", false)], true), "Der Link zeigt die Termine aller Teams von Lina: Ca.");
+  assert.equal(
+    linkTeamsText("Lina", [ab("Cb", true), ab("Ca", false)], true),
+    "Der Link zeigt die Termine aller Teams von Lina: Ca und Cb. Eine hier ausgeschaltete Selbstabholung sperrt den Link nicht, wenn ein anderes Team von Lina sie eingeschaltet hat.",
+  );
+  assert.equal(linkTeamsText("Lina", [ab("Ca", false), ab("Cb", true)], false), "Der Link zeigt die Termine aller Teams von Lina: Ca und Cb.");
+  assert.equal(linkTeamsText("Lina", [], true), null);
+  // Erneuern: ein Team mit Abholung.
+  assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true)]), [
+    "Der bisherige Link und das Kalender-Abo enden für alle Teams von Lina: Ca. Abmeldungen bleiben bestehen.",
+    "Die Eltern holen den neuen Link über die Abholadresse von Ca ab.",
+  ]);
+  // Mehrere Teams, zwei mit Abholung; nach Namen geordnet.
+  assert.deepEqual(linkErneuernSaetze("Lina", [ab("Cb", true), ab("Cc", false), ab("Ca", true)]), [
+    "Der bisherige Link und das Kalender-Abo enden für alle Teams von Lina: Ca, Cb und Cc. Abmeldungen bleiben bestehen.",
+    "Die Eltern holen den neuen Link über die Abholadresse von Ca oder Cb ab.",
+  ]);
+  // Keines abholbar.
+  assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", false), ab("Cb", false)]), [
+    "Der bisherige Link und das Kalender-Abo enden für alle Teams von Lina: Ca und Cb. Abmeldungen bleiben bestehen.",
+    "Keines dieser Teams hat die Selbstabholung eingeschaltet. Gib den neuen Link selbst weiter.",
+  ]);
+  // Ohne Team.
+  assert.deepEqual(linkErneuernSaetze("Lina", []), [
+    "Der bisherige Link und das Kalender-Abo enden. Abmeldungen bleiben bestehen.",
+    "Lina ist keinem Team zugeordnet; gib den neuen Link selbst weiter.",
+  ]);
 });
 
 pruefe("Spielerliste: Marker der Datenebene tragen die Sätze der Oberfläche", () => {

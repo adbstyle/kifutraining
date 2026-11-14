@@ -6,7 +6,7 @@
 // (lib/training-bedingungen.ts) übersetzt sie in diese Sätze.
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
-import { SPIELER_MAX, bereinigeName, imTeam, spielerName } from "@/lib/spieler";
+import { SPIELER_MAX, aufzaehlung, bereinigeName, imTeam, spielerName } from "@/lib/spieler";
 
 /** Zwilling der Grenze im Trigger `spieler_vorher` (Marker `VEREIN_VOLL`): So
  *  viele Spieler:innen führt ein Verein höchstens — mit denen ohne Team, den
@@ -116,11 +116,6 @@ export type ZuordnenAbweisung = {
   schnuppert: (SpielerKurz & { team: string })[];
   ueber_grenze: number;
 };
-
-/** «A», «A und B», «A, B und C». */
-function aufzaehlung(namen: string[]): string {
-  return namen.length <= 1 ? (namen[0] ?? "") : `${namen.slice(0, -1).join(", ")} und ${namen.at(-1)}`;
-}
 
 /** Bis drei beim Namen, darüber die Zahl. */
 function wer(namen: string[]): string {
