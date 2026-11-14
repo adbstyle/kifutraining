@@ -23,8 +23,6 @@ export type KopieZielWahl =
    Darum: eine Stufe, ein Dialog. Die Ziele stehen als Einfachauswahl da —
    dieselben `ChoiceChip`, mit denen auch die Variante des Hauptteils gewählt
    wird —, darunter der Satz, der sagt, was gleich geschieht, und ein Knopf.
-   Die Teamnamen tragen `look="nutzertext"`: Sie sind vom Trainer vergeben, und
-   Versalien verfälschten sie.
 
    Kein Kit-Baustein, sondern ein Bauteil der Trainings-Domäne: «Ich selbst
    oder eines meiner Teams» ist das Eigentumsmodell aus `training-zugriff.ts`,
@@ -101,7 +99,6 @@ export function TrainingZielDialog({
         {teams.map((t, i) => (
           <ChoiceChip
             key={t.id}
-            look="nutzertext"
             selected={gewaehlt === t.id}
             tabStop={gewaehlt === "" && !uebernehmen && i === 0}
             onSelect={() => setGewaehlt(t.id)}

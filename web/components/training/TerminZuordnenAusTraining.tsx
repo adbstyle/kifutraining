@@ -103,7 +103,6 @@ export function TerminZuordnenAusTraining({
           {teams.map((t, i) => (
             <ChoiceChip
               key={t.id}
-              look="nutzertext"
               selected={teamId === t.id}
               tabStop={teamId === t.id || (teamId === "" && i === 0)}
               onSelect={() => !pending && setTeamId(t.id)}
