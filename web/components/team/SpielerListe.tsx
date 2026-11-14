@@ -30,7 +30,7 @@ import {
   type Spieler,
   type SpielerTeams,
 } from "@/lib/spieler";
-import { SpielerFelder, type SpielerAngaben, type SpielerFehler } from "@/components/spieler/SpielerFelder";
+import { SpielerFelder, istFeldFehler, type SpielerAngaben, type SpielerFehler } from "@/components/spieler/SpielerFelder";
 import { SpielerLinkDialog } from "./SpielerLinkDialog";
 import { Selbstabholung } from "./Selbstabholung";
 import { SpielerImport } from "./SpielerImport";
@@ -216,7 +216,12 @@ export function SpielerListe({
           if (probeFolgenSumme(folgen) > 0) return;
         }
         const r = await aendereSpielerAktion(teamId, id, eingabe);
-        if (!r.ok) return setFehler({ feld: r.feld, text: r.error });
+        if (!r.ok) {
+          // Inzwischen aus dem Team genommen oder von der Verwaltung gelöscht
+          // (#582): Die Meldung steht über den Feldern, die Liste lädt neu.
+          if (r.feld === "spieler_id") router.refresh();
+          return setFehler({ feld: r.feld, text: r.error });
+        }
         const vorher = spieler.find((s) => s.id === id);
         // Stimmt die Zahl nicht mehr, steht der neue Stand im offenen Dialog.
         if (probeWechsel) {
@@ -369,6 +374,7 @@ export function SpielerListe({
           }}
         >
           {aufgenommen && <SectionMessage appearance="success">{aufgenommen}</SectionMessage>}
+          {fehler && !istFeldFehler(fehler) && <SectionMessage appearance="error">{fehler.text}</SectionMessage>}
           <SpielerFelder wert={form} onAendern={aendern} fehler={fehler} erstesFeld={erstesFeld} />
           {mitKadern && (
             <MultiSelect

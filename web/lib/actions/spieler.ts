@@ -23,10 +23,12 @@ import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
  * (lib/kern/spieler.ts), dieselben Funktionen wie die KI-Werkzeuge.
  */
 
-type Fehler = { ok: false; error: string; feld?: SpielerFeld };
+/** `feld`: eines der vier Felder oder, wo kein Feld gemeint ist, das Ziel
+ *  (`spieler_id`: inzwischen herausgenommen oder gelöscht; `team_id`). */
+type Fehler = { ok: false; error: string; feld?: SpielerFeld | "spieler_id" | "team_id" };
 
 function fehler(r: { meldung: string; feld?: string }): Fehler {
-  return { ok: false, error: r.meldung, feld: r.feld as SpielerFeld | undefined };
+  return { ok: false, error: r.meldung, feld: r.feld as Fehler["feld"] };
 }
 
 export async function nimmSpielerAufAktion(
