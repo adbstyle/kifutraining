@@ -7,6 +7,7 @@ import {
   PERSON_MELDUNG,
   type PersonSchritt,
   VEREIN_MELDUNG,
+  VEREIN_TEAM_NICHT_GEFUNDEN,
   teamnameVergebenText,
   vereinsNameProblem,
   zuordnenAbweisungText,
@@ -25,7 +26,7 @@ function vereinFehler(e: { message: string; code?: string }) {
 
 /** Dasselbe für die Team-adressierten `verein_*`-RPCs: Kein Recht und ein
  *  inzwischen aufgelöstes Team sind ununterscheidbar (`VEREIN_NICHT_GEFUNDEN`);
- *  dort heisst es «Team nicht gefunden» am Feld `team_id`. */
+ *  dort heisst es `VEREIN_TEAM_NICHT_GEFUNDEN` am Feld `team_id`. */
 function teamFehler(e: { message: string; code?: string }) {
   return e.message.includes("VEREIN_NICHT_GEFUNDEN") ? teamNichtGefunden() : spielerFehler(e);
 }
@@ -86,12 +87,12 @@ export async function ordneSpielerZu(
   _userId: string,
   e: { teamId: string; teamName: string; spielerIds: string[] },
 ): Promise<KernErgebnis<{ anzahl: number; ersetzt: number }>> {
-  if (!istUuid(e.teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
+  if (!istUuid(e.teamId)) return teamNichtGefunden();
   const ids = [...new Set(e.spielerIds)];
   if (ids.length === 0 || !ids.every(istUuid))
     return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, { feld: "spieler_ids" });
   const { data, error } = await supabase.rpc("verein_spieler_zuordnen", { p_team: e.teamId, p_spieler: ids });
-  if (error) return vereinFehler(error);
+  if (error) return teamFehler(error);
   const r = data as { status: "zugeordnet"; anzahl: number; ersetzt: number } | ({ status: "abgewiesen" } & ZuordnenAbweisung);
   if (r.status === "abgewiesen") return fehlschlag("regel", zuordnenAbweisungText(r, e.teamName, ids.length), { feld: "spieler_ids" });
   return ok({ anzahl: r.anzahl, ersetzt: r.ersetzt });
@@ -170,7 +171,7 @@ const trainerAus = (t: TrainerRoh): TeamTrainer => ({
   istVerwaltung: t.ist_verwaltung,
 });
 
-const teamNichtGefunden = () => fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
+const teamNichtGefunden = () => fehlschlag("nicht_gefunden", VEREIN_TEAM_NICHT_GEFUNDEN, { feld: "team_id" });
 const vereinNichtGefunden = () => fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.verein, { feld: "verein_id" });
 
 /** Die Vereinsansicht: Name, Verwaltung und Teams. Jedes Mitglied darf sie

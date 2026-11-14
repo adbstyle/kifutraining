@@ -284,6 +284,7 @@ import {
   PERSON_MELDUNG,
   TEAM_NUR_VERWALTUNG,
   VEREIN_MELDUNG,
+  VEREIN_TEAM_NICHT_GEFUNDEN,
   VEREIN_NAME_MAX,
   VEREIN_SPIELER_MAX,
   VEREIN_TEAMS_MAX,
@@ -2768,6 +2769,9 @@ pruefe("Verein (#577): Marker der Datenebene tragen die Sätze der Oberfläche, 
   // Kein Marker mehr (#581): eigene Konstante, nicht in der Markerliste.
   assert.equal(TEAM_NUR_VERWALTUNG, "Neue Teams legt die Vereinsverwaltung an.");
   assert.ok(!("TEAM_NUR_VERWALTUNG" in VEREIN_MELDUNG), "TEAM_NUR_VERWALTUNG steht wieder in VEREIN_MELDUNG");
+  // Verein-Ort: neutral, ohne den Zusatz des Team-Orts (die Verwaltung arbeitet ohne Mitgliedschaft).
+  assert.equal(VEREIN_TEAM_NICHT_GEFUNDEN, "Team nicht gefunden.");
+  assert.ok(SERIE_MELDUNG.TEAM_NICHT_GEFUNDEN.startsWith("Team nicht gefunden. Du kannst nur in Teams arbeiten"), "Satz des Team-Orts unverändert");
   assert.equal(VEREIN_MELDUNG.VEREIN_NICHT_GEFUNDEN, "Verein nicht gefunden.");
   assert.notEqual(SPIELER_MELDUNG.SPIELERLISTE_VOLL, VEREIN_MELDUNG.VEREIN_VOLL, "AK 7: Team- und Vereinsgrenze unterscheiden sich");
   // Die heiklen Paare aus Architekturplan §5.2 sind je als Ganzes eindeutig.

@@ -24,7 +24,7 @@ import {
   sucheVereinPersonAktion,
 } from "@/lib/actions/verein";
 import type { VerwaltungPerson } from "@/lib/kern/verein";
-import { VEREIN_MELDUNG, VEREIN_TEAMS_MAX, vereinsNameProblem } from "@/lib/verein";
+import { VEREIN_MELDUNG, VEREIN_TEAMS_MAX, vereinsNameProblem, zielWeg } from "@/lib/verein";
 
 /* Die Verwaltung des Vereins (Epic Vereine #575, Story #581 AK 3, 6, 23,
    30–34): Vereinsname, die Personen der Vereinsverwaltung mit Adresse,
@@ -72,7 +72,11 @@ export function VereinVerwaltung({
     setFehler(null);
     startTransition(async () => {
       const r = await entferneAusVerwaltungAktion(vereinId, p.userId);
-      if (!r.ok) return setFehler(r.error);
+      if (!r.ok) {
+        setFehler(r.error);
+        if (zielWeg(r.feld)) router.refresh();
+        return;
+      }
       setEntfernen(null);
       router.refresh();
       melde(`${p.anzeigeName ?? "Die Person"} ist nicht mehr in der Vereinsverwaltung.`);
@@ -86,7 +90,10 @@ export function VereinVerwaltung({
       // Gelingt es, leitet die Action selbst nach /teams um: Wer nicht mehr
       // zur Verwaltung gehört, hat hier nichts mehr zu tun.
       const r = await entferneAusVerwaltungAktion(vereinId, ich.userId);
-      if (!r.ok) setFehler(r.error);
+      if (!r.ok) {
+        setFehler(r.error);
+        if (zielWeg(r.feld)) router.refresh();
+      }
     });
   }
 
@@ -206,8 +213,16 @@ export function VereinVerwaltung({
         tragweite={[
           `Sie gehört damit zum ${vereinName} und verwaltet Teams, Spieler:innen und den Verein mit. Solange sie dabei ist, kann sie keinem anderen Verein beitreten und keinen eigenen gründen. Die Verwaltung und die Trainer:innen ihrer Teams sehen ihre E-Mail-Adresse. Prüfe, dass es das richtige Konto ist.`,
         ]}
-        suche={(email) => sucheVereinPersonAktion(vereinId, email)}
-        aufnahme={(email) => nimmInVerwaltungAufAktion(vereinId, email)}
+        suche={async (email) => {
+          const r = await sucheVereinPersonAktion(vereinId, email);
+          if (!r.ok && r.zielWeg) router.refresh();
+          return r;
+        }}
+        aufnahme={async (email) => {
+          const r = await nimmInVerwaltungAufAktion(vereinId, email);
+          if (!r.ok && r.zielWeg) router.refresh();
+          return r;
+        }}
         onAufgenommen={(anzeigeName) => {
           router.refresh();
           melde(`${anzeigeName} gehört jetzt zur Vereinsverwaltung.`);
@@ -288,7 +303,11 @@ function VereinUmbenennen({ offen, onClose, vereinId, name }: { offen: boolean; 
     setFehler(null);
     startTransition(async () => {
       const r = await benenneVereinUmAktion(vereinId, neu);
-      if (!r.ok) return setFehler(r.error);
+      if (!r.ok) {
+        setFehler(r.error);
+        if (zielWeg(r.feld)) router.refresh();
+        return;
+      }
       onClose();
       router.refresh();
       melde("Vereinsname gespeichert.");

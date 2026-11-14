@@ -35,6 +35,7 @@ import {
 import type { VereinTeamAnsicht, VereinTeamSpieler, VereinTeamTrainer } from "@/lib/kern/verein";
 import { SPIELER_MAX } from "@/lib/spieler";
 import { teamNameProblem } from "@/lib/team";
+import { zielWeg } from "@/lib/verein";
 
 /* Ein Team aus Sicht der Vereinsverwaltung (Epic Vereine #575, Story #581
    AK 10–14, 19–22, 24, 25; Story #579 AK 11, 17): Name, Trainerteam,
@@ -47,12 +48,6 @@ import { teamNameProblem } from "@/lib/team";
    am Feld bzw. als Section Message (eine Snackbar läge unter ihm, #234). Ist
    das Team inzwischen aufgelöst (oder das Recht weg), nennt er «Team nicht
    gefunden», und die Seite lädt neu: Sie leitet dann zur Übersicht. */
-
-/** Die Action fand ihr Ziel nicht mehr (Team aufgelöst, Recht weg): Die
- *  Seite ist überholt und wird neu geladen. */
-function zielWeg(feld?: string) {
-  return feld === "team_id" || feld === "verein_id";
-}
 
 /** «1 Training», «2 Trainings». */
 function n(zahl: number, eins: string, mehr: string) {

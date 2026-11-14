@@ -15,6 +15,20 @@ export const VEREIN_SPIELER_MAX = 1000;
 /** Zwilling der Grenze im Trigger `teams_vorher` (Marker `VEREIN_TEAMS_VOLL`). */
 export const VEREIN_TEAMS_MAX = 30;
 
+/** «Team nicht gefunden» am Verein-Ort: Die Verwaltung arbeitet in Teams
+ *  ohne Mitgliedschaft, darum ohne den Zusatz des Team-Orts
+ *  (`SERIE_MELDUNG.TEAM_NICHT_GEFUNDEN`). Kein Marker: Die Datenebene meldet
+ *  `VEREIN_NICHT_GEFUNDEN`, der Verein-Kern übersetzt es bei
+ *  Team-adressierten RPCs in diesen Satz. */
+export const VEREIN_TEAM_NICHT_GEFUNDEN = "Team nicht gefunden.";
+
+/** Eine Action der Vereinsverwaltung fand ihr Ziel nicht mehr (Feld
+ *  `team_id` bzw. `verein_id`: Team aufgelöst, Recht entzogen). Die offene
+ *  Seite ist überholt; der Aufrufer lädt sie neu, und sie leitet weiter. */
+export function zielWeg(feld?: string): boolean {
+  return feld === "team_id" || feld === "verein_id";
+}
+
 /** Hinweis der Teamübersicht für alle ausser der Verwaltung. Kein Marker
  *  (mehr): Seit Story #581 legt kein Weg am Team-Ort ein Team an, nur
  *  `verein_team_anlegen` — darum nicht in `VEREIN_MELDUNG`, das als
@@ -72,7 +86,8 @@ export function teamnameVergebenText(team: string): string {
  *  samt Anzeigename — oder der fertige Satz (`PERSON_MELDUNG`), warum es nicht
  *  weitergeht. Eine Form für Kern, Actions und den Baustein `PersonAufnehmen`.
  *  `zielWeg`: Das Ziel (Team oder Verein) ist nicht mehr zu finden, etwa weil
- *  das Team inzwischen aufgelöst ist; die offene Seite ist überholt. */
+ *  das Team inzwischen aufgelöst oder das Recht der Verwaltung entzogen ist;
+ *  die offene Seite ist überholt, der Aufrufer lädt sie neu. */
 export type PersonSchritt = { ok: true; anzeigeName: string } | { ok: false; meldung: string; zielWeg?: true };
 
 /** Der Ausgang einer Suche oder Aufnahme einer Person, als Satz — am Team-Ort

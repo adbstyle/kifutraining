@@ -79,7 +79,7 @@ const { getTeamPlanFuer, nochNichtVorbereitet } = await import("../lib/queries/t
 const { ladeSpielerliste, anzahlSpieler, nimmSpielerAuf, aendereSpieler, ladeSpieler, ladeSpielerTeams, eigenesTeamVon, nimmSpielerAusTeam, holeSpielerLink, erneuereSpielerLink, leseAbholung, schalteAbholung, erneuereAbholung, pruefeSpielerImport, importiereSpieler } =
   await import("../lib/kern/spieler");
 const { IMPORT_TEXT, erwartetVon } = await import("../lib/spieler-import");
-const { VEREIN_MELDUNG, VEREIN_SPIELER_MAX, VEREIN_TEAMS_MAX, PERSON_MELDUNG, teamnameVergebenText, zuordnenAbweisungText, zugeordnetText } =
+const { VEREIN_MELDUNG, VEREIN_TEAM_NICHT_GEFUNDEN, VEREIN_SPIELER_MAX, VEREIN_TEAMS_MAX, PERSON_MELDUNG, teamnameVergebenText, zuordnenAbweisungText, zugeordnetText } =
   await import("../lib/verein");
 const {
   ladeVereinSpielerliste,
@@ -3955,7 +3955,7 @@ try {
     assert.equal((await admin.from("team_members").select("user_id").eq("team_id", team)).data!.length, 2, "direktes DELETE auf team_members wirkungslos");
 
     // #581 AK 26: Mitglieder lösen nicht auf, auch nicht mit dem richtigen Namen — ununterscheidbar «nicht gefunden».
-    fehler(await aufloesen(a, team, "Kern-DB-Auflösen-480"), "nicht_gefunden", NICHT_GEFUNDEN.team);
+    fehler(await aufloesen(a, team, "Kern-DB-Auflösen-480"), "nicht_gefunden", VEREIN_TEAM_NICHT_GEFUNDEN);
     assert.ok(await besteht(team));
 
     // #480 AK 6: Gross- und Kleinschreibung zählen; PC 2: Team unverändert.
@@ -3991,7 +3991,7 @@ try {
     assert.equal(aufgeloestZwei.status, "aufgeloest");
     assert.equal(aufgeloestZwei.status === "aufgeloest" && aufgeloestZwei.name, "Kern-DB-Auflösen-480-B", "der Name für die Meldung kommt von der Datenebene");
     assert.deepEqual(await austritt(a, zwei), { status: "team_weg" });
-    fehler(await aufloesen(verwaltung, zwei, "Kern-DB-Auflösen-480-B"), "nicht_gefunden", NICHT_GEFUNDEN.team);
+    fehler(await aufloesen(verwaltung, zwei, "Kern-DB-Auflösen-480-B"), "nicht_gefunden", VEREIN_TEAM_NICHT_GEFUNDEN);
 
     // Unicode-Normalform zählt nicht: «ö» als o + Trema bestätigt «ö».
     const drei = await serienTeam("Kern-DB-Auflösen-480-C");
@@ -4579,11 +4579,11 @@ try {
     assert.equal(anstehend, 3, "der Einzeltermin und zwei der Serie");
 
     // Testfall 8, AK 3: Ein Mitglied ordnet nicht zu und sieht den Bestand nicht.
-    fehler(await ordneSpielerZu(a.supabase, a.id, { teamId: ziel, teamName: ZIEL, spielerIds: [lena] }), "nicht_gefunden", NICHT_GEFUNDEN.verein);
-    fehler(await ordneSpielerZu(b.supabase, b.id, { teamId: herkunft, teamName: HERKUNFT, spielerIds: [mia] }), "nicht_gefunden", NICHT_GEFUNDEN.verein);
+    fehler(await ordneSpielerZu(a.supabase, a.id, { teamId: ziel, teamName: ZIEL, spielerIds: [lena] }), "nicht_gefunden", VEREIN_TEAM_NICHT_GEFUNDEN);
+    fehler(await ordneSpielerZu(b.supabase, b.id, { teamId: herkunft, teamName: HERKUNFT, spielerIds: [mia] }), "nicht_gefunden", VEREIN_TEAM_NICHT_GEFUNDEN);
     fehler(await ladeVereinSpielerliste(a.supabase, a.id, { vereinId: verein }), "nicht_gefunden", NICHT_GEFUNDEN.verein);
     // Die Verwaltung: kein unbekanntes Team, keine Spieler:in eines fremden Vereins.
-    fehler(await zuordnen(randomUUID(), ZIEL, [lena]), "nicht_gefunden", NICHT_GEFUNDEN.verein);
+    fehler(await zuordnen(randomUUID(), ZIEL, [lena]), "nicht_gefunden", VEREIN_TEAM_NICHT_GEFUNDEN);
     const fremd = await wegwerfKonto();
     const fremdVerein = await testVerein("Kern-DB-Zuordnen-Fremd", fremd);
     const { data: ft } = await admin.from("teams").insert({ name: "Kern-DB-Zuordnen-Fremd", verein_id: fremdVerein }).select("id").single();
@@ -6839,8 +6839,8 @@ try {
   // Ergebnis und Satz, über den Nutzer-Client.
   const emailVon = async (k: Konto) => (await admin.auth.admin.getUserById(k.id)).data.user!.email!;
   const NG_VEREIN = VEREIN_MELDUNG.VEREIN_NICHT_GEFUNDEN;
-  // Team-adressierte RPCs: kein Recht oder Team aufgelöst heisst dort «Team nicht gefunden».
-  const NG_TEAM = NICHT_GEFUNDEN.team;
+  // Team-adressierte RPCs: kein Recht oder Team aufgelöst heisst dort «Team nicht gefunden.» (ohne Zusatz des Team-Orts).
+  const NG_TEAM = VEREIN_TEAM_NICHT_GEFUNDEN;
   /** Ein zweiter Verein samt eigener Verwaltung (für `anderer_verein`). */
   let fremdVerwaltung: Konto | null = null;
   const fremdeVerwaltung = async () => {
@@ -6877,7 +6877,7 @@ try {
       fehler(await legeTeamAn(k.supabase, k.id, { vereinId: verein, name: "Kern-DB-581-Fremd" }), "nicht_gefunden", NG_VEREIN);
     }
     fehler(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: randomUUID(), name: "Kern-DB-581-C" }), "nicht_gefunden", NG_TEAM);
-    fehler(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: "kein-uuid", name: "Kern-DB-581-C" }), "nicht_gefunden", NICHT_GEFUNDEN.team);
+    fehler(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: "kein-uuid", name: "Kern-DB-581-C" }), "nicht_gefunden", VEREIN_TEAM_NICHT_GEFUNDEN);
     // Netz: Auch an der RPC vorbei (Admin) kein zweiter Name im Verein.
     const netz = await admin.from("teams").insert({ name: "Kern-DB 581 B", verein_id: verein });
     assert.match(netz.error?.message ?? "", /TEAMNAME_VERGEBEN/);

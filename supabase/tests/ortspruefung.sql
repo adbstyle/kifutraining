@@ -1,7 +1,10 @@
 -- Ortsprüfung (Rollen nach Ort, Architekturplan Vereine §5.5):
 -- Keine Funktion in `public` darf beide Rollen kennen, also zugleich
 -- `ist_team_mitglied` bzw. `meine_team_ids` (Team-Ort) und
--- `ist_verein_verwaltung` (Verein-Ort) im Funktionstext enthalten.
+-- `ist_verein_verwaltung` (Verein-Ort) im Funktionstext enthalten. Auf der
+-- Verein-Seite zählen auch die Bausteine `verwaltung_sperren` und
+-- `verwaltung_team_sperren` (Story 5), die das Prädikat in sich tragen: Die
+-- `verein_*`-RPCs nennen es sonst nicht mehr selbst.
 -- Geprüft wird bewusst nicht die Form der Verknüpfung, sondern nur, dass
 -- nicht beide Prädikate in einer Funktion stehen. Eine Ausnahmeliste gibt es
 -- nicht. Funktionen, die beides nur anzeigen, lesen `team_members` und
@@ -13,8 +16,9 @@
 -- Dazu (ab Story 3): Jede RPC `verein_*` beginnt mit nur_in_der_anwendung()
 -- und weist ein KI-Token ab.
 --
--- Selbsttest zuerst: zwei Attrappen in `public` (plpgsql und SQL-Standard-
--- Rumpf), die beide Prädikatnamen tragen, muss die Abfrage finden. Sonst
+-- Selbsttest zuerst: drei Attrappen in `public` (plpgsql und SQL-Standard-
+-- Rumpf mit beiden Prädikatnamen, dazu eine mit dem Team-Prädikat und dem
+-- Baustein `verwaltung_team_sperren`) muss die Abfrage finden. Sonst
 -- prüfte sie still nichts. Danach fallen die Attrappen, und die eigentliche
 -- Prüfung läuft. Alles in einer Transaktion mit rollback; hinterlässt nichts.
 
@@ -34,7 +38,7 @@ language sql stable as $$
     ) t
    where p.pronamespace = 'public'::regnamespace
      and t.rumpf ~ '\m(ist_team_mitglied|meine_team_ids)\M'
-     and t.rumpf ~ '\mist_verein_verwaltung\M'
+     and t.rumpf ~ '\m(ist_verein_verwaltung|verwaltung_sperren|verwaltung_team_sperren)\M'
 $$;
 
 create function public.v0_ortspruefung_attrappe_plpgsql() returns void
@@ -42,6 +46,13 @@ language plpgsql as $$
 begin
   perform 'ist_team_mitglied';
   perform 'ist_verein_verwaltung';
+end $$;
+
+create function public.v0_ortspruefung_attrappe_baustein() returns void
+language plpgsql as $$
+begin
+  perform 'ist_team_mitglied';
+  perform 'verwaltung_team_sperren';
 end $$;
 
 create function public.v0_ortspruefung_attrappe_sql() returns text
@@ -55,13 +66,15 @@ declare
   treffer text := coalesce(pg_temp.ortspruefung_treffer(), '');
 begin
   if position('v0_ortspruefung_attrappe_plpgsql()' in treffer) = 0
-     or position('v0_ortspruefung_attrappe_sql()' in treffer) = 0 then
+     or position('v0_ortspruefung_attrappe_sql()' in treffer) = 0
+     or position('v0_ortspruefung_attrappe_baustein()' in treffer) = 0 then
     raise exception 'Selbsttest der Ortsprüfung: Attrappen nicht gefunden (Treffer: %)', treffer;
   end if;
 end $$;
 
 drop function public.v0_ortspruefung_attrappe_plpgsql();
 drop function public.v0_ortspruefung_attrappe_sql();
+drop function public.v0_ortspruefung_attrappe_baustein();
 
 do $$
 declare

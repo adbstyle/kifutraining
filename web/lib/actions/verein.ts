@@ -34,11 +34,11 @@ export async function ordneSpielerZuAktion(
   teamId: string,
   teamName: string,
   spielerIds: string[],
-): Promise<{ ok: true; anzahl: number; ersetzt: number } | { ok: false; error: string }> {
+): Promise<{ ok: true; anzahl: number; ersetzt: number } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await ordneSpielerZu(a.supabase, a.userId, { teamId, teamName, spielerIds });
-  if (!r.ok) return { ok: false, error: r.meldung };
+  if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld };
   revalidiereTeam(teamId);
   revalidiereVerein();
   return { ok: true, anzahl: r.wert.anzahl, ersetzt: r.wert.ersetzt };

@@ -726,6 +726,9 @@ begin
   perform verwaltung_team_sperren(p_team);
   perform sperre_teams(array[p_team]);
   select name into v_name from teams where id = p_team for update;
+  -- Netz: Aufgelöst wird nur unter der Vereinssperre; ein späterer Löschweg
+  -- ohne sie gäbe sonst name_falsch ohne Namen.
+  if not found then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
   if p_teamname is null
      or normalize(btrim(p_teamname), nfc) is distinct from normalize(v_name, nfc) then
     return jsonb_build_object('status', 'name_falsch', 'name', v_name);
