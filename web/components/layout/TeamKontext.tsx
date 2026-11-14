@@ -1,17 +1,19 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
 
 /**
- * Ob das geöffnete Training einem Team gehört — quer über die Navigation
- * hinweg festgehalten.
+ * Welchem Team das geöffnete Training gehört (oder keinem) — quer über die
+ * Navigation hinweg festgehalten.
  *
  * Warum das nicht der Server allein erledigt: Die Hauptnavigation sitzt im
  * (app)-Layout, und ein Layout rendert Next.js bei einer Client-Navigation
  * nicht neu (Partial Rendering). Wer im Trainingsplan auf eine Einheit klickt,
  * bekäme also weiterhin den Zustand des letzten harten Ladens zu sehen —
- * „Trainings" aktiv statt „Teams", genau das, was #156 abschaffen soll.
+ * „Trainings" aktiv statt des Teams, genau das, was #156 abschaffen soll. Seit
+ * dem Bereich-Wechsler (#581) braucht die Leiste dazu das Team selbst, nicht
+ * nur das Ja oder Nein.
  *
  * Ein Root-`template.tsx` löst es nicht: Es baut den Rahmen zwar bei jeder
  * Navigation neu auf, holt ihn aber aus dem Router-Cache und rendert die
@@ -32,22 +34,27 @@ import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
  * Server-Wert der ältere von beiden.
  */
 type TeamKontextWert = {
-  /** `null`, solange keine Seite etwas gemeldet hat — dann gilt der Server. */
-  gemeldet: boolean | null;
-  melden: (wert: boolean) => void;
+  /** `null`, solange keine Seite etwas gemeldet hat — dann gilt der Server.
+   *  Gemeldet ist die Kennung des Teams oder `{ team: null }` (kein Team). */
+  gemeldet: { team: string | null } | null;
+  melden: (team: string | null) => void;
 };
 
 const TeamKontext = createContext<TeamKontextWert | null>(null);
 
 export function TeamKontextProvider({ children }: { children: React.ReactNode }) {
-  const [gemeldet, melden] = useState<boolean | null>(null);
-  const wert = useMemo(() => ({ gemeldet, melden }), [gemeldet]);
+  const [gemeldet, setGemeldet] = useState<{ team: string | null } | null>(null);
+  // `melden` bleibt dieselbe Funktion: Der Melder hängt mit seinem Effekt
+  // daran, eine neue ließe ihn bei jeder Meldung erneut laufen.
+  const melden = useCallback((team: string | null) => setGemeldet({ team }), []);
+  const wert = useMemo(() => ({ gemeldet, melden }), [gemeldet, melden]);
   return <TeamKontext.Provider value={wert}>{children}</TeamKontext.Provider>;
 }
 
 /** Der geltende Zustand: das zuletzt Gemeldete, sonst der Wert vom Server. */
-export function useTeamBereich(vomServer: boolean): boolean {
-  return useContext(TeamKontext)?.gemeldet ?? vomServer;
+export function useTeamBereich(vomServer: string | null): string | null {
+  const gemeldet = useContext(TeamKontext)?.gemeldet;
+  return gemeldet ? gemeldet.team : vomServer;
 }
 
 /**
@@ -59,15 +66,15 @@ export function useTeamBereich(vomServer: boolean): boolean {
  * zum nächsten bleibt die Komponente stehen und nur der Effekt läuft neu:
  * erst das Zurücknehmen, dann die neue Meldung — beides im selben Durchgang.
  */
-export function TeamBereichMelder({ imTeamBereich }: { imTeamBereich: boolean }) {
+export function TeamBereichMelder({ teamId }: { teamId: string | null }) {
   const melden = useContext(TeamKontext)?.melden;
   useIsomorpherEffekt(() => {
     if (!melden) return;
-    melden(imTeamBereich);
-    // Zurück auf `false`, nicht auf `null`: Wer das Training verlässt, ist
-    // nicht mehr im Team-Bereich — und der Server-Wert, auf den `null`
-    // zurückfiele, gehört zur zuletzt hart geladenen Adresse.
-    return () => melden(false);
-  }, [melden, imTeamBereich]);
+    melden(teamId);
+    // Zurück auf «kein Team», nicht auf «nichts gemeldet»: Wer das Training
+    // verlässt, ist nicht mehr im Team-Bereich — und der Server-Wert, auf den
+    // das zurückfiele, gehört zur zuletzt hart geladenen Adresse.
+    return () => melden(null);
+  }, [melden, teamId]);
   return null;
 }

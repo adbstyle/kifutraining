@@ -280,7 +280,20 @@ import {
   ueberAnzahl,
   ueberAnzahlText,
 } from "../lib/probe";
-import { VEREIN_MELDUNG, VEREIN_SPIELER_MAX, VEREIN_TEAMS_MAX, zugeordnetText, zuordnenAbweisungText, zuordnenEinleitung } from "../lib/verein";
+import {
+  PERSON_MELDUNG,
+  VEREIN_MELDUNG,
+  VEREIN_NAME_MAX,
+  VEREIN_SPIELER_MAX,
+  VEREIN_TEAMS_MAX,
+  teamnameVergebenText,
+  vereinsNameProblem,
+  zugeordnetText,
+  zuordnenAbweisungText,
+  zuordnenEinleitung,
+} from "../lib/verein";
+import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
+import { bereichAusPfad } from "../lib/navigation";
 import { textMitLinks } from "../lib/text-links";
 
 let gelaufen = 0;
@@ -2237,6 +2250,93 @@ pruefe("Alte Namen abwesend: kein spieler_entfernen, kein spieler_loeschen, kein
   for (const datei of quelldateien(join(web, "lib/mcp")))
     if (/\.rpc\(\s*["`']verein_/.test(readFileSync(datei, "utf8"))) ki.push(relative(web, datei));
   assert.deepEqual(ki, [], `verein_*-RPC im KI-Weg: ${ki.join(", ")}`);
+});
+
+pruefe("Alte Namen abwesend: Team anlegen, auflösen und umbenennen gibt es nur noch am Verein-Ort (#581, Architekturplan §5.1)", () => {
+  // Treffer in supabase/migrations bleiben erlaubt (angewandte Migrationen); geprüft wird nur web/.
+  const vereinOrt = (d: string) =>
+    ["lib/kern/verein.ts", "lib/actions/verein.ts"].includes(d) || d.startsWith("app/(app)/verein/") || d.startsWith("components/verein/");
+  const treffer: string[] = [];
+  for (const datei of quelldateien(web)) {
+    if (datei === fileURLToPath(import.meta.url)) continue;
+    const rel = relative(web, datei);
+    readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
+      const ort = `${rel}:${i + 1}`;
+      // Überall verschwunden: die RPCs und Zustände des alten Auflösens.
+      if (/\b(create_team|loese_team_auf|team_aufloesen_wenn_leer|aufloesung_noetig|getTeamAufloesungsInfo)\b/.test(zeile)) treffer.push(ort);
+      // Der Teamname am Austritt ist weg; `p_teamname` gibt es nur noch beim Auflösen am Verein-Ort.
+      if (!vereinOrt(rel) && /\bp_teamname\b/.test(zeile)) treffer.push(ort);
+      // Umbenennen und Auflösen: nur am Verein-Ort, nie am Team-Ort.
+      if (!vereinOrt(rel) && /\b(benenneTeamUm|loeseTeamAuf)\b/.test(zeile)) treffer.push(ort);
+      if (/\bTeamAnsichten\b/.test(zeile)) treffer.push(ort);
+    });
+  }
+  assert.deepEqual(treffer, [], `alte Namen am falschen Ort, zu räumen: ${treffer.join(", ")}`);
+});
+
+pruefe("Verein-Kern nur für die Anwendung: kein MCP-Modul importiert ihn, kein anderer Kern ruft verein_* (#581, Architekturplan §5.5)", () => {
+  const treffer: string[] = [];
+  for (const datei of quelldateien(join(web, "lib/mcp")))
+    if (/lib\/kern\/verein["']/.test(readFileSync(datei, "utf8"))) treffer.push(relative(web, datei));
+  // Auch die übrigen Kerne bleiben frei von verein_*-RPCs: Was die KI ruft, endet nicht beim Verein.
+  for (const datei of quelldateien(join(web, "lib/kern")))
+    if (!datei.endsWith("kern/verein.ts") && /\.rpc\(\s*["`']verein_/.test(readFileSync(datei, "utf8"))) treffer.push(relative(web, datei));
+  // Und wer den Verein-Kern importiert, ist eine Action, eine Seite oder ein Skript — kein Kern.
+  for (const datei of quelldateien(join(web, "lib/kern")))
+    if (!datei.endsWith("kern/verein.ts") && /kern\/verein["']/.test(readFileSync(datei, "utf8"))) treffer.push(relative(web, datei));
+  assert.deepEqual(treffer, [], `Verein-Kern im KI-Weg: ${treffer.join(", ")}`);
+});
+
+pruefe("Vereinsverwaltung (#581): Zwillinge, Sätze zum Aufnehmen und Bereich der Seitenleiste", () => {
+  // Zwilling des CHECK `verein_name`.
+  assert.equal(VEREIN_NAME_MAX, 60);
+  assert.equal(vereinsNameProblem("FC Wyler"), null);
+  assert.equal(vereinsNameProblem("  FC Wyler  "), null, "Leerraum am Rand zählt nicht");
+  assert.equal(vereinsNameProblem("x".repeat(60)), null);
+  assert.equal(vereinsNameProblem("x".repeat(61)), `Der Vereinsname darf höchstens 60 Zeichen lang sein.`);
+  assert.equal(vereinsNameProblem("   "), "Bitte einen Vereinsnamen angeben.");
+  // Teamname vergeben: Netz ohne Namen, Anwendung mit dem Team (AK 21); beide aus dem Marker erklärt.
+  assert.equal(VEREIN_MELDUNG.TEAMNAME_VERGEBEN, "Im Verein trägt schon ein anderes Team diesen Namen.");
+  assert.equal(teamnameVergebenText("Da Junioren"), "Im Verein trägt schon das Team «Da Junioren» diesen Namen.");
+  assert.equal(fehlerMeldung("x TEAMNAME_VERGEBEN y"), VEREIN_MELDUNG.TEAMNAME_VERGEBEN);
+  // Personensuche: genau diese fünf Status, ein Wortlaut für Team- und Verein-Ort.
+  assert.deepEqual(Object.keys(PERSON_MELDUNG).sort(), ["anderer_verein", "bereits_mitglied", "bereits_verwaltung", "gebremst", "nicht_gefunden"]);
+  assert.equal(PERSON_MELDUNG.anderer_verein, VEREIN_MELDUNG.ANDERER_VEREIN, "eine Konstante, nicht zwei Texte");
+  assert.equal(PERSON_MELDUNG.nicht_gefunden, "Zu dieser Adresse gibt es kein bestätigtes Konto. Die Person registriert sich zuerst selbst bei KiFu.");
+  assert.equal(PERSON_MELDUNG.bereits_mitglied, "Diese Person ist bereits im Team.");
+  assert.equal(PERSON_MELDUNG.bereits_verwaltung, "Diese Person gehört schon zur Vereinsverwaltung.");
+  assert.equal(PERSON_MELDUNG.gebremst, "Zu viele Versuche - bitte später erneut.");
+
+  // Bereich aus der Adresse (AP §7.1).
+  const T1 = "11111111-1111-4111-8111-111111111111";
+  const T2 = "22222222-2222-4222-8222-222222222222";
+  assert.deepEqual(bereichAusPfad(`/team/${T1}`, null), { art: "team", id: T1 });
+  assert.deepEqual(bereichAusPfad(`/team/${T1}/verwaltung`, null), { art: "team", id: T1 });
+  assert.deepEqual(bereichAusPfad("/verein", null), { art: "verein" });
+  assert.deepEqual(bereichAusPfad("/verein/team/abc", null), { art: "verein" });
+  assert.deepEqual(bereichAusPfad("/verein/verwaltung", null), { art: "verein" });
+  assert.deepEqual(bereichAusPfad(`/training/${T2}`, T1), { art: "team", id: T1 }, "ein Team-Training gehört zu seinem Team");
+  assert.equal(bereichAusPfad(`/training/${T2}`, null), null, "ein persönliches Training liegt in keinem Bereich");
+  for (const pfad of ["/", "/trainings", "/teams", "/konto", "/vereinsliste", `/teamx/${T1}`]) assert.equal(bereichAusPfad(pfad, null), null, pfad);
+  assert.equal(bereichAusPfad("/trainings", T1), null, "die Trainingsübersicht liegt in keinem Bereich");
+
+  // Cookie: lesen, schreiben, fremde Werte fallen weg.
+  assert.equal(BEREICH_COOKIE, "kifu-bereich");
+  assert.deepEqual(leseBereich("verein"), { art: "verein" });
+  assert.deepEqual(leseBereich(`team:${T1}`), { art: "team", id: T1 });
+  for (const wert of [undefined, "", "team:", "team:x", "team:../etc", "Verein", "verein;x", "team:" + T1 + "x"]) assert.equal(leseBereich(wert), null, String(wert));
+  assert.equal(bereichSchluessel({ art: "team", id: T1 }), `team:${T1}`);
+  assert.match(bereichCookie({ art: "verein" }), /^kifu-bereich=verein; path=\/; max-age=\d+; samesite=lax$/);
+
+  // Welcher Bereich gilt: Adresse vor Cookie vor erstem; Fremdes und Verwaistes fällt zurück.
+  const eigene: Bereich[] = [{ art: "team", id: T1 }, { art: "team", id: T2 }, { art: "verein" }];
+  assert.deepEqual(waehleBereich(eigene, { art: "verein" }, { art: "team", id: T2 }), { art: "verein" });
+  assert.deepEqual(waehleBereich(eigene, null, { art: "team", id: T2 }), { art: "team", id: T2 });
+  assert.deepEqual(waehleBereich(eigene, null, null), { art: "team", id: T1 }, "ohne alles der erste");
+  assert.deepEqual(waehleBereich(eigene, null, { art: "team", id: "99999999-9999-4999-8999-999999999999" }), { art: "team", id: T1 }, "verwaistes Team im Cookie");
+  assert.deepEqual(waehleBereich(eigene, { art: "team", id: "99999999-9999-4999-8999-999999999999" }, { art: "verein" }), { art: "verein" }, "fremdes Team in der Adresse: der gemerkte");
+  assert.deepEqual(waehleBereich([{ art: "verein" }], null, { art: "team", id: T1 }), { art: "verein" }, "Verwaltung ohne Team: nur der Verein");
+  assert.equal(waehleBereich([], { art: "verein" }, null), null, "ohne Bereiche kein Bereich");
 });
 
 /** Alle .ts/.tsx-Dateien unter einem Ordner, ohne node_modules und .next. */

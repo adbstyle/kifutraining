@@ -3210,6 +3210,28 @@ export default async function Styleguide() {
             Neuladen; Ungespeichertes auf der Seite bleibt stehen.
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            <strong>Bereich-Wechsler</strong> (<code>BereichWechsler</code>, Story #581) steht oben in
+            der Leiste, unter der Marke, und wählt den Bereich: eines der eigenen Teams oder den
+            Verein. <em>Warum neu:</em> Bisher gab es einen einzigen Bereich «Teams» mit allen Teams als
+            Unterpunkten. Mit dem Verein kommt ein zweiter Bereich mit eigenen Einträgen dazu; die Leiste
+            zeigt darum nur, was in dem gewählten Bereich geht, und die Bibliotheken bleiben immer. Der
+            Knopf trägt zwei Zeilen (Art und Name, etwa «FC Wyler · Team» über «Da Junioren») und ein
+            Auf-Ab-Zeichen; die Liste klappt darunter auf, je Bereich mit seinem Untertitel und einem
+            Haken beim offenen, die Teams durch einen Strich vom Verein getrennt. Es gibt keine
+            Avatare. Gibt es nur einen Bereich, ist der Wechsler eine Anzeige ohne Liste.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            Die Einträge der Liste sind <strong>Links</strong>, keine Knöpfe (<code>menuitemradio</code>):
+            Wer ungesicherte Angaben auf der Seite hat, wird vor dem Wechsel wie bei jedem Link der
+            Leiste gewarnt. Tastatur nach dem Menü-Muster: beim Öffnen steht der Fokus auf dem offenen
+            Bereich, ↑/↓ laufen im Kreis, Escape schliesst und gibt den Fokus zurück. Die Beschriftung
+            für Vorlesehilfen ist «Bereich wählen». Schmal bleibt vom Knopf das Zeichen des Bereichs, die
+            Liste klappt (<code>fixed</code>, wie «Darstellung») rechts neben der Leiste auf. Welcher
+            Bereich offen ist, folgt aus der Adresse; auf Seiten ohne Bereich (Bibliotheken, Konto) bleibt
+            der zuletzt gewählte, gemerkt im Cookie <code>kifu-bereich</code>. Reine Navigation: Rechte
+            hängen daran keine.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             <strong>Breit oder schmal</strong> - 280 px mit Namen, 72 px nur mit
             Zeichen. Umgeschaltet wird <strong>nur von Hand</strong>, über den
             Knopf vor den Brotkrumen; beim Überfahren öffnet sich nichts, sonst

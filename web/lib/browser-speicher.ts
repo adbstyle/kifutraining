@@ -1,3 +1,4 @@
+import { BEREICH_COOKIE } from "@/lib/bereich";
 import { DARSTELLUNG_COOKIE } from "@/lib/darstellung";
 import { LEISTE_COOKIE } from "@/lib/seitenleiste";
 import { SPALTE_COOKIE } from "@/lib/spalte";
@@ -39,6 +40,13 @@ export const SPEICHERUNGEN: Speicherung[] = [
     zweck: "Merkt sich, ob du die Seitenleiste breit oder schmal gewählt hast.",
     dauer: "Ein Jahr.",
     ohne: "Die Seitenleiste steht bei jedem Besuch wieder breit.",
+  },
+  {
+    name: BEREICH_COOKIE,
+    titel: "Gewählter Bereich",
+    zweck: "Merkt sich, ob du zuletzt eines deiner Teams oder den Verein gewählt hast, damit die Seitenleiste auf Seiten ohne Bereich (Übungen, Trainings, Konto) wieder dort steht.",
+    dauer: "Ein Jahr.",
+    ohne: "Die Seitenleiste öffnet jedes Mal den ersten deiner Bereiche.",
   },
   {
     name: SPALTE_COOKIE,
