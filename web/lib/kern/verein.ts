@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
-import { nachSpielerName, SPIELER_MELDUNG } from "@/lib/spieler";
+import { nachSpielerName, SPIELER_MELDUNG, type SpielerEingabe } from "@/lib/spieler";
 import { teamNameProblem } from "@/lib/team";
 import {
   PERSON_MELDUNG,
@@ -9,12 +9,15 @@ import {
   VEREIN_MELDUNG,
   VEREIN_TEAM_NICHT_GEFUNDEN,
   teamnameVergebenText,
+  spielerAendernAbgewiesenText,
+  spielerErfassenAbgewiesenText,
   vereinsNameProblem,
   zuordnenAbweisungText,
+  type SpielerDoppeltImVerein,
   type ZuordnenAbweisung,
 } from "@/lib/verein";
 import { NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
-import { spielerFehler } from "@/lib/kern/spieler";
+import { argumente, eingabeFehler, spielerFehler } from "@/lib/kern/spieler";
 
 /** Ein Fehler der `verein_*`-RPCs: «Verein nicht gefunden» ordnet nur dieser
  *  Bereich ein, alles übrige `spielerFehler`. */
@@ -47,6 +50,10 @@ export type VereinSpieler = {
   vorname: string;
   nachname: string;
   jahrgang: number;
+  /** Die J+S-Nummer; `null`, wenn keine erfasst ist. Nur die Verwaltung sieht sie. */
+  js: string | null;
+  /** Der aktuelle private Link wurde schon bezogen (Spalte «Privater Link»). */
+  linkBezogen: boolean;
   /** Die Teams der Spieler:in, nach Namen; leer, wenn sie keinem zugeordnet ist. */
   teams: { id: string; name: string }[];
 };
@@ -66,9 +73,9 @@ export async function ladeVereinSpielerliste(
   if (!istUuid(e.vereinId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.verein, { feld: "verein_id" });
   const { data, error } = await supabase.rpc("verein_spielerliste", { p_verein: e.vereinId });
   if (error) return vereinFehler(error);
-  const r = data as { spieler: VereinSpieler[]; teams: VereinTeam[] };
+  const r = data as { spieler: (Omit<VereinSpieler, "js" | "linkBezogen"> & { js: string | null; link_bezogen: boolean })[]; teams: VereinTeam[] };
   return ok({
-    spieler: nachSpielerName(r.spieler).map((s) => ({ ...s, teams: [...s.teams].sort(nachName) })),
+    spieler: nachSpielerName(r.spieler).map(({ link_bezogen, ...s }) => ({ ...s, linkBezogen: link_bezogen, teams: [...s.teams].sort(nachName) })),
     teams: [...r.teams].sort(nachName),
   });
 }
@@ -124,7 +131,15 @@ export type VereinTeamZeile = {
   ohneMitglied?: boolean;
 };
 
-export type VereinAnsicht = { name: string; verwaltung: VerwaltungPerson[]; teams: VereinTeamZeile[] };
+/** `spielerZahl`: alle Spieler:innen des Vereins, gezählt wie die Grenze 1000;
+ *  `spielerOhneTeam`: davon ohne Team. Beide nur für die Verwaltung. */
+export type VereinAnsicht = {
+  name: string;
+  verwaltung: VerwaltungPerson[];
+  teams: VereinTeamZeile[];
+  spielerZahl?: number;
+  spielerOhneTeam?: number;
+};
 
 /** Eine Trainer:in in der Teamansicht der Verwaltung. */
 export type VereinTeamTrainer = TeamTrainer & { ich: boolean };
@@ -185,9 +200,11 @@ export async function ladeVereinAnsicht(
   if (!istUuid(e.vereinId)) return vereinNichtGefunden();
   const { data, error } = await supabase.rpc("verein_ansicht", { p_verein: e.vereinId });
   if (error) return vereinFehler(error);
-  const r = data as { name: string; verwaltung: VerwaltungRoh[]; teams: TeamRoh[] };
+  const r = data as { name: string; verwaltung: VerwaltungRoh[]; teams: TeamRoh[]; spieler_zahl?: number; spieler_ohne_team?: number };
   return ok({
     name: r.name,
+    ...(r.spieler_zahl !== undefined ? { spielerZahl: r.spieler_zahl } : {}),
+    ...(r.spieler_ohne_team !== undefined ? { spielerOhneTeam: r.spieler_ohne_team } : {}),
     verwaltung: r.verwaltung.map((v) => ({
       anzeigeName: v.anzeige_name,
       ich: v.ich,
@@ -436,4 +453,114 @@ export async function nimmSpielerAusTeamImVerein(
   const { data, error } = await supabase.rpc("verein_spieler_aus_team_nehmen", { p_team: e.teamId, p_spieler: e.spielerId });
   if (error) return teamFehler(error);
   return ok({ ohneTeam: !!(data as { ohne_team: boolean }).ohne_team });
+}
+
+// ── Spielerbestand der Verwaltung (Story #582) ──────────────────────────────
+//
+// Erfassen ohne Team, ändern, löschen und den privaten Link abrufen bzw.
+// erneuern — für jede Spieler:in des Vereins, ohne Mitgliedschaft in ihren
+// Teams. Wie oben: nur `verein_*`-RPCs, nur in der Anwendung, kein KI-Werkzeug.
+// Wer ohne Recht, für eine unbekannte, fremde oder gelöschte Spieler:in fragt,
+// erfährt dasselbe: `SPIELER_NICHT_GEFUNDEN` am Feld `spieler_id`.
+
+const spielerNichtGefunden = () =>
+  fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, { feld: "spieler_id" });
+
+type SpielerAbweisung = { status: "abgewiesen"; grund: "doppelt" } & SpielerDoppeltImVerein;
+
+/** Eine Spieler:in ohne Team erfassen (#582 AK 3, 4, 6, 7). `vereinName` steht
+ *  nur im Satz der Abweisung. Eine Doppelerfassung ist eine Regel am Feld
+ *  `vorname`; die Grenze des Vereins meldet die Datenebene mit `VEREIN_VOLL`. */
+export async function legeSpielerImVereinAn(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: SpielerEingabe & { vereinId: string; vereinName: string },
+): Promise<KernErgebnis<{ spielerId: string }>> {
+  const problem = eingabeFehler(e);
+  if (problem) return problem;
+  if (!istUuid(e.vereinId)) return vereinNichtGefunden();
+  const args = argumente(e);
+  const { data, error } = await supabase.rpc("verein_spieler_anlegen", { p_verein: e.vereinId, ...args });
+  if (error) return vereinFehler(error);
+  const r = data as { status: "angelegt"; id: string } | SpielerAbweisung;
+  // Der Jahrgang ist geprüft (eingabeFehler), also gesetzt.
+  if (r.status === "abgewiesen")
+    return fehlschlag(
+      "regel",
+      spielerErfassenAbgewiesenText(r, { vorname: args.p_vorname, nachname: args.p_nachname, jahrgang: args.p_jahrgang! }, e.vereinName),
+      { feld: "vorname" },
+    );
+  return ok({ spielerId: r.id });
+}
+
+/** Vorname, Nachname, Jahrgang und J+S-Nummer einer Spieler:in des Vereins
+ *  ändern (#582 AK 2, 5, 15) — als Ganzes. */
+export async function aendereSpielerImVerein(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: SpielerEingabe & { spielerId: string },
+): Promise<KernErgebnis<{ spielerId: string }>> {
+  const problem = eingabeFehler(e);
+  if (problem) return problem;
+  if (!istUuid(e.spielerId)) return spielerNichtGefunden();
+  const { data, error } = await supabase.rpc("verein_spieler_aendern", { p_spieler: e.spielerId, ...argumente(e) });
+  if (error) return spielerFehler(error);
+  const r = data as { status: "geaendert" } | SpielerAbweisung;
+  if (r.status === "abgewiesen") return fehlschlag("regel", spielerAendernAbgewiesenText(r), { feld: "vorname" });
+  return ok({ spielerId: e.spielerId });
+}
+
+/** Die Teams einer Spieler:in, nach Name — frisch gelesen für die Bestätigung
+ *  zum Löschen (#582 AK 13). */
+export async function ladeSpielerTeamsImVerein(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { spielerId: string },
+): Promise<KernErgebnis<{ teams: { id: string; name: string }[] }>> {
+  if (!istUuid(e.spielerId)) return spielerNichtGefunden();
+  const { data, error } = await supabase.rpc("verein_spieler_teams", { p_spieler: e.spielerId });
+  if (error) return spielerFehler(error);
+  return ok({ teams: [...(data as { teams: { id: string; name: string }[] }).teams].sort(nachName) });
+}
+
+/** Eine Spieler:in aus dem Verein löschen (#582 AK 12, 14) — samt privatem
+ *  Link und Meldungen. `teams`: ihre Teams vor dem Löschen, damit der Aufrufer
+ *  deren Ansichten neu lädt. */
+export async function loescheSpielerImVerein(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { spielerId: string },
+): Promise<KernErgebnis<{ teams: { id: string; name: string }[] }>> {
+  if (!istUuid(e.spielerId)) return spielerNichtGefunden();
+  const { data, error } = await supabase.rpc("verein_spieler_entfernen", { p_spieler: e.spielerId });
+  if (error) return spielerFehler(error);
+  return ok({ teams: (data as { status: "geloescht"; teams: { id: string; name: string }[] }).teams });
+}
+
+/** Den privaten Link einer Spieler:in des Vereins holen (#582 AK 9, 10) — das
+ *  Geheimnis, nicht die Adresse. `ohneTeam`: Die Spielervertretung sähe noch
+ *  keine Termine; `bezogen`: Der Link wurde schon bezogen. */
+export async function holeSpielerLinkImVerein(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { spielerId: string },
+): Promise<KernErgebnis<{ token: string; ohneTeam: boolean; bezogen: boolean }>> {
+  if (!istUuid(e.spielerId)) return spielerNichtGefunden();
+  const { data, error } = await supabase.rpc("verein_spieler_link_holen", { p_spieler: e.spielerId });
+  if (error) return spielerFehler(error);
+  const r = data as { link_token: string; ohne_team: boolean; bezogen: boolean };
+  return ok({ token: r.link_token, ohneTeam: r.ohne_team, bezogen: r.bezogen });
+}
+
+/** Den privaten Link erneuern (#582 AK 11): Der bisherige gilt nie wieder, ein
+ *  Kalender-Abo endet, der Stand «bezogen» ist zurückgesetzt. */
+export async function erneuereSpielerLinkImVerein(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { spielerId: string },
+): Promise<KernErgebnis<{ token: string }>> {
+  if (!istUuid(e.spielerId)) return spielerNichtGefunden();
+  const { data, error } = await supabase.rpc("verein_spieler_link_erneuern", { p_spieler: e.spielerId });
+  if (error) return spielerFehler(error);
+  return ok({ token: (data as { link_token: string }).link_token });
 }

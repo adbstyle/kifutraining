@@ -24,7 +24,7 @@ import {
   sucheVereinPersonAktion,
 } from "@/lib/actions/verein";
 import type { VerwaltungPerson } from "@/lib/kern/verein";
-import { VEREIN_MELDUNG, VEREIN_TEAMS_MAX, vereinsNameProblem, zielWeg } from "@/lib/verein";
+import { VEREIN_MELDUNG, VEREIN_TEAMS_MAX, spielerVonText, vereinsNameProblem, zielWeg } from "@/lib/verein";
 
 /* Die Verwaltung des Vereins (Epic Vereine #575, Story #581 AK 3, 6, 23,
    30–34): Vereinsname, die Personen der Vereinsverwaltung mit Adresse,
@@ -49,11 +49,14 @@ export function VereinVerwaltung({
   vereinId,
   vereinName,
   anzahlTeams,
+  anzahlSpieler,
   verwaltung,
 }: {
   vereinId: string;
   vereinName: string;
   anzahlTeams: number;
+  /** Alle Spieler:innen des Vereins, gezählt wie die Grenze 1000 (mit denen ohne Team). */
+  anzahlSpieler: number;
   verwaltung: VerwaltungEintrag[];
 }) {
   const router = useRouter();
@@ -121,6 +124,10 @@ export function VereinVerwaltung({
             <dd className="type-body-medium text-right font-medium text-on-surface">
               {anzahlTeams <= VEREIN_TEAMS_MAX ? `${anzahlTeams} von ${VEREIN_TEAMS_MAX}` : `${anzahlTeams} (höchstens ${VEREIN_TEAMS_MAX} Teams)`}
             </dd>
+          </div>
+          <div className="flex items-center justify-between gap-3 border-t border-linie py-2">
+            <dt className="type-body-medium text-on-surface-mittel">Spieler:innen</dt>
+            <dd className="type-body-medium text-right font-medium text-on-surface">{spielerVonText(anzahlSpieler)}</dd>
           </div>
         </dl>
       </Card>

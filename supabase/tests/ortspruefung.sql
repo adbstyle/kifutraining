@@ -16,9 +16,10 @@
 -- Dazu (ab Story 3): Jede RPC `verein_*` beginnt mit nur_in_der_anwendung()
 -- und weist ein KI-Token ab.
 --
--- Selbsttest zuerst: drei Attrappen in `public` (plpgsql und SQL-Standard-
--- Rumpf mit beiden Prädikatnamen, dazu eine mit dem Team-Prädikat und dem
--- Baustein `verwaltung_team_sperren`) muss die Abfrage finden. Sonst
+-- Selbsttest zuerst: vier Attrappen in `public` (plpgsql und SQL-Standard-
+-- Rumpf mit beiden Prädikatnamen, dazu je eine mit dem Team-Prädikat und dem
+-- Baustein `verwaltung_team_sperren` bzw. `verwaltung_spieler_sperren`) muss
+-- die Abfrage finden. Sonst
 -- prüfte sie still nichts. Danach fallen die Attrappen, und die eigentliche
 -- Prüfung läuft. Alles in einer Transaktion mit rollback; hinterlässt nichts.
 
@@ -38,7 +39,7 @@ language sql stable as $$
     ) t
    where p.pronamespace = 'public'::regnamespace
      and t.rumpf ~ '\m(ist_team_mitglied|meine_team_ids)\M'
-     and t.rumpf ~ '\m(ist_verein_verwaltung|verwaltung_sperren|verwaltung_team_sperren)\M'
+     and t.rumpf ~ '\m(ist_verein_verwaltung|verwaltung_sperren|verwaltung_team_sperren|verwaltung_spieler_sperren)\M'
 $$;
 
 create function public.v0_ortspruefung_attrappe_plpgsql() returns void
@@ -55,6 +56,13 @@ begin
   perform 'verwaltung_team_sperren';
 end $$;
 
+create function public.v0_ortspruefung_attrappe_spieler() returns void
+language plpgsql as $$
+begin
+  perform 'meine_team_ids';
+  perform 'verwaltung_spieler_sperren';
+end $$;
+
 create function public.v0_ortspruefung_attrappe_sql() returns text
 language sql
 begin atomic
@@ -67,7 +75,8 @@ declare
 begin
   if position('v0_ortspruefung_attrappe_plpgsql()' in treffer) = 0
      or position('v0_ortspruefung_attrappe_sql()' in treffer) = 0
-     or position('v0_ortspruefung_attrappe_baustein()' in treffer) = 0 then
+     or position('v0_ortspruefung_attrappe_baustein()' in treffer) = 0
+     or position('v0_ortspruefung_attrappe_spieler()' in treffer) = 0 then
     raise exception 'Selbsttest der Ortsprüfung: Attrappen nicht gefunden (Treffer: %)', treffer;
   end if;
 end $$;
@@ -75,6 +84,7 @@ end $$;
 drop function public.v0_ortspruefung_attrappe_plpgsql();
 drop function public.v0_ortspruefung_attrappe_sql();
 drop function public.v0_ortspruefung_attrappe_baustein();
+drop function public.v0_ortspruefung_attrappe_spieler();
 
 do $$
 declare

@@ -118,13 +118,14 @@ export function spielerFehler(e: { message: string; code?: string }): KernFehler
   return ausDbFehler(e);
 }
 
-function eingabeFehler(e: SpielerEingabe): KernFehler | null {
+/** Die Eingabe geprüft, sonst der Fehler am Feld — geteilt mit dem Verein-Kern. */
+export function eingabeFehler(e: SpielerEingabe): KernFehler | null {
   const p = spielerProblem(e);
   return p ? fehlschlag("eingabe", p.text, { feld: p.feld }) : null;
 }
 
-/** Die RPC-Argumente einer geprüften Eingabe. */
-function argumente(e: SpielerEingabe) {
+/** Die RPC-Argumente einer geprüften Eingabe — geteilt mit dem Verein-Kern. */
+export function argumente(e: SpielerEingabe) {
   return {
     p_vorname: bereinigeName(e.vorname),
     p_nachname: bereinigeName(e.nachname),

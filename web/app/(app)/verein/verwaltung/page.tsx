@@ -27,7 +27,10 @@ export default async function VereinVerwaltungPage() {
 
   const ansicht = await ladeVereinAnsicht(supabase, user.id, { vereinId: verein.id });
   if (!ansicht.ok) throw new Error(ansicht.meldung);
-  const { name, teams } = ansicht.wert;
+  const { name, teams, spielerZahl } = ansicht.wert;
+
+  // Die Zahl der Spieler:innen liefert die Datenebene der Verwaltung mit; fehlt sie, ist etwas falsch.
+  if (spielerZahl === undefined) throw new Error("verein_ansicht: Verwaltung ohne Zahl der Spieler:innen");
 
   // Die Verwaltung sieht Kennung und Adresse aller Personen; fehlt eine, ist
   // etwas an der Datenebene falsch — dann lieber keine Seite als eine ohne Adresse.
@@ -47,7 +50,7 @@ export default async function VereinVerwaltungPage() {
     <Seitenrahmen breite="5xl" krumen={[{ label: name }, { label: "Verwaltung" }]}>
       <h1 className="sr-only">Verwaltung des {name}</h1>
       <p className="type-body-medium mb-4 text-on-surface-mittel">Was den ganzen {name} betrifft</p>
-      <VereinVerwaltung vereinId={verein.id} vereinName={name} anzahlTeams={teams.length} verwaltung={verwaltung} />
+      <VereinVerwaltung vereinId={verein.id} vereinName={name} anzahlTeams={teams.length} anzahlSpieler={spielerZahl} verwaltung={verwaltung} />
     </Seitenrahmen>
   );
 }

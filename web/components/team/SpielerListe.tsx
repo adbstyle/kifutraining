@@ -13,7 +13,6 @@ import {
   SectionMessage,
   Tabelle,
   TabellenZeile,
-  TextField,
   Tooltip,
 } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
@@ -24,17 +23,14 @@ import { PROBE_TEXT, probeAusschaltenText, probeEinschaltenText, probeFolgenSumm
 import { KADER_TEXT, kaderVon, type Kader } from "@/lib/kader";
 import {
   HERAUSNEHMEN_TEXT,
-  JAHRGANG_STELLEN,
-  JS_MAX,
   herausnehmenSaetze,
   herausnehmenTitel,
-  nurZiffern,
   spielerName,
   verbleibendeTeams,
   type Spieler,
-  type SpielerFeld,
   type SpielerTeams,
 } from "@/lib/spieler";
+import { SpielerFelder, istFeldFehler, type SpielerAngaben, type SpielerFehler } from "@/components/spieler/SpielerFelder";
 import { SpielerLinkDialog } from "./SpielerLinkDialog";
 import { Selbstabholung } from "./Selbstabholung";
 import { SpielerImport } from "./SpielerImport";
@@ -112,7 +108,7 @@ export function SpielerListe({
   // `probe`: ihr Probe-Modus beim Öffnen — dagegen zählt, was sich ändert.
   const [offen, setOffen] = useState<{ id: string | null; probe: boolean } | null>(null);
   const [form, setForm] = useState<Form>(LEER);
-  const [fehler, setFehler] = useState<{ feld?: SpielerFeld; text: string } | null>(null);
+  const [fehler, setFehler] = useState<SpielerFehler | null>(null);
   // Wer aus dem Team genommen werden soll, samt den Teams und dem Stand, die
   // die Bestätigung nennt; `hinweis`: Die Lage hat sich inzwischen geändert.
   const [herausnehmen, setHerausnehmen] = useState<{ spieler: Spieler; teams: SpielerTeams; hinweis?: string; fehler?: string } | null>(null);
@@ -220,7 +216,12 @@ export function SpielerListe({
           if (probeFolgenSumme(folgen) > 0) return;
         }
         const r = await aendereSpielerAktion(teamId, id, eingabe);
-        if (!r.ok) return setFehler({ feld: r.feld, text: r.error });
+        if (!r.ok) {
+          // Inzwischen aus dem Team genommen oder von der Verwaltung gelöscht
+          // (#582): Die Meldung steht über den Feldern, die Liste lädt neu.
+          if (r.feld === "spieler_id") router.refresh();
+          return setFehler({ feld: r.feld, text: r.error });
+        }
         const vorher = spieler.find((s) => s.id === id);
         // Stimmt die Zahl nicht mehr, steht der neue Stand im offenen Dialog.
         if (probeWechsel) {
@@ -298,15 +299,11 @@ export function SpielerListe({
     });
   }
 
-  const feld = (k: Exclude<keyof Form, "kaderIds" | "probe">) => ({
-    value: form[k],
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((f) => ({ ...f, [k]: k === "jahrgang" ? nurZiffern(e.target.value) : e.target.value }));
-      setFehler(null);
-      setAufgenommen(null);
-    },
-  });
-  const fehlerAn = (f: SpielerFeld) => fehler && (fehler.feld ?? "vorname") === f ? fehler.text : undefined;
+  const aendern = (k: keyof SpielerAngaben, text: string) => {
+    setForm((f) => ({ ...f, [k]: text }));
+    setFehler(null);
+    setAufgenommen(null);
+  };
 
   const bezogen = spieler.filter((s) => s.linkBezogen).length;
   const namenVon = (s: Spieler) => kaderVon(s.id, kader).map((k) => k.name);
@@ -377,10 +374,8 @@ export function SpielerListe({
           }}
         >
           {aufgenommen && <SectionMessage appearance="success">{aufgenommen}</SectionMessage>}
-          <TextField ref={erstesFeld} label="Vorname" autoComplete="off" autoFocus {...feld("vorname")} error={!!fehlerAn("vorname")} supportingText={fehlerAn("vorname")} />
-          <TextField label="Nachname" autoComplete="off" {...feld("nachname")} error={!!fehlerAn("nachname")} supportingText={fehlerAn("nachname")} />
-          <TextField label="Jahrgang" inputMode="numeric" maxLength={JAHRGANG_STELLEN} autoComplete="off" {...feld("jahrgang")} error={!!fehlerAn("jahrgang")} supportingText={fehlerAn("jahrgang")} />
-          <TextField label="J+S-Nummer (optional)" autoComplete="off" maxLength={JS_MAX} {...feld("jsNummer")} error={!!fehlerAn("js_nummer")} supportingText={fehlerAn("js_nummer")} />
+          {fehler && !istFeldFehler(fehler) && <SectionMessage appearance="error">{fehler.text}</SectionMessage>}
+          <SpielerFelder wert={form} onAendern={aendern} fehler={fehler} erstesFeld={erstesFeld} />
           {mitKadern && (
             <MultiSelect
               label="Kader (optional)"

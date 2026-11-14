@@ -3,12 +3,18 @@
 import { redirect } from "next/navigation";
 import { eigeneBildPfade } from "@/lib/fassung";
 import {
+  aendereSpielerImVerein,
   benenneTeamUm,
   benenneVereinUm,
   entferneAusTeam,
   entferneAusVerwaltung,
+  erneuereSpielerLinkImVerein,
   findePerson,
+  holeSpielerLinkImVerein,
+  ladeSpielerTeamsImVerein,
+  legeSpielerImVereinAn,
   legeTeamAn,
+  loescheSpielerImVerein,
   loeseTeamAuf,
   nimmInVerwaltungAuf,
   nimmInsTeamAuf,
@@ -16,10 +22,12 @@ import {
   nimmSpielerAusTeamImVerein,
   ordneSpielerZu,
 } from "@/lib/kern/verein";
-import { revalidiereMitgliedschaften, revalidiereTeam, revalidiereVerein } from "@/lib/revalidate";
+import { oeffentlicherOrigin } from "@/lib/origin";
+import { revalidiereAlleTeams, revalidiereMitgliedschaften, revalidiereTeam, revalidiereVerein } from "@/lib/revalidate";
 import { raeumeVerwaisteBilder } from "@/lib/storage-aufraeumen";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
-import type { KernFehler } from "@/lib/kern/ergebnis";
+import type { FehlerArt, KernFehler } from "@/lib/kern/ergebnis";
+import { spielerLinkUrl, type SpielerEingabe } from "@/lib/spieler";
 import type { PersonSchritt } from "@/lib/verein";
 
 /**
@@ -49,8 +57,10 @@ export async function ordneSpielerZuAktion(
 /** Ergebnis einer Action der Vereinsverwaltung: `error` ist der fertige Satz;
  *  `feld` nennt, wo er hingehört (`name`, `teamname`) — `team_id` bzw.
  *  `verein_id` heisst: das Ziel ist nicht mehr zu finden (Team aufgelöst,
- *  Recht weg), die offene Seite ist überholt. */
-type Fehler = { ok: false; error: string; feld?: string };
+ *  Recht weg), die offene Seite ist überholt. `art` (wo mitgegeben) ist die
+ *  Art des Fehlers aus dem Kern: Nur eine `eingabe` gehört an ein Feld, eine
+ *  Regel-Abweisung steht über den Feldern. */
+type Fehler = { ok: false; error: string; feld?: string; art?: FehlerArt };
 
 const keinKonto: Fehler = { ok: false, error: NICHT_ANGEMELDET };
 
@@ -227,4 +237,80 @@ export async function nimmSpielerAusTeamImVereinAktion(
   revalidiereTeam(teamId);
   revalidiereVerein();
   return { ok: true, ohneTeam: r.wert.ohneTeam };
+}
+
+// ── Spielerbestand der Verwaltung (Story #582) ──────────────────────────────
+
+/** Eine Spieler:in ohne Team erfassen. `vereinName` steht nur im Satz der
+ *  Abweisung. Ein neuer Eintrag hängt an keinem Team: nur der Verein lädt neu. */
+export async function legeSpielerImVereinAnAktion(
+  vereinId: string,
+  vereinName: string,
+  e: SpielerEingabe,
+): Promise<{ ok: true; spielerId: string } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return keinKonto;
+  const r = await legeSpielerImVereinAn(a.supabase, a.userId, { ...e, vereinId, vereinName });
+  if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld, art: r.art };
+  revalidiereVerein();
+  return { ok: true, spielerId: r.wert.spielerId };
+}
+
+/** Die Angaben einer Spieler:in ändern. Ihre Teams kennt die Antwort nicht:
+ *  Namen stehen in allen Team-Ansichten, darum laden alle neu. */
+export async function aendereSpielerImVereinAktion(spielerId: string, e: SpielerEingabe): Promise<{ ok: true } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return keinKonto;
+  const r = await aendereSpielerImVerein(a.supabase, a.userId, { ...e, spielerId });
+  if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld, art: r.art };
+  revalidiereAlleTeams();
+  revalidiereVerein();
+  return { ok: true };
+}
+
+/** Die Teams einer Spieler:in, frisch gelesen für die Bestätigung zum Löschen. */
+export async function ladeVereinSpielerTeamsAktion(
+  spielerId: string,
+): Promise<{ ok: true; teams: { id: string; name: string }[] } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return keinKonto;
+  const r = await ladeSpielerTeamsImVerein(a.supabase, a.userId, { spielerId });
+  if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld };
+  return { ok: true, teams: r.wert.teams };
+}
+
+/** Eine Spieler:in aus dem Verein löschen; die Teams aus der Antwort der
+ *  Datenebene laden neu. */
+export async function loescheSpielerImVereinAktion(spielerId: string): Promise<{ ok: true } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return keinKonto;
+  const r = await loescheSpielerImVerein(a.supabase, a.userId, { spielerId });
+  if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld };
+  for (const t of r.wert.teams) revalidiereTeam(t.id);
+  revalidiereVerein();
+  return { ok: true };
+}
+
+/** Den privaten Link einer Spieler:in holen — als Adresse. `ohneTeam` und
+ *  `bezogen` stammen aus der Datenebene, nicht aus der offenen Liste. */
+export async function holeVereinSpielerLinkAktion(
+  spielerId: string,
+): Promise<{ ok: true; url: string; ohneTeam: boolean; bezogen: boolean } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return keinKonto;
+  const r = await holeSpielerLinkImVerein(a.supabase, a.userId, { spielerId });
+  if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld };
+  return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token), ohneTeam: r.wert.ohneTeam, bezogen: r.wert.bezogen };
+}
+
+/** Den privaten Link erneuern: Der bisherige gilt nie wieder. Der Stand
+ *  «bezogen» in den Team-Listen ist zurückgesetzt, darum laden sie neu. */
+export async function erneuereVereinSpielerLinkAktion(spielerId: string): Promise<{ ok: true; url: string } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return keinKonto;
+  const r = await erneuereSpielerLinkImVerein(a.supabase, a.userId, { spielerId });
+  if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld };
+  revalidiereAlleTeams();
+  revalidiereVerein();
+  return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token) };
 }

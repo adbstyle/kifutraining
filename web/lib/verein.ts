@@ -6,7 +6,7 @@
 // (lib/training-bedingungen.ts) übersetzt sie in diese Sätze.
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
-import { SPIELER_MAX, spielerName } from "@/lib/spieler";
+import { SPIELER_MAX, bereinigeName, imTeam, spielerName } from "@/lib/spieler";
 
 /** Zwilling der Grenze im Trigger `spieler_vorher` (Marker `VEREIN_VOLL`): So
  *  viele Spieler:innen führt ein Verein höchstens — mit denen ohne Team, den
@@ -23,10 +23,11 @@ export const VEREIN_TEAMS_MAX = 30;
 export const VEREIN_TEAM_NICHT_GEFUNDEN = "Team nicht gefunden.";
 
 /** Eine Action der Vereinsverwaltung fand ihr Ziel nicht mehr (Feld
- *  `team_id` bzw. `verein_id`: Team aufgelöst, Recht entzogen). Die offene
- *  Seite ist überholt; der Aufrufer lädt sie neu, und sie leitet weiter. */
+ *  `team_id` bzw. `verein_id`: Team aufgelöst, Recht entzogen; `spieler_id`:
+ *  Spieler:in inzwischen gelöscht, #582 AK 15). Die offene Seite ist
+ *  überholt; der Aufrufer lädt sie neu, und sie leitet weiter. */
 export function zielWeg(feld?: string): boolean {
-  return feld === "team_id" || feld === "verein_id";
+  return feld === "team_id" || feld === "verein_id" || feld === "spieler_id";
 }
 
 /** Hinweis der Teamübersicht für alle ausser der Verwaltung. Kein Marker
@@ -169,3 +170,100 @@ export function zugeordnetText(namen: string[], team: string, ersetzt: number): 
 export function zuordnenEinleitung(namen: string[]): string {
   return `${wer(namen)} ${namen.length === 1 ? "kommt" : "kommen"} ins gewählte Team. Bisherige Teams bleiben bestehen.`;
 }
+
+// ── Spielerbestand der Verwaltung (Story #582) ──────────────────────────────
+//
+// Eigene Sätze für die Verwaltung: `spielerDoppeltText` (lib/spieler.ts) und
+// `LINK_TEXT` sprechen Trainer:innen an und fliessen in die KI-Beschreibungen,
+// sie bleiben unverändert. Nie J+S-Nummer oder Link in einem Satz.
+
+/** Der Status `abgewiesen` der RPCs `verein_spieler_anlegen` und
+ *  `verein_spieler_aendern`: die Namen aller Teams der bestehenden
+ *  Spieler:in(nen) mit diesem Schlüssel und ob eine davon keinem Team
+ *  zugeordnet ist. */
+export type SpielerDoppeltImVerein = { teams: string[]; ohne_team: boolean };
+
+const ZUSATZ_IM_VORNAMEN = "Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.";
+
+/** Der Satz zur abgewiesenen Erfassung ohne Team (#582 AK 4): nennt die Teams
+ *  der bestehenden Spieler:in oder dass sie keinem zugeordnet ist, dass die
+ *  Verwaltung sie selbst zuordnet und wie man Gleichnamige unterscheidet.
+ *  Bei Altdubletten (Teams und eine ohne Team) nur die Teams. Die Eingabe
+ *  steht bereinigt, wie sie gespeichert würde. */
+export function spielerErfassenAbgewiesenText(
+  d: SpielerDoppeltImVerein,
+  e: { vorname: string; nachname: string; jahrgang: number },
+  verein: string,
+): string {
+  const name = `${spielerName({ vorname: bereinigeName(e.vorname), nachname: bereinigeName(e.nachname) })} (${e.jahrgang})`;
+  const zuordnen = "Ordne die vorhandene Spieler:in selbst einem Team zu.";
+  if (d.teams.length > 0) return `${name} wird im ${verein} schon ${imTeam(d.teams)} geführt. ${zuordnen} ${ZUSATZ_IM_VORNAMEN}`;
+  return `${name} wird im ${verein} schon geführt, ist aber keinem Team zugeordnet. ${zuordnen} ${ZUSATZ_IM_VORNAMEN}`;
+}
+
+/** Der Satz zur abgewiesenen Änderung (#582 AK 5): Wortlaut wie am Team-Ort,
+ *  ohne den Verweis an die Verwaltung — sie ist die Verwaltung. */
+export function spielerAendernAbgewiesenText(d: SpielerDoppeltImVerein): string {
+  const anfang = "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt";
+  return d.teams.length > 0 ? `${anfang}, ${imTeam(d.teams)}.` : `${anfang}, die keinem Team zugeordnet ist.`;
+}
+
+/** Der Satz über dem Dialog «Spieler:in erfassen». */
+export function spielerErfassenEinleitung(verein: string): string {
+  return `Die Spieler:in kommt ohne Team in den ${verein}. Einem Team ordnest du sie danach zu.`;
+}
+
+/** Der Hinweis über dem Link einer Spieler:in ohne Team (#582 AK 10). Eigene
+ *  Konstante: `LINK_TEXT` fliesst in die KI-Beschreibungen. */
+export function linkOhneTeamText(vorname: string): string {
+  return `${vorname} ist keinem Team zugeordnet. Die Spielervertretung sieht erst Termine, wenn ${vorname} einem Team zugeordnet ist; der Link bleibt danach derselbe.`;
+}
+
+/** Titel und Sätze der Bestätigung zum Löschen (#582 AK 13): die Teams, aus
+ *  denen die Spieler:in verschwindet, oder dass sie keinem zugeordnet ist,
+ *  dann die Folgen. `teams`: Namen, nach Name geordnet. */
+export function spielerLoeschenTitel(name: string): string {
+  return `${name} aus dem Verein löschen`;
+}
+
+export function spielerLoeschenSaetze(vorname: string, teams: string[]): { zuordnung: string; link: string; vergangen: string } {
+  const zuordnung =
+    teams.length === 0
+      ? `${vorname} ist keinem Team zugeordnet.`
+      : teams.length === 1
+        ? `${vorname} ist dem Team ${teams[0]} zugeordnet und verschwindet daraus.`
+        : `${vorname} ist den Teams ${aufzaehlung(teams)} zugeordnet und verschwindet aus allen.`;
+  return {
+    zuordnung,
+    link: `Der private Link und alle Meldungen von ${vorname} entfallen endgültig.`,
+    vergangen: `An vergangenen Terminen erscheint ${vorname} ohne Namen.`,
+  };
+}
+
+const spielerZahlWort = (n: number) => (n === 1 ? "1 Spieler:in" : `${n} Spieler:innen`);
+
+/** Die Kopfzeile von `/verein/spieler`: «144 Spieler:innen · 2 ohne Team ·
+ *  höchstens 1000 je Verein». */
+export function spielerKopfText(spieler: number, ohneTeam: number): string {
+  return `${spielerZahlWort(spieler)}${ohneTeam > 0 ? ` · ${ohneTeam} ohne Team` : ""} · höchstens ${VEREIN_SPIELER_MAX} je Verein`;
+}
+
+/** Die Kopfzeile von `/verein` für die Verwaltung: «10 Teams · 144
+ *  Spieler:innen · höchstens 30 Teams». Ohne Zahl der Spieler:innen (kein
+ *  Recht) fehlt der mittlere Teil. */
+export function vereinKopfText(teams: number, spieler?: number): string {
+  const t = teams === 1 ? "1 Team" : `${teams} Teams`;
+  return `${t}${spieler === undefined ? "" : ` · ${spielerZahlWort(spieler)}`} · höchstens ${VEREIN_TEAMS_MAX} Teams`;
+}
+
+/** Die Zeile «Spieler:innen» der Karte «Verein»; über der Grenze (Altbestand)
+ *  nur die Zahl, nie ein negativer Rest. */
+export function spielerVonText(n: number): string {
+  return n <= VEREIN_SPIELER_MAX ? `${n} von ${VEREIN_SPIELER_MAX}` : `${n} (höchstens ${VEREIN_SPIELER_MAX} Spieler:innen)`;
+}
+
+/** Der Leerzustand von `/verein/spieler`, solange der Verein niemanden führt. */
+export const SPIELER_BESTAND_LEER = {
+  titel: "Noch keine Spieler:innen",
+  text: "Der Verein führt noch keine Spieler:innen. Erfasse die erste oder nimm sie in der Spielerliste eines Teams auf.",
+} as const;

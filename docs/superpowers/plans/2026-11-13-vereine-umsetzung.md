@@ -251,12 +251,18 @@ Zusätzlich:
 
 **AP:** §4.3 «Spielerbestand am Verein-Ort», §7.6. **Migration:** `spielerbestand_verwaltung`.
 
-- [ ] Erfassen ohne Team, Ändern, Löschen, Link abrufen und erneuern, alle am Verein-Ort und mit `nur_in_der_anwendung()`.
-- [ ] **Aus Phase 5:** `verein_ansicht` um `spieler_ohne_team` ergänzen; der Kopf von `/verein` und `/verein/verwaltung` zeigt dann die Summe der Spieler:innen des Vereins.
-- [ ] Mit diesem PR wird das Löschen aus Story 3 abgenommen (#579 AK 12, 14).
-- [ ] Review Focus 4: dasselbe Konto mit beiden Rollen löscht im Bereich «Verein», aber nicht in der Team-Spielerliste.
+- [x] Erfassen ohne Team, Ändern, Löschen, Link abrufen und erneuern, alle am Verein-Ort und mit `nur_in_der_anwendung()`.
+- [x] **Aus Phase 5:** `verein_ansicht` um `spieler_ohne_team` ergänzen; der Kopf von `/verein` und `/verein/verwaltung` zeigt dann die Summe der Spieler:innen des Vereins. (Dazu `spieler_zahl`; beide nur für die Verwaltung.)
+- [x] Mit diesem PR wird das Löschen aus Story 3 abgenommen (#579 AK 12, 14).
+- [x] Review Focus 4: dasselbe Konto mit beiden Rollen löscht im Bereich «Verein», aber nicht in der Team-Spielerliste. (Kern belegt in `pruefe-kern-db.ts`; der Browser-Lauf folgt.)
 
 **Testfälle:** 12 (Teil Verwaltung), 30 (Teil `verein_spieler_entfernen`).
+
+**Umgesetzt** (Branch `feature/vereine-spielerbestand-582`): Migration `20261114210000_spielerbestand_verwaltung.sql` mit dem Baustein `verwaltung_spieler_sperren`; Spieler-adressierte `verein_*`-RPCs antworten ununterscheidbar mit `SPIELER_NICHT_GEFUNDEN`; `verein_spieler_zuordnen` prüft Recht und Team unter der Vereinssperre. `/verein/spieler` mit Erfassen, Ändern, privatem Link und Löschen; die vier Felder und der Link-Dialog sind gemeinsame Bausteine von Team-Ort und Verein-Ort. `pruefe-kern-db.ts` löscht über den echten Verwaltungsweg. Am Team-Ort zeigt der Ändern-Dialog «Spieler:in nicht gefunden.», wenn die Verwaltung inzwischen gelöscht hat. Alle lokalen Prüfungen grün; der Browser-Lauf folgt.
+
+**Verschoben aus Phase 6:** `abholbar` in `verein_spieler_teams` sowie Teams und Abholadresse im Erneuern-Dialog (Phase 7); Kopfzahlen von `/verein/spieler` aus `verein_ansicht` statt aus der Liste, sobald Suche und Filter Teilmengen liefern, und `js`/`link_bezogen` beim Umbau von `verein_spielerliste` erhalten (Phase 4); «Zum Schnuppern» und «Schnuppern n/4» in der Vereinsliste (Phase 8).
+
+**Zwischenstand:** Der Erneuern-Dialog am Verein-Ort nennt weder Teams noch Abholadresse (bis Phase 7). Suche und Filter auf `/verein/spieler` fehlen (bis Phase 4).
 
 ### Phase 7 – #583 Link, Abo, Abholung über mehrere Teams
 
@@ -264,6 +270,11 @@ Zusätzlich:
 
 - [ ] Reihenfolge: `spieler_link_ansicht` und Abo über alle Zuordnungen → Ab- und Anmelden sperrt zuerst das Termin-Team → Abholung → `feedback_link_gueltig`.
 - [ ] Zustände am Link nach dem Board: keine Termine, ohne Team, ungültig, Meldung für einen Termin, der nicht mehr gilt, «Fragen und Feedback» mit dem Verweis bei Dringendem.
+
+- [ ] **Aus Phase 6:** `verein_spieler_teams` um `abholbar` ergänzen; der Erneuern-Dialog am Verein-Ort (`components/verein/VereinSpielerLinkDialog.tsx`) nennt dann die betroffenen Teams und ob die Eltern den neuen Link über eine Abholadresse holen (#582 AK 11, #583 AK 15–16).
+- [ ] **Aus dem Review zu Phase 6 (Rennen beim Umbau beheben, je mit Rennen-Fall in `supabase/tests/rennen.sql`):**
+  - `abholung_abholen` (Stand `20261113110000_spieler_ueber_zuordnung.sql`) liest die Spieler:in ohne Sperre und setzt danach `link_bezogen`. Erneuert jemand genau dazwischen (`spieler_link_erneuern`, `verein_spieler_link_erneuern`), bekommt die Familie den toten Link, und der neue gilt als bezogen. Vorschlag: `update spieler set link_bezogen = true where id = s.id and link_token = s.link_token returning …`; trifft das Update keine Zeile → `{status: 'ungueltig'}` (bzw. neu lesen). Rennen-Fall: Erneuern gegen Abholen, beide Richtungen; danach ist der ausgegebene Link der gültige, und `link_bezogen` gilt nur für ihn.
+  - `spieler_link_abmelden` sperrt zuerst das erste Team (`spieler.team_id`, Beratungssperre `spieler:<team>`) und danach in `abmeldung_anwenden_training` das Team des Termins, also nicht aufsteigend. Mit mehreren Teams ist gegen `verein_spieler_entfernen` (Verein → alle Teams aufsteigend über `sperre_teams`) ein Deadlock (40P01) möglich. Beim Umbau auf mehrere Teams nur das Termin-Team sperren (bzw. alle nötigen Teams in einem `sperre_teams`-Aufruf). Rennen-Fall: Abmelden über den Link zu einem Termin des zweiten Teams gegen Löschen, beide Richtungen, kein 40P01.
 
 **Testfälle:** 13, 23. Bestehende Links und Abo-Adressen liefern ohne Neubezug.
 
@@ -273,6 +284,7 @@ Zusätzlich:
 
 - [ ] Regel «genau eine Zuordnung», Zuordnen zum Schnuppern, Abweisung der gesammelten Zuordnung nennt schnuppernde Spieler:innen (#584 AK 16).
 - [ ] **Aus Phase 5:** «Schnuppern 1/4» in der Spielerliste von `/verein/team/[teamId]` und `schnuppern_beendet` in der Rückgabe von `verein_spieler_aus_team_nehmen` (#584 AK 13).
+- [ ] **Aus Phase 6:** «Zum Schnuppern» beim Zuordnen und «Schnuppern n/4» in der Vereinsliste `/verein/spieler`.
 - [ ] Sichtbare Umbenennung in Oberfläche, Link und KI im selben PR; die MCP-Werkzeuge heissen neu, ohne Übergang. Interne Namen bleiben `probe_*`.
 - [ ] grep-Wächter «kein Probe in Oberflächentexten und MCP» scharf stellen.
 
@@ -284,6 +296,7 @@ Zusätzlich:
 
 - [ ] Liste für alle Vereinsmitglieder; Suche und Eingrenzung auf dem Server, Mehrfachauswahl bei Teams und Jahrgängen.
 - [ ] **Aus Phase 5:** Der Leisteneintrag «Spieler:innen» im Bereich «Verein» und `/verein/spieler` gelten dann für alle Vereinsmitglieder (bis hierher nur für die Verwaltung, Kommentar in W`components/layout/AppNavClient.tsx`).
+- [ ] **Aus Phase 6:** Der Kopf von `/verein/spieler` rechnet «‹n› Spieler:innen · ‹m› ohne Team» heute aus der Liste (`components/verein/VereinSpielerListe.tsx`); liefern Suche und Filter Teilmengen, kommen die Zahlen aus `verein_ansicht` (`spieler_zahl`, `spieler_ohne_team`). Beim Umbau von `verein_spielerliste` bleiben `js` und `link_bezogen` für die Verwaltung erhalten (Spalten J+S und «Privater Link»).
 - [ ] Texte auf Abholseite und Link zum Empfängerkreis.
 
 **Testfälle:** 4 (Teil Vereinsliste), 32.

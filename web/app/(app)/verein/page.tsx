@@ -9,7 +9,7 @@ import { Leerzustand, Lozenge, SectionMessage, Tabelle, TabellenZeile } from "@/
 import { ladeVereinAnsicht, type VerwaltungPerson } from "@/lib/kern/verein";
 import { getMeinVereinOderWurf } from "@/lib/queries/verein";
 import { createClient } from "@/lib/supabase/server";
-import { VEREIN_TEAMS_MAX } from "@/lib/verein";
+import { vereinKopfText } from "@/lib/verein";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Teams im Verein - KiFu", robots: { index: false } };
@@ -46,7 +46,7 @@ export default async function VereinPage({
 
   const ansicht = await ladeVereinAnsicht(supabase, user.id, { vereinId: verein.id });
   if (!ansicht.ok) throw new Error(ansicht.meldung);
-  const { name, verwaltung, teams } = ansicht.wert;
+  const { name, verwaltung, teams, spielerZahl } = ansicht.wert;
   const istVerwaltung = verein.istVerwaltung;
 
   const spalten = istVerwaltung
@@ -63,7 +63,7 @@ export default async function VereinPage({
         <div className="flex min-w-0 flex-col gap-1">
           <h1 className="type-headline-small text-on-surface">Teams im {name}</h1>
           <p className="type-body-medium text-on-surface-mittel">
-            {teams.length === 1 ? "1 Team" : `${teams.length} Teams`} · höchstens {VEREIN_TEAMS_MAX} Teams
+            {vereinKopfText(teams.length, spielerZahl)}
           </p>
           <p className="type-body-medium text-on-surface">Vereinsverwaltung: {verwaltungsZeile(verwaltung)}</p>
         </div>
