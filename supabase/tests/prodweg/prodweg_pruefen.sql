@@ -10,7 +10,8 @@
 -- Testfall 1 (Story 1 PC 2) und die Dublette über zwei Teams (Story 2 PC 1,
 -- AK 7), Umbenennen der Teams mit gleichem Schlüssel (Story 5 PC 6), die
 -- Altdublette am Verein-Ort ändern, löschen und neu erfassen (Story 6), eine
--- Bestands-Spieler:in in zwei Teams über Link, Abo und Abholung (Story 7). Teil B
+-- Bestands-Spieler:in in zwei Teams über Link, Abo und Abholung (Story 7),
+-- die Bestands-Schnuppernde über die neuen Schreibwege (Story 8). Teil B
 -- ändert nichts bleibend (rollback). Spätere Stories ergänzen ihre Abfragen
 -- (Konten ohne Verein mit Story 12).
 
@@ -163,7 +164,9 @@ set local role authenticated;
 do $$
 declare
   v_team uuid := prodweg.id('t_gross');
-  v_eins uuid := (select id from spieler where team_id = v_team and nachname = 'Nr 1');
+  -- Über die Zuordnung: spieler.team_id ist ab Story 8 für die Rolle nicht lesbar.
+  v_eins uuid := (select s.id from spieler s join team_spieler ts on ts.spieler_id = s.id
+                   where ts.team_id = v_team and s.nachname = 'Nr 1');
   v_zeile jsonb := jsonb_build_object('zeile', 1, 'vorname', 'Gross', 'nachname', 'Nr 2', 'jahrgang', 2015, 'js', '4711');
   v_drei uuid;
   v jsonb;
@@ -171,7 +174,8 @@ declare
 begin
   perform spieler_aendern(v_team, v_eins, 'Gross', 'Nr 1', 2015, '1234');
   -- Herausnehmen statt Löschen (Story 3).
-  v_drei := (select id from spieler where team_id = v_team and nachname = 'Nr 3');
+  v_drei := (select s.id from spieler s join team_spieler ts on ts.spieler_id = s.id
+              where ts.team_id = v_team and s.nachname = 'Nr 3');
   v := spieler_aus_team_nehmen(v_team, v_drei, spieler_teams(v_team, v_drei) ->> 'stand');
   if v ->> 'status' <> 'herausgenommen' or not (v ->> 'ohne_team')::boolean then
     raise exception 'Testfall 1: Herausnehmen über der Grenze: %', v;
@@ -200,7 +204,8 @@ begin
   -- Story 2 (PC 1, AK 7): Die Dublette über zwei Teams bleibt ohne
   -- Schlüsseländerung änderbar; eine dritte Erfassung mit demselben
   -- Schlüssel weist ab und nennt beide Teams.
-  v := spieler_aendern(prodweg.id('t_f1'), (select id from spieler where team_id = prodweg.id('t_f1') and nachname = 'Dublette'),
+  v := spieler_aendern(prodweg.id('t_f1'), (select s.id from spieler s join team_spieler ts on ts.spieler_id = s.id
+                                             where ts.team_id = prodweg.id('t_f1') and s.nachname = 'Dublette'),
                        'Lea', 'Dublette', 2017, '55');
   if v <> '{"status": "geaendert"}'::jsonb then raise exception 'Story 2: Dublette nicht änderbar: %', v; end if;
   v := spieler_aufnehmen(prodweg.id('t_d'), 'Lea', 'Dublette', 2017, null);
@@ -382,6 +387,72 @@ begin
   if not spieler_link_ansicht(v_link) @> '{"gueltig": true, "teams": [], "termine": []}'
      or not feedback_link_beginnen(v_link) @> '{"status": "ok", "ohne_team": true}' then
     raise exception 'Story 7: ohne Team: %', spieler_link_ansicht(v_link);
+  end if;
+end $$;
+
+-- Story 8 (PC 1–3, AK 8, 11, 13): Die Bestands-Schnuppernde (p_schnupper,
+-- seit 20 Tagen in t_d) schnuppert nach der Kette weiter (Stand, Link und
+-- Anzahl samt Info prüft die Gleichwertigkeit oben). Als Mitglied von t_d
+-- über die RPCs mit p_team: aus- und wieder einschalten zählt ab null; eine
+-- neu erfasste Spieler:in ohne Team lässt sich als Verwaltung zum Schnuppern
+-- zuordnen (zuerst nicht angemeldet); Herausnehmen beendet das Schnuppern.
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('trainer_a'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims_schnuppern \gset
+set local role authenticated;
+do $$
+declare
+  v jsonb;
+begin
+  v := spieler_teams(prodweg.id('t_d'), prodweg.id('p_schnupper'));
+  if not (v ->> 'schnuppert')::boolean then raise exception 'Story 8: Bestands-Schnuppernde schnuppert nicht: %', v; end if;
+  v := spieler_probe_setzen(prodweg.id('t_d'), prodweg.id('p_schnupper'), false);
+  if v <> '{"probe": false, "verfallen": 0}' then raise exception 'Story 8: Ausschalten: %', v; end if;
+  v := spieler_probe_setzen(prodweg.id('t_d'), prodweg.id('p_schnupper'), true);
+  if v <> '{"probe": true, "verfallen": 0}' then raise exception 'Story 8: Einschalten: %', v; end if;
+  v := spieler_teams(prodweg.id('t_d'), prodweg.id('p_schnupper'));
+  v := spieler_aus_team_nehmen(prodweg.id('t_d'), prodweg.id('p_schnupper'), v ->> 'stand');
+  if v ->> 'status' <> 'herausgenommen' or not (v ->> 'schnuppern_beendet')::boolean then
+    raise exception 'Story 8: Herausnehmen der Schnuppernden: %', v;
+  end if;
+end $$;
+reset role;
+do $$
+begin
+  if exists (select 1 from team_spieler where spieler_id = prodweg.id('p_schnupper'))
+     or probe_stand(prodweg.id('p_schnupper')) is not null then
+    raise exception 'Story 8: Schnuppern nach dem Herausnehmen nicht beendet';
+  end if;
+end $$;
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('verwaltung'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims_schnuppern_verwaltung \gset
+set local role authenticated;
+do $$
+declare
+  v_verein uuid := (select verein_id from teams where id = prodweg.id('t_gross'));   -- RLS: nur eigene Teams
+  v_neu uuid;
+  v jsonb;
+begin
+  v := verein_spieler_anlegen(v_verein, 'Sam', 'Schnupper', 2013, null);
+  if v ->> 'status' <> 'angelegt' then raise exception 'Story 8: Erfassen ohne Team: %', v; end if;
+  v_neu := (v ->> 'id')::uuid;
+  v := verein_spieler_zuordnen(prodweg.id('t_d'), array[v_neu], true);
+  if v <> '{"status": "zugeordnet", "anzahl": 1, "ersetzt": 0}' then raise exception 'Story 8: Zuordnen zum Schnuppern: %', v; end if;
+  if not verein_team_ansicht(prodweg.id('t_d')) -> 'spieler' @> jsonb_build_array(jsonb_build_object(
+           'id', v_neu, 'schnuppern', jsonb_build_object('anzahl', 3, 'besucht', 0))) then
+    raise exception 'Story 8: Zähler nach dem Zuordnen zum Schnuppern: %', verein_team_ansicht(prodweg.id('t_d'));
+  end if;
+  perform set_config('prodweg.neu', v_neu::text, true);
+end $$;
+reset role;
+do $$
+declare
+  v_neu uuid := current_setting('prodweg.neu')::uuid;
+begin
+  if not training_abgemeldet(prodweg.id('tr_kommend'), v_neu) or termin_gilt_fuer(prodweg.id('sp_kommend'), v_neu)
+     or probe_stand(v_neu) ->> 'besucht' <> '0' then
+    raise exception 'Story 8: zum Schnuppern zugeordnet, aber angemeldet, Spiel gilt oder zählt nicht ab null: %', probe_stand(v_neu);
   end if;
 end $$;
 

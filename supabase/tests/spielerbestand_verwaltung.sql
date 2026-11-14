@@ -208,8 +208,8 @@ begin
         format('select spieler_link_erneuern(%L, %L)', pg_temp.id(ziel.team), pg_temp.id(ziel.spieler)),
         format($s$select spieler_aus_team_nehmen(%L, %L, 'x')$s$, pg_temp.id(ziel.team), pg_temp.id(ziel.spieler)),
         format('select spieler_teams(%L, %L)', pg_temp.id(ziel.team), pg_temp.id(ziel.spieler)),
-        format('select spieler_probe_folgen(%L)', pg_temp.id(ziel.spieler)),
-        format('select spieler_probe_setzen(%L, true)', pg_temp.id(ziel.spieler))] loop
+        format('select spieler_probe_folgen(%L, %L)', pg_temp.id(ziel.team), pg_temp.id(ziel.spieler)),
+        format('select spieler_probe_setzen(%L, %L, true)', pg_temp.id(ziel.team), pg_temp.id(ziel.spieler))] loop
         perform pg_temp.erwarte(x, 'SPIELER_NICHT_GEFUNDEN');
       end loop;
     end loop;
@@ -263,7 +263,7 @@ declare
 begin
   perform pg_temp.pruefe(jsonb_array_length(l -> 'spieler') = 6, 'Liste: Anzahl ' || l::text);
   for s in select * from jsonb_array_elements(l -> 'spieler') loop
-    perform pg_temp.pruefe(pg_temp.schluessel(s) = array['id', 'jahrgang', 'js', 'link_bezogen', 'nachname', 'teams', 'vorname'],
+    perform pg_temp.pruefe(pg_temp.schluessel(s) = array['id', 'jahrgang', 'js', 'link_bezogen', 'nachname', 'schnuppern', 'teams', 'vorname'],
                            'Liste: Schlüssel ' || s::text);
   end loop;
   select e into s from jsonb_array_elements(l -> 'spieler') e where e ->> 'id' = pg_temp.id('s1')::text;
@@ -561,7 +561,7 @@ begin
   foreach f in array array['verein_spieler_anlegen(uuid,text,text,integer,text)',
     'verein_spieler_aendern(uuid,text,text,integer,text)', 'verein_spieler_entfernen(uuid)', 'verein_spieler_teams(uuid)',
     'verein_spieler_link_holen(uuid)', 'verein_spieler_link_erneuern(uuid)', 'verein_spielerliste(uuid)',
-    'verein_ansicht(uuid)', 'verein_spieler_zuordnen(uuid,uuid[])'] loop
+    'verein_ansicht(uuid)', 'verein_spieler_zuordnen(uuid,uuid[],boolean)'] loop
     if has_function_privilege('anon', f, 'execute') or not has_function_privilege('authenticated', f, 'execute') then
       raise exception 'Story 6: Grant von % falsch', f;
     end if;

@@ -5,7 +5,8 @@
 -- Doppelerfassung im Verein beim Erfassen und Ändern; Story 3: Zuordnen und
 -- Herausnehmen; Story 5: 30 Teams, Teamname, leere Verwaltung, Team vor
 -- Termin; Story 6: Löschen, Erfassen, Link und Grenze 1000 am Verein-Ort;
--- Story 7: Link über mehrere Teams, Abholen gegen Erneuern).
+-- Story 7: Link über mehrere Teams, Abholen gegen Erneuern; Story 8:
+-- Schnuppern in genau einem Team).
 --
 -- Muster für «gleichzeitig, genau eines gelingt» (spätere Stories bauen ihre
 -- Fälle als weitere Blöcke nach diesem Vorbild):
@@ -1329,6 +1330,146 @@ delete from vereine where id = (select id from rennen_test.ids where name = 'l_v
 delete from auth.users where id in (select id from rennen_test.ids where name in ('l_va', 'l_m'));
 delete from abholung_sperren where schluessel in (repeat('l', 32), repeat('m', 32), repeat('n', 32));
 
+-- ── Fälle: Schnuppern in genau einem Team (Story 8 #584, AP §3.3 f, §4.1, Testfall 19) ──
+-- Verein «Rennen-Schnuppern» mit Verwaltung SVA (ohne Team) und Trainer:in
+-- SM in «Schnupper-Eins»; «Schnupper-Zwei» ohne Mitglied. Beide Teams haben
+-- eine Anzahl. Über die RPCs wie PostgREST, mit rennen_test.verschraenkt.
+-- (s1) Einschalten gegen Zuordnen zu einem weiteren Team (AK 14): Das
+--      Zuordnen wartet an der Vereinssperre und weist danach mit `schnuppert`
+--      ab; genau eine Zuordnung, schnuppernd.
+-- (s2) Umgekehrt: Das Einschalten wartet an der Vereinssperre und weist
+--      danach mit SCHNUPPERN_MEHRERE_TEAMS ab; zwei Zuordnungen, keine
+--      schnuppernd.
+-- (s3) Einschalten gegen Herausnehmen: nach dem Herausnehmen
+--      SPIELER_NICHT_GEFUNDEN statt stillem Erfolg; nach dem Einschalten
+--      bemerkt der Stand-Abgleich die Änderung (`stand_geaendert`,
+--      `schnuppert` true) und nimmt nicht heraus.
+-- (s4) Zuordnen zum Schnuppern gegen Zuordnen ohne Schnuppern derselben
+--      Spieler:in in das andere Team, beide Reihenfolgen: genau eines gelingt.
+-- (s5) Sperrfolge: A hält die Vereinssperre, B schaltet ein und wartet dort;
+--      danach nimmt A die Teamsperre. Nähme das Einschalten die Teamsperre
+--      vor der Vereinssperre, endete das in 40P01; so schaltet B danach ein.
+-- Ein harter Abbruch lässt den Verein «Rennen-Schnuppern» samt Teams und
+-- Spieler:innen und die Konten «rennen-s-…@rennen.test» stehen (von Hand löschen).
+
+select set_config('rennen.fehler_schnuppern', '', false) is not null as rennen_fehler_schnuppern_leer \gset
+
+begin;
+insert into rennen_test.ids (name) values ('s_verein'), ('s_va'), ('s_m'), ('s_t1'), ('s_t2'),
+  ('s_x1'), ('s_x2'), ('s_h1'), ('s_h2'), ('s_f1'), ('s_f2'), ('s_z1');
+insert into auth.users (id, email, email_confirmed_at)
+select id, 'rennen-' || replace(name, '_', '-') || '@rennen.test', now() from rennen_test.ids where name in ('s_va', 's_m');
+insert into vereine (id, name) values (rennen_test.z('s_verein'), 'Rennen-Schnuppern');
+insert into verein_verwaltung (verein_id, user_id) values (rennen_test.z('s_verein'), rennen_test.z('s_va'));
+insert into teams (id, name, verein_id) values
+  (rennen_test.z('s_t1'), 'Schnupper-Eins', rennen_test.z('s_verein')),
+  (rennen_test.z('s_t2'), 'Schnupper-Zwei', rennen_test.z('s_verein'));
+insert into team_members (team_id, user_id) values (rennen_test.z('s_t1'), rennen_test.z('s_m'));
+insert into team_probetraining (team_id, anzahl) values (rennen_test.z('s_t1'), 3), (rennen_test.z('s_t2'), 3);
+insert into spieler (id, verein_id, vorname, nachname, jahrgang)
+select id, rennen_test.z('s_verein'), 'Schnupper', name, 2015 from rennen_test.ids where name ~ '^s_[xhfz][0-9]$';
+insert into team_spieler (team_id, spieler_id, verein_id)
+select rennen_test.z('s_t1'), id, rennen_test.z('s_verein') from rennen_test.ids where name ~ '^s_[xhz][0-9]$';
+commit;
+
+do $$
+declare
+  ziel   text := format(
+    'host=%s port=%s dbname=%s user=postgres password=postgres connect_timeout=5 options=''-c statement_timeout=30s''',
+    coalesce(host(inet_server_addr()), '127.0.0.1'), inet_server_port(), current_database());
+  v_va uuid := rennen_test.z('s_va');
+  v_m uuid := rennen_test.z('s_m');
+  v_t1 uuid := rennen_test.z('s_t1');
+  v_t2 uuid := rennen_test.z('s_t2');
+  v_stand text;
+  ergebnis text;
+begin
+  -- (s1) Einschalten, dann Zuordnen zu einem weiteren Team.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_probe_setzen(%L, %L, true)::text', v_t1, rennen_test.z('s_x1')),
+    v_va, format('select verein_spieler_zuordnen(%L, array[%L]::uuid[])::text', v_t2, rennen_test.z('s_x1')), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'abgewiesen'
+     or ergebnis::jsonb -> 'schnuppert' -> 0 ->> 'team' is distinct from 'Schnupper-Eins' then
+    raise exception '(s1) Zuordnen nach dem Einschalten hätte mit schnuppert abweisen müssen: %', ergebnis;
+  end if;
+  if (select count(*) from team_spieler where spieler_id = rennen_test.z('s_x1')) <> 1
+     or (select probe_seit from team_spieler where spieler_id = rennen_test.z('s_x1')) is null then
+    raise exception '(s1) nicht genau eine schnuppernde Zuordnung';
+  end if;
+
+  -- (s2) Zuordnen zu einem weiteren Team, dann Einschalten.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_spieler_zuordnen(%L, array[%L]::uuid[])::text', v_t2, rennen_test.z('s_x2')),
+    v_m, format('select spieler_probe_setzen(%L, %L, true)::text', v_t1, rennen_test.z('s_x2')), 'advisory');
+  if position('SCHNUPPERN_MEHRERE_TEAMS' in ergebnis) = 0 then
+    raise exception '(s2) Einschalten nach dem Zuordnen hätte SCHNUPPERN_MEHRERE_TEAMS melden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from team_spieler where spieler_id = rennen_test.z('s_x2')) <> 2
+     or exists (select 1 from team_spieler where spieler_id = rennen_test.z('s_x2') and probe_seit is not null) then
+    raise exception '(s2) nicht zwei Zuordnungen ohne Schnuppern';
+  end if;
+
+  -- (s3) Herausnehmen, dann Einschalten.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_aus_team_nehmen(%L, %L, %L)::text', v_t1, rennen_test.z('s_h1'),
+                spieler_teams_stand(rennen_test.z('s_h1'))),
+    v_m, format('select spieler_probe_setzen(%L, %L, true)::text', v_t1, rennen_test.z('s_h1')), 'advisory');
+  if position('SPIELER_NICHT_GEFUNDEN' in ergebnis) = 0
+     or exists (select 1 from team_spieler where spieler_id = rennen_test.z('s_h1')) then
+    raise exception '(s3) Einschalten nach dem Herausnehmen hätte SPIELER_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+  -- Einschalten, dann Herausnehmen mit dem Stand von vorher.
+  v_stand := spieler_teams_stand(rennen_test.z('s_h2'));
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_probe_setzen(%L, %L, true)::text', v_t1, rennen_test.z('s_h2')),
+    v_m, format('select spieler_aus_team_nehmen(%L, %L, %L)::text', v_t1, rennen_test.z('s_h2'), v_stand), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'stand_geaendert'
+     or ergebnis::jsonb -> 'schnuppert' <> 'true' or ergebnis::jsonb ->> 'stand' = v_stand then
+    raise exception '(s3) Herausnehmen nach dem Einschalten hätte stand_geaendert mit schnuppert melden müssen: %', ergebnis;
+  end if;
+  if (select probe_seit from team_spieler where spieler_id = rennen_test.z('s_h2') and team_id = v_t1) is null then
+    raise exception '(s3) Schnuppern nach dem Einschalten fehlt';
+  end if;
+
+  -- (s4) Zuordnen zum Schnuppern, dann ohne Schnuppern in das andere Team.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_spieler_zuordnen(%L, array[%L]::uuid[], true)::text', v_t1, rennen_test.z('s_f1')),
+    v_va, format('select verein_spieler_zuordnen(%L, array[%L]::uuid[])::text', v_t2, rennen_test.z('s_f1')), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'abgewiesen'
+     or ergebnis::jsonb -> 'schnuppert' -> 0 ->> 'team' is distinct from 'Schnupper-Eins' then
+    raise exception '(s4) Zuordnen nach dem Zuordnen zum Schnuppern: %', ergebnis;
+  end if;
+  -- Ohne Schnuppern, dann zum Schnuppern in das andere Team.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_spieler_zuordnen(%L, array[%L]::uuid[])::text', v_t2, rennen_test.z('s_f2')),
+    v_va, format('select verein_spieler_zuordnen(%L, array[%L]::uuid[], true)::text', v_t1, rennen_test.z('s_f2')), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'grund' is distinct from 'schnuppern_hat_team' then
+    raise exception '(s4) Zuordnen zum Schnuppern nach dem Zuordnen: %', ergebnis;
+  end if;
+  if (select count(*) from team_spieler where spieler_id = rennen_test.z('s_f1') and team_id = v_t1 and probe_seit is not null) <> 1
+     or (select count(*) from team_spieler where spieler_id = rennen_test.z('s_f1')) <> 1
+     or (select count(*) from team_spieler where spieler_id = rennen_test.z('s_f2') and team_id = v_t2 and probe_seit is null) <> 1
+     or (select count(*) from team_spieler where spieler_id = rennen_test.z('s_f2')) <> 1 then
+    raise exception '(s4) nicht genau eine Zuordnung je Spieler:in';
+  end if;
+
+  -- (s5) Die Vereinssperre kommt beim Einschalten vor der Teamsperre.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select 1 from pg_advisory_xact_lock(hashtextextended(%L, 0))', 'verein:' || rennen_test.z('s_verein')),
+    v_m, format('select spieler_probe_setzen(%L, %L, true)::text', v_t1, rennen_test.z('s_z1')), 'advisory',
+    format('select 1 from pg_advisory_xact_lock(hashtextextended(%L, 0))', 'spieler:' || v_t1));
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"probe": true, "verfallen": 0}' then
+    raise exception '(s5) Einschalten in der Sperrfolge Verein → Team: %', ergebnis;
+  end if;
+exception when others or query_canceled then
+  perform set_config('rennen.fehler_schnuppern', sqlerrm, false);
+end $$;
+
+delete from teams where verein_id = (select id from rennen_test.ids where name = 's_verein');
+delete from spieler where verein_id = (select id from rennen_test.ids where name = 's_verein');
+delete from vereine where id = (select id from rennen_test.ids where name = 's_verein');
+delete from auth.users where id in (select id from rennen_test.ids where name in ('s_va', 's_m'));
+
 -- Aufräumen, auch nach einem Fehler.
 drop schema rennen_test cascade;
 \if :dblink_vorher
@@ -1361,5 +1502,8 @@ begin
   end if;
   if current_setting('rennen.fehler_link') <> '' then
     raise exception 'Rennen Link über mehrere Teams: %', current_setting('rennen.fehler_link');
+  end if;
+  if current_setting('rennen.fehler_schnuppern') <> '' then
+    raise exception 'Rennen Schnuppern: %', current_setting('rennen.fehler_schnuppern');
   end if;
 end $$;
