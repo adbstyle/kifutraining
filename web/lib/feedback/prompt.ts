@@ -4,15 +4,15 @@
 // Die ersten beiden Blöcke sind für alle Gespräche gleich und laufen mit
 // Prompt-Caching (PO 11) — das Produktwissen macht den grössten Teil der
 // Kosten aus. Was je Gespräch oder Nachricht wechselt (Rolle, Kontext, der
-// Hinweis zum Limit), steht dahinter im dritten Block, damit der Cache trifft.
+// Hinweis zum Limit), steht dahinter im dritten Block (`lage.ts`), damit der Cache trifft.
 //
 // Das Produktwissen ist für das Einordnen geschrieben; wo es dem Gespräch
 // widerspricht (bei Wünschen Grenzen nennen), gehen die Regeln hier vor.
 import "server-only";
-import { KORREKTUREN_MAX, NACHRICHTEN_MAX, RUECKFRAGEN_ZIEL, type Zusammenfassung } from "./regeln";
+import { lageText, type Lage } from "./lage";
 import { PRODUKTWISSEN } from "./wissen";
 
-export type Rolle = "trainer" | "spielervertretung";
+export type { Lage, Rolle } from "./lage";
 
 const REGELN = `Du führst im Auftrag des Betreibers von KiFu ein kurzes Gespräch mit einer Person, die einen Fehler, einen Wunsch oder eine Frage zu KiFu hat. KiFu ist eine Web-App für Trainer:innen im Schweizer Kinder- und Juniorenfussball. Ziel: Der Betreiber kann einen gemeldeten Fehler ohne Rückfrage nachstellen und versteht hinter einem Wunsch das eigentliche Problem. Der Betreiber antwortet der Person nicht über KiFu.
 
@@ -50,61 +50,9 @@ Zusammenfassung:
 
 Antwortformat: ein JSON-Objekt mit «antwort» (dein Text an die Person, ohne Frage), «rueckfrage» (genau eine Frage oder null) und «zusammenfassung» (null, oder Einordnung, Titel und Punkte).`;
 
-/** Was sich je Gespräch und Nachricht ändert. */
-export type Lage = {
-  rolle: Rolle;
-  seite: string;
-  version: string;
-  geraet: string;
-  /** Am privaten Link: Die Spieler:in ist keinem Team zugeordnet (#583 AK 19) —
-   *  Dringendes gehört dann zur Vereinsverwaltung. Aus der Datenbank. */
-  ohneTeam?: boolean;
-  /** Die wievielte Nachricht der Person das ist. */
-  nachricht: number;
-  /** Mit welcher Nachricht die erste Zusammenfassung kam, sonst `null`. */
-  vorschlagBei: number | null;
-  /** Die zuletzt vorgelegte Zusammenfassung, sonst `null`. */
-  zusammenfassung: Zusammenfassung | null;
-};
-
-const ROLLEN: Record<Rolle, string> = {
-  trainer: "Die Person ist Trainer:in und mit ihrem Konto angemeldet.",
-  spielervertretung:
-    "Die Person nutzt KiFu ohne Konto über den privaten Link einer Spieler:in: Es sind die Eltern oder die Spieler:in selbst. Erkläre ihr nur, was hinter dem privaten Link sichtbar ist (im Produktwissen die Zeile «Eltern» der Sichtbarkeitsmatrix und was über den privaten Link steht). Funktionen, die nur Trainer:innen haben, erklärst du ihr nicht und sagst auch nicht, wo oder wie sie bei Trainer:innen gehen: Fragt sie danach, sag nur, dass das über den privaten Link nicht geht und die Trainer:innen des Teams dafür zuständig sind. Bei etwas Dringendem, etwa wenn das Abmelden kurz vor einem Termin nicht geht, verweise sie an die Trainer:innen des Teams.",
-};
-
-/** Die Spieler:in hinter dem Link ist keinem Team zugeordnet: Es gibt keine
- *  Trainer:innen, an die man verweist (#583 AK 19). */
-const OHNE_TEAM =
-  "Die Spieler:in hinter dem Link ist zurzeit keinem Team zugeordnet. Verweise Fragen zu Terminen und bei etwas Dringendem an die Vereinsverwaltung, nicht an Trainer:innen eines Teams. Termine erscheinen am Link, sobald die Spieler:in einem Team zugeordnet ist.";
-
-function hinweisZumLimit(l: Lage): string | null {
-  if (l.vorschlagBei === null) {
-    if (l.nachricht >= NACHRICHTEN_MAX) {
-      return "Das ist die letzte Nachricht vor der Zusammenfassung: Leg sie jetzt vor, ohne neue Fragen.";
-    }
-    // Etwa fünf Rückfragen, dann die Zusammenfassung (PO 18) — mit
-    // Erklärungen dazwischen darf es länger dauern, darum nur ein Anstoss.
-    return l.nachricht >= RUECKFRAGEN_ZIEL
-      ? "Du hast genug gefragt: Leg jetzt die Zusammenfassung vor, Fehlendes als «Unbekannt», ausser die Person hat gerade eine neue Frage gestellt."
-      : null;
-  }
-  return l.nachricht >= l.vorschlagBei + KORREKTUREN_MAX
-    ? "Das ist die letzte Korrektur: Leg die endgültige Zusammenfassung vor und stell keine Fragen mehr."
-    : null;
-}
-
 /** Die drei Blöcke des Systemprompts; der zweite trägt den Cache-Punkt. */
 export function systemBloecke(l: Lage) {
-  const lage = [
-    ROLLEN[l.rolle],
-    l.rolle === "spielervertretung" && l.ohneTeam ? OHNE_TEAM : null,
-    `Kontext ohne Nachfrage: Seite ${l.seite}, KiFu-Version ${l.version}, Gerät und Browser: ${l.geraet || "unbekannt"}.`,
-    l.zusammenfassung ? `Bisher vorgelegte Zusammenfassung: ${JSON.stringify(l.zusammenfassung)}` : null,
-    hinweisZumLimit(l),
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+  const lage = lageText(l);
   return [
     { type: "text" as const, text: REGELN },
     {

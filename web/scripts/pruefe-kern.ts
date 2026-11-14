@@ -2871,7 +2871,7 @@ pruefe("Link am Team-Ort und Verein-Ort (#583 AK 13, 15, 16): Hinweis und Erneue
 
 pruefe("Link in jedem Team (#583 AK 14, 16): kein Web-Code liest das «erste Team» für den Link", () => {
   const lies = (d: string) => readFileSync(join(web, d), "utf8");
-  // Das «erste Team» (`spieler.team_id`) hat im Web keinen Leser mehr: `erstesTeam` ist weg (pruefe-kern-db.ts folgt im Zusammenführungs-Lauf).
+  // Das «erste Team» (`spieler.team_id`) hat im Web keinen Leser mehr: `erstesTeam` ist weg; pruefe-kern-db.ts nennt es nur, um zu prüfen, dass die Liste es nicht mehr trägt.
   const treffer: string[] = [];
   for (const datei of quelldateien(web)) {
     const rel = relative(web, datei);
