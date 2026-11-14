@@ -15,6 +15,15 @@ export function revalidiereTeam(teamId: string) {
   revalidatePath(`/team/${teamId}`, "layout");
 }
 
+/** Die Ansichten aller Teams neu validieren — wo eine Änderung einer
+ *  Spieler:in alle ihre Teams trifft und die Antwort der Datenebene sie nicht
+ *  nennt (Ändern, Link erneuern durch die Verwaltung). Das dynamische Muster
+ *  trifft jedes Team. */
+export function revalidiereAlleTeams() {
+  revalidatePath("/teams");
+  revalidatePath("/team/[id]", "layout");
+}
+
 /** Alle Ansichten des Vereins neu validieren — der Spielerbestand und was
  *  daran hängt. `"layout"` erfasst den Bereich samt aller Unterseiten.
  *  Nach Zuordnen und Herausnehmen. */
