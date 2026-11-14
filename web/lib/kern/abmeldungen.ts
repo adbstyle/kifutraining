@@ -158,7 +158,7 @@ type Antwort =
   | { status: "abgewiesen"; grund: AbmeldeGrund; stand?: AbmeldeStand };
 
 /** Eine Spieler:in für einen Termin ab- oder wieder anmelden (AK 1, 2, 9).
- *  Bei einer Probe-Spieler:in dazu ihr Stand (#555); meldet ein Mitglied
+ *  Bei einer schnuppernden Spieler:in dazu ihr Stand (#555); meldet ein Mitglied
  *  oder die KI sie über die Anzahl hinaus an, trägt `hinweis` den Satz dazu
  *  (Zusatzentscheid PO 2026-10-29) — an Oberfläche und KI wortgleich. */
 export async function setzeAbmeldung(

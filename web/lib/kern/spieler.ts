@@ -88,7 +88,7 @@ function ausRoh(z: ZuordnungRoh & { spieler: SpielerRoh }, teamId: string): Spie
   };
 }
 
-/** Die Stände der Probe-Spieler:innen eines Teams (#555 AK 7), aus der
+/** Die Stände der schnuppernden Spieler:innen eines Teams (#555 AK 7), aus der
  *  Datenebene (`team_probe_staende`): besucht seit dem Einschalten, künftig
  *  angemeldet, noch möglich. */
 async function mitProbeStand(

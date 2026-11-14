@@ -6,6 +6,7 @@
 // (lib/training-bedingungen.ts) übersetzt sie in diese Sätze.
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
+import { PROBE_TEXT } from "@/lib/probe";
 import { SPIELER_MAX, aufzaehlung, bereinigeName, imTeam, spielerName } from "@/lib/spieler";
 
 /** Zwilling der Grenze im Trigger `spieler_vorher` (Marker `VEREIN_VOLL`): So
@@ -129,8 +130,9 @@ export const SCHNUPPERN_ZUORDNEN_TEXT = {
 /** Beschriftung der Checkbox im Dialog «Einem Team zuordnen» (#584 AK 8). */
 export const SCHNUPPERN_ZUORDNEN_LABEL = "Zum Schnuppern zuordnen";
 
-/** Der Satz unter der angehakten Checkbox (#584 AK 7). */
-export const SCHNUPPERN_ZUORDNEN_HINWEIS = "Solange die Spieler:in schnuppert, lässt sie sich keinem weiteren Team zuordnen.";
+/** Der Satz unter der angehakten Checkbox (#584 AK 7) — derselbe wie beim
+ *  Einschalten am Team-Ort. */
+export const SCHNUPPERN_ZUORDNEN_HINWEIS = PROBE_TEXT.keinWeiteresTeam;
 
 /** Die Meldung nach dem Zuordnen zum Schnuppern (#584 AK 11). */
 export function schnuppernZugeordnetText(name: string, team: string): string {
@@ -170,7 +172,10 @@ export function zuordnenAbweisungText(a: ZuordnenAbweisung, team: string, gewaeh
         ? `${team} umfasst schon ${SPIELER_MAX} oder mehr Spieler:innen. Die Grenze des Teams ist erreicht; eine weitere Spieler:in lässt sich nicht zuordnen.`
         : `Mit allen gewählten wären es ${SPIELER_MAX + a.ueber_grenze} von ${SPIELER_MAX}, ${a.ueber_grenze === 1 ? "eine" : a.ueber_grenze} zu viel.`,
     );
-  saetze.push(gewaehlt === 1 ? "Wähle ein anderes Team und versuche es nochmals." : "Ändere die Auswahl und versuche es nochmals.");
+  // Eine einzelne Schnuppernde lässt sich auch keinem anderen Team zuordnen:
+  // Dann gilt nur der Ausweg aus ihrem Satz (#584 AK 12), kein «anderes Team».
+  if (gewaehlt !== 1) saetze.push("Ändere die Auswahl und versuche es nochmals.");
+  else if (a.schnuppert.length === 0) saetze.push("Wähle ein anderes Team und versuche es nochmals.");
   return saetze.join(" ");
 }
 

@@ -104,7 +104,7 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
         });
         melde(r.error);
       } else {
-        // Eine Probe-Spieler:in über der Anzahl (#555, Zusatzentscheid).
+        // Eine schnuppernde Spieler:in über der Anzahl (#555, Zusatzentscheid).
         const hinweis = "hinweis" in r ? (r.hinweis as string | null) : null;
         if (hinweis) melde(hinweis);
       }

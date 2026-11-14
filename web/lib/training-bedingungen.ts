@@ -344,7 +344,7 @@ const TERMIN_MARKER: [string, string][] = [
   ...Object.entries(SPIEL_MELDUNG),
   // Trainer:innen an Terminen (#518).
   ...Object.entries(TRAINER_MELDUNG),
-  // Probetraining (#555).
+  // Schnuppertraining (#555, #584).
   ...Object.entries(PROBE_MELDUNG),
   // Der Verein: Grenzen, Teams nur durch die Verwaltung (#577).
   ...Object.entries(VEREIN_MELDUNG),

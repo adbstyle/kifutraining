@@ -7,7 +7,7 @@ import { JAHRGANG_STELLEN, JS_MAX, nurZiffern, type SpielerFeld } from "@/lib/sp
 /* Die vier Felder einer Spieler:in — Vorname, Nachname, Jahrgang, J+S-Nummer —
    samt Eingabe (der Jahrgang nimmt nur Ziffern) und Platz für den Fehler am
    Feld. Rein darstellend: Dialog, Knöpfe, Speichern und alles, was nur einen
-   Ort betrifft (Kader und Probe am Team-Ort), bleiben beim Aufrufer. Zwei
+   Ort betrifft (Kader und Schnuppern am Team-Ort), bleiben beim Aufrufer. Zwei
    Orte nutzen sie: die Spielerliste eines Teams und der Spielerbestand des
    Vereins; so stehen Zwillinge der Checks und die Fehlerzuordnung nur einmal
    da. Importiert nichts aus lib/actions (Rollen nach Ort, check:kern). */

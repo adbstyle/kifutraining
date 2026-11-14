@@ -23,7 +23,7 @@ import { getMeinVerein } from "@/lib/queries/verein";
  * Person zugleich Mitglied des Teams ist; am Team-Ort gibt es für sie keine
  * Verwaltungsaktion.
  *
- * Das Probetraining (#555) und die Kader (#452) stehen unter der
+ * Das Schnuppertraining (#555, #584) und die Kader (#452) stehen unter der
  * Spielerliste: Sie betreffen deren Spieler:innen.
  *
  * Das gehört zusammen, weil es das Team selbst betrifft und nicht die

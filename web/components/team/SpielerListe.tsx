@@ -39,7 +39,7 @@ import { TeamLozenges } from "./TeamLozenges";
 import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
 import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
-import { SchnupperLozenge } from "./SchnupperLozenge";
+import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
    Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet einen
@@ -99,7 +99,7 @@ export function SpielerListe({
   kader: Kader[];
   /** Die Selbstabholung des Teams (#438); `url` fehlt, solange es keine Adresse gibt. */
   abholung: { url: string | null; aktiv: boolean };
-  /** Die Anzahl Probetrainings des Teams (#555); `null`, solange keine festgelegt ist. */
+  /** Die Anzahl Schnuppertrainings des Teams (#555); `null`, solange keine festgelegt ist. */
   probeAnzahl: number | null;
 }) {
   const router = useRouter();
@@ -127,7 +127,7 @@ export function SpielerListe({
   const [auswahl, setAuswahl] = useState<string[]>([]);
   const [zuteilenOffen, setZuteilenOffen] = useState(false);
   const verfall = useVerfallRueckfrage(pending);
-  // Was das Einschalten des Probe-Modus verfallen liesse (#555 AK 5), sobald die Checkbox an ist.
+  // Was das Einschalten des Schnupperns verfallen liesse (#555 AK 5), sobald die Checkbox an ist.
   const [probeFolgen, setProbeFolgen] = useState<ProbeFolgen | null>(null);
   const [probeFehler, setProbeFehler] = useState<string | null>(null);
 
@@ -610,8 +610,8 @@ function aufzaehlung(namen: string[]): string {
 }
 
 /** Die Checkbox «Schnuppert» im Dialog «Spieler:in ändern» (#555 AK 3–5,
- *  16, 18, 19; #584 AK 6, 7): darunter, was das Schnuppern bedeutet, und dass
- *  sie sich dann keinem weiteren Team zuordnen lässt; ohne Anzahl gesperrt
+ *  16, 18, 19; #584 AK 6, 7): darunter, was das Schnuppern bedeutet, und vor
+ *  dem Einschalten, dass sie sich dann keinem weiteren Team zuordnen lässt; ohne Anzahl gesperrt
  *  mit dem Weg dahin; beim Einschalten die Warnung, was verfällt, beim
  *  Ausschalten, was danach gilt. Wer weiteren Teams zugeordnet ist, schnuppert
  *  nicht (Vereine AP §5.3): statt der Checkbox nur der Hinweis. */
@@ -659,7 +659,9 @@ function ProbeFeld({
             <span className="type-body-small text-on-surface-mittel">
               {gesperrt ? PROBE_TEXT.anzahlFehlt : probeEinschaltenText(vorname, anzahl)}
             </span>
-            {!gesperrt && <span className="type-body-small text-on-surface-mittel">{PROBE_TEXT.keinWeiteresTeam}</span>}
+            {/* AK 7: beim Einschalten; schnuppert sie schon, sagt es nichts Neues,
+                und beim Ausschalten widerspräche es dem Hinweis darunter. */}
+            {!gesperrt && !vorher && <span className="type-body-small text-on-surface-mittel">{PROBE_TEXT.keinWeiteresTeam}</span>}
           </span>
         }
       />

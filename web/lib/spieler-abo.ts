@@ -45,7 +45,7 @@ export type AboFeedTermin = Pick<
   | "treffpunkt"
 >;
 
-/** `probe`: Die Spieler:in ist im Probe-Modus (#555 PC 11); fehlt bei einer
+/** `probe`: Die Spieler:in schnuppert (#555 PC 11); fehlt bei einer
  *  Datenebene vor der Migration. Ohne Team ist das Abo gültig und leer
  *  (#583 AK 9); jeder Termin nennt sein Team. */
 export type AboFeed =
@@ -54,7 +54,7 @@ export type AboFeed =
 
 /** Der Status der Spieler:in an einem Termin.
  *  - Training (#507 PC 3): angemeldet = zugesagt, abgemeldet = abgesagt;
- *    «vielleicht» gibt es nicht — ausser im Probe-Modus (#555 PC 11): Dort
+ *    «vielleicht» gibt es nicht — ausser beim Schnuppern (#555 PC 11): Dort
  *    heisst nicht angemeldet vielleicht, auch wenn sie sich nicht mehr
  *    anmelden kann.
  *  - Spiel (#508 PC 3–6): nicht aufgeboten = abgesagt, auch wenn angemeldet;

@@ -249,7 +249,7 @@ export type KaderEntfernenFolgen = {
   verfallendSpiele: number;
   /** Davon Kennzeichnungen als nicht aufgeboten (#464 AK 10). */
   verfallendKennzeichnungen: number;
-  /** Davon Anmeldungen von Probe-Spieler:innen (#555 AK 14). */
+  /** Davon Anmeldungen von schnuppernden Spieler:innen (#555 AK 14). */
   verfallendAnmeldungen: number;
 };
 

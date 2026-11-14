@@ -51,10 +51,10 @@ import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaeh
    (#472): «angemeldet» und «abgemeldet» meinen auf dieser Seite nur die
    eigene Spieler:in.
 
-   Im Probe-Modus (#555 AK 9–12) ist es umgekehrt: Die Spieler:in ist an
+   Schnuppert sie (#555 AK 9–12), ist es umgekehrt: Die Spieler:in ist an
    Trainings zuerst nicht angemeldet, Spiele stehen keine da. Der Kopf nennt,
-   wie viele Probetrainings noch möglich sind, mit einem Balken je
-   Probetraining (besucht gefüllt, angemeldet umrandet). Ist die Anzahl
+   wie viele Schnuppertrainings noch möglich sind, mit einem Balken je
+   Schnuppertraining (besucht gefüllt, angemeldet umrandet). Ist die Anzahl
    erreicht, sagt das eine Meldung über den Trainings, und die Schalter der
    übrigen sind gesperrt, bis ein Platz frei wird. Das Info-Schreiben des
    Teams (#556) steht davor, gekürzt mit «Ganz lesen» — man liest es, bevor
@@ -190,7 +190,7 @@ export function ElternAnsicht({
         : { quelle: "liste" as const, angemeldet: t.angemeldet + Number(t.abgemeldet) - Number(ab), gesamt: t.gesamt, anwesend: null }; // Eltern sehen den Stand bei Beginn (#475 AK 16).
     // «Fällt aus» sagt schon die Lozenge; ausgefallen bleibt der Ort stehen (#530 AK 5).
     const zweite = !t.ausgefallen && t.begonnen ? "Hat begonnen · nicht mehr änderbar" : null;
-    // Probe: Ist die Anzahl erreicht, lässt sich nur noch abmelden (AK 10, 12).
+    // Schnuppern: Ist die Anzahl erreicht, lässt sich nur noch abmelden (AK 10, 12).
     const vergeben = voll && ab && !t.ausgefallen && !t.begonnen;
     return { ab, zweite, zahl, probe: !!probe, vergeben };
   }
@@ -339,7 +339,7 @@ type KarteProps = {
   zahl: Spielerzahl | null;
   /** Beim Schnuppern: zuerst nicht angemeldet (#555). */
   probe: boolean;
-  /** Probe: Die Anzahl ist erreicht, anmelden geht hier nicht (AK 12). */
+  /** Schnuppern: Die Anzahl ist erreicht, anmelden geht hier nicht (AK 12). */
   vergeben: boolean;
   name: string;
   pending: boolean;
@@ -352,7 +352,7 @@ type KarteProps = {
 function trainingStatus(t: LinkTermin, ab: boolean, probe: boolean) {
   if (t.ausgefallen) return TERMIN_STATUS.faelltAus;
   if (!ab) return MELDE_STATUS.angemeldet;
-  // Probe: nicht angemeldet ist der Ausgangsstand, kein Absagen (#555).
+  // Schnuppern: nicht angemeldet ist der Ausgangsstand, kein Absagen (#555).
   return probe ? { wort: PROBE_TEXT.nichtAngemeldet, appearance: "neutral" as const } : MELDE_STATUS.abgemeldet;
 }
 
@@ -361,7 +361,7 @@ function trainingStatus(t: LinkTermin, ab: boolean, probe: boolean) {
    Schalter. Abgemeldet oder ausgefallen tritt die Karte gedämpft zurück. */
 function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUmlegen, hinweise }: KarteProps) {
   const status = trainingStatus(t, ab, probe);
-  // Probe: nicht angemeldet ist der Ausgangsstand, keine Absage - die Karte bleibt.
+  // Schnuppern: nicht angemeldet ist der Ausgangsstand, keine Absage - die Karte bleibt.
   const gedaempft = t.ausgefallen || (ab && !probe);
   return (
     <li className={cn("flex flex-col gap-2 rounded-flaeche px-3 py-3", gedaempft ? "kontur border-linie" : "bg-elev-01")}>

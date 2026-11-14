@@ -56,7 +56,7 @@ type Fehler = {
   verschwindend?: number;
   /** Davon Kennzeichnungen als nicht aufgeboten (#464 AK 10). */
   kennzeichnungen?: number;
-  /** Davon Anmeldungen von Probe-Spieler:innen (#555 AK 14). */
+  /** Davon Anmeldungen von schnuppernden Spieler:innen (#555 AK 14). */
   anmeldungen?: number;
   /** Ein Training (#561 PC 5): Mit dem neuen Beginn entfiele der Treffpunkt. */
   treffpunktEntfaellt?: boolean;

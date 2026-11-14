@@ -3108,10 +3108,15 @@ pruefe("Zuordnen zum Schnuppern (#584 AK 7–12, 16): jede Abweisung, eine und m
     "Das Team hat noch keine Anzahl Schnuppertrainings. Ein Mitglied des Teams legt sie zuerst fest.",
   );
   assert.deepEqual(Object.keys(SCHNUPPERN_ZUORDNEN_TEXT).sort(), ["schnuppern_anzahl_fehlt", "schnuppern_hat_team"]);
-  // AK 12: eine Schnuppernde nennt ihr Team und beide Auswege.
+  // AK 12: eine Schnuppernde nennt ihr Team und beide Auswege; einzeln ohne
+  // «Wähle ein anderes Team» — auch dort liesse sie sich nicht zuordnen.
   assert.equal(
     zuordnenAbweisungText({ ...leer, schnuppert: [{ ...p("Leon", "Graf", 2015), team: "Da Junioren" }] }, "Ea Junioren", 1),
-    "Leon Graf (2015) schnuppert im Team «Da Junioren». Dort beendet zuerst ein Mitglied das Schnuppern, oder Leon wird aus dem Team genommen. Wähle ein anderes Team und versuche es nochmals.",
+    "Leon Graf (2015) schnuppert im Team «Da Junioren». Dort beendet zuerst ein Mitglied das Schnuppern, oder Leon wird aus dem Team genommen.",
+  );
+  assert.ok(
+    !zuordnenAbweisungText({ ...leer, gleich: [p("Elias", "Brunner", 2014)], schnuppert: [{ ...p("Elias", "Brunner", 2014), team: "Da Junioren" }] }, "Ea Junioren", 1).includes("anderes Team"),
+    "einzeln mit Schnuppern nie «anderes Team»",
   );
   // AK 16: gesammelt nennt jede Schnuppernde mit ihrem Team, in der Reihenfolge der Datenebene.
   const mehrere = zuordnenAbweisungText(
