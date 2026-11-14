@@ -11,7 +11,8 @@
 --   Spieler:in genau diese eine. Netz in `team_spieler_vorher` (jetzt auch
 --   bei UPDATE OF probe_seit), in dieser Reihenfolge: SPIELER_SCHNUPPERT (eine
 --   weitere Zuordnung für eine Schnuppernde), SCHNUPPERN_MEHRERE_TEAMS
---   (`probe_seit` neben weiteren Zuordnungen).
+--   (`probe_seit` neben weiteren Zuordnungen). Team, Spieler:in und Verein
+--   einer Zuordnung sind unveränderlich (ZUORDNUNG_UNVERAENDERLICH).
 -- - `spieler_probe_setzen` und `spieler_probe_folgen` nehmen `p_team` und
 --   lesen `spieler.team_id` nicht mehr. Das Einschalten nimmt zuerst die
 --   Vereinssperre (wie das Zuordnen), dann Team und Zeile, und prüft unter
@@ -152,7 +153,12 @@ $$;
 -- dieselbe Folge, darum kein Zyklus, und es kommt ganz vor oder ganz nach
 -- dieser Prüfung (AK 14). Unter den Sperren erneut: Spieler:in noch im Team
 -- (sonst SPIELER_NICHT_GEFUNDEN statt eines stillen Erfolgs), beim
--- Einschalten keine weitere Zuordnung. Rückgabe unverändert {probe, verfallen}.
+-- Einschalten keine weitere Zuordnung. Ist das Team schon vor der
+-- Vereinssperre weg, ebenfalls SPIELER_NICHT_GEFUNDEN. Kommende Ab- und
+-- Anmeldungen fallen nur in p_team: Schaltet ein Mitglied eine Altlast
+-- (schnuppernd hier, zugeordnet anderswo) aus, bleiben die Meldungen im
+-- anderen Team. Rückgabe unverändert
+-- {probe, verfallen}.
 drop function spieler_probe_setzen(uuid, boolean, integer);
 create function spieler_probe_setzen(p_team uuid, p_spieler uuid, p_probe boolean, p_bestaetigt integer default null)
 returns jsonb
@@ -161,6 +167,7 @@ set search_path = public, pg_temp
 as $$
 declare
   v_jetzt boolean;
+  v_verein uuid;
   v_ab integer := 0;
   v_sp integer := 0;
   v_kz integer := 0;
@@ -170,7 +177,9 @@ begin
   if p_probe is null or not ist_team_mitglied(p_team) or not spieler_im_team(p_spieler, p_team) then
     raise exception 'SPIELER_NICHT_GEFUNDEN';
   end if;
-  perform sperre_verein((select verein_id from teams where id = p_team));
+  v_verein := (select verein_id from teams where id = p_team);
+  if v_verein is null then raise exception 'SPIELER_NICHT_GEFUNDEN'; end if;
+  perform sperre_verein(v_verein);
   -- Dieselbe Sperre wie jede Meldung; dann begonnene Trainings festhalten:
   -- Ihr Stand bei Beginn folgte noch dem bisherigen Grundstand.
   perform sperre_teams(array[p_team]);
@@ -203,9 +212,11 @@ begin
   -- Kommende Trainings beginnen im neuen Grundstand (PC 1, 9); niemand hat
   -- dort gewechselt.
   delete from termin_abmeldungen a using training_termine t
-   where a.termin_id = t.id and a.spieler_id = p_spieler and not termin_begonnen(t.datum, t.beginn);
+   where a.termin_id = t.id and t.team_id = p_team and a.spieler_id = p_spieler
+     and not termin_begonnen(t.datum, t.beginn);
   delete from termin_statuswechsel w using training_termine t
-   where w.termin_id = t.id and w.spieler_id = p_spieler and not termin_begonnen(t.datum, t.beginn);
+   where w.termin_id = t.id and t.team_id = p_team and w.spieler_id = p_spieler
+     and not termin_begonnen(t.datum, t.beginn);
   update team_spieler set probe_seit = case when p_probe then now() end
    where spieler_id = p_spieler and team_id = p_team;
   -- Spiele gelten nun nicht mehr: ihre Meldungen und Kennzeichnungen fallen.
@@ -529,6 +540,9 @@ $function$;
 -- anderen Team) → SCHNUPPERN_MEHRERE_TEAMS (mit probe_seit neben weiteren
 -- Zuordnungen) → SPIELER_DOPPELT → SPIELERLISTE_VOLL. Beim UPDATE nur
 -- SCHNUPPERN_MEHRERE_TEAMS, und nur beim Einschalten; Ausschalten geht immer.
+-- Team, Spieler:in und Verein einer Zuordnung ändert kein Weg (keine Funktion
+-- schreibt sie); ein direktes UPDATE darauf ginge am Netz vorbei und wird mit
+-- ZUORDNUNG_UNVERAENDERLICH abgewiesen (Herausnehmen und neu Zuordnen).
 -- Sperren in der Sperrordnung: Wo Schnuppern beginnt, zuerst die
 -- Vereinssperre (die RPCs halten sie schon, `spieler_probe_setzen` und
 -- `verein_spieler_zuordnen`), dann Team, dann die `spieler`-Zeile. Jeder Weg,
@@ -541,6 +555,10 @@ as $$
 declare
   r team_spieler := case when tg_op = 'DELETE' then old else new end;
 begin
+  if tg_op = 'UPDATE' and (new.team_id, new.spieler_id, new.verein_id)
+                          is distinct from (old.team_id, old.spieler_id, old.verein_id) then
+    raise exception 'ZUORDNUNG_UNVERAENDERLICH';
+  end if;
   if not exists (select 1 from teams where id = r.team_id) then return r; end if;
   if tg_op = 'DELETE' and not exists (select 1 from spieler where id = r.spieler_id) then return r; end if;
   if tg_op = 'UPDATE' and new.probe_seit is null then return new; end if;
@@ -585,9 +603,10 @@ $$;
 
 -- ── Trigger ─────────────────────────────────────────────────────────────────
 
--- Neu auch bei UPDATE OF probe_seit (Einschalten, AK 5).
+-- Neu auch bei UPDATE OF probe_seit (Einschalten, AK 5) und bei UPDATE der
+-- Schlüsselspalten (abgewiesen).
 drop trigger team_spieler_vorher on team_spieler;
-create trigger team_spieler_vorher before insert or update of probe_seit or delete on team_spieler
+create trigger team_spieler_vorher before insert or update of probe_seit, team_id, spieler_id, verein_id or delete on team_spieler
   for each row execute function team_spieler_vorher();
 
 -- ── Grants ──────────────────────────────────────────────────────────────────

@@ -8,16 +8,20 @@
 -- - Trigger-Netz (direktes Schreiben als Eigentümer): zweite Zuordnung einer
 --   Schnuppernden → SPIELER_SCHNUPPERT; `probe_seit` setzen bei mehreren
 --   Zuordnungen → SCHNUPPERN_MEHRERE_TEAMS; beides zugleich → der erste
---   Marker; Ausschalten geht immer; unter `replica` still
+--   Marker; Ausschalten geht immer; unter `replica` still; mehrzeilige
+--   INSERTs in jeder Reihenfolge; Team, Spieler:in und Verein einer Zuordnung
+--   lassen sich nicht ändern (ZUORDNUNG_UNVERAENDERLICH)
 -- - Einschalten und Folgen nur als Mitglied von `p_team` für eine
 --   Spieler:in in `p_team` (Mitglied eines anderen Teams, Nicht-Mitglied,
 --   Verwaltung ohne Mitgliedschaft: SPIELER_NICHT_GEFUNDEN; beide Rollen
 --   nicht mehr als ein Mitglied); `spieler.team_id` wird nicht gelesen;
---   SCHNUPPERN_MEHRERE_TEAMS auch über ein KI-Token (AK 5, 6, 15)
+--   SCHNUPPERN_MEHRERE_TEAMS auch über ein KI-Token (AK 5, 6, 15);
+--   Ausschalten einer Altlast löscht kommende Meldungen nur im eigenen Team
 -- - Zuordnen zum Schnuppern (AK 8–11): Abweisungen in der Reihenfolge
 --   SCHNUPPERN_NUR_EINZELN → schnuppern_hat_team → schnuppern_anzahl_fehlt,
 --   je in der Vertragsform; Erfolg: zuerst nicht angemeldet, Spiele gelten
---   nicht, Zählung ab der Zuordnung
+--   nicht, Zählung ab der Zuordnung; ein Mitglied ohne Verwaltung und die
+--   Verwaltung eines anderen Vereins: VEREIN_NICHT_GEFUNDEN
 -- - Schnuppernde weiteren Teams zuordnen: einzeln und gesammelt abgewiesen
 --   mit Teamname (AK 12, 16)
 -- - Herausnehmen (AK 13, PC 1, 2): `spieler_teams.schnuppert`, der Stand
@@ -73,20 +77,22 @@ create function pg_temp.schluessel(p jsonb) returns text[]
 language sql immutable as $$ select array(select k from jsonb_object_keys(p) k order by k) $$;
 
 create temp table ids (name text primary key, id uuid not null default gen_random_uuid());
-insert into ids (name) values ('va'), ('vm'), ('a'), ('b'), ('c'), ('x'), ('v'),
-  ('t1'), ('t2'), ('t3'), ('t4'),
+insert into ids (name) values ('va'), ('vm'), ('a'), ('b'), ('c'), ('x'), ('v'), ('v2'), ('vx'),
+  ('t1'), ('t2'), ('t3'), ('t4'), ('tr_t2'),
   ('ein'), ('zwei'), ('nur2'), ('nur3'), ('frei'), ('frei2'), ('frei3'), ('alt'),
   ('tr_kommend'), ('sp_kommend'), ('tr_vorbei');
 create function pg_temp.id(p text) returns uuid language sql stable as $$ select id from ids where name = p $$;
 grant select on ids to authenticated;   -- temporär; die Rolle braucht pg_temp.id
 
 insert into auth.users (id, email, email_confirmed_at)
-select id, name || '@schnuppern.test', now() from ids where name in ('va', 'vm', 'a', 'b', 'c', 'x');
+select id, name || '@schnuppern.test', now() from ids where name in ('va', 'vm', 'a', 'b', 'c', 'x', 'vx');
 
 -- Verein V: va nur Verwaltung, vm Verwaltung und Mitglied von T1; a in T1,
 -- b in T2, c in T3; x gehört keinem Verein an. T1 (Anzahl 3, Info), T2
--- (Anzahl 2), T3 ohne Anzahl, T4 (Anzahl 1, wird aufgelöst).
-insert into vereine (id, name) values (pg_temp.id('v'), 'Schnupper-Verein');
+-- (Anzahl 2), T3 ohne Anzahl, T4 (Anzahl 1, wird aufgelöst). vx verwaltet
+-- einen anderen Verein V2.
+insert into vereine (id, name) values (pg_temp.id('v'), 'Schnupper-Verein'), (pg_temp.id('v2'), 'Anderer Verein');
+insert into verein_verwaltung (verein_id, user_id) values (pg_temp.id('v2'), pg_temp.id('vx'));
 insert into verein_verwaltung (verein_id, user_id) values (pg_temp.id('v'), pg_temp.id('va')), (pg_temp.id('v'), pg_temp.id('vm'));
 insert into teams (id, name, verein_id) values
   (pg_temp.id('t1'), 'Team Eins', pg_temp.id('v')), (pg_temp.id('t2'), 'Team Zwei', pg_temp.id('v')),
@@ -127,7 +133,8 @@ insert into team_spieler (team_id, spieler_id, verein_id, probe_seit, created_at
   (pg_temp.id('t2'), pg_temp.id('alt'), pg_temp.id('v'), null, now());
 set local session_replication_role = origin;
 insert into training_termine (id, team_id, datum, beginn, ende) values
-  (pg_temp.id('tr_kommend'), pg_temp.id('t1'), current_date + 7, '18:00', '19:30');
+  (pg_temp.id('tr_kommend'), pg_temp.id('t1'), current_date + 7, '18:00', '19:30'),
+  (pg_temp.id('tr_t2'), pg_temp.id('t2'), current_date + 7, '17:00', '18:30');
 insert into training_termine (id, team_id, datum, beginn, ende, art, bezeichnung) values
   (pg_temp.id('sp_kommend'), pg_temp.id('t1'), current_date + 8, '10:00', '12:00', 'spiel', 'Match kommend');
 
@@ -176,6 +183,33 @@ select pg_temp.erwarte(format('update team_spieler set probe_seit = now() where 
 -- Eine Zuordnung mit probe_seit neben einer bestehenden ebenso.
 select pg_temp.erwarte(format('insert into team_spieler (team_id, spieler_id, verein_id, probe_seit) values (%L, %L, %L, now())',
                               pg_temp.id('t1'), pg_temp.id('nur2'), pg_temp.id('v')), 'SCHNUPPERN_MEHRERE_TEAMS');
+-- Mehrzeilige INSERTs: Der Trigger der zweiten Zeile sieht die erste. Zuerst
+-- mit probe_seit, dann ohne → SPIELER_SCHNUPPERT; umgekehrt →
+-- SCHNUPPERN_MEHRERE_TEAMS; beide mit → der erste Marker. Nichts bleibt.
+select pg_temp.erwarte(format('insert into team_spieler (team_id, spieler_id, verein_id, probe_seit) values (%L, %L, %L, now()), (%L, %L, %L, null)',
+                              pg_temp.id('t1'), pg_temp.id('frei'), pg_temp.id('v'), pg_temp.id('t2'), pg_temp.id('frei'), pg_temp.id('v')),
+                       'SPIELER_SCHNUPPERT');
+select pg_temp.erwarte(format('insert into team_spieler (team_id, spieler_id, verein_id, probe_seit) values (%L, %L, %L, null), (%L, %L, %L, now())',
+                              pg_temp.id('t1'), pg_temp.id('frei'), pg_temp.id('v'), pg_temp.id('t2'), pg_temp.id('frei'), pg_temp.id('v')),
+                       'SCHNUPPERN_MEHRERE_TEAMS');
+select pg_temp.erwarte(format('insert into team_spieler (team_id, spieler_id, verein_id, probe_seit) values (%L, %L, %L, now()), (%L, %L, %L, now())',
+                              pg_temp.id('t1'), pg_temp.id('frei'), pg_temp.id('v'), pg_temp.id('t2'), pg_temp.id('frei'), pg_temp.id('v')),
+                       'SPIELER_SCHNUPPERT');
+select pg_temp.pruefe(not exists (select 1 from team_spieler where spieler_id = pg_temp.id('frei')), 'mehrzeiliger INSERT schrieb');
+-- Team, Spieler:in und Verein einer Zuordnung ändert kein Weg: Ein direktes
+-- UPDATE ginge sonst am Netz vorbei (die Schnuppernde ein in ein zweites Team,
+-- eine zweite Zuordnung von zwei auf eine Schnuppernde).
+update team_spieler set probe_seit = now() where team_id = pg_temp.id('t1') and spieler_id = pg_temp.id('ein');
+select pg_temp.erwarte(format('update team_spieler set team_id = %L where team_id = %L and spieler_id = %L',
+                              pg_temp.id('t3'), pg_temp.id('t1'), pg_temp.id('ein')), 'ZUORDNUNG_UNVERAENDERLICH');
+select pg_temp.erwarte(format('update team_spieler set spieler_id = %L where team_id = %L and spieler_id = %L',
+                              pg_temp.id('ein'), pg_temp.id('t2'), pg_temp.id('nur2')), 'ZUORDNUNG_UNVERAENDERLICH');
+select pg_temp.erwarte(format('update team_spieler set verein_id = %L where team_id = %L and spieler_id = %L',
+                              pg_temp.id('v2'), pg_temp.id('t1'), pg_temp.id('ein')), 'ZUORDNUNG_UNVERAENDERLICH');
+update team_spieler set probe_seit = null where team_id = pg_temp.id('t1') and spieler_id = pg_temp.id('ein');
+select pg_temp.pruefe((select array_agg(team_id) from team_spieler where spieler_id = pg_temp.id('ein')) = array[pg_temp.id('t1')]
+                      and (select array_agg(team_id) from team_spieler where spieler_id = pg_temp.id('nur2')) = array[pg_temp.id('t2')],
+                      'UPDATE der Schlüsselspalten schrieb');
 -- Ausschalten der Altlast geht trotz zweier Zuordnungen; unter replica bleibt
 -- das Netz still (Sync-Weg).
 savepoint netz;
@@ -245,12 +279,34 @@ select pg_temp.pruefe((select probe_seit from team_spieler where team_id = pg_te
                       and not exists (select 1 from team_spieler where spieler_id = pg_temp.id('zwei') and probe_seit is not null),
                       'Stand nach dem Einschalten');
 
+-- Ausschalten der Altlast (schnuppernd in T1, zugeordnet in T2) durch ein
+-- Mitglied von T1: Kommende Ab- und Anmeldungen und Statuswechsel fallen nur
+-- in T1; die in T2 bleiben.
+savepoint altlast;
+set local session_replication_role = replica;
+insert into termin_abmeldungen (termin_id, spieler_id, team_id) values
+  (pg_temp.id('tr_kommend'), pg_temp.id('alt'), pg_temp.id('t1')), (pg_temp.id('tr_t2'), pg_temp.id('alt'), pg_temp.id('t2'));
+insert into termin_statuswechsel (termin_id, spieler_id, team_id) values
+  (pg_temp.id('tr_kommend'), pg_temp.id('alt'), pg_temp.id('t1')), (pg_temp.id('tr_t2'), pg_temp.id('alt'), pg_temp.id('t2'));
+set local session_replication_role = origin;
+select pg_temp.als(pg_temp.id('a'));
+select pg_temp.pruefe(spieler_probe_setzen(pg_temp.id('t1'), pg_temp.id('alt'), false) = '{"probe": false, "verfallen": 0}',
+                      'Ausschalten der Altlast');
+reset role;
+select pg_temp.pruefe(
+  (select array_agg(termin_id) from termin_abmeldungen where spieler_id = pg_temp.id('alt')) = array[pg_temp.id('tr_t2')]
+  and (select array_agg(termin_id) from termin_statuswechsel where spieler_id = pg_temp.id('alt')) = array[pg_temp.id('tr_t2')]
+  and (select probe_seit from team_spieler where team_id = pg_temp.id('t1') and spieler_id = pg_temp.id('alt')) is null,
+  'Altlast: Meldungen im anderen Team bleiben');
+rollback to savepoint altlast;
+
 -- ── Zuordnen zum Schnuppern (AK 8–12, 16; Testfall 18) ─────────────────────
 
 select pg_temp.als(pg_temp.id('va'));
 do $$
 declare
   v jsonb;
+  wer text;
   c_leer constant jsonb := '[]';
 begin
   -- Reihenfolge: mehr als eine → Marker, auch wenn eine schon ein Team hat
@@ -285,6 +341,13 @@ begin
                          and v -> 'schnuppert' = jsonb_build_array(jsonb_build_object('id', pg_temp.id('frei'), 'vorname', 'Fia',
                                'nachname', 'Frei', 'jahrgang', 2015, 'team', 'Team Eins'))
                          and v -> 'bereits' = c_leer and v -> 'gleich' = c_leer, 'gesammelt: ' || v::text);
+  -- Nur die Verwaltung dieses Vereins: ein Mitglied ohne Verwaltung (a in
+  -- T1) und die Verwaltung eines anderen Vereins (vx) nicht.
+  foreach wer in array array['a', 'vx'] loop
+    perform pg_temp.als(pg_temp.id(wer));
+    perform pg_temp.erwarte(format('select verein_spieler_zuordnen(%L, array[%L]::uuid[], true)', pg_temp.id('t1'), pg_temp.id('frei2')),
+                            'VEREIN_NICHT_GEFUNDEN');
+  end loop;
   -- Auch über ein KI-Token nie.
   perform pg_temp.als(pg_temp.id('va'), '{"client_id": "ki-client"}');
   perform pg_temp.erwarte(format('select verein_spieler_zuordnen(%L, array[%L]::uuid[], true)', pg_temp.id('t1'), pg_temp.id('frei2')),

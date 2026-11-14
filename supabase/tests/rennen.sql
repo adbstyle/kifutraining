@@ -1349,27 +1349,41 @@ delete from abholung_sperren where schluessel in (repeat('l', 32), repeat('m', 3
 -- (s5) Sperrfolge: A hält die Vereinssperre, B schaltet ein und wartet dort;
 --      danach nimmt A die Teamsperre. Nähme das Einschalten die Teamsperre
 --      vor der Vereinssperre, endete das in 40P01; so schaltet B danach ein.
+-- (s6) Einschalten gegen Auflösen des Teams («Schnupper-Drei», «Schnupper-
+--      Vier», beide mit SM und Anzahl), beide Reihenfolgen: nach dem Auflösen
+--      SPIELER_NICHT_GEFUNDEN; nach dem Einschalten löst die Verwaltung auf.
+--      Kein 40P01, die Spieler:in bleibt im Verein ohne Team.
+-- (s7) Einschalten gegen Löschen aus dem Verein, beide Reihenfolgen: nach dem
+--      Löschen SPIELER_NICHT_GEFUNDEN; nach dem Einschalten löscht die
+--      Verwaltung. Kein 40P01, die Spieler:in ist weg.
 -- Ein harter Abbruch lässt den Verein «Rennen-Schnuppern» samt Teams und
 -- Spieler:innen und die Konten «rennen-s-…@rennen.test» stehen (von Hand löschen).
 
 select set_config('rennen.fehler_schnuppern', '', false) is not null as rennen_fehler_schnuppern_leer \gset
 
 begin;
-insert into rennen_test.ids (name) values ('s_verein'), ('s_va'), ('s_m'), ('s_t1'), ('s_t2'),
-  ('s_x1'), ('s_x2'), ('s_h1'), ('s_h2'), ('s_f1'), ('s_f2'), ('s_z1');
+insert into rennen_test.ids (name) values ('s_verein'), ('s_va'), ('s_m'), ('s_t1'), ('s_t2'), ('s_t3'), ('s_t4'),
+  ('s_x1'), ('s_x2'), ('s_h1'), ('s_h2'), ('s_f1'), ('s_f2'), ('s_z1'), ('s_a1'), ('s_a2'), ('s_l1'), ('s_l2');
 insert into auth.users (id, email, email_confirmed_at)
 select id, 'rennen-' || replace(name, '_', '-') || '@rennen.test', now() from rennen_test.ids where name in ('s_va', 's_m');
 insert into vereine (id, name) values (rennen_test.z('s_verein'), 'Rennen-Schnuppern');
 insert into verein_verwaltung (verein_id, user_id) values (rennen_test.z('s_verein'), rennen_test.z('s_va'));
 insert into teams (id, name, verein_id) values
   (rennen_test.z('s_t1'), 'Schnupper-Eins', rennen_test.z('s_verein')),
-  (rennen_test.z('s_t2'), 'Schnupper-Zwei', rennen_test.z('s_verein'));
-insert into team_members (team_id, user_id) values (rennen_test.z('s_t1'), rennen_test.z('s_m'));
-insert into team_probetraining (team_id, anzahl) values (rennen_test.z('s_t1'), 3), (rennen_test.z('s_t2'), 3);
+  (rennen_test.z('s_t2'), 'Schnupper-Zwei', rennen_test.z('s_verein')),
+  (rennen_test.z('s_t3'), 'Schnupper-Drei', rennen_test.z('s_verein')),
+  (rennen_test.z('s_t4'), 'Schnupper-Vier', rennen_test.z('s_verein'));
+insert into team_members (team_id, user_id) values
+  (rennen_test.z('s_t1'), rennen_test.z('s_m')), (rennen_test.z('s_t3'), rennen_test.z('s_m')), (rennen_test.z('s_t4'), rennen_test.z('s_m'));
+insert into team_probetraining (team_id, anzahl) values
+  (rennen_test.z('s_t1'), 3), (rennen_test.z('s_t2'), 3), (rennen_test.z('s_t3'), 3), (rennen_test.z('s_t4'), 3);
 insert into spieler (id, verein_id, vorname, nachname, jahrgang)
-select id, rennen_test.z('s_verein'), 'Schnupper', name, 2015 from rennen_test.ids where name ~ '^s_[xhfz][0-9]$';
+select id, rennen_test.z('s_verein'), 'Schnupper', name, 2015 from rennen_test.ids where name ~ '^s_[xhfzal][0-9]$';
 insert into team_spieler (team_id, spieler_id, verein_id)
-select rennen_test.z('s_t1'), id, rennen_test.z('s_verein') from rennen_test.ids where name ~ '^s_[xhz][0-9]$';
+select rennen_test.z('s_t1'), id, rennen_test.z('s_verein') from rennen_test.ids where name ~ '^s_[xhzl][0-9]$';
+insert into team_spieler (team_id, spieler_id, verein_id) values
+  (rennen_test.z('s_t3'), rennen_test.z('s_a1'), rennen_test.z('s_verein')),
+  (rennen_test.z('s_t4'), rennen_test.z('s_a2'), rennen_test.z('s_verein'));
 commit;
 
 do $$
@@ -1460,6 +1474,49 @@ begin
     format('select 1 from pg_advisory_xact_lock(hashtextextended(%L, 0))', 'spieler:' || v_t1));
   if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"probe": true, "verfallen": 0}' then
     raise exception '(s5) Einschalten in der Sperrfolge Verein → Team: %', ergebnis;
+  end if;
+
+  -- (s6) Auflösen, dann Einschalten.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_team_aufloesen(%L, %L)::text', rennen_test.z('s_t3'), 'Schnupper-Drei'),
+    v_m, format('select spieler_probe_setzen(%L, %L, true)::text', rennen_test.z('s_t3'), rennen_test.z('s_a1')), 'advisory');
+  if position('SPIELER_NICHT_GEFUNDEN' in ergebnis) = 0 then
+    raise exception '(s6) Einschalten nach dem Auflösen hätte SPIELER_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+  if exists (select 1 from teams where id = rennen_test.z('s_t3'))
+     or exists (select 1 from team_spieler where spieler_id = rennen_test.z('s_a1'))
+     or not exists (select 1 from spieler where id = rennen_test.z('s_a1')) then
+    raise exception '(s6) nach dem Auflösen: Team oder Zuordnung blieb, oder die Spieler:in fehlt';
+  end if;
+  -- Einschalten, dann Auflösen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_probe_setzen(%L, %L, true)::text', rennen_test.z('s_t4'), rennen_test.z('s_a2')),
+    v_va, format('select verein_team_aufloesen(%L, %L)::text', rennen_test.z('s_t4'), 'Schnupper-Vier'), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'aufgeloest'
+     or (ergebnis::jsonb ->> 'spieler_bleiben')::int <> 1 then
+    raise exception '(s6) Auflösen nach dem Einschalten: %', ergebnis;
+  end if;
+  if exists (select 1 from team_spieler where spieler_id = rennen_test.z('s_a2'))
+     or not exists (select 1 from spieler where id = rennen_test.z('s_a2')) then
+    raise exception '(s6) nach dem Einschalten und Auflösen: Zuordnung blieb, oder die Spieler:in fehlt';
+  end if;
+
+  -- (s7) Löschen aus dem Verein, dann Einschalten.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('s_l1')),
+    v_m, format('select spieler_probe_setzen(%L, %L, true)::text', v_t1, rennen_test.z('s_l1')), 'advisory');
+  if position('SPIELER_NICHT_GEFUNDEN' in ergebnis) = 0
+     or exists (select 1 from spieler where id = rennen_test.z('s_l1')) then
+    raise exception '(s7) Einschalten nach dem Löschen hätte SPIELER_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+  -- Einschalten, dann Löschen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_probe_setzen(%L, %L, true)::text', v_t1, rennen_test.z('s_l2')),
+    v_va, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('s_l2')), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'geloescht'
+     or ergebnis::jsonb -> 'teams' <> jsonb_build_array(jsonb_build_object('id', v_t1, 'name', 'Schnupper-Eins'))
+     or exists (select 1 from spieler where id = rennen_test.z('s_l2')) then
+    raise exception '(s7) Löschen nach dem Einschalten: %', ergebnis;
   end if;
 exception when others or query_canceled then
   perform set_config('rennen.fehler_schnuppern', sqlerrm, false);
