@@ -6,7 +6,7 @@
 -- - `create_team` nur durch die Verwaltung, im eigenen Verein (Testfall 3)
 -- - `meine_vereinslage()` und die Sichtbarkeit der Vereine
 -- - Grenzen 100 je Team und 1000 je Verein nur für Neues; Bestand darüber
---   bleibt änderbar und löschbar (Testfall 1, Story 1 PC 2); Schnuppernde
+--   bleibt änderbar, und herausnehmen lässt sich weiter (Testfall 1, Story 1 PC 2); Schnuppernde
 --   und bestehende Doppeleinträge zählen mit (Story 1 PC 3)
 -- - `delete_account()`: letzte Verwaltung, KI-Token, Erfolg
 -- - Funktionen ohne API-Zweck für anon und authenticated gesperrt (Testfall 26)
@@ -150,8 +150,8 @@ begin
   end if;
 end $$;
 
--- Testfall 1: Bestand über den Grenzen (per replica angelegt) bleibt änderbar
--- und löschbar; nur Neues wird abgewiesen, getrennt nach Team und Verein.
+-- Testfall 1: Bestand über den Grenzen (per replica angelegt) bleibt änderbar,
+-- Herausnehmen geht; nur Neues wird abgewiesen, getrennt nach Team und Verein.
 set local session_replication_role = replica;
 with neu as (
   insert into spieler (team_id, verein_id, vorname, nachname, jahrgang)
@@ -186,10 +186,15 @@ select pg_temp.als(pg_temp.id('a'));
 do $$
 declare
   v_spieler uuid := (select spieler_id from team_spieler where team_id = pg_temp.id('team1') limit 1);
+  v_raus uuid;
 begin
   perform spieler_aendern(pg_temp.id('team1'), v_spieler, 'Geändert', 'Nr 1', 2015, null);
-  perform spieler_entfernen((select spieler_id from team_spieler
-                              where team_id = pg_temp.id('team1') and spieler_id <> v_spieler limit 1));
+  -- Herausnehmen (seit Story 3; Löschen am Team-Ort gibt es nicht mehr).
+  select spieler_id into v_raus from team_spieler where team_id = pg_temp.id('team1') and spieler_id <> v_spieler limit 1;
+  if spieler_aus_team_nehmen(pg_temp.id('team1'), v_raus, spieler_teams(pg_temp.id('team1'), v_raus) ->> 'stand') ->> 'status'
+     <> 'herausgenommen' then
+    raise exception 'Testfall 1: Herausnehmen über der Grenze gescheitert';
+  end if;
 end $$;
 select pg_temp.erwarte(format($$select spieler_aufnehmen(%L, 'Neu', 'Neu', 2015, null)$$, pg_temp.id('team1')),
                        'SPIELERLISTE_VOLL');
@@ -275,7 +280,8 @@ begin
     'person_verein(uuid)', 'sperre_verein(uuid)', 'sperre_person(uuid)', 'sperre_teams(uuid[])',
     'nur_in_der_anwendung()', 'spieler_im_team(uuid,uuid)', 'spielerzahl_freigeben(uuid)',
     'vereine_nachziehen(uuid)', 'staging_nach_sync()', 'teams_vorher()', 'teams_verein_fest()',
-    'team_members_vorher()', 'verwaltung_vorher()', 'team_spieler_vorher()'] loop
+    'team_members_vorher()', 'verwaltung_vorher()', 'team_spieler_vorher()', 'team_spieler_nachher()',
+    'spieler_teams_stand(uuid)', 'spieler_teams_auskunft(uuid,uuid)'] loop
     foreach r in array array['anon', 'authenticated'] loop
       if has_function_privilege(r, f, 'execute') then
         raise exception 'Testfall 26: % darf % ausführen', r, f;

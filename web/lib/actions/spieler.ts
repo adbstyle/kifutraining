@@ -2,19 +2,20 @@
 
 import {
   aendereSpieler,
-  entferneSpieler,
   erneuereAbholung,
   erneuereSpielerLink,
   holeSpielerLink,
   importiereSpieler,
+  ladeSpielerTeams,
   nimmSpielerAuf,
+  nimmSpielerAusTeam,
   pruefeSpielerImport,
   schalteAbholung,
 } from "@/lib/kern/spieler";
-import { abholUrl, spielerLinkUrl, type SpielerEingabe, type SpielerFeld } from "@/lib/spieler";
+import { abholUrl, spielerLinkUrl, type SpielerEingabe, type SpielerFeld, type SpielerTeams } from "@/lib/spieler";
 import type { ImportEintrag, ImportErwartet, ImportVorschau } from "@/lib/spieler-import";
 import { oeffentlicherOrigin } from "@/lib/origin";
-import { revalidiereTeam } from "@/lib/revalidate";
+import { revalidiereTeam, revalidiereVerein } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
 
 /**
@@ -49,12 +50,30 @@ export async function aendereSpielerAktion(teamId: string, spielerId: string, e:
   return { ok: true };
 }
 
-export async function entferneSpielerAktion(spielerId: string): Promise<{ ok: true } | Fehler> {
+/** Die Teams einer Spieler:in samt Stand, für die Bestätigung des
+ *  Herausnehmens (#579 AK 14–16). */
+export async function ladeSpielerTeamsAktion(teamId: string, spielerId: string): Promise<({ ok: true } & SpielerTeams) | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await entferneSpieler(a.supabase, a.userId, { spielerId });
+  const r = await ladeSpielerTeams(a.supabase, a.userId, { teamId, spielerId });
   if (!r.ok) return fehler(r);
-  revalidiereTeam(r.wert.teamId);
+  return { ok: true, ...r.wert };
+}
+
+/** Eine Spieler:in aus dem Team nehmen, nicht löschen (#579 AK 10). `stand`
+ *  ist der, den die Bestätigung zeigte; `geaendert`: Er galt nicht mehr, es
+ *  wurde nichts geändert — die Bestätigung zeigt den neuen Stand. */
+export async function nimmSpielerAusTeamAktion(
+  teamId: string,
+  spielerId: string,
+  stand: string,
+): Promise<{ ok: true } | (Fehler & { geaendert?: boolean })> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await nimmSpielerAusTeam(a.supabase, a.userId, { teamId, spielerId, stand });
+  if (!r.ok) return { ...fehler(r), geaendert: r.art === "konflikt" && r.feld === "stand" };
+  revalidiereTeam(teamId);
+  revalidiereVerein();
   return { ok: true };
 }
 

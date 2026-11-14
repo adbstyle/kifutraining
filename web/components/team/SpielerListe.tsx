@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FileUp, Link2, Pencil, Plus, Shirt, X } from "lucide-react";
+import { FileUp, Link2, Pencil, Plus, Shirt, UserMinus } from "lucide-react";
 import {
   AuswahlLeiste,
   Button,
@@ -17,16 +17,29 @@ import {
   Tooltip,
 } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
-import { aendereSpielerAktion, entferneSpielerAktion, nimmSpielerAufAktion } from "@/lib/actions/spieler";
+import { aendereSpielerAktion, ladeSpielerTeamsAktion, nimmSpielerAufAktion, nimmSpielerAusTeamAktion } from "@/lib/actions/spieler";
 import { aendereZuteilungAktion } from "@/lib/actions/kader";
 import { probeFolgenAktion, schalteProbeAktion } from "@/lib/actions/probe";
 import { PROBE_TEXT, probeAusschaltenText, probeEinschaltenText, probeFolgenSumme, probeVerfallFolge, probeVerfallTitel, type ProbeFolgen } from "@/lib/probe";
 import { KADER_TEXT, kaderVon, type Kader } from "@/lib/kader";
-import { JAHRGANG_STELLEN, JS_MAX, nurZiffern, spielerName, type Spieler, type SpielerFeld } from "@/lib/spieler";
+import {
+  HERAUSNEHMEN_TEXT,
+  JAHRGANG_STELLEN,
+  JS_MAX,
+  herausnehmenSaetze,
+  herausnehmenTitel,
+  nurZiffern,
+  spielerName,
+  verbleibendeTeams,
+  type Spieler,
+  type SpielerFeld,
+  type SpielerTeams,
+} from "@/lib/spieler";
 import { SpielerLinkDialog } from "./SpielerLinkDialog";
 import { Selbstabholung } from "./Selbstabholung";
 import { SpielerImport } from "./SpielerImport";
 import { KaderLozenges } from "./KaderLozenge";
+import { TeamLozenges } from "./TeamLozenges";
 import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
 import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
@@ -38,7 +51,12 @@ import { ProbeLozenge } from "./ProbeLozenge";
    ihn, ohne zu speichern. «Hinzufügen» und Enter nehmen auf, danach bleibt
    er für die nächste offen und sagt, wer eben dazukam — die Snackbar läge
    unter dem Dialog. Ändern öffnet denselben Dialog mit den Angaben der
-   Spieler:in und schliesst nach dem Speichern, Entfernen fragt nach.
+   Spieler:in und schliesst nach dem Speichern. «Aus dem Team nehmen» fragt
+   nach (#579): Die Spieler:in wird nicht gelöscht und bleibt samt Link im
+   Verein; der Dialog nennt die Teams, in denen sie bleibt, oder dass sie
+   danach keinem Team mehr angehört. Die Spalte «Auch in» nennt ihre weiteren
+   Teams (#579 AK 9). Löschen gibt es im Team nicht — das macht nur die
+   Vereinsverwaltung.
    Das Kettenglied zeigt ihren privaten Link (#436); ob er über die
    Selbstabholung bezogen wurde (#438 AK 21), sagt ein grüner Punkt daran;
    «nicht bezogen» steht nur im Link-Dialog — in der Liste wäre es bei fast
@@ -68,12 +86,17 @@ const OHNE = "ohne";
 
 export function SpielerListe({
   teamId,
+  teamName,
+  vereinName,
   spieler,
   kader,
   abholung,
   probeAnzahl,
 }: {
   teamId: string;
+  teamName: string;
+  /** Der Name des Vereins; `null`, wenn das Konto keinem angehört. */
+  vereinName: string | null;
   spieler: Spieler[];
   /** Die Kader des Teams (#452), nach Namen. */
   kader: Kader[];
@@ -90,7 +113,9 @@ export function SpielerListe({
   const [offen, setOffen] = useState<{ id: string | null; probe: boolean } | null>(null);
   const [form, setForm] = useState<Form>(LEER);
   const [fehler, setFehler] = useState<{ feld?: SpielerFeld; text: string } | null>(null);
-  const [entfernen, setEntfernen] = useState<Spieler | null>(null);
+  // Wer aus dem Team genommen werden soll, samt den Teams und dem Stand, die
+  // die Bestätigung nennt; `hinweis`: Die Lage hat sich inzwischen geändert.
+  const [herausnehmen, setHerausnehmen] = useState<{ spieler: Spieler; teams: SpielerTeams; hinweis?: string; fehler?: string } | null>(null);
   const [link, setLink] = useState<Spieler | null>(null);
   const [importOffen, setImportOffen] = useState(false);
   // Wer eben aufgenommen wurde — im noch offenen Dialog.
@@ -234,14 +259,42 @@ export function SpielerListe({
     });
   }
 
-  function entfernenAusfuehren(s: Spieler) {
+  /** Die Bestätigung öffnen: erst die Teams der Spieler:in lesen. */
+  function herausnehmenOeffnen(s: Spieler) {
     startTransition(async () => {
-      const r = await entferneSpielerAktion(s.id);
-      setEntfernen(null);
-      if (!r.ok) return melde(r.error);
-      if (offen?.id === s.id) schliessen();
-      router.refresh();
-      melde(`${spielerName(s)} ist nicht mehr auf der Liste.`);
+      const r = await ladeSpielerTeamsAktion(teamId, s.id);
+      if (!r.ok) {
+        router.refresh();
+        return melde(r.error);
+      }
+      setHerausnehmen({ spieler: s, teams: { teams: r.teams, stand: r.stand } });
+    });
+  }
+
+  function herausnehmenAusfuehren() {
+    if (!herausnehmen) return;
+    const { spieler: s, teams } = herausnehmen;
+    startTransition(async () => {
+      const r = await nimmSpielerAusTeamAktion(teamId, s.id, teams.stand);
+      if (r.ok) {
+        setHerausnehmen(null);
+        if (offen?.id === s.id) schliessen();
+        router.refresh();
+        return melde(`${spielerName(s)} ist nicht mehr im Team ${teamName}.`);
+      }
+      // Ein Fehler (etwa gleichzeitig herausgenommen): die Liste neu, nur die
+      // Meldung im Dialog, kein früherer Hinweis.
+      if (!r.geaendert) {
+        router.refresh();
+        return setHerausnehmen({ spieler: s, teams, fehler: r.error });
+      }
+      // Die Lage hat sich geändert, nichts wurde geschrieben: der neue Stand.
+      const neu = await ladeSpielerTeamsAktion(teamId, s.id);
+      if (!neu.ok) {
+        router.refresh();
+        return setHerausnehmen({ spieler: s, teams, fehler: neu.error });
+      }
+      setHerausnehmen({ spieler: s, teams: { teams: neu.teams, stand: neu.stand }, hinweis: HERAUSNEHMEN_TEXT.geaendert });
     });
   }
 
@@ -266,11 +319,11 @@ export function SpielerListe({
   const probeVorher = !!offen?.probe;
   const mitProbe = spieler.some((s) => s.probe);
   const spalten = mitKadern
-    ? "sm:grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_7.5rem]"
-    : "sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem]";
+    ? "sm:grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_minmax(0,1fr)_7.5rem]"
+    : "sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_7.5rem]";
   const kopf = mitKadern
-    ? ["", "Name", "Jahrgang", "J+S-Nr.", "Kader", ""]
-    : ["Name", "Jahrgang", "J+S-Nr.", ""];
+    ? ["", "Name", "Jahrgang", "J+S-Nr.", "Kader", "Auch in", ""]
+    : ["Name", "Jahrgang", "J+S-Nr.", "Auch in", ""];
 
   return (
     <>
@@ -343,6 +396,7 @@ export function SpielerListe({
             <ProbeFeld
               vorname={form.vorname.trim() || "Die Spieler:in"}
               anzahl={probeAnzahl}
+              mehrereTeams={(spieler.find((x) => x.id === offen.id)?.weitereTeams.length ?? 0) > 0}
               an={form.probe}
               vorher={probeVorher}
               folgen={probeFolgen}
@@ -402,6 +456,7 @@ export function SpielerListe({
                   {[s.jahrgang, s.jsNummer && `J+S ${s.jsNummer}`].filter(Boolean).join(" · ")}
                 </span>
                 <KaderLozenges namen={namenVon(s)} className="mt-1 sm:hidden" />
+                <TeamLozenges namen={s.weitereTeams} className="mt-1 sm:hidden" />
               </span>
               <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.jahrgang}</span>
               <span className={`type-body-medium hidden truncate sm:block ${s.jsNummer ? "text-on-surface-mittel" : "text-on-surface-tief"}`}>
@@ -416,20 +471,36 @@ export function SpielerListe({
                   )}
                 </span>
               )}
+              <span className="hidden min-w-0 sm:block">
+                {s.weitereTeams.length > 0 ? (
+                  <TeamLozenges namen={s.weitereTeams} />
+                ) : (
+                  <span className="type-body-medium text-on-surface-tief">–</span>
+                )}
+              </span>
               <span className="flex justify-end gap-1">
-                <Tooltip label={s.linkBezogen ? "Privater Link · bezogen" : "Privater Link"}>
-                  <IconButton
-                    icon={Link2}
-                    label={`Privater Link für ${spielerName(s)}${s.linkBezogen ? ", bezogen" : ""}`}
-                    punkt={s.linkBezogen ? "success" : undefined}
-                    onClick={() => setLink(s)}
-                  />
-                </Tooltip>
+                {/* Bis Phase 7 hängt der Link am ersten Team der Spieler:in. */}
+                {s.erstesTeam && (
+                  <Tooltip label={s.linkBezogen ? "Privater Link · bezogen" : "Privater Link"}>
+                    <IconButton
+                      icon={Link2}
+                      label={`Privater Link für ${spielerName(s)}${s.linkBezogen ? ", bezogen" : ""}`}
+                      punkt={s.linkBezogen ? "success" : undefined}
+                      onClick={() => setLink(s)}
+                    />
+                  </Tooltip>
+                )}
                 <Tooltip label="Ändern">
                   <IconButton icon={Pencil} label={`${spielerName(s)} ändern`} onClick={() => oeffnen(s)} />
                 </Tooltip>
-                <Tooltip label="Entfernen" ende>
-                  <IconButton icon={X} label={`${spielerName(s)} entfernen`} onClick={() => setEntfernen(s)} />
+                <Tooltip label="Aus dem Team nehmen" ende>
+                  <IconButton
+                    icon={UserMinus}
+                    label={`${spielerName(s)} aus dem Team nehmen`}
+                    aria-haspopup="dialog"
+                    disabled={pending}
+                    onClick={() => herausnehmenOeffnen(s)}
+                  />
                 </Tooltip>
               </span>
             </TabellenZeile>
@@ -453,25 +524,21 @@ export function SpielerListe({
       </AuswahlLeiste>
 
       <Dialog
-        open={entfernen != null}
-        onClose={() => setEntfernen(null)}
-        title={`${entfernen ? spielerName(entfernen) : ""} entfernen?`}
+        open={herausnehmen !== null}
+        onClose={() => !pending && setHerausnehmen(null)}
+        title={herausnehmen ? herausnehmenTitel({ ...herausnehmen.spieler, team: teamName }) : ""}
         actions={
           <>
-            <Button variant="outlined" onClick={() => setEntfernen(null)}>
+            <Button variant="outlined" onClick={() => setHerausnehmen(null)} disabled={pending}>
               Abbrechen
             </Button>
-            <Button variant="danger" onClick={() => entfernen && entfernenAusfuehren(entfernen)} disabled={pending}>
-              Entfernen
+            <Button variant="danger" onClick={herausnehmenAusfuehren} disabled={pending}>
+              {HERAUSNEHMEN_TEXT.aktion}
             </Button>
           </>
         }
       >
-        <p>
-          Ihr privater Link gilt danach nicht mehr, und die Selbstabholung findet sie nicht mehr. An
-          vergangenen Terminen steht sie nur noch ohne Namen, die Spielerzahl dort bleibt. An anstehenden
-          Terminen zählt sie nicht mehr.
-        </p>
+        {herausnehmen && <HerausnehmenText {...herausnehmen} team={teamName} verein={vereinName} />}
       </Dialog>
 
       <KaderZuteilen
@@ -499,6 +566,44 @@ export function SpielerListe({
   );
 }
 
+/** Der Inhalt der Bestätigung (#579 AK 13–16): nicht gelöscht, bleibt im
+ *  Verein, was verfällt — mit weiteren Teams oder als letztes Team. */
+function HerausnehmenText({
+  spieler,
+  teams,
+  team,
+  verein,
+  hinweis,
+  fehler,
+}: {
+  spieler: Spieler;
+  teams: SpielerTeams;
+  team: string;
+  verein: string | null;
+  hinweis?: string;
+  fehler?: string;
+}) {
+  const s = herausnehmenSaetze({
+    vorname: spieler.vorname,
+    nachname: spieler.nachname,
+    team,
+    verein,
+    verbleibend: verbleibendeTeams(teams.teams),
+    probe: spieler.probe !== null,
+  });
+  return (
+    <div className="flex flex-col gap-3">
+      {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
+      {hinweis && <SectionMessage appearance="information">{hinweis}</SectionMessage>}
+      {s.absaetze.map((a) => (
+        <p key={a}>{a}</p>
+      ))}
+      <SectionMessage appearance="warning">{s.warnung}</SectionMessage>
+      <p>{s.zusatz}</p>
+    </div>
+  );
+}
+
 /** Was sich an den Kadern einer Spieler:in ändert. */
 function kaderAenderung(bisher: readonly string[], neu: readonly string[]): ZuteilungAenderung {
   return { dazu: neu.filter((k) => !bisher.includes(k)), weg: bisher.filter((k) => !neu.includes(k)) };
@@ -512,10 +617,12 @@ function aufzaehlung(namen: string[]): string {
 /** Die Checkbox «Im Probetraining» im Dialog «Spieler:in ändern» (#555 AK 3–5,
  *  16, 18, 19): darunter, was der Probe-Modus bedeutet; ohne Anzahl gesperrt
  *  mit dem Weg dahin; beim Einschalten die Warnung, was verfällt, beim
- *  Ausschalten, was danach gilt. */
+ *  Ausschalten, was danach gilt. Wer weiteren Teams zugeordnet ist, schnuppert
+ *  nicht (Vereine AP §5.3): statt der Checkbox nur der Hinweis. */
 function ProbeFeld({
   vorname,
   anzahl,
+  mehrereTeams,
   an,
   vorher,
   folgen,
@@ -525,6 +632,7 @@ function ProbeFeld({
 }: {
   vorname: string;
   anzahl: number | null;
+  mehrereTeams: boolean;
   an: boolean;
   vorher: boolean;
   folgen: ProbeFolgen | null;
@@ -534,6 +642,13 @@ function ProbeFeld({
 }) {
   const gesperrt = anzahl === null && !vorher;
   const verfaellt = an && !vorher && folgen && probeFolgenSumme(folgen) > 0 ? folgen : null;
+  if (mehrereTeams && !vorher)
+    return (
+      <>
+        <hr className="my-1 border-kante" />
+        <p className="type-body-small text-on-surface-mittel">{PROBE_TEXT.mehrereTeams}</p>
+      </>
+    );
   return (
     <>
       <hr className="my-1 border-kante" />

@@ -3,15 +3,20 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
 import {
   SPIELER_MELDUNG,
+  HERAUSNEHMEN_TEXT,
   bereinigeName,
+  herausnehmenFrage,
   jahrgangAus,
   nachSpielerName,
   spielerDoppeltText,
   spielerName,
   spielerProblem,
+  verbleibendeTeams,
+  type HerausnehmenLage,
   type Spieler,
   type SpielerDoppelt,
   type SpielerEingabe,
+  type SpielerTeams,
 } from "@/lib/spieler";
 import type { ProbeStand } from "@/lib/probe";
 import {
@@ -28,7 +33,7 @@ import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type 
 
 /**
  * Die Spielerliste eines Teams (Epic #433, Story #434): einsehen, aufnehmen,
- * ändern, entfernen — dieselben Funktionen für die Karte «Spieler:innen» im
+ * ändern, aus dem Team nehmen — dieselben Funktionen für die Karte «Spieler:innen» im
  * Team-Bereich und die KI-Werkzeuge «spieler_*».
  *
  * Geschrieben wird nur über die RPCs `spieler_*`: Sie prüfen die
@@ -39,23 +44,30 @@ import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type 
 
 export const SPIELER_FELD = { feld: "spieler_id" } as const;
 
-const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, kader_spieler(kader_id)";
+const SPIELER_SPALTEN = "id, team_id, vorname, nachname, jahrgang, js_nummer, link_bezogen, kader_spieler(kader_id, team_id)";
 
 type SpielerRoh = {
   id: string;
+  /** Ihr erstes Team (Übergang bis Phase 7/8, Entscheid A.1); `null` ohne Team. */
+  team_id: string | null;
   vorname: string;
   nachname: string;
   jahrgang: number;
   js_nummer: string | null;
   link_bezogen: boolean;
-  kader_spieler: { kader_id: string }[] | null;
+  /** Alle Kader der Spieler:in, die die RLS zeigt — auch die anderer Teams,
+   *  denen die handelnde Person angehört; `kopfAusRoh` grenzt auf das Team ein. */
+  kader_spieler: { kader_id: string; team_id: string }[] | null;
 };
 
 /** Eine Zuordnung des Kontextteams mit ihrer Spieler:in. Das Schnuppern
  *  (`probe_seit`) hängt an der Zuordnung, nicht an der Spieler:in. */
 type ZuordnungRoh = { probe_seit: string | null; spieler: SpielerRoh | null };
 
-function kopfAusRoh(s: SpielerRoh): Omit<Spieler, "probe"> {
+/** Die Spieler:in ohne Probe-Stand und weitere Teams; `kaderIds` nur die
+ *  Kader von `teamId` (Story #579 AK 9: Eine Spieler:in steht in mehreren
+ *  Teams, ihre Kader gehören je einem). */
+function kopfAusRoh(s: SpielerRoh, teamId: string): Omit<Spieler, "probe" | "weitereTeams"> {
   return {
     id: s.id,
     vorname: s.vorname,
@@ -63,13 +75,16 @@ function kopfAusRoh(s: SpielerRoh): Omit<Spieler, "probe"> {
     jahrgang: s.jahrgang,
     jsNummer: s.js_nummer,
     linkBezogen: s.link_bezogen,
-    kaderIds: (s.kader_spieler ?? []).map((k) => k.kader_id),
+    erstesTeam: s.team_id === teamId,
+    kaderIds: (s.kader_spieler ?? []).filter((k) => k.team_id === teamId).map((k) => k.kader_id),
   };
 }
 
-function ausRoh(z: ZuordnungRoh & { spieler: SpielerRoh }): Spieler {
+function ausRoh(z: ZuordnungRoh & { spieler: SpielerRoh }, teamId: string): Spieler {
   return {
-    ...kopfAusRoh(z.spieler),
+    ...kopfAusRoh(z.spieler, teamId),
+    // Die weiteren Teams liest `ladeSpielerliste` nach (`spieler_weitere_teams`).
+    weitereTeams: [],
     // Den Stand liest `mitProbeStand` nach (#555 AK 6, 7).
     probe: z.probe_seit ? { anzahl: null, besucht: 0, angemeldet: 0, moeglich: 0 } : null,
   };
@@ -93,7 +108,7 @@ async function mitProbeStand(
 /** Ein Fehler der Spieler-RPCs als Kern-Fehler: «nicht gefunden» ordnet nur
  *  die Spielerliste ein, alles übrige `ausDbFehler` mit dem Satz aus
  *  `SPIELER_MELDUNG`. */
-function spielerFehler(e: { message: string; code?: string }): KernFehler {
+export function spielerFehler(e: { message: string; code?: string }): KernFehler {
   if (e.message.includes("SPIELER_NICHT_GEFUNDEN"))
     return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
   if (e.message.includes("TEAM_NICHT_GEFUNDEN"))
@@ -134,7 +149,11 @@ export async function ladeSpielerliste(
     .eq("team_id", e.teamId);
   if (error) return ausDbFehler(error);
   const zeilen = ((data ?? []) as unknown as ZuordnungRoh[]).filter((z): z is ZuordnungRoh & { spieler: SpielerRoh } => z.spieler !== null);
-  const spieler = await mitProbeStand(supabase, e.teamId, nachSpielerName(zeilen.map(ausRoh)));
+  const weitere = await supabase.rpc("spieler_weitere_teams", { p_team: e.teamId });
+  if (weitere.error) return ausDbFehler(weitere.error);
+  const weitereVon = new Map(((weitere.data ?? []) as { spieler_id: string; teams: string[] }[]).map((w) => [w.spieler_id, w.teams]));
+  const liste = zeilen.map((z) => ({ ...ausRoh(z, e.teamId), weitereTeams: weitereVon.get(z.spieler.id) ?? [] }));
+  const spieler = await mitProbeStand(supabase, e.teamId, nachSpielerName(liste));
   if (!spieler.ok) return spieler;
   return ok({ team: team.wert, spieler: spieler.wert });
 }
@@ -177,37 +196,136 @@ export async function aendereSpieler(
   return ok({ spielerId: e.spielerId, teamId: e.teamId });
 }
 
-/** Eine Spieler:in aus der Liste entfernen (AK 3). An vergangenen Terminen
- *  bleibt sie als ehemalige Spieler:in ohne Namen (#435 PC 4). */
-export async function entferneSpieler(
+/** Die Teams einer Spieler:in samt Stand — was die Bestätigung des
+ *  Herausnehmens nennt (#579 AK 14–16). Nur im Team, in dem man handelt. */
+export async function ladeSpielerTeams(
   supabase: SupabaseClient,
   _userId: string,
-  e: { spielerId: string },
-): Promise<KernErgebnis<{ teamId: string; name: string }>> {
-  const geladen = await ladeSpieler(supabase, e.spielerId);
-  if (!geladen.ok) return geladen;
-  const { error } = await supabase.rpc("spieler_entfernen", { p_spieler: e.spielerId });
+  e: { teamId: string; spielerId: string },
+): Promise<KernErgebnis<SpielerTeams>> {
+  if (!istUuid(e.teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
+  if (!istUuid(e.spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
+  const { data, error } = await supabase.rpc("spieler_teams", { p_team: e.teamId, p_spieler: e.spielerId });
   if (error) return spielerFehler(error);
-  return ok({ teamId: geladen.wert.teamId, name: spielerName(geladen.wert) });
+  return ok(data as SpielerTeams);
 }
 
-/** Eine Spieler:in samt Team, soweit die RLS sie zeigt — ohne Schnupper-Stand,
- *  der nur im Kontext eines Teams gilt (`ladeSpielerliste`). Das Team ist in
- *  Story #577 noch das eine der Zeile (`spieler.team_id`); die Teamliste
- *  folgt mit Story #579. */
+/** Der Name des Vereins der handelnden Person; `null`, wenn sie keinem angehört. */
+async function vereinsname(supabase: SupabaseClient): Promise<string | null> {
+  const { data } = await supabase.rpc("meine_vereinslage");
+  return (data as { verein: { name: string } | null } | null)?.verein?.name ?? null;
+}
+
+/** Die Lage für die Rückfrage des KI-Wegs: Name, Team, Verein, weitere Teams. */
+async function herausnehmenLage(
+  supabase: SupabaseClient,
+  e: { teamId: string; spielerId: string },
+  teams: SpielerTeams,
+): Promise<KernErgebnis<HerausnehmenLage>> {
+  const team = await pruefeTeamMitglied(supabase, e.teamId);
+  if (!team.ok) return team;
+  const { data, error } = await supabase
+    .from("team_spieler")
+    .select("probe_seit, spieler:spieler!tsp_spieler(vorname, nachname)")
+    .eq("team_id", e.teamId)
+    .eq("spieler_id", e.spielerId)
+    .maybeSingle<{ probe_seit: string | null; spieler: { vorname: string; nachname: string } | null }>();
+  if (error) return ausDbFehler(error);
+  if (!data?.spieler) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
+  return ok({
+    ...data.spieler,
+    team: team.wert.name,
+    verein: await vereinsname(supabase),
+    verbleibend: verbleibendeTeams(teams.teams),
+    probe: data.probe_seit !== null,
+  });
+}
+
+/**
+ * Eine Spieler:in aus dem Team nehmen, nicht löschen (#579 AK 10, 13–16;
+ * PC 4–6). Sie bleibt samt Link im Verein; ihre künftigen Meldungen und
+ * Kader in diesem Team verfallen, begonnene Termine behalten sie.
+ *
+ * `stand` ist die Kennung der Teams, die die Bestätigung nannte
+ * (`ladeSpielerTeams`). Fehlt er, ändert der Aufruf nichts und liefert die
+ * Rückfrage samt Stand (KI-Weg, wie `schalteProbe`); weicht er ab, hat sich
+ * die Lage geändert und nichts wurde geschrieben: ein `konflikt` auf `stand`,
+ * den die Oberfläche mit frischem Stand erneut zeigt.
+ */
+export async function nimmSpielerAusTeam(
+  supabase: SupabaseClient,
+  userId: string,
+  e: { teamId: string; spielerId: string; stand?: string },
+): Promise<KernErgebnis<{ teamId: string; spielerId: string; ohneTeam: boolean; letztesEigenesTeam: boolean }>> {
+  if (e.stand === undefined) {
+    const teams = await ladeSpielerTeams(supabase, userId, e);
+    if (!teams.ok) return teams;
+    const lage = await herausnehmenLage(supabase, e, teams.wert);
+    if (!lage.ok) return lage;
+    return fehlschlag("regel", herausnehmenFrage(lage.wert), {
+      feld: "stand",
+      hinweis: `Wiederhole den Aufruf mit stand: «${teams.wert.stand}», wenn das so gewollt ist.`,
+    });
+  }
+  if (!istUuid(e.teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
+  if (!istUuid(e.spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
+  const { data, error } = await supabase.rpc("spieler_aus_team_nehmen", {
+    p_team: e.teamId,
+    p_spieler: e.spielerId,
+    p_stand: e.stand,
+  });
+  if (error) return spielerFehler(error);
+  const r = data as
+    | { status: "herausgenommen"; ohne_team: boolean; letztes_eigenes_team: boolean }
+    | ({ status: "stand_geaendert" } & SpielerTeams);
+  // Nie als Erfolg lesen: Es wurde nichts geändert.
+  if (r.status === "stand_geaendert")
+    return fehlschlag("konflikt", HERAUSNEHMEN_TEXT.geaendert, {
+      feld: "stand",
+      hinweis:
+        `Die Teams der Spieler:in haben sich geändert (jetzt: ${r.teams.map((t) => t.name).join(", ") || "keines"}). ` +
+        "Rufe das Werkzeug ohne stand erneut auf, um die Rückfrage mit dem neuen Stand zu erhalten.",
+    });
+  return ok({ teamId: e.teamId, spielerId: e.spielerId, ohneTeam: r.ohne_team, letztesEigenesTeam: r.letztes_eigenes_team });
+}
+
+/** Eine Spieler:in samt Team, soweit die RLS sie zeigt — ohne Schnupper-Stand
+ *  und weitere Teams, die nur im Kontext eines Teams gelten
+ *  (`ladeSpielerliste`). Das Team ist bis Phase 7/8 das erste der Spieler:in
+ *  (`spieler.team_id`, Architekturplan Story #579 Entscheid A.1); eine
+ *  Spieler:in ohne Team gibt es hier nicht — Link, Schnuppern und Feedback
+ *  hängen noch an ihm. */
 export async function ladeSpieler(
   supabase: SupabaseClient,
   spielerId: string,
-): Promise<KernErgebnis<Omit<Spieler, "probe"> & { teamId: string }>> {
+): Promise<KernErgebnis<Omit<Spieler, "probe" | "weitereTeams"> & { teamId: string }>> {
   if (!istUuid(spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
   const { data, error } = await supabase
     .from("spieler")
-    .select(`${SPIELER_SPALTEN}, team_id`)
+    .select(SPIELER_SPALTEN)
     .eq("id", spielerId)
-    .maybeSingle<SpielerRoh & { team_id: string }>();
+    .maybeSingle<SpielerRoh>();
+  if (error) return ausDbFehler(error);
+  if (!data?.team_id) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
+  return ok({ ...kopfAusRoh(data, data.team_id), teamId: data.team_id });
+}
+
+/** Das älteste Team der Spieler:in, dem die handelnde Person angehört — für
+ *  einen Aufruf ohne Team (KI-Weg). Die RLS von `team_spieler` zeigt nur
+ *  Zuordnungen zu eigenen Teams. */
+export async function eigenesTeamVon(supabase: SupabaseClient, spielerId: string): Promise<KernErgebnis<string>> {
+  if (!istUuid(spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
+  const { data, error } = await supabase
+    .from("team_spieler")
+    .select("team_id")
+    .eq("spieler_id", spielerId)
+    .order("created_at")
+    .order("team_id")
+    .limit(1)
+    .maybeSingle<{ team_id: string }>();
   if (error) return ausDbFehler(error);
   if (!data) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
-  return ok({ ...kopfAusRoh(data), teamId: data.team_id });
+  return ok(data.team_id);
 }
 
 /** Wie viele Spieler:innen die Liste des Teams führt. Führt das Team eine,

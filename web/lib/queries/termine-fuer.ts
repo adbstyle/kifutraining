@@ -222,11 +222,14 @@ export function kurzeZeit(t: string): string {
   return t.slice(0, 5);
 }
 
+// `!tk_termin_team`, `!stp_termin_team`: Seit Story #579 sichern zusammengesetzte
+// FKs (termin_id, team_id) das Team der Kader- und Treffpunktzeilen; neben dem
+// FK auf termin_id allein wäre die Einbettung für PostgREST mehrdeutig (PGRST201).
 const TERMIN_SELECT =
   "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, vorher_datum, vorher_beginn, datum, beginn, ende, ort, ort_link, bemerkung, hinweis_eltern, treffpunkt_vorlauf_min, treffpunkt_ort, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, hinweis_eltern_abweichend, treffpunkt_abweichend, eingeladene_abweichend, verantwortung_abweichend, felder_abweichend, spielerzahl_abweichend, kader_abweichend, besetzung_art, besetzung_zahl, besetzung_abweichend, ausgefallen, ausfall_grund, " +
   "termin_trainer ( id, user_id, verantwortlich, abgesagt_am, trainer_name, trainer_ehemalig ), " +
-  "termin_kader ( kader_id, kader ( name ) ), " +
-  "spiel_treffpunkte ( anreise, vorlauf_min, ort ), " +
+  "termin_kader!tk_termin_team ( kader_id, kader ( name ) ), " +
+  "spiel_treffpunkte!stp_termin_team ( anreise, vorlauf_min, ort ), " +
   "trainings ( id, name, stufen, termin_training ), " +
   "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, ort_link, bemerkung, hinweis_eltern, treffpunkt_vorlauf_min, treffpunkt_ort, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, " +
   "termin_serien_trainer ( user_id, verantwortlich, trainer_name ), termin_serien_kader ( kader_id, kader ( name ) ) )";

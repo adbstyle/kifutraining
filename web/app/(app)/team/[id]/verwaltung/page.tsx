@@ -13,6 +13,7 @@ import { ProbeKarte } from "@/components/team/ProbeKarte";
 import { leseProbetraining } from "@/lib/kern/probe";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { abholUrl } from "@/lib/spieler";
+import { getMeinVerein } from "@/lib/queries/verein";
 
 /* Die Teamverwaltung: wie das Team heisst, wer dabei ist — Mitglieder und
  * Spieler:innen (#434) — und wie man wieder herauskommt: in der Gefahrenzone
@@ -41,8 +42,9 @@ export default async function TeamVerwaltungPage({
 
   // Der Rahmen hat das Team bereits geladen und die Zugehörigkeit geprüft;
   // `getTeam` antwortet hier aus dem Request-Cache.
-  const [team, aufloesung, liste, kader, abholung, origin, probe] = await Promise.all([
+  const [team, verein, aufloesung, liste, kader, abholung, origin, probe] = await Promise.all([
     getTeam(id),
+    getMeinVerein(),
     getTeamAufloesungsInfo(id),
     ladeSpielerliste(supabase, user.id, { teamId: id }),
     ladeKader(supabase, user.id, { teamId: id }),
@@ -64,6 +66,8 @@ export default async function TeamVerwaltungPage({
       <Card className="p-5 sm:p-6">
         <SpielerListe
           teamId={team.id}
+          teamName={team.name}
+          vereinName={verein?.name ?? null}
           spieler={liste.wert.spieler}
           kader={kader.wert.kader}
           abholung={{

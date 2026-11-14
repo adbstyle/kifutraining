@@ -29,6 +29,10 @@ begin
   select count(*) into n from spieler s where s.team_id is not null and not exists
     (select 1 from team_spieler ts where ts.spieler_id = s.id and ts.team_id = s.team_id);
   if n > 0 then raise exception 'Spieler:innen ohne Zuordnung zu ihrem Team: %', n; end if;
+  -- spieler.team_id = erstes Team bis Phase 7/8 (Story 3, Entscheid A.1): null nur ohne Zuordnung.
+  select count(*) into n from spieler s where s.team_id is null and exists
+    (select 1 from team_spieler ts where ts.spieler_id = s.id);
+  if n > 0 then raise exception 'Spieler:innen mit Zuordnung, aber ohne team_id: %', n; end if;
   select count(*) into n from team_spieler ts join spieler s on s.id = ts.spieler_id
    where s.verein_id <> ts.verein_id;
   if n > 0 then raise exception 'Zuordnungen mit fremdem Verein: %', n; end if;
@@ -54,10 +58,18 @@ begin
   if n > 0 then raise exception 'Doppelte Schlüssel im selben Team: %', n; end if;
   -- Keine ungeprüften Constraints an den Tabellen des Epics (andere Tabellen
   -- tragen schon vorher `not valid`-Constraints, etwa training_exercises).
+  -- Ausgenommen bis zur Validierung im letzten PR vor dem Release (Plan
+  -- Phase A, `_validieren`): die FKs aus 20261114100000_zuordnung_invarianten.sql.
   select string_agg(conname, ', ') into x from pg_constraint
    where conrelid in ('teams'::regclass, 'spieler'::regclass, 'vereine'::regclass,
-                      'verein_verwaltung'::regclass, 'team_spieler'::regclass)
-     and not convalidated;
+                      'verein_verwaltung'::regclass, 'team_spieler'::regclass,
+                      'kader_spieler'::regclass, 'termin_abmeldungen'::regclass, 'spiel_meldungen'::regclass,
+                      'termin_statuswechsel'::regclass, 'termin_eingefroren'::regclass, 'termin_kader'::regclass,
+                      'spiel_treffpunkte'::regclass, 'termin_teilnahmen'::regclass, 'spiel_teilnahmen'::regclass)
+     and not convalidated
+     and conname not in ('ks_zuordnung', 'ta_zuordnung', 'sm_zuordnung', 'ta_termin_team', 'tsw_termin_team',
+                         'sm_termin_team', 'te_termin_team', 'tk_termin_team', 'stp_termin_team',
+                         'tn_eingefroren_team', 'st_eingefroren_team');
   if x is not null then raise exception 'Ungeprüfte Constraints: %', x; end if;
 end $$;
 rollback;
@@ -120,8 +132,8 @@ begin
   end if;
 end $$;
 
--- Testfall 1 (Story 1 PC 2): Ein Team mit 150 Bestand kann ändern, löschen
--- und J+S importieren; die 151. Spieler:in und ein Import mit neuer Zeile
+-- Testfall 1 (Story 1 PC 2): Ein Team mit 150 Bestand kann ändern,
+-- herausnehmen (seit Story 3 statt löschen) und J+S importieren; die 151. Spieler:in und ein Import mit neuer Zeile
 -- scheitern an der Teamgrenze. Als Trainer:in über die RPCs (wie PostgREST).
 select set_config('request.jwt.claims',
          jsonb_build_object('sub', prodweg.id('trainer_a'), 'role', 'authenticated')::text, true) is not null
@@ -134,11 +146,17 @@ declare
   v_team uuid := prodweg.id('t_gross');
   v_eins uuid := (select id from spieler where team_id = v_team and nachname = 'Nr 1');
   v_zeile jsonb := jsonb_build_object('zeile', 1, 'vorname', 'Gross', 'nachname', 'Nr 2', 'jahrgang', 2015, 'js', '4711');
+  v_drei uuid;
   v jsonb;
   f text;
 begin
   perform spieler_aendern(v_team, v_eins, 'Gross', 'Nr 1', 2015, '1234');
-  perform spieler_entfernen((select id from spieler where team_id = v_team and nachname = 'Nr 3'));
+  -- Herausnehmen statt Löschen (Story 3).
+  v_drei := (select id from spieler where team_id = v_team and nachname = 'Nr 3');
+  v := spieler_aus_team_nehmen(v_team, v_drei, spieler_teams(v_team, v_drei) ->> 'stand');
+  if v ->> 'status' <> 'herausgenommen' or not (v ->> 'ohne_team')::boolean then
+    raise exception 'Testfall 1: Herausnehmen über der Grenze: %', v;
+  end if;
   begin
     perform spieler_aufnehmen(v_team, 'Neu', 'Neu', 2015, null);
     raise exception 'Testfall 1: 151. Spieler:in aufgenommen';
@@ -187,7 +205,7 @@ do $$
 begin
   if (select count(*) from team_spieler where team_id = prodweg.id('t_gross')) <> 149
      or (select js_nummer from spieler where team_id = prodweg.id('t_gross') and nachname = 'Nr 2') <> '4711' then
-    raise exception 'Testfall 1: Bestand nach Ändern, Löschen und Import falsch';
+    raise exception 'Testfall 1: Bestand nach Ändern, Herausnehmen und Import falsch';
   end if;
   if (select count(*) from spieler where nachname = 'Dublette' and team_id in (prodweg.id('t_f1'), prodweg.id('t_f2'))) <> 2
      or (select js_nummer from spieler where team_id = prodweg.id('t_f1') and nachname = 'Dublette') <> '55' then

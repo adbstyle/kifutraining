@@ -210,7 +210,7 @@ Zusätzlich zur Schablone, in dieser Reihenfolge:
 **AP:** §3.3 b–e, §3.7, §4.3 (Zuordnen, Herausnehmen), §4.4, §7.6. **Migrationen:** `zuordnung_invarianten` (FKs `not valid`), `vereine_bestand`. Die Datei `_validieren` gehört **nicht** hierher (Phase A).
 
 Zusätzlich, in dieser Reihenfolge:
-- [ ] Invarianten und Trigger vollständig; `spieler.team_id` wird nullable und nicht mehr geschrieben.
+- [ ] Invarianten und Trigger vollständig; `spieler.team_id` wird nullable und bleibt bis Phase 7/8 als «erstes Team» gepflegt, an einer Stelle (`team_spieler_nachher`), nicht mehr von den RPCs (AP §3.7, berichtigt mit Story 3).
 - [ ] RPCs zum Zuordnen (einzeln und gesammelt) und Herausnehmen mit `p_stand`; `spieler_entfernen(uuid)` fällt.
 - [ ] **MCP im selben PR:** Das Werkzeug `spieler_entfernen` wird durch `spieler_aus_team_nehmen` ersetzt, weil die RPC wegfällt (Muster 3). Die Abnahme der KI-Texte bleibt bei Phase 13.
 - [ ] `termin_teilnehmer` und `spiel_teilnehmer` mit `nicht_mehr_im_team`; Nachtragen an begonnenen Terminen prüft weiter gegen den festgehaltenen Stand.
@@ -221,7 +221,9 @@ Zusätzlich, in dieser Reihenfolge:
 
 **Aus dem Review von Story 1:** `rennen.sql` braucht einen eigenen Fall für die Teamsperre in `team_spieler_vorher` (der heutige Fall beweist nur die Vereinssperre). `ladeSpielerliste` muss `kader_spieler` auf das Kontextteam eingrenzen (`web/lib/kern/spieler.ts`, Kader-Embed), sobald eine Spieler:in in mehreren Teams steht.
 
-**Zwischenstand auf `develop`:** Niemand löscht eine Spieler:in (bis Phase 6). `/verein` leitet auf `/verein/spieler`, Mitglieder ohne Verwaltung auf `/teams` (bis Phase 5). Feedback über den Link einer Spieler:in ohne Team gilt als ungültig (bis Phase 7).
+**Nicht in Phase 3:** Herausnehmen durch die Verwaltung (`verein_spieler_aus_team_nehmen`, AK 11, 17 → Phase 5), Löschen aus dem Verein (Phase 6), Suche und Lesesicht für Mitglieder auf `/verein/spieler` (Phase 4), Schnuppern zuordnen (`p_schnuppern`, Phase 8), die Datei `_validieren` (Phase A).
+
+**Zwischenstand auf `develop`:** Niemand löscht eine Spieler:in (bis Phase 6). Ein aufgelöstes Team lässt seine Spieler:innen ohne dieses Team im Verein. `/verein` leitet auf `/verein/spieler`, Mitglieder ohne Verwaltung auf `/teams` (bis Phase 5). Der private Link zeigt bei mehreren Teams nur die Termine des ersten Teams, eine Spieler:in ohne Team hat einen Link ohne Team, und Feedback über ihren Link gilt als ungültig (bis Phase 7). Link abrufen und erneuern sowie Schnuppern schalten gehen nur im ersten Team; in den weiteren Teams zeigt die Team-Spielerliste darum keinen Link-Knopf (bis Phase 7/8). Ein Mitglied eines weiteren Teams sieht in der `spieler`-Zeile `team_id` = die ID des ersten Teams (hingenommen bis Phase 7/8). Das Einschalten des Schnupperns weist schon jetzt ab, wer mehr als einem Team zugeordnet ist (`SCHNUPPERN_MEHRERE_TEAMS`, AP §5.3, aus Phase 8 vorgezogen); die Team-Spielerliste zeigt dann statt der Checkbox den Satz.
 
 ### Phase 5 – #581 Verwaltung führt Teams und Trainer:innen
 
@@ -233,6 +235,7 @@ Zusätzlich:
 - [ ] **Bereich-Wechsler** in der Seitenleiste kommt hier, weil der Bereich «Verein» ab jetzt für alle Vereinsmitglieder besteht. Die Verwaltung sehen Trainer:innen im Kopf von «Verein › Teams».
 - [ ] Bausteine `PersonAufnehmen` und `NamenBestaetigen` zuerst in den Styleguide.
 - [ ] Review Focus 4: E2E mit einem Konto, das Verwaltung **und** Mitglied ist. Im Team erscheinen keine Verwaltungsaktionen, und die Team-RPCs geben ihm nicht mehr als einem Mitglied.
+- [ ] **Aus dem Review von Story 3:** `termin_kader_setzen` (`supabase/migrations/20261018130000_termin_kader.sql`, letzte Fassung) und `termin_der_serie_folgen` (`supabase/migrations/20261031120000_treffpunkt_training.sql`, letzte Fassung) sperren zuerst die Termin-Zeile und nehmen erst danach über `kader_vorher` die Teamsperre, umgekehrt zur Sperrordnung Verein → Person → Teams → `spieler`-Zeile → Termin. Zusammen mit dem Auflösen eines Teams, dem Austritt des letzten Mitglieds oder der Konto-Löschung kann das einen Deadlock geben (40P01, ein Aufruf bricht ab, keine falschen Daten). Bewusst hingenommen bis hierher; hier beide Funktionen auf «Team vor Termin» umstellen und mit einem Rennen-Fall belegen.
 
 **Testfälle:** 3 (zweiter Teil), 4 (Teil Teams), 14, 16, 27, 31.
 
@@ -362,6 +365,7 @@ Jeder Schritt auf Prod nur mit Freigabe im Moment.
 - [ ] Prüfabfragen aus AP §6.5 auf Prod, nur lesend; Rundgang mit dem eigenen Konto durch die Sperre.
 - [ ] Review Focus 2: in einem vorher geöffneten Tab eine Aktion auslösen und in einem verbundenen KI-Client ein altes Werkzeug aufrufen; beides endet mit einer Meldung, ohne Wirkung.
 - [ ] Review Focus 2, Story 2: Ein altes Bundle oder ein verbundener KI-Client liest während des Einspielens eine Abweisung `{status: 'abgewiesen'}` von `spieler_aufnehmen` als Erfolg (meldet «aufgenommen», obwohl nichts gespeichert ist) und scheitert bei `spieler_aendern` an der alten Signatur. Darum die Schreibwege erst freigeben, wenn die Migrationen **und** der Vercel-Deploy durch sind.
+- [ ] Review Focus 2, Story 3: Die zusammengesetzten Fremdschlüssel aus `zuordnung_invarianten` machen zwei eingebettete Abfragen eines alten Bundles mehrdeutig (PostgREST PGRST201: Trainingsplan, Reiter «Spieler:innen» am Termin), bis das neue Bundle deployt ist. Gleicher Prüfschritt wie bei Story 2: Schreibwege und Seiten erst freigeben, wenn die Migrationen **und** der Vercel-Deploy durch sind.
 - [ ] Firewall-Regel entfernen.
 - [ ] GitHub-Release mit `--target main`, Text aus `docs/releases/`. Stories #577–#585 und #587–#589 als erledigt markieren.
 

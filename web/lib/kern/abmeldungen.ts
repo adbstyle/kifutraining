@@ -95,6 +95,7 @@ export async function terminSpielerVon(
         nachname: string | null;
         abgemeldet: boolean;
         ehemalig: boolean;
+        nicht_mehr_im_team: boolean;
         kader: string[] | null;
         gewechselt_am: string | null;
         nachgetragen: boolean;
@@ -106,6 +107,7 @@ export async function terminSpielerVon(
       nachname: r.nachname,
       abgemeldet: r.abgemeldet,
       ehemalig: r.ehemalig,
+      nichtMehrImTeam: r.nicht_mehr_im_team,
       kader: r.kader ?? [],
       gewechseltAm: r.gewechselt_am,
       // Ein ausgefallener Termin zeigt keine Nachträge, auch der KI nicht (#475 AK 11).

@@ -43,6 +43,9 @@ export const SPIELER_MELDUNG = {
   SPIELER_DOPPELT:
     "Diese Spieler:in steht schon auf der Liste. Unterscheide zwei Gleichnamige mit einem Zusatz im Vornamen.",
   SPIELERLISTE_VOLL: `Das Team hat schon ${SPIELER_MAX} Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind.`,
+  /** Netz aus dem Trigger `team_spieler_vorher` (Story #579): Die Zuordnung
+   *  besteht schon — die Verwaltung erfährt es sonst als Befund `bereits`. */
+  SCHON_ZUGEORDNET: "Diese Spieler:in ist dem Team schon zugeordnet.",
   SPIELER_NICHT_GEFUNDEN: "Spieler:in nicht gefunden.",
   SPIELERLISTE_FUEHRT_ZAHL:
     "Das Team führt eine Spielerliste: Die Spielerzahl anstehender Termine kommt aus ihr und lässt sich nicht von Hand festlegen.",
@@ -58,26 +61,37 @@ export function imTeam(teams: string[]): string {
   return `im Team ${liste}`;
 }
 
-/** Der Status `doppelt` der RPCs `spieler_aufnehmen` und `spieler_aendern`
+/** Der Status `abgewiesen` der RPCs `spieler_aufnehmen` und `spieler_aendern`
  *  (Story #578, Architekturplan Vereine §4.4): Die bestehende Spieler:in
  *  steht im Team, in dem man handelt (`eigenes_team`), oder nur in anderen
- *  Teams des Vereins (`teams`, nur Namen). `ohne_team` liest die Oberfläche
- *  erst ab Story #579. */
+ *  Teams des Vereins (`teams`, nur Namen) oder in keinem (`ohne_team`, Story
+ *  #579 AK 19). */
 export type SpielerDoppelt = { status: "abgewiesen"; grund: "doppelt"; eigenes_team: boolean; teams: string[]; ohne_team: boolean };
 
 /** Der Satz zur Abweisung einer Doppelerfassung, gleich in App und KI
- *  (#578 AK 3, 4, 6, 10). Erfassen nennt die Eingabe, bereinigt wie beim
- *  Speichern; Ändern nennt nur die Teams. Im eigenen Team — oder ohne
- *  anderes Team, was es bis Story #579 nicht gibt — der Satz zu
- *  `SPIELER_DOPPELT`. Nie J+S-Nummer oder Link (PC 3). */
+ *  (#578 AK 3, 4, 6, 10; #579 AK 19). Erfassen nennt die Eingabe, bereinigt
+ *  wie beim Speichern; Ändern nennt nur die Teams. Im eigenen Team der Satz
+ *  zu `SPIELER_DOPPELT`; in anderen Teams nennt er deren Namen, in keinem
+ *  Team sagt er, dass die Spieler:in im Verein geführt wird, aber keinem Team
+ *  zugeordnet ist — die Zuordnung klärt die Vereinsverwaltung. Nie J+S-Nummer
+ *  oder Link (PC 3). */
 export function spielerDoppeltText(
-  d: Pick<SpielerDoppelt, "eigenes_team" | "teams">,
+  d: Pick<SpielerDoppelt, "eigenes_team" | "teams" | "ohne_team">,
   eingabe: { vorname: string; nachname: string; jahrgang: number } | null,
 ): string {
-  if (d.eigenes_team || d.teams.length === 0) return SPIELER_MELDUNG.SPIELER_DOPPELT;
-  if (!eingabe) return `Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, ${imTeam(d.teams)}.`;
-  const name = spielerName({ vorname: bereinigeName(eingabe.vorname), nachname: bereinigeName(eingabe.nachname) });
-  return `${name} (${eingabe.jahrgang}) wird im Verein schon ${imTeam(d.teams)} geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.`;
+  if (d.eigenes_team) return SPIELER_MELDUNG.SPIELER_DOPPELT;
+  const name = eingabe
+    ? `${spielerName({ vorname: bereinigeName(eingabe.vorname), nachname: bereinigeName(eingabe.nachname) })} (${eingabe.jahrgang})`
+    : null;
+  if (d.teams.length === 0) {
+    if (!d.ohne_team) return SPIELER_MELDUNG.SPIELER_DOPPELT;
+    const klaeren = "Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.";
+    return name
+      ? `${name} wird im Verein geführt, ist aber keinem Team zugeordnet. ${klaeren}`
+      : `Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, die keinem Team zugeordnet ist. ${klaeren}`;
+  }
+  if (!name) return `Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, ${imTeam(d.teams)}.`;
+  return `${name} wird im Verein schon ${imTeam(d.teams)} geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.`;
 }
 
 /** Die CHECKs der Spielerliste, samt Anführungszeichen gesucht (wie
@@ -145,8 +159,15 @@ export type Spieler = {
   jsNummer: string | null;
   /** Der aktuelle Link wurde über die Selbstabholung herausgegeben (#438 PC 2). */
   linkBezogen: boolean;
-  /** Die Kader, denen sie angehört (#452 AK 5). */
+  /** Das Team, in dessen Liste sie steht, ist ihr erstes (`spieler.team_id`):
+   *  Nur dort gehen Link abrufen und erneuern bis Phase 7 (Vereine Story #579
+   *  Entscheid A.1). */
+  erstesTeam: boolean;
+  /** Die Kader des Teams, in dessen Liste sie steht (#452 AK 5). */
   kaderIds: string[];
+  /** Die Namen der weiteren Teams des Vereins, denen sie zugeordnet ist,
+   *  nach Namen (#579 AK 9). */
+  weitereTeams: string[];
   /** Im Probe-Modus: ihr Stand (#555 AK 6, 7); sonst `null`. */
   probe: ProbeStand | null;
 };
@@ -161,6 +182,87 @@ export function nachSpielerName<T extends { vorname: string; nachname: string }>
   return [...liste].sort(
     (a, b) => a.vorname.localeCompare(b.vorname, "de") || a.nachname.localeCompare(b.nachname, "de"),
   );
+}
+
+// ── Aus dem Team nehmen (Story #579) ────────────────────────────────────────
+
+/** Die Teams einer Spieler:in samt Stand, wie `spieler_teams` sie liefert:
+ *  `eigen` — die handelnde Person ist Mitglied; `dieses` — das Team, in dem
+ *  sie handelt; `stand` — die Kennung dieser Teams, die das Herausnehmen
+ *  mitgibt (AP §4.3). */
+export type SpielerTeams = { teams: { name: string; eigen: boolean; dieses: boolean }[]; stand: string };
+
+/** Was die Bestätigung des Herausnehmens braucht: wen, aus welchem Team, in
+ *  welchem Verein und in welchen weiteren Teams sie danach bleibt. */
+export type HerausnehmenLage = {
+  vorname: string;
+  nachname: string;
+  team: string;
+  /** Der Name des Vereins; `null`, wo er nicht bekannt ist. */
+  verein: string | null;
+  /** Die Namen der Teams, in denen sie danach bleibt (ohne `team`). */
+  verbleibend: string[];
+  /** Sie schnuppert in diesem Team: Das Schnuppertraining endet mit. */
+  probe: boolean;
+};
+
+/** Die Teams, in denen sie nach dem Herausnehmen bleibt: alle ausser dem,
+ *  in dem man handelt — über `dieses`, nicht über den Namen: Teamnamen sind
+ *  im Bestand nicht eindeutig. */
+export function verbleibendeTeams(teams: { name: string; dieses: boolean }[]): string[] {
+  return teams.filter((t) => !t.dieses).map((t) => t.name);
+}
+
+export const HERAUSNEHMEN_TEXT = {
+  /** Der Stand der Teams wich ab: nichts wurde geändert (AP §4.3). */
+  geaendert: "Inzwischen hat sich etwas geändert. Lies den Hinweis noch einmal und bestätige erneut.",
+  aktion: "Aus dem Team nehmen",
+} as const;
+
+export function herausnehmenTitel(l: Pick<HerausnehmenLage, "vorname" | "nachname" | "team">): string {
+  return `${spielerName(l)} aus ${l.team} nehmen`;
+}
+
+/** Die Bestätigung des Herausnehmens (#579 AK 13–16, Board «Herausnehmen
+ *  statt löschen»): `absaetze` sagen, dass die Spieler:in nicht gelöscht wird
+ *  und samt Link im Verein bleibt — mit weiteren Teams oder, beim letzten,
+ *  ohne Team —, `warnung` nennt, was in diesem Team verfällt, `zusatz`, was
+ *  bleibt. Die Oberfläche setzt sie in den Dialog, der KI-Weg hängt sie zu
+ *  einer Rückfrage zusammen (`herausnehmenFrage`). */
+export function herausnehmenSaetze(l: HerausnehmenLage): { absaetze: string[]; warnung: string; zusatz: string } {
+  const imVerein = l.verein ? `im ${l.verein}` : "im Verein";
+  const wer = l.vorname;
+  const verfall = `Abmeldungen, Spiel-Meldungen und Kader in ${l.team} verfallen.`;
+  const warnung = l.probe ? `Das Schnuppertraining endet samt Zählung; künftige ${verfall}` : `Künftige ${verfall}`;
+  // Gilt in beiden Fällen (PC 5).
+  const zusatz = "Vergangene Anwesenheiten bleiben mit dem Namen stehen.";
+  if (l.verbleibend.length === 0)
+    return {
+      absaetze: [
+        `${wer} wird dadurch nicht gelöscht und bleibt samt privatem Link ${imVerein}, ist danach aber keinem Team mehr zugeordnet.`,
+        "Ändern, einem Team zuordnen oder löschen kann dann nur die Vereinsverwaltung.",
+      ],
+      warnung,
+      zusatz,
+    };
+  const teams =
+    l.verbleibend.length === 1
+      ? `im Team ${l.verbleibend[0]}`
+      : `in den Teams ${l.verbleibend.slice(0, -1).join(", ")} und ${l.verbleibend.at(-1)}`;
+  return {
+    absaetze: [
+      `${wer} wird dadurch nicht gelöscht und bleibt samt privatem Link ${imVerein} und ${teams}. Aus dem Verein löscht nur die Vereinsverwaltung.`,
+    ],
+    warnung,
+    zusatz,
+  };
+}
+
+/** Dasselbe als eine Rückfrage an den Assistenten (`spieler_aus_team_nehmen`
+ *  ohne `stand`): nichts geschieht, bis er mit dem Stand wiederholt. */
+export function herausnehmenFrage(l: HerausnehmenLage): string {
+  const s = herausnehmenSaetze(l);
+  return [herausnehmenTitel(l) + "?", ...s.absaetze, s.warnung, s.zusatz].filter(Boolean).join(" ");
 }
 
 // ── Spielerzahl eines Termins ───────────────────────────────────────────────
@@ -285,6 +387,9 @@ export type Teilnehmer = {
   nachname: string | null;
   abgemeldet: boolean;
   ehemalig: boolean;
+  /** Aus dem Team genommen, am begonnenen Termin aber mit Namen und Stand
+   *  bei Beginn geblieben (#579 PC 5); das Nachtragen bleibt möglich (AK 18). */
+  nichtMehrImTeam: boolean;
   /** Die Kader, über die der Termin für sie gilt (#453 AK 15); leer bei einem Termin für alle. */
   kader: string[];
   /** Wann ihr Status zuletzt zwischen angemeldet und abgemeldet wechselte
@@ -328,6 +433,10 @@ export const TEILNAHME_TEXT: Record<TeilnahmeStatus, string> = {
 
 /** Wie eine ehemalige Spieler:in überall heisst. */
 export const EHEMALIGE_SPIELERIN = "Ehemalige Spieler:in";
+
+/** Das Kennzeichen an einer Zeile eines begonnenen Termins, wenn die
+ *  Spieler:in inzwischen aus dem Team genommen wurde (#579 AK 18). */
+export const NICHT_MEHR_IM_TEAM = "nicht mehr im Team";
 
 /** Nach Name; ehemalige zuletzt — an Trainings und an Spielen. */
 export function nachTeilnehmer<T extends { vorname: string | null; nachname: string | null }>(liste: T[]): T[] {
@@ -490,7 +599,7 @@ export const ABHOLUNG_TEXT = {
   /** AK 7: was KiFu speichert, wer es sieht, wann es verschwindet. */
   speichertTitel: "Was KiFu speichert",
   speichert:
-    "Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein Spiel nicht aufgeboten ist. Das sehen die Trainer:innen des Teams, KI-Assistenten, die sie mit KiFu verbunden haben, und wer den Link der Spieler:in hat. Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen und ihre KI-Assistenten. Nimmt das Team eine Spieler:in aus der Liste, verschwinden ihre Angaben überall.",
+    "Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein Spiel nicht aufgeboten ist. Das sehen die Trainer:innen des Teams, KI-Assistenten, die sie mit KiFu verbunden haben, und wer den Link der Spieler:in hat. Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen und ihre KI-Assistenten. Nimmt ein Team eine Spieler:in heraus, bleiben ihre Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht.",
   /** AK 13, 14: immer derselbe Satz. */
   passtNicht: "Dazu finden wir keinen Link. Prüf die Schreibweise oder frag beim Team nach.",
   /** AK 16. */

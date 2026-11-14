@@ -191,8 +191,10 @@ export type TerminMitStand = TerminRoh & {
   termin_kader: { kader_id: string | null; kader: { name: string } | null }[];
 };
 
+// `!tk_termin_team`: eindeutige Einbettung neben dem FK auf termin_id allein
+// (Story #579, sonst PGRST201; wie TERMIN_SELECT in lib/queries/termine-fuer.ts).
 export async function ladeTerminMitStand(supabase: SupabaseClient, terminId: string): Promise<KernErgebnis<TerminMitStand>> {
-  return lade<TerminMitStand>(supabase, terminId, `${TERMIN_ROH}, spielstand, termin_kader ( kader_id, kader ( name ) )`);
+  return lade<TerminMitStand>(supabase, terminId, `${TERMIN_ROH}, spielstand, termin_kader!tk_termin_team ( kader_id, kader ( name ) )`);
 }
 
 async function lade<T extends TerminRoh>(supabase: SupabaseClient, terminId: string, spalten: string): Promise<KernErgebnis<T>> {
