@@ -3068,6 +3068,19 @@ export default async function Styleguide() {
             von unten ein; bei reduzierter Bewegung blendet sie nur ein.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Rückfragen</strong> stehen als Geschwister neben den übrigen
+            Dialogen, wenn sie eine Aktion der Seite bestätigen (etwa «Variante
+            entfernen» im Trainingseditor). Geschachtelt im Dialog steht eine
+            Rückfrage nur, wenn sie einen Schritt dieses Dialogs bestätigt und
+            danach in ihn zurückführt - wie «Link erneuern?» im Link-Dialog, der
+            danach den neuen Link zeigt. Der Baustein trägt das: Er reagiert nur
+            auf sein eigenes <code>close</code> und <code>cancel</code>, sodass
+            Abbrechen oder Escape in der Rückfrage den äusseren Dialog nicht
+            mitschliessen (React reicht diese Ereignisse sonst nach aussen
+            weiter, ebenso das <code>cancel</code> eines abgebrochenen
+            Dateiwählers).
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Im Fuss eines Dialogs steht kein Textknopf: Der Ausweg ist ein
             Secondary Button (<code>outlined</code>), seine Schrift ist{" "}
             <code>on-surface</code>. Links im Inhalt eines Dialogs («Der Serie

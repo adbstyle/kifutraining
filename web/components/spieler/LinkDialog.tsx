@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import { Button, Dialog, KopierFeld, SectionMessage } from "@/components/ui";
 import { BezogenLozenge } from "@/components/team/BezogenLozenge";
-import { LINK_ERNEUERN_LADEFEHLER, LINK_TEXT, linkErneuernSaetze, linkTeamsText, type LinkTeam } from "@/lib/spieler";
+import { LINK_ERNEUERN_LADEFEHLER, LINK_ERNEUERN_OHNE_ANTWORT, LINK_TEXT, linkErneuernSaetze, linkTeamsText, type LinkTeam } from "@/lib/spieler";
 
 /* Der private Link einer Spieler:in (#436 AK 1–3): holen, kopieren, erneuern.
    Der Link ist ein Geheimnis — was er kann, steht darum immer bei ihm (AK 2).
@@ -163,7 +163,15 @@ function LinkInhalt({
 
   function neu() {
     startTransition(async () => {
-      const r = await erneuern(spieler.id);
+      let r: LinkErneuern;
+      try {
+        r = await erneuern(spieler.id);
+      } catch {
+        // Ohne Antwort (etwa ohne Netz) ist offen, ob erneuert wurde: Der Satz
+        // sagt das, die Rückfrage schliesst, der Dialog bleibt bedienbar.
+        setFrage("zu");
+        return setMeldung({ art: "error", text: LINK_ERNEUERN_OHNE_ANTWORT });
+      }
       setFrage("zu");
       if (!r.ok) {
         setWeg(!!r.weg);

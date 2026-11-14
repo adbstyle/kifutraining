@@ -527,6 +527,11 @@ export function linkErneuernSaetze(vorname: string, teams: LinkTeam[]): string[]
  *  (etwa ohne Netz): Die Bestätigung schliesst, der Link bleibt, wie er war. */
 export const LINK_ERNEUERN_LADEFEHLER = "Die Teams liessen sich nicht laden. Der Link ist nicht erneuert; versuche es noch einmal.";
 
+/** Erneuern bekam keine Antwort (etwa ohne Netz): Ob der Link erneuert ist,
+ *  bleibt offen; der Dialog zeigt den bisher geladenen Link weiter. */
+export const LINK_ERNEUERN_OHNE_ANTWORT =
+  "Keine Antwort beim Erneuern. Vielleicht ist der Link schon erneuert: Schliesse den Dialog und öffne ihn neu, um den aktuellen zu sehen.";
+
 // ── Der private Link über mehrere Teams (#583) ──────────────────────────────
 
 /** Die Teams stehen im Kopf der Seite; jeder Termin trägt sein Team (AK 2, 3). */
