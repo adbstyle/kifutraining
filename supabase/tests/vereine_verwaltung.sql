@@ -72,7 +72,7 @@ insert into ids (name) values ('verw'), ('verw2'), ('zverw'), ('a'), ('b'), ('c'
   ('unbest'), ('frei'), ('frei2'),
   ('v'), ('w'), ('t1'), ('t2'), ('t3'), ('t4'), ('t5'), ('tw'),
   ('s1'), ('s2'), ('s3'), ('sb'), ('s5'), ('k1'), ('k5'), ('serie1'), ('tr1'), ('tr2'), ('sp1'), ('tr_serie'), ('tr_t2'),
-  ('tr_t2_vorbei'), ('k2'), ('tr_t5'), ('training1'), ('training2'), ('alt1'), ('alt2'), ('w32');
+  ('tr_t2_vorbei'), ('tr1_vorbei'), ('k2'), ('tr_t5'), ('training1'), ('training2'), ('alt1'), ('alt2'), ('w32');
 create function pg_temp.id(p text) returns uuid language sql stable as $$ select id from ids where name = p $$;
 create function pg_temp.mail(p text) returns text language sql stable as $$ select p || '@verwaltung.test' $$;
 grant select on ids to authenticated;   -- temporär; die Rolle braucht pg_temp.id
@@ -124,7 +124,8 @@ set local session_replication_role = origin;
 insert into team_probetraining (team_id, anzahl) values (pg_temp.id('t1'), 3);
 
 -- Inhalte von T1 (Auflösen): zwei Trainings (eines als Termin-Training),
--- Serie mit Termin, zwei Trainingstermine, ein Spiel, Kader, Abmeldung.
+-- Serie mit Termin, drei Trainingstermine (einer vorbei, mit Anwesenheit),
+-- ein Spiel, Kader, Abmeldung.
 insert into trainings (id, name, altersstufe, stufen, team_id) values
   (pg_temp.id('training1'), 'Team-Training', 'kinderfussball', '{F}', pg_temp.id('t1'));
 insert into trainings (id, name, altersstufe, stufen, team_id, termin_training) values
@@ -143,6 +144,13 @@ insert into training_termine (id, team_id, datum, beginn, ende, art, bezeichnung
 insert into kader (id, team_id, name) values (pg_temp.id('k1'), pg_temp.id('t1'), 'Kader Eins');
 insert into termin_abmeldungen (termin_id, spieler_id, team_id, angemeldet) values
   (pg_temp.id('tr1'), pg_temp.id('s1'), pg_temp.id('t1'), false);
+-- Vergangener Termin von T1 mit festgehaltener Anwesenheit (PC 2).
+insert into training_termine (id, team_id, datum, beginn, ende) values
+  (pg_temp.id('tr1_vorbei'), pg_temp.id('t1'), current_date - 2, '18:00', '19:30');
+insert into termin_eingefroren (termin_id, team_id) values (pg_temp.id('tr1_vorbei'), pg_temp.id('t1'))
+  on conflict do nothing;   -- ein vergangener Termin wird schon beim Anlegen festgehalten
+insert into termin_teilnahmen (termin_id, team_id, spieler_id, abgemeldet) values
+  (pg_temp.id('tr1_vorbei'), pg_temp.id('t1'), pg_temp.id('s1'), false) on conflict do nothing;
 -- T2 für Kader und Serie am Termin; T5 mit Link-Abo, Abholadresse, Termin, Kader.
 insert into kader (id, team_id, name) values (pg_temp.id('k2'), pg_temp.id('t2'), 'Kader Zwei');
 insert into training_termine (id, team_id, datum, beginn, ende) values
@@ -321,7 +329,7 @@ begin
                          'Teamansicht: Schlüssel ' || pg_temp.schluessel(v)::text);
   perform pg_temp.pruefe(v ->> 'name' = 'Team Eins' and (v ->> 'spieler_zahl')::int = 3 and not (v ->> 'ich_mitglied')::boolean,
                          'Teamansicht: Kopf');
-  perform pg_temp.pruefe(v -> 'aufloesung' = '{"trainings": 1, "termine": 2, "spiele": 1, "kader": 1}',
+  perform pg_temp.pruefe(v -> 'aufloesung' = '{"trainings": 1, "termine": 3, "spiele": 1, "kader": 1}',
                          'Auflösungszahlen: ' || (v -> 'aufloesung')::text);
   for x in select * from jsonb_array_elements(v -> 'trainer') loop
     perform pg_temp.pruefe(pg_temp.schluessel(x) = array['anzeige_name', 'email', 'ich', 'ist_verwaltung', 'user_id'],
@@ -623,6 +631,8 @@ reset role;
 
 -- ── Auflösen (AK 24, 25, PC 1, PC 2, Testfall 13) ───────────────────────────
 
+select pg_temp.pruefe(exists (select 1 from termin_teilnahmen where termin_id = pg_temp.id('tr1_vorbei')
+                               and spieler_id = pg_temp.id('s1')), 'Anwesenheit von T1 fehlt vor dem Auflösen');
 select pg_temp.als(pg_temp.id('verw'));
 do $$
 declare
@@ -647,11 +657,13 @@ select pg_temp.pruefe((select count(*) from spieler where id in (pg_temp.id('s1'
                       and (select team_id from spieler where id = pg_temp.id('s1')) is null
                       and not exists (select 1 from team_spieler where spieler_id in (pg_temp.id('s1'), pg_temp.id('s2'), pg_temp.id('s3'), pg_temp.id('s5')))
                       and exists (select 1 from spieler_abos where spieler_id = pg_temp.id('s5')), 'PC 1');
--- PC 2: Termine, Serien, Spiele, Kader, Abmeldungen, Trainings weg.
+-- PC 2: Termine, Serien, Spiele, Kader, Abmeldungen, Anwesenheit, Trainings weg.
 select pg_temp.pruefe(not exists (select 1 from training_termine where id in (pg_temp.id('tr1'), pg_temp.id('sp1'), pg_temp.id('tr_serie'), pg_temp.id('tr_t5')))
                       and not exists (select 1 from termin_serien where id = pg_temp.id('serie1'))
                       and not exists (select 1 from kader where id in (pg_temp.id('k1'), pg_temp.id('k5')))
                       and not exists (select 1 from termin_abmeldungen where termin_id = pg_temp.id('tr1'))
+                      and not exists (select 1 from termin_eingefroren where team_id = pg_temp.id('t1'))
+                      and not exists (select 1 from termin_teilnahmen where team_id = pg_temp.id('t1'))
                       and not exists (select 1 from trainings where id in (pg_temp.id('training1'), pg_temp.id('training2')))
                       and not exists (select 1 from team_abholung where team_id = pg_temp.id('t5')), 'PC 2');
 -- Ein früheres Mitglied erfährt, dass das Team weg ist.
@@ -673,6 +685,14 @@ begin
     'entferne_team_mitglied(uuid,uuid)'] loop
     if has_function_privilege('anon', f, 'execute') or not has_function_privilege('authenticated', f, 'execute') then
       raise exception 'Story 5: Grant von % falsch', f;
+    end if;
+  end loop;
+  -- Helfer ohne API-Recht.
+  foreach f in array array['teamname_vergeben(uuid,text,uuid)', 'aufnahme_ziel(uuid,text,uuid,boolean)',
+    'spieler_aus_team_nehmen_kern(uuid,uuid,boolean,text)', 'verwaltung_sperren(uuid)',
+    'verwaltung_team_sperren(uuid)'] loop
+    if has_function_privilege('anon', f, 'execute') or has_function_privilege('authenticated', f, 'execute') then
+      raise exception 'Story 5: Helfer % ist per API ausführbar', f;
     end if;
   end loop;
 end $$;

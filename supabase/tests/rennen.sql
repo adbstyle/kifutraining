@@ -729,6 +729,164 @@ delete from teams where verein_id = (select id from rennen_test.ids where name =
 delete from vereine where id = (select id from rennen_test.ids where name = 'v_verein');
 delete from auth.users where id in (select id from rennen_test.ids where name in ('v_va', 'v_vb', 'v_m'));
 
+-- ── Fälle: Recht und Team unter der Vereinssperre, Suchbremse (Story 5 #581) ──
+-- Verein «Rennen-Recht» mit den Verwaltungen RA und RB, Trainer:in RM in den
+-- Teams «Recht-Eins» (mit Spieler:in), «Recht-Zwei» und «Recht-Drei», Konto
+-- RS in «Recht-Drei». B wartet jeweils an einer Beratungssperre (`advisory`).
+-- (k) RA löst «Recht-Eins» auf, RB nimmt gleichzeitig die Spieler:in heraus:
+--     B prüft unter der Vereinssperre, ob das Team noch besteht →
+--     VEREIN_NICHT_GEFUNDEN (nicht SPIELER_NICHT_GEFUNDEN).
+-- (l) RA löst «Recht-Zwei» auf, RM nimmt dort gleichzeitig jemanden auf
+--     (add_team_member): «not a member of this team», kein rohes VEREIN_FEHLT.
+-- (m) RA entfernt RB aus der Verwaltung, während RB «Recht-Drei» auflösen
+--     will: VEREIN_NICHT_GEFUNDEN, das Team besteht.
+-- (n) Suchbremse: Mit 9 erfolglosen Versuchen sucht A erfolglos (10.) und
+--     hält die Transaktion offen; B sucht gleichzeitig und wartet an der
+--     Suchsperre → gebremst. Für finde_trainer (Team-Ort) und
+--     verein_finde_person (Verein-Ort), die keine Vereinssperre nehmen.
+-- (o) 15 Verbindungen suchen gleichzeitig erfolglos (je eine Transaktion):
+--     höchstens 10 ungebremste Antworten, höchstens 10 Vermerke.
+-- Ein harter Abbruch lässt den Verein «Rennen-Recht» samt Teams und die
+-- Konten «rennen-r-…@rennen.test» stehen (von Hand löschen).
+
+select set_config('rennen.fehler_recht', '', false) is not null as rennen_fehler_recht_leer \gset
+
+begin;
+insert into rennen_test.ids (name) values ('r_verein'), ('r_va'), ('r_vb'), ('r_m'), ('r_s'),
+  ('r_t1'), ('r_t2'), ('r_t3'), ('r_sp');
+insert into auth.users (id, email, email_confirmed_at)
+select id, 'rennen-' || replace(name, '_', '-') || '@rennen.test', now() from rennen_test.ids
+ where name in ('r_va', 'r_vb', 'r_m', 'r_s');
+insert into vereine (id, name) values (rennen_test.z('r_verein'), 'Rennen-Recht');
+insert into verein_verwaltung (verein_id, user_id) values
+  (rennen_test.z('r_verein'), rennen_test.z('r_va')), (rennen_test.z('r_verein'), rennen_test.z('r_vb'));
+insert into teams (id, name, verein_id) values
+  (rennen_test.z('r_t1'), 'Recht-Eins', rennen_test.z('r_verein')),
+  (rennen_test.z('r_t2'), 'Recht-Zwei', rennen_test.z('r_verein')),
+  (rennen_test.z('r_t3'), 'Recht-Drei', rennen_test.z('r_verein'));
+insert into team_members (team_id, user_id) values
+  (rennen_test.z('r_t1'), rennen_test.z('r_m')), (rennen_test.z('r_t2'), rennen_test.z('r_m')),
+  (rennen_test.z('r_t3'), rennen_test.z('r_m')), (rennen_test.z('r_t3'), rennen_test.z('r_s'));
+insert into spieler (id, verein_id, vorname, nachname, jahrgang)
+  values (rennen_test.z('r_sp'), rennen_test.z('r_verein'), 'Recht', 'Spieler', 2015);
+insert into team_spieler (team_id, spieler_id, verein_id)
+  values (rennen_test.z('r_t1'), rennen_test.z('r_sp'), rennen_test.z('r_verein'));
+commit;
+
+do $$
+declare
+  ziel   text := format(
+    'host=%s port=%s dbname=%s user=postgres password=postgres connect_timeout=5 options=''-c statement_timeout=30s''',
+    coalesce(host(inet_server_addr()), '127.0.0.1'), inet_server_port(), current_database());
+  v_verein uuid := rennen_test.z('r_verein');
+  v_va uuid := rennen_test.z('r_va');
+  v_vb uuid := rennen_test.z('r_vb');
+  v_m uuid := rennen_test.z('r_m');
+  v_s uuid := rennen_test.z('r_s');
+  ergebnis text;
+  verbindungen text[] := '{}';
+  n text;
+  ungebremst int := 0;
+  gebremst int := 0;
+begin
+  -- (k) Herausnehmen gegen Auflösen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format($q$select verein_team_aufloesen(%L, 'Recht-Eins')::text$q$, rennen_test.z('r_t1')),
+    v_vb, format('select verein_spieler_aus_team_nehmen(%L, %L)::text', rennen_test.z('r_t1'), rennen_test.z('r_sp')),
+    'advisory');
+  if position('VEREIN_NICHT_GEFUNDEN' in ergebnis) = 0 then
+    raise exception '(k) B hätte VEREIN_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+  if exists (select 1 from teams where id = rennen_test.z('r_t1'))
+     or not exists (select 1 from spieler where id = rennen_test.z('r_sp')) then
+    raise exception '(k) Team nicht aufgelöst oder Spieler:in weg';
+  end if;
+
+  -- (l) Aufnehmen am Team-Ort gegen Auflösen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format($q$select verein_team_aufloesen(%L, 'Recht-Zwei')::text$q$, rennen_test.z('r_t2')),
+    v_m, format($q$select add_team_member(%L, 'rennen-r-vb@rennen.test')::text$q$, rennen_test.z('r_t2')),
+    'advisory');
+  if position('not a member of this team' in ergebnis) = 0 then
+    raise exception '(l) B hätte wie ein Nicht-Mitglied abgewiesen werden müssen: %', ergebnis;
+  end if;
+
+  -- (m) Auflösen gegen Entfernen aus der Verwaltung.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_verwaltung_entfernen(%L, %L)::text', v_verein, v_vb),
+    v_vb, format($q$select verein_team_aufloesen(%L, 'Recht-Drei')::text$q$, rennen_test.z('r_t3')),
+    'advisory');
+  if position('VEREIN_NICHT_GEFUNDEN' in ergebnis) = 0 then
+    raise exception '(m) B ist keine Verwaltung mehr und hätte VEREIN_NICHT_GEFUNDEN bekommen müssen: %', ergebnis;
+  end if;
+  if not exists (select 1 from teams where id = rennen_test.z('r_t3')) then
+    raise exception '(m) «Recht-Drei» ist aufgelöst';
+  end if;
+
+  -- (n) Suchbremse am Team-Ort: 9 Versuche stehen, A macht den 10.
+  perform extensions.dblink_exec(ziel, format(
+    'insert into public.trainer_suchversuche (user_id) select %L from generate_series(1, 9)', v_m));
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format($q$select finde_trainer(%L, 'niemand-a@rennen.test')::text$q$, rennen_test.z('r_t3')),
+    v_m, format($q$select finde_trainer(%L, 'niemand-b@rennen.test')::text$q$, rennen_test.z('r_t3')),
+    'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"status": "gebremst"}' then
+    raise exception '(n) finde_trainer: B hätte gebremst werden müssen: %', ergebnis;
+  end if;
+  -- Am Verein-Ort.
+  perform extensions.dblink_exec(ziel, format(
+    'insert into public.trainer_suchversuche (user_id) select %L from generate_series(1, 9)', v_va));
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format($q$select verein_finde_person(%L, 'niemand-a@rennen.test')::text$q$, v_verein),
+    v_va, format($q$select verein_finde_person(%L, 'niemand-b@rennen.test')::text$q$, v_verein),
+    'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"status": "gebremst"}' then
+    raise exception '(n) verein_finde_person: B hätte gebremst werden müssen: %', ergebnis;
+  end if;
+
+  -- (o) Viele gleichzeitige erfolglose Suchen von RS.
+  for i in 1..15 loop
+    n := 'rennen_s' || i;
+    perform extensions.dblink_connect(n, ziel || ' application_name=' || n);
+    verbindungen := verbindungen || n;
+    perform extensions.dblink_exec(n, 'set role authenticated');
+    perform * from extensions.dblink(n, format($q$select set_config('request.jwt.claims', %L, false)$q$,
+      jsonb_build_object('sub', v_s, 'role', 'authenticated')::text)) as t(x text);
+  end loop;
+  foreach n in array verbindungen loop
+    perform extensions.dblink_send_query(n, format($q$select finde_trainer(%L, %L)::text$q$,
+      rennen_test.z('r_t3'), 'niemand-' || n || '@rennen.test'));
+  end loop;
+  foreach n in array verbindungen loop
+    select t.x into ergebnis from extensions.dblink_get_result(n, false) as t(x text);
+    if ergebnis is null then
+      raise exception '(o) Suche auf % scheiterte: %', n, extensions.dblink_error_message(n);
+    end if;
+    perform * from extensions.dblink_get_result(n, false) as t(x text);
+    case ergebnis::jsonb ->> 'status'
+      when 'nicht_gefunden' then ungebremst := ungebremst + 1;
+      when 'gebremst' then gebremst := gebremst + 1;
+      else raise exception '(o) unerwartete Antwort: %', ergebnis;
+    end case;
+    perform extensions.dblink_disconnect(n);
+  end loop;
+  verbindungen := '{}';
+  if ungebremst <> 10 or gebremst <> 5 or (select count(*) from trainer_suchversuche where user_id = v_s) <> 10 then
+    raise exception '(o) Erwartet 10 ungebremst, 5 gebremst, 10 Vermerke; bekommen: %, %, %',
+      ungebremst, gebremst, (select count(*) from trainer_suchversuche where user_id = v_s);
+  end if;
+exception when others or query_canceled then
+  foreach n in array coalesce(extensions.dblink_get_connections(), '{}') loop
+    perform extensions.dblink_disconnect(n);
+  end loop;
+  perform set_config('rennen.fehler_recht', sqlerrm, false);
+end $$;
+
+delete from teams where verein_id = (select id from rennen_test.ids where name = 'r_verein');
+delete from spieler where verein_id = (select id from rennen_test.ids where name = 'r_verein');
+delete from vereine where id = (select id from rennen_test.ids where name = 'r_verein');
+delete from auth.users where id in (select id from rennen_test.ids where name in ('r_va', 'r_vb', 'r_m', 'r_s'));
+
 -- Aufräumen, auch nach einem Fehler.
 drop schema rennen_test cascade;
 \if :dblink_vorher
@@ -752,5 +910,8 @@ begin
   end if;
   if current_setting('rennen.fehler_verwaltung') <> '' then
     raise exception 'Rennen Verwaltung: %', current_setting('rennen.fehler_verwaltung');
+  end if;
+  if current_setting('rennen.fehler_recht') <> '' then
+    raise exception 'Rennen Recht und Suchbremse: %', current_setting('rennen.fehler_recht');
   end if;
 end $$;

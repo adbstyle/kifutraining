@@ -23,8 +23,10 @@
 -- Rollen nach Ort (AP §4): Team-RPCs prüfen die Mitgliedschaft, `verein_*`
 -- beginnt mit `nur_in_der_anwendung()` und prüft die Verwaltung des Vereins
 -- (bei Team-RPCs des Vereins des Teams). Kein Recht und unbekanntes Ziel sind
--- ununterscheidbar (`VEREIN_NICHT_GEFUNDEN`). Sperrordnung Verein → Person →
--- Teams → `spieler`-Zeile → Termin-Zeile.
+-- ununterscheidbar (`VEREIN_NICHT_GEFUNDEN`); nach der Vereinssperre prüfen
+-- sie das Recht und das Team erneut (verwaltung_sperren,
+-- verwaltung_team_sperren). Sperrordnung Verein → Suche (suchende Person) →
+-- Person → Teams → `spieler`-Zeile → Termin-Zeile.
 
 set lock_timeout = '5s';
 
@@ -43,6 +45,38 @@ as $$
    limit 1;
 $$;
 
+-- Verwaltungsrecht für alle schreibenden verein_*-RPCs (AP §4.1): prüfen,
+-- Vereinssperre nehmen, unter ihr erneut prüfen. Ein gleichzeitiges Entfernen
+-- aus der Verwaltung, auf das die Sperre gewartet hat, weist so ab. Die erste
+-- Prüfung vor der Sperre hält Fremde von der Vereinssperre fern. Kein
+-- API-Recht.
+create function verwaltung_sperren(p_verein uuid) returns void
+language plpgsql
+set search_path = public, pg_temp
+as $$
+begin
+  if not ist_verein_verwaltung(p_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
+  perform sperre_verein(p_verein);
+  if not ist_verein_verwaltung(p_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
+end;
+$$;
+
+-- Dasselbe für Team-adressierte RPCs: Das Recht folgt dem Verein des Teams,
+-- und unter der Vereinssperre muss das Team noch bestehen (aufgelöst wird
+-- nur unter ihr). Liefert den Verein. Kein API-Recht.
+create function verwaltung_team_sperren(p_team uuid) returns uuid
+language plpgsql
+set search_path = public, pg_temp
+as $$
+declare
+  v_verein uuid := (select verein_id from teams where id = p_team);
+begin
+  perform verwaltung_sperren(v_verein);
+  if not exists (select 1 from teams where id = p_team) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
+  return v_verein;
+end;
+$$;
+
 -- Ziel einer Aufnahme per E-Mail für alle fünf Suchwege (finde_trainer,
 -- add_team_member, verein_finde_person, verein_team_aufnehmen,
 -- verein_verwaltung_aufnehmen). Status `gebremst`, `nicht_gefunden`,
@@ -51,6 +85,15 @@ $$;
 -- erfolglosen Versuch (AP §4.3). Mit p_sperren nimmt sie die Personensperre
 -- vor der Prüfung; dann hält der Aufrufer schon die Vereinssperre
 -- (Sperrordnung Verein → Person). Läuft mit den Rechten der DEFINER-RPCs.
+--
+-- Zählen und Vermerken der Bremse laufen unter einer Sperre je suchender
+-- Person (Schlüssel `suche:`), sonst kämen gleichzeitige erfolglose Suchen
+-- alle an der Bremse vorbei. Nur diese Funktion nimmt die Suchsperre, als
+-- erste eigene Sperre: nach der Vereinssperre des Aufrufers (falls er sie
+-- hält), vor der Personensperre des Ziels. Wer sie hält, wartet danach
+-- höchstens auf diese Personensperre; niemand hält eine Personen-, Team-,
+-- Zeilen- oder Terminsperre und will dann die Suchsperre. Ordnung: Verein →
+-- Suche → Person → Teams → `spieler`-Zeile → Termin, ohne Zyklus.
 create function aufnahme_ziel(p_user uuid, p_email text, p_verein uuid, p_sperren boolean,
                               out o_status text, out o_ziel uuid)
 language plpgsql
@@ -59,6 +102,7 @@ as $$
 declare
   v_verein uuid;
 begin
+  perform pg_advisory_xact_lock(hashtextextended('suche:' || p_user::text, 0));
   if such_bremse_aktiv(p_user) then
     o_status := 'gebremst';
     return;
@@ -204,6 +248,9 @@ $$;
 
 -- Rumpf wie in 20260824200312_team_rpcs.sql; dazu `anderer_verein` unter
 -- Vereins- und Personensperre (der Trigger team_members_vorher bleibt Netz).
+-- Unter der Vereinssperre die Mitgliedschaft erneut prüfen: Hat die
+-- Verwaltung das Team inzwischen aufgelöst (oder das Mitglied entfernt),
+-- weist das ab wie für ein Nicht-Mitglied.
 create or replace function add_team_member(p_team_id uuid, p_email text) returns jsonb
 language plpgsql security definer
 set search_path = public, pg_temp
@@ -219,7 +266,12 @@ begin
     raise exception 'not a member of this team';
   end if;
   v_verein := (select verein_id from teams where id = p_team_id);
+  if v_verein is null then raise exception 'not a member of this team'; end if;
   perform sperre_verein(v_verein);
+  if not exists (select 1 from team_members
+                 where team_id = p_team_id and user_id = v_uid) then
+    raise exception 'not a member of this team';
+  end if;
   z := aufnahme_ziel(v_uid, p_email, v_verein, true);
   if z.o_status is not null then
     return jsonb_build_object('status', z.o_status);
@@ -602,8 +654,7 @@ declare
   v_team uuid;
 begin
   perform nur_in_der_anwendung();
-  if not ist_verein_verwaltung(p_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
-  perform sperre_verein(p_verein);
+  perform verwaltung_sperren(p_verein);
   v_vergeben := teamname_vergeben(p_verein, v_name);
   if v_vergeben is not null then
     return jsonb_build_object('status', 'abgewiesen', 'grund', 'name_vergeben', 'team', v_vergeben);
@@ -627,11 +678,8 @@ declare
   v_vergeben text;
 begin
   perform nur_in_der_anwendung();
-  v_verein := (select verein_id from teams where id = p_team);
-  if not ist_verein_verwaltung(v_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
-  perform sperre_verein(v_verein);
-  select name into v_alt from teams where id = p_team;   -- unter der Vereinssperre (Anlegen, Umbenennen, Auflösen)
-  if not found then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
+  v_verein := verwaltung_team_sperren(p_team);
+  v_alt := (select name from teams where id = p_team);   -- unter der Vereinssperre (Anlegen, Umbenennen, Auflösen)
   if spieler_text_schluessel(v_name) is distinct from spieler_text_schluessel(v_alt) then
     v_vergeben := teamname_vergeben(v_verein, v_name, p_team);
     if v_vergeben is not null then
@@ -652,8 +700,7 @@ declare
   v_name text := btrim(p_name);
 begin
   perform nur_in_der_anwendung();
-  if not ist_verein_verwaltung(p_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
-  perform sperre_verein(p_verein);
+  perform verwaltung_sperren(p_verein);
   update vereine set name = v_name where id = p_verein;
   return jsonb_build_object('status', 'umbenannt', 'name', v_name);
 end;
@@ -670,18 +717,14 @@ language plpgsql security definer
 set search_path = public, pg_temp
 as $$
 declare
-  v_verein uuid;
   v_name text;
   v_bilder jsonb;
   v_spieler int;
 begin
   perform nur_in_der_anwendung();
-  v_verein := (select verein_id from teams where id = p_team);
-  if not ist_verein_verwaltung(v_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
-  perform sperre_verein(v_verein);
+  perform verwaltung_team_sperren(p_team);
   perform sperre_teams(array[p_team]);
   select name into v_name from teams where id = p_team for update;
-  if not found then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
   if p_teamname is null
      or normalize(btrim(p_teamname), nfc) is distinct from normalize(v_name, nfc) then
     return jsonb_build_object('status', 'name_falsch', 'name', v_name);
@@ -694,19 +737,16 @@ end;
 $$;
 
 -- Spieler:in aus einem Team nehmen, ohne Mitgliedschaft (#579 AK 11, 17).
--- Kein Stand-Vergleich (die Verwaltung sieht alle Teams).
+-- Kein Stand-Vergleich (die Verwaltung sieht alle Teams). Ein inzwischen
+-- aufgelöstes Team ist VEREIN_NICHT_GEFUNDEN (verwaltung_team_sperren).
 --   {status: 'herausgenommen', ohne_team}
 create function verein_spieler_aus_team_nehmen(p_team uuid, p_spieler uuid) returns jsonb
 language plpgsql security definer
 set search_path = public, pg_temp
 as $$
-declare
-  v_verein uuid;
 begin
   perform nur_in_der_anwendung();
-  v_verein := (select verein_id from teams where id = p_team);
-  if not ist_verein_verwaltung(v_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
-  perform sperre_verein(v_verein);
+  perform verwaltung_team_sperren(p_team);
   return spieler_aus_team_nehmen_kern(p_team, p_spieler, false, null);
 end;
 $$;
@@ -754,10 +794,7 @@ declare
   z record;
 begin
   perform nur_in_der_anwendung();
-  v_verein := (select verein_id from teams where id = p_team);
-  if not ist_verein_verwaltung(v_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
-  perform sperre_verein(v_verein);
-  if not exists (select 1 from teams where id = p_team) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
+  v_verein := verwaltung_team_sperren(p_team);
   z := aufnahme_ziel(auth.uid(), p_email, v_verein, true);
   if z.o_status is not null then
     return jsonb_build_object('status', z.o_status);
@@ -775,14 +812,9 @@ create function verein_team_beitreten(p_team uuid) returns jsonb
 language plpgsql security definer
 set search_path = public, pg_temp
 as $$
-declare
-  v_verein uuid;
 begin
   perform nur_in_der_anwendung();
-  v_verein := (select verein_id from teams where id = p_team);
-  if not ist_verein_verwaltung(v_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
-  perform sperre_verein(v_verein);
-  if not exists (select 1 from teams where id = p_team) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
+  perform verwaltung_team_sperren(p_team);
   insert into team_members (team_id, user_id) values (p_team, auth.uid()) on conflict do nothing;
   return jsonb_build_object('status', 'beigetreten');
 end;
@@ -794,23 +826,18 @@ create function verein_team_mitglied_entfernen(p_team uuid, p_user uuid) returns
 language plpgsql security definer
 set search_path = public, pg_temp
 as $$
-declare
-  v_verein uuid;
 begin
   perform nur_in_der_anwendung();
-  v_verein := (select verein_id from teams where id = p_team);
-  if not ist_verein_verwaltung(v_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
-  perform sperre_verein(v_verein);
+  perform verwaltung_team_sperren(p_team);
   perform sperre_teams(array[p_team]);
-  if not exists (select 1 from teams where id = p_team) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
   delete from team_members where team_id = p_team and user_id = p_user;
   return jsonb_build_object('status', 'entfernt');
 end;
 $$;
 
 -- Person in die Verwaltung aufnehmen, sofort, ohne Obergrenze (AK 30).
--- Unter der Vereinssperre die Verwaltung erneut prüfen (ein gleichzeitiges
--- Entfernen kann sie eben genommen haben).
+-- Unter der Vereinssperre prüft verwaltung_sperren die Verwaltung erneut (ein
+-- gleichzeitiges Entfernen kann sie eben genommen haben).
 --   {status: 'aufgenommen', anzeige_name} | {status}
 create function verein_verwaltung_aufnehmen(p_verein uuid, p_email text) returns jsonb
 language plpgsql security definer
@@ -820,9 +847,7 @@ declare
   z record;
 begin
   perform nur_in_der_anwendung();
-  if not ist_verein_verwaltung(p_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
-  perform sperre_verein(p_verein);
-  if not ist_verein_verwaltung(p_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
+  perform verwaltung_sperren(p_verein);
   z := aufnahme_ziel(auth.uid(), p_email, p_verein, true);
   if z.o_status is not null then
     return jsonb_build_object('status', z.o_status);
@@ -838,17 +863,16 @@ $$;
 -- Person aus der Verwaltung nehmen oder selbst austreten (AK 31–33). Die
 -- letzte Person bleibt: {status: 'letzte_verwaltung'} (Netz: Trigger
 -- verwaltung_vorher, LETZTE_VERWALTUNG). Teammitgliedschaften bleiben (PC 4).
--- Unter der Vereinssperre die eigene Verwaltung erneut prüfen (zwei, die sich
--- gegenseitig entfernen: die zweite ist danach keine Verwaltung mehr).
+-- Unter der Vereinssperre prüft verwaltung_sperren die eigene Verwaltung
+-- erneut (zwei, die sich gegenseitig entfernen: die zweite ist danach keine
+-- Verwaltung mehr).
 create function verein_verwaltung_entfernen(p_verein uuid, p_user uuid) returns jsonb
 language plpgsql security definer
 set search_path = public, pg_temp
 as $$
 begin
   perform nur_in_der_anwendung();
-  if not ist_verein_verwaltung(p_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
-  perform sperre_verein(p_verein);
-  if not ist_verein_verwaltung(p_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
+  perform verwaltung_sperren(p_verein);
   if not exists (select 1 from verein_verwaltung where verein_id = p_verein and user_id = p_user) then
     return jsonb_build_object('status', 'entfernt');
   end if;
@@ -877,6 +901,8 @@ revoke all on teams from authenticated;
 grant select on teams to authenticated;
 
 revoke all on function teamname_vergeben(uuid, text, uuid) from public, anon, authenticated;
+revoke all on function verwaltung_sperren(uuid) from public, anon, authenticated;
+revoke all on function verwaltung_team_sperren(uuid) from public, anon, authenticated;
 revoke all on function aufnahme_ziel(uuid, text, uuid, boolean) from public, anon, authenticated;
 revoke all on function spieler_aus_team_nehmen_kern(uuid, uuid, boolean, text) from public, anon, authenticated;
 
