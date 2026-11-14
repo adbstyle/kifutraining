@@ -268,15 +268,21 @@ Zusätzlich:
 
 **AP:** §3.7 (Feedback über den Link), §4.4, §7.7, §7.8, §7.9. **Migration:** `link_mehrere_teams` (nur RPCs).
 
-- [ ] Reihenfolge: `spieler_link_ansicht` und Abo über alle Zuordnungen → Ab- und Anmelden sperrt zuerst das Termin-Team → Abholung → `feedback_link_gueltig`.
-- [ ] Zustände am Link nach dem Board: keine Termine, ohne Team, ungültig, Meldung für einen Termin, der nicht mehr gilt, «Fragen und Feedback» mit dem Verweis bei Dringendem.
+- [x] Reihenfolge: `spieler_link_ansicht` und Abo über alle Zuordnungen → Ab- und Anmelden sperrt zuerst das Termin-Team → Abholung → `feedback_link_gueltig`.
+- [x] Zustände am Link nach dem Board: keine Termine, ohne Team, ungültig, Meldung für einen Termin, der nicht mehr gilt, «Fragen und Feedback» mit dem Verweis bei Dringendem.
 
-- [ ] **Aus Phase 6:** `verein_spieler_teams` um `abholbar` ergänzen; der Erneuern-Dialog am Verein-Ort (`components/verein/VereinSpielerLinkDialog.tsx`) nennt dann die betroffenen Teams und ob die Eltern den neuen Link über eine Abholadresse holen (#582 AK 11, #583 AK 15–16).
-- [ ] **Aus dem Review zu Phase 6 (Rennen beim Umbau beheben, je mit Rennen-Fall in `supabase/tests/rennen.sql`):**
+- [x] **Aus Phase 6:** `verein_spieler_teams` um `abholbar` ergänzen; der Erneuern-Dialog am Verein-Ort (`components/verein/VereinSpielerLinkDialog.tsx`) nennt dann die betroffenen Teams und ob die Eltern den neuen Link über eine Abholadresse holen (#582 AK 11, #583 AK 15–16).
+- [x] **Aus dem Review zu Phase 6 (Rennen beim Umbau beheben, je mit Rennen-Fall in `supabase/tests/rennen.sql`):**
   - `abholung_abholen` (Stand `20261113110000_spieler_ueber_zuordnung.sql`) liest die Spieler:in ohne Sperre und setzt danach `link_bezogen`. Erneuert jemand genau dazwischen (`spieler_link_erneuern`, `verein_spieler_link_erneuern`), bekommt die Familie den toten Link, und der neue gilt als bezogen. Vorschlag: `update spieler set link_bezogen = true where id = s.id and link_token = s.link_token returning …`; trifft das Update keine Zeile → `{status: 'ungueltig'}` (bzw. neu lesen). Rennen-Fall: Erneuern gegen Abholen, beide Richtungen; danach ist der ausgegebene Link der gültige, und `link_bezogen` gilt nur für ihn.
   - `spieler_link_abmelden` sperrt zuerst das erste Team (`spieler.team_id`, Beratungssperre `spieler:<team>`) und danach in `abmeldung_anwenden_training` das Team des Termins, also nicht aufsteigend. Mit mehreren Teams ist gegen `verein_spieler_entfernen` (Verein → alle Teams aufsteigend über `sperre_teams`) ein Deadlock (40P01) möglich. Beim Umbau auf mehrere Teams nur das Termin-Team sperren (bzw. alle nötigen Teams in einem `sperre_teams`-Aufruf). Rennen-Fall: Abmelden über den Link zu einem Termin des zweiten Teams gegen Löschen, beide Richtungen, kein 40P01.
 
 **Testfälle:** 13, 23. Bestehende Links und Abo-Adressen liefern ohne Neubezug.
+
+**Umgesetzt** (Branch `feature/vereine-link-mehrere-teams-583`): Migration `20261114220000_link_mehrere_teams.sql` (nur Funktionen und Rechte): Link und Abo über alle Teams mit `team` je Termin und `teams`, `gilt_nicht` ohne `stand`, Link holen und erneuern je Team (`p_team`), `abholbar` je Team in `spieler_teams` und `verein_spieler_teams`, Abholen gegen Erneuern in einer Anweisung, `feedback_link_gueltig` und `ohne_team`, `feedback_link_team` gefallen. Beide Rennen mit Fällen in `rennen.sql`, neu `link_mehrere_teams.sql`, Prod-Weg mit Abo und Token-Vergleich (PC 5). Web: Eltern-Seite, Abo «Trainings und Spiele», Abholseite, Link-Knopf in jedem Team, Erneuern mit Bestätigung an beiden Orten, «Fragen und Feedback» ohne Team; der KI-Weg leitet das Team über `eigenesTeamVon` ab. `check:kern-db` prüft die Naht über Kern und Web-Leser; der Systemprompt-Teil «ohne Team» liegt prüfbar in `lib/feedback/lage.ts` (`check:feedback`). Alle lokalen Prüfungen grün; der Browser-Lauf folgt.
+
+**Verschoben aus Phase 7:** `probe`/`probe_info` auf dem Link bei mehreren Teams und der letzte Leser von `spieler.team_id` (`spieler_probe_*`, im Web `ladeSpieler` für Schnuppern und MCP `spieler_aendern`) (Phase 8); `verein` auf Link und Abholseite (die Datenebene liefert ihn am Link schon, der Web-Typ nimmt ihn erst dann auf) und «Vereinsverwaltung des ‹Verein›» im Verweis bei Dringendem (Phase 11); `team_id` als Eingabe der Link-Werkzeuge, `teams[]` in deren Antworten und die Modelltexte (`LINK_MODELL` nennt noch «Teamname» und «Termine des Teams») (Phase 13).
+
+**Zwischenstand:** Für eine Spieler:in in mehreren Teams zeigt der Link keinen Schnupper-Stand (bis Phase 8). Link und Abholseite nennen den Verein nicht (bis Phase 11). Die KI-Werkzeuge zum Link nehmen kein Team entgegen und beschreiben den Link noch für ein Team (bis Phase 13).
 
 ### Phase 8 – #584 Schnuppertraining
 
@@ -285,6 +291,7 @@ Zusätzlich:
 - [ ] Regel «genau eine Zuordnung», Zuordnen zum Schnuppern, Abweisung der gesammelten Zuordnung nennt schnuppernde Spieler:innen (#584 AK 16).
 - [ ] **Aus Phase 5:** «Schnuppern 1/4» in der Spielerliste von `/verein/team/[teamId]` und `schnuppern_beendet` in der Rückgabe von `verein_spieler_aus_team_nehmen` (#584 AK 13).
 - [ ] **Aus Phase 6:** «Zum Schnuppern» beim Zuordnen und «Schnuppern n/4» in der Vereinsliste `/verein/spieler`.
+- [ ] **Aus Phase 7:** `probe`/`probe_info` auf dem Link für eine Spieler:in in mehreren Teams (heute nur bei genau einem Team); `spieler_probe_*` und im Web `ladeSpieler` (Schnuppern, MCP `spieler_aendern`, das daraus nur die J+S-Nummer liest) lösen sich von `spieler.team_id`, danach liest nur noch `vereine_nachziehen` die Spalte.
 - [ ] Sichtbare Umbenennung in Oberfläche, Link und KI im selben PR; die MCP-Werkzeuge heissen neu, ohne Übergang. Interne Namen bleiben `probe_*`.
 - [ ] grep-Wächter «kein Probe in Oberflächentexten und MCP» scharf stellen.
 
@@ -316,7 +323,7 @@ Zusätzlich:
 
 - [ ] **Vor dem Merge:** Laufzeit von `verein_loeschen` mit 30 Teams und 1000 Spieler:innen auf Staging messen (AP §11 F4).
 - [ ] Reihenfolge: Gründen → Verein löschen → `delete_account(p_vereinsname)` mit dem Zweig der einzigen Person → Einstieg auf `/teams` für Konten ohne Verein.
-- [ ] Verein als verantwortlich auf Abholseite und Link.
+- [ ] Verein als verantwortlich auf Abholseite und Link; dazu `verein` in den Web-Typ `LinkAnsicht` aufnehmen (die Datenebene liefert ihn seit Phase 7) und «Vereinsverwaltung des ‹Verein›» im Verweis bei Dringendem (`feedbackDringend`).
 - [ ] **Aus Phase 5:** `konto_loeschen_info` (bleibende Teams namentlich, `einzige_person`), das Feld `einzige_person` in `verein_verwaltung_entfernen`, die Löschzahlen in `verein_ansicht`, «Verein löschen» in der Gefahrenzone von `/verein/verwaltung`; den Wortlaut von `LETZTE_VERWALTUNG` («… im Bereich «Verein» löschen») gegen die fertige Oberfläche prüfen.
 
 **Testfälle:** 15, 20, 21, 30 (übrige RPCs).
@@ -337,6 +344,7 @@ Zusätzlich:
 
 **AP:** §7.10. **Migration:** keine.
 
+- [ ] **Aus Phase 7:** optionales `team_id` als Eingabe von `spieler_link_abrufen`/`spieler_link_erneuern` (der Kern nimmt es schon, ohne leitet er über `eigenesTeamVon` ab), `teams[]` in deren Antworten, `LINK_MODELL` auf den Link über alle Teams berichtigen.
 - [ ] Vereinsangaben in `teams_abrufen` und `spielerliste_abrufen`, optionales `team_id` mit Ableitung, Rückfrage beim Herausnehmen mit `stand`, Hinweis für Konten ohne Team.
 - [ ] Werkzeugtext von `teams_abrufen` (W`lib/mcp/werkzeuge/team.ts`) berichtigen: «… das Übrige geht nur im Team-Bereich von KiFu» schliesst Umbenennen und Auflösen ein und ist seit Phase 5 (#581) falsch; beides macht nur die Vereinsverwaltung im Bereich «Verein» (in Phase 5 bewusst nicht geändert, MCP-Werkzeuge gehören zu dieser Phase).
 - [ ] `ZUGANG_DARF` und `ZUGANG_DARF_NICHT`; der PR listet jede geänderte Zeile.
