@@ -8,8 +8,9 @@
 -- vorher den synthetischen Bestand angelegt hat (Schema `prodweg`): Backfill
 -- dieses Bestands, Gleichwertigkeit der Lesepfade mit dem alten Schema und
 -- Testfall 1 (Story 1 PC 2) und die Dublette über zwei Teams (Story 2 PC 1,
--- AK 7). Teil B ändert nichts bleibend (rollback). Spätere Stories ergänzen
--- ihre Abfragen (Konten ohne Verein mit Story 12).
+-- AK 7), Umbenennen der Teams mit gleichem Schlüssel (Story 5 PC 6). Teil B
+-- ändert nichts bleibend (rollback). Spätere Stories ergänzen ihre Abfragen
+-- (Konten ohne Verein mit Story 12).
 
 \set ON_ERROR_STOP on
 
@@ -71,6 +72,15 @@ begin
                          'sm_termin_team', 'te_termin_team', 'tk_termin_team', 'stp_termin_team',
                          'tn_eingefroren_team', 'st_eingefroren_team');
   if x is not null then raise exception 'Ungeprüfte Constraints: %', x; end if;
+  -- Story 5: Ein Team ohne Mitglied bleibt bestehen; die Auflösewege der
+  -- Mitglieder sind weg (Teams ohne Mitglied sind ab dann erlaubt).
+  if to_regprocedure('team_aufloesen_wenn_leer()') is not null
+     or exists (select 1 from pg_trigger where tgname = 'team_aufloesen_wenn_leer')
+     or to_regprocedure('create_team(text)') is not null
+     or to_regprocedure('loese_team_auf(uuid,text)') is not null
+     or to_regprocedure('entferne_team_mitglied(uuid,uuid,text)') is not null then
+    raise exception 'Auflösewege der Mitglieder bestehen noch';
+  end if;
 end $$;
 rollback;
 
@@ -212,6 +222,36 @@ begin
     raise exception 'Story 2: Dublette nicht als zwei Datensätze erhalten oder Änderung fehlt';
   end if;
 end $$;
+
+-- Story 5 (PC 6, AK 22): Von den zwei Teams mit gleichem Schlüssel lässt sich
+-- eines auf eine andere Schreibweise und auf einen neuen Schlüssel umbenennen,
+-- nicht aber zurück auf den Schlüssel des anderen; ein drittes Team mit
+-- diesem Schlüssel entsteht nicht. Als Verwaltung über die RPCs.
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('verwaltung'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims_verwaltung \gset
+set local role authenticated;
+do $$
+declare
+  v_verein uuid := (select verein_id from teams where id = prodweg.id('t_gross'));
+  v jsonb;
+begin
+  v := verein_team_umbenennen(prodweg.id('t_f2'), 'Prodweg F junioren');
+  if v <> '{"status": "umbenannt", "name": "Prodweg F junioren"}'::jsonb then
+    raise exception 'Story 5: Altdublette nicht auf andere Schreibweise umbenennbar: %', v;
+  end if;
+  v := verein_team_anlegen(v_verein, 'PRODWEG F-JUNIOREN');
+  if v ->> 'status' <> 'abgewiesen' or v ->> 'grund' <> 'name_vergeben' then
+    raise exception 'Story 5: drittes Team mit vergebenem Schlüssel: %', v;
+  end if;
+  v := verein_team_umbenennen(prodweg.id('t_f2'), 'Prodweg F-Junioren Zwei');
+  if v ->> 'status' <> 'umbenannt' then raise exception 'Story 5: Umbenennen auf neuen Schlüssel: %', v; end if;
+  v := verein_team_umbenennen(prodweg.id('t_f2'), 'prodweg f junioren');
+  if v <> '{"status": "abgewiesen", "grund": "name_vergeben", "team": "Prodweg F-Junioren"}'::jsonb then
+    raise exception 'Story 5: Umbenennen zurück auf vergebenen Schlüssel: %', v;
+  end if;
+end $$;
+reset role;
 
 rollback;
 \endif

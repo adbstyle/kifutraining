@@ -21,7 +21,8 @@
 --   behält seine Abmeldungen (AP §5.3)
 -- - spieler.team_id = erstes Team (Entscheid A.1)
 -- - Team auflösen: Spieler:innen bleiben, `team_id` rückt nach bzw. wird null
---   (Entscheid A.2), auch beim Weggang des letzten Mitglieds
+--   (Entscheid A.2); beim Weggang des letzten Mitglieds bleibt das Team samt
+--   Zuordnungen (seit Story 5)
 -- Alles in einer Transaktion mit rollback; hinterlässt nichts.
 
 \set ON_ERROR_STOP on
@@ -429,8 +430,8 @@ select pg_temp.pruefe(exists (select 1 from termin_teilnahmen where termin_id = 
 
 -- ── Team auflösen (Entscheid A.2) ───────────────────────────────────────────
 -- s3 steht in T3 und T2, frei1 nur in T3. Auflösen von T3: beide bleiben,
--- s3 rückt auf T2, frei1 ohne Team. Dann verlässt b als letztes Mitglied T2
--- (team_aufloesen_wenn_leer): sb und s3 bleiben ohne Team.
+-- s3 rückt auf T2, frei1 ohne Team. Dann verlässt b als letztes Mitglied T2:
+-- Seit Story 5 bleibt T2 bestehen, sb und s3 bleiben zugeordnet.
 insert into team_spieler (team_id, spieler_id, verein_id) values (pg_temp.id('t2'), pg_temp.id('s3'), pg_temp.id('v'));
 -- b ist auch Mitglied von T3: Aus T2 genommen bleibt s3 in einem eigenen Team.
 select pg_temp.als(pg_temp.id('b'));
@@ -443,8 +444,10 @@ select pg_temp.pruefe((select team_id from spieler where id = pg_temp.id('s3')) 
                       and exists (select 1 from spieler where id = pg_temp.id('frei1') and team_id is null),
                       'Auflösen von T3');
 delete from team_members where team_id = pg_temp.id('t2');
-select pg_temp.pruefe(not exists (select 1 from teams where id = pg_temp.id('t2'))
-                      and (select count(*) from spieler where id in (pg_temp.id('s3'), pg_temp.id('sb')) and team_id is null) = 2,
+select pg_temp.pruefe(exists (select 1 from teams where id = pg_temp.id('t2'))
+                      and (select count(*) from spieler where id in (pg_temp.id('s3'), pg_temp.id('sb')) and team_id = pg_temp.id('t2')) = 2
+                      and (select count(*) from team_spieler where team_id = pg_temp.id('t2')
+                            and spieler_id in (pg_temp.id('s3'), pg_temp.id('sb'))) = 2,
                       'letztes Mitglied verlässt T2');
 
 rollback;
