@@ -45,7 +45,7 @@ const TeamKontext = createContext<TeamKontextWert | null>(null);
 export function TeamKontextProvider({ children }: { children: React.ReactNode }) {
   const [gemeldet, setGemeldet] = useState<{ team: string | null } | null>(null);
   // `melden` bleibt dieselbe Funktion: Der Melder hängt mit seinem Effekt
-  // daran, eine neue ließe ihn bei jeder Meldung erneut laufen.
+  // daran, eine neue liesse ihn bei jeder Meldung erneut laufen.
   const melden = useCallback((team: string | null) => setGemeldet({ team }), []);
   const wert = useMemo(() => ({ gemeldet, melden }), [gemeldet, melden]);
   return <TeamKontext.Provider value={wert}>{children}</TeamKontext.Provider>;

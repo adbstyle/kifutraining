@@ -711,7 +711,8 @@ $$;
 -- Sperren Verein → Team vor dem DELETE; die Kaskade nimmt Inhalte,
 -- Zuordnungen und Mitgliedschaften mit, die Spieler:innen bleiben im Verein
 -- (PC 1, 2). Rumpf nach loese_team_auf (20261114110000_vereine_bestand.sql).
---   {status: 'name_falsch', name} | {status: 'aufgeloest', bilder, spieler_bleiben}
+-- `name` nennt den Namen des aufgelösten Teams (für die Meldung danach).
+--   {status: 'name_falsch', name} | {status: 'aufgeloest', name, bilder, spieler_bleiben}
 create function verein_team_aufloesen(p_team uuid, p_teamname text) returns jsonb
 language plpgsql security definer
 set search_path = public, pg_temp
@@ -732,7 +733,7 @@ begin
   v_bilder := team_bilder(p_team);
   v_spieler := (select count(*) from team_spieler where team_id = p_team);
   delete from teams where id = p_team;
-  return jsonb_build_object('status', 'aufgeloest', 'bilder', v_bilder, 'spieler_bleiben', v_spieler);
+  return jsonb_build_object('status', 'aufgeloest', 'name', v_name, 'bilder', v_bilder, 'spieler_bleiben', v_spieler);
 end;
 $$;
 

@@ -5,7 +5,7 @@ import { ChevronRight, Shield } from "lucide-react";
 import { ButtonLink, Card, Leerzustand, SectionMessage } from "@/components/ui";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { getMeinVerein } from "@/lib/queries/verein";
-import { VEREIN_MELDUNG } from "@/lib/verein";
+import { TEAM_NUR_VERWALTUNG } from "@/lib/verein";
 import { createClient } from "@/lib/supabase/server";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { Flash } from "@/components/Flash";
@@ -48,7 +48,7 @@ export default async function TeamsPage({
           Der Verwaltung selbst sagt er nichts Neues. */}
       {!verein?.istVerwaltung && (
         <SectionMessage appearance="information" className="mb-4">
-          {VEREIN_MELDUNG.TEAM_NUR_VERWALTUNG}
+          {TEAM_NUR_VERWALTUNG}
         </SectionMessage>
       )}
       {teams.length === 0 ? (

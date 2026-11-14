@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { CSSProperties, RefObject } from "react";
 import Link from "next/link";
 import { Check, ChevronsUpDown, type LucideIcon } from "lucide-react";
@@ -70,6 +70,7 @@ export function BereichWechsler({
 }) {
   const knopfRef = useRef<HTMLButtonElement>(null);
   const listeRef = useRef<HTMLDivElement>(null);
+  const listeId = useId();
   const [lage, setLage] = useState<CSSProperties | null>(null);
   const k = schmalAb ? SCHMAL_KLASSEN[schmalAb] : null;
   const aktuell = optionen.find((o) => o.schluessel === aktiv) ?? optionen[0];
@@ -173,6 +174,7 @@ export function BereichWechsler({
             type="button"
             aria-haspopup="menu"
             aria-expanded={!!lage}
+            aria-controls={lage ? listeId : undefined}
             data-hinweis={`${aktuell.kopf}: ${aktuell.label}`}
             onClick={() => (lage ? zu() : oeffnen())}
             className={cn(rahmen, "state focus-ring-inset cursor-pointer")}
@@ -184,6 +186,7 @@ export function BereichWechsler({
           {lage && (
             <div
               ref={listeRef}
+              id={listeId}
               role="menu"
               aria-label="Bereich wählen"
               onKeyDown={onListeKey}

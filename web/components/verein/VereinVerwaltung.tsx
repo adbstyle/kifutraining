@@ -83,11 +83,10 @@ export function VereinVerwaltung({
     if (!ich) return;
     setFehler(null);
     startTransition(async () => {
+      // Gelingt es, leitet die Action selbst nach /teams um: Wer nicht mehr
+      // zur Verwaltung gehört, hat hier nichts mehr zu tun.
       const r = await entferneAusVerwaltungAktion(vereinId, ich.userId);
-      if (!r.ok) return setFehler(r.error);
-      // Wer nicht mehr zur Verwaltung gehört, hat hier nichts mehr zu tun.
-      setAustreten(false);
-      router.push("/teams");
+      if (!r.ok) setFehler(r.error);
     });
   }
 

@@ -1649,8 +1649,10 @@ export default async function Styleguide() {
             Ansichts-Umschalter (<code>TabNav</code>)
           </p>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-            Mehrere Sichten auf denselben Gegenstand - etwa ein Team mit
-            Trainingsplan, Trainings und Verwaltung. Bewusst Links statt
+            Mehrere Sichten auf denselben Gegenstand - etwa ein Termin mit
+            Termin, Training, Spieler:innen und Trainer:innen. Zwischen den
+            Seiten eines Bereichs (Team, Verein) wechselt dagegen die
+            Seitenleiste (<Siehe id="navigation" />). Bewusst Links statt
             Schaltflächen: jede Ansicht hat ihre eigene Adresse, ist damit
             weitergebbar, und der Zurück-Schritt des Browsers funktioniert.
             Deshalb auch kein Auswahl-Baustein (<Siehe id="offene-einfachauswahl" />,{" "}
@@ -1665,9 +1667,10 @@ export default async function Styleguide() {
             ariaLabel="Beispiel-Ansichten"
             className="mb-6 max-w-md"
             items={[
-              { label: "Trainingsplan", href: "#", current: true },
-              { label: "Trainings", href: "#" },
-              { label: "Team", href: "#" },
+              { label: "Termin", href: "#", current: true },
+              { label: "Training", href: "#" },
+              { label: "Spieler:innen", href: "#" },
+              { label: "Trainer:innen", href: "#" },
             ]}
           />
 

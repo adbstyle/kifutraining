@@ -48,7 +48,7 @@ export function AppNavClient({
   /** Der Verein des Kontos; `null` ohne Verein (oder wenn die Lage nicht zu
    *  lesen war — dann zeigt der Wechsler nur die Teams). */
   verein: { name: string; istVerwaltung: boolean } | null;
-  /** Der Wert des Cookies `bereich`, roh (fremde Werte fängt `leseBereich`). */
+  /** Der Wert des Cookies `kifu-bereich` (BEREICH_COOKIE), roh (fremde Werte fängt `leseBereich`). */
   gemerkt: string | null;
   /** Welchem Team gehört das geöffnete Training? Der Server schlägt das
    *  nach — der Adresse ist es nicht anzusehen (#156). Der Wert stimmt für
@@ -91,13 +91,13 @@ export function AppNavClient({
   const hatAusPfad = ausPfad !== null && bereiche.some((b) => gleicherBereich(b, ausPfad));
   useEffect(() => {
     // Wer einen Bereich betritt (Link, Adresse, Zurück), merkt ihn sich.
-    if (!ausPfad || !hatAusPfad) return;
-    setGemerkt((g) => {
-      if (gleicherBereich(g, ausPfad)) return g;
-      document.cookie = bereichCookie(ausPfad);
-      return ausPfad;
-    });
-    // `ausPfad` ist durch den Schlüssel bestimmt.
+    // Das Cookie ausserhalb des State-Updaters schreiben: React darf Updater
+    // mehrfach aufrufen, sie müssen frei von Nebenwirkungen sein.
+    if (!ausPfad || !hatAusPfad || gleicherBereich(gemerkt, ausPfad)) return;
+    document.cookie = bereichCookie(ausPfad);
+    setGemerkt(ausPfad);
+    // `ausPfad` ist durch den Schlüssel bestimmt; `gemerkt` ändert sich nur
+    // hier und in `wahl`, die das Cookie selbst schreibt.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ausPfadSchluessel, hatAusPfad]);
 

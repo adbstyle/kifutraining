@@ -15,6 +15,12 @@ export const VEREIN_SPIELER_MAX = 1000;
 /** Zwilling der Grenze im Trigger `teams_vorher` (Marker `VEREIN_TEAMS_VOLL`). */
 export const VEREIN_TEAMS_MAX = 30;
 
+/** Hinweis der Teamübersicht für alle ausser der Verwaltung. Kein Marker
+ *  (mehr): Seit Story #581 legt kein Weg am Team-Ort ein Team an, nur
+ *  `verein_team_anlegen` — darum nicht in `VEREIN_MELDUNG`, das als
+ *  Markerliste durchlaufen wird. */
+export const TEAM_NUR_VERWALTUNG = "Neue Teams legt die Vereinsverwaltung an.";
+
 /** Die Sätze zu den Markern der Datenebene (Migrationen vereine_fundament und
  *  spieler_ueber_zuordnung). `VEREIN_VOLL` (Verein) und `SPIELERLISTE_VOLL`
  *  (Team, lib/spieler.ts) bleiben getrennt: Wer abgewiesen wird, erfährt, welche
@@ -27,10 +33,6 @@ export const VEREIN_MELDUNG = {
   VEREIN_FEST: "Ein Team bleibt in seinem Verein.",
   VEREIN_VOLL: `Der Verein hat schon ${VEREIN_SPIELER_MAX} Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind.`,
   VEREIN_TEAMS_VOLL: `Der Verein hat schon ${VEREIN_TEAMS_MAX} Teams. Ein weiteres kommt erst dazu, wenn es weniger sind.`,
-  /** Kein Marker mehr: Seit Story #581 legt kein Weg am Team-Ort ein Team an,
-   *  nur `verein_team_anlegen`. Bleibt als Hinweis der Teamübersicht für alle
-   *  ausser der Verwaltung, wortgleich an einer Stelle. */
-  TEAM_NUR_VERWALTUNG: "Neue Teams legt die Vereinsverwaltung an.",
   /** Netz; die Anwendung zeigt den Status `letzte_verwaltung` mit demselben Satz. */
   LETZTE_VERWALTUNG:
     "Du bist das letzte Mitglied der Vereinsverwaltung. Nimm zuerst eine weitere Person in die Verwaltung auf. " +
@@ -68,8 +70,10 @@ export function teamnameVergebenText(team: string): string {
 
 /** Ein Schritt beim Aufnehmen einer Person (Suche oder Aufnahme): die Person
  *  samt Anzeigename — oder der fertige Satz (`PERSON_MELDUNG`), warum es nicht
- *  weitergeht. Eine Form für Kern, Actions und den Baustein `PersonAufnehmen`. */
-export type PersonSchritt = { ok: true; anzeigeName: string } | { ok: false; meldung: string };
+ *  weitergeht. Eine Form für Kern, Actions und den Baustein `PersonAufnehmen`.
+ *  `zielWeg`: Das Ziel (Team oder Verein) ist nicht mehr zu finden, etwa weil
+ *  das Team inzwischen aufgelöst ist; die offene Seite ist überholt. */
+export type PersonSchritt = { ok: true; anzeigeName: string } | { ok: false; meldung: string; zielWeg?: true };
 
 /** Der Ausgang einer Suche oder Aufnahme einer Person, als Satz — am Team-Ort
  *  und am Verein-Ort derselbe (#581). Der Schlüssel ist der `status` der RPC. */

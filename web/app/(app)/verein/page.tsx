@@ -50,7 +50,9 @@ export default async function VereinPage({
   const istVerwaltung = verein.istVerwaltung;
 
   const spalten = istVerwaltung
-    ? "sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1.6fr)_5rem]"
+    ? // Kopf und Zeilen sind getrennte Raster: die letzte Spalte fest, breit
+      // genug für ihren Kopf «Spieler:innen».
+      "sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1.6fr)_7rem]"
     : "sm:grid-cols-[minmax(0,1fr)]";
 
   return (
@@ -136,7 +138,8 @@ function verwaltungsZeile(verwaltung: VerwaltungPerson[]): string {
 
 /** Trainer:innen mit Adresse untereinander, ohne sie die Plakette (AK 4, 7). */
 function TrainerSpalte({ trainer, ohne }: { trainer: { userId: string; anzeigeName: string; email: string }[]; ohne: boolean }) {
-  if (ohne) return <Lozenge appearance="warning">ohne Trainer:in</Lozenge>;
+  // In der Spalte (flex-col) so breit wie ihr Text, nicht wie die Spalte.
+  if (ohne) return <Lozenge appearance="warning" className="self-start">ohne Trainer:in</Lozenge>;
   return (
     <>
       {trainer.map((p) => (

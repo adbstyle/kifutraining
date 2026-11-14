@@ -3955,7 +3955,7 @@ try {
     assert.equal((await admin.from("team_members").select("user_id").eq("team_id", team)).data!.length, 2, "direktes DELETE auf team_members wirkungslos");
 
     // #581 AK 26: Mitglieder lösen nicht auf, auch nicht mit dem richtigen Namen — ununterscheidbar «nicht gefunden».
-    fehler(await aufloesen(a, team, "Kern-DB-Auflösen-480"), "nicht_gefunden", VEREIN_MELDUNG.VEREIN_NICHT_GEFUNDEN);
+    fehler(await aufloesen(a, team, "Kern-DB-Auflösen-480"), "nicht_gefunden", NICHT_GEFUNDEN.team);
     assert.ok(await besteht(team));
 
     // #480 AK 6: Gross- und Kleinschreibung zählen; PC 2: Team unverändert.
@@ -3987,9 +3987,11 @@ try {
     // #480 PC 5: Danach erfährt das frühere Mitglied, dass es das Team nicht
     // mehr gibt; die Verwaltung bekommt «nicht gefunden».
     const zwei = await serienTeam("Kern-DB-Auflösen-480-B");
-    assert.equal(wert(await aufloesen(verwaltung, zwei, "Kern-DB-Auflösen-480-B")).status, "aufgeloest");
+    const aufgeloestZwei = wert(await aufloesen(verwaltung, zwei, "Kern-DB-Auflösen-480-B"));
+    assert.equal(aufgeloestZwei.status, "aufgeloest");
+    assert.equal(aufgeloestZwei.status === "aufgeloest" && aufgeloestZwei.name, "Kern-DB-Auflösen-480-B", "der Name für die Meldung kommt von der Datenebene");
     assert.deepEqual(await austritt(a, zwei), { status: "team_weg" });
-    fehler(await aufloesen(verwaltung, zwei, "Kern-DB-Auflösen-480-B"), "nicht_gefunden", VEREIN_MELDUNG.VEREIN_NICHT_GEFUNDEN);
+    fehler(await aufloesen(verwaltung, zwei, "Kern-DB-Auflösen-480-B"), "nicht_gefunden", NICHT_GEFUNDEN.team);
 
     // Unicode-Normalform zählt nicht: «ö» als o + Trema bestätigt «ö».
     const drei = await serienTeam("Kern-DB-Auflösen-480-C");
@@ -4788,10 +4790,12 @@ try {
     assert.equal((await admin.from("spieler").select("id").eq("id", lena)).data!.length, 1, "kein direktes Löschen");
   });
 
-  // Gleichnamige Teams gibt es seit #581 nur noch als Altdubletten (PC 6),
-  // die über die API nicht mehr entstehen; dass `verbleibendeTeams` nicht
-  // über den Namen geht, prüft `check:kern` mit gleichen Namen. Hier, dass die
-  // Datenebene «dieses» richtig setzt und der Satz daraus entsteht.
+  // Gleichnamige Teams gibt es seit #581 nur noch als Altdubletten (PC 6).
+  // Auch die Service-Rolle legt keine mehr an (der Trigger `teams_vorher`
+  // weist sie ab); dass die Datenebene «dieses» bei echten gleichnamigen
+  // Teams über die Kennung setzt, prüft darum zuordnen_herausnehmen.sql
+  // (Altdubletten unter `replica`), dass `verbleibendeTeams` nicht über den
+  // Namen geht, `check:kern`. Hier der Weg durch Kern und Satz.
   await pruefe("Herausnehmen mit einem weiteren Team: verbleibend über «dieses» (#579 AK 14; #581 PC 6)", async () => {
     const NAME = "Kern-DB-Gleichnamig";
     const ZWEI = "Kern-DB-Gleichnamig-Zwei";
@@ -6835,6 +6839,8 @@ try {
   // Ergebnis und Satz, über den Nutzer-Client.
   const emailVon = async (k: Konto) => (await admin.auth.admin.getUserById(k.id)).data.user!.email!;
   const NG_VEREIN = VEREIN_MELDUNG.VEREIN_NICHT_GEFUNDEN;
+  // Team-adressierte RPCs: kein Recht oder Team aufgelöst heisst dort «Team nicht gefunden».
+  const NG_TEAM = NICHT_GEFUNDEN.team;
   /** Ein zweiter Verein samt eigener Verwaltung (für `anderer_verein`). */
   let fremdVerwaltung: Konto | null = null;
   const fremdeVerwaltung = async () => {
@@ -6867,10 +6873,10 @@ try {
     await admin.from("team_members").insert({ team_id: zwei, user_id: a.id });
     const fremd = await fremdeVerwaltung();
     for (const k of [a, fremd]) {
-      fehler(await benenneTeamUm(k.supabase, k.id, { teamId: zwei, name: "Kern-DB-581-Fremd" }), "nicht_gefunden", NG_VEREIN);
+      fehler(await benenneTeamUm(k.supabase, k.id, { teamId: zwei, name: "Kern-DB-581-Fremd" }), "nicht_gefunden", NG_TEAM);
       fehler(await legeTeamAn(k.supabase, k.id, { vereinId: verein, name: "Kern-DB-581-Fremd" }), "nicht_gefunden", NG_VEREIN);
     }
-    fehler(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: randomUUID(), name: "Kern-DB-581-C" }), "nicht_gefunden", NG_VEREIN);
+    fehler(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: randomUUID(), name: "Kern-DB-581-C" }), "nicht_gefunden", NG_TEAM);
     fehler(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: "kein-uuid", name: "Kern-DB-581-C" }), "nicht_gefunden", NICHT_GEFUNDEN.team);
     // Netz: Auch an der RPC vorbei (Admin) kein zweiter Name im Verein.
     const netz = await admin.from("teams").insert({ name: "Kern-DB 581 B", verein_id: verein });
@@ -6941,20 +6947,20 @@ try {
     // AK 26: Mitglieder und fremde Verwaltung handeln nicht am Verein-Ort.
     await admin.from("team_members").insert({ team_id: team, user_id: a.id });
     for (const k of [a, fremd]) {
-      fehler(await findePerson(k.supabase, k.id, { vereinId: verein, teamId: team, email: mailV }), "nicht_gefunden", NG_VEREIN);
-      fehler(await nimmInsTeamAuf(k.supabase, k.id, { teamId: team, email: mailV }), "nicht_gefunden", NG_VEREIN);
-      fehler(await nimmMichInsTeam(k.supabase, k.id, { teamId: team }), "nicht_gefunden", NG_VEREIN);
-      fehler(await entferneAusTeam(k.supabase, k.id, { teamId: team, userId: a.id }), "nicht_gefunden", NG_VEREIN);
+      fehler(await findePerson(k.supabase, k.id, { vereinId: verein, teamId: team, email: mailV }), "nicht_gefunden", NG_TEAM);
+      fehler(await nimmInsTeamAuf(k.supabase, k.id, { teamId: team, email: mailV }), "nicht_gefunden", NG_TEAM);
+      fehler(await nimmMichInsTeam(k.supabase, k.id, { teamId: team }), "nicht_gefunden", NG_TEAM);
+      fehler(await entferneAusTeam(k.supabase, k.id, { teamId: team, userId: a.id }), "nicht_gefunden", NG_TEAM);
     }
     // Ein Team eines anderen Vereins bei der Suche: ebenso.
-    fehler(await findePerson(verwaltung.supabase, verwaltung.id, { vereinId: verein, teamId: randomUUID(), email: mailA }), "nicht_gefunden", NG_VEREIN);
+    fehler(await findePerson(verwaltung.supabase, verwaltung.id, { vereinId: verein, teamId: randomUUID(), email: mailA }), "nicht_gefunden", NG_TEAM);
     // Nach dem Auflösen: «nicht gefunden» statt eines Rohtexts.
     wert(await loeseTeamAuf(verwaltung.supabase, verwaltung.id, { teamId: team, teamname: "Kern-DB-581-Personen" }));
-    fehler(await nimmMichInsTeam(verwaltung.supabase, verwaltung.id, { teamId: team }), "nicht_gefunden", NG_VEREIN);
-    fehler(await entferneAusTeam(verwaltung.supabase, verwaltung.id, { teamId: team, userId: a.id }), "nicht_gefunden", NG_VEREIN);
-    fehler(await nimmInsTeamAuf(verwaltung.supabase, verwaltung.id, { teamId: team, email: mailA }), "nicht_gefunden", NG_VEREIN);
-    fehler(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: team, name: "Kern-DB-581-Weg" }), "nicht_gefunden", NG_VEREIN);
-    fehler(await ladeVereinTeamAnsicht(verwaltung.supabase, verwaltung.id, { teamId: team }), "nicht_gefunden", NG_VEREIN);
+    fehler(await nimmMichInsTeam(verwaltung.supabase, verwaltung.id, { teamId: team }), "nicht_gefunden", NG_TEAM);
+    fehler(await entferneAusTeam(verwaltung.supabase, verwaltung.id, { teamId: team, userId: a.id }), "nicht_gefunden", NG_TEAM);
+    fehler(await nimmInsTeamAuf(verwaltung.supabase, verwaltung.id, { teamId: team, email: mailA }), "nicht_gefunden", NG_TEAM);
+    fehler(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: team, name: "Kern-DB-581-Weg" }), "nicht_gefunden", NG_TEAM);
+    fehler(await ladeVereinTeamAnsicht(verwaltung.supabase, verwaltung.id, { teamId: team }), "nicht_gefunden", NG_TEAM);
   });
 
   await pruefe("Verein: Bremse der Personensuche — nicht gefunden und anderer Verein zählen, gefunden nicht (#581 AK 13; AP §4.3)", async () => {
@@ -7014,7 +7020,7 @@ try {
     const zweites = await serienTeam("Kern-DB-581-Heraus-2");
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     wert(await ordneSpielerZu(verwaltung.supabase, verwaltung.id, { teamId: zweites, teamName: "Kern-DB-581-Heraus-2", spielerIds: [lena] }));
-    fehler(await nimmSpielerAusTeamImVerein(a.supabase, a.id, { teamId: team, spielerId: lena }), "nicht_gefunden", NG_VEREIN);
+    fehler(await nimmSpielerAusTeamImVerein(a.supabase, a.id, { teamId: team, spielerId: lena }), "nicht_gefunden", NG_TEAM);
     assert.deepEqual(wert(await nimmSpielerAusTeamImVerein(verwaltung.supabase, verwaltung.id, { teamId: team, spielerId: lena })), { ohneTeam: false });
     assert.deepEqual(wert(await nimmSpielerAusTeamImVerein(verwaltung.supabase, verwaltung.id, { teamId: zweites, spielerId: lena })), { ohneTeam: true });
     fehler(await nimmSpielerAusTeamImVerein(verwaltung.supabase, verwaltung.id, { teamId: zweites, spielerId: lena }), "nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN);
@@ -7075,9 +7081,9 @@ try {
       assert.deepEqual(Object.keys(t.spieler[0]).sort(), ["id", "jahrgang", "nachname", "schnuppert", "teams", "vorname"], "AK 10: keine J+S-Nummer, kein Link");
       assert.deepEqual(t.aufloesung, { trainings: 0, termine: 1, spiele: 1, kader: 1 }, "AK 25");
       // Mitglied, fremde Verwaltung und Konto ohne Verein: nicht gefunden.
-      fehler(await ladeVereinTeamAnsicht(a.supabase, a.id, { teamId: mitA }), "nicht_gefunden", NG_VEREIN);
+      fehler(await ladeVereinTeamAnsicht(a.supabase, a.id, { teamId: mitA }), "nicht_gefunden", NG_TEAM);
       const fremd = await fremdeVerwaltung();
-      fehler(await ladeVereinTeamAnsicht(fremd.supabase, fremd.id, { teamId: mitA }), "nicht_gefunden", NG_VEREIN);
+      fehler(await ladeVereinTeamAnsicht(fremd.supabase, fremd.id, { teamId: mitA }), "nicht_gefunden", NG_TEAM);
       fehler(await ladeVereinAnsicht(fremd.supabase, fremd.id, { vereinId: verein }), "nicht_gefunden", NG_VEREIN);
       const ohne = await wegwerfKonto();
       fehler(await ladeVereinAnsicht(ohne.supabase, ohne.id, { vereinId: verein }), "nicht_gefunden", NG_VEREIN);

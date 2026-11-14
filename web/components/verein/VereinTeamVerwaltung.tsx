@@ -44,7 +44,15 @@ import { teamNameProblem } from "@/lib/team";
 
    Alles hier geht über die `verein_*`-Aktionen. Umbenennen und Auflösen sind
    Knopf und Dialog; der Dialog bleibt bei einer Abweisung offen und nennt sie
-   am Feld bzw. als Section Message (eine Snackbar läge unter ihm, #234). */
+   am Feld bzw. als Section Message (eine Snackbar läge unter ihm, #234). Ist
+   das Team inzwischen aufgelöst (oder das Recht weg), nennt er «Team nicht
+   gefunden», und die Seite lädt neu: Sie leitet dann zur Übersicht. */
+
+/** Die Action fand ihr Ziel nicht mehr (Team aufgelöst, Recht weg): Die
+ *  Seite ist überholt und wird neu geladen. */
+function zielWeg(feld?: string) {
+  return feld === "team_id" || feld === "verein_id";
+}
 
 /** «1 Training», «2 Trainings». */
 function n(zahl: number, eins: string, mehr: string) {
@@ -54,6 +62,26 @@ function n(zahl: number, eins: string, mehr: string) {
 /** «A», «A und B», «A, B und C». */
 function aufzaehlung(teile: string[]) {
   return teile.length <= 1 ? (teile[0] ?? "") : `${teile.slice(0, -1).join(", ")} und ${teile.at(-1)}`;
+}
+
+/** Der Satz der Gefahrenzone: was mit dem Team verschwindet (nur, was es
+ *  gibt) und was mit den Spieler:innen geschieht (nur, wenn es welche gibt). */
+function aufloesenBeschreibung(team: VereinTeamAnsicht) {
+  const f = team.aufloesung;
+  const inhalte = [
+    f.trainings > 0 && n(f.trainings, "Training", "Trainings"),
+    f.termine > 0 && n(f.termine, "Termin", "Termine"),
+    f.spiele > 0 && n(f.spiele, "Spiel", "Spiele"),
+    f.kader > 0 && n(f.kader, "Kader", "Kader"),
+  ].filter((t): t is string => !!t);
+  const loescht = inhalte.length > 0 ? `Auflösen löscht ${aufzaehlung(inhalte)} des Teams.` : "Auflösen löscht das Team.";
+  const spieler =
+    team.spielerZahl === 0
+      ? ""
+      : team.spielerZahl === 1
+        ? " Die Spieler:in bleibt samt privatem Link im Verein; hat sie kein anderes Team, ist sie danach ohne Team."
+        : ` Die ${team.spielerZahl} Spieler:innen bleiben samt privatem Link im Verein; wer kein anderes Team hat, ist danach ohne Team.`;
+  return `${loescht}${spieler} Zum Auflösen gibst du den Teamnamen ein.`;
 }
 
 export function VereinTeamVerwaltung({
@@ -79,7 +107,11 @@ export function VereinTeamVerwaltung({
   function michAufnehmen() {
     startTransition(async () => {
       const r = await nimmMichInsTeamAktion(team.id);
-      if (!r.ok) return melde(r.error);
+      if (!r.ok) {
+        melde(r.error);
+        if (zielWeg(r.feld)) router.refresh();
+        return;
+      }
       router.refresh();
       melde(`Du bist jetzt im Team ${team.name}.`);
     });
@@ -89,7 +121,11 @@ export function VereinTeamVerwaltung({
     setEntfernenFehler(null);
     startTransition(async () => {
       const r = await entferneAusTeamAktion(team.id, p.userId);
-      if (!r.ok) return setEntfernenFehler(r.error);
+      if (!r.ok) {
+        setEntfernenFehler(r.error);
+        if (zielWeg(r.feld)) router.refresh();
+        return;
+      }
       setEntfernen(null);
       router.refresh();
       melde(`${p.anzeigeName} ist nicht mehr im Team.`);
@@ -100,7 +136,11 @@ export function VereinTeamVerwaltung({
     setHerausnehmenFehler(null);
     startTransition(async () => {
       const r = await nimmSpielerAusTeamImVereinAktion(team.id, s.id);
-      if (!r.ok) return setHerausnehmenFehler(r.error);
+      if (!r.ok) {
+        setHerausnehmenFehler(r.error);
+        if (zielWeg(r.feld)) router.refresh();
+        return;
+      }
       setHerausnehmen(null);
       router.refresh();
       melde(`${s.vorname} ist nicht mehr im Team ${team.name}.`);
@@ -296,14 +336,7 @@ export function VereinTeamVerwaltung({
       </Card>
 
       <Gefahrenzone
-        beschreibung={`Auflösen löscht ${aufzaehlung([
-          n(team.aufloesung.trainings, "Training", "Trainings"),
-          n(team.aufloesung.termine, "Termin", "Termine"),
-          n(team.aufloesung.spiele, "Spiel", "Spiele"),
-          n(team.aufloesung.kader, "Kader", "Kader"),
-        ])} des Teams. ${
-          team.spielerZahl === 1 ? "Die 1 Spieler:in bleibt" : `Die ${team.spielerZahl} Spieler:innen bleiben`
-        } samt privatem Link im Verein; wer kein anderes Team hat, ist danach ohne Team. Zum Auflösen gibst du den Teamnamen ein.`}
+        beschreibung={aufloesenBeschreibung(team)}
       >
         <Button variant="danger" aria-haspopup="dialog" onClick={() => setAufloesen(true)}>
           <Trash2 size={18} strokeWidth={2} aria-hidden />
@@ -321,8 +354,16 @@ export function VereinTeamVerwaltung({
         tragweite={[
           `Sie gehört damit zum ${vereinName}. Solange sie dabei ist, kann sie keinem anderen Verein beitreten und keinen gründen. Die Vereinsverwaltung und das Trainerteam sehen ihre E-Mail-Adresse. Prüfe, dass es das richtige Konto ist.`,
         ]}
-        suche={(email) => sucheVereinPersonAktion(vereinId, email, team.id)}
-        aufnahme={(email) => nimmInsTeamAufAktion(team.id, email)}
+        suche={async (email) => {
+          const r = await sucheVereinPersonAktion(vereinId, email, team.id);
+          if (!r.ok && r.zielWeg) router.refresh();
+          return r;
+        }}
+        aufnahme={async (email) => {
+          const r = await nimmInsTeamAufAktion(team.id, email);
+          if (!r.ok && r.zielWeg) router.refresh();
+          return r;
+        }}
         onAufgenommen={(anzeigeName) => {
           router.refresh();
           melde(`${anzeigeName} ist jetzt im Team.`);
@@ -416,7 +457,11 @@ function TeamUmbenennen({ offen, onClose, teamId, name }: { offen: boolean; onCl
     setFehler(null);
     startTransition(async () => {
       const r = await benenneTeamUmAktion(teamId, neu);
-      if (!r.ok) return setFehler({ feld: r.feld === "name", text: r.error });
+      if (!r.ok) {
+        setFehler({ feld: r.feld === "name", text: r.error });
+        if (zielWeg(r.feld)) router.refresh();
+        return;
+      }
       onClose();
       router.refresh();
       melde("Teamname gespeichert.");
@@ -469,8 +514,8 @@ function TeamUmbenennen({ offen, onClose, teamId, name }: { offen: boolean; onCl
 /* Auflösen: der Dialog nennt, was mit dem Team verschwindet, und verlangt den
    Teamnamen (AK 24, 25). Die Spieler:innen bleiben im Verein (PC 1). Stimmt der
    Name nicht mehr, weil das Team inzwischen umbenannt wurde, bleibt der Dialog
-   offen und nennt den aktuellen Namen. Danach führt der Weg zur Übersicht, die
-   es meldet. */
+   offen und nennt den aktuellen Namen. Danach leitet die Action zur Übersicht,
+   die es meldet. */
 function TeamAufloesen({ offen, onClose, team }: { offen: boolean; onClose: () => void; team: VereinTeamAnsicht }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -492,15 +537,12 @@ function TeamAufloesen({ offen, onClose, team }: { offen: boolean; onClose: () =
     if (!passt) return;
     setFehler(null);
     startTransition(async () => {
+      // Gelingt es, leitet die Action selbst zur Übersicht um.
       const r = await loeseTeamAufAktion(team.id, eingabe);
-      if (!r.ok) {
-        setFehler(r.error);
-        // Der Name hat sich geändert: die Ansicht nachladen, damit der
-        // verlangte Name im Dialog der aktuelle ist.
-        if (r.feld === "teamname") router.refresh();
-        return;
-      }
-      router.push(`/verein?aufgeloest=${encodeURIComponent(team.name)}`);
+      setFehler(r.error);
+      // Der Name hat sich geändert: die Ansicht nachladen, damit der verlangte
+      // Name im Dialog der aktuelle ist. Ist das Team weg, leitet sie um.
+      if (r.feld === "teamname" || zielWeg(r.feld)) router.refresh();
     });
   }
 
@@ -537,11 +579,20 @@ function TeamAufloesen({ offen, onClose, team }: { offen: boolean; onClose: () =
           <li>{n(f.trainings, "Team-Training", "Team-Trainings")}</li>
           <li>{n(f.termine, "Trainingstermin", "Trainingstermine")} samt Abmeldungen und Anwesenheiten</li>
           <li>{n(f.spiele, "Spiel", "Spiele")} samt Meldungen und Aufgeboten</li>
-          <li>die Zuordnung von {n(team.spielerZahl, "Spieler:in", "Spieler:innen")} zu diesem Team</li>
+          {team.spielerZahl > 0 && (
+            <li>die Zuordnung von {n(team.spielerZahl, "Spieler:in", "Spieler:innen")} zu diesem Team</li>
+          )}
           <li>{n(f.kader, "Kader", "Kader")}</li>
         </ul>
         <p>Persönliche Trainings der Trainer:innen bleiben erhalten - auch Kopien aus diesem Team.</p>
-        {team.spielerZahl > 0 && (
+        {team.spielerZahl === 1 && (
+          <p>
+            Die Spieler:in bleibt samt privatem Link im Verein. Gehört sie keinem anderen Team an, ist sie danach
+            keinem Team mehr zugeordnet; ändern, einem Team zuordnen oder löschen kann sie dann nur die
+            Vereinsverwaltung.
+          </p>
+        )}
+        {team.spielerZahl > 1 && (
           <p>
             Die Spieler:innen bleiben samt privatem Link im Verein. Wer keinem anderen Team angehört, ist danach
             keinem Team mehr zugeordnet; ändern, einem Team zuordnen oder löschen kann sie dann nur die

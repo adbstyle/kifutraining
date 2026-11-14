@@ -282,6 +282,7 @@ import {
 } from "../lib/probe";
 import {
   PERSON_MELDUNG,
+  TEAM_NUR_VERWALTUNG,
   VEREIN_MELDUNG,
   VEREIN_NAME_MAX,
   VEREIN_SPIELER_MAX,
@@ -2290,6 +2291,16 @@ pruefe("Verein-Kern nur für die Anwendung: kein MCP-Modul importiert ihn, kein 
   assert.deepEqual(treffer, [], `Verein-Kern im KI-Weg: ${treffer.join(", ")}`);
 });
 
+pruefe("Rollen nach Ort (#581, Architekturplan §4): Team-Seiten und Team-Bausteine importieren weder Verein-Actions noch Verein-Kern", () => {
+  // Am Team-Ort wirkt nur die Mitgliedschaft; was die Verwaltung darf, liegt
+  // im Bereich «Verein». Die Vereinslage zu lesen (lib/queries/verein) bleibt erlaubt.
+  const treffer: string[] = [];
+  for (const ordner of ["components/team", "app/(app)/team"])
+    for (const datei of quelldateien(join(web, ordner)))
+      if (/lib\/(actions|kern)\/verein["']/.test(readFileSync(datei, "utf8"))) treffer.push(relative(web, datei));
+  assert.deepEqual(treffer, [], `Verein-Actions oder Verein-Kern am Team-Ort: ${treffer.join(", ")}`);
+});
+
 pruefe("Vereinsverwaltung (#581): Zwillinge, Sätze zum Aufnehmen und Bereich der Seitenleiste", () => {
   // Zwilling des CHECK `verein_name`.
   assert.equal(VEREIN_NAME_MAX, 60);
@@ -2754,11 +2765,13 @@ pruefe("Verein (#577): Marker der Datenebene tragen die Sätze der Oberfläche, 
   assert.equal(SPIELER_MELDUNG.SPIELERLISTE_VOLL, "Das Team hat schon 100 Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind.");
   assert.equal(VEREIN_MELDUNG.VEREIN_VOLL, "Der Verein hat schon 1000 Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind.");
   assert.equal(VEREIN_MELDUNG.VEREIN_TEAMS_VOLL, "Der Verein hat schon 30 Teams. Ein weiteres kommt erst dazu, wenn es weniger sind.");
-  assert.equal(VEREIN_MELDUNG.TEAM_NUR_VERWALTUNG, "Neue Teams legt die Vereinsverwaltung an.");
+  // Kein Marker mehr (#581): eigene Konstante, nicht in der Markerliste.
+  assert.equal(TEAM_NUR_VERWALTUNG, "Neue Teams legt die Vereinsverwaltung an.");
+  assert.ok(!("TEAM_NUR_VERWALTUNG" in VEREIN_MELDUNG), "TEAM_NUR_VERWALTUNG steht wieder in VEREIN_MELDUNG");
   assert.equal(VEREIN_MELDUNG.VEREIN_NICHT_GEFUNDEN, "Verein nicht gefunden.");
   assert.notEqual(SPIELER_MELDUNG.SPIELERLISTE_VOLL, VEREIN_MELDUNG.VEREIN_VOLL, "AK 7: Team- und Vereinsgrenze unterscheiden sich");
   // Die heiklen Paare aus Architekturplan §5.2 sind je als Ganzes eindeutig.
-  for (const [a, b] of [["VEREIN_VOLL", "VEREIN_TEAMS_VOLL"], ["TEAM_NUR_VERWALTUNG", "LETZTE_VERWALTUNG"]] as const) {
+  for (const [a, b] of [["VEREIN_VOLL", "VEREIN_TEAMS_VOLL"]] as const) {
     assert.equal(fehlerMeldung(`x ${a} y`), VEREIN_MELDUNG[a]);
     assert.equal(fehlerMeldung(`x ${b} y`), VEREIN_MELDUNG[b]);
   }

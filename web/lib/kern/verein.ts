@@ -23,6 +23,13 @@ function vereinFehler(e: { message: string; code?: string }) {
     : spielerFehler(e);
 }
 
+/** Dasselbe für die Team-adressierten `verein_*`-RPCs: Kein Recht und ein
+ *  inzwischen aufgelöstes Team sind ununterscheidbar (`VEREIN_NICHT_GEFUNDEN`);
+ *  dort heisst es «Team nicht gefunden» am Feld `team_id`. */
+function teamFehler(e: { message: string; code?: string }) {
+  return e.message.includes("VEREIN_NICHT_GEFUNDEN") ? teamNichtGefunden() : spielerFehler(e);
+}
+
 /**
  * Der Spielerbestand des Vereins am Verein-Ort (Epic Vereine #575, Story
  * #579): die Grundfassung der Liste und das Zuordnen zu einem Team — nur für
@@ -205,7 +212,7 @@ export async function ladeVereinTeamAnsicht(
 ): Promise<KernErgebnis<VereinTeamAnsicht>> {
   if (!istUuid(e.teamId)) return teamNichtGefunden();
   const { data, error } = await supabase.rpc("verein_team_ansicht", { p_team: e.teamId });
-  if (error) return vereinFehler(error);
+  if (error) return teamFehler(error);
   const r = data as {
     id: string;
     name: string;
@@ -264,7 +271,7 @@ export async function benenneTeamUm(
   if (problem) return fehlschlag("eingabe", problem, { feld: "name" });
   if (!istUuid(e.teamId)) return teamNichtGefunden();
   const { data, error } = await supabase.rpc("verein_team_umbenennen", { p_team: e.teamId, p_name: e.name.trim() });
-  if (error) return vereinFehler(error);
+  if (error) return teamFehler(error);
   const r = data as { status: "umbenannt"; name: string } | { status: "abgewiesen"; grund: "name_vergeben"; team: string };
   if (r.status === "abgewiesen") return nameVergeben(r.team);
   return ok({ name: r.name });
@@ -285,11 +292,11 @@ export async function benenneVereinUm(
   return ok({ name: (data as { name: string }).name });
 }
 
-/** Der Ausgang des Auflösens: aufgelöst (mit den Bildern, die der Aufrufer
- *  danach aus dem Speicher räumt) oder der Name stimmte nicht — dann steht
- *  der aktuelle Name da. */
+/** Der Ausgang des Auflösens: aufgelöst (mit dem Namen des Teams und den
+ *  Bildern, die der Aufrufer danach aus dem Speicher räumt) oder der Name
+ *  stimmte nicht — dann steht der aktuelle Name da. */
 export type AufloesungErgebnis =
-  | { status: "aufgeloest"; bilder: { id: string; bild_url: string | null }[]; spielerBleiben: number }
+  | { status: "aufgeloest"; name: string; bilder: { id: string; bild_url: string | null }[]; spielerBleiben: number }
   | { status: "name_falsch"; name: string };
 
 /** Ein Team auflösen, nur mit dem bestätigten aktuellen Teamnamen. */
@@ -300,12 +307,12 @@ export async function loeseTeamAuf(
 ): Promise<KernErgebnis<AufloesungErgebnis>> {
   if (!istUuid(e.teamId)) return teamNichtGefunden();
   const { data, error } = await supabase.rpc("verein_team_aufloesen", { p_team: e.teamId, p_teamname: e.teamname.trim() });
-  if (error) return vereinFehler(error);
+  if (error) return teamFehler(error);
   const r = data as
-    | { status: "aufgeloest"; bilder: { id: string; bild_url: string | null }[]; spieler_bleiben: number }
+    | { status: "aufgeloest"; name: string; bilder: { id: string; bild_url: string | null }[]; spieler_bleiben: number }
     | { status: "name_falsch"; name: string };
   if (r.status === "name_falsch") return ok({ status: "name_falsch", name: r.name });
-  return ok({ status: "aufgeloest", bilder: r.bilder ?? [], spielerBleiben: r.spieler_bleiben });
+  return ok({ status: "aufgeloest", name: r.name, bilder: r.bilder ?? [], spielerBleiben: r.spieler_bleiben });
 }
 
 /** Der Status einer Suche oder Aufnahme als Schritt. Fachliche Abweisungen
@@ -340,7 +347,7 @@ export async function findePerson(
     p_email: adresse,
     p_team: e.teamId ?? null,
   });
-  if (error) return vereinFehler(error);
+  if (error) return e.teamId === undefined ? vereinFehler(error) : teamFehler(error);
   return personSchritt(data as { status: string; anzeige_name?: string }, "gefunden");
 }
 
@@ -354,7 +361,7 @@ export async function nimmInsTeamAuf(
   if (typeof adresse !== "string") return adresse;
   if (!istUuid(e.teamId)) return teamNichtGefunden();
   const { data, error } = await supabase.rpc("verein_team_aufnehmen", { p_team: e.teamId, p_email: adresse });
-  if (error) return vereinFehler(error);
+  if (error) return teamFehler(error);
   return personSchritt(data as { status: string; anzeige_name?: string }, "aufgenommen");
 }
 
@@ -367,7 +374,7 @@ export async function nimmMichInsTeam(
 ): Promise<KernErgebnis<{ teamId: string }>> {
   if (!istUuid(e.teamId)) return teamNichtGefunden();
   const { error } = await supabase.rpc("verein_team_beitreten", { p_team: e.teamId });
-  if (error) return vereinFehler(error);
+  if (error) return teamFehler(error);
   return ok({ teamId: e.teamId });
 }
 
@@ -381,7 +388,7 @@ export async function entferneAusTeam(
   if (!istUuid(e.teamId)) return teamNichtGefunden();
   if (!istUuid(e.userId)) return fehlschlag("nicht_gefunden", "Person nicht gefunden.", { feld: "user_id" });
   const { error } = await supabase.rpc("verein_team_mitglied_entfernen", { p_team: e.teamId, p_user: e.userId });
-  if (error) return vereinFehler(error);
+  if (error) return teamFehler(error);
   return ok({ teamId: e.teamId });
 }
 
@@ -426,6 +433,6 @@ export async function nimmSpielerAusTeamImVerein(
   if (!istUuid(e.spielerId))
     return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, { feld: "spieler_id" });
   const { data, error } = await supabase.rpc("verein_spieler_aus_team_nehmen", { p_team: e.teamId, p_spieler: e.spielerId });
-  if (error) return vereinFehler(error);
+  if (error) return teamFehler(error);
   return ok({ ohneTeam: !!(data as { ohne_team: boolean }).ohne_team });
 }

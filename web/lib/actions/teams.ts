@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { revalidiereMitgliedschaften, revalidiereTeam } from "@/lib/revalidate";
 import { fachlicheMeldung } from "@/lib/training-bedingungen";
@@ -35,9 +35,11 @@ function rpcFehlerMeldung(e: { message: string }): string {
 }
 
 /** Der Satz zu einem Status der Suche oder Aufnahme; ein unbekannter Status
- *  (eine neuere Datenebene) fällt auf die allgemeine Meldung. */
+ *  (eine neuere Datenebene) steht im Log und fällt auf die allgemeine Meldung. */
 function personMeldung(status: string): string {
-  return status in PERSON_MELDUNG ? PERSON_MELDUNG[status as keyof typeof PERSON_MELDUNG] : FEHLER;
+  if (status in PERSON_MELDUNG) return PERSON_MELDUNG[status as keyof typeof PERSON_MELDUNG];
+  console.error("[team] unbekannter Status der Personensuche", status);
+  return FEHLER;
 }
 
 /** Vor der Aufnahme nachsehen, wer sich hinter der Adresse verbirgt (Story 4
@@ -90,18 +92,22 @@ export async function nimmMitgliedAuf(teamId: string, email: string): Promise<Pe
 
 // ── Story 13: Verlassen und Entfernen ────────────────────────────────────────
 
-/** Ergebnis eines Austritts oder einer Entfernung:
- *  - `entfernt`: die Person ist nicht mehr im Team — auch, wenn sie es schon
- *    nicht mehr war;
- *  - `team_weg`: die Vereinsverwaltung hat das Team inzwischen aufgelöst. */
-export type MitgliedschaftResult =
-  | { status: "entfernt" }
-  | { status: "team_weg" }
-  | { status: "fehler"; error: string };
+/** Ergebnis einer Entfernung, die auf der Seite bleibt: Die Person ist nicht
+ *  mehr im Team — auch, wenn sie es schon nicht mehr war. Alles andere leitet
+ *  die Action selbst um (siehe `entferneMitglied`). */
+type MitgliedschaftResult = { status: "entfernt" } | { status: "fehler"; error: string };
 
 /** Ein Mitglied entfernen — sich selbst („verlassen") oder eine andere Person.
  *  Beides derselbe Vorgang. Geht die letzte Person, bleibt das Team bestehen:
- *  Auflösen kann es nur die Vereinsverwaltung (#581). */
+ *  Auflösen kann es nur die Vereinsverwaltung (#581).
+ *
+ *  Macht der Vorgang die offene Team-Seite ungültig, leitet die Action selbst
+ *  um: nach dem eigenen Austritt nach `/teams`, und hat die Verwaltung das
+ *  Team inzwischen aufgelöst (`team_weg`), nach `/teams?weg=1`, das es meldet
+ *  (#480 PC 5). Eine Weiterleitung im Client liefe gegen die Antwort der
+ *  Action: `revalidiereMitgliedschaften` rendert die offene Seite neu, und
+ *  deren Rahmen leitete ohne den Hinweis nach `/teams` um. Mit `redirect`
+ *  rendert die Antwort nur das Ziel. */
 export async function entferneMitglied(teamId: string, userId: string): Promise<MitgliedschaftResult> {
   const supabase = await createClient();
   const {
@@ -122,15 +128,14 @@ export async function entferneMitglied(teamId: string, userId: string): Promise<
   // Mitgliedschaften wechseln: Der Wechsler der Seitenleiste liest sie im
   // Wurzel-Layout.
   revalidiereMitgliedschaften();
-  // Die Ansichten eines Teams, das es nicht mehr gibt, nicht neu rendern: Ihr
-  // Rahmen leitete dann schon in der Antwort auf /teams um, und die Oberfläche
-  // käme nicht mehr dazu, den Ausgang zu melden (PC 5).
-  if (res.status === "team_weg") revalidatePath("/teams");
-  else revalidiereTeam(teamId);
-  return { status: res.status };
+  if (res.status === "team_weg") redirect("/teams?weg=1");
+  revalidiereTeam(teamId);
+  if (userId === user.id) redirect("/teams");
+  return { status: "entfernt" };
 }
 
-/** Das Team selbst verlassen (Story 13 AK 1–3). */
+/** Das Team selbst verlassen (Story 13 AK 1–3). Gelingt es, leitet die
+ *  Action um; zurück kommt nur ein Fehler. */
 export async function verlasseTeam(teamId: string): Promise<MitgliedschaftResult> {
   const supabase = await createClient();
   const {
