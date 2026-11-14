@@ -234,7 +234,7 @@ Zusätzlich:
 - [x] `create_team` und `loese_team_auf` fallen; Team anlegen ohne Mitgliedschaft; `team_aufloesen_wenn_leer` fällt.
 - [x] **Bereich-Wechsler** in der Seitenleiste kommt hier, weil der Bereich «Verein» ab jetzt für alle Vereinsmitglieder besteht. Die Verwaltung sehen Trainer:innen im Kopf von «Verein › Teams».
 - [x] Bausteine `PersonAufnehmen` und `NamenBestaetigen` zuerst in den Styleguide.
-- [ ] Review Focus 4: E2E mit einem Konto, das Verwaltung **und** Mitglied ist. Im Team erscheinen keine Verwaltungsaktionen, und die Team-RPCs geben ihm nicht mehr als einem Mitglied. (Datenebene belegt in `vereine_verwaltung.sql`; der Browser-Lauf steht aus.)
+- [x] Review Focus 4: E2E mit einem Konto, das Verwaltung **und** Mitglied ist. Im Team erscheinen keine Verwaltungsaktionen, und die Team-RPCs geben ihm nicht mehr als einem Mitglied. (Datenebene belegt in `vereine_verwaltung.sql`; im Browser bestanden.)
 - [x] **Aus dem Review von Story 3:** `termin_kader_setzen` (`supabase/migrations/20261018130000_termin_kader.sql`, letzte Fassung) und `termin_der_serie_folgen` (`supabase/migrations/20261031120000_treffpunkt_training.sql`, letzte Fassung) sperren zuerst die Termin-Zeile und nehmen erst danach über `kader_vorher` die Teamsperre, umgekehrt zur Sperrordnung Verein → Person → Teams → `spieler`-Zeile → Termin. Zusammen mit dem Auflösen eines Teams, dem Austritt des letzten Mitglieds oder der Konto-Löschung kann das einen Deadlock geben (40P01, ein Aufruf bricht ab, keine falschen Daten). Bewusst hingenommen bis hierher; hier beide Funktionen auf «Team vor Termin» umstellen und mit einem Rennen-Fall belegen.
 
 **Testfälle:** 3 (zweiter Teil), 4 (Teil Teams), 14, 16, 27, 31.
@@ -325,6 +325,7 @@ Zusätzlich:
 **AP:** §7.10. **Migration:** keine.
 
 - [ ] Vereinsangaben in `teams_abrufen` und `spielerliste_abrufen`, optionales `team_id` mit Ableitung, Rückfrage beim Herausnehmen mit `stand`, Hinweis für Konten ohne Team.
+- [ ] Werkzeugtext von `teams_abrufen` (W`lib/mcp/werkzeuge/team.ts`) berichtigen: «… das Übrige geht nur im Team-Bereich von KiFu» schliesst Umbenennen und Auflösen ein und ist seit Phase 5 (#581) falsch; beides macht nur die Vereinsverwaltung im Bereich «Verein» (in Phase 5 bewusst nicht geändert, MCP-Werkzeuge gehören zu dieser Phase).
 - [ ] `ZUGANG_DARF` und `ZUGANG_DARF_NICHT`; der PR listet jede geänderte Zeile.
 - [ ] Werkzeug-Handler exportieren und in `pruefe-kern-db.ts` prüfen.
 - [ ] Review Focus 2: Ein Aufruf mit altem Werkzeugnamen ergibt «unbekanntes Werkzeug» und ändert nichts; das im echten KI-Client gegen Staging prüfen.
