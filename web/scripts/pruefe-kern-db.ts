@@ -5037,6 +5037,13 @@ try {
     assert.equal((await admin.from("termin_eingefroren").select("termin_id").eq("team_id", team)).data?.length, 0);
     assert.equal((await admin.from("spieler").select("id").in("id", [noah.spielerId, mia.spielerId])).data?.length, 2, "im Verein");
     assert.equal((await admin.from("team_spieler").select("team_id").in("spieler_id", [noah.spielerId, mia.spielerId])).data?.length, 0, "ohne Team");
+    // Die Spalte spieler.team_id lebt bis zum Nachlauf N1 (vereine_nachziehen liest sie): team_spieler_nachher setzt
+    // sie beim Auflösen auf null. Nur die Admin-Rolle liest sie noch.
+    assert.deepEqual(
+      ((await admin.from("spieler").select("id, team_id").in("id", [noah.spielerId, mia.spielerId])).data ?? []).map((x) => x.team_id),
+      [null, null],
+      "spieler.team_id nach dem Auflösen",
+    );
   });
   // ── Ab- und Anmelden (#435) ──────────────────────────────────────────────
   await pruefe("Abmelden: ab und wieder an bis zum Beginn, Zahl folgt, Abweisungen mit Stand (#435 AK 1–6; #437 AK 3, 5)", async () => {
@@ -7841,11 +7848,13 @@ try {
     assert.equal((frage.structuredContent as { fehler: { verfallend?: number } }).fehler.verfallend, 1);
     const ein = kiWert(await ki(a, "spieler_schnuppern_setzen", { spieler_id: k.mia, schnuppern: true, bestaetigt: true }));
     assert.deepEqual(ein, { spieler_id: k.mia, team_id: k.team, schnuppert: true, verfallen: 1 });
-    // Ausgabefelder der Spielerliste und der Teilnehmenden: «schnuppert», nie «probe».
+    // Ausgabefelder: In der Spielerliste der Stand unter «schnuppern» (wie in den Vereinsansichten), bei den
+    // Teilnehmenden der Wahrheitswert «schnuppert»; nie «probe».
     const liste = kiWert(await ki(a, "spielerliste_abrufen", { team_id: k.team })) as { spieler: Record<string, unknown>[] };
-    const mia = liste.spieler.find((x) => x.spieler_id === k.mia || x.id === k.mia)!;
-    assert.deepEqual(mia.schnuppert, { anzahl: 5, besucht: 0, angemeldet: 0, moeglich: 5 });
-    assert.ok(liste.spieler.every((x) => !("probe" in x)), "kein Feld «probe»");
+    const mia = liste.spieler.find((x) => x.id === k.mia)!;
+    assert.deepEqual(mia.schnuppern, { anzahl: 5, besucht: 0, angemeldet: 0, moeglich: 5 });
+    assert.ok(liste.spieler.every((x) => !("probe" in x) && !("schnuppert" in x)), "kein Feld «probe» oder «schnuppert» in der Liste");
+    assert.equal(liste.spieler.find((x) => x.id === k.lena)!.schnuppern, null);
     const teilnehmende = kiWert(await ki(a, "termin_spieler_abrufen", { termin_id: t })) as { spieler: Record<string, unknown>[] };
     assert.deepEqual(teilnehmende.spieler.map((x) => [x.vorname, x.schnuppert]), [["Lena", false], ["Mia", true], ["Noah", false]]);
     assert.ok(!JSON.stringify(teilnehmende).includes('"probe"'));

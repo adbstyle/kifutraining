@@ -78,7 +78,7 @@ const SpielerAusgabe = z.object({
   js_nummer: z.string().nullable(),
   link_bezogen: z.boolean().describe("Der aktuelle private Link wurde über die Selbstabholung herausgegeben."),
   kader_ids: z.array(z.string()).describe("Die Kader, denen sie angehört («kader_abrufen» nennt die Namen)."),
-  schnuppert: z
+  schnuppern: z
     .object({
       anzahl: z.number().int().nullable().describe("Die Anzahl Schnuppertrainings des Teams; null, solange keine festgelegt ist."),
       besucht: z.number().int().describe("Begonnene Trainings seit dem Einschalten, an denen sie angemeldet war."),
@@ -116,7 +116,7 @@ export const spielerlisteAbrufen = werkzeug({
         js_nummer: s.jsNummer,
         link_bezogen: s.linkBezogen,
         kader_ids: s.kaderIds,
-        schnuppert: s.probe,
+        schnuppern: s.probe,
       })),
     })),
 });

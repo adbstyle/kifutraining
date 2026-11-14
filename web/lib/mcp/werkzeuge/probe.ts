@@ -51,7 +51,7 @@ export const schnuppertrainingAbrufen = werkzeug({
   titel: "Schnuppertraining eines Teams",
   beschreibung:
     "Nennt die Anzahl Schnuppertrainings eines deiner Teams und sein Info-Schreiben. Wer schnuppert und wie weit, nennt " +
-    `«spielerliste_abrufen» («schnuppert»). ${SCHNUPPER_MODELL} ${TEAM_KENNUNG_FEHLER}`,
+    `«spielerliste_abrufen» («schnuppern»). ${SCHNUPPER_MODELL} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: z.object({ team_id: TeamId }),
   ausgabe: SchnuppertrainingAusgabe,
