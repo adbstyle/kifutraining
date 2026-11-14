@@ -23,6 +23,14 @@ export function revalidiereVerein() {
   revalidatePath("/teams");
 }
 
+/** Das Wurzel-Layout neu rendern: Der Bereich-Wechsler der Seitenleiste
+ *  (eigene Teams, Verein) liest die Mitgliedschaften dort. Nötig nach jeder
+ *  Änderung von Team- oder Verwaltungsmitgliedschaften und nach dem Anlegen
+ *  oder Auflösen eines Teams. */
+export function revalidiereMitgliedschaften() {
+  revalidatePath("/", "layout");
+}
+
 /** Alle Ansichten eines Trainings (inkl. der Übersicht) neu validieren; mit
  *  `fassungId` zusätzlich die Bearbeiten-Seite dieser Fassung. */
 export function revalidiereTraining(trainingId: string, fassungId?: string) {
