@@ -175,7 +175,7 @@ export type Spieler = {
   /** Die Namen der weiteren Teams des Vereins, denen sie zugeordnet ist,
    *  nach Namen (#579 AK 9). */
   weitereTeams: string[];
-  /** Im Probe-Modus: ihr Stand (#555 AK 6, 7); sonst `null`. */
+  /** Sie schnuppert im Team: ihr Stand (#555 AK 6, 7); sonst `null`. */
   probe: ProbeStand | null;
 };
 
@@ -196,9 +196,14 @@ export function nachSpielerName<T extends { vorname: string; nachname: string }>
 /** Die Teams einer Spieler:in samt Stand, wie `spieler_teams` sie liefert:
  *  `eigen` — die handelnde Person ist Mitglied; `dieses` — das Team, in dem
  *  sie handelt; `abholbar` — dessen Selbstabholung ist eingeschaltet (#583);
- *  `stand` — die Kennung dieser Teams, die das Herausnehmen
- *  mitgibt (AP §4.3). */
-export type SpielerTeams = { teams: { name: string; eigen: boolean; dieses: boolean; abholbar: boolean }[]; stand: string };
+ *  `stand` — die Kennung dieser Teams und ihres Schnupperns, die das
+ *  Herausnehmen mitgibt (AP §4.3). */
+export type SpielerTeams = {
+  teams: { name: string; eigen: boolean; dieses: boolean; abholbar: boolean }[];
+  stand: string;
+  /** Sie schnuppert in diesem Team (`dieses`, #584): Das Herausnehmen beendet es. */
+  schnuppert: boolean;
+};
 
 /** Was die Bestätigung des Herausnehmens braucht: wen, aus welchem Team, in
  *  welchem Verein und in welchen weiteren Teams sie danach bleibt. */
@@ -348,7 +353,7 @@ export type AbmeldeGrund =
   | "nicht_dabei"
   /** Ein Spiel (#448): Für Spiele gilt diese Abmeldung nicht. */
   | "ist_spiel"
-  /** Über den Link: Alle Probetrainings sind vergeben (#555 AK 10, 12). */
+  /** Über den Link: Alle Schnuppertrainings sind vergeben (#555 AK 10, 12). */
   | "probe_voll";
 
 /** Der Stand des Termins, gegen den abgewiesen wurde. */
@@ -369,7 +374,7 @@ export const ABMELDUNG_TEXT = {
   nichtDabei: "Diese Spieler:in gehörte bei Beginn nicht zu diesem Termin. Nachtragen lässt sich nur, wer da auf der Liste stand.",
   /** An einem ausgefallenen Termin (#475 AK 6). */
   ausgefallenNachtrag: "Der Termin fällt aus. Für ihn lässt sich nicht nachtragen, wer da war.",
-  /** Über den Link einer Probe-Spieler:in (#555 AK 12). */
+  /** Über den Link einer schnuppernden Spieler:in (#555 AK 12). */
   probeVoll: PROBE_TEXT.voll,
 } as const;
 
@@ -407,7 +412,7 @@ export type Teilnehmer = {
   /** Ab Beginn: Ihre Anwesenheit weicht vom Stand bei Beginn ab (#475) —
    *  angemeldet heisst dann nicht erschienen, abgemeldet doch erschienen. */
   nachgetragen: boolean;
-  /** Im Probe-Modus (#555): zuerst nicht angemeldet. */
+  /** Sie schnuppert (#555): zuerst nicht angemeldet. */
   probe: boolean;
 };
 
@@ -618,14 +623,14 @@ export function mitAbsagen(text: string, n: number): string {
   return text ? `${text} Ausserdem ${satz}` : `Damit ${satz}`;
 }
 
-/** Was mit den Anmeldungen von Probe-Spieler:innen geschieht (#555 AK 14,
+/** Was mit den Anmeldungen von schnuppernden Spieler:innen geschieht (#555 AK 14,
  *  PC 5) — als Satz an `text` gehängt wie `mitAbsagen`. */
 export function mitAnmeldungen(text: string, n: number): string {
   if (n === 0) return text;
   const satz =
     n === 1
-      ? "verfällt 1 Anmeldung einer Probe-Spieler:in: Sie gilt wieder als nicht angemeldet."
-      : `verfallen ${n} Anmeldungen von Probe-Spieler:innen: Sie gelten wieder als nicht angemeldet.`;
+      ? "verfällt 1 Anmeldung einer schnuppernden Spieler:in: Sie gilt wieder als nicht angemeldet."
+      : `verfallen ${n} Anmeldungen von schnuppernden Spieler:innen: Sie gelten wieder als nicht angemeldet.`;
   return text ? `${text} Ausserdem ${satz}` : `Damit ${satz}`;
 }
 
@@ -642,7 +647,7 @@ export function verfallBestaetigen(n: number, nachtraege = 0, absagen = 0, anmel
 }
 
 /** Am privaten Link: Der Termin wurde verlegt, seit sie abgemeldet — bzw. als
- *  Probe-Spieler:in angemeldet (#555 PC 5) — wurde (AK 2). */
+ *  schnuppernde Spieler:in angemeldet (#555 PC 5) — wurde (AK 2). */
 export function verfallenHinweis(vorher: { datum: string; beginn: string; anmeldung?: boolean }): string {
   return `Verlegt, vorher ${tagOhneJahr(vorher.datum)} um ${vorher.beginn}. Deine ${vorher.anmeldung ? "Anmeldung" : "Abmeldung"} gilt nicht mehr.`;
 }

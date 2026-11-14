@@ -78,15 +78,15 @@ const SpielerAusgabe = z.object({
   js_nummer: z.string().nullable(),
   link_bezogen: z.boolean().describe("Der aktuelle private Link wurde über die Selbstabholung herausgegeben."),
   kader_ids: z.array(z.string()).describe("Die Kader, denen sie angehört («kader_abrufen» nennt die Namen)."),
-  probe: z
+  schnuppert: z
     .object({
-      anzahl: z.number().int().nullable().describe("Die Anzahl Probetrainings des Teams; null, solange keine festgelegt ist."),
+      anzahl: z.number().int().nullable().describe("Die Anzahl Schnuppertrainings des Teams; null, solange keine festgelegt ist."),
       besucht: z.number().int().describe("Begonnene Trainings seit dem Einschalten, an denen sie angemeldet war."),
       angemeldet: z.number().int().describe("Kommende Trainings, für die sie angemeldet ist."),
       moeglich: z.number().int().describe("Wie viele sie über ihren Link noch dazu anmelden kann."),
     })
     .nullable()
-    .describe("Nur im Probe-Modus, sonst null."),
+    .describe("Nur wenn sie im Team schnuppert, sonst null."),
 });
 
 // ── spielerliste_abrufen ────────────────────────────────────────────────────
@@ -116,7 +116,7 @@ export const spielerlisteAbrufen = werkzeug({
         js_nummer: s.jsNummer,
         link_bezogen: s.linkBezogen,
         kader_ids: s.kaderIds,
-        probe: s.probe,
+        schnuppert: s.probe,
       })),
     })),
 });
@@ -176,16 +176,17 @@ export const spielerAendern = werkzeug({
   ausgabe: z.object({ spieler_id: z.string(), team_id: z.string() }),
   ausfuehren: async (e, zugang) => {
     let teamId = e.team_id;
-    let js = e.js_nummer;
-    if (js === undefined) {
-      const bisher = await ladeSpieler(zugang.supabase, e.spieler_id);
-      if (!bisher.ok) return bisher;
-      js = bisher.wert.jsNummer ?? "";
-    }
     if (teamId === undefined) {
       const eigenes = await eigenesTeamVon(zugang.supabase, e.spieler_id);
       if (!eigenes.ok) return eigenes;
       teamId = eigenes.wert;
+    }
+    // Ohne Angabe bleibt die bisherige J+S-Nummer, gelesen aus der Liste des Teams.
+    let js = e.js_nummer;
+    if (js === undefined) {
+      const bisher = await ladeSpieler(zugang.supabase, teamId, e.spieler_id);
+      if (!bisher.ok) return bisher;
+      js = bisher.wert.jsNummer ?? "";
     }
     return abgebildet(
       await aendereSpieler(zugang.supabase, zugang.userId, {
@@ -232,6 +233,7 @@ export const spielerAusTeamNehmen = werkzeug({
     letztes_eigenes_team: z
       .boolean()
       .describe("Sie ist danach keinem Team mehr zugeordnet, dem du angehörst: Du siehst sie nicht mehr."),
+    schnuppern_beendet: z.boolean().describe("Sie schnupperte in diesem Team: Das Schnuppertraining ist samt Zählung beendet."),
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
@@ -241,6 +243,7 @@ export const spielerAusTeamNehmen = werkzeug({
         spieler_id: w.spielerId,
         ohne_team: w.ohneTeam,
         letztes_eigenes_team: w.letztesEigenesTeam,
+        schnuppern_beendet: w.schnuppernBeendet,
       }),
     ),
 });
@@ -250,8 +253,8 @@ export const spielerAusTeamNehmen = werkzeug({
 /** Was jede Beschreibung eines Abmelde-Werkzeugs über das Modell sagt. */
 const ABMELDE_MODELL =
   "Jede Spieler:in der Spielerliste ist für jedes Training angemeldet, bis sie abgemeldet wird; «keine Rückmeldung» gibt " +
-  "es nicht. Eine Spieler:in im Probe-Modus («probe: true») ist umgekehrt zuerst nicht angemeldet («meldung: " +
-  "abgemeldet»), bis sie angemeldet wird; Spiele gelten für sie nicht («probetraining_abrufen» erklärt das Modell). Ab- und anmelden geht bis zum Beginn des Termins (Uhr am Trainingsort, Schweiz), nicht an einem " +
+  "es nicht. Eine schnuppernde Spieler:in («schnuppert: true») ist umgekehrt zuerst nicht angemeldet («meldung: " +
+  "abgemeldet»), bis sie angemeldet wird; Spiele gelten für sie nicht («schnuppertraining_abrufen» erklärt das Modell). Ab- und anmelden geht bis zum Beginn des Termins (Uhr am Trainingsort, Schweiz), nicht an einem " +
   "ausgefallenen. Ab Beginn gilt der Stand bei Beginn; dann tragen Mitglieder nach, wer trotz Anmeldung nicht erschienen " +
   "und wer trotz Abmeldung doch erschienen ist (termin_anwesenheit_setzen), unbefristet. Ohne Nachtrag gilt der Stand " +
   "bei Beginn als Anwesenheit - ob jemand geprüft hat, hält KiFu nicht fest. Wer aus dem Team genommen wird, steht an " +
@@ -347,7 +350,7 @@ export const terminSpielerAbrufen = werkzeug({
         nicht_mehr_im_team: z
           .boolean()
           .describe("Aus dem Team genommen, an diesem begonnenen Termin aber mit Namen geblieben; ihre Anwesenheit lässt sich weiter nachtragen."),
-        probe: z.boolean().describe("Im Probe-Modus: an einem Training zuerst nicht angemeldet. An Spielen nie true."),
+        schnuppert: z.boolean().describe("Sie schnuppert: an einem Training zuerst nicht angemeldet. An Spielen nie true."),
         kader: z.array(z.string()).describe("Die Kader, über die der Termin für sie gilt; leer bei einem Termin für alle."),
         anwesenheit: z.enum(["nicht_erschienen", "doch_erschienen"]).nullable().describe(ANWESENHEIT_BESCHREIBUNG),
         zuletzt_gewechselt: z
@@ -430,7 +433,7 @@ function spielTeilnehmerAusgabe(s: SpielTeilnehmer, fristAbgelaufen: boolean) {
     meldefrist_verpasst: meldefristVerpasst(s.meldung, s.nichtAufgeboten, fristAbgelaufen),
     ehemalig: s.ehemalig,
     nicht_mehr_im_team: s.nichtMehrImTeam,
-    probe: false,
+    schnuppert: false,
     kader: s.kader,
     // #487 AK 14: der Nachtrag gegen den Stand beim Anpfiff.
     anwesenheit: s.nachgetragen
@@ -455,7 +458,7 @@ export function teilnehmerAusgabe(s: Teilnehmer) {
     meldefrist_verpasst: false,
     ehemalig: s.ehemalig,
     nicht_mehr_im_team: s.nichtMehrImTeam,
-    probe: s.probe,
+    schnuppert: s.probe,
     kader: s.kader,
     anwesenheit: anwesenheitAusgabe(s),
     zuletzt_gewechselt: s.gewechseltAm && jetztAmTrainingsort(new Date(s.gewechseltAm)),
@@ -494,7 +497,7 @@ export const terminAbmeldungSetzen = werkzeug({
     hinweis: z
       .string()
       .nullable()
-      .describe("Nur wenn eine Probe-Spieler:in damit über der Anzahl Probetrainings ist: der Stand als Satz für das Mitglied."),
+      .describe("Nur wenn eine schnuppernde Spieler:in damit über der Anzahl Schnuppertrainings ist: der Stand als Satz für das Mitglied."),
   }),
   ausfuehren: async (e, zugang) => {
     const gesehen = { datum: e.termin_datum, beginn: e.termin_beginn };
@@ -632,8 +635,8 @@ const LINK_MODELL =
   "bis zur Meldefrist (ohne Frist bis zum Anpfiff) und sieht dort Bezeichnung, " +
   "Richtwert, Meldefrist, Treffpunkte und ob die Spieler:in nicht aufgeboten ist. An einem ausgefallenen Training " +
   "oder Spiel sieht sie den Grund des Ausfalls, ganz, und keinen Hinweis — keine Namen anderer, kein " +
-  "Training, keine Nachträge, nichts Vergangenes. Im Probe-Modus sieht sie keine Spiele, meldet die Spieler:in für " +
-  "Trainings an statt ab und das nur bis zur Anzahl Probetrainings, und sieht, wie viele noch möglich sind. Über den Link holen Eltern auch ein Kalender-Abo der Termine; das " +
+  "Training, keine Nachträge, nichts Vergangenes. Schnuppert sie, sieht sie keine Spiele, meldet die Spieler:in für " +
+  "Trainings an statt ab und das nur bis zur Anzahl Schnuppertrainings, und sieht, wie viele noch möglich sind. Über den Link holen Eltern auch ein Kalender-Abo der Termine; das " +
   "kannst du weder holen noch einsehen noch widerrufen. KiFu verschickt den Link nicht. Gib ihn nur der " +
   `Person weiter, die ihn verlangt, und nie in einer Gruppe. ${LINK_TEXT.warnung}`;
 

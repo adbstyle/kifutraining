@@ -68,9 +68,10 @@ import { SchnupperLozenge } from "./SchnupperLozenge";
    Spieler:innen aus Terminen, für die sie abgemeldet waren, fragt sie vorher
    nach (#453 AK 10).
 
-   Probetraining (#555): Eine Probe-Spieler:in trägt die Plakette «Probe 1/4»
-   neben dem Namen. Den Probe-Modus schaltet die Checkbox im Dialog «Spieler:in
-   ändern» — gesperrt, solange das Team keine Anzahl festgelegt hat. Was das
+   Schnuppertraining (#555, #584): Eine schnuppernde Spieler:in trägt die
+   Plakette «Schnuppern 1/4» neben dem Namen. Das Schnuppern schaltet die
+   Checkbox im Dialog «Spieler:in ändern» — gesperrt, solange das Team keine
+   Anzahl festgelegt hat. Was das
    Einschalten verfallen liesse, steht vor dem Speichern als Warnung im Dialog;
    was das Ausschalten bewirkt, als Information. */
 
@@ -105,7 +106,7 @@ export function SpielerListe({
   const melde = useSnackbar();
   const [pending, startTransition] = useTransition();
   // `null`: zu; sonst neu (`id` leer) oder die geänderte Spieler:in.
-  // `probe`: ihr Probe-Modus beim Öffnen — dagegen zählt, was sich ändert.
+  // `probe`: ihr Schnuppern beim Öffnen — dagegen zählt, was sich ändert.
   const [offen, setOffen] = useState<{ id: string | null; probe: boolean } | null>(null);
   const [form, setForm] = useState<Form>(LEER);
   const [fehler, setFehler] = useState<SpielerFehler | null>(null);
@@ -172,7 +173,7 @@ export function SpielerListe({
     );
   }
 
-  /** Die Checkbox «Im Probetraining»: beim Einschalten erst holen, was
+  /** Die Checkbox «Schnuppert»: beim Einschalten erst holen, was
    *  verfiele (AK 5, 16) — die Warnung steht vor dem Speichern. */
   function probeSchalten(id: string, an: boolean) {
     setForm((f) => ({ ...f, probe: an }));
@@ -180,7 +181,7 @@ export function SpielerListe({
     setProbeFolgen(null);
     if (!an || offen?.probe) return;
     startTransition(async () => {
-      const r = await probeFolgenAktion(id);
+      const r = await probeFolgenAktion(teamId, id);
       if (!r.ok) return setProbeFehler(r.error);
       setProbeFolgen(r.folgen);
     });
@@ -208,7 +209,7 @@ export function SpielerListe({
         // und erst der nächste Klick schaltet.
         let folgen = probeFolgen;
         if (probeWechsel && form.probe && !folgen) {
-          const f = await probeFolgenAktion(id);
+          const f = await probeFolgenAktion(teamId, id);
           if (!f.ok) return setProbeFehler(f.error);
           folgen = f.folgen;
           setProbeFehler(null);
@@ -228,7 +229,7 @@ export function SpielerListe({
           const p = await schalteProbeAktion(teamId, id, form.probe, form.probe && folgen ? probeFolgenSumme(folgen) : null);
           if (!p.ok) {
             router.refresh();
-            const f = await probeFolgenAktion(id);
+            const f = await probeFolgenAktion(teamId, id);
             if (f.ok) setProbeFolgen(f.folgen);
             return setProbeFehler(p.error);
           }
@@ -268,7 +269,7 @@ export function SpielerListe({
         router.refresh();
         return melde(r.error);
       }
-      setHerausnehmen({ spieler: s, teams: { teams: r.teams, stand: r.stand } });
+      setHerausnehmen({ spieler: s, teams: { teams: r.teams, stand: r.stand, schnuppert: r.schnuppert } });
     });
   }
 
@@ -295,7 +296,7 @@ export function SpielerListe({
         router.refresh();
         return setHerausnehmen({ spieler: s, teams, fehler: neu.error });
       }
-      setHerausnehmen({ spieler: s, teams: { teams: neu.teams, stand: neu.stand }, hinweis: HERAUSNEHMEN_TEXT.geaendert });
+      setHerausnehmen({ spieler: s, teams: { teams: neu.teams, stand: neu.stand, schnuppert: neu.schnuppert }, hinweis: HERAUSNEHMEN_TEXT.geaendert });
     });
   }
 
@@ -582,7 +583,8 @@ function HerausnehmenText({
     team,
     verein,
     verbleibend: verbleibendeTeams(teams.teams),
-    probe: spieler.probe !== null,
+    // Aus `spieler_teams` (dieses Team), nicht aus der Liste: eine Quelle.
+    probe: teams.schnuppert,
   });
   return (
     <div className="flex flex-col gap-3">
@@ -607,8 +609,9 @@ function aufzaehlung(namen: string[]): string {
   return namen.length <= 1 ? (namen[0] ?? "") : `${namen.slice(0, -1).join(", ")} und ${namen[namen.length - 1]}`;
 }
 
-/** Die Checkbox «Im Probetraining» im Dialog «Spieler:in ändern» (#555 AK 3–5,
- *  16, 18, 19): darunter, was der Probe-Modus bedeutet; ohne Anzahl gesperrt
+/** Die Checkbox «Schnuppert» im Dialog «Spieler:in ändern» (#555 AK 3–5,
+ *  16, 18, 19; #584 AK 6, 7): darunter, was das Schnuppern bedeutet, und dass
+ *  sie sich dann keinem weiteren Team zuordnen lässt; ohne Anzahl gesperrt
  *  mit dem Weg dahin; beim Einschalten die Warnung, was verfällt, beim
  *  Ausschalten, was danach gilt. Wer weiteren Teams zugeordnet ist, schnuppert
  *  nicht (Vereine AP §5.3): statt der Checkbox nur der Hinweis. */
@@ -656,6 +659,7 @@ function ProbeFeld({
             <span className="type-body-small text-on-surface-mittel">
               {gesperrt ? PROBE_TEXT.anzahlFehlt : probeEinschaltenText(vorname, anzahl)}
             </span>
+            {!gesperrt && <span className="type-body-small text-on-surface-mittel">{PROBE_TEXT.keinWeiteresTeam}</span>}
           </span>
         }
       />

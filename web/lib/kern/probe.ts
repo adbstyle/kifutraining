@@ -19,13 +19,16 @@ import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 
 /**
- * Probetraining (Epic #554, Story #555): die Anzahl des Teams festlegen und
- * den Probe-Modus einer Spieler:in schalten — dieselben Funktionen für die
- * Karte «Probetraining», den Dialog «Spieler:in ändern» und die KI-Werkzeuge.
+ * Schnuppertraining (Epic #554, Story #555, #584; intern `probe`): die Anzahl
+ * des Teams festlegen und das Schnuppern einer Spieler:in schalten — dieselben
+ * Funktionen für die Karte «Schnuppertraining», den Dialog «Spieler:in
+ * ändern» und die KI-Werkzeuge.
  *
  * Geschrieben wird nur über die RPCs `team_probetraining_festlegen` und
  * `spieler_probe_setzen`; die Regeln (Anzahl 1–20, nicht entfernbar,
- * Einschalten nur mit Anzahl, Rückfrage mit Zahl) stehen in der Datenebene.
+ * Einschalten nur mit Anzahl und nur in genau einem Team, Rückfrage mit Zahl)
+ * stehen in der Datenebene. Schalten und Folgen nennen immer das Team der
+ * Liste, in der man handelt: Schnuppern hängt an der Zuordnung.
  */
 
 function probeFehler(e: { message: string; code?: string }): KernFehler {
@@ -33,8 +36,8 @@ function probeFehler(e: { message: string; code?: string }): KernFehler {
     return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
   if (e.message.includes("TEAM_NICHT_GEFUNDEN"))
     return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
-  if (e.message.includes("PROBE_ANZAHL_FEHLT")) return fehlschlag("regel", PROBE_TEXT.anzahlFehlt, { feld: "probe" });
-  if (e.message.includes("SCHNUPPERN_MEHRERE_TEAMS")) return fehlschlag("regel", PROBE_TEXT.mehrereTeams, { feld: "probe" });
+  if (e.message.includes("PROBE_ANZAHL_FEHLT")) return fehlschlag("regel", PROBE_TEXT.anzahlFehlt, { feld: "schnuppern" });
+  if (e.message.includes("SCHNUPPERN_MEHRERE_TEAMS")) return fehlschlag("regel", PROBE_TEXT.mehrereTeams, { feld: "schnuppern" });
   if (e.message.includes("PROBE_ANZAHL_UNGUELTIG")) return fehlschlag("eingabe", PROBE_TEXT.anzahlProblem, { feld: "anzahl" });
   if (e.message.includes("PROBE_INFO_ZU_LANG") || e.message.includes("team_probetraining_info"))
     return fehlschlag("eingabe", PROBE_TEXT.infoZuLang, { feld: "info" });
@@ -59,7 +62,7 @@ export async function leseProbetraining(
   return ok({ teamId: e.teamId, anzahl: data?.anzahl ?? null, info: data?.info ?? null });
 }
 
-/** Die Anzahl Probetrainings und das Info-Schreiben festlegen oder ändern
+/** Die Anzahl Schnuppertrainings und das Info-Schreiben festlegen oder ändern
  *  (#555 AK 1, 2; #556 AK 1, 2) — immer beide; leeres `info` entfernt es. */
 export async function legeProbetrainingFest(
   supabase: SupabaseClient,
@@ -84,10 +87,11 @@ export async function legeProbetrainingFest(
 export async function probeFolgen(
   supabase: SupabaseClient,
   _userId: string,
-  e: { spielerId: string },
+  e: { teamId: string; spielerId: string },
 ): Promise<KernErgebnis<ProbeFolgen>> {
+  if (!istUuid(e.teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
   if (!istUuid(e.spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
-  const { data, error } = await supabase.rpc("spieler_probe_folgen", { p_spieler: e.spielerId });
+  const { data, error } = await supabase.rpc("spieler_probe_folgen", { p_team: e.teamId, p_spieler: e.spielerId });
   if (error) return probeFehler(error);
   const r = data as ProbeFolgen;
   return ok({
@@ -108,7 +112,7 @@ function verfallNachfrage(meldung: string, f: ProbeFolgen, wiederholbar = false)
 }
 
 /**
- * Den Probe-Modus ein- oder ausschalten (AK 3–5; PC 1, 9, 10).
+ * Das Schnuppern ein- oder ausschalten (AK 3–5; PC 1, 9, 10).
  *
  * Lässt das Einschalten Meldungen verfallen, schreibt die Datenebene nur,
  * wenn `bestaetigt` genau deren Zahl nennt (wie bei Kader-Änderungen): Die
@@ -119,21 +123,24 @@ function verfallNachfrage(meldung: string, f: ProbeFolgen, wiederholbar = false)
 export async function schalteProbe(
   supabase: SupabaseClient,
   _userId: string,
-  e: { spielerId: string; probe: boolean; bestaetigt?: boolean | number },
+  e: { teamId: string; spielerId: string; probe: boolean; bestaetigt?: boolean | number },
 ): Promise<KernErgebnis<{ spielerId: string; teamId: string; probe: boolean; verfallen: number }>> {
-  const geladen = await ladeSpieler(supabase, e.spielerId);
-  if (!geladen.ok) return geladen;
+  if (!istUuid(e.teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
+  if (!istUuid(e.spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
   const zahl = typeof e.bestaetigt === "number" ? e.bestaetigt : null;
   const aufruf = (n: number | null) =>
-    supabase.rpc("spieler_probe_setzen", { p_spieler: e.spielerId, p_probe: e.probe, p_bestaetigt: n });
+    supabase.rpc("spieler_probe_setzen", { p_team: e.teamId, p_spieler: e.spielerId, p_probe: e.probe, p_bestaetigt: n });
   const fertig = (data: unknown) => {
     const r = data as { probe: boolean; verfallen: number };
-    return ok({ spielerId: e.spielerId, teamId: geladen.wert.teamId, probe: r.probe, verfallen: r.verfallen });
+    return ok({ spielerId: e.spielerId, teamId: e.teamId, probe: r.probe, verfallen: r.verfallen });
   };
   const erst = await aufruf(zahl);
   if (!erst.error) return fertig(erst.data);
   const f = probeFolgenAusFehler(erst.error.message);
   if (!f) return probeFehler(erst.error);
+  // Den Vornamen braucht nur die Rückfrage.
+  const geladen = await ladeSpieler(supabase, e.teamId, e.spielerId);
+  if (!geladen.ok) return geladen;
   const vorname = geladen.wert.vorname;
   // Eine Zahl, die nicht mehr stimmt: der aktuelle Stand.
   if (zahl !== null) return verfallNachfrage(`Inzwischen hat sich etwas geändert. ${probeVerfallText(vorname, f)}`, f);
