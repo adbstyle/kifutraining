@@ -445,12 +445,21 @@ export function SpielerListe({
               <span className="min-w-0 flex-1">
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="type-body-medium truncate text-on-surface">{spielerName(s)}</span>
-                  {s.probe && <SchnupperLozenge stand={s.probe} />}
+                  {s.probe && (
+                    <span className="hidden shrink-0 sm:inline-flex">
+                      <SchnupperLozenge stand={s.probe} />
+                    </span>
+                  )}
                 </span>
-                {/* Schmal stehen Jahrgang, J+S-Nummer und Kader unter dem Namen. */}
+                {/* Schmal stehen Jahrgang, J+S-Nummer, Schnuppern und Kader unter dem Namen: Der Name bleibt lesbar. */}
                 <span className="type-body-small block text-on-surface-mittel sm:hidden">
                   {[s.jahrgang, s.jsNummer && `J+S ${s.jsNummer}`].filter(Boolean).join(" · ")}
                 </span>
+                {s.probe && (
+                  <span className="mt-1 flex sm:hidden">
+                    <SchnupperLozenge stand={s.probe} />
+                  </span>
+                )}
                 <KaderLozenges namen={namenVon(s)} className="mt-1 sm:hidden" />
                 <TeamLozenges namen={s.weitereTeams} className="mt-1 sm:hidden" />
               </span>
