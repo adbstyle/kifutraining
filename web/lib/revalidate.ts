@@ -31,7 +31,7 @@ export function revalidiereTeam(teamId: string) {
 
 /** Die Ansichten aller Teams neu validieren — wo eine Änderung einer
  *  Spieler:in alle ihre Teams trifft und die Antwort der Datenebene sie nicht
- *  nennt (Ändern, Link erneuern durch die Verwaltung). Das Muster mit
+ *  nennt (Ändern, Link erneuern durch Mitglieder und Verwaltung). Das Muster mit
  *  Routengruppe trifft das implizite Layout-Tag jeder Team-Seite (siehe
  *  Kopf); solange das Team-Layout `force-dynamic` ist, zeigt sich davon nur
  *  das Verwerfen des Router-Caches. */

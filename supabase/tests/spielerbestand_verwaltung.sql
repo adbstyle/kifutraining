@@ -204,8 +204,8 @@ begin
                  where z.spieler = 'x' or wer = 'verw2' loop
       foreach x in array array[
         format($s$select spieler_aendern(%L, %L, 'Team', 'Weg', 2015, '1')$s$, pg_temp.id(ziel.team), pg_temp.id(ziel.spieler)),
-        format('select spieler_link_holen(%L)', pg_temp.id(ziel.spieler)),
-        format('select spieler_link_erneuern(%L)', pg_temp.id(ziel.spieler)),
+        format('select spieler_link_holen(%L, %L)', pg_temp.id(ziel.team), pg_temp.id(ziel.spieler)),
+        format('select spieler_link_erneuern(%L, %L)', pg_temp.id(ziel.team), pg_temp.id(ziel.spieler)),
         format($s$select spieler_aus_team_nehmen(%L, %L, 'x')$s$, pg_temp.id(ziel.team), pg_temp.id(ziel.spieler)),
         format('select spieler_teams(%L, %L)', pg_temp.id(ziel.team), pg_temp.id(ziel.spieler)),
         format('select spieler_probe_folgen(%L)', pg_temp.id(ziel.spieler)),
@@ -433,9 +433,10 @@ begin
                          and not exists (select 1 from spieler_abos where spieler_id = pg_temp.id('s1')), 'Abo lebt auf');
   perform pg_temp.pruefe(exists (select 1 from termin_abmeldungen where termin_id = pg_temp.id('tr1_zukunft')
                                                                     and spieler_id = pg_temp.id('s1')), 'Abmeldung weg');
-  -- Neuer Link gilt; ohne Team ohne Teamnamen und ohne Termine.
+  -- Neuer Link gilt; ohne Team ohne Teams und ohne Termine (Story 7: `team`
+  -- ist dann der Vereinsname).
   perform pg_temp.pruefe((spieler_link_ansicht(current_setting('test.neu_s1')) ->> 'gueltig')::boolean, 'neuer Link s1');
-  perform pg_temp.pruefe(spieler_link_ansicht(current_setting('test.neu_x')) @> '{"gueltig": true, "team": null, "termine": []}',
+  perform pg_temp.pruefe(spieler_link_ansicht(current_setting('test.neu_x')) @> '{"gueltig": true, "team": "Bestand-Verein", "teams": [], "termine": []}',
                          'neuer Link x: ' || spieler_link_ansicht(current_setting('test.neu_x'))::text);
 end $$;
 
@@ -444,8 +445,8 @@ end $$;
 select pg_temp.als(pg_temp.id('verw'));
 select pg_temp.pruefe(verein_spieler_teams(pg_temp.id('s3'))
                       = jsonb_build_object('teams', jsonb_build_array(
-                          jsonb_build_object('id', pg_temp.id('t1'), 'name', 'Team Eins'),
-                          jsonb_build_object('id', pg_temp.id('t2'), 'name', 'Team Zwei'))), 'Teams von s3');
+                          jsonb_build_object('id', pg_temp.id('t1'), 'name', 'Team Eins', 'abholbar', false),
+                          jsonb_build_object('id', pg_temp.id('t2'), 'name', 'Team Zwei', 'abholbar', false))), 'Teams von s3');
 select pg_temp.pruefe(verein_spieler_teams(pg_temp.id('x')) = '{"teams": []}', 'Teams von x');
 -- s3 aus T2 nehmen: Das hält den vergangenen Termin von T2 mit s3 fest.
 select pg_temp.pruefe(verein_spieler_aus_team_nehmen(pg_temp.id('t2'), pg_temp.id('s3')) ->> 'status' = 'herausgenommen',

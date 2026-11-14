@@ -6,7 +6,7 @@ import { ladeLinkAnsicht } from "@/lib/privater-link";
 import { LINK_TEXT } from "@/lib/spieler";
 
 /* Der private Link einer Spieler:in (#436): Ihre Spielervertretung meldet sie
-   ohne Konto für anstehende Termine ab und wieder an. Jeder Aufruf liest neu —
+   ohne Konto für anstehende Termine aller ihrer Teams ab und wieder an (#583). Jeder Aufruf liest neu —
    ein erneuerter Link gilt sofort nicht mehr (PC 2).
 
    Titel und Beschreibung sind fest und nennen weder Team noch Spieler:in: Ein
@@ -30,14 +30,14 @@ export default async function SpielerLinkSeite({ params }: { params: Promise<{ p
     <>
       <ElternAnsicht
         token={privaterLink}
-        team={ansicht.team}
+        teams={ansicht.teams}
         spieler={ansicht.spieler}
         probe={ansicht.probe ?? null}
         probeInfo={ansicht.probe_info ?? null}
         termine={ansicht.termine}
       />
       {/* Fragen und Feedback ohne Konto (#544), am Ende der Seite. */}
-      <FeedbackLink token={privaterLink} />
+      <FeedbackLink token={privaterLink} ohneTeam={ansicht.teams.length === 0} />
     </>
   );
 }

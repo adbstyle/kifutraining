@@ -7,6 +7,7 @@ import { getMeineTeamsImRequest } from "@/lib/queries/teams";
 import { getTrainingNavKontext } from "@/lib/queries/trainings";
 import { getMeinVerein } from "@/lib/queries/verein";
 import { BEREICH_COOKIE } from "@/lib/bereich";
+import { nachTeamname } from "@/lib/spieler";
 import { AppNavClient } from "./AppNavClient";
 
 /** Ein geöffnetes Training in der Adresse: `/training/<uuid>` und alles
@@ -62,7 +63,7 @@ export async function AppNav() {
             }
           : null
       }
-      teams={[...teams].sort((a, b) => a.name.localeCompare(b.name, "de"))}
+      teams={[...teams].sort((a, b) => nachTeamname(a.name, b.name))}
       verein={verein ? { name: verein.name, istVerwaltung: verein.istVerwaltung } : null}
       gemerkt={gemerkt ?? null}
       teamImTraining={kontext?.team?.id ?? null}

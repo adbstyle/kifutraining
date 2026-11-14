@@ -1,10 +1,11 @@
 import { createAnonClient } from "@/lib/supabase/anon";
 import { ABO_ERLOSCHEN, aboTokenAus, kalenderAntwort, kalenderNichtErreichbar, kalenderText } from "@/lib/ical";
-import { aboEintrag, aboKalenderName, type AboFeed } from "@/lib/spieler-abo";
+import { ABO_KALENDER_NAME, aboEintrag, type AboFeed } from "@/lib/spieler-abo";
 
 /* Der Feed des Kalender-Abos einer Spielervertretung (#507), mit Trainings
    und Spielen im selben Kalender (#508 AK 1). Jeder Abruf liefert den Stand,
-   den der private Link im selben Moment zeigt, ohne ausgefallene Termine
+   den der private Link im selben Moment zeigt — alle Teams der Spieler:in in
+   einem Kalender (#583 AK 8, 10), ohne Team leer (AK 9) —, ohne ausgefallene Termine
    (PC 1, 4). Eine ungültige oder erloschene Abo-Adresse liefert einen leeren
    Kalender wie beim Abo der Mitglieder (PC 7) — und nichts, woran man
    erkennt, ob es sie je gab.
@@ -24,9 +25,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ datei: 
   }
   return kalenderAntwort(
     kalenderText({
-      kalenderName: feed.gueltig ? aboKalenderName(feed.team) : ABO_ERLOSCHEN,
+      kalenderName: feed.gueltig ? ABO_KALENDER_NAME : ABO_ERLOSCHEN,
       uidZusatz: feed.gueltig ? feed.abo : undefined,
-      termine: feed.gueltig ? feed.termine.map((t) => aboEintrag(t, feed.team, feed.probe ?? false)) : [],
+      termine: feed.gueltig ? feed.termine.map((t) => aboEintrag(t, feed.probe ?? false)) : [],
       jetzt: new Date(),
     }),
   );

@@ -15,7 +15,7 @@ import {
 import { abholUrl, spielerLinkUrl, type SpielerEingabe, type SpielerFeld, type SpielerTeams } from "@/lib/spieler";
 import type { ImportEintrag, ImportErwartet, ImportVorschau } from "@/lib/spieler-import";
 import { oeffentlicherOrigin } from "@/lib/origin";
-import { revalidiereTeam, revalidiereVerein } from "@/lib/revalidate";
+import { revalidiereAlleTeams, revalidiereTeam, revalidiereVerein } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
 
 /**
@@ -107,22 +107,27 @@ export async function importiereSpielerAktion(
   return { ok: true, neu: r.wert.neu, js: r.wert.js, ersetzt: r.wert.ersetzt };
 }
 
-/** Den privaten Link einer Spieler:in holen (#436 AK 1) — als Adresse. */
-export async function holeSpielerLinkAktion(spielerId: string): Promise<{ ok: true; url: string } | Fehler> {
+/** Den privaten Link einer Spieler:in holen (#436 AK 1) — als Adresse. Im
+ *  Team, in dessen Liste man sie sieht (#583 AK 14): in jedem ihrer Teams. */
+export async function holeSpielerLinkAktion(teamId: string, spielerId: string): Promise<{ ok: true; url: string } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await holeSpielerLink(a.supabase, a.userId, { spielerId });
+  const r = await holeSpielerLink(a.supabase, a.userId, { teamId, spielerId });
   if (!r.ok) return fehler(r);
   return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token) };
 }
 
-/** Den privaten Link erneuern (#436 AK 3): Der bisherige gilt nie wieder. */
-export async function erneuereSpielerLinkAktion(spielerId: string): Promise<{ ok: true; url: string } | Fehler> {
+/** Den privaten Link erneuern (#436 AK 3): Der bisherige gilt nie wieder, in
+ *  allen Teams der Spieler:in (#583 AK 15). «Bezogen» steht in jeder Liste
+ *  zurückgesetzt; die Antwort nennt die anderen Teams nicht, darum laden alle
+ *  neu, dazu der Spielerbestand des Vereins. */
+export async function erneuereSpielerLinkAktion(teamId: string, spielerId: string): Promise<{ ok: true; url: string } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await erneuereSpielerLink(a.supabase, a.userId, { spielerId });
+  const r = await erneuereSpielerLink(a.supabase, a.userId, { teamId, spielerId });
   if (!r.ok) return fehler(r);
-  revalidiereTeam(r.wert.teamId);
+  revalidiereAlleTeams();
+  revalidiereVerein();
   return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token) };
 }
 

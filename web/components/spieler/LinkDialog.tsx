@@ -1,16 +1,25 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import { Button, Dialog, KopierFeld, SectionMessage } from "@/components/ui";
 import { BezogenLozenge } from "@/components/team/BezogenLozenge";
-import { LINK_TEXT } from "@/lib/spieler";
+import { LINK_ERNEUERN_LADEFEHLER, LINK_ERNEUERN_OHNE_ANTWORT, LINK_TEXT, linkErneuernSaetze, linkTeamsText, type LinkTeam } from "@/lib/spieler";
 
 /* Der private Link einer Spieler:in (#436 AK 1–3): holen, kopieren, erneuern.
    Der Link ist ein Geheimnis — was er kann, steht darum immer bei ihm (AK 2).
    Erneuern wirkt sofort: Der bisherige Link gilt nie wieder, die Abmeldungen
    bleiben (PC 2, 3). Ob der aktuelle Link über die Selbstabholung bezogen
    wurde, zeigt die Lozenge; Erneuern setzt ihn zurück (#438 PC 3).
+
+   Der Link gehört der Spieler:in und zeigt die Termine aller ihrer Teams
+   (#583): Der Hinweis nennt die Teams, und Erneuern fragt vorher nach — mit
+   den Teams, die es trifft, und ob die Eltern den neuen Link über eine
+   Abholadresse holen können. Die Teams liest der Dialog frisch über den
+   Rückruf `teams`, beim Öffnen und noch einmal vor der Bestätigung. Wer
+   abbricht, solange die Teams laden, bleibt draussen: Die späte Antwort
+   öffnet die Bestätigung nicht wieder. Scheitert das Laden, schliesst sie
+   mit einem Satz.
 
    Rein darstellend, mit Rückrufen: Holen und Erneuern sind Sache der
    Aufrufer — die Spielerliste eines Teams (Team-Actions) und der
@@ -27,21 +36,25 @@ import { LINK_TEXT } from "@/lib/spieler";
 type LinkFehler = { ok: false; error: string; weg?: boolean };
 export type LinkHolen = { ok: true; url: string; bezogen?: boolean; hinweis?: string } | LinkFehler;
 export type LinkErneuern = { ok: true; url: string } | LinkFehler;
+export type LinkTeams = { ok: true; teams: LinkTeam[] } | LinkFehler;
 
 export function LinkDialog({
   spieler,
   holen,
   erneuern,
-  abholungAktiv = false,
+  teams,
+  ausgeschaltetHinweis = false,
   onClose,
 }: {
   /** Wer gemeint ist; `null`: zu. `bezogen` gilt, bis Holen den Stand liefert. */
-  spieler: { id: string; name: string; bezogen: boolean } | null;
+  spieler: { id: string; vorname: string; name: string; bezogen: boolean } | null;
   holen: (spielerId: string) => Promise<LinkHolen>;
   erneuern: (spielerId: string) => Promise<LinkErneuern>;
-  /** Die Selbstabholung ist eingeschaltet: Nach dem Erneuern holen die Eltern
-   *  den neuen Link wieder über die Abholadresse (#438). */
-  abholungAktiv?: boolean;
+  /** Die Teams der Spieler:in, frisch gelesen, samt dem Stand ihrer Selbstabholung. */
+  teams: (spielerId: string) => Promise<LinkTeams>;
+  /** Der Dialog gehört einem Team: Der Hinweis sagt auch, dass dessen
+   *  ausgeschaltete Selbstabholung den Link nicht sperrt (#583 AK 13). */
+  ausgeschaltetHinweis?: boolean;
   onClose: () => void;
 }) {
   return (
@@ -56,7 +69,16 @@ export function LinkDialog({
       }
     >
       {/* Eigene Komponente, damit Link und Zustand mit dem Schliessen verschwinden. */}
-      {spieler && <LinkInhalt key={spieler.id} spieler={spieler} holen={holen} erneuern={erneuern} abholungAktiv={abholungAktiv} />}
+      {spieler && (
+        <LinkInhalt
+          key={spieler.id}
+          spieler={spieler}
+          holen={holen}
+          erneuern={erneuern}
+          teams={teams}
+          ausgeschaltetHinweis={ausgeschaltetHinweis}
+        />
+      )}
     </Dialog>
   );
 }
@@ -65,18 +87,27 @@ function LinkInhalt({
   spieler,
   holen,
   erneuern,
-  abholungAktiv,
+  teams,
+  ausgeschaltetHinweis,
 }: {
-  spieler: { id: string; name: string; bezogen: boolean };
+  spieler: { id: string; vorname: string; name: string; bezogen: boolean };
   holen: (spielerId: string) => Promise<LinkHolen>;
   erneuern: (spielerId: string) => Promise<LinkErneuern>;
-  abholungAktiv: boolean;
+  teams: (spielerId: string) => Promise<LinkTeams>;
+  ausgeschaltetHinweis: boolean;
 }) {
   const [url, setUrl] = useState<string | null>(null);
   const [meldung, setMeldung] = useState<{ art: "error" | "success"; text: string } | null>(null);
   const [bezogen, setBezogen] = useState(spieler.bezogen);
   const [hinweis, setHinweis] = useState<string | null>(null);
   const [weg, setWeg] = useState(false);
+  // Die Teams für den Hinweis; ein Fehler beim Lesen lässt ihn weg.
+  const [teamListe, setTeamListe] = useState<LinkTeam[] | null>(null);
+  // Die Bestätigung zum Erneuern: zu, lädt die Teams oder zeigt sie.
+  const [frage, setFrage] = useState<"zu" | "laedt" | LinkTeam[]>("zu");
+  // Zählt jedes Öffnen und Schliessen der Bestätigung: Eine Antwort gilt nur
+  // für das Öffnen, das sie angefordert hat.
+  const anfrage = useRef(0);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -91,6 +122,9 @@ function LinkInhalt({
       if (r.bezogen !== undefined) setBezogen(r.bezogen);
       setHinweis(r.hinweis ?? null);
     });
+    teams(spieler.id).then((r) => {
+      if (aktiv && r.ok) setTeamListe(r.teams);
+    });
     return () => {
       aktiv = false;
     };
@@ -98,9 +132,47 @@ function LinkInhalt({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spieler.id]);
 
+  // Vor dem Erneuern die Teams frisch lesen: Sie sind der Inhalt der Frage.
+  function fragen() {
+    const nr = ++anfrage.current;
+    setFrage("laedt");
+    teams(spieler.id).then(
+      (r) => {
+        if (nr !== anfrage.current) return;
+        if (!r.ok) {
+          setFrage("zu");
+          setWeg(!!r.weg);
+          return setMeldung({ art: "error", text: r.error });
+        }
+        setTeamListe(r.teams);
+        setFrage(r.teams);
+      },
+      () => {
+        if (nr !== anfrage.current) return;
+        setFrage("zu");
+        setMeldung({ art: "error", text: LINK_ERNEUERN_LADEFEHLER });
+      },
+    );
+  }
+
+  // Abbrechen (Knopf oder Escape) gilt, auch während die Teams noch laden.
+  function abbrechen() {
+    anfrage.current++;
+    setFrage("zu");
+  }
+
   function neu() {
     startTransition(async () => {
-      const r = await erneuern(spieler.id);
+      let r: LinkErneuern;
+      try {
+        r = await erneuern(spieler.id);
+      } catch {
+        // Ohne Antwort (etwa ohne Netz) ist offen, ob erneuert wurde: Der Satz
+        // sagt das, die Rückfrage schliesst, der Dialog bleibt bedienbar.
+        setFrage("zu");
+        return setMeldung({ art: "error", text: LINK_ERNEUERN_OHNE_ANTWORT });
+      }
+      setFrage("zu");
       if (!r.ok) {
         setWeg(!!r.weg);
         return setMeldung({ art: "error", text: r.error });
@@ -110,6 +182,8 @@ function LinkInhalt({
       setMeldung({ art: "success", text: LINK_TEXT.erneuert });
     });
   }
+
+  const teamsHinweis = teamListe && linkTeamsText(spieler.vorname, teamListe, ausgeschaltetHinweis);
 
   const oben: ReactNode = hinweis && <SectionMessage appearance="information">{hinweis}</SectionMessage>;
 
@@ -123,19 +197,44 @@ function LinkInhalt({
         Mit diesem Link meldet man {spieler.name} für Trainings ab und wieder an, ohne Konto. {LINK_TEXT.warnung}
       </p>
       {oben}
+      {teamsHinweis && <SectionMessage appearance="information">{teamsHinweis}</SectionMessage>}
       {meldung && <SectionMessage appearance={meldung.art}>{meldung.text}</SectionMessage>}
       <KopierFeld label="Privater Link" value={url ?? "Wird geladen …"} disabled={!url} />
       <SectionMessage
         appearance="warning"
         actions={
-          <Button variant="link" onClick={neu} disabled={pending || !url}>
+          <Button variant="link" onClick={fragen} disabled={pending || !url || frage !== "zu"}>
             Link erneuern
           </Button>
         }
       >
         Weitergegeben oder missbraucht? {LINK_TEXT.erneuern}
-        {abholungAktiv && ` ${LINK_TEXT.erneuertAbholen}`}
       </SectionMessage>
+      <Dialog
+        open={frage !== "zu"}
+        onClose={() => !pending && abbrechen()}
+        title="Link erneuern?"
+        actions={
+          <>
+            <Button variant="outlined" onClick={abbrechen} disabled={pending}>
+              Abbrechen
+            </Button>
+            <Button variant="filled" onClick={neu} disabled={pending || frage === "laedt" || frage === "zu"}>
+              Erneuern
+            </Button>
+          </>
+        }
+      >
+        {Array.isArray(frage) ? (
+          <div className="flex flex-col gap-2">
+            {linkErneuernSaetze(spieler.vorname, frage).map((satz) => (
+              <p key={satz}>{satz}</p>
+            ))}
+          </div>
+        ) : (
+          <p>Wird geladen …</p>
+        )}
+      </Dialog>
     </div>
   );
 }

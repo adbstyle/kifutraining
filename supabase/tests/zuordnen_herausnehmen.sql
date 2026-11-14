@@ -324,7 +324,7 @@ begin
   perform pg_temp.pruefe(v @> jsonb_build_array(jsonb_build_object('spieler_id', pg_temp.id('s1'), 'teams', '["Team Zwei"]'::jsonb),
                                                 jsonb_build_object('spieler_id', pg_temp.id('d1'), 'teams', '["Team Vier"]'::jsonb))
                          and jsonb_array_length(v) = 2, 'spieler_weitere_teams: ' || v::text);
-  perform pg_temp.pruefe(v_auskunft -> 'teams' = '[{"name": "Team Eins", "eigen": true, "dieses": true}, {"name": "Team Zwei", "eigen": false, "dieses": false}]'
+  perform pg_temp.pruefe(v_auskunft -> 'teams' = '[{"name": "Team Eins", "eigen": true, "dieses": true, "abholbar": false}, {"name": "Team Zwei", "eigen": false, "dieses": false, "abholbar": false}]'
                          and length(v_auskunft ->> 'stand') = 32, 'spieler_teams: ' || v_auskunft::text);
   perform pg_temp.pruefe((select count(*) from spieler where id = pg_temp.id('s1')) = 1, 'vorher sichtbar');
 
@@ -397,7 +397,7 @@ declare
   v_auskunft jsonb := spieler_teams(pg_temp.id('t2'), pg_temp.id('s1'));
   v jsonb;
 begin
-  perform pg_temp.pruefe(v_auskunft -> 'teams' = '[{"name": "Team Zwei", "eigen": true, "dieses": true}]', 'Auskunft letztes Team: ' || v_auskunft::text);
+  perform pg_temp.pruefe(v_auskunft -> 'teams' = '[{"name": "Team Zwei", "eigen": true, "dieses": true, "abholbar": false}]', 'Auskunft letztes Team: ' || v_auskunft::text);
   v := spieler_aus_team_nehmen(pg_temp.id('t2'), pg_temp.id('s1'), v_auskunft ->> 'stand');
   perform pg_temp.pruefe(v = '{"status": "herausgenommen", "ohne_team": true, "letztes_eigenes_team": true}', 'letztes Team: ' || v::text);
 end $$;

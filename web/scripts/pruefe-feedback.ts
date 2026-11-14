@@ -31,6 +31,7 @@ import {
   verlaufSchema,
 } from "../lib/feedback/regeln";
 import { PRODUKTWISSEN } from "../lib/feedback/wissen";
+import { lageText, type Lage } from "../lib/feedback/lage";
 
 const hier = fileURLToPath(new URL(".", import.meta.url));
 
@@ -114,6 +115,21 @@ assert.deepEqual(eine("Um 18.00 Uhr? Danke.", "Hast du «nur diesen Termin» gew
   gefragt: true,
 });
 assert.deepEqual(eine("Hast du «nur diesen?» Danke.", null).text, "Danke. Hast du «nur diesen?»", "Frage mit schliessendem Anführungszeichen");
+
+// ── Lage im Systemprompt: Link ohne Team (#583 AK 19) ───────────────────────
+// Ob «ohne Team», sagt die Datenbank (`ohne_team`); der dritte Block folgt ihr:
+// Dringendes an die Vereinsverwaltung — nur am Link, nie bei Trainer:innen.
+{
+  const lage = (l: Partial<Lage>): string =>
+    lageText({ rolle: "spielervertretung", seite: "/", version: "1", geraet: "", nachricht: 1, vorschlagBei: null, zusammenfassung: null, ...l });
+  const ohne = "Die Spieler:in hinter dem Link ist zurzeit keinem Team zugeordnet.";
+  assert.ok(lage({ ohneTeam: true }).includes(ohne), "ohne Team: der Satz steht");
+  assert.ok(lage({ ohneTeam: true }).includes("an die Vereinsverwaltung, nicht an Trainer:innen eines Teams"));
+  assert.ok(lage({ ohneTeam: true }).indexOf(ohne) > lage({ ohneTeam: true }).indexOf("über den privaten Link"), "nach der Rolle, die ihn einschränkt");
+  assert.ok(!lage({ ohneTeam: false }).includes(ohne) && !lage({}).includes(ohne), "mit Team oder ohne Angabe: kein Satz");
+  assert.ok(!lage({ rolle: "trainer", ohneTeam: true }).includes(ohne), "nie bei Trainer:innen");
+  assert.ok(lage({}).includes("verweise sie an die Trainer:innen des Teams"));
+}
 
 // ── Seite ───────────────────────────────────────────────────────────────────
 assert.equal(seiteAus("/team/abc/termine?suche=Muster#x"), "/team/abc/termine", "Ohne Suche und Anker");
