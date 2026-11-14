@@ -325,6 +325,7 @@ import {
   SCHNUPPERN_ZUORDNEN_LABEL,
   SCHNUPPERN_ZUORDNEN_TEXT,
   schnuppernZugeordnetText,
+  vereinHerausgenommenText,
 } from "../lib/verein";
 import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
 import { bereichAusPfad } from "../lib/navigation";
@@ -3147,6 +3148,9 @@ pruefe("Zuordnen zum Schnuppern (#584 AK 7–12, 16): jede Abweisung, eine und m
   assert.equal(SCHNUPPERN_ZUORDNEN_LABEL, "Zum Schnuppern zuordnen");
   assert.equal(SCHNUPPERN_ZUORDNEN_HINWEIS, "Solange die Spieler:in schnuppert, lässt sie sich keinem weiteren Team zuordnen.");
   assert.equal(schnuppernZugeordnetText("Noah Keller", "Da Junioren"), "Noah Keller ist jetzt dem Team Da Junioren zugeordnet und schnuppert dort.");
+  // AK 13: Endet beim Herausnehmen ein Schnuppern, das die Bestätigung nicht ankündigte, sagt es die Snackbar.
+  assert.equal(vereinHerausgenommenText("Noah", "Da Junioren", false), "Noah ist nicht mehr im Team Da Junioren.");
+  assert.equal(vereinHerausgenommenText("Noah", "Da Junioren", true), "Noah ist nicht mehr im Team Da Junioren. Das Schnuppertraining ist damit beendet.");
   // Marker der Datenebene kommen beim Zuordnen als Satz an (der Verein-Kern übersetzt sie über `fachlicheMeldung`).
   assert.equal(fachlicheMeldung("SCHNUPPERN_NUR_EINZELN"), "Zum Schnuppern lässt sich nur eine Spieler:in zuordnen.");
   assert.equal(

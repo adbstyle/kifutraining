@@ -139,6 +139,14 @@ export function schnuppernZugeordnetText(name: string, team: string): string {
   return `${name} ist jetzt dem Team ${team} zugeordnet und schnuppert dort.`;
 }
 
+/** Die Meldung nach dem Herausnehmen am Verein-Ort. Endete dabei ein
+ *  Schnuppertraining, das die Bestätigung nicht angekündigt hat (ein Mitglied
+ *  schaltete es nach dem Laden der Seite ein), sagt es der Zusatz (#584 AK 13). */
+export function vereinHerausgenommenText(vorname: string, team: string, schnuppernUnangekuendigt: boolean): string {
+  const satz = `${vorname} ist nicht mehr im Team ${team}.`;
+  return schnuppernUnangekuendigt ? `${satz} Das Schnuppertraining ist damit beendet.` : satz;
+}
+
 /** Bis drei beim Namen, darüber die Zahl. */
 function wer(namen: string[]): string {
   return namen.length <= 3 ? aufzaehlung(namen) : `${namen.length} Spieler:innen`;

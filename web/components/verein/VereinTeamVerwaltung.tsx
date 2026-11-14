@@ -36,7 +36,7 @@ import {
 import type { VereinTeamAnsicht, VereinTeamSpieler, VereinTeamTrainer } from "@/lib/kern/verein";
 import { SPIELER_MAX } from "@/lib/spieler";
 import { teamNameProblem } from "@/lib/team";
-import { zielWeg } from "@/lib/verein";
+import { vereinHerausgenommenText, zielWeg } from "@/lib/verein";
 
 /* Ein Team aus Sicht der Vereinsverwaltung (Epic Vereine #575, Story #581
    AK 10–14, 19–22, 24, 25; Story #579 AK 11, 17): Name, Trainerteam,
@@ -139,7 +139,7 @@ export function VereinTeamVerwaltung({
       }
       setHerausnehmen(null);
       router.refresh();
-      melde(`${s.vorname} ist nicht mehr im Team ${team.name}.`);
+      melde(vereinHerausgenommenText(s.vorname, team.name, r.schnuppernBeendet && !s.schnuppern));
     });
   }
 
