@@ -1,10 +1,13 @@
-// Probetraining (Epic #554, Story #555): Regeln und Texte des Probe-Modus für
-// Oberfläche, privaten Link und KI-Werkzeuge — eine Quelle, wortgleich.
+// Schnuppertraining (Epic #554, Story #555, umbenannt mit Story #584): Regeln
+// und Texte des Schnupperns für Oberfläche, privaten Link und KI-Werkzeuge —
+// eine Quelle, wortgleich. Intern heisst es weiter `probe`, in der Oberfläche
+// und in der KI «Schnuppern» (Epic Vereine, F-Begriff).
 //
-// Eine Spieler:in im Probe-Modus ist an Trainings zuerst nicht angemeldet und
+// Eine schnuppernde Spieler:in ist an Trainings zuerst nicht angemeldet und
 // meldet sich an; über den Link nur, solange besuchte und künftig angemeldete
-// Probetrainings samt dieser Anmeldung die Anzahl des Teams nicht übersteigen.
-// Spiele gelten für sie nicht. Die Regeln selbst stehen in der Datenebene
+// Schnuppertrainings samt dieser Anmeldung die Anzahl des Teams nicht
+// übersteigen. Spiele gelten für sie nicht. Schnuppern geht nur in genau einem
+// Team. Die Regeln selbst stehen in der Datenebene
 // (20261029110000_probetraining.sql); hier stehen ihre Zwillinge und Sätze.
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
@@ -15,7 +18,7 @@ export const PROBE_ANZAHL_MAX = 20;
 /** Zwilling des Checks `team_probetraining_info` (#556 AK 2). */
 export const PROBE_INFO_MAX = 2000;
 
-/** Der Stand einer Probe-Spieler:in (`probe_stand`). `anzahl` ist leer, solange
+/** Der Stand einer schnuppernden Spieler:in (`probe_stand`). `anzahl` ist leer, solange
  *  das Team keine festgelegt hat; `moeglich` wird nie kleiner als null. */
 export type ProbeStand = {
   anzahl: number | null;
@@ -24,51 +27,59 @@ export type ProbeStand = {
   moeglich: number;
 };
 
-/** Die Probetraining-Einstellung des Teams; `anzahl` leer = nicht konfiguriert,
+/** Die Schnuppertraining-Einstellung des Teams; `anzahl` leer = nicht konfiguriert,
  *  `info` leer = kein Info-Schreiben (#556). */
 export type Probetraining = { anzahl: number | null; info: string | null };
 
 export const PROBE_TEXT = {
-  titel: "Probetraining",
+  titel: "Schnuppertraining",
+  /** AK 4: unter dem Titel steht, für wen es gedacht ist. */
   karte:
-    "Probe-Spieler:innen melden sich über ihren Link selbst für Trainings an, höchstens für so viele, wie das Team festlegt. Spiele sehen sie nicht.",
-  leerTitel: "Noch kein Probetraining",
-  leer: "Lege fest, wie viele Trainings eine Probe-Spieler:in besuchen darf. Danach kannst du den Probe-Modus bei Spieler:innen einschalten.",
-  konfigurieren: "Probetraining konfigurieren",
-  bearbeiten: "Probetraining bearbeiten",
-  dialog: "Gilt für alle Probe-Spieler:innen des Teams.",
-  anzahl: "Anzahl Probetrainings",
+    "Für Spieler:innen, die den Verein ausprobieren. Sie melden sich über ihren Link selbst für Trainings an, höchstens für so viele, wie das Team festlegt. Spiele sehen sie nicht.",
+  leerTitel: "Noch kein Schnuppertraining",
+  leer: "Lege fest, wie viele Trainings eine Spieler:in zum Schnuppern besuchen darf. Danach kannst du das Schnuppern bei Spieler:innen einschalten.",
+  konfigurieren: "Schnuppertraining konfigurieren",
+  bearbeiten: "Schnuppertraining bearbeiten",
+  dialog: "Gilt für alle schnuppernden Spieler:innen des Teams.",
+  anzahl: "Anzahl Schnuppertrainings",
   anzahlHinweis: `${PROBE_ANZAHL_MIN} bis ${PROBE_ANZAHL_MAX} · zählt besuchte und angemeldete Trainings`,
   anzahlProblem: `Gib eine ganze Zahl von ${PROBE_ANZAHL_MIN} bis ${PROBE_ANZAHL_MAX} ein.`,
-  imProbeModus: "Im Probe-Modus",
-  niemand: "Noch niemand. Den Probe-Modus schaltest du bei einer Spieler:in im Dialog «Spieler:in ändern» ein.",
-  festgelegt: "Probetraining gespeichert.",
+  imProbeModus: "Schnuppert",
+  niemand: "Noch niemand. Das Schnuppern schaltest du bei einer Spieler:in im Dialog «Spieler:in ändern» ein.",
+  festgelegt: "Schnuppertraining gespeichert.",
   /** Die Checkbox im Dialog «Spieler:in ändern». */
-  checkbox: "Im Probetraining",
+  checkbox: "Schnuppert",
   /** Ohne festgelegte Anzahl lässt sich nichts einschalten (AK 4, 18). */
-  anzahlFehlt: "Lege zuerst in der Karte «Probetraining» fest, wie viele Trainings eine Probe-Spieler:in besuchen darf.",
-  einschalten: "Probetraining einschalten",
-  /** Wer weiteren Teams zugeordnet ist, schnuppert nicht (Vereine AP §5.3). */
+  anzahlFehlt: "Lege zuerst in der Karte «Schnuppertraining» fest, wie viele Trainings eine Spieler:in zum Schnuppern besuchen darf.",
+  einschalten: "Schnuppern einschalten",
+  /** Wer weiteren Teams zugeordnet ist, schnuppert nicht (Vereine AP §5.3, AK 6). */
   mehrereTeams: "Diese Spieler:in ist weiteren Teams zugeordnet und macht darum regulär in deinem Team mit.",
+  /** Beim Einschalten und beim Zuordnen zum Schnuppern (AK 7). */
+  keinWeiteresTeam: "Solange die Spieler:in schnuppert, lässt sie sich keinem weiteren Team zuordnen.",
+  /** Netz-Marker `SPIELER_SCHNUPPERT` — ohne Teamnamen, der Normalfall nennt das Team. */
+  schnuppertAnderswo:
+    "Diese Spieler:in schnuppert in einem anderen Team. Dort beendet zuerst ein Mitglied das Schnuppern, oder sie wird aus dem Team genommen.",
+  /** Marker `SCHNUPPERN_NUR_EINZELN`. */
+  nurEinzeln: "Zum Schnuppern lässt sich nur eine Spieler:in zuordnen.",
   /** Am privaten Link: nach Ablauf der Anzahl (AK 12). */
-  vergeben: "Probetrainings vergeben",
+  vergeben: "Schnuppertrainings vergeben",
   /** Die Abweisung am Link, wenn die Anzahl erreicht ist (AK 12). */
-  voll: "Alle Probetrainings sind vergeben. Meldest du von einem anderen Training ab, wird ein Platz frei. Für weitere Trainings wende dich an das Team.",
-  imProbeModusZahl: (n: number) => `${n === 1 ? "1 Spieler:in" : `${n} Spieler:innen`} im Probe-Modus`,
+  voll: "Alle Schnuppertrainings sind vergeben. Meldest du von einem anderen Training ab, wird ein Platz frei. Für weitere Trainings wende dich an das Team.",
+  imProbeModusZahl: (n: number) => (n === 1 ? "1 Spieler:in schnuppert" : `${n} Spieler:innen schnuppern`),
   nichtAngemeldet: "Nicht angemeldet",
   // ── Info-Schreiben (#556) ──
   info: "Info-Schreiben",
   infoFeld: "Info-Schreiben (optional)",
   /** AK 3: wer es sieht — fest hinter dem ⓘ. */
-  infoWer: "Das sehen die Eltern aller Probe-Spieler:innen oben in ihrem Link.",
+  infoWer: "Das sehen die Eltern aller schnuppernden Spieler:innen oben in ihrem Link.",
   infoUnter: "Nur Text. Webadressen werden im Link anklickbar.",
   infoZuLang: `Das Info-Schreiben darf höchstens ${PROBE_INFO_MAX} Zeichen lang sein.`,
   infoKeines: "Keines",
   /** Am privaten Link (AK 4). */
-  linkInfoTitel: "Infos zum Probetraining",
-  /** Unter der Spielerliste, sobald jemand im Probe-Modus ist. */
+  linkInfoTitel: "Infos zum Schnuppertraining",
+  /** Unter der Spielerliste, sobald jemand schnuppert. */
   listeHinweis:
-    "«Probe 1/4»: 1 von 4 Probetrainings besucht. Für welche Trainings jemand angemeldet ist, steht am jeweiligen Training. Probe-Spieler:innen zählen bei den Angemeldeten eines Trainings nur, wenn sie angemeldet sind.",
+    "«Schnuppern 1/4»: 1 von 4 Schnuppertrainings besucht. Für welche Trainings jemand angemeldet ist, steht am jeweiligen Training. Schnuppernde Spieler:innen zählen bei den Angemeldeten eines Trainings nur, wenn sie angemeldet sind.",
 } as const;
 
 /** Was an einer Anzahl nicht stimmt, sonst `null` (AK 2). */
@@ -78,7 +89,7 @@ export function probeAnzahlProblem(n: number | null | undefined): string | null 
     : PROBE_TEXT.anzahlProblem;
 }
 
-/** Was der Probe-Modus für die Spieler:in bedeutet, vor dem Einschalten (AK 16). */
+/** Was das Schnuppern für die Spieler:in bedeutet, vor dem Einschalten (AK 16). */
 export function probeEinschaltenText(vorname: string, anzahl: number | null): string {
   const hoechstens = anzahl === null ? "" : `, höchstens für ${anzahl}`;
   return `${vorname} meldet sich selbst für Trainings an${hoechstens}. Spiele sieht ${vorname} nicht.`;
@@ -86,7 +97,7 @@ export function probeEinschaltenText(vorname: string, anzahl: number | null): st
 
 /** Was das Ausschalten bewirkt, vorher (AK 19). */
 export function probeAusschaltenText(vorname: string): string {
-  return `${vorname} ist danach an allen kommenden Trainings angemeldet und sieht Spiele wie alle. Schaltest du das Probetraining später wieder ein, zählt es wieder ab null.`;
+  return `${vorname} ist danach an allen kommenden Trainings angemeldet und sieht Spiele wie alle. Schaltest du das Schnuppern später wieder ein, zählt es wieder ab null.`;
 }
 
 /** Was das Einschalten verfallen lässt (AK 5): Abmeldungen von Trainings,
@@ -143,6 +154,8 @@ export const PROBE_MELDUNG = {
   PROBE_ANZAHL_UNGUELTIG: PROBE_TEXT.anzahlProblem,
   PROBE_INFO_ZU_LANG: PROBE_TEXT.infoZuLang,
   SCHNUPPERN_MEHRERE_TEAMS: PROBE_TEXT.mehrereTeams,
+  SPIELER_SCHNUPPERT: PROBE_TEXT.schnuppertAnderswo,
+  SCHNUPPERN_NUR_EINZELN: PROBE_TEXT.nurEinzeln,
 } as const;
 
 /** Die CHECKs, samt Anführungszeichen gesucht (wie `SPIELER_CHECKS`). */
@@ -169,15 +182,19 @@ export function probeInfoProblem(text: string | null | undefined): string | null
   return probeInfoLaenge(text) > PROBE_INFO_MAX ? PROBE_TEXT.infoZuLang : null;
 }
 
-/** Die Plakette in der Spielerliste: «Probe 1/4» — besuchte von der Anzahl
- *  (PO 2026-10-29); ohne Anzahl nur «Probe». */
-export function probeKurz(s: ProbeStand | null): string {
-  return s?.anzahl ? `Probe ${s.besucht}/${s.anzahl}` : "Probe";
+/** Was die Plakette braucht: besuchte von der Anzahl — angemeldete und freie
+ *  Plätze gehören nicht hinein (die Verwaltung kennt sie nicht). */
+export type SchnupperZahl = Pick<ProbeStand, "anzahl" | "besucht">;
+
+/** Die Plakette in der Spielerliste: «Schnuppern 1/4» — besuchte von der
+ *  Anzahl (PO 2026-10-29); ohne Anzahl nur «Schnuppern». */
+export function probeKurz(s: SchnupperZahl | null): string {
+  return s?.anzahl ? `Schnuppern ${s.besucht}/${s.anzahl}` : "Schnuppern";
 }
 
 /** Dasselbe ausgeschrieben, für die Vorlesehilfe. */
-export function probeLang(s: ProbeStand | null): string {
-  return s?.anzahl ? `Probe: ${s.besucht} von ${s.anzahl} Probetrainings besucht` : "Im Probe-Modus";
+export function probeLang(s: SchnupperZahl | null): string {
+  return s?.anzahl ? `Schnuppern: ${s.besucht} von ${s.anzahl} Schnuppertrainings besucht` : "Schnuppert";
 }
 
 /** Eine Anmeldung durch ein Mitglied oder die KI über der Anzahl (Zusatzentscheid
@@ -187,30 +204,30 @@ export function ueberAnzahl(s: ProbeStand | null | undefined): boolean {
 }
 
 export function ueberAnzahlText(name: string, s: ProbeStand): string {
-  return `${name} ist damit über der Anzahl Probetrainings: ${s.besucht} besucht und ${s.angemeldet} angemeldet, vorgesehen sind ${s.anzahl}.`;
+  return `${name} ist damit über der Anzahl Schnuppertrainings: ${s.besucht} besucht und ${s.angemeldet} angemeldet, vorgesehen sind ${s.anzahl}.`;
 }
 
 // ── Am privaten Link (AK 9, 11, 12) ─────────────────────────────────────────
 
 export function linkProbeKopf(vorname: string): string {
-  return `${vorname} ist im Probetraining. Melde ${vorname} für die Trainings an, an denen ${vorname} teilnimmt, und bis zum Beginn wieder ab.`;
+  return `${vorname} schnuppert. Melde ${vorname} für die Trainings an, an denen ${vorname} teilnimmt, und bis zum Beginn wieder ab.`;
 }
 
-/** «1 Probetraining», «4 Probetrainings». */
-function probetrainings(n: number): string {
-  return n === 1 ? "1 Probetraining" : `${n} Probetrainings`;
+/** «1 Schnuppertraining», «4 Schnuppertrainings». */
+function schnuppertrainings(n: number): string {
+  return n === 1 ? "1 Schnuppertraining" : `${n} Schnuppertrainings`;
 }
 
-/** Was vergeben ist: «Das Probetraining», «Alle 4 Probetrainings» (ohne «Alle 1»). */
+/** Was vergeben ist: «Das Schnuppertraining», «Alle 4 Schnuppertrainings» (ohne «Alle 1»). */
 function alleVergeben(n: number | null): string {
-  return n === 1 ? "Das Probetraining ist vergeben" : `Alle ${n} Probetrainings sind vergeben`;
+  return n === 1 ? "Das Schnuppertraining ist vergeben" : `Alle ${n} Schnuppertrainings sind vergeben`;
 }
 
 export function linkProbeZaehler(s: ProbeStand): string {
   if (s.anzahl === null) return `${s.besucht} besucht · ${s.angemeldet} angemeldet`;
-  // Die Kopfzeile knapp wie im Entwurf: «Alle 4 Probetrainings vergeben».
-  if (s.moeglich > 0) return `Noch ${s.moeglich} von ${probetrainings(s.anzahl)} möglich`;
-  return s.anzahl === 1 ? "Das Probetraining ist vergeben" : `Alle ${s.anzahl} Probetrainings vergeben`;
+  // Die Kopfzeile knapp wie im Entwurf: «Alle 4 Schnuppertrainings vergeben».
+  if (s.moeglich > 0) return `Noch ${s.moeglich} von ${schnuppertrainings(s.anzahl)} möglich`;
+  return s.anzahl === 1 ? "Das Schnuppertraining ist vergeben" : `Alle ${s.anzahl} Schnuppertrainings vergeben`;
 }
 
 export function linkProbeStand(s: ProbeStand): string {

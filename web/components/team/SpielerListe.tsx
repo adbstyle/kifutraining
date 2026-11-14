@@ -39,7 +39,7 @@ import { TeamLozenges } from "./TeamLozenges";
 import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
 import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
-import { ProbeLozenge } from "./ProbeLozenge";
+import { SchnupperLozenge } from "./SchnupperLozenge";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
    Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet einen
@@ -444,7 +444,7 @@ export function SpielerListe({
               <span className="min-w-0 flex-1">
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="type-body-medium truncate text-on-surface">{spielerName(s)}</span>
-                  {s.probe && <ProbeLozenge stand={s.probe} />}
+                  {s.probe && <SchnupperLozenge stand={s.probe} />}
                 </span>
                 {/* Schmal stehen Jahrgang, J+S-Nummer und Kader unter dem Namen. */}
                 <span className="type-body-small block text-on-surface-mittel sm:hidden">
