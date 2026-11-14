@@ -2911,6 +2911,11 @@ pruefe("Link in jedem Team (#583 AK 14, 16): kein Web-Code liest das «erste Tea
   assert.match(erneuern, /revalidiereAlleTeams\(\)[\s\S]*revalidiereVerein\(\)/, "Erneuern revalidiert nicht alle Teams und den Verein");
   const vereinErneuern = lies("lib/actions/verein.ts").match(/export async function erneuereVereinSpielerLinkAktion[\s\S]*?\n}\n/)?.[0] ?? "";
   assert.match(vereinErneuern, /revalidiereAlleTeams\(\)[\s\S]*revalidiereVerein\(\)/);
+  // Die Rückfrage zum Erneuern liegt im Link-Dialog: Der Dialog-Baustein reagiert nur auf eigene `close`/`cancel`, sonst
+  // schlösse Abbrechen, Escape oder das Erneuern selbst auch den Link-Dialog (React reicht die Ereignisse nach aussen weiter).
+  const dialog = lies("components/ui/Dialog.tsx");
+  assert.match(dialog, /onClose=\{\(e\) => \{\s*if \(e\.target === ref\.current\) onClose\(\);/);
+  assert.match(dialog, /onCancel=\{\(e\) => \{\s*if \(e\.target !== ref\.current\) return;/);
   // Der Dialog hat kein `abholungAktiv` mehr.
   assert.ok(!/abholungAktiv/.test(lies("components/spieler/LinkDialog.tsx") + lies("components/team/SpielerLinkDialog.tsx") + lies("components/team/SpielerListe.tsx")), "abholungAktiv ist gefallen");
   // Der Link-Knopf der Spielerliste steht in jeder Zeile, an keiner Bedingung (früher `s.erstesTeam && (`): Zwischen dem Beginn
