@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import { Button, Dialog, KopierFeld, SectionMessage } from "@/components/ui";
 import { BezogenLozenge } from "@/components/team/BezogenLozenge";
-import { LINK_TEXT, linkErneuernSaetze, linkTeamsText, type LinkTeam } from "@/lib/spieler";
+import { LINK_ERNEUERN_LADEFEHLER, LINK_TEXT, linkErneuernSaetze, linkTeamsText, type LinkTeam } from "@/lib/spieler";
 
 /* Der private Link einer Spieler:in (#436 AK 1–3): holen, kopieren, erneuern.
    Der Link ist ein Geheimnis — was er kann, steht darum immer bei ihm (AK 2).
@@ -16,7 +16,10 @@ import { LINK_TEXT, linkErneuernSaetze, linkTeamsText, type LinkTeam } from "@/l
    (#583): Der Hinweis nennt die Teams, und Erneuern fragt vorher nach — mit
    den Teams, die es trifft, und ob die Eltern den neuen Link über eine
    Abholadresse holen können. Die Teams liest der Dialog frisch über den
-   Rückruf `teams`, beim Öffnen und noch einmal vor der Bestätigung.
+   Rückruf `teams`, beim Öffnen und noch einmal vor der Bestätigung. Wer
+   abbricht, solange die Teams laden, bleibt draussen: Die späte Antwort
+   öffnet die Bestätigung nicht wieder. Scheitert das Laden, schliesst sie
+   mit einem Satz.
 
    Rein darstellend, mit Rückrufen: Holen und Erneuern sind Sache der
    Aufrufer — die Spielerliste eines Teams (Team-Actions) und der
@@ -102,6 +105,9 @@ function LinkInhalt({
   const [teamListe, setTeamListe] = useState<LinkTeam[] | null>(null);
   // Die Bestätigung zum Erneuern: zu, lädt die Teams oder zeigt sie.
   const [frage, setFrage] = useState<"zu" | "laedt" | LinkTeam[]>("zu");
+  // Zählt jedes Öffnen und Schliessen der Bestätigung: Eine Antwort gilt nur
+  // für das Öffnen, das sie angefordert hat.
+  const anfrage = useRef(0);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -128,16 +134,31 @@ function LinkInhalt({
 
   // Vor dem Erneuern die Teams frisch lesen: Sie sind der Inhalt der Frage.
   function fragen() {
+    const nr = ++anfrage.current;
     setFrage("laedt");
-    teams(spieler.id).then((r) => {
-      if (!r.ok) {
+    teams(spieler.id).then(
+      (r) => {
+        if (nr !== anfrage.current) return;
+        if (!r.ok) {
+          setFrage("zu");
+          setWeg(!!r.weg);
+          return setMeldung({ art: "error", text: r.error });
+        }
+        setTeamListe(r.teams);
+        setFrage(r.teams);
+      },
+      () => {
+        if (nr !== anfrage.current) return;
         setFrage("zu");
-        setWeg(!!r.weg);
-        return setMeldung({ art: "error", text: r.error });
-      }
-      setTeamListe(r.teams);
-      setFrage(r.teams);
-    });
+        setMeldung({ art: "error", text: LINK_ERNEUERN_LADEFEHLER });
+      },
+    );
+  }
+
+  // Abbrechen (Knopf oder Escape) gilt, auch während die Teams noch laden.
+  function abbrechen() {
+    anfrage.current++;
+    setFrage("zu");
   }
 
   function neu() {
@@ -183,11 +204,11 @@ function LinkInhalt({
       </SectionMessage>
       <Dialog
         open={frage !== "zu"}
-        onClose={() => !pending && setFrage("zu")}
+        onClose={() => !pending && abbrechen()}
         title="Link erneuern?"
         actions={
           <>
-            <Button variant="outlined" onClick={() => setFrage("zu")} disabled={pending}>
+            <Button variant="outlined" onClick={abbrechen} disabled={pending}>
               Abbrechen
             </Button>
             <Button variant="filled" onClick={neu} disabled={pending || frage === "laedt" || frage === "zu"}>

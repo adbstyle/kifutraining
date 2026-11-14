@@ -177,6 +177,7 @@ import {
   LINK_TEXT,
   linkErneuernSaetze,
   linkTeamsText,
+  nachTeamname,
   nachSpielerName,
   spielerDoppeltText,
   spielerProblem,
@@ -2396,13 +2397,15 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
     linkOhneTeamText("Elias"),
     "Elias ist keinem Team zugeordnet. Die Spielervertretung sieht erst Termine, wenn Elias einem Team zugeordnet ist; der Link bleibt danach derselbe.",
   );
-  // LINK_TEXT (Story #583): Wortlaut eingefroren, die geänderten Schlüssel bewusst neu festgehalten (warnung, erneuern, erneuertAbholen).
+  // LINK_TEXT (Story #583): Wortlaut eingefroren, die geänderten Schlüssel bewusst neu festgehalten (erneuern, erneuertAbholen).
+  // `warnung` bleibt beim Wortlaut vor Story 7: Dass der Link alle Teams zeigt, sagt im Dialog `linkTeamsText` (einmal), und die
+  // KI-Beschreibung, in die `warnung` fliesst, spricht bis Story 13 von den Terminen des Teams.
   const { erneuertAbholen, ...linkStatisch } = LINK_TEXT;
   assert.deepEqual(
     linkStatisch,
     {
       warnung:
-        "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Er zeigt die Termine aller Teams der Spieler:in. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
+        "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
       erneuern:
         "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen.",
       ungueltigTitel: "Dieser Link gilt nicht mehr",
@@ -2734,11 +2737,15 @@ pruefe("Eltern-Seite über mehrere Teams: Kopf, Leerzustände und Meldung zu «g
     "Das Training vom Donnerstag, 5. November gilt nicht mehr für Noah. Die Liste zeigt jetzt die aktuellen Termine.",
   );
   assert.match(linkGiltNichtText("spiel", "2026-11-07", "Noah"), /^Das Spiel vom Samstag, 7\. November gilt nicht mehr für Noah\./);
-  // Beide Ursachen stehen im Text der Abweisung, für Training und Spiel (AK 7).
-  for (const t of [ABMELDUNG_TEXT.giltNicht, MELDUNG_TEXT.giltNicht]) {
-    assert.ok(t.includes("nicht mehr im Team") && t.includes("Kader"), t);
-    assert.ok(!/\b(er|ihn|sein|seine|ihm)\b/i.test(t), "neutral formuliert");
-  }
+  // Die Abweisungstexte `giltNicht` erreichen nur Mitglieder und die KI (am Link steht `linkGiltNichtText`); dort ist die Ursache
+  // nie das Team (deren Wege antworten `nicht_gefunden`), darum ohne Team im Text — Wortlaut wie vor Story 7.
+  assert.equal(ABMELDUNG_TEXT.giltNicht, "Dieser Termin gilt nicht mehr für diese Spieler:in. Sieh dir die Termine noch einmal an.");
+  assert.equal(MELDUNG_TEXT.giltNicht, "Dieses Spiel gilt nicht mehr für diese Spieler:in. Sieh dir die Termine noch einmal an.");
+  const eltern = readFileSync(join(web, "components/privat/ElternAnsicht.tsx"), "utf8");
+  assert.match(eltern, /if \(r\.giltNicht\) setGiltNicht\(/, "am Link ersetzt die Meldung «Nicht gespeichert» den Abweisungstext");
+  // W5: nach `gilt_nicht` geht der Fokus auf die Meldung.
+  assert.match(eltern, /ref=\{giltNichtRef\} tabIndex=\{-1\}/);
+  assert.match(eltern, /if \(giltNicht\) giltNichtRef\.current\?\.focus\(\)/);
   // AK 17: der ungültige Link nennt weder Team noch Spieler:in und weist drei Wege.
   assert.ok(LINK_TEXT.ungueltig.includes("Abholadresse") && LINK_TEXT.ungueltig.includes("Vereinsverwaltung"));
 });
@@ -2842,18 +2849,27 @@ pruefe("Link am Team-Ort und Verein-Ort (#583 AK 13, 15, 16): Hinweis und Erneue
   // Hinweis: ein Team ohne den zweiten Satz, mehrere mit; Verein-Ort nie mit; ohne Team keiner.
   assert.equal(linkTeamsText("Lina", [ab("Ca", false)], true), "Der Link zeigt die Termine aller Teams von Lina: Ca.");
   assert.equal(
-    linkTeamsText("Lina", [ab("Cb", true), ab("Ca", false)], true),
+    linkTeamsText("Lina", [ab("Ca", false), ab("Cb", true)], true),
     "Der Link zeigt die Termine aller Teams von Lina: Ca und Cb. Eine hier ausgeschaltete Selbstabholung sperrt den Link nicht, wenn ein anderes Team von Lina sie eingeschaltet hat.",
   );
   assert.equal(linkTeamsText("Lina", [ab("Ca", false), ab("Cb", true)], false), "Der Link zeigt die Termine aller Teams von Lina: Ca und Cb.");
   assert.equal(linkTeamsText("Lina", [], true), null);
+  // Eine Ordnung der Teamnamen (D4): deutsch, Gross-/Kleinschreibung und Umlaute wie in allen Team-Listen der Vereins-Funktionen;
+  // geordnet wird beim Laden (Kern, Link-Ansicht), die Sätze übernehmen die Folge.
+  assert.deepEqual(["beta", "Zug", "Älpler", "Alpha"].sort(nachTeamname), ["Alpha", "Älpler", "beta", "Zug"]);
+  assert.deepEqual(linkTeamsText("Lina", [ab("Cb", false)].concat([ab("Ca", false)]), false), "Der Link zeigt die Termine aller Teams von Lina: Cb und Ca.");
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  assert.match(lies("lib/kern/spieler.ts"), /teams: \[\.\.\.r\.teams\]\.sort\(\(a, b\) => nachTeamname\(a\.name, b\.name\)\)/, "ladeSpielerTeams ordnet nicht");
+  assert.match(lies("lib/kern/verein.ts"), /const nachName = \(a: \{ name: string \}, b: \{ name: string \}\) => nachTeamname\(a\.name, b\.name\);/);
+  assert.match(lies("lib/privater-link.ts"), /teams: \[\.\.\.ansicht\.teams\]\.sort\(nachTeamname\)/, "Link-Ansicht ordnet die Teams nicht");
+  assert.ok(!/\.sort\(/.test(lies("components/privat/ElternAnsicht.tsx")), "die Eltern-Seite ordnet nicht noch einmal um");
   // Erneuern: ein Team mit Abholung.
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true)]), [
     "Der bisherige Link und das Kalender-Abo enden für alle Teams von Lina: Ca. Abmeldungen bleiben bestehen.",
     "Die Eltern holen den neuen Link über die Abholadresse von Ca ab.",
   ]);
-  // Mehrere Teams, zwei mit Abholung; nach Namen geordnet.
-  assert.deepEqual(linkErneuernSaetze("Lina", [ab("Cb", true), ab("Cc", false), ab("Ca", true)]), [
+  // Mehrere Teams, zwei mit Abholung; in der geladenen Folge (geordnet hat der Kern, `nachTeamname`).
+  assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true), ab("Cb", true), ab("Cc", false)]), [
     "Der bisherige Link und das Kalender-Abo enden für alle Teams von Lina: Ca, Cb und Cc. Abmeldungen bleiben bestehen.",
     "Die Eltern holen den neuen Link über die Abholadresse von Ca oder Cb ab.",
   ]);
@@ -2895,8 +2911,15 @@ pruefe("Link in jedem Team (#583 AK 14, 16): kein Web-Code liest das «erste Tea
   assert.match(erneuern, /revalidiereAlleTeams\(\)[\s\S]*revalidiereVerein\(\)/, "Erneuern revalidiert nicht alle Teams und den Verein");
   const vereinErneuern = lies("lib/actions/verein.ts").match(/export async function erneuereVereinSpielerLinkAktion[\s\S]*?\n}\n/)?.[0] ?? "";
   assert.match(vereinErneuern, /revalidiereAlleTeams\(\)[\s\S]*revalidiereVerein\(\)/);
-  // Der Link-Knopf der Spielerliste hängt an keiner Bedingung des Teams; der Dialog hat kein `abholungAktiv` mehr.
+  // Der Dialog hat kein `abholungAktiv` mehr.
   assert.ok(!/abholungAktiv/.test(lies("components/spieler/LinkDialog.tsx") + lies("components/team/SpielerLinkDialog.tsx") + lies("components/team/SpielerListe.tsx")), "abholungAktiv ist gefallen");
+  // Der Link-Knopf der Spielerliste steht in jeder Zeile, an keiner Bedingung (früher `s.erstesTeam && (`): Zwischen dem Beginn
+  // der Knopfgruppe der Zeile und dem Kettenglied steht kein bedingtes Rendern.
+  const liste = lies("components/team/SpielerListe.tsx");
+  const gruppe = liste.indexOf('<span className="flex justify-end gap-1">');
+  const knopf = liste.indexOf("icon={Link2}", gruppe);
+  assert.ok(gruppe > 0 && knopf > gruppe, "Knopfgruppe mit Link-Knopf nicht gefunden");
+  assert.ok(!/&&\s*\(|\?\s*\(/.test(liste.slice(gruppe, knopf)), "Link-Knopf hängt an einer Bedingung");
 });
 
 pruefe("Spielerliste: Marker der Datenebene tragen die Sätze der Oberfläche", () => {

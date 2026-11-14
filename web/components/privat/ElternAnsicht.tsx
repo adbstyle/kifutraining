@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CalendarX2 } from "lucide-react";
 import { ExternerLink, FilterChip, Kalenderblatt, KuerzbarerText, Leerzustand, Lozenge, SectionMessage, Switch, TrainingsTreffpunkt } from "@/components/ui";
 import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
@@ -87,6 +87,12 @@ export function ElternAnsicht({
   // geladene Liste ihn nicht mehr: Die Meldung hält Art und Tag selbst fest und
   // bleibt stehen, bis neu gemeldet wird.
   const [giltNicht, setGiltNicht] = useState<{ art: LinkTermin["art"]; datum: string } | null>(null);
+  // Der gedrückte Schalter verschwindet mit seiner Karte: Der Fokus geht auf
+  // die Meldung, statt auf die Seite zu fallen (Tastatur, Vorlesehilfen).
+  const giltNichtRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (giltNicht) giltNichtRef.current?.focus();
+  }, [giltNicht]);
   // Ein inzwischen erneuerter Link: Die Seite lädt neu und sagt es.
   const zeigeFehler = (t: LinkTermin) => (r: { ungueltig: true } | { ungueltig?: false; giltNicht?: boolean; error: string }) => {
     if (r.ungueltig) return;
@@ -213,8 +219,9 @@ export function ElternAnsicht({
         {/* Die Teams alphabetisch, auch ohne Termine (#583 AK 3). */}
         {teams.length > 0 && (
           <ul aria-label="Teams" className="mt-1 flex flex-wrap gap-1">
-            {teams.map((t) => (
-              <li key={t}>
+            {/* Gleichnamige Teams eines Vereins sind im Altbestand möglich: Schlüssel mit Stelle. */}
+            {teams.map((t, i) => (
+              <li key={`${i}:${t}`}>
                 <Lozenge appearance="neutral">{t}</Lozenge>
               </li>
             ))}
@@ -266,7 +273,7 @@ export function ElternAnsicht({
         </div>
       )}
       {giltNicht && (
-        <div className="px-4 pt-4">
+        <div ref={giltNichtRef} tabIndex={-1} className="px-4 pt-4 focus:outline-none">
           <SectionMessage appearance="error">
             <strong className="block font-semibold">{LINK_GILT_NICHT_TITEL}</strong>
             {linkGiltNichtText(giltNicht.art, giltNicht.datum, spieler.vorname)}

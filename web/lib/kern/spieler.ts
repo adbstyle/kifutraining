@@ -8,6 +8,7 @@ import {
   herausnehmenFrage,
   jahrgangAus,
   nachSpielerName,
+  nachTeamname,
   spielerDoppeltText,
   spielerName,
   spielerProblem,
@@ -197,7 +198,8 @@ export async function aendereSpieler(
 }
 
 /** Die Teams einer Spieler:in samt Stand — was die Bestätigung des
- *  Herausnehmens nennt (#579 AK 14–16). Nur im Team, in dem man handelt. */
+ *  Herausnehmens nennt (#579 AK 14–16) und der Link-Dialog (#583). Nur im
+ *  Team, in dem man handelt; nach Namen wie alle Team-Listen (`nachTeamname`). */
 export async function ladeSpielerTeams(
   supabase: SupabaseClient,
   _userId: string,
@@ -207,7 +209,8 @@ export async function ladeSpielerTeams(
   if (!istUuid(e.spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
   const { data, error } = await supabase.rpc("spieler_teams", { p_team: e.teamId, p_spieler: e.spielerId });
   if (error) return spielerFehler(error);
-  return ok(data as SpielerTeams);
+  const r = data as SpielerTeams;
+  return ok({ ...r, teams: [...r.teams].sort((a, b) => nachTeamname(a.name, b.name)) });
 }
 
 /** Der Name des Vereins der handelnden Person; `null`, wenn sie keinem angehört. */
@@ -359,13 +362,13 @@ async function linkRpc(
   }
   if (!istUuid(teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
   if (!istUuid(e.spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
-  const { data, error } = await supabase.rpc(name, { p_team: teamId, p_spieler: e.spielerId });
-  if (error) return spielerFehler(error);
-  const token = data as string;
+  // Den Namen vor dem RPC lesen: Ein erneuerter Link wird so nie als Fehler gemeldet.
   const person = await supabase.from("spieler").select("vorname, nachname").eq("id", e.spielerId).maybeSingle<{ vorname: string; nachname: string }>();
   if (person.error) return ausDbFehler(person.error);
   if (!person.data) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
-  return ok({ token, teamId, name: spielerName(person.data) });
+  const { data, error } = await supabase.rpc(name, { p_team: teamId, p_spieler: e.spielerId });
+  if (error) return spielerFehler(error);
+  return ok({ token: data as string, teamId, name: spielerName(person.data) });
 }
 
 /** Den privaten Link einer Spieler:in holen (AK 1, 12) — das Geheimnis, nicht die Adresse. */

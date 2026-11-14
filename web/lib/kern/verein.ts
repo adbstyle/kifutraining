@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
-import { nachSpielerName, SPIELER_MELDUNG, type SpielerEingabe } from "@/lib/spieler";
+import { nachSpielerName, nachTeamname, SPIELER_MELDUNG, type SpielerEingabe } from "@/lib/spieler";
 import { teamNameProblem } from "@/lib/team";
 import {
   PERSON_MELDUNG,
@@ -61,7 +61,7 @@ export type VereinSpieler = {
 /** Ein Team des Vereins; `anzahl`: Zuordnungen, gezählt wie die Grenze 100. */
 export type VereinTeam = { id: string; name: string; anzahl: number };
 
-const nachName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name, "de");
+const nachName = (a: { name: string }, b: { name: string }) => nachTeamname(a.name, b.name);
 
 /** Alle Spieler:innen und Teams des Vereins, nach Vorname und Nachname bzw.
  *  Teamname geordnet (#579 AK 1) — die Grundfassung, die Story #580 ersetzt. */

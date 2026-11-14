@@ -1,7 +1,7 @@
 import "server-only";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { istUuid } from "@/lib/kennung";
-import { LINK_FEHLER, abweisungText, istLinkToken, type AbmeldeGrund, type AbmeldeStand, type Spielstand } from "@/lib/spieler";
+import { LINK_FEHLER, abweisungText, istLinkToken, nachTeamname, type AbmeldeGrund, type AbmeldeStand, type Spielstand } from "@/lib/spieler";
 import { meldungAbweisungText, type Meldung, type Treffpunkt } from "@/lib/spiel";
 import type { MeldeAntwort } from "@/lib/kern/spiele";
 import { spielerAboUrl } from "@/lib/spieler-abo";
@@ -94,8 +94,9 @@ export type LinkTermin = {
 export type LinkAnsicht =
   | {
       gueltig: true;
-      /** Die Teams der Spieler:in, alphabetisch, auch ohne Termine (AK 3);
-       *  leer ohne Team (AK 5). */
+      /** Die Teams der Spieler:in, nach Namen wie alle Team-Listen
+       *  (`nachTeamname`, hier geordnet), auch ohne Termine (AK 3); leer ohne
+       *  Team (AK 5). */
       teams: string[];
       spieler: { vorname: string; nachname: string };
       /** Im Probe-Modus ihr Stand (#555 AK 11), sonst `null`; fehlt bei einer
@@ -118,7 +119,8 @@ export async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
   // Ein Fehler der Datenebene ist kein Beweis, dass der Link nicht gilt — die
   // Seite sagt es trotzdem so, statt etwas über ihn preiszugeben.
   if (error || !data) return UNGUELTIG;
-  return data as LinkAnsicht;
+  const ansicht = data as LinkAnsicht;
+  return ansicht.gueltig ? { ...ansicht, teams: [...ansicht.teams].sort(nachTeamname) } : ansicht;
 }
 
 export type LinkAbmeldung = { terminId: string; abgemeldet: boolean; gesehen: { datum: string; beginn: string } };

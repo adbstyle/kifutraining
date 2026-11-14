@@ -59,10 +59,16 @@ export function aufzaehlung(namen: string[], bindewort = "und"): string {
   return namen.length <= 1 ? (namen[0] ?? "") : `${namen.slice(0, -1).join(", ")} ${bindewort} ${namen.at(-1)}`;
 }
 
+/** Die eine Ordnung von Teamnamen im Web, wie in allen Team-Listen der
+ *  Vereins-Funktionen: deutsch verglichen. Die Datenebene liefert in ihrer
+ *  Kollation; die Lade-Funktionen (Kern, Link-Ansicht) ordnen damit einmal,
+ *  die Bausteine übernehmen die Folge, wie sie kommt. */
+export const nachTeamname = (a: string, b: string): number => a.localeCompare(b, "de");
+
 /** «im Team «A»», «im Team «A» und «B»», «im Team «A», «B» und «C»» —
  *  nach Namen sortiert. */
 export function imTeam(teams: string[]): string {
-  const namen = [...teams].sort((x, y) => x.localeCompare(y, "de")).map((t) => `«${t}»`);
+  const namen = [...teams].sort(nachTeamname).map((t) => `«${t}»`);
   return `im Team ${aufzaehlung(namen)}`;
 }
 
@@ -352,10 +358,9 @@ export const ABMELDUNG_TEXT = {
   nichtGefunden: "Diesen Termin oder diese Spieler:in gibt es nicht mehr. Sieh dir den Trainingsplan noch einmal an.",
   begonnen: "Der Termin hat begonnen. An- und abmelden geht nur bis zum Beginn.",
   ausgefallen: "Der Termin fällt aus. Für ihn lässt sich niemand an- oder abmelden.",
-  /** Der Termin gilt nicht (mehr) für die Spieler:in: Sie ist nicht mehr im Team des Termins oder
-   *  gehört keinem seiner Kader mehr (#453 AK 9, #454 AK 5; #583 AK 7). */
-  giltNicht:
-    "Dieser Termin gilt nicht mehr für diese Spieler:in: Sie ist nicht mehr im Team des Termins oder gehört keinem seiner Kader mehr. Sieh dir die Termine noch einmal an.",
+  /** Der Termin gilt nicht (mehr) für die Spieler:in — ihre Kader (#453 AK 9, #454 AK 5).
+   *  Nur für Mitglieder und die KI; am Link steht `linkGiltNichtText` (#583 AK 7). */
+  giltNicht: "Dieser Termin gilt nicht mehr für diese Spieler:in. Sieh dir die Termine noch einmal an.",
   /** Ein Termin, der begann, als die Spielerliste leer war. */
   ohneListe: "Bei Beginn führte das Team keine Spielerliste. Für diesen Termin gilt die erwartete Spielerzahl.",
   /** Ein Nachtrag vor Beginn (#475 AK 4). */
@@ -467,9 +472,11 @@ export function spielerLinkUrl(origin: string, token: string): string {
 }
 
 export const LINK_TEXT = {
-  /** AK 2, #583 AK 13: was der Link kann — beim Holen, in der Oberfläche wie beim KI-Assistenten. */
+  /** AK 2: was der Link kann — beim Holen, in der Oberfläche wie beim KI-Assistenten.
+   *  Dass er die Termine aller Teams zeigt, sagt im Link-Dialog `linkTeamsText`
+   *  (#583 AK 13); die KI-Beschreibung folgt mit Story 13. */
   warnung:
-    "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Er zeigt die Termine aller Teams der Spieler:in. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
+    "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
   /** Was Erneuern bewirkt (AK 3, PC 3; #583 AK 15): für alle Teams der Spieler:in. */
   erneuern:
     "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen.",
@@ -486,37 +493,39 @@ export const LINK_TEXT = {
  *  die Selbstabholung dieses Teams eingeschaltet ist (#583). */
 export type LinkTeam = { name: string; abholbar: boolean };
 
-const nachTeamName = (teams: LinkTeam[]): LinkTeam[] => [...teams].sort((a, b) => a.name.localeCompare(b.name, "de"));
-
 /** Der Hinweis im Link-Dialog (#583 AK 13): der Link zeigt die Termine aller
- *  Teams der Spieler:in. `ausgeschaltet`: Der Dialog gehört einem Team; bei
+ *  Teams der Spieler:in, in der Folge, in der sie geladen sind (`nachTeamname`). `ausgeschaltet`: Der Dialog gehört einem Team; bei
  *  mehr als einem Team steht dazu, dass dessen ausgeschaltete Selbstabholung
  *  den Link nicht sperrt, wenn ein anderes Team sie eingeschaltet hat.
  *  Ohne Team: `null` (dort steht der Hinweis «ohne Team»). */
 export function linkTeamsText(vorname: string, teams: LinkTeam[], ausgeschaltet: boolean): string | null {
   if (teams.length === 0) return null;
-  const erster = `Der Link zeigt die Termine aller Teams von ${vorname}: ${aufzaehlung(nachTeamName(teams).map((t) => t.name))}.`;
+  const erster = `Der Link zeigt die Termine aller Teams von ${vorname}: ${aufzaehlung(teams.map((t) => t.name))}.`;
   if (!ausgeschaltet || teams.length < 2) return erster;
   return `${erster} Eine hier ausgeschaltete Selbstabholung sperrt den Link nicht, wenn ein anderes Team von ${vorname} sie eingeschaltet hat.`;
 }
 
 /** Was die Bestätigung zum Erneuern sagt (#583 AK 15, 16), Satz für Satz:
- *  wen es trifft, ob die Eltern den neuen Link abholen können. */
+ *  wen es trifft, ob die Eltern den neuen Link abholen können. Die Teams in
+ *  der geladenen Folge (`nachTeamname`). */
 export function linkErneuernSaetze(vorname: string, teams: LinkTeam[]): string[] {
   if (teams.length === 0)
     return [
       "Der bisherige Link und das Kalender-Abo enden. Abmeldungen bleiben bestehen.",
       `${vorname} ist keinem Team zugeordnet; gib den neuen Link selbst weiter.`,
     ];
-  const geordnet = nachTeamName(teams);
-  const abholbar = geordnet.filter((t) => t.abholbar).map((t) => t.name);
+  const abholbar = teams.filter((t) => t.abholbar).map((t) => t.name);
   return [
-    `Der bisherige Link und das Kalender-Abo enden für alle Teams von ${vorname}: ${aufzaehlung(geordnet.map((t) => t.name))}. Abmeldungen bleiben bestehen.`,
+    `Der bisherige Link und das Kalender-Abo enden für alle Teams von ${vorname}: ${aufzaehlung(teams.map((t) => t.name))}. Abmeldungen bleiben bestehen.`,
     abholbar.length > 0
       ? LINK_TEXT.erneuertAbholen(abholbar)
       : "Keines dieser Teams hat die Selbstabholung eingeschaltet. Gib den neuen Link selbst weiter.",
   ];
 }
+
+/** Die Teams für die Bestätigung zum Erneuern liessen sich nicht lesen
+ *  (etwa ohne Netz): Die Bestätigung schliesst, der Link bleibt, wie er war. */
+export const LINK_ERNEUERN_LADEFEHLER = "Die Teams liessen sich nicht laden. Der Link ist nicht erneuert; versuche es noch einmal.";
 
 // ── Der private Link über mehrere Teams (#583) ──────────────────────────────
 
@@ -651,7 +660,7 @@ export const ABHOL_SPERRE_MINUTEN = 15;
 export const ABHOLUNG_TEXT = {
   /** AK 3, 5: was die Adresse kann und was Ausschalten bewirkt. */
   beschreibung:
-    "Eltern holen den privaten Link selbst ab. Er zeigt die Termine aller Teams ihrer Spieler:in. Über diese Adresse können Spieler:innen-Links mit Vorname, Nachname und Jahrgang abgeholt werden. Wer die Abholadresse hat und die Angaben der Spieler:in kennt, kann die Spieler:in ab- und anmelden; teile sie nur teamintern. Ausschalten stoppt neue Abholungen, bezogene Spieler:innen-Links gelten weiter.",
+    "Über diese Adresse holen Eltern den privaten Link ihrer Spieler:in mit Vorname, Nachname und Jahrgang selbst ab. Der Link zeigt die Termine aller Teams der Spieler:in. Wer die Abholadresse hat und die Angaben der Spieler:in kennt, kann die Spieler:in ab- und anmelden; teile sie nur teamintern. Ausschalten stoppt neue Abholungen, bezogene Spieler:innen-Links gelten weiter.",
   aus: "Ausgeschaltet. Eltern erhalten ihren Link von diesem Team nur von euch. Der Link zeigt die Termine aller Teams der Spieler:in; ausgeschaltet sperrt die Selbstabholung ihn nicht, wenn ein anderes Team der Spieler:in sie eingeschaltet hat. Beim Einschalten gilt die bisherige Abholadresse wieder.",
   /** AK 4, 5: vor dem Erneuern. */
   erneuern:
