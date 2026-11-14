@@ -157,7 +157,7 @@ import {
 } from "@/lib/farben";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { KaderLozenge } from "@/components/team/KaderLozenge";
-import { SchnupperLozenge } from "@/components/team/SchnupperLozenge";
+import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 import { VERZEICHNIS_COOKIE, leseVerzeichnis } from "@/lib/verzeichnis";
 
 export const metadata: Metadata = {
@@ -2754,7 +2754,10 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Schnuppern</strong> (<code>SchnupperLozenge</code>, #555, #584):
             eine Spieler:in, die im Team schnuppert, neben dem Namen in der
-            Spielerliste und in der Karte «Schnuppertraining».{" "}
+            Spielerliste und in der Karte «Schnuppertraining», und für die
+            Verwaltung in der Teams-Spalte der Vereinsliste und in der
+            Spielerliste unter Verein › Team - ein Baustein für beide Orte
+            (<code>components/spieler</code>).{" "}
             <code>discovery</code> - etwas Zusätzliches, kein Status. Die Zahl
             nennt besuchte Schnuppertrainings von der Anzahl des Teams (PO
             2026-10-29); angemeldete stehen am jeweiligen Training. Ohne
@@ -2765,6 +2768,7 @@ export default async function Styleguide() {
           <div className="mb-6 flex flex-wrap items-center gap-2">
             <SchnupperLozenge stand={{ anzahl: 4, besucht: 1 }} />
             <SchnupperLozenge stand={{ anzahl: 4, besucht: 3 }} />
+            <SchnupperLozenge stand={{ anzahl: null, besucht: 0 }} />
           </div>
           <div className="mb-6 flex flex-wrap items-center gap-3 rounded-flaeche bg-[linear-gradient(135deg,#f5f5f0,#9aa79c)] p-3">
             <HerkunftLozenge herkunft="manual" aufBild />

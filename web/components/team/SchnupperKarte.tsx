@@ -16,7 +16,7 @@ import {
   type Probetraining,
 } from "@/lib/probe";
 import { nurZiffern, spielerName, type Spieler } from "@/lib/spieler";
-import { SchnupperLozenge } from "./SchnupperLozenge";
+import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 
 /* Das Schnuppertraining eines Teams (Epic #554, Story #555, #584; intern
    `probe`): gelesen in der Karte, bearbeitet im Dialog (PO 2026-10-29). Ohne

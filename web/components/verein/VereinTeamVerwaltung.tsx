@@ -23,7 +23,7 @@ import {
 } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { TeamLozenges } from "@/components/team/TeamLozenges";
-import { SchnuppernPlakette } from "./SchnuppernPlakette";
+import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 import {
   benenneTeamUmAktion,
   entferneAusTeamAktion,
@@ -305,11 +305,11 @@ export function VereinTeamVerwaltung({
                   <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.jahrgang}</span>
                   <span className="hidden min-w-0 sm:flex sm:flex-wrap sm:gap-1">
                     <TeamLozenges namen={s.teams.map((t) => t.name)} ids={s.teams.map((t) => t.id)} />
-                    {s.schnuppern && <SchnuppernPlakette stand={s.schnuppern} />}
+                    {s.schnuppern && <SchnupperLozenge stand={s.schnuppern} />}
                   </span>
                   <span className="mt-1 flex flex-wrap gap-1 sm:hidden">
                     <TeamLozenges namen={s.teams.map((t) => t.name)} ids={s.teams.map((t) => t.id)} />
-                    {s.schnuppern && <SchnuppernPlakette stand={s.schnuppern} />}
+                    {s.schnuppern && <SchnupperLozenge stand={s.schnuppern} />}
                   </span>
                 </span>
                 <span className="flex justify-end">

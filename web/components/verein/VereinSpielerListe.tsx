@@ -31,7 +31,7 @@ import {
   zugeordnetText,
   zuordnenEinleitung,
 } from "@/lib/verein";
-import { SchnuppernPlakette } from "./SchnuppernPlakette";
+import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 import { VereinSpielerFormular } from "./VereinSpielerFormular";
 import { VereinSpielerLinkDialog } from "./VereinSpielerLinkDialog";
 import { VereinSpielerLoeschen } from "./VereinSpielerLoeschen";
@@ -188,7 +188,7 @@ export function VereinSpielerListe({
                 {s.teams.length > 0 ? (
                   <span className="inline-flex flex-wrap gap-1">
                     <TeamLozenges namen={s.teams.map((t) => t.name)} ids={s.teams.map((t) => t.id)} />
-                    {s.schnuppern && <SchnuppernPlakette stand={s.schnuppern} />}
+                    {s.schnuppern && <SchnupperLozenge stand={s.schnuppern} />}
                   </span>
                 ) : (
                   <span className="type-body-medium text-on-surface-tief">ohne Team</span>
@@ -196,7 +196,7 @@ export function VereinSpielerListe({
               </span>
               <span className="mt-1 flex flex-wrap gap-1 sm:hidden">
                 <TeamLozenges namen={s.teams.map((t) => t.name)} ids={s.teams.map((t) => t.id)} />
-                {s.schnuppern && <SchnuppernPlakette stand={s.schnuppern} />}
+                {s.schnuppern && <SchnupperLozenge stand={s.schnuppern} />}
               </span>
               <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.js ?? "–"}</span>
               <span className="hidden sm:block">
