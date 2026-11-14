@@ -7,8 +7,8 @@
 --   Vereins, Konto ohne Verein, Spieler:in eines anderen Vereins, unbekannt
 --   → SPIELER_NICHT_GEFUNDEN (p_spieler) bzw. VEREIN_NICHT_GEFUNDEN (p_verein)
 -- - AK 14 und Review Focus 4: Kein Team-Weg erreicht eine Spieler:in ohne
---   Team, auch nicht für ein Konto mit beiden Rollen; am Team-Ort löscht
---   niemand
+--   Team, auch nicht über Termine und Kader und nicht für ein Konto mit
+--   beiden Rollen; am Team-Ort löscht niemand
 -- - verein_spielerliste mit J+S und Link-Stand (AK 1, 8), verein_ansicht mit
 --   den Zahlen der Verwaltung (Zettel A1.2)
 -- - Erfassen ohne Team (AK 3), doppelt mit Teams bzw. ohne Team (AK 4),
@@ -188,12 +188,15 @@ end $$;
 
 -- a (Mitglied T1) und verw2 (Verwaltung und Mitglied T1) erreichen x über
 -- keine Team-RPC und sehen x nicht; verw2 erreicht auch sb (nur T2) nicht.
+-- Auch die Wege über Termine und Kader des eigenen Teams (Abmeldung,
+-- Anwesenheit, Spiel-Meldung, Aufgebot, Kader) weisen x ab, ohne Zeile.
 -- Am Team-Ort gibt es kein Löschen, und direkt darf niemand löschen.
 do $$
 declare
   wer text;
   ziel record;
   x text;
+  r jsonb;
 begin
   foreach wer in array array['a', 'verw2'] loop
     perform pg_temp.als(pg_temp.id(wer));
@@ -210,6 +213,25 @@ begin
         perform pg_temp.erwarte(x, 'SPIELER_NICHT_GEFUNDEN');
       end loop;
     end loop;
+    foreach x in array array[
+      format('select termin_abmeldung_setzen(%L, %L, true)', pg_temp.id('tr1_zukunft'), pg_temp.id('x')),
+      format('select termin_anwesenheit_setzen(%L, %L, true, null, null)', pg_temp.id('tr1_begonnen'), pg_temp.id('x')),
+      format('select termin_meldung_setzen(%L, %L, true, null, null)', pg_temp.id('sp1'), pg_temp.id('x')),
+      format('select termin_aufgebot_setzen(%L, %L, false, null, null)', pg_temp.id('sp1'), pg_temp.id('x'))] loop
+      execute x into r;
+      perform pg_temp.pruefe(r = '{"status": "abgewiesen", "grund": "nicht_gefunden"}', wer || ': ' || x || ' → ' || r::text);
+    end loop;
+    perform pg_temp.erwarte(format('select kader_zuteilung_aendern(%L, array[%L]::uuid[], array[%L]::uuid[])',
+                                   pg_temp.id('t1'), pg_temp.id('x'), pg_temp.id('k1')), 'SPIELER_NICHT_GEFUNDEN');
+    reset role;
+    perform pg_temp.pruefe(not exists (select 1 from termin_abmeldungen where spieler_id = pg_temp.id('x'))
+                           and not exists (select 1 from termin_statuswechsel where spieler_id = pg_temp.id('x'))
+                           and not exists (select 1 from termin_teilnahmen where spieler_id = pg_temp.id('x'))
+                           and not exists (select 1 from spiel_meldungen where spieler_id = pg_temp.id('x'))
+                           and not exists (select 1 from spiel_teilnahmen where spieler_id = pg_temp.id('x'))
+                           and not exists (select 1 from kader_spieler where spieler_id = pg_temp.id('x')),
+                           wer || ': ein Termin- oder Kader-Weg schrieb zu x');
+    perform pg_temp.als(pg_temp.id(wer));
     perform pg_temp.pruefe(not exists (select 1 from spieler where id in (pg_temp.id('x'), pg_temp.id('x2'))),
                            wer || ' sieht Spieler:innen ohne Team');
     perform pg_temp.erwarte(format('delete from spieler where id = %L', pg_temp.id('s1')), '42501');

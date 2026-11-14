@@ -4,7 +4,7 @@
 -- Fälle (Story 1: Teamgrenze 100 unter der Vereinssperre; Story 2:
 -- Doppelerfassung im Verein beim Erfassen und Ändern; Story 3: Zuordnen und
 -- Herausnehmen; Story 5: 30 Teams, Teamname, leere Verwaltung, Team vor
--- Termin; Story 6: Löschen, Erfassen und Grenze 1000 am Verein-Ort).
+-- Termin; Story 6: Löschen, Erfassen, Link und Grenze 1000 am Verein-Ort).
 --
 -- Muster für «gleichzeitig, genau eines gelingt» (spätere Stories bauen ihre
 -- Fälle als weitere Blöcke nach diesem Vorbild):
@@ -909,6 +909,12 @@ delete from auth.users where id in (select id from rennen_test.ids where name in
 --     löscht: SPIELER_NICHT_GEFUNDEN, die Spieler:in bleibt.
 -- (w) Zuordnen gegen Auflösen: B antwortet VEREIN_NICHT_GEFUNDEN statt mit
 --     einem rohen Fehler.
+-- (x) Erfassen im Verein gegen Aufnehmen am Team-Ort mit demselben
+--     Schlüssel, beide Richtungen: genau eine gelingt, die andere antwortet
+--     `doppelt` (am Team-Ort mit dem Status des Team-Orts).
+-- (y) Link erneuern gegen Abo holen über den alten Link, beide Richtungen:
+--     Danach gibt es kein Abo zum alten Link (`for key share` hält das
+--     Erneuern an; nach dem Erneuern findet der alte Link nichts mehr).
 -- Ein harter Abbruch lässt den Verein «Rennen-Bestand» samt Teams und
 -- Spieler:innen und die Konten «rennen-b-…@rennen.test» stehen (von Hand löschen).
 
@@ -916,7 +922,7 @@ select set_config('rennen.fehler_bestand', '', false) is not null as rennen_fehl
 
 begin;
 insert into rennen_test.ids (name) values ('b_verein'), ('b_va'), ('b_vb'), ('b_m'), ('b_t1'), ('b_t2'), ('b_termin'),
-  ('b_p1'), ('b_p2'), ('b_q1'), ('b_q2'), ('b_r1'), ('b_r2'), ('b_s1'), ('b_v1'), ('b_w1');
+  ('b_p1'), ('b_p2'), ('b_q1'), ('b_q2'), ('b_r1'), ('b_r2'), ('b_s1'), ('b_v1'), ('b_w1'), ('b_y1'), ('b_y2');
 insert into auth.users (id, email, email_confirmed_at)
 select id, 'rennen-' || replace(name, '_', '-') || '@rennen.test', now() from rennen_test.ids where name in ('b_va', 'b_vb', 'b_m');
 insert into vereine (id, name) values (rennen_test.z('b_verein'), 'Rennen-Bestand');
@@ -930,9 +936,9 @@ insert into team_members (team_id, user_id) values
 insert into training_termine (id, team_id, datum, beginn, ende) values
   (rennen_test.z('b_termin'), rennen_test.z('b_t1'), current_date + 7, '18:00', '19:30');
 insert into spieler (id, verein_id, vorname, nachname, jahrgang)
-select id, rennen_test.z('b_verein'), 'Bestand', name, 2015 from rennen_test.ids where name like 'b\_%' and name ~ '^b_[pqrsvw][0-9]$';
+select id, rennen_test.z('b_verein'), 'Bestand', name, 2015 from rennen_test.ids where name like 'b\_%' and name ~ '^b_[pqrsvwy][0-9]$';
 insert into team_spieler (team_id, spieler_id, verein_id)
-select rennen_test.z('b_t1'), id, rennen_test.z('b_verein') from rennen_test.ids where name in ('b_p2', 'b_q1', 'b_q2', 'b_r1', 'b_r2');
+select rennen_test.z('b_t1'), id, rennen_test.z('b_verein') from rennen_test.ids where name in ('b_p2', 'b_q1', 'b_q2', 'b_r1', 'b_r2', 'b_y1');
 commit;
 
 do $$
@@ -1026,6 +1032,51 @@ begin
   end if;
   if (select count(*) from spieler where verein_id = v_verein and nachname ilike 'gleich') <> 1 then
     raise exception '(t) Schlüssel nicht genau einmal';
+  end if;
+
+  -- (x) Erfassen im Verein, dann Aufnehmen am Team-Ort.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format($q$select verein_spieler_anlegen(%L, 'Kreuz', 'Eins', 2015, null)::text$q$, v_verein),
+    v_m, format($q$select spieler_aufnehmen(%L, ' kreuz ', 'EINS', 2015, null)::text$q$, v_t1), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:'
+     or ergebnis::jsonb <> '{"status": "abgewiesen", "grund": "doppelt", "eigenes_team": false, "teams": [], "ohne_team": true}' then
+    raise exception '(x) Aufnehmen nach dem Erfassen hätte doppelt ohne Team melden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from spieler where verein_id = v_verein and nachname ilike 'eins' and vorname ilike 'kreuz') <> 1
+     or exists (select 1 from team_spieler ts join spieler s on s.id = ts.spieler_id
+                 where s.verein_id = v_verein and s.vorname = 'Kreuz') then
+    raise exception '(x) Erwartet genau eine «Kreuz Eins» ohne Team';
+  end if;
+  -- Aufnehmen am Team-Ort, dann Erfassen im Verein.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format($q$select spieler_aufnehmen(%L, 'Kreuz', 'Zwei', 2015, null)::text$q$, v_t1),
+    v_va, format($q$select verein_spieler_anlegen(%L, 'KREUZ', ' zwei ', 2015, null)::text$q$, v_verein), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:'
+     or ergebnis::jsonb <> '{"status": "abgewiesen", "grund": "doppelt", "teams": ["Bestand-Eins"], "ohne_team": false}' then
+    raise exception '(x) Erfassen nach dem Aufnehmen hätte doppelt mit Bestand-Eins melden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from spieler where verein_id = v_verein and nachname ilike 'zwei' and vorname ilike 'kreuz') <> 1 then
+    raise exception '(x) Erwartet genau eine «Kreuz Zwei»';
+  end if;
+
+  -- (y) Link erneuern, dann Abo über den alten Link holen: Der alte Link
+  -- findet nach dem Commit nichts mehr.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_spieler_link_erneuern(%L)::text', rennen_test.z('b_y1')),
+    v_m, format($q$select coalesce(spieler_abo_holen(%L), 'kein Abo')$q$,
+                (select link_token from spieler where id = rennen_test.z('b_y1'))));
+  if ergebnis <> 'kein Abo' then
+    raise exception '(y) Abo über den alten Link nach dem Erneuern: %', ergebnis;
+  end if;
+  -- Abo über den alten Link holen, dann erneuern: Der Trigger beendet es.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_abo_holen(%L)', (select link_token from spieler where id = rennen_test.z('b_y2'))),
+    v_va, format('select verein_spieler_link_erneuern(%L)::text', rennen_test.z('b_y2')));
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'link_token' is null then
+    raise exception '(y) B hätte nach dem Abo erneuern müssen: %', ergebnis;
+  end if;
+  if exists (select 1 from spieler_abos where spieler_id in (rennen_test.z('b_y1'), rennen_test.z('b_y2'))) then
+    raise exception '(y) Abo zum alten Link nach dem Erneuern da';
   end if;
 
   -- (u) Grenze 1000: auf 999 auffüllen (eigene Verbindung, committet).

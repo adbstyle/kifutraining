@@ -251,10 +251,12 @@ language plpgsql security definer
 set search_path = public, pg_temp
 as $$
 declare
-  v_token text := neues_geheimnis();
+  v_token text;
 begin
   perform nur_in_der_anwendung();
   perform verwaltung_spieler_sperren(p_spieler);
+  -- Das Geheimnis erst nach den Prüfungen erzeugen.
+  v_token := neues_geheimnis();
   update spieler set link_token = v_token, link_bezogen = false where id = p_spieler;
   return jsonb_build_object('link_token', v_token);
 end;
