@@ -1,89 +1,69 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { revalidiereTeam } from "@/lib/revalidate";
-import { teamNameProblem } from "@/lib/team";
-import { eigeneBildPfade } from "@/lib/fassung";
-import { raeumeVerwaisteBilder } from "@/lib/storage-aufraeumen";
+import { revalidiereMitgliedschaften, revalidiereTeam } from "@/lib/revalidate";
+import { fachlicheMeldung } from "@/lib/training-bedingungen";
+import { PERSON_MELDUNG, type PersonSchritt } from "@/lib/verein";
 
 /**
- * Server Actions rund um Teams (Team-Epic Stories 3, 4).
+ * Server Actions am Team-Ort: Trainer:innen aufnehmen, entfernen, das Team
+ * verlassen (Team-Epic Stories 4, 13; Vereine #581).
  *
  * Alles, was auth.users auflösen oder mehrere Tabellen atomar anfassen muss,
  * läuft über SECURITY-DEFINER-RPCs; hier bleiben Eingabeprüfung, Übersetzung
  * der RPC-Zustände in Klartext und die Cache-Invalidierung.
+ *
+ * Umbenennen, Auflösen und Anlegen von Teams gehören der Vereinsverwaltung und
+ * liegen im Verein (`lib/actions/verein.ts`): Am Team-Ort gibt es nichts, was
+ * ein Team verschwinden lässt oder umbenennt.
  */
 
-export type TeamActionResult = { ok: boolean; error?: string };
+const FEHLER = "Das hat nicht geklappt. Bitte erneut versuchen.";
 
-function pruefeName(name: string): { ok: true; name: string } | { ok: false; error: string } {
-  const problem = teamNameProblem(name);
-  return problem ? { ok: false, error: problem } : { ok: true, name: name.trim() };
+/** Wer nicht (mehr) Mitglied des Teams ist — auch, weil die Vereinsverwaltung
+ *  einen entfernt oder das Team aufgelöst hat —, bekommt von den Team-RPCs
+ *  `not a member of this team`. */
+const NICHT_MEHR_MITGLIED = "Du bist nicht mehr Mitglied dieses Teams.";
+
+/** Der Satz zu einem Fehler der Team-RPCs: «nicht mehr Mitglied», ein Marker
+ *  der Datenebene (z. B. `ANDERER_VEREIN` als Netz) oder die allgemeine
+ *  Meldung. Der Rohtext steht nur im Log. */
+function rpcFehlerMeldung(e: { message: string }): string {
+  if (e.message.includes("not a member")) return NICHT_MEHR_MITGLIED;
+  return fachlicheMeldung(e.message) ?? FEHLER;
 }
 
-/** Team umbenennen (Story 3 AK 5). Jedes Mitglied darf das — alle sind
- *  gleichberechtigt; die RLS prüft die Mitgliedschaft. */
-export async function benenneTeamUm(teamId: string, name: string): Promise<TeamActionResult> {
-  const supabase = await createClient();
-  const geprueft = pruefeName(name);
-  if (!geprueft.ok) return geprueft;
-
-  const { data, error } = await supabase
-    .from("teams")
-    .update({ name: geprueft.name })
-    .eq("id", teamId)
-    .select("id")
-    .maybeSingle();
-  // Die Rohmeldung der Datenbank ist englisch und erklärt dem Trainer nichts;
-  // sie gehört ins Log, nicht an den Bildschirmrand.
-  if (error) {
-    console.error("[team] umbenennen", error);
-    return { ok: false, error: "Der Teamname liess sich nicht speichern. Bitte erneut versuchen." };
-  }
-  if (!data) return { ok: false, error: "Team nicht gefunden." };
-
-  revalidiereTeam(teamId);
-  return { ok: true };
+/** Der Satz zu einem Status der Suche oder Aufnahme; ein unbekannter Status
+ *  (eine neuere Datenebene) steht im Log und fällt auf die allgemeine Meldung. */
+function personMeldung(status: string): string {
+  if (status in PERSON_MELDUNG) return PERSON_MELDUNG[status as keyof typeof PERSON_MELDUNG];
+  console.error("[team] unbekannter Status der Personensuche", status);
+  return FEHLER;
 }
-
-export type TrainerSuche =
-  | { status: "gefunden"; anzeigeName: string }
-  | { status: "bereits_mitglied" }
-  | { status: "fehler"; error: string };
 
 /** Vor der Aufnahme nachsehen, wer sich hinter der Adresse verbirgt (Story 4
  *  AK 2). Bewusste, dokumentierte Ausnahme von der Anti-Enumeration-Linie: die
  *  Vorschau verhindert, dass jemand versehentlich eine fremde Person ins Team
- *  holt. Die RPC bremst erfolglose Versuche aus. */
-export async function sucheTrainer(teamId: string, email: string): Promise<TrainerSuche> {
+ *  holt. Die RPC bremst erfolglose Versuche aus (`nicht_gefunden` und
+ *  `anderer_verein` zählen, #581). */
+export async function sucheTrainer(teamId: string, email: string): Promise<PersonSchritt> {
   const supabase = await createClient();
   const adresse = email.trim();
-  if (!adresse) return { status: "fehler", error: "Bitte eine E-Mail-Adresse angeben." };
+  if (!adresse) return { ok: false, meldung: "Bitte eine E-Mail-Adresse angeben." };
 
   const { data, error } = await supabase.rpc("finde_trainer", {
     p_team_id: teamId,
     p_email: adresse,
   });
-  if (error) return { status: "fehler", error: error.message };
+  if (error) {
+    console.error("[team] trainer suchen", error);
+    return { ok: false, meldung: rpcFehlerMeldung(error) };
+  }
 
   const res = data as { status: string; anzeige_name?: string };
-  switch (res.status) {
-    case "gefunden":
-      return { status: "gefunden", anzeigeName: res.anzeige_name! };
-    case "bereits_mitglied":
-      return { status: "bereits_mitglied" };
-    case "gebremst":
-      return {
-        status: "fehler",
-        error: "Zu viele Versuche - bitte später erneut.",
-      };
-    default:
-      return {
-        status: "fehler",
-        error: "Unter dieser Adresse ist niemand registriert.",
-      };
-  }
+  if (res.status === "gefunden") return { ok: true, anzeigeName: res.anzeige_name! };
+  return { ok: false, meldung: personMeldung(res.status) };
 }
 
 /** Nach der Vorschau-Bestätigung aufnehmen (Story 4 AK 6). Zweimal aufnehmen
@@ -92,146 +72,75 @@ export async function sucheTrainer(teamId: string, email: string): Promise<Train
  *  Die Aufnahme löst dieselbe E-Mail-Frage auf wie die Vorschau und unterliegt
  *  darum derselben Bremse (NFR 2); sonst liesse sich die Vorschau schlicht
  *  überspringen. */
-export async function nimmMitgliedAuf(
-  teamId: string,
-  email: string,
-): Promise<{ ok: true; anzeigeName: string } | { ok: false; error: string }> {
+export async function nimmMitgliedAuf(teamId: string, email: string): Promise<PersonSchritt> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("add_team_member", {
     p_team_id: teamId,
     p_email: email.trim(),
   });
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    console.error("[team] trainer aufnehmen", error);
+    return { ok: false, meldung: rpcFehlerMeldung(error) };
+  }
 
   const res = data as { status: string; anzeige_name?: string };
-  if (res.status === "gebremst")
-    return { ok: false, error: "Zu viele Versuche - bitte später erneut." };
-  if (res.status !== "aufgenommen")
-    return { ok: false, error: "Unter dieser Adresse ist niemand registriert." };
+  if (res.status !== "aufgenommen") return { ok: false, meldung: personMeldung(res.status) };
 
   revalidiereTeam(teamId);
   return { ok: true, anzeigeName: res.anzeige_name! };
 }
 
-// ── Story 13 / #480: Verlassen, Entfernen, Auflösen ──────────────────────────
+// ── Story 13: Verlassen und Entfernen ────────────────────────────────────────
 
-/** Ergebnis eines Austritts, einer Entfernung oder einer Auflösung.
- *
- *  Ein Team verschwindet nur mit dem bestätigten aktuellen Teamnamen (#480) —
- *  die Datenbank prüft das, nicht die Oberfläche:
- *  - `aufloesung_noetig`: der Vorgang würde das letzte Mitglied entfernen und
- *    damit das Team auflösen; dafür braucht es den Namen (`name` = aktueller).
- *  - `name_falsch`: der bestätigte Name ist nicht (mehr) der aktuelle — etwa
- *    weil jemand das Team inzwischen umbenannt hat.
- *  - `team_weg`: ein anderes Mitglied hat das Team inzwischen aufgelöst. */
-export type MitgliedschaftResult =
-  | { status: "entfernt" }
-  | { status: "aufgeloest" }
-  | { status: "aufloesung_noetig"; name: string }
-  | { status: "name_falsch"; name: string }
-  | { status: "team_weg" }
-  | { status: "fehler"; error: string };
-
-type RpcAntwort = {
-  status: "entfernt" | "aufgeloest" | "aufloesung_noetig" | "name_falsch" | "team_weg";
-  name?: string;
-  bilder?: { id: string; bild_url: string | null }[];
-};
-
-/** Die Antwort beider RPCs in Klartext übersetzen und nachlaufen lassen. */
-async function auswerten(
-  teamId: string,
-  was: string,
-  { data, error }: { data: unknown; error: { message: string } | null },
-): Promise<MitgliedschaftResult> {
-  if (error) {
-    console.error(`[team] ${was}`, error);
-    if (error.message.includes("not a member"))
-      return { status: "fehler", error: "Du bist nicht mehr Mitglied dieses Teams." };
-    return { status: "fehler", error: "Das hat nicht geklappt. Bitte erneut versuchen." };
-  }
-
-  const res = data as RpcAntwort;
-  // Die Ansichten eines Teams, das es nicht mehr gibt, nicht neu rendern: Ihr
-  // Rahmen leitete dann schon in der Antwort auf /teams um, und die Oberfläche
-  // käme nicht mehr dazu, den Ausgang zu melden (PC 5).
-  if (res.status === "team_weg" || res.status === "aufgeloest") revalidatePath("/teams");
-  else revalidiereTeam(teamId);
-  switch (res.status) {
-    case "aufloesung_noetig":
-    case "name_falsch":
-      return { status: res.status, name: res.name! };
-    case "team_weg":
-    case "entfernt":
-      return { status: res.status };
-    case "aufgeloest":
-      // Das Team ist weg — und mit der Mitgliedschaft auch das Recht, seine
-      // Bilder zu löschen. Den Nachlauf erledigt darum der Service-Role-Client.
-      await raeumeVerwaisteBilder(eigeneBildPfade(res.bilder ?? []));
-      return { status: "aufgeloest" };
-  }
-}
+/** Ergebnis einer Entfernung, die auf der Seite bleibt: Die Person ist nicht
+ *  mehr im Team — auch, wenn sie es schon nicht mehr war. Alles andere leitet
+ *  die Action selbst um (siehe `entferneMitglied`). */
+type MitgliedschaftResult = { status: "entfernt" } | { status: "fehler"; error: string };
 
 /** Ein Mitglied entfernen — sich selbst („verlassen") oder eine andere Person.
- *  Beides derselbe Vorgang: im Team sind alle gleichberechtigt.
+ *  Beides derselbe Vorgang. Geht die letzte Person, bleibt das Team bestehen:
+ *  Auflösen kann es nur die Vereinsverwaltung (#581).
  *
- *  Ob der Vorgang das Team leert, entscheidet die RPC in derselben Transaktion
- *  wie die Löschung (#480 AK 12) — sonst könnte zwischen Prüfung und Ausführung
- *  jemand anders austreten und das Team unbestätigt verschwinden. Aus demselben
- *  Grund räumt hier NICHTS vor der RPC auf. Leert der Vorgang das Team, löst er
- *  nur mit dem aktuellen `teamname` auf. */
-export async function entferneMitglied(
-  teamId: string,
-  userId: string,
-  teamname?: string,
-): Promise<MitgliedschaftResult> {
+ *  Macht der Vorgang die offene Team-Seite ungültig, leitet die Action selbst
+ *  um: nach dem eigenen Austritt nach `/teams`, und hat die Verwaltung das
+ *  Team inzwischen aufgelöst (`team_weg`), nach `/teams?weg=1`, das es meldet
+ *  (#480 PC 5). Eine Weiterleitung im Client liefe gegen die Antwort der
+ *  Action: `revalidiereMitgliedschaften` rendert die offene Seite neu, und
+ *  deren Rahmen leitete ohne den Hinweis nach `/teams` um. Mit `redirect`
+ *  rendert die Antwort nur das Ziel. */
+export async function entferneMitglied(teamId: string, userId: string): Promise<MitgliedschaftResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { status: "fehler", error: "Nicht angemeldet." };
 
-  return auswerten(
-    teamId,
-    "entfernen",
-    await supabase.rpc("entferne_team_mitglied", {
-      p_team: teamId,
-      p_user: userId,
-      // Wie die Oberfläche: Leerraum am Rand zählt nicht (AK 7).
-      p_teamname: teamname?.trim(),
-    }),
-  );
+  const { data, error } = await supabase.rpc("entferne_team_mitglied", {
+    p_team: teamId,
+    p_user: userId,
+  });
+  if (error) {
+    console.error("[team] entfernen", error);
+    return { status: "fehler", error: rpcFehlerMeldung(error) };
+  }
+
+  const res = data as { status: "entfernt" | "team_weg" };
+  // Mitgliedschaften wechseln: Der Wechsler der Seitenleiste liest sie im
+  // Wurzel-Layout.
+  revalidiereMitgliedschaften();
+  if (res.status === "team_weg") redirect("/teams?weg=1");
+  revalidiereTeam(teamId);
+  if (userId === user.id) redirect("/teams");
+  return { status: "entfernt" };
 }
 
-/** Das Team selbst verlassen (Story 13 AK 1–3; als letztes Mitglied #480 AK 10). */
-export async function verlasseTeam(
-  teamId: string,
-  teamname?: string,
-): Promise<MitgliedschaftResult> {
+/** Das Team selbst verlassen (Story 13 AK 1–3). Gelingt es, leitet die
+ *  Action um; zurück kommt nur ein Fehler. */
+export async function verlasseTeam(teamId: string): Promise<MitgliedschaftResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { status: "fehler", error: "Nicht angemeldet." };
-  return entferneMitglied(teamId, user.id, teamname);
-}
-
-/** Das Team ausdrücklich auflösen (Story 13 AK 5, #480 AK 5–7). Alle Inhalte
- *  des Teams gehen dabei verloren; persönliche Trainings der Mitglieder — auch
- *  Kopien, die jemand zu sich übernommen hat — bleiben unberührt. */
-export async function loeseTeamAuf(
-  teamId: string,
-  teamname: string,
-): Promise<MitgliedschaftResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { status: "fehler", error: "Nicht angemeldet." };
-
-  return auswerten(
-    teamId,
-    "auflösen",
-    await supabase.rpc("loese_team_auf", { p_team: teamId, p_teamname: teamname?.trim() ?? "" }),
-  );
+  return entferneMitglied(teamId, user.id);
 }

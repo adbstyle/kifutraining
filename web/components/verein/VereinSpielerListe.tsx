@@ -64,7 +64,13 @@ export function VereinSpielerListe({ spieler, teams }: { spieler: VereinSpieler[
     const wer = zuordnen;
     startTransition(async () => {
       const r = await ordneSpielerZuAktion(team.id, team.name, wer.map((s) => s.id));
-      if (!r.ok) return setAbweisung(r.error);
+      if (!r.ok) {
+        setAbweisung(r.error);
+        // Das Team ist inzwischen aufgelöst (oder das Recht weg): Die Seite
+        // lädt neu, damit die Auswahl der Teams wieder stimmt.
+        if (r.feld === "team_id") router.refresh();
+        return;
+      }
       setZuordnen(null);
       setAuswahl([]);
       router.refresh();

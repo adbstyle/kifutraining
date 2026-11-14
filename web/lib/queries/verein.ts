@@ -20,18 +20,34 @@ type VereinslageRoh = {
   verein: { id: string; name: string; ist_verwaltung: boolean; ist_teammitglied: boolean } | null;
 };
 
-/** Der Verein des angemeldeten Kontos, einmal pro Request gelesen: Der Kopf
- *  eines Teams und die Teamübersicht nennen ihn. `null`, wenn das Konto
- *  keinem Verein angehört — dann entfällt die Krume. Ein Datenbankfehler
- *  wird protokolliert und ergibt ebenfalls `null`: Die Krume ist Zierde und
- *  darf `/teams` und die Team-Seiten nicht auf die Fehlerseite schicken. */
-export const getMeinVerein = cache(async (): Promise<Vereinslage | null> => {
+/** Die Vereinslage einmal pro Request gelesen: `lage` oder der Fehler der
+ *  Datenebene. Beide Zugänge unten teilen sich diese Abfrage. */
+const leseVereinslage = cache(async (): Promise<{ lage: Vereinslage | null; fehler: Error | null }> => {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("meine_vereinslage");
-  if (error) {
-    console.error("[verein] Vereinslage lesen", error);
-    return null;
-  }
+  if (error) return { lage: null, fehler: new Error(`meine_vereinslage: ${error.message}`) };
   const v = (data as VereinslageRoh | null)?.verein;
-  return v ? { id: v.id, name: v.name, istVerwaltung: v.ist_verwaltung, istTeammitglied: v.ist_teammitglied } : null;
+  return {
+    lage: v ? { id: v.id, name: v.name, istVerwaltung: v.ist_verwaltung, istTeammitglied: v.ist_teammitglied } : null,
+    fehler: null,
+  };
 });
+
+/** Der Verein des angemeldeten Kontos: Der Kopf eines Teams, die Teamübersicht
+ *  und der Bereich-Wechsler nennen ihn. `null`, wenn das Konto keinem Verein
+ *  angehört. Ein Datenbankfehler wird protokolliert und ergibt ebenfalls
+ *  `null`: Krume und Wechsler sind Zierde und dürfen Seiten nicht auf die
+ *  Fehlerseite schicken. */
+export const getMeinVerein = async (): Promise<Vereinslage | null> => {
+  const { lage, fehler } = await leseVereinslage();
+  if (fehler) console.error("[verein] Vereinslage lesen", fehler);
+  return lage;
+};
+
+/** Wie `getMeinVerein`, aber ein Datenbankfehler wirft: Die Seiten unter
+ *  `/verein` dürfen nicht so tun, als gäbe es keinen Verein. */
+export async function getMeinVereinOderWurf(): Promise<Vereinslage | null> {
+  const { lage, fehler } = await leseVereinslage();
+  if (fehler) throw fehler;
+  return lage;
+}

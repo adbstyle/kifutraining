@@ -230,24 +230,29 @@ Zusätzlich, in dieser Reihenfolge:
 **AP:** §3.6, §4.3 (Verwaltung), §7.1, §7.4, §7.5. **Migration:** `vereine_verwaltung`.
 
 Zusätzlich:
-- [ ] Bereich «Verein» vollständig: Übersicht, `/verein/team/[teamId]`, `/verein/verwaltung`.
-- [ ] `create_team` und `loese_team_auf` fallen; Team anlegen ohne Mitgliedschaft; `team_aufloesen_wenn_leer` fällt.
-- [ ] **Bereich-Wechsler** in der Seitenleiste kommt hier, weil der Bereich «Verein» ab jetzt für alle Vereinsmitglieder besteht. Die Verwaltung sehen Trainer:innen im Kopf von «Verein › Teams».
-- [ ] Bausteine `PersonAufnehmen` und `NamenBestaetigen` zuerst in den Styleguide.
-- [ ] Review Focus 4: E2E mit einem Konto, das Verwaltung **und** Mitglied ist. Im Team erscheinen keine Verwaltungsaktionen, und die Team-RPCs geben ihm nicht mehr als einem Mitglied.
-- [ ] **Aus dem Review von Story 3:** `termin_kader_setzen` (`supabase/migrations/20261018130000_termin_kader.sql`, letzte Fassung) und `termin_der_serie_folgen` (`supabase/migrations/20261031120000_treffpunkt_training.sql`, letzte Fassung) sperren zuerst die Termin-Zeile und nehmen erst danach über `kader_vorher` die Teamsperre, umgekehrt zur Sperrordnung Verein → Person → Teams → `spieler`-Zeile → Termin. Zusammen mit dem Auflösen eines Teams, dem Austritt des letzten Mitglieds oder der Konto-Löschung kann das einen Deadlock geben (40P01, ein Aufruf bricht ab, keine falschen Daten). Bewusst hingenommen bis hierher; hier beide Funktionen auf «Team vor Termin» umstellen und mit einem Rennen-Fall belegen.
+- [x] Bereich «Verein» vollständig: Übersicht, `/verein/team/[teamId]`, `/verein/verwaltung`.
+- [x] `create_team` und `loese_team_auf` fallen; Team anlegen ohne Mitgliedschaft; `team_aufloesen_wenn_leer` fällt.
+- [x] **Bereich-Wechsler** in der Seitenleiste kommt hier, weil der Bereich «Verein» ab jetzt für alle Vereinsmitglieder besteht. Die Verwaltung sehen Trainer:innen im Kopf von «Verein › Teams».
+- [x] Bausteine `PersonAufnehmen` und `NamenBestaetigen` zuerst in den Styleguide.
+- [x] Review Focus 4: E2E mit einem Konto, das Verwaltung **und** Mitglied ist. Im Team erscheinen keine Verwaltungsaktionen, und die Team-RPCs geben ihm nicht mehr als einem Mitglied. (Datenebene belegt in `vereine_verwaltung.sql`; im Browser bestanden.)
+- [x] **Aus dem Review von Story 3:** `termin_kader_setzen` (`supabase/migrations/20261018130000_termin_kader.sql`, letzte Fassung) und `termin_der_serie_folgen` (`supabase/migrations/20261031120000_treffpunkt_training.sql`, letzte Fassung) sperren zuerst die Termin-Zeile und nehmen erst danach über `kader_vorher` die Teamsperre, umgekehrt zur Sperrordnung Verein → Person → Teams → `spieler`-Zeile → Termin. Zusammen mit dem Auflösen eines Teams, dem Austritt des letzten Mitglieds oder der Konto-Löschung kann das einen Deadlock geben (40P01, ein Aufruf bricht ab, keine falschen Daten). Bewusst hingenommen bis hierher; hier beide Funktionen auf «Team vor Termin» umstellen und mit einem Rennen-Fall belegen.
 
 **Testfälle:** 3 (zweiter Teil), 4 (Teil Teams), 14, 16, 27, 31.
 
-**Aus dem Review von Story 1:** Der Text `LETZTE_VERWALTUNG` (`web/lib/verein.ts`) verweist auf den Bereich «Verein», den es erst mit dieser Phase gibt; hier prüfen, dass der Verweis dann stimmt.
+**Aus dem Review von Story 1:** Der Text `LETZTE_VERWALTUNG` (`web/lib/verein.ts`) verweist auf den Bereich «Verein», den es erst mit dieser Phase gibt; hier prüfen, dass der Verweis dann stimmt. **Stand nach Story 5:** Den Bereich gibt es; der Satz verspricht aber «Verein löschen», das erst Phase 11 bringt. Der Wortlaut bleibt (Entscheid A1.5), Phase 11 prüft ihn.
 
-**Zwischenstand:** Einen neuen Verein kann noch niemand gründen (bis Phase 11).
+**Umgesetzt** (Branch `feature/vereine-verwaltung-581`): Migration `20261114200000_vereine_verwaltung.sql` (auch `terminserie_aendern` auf «Team vor Termin»), Herausnehmen durch die Verwaltung (`verein_spieler_aus_team_nehmen` über `spieler_aus_team_nehmen_kern`), `anderer_verein` an allen fünf Suchwegen samt Zählregel der Bremse. Alle lokalen Prüfungen grün; der Browser-Lauf folgt.
+
+**Verschoben aus Phase 5:** `spieler_ohne_team` in `verein_ansicht` und die Summe der Spieler:innen im Kopf (Phase 6); `konto_loeschen_info`, `einzige_person`, die Löschzahlen, «Verein löschen» und die Prüfung des Wortlauts `LETZTE_VERWALTUNG` (Phase 11); «Spieler:innen» im Bereich «Verein» für alle Mitglieder (Phase 4, bis dahin nur Verwaltung); «Schnuppern 1/4» und `schnuppern_beendet` beim Herausnehmen (Phase 8).
+
+**Zwischenstand:** Einen neuen Verein kann noch niemand gründen (bis Phase 11). `/verein/spieler` und der Leisteneintrag «Spieler:innen» gibt es nur für die Verwaltung (bis Phase 4). Der Bereich «Verein» zeigt keine Summe der Spieler:innen des Vereins (bis Phase 6). Der Dialog «Konto löschen» nennt die bleibenden Teams als festen Satz, nicht namentlich (bis Phase 11).
 
 ### Phase 6 – #582 Verwaltung führt den Spielerbestand
 
 **AP:** §4.3 «Spielerbestand am Verein-Ort», §7.6. **Migration:** `spielerbestand_verwaltung`.
 
 - [ ] Erfassen ohne Team, Ändern, Löschen, Link abrufen und erneuern, alle am Verein-Ort und mit `nur_in_der_anwendung()`.
+- [ ] **Aus Phase 5:** `verein_ansicht` um `spieler_ohne_team` ergänzen; der Kopf von `/verein` und `/verein/verwaltung` zeigt dann die Summe der Spieler:innen des Vereins.
 - [ ] Mit diesem PR wird das Löschen aus Story 3 abgenommen (#579 AK 12, 14).
 - [ ] Review Focus 4: dasselbe Konto mit beiden Rollen löscht im Bereich «Verein», aber nicht in der Team-Spielerliste.
 
@@ -267,6 +272,7 @@ Zusätzlich:
 **AP:** §3.3 f, §4.4, §7.10 (Inventar «probe»). **Migration:** `schnuppertraining`.
 
 - [ ] Regel «genau eine Zuordnung», Zuordnen zum Schnuppern, Abweisung der gesammelten Zuordnung nennt schnuppernde Spieler:innen (#584 AK 16).
+- [ ] **Aus Phase 5:** «Schnuppern 1/4» in der Spielerliste von `/verein/team/[teamId]` und `schnuppern_beendet` in der Rückgabe von `verein_spieler_aus_team_nehmen` (#584 AK 13).
 - [ ] Sichtbare Umbenennung in Oberfläche, Link und KI im selben PR; die MCP-Werkzeuge heissen neu, ohne Übergang. Interne Namen bleiben `probe_*`.
 - [ ] grep-Wächter «kein Probe in Oberflächentexten und MCP» scharf stellen.
 
@@ -277,6 +283,7 @@ Zusätzlich:
 **AP:** §4.3 (`verein_spielerliste`), §7.6. **Migration:** `verein_spielerliste` (drop + create).
 
 - [ ] Liste für alle Vereinsmitglieder; Suche und Eingrenzung auf dem Server, Mehrfachauswahl bei Teams und Jahrgängen.
+- [ ] **Aus Phase 5:** Der Leisteneintrag «Spieler:innen» im Bereich «Verein» und `/verein/spieler` gelten dann für alle Vereinsmitglieder (bis hierher nur für die Verwaltung, Kommentar in W`components/layout/AppNavClient.tsx`).
 - [ ] Texte auf Abholseite und Link zum Empfängerkreis.
 
 **Testfälle:** 4 (Teil Vereinsliste), 32.
@@ -297,6 +304,7 @@ Zusätzlich:
 - [ ] **Vor dem Merge:** Laufzeit von `verein_loeschen` mit 30 Teams und 1000 Spieler:innen auf Staging messen (AP §11 F4).
 - [ ] Reihenfolge: Gründen → Verein löschen → `delete_account(p_vereinsname)` mit dem Zweig der einzigen Person → Einstieg auf `/teams` für Konten ohne Verein.
 - [ ] Verein als verantwortlich auf Abholseite und Link.
+- [ ] **Aus Phase 5:** `konto_loeschen_info` (bleibende Teams namentlich, `einzige_person`), das Feld `einzige_person` in `verein_verwaltung_entfernen`, die Löschzahlen in `verein_ansicht`, «Verein löschen» in der Gefahrenzone von `/verein/verwaltung`; den Wortlaut von `LETZTE_VERWALTUNG` («… im Bereich «Verein» löschen») gegen die fertige Oberfläche prüfen.
 
 **Testfälle:** 15, 20, 21, 30 (übrige RPCs).
 
@@ -317,6 +325,7 @@ Zusätzlich:
 **AP:** §7.10. **Migration:** keine.
 
 - [ ] Vereinsangaben in `teams_abrufen` und `spielerliste_abrufen`, optionales `team_id` mit Ableitung, Rückfrage beim Herausnehmen mit `stand`, Hinweis für Konten ohne Team.
+- [ ] Werkzeugtext von `teams_abrufen` (W`lib/mcp/werkzeuge/team.ts`) berichtigen: «… das Übrige geht nur im Team-Bereich von KiFu» schliesst Umbenennen und Auflösen ein und ist seit Phase 5 (#581) falsch; beides macht nur die Vereinsverwaltung im Bereich «Verein» (in Phase 5 bewusst nicht geändert, MCP-Werkzeuge gehören zu dieser Phase).
 - [ ] `ZUGANG_DARF` und `ZUGANG_DARF_NICHT`; der PR listet jede geänderte Zeile.
 - [ ] Werkzeug-Handler exportieren und in `pruefe-kern-db.ts` prüfen.
 - [ ] Review Focus 2: Ein Aufruf mit altem Werkzeugnamen ergibt «unbekanntes Werkzeug» und ändert nichts; das im echten KI-Client gegen Staging prüfen.

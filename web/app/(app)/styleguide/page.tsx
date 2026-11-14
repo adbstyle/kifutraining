@@ -74,6 +74,8 @@ import { TabelleAuswahlDemo } from "./TabelleAuswahlDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
+import { NamenBestaetigenDemo } from "./NamenBestaetigenDemo";
+import { PersonAufnehmenDemo } from "./PersonAufnehmenDemo";
 import { MaterialDemo } from "./MaterialDemo";
 import { FelderDemo } from "./FelderDemo";
 import { MiniMonatDemo } from "./MiniMonatDemo";
@@ -239,6 +241,7 @@ const GLIEDERUNG = [
           { id: "filterknopf", titel: "Filterknopf" },
           { id: "menue", titel: "Menü" },
           { id: "chip-menue", titel: "Chip mit Menü" },
+          { id: "person-aufnehmen", titel: "Person aufnehmen" },
         ],
       },
       {
@@ -267,6 +270,7 @@ const GLIEDERUNG = [
           { id: "liste-detail", titel: "Liste mit Detail daneben" },
           { id: "disclosure", titel: "Disclosure" },
           { id: "gefahrenzone", titel: "Gefahrenzone" },
+          { id: "namen-bestaetigen", titel: "Namen bestätigen" },
         ],
       },
       {
@@ -1645,8 +1649,10 @@ export default async function Styleguide() {
             Ansichts-Umschalter (<code>TabNav</code>)
           </p>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-            Mehrere Sichten auf denselben Gegenstand - etwa ein Team mit
-            Trainingsplan, Trainings und Verwaltung. Bewusst Links statt
+            Mehrere Sichten auf denselben Gegenstand - etwa ein Termin mit
+            Termin, Training, Spieler:innen und Trainer:innen. Zwischen den
+            Seiten eines Bereichs (Team, Verein) wechselt dagegen die
+            Seitenleiste (<Siehe id="navigation" />). Bewusst Links statt
             Schaltflächen: jede Ansicht hat ihre eigene Adresse, ist damit
             weitergebbar, und der Zurück-Schritt des Browsers funktioniert.
             Deshalb auch kein Auswahl-Baustein (<Siehe id="offene-einfachauswahl" />,{" "}
@@ -1661,9 +1667,10 @@ export default async function Styleguide() {
             ariaLabel="Beispiel-Ansichten"
             className="mb-6 max-w-md"
             items={[
-              { label: "Trainingsplan", href: "#", current: true },
-              { label: "Trainings", href: "#" },
-              { label: "Team", href: "#" },
+              { label: "Termin", href: "#", current: true },
+              { label: "Training", href: "#" },
+              { label: "Spieler:innen", href: "#" },
+              { label: "Trainer:innen", href: "#" },
             ]}
           />
 
@@ -2572,6 +2579,32 @@ export default async function Styleguide() {
           <ChipMenuDemo />
         </Section>
 
+        <Section id="person-aufnehmen">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Eine Person ins Trainerteam oder in die Vereinsverwaltung aufnehmen
+            (<code>PersonAufnehmen</code>, #581): ein Dialog in zwei Stufen, den
+            Team-Ort und Vereins-Ort teilen. Erst Adresse und die Tragweite
+            («Was das für die Person bedeutet», als <code>information</code>-
+            Section Message) lesen, «Suchen»; dann den Anzeigenamen samt Adresse
+            prüfen, «Aufnehmen». «Zurück» führt mit der Adresse ins Feld
+            zurück, falls die Vorschau die falsche Person zeigt.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Der Baustein kennt weder Team noch Verein: Er bekommt{" "}
+            <code>suche</code> und <code>aufnahme</code> als Funktionen, die
+            einen <code>PersonSchritt</code> liefern - die Person oder den
+            fertigen Satz, warum es nicht weitergeht. So bleibt der Ablauf an
+            allen Orten derselbe, und die Sätze stehen an einer Stelle. Die
+            Vorschau ist eine dokumentierte Ausnahme von der Anti-Enumeration-
+            Linie und darum gebremst; die Meldung der Bremse steht im selben
+            Feld wie «kein Konto». Nach der Aufnahme schliesst sich der Dialog
+            und ruft <code>onAufgenommen</code>; Neuladen und Snackbar sind
+            Sache der Seite. Erfundene Adressen in der Demo: «lea@beispiel.test»
+            findet eine Person, «frei@beispiel.test» hat schon einen Verein.
+          </p>
+          <PersonAufnehmenDemo />
+        </Section>
+
         <Section id="plaketten">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Lozenge</strong> heisst die Plakette wie bei Atlassian: ein
@@ -3180,6 +3213,28 @@ export default async function Styleguide() {
             Neuladen; Ungespeichertes auf der Seite bleibt stehen.
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            <strong>Bereich-Wechsler</strong> (<code>BereichWechsler</code>, Story #581) steht oben in
+            der Leiste, unter der Marke, und wählt den Bereich: eines der eigenen Teams oder den
+            Verein. <em>Warum neu:</em> Bisher gab es einen einzigen Bereich «Teams» mit allen Teams als
+            Unterpunkten. Mit dem Verein kommt ein zweiter Bereich mit eigenen Einträgen dazu; die Leiste
+            zeigt darum nur, was in dem gewählten Bereich geht, und die Bibliotheken bleiben immer. Der
+            Knopf trägt zwei Zeilen (Art und Name, etwa «FC Wyler · Team» über «Da Junioren») und ein
+            Auf-Ab-Zeichen; die Liste klappt darunter auf, je Bereich mit seinem Untertitel und einem
+            Haken beim offenen, die Teams durch einen Strich vom Verein getrennt. Es gibt keine
+            Avatare. Gibt es nur einen Bereich, ist der Wechsler eine Anzeige ohne Liste.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            Die Einträge der Liste sind <strong>Links</strong>, keine Knöpfe (<code>menuitemradio</code>):
+            Wer ungesicherte Angaben auf der Seite hat, wird vor dem Wechsel wie bei jedem Link der
+            Leiste gewarnt. Tastatur nach dem Menü-Muster: beim Öffnen steht der Fokus auf dem offenen
+            Bereich, ↑/↓ laufen im Kreis, Escape schliesst und gibt den Fokus zurück. Die Beschriftung
+            für Vorlesehilfen ist «Bereich wählen». Schmal bleibt vom Knopf das Zeichen des Bereichs, die
+            Liste klappt (<code>fixed</code>, wie «Darstellung») rechts neben der Leiste auf. Welcher
+            Bereich offen ist, folgt aus der Adresse; auf Seiten ohne Bereich (Bibliotheken, Konto) bleibt
+            der zuletzt gewählte, gemerkt im Cookie <code>kifu-bereich</code>. Reine Navigation: Rechte
+            hängen daran keine.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             <strong>Breit oder schmal</strong> - 280 px mit Namen, 72 px nur mit
             Zeichen. Umgeschaltet wird <strong>nur von Hand</strong>, über den
             Knopf vor den Brotkrumen; beim Überfahren öffnet sich nichts, sonst
@@ -3335,36 +3390,56 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Der Bereich am Ende einer Verwaltungsseite für Handlungen, die sich
             nicht zurücknehmen lassen und andere mittreffen - in der
-            Teamverwaltung Verlassen und Auflösen (#480). Eine Karte auf{" "}
-            <code>elev-01</code> wie jede andere, aber mit voller Kontur und
-            Überschrift in Error: {v(kontrast(ERROR, elev(1)))} als Schrift, als
-            Kontur mindestens 3:1 auf jeder Stufe und im Druck. Getönt wird die
-            Fläche nicht - <code>section-danger</code> heisst «etwas ist
-            schiefgegangen» (<Siehe id="meldungen" />), die Gefahrenzone dagegen
-            «hier ist Vorsicht geboten». Eine Kontur mit Alpha bräche die 3:1;
-            darum volles <code>border-error</code>.
+            Teamverwaltung das Verlassen des Teams, in der Vereinsverwaltung das
+            Auflösen eines Teams und der Austritt aus der Verwaltung (#480,
+            #581). Eine Karte auf <code>elev-01</code> wie jede andere, aber mit
+            voller Kontur und Überschrift in Error: {v(kontrast(ERROR, elev(1)))}{" "}
+            als Schrift, als Kontur mindestens 3:1 auf jeder Stufe und im
+            Druck. Getönt wird die Fläche nicht - <code>section-danger</code>{" "}
+            heisst «etwas ist schiefgegangen» (<Siehe id="meldungen" />), die
+            Gefahrenzone dagegen «hier ist Vorsicht geboten». Eine Kontur mit
+            Alpha bräche die 3:1; darum volles <code>border-error</code>.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Löscht eine Handlung dort für alle, bestätigt man sie durch die{" "}
-            <strong>Eingabe des Namens</strong>: Der Dialog nennt, was verloren
-            geht, und den einzugebenden Namen; der <code>danger</code>-Knopf ist
-            erst frei, wenn die Eingabe genau stimmt (Gross- und Kleinschreibung
-            zählen, Leerzeichen am Rand nicht). Das Feld schaltet Autokorrektur,
-            automatische Grossschreibung und Rechtschreibprüfung ab, Einfügen
-            bleibt erlaubt. Die Vorlesehilfe hört den Namen über{" "}
-            <code>aria-describedby</code> mit dem Feld und die Freigabe über eine
-            Live-Region. Andere Löschungen bleiben bei der gewöhnlichen Rückfrage
-            - die Eingabe ist dem vorbehalten, was mehrere Menschen trifft.
+            Löscht eine Handlung für alle, bestätigt man sie durch die Eingabe
+            des Namens (<Siehe id="namen-bestaetigen" />) - das Auflösen eines
+            Teams liegt im Bereich «Verein». Andere Handlungen bleiben bei der
+            gewöhnlichen Rückfrage; die Eingabe ist dem vorbehalten, was mehrere
+            Menschen trifft.
           </p>
           <Gefahrenzone
             className="max-w-xl"
-            beschreibung="Verlassen betrifft nur dich - ausser du bist das letzte Mitglied. Auflösen löscht das Team samt allen Inhalten für alle Mitglieder."
+            beschreibung="Du verlierst den Zugang zu Kalender, Spieler:innen und Team-Trainings. Das Team bleibt bestehen, auch wenn du die letzte Person bist."
           >
             <div className="flex flex-wrap gap-2">
               <Button variant="outlined">Team verlassen</Button>
-              <Button variant="danger">Team auflösen</Button>
             </div>
           </Gefahrenzone>
+        </Section>
+
+        <Section id="namen-bestaetigen">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Die Bestätigung einer Handlung, die für mehrere Menschen
+            unwiderruflich ist, durch die <strong>Eingabe des Namens</strong>{" "}
+            (<code>NamenBestaetigen</code>, #480, herausgelöst aus der Team-
+            Gefahrenzone, weil auch das Auflösen im Verein sie braucht): ein
+            Absatz, der den einzugebenden Namen nennt, das Feld und die Meldung
+            des Servers. Titel, Folgenliste und der <code>danger</code>-Knopf
+            stehen beim Dialog, der den Baustein trägt; der Knopf ist erst frei,
+            wenn <code>namenStimmen</code> zutrifft - Gross- und Kleinschreibung
+            zählen, Leerzeichen am Rand und die Unicode-Normalform nicht.
+            Dieselbe Regel wiederholt die Datenebene; die Oberfläche entscheidet
+            nichts.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Das Feld schaltet Autokorrektur, automatische Grossschreibung und
+            Rechtschreibprüfung ab und sagt Passwort-Managern, dass es kein
+            Login ist; Einfügen bleibt erlaubt. Die Vorlesehilfe hört den Namen
+            über <code>aria-describedby</code> mit dem Feld und die Freigabe über
+            eine Live-Region. Weicht der Name inzwischen ab, nennt der Dialog
+            den aktuellen als Fehler (<code>fehler</code>) und bleibt offen.
+          </p>
+          <NamenBestaetigenDemo />
         </Section>
 
         <Section id="tabelle">

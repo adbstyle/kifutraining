@@ -15,6 +15,26 @@ export const VEREIN_SPIELER_MAX = 1000;
 /** Zwilling der Grenze im Trigger `teams_vorher` (Marker `VEREIN_TEAMS_VOLL`). */
 export const VEREIN_TEAMS_MAX = 30;
 
+/** «Team nicht gefunden» am Verein-Ort: Die Verwaltung arbeitet in Teams
+ *  ohne Mitgliedschaft, darum ohne den Zusatz des Team-Orts
+ *  (`SERIE_MELDUNG.TEAM_NICHT_GEFUNDEN`). Kein Marker: Die Datenebene meldet
+ *  `VEREIN_NICHT_GEFUNDEN`, der Verein-Kern übersetzt es bei
+ *  Team-adressierten RPCs in diesen Satz. */
+export const VEREIN_TEAM_NICHT_GEFUNDEN = "Team nicht gefunden.";
+
+/** Eine Action der Vereinsverwaltung fand ihr Ziel nicht mehr (Feld
+ *  `team_id` bzw. `verein_id`: Team aufgelöst, Recht entzogen). Die offene
+ *  Seite ist überholt; der Aufrufer lädt sie neu, und sie leitet weiter. */
+export function zielWeg(feld?: string): boolean {
+  return feld === "team_id" || feld === "verein_id";
+}
+
+/** Hinweis der Teamübersicht für alle ausser der Verwaltung. Kein Marker
+ *  (mehr): Seit Story #581 legt kein Weg am Team-Ort ein Team an, nur
+ *  `verein_team_anlegen` — darum nicht in `VEREIN_MELDUNG`, das als
+ *  Markerliste durchlaufen wird. */
+export const TEAM_NUR_VERWALTUNG = "Neue Teams legt die Vereinsverwaltung an.";
+
 /** Die Sätze zu den Markern der Datenebene (Migrationen vereine_fundament und
  *  spieler_ueber_zuordnung). `VEREIN_VOLL` (Verein) und `SPIELERLISTE_VOLL`
  *  (Team, lib/spieler.ts) bleiben getrennt: Wer abgewiesen wird, erfährt, welche
@@ -27,7 +47,6 @@ export const VEREIN_MELDUNG = {
   VEREIN_FEST: "Ein Team bleibt in seinem Verein.",
   VEREIN_VOLL: `Der Verein hat schon ${VEREIN_SPIELER_MAX} Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind.`,
   VEREIN_TEAMS_VOLL: `Der Verein hat schon ${VEREIN_TEAMS_MAX} Teams. Ein weiteres kommt erst dazu, wenn es weniger sind.`,
-  TEAM_NUR_VERWALTUNG: "Neue Teams legt die Vereinsverwaltung an.",
   /** Netz; die Anwendung zeigt den Status `letzte_verwaltung` mit demselben Satz. */
   LETZTE_VERWALTUNG:
     "Du bist das letzte Mitglied der Vereinsverwaltung. Nimm zuerst eine weitere Person in die Verwaltung auf. " +
@@ -38,7 +57,47 @@ export const VEREIN_MELDUNG = {
   /** Netz der `verein_*`-RPCs (Story #579): Wer nicht zur Verwaltung dieses
    *  Vereins gehört, erfährt nur dies — nie, ob es ihn gibt. */
   VEREIN_NICHT_GEFUNDEN: "Verein nicht gefunden.",
+  /** Netz der Teamnamen (Story #581): Der Name steht im Verein schon; die
+   *  Anwendung nennt mit `teamnameVergebenText` das Team. */
+  TEAMNAME_VERGEBEN: "Im Verein trägt schon ein anderes Team diesen Namen.",
   NUR_IN_DER_ANWENDUNG: "Das geht nur in der Anwendung, nicht über einen KI-Assistenten.",
+} as const;
+
+/** Zwilling des CHECK `verein_name`: so viele Zeichen darf ein Vereinsname
+ *  höchstens haben (getrimmt gezählt). */
+export const VEREIN_NAME_MAX = 60;
+
+/** Was einem Vereinsnamen im Weg steht — `null`, wenn er sich speichern lässt.
+ *  Das Web prüft vorab; die Datenebene weist mit dem CHECK ab. */
+export function vereinsNameProblem(name: string): string | null {
+  const getrimmt = name.trim();
+  if (!getrimmt) return "Bitte einen Vereinsnamen angeben.";
+  if (getrimmt.length > VEREIN_NAME_MAX) return `Der Vereinsname darf höchstens ${VEREIN_NAME_MAX} Zeichen lang sein.`;
+  return null;
+}
+
+/** Der Satz, wenn der Teamname im Verein schon vergeben ist (#581 AK 21):
+ *  nennt das Team, das ihn trägt. */
+export function teamnameVergebenText(team: string): string {
+  return `Im Verein trägt schon das Team «${team}» diesen Namen.`;
+}
+
+/** Ein Schritt beim Aufnehmen einer Person (Suche oder Aufnahme): die Person
+ *  samt Anzeigename — oder der fertige Satz (`PERSON_MELDUNG`), warum es nicht
+ *  weitergeht. Eine Form für Kern, Actions und den Baustein `PersonAufnehmen`.
+ *  `zielWeg`: Das Ziel (Team oder Verein) ist nicht mehr zu finden, etwa weil
+ *  das Team inzwischen aufgelöst oder das Recht der Verwaltung entzogen ist;
+ *  die offene Seite ist überholt, der Aufrufer lädt sie neu. */
+export type PersonSchritt = { ok: true; anzeigeName: string } | { ok: false; meldung: string; zielWeg?: true };
+
+/** Der Ausgang einer Suche oder Aufnahme einer Person, als Satz — am Team-Ort
+ *  und am Verein-Ort derselbe (#581). Der Schlüssel ist der `status` der RPC. */
+export const PERSON_MELDUNG = {
+  nicht_gefunden: "Zu dieser Adresse gibt es kein bestätigtes Konto. Die Person registriert sich zuerst selbst bei KiFu.",
+  anderer_verein: VEREIN_MELDUNG.ANDERER_VEREIN,
+  gebremst: "Zu viele Versuche - bitte später erneut.",
+  bereits_mitglied: "Diese Person ist bereits im Team.",
+  bereits_verwaltung: "Diese Person gehört schon zur Vereinsverwaltung.",
 } as const;
 
 // ── Spieler:innen einem Team zuordnen (Story #579) ──────────────────────────

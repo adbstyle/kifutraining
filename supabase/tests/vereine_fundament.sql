@@ -2,8 +2,10 @@
 -- §3.10, §6.7 Testfälle 1, 2, 3 erster Teil, 26):
 -- - kein Team ohne Verein, höchstens 30 Teams je Verein
 -- - höchstens ein Verein je Person (Team und Verwaltung)
--- - `teams.verein_id` per PostgREST-Rolle nicht änderbar (Testfall 2)
--- - `create_team` nur durch die Verwaltung, im eigenen Verein (Testfall 3)
+-- - `teams` per PostgREST-Rolle nicht änderbar, `verein_id` auch als
+--   Eigentümer nicht (Testfall 2; seit Story 5 schreibt nur verein_*)
+-- - Team anlegen nur durch die Verwaltung, im eigenen Verein, ohne
+--   Mitgliedschaft (Testfall 3; seit Story 5 `verein_team_anlegen`)
 -- - `meine_vereinslage()` und die Sichtbarkeit der Vereine
 -- - Grenzen 100 je Team und 1000 je Verein nur für Neues; Bestand darüber
 --   bleibt änderbar, und herausnehmen lässt sich weiter (Testfall 1, Story 1 PC 2); Schnuppernde
@@ -80,16 +82,19 @@ insert into teams (name, verein_id) select 'X ' || i, pg_temp.id('v2') from gene
 select pg_temp.erwarte(format('insert into teams (name, verein_id) values (%L, %L)', 'X 31', pg_temp.id('v2')),
                        'VEREIN_TEAMS_VOLL');
 
--- Testfall 2: Ein Mitglied darf das Team ändern (Name), aber nicht den Verein.
+-- Testfall 2: Ein Mitglied ändert das Team nicht direkt (Story 5: Name nur
+-- über verein_team_umbenennen), den Verein auch der Eigentümer nicht.
 select pg_temp.als(pg_temp.id('a'));
 select pg_temp.erwarte(format('update teams set verein_id = %L where id = %L', pg_temp.id('v2'), pg_temp.id('team1')),
-                       'VEREIN_FEST');
-update teams set name = 'Team Eins neu' where id = pg_temp.id('team1');
+                       '42501');
+select pg_temp.erwarte(format($$update teams set name = 'Team Eins neu' where id = %L$$, pg_temp.id('team1')), '42501');
 reset role;
+select pg_temp.erwarte(format('update teams set verein_id = %L where id = %L', pg_temp.id('v2'), pg_temp.id('team1')),
+                       'VEREIN_FEST');
 do $$
 begin
   if (select verein_id from teams where id = pg_temp.id('team1')) <> pg_temp.id('v1')
-     or (select name from teams where id = pg_temp.id('team1')) <> 'Team Eins neu' then
+     or (select name from teams where id = pg_temp.id('team1')) <> 'Team Eins' then
     raise exception 'Testfall 2: Team falsch geändert';
   end if;
 end $$;
@@ -120,21 +125,24 @@ begin
 end $$;
 reset role;
 
--- Testfall 3 (erster Teil): create_team nur durch die Verwaltung.
+-- Testfall 3: Team anlegen nur durch die Verwaltung, im eigenen Verein; sie
+-- wird dabei nicht Mitglied (Story 5 AK 17). create_team gibt es nicht mehr.
 select pg_temp.als(pg_temp.id('a'));
-select pg_temp.erwarte($$select create_team('Von Mitglied')$$, 'TEAM_NUR_VERWALTUNG');
+select pg_temp.erwarte($$select create_team('Von Mitglied')$$, '42883');
+select pg_temp.erwarte(format($$select verein_team_anlegen(%L, 'Von Mitglied')$$, pg_temp.id('v1')), 'VEREIN_NICHT_GEFUNDEN');
 reset role;
 select pg_temp.als(pg_temp.id('ohne'));
-select pg_temp.erwarte($$select create_team('Ohne Verein')$$, 'TEAM_NUR_VERWALTUNG');
+select pg_temp.erwarte(format($$select verein_team_anlegen(%L, 'Ohne Verein')$$, pg_temp.id('v1')), 'VEREIN_NICHT_GEFUNDEN');
 reset role;
 select pg_temp.als(pg_temp.id('verw'));
+select pg_temp.erwarte(format($$select verein_team_anlegen(%L, 'Fremd')$$, pg_temp.id('v2')), 'VEREIN_NICHT_GEFUNDEN');
 do $$
 declare
-  v_team uuid := create_team('Von Verwaltung');
+  v_team uuid := (verein_team_anlegen(pg_temp.id('v1'), 'Von Verwaltung') ->> 'id')::uuid;
   v jsonb := meine_vereinslage();
 begin
   if (v -> 'verein' ->> 'ist_verwaltung')::boolean is not true
-     or (v -> 'verein' ->> 'ist_teammitglied')::boolean is not true then
+     or (v -> 'verein' ->> 'ist_teammitglied')::boolean is not false then
     raise exception 'meine_vereinslage (Verwaltung): %', v;
   end if;
   perform set_config('test.neues_team', v_team::text, true);
@@ -145,8 +153,8 @@ declare
   v_team uuid := current_setting('test.neues_team')::uuid;
 begin
   if (select verein_id from teams where id = v_team) is distinct from pg_temp.id('v1')
-     or not exists (select 1 from team_members where team_id = v_team and user_id = pg_temp.id('verw')) then
-    raise exception 'Testfall 3: Team nicht im Verein der Verwaltung oder ohne Mitgliedschaft';
+     or exists (select 1 from team_members where team_id = v_team) then
+    raise exception 'Testfall 3: Team nicht im Verein der Verwaltung oder mit Mitgliedschaft';
   end if;
 end $$;
 
@@ -281,7 +289,9 @@ begin
     'nur_in_der_anwendung()', 'spieler_im_team(uuid,uuid)', 'spielerzahl_freigeben(uuid)',
     'vereine_nachziehen(uuid)', 'staging_nach_sync()', 'teams_vorher()', 'teams_verein_fest()',
     'team_members_vorher()', 'verwaltung_vorher()', 'team_spieler_vorher()', 'team_spieler_nachher()',
-    'spieler_teams_stand(uuid)', 'spieler_teams_auskunft(uuid,uuid)'] loop
+    'spieler_teams_stand(uuid)', 'spieler_teams_auskunft(uuid,uuid)',
+    'teamname_vergeben(uuid,text,uuid)', 'aufnahme_ziel(uuid,text,uuid,boolean)',
+    'spieler_aus_team_nehmen_kern(uuid,uuid,boolean,text)'] loop
     foreach r in array array['anon', 'authenticated'] loop
       if has_function_privilege(r, f, 'execute') then
         raise exception 'Testfall 26: % darf % ausführen', r, f;
@@ -289,7 +299,7 @@ begin
     end loop;
   end loop;
   foreach f in array array['mein_verein()', 'ist_verein_mitglied(uuid)', 'ist_verein_verwaltung(uuid)',
-                           'meine_vereinslage()', 'delete_account()', 'create_team(text)'] loop
+                           'meine_vereinslage()', 'delete_account()'] loop
     if has_function_privilege('anon', f, 'execute') or not has_function_privilege('authenticated', f, 'execute') then
       raise exception 'Testfall 26: Grant von % falsch', f;
     end if;

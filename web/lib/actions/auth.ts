@@ -10,11 +10,6 @@ import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { eigeneBildPfade } from "@/lib/fassung";
 import { fachlicheMeldung } from "@/lib/training-bedingungen";
 import { VEREIN_MELDUNG } from "@/lib/verein";
-import {
-  raeumeGeloeschteFassungsBilder,
-  teamBildKandidaten,
-  type BildKandidat,
-} from "@/lib/storage-aufraeumen";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PW = 8;
@@ -150,36 +145,20 @@ export async function signOut() {
   redirect("/");
 }
 
-/** Die Fassungen in den Team-Trainings dieses Kontos — Kandidaten fürs
- *  Aufräumen, falls die Konto-Löschung ein Team mit auflöst.
- *
- *  Ob sie wirklich fallen, entscheidet erst die auth.users-Kaskade: tritt
- *  jemand zwischenzeitlich bei, lebt das Team weiter. Darum nur einsammeln —
- *  gelöscht wird hinterher und nur, was tatsächlich verschwunden ist. */
-async function teamFassungsKandidaten(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  uid: string,
-): Promise<BildKandidat[]> {
-  const { data: meine } = await supabase
-    .from("team_members")
-    .select("team_id")
-    .eq("user_id", uid);
-  return teamBildKandidaten(
-    supabase,
-    (meine ?? []).map((m) => m.team_id),
-  );
-}
-
 /** Der Zustand des Dialogs «Konto löschen» (`useActionState`): `fehler` ist
  *  der Klartext, wenn das Konto bleibt — die letzte Verwaltung eines Vereins
- *  (#577) oder ein technischer Fehler; sonst `null`. Gelingt das Löschen,
- *  leitet die Action weiter. */
-export type KontoLoeschenZustand = { fehler: string | null };
+ *  (#577) oder ein technischer Fehler; sonst `null`. `letzteVerwaltung` weist
+ *  den ersten Fall aus: Dort führt der Dialog zur Verwaltung, statt es erneut
+ *  versuchen zu lassen (#581 AK 34). Gelingt das Löschen, leitet die Action
+ *  weiter. */
+export type KontoLoeschenZustand = { fehler: string | null; letzteVerwaltung?: boolean };
 
 const KONTO_LOESCHEN_FEHLER = "Das Konto liess sich nicht löschen. Bitte versuche es noch einmal.";
 
 /** Konto löschen (Story 9). Öffentliche Übungen bleiben anonymisiert erhalten,
- *  private werden samt Feld-Diagramm gelöscht, danach der Auth-User. Die letzte
+ *  private werden samt Feld-Diagramm gelöscht, danach der Auth-User. Teams
+ *  bleiben bestehen, auch wenn das Konto ihr letztes Mitglied war (#581):
+ *  Darum gibt es hier keinen Nachlauf für Bilder von Team-Trainings. Die letzte
  *  Verwaltung eines Vereins löscht ihr Konto nicht (#577): Die RPC meldet
  *  `letzte_verwaltung`, bevor sie etwas anfasst, und das Konto bleibt. */
 export async function deleteAccount(
@@ -211,13 +190,6 @@ export async function deleteAccount(
     .eq("trainings.owner_id", uid)
     .eq("trainings.visibility", "private");
 
-  // Die Team-Trainings des Kontos: löst seine Löschung ein Team auf (es war
-  // allein darin), verschwinden ihre Zeilen über die auth.users-Kaskade — die
-  // Bilddateien nicht. Hinterher darf sie niemand mehr löschen, weil die
-  // Storage-Policy eine bestehende Mitgliedschaft verlangt. Nur einsammeln:
-  // ob das Team wirklich fällt, steht erst nach der Kaskade fest.
-  const teamKandidaten = await teamFassungsKandidaten(supabase, uid);
-
   // Gelöscht wird nur die eigene Bildkopie der Fassung (Dateiname = ihre ID),
   // nie eine Datei, auf die eine bild_url sonst noch zeigen könnte — derselbe
   // Guard wie in allen anderen Löschwegen.
@@ -234,7 +206,8 @@ export async function deleteAccount(
     return { fehler: fachlich ?? KONTO_LOESCHEN_FEHLER };
   }
   const geloescht = (status as { status?: string } | null)?.status;
-  if (geloescht === "letzte_verwaltung") return { fehler: VEREIN_MELDUNG.LETZTE_VERWALTUNG };
+  if (geloescht === "letzte_verwaltung")
+    return { fehler: VEREIN_MELDUNG.LETZTE_VERWALTUNG, letzteVerwaltung: true };
   if (geloescht !== "geloescht") return { fehler: KONTO_LOESCHEN_FEHLER };
 
   // Erst nach erfolgreichem RPC die verwaisten Diagramme entfernen.
@@ -249,11 +222,6 @@ export async function deleteAccount(
   }
   const admin = createAdminClient();
   await admin.auth.admin.deleteUser(uid);
-
-  // Jetzt erst die Team-Bilder: die Kaskade ist durch, und geräumt wird nur,
-  // was sie wirklich mitgenommen hat. Ein Team, dem inzwischen jemand
-  // beigetreten ist, behält seinen Bestand samt Bildern.
-  await raeumeGeloeschteFassungsBilder(teamKandidaten);
 
   revalidatePath("/");
   redirect("/?account_deleted=1");

@@ -7,12 +7,11 @@ import { env } from "@/lib/env";
  * Admin-Operationen (z.B. Auth-User-Löschung im Konto-Löschen-Flow).
  * NIEMALS aus einer normalen Request-Pipeline / einem Client-Pfad importieren.
  *
- * Eine weitere bewusste Ausnahme: `lib/storage-aufraeumen.ts`. Löst sich ein
- * Team auf, erlischt mit der Mitgliedschaft auch das Recht an seinen
- * Bilddateien — und die Entscheidung, ob wirklich aufgelöst wird, fällt erst in
- * der Transaktion, die die Mitgliedschaft beendet. Der Nachlauf hat dort keinen
- * anderen Handelnden mehr; er löscht ausschliesslich Pfade zu nachweislich
- * gelöschten Zeilen.
+ * Eine weitere bewusste Ausnahme: `lib/storage-aufraeumen.ts`. Löst die
+ * Vereinsverwaltung ein Team auf, ist sie kein Mitglied des Teams und hat kein
+ * Recht an seinen Bilddateien — mit den Zeilen verschwindet auch das der
+ * Mitglieder. Der Nachlauf hat dort keinen anderen Handelnden mehr; er löscht
+ * ausschliesslich Pfade zu nachweislich gelöschten Zeilen.
  */
 export function createAdminClient() {
   return createClient(env.supabaseUrl(), env.supabaseServiceRoleKey(), {

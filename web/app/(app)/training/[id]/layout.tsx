@@ -25,7 +25,7 @@ export default async function TrainingLayout({
   const kontext = await getTrainingNavKontext(id);
   return (
     <>
-      <TeamBereichMelder imTeamBereich={!!kontext?.team} />
+      <TeamBereichMelder teamId={kontext?.team?.id ?? null} />
       {children}
     </>
   );

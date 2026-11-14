@@ -21,7 +21,8 @@
 --   behält seine Abmeldungen (AP §5.3)
 -- - spieler.team_id = erstes Team (Entscheid A.1)
 -- - Team auflösen: Spieler:innen bleiben, `team_id` rückt nach bzw. wird null
---   (Entscheid A.2), auch beim Weggang des letzten Mitglieds
+--   (Entscheid A.2); beim Weggang des letzten Mitglieds bleibt das Team samt
+--   Zuordnungen (seit Story 5)
 -- Alles in einer Transaktion mit rollback; hinterlässt nichts.
 
 \set ON_ERROR_STOP on
@@ -67,7 +68,7 @@ create temp table ids (name text primary key, id uuid not null default gen_rando
 insert into ids (name) values ('verw'), ('a'), ('b'), ('c'), ('v'), ('v2'),
   ('t1'), ('t2'), ('t3'), ('t4'), ('tx'),
   ('s1'), ('s2'), ('s3'), ('sb'), ('d1'), ('d2'), ('d3'), ('sp'), ('frei1'), ('frei2'), ('frei3'), ('px'),
-  ('k1'), ('tp'), ('tf'), ('spp'), ('spf'), ('t3_termin'), ('tb'), ('tv');
+  ('k1'), ('tp'), ('tf'), ('spp'), ('spf'), ('t3_termin'), ('tb'), ('tv'), ('tg1'), ('tg2'), ('sg');
 create function pg_temp.id(p text) returns uuid language sql stable as $$ select id from ids where name = p $$;
 grant select on ids to authenticated;   -- temporär; die Rolle braucht pg_temp.id
 
@@ -429,8 +430,8 @@ select pg_temp.pruefe(exists (select 1 from termin_teilnahmen where termin_id = 
 
 -- ── Team auflösen (Entscheid A.2) ───────────────────────────────────────────
 -- s3 steht in T3 und T2, frei1 nur in T3. Auflösen von T3: beide bleiben,
--- s3 rückt auf T2, frei1 ohne Team. Dann verlässt b als letztes Mitglied T2
--- (team_aufloesen_wenn_leer): sb und s3 bleiben ohne Team.
+-- s3 rückt auf T2, frei1 ohne Team. Dann verlässt b als letztes Mitglied T2:
+-- Seit Story 5 bleibt T2 bestehen, sb und s3 bleiben zugeordnet.
 insert into team_spieler (team_id, spieler_id, verein_id) values (pg_temp.id('t2'), pg_temp.id('s3'), pg_temp.id('v'));
 -- b ist auch Mitglied von T3: Aus T2 genommen bleibt s3 in einem eigenen Team.
 select pg_temp.als(pg_temp.id('b'));
@@ -443,8 +444,40 @@ select pg_temp.pruefe((select team_id from spieler where id = pg_temp.id('s3')) 
                       and exists (select 1 from spieler where id = pg_temp.id('frei1') and team_id is null),
                       'Auflösen von T3');
 delete from team_members where team_id = pg_temp.id('t2');
-select pg_temp.pruefe(not exists (select 1 from teams where id = pg_temp.id('t2'))
-                      and (select count(*) from spieler where id in (pg_temp.id('s3'), pg_temp.id('sb')) and team_id is null) = 2,
+select pg_temp.pruefe(exists (select 1 from teams where id = pg_temp.id('t2'))
+                      and (select count(*) from spieler where id in (pg_temp.id('s3'), pg_temp.id('sb')) and team_id = pg_temp.id('t2')) = 2
+                      and (select count(*) from team_spieler where team_id = pg_temp.id('t2')
+                            and spieler_id in (pg_temp.id('s3'), pg_temp.id('sb'))) = 2,
                       'letztes Mitglied verlässt T2');
+
+-- #579 AK 14, #581 PC 6: Gleichnamige Teams gibt es nur noch als Altdubletten
+-- (der Trigger weist neue ab, auch für die Service-Rolle). Die Auskunft
+-- markiert «dieses» über die Kennung, nicht über den Namen: a ist in beiden
+-- Teams, die Spieler:in auch; genau eines ist «dieses».
+set local session_replication_role = replica;
+insert into teams (id, name, verein_id) values
+  (pg_temp.id('tg1'), 'Team Gleich', pg_temp.id('v')), (pg_temp.id('tg2'), 'Team Gleich', pg_temp.id('v'));
+insert into spieler (id, verein_id, team_id, vorname, nachname, jahrgang) values
+  (pg_temp.id('sg'), pg_temp.id('v'), pg_temp.id('tg1'), 'Gina', 'Gleich', 2016);
+insert into team_spieler (team_id, spieler_id, verein_id) values
+  (pg_temp.id('tg1'), pg_temp.id('sg'), pg_temp.id('v')), (pg_temp.id('tg2'), pg_temp.id('sg'), pg_temp.id('v'));
+set local session_replication_role = origin;
+insert into team_members (team_id, user_id) values (pg_temp.id('tg1'), pg_temp.id('a')), (pg_temp.id('tg2'), pg_temp.id('a'));
+select pg_temp.als(pg_temp.id('a'));
+do $$
+declare
+  v jsonb := spieler_teams(pg_temp.id('tg2'), pg_temp.id('sg')) -> 'teams';
+begin
+  perform pg_temp.pruefe(jsonb_array_length(v) = 2
+                         and (select count(*) from jsonb_array_elements(v) e where e ->> 'name' = 'Team Gleich' and (e ->> 'eigen')::boolean) = 2
+                         and (select count(*) from jsonb_array_elements(v) e where (e ->> 'dieses')::boolean) = 1,
+                         'gleichnamige Teams: genau eines ist «dieses»: ' || v::text);
+  v := spieler_aus_team_nehmen(pg_temp.id('tg2'), pg_temp.id('sg'), null) -> 'teams';
+  perform pg_temp.pruefe((select count(*) from jsonb_array_elements(v) e where (e ->> 'dieses')::boolean) = 1,
+                         'stand_geaendert bei gleichnamigen Teams: ' || v::text);
+end $$;
+reset role;
+select pg_temp.pruefe(exists (select 1 from team_spieler where team_id = pg_temp.id('tg2') and spieler_id = pg_temp.id('sg')),
+                      'gleichnamige Teams: ohne Stand nichts geändert');
 
 rollback;
