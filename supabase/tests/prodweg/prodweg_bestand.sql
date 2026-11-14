@@ -23,7 +23,12 @@
 --   lesend      spielstand (→ spielstand_training, spiel_stand, auch direkt),
 --               termin_teilnehmer, spiel_teilnehmer, training_meldestand,
 --               training_abgemeldet, termin_gilt_fuer, probe_stand,
---               team_probe_staende, spieler_link_ansicht, feedback_link_team,
+--               team_probe_staende, spieler_link_ansicht (ohne die mit Story 7
+--               dazugekommenen Schlüssel), Gültigkeit für Fragen und Feedback
+--               über den Link (feedback_link_team bzw. ab Story 7
+--               feedback_link_gueltig), spieler_abo_termine zweier Abos (ohne
+--               `team` je Termin), die Geheimnisse (Link, Abo, Abholadresse)
+--               und «bezogen» unverändert (Story 7 PC 5),
 --               spiel_pruefen, termin_abmeldungen_verfallend,
 --               termin_anmeldungen_verfallend;
 --   schreibend  Ergebnis und Folgezustand in einer zurückgerollten
@@ -132,6 +137,38 @@ insert into spiel_meldungen (termin_id, spieler_id, team_id, zustand, gewechselt
   (prodweg.id('sp_kommend'), prodweg.id('p2'), prodweg.id('t_d'), 'angemeldet', now()),
   (prodweg.id('sp_kommend'), prodweg.id('p3'), prodweg.id('t_d'), 'abgemeldet', now());
 insert into team_abholung (team_id, aktiv) values (prodweg.id('t_d'), true);
+-- Zwei Kalender-Abos (Story 7 PC 5: jede bestehende Abo-Adresse liefert weiter).
+insert into spieler_abos (spieler_id) values (prodweg.id('p1')), (prodweg.id('p2'));
+
+-- Link-Ansicht und Abo-Feed ohne die mit Story 7 dazugekommenen Schlüssel
+-- (`teams`, `verein`, `team` je Termin): Alles Bisherige muss gleich bleiben.
+create function prodweg.ohne_neue(p jsonb) returns jsonb
+language sql immutable as $$
+  select case when p ? 'termine' and jsonb_typeof(p -> 'termine') = 'array'
+              then (p - 'teams' - 'verein')
+                   || jsonb_build_object('termine', (select coalesce(jsonb_agg(e - 'team' order by n), '[]')
+                                                      from jsonb_array_elements(p -> 'termine') with ordinality x(e, n)))
+              else p - 'teams' - 'verein' end
+$$;
+
+-- Gilt der Link für Fragen und Feedback? Im alten Schema über
+-- feedback_link_team, ab Story 7 über feedback_link_gueltig (zur Laufzeit
+-- aufgelöst).
+create function prodweg.feedback_gueltig(p_token text) returns boolean
+language plpgsql
+set search_path = public, pg_temp
+as $$
+declare
+  v boolean;
+begin
+  if to_regprocedure('public.feedback_link_gueltig(text)') is not null then
+    execute 'select public.feedback_link_gueltig($1)' into v using p_token;
+  else
+    execute 'select public.feedback_link_team($1) is not null' into v using p_token;
+  end if;
+  return v;
+end;
+$$;
 
 -- Führt einen Schreibweg in einer Untertransaktion aus, liest Ergebnis bzw.
 -- Folgezustand und rollt zurück: Vorher und nachher laufen so auf demselben
@@ -232,8 +269,8 @@ begin
                               from unnest(v_termine) x),
     'je_spieler', (select jsonb_object_agg(s.id, jsonb_build_object(
                       'probe_stand', probe_stand(s.id),
-                      'link', spieler_link_ansicht(s.link_token),
-                      'feedback_team', feedback_link_team(s.link_token),
+                      'link', prodweg.ohne_neue(spieler_link_ansicht(s.link_token)),
+                      'feedback_gueltig', prodweg.feedback_gueltig(s.link_token),
                       'gilt', (select jsonb_object_agg(x, termin_gilt_fuer(x, s.id)) from unnest(v_termine) x),
                       -- Nur Termine des eigenen Teams: Für eine fremde Spieler:in gab
                       -- training_abgemeldet bisher false (bzw. bei Schnuppernden true)
@@ -242,6 +279,16 @@ begin
                       'abgemeldet', (select jsonb_object_agg(t.id, training_abgemeldet(t.id, s.id)) from training_termine t
                                       where t.id = any(v_termine) and t.team_id = s.team_id)))
                      from spieler s where s.id = any(v_spieler)),
+    'abo', (select jsonb_object_agg(a.spieler_id, prodweg.ohne_neue(spieler_abo_termine(a.token)))
+              from spieler_abos a where a.spieler_id = any(v_spieler)),
+    -- Die Geheimnisse und «bezogen» bleiben (Story 7 PC 5), als Prüfsumme.
+    'geheimnisse', jsonb_build_object(
+      'link', (select md5(string_agg(s.id || ':' || s.link_token || ':' || s.link_bezogen, ',' order by s.id))
+                 from spieler s where s.id = any(v_spieler)),
+      'abo', (select md5(string_agg(a.spieler_id || ':' || a.token, ',' order by a.spieler_id))
+                from spieler_abos a where a.spieler_id = any(v_spieler)),
+      'abholung', (select md5(string_agg(t.team_id || ':' || t.token || ':' || t.aktiv, ',' order by t.team_id))
+                     from team_abholung t where t.team_id = any(v_teams))),
     'team_probe_staende', (select jsonb_object_agg(x, (select coalesce(jsonb_agg(to_jsonb(r) order by r.spieler_id), '[]')
                                                           from team_probe_staende(x) r))
                              from unnest(v_teams) x),

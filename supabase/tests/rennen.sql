@@ -4,7 +4,8 @@
 -- Fälle (Story 1: Teamgrenze 100 unter der Vereinssperre; Story 2:
 -- Doppelerfassung im Verein beim Erfassen und Ändern; Story 3: Zuordnen und
 -- Herausnehmen; Story 5: 30 Teams, Teamname, leere Verwaltung, Team vor
--- Termin; Story 6: Löschen, Erfassen, Link und Grenze 1000 am Verein-Ort).
+-- Termin; Story 6: Löschen, Erfassen, Link und Grenze 1000 am Verein-Ort;
+-- Story 7: Link über mehrere Teams, Abholen gegen Erneuern).
 --
 -- Muster für «gleichzeitig, genau eines gelingt» (spätere Stories bauen ihre
 -- Fälle als weitere Blöcke nach diesem Vorbild):
@@ -1127,6 +1128,207 @@ delete from spieler where verein_id = (select id from rennen_test.ids where name
 delete from vereine where id = (select id from rennen_test.ids where name = 'b_verein');
 delete from auth.users where id in (select id from rennen_test.ids where name in ('b_va', 'b_vb', 'b_m'));
 
+-- ── Fälle: Link über mehrere Teams (Story 7 #583, AP §4.1, §4.4, Testfall 23) ──
+-- Verein «Rennen-Link» mit Verwaltung LA (ohne Team) und Trainer:in LM in
+-- «Link-Gross» (feste, grösste UUID) und «Link-Klein» (feste, kleinste UUID,
+-- Abholung an, ein Training und ein Spiel). Jede Spieler:in steht in beiden
+-- Teams, «Link-Gross» ist ihr erstes (ältere Zuordnung). Über die RPCs wie
+-- PostgREST, mit rennen_test.verschraenkt.
+-- (z1) Abholen gegen Erneuern, beide Richtungen und beide Orte: Der
+--      ausgegebene Link ist der, für den «bezogen» gilt. Erneuern → Abholen:
+--      die Abholung liefert den neuen Link und «bezogen» gilt; Abholen →
+--      Erneuern: «bezogen» gilt nicht, der Link ist ein anderer.
+-- (z2) Abmelden über den Link für einen Termin des zweiten Teams gegen
+--      Löschen aus dem Verein, beide Reihenfolgen: danach `ungueltig` bzw.
+--      keine Abmeldung ohne Spieler:in. Dazu der Zyklus selbst: A hält die
+--      Sperre von «Link-Klein» und nimmt danach die von «Link-Gross» (die
+--      aufsteigende Folge des Löschens, sperre_teams); B meldet über den Link
+--      ab. Sperrte der Link noch das erste Team vor dem Termin-Team, endete
+--      das in 40P01; jetzt wartet B nur am Termin-Team und meldet danach ab.
+-- (z3) Abmelden bzw. Anmelden über den Link gegen Herausnehmen aus dem
+--      Termin-Team: nachher `gilt_nicht` (ohne `stand`), vorher verfällt die
+--      Abmeldung mit dem Herausnehmen; nie eine Meldung ohne Zuordnung.
+-- (z4) Erneuern am Team-Ort gegen Herausnehmen aus diesem Team: nachher
+--      SPIELER_NICHT_GEFUNDEN und der Link bleibt; vorher gelingt beides.
+-- Ein harter Abbruch lässt den Verein «Rennen-Link» samt Teams und
+-- Spieler:innen und die Konten «rennen-l-…@rennen.test» stehen (von Hand löschen).
+
+select set_config('rennen.fehler_link', '', false) is not null as rennen_fehler_link_leer \gset
+
+begin;
+insert into rennen_test.ids (name) values ('l_verein'), ('l_va'), ('l_m'), ('l_tr'), ('l_sp'),
+  ('l_a1'), ('l_a2'), ('l_a3'), ('l_d1'), ('l_d2'), ('l_d3'), ('l_h1'), ('l_h2'), ('l_h3'), ('l_e1'), ('l_e2');
+insert into rennen_test.ids (name, id) values
+  ('l_gross', 'ffffffff-ffff-4fff-bfff-ffffffff0583'), ('l_klein', '00000000-0000-4000-8000-000000000583');
+insert into auth.users (id, email, email_confirmed_at)
+select id, 'rennen-' || replace(name, '_', '-') || '@rennen.test', now() from rennen_test.ids where name in ('l_va', 'l_m');
+insert into vereine (id, name) values (rennen_test.z('l_verein'), 'Rennen-Link');
+insert into verein_verwaltung (verein_id, user_id) values (rennen_test.z('l_verein'), rennen_test.z('l_va'));
+insert into teams (id, name, verein_id) values
+  (rennen_test.z('l_gross'), 'Link-Gross', rennen_test.z('l_verein')),
+  (rennen_test.z('l_klein'), 'Link-Klein', rennen_test.z('l_verein'));
+insert into team_members (team_id, user_id) values
+  (rennen_test.z('l_gross'), rennen_test.z('l_m')), (rennen_test.z('l_klein'), rennen_test.z('l_m'));
+insert into team_abholung (team_id, aktiv) values (rennen_test.z('l_klein'), true);
+insert into training_termine (id, team_id, datum, beginn, ende) values
+  (rennen_test.z('l_tr'), rennen_test.z('l_klein'), current_date + 7, '18:00', '19:30');
+insert into training_termine (id, team_id, datum, beginn, ende, art, bezeichnung) values
+  (rennen_test.z('l_sp'), rennen_test.z('l_klein'), current_date + 8, '10:00', '12:00', 'spiel', 'Link-Spiel');
+insert into spieler (id, verein_id, vorname, nachname, jahrgang)
+select id, rennen_test.z('l_verein'), 'Link', name, 2015 from rennen_test.ids where name ~ '^l_[adhe][0-9]$';
+insert into team_spieler (team_id, spieler_id, verein_id, created_at)
+select rennen_test.z('l_gross'), id, rennen_test.z('l_verein'), now() - interval '1 day'
+  from rennen_test.ids where name ~ '^l_[adhe][0-9]$';
+insert into team_spieler (team_id, spieler_id, verein_id)
+select rennen_test.z('l_klein'), id, rennen_test.z('l_verein') from rennen_test.ids where name ~ '^l_[adhe][0-9]$';
+commit;
+
+do $$
+declare
+  ziel   text := format(
+    'host=%s port=%s dbname=%s user=postgres password=postgres connect_timeout=5 options=''-c statement_timeout=30s''',
+    coalesce(host(inet_server_addr()), '127.0.0.1'), inet_server_port(), current_database());
+  v_va uuid := rennen_test.z('l_va');
+  v_m uuid := rennen_test.z('l_m');
+  v_gross uuid := rennen_test.z('l_gross');
+  v_klein uuid := rennen_test.z('l_klein');
+  v_tr uuid := rennen_test.z('l_tr');
+  v_sp uuid := rennen_test.z('l_sp');
+  v_abholung text := (select token from team_abholung where team_id = rennen_test.z('l_klein'));
+  v_alt text;
+  ergebnis text;
+begin
+  -- Voraussetzung des Zyklus: Das erste Team ist das mit der grösseren UUID.
+  if exists (select 1 from spieler where verein_id = rennen_test.z('l_verein') and team_id is distinct from v_gross) then
+    raise exception 'Voraussetzung: erstes Team ist nicht Link-Gross';
+  end if;
+
+  -- (z1) Erneuern am Verein-Ort, dann Abholen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_spieler_link_erneuern(%L)::text', rennen_test.z('l_a1')),
+    v_m, format($q$select abholung_abholen(%L, %L, 'Link', 'l_a1', 2015)::text$q$, v_abholung, repeat('l', 32)));
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'ok'
+     or ergebnis::jsonb ->> 'token' is distinct from (select link_token from spieler where id = rennen_test.z('l_a1'))
+     or not (select link_bezogen from spieler where id = rennen_test.z('l_a1')) then
+    raise exception '(z1) Abholen nach dem Erneuern (Verein-Ort) gab nicht den bezogenen Link: %', ergebnis;
+  end if;
+  -- Abholen, dann Erneuern am Team-Ort.
+  v_alt := (select link_token from spieler where id = rennen_test.z('l_a2'));
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format($q$select abholung_abholen(%L, %L, 'Link', 'l_a2', 2015)::text$q$, v_abholung, repeat('m', 32)),
+    v_m, format('select spieler_link_erneuern(%L, %L)', v_klein, rennen_test.z('l_a2')));
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis = v_alt
+     or ergebnis is distinct from (select link_token from spieler where id = rennen_test.z('l_a2'))
+     or (select link_bezogen from spieler where id = rennen_test.z('l_a2')) then
+    raise exception '(z1) Erneuern nach dem Abholen: neuer Link fälschlich bezogen oder nicht erneuert: %', ergebnis;
+  end if;
+  -- Erneuern am Team-Ort, dann Abholen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_link_erneuern(%L, %L)', v_gross, rennen_test.z('l_a3')),
+    v_m, format($q$select abholung_abholen(%L, %L, 'Link', 'l_a3', 2015)::text$q$, v_abholung, repeat('n', 32)));
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'ok'
+     or ergebnis::jsonb ->> 'token' is distinct from (select link_token from spieler where id = rennen_test.z('l_a3'))
+     or not (select link_bezogen from spieler where id = rennen_test.z('l_a3')) then
+    raise exception '(z1) Abholen nach dem Erneuern (Team-Ort) gab nicht den bezogenen Link: %', ergebnis;
+  end if;
+
+  -- (z2) Löschen, dann Abmelden über den Link (Termin im zweiten Team).
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('l_d1')),
+    v_m, format('select spieler_link_abmelden(%L, %L, true, null, null)::text',
+                (select link_token from spieler where id = rennen_test.z('l_d1')), v_tr), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"status": "ungueltig"}' then
+    raise exception '(z2) Abmelden nach dem Löschen hätte ungueltig melden müssen: %', ergebnis;
+  end if;
+  -- Abmelden über den Link, dann Löschen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_link_abmelden(%L, %L, true, null, null)::text',
+                (select link_token from spieler where id = rennen_test.z('l_d2')), v_tr),
+    v_va, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('l_d2')), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'geloescht' then
+    raise exception '(z2) Löschen nach dem Abmelden: %', ergebnis;
+  end if;
+  if exists (select 1 from termin_abmeldungen where spieler_id in (rennen_test.z('l_d1'), rennen_test.z('l_d2')))
+     or exists (select 1 from spieler where id in (rennen_test.z('l_d1'), rennen_test.z('l_d2'))) then
+    raise exception '(z2) Abmeldung oder Spieler:in nach dem Löschen da';
+  end if;
+  -- Der Zyklus: A hält Link-Klein und nimmt danach Link-Gross.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select 1 from pg_advisory_xact_lock(hashtextextended(%L, 0))', 'spieler:' || v_klein),
+    v_m, format('select spieler_link_abmelden(%L, %L, true, null, null)::text',
+                (select link_token from spieler where id = rennen_test.z('l_d3')), v_tr), 'advisory',
+    format('select 1 from pg_advisory_xact_lock(hashtextextended(%L, 0))', 'spieler:' || v_gross));
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'ok' then
+    raise exception '(z2) Abmelden über den Link in der Sperrfolge des Löschens: %', ergebnis;
+  end if;
+  if not exists (select 1 from termin_abmeldungen where spieler_id = rennen_test.z('l_d3') and termin_id = v_tr) then
+    raise exception '(z2) Abmeldung fehlt';
+  end if;
+
+  -- (z3) Herausnehmen aus dem Termin-Team, dann Abmelden über den Link.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_aus_team_nehmen(%L, %L, %L)::text', v_klein, rennen_test.z('l_h1'),
+                spieler_teams_stand(rennen_test.z('l_h1'))),
+    v_m, format('select spieler_link_abmelden(%L, %L, true, null, null)::text',
+                (select link_token from spieler where id = rennen_test.z('l_h1')), v_tr), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"status": "abgewiesen", "grund": "gilt_nicht"}' then
+    raise exception '(z3) Abmelden nach dem Herausnehmen hätte gilt_nicht melden müssen: %', ergebnis;
+  end if;
+  -- Abmelden über den Link, dann Herausnehmen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_link_abmelden(%L, %L, true, null, null)::text',
+                (select link_token from spieler where id = rennen_test.z('l_h2')), v_tr),
+    v_m, format('select spieler_aus_team_nehmen(%L, %L, %L)::text', v_klein, rennen_test.z('l_h2'),
+                spieler_teams_stand(rennen_test.z('l_h2'))), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'herausgenommen' then
+    raise exception '(z3) Herausnehmen nach dem Abmelden: %', ergebnis;
+  end if;
+  -- Herausnehmen, dann Anmelden zum Spiel über den Link.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_aus_team_nehmen(%L, %L, %L)::text', v_klein, rennen_test.z('l_h3'),
+                spieler_teams_stand(rennen_test.z('l_h3'))),
+    v_m, format('select spieler_link_melden(%L, %L, true, null, null)::text',
+                (select link_token from spieler where id = rennen_test.z('l_h3')), v_sp), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"status": "abgewiesen", "grund": "gilt_nicht"}' then
+    raise exception '(z3) Anmelden nach dem Herausnehmen hätte gilt_nicht melden müssen: %', ergebnis;
+  end if;
+  if exists (select 1 from termin_abmeldungen a where a.spieler_id in (rennen_test.z('l_h1'), rennen_test.z('l_h2'), rennen_test.z('l_h3'))
+              and not exists (select 1 from team_spieler ts where ts.spieler_id = a.spieler_id and ts.team_id = a.team_id))
+     or exists (select 1 from spiel_meldungen m where m.spieler_id in (rennen_test.z('l_h1'), rennen_test.z('l_h2'), rennen_test.z('l_h3'))
+              and not exists (select 1 from team_spieler ts where ts.spieler_id = m.spieler_id and ts.team_id = m.team_id)) then
+    raise exception '(z3) Meldung ohne Zuordnung';
+  end if;
+
+  -- (z4) Herausnehmen, dann Erneuern am Team-Ort.
+  v_alt := (select link_token from spieler where id = rennen_test.z('l_e1'));
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_aus_team_nehmen(%L, %L, %L)::text', v_klein, rennen_test.z('l_e1'),
+                spieler_teams_stand(rennen_test.z('l_e1'))),
+    v_m, format('select spieler_link_erneuern(%L, %L)', v_klein, rennen_test.z('l_e1')), 'advisory');
+  if position('SPIELER_NICHT_GEFUNDEN' in ergebnis) = 0
+     or (select link_token from spieler where id = rennen_test.z('l_e1')) <> v_alt then
+    raise exception '(z4) Erneuern nach dem Herausnehmen hätte SPIELER_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+  -- Erneuern am Team-Ort, dann Herausnehmen.
+  v_alt := (select link_token from spieler where id = rennen_test.z('l_e2'));
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_link_erneuern(%L, %L)', v_klein, rennen_test.z('l_e2')),
+    v_m, format('select spieler_aus_team_nehmen(%L, %L, %L)::text', v_klein, rennen_test.z('l_e2'),
+                spieler_teams_stand(rennen_test.z('l_e2'))), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'herausgenommen'
+     or (select link_token from spieler where id = rennen_test.z('l_e2')) = v_alt then
+    raise exception '(z4) Herausnehmen nach dem Erneuern: %', ergebnis;
+  end if;
+exception when others or query_canceled then
+  perform set_config('rennen.fehler_link', sqlerrm, false);
+end $$;
+
+delete from teams where verein_id = (select id from rennen_test.ids where name = 'l_verein');
+delete from spieler where verein_id = (select id from rennen_test.ids where name = 'l_verein');
+delete from vereine where id = (select id from rennen_test.ids where name = 'l_verein');
+delete from auth.users where id in (select id from rennen_test.ids where name in ('l_va', 'l_m'));
+delete from abholung_sperren where schluessel in (repeat('l', 32), repeat('m', 32), repeat('n', 32));
+
 -- Aufräumen, auch nach einem Fehler.
 drop schema rennen_test cascade;
 \if :dblink_vorher
@@ -1156,5 +1358,8 @@ begin
   end if;
   if current_setting('rennen.fehler_bestand') <> '' then
     raise exception 'Rennen Spielerbestand: %', current_setting('rennen.fehler_bestand');
+  end if;
+  if current_setting('rennen.fehler_link') <> '' then
+    raise exception 'Rennen Link über mehrere Teams: %', current_setting('rennen.fehler_link');
   end if;
 end $$;

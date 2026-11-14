@@ -9,7 +9,8 @@
 -- dieses Bestands, Gleichwertigkeit der Lesepfade mit dem alten Schema und
 -- Testfall 1 (Story 1 PC 2) und die Dublette über zwei Teams (Story 2 PC 1,
 -- AK 7), Umbenennen der Teams mit gleichem Schlüssel (Story 5 PC 6), die
--- Altdublette am Verein-Ort ändern, löschen und neu erfassen (Story 6). Teil B
+-- Altdublette am Verein-Ort ändern, löschen und neu erfassen (Story 6), eine
+-- Bestands-Spieler:in in zwei Teams über Link, Abo und Abholung (Story 7). Teil B
 -- ändert nichts bleibend (rollback). Spätere Stories ergänzen ihre Abfragen
 -- (Konten ohne Verein mit Story 12).
 
@@ -81,6 +82,13 @@ begin
      or to_regprocedure('loese_team_auf(uuid,text)') is not null
      or to_regprocedure('entferne_team_mitglied(uuid,uuid,text)') is not null then
     raise exception 'Auflösewege der Mitglieder bestehen noch';
+  end if;
+  -- Story 7: Gültigkeit für Feedback über den Link ohne Team und ohne API-Recht.
+  if to_regprocedure('feedback_link_team(text)') is not null
+     or to_regprocedure('feedback_link_gueltig(text)') is null
+     or has_function_privilege('anon', 'feedback_link_gueltig(text)', 'execute')
+     or has_function_privilege('authenticated', 'feedback_link_gueltig(text)', 'execute') then
+    raise exception 'Feedback über den Link: feedback_link_team besteht oder feedback_link_gueltig fehlt bzw. hat API-Recht';
   end if;
 end $$;
 rollback;
@@ -305,6 +313,75 @@ begin
                  where ts.team_id = prodweg.id('t_f1') and s.nachname = 'Dublette')
      or (select jahrgang from spieler where team_id = prodweg.id('t_f2') and nachname = 'Dublette') <> 2018 then
     raise exception 'Story 6: Bestand nach Löschen der Altdublette falsch';
+  end if;
+end $$;
+
+-- Story 7 (AK 1, 6, 7, 11, 18; Testfall 23): Eine Bestands-Spieler:in (p4,
+-- D-Junioren) kommt zusätzlich in t_f2. Ihr bisheriger Link und ihr Abo
+-- zeigen die Termine beider Teams, beide Abholadressen liefern denselben
+-- Link, Abmelden im zweiten Team gelingt; nach dem Herausnehmen aus t_f2
+-- `gilt_nicht`, ohne Team bleibt der Link gültig und Feedback geht.
+set local role authenticated;
+do $$
+begin
+  perform verein_spieler_zuordnen(prodweg.id('t_f2'), array[prodweg.id('p4')]);
+end $$;
+reset role;
+do $$
+declare
+  v_link text := (select link_token from spieler where id = prodweg.id('p4'));
+  v_abo text := spieler_abo_holen(v_link);
+  v_teams jsonb := (select jsonb_agg(name order by name) from teams where id in (prodweg.id('t_d'), prodweg.id('t_f2')));
+  v jsonb := spieler_link_ansicht(v_link);
+  r jsonb;
+begin
+  if v -> 'teams' <> v_teams
+     or not exists (select 1 from jsonb_array_elements(v -> 'termine') e where e ->> 'id' = prodweg.id('tr_f2')::text
+                                                                         and e ->> 'team' = (select name from teams where id = prodweg.id('t_f2')))
+     or not exists (select 1 from jsonb_array_elements(v -> 'termine') e where e ->> 'id' = prodweg.id('tr_kommend')::text) then
+    raise exception 'Story 7: Link in zwei Teams: %', v;
+  end if;
+  if not exists (select 1 from jsonb_array_elements(spieler_abo_termine(v_abo) -> 'termine') e
+                  where e ->> 'id' = prodweg.id('tr_f2')::text and e ->> 'team' is not null) then
+    raise exception 'Story 7: Abo in zwei Teams: %', spieler_abo_termine(v_abo);
+  end if;
+  insert into team_abholung (team_id, aktiv) values (prodweg.id('t_f2'), true);
+  foreach r in array array[
+    abholung_abholen((select token from team_abholung where team_id = prodweg.id('t_d')), repeat('p', 32), 'Dan', 'Dee', 2013),
+    abholung_abholen((select token from team_abholung where team_id = prodweg.id('t_f2')), repeat('p', 32), 'Dan', 'Dee', 2013)] loop
+    if r ->> 'status' <> 'ok' or r ->> 'token' <> v_link then raise exception 'Story 7: Abholung in zwei Teams: %', r; end if;
+  end loop;
+  r := spieler_link_abmelden(v_link, prodweg.id('tr_f2'), true, null, null);
+  if r ->> 'status' <> 'ok' then raise exception 'Story 7: Abmelden im zweiten Team: %', r; end if;
+end $$;
+set local role authenticated;
+do $$
+begin
+  perform verein_spieler_aus_team_nehmen(prodweg.id('t_f2'), prodweg.id('p4'));
+end $$;
+reset role;
+do $$
+declare
+  v_link text := (select link_token from spieler where id = prodweg.id('p4'));
+  r jsonb := spieler_link_abmelden(v_link, prodweg.id('tr_f2'), false, null, null);
+begin
+  if r <> '{"status": "abgewiesen", "grund": "gilt_nicht"}' then
+    raise exception 'Story 7: Abmelden nach dem Herausnehmen: %', r;
+  end if;
+end $$;
+set local role authenticated;
+do $$
+begin
+  perform verein_spieler_aus_team_nehmen(prodweg.id('t_d'), prodweg.id('p4'));
+end $$;
+reset role;
+do $$
+declare
+  v_link text := (select link_token from spieler where id = prodweg.id('p4'));
+begin
+  if not spieler_link_ansicht(v_link) @> '{"gueltig": true, "teams": [], "termine": []}'
+     or not feedback_link_beginnen(v_link) @> '{"status": "ok", "ohne_team": true}' then
+    raise exception 'Story 7: ohne Team: %', spieler_link_ansicht(v_link);
   end if;
 end $$;
 
