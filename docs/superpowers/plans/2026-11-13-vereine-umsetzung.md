@@ -290,15 +290,19 @@ Zusätzlich:
 
 **AP:** §3.3 f, §4.4, §7.10 (Inventar «probe»). **Migration:** `schnuppertraining`.
 
-- [ ] Regel «genau eine Zuordnung», Zuordnen zum Schnuppern, Abweisung der gesammelten Zuordnung nennt schnuppernde Spieler:innen (#584 AK 16).
-- [ ] **Aus Phase 5:** «Schnuppern 1/4» in der Spielerliste von `/verein/team/[teamId]` und `schnuppern_beendet` in der Rückgabe von `verein_spieler_aus_team_nehmen` (#584 AK 13).
-- [ ] **Aus Phase 6:** «Zum Schnuppern» beim Zuordnen und «Schnuppern n/4» in der Vereinsliste `/verein/spieler`.
-- [ ] **Aus Phase 7:** `probe`/`probe_info` auf dem Link für eine Spieler:in in mehreren Teams (heute nur bei genau einem Team); `spieler_probe_*` und im Web `ladeSpieler` (Schnuppern, MCP `spieler_aendern`, das daraus nur die J+S-Nummer liest) lösen sich von `spieler.team_id`, danach liest nur noch `vereine_nachziehen` die Spalte.
-  - Klären: Eine Spieler:in, die in Team T schnuppert und einem zweiten Team angehört, bekommt auf dem Link heute `probe: null`, während das Abmelden über den Link für T-Termine weiter die Schnupper-Regeln prüft (`probe_voll`). Beim Umbau den Link-Stand und die Abweisung angleichen — und entscheiden, ob Zuordnen eine Schnuppernde überhaupt in ein zweites Team lässt (Regel «genau eine Zuordnung»).
-- [ ] Sichtbare Umbenennung in Oberfläche, Link und KI im selben PR; die MCP-Werkzeuge heissen neu, ohne Übergang. Interne Namen bleiben `probe_*`.
-- [ ] grep-Wächter «kein Probe in Oberflächentexten und MCP» scharf stellen.
+- [x] Regel «genau eine Zuordnung», Zuordnen zum Schnuppern, Abweisung der gesammelten Zuordnung nennt schnuppernde Spieler:innen (#584 AK 16).
+- [x] **Aus Phase 5:** «Schnuppern 1/4» in der Spielerliste von `/verein/team/[teamId]` und `schnuppern_beendet` in der Rückgabe von `verein_spieler_aus_team_nehmen` (#584 AK 13).
+- [x] **Aus Phase 6:** «Zum Schnuppern» beim Zuordnen und «Schnuppern n/4» in der Vereinsliste `/verein/spieler`.
+- [x] **Aus Phase 7:** `probe`/`probe_info` auf dem Link für eine Spieler:in in mehreren Teams (heute nur bei genau einem Team); `spieler_probe_*` und im Web `ladeSpieler` (Schnuppern, MCP `spieler_aendern`, das daraus nur die J+S-Nummer liest) lösen sich von `spieler.team_id`, danach liest nur noch `vereine_nachziehen` die Spalte.
+  - [x] Geklärt: Regel «genau eine Zuordnung» (Zuordnen lässt eine Schnuppernde in kein zweites Team, Netz `SPIELER_SCHNUPPERT`); `probe`/`probe_info` kommen von der schnuppernden Zuordnung, also dem Team, nach dem auch das Abmelden über den Link urteilt. Ursprüngliche Frage: Eine Spieler:in, die in Team T schnuppert und einem zweiten Team angehört, bekommt auf dem Link heute `probe: null`, während das Abmelden über den Link für T-Termine weiter die Schnupper-Regeln prüft (`probe_voll`). Beim Umbau den Link-Stand und die Abweisung angleichen — und entscheiden, ob Zuordnen eine Schnuppernde überhaupt in ein zweites Team lässt (Regel «genau eine Zuordnung»).
+- [x] Sichtbare Umbenennung in Oberfläche, Link und KI im selben PR; die MCP-Werkzeuge heissen neu, ohne Übergang. Interne Namen bleiben `probe_*`.
+- [x] grep-Wächter «kein Probe in Oberflächentexten und MCP» scharf stellen.
 
 **Testfälle:** 17, 18, 19 (`rennen.sql`), 28.
+
+**Umgesetzt** (Branch `feature/vereine-schnuppertraining-584`): Migration `20261114230000_schnuppertraining.sql` (nur Funktionen, ein Trigger, Rechte): `spieler_probe_setzen`/`spieler_probe_folgen` mit `p_team` und Sperren Verein → Team → Zeile, Regel «genau ein Team» als Netz in `team_spieler_vorher` (ein Trigger statt zwei, `SPIELER_SCHNUPPERT` vor `SCHNUPPERN_MEHRERE_TEAMS`), `verein_spieler_zuordnen` mit `p_schnuppern` (`SCHNUPPERN_NUR_EINZELN`, `schnuppern_hat_team`, `schnuppern_anzahl_fehlt`), `schnuppern_beendet` an beiden Orten, `schnuppert` in `spieler_teams` samt Stand, Zähler `schnuppern` in `verein_team_ansicht` und `verein_spielerliste` (Helfer `team_probe_zaehler`), Link-Stand von der schnuppernden Zuordnung, Spaltenrechte `team_id`/`probe_seit` auf `spieler` für `authenticated` widerrufen. Tests: neu `schnuppertraining.sql`, Rennen in `rennen.sql`, Prod-Weg (`team_probetraining` zeilengleich). Web: Texte «Schnuppertraining», `SchnupperKarte`, ein Plaketten-Baustein `SchnupperLozenge` (W`components/spieler`), Team-Ort mit `p_team`, Verein-Ort mit «Zum Schnuppern zuordnen» und Zählern, KI-Werkzeuge `schnuppertraining_abrufen`, `schnuppertraining_festlegen`, `spieler_schnuppern_setzen`, Wächter «kein Probe in Oberflächentexten und KI» in `check:kern`. `check:kern-db` prüft die Naht über Kern, Nutzer-Client und den registrierten Werkzeugsatz. Alle lokalen Prüfungen grün; der Browser-Lauf folgt.
+
+**Verschoben aus Phase 8:** `team_id` als Eingabe der Schnupper-Werkzeuge und die übrigen Modelltexte (Phase 13); `schnuppern` in `verein_spielerliste` beim Umbau nicht verlieren (Phase 4); Release-Text mit dem Hinweis, dass verbundene KI-Clients ihre Werkzeuge neu laden (die drei Schnupper-Werkzeuge heissen neu), samt Produktdoku und Feedback-Wissen (Phase D); Spalten `spieler.team_id` und `spieler.probe_seit` fallen (N1; kein API-Client liest sie mehr).
 
 ### Phase 4 – #580 Spieler:innen des Vereins überblicken
 
@@ -307,6 +311,7 @@ Zusätzlich:
 - [ ] Liste für alle Vereinsmitglieder; Suche und Eingrenzung auf dem Server, Mehrfachauswahl bei Teams und Jahrgängen.
 - [ ] **Aus Phase 5:** Der Leisteneintrag «Spieler:innen» im Bereich «Verein» und `/verein/spieler` gelten dann für alle Vereinsmitglieder (bis hierher nur für die Verwaltung, Kommentar in W`components/layout/AppNavClient.tsx`).
 - [ ] **Aus Phase 6:** Der Kopf von `/verein/spieler` rechnet «‹n› Spieler:innen · ‹m› ohne Team» heute aus der Liste (`components/verein/VereinSpielerListe.tsx`); liefern Suche und Filter Teilmengen, kommen die Zahlen aus `verein_ansicht` (`spieler_zahl`, `spieler_ohne_team`). Beim Umbau von `verein_spielerliste` bleiben `js` und `link_bezogen` für die Verwaltung erhalten (Spalten J+S und «Privater Link»).
+- [ ] **Aus Phase 8:** Beim Umbau von `verein_spielerliste` bleibt `schnuppern: {team_id, anzahl, besucht} | null` je Spieler:in erhalten (Plakette «Schnuppern n/m» in der Teams-Spalte).
 - [ ] Texte auf Abholseite und Link zum Empfängerkreis.
 
 **Testfälle:** 4 (Teil Vereinsliste), 32.
@@ -348,6 +353,7 @@ Zusätzlich:
 **AP:** §7.10. **Migration:** keine.
 
 - [ ] **Aus Phase 7:** optionales `team_id` als Eingabe von `spieler_link_abrufen`/`spieler_link_erneuern` (der Kern nimmt es schon, ohne leitet er über `eigenesTeamVon` ab), `teams[]` in deren Antworten, `LINK_MODELL` auf den Link über alle Teams berichtigen.
+- [ ] **Aus Phase 8:** optionales `team_id` als Eingabe von `spieler_schnuppern_setzen` (der Kern nimmt es schon, ohne leitet er über `eigenesTeamVon` ab) und die übrigen Modelltexte (die Beschreibung von `spieler_schnuppern_setzen` nennt noch «im ältesten ihrer Teams, dem du angehörst»).
 - [ ] Vereinsangaben in `teams_abrufen` und `spielerliste_abrufen`, optionales `team_id` mit Ableitung, Rückfrage beim Herausnehmen mit `stand`, Hinweis für Konten ohne Team.
 - [ ] Werkzeugtext von `teams_abrufen` (W`lib/mcp/werkzeuge/team.ts`) berichtigen: «… das Übrige geht nur im Team-Bereich von KiFu» schliesst Umbenennen und Auflösen ein und ist seit Phase 5 (#581) falsch; beides macht nur die Vereinsverwaltung im Bereich «Verein» (in Phase 5 bewusst nicht geändert, MCP-Werkzeuge gehören zu dieser Phase).
 - [ ] `ZUGANG_DARF` und `ZUGANG_DARF_NICHT`; der PR listet jede geänderte Zeile.
@@ -365,6 +371,7 @@ Ein PR auf `develop`, ohne Migration:
 - [ ] `docs/feedback-triage.md` nachführen, `npm run gen:feedback-wissen`.
 - [ ] Feedback-Dialog (`web/lib/feedback/prompt.ts`): Rollen Vereinsverwaltung und Konto ohne Verein, «Vereinsverwaltung» statt «Vereinsleitung», die neuen Grenzen als Absicht.
 - [ ] Release-Text nach `docs/releases/` mit allen Punkten, die die Stories verlangen (Liste in AP §7.11), dazu «KI-Clients laden ihre Werkzeuge neu».
+- [ ] **Aus Phase 8:** Im Release-Text der Hinweis, dass verbundene KI-Clients ihre Werkzeuge neu laden (die Schnupper-Werkzeuge heissen `schnuppertraining_abrufen`, `schnuppertraining_festlegen`, `spieler_schnuppern_setzen`, ohne Übergang); Produktdoku und `docs/feedback-triage.md` mit «Schnuppertraining» statt «Probetraining» und der Regel «genau ein Team» (W`lib/feedback/wissen.ts` ist bis dahin vom Wächter ausgenommen).
 - [ ] `CLAUDE.md`-Gotchas (AP §5.6).
 
 ### A – Abschluss-PR (AP §3, §6.1 Schritt 1)
@@ -417,6 +424,7 @@ Frühestens zwei Wochen nach R ohne Befund.
 
 - [ ] Hilfsabfrage aus AP §5.5: Keine Funktion liest mehr `spieler.team_id`; grep-Wächter «vor N1» grün.
 - [ ] Contract-Migration und Folgemigration (validate → set not null), `vereine_nachziehen.sql` und der Aufruf im Sync fallen.
+- [ ] **Aus Phase 8:** Die Spalten `spieler.team_id` und `spieler.probe_seit` fallen; seit Phase 8 hat `authenticated` kein Leserecht mehr darauf, und ausser `vereine_nachziehen` liest sie keine Funktion.
 - [ ] Kein Sync im Fenster von N1. Eigener, interner Release-Text.
 
 ---
