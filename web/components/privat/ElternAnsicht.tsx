@@ -71,9 +71,9 @@ export function ElternAnsicht({
   /** Die Teams der Spieler:in, alphabetisch, auch ohne Termine; leer ohne Team. */
   teams: string[];
   spieler: { vorname: string; nachname: string };
-  /** Im Probe-Modus ihr Stand, sonst `null`. */
+  /** Schnuppert sie: ihr Stand, sonst `null`. */
   probe: ProbeStand | null;
-  /** Das Info-Schreiben des Teams, nur im Probe-Modus (#556). */
+  /** Das Info-Schreiben des Teams, nur beim Schnuppern (#556). */
   probeInfo: string | null;
   termine: LinkTermin[];
 }) {
@@ -105,10 +105,10 @@ export function ElternAnsicht({
   // ein Klick auf die gewählte hebt sie auf — wie «Meine Termine» im Team.
   // Bewusst nur im Zustand der Seite: Neu öffnen oder neu laden zeigt wieder
   // alles (PC 1), ein Melden lädt die Daten neu und lässt die Wahl stehen
-  // (AK 7). Im Probe-Modus stehen keine Spiele da, also keine Wahl (AK 8).
+  // (AK 7). Beim Schnuppern stehen keine Spiele da, also keine Wahl (AK 8).
   const [art, setArt] = useState<LinkTermin["art"] | null>(null);
   const eingrenzbar = !probe && termine.length > 0;
-  // Verschwinden die Chips (Probe-Modus, keine Termine mehr), fällt die Wahl
+  // Verschwinden die Chips (Schnuppern, keine Termine mehr), fällt die Wahl
   // weg, statt verdeckt weiterzuleben und beim Wiedererscheinen still zu gelten.
   if (!eingrenzbar && art) setArt(null);
   const sichtbar = art ? termine.filter((t) => t.art === art) : termine;
@@ -120,7 +120,7 @@ export function ElternAnsicht({
   const begonnen = sichtbar.filter((t) => t.begonnen);
   const uebrige = sichtbar.filter((t) => !t.begonnen);
 
-  // Der Probe-Stand folgt den lokalen Schaltern, bevor der Server antwortet.
+  // Der Schnupper-Stand folgt den lokalen Schaltern, bevor der Server antwortet.
   const probeLokal = probe && {
     ...probe,
     angemeldet:
@@ -337,7 +337,7 @@ type KarteProps = {
   /** Unter dem Ort: begonnen und nicht mehr änderbar. */
   zweite: string | null;
   zahl: Spielerzahl | null;
-  /** Im Probe-Modus: zuerst nicht angemeldet (#555). */
+  /** Beim Schnuppern: zuerst nicht angemeldet (#555). */
   probe: boolean;
   /** Probe: Die Anzahl ist erreicht, anmelden geht hier nicht (AK 12). */
   vergeben: boolean;
@@ -403,7 +403,7 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
         )}
       </div>
       {/* #561 AK 12: der Treffpunkt wie bei einem Spiel — nicht abgemeldet,
-          ausgefallen oder ab Beginn; nicht angemeldet auf Probe sieht ihn. */}
+          ausgefallen oder ab Beginn; nicht angemeldet beim Schnuppern sieht ihn. */}
       {!t.begonnen && !gedaempft && (
         <TrainingsTreffpunkt treffpunkt={t.treffpunkt ?? null} className="type-body-medium text-on-surface" />
       )}
@@ -434,8 +434,8 @@ function TeamZeile({ t, zahl, zusatz }: { t: LinkTermin; zahl: Spielerzahl | nul
   );
 }
 
-/** Wie viele Probetrainings noch möglich sind (#555 AK 11; PC 13): ein Balken
- *  je Probetraining — besucht gefüllt, künftig angemeldet umrandet, frei leer. */
+/** Wie viele Schnuppertrainings noch möglich sind (#555 AK 11; PC 13): ein Balken
+ *  je Schnuppertraining — besucht gefüllt, künftig angemeldet umrandet, frei leer. */
 function ProbeZaehler({ stand }: { stand: ProbeStand }) {
   const n = stand.anzahl ?? 0;
   return (
