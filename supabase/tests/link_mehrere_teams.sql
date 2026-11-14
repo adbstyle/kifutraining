@@ -7,8 +7,8 @@
 -- - ohne Team gültig und leer (AK 5); eine Spieler:in mit genau einem Team
 --   behält jedes bisherige Feld, dazu nur die neuen Schlüssel
 -- - Ab- und Anmelden nach den Regeln des Termin-Teams; `gilt_nicht` ohne
---   `stand` in beiden Ursachen, die Wege der Mitglieder behalten
---   `nicht_gefunden` (AK 6, 7)
+--   `stand` in beiden Ursachen und für einen unbekannten Termin, die Wege der
+--   Mitglieder behalten `nicht_gefunden` (AK 6, 7)
 -- - Abo mit `team` je Termin, ohne Team gültig und leer, bleibt beim
 --   Herausnehmen und Auflösen (AK 8, 9, PC 3)
 -- - Herausnehmen und Auflösen lassen die Termine des Teams verschwinden, auch
@@ -106,7 +106,8 @@ insert into team_spieler (team_id, spieler_id, verein_id, created_at) values
   (pg_temp.id('tg'), pg_temp.id('s'), pg_temp.id('v'), now()),
   (pg_temp.id('ta'), pg_temp.id('e'), pg_temp.id('v'), now());
 -- Termine: x0 (Alpha) und x1 (Beta) heute begonnen; am selben Tag x4 (Beta
--- 17:00), x3 (Beta 18:00, Kader K-Beta mit s, vor x2 angelegt) und x2 (Alpha
+-- 17:00), x3 (Beta 18:00, Kader K-Beta mit s und K-Beta-Zwei ohne s, vor x2
+-- angelegt) und x2 (Alpha
 -- 18:00); x6 (Alpha, Kader K-Alpha ohne s); x5 Spiel Alpha mit abgelaufener
 -- Frist, x9 Spiel Beta ohne Frist, x10 Spiel Beta mit Kader ohne s; x7
 -- (Fremd) und x8 (Beta, gestern) nie.
@@ -128,7 +129,8 @@ insert into kader (id, team_id, name) values
   (pg_temp.id('kb2'), pg_temp.id('tb'), 'K-Beta-Zwei');
 insert into kader_spieler (kader_id, spieler_id, team_id) values (pg_temp.id('kb'), pg_temp.id('s'), pg_temp.id('tb'));
 insert into termin_kader (termin_id, kader_id, team_id) values
-  (pg_temp.id('x3'), pg_temp.id('kb'), pg_temp.id('tb')), (pg_temp.id('x6'), pg_temp.id('ka'), pg_temp.id('ta')),
+  (pg_temp.id('x3'), pg_temp.id('kb'), pg_temp.id('tb')), (pg_temp.id('x3'), pg_temp.id('kb2'), pg_temp.id('tb')),
+  (pg_temp.id('x6'), pg_temp.id('ka'), pg_temp.id('ta')),
   (pg_temp.id('x10'), pg_temp.id('kb2'), pg_temp.id('tb'));
 set local session_replication_role = origin;
 
@@ -144,7 +146,8 @@ begin
   perform pg_temp.pruefe(v -> 'teams' = '["Alpha", "Beta", "Gamma"]', 'teams s: ' || (v -> 'teams')::text);
   perform pg_temp.pruefe(v ->> 'team' = 'Link-Verein' and v ->> 'verein' = 'Link-Verein', 'team/verein s: ' || v::text);
   perform pg_temp.pruefe((select e -> 'kader' from jsonb_array_elements(v -> 'termine') e
-                           where e ->> 'id' = pg_temp.id('x3')::text) = '["K-Beta"]', 'Kader an x3');
+                           where e ->> 'id' = pg_temp.id('x3')::text) = '["K-Beta"]',
+                         'Kader an x3: nur der eigene, nie K-Beta-Zwei ohne s');
   perform pg_temp.pruefe(v -> 'probe' = 'null' and v -> 'probe_info' = 'null', 'probe bei mehreren Teams');
 end $$;
 
@@ -224,7 +227,8 @@ begin
   r := spieler_link_abmelden(t, pg_temp.id('x7'), true, null, null);
   perform pg_temp.pruefe(r = '{"status": "abgewiesen", "grund": "gilt_nicht"}', 'x7 fremdes Team: ' || r::text);
   r := spieler_link_abmelden(t, gen_random_uuid(), true, null, null);
-  perform pg_temp.pruefe(r = '{"status": "abgewiesen", "grund": "nicht_gefunden"}', 'unbekannter Termin: ' || r::text);
+  -- Ein unbekannter (auch ein gelöschter) Termin antwortet wie einer, der nicht gilt.
+  perform pg_temp.pruefe(r = '{"status": "abgewiesen", "grund": "gilt_nicht"}', 'unbekannter Termin: ' || r::text);
   r := spieler_link_abmelden(t, pg_temp.id('x9'), true, null, null);
   perform pg_temp.pruefe(r ->> 'grund' = 'ist_spiel', 'Spiel über abmelden: ' || r::text);
   r := spieler_link_abmelden(repeat('0', 64), pg_temp.id('x4'), true, null, null);
@@ -238,6 +242,8 @@ begin
   perform pg_temp.pruefe(r = '{"status": "abgewiesen", "grund": "gilt_nicht"}', 'Melden x10 Kader: ' || r::text);
   r := spieler_link_melden(t, pg_temp.id('x7'), true, null, null);
   perform pg_temp.pruefe(r = '{"status": "abgewiesen", "grund": "gilt_nicht"}', 'Melden x7 fremdes Team: ' || r::text);
+  r := spieler_link_melden(t, gen_random_uuid(), true, null, null);
+  perform pg_temp.pruefe(r = '{"status": "abgewiesen", "grund": "gilt_nicht"}', 'Melden unbekannter Termin: ' || r::text);
   perform pg_temp.pruefe((select count(*) from termin_abmeldungen where spieler_id = pg_temp.id('s')) = 2
                          and (select count(*) from spiel_meldungen where spieler_id = pg_temp.id('s')) = 1,
                          'Meldungen von s');

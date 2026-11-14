@@ -13,8 +13,10 @@
 --   (termin_gilt_fuer). Ordnung aus der Datenbank: heute begonnene zuerst,
 --   dann Datum, Beginn, Teamname. Neu `teams`, `verein`, `team` je Termin.
 -- - Ab- und Anmelden über den Link sperren nur das Termin-Team und prüfen
---   danach die Zuordnung: `gilt_nicht` ohne `stand` (AK 7). Die Wege der
---   Mitglieder behalten `nicht_gefunden`.
+--   danach die Zuordnung: `gilt_nicht` ohne `stand` (AK 7), auch für einen
+--   unbekannten Termin (ein gültiger Link erfährt nicht, ob es einen Termin
+--   gibt, der nicht für seine Spieler:in gilt). Die Wege der Mitglieder
+--   behalten `nicht_gefunden`.
 -- - abholung_abholen gibt den Link aus, für den es «bezogen» setzt.
 -- - Link holen und erneuern am Team-Ort je Team (p_team).
 -- - spieler_teams und verein_spieler_teams nennen je Team `abholbar`.
@@ -201,8 +203,11 @@ $$;
 -- Löschen, das alle Teams aufsteigend sperrt), danach die Spieler:in samt
 -- Geheimnis neu lesen und die Zuordnung prüfen; die Termin-Zeile sperrt
 -- abmeldung_anwenden_training unter derselben, erneut genommenen Teamsperre.
--- Nicht (mehr) im Termin-Team oder in keinem Kader des Termins:
--- {status: 'abgewiesen', grund: 'gilt_nicht'} ohne `stand` (AK 7).
+-- Nicht (mehr) im Termin-Team oder in keinem Kader des Termins, und ebenso
+-- ein unbekannter (auch ein inzwischen gelöschter) Termin:
+-- {status: 'abgewiesen', grund: 'gilt_nicht'} ohne `stand` (AK 7). So
+-- antwortet der Link auf einen Termin ausserhalb der Liste der Spieler:in
+-- immer gleich, ob es ihn gibt oder nicht (auch in einem fremden Verein).
 create or replace function spieler_link_abmelden(p_token text, p_termin uuid, p_abgemeldet boolean,
                                                  p_gesehen_datum date, p_gesehen_beginn time)
 returns jsonb
@@ -219,7 +224,7 @@ begin
   if not found then return jsonb_build_object('status', 'ungueltig'); end if;
   select team_id into v_team from training_termine where id = p_termin;
   if v_team is null then
-    return jsonb_build_object('status', 'abgewiesen', 'grund', 'nicht_gefunden');
+    return jsonb_build_object('status', 'abgewiesen', 'grund', 'gilt_nicht');
   end if;
   -- Erst unter der Sperre gelesen, gilt der Probe-Modus: Ein Mitglied, das ihn
   -- gleichzeitig einschaltet, kann die Grenze nicht unterlaufen.
@@ -250,7 +255,8 @@ end;
 $$;
 
 -- Rumpf wie in 20261021210000_spiel_meldungen.sql; dieselbe Sperrfolge und
--- dieselbe Abweisung wie spieler_link_abmelden. spiel_pruefen nimmt die
+-- dieselbe Abweisung wie spieler_link_abmelden (auch für einen unbekannten
+-- Termin). spiel_pruefen nimmt die
 -- Teamsperre erneut und sperrt die Termin-Zeile.
 create or replace function spieler_link_melden(p_token text, p_termin uuid, p_angemeldet boolean,
                                                p_gesehen_datum date, p_gesehen_beginn time)
@@ -267,7 +273,7 @@ begin
   if v_spieler is null then return jsonb_build_object('status', 'ungueltig'); end if;
   select team_id into v_team from training_termine where id = p_termin;
   if v_team is null then
-    return jsonb_build_object('status', 'abgewiesen', 'grund', 'nicht_gefunden');
+    return jsonb_build_object('status', 'abgewiesen', 'grund', 'gilt_nicht');
   end if;
   perform sperre_teams(array[v_team]);
   if not exists (select 1 from spieler where id = v_spieler and link_token = p_token) then
@@ -452,6 +458,9 @@ revoke all on function feedback_link_gueltig(text) from public, anon, authentica
 -- Ob die Spieler:in hinter einem (gültigen) Link keinem Team zugeordnet ist:
 -- Danach richten sich Begrüssung und Systemprompt (Dringendes an die
 -- Vereinsverwaltung statt an die Trainer:innen, AK 19). Kein API-Recht.
+-- Für einen ungültigen Token liefert sie `true` (kein Treffer); das ist ohne
+-- Folgen, weil sie nur nach feedback_link_gueltig gerufen wird (beginnen,
+-- zaehlen) und deren Antwort für einen ungültigen Link `ohne_team` nie trägt.
 create function feedback_link_ohne_team(p_token text) returns boolean
 language sql stable security definer
 set search_path = public, pg_temp

@@ -5177,13 +5177,14 @@ try {
     assert.equal((await abmelden(link.token, false)).data.stand.angemeldet, 2, "AK 8: wieder angemeldet");
     // Ein Termin eines Teams, dem sie nicht zugeordnet ist, gilt nicht für sie
     // (Story #583 AK 7: `gilt_nicht` ohne Stand — die Datenebene unterscheidet
-    // «nie» und «nicht mehr» nicht); ein unbekannter Termin bleibt «nicht gefunden».
+    // «nie» und «nicht mehr» nicht); ein unbekannter (etwa gelöschter) Termin
+    // antwortet gleich, damit der Link nicht erfährt, ob es ihn gibt.
     const anderes = await serienTeam("Kern-DB-Link-Anders");
     const fremd = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: anderes, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
     const r = (await feldAnon.rpc("spieler_link_abmelden", { p_token: link.token, p_termin: fremd, p_abgemeldet: true, p_gesehen_datum: null, p_gesehen_beginn: null })).data;
     assert.deepEqual(r, { status: "abgewiesen", grund: "gilt_nicht" });
     const weg = (await feldAnon.rpc("spieler_link_abmelden", { p_token: link.token, p_termin: randomUUID(), p_abgemeldet: true, p_gesehen_datum: null, p_gesehen_beginn: null })).data;
-    assert.deepEqual(weg, { status: "abgewiesen", grund: "nicht_gefunden" });
+    assert.deepEqual(weg, { status: "abgewiesen", grund: "gilt_nicht" });
 
     // AK 11: unbekannt antwortet wie ungültig, ohne irgendetwas preiszugeben.
     const unbekannt = "0".repeat(64);

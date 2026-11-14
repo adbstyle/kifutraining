@@ -38,7 +38,8 @@
 --               termin_einfrieren_training, termine_einfrieren_training,
 --               termin_zeitpunkt_nachher (Verlegen in die Zukunft),
 --               termin_abmeldung_setzen, abmeldung_anwenden_training,
---               spieler_link_abmelden, termin_anwesenheit_setzen_training,
+--               spieler_link_abmelden, spieler_link_melden (offenes Spiel),
+--               termin_anwesenheit_setzen_training,
 --               spiel_anwesenheit_setzen, termin_spielerzahl_regel und
 --               serie_spielerzahl_regel (Insert mit Zahl).
 -- Nicht abgedeckt: die Schreibwege mit eigenem Testfall (spieler_aufnehmen,
@@ -332,6 +333,8 @@ begin
                                         prodweg.id('tr_kommend'), prodweg.id('p3'))),
       'spieler_link_abmelden', prodweg.zurueck(null, format('select spieler_link_abmelden(%L, %L, true, null, null)',
                                   v_link_p2, prodweg.id('tr_kommend'))),
+      'spieler_link_melden', prodweg.zurueck(null, format('select spieler_link_melden(%L, %L, false, null, null)',
+                                v_link_p2, prodweg.id('sp_kommend'))),
       'termin_anwesenheit_setzen_training', prodweg.zurueck(null, format('select termin_anwesenheit_setzen_training(%L, %L, false)',
                                                prodweg.id('tr_vorbei'), prodweg.id('p1'))),
       'spiel_anwesenheit_setzen', prodweg.zurueck(null, format('select spiel_anwesenheit_setzen(%L, %L, true, null, null)',
