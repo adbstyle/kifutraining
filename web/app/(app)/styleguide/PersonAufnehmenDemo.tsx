@@ -2,25 +2,21 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { Button, PersonAufnehmen, type PersonSchritt } from "@/components/ui";
+import { Button, PersonAufnehmen } from "@/components/ui";
+import { PERSON_MELDUNG, type PersonSchritt } from "@/lib/verein";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 
 /* Zwei Arten der Aufnahme mit erfundenen Adressen. «lea@beispiel.test»
    findet eine Person, «frei@beispiel.test» hat schon einen Verein, alles
    andere kennt kein Konto — so zeigt die Demo alle Stufen und Meldungen. */
 const GEFUNDEN: Record<string, string> = { "lea@beispiel.test": "Lea Frei" };
-const MELDUNG = {
-  nicht_gefunden: "Zu dieser Adresse gibt es kein bestätigtes Konto. Die Person registriert sich zuerst selbst bei KiFu.",
-  anderer_verein:
-    "Diese Person gehört schon einem Verein an. Aufnehmen lässt sie sich erst, wenn sie ihn verlassen hat.",
-};
 
 async function demoSuche(email: string): Promise<PersonSchritt> {
   await new Promise((r) => setTimeout(r, 300));
   const adresse = email.trim().toLowerCase();
   if (GEFUNDEN[adresse]) return { ok: true, anzeigeName: GEFUNDEN[adresse] };
-  if (adresse === "frei@beispiel.test") return { ok: false, meldung: MELDUNG.anderer_verein };
-  return { ok: false, meldung: MELDUNG.nicht_gefunden };
+  if (adresse === "frei@beispiel.test") return { ok: false, meldung: PERSON_MELDUNG.anderer_verein };
+  return { ok: false, meldung: PERSON_MELDUNG.nicht_gefunden };
 }
 
 export function PersonAufnehmenDemo() {

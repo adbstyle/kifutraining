@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { revalidiereMitgliedschaften, revalidiereTeam } from "@/lib/revalidate";
-import { PERSON_MELDUNG } from "@/lib/verein";
-import type { PersonSchritt } from "@/components/ui";
+import { fachlicheMeldung } from "@/lib/training-bedingungen";
+import { PERSON_MELDUNG, type PersonSchritt } from "@/lib/verein";
 
 /**
  * Server Actions am Team-Ort: Trainer:innen aufnehmen, entfernen, das Team
@@ -20,6 +20,19 @@ import type { PersonSchritt } from "@/components/ui";
  */
 
 const FEHLER = "Das hat nicht geklappt. Bitte erneut versuchen.";
+
+/** Wer nicht (mehr) Mitglied des Teams ist — auch, weil die Vereinsverwaltung
+ *  einen entfernt oder das Team aufgelöst hat —, bekommt von den Team-RPCs
+ *  `not a member of this team`. */
+const NICHT_MEHR_MITGLIED = "Du bist nicht mehr Mitglied dieses Teams.";
+
+/** Der Satz zu einem Fehler der Team-RPCs: «nicht mehr Mitglied», ein Marker
+ *  der Datenebene (z. B. `ANDERER_VEREIN` als Netz) oder die allgemeine
+ *  Meldung. Der Rohtext steht nur im Log. */
+function rpcFehlerMeldung(e: { message: string }): string {
+  if (e.message.includes("not a member")) return NICHT_MEHR_MITGLIED;
+  return fachlicheMeldung(e.message) ?? FEHLER;
+}
 
 /** Der Satz zu einem Status der Suche oder Aufnahme; ein unbekannter Status
  *  (eine neuere Datenebene) fällt auf die allgemeine Meldung. */
@@ -43,7 +56,7 @@ export async function sucheTrainer(teamId: string, email: string): Promise<Perso
   });
   if (error) {
     console.error("[team] trainer suchen", error);
-    return { ok: false, meldung: FEHLER };
+    return { ok: false, meldung: rpcFehlerMeldung(error) };
   }
 
   const res = data as { status: string; anzeige_name?: string };
@@ -65,7 +78,7 @@ export async function nimmMitgliedAuf(teamId: string, email: string): Promise<Pe
   });
   if (error) {
     console.error("[team] trainer aufnehmen", error);
-    return { ok: false, meldung: FEHLER };
+    return { ok: false, meldung: rpcFehlerMeldung(error) };
   }
 
   const res = data as { status: string; anzeige_name?: string };
@@ -102,9 +115,7 @@ export async function entferneMitglied(teamId: string, userId: string): Promise<
   });
   if (error) {
     console.error("[team] entfernen", error);
-    if (error.message.includes("not a member"))
-      return { status: "fehler", error: "Du bist nicht mehr Mitglied dieses Teams." };
-    return { status: "fehler", error: FEHLER };
+    return { status: "fehler", error: rpcFehlerMeldung(error) };
   }
 
   const res = data as { status: "entfernt" | "team_weg" };

@@ -5,12 +5,8 @@ import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 import { SectionMessage } from "./SectionMessage";
 import { TextField } from "./TextField";
+import type { PersonSchritt } from "@/lib/verein";
 
-/** Das Ergebnis eines Schritts: die Person samt Anzeigename — oder der fertige
- *  Satz, der sagt, warum es nicht weitergeht. Die Sätze stehen in
- *  `PERSON_MELDUNG` (lib/verein.ts), damit Team- und Vereinsweg gleich
- *  sprechen. */
-export type PersonSchritt = { ok: true; anzeigeName: string } | { ok: false; meldung: string };
 
 /* Eine Person aufnehmen — ins Trainerteam oder in die Vereinsverwaltung (#581,
    AP §7.5). Ein Dialog in zwei Stufen, den Team-Ort und Vereins-Ort teilen:

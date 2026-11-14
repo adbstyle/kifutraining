@@ -27,6 +27,9 @@ export const VEREIN_MELDUNG = {
   VEREIN_FEST: "Ein Team bleibt in seinem Verein.",
   VEREIN_VOLL: `Der Verein hat schon ${VEREIN_SPIELER_MAX} Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind.`,
   VEREIN_TEAMS_VOLL: `Der Verein hat schon ${VEREIN_TEAMS_MAX} Teams. Ein weiteres kommt erst dazu, wenn es weniger sind.`,
+  /** Kein Marker mehr: Seit Story #581 legt kein Weg am Team-Ort ein Team an,
+   *  nur `verein_team_anlegen`. Bleibt als Hinweis der Teamübersicht für alle
+   *  ausser der Verwaltung, wortgleich an einer Stelle. */
   TEAM_NUR_VERWALTUNG: "Neue Teams legt die Vereinsverwaltung an.",
   /** Netz; die Anwendung zeigt den Status `letzte_verwaltung` mit demselben Satz. */
   LETZTE_VERWALTUNG:
@@ -62,6 +65,11 @@ export function vereinsNameProblem(name: string): string | null {
 export function teamnameVergebenText(team: string): string {
   return `Im Verein trägt schon das Team «${team}» diesen Namen.`;
 }
+
+/** Ein Schritt beim Aufnehmen einer Person (Suche oder Aufnahme): die Person
+ *  samt Anzeigename — oder der fertige Satz (`PERSON_MELDUNG`), warum es nicht
+ *  weitergeht. Eine Form für Kern, Actions und den Baustein `PersonAufnehmen`. */
+export type PersonSchritt = { ok: true; anzeigeName: string } | { ok: false; meldung: string };
 
 /** Der Ausgang einer Suche oder Aufnahme einer Person, als Satz — am Team-Ort
  *  und am Verein-Ort derselbe (#581). Der Schlüssel ist der `status` der RPC. */

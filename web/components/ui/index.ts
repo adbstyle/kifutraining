@@ -15,7 +15,6 @@ export { Card } from "./Card";
 export { Gefahrenzone } from "./Gefahrenzone";
 export { NamenBestaetigen, namenStimmen } from "./NamenBestaetigen";
 export { PersonAufnehmen } from "./PersonAufnehmen";
-export type { PersonSchritt } from "./PersonAufnehmen";
 export { Kalenderblatt } from "./Kalenderblatt";
 export { MiniMonat } from "./MiniMonat";
 export type { Marke, StatusTon } from "./MiniMonat";

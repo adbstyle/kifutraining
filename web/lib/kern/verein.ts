@@ -5,6 +5,7 @@ import { nachSpielerName, SPIELER_MELDUNG } from "@/lib/spieler";
 import { teamNameProblem } from "@/lib/team";
 import {
   PERSON_MELDUNG,
+  type PersonSchritt,
   VEREIN_MELDUNG,
   teamnameVergebenText,
   vereinsNameProblem,
@@ -143,11 +144,6 @@ export type VereinTeamAnsicht = {
   spieler: VereinTeamSpieler[];
   aufloesung: AufloesungsFolgen;
 };
-
-/** Ein Schritt beim Aufnehmen einer Person (Suche oder Aufnahme): der Name
- *  der Person oder der Satz, warum es nicht geht. Gleiche Form wie der
- *  Baustein `PersonAufnehmen`. */
-export type PersonSchritt = { ok: true; anzeigeName: string } | { ok: false; meldung: string };
 
 type TrainerRoh = { user_id: string; anzeige_name: string; email: string; ist_verwaltung: boolean; ich?: boolean };
 type VerwaltungRoh = { anzeige_name: string | null; ich: boolean; user_id?: string; email?: string };

@@ -14,11 +14,11 @@ import {
   nimmMichInsTeam,
   nimmSpielerAusTeamImVerein,
   ordneSpielerZu,
-  type PersonSchritt,
 } from "@/lib/kern/verein";
 import { revalidiereMitgliedschaften, revalidiereTeam, revalidiereVerein } from "@/lib/revalidate";
 import { raeumeVerwaisteBilder } from "@/lib/storage-aufraeumen";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
+import type { PersonSchritt } from "@/lib/verein";
 
 /**
  * Der Spielerbestand des Vereins (Story #579) — dünne Adapter über den
