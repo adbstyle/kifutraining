@@ -79,8 +79,25 @@ const { getTeamPlanFuer, nochNichtVorbereitet } = await import("../lib/queries/t
 const { ladeSpielerliste, anzahlSpieler, nimmSpielerAuf, aendereSpieler, ladeSpieler, ladeSpielerTeams, eigenesTeamVon, nimmSpielerAusTeam, holeSpielerLink, erneuereSpielerLink, leseAbholung, schalteAbholung, erneuereAbholung, pruefeSpielerImport, importiereSpieler } =
   await import("../lib/kern/spieler");
 const { IMPORT_TEXT, erwartetVon } = await import("../lib/spieler-import");
-const { VEREIN_MELDUNG, VEREIN_SPIELER_MAX, zuordnenAbweisungText, zugeordnetText } = await import("../lib/verein");
-const { ladeVereinSpielerliste, ordneSpielerZu } = await import("../lib/kern/verein");
+const { VEREIN_MELDUNG, VEREIN_SPIELER_MAX, VEREIN_TEAMS_MAX, PERSON_MELDUNG, teamnameVergebenText, zuordnenAbweisungText, zugeordnetText } =
+  await import("../lib/verein");
+const {
+  ladeVereinSpielerliste,
+  ordneSpielerZu,
+  ladeVereinAnsicht,
+  ladeVereinTeamAnsicht,
+  legeTeamAn,
+  benenneTeamUm,
+  benenneVereinUm,
+  loeseTeamAuf,
+  findePerson,
+  nimmInsTeamAuf,
+  nimmMichInsTeam,
+  entferneAusTeam,
+  nimmInVerwaltungAuf,
+  entferneAusVerwaltung,
+  nimmSpielerAusTeamImVerein,
+} = await import("../lib/kern/verein");
 const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, HERAUSNEHMEN_TEXT, abweisungText, herausnehmenFrage, spielerDoppeltText, spielerzahlVon, verfallBestaetigen } = await import("../lib/spieler");
 const { SPIEL_MELDUNG, SPIEL_TEXT, MELDUNG_TEXT, TREFFPUNKT_TEXT, meldefristZeitpunkt, spielBestaetigen, spielEntfernenText, spielVerfallText } =
   await import("../lib/spiel");
@@ -273,7 +290,7 @@ async function aufraeumen(): Promise<string[]> {
     melde("Teams", e);
   }
   if (vereine.length) {
-    // Auch Teams, die nicht über den Helfer entstanden (create_team).
+    // Auch Teams, die nicht über den Helfer entstanden (verein_team_anlegen).
     const t = await admin.from("teams").delete().in("verein_id", vereine);
     if (t.error) melde("Teams der Vereine nicht entfernt", t.error);
     const s = await admin.from("spieler").delete().in("verein_id", vereine);
@@ -2496,10 +2513,15 @@ try {
     const { data, error } = await liste(b);
     assert.equal(error, null);
     assert.deepEqual(
-      (data as { user_id: string; email: string }[]).map((m) => [m.user_id, m.email]).sort(),
-      [[a.id, await adresse(a.id)], [b.id, await adresse(b.id)]].sort(),
+      (data as { user_id: string; email: string; ist_verwaltung: boolean }[]).map((m) => [m.user_id, m.email, m.ist_verwaltung]).sort(),
+      [[a.id, await adresse(a.id), false], [b.id, await adresse(b.id), false]].sort(),
       "AK 1: jedes Mitglied mit seiner Adresse",
     );
+    // #581 AK 15: Wer auch zur Vereinsverwaltung gehört, ist gekennzeichnet.
+    await admin.from("team_members").insert({ team_id: team, user_id: verwaltung.id });
+    const mitVerwaltung = (await liste(b)).data as { user_id: string; ist_verwaltung: boolean }[];
+    assert.deepEqual(mitVerwaltung.filter((m) => m.ist_verwaltung).map((m) => m.user_id), [verwaltung.id], "#581 AK 15");
+    await admin.from("team_members").delete().eq("team_id", team).eq("user_id", verwaltung.id);
     assert.ok((await liste(await wegwerfKonto())).error, "AK 4: wer nicht im Team ist, bekommt keine Liste");
 
     await admin.from("team_members").delete().eq("team_id", team).eq("user_id", b.id);
@@ -3659,8 +3681,8 @@ try {
     if (user) q = q.eq("user_id", user);
     return (await q).data ?? [];
   };
-  const austreten = async (k: Konto, team: string, teamname?: string) => {
-    const { error } = await k.supabase.rpc("entferne_team_mitglied", { p_team: team, p_user: k.id, p_teamname: teamname });
+  const austreten = async (k: Konto, team: string) => {
+    const { error } = await k.supabase.rpc("entferne_team_mitglied", { p_team: team, p_user: k.id });
     if (error) throw error;
   };
 
@@ -3866,7 +3888,7 @@ try {
     assert.equal((await feed(neu)).gueltig, true);
   });
 
-  await pruefe("Abo erlischt beim Entfernen durch ein anderes Mitglied, bei Teamauflösung und bei Kontolöschung (#330 PC 9)", async () => {
+  await pruefe("Abo erlischt beim Entfernen durch ein anderes Mitglied, beim Austritt der Letzten, bei Teamauflösung und bei Kontolöschung (#330 PC 9; #581 PC 3)", async () => {
     // Entfernen durch ein anderes Mitglied.
     const team = await serienTeam("Kern-DB-Abo-Entfernen");
     await admin.from("team_members").insert({ team_id: team, user_id: b.id });
@@ -3876,12 +3898,23 @@ try {
     assert.deepEqual(await feed(tb), { gueltig: false });
     assert.equal((await aboZeilen(team, b.id)).length, 0);
 
-    // Auflösung: das letzte Mitglied tritt aus; Team und Abo sind weg.
+    // #581 PC 3: Das letzte Mitglied tritt aus — sein Abo erlischt, das Team bleibt.
     const aufgeloest = await serienTeam("Kern-DB-Abo-Aufloesen");
+    await admin.from("team_members").insert({ team_id: aufgeloest, user_id: b.id });
     const ta = (await holen(a, aufgeloest)).token!;
-    await austreten(a, aufgeloest, "Kern-DB-Abo-Aufloesen");
+    const tb2 = (await holen(b, aufgeloest)).token!;
+    await austreten(a, aufgeloest);
+    assert.deepEqual(await feed(ta), { gueltig: false }, "Abo der Ausgetretenen erloschen");
+    assert.equal((await feed(tb2)).gueltig, true);
+    await austreten(b, aufgeloest);
+    assert.equal((await admin.from("teams").select("id").eq("id", aufgeloest)).data!.length, 1, "#581 PC 3: Team bleibt ohne Mitglied");
+    assert.deepEqual(await feed(tb2), { gueltig: false });
+    // Auflösen durch die Vereinsverwaltung: Team und alle Abos sind weg.
+    await admin.from("team_members").insert({ team_id: aufgeloest, user_id: b.id });
+    const tb3 = (await holen(b, aufgeloest)).token!;
+    assert.equal(wert(await loeseTeamAuf(verwaltung.supabase, verwaltung.id, { teamId: aufgeloest, teamname: "Kern-DB-Abo-Aufloesen" })).status, "aufgeloest");
     assert.equal((await admin.from("teams").select("id").eq("id", aufgeloest)).data!.length, 0, "Team aufgelöst");
-    assert.deepEqual(await feed(ta), { gueltig: false });
+    assert.deepEqual(await feed(tb3), { gueltig: false });
     assert.equal((await aboZeilen(aufgeloest)).length, 0);
 
     // Kontolöschung.
@@ -3895,75 +3928,82 @@ try {
     konten.splice(konten.indexOf(c.id), 1);
     assert.deepEqual(await feed(token), { gueltig: false });
     assert.equal((await aboZeilen(tc)).length, 0, "kein verwaistes Abo");
+    assert.equal((await admin.from("teams").select("id").eq("id", tc)).data!.length, 1, "#581 PC 3: Team bleibt nach der Kontolöschung");
   });
 
-  // ── Team-Auflösung nur mit dem Teamnamen (#480) ──────────────────────────
-  await pruefe("Team löst sich nur mit dem aktuellen Teamnamen auf, auch ausserhalb der Oberfläche (#480 AK 5–7, 10–12, PC 1–5)", async () => {
+  // ── Team bleibt ohne Mitglied; Auflösen nur durch die Verwaltung (#480 → #581) ──
+  await pruefe("Team bleibt beim Austritt der Letzten und löst sich nur durch die Verwaltung mit dem aktuellen Namen auf (#480 AK 6, 7, 11, PC 2, 3, 5; #581 AK 24, 26, 28, PC 1, 3)", async () => {
     const besteht = async (team: string) => (await admin.from("teams").select("id").eq("id", team)).data!.length === 1;
-    const austritt = async (k: Konto, team: string, teamname?: string) => {
-      const { data, error } = await k.supabase.rpc("entferne_team_mitglied", { p_team: team, p_user: k.id, p_teamname: teamname });
+    const austritt = async (k: Konto, team: string) => {
+      const { data, error } = await k.supabase.rpc("entferne_team_mitglied", { p_team: team, p_user: k.id });
       if (error) throw error;
-      return data as { status: string; name?: string };
+      return data as { status: string };
     };
-    const aufloesen = async (k: Konto, team: string, teamname: string) => {
-      const { data, error } = await k.supabase.rpc("loese_team_auf", { p_team: team, p_teamname: teamname });
-      if (error) throw error;
-      return data as { status: string; name?: string };
-    };
+    const aufloesen = async (k: Konto, team: string, teamname: string) =>
+      loeseTeamAuf(k.supabase, k.id, { teamId: team, teamname });
 
     const team = await serienTeam("Kern-DB-Auflösen-480");
     await admin.from("team_members").insert({ team_id: team, user_id: b.id });
 
-    // AK 11: Die direkten Löschwege sind zu — weder Team noch eigene Mitgliedschaft.
+    // #480 AK 11, #581 AK 26: Die direkten Wege sind zu — weder Team löschen
+    // noch umbenennen noch die eigene Mitgliedschaft löschen.
     await a.supabase.from("teams").delete().eq("id", team);
+    assert.ok((await a.supabase.from("teams").update({ name: "Kern-DB-Direkt" }).eq("id", team)).error, "direktes UPDATE auf teams abgewiesen");
     await a.supabase.from("team_members").delete().eq("team_id", team).eq("user_id", a.id);
     assert.ok(await besteht(team), "direktes DELETE auf teams wirkungslos");
+    assert.equal((await admin.from("teams").select("name").eq("id", team).single()).data!.name, "Kern-DB-Auflösen-480");
     assert.equal((await admin.from("team_members").select("user_id").eq("team_id", team)).data!.length, 2, "direktes DELETE auf team_members wirkungslos");
 
-    // AK 6: Gross- und Kleinschreibung zählen; PC 2: Team unverändert.
-    assert.deepEqual(await aufloesen(a, team, "kern-db-auflösen-480"), { status: "name_falsch", name: "Kern-DB-Auflösen-480" });
+    // #581 AK 26: Mitglieder lösen nicht auf, auch nicht mit dem richtigen Namen — ununterscheidbar «nicht gefunden».
+    fehler(await aufloesen(a, team, "Kern-DB-Auflösen-480"), "nicht_gefunden", VEREIN_MELDUNG.VEREIN_NICHT_GEFUNDEN);
     assert.ok(await besteht(team));
 
-    // Out of Scope 2: Wer nicht als letztes Mitglied geht, braucht keinen Namen.
+    // #480 AK 6: Gross- und Kleinschreibung zählen; PC 2: Team unverändert.
+    assert.deepEqual(wert(await aufloesen(verwaltung, team, "kern-db-auflösen-480")), { status: "name_falsch", name: "Kern-DB-Auflösen-480" });
+    assert.ok(await besteht(team));
+
+    // #581 AK 28, PC 3: Beide verlassen das Team ohne Namen; es bleibt ohne Mitglied bestehen.
     assert.deepEqual(await austritt(b, team), { status: "entfernt" });
+    assert.deepEqual(await austritt(a, team), { status: "entfernt" });
+    assert.ok(await besteht(team), "#581 PC 3: Team bleibt ohne Mitglied");
+    // Ein Nichtmitglied tritt nicht aus: «not a member» (die Action macht daraus einen Satz).
+    await assert.rejects(austritt(a, team), (e: { message: string }) => e.message.includes("not a member"));
 
-    // PC 4: Als letztes Mitglied ohne Namen abgewiesen — mit dem verlangten Namen.
-    assert.deepEqual(await austritt(a, team), { status: "aufloesung_noetig", name: "Kern-DB-Auflösen-480" });
+    // #480 PC 3: Umbenannt — der alte Name trägt nicht mehr, die Antwort nennt den neuen.
+    wert(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: team, name: "Kern-DB-Umbenannt-480" }));
+    assert.deepEqual(wert(await aufloesen(verwaltung, team, "Kern-DB-Auflösen-480")), { status: "name_falsch", name: "Kern-DB-Umbenannt-480" });
     assert.ok(await besteht(team));
 
-    // PC 3: Umbenannt — der alte Name trägt nicht mehr, die Antwort nennt den neuen.
-    await admin.from("teams").update({ name: "Kern-DB-Umbenannt-480" }).eq("id", team);
-    assert.deepEqual(await austritt(a, team, "Kern-DB-Auflösen-480"), { status: "name_falsch", name: "Kern-DB-Umbenannt-480" });
-    assert.ok(await besteht(team));
-
-    // AK 7, 10, PC 1: Leerzeichen am Rand zählen nicht; der Austritt löst auf.
-    assert.equal((await austritt(a, team, "  Kern-DB-Umbenannt-480 ")).status, "aufgeloest");
+    // #480 AK 7, #581 AK 24, PC 1: Leerzeichen am Rand zählen nicht; die
+    // Spieler:innen bleiben samt Link im Verein.
+    const lena = wert(await nimmSpielerAuf(a.supabase, a.id, { teamId: (await serienTeam("Kern-DB-Auflösen-480-Hilf")), vorname: "Lena", nachname: "Muster", jahrgang: 2017 })).spielerId;
+    await admin.from("team_spieler").insert({ team_id: team, spieler_id: lena, verein_id: verein });
+    const link = (await admin.from("spieler").select("link_token").eq("id", lena).single()).data!.link_token as string;
+    const r = wert(await aufloesen(verwaltung, team, "  Kern-DB-Umbenannt-480 "));
+    assert.deepEqual([r.status, r.status === "aufgeloest" && r.spielerBleiben], ["aufgeloest", 1]);
     assert.ok(!(await besteht(team)), "Team aufgelöst");
+    assert.equal((await admin.from("spieler").select("link_token").eq("id", lena).single()).data!.link_token, link, "PC 1: Spieler:in samt Link bleibt");
 
-    // AK 5: Ausdrückliches Auflösen durch ein beliebiges Mitglied.
+    // #480 PC 5: Danach erfährt das frühere Mitglied, dass es das Team nicht
+    // mehr gibt; die Verwaltung bekommt «nicht gefunden».
     const zwei = await serienTeam("Kern-DB-Auflösen-480-B");
-    await admin.from("team_members").insert({ team_id: zwei, user_id: b.id });
-    const c = await wegwerfKonto();
-    await assert.rejects(aufloesen(c, zwei, "Kern-DB-Auflösen-480-B"), (e: { message: string }) => e.message.includes("not a member"), "Nichtmitglied abgewiesen");
-    assert.equal((await aufloesen(b, zwei, "Kern-DB-Auflösen-480-B")).status, "aufgeloest");
-    assert.ok(!(await besteht(zwei)));
-
-    // PC 5: Danach erfährt das andere Mitglied, dass es das Team nicht mehr gibt.
-    assert.deepEqual(await aufloesen(a, zwei, "Kern-DB-Auflösen-480-B"), { status: "team_weg" });
+    assert.equal(wert(await aufloesen(verwaltung, zwei, "Kern-DB-Auflösen-480-B")).status, "aufgeloest");
     assert.deepEqual(await austritt(a, zwei), { status: "team_weg" });
+    fehler(await aufloesen(verwaltung, zwei, "Kern-DB-Auflösen-480-B"), "nicht_gefunden", VEREIN_MELDUNG.VEREIN_NICHT_GEFUNDEN);
 
     // Unicode-Normalform zählt nicht: «ö» als o + Trema bestätigt «ö».
     const drei = await serienTeam("Kern-DB-Auflösen-480-C");
-    assert.equal((await aufloesen(a, drei, "Kern-DB-Auflösen-480-C".normalize("NFD"))).status, "aufgeloest");
+    assert.equal(wert(await aufloesen(verwaltung, drei, "Kern-DB-Auflösen-480-C".normalize("NFD"))).status, "aufgeloest");
 
-    // Out of Scope 1: Löscht das letzte Mitglied sein Konto, löst sich das Team ohne Namen auf.
+    // #581 PC 3: Löscht das letzte Mitglied sein Konto, bleibt das Team.
+    const c = await wegwerfKonto();
     const vier = await serienTeam("Kern-DB-Auflösen-480-D");
     await admin.from("team_members").insert({ team_id: vier, user_id: c.id });
     await admin.from("team_members").delete().eq("team_id", vier).eq("user_id", a.id);
     const { error: weg } = await admin.auth.admin.deleteUser(c.id);
     if (weg) throw weg;
     konten.splice(konten.indexOf(c.id), 1);
-    assert.ok(!(await besteht(vier)), "Konto-Löschung löst ohne Namen auf");
+    assert.ok(await besteht(vier), "Konto-Löschung lässt das Team bestehen");
   });
 
   // ── Kalender: Felder eines Termins (#389) ────────────────────────────────
@@ -4748,18 +4788,23 @@ try {
     assert.equal((await admin.from("spieler").select("id").eq("id", lena)).data!.length, 1, "kein direktes Löschen");
   });
 
-  await pruefe("Herausnehmen bei gleichnamigen Teams: verbleibend über «dieses», nicht über den Namen (#579 AK 14)", async () => {
+  // Gleichnamige Teams gibt es seit #581 nur noch als Altdubletten (PC 6),
+  // die über die API nicht mehr entstehen; dass `verbleibendeTeams` nicht
+  // über den Namen geht, prüft `check:kern` mit gleichen Namen. Hier, dass die
+  // Datenebene «dieses» richtig setzt und der Satz daraus entsteht.
+  await pruefe("Herausnehmen mit einem weiteren Team: verbleibend über «dieses» (#579 AK 14; #581 PC 6)", async () => {
     const NAME = "Kern-DB-Gleichnamig";
+    const ZWEI = "Kern-DB-Gleichnamig-Zwei";
     const eins = await serienTeam(NAME);
-    const zwei = await neuesTeam(NAME);
+    const zwei = await neuesTeam(ZWEI);
     const lena = (await neuerSpieler(eins, "Lena", "Gleich", 2016)).spielerId;
-    wert(await zuordnen(zwei, NAME, [lena]));
+    wert(await zuordnen(zwei, ZWEI, [lena]));
     const teams = wert(await ladeSpielerTeams(a.supabase, a.id, { teamId: eins, spielerId: lena })).teams;
-    assert.deepEqual(teams.map((t) => [t.name, t.dieses]).sort((x, y) => Number(x[1]) - Number(y[1])), [[NAME, false], [NAME, true]]);
+    assert.deepEqual(teams.map((t) => [t.name, t.dieses]).sort((x, y) => Number(x[1]) - Number(y[1])), [[ZWEI, false], [NAME, true]]);
     fehler(
       await nimmSpielerAusTeam(a.supabase, a.id, { teamId: eins, spielerId: lena }),
       "regel",
-      herausnehmenFrage({ vorname: "Lena", nachname: "Gleich", team: NAME, verein: "Kern-DB", verbleibend: [NAME], probe: false }),
+      herausnehmenFrage({ vorname: "Lena", nachname: "Gleich", team: NAME, verein: "Kern-DB", verbleibend: [ZWEI], probe: false }),
     );
   });
 
@@ -5237,9 +5282,13 @@ try {
     wert(await nimmHeraus(a, team, mia));
     const feedMia = await aboFeed(vonMia);
     assert.deepEqual([feedMia.gueltig, feedMia.team, feedMia.termine], [true, null, []], "herausgenommen: bleibt, ohne Termine");
-    // Auflösen: Ohne Mitglieder löst der Trigger das Team auf; seine
-    // Spieler:innen bleiben ohne Team im Verein (Entscheid A.2), ihre Abos mit.
+    // #581 PC 3: Ohne Mitglieder bleibt das Team samt Abos und Terminen.
     await admin.from("team_members").delete().eq("team_id", team);
+    assert.equal((await admin.from("teams").select("id").eq("id", team)).data!.length, 1, "Team bleibt ohne Mitglied");
+    assert.equal((await aboFeed(vonNoah)).termine!.length, 1, "ohne Mitglied: Abo mit Terminen");
+    // Auflösen durch die Verwaltung: Die Spieler:innen bleiben ohne Team im
+    // Verein (Entscheid A.2), ihre Abos mit.
+    assert.equal(wert(await loeseTeamAuf(verwaltung.supabase, verwaltung.id, { teamId: team, teamname: "Kern-DB-Eltern-Abo-Erloeschen" })).status, "aufgeloest");
     assert.equal((await admin.from("teams").select("id").eq("id", team)).data!.length, 0, "Team aufgelöst");
     assert.deepEqual([(await aboFeed(vonNoah)).gueltig, (await aboFeed(vonNoah)).termine], [true, []], "aufgelöst: bleibt, ohne Termine");
     assert.equal((await admin.from("spieler_abos").select("id").in("token", [alt, neu])).data!.length, 0);
@@ -5529,10 +5578,10 @@ try {
     assert.deepEqual(await kaderVonTeam(team), []);
     assert.equal(wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler.length, 1, "Lena bleibt");
     fehler(await entferneKader(a.supabase, a.id, { kaderId: k }), "nicht_gefunden", KADER_MELDUNG.KADER_NICHT_GEFUNDEN);
-    // Das Team aufgelöst: Kader und Zuteilung gehen mit.
+    // Das Team aufgelöst (durch die Verwaltung, #581): Kader und Zuteilung gehen mit.
     const k2 = await neuerKader(team, "S1");
     wert(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [lena], dazu: [k2] }));
-    await admin.from("teams").delete().eq("id", team);
+    assert.equal(wert(await loeseTeamAuf(verwaltung.supabase, verwaltung.id, { teamId: team, teamname: "Kern-DB-Kader-Entfernen" })).status, "aufgeloest");
     assert.equal((await admin.from("kader").select("id").eq("team_id", team)).data!.length, 0);
     assert.equal((await admin.from("kader_spieler").select("kader_id").eq("team_id", team)).data!.length, 0);
   });
@@ -6745,7 +6794,7 @@ try {
     return data as Lage;
   };
 
-  await pruefe("Verein: Lage je Konto, Teams nur durch die Verwaltung, der Verein eines Teams bleibt (#577 AK 4, 5; Testfall 2, 3)", async () => {
+  await pruefe("Verein: Lage je Konto, Teams nur durch die Verwaltung, der Verein eines Teams bleibt (#577 AK 4, 5; Testfall 2, 3; #581 AK 17, 26)", async () => {
     const ohne = await wegwerfKonto();
     assert.deepEqual(await lageVon(ohne), { verein: null, grenzen: null }, "Konto ohne Verein");
     assert.deepEqual(await lageVon(verwaltung), {
@@ -6755,27 +6804,287 @@ try {
     const team = await serienTeam("Kern-DB-Verein");
     assert.deepEqual((await lageVon(a)).verein, { id: verein, name: "Kern-DB", ist_verwaltung: false, ist_teammitglied: true });
 
-    // AK 5: Mitglieder und Konten ohne Verein legen keine Teams an — mit dem Satz der Oberfläche.
+    // AK 5, #581 AK 26: Mitglieder und Konten ohne Verein legen keine Teams an
+    // — weder über die RPC (ununterscheidbar «nicht gefunden») noch direkt.
     for (const k of [a, ohne]) {
-      const { error } = await k.supabase.rpc("create_team", { p_name: "Kern-DB-Verboten" });
-      assert.match(error?.message ?? "", /TEAM_NUR_VERWALTUNG/);
-      assert.equal(ausDbFehler(error!).meldung, VEREIN_MELDUNG.TEAM_NUR_VERWALTUNG);
+      fehler(await legeTeamAn(k.supabase, k.id, { vereinId: verein, name: "Kern-DB-Verboten" }), "nicht_gefunden", VEREIN_MELDUNG.VEREIN_NICHT_GEFUNDEN);
+      assert.ok((await k.supabase.from("teams").insert({ name: "Kern-DB-Verboten", verein_id: verein })).error, "kein direktes INSERT");
     }
     assert.equal((await admin.from("teams").select("id").eq("name", "Kern-DB-Verboten")).data!.length, 0);
-    // Die Verwaltung legt eines im eigenen Verein an und wird bis Story #581 Mitglied.
-    const { data: neu, error } = await verwaltung.supabase.rpc("create_team", { p_name: "Kern-DB-Verwaltung" });
-    assert.equal(error, null);
-    teams.push(neu as string);
+    // #581 AK 17: Die Verwaltung legt eines im eigenen Verein an, ohne Mitglied zu werden.
+    const neu = wert(await legeTeamAn(verwaltung.supabase, verwaltung.id, { vereinId: verein, name: "Kern-DB-Verwaltung" })).teamId;
+    teams.push(neu);
     assert.equal((await admin.from("teams").select("verein_id").eq("id", neu).single()).data!.verein_id, verein);
-    assert.equal((await lageVon(verwaltung)).verein!.ist_teammitglied, true);
+    assert.equal((await admin.from("team_members").select("user_id").eq("team_id", neu)).data!.length, 0, "#581 AK 17: ohne Mitglied");
+    assert.equal((await lageVon(verwaltung)).verein!.ist_teammitglied, false);
 
-    // Testfall 2: Ein Mitglied ändert den Namen, nie den Verein (eigenes Konto, eigener Verein).
+    // Testfall 2: Der Verein eines Teams bleibt (Netz, auch per Admin); den
+    // Namen ändert seit #581 nur die Verwaltung, nie ein Mitglied direkt.
     const fremdeVerwaltung = await wegwerfKonto();
     const anderer = await testVerein("Kern-DB-Anderer", fremdeVerwaltung);
-    const wechsel = await a.supabase.from("teams").update({ verein_id: anderer }).eq("id", team).select();
+    const wechsel = await admin.from("teams").update({ verein_id: anderer }).eq("id", team).select();
     assert.match(wechsel.error?.message ?? "", /VEREIN_FEST/);
-    assert.equal((await a.supabase.from("teams").update({ name: "Kern-DB-Verein-Neu" }).eq("id", team)).error, null);
+    assert.ok((await a.supabase.from("teams").update({ name: "Kern-DB-Verein-Neu" }).eq("id", team)).error, "#581 AK 26: kein direktes UPDATE");
+    wert(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: team, name: "Kern-DB-Verein-Neu" }));
     assert.deepEqual((await admin.from("teams").select("name, verein_id").eq("id", team).single()).data, { name: "Kern-DB-Verein-Neu", verein_id: verein });
+  });
+
+  // ── Vereinsverwaltung führt Teams und Trainer:innen (#581) ───────────────
+  // Die Regeln und Rennen prüft supabase/tests/vereine_verwaltung.sql per psql;
+  // hier der Kern (lib/kern/verein.ts): jede Antwort der Datenebene als
+  // Ergebnis und Satz, über den Nutzer-Client.
+  const emailVon = async (k: Konto) => (await admin.auth.admin.getUserById(k.id)).data.user!.email!;
+  const NG_VEREIN = VEREIN_MELDUNG.VEREIN_NICHT_GEFUNDEN;
+  /** Ein zweiter Verein samt eigener Verwaltung (für `anderer_verein`). */
+  let fremdVerwaltung: Konto | null = null;
+  const fremdeVerwaltung = async () => {
+    if (!fremdVerwaltung) {
+      fremdVerwaltung = await wegwerfKonto();
+      await testVerein("Kern-DB-581-Fremd", fremdVerwaltung);
+    }
+    return fremdVerwaltung;
+  };
+
+  await pruefe("Verein: Teams anlegen und umbenennen, Name je Verein eindeutig, Grenze 30 nur beim Anlegen (#581 AK 17–22, 26, PC 7)", async () => {
+    const eins = wert(await legeTeamAn(verwaltung.supabase, verwaltung.id, { vereinId: verein, name: "  Kern-DB-581-A " }));
+    teams.push(eins.teamId);
+    assert.equal(eins.name, "Kern-DB-581-A", "getrimmt");
+    assert.equal((await admin.from("team_members").select("user_id").eq("team_id", eins.teamId)).data!.length, 0, "AK 17");
+    const zwei = wert(await legeTeamAn(verwaltung.supabase, verwaltung.id, { vereinId: verein, name: "Kern-DB-581-B" })).teamId;
+    teams.push(zwei);
+    // AK 20, 21: Gross/Klein, Leerzeichen und Bindestriche machen keinen Unterschied; die Abweisung nennt das Team.
+    const vergeben = fehler(await legeTeamAn(verwaltung.supabase, verwaltung.id, { vereinId: verein, name: "kern db 581 a" }), "regel", teamnameVergebenText("Kern-DB-581-A"));
+    assert.equal((vergeben as { feld?: string }).feld, "name");
+    fehler(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: zwei, name: "KERN-DB-581-A" }), "regel", teamnameVergebenText("Kern-DB-581-A"));
+    // AK 20: Umlaute zählen — «Kern-DB-581-Ä» ist ein anderer Name.
+    teams.push(wert(await legeTeamAn(verwaltung.supabase, verwaltung.id, { vereinId: verein, name: "Kern-DB-581-Ä" })).teamId);
+    // AK 22: eine andere Schreibweise des eigenen Namens.
+    assert.equal(wert(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: eins.teamId, name: "kern-db 581-a" })).name, "kern-db 581-a");
+    // Eingabe: leer oder über 60 Zeichen, vor der Datenebene.
+    fehler(await legeTeamAn(verwaltung.supabase, verwaltung.id, { vereinId: verein, name: "  " }), "eingabe");
+    fehler(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: zwei, name: "x".repeat(61) }), "eingabe");
+    // AK 26: Mitglied, fremde Verwaltung, unbekanntes Team — ununterscheidbar.
+    await admin.from("team_members").insert({ team_id: zwei, user_id: a.id });
+    const fremd = await fremdeVerwaltung();
+    for (const k of [a, fremd]) {
+      fehler(await benenneTeamUm(k.supabase, k.id, { teamId: zwei, name: "Kern-DB-581-Fremd" }), "nicht_gefunden", NG_VEREIN);
+      fehler(await legeTeamAn(k.supabase, k.id, { vereinId: verein, name: "Kern-DB-581-Fremd" }), "nicht_gefunden", NG_VEREIN);
+    }
+    fehler(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: randomUUID(), name: "Kern-DB-581-C" }), "nicht_gefunden", NG_VEREIN);
+    fehler(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: "kein-uuid", name: "Kern-DB-581-C" }), "nicht_gefunden", NICHT_GEFUNDEN.team);
+    // Netz: Auch an der RPC vorbei (Admin) kein zweiter Name im Verein.
+    const netz = await admin.from("teams").insert({ name: "Kern-DB 581 B", verein_id: verein });
+    assert.match(netz.error?.message ?? "", /TEAMNAME_VERGEBEN/);
+    assert.equal(ausDbFehler(netz.error!).meldung, VEREIN_MELDUNG.TEAMNAME_VERGEBEN);
+
+    // AK 18: Mit 30 Teams weist das Anlegen ab, mit dem Satz der Grenze; PC 7: Umbenennen geht weiter.
+    const { count } = await admin.from("teams").select("id", { count: "exact", head: true }).eq("verein_id", verein);
+    const fehlend = VEREIN_TEAMS_MAX - count!;
+    const { data: voll, error: vollFehler } = await admin
+      .from("teams")
+      .insert(Array.from({ length: fehlend }, (_, i) => ({ name: `Kern-DB-581-Voll-${i}`, verein_id: verein })))
+      .select("id");
+    assert.equal(vollFehler, null);
+    teams.push(...voll!.map((t) => t.id as string));
+    fehler(await legeTeamAn(verwaltung.supabase, verwaltung.id, { vereinId: verein, name: "Kern-DB-581-31" }), "regel", VEREIN_MELDUNG.VEREIN_TEAMS_VOLL);
+    assert.equal(wert(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: zwei, name: "Kern-DB-581-B2" })).name, "Kern-DB-581-B2", "PC 7");
+  });
+
+  await pruefe("Verein: Name ändern, leer und über 60 Zeichen abgewiesen, nur durch die Verwaltung (#581 AK 23, 26)", async () => {
+    try {
+      assert.equal(wert(await benenneVereinUm(verwaltung.supabase, verwaltung.id, { vereinId: verein, name: "  Kern-DB-Neu " })).name, "Kern-DB-Neu");
+      assert.equal((await admin.from("vereine").select("name").eq("id", verein).single()).data!.name, "Kern-DB-Neu");
+      fehler(await benenneVereinUm(verwaltung.supabase, verwaltung.id, { vereinId: verein, name: " " }), "eingabe", "Bitte einen Vereinsnamen angeben.");
+      fehler(await benenneVereinUm(verwaltung.supabase, verwaltung.id, { vereinId: verein, name: "x".repeat(61) }), "eingabe", "Der Vereinsname darf höchstens 60 Zeichen lang sein.");
+      wert(await benenneVereinUm(verwaltung.supabase, verwaltung.id, { vereinId: verein, name: "x".repeat(60) }));
+      fehler(await benenneVereinUm(a.supabase, a.id, { vereinId: verein, name: "Kern-DB-Mitglied" }), "nicht_gefunden", NG_VEREIN);
+      assert.ok((await a.supabase.from("vereine").update({ name: "Kern-DB-Direkt" }).eq("id", verein)).error || (await admin.from("vereine").select("name").eq("id", verein).single()).data!.name !== "Kern-DB-Direkt");
+    } finally {
+      // Die übrigen Prüfungen erwarten den Namen «Kern-DB».
+      await admin.from("vereine").update({ name: "Kern-DB" }).eq("id", verein);
+    }
+  });
+
+  await pruefe("Verein: Trainer:innen suchen, aufnehmen, sich selbst aufnehmen, entfernen — jeder Status als Satz (#581 AK 12–14, 16, 26, PC 3, 4)", async () => {
+    const team = await neuesTeam("Kern-DB-581-Personen");
+    const [mailA, mailV] = [await emailVon(a), await emailVon(verwaltung)];
+    const fremd = await fremdeVerwaltung();
+    const schritt = (r: Awaited<ReturnType<typeof findePerson>>) => wert(r);
+    // Suche mit Team: nicht gefunden, anderer Verein, gefunden.
+    assert.deepEqual(schritt(await findePerson(verwaltung.supabase, verwaltung.id, { vereinId: verein, teamId: team, email: "niemand-581@test.local" })), { ok: false, meldung: PERSON_MELDUNG.nicht_gefunden });
+    assert.deepEqual(schritt(await findePerson(verwaltung.supabase, verwaltung.id, { vereinId: verein, teamId: team, email: await emailVon(fremd) })), { ok: false, meldung: PERSON_MELDUNG.anderer_verein });
+    assert.equal(PERSON_MELDUNG.anderer_verein, VEREIN_MELDUNG.ANDERER_VEREIN, "eine Konstante");
+    const gefunden = schritt(await findePerson(verwaltung.supabase, verwaltung.id, { vereinId: verein, teamId: team, email: ` ${mailA.toUpperCase()} ` }));
+    assert.equal(gefunden.ok, true);
+    // AK 13: aufnehmen, zweimal → bereits Mitglied (Suche und Aufnahme).
+    assert.equal(schritt(await nimmInsTeamAuf(verwaltung.supabase, verwaltung.id, { teamId: team, email: mailA })).ok, true);
+    assert.deepEqual(schritt(await nimmInsTeamAuf(verwaltung.supabase, verwaltung.id, { teamId: team, email: mailA })), { ok: false, meldung: PERSON_MELDUNG.bereits_mitglied });
+    assert.deepEqual(schritt(await findePerson(verwaltung.supabase, verwaltung.id, { vereinId: verein, teamId: team, email: mailA })), { ok: false, meldung: PERSON_MELDUNG.bereits_mitglied });
+    assert.deepEqual(schritt(await nimmInsTeamAuf(verwaltung.supabase, verwaltung.id, { teamId: team, email: await emailVon(fremd) })), { ok: false, meldung: PERSON_MELDUNG.anderer_verein });
+    // Ohne Team: Suche für die Verwaltung → bereits Verwaltung.
+    assert.deepEqual(schritt(await findePerson(verwaltung.supabase, verwaltung.id, { vereinId: verein, email: mailV })), { ok: false, meldung: PERSON_MELDUNG.bereits_verwaltung });
+    fehler(await findePerson(verwaltung.supabase, verwaltung.id, { vereinId: verein, teamId: team, email: "  " }), "eingabe", "Bitte eine E-Mail-Adresse angeben.");
+    // Team-Ort: Auch finde_trainer und add_team_member weisen ein Konto eines anderen Vereins ab.
+    assert.deepEqual((await a.supabase.rpc("finde_trainer", { p_team_id: team, p_email: await emailVon(fremd) })).data, { status: "anderer_verein" });
+    assert.deepEqual((await a.supabase.rpc("add_team_member", { p_team_id: team, p_email: await emailVon(fremd) })).data, { status: "anderer_verein" });
+    // AK 12: sich selbst aufnehmen, wiederholbar.
+    assert.deepEqual(wert(await nimmMichInsTeam(verwaltung.supabase, verwaltung.id, { teamId: team })), { teamId: team });
+    wert(await nimmMichInsTeam(verwaltung.supabase, verwaltung.id, { teamId: team }));
+    assert.equal((await admin.from("team_members").select("user_id").eq("team_id", team).eq("user_id", verwaltung.id)).data!.length, 1);
+    // AK 16, PC 4: Ein Mitglied entfernt die Verwaltung wie jedes Mitglied; sie bleibt Verwaltung.
+    assert.deepEqual((await a.supabase.rpc("entferne_team_mitglied", { p_team: team, p_user: verwaltung.id })).data, { status: "entfernt" });
+    assert.equal((await lageVon(verwaltung)).verein!.ist_verwaltung, true, "PC 4");
+    // AK 14: Die Verwaltung entfernt jede Trainer:in, auch wenn sie schon weg ist; das Team bleibt (PC 3).
+    assert.deepEqual(wert(await entferneAusTeam(verwaltung.supabase, verwaltung.id, { teamId: team, userId: a.id })), { teamId: team });
+    wert(await entferneAusTeam(verwaltung.supabase, verwaltung.id, { teamId: team, userId: a.id }));
+    assert.equal((await admin.from("teams").select("id").eq("id", team)).data!.length, 1, "PC 3: Team bleibt ohne Mitglied");
+    // AK 26: Mitglieder und fremde Verwaltung handeln nicht am Verein-Ort.
+    await admin.from("team_members").insert({ team_id: team, user_id: a.id });
+    for (const k of [a, fremd]) {
+      fehler(await findePerson(k.supabase, k.id, { vereinId: verein, teamId: team, email: mailV }), "nicht_gefunden", NG_VEREIN);
+      fehler(await nimmInsTeamAuf(k.supabase, k.id, { teamId: team, email: mailV }), "nicht_gefunden", NG_VEREIN);
+      fehler(await nimmMichInsTeam(k.supabase, k.id, { teamId: team }), "nicht_gefunden", NG_VEREIN);
+      fehler(await entferneAusTeam(k.supabase, k.id, { teamId: team, userId: a.id }), "nicht_gefunden", NG_VEREIN);
+    }
+    // Ein Team eines anderen Vereins bei der Suche: ebenso.
+    fehler(await findePerson(verwaltung.supabase, verwaltung.id, { vereinId: verein, teamId: randomUUID(), email: mailA }), "nicht_gefunden", NG_VEREIN);
+    // Nach dem Auflösen: «nicht gefunden» statt eines Rohtexts.
+    wert(await loeseTeamAuf(verwaltung.supabase, verwaltung.id, { teamId: team, teamname: "Kern-DB-581-Personen" }));
+    fehler(await nimmMichInsTeam(verwaltung.supabase, verwaltung.id, { teamId: team }), "nicht_gefunden", NG_VEREIN);
+    fehler(await entferneAusTeam(verwaltung.supabase, verwaltung.id, { teamId: team, userId: a.id }), "nicht_gefunden", NG_VEREIN);
+    fehler(await nimmInsTeamAuf(verwaltung.supabase, verwaltung.id, { teamId: team, email: mailA }), "nicht_gefunden", NG_VEREIN);
+    fehler(await benenneTeamUm(verwaltung.supabase, verwaltung.id, { teamId: team, name: "Kern-DB-581-Weg" }), "nicht_gefunden", NG_VEREIN);
+    fehler(await ladeVereinTeamAnsicht(verwaltung.supabase, verwaltung.id, { teamId: team }), "nicht_gefunden", NG_VEREIN);
+  });
+
+  await pruefe("Verein: Bremse der Personensuche — nicht gefunden und anderer Verein zählen, gefunden nicht (#581 AK 13; AP §4.3)", async () => {
+    const zweite = await wegwerfKonto();
+    await admin.from("verein_verwaltung").insert({ verein_id: verein, user_id: zweite.id });
+    try {
+      const fremdMail = await emailVon(await fremdeVerwaltung());
+      const mailA = await emailVon(a);
+      const suche = async (email: string) => wert(await findePerson(zweite.supabase, zweite.id, { vereinId: verein, email }));
+      for (let i = 0; i < 5; i++) {
+        assert.equal((await suche(mailA)).ok, true, "gefunden zählt nicht");
+        assert.deepEqual(await suche(`niemand-${i}-581@test.local`), { ok: false, meldung: PERSON_MELDUNG.nicht_gefunden });
+        assert.deepEqual(await suche(fremdMail), { ok: false, meldung: PERSON_MELDUNG.anderer_verein });
+      }
+      assert.equal((await admin.from("trainer_suchversuche").select("user_id").eq("user_id", zweite.id)).data!.length, 10);
+      assert.deepEqual(await suche(mailA), { ok: false, meldung: PERSON_MELDUNG.gebremst }, "nach zehn erfolglosen gebremst");
+      assert.deepEqual(wert(await nimmInVerwaltungAuf(zweite.supabase, zweite.id, { vereinId: verein, email: mailA })), { ok: false, meldung: PERSON_MELDUNG.gebremst });
+    } finally {
+      await admin.from("verein_verwaltung").delete().eq("verein_id", verein).eq("user_id", zweite.id);
+    }
+  });
+
+  await pruefe("Verein: Verwaltung aufnehmen, entfernen, austreten, die letzte bleibt (#581 AK 30–34, PC 4)", async () => {
+    const c = await wegwerfKonto();
+    const team = await serienTeam("Kern-DB-581-Verwaltung");
+    await admin.from("team_members").insert({ team_id: team, user_id: c.id });
+    const mailC = await emailVon(c);
+    const fremd = await fremdeVerwaltung();
+    assert.deepEqual(wert(await findePerson(verwaltung.supabase, verwaltung.id, { vereinId: verein, email: mailC })).ok, true);
+    assert.equal(wert(await nimmInVerwaltungAuf(verwaltung.supabase, verwaltung.id, { vereinId: verein, email: mailC })).ok, true);
+    assert.deepEqual(wert(await nimmInVerwaltungAuf(verwaltung.supabase, verwaltung.id, { vereinId: verein, email: mailC })), { ok: false, meldung: PERSON_MELDUNG.bereits_verwaltung });
+    assert.deepEqual(wert(await nimmInVerwaltungAuf(verwaltung.supabase, verwaltung.id, { vereinId: verein, email: await emailVon(fremd) })), { ok: false, meldung: PERSON_MELDUNG.anderer_verein });
+    assert.deepEqual(wert(await nimmInVerwaltungAuf(verwaltung.supabase, verwaltung.id, { vereinId: verein, email: "niemand-581@test.local" })), { ok: false, meldung: PERSON_MELDUNG.nicht_gefunden });
+    fehler(await nimmInVerwaltungAuf(a.supabase, a.id, { vereinId: verein, email: mailC }), "nicht_gefunden", NG_VEREIN);
+    fehler(await entferneAusVerwaltung(a.supabase, a.id, { vereinId: verein, userId: c.id }), "nicht_gefunden", NG_VEREIN);
+    fehler(await entferneAusVerwaltung(fremd.supabase, fremd.id, { vereinId: verein, userId: c.id }), "nicht_gefunden", NG_VEREIN);
+    // AK 32, PC 4: c tritt aus und bleibt Trainer:in im Team; danach hat c kein Recht mehr.
+    assert.deepEqual(wert(await entferneAusVerwaltung(c.supabase, c.id, { vereinId: verein, userId: c.id })), { vereinId: verein });
+    assert.equal((await admin.from("team_members").select("user_id").eq("team_id", team).eq("user_id", c.id)).data!.length, 1, "PC 4");
+    fehler(await entferneAusVerwaltung(c.supabase, c.id, { vereinId: verein, userId: verwaltung.id }), "nicht_gefunden", NG_VEREIN);
+    // AK 31: eine andere Person entfernen; schon weg → entfernt.
+    wert(await nimmInVerwaltungAuf(verwaltung.supabase, verwaltung.id, { vereinId: verein, email: mailC }));
+    wert(await entferneAusVerwaltung(verwaltung.supabase, verwaltung.id, { vereinId: verein, userId: c.id }));
+    wert(await entferneAusVerwaltung(verwaltung.supabase, verwaltung.id, { vereinId: verein, userId: c.id }));
+    // AK 33, 34: Die letzte Person geht nicht — mit dem Satz und dem Feld.
+    const letzte = fehler(await entferneAusVerwaltung(verwaltung.supabase, verwaltung.id, { vereinId: verein, userId: verwaltung.id }), "regel", VEREIN_MELDUNG.LETZTE_VERWALTUNG);
+    assert.equal((letzte as { feld?: string }).feld, "user_id");
+    assert.equal((await admin.from("verein_verwaltung").select("user_id").eq("verein_id", verein)).data!.length, 1);
+    // Netz: Auch per Admin bleibt die letzte Person (Trigger).
+    const netz = await admin.from("verein_verwaltung").delete().eq("verein_id", verein).eq("user_id", verwaltung.id);
+    assert.match(netz.error?.message ?? "", /LETZTE_VERWALTUNG/);
+    assert.equal(ausDbFehler(netz.error!).meldung, VEREIN_MELDUNG.LETZTE_VERWALTUNG);
+  });
+
+  await pruefe("Verein: Spieler:in aus einem Team nehmen durch die Verwaltung, auch ohne Mitgliedschaft (#579 AK 11, 17)", async () => {
+    const team = await serienTeam("Kern-DB-581-Heraus");
+    const zweites = await serienTeam("Kern-DB-581-Heraus-2");
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    wert(await ordneSpielerZu(verwaltung.supabase, verwaltung.id, { teamId: zweites, teamName: "Kern-DB-581-Heraus-2", spielerIds: [lena] }));
+    fehler(await nimmSpielerAusTeamImVerein(a.supabase, a.id, { teamId: team, spielerId: lena }), "nicht_gefunden", NG_VEREIN);
+    assert.deepEqual(wert(await nimmSpielerAusTeamImVerein(verwaltung.supabase, verwaltung.id, { teamId: team, spielerId: lena })), { ohneTeam: false });
+    assert.deepEqual(wert(await nimmSpielerAusTeamImVerein(verwaltung.supabase, verwaltung.id, { teamId: zweites, spielerId: lena })), { ohneTeam: true });
+    fehler(await nimmSpielerAusTeamImVerein(verwaltung.supabase, verwaltung.id, { teamId: zweites, spielerId: lena }), "nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN);
+    fehler(await nimmSpielerAusTeamImVerein(verwaltung.supabase, verwaltung.id, { teamId: zweites, spielerId: "kein-uuid" }), "nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN);
+    assert.equal((await admin.from("spieler").select("id").eq("id", lena)).data!.length, 1, "bleibt im Verein");
+  });
+
+  await pruefe("Verein: Ansichten für Mitglied und Verwaltung — wer was sieht (#581 AK 1–10, 25)", async () => {
+    const mitA = await serienTeam("Kern-DB-581-Ansicht-A");
+    const ohneA = await neuesTeam("Kern-DB-581-Ansicht-B");
+    await admin.from("team_members").insert({ team_id: ohneA, user_id: b.id });
+    await admin.from("team_members").insert({ team_id: ohneA, user_id: a.id });
+    const leer = await neuesTeam("Kern-DB-581-Ansicht-C");
+    const lena = (await neuerSpieler(mitA, "Lena")).spielerId;
+    const mia = (await neuerSpieler(mitA, "Mia")).spielerId;
+    await admin.from("team_spieler").insert({ team_id: ohneA, spieler_id: lena, verein_id: verein });
+    await admin.from("team_spieler").update({ probe_seit: new Date().toISOString() }).eq("team_id", mitA).eq("spieler_id", mia);
+    assert.equal((await admin.from("training_termine").insert({ team_id: mitA, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).error, null);
+    wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Cup", teamId: mitA, datum: tagCh(4), beginn: "10:00", ende: "11:00", eingeladene: [], verantwortlich: a.id }));
+    await neuerKader(mitA, "S1");
+    const zweite = await wegwerfKonto();
+    await admin.from("verein_verwaltung").insert({ verein_id: verein, user_id: zweite.id });
+    await admin.from("profiles").upsert({ user_id: zweite.id, display_name: "Zweite Verwaltung" });
+    try {
+      const unsere = (ts: { id: string }[]) => ts.filter((t) => [mitA, ohneA, leer].includes(t.id));
+      // AK 1, 8, 9: Ein Mitglied sieht Vereinsname, Anzeigenamen der Verwaltung und nur die Namen der Teams.
+      const m = wert(await ladeVereinAnsicht(b.supabase, b.id, { vereinId: verein }));
+      assert.equal(m.name, "Kern-DB");
+      assert.deepEqual(m.verwaltung, [
+        { anzeigeName: "Zweite Verwaltung", ich: false },
+        { anzeigeName: null, ich: false },
+      ], "AK 9: nur Anzeigenamen (ohne Anzeigenamen null), nie Adresse oder Kennung");
+      assert.deepEqual(unsere(m.teams), [
+        { id: mitA, name: "Kern-DB-581-Ansicht-A", istMitglied: false },
+        { id: ohneA, name: "Kern-DB-581-Ansicht-B", istMitglied: true },
+        { id: leer, name: "Kern-DB-581-Ansicht-C", istMitglied: false },
+      ], "AK 8: von Teams nur Name und Mitgliedschaft");
+      // AK 3–7: Die Verwaltung erkennt sich, sieht Adressen, Trainer:innen, Spielerzahl, Teams ohne Mitglied.
+      const v = wert(await ladeVereinAnsicht(verwaltung.supabase, verwaltung.id, { vereinId: verein }));
+      assert.deepEqual(
+        v.verwaltung.map((p) => [p.anzeigeName, p.ich, p.userId, p.email]),
+        [["Zweite Verwaltung", false, zweite.id, await emailVon(zweite)], [null, true, verwaltung.id, await emailVon(verwaltung)]],
+        "AK 3, 6; sortiert nach Anzeigenamen, ohne zuletzt",
+      );
+      const [ta, tb, tc] = unsere(v.teams) as typeof v.teams;
+      assert.deepEqual(ta.trainer!.map((t) => [t.userId, t.email, t.istVerwaltung]), [[a.id, await emailVon(a), false]], "AK 4");
+      assert.deepEqual(tb.trainer!.map((t) => t.userId), [b.id, a.id], "Trainer:innen in der Reihenfolge der Aufnahme (created_at, user_id)");
+      assert.deepEqual([ta.spielerZahl, tb.spielerZahl, tc.spielerZahl], [2, 1, 0], "AK 5: samt Schnuppernden");
+      assert.deepEqual([ta.ohneMitglied, tb.ohneMitglied, tc.ohneMitglied], [false, false, true], "AK 7");
+      // AK 10, 25: Die Teamansicht der Verwaltung — auch ohne Mitgliedschaft, nie J+S-Nummer oder Link.
+      const t = wert(await ladeVereinTeamAnsicht(verwaltung.supabase, verwaltung.id, { teamId: mitA }));
+      assert.deepEqual([t.name, t.spielerZahl, t.ichMitglied], ["Kern-DB-581-Ansicht-A", 2, false]);
+      assert.deepEqual(t.trainer, [{ userId: a.id, anzeigeName: t.trainer[0].anzeigeName, email: await emailVon(a), istVerwaltung: false, ich: false }]);
+      assert.deepEqual(t.spieler.map((s) => [s.vorname, s.jahrgang, s.schnuppert, s.teams.map((x) => x.name)]), [
+        ["Lena", 2017, false, ["Kern-DB-581-Ansicht-A", "Kern-DB-581-Ansicht-B"]],
+        ["Mia", 2017, true, ["Kern-DB-581-Ansicht-A"]],
+      ]);
+      assert.deepEqual(Object.keys(t.spieler[0]).sort(), ["id", "jahrgang", "nachname", "schnuppert", "teams", "vorname"], "AK 10: keine J+S-Nummer, kein Link");
+      assert.deepEqual(t.aufloesung, { trainings: 0, termine: 1, spiele: 1, kader: 1 }, "AK 25");
+      // Mitglied, fremde Verwaltung und Konto ohne Verein: nicht gefunden.
+      fehler(await ladeVereinTeamAnsicht(a.supabase, a.id, { teamId: mitA }), "nicht_gefunden", NG_VEREIN);
+      const fremd = await fremdeVerwaltung();
+      fehler(await ladeVereinTeamAnsicht(fremd.supabase, fremd.id, { teamId: mitA }), "nicht_gefunden", NG_VEREIN);
+      fehler(await ladeVereinAnsicht(fremd.supabase, fremd.id, { vereinId: verein }), "nicht_gefunden", NG_VEREIN);
+      const ohne = await wegwerfKonto();
+      fehler(await ladeVereinAnsicht(ohne.supabase, ohne.id, { vereinId: verein }), "nicht_gefunden", NG_VEREIN);
+      fehler(await ladeVereinAnsicht(ohne.supabase, ohne.id, { vereinId: "kein-uuid" }), "nicht_gefunden", NG_VEREIN);
+    } finally {
+      await admin.from("verein_verwaltung").delete().eq("verein_id", verein).eq("user_id", zweite.id);
+    }
   });
 
   await pruefe("Konto löschen: die letzte Verwaltung bekommt den Status, nichts ist gelöscht (#577)", async () => {

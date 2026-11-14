@@ -2254,8 +2254,11 @@ pruefe("Alte Namen abwesend: kein spieler_entfernen, kein spieler_loeschen, kein
 
 pruefe("Alte Namen abwesend: Team anlegen, auflösen und umbenennen gibt es nur noch am Verein-Ort (#581, Architekturplan §5.1)", () => {
   // Treffer in supabase/migrations bleiben erlaubt (angewandte Migrationen); geprüft wird nur web/.
+  // `check:kern-db` prüft den Verein-Kern selbst und ruft ihn darum auf.
   const vereinOrt = (d: string) =>
-    ["lib/kern/verein.ts", "lib/actions/verein.ts"].includes(d) || d.startsWith("app/(app)/verein/") || d.startsWith("components/verein/");
+    ["lib/kern/verein.ts", "lib/actions/verein.ts", "scripts/pruefe-kern-db.ts"].includes(d) ||
+    d.startsWith("app/(app)/verein/") ||
+    d.startsWith("components/verein/");
   const treffer: string[] = [];
   for (const datei of quelldateien(web)) {
     if (datei === fileURLToPath(import.meta.url)) continue;
