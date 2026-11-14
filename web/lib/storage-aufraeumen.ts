@@ -2,38 +2,16 @@
 //
 // Normalfall bleibt der Weg über den request-gebundenen Client: wer löschen
 // darf, räumt selbst auf (`loescheTrainingMitBildern`). Beim Auflösen eines
-// Teams geht das nicht — die Entscheidung, ob wirklich aufgelöst wird, fällt in
-// derselben Transaktion, die die Mitgliedschaft beendet, und danach greift die
-// Storage-Policy `ist_team_bildpfad` für niemanden mehr. Vorher aufzuräumen
-// hiesse, den Bestand eines Teams zu vernichten, das die Zählung anschliessend
-// am Leben lässt.
+// Teams geht das nicht — das löst die Vereinsverwaltung auf (`verein_team_aufloesen`),
+// und sie ist kein Mitglied des Teams: Die Storage-Policy `ist_team_bildpfad`
+// gilt nur dessen Mitgliedern und nach der Auflösung für niemanden mehr. Die
+// RPC liefert darum die Bildpfade der gelöschten Fassungen zurück, und der
+// Nachlauf räumt sie weg.
 //
 // Darum hier — und nur für diesen Nachlauf — der Service-Role-Client: er löscht
 // ausschliesslich Pfade zu Zeilen, die nachweislich nicht mehr existieren.
 import { createAdminClient } from "@/lib/supabase/admin";
 import { STORAGE_BUCKET } from "@/lib/storage";
-import { eigeneBildPfade, type BildKandidat } from "@/lib/fassung";
-import type { createClient } from "@/lib/supabase/server";
-
-type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
-
-export type { BildKandidat };
-
-/** Die Fassungen aller Trainings dieser Teams — die eine Formulierung von
- *  „welche Bilddateien hängen an diesem Team", statt sie je Aufrufer erneut zu
- *  schreiben. Einzusammeln ist sie immer VOR dem Löschen: danach sind die
- *  Zeilen weg, und die Kaskade nimmt nur die Zeilen mit, nicht die Dateien. */
-export async function teamBildKandidaten(
-  supabase: SupabaseClient,
-  teamIds: string[],
-): Promise<BildKandidat[]> {
-  if (teamIds.length === 0) return [];
-  const { data } = await supabase
-    .from("training_exercises")
-    .select("id, bild_url, trainings!inner ( team_id )")
-    .in("trainings.team_id", teamIds);
-  return data ?? [];
-}
 
 /** Verwaiste Bilddateien entfernen (no-op bei leerer Liste).
  *
@@ -48,33 +26,4 @@ export async function raeumeVerwaisteBilder(pfade: string[]): Promise<void> {
   } catch {
     /* ignorieren: Waisen im Bildspeicher sind folgenlos */
   }
-}
-
-/** Von den Kandidaten nur die Bilder derer entfernen, deren Zeile tatsächlich
- *  verschwunden ist.
- *
- *  Für Vorgänge, die eine Löschung nur ANSTOSSEN und deren Tragweite erst
- *  nachher feststeht — etwa die Konto-Löschung, die Teams über die
- *  auth.users-Kaskade auflöst. Ob ein Team dabei wirklich fiel, entscheidet
- *  sich erst mit der Kaskade: ist zwischenzeitlich jemand beigetreten, lebt es
- *  weiter, und seine Bilder müssen bleiben. */
-export async function raeumeGeloeschteFassungsBilder(
-  kandidaten: BildKandidat[],
-): Promise<void> {
-  if (kandidaten.length === 0) return;
-  const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("training_exercises")
-    .select("id")
-    .in(
-      "id",
-      kandidaten.map((k) => k.id),
-    );
-  // Im Zweifel nichts löschen: eine Waise ist harmlos, ein gelöschtes Bild
-  // einer noch lebenden Fassung wäre Datenverlust.
-  if (error) return;
-  const nochDa = new Set((data ?? []).map((r) => r.id));
-  await raeumeVerwaisteBilder(
-    eigeneBildPfade(kandidaten.filter((k) => !nochDa.has(k.id))),
-  );
 }

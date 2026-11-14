@@ -5,9 +5,11 @@ import { getMeineTeamsFuer, type TeamUebersicht } from "@/lib/queries/teams-fuer
 export type { TeamUebersicht } from "@/lib/queries/teams-fuer";
 
 /**
- * Query-Layer für Teams (Team-Epic Stories 3, 4, 5).
+ * Query-Layer für Teams (Team-Epic Stories 3, 4, 5; Vereine #581).
  *
- * Alle Mitglieder sind gleichberechtigt — es gibt keine Rollen. Sichtbar ist
+ * Die Mitglieder eines Teams sind untereinander gleichberechtigt — es gibt im
+ * Team keine Rollen. Was ein Team selbst betrifft (anlegen, umbenennen,
+ * auflösen), ist Sache der Vereinsverwaltung und liegt im Verein. Sichtbar ist
  * ein Team nur seinen Mitgliedern; das setzt die RLS durch, hier steht kein
  * zusätzlicher Filter. Die Mitgliederliste liefert Anzeigename und E-Mail-
  * Adresse (#425) — beides nur den aktuellen Mitgliedern des Teams, darum die
@@ -19,6 +21,8 @@ export type TeamMitglied = {
   anzeigeName: string;
   /** Damit erkennbar ist, wer hinter einem Anzeigenamen steckt (#425). */
   email: string;
+  /** Gehört auch zur Vereinsverwaltung — die Liste zeigt es als Plakette (#581 AK 15). */
+  istVerwaltung: boolean;
 };
 
 export type TeamDetail = {
@@ -69,43 +73,13 @@ export const getTeam = cache(async function getTeam(
 
   const { data: roh } = await supabase.rpc("team_mitglieder", { p_team: id });
   const mitglieder = (
-    (roh ?? []) as { user_id: string; anzeige_name: string; email: string }[]
+    (roh ?? []) as { user_id: string; anzeige_name: string; email: string; ist_verwaltung: boolean }[]
   ).map((m) => ({
     userId: m.user_id,
     anzeigeName: m.anzeige_name,
     email: m.email,
+    istVerwaltung: m.ist_verwaltung,
   }));
 
   return { id: team.id, name: team.name, mitglieder };
 });
-
-/** Was beim Auflösen verloren geht (Story 13 AK 5, #480 AK 3): die Zahlen für
- *  den Bestätigungsdialog. Persönliche Trainings der Mitglieder zählen nicht
- *  dazu — sie gehören nicht dem Team. Spielerliste und Kader zählt die
- *  Verwaltungsseite selbst, sie lädt beide ohnehin. */
-export async function getTeamAufloesungsInfo(
-  teamId: string,
-): Promise<{ trainings: number; termine: number; spiele: number }> {
-  const supabase = await createClient();
-  const termineDerArt = (art: "training" | "spiel") =>
-    supabase
-      .from("training_termine")
-      .select("id", { count: "exact", head: true })
-      .eq("team_id", teamId)
-      .eq("art", art);
-
-  const [{ count: trainings }, { count: termine }, { count: spiele }] = await Promise.all([
-    // Gezählt wird der Bestand, wie ihn die Trainings-Ansicht zeigt; die
-    // Termin-Trainings gehen mit den Terminen, die der Dialog ebenfalls nennt.
-    supabase
-      .from("trainings")
-      .select("id", { count: "exact", head: true })
-      .eq("team_id", teamId)
-      .eq("termin_training", false),
-    // Alle Termine des Teams, auch jene ohne Training (#322 PC 10).
-    termineDerArt("training"),
-    termineDerArt("spiel"),
-  ]);
-
-  return { trainings: trainings ?? 0, termine: termine ?? 0, spiele: spiele ?? 0 };
-}
