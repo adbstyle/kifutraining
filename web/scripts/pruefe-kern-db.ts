@@ -97,6 +97,12 @@ const {
   nimmInVerwaltungAuf,
   entferneAusVerwaltung,
   nimmSpielerAusTeamImVerein,
+  legeSpielerImVereinAn,
+  aendereSpielerImVerein,
+  ladeSpielerTeamsImVerein,
+  loescheSpielerImVerein,
+  holeSpielerLinkImVerein,
+  erneuereSpielerLinkImVerein,
 } = await import("../lib/kern/verein");
 const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, HERAUSNEHMEN_TEXT, abweisungText, herausnehmenFrage, spielerDoppeltText, spielerzahlVon, verfallBestaetigen } = await import("../lib/spieler");
 const { SPIEL_MELDUNG, SPIEL_TEXT, MELDUNG_TEXT, TREFFPUNKT_TEXT, meldefristZeitpunkt, spielBestaetigen, spielEntfernenText, spielVerfallText } =
@@ -175,14 +181,13 @@ async function nimmHeraus(k: Konto, teamId: string, spielerId: string) {
   return nimmSpielerAusTeam(k.supabase, k.id, { teamId, spielerId, stand: t.wert.stand });
 }
 
-/** Eine Spieler:in aus dem Verein löschen. Bis Story #582 (Phase 6) die RPC
- *  der Verwaltung liefert, löscht niemand in der Anwendung — der Lauf per
- *  Admin, damit die Folgen des Löschens (ehemalig ohne Namen, Link und Abo
- *  erloschen) geprüft bleiben. */
-async function loescheSpieler(spielerId: string) {
-  const { error, count } = await admin.from("spieler").delete({ count: "exact" }).eq("id", spielerId);
-  assert.equal(error, null);
-  assert.equal(count, 1, "gelöscht");
+/** Eine Spieler:in aus dem Verein löschen — auf dem einzigen Weg der
+ *  Anwendung (Story #582): die Verwaltung über den Verein-Kern
+ *  (`verein_spieler_entfernen`). Danach ist die Zeile weg; die Folgen
+ *  (ehemalig ohne Namen, Link und Abo erloschen) prüfen die Aufrufer. */
+async function loescheSpieler(verwaltung: Konto, spielerId: string) {
+  wert(await loescheSpielerImVerein(verwaltung.supabase, verwaltung.id, { spielerId }));
+  assert.equal((await admin.from("spieler").select("id").eq("id", spielerId)).data!.length, 0, "gelöscht");
 }
 
 /** Erfolg erwarten und den Wert liefern — sonst mit der Kern-Meldung scheitern. */
@@ -4596,10 +4601,10 @@ try {
     fehler(await nimmHeraus(verwaltung, herkunft, lena), "nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN);
     assert.equal(await zuordnungenVon(ziel), 0, "nichts zugeordnet");
 
-    // AK 1: Die Verwaltung sieht alle mit Vorname, Nachname, Jahrgang und Teams — ohne J+S-Nummer, auch ohne Team.
+    // AK 1: Die Verwaltung sieht alle mit Vorname, Nachname, Jahrgang und Teams, auch ohne Team; seit #582 AK 1 dazu J+S-Nummer und Link-Stand, nie den Link.
     const vorher = wert(await ladeVereinSpielerliste(verwaltung.supabase, verwaltung.id, { vereinId: verein }));
     const zeile = (l: typeof vorher, id: string) => l.spieler.find((x) => x.id === id)!;
-    assert.deepEqual(zeile(vorher, lena), { id: lena, vorname: "Lena", nachname: "Zuordnen", jahrgang: 2016, teams: [{ id: herkunft, name: HERKUNFT }] });
+    assert.deepEqual(zeile(vorher, lena), { id: lena, vorname: "Lena", nachname: "Zuordnen", jahrgang: 2016, js: "1234567", linkBezogen: false, teams: [{ id: herkunft, name: HERKUNFT }] });
     assert.deepEqual(zeile(vorher, mia).teams, [], "ohne Team im Bestand");
     assert.ok(!vorher.spieler.some((x) => x.id === fremde), "kein fremder Verein");
     assert.deepEqual(vorher.teams.filter((t) => [herkunft, ziel].includes(t.id)), [
@@ -4876,6 +4881,18 @@ try {
     const v = wert(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen }));
     fehler(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen, erwartet: erwartetVon(v) }), "regel", VEREIN_MELDUNG.VEREIN_VOLL);
     assert.equal(await anzahlSpieler(a.supabase, team), 0, "nichts aufgenommen");
+    // #582 AK 6, 7: Erfassen durch die Verwaltung — derselbe Satz der Grenze, eine Dublette zuerst; die Zahl in der Ansicht.
+    const erfassen = (vorname: string, nachname: string, jahrgang: number) =>
+      legeSpielerImVereinAn(verwaltung.supabase, verwaltung.id, { vereinId: verein, vereinName: "Kern-DB", vorname, nachname, jahrgang });
+    fehler(await erfassen("Zuviel", "Verwaltung", 2017), "regel", VEREIN_MELDUNG.VEREIN_VOLL);
+    fehler(
+      await erfassen("Vorhanden", "Verein", 2016),
+      "regel",
+      "Vorhanden Verein (2016) wird im Kern-DB schon im Team «Kern-DB-Verein-Voll-Bestand» geführt. Ordne die vorhandene Spieler:in selbst einem Team zu. Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.",
+    );
+    const ansicht = wert(await ladeVereinAnsicht(verwaltung.supabase, verwaltung.id, { vereinId: verein }));
+    const mitTeam = new Set((await admin.from("team_spieler").select("spieler_id").eq("verein_id", verein)).data!.map((z) => z.spieler_id)).size;
+    assert.deepEqual([ansicht.spielerZahl, ansicht.spielerOhneTeam], [VEREIN_SPIELER_MAX, VEREIN_SPIELER_MAX - mitTeam], "#582 A1.2: gezählt wie die Grenze, mit denen ohne Team");
   });
 
   await pruefe("CSV-Import: Vorschau schreibt nicht, letzte Zeile gewinnt, Übernahme nur mit passender Vorschau (#455)", async () => {
@@ -4976,7 +4993,7 @@ try {
     assert.equal((await standVon(team, gestern)).spielstand?.gesamt, 2, "wer danach kam, zählt am vergangenen nicht");
     assert.equal((await standVon(team, morgen)).spielstand?.gesamt, 3);
     // Aus dem Verein gelöscht: am vergangenen bleibt sie als ehemalige Zeile ohne Namen, am anstehenden zählt sie nicht mehr (#579 PC 11).
-    await loescheSpieler(lena.spielerId);
+    await loescheSpieler(verwaltung, lena.spielerId);
     assert.equal((await standVon(team, gestern)).spielstand?.gesamt, 2);
     assert.equal((await standVon(team, morgen)).spielstand?.gesamt, 2);
     const zeilen = async () => ((await admin.from("termin_teilnahmen").select("spieler_id").eq("termin_id", gestern)).data ?? []).map((z) => z.spieler_id).sort();
@@ -5069,7 +5086,7 @@ try {
     await neuerSpieler(team, "Mia");
     // Aus dem Verein gelöscht: ohne Namen (PC 4); aus dem Team genommen: mit
     // Namen und Stand bei Beginn (#579 PC 5). Die Zahl bleibt in beiden Fällen.
-    await loescheSpieler(noah);
+    await loescheSpieler(verwaltung, noah);
     wert(await nimmHeraus(a, team, lena));
     assert.deepEqual((await standVon(team, t)).spielstand, { gesamt: 2, angemeldet: 1, eingefroren: true, anwesend: 1 });
     const liste = wert(await terminSpieler(a.supabase, a.id, { terminId: t }));
@@ -5190,7 +5207,7 @@ try {
     const ohneTeam = (await feldAnon.rpc("spieler_link_ansicht", { p_token: vonNoah })).data;
     assert.deepEqual([ohneTeam.gueltig, ohneTeam.team, ohneTeam.spieler, ohneTeam.termine], [true, null, { vorname: "Noah", nachname: "Muster" }, []]);
     // PC 2: aus dem Verein gelöscht gilt keiner mehr.
-    await loescheSpieler(lena);
+    await loescheSpieler(verwaltung, lena);
     assert.deepEqual((await feldAnon.rpc("spieler_link_ansicht", { p_token: neu })).data, { gueltig: false }, "PC 2: gelöscht");
   });
 
@@ -5277,7 +5294,7 @@ try {
     const neu = (await aboHolen(await linkVon(lena)))!;
     assert.notEqual(neu, alt, "PC 8: über den neuen Link eine neue Adresse");
     assert.deepEqual(await aboFeed(alt), { gueltig: false }, "PC 8: die alte bleibt erloschen");
-    await loescheSpieler(lena);
+    await loescheSpieler(verwaltung, lena);
     assert.deepEqual(await aboFeed(neu), { gueltig: false }, "gelöscht");
     // #579 PC 4: Herausgenommen bleibt die Spieler:in samt Link im Verein, das
     // Abo mit ihr — bis Story #583 (Phase 7) ohne Termine.
@@ -5576,7 +5593,7 @@ try {
     wert(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [lena, mia, noah], dazu: [k] }));
     wert(await nimmHeraus(a, team, mia));
     assert.deepEqual((await kaderVonTeam(team))[0].spielerIds.sort(), [lena, noah].sort(), "die herausgenommene fällt aus dem Kader");
-    await loescheSpieler(noah);
+    await loescheSpieler(verwaltung, noah);
     assert.deepEqual((await kaderVonTeam(team))[0].spielerIds, [lena], "die gelöschte auch");
     assert.deepEqual(wert(await entferneKader(a.supabase, a.id, { kaderId: k })), { teamId: team, name: "Aushilfe", verfallen: 0 });
     assert.deepEqual(await kaderVonTeam(team), []);
@@ -5856,7 +5873,7 @@ try {
     assert.deepEqual(await seit(u), zeiten, "eine Änderung der Liste ändert den Stand bei Beginn nicht");
     wert(await nimmHeraus(a, team, lena));
     assert.deepEqual(await seit(u), zeiten, "herausgenommen: am begonnenen mit Zeit");
-    await loescheSpieler(noah);
+    await loescheSpieler(verwaltung, noah);
     assert.deepEqual(await seit(u), { Lena: zeiten.Lena, ehemalig: null }, "ehemalig ohne Zeit");
     assert.equal((await admin.from("termin_statuswechsel").select("spieler_id").eq("spieler_id", noah)).data!.length, 0, "überall weg");
     // Herausgenommen: künftige Statuswechsel dieses Teams fallen, der am begonnenen bleibt.
@@ -5981,7 +5998,7 @@ try {
     assert.deepEqual(await anwesenheit(t), { Lena: [false, true], Noah: [false, false] });
     assert.equal((await standVon(team, t)).spielstand?.anwesend, 1);
     // PC 5: aus dem Verein gelöscht, bleibt sie ohne Namen samt Nachtrag; die Zahl bleibt.
-    await loescheSpieler(lena);
+    await loescheSpieler(verwaltung, lena);
     assert.deepEqual(await anwesenheit(t), { Noah: [false, false], ehemalig: [false, true] });
     assert.equal((await standVon(team, t)).spielstand?.anwesend, 1);
   });
@@ -7090,6 +7107,218 @@ try {
       fehler(await ladeVereinAnsicht(ohne.supabase, ohne.id, { vereinId: "kein-uuid" }), "nicht_gefunden", NG_VEREIN);
     } finally {
       await admin.from("verein_verwaltung").delete().eq("verein_id", verein).eq("user_id", zweite.id);
+    }
+  });
+
+  // ── Spielerbestand der Verwaltung (Story #582) ───────────────────────────
+  // Jede Antwort der Datenebene wird im Verein-Kern zu Ergebnis und Satz.
+  // Altdubletten (gleicher Schlüssel im Verein, aus der Zeit vor #578)
+  // entstehen hier über einen Vereinswechsel per Admin: Der Trigger
+  // `spieler_vorher` prüft nur Einfügen und Namensänderungen.
+  const VEREIN_NAME = "Kern-DB";
+  const EINS = "Kern-DB-582-Eins";
+  const ZWEI = "Kern-DB-582-Zwei";
+  const NG_SPIELER = SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN;
+  const erfassen = (k: Konto, e: { vorname: string; nachname: string; jahrgang: number | string; jsNummer?: string | null }, vereinId = verein) =>
+    legeSpielerImVereinAn(k.supabase, k.id, { vereinId, vereinName: VEREIN_NAME, ...e });
+  const aendern = (k: Konto, spielerId: string, e: { vorname: string; nachname: string; jahrgang: number | string; jsNummer?: string | null }) =>
+    aendereSpielerImVerein(k.supabase, k.id, { spielerId, ...e });
+  /** Eine Spieler:in mit dem Schlüssel einer bestehenden, ohne Team: im
+   *  fremden Verein angelegt und per Admin herübergeholt. */
+  const altdublette = async (vorname: string, nachname: string, jahrgang: number) => {
+    const fremd = await fremdeVerwaltung();
+    const fremdVerein = (await admin.from("verein_verwaltung").select("verein_id").eq("user_id", fremd.id).single()).data!.verein_id as string;
+    const id = wert(await erfassen(fremd, { vorname, nachname, jahrgang }, fremdVerein)).spielerId;
+    assert.equal((await admin.from("spieler").update({ verein_id: verein }).eq("id", id)).error, null);
+    return id;
+  };
+  /** Zwei Teams; Sina steht in beiden, Xaver ohne Team. */
+  const bestand582 = async () => {
+    const eins = await serienTeam(EINS);
+    const zwei = await serienTeam(ZWEI);
+    const sina = (await neuerSpieler(eins, "Sina", "Beide", 2014)).spielerId;
+    wert(await ordneSpielerZu(verwaltung.supabase, verwaltung.id, { teamId: zwei, teamName: ZWEI, spielerIds: [sina] }));
+    const xaver = wert(await erfassen(verwaltung, { vorname: "  Xaver ", nachname: "Ohne", jahrgang: "2016", jsNummer: " 77 " })).spielerId;
+    return { eins, zwei, sina, xaver };
+  };
+
+  await pruefe("Verein: Spieler:in erfassen ohne Team — angelegt, doppelt mit Teams, ohne Team, Mischfall, ungültig, ohne Recht (#582 AK 3, 4, 6)", async () => {
+    const { eins, xaver } = await bestand582();
+    // AK 3: ohne Team im Verein, bereinigt gespeichert, J+S getrimmt.
+    const zeile = (await admin.from("spieler").select("verein_id, team_id, vorname, nachname, jahrgang, js_nummer, link_bezogen").eq("id", xaver).single()).data!;
+    assert.deepEqual(zeile, { verein_id: verein, team_id: null, vorname: "Xaver", nachname: "Ohne", jahrgang: 2016, js_nummer: "77", link_bezogen: false });
+    assert.equal((await admin.from("team_spieler").select("team_id").eq("spieler_id", xaver)).data!.length, 0, "keinem Team zugeordnet");
+    const anzahl = async () => (await admin.from("spieler").select("id", { count: "exact", head: true }).eq("verein_id", verein)).count;
+    const vorher = await anzahl();
+    // AK 4: doppelt — mit Teams, ohne Team, Mischfall (Altdublette: nur die Teams); Schreibvarianten zählen als gleich.
+    const doppelt = fehler(await erfassen(verwaltung, { vorname: "sina ", nachname: "BEIDE", jahrgang: 2014 }), "regel",
+      `sina BEIDE (2014) wird im ${VEREIN_NAME} schon im Team «${EINS}» und «${ZWEI}» geführt. Ordne die vorhandene Spieler:in selbst einem Team zu. Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.`);
+    assert.equal((doppelt as { feld?: string }).feld, "vorname");
+    fehler(await erfassen(verwaltung, { vorname: "Xaver", nachname: "Ohne", jahrgang: 2016 }), "regel",
+      `Xaver Ohne (2016) wird im ${VEREIN_NAME} schon geführt, ist aber keinem Team zugeordnet. Ordne die vorhandene Spieler:in selbst einem Team zu. Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.`);
+    await neuerSpieler(eins, "Lea", "Dublette", 2017);
+    await altdublette("Lea", "Dublette", 2017);
+    fehler(await erfassen(verwaltung, { vorname: "Lea", nachname: "Dublette", jahrgang: 2017 }), "regel",
+      `Lea Dublette (2017) wird im ${VEREIN_NAME} schon im Team «${EINS}» geführt. Ordne die vorhandene Spieler:in selbst einem Team zu. Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.`);
+    assert.equal(await anzahl(), vorher! + 2, "eine Abweisung hinterlässt nichts (dazu kamen nur Lea und ihre Altdublette)");
+    // Ungültige Angaben: der Satz am Feld, bevor die Datenebene sie sieht.
+    const amFeld = (r: { ok: boolean; feld?: string }, feld: string) => assert.equal((r as { feld?: string }).feld, feld);
+    amFeld(fehler(await erfassen(verwaltung, { vorname: "  ", nachname: "Leer", jahrgang: 2015 }), "eingabe", SPIELER_TEXT.vorname), "vorname");
+    amFeld(fehler(await erfassen(verwaltung, { vorname: "Leer", nachname: "x".repeat(61), jahrgang: 2015 }), "eingabe", SPIELER_TEXT.nachname), "nachname");
+    amFeld(fehler(await erfassen(verwaltung, { vorname: "Alt", nachname: "Alt", jahrgang: "999" }), "eingabe", SPIELER_TEXT.jahrgang), "jahrgang");
+    amFeld(fehler(await erfassen(verwaltung, { vorname: "Lang", nachname: "Js", jahrgang: 2015, jsNummer: "1".repeat(21) }), "eingabe", SPIELER_TEXT.jsNummer), "js_nummer");
+    // Wer den Kern umgeht, bekommt von der Datenebene 23514 — auch das wird ein Satz, keine Rohmeldung.
+    const roh = await verwaltung.supabase.rpc("verein_spieler_anlegen", { p_verein: verein, p_vorname: "  ", p_nachname: "Leer", p_jahrgang: 2015, p_js: null });
+    assert.equal(roh.error?.code, "23514");
+    assert.equal(ausDbFehler(roh.error!).meldung, SPIELER_TEXT.vorname);
+    const rohJs = await verwaltung.supabase.rpc("verein_spieler_anlegen", { p_verein: verein, p_vorname: "Js", p_nachname: "Leer", p_jahrgang: 2015, p_js: "   " });
+    assert.equal(rohJs.data?.status, "angelegt", "eine leere J+S-Nummer ist keine");
+    assert.equal((await admin.from("spieler").select("js_nummer").eq("id", rohJs.data.id).single()).data!.js_nummer, null);
+    assert.equal(await anzahl(), vorher! + 3);
+    // Ohne Recht: ein Mitglied, eine fremde Verwaltung, keine Kennung — «Verein nicht gefunden.» am Feld verein_id.
+    const fremd = await fremdeVerwaltung();
+    for (const k of [a, fremd])
+      amFeld(fehler(await erfassen(k, { vorname: "Ohne", nachname: "Recht", jahrgang: 2015 }), "nicht_gefunden", NG_VEREIN), "verein_id");
+    fehler(await erfassen(verwaltung, { vorname: "Ohne", nachname: "Recht", jahrgang: 2015 }, "kein-uuid"), "nicht_gefunden", NG_VEREIN);
+    assert.equal(await anzahl(), vorher! + 3, "ohne Recht nichts angelegt");
+  });
+
+  await pruefe("Verein: Spieler:in ändern ohne Mitgliedschaft — geändert, J+S leeren, doppelt, Altdublette bleibt änderbar, nicht gefunden (#582 AK 2, 5, 15)", async () => {
+    const { eins, sina, xaver } = await bestand582();
+    // AK 2: samt J+S; der Name wirkt am Team-Ort.
+    assert.deepEqual(wert(await aendern(verwaltung, sina, { vorname: " Sina  Maria ", nachname: "Beide", jahrgang: 2014, jsNummer: "4711" })), { spielerId: sina });
+    const zeile = async (id: string) => (await admin.from("spieler").select("vorname, nachname, jahrgang, js_nummer").eq("id", id).single()).data!;
+    assert.deepEqual(await zeile(sina), { vorname: "Sina Maria", nachname: "Beide", jahrgang: 2014, js_nummer: "4711" });
+    assert.ok(wert(await ladeSpielerliste(a.supabase, a.id, { teamId: eins })).spieler.some((s) => s.vorname === "Sina Maria"), "der Name wirkt am Team-Ort");
+    // Ein leeres Feld leert die J+S-Nummer (p_js null).
+    wert(await aendern(verwaltung, sina, { vorname: "Sina Maria", nachname: "Beide", jahrgang: 2014, jsNummer: "" }));
+    assert.equal((await zeile(sina)).js_nummer, null);
+    // AK 5: doppelt — mit Teams, ohne Team; nichts geschrieben.
+    fehler(await aendern(verwaltung, xaver, { vorname: "sina maria", nachname: "Beide", jahrgang: 2014 }), "regel",
+      `Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, im Team «${EINS}» und «${ZWEI}».`);
+    fehler(await aendern(verwaltung, sina, { vorname: "Xaver", nachname: "Ohne", jahrgang: 2016 }), "regel",
+      "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, die keinem Team zugeordnet ist.");
+    assert.deepEqual(await zeile(xaver), { vorname: "Xaver", nachname: "Ohne", jahrgang: 2016, js_nummer: "77" }, "abgewiesen: unverändert");
+    // Altdublette: Mischfall nennt nur die Teams; mit gleichem Schlüssel bleibt jede änderbar, auch in anderer Schreibung.
+    const lea = (await neuerSpieler(eins, "Lea", "Dublette", 2017)).spielerId;
+    const lea2 = await altdublette("Lea", "Dublette", 2017);
+    fehler(await aendern(verwaltung, xaver, { vorname: "Lea", nachname: "Dublette", jahrgang: 2017 }), "regel",
+      `Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, im Team «${EINS}».`);
+    wert(await aendern(verwaltung, lea, { vorname: " lea ", nachname: "DUBLETTE", jahrgang: 2017, jsNummer: "55" }));
+    wert(await aendern(verwaltung, lea2, { vorname: "Lea", nachname: "Dublette", jahrgang: 2017, jsNummer: "56" }));
+    assert.deepEqual([(await zeile(lea)).js_nummer, (await zeile(lea2)).js_nummer], ["55", "56"]);
+    // Ungültig: am Feld, vor der Datenebene.
+    fehler(await aendern(verwaltung, sina, { vorname: "Sina", nachname: "Beide", jahrgang: "20" }), "eingabe", SPIELER_TEXT.jahrgang);
+    // AK 15: ohne Recht, unbekannt, fremd, keine Kennung — ununterscheidbar am Feld spieler_id.
+    const fremd = await fremdeVerwaltung();
+    const fremdVerein = (await admin.from("verein_verwaltung").select("verein_id").eq("user_id", fremd.id).single()).data!.verein_id as string;
+    const fremde = wert(await erfassen(fremd, { vorname: "Fremde", nachname: "Spielerin", jahrgang: 2015 }, fremdVerein)).spielerId;
+    for (const [k, id] of [[a, sina], [b, xaver], [fremd, sina], [verwaltung, fremde], [verwaltung, randomUUID()], [verwaltung, "kein-uuid"]] as [Konto, string][]) {
+      const r = fehler(await aendern(k, id, { vorname: "Neu", nachname: "Name", jahrgang: 2015 }), "nicht_gefunden", NG_SPIELER);
+      assert.equal((r as { feld?: string }).feld, "spieler_id");
+    }
+    assert.equal((await zeile(sina)).vorname, "Sina Maria", "nichts geändert");
+    assert.equal((await admin.from("spieler").select("vorname").eq("id", fremde).single()).data!.vorname, "Fremde");
+  });
+
+  await pruefe("Verein: Teams lesen und Spieler:in löschen — Teams in der Antwort, danach überall nicht gefunden, nur durch die Verwaltung (#582 AK 12, 13, 15; #579 AK 12, 14)", async () => {
+    const { eins, zwei, sina, xaver } = await bestand582();
+    // AK 13: die Teams frisch, nach Name; ohne Team leer.
+    assert.deepEqual(wert(await ladeSpielerTeamsImVerein(verwaltung.supabase, verwaltung.id, { spielerId: sina })).teams, [{ id: eins, name: EINS }, { id: zwei, name: ZWEI }]);
+    assert.deepEqual(wert(await ladeSpielerTeamsImVerein(verwaltung.supabase, verwaltung.id, { spielerId: xaver })).teams, []);
+    // Ohne Recht: weder lesen noch löschen; die Spieler:in bleibt.
+    const fremd = await fremdeVerwaltung();
+    for (const k of [a, b, fremd]) {
+      fehler(await ladeSpielerTeamsImVerein(k.supabase, k.id, { spielerId: sina }), "nicht_gefunden", NG_SPIELER);
+      fehler(await loescheSpielerImVerein(k.supabase, k.id, { spielerId: sina }), "nicht_gefunden", NG_SPIELER);
+    }
+    fehler(await loescheSpielerImVerein(verwaltung.supabase, verwaltung.id, { spielerId: "kein-uuid" }), "nicht_gefunden", NG_SPIELER);
+    fehler(await loescheSpielerImVerein(verwaltung.supabase, verwaltung.id, { spielerId: randomUUID() }), "nicht_gefunden", NG_SPIELER);
+    assert.equal((await admin.from("spieler").select("id").eq("id", sina)).data!.length, 1, "ohne Recht nicht gelöscht");
+    // AK 12: mit Teams gelöscht — die Antwort nennt sie für die Revalidierung; aus jedem Team und dem Bestand weg.
+    assert.deepEqual(wert(await loescheSpielerImVerein(verwaltung.supabase, verwaltung.id, { spielerId: sina })), { teams: [{ id: eins, name: EINS }, { id: zwei, name: ZWEI }] });
+    assert.equal((await admin.from("team_spieler").select("team_id").eq("spieler_id", sina)).data!.length, 0);
+    assert.ok(!wert(await ladeSpielerliste(a.supabase, a.id, { teamId: eins })).spieler.some((s) => s.id === sina), "nicht mehr am Team-Ort");
+    assert.ok(!wert(await ladeVereinSpielerliste(verwaltung.supabase, verwaltung.id, { vereinId: verein })).spieler.some((s) => s.id === sina));
+    // Ohne Team gelöscht: keine Teams.
+    assert.deepEqual(wert(await loescheSpielerImVerein(verwaltung.supabase, verwaltung.id, { spielerId: xaver })), { teams: [] });
+    // AK 15: danach nicht gefunden — an jedem Weg, am Feld spieler_id (der Dialog lädt die Liste neu).
+    const k = verwaltung;
+    for (const r of [
+      await ladeSpielerTeamsImVerein(k.supabase, k.id, { spielerId: sina }),
+      await loescheSpielerImVerein(k.supabase, k.id, { spielerId: sina }),
+      await aendern(k, sina, { vorname: "Sina", nachname: "Beide", jahrgang: 2014 }),
+      await holeSpielerLinkImVerein(k.supabase, k.id, { spielerId: sina }),
+      await erneuereSpielerLinkImVerein(k.supabase, k.id, { spielerId: xaver }),
+    ]) assert.equal((fehler(r, "nicht_gefunden", NG_SPIELER) as { feld?: string }).feld, "spieler_id");
+    fehler(await ordneSpielerZu(k.supabase, k.id, { teamId: eins, teamName: EINS, spielerIds: [xaver] }), "nicht_gefunden", NG_SPIELER);
+  });
+
+  await pruefe("Verein: privater Link holen und erneuern, Liste mit J+S und Link-Stand, Zahlen nur für die Verwaltung (#582 AK 1, 8–11; A1.2)", async () => {
+    const { sina, xaver } = await bestand582();
+    const tokenVon = async (id: string) => (await admin.from("spieler").select("link_token, link_bezogen").eq("id", id).single()).data!;
+    // AK 9, 10: der Link, auch ohne Team; `ohneTeam` und `bezogen` aus der Datenebene.
+    const x = wert(await holeSpielerLinkImVerein(verwaltung.supabase, verwaltung.id, { spielerId: xaver }));
+    assert.deepEqual(x, { token: (await tokenVon(xaver)).link_token, ohneTeam: true, bezogen: false });
+    assert.equal((await admin.from("spieler").update({ link_bezogen: true }).eq("id", sina)).error, null);
+    const s = wert(await holeSpielerLinkImVerein(verwaltung.supabase, verwaltung.id, { spielerId: sina }));
+    assert.deepEqual([s.ohneTeam, s.bezogen], [false, true]);
+    // AK 1, 8: die Liste mit J+S und dem Stand, nie dem Link.
+    const liste = wert(await ladeVereinSpielerliste(verwaltung.supabase, verwaltung.id, { vereinId: verein })).spieler;
+    const zeile = (id: string) => liste.find((z) => z.id === id)!;
+    assert.deepEqual([zeile(xaver).js, zeile(xaver).linkBezogen, zeile(xaver).teams], ["77", false, []]);
+    assert.deepEqual([zeile(sina).js, zeile(sina).linkBezogen, zeile(sina).teams.map((t) => t.name)], [null, true, [EINS, ZWEI]]);
+    assert.deepEqual(Object.keys(zeile(sina)).sort(), ["id", "jahrgang", "js", "linkBezogen", "nachname", "teams", "vorname"], "kein Link in der Liste");
+    // AK 11: erneuern — der bisherige gilt nicht mehr, «bezogen» fällt zurück, auch mit Teams.
+    const alt = s.token;
+    const neu = wert(await erneuereSpielerLinkImVerein(verwaltung.supabase, verwaltung.id, { spielerId: sina })).token;
+    assert.notEqual(neu, alt);
+    assert.deepEqual(await tokenVon(sina), { link_token: neu, link_bezogen: false });
+    assert.deepEqual((await feldAnon.rpc("spieler_link_ansicht", { p_token: alt })).data, { gueltig: false }, "der bisherige Link endet sofort");
+    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: neu })).data.gueltig, true);
+    const neuX = wert(await erneuereSpielerLinkImVerein(verwaltung.supabase, verwaltung.id, { spielerId: xaver })).token;
+    assert.equal((await tokenVon(xaver)).link_token, neuX, "auch ohne Team");
+    // Ohne Recht: kein Link, kein Erneuern.
+    const fremd = await fremdeVerwaltung();
+    for (const k of [a, b, fremd]) {
+      fehler(await holeSpielerLinkImVerein(k.supabase, k.id, { spielerId: sina }), "nicht_gefunden", NG_SPIELER);
+      fehler(await erneuereSpielerLinkImVerein(k.supabase, k.id, { spielerId: sina }), "nicht_gefunden", NG_SPIELER);
+    }
+    assert.equal((await tokenVon(sina)).link_token, neu, "ohne Recht nicht erneuert");
+    // A1.2: Zahl aller und ohne Team — nur die Verwaltung bekommt sie.
+    const alle = (await admin.from("spieler").select("id", { count: "exact", head: true }).eq("verein_id", verein)).count!;
+    const mitTeam = new Set((await admin.from("team_spieler").select("spieler_id").eq("verein_id", verein)).data!.map((z) => z.spieler_id)).size;
+    const v = wert(await ladeVereinAnsicht(verwaltung.supabase, verwaltung.id, { vereinId: verein }));
+    assert.deepEqual([v.spielerZahl, v.spielerOhneTeam], [alle, alle - mitTeam]);
+    assert.ok(v.spielerOhneTeam! >= 1, "Xaver zählt ohne Team");
+    const m = wert(await ladeVereinAnsicht(a.supabase, a.id, { vereinId: verein }));
+    assert.ok(!("spielerZahl" in m) && !("spielerOhneTeam" in m), "ein Mitglied bekommt keine Zahlen");
+  });
+
+  await pruefe("Verein: Eine Spieler:in ohne Team erreicht kein Team-Weg; Verwaltung und Mitglied zugleich löscht nur im Verein (#582 AK 14; Review Focus 4)", async () => {
+    const { eins, sina, xaver } = await bestand582();
+    const beides = await wegwerfKonto();
+    await admin.from("verein_verwaltung").insert({ verein_id: verein, user_id: beides.id });
+    await admin.from("team_members").insert({ team_id: eins, user_id: beides.id });
+    try {
+      for (const k of [a, beides]) {
+        // Die Team-Spielerliste kennt sie nicht, kein Team-Weg erreicht sie.
+        assert.ok(!wert(await ladeSpielerliste(k.supabase, k.id, { teamId: eins })).spieler.some((s) => s.id === xaver));
+        fehler(await aendereSpieler(k.supabase, k.id, { teamId: eins, spielerId: xaver, vorname: "Neu", nachname: "Name", jahrgang: 2015 }), "nicht_gefunden", NG_SPIELER);
+        fehler(await holeSpielerLink(k.supabase, k.id, { spielerId: xaver }), "nicht_gefunden", NG_SPIELER);
+        fehler(await erneuereSpielerLink(k.supabase, k.id, { spielerId: xaver }), "nicht_gefunden", NG_SPIELER);
+        fehler(await nimmHeraus(k, eins, xaver), "nicht_gefunden", NG_SPIELER);
+        fehler(await ladeSpieler(k.supabase, xaver), "nicht_gefunden", NG_SPIELER);
+        fehler(await eigenesTeamVon(k.supabase, xaver), "nicht_gefunden");
+      }
+      // Der Team-Kern hat keinen Weg zum Löschen; die Verwaltung löscht im Verein-Kern, auch als Mitglied.
+      const teamKern = await import("../lib/kern/spieler");
+      assert.deepEqual(Object.keys(teamKern).filter((n) => /l(oe|ö)sch|entfern/i.test(n)), [], "kein Löschen am Team-Ort");
+      wert(await aendereSpieler(beides.supabase, beides.id, { teamId: eins, spielerId: sina, vorname: "Sina", nachname: "Beide", jahrgang: 2014 }));
+      assert.deepEqual(wert(await loescheSpielerImVerein(beides.supabase, beides.id, { spielerId: xaver })), { teams: [] });
+      assert.equal((await admin.from("spieler").select("id").eq("id", xaver)).data!.length, 0);
+    } finally {
+      await admin.from("verein_verwaltung").delete().eq("verein_id", verein).eq("user_id", beides.id);
     }
   });
 
