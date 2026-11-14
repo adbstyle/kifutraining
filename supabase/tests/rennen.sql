@@ -4,7 +4,7 @@
 -- Fälle (Story 1: Teamgrenze 100 unter der Vereinssperre; Story 2:
 -- Doppelerfassung im Verein beim Erfassen und Ändern; Story 3: Zuordnen und
 -- Herausnehmen; Story 5: 30 Teams, Teamname, leere Verwaltung, Team vor
--- Termin).
+-- Termin; Story 6: Löschen, Erfassen und Grenze 1000 am Verein-Ort).
 --
 -- Muster für «gleichzeitig, genau eines gelingt» (spätere Stories bauen ihre
 -- Fälle als weitere Blöcke nach diesem Vorbild):
@@ -887,6 +887,195 @@ delete from spieler where verein_id = (select id from rennen_test.ids where name
 delete from vereine where id = (select id from rennen_test.ids where name = 'r_verein');
 delete from auth.users where id in (select id from rennen_test.ids where name in ('r_va', 'r_vb', 'r_m', 'r_s'));
 
+-- ── Fälle: Spielerbestand der Verwaltung (Story 6 #582, AP §4.1, §4.3) ──────
+-- Verein «Rennen-Bestand» mit den Verwaltungen BA und BB (ohne Team) und
+-- Trainer:in BM in «Bestand-Eins» (künftiger Termin) und «Bestand-Zwei».
+-- Über die RPCs wie PostgREST, mit rennen_test.verschraenkt; B wartet
+-- jeweils an einer Beratungssperre (Verein oder Team, `advisory`).
+-- (p) Löschen gegen Zuordnen, beide Richtungen: Nach dem Zuordnen nimmt das
+--     Löschen das neue Team mit (und nennt es); nach dem Löschen findet das
+--     Zuordnen die Spieler:in nicht.
+-- (q) Löschen gegen Herausnehmen am Team-Ort (Team → Zeile), beide
+--     Richtungen: Das Löschen sperrt die Teams vor der Zeile; kein 40P01,
+--     nach dem Löschen SPIELER_NICHT_GEFUNDEN.
+-- (r) Löschen gegen eine Abmeldung über den privaten Link, beide Richtungen:
+--     danach `ungueltig` bzw. keine Abmeldung ohne Spieler:in.
+-- (s) Löschen gegen Ändern: SPIELER_NICHT_GEFUNDEN (AK 15).
+-- (t) Zweimal dieselbe Spieler:in gleichzeitig erfassen: B antwortet
+--     `doppelt` ohne Team, der Schlüssel steht einmal.
+-- (u) Grenze 1000: Bei 999 erfassen BA und BB je eine; B scheitert an
+--     VEREIN_VOLL, es bleiben 1000.
+-- (v) Recht unter der Sperre: BA entfernt BB aus der Verwaltung, während BB
+--     löscht: SPIELER_NICHT_GEFUNDEN, die Spieler:in bleibt.
+-- (w) Zuordnen gegen Auflösen: B antwortet VEREIN_NICHT_GEFUNDEN statt mit
+--     einem rohen Fehler.
+-- Ein harter Abbruch lässt den Verein «Rennen-Bestand» samt Teams und
+-- Spieler:innen und die Konten «rennen-b-…@rennen.test» stehen (von Hand löschen).
+
+select set_config('rennen.fehler_bestand', '', false) is not null as rennen_fehler_bestand_leer \gset
+
+begin;
+insert into rennen_test.ids (name) values ('b_verein'), ('b_va'), ('b_vb'), ('b_m'), ('b_t1'), ('b_t2'), ('b_termin'),
+  ('b_p1'), ('b_p2'), ('b_q1'), ('b_q2'), ('b_r1'), ('b_r2'), ('b_s1'), ('b_v1'), ('b_w1');
+insert into auth.users (id, email, email_confirmed_at)
+select id, 'rennen-' || replace(name, '_', '-') || '@rennen.test', now() from rennen_test.ids where name in ('b_va', 'b_vb', 'b_m');
+insert into vereine (id, name) values (rennen_test.z('b_verein'), 'Rennen-Bestand');
+insert into verein_verwaltung (verein_id, user_id) values
+  (rennen_test.z('b_verein'), rennen_test.z('b_va')), (rennen_test.z('b_verein'), rennen_test.z('b_vb'));
+insert into teams (id, name, verein_id) values
+  (rennen_test.z('b_t1'), 'Bestand-Eins', rennen_test.z('b_verein')),
+  (rennen_test.z('b_t2'), 'Bestand-Zwei', rennen_test.z('b_verein'));
+insert into team_members (team_id, user_id) values
+  (rennen_test.z('b_t1'), rennen_test.z('b_m')), (rennen_test.z('b_t2'), rennen_test.z('b_m'));
+insert into training_termine (id, team_id, datum, beginn, ende) values
+  (rennen_test.z('b_termin'), rennen_test.z('b_t1'), current_date + 7, '18:00', '19:30');
+insert into spieler (id, verein_id, vorname, nachname, jahrgang)
+select id, rennen_test.z('b_verein'), 'Bestand', name, 2015 from rennen_test.ids where name like 'b\_%' and name ~ '^b_[pqrsvw][0-9]$';
+insert into team_spieler (team_id, spieler_id, verein_id)
+select rennen_test.z('b_t1'), id, rennen_test.z('b_verein') from rennen_test.ids where name in ('b_p2', 'b_q1', 'b_q2', 'b_r1', 'b_r2');
+commit;
+
+do $$
+declare
+  ziel   text := format(
+    'host=%s port=%s dbname=%s user=postgres password=postgres connect_timeout=5 options=''-c statement_timeout=30s''',
+    coalesce(host(inet_server_addr()), '127.0.0.1'), inet_server_port(), current_database());
+  v_verein uuid := rennen_test.z('b_verein');
+  v_va uuid := rennen_test.z('b_va');
+  v_vb uuid := rennen_test.z('b_vb');
+  v_m uuid := rennen_test.z('b_m');
+  v_t1 uuid := rennen_test.z('b_t1');
+  v_termin uuid := rennen_test.z('b_termin');
+  ergebnis text;
+begin
+  -- (p) Zuordnen, dann Löschen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_spieler_zuordnen(%L, array[%L]::uuid[])::text', v_t1, rennen_test.z('b_p1')),
+    v_vb, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('b_p1')), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:'
+     or ergebnis::jsonb <> jsonb_build_object('status', 'geloescht', 'teams',
+                                              jsonb_build_array(jsonb_build_object('id', v_t1, 'name', 'Bestand-Eins'))) then
+    raise exception '(p) B hätte nach dem Zuordnen samt Team löschen müssen: %', ergebnis;
+  end if;
+  if exists (select 1 from spieler where id = rennen_test.z('b_p1'))
+     or exists (select 1 from team_spieler where spieler_id = rennen_test.z('b_p1')) then
+    raise exception '(p) Spieler:in oder Zuordnung nach dem Löschen da';
+  end if;
+  -- Löschen, dann Zuordnen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('b_p2')),
+    v_vb, format('select verein_spieler_zuordnen(%L, array[%L]::uuid[])::text', rennen_test.z('b_t2'), rennen_test.z('b_p2')),
+    'advisory');
+  if position('SPIELER_NICHT_GEFUNDEN' in ergebnis) = 0 then
+    raise exception '(p) Zuordnen nach dem Löschen hätte SPIELER_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+
+  -- (q) Herausnehmen (Team-Ort), dann Löschen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_aus_team_nehmen(%L, %L, %L)::text', v_t1, rennen_test.z('b_q1'),
+                spieler_teams_stand(rennen_test.z('b_q1'))),
+    v_va, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('b_q1')), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"status": "geloescht", "teams": []}' then
+    raise exception '(q) B hätte nach dem Herausnehmen ohne Team löschen müssen: %', ergebnis;
+  end if;
+  -- Löschen, dann Herausnehmen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('b_q2')),
+    v_m, format('select spieler_aus_team_nehmen(%L, %L, %L)::text', v_t1, rennen_test.z('b_q2'),
+                spieler_teams_stand(rennen_test.z('b_q2'))), 'advisory');
+  if position('SPIELER_NICHT_GEFUNDEN' in ergebnis) = 0 then
+    raise exception '(q) Herausnehmen nach dem Löschen hätte SPIELER_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+
+  -- (r) Löschen, dann Abmelden über den Link.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('b_r1')),
+    v_m, format('select spieler_link_abmelden(%L, %L, true, null, null)::text',
+                (select link_token from spieler where id = rennen_test.z('b_r1')), v_termin), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"status": "ungueltig"}' then
+    raise exception '(r) Abmelden nach dem Löschen hätte ungueltig melden müssen: %', ergebnis;
+  end if;
+  -- Abmelden, dann Löschen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_link_abmelden(%L, %L, true, null, null)::text',
+                (select link_token from spieler where id = rennen_test.z('b_r2')), v_termin),
+    v_va, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('b_r2')), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'geloescht' then
+    raise exception '(r) B hätte nach dem Abmelden löschen müssen: %', ergebnis;
+  end if;
+  if exists (select 1 from termin_abmeldungen where termin_id = v_termin)
+     or exists (select 1 from spieler where id in (rennen_test.z('b_r1'), rennen_test.z('b_r2'))) then
+    raise exception '(r) Abmeldung oder Spieler:in nach dem Löschen da';
+  end if;
+
+  -- (s) Löschen, dann Ändern.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('b_s1')),
+    v_vb, format($q$select verein_spieler_aendern(%L, 'Bestand', 'Neu', 2015, null)::text$q$, rennen_test.z('b_s1')), 'advisory');
+  if position('SPIELER_NICHT_GEFUNDEN' in ergebnis) = 0 then
+    raise exception '(s) Ändern nach dem Löschen hätte SPIELER_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+
+  -- (t) Zweimal dieselbe Spieler:in.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format($q$select verein_spieler_anlegen(%L, 'Rennen', 'Gleich', 2015, null)::text$q$, v_verein),
+    v_vb, format($q$select verein_spieler_anlegen(%L, ' rennen ', 'GLEICH', 2015, '1')::text$q$, v_verein), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:'
+     or ergebnis::jsonb <> '{"status": "abgewiesen", "grund": "doppelt", "teams": [], "ohne_team": true}' then
+    raise exception '(t) B hätte doppelt ohne Team melden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from spieler where verein_id = v_verein and nachname ilike 'gleich') <> 1 then
+    raise exception '(t) Schlüssel nicht genau einmal';
+  end if;
+
+  -- (u) Grenze 1000: auf 999 auffüllen (eigene Verbindung, committet).
+  perform extensions.dblink_exec(ziel, format(
+    $q$set session_replication_role = replica;
+       insert into public.spieler (verein_id, vorname, nachname, jahrgang)
+       select %L, 'Voll', 'Nr ' || i, 2015 from generate_series(1, %s) i$q$,
+    v_verein, 999 - (select count(*) from spieler where verein_id = v_verein)));
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format($q$select verein_spieler_anlegen(%L, 'Grenze', 'A', 2015, null)::text$q$, v_verein),
+    v_vb, format($q$select verein_spieler_anlegen(%L, 'Grenze', 'B', 2015, null)::text$q$, v_verein), 'advisory');
+  if position('VEREIN_VOLL' in ergebnis) = 0 then
+    raise exception '(u) B hätte an VEREIN_VOLL scheitern müssen: %', ergebnis;
+  end if;
+  if (select count(*) from spieler where verein_id = v_verein) <> 1000
+     or not exists (select 1 from spieler where verein_id = v_verein and nachname = 'A') then
+    raise exception '(u) Erwartet 1000 samt A, gefunden: %', (select count(*) from spieler where verein_id = v_verein);
+  end if;
+
+  -- (v) Recht unter der Sperre.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_verwaltung_entfernen(%L, %L)::text', v_verein, v_vb),
+    v_vb, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('b_v1')), 'advisory');
+  if position('SPIELER_NICHT_GEFUNDEN' in ergebnis) = 0 then
+    raise exception '(v) BB ist keine Verwaltung mehr und hätte SPIELER_NICHT_GEFUNDEN bekommen müssen: %', ergebnis;
+  end if;
+  if not exists (select 1 from spieler where id = rennen_test.z('b_v1')) then
+    raise exception '(v) Spieler:in gelöscht';
+  end if;
+
+  -- (w) Zuordnen gegen Auflösen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format($q$select verein_team_aufloesen(%L, 'Bestand-Zwei')::text$q$, rennen_test.z('b_t2')),
+    v_va, format('select verein_spieler_zuordnen(%L, array[%L]::uuid[])::text', rennen_test.z('b_t2'), rennen_test.z('b_w1')),
+    'advisory');
+  if position('VEREIN_NICHT_GEFUNDEN' in ergebnis) = 0 then
+    raise exception '(w) Zuordnen nach dem Auflösen hätte VEREIN_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+  if exists (select 1 from team_spieler where spieler_id = rennen_test.z('b_w1')) then
+    raise exception '(w) Zuordnung nach dem Auflösen da';
+  end if;
+exception when others or query_canceled then
+  perform set_config('rennen.fehler_bestand', sqlerrm, false);
+end $$;
+
+delete from teams where verein_id = (select id from rennen_test.ids where name = 'b_verein');
+delete from spieler where verein_id = (select id from rennen_test.ids where name = 'b_verein');
+delete from vereine where id = (select id from rennen_test.ids where name = 'b_verein');
+delete from auth.users where id in (select id from rennen_test.ids where name in ('b_va', 'b_vb', 'b_m'));
+
 -- Aufräumen, auch nach einem Fehler.
 drop schema rennen_test cascade;
 \if :dblink_vorher
@@ -913,5 +1102,8 @@ begin
   end if;
   if current_setting('rennen.fehler_recht') <> '' then
     raise exception 'Rennen Recht und Suchbremse: %', current_setting('rennen.fehler_recht');
+  end if;
+  if current_setting('rennen.fehler_bestand') <> '' then
+    raise exception 'Rennen Spielerbestand: %', current_setting('rennen.fehler_bestand');
   end if;
 end $$;

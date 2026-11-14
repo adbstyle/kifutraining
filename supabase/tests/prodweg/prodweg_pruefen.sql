@@ -8,7 +8,8 @@
 -- vorher den synthetischen Bestand angelegt hat (Schema `prodweg`): Backfill
 -- dieses Bestands, Gleichwertigkeit der Lesepfade mit dem alten Schema und
 -- Testfall 1 (Story 1 PC 2) und die Dublette über zwei Teams (Story 2 PC 1,
--- AK 7), Umbenennen der Teams mit gleichem Schlüssel (Story 5 PC 6). Teil B
+-- AK 7), Umbenennen der Teams mit gleichem Schlüssel (Story 5 PC 6), die
+-- Altdublette am Verein-Ort ändern, löschen und neu erfassen (Story 6). Teil B
 -- ändert nichts bleibend (rollback). Spätere Stories ergänzen ihre Abfragen
 -- (Konten ohne Verein mit Story 12).
 
@@ -251,7 +252,61 @@ begin
     raise exception 'Story 5: Umbenennen zurück auf vergebenen Schlüssel: %', v;
   end if;
 end $$;
+
+-- Story 6 (Zettel A2.6, A2.8): Am Verein-Ort bleibt die Altdublette ohne
+-- Schlüsseländerung änderbar; ändert die eine ihren Schlüssel weg und
+-- zurück, weist das ab und nennt das Team der anderen. Die eine lässt sich
+-- löschen (Altbestand, `not valid`-FKs), die andere bleibt; danach weist eine
+-- neue Erfassung mit deren Schlüssel ab, und der frei gewordene geht. Als
+-- Verwaltung über die RPCs.
+do $$
+declare
+  v_verein uuid := (select verein_id from teams where id = prodweg.id('t_gross'));
+  v_f1 text := (select e ->> 'name' from jsonb_array_elements(verein_spielerliste(v_verein) -> 'teams') e
+                 where e ->> 'id' = prodweg.id('t_f1')::text);
+  v_f2 text := (select e ->> 'name' from jsonb_array_elements(verein_spielerliste(v_verein) -> 'teams') e
+                 where e ->> 'id' = prodweg.id('t_f2')::text);
+  v_d1 uuid;
+  v_d2 uuid;
+  v jsonb;
+begin
+  -- Die Verwaltung liest Altdublette und Teamnamen über ihre Liste (RLS
+  -- zeigt ihr nur die eigenen Teams).
+  select (e ->> 'id')::uuid into v_d1 from jsonb_array_elements(verein_spielerliste(v_verein) -> 'spieler') e
+   where e ->> 'nachname' = 'Dublette' and e -> 'teams' @> jsonb_build_array(jsonb_build_object('id', prodweg.id('t_f1')));
+  select (e ->> 'id')::uuid into v_d2 from jsonb_array_elements(verein_spielerliste(v_verein) -> 'spieler') e
+   where e ->> 'nachname' = 'Dublette' and e -> 'teams' @> jsonb_build_array(jsonb_build_object('id', prodweg.id('t_f2')));
+  if v_d1 is null or v_d2 is null then raise exception 'Story 6: Altdublette nicht in der Liste der Verwaltung'; end if;
+  v := verein_spieler_aendern(v_d1, 'Lea', 'Dublette', 2017, '66');
+  if v <> '{"status": "geaendert"}'::jsonb then raise exception 'Story 6: Altdublette nicht änderbar: %', v; end if;
+  v := verein_spieler_aendern(v_d2, 'Lea', 'Dublette', 2018, null);
+  if v <> '{"status": "geaendert"}'::jsonb then raise exception 'Story 6: Schlüssel der Altdublette nicht änderbar: %', v; end if;
+  v := verein_spieler_aendern(v_d2, 'lea', 'dublette', 2017, null);
+  if v <> jsonb_build_object('status', 'abgewiesen', 'grund', 'doppelt', 'teams', jsonb_build_array(v_f1), 'ohne_team', false) then
+    raise exception 'Story 6: Ändern zurück auf den Schlüssel der anderen: %', v;
+  end if;
+  v := verein_spieler_entfernen(v_d1);
+  if v <> jsonb_build_object('status', 'geloescht', 'teams',
+                             jsonb_build_array(jsonb_build_object('id', prodweg.id('t_f1'), 'name', v_f1))) then
+    raise exception 'Story 6: Altdublette nicht löschbar: %', v;
+  end if;
+  v := verein_spieler_anlegen(v_verein, 'Lea', 'Dublette', 2018, null);
+  if v <> jsonb_build_object('status', 'abgewiesen', 'grund', 'doppelt', 'teams', jsonb_build_array(v_f2), 'ohne_team', false) then
+    raise exception 'Story 6: Erfassen mit dem Schlüssel der verbliebenen: %', v;
+  end if;
+  v := verein_spieler_anlegen(v_verein, 'Lea', 'Dublette', 2017, null);
+  if v ->> 'status' <> 'angelegt' then raise exception 'Story 6: frei gewordener Schlüssel: %', v; end if;
+end $$;
 reset role;
+do $$
+begin
+  if exists (select 1 from spieler where nachname = 'Dublette' and team_id = prodweg.id('t_f1'))
+     or exists (select 1 from team_spieler ts join spieler s on s.id = ts.spieler_id
+                 where ts.team_id = prodweg.id('t_f1') and s.nachname = 'Dublette')
+     or (select jahrgang from spieler where team_id = prodweg.id('t_f2') and nachname = 'Dublette') <> 2018 then
+    raise exception 'Story 6: Bestand nach Löschen der Altdublette falsch';
+  end if;
+end $$;
 
 rollback;
 \endif

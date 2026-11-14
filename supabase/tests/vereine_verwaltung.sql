@@ -293,7 +293,10 @@ declare
   t3 jsonb;
   ich jsonb;
 begin
-  perform pg_temp.pruefe(pg_temp.schluessel(v) = array['name', 'teams', 'verwaltung'], 'Ansicht Verwaltung: Schlüssel');
+  -- Seit Story 6 mit den Zahlen der Spieler:innen (spielerbestand_verwaltung.sql).
+  perform pg_temp.pruefe(pg_temp.schluessel(v) = array['name', 'spieler_ohne_team', 'spieler_zahl', 'teams', 'verwaltung'],
+                         'Ansicht Verwaltung: Schlüssel');
+  perform pg_temp.pruefe(v -> 'spieler_zahl' = '5' and v -> 'spieler_ohne_team' = '0', 'Ansicht Verwaltung: Zahlen');
   select e into ich from jsonb_array_elements(v -> 'verwaltung') e where (e ->> 'ich')::boolean;
   perform pg_temp.pruefe(ich = jsonb_build_object('anzeige_name', null, 'ich', true, 'user_id', pg_temp.id('verw'),
                                                   'email', pg_temp.mail('verw')), 'eigene Zeile der Verwaltung: ' || coalesce(ich::text, '–'));
