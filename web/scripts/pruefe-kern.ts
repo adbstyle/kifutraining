@@ -2571,12 +2571,19 @@ pruefe("Kein «ansetzen» mehr in Oberfläche und KI-Texten (#323 PC 11)", () =>
 /** «Probe» in Oberflächentexten und KI-Texten (Story #584 AK 2, 3). Geprüft wird mit dem
  *  Parser, was Menschen oder ein KI-Client zu sehen bekommen: Zeichenketten, Vorlagen und
  *  JSX-Text (nicht Kommentare, Bezeichner, Importpfade, Typ-Literale) und unter `lib/mcp` die
- *  Namen der Schema-Schlüssel. Die internen Namen der Datenebene stehen in `INTERN`; von
- *  Teams verfasste Texte stehen nie im Quelltext. */
+ *  Namen der Schema-Schlüssel. Die internen Namen der Datenebene (`PROBE_INTERN`, als ganze
+ *  Wörter) sind ausserhalb von `lib/mcp` erlaubt; unter `lib/mcp` nur, wo sie als Name gebraucht
+ *  werden (Argument von `.rpc()`, `.from()`, `.select()` u. ä.), damit keine KI-Beschreibung sie
+ *  nennt. Die alten Werkzeugnamen stehen nirgends ausser als solcher Name. Von Teams verfasste
+ *  Texte stehen nie im Quelltext. */
 const PROBE_INTERN =
-  /team_probetraining\w*|spieler_probe_\w+|team_probe_staende|probe_seit|probe_stand\w*|probe_voll|probe_info|PROBE_[A-Z_]+|probe-info/g;
-/** Ausgenommen: generiertes Produktwissen (kommt mit Phase D) und ein Nachname im Styleguide. */
-const PROBE_AUSNAHMEN = ["lib/feedback/wissen.ts", "app/(app)/styleguide/TabelleAuswahlDemo.tsx"];
+  /\b(?:team_probetraining\w*|spieler_probe_\w+|team_probe_staende|probe_seit|probe_stand\w*|probe_voll|probe_info|PROBE_[A-Z_]+)\b|\bprobe-info\b/g;
+/** Die Werkzeugnamen vor #584 (`spieler_probe_setzen` heisst die RPC weiterhin). */
+const ALTE_WERKZEUGNAMEN = /\b(?:probetraining_abrufen|probetraining_festlegen|spieler_probe_setzen)\b/;
+/** Methoden des Datenbank-Clients, deren Zeichenketten-Argument ein Name der Datenebene ist. */
+const NAMENS_AUFRUFE = ["rpc", "from", "select", "eq", "neq", "in", "is", "order", "insert", "update", "upsert", "match", "filter"];
+/** Ausgenommen: generiertes Produktwissen (kommt mit Phase D). */
+const PROBE_AUSNAHMEN = ["lib/feedback/wissen.ts"];
 /** Aufrufe, deren Eingabe-Objekt die interne Eigenschaft `probe` trägt (Kern, nicht KI-Schema). */
 const PROBE_KERN_AUFRUFE = ["schalteProbe"];
 
@@ -2594,7 +2601,14 @@ function probeTreffer(quelltext: string, rel: string): string[] {
       const modul = (ts.isImportDeclaration(p) || ts.isExportDeclaration(p)) && p.moduleSpecifier === n;
       const dynamisch = ts.isCallExpression(p) && p.expression.kind === ts.SyntaxKind.ImportKeyword;
       const typ = ts.isLiteralTypeNode(p);
-      if (!modul && !dynamisch && !typ && /probe/i.test(n.text.replace(PROBE_INTERN, ""))) treffer.push(`${ort(n)} Text «${n.text.slice(0, 60)}»`);
+      const name =
+        ts.isCallExpression(p) && p.arguments.some((a) => a === n) &&
+        ts.isPropertyAccessExpression(p.expression) && NAMENS_AUFRUFE.includes(p.expression.name.text);
+      const rest = imKi && !name ? n.text : n.text.replace(PROBE_INTERN, "");
+      if (modul || dynamisch || typ) {
+        // Importpfade und Typ-Literale sieht niemand.
+      } else if (!name && ALTE_WERKZEUGNAMEN.test(n.text)) treffer.push(`${ort(n)} alter Werkzeugname «${n.text.slice(0, 60)}»`);
+      else if (/probe/i.test(rest)) treffer.push(`${ort(n)} Text «${n.text.slice(0, 60)}»`);
     }
     if (imKi && (ts.isPropertyAssignment(n) || ts.isPropertySignature(n) || ts.isShorthandPropertyAssignment(n)) && /probe/i.test(n.name.getText(sf))) {
       let kernEingabe = false;
@@ -2623,6 +2637,15 @@ pruefe("Kein «Probe» in Oberflächentexten und KI: Texte, JSX, Schema-Schlüss
     0,
     "interne Namen der Datenebene",
   );
+  // Nur als ganzes Wort, und unter lib/mcp nur als Name eines Datenbank-Aufrufs.
+  assert.equal(probeTreffer('export const a = "Ein Xprobe_voll";', "lib/x.ts").length, 1, "ohne Wortgrenze keine Ausnahme");
+  assert.equal(probeTreffer('export const a = { description: "Ruft spieler_probe_setzen auf." };', "lib/mcp/werkzeuge/x.ts").length, 1, "RPC-Name in einer KI-Beschreibung");
+  assert.equal(probeTreffer('export const a = z.string().describe("Ist probe_voll, geht nichts.");', "lib/mcp/werkzeuge/x.ts").length, 1, "Spaltenname in einer KI-Beschreibung");
+  assert.equal(probeTreffer('db.rpc("spieler_probe_setzen"); db.from("team_probetraining").select("probe_seit");', "lib/mcp/werkzeuge/x.ts").length, 0, "als Name unter lib/mcp");
+  // Die alten Werkzeugnamen nirgends, ausser als RPC-Name.
+  for (const alt of ["probetraining_abrufen", "probetraining_festlegen", "spieler_probe_setzen"])
+    assert.equal(probeTreffer(`export const a = "Nutze ${alt}.";`, "components/x.tsx").length, 1, alt);
+  assert.equal(probeTreffer('supabase.rpc("spieler_probe_setzen", {}); db.rpc("team_probetraining_festlegen");', "lib/kern/x.ts").length, 0, "RPC-Namen im Kern");
   const treffer: string[] = [];
   for (const wurzel of ["app", "components", "lib"].map((p) => join(web, p)))
     for (const datei of quelldateien(wurzel)) {
