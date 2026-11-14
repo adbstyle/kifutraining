@@ -38,7 +38,39 @@ export const VEREIN_MELDUNG = {
   /** Netz der `verein_*`-RPCs (Story #579): Wer nicht zur Verwaltung dieses
    *  Vereins gehört, erfährt nur dies — nie, ob es ihn gibt. */
   VEREIN_NICHT_GEFUNDEN: "Verein nicht gefunden.",
+  /** Netz der Teamnamen (Story #581): Der Name steht im Verein schon; die
+   *  Anwendung nennt mit `teamnameVergebenText` das Team. */
+  TEAMNAME_VERGEBEN: "Im Verein trägt schon ein anderes Team diesen Namen.",
   NUR_IN_DER_ANWENDUNG: "Das geht nur in der Anwendung, nicht über einen KI-Assistenten.",
+} as const;
+
+/** Zwilling des CHECK `verein_name`: so viele Zeichen darf ein Vereinsname
+ *  höchstens haben (getrimmt gezählt). */
+export const VEREIN_NAME_MAX = 60;
+
+/** Was einem Vereinsnamen im Weg steht — `null`, wenn er sich speichern lässt.
+ *  Das Web prüft vorab; die Datenebene weist mit dem CHECK ab. */
+export function vereinsNameProblem(name: string): string | null {
+  const getrimmt = name.trim();
+  if (!getrimmt) return "Bitte einen Vereinsnamen angeben.";
+  if (getrimmt.length > VEREIN_NAME_MAX) return `Der Vereinsname darf höchstens ${VEREIN_NAME_MAX} Zeichen lang sein.`;
+  return null;
+}
+
+/** Der Satz, wenn der Teamname im Verein schon vergeben ist (#581 AK 21):
+ *  nennt das Team, das ihn trägt. */
+export function teamnameVergebenText(team: string): string {
+  return `Im Verein trägt schon das Team «${team}» diesen Namen.`;
+}
+
+/** Der Ausgang einer Suche oder Aufnahme einer Person, als Satz — am Team-Ort
+ *  und am Verein-Ort derselbe (#581). Der Schlüssel ist der `status` der RPC. */
+export const PERSON_MELDUNG = {
+  nicht_gefunden: "Zu dieser Adresse gibt es kein bestätigtes Konto. Die Person registriert sich zuerst selbst bei KiFu.",
+  anderer_verein: VEREIN_MELDUNG.ANDERER_VEREIN,
+  gebremst: "Zu viele Versuche - bitte später erneut.",
+  bereits_mitglied: "Diese Person ist bereits im Team.",
+  bereits_verwaltung: "Diese Person gehört schon zur Vereinsverwaltung.",
 } as const;
 
 // ── Spieler:innen einem Team zuordnen (Story #579) ──────────────────────────
