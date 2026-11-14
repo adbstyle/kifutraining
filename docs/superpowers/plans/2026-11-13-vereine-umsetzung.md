@@ -272,6 +272,9 @@ Zusätzlich:
 - [ ] Zustände am Link nach dem Board: keine Termine, ohne Team, ungültig, Meldung für einen Termin, der nicht mehr gilt, «Fragen und Feedback» mit dem Verweis bei Dringendem.
 
 - [ ] **Aus Phase 6:** `verein_spieler_teams` um `abholbar` ergänzen; der Erneuern-Dialog am Verein-Ort (`components/verein/VereinSpielerLinkDialog.tsx`) nennt dann die betroffenen Teams und ob die Eltern den neuen Link über eine Abholadresse holen (#582 AK 11, #583 AK 15–16).
+- [ ] **Aus dem Review zu Phase 6 (Rennen beim Umbau beheben, je mit Rennen-Fall in `supabase/tests/rennen.sql`):**
+  - `abholung_abholen` (Stand `20261113110000_spieler_ueber_zuordnung.sql`) liest die Spieler:in ohne Sperre und setzt danach `link_bezogen`. Erneuert jemand genau dazwischen (`spieler_link_erneuern`, `verein_spieler_link_erneuern`), bekommt die Familie den toten Link, und der neue gilt als bezogen. Vorschlag: `update spieler set link_bezogen = true where id = s.id and link_token = s.link_token returning …`; trifft das Update keine Zeile → `{status: 'ungueltig'}` (bzw. neu lesen). Rennen-Fall: Erneuern gegen Abholen, beide Richtungen; danach ist der ausgegebene Link der gültige, und `link_bezogen` gilt nur für ihn.
+  - `spieler_link_abmelden` sperrt zuerst das erste Team (`spieler.team_id`, Beratungssperre `spieler:<team>`) und danach in `abmeldung_anwenden_training` das Team des Termins, also nicht aufsteigend. Mit mehreren Teams ist gegen `verein_spieler_entfernen` (Verein → alle Teams aufsteigend über `sperre_teams`) ein Deadlock (40P01) möglich. Beim Umbau auf mehrere Teams nur das Termin-Team sperren (bzw. alle nötigen Teams in einem `sperre_teams`-Aufruf). Rennen-Fall: Abmelden über den Link zu einem Termin des zweiten Teams gegen Löschen, beide Richtungen, kein 40P01.
 
 **Testfälle:** 13, 23. Bestehende Links und Abo-Adressen liefern ohne Neubezug.
 
