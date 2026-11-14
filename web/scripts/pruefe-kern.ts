@@ -173,6 +173,7 @@ import {
   herausnehmenTitel,
   imTeam,
   jahrgangAus,
+  LINK_TEXT,
   nachSpielerName,
   spielerDoppeltText,
   spielerProblem,
@@ -288,8 +289,19 @@ import {
   VEREIN_NAME_MAX,
   VEREIN_SPIELER_MAX,
   VEREIN_TEAMS_MAX,
+  linkOhneTeamText,
+  spielerAendernAbgewiesenText,
+  spielerErfassenAbgewiesenText,
+  spielerErfassenEinleitung,
+  spielerKopfText,
+  spielerLoeschenSaetze,
+  spielerLoeschenTitel,
+  spielerVonText,
+  SPIELER_BESTAND_LEER,
   teamnameVergebenText,
+  vereinKopfText,
   vereinsNameProblem,
+  zielWeg,
   zugeordnetText,
   zuordnenAbweisungText,
   zuordnenEinleitung,
@@ -2300,6 +2312,116 @@ pruefe("Rollen nach Ort (#581, Architekturplan §4): Team-Seiten und Team-Bauste
     for (const datei of quelldateien(join(web, ordner)))
       if (/lib\/(actions|kern)\/verein["']/.test(readFileSync(datei, "utf8"))) treffer.push(relative(web, datei));
   assert.deepEqual(treffer, [], `Verein-Actions oder Verein-Kern am Team-Ort: ${treffer.join(", ")}`);
+});
+
+pruefe("Spielerbestand der Verwaltung (#582): Sätze zum Erfassen und Ändern, Doppelte mit Teams, ohne Team und gemischt (AK 4, 5)", () => {
+  const e = { vorname: "  Noah ", nachname: "Keller", jahrgang: 2015 };
+  const zusatz = "Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.";
+  const zuordnen = "Ordne die vorhandene Spieler:in selbst einem Team zu.";
+  // Erfassen mit einem, zwei, drei Teams (Namen nach Name geordnet, wie am Team-Ort).
+  assert.equal(
+    spielerErfassenAbgewiesenText({ teams: ["Da"], ohne_team: false }, e, "FC Wyler"),
+    `Noah Keller (2015) wird im FC Wyler schon im Team «Da» geführt. ${zuordnen} ${zusatz}`,
+  );
+  assert.equal(
+    spielerErfassenAbgewiesenText({ teams: ["Ea", "Da"], ohne_team: false }, e, "FC Wyler"),
+    `Noah Keller (2015) wird im FC Wyler schon im Team «Da» und «Ea» geführt. ${zuordnen} ${zusatz}`,
+  );
+  assert.equal(
+    spielerErfassenAbgewiesenText({ teams: ["Ea", "Ca", "Da"], ohne_team: false }, e, "FC Wyler"),
+    `Noah Keller (2015) wird im FC Wyler schon im Team «Ca», «Da» und «Ea» geführt. ${zuordnen} ${zusatz}`,
+  );
+  // Erfassen ohne Team: kein Verweis an «dein Team» (die Verwaltung ordnet selbst zu).
+  const ohne = spielerErfassenAbgewiesenText({ teams: [], ohne_team: true }, e, "FC Wyler");
+  assert.equal(ohne, `Noah Keller (2015) wird im FC Wyler schon geführt, ist aber keinem Team zugeordnet. ${zuordnen} ${zusatz}`);
+  // Mischfall (Altdubletten): nur die Teams.
+  assert.equal(
+    spielerErfassenAbgewiesenText({ teams: ["Da"], ohne_team: true }, e, "FC Wyler"),
+    spielerErfassenAbgewiesenText({ teams: ["Da"], ohne_team: false }, e, "FC Wyler"),
+  );
+  // Ändern: Wortlaut des Team-Orts, ohne den Satz an die Trainer:in.
+  assert.equal(spielerAendernAbgewiesenText({ teams: ["Da"], ohne_team: false }), "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, im Team «Da».");
+  assert.equal(spielerAendernAbgewiesenText({ teams: ["Ea", "Da"], ohne_team: false }), "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, im Team «Da» und «Ea».");
+  assert.equal(spielerAendernAbgewiesenText({ teams: [], ohne_team: true }), "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, die keinem Team zugeordnet ist.");
+  assert.equal(spielerAendernAbgewiesenText({ teams: ["Da"], ohne_team: true }), spielerAendernAbgewiesenText({ teams: ["Da"], ohne_team: false }), "Mischfall: nur die Teams");
+  assert.equal(
+    spielerAendernAbgewiesenText({ teams: ["Eb", "Ea"], ohne_team: false }),
+    spielerDoppeltText({ eigenes_team: false, teams: ["Eb", "Ea"], ohne_team: false }, null),
+    "mit Teams derselbe Satz wie am Team-Ort",
+  );
+  for (const satz of [ohne, spielerAendernAbgewiesenText({ teams: [], ohne_team: true })])
+    assert.ok(!/dein|Vereinsverwaltung/.test(satz), `die Verwaltung wird nicht an sich selbst verwiesen: ${satz}`);
+  // Der Team-Ort und die KI behalten ihre Sätze: Die Trainer:in wird weiter an die Verwaltung verwiesen.
+  assert.match(spielerDoppeltText({ eigenes_team: false, teams: [], ohne_team: true }, null), /Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung\./);
+  // Grenze (AK 7): der Satz zu VEREIN_VOLL, eine Quelle für App und KI — kein eigener Satz der Verwaltung.
+  assert.equal(fehlerMeldung("x VEREIN_VOLL y"), VEREIN_MELDUNG.VEREIN_VOLL);
+  assert.match(spielerErfassenEinleitung("FC Wyler"), /^Die Spieler:in kommt ohne Team in den FC Wyler\. Einem Team ordnest du sie danach zu\.$/);
+});
+
+pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätigung, Zahlen und Leerzustand (AK 10, 13)", () => {
+  // Link ohne Team: eigene Konstante, nicht in LINK_TEXT (das in die KI-Beschreibungen fliesst).
+  assert.equal(
+    linkOhneTeamText("Elias"),
+    "Elias ist keinem Team zugeordnet. Die Spielervertretung sieht erst Termine, wenn Elias einem Team zugeordnet ist; der Link bleibt danach derselbe.",
+  );
+  assert.ok(!Object.keys(LINK_TEXT).some((k) => /team/i.test(k)), "LINK_TEXT bleibt, wie es ist");
+  // Löschen: ein, mehrere, kein Team.
+  assert.equal(spielerLoeschenTitel("Lina Meier"), "Lina Meier aus dem Verein löschen");
+  assert.deepEqual(spielerLoeschenSaetze("Lina", ["Ca"]), {
+    zuordnung: "Lina ist dem Team Ca zugeordnet und verschwindet daraus.",
+    link: "Der private Link und alle Meldungen von Lina entfallen endgültig.",
+    vergangen: "An vergangenen Terminen erscheint Lina ohne Namen.",
+  });
+  assert.equal(spielerLoeschenSaetze("Lina", ["Ca", "FF-15"]).zuordnung, "Lina ist den Teams Ca und FF-15 zugeordnet und verschwindet aus allen.");
+  assert.equal(spielerLoeschenSaetze("Lina", ["A", "B", "C"]).zuordnung, "Lina ist den Teams A, B und C zugeordnet und verschwindet aus allen.");
+  assert.equal(spielerLoeschenSaetze("Lina", []).zuordnung, "Lina ist keinem Team zugeordnet.");
+  // Kopfzeilen: Einzahl, ohne Team nur wenn es welche gibt, nie ein negativer Rest.
+  assert.equal(spielerKopfText(144, 2), "144 Spieler:innen · 2 ohne Team · höchstens 1000 je Verein");
+  assert.equal(spielerKopfText(1, 0), "1 Spieler:in · höchstens 1000 je Verein");
+  assert.equal(spielerKopfText(1001, 1), "1001 Spieler:innen · 1 ohne Team · höchstens 1000 je Verein");
+  assert.equal(vereinKopfText(10, 144), "10 Teams · 144 Spieler:innen · höchstens 30 Teams");
+  assert.equal(vereinKopfText(1, 1), "1 Team · 1 Spieler:in · höchstens 30 Teams");
+  assert.equal(vereinKopfText(10), "10 Teams · höchstens 30 Teams", "ohne Recht keine Zahl der Spieler:innen");
+  assert.equal(spielerVonText(144), "144 von 1000");
+  assert.equal(spielerVonText(1000), "1000 von 1000");
+  assert.equal(spielerVonText(1003), "1003 (höchstens 1000 Spieler:innen)");
+  assert.equal(SPIELER_BESTAND_LEER.titel, "Noch keine Spieler:innen");
+  assert.equal(SPIELER_BESTAND_LEER.text, "Der Verein führt noch keine Spieler:innen. Erfasse die erste oder nimm sie in der Spielerliste eines Teams auf.");
+  // Eine gelöschte Spieler:in macht die offene Seite überholt (AK 15), wie ein aufgelöstes Team.
+  for (const f of ["team_id", "verein_id", "spieler_id"]) assert.equal(zielWeg(f), true, f);
+  for (const f of [undefined, "vorname", "name", "spieler_ids"]) assert.equal(zielWeg(f), false, String(f));
+  assert.equal(SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, "Spieler:in nicht gefunden.", "ohne Verweis auf ein Team, gilt auch für die Verwaltung");
+});
+
+pruefe("Spielerbestand der Verwaltung (#582): Löschen, Verein-Import und Verein-Weg nur am Verein-Ort (Review Focus 4)", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Der Team-Ort kennt weder das Löschen einer Spieler:in noch einen Verein-Weg.
+  const treffer: string[] = [];
+  for (const ordner of ["components/team", "app/(app)/team"])
+    for (const datei of quelldateien(join(web, ordner)))
+      readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
+        if (/\b(loescheSpielerImVerein\w*|verein_spieler_\w+|VereinSpieler(Formular|LinkDialog|Loeschen|Liste))\b/.test(zeile)) treffer.push(`${relative(web, datei)}:${i + 1}`);
+      });
+  assert.deepEqual(treffer, [], `Verein-Weg am Team-Ort: ${treffer.join(", ")}`);
+  // Die Spielerliste eines Teams bietet kein Löschen und keine Spieler:in ohne Team (eine Zeile je Zuordnung des Teams).
+  assert.ok(!/loesche|Löschen["'`]/.test(lies("components/team/SpielerListe.tsx").replace(/\/\*[\s\S]*?\*\//g, "")), "Löschen gibt es im Team nicht");
+  // Der Verein-Ort importiert nicht den Team-Import (CSV folgt in Story 9, nicht hier).
+  for (const datei of quelldateien(join(web, "components/verein")))
+    assert.ok(!/SpielerImport|importiereSpieler/.test(readFileSync(datei, "utf8")), `Verein-Import: ${relative(web, datei)}`);
+  // Das einzige Löschen einer Spieler:in im Web liegt im Verein-Kern und seiner Action.
+  const loescher: string[] = [];
+  for (const datei of quelldateien(web)) {
+    const rel = relative(web, datei);
+    if (datei === fileURLToPath(import.meta.url) || rel === "scripts/pruefe-kern-db.ts") continue;
+    if (/\.rpc\(\s*["`']verein_spieler_entfernen["`']/.test(readFileSync(datei, "utf8"))) loescher.push(rel);
+    if (/from\("spieler"\)\s*\.delete\(/.test(readFileSync(datei, "utf8"))) loescher.push(rel);
+  }
+  assert.deepEqual(loescher, ["lib/kern/verein.ts"], "verein_spieler_entfernen nur im Verein-Kern, kein direktes Löschen");
+  // Die geteilten Bausteine hängen an keiner Rolle: keine Actions, kein Kern.
+  for (const datei of quelldateien(join(web, "components/spieler")))
+    assert.ok(!/lib\/(actions|kern)\//.test(readFileSync(datei, "utf8")), `geteilter Baustein importiert Actions oder Kern: ${relative(web, datei)}`);
+  // Die Verein-Actions für Spieler:innen kommen aus der Datenebene, nicht aus der Liste: Teams für das Revalidieren aus der Antwort.
+  assert.match(lies("lib/actions/verein.ts"), /for \(const t of r\.wert\.teams\) revalidiereTeam\(t\.id\)/);
 });
 
 pruefe("Vereinsverwaltung (#581): Zwillinge, Sätze zum Aufnehmen und Bereich der Seitenleiste", () => {
