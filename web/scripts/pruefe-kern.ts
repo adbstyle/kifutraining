@@ -155,7 +155,7 @@ import {
   type TerminTrainer,
 } from "../lib/trainer";
 import { aboDatei, aboPfad, aboUrl, aboTokenAus, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
-import { aboEintrag, aboKalenderName, aboStatus, spielerAboUrl, type AboFeedTermin } from "../lib/spieler-abo";
+import { ABO_KALENDER_NAME, aboEintrag, aboStatus, spielerAboUrl, type AboFeedTermin } from "../lib/spieler-abo";
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
@@ -190,6 +190,14 @@ import {
   TEILNAHME_TEXT,
   verfallDialogText,
   ABMELDUNG_TEXT,
+  LINK_GILT_NICHT_TITEL,
+  LINK_KEINE_TERMINE_TITEL,
+  abholErhaltText,
+  feedbackDringend,
+  linkGiltNichtText,
+  linkKeineTermineText,
+  linkKopfTitel,
+  linkOhneTeamEltern,
   EHEMALIGE_SPIELERIN,
   abweisungText,
   nachTeilnehmer,
@@ -2641,12 +2649,12 @@ pruefe("Abo: Eine lange URL-Zeile wird gefaltet und fügt sich wieder zusammen",
 });
 
 const feedTermin = (t: Partial<AboFeedTermin> & { id: string }): AboFeedTermin => ({
-  datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: "Sportplatz", art: "training", bezeichnung: null,
+  team: "FC Test", datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: "Sportplatz", art: "training", bezeichnung: null,
   begonnen: false, abgemeldet: false, meldung: null, frist_abgelaufen: false, nicht_aufgeboten: false,
   hinweis_eltern: null, treffpunkte: null, ...t,
 });
 const elternAbo = (termine: AboFeedTermin[]) =>
-  kalenderText({ kalenderName: aboKalenderName("FC Test"), uidZusatz: "abo1", jetzt: ABO_JETZT, termine: termine.map((t) => aboEintrag(t, "FC Test")) });
+  kalenderText({ kalenderName: ABO_KALENDER_NAME, uidZusatz: "abo1", jetzt: ABO_JETZT, termine: termine.map((t) => aboEintrag(t)) });
 /** Ein Feed ohne Zeilenfaltung, damit Prüfungen ganze Zeilen sehen. */
 const ungefaltet = (text: string) => text.split("\r\n ").join("");
 
@@ -2672,19 +2680,19 @@ pruefe("Abos: der Kartenlink steht in der Beschreibung, nie als Verweis (#533 PC
 pruefe("Abo Spielervertretung: Training angemeldet = zugesagt, abgemeldet = abgesagt (#507 PC 3, AK 6)", () => {
   assert.equal(aboStatus(feedTermin({ id: "a" })), "zugesagt");
   assert.equal(aboStatus(feedTermin({ id: "a", abgemeldet: true })), "abgesagt");
-  const zu = aboEintrag(feedTermin({ id: "a" }), "FC Test");
+  const zu = aboEintrag(feedTermin({ id: "a" }));
   assert.equal(zu.titel, "✅ Training · FC Test", "Status vorn im Titel");
   assert.equal(zu.beschreibung, "Zugesagt");
   assert.equal(zu.status, "CONFIRMED");
   assert.equal(zu.frei, false);
-  const ab = aboEintrag(feedTermin({ id: "a", abgemeldet: true }), "FC Test");
+  const ab = aboEintrag(feedTermin({ id: "a", abgemeldet: true }));
   assert.equal(ab.titel, "❌ Training · FC Test");
   assert.equal(ab.frei, true, "abgesagt belegt keine Zeit");
 });
 
 pruefe("Abo Spielervertretung: nur Terminart, Team, Zeit, Ort, Status — kein Verweis, eigene UID (#507 PC 2, 5, 6; OoS 3)", () => {
   const text = elternAbo([feedTermin({ id: "a", ort: "Halle; Nord" })]);
-  assert.ok(text.includes("\r\nX-WR-CALNAME:Trainings und Spiele · FC Test\r\n"), "Kalender heisst nach dem Team");
+  assert.ok(text.includes("\r\nX-WR-CALNAME:Trainings und Spiele\r\n"), "Kalender heisst immer gleich, das Team steht im Titel (#583 AK 10)");
   assert.ok(text.includes("\r\nUID:a.abo1@ki-fu.ch\r\n"), "UID je Abo");
   assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20261007T180000\r\nDTEND;TZID=Europe/Zurich:20261007T193000"), "Schweizer Wanduhrzeit");
   assert.ok(text.includes("\r\nLOCATION:Halle\\; Nord\r\n"));
@@ -2697,6 +2705,53 @@ pruefe("Abo Spielervertretung: nur Terminart, Team, Zeit, Ort, Status — kein V
   assert.ok(elternAbo([feedTermin({ id: "a", abgemeldet: true })]).includes("\r\nTRANSP:TRANSPARENT\r\n"));
 });
 
+pruefe("Link und Abo über mehrere Teams: Team je Termin, konstanter Kalendername, ohne Team leer (#583 AK 8–10)", () => {
+  // AK 8, 10: Termine zweier Teams in einem Kalender; jeder Titel trägt sein Team, der Kalender heisst immer gleich.
+  const text = elternAbo([feedTermin({ id: "a", team: "Da Junioren" }), feedTermin({ id: "b", team: "Ea Junioren", art: "spiel", bezeichnung: "Spiel gegen FC Au" })]);
+  assert.equal(ABO_KALENDER_NAME, "Trainings und Spiele");
+  assert.ok(text.includes("\r\nX-WR-CALNAME:Trainings und Spiele\r\n"));
+  assert.ok(text.includes("\r\nSUMMARY:✅ Training · Da Junioren\r\n"));
+  assert.ok(text.includes("\r\nSUMMARY:❔ Spiel gegen FC Au · Ea Junioren\r\n"));
+  assert.equal(aboEintrag(feedTermin({ id: "a", team: "Da Junioren" })).titel, "✅ Training · Da Junioren");
+  // AK 9: ohne Team ein gültiger, leerer Feed.
+  const leer = elternAbo([]);
+  assert.ok(leer.startsWith("BEGIN:VCALENDAR") && leer.includes("X-WR-CALNAME:Trainings und Spiele") && !leer.includes("BEGIN:VEVENT"));
+});
+
+pruefe("Eltern-Seite über mehrere Teams: Kopf, Leerzustände und Meldung zu «gilt nicht» (#583 AK 2–5, 7, 17)", () => {
+  assert.equal(linkKopfTitel("Noah Keller"), "Termine für Noah Keller");
+  // AK 4: die Teams haben keine Termine; AK 5: ohne Team — Vorname statt Pronomen, die Vereinsverwaltung hilft.
+  assert.equal(LINK_KEINE_TERMINE_TITEL, "Keine anstehenden Termine");
+  assert.equal(linkKeineTermineText("Noah"), "Die Teams von Noah haben zurzeit keine Termine für Noah.");
+  assert.equal(
+    linkOhneTeamEltern("Elias"),
+    "Elias ist zurzeit keinem Team zugeordnet. Termine erscheinen hier, sobald Elias einem Team zugeordnet ist. Bei Fragen hilft die Vereinsverwaltung.",
+  );
+  // AK 7: Art und Tag bleiben in der Meldung, auch wenn der Termin aus der Liste verschwindet.
+  assert.equal(LINK_GILT_NICHT_TITEL, "Nicht gespeichert");
+  assert.equal(
+    linkGiltNichtText("training", "2026-11-05", "Noah"),
+    "Das Training vom Donnerstag, 5. November gilt nicht mehr für Noah. Die Liste zeigt jetzt die aktuellen Termine.",
+  );
+  assert.match(linkGiltNichtText("spiel", "2026-11-07", "Noah"), /^Das Spiel vom Samstag, 7\. November gilt nicht mehr für Noah\./);
+  // Beide Ursachen stehen im Text der Abweisung, für Training und Spiel (AK 7).
+  for (const t of [ABMELDUNG_TEXT.giltNicht, MELDUNG_TEXT.giltNicht]) {
+    assert.ok(t.includes("nicht mehr im Team") && t.includes("Kader"), t);
+    assert.ok(!/\b(er|ihn|sein|seine|ihm)\b/i.test(t), "neutral formuliert");
+  }
+  // AK 17: der ungültige Link nennt weder Team noch Spieler:in und weist drei Wege.
+  assert.ok(LINK_TEXT.ungueltig.includes("Abholadresse") && LINK_TEXT.ungueltig.includes("Vereinsverwaltung"));
+});
+
+pruefe("Abholseite und «Fragen und Feedback» am Link: alle Teams, Verweis bei Dringendem je nach Lage (#583 AK 12, 18, 19)", () => {
+  // AK 12: der Link zeigt alle Teams — ohne sie zu nennen.
+  const erhalt = abholErhaltText("Noah Keller");
+  assert.equal(erhalt.teams, "Der Link zeigt die Termine aller Teams von Noah Keller.");
+  // AK 19: mit Team die Trainer:innen, ohne Team die Vereinsverwaltung.
+  assert.equal(feedbackDringend(false), "Bei Dringendem, etwa einer kurzfristigen Absage, wende dich direkt an die Trainer:innen des Teams.");
+  assert.equal(feedbackDringend(true), "Bei Dringendem, etwa einer kurzfristigen Absage, wende dich an die Vereinsverwaltung.");
+});
+
 pruefe("Abo Spielervertretung: Spiel zugesagt, vielleicht bis zur Frist, sonst abgesagt (#508 PC 3–6, AK 2)", () => {
   const spiel = (t: Partial<AboFeedTermin>) => feedTermin({ id: "s", art: "spiel", bezeichnung: "Cup gegen Thun", ...t });
   assert.equal(aboStatus(spiel({ meldung: "angemeldet" })), "zugesagt", "PC 3");
@@ -2707,10 +2762,10 @@ pruefe("Abo Spielervertretung: Spiel zugesagt, vielleicht bis zur Frist, sonst a
   assert.equal(aboStatus(spiel({ nicht_aufgeboten: true })), "abgesagt");
   assert.equal(aboStatus(spiel({ meldung: "abgemeldet" })), "abgesagt");
   assert.equal(aboStatus(spiel({ meldung: "angemeldet", begonnen: true })), "zugesagt", "angemeldet bleibt zugesagt");
-  const vielleicht = aboEintrag(spiel({}), "FC Test");
+  const vielleicht = aboEintrag(spiel({}));
   assert.equal(vielleicht.titel, "❔ Cup gegen Thun · FC Test", "Bezeichnung statt Terminart");
   assert.deepEqual([vielleicht.status, vielleicht.frei], ["TENTATIVE", false]);
-  assert.equal(aboEintrag(spiel({ bezeichnung: null }), "FC Test").titel, "❔ Spiel · FC Test");
+  assert.equal(aboEintrag(spiel({ bezeichnung: null })).titel, "❔ Spiel · FC Test");
   // Ein Training kennt kein «vielleicht», auch ohne Meldung.
   assert.equal(aboStatus(feedTermin({ id: "t", meldung: null })), "zugesagt");
 });
@@ -2724,17 +2779,17 @@ pruefe("Abo Spielervertretung: Treffpunkte und Hinweis für Eltern wie am Link (
   const spiel = (t: Partial<AboFeedTermin>) =>
     feedTermin({ id: "s", art: "spiel", bezeichnung: "Cup", ort: "Wyler", treffpunkte, hinweis_eltern: "Leibchen mitnehmen", ...t });
   assert.equal(
-    aboEintrag(spiel({ meldung: "angemeldet" }), "FC Test").beschreibung,
+    aboEintrag(spiel({ meldung: "angemeldet" })).beschreibung,
     "Zugesagt\n\nTreffpunkte\nDi., 06.10., 19:00 · Car oder Vereinsbus\n16:30 · öV · Bahnhof; Gleis 3\n17:30 · vor Ort · Wyler\n\nLeibchen mitnehmen",
   );
   // Abgesagt oder begonnen: am Link gedämpft bzw. vorbei — keine Treffpunkte, der Hinweis bleibt.
-  assert.equal(aboEintrag(spiel({ meldung: "abgemeldet" }), "FC Test").beschreibung, "Abgesagt\n\nLeibchen mitnehmen");
-  assert.equal(aboEintrag(spiel({ meldung: "angemeldet", begonnen: true }), "FC Test").beschreibung, "Zugesagt\n\nLeibchen mitnehmen");
-  assert.equal(aboEintrag(spiel({ treffpunkte: [], hinweis_eltern: null }), "FC Test").beschreibung, "Vielleicht");
+  assert.equal(aboEintrag(spiel({ meldung: "abgemeldet" })).beschreibung, "Abgesagt\n\nLeibchen mitnehmen");
+  assert.equal(aboEintrag(spiel({ meldung: "angemeldet", begonnen: true })).beschreibung, "Zugesagt\n\nLeibchen mitnehmen");
+  assert.equal(aboEintrag(spiel({ treffpunkte: [], hinweis_eltern: null })).beschreibung, "Vielleicht");
   // #590 AK 12: auch ein Training trägt seinen Hinweis, abgesagt ebenso.
   const training = feedTermin({ id: "t", hinweis_eltern: "Pincode: 4702\nEintritt frühestens 15 min vorher" });
-  assert.equal(aboEintrag(training, "FC Test").beschreibung, "Zugesagt\n\nPincode: 4702\nEintritt frühestens 15 min vorher");
-  assert.equal(aboEintrag({ ...training, abgemeldet: true }, "FC Test").beschreibung, "Abgesagt\n\nPincode: 4702\nEintritt frühestens 15 min vorher");
+  assert.equal(aboEintrag(training).beschreibung, "Zugesagt\n\nPincode: 4702\nEintritt frühestens 15 min vorher");
+  assert.equal(aboEintrag({ ...training, abgemeldet: true }).beschreibung, "Abgesagt\n\nPincode: 4702\nEintritt frühestens 15 min vorher");
   // Weder Meldefrist noch Richtwert noch Zahl der Angemeldeten (OoS 1), kein Grund der Absage (OoS 2).
   const text = elternAbo([spiel({ nicht_aufgeboten: true })]);
   assert.ok(!/frist|aufgeboten|angemeldet|18:00/i.test(text.replace(/DTSTART[^\r]*|DTEND[^\r]*/g, "")));
@@ -2812,6 +2867,36 @@ pruefe("Link am Team-Ort und Verein-Ort (#583 AK 13, 15, 16): Hinweis und Erneue
     "Der bisherige Link und das Kalender-Abo enden. Abmeldungen bleiben bestehen.",
     "Lina ist keinem Team zugeordnet; gib den neuen Link selbst weiter.",
   ]);
+});
+
+pruefe("Link in jedem Team (#583 AK 14, 16): kein Web-Code liest das «erste Team» für den Link", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Das «erste Team» (`spieler.team_id`) hat im Web keinen Leser mehr: `erstesTeam` ist weg (pruefe-kern-db.ts folgt im Zusammenführungs-Lauf).
+  const treffer: string[] = [];
+  for (const datei of quelldateien(web)) {
+    const rel = relative(web, datei);
+    if (datei === fileURLToPath(import.meta.url) || rel === "scripts/pruefe-kern-db.ts") continue;
+    readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
+      if (/\berstesTeam\b/.test(zeile)) treffer.push(`${rel}:${i + 1}`);
+    });
+  }
+  assert.deepEqual(treffer, [], `«erstesTeam» gelesen: ${treffer.join(", ")}`);
+  // Die Link-Wege des Kerns geben das Team mit (`p_team`), lesen weder `ladeSpieler` noch `team_id` der Spieler:in; ohne Team leitet `eigenesTeamVon` es ab.
+  const kern = lies("lib/kern/spieler.ts");
+  const link = kern.match(/async function linkRpc[\s\S]*?\n}\n/)?.[0] ?? "";
+  assert.match(link, /\.rpc\(name, \{ p_team: teamId, p_spieler: e\.spielerId \}\)/, "Link-RPC ohne p_team");
+  assert.match(link, /eigenesTeamVon\(/, "Ohne Team leitet der KI-Weg es nicht ab");
+  assert.ok(!/ladeSpieler\(|\.team_id\b|"team_id"\)/.test(link.replace(/\.eq\("id"/g, "")), "Link-Weg liest das erste Team der Spieler:in");
+  assert.match(kern, /name: "spieler_link_holen" \| "spieler_link_erneuern"/);
+  // Die Team-Actions nennen das Team der Seite; Erneuern lädt alle Teams und den Verein neu (AK 15).
+  const aktionen = lies("lib/actions/spieler.ts");
+  assert.match(aktionen, /holeSpielerLinkAktion\(teamId: string, spielerId: string\)/);
+  const erneuern = aktionen.match(/export async function erneuereSpielerLinkAktion[\s\S]*?\n}\n/)?.[0] ?? "";
+  assert.match(erneuern, /revalidiereAlleTeams\(\)[\s\S]*revalidiereVerein\(\)/, "Erneuern revalidiert nicht alle Teams und den Verein");
+  const vereinErneuern = lies("lib/actions/verein.ts").match(/export async function erneuereVereinSpielerLinkAktion[\s\S]*?\n}\n/)?.[0] ?? "";
+  assert.match(vereinErneuern, /revalidiereAlleTeams\(\)[\s\S]*revalidiereVerein\(\)/);
+  // Der Link-Knopf der Spielerliste hängt an keiner Bedingung des Teams; der Dialog hat kein `abholungAktiv` mehr.
+  assert.ok(!/abholungAktiv/.test(lies("components/spieler/LinkDialog.tsx") + lies("components/team/SpielerLinkDialog.tsx") + lies("components/team/SpielerListe.tsx")), "abholungAktiv ist gefallen");
 });
 
 pruefe("Spielerliste: Marker der Datenebene tragen die Sätze der Oberfläche", () => {
@@ -3556,11 +3641,11 @@ pruefe("Treffpunkt eines Trainings: Regeln, Abstand, Änderung und Abo (#561)", 
   assert.equal(still(() => fehlerMeldung(termin("tt_treffpunkt_art"))), TERMIN_TEXT.treffpunktNurTraining);
   // AK 13: im Abo wie am Link — nicht abgesagt, nicht nach Beginn; der Kartenlink gehört erkennbar zum Ort (AK 16).
   const training = feedTermin({ id: "t", treffpunkt: { zeit: "17:15", ort: "Garderoben Schulhaus Rain" }, hinweis_eltern: "Pincode 4702" });
-  assert.equal(aboEintrag(training, "FC Test").beschreibung, "Zugesagt\n\nTreffpunkt\n17:15 · Garderoben Schulhaus Rain\n\nPincode 4702");
-  assert.equal(aboEintrag({ ...training, abgemeldet: true }, "FC Test").beschreibung, "Abgesagt\n\nPincode 4702");
-  assert.equal(aboEintrag({ ...training, begonnen: true }, "FC Test").beschreibung, "Zugesagt\n\nPincode 4702");
+  assert.equal(aboEintrag(training).beschreibung, "Zugesagt\n\nTreffpunkt\n17:15 · Garderoben Schulhaus Rain\n\nPincode 4702");
+  assert.equal(aboEintrag({ ...training, abgemeldet: true }).beschreibung, "Abgesagt\n\nPincode 4702");
+  assert.equal(aboEintrag({ ...training, begonnen: true }).beschreibung, "Zugesagt\n\nPincode 4702");
   assert.equal(
-    aboEintrag({ ...training, abgemeldet: true }, "FC Test", true).beschreibung,
+    aboEintrag({ ...training, abgemeldet: true }, true).beschreibung,
     "Vielleicht\n\nTreffpunkt\n17:15 · Garderoben Schulhaus Rain\n\nPincode 4702",
     "auf Probe nicht angemeldet sieht ihn",
   );

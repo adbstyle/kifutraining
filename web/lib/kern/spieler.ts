@@ -75,7 +75,6 @@ function kopfAusRoh(s: SpielerRoh, teamId: string): Omit<Spieler, "probe" | "wei
     jahrgang: s.jahrgang,
     jsNummer: s.js_nummer,
     linkBezogen: s.link_bezogen,
-    erstesTeam: s.team_id === teamId,
     kaderIds: (s.kader_spieler ?? []).filter((k) => k.team_id === teamId).map((k) => k.kader_id),
   };
 }
@@ -294,8 +293,8 @@ export async function nimmSpielerAusTeam(
  *  und weitere Teams, die nur im Kontext eines Teams gelten
  *  (`ladeSpielerliste`). Das Team ist bis Phase 7/8 das erste der Spieler:in
  *  (`spieler.team_id`, Architekturplan Story #579 Entscheid A.1); eine
- *  Spieler:in ohne Team gibt es hier nicht — Link, Schnuppern und Feedback
- *  hängen noch an ihm. */
+ *  Spieler:in ohne Team gibt es hier nicht. Den Link liest dieses Team nicht
+ *  mehr (Story #583); nur noch das Schnuppern (Story 8) hängt an ihm. */
 export async function ladeSpieler(
   supabase: SupabaseClient,
   spielerId: string,
@@ -342,26 +341,49 @@ export async function anzahlSpieler(supabase: SupabaseClient, teamId: string): P
 
 type LinkErgebnis = KernErgebnis<{ token: string; teamId: string; name: string }>;
 
+/** Der private Link einer Spieler:in im Team `teamId` (Story #583): Der Link
+ *  gehört der Spieler:in und gilt für alle ihre Teams; geholt und erneuert
+ *  wird er in einem Team, dem man angehört und dem sie zugeordnet ist (die
+ *  Datenebene prüft beides). Ohne `teamId` (KI-Weg) ist es das älteste ihrer
+ *  Teams, dem die handelnde Person angehört. */
 async function linkRpc(
   supabase: SupabaseClient,
-  spielerId: string,
+  e: { spielerId: string; teamId?: string },
   name: "spieler_link_holen" | "spieler_link_erneuern",
 ): Promise<LinkErgebnis> {
-  const s = await ladeSpieler(supabase, spielerId);
-  if (!s.ok) return s;
-  const { data, error } = await supabase.rpc(name, { p_spieler: spielerId });
+  let teamId = e.teamId;
+  if (teamId === undefined) {
+    const eigenes = await eigenesTeamVon(supabase, e.spielerId);
+    if (!eigenes.ok) return eigenes;
+    teamId = eigenes.wert;
+  }
+  if (!istUuid(teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
+  if (!istUuid(e.spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
+  const { data, error } = await supabase.rpc(name, { p_team: teamId, p_spieler: e.spielerId });
   if (error) return spielerFehler(error);
-  return ok({ token: data as string, teamId: s.wert.teamId, name: spielerName(s.wert) });
+  const token = data as string;
+  const person = await supabase.from("spieler").select("vorname, nachname").eq("id", e.spielerId).maybeSingle<{ vorname: string; nachname: string }>();
+  if (person.error) return ausDbFehler(person.error);
+  if (!person.data) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
+  return ok({ token, teamId, name: spielerName(person.data) });
 }
 
 /** Den privaten Link einer Spieler:in holen (AK 1, 12) — das Geheimnis, nicht die Adresse. */
-export async function holeSpielerLink(supabase: SupabaseClient, _userId: string, e: { spielerId: string }): Promise<LinkErgebnis> {
-  return linkRpc(supabase, e.spielerId, "spieler_link_holen");
+export async function holeSpielerLink(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { spielerId: string; teamId?: string },
+): Promise<LinkErgebnis> {
+  return linkRpc(supabase, e, "spieler_link_holen");
 }
 
-/** Den privaten Link erneuern (AK 3): Der bisherige gilt nie wieder. */
-export async function erneuereSpielerLink(supabase: SupabaseClient, _userId: string, e: { spielerId: string }): Promise<LinkErgebnis> {
-  return linkRpc(supabase, e.spielerId, "spieler_link_erneuern");
+/** Den privaten Link erneuern (AK 3): Der bisherige gilt nie wieder, in allen Teams der Spieler:in. */
+export async function erneuereSpielerLink(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { spielerId: string; teamId?: string },
+): Promise<LinkErgebnis> {
+  return linkRpc(supabase, e, "spieler_link_erneuern");
 }
 
 // ── Selbstabholung (#438) ───────────────────────────────────────────────────

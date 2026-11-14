@@ -511,16 +511,17 @@ export async function aendereSpielerImVerein(
 }
 
 /** Die Teams einer Spieler:in, nach Name — frisch gelesen für die Bestätigung
- *  zum Löschen (#582 AK 13). */
+ *  zum Löschen (#582 AK 13) und zum Erneuern des Links (#583 AK 16);
+ *  `abholbar`: Die Selbstabholung des Teams ist eingeschaltet. */
 export async function ladeSpielerTeamsImVerein(
   supabase: SupabaseClient,
   _userId: string,
   e: { spielerId: string },
-): Promise<KernErgebnis<{ teams: { id: string; name: string }[] }>> {
+): Promise<KernErgebnis<{ teams: { id: string; name: string; abholbar: boolean }[] }>> {
   if (!istUuid(e.spielerId)) return spielerNichtGefunden();
   const { data, error } = await supabase.rpc("verein_spieler_teams", { p_spieler: e.spielerId });
   if (error) return spielerFehler(error);
-  return ok({ teams: [...(data as { teams: { id: string; name: string }[] }).teams].sort(nachName) });
+  return ok({ teams: [...(data as { teams: { id: string; name: string; abholbar: boolean }[] }).teams].sort(nachName) });
 }
 
 /** Eine Spieler:in aus dem Verein löschen (#582 AK 12, 14) — samt privatem

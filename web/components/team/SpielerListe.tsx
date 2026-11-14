@@ -474,17 +474,15 @@ export function SpielerListe({
                 )}
               </span>
               <span className="flex justify-end gap-1">
-                {/* Bis Phase 7 hängt der Link am ersten Team der Spieler:in. */}
-                {s.erstesTeam && (
-                  <Tooltip label={s.linkBezogen ? "Privater Link · bezogen" : "Privater Link"}>
-                    <IconButton
-                      icon={Link2}
-                      label={`Privater Link für ${spielerName(s)}${s.linkBezogen ? ", bezogen" : ""}`}
-                      punkt={s.linkBezogen ? "success" : undefined}
-                      onClick={() => setLink(s)}
-                    />
-                  </Tooltip>
-                )}
+                {/* Der Link gehört der Spieler:in und geht in jedem ihrer Teams (#583 AK 14). */}
+                <Tooltip label={s.linkBezogen ? "Privater Link · bezogen" : "Privater Link"}>
+                  <IconButton
+                    icon={Link2}
+                    label={`Privater Link für ${spielerName(s)}${s.linkBezogen ? ", bezogen" : ""}`}
+                    punkt={s.linkBezogen ? "success" : undefined}
+                    onClick={() => setLink(s)}
+                  />
+                </Tooltip>
                 <Tooltip label="Ändern">
                   <IconButton icon={Pencil} label={`${spielerName(s)} ändern`} onClick={() => oeffnen(s)} />
                 </Tooltip>
@@ -556,7 +554,7 @@ export function SpielerListe({
 
       <SpielerImport teamId={teamId} offen={importOffen} onClose={() => setImportOffen(false)} />
 
-      <SpielerLinkDialog spieler={link} abholungAktiv={abholung.aktiv} onClose={() => setLink(null)} />
+      <SpielerLinkDialog teamId={teamId} spieler={link} onClose={() => setLink(null)} />
     </>
   );
 }

@@ -164,10 +164,6 @@ export type Spieler = {
   jsNummer: string | null;
   /** Der aktuelle Link wurde über die Selbstabholung herausgegeben (#438 PC 2). */
   linkBezogen: boolean;
-  /** Das Team, in dessen Liste sie steht, ist ihr erstes (`spieler.team_id`):
-   *  Nur dort gehen Link abrufen und erneuern bis Phase 7 (Vereine Story #579
-   *  Entscheid A.1). */
-  erstesTeam: boolean;
   /** Die Kader des Teams, in dessen Liste sie steht (#452 AK 5). */
   kaderIds: string[];
   /** Die Namen der weiteren Teams des Vereins, denen sie zugeordnet ist,
@@ -193,9 +189,10 @@ export function nachSpielerName<T extends { vorname: string; nachname: string }>
 
 /** Die Teams einer Spieler:in samt Stand, wie `spieler_teams` sie liefert:
  *  `eigen` — die handelnde Person ist Mitglied; `dieses` — das Team, in dem
- *  sie handelt; `stand` — die Kennung dieser Teams, die das Herausnehmen
+ *  sie handelt; `abholbar` — dessen Selbstabholung ist eingeschaltet (#583);
+ *  `stand` — die Kennung dieser Teams, die das Herausnehmen
  *  mitgibt (AP §4.3). */
-export type SpielerTeams = { teams: { name: string; eigen: boolean; dieses: boolean }[]; stand: string };
+export type SpielerTeams = { teams: { name: string; eigen: boolean; dieses: boolean; abholbar: boolean }[]; stand: string };
 
 /** Was die Bestätigung des Herausnehmens braucht: wen, aus welchem Team, in
  *  welchem Verein und in welchen weiteren Teams sie danach bleibt. */

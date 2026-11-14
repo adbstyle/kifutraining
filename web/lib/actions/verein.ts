@@ -268,10 +268,11 @@ export async function aendereSpielerImVereinAktion(spielerId: string, e: Spieler
   return { ok: true };
 }
 
-/** Die Teams einer Spieler:in, frisch gelesen für die Bestätigung zum Löschen. */
+/** Die Teams einer Spieler:in, frisch gelesen für die Bestätigung zum Löschen
+ *  und zum Erneuern des Links (#583 AK 16). */
 export async function ladeVereinSpielerTeamsAktion(
   spielerId: string,
-): Promise<{ ok: true; teams: { id: string; name: string }[] } | Fehler> {
+): Promise<{ ok: true; teams: { id: string; name: string; abholbar: boolean }[] } | Fehler> {
   const a = await angemeldet();
   if (!a) return keinKonto;
   const r = await ladeSpielerTeamsImVerein(a.supabase, a.userId, { spielerId });
