@@ -284,6 +284,8 @@ Zusätzlich:
 
 **Zwischenstand:** Für eine Spieler:in in mehreren Teams zeigt der Link keinen Schnupper-Stand (bis Phase 8). Link und Abholseite nennen den Verein nicht (bis Phase 11). Die KI-Werkzeuge zum Link nehmen kein Team entgegen und beschreiben den Link noch für ein Team (bis Phase 13).
 
+**Lokal:** Die Abholseite braucht `ABHOL_SPERRE_SCHLUESSEL` in der Umgebung des Dev-Servers (siehe `web/.env.example`); ohne ihn scheitert das Abholen.
+
 ### Phase 8 – #584 Schnuppertraining
 
 **AP:** §3.3 f, §4.4, §7.10 (Inventar «probe»). **Migration:** `schnuppertraining`.
@@ -292,6 +294,7 @@ Zusätzlich:
 - [ ] **Aus Phase 5:** «Schnuppern 1/4» in der Spielerliste von `/verein/team/[teamId]` und `schnuppern_beendet` in der Rückgabe von `verein_spieler_aus_team_nehmen` (#584 AK 13).
 - [ ] **Aus Phase 6:** «Zum Schnuppern» beim Zuordnen und «Schnuppern n/4» in der Vereinsliste `/verein/spieler`.
 - [ ] **Aus Phase 7:** `probe`/`probe_info` auf dem Link für eine Spieler:in in mehreren Teams (heute nur bei genau einem Team); `spieler_probe_*` und im Web `ladeSpieler` (Schnuppern, MCP `spieler_aendern`, das daraus nur die J+S-Nummer liest) lösen sich von `spieler.team_id`, danach liest nur noch `vereine_nachziehen` die Spalte.
+  - Klären: Eine Spieler:in, die in Team T schnuppert und einem zweiten Team angehört, bekommt auf dem Link heute `probe: null`, während das Abmelden über den Link für T-Termine weiter die Schnupper-Regeln prüft (`probe_voll`). Beim Umbau den Link-Stand und die Abweisung angleichen — und entscheiden, ob Zuordnen eine Schnuppernde überhaupt in ein zweites Team lässt (Regel «genau eine Zuordnung»).
 - [ ] Sichtbare Umbenennung in Oberfläche, Link und KI im selben PR; die MCP-Werkzeuge heissen neu, ohne Übergang. Interne Namen bleiben `probe_*`.
 - [ ] grep-Wächter «kein Probe in Oberflächentexten und MCP» scharf stellen.
 
@@ -396,6 +399,7 @@ Jeder Schritt auf Prod nur mit Freigabe im Moment.
 - [ ] Review Focus 2: in einem vorher geöffneten Tab eine Aktion auslösen und in einem verbundenen KI-Client ein altes Werkzeug aufrufen; beides endet mit einer Meldung, ohne Wirkung.
 - [ ] Review Focus 2, Story 2: Ein altes Bundle oder ein verbundener KI-Client liest während des Einspielens eine Abweisung `{status: 'abgewiesen'}` von `spieler_aufnehmen` als Erfolg (meldet «aufgenommen», obwohl nichts gespeichert ist) und scheitert bei `spieler_aendern` an der alten Signatur. Darum die Schreibwege erst freigeben, wenn die Migrationen **und** der Vercel-Deploy durch sind.
 - [ ] Review Focus 2, Story 3: Die zusammengesetzten Fremdschlüssel aus `zuordnung_invarianten` machen zwei eingebettete Abfragen eines alten Bundles mehrdeutig (PostgREST PGRST201: Trainingsplan, Reiter «Spieler:innen» am Termin), bis das neue Bundle deployt ist. Gleicher Prüfschritt wie bei Story 2: Schreibwege und Seiten erst freigeben, wenn die Migrationen **und** der Vercel-Deploy durch sind.
+- [ ] Review Focus 2, Story 7: Zwischen Migration und neuem Web-Bundle scheitert das alte Bundle an `spieler_link_holen`/`spieler_link_erneuern` mit einem Argument (Link-Knopf am Team-Ort und im KI-Weg), und für Spieler:innen in mehreren Teams zeigt es den Vereinsnamen als Team (Feld `team` der Link-Ansicht). Darum nur im Wartungsfenster; Link-Seite und Link-Knopf erst nach Migration **und** Vercel-Deploy prüfen.
 - [ ] Firewall-Regel entfernen.
 - [ ] GitHub-Release mit `--target main`, Text aus `docs/releases/`. Stories #577–#585 und #587–#589 als erledigt markieren.
 
