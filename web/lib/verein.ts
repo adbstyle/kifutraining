@@ -115,7 +115,27 @@ export type ZuordnenAbweisung = {
   gleich: SpielerKurz[];
   schnuppert: (SpielerKurz & { team: string })[];
   ueber_grenze: number;
+  /** Nur beim Zuordnen zum Schnuppern (#584): der Grund, dann sind die vier
+   *  Listen leer bzw. 0. */
+  grund?: "schnuppern_hat_team" | "schnuppern_anzahl_fehlt";
 };
+
+/** Die Sätze der Abweisungen beim Zuordnen zum Schnuppern (#584 AK 9, 10). */
+export const SCHNUPPERN_ZUORDNEN_TEXT = {
+  schnuppern_hat_team: "Diese Spieler:in ist schon einem Team zugeordnet. Ordne sie ohne Schnuppern zu.",
+  schnuppern_anzahl_fehlt: "Das Team hat noch keine Anzahl Schnuppertrainings. Ein Mitglied des Teams legt sie zuerst fest.",
+} as const;
+
+/** Beschriftung der Checkbox im Dialog «Einem Team zuordnen» (#584 AK 8). */
+export const SCHNUPPERN_ZUORDNEN_LABEL = "Zum Schnuppern zuordnen";
+
+/** Der Satz unter der angehakten Checkbox (#584 AK 7). */
+export const SCHNUPPERN_ZUORDNEN_HINWEIS = "Solange die Spieler:in schnuppert, lässt sie sich keinem weiteren Team zuordnen.";
+
+/** Die Meldung nach dem Zuordnen zum Schnuppern (#584 AK 11). */
+export function schnuppernZugeordnetText(name: string, team: string): string {
+  return `${name} ist jetzt dem Team ${team} zugeordnet und schnuppert dort.`;
+}
 
 /** Bis drei beim Namen, darüber die Zahl. */
 function wer(namen: string[]): string {
@@ -125,12 +145,14 @@ function wer(namen: string[]): string {
 const mitJahrgang = (p: SpielerKurz) => `${spielerName(p)} (${p.jahrgang})`;
 
 /** Der Satz zur Abweisung einer einzelnen oder gesammelten Zuordnung
- *  (#579 AK 4–7, 21, 22): zuerst gleiche Angaben und bestehende Zuordnungen,
+ *  (#579 AK 4–7, 21, 22; #584 AK 9, 10, 12, 16): zuerst gleiche Angaben und bestehende Zuordnungen,
  *  dann die Schnuppernden, zuletzt die Grenze des Teams. `gewaehlt`: wie
  *  viele Spieler:innen zur Wahl standen — bei einer ist es eine einzelne
  *  Zuordnung. Wortlaut des Boards (Gleiche Angaben, Grenze gesammelt), das
  *  Übrige im selben Stil. */
 export function zuordnenAbweisungText(a: ZuordnenAbweisung, team: string, gewaehlt: number): string {
+  // Beim Zuordnen zum Schnuppern nennt die Datenebene genau einen Grund (#584 AK 9, 10).
+  if (a.grund) return SCHNUPPERN_ZUORDNEN_TEXT[a.grund];
   const saetze: string[] = [];
   if (a.bereits.length === 1) saetze.push(`${mitJahrgang(a.bereits[0])} ist ${team} schon zugeordnet.`);
   else if (a.bereits.length > 1) saetze.push(`${aufzaehlung(a.bereits.map(mitJahrgang))} sind ${team} schon zugeordnet.`);
@@ -141,7 +163,7 @@ export function zuordnenAbweisungText(a: ZuordnenAbweisung, team: string, gewaeh
     saetze.push(`${team} führt schon Spieler:innen mit gleichen Angaben wie ${aufzaehlung(a.gleich.map(mitJahrgang))}.`);
   }
   for (const p of a.schnuppert)
-    saetze.push(`${mitJahrgang(p)} schnuppert im Team ${p.team} und lässt sich keinem weiteren Team zuordnen.`);
+    saetze.push(`${mitJahrgang(p)} schnuppert im Team «${p.team}». Dort beendet zuerst ein Mitglied das Schnuppern, oder ${p.vorname} wird aus dem Team genommen.`);
   if (a.ueber_grenze > 0)
     saetze.push(
       gewaehlt === 1

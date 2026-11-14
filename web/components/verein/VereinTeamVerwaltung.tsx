@@ -23,6 +23,7 @@ import {
 } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { TeamLozenges } from "@/components/team/TeamLozenges";
+import { SchnuppernPlakette } from "./SchnuppernPlakette";
 import {
   benenneTeamUmAktion,
   entferneAusTeamAktion,
@@ -304,11 +305,11 @@ export function VereinTeamVerwaltung({
                   <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.jahrgang}</span>
                   <span className="hidden min-w-0 sm:flex sm:flex-wrap sm:gap-1">
                     <TeamLozenges namen={s.teams.map((t) => t.name)} ids={s.teams.map((t) => t.id)} />
-                    {s.schnuppert && <Lozenge appearance="discovery">Schnuppern</Lozenge>}
+                    {s.schnuppern && <SchnuppernPlakette stand={s.schnuppern} />}
                   </span>
                   <span className="mt-1 flex flex-wrap gap-1 sm:hidden">
                     <TeamLozenges namen={s.teams.map((t) => t.name)} ids={s.teams.map((t) => t.id)} />
-                    {s.schnuppert && <Lozenge appearance="discovery">Schnuppern</Lozenge>}
+                    {s.schnuppern && <SchnuppernPlakette stand={s.schnuppern} />}
                   </span>
                 </span>
                 <span className="flex justify-end">
@@ -413,7 +414,7 @@ export function VereinTeamVerwaltung({
             </p>
             <ul className="list-disc space-y-1 pl-5">
               <li>Künftige Abmeldungen, Spiel-Meldungen und Kader in diesem Team verfallen.</li>
-              {herausnehmen.schnuppert && <li>Das Schnuppertraining endet samt Zählung.</li>}
+              {herausnehmen.schnuppern && <li>Das Schnuppertraining endet samt Zählung.</li>}
               {herausnehmen.teams.length <= 1 && <li>{herausnehmen.vorname} ist danach keinem Team mehr zugeordnet.</li>}
             </ul>
           </div>

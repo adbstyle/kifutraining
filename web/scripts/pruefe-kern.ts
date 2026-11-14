@@ -317,6 +317,10 @@ import {
   zugeordnetText,
   zuordnenAbweisungText,
   zuordnenEinleitung,
+  SCHNUPPERN_ZUORDNEN_HINWEIS,
+  SCHNUPPERN_ZUORDNEN_LABEL,
+  SCHNUPPERN_ZUORDNEN_TEXT,
+  schnuppernZugeordnetText,
 } from "../lib/verein";
 import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
 import { bereichAusPfad } from "../lib/navigation";
@@ -3018,6 +3022,64 @@ pruefe("Aus dem Team nehmen (#579 AK 13–16): nicht gelöscht, bleibt im Verein
   assert.equal(HERAUSNEHMEN_TEXT.geaendert, "Inzwischen hat sich etwas geändert. Lies den Hinweis noch einmal und bestätige erneut.");
 });
 
+pruefe("Zuordnen zum Schnuppern (#584 AK 7–12, 16): jede Abweisung, eine und mehrere Schnuppernde, Satz und Snackbar", () => {
+  const p = (vorname: string, nachname: string, jahrgang: number) => ({ id: vorname, vorname, nachname, jahrgang });
+  const leer = { bereits: [], gleich: [], schnuppert: [], ueber_grenze: 0 };
+  // AK 9, 10: Die Datenebene nennt genau einen Grund; der Satz steht allein.
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, grund: "schnuppern_hat_team" }, "Da Junioren", 1),
+    "Diese Spieler:in ist schon einem Team zugeordnet. Ordne sie ohne Schnuppern zu.",
+  );
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, grund: "schnuppern_anzahl_fehlt" }, "Da Junioren", 1),
+    "Das Team hat noch keine Anzahl Schnuppertrainings. Ein Mitglied des Teams legt sie zuerst fest.",
+  );
+  assert.deepEqual(Object.keys(SCHNUPPERN_ZUORDNEN_TEXT).sort(), ["schnuppern_anzahl_fehlt", "schnuppern_hat_team"]);
+  // AK 12: eine Schnuppernde nennt ihr Team und beide Auswege.
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, schnuppert: [{ ...p("Leon", "Graf", 2015), team: "Da Junioren" }] }, "Ea Junioren", 1),
+    "Leon Graf (2015) schnuppert im Team «Da Junioren». Dort beendet zuerst ein Mitglied das Schnuppern, oder Leon wird aus dem Team genommen. Wähle ein anderes Team und versuche es nochmals.",
+  );
+  // AK 16: gesammelt nennt jede Schnuppernde mit ihrem Team, in der Reihenfolge der Datenebene.
+  const mehrere = zuordnenAbweisungText(
+    {
+      ...leer,
+      schnuppert: [
+        { ...p("Leon", "Graf", 2015), team: "Da Junioren" },
+        { ...p("Mia", "Ott", 2016), team: "Fa Junioren" },
+      ],
+    },
+    "Ea Junioren",
+    3,
+  );
+  assert.equal(
+    mehrere,
+    "Leon Graf (2015) schnuppert im Team «Da Junioren». Dort beendet zuerst ein Mitglied das Schnuppern, oder Leon wird aus dem Team genommen. " +
+      "Mia Ott (2016) schnuppert im Team «Fa Junioren». Dort beendet zuerst ein Mitglied das Schnuppern, oder Mia wird aus dem Team genommen. " +
+      "Ändere die Auswahl und versuche es nochmals.",
+  );
+  // Schnuppernde zusammen mit anderen Befunden: keiner geht verloren.
+  const gemischt = zuordnenAbweisungText(
+    { ...leer, bereits: [p("Luis", "Ott", 2012)], schnuppert: [{ ...p("Leon", "Graf", 2015), team: "Da Junioren" }] },
+    "Ea Junioren",
+    2,
+  );
+  assert.ok(gemischt.includes("Luis Ott (2012) ist Ea Junioren schon zugeordnet.") && gemischt.includes("Leon Graf (2015) schnuppert im Team «Da Junioren»"));
+  // AK 7, 8, 11: Beschriftung, Satz unter der Auswahl, Snackbar.
+  assert.equal(SCHNUPPERN_ZUORDNEN_LABEL, "Zum Schnuppern zuordnen");
+  assert.equal(SCHNUPPERN_ZUORDNEN_HINWEIS, "Solange die Spieler:in schnuppert, lässt sie sich keinem weiteren Team zuordnen.");
+  assert.equal(schnuppernZugeordnetText("Noah Keller", "Da Junioren"), "Noah Keller ist jetzt dem Team Da Junioren zugeordnet und schnuppert dort.");
+  // Marker der Datenebene kommen beim Zuordnen als Satz an (der Verein-Kern übersetzt sie über `fachlicheMeldung`).
+  assert.equal(fachlicheMeldung("SCHNUPPERN_NUR_EINZELN"), "Zum Schnuppern lässt sich nur eine Spieler:in zuordnen.");
+  assert.equal(
+    fachlicheMeldung("SPIELER_SCHNUPPERT"),
+    "Diese Spieler:in schnuppert in einem anderen Team. Dort beendet zuerst ein Mitglied das Schnuppern, oder sie wird aus dem Team genommen.",
+  );
+  // Kein «Probe» in den Sätzen.
+  for (const t of [...Object.values(SCHNUPPERN_ZUORDNEN_TEXT), SCHNUPPERN_ZUORDNEN_LABEL, SCHNUPPERN_ZUORDNEN_HINWEIS, mehrere, gemischt])
+    assert.ok(!/probe/i.test(t), t);
+});
+
 pruefe("Zuordnen (#579 AK 4–7, 20–23): Abweisung einzeln und gesammelt, Zahl der Termine im Singular und Plural", () => {
   const p = (vorname: string, nachname: string, jahrgang: number) => ({ id: vorname, vorname, nachname, jahrgang });
   const leer = { bereits: [], gleich: [], schnuppert: [], ueber_grenze: 0 };
@@ -3046,7 +3108,7 @@ pruefe("Zuordnen (#579 AK 4–7, 20–23): Abweisung einzeln und gesammelt, Zahl
   // Schnuppernd: nennt das Team, in dem sie schnuppert.
   assert.match(
     zuordnenAbweisungText({ ...leer, schnuppert: [{ ...p("Leon", "Graf", 2015), team: "Da Junioren" }] }, "Ea Junioren", 1),
-    /^Leon Graf \(2015\) schnuppert im Team Da Junioren und lässt sich keinem weiteren Team zuordnen\./,
+    /^Leon Graf \(2015\) schnuppert im Team «Da Junioren»\. Dort beendet zuerst ein Mitglied das Schnuppern, oder Leon wird aus dem Team genommen\./,
   );
   // Grenze: Wortlaut des Boards gesammelt («eine zu viel»), einzeln als Grenze des Teams.
   assert.equal(

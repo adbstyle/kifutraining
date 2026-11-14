@@ -56,6 +56,9 @@ export type VereinSpieler = {
   linkBezogen: boolean;
   /** Die Teams der Spieler:in, nach Namen; leer, wenn sie keinem zugeordnet ist. */
   teams: { id: string; name: string }[];
+  /** Wo und wie weit sie schnuppert (#584); `anzahl`: die vom Team festgelegte
+   *  Zahl, `null` ohne; `besucht`: gezählt wie am Team-Ort. */
+  schnuppern: { teamId: string; anzahl: number | null; besucht: number } | null;
 };
 
 /** Ein Team des Vereins; `anzahl`: Zuordnungen, gezählt wie die Grenze 100. */
@@ -73,9 +76,21 @@ export async function ladeVereinSpielerliste(
   if (!istUuid(e.vereinId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.verein, { feld: "verein_id" });
   const { data, error } = await supabase.rpc("verein_spielerliste", { p_verein: e.vereinId });
   if (error) return vereinFehler(error);
-  const r = data as { spieler: (Omit<VereinSpieler, "js" | "linkBezogen"> & { js: string | null; link_bezogen: boolean })[]; teams: VereinTeam[] };
+  const r = data as {
+    spieler: (Omit<VereinSpieler, "js" | "linkBezogen" | "schnuppern"> & {
+      js: string | null;
+      link_bezogen: boolean;
+      schnuppern: { team_id: string; anzahl: number | null; besucht: number } | null;
+    })[];
+    teams: VereinTeam[];
+  };
   return ok({
-    spieler: nachSpielerName(r.spieler).map(({ link_bezogen, ...s }) => ({ ...s, linkBezogen: link_bezogen, teams: [...s.teams].sort(nachName) })),
+    spieler: nachSpielerName(r.spieler).map(({ link_bezogen, schnuppern, ...s }) => ({
+      ...s,
+      linkBezogen: link_bezogen,
+      teams: [...s.teams].sort(nachName),
+      schnuppern: schnuppern ? { teamId: schnuppern.team_id, anzahl: schnuppern.anzahl, besucht: schnuppern.besucht } : null,
+    })),
     teams: [...r.teams].sort(nachName),
   });
 }
@@ -87,18 +102,25 @@ export async function ladeVereinSpielerliste(
  * (`zuordnenAbweisungText`); `teamName` ist der Name, den die Verwaltung
  * gewählt hat — er steht nur im Satz. `ersetzt`: Zahl der anstehenden
  * Termine, deren erwartete Spielerzahl wegfiel (nur beim ersten Zuordnen in
- * ein Team ohne Spieler:innen, AK 23).
+ * ein Team ohne Spieler:innen, AK 23). `schnuppern` (#584 AK 8–11): nur für
+ * eine einzelne Spieler:in ohne Team; die Zählung beginnt mit der Zuordnung.
+ * Abweisungen und die Marker `SCHNUPPERN_NUR_EINZELN` bzw. `SPIELER_SCHNUPPERT`
+ * kommen als Satz an.
  */
 export async function ordneSpielerZu(
   supabase: SupabaseClient,
   _userId: string,
-  e: { teamId: string; teamName: string; spielerIds: string[] },
+  e: { teamId: string; teamName: string; spielerIds: string[]; schnuppern?: boolean },
 ): Promise<KernErgebnis<{ anzahl: number; ersetzt: number }>> {
   if (!istUuid(e.teamId)) return teamNichtGefunden();
   const ids = [...new Set(e.spielerIds)];
   if (ids.length === 0 || !ids.every(istUuid))
     return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, { feld: "spieler_ids" });
-  const { data, error } = await supabase.rpc("verein_spieler_zuordnen", { p_team: e.teamId, p_spieler: ids });
+  const { data, error } = await supabase.rpc("verein_spieler_zuordnen", {
+    p_team: e.teamId,
+    p_spieler: ids,
+    p_schnuppern: e.schnuppern === true,
+  });
   if (error) return teamFehler(error);
   const r = data as { status: "zugeordnet"; anzahl: number; ersetzt: number } | ({ status: "abgewiesen" } & ZuordnenAbweisung);
   if (r.status === "abgewiesen") return fehlschlag("regel", zuordnenAbweisungText(r, e.teamName, ids.length), { feld: "spieler_ids" });
@@ -145,13 +167,14 @@ export type VereinAnsicht = {
 export type VereinTeamTrainer = TeamTrainer & { ich: boolean };
 
 /** Eine Spieler:in in der Teamansicht: `teams` sind alle ihre Teams (samt
- *  diesem), `schnuppert` gilt für dieses Team. Nie J+S-Nummer oder Link. */
+ *  diesem), `schnuppern` gilt für dieses Team (#584: `anzahl` die festgelegte
+ *  Zahl oder `null`, `besucht` die Zählung). Nie J+S-Nummer oder Link. */
 export type VereinTeamSpieler = {
   id: string;
   vorname: string;
   nachname: string;
   jahrgang: number;
-  schnuppert: boolean;
+  schnuppern: { anzahl: number | null; besucht: number } | null;
   teams: { id: string; name: string }[];
 };
 
@@ -242,7 +265,7 @@ export async function ladeVereinTeamAnsicht(
       vorname: string;
       nachname: string;
       jahrgang: number;
-      schnuppert: boolean;
+      schnuppern: { anzahl: number | null; besucht: number } | null;
       teams: { id: string; name: string }[];
     }[];
     aufloesung: AufloesungsFolgen;
@@ -441,18 +464,21 @@ export async function entferneAusVerwaltung(
 }
 
 /** Eine Spieler:in aus einem Team nehmen (Verwaltung, #579 AK 11, 17).
- *  `ohneTeam`: danach ist sie keinem Team mehr zugeordnet. */
+ *  `ohneTeam`: danach ist sie keinem Team mehr zugeordnet;
+ *  `schnuppernBeendet`: sie schnupperte dort, Schnuppern und Zählung enden
+ *  (#584 AK 13). */
 export async function nimmSpielerAusTeamImVerein(
   supabase: SupabaseClient,
   _userId: string,
   e: { teamId: string; spielerId: string },
-): Promise<KernErgebnis<{ ohneTeam: boolean }>> {
+): Promise<KernErgebnis<{ ohneTeam: boolean; schnuppernBeendet: boolean }>> {
   if (!istUuid(e.teamId)) return teamNichtGefunden();
   if (!istUuid(e.spielerId))
     return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, { feld: "spieler_id" });
   const { data, error } = await supabase.rpc("verein_spieler_aus_team_nehmen", { p_team: e.teamId, p_spieler: e.spielerId });
   if (error) return teamFehler(error);
-  return ok({ ohneTeam: !!(data as { ohne_team: boolean }).ohne_team });
+  const r = data as { ohne_team: boolean; schnuppern_beendet: boolean };
+  return ok({ ohneTeam: !!r.ohne_team, schnuppernBeendet: !!r.schnuppern_beendet });
 }
 
 // ── Spielerbestand der Verwaltung (Story #582) ──────────────────────────────
