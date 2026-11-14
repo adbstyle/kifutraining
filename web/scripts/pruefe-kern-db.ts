@@ -4696,8 +4696,14 @@ try {
     assert.deepEqual(imZiel.map((s) => [s.vorname, s.weitereTeams, s.kaderIds]), [["Elias", [HERKUNFT], []], ["Lena", [HERKUNFT], [kZ]], ["Noah", [], []]]);
     assert.deepEqual((await listeVon(a, herkunft)).map((s) => [s.vorname, s.weitereTeams, s.kaderIds]), [["Elias", [ZIEL], []], ["Lena", [ZIEL], [kH]]]);
     assert.deepEqual((await listeVon(b, herkunft)).find((s) => s.id === lena)!.weitereTeams, [ZIEL], "auch ohne Mitgliedschaft im weiteren Team");
-    // Link-Knopf nur im ersten Team (bis Phase 7): Herkunft ist Lenas erstes.
-    assert.deepEqual([imZiel.find((s) => s.id === lena)!.erstesTeam, imZiel.find((s) => s.id === noah)!.erstesTeam], [false, true]);
+    // Story #583: Der Link geht in jedem Team der Spieler:in; die Liste kennt kein «erstes Team» mehr,
+    // und ein Mitglied nur des Ziels holt denselben Link wie eines der Herkunft (Lenas erstem Team).
+    assert.ok(imZiel.every((s) => !("erstesTeam" in s)), "kein «erstes Team» in der Liste");
+    assert.equal(
+      wert(await holeSpielerLink(c.supabase, c.id, { teamId: ziel, spielerId: lena })).token,
+      wert(await holeSpielerLink(a.supabase, a.id, { teamId: herkunft, spielerId: lena })).token,
+      "derselbe Link aus jedem ihrer Teams",
+    );
     // MCP «spieler_aendern» ohne team_id: das älteste ihrer Teams, dem man angehört — für c (nur im Ziel)
     // das Ziel, nicht ihr erstes Team (Herkunft), in dem c «nicht gefunden» bekäme.
     assert.equal(wert(await eigenesTeamVon(c.supabase, lena)), ziel);
@@ -4726,7 +4732,7 @@ try {
       herausnehmenFrage({ vorname: "Lena", nachname: "Heraus", team: ZIEL, verein: "Kern-DB", verbleibend: [HERKUNFT], probe: false }),
     ) as { feld?: string; hinweis?: string };
     const auskunft = wert(await ladeSpielerTeams(a.supabase, a.id, { teamId: ziel, spielerId: lena }));
-    assert.deepEqual(auskunft.teams, [{ name: HERKUNFT, eigen: true, dieses: false }, { name: ZIEL, eigen: true, dieses: true }]);
+    assert.deepEqual(auskunft.teams, [{ name: HERKUNFT, eigen: true, dieses: false, abholbar: false }, { name: ZIEL, eigen: true, dieses: true, abholbar: false }]);
     assert.equal(frage.feld, "stand");
     assert.ok(frage.hinweis!.includes(auskunft.stand), "der Stand für die Wiederholung");
     assert.deepEqual(wert(await ladeSpielerTeams(c.supabase, c.id, { teamId: ziel, spielerId: lena })).teams.map((t) => t.eigen), [false, true], "eigen je Konto");
@@ -4760,12 +4766,12 @@ try {
     assert.equal((await setzeAnwesenheit(c.supabase, c.id, { terminId: tZ, spielerId: lena, da: false })).ok, false);
     // PC 7 über die Kern-Leser: c sieht sie nicht mehr, weder Zeile noch J+S-Nummer noch Link; a (Herkunft) schon.
     fehler(await ladeSpieler(c.supabase, lena), "nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN);
-    fehler(await holeSpielerLink(c.supabase, c.id, { spielerId: lena }), "nicht_gefunden");
+    fehler(await holeSpielerLink(c.supabase, c.id, { teamId: ziel, spielerId: lena }), "nicht_gefunden");
     assert.ok(!(await listeVon(c, ziel)).some((s) => s.id === lena));
     assert.deepEqual((await c.supabase.from("spieler").select("js_nummer").eq("id", lena)).data ?? [], []);
     assert.equal(wert(await ladeSpieler(a.supabase, lena)).jsNummer, "7654321");
     // PC 4: Link bleibt.
-    wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lena }));
+    wert(await holeSpielerLink(a.supabase, a.id, { teamId: herkunft, spielerId: lena }));
 
     // PC 9: erneut zugeordnet wie neu — ohne Kader, ohne frühere Meldungen.
     wert(await zuordnen(ziel, ZIEL, [lena]));
@@ -5105,24 +5111,25 @@ try {
     const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler" })).terminId;
     // Gestern: vergangen, erscheint nicht.
     const gestern = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
-    const link = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lena }));
+    const link = wert(await holeSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lena }));
     assert.match(link.token, /^[0-9a-f]{64}$/);
     assert.equal(link.name, "Lena Meier");
-    assert.equal(wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lena })).token, link.token, "derselbe Link, bis er erneuert wird");
-    fehler(await holeSpielerLink(b.supabase, b.id, { spielerId: lena }), "nicht_gefunden");
+    assert.equal(wert(await holeSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lena })).token, link.token, "derselbe Link, bis er erneuert wird");
+    fehler(await holeSpielerLink(b.supabase, b.id, { teamId: team, spielerId: lena }), "nicht_gefunden");
     // Das Geheimnis ist über die Tabelle nicht lesbar — auch nicht für Mitglieder.
     assert.ok((await a.supabase.from("spieler").select("link_token").eq("id", lena)).error);
     assert.ok((await a.supabase.from("spieler").select("*").eq("id", lena)).error);
-    assert.ok((await feldAnon.rpc("spieler_link_holen", { p_spieler: lena })).error);
+    assert.ok((await feldAnon.rpc("spieler_link_holen", { p_team: team, p_spieler: lena })).error);
 
     const ansicht = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data;
     assert.equal(ansicht.gueltig, true);
-    assert.equal(ansicht.team, "Kern-DB-Link");
+    // Story #583: Bei genau einem Team ist `team` dessen Name; dazu die Teams und der Verein.
+    assert.deepEqual([ansicht.team, ansicht.teams, ansicht.verein], ["Kern-DB-Link", ["Kern-DB-Link"], "Kern-DB"]);
     assert.deepEqual(ansicht.spieler, { vorname: "Lena", nachname: "Meier" }, "keine Namen anderer (OoS 2)");
     assert.deepEqual(ansicht.termine.map((x: { id: string }) => x.id), [t], "nichts Vergangenes (OoS 2)");
     assert.ok(!ansicht.termine.some((x: { id: string }) => x.id === gestern));
     assert.deepEqual(ansicht.termine[0], {
-      id: t, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler", ort_link: null, ausgefallen: false, ausfall_grund: null, begonnen: false, angemeldet: 2, gesamt: 2, abgemeldet: false, verfallen: null, kader: [],
+      id: t, team: "Kern-DB-Link", datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler", ort_link: null, ausgefallen: false, ausfall_grund: null, begonnen: false, angemeldet: 2, gesamt: 2, abgemeldet: false, verfallen: null, kader: [],
       // Ein Training: keine Spielangaben (#459 AK 17).
       art: "training", bezeichnung: null, richtwert_min: null, richtwert_max: null,
       // Spielangaben (#463) bleiben an einem Training leer.
@@ -5168,11 +5175,15 @@ try {
     assert.deepEqual(liste.spieler.map((s) => [s.vorname, s.abgemeldet]), [["Lena", true], ["Noah", false]]);
     assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].abgemeldet, true);
     assert.equal((await abmelden(link.token, false)).data.stand.angemeldet, 2, "AK 8: wieder angemeldet");
-    // Ein Termin eines anderen Teams passt nicht zum Link.
+    // Ein Termin eines Teams, dem sie nicht zugeordnet ist, gilt nicht für sie
+    // (Story #583 AK 7: `gilt_nicht` ohne Stand — die Datenebene unterscheidet
+    // «nie» und «nicht mehr» nicht); ein unbekannter Termin bleibt «nicht gefunden».
     const anderes = await serienTeam("Kern-DB-Link-Anders");
     const fremd = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: anderes, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
     const r = (await feldAnon.rpc("spieler_link_abmelden", { p_token: link.token, p_termin: fremd, p_abgemeldet: true, p_gesehen_datum: null, p_gesehen_beginn: null })).data;
-    assert.deepEqual([r.status, r.grund], ["abgewiesen", "nicht_gefunden"]);
+    assert.deepEqual(r, { status: "abgewiesen", grund: "gilt_nicht" });
+    const weg = (await feldAnon.rpc("spieler_link_abmelden", { p_token: link.token, p_termin: randomUUID(), p_abgemeldet: true, p_gesehen_datum: null, p_gesehen_beginn: null })).data;
+    assert.deepEqual(weg, { status: "abgewiesen", grund: "nicht_gefunden" });
 
     // AK 11: unbekannt antwortet wie ungültig, ohne irgendetwas preiszugeben.
     const unbekannt = "0".repeat(64);
@@ -5188,31 +5199,34 @@ try {
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     const noah = (await neuerSpieler(team, "Noah")).spielerId;
     const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
-    const alt = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lena })).token;
+    const alt = wert(await holeSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lena })).token;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
-    const neu = wert(await erneuereSpielerLink(a.supabase, a.id, { spielerId: lena })).token;
+    const neu = wert(await erneuereSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lena })).token;
     assert.notEqual(neu, alt);
-    assert.equal(wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lena })).token, neu);
+    assert.equal(wert(await holeSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lena })).token, neu);
     assert.deepEqual((await feldAnon.rpc("spieler_link_ansicht", { p_token: alt })).data, { gueltig: false });
     assert.deepEqual(
       (await feldAnon.rpc("spieler_link_abmelden", { p_token: alt, p_termin: t, p_abgemeldet: false, p_gesehen_datum: null, p_gesehen_beginn: null })).data,
       { status: "ungueltig" },
     );
     assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: neu })).data.termine[0].abgemeldet, true, "PC 3");
-    fehler(await erneuereSpielerLink(b.supabase, b.id, { spielerId: lena }), "nicht_gefunden");
-    // #579 PC 4: Aus dem (letzten) Team genommen bleibt der Link gültig — bis
-    // Story #583 (Phase 7) ohne Team und ohne Termine, danach mit denen der übrigen Teams.
-    const vonNoah = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: noah })).token;
+    fehler(await erneuereSpielerLink(b.supabase, b.id, { teamId: team, spielerId: lena }), "nicht_gefunden");
+    // #579 PC 4: Aus dem (letzten) Team genommen bleibt der Link gültig, ohne
+    // Team und ohne Termine; `team` ist dann der Vereinsname (Story #583 AK 5).
+    const vonNoah = wert(await holeSpielerLink(a.supabase, a.id, { teamId: team, spielerId: noah })).token;
     wert(await nimmHeraus(a, team, noah));
     const ohneTeam = (await feldAnon.rpc("spieler_link_ansicht", { p_token: vonNoah })).data;
-    assert.deepEqual([ohneTeam.gueltig, ohneTeam.team, ohneTeam.spieler, ohneTeam.termine], [true, null, { vorname: "Noah", nachname: "Muster" }, []]);
+    assert.deepEqual(
+      [ohneTeam.gueltig, ohneTeam.team, ohneTeam.teams, ohneTeam.spieler, ohneTeam.termine],
+      [true, "Kern-DB", [], { vorname: "Noah", nachname: "Muster" }, []],
+    );
     // PC 2: aus dem Verein gelöscht gilt keiner mehr.
     await loescheSpieler(verwaltung, lena);
     assert.deepEqual((await feldAnon.rpc("spieler_link_ansicht", { p_token: neu })).data, { gueltig: false }, "PC 2: gelöscht");
   });
 
   // ── Kalender-Abo der Spielervertretung (#507) ────────────────────────────
-  const linkVon = async (spielerId: string) => wert(await holeSpielerLink(a.supabase, a.id, { spielerId })).token;
+  const linkVon = async (teamId: string, spielerId: string) => wert(await holeSpielerLink(a.supabase, a.id, { teamId, spielerId })).token;
   const aboHolen = async (link: string) => (await feldAnon.rpc("spieler_abo_holen", { p_link: link })).data as string | null;
   type AboFeedDb = { gueltig: boolean; abo?: string; team?: string; termine?: Record<string, unknown>[] };
   const aboFeed = async (token: string) => (await feldAnon.rpc("spieler_abo_termine", { p_token: token })).data as AboFeedDb;
@@ -5221,7 +5235,7 @@ try {
     const team = await serienTeam("Kern-DB-Eltern-Abo");
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
-    const link = await linkVon(lena);
+    const link = await linkVon(team, lena);
     const abo = (await aboHolen(link))!;
     assert.match(abo, /^[0-9a-f]{64}$/, "AK 9: nicht erratbar");
     assert.notEqual(abo, link);
@@ -5243,8 +5257,9 @@ try {
     assert.ok(!JSON.stringify(f).includes("Lena") && !JSON.stringify(f).includes(link));
     assert.deepEqual(Object.keys(f.termine![0]).sort(), [
       "abgemeldet", "art", "beginn", "begonnen", "bezeichnung", "datum", "ende", "frist_abgelaufen", "hinweis_eltern",
-      "id", "meldung", "nicht_aufgeboten", "ort", "ort_link", "treffpunkt", "treffpunkte",
+      "id", "meldung", "nicht_aufgeboten", "ort", "ort_link", "team", "treffpunkt", "treffpunkte",
     ]);
+    assert.equal(f.termine![0].team, "Kern-DB-Eltern-Abo", "Story #583 AK 8: jeder Termin nennt sein Team");
     assert.deepEqual(await aboFeed("f".repeat(64)), { gueltig: false });
   });
 
@@ -5265,7 +5280,7 @@ try {
     await admin.from("training_termine").insert({ team_id: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" });
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: ab, spielerId: lena, abgemeldet: true }));
     wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus }));
-    const link = await linkVon(lena);
+    const link = await linkVon(team, lena);
     const abo = (await aboHolen(link))!;
     const ansicht = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link })).data as { termine: { id: string; ausgefallen: boolean }[] };
     const ids = (await aboFeed(abo)).termine!.map((x) => x.id);
@@ -5286,23 +5301,23 @@ try {
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     const noah = (await neuerSpieler(team, "Noah")).spielerId;
     await admin.from("training_termine").insert({ team_id: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" });
-    const alt = (await aboHolen(await linkVon(lena)))!;
-    const vonNoah = (await aboHolen(await linkVon(noah)))!;
-    wert(await erneuereSpielerLink(a.supabase, a.id, { spielerId: lena }));
+    const alt = (await aboHolen(await linkVon(team, lena)))!;
+    const vonNoah = (await aboHolen(await linkVon(team, noah)))!;
+    wert(await erneuereSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lena }));
     assert.deepEqual(await aboFeed(alt), { gueltig: false }, "erneuert");
     assert.equal((await aboFeed(vonNoah)).gueltig, true, "andere Abos bleiben");
-    const neu = (await aboHolen(await linkVon(lena)))!;
+    const neu = (await aboHolen(await linkVon(team, lena)))!;
     assert.notEqual(neu, alt, "PC 8: über den neuen Link eine neue Adresse");
     assert.deepEqual(await aboFeed(alt), { gueltig: false }, "PC 8: die alte bleibt erloschen");
     await loescheSpieler(verwaltung, lena);
     assert.deepEqual(await aboFeed(neu), { gueltig: false }, "gelöscht");
     // #579 PC 4: Herausgenommen bleibt die Spieler:in samt Link im Verein, das
-    // Abo mit ihr — bis Story #583 (Phase 7) ohne Termine.
+    // Abo mit ihr — ohne Team gültig und leer, `team` ist der Vereinsname (Story #583 AK 9).
     const mia = (await neuerSpieler(team, "Mia")).spielerId;
-    const vonMia = (await aboHolen(await linkVon(mia)))!;
+    const vonMia = (await aboHolen(await linkVon(team, mia)))!;
     wert(await nimmHeraus(a, team, mia));
     const feedMia = await aboFeed(vonMia);
-    assert.deepEqual([feedMia.gueltig, feedMia.team, feedMia.termine], [true, null, []], "herausgenommen: bleibt, ohne Termine");
+    assert.deepEqual([feedMia.gueltig, feedMia.team, feedMia.termine], [true, "Kern-DB", []], "herausgenommen: bleibt, ohne Termine");
     // #581 PC 3: Ohne Mitglieder bleibt das Team samt Abos und Terminen.
     await admin.from("team_members").delete().eq("team_id", team);
     assert.equal((await admin.from("teams").select("id").eq("id", team)).data!.length, 1, "Team bleibt ohne Mitglied");
@@ -5322,16 +5337,16 @@ try {
     const noah = (await neuerSpieler(team, "Noah")).spielerId;
     const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
-    const link = await linkVon(lena);
+    const link = await linkVon(team, lena);
     const alt = (await aboHolen(link))!;
-    const vonNoah = (await aboHolen(await linkVon(noah)))!;
+    const vonNoah = (await aboHolen(await linkVon(team, noah)))!;
     const widerrufen = async (l: string) => (await feldAnon.rpc("spieler_abo_widerrufen", { p_link: l })).data;
     assert.equal(await widerrufen(alt), "ungueltig", "die Abo-Adresse selbst widerruft nichts");
     assert.equal(await widerrufen(link), "ok");
     assert.deepEqual(await aboFeed(alt), { gueltig: false }, "PC 1");
     assert.equal((await aboFeed(vonNoah)).gueltig, true, "fremde Abos bleiben");
     // PC 3: Link, Abmeldung und Zahl bleiben.
-    assert.equal(await linkVon(lena), link);
+    assert.equal(await linkVon(team, lena), link);
     assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link })).data.termine[0].abgemeldet, true);
     assert.equal(await widerrufen(link), "ok", "ohne Abo kein Fehler");
     // AK 4, PC 2: eine neue Adresse, die alte bleibt erloschen.
@@ -5343,8 +5358,8 @@ try {
   });
 
   // ── Verlegen und Ausfall (#437) ──────────────────────────────────────────
-  const linkAnsicht = async (spielerId: string) =>
-    (await feldAnon.rpc("spieler_link_ansicht", { p_token: wert(await holeSpielerLink(a.supabase, a.id, { spielerId })).token })).data as {
+  const linkAnsicht = async (teamId: string, spielerId: string) =>
+    (await feldAnon.rpc("spieler_link_ansicht", { p_token: wert(await holeSpielerLink(a.supabase, a.id, { teamId, spielerId })).token })).data as {
       termine: { id: string; abgemeldet: boolean; angemeldet: number | null; gesamt: number | null; verfallen: { datum: string; beginn: string; anmeldung: boolean } | null }[];
     };
 
@@ -5368,14 +5383,14 @@ try {
     // PC 1: alle wieder angemeldet; AK 2: der Link nennt den Zeitpunkt vorher.
     assert.equal((await standVon(team, t)).spielstand?.angemeldet, 2);
     assert.deepEqual(wert(await terminSpieler(a.supabase, a.id, { terminId: t })).spieler.map((s) => s.abgemeldet), [false, false]);
-    const termin = (await linkAnsicht(lena)).termine.find((x) => x.id === t)!;
+    const termin = (await linkAnsicht(team, lena)).termine.find((x) => x.id === t)!;
     assert.deepEqual([termin.abgemeldet, termin.verfallen], [false, { datum: tagCh(3), beginn: "18:00", anmeldung: false }]);
     // Ein zweites Verlegen behält den ursprünglichen Zeitpunkt und fragt nicht mehr.
     assert.equal(wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(5) })).abmeldungenVerfallen, 0);
-    assert.deepEqual((await linkAnsicht(lena)).termine.find((x) => x.id === t)!.verfallen, { datum: tagCh(3), beginn: "18:00", anmeldung: false });
+    assert.deepEqual((await linkAnsicht(team, lena)).termine.find((x) => x.id === t)!.verfallen, { datum: tagCh(3), beginn: "18:00", anmeldung: false });
     // Neu abmelden ersetzt die Markierung; danach zählt die Abmeldung wieder.
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
-    assert.deepEqual((await linkAnsicht(lena)).termine.find((x) => x.id === t)!.verfallen, null);
+    assert.deepEqual((await linkAnsicht(team, lena)).termine.find((x) => x.id === t)!.verfallen, null);
     assert.equal((await standVon(team, t)).spielstand?.angemeldet, 1);
     assert.equal(
       (await a.supabase.rpc("termin_abmeldungen_verfallend", { p_termin: t, p_datum: tagCh(5), p_beginn: "18:00" })).data,
@@ -5398,13 +5413,13 @@ try {
     assert.equal(f.verfallend, 1);
     wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(2), bestaetigt: true }));
     assert.deepEqual((await standVon(team, t)).spielstand, { gesamt: 2, angemeldet: 2, eingefroren: false, anwesend: null });
-    assert.deepEqual((await linkAnsicht(lena)).termine.find((x) => x.id === t)!.verfallen, { datum: tagCh(-1), beginn: "18:00", anmeldung: false });
+    assert.deepEqual((await linkAnsicht(team, lena)).termine.find((x) => x.id === t)!.verfallen, { datum: tagCh(-1), beginn: "18:00", anmeldung: false });
 
     // PC 4: Ein Ausfall lässt die Abmeldung ruhen; zurückgenommen gilt sie wieder.
     const u = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: u, spielerId: lena, abgemeldet: true }));
     wert(await lasseAusfallen(a.supabase, a.id, { terminId: u, grund: null }));
-    const ausgefallen = (await linkAnsicht(lena)).termine.find((x) => x.id === u)!;
+    const ausgefallen = (await linkAnsicht(team, lena)).termine.find((x) => x.id === u)!;
     assert.equal(ausgefallen.abgemeldet, true);
     // AK 4, #472: Ausgefallen nennt der Link keine Zahl, auch nicht von wie vielen.
     assert.deepEqual([ausgefallen.angemeldet, ausgefallen.gesamt], [null, null]);
@@ -5483,13 +5498,13 @@ try {
     const r = await abholen(an.token, k, "  anna lena ", "o'brien", 2017);
     assert.equal(r.status, "ok");
     assert.deepEqual(r.spieler, { vorname: "Anna-Lena", nachname: "O’Brien" });
-    assert.equal(r.token, wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lena })).token, "AK 11: der gültige Link");
+    assert.equal(r.token, wert(await holeSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lena })).token, "AK 11: der gültige Link");
     assert.equal((await abholen(an.token, k, "Anna–Lena", "O`BRIEN", 2017)).status, "ok");
     assert.equal((await abholen(an.token, k, "Anna-Lena", "O’Bríen", 2017)).status, "passt_nicht");
     assert.deepEqual(await abholen(an.token, k, "Anna-Lena", "O’Brien", 2018), { status: "passt_nicht" }, "AK 13: dieselbe Antwort");
     // PC 2, 3: bezogen — bis der Link erneuert wird.
     assert.equal(wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler[0].linkBezogen, true);
-    const neuLink = wert(await erneuereSpielerLink(a.supabase, a.id, { spielerId: lena })).token;
+    const neuLink = wert(await erneuereSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lena })).token;
     assert.equal(wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler[0].linkBezogen, false);
     assert.equal((await abholen(an.token, anschluss(3), "Anna-Lena", "O’Brien", 2017)).token, neuLink, "OoS 5: wieder abholbar");
 
@@ -5775,7 +5790,7 @@ try {
     const gemischt = wert(await anstehend(k.team, [k.s2, aushilfe], 7)).terminId;
     const alle = wert(await anstehend(k.team, [], 8)).terminId;
     const ansicht = async (spielerId: string) =>
-      (await feldAnon.rpc("spieler_link_ansicht", { p_token: wert(await holeSpielerLink(a.supabase, a.id, { spielerId })).token })).data as {
+      (await feldAnon.rpc("spieler_link_ansicht", { p_token: wert(await holeSpielerLink(a.supabase, a.id, { teamId: k.team, spielerId })).token })).data as {
         termine: { id: string; angemeldet: number | null; gesamt: number | null; kader: string[] }[];
       };
     const lena = await ansicht(k.lena);
@@ -5789,7 +5804,7 @@ try {
       assert.deepEqual([t.angemeldet, t.gesamt], [mitglieder.angemeldet, mitglieder.gesamt], "wie für die Mitglieder");
     }
     // AK 5: Ein Termin, der inzwischen nicht mehr gilt, weist ab.
-    const token = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: k.lena })).token;
+    const token = wert(await holeSpielerLink(a.supabase, a.id, { teamId: k.team, spielerId: k.lena })).token;
     const ab = (await feldAnon.rpc("spieler_link_abmelden", { p_token: token, p_termin: s2, p_abgemeldet: true, p_gesehen_datum: null, p_gesehen_beginn: null })).data as { status: string; grund: string };
     assert.deepEqual([ab.status, ab.grund], ["abgewiesen", "gilt_nicht"]);
     // PC 1: Gilt er wieder für sie, steht sie dort angemeldet.
@@ -5820,7 +5835,7 @@ try {
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
     assert.equal((await seit(t)).Lena, t1);
     // Über den Link wieder angemeldet: ein Wechsel, auch ohne Konto (PC 1).
-    const token = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lena })).token;
+    const token = wert(await holeSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lena })).token;
     const ueberLink = (ab: boolean) =>
       feldAnon.rpc("spieler_link_abmelden", { p_token: token, p_termin: t, p_abgemeldet: ab, p_gesehen_datum: tagCh(2), p_gesehen_beginn: "18:00" });
     await kurz();
@@ -5989,7 +6004,7 @@ try {
     // Heute um Mitternacht: begonnen und für die Spielervertretung noch sichtbar.
     const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(0), beginn: "00:00", ende: "00:30" })).terminId;
     wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: lena, da: false }));
-    const termin = (await linkAnsicht(lena)).termine.find((x) => x.id === t)!;
+    const termin = (await linkAnsicht(team, lena)).termine.find((x) => x.id === t)!;
     assert.deepEqual([termin.abgemeldet, termin.angemeldet, termin.gesamt], [false, 2, 2], "AK 16");
     assert.ok(!("nachgetragen" in termin) && !("anwesend" in termin));
     assert.equal((await standVon(team, t)).spielstand?.anwesend, 1);
@@ -6100,7 +6115,7 @@ try {
     fehler(await terminSpieler(a.supabase, a.id, { terminId: t }), "regel", SPIEL_TEXT.istSpiel);
 
     // AK 17: Der private Link zeigt ein Spiel als Spiel mit Bezeichnung und Richtwert.
-    const link = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lena }));
+    const link = wert(await holeSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lena }));
     const imLink = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine.find((x: { id: string }) => x.id === t);
     assert.deepEqual([imLink.art, imLink.bezeichnung, imLink.richtwert_min, imLink.richtwert_max], ["spiel", "Cup gegen FC Köniz", 9, null]);
     const ab = await feldAnon.rpc("spieler_link_abmelden", { p_token: link.token, p_termin: t, p_abgemeldet: true, p_gesehen_datum: null, p_gesehen_beginn: null });
@@ -6181,7 +6196,7 @@ try {
     const k = await spielTeam("Kern-DB-Meldefrist");
     // Eine Frist, die schon vorbei ist, ist erlaubt (AK 8).
     const t = wert(await k.spiel(2, { meldefrist: `${tagCh(-1)}T20:00` })).terminId;
-    const link = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: k.lena })).token;
+    const link = wert(await holeSpielerLink(a.supabase, a.id, { teamId: k.team, spielerId: k.lena })).token;
     const ueberLink = (angemeldet: boolean) =>
       feldAnon.rpc("spieler_link_melden", { p_token: link, p_termin: t, p_angemeldet: angemeldet, p_gesehen_datum: tagCh(2), p_gesehen_beginn: "10:00" });
     assert.equal((await ueberLink(true)).data.grund, "frist_abgelaufen", "AK 9");
@@ -6219,7 +6234,7 @@ try {
     fehler(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(6), bestaetigt: 1 }), "regel");
     wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(6), bestaetigt: 2 }));
     assert.deepEqual(await meldungen(t), { Lena: null, Mia: null, Noah: null }, "alle wieder ohne Meldung");
-    const link = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: k.lena })).token;
+    const link = wert(await holeSpielerLink(a.supabase, a.id, { teamId: k.team, spielerId: k.lena })).token;
     const imLink = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link })).data.termine.find((x: { id: string }) => x.id === t);
     assert.deepEqual([imLink.meldung, imLink.meldung_verfallen, imLink.vorher], [null, true, { datum: tagCh(5), beginn: "11:00" }], "AK 15: verfallen, vorher der zuletzt gültige");
     // Neu melden hebt den Hinweis auf.
@@ -6312,7 +6327,7 @@ try {
     assert.equal(na.spieler.find((x) => x.vorname === "Lena")!.gewechseltAm, fest.spieler.find((x) => x.vorname === "Lena")!.gewechseltAm);
     // AK 10, 19: Mitglieder sehen die Anwesenden, die Eltern weiter die Angemeldeten beim Anpfiff.
     assert.deepEqual([(await standVon(k.team, t)).spielstand?.anwesend, (await standVon(k.team, t)).spielstand?.angemeldet], [2, 1]);
-    const lenaLink = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: k.lena })).token;
+    const lenaLink = wert(await holeSpielerLink(a.supabase, a.id, { teamId: k.team, spielerId: k.lena })).token;
     const imLink = (await feldAnon.rpc("spieler_link_ansicht", { p_token: lenaLink })).data.termine.find((x: { id: string }) => x.id === t);
     assert.deepEqual([imLink.angemeldet, "anwesend" in imLink], [1, false]);
     // AK 3: zurücknehmen.
@@ -6398,7 +6413,7 @@ try {
 
     // AK 10: der Link zeigt die Treffpunkte eines Spiels, unabhängig von der Meldung; #590 AK 9, 13:
     // dazu den Hinweis für Eltern, nie die Bemerkung.
-    const link = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: k.lena })).token;
+    const link = wert(await holeSpielerLink(a.supabase, a.id, { teamId: k.team, spielerId: k.lena })).token;
     const imLink = async (id: string) => (await feldAnon.rpc("spieler_link_ansicht", { p_token: link })).data.termine.find((x: { id: string }) => x.id === id);
     const s1 = await imLink(t);
     assert.deepEqual([s1.meldung, s1.hinweis_eltern, "bemerkung" in s1], [null, "Schienbeinschoner mitnehmen.", false]);
@@ -6448,7 +6463,7 @@ try {
     const training = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: k.team, datum: tagCh(4), beginn: "18:00", ende: "19:00", hinweisEltern: "Pincode", treffpunkt: { zeit: "17:45", ort: "Garderoben" } })).terminId;
     wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus }));
     wert(await setzeAufgebot(a.supabase, a.id, { terminId: offen, spielerId: k.lena, nichtAufgeboten: true }));
-    const link = await linkVon(k.lena);
+    const link = await linkVon(k.team, k.lena);
     const abo = (await aboHolen(link))!;
     const ansicht = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link })).data as { termine: Record<string, unknown>[] };
     const feld = ["id", "art", "bezeichnung", "meldung", "frist_abgelaufen", "nicht_aufgeboten", "hinweis_eltern", "treffpunkte", "treffpunkt"];
@@ -6491,7 +6506,7 @@ try {
     });
     // AK 4: keine Meldung, weder von Mitgliedern noch über den Link.
     fehler(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.noah, angemeldet: true }), "regel", MELDUNG_TEXT.nichtAufgeboten);
-    const link = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: k.lena })).token;
+    const link = wert(await holeSpielerLink(a.supabase, a.id, { teamId: k.team, spielerId: k.lena })).token;
     const ueberLink = await feldAnon.rpc("spieler_link_melden", { p_token: link, p_termin: t, p_angemeldet: false, p_gesehen_datum: tagCh(6), p_gesehen_beginn: "10:00" });
     assert.deepEqual([ueberLink.data.status, ueberLink.data.grund], ["abgewiesen", "nicht_aufgeboten"]);
     // AK 8, 9: der Link nennt die Kennzeichnung und die Zahl.
@@ -6538,7 +6553,7 @@ try {
     const d = wert(await spielSpieler(a.supabase, a.id, { terminId: t }));
     const noah = d.spieler.find((x) => x.vorname === "Noah")!;
     assert.deepEqual([noah.nichtAufgeboten, noah.aufgebotVerfallen, d.nichtAufgeboten], [false, true, 0]);
-    const link = wert(await holeSpielerLink(a.supabase, a.id, { spielerId: k.noah })).token;
+    const link = wert(await holeSpielerLink(a.supabase, a.id, { teamId: k.team, spielerId: k.noah })).token;
     const imLink = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link })).data.termine.find((x: { id: string }) => x.id === t);
     assert.deepEqual([imLink.nicht_aufgeboten, imLink.aufgebot_verfallen], [false, true]);
     // Neu gekennzeichnet: der Hinweis geht.
@@ -6580,7 +6595,7 @@ try {
     if (anzahl !== null) wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl, info: null }));
     const training = async (tage: number, kaderIds: string[] = []) =>
       wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: k.team, datum: tagCh(tage), beginn: "18:00", ende: "19:30", kaderIds })).terminId;
-    const token = async (spielerId: string) => wert(await holeSpielerLink(a.supabase, a.id, { spielerId })).token;
+    const token = async (spielerId: string) => wert(await holeSpielerLink(a.supabase, a.id, { teamId: k.team, spielerId })).token;
     const ueberLink = async (tok: string, terminId: string, tage: number, abgemeldet: boolean) =>
       (await feldAnon.rpc("spieler_link_abmelden", { p_token: tok, p_termin: terminId, p_abgemeldet: abgemeldet, p_gesehen_datum: tagCh(tage), p_gesehen_beginn: "18:00" })).data as {
         status: string;
@@ -7224,7 +7239,7 @@ try {
   await pruefe("Verein: Teams lesen und Spieler:in löschen — Teams in der Antwort, danach überall nicht gefunden, nur durch die Verwaltung (#582 AK 12, 13, 15; #579 AK 12, 14)", async () => {
     const { eins, zwei, sina, xaver } = await bestand582();
     // AK 13: die Teams frisch, nach Name; ohne Team leer.
-    assert.deepEqual(wert(await ladeSpielerTeamsImVerein(verwaltung.supabase, verwaltung.id, { spielerId: sina })).teams, [{ id: eins, name: EINS }, { id: zwei, name: ZWEI }]);
+    assert.deepEqual(wert(await ladeSpielerTeamsImVerein(verwaltung.supabase, verwaltung.id, { spielerId: sina })).teams, [{ id: eins, name: EINS, abholbar: false }, { id: zwei, name: ZWEI, abholbar: false }]);
     assert.deepEqual(wert(await ladeSpielerTeamsImVerein(verwaltung.supabase, verwaltung.id, { spielerId: xaver })).teams, []);
     // Ohne Recht: weder lesen noch löschen; die Spieler:in bleibt.
     const fremd = await fremdeVerwaltung();
@@ -7305,8 +7320,11 @@ try {
         // Die Team-Spielerliste kennt sie nicht, kein Team-Weg erreicht sie.
         assert.ok(!wert(await ladeSpielerliste(k.supabase, k.id, { teamId: eins })).spieler.some((s) => s.id === xaver));
         fehler(await aendereSpieler(k.supabase, k.id, { teamId: eins, spielerId: xaver, vorname: "Neu", nachname: "Name", jahrgang: 2015 }), "nicht_gefunden", NG_SPIELER);
+        // KI-Weg ohne Team und Team-Ort mit Team: Ohne Team erreicht sie keiner (Story #583).
         fehler(await holeSpielerLink(k.supabase, k.id, { spielerId: xaver }), "nicht_gefunden", NG_SPIELER);
         fehler(await erneuereSpielerLink(k.supabase, k.id, { spielerId: xaver }), "nicht_gefunden", NG_SPIELER);
+        fehler(await holeSpielerLink(k.supabase, k.id, { teamId: eins, spielerId: xaver }), "nicht_gefunden", NG_SPIELER);
+        fehler(await erneuereSpielerLink(k.supabase, k.id, { teamId: eins, spielerId: xaver }), "nicht_gefunden", NG_SPIELER);
         fehler(await nimmHeraus(k, eins, xaver), "nicht_gefunden", NG_SPIELER);
         fehler(await ladeSpieler(k.supabase, xaver), "nicht_gefunden", NG_SPIELER);
         fehler(await eigenesTeamVon(k.supabase, xaver), "nicht_gefunden");
@@ -7330,6 +7348,204 @@ try {
     assert.equal((await admin.from("verein_verwaltung").select("user_id").eq("verein_id", verein)).data!.length, 1, "Verwaltung bleibt");
     assert.equal((await admin.from("trainings").select("id").eq("id", training)).data!.length, 1, "Training bleibt");
     assert.equal((await admin.auth.admin.getUserById(verwaltung.id)).error, null, "Konto bleibt");
+  });
+
+  // ── Privater Link, Kalender-Abo und Selbstabholung über mehrere Teams (Story #583) ──
+  // Über Kern und Web-Leser (ladeLinkAnsicht, meldeUeberLink, holeLinkAb, Abo-Route, rpcWeg):
+  // Lina ist in A und B (B ist ihr erstes Team), a in A, B und C, c nur in A.
+  const mehrTeams = async (praefix: string) => {
+    const A = `${praefix}-A`;
+    const B = `${praefix}-B`;
+    const tB = await serienTeam(B);
+    const tA = await serienTeam(A);
+    const tC = await serienTeam(`${praefix}-C`);
+    const c = await wegwerfKonto();
+    assert.equal((await admin.from("team_members").insert({ team_id: tA, user_id: c.id })).error, null);
+    const lina = (await neuerSpieler(tB, "Lina", "Zwei", 2016)).spielerId;
+    wert(await zuordnen(tA, A, [lina]));
+    return { A, B, tA, tB, tC, c, lina };
+  };
+
+  await pruefe("Link über mehrere Teams: Termine beider Teams, Team je Termin, Ordnung nach Teamname, Kader nur des Termin-Teams; Abo mit Team im Titel (#583 AK 1–3, 8, 10)", async () => {
+    const { A, B, tA, tB, tC, lina } = await mehrTeams("Kern-DB-Mehr");
+    const { ladeLinkAnsicht } = await import("../lib/privater-link");
+    const { aboEintrag, ABO_KALENDER_NAME } = await import("../lib/spieler-abo");
+    const { GET: aboRoute } = await import("../app/api/kalender/spieler/[datei]/route");
+    const training = async (team: string, tage: number, kaderIds: string[] = []) =>
+      wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(tage), beginn: "18:00", ende: "19:00", kaderIds })).terminId;
+    const fremderKader = wert(await legeKaderAn(a.supabase, a.id, { teamId: tA, name: "K-Fremd" })).kaderId;
+    const linasKader = wert(await legeKaderAn(a.supabase, a.id, { teamId: tA, name: "K-Lina" })).kaderId;
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: tA, spielerIds: [lina], dazu: [linasKader] }));
+    // Gleicher Tag und Beginn in B (zuerst angelegt) und A: A steht vorn (AK 1).
+    const inB = await training(tB, 2);
+    const inA = await training(tA, 2);
+    const spiel = wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Cup", teamId: tB, datum: tagCh(3), beginn: "10:00", ende: "12:00" })).terminId;
+    const nurFremd = await training(tA, 4, [fremderKader]);
+    const mitLina = await training(tA, 5, [linasKader]);
+    const inC = await training(tC, 2);
+
+    const token = wert(await holeSpielerLink(a.supabase, a.id, { teamId: tB, spielerId: lina })).token;
+    const ansicht = await ladeLinkAnsicht(token);
+    assert.ok(ansicht.gueltig);
+    // Mehrere Teams: `team` ist der Vereinsname, `teams` alphabetisch, kein Probe-Stand (Story 8).
+    assert.deepEqual([ansicht.teams, (ansicht as unknown as { team: string }).team, ansicht.probe], [[A, B], "Kern-DB", null]);
+    assert.deepEqual(ansicht.termine.map((x) => [x.id, x.team]), [[inA, A], [inB, B], [spiel, B], [mitLina, A]]);
+    assert.ok(![nurFremd, inC].some((id) => ansicht.termine.some((x) => x.id === id)), "kein fremder Kader, kein fremdes Team");
+    assert.deepEqual(ansicht.termine.find((x) => x.id === mitLina)!.kader, ["K-Lina"]);
+    // Die Zahl am Termin bleibt die seines Teams.
+    assert.deepEqual([ansicht.termine[0].gesamt, ansicht.termine[1].gesamt], [1, 1]);
+
+    // Abo (AK 8, 10): dieselben Termine samt Team; der Kalender heisst immer gleich, jeder Titel nennt das Team.
+    const abo = (await aboHolen(token))!;
+    const feed = await aboFeed(abo);
+    assert.deepEqual(feed.termine!.map((x) => [x.id, x.team]), [[inA, A], [inB, B], [spiel, B], [mitLina, A]]);
+    const ics = await (await aboRoute(new Request("http://localhost/"), { params: Promise.resolve({ datei: `${abo}.ics` }) })).text();
+    assert.ok(ics.includes(`X-WR-CALNAME:${ABO_KALENDER_NAME}`), "Kalendername ohne Team");
+    for (const t of (feed as unknown as { termine: Parameters<typeof aboEintrag>[0][] }).termine)
+      assert.ok(ics.includes(`SUMMARY:${aboEintrag(t).titel}`), `Titel mit Team: ${aboEintrag(t).titel}`);
+    assert.ok(ics.includes(`· ${A}`) && ics.includes(`· ${B}`));
+  });
+
+  await pruefe("Link über mehrere Teams: holen und erneuern in jedem Team der Spieler:in, nicht ausserhalb; KI-Weg leitet das Team ab (#583 AK 14, 15)", async () => {
+    const { tA, tB, tC, c, lina } = await mehrTeams("Kern-DB-Mehr-Holen");
+    const d = await wegwerfKonto();
+    const inB = wert(await holeSpielerLink(a.supabase, a.id, { teamId: tB, spielerId: lina }));
+    // c ist nur im zweiten Team (A): derselbe Link, im Team A geholt.
+    const inA = wert(await holeSpielerLink(c.supabase, c.id, { teamId: tA, spielerId: lina }));
+    assert.deepEqual([inA.token, inA.teamId, inA.name], [inB.token, tA, "Lina Zwei"]);
+    // KI-Weg ohne Team: das älteste ihrer Teams, dem man angehört — für c A, für a B (ihr erstes).
+    assert.equal(wert(await holeSpielerLink(c.supabase, c.id, { spielerId: lina })).teamId, tA);
+    assert.equal(wert(await holeSpielerLink(a.supabase, a.id, { spielerId: lina })).teamId, tB);
+    // Nicht im Team, nicht Mitglied, unbekannt: «nicht gefunden», nichts erneuert.
+    for (const r of [
+      await holeSpielerLink(c.supabase, c.id, { teamId: tB, spielerId: lina }),
+      await holeSpielerLink(a.supabase, a.id, { teamId: tC, spielerId: lina }),
+      await holeSpielerLink(d.supabase, d.id, { spielerId: lina }),
+      await holeSpielerLink(d.supabase, d.id, { teamId: tA, spielerId: lina }),
+      await erneuereSpielerLink(c.supabase, c.id, { teamId: tB, spielerId: lina }),
+      await erneuereSpielerLink(a.supabase, a.id, { teamId: tC, spielerId: lina }),
+      await erneuereSpielerLink(d.supabase, d.id, { spielerId: lina }),
+    ]) fehler(r, "nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN);
+    fehler(await holeSpielerLink(a.supabase, a.id, { teamId: "kein-uuid", spielerId: lina }), "nicht_gefunden", NICHT_GEFUNDEN.team);
+    assert.equal(wert(await holeSpielerLink(a.supabase, a.id, { teamId: tB, spielerId: lina })).token, inB.token, "unverändert");
+    // c erneuert im Team A: Der bisherige Link endet für alle Teams, a sieht in B den neuen.
+    const neu = wert(await erneuereSpielerLink(c.supabase, c.id, { teamId: tA, spielerId: lina }));
+    assert.deepEqual([neu.teamId, neu.token === inB.token], [tA, false]);
+    assert.deepEqual((await feldAnon.rpc("spieler_link_ansicht", { p_token: inB.token })).data, { gueltig: false });
+    assert.equal(wert(await holeSpielerLink(a.supabase, a.id, { teamId: tB, spielerId: lina })).token, neu.token);
+    // Auch der KI-Weg erneuert, im abgeleiteten Team.
+    assert.equal(wert(await erneuereSpielerLink(c.supabase, c.id, { spielerId: lina })).teamId, tA);
+  });
+
+  await pruefe("Selbstabholung über mehrere Teams: beide Adressen führen zum selben Link, «bezogen» gilt in beiden Teams, Erneuern setzt es zurück; abholbar je Team (#583 AK 12–16; PC 4)", async () => {
+    const { A, B, tA, tB, lina } = await mehrTeams("Kern-DB-Mehr-Abholen");
+    const { holeLinkAb } = await import("../lib/abholung");
+    const bezogen = async (team: string) => wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler.find((s) => s.id === lina)!.linkBezogen;
+    const abholbar = async (team: string) => wert(await ladeSpielerTeams(a.supabase, a.id, { teamId: team, spielerId: lina })).teams.map((t) => [t.name, t.dieses, t.abholbar]);
+    const imVerein = async () => wert(await ladeSpielerTeamsImVerein(verwaltung.supabase, verwaltung.id, { spielerId: lina })).teams.map((t) => [t.name, t.abholbar]);
+    assert.deepEqual(await abholbar(tB), [[A, false, false], [B, true, false]]);
+    assert.deepEqual(await imVerein(), [[A, false], [B, false]]);
+    const adresseA = wert(await schalteAbholung(a.supabase, a.id, { teamId: tA, aktiv: true })).token;
+    const adresseB = wert(await schalteAbholung(a.supabase, a.id, { teamId: tB, aktiv: true })).token;
+    assert.deepEqual(await abholbar(tB), [[A, false, true], [B, true, true]]);
+    const link = wert(await holeSpielerLink(a.supabase, a.id, { teamId: tA, spielerId: lina })).token;
+    assert.deepEqual([await bezogen(tA), await bezogen(tB)], [false, false]);
+    const ueberA = await holeLinkAb(adresseA, anschluss(81), { vorname: "Lina", nachname: "Zwei", jahrgang: "2016" });
+    assert.deepEqual(ueberA, { status: "ok", token: link, name: "Lina Zwei" });
+    assert.deepEqual([await bezogen(tA), await bezogen(tB)], [true, true], "PC 4: bezogen je Spieler:in");
+    assert.deepEqual(await holeLinkAb(adresseB, anschluss(82), { vorname: "lina", nachname: "zwei", jahrgang: "2016" }), { status: "ok", token: link, name: "Lina Zwei" });
+    // B schaltet aus: A gibt den Link weiter heraus (AK 13), B nicht.
+    wert(await schalteAbholung(a.supabase, a.id, { teamId: tB, aktiv: false }));
+    assert.deepEqual(await abholbar(tA), [[A, true, true], [B, false, false]]);
+    assert.deepEqual(await imVerein(), [[A, true], [B, false]]);
+    assert.deepEqual(await holeLinkAb(adresseB, anschluss(83), { vorname: "Lina", nachname: "Zwei", jahrgang: "2016" }), { status: "ungueltig" });
+    assert.equal((await holeLinkAb(adresseA, anschluss(84), { vorname: "Lina", nachname: "Zwei", jahrgang: "2016" })).status, "ok");
+    // Erneuern in B setzt «bezogen» in beiden Teams zurück; über A gibt es den neuen.
+    const neu = wert(await erneuereSpielerLink(a.supabase, a.id, { teamId: tB, spielerId: lina })).token;
+    assert.deepEqual([await bezogen(tA), await bezogen(tB)], [false, false]);
+    assert.deepEqual(await holeLinkAb(adresseA, anschluss(85), { vorname: "Lina", nachname: "Zwei", jahrgang: "2016" }), { status: "ok", token: neu, name: "Lina Zwei" });
+  });
+
+  await pruefe("Link nach dem Herausnehmen: gilt_nicht ohne Stand am Link, Termine des Teams weg; ohne Team gültig und leer, Abo leer, Feedback ohne Team (#583 AK 5, 7, 9, 18, 19; PC 2, 6)", async () => {
+    const { B, tA, tB, lina } = await mehrTeams("Kern-DB-Mehr-Heraus");
+    const { ladeLinkAnsicht, meldeUeberLink, meldeSpielUeberLink } = await import("../lib/privater-link");
+    const { GET: aboRoute } = await import("../app/api/kalender/spieler/[datei]/route");
+    const { ABO_KALENDER_NAME } = await import("../lib/spieler-abo");
+    const { rpcWeg } = await import("../lib/feedback/dialog");
+    const fremd = wert(await legeKaderAn(a.supabase, a.id, { teamId: tA, name: "K-Fremd" })).kaderId;
+    const inA = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: tA, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const nurFremd = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: tA, datum: tagCh(2), beginn: "17:00", ende: "18:00", kaderIds: [fremd] })).terminId;
+    const spielA = wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Cup", teamId: tA, datum: tagCh(3), beginn: "10:00", ende: "12:00" })).terminId;
+    const inB = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: tB, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const token = wert(await holeSpielerLink(a.supabase, a.id, { teamId: tA, spielerId: lina })).token;
+    const abo = (await aboHolen(token))!;
+    const gesehen = { datum: tagCh(2), beginn: "18:00" };
+    const roh = async (termin: string, art: "abmelden" | "melden") =>
+      (await feldAnon.rpc(`spieler_link_${art}`, { p_token: token, p_termin: termin, [art === "abmelden" ? "p_abgemeldet" : "p_angemeldet"]: art === "abmelden", p_gesehen_datum: null, p_gesehen_beginn: null })).data;
+    // Kein Kader des Termins: gilt_nicht, ohne Stand (AK 7).
+    assert.deepEqual(await roh(nurFremd, "abmelden"), { status: "abgewiesen", grund: "gilt_nicht" });
+    // Aus A genommen: Termine von A weg, auch für Abo; Ab- und Anmelden dort gilt_nicht ohne Stand.
+    wert(await nimmHeraus(a, tA, lina));
+    const nachher = await ladeLinkAnsicht(token);
+    assert.ok(nachher.gueltig);
+    assert.deepEqual([nachher.teams, nachher.termine.map((x) => x.id), (nachher as unknown as { team: string }).team], [[B], [inB], B], "ein Team: `team` ist sein Name");
+    assert.deepEqual((await aboFeed(abo)).termine!.map((x) => x.id), [inB]);
+    assert.deepEqual(await roh(inA, "abmelden"), { status: "abgewiesen", grund: "gilt_nicht" });
+    assert.deepEqual(await roh(spielA, "melden"), { status: "abgewiesen", grund: "gilt_nicht" });
+    assert.deepEqual(await meldeUeberLink(token, { terminId: inA, abgemeldet: true, gesehen }), { ok: false, giltNicht: true, error: ABMELDUNG_TEXT.giltNicht });
+    assert.deepEqual(await meldeSpielUeberLink(token, { terminId: spielA, angemeldet: true, gesehen: { datum: tagCh(3), beginn: "10:00" } }), { ok: false, giltNicht: true, error: MELDUNG_TEXT.giltNicht });
+    // Im Team B geht Abmelden weiter.
+    assert.equal((await meldeUeberLink(token, { terminId: inB, abgemeldet: true, gesehen })).ok, true);
+
+    // Feedback mit Team: nicht «ohne Team».
+    const weg = rpcWeg({
+      supabase: feldAnon,
+      rolle: "spielervertretung",
+      seiteFest: "/abmelden/[privater Link]",
+      rpc: { beginnen: "feedback_link_beginnen", zaehlen: "feedback_link_zaehlen", vermerken: "feedback_link_vermerken", ablegen: "feedback_link_ablegen" },
+      args: { p_token: token },
+    });
+    const mitTeam = (await weg.beginnen()) as { status: string; ohne_team: boolean };
+    assert.deepEqual([mitTeam.status, mitTeam.ohne_team], ["ok", false]);
+
+    // Aus B genommen: ohne Team gültig und leer (AK 5), Abo gültig und leer (AK 9).
+    wert(await nimmHeraus(a, tB, lina));
+    const ohne = await ladeLinkAnsicht(token);
+    assert.ok(ohne.gueltig);
+    assert.deepEqual([ohne.teams, ohne.termine, (ohne as unknown as { team: string }).team], [[], [], "Kern-DB"]);
+    assert.deepEqual([(await aboFeed(abo)).gueltig, (await aboFeed(abo)).termine], [true, []]);
+    const ics = await (await aboRoute(new Request("http://localhost/"), { params: Promise.resolve({ datei: `${abo}.ics` }) })).text();
+    assert.ok(ics.includes(`X-WR-CALNAME:${ABO_KALENDER_NAME}`) && !ics.includes("BEGIN:VEVENT"), "gültiger, leerer Feed");
+    assert.deepEqual(await roh(inB, "abmelden"), { status: "abgewiesen", grund: "gilt_nicht" });
+
+    // Feedback ohne Team (AK 18, 19; PC 6): gültig, `ohne_team` beim Beginnen und Zählen, gespeichert ohne Team, Spieler:in und Link.
+    const b0 = (await weg.beginnen()) as { status: string; dialog: string; ohne_team: boolean };
+    assert.deepEqual([b0.status, b0.ohne_team], ["ok", true]);
+    const z = (await weg.zaehlen(b0.dialog)) as { status: string; nachricht: number; ohne_team: boolean };
+    assert.deepEqual([z.status, z.nachricht, z.ohne_team], ["ok", 1, true]);
+    assert.equal(await weg.vermerken(b0.dialog), true);
+    const titel = `Kern-DB Feedback ohne Team ${randomUUID()}`;
+    const abgelegt = await weg.ablegen(b0.dialog, {
+      einordnung: "frage",
+      titel,
+      punkte: [{ bezeichnung: "Frage", text: "Wann gibt es Termine?" }],
+      verlauf: [{ von: "person", text: "Wann gibt es Termine?" }, { von: "ki", text: "Sobald Lina einem Team zugeordnet ist." }],
+      seite: "/abmelden/[privater Link]",
+      version: "kern-db",
+      umgebung: "test",
+      geraet: "kern-db",
+    });
+    assert.deepEqual(abgelegt, { status: "ok" });
+    const zeile = (await admin.from("feedback").select("*").eq("titel", titel).single()).data!;
+    try {
+      assert.deepEqual([zeile.rolle, zeile.team_id, zeile.user_id], ["spielervertretung", null, null]);
+      assert.ok(!JSON.stringify(zeile).includes(token) && !JSON.stringify(zeile).includes(lina), "weder Link noch Spieler:in");
+    } finally {
+      await admin.from("feedback").delete().eq("id", zeile.id);
+    }
+    // Ein erneuerter (hier: unbekannter) Link gilt nicht.
+    const ungueltig = rpcWeg({ supabase: feldAnon, rolle: "spielervertretung", rpc: { beginnen: "feedback_link_beginnen", zaehlen: "feedback_link_zaehlen", vermerken: "feedback_link_vermerken", ablegen: "feedback_link_ablegen" }, args: { p_token: "0".repeat(64) } });
+    assert.deepEqual(await ungueltig.beginnen(), { status: "ungueltig" });
   });
 
   await pruefe("Lesepfade über die Zuordnung: Spielerliste, Anzahl, Termin, Spiel und Schnuppern über team_spieler, nicht über spieler.team_id (#577; #579)", async () => {
