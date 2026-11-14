@@ -250,7 +250,8 @@ export const MELDUNG_TEXT = {
   /** Die Abweisungen — an Oberfläche, Link und KI wortgleich (AK 17, 24). */
   begonnen: "Das Spiel hat begonnen. Gemeldet wird nur bis zum Anpfiff.",
   ausgefallen: "Das Spiel fällt aus. Für es lässt sich niemand an- oder abmelden.",
-  giltNicht: "Dieses Spiel gilt nicht mehr für diese Spieler:in. Sieh dir die Termine noch einmal an.",
+  giltNicht:
+    "Dieses Spiel gilt nicht mehr für diese Spieler:in: Sie ist nicht mehr im Team des Spiels oder gehört keinem seiner Kader mehr. Sieh dir die Termine noch einmal an.",
   fristAbgelaufen: "Die Meldefrist ist abgelaufen. Für eine Änderung wende dich an das Team.",
   nichtGefunden: "Dieses Spiel oder diese Spieler:in gibt es nicht mehr. Sieh dir den Trainingsplan noch einmal an.",
   /** #464 AK 4: an Oberfläche, Link und KI wortgleich. */

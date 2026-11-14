@@ -17,8 +17,14 @@ import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import type { LinkTermin } from "@/lib/privater-link";
 import {
   LINK_EINGRENZUNG,
+  LINK_GILT_NICHT_TITEL,
+  LINK_KEINE_TERMINE_TITEL,
   linkEingrenzungLeer,
   linkEingrenzungStand,
+  linkGiltNichtText,
+  linkKeineTermineText,
+  linkKopfTitel,
+  linkOhneTeamEltern,
   spielerName,
   spielerzahlKurz,
   verfallenHinweis,
@@ -28,7 +34,8 @@ import { useLokalerStand } from "@/lib/use-lokaler-stand";
 import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaehler, type ProbeStand } from "@/lib/probe";
 
 /* Was die Spielervertretung über den privaten Link sieht (#436 AK 5–9): ihre
-   Spieler:in, das Team und die anstehenden Termine. Angemeldet ist der
+   Spieler:in, ihre Teams und die anstehenden Termine aller Teams — jeder
+   Termin nennt sein Team, auch bei nur einem (#583 AK 1–3). Angemeldet ist der
    Normalfall — man meldet nur ab, wenn sie nicht kann, und bis zum Beginn
    wieder an. Ein begonnener Termin bleibt bis Ende des Tages stehen,
    gesperrt; ein ausgefallener ist neutral gesperrt. Wurde ein Termin verlegt,
@@ -54,14 +61,15 @@ import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaeh
    man anmeldet (AK 4); Webadressen darin öffnen sich (AK 5). */
 export function ElternAnsicht({
   token,
-  team,
+  teams,
   spieler,
   probe,
   probeInfo,
   termine,
 }: {
   token: string;
-  team: string;
+  /** Die Teams der Spieler:in, alphabetisch, auch ohne Termine; leer ohne Team. */
+  teams: string[];
   spieler: { vorname: string; nachname: string };
   /** Im Probe-Modus ihr Stand, sonst `null`. */
   probe: ProbeStand | null;
@@ -75,9 +83,15 @@ export function ElternAnsicht({
   const meldungen = useLokalerStand<Meldung>(termine);
   const pending = abmeldungen.pending || meldungen.pending;
   const [fehler, setFehler] = useState<{ terminId: string; text: string } | null>(null);
+  // Gilt der Termin nicht mehr für die Spieler:in (#583 AK 7), zeigt die neu
+  // geladene Liste ihn nicht mehr: Die Meldung hält Art und Tag selbst fest und
+  // bleibt stehen, bis neu gemeldet wird.
+  const [giltNicht, setGiltNicht] = useState<{ art: LinkTermin["art"]; datum: string } | null>(null);
   // Ein inzwischen erneuerter Link: Die Seite lädt neu und sagt es.
-  const zeigeFehler = (terminId: string) => (r: { ungueltig: true } | { ungueltig?: false; error: string }) => {
-    if (!r.ungueltig) setFehler({ terminId, text: r.error });
+  const zeigeFehler = (t: LinkTermin) => (r: { ungueltig: true } | { ungueltig?: false; giltNicht?: boolean; error: string }) => {
+    if (r.ungueltig) return;
+    if (r.giltNicht) setGiltNicht({ art: t.art, datum: t.datum });
+    else setFehler({ terminId: t.id, text: r.error });
   };
 
   const name = spielerName(spieler);
@@ -115,22 +129,24 @@ export function ElternAnsicht({
 
   function umlegen(t: LinkTermin, an: boolean) {
     setFehler(null);
+    setGiltNicht(null);
     abmeldungen.aendere(
       t.id,
       !an,
       () => meldeUeberLinkAktion(token, { terminId: t.id, abgemeldet: !an, gesehen: { datum: t.datum, beginn: t.beginn } }),
-      zeigeFehler(t.id),
+      zeigeFehler(t),
     );
   }
 
   /** Ein Spiel melden (#463 AK 3): bis zur Meldefrist, sonst bis zum Anpfiff. */
   function melden(t: LinkTermin, an: boolean) {
     setFehler(null);
+    setGiltNicht(null);
     meldungen.aendere(
       t.id,
       an ? "angemeldet" : "abgemeldet",
       () => meldeSpielUeberLinkAktion(token, { terminId: t.id, angemeldet: an, gesehen: { datum: t.datum, beginn: t.beginn } }),
-      zeigeFehler(t.id),
+      zeigeFehler(t),
     );
   }
 
@@ -188,19 +204,28 @@ export function ElternAnsicht({
   return (
     <>
       <header className="flex flex-col gap-0.5 border-b border-linie px-4 pb-4 pt-6">
-        <p className="type-body-small text-on-surface-mittel">{team}</p>
         {/* Das Kalender-Abo (#507 AK 1) gleich hinter dem Namen: Es ist der
             Kalender dieser Spieler:in (PO 2026-10-24). */}
         <div className="flex items-center gap-1">
-          <h1 className="min-w-0 type-headline-small text-on-surface">{name}</h1>
+          <h1 className="min-w-0 type-headline-small text-on-surface">{linkKopfTitel(name)}</h1>
           <AboKnopf token={token} />
         </div>
+        {/* Die Teams alphabetisch, auch ohne Termine (#583 AK 3). */}
+        {teams.length > 0 && (
+          <ul aria-label="Teams" className="mt-1 flex flex-wrap gap-1">
+            {teams.map((t) => (
+              <li key={t}>
+                <Lozenge appearance="neutral">{t}</Lozenge>
+              </li>
+            ))}
+          </ul>
+        )}
         {probeLokal ? (
           <>
             <p className="type-body-medium text-on-surface-mittel">{linkProbeKopf(spieler.vorname)}</p>
             <ProbeZaehler stand={probeLokal} />
           </>
-        ) : (
+        ) : teams.length === 0 ? null : (
           <p className="type-body-medium text-on-surface-mittel">
             {name} ist für jedes Training zuerst angemeldet. Kann {spieler.vorname} nicht, melde ab - und bis zum
             Beginn wieder an. Für ein Spiel ist {spieler.vorname} erst angemeldet, wenn du anmeldest.
@@ -240,10 +265,19 @@ export function ElternAnsicht({
           </SectionMessage>
         </div>
       )}
+      {giltNicht && (
+        <div className="px-4 pt-4">
+          <SectionMessage appearance="error">
+            <strong className="block font-semibold">{LINK_GILT_NICHT_TITEL}</strong>
+            {linkGiltNichtText(giltNicht.art, giltNicht.datum, spieler.vorname)}
+          </SectionMessage>
+        </div>
+      )}
       {termine.length === 0 ? (
         <div className="px-4 py-6">
-          <Leerzustand icon={CalendarX2} titel="Keine anstehenden Termine" dicht>
-            Sobald das Team Termine plant, stehen sie hier.
+          <Leerzustand icon={CalendarX2} titel={LINK_KEINE_TERMINE_TITEL} dicht>
+            {/* Ohne Team bleibt der Link gültig (#583 AK 5). */}
+            {teams.length === 0 ? linkOhneTeamEltern(spieler.vorname) : linkKeineTermineText(spieler.vorname)}
           </Leerzustand>
         </div>
       ) : art && sichtbar.length === 0 ? (
@@ -331,6 +365,8 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
           <span className={cn("type-body-medium", gedaempft ? "text-on-surface-mittel" : "text-on-surface")}>
             {t.beginn}–{t.ende}
           </span>
+          {/* Jeder Termin nennt sein Team (#583 AK 2). */}
+          <span className="type-body-small text-on-surface-mittel">{t.team}</span>
           {/* Der Ort steht ganz und auch nach Beginn (#534 AK 1, 2); mit
               Kartenlink als Link auf einer Zeile (#533 AK 6, 10, 11; PC 5). */}
           {t.ort &&

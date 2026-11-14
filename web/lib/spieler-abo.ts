@@ -1,7 +1,7 @@
 // Das Kalender-Abo einer Spielervertretung (Epic #506): Status und Einträge.
 //
 // Das Abo folgt dem privaten Link — die Datenebene liefert dieselben Termine
-// wie er (ohne ausgefallene), hier wird daraus, wie ein Termin im
+// wie er, über alle Teams der Spieler:in (ohne ausgefallene), hier wird daraus, wie ein Termin im
 // Kalenderprogramm erscheint. Der Status steht vorn im Titel als Zeichen
 // (PO 2026-10-24): So unterscheidet die Spielervertretung zugesagt und
 // abgesagt schon in der Kalenderübersicht, in allen vier Programmen (#507
@@ -27,6 +27,7 @@ export const ABO_STATUS: Record<AboStatus, { zeichen: string; wort: string }> = 
 export type AboFeedTermin = Pick<
   LinkTermin,
   | "id"
+  | "team"
   | "datum"
   | "beginn"
   | "ende"
@@ -45,10 +46,11 @@ export type AboFeedTermin = Pick<
 >;
 
 /** `probe`: Die Spieler:in ist im Probe-Modus (#555 PC 11); fehlt bei einer
- *  Datenebene vor der Migration. */
+ *  Datenebene vor der Migration. Ohne Team ist das Abo gültig und leer
+ *  (#583 AK 9); jeder Termin nennt sein Team. */
 export type AboFeed =
   | { gueltig: false }
-  | { gueltig: true; abo: string; team: string; probe?: boolean; termine: AboFeedTermin[] };
+  | { gueltig: true; abo: string; probe?: boolean; termine: AboFeedTermin[] };
 
 /** Der Status der Spieler:in an einem Termin.
  *  - Training (#507 PC 3): angemeldet = zugesagt, abgemeldet = abgesagt;
@@ -72,7 +74,7 @@ export function aboStatus(t: AboFeedTermin, probe = false): AboStatus {
  *  bei Trainings der Treffpunkt (#561 AK 13), bei beiden der Hinweis für
  *  Eltern (#590 AK 12). Vielleicht
  *  ist vorläufig, abgesagt belegt keine Zeit. */
-export function aboEintrag(t: AboFeedTermin, team: string, probe = false): AboTermin {
+export function aboEintrag(t: AboFeedTermin, probe = false): AboTermin {
   const status = aboStatus(t, probe);
   const { zeichen, wort } = ABO_STATUS[status];
   const art = t.art === "spiel" ? (t.bezeichnung ?? "Spiel") : "Training";
@@ -83,7 +85,7 @@ export function aboEintrag(t: AboFeedTermin, team: string, probe = false): AboTe
     ende: t.ende,
     ort: t.ort,
     ortLink: t.ort_link ?? null,
-    titel: `${zeichen} ${art} · ${team}`,
+    titel: `${zeichen} ${art} · ${t.team}`,
     beschreibung: [wort, ...treffpunktAbschnitt(t, status), ...(t.hinweis_eltern ? [t.hinweis_eltern] : [])].join("\n\n"),
     status: status === "vielleicht" ? "TENTATIVE" : "CONFIRMED",
     frei: status === "abgesagt",
@@ -108,8 +110,9 @@ function treffpunktAbschnitt(t: AboFeedTermin, status: AboStatus): string[] {
   return [["Treffpunkte", ...zeilen].join("\n")];
 }
 
-/** Der Kalender heisst nach dem Team (#507 PC 6) — wie das Abo der Mitglieder. */
-export const aboKalenderName = (team: string) => `Trainings und Spiele · ${team}`;
+/** Der Kalender heisst immer gleich (#583 AK 10): Er zeigt die Termine aller
+ *  Teams der Spieler:in, jeder Eintrag trägt sein Team im Titel. */
+export const ABO_KALENDER_NAME = "Trainings und Spiele";
 
 /** Die Adresse des Feeds neben der der Mitglieder: `/api/kalender/spieler/…`. */
 export const spielerAboUrl = (origin: string, token: string) => aboUrl(origin, token, "spieler/");

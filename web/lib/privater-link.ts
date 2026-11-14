@@ -12,7 +12,7 @@ import type { ProbeStand } from "@/lib/probe";
  * — ohne Konto und ohne Sitzung. Das Geheimnis im Link ist die Berechtigung;
  * die RPCs `spieler_link_*` und `spieler_abo_holen`/`_widerrufen` (#506)
  * prüfen es als SECURITY DEFINER und geben nur heraus, was die
- * Spielervertretung sehen darf: Teamname, ihre Spieler:in, die anstehenden
+ * Spielervertretung sehen darf: die Teams der Spieler:in, ihre Spieler:in, die anstehenden
  * Termine mit der Zahl der Angemeldeten und derer, für die sie gelten (OoS 2,
  * #472), und die Abo-Adresse ihres Kalender-Abos.
  *
@@ -24,6 +24,9 @@ import type { ProbeStand } from "@/lib/probe";
 
 export type LinkTermin = {
   id: string;
+  /** Das Team des Termins (#583 AK 2): auch bei nur einem Team. Ab- und
+   *  Anmelden folgt den Regeln dieses Teams. */
+  team: string;
   /** Nur an einem Spiel (#463): ihre Meldung (null = ohne), ob sie mit einer
    *  Verlegung verfallen ist, die Meldefrist und der Zeitpunkt vorher. */
   meldung: Meldung;
@@ -88,13 +91,19 @@ export type LinkTermin = {
 export type LinkAnsicht =
   | {
       gueltig: true;
-      team: string;
+      /** Der Verein der Spieler:in (#583); die Seite nennt ihn noch nicht (Story 11). */
+      verein: string;
+      /** Die Teams der Spieler:in, alphabetisch, auch ohne Termine (AK 3);
+       *  leer ohne Team (AK 5). */
+      teams: string[];
       spieler: { vorname: string; nachname: string };
       /** Im Probe-Modus ihr Stand (#555 AK 11), sonst `null`; fehlt bei einer
        *  Datenebene vor der Migration. */
       probe?: ProbeStand | null;
       /** Das Info-Schreiben des Teams, nur im Probe-Modus (#556 AK 4). */
       probe_info?: string | null;
+      /** In der Ordnung der Datenebene: heute begonnene zuerst, dann nach
+       *  Datum, Beginn und Teamname (AK 1). Das Web sortiert nicht um. */
       termine: LinkTermin[];
     }
   | { gueltig: false };
@@ -113,10 +122,13 @@ export async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
 
 export type LinkAbmeldung = { terminId: string; abgemeldet: boolean; gesehen: { datum: string; beginn: string } };
 
+/** `giltNicht`: Der Termin gilt nicht mehr für die Spieler:in (#583 AK 7) —
+ *  die Seite hält die Meldung fest, auch wenn die neu geladene Liste ihn
+ *  nicht mehr zeigt. */
 export type LinkAbmeldeErgebnis =
   | { ok: true; abgemeldet: boolean; angemeldet: number }
   | { ok: false; ungueltig: true }
-  | { ok: false; ungueltig?: false; error: string };
+  | { ok: false; ungueltig?: false; giltNicht?: boolean; error: string };
 
 type Antwort =
   | { status: "ungueltig" }
@@ -139,7 +151,7 @@ export async function meldeUeberLink(token: string, e: LinkAbmeldung): Promise<L
   if (error || !data) return { ok: false, error: LINK_FEHLER };
   const r = data as Antwort;
   if (r.status === "ungueltig") return { ok: false, ungueltig: true };
-  if (r.status === "abgewiesen") return { ok: false, error: abweisungText(r.grund, r.stand) };
+  if (r.status === "abgewiesen") return { ok: false, giltNicht: r.grund === "gilt_nicht", error: abweisungText(r.grund, r.stand) };
   return { ok: true, abgemeldet: r.abgemeldet, angemeldet: r.stand?.angemeldet ?? 0 };
 }
 
@@ -148,7 +160,7 @@ export type LinkMeldung = { terminId: string; angemeldet: boolean; gesehen: { da
 export type LinkMeldeErgebnis =
   | { ok: true; angemeldet: boolean; zahl: number | null }
   | { ok: false; ungueltig: true }
-  | { ok: false; ungueltig?: false; error: string };
+  | { ok: false; ungueltig?: false; giltNicht?: boolean; error: string };
 
 /** Für ein Spiel über den Link an- oder abmelden (#463 AK 3, 9, 17): bis zur
  *  Meldefrist, ohne Frist bis zum Anpfiff — dieselbe Regel wie für
@@ -167,7 +179,7 @@ export async function meldeSpielUeberLink(token: string, e: LinkMeldung): Promis
   if (error || !data) return { ok: false, error: LINK_FEHLER };
   const r = data as MeldeAntwort | { status: "ungueltig" };
   if (r.status === "ungueltig") return { ok: false, ungueltig: true };
-  if (r.status === "abgewiesen") return { ok: false, error: meldungAbweisungText(r.grund, r.stand) };
+  if (r.status === "abgewiesen") return { ok: false, giltNicht: r.grund === "gilt_nicht", error: meldungAbweisungText(r.grund, r.stand) };
   return { ok: true, angemeldet: r.angemeldet, zahl: r.stand?.angemeldet ?? null };
 }
 

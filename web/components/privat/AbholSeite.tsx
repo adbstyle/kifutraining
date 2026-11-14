@@ -109,6 +109,8 @@ function Erhalt({ url, name, onWeiteres }: { url: string; name: string; onWeiter
   return (
     <div className="flex flex-col gap-4 p-4">
       <p className="type-body-medium text-on-surface-mittel">{text.wozu}</p>
+      {/* Der Link zeigt die Termine aller Teams; welche, nennt die Seite nicht (#583 AK 12). */}
+      <p className="type-body-medium text-on-surface-mittel">{text.teams}</p>
       <KopierFeld label="Privater Link" value={url} />
       <SectionMessage appearance="warning" icon={ShieldAlert}>
         {text.privat}
