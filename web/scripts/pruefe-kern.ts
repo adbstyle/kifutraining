@@ -338,7 +338,6 @@ import { liesListe, liesPositiveZahl, mitAnzahl } from "../lib/adresse";
 import {
   OHNE_TEAM_WERT,
   SPIELER_SEITE,
-  SPIELER_SUCHE_MAX,
   bereinigeEingrenzung,
   eingrenzungGesetzt,
   gleicheEingrenzung,
@@ -3153,7 +3152,13 @@ pruefe("Adress-Parameter der Spieler:innen des Vereins (#580 AK 6–10): lesen, 
   // Unbrauchbares fällt weg: keine Kennung, keine Zahl, zu kurz, zu lang, leer.
   assert.deepEqual(liesSpielerEingrenzung({ team: "nicht-uuid,,123", jahrgang: "abc,99999,12,-2016,2016.5,0999,2e3" }), { suche: "", teamIds: [], ohneTeam: false, jahrgaenge: [] });
   assert.equal(liesSpielerEingrenzung({ q: "   " }).suche, "");
-  assert.equal(liesSpielerEingrenzung({ q: "a".repeat(500) }).suche.length, SPIELER_SUCHE_MAX);
+  // Die Suche wie die Datenebene bereinigt (spieler_text_bereinigt), nicht gekappt: Im Feld steht, wonach gesucht wird.
+  assert.equal(liesSpielerEingrenzung({ q: "a".repeat(500) }).suche.length, 500, "ungekappt — länger als jeder Name trifft eben niemanden");
+  assert.equal(liesSpielerEingrenzung({ q: "😀".repeat(70) }).suche, "😀".repeat(70), "kein halbes Zeichen");
+  assert.equal(liesSpielerEingrenzung({ q: "Zoe\u0308" }).suche, "Zo\u00eb", "NFC wie die Datenebene");
+  assert.equal(liesSpielerEingrenzung({ q: "\u00a0Léa\u202f\u2009 Müller\t\u0085" }).suche, "Léa Müller", "geschützte und schmale Leerzeichen, NEL");
+  assert.equal(liesSpielerEingrenzung({ q: "\ufeffLea" }).suche, "\ufeffLea", "U+FEFF ist für die Datenebene kein Leerraum");
+  assert.equal(liesSpielerEingrenzung({ q: "50% _a\\b 'c\" d," }).suche, "50% _a\\b 'c\" d,", "Sonderzeichen bleiben, wie sie sind");
   assert.equal(liesSpielerEingrenzung({ q: ["eins", "zwei"] }).suche, "eins", "bei Wiederholung zählt der erste");
   assert.deepEqual(liesSpielerEingrenzung({ team: [ea, eb] }).teamIds, [ea, eb], "auch mehrfach in der Adresse");
   // Was es im Verein nicht gibt, fällt aus der Eingrenzung — die Seite fragt dann ohne es neu.
@@ -3202,6 +3207,13 @@ pruefe("Spieler:innen des Vereins (#580): für alle Mitglieder, Mitglieder-Form 
   // Die lesende Sicht kennt weder Aktionen noch Verwaltungsbausteine.
   const ansicht = lies("components/verein/VereinSpielerAnsicht.tsx").replace(/\/\*[\s\S]*?\*\//g, "");
   assert.ok(!/actions\/|VereinSpieler(Formular|LinkDialog|Loeschen|Liste)|OverflowMenu|Checkbox|AuswahlLeiste|"use client"/.test(ansicht), "nur lesen");
+  // Die Sicht der Mitglieder bekommt nur die Mitglieder-Form (alsMitglied), die Verwaltungssicht nur, wenn Lage und Antwort sie tragen.
+  assert.match(seite, /<VereinSpielerAnsicht \{\.\.\.mitglied\(liste, anzahl\)\}/);
+  assert.match(seite, /const m = alsMitglied\(liste\);/);
+  assert.match(seite, /verein\.istVerwaltung \? alsVerwaltung\(liste\) : null/);
+  // «ohne Team» steht als Plakette in beiden Sichten auch schmal (AK 4; #582 AK 8): Die Teams-Zelle ist nie versteckt.
+  for (const d of ["components/verein/VereinSpielerAnsicht.tsx", "components/verein/VereinSpielerListe.tsx"])
+    assert.match(lies(d), /<span className="mt-1 block min-w-0 sm:mt-0">\s*<SpielerTeams /, d);
   // Die Verwaltungsliste zeigt nur, was steht: die Auswahl leert sich mit Suche und Eingrenzung.
   assert.match(lies("components/verein/VereinSpielerListe.tsx"), /schluessel !== schluesselVorher\) \{\s*setSchluesselVorher\(schluessel\);\s*setAuswahl\(\[\]\)/);
 });

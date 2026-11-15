@@ -91,13 +91,36 @@ export type VereinSpielerliste = {
   ohneTeam: number;
 };
 
-/** Die Liste für die Vereinsverwaltung: Ihre Zeilen tragen alle drei
- *  Zusatzangaben, ihre Teams die Zahl der Zuordnungen. */
-export function alsVerwaltung(l: VereinSpielerliste): Omit<VereinSpielerliste, "spieler" | "teams"> & { spieler: VereinSpieler[]; teams: VereinTeam[] } {
+export type VereinSpielerlisteVerwaltung = Omit<VereinSpielerliste, "spieler" | "teams"> & { spieler: VereinSpieler[]; teams: VereinTeam[] };
+export type VereinSpielerlisteMitglied = Omit<VereinSpielerliste, "spieler" | "teams"> & {
+  spieler: VereinSpielerMitglied[];
+  teams: VereinTeamMitglied[];
+};
+
+const istVerwaltungsZeile = (s: VereinSpielerMitglied | VereinSpieler): s is VereinSpieler => "linkBezogen" in s;
+const istVerwaltungsTeam = (t: VereinTeamMitglied | VereinTeam): t is VereinTeam => "anzahl" in t;
+
+/** Die Liste als die der Vereinsverwaltung — nur, wenn die Datenebene sie so
+ *  geliefert hat: jede Zeile mit den drei Zusatzangaben, jedes Team mit der
+ *  Zahl der Zuordnungen. Sonst `null` (die Rolle fiel zwischen Vereinslage
+ *  und Abfrage weg); die Seite zeigt dann die Sicht der Mitglieder, statt
+ *  Zeilen still wegzulassen. */
+export function alsVerwaltung(l: VereinSpielerliste): VereinSpielerlisteVerwaltung | null {
+  if (!l.spieler.every(istVerwaltungsZeile) || !l.teams.every(istVerwaltungsTeam)) return null;
+  return { ...l, spieler: l.spieler, teams: l.teams };
+}
+
+/** Die Liste in der Form der Mitglieder (Story #580 AK 3): je Zeile genau
+ *  Kennung, Vorname, Nachname, Jahrgang und Teams, je Team Kennung und Name.
+ *  Die Seite reicht nur diese Form an die Sicht der Mitglieder weiter — auch
+ *  dann, wenn die Rolle zwischen Vereinslage und Abfrage dazukam und die
+ *  Datenebene mehr geliefert hat. */
+export function alsMitglied(l: VereinSpielerliste): VereinSpielerlisteMitglied {
+  const team = (t: VereinTeamMitglied) => ({ id: t.id, name: t.name });
   return {
     ...l,
-    spieler: l.spieler.filter((s): s is VereinSpieler => "linkBezogen" in s),
-    teams: l.teams.filter((t): t is VereinTeam => "anzahl" in t),
+    spieler: l.spieler.map((s) => ({ id: s.id, vorname: s.vorname, nachname: s.nachname, jahrgang: s.jahrgang, teams: s.teams.map(team) })),
+    teams: l.teams.map(team),
   };
 }
 
@@ -111,9 +134,13 @@ type SpielerRoh = VereinSpielerMitglied & {
 
 /**
  * Die Spieler:innen des Vereins mit Suche und Eingrenzung (Story #580): Die
- * Datenebene sucht und grenzt über den ganzen Verein ein und ordnet nach
- * Vorname, dann Nachname; hier wird nur noch nach der Ordnung der
- * Oberfläche (deutsch) nachgeordnet, nichts gekappt. `suche`: Teil von
+ * Datenebene sucht und grenzt über den ganzen Verein ein, nichts gekappt.
+ * Die Reihenfolge (AK 1: Vorname, dann Nachname) legt allein dieser Kern
+ * fest, mit derselben deutschen Ordnung wie die Spielerliste eines Teams
+ * (`nachSpielerName`) — unabhängig von der Collation der Datenbank. Bei
+ * gleichem Vor- und Nachnamen bleibt die Folge der Datenebene stehen
+ * (Jahrgang, dann Kennung; `sort` ist stabil). Weil die Daten ganz kommen,
+ * stört das weder Suche noch Anzeige in Schritten. `suche`: Teil von
  * «Vorname Nachname», ohne Gross-/Kleinschreibung und Akzente. `teamIds` und
  * `ohneTeam` gelten zusammen als ODER, `jahrgaenge` ebenso; Suche und beide
  * Eingrenzungen als UND. Unbekannte Teams treffen nie. Jede Zeile nennt
@@ -127,7 +154,8 @@ export async function ladeVereinSpielerliste(
   if (!istUuid(e.vereinId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.verein, { feld: "verein_id" });
   const { data, error } = await supabase.rpc("verein_spielerliste", {
     p_verein: e.vereinId,
-    p_suche: e.suche?.trim() || null,
+    // Die Datenebene bereinigt selbst (NFC, Leerraum); nur Leeres heisst null.
+    p_suche: e.suche || null,
     p_teams: e.teamIds?.length ? e.teamIds : null,
     p_ohne_team: e.ohneTeam ?? false,
     p_jahrgaenge: e.jahrgaenge?.length ? e.jahrgaenge : null,

@@ -1,6 +1,6 @@
 import { liesListe, liesPositiveZahl, type AdressParameter } from "@/lib/adresse";
 import { istUuid } from "@/lib/kennung";
-import { JAHRGANG_MIN, NAME_MAX } from "@/lib/spieler";
+import { JAHRGANG_MIN } from "@/lib/spieler";
 
 /* Suche und Eingrenzung der Spieler:innen des Vereins in der Adresse (Story
    #580): `?q=` die Suche, `?team=` Teams und «ohne Team» (kommagetrennt),
@@ -17,8 +17,11 @@ export const SPIELER_SEITE = 50;
 /** Der Wert in `?team=` für «Ohne Team». */
 export const OHNE_TEAM_WERT = "ohne";
 
-/** Die längste Suche: Vorname, Leerzeichen, Nachname. */
-export const SPIELER_SUCHE_MAX = 2 * NAME_MAX + 1;
+/** Der Leerraum, den `spieler_text_bereinigt` zu einem Leerzeichen macht
+ *  (`[[:space:]]` unter en_US.UTF-8 samt geschütztem und schmalem
+ *  Leerzeichen; gemessen, geprüft in `pruefe-kern-db.ts`). Nicht `\s`: Das
+ *  nähme U+FEFF dazu und liesse U+001C–U+001F und U+0085 stehen. */
+const LEERRAUM = /[\t-\r\x1c-\x20\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/g;
 
 export type SpielerEingrenzung = {
   suche: string;
@@ -30,14 +33,16 @@ export type SpielerEingrenzung = {
 /** Was die Antwort der Datenebene über den Bestand des Vereins weiss. */
 export type SpielerBestand = { teams: readonly { id: string }[]; jahrgaenge: readonly number[] };
 
-/** Die Eingrenzung aus der Adresse: Suche ohne Rand- und Mehrfach-Leerzeichen,
- *  höchstens `SPIELER_SUCHE_MAX` Zeichen; Teams nur als Kennung oder «ohne»;
+/** Die Eingrenzung aus der Adresse: die Suche so bereinigt, wie die Datenebene
+ *  sie bereinigt (NFC, Leerraum zu einem Leerzeichen, Rand weg), damit im
+ *  Suchfeld genau steht, wonach gesucht wird — ungekappt: Eine Eingabe, die
+ *  länger ist als jeder Name, trifft eben niemanden; Teams nur als Kennung oder «ohne»;
  *  Jahrgänge nur als vierstellige Zahl ab `JAHRGANG_MIN`; jeder Wert höchstens einmal. */
 export function liesSpielerEingrenzung(sp: AdressParameter): SpielerEingrenzung {
   const q = Array.isArray(sp.q) ? sp.q[0] : sp.q;
   const teams = liesListe(sp.team);
   return {
-    suche: (q ?? "").trim().replace(/\s+/g, " ").slice(0, SPIELER_SUCHE_MAX).trim(),
+    suche: (q ?? "").normalize("NFC").replace(LEERRAUM, " ").replace(/^ | $/g, ""),
     teamIds: [...new Set(teams.filter(istUuid))],
     ohneTeam: teams.includes(OHNE_TEAM_WERT),
     jahrgaenge: [...new Set(liesListe(sp.jahrgang).filter((j) => /^\d{4}$/.test(j)).map(Number))]

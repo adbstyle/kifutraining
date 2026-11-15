@@ -4,7 +4,7 @@ import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { VereinSpielerAnsicht } from "@/components/verein/VereinSpielerAnsicht";
 import { VereinSpielerListe } from "@/components/verein/VereinSpielerListe";
 import { mitAnzahl, type AdressParameter } from "@/lib/adresse";
-import { alsVerwaltung, ladeVereinSpielerliste } from "@/lib/kern/verein";
+import { alsMitglied, alsVerwaltung, ladeVereinSpielerliste } from "@/lib/kern/verein";
 import { getMeinVereinOderWurf } from "@/lib/queries/verein";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -13,6 +13,7 @@ import {
   liesSpielerAnzahl,
   liesSpielerEingrenzung,
   SPIELER_SEITE,
+  type SpielerEingrenzung,
 } from "@/lib/verein-spielerliste";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +28,9 @@ const PFAD = "/verein/spieler";
    laufen auf dem Server über den ganzen Verein; hier wird nur eine Seite
    davon gezeigt. Die Rolle prüft die Datenebene (`verein_spielerliste` liefert
    Mitgliedern die Verwaltungsangaben gar nicht), die Wahl der Sicht hier
-   ist nur die Darstellung, nicht die Sperre. */
+   ist nur die Darstellung, nicht die Sperre: Die Verwaltungssicht kommt nur,
+   wenn Vereinslage UND Antwort sie tragen; die Sicht der Mitglieder bekommt
+   immer nur die vier Angaben (`alsMitglied`). */
 export default async function VereinSpielerPage({ searchParams }: { searchParams: Promise<AdressParameter> }) {
   const sp = await searchParams;
   const supabase = await createClient();
@@ -39,23 +42,24 @@ export default async function VereinSpielerPage({ searchParams }: { searchParams
   const verein = await getMeinVereinOderWurf();
   if (!verein) redirect("/teams");
 
-  const laden = (e: ReturnType<typeof liesSpielerEingrenzung>) =>
-    ladeVereinSpielerliste(supabase, user.id, { vereinId: verein.id, suche: e.suche, teamIds: e.teamIds, ohneTeam: e.ohneTeam, jahrgaenge: e.jahrgaenge });
+  const holen = async (e: SpielerEingrenzung) => {
+    const r = await ladeVereinSpielerliste(supabase, user.id, { vereinId: verein.id, ...e });
+    // Die Mitgliedschaft fiel zwischen Vereinslage und Abfrage weg: wie ohne Verein.
+    if (!r.ok && r.art === "nicht_gefunden") redirect("/teams");
+    if (!r.ok) throw new Error(r.meldung);
+    return r.wert;
+  };
 
   let eingrenzung = liesSpielerEingrenzung(sp);
-  let r = await laden(eingrenzung);
-  // Die Mitgliedschaft fiel zwischen Vereinslage und Abfrage weg: wie ohne Verein.
-  if (!r.ok && r.art === "nicht_gefunden") redirect("/teams");
-  if (!r.ok) throw new Error(r.meldung);
+  let liste = await holen(eingrenzung);
   // Teams und Jahrgänge, die es im Verein nicht gibt, träfen nie: Sie fallen
-  // aus der Eingrenzung, und die Liste wird ohne sie neu geholt.
-  const sauber = bereinigeEingrenzung(eingrenzung, r.wert);
+  // aus der Eingrenzung, und die Liste wird ohne sie genau einmal neu geholt
+  // (keine Schleife; ein Team, das gerade erst wegfiel, trifft dann eben nie).
+  const sauber = bereinigeEingrenzung(eingrenzung, liste);
   if (!gleicheEingrenzung(eingrenzung, sauber)) {
     eingrenzung = sauber;
-    r = await laden(eingrenzung);
-    if (!r.ok) throw new Error(r.meldung);
+    liste = await holen(eingrenzung);
   }
-  const liste = r.wert;
 
   const anzahl = liesSpielerAnzahl(sp);
   const treffer = liste.spieler.length;
@@ -75,12 +79,15 @@ export default async function VereinSpielerPage({ searchParams }: { searchParams
           {...gemeinsam}
         />
       ) : (
-        <VereinSpielerAnsicht
-          spieler={liste.spieler.slice(0, anzahl)}
-          teams={liste.teams}
-          {...gemeinsam}
-        />
+        <VereinSpielerAnsicht {...mitglied(liste, anzahl)} {...gemeinsam} />
       )}
     </Seitenrahmen>
   );
+}
+
+/** Die Sicht der Mitglieder: eine Seite der Zeilen und die Teams, beides nur
+ *  in der Form der Mitglieder. */
+function mitglied(liste: Parameters<typeof alsMitglied>[0], anzahl: number) {
+  const m = alsMitglied(liste);
+  return { spieler: m.spieler.slice(0, anzahl), teams: m.teams };
 }
