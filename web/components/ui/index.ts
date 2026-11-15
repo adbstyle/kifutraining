@@ -25,6 +25,7 @@ export { Feldgruppe } from "./Feldgruppe";
 export { ExternerLink } from "./ExternerLink";
 export { Leerzustand } from "./Leerzustand";
 export { SectionMessage } from "./SectionMessage";
+export { BestandAnzeige } from "./BestandAnzeige";
 export { UebungsBild } from "./UebungsBild";
 export { FieldPlaceholder } from "./FieldPlaceholder";
 export { ExerciseCard } from "./ExerciseCard";

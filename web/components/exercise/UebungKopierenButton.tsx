@@ -1,10 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Copy } from "lucide-react";
 import { IconButton, Tooltip } from "@/components/ui";
-import { useSnackbar } from "@/components/layout/SnackbarKontext";
+import { useBestandStufe } from "@/components/konto/BestandStufe";
 import { kopiereUebung } from "@/lib/actions/exercises";
 
 /**
@@ -31,25 +30,31 @@ export function UebungKopierenButton({
   name: string;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const melde = useSnackbar();
-
-  function kopieren() {
-    startTransition(async () => {
+  // Für ein Konto ohne Verein erst der frisch gelesene Stand (#588); sonst wie bisher ein Klick.
+  const { starte, laeuft, dialog } = useBestandStufe({
+    art: "uebungen",
+    titel: "Übung kopieren",
+    aktion: "Kopieren",
+    hinweis: "Die Kopie ist ein privater Entwurf in deinem Bestand.",
+    ausfuehren: async () => {
       const res = await kopiereUebung(exerciseId);
-      if (res.ok) router.push(`/uebung/${res.slug}?kopiert=1`);
-      else melde(res.error);
-    });
-  }
+      if (!res.ok) return res.error;
+      router.push(`/uebung/${res.slug}?kopiert=1`);
+      return null;
+    },
+  });
 
   return (
-    <Tooltip label="Kopieren">
-      <IconButton
-        icon={Copy}
-        label={`„${name}" in meinen Bestand kopieren`}
-        disabled={pending}
-        onClick={kopieren}
-      />
-    </Tooltip>
+    <>
+      <Tooltip label="Kopieren">
+        <IconButton
+          icon={Copy}
+          label={`„${name}" in meinen Bestand kopieren`}
+          disabled={laeuft}
+          onClick={starte}
+        />
+      </Tooltip>
+      {dialog}
+    </>
   );
 }

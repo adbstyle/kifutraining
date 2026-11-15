@@ -24,6 +24,7 @@ import {
 } from "@/components/ui";
 import { datumKurz } from "@/lib/zeit";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
+import { useBestandStufe } from "@/components/konto/BestandStufe";
 import {
   SichtbarkeitDialoge,
   type SichtbarkeitSchritt,
@@ -137,13 +138,30 @@ export function TrainingAktionen({
   }
 
   /** Übernehmen ohne eigenes Team: Es gibt nur ein mögliches Ziel, und eine
-   *  Wahl mit einer Option ist bloss ein Klick mehr (AK 11). */
+   *  Wahl mit einer Option ist bloss ein Klick mehr (AK 11). Ohne Team heisst
+   *  auch: kein Verein durch ein Team — dann geht der frisch gelesene Stand
+   *  voraus (#588); ein Konto in der Verwaltung ohne Team übernimmt wie bisher
+   *  mit einem Klick. */
+  const uebernehmenStufe = useBestandStufe({
+    art: "trainings",
+    titel: "Training übernehmen",
+    aktion: "Übernehmen",
+    hinweis: "Die Kopie ist ein privater Entwurf in deinem Bestand.",
+    ausfuehren: async () => {
+      const res = await uebernimmTraining(trainingId, { art: "persoenlich" });
+      if (!res.ok) return res.error;
+      // PO-Entscheid Übungswelten-Epic: nach der Übernahme direkt zur Kopie.
+      router.push(`/training/${res.trainingId}?uebernommen=1`);
+      return null;
+    },
+  });
+
   function uebernehmenStarten() {
     if (teams.length > 0) {
       setZielWahl("uebernehmen");
       return;
     }
-    uebernehmenJetzt({ art: "persoenlich" });
+    uebernehmenStufe.starte();
   }
 
   function uebernehmenJetzt(wahl: KopieZielWahl) {
@@ -303,7 +321,7 @@ export function TrainingAktionen({
         {hatUeberlauf(rechte) && (
           <OverflowMenu
             label={`Weitere Aktionen zu „${name}"`}
-            disabled={pending}
+            disabled={pending || uebernehmenStufe.laeuft}
             items={eintraege}
           />
         )}
@@ -323,6 +341,8 @@ export function TrainingAktionen({
           onAufEntwurf={aufEntwurfJetzt}
         />
       )}
+
+      {uebernehmenStufe.dialog}
 
       {(rechte.uebernehmen || rechte.insTeamStellen) && (
         <TrainingZielDialog

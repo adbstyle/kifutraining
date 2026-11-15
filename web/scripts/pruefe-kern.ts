@@ -372,6 +372,8 @@ import {
   bestandSatz,
   bestandText,
   bestandVollMeldung,
+  NICHTS_MEHR_FREI,
+  istKontoGrenzeMeldung,
   istVoll,
   kontoGrenzeAusFehler,
   kontoGrenzeMeldung,
@@ -4755,11 +4757,16 @@ pruefe("Konto ohne Verein (#588 AK 5): Texte der Anzeige in jeder Lage — unter
   assert.equal(bestandText("uebungen", u(0)), "0 von 50 Übungen");
   assert.equal(bestandText("uebungen", u(12)), "12 von 50 Übungen");
   assert.equal(bestandText("uebungen", u(49)), "49 von 50 Übungen");
-  assert.equal(bestandText("uebungen", u(50)), "50 von 50 Übungen · nichts mehr frei");
-  assert.equal(bestandText("uebungen", u(62)), "62 Übungen (höchstens 50) · nichts mehr frei", "nie ein negativer Rest");
+  assert.equal(bestandText("uebungen", u(50)), "50 von 50 Übungen");
+  assert.equal(bestandText("uebungen", u(62)), "62 Übungen (höchstens 50)", "nie ein negativer Rest");
   assert.equal(bestandText("trainings", t(29)), "29 von 30 Trainings");
-  assert.equal(bestandText("trainings", t(30)), "30 von 30 Trainings · nichts mehr frei");
-  assert.equal(bestandText("trainings", t(31)), "31 Trainings (höchstens 30) · nichts mehr frei");
+  assert.equal(bestandText("trainings", t(30)), "30 von 30 Trainings");
+  assert.equal(bestandText("trainings", t(31)), "31 Trainings (höchstens 30)");
+  assert.equal(NICHTS_MEHR_FREI, "Nichts mehr frei");
+  // Der Satz der Abweisung ist erkennbar, auch nachdem eine Action nur den Text zurückgab.
+  assert.ok(istKontoGrenzeMeldung(kontoGrenzeText("uebungen", 50)));
+  assert.ok(istKontoGrenzeMeldung(kontoGrenzeText("trainings", 31)));
+  assert.ok(!istKontoGrenzeMeldung("Das liess sich nicht speichern. Bitte versuche es noch einmal."));
   assert.equal(bestandSatz("uebungen", u(12)), "Du besitzt 12 von 50 Übungen.");
   assert.equal(bestandSatz("trainings", t(31)), "Du besitzt 31 Trainings, höchstens 30 sind erlaubt.");
   // Die Meldung an der Grenze, bevor Angaben gemacht werden: Board-Wortlaut, Link zur eigenen Übersicht.
@@ -4817,6 +4824,104 @@ pruefe("Konto ohne Verein (#588): ein Weg für den Satz, die Hinweise im Kern, Z
   // Die Schreibweise der Grenze steht in einer Datei: keine zweite 50/30 in den Werkzeugtexten.
   for (const d of ["lib/mcp/werkzeuge/uebungen-bearbeiten.ts", "lib/mcp/werkzeuge/trainings.ts", "lib/mcp/werkzeuge/trainings-bestand.ts"])
     assert.ok(!/höchstens (50|30) /.test(lies(d)), `${d}: Grenzen nur über konto-grenzen.ts`);
+});
+
+pruefe("Konto ohne Verein (#588 AK 5, PC 3): Anzeige nur ohne Verein und aus der Datenebene, nie hart verdrahtet, nie im Layout", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Kein hartes 50/30 in den Bausteinen der Anzeige: Die Zahl kommt aus `grenzen`, die Sätze aus lib/konto-grenzen.ts.
+  for (const d of ["components/ui/BestandAnzeige.tsx", "components/konto/BestandStufe.tsx", "lib/actions/konto-bestand.ts"])
+    assert.ok(!/\b(50|30)\b/.test(lies(d).replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "")), `${d}: keine feste Grenze im Code`);
+  // Die Übersichten zeigen den Stand nur in «Meine …» und lesen ihn von der Datenebene, nicht aus der Liste.
+  assert.match(lies("app/(app)/page.tsx"), /const grenzen = filters\.mine \? await getMeineGrenzen\(\) : null;/);
+  assert.match(lies("app/(app)/page.tsx"), /\{grenzen && <BestandAnzeige art="uebungen" grenze=\{grenzen\.uebungen\}/);
+  assert.match(lies("app/(app)/trainings/page.tsx"), /const grenzen = mine \? await getMeineGrenzen\(\) : null;/);
+  assert.match(lies("app/(app)/trainings/page.tsx"), /\{grenzen && <BestandAnzeige art="trainings" grenze=\{grenzen\.trainings\}/);
+  // Anlegen: Meldung statt der Maske erst an der Grenze (`istVoll`, auch darüber), darunter die Zeile; ohne `grenzen` nichts.
+  assert.match(lies("app/(app)/neu/page.tsx"), /const voll = grenzen !== null && istVoll\(grenzen\.uebungen\);/);
+  assert.match(lies("app/(app)/neu/page.tsx"), /\{grenzen && voll \? \(\s*<BestandAnzeige art="uebungen" grenze=\{grenzen\.uebungen\} variante="meldung" \/>/);
+  assert.match(lies("app/(app)/training/neu/page.tsx"), /const voll = grenzen !== null && istVoll\(grenzen\.trainings\);/);
+  assert.match(lies("app/(app)/training/neu/page.tsx"), /\{grenzen && voll \? \(\s*<BestandAnzeige art="trainings" grenze=\{grenzen\.trainings\} variante="meldung" \/>/);
+  // Die Zähler stehen in der Seite, nie im Layout: Das Layout rendert bei Navigation im Client nicht neu und zeigte einen
+  // Stand von gestern; eine Anzeige, die nie sperrt, darf veralten, eine Seite soll es nicht.
+  for (const datei of quelldateien(join(web, "components/layout")))
+    assert.ok(!/konto-grenzen|getMeineGrenzen|BestandAnzeige/.test(readFileSync(datei, "utf8")), relative(web, datei));
+  // Die Vereinslage liest je Anfrage (React-`cache`), nie über Anfragen hinweg.
+  assert.ok(!/unstable_cache|revalidate\s*=/.test(lies("lib/queries/verein.ts")), "kein Zwischenspeicher über Anfragen");
+  assert.match(lies("lib/queries/verein.ts"), /grenzen: v \? null : grenzen/, "mit Verein nie eine Anzeige");
+  // Die Seiten rendern je Aufruf frisch.
+  for (const d of ["app/(app)/page.tsx", "app/(app)/trainings/page.tsx", "app/(app)/neu/page.tsx", "app/(app)/training/neu/page.tsx"])
+    assert.match(lies(d), /export const dynamic = "force-dynamic";/, d);
+});
+
+pruefe("Konto ohne Verein (#588 AK 5, 6): die Stufe vor Kopieren, Übernehmen und «In die Bibliothek» — frischer Stand, ein Klick mit Verein, bleibende Meldung, gesperrt während der Anfrage", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Alle vier Einstiege gehen über die Stufe; keiner startet seine Aktion mehr ohne sie.
+  for (const [d, art] of [
+    ["components/exercise/UebungKopierenButton.tsx", "uebungen"],
+    ["components/exercise/OwnerActions.tsx", "uebungen"],
+    ["components/training/InBibliothekButton.tsx", "uebungen"],
+    ["components/training/TrainingAktionen.tsx", "trainings"],
+  ] as const) {
+    const t = lies(d);
+    assert.match(t, new RegExp(`useBestandStufe\\(\\{\\s*art: "${art}"`), d);
+    assert.match(t, /\.dialog\b|\{(dialog|kopierDialog)\}/, `${d} zeigt die Stufe`);
+  }
+  assert.ok(!/useTransition/.test(lies("components/exercise/UebungKopierenButton.tsx")));
+  assert.ok(!/useTransition/.test(lies("components/training/InBibliothekButton.tsx")));
+  assert.ok(!/useTransition/.test(lies("components/exercise/OwnerActions.tsx")));
+  // Nur ein Weg zur Aktion: im Dialog und im direkten Pfad dieselbe `ausfuehren`.
+  const stufe = lies("components/konto/BestandStufe.tsx");
+  assert.match(stufe, /ladeBestandAktion\(art\)/, "der Stand wird frisch gelesen, nicht von der Seite übernommen");
+  assert.match(stufe, /stand\.grenze === null\)\s*\{[\s\S]*?ausfuehrenGesichert\(nr, false\)/, "mit Verein sofort, wie bisher");
+  assert.match(stufe, /if \(imDialog \|\| istKontoGrenzeMeldung\(fehler\)\) setOffen/, "die Abweisung bleibt stehen, anderes meldet die Snackbar");
+  assert.match(stufe, /else melde\(fehler\);/);
+  // Gesperrt: laufende Anfrage sperrt Schliessen und Escape, ein zweiter Klick startet keine zweite Anfrage.
+  assert.match(stufe, /function schliessen\(\) \{\s*if \(belegt\.current && offen\) return;\s*lauf\.current\+\+;/);
+  assert.match(stufe, /function starte\(\) \{\s*if \(belegt\.current \|\| offen\) return;/);
+  assert.match(stufe, /disabled=\{laeuft\}/);
+  assert.match(stufe, /if \(nr !== lauf\.current\) return;/, "überholte Antworten werden verworfen");
+  // An der Grenze nur «Schliessen» (frisch gelesener Stand), nach einer Abweisung der Datenebene ein zweiter Versuch.
+  assert.match(stufe, /const voll = grenze !== null && istVoll\(grenze\) && offen\?\.fehler == null;/);
+  assert.match(stufe, /voll \? \(\s*<Button type="button" variant="outlined" onClick=\{schliessen\}>\s*Schliessen/);
+  // Die Action liest nur, prüft ihre Eingabe und gehört dem angemeldeten Konto.
+  const aktion = lies("lib/actions/konto-bestand.ts");
+  assert.match(aktion, /art !== "uebungen" && art !== "trainings"/);
+  assert.match(aktion, /angemeldet\(\)/);
+  assert.ok(!/\.insert\(|\.update\(|\.delete\(|\.rpc\(/.test(aktion), "nur lesen");
+});
+
+pruefe("Konto ohne Verein (#588 PC 2): Wer die Zugehörigkeit oder den Bestand ändert, lädt die Ansichten neu — Anlegen, Kopieren, Löschen, Aufnahme, Austritt, Auflösen, Verein löschen", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  /** Der Rumpf einer exportierten Funktion bis zur nächsten. */
+  const rumpf = (text: string, name: string): string => {
+    const i = text.search(new RegExp(`export async function ${name}\\b`));
+    assert.ok(i >= 0, `${name} nicht gefunden`);
+    const rest = text.slice(i + 1);
+    const j = rest.search(/\n(?:\/\*\*|export )/);
+    return j < 0 ? rest : rest.slice(0, j);
+  };
+  // Wer den Bestand ändert, verwirft die Liste, die ihn zeigt.
+  const exercises = lies("lib/actions/exercises.ts");
+  for (const name of ["createExercise", "kopiereUebung", "deleteExercise"]) assert.match(rumpf(exercises, name), /revalidateLists\(\)/, name);
+  assert.match(rumpf(lies("lib/actions/fassung.ts"), "kopiereInBibliothek"), /revalidatePath\("\/"\)/);
+  const trainings = lies("lib/actions/trainings.ts");
+  for (const name of ["createTraining", "deleteTraining"]) assert.match(rumpf(trainings, name), /revalidatePath\("\/trainings"\)/, name);
+  assert.match(rumpf(lies("lib/actions/team-trainings.ts"), "uebernimmTraining"), /revalidatePath\("\/trainings"\)/);
+  // Wer die eigene Zugehörigkeit ändert, rendert das Wurzel-Layout neu (Leiste, Wechsler) und verwirft den Router-Cache,
+  // damit `/` und `/trainings` bei der nächsten Navigation den Stand ohne oder mit Grenze zeigen.
+  const verein = lies("lib/actions/verein.ts");
+  for (const name of [
+    "gruendeVereinAktion",
+    "loeseTeamAufAktion",
+    "loescheVereinAktion",
+    "nimmMichInsTeamAktion",
+    "entferneAusTeamAktion",
+    "nimmInVerwaltungAufAktion",
+    "entferneAusVerwaltungAktion",
+  ])
+    assert.match(rumpf(verein, name), /revalidiereMitgliedschaften\(\)/, name);
+  assert.match(rumpf(lies("lib/actions/teams.ts"), "entferneMitglied"), /revalidiereMitgliedschaften\(\)/, "Austritt aus dem Team");
+  assert.match(lies("lib/actions/auth.ts"), /revalidiereVerein\(\);\s*revalidiereMitgliedschaften\(\);/, "Konto löschen mit Verein");
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

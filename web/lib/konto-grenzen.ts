@@ -115,13 +115,21 @@ export function bestandKurz(g: KontoGrenze): string {
   return `${g.bestand}/${g.max}`;
 }
 
-/** Die Zeile der Übersicht und der Dialoge: «12 von 50 Übungen»; an der Grenze
- *  «50 von 50 Übungen · nichts mehr frei»; darüber «60 Übungen (höchstens 50) ·
- *  nichts mehr frei». Nie ein negativer Rest (Vorlage `spielerVonText`). */
+/** Das Wort der Plakette, sobald nichts mehr frei ist (an und über der Grenze). */
+export const NICHTS_MEHR_FREI = "Nichts mehr frei";
+
+/** Die Zeile der Übersicht und der Dialoge: «12 von 50 Übungen»; über der Grenze
+ *  (Altbestand) «62 Übungen (höchstens 50)», nie ein negativer Rest (Vorlage
+ *  `spielerVonText`). Ob nichts mehr frei ist, sagt `istVoll`. */
 export function bestandText(art: KontoArt, g: KontoGrenze): string {
-  const stand =
-    g.bestand <= g.max ? `${g.bestand} von ${g.max} ${NOMEN[art].viele}` : `${mitNomen(art, g.bestand)} (höchstens ${g.max})`;
-  return istVoll(g) ? `${stand} · nichts mehr frei` : stand;
+  return g.bestand <= g.max ? `${g.bestand} von ${g.max} ${NOMEN[art].viele}` : `${mitNomen(art, g.bestand)} (höchstens ${g.max})`;
+}
+
+/** Ist der Text einer Fehlermeldung die Abweisung der Kontogrenze? Eine Action
+ *  gibt nur den Satz zurück, und der Aufrufer zeigt ihn dann bleibend statt
+ *  flüchtig (der Satz hat drei Teile und ist für die Snackbar zu lang). */
+export function istKontoGrenzeMeldung(text: string): boolean {
+  return text.endsWith(KONTO_GRENZE_SCHLUSS);
 }
 
 /** Die Meldung an der Grenze, bevor die Person Angaben macht (AK 5): Titel,
