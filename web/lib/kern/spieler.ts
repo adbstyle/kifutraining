@@ -14,6 +14,7 @@ import {
   spielerProblem,
   verbleibendeTeams,
   type HerausnehmenLage,
+  type LinkTeam,
   type Spieler,
   type SpielerDoppelt,
   type SpielerEingabe,
@@ -21,6 +22,7 @@ import {
 } from "@/lib/spieler";
 import type { ProbeStand } from "@/lib/probe";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
+import { ladeVereinslage } from "@/lib/kern/konto";
 import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 
 /**
@@ -123,12 +125,13 @@ export function argumente(e: SpielerEingabe) {
   };
 }
 
-/** Die Spielerliste eines Teams, nach Vorname und Nachname (AK 5). */
+/** Die Spielerliste eines Teams, nach Vorname und Nachname (AK 5), mit dem
+ *  Verein des Teams (#589 AK 1: der der Person, siehe `ladeVereinslage`). */
 export async function ladeSpielerliste(
   supabase: SupabaseClient,
   _userId: string,
   e: { teamId: string },
-): Promise<KernErgebnis<{ team: { id: string; name: string }; spieler: Spieler[] }>> {
+): Promise<KernErgebnis<{ team: { id: string; name: string }; verein: string | null; spieler: Spieler[] }>> {
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
   // Über die Zuordnungen des Kontextteams, nicht über `spieler.team_id`:
@@ -145,7 +148,9 @@ export async function ladeSpielerliste(
   const liste = zeilen.map((z) => ({ ...ausRoh(z, e.teamId), weitereTeams: weitereVon.get(z.spieler.id) ?? [] }));
   const spieler = await mitProbeStand(supabase, e.teamId, nachSpielerName(liste));
   if (!spieler.ok) return spieler;
-  return ok({ team: team.wert, spieler: spieler.wert });
+  const verein = await ladeVereinslage(supabase);
+  if (!verein.ok) return verein;
+  return ok({ team: team.wert, verein: verein.wert?.name ?? null, spieler: spieler.wert });
 }
 
 /** Eine Spieler:in aufnehmen (AK 1, 6, 7, 14). `ersetzt`: Wie viele
@@ -202,13 +207,8 @@ export async function ladeSpielerTeams(
   return ok({ ...r, teams: [...r.teams].sort((a, b) => nachTeamname(a.name, b.name)) });
 }
 
-/** Der Name des Vereins der handelnden Person; `null`, wenn sie keinem angehört. */
-async function vereinsname(supabase: SupabaseClient): Promise<string | null> {
-  const { data } = await supabase.rpc("meine_vereinslage");
-  return (data as { verein: { name: string } | null } | null)?.verein?.name ?? null;
-}
-
-/** Die Lage für die Rückfrage des KI-Wegs: Name, Team, Verein, weitere Teams. */
+/** Die Lage für die Rückfrage des KI-Wegs: Name, Team, Verein, weitere Teams
+ *  und ob es das letzte Team der handelnden Person mit ihr ist (#589 AK 4). */
 async function herausnehmenLage(
   supabase: SupabaseClient,
   e: { teamId: string; spielerId: string },
@@ -218,14 +218,18 @@ async function herausnehmenLage(
   if (!team.ok) return team;
   const spieler = await ladeSpieler(supabase, e.teamId, e.spielerId);
   if (!spieler.ok) return spieler;
+  const verein = await ladeVereinslage(supabase);
+  if (!verein.ok) return verein;
   return ok({
     vorname: spieler.wert.vorname,
     nachname: spieler.wert.nachname,
     team: team.wert.name,
-    verein: await vereinsname(supabase),
+    verein: verein.wert?.name ?? null,
     verbleibend: verbleibendeTeams(teams.teams),
     // Ob sie in diesem Team schnuppert, nennt `spieler_teams` (eine Quelle).
     probe: teams.schnuppert,
+    // `eigen` je Team aus `spieler_teams`: kein weiteres Team der Person mit ihr.
+    letztesEigenes: !teams.teams.some((t) => t.eigen && !t.dieses),
   });
 }
 
@@ -361,6 +365,31 @@ async function linkRpc(
   const { data, error } = await supabase.rpc(name, { p_team: teamId, p_spieler: e.spielerId });
   if (error) return spielerFehler(error);
   return ok({ token: data as string, teamId, name: spielerName(person.data) });
+}
+
+/** Was der KI-Weg über den privaten Link einer Spieler:in nennt (#589 AK 9):
+ *  das Team, in dem er ihn holt (das älteste ihrer Teams, dem die handelnde
+ *  Person angehört), ihr Name und alle ihre Teams — auch die, denen die
+ *  Person nicht angehört, nur mit Namen (`spieler_teams`). Keine eigene,
+ *  keine fremde Spieler:in ausserhalb der eigenen Teams: `nicht_gefunden`
+ *  wie eine unbekannte (#589 AK 8). */
+export async function ladeLinkLage(
+  supabase: SupabaseClient,
+  userId: string,
+  e: { spielerId: string },
+): Promise<KernErgebnis<{ teamId: string; vorname: string; name: string; teams: LinkTeam[] }>> {
+  const team = await eigenesTeamVon(supabase, e.spielerId);
+  if (!team.ok) return team;
+  const spieler = await ladeSpieler(supabase, team.wert, e.spielerId);
+  if (!spieler.ok) return spieler;
+  const teams = await ladeSpielerTeams(supabase, userId, { teamId: team.wert, spielerId: e.spielerId });
+  if (!teams.ok) return teams;
+  return ok({
+    teamId: team.wert,
+    vorname: spieler.wert.vorname,
+    name: spielerName(spieler.wert),
+    teams: teams.wert.teams.map(({ name, abholbar }) => ({ name, abholbar })),
+  });
 }
 
 /** Den privaten Link einer Spieler:in holen (AK 1, 12) — das Geheimnis, nicht die Adresse. */

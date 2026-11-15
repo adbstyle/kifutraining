@@ -1,9 +1,10 @@
 import "server-only";
 import { z } from "zod";
-import { abgebildet } from "@/lib/kern/ergebnis";
+import { abgebildet, fehlschlag } from "@/lib/kern/ergebnis";
 import {
   aendereSpieler,
   eigenesTeamVon,
+  ladeLinkLage,
   erneuereAbholung,
   erneuereSpielerLink,
   holeSpielerLink,
@@ -27,6 +28,9 @@ import {
   LINK_PFAD,
   LINK_TEXT,
   NAME_MAX,
+  linkErneuernSaetze,
+  linkTeamsText,
+  type LinkTeam,
   SPIELER_MAX,
   teilnahmeStatus,
   type Teilnehmer,
@@ -43,10 +47,18 @@ import { jetztAmTrainingsort } from "@/lib/zeit";
  * «Spieler:innen» im Team-Bereich.
  */
 
+/** Kein KI-Werkzeug löscht eine Spieler:in (#589 AK 5). */
+const LOESCHEN_NUR_VERWALTUNG =
+  "Aus dem Verein löscht Spieler:innen nur die Vereinsverwaltung, in der Anwendung; kein Werkzeug löscht sie.";
+
 /** Was jede Beschreibung eines Spieler-Werkzeugs über das Modell sagt. */
 const SPIELER_MODELL =
   "Ein Team kann eine Spielerliste führen: je Spieler:in Vorname, Nachname, Jahrgang und optional die J+S-Nummer, " +
-  `höchstens ${SPIELER_MAX} je Team und ${VEREIN_SPIELER_MAX} je Verein, jedes Mitglied führt sie. Wer eine Grenze ` +
+  `höchstens ${SPIELER_MAX} je Team und ${VEREIN_SPIELER_MAX} je Verein, jedes Mitglied führt sie. Eine Spieler:in ` +
+  "gehört dem Verein und kann mehreren seiner Teams zugeordnet sein; «weitere_teams» in «spielerliste_abrufen» nennt " +
+  "die Namen ihrer übrigen Teams. Einem Team zuordnen kann sie nur die Vereinsverwaltung; über den KI-Assistenten " +
+  "nimmst du sie nur aus einem deiner Teams («spieler_aus_team_nehmen»), sie bleibt dabei im Verein. " +
+  `${LOESCHEN_NUR_VERWALTUNG} Wer eine Grenze ` +
   "erreicht, weist das Aufnehmen ab; die Meldung nennt, ob die des Teams oder die des Vereins gilt, und bestehende " +
   `Einträge bleiben unverändert. Vor- und Nachname haben je 1 bis ${NAME_MAX} Zeichen, ` +
   `der Jahrgang vier Ziffern, die J+S-Nummer höchstens ${JS_MAX} Zeichen. Dieselbe Spieler:in ist im Verein nur einmal ` +
@@ -62,8 +74,11 @@ const SPIELER_MODELL =
 export const SpielerId = kennung("Kennung einer Spieler:in («id» aus «spielerliste_abrufen»).");
 
 export const SPIELER_KENNUNG_FEHLER =
-  "Fehlerart zur Spieler-Kennung: «nicht_gefunden» - keine Spieler:in eines deiner Teams (es gibt sie nicht, sie " +
-  "wurde entfernt, oder sie gehört einem fremden Team; bewusst nicht unterscheidbar).";
+  "Fehlerart zur Spieler-Kennung: «nicht_gefunden» - keine Spieler:in eines deiner Teams: Es gibt sie nicht, sie " +
+  "gehört nur fremden Teams oder keinem Team des Vereins an, oder sie wurde aus deinen Teams genommen oder aus dem " +
+  "Verein gelöscht; bewusst nicht unterscheidbar. Über Spieler:innen ausserhalb deiner Teams erfährst du nur, was " +
+  "die Abweisung einer Doppelerfassung beim Aufnehmen oder Ändern nennt, und wer an begonnenen Terminen deiner " +
+  "Teams mit Namen steht («nicht_mehr_im_team»).";
 
 const VORNAME = z.string().describe(`Vorname, 1 bis ${NAME_MAX} Zeichen.`);
 const NACHNAME = z.string().describe(`Nachname, 1 bis ${NAME_MAX} Zeichen.`);
@@ -78,6 +93,9 @@ const SpielerAusgabe = z.object({
   js_nummer: z.string().nullable(),
   link_bezogen: z.boolean().describe("Der aktuelle private Link wurde über die Selbstabholung herausgegeben."),
   kader_ids: z.array(z.string()).describe("Die Kader, denen sie angehört («kader_abrufen» nennt die Namen)."),
+  weitere_teams: z
+    .array(z.string())
+    .describe("Die Namen ihrer übrigen Teams im Verein, auch solcher, denen du nicht angehörst; leer: nur dieses Team."),
   schnuppern: z
     .object({
       anzahl: z.number().int().nullable().describe("Die Anzahl Schnuppertrainings des Teams; null, solange keine festgelegt ist."),
@@ -95,18 +113,22 @@ export const spielerlisteAbrufen = werkzeug({
   name: "spielerliste_abrufen",
   titel: "Spielerliste eines Teams",
   beschreibung:
-    "Nennt die Spielerliste eines deiner Teams, nach Vorname und Nachname geordnet, mit Jahrgang und J+S-Nummer. " +
-    `Eine leere Liste heisst: Das Team plant mit der erwarteten Spielerzahl. ${SPIELER_MODELL} ${TEAM_KENNUNG_FEHLER}`,
+    "Nennt die Spielerliste eines deiner Teams, nach Vorname und Nachname geordnet, mit Jahrgang und J+S-Nummer, " +
+    "dazu den Verein des Teams («verein») und je Spieler:in die Namen ihrer weiteren Teams («weitere_teams», nur " +
+    "Namen). Eine leere Liste heisst: Das Team plant mit der erwarteten Spielerzahl. Die Spielerliste des ganzen " +
+    `Vereins gibt es nur in der Anwendung. ${SPIELER_MODELL} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: z.object({ team_id: TeamId }),
   ausgabe: z.object({
     team: z.object({ id: z.string(), name: z.string() }),
+    verein: z.string().nullable().describe("Der Name des Vereins, dem das Team angehört."),
     anzahl: z.number().int(),
     spieler: z.array(SpielerAusgabe),
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(await ladeSpielerliste(zugang.supabase, zugang.userId, { teamId: e.team_id }), (w) => ({
       team: w.team,
+      verein: w.verein,
       anzahl: w.spieler.length,
       spieler: w.spieler.map((s) => ({
         id: s.id,
@@ -116,6 +138,7 @@ export const spielerlisteAbrufen = werkzeug({
         js_nummer: s.jsNummer,
         link_bezogen: s.linkBezogen,
         kader_ids: s.kaderIds,
+        weitere_teams: s.weitereTeams,
         schnuppern: s.probe,
       })),
     })),
@@ -213,10 +236,14 @@ export const spielerAusTeamNehmen = werkzeug({
     "KI-Assistenten. Im Team verfallen ihre Abmeldungen, Spiel-Meldungen und Kader für noch nicht begonnene Termine; " +
     "begonnene Termine behalten sie mit Namen («nicht_mehr_im_team»), und ihre Anwesenheit lässt sich dort weiter " +
     "nachtragen. Ist es ihr letztes Team, ist sie danach keinem Team mehr zugeordnet, und nur die Vereinsverwaltung " +
-    "führt sie, ordnet sie einem Team zu oder löscht sie. Ohne «stand» ändert der Aufruf nichts: Er liefert als " +
-    "Rückfrage, was das Herausnehmen bedeutet, samt dem «stand» der Teams. Frag die Person, ob das so gewollt ist, und " +
-    "wiederhole den Aufruf dann mit diesem «stand». Hat sich die Lage inzwischen geändert (Fehlerart «konflikt»), wurde " +
-    `nichts geändert; rufe dann erneut ohne «stand» auf. ${SPIELER_MODELL} ${SPIELER_KENNUNG_FEHLER} ${TEAM_KENNUNG_FEHLER}`,
+    "führt sie, ordnet sie einem Team zu oder löscht sie. Ist es das letzte deiner Teams mit ihr, ist sie danach über " +
+    "den Assistenten nicht mehr erreichbar. Ohne «stand» ändert der Aufruf nichts: Er liefert als Rückfrage " +
+    "(Fehlerart «regel», «feld»: «stand») dieselben Sätze wie die Bestätigung in der Anwendung, beim letzten deiner " +
+    "Teams mit ihr dazu, dass sie danach über den Assistenten nicht mehr erreichbar ist, und im «hinweis» den «stand» " +
+    "der Teams. Frag die Person, ob das so gewollt ist, und wiederhole den Aufruf dann mit diesem «stand». Hat sich die " +
+    "Lage inzwischen geändert (Fehlerart «konflikt»), wurde nichts geändert; rufe dann erneut ohne «stand» auf. Ein " +
+    "Team, dem du nicht angehörst oder dem sie nicht angehört, ergibt dieselbe Auskunft wie eine unbekannte " +
+    `Spieler:in. ${SPIELER_MODELL} ${SPIELER_KENNUNG_FEHLER} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     team_id: TeamId.describe("Das Team, aus dem sie genommen wird («team.id» aus «spielerliste_abrufen»)."),
@@ -628,43 +655,58 @@ export const terminAnwesenheitSetzen = werkzeug({
 
 /** Was jede Beschreibung eines Link-Werkzeugs über das Modell sagt. */
 const LINK_MODELL =
-  "Jede Spieler:in hat einen privaten Link: Wer ihn öffnet, sieht ohne Konto den Teamnamen, Vor- und Nachnamen dieser " +
-  "Spieler:in und die anstehenden Termine des Teams, die für sie gelten (bei Terminen mit Kadern nur die ihrer Kader, samt " +
-  "dieser Kader), mit der Zahl der Angemeldeten und derer, für die er gilt, und meldet sie bis zum Beginn ab und " +
-  "wieder an. An Trainings und Spielen sieht sie den Hinweis für Eltern, nie die Bemerkung; an einem Training seinen Treffpunkt, solange sie angemeldet ist und es nicht begonnen hat. Spiele meldet sie an oder ab " +
-  "bis zur Meldefrist (ohne Frist bis zum Anpfiff) und sieht dort Bezeichnung, " +
-  "Richtwert, Meldefrist, Treffpunkte und ob die Spieler:in nicht aufgeboten ist. An einem ausgefallenen Training " +
-  "oder Spiel sieht sie den Grund des Ausfalls, ganz, und keinen Hinweis — keine Namen anderer, kein " +
-  "Training, keine Nachträge, nichts Vergangenes. Schnuppert sie, sieht sie keine Spiele, meldet die Spieler:in für " +
-  "Trainings an statt ab und das nur bis zur Anzahl Schnuppertrainings, und sieht, wie viele noch möglich sind. Über den Link holen Eltern auch ein Kalender-Abo der Termine; das " +
-  "kannst du weder holen noch einsehen noch widerrufen. KiFu verschickt den Link nicht. Gib ihn nur der " +
-  `Person weiter, die ihn verlangt, und nie in einer Gruppe. ${LINK_TEXT.warnung}`;
+  "Jede Spieler:in hat einen privaten Link, denselben für alle ihre Teams: Wer ihn öffnet, sieht ohne Konto Vor- und " +
+  "Nachnamen dieser Spieler:in, die Namen ihrer Teams und die anstehenden Termine aller ihrer Teams, die für sie " +
+  "gelten, je Termin mit seinem Team (bei Terminen mit Kadern nur die ihrer Kader, samt dieser Kader), mit der Zahl " +
+  "der Angemeldeten und derer, für die er gilt, und meldet sie bis zum Beginn ab und wieder an. An Trainings und " +
+  "Spielen sieht sie den Hinweis für Eltern, nie die Bemerkung; an einem Training seinen Treffpunkt, solange sie " +
+  "angemeldet ist und es nicht begonnen hat. Spiele meldet sie an oder ab bis zur Meldefrist (ohne Frist bis zum " +
+  "Anpfiff) und sieht dort Bezeichnung, Richtwert, Meldefrist, Treffpunkte und ob die Spieler:in nicht aufgeboten " +
+  "ist. An einem ausgefallenen Training oder Spiel sieht sie den Grund des Ausfalls, ganz, und keinen Hinweis — " +
+  "keine Namen anderer, kein Training, keine Nachträge, nichts Vergangenes. Schnuppert sie, sieht sie keine Spiele, " +
+  "meldet die Spieler:in für Trainings an statt ab und das nur bis zur Anzahl Schnuppertrainings, und sieht, wie " +
+  "viele noch möglich sind. Über den Link holen Eltern auch ein Kalender-Abo der Termine aller ihrer Teams; das " +
+  "kannst du weder holen noch einsehen noch widerrufen. Ein erneuerter Link gilt für alle ihre Teams, der bisherige " +
+  "in keinem mehr. Ist sie keinem Team mehr zugeordnet, bleibt der Link gültig und zeigt keine Termine. KiFu " +
+  "verschickt den Link nicht. Gib ihn nur der Person weiter, die ihn verlangt, und nie in einer Gruppe. " +
+  `${LINK_TEXT.warnung}`;
 
 const LinkAusgabe = z.object({
   spieler_id: z.string(),
-  team_id: z.string(),
+  team_id: z.string().describe("Das älteste ihrer Teams, dem du angehörst - dort wurde der Link geholt."),
   name: z.string(),
   url: z.string().describe("Der private Link. Ein Geheimnis: Wer ihn hat, kann diese Spieler:in für Trainings ab- und anmelden und für Spiele melden."),
+  teams: z
+    .array(z.string())
+    .describe("Die Namen aller ihrer Teams, auch solcher, denen du nicht angehörst: Der Link zeigt deren Termine und gilt für alle."),
   hinweis: z.string(),
 });
+
+/** Die Teams der Spieler:in als ein Satz (#589 AK 9) — derselbe wie im Link-Dialog. */
+const teamsSatz = (l: { vorname: string; teams: LinkTeam[] }) => linkTeamsText(l.vorname, l.teams, false) ?? "";
 
 export const spielerLinkAbrufen = werkzeug({
   name: "spieler_link_abrufen",
   titel: "Privater Link einer Spieler:in",
   beschreibung:
     "Holt den privaten Link einer Spieler:in, damit du ihn ihrer Spielervertretung (Eltern oder ihr selbst) weitergibst. " +
-    `Er bleibt derselbe, bis ihn jemand erneuert. ${LINK_MODELL} ${SPIELER_KENNUNG_FEHLER}`,
+    "Er bleibt derselbe, bis ihn jemand erneuert. «teams» nennt die Namen aller ihrer Teams; «hinweis» sagt, was der " +
+    `Link kann und dass er die Termine aller dieser Teams zeigt. ${LINK_MODELL} ${SPIELER_KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: z.object({ spieler_id: SpielerId }),
   ausgabe: LinkAusgabe,
-  ausfuehren: async (e, zugang) =>
-    abgebildet(await holeSpielerLink(zugang.supabase, zugang.userId, { spielerId: e.spieler_id }), (w) => ({
+  ausfuehren: async (e, zugang) => {
+    const lage = await ladeLinkLage(zugang.supabase, zugang.userId, { spielerId: e.spieler_id });
+    if (!lage.ok) return lage;
+    return abgebildet(await holeSpielerLink(zugang.supabase, zugang.userId, { spielerId: e.spieler_id, teamId: lage.wert.teamId }), (w) => ({
       spieler_id: e.spieler_id,
       team_id: w.teamId,
       name: w.name,
       url: zugang.url(LINK_PFAD, w.token),
-      hinweis: LINK_TEXT.warnung,
-    })),
+      teams: lage.wert.teams.map((t) => t.name),
+      hinweis: `${LINK_TEXT.warnung} ${teamsSatz(lage.wert)}`,
+    }));
+  },
 });
 
 export const spielerLinkErneuern = werkzeug({
@@ -672,27 +714,51 @@ export const spielerLinkErneuern = werkzeug({
   titel: "Privaten Link einer Spieler:in erneuern",
   beschreibung:
     "Erneuert den privaten Link einer Spieler:in und gibt den neuen zurück — etwa wenn er weitergegeben oder " +
-    `missbraucht wurde. ${LINK_TEXT.erneuern} Frag vorher nach, ob das gemeint ist. ${LINK_MODELL} ${SPIELER_KENNUNG_FEHLER}`,
+    "missbraucht wurde. Ohne «bestaetigt: true» ändert der Aufruf nichts: Er liefert als Rückfrage (Fehlerart " +
+    "«regel», «feld»: «bestaetigt»), für welche Teams der neue Link gilt und der bisherige endet, mit deren Namen. " +
+    "Frag die Person, ob das gemeint ist, und wiederhole den Aufruf dann mit «bestaetigt: true»; dann nennt «teams» " +
+    `die Namen aller ihrer Teams. ${LINK_TEXT.erneuern} ${LINK_MODELL} ${SPIELER_KENNUNG_FEHLER}`,
   nurLesen: false,
-  eingabe: z.object({ spieler_id: SpielerId }),
+  eingabe: z.object({
+    spieler_id: SpielerId,
+    bestaetigt: z.boolean().optional().describe("Erst mit «true» wird erneuert; vorher kommt die Rückfrage mit den Teams."),
+  }),
   ausgabe: LinkAusgabe,
-  ausfuehren: async (e, zugang) =>
-    abgebildet(await erneuereSpielerLink(zugang.supabase, zugang.userId, { spielerId: e.spieler_id }), (w) => ({
+  ausfuehren: async (e, zugang) => {
+    const lage = await ladeLinkLage(zugang.supabase, zugang.userId, { spielerId: e.spieler_id });
+    if (!lage.ok) return lage;
+    const l = lage.wert;
+    if (e.bestaetigt !== true)
+      return fehlschlag(
+        "regel",
+        [`Den privaten Link von ${l.name} erneuern?`, teamsSatz(l), "Der neue gilt für alle diese Teams.", ...linkErneuernSaetze(l.vorname, l.teams)]
+          .filter(Boolean)
+          .join(" "),
+        {
+          feld: "bestaetigt",
+          hinweis: "Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist. Bis dahin gilt der bisherige Link.",
+        },
+      );
+    return abgebildet(await erneuereSpielerLink(zugang.supabase, zugang.userId, { spielerId: e.spieler_id, teamId: l.teamId }), (w) => ({
       spieler_id: e.spieler_id,
       team_id: w.teamId,
       name: w.name,
       url: zugang.url(LINK_PFAD, w.token),
-      hinweis: LINK_TEXT.erneuern,
-    })),
+      teams: l.teams.map((t) => t.name),
+      hinweis: `${LINK_TEXT.erneuern} ${teamsSatz(l)}`,
+    }));
+  },
 });
 
 // ── Selbstabholung (#438) ───────────────────────────────────────────────────
 
 const ABHOL_MODELL =
-  "Mit der Selbstabholung holen Eltern den privaten Link ihrer Spieler:in selbst ab: Sie öffnen die Abholadresse des Teams " +
-  "ohne Konto und geben Vorname, Nachname und Jahrgang ein; passt die Eingabe (wie die Eindeutigkeit der Liste: Gross- " +
-  "und Kleinschreibung, Leerzeichen, Bindestrich und Apostroph-Varianten zählen nicht), erhalten sie den Link, und er " +
-  `gilt als bezogen («link_bezogen» in «spielerliste_abrufen»). Nach ${ABHOL_VERSUCHE} nicht passenden Eingaben ist die ` +
+  "Mit der Selbstabholung holen Eltern den privaten Link ihrer Spieler:in selbst ab: Sie öffnen die Abholadresse eines " +
+  "Teams ohne Konto und geben Vorname, Nachname und Jahrgang einer Spieler:in dieses Teams ein; passt die Eingabe (wie " +
+  "die Eindeutigkeit der Liste: Gross- und Kleinschreibung, Leerzeichen, Bindestrich und Apostroph-Varianten zählen " +
+  "nicht), erhalten sie ihren privaten Link - denselben, den die Abholadresse jedes ihrer Teams herausgibt -, und er " +
+  "gilt als bezogen («link_bezogen» in «spielerliste_abrufen», in allen ihren Teams). Nach " +
+  `${ABHOL_VERSUCHE} nicht passenden Eingaben ist die ` +
   `Eingabe vom selben Anschluss ${ABHOL_SPERRE_MINUTEN} Minuten gesperrt. Die Selbstabholung ist aus, bis ein Mitglied ` +
   "sie einschaltet; aus und wieder ein gilt dieselbe Adresse. Erneuern macht die bisherige für immer ungültig. Bezogene " +
   "Spieler-Links gelten in jedem Fall weiter; ein erneuerter Spieler-Link gilt wieder als nicht bezogen. KiFu verschickt " +

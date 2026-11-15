@@ -4,8 +4,13 @@
 // mit späteren Stories dazukommt (Epic #139 Übungen, Epic #190 Trainings).
 // Eine Erweiterung des Werkzeugsatzes verlangt darum keine erneute
 // Zustimmung (#142 OoS 4, PO 2026-09-23). Was hier steht, ist Zusage an den
-// Trainer; wer den Werkzeugsatz über diese Liste hinaus erweitert, muss zuerst
-// diese Liste ändern — und damit die Frage nach erneuter Zustimmung stellen.
+// Trainer; wer den Werkzeugsatz über diese Liste hinaus erweitert, ändert
+// zuerst diese Liste. Bleibt die Ergänzung im Rahmen dessen, was das Konto in
+// KiFu ohnehin darf, und beschreibt sie nur, was der Zugang über dieselben
+// Daten zusätzlich erfährt oder nicht mehr darf, verlangt sie von bestehenden
+// Zugängen keine erneute Zustimmung (Vereine: Verein und weitere Teams,
+// Herausnehmen statt Löschen; #589 PC 2). Technisch gäbe es dafür auch keinen
+// Weg: Der Grant trägt weder Scope noch Fassung dieser Liste.
 //
 // REIN: keine Server-Importe; die Produktdoku übernimmt denselben Wortlaut.
 
@@ -15,12 +20,12 @@ export const ZUGANG_DARF: readonly string[] = [
   "Trainings anlegen, überarbeiten, veröffentlichen, zurückziehen, übernehmen und löschen",
   "Team-Trainings deiner Teams führen und im Kalender deiner Teams Termine und Terminserien samt Platz, Treffpunkt, erwarteter Spielerzahl, Kadern und Mindestbesetzung sowie Spiele mit Bezeichnung, Richtwert, Meldefrist und Treffpunkten festlegen, ändern und entfernen, ihnen als Kopie Trainings aus dem Team oder deine persönlichen Trainings zuordnen und sie wieder lösen, Trainer:innen einladen, ausladen, absagen und wieder zusagen und bestimmen, wer verantwortlich ist, Ausfälle festhalten und zurücknehmen sowie die Termine eines Zeitraums abrufen",
   "die Anzeigenamen der Mitglieder deiner Teams lesen (ohne E-Mail-Adressen)",
-  "die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen und führen, Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die Anzahl Schnuppertrainings samt Info-Schreiben festlegen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link einer Spieler:in holen und erneuern, die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche Links bezogen wurden",
+  "die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer, dazu der Verein deiner Teams und die Namen weiterer Teams einer Spieler:in) einsehen und führen, Spieler:innen aus einem deiner Teams nehmen (sie bleiben im Verein), Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die Anzahl Schnuppertrainings samt Info-Schreiben festlegen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link einer Spieler:in holen und erneuern, die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche Links bezogen wurden",
 ];
 
 export const ZUGANG_DARF_NICHT: readonly string[] = [
   "deine Favoriten",
-  "die Verwaltung deiner Teams (gründen, umbenennen, Mitglieder aufnehmen oder entfernen)",
+  "die Verwaltung deiner Teams und deines Vereins (Verein gründen, umbenennen und löschen, Teams anlegen, umbenennen und auflösen, Personen in Teams oder in die Vereinsverwaltung aufnehmen oder daraus entfernen, Spieler:innen Teams zuordnen, Spieler:innen aus dem Verein löschen und Spielerlisten importieren)",
   "dein Konto selbst (Anzeigename, Passwort, Löschen)",
 ];
 
