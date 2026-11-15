@@ -53,6 +53,9 @@
 -- beiden Reihenfolgen geordnet. REGEL für künftige RPCs: keinen zählenden
 -- Insert oder Besitzwechsel nach einer Vereins-, Team- oder Terminsperre
 -- ausführen (sonst Zyklus mit der Personensperre); heute tut es keiner.
+-- REGEL (zweite): Kein DEFINER-Weg legt zählende Zeilen für ein anderes
+-- Konto als `auth.uid()` an oder überträgt ihm Besitz (der Trigger steigt bei
+-- fremdem Besitzer aus und verlässt sich auf die RLS).
 -- Ein Nutzer-Upsert auf exercises/trainings feuerte den Insert-Trigger auch
 -- für eine schon vorhandene Zeile (heute upsertet nur der Seed, ohne
 -- Besitzer).
@@ -141,7 +144,8 @@ $$;
 --   {verein: {id, name, ist_verwaltung, ist_teammitglied}, grenzen: null}      mit Verein
 --   {verein: null, grenzen: {uebungen: {bestand, max}, trainings: {bestand, max}}}   ohne Verein
 -- `bestand` kann über `max` liegen. Rumpf sonst wie in
--- 20261113100000_vereine_fundament.sql.
+-- 20261113100000_vereine_fundament.sql. Ohne nur_in_der_anwendung: der
+-- KI-Hinweis braucht sie.
 create or replace function meine_vereinslage() returns jsonb
 language plpgsql stable security definer
 set search_path = public, pg_temp

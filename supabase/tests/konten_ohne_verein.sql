@@ -19,6 +19,8 @@
 --   mit gleichem Text unabhängig vom fremden Konto (die Sperre prüft rennen.sql)
 -- - Besitzwechsel per UPDATE zählt; Updates ohne Besitzwechsel,
 --   delete_account, FK-SET-NULL, Inserts ohne Besitzer lösen nichts aus
+-- - Sammel-Insert über die Grenze: nichts eingefügt; Upsert auf eine eigene
+--   Zeile an der Grenze wird abgewiesen (dokumentiertes Verhalten)
 -- - `meine_vereinslage().grenzen` in jeder Lage (PC 3)
 -- - AK 9: ein Konto ohne Team bekommt am Team-Ort nichts, auch mit KI-Token;
 --   die Verwaltung ohne Team behält den Verein-Ort
@@ -90,7 +92,7 @@ end $$;
 create temp table ids (name text primary key, id uuid not null default gen_random_uuid());
 insert into ids (name) values ('ohne'), ('gross'), ('mitglied'), ('verw'), ('fremd'), ('aus'), ('aufl'), ('vl'),
   ('ki'), ('dienst'), ('del'), ('fk'), ('v1'), ('v2'), ('t1'), ('t2'), ('termin'), ('sp'),
-  ('tr_ohne'), ('tr_team'), ('tr_team2');
+  ('tr_ohne'), ('tr_team'), ('tr_team2'), ('sammel');
 create function pg_temp.id(p text) returns uuid language sql stable as $$ select id from ids where name = p $$;
 grant select on ids to authenticated, service_role;   -- temporär; die Rollen brauchen pg_temp.id
 
@@ -134,7 +136,7 @@ end $$;
 
 insert into auth.users (id, email, email_confirmed_at)
 select id, name || '@konten-ohne-verein.test', now() from ids
- where name in ('ohne', 'gross', 'mitglied', 'verw', 'fremd', 'aus', 'aufl', 'vl', 'ki', 'dienst', 'del', 'fk');
+ where name in ('ohne', 'gross', 'mitglied', 'verw', 'fremd', 'aus', 'aufl', 'vl', 'ki', 'dienst', 'del', 'fk', 'sammel');
 
 -- V1 mit Verwaltung «verw» (ohne Team), Team T1 (mitglied, aus) und Team T2
 -- (aufl); V2 mit «vl» als einziger Person, ohne Team.
@@ -252,6 +254,50 @@ select pg_temp.geht(pg_temp.training(pg_temp.id('gross')));
 select pg_temp.erwarte_genau(pg_temp.training(pg_temp.id('gross')), 'P0001 KONTO_TRAININGS_VOLL 30');
 select pg_temp.zurueck();
 select pg_temp.zaehlt(pg_temp.id('gross'), 50, 30, 'nach Löschen und Neuanlage');
+
+-- ── Sammel-Insert über die Grenze hinweg; Upsert an der Grenze ─────────────
+-- Eine Anweisung mit fünf Zeilen bei 48 bzw. 28: Der Trigger läuft je Zeile
+-- und sieht die schon eingefügten derselben Anweisung; die dritte trifft die
+-- Grenze, und die ganze Anweisung fällt zurück — nichts ist eingefügt.
+select pg_temp.bestand(pg_temp.id('sammel'), 48, 28);
+select pg_temp.als(pg_temp.id('sammel'));
+select pg_temp.erwarte_genau(format($q$insert into exercises (slug, name, trainingsteil, aufbau, source, owner_id, visibility)
+                                       select 'kov-s-' || gen_random_uuid(), 'Sammel', 'ausklang', 'Aufbau', 'user', %L, 'private'
+                                         from generate_series(1, 5)$q$, pg_temp.id('sammel')),
+                             'P0001 KONTO_UEBUNGEN_VOLL 50');
+select pg_temp.erwarte_genau(format($q$insert into trainings (name, owner_id, visibility, altersstufe, stufen)
+                                       select 'Sammel', %L, 'private', 'kinderfussball', array['F']
+                                         from generate_series(1, 5)$q$, pg_temp.id('sammel')),
+                             'P0001 KONTO_TRAININGS_VOLL 30');
+select pg_temp.zurueck();
+select pg_temp.zaehlt(pg_temp.id('sammel'), 48, 28, 'Sammel-Insert über die Grenze: nichts eingefügt');
+-- Dokumentiertes Verhalten: Ein Upsert auf eine bestehende eigene Zeile feuert
+-- den BEFORE-INSERT-Trigger vor der Konfliktprüfung und wird an der Grenze
+-- abgewiesen, auch wenn er nur änderte. Darum keine Upserts auf zählende
+-- Zeilen (heute upsertet nur der Seed, ohne Besitzer).
+select pg_temp.als(pg_temp.id('sammel'));
+select pg_temp.geht(pg_temp.uebung(pg_temp.id('sammel')));
+select pg_temp.geht(pg_temp.uebung(pg_temp.id('sammel')));
+select pg_temp.geht(pg_temp.training(pg_temp.id('sammel')));
+select pg_temp.geht(pg_temp.training(pg_temp.id('sammel')));
+select pg_temp.erwarte_genau(format($q$insert into exercises (id, slug, name, trainingsteil, aufbau, source, owner_id, visibility)
+                                       select id, slug, 'Upsert', trainingsteil, aufbau, source, owner_id, visibility
+                                         from exercises where owner_id = %L order by created_at, id limit 1
+                                       on conflict (id) do update set name = excluded.name$q$, pg_temp.id('sammel')),
+                             'P0001 KONTO_UEBUNGEN_VOLL 50');
+select pg_temp.erwarte_genau(format($q$insert into trainings (id, name, owner_id, visibility, altersstufe, stufen)
+                                       select id, 'Upsert', owner_id, visibility, altersstufe, stufen
+                                         from trainings where owner_id = %L order by created_at, id limit 1
+                                       on conflict (id) do update set name = excluded.name$q$, pg_temp.id('sammel')),
+                             'P0001 KONTO_TRAININGS_VOLL 30');
+select pg_temp.zurueck();
+select pg_temp.zaehlt(pg_temp.id('sammel'), 50, 30, 'Upsert an der Grenze: abgewiesen');
+do $$ begin
+  if exists (select 1 from exercises where owner_id = pg_temp.id('sammel') and name = 'Upsert')
+     or exists (select 1 from trainings where owner_id = pg_temp.id('sammel') and name = 'Upsert') then
+    raise exception 'Upsert an der Grenze hat geändert';
+  end if;
+end $$;
 
 -- ── Konto mit Verein: keine Grenze; danach gilt sie wieder (PC 2) ──────────
 select pg_temp.bestand(pg_temp.id(x), 50, 30) from unnest(array['mitglied', 'verw', 'aus', 'aufl', 'vl']) x;
