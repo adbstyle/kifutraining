@@ -39,6 +39,9 @@ export function useAdressFilter() {
     // Seite, statt eine früher aufgeklappte Länge mitzuschleppen.
     p.delete("anzahl");
     const qs = p.toString();
+    // Nichts geändert (etwa ein Leerzeichen, das die Bereinigung wieder
+    // wegnimmt): keine Navigation, also auch keine zweite Server-Abfrage.
+    if (qs === new URLSearchParams(window.location.search).toString()) return;
     router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
 
