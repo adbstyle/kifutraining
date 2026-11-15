@@ -65,18 +65,15 @@ begin
   if n > 0 then raise exception 'Doppelte Schlüssel im selben Team: %', n; end if;
   -- Keine ungeprüften Constraints an den Tabellen des Epics (andere Tabellen
   -- tragen schon vorher `not valid`-Constraints, etwa training_exercises).
-  -- Ausgenommen bis zur Validierung im letzten PR vor dem Release (Plan
-  -- Phase A, `_validieren`): die FKs aus 20261114100000_zuordnung_invarianten.sql.
+  -- Die FKs aus 20261114100000_zuordnung_invarianten.sql validiert
+  -- 20261115140000_zuordnung_invarianten_validieren.sql (Plan Phase A).
   select string_agg(conname, ', ') into x from pg_constraint
    where conrelid in ('teams'::regclass, 'spieler'::regclass, 'vereine'::regclass,
                       'verein_verwaltung'::regclass, 'team_spieler'::regclass,
                       'kader_spieler'::regclass, 'termin_abmeldungen'::regclass, 'spiel_meldungen'::regclass,
                       'termin_statuswechsel'::regclass, 'termin_eingefroren'::regclass, 'termin_kader'::regclass,
                       'spiel_treffpunkte'::regclass, 'termin_teilnahmen'::regclass, 'spiel_teilnahmen'::regclass)
-     and not convalidated
-     and conname not in ('ks_zuordnung', 'ta_zuordnung', 'sm_zuordnung', 'ta_termin_team', 'tsw_termin_team',
-                         'sm_termin_team', 'te_termin_team', 'tk_termin_team', 'stp_termin_team',
-                         'tn_eingefroren_team', 'st_eingefroren_team');
+     and not convalidated;
   if x is not null then raise exception 'Ungeprüfte Constraints: %', x; end if;
   -- Grenzen der Konten ohne Verein (Story 12): je Tabelle die zwei Trigger,
   -- aktiv (ein Sync unter replica schaltet sie nicht ab).
@@ -367,8 +364,9 @@ end $$;
 -- Story 6 (Zettel A2.6, A2.8): Am Verein-Ort bleibt die Altdublette ohne
 -- Schlüsseländerung änderbar; ändert die eine ihren Schlüssel weg und
 -- zurück, weist das ab und nennt das Team der anderen. Die eine lässt sich
--- löschen (Altbestand, `not valid`-FKs), die andere bleibt; danach weist eine
--- neue Erfassung mit deren Schlüssel ab, und der frei gewordene geht. Als
+-- löschen (Altbestand, Kaskade über die validierten FKs), die andere
+-- bleibt; danach weist eine neue Erfassung mit deren Schlüssel ab, und der
+-- frei gewordene geht. Als
 -- Verwaltung über die RPCs.
 do $$
 declare
