@@ -14,12 +14,14 @@ import {
   erkenneSpalten,
   erwartetVon,
   importErgebnisText,
+  importJsPlakette,
   importMehrfachText,
   importNeuText,
   importNichtsZuTunText,
   importUebernehmbar,
   importUeberGrenzeText,
   importZeilen,
+  importZeilenStimmen,
   leseDatei,
   zuordnungVollstaendig,
   type CsvTabelle,
@@ -87,7 +89,8 @@ export function VereinSpielerImport({
   const [veraltet, setVeraltet] = useState(false);
   const [fehler, setFehler] = useState<string | null>(null);
   const datei = useRef<HTMLInputElement>(null);
-  // Verwirft die Antwort einer Vorschau, die eine neuere schon überholt hat.
+  // Verwirft die Antwort einer Dateiwahl, Vorschau oder Übernahme, die ein
+  // neuerer Lauf schon überholt hat.
   const lauf = useRef(0);
 
   // Die Zeilen der Datei nach der Zuordnung — dieselben für Vorschau und Übernahme.
@@ -119,7 +122,12 @@ export function VereinSpielerImport({
   }
 
   async function dateiGewaehlt(f: File) {
-    const r = leseDatei(f.name, new Uint8Array(await f.arrayBuffer()));
+    // Zwei schnelle Dateiwahlen: Die spätere gewinnt, auch wenn die frühere
+    // langsamer gelesen wird.
+    const nr = ++lauf.current;
+    const bytes = new Uint8Array(await f.arrayBuffer());
+    if (nr !== lauf.current) return;
+    const r = leseDatei(f.name, bytes);
     if (!r.ok) {
       lauf.current++;
       setGeladen(null);
@@ -145,8 +153,16 @@ export function VereinSpielerImport({
 
   function uebernehmen() {
     if (!vorschau || pending || laedt) return;
+    const nr = ++lauf.current;
+    setFehler(null);
     startTransition(async () => {
       const r = await importiereInVereinAktion(vereinId, zeilen.eintraege, erwartetVon(vorschau));
+      if (nr !== lauf.current) {
+        // Überholt: nichts mehr anzeigen; was übernommen ist, zeigt die Liste.
+        if (r.ok && r.ausgang.status === "uebernommen") router.refresh();
+        return;
+      }
+      // Ein Fehler sperrt nicht: «Übernehmen» bleibt für einen zweiten Versuch.
       if (!r.ok) return setFehler(r.error);
       if (r.ausgang.status === "veraltet") {
         // Nichts übernommen: die neue Vorschau steht an Stelle der alten.
@@ -168,9 +184,12 @@ export function VereinSpielerImport({
 
   const anzahlNeu = vorschau?.neu.length ?? 0;
   const anzahlJs = vorschau?.js.length ?? 0;
-  const kann = vorschau !== null && importUebernehmbar(vorschau) && !fehler && !pending && !laedt;
+  // Der Kern prüft die Zeilennummern schon; passt eine nicht, zeigt der Dialog
+  // keine Vorschau statt einer falschen (und stürzt nicht ab).
+  const stimmig = vorschau !== null && importZeilenStimmen(vorschau, zeilen.eintraege.map((e) => e.zeile));
+  const kann = vorschau !== null && stimmig && importUebernehmbar(vorschau) && !pending && !laedt;
   const nachZeile = new Map(zeilen.eintraege.map((e) => [e.zeile, e]));
-  const eintragVon = (zeile: number) => nachZeile.get(zeile)!;
+  const eintragVon = (zeile: number): ImportEintrag | undefined => nachZeile.get(zeile);
 
   const dateiFeld = (
     <input
@@ -243,15 +262,32 @@ export function VereinSpielerImport({
           </div>
 
           {veraltet && <SectionMessage appearance="warning">{IMPORT_TEXT.veraltet}</SectionMessage>}
-          {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
-          <Spalten geladen={geladen} onZuordnen={zuordnen} />
+          {fehler && (
+            <SectionMessage
+              appearance="error"
+              actions={
+                // Die Vorschau scheiterte: ein neuer Versuch mit derselben Datei
+                // (nach einer gescheiterten Übernahme ist «Übernehmen» der Weg).
+                !vorschau && !laedt ? (
+                  <Button type="button" variant="link" onClick={() => laden(geladen)}>
+                    Erneut versuchen
+                  </Button>
+                ) : undefined
+              }
+            >
+              {fehler}
+            </SectionMessage>
+          )}
+          {vorschau && !stimmig && <SectionMessage appearance="error">{IMPORT_TEXT.unstimmig}</SectionMessage>}
+          <Spalten geladen={geladen} onZuordnen={zuordnen} gesperrt={pending} />
           {!zuordnungVollstaendig(geladen.zuordnung) ? (
             <p className="kontur rounded-flaeche border-dashed border-kante px-6 py-8 text-center">
               Sobald Vorname, Nachname und Geburtsdatum je einer Spalte zugeordnet sind, zeigt KiFu hier, wer neu
               dazukommt.
             </p>
           ) : (
-            vorschau && (
+            vorschau &&
+            stimmig && (
               <Vorschau
                 vorschau={vorschau}
                 vereinName={vereinName}
@@ -267,7 +303,16 @@ export function VereinSpielerImport({
   );
 }
 
-function Spalten({ geladen, onZuordnen }: { geladen: Geladen; onZuordnen: (a: ImportAngabe, wert: string) => void }) {
+function Spalten({
+  geladen,
+  onZuordnen,
+  gesperrt,
+}: {
+  geladen: Geladen;
+  onZuordnen: (a: ImportAngabe, wert: string) => void;
+  /** Während der Übernahme: Die Zeilen dürfen sich nicht mehr ändern. */
+  gesperrt: boolean;
+}) {
   const { tabelle, zuordnung } = geladen;
   const optionen = tabelle.kopf.map((kopf, i) => {
     const bsp = beispielVon(tabelle, i);
@@ -291,6 +336,7 @@ function Spalten({ geladen, onZuordnen }: { geladen: Geladen; onZuordnen: (a: Im
               options={pflicht ? optionen : [...optionen, { value: OHNE_JS, label: "Ohne J+S-Nummer" }]}
               value={spalte === null ? (pflicht ? "" : OHNE_JS) : String(spalte)}
               onChange={(w) => onZuordnen(angabe, w)}
+              disabled={gesperrt}
               error={fehlt}
               supportingText={fehlt ? `Ohne ${label} lässt sich niemand übernehmen.` : undefined}
             />
@@ -311,7 +357,8 @@ function Vorschau({
   vorschau: ImportVorschau;
   vereinName: string;
   hinweise: ImportHinweis[];
-  eintragVon: (zeile: number) => ImportEintrag;
+  /** Nur mit stimmiger Vorschau gerendert; eine unbekannte Zeile fiele still weg. */
+  eintragVon: (zeile: number) => ImportEintrag | undefined;
   /** Keine Zeile der Datei taugt. */
   leer: boolean;
 }) {
@@ -323,15 +370,15 @@ function Vorschau({
   ]);
   const hinweise = alle.filter((h) => h.ausgelassen || genommen.has(h.zeile));
   const ausgelassen = hinweise.filter((h) => h.ausgelassen).length;
-  const mehrfach = vorschau.mehrfach.map((m) => {
+  const mehrfach = vorschau.mehrfach.flatMap((m) => {
     const e = eintragVon(m.zeile);
-    return { zeile: m.zeile, name: spielerName(e), jahrgang: e.jahrgang, teams: m.teams };
+    return e ? [{ zeile: m.zeile, name: spielerName(e), jahrgang: e.jahrgang, teams: m.teams }] : [];
   });
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
         {vorschau.neu.length > 0 && <Lozenge appearance="information">{vorschau.neu.length} neu</Lozenge>}
-        {vorschau.js.length > 0 && <Lozenge appearance="warning">{vorschau.js.length} J+S-Nummer ändert sich</Lozenge>}
+        {vorschau.js.length > 0 && <Lozenge appearance="warning">{importJsPlakette(vorschau.js.length)}</Lozenge>}
         {vorschau.gleich.length > 0 && <Lozenge>{vorschau.gleich.length} unverändert</Lozenge>}
         {mehrfach.length > 0 && <Lozenge appearance="warning">{mehrfach.length} mehrfach im Verein geführt</Lozenge>}
         {ausgelassen > 0 && <Lozenge appearance="danger">{ausgelassen} ausgelassen</Lozenge>}
@@ -350,6 +397,7 @@ function Vorschau({
           <Tabelle spalten="sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem]" kopf={["Name", "Jahrgang", "J+S-Nr."]}>
             {vorschau.neu.map((z) => {
               const e = eintragVon(z);
+              if (!e) return null;
               return (
                 <TabellenZeile key={z}>
                   <Name e={e} zusatz={[e.jahrgang, e.jsNummer && `J+S ${e.jsNummer}`]} />
@@ -370,6 +418,7 @@ function Vorschau({
           >
             {vorschau.js.map(({ zeile, alt, teams }) => {
               const e = eintragVon(zeile);
+              if (!e) return null;
               const wechsel = `${alt ?? "–"} → ${e.jsNummer}`;
               return (
                 <TabellenZeile key={zeile}>
@@ -396,6 +445,7 @@ function Vorschau({
           <Tabelle spalten="sm:grid-cols-[minmax(0,1fr)_4.5rem_minmax(0,1fr)]" kopf={["Name", "Jahrgang", "Teams"]}>
             {mehrfach.map(({ zeile, teams }) => {
               const e = eintragVon(zeile);
+              if (!e) return null;
               return (
                 <TabellenZeile key={zeile}>
                   <Name e={e} zusatz={[e.jahrgang]} teams={teams} />
@@ -434,6 +484,7 @@ function Vorschau({
             >
               {vorschau.gleich.map(({ zeile, teams }) => {
                 const e = eintragVon(zeile);
+                if (!e) return null;
                 return (
                   <TabellenZeile key={zeile}>
                     <Name e={e} zusatz={[e.jahrgang]} teams={teams} />

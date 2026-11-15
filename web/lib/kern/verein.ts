@@ -6,6 +6,9 @@ import {
   IMPORT_TEXT,
   IMPORT_ZEILEN_MAX,
   ausgangAus,
+  importErwartetForm,
+  importZeilenForm,
+  importZeilenStimmen,
   jsAus,
   vorschauAus,
   type ImportAusgang,
@@ -696,7 +699,9 @@ export async function erneuereSpielerLinkImVerein(
 /** Die Zeilen, wie sie aus dem Browser kommen, geprüft wie beim einzelnen
  *  Erfassen und auf eine J+S-Nummer aus Ziffern (#455 AK 17, 19). Mehr als
  *  `IMPORT_ZEILEN_MAX` Zeilen weist schon der Kern ab, wie die Datenebene. */
-function importFehler(zeilen: ImportEintrag[]): KernFehler | null {
+function importFehler(zeilen: unknown): KernFehler | null {
+  // Eine Action nimmt, was ein Aufruf schickt: ohne die Form kein TypeError.
+  if (!importZeilenForm(zeilen)) return fehlschlag("eingabe", MELDUNG_WIEDERHOLEN);
   if (zeilen.length > IMPORT_ZEILEN_MAX) return fehlschlag("regel", IMPORT_TEXT.zuGross);
   // Die Zeilennummer trägt die Einordnung zwischen Vorschau und Übernahme.
   const nummern = zeilen.map((z) => z.zeile);
@@ -737,9 +742,12 @@ export async function pruefeVereinImport(
   if (!istUuid(e.vereinId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.verein, { feld: "verein_id" });
   const { data, error } = await supabase.rpc("verein_spieler_importieren", importArgumente(e.vereinId, e.zeilen));
   if (error) return vereinFehler(error);
-  // Die Form prüft `vorschauAus`; passt sie nicht, keine falsche Vorschau.
+  // Die Form prüft `vorschauAus`, die Zeilennummern `importZeilenStimmen`;
+  // passt etwas nicht, keine falsche Vorschau.
   const vorschau = (data as { status?: unknown } | null)?.status === "vorschau" ? vorschauAus(data) : null;
-  return vorschau ? ok(vorschau) : fehlschlag("technisch", IMPORT_TEXT.unstimmig, { wiederholbar: true });
+  return vorschau && importZeilenStimmen(vorschau, e.zeilen.map((z) => z.zeile))
+    ? ok(vorschau)
+    : fehlschlag("technisch", IMPORT_TEXT.unstimmig, { wiederholbar: true });
 }
 
 /** Den Import übernehmen, ganz oder gar nicht (#585 PC 4): nur, wenn die
@@ -754,12 +762,18 @@ export async function importiereInVerein(
 ): Promise<KernErgebnis<ImportAusgang>> {
   const problem = importFehler(e.zeilen);
   if (problem) return problem;
+  if (!importErwartetForm(e.erwartet)) return fehlschlag("eingabe", MELDUNG_WIEDERHOLEN);
   if (!istUuid(e.vereinId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.verein, { feld: "verein_id" });
   const { data, error } = await supabase.rpc("verein_spieler_importieren", {
     ...importArgumente(e.vereinId, e.zeilen),
-    p_erwartet: { neu: e.erwartet.neu, js: e.erwartet.js, mehrfach: e.erwartet.mehrfach },
+    p_erwartet: {
+      neu: e.erwartet.neu,
+      js: e.erwartet.js.map(({ zeile, alt }) => ({ zeile, alt })),
+      mehrfach: e.erwartet.mehrfach,
+    },
   });
   if (error) return vereinFehler(error);
   const ausgang = ausgangAus(data);
-  return ausgang ? ok(ausgang) : fehlschlag("technisch", IMPORT_TEXT.unstimmig, { wiederholbar: true });
+  const stimmt = ausgang?.status !== "veraltet" || importZeilenStimmen(ausgang.vorschau, e.zeilen.map((z) => z.zeile));
+  return ausgang && stimmt ? ok(ausgang) : fehlschlag("technisch", IMPORT_TEXT.unstimmig, { wiederholbar: true });
 }

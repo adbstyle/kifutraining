@@ -271,12 +271,16 @@ import {
   ausgangAus,
   erwartetVon,
   importErgebnisText,
+  importErwartetForm,
+  importJsPlakette,
   importMehrfachText,
   importNeuText,
   importNichtsZuTunText,
   importUebernehmbar,
   importUeberGrenzeText,
   importZeilen,
+  importZeilenForm,
+  importZeilenStimmen,
   jahrgangAusDatum,
   jsAus,
   leseDatei,
@@ -3500,15 +3504,22 @@ pruefe("Import im Verein: Grenze 1000, Zeilendeckel und Dateigrösse haben je ih
   assert.equal(SPIELER_MELDUNG.IMPORT_ZU_GROSS, `Eine Datei darf höchstens ${IMPORT_ZEILEN_MAX} Zeilen haben.`, "Satz und Zahl bleiben Zwillinge");
   assert.equal(IMPORT_TEXT.zuGross, SPIELER_MELDUNG.IMPORT_ZU_GROSS, "Zeilen: derselbe Satz wie der Marker");
   assert.notEqual(IMPORT_TEXT.zuGrossBytes, IMPORT_TEXT.zuGross, "die Dateigrösse hat einen eigenen Satz");
+  assert.equal(
+    IMPORT_TEXT.zuGrossBytes,
+    "Die Datei ist zu gross. Speichere die Datei nur mit den Spalten für Vorname, Nachname, Jahrgang und J+S-Nummer und wähle sie erneut.",
+  );
   assert.equal(fehlerMeldung("x IMPORT_ZU_GROSS y"), SPIELER_MELDUNG.IMPORT_ZU_GROSS, "der Marker der Datenebene kommt als Satz an");
-  // Mit Zahl: um wie viele der Verein über 1000 läge (Beispiel des Boards).
+  // Mit Zahl: um wie viele der Verein über 1000 läge (Beispiel des Boards). Ohne
+  // «Nichts übernommen.»: In der Vorschau ist noch nichts versucht; nach einer
+  // Übernahme sagt es das Band.
+  assert.ok(IMPORT_TEXT.veraltet.includes("Nichts übernommen."), "das Band sagt, dass nichts übernommen wurde");
   assert.equal(
     importUeberGrenzeText(importVorschau({ bestand: 997, ueber: 9, neu: Array.from({ length: 12 }, (_, i) => i + 2) })),
-    "Mit diesen 12 neuen wären es 1009 Spieler:innen, 9 mehr als 1000. Nichts übernommen. Entferne Zeilen aus der Datei oder lösche zuerst Spieler:innen.",
+    "Mit diesen 12 neuen wären es 1009 Spieler:innen, 9 mehr als 1000. Entferne Zeilen aus der Datei oder lösche zuerst Spieler:innen.",
   );
   assert.equal(
     importUeberGrenzeText(importVorschau({ bestand: 1000, ueber: 1, neu: [2] })),
-    "Mit dieser neuen Spieler:in wären es 1001 Spieler:innen, 1 mehr als 1000. Nichts übernommen. Entferne Zeilen aus der Datei oder lösche zuerst Spieler:innen.",
+    "Mit dieser neuen Spieler:in wären es 1001 Spieler:innen, 1 mehr als 1000. Entferne Zeilen aus der Datei oder lösche zuerst Spieler:innen.",
   );
 });
 
@@ -3533,7 +3544,7 @@ pruefe("Import im Verein: Sätze der Vorschau, mit Einzahl und ohne Team (#585 A
   );
   assert.equal(
     importNeuText(1, 0, "FC Wyler"),
-    "1 Spieler:in kommt neu in den FC Wyler, ohne Team. Alle Trainer:innen des Vereins sehen sie mit Name und Jahrgang; löschen lässt sie sich nur einzeln. Danach sind es 1 von 1000.",
+    "1 Spieler:in kommt neu in den FC Wyler, ohne Team. Alle Trainer:innen des Vereins sehen sie mit Name und Jahrgang; löschen lässt sie sich nur einzeln. Danach ist es 1 von 1000.",
   );
   assert.equal(IMPORT_TEXT.einleitung("FC Wyler"), "Neue Spieler:innen kommen ohne Team in den FC Wyler. Bestehende erkennt KiFu im ganzen Verein und legt sie nicht neu an.");
   const ea = { id: "t2", name: "Ea Junioren" };
@@ -3599,7 +3610,34 @@ pruefe("Import im Verein: Antwort der Datenebene wird zur Vorschau, Teams in deu
     assert.equal(ausgangAus(kaputt), null, JSON.stringify(kaputt));
   // Was die Oberfläche der Übernahme mitgibt: die Zeilennummern der Vorschau.
   assert.equal(IMPORT_TEXT.unstimmig, "Der Import liess sich gerade nicht auswerten. Bitte versuche es noch einmal.");
-  assert.deepEqual(erwartetVon(v), { neu: [2, 5], js: [3], mehrfach: [6] });
+  assert.deepEqual(erwartetVon(v), { neu: [2, 5], js: [{ zeile: 3, alt: null }], mehrfach: [6] }, "J+S mit der alten Nummer (D1)");
+});
+
+pruefe("Import im Verein: Zeilennummern der Antwort stammen aus den gesendeten Zeilen, keine doppelt (#585, Review W2)", () => {
+  const v = importVorschau({ neu: [2], js: [{ zeile: 3, alt: "1", teams: [] }], gleich: [{ zeile: 4, teams: [] }], mehrfach: [{ zeile: 5, teams: [] }] });
+  assert.equal(importZeilenStimmen(v, [2, 3, 4, 5]), true);
+  assert.equal(importZeilenStimmen(v, [2, 3, 4, 5, 6]), true, "überstimmte Zeilen fehlen still");
+  assert.equal(importZeilenStimmen(v, [2, 3, 4]), false, "Zeile 5 nicht gesendet");
+  assert.equal(importZeilenStimmen({ ...v, gleich: [{ zeile: 2, teams: [] }] }, [2, 3, 4, 5]), false, "Zeile 2 doppelt");
+  assert.equal(importZeilenStimmen({ ...v, neu: [2, 2] }, [2, 3, 4, 5]), false, "doppelt in derselben Liste");
+  assert.equal(importZeilenStimmen(importVorschau({}), []), true);
+});
+
+pruefe("Import im Verein: Eingaben einer Action in Form, sonst kein TypeError (#585, Review W4)", () => {
+  const z = { zeile: 2, vorname: "Mia", nachname: "Rossi", jahrgang: 2015, jsNummer: null };
+  assert.equal(importZeilenForm([z, { ...z, zeile: 3, jsNummer: "123" }]), true);
+  assert.equal(importZeilenForm([]), true);
+  for (const kaputt of [null, undefined, "x", {}, [null], [7], [{ ...z, zeile: "2" }], [{ ...z, vorname: 1 }], [{ ...z, jahrgang: "2015" }], [{ ...z, jsNummer: undefined }]])
+    assert.equal(importZeilenForm(kaputt), false, JSON.stringify(kaputt));
+  const e = { neu: [2], js: [{ zeile: 3, alt: null }, { zeile: 4, alt: "9" }], mehrfach: [] };
+  assert.equal(importErwartetForm(e), true);
+  for (const kaputt of [null, undefined, [], {}, { ...e, neu: null }, { ...e, js: [3] }, { ...e, js: [{ zeile: 3 }] }, { ...e, js: [{ zeile: 3, alt: 9 }] }, { ...e, mehrfach: ["6"] }])
+    assert.equal(importErwartetForm(kaputt), false, JSON.stringify(kaputt));
+});
+
+pruefe("Import im Verein: Plakette der J+S-Änderungen in Ein- und Mehrzahl (#585, Review W5)", () => {
+  assert.equal(importJsPlakette(1), "1 J+S-Nummer ändert sich");
+  assert.equal(importJsPlakette(3), "3 J+S-Nummern ändern sich");
 });
 
 pruefe("Spielerzahl: Liste vor erwartet, ausgefallen ohne Zahl (#434 AK 8, #435 AK 6, #437 AK 4)", () => {
@@ -3799,10 +3837,17 @@ pruefe("CSV-Import: Jahrgang, J+S-Nummer und ausgelassene Zeilen (#455 AK 17–2
 });
 
 pruefe("CSV-Import: Meldung nach der Übernahme, die Neuen sind ohne Team (#585 AK 10)", () => {
-  assert.equal(importErgebnisText({ neu: 12, js: 2 }), "12 Spieler:innen aufgenommen, bei 2 die J+S-Nummer geändert. Die neuen sind ohne Team.");
-  assert.equal(importErgebnisText({ neu: 12, js: 0 }), "12 Spieler:innen aufgenommen. Die neuen sind ohne Team.");
-  assert.equal(importErgebnisText({ neu: 1, js: 2 }), "1 Spieler:in aufgenommen, bei 2 die J+S-Nummer geändert. Sie ist ohne Team.");
-  assert.equal(importErgebnisText({ neu: 1, js: 0 }), "1 Spieler:in aufgenommen. Sie ist ohne Team.");
+  const zuordnen = "Teams ordnest du im Spielerbestand zu.";
+  assert.equal(
+    importErgebnisText({ neu: 12, js: 2 }),
+    `12 Spieler:innen aufgenommen, bei 2 die J+S-Nummer geändert. Die Neuen sind keinem Team zugeordnet; ${zuordnen}`,
+  );
+  assert.equal(importErgebnisText({ neu: 12, js: 0 }), `12 Spieler:innen aufgenommen. Die Neuen sind keinem Team zugeordnet; ${zuordnen}`);
+  assert.equal(
+    importErgebnisText({ neu: 1, js: 2 }),
+    `1 Spieler:in aufgenommen, bei 2 die J+S-Nummer geändert. Sie ist keinem Team zugeordnet; ${zuordnen}`,
+  );
+  assert.equal(importErgebnisText({ neu: 1, js: 0 }), `1 Spieler:in aufgenommen. Sie ist keinem Team zugeordnet; ${zuordnen}`);
   assert.equal(importErgebnisText({ neu: 0, js: 1 }), "Bei 1 Spieler:in die J+S-Nummer geändert.", "ohne Neue kein Satz zu Teams");
   assert.equal(importErgebnisText({ neu: 0, js: 3 }), "Bei 3 Spieler:innen die J+S-Nummer geändert.");
 });

@@ -30,7 +30,7 @@ export const IMPORT_TEXT = {
   zuGross: SPIELER_MELDUNG.IMPORT_ZU_GROSS,
   /** Die Datei selbst ist zu gross (1 MB), unabhängig von der Zeilenzahl. */
   zuGrossBytes:
-    "Die Datei ist zu gross. Speichere nur die Spalten für Vorname, Nachname, Jahrgang und J+S-Nummer und wähle sie erneut.",
+    "Die Datei ist zu gross. Speichere die Datei nur mit den Spalten für Vorname, Nachname, Jahrgang und J+S-Nummer und wähle sie erneut.",
   /** Die Antwort der Datenebene hat nicht die vereinbarte Form (technischer Fehler). */
   unstimmig: "Der Import liess sich gerade nicht auswerten. Bitte versuche es noch einmal.",
   /** Die Einordnung stimmt nicht mehr mit der bestätigten Vorschau überein (#585 AK 9). */
@@ -289,8 +289,10 @@ export type ImportVorschau = {
 };
 
 /** Was die Oberfläche nach der Vorschau bestätigt: Weicht die Einordnung bei
- *  der Übernahme davon ab, übernimmt die Datenebene nichts (#585 AK 9). */
-export type ImportErwartet = { neu: number[]; js: number[]; mehrfach: number[] };
+ *  der Übernahme davon ab, übernimmt die Datenebene nichts (#585 AK 9). Bei
+ *  `js` zählt auch die bisherige Nummer: Wer sie inzwischen geändert hat,
+ *  wird nicht still überschrieben. */
+export type ImportErwartet = { neu: number[]; js: { zeile: number; alt: string | null }[]; mehrfach: number[] };
 
 /** Die Antwort der Übernahme: übernommen, oder nichts geändert, weil der
  *  Bestand die Vorschau überholt hat (`grund`) — dann mit der neuen Vorschau. */
@@ -299,7 +301,7 @@ export type ImportAusgang =
   | { status: "veraltet"; grund: "bestand" | "grenze"; vorschau: ImportVorschau };
 
 export function erwartetVon(v: ImportVorschau): ImportErwartet {
-  return { neu: v.neu, js: v.js.map((j) => j.zeile), mehrfach: v.mehrfach.map((m) => m.zeile) };
+  return { neu: v.neu, js: v.js.map(({ zeile, alt }) => ({ zeile, alt })), mehrfach: v.mehrfach.map((m) => m.zeile) };
 }
 
 /** Ein Objekt der Antwort, oder `null`. */
@@ -345,6 +347,57 @@ export function vorschauAus(antwort: unknown): ImportVorschau | null {
   };
 }
 
+/** Die Zeilennummern der Vorschau stammen alle aus den gesendeten Zeilen, und
+ *  keine steht doppelt — sonst passt die Antwort nicht zur Datei (der Kern
+ *  meldet einen technischen Fehler, die Oberfläche zeigt nichts Falsches). */
+export function importZeilenStimmen(v: ImportVorschau, gesendet: number[]): boolean {
+  const da = new Set(gesendet);
+  const alle = [...v.neu, ...[...v.js, ...v.gleich, ...v.mehrfach].map((z) => z.zeile)];
+  return alle.every((z) => da.has(z)) && new Set(alle).size === alle.length;
+}
+
+/** Die Zeilen eines Aufrufs in der Form `ImportEintrag` (die Werte selbst
+ *  prüft der Kern danach wie beim Erfassen). Eine Action nimmt alles
+ *  entgegen, was ein Aufruf schickt; ohne diese Form kein TypeError. */
+export function importZeilenForm(x: unknown): x is ImportEintrag[] {
+  return (
+    Array.isArray(x) &&
+    x.every((e) => {
+      const o = objekt(e);
+      return (
+        o !== null &&
+        ganz(o.zeile) &&
+        typeof o.vorname === "string" &&
+        typeof o.nachname === "string" &&
+        typeof o.jahrgang === "number" &&
+        (o.jsNummer === null || typeof o.jsNummer === "string")
+      );
+    })
+  );
+}
+
+/** Die Erwartung eines Aufrufs in der Form `ImportErwartet`. */
+export function importErwartetForm(x: unknown): x is ImportErwartet {
+  const o = objekt(x);
+  return (
+    o !== null &&
+    Array.isArray(o.neu) &&
+    o.neu.every(ganz) &&
+    Array.isArray(o.mehrfach) &&
+    o.mehrfach.every(ganz) &&
+    Array.isArray(o.js) &&
+    o.js.every((e) => {
+      const j = objekt(e);
+      return j !== null && ganz(j.zeile) && (j.alt === null || typeof j.alt === "string");
+    })
+  );
+}
+
+/** Die Plakette der J+S-Änderungen in Ein- und Mehrzahl. */
+export function importJsPlakette(n: number): string {
+  return n === 1 ? "1 J+S-Nummer ändert sich" : `${n} J+S-Nummern ändern sich`;
+}
+
 /** Die Antwort der Übernahme (`status` `uebernommen` oder `veraltet`) als
  *  Ausgang — oder `null`, wenn sie keine dieser Formen hat. */
 export function ausgangAus(antwort: unknown): ImportAusgang | null {
@@ -364,10 +417,11 @@ export function importUebernehmbar(v: ImportVorschau): boolean {
 }
 
 /** Die Grenze des Vereins ist erreicht (AK 6): mit der Zahl, um die er
- *  darüber läge. */
+ *  darüber läge. Vor der Übernahme ist nichts versucht; dass eine Übernahme
+ *  nichts übernommen hat, sagt das Band `IMPORT_TEXT.veraltet`. */
 export function importUeberGrenzeText(v: ImportVorschau): string {
   const wer = v.neu.length === 1 ? "dieser neuen Spieler:in" : `diesen ${v.neu.length} neuen`;
-  return `Mit ${wer} wären es ${v.bestand + v.neu.length} Spieler:innen, ${v.ueber} mehr als ${VEREIN_SPIELER_MAX}. Nichts übernommen. Entferne Zeilen aus der Datei oder lösche zuerst Spieler:innen.`;
+  return `Mit ${wer} wären es ${v.bestand + v.neu.length} Spieler:innen, ${v.ueber} mehr als ${VEREIN_SPIELER_MAX}. Entferne Zeilen aus der Datei oder lösche zuerst Spieler:innen.`;
 }
 
 /** Vor der Übernahme (AK 3, 4): wie viele neu sind, dass sie ohne Team
@@ -378,7 +432,8 @@ export function importNeuText(neu: number, bestand: number, verein: string): str
     neu === 1
       ? ["1 Spieler:in kommt neu", "sehen sie mit Name und Jahrgang; löschen lässt sie sich nur einzeln"]
       : [`${neu} Spieler:innen kommen neu`, "sehen sie mit Name und Jahrgang; löschen lassen sie sich nur einzeln"];
-  return `${kommen} in den ${verein}, ohne Team. Alle Trainer:innen des Vereins ${sehen}. Danach sind es ${spielerVonText(bestand + neu)}.`;
+  const danach = bestand + neu === 1 ? "Danach ist es" : "Danach sind es";
+  return `${kommen} in den ${verein}, ohne Team. Alle Trainer:innen des Vereins ${sehen}. ${danach} ${spielerVonText(bestand + neu)}.`;
 }
 
 /** Zeilen, die im Verein mehrfach geführt werden (AK 5): eine Einzelne mit
@@ -395,13 +450,20 @@ export function importNichtsZuTunText(mehrfach: number): string {
   return mehrfach > 0 ? `${IMPORT_TEXT.nichtsZuTun} ${IMPORT_TEXT.nichtsZuTunMehrfach}` : IMPORT_TEXT.nichtsZuTun;
 }
 
-/** Die Meldung nach der Übernahme (AK 10): Zahlen, und dass die Neuen ohne
- *  Team sind — dort hängt die Aktion «Zuordnen». */
+/** Die Meldung nach der Übernahme (AK 10): Zahlen, und dass die Neuen keinem
+ *  Team zugeordnet sind und man das im Spielerbestand tut — dort hängt
+ *  auch die Aktion «Zuordnen». */
 export function importErgebnisText(r: { neu: number; js: number }): string {
   const spieler = (n: number) => (n === 1 ? "1 Spieler:in" : `${n} Spieler:innen`);
   const teile: string[] = [];
   if (r.neu > 0) teile.push(`${spieler(r.neu)} aufgenommen`);
   if (r.js > 0) teile.push(r.neu > 0 ? `bei ${r.js} die J+S-Nummer geändert` : `Bei ${spieler(r.js)} die J+S-Nummer geändert`);
-  const ohneTeam = r.neu === 0 ? "" : r.neu === 1 ? " Sie ist ohne Team." : " Die neuen sind ohne Team.";
+  const zuordnen = "Teams ordnest du im Spielerbestand zu.";
+  const ohneTeam =
+    r.neu === 0
+      ? ""
+      : r.neu === 1
+        ? ` Sie ist keinem Team zugeordnet; ${zuordnen}`
+        : ` Die Neuen sind keinem Team zugeordnet; ${zuordnen}`;
   return `${teile.join(", ")}.${ohneTeam}`;
 }

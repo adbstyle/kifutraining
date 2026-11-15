@@ -7412,7 +7412,28 @@ try {
     assert.deepEqual([await spielerImVerein(), await jsVon(kai)], [bestand + 2, "2"]);
   });
 
-  await pruefe("Import im Verein: nur die Verwaltung; Eingaben wie beim Erfassen; der Team-Import ist weg, auch für die Verwaltung (#585 AK 1, 11, 12)", async () => {
+  await pruefe("Import im Verein: J+S-Nummer seit der Vorschau geändert — veraltet, nichts überschrieben; mit unveränderter alter Nummer übernommen (#585 AK 9, Review D1)", async () => {
+    const uli = wert(await erfassen(verwaltung, { vorname: "Uli", nachname: "Nummer", jahrgang: 2014, jsNummer: "1" })).spielerId;
+    const zeilen = [zeile585(2, "Uli", "Nummer", 2014, "3")];
+    const v = wert(await vorschau585(verwaltung, zeilen));
+    assert.deepEqual(v.js, [{ zeile: 2, alt: "1", teams: [] }]);
+    assert.deepEqual(erwartetVon(v).js, [{ zeile: 2, alt: "1" }], "die Übernahme schickt die alte Nummer mit");
+    // Dazwischen ändert jemand die J+S-Nummer: Zeile 2 bleibt eine J+S-Änderung, aber mit anderer alter Nummer.
+    wert(await aendern(verwaltung, uli, { vorname: "Uli", nachname: "Nummer", jahrgang: 2014, jsNummer: "2" }));
+    const veraltet = wert(await uebernimm585(verwaltung, zeilen, erwartetVon(v)));
+    assert.deepEqual(veraltet, {
+      status: "veraltet",
+      grund: "bestand",
+      vorschau: { ...v, js: [{ zeile: 2, alt: "2", teams: [] }] },
+    });
+    assert.equal(await jsVon(uli), "2", "nicht still überschrieben");
+    // Gegenfall: Mit der neuen Vorschau (alte Nummer 2) geht es durch.
+    assert.ok(veraltet.status === "veraltet");
+    assert.deepEqual(wert(await uebernimm585(verwaltung, zeilen, erwartetVon(veraltet.vorschau))), { status: "uebernommen", neu: 0, js: 1 });
+    assert.equal(await jsVon(uli), "3");
+  });
+
+  await pruefe("Import im Verein: nur die Verwaltung; Eingaben wie beim Erfassen und in der vereinbarten Form; der Team-Import ist weg, auch für die Verwaltung (#585 AK 1, 11, 12)", async () => {
     const team = await serienTeam(IMPORT_EINS);
     const fremd = await fremdeVerwaltung();
     const zeilen = [zeile585(2, "Rolle", "Import", 2016)];
@@ -7430,6 +7451,13 @@ try {
     fehler(await vorschau585(verwaltung, [zeile585(2, "Rolle", "Import", 2016, "k.A.")]), "eingabe", IMPORT_TEXT.js("k.A."));
     fehler(await vorschau585(verwaltung, [zeile585(2, "Rolle", "Import", 2016, "1".repeat(21))]), "eingabe", SPIELER_TEXT.jsNummer);
     fehler(await vorschau585(verwaltung, [zeile585(2, "Rolle", "Import", 2016), zeile585(2, "Andere", "Import", 2016)]), "eingabe");
+    // Ein manipulierter Aufruf der Action (falsche Form) wird ein Kern-Fehler, kein TypeError (Review W4).
+    const roh585 = (x: unknown) => x as never;
+    fehler(await vorschau585(verwaltung, roh585(null)), "eingabe");
+    fehler(await vorschau585(verwaltung, roh585([{ zeile: 2, vorname: "Rolle" }])), "eingabe");
+    fehler(await uebernimm585(verwaltung, zeilen, roh585(null)), "eingabe");
+    fehler(await uebernimm585(verwaltung, zeilen, roh585({ neu: [2], js: [3], mehrfach: [] })), "eingabe");
+    fehler(await uebernimm585(verwaltung, roh585("x"), { neu: [2], js: [], mehrfach: [] }), "eingabe");
     const viele = Array.from({ length: 1001 }, (_, i) => zeile585(i + 2, `Viele${i}`, "Import", 2016));
     fehler(await vorschau585(verwaltung, viele), "regel", IMPORT_TEXT.zuGross);
     // Die Datenebene weist dasselbe ab (Marker IMPORT_ZU_GROSS), mit demselben Satz.
