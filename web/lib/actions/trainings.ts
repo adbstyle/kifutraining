@@ -33,11 +33,14 @@ import {
   oberflaechenMeldung,
 } from "@/lib/actions/adapter";
 import type { Bedingung, FehlendeBedingung } from "@/lib/training-bedingungen";
+import type { KontoAbweisung } from "@/lib/konto-grenzen";
 
 export type TrainingFormState = {
   status: "idle" | "error";
   errors?: Record<string, string>;
   message?: string;
+  /** Abweisung an der Grenze eines Kontos ohne Verein (#588), wie bei der Übung. */
+  grenze?: KontoAbweisung;
 };
 
 /** Ergebnis einer feingranularen Editor-Aktion (sofort-persistent).
@@ -104,7 +107,7 @@ export async function createTraining(
   if (!r.ok)
     return r.feld === "name"
       ? { status: "error", errors: { name: oberflaechenMeldung(r) } }
-      : { status: "error", message: oberflaechenMeldung(r) };
+      : { status: "error", message: oberflaechenMeldung(r), ...(r.grenze && { grenze: r.grenze }) };
 
   revalidatePath("/trainings");
   redirect(`/training/${r.wert.id}/edit`);

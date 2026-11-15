@@ -1,10 +1,10 @@
 "use client";
 
-import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Copy } from "lucide-react";
 import { IconButton, Tooltip } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
+import { useBestandStufe } from "@/components/konto/BestandStufe";
 import { kopiereInBibliothek } from "@/lib/actions/fassung";
 
 /**
@@ -29,29 +29,33 @@ export function InBibliothekButton({
   className?: string;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
   const melde = useSnackbar();
-
-  function kopieren() {
-    startTransition(async () => {
+  // Für ein Konto ohne Verein erst der frisch gelesene Stand (#588); sonst wie bisher ein Klick.
+  const { starte, laeuft, dialog } = useBestandStufe({
+    art: "uebungen",
+    titel: "In meine Bibliothek kopieren",
+    aktion: "Kopieren",
+    hinweis: "Die Übung kommt als private Vorlage in deine Bibliothek.",
+    ausfuehren: async () => {
       const res = await kopiereInBibliothek(fassungId);
-      if (res.ok) {
-        melde(`„${name}" ist als private Vorlage in deiner Bibliothek.`);
-        router.refresh();
-      } else {
-        melde(res.error);
-      }
-    });
-  }
+      if (!res.ok) return res;
+      melde(`„${name}" ist als private Vorlage in deiner Bibliothek.`);
+      router.refresh();
+      return null;
+    },
+  });
 
   return (
-    <Tooltip label="In meine Bibliothek kopieren" className={className}>
-      <IconButton
-        icon={Copy}
-        label={`${name} in meine Bibliothek kopieren`}
-        onClick={kopieren}
-        disabled={pending}
-      />
-    </Tooltip>
+    <>
+      <Tooltip label="In meine Bibliothek kopieren" className={className}>
+        <IconButton
+          icon={Copy}
+          label={`${name} in meine Bibliothek kopieren`}
+          onClick={starte}
+          aria-disabled={laeuft || undefined}
+        />
+      </Tooltip>
+      {dialog}
+    </>
   );
 }

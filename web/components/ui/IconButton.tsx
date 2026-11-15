@@ -28,6 +28,9 @@ function iconButtonClasses(
     // Eckig mit gerundeten Kanten wie Knopf und Feld (Epic #363), kein Kreis.
     "state focus-ring inline-flex items-center justify-center rounded-flaeche transition-colors",
     "disabled:opacity-40 disabled:pointer-events-none",
+    // Gesperrt, aber fokussierbar (`aria-disabled`, etwa während eine Kopie
+    // läuft): sieht aus wie gesperrt, der Aufrufer fängt den Klick ab.
+    "aria-disabled:opacity-40 aria-disabled:cursor-default",
     BOX,
     // `primary`: die Hauptaktion einer Zeile (etwa Kopieren im KopierFeld,
     // PO 2026-10-24) — gefüllt wie der Knopf `filled`, Primary-Fläche mit

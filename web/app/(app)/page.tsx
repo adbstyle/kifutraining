@@ -1,9 +1,10 @@
 import { SearchX, Heart } from "lucide-react";
-import { ExerciseCard, ButtonLink, Leerzustand, SectionMessage } from "@/components/ui";
+import { BestandAnzeige, ExerciseCard, ButtonLink, Leerzustand, SectionMessage } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { CatalogFilterBar, type CatalogFilters } from "@/components/catalog/CatalogFilterBar";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { createClient } from "@/lib/supabase/server";
+import { getMeineGrenzen } from "@/lib/queries/verein";
 import {
   getExercises,
   toCardData,
@@ -64,6 +65,10 @@ export default async function Home({
 
   const anzahl = Math.max(SEITE, liesPositiveZahl(sp.anzahl) ?? 0);
 
+  // Nur in «Meine Übungen» und nur für ein Konto ohne Verein (#588 AK 5, PC 3):
+  // der Stand von der Datenebene, nie aus der gezählten Liste (Filter, Seitenschnitt).
+  const grenzen = filters.mine ? await getMeineGrenzen() : null;
+
   let rows: Awaited<ReturnType<typeof getExercises>> | null = null;
   let error: string | null = null;
 
@@ -104,6 +109,8 @@ export default async function Home({
           </div>
         </SectionMessage>
       )}
+
+      {grenzen && <BestandAnzeige art="uebungen" grenze={grenzen.uebungen} className="mb-4" />}
 
       {rows && (
         <>

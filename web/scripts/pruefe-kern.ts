@@ -362,6 +362,25 @@ import {
 } from "../lib/verein";
 import { liesListe, liesPositiveZahl, mitAnzahl } from "../lib/adresse";
 import {
+  KONTO_GRENZE_HINWEIS,
+  KONTO_GRENZE_SCHLUSS,
+  KONTO_GRENZE_WERKZEUG,
+  KONTO_MARKER,
+  KONTO_TRAININGS_MAX,
+  KONTO_UEBUNGEN_MAX,
+  bestandSatz,
+  bestandText,
+  bestandVollMeldung,
+  NICHTS_MEHR_FREI,
+  grenzeAusAbweisung,
+  grenzenOhneVerein,
+  istVoll,
+  kontoGrenzeAusFehler,
+  kontoGrenzeMeldung,
+  kontoGrenzeText,
+  kontoGrenzenAus,
+} from "../lib/konto-grenzen";
+import {
   OHNE_TEAM_WERT,
   SPIELER_SEITE,
   bereinigeEingrenzung,
@@ -1290,6 +1309,8 @@ pruefe("Serien-Marker: kein Marker steckt in einem anderen (includes-Suche bleib
     ...Object.keys(TRAINER_MELDUNG),
     ...Object.keys(PROBE_MELDUNG),
     ...Object.keys(VEREIN_MELDUNG),
+    // Die Grenzen eines Kontos ohne Verein (#588): Marker mit Bestand dahinter.
+    ...Object.values(KONTO_MARKER),
     // Wird vor der Übersetzung abgefangen (lib/kern/kader.ts), darf aber
     // keinen Satz treffen.
     VERFALL_MARKER,
@@ -4609,6 +4630,372 @@ pruefe("Verein und Konto löschen (#587): ein Weg je RPC, Bestätigung mit dem B
   for (const ordner of ["components/team", "app/(app)/team", "lib/mcp"])
     for (const datei of quelldateien(join(web, ordner)))
       assert.ok(!/\b(loescheVerein\w*|gruendeVerein\w*|loescheKonto|ladeKontoLoeschenInfo|verein_loeschen|verein_gruenden|delete_account|konto_loeschen_info)\b/.test(readFileSync(datei, "utf8")), relative(web, datei));
+});
+
+// ── Konten ohne Verein (Story #588) ─────────────────────────────────────────
+
+pruefe("Konto ohne Verein (#588): Zwillinge der Grenzen und feste Sätze, ohne Verein nur der Marker mit Bestand", () => {
+  assert.equal(KONTO_UEBUNGEN_MAX, 50);
+  assert.equal(KONTO_TRAININGS_MAX, 30);
+  assert.deepEqual(KONTO_MARKER, { uebungen: "KONTO_UEBUNGEN_VOLL", trainings: "KONTO_TRAININGS_VOLL" });
+  assert.equal(
+    KONTO_GRENZE_SCHLUSS,
+    "In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  assert.equal(KONTO_GRENZE_HINWEIS, "Es ist nichts entstanden.");
+  // Der Bestand steht hinter dem Marker; ohne Marker oder ohne Zahl nichts.
+  assert.deepEqual(kontoGrenzeAusFehler("ERROR: KONTO_UEBUNGEN_VOLL 50"), { art: "uebungen", bestand: 50 });
+  assert.deepEqual(kontoGrenzeAusFehler("x KONTO_TRAININGS_VOLL 62 y"), { art: "trainings", bestand: 62 });
+  assert.equal(kontoGrenzeAusFehler("KONTO_UEBUNGEN_VOLL"), null, "ohne Zahl kein Satz");
+  assert.equal(kontoGrenzeAusFehler("KONTO_UEBUNGEN_VOLL x"), null);
+  assert.equal(kontoGrenzeAusFehler("VEREIN_VOLL"), null);
+  assert.equal(kontoGrenzeMeldung("VEREIN_VOLL"), null);
+});
+
+pruefe("Konto ohne Verein (#588 AK 6): Satz bei der Abweisung — genau an, bei und über der Grenze", () => {
+  // Genau an der Grenze: «n von max», dazu Platz schaffen und der Verein.
+  assert.equal(
+    kontoGrenzeText("uebungen", 50),
+    "Du besitzt 50 von 50 Übungen. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  assert.equal(
+    kontoGrenzeText("trainings", 30),
+    "Du besitzt 30 von 30 Trainings. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  // Über der Grenze (Altbestand): nie «60 von 50».
+  assert.equal(
+    kontoGrenzeText("uebungen", 62),
+    "Du besitzt 62 Übungen, höchstens 50 sind erlaubt. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  assert.equal(
+    kontoGrenzeText("trainings", 31),
+    "Du besitzt 31 Trainings, höchstens 30 sind erlaubt. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  // Die Einzahl stimmt auch bei einer erfundenen Zahl.
+  assert.match(kontoGrenzeText("trainings", 1), /^Du besitzt 1 von 30 Trainings\./);
+  for (const art of ["uebungen", "trainings"] as const)
+    for (const n of [29, 30, 31, 50, 51, 100]) {
+      const satz = kontoGrenzeText(art, n);
+      assert.ok(!/wiederhol|nochmal|noch einmal/i.test(satz), `kein Wiederholen: ${satz}`);
+      assert.ok(!/loesch|_loeschen/.test(satz), "kein Löschwerkzeug des Assistenten");
+      assert.ok(!/FutAssist|\bKind\b|Kinder/.test(satz), satz);
+    }
+});
+
+pruefe("Konto ohne Verein (#588 AK 6, 7): Anwendung und KI lesen denselben Satz, der Marker ist eine Regel mit Hinweis", () => {
+  for (const [marker, art, bestand] of [
+    [KONTO_MARKER.uebungen, "uebungen", 50],
+    [KONTO_MARKER.uebungen, "uebungen", 57],
+    [KONTO_MARKER.trainings, "trainings", 30],
+    [KONTO_MARKER.trainings, "trainings", 44],
+  ] as const) {
+    const message = `${marker} ${bestand}`;
+    const satz = kontoGrenzeText(art, bestand);
+    // Anwendung: createExercise nutzt `fehlerMeldung`, der Kern `ausDbFehler` — beide denselben Satz.
+    assert.equal(fehlerMeldung(message), satz, message);
+    assert.equal(fehlerMeldung(`ERROR: ${message} (P0001)`), satz, "Postgres-Rahmen um den Marker");
+    const f = ausDbFehler({ message, code: "P0001" });
+    assert.equal(f.art, "regel", "eine Regel, kein technischer Fehler");
+    assert.equal(f.meldung, satz);
+    // KI: dieselbe Auskunft, nichts entstanden, kein Wiederholen.
+    assert.equal(f.hinweis, "Es ist nichts entstanden.");
+    assert.equal(f.wiederholbar, undefined, "nicht als wiederholbar gekennzeichnet");
+    assert.ok(!/wiederhol/i.test(`${f.meldung} ${f.hinweis}`));
+  }
+  // Der Marker wird erwartet und nicht als unerwarteter Fehler protokolliert.
+  const geloggt: unknown[] = [];
+  const orig = console.error;
+  console.error = (...a: unknown[]) => void geloggt.push(a);
+  try {
+    fehlerMeldung(`${KONTO_MARKER.uebungen} 50`);
+    ausDbFehler({ message: `${KONTO_MARKER.trainings} 30` });
+  } finally {
+    console.error = orig;
+  }
+  assert.deepEqual(geloggt, []);
+  // Ein Deadlock bleibt ein Konflikt; nur der Marker trägt den Hinweis der Grenze.
+  assert.equal(ausDbFehler({ message: "deadlock detected", code: "40P01" }).hinweis, undefined);
+  assert.equal(still(() => ausDbFehler({ message: "VEREIN_VOLL" })).hinweis, undefined);
+});
+
+pruefe("Konto ohne Verein (#588 PC 3): `grenzen` der Vereinslage wird auf ihre Form geprüft, `null` mit Verein", () => {
+  const g = { uebungen: { bestand: 12, max: 50 }, trainings: { bestand: 0, max: 30 } };
+  assert.equal(kontoGrenzenAus(null), null, "mit Verein keine Anzeige");
+  assert.deepEqual(kontoGrenzenAus(g), g);
+  assert.deepEqual(
+    kontoGrenzenAus({ uebungen: { bestand: 62, max: 50 }, trainings: { bestand: 31, max: 30 } }),
+    { uebungen: { bestand: 62, max: 50 }, trainings: { bestand: 31, max: 30 } },
+    "der Bestand darf über der Grenze liegen",
+  );
+  for (const kaputt of [
+    undefined,
+    "grenzen",
+    [],
+    7,
+    {},
+    { uebungen: g.uebungen },
+    { trainings: g.trainings },
+    { uebungen: { bestand: 12 }, trainings: g.trainings },
+    { uebungen: { bestand: -1, max: 50 }, trainings: g.trainings },
+    { uebungen: { bestand: 1.5, max: 50 }, trainings: g.trainings },
+    { uebungen: { bestand: "12", max: 50 }, trainings: g.trainings },
+    { uebungen: { bestand: 12, max: 0 }, trainings: g.trainings },
+    { uebungen: g.uebungen, trainings: null },
+    { uebungen: [], trainings: g.trainings },
+  ])
+    assert.equal(kontoGrenzenAus(kaputt), undefined, JSON.stringify(kaputt));
+});
+
+pruefe("Konto ohne Verein (#588, Fix-Lauf): ein Formfehler in `grenzen` reisst die Vereinslage nicht mit", () => {
+  // Ohne Verein: Formfehler → keine Anzeige, protokolliert; nie ein Fehler der ganzen Lage.
+  assert.deepEqual(grenzenOhneVerein({ uebungen: "kaputt" }), { grenzen: null, formfehler: true });
+  assert.deepEqual(grenzenOhneVerein(undefined), { grenzen: null, formfehler: true });
+  assert.deepEqual(grenzenOhneVerein(null), { grenzen: null, formfehler: false });
+  const g = { uebungen: { bestand: 3, max: 50 }, trainings: { bestand: 1, max: 30 } };
+  assert.deepEqual(grenzenOhneVerein(g), { grenzen: g, formfehler: false });
+  // Die Lage entsteht zuerst aus dem Verein; mit Verein wird `grenzen` gar nicht gelesen, und ein Formfehler gibt kein `fehler`.
+  const lage = readFileSync(join(web, "lib/queries/verein.ts"), "utf8");
+  assert.match(lage, /if \(lage\) return \{ lage, grenzen: null, fehler: null \};\s*[\s\S]*?grenzenOhneVerein\(roh\?\.grenzen\)/);
+  assert.match(lage, /if \(formfehler\) console\.error\([^)]*\);\s*return \{ lage: null, grenzen, fehler: null \};/);
+  assert.ok(!/grenzen hat nicht die erwartete Form"\) \}/.test(lage), "kein `fehler` aus einem Formfehler");
+});
+
+pruefe("Konto ohne Verein (#588 AK 5): Texte der Anzeige in jeder Lage — unter, an und über der Grenze", () => {
+  const u = (bestand: number) => ({ bestand, max: 50 });
+  const t = (bestand: number) => ({ bestand, max: 30 });
+  assert.deepEqual([0, 49, 50, 51].map((n) => istVoll(u(n))), [false, false, true, true]);
+  assert.deepEqual([29, 30, 31].map((n) => istVoll(t(n))), [false, true, true]);
+  assert.equal(bestandText("uebungen", u(0)), "0 von 50 Übungen");
+  assert.equal(bestandText("uebungen", u(12)), "12 von 50 Übungen");
+  assert.equal(bestandText("uebungen", u(49)), "49 von 50 Übungen");
+  assert.equal(bestandText("uebungen", u(50)), "50 von 50 Übungen");
+  assert.equal(bestandText("uebungen", u(62)), "62 Übungen (höchstens 50)", "nie ein negativer Rest");
+  assert.equal(bestandText("trainings", t(29)), "29 von 30 Trainings");
+  assert.equal(bestandText("trainings", t(30)), "30 von 30 Trainings");
+  assert.equal(bestandText("trainings", t(31)), "31 Trainings (höchstens 30)");
+  assert.equal(NICHTS_MEHR_FREI, "Nichts mehr frei");
+  // Eine Abweisung der Datenebene wird zum Stand der vollen Grenze: Bestand aus dem Marker, Grenze vom Zwilling.
+  assert.deepEqual(grenzeAusAbweisung({ art: "uebungen", bestand: 50 }), { bestand: 50, max: 50 });
+  assert.deepEqual(grenzeAusAbweisung({ art: "trainings", bestand: 34 }), { bestand: 34, max: 30 });
+  assert.equal(bestandSatz("uebungen", u(12)), "Du besitzt 12 von 50 Übungen.");
+  assert.equal(bestandSatz("trainings", t(31)), "Du besitzt 31 Trainings, höchstens 30 sind erlaubt.");
+  // Die Meldung an der Grenze, bevor Angaben gemacht werden: Board-Wortlaut, Link zur eigenen Übersicht.
+  assert.deepEqual(bestandVollMeldung("trainings", t(30)), {
+    titel: "Nichts mehr frei: 30 von 30 Trainings",
+    text: "Ohne Verein besitzt du höchstens 30 Trainings. Lösche eines, um Platz zu schaffen. In einem Verein gilt die Grenze nicht.",
+    link: "/trainings?mine=1",
+    linkText: "Zu meinen Trainings",
+  });
+  assert.deepEqual(bestandVollMeldung("uebungen", u(50)), {
+    titel: "Nichts mehr frei: 50 von 50 Übungen",
+    text: "Ohne Verein besitzt du höchstens 50 Übungen. Lösche eine, um Platz zu schaffen. In einem Verein gilt die Grenze nicht.",
+    link: "/?mine=1",
+    linkText: "Zu meinen Übungen",
+  });
+  assert.equal(bestandVollMeldung("uebungen", u(62)).titel, "Nichts mehr frei: 62 Übungen, höchstens 50");
+  assert.equal(bestandVollMeldung("trainings", t(31)).titel, "Nichts mehr frei: 31 Trainings, höchstens 30");
+});
+
+pruefe("Konto ohne Verein (#588 AK 5, Fix-Lauf): der Satz über der Grenze nennt, wie viele weg müssen", () => {
+  const u = (bestand: number) => ({ bestand, max: 50 });
+  const t = (bestand: number) => ({ bestand, max: 30 });
+  // Genau an der Grenze: eine bzw. eines.
+  assert.match(bestandVollMeldung("uebungen", u(50)).text, / Lösche eine, um Platz zu schaffen\. /);
+  assert.match(bestandVollMeldung("trainings", t(30)).text, / Lösche eines, um Platz zu schaffen\. /);
+  // Eine darüber: zwei müssen weg, bis eine neue Platz hat.
+  assert.equal(
+    bestandVollMeldung("uebungen", u(51)).text,
+    "Ohne Verein besitzt du höchstens 50 Übungen. Lösche 2 Übungen, um Platz für eine neue zu schaffen. In einem Verein gilt die Grenze nicht.",
+  );
+  assert.equal(
+    bestandVollMeldung("trainings", t(31)).text,
+    "Ohne Verein besitzt du höchstens 30 Trainings. Lösche 2 Trainings, um Platz für ein neues zu schaffen. In einem Verein gilt die Grenze nicht.",
+  );
+  // Weit darüber: Bestand − Grenze + 1.
+  assert.match(bestandVollMeldung("uebungen", u(62)).text, / Lösche 13 Übungen, um Platz für eine neue zu schaffen\. /);
+  assert.match(bestandVollMeldung("trainings", t(45)).text, / Lösche 16 Trainings, um Platz für ein neues zu schaffen\. /);
+});
+
+pruefe("Konto ohne Verein (#588 AK 7): Werkzeugtexte der KI nennen die Grenze, fordern nicht zum Wiederholen auf und kennen kein Löschwerkzeug", () => {
+  assert.match(KONTO_GRENZE_WERKZEUG.uebungen, /höchstens 50 Übungen/);
+  assert.match(KONTO_GRENZE_WERKZEUG.trainings, /höchstens 30 Trainings.*Team-Trainings nicht/);
+  for (const text of Object.values(KONTO_GRENZE_WERKZEUG)) {
+    assert.match(text, /«hinweis» sagt, dass nichts entstanden ist/);
+    assert.match(text, /statt den Aufruf zu wiederholen/);
+    assert.match(text, /In einem Verein gilt die Grenze nicht\.$/);
+    assert.ok(!/(uebung|training)_loeschen/.test(text), "kein Verweis auf ein Löschwerkzeug");
+  }
+});
+
+pruefe("Konto ohne Verein (#588): ein Weg für den Satz, die Hinweise im Kern, Zuordnen bleibt frei (AK 4), Einfüge-Wege vollständig", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Die Übersetzung steht in `fachlicheMeldung`: `createExercise` (fehlerMeldung) und der Kern (ausDbFehler) lesen sie dort.
+  assert.match(lies("lib/training-bedingungen.ts"), /const konto = kontoGrenzeMeldung\(message\);\s*if \(konto\) return konto;/);
+  assert.match(lies("lib/actions/exercises.ts"), /message: error \? fehlerMeldung\(error\.message\)/, "createExercise übersetzt");
+  // Der Hinweis der Datenebene erreicht jeden Weg: Kern, Übungskopie, Trainingskopie.
+  assert.match(lies("lib/kern/ergebnis.ts"), /const grenze = kontoGrenzeAusFehler\(e\.message\);\s*return fehlschlag\("regel", meldung, grenze \? \{ hinweis: KONTO_GRENZE_HINWEIS, grenze \} : \{\}\);/);
+  assert.match(lies("lib/fassung.ts"), /art: f\.art, \.\.\.\(f\.hinweis && \{ hinweis: f\.hinweis \}\), \.\.\.\(f\.grenze && \{ grenze: f\.grenze \}\)/);
+  assert.match(lies("lib/kern/uebungen.ts"), /hinweis: kopie\.hinweis \?\? nichtsEntstanden\(kopie\.art\),\s*\.\.\.\(kopie\.grenze && \{ grenze: kopie\.grenze \}\)/);
+  assert.match(lies("lib/kern/kopie.ts"), /return vorher\(f\.error, f\.art, f\);/);
+  // «Gefahrlos wiederholen» nur bei technisch/konflikt, auch beim Übernehmen eines Trainings (Fix-Lauf #588).
+  assert.match(lies("lib/kern/kopie.ts"), /kopie\.nichtsEntstanden \? \(kopie\.hinweis \?\? nichtsEntstanden\(kopie\.art\)\)/);
+  assert.match(lies("lib/kern/kopie.ts"), /return art === "technisch" \|\| art === "konflikt" \? HINWEIS_NICHTS_ENTSTANDEN : KEINE_KOPIE;/);
+  assert.ok(!/const nichts = \{ hinweis: HINWEIS_NICHTS_ENTSTANDEN \}/.test(lies("lib/kern/kopie.ts")));
+  // Das Merkmal `grenze` erreicht die Actions der Oberfläche; der KI-Weg lässt es weg.
+  assert.match(lies("lib/actions/exercises.ts"), /const grenze = error \? kontoGrenzeAusFehler\(error\.message\) : null;/);
+  assert.match(lies("lib/actions/exercises.ts"), /error: kopie\.meldung, \.\.\.\(kopie\.grenze && \{ grenze: kopie\.grenze \}\)/);
+  assert.match(lies("lib/actions/fassung.ts"), /error: kopie\.error, \.\.\.\(kopie\.grenze && \{ grenze: kopie\.grenze \}\)/);
+  assert.match(lies("lib/actions/trainings.ts"), /message: oberflaechenMeldung\(r\), \.\.\.\(r\.grenze && \{ grenze: r\.grenze \}\)/);
+  assert.match(lies("lib/actions/team-trainings.ts"), /error: oberflaechenMeldung\(r\), \.\.\.\(r\.grenze && \{ grenze: r\.grenze \}\)/);
+  assert.match(lies("lib/mcp/ergebnis.ts"), /grenze: _grenze, \.\.\.rest \} = f;/);
+  // Kein toter Code: updateExercise und erstelleTeamTraining können an der Grenze nie abweisen.
+  assert.equal((lies("lib/actions/exercises.ts").match(/kontoGrenzeAusFehler\(error\.message\)/g) ?? []).length, 1, "nur createExercise");
+  assert.equal((lies("lib/actions/team-trainings.ts").match(/r\.grenze/g) ?? []).length, 2, "kopie() — nicht erstelleTeamTraining");
+  // Ein Weg, der nicht zählt, kennt die Grenze nicht: Übung ins Training übernehmen.
+  assert.ok(!/konto-grenzen|KONTO_/.test(lies("lib/kern/fassung.ts")), "ordneUebungZu bleibt frei");
+  assert.ok(!/konto-grenzen|KONTO_/.test(lies("lib/actions/trainings.ts").split("export async function addTrainingExercise")[1]?.split("\nexport async function")[0] ?? ""));
+  // Alle vier Einfüge-Wege tragen die Grenze in ihrer Werkzeugbeschreibung.
+  for (const d of ["lib/mcp/werkzeuge/uebungen-bearbeiten.ts", "lib/mcp/werkzeuge/trainings.ts", "lib/mcp/werkzeuge/trainings-bestand.ts"])
+    assert.match(lies(d), /KONTO_GRENZE_WERKZEUG\.(uebungen|trainings)/, d);
+  assert.equal((lies("lib/mcp/werkzeuge/uebungen-bearbeiten.ts").match(/KONTO_GRENZE_WERKZEUG\.uebungen/g) ?? []).length, 2, "uebung_anlegen und uebung_kopieren");
+  assert.match(lies("lib/mcp/werkzeuge/trainings.ts"), /KONTO_GRENZE_WERKZEUG\.trainings/, "training_anlegen");
+  assert.match(lies("lib/mcp/werkzeuge/trainings-bestand.ts"), /KONTO_GRENZE_WERKZEUG\.trainings/, "training_kopieren");
+  // Die Vereinslage reicht `grenzen` durch, auf ihre Form geprüft; ein Weg, der den Verein kennt, zeigt sie nie.
+  assert.match(lies("lib/queries/verein.ts"), /const \{ grenzen, formfehler \} = grenzenOhneVerein\(roh\?\.grenzen\);/);
+  // Lage unbekannt (Fehler, Formfehler) ist nie «ohne Grenzen»: dritter Zustand.
+  const vq = lies("lib/queries/verein.ts");
+  assert.match(vq, /export type GrenzenLage = "mit" \| "ohne" \| "unbekannt";/);
+  assert.match(vq, /if \(fehler\) \{[^}]*return "unbekannt";\s*\}\s*if \(lage\) return "ohne";\s*return grenzen \? "mit" : "unbekannt";/);
+  assert.match(lies("lib/queries/verein.ts"), /if \(lage\) return \{ lage, grenzen: null, fehler: null \};/);
+  assert.match(lies("lib/kern/konto.ts"), /kontoGrenzenAus\(/);
+  // Die Schreibweise der Grenze steht in einer Datei: keine zweite 50/30 in den Werkzeugtexten.
+  for (const d of ["lib/mcp/werkzeuge/uebungen-bearbeiten.ts", "lib/mcp/werkzeuge/trainings.ts", "lib/mcp/werkzeuge/trainings-bestand.ts"])
+    assert.ok(!/höchstens (50|30) /.test(lies(d)), `${d}: Grenzen nur über konto-grenzen.ts`);
+});
+
+pruefe("Konto ohne Verein (#588 AK 5, PC 3): Anzeige nur ohne Verein und aus der Datenebene, nie hart verdrahtet, nie im Layout", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Kein hartes 50/30 in den Bausteinen der Anzeige: Die Zahl kommt aus `grenzen`, die Sätze aus lib/konto-grenzen.ts.
+  for (const d of ["components/ui/BestandAnzeige.tsx", "components/konto/BestandStufe.tsx", "lib/actions/konto-bestand.ts"])
+    assert.ok(!/\b(50|30)\b/.test(lies(d).replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "")), `${d}: keine feste Grenze im Code`);
+  // Die Übersichten zeigen den Stand nur in «Meine …» und lesen ihn von der Datenebene, nicht aus der Liste.
+  assert.match(lies("app/(app)/page.tsx"), /const grenzen = filters\.mine \? await getMeineGrenzen\(\) : null;/);
+  assert.match(lies("app/(app)/page.tsx"), /\{grenzen && <BestandAnzeige art="uebungen" grenze=\{grenzen\.uebungen\}/);
+  assert.match(lies("app/(app)/trainings/page.tsx"), /const grenzen = mine \? await getMeineGrenzen\(\) : null;/);
+  assert.match(lies("app/(app)/trainings/page.tsx"), /\{grenzen && <BestandAnzeige art="trainings" grenze=\{grenzen\.trainings\}/);
+  // Anlegen: Meldung statt der Maske erst an der Grenze (`istVoll`, auch darüber), darunter die Zeile; ohne `grenzen` nichts.
+  assert.match(lies("app/(app)/neu/page.tsx"), /const voll = grenzen !== null && istVoll\(grenzen\.uebungen\);/);
+  assert.match(lies("app/(app)/neu/page.tsx"), /\{grenzen && voll \? \(\s*<BestandAnzeige art="uebungen" grenze=\{grenzen\.uebungen\} variante="meldung" \/>/);
+  assert.match(lies("app/(app)/neu/page.tsx"), /bestand=\{grenzen\?\.uebungen\}/);
+  assert.match(lies("app/(app)/training/neu/page.tsx"), /const voll = grenzen !== null && istVoll\(grenzen\.trainings\);/);
+  assert.match(lies("app/(app)/training/neu/page.tsx"), /\{grenzen && voll \? \(\s*<BestandAnzeige art="trainings" grenze=\{grenzen\.trainings\} variante="meldung" \/>/);
+  assert.match(lies("app/(app)/training/neu/page.tsx"), /<TrainingCreateForm bestand=\{grenzen\?\.trainings\} \/>/);
+  // Weist die Datenebene beim Speichern ab (Rennen): dieselbe Meldung wie bei voller Grenze, erkannt am Merkmal
+  // `grenze`, und die Zeile mit dem alten Stand fällt weg — die Angaben bleiben in der Maske (Fix-Lauf).
+  for (const [d, art] of [["components/exercise/ExerciseForm.tsx", "uebungen"], ["components/training/TrainingCreateForm.tsx", "trainings"]] as const) {
+    const t = lies(d);
+    assert.match(t, new RegExp(`state\\.grenze \\? \\(\\s*<div ref=\\{grenzMeldungRef\\}[^>]*role="alert"[^>]*>\\s*<BestandAnzeige art="${art}" grenze=\\{grenzeAusAbweisung\\(state\\.grenze\\)\\} variante="meldung"`), d);
+    assert.match(t, new RegExp(`\\{bestand && !state\\.grenze && (?:\\(\\s*)?<BestandAnzeige art="${art}" grenze=\\{bestand\\}`), d);
+  }
+  // Die Zähler stehen in der Seite, nie im Layout: Das Layout rendert bei Navigation im Client nicht neu und zeigte einen
+  // Stand von gestern; eine Anzeige, die nie sperrt, darf veralten, eine Seite soll es nicht.
+  for (const datei of quelldateien(join(web, "components/layout")))
+    assert.ok(!/konto-grenzen|getMeineGrenzen|BestandAnzeige/.test(readFileSync(datei, "utf8")), relative(web, datei));
+  // Die Vereinslage liest je Anfrage (React-`cache`), nie über Anfragen hinweg.
+  assert.ok(!/unstable_cache|revalidate\s*=/.test(lies("lib/queries/verein.ts")), "kein Zwischenspeicher über Anfragen");
+  assert.match(lies("lib/queries/verein.ts"), /if \(lage\) return \{ lage, grenzen: null, fehler: null \};/, "mit Verein nie eine Anzeige");
+  // Die Seiten rendern je Aufruf frisch.
+  for (const d of ["app/(app)/page.tsx", "app/(app)/trainings/page.tsx", "app/(app)/neu/page.tsx", "app/(app)/training/neu/page.tsx"])
+    assert.match(lies(d), /export const dynamic = "force-dynamic";/, d);
+});
+
+pruefe("Konto ohne Verein (#588 AK 5, 6): die Stufe vor Kopieren, Übernehmen und «In die Bibliothek» — ein Klick mit Verein, frischer Stand ohne, gesperrt bis zur Zielseite, Abweisung am Merkmal", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Alle vier Einstiege gehen über die Stufe und geben das Ergebnis der Action samt Merkmal weiter.
+  for (const [d, art] of [
+    ["components/exercise/UebungKopierenButton.tsx", "uebungen"],
+    ["components/exercise/OwnerActions.tsx", "uebungen"],
+    ["components/training/InBibliothekButton.tsx", "uebungen"],
+    ["components/training/TrainingAktionen.tsx", "trainings"],
+  ] as const) {
+    const t = lies(d);
+    assert.match(t, new RegExp(`useBestandStufe\\(\\{\\s*art: "${art}"`), d);
+    assert.match(t, /\.dialog\b|\{(dialog|kopierDialog)\}/, `${d} zeigt die Stufe`);
+    assert.match(t, /if \(!res\.ok\) return res;/, `${d}: das Merkmal reist mit`);
+    // Der Auslöser sperrt fokussierbar (W6), nie `disabled` durch die Stufe.
+    assert.ok(!/disabled=\{(laeuft|kopierLaeuft|pending \|\| uebernehmenStufe\.laeuft)\}/.test(t), `${d}: kein disabled durch die Stufe`);
+  }
+  assert.match(lies("components/exercise/UebungKopierenButton.tsx"), /aria-disabled=\{laeuft \|\| undefined\}/);
+  assert.match(lies("components/training/InBibliothekButton.tsx"), /aria-disabled=\{laeuft \|\| undefined\}/);
+  assert.match(lies("components/exercise/OwnerActions.tsx"), /gesperrt=\{kopierLaeuft\}/);
+  assert.match(lies("components/training/TrainingAktionen.tsx"), /gesperrt=\{uebernehmenStufe\.laeuft\}/);
+  const menue = lies("components/ui/OverflowMenu.tsx");
+  assert.match(menue, /aria-disabled=\{gesperrt \|\| undefined\}/);
+  assert.match(menue, /if \(gesperrt\) return;\s*setOffen/);
+  // Die Seiten geben die Lage mit (W2): mit Verein kein Aufruf der Bestands-Action.
+  for (const d of ["app/(app)/uebung/[slug]/page.tsx", "app/(app)/training/[id]/page.tsx", "app/(app)/training/[id]/edit/page.tsx"]) {
+    const t = lies(d);
+    assert.match(t, /getMeineGrenzenLage\(\)\]\)/, `${d}: Lage parallel zu den anderen Abfragen`);
+    assert.match(t, /const mitGrenzen = grenzenLage !== "ohne";/, `${d}: unbekannt heisst nicht «ohne Grenzen»`);
+    assert.match(t, /<KontoGrenzenLage mitGrenzen=\{mitGrenzen\}>/, d);
+  }
+  const stufe = lies("components/konto/BestandStufe.tsx");
+  assert.match(stufe, /if \(!mitGrenzen\) \{\s*ausfuehrenGesichert\(nr, false\);\s*return;\s*\}/, "mit Verein sofort, ohne Rundreise");
+  assert.match(stufe, /ladeBestandAktion\(art\)/, "ohne Verein der Stand frisch, nicht von der Seite übernommen");
+  // W1: Die Aktion läuft in einer Transition; im Erfolg bleibt sie offen, bis die Zielseite steht.
+  assert.match(stufe, /const \[fuehrtAus, startAusfuehren\] = useTransition\(\);/);
+  assert.match(stufe, /startAusfuehren\(async \(\) => \{\s*let r: StufenFehler;\s*try \{\s*r = await ausfuehren\(\);/);
+  assert.match(stufe, /const laeuft = fragt \|\| fuehrtAus;/);
+  assert.match(stufe, /function starte\(\) \{\s*if \(belegt\.current \|\| laeuft \|\| offen\) return;/);
+  assert.match(stufe, /if \(belegt\.current \|\| laeuft\) return;\s*ausfuehrenGesichert\(\+\+lauf\.current, true\);/);
+  assert.match(stufe, /function schliessen\(\) \{\s*if \(belegt\.current \|\| fuehrtAus\) return;/);
+  assert.match(stufe, /if \(nr !== lauf\.current\) return;/, "überholte Antworten werden verworfen");
+  // W5: Die Abweisung an der Grenze erkennt die Stufe am Merkmal, nie am Text, und zeigt die Form der vollen Grenze.
+  assert.match(stufe, /if \(r\.grenze\) setOffen\(\{ grenze: grenzeAusAbweisung\(r\.grenze\), fehler: null, abgewiesen: true \}\);/);
+  assert.match(stufe, /const voll = grenze !== null && \(offen\?\.abgewiesen \|\| \(istVoll\(grenze\) && offen\?\.fehler == null\)\);/);
+  assert.match(stufe, /voll \? \(\s*<Button type="button" variant="outlined" onClick=\{schliessen\}>\s*Schliessen/);
+  assert.match(stufe, /<BestandAnzeige art=\{art\} grenze=\{grenze\} variante="meldung" \/>/, "mit dem Weg zur eigenen Übersicht");
+  assert.ok(!/endsWith|KONTO_GRENZE_SCHLUSS/.test(stufe), "keine Erkennung am Text");
+  assert.match(stufe, /else melde\(r\.error\);/);
+  // Die Action liest nur, prüft ihre Eingabe und gehört dem angemeldeten Konto.
+  const aktion = lies("lib/actions/konto-bestand.ts");
+  assert.match(aktion, /art !== "uebungen" && art !== "trainings"/);
+  assert.match(aktion, /angemeldet\(\)/);
+  assert.ok(!/\.insert\(|\.update\(|\.delete\(|\.rpc\(/.test(aktion), "nur lesen");
+});
+
+pruefe("Konto ohne Verein (#588 PC 2): Wer die Zugehörigkeit oder den Bestand ändert, lädt die Ansichten neu — Anlegen, Kopieren, Löschen, Aufnahme, Austritt, Auflösen, Verein löschen", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  /** Der Rumpf einer exportierten Funktion bis zur nächsten. */
+  const rumpf = (text: string, name: string): string => {
+    const i = text.search(new RegExp(`export async function ${name}\\b`));
+    assert.ok(i >= 0, `${name} nicht gefunden`);
+    const rest = text.slice(i + 1);
+    const j = rest.search(/\n(?:\/\*\*|export )/);
+    return j < 0 ? rest : rest.slice(0, j);
+  };
+  // Wer den Bestand ändert, verwirft die Liste, die ihn zeigt.
+  const exercises = lies("lib/actions/exercises.ts");
+  for (const name of ["createExercise", "kopiereUebung", "deleteExercise"]) assert.match(rumpf(exercises, name), /revalidateLists\(\)/, name);
+  assert.match(rumpf(lies("lib/actions/fassung.ts"), "kopiereInBibliothek"), /revalidatePath\("\/"\)/);
+  const trainings = lies("lib/actions/trainings.ts");
+  for (const name of ["createTraining", "deleteTraining"]) assert.match(rumpf(trainings, name), /revalidatePath\("\/trainings"\)/, name);
+  assert.match(rumpf(lies("lib/actions/team-trainings.ts"), "uebernimmTraining"), /revalidatePath\("\/trainings"\)/);
+  // Wer die eigene Zugehörigkeit ändert, rendert das Wurzel-Layout neu (Leiste, Wechsler) und verwirft den Router-Cache,
+  // damit `/` und `/trainings` bei der nächsten Navigation den Stand ohne oder mit Grenze zeigen.
+  const verein = lies("lib/actions/verein.ts");
+  for (const name of [
+    "gruendeVereinAktion",
+    "loeseTeamAufAktion",
+    "loescheVereinAktion",
+    "nimmMichInsTeamAktion",
+    "entferneAusTeamAktion",
+    "nimmInVerwaltungAufAktion",
+    "entferneAusVerwaltungAktion",
+  ])
+    assert.match(rumpf(verein, name), /revalidiereMitgliedschaften\(\)/, name);
+  assert.match(rumpf(lies("lib/actions/teams.ts"), "entferneMitglied"), /revalidiereMitgliedschaften\(\)/, "Austritt aus dem Team");
+  assert.match(lies("lib/actions/auth.ts"), /revalidiereVerein\(\);\s*revalidiereMitgliedschaften\(\);/, "Konto löschen mit Verein");
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

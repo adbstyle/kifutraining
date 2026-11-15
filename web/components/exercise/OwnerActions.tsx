@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Globe, Lock, Trash2, Copy } from "lucide-react";
 import {
@@ -11,7 +11,7 @@ import {
   OverflowMenu,
   Dialog,
 } from "@/components/ui";
-import { useSnackbar } from "@/components/layout/SnackbarKontext";
+import { useBestandStufe } from "@/components/konto/BestandStufe";
 import {
   setVisibility,
   deleteExercise,
@@ -51,22 +51,26 @@ export function OwnerActions({
 }) {
   const router = useRouter();
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const melde = useSnackbar();
-  const [kopierLaeuft, starteKopie] = useTransition();
   const isPublic = visibility === "public";
   const next = isPublic ? "private" : "public";
   const visibilityLabel = isPublic ? "Auf privat setzen" : "Öffentlich schalten";
 
   /* Kopieren: Der Server legt die Kopie an (Name samt Kopie-Kennzeichnung,
      Bild, Diagramm, privat) und meldet ihren Slug; von dort geht es unmittelbar
-     auf die Kopie (AK 4). Fehlschläge sagt die Snackbar (AK 7). */
-  function kopieren() {
-    starteKopie(async () => {
+     auf die Kopie (AK 4). Fehlschläge sagt die Snackbar (AK 7); für ein Konto
+     ohne Verein geht der frisch gelesene Stand voraus (#588). */
+  const { starte: kopieren, laeuft: kopierLaeuft, dialog: kopierDialog } = useBestandStufe({
+    art: "uebungen",
+    titel: "Übung kopieren",
+    aktion: "Kopieren",
+    hinweis: "Die Kopie ist ein privater Entwurf in deinem Bestand.",
+    ausfuehren: async () => {
       const res = await kopiereUebung(id);
-      if (res.ok) router.push(`/uebung/${res.slug}?kopiert=1`);
-      else melde(res.error);
-    });
-  }
+      if (!res.ok) return res;
+      router.push(`/uebung/${res.slug}?kopiert=1`);
+      return null;
+    },
+  });
 
   return (
     <>
@@ -93,7 +97,7 @@ export function OwnerActions({
       {/* ⋮-Überlaufmenü — Kopieren und, davon abgesetzt, das Löschen. */}
       <OverflowMenu
         label={`Weitere Aktionen zu „${name}"`}
-        disabled={kopierLaeuft}
+        gesperrt={kopierLaeuft}
         items={[
           {
             label: "Kopieren",
@@ -129,6 +133,8 @@ export function OwnerActions({
         Diese Übung wird mitsamt Feld-Diagramm endgültig entfernt. Das kann nicht
         rückgängig gemacht werden.
       </Dialog>
+
+      {kopierDialog}
     </>
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { BestandAnzeige } from "@/components/ui";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { createExercise } from "@/lib/actions/exercises";
 import {
@@ -8,6 +9,8 @@ import {
   traegtHauptteilkategorie,
 } from "@/lib/altersstufe";
 import { hauptteilkategorieSlugs } from "@/lib/vocab";
+import { istVoll } from "@/lib/konto-grenzen";
+import { getMeineGrenzen } from "@/lib/queries/verein";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Neue Übung - KiFu", robots: { index: false } };
@@ -34,19 +37,32 @@ export default async function NeuePage({
       ? sp.kategorie
       : undefined;
 
+  // Ein Konto ohne Verein erfährt den Stand, bevor es Angaben macht (#588 AK 5):
+  // unter der Grenze als Zeile, an und über der Grenze als Meldung statt der
+  // Maske. Die Seite rendert je Aufruf frisch; entscheiden tut die Datenebene
+  // beim Speichern (die Maske zeigt ihre Abweisung bleibend), und ein Konto in
+  // einem Verein sieht nichts davon (PC 3).
+  const grenzen = await getMeineGrenzen();
+  const voll = grenzen !== null && istVoll(grenzen.uebungen);
+
   return (
     <Seitenrahmen breite="4xl" krumen={[{ label: "Übungen", href: "/" }, { label: "Neue Übung" }]}>
       {/* Kopf wie im Trainings-Editor: Brotkrumen, darunter der Name als
           Kopf-Feld der Maske. Die Überschrift trägt die Seite unsichtbar. */}
       <h1 className="sr-only">Neue Übung</h1>
-      <ExerciseForm
-        action={createExercise}
-        altersstufe={altersstufe}
-        stufenWahl="waehlbar"
-        kontext="bibliothek"
-        initial={{ trainingsteil: teil, hauptteilkategorie: kategorie }}
-        submitLabel="Übung speichern"
-      />
+      {grenzen && voll ? (
+        <BestandAnzeige art="uebungen" grenze={grenzen.uebungen} variante="meldung" />
+      ) : (
+        <ExerciseForm
+          action={createExercise}
+          altersstufe={altersstufe}
+          stufenWahl="waehlbar"
+          kontext="bibliothek"
+          initial={{ trainingsteil: teil, hauptteilkategorie: kategorie }}
+          submitLabel="Übung speichern"
+          bestand={grenzen?.uebungen}
+        />
+      )}
     </Seitenrahmen>
   );
 }

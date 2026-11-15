@@ -13,10 +13,10 @@
 -- Bestands-Spieler:in in zwei Teams über Link, Abo und Abholung (Story 7),
 -- die Bestands-Schnuppernde über die neuen Schreibwege (Story 8), die
 -- Vereinsliste für ein Mitglied ohne Verwaltung (Story 4), der Import in
--- den Bestandsverein samt Altdublette (Story 9), Gründen durch das Konto
--- ohne Team und Löschen des Bestandsvereins (Story 11, zuletzt). Teil B
--- ändert nichts bleibend (rollback). Spätere Stories ergänzen ihre Abfragen
--- (Konten ohne Verein mit Story 12).
+-- den Bestandsverein samt Altdublette (Story 9), das Konto ohne Team mit
+-- Bestand über den Grenzen (Story 12), Gründen durch das Konto ohne Team und
+-- Löschen des Bestandsvereins (Story 11, zuletzt). Teil B ändert nichts
+-- bleibend (rollback). Spätere Stories ergänzen ihre Abfragen.
 
 \set ON_ERROR_STOP on
 
@@ -78,6 +78,12 @@ begin
                          'sm_termin_team', 'te_termin_team', 'tk_termin_team', 'stp_termin_team',
                          'tn_eingefroren_team', 'st_eingefroren_team');
   if x is not null then raise exception 'Ungeprüfte Constraints: %', x; end if;
+  -- Grenzen der Konten ohne Verein (Story 12): je Tabelle die zwei Trigger,
+  -- aktiv (ein Sync unter replica schaltet sie nicht ab).
+  select string_agg(r || '.' || g, ', ') into x
+    from unnest(array['exercises', 'trainings']) r, unnest(array['konto_grenze_neu', 'konto_grenze_besitz']) g
+   where not exists (select 1 from pg_trigger t where t.tgrelid = r::regclass and t.tgname = g and t.tgenabled = 'O');
+  if x is not null then raise exception 'Trigger der Kontogrenzen fehlen oder sind abgeschaltet: %', x; end if;
   -- Story 5: Ein Team ohne Mitglied bleibt bestehen; die Auflösewege der
   -- Mitglieder sind weg (Teams ohne Mitglied sind ab dann erlaubt).
   if to_regprocedure('team_aufloesen_wenn_leer()') is not null
@@ -547,6 +553,73 @@ begin
     raise exception 'Story 8: zum Schnuppern zugeordnet, aber angemeldet, Spiel gilt oder zählt nicht ab null: %', probe_stand(v_neu);
   end if;
 end $$;
+
+-- Story 12 (PC 1, 3, AK 2, 3, 6): Das Konto ohne Team besitzt 60 Übungen und
+-- 31 Trainings aus dem alten Schema. Der Bestand bleibt und lässt sich
+-- ändern, veröffentlichen, auf Entwurf setzen und löschen; Neues wird mit dem
+-- tatsächlichen Bestand abgewiesen, bis es unter der Grenze liegt. Vor
+-- Story 11 (die macht das Konto zur Verwaltung).
+do $$
+begin
+  if konto_bestand(prodweg.id('ohne_team')) <> '{"uebungen": 60, "trainings": 31}' then
+    raise exception 'Story 12: Bestand des Kontos ohne Team: %', konto_bestand(prodweg.id('ohne_team'));
+  end if;
+end $$;
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('ohne_team'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims_grenzen \gset
+set local role authenticated;
+do $$
+declare
+  v_uid uuid := prodweg.id('ohne_team');
+  v_ue uuid := (select id from exercises where slug = 'prodweg-ohne-team-2');
+  v_tr uuid := (select id from trainings where owner_id = v_uid order by name limit 1);
+  f text;
+  -- Neue Übung bzw. neues Training wie die Anwendung (direkter Insert, RLS).
+  c_ue constant text := format($q$insert into exercises (slug, name, trainingsteil, aufbau, source, owner_id)
+                                  values ('prodweg-neu-' || gen_random_uuid(), 'Neu', 'ausklang', 'Aufbau', 'user', %L)$q$, v_uid);
+  c_tr constant text := format($q$insert into trainings (name, owner_id, visibility, altersstufe, stufen)
+                                  values ('Neu', %L, 'private', 'kinderfussball', array['F'])$q$, v_uid);
+begin
+  if meine_vereinslage() <> '{"verein": null, "grenzen": {"uebungen": {"bestand": 60, "max": 50},
+                                                           "trainings": {"bestand": 31, "max": 30}}}' then
+    raise exception 'Story 12: meine_vereinslage über der Grenze: %', meine_vereinslage();
+  end if;
+  update exercises set name = 'Prodweg geändert', visibility = 'public' where id = v_ue;
+  update exercises set visibility = 'private' where id = v_ue;
+  update trainings set name = 'Prodweg geändert' where id = v_tr;
+  if not found or (select name from exercises where id = v_ue) <> 'Prodweg geändert' then
+    raise exception 'Story 12: Bestand über der Grenze nicht änderbar';
+  end if;
+  delete from exercises where id = v_ue;
+  begin
+    execute c_ue;
+    raise exception 'Story 12: Übung über der Grenze angelegt';
+  exception when raise_exception then
+    get stacked diagnostics f = message_text;
+    if f <> 'KONTO_UEBUNGEN_VOLL 59' then raise exception 'Story 12: Abweisung der Übung: %', f; end if;
+  end;
+  begin
+    execute c_tr;
+    raise exception 'Story 12: Training über der Grenze angelegt';
+  exception when raise_exception then
+    get stacked diagnostics f = message_text;
+    if f <> 'KONTO_TRAININGS_VOLL 31' then raise exception 'Story 12: Abweisung des Trainings: %', f; end if;
+  end;
+  -- Bis unter die Grenze löschen: genau eine neue geht wieder.
+  delete from exercises where id in (select id from exercises where owner_id = v_uid order by slug limit 10);
+  delete from trainings where id in (select id from trainings where owner_id = v_uid order by name limit 2);
+  execute c_ue;
+  execute c_tr;
+  begin
+    execute c_ue;
+    raise exception 'Story 12: 51. Übung angelegt';
+  exception when raise_exception then
+    get stacked diagnostics f = message_text;
+    if f <> 'KONTO_UEBUNGEN_VOLL 50' then raise exception 'Story 12: Abweisung an der Grenze: %', f; end if;
+  end;
+end $$;
+reset role;
 
 -- Story 11 (AK 1, 10–13, PC 1, 3, 4; Testfälle 20, 21): Auf dem migrierten
 -- Bestand gründet das Konto ohne Team einen Verein und ist dessen einzige

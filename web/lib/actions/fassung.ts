@@ -24,6 +24,7 @@ import { fehlerMeldung } from "@/lib/training-bedingungen";
 import { istHauptteil } from "@/lib/gruppen";
 import { varianteAnhang } from "@/lib/varianten";
 import { materialBasisAusDiagramm } from "@/lib/material";
+import type { KontoAbweisung } from "@/lib/konto-grenzen";
 
 /** Die Fassung samt ihrem Training laden und das Schreibrecht prüfen. Die RLS
  *  setzt es ohnehin durch; hier geht es um eine klare Meldung statt eines
@@ -296,7 +297,7 @@ type ZuKopierendeFassung = {
  *  einer eigenen Bibliotheks-Übung (#171 OOS 5). */
 export async function kopiereInBibliothek(
   fassungId: string,
-): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
+): Promise<{ ok: true; slug: string } | { ok: false; error: string; grenze?: KontoAbweisung }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -328,7 +329,7 @@ export async function kopiereInBibliothek(
     ownerId: user.id,
     altersstufe,
   });
-  if (!kopie.ok) return kopie;
+  if (!kopie.ok) return { ok: false, error: kopie.error, ...(kopie.grenze && { grenze: kopie.grenze }) };
 
   revalidatePath("/");
   return kopie;

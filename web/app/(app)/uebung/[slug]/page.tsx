@@ -14,7 +14,9 @@ import { OwnerActions } from "@/components/exercise/OwnerActions";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { UebungKopierenButton } from "@/components/exercise/UebungKopierenButton";
 import { EinordnungsLeiste } from "@/components/exercise/EinordnungsLeiste";
+import { KontoGrenzenLage } from "@/components/konto/BestandStufe";
 import { createClient } from "@/lib/supabase/server";
+import { getMeineGrenzenLage } from "@/lib/queries/verein";
 import { getExerciseDetail, isFavorited } from "@/lib/queries/exercises";
 import { EINORDNUNG_LABEL } from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
@@ -72,7 +74,13 @@ export default async function ExerciseDetailPage({
   } = await supabase.auth.getUser();
   const isOwner = ex.source === "user" && !!user && ex.owner_id === user.id;
   // Favoriten-Aktion nur für angemeldete USER (AC2/AC11).
-  const favorited = user ? await isFavorited(ex.id) : false;
+  // Gelten für das Konto Grenzen (#588)? Nur dann fragt Kopieren den Stand
+  // vorher; ein Konto in einem Verein kopiert mit einem Klick. Ist die Lage
+  // unbekannt, fragt die Stufe selbst. Beide Abfragen sind unabhängig.
+  const [favorited, grenzenLage] = user
+    ? await Promise.all([isFavorited(ex.id), getMeineGrenzenLage()])
+    : [false, "ohne" as const];
+  const mitGrenzen = grenzenLage !== "ohne";
 
   // Die Brotkrumen nennen die Einordnung als Filter-Link auf den Pool. Der
   // Link zielt auf die feinste Einordnung, die der Katalog filtern kann — im
@@ -147,7 +155,7 @@ export default async function ExerciseDetailPage({
     <div className="ml-auto flex shrink-0 items-center gap-0.5 print:hidden">
       <PrintButton variant="icon" />
       {(isOwner || user) && (
-        <>
+        <KontoGrenzenLage mitGrenzen={mitGrenzen}>
           {isOwner ? (
             <OwnerActions
               id={ex.id}
@@ -173,7 +181,7 @@ export default async function ExerciseDetailPage({
               />
             </>
           )}
-        </>
+        </KontoGrenzenLage>
       )}
     </div>
   );

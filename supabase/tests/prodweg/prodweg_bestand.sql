@@ -14,7 +14,8 @@
 -- Bestand: ein Team mit 150 Spieler:innen, zwei Teams mit gleichem
 -- normalisiertem Namen und einer Dublette, ein Team mit Schnuppernder, Kader,
 -- Trainings und Spielen (kommend und festgehalten) samt Meldungen, Trainer:innen
--- in mehreren Teams und ein bestätigtes Konto ohne Team.
+-- in mehreren Teams und ein bestätigtes Konto ohne Team mit 60 eigenen
+-- Übungen und 31 eigenen Trainings (über den Grenzen von Story 12).
 -- Dazu das Schema `prodweg` (nicht `public`): die IDs und eine Funktion, die
 -- die Ausgaben der Lesepfade sammelt; ihr Ergebnis hier im alten Schema ist
 -- der Vergleichsstand für die Gleichwertigkeit (Story 1, AP §3.2).
@@ -77,6 +78,16 @@ language sql stable as $$ select id from prodweg.ids where name = p $$;
 insert into auth.users (id, email, email_confirmed_at)
 select id, name || '@prodweg.test', now() from prodweg.ids
  where name in ('verwaltung', 'trainer_a', 'trainer_b', 'ohne_team');
+
+-- Konto ohne Team mit Bestand über den späteren Grenzen (Story 12 PC 1):
+-- 60 eigene Übungen (eine öffentlich) und 31 eigene Trainings, mit Triggern.
+insert into exercises (slug, name, trainingsteil, aufbau, source, owner_id, visibility)
+select 'prodweg-ohne-team-' || i, 'Prodweg Übung ' || i, 'ausklang', 'Aufbau', 'user', prodweg.id('ohne_team'),
+       case when i = 1 then 'public' else 'private' end
+  from generate_series(1, 60) i;
+insert into trainings (name, owner_id, visibility, altersstufe, stufen)
+select 'Prodweg Training ' || i, prodweg.id('ohne_team'), 'private', 'kinderfussball', array['F']
+  from generate_series(1, 31) i;
 
 insert into teams (id, name) values
   (prodweg.id('t_gross'), 'Prodweg E-Junioren'),

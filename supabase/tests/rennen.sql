@@ -9,7 +9,9 @@
 -- Schnuppern in genau einem Team; Story 9: Import in den Verein gegen
 -- Erfassen, Löschen, Aufnehmen und einen zweiten Import; Story 11: Verein
 -- gründen und löschen gegen Aufnehmen, Termine, Umbenennen und Konto
--- löschen, Termin-RPCs mit Termin-Training gegen Löschen).
+-- löschen, Termin-RPCs mit Termin-Training gegen Löschen; Story 12: Grenzen
+-- der Konten ohne Verein gegen gleichzeitige Anlage, Aufnahme und Konto
+-- löschen).
 --
 -- Muster für «gleichzeitig, genau eines gelingt» (spätere Stories bauen ihre
 -- Fälle als weitere Blöcke nach diesem Vorbild):
@@ -2146,6 +2148,199 @@ delete from vereine where id in (select id from rennen_test.ids where name like 
 delete from trainer_suchversuche where user_id in (select id from rennen_test.ids where name like 's11\_%');
 delete from auth.users where id in (select id from rennen_test.ids where name like 's11\_%');
 
+-- ── Fälle: Konten ohne Verein (Story 12 #588 AK 8, PC 2; AP §3.5, §4.4, Testfall 22) ──
+-- Eigene Konten ohne Verein «rennen-s12-…@rennen.test» mit Bestand per
+-- replica, ein Verein «Rennen-s12» mit Verwaltung VA und Team. Angelegt wird
+-- wie in der Anwendung per direktem Insert über die RLS, mit
+-- rennen_test.verschraenkt; B wartet jeweils an der Personensperre
+-- (`advisory`). Kein Fall endet in 40P01.
+-- (u1) Zwei Übungen bei 49, A über einen KI-Zugang (client_id), B in der
+--      Anwendung: B KONTO_UEBUNGEN_VOLL 50, Bestand 50.
+-- (u2) Zwei Trainings bei 29: B KONTO_TRAININGS_VOLL 30, Bestand 30.
+-- (u3) Aufnahme ins Team gegen Anlage bei 50: B gelingt (die 51.).
+-- (u4) Anlage bei 49 gegen Aufnahme ins Team: beide gelingen, Bestand 50.
+-- (u5) Aufnahme in die Verwaltung gegen Anlage bei 50: B gelingt.
+-- (u6) Konto löschen gegen Anlage: B legt danach an (Bestand 1).
+-- (u7) Anlage gegen Konto löschen: B löscht danach alles, auch die neue.
+-- (u8) Kein Abfluss über die Sperre: A legt für X an und hält dessen
+--      Personensperre; ein anderes Konto fügt eine Zeile mit owner_id X ein,
+--      wartet nicht und bekommt die RLS-Abweisung.
+-- Ein harter Abbruch lässt den Verein «Rennen-s12» samt Team, die Konten
+-- «rennen-s12-…@rennen.test» und deren Übungen und Trainings stehen (von
+-- Hand löschen: erst Übungen/Trainings der Konten, dann Konten und Verein).
+
+select set_config('rennen.fehler_konten', '', false) is not null as rennen_fehler_konten_leer \gset
+
+begin;
+insert into rennen_test.ids (name) values ('s12_verein'), ('s12_team'), ('s12_va'),
+  ('s12_u1'), ('s12_u2'), ('s12_u3'), ('s12_u4'), ('s12_u5'), ('s12_u6'), ('s12_u7'), ('s12_u8'), ('s12_y');
+insert into auth.users (id, email, email_confirmed_at)
+select id, 'rennen-' || replace(name, '_', '-') || '@rennen.test', now() from rennen_test.ids
+ where name like 's12\_%' and name not in ('s12_verein', 's12_team');
+insert into vereine (id, name) values (rennen_test.z('s12_verein'), 'Rennen-s12');
+insert into verein_verwaltung (verein_id, user_id) values (rennen_test.z('s12_verein'), rennen_test.z('s12_va'));
+insert into teams (id, name, verein_id) values (rennen_test.z('s12_team'), 'Rennen-s12-Team', rennen_test.z('s12_verein'));
+create function rennen_test.s12_bestand(p text, p_uebungen int, p_trainings int) returns void
+language plpgsql as $f$
+begin
+  set local session_replication_role = replica;
+  insert into exercises (slug, name, trainingsteil, aufbau, source, owner_id, visibility)
+  select 'rennen-s12-' || gen_random_uuid(), 'Alt', 'ausklang', 'Aufbau', 'user', rennen_test.z(p), 'private'
+    from generate_series(1, p_uebungen);
+  insert into trainings (name, owner_id, visibility, altersstufe, stufen)
+  select 'Alt', rennen_test.z(p), 'private', 'kinderfussball', array['F'] from generate_series(1, p_trainings);
+  set local session_replication_role = origin;
+end $f$;
+-- SQL einer neuen eigenen Übung bzw. eines Trainings (Ergebnis: die ID).
+create function rennen_test.s12_uebung(p_owner uuid) returns text
+language sql stable as $f$
+  select format($q$insert into exercises (slug, name, trainingsteil, aufbau, source, owner_id)
+                   values ('rennen-s12-' || gen_random_uuid(), 'Neu', 'ausklang', 'Aufbau', 'user', %L) returning id::text$q$, p_owner);
+$f$;
+create function rennen_test.s12_training(p_owner uuid) returns text
+language sql stable as $f$
+  select format($q$insert into trainings (name, owner_id, visibility, altersstufe, stufen)
+                   values ('Neu', %L, 'private', 'kinderfussball', array['F']) returning id::text$q$, p_owner);
+$f$;
+select rennen_test.s12_bestand('s12_u1', 49, 0), rennen_test.s12_bestand('s12_u2', 0, 29),
+       rennen_test.s12_bestand('s12_u3', 50, 0), rennen_test.s12_bestand('s12_u4', 49, 0),
+       rennen_test.s12_bestand('s12_u5', 50, 0), rennen_test.s12_bestand('s12_u6', 10, 3),
+       rennen_test.s12_bestand('s12_u7', 10, 3), rennen_test.s12_bestand('s12_u8', 10, 0);
+commit;
+
+do $$
+declare
+  ziel   text := format(
+    'host=%s port=%s dbname=%s user=postgres password=postgres connect_timeout=5 options=''-c statement_timeout=30s''',
+    coalesce(host(inet_server_addr()), '127.0.0.1'), inet_server_port(), current_database());
+  ergebnis text;
+  meldung text;
+  frist timestamptz;
+  gewartet boolean := false;
+  n text;
+begin
+  -- (u1) Zwei Übungen bei 49, A über einen KI-Zugang.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s12_u1'), format($q$select set_config('request.jwt.claims', %L, true); %s$q$,
+                                     jsonb_build_object('sub', rennen_test.z('s12_u1'), 'role', 'authenticated', 'client_id', 'ki-client'),
+                                     rennen_test.s12_uebung(rennen_test.z('s12_u1'))),
+    rennen_test.z('s12_u1'), rennen_test.s12_uebung(rennen_test.z('s12_u1')), 'advisory');
+  if position('KONTO_UEBUNGEN_VOLL 50' in ergebnis) = 0 then
+    raise exception '(u1) B hätte KONTO_UEBUNGEN_VOLL 50 melden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from exercises where owner_id = rennen_test.z('s12_u1')) <> 50 then
+    raise exception '(u1) Bestand nicht 50';
+  end if;
+
+  -- (u2) Zwei Trainings bei 29.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s12_u2'), rennen_test.s12_training(rennen_test.z('s12_u2')),
+    rennen_test.z('s12_u2'), rennen_test.s12_training(rennen_test.z('s12_u2')), 'advisory');
+  if position('KONTO_TRAININGS_VOLL 30' in ergebnis) = 0 then
+    raise exception '(u2) B hätte KONTO_TRAININGS_VOLL 30 melden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from trainings where owner_id = rennen_test.z('s12_u2')) <> 30 then
+    raise exception '(u2) Bestand nicht 30';
+  end if;
+
+  -- (u3) Aufnahme ins Team gegen Anlage bei 50.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s12_va'), format($q$select verein_team_aufnehmen(%L, 'rennen-s12-u3@rennen.test')::text$q$, rennen_test.z('s12_team')),
+    rennen_test.z('s12_u3'), rennen_test.s12_uebung(rennen_test.z('s12_u3')), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or (select count(*) from exercises where owner_id = rennen_test.z('s12_u3')) <> 51 then
+    raise exception '(u3) B hätte nach der Aufnahme die 51. anlegen müssen: %', ergebnis;
+  end if;
+
+  -- (u4) Anlage bei 49 gegen Aufnahme ins Team.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s12_u4'), rennen_test.s12_uebung(rennen_test.z('s12_u4')),
+    rennen_test.z('s12_va'), format($q$select verein_team_aufnehmen(%L, 'rennen-s12-u4@rennen.test')::text$q$, rennen_test.z('s12_team')),
+    'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'aufgenommen'
+     or (select count(*) from exercises where owner_id = rennen_test.z('s12_u4')) <> 50
+     or person_verein(rennen_test.z('s12_u4')) is distinct from rennen_test.z('s12_verein') then
+    raise exception '(u4) Anlage und Aufnahme hätten beide gelingen müssen: %', ergebnis;
+  end if;
+
+  -- (u5) Aufnahme in die Verwaltung gegen Anlage bei 50.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s12_va'), format($q$select verein_verwaltung_aufnehmen(%L, 'rennen-s12-u5@rennen.test')::text$q$,
+                                    rennen_test.z('s12_verein')),
+    rennen_test.z('s12_u5'), rennen_test.s12_uebung(rennen_test.z('s12_u5')),
+    'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or (select count(*) from exercises where owner_id = rennen_test.z('s12_u5')) <> 51 then
+    raise exception '(u5) B hätte nach der Aufnahme in die Verwaltung die 51. anlegen müssen: %', ergebnis;
+  end if;
+
+  -- (u6) Konto löschen gegen Anlage.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s12_u6'), $q$select delete_account()::text$q$,
+    rennen_test.z('s12_u6'), rennen_test.s12_uebung(rennen_test.z('s12_u6')), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or (select count(*) from exercises where owner_id = rennen_test.z('s12_u6')) <> 1
+     or exists (select 1 from trainings where owner_id = rennen_test.z('s12_u6')) then
+    raise exception '(u6) B hätte nach dem Löschen anlegen müssen: %', ergebnis;
+  end if;
+
+  -- (u7) Anlage gegen Konto löschen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s12_u7'), rennen_test.s12_uebung(rennen_test.z('s12_u7')),
+    rennen_test.z('s12_u7'), $q$select delete_account()::text$q$, 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'geloescht'
+     or exists (select 1 from exercises where owner_id = rennen_test.z('s12_u7')) then
+    raise exception '(u7) B hätte danach alles löschen müssen: %', ergebnis;
+  end if;
+
+  -- (u8) Kein Abfluss über die Sperre: B (Konto Y) wartet nicht auf die
+  -- Personensperre von X.
+  perform extensions.dblink_connect('rennen_a', ziel || ' application_name=rennen_a');
+  perform extensions.dblink_connect('rennen_b', ziel || ' application_name=rennen_b');
+  perform extensions.dblink_exec('rennen_a', 'begin');
+  perform extensions.dblink_exec('rennen_a', 'set local role authenticated');
+  perform * from extensions.dblink('rennen_a', format($q$select set_config('request.jwt.claims', %L, true)$q$,
+    jsonb_build_object('sub', rennen_test.z('s12_u8'), 'role', 'authenticated')::text)) as t(x text);
+  perform * from extensions.dblink('rennen_a', rennen_test.s12_uebung(rennen_test.z('s12_u8'))) as t(x text);
+  perform extensions.dblink_exec('rennen_b', 'begin');
+  perform extensions.dblink_exec('rennen_b', 'set local role authenticated');
+  perform * from extensions.dblink('rennen_b', format($q$select set_config('request.jwt.claims', %L, true)$q$,
+    jsonb_build_object('sub', rennen_test.z('s12_y'), 'role', 'authenticated')::text)) as t(x text);
+  perform extensions.dblink_send_query('rennen_b', rennen_test.s12_uebung(rennen_test.z('s12_u8')));
+  frist := clock_timestamp() + interval '5 seconds';
+  while extensions.dblink_is_busy('rennen_b') = 1 loop
+    perform pg_stat_clear_snapshot();
+    if exists (select 1 from pg_stat_activity where application_name = 'rennen_b' and wait_event_type = 'Lock') then
+      gewartet := true;
+      exit;
+    end if;
+    if clock_timestamp() > frist then raise exception '(u8) B nach 5 s nicht fertig'; end if;
+    perform pg_sleep(0.02);
+  end loop;
+  perform extensions.dblink_exec('rennen_a', 'rollback');
+  select t.x into ergebnis from extensions.dblink_get_result('rennen_b', false) as t(x text);
+  meldung := extensions.dblink_error_message('rennen_b');
+  perform * from extensions.dblink_get_result('rennen_b', false) as t(x text);
+  perform extensions.dblink_exec('rennen_b', 'rollback');
+  perform extensions.dblink_disconnect('rennen_a');
+  perform extensions.dblink_disconnect('rennen_b');
+  if gewartet then
+    raise exception '(u8) B hat auf eine Sperre gewartet (fremde Personensperre)';
+  end if;
+  if ergebnis is not null or position('row-level security' in meldung) = 0 then
+    raise exception '(u8) B hätte die RLS-Abweisung bekommen müssen: %, %', ergebnis, meldung;
+  end if;
+exception when others or query_canceled then
+  foreach n in array coalesce(extensions.dblink_get_connections(), '{}') loop
+    perform extensions.dblink_disconnect(n);
+  end loop;
+  perform set_config('rennen.fehler_konten', sqlerrm, false);
+end $$;
+
+delete from exercises where owner_id in (select id from rennen_test.ids where name like 's12\_%');
+delete from trainings where owner_id in (select id from rennen_test.ids where name like 's12\_%');
+delete from teams where verein_id = (select id from rennen_test.ids where name = 's12_verein');
+delete from vereine where id = (select id from rennen_test.ids where name = 's12_verein');
+delete from trainer_suchversuche where user_id in (select id from rennen_test.ids where name like 's12\_%');
+delete from auth.users where id in (select id from rennen_test.ids where name like 's12\_%');
+
 -- Aufräumen, auch nach einem Fehler.
 drop schema rennen_test cascade;
 \if :dblink_vorher
@@ -2193,5 +2388,8 @@ begin
   end if;
   if current_setting('rennen.fehler_serie_loeschen') <> '' then
     raise exception 'Rennen Serie entfernen gegen Löschen: %', current_setting('rennen.fehler_serie_loeschen');
+  end if;
+  if current_setting('rennen.fehler_konten') <> '' then
+    raise exception 'Rennen Konten ohne Verein: %', current_setting('rennen.fehler_konten');
   end if;
 end $$;

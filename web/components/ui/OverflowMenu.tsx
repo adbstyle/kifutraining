@@ -26,6 +26,7 @@ export function OverflowMenu({
   label = "Weitere Aktionen",
   tooltip = "Weitere Aktionen",
   disabled,
+  gesperrt,
   className,
 }: {
   items: MenuItemDef[];
@@ -35,6 +36,11 @@ export function OverflowMenu({
   /** Tooltip-Text; bleibt bewusst kurz, auch wenn `label` ausführlich ist. */
   tooltip?: string;
   disabled?: boolean;
+  /** Gesperrt, solange eine Aktion aus dem Menü läuft: `aria-disabled` statt
+   *  `disabled` — der Trigger behält den Fokus, den das Menü ihm nach der Wahl
+   *  zurückgibt (und den ein Dialog danach wieder an ihn gibt); das Menü öffnet
+   *  dann nicht. */
+  gesperrt?: boolean;
   className?: string;
 }) {
   const [offen, setOffen] = useState(false);
@@ -49,9 +55,13 @@ export function OverflowMenu({
           icon={MoreVertical}
           label={label}
           disabled={disabled}
+          aria-disabled={gesperrt || undefined}
           aria-haspopup="menu"
           aria-expanded={offen}
-          onClick={() => setOffen((o) => !o)}
+          onClick={() => {
+            if (gesperrt) return;
+            setOffen((o) => !o);
+          }}
         />
       </Tooltip>
       <Menu

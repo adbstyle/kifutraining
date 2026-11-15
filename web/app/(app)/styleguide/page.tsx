@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { ReleaseText } from "@/components/versionen/ReleaseText";
 import {
+  BestandAnzeige,
   Button,
   ButtonLink,
   Badge,
@@ -252,6 +253,7 @@ const GLIEDERUNG = [
         titel: "Meldungen",
         eintraege: [
           { id: "meldungen", titel: "Leerzustand, Hinweiszeile & Section Message" },
+          { id: "bestand-anzeige", titel: "Bestand und Grenze" },
           { id: "dialog-snackbar", titel: "Dialog & Snackbar" },
           { id: "feedback-dialog", titel: "Fragen und Feedback" },
         ],
@@ -1578,6 +1580,19 @@ export default async function Styleguide() {
           </div>
 
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
+            Gesperrt, aber im Fokus: <code>aria-disabled</code> statt <code>disabled</code> - solange eine Aktion
+            läuft und der Knopf den Fokus behalten soll
+          </p>
+          <div className="flex items-center gap-4">
+            <IconButton icon={Copy} label="Kopieren" aria-disabled />
+            <span className="type-label-small text-on-surface-mittel">
+              Ein <code>disabled</code>-Knopf verliert den Fokus, und die Tastatur- und Vorlesehilfe-Person steht
+              im Leeren. Mit <code>aria-disabled</code> bleibt er fokussierbar und sieht gesperrt aus; der
+              Klick-Handler des Aufrufers fängt den Klick ab (<code>if (laeuft) return</code>).
+            </span>
+          </div>
+
+          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Punkt am Zeichen (<code>ZeichenPunkt</code>, <code>punkt</code>) - wie die Benachrichtigung an einem App-Symbol
           </p>
           <div className="flex items-center gap-4">
@@ -1688,6 +1703,11 @@ export default async function Styleguide() {
             dann den eigenen Trigger nicht mehr - das Menü togglet doppelt und
             öffnet sofort wieder. In Listen gehört der Gegenstand ins{" "}
             <code>label</code> („Weitere Aktionen zu …"); der Tooltip bleibt kurz.
+          </p>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <code>gesperrt</code> sperrt den Auslöser, solange eine Aktion aus dem Menü läuft (dritte Reihe unten):
+            Er setzt <code>aria-disabled</code> statt <code>disabled</code>, behält also den Fokus, und das Menü
+            öffnet sich nicht mehr.
           </p>
           <OverflowMenuDemo />
 
@@ -3055,6 +3075,58 @@ export default async function Styleguide() {
               discovery - im Kit, derzeit ohne Ort.
             </SectionMessage>
           </div>
+        </Section>
+
+        <Section id="bestand-anzeige">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Wie viele eigene Übungen oder Trainings ein Konto ohne Verein von
+            seiner Grenze besitzt (<code>BestandAnzeige</code>, #588): höchstens
+            50 Übungen und 30 Trainings, bis es einem Team oder der Verwaltung
+            eines Vereins angehört. Neu als Baustein, weil derselbe Stand an
+            drei Orten steht und überall gleich lauten muss - oben in «Meine
+            Übungen» und «Meine Trainings», vor dem Anlegen und in der Stufe
+            vor Kopieren und Übernehmen. Die Zahl kommt von der Datenebene,
+            nie aus einer gezählten Liste; die Sätze stehen einmal in{" "}
+            <code>lib/konto-grenzen.ts</code>. Konten in einem Verein sehen
+            nichts davon.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Die <strong>Zeile</strong> ist der Stand als Text; ab der Grenze
+            steht daneben eine Lozenge <code>warning</code> - eine Eigenschaft,
+            die Aufmerksamkeit braucht, kein Fehler. Über der Grenze (Altbestand
+            bleibt, nur Neues wird abgewiesen) steht die Zahl ohne negativen
+            Rest. Die <strong>Meldung</strong> ist die Section Message{" "}
+            <code>warning</code> mit dem Weg zur eigenen Übersicht, wo sich
+            etwas löschen lässt: Sie steht auf <code>/neu</code> und{" "}
+            <code>/training/neu</code> an der Grenze statt der Maske, bevor
+            jemand Angaben macht. Kein Fortschrittsbalken - er zeigte dieselbe
+            Zahl ein zweites Mal und bräuchte ein Mass für den Bestand über der
+            Grenze.
+          </p>
+          <div className="flex max-w-xl flex-col gap-3">
+            <BestandAnzeige art="uebungen" grenze={{ bestand: 12, max: 50 }} />
+            <BestandAnzeige art="trainings" grenze={{ bestand: 30, max: 30 }} />
+            <BestandAnzeige art="uebungen" grenze={{ bestand: 62, max: 50 }} />
+            <BestandAnzeige art="trainings" grenze={{ bestand: 30, max: 30 }} variante="meldung" />
+          </div>
+          <p className="type-body-medium mb-5 mt-8 max-w-2xl text-on-surface-mittel">
+            <strong>Die Stufe vor Kopieren, Übernehmen und «In die Bibliothek»</strong>{" "}
+            (<code>useBestandStufe</code>) ist ein Dialog, den nur ein Konto ohne
+            Verein sieht: Er nennt den frisch gelesenen Stand («Du besitzt 12 von
+            50 Übungen.») und bietet die Aktion an; an der Grenze steht dort die
+            Meldung und nur «Schliessen». Weist die Datenebene trotz freier
+            Anzeige an der Grenze ab (gleichzeitige Vorgänge, überholter Stand),
+            zeigt der Dialog dieselbe Form: die Meldung mit dem Weg zur eigenen
+            Übersicht und nur «Schliessen»; auf <code>/neu</code> und{" "}
+            <code>/training/neu</code> ersetzt die Meldung die Zeile, und die
+            Angaben bleiben. Die Anzeige entscheidet nie: Kein Knopf bleibt
+            wegen eines Zählers gesperrt, den niemand gelesen hat. Ein Konto in
+            einem Verein kopiert und übernimmt weiter mit einem Klick. Während
+            die Aktion läuft, bis die Zielseite steht, ist der Auslöser mit{" "}
+            <code>aria-disabled</code> gesperrt (beim ⋮-Menü{" "}
+            <code>OverflowMenu gesperrt</code>): Er behält den Fokus, und ein
+            schneller zweiter Klick erzeugt keine zweite Kopie.
+          </p>
         </Section>
 
         <Section id="dialog-snackbar">
