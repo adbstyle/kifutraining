@@ -11,6 +11,7 @@ import {
   erneuereSpielerLinkImVerein,
   findePerson,
   holeSpielerLinkImVerein,
+  importiereInVerein,
   ladeSpielerTeamsImVerein,
   legeSpielerImVereinAn,
   legeTeamAn,
@@ -21,6 +22,7 @@ import {
   nimmMichInsTeam,
   nimmSpielerAusTeamImVerein,
   ordneSpielerZu,
+  pruefeVereinImport,
 } from "@/lib/kern/verein";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { revalidiereAlleTeams, revalidiereMitgliedschaften, revalidiereTeam, revalidiereVerein } from "@/lib/revalidate";
@@ -28,6 +30,7 @@ import { raeumeVerwaisteBilder } from "@/lib/storage-aufraeumen";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
 import type { FehlerArt, KernFehler } from "@/lib/kern/ergebnis";
 import { spielerLinkUrl, type SpielerEingabe } from "@/lib/spieler";
+import type { ImportAusgang, ImportEintrag, ImportErwartet, ImportVorschau } from "@/lib/spieler-import";
 import type { PersonSchritt } from "@/lib/verein";
 
 /**
@@ -317,4 +320,39 @@ export async function erneuereVereinSpielerLinkAktion(spielerId: string): Promis
   revalidiereAlleTeams();
   revalidiereVerein();
   return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token) };
+}
+
+// ── Import aus einer Datei (Story #585) ─────────────────────────────────────
+
+/** Die Vorschau eines Imports in den Spielerbestand des Vereins — nur die vier
+ *  Angaben je Zeile kommen hierher, die Datei bleibt im Browser. */
+export async function pruefeVereinImportAktion(
+  vereinId: string,
+  zeilen: ImportEintrag[],
+): Promise<{ ok: true; vorschau: ImportVorschau } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return keinKonto;
+  const r = await pruefeVereinImport(a.supabase, a.userId, { vereinId, zeilen });
+  if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld };
+  return { ok: true, vorschau: r.wert };
+}
+
+/** Den Import übernehmen, ganz oder gar nicht. `veraltet`: Der Bestand hat die
+ *  bestätigte Vorschau überholt, nichts ist übernommen. Neue hängen an keinem
+ *  Team (nur der Verein lädt neu); eine geänderte J+S-Nummer steht in jeder
+ *  Team-Spielerliste, darum laden dann alle Teams neu. */
+export async function importiereInVereinAktion(
+  vereinId: string,
+  zeilen: ImportEintrag[],
+  erwartet: ImportErwartet,
+): Promise<{ ok: true; ausgang: ImportAusgang } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return keinKonto;
+  const r = await importiereInVerein(a.supabase, a.userId, { vereinId, zeilen, erwartet });
+  if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld };
+  if (r.wert.status === "uebernommen") {
+    if (r.wert.js > 0) revalidiereAlleTeams();
+    revalidiereVerein();
+  }
+  return { ok: true, ausgang: r.wert };
 }
