@@ -49,8 +49,8 @@ export default async function VereinVerwaltungPage() {
 
   return (
     <Seitenrahmen breite="5xl" krumen={[{ label: name }, { label: "Verwaltung" }]}>
-      <h1 className="sr-only">Verwaltung des {name}</h1>
-      <p className="type-body-medium mb-4 text-on-surface-mittel">Was den ganzen {name} betrifft</p>
+      <h1 className="sr-only">Vereinsverwaltung von «{name}»</h1>
+      <p className="type-body-medium mb-4 text-on-surface-mittel">Was den ganzen Verein betrifft</p>
       <VereinVerwaltung
         vereinId={verein.id}
         vereinName={name}

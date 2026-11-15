@@ -1,6 +1,6 @@
 # KiFu – Produktwissen für die Einordnung von User-Feedback
 
-Stand 2026-11-13 (Release 1.47.1). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
+Stand 2026-11-15 (Release 1.48.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
 gedacht als Kontext für ein kleines Modell (z. B. Haiku), das Rückmeldungen von Nutzer:innen
 einordnet. Rückmeldungen sind **Fehlermeldungen ebenso wie Feature-Wünsche**: Das Modell erkennt,
 was die Person meint, gleicht es mit dem heutigen Stand ab und stellt die Rückfragen, mit denen sich
@@ -20,13 +20,13 @@ Beschreibt eine Meldung ein Verhalten, das hier als Absicht oder als „Bekannte
 | Kategorie | Wann | Beispiel |
 |---|---|---|
 | **Fehler** | Die Anwendung tut etwas anderes als hier beschrieben (falsche Zahl, Absturz, Speichern scheitert ohne Grund, Daten fehlen, falsche Person sieht etwas). | „Spielerzahl zeigt 15/15, obwohl 3 abgemeldet sind." |
-| **Erwartetes Verhalten** | Verhalten ist hier ausdrücklich als Absicht beschrieben. Antwort: erklären, wie es gedacht ist. | „Die Abmeldung meines Kindes ist verschwunden" → Termin wurde verlegt, Abmeldungen verfallen bei Verlegung. |
+| **Erwartetes Verhalten** | Verhalten ist hier ausdrücklich als Absicht beschrieben. Antwort: erklären, wie es gedacht ist. | „Die Abmeldung meiner Tochter ist verschwunden" → Termin wurde verlegt, Abmeldungen verfallen bei Verlegung. |
 | **Wunsch zu einer bekannten Grenze** | Gewünscht wird etwas, das Abschnitt 12 als heute fehlend nennt. Ein Wunsch, kein Fehler; die genannte Grenze als Bezug angeben. | „Ich möchte an Trainings erinnert werden." → keine Benachrichtigungen. |
 | **Neuer Wunsch** | Etwas Neues, das weder beschrieben noch als Grenze genannt ist. | „Ich möchte pro Übung ein Video hinterlegen." |
 | **Wunsch, der schon erfüllt ist** | Die gewünschte Fähigkeit gibt es bereits. Antwort: zeigen, wo sie liegt. | „Ich hätte gern Alternativen für den Hauptteil." → Varianten des Hauptteils. |
 | **Wunsch nach anderem Verhalten** | Die Fähigkeit gibt es, sie soll sich aber anders verhalten als bewusst entschieden (Abschnitt 10). | „Abmeldungen sollen bei einer Verlegung bestehen bleiben." |
 | **Bedienproblem / Unklarheit** | Funktion existiert, Person findet sie nicht oder versteht sie falsch. | „Wo kann ich ein Training kopieren?" → drei Punkte → Übernehmen. |
-| **Datenschutz / Sicherheit** | Jemand sieht Daten, die er nicht sehen dürfte, oder ein Link/eine Adresse wurde missbraucht. Immer hoch priorisieren. | „Ich sehe die E-Mail einer Person, die nicht in meinem Team ist." |
+| **Datenschutz / Sicherheit** | Jemand sieht Daten, die er nicht sehen dürfte, oder ein Link/eine Adresse wurde missbraucht. Immer hoch priorisieren. | „Ich sehe die E-Mail einer Person, die nicht in meinem Team ist, und gehöre nicht zur Vereinsverwaltung." |
 
 Meldungen können mehrere Kategorien treffen (z. B. Fehler + Wunsch). Nenne dann beide.
 
@@ -38,12 +38,12 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 - Welches Problem soll gelöst werden – was ist die Situation auf dem Platz oder im Team? (Das
   Problem ist wichtiger als die vorgeschlagene Lösung.)
-- Wer braucht es: Trainer:in, verantwortliche Person, Eltern, Spieler:in, Verein?
+- Wer braucht es: Trainer:in, verantwortliche Person, Vereinsverwaltung, Konto ohne Verein, Eltern, Spieler:in?
 - Wie oft kommt die Situation vor (jedes Training, jede Saison, selten)?
 - Wie wird es heute gelöst (Umweg in KiFu, anderes Werkzeug, Zettel, Chat)?
 - Welche Altersstufe, welches Gerät (Telefon auf dem Platz oder Rechner zu Hause)?
 - Was wäre das Mindeste, das schon hilft?
-- Betrifft der Wunsch Daten von Kindern oder Eltern? (Dann Datenschutz mitdenken: KiFu führt
+- Betrifft der Wunsch Daten von Spieler:innen oder Eltern? (Dann Datenschutz mitdenken: KiFu führt
   bewusst nur Vorname, Nachname, Jahrgang, J+S-Nummer und keine Kontaktdaten.)
 
 ### Rückfragen zur Reproduktion eines Fehlers (nur die passenden stellen)
@@ -52,7 +52,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Was genau getan (Schritte), was erwartet, was passiert? Wortlaut einer Fehlermeldung?
 - Gerät und Bildschirm: Telefon / Tablet hoch / Tablet quer / Laptop / breiter Bildschirm? Browser?
   (Viele Ansichten verhalten sich je nach Breite anders – siehe Abschnitt 3.)
-- Angemeldet oder ohne Konto? Über einen **privaten Link** (Eltern) oder als Trainer:in?
+- Angemeldet oder ohne Konto? Über einen **privaten Link** (Eltern) oder als Trainer:in? Als Vereinsverwaltung, im Team oder im Bereich „Verein"? Konto ohne Verein (keinem Team, keiner Verwaltung angehörig)?
 - Wann (Datum/Uhrzeit)? Viele Regeln hängen an Schweizer Zeit, Terminbeginn, Meldefrist.
 - Prod (ki-fu.ch) oder Staging (staging.ki-fu.ch)?
 
@@ -60,7 +60,9 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Übung: Altersstufe (Kinder-/Juniorenfussball)? Eigene, Manual- oder fremde Übung? Entwurf oder öffentlich? Mit Diagramm/Foto?
 - Training: Altersstufe? Persönlich, Team-Training oder Termin-Training? Entwurf oder öffentlich? Mehrere Varianten des Hauptteils? Gruppen?
 - Termin: Training oder Spiel? Einzeltermin oder Serientermin (welche Wahl: nur dieser / folgende / alle)? Schon begonnen? Ausgefallen? Verlegt? Kader am Termin?
-- Team: Führt das Team eine Spielerliste? Kader? Selbstabholung an? Wie viele Mitglieder?
+- Team: Führt das Team eine Spielerliste? Kader? Selbstabholung an? Wie viele Mitglieder? Hat das Team überhaupt eine Trainer:in?
+- Spieler:in: In wie vielen Teams? Ohne Team? Schnuppert sie? Gibt es im Verein einen Doppeleintrag aus der Zeit vor dem Verein?
+- Verein: Vereinsverwaltung oder Trainer:in? Bereich „Verein" › Teams, Spieler:innen oder Verwaltung?
 - Spiel: Meldefrist gesetzt / abgelaufen? Richtwert (Mindest-/Höchstzahl)? Anpfiff vorbei?
 - KI-Assistent: Welcher Client (Claude Desktop, claude.ai, Claude Code)? Welches Werkzeug, welche Antwort?
 - Mehrere Personen gleichzeitig am selben Training/Termin? (Siehe Abschnitt 11.)
@@ -82,19 +84,28 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - **Herkunft / Plaketten** – „Kifu-Manual" (75 kuratierte Kinderfussball-Übungen, für niemanden änderbar), „Community" (öffentliche Trainer-Übung), „Entwurf" (eigene private).
 - **Fassung** – Jede Übung in einem Training ist eine eigenständige Kopie (keine Verknüpfung zur Bibliothek).
 - **Variante** – alternativer Inhalt des **Hauptteils** eines Trainings (z. B. „21 Kinder", „bei Regen"). Immer der ganze Hauptteil.
-- **Gruppe** – Bezeichnung im Training (z. B. „Rot"), ohne Kinder. **Durchlauf** – Reihenfolge der Gruppen an einer Hauptteil-Übung. **Wechsel** – Position im Durchlauf = Zeitfenster.
-- **Team** – Trainerteam; alle Mitglieder gleichberechtigt.
+- **Gruppe** – Bezeichnung im Training (z. B. „Rot"), ohne Spieler:innen. **Durchlauf** – Reihenfolge der Gruppen an einer Hauptteil-Übung. **Wechsel** – Position im Durchlauf = Zeitfenster.
+- **Verein** – Dach über Teams und Spieler:innen; nur ein Name (1–60 Zeichen, nicht eindeutig). Jedes Team gehört genau einem Verein, für immer. Die Teams aus der Zeit vor den Vereinen kamen gemeinsam in einen ersten Verein. Vereinsnamen stehen ohne Artikel nach „Verein": „im Verein «FC Muster»".
+- **Vereinsverwaltung** – Personen, die im Bereich „Verein" Teams, Trainer:innen, Spielerbestand und den Verein führen; gleichberechtigt, mindestens eine. Kann zugleich Trainer:in sein, hat im Team aber keine weiteren Rechte. Wer „Vereinsleitung" oder „Vorstand" schreibt, meint meist sie.
+- **Vereinsmitglied** – wer einem Team des Vereins oder seiner Verwaltung angehört; höchstens ein Verein je Person. Kein Rollenfeld, keine Plattform-Admin-Rolle.
+- **Konto ohne Verein** – Konto, das weder einem Team noch einer Vereinsverwaltung angehört (jede Neuregistrierung). Eigene Übungen und Trainings (höchstens 50/30), Bibliothek, KI-Assistent, Verein gründen; keine Teams, Spielerlisten, Kalender.
+- **Rollen nach Ort** – Was eine Person darf, folgt aus dem Ort: im Team als Trainer:in, im Bereich „Verein" als Vereinsverwaltung, nie als Summe.
+- **Bereich-Wechsler** – oben in der Seitenleiste: eigene Teams oder der Verein.
+- **Spielerbestand / Vereinsliste** – alle Spieler:innen des Vereins unter Verein › Spieler:innen, mit und ohne Team. Verwaltung: Bestand mit Aktionen; übrige Trainer:innen: Vereinsliste nur lesend (Name, Jahrgang, Teams).
+- **Zuordnen / Aus dem Team nehmen** – eine Spieler:in einem weiteren Team zuordnen (nur Verwaltung) bzw. die Zuordnung beenden (Trainer:innen des Teams, Verwaltung); Herausnehmen löscht nicht.
+- **Spieler:in ohne Team** – im Verein geführt, keinem Team zugeordnet; nur die Verwaltung ändert, ordnet zu oder löscht sie.
+- **Team** – Trainerteam im Verein; alle Mitglieder gleichberechtigt. Besteht auch ohne Trainer:in weiter.
 - **Team-Bestand** – Trainings, die dem Team gehören. **Termin-Training** – stille Kopie, die beim Zuordnen an einen Termin entsteht; lebt nur mit dem Termin, steht nicht im Bestand.
 - **Termin** – Training oder Spiel im Teamkalender. **Terminserie** – wöchentlich wiederholte Trainingstermine (max. 1 Jahr).
 - **Abweichung** – Angabe eines Serientermins, die „nur für diesen Termin" geändert wurde; zurück mit „Der Serie folgen".
 - **Trainer:innen am Termin** – eingeladen / dabei / abgesagt / verantwortlich (max. eine Person). „Absagen/dabei" = Trainer:innen; „abmelden/angemeldet" = Spieler:innen.
 - **Mindestbesetzung** – nötige Trainer:innen: feste Zahl oder Verhältnis (1 je n Spieler:innen).
-- **Spielerliste** – Spieler:innen des Teams (Vorname, Nachname, Jahrgang, optional J+S-Nummer).
+- **Spielerliste** – die dem Team zugeordneten Spieler:innen (Vorname, Nachname, Jahrgang, optional J+S-Nummer). Spieler:innen gehören dem Verein, nicht dem Team.
 - **Kader** – benannte Teilmenge der Spielerliste (z. B. „Torhüterinnen"); Termine lassen sich auf Kader beschränken.
-- **Probetraining / Probe-Modus** – Spieler:in auf Probe: an Trainings zuerst nicht angemeldet, meldet sich über den Link selbst an, höchstens für die Anzahl Probetrainings des Teams; Spiele gelten für sie nicht.
-- **Info-Schreiben** – Text des Teams für Probe-Spieler:innen, steht oben in ihrem privaten Link.
-- **Privater Link** – Link je Spieler:in, über den Eltern ohne Konto ab-/anmelden und Termine abonnieren.
-- **Selbstabholung / Abholadresse** – Team-Adresse, über die Eltern mit Vorname+Nachname+Jahrgang den privaten Link selbst holen.
+- **Schnuppertraining / schnuppert** – für Spieler:innen, die den Verein ausprobieren, nur bei genau einem Team: an Trainings zuerst nicht angemeldet, meldet sich über den Link selbst an, höchstens für die Anzahl Schnuppertrainings des Teams; Spiele gelten für sie nicht. Plakette „Schnuppern 1/4". Alte Release-Texte unter „Versionen" nennen es noch mit dem früheren Namen.
+- **Info-Schreiben** – Text des Teams für schnuppernde Spieler:innen, steht oben in ihrem privaten Link.
+- **Privater Link** – ein Link je Spieler:in im ganzen Verein, zeigt die Termine aller ihrer Teams; Eltern melden darüber ohne Konto ab/an und abonnieren Termine.
+- **Selbstabholung / Abholadresse** – Team-Adresse, über die Eltern mit Vorname+Nachname+Jahrgang den privaten Link (für alle Teams der Spieler:in) selbst holen.
 - **Bezogen** – der aktuelle private Link wurde über die Abholadresse herausgegeben (grüner Punkt).
 - **Richtwert** (Spiel) – Mindest- und Höchstzahl. **Meldefrist** – bis wann Eltern für ein Spiel melden. **Treffpunkte** (Spiel) – je Anreiseart (vor Ort, öV, Auto, Velo, Car/Vereinsbus). **Treffpunkt** (Training) – höchstens einer, Uhrzeit + Ort, ohne Anreiseart.
 - **Nicht aufgeboten** – Kennzeichnung einer Spieler:in für ein Spiel durch Mitglieder.
@@ -106,7 +117,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 ## 3. Oberfläche und Navigation
 
-**Seitenleiste (links):** Marke (Zeichen F mit Punkt, Name KiFu) → Übungsbestand. Gruppen „Bibliothek" (Übungen, Trainings) und „Mein Bereich" (Meine Übungen, Meine Trainings, Teams mit aufklappbaren Teamnamen). Unten: „Fragen und Feedback" (nur angemeldet; öffnet diesen Dialog), „Darstellung" (nur angemeldet), Version (Klick → „Versionen"), Konto. Den Styleguide führt die Leiste nicht mehr. Ohne Anmeldung: „Anmelden" statt Konto, „Mein Bereich" fehlt.
+**Seitenleiste (links):** Marke (Zeichen F mit Punkt, Name KiFu) → Übungsbestand. Angemeldet darunter der **Bereich-Wechsler**: eigene Teams (Untertitel „Trainer:in", alphabetisch) oder der Verein („Teams und Spieler:innen des Vereins"); nur ein Bereich → Anzeige ohne Liste. Darunter nur die Einträge des gewählten Bereichs: Team → „Trainingsplan", „Trainings", „Team"; Verein → „Teams", „Spieler:innen", nur für die Verwaltung „Verwaltung". Trainer:in sieht ihre Teams + Verein; Verwaltung ohne Team nur den Verein; **Konto ohne Verein** hat keinen Wechsler, sondern die Gruppe „Start" mit „Teams" (Einstieg). Der Wechsler ist nur Navigation, keine Rechte. Offener Bereich folgt der Seite; auf Seiten ohne Bereich (Bibliotheken, Teamübersicht, Konto) bleibt der zuletzt gewählte (pro Browser). Dann Gruppen „Bibliothek" (Übungen, Trainings) und „Meine Bibliothek" (Meine Übungen, Meine Trainings). Unten: „Fragen und Feedback" (nur angemeldet; öffnet diesen Dialog), „Darstellung" (nur angemeldet), Version (Klick → „Versionen"), Konto. Den Styleguide führt die Leiste nicht mehr. Ohne Anmeldung: „Anmelden" statt Konto, Wechsler und „Meine Bibliothek" fehlen. Die Grenzen 50/30 stehen nicht in der Leiste.
 - Breit/schmal nur per Knopf links vor den Brotkrumen; Wahl merkt sich der **Browser**, nicht das Konto.
 - Telefon: Menüknopf oben öffnet die Leiste als Überlagerung; kein Verkleinern-Knopf.
 
@@ -134,7 +145,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Weitere Seiten:** „Versionen" (Release-Texte von GitHub, 30 neueste sofort, ältere auf Knopf; ohne Anmeldung; Cache bis 1 h; bei GitHub-Ausfall letzter Stand + Hinweis). „Styleguide" (Designsystem, ohne Anmeldung, nur direkt unter ki-fu.ch/styleguide, nicht in der Leiste). „Cookies" (was im Browser liegt + Besucherstatistik Vercel Web Analytics; ohne Anmeldung erreichbar). Falsche Adresse → Hinweisseite mit Weg zu den Übungen. Anmelde-Seiten ohne Leiste.
 
-**Fragen und Feedback:** Gespräch mit Haiku (Anthropic, USA) über Fehler, Wünsche und Fragen; Trainer:innen über die Seitenleiste, Eltern über eine am unteren Rand klebende Leiste auf der Seite hinter dem privaten Link. Desktop: Spalte rechts, bleibt beim Seitenwechsel offen; Telefon und privater Link: Vollbild. Gespeichert wird nur die bestätigte Zusammenfassung samt Gespräch (Trainer:innen mit Konto, Eltern nur mit Team); keine Antwort über KiFu, Löschung nach 12 Monaten; bei Konto-Löschung bleibt es ohne Kontobezug. Fällt die KI aus oder ist ihr Budget aufgebraucht: nur „Feedback ist gerade nicht möglich", kein anderer Weg.
+**Fragen und Feedback:** Gespräch mit Haiku (Anthropic, USA) über Fehler, Wünsche und Fragen; Trainer:innen über die Seitenleiste, Eltern über eine am unteren Rand klebende Leiste auf der Seite hinter dem privaten Link. Desktop: Spalte rechts, bleibt beim Seitenwechsel offen; Telefon und privater Link: Vollbild. Gespeichert wird nur die bestätigte Zusammenfassung samt Gespräch (Trainer:innen mit Konto; am privaten Link ohne Spieler:in, Team oder Link, auch für eine Spieler:in ohne Team); Eltern verweist der Dialog bei Dringendem an die Trainer:innen, bei einer Spieler:in ohne Team an die Vereinsverwaltung (mit Vereinsnamen); bei Verhalten von Personen im Verein an Vereinsverwaltung oder Swiss Sport Integrity (kein Feedback). Keine Antwort über KiFu, Löschung nach 12 Monaten; bei Konto-Löschung bleibt es ohne Kontobezug, bei gelöschtem Team oder Verein ohne Teambezug. Fällt die KI aus oder ist ihr Budget aufgebraucht: nur „Feedback ist gerade nicht möglich", kein anderer Weg.
 
 **Plakettenfarben:** grau = benennt (Herkunft, Entwurf, Altersstufe), blau = gilt nach aussen, violett = Zusatz (mehrere Varianten, neue Version), orange = braucht Aufmerksamkeit (Termin ohne Training).
 
@@ -145,12 +156,13 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - **Registrierung:** E-Mail + Passwort (min. 8 Zeichen, 2× eingeben). Danach immer derselbe Hinweis „Bestätigungslink unterwegs" – auch bei bereits registrierter Adresse (Absicht, verrät keine Konten). Konto nutzbar erst nach Klick auf den Mail-Link.
 - **Anmelden:** Vor Bestätigung → Hinweis + Mail erneut anfordern. Falsche Adresse/Passwort → bewusst unbestimmte Meldung. Kein Magic-Link, kein Login über Google o. Ä.
 - **Passwort vergessen:** immer gleiche Antwort; neues Passwort 2×; altes wird abgelehnt. Passwort ändern geht **nur** über diesen Mailweg.
-- **Konto-Seite:** E-Mail, Abmelden, eigene Übungen, Anzeigename, KI-Zugänge, Kalender-Abos, Cookies, Konto löschen. Kein Profilbild, keine Adresse, kein Verein.
+- **Konto-Seite:** E-Mail, Abmelden, eigene Übungen, Anzeigename, KI-Zugänge, Kalender-Abos, Cookies, Konto löschen. Kein Profilbild, keine Adresse, keine Vereinszugehörigkeit als Profilangabe.
 - **Anzeigename:** Sichtbar für andere (Urheber öffentlicher Trainings, Mitgliederlisten, Termine, Kalender-Abos anderer; als Verantwortliche:r auch für Eltern am privaten Link). Ohne eigenen Namen automatische Kennung „Trainer:in a1b2". Max. 40 Zeichen. Speichert beim Verlassen/Enter, Escape verwirft. **Einmal gesetzt nicht mehr entfernbar** (Absicht).
-- **E-Mail-Adresse** sehen nur Mitglieder gemeinsamer Teams (Mitgliederliste, Trainer:innen-Auswahl). KI-Assistent bekommt sie nie.
+- **E-Mail-Adresse** sehen Mitglieder gemeinsamer Teams (Mitgliederliste, Trainer:innen-Auswahl) und die Vereinsverwaltung (bei jeder Trainer:in des Vereins und bei der Verwaltung). Übrige Vereinsmitglieder sehen von der Verwaltung nur den Anzeigenamen. KI-Assistent bekommt sie nie. Wer sie sieht, sagt das ⓘ beim Anzeigenamen.
+- **Konto ohne Verein:** jede Neuregistrierung, und wieder, wer das letzte Team verlässt (ohne Verwaltung) oder dessen Verein gelöscht wird. Bibliothek, eigene Übungen/Trainings, KI-Assistent; keine Teams/Spielerlisten/Kalender. Unter „Teams" der Einstieg „Willkommen bei KiFu": „Verein gründen" oder „In einen Verein aufgenommen werden" (eigene Adresse zum Kopieren, die man Trainer:innen/Verwaltung selbst gibt; keine Anfrage, keine Einladung per Mail). **Höchstens 50 eigene Übungen und 30 eigene Trainings** (Details Abschnitt 5/6); entfällt sofort mit der Aufnahme in ein Team oder eine Verwaltung, gilt wieder ohne Verein; Bestand darüber bleibt und bleibt änderbar.
 - **Ohne Konto:** gesamter Übungsbestand und alle öffentlichen Trainings ansehen, suchen, filtern, durchführen, drucken. Nicht: anlegen, bearbeiten, favorisieren, übernehmen, Teams. Geschützte Adresse → Anmeldung → danach zurück zum Ziel. Ausnahmen ohne Konto: Kalender-Abo-Links, privater Link, Abholadresse.
-- **Konto löschen** (unumkehrbar, Bestätigung): Favoriten, private Übungen, persönliche Trainings weg. Öffentliche Übungen/Trainings bleiben ohne Urheber. Teams mit weiteren Mitgliedern bleiben; war die Person letztes Mitglied → Team aufgelöst (inkl. Spielerliste, Links ungültig). Aus allen anstehenden Terminen ausgeladen; an vergangenen „Ehemaliges Mitglied". Kalender-Abos erlöschen (ohne Hinweis), KI-Zugänge entzogen.
-- **Keine Rollen**: weder global noch im Team.
+- **Konto löschen** (unumkehrbar, Bestätigung): Favoriten, private Übungen, persönliche Trainings weg. Öffentliche Übungen/Trainings bleiben ohne Urheber. **Teams bleiben** samt allem; letzte Trainer:in weg → Team besteht ohne Trainer:in, bis die Verwaltung jemanden aufnimmt oder auflöst. Aus allen anstehenden Terminen ausgeladen; an vergangenen „Ehemaliges Mitglied". Kalender-Abos erlöschen (ohne Hinweis), KI-Zugänge entzogen. Drei Fälle: **frei** (ohne Verein, nur Trainer:in, oder weitere Personen in der Verwaltung) → „Konto endgültig löschen"; **letzte Verwaltung** bei weiteren Vereinsmitgliedern → „Konto lässt sich noch nicht löschen" (erst jemanden in die Verwaltung aufnehmen oder Verein löschen, „Zur Verwaltung"); **einzige Person im Verein** → „Konto und Verein löschen" mit Aufzählung und exaktem Vereinsnamen. Geprüft beim Ausführen erneut (inzwischen jemand dazugekommen/umbenannt → nichts gelöscht, Hinweis).
+- **Rollen:** nur zwei, nach Ort – Trainer:in eines Teams und Vereinsverwaltung. Im Team alle gleichberechtigt; keine weitere Abstufung (keine nur lesende Rolle).
 
 ---
 
@@ -184,7 +196,9 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Kopieren:** jede sichtbare Übung → private, unabhängige Kopie mit Bild/Diagramm, gleiche Altersstufe. Eigene Übung → Name + „(Kopie)" (jedes Mal, nicht durchgezählt); Manual/fremde → Name unverändert. Favorit wird nicht mitkopiert. Eigene über Drei-Punkte-Menü, fremde/Manual über Kopieren-Symbol. **Nicht aus der Übungsliste.** Aus einem Training: Fassung „In meine Bibliothek kopieren" (ohne Notiz/Gruppen; unvollständige erst nach Ergänzung).
 
-**Finden (Katalog):** Volltextsuche (Wortteile), Kreuz leert. Beide Altersstufen in einer Liste. Kachel: Bild, Name, Eckdaten (z. B. „F E · Fussball spielen lernen · Kleinfeld · 6–8 Sp.", max. 2 Zeilen). Filter: Trainingsteil (Kinder-Teile und Junioren-Blöcke getrennt, Kinder-Hauptteil als 3 Kategorien), Alterskategorie, Feldtyp, Erscheinungsform, Übungstyp, Zahl verfügbarer Kinder (zeigt Übungen, die mit mindestens so vielen gehen). Erst 24 Kacheln, „Weitere anzeigen" +24; Filteränderung beginnt wieder bei 24. Angemeldet zusätzlich: Meine Übungen, Favoriten (jede sichtbare Übung favorisierbar).
+**Konto ohne Verein: höchstens 50 eigene Übungen.** Zählen: alle eigenen (Entwurf/öffentlich, erfasst/kopiert, aus Training in die Bibliothek kopiert). Nicht: Manual, fremde, Fassungen in Trainings (in ein Training übernehmen bleibt frei). Anzeige oben in „Meine Übungen" („12 von 50 Übungen", ab Grenze Plakette „Nichts mehr frei", darüber „62 Übungen (höchstens 50)"; immer ganzer Bestand, auch bei Filter). „Neue Übung" an der Grenze: statt Maske „Nichts mehr frei: 50 von 50 Übungen" + „Ohne Verein besitzt du höchstens 50 Übungen. Lösche eine, um Platz zu schaffen. In einem Verein gilt die Grenze nicht." (darüber: „Lösche 13 Übungen, um Platz für eine neue zu schaffen."). Kopieren und „In meine Bibliothek kopieren" über einen Dialog mit frischem Stand. Bestehendes bleibt änderbar/löschbar. In einem Verein: keine Grenze, keine Anzeige, kein Dialog.
+
+**Finden (Katalog):** Volltextsuche (Wortteile), Kreuz leert. Beide Altersstufen in einer Liste. Kachel: Bild, Name, Eckdaten (z. B. „F E · Fussball spielen lernen · Kleinfeld · 6–8 Sp.", max. 2 Zeilen). Filter: Trainingsteil (Kinder-Teile und Junioren-Blöcke getrennt, Kinder-Hauptteil als 3 Kategorien), Alterskategorie, Feldtyp, Erscheinungsform, Übungstyp, „Verfügbare Kinder" (Zahl; zeigt Übungen, die mit mindestens so vielen Spieler:innen gehen). Erst 24 Kacheln, „Weitere anzeigen" +24; Filteränderung beginnt wieder bei 24. Angemeldet zusätzlich: Meine Übungen, Favoriten (jede sichtbare Übung favorisierbar).
 - Übungen ohne Erscheinungsform/Übungstyp/Feldtyp fallen bei entsprechenden Filtern raus (Absicht).
 
 **Drucken:** jede sichtbare Übung, auch ohne Konto. Drucker-Symbol neben dem Herz → Druckdialog des Geräts (PDF über Druckdialog). Fuss nennt Herkunft (Manual SFV oder Community), nie Trainername; Entwurf wird vermerkt. Keine Dauer. Ohne Bild leere Feld-Skizze. Nur eine Übung pro Vorgang.
@@ -213,13 +227,13 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Zeile: Vorschaubild, Name, Kategorien, Dauer. Pfeile verschieben **um einen Platz** (kein Drag & Drop). X entfernt nur diese Fassung.
 - **Dauer** (nicht im Auffangen): ganze Minuten ≥0; Enter/Häkchen/Klick daneben speichert, Escape/Kreuz verwirft; leer = ohne Dauer. Summe läuft mit, Zahl der Übungen ohne Dauer wird genannt.
 - Kategorie geändert → Anwendung nennt nicht mehr passende Übungen; Entscheid beim Trainer.
-- Hinweise (sperren nie): Kinder – Teil mit ungewöhnlich vielen Übungen, leeres freies Spiel. Junioren – leere Spielform zum Trainingsziel / Explosivität / Spiel / Abschluss.
+- Hinweise (sperren nie): Kinderfussball – Teil mit ungewöhnlich vielen Übungen, leeres freies Spiel. Junioren – leere Spielform zum Trainingsziel / Explosivität / Spiel / Abschluss.
 
 **Spalte rechts (nur breit):** ohne geöffnete Übung die Eigenschaften (Altersstufe, Kategorien, Ziel, Gesamtdauer, Materialliste, Team/Termin, Sichtbarkeit, Urheber). Ziel und Kategorien dort direkt editierbar (Jira-Stil). Klick auf eine Übungszeile öffnet das Detail in der Spalte (eigene Adresse). Bearbeiten in der Spalte, Sichern/Verwerfen/Schliessen kleben oben; „Sichern und weiter" gibt es nicht. Ungesicherte Änderung + anderer Vorgang → Rückfrage „weiter bearbeiten / verwerfen". Variantenwechsel schliesst die Übung. Schmal: eigene Bearbeitungsseite.
 
 **Notiz je Übung:** direkt unter dem Namen, speichert beim Verlassen, max. 500 Zeichen. Erscheint auch in Durchführen und Druck. Gehört dem Training (reist mit Trainingskopie, nicht mit Fassungskopie).
 
-**Gruppen:** nur Bezeichnungen (keine Kinder, keine Zahl), keine Obergrenze. Verwaltet in der Hauptteil-Karte (Leiste mit Personen-Zeichen). Chip zeigt Name + Zeit („Rot · 24 min", „–" ohne Dauer). Menü: bearbeiten, nach vorne/hinten, entfernen (Rückfrage, wenn zugewiesen). Name max. 40, nicht leer, eindeutig (Gross/klein egal).
+**Gruppen:** nur Bezeichnungen (keine Spieler:innen, keine Zahl), keine Obergrenze. Verwaltet in der Hauptteil-Karte (Leiste mit Personen-Zeichen). Chip zeigt Name + Zeit („Rot · 24 min", „–" ohne Dauer). Menü: bearbeiten, nach vorne/hinten, entfernen (Rückfrage, wenn zugewiesen). Name max. 40, nicht leer, eindeutig (Gross/klein egal).
 - **Durchlauf** je Hauptteil-Übung: Kette von Gruppen-Chips; ohne Gruppe „Alle gemeinsam". Position = Wechsel (Junioren: über beide Hauptteil-Blöcke).
 - Meldungen am Fuss der Hauptteil-Karte (sperren nichts): Gruppe im selben Wechsel an zwei Übungen (Chip rot), ungleich lange Übungen im selben Wechsel.
 - Übung aus dem Hauptteil wegverschoben → Zuweisungen fallen **still** weg.
@@ -243,16 +257,32 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Übernehmen eines öffentlichen Trainings: jede angemeldete Person, auch Urheber → private Kopie inkl. Ziel.
 - Bekannt: keine Historie, niemand wird benachrichtigt.
 
+**Konto ohne Verein: höchstens 30 eigene Trainings.** Zählen: alle persönlichen (Entwurf/öffentlich, angelegt/übernommen, persönliche Kopie eines Team-Trainings). Nicht: Team- und Termin-Trainings, Varianten, Gruppen, Übungen. Anzeige in „Meine Trainings" („3 von 30 Trainings", „Nichts mehr frei", „34 Trainings (höchstens 30)"); „Neues Training" an der Grenze mit Meldung „Nichts mehr frei: 30 von 30 Trainings"; „Übernehmen" über Dialog mit Stand. Bestehendes bleibt bearbeitbar/löschbar. In einem Verein keine Grenze.
+
 **Trainingsübersicht:** öffentliche + eigene (inkl. Entwürfe), Schalter „nur eigene". Suche über Namen, Filter Alterskategorie. Ohne Suchbegriff zuletzt geändert oben. Marke mit Variantenzahl; Übungszahl/Dauer beziehen sich auf die erste Variante. **Team-Trainings erscheinen hier nie.**
 
 ---
 
-## 7. Team-Bereich
+## 7. Team-Bereich und Verein
 
-**Teams:** Jede angemeldete Person kann eins anlegen. Mitglieder per E-Mail (nur bestätigte Konten, keine Zustimmung nötig); Suche max. 10 erfolglose pro Stunde. Alle gleichberechtigt (umbenennen, aufnehmen, entfernen, Trainings/Termine, Spielerliste, auflösen). Mitgliederliste mit Anzeigename + E-Mail.
-- Drei Ansichten (Umschalter unter Brotkrumen): **Trainingsplan** (Start), **Trainings** (Bestand), **Team** (Name, Spielerliste, Kader, Mitglieder, Gefahrenzone). Eigene Adressen. Team, in dem man nicht ist → Teamübersicht (nicht unterscheidbar von „gibt es nicht").
-- Teamname ändern: Feld, speichert beim Verlassen; leer → alter Name zurück.
-- Bekannt: Aufnahme durch anderes Konto erscheint in der Leiste erst nach Neuladen/eigener Aktion.
+**Verein (Bereich „Verein"):** Jedes Team gehört genau einem Verein; Spieler:innen gehören dem Verein und sind einem, mehreren oder keinem Team zugeordnet. Eine Person gehört höchstens einem Verein an; Meldungen nennen nie den Verein einer anderen Person („Diese Person gehört schon einem Verein an. Aufnehmen lässt sie sich erst, wenn sie ihn verlassen hat."). Einträge „Teams", „Spieler:innen", nur Verwaltung „Verwaltung". Erste Brotkrume jeder Teamseite nennt den Verein.
+- **Teams-Übersicht** (alle Vereinsmitglieder): Vereinsname, „3 Teams · höchstens 30 Teams", Verwaltung mit Anzeigename (ohne Namen nur „Vereinsverwaltung", nie Adresse), alle Teams alphabetisch; eigene mit Plakette „Mein Team". Verwaltung zusätzlich: Spielerzahl, je Team Trainer:innen mit E-Mail, Plakette „ohne Trainer:in", Spielerzahl, eigene Team-Seite im Verein; Hinweis, dass sie Team-Inhalte nur als Trainer:in sieht („Mich aufnehmen").
+- **Verwaltung** (nur Verwaltung): Karte „Verein" mit Name, „Teams 3 von 30", „Spieler:innen 144 von 1000", „Umbenennen"; Verwaltung mit Anzeigename, E-Mail und ihren Teams; „Person aufnehmen" (wie Trainer:in aufnehmen, zwei Schritte); Kreuz entfernt eine andere Person (bleibt Trainer:in ihrer Teams); Gefahrenzone „Aus der Verwaltung austreten" (eigene Teams bleiben) und „Verein löschen". **Letzte Verwaltung kann nicht austreten** (Knopf gesperrt: „Du bist das letzte Mitglied der Vereinsverwaltung. Nimm zuerst eine weitere Person in die Verwaltung auf. Du kannst den Verein auch im Bereich «Verein» löschen.").
+- **Teams führen (nur Verwaltung):** „Team anlegen" (Name im Verein eindeutig – Gross/klein, Leerzeichen, Bindestrich/Leerzeichen, Apostrophe egal –, ≤ 60 Zeichen; man wird dabei nicht Trainer:in); voll bei 30 Teams. Team-Seite im Verein: Hinweis „Du verwaltest dieses Team, ohne selbst Trainer:in zu sein. …" + „Mich aufnehmen" bzw. „Zum Team"; Teamangaben („18 von 100", „Umbenennen"), Trainerteam (E-Mail, Plakette „Vereinsverwaltung", „Trainer:in aufnehmen", Kreuz für jede Person), Spieler:innen des Teams (Kreuz = herausnehmen; zuordnen nur unter Verein › Spieler:innen), Gefahrenzone „Team auflösen". Keine Termine, Trainings, Kader.
+- **Team auflösen** (nur Verwaltung): exakter Teamname (Gross/klein zählt, Rand-Leerzeichen nicht), Aufzählung mit Anzahl (Team-Trainings, Trainingstermine samt Abmeldungen/Anwesenheiten, Spiele samt Meldungen, Zuordnungen, Kader). Persönliche Trainings bleiben. Spieler:innen bleiben samt Link im Verein (evtl. ohne Team). Trainer:innen mit offenem Team: „Dieses Team besteht nicht mehr - die Vereinsverwaltung hat es aufgelöst." Abos der Trainer:innen erlöschen.
+- **Spielerbestand / Vereinsliste** (Verein › Spieler:innen): alle Spieler:innen mit und ohne Team, auch Schnuppernde; Kopf „144 Spieler:innen · 2 ohne Team · höchstens 1000 je Verein"; je 50 mit „Weitere anzeigen". Suche „Spieler:innen durchsuchen" (Teil von Vor-/Nachname; Gross/klein und Akzente egal, „ß"=„ss", „æ"=„ae", „œ"=„oe"; aber „Mueller" findet „Müller" nicht), Auswahl „Team" (inkl. „Ohne Team") und „Jahrgang" (je Mehrfachwahl, ODER innerhalb, UND zwischen), „Zurücksetzen"; Suche steht in der Adresse; „12 von 37 angezeigt". **Trainer:innen ohne Verwaltung** sehen nur Vorname, Nachname, Jahrgang, Teams (bzw. „ohne Team"), keine J+S, keinen Link, keinen Schnupper-Stand, keine Aktionen („Spieler:innen ordnet die Vereinsverwaltung einem Team zu."). **Verwaltung** zusätzlich J+S, Link „bezogen"/„offen", „Schnuppern 1/4"; Menü „Ändern", „Privater Link", „Einem Team zuordnen", „Löschen"; oben „Spieler:in erfassen" (kommt ohne Team in den Verein) und Import.
+- **Zuordnen** (nur Verwaltung): Wahl des Teams („18 von 100", volle gedämpft), bisherige Teams bleiben. Gesammelt per Kästchen + schwebende Leiste, **ganz oder gar nicht**: schon im Team, gleiche Angaben im Team, schnuppert anderswo oder über 100 → niemand zugeordnet, Liste unter „Keine Spieler:in zugeordnet" („Mit allen gewählten wären es 103 von 100, 3 zu viel."). „Zum Schnuppern zuordnen" nur bei genau einer gewählten Spieler:in ohne Team und nur, wenn das Team eine Anzahl Schnuppertrainings hat. Erste Spieler:in eines Teams → erwartete Spielerzahl anstehender Termine fällt weg (Meldung nennt Zahl).
+- **Löschen** (nur Verwaltung, nur hier, nur einzeln): „… aus dem Verein löschen" nennt Teams, dass Link und alle Meldungen entfallen, an vergangenen Terminen ohne Namen. Gelöscht → jeder Dialog „Spieler:in nicht gefunden.".
+- **Doppelerfassung:** Vorname+Nachname+Jahrgang im **ganzen Verein** eindeutig (Gross/klein, Leerzeichen, Bindestrich/Leerzeichen, Apostrophe egal; Umlaute/Akzente nicht: „Müller" ≠ „Mueller"; J+S zählt nicht). Erfassen/Ändern einer schon geführten Spieler:in → abgewiesen mit Ort: im eigenen Team „Diese Spieler:in steht schon auf der Liste. Unterscheide zwei Gleichnamige mit einem Zusatz im Vornamen."; in anderen Teams „Noah Keller (2015) wird im Verein schon im Team «Da» geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung."; ohne Team „… im Verein geführt, ist aber keinem Team zugeordnet …". Trainer:innen holen eine bestehende Spieler:in nie selbst ins Team. **Altdubletten** aus der Zeit vor dem Verein bleiben als getrennte Zeilen mit je eigenem Link, nicht zusammenführbar.
+- **Import aus Datei** (nur Verwaltung, nur im Spielerbestand; **im Team gibt es keinen Import mehr**): CSV mit Semikolon/Komma, UTF-8 oder Windows-Zeichensatz, Kopfzeile (ClubCorner-Export), ≤ 1000 Zeilen, ≤ 1 MB; nur Vorname, Nachname, Jahrgang, J+S verlassen das Gerät. Spalten per Kopf erkannt, änderbar. Aus Geburtsdatum nur 4-stelliges Jahr (2-stellig → ausgelassen); J+S nur Ziffern („k.A." = leer). Neue kommen **ohne Team**; Bestehende erkennt er im ganzen Verein (auch ohne Team, schnuppernd). Vorschau: „Neu im Verein", „Neue J+S-Nummer", „Mehrfach im Verein geführt" (dort ändert er nie etwas), „Ausgelassen oder ohne J+S-Nummer", „Unverändert". Letzte gleiche Zeile gewinnt; leere J+S löscht nichts; wer fehlt, bleibt. Ganz oder gar nicht. Über 1000 im Verein → nichts übernommen (ohne Neue, nur J+S-Änderungen, geht es). Bestand seit der Vorschau geändert → „Seit der Vorschau hat sich der Spielerbestand geändert. Nichts übernommen. Prüfe die neue Vorschau." Danach Meldung mit Aktion „Zuordnen" (Liste „Ohne Team").
+- **Verein gründen** (nur Konto ohne Verein, Einstieg unter „Teams"): „Name des Vereins" (1–60, später änderbar, nicht eindeutig) + zwei Bestätigungen (berechtigt zu handeln; Verein verantwortlich für die Daten), nicht gespeichert, nicht geprüft. Man wird erste Verwaltung, ohne Team. Inzwischen anderswo aufgenommen → „Du gehörst schon einem Verein an. Einen Verein gründen kann nur, wer keinem angehört."
+- **Verein löschen** (jede Verwaltung, Verein › Verwaltung): Aufzählung mit Anzahl (Teams mit Terminen und Team-Trainings, Spieler:innen samt Links, Abos, Abholadressen, davon ohne Team; Personen, die zu Konten ohne Verein werden); Knopf erst bei **exaktem Vereinsnamen** (Gross/klein zählt, Rand-Leerzeichen nicht); inzwischen umbenannt → nichts gelöscht, neuer Name verlangt. Alles weg; Links, Eltern-Abos und Abholadressen zeigen danach die Seite „Dieser Link gilt nicht mehr"; Trainer-Abos erlöschen. Konten bleiben mit eigenen Übungen und persönlichen Trainings (dann Grenzen 50/30). Feedback bleibt ohne Teambezug. Die löschende Person landet mit Meldung auf dem Einstieg, die übrigen beim nächsten Schritt ohne Meldung.
+- **Grenzen:** Verein ≤ 30 Teams und ≤ 1000 Spieler:innen (mitgezählt ohne Team, Schnuppernde, Doppeleinträge), Team ≤ 100 Spieler:innen (Schnuppernde mitgezählt). Wirken nur auf Neues (Team anlegen, erfassen, Import mit Neuen, zuordnen); Bestand darüber bleibt („1012 (höchstens 1000 Spieler:innen)"). Meldungen: „Das Team hat schon 100 Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind." bzw. „Der Verein hat schon 1000 Spieler:innen. …", „Der Verein hat schon 30 Teams. …". Keine Grenze für Zahl der Vereine oder der Verwaltung.
+
+**Teams:** Angelegt, umbenannt und aufgelöst nur von der **Vereinsverwaltung** im Bereich „Verein"; selbst gründen kann ein Team niemand (Teamübersicht: „Neue Teams legt die Vereinsverwaltung an."). Trainer:innen per E-Mail aufnehmen („Trainer:in aufnehmen", zwei Schritte: Suchen, dann Aufnehmen; nur bestätigte Konten ohne anderen Verein, keine Zustimmung nötig; die Person gehört damit zum Verein). Suche max. 10 erfolglose pro Stunde (gemeinsam mit der Suche in der Verwaltung). Alle Mitglieder gleichberechtigt (Trainings/Termine, Spielerliste, Mitglieder aufnehmen und entfernen, auch solche der Verwaltung); wer auch Verwaltung ist, hat im Team keine weiteren Rechte. Mitgliederliste mit Anzeigename + E-Mail, Plakette „Vereinsverwaltung". Karte „Teamangaben" mit Name und Verein (Umbenennen/Auflösen macht die Verwaltung). **Team besteht ohne Trainer:in weiter.**
+- Drei Seiten (in der Leiste unter dem gewählten Team): **Trainingsplan** (Start), **Trainings** (Bestand), **Team** (Teamangaben, Spielerliste, Schnuppertraining, Kader, Mitglieder, Gefahrenzone „Team verlassen"). Eigene Adressen. Team, in dem man nicht ist (auch als Verwaltung) → Teamübersicht (nicht unterscheidbar von „gibt es nicht").
+- Wer keinem Team angehört: Teamübersicht zeigt als Konto ohne Verein den Einstieg, als Verwaltung den Hinweis, sich im Bereich „Verein" selbst aufzunehmen.
+- Bekannt: Aufnahme durch anderes Konto (Team oder Verwaltung) erscheint im Wechsler erst nach Neuladen/eigener Aktion; ebenso verschwindet ein aufgelöstes Team.
 
 **Trainings im Team:** gehören Person **oder** Team, nie beiden. Immer Kopie (Ins Team stellen, Zu sich übernehmen), vollständig (Ziel, Gruppen, Verteilung, Notizen, alle Varianten). Direkt im Team anlegen möglich. Team-Trainings nur im Team-Bereich; Leiste hält „Teams" hervorgehoben.
 
@@ -289,25 +319,27 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - **Geöffneter Termin**: rechts neben der Liste (schmal: ersetzt die Liste). Reiter **Termin / Training / Spieler:innen / Trainer:innen** (Spiel: Spiel / Spieler:innen / Trainer:innen). Eigene Adresse inkl. Reiter.
 - Eigene Änderungen erscheinen sofort; **Änderungen anderer erst nach Neuladen**.
 
-**Kalender-Abo (Mitglieder):** Menü neben „Termin erstellen" → persönlicher Link je Team (Warnung: persönlich, nicht weitergeben). Anleitung für Apple, Google (nur im Browser hinzufügen), Outlook, Proton. Liefert anstehende + letzte 28 Tage, **nur Termine, zu denen man eingeladen ist**; ausgefallene/entfernte fehlen. Titel „Training · Teamname" bzw. „Bezeichnung · Teamname", Präfix „Abgesagt · " / „Verantwortlich · ". Beschreibung: eigener Stand, wer dabei/abgesagt/verantwortlich, Lücke Mindestbesetzung, Kartenlink als „Karte zum Ort: …". Keine Trainingsnamen, Bemerkung, Felder, Spieler:innen, kein Treffpunkt. Schweizer Zeit. Erlischt bei Widerruf, Austritt, Entfernung, Kontolöschung, Teamauflösung; bleibt erloschen (neuer Link nötig). Kalenderprogramm bestimmt Abrufhäufigkeit (Änderungen kommen verzögert – kein Fehler).
+**Kalender-Abo (Mitglieder):** Menü neben „Termin erstellen" → persönlicher Link je Team (Warnung: persönlich, nicht weitergeben). Anleitung für Apple, Google (nur im Browser hinzufügen), Outlook, Proton. Liefert anstehende + letzte 28 Tage, **nur Termine, zu denen man eingeladen ist**; ausgefallene/entfernte fehlen. Titel „Training · Teamname" bzw. „Bezeichnung · Teamname", Präfix „Abgesagt · " / „Verantwortlich · ". Beschreibung: eigener Stand, wer dabei/abgesagt/verantwortlich, Lücke Mindestbesetzung, Kartenlink als „Karte zum Ort: …". Keine Trainingsnamen, Bemerkung, Felder, Spieler:innen, kein Treffpunkt. Schweizer Zeit. Erlischt bei Widerruf, Austritt, Entfernung, Kontolöschung, Teamauflösung, Löschen des Vereins; bleibt erloschen (neuer Link nötig). Kalenderprogramm bestimmt Abrufhäufigkeit (Änderungen kommen verzögert – kein Fehler).
 
-**Spielerliste:** Karte unter „Team". Vorname/Nachname je 1–60, Jahrgang 4-stellig, J+S-Nr. max. 20, **max. 200 Spieler:innen**. Eindeutig: Vorname+Nachname+Jahrgang (Gross/klein, Mehrfach-Leerzeichen, Bindestrich vs. Leerzeichen, Apostroph-Varianten egal; „Müller" ≠ „Mueller"). Dialog bleibt nach „Hinzufügen" offen.
-- **CSV-Import:** Semikolon/Komma, UTF-8 oder Windows-Zeichensatz, Kopfzeile Pflicht (ClubCorner-Export). Nur Vorname, Nachname, Jahrgang, J+S-Nr. verlassen das Gerät. Spalten per Kopf erkannt. Aus Geburtsdatum nur 4-stelliges Jahr (2-stellig → Zeile ausgelassen). J+S nur Ziffern („k.A." = leer). Vorschau: neu / neue J+S / unverändert / ausgelassen mit Grund. Gleiche Angaben mehrfach → letzte Zeile gewinnt. Wer fehlt, bleibt. Ganz oder gar nicht. Keine Excel-Dateien. Namen bestehender werden nicht geändert (gekürzter Rufname → beim nächsten Import Duplikat).
-- **Erste Aufnahme** → alle anstehenden Termine + Serien verlieren ihre erwartete Zahl; Spielerzahl kommt fortan aus der Liste. Liste wieder leer → Zahl unbekannt.
-- Entfernen: Link ungültig, an vergangenen Terminen „Ehemalige Spieler:in".
+**Spielerliste:** Karte unter „Team" („15 · 9 Links bezogen"). Vorname/Nachname je 1–60, Jahrgang 4-stellig, J+S-Nr. max. 20, **max. 100 Spieler:innen je Team** (und 1000 im Verein). Eindeutig im **ganzen Verein** (siehe Doppelerfassung oben). Dialog „Spieler:in hinzufügen" bleibt nach „Hinzufügen" offen; neu Hinzugefügte kommen in den Verein und sind diesem Team zugeordnet. Zeile: Name, Jahrgang, J+S, Kader, „Auch in" (weitere Teams), Link, „Ändern", „Aus dem Team nehmen". Änderung an Name/Jahrgang/J+S gilt sofort in allen Teams der Spieler:in (deren Trainer:innen erfahren es nicht).
+- **Kein CSV-Import im Team** mehr (nur Verwaltung im Spielerbestand); Hinzufügen einzeln geht weiter.
+- **Kein Löschen im Team** (für niemanden, auch nicht für die Verwaltung im Team). **„Aus dem Team nehmen"**: Rückfrage nennt, was bleibt (Spieler:in samt Link im Verein und in weiteren Teams; letztes Team → danach ohne Team, nur noch Verwaltung) und was verfällt (künftige Abmeldungen, Spiel-Meldungen, Kader in diesem Team; Schnuppern samt Zählung). An begonnenen Terminen bleibt sie mit Namen und „nicht mehr im Team", Nachtrag geht weiter; an anstehenden zählt sie nicht. Lage seit dem Öffnen geändert → nichts herausgenommen, Hinweis neu lesen.
+- **Erste Spieler:in** (Hinzufügen oder Zuordnen durch die Verwaltung) → alle anstehenden Termine + Serien verlieren ihre erwartete Zahl; Spielerzahl kommt fortan aus der Liste. Liste wieder leer → Zahl unbekannt.
+- Aus dem Verein gelöscht: Link ungültig, an vergangenen Terminen „Ehemalige Spieler:in" ohne Namen.
 - Begonnener Termin behält „Stand bei Beginn" (minutengenau, Schweizer Zeit).
 
 **Kader:** max. 20 je Team, Name 1–30, eindeutig (Bindestrich/Apostroph unterscheiden hier!). Hinweis: Eltern sehen die Kader ihrer Spieler:in → nichts Heikles in den Namen. Zuteilung im Spieler-Dialog oder per Mehrfachauswahl („Kader zuteilen", Leiste unten). Termin/Serie mit Kadern gilt nur für deren Mitglieder; ohne Kader für alle. Kader schliessen nichts aus. Termin für niemanden → „0 von 0".
 - Termin gilt durch Kader-Änderung nicht mehr für jemanden → Abmeldung/Meldung/Kennzeichnung **verfällt** (Rückfrage mit Zahl); gilt später wieder → angemeldet (Spiel: ohne Meldung).
 - Mitglieder sehen immer alle Termine (Kader filtern nur Spieler:innen).
 
-**Probetraining:** Karte unter „Team" zwischen Spielerliste und Kadern; ohne Einstellung „Noch kein Probetraining" + Link „Probetraining konfigurieren", sonst Anzahl, Info-Schreiben (3 Zeilen, „Ganz lesen"), wer im Probe-Modus ist. Dialog „Probetraining konfigurieren" bzw. „… bearbeiten": **Anzahl 1–20** (zählt besuchte + angemeldete Trainings, gilt fürs ganze Team, nicht entfernbar), **Info-Schreiben optional, ≤ 2000 Zeichen**, nur Text, Zeilenumbrüche bleiben, Webadressen im Link anklickbar, leer = entfernt.
-- Ein-/Ausschalten nur im Dialog „Spieler:in ändern" (Checkbox „Im Probetraining"); nicht beim Hinzufügen/Import. Ohne Anzahl gesperrt. Einschalten lässt Abmeldungen kommender Trainings, Meldungen und Kennzeichnungen kommender Spiele **verfallen** (Knopf beim Einschalten „Probetraining einschalten"; verfällt etwas, Warnung mit Zahl). Ausschalten → an allen kommenden Trainings angemeldet, Spiele wieder sichtbar; erneutes Einschalten zählt ab null. Link bleibt derselbe.
-- Plakette „Probe 1/4" in Spielerliste und Karte = **besuchte** von der Anzahl (nicht die angemeldeten).
+**Schnuppertraining:** Karte unter „Team" zwischen Spielerliste und Kadern („Für Spieler:innen, die den Verein ausprobieren. …"); ohne Einstellung „Noch kein Schnuppertraining" + Link „Schnuppertraining konfigurieren", sonst „2 Spieler:innen schnuppern", Anzahl, Info-Schreiben (3 Zeilen, „Ganz lesen"), wer schnuppert. Dialog „Schnuppertraining bearbeiten": **Anzahl 1–20** (zählt besuchte + angemeldete Trainings, gilt fürs ganze Team, nicht entfernbar), **Info-Schreiben optional, ≤ 2000 Zeichen**, nur Text, Zeilenumbrüche bleiben, Webadressen im Link anklickbar, leer = entfernt.
+- **Nur bei genau einem Team.** Ein-/Ausschalten nur im Dialog „Spieler:in ändern" (Checkbox „Schnuppert"); nicht beim Hinzufügen. Ohne Anzahl gesperrt. Weitere Teams → statt Checkbox „Diese Spieler:in ist weiteren Teams zugeordnet und macht darum regulär in deinem Team mit." Vor dem Einschalten: „Solange die Spieler:in schnuppert, lässt sie sich keinem weiteren Team zuordnen." Einschalten („Schnuppern einschalten") lässt Abmeldungen kommender Trainings, Meldungen und Kennzeichnungen kommender Spiele **verfallen** (Warnung mit Zahl). Ausschalten → an allen kommenden Trainings angemeldet, Spiele wieder sichtbar; erneutes Einschalten zählt ab null. Link bleibt derselbe.
+- Verwaltung kann eine Spieler:in ohne Team **zum Schnuppern zuordnen** (nur einzeln, Team braucht Anzahl). Schnuppernde lässt sich keinem weiteren Team zuordnen, bis das Schnuppern endet oder sie herausgenommen wird (Herausnehmen beendet es samt Zählung).
+- Plakette „Schnuppern 1/4" in Spielerliste und Karte = **besuchte** von der Anzahl (nicht die angemeldeten).
 - Besucht = nach dem Einschalten begonnenes Training, bei Beginn angemeldet oder „doch erschienen" nachgetragen (nicht „nicht erschienen"). Ausgefallenes zählt nicht, Anmeldung ruht bis Rücknahme.
-- Eltern melden über den Link nur bis zur Anzahl an; **Mitglieder (und KI) dürfen darüber hinaus** anmelden, mit Hinweis „… ist damit über der Anzahl Probetrainings …". Anzahl senken lässt bestehende Anmeldungen stehen.
+- Eltern melden über den Link nur bis zur Anzahl an; **Mitglieder (und KI) dürfen darüber hinaus** anmelden, mit Hinweis „… ist damit über der Anzahl Schnuppertrainings …". Anzahl senken lässt bestehende Anmeldungen stehen.
 - Am Training zählt sie nur, wenn angemeldet; nicht angemeldet steht sie wie abgemeldet da, ohne eigene Kennzeichnung. In keinem Spiel.
-- Verlegen oder Kader-Wegfall → ihre Anmeldung **verfällt** (Rückfrage nennt „Anmeldung einer Probe-Spieler:in"); gilt das Training wieder → nicht angemeldet.
+- Verlegen oder Kader-Wegfall → ihre Anmeldung **verfällt** (Rückfrage nennt „Anmeldung einer schnuppernden Spieler:in"); gilt das Training wieder → nicht angemeldet.
 
 **Ab- und Anmelden (Trainings):** Jede Spieler:in ist **standardmässig angemeldet**, bis abgemeldet. Kein „keine Rückmeldung". Bis Beginn, nie an ausgefallenem Termin. Durch Mitglieder (Reiter „Spieler:innen", Schalter) oder Eltern (privater Link). Wer gesetzt hat, wird nicht festgehalten; letzte gilt. Kein Grund.
 - Zeitangabe links vom Schalter: seit wann der Status gilt („gerade eben", „vor 3 Stunden", „gestern", …); nur bei echtem Wechsel.
@@ -324,21 +356,22 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - **Verlegen:** Meldungen und Kennzeichnungen verfallen **nur bei Datumsänderung** (andere Uhrzeit am selben Tag lässt sie stehen). Meldefrist und Treffpunkte wandern mit (Abstand bleibt); kann dadurch abgelaufen sein. Nachträge verfallen beim Wiederöffnen immer.
 - Ausfall: alles ruht; Eltern sehen nur Kopf mit Grund. Entfernen nennt Zahl der Meldungen.
 
-**Privater Link (Eltern):** je Spieler:in genau einer; Mitglied holt ihn über Kettenglied in der Spielerliste. Anwendung verschickt nichts. „Link erneuern" → alter sofort ungültig, Abmeldungen bleiben, Kalender-Abo der Spieler:in erlischt.
-- Seite: fürs Telefon, ohne Konto, ohne Leiste, keine Cookies, fester Titel ohne Namen. Teamname, Name der Spieler:in. „Heute" (begonnen, gesperrt) + anstehende Termine nach Monat. Trainingskarte: Status „Angemeldet"/„Abgemeldet"/„Fällt aus", Zeit, Ort, Kader, Spielerzahl („24/33", alle für die der Termin gilt), Verantwortliche:r, Schalter. Ort immer ganz (bricht um), auch nach Beginn; mit Kartenlink ist der Ort selbst der Link (violett, unterstrichen, Zeichen für extern; lang dann einzeilig mit „…"); bei Ausfall ohne Link. Ausfallgrund mit „Grund:". Treffpunkt eines Trainings als Zeile „Treffpunkt  17:45  Ort" – nicht bei Abmeldung, Ausfall und ab Beginn; nicht angemeldete Probe-Spieler:in sieht ihn. Hinweis für Eltern unter einer Linie am Fuss der Karte, ab vier Zeilen gekürzt mit „Ganz lesen"; auch abgemeldet und nach Beginn, nicht bei Ausfall. Verlegt → „Verlegt, vorher … Deine Abmeldung gilt nicht mehr."
+**Privater Link (Eltern):** je Spieler:in genau einer **im ganzen Verein**, zeigt die Termine **aller ihrer Teams**. Mitglied jedes dieser Teams holt ihn über Kettenglied in der Spielerliste (Dialog nennt die Teams), die Verwaltung im Spielerbestand. Anwendung verschickt nichts. „Link erneuern" fragt nach (nennt die Teams, für die der bisherige endet) → alter sofort ungültig **für alle Teams**, Abmeldungen bleiben, Kalender-Abo der Spieler:in erlischt. Bleibt gültig beim Herausnehmen und beim Auflösen eines Teams.
+- Seite: fürs Telefon, ohne Konto, ohne Leiste, keine Cookies, fester Titel ohne Namen. Kopf „Termine für" + Name, ihre Teams als Plaketten; jede Karte nennt ihr Team. Unten: verantwortlich ist der Verein (mit Namen) und wer was sieht (Name/Jahrgang/Teams alle Trainer:innen des Vereins, alles die Trainer:innen ihrer Teams, J+S und Link auch die Verwaltung, dazu deren KI-Assistenten und wer den Link hat).
+- **Ohne Team:** Link gültig, zeigt keine Teams und keine Termine, sagt, dass Termine nach einer Zuordnung erscheinen und die Vereinsverwaltung hilft; Abo und Feedback bleiben. Nach dem Herausnehmen verschwinden die Termine dieses Teams (auch ein heute begonnener); Meldung an einem Termin, der nicht mehr gilt → „Nicht gespeichert" mit Art und Tag. „Heute" (begonnen, gesperrt) + anstehende Termine nach Monat. Trainingskarte: Status „Angemeldet"/„Abgemeldet"/„Fällt aus", Zeit, Ort, Kader, Spielerzahl („24/33", alle für die der Termin gilt), Verantwortliche:r, Schalter. Ort immer ganz (bricht um), auch nach Beginn; mit Kartenlink ist der Ort selbst der Link (violett, unterstrichen, Zeichen für extern; lang dann einzeilig mit „…"); bei Ausfall ohne Link. Ausfallgrund mit „Grund:". Treffpunkt eines Trainings als Zeile „Treffpunkt  17:45  Ort" – nicht bei Abmeldung, Ausfall und ab Beginn; nicht angemeldete schnuppernde Spieler:in sieht ihn. Hinweis für Eltern unter einer Linie am Fuss der Karte, ab vier Zeilen gekürzt mit „Ganz lesen"; auch abgemeldet und nach Beginn, nicht bei Ausfall. Verlegt → „Verlegt, vorher … Deine Abmeldung gilt nicht mehr."
 - Spielkarte: Status inkl. „Ohne Meldung", „Nicht aufgeboten", „Meldefrist verpasst"; „Bitte melden bis …", „7/14 · gesucht 9 bis 12", Knöpfe Anmelden/Abmelden; nach Frist „Meldefrist abgelaufen · Änderung übers Team". Treffpunkte, Hinweis für Eltern. Nachträge und Status des Spiels sehen Eltern nicht.
-- **Eingrenzen:** Filter-Chips „Trainings" und „Spiele" über der Liste; höchstens einer gilt, nochmals tippen hebt auf (kein Chip „Alle"). Ausgefallene und heute begonnene stehen unter ihrer Art. Leer → „Keine anstehenden Spiele"/„… Trainings". Bleibt beim Melden, aber neu öffnen/neu laden zeigt wieder alle (nicht gemerkt). Nicht im Probe-Modus, nicht ohne Termine. Kalender-Abo immer mit allen Terminen. Kein schrittweises Nachladen: alle anstehenden Termine auf einmal.
+- **Eingrenzen:** Filter-Chips „Trainings" und „Spiele" über der Liste; höchstens einer gilt, nochmals tippen hebt auf (kein Chip „Alle"). Ausgefallene und heute begonnene stehen unter ihrer Art. Leer → „Keine anstehenden Spiele"/„… Trainings". Bleibt beim Melden, aber neu öffnen/neu laden zeigt wieder alle (nicht gemerkt). Nicht bei schnuppernden Spieler:innen, nicht ohne Termine. Kalender-Abo immer mit allen Terminen. Kein schrittweises Nachladen: alle anstehenden Termine auf einmal.
 - Zeigt **nicht**: andere Namen, fremde Kader, Termine anderer Kader, Trainingsinhalte, vergangene Termine.
-- **Im Probe-Modus:** Kopf „… ist im Probetraining. Melde … an …", „Noch 2 von 4 Probetrainings möglich" mit Balken (besucht gefüllt, angemeldet umrandet), „x besucht · y angemeldet"; „Infos zum Probetraining" (Info-Schreiben, 4 Zeilen, „Ganz lesen", Links öffnen extern). Keine Spiele. Trainings zuerst „Nicht angemeldet" (grau, nicht gedämpft). Anzahl erreicht → „Alle 4 Probetrainings vergeben" (bei 1: „Das Probetraining ist vergeben"), Meldung über den Trainings, übrige Schalter gesperrt „Probetrainings vergeben"; abmelden geht immer. Verfallene Anmeldung: „… Deine Anmeldung gilt nicht mehr."
-- Ungültig/unbekannt → neutrale Seite „Dieser Link gilt nicht mehr".
-- **Kalender-Abo am Link:** Kalender-Zeichen hinter dem Namen. Titel mit ✅ zugesagt / ❔ vielleicht (Spiel ohne Meldung bis Frist; im Probe-Modus nicht angemeldetes Training) / ❌ abgesagt. Nur Anzeige, gemeldet wird über den Link. Beschreibung: Status, Treffpunkt eines Trainings („Treffpunkt" + „17:45 · Ort", gleiche Bedingungen wie am Link), Hinweis für Eltern, Kartenlink als „Karte zum Ort: …" (führt zum Ort, nicht zum Treffpunkt). Eintrag beginnt zum Beginn, nicht zum Treffpunkt. Kein Spielername, keine Frist, kein Richtwert. Erlischt bei Link-Erneuerung, Entfernung, Auflösung oder Widerruf durch Eltern (trifft alle mit derselben Adresse).
+- **Schnuppert sie:** Kopf „Mia schnuppert. Melde Mia für die Trainings an, …", „Noch 2 von 4 Schnuppertrainings möglich" mit Balken (besucht gefüllt, angemeldet umrandet), „x besucht · y angemeldet"; „Infos zum Schnuppertraining" (Info-Schreiben, 4 Zeilen, „Ganz lesen", Links öffnen extern). Keine Spiele. Trainings zuerst „Nicht angemeldet" (grau, nicht gedämpft). Anzahl erreicht → „Alle 4 Schnuppertrainings vergeben" (bei 1: „Das Schnuppertraining ist vergeben"), Meldung über den Trainings, übrige Schalter gesperrt „Schnuppertrainings vergeben"; abmelden geht immer. Verfallene Anmeldung: „… Deine Anmeldung gilt nicht mehr."
+- Erneuert, unbekannt, Spieler:in aus dem Verein gelöscht oder Verein gelöscht → neutrale Seite „Dieser Link gilt nicht mehr" (ohne Team/Spieler:in; „Den aktuellen erhältst du über eine Abholadresse, bei den Trainer:innen oder bei der Vereinsverwaltung.").
+- **Kalender-Abo am Link:** Kalender-Zeichen hinter dem Namen. Kalender heisst **„Trainings und Spiele"** (ohne Teamnamen; früher abonnierte behalten im Kalenderprogramm allenfalls ihren alten Namen), enthält die Termine aller Teams, jeder Eintrag nennt sein Team; ohne Team leer. Titel mit ✅ zugesagt / ❔ vielleicht (Spiel ohne Meldung bis Frist; schnuppernd nicht angemeldetes Training) / ❌ abgesagt. Nur Anzeige, gemeldet wird über den Link. Beschreibung: Status, Treffpunkt eines Trainings („Treffpunkt" + „17:45 · Ort", gleiche Bedingungen wie am Link), Hinweis für Eltern, Kartenlink als „Karte zum Ort: …" (führt zum Ort, nicht zum Treffpunkt). Eintrag beginnt zum Beginn, nicht zum Treffpunkt. Kein Spielername, keine Frist, kein Richtwert. Erlischt bei Link-Erneuerung, Löschen der Spieler:in oder des Vereins, oder Widerruf durch Eltern (trifft alle mit derselben Adresse); Herausnehmen und Auflösen eines Teams lassen es bestehen.
 
-**Selbstabholung:** Schalter in der Spielerliste (Standard aus). An → Abholadresse zum Kopieren; nur teamintern teilen. Erneuern macht alte Adresse ungültig; Aus stoppt neue Abholungen. Bereits bezogene Links bleiben gültig.
-- Abholseite: Vorname, Nachname, Jahrgang exakt (Umlaute/Akzente müssen stimmen; „ue" ≠ „ü"). Treffer → Link. Kein Treffer → immer „Dazu finden wir keinen Link. Prüf die Schreibweise oder frag beim Team nach."
+**Selbstabholung:** Schalter in der Spielerliste (Standard aus). An → Abholadresse zum Kopieren; nur teamintern teilen. Erneuern macht alte Adresse ungültig; Aus stoppt neue Abholungen über dieses Team. Bereits bezogene Links bleiben gültig. Der Link gilt für alle Teams: Über die Abholadresse **jedes** ihrer Teams mit eingeschalteter Selbstabholung kommen Eltern zum selben Link (ein Team, das sie ausschaltet, sperrt ihn nicht).
+- Abholseite: findet Spieler:innen dieses Teams; Vorname, Nachname, Jahrgang exakt (Umlaute/Akzente müssen stimmen; „ue" ≠ „ü"). Nennt unter „Was KiFu speichert" die Angaben, den Verein als verantwortlich und wer was sieht. Treffer → Link (zeigt Termine aller Teams). Kein Treffer → immer „Dazu finden wir keinen Link. Prüf die Schreibweise oder frag beim Team nach."
 - **Sperre:** 5 Fehlversuche in 15 min → 15 min Sperre für den **Internetanschluss** (alle Teams; trifft auch andere Eltern im selben WLAN).
-- Bekannt: Wer die Adresse + Namen/Jahrgang kennt, kann fremde Kinder ab-/anmelden (vom Team bewusst getragen).
+- Bekannt: Wer die Adresse + Namen/Jahrgang kennt, kann fremde Spieler:innen ab-/anmelden, für alle ihre Teams (vom Team bewusst getragen).
 
-**Team verlassen / auflösen** („Gefahrenzone"): Verlassen kurz bestätigen. Auflösen bzw. Austritt als letztes Mitglied → Eingabe des **exakten Teamnamens** (Gross/klein zählt, Rand-Leerzeichen nicht). Zählt auf, was verschwindet. Prüfung beim Ausführen (inzwischen umbenannt → neuer Name verlangt). Unwiderruflich, keine Benachrichtigung, kein Export. Bei Austritt: Trainings bleiben im Team, Abo erlischt (ohne Hinweis).
+**Team verlassen** („Gefahrenzone"): kurz bestätigen, **ohne Teamnamen**, auch als letzte Person. Das Team bleibt samt Trainings, Terminen, Spielerliste bestehen (als letzte Person: ohne Trainer:in, bis die Verwaltung jemanden aufnimmt oder es auflöst). Persönliche Trainings bleiben; Abo erlischt (ohne Hinweis). Wer danach in keinem Team und nicht in der Verwaltung ist → Konto ohne Verein. **Auflösen und Umbenennen gibt es im Team nicht** (auch nicht für die Verwaltung im Team), nur im Bereich „Verein".
 
 ---
 
@@ -346,12 +379,17 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 - Verbinden: Adresse `https://ki-fu.ch/api/mcp` im Client eintragen (Claude Desktop/claude.ai: Einstellungen → Connectors → Custom connector; Claude Code per Befehl). Browser öffnet Erlauben-Seite (vorher ggf. anmelden). Zugangsname max. 40. Kein Passwort/Schlüssel an den Assistenten.
 - **Max. 5 Zugänge je Konto**, zusammen **600 Aufrufe/Stunde** (darüber Meldung mit Wartezeit). Widerruf unter „KI-Zugänge" wirkt sofort. Verfällt nie von selbst.
-- Kann: Übungen suchen/abrufen; eigene Übungen anlegen, ändern, kopieren, öffentlich schalten, Diagramm setzen (als Ganzes) und Diagramm-Mängel abrufen; Trainings anlegen, Übungen zuordnen, überarbeiten (Name, Ziel, Kategorien, Dauer, Notiz, Reihenfolge eines ganzen Abschnitts in einem Zug, Entfernen), Gruppen/Durchlauf, Varianten, Hinweise abrufen, veröffentlichen/zurückziehen, übernehmen, löschen; Team-Trainings; Kalender (Termine, Serien samt Treffpunkt eines Trainings, Spiele, Zuordnen, Trainer:innen, Ausfälle); Spielerliste, Kader, Probetraining (Anzahl, Info-Schreiben, Probe-Modus ein/aus), Ab-/Anmeldungen, Meldungen, Nachträge, private Links, Selbstabholung.
-- Kann **nicht**: Favoriten, Teams gründen/umbenennen/auflösen, Mitglieder verwalten, Konto (Name, Passwort, Löschen), Kalender-Abos, Fotos hochladen, Übungen löschen, Übung in andere Altersstufe überführen, Übung aus Training in Bibliothek kopieren, einzelne Diagramm-Elemente ändern, Diagramm entfernen, Gruppenreihenfolge ändern, CSV-Import, E-Mail-Adressen sehen.
+- Kann: Übungen suchen/abrufen; eigene Übungen anlegen, ändern, kopieren, öffentlich schalten, Diagramm setzen (als Ganzes) und Diagramm-Mängel abrufen; Trainings anlegen, Übungen zuordnen, überarbeiten (Name, Ziel, Kategorien, Dauer, Notiz, Reihenfolge eines ganzen Abschnitts in einem Zug, Entfernen), Gruppen/Durchlauf, Varianten, Hinweise abrufen, veröffentlichen/zurückziehen, übernehmen, löschen; Team-Trainings; Kalender (Termine, Serien samt Treffpunkt eines Trainings, Spiele, Zuordnen, Trainer:innen, Ausfälle); Spielerliste der eigenen Teams (mit Verein des Teams und Namen weiterer Teams je Spieler:in), Spieler:innen aufnehmen/ändern, Kader, Schnuppertraining (`schnuppertraining_abrufen`, `schnuppertraining_festlegen`, `spieler_schnuppern_setzen`; einschalten nur bei genau einem Team), Ab-/Anmeldungen, Meldungen, Nachträge, private Links, Selbstabholung. `teams_abrufen` nennt die Teams mit Verein; ohne Team leer, mit Erklärung warum (der Verwaltung zusätzlich, wie sie sich in der App selbst aufnimmt).
+- **Herausnehmen** mit `spieler_aus_team_nehmen` nur zweistufig: erster Aufruf ändert nichts und liefert die Sätze der App-Rückfrage (beim letzten eigenen Team zusätzlich: danach über den Assistenten nicht mehr erreichbar); erst der zweite nimmt heraus; Lage inzwischen geändert → nichts, neue Rückfrage. **Löschen kann er keine Spieler:in.**
+- **`spieler_link_erneuern`** nur zweistufig: ohne `bestaetigt: true` ändert es nichts und nennt die Teams, für die der bisherige Link endet; erst mit Bestätigung erneuert er. Link-Antworten nennen alle Teams der Spieler:in.
+- Umbenannt mit Release 1.48.0, ohne Übergang: das frühere Werkzeug zum Entfernen einer Spieler:in heisst `spieler_aus_team_nehmen` (und löscht nicht mehr), die drei Schnupper-Werkzeuge tragen den neuen Begriff. Verbundene Clients müssen ihre Werkzeuge neu laden; ein alter Name ergibt „unbekanntes Werkzeug" und ändert nichts.
+- Spieler:innen ausserhalb der eigenen Teams (auch ohne Team) gelten für ihn als **nicht gefunden**; die Vereinsliste liest er nicht.
+- Für ein Konto ohne Verein dieselben Grenzen 50/30 wie in der App (Übung anlegen/kopieren, Training anlegen/übernehmen): nichts entsteht, Antwort nennt den Bestand („Du besitzt 50 von 50 Übungen. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.") und dass nichts entstanden ist.
+- Kann **nicht**: Favoriten, **Teams und Verein verwalten** (Teams anlegen/umbenennen/auflösen, Personen in Teams oder Verwaltung aufnehmen/entfernen, Spieler:innen Teams zuordnen, aus dem Verein löschen, importieren, Verein gründen/umbenennen/löschen – auch nicht für die Verwaltung, nur in der App), zum Schnuppern zuordnen, Konto (Name, Passwort, Löschen), Kalender-Abos, Fotos hochladen, Übungen löschen, Übung in andere Altersstufe überführen, Übung aus Training in Bibliothek kopieren, einzelne Diagramm-Elemente ändern, Diagramm entfernen, Gruppenreihenfolge ändern, E-Mail-Adressen sehen.
 - Strenger als das Formular: Werte, die das Formular gar nicht anbietet, werden **abgelehnt** (mit Liste aller Verstösse), nicht still verworfen.
 - Kartenlink zum Ort setzt er wie die App (nur mit Ort, https://, ≤ 500 Zeichen). Ändert er den Ort ohne neuen Link, fällt der bisherige weg – die Antwort sagt es ihm; ebenso, wenn ein Serientermin wieder der Serie folgt und seinen eigenen Link verliert.
 - Treffpunkt eines Trainings (`treffpunkt` {uhrzeit, ort}, null entfernt) nach denselben Regeln und mit denselben Meldungen wie die App. Läge er nach einer Zeitänderung am Vortag, entfällt er **ohne Rückfrage**; das Ergebnis nennt die Daten (`treffpunkt_entfallen`).
-- Fragt bei Löschen/Entfernen/Ersetzen nicht nach; Bestätigung im Aufruf nur bei Serienänderungen mit vergangenen Terminen und bei verfallenden Abmeldungen/Meldungen/Nachträgen.
+- Fragt bei Löschen/Entfernen/Ersetzen nicht nach; Bestätigung im Aufruf nur beim Herausnehmen, beim Erneuern eines Links, bei Serienänderungen mit vergangenen Terminen und bei verfallenden Abmeldungen/Meldungen/Nachträgen (ob er die Person wirklich gefragt hat, prüft KiFu nicht).
 - Bekannt: neue Fähigkeiten kennt ein verbundener Assistent erst nach Neuverbinden; offener Browser-Tab zeigt Änderungen des Assistenten erst nach Neuladen; Abbruch mitten im Kopieren kann eine unvollständige Kopie hinterlassen; die gemeldeten Diagramm-Mängel erscheinen in der App nirgends; Platz-/Spielerzahl-Passung beurteilt der Assistent selbst (Richtmasse SFV 2026/27: Kleinfeld G ~20×15, F ~25×20, E 25–30×20–25; Grossfeld F ~30×25, E 43–48×25–30 m).
 
 ---
@@ -361,11 +399,13 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 | Wer | Sieht / darf |
 |---|---|
 | Ohne Konto | Übungsbestand, öffentliche Trainings (ansehen, drucken, durchführen), Versionen, Styleguide, Cookies |
-| Angemeldet | + eigene Übungen/Trainings, Favoriten, Übernehmen, Teams |
-| Team-Mitglied | alles im Team, gleichberechtigt; E-Mails der Mitglieder; alle Termine (unabhängig von Kadern) |
-| Eltern (privater Link) | nur eigene Spieler:in: anstehende Termine ihrer Kader, eigener Status, Spielerzahl, Verantwortliche:r, Ort samt Kartenlink (Linkziel verantwortet das Team), Ausfallgrund, Hinweis für Eltern (Trainings und Spiele), Treffpunkte (Spiele) bzw. Treffpunkt (Trainings); nie die Bemerkung; keine anderen Namen, keine Trainingsinhalte |
+| Konto ohne Verein | + eigene Übungen/Trainings (≤ 50/30), Favoriten, Übernehmen, KI-Assistent, Verein gründen; keine Teams |
+| Trainer:in (Team-Mitglied) | im Team: alles, gleichberechtigt (Termine, Trainings, Spielerliste, Mitglieder aufnehmen/entfernen); E-Mails der Mitglieder; alle Termine (unabhängig von Kadern). Nicht: Team umbenennen/auflösen, Spieler:in löschen, Import, bestehende Spieler:in ins Team holen |
+| Vereinsmitglied (jede Trainer:in) | im Bereich „Verein": Vereinsname, Verwaltung (nur Anzeigename), alle Teams, Vereinsliste (Name, Jahrgang, Teams aller Spieler:innen); ändert dort nichts. J+S, Link und Meldungen nur der eigenen Teams |
+| Vereinsverwaltung | im Bereich „Verein": Teams anlegen/umbenennen/auflösen, Trainer:innen und Verwaltung aufnehmen/entfernen, Spielerbestand (erfassen, ändern, zuordnen, herausnehmen, löschen, Link abrufen/erneuern, Import), Verein umbenennen/löschen; E-Mails aller Trainer:innen. Team-Inhalte (Termine, Trainings, Spiele, Kader, Abmeldungen) nur als Trainer:in im Team; dort keine weiteren Rechte |
+| Eltern (privater Link) | nur eigene Spieler:in: anstehende Termine aller ihrer Teams (für ihre Kader), Verein als verantwortlich, eigener Status, Spielerzahl, Verantwortliche:r, Ort samt Kartenlink (Linkziel verantwortet das Team), Ausfallgrund, Hinweis für Eltern (Trainings und Spiele), Treffpunkte (Spiele) bzw. Treffpunkt (Trainings); nie die Bemerkung; keine anderen Namen, keine Trainingsinhalte |
 | Mit Abholadresse | Link einer Spieler:in bei exaktem Vorname+Nachname+Jahrgang |
-| KI-Assistent | wie Konto, eingeschränkt auf angebotene Werkzeuge; keine E-Mails |
+| KI-Assistent | wie Trainer:in der eigenen Teams (auch für die Verwaltung), eingeschränkt auf angebotene Werkzeuge; nie Verwaltung, keine Vereinsliste, keine E-Mails |
 
 Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den Assistenten). Fremde Übungen/Manual-Übungen sind nie direkt bearbeitbar.
 
@@ -378,9 +418,10 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Anzeigename lässt sich nicht mehr leeren.
 - Abmeldungen/Absagen/Meldungen sind nach einer **Verlegung** weg (Training: Datum oder Beginn; Spiel: nur Datum).
 - Abmeldung weg, weil der Termin durch eine **Kader-Änderung** nicht mehr für die Spieler:in gilt.
-- Probe-Spieler:in an allen Trainings „nicht angemeldet" / sieht keine Spiele → Probe-Modus ist so gedacht; Abmeldungen und Meldungen verfielen beim Einschalten.
-- Eltern können nicht mehr anmelden, Mitglieder schon → Anzahl Probetrainings erreicht; Mitglieder dürfen darüber hinaus.
-- Plakette „Probe 0/4", obwohl angemeldet → zählt nur besuchte Trainings.
+- Schnuppernde Spieler:in an allen Trainings „nicht angemeldet" / sieht keine Spiele → Schnuppern ist so gedacht; Abmeldungen und Meldungen verfielen beim Einschalten.
+- Eltern können nicht mehr anmelden, Mitglieder schon → Anzahl Schnuppertrainings erreicht; Mitglieder dürfen darüber hinaus.
+- Plakette „Schnuppern 0/4", obwohl angemeldet → zählt nur besuchte Trainings.
+- Schnuppern lässt sich nicht einschalten → Spieler:in ist weiteren Teams zugeordnet (Schnuppern nur bei genau einem Team) oder das Team hat keine Anzahl. Schnuppernde lässt sich keinem weiteren Team zuordnen.
 - Erwartete Spielerzahl verschwunden → Team hat eine Spielerliste angelegt.
 - Ausgefallener Termin zeigt keine Spielerzahl.
 - Spieler:innen bei Trainings sind automatisch angemeldet; bei Spielen „ohne Meldung".
@@ -414,6 +455,29 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Diagramm: weisse Leibchen erscheinen im Hellen grau (Graphit) → Absicht, sonst auf hellem Rasen unsichtbar.
 - Kein Schalter an einem ausgefallenen Termin am privaten Link → Absicht; Plakette „Fällt aus" und Grund sagen es.
 - Am privaten Link ist die Eingrenzung „Trainings"/„Spiele" nach dem Neuladen weg → Absicht, die Wahl gilt nur, solange die Seite offen ist.
+- Ein Team selbst anlegen geht nicht → neue Teams legt nur die Vereinsverwaltung an; Umbenennen und Auflösen ebenso, nur im Bereich „Verein".
+- Konto ohne Verein sieht unter „Teams" keine Teams, nur „Willkommen bei KiFu" → Teams, Spielerlisten, Kalender gibt es nur in einem Verein; gründen oder aufnehmen lassen.
+- Abweisung „Du besitzt 50 von 50 Übungen …" / „Nichts mehr frei" → Grenze für Konten ohne Verein (50 Übungen, 30 Trainings). Anzeige „62 Übungen (höchstens 50)" und weiter abgewiesen, obwohl eine gelöscht → Bestand liegt noch über der Grenze. Anzeige nennt den ganzen Bestand, auch wenn ein Filter die Liste kürzt. In ein Training übernehmen geht immer.
+- Vereinsverwaltung sieht Termine/Trainings/Kader eines Teams nicht → Rollen nach Ort; sie nimmt sich mit „Mich aufnehmen" ins Team auf. Auch im Team hat sie nicht mehr Rechte als ein Mitglied (kein Löschen dort).
+- Team hat keine Trainer:in mehr und besteht weiter → Absicht; die Verwaltung nimmt jemanden auf oder löst es auf. Team verlassen verlangt keinen Teamnamen.
+- Erfassen wird abgewiesen („… wird im Verein schon im Team «…» geführt" / „… keinem Team zugeordnet") → Doppelerfassung verhindert; die Verwaltung ordnet die bestehende zu. Zwei echte Gleichnamige: Zusatz im Vornamen. Zwei gleiche Einträge in der Vereinsliste → Altdublette aus der Zeit vor dem Verein.
+- Team voll bei 100 Spieler:innen, Verein bei 1000 bzw. 30 Teams; ein Bestand darüber bleibt, nur Neues wird abgewiesen.
+- In der Spielerliste fehlen „Löschen" und der Import → Absicht: Trainer:innen nehmen aus dem Team, löschen und importieren tut nur die Verwaltung im Bereich „Verein".
+- Herausgenommene Spieler:in steht an einem begonnenen Termin weiter („nicht mehr im Team") → Absicht, Anwesenheit bleibt nachtragbar.
+- „Aus dem Team nehmen" tut nichts und zeigt die Rückfrage neu → Lage hat sich seit dem Öffnen geändert.
+- Import übernimmt nichts: „Seit der Vorschau hat sich der Spielerbestand geändert …" → neue Vorschau prüfen und erneut übernehmen (auch nach Verbindungsabbruch, wenn der erste Versuch schon ankam). Mehrfach im Verein Geführte ändert er nie.
+- Spieler:in ohne Team: Link gültig, aber leer („Termine erscheinen, sobald …") → Absicht. Eltern einer Spieler:in ohne Team verweist der Feedback-Dialog an die Vereinsverwaltung.
+- Link plötzlich ungültig → erneuert, Spieler:in aus dem Verein gelöscht oder Verein gelöscht. Herausnehmen und Team auflösen machen ihn **nicht** ungültig.
+- Link zeigt Termine eines anderen Teams → Spieler:in ist mehreren Teams zugeordnet; ein Link für alle Teams. Ebenso führt die Abholadresse eines Teams zu allen Terminen.
+- Eltern-Abo heisst plötzlich „Trainings und Spiele" bzw. alter Name bleibt → neuer Name seit 1.48.0; früher abonnierte behalten ihn allenfalls.
+- KI-Assistent findet eine Spieler:in nicht → sie steht in keinem eigenen Team (auch ohne Team); Vereinsliste und Löschen nicht über die KI.
+- KI: `spieler_link_erneuern` erneuert nicht → ohne Bestätigung nennt es nur die Teams; erst mit `bestaetigt: true`. Altes Werkzeug „unbekannt" → Werkzeuge umbenannt, Client neu laden.
+- KI verwaltet weder Teams noch Verein, auch nicht für die Verwaltung → Absicht, nur in der App.
+- Verein löschen bzw. „Konto und Verein löschen" ist gesperrt → Vereinsname nicht exakt (Gross/klein) oder inzwischen umbenannt (Dialog nennt den neuen). Konto lässt sich nicht löschen → letzte Verwaltung bei weiteren Vereinsmitgliedern.
+- Letzte Verwaltung kann nicht austreten → Absicht; erst weitere Person aufnehmen oder Verein löschen.
+- Aufnahme abgewiesen „Diese Person gehört schon einem Verein an …" ohne Vereinsnamen → Absicht (höchstens ein Verein je Person, Datenschutz).
+- Verein gründen: „Du gehörst schon einem Verein an …" → inzwischen aufgenommen worden; nur Konten ohne Verein gründen.
+- Zwei Vereine mit gleichem Namen → erlaubt, Namen sind nicht eindeutig.
 
 ---
 
@@ -422,14 +486,17 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Kalender: Hat ein anderes Mitglied seit der eigenen Auswahl etwas Ergebnisrelevantes geändert (Termin entfernt, anderes Training, Ausfall, Serie), lehnt die Anwendung ab („Seit deiner Auswahl hat sich geändert …"), Dialog schliesst, Plan zeigt neuen Stand. Beim Termin-Ändern werden nur die tatsächlich geänderten Felder übernommen.
 - Training/Übung/Notiz/Verteilung: **keine Konflikterkennung** – zuletzt gespeichert gewinnt (bekannte Grenze, kein Fehler).
 - Offene Seiten aktualisieren sich nicht von selbst (auch Leiste, Brotkrumen, Termindatum erst beim nächsten Aufruf).
+- Verein löschen oder Team auflösen, während jemand im Team einen Termin ändert, ausfallen lässt oder ein Training löscht → einer der Vorgänge kann abbrechen („noch einmal versuchen"), nichts geht verloren.
+- Spielerbestand: Zuordnen, Herausnehmen und Import prüfen beim Ausführen den aktuellen Stand; hat sich etwas geändert, geschieht nichts und die Anwendung zeigt den neuen Stand.
 
 ---
 
 ## 12. Bekannte Grenzen (kein Fehler – ggf. als Wunsch erfassen)
 
 **Allgemein / Konto**
-- Keine Rollen/Rechteabstufung; keine Einladung an Personen ohne Konto.
-- Kein Profilbild; Anzeigename nicht zurücksetzbar; E-Mail vor Teammitgliedern nicht verbergbar.
+- Nur zwei Rollen (Trainer:in, Vereinsverwaltung), keine Abstufung (keine nur lesende Rolle, kein Vorstand); keine Einladung an Personen ohne Konto, keine Anfrage an einen Verein, keine Annahme durch Aufgenommene.
+- Kein Profilbild; Anzeigename nicht zurücksetzbar; E-Mail vor Teammitgliedern und Vereinsverwaltung nicht verbergbar.
+- Konto ohne Verein: höchstens 50 eigene Übungen und 30 eigene Trainings, keine Erweiterung; Stand nicht in der Seitenleiste.
 - Keine vollständige Datenschutzerklärung, kein Impressum; Besucherstatistik nicht abwählbar.
 - Einstellungen (Leistenbreite, Spaltenbreite, Darstellung, „Versionen gesehen") pro Browser, nicht pro Konto.
 - Darstellung: ohne Anmeldung nicht wählbar; ältere Browser (Safari vor 17.5, iOS 16/frühes iOS 17) immer hell, ohne Wahl; privater Link nur nach Gerät.
@@ -442,7 +509,19 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Kein Löschen vor Ablauf der 12 Monate; keine Antwort und keine Rückmeldung zum Stand.
 
 **Benachrichtigungen**
-- **Keinerlei Erinnerungen oder Benachrichtigungen** (kein E-Mail, kein Push): weder für Trainer:innen (neue/geänderte/ausgefallene Termine, Einladungen, Absagen, Mindestbesetzung) noch für Eltern (Verlegung, Ausfall, verfallene Abmeldung, fehlende Meldung, Meldefrist).
+- **Keinerlei Erinnerungen oder Benachrichtigungen** (kein E-Mail, kein Push): weder für Trainer:innen (neue/geänderte/ausgefallene Termine, Einladungen, Absagen, Mindestbesetzung, Aufnahme/Entfernung, aufgelöstes Team, gelöschter Verein) noch für Eltern (Verlegung, Ausfall, verfallene Abmeldung, fehlende Meldung, Meldefrist, Herausnehmen, Zuordnen).
+
+**Verein**
+- Höchstens ein Verein je Person (auch keine Aushilfe in einem zweiten); Vereine nicht zusammenführbar, Team nicht in anderen Verein verschiebbar; Vereinsnamen nicht eindeutig; nur ein Name (keine Adresse, kein Logo, keine Kontaktperson); keine Übersicht aller Vereine.
+- Ist die einzige Verwaltung nicht erreichbar, gibt es keinen Weg zu einer neuen Verwaltung (keine Plattform-Admin-Rolle).
+- Gründung und Bestätigungen werden nicht geprüft und nicht gespeichert.
+- Vereinsliste für alle Trainer:innen (Name, Jahrgang, Teams) nicht einschränkbar.
+- Grenzen 30 Teams / 1000 Spieler:innen / 100 je Team ohne Ausnahme, keine Erweiterung.
+- Löschen nur einzeln, kein Import-Rückgängig, kein Verschieben zwischen Teams (zuordnen + herausnehmen), gesammelt nicht zum Schnuppern; Altdubletten nicht zusammenführbar.
+- Kein Export vor Auflösen/Löschen; gelöschter Verein, aufgelöstes Team, gelöschte Spieler:in nicht wiederherstellbar.
+- Teams mehrerer Teams nirgends gemeinsam (kein Vereinskalender, kein gemeinsames Abo, auch nicht für die Verwaltung); nur der private Link einer Spieler:in führt ihre Teams zusammen.
+- Team ohne Trainer:in: Erinnerung nur durch Plakette „ohne Trainer:in" in der Vereinsübersicht.
+- Team mit Namen nur aus unsichtbarem Leerraum lässt sich über die Namensbestätigung nicht auflösen.
 
 **Übungen**
 - Kein kuratierter Junioren-Bestand; keine Übung in beiden Altersstufen.
@@ -470,18 +549,18 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Keine Tages-/Wochenansicht; Liste nicht durchsuchbar, nicht nach Zeitraum filterbar; kein Archiv.
 - „Verantwortlich" ≠ J+S-Leitperson; keine Einsatz-Nachweise; Absage ohne Grund.
 - Abo nicht auf eigene Termine/Trainings/Spiele eingrenzbar; Abruf-Frequenz bestimmt das Kalenderprogramm.
-- Auflösen: kein Export, nicht wiederherstellbar, niemand wird informiert.
+- Auflösen (nur Verwaltung): kein Export, nicht wiederherstellbar, niemand wird informiert.
 
 **Spielerliste / Kader / Anmeldungen**
-- Nur Vorname, Nachname, Jahrgang, J+S – keine Kontakte, Geburtsdaten, Positionen; keine teamübergreifende Liste, kein Geschwister-Link.
+- Nur Vorname, Nachname, Jahrgang, J+S – keine Kontakte, Geburtsdaten, Positionen; kein Geschwister-Link. Trainer:innen holen eine bestehende Spieler:in nicht selbst ins Team (nur die Verwaltung ordnet zu), kein Vorschlag beim Tippen.
 - Kader nur mit Namen, ohne Saison, nicht teilbar; Kader beschränken nicht, was Mitglieder sehen.
-- Import nur CSV mit Kopfzeile; keine Vorschau-Bearbeitung; Schreibvarianten nicht erkannt.
+- Import nur durch die Verwaltung, nur CSV mit Kopfzeile, nicht über die KI; keine Vorschau-Bearbeitung/Abwahl; Schreibvarianten und umschriebene Umlaute nicht erkannt; Namen bestehender nie geändert (gekürzter Rufname → beim nächsten Import zweiter Eintrag); Spaltenzuordnung heisst „Geburtsdatum" auch für einen Jahrgang.
 - Abmeldung ohne Grund, je Termin einzeln, Frist = Beginn (nicht einstellbar); nicht erkennbar, wer sich zu einem Training nicht geäussert hat.
 - Nachtrag ohne Grund, kein entschuldigt/unentschuldigt, keine Teilanwesenheit, keine Präsenzauswertung, keine J+S-Übermittlung.
 - Spiele: keine Resultate/Tabellen/Gegnerdaten, kein Import aus ClubCorner/Matchcenter, keine Serie, kein Nachtragen vergangener Spiele, keine Art „Turnier", Meldung nicht auf „ohne Meldung" zurücksetzbar, keine Fahrgemeinschaften, keine Rückkehrzeit, geänderte Treffpunkte nicht gekennzeichnet.
-- Probetraining: Anzahl nur je Team (nicht je Spieler:in), nicht entfernbar; endet nicht von selbst; nicht beim Hinzufügen/Import; keine Eingrenzung der Liste auf Probe-Spieler:innen; keine eigene Kennzeichnung am Training; Info-Schreiben ohne Formatierung, nicht je Kader, nicht im Abo/bei der Selbstabholung; Kader-Wegfall ohne Hinweis am Link; keine Benachrichtigung.
-- Link: Weitergabe nicht erkennbar; wer meldet (Eltern/Kind) nicht unterscheidbar; Sperren nur durch Erneuern, einzeln.
-- Selbstabholung für alle oder keine; Sperre trifft Internetanschluss.
+- Schnuppertraining: nur bei genau einem Team, kein Schnuppern für den ganzen Verein; Anzahl nur je Team (nicht je Spieler:in), nicht entfernbar; endet nicht von selbst; nicht beim Hinzufügen; keine Eingrenzung der Liste auf Schnuppernde; keine eigene Kennzeichnung am Training; Info-Schreiben ohne Formatierung, nicht je Kader, nicht im Abo/bei der Selbstabholung; Kader-Wegfall ohne Hinweis am Link; keine Benachrichtigung.
+- Link: Weitergabe nicht erkennbar; wer meldet (Eltern oder Spieler:in) nicht unterscheidbar; Sperren nur durch Erneuern, einzeln (gilt dann für alle Teams). Ein Link je Spieler:in für alle Teams, nicht je Team.
+- Selbstabholung für alle oder keine; ein Team, das sie ausschaltet, sperrt den Link nicht, wenn ein anderes Team sie an hat; Sperre trifft Internetanschluss.
 
 ---
 
@@ -502,13 +581,18 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 | Feld eines Termins | 5–120 m je Seite |
 | Erwartete Spielerzahl, Richtwert Spiel | 1–200 |
 | Mindestbesetzung | 1–99 |
-| Spielerliste | ≤ 200 Spieler:innen; Vor-/Nachname 1–60; J+S ≤ 20 |
+| Spielerliste | ≤ 100 Spieler:innen je Team; Vor-/Nachname 1–60; J+S ≤ 20 |
+| Verein | ≤ 30 Teams; ≤ 1000 Spieler:innen (inkl. ohne Team, Schnuppernde, Doppeleinträge); Name 1–60, nicht eindeutig |
+| Teamname | ≤ 60 Zeichen, im Verein eindeutig |
+| Konto ohne Verein | ≤ 50 eigene Übungen, ≤ 30 eigene Trainings |
+| Import (nur Verwaltung) | ≤ 1000 Zeilen, ≤ 1 MB, CSV |
+| Vereinsliste | 50 je Schritt („Weitere anzeigen") |
 | Kader | ≤ 20 je Team; Name 1–30 |
-| Probetraining | Anzahl 1–20 je Team; Info-Schreiben ≤ 2000 Zeichen |
+| Schnuppertraining | Anzahl 1–20 je Team; Info-Schreiben ≤ 2000 Zeichen; nur bei genau einem Team |
 | Treffpunkte | Spiel ≤ 5 (je Anreiseart 1); Training ≤ 1, am Trainingstag, nicht nach dem Beginn |
 | Terminserie / Meldefrist / Treffpunkt-Abstand (Spiel) | ≤ 1 Jahr |
 | KI-Zugänge | ≤ 5 je Konto, 600 Aufrufe/h gesamt |
-| Mitglieder-Suche | 10 erfolglose/h |
+| Personensuche (Team und Verwaltung gemeinsam) | 10 erfolglose/h |
 | Abholseite | 5 Fehlversuche/15 min → 15 min Sperre je Anschluss |
 | Katalog | 24 Kacheln je Seite |
 | Meldung am unteren Rand | 6 s |

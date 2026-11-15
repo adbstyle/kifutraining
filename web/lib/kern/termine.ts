@@ -48,7 +48,7 @@ import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugrif
 import { mitAbsagen } from "@/lib/trainer";
 import { besetzungProblem, type Mindestbesetzung } from "@/lib/besetzung";
 import { trainerBeimFestlegen, type TrainerWahl } from "@/lib/kern/trainer";
-import { HINWEIS_NICHTS_ENTSTANDEN, hinweisRest, kopiereTraining, type KopieErgebnis } from "@/lib/kern/kopie";
+import { hinweisRest, kopiereTraining, nichtsEntstanden, type KopieErgebnis } from "@/lib/kern/kopie";
 import { gibtEsTraining, loescheTrainingMitBildern, raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
 import {
   NICHT_GEFUNDEN,
@@ -932,7 +932,7 @@ export async function mitAufgeraeumterKopie(
   f: KernFehler,
   kopieId: string,
 ): Promise<KernFehler> {
-  if (await loescheTrainingMitBildern(supabase, kopieId)) return { ...f, hinweis: HINWEIS_NICHTS_ENTSTANDEN };
+  if (await loescheTrainingMitBildern(supabase, kopieId)) return { ...f, hinweis: nichtsEntstanden(f.art) };
   const { data } = await supabase.from("trainings").select("name").eq("id", kopieId).maybeSingle<{ name: string }>();
   return { ...f, meldung: `${f.meldung} ${kopieGebliebenText(data?.name ?? "Kopie")}`, hinweis: hinweisRest(kopieId) };
 }
@@ -944,7 +944,7 @@ async function kopierFehler(
   supabase: SupabaseClient,
   kopie: Extract<KopieErgebnis, { ok: false }>,
 ): Promise<KernFehler> {
-  if (kopie.nichtsEntstanden) return fehlschlag(kopie.art, kopie.error, { hinweis: HINWEIS_NICHTS_ENTSTANDEN });
+  if (kopie.nichtsEntstanden) return fehlschlag(kopie.art, kopie.error, { hinweis: nichtsEntstanden(kopie.art) });
   const { data } = await supabase.from("trainings").select("name").eq("id", kopie.rest).maybeSingle<{ name: string }>();
   return fehlschlag(kopie.art, `${kopie.error} ${kopieGebliebenText(data?.name ?? "Kopie")}`, {
     hinweis: hinweisRest(kopie.rest),

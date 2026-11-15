@@ -61,7 +61,7 @@ export default async function VereinSpielerPage({ searchParams }: { searchParams
 
   return (
     <Seitenrahmen breite="voll" krumen={[{ label: verein.name }, { label: "Spieler:innen" }]}>
-      <h1 className="sr-only">Spieler:innen des {verein.name}</h1>
+      <h1 className="sr-only">Spieler:innen im Verein «{verein.name}»</h1>
       {liste.verwaltung ? (
         <VereinSpielerListe
           vereinId={verein.id}

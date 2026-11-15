@@ -348,7 +348,7 @@ export function VereinTeamVerwaltung({
         titel="Trainer:in aufnehmen"
         einleitung="Die Person braucht ein Konto bei KiFu. Sie ist sofort im Team, ohne Einladung."
         tragweite={[
-          `Sie gehört damit zum ${vereinName}. Solange sie dabei ist, kann sie keinem anderen Verein beitreten und keinen gründen. Die Vereinsverwaltung und das Trainerteam sehen ihre E-Mail-Adresse. Prüfe, dass es das richtige Konto ist.`,
+          `Sie gehört damit zum Verein «${vereinName}». Solange sie dabei ist, kann sie keinem anderen Verein beitreten und keinen gründen. Die Vereinsverwaltung und das Trainerteam sehen ihre E-Mail-Adresse. Prüfe, dass es das richtige Konto ist.`,
         ]}
         suche={async (email) => {
           const r = await sucheVereinPersonAktion(vereinId, email, team.id);
@@ -410,7 +410,7 @@ export function VereinTeamVerwaltung({
           <div className="flex flex-col gap-3">
             {herausnehmenFehler && <SectionMessage appearance="error">{herausnehmenFehler}</SectionMessage>}
             <p>
-              {herausnehmen.vorname} bleibt samt privatem Link im {vereinName}.
+              {herausnehmen.vorname} bleibt samt privatem Link im Verein «{vereinName}».
             </p>
             <ul className="list-disc space-y-1 pl-5">
               <li>Künftige Abmeldungen, Spiel-Meldungen und Kader in diesem Team verfallen.</li>

@@ -1,20 +1,40 @@
 # Navigation
 
-Stand 2026-10-30. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-11-15. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Seitenleiste
 
 Die Hauptnavigation steht als Leiste am linken Rand. Oben steht die Marke — das Zeichen von
 FutAssist, ein F mit einem Punkt darüber, mit dem Namen KiFu —, die zum Übungsbestand führt.
-Dasselbe Zeichen steht im Tab des Browsers und auf dem Home-Bildschirm. Darunter folgen zwei Gruppen. Unter
-„Bibliothek" stehen „Übungen" und „Trainings", der ganze Bestand. Unter „Mein Bereich" stehen
-„Meine Übungen" und „Meine Trainings", also derselbe Bestand, eingegrenzt auf das Eigene, und
-„Teams". Unter „Teams" sind die eigenen Teams als Unterpunkte aufgeführt. Ein Klick auf
-„Teams" führt in die Teamübersicht, der Pfeil daneben klappt die Teamnamen auf und zu. Ein
-neues, umbenanntes oder aufgelöstes Team erscheint dort ohne Neuladen.
+Dasselbe Zeichen steht im Tab des Browsers und auf dem Home-Bildschirm.
 
-Hervorgehoben ist, wo man gerade steht. Ein geöffnetes Team-Training hält „Teams" hervor,
-wie im Team-Bereich beschrieben.
+Angemeldet folgt darunter der Bereich-Wechsler. Er wählt, woran man gerade arbeitet: eines der
+eigenen Teams — mit dem Untertitel „Trainer:in", alphabetisch — oder den Verein mit dem
+Untertitel „Teams und Spieler:innen des Vereins", durch einen Strich von den Teams getrennt. Der
+Knopf zeigt in einer kleinen Zeile die Art, etwa „Verein" oder bei einem Team den Vereinsnamen mit
+„· Team", und darunter den Namen; ein Klick klappt die Liste auf, die sich auch mit den Pfeiltasten
+bedienen lässt. Gibt es nur einen Bereich, ist es eine Anzeige ohne Liste. Darunter stehen nur die
+Einträge des gewählten Bereichs: bei einem Team „Trainingsplan", „Trainings" und „Team" (siehe
+[Team-Bereich](team-bereich.md#drei-seiten)), beim Verein „Teams", „Spieler:innen" und, nur für
+die Vereinsverwaltung, „Verwaltung" (siehe [Verein](verein.md#der-bereich-verein)).
+
+Wer welche Bereiche sieht, folgt aus der Lage im Verein: eine Trainer:in die eigenen Teams und den
+Verein, die Vereinsverwaltung ohne eigenes Team nur den Verein. Ein Konto ohne Verein hat keinen
+Wechsler; an seiner Stelle steht die Gruppe „Start" mit „Teams", wo es einen Verein gründet oder
+sich aufnehmen lässt (siehe [Verein](verein.md#einstieg-für-konten-ohne-verein)). Rechte hängen am
+Wechsler keine; er ist nur Navigation. Welcher Bereich offen ist, folgt aus der Seite: Auf einer
+Seite eines Teams oder einem Team-Training ist es dieses Team, im Bereich „Verein" der Verein. Auf
+Seiten ohne Bereich — Bibliotheken, Teamübersicht, Konto — bleibt der zuletzt gewählte offen; das
+merkt sich der Browser (siehe „Cookies"). Ein neues, umbenanntes oder aufgelöstes Team erscheint im
+Wechsler nach der eigenen Aktion ohne Neuladen.
+
+Es folgen zwei Gruppen. Unter „Bibliothek" stehen „Übungen" und „Trainings", der ganze Bestand.
+Unter „Meine Bibliothek" stehen „Meine Übungen" und „Meine Trainings", also derselbe Bestand,
+eingegrenzt auf das Eigene; ohne Anmeldung fehlt sie. Die Grenzen eines Kontos ohne Verein stehen
+nicht in der Leiste, sondern in „Meine Übungen" und „Meine Trainings".
+
+Hervorgehoben ist, wo man gerade steht. Ein geöffnetes Team-Training hält „Trainingsplan" seines
+Teams hervor, wie im Team-Bereich beschrieben.
 
 Angemeldet steht darüber „Fragen und Feedback" (siehe unten). Es ist ein Knopf, kein Link: Er
 öffnet das Gespräch neben der Seite, statt die Seite zu wechseln. Darunter steht, ebenfalls nur
@@ -34,7 +54,7 @@ nicht von selbst.
 
 Ganz unten steht das Konto: Initialen, Anzeigename und E-Mail-Adresse. Ein Klick darauf führt
 ins Konto, wo auch das Abmelden zu finden ist. Ohne Anmeldung steht an dieser Stelle
-„Anmelden", und die Gruppe „Mein Bereich" fehlt.
+„Anmelden", und Bereich-Wechsler und „Meine Bibliothek" fehlen.
 
 ## Breit oder schmal
 
@@ -106,8 +126,8 @@ Anmeldung. Er zeigt die Farben beider Erscheinungsbilder nebeneinander.
 
 Die Seite „Cookies" nennt alles, was KiFu im Browser ablegt: die Anmeldung, die gewählte
 Breite der Seitenleiste, die gezogene Breite der Spalte und des Verzeichnisses unter
-„Versionen" und im Styleguide, die gewählte Darstellung und bis zu welcher Version man
-„Versionen" gesehen hat — je mit Zweck, Dauer, Namen und dem, was ohne sie nicht mehr geht.
+„Versionen" und im Styleguide, die gewählte Darstellung, den zuletzt gewählten Bereich der
+Seitenleiste und bis zu welcher Version man „Versionen" gesehen hat — je mit Zweck, Dauer, Namen und dem, was ohne sie nicht mehr geht.
 Sie nennt auch die Besucherstatistik: KiFu zählt auf ki-fu.ch Seitenaufrufe mit Vercel Web
 Analytics nach Seite, Herkunft, Land und Gerätetyp. Diese legt nichts im Browser ab, kennt keine
 Personen und erhält die Adresse ohne Suchbegriffe und Filter; eine unbekannte Adresse zählt sie
@@ -125,7 +145,7 @@ Jede Seite zeigt zuoberst ihren Pfad als Brotkrumen, auch die Einstiegsseiten: d
 Übungsbestand etwa „Übungen", eine Übung „Übungen › Hauptteil › ‹Name›". Davor steht der
 Knopf zum Verkleinern der Leiste. Die Zeile steht auf einer Höhe mit der Marke oben in der
 Leiste. In derselben Zeile stehen rechts die Aktionen der Seite: auf den Übersichten von
-Übungen, Trainings und Teams der Knopf zum Erstellen, auf Trainingsseiten die Aktionen am
+Übungen und Trainings der Knopf zum Erstellen, auf Trainingsseiten die Aktionen am
 Training. Eine sichtbare Überschrift tragen die Übersichten nicht, ihren Namen nennt die
 Brotkrume; für Screenreader steht er unsichtbar als Überschrift der Seite. Im Druck
 erscheint die Leiste nie; die Brotkrumen nur beim Drucken der Trainingsansicht aus dem
@@ -134,7 +154,8 @@ Browser, damit auf dem Papier steht, wo das Training liegt.
 ## Seitenaufbau
 
 Jede Seite beginnt links neben der Leiste, nichts steht zentriert in der Mitte. Übersichten —
-Übungen, Trainings, Teams und der Bereich eines Teams — nutzen die ganze Breite des Fensters;
+Übungen, Trainings, Teams, der Bereich eines Teams und die Übersicht der Teams und Spieler:innen
+eines Vereins — nutzen die ganze Breite des Fensters;
 die Kacheln reihen sich so dicht, wie Platz ist, auf einem breiten Bildschirm also in mehr
 Spalten. Formulare und Seiten zum Lesen behalten eine angenehme Lesebreite und stehen ebenfalls
 links; geteilte Seiten — eine Übung, ein Training — nutzen auf einem breiten Bildschirm die ganze
@@ -222,8 +243,8 @@ deutsch — die eigenen, englischen Meldungen des Browsers erscheinen nicht. Ebe
 Filter stehen über den Übersichten in einer Zeile als Knöpfe: Jeder nennt, wonach er filtert,
 und zählt, wie viele Werte gewählt sind; welche, zeigt ein Klick, der darunter eine Liste mit
 Kästchen zum An- und Abwählen öffnet. Ein Filter, der eingrenzt, ist farbig umrandet. Die Wahl
-wirkt sofort und die Liste bleibt offen; Escape oder ein Klick daneben schliesst sie. Die Zahl der
-verfügbaren Kinder trägt man an derselben Stelle als Zahl ein. Sie wirkt wie die Suche daneben
+wirkt sofort und die Liste bleibt offen; Escape oder ein Klick daneben schliesst sie. Den Filter
+„Verfügbare Kinder" füllt man an derselben Stelle als Zahl ein. Sie wirkt wie die Suche daneben
 nach einer kurzen Tipppause.
 
 ## Auf schmalen Bildschirmen
@@ -252,7 +273,7 @@ Telefon gebaut: eine schmale Spalte ohne Seitenleiste, ohne Brotkrumen und ohne 
 Bildschirmrand. Auf der Seite der Spieler:in klebt unten am Bildschirmrand eine schmale Leiste mit
 dem Link „Fragen und Feedback"; die Abholseite hat unten nichts. In den
 übrigen Teil der Anwendung führen sie nicht. Eine Anmeldung kennen sie nicht — auch wer ein Konto
-hat, ist dort niemand Bestimmtes —, und sie legen nichts im Browser ab. Ihr Titel ist fest und nennt weder Team noch Kind,
+hat, ist dort niemand Bestimmtes —, und sie legen nichts im Browser ab. Ihr Titel ist fest und nennt weder Team noch Spieler:in,
 damit ein Chat beim Teilen keine Namen in die Vorschau setzt; Suchmaschinen nehmen sie nicht auf,
 die Besucherstatistik zählt sie nicht, und in eine fremde Seite einbetten lassen sie sich nicht.
 
@@ -273,9 +294,10 @@ und ob er wieder auftritt, bei einem falschen Inhalt nach der Stelle; bei einem 
 Problem dahinter, dem heutigen Weg, der Häufigkeit und wer betroffen ist. Eine Frage beantwortet
 es aus dem Wissen über die Anwendung, und es sagt, wenn ein gemeldetes Verhalten so gewollt oder
 eine bekannte Grenze ist. Bei einem Wunsch erklärt es nichts, es versteht nur. Eltern erklärt es
-nur, was sie hinter dem privaten Link sehen, und verweist bei Dringendem an die Trainer:innen.
-Wer das Verhalten von Personen im Verein anspricht, wird an die Vereinsleitung oder an Swiss
-Sport Integrity verwiesen; daraus wird kein Feedback. Pro Nachricht stellt es eine Frage.
+nur, was sie hinter dem privaten Link sehen, und verweist bei Dringendem an die Trainer:innen —
+ist die Spieler:in keinem Team zugeordnet, an die Vereinsverwaltung des Vereins, mit seinem Namen;
+dieser Verweis steht auch in der Begrüssung und nach dem Absenden. Wer das Verhalten von Personen
+im Verein anspricht, wird an die Vereinsverwaltung oder an Swiss Sport Integrity verwiesen; daraus wird kein Feedback. Pro Nachricht stellt es eine Frage.
 
 Hat es genug erfahren — oder verlangt man es mit „Jetzt zusammenfassen" —, legt es eine
 Zusammenfassung vor. Gespeichert wird nur, was man mit „Bestätigen und senden" bestätigt; wer
@@ -283,7 +305,8 @@ verwirft oder schliesst, bricht ab, und nichts bleibt. Danach kommt keine Antwor
 Feedback wird gelesen und von der Entwicklung priorisiert und nach 12 Monaten automatisch gelöscht.
 Mit dem Feedback gehen die Seite beim Bestätigen, die Version, Gerät und Browser mit. Bei
 Trainer:innen ist es mit dem Konto verbunden; wer das Konto löscht, dessen Feedback bleibt ohne
-diesen Bezug. Am privaten Link kennt es nur das Team, nie die Spieler:in und nie den Link selbst.
+diesen Bezug. Am privaten Link geht es auch für eine Spieler:in ohne Team und hält weder Team noch Spieler:in
+noch den Link selbst fest.
 
 Eine Nachricht hat höchstens 1000 Zeichen; der Zähler zeigt, die wievielte von zehn es ist. Nach
 der Zusammenfassung sind noch zwei Korrekturen möglich, danach bleibt Bestätigen oder Verwerfen.
@@ -299,8 +322,10 @@ Browser — etwa Safari vor Version 17.5, also iPhones mit iOS 16 oder einem fr�
 zeigen KiFu immer hell; dort fehlt „Darstellung" in der Leiste. Ohne Anmeldung lässt sich die
 Darstellung nicht wählen, und die Seiten hinter einem privaten Link kennen keine eigene Wahl.
 
-Wird jemand von einem anderen Konto in ein Team aufgenommen, erscheint das Team in der Leiste
-erst beim nächsten Neuladen oder nach der nächsten eigenen Aktion. Breit oder schmal merkt
+Wird jemand von einem anderen Konto in ein Team oder in die Vereinsverwaltung aufgenommen,
+erscheinen Team oder Verein im Wechsler erst beim nächsten Neuladen oder nach der nächsten
+eigenen Aktion; ebenso verschwindet ein Team, das die Vereinsverwaltung aufgelöst hat. Der zuletzt
+gewählte Bereich gilt je Browser, nicht je Konto. Breit oder schmal merkt
 sich jeder Browser für sich, nicht das Konto — ebenso die gezogene Breite des Verzeichnisses
 unter „Versionen" und im Styleguide und die der Spalte auf den
 geteilten Seiten; sie gilt für Übung und Training gemeinsam. Die Teilung gibt es nur auf breiten Bildschirmen; auf einem Tablet im

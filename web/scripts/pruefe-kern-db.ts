@@ -4932,7 +4932,7 @@ try {
     fehler(
       await erfassen("Vorhanden", "Verein", 2016),
       "regel",
-      "Vorhanden Verein (2016) wird im Kern-DB schon im Team «Kern-DB-Verein-Voll-Bestand» geführt. Ordne die vorhandene Spieler:in selbst einem Team zu. Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.",
+      "Vorhanden Verein (2016) wird im Verein «Kern-DB» schon im Team «Kern-DB-Verein-Voll-Bestand» geführt. Ordne die vorhandene Spieler:in selbst einem Team zu. Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.",
     );
     const ansicht = wert(await ladeVereinAnsicht(verwaltung.supabase, verwaltung.id, { vereinId: verein }));
     const mitTeam = new Set((await admin.from("team_spieler").select("spieler_id").eq("verein_id", verein)).data!.map((z) => z.spieler_id)).size;
@@ -7157,14 +7157,14 @@ try {
     const vorher = await anzahl();
     // AK 4: doppelt — mit Teams, ohne Team, Mischfall (Altdublette: nur die Teams); Schreibvarianten zählen als gleich.
     const doppelt = fehler(await erfassen(verwaltung, { vorname: "sina ", nachname: "BEIDE", jahrgang: 2014 }), "regel",
-      `sina BEIDE (2014) wird im ${VEREIN_NAME} schon im Team «${EINS}» und «${ZWEI}» geführt. Ordne die vorhandene Spieler:in selbst einem Team zu. Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.`);
+      `sina BEIDE (2014) wird im Verein «${VEREIN_NAME}» schon im Team «${EINS}» und «${ZWEI}» geführt. Ordne die vorhandene Spieler:in selbst einem Team zu. Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.`);
     assert.equal((doppelt as { feld?: string }).feld, "vorname");
     fehler(await erfassen(verwaltung, { vorname: "Xaver", nachname: "Ohne", jahrgang: 2016 }), "regel",
-      `Xaver Ohne (2016) wird im ${VEREIN_NAME} schon geführt, ist aber keinem Team zugeordnet. Ordne die vorhandene Spieler:in selbst einem Team zu. Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.`);
+      `Xaver Ohne (2016) wird im Verein «${VEREIN_NAME}» schon geführt, ist aber keinem Team zugeordnet. Ordne die vorhandene Spieler:in selbst einem Team zu. Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.`);
     await neuerSpieler(eins, "Lea", "Dublette", 2017);
     await altdublette("Lea", "Dublette", 2017);
     fehler(await erfassen(verwaltung, { vorname: "Lea", nachname: "Dublette", jahrgang: 2017 }), "regel",
-      `Lea Dublette (2017) wird im ${VEREIN_NAME} schon im Team «${EINS}» geführt. Ordne die vorhandene Spieler:in selbst einem Team zu. Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.`);
+      `Lea Dublette (2017) wird im Verein «${VEREIN_NAME}» schon im Team «${EINS}» geführt. Ordne die vorhandene Spieler:in selbst einem Team zu. Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.`);
     assert.equal(await anzahl(), vorher! + 2, "eine Abweisung hinterlässt nichts (dazu kamen nur Lea und ihre Altdublette)");
     // Ungültige Angaben: der Satz am Feld, bevor die Datenebene sie sieht.
     const amFeld = (r: { ok: boolean; feld?: string }, feld: string) => assert.equal((r as { feld?: string }).feld, feld);

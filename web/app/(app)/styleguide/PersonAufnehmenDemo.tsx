@@ -40,7 +40,7 @@ export function PersonAufnehmenDemo() {
         titel="Trainer:in aufnehmen"
         einleitung="Die Person braucht ein Konto bei KiFu. Sie ist sofort im Team, ohne Einladung."
         tragweite={[
-          "Sie gehört damit zum FC Wyler. Solange sie dabei ist, kann sie keinem anderen Verein beitreten und keinen gründen. Die Vereinsverwaltung und das Trainerteam sehen ihre E-Mail-Adresse. Prüfe, dass es das richtige Konto ist.",
+          "Sie gehört damit zum Verein «FC Wyler». Solange sie dabei ist, kann sie keinem anderen Verein beitreten und keinen gründen. Die Vereinsverwaltung und das Trainerteam sehen ihre E-Mail-Adresse. Prüfe, dass es das richtige Konto ist.",
         ]}
         suche={demoSuche}
         aufnahme={demoSuche}
@@ -52,7 +52,7 @@ export function PersonAufnehmenDemo() {
         titel="Person in die Verwaltung aufnehmen"
         einleitung="Die Person braucht ein Konto bei KiFu. Sie ist sofort in der Verwaltung, ohne Annahme."
         tragweite={[
-          "Sie gehört damit zum FC Wyler und verwaltet Teams, Spieler:innen und den Verein mit. Solange sie dabei ist, kann sie keinem anderen Verein beitreten und keinen eigenen gründen. Die Verwaltung und die Trainer:innen ihrer Teams sehen ihre E-Mail-Adresse. Prüfe, dass es das richtige Konto ist.",
+          "Sie gehört damit zum Verein «FC Wyler» und verwaltet Teams, Spieler:innen und den Verein mit. Solange sie dabei ist, kann sie keinem anderen Verein beitreten und keinen eigenen gründen. Die Verwaltung und die Trainer:innen ihrer Teams sehen ihre E-Mail-Adresse. Prüfe, dass es das richtige Konto ist.",
         ]}
         suche={demoSuche}
         aufnahme={demoSuche}
