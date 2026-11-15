@@ -609,7 +609,7 @@ wenig wie die Anwendung. Für den Juniorenfussball gibt es keinen kuratierten Ü
 Block, zu dem der sichtbare Bestand nichts führt, bleibt leer und wird gemeldet. Die
 Zeitrichtwerte erzwingt die Anwendung weder beim Speichern noch beim Veröffentlichen. Was im
 Gespräch zur Sprache kommt — etwa ein Problem der Mannschaft —, hält das Training nicht fest.
-Die Zahl der Kinder steht am Termin — als erwartete Spielerzahl oder aus der Spielerliste —,
+Die Zahl der Spieler:innen steht am Termin — als erwartete Spielerzahl oder aus der Spielerliste —,
 nicht am Training oder an einer Variante, und Spieler:innen lassen sich keiner Gruppe des
 Trainings zuteilen; ob eine Übung oder ein Training zu ihr oder zum Platz des Termins passt,
 prüft die Anwendung auch beim Assistenten nicht und meldet keine Unstimmigkeit — das Urteil

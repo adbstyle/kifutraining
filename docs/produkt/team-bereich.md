@@ -153,7 +153,7 @@ Minitore, 5-m-Tore und 7-m-Tore —, und der Untergrund, gewählt aus Naturrasen
 Hartplatz und Halle. Jede dieser Angaben ist freiwillig: Was leer bleibt, gilt als unbekannt,
 beim Untergrund ausdrücklich als „Unbekannt" gewählt; 0 Tore einer Torart heisst dagegen, dass
 keine dastehen. Spielfelder innerhalb eines Feldes steckt der Trainer selbst ab. Ebenso
-freiwillig ist die erwartete Spielerzahl: alle Kinder, mit denen gerechnet wird, einschliesslich
+freiwillig ist die erwartete Spielerzahl: alle Spieler:innen, mit denen gerechnet wird, einschliesslich
 Torhüter:innen und ohne Trainer:innen, als ganze Zahl von 1 bis 200. Beides steht im Dialog
 unter den Trainer:innen, als „Erwartete Spielerzahl (optional)" und „Feld hinzufügen
 (optional)". Was eine Angabe heisst — wen die Spielerzahl zählt, dass leer unbekannt und 0 Tore

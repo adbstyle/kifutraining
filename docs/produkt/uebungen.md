@@ -53,7 +53,7 @@ lässt sich zusätzlich seine Grösse in Metern angeben, denn anders als Klein- 
 es nicht, wie gross abzustecken ist — freiwillig wie im Juniorenfussball, aber nur ganz. Wechselt
 der Feldtyp auf Kleinfeld oder Grossfeld, entfallen die Meter. Jede Manual-Übung trägt einen
 Feldtyp, so wie ihn die Abbildung im Manual erkennen lässt. Stehen sich zwei grosse Tore gegenüber,
-ist es Grossfeld. Kleinfeld ist es, wenn sich Minitore gegenüberstehen oder die Kinder 3:3 in einem
+ist es Grossfeld. Kleinfeld ist es, wenn sich Minitore gegenüberstehen oder die Spieler:innen 3:3 in einem
 abgegrenzten Feld spielen, dem Kleinfeld-Format des Manuals. Zeigt das Manual keins von beidem,
 gilt das freie Feld, und zwar ohne Meterangabe. Klein- und Grossfeld selbst tragen keine Masse;
 ein verbundener KI-Assistent kennt aber ihre Richtmasse je Alterskategorie nach den
@@ -266,9 +266,9 @@ sagt, welches gemeint ist. Der Kinderfussball-Hauptteil steht dort nicht als Gan
 seine drei Hauptteilkategorien: Gewählt wird in beiden Welten die feinste Ebene, die das jeweilige
 Lehrmittel kennt, und einen eigenen Hauptteilkategorie-Filter gibt es darum nicht. Weiter gefiltert
 wird nach Alterskategorie, Feldtyp, Erscheinungsform und Übungstyp, jeweils mit Mehrfachauswahl,
-sowie nach der Zahl der verfügbaren Kinder — dann erscheinen alle Übungen, die mit mindestens so
+sowie mit „Verfügbare Kinder" nach der Zahl der verfügbaren Spieler:innen — dann erscheinen alle Übungen, die mit mindestens so
 vielen durchführbar sind. Jede dieser Dimensionen ist ein Filterknopf, der zählt, wie viele Werte
-gewählt sind, die Zahl der verfügbaren Kinder ein Knopf mit dem gesetzten Wert (siehe
+gewählt sind, „Verfügbare Kinder" ein Knopf mit dem gesetzten Wert (siehe
 [Navigation](navigation.md#bedienung)). Auch diese Filter beschriften ihre Werte nach Altersstufe: die
 Erscheinungsformen beider Manuals, die Alterskategorien G bis A, und ebenso die zwei Filter, die
 ganz einer Altersstufe gehören — der Feldtyp dem Kinderfussball, der Übungstyp dem
@@ -446,8 +446,8 @@ Farbe wählt, wer zeichnet, und die Anwendung prüft sie nicht gegen die Figuren
 
 Die Material-Liste zählt, was gezeichnet ist, nicht wofür. Vier Pylonen bleiben vier Pylonen,
 auch wenn sie ein Tor bilden, und Teller am Feldrand zählen wie Teller im Feld. Die Mengen
-folgen dem Diagramm, nicht der Zahl der Kinder, die tatsächlich kommen. Weil die Manual-Diagramme
-die Kinder fast durchwegs in zwei Farben zeichnen, schlägt der Vorschlag dort in aller Regel
+folgen dem Diagramm, nicht der Zahl der Spieler:innen, die tatsächlich kommen. Weil die Manual-Diagramme
+die Spieler:innen fast durchwegs in zwei Farben zeichnen, schlägt der Vorschlag dort in aller Regel
 Überziehleibchen für beide Farben vor; die Anwendung nimmt nicht an, dass ein Team in eigener
 Kleidung spielt. Eigene Material-Arten ausserhalb des Diagramm-Vorrats gibt es in der Liste
 nicht — dafür ist die Ergänzung da. Die Spielfeldgrösse leitet die Anwendung nie aus dem

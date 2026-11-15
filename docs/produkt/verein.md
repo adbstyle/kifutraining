@@ -283,7 +283,7 @@ die Meldung ebenso die Teams oder „keinem Team zugeordnet" und dass sie die be
 zuordnet. Dieselbe Regel gilt beim Ändern. J+S-Nummer und Link nennt keine dieser Meldungen.
 
 Aus der Zeit vor dem Verein können Spieler:innen mit gleichen Angaben doppelt im Verein stehen,
-etwa weil zwei Teams dasselbe Kind je für sich führten. Sie erscheinen in der Vereinsliste als
+etwa weil zwei Teams dieselbe Spieler:in je für sich führten. Sie erscheinen in der Vereinsliste als
 getrennte Zeilen ohne Kennzeichnung und lassen sich weiter ändern; zusammenführen lassen sie sich
 nicht.
 

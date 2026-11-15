@@ -243,8 +243,8 @@ deutsch — die eigenen, englischen Meldungen des Browsers erscheinen nicht. Ebe
 Filter stehen über den Übersichten in einer Zeile als Knöpfe: Jeder nennt, wonach er filtert,
 und zählt, wie viele Werte gewählt sind; welche, zeigt ein Klick, der darunter eine Liste mit
 Kästchen zum An- und Abwählen öffnet. Ein Filter, der eingrenzt, ist farbig umrandet. Die Wahl
-wirkt sofort und die Liste bleibt offen; Escape oder ein Klick daneben schliesst sie. Die Zahl der
-verfügbaren Kinder trägt man an derselben Stelle als Zahl ein. Sie wirkt wie die Suche daneben
+wirkt sofort und die Liste bleibt offen; Escape oder ein Klick daneben schliesst sie. Den Filter
+„Verfügbare Kinder" füllt man an derselben Stelle als Zahl ein. Sie wirkt wie die Suche daneben
 nach einer kurzen Tipppause.
 
 ## Auf schmalen Bildschirmen
@@ -273,7 +273,7 @@ Telefon gebaut: eine schmale Spalte ohne Seitenleiste, ohne Brotkrumen und ohne 
 Bildschirmrand. Auf der Seite der Spieler:in klebt unten am Bildschirmrand eine schmale Leiste mit
 dem Link „Fragen und Feedback"; die Abholseite hat unten nichts. In den
 übrigen Teil der Anwendung führen sie nicht. Eine Anmeldung kennen sie nicht — auch wer ein Konto
-hat, ist dort niemand Bestimmtes —, und sie legen nichts im Browser ab. Ihr Titel ist fest und nennt weder Team noch Kind,
+hat, ist dort niemand Bestimmtes —, und sie legen nichts im Browser ab. Ihr Titel ist fest und nennt weder Team noch Spieler:in,
 damit ein Chat beim Teilen keine Namen in die Vorschau setzt; Suchmaschinen nehmen sie nicht auf,
 die Besucherstatistik zählt sie nicht, und in eine fremde Seite einbetten lassen sie sich nicht.
 
