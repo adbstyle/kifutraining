@@ -362,6 +362,23 @@ import {
 } from "../lib/verein";
 import { liesListe, liesPositiveZahl, mitAnzahl } from "../lib/adresse";
 import {
+  KONTO_GRENZE_HINWEIS,
+  KONTO_GRENZE_SCHLUSS,
+  KONTO_GRENZE_WERKZEUG,
+  KONTO_MARKER,
+  KONTO_TRAININGS_MAX,
+  KONTO_UEBUNGEN_MAX,
+  bestandKurz,
+  bestandSatz,
+  bestandText,
+  bestandVollMeldung,
+  istVoll,
+  kontoGrenzeAusFehler,
+  kontoGrenzeMeldung,
+  kontoGrenzeText,
+  kontoGrenzenAus,
+} from "../lib/konto-grenzen";
+import {
   OHNE_TEAM_WERT,
   SPIELER_SEITE,
   bereinigeEingrenzung,
@@ -1290,6 +1307,8 @@ pruefe("Serien-Marker: kein Marker steckt in einem anderen (includes-Suche bleib
     ...Object.keys(TRAINER_MELDUNG),
     ...Object.keys(PROBE_MELDUNG),
     ...Object.keys(VEREIN_MELDUNG),
+    // Die Grenzen eines Kontos ohne Verein (#588): Marker mit Bestand dahinter.
+    ...Object.values(KONTO_MARKER),
     // Wird vor der Übersetzung abgefangen (lib/kern/kader.ts), darf aber
     // keinen Satz treffen.
     VERFALL_MARKER,
@@ -4609,6 +4628,195 @@ pruefe("Verein und Konto löschen (#587): ein Weg je RPC, Bestätigung mit dem B
   for (const ordner of ["components/team", "app/(app)/team", "lib/mcp"])
     for (const datei of quelldateien(join(web, ordner)))
       assert.ok(!/\b(loescheVerein\w*|gruendeVerein\w*|loescheKonto|ladeKontoLoeschenInfo|verein_loeschen|verein_gruenden|delete_account|konto_loeschen_info)\b/.test(readFileSync(datei, "utf8")), relative(web, datei));
+});
+
+// ── Konten ohne Verein (Story #588) ─────────────────────────────────────────
+
+pruefe("Konto ohne Verein (#588): Zwillinge der Grenzen und feste Sätze, ohne Verein nur der Marker mit Bestand", () => {
+  assert.equal(KONTO_UEBUNGEN_MAX, 50);
+  assert.equal(KONTO_TRAININGS_MAX, 30);
+  assert.deepEqual(KONTO_MARKER, { uebungen: "KONTO_UEBUNGEN_VOLL", trainings: "KONTO_TRAININGS_VOLL" });
+  assert.equal(
+    KONTO_GRENZE_SCHLUSS,
+    "In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  assert.equal(KONTO_GRENZE_HINWEIS, "Es ist nichts entstanden.");
+  // Der Bestand steht hinter dem Marker; ohne Marker oder ohne Zahl nichts.
+  assert.deepEqual(kontoGrenzeAusFehler("ERROR: KONTO_UEBUNGEN_VOLL 50"), { art: "uebungen", bestand: 50 });
+  assert.deepEqual(kontoGrenzeAusFehler("x KONTO_TRAININGS_VOLL 62 y"), { art: "trainings", bestand: 62 });
+  assert.equal(kontoGrenzeAusFehler("KONTO_UEBUNGEN_VOLL"), null, "ohne Zahl kein Satz");
+  assert.equal(kontoGrenzeAusFehler("KONTO_UEBUNGEN_VOLL x"), null);
+  assert.equal(kontoGrenzeAusFehler("VEREIN_VOLL"), null);
+  assert.equal(kontoGrenzeMeldung("VEREIN_VOLL"), null);
+});
+
+pruefe("Konto ohne Verein (#588 AK 6): Satz bei der Abweisung — genau an, bei und über der Grenze", () => {
+  // Genau an der Grenze: «n von max», dazu Platz schaffen und der Verein.
+  assert.equal(
+    kontoGrenzeText("uebungen", 50),
+    "Du besitzt 50 von 50 Übungen. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  assert.equal(
+    kontoGrenzeText("trainings", 30),
+    "Du besitzt 30 von 30 Trainings. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  // Über der Grenze (Altbestand): nie «60 von 50».
+  assert.equal(
+    kontoGrenzeText("uebungen", 62),
+    "Du besitzt 62 Übungen, höchstens 50 sind erlaubt. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  assert.equal(
+    kontoGrenzeText("trainings", 31),
+    "Du besitzt 31 Trainings, höchstens 30 sind erlaubt. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  // Die Einzahl stimmt auch bei einer erfundenen Zahl.
+  assert.match(kontoGrenzeText("trainings", 1), /^Du besitzt 1 von 30 Trainings\./);
+  for (const art of ["uebungen", "trainings"] as const)
+    for (const n of [29, 30, 31, 50, 51, 100]) {
+      const satz = kontoGrenzeText(art, n);
+      assert.ok(!/wiederhol|nochmal|noch einmal/i.test(satz), `kein Wiederholen: ${satz}`);
+      assert.ok(!/loesch|_loeschen/.test(satz), "kein Löschwerkzeug des Assistenten");
+      assert.ok(!/FutAssist|\bKind\b|Kinder/.test(satz), satz);
+    }
+});
+
+pruefe("Konto ohne Verein (#588 AK 6, 7): Anwendung und KI lesen denselben Satz, der Marker ist eine Regel mit Hinweis", () => {
+  for (const [marker, art, bestand] of [
+    [KONTO_MARKER.uebungen, "uebungen", 50],
+    [KONTO_MARKER.uebungen, "uebungen", 57],
+    [KONTO_MARKER.trainings, "trainings", 30],
+    [KONTO_MARKER.trainings, "trainings", 44],
+  ] as const) {
+    const message = `${marker} ${bestand}`;
+    const satz = kontoGrenzeText(art, bestand);
+    // Anwendung: createExercise nutzt `fehlerMeldung`, der Kern `ausDbFehler` — beide denselben Satz.
+    assert.equal(fehlerMeldung(message), satz, message);
+    assert.equal(fehlerMeldung(`ERROR: ${message} (P0001)`), satz, "Postgres-Rahmen um den Marker");
+    const f = ausDbFehler({ message, code: "P0001" });
+    assert.equal(f.art, "regel", "eine Regel, kein technischer Fehler");
+    assert.equal(f.meldung, satz);
+    // KI: dieselbe Auskunft, nichts entstanden, kein Wiederholen.
+    assert.equal(f.hinweis, "Es ist nichts entstanden.");
+    assert.equal(f.wiederholbar, undefined, "nicht als wiederholbar gekennzeichnet");
+    assert.ok(!/wiederhol/i.test(`${f.meldung} ${f.hinweis}`));
+  }
+  // Der Marker wird erwartet und nicht als unerwarteter Fehler protokolliert.
+  const geloggt: unknown[] = [];
+  const orig = console.error;
+  console.error = (...a: unknown[]) => void geloggt.push(a);
+  try {
+    fehlerMeldung(`${KONTO_MARKER.uebungen} 50`);
+    ausDbFehler({ message: `${KONTO_MARKER.trainings} 30` });
+  } finally {
+    console.error = orig;
+  }
+  assert.deepEqual(geloggt, []);
+  // Ein Deadlock bleibt ein Konflikt; nur der Marker trägt den Hinweis der Grenze.
+  assert.equal(ausDbFehler({ message: "deadlock detected", code: "40P01" }).hinweis, undefined);
+  assert.equal(still(() => ausDbFehler({ message: "VEREIN_VOLL" })).hinweis, undefined);
+});
+
+pruefe("Konto ohne Verein (#588 PC 3): `grenzen` der Vereinslage wird auf ihre Form geprüft, `null` mit Verein", () => {
+  const g = { uebungen: { bestand: 12, max: 50 }, trainings: { bestand: 0, max: 30 } };
+  assert.equal(kontoGrenzenAus(null), null, "mit Verein keine Anzeige");
+  assert.deepEqual(kontoGrenzenAus(g), g);
+  assert.deepEqual(
+    kontoGrenzenAus({ uebungen: { bestand: 62, max: 50 }, trainings: { bestand: 31, max: 30 } }),
+    { uebungen: { bestand: 62, max: 50 }, trainings: { bestand: 31, max: 30 } },
+    "der Bestand darf über der Grenze liegen",
+  );
+  for (const kaputt of [
+    undefined,
+    "grenzen",
+    [],
+    7,
+    {},
+    { uebungen: g.uebungen },
+    { trainings: g.trainings },
+    { uebungen: { bestand: 12 }, trainings: g.trainings },
+    { uebungen: { bestand: -1, max: 50 }, trainings: g.trainings },
+    { uebungen: { bestand: 1.5, max: 50 }, trainings: g.trainings },
+    { uebungen: { bestand: "12", max: 50 }, trainings: g.trainings },
+    { uebungen: { bestand: 12, max: 0 }, trainings: g.trainings },
+    { uebungen: g.uebungen, trainings: null },
+    { uebungen: [], trainings: g.trainings },
+  ])
+    assert.equal(kontoGrenzenAus(kaputt), undefined, JSON.stringify(kaputt));
+});
+
+pruefe("Konto ohne Verein (#588 AK 5): Texte der Anzeige in jeder Lage — unter, an und über der Grenze", () => {
+  const u = (bestand: number) => ({ bestand, max: 50 });
+  const t = (bestand: number) => ({ bestand, max: 30 });
+  assert.equal(bestandKurz(u(12)), "12/50");
+  assert.equal(bestandKurz(t(30)), "30/30");
+  assert.equal(bestandKurz(u(62)), "62/50", "die Plakette nennt den echten Bestand");
+  assert.deepEqual([0, 49, 50, 51].map((n) => istVoll(u(n))), [false, false, true, true]);
+  assert.deepEqual([29, 30, 31].map((n) => istVoll(t(n))), [false, true, true]);
+  assert.equal(bestandText("uebungen", u(0)), "0 von 50 Übungen");
+  assert.equal(bestandText("uebungen", u(12)), "12 von 50 Übungen");
+  assert.equal(bestandText("uebungen", u(49)), "49 von 50 Übungen");
+  assert.equal(bestandText("uebungen", u(50)), "50 von 50 Übungen · nichts mehr frei");
+  assert.equal(bestandText("uebungen", u(62)), "62 Übungen (höchstens 50) · nichts mehr frei", "nie ein negativer Rest");
+  assert.equal(bestandText("trainings", t(29)), "29 von 30 Trainings");
+  assert.equal(bestandText("trainings", t(30)), "30 von 30 Trainings · nichts mehr frei");
+  assert.equal(bestandText("trainings", t(31)), "31 Trainings (höchstens 30) · nichts mehr frei");
+  assert.equal(bestandSatz("uebungen", u(12)), "Du besitzt 12 von 50 Übungen.");
+  assert.equal(bestandSatz("trainings", t(31)), "Du besitzt 31 Trainings, höchstens 30 sind erlaubt.");
+  // Die Meldung an der Grenze, bevor Angaben gemacht werden: Board-Wortlaut, Link zur eigenen Übersicht.
+  assert.deepEqual(bestandVollMeldung("trainings", t(30)), {
+    titel: "Nichts mehr frei: 30 von 30 Trainings",
+    text: "Ohne Verein besitzt du höchstens 30 Trainings. Lösche eines, um Platz zu schaffen. In einem Verein gilt die Grenze nicht.",
+    link: "/trainings?mine=1",
+    linkText: "Zu meinen Trainings",
+  });
+  assert.deepEqual(bestandVollMeldung("uebungen", u(50)), {
+    titel: "Nichts mehr frei: 50 von 50 Übungen",
+    text: "Ohne Verein besitzt du höchstens 50 Übungen. Lösche eine, um Platz zu schaffen. In einem Verein gilt die Grenze nicht.",
+    link: "/?mine=1",
+    linkText: "Zu meinen Übungen",
+  });
+  assert.equal(bestandVollMeldung("uebungen", u(62)).titel, "Nichts mehr frei: 62 Übungen, höchstens 50");
+  assert.equal(bestandVollMeldung("trainings", t(31)).titel, "Nichts mehr frei: 31 Trainings, höchstens 30");
+});
+
+pruefe("Konto ohne Verein (#588 AK 7): Werkzeugtexte der KI nennen die Grenze, fordern nicht zum Wiederholen auf und kennen kein Löschwerkzeug", () => {
+  assert.match(KONTO_GRENZE_WERKZEUG.uebungen, /höchstens 50 Übungen/);
+  assert.match(KONTO_GRENZE_WERKZEUG.trainings, /höchstens 30 Trainings.*Team-Trainings nicht/);
+  for (const text of Object.values(KONTO_GRENZE_WERKZEUG)) {
+    assert.match(text, /«hinweis» sagt, dass nichts entstanden ist/);
+    assert.match(text, /statt den Aufruf zu wiederholen/);
+    assert.match(text, /In einem Verein gilt die Grenze nicht\.$/);
+    assert.ok(!/(uebung|training)_loeschen/.test(text), "kein Verweis auf ein Löschwerkzeug");
+  }
+});
+
+pruefe("Konto ohne Verein (#588): ein Weg für den Satz, die Hinweise im Kern, Zuordnen bleibt frei (AK 4), Einfüge-Wege vollständig", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Die Übersetzung steht in `fachlicheMeldung`: `createExercise` (fehlerMeldung) und der Kern (ausDbFehler) lesen sie dort.
+  assert.match(lies("lib/training-bedingungen.ts"), /const konto = kontoGrenzeMeldung\(message\);\s*if \(konto\) return konto;/);
+  assert.match(lies("lib/actions/exercises.ts"), /message: error \? fehlerMeldung\(error\.message\)/, "createExercise übersetzt");
+  // Der Hinweis der Datenebene erreicht jeden Weg: Kern, Übungskopie, Trainingskopie.
+  assert.match(lies("lib/kern/ergebnis.ts"), /kontoGrenzeAusFehler\(e\.message\) \? \{ hinweis: KONTO_GRENZE_HINWEIS \}/);
+  assert.match(lies("lib/fassung.ts"), /art: f\.art, \.\.\.\(f\.hinweis && \{ hinweis: f\.hinweis \}\)/);
+  assert.match(lies("lib/kern/uebungen.ts"), /hinweis: kopie\.hinweis \?\? nichtsEntstanden\(kopie\.art\)/);
+  assert.match(lies("lib/kern/kopie.ts"), /return vorher\(f\.error, f\.art, f\.hinweis\);/);
+  assert.match(lies("lib/kern/kopie.ts"), /kopie\.nichtsEntstanden \? \(kopie\.hinweis \?\? HINWEIS_NICHTS_ENTSTANDEN\)/);
+  // Ein Weg, der nicht zählt, kennt die Grenze nicht: Übung ins Training übernehmen.
+  assert.ok(!/konto-grenzen|KONTO_/.test(lies("lib/kern/fassung.ts")), "ordneUebungZu bleibt frei");
+  assert.ok(!/konto-grenzen|KONTO_/.test(lies("lib/actions/trainings.ts").split("export async function addTrainingExercise")[1]?.split("\nexport async function")[0] ?? ""));
+  // Alle vier Einfüge-Wege tragen die Grenze in ihrer Werkzeugbeschreibung.
+  for (const d of ["lib/mcp/werkzeuge/uebungen-bearbeiten.ts", "lib/mcp/werkzeuge/trainings.ts", "lib/mcp/werkzeuge/trainings-bestand.ts"])
+    assert.match(lies(d), /KONTO_GRENZE_WERKZEUG\.(uebungen|trainings)/, d);
+  assert.equal((lies("lib/mcp/werkzeuge/uebungen-bearbeiten.ts").match(/KONTO_GRENZE_WERKZEUG\.uebungen/g) ?? []).length, 2, "uebung_anlegen und uebung_kopieren");
+  assert.match(lies("lib/mcp/werkzeuge/trainings.ts"), /KONTO_GRENZE_WERKZEUG\.trainings/, "training_anlegen");
+  assert.match(lies("lib/mcp/werkzeuge/trainings-bestand.ts"), /KONTO_GRENZE_WERKZEUG\.trainings/, "training_kopieren");
+  // Die Vereinslage reicht `grenzen` durch, auf ihre Form geprüft; ein Weg, der den Verein kennt, zeigt sie nie.
+  assert.match(lies("lib/queries/verein.ts"), /const grenzen = kontoGrenzenAus\(roh\?\.grenzen\);/);
+  assert.match(lies("lib/queries/verein.ts"), /grenzen: v \? null : grenzen,/);
+  assert.match(lies("lib/kern/konto.ts"), /kontoGrenzenAus\(/);
+  // Die Schreibweise der Grenze steht in einer Datei: keine zweite 50/30 in den Werkzeugtexten.
+  for (const d of ["lib/mcp/werkzeuge/uebungen-bearbeiten.ts", "lib/mcp/werkzeuge/trainings.ts", "lib/mcp/werkzeuge/trainings-bestand.ts"])
+    assert.ok(!/höchstens (50|30) /.test(lies(d)), `${d}: Grenzen nur über konto-grenzen.ts`);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

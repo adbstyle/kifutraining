@@ -9,6 +9,7 @@ import {
   TeamId,
   TrainingId,
 } from "@/lib/mcp/werkzeuge/trainings";
+import { KONTO_GRENZE_WERKZEUG } from "@/lib/konto-grenzen";
 import { werkzeug } from "@/lib/mcp/werkzeug";
 
 /**
@@ -45,13 +46,14 @@ export const trainingKopieren = werkzeug({
     "Original bleibt in beiden Fällen, wie es ist. Ein Termin geht nie mit. " +
     "Scheitert das Kopieren mit einer " +
     "Meldung, räumt KiFu weg, was schon entstanden war, und «hinweis» sagt, dass nichts " +
-    "entstanden ist (dann ist ein Wiederholen gefahrlos) - oder, falls auch das Aufräumen " +
+    "entstanden ist (dann ist ein Wiederholen gefahrlos, ausser bei der Grenze unten, die ein " +
+    "zweiter Versuch nicht ändert) - oder, falls auch das Aufräumen " +
     "scheiterte, welche unvollständige Kopie stehen blieb. Bricht der Vorgang dagegen ohne " +
     "Meldung ab - durch eine Zeitüberschreitung oder einen Absturz mitten im Kopieren -, kann " +
     "eine unvollständige Kopie stehen bleiben, die nicht als unfertig erkennbar ist, oder die " +
     "Kopie ist vollständig entstanden, ohne dass du davon erfährst. Prüfe dann vorher und " +
     "nachher mit «trainings_suchen» (bestand: eigene bzw. team), bevor du es noch einmal " +
-    `versuchst. ${KENNUNG_FEHLER} ${TEAM_KENNUNG_FEHLER}`,
+    `versuchst. ${KONTO_GRENZE_WERKZEUG.trainings} ${KENNUNG_FEHLER} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     training_id: TrainingId,

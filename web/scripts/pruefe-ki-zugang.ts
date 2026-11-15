@@ -44,6 +44,8 @@ import {
   zugangsnameProblem,
 } from "../lib/mcp/regeln";
 import { loginAdresse, sichererRuecksprung } from "../lib/weiterleitung";
+import { KONTO_GRENZE_WERKZEUG, kontoGrenzeText } from "../lib/konto-grenzen";
+import { registriereWerkzeuge } from "../lib/mcp/server";
 import {
   altersstufeSlugs,
   erscheinungsform_juniorenSlugs,
@@ -961,6 +963,195 @@ pruefe("Ein trotzdem gesendetes Abo weist das SDK sofort ab, statt einen Stream 
 pruefe("Die Frühabweisung antwortet wie das SDK und lässt alles andere durch", () => {
   assert.deepEqual(fruehAboWert, sdkAbo);
   assert.equal(fruehAufruf, null);
+});
+
+// ── Konten ohne Verein: die Grenzen im KI-Zugang (Story #588 AK 2, 3, 7, 8) ──
+//
+// Ohne Datenbank: Ein Client, der auf jedes Einfügen mit dem Marker der
+// Datenebene antwortet, durchläuft die vier Wege (Übung anlegen, Übung kopieren,
+// Training anlegen, Training kopieren) und die beiden Rümpfe dahinter. Was die
+// Datenebene dazu sagt, prüft `check:kern-db` und `supabase/tests`.
+
+type DbAntwort = { data: unknown; error: { message: string; code?: string } | null };
+
+function fakeClient(antwort: (tabelle: string, art: string) => DbAntwort) {
+  const aufrufe: string[] = [];
+  const baustein = (tabelle: string) => {
+    let art = "select";
+    const b: Record<string, unknown> = {};
+    const fertig = () => {
+      aufrufe.push(`${art} ${tabelle}`);
+      return Promise.resolve(antwort(tabelle, art));
+    };
+    for (const m of ["select", "eq", "order", "in", "limit"]) b[m] = () => b;
+    for (const m of ["insert", "delete", "update"]) b[m] = () => ((art = m), b);
+    b.single = fertig;
+    b.maybeSingle = fertig;
+    b.then = (ok: (v: DbAntwort) => unknown, nein?: (e: unknown) => unknown) => fertig().then(ok, nein);
+    return b;
+  };
+  const storage = {
+    from: () => ({
+      copy: async () => (aufrufe.push("copy bild"), { error: null }),
+      remove: async (pfade: string[]) => (aufrufe.push(`remove ${pfade.join(",")}`), { error: null }),
+      getPublicUrl: (pfad: string) => ({ data: { publicUrl: `https://x.test/storage/v1/object/public/exercise-images/${pfad}` } }),
+    }),
+  };
+  return { client: { from: baustein, storage } as never, aufrufe };
+}
+
+const KONTO_FEHLER = (art: "UEBUNGEN" | "TRAININGS", n: number) => ({
+  message: `KONTO_${art}_VOLL ${n}`,
+  code: "P0001",
+});
+const QUELLE_UEBUNG = {
+  id: "11111111-1111-4111-8111-111111111111",
+  slug: "quelle-1",
+  name: "Quelle",
+  altersstufe: "kinderfussball",
+  owner_id: "11111111-1111-4111-8111-111111111112",
+  source: "user",
+  visibility: "private",
+  trainingsteil: "einleitung",
+  hauptteilkategorie: null,
+  bild_url: "https://x.test/storage/v1/object/public/exercise-images/u/quelle.webp",
+  bild_quelle: "foto",
+  diagramm: null,
+};
+const QUELLE_TRAINING = {
+  id: "11111111-1111-4111-8111-111111111113",
+  name: "Quelle",
+  altersstufe: "kinderfussball",
+  stufen: ["F"],
+  ziel: null,
+  owner_id: "11111111-1111-4111-8111-111111111112",
+  team_id: null,
+  visibility: "private",
+};
+const NUTZER = "11111111-1111-4111-8111-111111111112";
+const nurLesen = (tabelle: string, art: string): DbAntwort | null =>
+  art !== "select"
+    ? null
+    : tabelle === "exercises"
+      ? { data: QUELLE_UEBUNG, error: null }
+      : tabelle === "trainings"
+        ? { data: QUELLE_TRAINING, error: null }
+        : { data: [], error: null };
+
+const voll = async (art: "UEBUNGEN" | "TRAININGS", n: number) => {
+  const { client, aufrufe } = fakeClient((tabelle, a) => nurLesen(tabelle, a) ?? { data: null, error: KONTO_FEHLER(art, n) });
+  const { legeUebungAn } = await import("../lib/kern/uebungen");
+  const { kopiereUebungNach } = await import("../lib/kern/uebungen");
+  const { legeTrainingAn } = await import("../lib/kern/training");
+  const { kopiereTrainingNach } = await import("../lib/kern/kopie");
+  const { legeUebungsKopieAn } = await import("../lib/fassung");
+  return {
+    aufrufe,
+    anlegenUebung: await legeUebungAn(client, NUTZER, {
+      altersstufe: "kinderfussball",
+      name: "Probe",
+      einordnung: "einleitung",
+      kategorien: ["F"],
+      offenStarten: "Offen",
+      ueben: "Üben",
+      wetteifern: "Wett",
+    } as never),
+    kopierenUebung: await kopiereUebungNach(client, NUTZER, { kennung: QUELLE_UEBUNG.slug }),
+    anlegenTraining: await legeTrainingAn(client, NUTZER, { name: "Probe", altersstufe: "kinderfussball", stufen: ["F"] }),
+    kopierenTraining: await kopiereTrainingNach(client, NUTZER, { quelleId: QUELLE_TRAINING.id }),
+    bibliothek: await legeUebungsKopieAn(client, QUELLE_UEBUNG as never, { ownerId: NUTZER, altersstufe: "kinderfussball" }),
+  };
+};
+const uebungenVoll = await voll("UEBUNGEN", 50);
+const trainingsVoll = await voll("TRAININGS", 31);
+
+pruefe("Konto ohne Verein (#588 AK 2, 7): Übung anlegen und kopieren, auch aus dem Training in die Bibliothek — dieselbe Auskunft, nichts entstanden, kein Wiederholen", () => {
+  const satz = kontoGrenzeText("uebungen", 50);
+  for (const f of [uebungenVoll.anlegenUebung, uebungenVoll.kopierenUebung]) {
+    assert.equal(f.ok, false);
+    if (f.ok) return;
+    assert.equal(f.art, "regel");
+    assert.equal(f.meldung, satz, "wie in der Anwendung");
+    assert.equal(f.hinweis, "Es ist nichts entstanden.");
+    assert.equal(f.wiederholbar, undefined);
+    // Wie es beim Assistenten ankommt: Text und Struktur, ohne Aufforderung zum Wiederholen.
+    const r = fehlerErgebnis(f);
+    assert.ok(textVon(r).startsWith(`[regel] ${satz}`), textVon(r));
+    assert.ok(textVon(r).endsWith("Es ist nichts entstanden."), textVon(r));
+    assert.ok(!/wiederhol|noch einmal/i.test(textVon(r)), textVon(r));
+    assert.ok(!("wiederholbar" in fehlerVon(r)), "nicht als wiederholbar gekennzeichnet");
+    assert.ok(!/(uebung|training)_loeschen/.test(textVon(r)), "kein Löschwerkzeug");
+  }
+  // Das Kopieren aus dem Training (Rumpf der Bibliothek) meldet denselben Satz.
+  assert.equal(uebungenVoll.bibliothek.ok, false);
+  if (!uebungenVoll.bibliothek.ok) {
+    assert.equal(uebungenVoll.bibliothek.error, satz);
+    assert.equal(uebungenVoll.bibliothek.art, "regel");
+    assert.equal(uebungenVoll.bibliothek.hinweis, "Es ist nichts entstanden.");
+  }
+  // Eine abgewiesene Kopie hinterlässt nichts, auch kein Bild: Die kopierte Bilddatei wird entfernt.
+  const bildKopien = uebungenVoll.aufrufe.filter((a) => a === "copy bild").length;
+  const bildEntfernt = uebungenVoll.aufrufe.filter((a) => a.startsWith("remove ")).length;
+  assert.equal(bildKopien, 2, "uebung_kopieren und Bibliothek kopieren das Bild vor dem Einfügen");
+  assert.equal(bildEntfernt, bildKopien, "jede abgewiesene Kopie räumt ihr Bild ab");
+  assert.ok(!uebungenVoll.aufrufe.includes("delete exercises"), "nichts zu löschen: es entstand keine Zeile");
+});
+
+pruefe("Konto ohne Verein (#588 AK 3, 7): Training anlegen und übernehmen — dieselbe Auskunft, nichts entstanden, kein «gefahrlos wiederholen»", () => {
+  const satz = kontoGrenzeText("trainings", 31);
+  assert.equal(satz, "Du besitzt 31 Trainings, höchstens 30 sind erlaubt. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.");
+  for (const f of [trainingsVoll.anlegenTraining, trainingsVoll.kopierenTraining]) {
+    assert.equal(f.ok, false);
+    if (f.ok) return;
+    assert.equal(f.art, "regel");
+    assert.equal(f.meldung, satz);
+    assert.equal(f.hinweis, "Es ist nichts entstanden.", "nicht «gefahrlos wiederholen»");
+    assert.equal(f.wiederholbar, undefined);
+    const r = fehlerErgebnis(f);
+    assert.ok(!/wiederhol|noch einmal/i.test(textVon(r)), textVon(r));
+    assert.ok(!("wiederholbar" in fehlerVon(r)));
+    assert.ok(!/(uebung|training)_loeschen/.test(textVon(r)), "kein Löschwerkzeug");
+  }
+  assert.ok(!trainingsVoll.aufrufe.includes("delete trainings"), "nichts zu löschen: es entstand keine Zeile");
+});
+
+pruefe("Konto ohne Verein (#588): der Satz nennt die Art - Übungen und Trainings haben je ihre Grenze", () => {
+  // Ein Marker der anderen Art ergibt den eigenen Satz: Bei Trainings nennt er Trainings.
+  assert.ok(uebungenVoll.kopierenUebung.ok === false && uebungenVoll.kopierenUebung.meldung.includes("Übungen"));
+  assert.ok(trainingsVoll.kopierenTraining.ok === false && trainingsVoll.kopierenTraining.meldung.includes("Trainings"));
+});
+
+pruefe("Konto ohne Verein (#588 AK 7): die Werkzeugbeschreibungen der vier Wege nennen die Grenze; «gefahrlos wiederholen» gilt bei training_kopieren nicht für sie", () => {
+  const beschreibungen = new Map<string, string>();
+  const teamKennung = new Map<string, boolean>();
+  const server = {
+    registerTool: (name: string, def: { description?: string; inputSchema?: { shape?: Record<string, unknown> } }) => {
+      beschreibungen.set(name, def.description ?? "");
+      teamKennung.set(name, "team_id" in (def.inputSchema?.shape ?? {}));
+    },
+  };
+  registriereWerkzeuge(server as never);
+  for (const name of ["uebung_anlegen", "uebung_kopieren"])
+    assert.ok(beschreibungen.get(name)?.includes(KONTO_GRENZE_WERKZEUG.uebungen), name);
+  for (const name of ["training_anlegen", "training_kopieren"])
+    assert.ok(beschreibungen.get(name)?.includes(KONTO_GRENZE_WERKZEUG.trainings), name);
+  const kopieren = beschreibungen.get("training_kopieren") ?? "";
+  assert.match(kopieren, /\(dann ist ein Wiederholen gefahrlos, ausser bei der Grenze unten, die ein zweiter Versuch nicht ändert\)/);
+  // Die Aufforderung, bei einer Ablehnung «noch einmal zu senden», gilt für Verstösse, nicht für die Grenze.
+  const anlegen = beschreibungen.get("uebung_anlegen") ?? "";
+  assert.match(anlegen, /Nach einer Ablehnung wegen verletzter Angaben die ganze Übung korrigiert noch einmal senden\./);
+  assert.ok(!/Danach die ganze Übung korrigiert/.test(anlegen));
+  // Übungen löscht der Assistent nie (#588 OoS 3): kein Werkzeug, kein Verweis darauf.
+  assert.ok(![...beschreibungen.keys()].some((n) => n === "uebung_loeschen"));
+  for (const [name, text] of beschreibungen)
+    if (name.startsWith("uebung")) assert.ok(!/uebung_loeschen/.test(text), name);
+  // Übung ins Training übernehmen zählt nicht (AK 4) — die Beschreibung sagt es.
+  assert.match(beschreibungen.get("training_uebung_zuordnen") ?? "", /zählt nicht zur Grenze der eigenen Übungen/);
+  // AK 9 (schon durchgesetzt, hier festgehalten): Team, Spielerliste, Kader und Kalender öffnet nur, wer die Kennung
+  // eines Teams nennt, und `pruefeTeamMitglied` liest das Team unter der RLS (lib/kern/zugriff.ts) — ein Konto ohne
+  // Team bekommt «nicht gefunden». Kein Werkzeug listet fremde Teams, `teams_abrufen` nur die eigenen.
+  for (const name of ["team_plan_abrufen", "team_mitglieder_abrufen", "spielerliste_abrufen", "kader_abrufen", "termin_festlegen", "spieler_aufnehmen"])
+    assert.ok(teamKennung.get(name), `${name} verlangt «team_id»`);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

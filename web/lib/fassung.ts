@@ -333,7 +333,7 @@ export async function legeUebungsKopieAn(
     /** Abweichender Name der Kopie. Ohne ihn trägt sie den Namen der Quelle. */
     name?: string;
   },
-): Promise<{ ok: true; slug: string; id: string } | { ok: false; error: string; art: FehlerArt }> {
+): Promise<{ ok: true; slug: string; id: string } | { ok: false; error: string; art: FehlerArt; hinweis?: string }> {
   // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
   const uebungId = crypto.randomUUID();
   const bild = await kopiereBild(supabase, quelle.bild_url, userOrdner(ziel.ownerId), uebungId);
@@ -373,7 +373,7 @@ export async function legeUebungsKopieAn(
   if (error) {
     await entferneStorageObjekt(supabase, bild.pfad);
     const f = ausDbFehler(error);
-    return { ok: false, error: f.meldung, art: f.art };
+    return { ok: false, error: f.meldung, art: f.art, ...(f.hinweis && { hinweis: f.hinweis }) };
   }
   return { ok: true, slug: angelegt.slug, id: uebungId };
 }

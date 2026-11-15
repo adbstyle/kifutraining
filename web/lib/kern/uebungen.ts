@@ -247,7 +247,7 @@ export async function kopiereUebungNach(
 
   const name = q.owner_id === userId ? kopieName(q.name) : undefined;
   const kopie = await legeUebungsKopieAn(supabase, q, { ownerId: userId, altersstufe: q.altersstufe, name });
-  if (!kopie.ok) return fehlschlag(kopie.art, kopie.error, { hinweis: nichtsEntstanden(kopie.art) });
+  if (!kopie.ok) return fehlschlag(kopie.art, kopie.error, { hinweis: kopie.hinweis ?? nichtsEntstanden(kopie.art) });
   return ok({ id: kopie.id, slug: kopie.slug, name: name ?? q.name, sichtbarkeit: "entwurf" });
 }
 

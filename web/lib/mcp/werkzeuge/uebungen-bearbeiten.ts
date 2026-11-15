@@ -22,6 +22,7 @@ import {
   alsUebungInhalt,
   alsUebungPatch,
 } from "@/lib/mcp/uebung-eingaben";
+import { KONTO_GRENZE_WERKZEUG } from "@/lib/konto-grenzen";
 import { werkzeug, type Zugang } from "@/lib/mcp/werkzeug";
 
 /**
@@ -62,8 +63,8 @@ export const uebungAnlegen = werkzeug({
     "Legt eine eigene Übung als privaten Entwurf an - sichtbar nur für dich und in KiFu unter " +
     "deinen eigenen Übungen, bis «uebung_veroeffentlichen» sie öffentlich schaltet. Es gelten " +
     "dieselben Regeln wie im Formular in KiFu, je Altersstufe die ihren; die Altersstufe steht " +
-    `danach fest. ${ABLEHNUNG} Danach die ` +
-    `ganze Übung korrigiert noch einmal senden. ${UEBUNG_ANGABEN} Die Werte samt Klartext liefert ` +
+    `danach fest. ${ABLEHNUNG} Nach einer Ablehnung wegen ` +
+    `verletzter Angaben die ganze Übung korrigiert noch einmal senden. ${KONTO_GRENZE_WERKZEUG.uebungen} ${UEBUNG_ANGABEN} Die Werte samt Klartext liefert ` +
     "«vokabular». Ein Feld-Diagramm lässt sich in «diagramm» gleich mitgeben, mit denselben " +
     "Grenzen wie bei «uebung_diagramm_setzen»: Es wird das Bild der Übung, und KiFu zählt das " +
     "Material daraus selbst - dann «material.liste» weglassen, die Ergänzung bleibt möglich - und " +
@@ -187,7 +188,9 @@ export const uebungKopieren = werkzeug({
     "trägt im Namen den Zusatz «(Kopie)», die einer Manual- oder fremden Übung behält den Namen. " +
     "Danach lässt sich die Kopie mit «uebung_aendern» anpassen. Je Aufruf entsteht genau eine " +
     "Kopie; scheitert es mit einer Meldung, bleibt nichts zurück (siehe «hinweis»); bei " +
-    "«technisch» oder «konflikt» ist ein zweiter Versuch gefahrlos. Bricht der Vorgang ohne " +
+    "«technisch» oder «konflikt» ist ein zweiter Versuch gefahrlos. " +
+    `${KONTO_GRENZE_WERKZEUG.uebungen} ` +
+    "Bricht der Vorgang ohne " +
     "Meldung ab (Zeitüberschreitung), " +
     "kann die Kopie trotzdem entstanden sein - prüfe dann mit «uebungen_suchen» («nur_eigene»), " +
     "bevor du es noch einmal versuchst. Übungen aus Trainings («fassung_id» aus «training_abrufen») lassen sich hier nicht " +

@@ -16,6 +16,7 @@ import { KADER_CHECKS, KADER_MELDUNG } from "@/lib/kader";
 import { SPIEL_CHECKS, SPIEL_MELDUNG } from "@/lib/spiel";
 import { TRAINER_MELDUNG } from "@/lib/trainer";
 import { PROBE_CHECKS, PROBE_MELDUNG } from "@/lib/probe";
+import { kontoGrenzeMeldung } from "@/lib/konto-grenzen";
 import { VEREIN_MELDUNG } from "@/lib/verein";
 import { FELDER_TEXT } from "@/lib/termin-felder";
 import { sichtbareZuordnungen } from "@/lib/varianten";
@@ -377,6 +378,10 @@ const TERMIN_CHECKS: [string, string][] = [
 /** Die Meldung zu einem Marker aus Übungsfolge, Variantenfolge oder Termin,
  *  sonst `null`. */
 function weitereMeldung(message: string): string | null {
+  // Die Grenzen eines Kontos ohne Verein (#588): der Marker trägt den Bestand,
+  // der Satz hängt an der Zahl — darum kein Eintrag in `TERMIN_MARKER`.
+  const konto = kontoGrenzeMeldung(message);
+  if (konto) return konto;
   for (const [marker, klartext] of [
     ...Object.entries(UEBUNGSFOLGE_MELDUNG),
     ...Object.entries(VARIANTENFOLGE_MELDUNG),

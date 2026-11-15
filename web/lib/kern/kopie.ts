@@ -61,21 +61,21 @@ export type KopieZiel =
  *  bemerkt niemand — dann kommt gar kein Ergebnis zurück (#197 OoS 6). */
 export type KopieErgebnis =
   | { ok: true; neueId: string }
-  | ({ ok: false; error: string; art: FehlerArt } & (
+  | ({ ok: false; error: string; art: FehlerArt; hinweis?: string } & (
       | { nichtsEntstanden: true }
       | { nichtsEntstanden: false; rest: string }
     ));
 
 /** Ein Fehlschlag, bevor es eine Kopie gibt — da ist nie etwas entstanden. */
-function vorher(error: string, art: FehlerArt = "technisch"): KopieErgebnis {
-  return { ok: false, error, art, nichtsEntstanden: true };
+function vorher(error: string, art: FehlerArt = "technisch", hinweis?: string): KopieErgebnis {
+  return { ok: false, error, art, ...(hinweis && { hinweis }), nichtsEntstanden: true };
 }
 
 /** Ein Datenbankfehler als Meldung samt Einordnung — die Meldung ist
  *  wortgleich mit `fehlerMeldung` (siehe `ausDbFehler`). */
-function db(e: { message: string; code?: string }): { error: string; art: FehlerArt } {
+function db(e: { message: string; code?: string }): { error: string; art: FehlerArt; hinweis?: string } {
   const f = ausDbFehler(e);
-  return { error: f.meldung, art: f.art };
+  return { error: f.meldung, art: f.art, ...(f.hinweis && { hinweis: f.hinweis }) };
 }
 
 /** Die Meldung, wenn die Quelle für dieses Konto nicht (mehr) sichtbar ist. */
@@ -213,7 +213,10 @@ export async function kopiereTraining(
   if (insertFehler || !neu) {
     if (!insertFehler) return vorher("Kopieren fehlgeschlagen.");
     const f = db(insertFehler);
-    return vorher(f.error, f.art);
+    // Mit dem Hinweis der Datenebene: Bei der Grenze eines Kontos ohne Verein
+    // (#588) steht für den Assistenten «nichts entstanden» — ohne Aufforderung
+    // zum zweiten Versuch, den nur `HINWEIS_NICHTS_ENTSTANDEN` ausspräche.
+    return vorher(f.error, f.art, f.hinweis);
   }
 
   // Ab hier kann eine Teilkopie entstehen: jeder weitere Fehlerpfad räumt die
@@ -477,7 +480,10 @@ export async function kopiereTrainingNach(
   );
   if (!kopie.ok)
     return fehlschlag(kopie.art, kopie.error, {
-      hinweis: kopie.nichtsEntstanden ? HINWEIS_NICHTS_ENTSTANDEN : hinweisRest(kopie.rest),
+      // Eine Regel ändert ein zweiter Versuch nicht: Dann sagt nur der Hinweis
+      // der Datenebene, dass nichts entstanden ist (die Grenze, #588), sonst
+      // gilt der Satz «gefahrlos wiederholen».
+      hinweis: kopie.nichtsEntstanden ? (kopie.hinweis ?? HINWEIS_NICHTS_ENTSTANDEN) : hinweisRest(kopie.rest),
     });
 
   return ok({ id: kopie.neueId, ziel: wohin });

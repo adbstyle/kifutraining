@@ -21,6 +21,7 @@
 // REIN: keine Importe aus `next/*`, `server-only` oder Datenbank-Modulen —
 // die Prüfskripte (`tsx scripts/pruefe-*.ts`) laden diese Datei ohne Server.
 import { MELDUNG_VERGEBEN } from "@/lib/bezeichnung";
+import { KONTO_GRENZE_HINWEIS, kontoGrenzeAusFehler } from "@/lib/konto-grenzen";
 import { SERIE_MELDUNG } from "@/lib/serie";
 import { TERMIN_MELDUNG } from "@/lib/termin";
 import { VEREIN_MELDUNG } from "@/lib/verein";
@@ -223,7 +224,11 @@ export function ausDbFehler(e: { message: string; code?: string }): KernFehler {
       bedingung,
       varianteId: varianteAusFehler(e.message) ?? undefined,
     });
-  if (fachlicheMeldung(e.message)) return fehlschlag("regel", meldung);
+  if (fachlicheMeldung(e.message))
+    // Die Grenze eines Kontos ohne Verein (#588 AK 7): Für den Assistenten
+    // steht dabei, dass nichts entstanden ist — und nirgends, dass sich ein
+    // zweiter Versuch lohnte. `wiederholbar` bleibt ungesetzt.
+    return fehlschlag("regel", meldung, kontoGrenzeAusFehler(e.message) ? { hinweis: KONTO_GRENZE_HINWEIS } : {});
   if (istRlsVerletzung(e.message)) return fehlschlag("keine_rechte", meldung);
   return fehlschlag("technisch", meldung);
 }
