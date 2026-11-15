@@ -7,12 +7,14 @@ import { KiZugaengeListe } from "./KiZugaengeListe";
 import { AbosListe } from "./AbosListe";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
+import { ladeKontoLoeschenInfo } from "@/lib/kern/verein";
 import { getMeinAnzeigename } from "@/lib/queries/profil";
 import { getMeineZugaenge } from "@/lib/queries/ki-zugaenge";
 import { getMeineAbos } from "@/lib/queries/abos";
 import { KI_ZUGAENGE_MAX } from "@/lib/mcp/regeln";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { MCP_PFAD } from "@/lib/mcp/pfad";
+import { VEREIN_UNSTIMMIG } from "@/lib/verein";
 import Link from "next/link";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
@@ -59,11 +61,13 @@ export default async function KontoPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [anzeigeName, zugaenge, abos, origin] = await Promise.all([
+  const [anzeigeName, zugaenge, abos, origin, loeschInfo] = await Promise.all([
     getMeinAnzeigename(),
     getMeineZugaenge(),
     getMeineAbos(),
     oeffentlicherOrigin(),
+    // Wie das Löschen des Kontos zum Verein steht (#587): frei, letzte Verwaltung, einzige Person.
+    user ? ladeKontoLoeschenInfo(supabase, user.id) : null,
   ]);
 
   return (
@@ -170,7 +174,12 @@ export default async function KontoPage() {
           gelöscht. Verbundene KI-Assistenten verlieren ihren Zugang.
         </p>
         <div className="mt-5">
-          <KontoClient />
+          {/* Ohne die Lage im Verein gäbe es keinen Dialog, der sagt, was mitgeht. */}
+          {loeschInfo?.ok ? (
+            <KontoClient info={loeschInfo.wert} />
+          ) : (
+            <SectionMessage appearance="error">{loeschInfo ? loeschInfo.meldung : VEREIN_UNSTIMMIG.info}</SectionMessage>
+          )}
         </div>
       </Card>
     </Seitenrahmen>

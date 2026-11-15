@@ -1,16 +1,13 @@
 /* Welcher Navigationseintrag gerade offen ist — rein aus Adresse und
    Team-Kontext abgeleitet, ohne React. */
 
+import type { Bereich } from "@/lib/bereich";
+
 export type AktiveBereiche = {
   uebungen: boolean;
   meineUebungen: boolean;
   trainings: boolean;
   meineTrainings: boolean;
-  /** Genau die Teams-Übersicht. */
-  teamsSeite: boolean;
-  /** Irgendwo im Team-Bereich: ein Team, seine Unterseiten oder ein
-   *  geöffnetes Team-Training. */
-  teamsBereich: boolean;
 };
 
 /**
@@ -32,12 +29,19 @@ export function aktiveBereiche(pfad: string, mine: boolean, imTeamBereich: boole
     // deckt als Präfix auch `/trainings` ab.
     trainings: pfad.startsWith("/training") && !imTeamBereich && !meineTrainings,
     meineTrainings,
-    teamsSeite: pfad === "/teams",
-    teamsBereich: pfad === "/teams" || pfad.startsWith("/team/") || imTeamBereich,
   };
 }
 
-/** Ist dieses Team (oder eine seiner Unterseiten) offen? */
-export function teamOffen(pfad: string, teamId: string): boolean {
-  return pfad === `/team/${teamId}` || pfad.startsWith(`/team/${teamId}/`);
+const TEAM_PFAD = /^\/team\/([0-9a-f-]{36})(\/|$)/i;
+
+/** Der Bereich, in dem die Adresse liegt: `/team/<id>/…` und ein geöffnetes
+ *  Team-Training (`teamImTraining`: das Team, dem es gehört) → dieses Team,
+ *  `/verein/…` → der Verein. Sonst `null`: Auf Seiten ohne Bereich
+ *  (Bibliotheken, `/teams`, `/konto`) bleibt der gemerkte (lib/bereich.ts). */
+export function bereichAusPfad(pfad: string, teamImTraining: string | null): Bereich | null {
+  const team = pfad.match(TEAM_PFAD)?.[1];
+  if (team) return { art: "team", id: team };
+  if (pfad === "/verein" || pfad.startsWith("/verein/")) return { art: "verein" };
+  if (teamImTraining && pfad.startsWith("/training/")) return { art: "team", id: teamImTraining };
+  return null;
 }

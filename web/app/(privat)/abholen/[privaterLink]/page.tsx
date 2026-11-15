@@ -25,5 +25,5 @@ export default async function AbholAdresse({ params }: { params: Promise<{ priva
   const { privaterLink } = await params;
   const ansicht = await ladeAbholAnsicht(privaterLink);
   if (!ansicht.gueltig) return <GiltNicht titel={ABHOLUNG_TEXT.ungueltigTitel} text={ABHOLUNG_TEXT.ungueltig} />;
-  return <AbholSeite token={privaterLink} team={ansicht.team} />;
+  return <AbholSeite token={privaterLink} team={ansicht.team} verein={ansicht.verein} />;
 }

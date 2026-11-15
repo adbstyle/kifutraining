@@ -26,6 +26,8 @@ import { Lozenge } from "./Lozenge";
 import { IconButton } from "./IconButton";
 import { ZeichenPunkt } from "./ZeichenPunkt";
 import { tooltipFlaeche } from "./Tooltip";
+import { BereichWechsler, type BereichWechslerProps } from "./BereichWechsler";
+import { SCHMAL_KLASSEN, type SchmalAb } from "./seitenleiste-schmal";
 
 /* ── Typen ──────────────────────────────────────────────────── */
 
@@ -90,6 +92,9 @@ export interface SeitenleisteDarstellung {
 }
 
 export interface SeitenleisteProps {
+  /** Der Wechsler oben, unter der Marke: eines der eigenen Teams oder der
+   *  Verein. Fehlt er (kein Verein, kein Team), steht nichts an seiner Stelle. */
+  bereich?: BereichWechslerProps;
   gruppen: SeitenleisteGruppe[];
   /** Angemeldet: Konto-Karte unten. Sonst `anmeldenHref`. */
   konto?: SeitenleisteKonto;
@@ -135,29 +140,6 @@ export const unterKopfzeile = "top-12 lg:top-0";
 export const nebenLeiste =
   "left-0 transition-[left] duration-200 motion-reduce:transition-none lg:left-[var(--leiste-breite,0px)]";
 
-/* Schmale Form: eingebettet auf jeder Breite, sonst erst ab `lg` — darunter
-   zeigt der Drawer immer alles. Ausgeschriebene Literale, damit Tailwind sie
-   findet. */
-const SCHMAL_KLASSEN = {
-  lg: {
-    textWeg: "lg:sr-only",
-    nurBreit: "lg:hidden",
-    mitte: "lg:justify-center",
-    linie: "lg:block",
-    konto: "lg:justify-center lg:p-0",
-    anmelden: "lg:px-0",
-  },
-  immer: {
-    textWeg: "sr-only",
-    nurBreit: "hidden",
-    mitte: "justify-center",
-    linie: "block!",
-    konto: "justify-center p-0!",
-    anmelden: "px-0!",
-  },
-} as const;
-type SchmalAb = keyof typeof SCHMAL_KLASSEN;
-
 /* ── Kleinteile ─────────────────────────────────────────────── */
 
 function keineAktion() {}
@@ -196,6 +178,7 @@ const zeileRuhe = "text-on-surface-mittel hover:text-on-surface";
    Fläche 01dp mit Haarlinie: Die Leiste ist Rahmen, keine schwebende Fläche,
    und trägt darum keinen Schatten. Der Drawer schwebt und steht auf 08dp. */
 export function Seitenleiste({
+  bereich,
   gruppen,
   konto,
   anmeldenHref = "/login",
@@ -368,6 +351,10 @@ export function Seitenleiste({
             />
           )}
         </div>
+
+        {bereich && (
+          <BereichWechsler {...bereich} schmalAb={schmalAb} navRef={navRef} onNavigiert={schliessen} />
+        )}
 
         <div
           className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden px-4 py-3"

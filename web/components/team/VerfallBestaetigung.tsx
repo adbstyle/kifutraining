@@ -72,7 +72,7 @@ type Antwort = {
   kennzeichnungen?: number;
   /** Davon Absagen von Trainer:innen (#520 AK 11). */
   absagen?: number;
-  /** Davon Anmeldungen von Probe-Spieler:innen (#555 AK 14). */
+  /** Davon Anmeldungen von schnuppernden Spieler:innen (#555 AK 14). */
   anmeldungen?: number;
   /** Ein Training (#561 PC 5): Mit dem neuen Beginn entfällt der Treffpunkt. */
   treffpunktEntfaellt?: boolean;
@@ -97,7 +97,7 @@ export function useVerfallRueckfrage(pending?: boolean) {
   function nachKader(r: Antwort, bestaetigt: number | false, weiter: (anzahl: number) => void): boolean {
     if (r.ok || !r.verfallend) return false;
     const n = r.verfallend;
-    // Verfallen nur Anmeldungen von Probe-Spieler:innen, heisst der Dialog so (#555).
+    // Verfallen nur Anmeldungen von schnuppernden Spieler:innen, heisst der Dialog so (#555).
     const nurAnmeldungen =
       (r.anmeldungen ?? 0) > 0 && n === (r.anmeldungen ?? 0) && !r.verfallendSpiele && !r.kennzeichnungen;
     setFrage({

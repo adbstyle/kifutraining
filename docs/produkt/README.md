@@ -5,11 +5,12 @@ Antwort auf die Frage „Was geht heute?" für alle, die nicht im Code nachsehen
 
 | Bereich | Inhalt |
 |---|---|
-| [Navigation](navigation.md) | Seitenleiste, breit oder schmal, hell und dunkel, Brotkrumen, Seitenaufbau, Bedienung von Feldern, Filtern und Knöpfen, schmale Bildschirme |
-| [Konto und Zugang](konto-und-zugang.md) | Registrieren, Anmelden, Anzeigename, KI-Assistent verbinden, Kalender-Abos, Konto löschen |
-| [Übungen](uebungen.md) | Altersstufen, Übungsbestand, eigene Übungen, Feld-Diagramme, Favoriten |
-| [Trainings](trainings.md) | Trainings der beiden Altersstufen zusammenstellen, durchführen, drucken, veröffentlichen |
-| [Team-Bereich](team-bereich.md) | Trainerteams samt Verlassen und Auflösen mit Teamnamen, Team-Trainings, Kalender mit Terminen und Terminserien samt Platz und Spielerzahl, Trainer:innen mit Einladung, Absage und Mindestbesetzung, Ausfälle, Trainingsplan mit nächstem Termin, Monat und geöffnetem Termin, Kalender-Abo, Spielerliste, Probetraining mit Info-Schreiben, Kader, Ab- und Anmelden, Spiele mit Meldungen, Meldefrist und Treffpunkten, privater Link je Spieler:in mit Kalender-Abo, Selbstabholung |
+| [Navigation](navigation.md) | Seitenleiste mit Bereich-Wechsler zwischen Teams und Verein, breit oder schmal, hell und dunkel, Brotkrumen, Seitenaufbau, Bedienung von Feldern, Filtern und Knöpfen, schmale Bildschirme |
+| [Konto und Zugang](konto-und-zugang.md) | Registrieren, Anmelden, Anzeigename, Konto ohne Verein, KI-Assistent verbinden, Kalender-Abos, Konto löschen je nach Lage im Verein |
+| [Verein](verein.md) | Rollen nach Ort, Verein gründen und löschen, Vereinsverwaltung, Teams und Trainer:innen führen, Spielerbestand und Vereinsliste mit Suche, Zuordnen und Herausnehmen, Doppelerfassung, Import aus einer Datei, Grenzen |
+| [Übungen](uebungen.md) | Altersstufen, Übungsbestand, eigene Übungen, Feld-Diagramme, Favoriten, Grenze für Konten ohne Verein |
+| [Trainings](trainings.md) | Trainings der beiden Altersstufen zusammenstellen, durchführen, drucken, veröffentlichen, Grenze für Konten ohne Verein |
+| [Team-Bereich](team-bereich.md) | Trainerteams im Verein samt Aufnehmen und Verlassen, Team-Trainings, Kalender mit Terminen und Terminserien samt Platz und Spielerzahl, Trainer:innen mit Einladung, Absage und Mindestbesetzung, Ausfälle, Trainingsplan mit nächstem Termin, Monat und geöffnetem Termin, Kalender-Abo, Spielerliste mit Herausnehmen, Schnuppertraining mit Info-Schreiben, Kader, Ab- und Anmelden, Spiele mit Meldungen, Meldefrist und Treffpunkten, privater Link je Spieler:in über alle Teams mit Kalender-Abo, Selbstabholung |
 | [Rückmeldungen](rueckmeldungen.md) | Wie die Anwendung über Vorgänge und Zustände Bescheid gibt |
 
 ## Pflicht zur Aktualisierung

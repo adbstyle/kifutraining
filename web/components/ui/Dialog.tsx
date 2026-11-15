@@ -59,8 +59,14 @@ export function Dialog({
     <dialog
       ref={ref}
       aria-labelledby={title ? titelId : undefined}
-      onClose={onClose}
+      // Nur die eigenen Ereignisse: React reicht `close` und `cancel` eines
+      // darin geschachtelten Dialogs (etwa einer Rückfrage) an die äusseren
+      // weiter, sonst schlösse Abbrechen oder Escape dort beide.
+      onClose={(e) => {
+        if (e.target === ref.current) onClose();
+      }}
       onCancel={(e) => {
+        if (e.target !== ref.current) return;
         e.preventDefault();
         onClose();
       }}

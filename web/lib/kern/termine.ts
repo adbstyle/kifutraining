@@ -48,7 +48,7 @@ import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugrif
 import { mitAbsagen } from "@/lib/trainer";
 import { besetzungProblem, type Mindestbesetzung } from "@/lib/besetzung";
 import { trainerBeimFestlegen, type TrainerWahl } from "@/lib/kern/trainer";
-import { HINWEIS_NICHTS_ENTSTANDEN, hinweisRest, kopiereTraining, type KopieErgebnis } from "@/lib/kern/kopie";
+import { hinweisRest, kopiereTraining, nichtsEntstanden, type KopieErgebnis } from "@/lib/kern/kopie";
 import { gibtEsTraining, loescheTrainingMitBildern, raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
 import {
   NICHT_GEFUNDEN,
@@ -191,8 +191,10 @@ export type TerminMitStand = TerminRoh & {
   termin_kader: { kader_id: string | null; kader: { name: string } | null }[];
 };
 
+// `!tk_termin_team`: eindeutige Einbettung neben dem FK auf termin_id allein
+// (Story #579, sonst PGRST201; wie TERMIN_SELECT in lib/queries/termine-fuer.ts).
 export async function ladeTerminMitStand(supabase: SupabaseClient, terminId: string): Promise<KernErgebnis<TerminMitStand>> {
-  return lade<TerminMitStand>(supabase, terminId, `${TERMIN_ROH}, spielstand, termin_kader ( kader_id, kader ( name ) )`);
+  return lade<TerminMitStand>(supabase, terminId, `${TERMIN_ROH}, spielstand, termin_kader!tk_termin_team ( kader_id, kader ( name ) )`);
 }
 
 async function lade<T extends TerminRoh>(supabase: SupabaseClient, terminId: string, spalten: string): Promise<KernErgebnis<T>> {
@@ -488,7 +490,7 @@ export type Verfallend = {
   nachtraege: number;
   /** Absagen von Trainer:innen (#520 AK 11). */
   absagen: number;
-  /** Anmeldungen von Probe-Spieler:innen (#555 AK 14, PC 5). */
+  /** Anmeldungen von schnuppernden Spieler:innen (#555 AK 14, PC 5). */
   anmeldungen: number;
   summe: number;
   /** Nur an einem Spiel (#463 AK 13, 26; #464 AK 10): verfallende Meldungen
@@ -930,7 +932,7 @@ export async function mitAufgeraeumterKopie(
   f: KernFehler,
   kopieId: string,
 ): Promise<KernFehler> {
-  if (await loescheTrainingMitBildern(supabase, kopieId)) return { ...f, hinweis: HINWEIS_NICHTS_ENTSTANDEN };
+  if (await loescheTrainingMitBildern(supabase, kopieId)) return { ...f, hinweis: nichtsEntstanden(f.art) };
   const { data } = await supabase.from("trainings").select("name").eq("id", kopieId).maybeSingle<{ name: string }>();
   return { ...f, meldung: `${f.meldung} ${kopieGebliebenText(data?.name ?? "Kopie")}`, hinweis: hinweisRest(kopieId) };
 }
@@ -942,7 +944,7 @@ async function kopierFehler(
   supabase: SupabaseClient,
   kopie: Extract<KopieErgebnis, { ok: false }>,
 ): Promise<KernFehler> {
-  if (kopie.nichtsEntstanden) return fehlschlag(kopie.art, kopie.error, { hinweis: HINWEIS_NICHTS_ENTSTANDEN });
+  if (kopie.nichtsEntstanden) return fehlschlag(kopie.art, kopie.error, { hinweis: nichtsEntstanden(kopie.art) });
   const { data } = await supabase.from("trainings").select("name").eq("id", kopie.rest).maybeSingle<{ name: string }>();
   return fehlschlag(kopie.art, `${kopie.error} ${kopieGebliebenText(data?.name ?? "Kopie")}`, {
     hinweis: hinweisRest(kopie.rest),

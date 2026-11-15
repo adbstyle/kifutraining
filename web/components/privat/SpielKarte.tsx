@@ -80,6 +80,8 @@ export function SpielKarte({
           <span className="type-body-medium text-on-surface-mittel">
             {t.beginn}–{t.ende}
           </span>
+          {/* Jeder Termin nennt sein Team (#583 AK 2). */}
+          <span className="type-body-small text-on-surface-mittel">{t.team}</span>
           {/* #533 AK 6, 10, 11; PC 5: mit Kartenlink als Link auf einer Zeile. */}
           {t.ort &&
             (t.ort_link && !t.ausgefallen ? (

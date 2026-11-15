@@ -1,0 +1,692 @@
+-- Prod-Weg, Teil 2 (Architekturplan Vereine §6.5, §6.7): Prüfabfragen nach
+-- den Vereine-Migrationen, je Verstoss ein `raise exception`.
+--
+--   psql "$DB_URL" -f prodweg_pruefen.sql
+--
+-- Teil A gilt für jede Datenbank nach dem Rollout: CI-Prod-Weg, Generalprobe
+-- auf Staging, Staging nach einem Sync. Teil B nur, wenn prodweg_bestand.sql
+-- vorher den synthetischen Bestand angelegt hat (Schema `prodweg`): Backfill
+-- dieses Bestands, Gleichwertigkeit der Lesepfade mit dem alten Schema und
+-- Testfall 1 (Story 1 PC 2) und die Dublette über zwei Teams (Story 2 PC 1,
+-- AK 7), Umbenennen der Teams mit gleichem Schlüssel (Story 5 PC 6), die
+-- Altdublette am Verein-Ort ändern, löschen und neu erfassen (Story 6), eine
+-- Bestands-Spieler:in in zwei Teams über Link, Abo und Abholung (Story 7),
+-- die Bestands-Schnuppernde über die neuen Schreibwege (Story 8), die
+-- Vereinsliste für ein Mitglied ohne Verwaltung (Story 4), der Import in
+-- den Bestandsverein samt Altdublette (Story 9), das Konto ohne Team mit
+-- Bestand über den Grenzen (Story 12), Gründen durch das Konto ohne Team und
+-- Löschen des Bestandsvereins (Story 11, zuletzt). Teil B ändert nichts
+-- bleibend (rollback). Spätere Stories ergänzen ihre Abfragen.
+
+\set ON_ERROR_STOP on
+
+-- ── Teil A: Invarianten ─────────────────────────────────────────────────────
+
+begin read only;
+set local statement_timeout = '120s';
+do $$
+declare
+  n bigint;
+  x text;
+begin
+  select count(*) into n from teams where verein_id is null;
+  if n > 0 then raise exception 'Teams ohne Verein: %', n; end if;
+  select count(*) into n from spieler where verein_id is null;
+  if n > 0 then raise exception 'Spieler:innen ohne Verein: %', n; end if;
+  select count(*) into n from spieler s where s.team_id is not null and not exists
+    (select 1 from team_spieler ts where ts.spieler_id = s.id and ts.team_id = s.team_id);
+  if n > 0 then raise exception 'Spieler:innen ohne Zuordnung zu ihrem Team: %', n; end if;
+  -- spieler.team_id = erstes Team bis Phase 7/8 (Story 3, Entscheid A.1): null nur ohne Zuordnung.
+  select count(*) into n from spieler s where s.team_id is null and exists
+    (select 1 from team_spieler ts where ts.spieler_id = s.id);
+  if n > 0 then raise exception 'Spieler:innen mit Zuordnung, aber ohne team_id: %', n; end if;
+  select count(*) into n from team_spieler ts join spieler s on s.id = ts.spieler_id
+   where s.verein_id <> ts.verein_id;
+  if n > 0 then raise exception 'Zuordnungen mit fremdem Verein: %', n; end if;
+  select count(*) into n from vereine v where not exists
+    (select 1 from verein_verwaltung w where w.verein_id = v.id);
+  if n > 0 then raise exception 'Vereine ohne Verwaltung: %', n; end if;
+  -- Höchstens ein Verein je Person (Story 11 AK 7).
+  select string_agg(user_id::text, ', ') into x from (
+    select user_id from (
+      select m.user_id, t.verein_id from team_members m join teams t on t.id = m.team_id
+      union select user_id, verein_id from verein_verwaltung) z
+     group by user_id having count(distinct verein_id) > 1) d;
+  if x is not null then raise exception 'Personen in mehreren Vereinen: %', x; end if;
+  -- Schnuppernde stehen in genau einem Team (Story 8 AK 5).
+  select count(*) into n from team_spieler ts where ts.probe_seit is not null and exists
+    (select 1 from team_spieler a where a.spieler_id = ts.spieler_id and a.team_id <> ts.team_id);
+  if n > 0 then raise exception 'Schnuppernde in mehreren Teams: %', n; end if;
+  -- Im selben Team kein Schlüssel doppelt.
+  select count(*) into n from (
+    select 1 from team_spieler ts join spieler s on s.id = ts.spieler_id
+     group by ts.team_id, spieler_text_schluessel(s.vorname), spieler_text_schluessel(s.nachname), s.jahrgang
+    having count(*) > 1) d;
+  if n > 0 then raise exception 'Doppelte Schlüssel im selben Team: %', n; end if;
+  -- Keine ungeprüften Constraints an den Tabellen des Epics (andere Tabellen
+  -- tragen schon vorher `not valid`-Constraints, etwa training_exercises).
+  -- Die FKs aus 20261114100000_zuordnung_invarianten.sql validiert
+  -- 20261115140000_zuordnung_invarianten_validieren.sql (Plan Phase A).
+  select string_agg(conname, ', ') into x from pg_constraint
+   where conrelid in ('teams'::regclass, 'spieler'::regclass, 'vereine'::regclass,
+                      'verein_verwaltung'::regclass, 'team_spieler'::regclass,
+                      'kader_spieler'::regclass, 'termin_abmeldungen'::regclass, 'spiel_meldungen'::regclass,
+                      'termin_statuswechsel'::regclass, 'termin_eingefroren'::regclass, 'termin_kader'::regclass,
+                      'spiel_treffpunkte'::regclass, 'termin_teilnahmen'::regclass, 'spiel_teilnahmen'::regclass)
+     and not convalidated;
+  if x is not null then raise exception 'Ungeprüfte Constraints: %', x; end if;
+  -- Grenzen der Konten ohne Verein (Story 12): je Tabelle die zwei Trigger,
+  -- aktiv (ein Sync unter replica schaltet sie nicht ab).
+  select string_agg(r || '.' || g, ', ') into x
+    from unnest(array['exercises', 'trainings']) r, unnest(array['konto_grenze_neu', 'konto_grenze_besitz']) g
+   where not exists (select 1 from pg_trigger t where t.tgrelid = r::regclass and t.tgname = g and t.tgenabled = 'O');
+  if x is not null then raise exception 'Trigger der Kontogrenzen fehlen oder sind abgeschaltet: %', x; end if;
+  -- Story 5: Ein Team ohne Mitglied bleibt bestehen; die Auflösewege der
+  -- Mitglieder sind weg (Teams ohne Mitglied sind ab dann erlaubt).
+  if to_regprocedure('team_aufloesen_wenn_leer()') is not null
+     or exists (select 1 from pg_trigger where tgname = 'team_aufloesen_wenn_leer')
+     or to_regprocedure('create_team(text)') is not null
+     or to_regprocedure('loese_team_auf(uuid,text)') is not null
+     or to_regprocedure('entferne_team_mitglied(uuid,uuid,text)') is not null then
+    raise exception 'Auflösewege der Mitglieder bestehen noch';
+  end if;
+  -- Story 7: Gültigkeit für Feedback über den Link ohne Team und ohne API-Recht.
+  if to_regprocedure('feedback_link_team(text)') is not null
+     or to_regprocedure('feedback_link_gueltig(text)') is null
+     or has_function_privilege('anon', 'feedback_link_gueltig(text)', 'execute')
+     or has_function_privilege('authenticated', 'feedback_link_gueltig(text)', 'execute') then
+    raise exception 'Feedback über den Link: feedback_link_team besteht oder feedback_link_gueltig fehlt bzw. hat API-Recht';
+  end if;
+end $$;
+rollback;
+
+-- ── Teil B: synthetischer Bestand (nur nach prodweg_bestand.sql) ────────────
+
+select to_regnamespace('prodweg') is not null as prodweg_bestand \gset
+\if :prodweg_bestand
+
+begin;
+set local statement_timeout = '120s';
+
+do $$
+declare
+  v_teams uuid[] := array[prodweg.id('t_gross'), prodweg.id('t_f1'), prodweg.id('t_f2'), prodweg.id('t_d')];
+  v_verein uuid := (select verein_id from teams where id = prodweg.id('t_gross'));
+  v_vorher jsonb := (select lesepfade from prodweg.vorher);
+  v_jetzt jsonb := prodweg.lesepfade();
+  k text;
+begin
+  -- Backfill: ein Verein «FC Wyler» mit genau der Verwaltung aus dem Default.
+  if (select name from vereine where id = v_verein) is distinct from 'FC Wyler'
+     or (select count(distinct verein_id) from teams where id = any(v_teams)) <> 1 then
+    raise exception 'Bestand nicht im Verein «FC Wyler»';
+  end if;
+  if (select array_agg(user_id) from verein_verwaltung where verein_id = v_verein)
+     is distinct from array[prodweg.id('verwaltung')] then
+    raise exception 'Verwaltung von FC Wyler ist nicht genau das Konto aus vereine_nachziehen';
+  end if;
+  if person_verein(prodweg.id('ohne_team')) is not null then
+    raise exception 'Konto ohne Team gehört einem Verein an';
+  end if;
+  if (select count(*) from team_spieler where team_id = any(v_teams))
+     <> (select count(*) from spieler where team_id = any(v_teams))
+     or (select count(*) from team_spieler where team_id = prodweg.id('t_gross')) <> 150 then
+    raise exception 'Zuordnungen des Bestands unvollständig';
+  end if;
+  if (select count(distinct s.id) from spieler s join team_spieler ts on ts.spieler_id = s.id and ts.team_id = s.team_id
+       where s.nachname = 'Dublette' and s.team_id = any(v_teams)) <> 2 then
+    raise exception 'Dublette nicht als zwei Datensätze mit je eigener Zuordnung';
+  end if;
+  if (select name from teams where id = prodweg.id('t_f2')) <> 'prodweg f junioren' then
+    raise exception 'Teamname mit gleichem Schlüssel verändert';
+  end if;
+  if (select probe_seit from team_spieler where spieler_id = prodweg.id('p_schnupper'))
+     is distinct from (select probe_seit from spieler where id = prodweg.id('p_schnupper')) then
+    raise exception 'Schnupper-Status nicht auf der Zuordnung';
+  end if;
+
+  -- Gleichwertigkeit: dieselben Ausgaben wie im alten Schema, und die
+  -- Schreibwege, die gelingen sollen, gelingen (vorher prüft prodweg_bestand.sql).
+  perform prodweg.erfolg_pruefen(v_jetzt, 'nachher');
+  if v_jetzt is distinct from v_vorher then
+    for k in select key from jsonb_each(v_vorher) loop
+      if v_jetzt -> k is distinct from v_vorher -> k then
+        raise exception 'Lesepfad «%» weicht ab. Vorher: % Jetzt: %', k, v_vorher -> k, v_jetzt -> k;
+      end if;
+    end loop;
+    raise exception 'Lesepfade weichen ab';
+  end if;
+end $$;
+
+-- Testfall 1 (Story 1 PC 2): Ein Team mit 150 Bestand kann ändern (auch die
+-- J+S-Nummer) und herausnehmen (seit Story 3 statt löschen); die 151.
+-- Spieler:in scheitert an der Teamgrenze. Als Trainer:in über die RPCs (wie
+-- PostgREST). Den Import ohne Teamgrenze am Verein-Ort prüft Story 9 unten.
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('trainer_a'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims \gset
+grant usage on schema prodweg to authenticated;
+grant select on prodweg.ids to authenticated;
+set local role authenticated;
+do $$
+declare
+  v_team uuid := prodweg.id('t_gross');
+  -- Über die Zuordnung: spieler.team_id ist ab Story 8 für die Rolle nicht lesbar.
+  v_eins uuid := (select s.id from spieler s join team_spieler ts on ts.spieler_id = s.id
+                   where ts.team_id = v_team and s.nachname = 'Nr 1');
+  v_drei uuid;
+  v jsonb;
+  f text;
+begin
+  perform spieler_aendern(v_team, v_eins, 'Gross', 'Nr 1', 2015, '1234');
+  -- Herausnehmen statt Löschen (Story 3).
+  v_drei := (select s.id from spieler s join team_spieler ts on ts.spieler_id = s.id
+              where ts.team_id = v_team and s.nachname = 'Nr 3');
+  v := spieler_aus_team_nehmen(v_team, v_drei, spieler_teams(v_team, v_drei) ->> 'stand');
+  if v ->> 'status' <> 'herausgenommen' or not (v ->> 'ohne_team')::boolean then
+    raise exception 'Testfall 1: Herausnehmen über der Grenze: %', v;
+  end if;
+  begin
+    perform spieler_aufnehmen(v_team, 'Neu', 'Neu', 2015, null);
+    raise exception 'Testfall 1: 151. Spieler:in aufgenommen';
+  exception when others then
+    if position('SPIELERLISTE_VOLL' in sqlerrm) = 0 then raise; end if;
+  end;
+  -- Eine J+S-Nummer bei Bestand über 100 setzen geht.
+  v := spieler_aendern(v_team, (select s.id from spieler s join team_spieler ts on ts.spieler_id = s.id
+                                 where ts.team_id = v_team and s.nachname = 'Nr 2'), 'Gross', 'Nr 2', 2015, '4711');
+  if v <> '{"status": "geaendert"}'::jsonb then raise exception 'Testfall 1: J+S über der Grenze: %', v; end if;
+
+  -- Story 2 (PC 1, AK 7): Die Dublette über zwei Teams bleibt ohne
+  -- Schlüsseländerung änderbar; eine dritte Erfassung mit demselben
+  -- Schlüssel weist ab und nennt beide Teams.
+  v := spieler_aendern(prodweg.id('t_f1'), (select s.id from spieler s join team_spieler ts on ts.spieler_id = s.id
+                                             where ts.team_id = prodweg.id('t_f1') and s.nachname = 'Dublette'),
+                       'Lea', 'Dublette', 2017, '55');
+  if v <> '{"status": "geaendert"}'::jsonb then raise exception 'Story 2: Dublette nicht änderbar: %', v; end if;
+  v := spieler_aufnehmen(prodweg.id('t_d'), 'Lea', 'Dublette', 2017, null);
+  if v ->> 'status' <> 'abgewiesen' or v ->> 'grund' <> 'doppelt' or (v ->> 'eigenes_team')::boolean
+     or jsonb_array_length(v -> 'teams') <> 2
+     or not v -> 'teams' @> '["Prodweg F-Junioren", "prodweg f junioren"]'::jsonb then
+    raise exception 'Story 2: dritte Erfassung nicht als doppelt abgewiesen: %', v;
+  end if;
+end $$;
+reset role;
+-- Das Netz im Trigger: dieselbe dritte Erfassung ohne RPC.
+do $$
+begin
+  insert into spieler (team_id, verein_id, vorname, nachname, jahrgang)
+  values (prodweg.id('t_d'), (select verein_id from teams where id = prodweg.id('t_d')), 'Lea', 'Dublette', 2017);
+  raise exception 'Story 2: dritte Erfassung ohne RPC angenommen';
+exception when others then
+  if position('SPIELER_DOPPELT' in sqlerrm) = 0 then raise; end if;
+end $$;
+do $$
+begin
+  if (select count(*) from team_spieler where team_id = prodweg.id('t_gross')) <> 149
+     or (select js_nummer from spieler where team_id = prodweg.id('t_gross') and nachname = 'Nr 2') <> '4711' then
+    raise exception 'Testfall 1: Bestand nach Ändern und Herausnehmen falsch';
+  end if;
+  if (select count(*) from spieler where nachname = 'Dublette' and team_id in (prodweg.id('t_f1'), prodweg.id('t_f2'))) <> 2
+     or (select js_nummer from spieler where team_id = prodweg.id('t_f1') and nachname = 'Dublette') <> '55' then
+    raise exception 'Story 2: Dublette nicht als zwei Datensätze erhalten oder Änderung fehlt';
+  end if;
+end $$;
+
+-- Story 4 (AK 1, 3, 7, PC 2): trainer_b (nur Mitglied von t_f2) liest die
+-- Vereinsliste des Bestandsvereins: alle Spieler:innen, die Altdublette als
+-- zwei Zeilen, nur die vier Angaben; «ohne Team» trifft genau die
+-- Spieler:innen ohne Zuordnung. Erwartung als Eigentümer, Aufruf als
+-- Mitglied; vor Story 6, die eine der Altdubletten löscht.
+reset role;
+select set_config('prodweg.liste_erwartet', jsonb_build_object(
+         'verein', v.id,
+         'gesamt', (select count(*) from spieler s where s.verein_id = v.id),
+         'dublette', (select count(*) from spieler s where s.verein_id = v.id and s.nachname = 'Dublette'),
+         'ohne_team', (select count(*) from spieler s where s.verein_id = v.id
+                        and not exists (select 1 from team_spieler ts where ts.spieler_id = s.id)))::text, true)
+       is not null as prodweg_liste_erwartet
+  from (select verein_id as id from teams where id = prodweg.id('t_gross')) v \gset
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('trainer_b'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims_vereinsliste \gset
+set local role authenticated;
+do $$
+declare
+  e jsonb := current_setting('prodweg.liste_erwartet')::jsonb;
+  l jsonb := verein_spielerliste((e ->> 'verein')::uuid);
+  z jsonb;
+begin
+  if jsonb_array_length(l -> 'spieler') <> (e ->> 'gesamt')::int or l -> 'gesamt' <> e -> 'gesamt'
+     or l -> 'ohne_team' <> e -> 'ohne_team' or l -> 'verwaltung' <> 'false'
+     or (select count(*) from jsonb_array_elements(l -> 'spieler') x where x ->> 'nachname' = 'Dublette') <> (e ->> 'dublette')::int
+     or (e ->> 'dublette')::int < 2 then
+    raise exception 'Story 4: Vereinsliste des Mitglieds unvollständig: % gegen %', l - 'spieler', e;
+  end if;
+  for z in select * from jsonb_array_elements(l -> 'spieler') loop
+    if array(select k from jsonb_object_keys(z) k order by k) <> array['id', 'jahrgang', 'nachname', 'teams', 'vorname'] then
+      raise exception 'Story 4: Vereinsliste des Mitglieds mit Angaben der Verwaltung: %', z;
+    end if;
+  end loop;
+  if jsonb_array_length(verein_spielerliste((e ->> 'verein')::uuid, p_ohne_team => true) -> 'spieler') <> (e ->> 'ohne_team')::int then
+    raise exception 'Story 4: Eingrenzung «ohne Team» im Bestand: %', verein_spielerliste((e ->> 'verein')::uuid, p_ohne_team => true);
+  end if;
+end $$;
+reset role;
+
+-- Story 5 (PC 6, AK 22): Von den zwei Teams mit gleichem Schlüssel lässt sich
+-- eines auf eine andere Schreibweise und auf einen neuen Schlüssel umbenennen,
+-- nicht aber zurück auf den Schlüssel des anderen; ein drittes Team mit
+-- diesem Schlüssel entsteht nicht. Als Verwaltung über die RPCs.
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('verwaltung'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims_verwaltung \gset
+set local role authenticated;
+do $$
+declare
+  v_verein uuid := (select verein_id from teams where id = prodweg.id('t_gross'));
+  v jsonb;
+begin
+  v := verein_team_umbenennen(prodweg.id('t_f2'), 'Prodweg F junioren');
+  if v <> '{"status": "umbenannt", "name": "Prodweg F junioren"}'::jsonb then
+    raise exception 'Story 5: Altdublette nicht auf andere Schreibweise umbenennbar: %', v;
+  end if;
+  v := verein_team_anlegen(v_verein, 'PRODWEG F-JUNIOREN');
+  if v ->> 'status' <> 'abgewiesen' or v ->> 'grund' <> 'name_vergeben' then
+    raise exception 'Story 5: drittes Team mit vergebenem Schlüssel: %', v;
+  end if;
+  v := verein_team_umbenennen(prodweg.id('t_f2'), 'Prodweg F-Junioren Zwei');
+  if v ->> 'status' <> 'umbenannt' then raise exception 'Story 5: Umbenennen auf neuen Schlüssel: %', v; end if;
+  v := verein_team_umbenennen(prodweg.id('t_f2'), 'prodweg f junioren');
+  if v <> '{"status": "abgewiesen", "grund": "name_vergeben", "team": "Prodweg F-Junioren"}'::jsonb then
+    raise exception 'Story 5: Umbenennen zurück auf vergebenen Schlüssel: %', v;
+  end if;
+end $$;
+
+-- Story 9 (AK 2, 3, 5, 8; Testfall 24): Die Verwaltung importiert in den
+-- Bestandsverein. Eine Zeile trifft die Altdublette über zwei Teams
+-- (`mehrfach` mit beiden Teams, ihre J+S-Nummern bleiben), eine ändert die
+-- J+S-Nummer im Team mit 149 (keine Teamgrenze), eine ist neu und kommt ohne
+-- Team in den Verein. In einer Untertransaktion, die danach zurückrollt: Die
+-- folgenden Fälle sehen den Bestand unverändert.
+do $$
+declare
+  v_verein uuid := (select verein_id from teams where id = prodweg.id('t_gross'));
+  v_liste jsonb := verein_spielerliste(v_verein);
+  v_team jsonb := (select jsonb_agg(jsonb_build_object('id', e -> 'id', 'name', e -> 'name') order by e ->> 'name', e ->> 'id')
+                     from jsonb_array_elements(v_liste -> 'teams') e
+                    where (e ->> 'id')::uuid in (prodweg.id('t_f1'), prodweg.id('t_f2')));
+  v_gross jsonb := (select jsonb_build_array(jsonb_build_object('id', e -> 'id', 'name', e -> 'name'))
+                      from jsonb_array_elements(v_liste -> 'teams') e where (e ->> 'id')::uuid = prodweg.id('t_gross'));
+  v_nr4 jsonb := (select e from jsonb_array_elements(v_liste -> 'spieler') e
+                   where e ->> 'vorname' = 'Gross' and e ->> 'nachname' = 'Nr 4');
+  v_dubletten text := (select string_agg(coalesce(e ->> 'js', '-'), ',' order by e ->> 'id')
+                         from jsonb_array_elements(v_liste -> 'spieler') e where e ->> 'nachname' = 'Dublette');
+  v_zeilen jsonb := '[{"zeile": 2, "vorname": "Gross", "nachname": "Nr 4", "jahrgang": 2015, "js": "999"},
+                      {"zeile": 3, "vorname": "lea", "nachname": "DUBLETTE", "jahrgang": 2017, "js": "77"},
+                      {"zeile": 4, "vorname": "Prodweg", "nachname": "Import", "jahrgang": 2016}]';
+  v jsonb;
+begin
+  if v_nr4 is null or jsonb_array_length(v_team) <> 2 then
+    raise exception 'Story 9: Bestand für den Import nicht wie erwartet';
+  end if;
+  begin
+    v := verein_spieler_importieren(v_verein, v_zeilen);
+    if v <> jsonb_build_object('status', 'vorschau', 'bestand', (v_liste ->> 'gesamt')::int, 'ueber', 0,
+                               'neu', '[4]'::jsonb,
+                               'js', jsonb_build_array(jsonb_build_object('zeile', 2, 'alt', v_nr4 -> 'js', 'teams', v_gross)),
+                               'gleich', '[]'::jsonb,
+                               'mehrfach', jsonb_build_array(jsonb_build_object('zeile', 3, 'teams', v_team))) then
+      raise exception 'Story 9: Vorschau im Bestand: %', v;
+    end if;
+    v := verein_spieler_importieren(v_verein, v_zeilen, jsonb_build_object('neu', '[4]'::jsonb,
+           'js', jsonb_build_array(jsonb_build_object('zeile', 2, 'alt', v_nr4 -> 'js')), 'mehrfach', '[3]'::jsonb));
+    if v <> '{"status": "uebernommen", "neu": 1, "js": 1}'::jsonb then
+      raise exception 'Story 9: Übernahme im Bestand: %', v;
+    end if;
+    v_liste := verein_spielerliste(v_verein);
+    if (select e -> 'teams' from jsonb_array_elements(v_liste -> 'spieler') e
+         where e ->> 'vorname' = 'Prodweg' and e ->> 'nachname' = 'Import') is distinct from '[]'::jsonb
+       or (select e ->> 'js' from jsonb_array_elements(v_liste -> 'spieler') e
+            where e ->> 'vorname' = 'Gross' and e ->> 'nachname' = 'Nr 4') <> '999'
+       or (select string_agg(coalesce(e ->> 'js', '-'), ',' order by e ->> 'id')
+             from jsonb_array_elements(v_liste -> 'spieler') e where e ->> 'nachname' = 'Dublette') <> v_dubletten
+       or (select count(*) from jsonb_array_elements(v_liste -> 'teams') e
+            where (e ->> 'id')::uuid = prodweg.id('t_gross') and (e ->> 'anzahl')::int = 149) <> 1 then
+      raise exception 'Story 9: Bestand nach der Übernahme falsch: %', v_liste;
+    end if;
+    raise exception 'prodweg_story9_zurueck';
+  exception when others then
+    if sqlerrm <> 'prodweg_story9_zurueck' then raise; end if;
+  end;
+end $$;
+
+-- Story 6 (Zettel A2.6, A2.8): Am Verein-Ort bleibt die Altdublette ohne
+-- Schlüsseländerung änderbar; ändert die eine ihren Schlüssel weg und
+-- zurück, weist das ab und nennt das Team der anderen. Die eine lässt sich
+-- löschen (Altbestand, Kaskade über die validierten FKs), die andere
+-- bleibt; danach weist eine neue Erfassung mit deren Schlüssel ab, und der
+-- frei gewordene geht. Als
+-- Verwaltung über die RPCs.
+do $$
+declare
+  v_verein uuid := (select verein_id from teams where id = prodweg.id('t_gross'));
+  v_f1 text := (select e ->> 'name' from jsonb_array_elements(verein_spielerliste(v_verein) -> 'teams') e
+                 where e ->> 'id' = prodweg.id('t_f1')::text);
+  v_f2 text := (select e ->> 'name' from jsonb_array_elements(verein_spielerliste(v_verein) -> 'teams') e
+                 where e ->> 'id' = prodweg.id('t_f2')::text);
+  v_d1 uuid;
+  v_d2 uuid;
+  v jsonb;
+begin
+  -- Die Verwaltung liest Altdublette und Teamnamen über ihre Liste (RLS
+  -- zeigt ihr nur die eigenen Teams).
+  select (e ->> 'id')::uuid into v_d1 from jsonb_array_elements(verein_spielerliste(v_verein) -> 'spieler') e
+   where e ->> 'nachname' = 'Dublette' and e -> 'teams' @> jsonb_build_array(jsonb_build_object('id', prodweg.id('t_f1')));
+  select (e ->> 'id')::uuid into v_d2 from jsonb_array_elements(verein_spielerliste(v_verein) -> 'spieler') e
+   where e ->> 'nachname' = 'Dublette' and e -> 'teams' @> jsonb_build_array(jsonb_build_object('id', prodweg.id('t_f2')));
+  if v_d1 is null or v_d2 is null then raise exception 'Story 6: Altdublette nicht in der Liste der Verwaltung'; end if;
+  v := verein_spieler_aendern(v_d1, 'Lea', 'Dublette', 2017, '66');
+  if v <> '{"status": "geaendert"}'::jsonb then raise exception 'Story 6: Altdublette nicht änderbar: %', v; end if;
+  v := verein_spieler_aendern(v_d2, 'Lea', 'Dublette', 2018, null);
+  if v <> '{"status": "geaendert"}'::jsonb then raise exception 'Story 6: Schlüssel der Altdublette nicht änderbar: %', v; end if;
+  v := verein_spieler_aendern(v_d2, 'lea', 'dublette', 2017, null);
+  if v <> jsonb_build_object('status', 'abgewiesen', 'grund', 'doppelt', 'teams', jsonb_build_array(v_f1), 'ohne_team', false) then
+    raise exception 'Story 6: Ändern zurück auf den Schlüssel der anderen: %', v;
+  end if;
+  v := verein_spieler_entfernen(v_d1);
+  if v <> jsonb_build_object('status', 'geloescht', 'teams',
+                             jsonb_build_array(jsonb_build_object('id', prodweg.id('t_f1'), 'name', v_f1))) then
+    raise exception 'Story 6: Altdublette nicht löschbar: %', v;
+  end if;
+  v := verein_spieler_anlegen(v_verein, 'Lea', 'Dublette', 2018, null);
+  if v <> jsonb_build_object('status', 'abgewiesen', 'grund', 'doppelt', 'teams', jsonb_build_array(v_f2), 'ohne_team', false) then
+    raise exception 'Story 6: Erfassen mit dem Schlüssel der verbliebenen: %', v;
+  end if;
+  v := verein_spieler_anlegen(v_verein, 'Lea', 'Dublette', 2017, null);
+  if v ->> 'status' <> 'angelegt' then raise exception 'Story 6: frei gewordener Schlüssel: %', v; end if;
+end $$;
+reset role;
+do $$
+begin
+  if exists (select 1 from spieler where nachname = 'Dublette' and team_id = prodweg.id('t_f1'))
+     or exists (select 1 from team_spieler ts join spieler s on s.id = ts.spieler_id
+                 where ts.team_id = prodweg.id('t_f1') and s.nachname = 'Dublette')
+     or (select jahrgang from spieler where team_id = prodweg.id('t_f2') and nachname = 'Dublette') <> 2018 then
+    raise exception 'Story 6: Bestand nach Löschen der Altdublette falsch';
+  end if;
+end $$;
+
+-- Story 7 (AK 1, 6, 7, 11, 18; Testfall 23): Eine Bestands-Spieler:in (p4,
+-- D-Junioren) kommt zusätzlich in t_f2. Ihr bisheriger Link und ihr Abo
+-- zeigen die Termine beider Teams, beide Abholadressen liefern denselben
+-- Link, Abmelden im zweiten Team gelingt; nach dem Herausnehmen aus t_f2
+-- `gilt_nicht`, ohne Team bleibt der Link gültig und Feedback geht.
+set local role authenticated;
+do $$
+begin
+  perform verein_spieler_zuordnen(prodweg.id('t_f2'), array[prodweg.id('p4')]);
+end $$;
+reset role;
+do $$
+declare
+  v_link text := (select link_token from spieler where id = prodweg.id('p4'));
+  v_abo text := spieler_abo_holen(v_link);
+  v_teams jsonb := (select jsonb_agg(name order by name) from teams where id in (prodweg.id('t_d'), prodweg.id('t_f2')));
+  v jsonb := spieler_link_ansicht(v_link);
+  r jsonb;
+begin
+  if v -> 'teams' <> v_teams
+     or not exists (select 1 from jsonb_array_elements(v -> 'termine') e where e ->> 'id' = prodweg.id('tr_f2')::text
+                                                                         and e ->> 'team' = (select name from teams where id = prodweg.id('t_f2')))
+     or not exists (select 1 from jsonb_array_elements(v -> 'termine') e where e ->> 'id' = prodweg.id('tr_kommend')::text) then
+    raise exception 'Story 7: Link in zwei Teams: %', v;
+  end if;
+  if not exists (select 1 from jsonb_array_elements(spieler_abo_termine(v_abo) -> 'termine') e
+                  where e ->> 'id' = prodweg.id('tr_f2')::text and e ->> 'team' is not null) then
+    raise exception 'Story 7: Abo in zwei Teams: %', spieler_abo_termine(v_abo);
+  end if;
+  insert into team_abholung (team_id, aktiv) values (prodweg.id('t_f2'), true);
+  foreach r in array array[
+    abholung_abholen((select token from team_abholung where team_id = prodweg.id('t_d')), repeat('p', 32), 'Dan', 'Dee', 2013),
+    abholung_abholen((select token from team_abholung where team_id = prodweg.id('t_f2')), repeat('p', 32), 'Dan', 'Dee', 2013)] loop
+    if r ->> 'status' <> 'ok' or r ->> 'token' <> v_link then raise exception 'Story 7: Abholung in zwei Teams: %', r; end if;
+  end loop;
+  r := spieler_link_abmelden(v_link, prodweg.id('tr_f2'), true, null, null);
+  if r ->> 'status' <> 'ok' then raise exception 'Story 7: Abmelden im zweiten Team: %', r; end if;
+end $$;
+set local role authenticated;
+do $$
+begin
+  perform verein_spieler_aus_team_nehmen(prodweg.id('t_f2'), prodweg.id('p4'));
+end $$;
+reset role;
+do $$
+declare
+  v_link text := (select link_token from spieler where id = prodweg.id('p4'));
+  r jsonb := spieler_link_abmelden(v_link, prodweg.id('tr_f2'), false, null, null);
+begin
+  if r <> '{"status": "abgewiesen", "grund": "gilt_nicht"}' then
+    raise exception 'Story 7: Abmelden nach dem Herausnehmen: %', r;
+  end if;
+end $$;
+set local role authenticated;
+do $$
+begin
+  perform verein_spieler_aus_team_nehmen(prodweg.id('t_d'), prodweg.id('p4'));
+end $$;
+reset role;
+do $$
+declare
+  v_link text := (select link_token from spieler where id = prodweg.id('p4'));
+begin
+  if not spieler_link_ansicht(v_link) @> '{"gueltig": true, "teams": [], "termine": []}'
+     or not feedback_link_beginnen(v_link) @> '{"status": "ok", "ohne_team": true}' then
+    raise exception 'Story 7: ohne Team: %', spieler_link_ansicht(v_link);
+  end if;
+end $$;
+
+-- Story 8 (PC 1–3, AK 8, 11, 13): Die Bestands-Schnuppernde (p_schnupper,
+-- seit 20 Tagen in t_d) schnuppert nach der Kette weiter (Stand, Link und
+-- Anzahl samt Info prüft die Gleichwertigkeit oben). Als Mitglied von t_d
+-- über die RPCs mit p_team: aus- und wieder einschalten zählt ab null; eine
+-- neu erfasste Spieler:in ohne Team lässt sich als Verwaltung zum Schnuppern
+-- zuordnen (zuerst nicht angemeldet); Herausnehmen beendet das Schnuppern.
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('trainer_a'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims_schnuppern \gset
+set local role authenticated;
+do $$
+declare
+  v jsonb;
+begin
+  v := spieler_teams(prodweg.id('t_d'), prodweg.id('p_schnupper'));
+  if not (v ->> 'schnuppert')::boolean then raise exception 'Story 8: Bestands-Schnuppernde schnuppert nicht: %', v; end if;
+  v := spieler_probe_setzen(prodweg.id('t_d'), prodweg.id('p_schnupper'), false);
+  if v <> '{"probe": false, "verfallen": 0}' then raise exception 'Story 8: Ausschalten: %', v; end if;
+  v := spieler_probe_setzen(prodweg.id('t_d'), prodweg.id('p_schnupper'), true);
+  if v <> '{"probe": true, "verfallen": 0}' then raise exception 'Story 8: Einschalten: %', v; end if;
+  v := spieler_teams(prodweg.id('t_d'), prodweg.id('p_schnupper'));
+  v := spieler_aus_team_nehmen(prodweg.id('t_d'), prodweg.id('p_schnupper'), v ->> 'stand');
+  if v ->> 'status' <> 'herausgenommen' or not (v ->> 'schnuppern_beendet')::boolean then
+    raise exception 'Story 8: Herausnehmen der Schnuppernden: %', v;
+  end if;
+end $$;
+reset role;
+do $$
+begin
+  if exists (select 1 from team_spieler where spieler_id = prodweg.id('p_schnupper'))
+     or probe_stand(prodweg.id('p_schnupper')) is not null then
+    raise exception 'Story 8: Schnuppern nach dem Herausnehmen nicht beendet';
+  end if;
+end $$;
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('verwaltung'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims_schnuppern_verwaltung \gset
+set local role authenticated;
+do $$
+declare
+  v_verein uuid := (select verein_id from teams where id = prodweg.id('t_gross'));   -- RLS: nur eigene Teams
+  v_neu uuid;
+  v jsonb;
+begin
+  v := verein_spieler_anlegen(v_verein, 'Sam', 'Schnupper', 2013, null);
+  if v ->> 'status' <> 'angelegt' then raise exception 'Story 8: Erfassen ohne Team: %', v; end if;
+  v_neu := (v ->> 'id')::uuid;
+  v := verein_spieler_zuordnen(prodweg.id('t_d'), array[v_neu], true);
+  if v <> '{"status": "zugeordnet", "anzahl": 1, "ersetzt": 0}' then raise exception 'Story 8: Zuordnen zum Schnuppern: %', v; end if;
+  if not verein_team_ansicht(prodweg.id('t_d')) -> 'spieler' @> jsonb_build_array(jsonb_build_object(
+           'id', v_neu, 'schnuppern', jsonb_build_object('anzahl', 3, 'besucht', 0))) then
+    raise exception 'Story 8: Zähler nach dem Zuordnen zum Schnuppern: %', verein_team_ansicht(prodweg.id('t_d'));
+  end if;
+  perform set_config('prodweg.neu', v_neu::text, true);
+end $$;
+reset role;
+do $$
+declare
+  v_neu uuid := current_setting('prodweg.neu')::uuid;
+begin
+  if not training_abgemeldet(prodweg.id('tr_kommend'), v_neu) or termin_gilt_fuer(prodweg.id('sp_kommend'), v_neu)
+     or probe_stand(v_neu) ->> 'besucht' <> '0' then
+    raise exception 'Story 8: zum Schnuppern zugeordnet, aber angemeldet, Spiel gilt oder zählt nicht ab null: %', probe_stand(v_neu);
+  end if;
+end $$;
+
+-- Story 12 (PC 1, 3, AK 2, 3, 6): Das Konto ohne Team besitzt 60 Übungen und
+-- 31 Trainings aus dem alten Schema. Der Bestand bleibt und lässt sich
+-- ändern, veröffentlichen, auf Entwurf setzen und löschen; Neues wird mit dem
+-- tatsächlichen Bestand abgewiesen, bis es unter der Grenze liegt. Vor
+-- Story 11 (die macht das Konto zur Verwaltung).
+do $$
+begin
+  if konto_bestand(prodweg.id('ohne_team')) <> '{"uebungen": 60, "trainings": 31}' then
+    raise exception 'Story 12: Bestand des Kontos ohne Team: %', konto_bestand(prodweg.id('ohne_team'));
+  end if;
+end $$;
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('ohne_team'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims_grenzen \gset
+set local role authenticated;
+do $$
+declare
+  v_uid uuid := prodweg.id('ohne_team');
+  v_ue uuid := (select id from exercises where slug = 'prodweg-ohne-team-2');
+  v_tr uuid := (select id from trainings where owner_id = v_uid order by name limit 1);
+  f text;
+  -- Neue Übung bzw. neues Training wie die Anwendung (direkter Insert, RLS).
+  c_ue constant text := format($q$insert into exercises (slug, name, trainingsteil, aufbau, source, owner_id)
+                                  values ('prodweg-neu-' || gen_random_uuid(), 'Neu', 'ausklang', 'Aufbau', 'user', %L)$q$, v_uid);
+  c_tr constant text := format($q$insert into trainings (name, owner_id, visibility, altersstufe, stufen)
+                                  values ('Neu', %L, 'private', 'kinderfussball', array['F'])$q$, v_uid);
+begin
+  if meine_vereinslage() <> '{"verein": null, "grenzen": {"uebungen": {"bestand": 60, "max": 50},
+                                                           "trainings": {"bestand": 31, "max": 30}}}' then
+    raise exception 'Story 12: meine_vereinslage über der Grenze: %', meine_vereinslage();
+  end if;
+  update exercises set name = 'Prodweg geändert', visibility = 'public' where id = v_ue;
+  update exercises set visibility = 'private' where id = v_ue;
+  update trainings set name = 'Prodweg geändert' where id = v_tr;
+  if not found or (select name from exercises where id = v_ue) <> 'Prodweg geändert' then
+    raise exception 'Story 12: Bestand über der Grenze nicht änderbar';
+  end if;
+  delete from exercises where id = v_ue;
+  begin
+    execute c_ue;
+    raise exception 'Story 12: Übung über der Grenze angelegt';
+  exception when raise_exception then
+    get stacked diagnostics f = message_text;
+    if f <> 'KONTO_UEBUNGEN_VOLL 59' then raise exception 'Story 12: Abweisung der Übung: %', f; end if;
+  end;
+  begin
+    execute c_tr;
+    raise exception 'Story 12: Training über der Grenze angelegt';
+  exception when raise_exception then
+    get stacked diagnostics f = message_text;
+    if f <> 'KONTO_TRAININGS_VOLL 31' then raise exception 'Story 12: Abweisung des Trainings: %', f; end if;
+  end;
+  -- Bis unter die Grenze löschen: genau eine neue geht wieder.
+  delete from exercises where id in (select id from exercises where owner_id = v_uid order by slug limit 10);
+  delete from trainings where id in (select id from trainings where owner_id = v_uid order by name limit 2);
+  execute c_ue;
+  execute c_tr;
+  begin
+    execute c_ue;
+    raise exception 'Story 12: 51. Übung angelegt';
+  exception when raise_exception then
+    get stacked diagnostics f = message_text;
+    if f <> 'KONTO_UEBUNGEN_VOLL 50' then raise exception 'Story 12: Abweisung an der Grenze: %', f; end if;
+  end;
+end $$;
+reset role;
+
+-- Story 11 (AK 1, 10–13, PC 1, 3, 4; Testfälle 20, 21): Auf dem migrierten
+-- Bestand gründet das Konto ohne Team einen Verein und ist dessen einzige
+-- Person. Die Verwaltung des Bestandsvereins ist letzte Verwaltung mit
+-- weiteren Personen, sieht deren Zahl und löscht den Verein mit seinem
+-- Namen (ein falscher löscht nichts). Danach ist nichts des Bestandsvereins
+-- mehr da, alle Personen sind Konten ohne Verein, der neue Verein bleibt.
+-- Letzter Fall von Teil B (der Bestand ist danach weg; rollback).
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('ohne_team'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims_gruenden \gset
+set local role authenticated;
+do $$
+declare
+  v jsonb;
+begin
+  v := verein_gruenden('Prodweg Neu', true);
+  if v ->> 'status' <> 'gegruendet' or v ->> 'name' <> 'Prodweg Neu' then raise exception 'Story 11: Gründen: %', v; end if;
+  v := konto_loeschen_info();
+  if v <> '{"fall": "einzige_person", "verein": "Prodweg Neu", "teams": 0, "spieler": 0}' then
+    raise exception 'Story 11: Vorschau nach dem Gründen: %', v;
+  end if;
+end $$;
+reset role;
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('verwaltung'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims_loeschen \gset
+set local role authenticated;
+do $$
+declare
+  v_verein uuid := (select verein_id from teams where id = prodweg.id('t_gross'));   -- RLS: nur eigene Teams
+  v_ansicht jsonb := verein_ansicht(v_verein);
+  v jsonb;
+begin
+  perform set_config('prodweg.verein', v_verein::text, true);
+  v := konto_loeschen_info();
+  if v <> jsonb_build_object('fall', 'letzte_verwaltung', 'verein', v_ansicht ->> 'name', 'teams', 0, 'spieler', 0) then
+    raise exception 'Story 11: Vorschau der letzten Verwaltung: %', v;
+  end if;
+  if v_ansicht -> 'personen' <> '3' then raise exception 'Story 11: personen: %', v_ansicht -> 'personen'; end if;
+  v := verein_loeschen(v_verein, upper(v_ansicht ->> 'name'));
+  if v <> jsonb_build_object('status', 'vereinsname_falsch', 'name', v_ansicht ->> 'name') then
+    raise exception 'Story 11: falscher Name: %', v;
+  end if;
+  v := verein_loeschen(v_verein, ' ' || (v_ansicht ->> 'name') || ' ');
+  if v ->> 'status' <> 'geloescht' or jsonb_typeof(v -> 'bilder') <> 'array' then
+    raise exception 'Story 11: Löschen des Bestandsvereins: %', v;
+  end if;
+end $$;
+reset role;
+do $$
+declare
+  v_verein uuid := current_setting('prodweg.verein')::uuid;
+begin
+  if exists (select 1 from vereine where id = v_verein)
+     or exists (select 1 from teams where verein_id = v_verein or id in (select id from prodweg.ids))
+     or exists (select 1 from spieler where verein_id = v_verein)
+     or exists (select 1 from training_termine where team_id in (select id from prodweg.ids))
+     or exists (select 1 from verein_verwaltung where verein_id = v_verein) then
+    raise exception 'Story 11: Bestandsverein nicht vollständig gelöscht';
+  end if;
+  if person_verein(prodweg.id('verwaltung')) is not null or person_verein(prodweg.id('trainer_a')) is not null
+     or person_verein(prodweg.id('trainer_b')) is not null then
+    raise exception 'Story 11: Personen des Bestandsvereins haben noch einen Verein';
+  end if;
+  if (select v.name from vereine v where v.id = person_verein(prodweg.id('ohne_team'))) is distinct from 'Prodweg Neu' then
+    raise exception 'Story 11: neuer Verein betroffen';
+  end if;
+end $$;
+
+rollback;
+\endif

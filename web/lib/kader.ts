@@ -94,7 +94,7 @@ export function verfallKennzeichnungenAusFehler(message: string): number {
   return m ? Number(m[1]) : 0;
 }
 
-/** Wie viele der verfallenden Anmeldungen von Probe-Spieler:innen sind
+/** Wie viele der verfallenden Anmeldungen von schnuppernden Spieler:innen sind
  *  (#555 AK 14): die vierte Zahl hinter dem Marker, sonst 0. */
 export function verfallAnmeldungenAusFehler(message: string): number {
   const m = message.match(new RegExp(`${VERFALL_MARKER} \\d+ \\d+ \\d+ (\\d+)`));
@@ -106,7 +106,7 @@ export function verfallAnmeldungenAusFehler(message: string): number {
  *  Meldung, wenn das Spiel wieder für sie gilt. `kennzeichnungen`: davon
  *  Kennzeichnungen als nicht aufgeboten (#464 AK 10). */
 export function kaderVerfallText(n: number, spiele = 0, kennzeichnungen = 0, anmeldungen = 0): string {
-  // Anmeldungen von Probe-Spieler:innen (#555 AK 14) als eigener Satz.
+  // Anmeldungen von schnuppernden Spieler:innen (#555 AK 14) als eigener Satz.
   if (anmeldungen > 0)
     return mitAnmeldungen(n - anmeldungen > 0 ? kaderVerfallText(n - anmeldungen, spiele, kennzeichnungen) : "", anmeldungen);
   const ab = n - spiele - kennzeichnungen;

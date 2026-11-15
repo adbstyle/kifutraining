@@ -6,7 +6,7 @@ import { Shirt } from "lucide-react";
 import { Leerzustand, Lozenge, LozengeAuswahl, type Wechsel } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { setzeAnwesenheitAktion, setzeAufgebotAktion, setzeMeldungAktion } from "@/lib/actions/abmeldungen";
-import { EHEMALIGE_SPIELERIN, spielerName } from "@/lib/spieler";
+import { EHEMALIGE_SPIELERIN, NICHT_MEHR_IM_TEAM, spielerName } from "@/lib/spieler";
 import {
   AUFGEBOT_TEXT,
   MELDUNG_TEXT,
@@ -368,7 +368,12 @@ function NachtragZeile({
   const beimAnpfiff = meldeStatus(s.meldung, s.nichtAufgeboten, fristAbgelaufen);
   const nachtrag = zaehlte ? MELDE_STATUS.nichtErschienen : MELDE_STATUS.dochErschienen;
   const status = nachgetragen ? nachtrag : beimAnpfiff;
-  const zeile2 = [zaehlte && !nachgetragen ? "angemeldet" : warBeimAnpfiff(s, fristAbgelaufen), s.gewechseltAm && seitWann(s.gewechseltAm, gelesenAm), ...s.kader]
+  const zeile2 = [
+    zaehlte && !nachgetragen ? "angemeldet" : warBeimAnpfiff(s, fristAbgelaufen),
+    s.gewechseltAm && seitWann(s.gewechseltAm, gelesenAm),
+    s.nichtMehrImTeam && NICHT_MEHR_IM_TEAM,
+    ...s.kader,
+  ]
     .filter(Boolean)
     .join(" · ");
   const wechsel: Wechsel[] = s.ehemalig

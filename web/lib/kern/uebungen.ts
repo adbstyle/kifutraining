@@ -9,7 +9,6 @@ import {
   ausDbFehler,
   fehlschlag,
   ok,
-  type FehlerArt,
   type KernErgebnis,
 } from "@/lib/kern/ergebnis";
 import {
@@ -18,7 +17,7 @@ import {
   ladeUebungZumBearbeiten,
   ladeUebungZumLesen,
 } from "@/lib/kern/zugriff";
-import { HINWEIS_NICHTS_ENTSTANDEN } from "@/lib/kern/kopie";
+import { nichtsEntstanden } from "@/lib/kern/kopie";
 import { diagrammZumAnlegen } from "@/lib/kern/uebung-diagramm";
 import type { MaterialPosten } from "@/lib/material";
 import type { Befund } from "@/lib/diagramm-pruefung";
@@ -241,21 +240,17 @@ export async function kopiereUebungNach(
   const quelle = await ladeUebungZumLesen<UebungsZeile>(supabase, e.kennung, VORLAGE_SELECT);
   if (!quelle.ok)
     return quelle.art === "nicht_gefunden"
-      ? fehlschlag("nicht_gefunden", UEBUNG_QUELLE_NICHT_VERFUEGBAR, { feld: "kennung", hinweis: KEINE_KOPIE })
+      ? fehlschlag("nicht_gefunden", UEBUNG_QUELLE_NICHT_VERFUEGBAR, { feld: "kennung", hinweis: nichtsEntstanden("nicht_gefunden") })
       : { ...quelle, hinweis: nichtsEntstanden(quelle.art) };
   const q = quelle.wert;
 
   const name = q.owner_id === userId ? kopieName(q.name) : undefined;
   const kopie = await legeUebungsKopieAn(supabase, q, { ownerId: userId, altersstufe: q.altersstufe, name });
-  if (!kopie.ok) return fehlschlag(kopie.art, kopie.error, { hinweis: nichtsEntstanden(kopie.art) });
+  if (!kopie.ok)
+    return fehlschlag(kopie.art, kopie.error, {
+      hinweis: kopie.hinweis ?? nichtsEntstanden(kopie.art),
+      ...(kopie.grenze && { grenze: kopie.grenze }),
+    });
   return ok({ id: kopie.id, slug: kopie.slug, name: name ?? q.name, sichtbarkeit: "entwurf" });
 }
 
-/** Was beim Assistenten von einer gescheiterten Kopie ankommt: Nur wo ein
- *  zweiter Versuch Erfolg verspricht (unerwarteter Fehler, Nebenläufigkeit),
- *  steht die Aufforderung dazu da — eine unsichtbare Quelle oder eine
- *  verletzte Regel ändert ein zweiter Versuch nicht. */
-const KEINE_KOPIE = "Es ist keine Kopie entstanden.";
-function nichtsEntstanden(art: FehlerArt): string {
-  return art === "technisch" || art === "konflikt" ? HINWEIS_NICHTS_ENTSTANDEN : KEINE_KOPIE;
-}

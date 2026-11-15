@@ -5,7 +5,8 @@ import { cn } from "@/lib/cn";
 
 /* Gefahrenzone (#480): der Bereich am Ende einer Verwaltungsseite, in dem die
    Handlungen stehen, die sich nicht zurücknehmen lassen und andere mittreffen
-   — beim Team Verlassen und Auflösen. Vorbild ist die «Danger Zone» von GitHub.
+   — beim Team das Verlassen, im Verein das Auflösen eines Teams und der
+   Austritt aus der Verwaltung. Vorbild ist die «Danger Zone» von GitHub.
 
    Eine Karte wie jede andere (01dp), aber mit voller Kontur in Error und der
    Überschrift in Error: So hebt sie sich ab, ohne dass die ganze Fläche rot

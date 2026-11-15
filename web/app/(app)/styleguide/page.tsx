@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { ReleaseText } from "@/components/versionen/ReleaseText";
 import {
+  BestandAnzeige,
   Button,
   ButtonLink,
   Badge,
@@ -74,6 +75,8 @@ import { TabelleAuswahlDemo } from "./TabelleAuswahlDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
+import { NamenBestaetigenDemo } from "./NamenBestaetigenDemo";
+import { PersonAufnehmenDemo } from "./PersonAufnehmenDemo";
 import { MaterialDemo } from "./MaterialDemo";
 import { FelderDemo } from "./FelderDemo";
 import { MiniMonatDemo } from "./MiniMonatDemo";
@@ -155,7 +158,7 @@ import {
 } from "@/lib/farben";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { KaderLozenge } from "@/components/team/KaderLozenge";
-import { ProbeLozenge } from "@/components/team/ProbeLozenge";
+import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 import { VERZEICHNIS_COOKIE, leseVerzeichnis } from "@/lib/verzeichnis";
 
 export const metadata: Metadata = {
@@ -239,6 +242,7 @@ const GLIEDERUNG = [
           { id: "filterknopf", titel: "Filterknopf" },
           { id: "menue", titel: "Menü" },
           { id: "chip-menue", titel: "Chip mit Menü" },
+          { id: "person-aufnehmen", titel: "Person aufnehmen" },
         ],
       },
       {
@@ -249,6 +253,7 @@ const GLIEDERUNG = [
         titel: "Meldungen",
         eintraege: [
           { id: "meldungen", titel: "Leerzustand, Hinweiszeile & Section Message" },
+          { id: "bestand-anzeige", titel: "Bestand und Grenze" },
           { id: "dialog-snackbar", titel: "Dialog & Snackbar" },
           { id: "feedback-dialog", titel: "Fragen und Feedback" },
         ],
@@ -267,6 +272,7 @@ const GLIEDERUNG = [
           { id: "liste-detail", titel: "Liste mit Detail daneben" },
           { id: "disclosure", titel: "Disclosure" },
           { id: "gefahrenzone", titel: "Gefahrenzone" },
+          { id: "namen-bestaetigen", titel: "Namen bestätigen" },
         ],
       },
       {
@@ -1574,6 +1580,19 @@ export default async function Styleguide() {
           </div>
 
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
+            Gesperrt, aber im Fokus: <code>aria-disabled</code> statt <code>disabled</code> - solange eine Aktion
+            läuft und der Knopf den Fokus behalten soll
+          </p>
+          <div className="flex items-center gap-4">
+            <IconButton icon={Copy} label="Kopieren" aria-disabled />
+            <span className="type-label-small text-on-surface-mittel">
+              Ein <code>disabled</code>-Knopf verliert den Fokus, und die Tastatur- und Vorlesehilfe-Person steht
+              im Leeren. Mit <code>aria-disabled</code> bleibt er fokussierbar und sieht gesperrt aus; der
+              Klick-Handler des Aufrufers fängt den Klick ab (<code>if (laeuft) return</code>).
+            </span>
+          </div>
+
+          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Punkt am Zeichen (<code>ZeichenPunkt</code>, <code>punkt</code>) - wie die Benachrichtigung an einem App-Symbol
           </p>
           <div className="flex items-center gap-4">
@@ -1645,8 +1664,10 @@ export default async function Styleguide() {
             Ansichts-Umschalter (<code>TabNav</code>)
           </p>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-            Mehrere Sichten auf denselben Gegenstand - etwa ein Team mit
-            Trainingsplan, Trainings und Verwaltung. Bewusst Links statt
+            Mehrere Sichten auf denselben Gegenstand - etwa ein Termin mit
+            Termin, Training, Spieler:innen und Trainer:innen. Zwischen den
+            Seiten eines Bereichs (Team, Verein) wechselt dagegen die
+            Seitenleiste (<Siehe id="navigation" />). Bewusst Links statt
             Schaltflächen: jede Ansicht hat ihre eigene Adresse, ist damit
             weitergebbar, und der Zurück-Schritt des Browsers funktioniert.
             Deshalb auch kein Auswahl-Baustein (<Siehe id="offene-einfachauswahl" />,{" "}
@@ -1661,9 +1682,10 @@ export default async function Styleguide() {
             ariaLabel="Beispiel-Ansichten"
             className="mb-6 max-w-md"
             items={[
-              { label: "Trainingsplan", href: "#", current: true },
-              { label: "Trainings", href: "#" },
-              { label: "Team", href: "#" },
+              { label: "Termin", href: "#", current: true },
+              { label: "Training", href: "#" },
+              { label: "Spieler:innen", href: "#" },
+              { label: "Trainer:innen", href: "#" },
             ]}
           />
 
@@ -1681,6 +1703,11 @@ export default async function Styleguide() {
             dann den eigenen Trigger nicht mehr - das Menü togglet doppelt und
             öffnet sofort wieder. In Listen gehört der Gegenstand ins{" "}
             <code>label</code> („Weitere Aktionen zu …"); der Tooltip bleibt kurz.
+          </p>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <code>gesperrt</code> sperrt den Auslöser, solange eine Aktion aus dem Menü läuft (dritte Reihe unten):
+            Er setzt <code>aria-disabled</code> statt <code>disabled</code>, behält also den Fokus, und das Menü
+            öffnet sich nicht mehr.
           </p>
           <OverflowMenuDemo />
 
@@ -2040,6 +2067,14 @@ export default async function Styleguide() {
             Kästchen ist gefüllt wie gewählt, trägt aber einen Strich statt des
             Hakens, und der Browser meldet «gemischt». Ein Klick macht daraus
             «gewählt»; zurück zum Strich geht es erst beim neuen Öffnen.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Pflicht-Bestätigung</strong> (#587): Im Dialog «Verein
+            gründen» stehen zwei Häkchen unter dem Namen, und der Knopf bleibt
+            gesperrt, bis beide gesetzt sind. Sie stehen nicht für eine Option,
+            sondern für eine Zusage - der Satz ist die Zusage selbst und darf
+            über mehrere Zeilen laufen. Wer das Häkchen umgeht, scheitert an der
+            Datenebene, die beide Zusagen beim Ausführen verlangt.
           </p>
           <CheckboxDemo />
 
@@ -2481,7 +2516,10 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Die Suche der Leiste (<code>FilterSuche</code>) steht ohne
             sichtbaren Namen, dafür umrandet und mit Platzhalter (<Siehe id="textfelder" />) - ohne Kante stünde neben den umrandeten
-            Knöpfen ein Feld, das man nicht sieht. Schalter wie «Meine Übungen»
+            Knöpfen ein Feld, das man nicht sieht. Bereinigt die Seite den
+            Suchtext (trimmen, Leerraum), bekommt das Feld dieselbe Funktion
+            als <code>bereinige</code>: Es erkennt daran das Echo und behält,
+            was gerade getippt wird. Schalter wie «Meine Übungen»
             bleiben <code>FilterChip</code> (<Siehe id="plaketten" />): Sie haben kein Panel, nur an
             und aus.
           </p>
@@ -2570,6 +2608,32 @@ export default async function Styleguide() {
             (<Siehe id="textfelder" />): Der Wert ist gespeichert, er geht bloss mit anderen nicht auf.
           </p>
           <ChipMenuDemo />
+        </Section>
+
+        <Section id="person-aufnehmen">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Eine Person ins Trainerteam oder in die Vereinsverwaltung aufnehmen
+            (<code>PersonAufnehmen</code>, #581): ein Dialog in zwei Stufen, den
+            Team-Ort und Vereins-Ort teilen. Erst Adresse und die Tragweite
+            («Was das für die Person bedeutet», als <code>information</code>-
+            Section Message) lesen, «Suchen»; dann den Anzeigenamen samt Adresse
+            prüfen, «Aufnehmen». «Zurück» führt mit der Adresse ins Feld
+            zurück, falls die Vorschau die falsche Person zeigt.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Der Baustein kennt weder Team noch Verein: Er bekommt{" "}
+            <code>suche</code> und <code>aufnahme</code> als Funktionen, die
+            einen <code>PersonSchritt</code> liefern - die Person oder den
+            fertigen Satz, warum es nicht weitergeht. So bleibt der Ablauf an
+            allen Orten derselbe, und die Sätze stehen an einer Stelle. Die
+            Vorschau ist eine dokumentierte Ausnahme von der Anti-Enumeration-
+            Linie und darum gebremst; die Meldung der Bremse steht im selben
+            Feld wie «kein Konto». Nach der Aufnahme schliesst sich der Dialog
+            und ruft <code>onAufgenommen</code>; Neuladen und Snackbar sind
+            Sache der Seite. Erfundene Adressen in der Demo: «lea@beispiel.test»
+            findet eine Person, «frei@beispiel.test» hat schon einen Verein.
+          </p>
+          <PersonAufnehmenDemo />
         </Section>
 
         <Section id="plaketten">
@@ -2719,17 +2783,23 @@ export default async function Styleguide() {
             <KaderLozenge name={null} />
           </div>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-            <strong>Probe</strong> (<code>ProbeLozenge</code>, #555): eine
-            Spieler:in im Probe-Modus, neben dem Namen in der Spielerliste und in
-            der Karte «Probetraining». <code>discovery</code> - etwas Zusätzliches,
-            kein Status. Die Zahl nennt besuchte Probetrainings von der Anzahl
-            des Teams (PO 2026-10-29); angemeldete stehen am jeweiligen Training.
-            Derselbe Ton trägt am privaten Link den Balken der Probetrainings:
-            besucht gefüllt, angemeldet umrandet.
+            <strong>Schnuppern</strong> (<code>SchnupperLozenge</code>, #555, #584):
+            eine Spieler:in, die im Team schnuppert, neben dem Namen in der
+            Spielerliste und in der Karte «Schnuppertraining», und für die
+            Verwaltung in der Teams-Spalte der Vereinsliste und in der
+            Spielerliste unter Verein › Team - ein Baustein für beide Orte
+            (<code>components/spieler</code>).{" "}
+            <code>discovery</code> - etwas Zusätzliches, kein Status. Die Zahl
+            nennt besuchte Schnuppertrainings von der Anzahl des Teams (PO
+            2026-10-29); angemeldete stehen am jeweiligen Training. Ohne
+            festgelegte Anzahl steht nur «Schnuppern». Derselbe Ton trägt am
+            privaten Link den Balken der Schnuppertrainings: besucht gefüllt,
+            angemeldet umrandet.
           </p>
           <div className="mb-6 flex flex-wrap items-center gap-2">
-            <ProbeLozenge stand={{ anzahl: 4, besucht: 1, angemeldet: 2, moeglich: 1 }} />
-            <ProbeLozenge stand={{ anzahl: 4, besucht: 3, angemeldet: 0, moeglich: 1 }} />
+            <SchnupperLozenge stand={{ anzahl: 4, besucht: 1 }} />
+            <SchnupperLozenge stand={{ anzahl: 4, besucht: 3 }} />
+            <SchnupperLozenge stand={{ anzahl: null, besucht: 0 }} />
           </div>
           <div className="mb-6 flex flex-wrap items-center gap-3 rounded-flaeche bg-[linear-gradient(135deg,#f5f5f0,#9aa79c)] p-3">
             <HerkunftLozenge herkunft="manual" aufBild />
@@ -3007,6 +3077,58 @@ export default async function Styleguide() {
           </div>
         </Section>
 
+        <Section id="bestand-anzeige">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Wie viele eigene Übungen oder Trainings ein Konto ohne Verein von
+            seiner Grenze besitzt (<code>BestandAnzeige</code>, #588): höchstens
+            50 Übungen und 30 Trainings, bis es einem Team oder der Verwaltung
+            eines Vereins angehört. Neu als Baustein, weil derselbe Stand an
+            drei Orten steht und überall gleich lauten muss - oben in «Meine
+            Übungen» und «Meine Trainings», vor dem Anlegen und in der Stufe
+            vor Kopieren und Übernehmen. Die Zahl kommt von der Datenebene,
+            nie aus einer gezählten Liste; die Sätze stehen einmal in{" "}
+            <code>lib/konto-grenzen.ts</code>. Konten in einem Verein sehen
+            nichts davon.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Die <strong>Zeile</strong> ist der Stand als Text; ab der Grenze
+            steht daneben eine Lozenge <code>warning</code> - eine Eigenschaft,
+            die Aufmerksamkeit braucht, kein Fehler. Über der Grenze (Altbestand
+            bleibt, nur Neues wird abgewiesen) steht die Zahl ohne negativen
+            Rest. Die <strong>Meldung</strong> ist die Section Message{" "}
+            <code>warning</code> mit dem Weg zur eigenen Übersicht, wo sich
+            etwas löschen lässt: Sie steht auf <code>/neu</code> und{" "}
+            <code>/training/neu</code> an der Grenze statt der Maske, bevor
+            jemand Angaben macht. Kein Fortschrittsbalken - er zeigte dieselbe
+            Zahl ein zweites Mal und bräuchte ein Mass für den Bestand über der
+            Grenze.
+          </p>
+          <div className="flex max-w-xl flex-col gap-3">
+            <BestandAnzeige art="uebungen" grenze={{ bestand: 12, max: 50 }} />
+            <BestandAnzeige art="trainings" grenze={{ bestand: 30, max: 30 }} />
+            <BestandAnzeige art="uebungen" grenze={{ bestand: 62, max: 50 }} />
+            <BestandAnzeige art="trainings" grenze={{ bestand: 30, max: 30 }} variante="meldung" />
+          </div>
+          <p className="type-body-medium mb-5 mt-8 max-w-2xl text-on-surface-mittel">
+            <strong>Die Stufe vor Kopieren, Übernehmen und «In die Bibliothek»</strong>{" "}
+            (<code>useBestandStufe</code>) ist ein Dialog, den nur ein Konto ohne
+            Verein sieht: Er nennt den frisch gelesenen Stand («Du besitzt 12 von
+            50 Übungen.») und bietet die Aktion an; an der Grenze steht dort die
+            Meldung und nur «Schliessen». Weist die Datenebene trotz freier
+            Anzeige an der Grenze ab (gleichzeitige Vorgänge, überholter Stand),
+            zeigt der Dialog dieselbe Form: die Meldung mit dem Weg zur eigenen
+            Übersicht und nur «Schliessen»; auf <code>/neu</code> und{" "}
+            <code>/training/neu</code> ersetzt die Meldung die Zeile, und die
+            Angaben bleiben. Die Anzeige entscheidet nie: Kein Knopf bleibt
+            wegen eines Zählers gesperrt, den niemand gelesen hat. Ein Konto in
+            einem Verein kopiert und übernimmt weiter mit einem Klick. Während
+            die Aktion läuft, bis die Zielseite steht, ist der Auslöser mit{" "}
+            <code>aria-disabled</code> gesperrt (beim ⋮-Menü{" "}
+            <code>OverflowMenu gesperrt</code>): Er behält den Fokus, und ein
+            schneller zweiter Klick erzeugt keine zweite Kopie.
+          </p>
+        </Section>
+
         <Section id="dialog-snackbar">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Der <strong>Dialog</strong> steht auf nativem{" "}
@@ -3033,6 +3155,19 @@ export default async function Styleguide() {
             ist dort das dunkle Violett -, damit Textknopf, Zustands-Ebene und
             Fokus-Ring ohne Sonderklassen tragen. Beim Erscheinen fährt sie kurz
             von unten ein; bei reduzierter Bewegung blendet sie nur ein.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Rückfragen</strong> stehen als Geschwister neben den übrigen
+            Dialogen, wenn sie eine Aktion der Seite bestätigen (etwa «Variante
+            entfernen» im Trainingseditor). Geschachtelt im Dialog steht eine
+            Rückfrage nur, wenn sie einen Schritt dieses Dialogs bestätigt und
+            danach in ihn zurückführt - wie «Link erneuern?» im Link-Dialog, der
+            danach den neuen Link zeigt. Der Baustein trägt das: Er reagiert nur
+            auf sein eigenes <code>close</code> und <code>cancel</code>, sodass
+            Abbrechen oder Escape in der Rückfrage den äusseren Dialog nicht
+            mitschliessen (React reicht diese Ereignisse sonst nach aussen
+            weiter, ebenso das <code>cancel</code> eines abgebrochenen
+            Dateiwählers).
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Im Fuss eines Dialogs steht kein Textknopf: Der Ausweg ist ein
@@ -3178,6 +3313,28 @@ export default async function Styleguide() {
             Browser gilt. Breit klappt es über der Zeile auf, schmal rechts neben der Leiste - es steht
             darum <code>fixed</code> und ragt aus der Leiste hinaus. Umgeschaltet wird sofort und ohne
             Neuladen; Ungespeichertes auf der Seite bleibt stehen.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            <strong>Bereich-Wechsler</strong> (<code>BereichWechsler</code>, Story #581) steht oben in
+            der Leiste, unter der Marke, und wählt den Bereich: eines der eigenen Teams oder den
+            Verein. <em>Warum neu:</em> Bisher gab es einen einzigen Bereich «Teams» mit allen Teams als
+            Unterpunkten. Mit dem Verein kommt ein zweiter Bereich mit eigenen Einträgen dazu; die Leiste
+            zeigt darum nur, was in dem gewählten Bereich geht, und die Bibliotheken bleiben immer. Der
+            Knopf trägt zwei Zeilen (Art und Name, etwa «FC Wyler · Team» über «Da Junioren») und ein
+            Auf-Ab-Zeichen; die Liste klappt darunter auf, je Bereich mit seinem Untertitel und einem
+            Haken beim offenen, die Teams durch einen Strich vom Verein getrennt. Es gibt keine
+            Avatare. Gibt es nur einen Bereich, ist der Wechsler eine Anzeige ohne Liste.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            Die Einträge der Liste sind <strong>Links</strong>, keine Knöpfe (<code>menuitemradio</code>):
+            Wer ungesicherte Angaben auf der Seite hat, wird vor dem Wechsel wie bei jedem Link der
+            Leiste gewarnt. Tastatur nach dem Menü-Muster: beim Öffnen steht der Fokus auf dem offenen
+            Bereich, ↑/↓ laufen im Kreis, Escape schliesst und gibt den Fokus zurück. Die Beschriftung
+            für Vorlesehilfen ist «Bereich wählen». Schmal bleibt vom Knopf das Zeichen des Bereichs, die
+            Liste klappt (<code>fixed</code>, wie «Darstellung») rechts neben der Leiste auf. Welcher
+            Bereich offen ist, folgt aus der Adresse; auf Seiten ohne Bereich (Bibliotheken, Konto) bleibt
+            der zuletzt gewählte, gemerkt im Cookie <code>kifu-bereich</code>. Reine Navigation: Rechte
+            hängen daran keine.
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             <strong>Breit oder schmal</strong> - 280 px mit Namen, 72 px nur mit
@@ -3335,36 +3492,77 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Der Bereich am Ende einer Verwaltungsseite für Handlungen, die sich
             nicht zurücknehmen lassen und andere mittreffen - in der
-            Teamverwaltung Verlassen und Auflösen (#480). Eine Karte auf{" "}
-            <code>elev-01</code> wie jede andere, aber mit voller Kontur und
-            Überschrift in Error: {v(kontrast(ERROR, elev(1)))} als Schrift, als
-            Kontur mindestens 3:1 auf jeder Stufe und im Druck. Getönt wird die
-            Fläche nicht - <code>section-danger</code> heisst «etwas ist
-            schiefgegangen» (<Siehe id="meldungen" />), die Gefahrenzone dagegen
-            «hier ist Vorsicht geboten». Eine Kontur mit Alpha bräche die 3:1;
-            darum volles <code>border-error</code>.
+            Teamverwaltung das Verlassen des Teams, in der Vereinsverwaltung das
+            Auflösen eines Teams und der Austritt aus der Verwaltung (#480,
+            #581). Eine Karte auf <code>elev-01</code> wie jede andere, aber mit
+            voller Kontur und Überschrift in Error: {v(kontrast(ERROR, elev(1)))}{" "}
+            als Schrift, als Kontur mindestens 3:1 auf jeder Stufe und im
+            Druck. Getönt wird die Fläche nicht - <code>section-danger</code>{" "}
+            heisst «etwas ist schiefgegangen» (<Siehe id="meldungen" />), die
+            Gefahrenzone dagegen «hier ist Vorsicht geboten». Eine Kontur mit
+            Alpha bräche die 3:1; darum volles <code>border-error</code>.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Löscht eine Handlung dort für alle, bestätigt man sie durch die{" "}
-            <strong>Eingabe des Namens</strong>: Der Dialog nennt, was verloren
-            geht, und den einzugebenden Namen; der <code>danger</code>-Knopf ist
-            erst frei, wenn die Eingabe genau stimmt (Gross- und Kleinschreibung
-            zählen, Leerzeichen am Rand nicht). Das Feld schaltet Autokorrektur,
-            automatische Grossschreibung und Rechtschreibprüfung ab, Einfügen
-            bleibt erlaubt. Die Vorlesehilfe hört den Namen über{" "}
-            <code>aria-describedby</code> mit dem Feld und die Freigabe über eine
-            Live-Region. Andere Löschungen bleiben bei der gewöhnlichen Rückfrage
-            - die Eingabe ist dem vorbehalten, was mehrere Menschen trifft.
+            Löscht eine Handlung für alle, bestätigt man sie durch die Eingabe
+            des Namens (<Siehe id="namen-bestaetigen" />) - das Auflösen eines
+            Teams und das Löschen des Vereins (#587) liegen im Bereich
+            «Verein». Andere Handlungen bleiben bei der
+            gewöhnlichen Rückfrage; die Eingabe ist dem vorbehalten, was mehrere
+            Menschen trifft.
           </p>
           <Gefahrenzone
             className="max-w-xl"
-            beschreibung="Verlassen betrifft nur dich - ausser du bist das letzte Mitglied. Auflösen löscht das Team samt allen Inhalten für alle Mitglieder."
+            beschreibung="Du verlierst den Zugang zu Kalender, Spieler:innen und Team-Trainings. Das Team bleibt bestehen, auch wenn du die letzte Person bist."
           >
             <div className="flex flex-wrap gap-2">
               <Button variant="outlined">Team verlassen</Button>
-              <Button variant="danger">Team auflösen</Button>
             </div>
           </Gefahrenzone>
+          <p className="type-body-medium mb-5 mt-8 max-w-2xl text-on-surface-mittel">
+            Stehen zwei Handlungen darin, geht die mildere als{" "}
+            <code>outlined</code> voran und die unwiderrufliche als{" "}
+            <code>danger</code> dahinter, nebeneinander und auf schmalem Schirm
+            untereinander (#587): in der Verwaltung des Vereins der eigene
+            Austritt und das Löschen des Vereins.
+          </p>
+          <Gefahrenzone
+            className="max-w-xl"
+            beschreibung="Austreten betrifft nur dich. Verein löschen entfernt alle Teams und alle Spieler:innen; alle Personen werden Konten ohne Verein."
+          >
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outlined">Aus der Verwaltung austreten</Button>
+              <Button variant="danger">Verein löschen</Button>
+            </div>
+          </Gefahrenzone>
+        </Section>
+
+        <Section id="namen-bestaetigen">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Die Bestätigung einer Handlung, die für mehrere Menschen
+            unwiderruflich ist, durch die <strong>Eingabe des Namens</strong>{" "}
+            (<code>NamenBestaetigen</code>, #480, herausgelöst aus der Team-
+            Gefahrenzone, weil auch das Auflösen im Verein sie braucht): ein
+            Absatz, der den einzugebenden Namen nennt, das Feld und die Meldung
+            des Servers. Titel, Folgenliste und der <code>danger</code>-Knopf
+            stehen beim Dialog, der den Baustein trägt; der Knopf ist erst frei,
+            wenn <code>namenStimmen</code> zutrifft - Gross- und Kleinschreibung
+            zählen, Leerzeichen am Rand und die Unicode-Normalform nicht.
+            Dieselbe Regel wiederholt die Datenebene; die Oberfläche entscheidet
+            nichts.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Das Feld schaltet Autokorrektur, automatische Grossschreibung und
+            Rechtschreibprüfung ab und sagt Passwort-Managern, dass es kein
+            Login ist; Einfügen bleibt erlaubt. Die Vorlesehilfe hört den Namen
+            über <code>aria-describedby</code> mit dem Feld und die Freigabe über
+            eine Live-Region. Weicht der Name inzwischen ab, nennt der Dialog
+            den aktuellen als Fehler (<code>fehler</code>) und bleibt offen.
+            Während einer laufenden Anfrage lässt sich das Feld nicht ändern
+            (<code>gesperrt</code>, #587); es bleibt nur schreibgeschützt und
+            behält den Fokus. Der Baustein trägt auch das Löschen eines Vereins
+            und das Löschen des Kontos als einzige Person eines Vereins.
+          </p>
+          <NamenBestaetigenDemo />
         </Section>
 
         <Section id="tabelle">
@@ -3719,7 +3917,7 @@ export default async function Styleguide() {
             <strong>Kürzbarer Text</strong> - <code>KuerzbarerText</code>: ein längerer
             Freitext ohne Formatierung, gekürzt auf wenige Zeilen (Vorgabe drei) mit
             «Ganz lesen» als Link darunter - das Info-Schreiben in der Karte
-            «Probetraining» und am privaten Link (#556). Der Link steht nur, wenn der
+            «Schnuppertraining» und am privaten Link (#556). Der Link steht nur, wenn der
             Text wirklich länger ist (gemessen); aufgeklappt heisst er «Weniger
             anzeigen». Zeilenumbrüche bleiben, Webadressen (http, https, www.) werden
             zu externen Links (<code>ExternerLink</code>). Neu, weil{" "}

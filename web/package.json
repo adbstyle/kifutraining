@@ -1,6 +1,6 @@
 {
   "name": "kifu-web",
-  "version": "1.47.1",
+  "version": "1.48.0",
   "license": "CC-BY-SA-4.0",
   "private": true,
   "type": "module",
@@ -27,7 +27,7 @@
     "check:farben": "tsx scripts/pruefe-farben.ts",
     "check:diagramm-farben": "tsx scripts/pruefe-diagramm-farben.ts",
     "check:figuren": "tsx scripts/pruefe-figuren.ts",
-    "check:ki-zugang": "tsx scripts/pruefe-ki-zugang.ts",
+    "check:ki-zugang": "tsx --conditions=react-server scripts/pruefe-ki-zugang.ts",
     "check:kern": "tsx scripts/pruefe-kern.ts",
     "check:material": "tsx scripts/pruefe-material.ts",
     "check:freitext": "tsx scripts/pruefe-freitext.ts",

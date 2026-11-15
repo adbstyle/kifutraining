@@ -6,7 +6,8 @@
 // Schreiben, und die Datenebene meldet mit denselben Markern
 // (SPIELER_MELDUNG), wenn sie trotzdem abweist. Ob zwei Angaben dieselbe
 // Spieler:in meinen (Gross/Klein, Bindestrich, Apostroph), entscheidet allein
-// die Datenebene (`spieler_text_schluessel`, Unique-Index `spieler_eindeutig`).
+// die Datenebene: je Verein über `spieler_text_schluessel` im Trigger
+// `spieler_vorher` und in `spieler_doppelt` (Story #578).
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
 import { datumKurz } from "@/lib/zeit";
@@ -14,15 +15,19 @@ import { tagOhneJahr } from "@/lib/monat";
 import { SPIEL_TEXT } from "@/lib/spiel";
 import { PROBE_TEXT, type ProbeStand } from "@/lib/probe";
 
-/** Zwillinge der Checks `spieler_vorname`, `spieler_nachname`, `spieler_js`,
- *  `spieler_jahrgang` und der Obergrenze im Trigger `spieler_vorher`. */
+/** Zwillinge der Checks `spieler_vorname`, `spieler_nachname`, `spieler_js`
+ *  und `spieler_jahrgang`. */
 export const NAME_MAX = 60;
 export const JS_MAX = 20;
 export const JAHRGANG_MIN = 1000;
 export const JAHRGANG_MAX = 9999;
 /** So viele Ziffern hat ein Jahrgang — für `maxLength` der Felder. */
 export const JAHRGANG_STELLEN = 4;
-export const SPIELER_MAX = 200;
+/** Zwilling der Obergrenze im Trigger `team_spieler_vorher` (Marker
+ *  `SPIELERLISTE_VOLL`): So viele Zuordnungen führt ein Team höchstens, die
+ *  Schnuppernden mitgezählt. Sie wirkt nur auf neue Zuordnungen. Die Grenze
+ *  des Vereins steht in lib/verein.ts. */
+export const SPIELER_MAX = 100;
 
 export const SPIELER_TEXT = {
   vorname: `Bitte einen Vornamen mit höchstens ${NAME_MAX} Zeichen angeben.`,
@@ -33,15 +38,73 @@ export const SPIELER_TEXT = {
 
 /** Die Sätze zu den Markern der Datenebene (Migration spielerliste). */
 export const SPIELER_MELDUNG = {
+  /** Im eigenen Team (#578 AK 3) und als Netz aus dem Trigger `spieler_vorher`
+   *  für das Rennen; sonst wählt `spielerDoppeltText` den Satz. */
   SPIELER_DOPPELT:
     "Diese Spieler:in steht schon auf der Liste. Unterscheide zwei Gleichnamige mit einem Zusatz im Vornamen.",
-  SPIELERLISTE_VOLL: `Eine Spielerliste fasst höchstens ${SPIELER_MAX} Spieler:innen.`,
+  SPIELERLISTE_VOLL: `Das Team hat schon ${SPIELER_MAX} Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind.`,
+  /** Netz aus dem Trigger `team_spieler_vorher` (Story #579): Die Zuordnung
+   *  besteht schon — die Verwaltung erfährt es sonst als Befund `bereits`. */
+  SCHON_ZUGEORDNET: "Diese Spieler:in ist dem Team schon zugeordnet.",
   SPIELER_NICHT_GEFUNDEN: "Spieler:in nicht gefunden.",
   SPIELERLISTE_FUEHRT_ZAHL:
     "Das Team führt eine Spielerliste: Die Spielerzahl anstehender Termine kommt aus ihr und lässt sich nicht von Hand festlegen.",
-  /** Der Import trifft eine andere Liste als seine Vorschau (#455 AK 27). */
-  SPIELERLISTE_GEAENDERT: "Die Spielerliste hat sich inzwischen geändert. Wähle die Datei erneut.",
+  /** Der Import im Verein bekommt mehr Zeilen, als eine Datei haben darf
+   *  (#585): Zwilling von `IMPORT_ZEILEN_MAX` in lib/spieler-import.ts. */
+  IMPORT_ZU_GROSS: "Eine Datei darf höchstens 1000 Zeilen haben.",
 } as const;
+
+/** «A», «A und B», «A, B und C» — die eine Aufzählung von Namen (Teams,
+ *  Spieler:innen) in allen Sätzen; `bindewort` «oder» für Alternativen. */
+export function aufzaehlung(namen: string[], bindewort = "und"): string {
+  return namen.length <= 1 ? (namen[0] ?? "") : `${namen.slice(0, -1).join(", ")} ${bindewort} ${namen.at(-1)}`;
+}
+
+/** Die eine Ordnung von Teamnamen im Web, wie in allen Team-Listen der
+ *  Vereins-Funktionen: deutsch verglichen. Die Datenebene liefert in ihrer
+ *  Kollation; die Lade-Funktionen (Kern, Link-Ansicht) ordnen damit einmal,
+ *  die Bausteine übernehmen die Folge, wie sie kommt. */
+export const nachTeamname = (a: string, b: string): number => a.localeCompare(b, "de");
+
+/** «im Team «A»», «im Team «A» und «B»», «im Team «A», «B» und «C»» —
+ *  nach Namen sortiert. */
+export function imTeam(teams: string[]): string {
+  const namen = [...teams].sort(nachTeamname).map((t) => `«${t}»`);
+  return `im Team ${aufzaehlung(namen)}`;
+}
+
+/** Der Status `abgewiesen` der RPCs `spieler_aufnehmen` und `spieler_aendern`
+ *  (Story #578, Architekturplan Vereine §4.4): Die bestehende Spieler:in
+ *  steht im Team, in dem man handelt (`eigenes_team`), oder nur in anderen
+ *  Teams des Vereins (`teams`, nur Namen) oder in keinem (`ohne_team`, Story
+ *  #579 AK 19). */
+export type SpielerDoppelt = { status: "abgewiesen"; grund: "doppelt"; eigenes_team: boolean; teams: string[]; ohne_team: boolean };
+
+/** Der Satz zur Abweisung einer Doppelerfassung, gleich in App und KI
+ *  (#578 AK 3, 4, 6, 10; #579 AK 19). Erfassen nennt die Eingabe, bereinigt
+ *  wie beim Speichern; Ändern nennt nur die Teams. Im eigenen Team der Satz
+ *  zu `SPIELER_DOPPELT`; in anderen Teams nennt er deren Namen, in keinem
+ *  Team sagt er, dass die Spieler:in im Verein geführt wird, aber keinem Team
+ *  zugeordnet ist — die Zuordnung klärt die Vereinsverwaltung. Nie J+S-Nummer
+ *  oder Link (PC 3). */
+export function spielerDoppeltText(
+  d: Pick<SpielerDoppelt, "eigenes_team" | "teams" | "ohne_team">,
+  eingabe: { vorname: string; nachname: string; jahrgang: number } | null,
+): string {
+  if (d.eigenes_team) return SPIELER_MELDUNG.SPIELER_DOPPELT;
+  const name = eingabe
+    ? `${spielerName({ vorname: bereinigeName(eingabe.vorname), nachname: bereinigeName(eingabe.nachname) })} (${eingabe.jahrgang})`
+    : null;
+  if (d.teams.length === 0) {
+    if (!d.ohne_team) return SPIELER_MELDUNG.SPIELER_DOPPELT;
+    const klaeren = "Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.";
+    return name
+      ? `${name} wird im Verein geführt, ist aber keinem Team zugeordnet. ${klaeren}`
+      : `Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, die keinem Team zugeordnet ist. ${klaeren}`;
+  }
+  if (!name) return `Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, ${imTeam(d.teams)}.`;
+  return `${name} wird im Verein schon ${imTeam(d.teams)} geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.`;
+}
 
 /** Die CHECKs der Spielerliste, samt Anführungszeichen gesucht (wie
  *  `TERMIN_CHECKS`). Der Fachkern prüft vorab; die Meldung trifft nur, wer
@@ -108,9 +171,12 @@ export type Spieler = {
   jsNummer: string | null;
   /** Der aktuelle Link wurde über die Selbstabholung herausgegeben (#438 PC 2). */
   linkBezogen: boolean;
-  /** Die Kader, denen sie angehört (#452 AK 5). */
+  /** Die Kader des Teams, in dessen Liste sie steht (#452 AK 5). */
   kaderIds: string[];
-  /** Im Probe-Modus: ihr Stand (#555 AK 6, 7); sonst `null`. */
+  /** Die Namen der weiteren Teams des Vereins, denen sie zugeordnet ist,
+   *  nach Namen (#579 AK 9). */
+  weitereTeams: string[];
+  /** Sie schnuppert im Team: ihr Stand (#555 AK 6, 7); sonst `null`. */
   probe: ProbeStand | null;
 };
 
@@ -124,6 +190,103 @@ export function nachSpielerName<T extends { vorname: string; nachname: string }>
   return [...liste].sort(
     (a, b) => a.vorname.localeCompare(b.vorname, "de") || a.nachname.localeCompare(b.nachname, "de"),
   );
+}
+
+// ── Aus dem Team nehmen (Story #579) ────────────────────────────────────────
+
+/** Die Teams einer Spieler:in samt Stand, wie `spieler_teams` sie liefert:
+ *  `eigen` — die handelnde Person ist Mitglied; `dieses` — das Team, in dem
+ *  sie handelt; `abholbar` — dessen Selbstabholung ist eingeschaltet (#583);
+ *  `stand` — die Kennung dieser Teams und ihres Schnupperns, die das
+ *  Herausnehmen mitgibt (AP §4.3). */
+export type SpielerTeams = {
+  teams: { name: string; eigen: boolean; dieses: boolean; abholbar: boolean }[];
+  stand: string;
+  /** Sie schnuppert in diesem Team (`dieses`, #584): Das Herausnehmen beendet es. */
+  schnuppert: boolean;
+};
+
+/** Was die Bestätigung des Herausnehmens braucht: wen, aus welchem Team, in
+ *  welchem Verein und in welchen weiteren Teams sie danach bleibt. */
+export type HerausnehmenLage = {
+  vorname: string;
+  nachname: string;
+  team: string;
+  /** Der Name des Vereins; `null`, wo er nicht bekannt ist. */
+  verein: string | null;
+  /** Die Namen der Teams, in denen sie danach bleibt (ohne `team`). */
+  verbleibend: string[];
+  /** Sie schnuppert in diesem Team: Das Schnuppertraining endet mit. */
+  probe: boolean;
+  /** Nur im KI-Weg (#589 AK 4): Es ist das letzte Team der handelnden Person
+   *  mit ihr, der Assistent erreicht sie danach nicht mehr. Die Sätze der
+   *  Bestätigung (`herausnehmenSaetze`) kennen das Feld nicht; nur
+   *  `herausnehmenFrage` hängt den Zusatz an. */
+  letztesEigenes?: boolean;
+};
+
+/** Die Teams, in denen sie nach dem Herausnehmen bleibt: alle ausser dem,
+ *  in dem man handelt — über `dieses`, nicht über den Namen: Teamnamen sind
+ *  im Bestand nicht eindeutig. */
+export function verbleibendeTeams(teams: { name: string; dieses: boolean }[]): string[] {
+  return teams.filter((t) => !t.dieses).map((t) => t.name);
+}
+
+export const HERAUSNEHMEN_TEXT = {
+  /** Der Stand der Teams wich ab: nichts wurde geändert (AP §4.3). */
+  geaendert: "Inzwischen hat sich etwas geändert. Lies den Hinweis noch einmal und bestätige erneut.",
+  aktion: "Aus dem Team nehmen",
+} as const;
+
+export function herausnehmenTitel(l: Pick<HerausnehmenLage, "vorname" | "nachname" | "team">): string {
+  return `${spielerName(l)} aus ${l.team} nehmen`;
+}
+
+/** Die Bestätigung des Herausnehmens (#579 AK 13–16, Board «Herausnehmen
+ *  statt löschen»): `absaetze` sagen, dass die Spieler:in nicht gelöscht wird
+ *  und samt Link im Verein bleibt — mit weiteren Teams oder, beim letzten,
+ *  ohne Team —, `warnung` nennt, was in diesem Team verfällt, `zusatz`, was
+ *  bleibt. Die Oberfläche setzt sie in den Dialog, der KI-Weg hängt sie zu
+ *  einer Rückfrage zusammen (`herausnehmenFrage`). */
+export function herausnehmenSaetze(l: HerausnehmenLage): { absaetze: string[]; warnung: string; zusatz: string } {
+  const imVerein = l.verein ? `im Verein «${l.verein}»` : "im Verein";
+  const wer = l.vorname;
+  const verfall = `Abmeldungen, Spiel-Meldungen und Kader in ${l.team} verfallen.`;
+  const warnung = l.probe ? `Das Schnuppertraining endet samt Zählung; künftige ${verfall}` : `Künftige ${verfall}`;
+  // Gilt in beiden Fällen (PC 5).
+  const zusatz = "Vergangene Anwesenheiten bleiben mit dem Namen stehen.";
+  if (l.verbleibend.length === 0)
+    return {
+      absaetze: [
+        `${wer} wird dadurch nicht gelöscht und bleibt samt privatem Link ${imVerein}, ist danach aber keinem Team mehr zugeordnet.`,
+        "Ändern, einem Team zuordnen oder löschen kann dann nur die Vereinsverwaltung.",
+      ],
+      warnung,
+      zusatz,
+    };
+  const teams =
+    l.verbleibend.length === 1
+      ? `im Team ${l.verbleibend[0]}`
+      : `in den Teams ${l.verbleibend.slice(0, -1).join(", ")} und ${l.verbleibend.at(-1)}`;
+  return {
+    absaetze: [
+      `${wer} wird dadurch nicht gelöscht und bleibt samt privatem Link ${imVerein} und ${teams}. Aus dem Verein löscht nur die Vereinsverwaltung.`,
+    ],
+    warnung,
+    zusatz,
+  };
+}
+
+/** Dasselbe als eine Rückfrage an den Assistenten (`spieler_aus_team_nehmen`
+ *  ohne `stand`): nichts geschieht, bis er mit dem Stand wiederholt. Beim
+ *  letzten Team der handelnden Person mit ihr dazu, dass der Assistent sie
+ *  danach nicht mehr erreicht (#589 AK 4) — nur hier, nie im Dialog. */
+export function herausnehmenFrage(l: HerausnehmenLage): string {
+  const s = herausnehmenSaetze(l);
+  const ki = l.letztesEigenes
+    ? `Danach ist ${l.vorname} über den Assistenten nicht mehr erreichbar: ${l.vorname} gehört dann keinem deiner Teams mehr an.`
+    : "";
+  return [herausnehmenTitel(l) + "?", ...s.absaetze, s.warnung, s.zusatz, ki].filter(Boolean).join(" ");
 }
 
 // ── Spielerzahl eines Termins ───────────────────────────────────────────────
@@ -201,7 +364,7 @@ export type AbmeldeGrund =
   | "nicht_dabei"
   /** Ein Spiel (#448): Für Spiele gilt diese Abmeldung nicht. */
   | "ist_spiel"
-  /** Über den Link: Alle Probetrainings sind vergeben (#555 AK 10, 12). */
+  /** Über den Link: Alle Schnuppertrainings sind vergeben (#555 AK 10, 12). */
   | "probe_voll";
 
 /** Der Stand des Termins, gegen den abgewiesen wurde. */
@@ -211,7 +374,8 @@ export const ABMELDUNG_TEXT = {
   nichtGefunden: "Diesen Termin oder diese Spieler:in gibt es nicht mehr. Sieh dir den Trainingsplan noch einmal an.",
   begonnen: "Der Termin hat begonnen. An- und abmelden geht nur bis zum Beginn.",
   ausgefallen: "Der Termin fällt aus. Für ihn lässt sich niemand an- oder abmelden.",
-  /** Der Termin gilt nicht (mehr) für die Spieler:in — ihre Kader (#453 AK 9, #454 AK 5). */
+  /** Der Termin gilt nicht (mehr) für die Spieler:in — ihre Kader (#453 AK 9, #454 AK 5).
+   *  Nur für Mitglieder und die KI; am Link steht `linkGiltNichtText` (#583 AK 7). */
   giltNicht: "Dieser Termin gilt nicht mehr für diese Spieler:in. Sieh dir die Termine noch einmal an.",
   /** Ein Termin, der begann, als die Spielerliste leer war. */
   ohneListe: "Bei Beginn führte das Team keine Spielerliste. Für diesen Termin gilt die erwartete Spielerzahl.",
@@ -221,7 +385,7 @@ export const ABMELDUNG_TEXT = {
   nichtDabei: "Diese Spieler:in gehörte bei Beginn nicht zu diesem Termin. Nachtragen lässt sich nur, wer da auf der Liste stand.",
   /** An einem ausgefallenen Termin (#475 AK 6). */
   ausgefallenNachtrag: "Der Termin fällt aus. Für ihn lässt sich nicht nachtragen, wer da war.",
-  /** Über den Link einer Probe-Spieler:in (#555 AK 12). */
+  /** Über den Link einer schnuppernden Spieler:in (#555 AK 12). */
   probeVoll: PROBE_TEXT.voll,
 } as const;
 
@@ -248,6 +412,9 @@ export type Teilnehmer = {
   nachname: string | null;
   abgemeldet: boolean;
   ehemalig: boolean;
+  /** Aus dem Team genommen, am begonnenen Termin aber mit Namen und Stand
+   *  bei Beginn geblieben (#579 PC 5); das Nachtragen bleibt möglich (AK 18). */
+  nichtMehrImTeam: boolean;
   /** Die Kader, über die der Termin für sie gilt (#453 AK 15); leer bei einem Termin für alle. */
   kader: string[];
   /** Wann ihr Status zuletzt zwischen angemeldet und abgemeldet wechselte
@@ -256,7 +423,7 @@ export type Teilnehmer = {
   /** Ab Beginn: Ihre Anwesenheit weicht vom Stand bei Beginn ab (#475) —
    *  angemeldet heisst dann nicht erschienen, abgemeldet doch erschienen. */
   nachgetragen: boolean;
-  /** Im Probe-Modus (#555): zuerst nicht angemeldet. */
+  /** Sie schnuppert (#555): zuerst nicht angemeldet. */
   probe: boolean;
 };
 
@@ -292,6 +459,10 @@ export const TEILNAHME_TEXT: Record<TeilnahmeStatus, string> = {
 /** Wie eine ehemalige Spieler:in überall heisst. */
 export const EHEMALIGE_SPIELERIN = "Ehemalige Spieler:in";
 
+/** Das Kennzeichen an einer Zeile eines begonnenen Termins, wenn die
+ *  Spieler:in inzwischen aus dem Team genommen wurde (#579 AK 18). */
+export const NICHT_MEHR_IM_TEAM = "nicht mehr im Team";
+
 /** Nach Name; ehemalige zuletzt — an Trainings und an Spielen. */
 export function nachTeilnehmer<T extends { vorname: string | null; nachname: string | null }>(liste: T[]): T[] {
   const benannt = liste.filter((t) => t.vorname !== null) as (T & { vorname: string; nachname: string })[];
@@ -317,20 +488,93 @@ export function spielerLinkUrl(origin: string, token: string): string {
 }
 
 export const LINK_TEXT = {
-  /** AK 2: was der Link kann — beim Holen, in der Oberfläche wie beim KI-Assistenten. */
+  /** AK 2: was der Link kann — beim Holen, in der Oberfläche wie beim KI-Assistenten.
+   *  Dass er die Termine aller Teams zeigt, sagt `linkTeamsText`: im Link-Dialog
+   *  (#583 AK 13) und im Hinweis der KI-Link-Werkzeuge (#589 AK 9). */
   warnung:
     "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
-  /** Was Erneuern bewirkt (AK 3, PC 3). */
+  /** Was Erneuern bewirkt (AK 3, PC 3; #583 AK 15): für alle Teams der Spieler:in. */
   erneuern:
-    "Erneuern macht den bisherigen Link sofort ungültig. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen.",
+    "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen.",
   /** AK 10: ein erneuerter, unbekannter oder entfernter Link. */
   ungueltigTitel: "Dieser Link gilt nicht mehr",
-  ungueltig:
-    "Vielleicht hat das Trainerteam ihn erneuert. Hol den aktuellen Link über die Abholadresse deines Teams ab oder frag deine Trainerin oder deinen Trainer.",
+  ungueltig: "Den aktuellen erhältst du über eine Abholadresse, bei den Trainer:innen oder bei der Vereinsverwaltung.",
   erneuert: "Link erneuert. Der bisherige gilt nicht mehr.",
-  /** Mit eingeschalteter Selbstabholung (#438): woher die Eltern den neuen holen. */
-  erneuertAbholen: "Die Eltern holen den neuen Link wieder über die Abholadresse ab.",
+  /** Mit eingeschalteter Selbstabholung (#438, #583 AK 15): woher die Eltern
+   *  den neuen holen — bei den Teams, die sie eingeschaltet haben. */
+  erneuertAbholen: (teams: string[]): string => `Die Eltern holen den neuen Link über die Abholadresse von ${aufzaehlung(teams, "oder")} ab.`,
 } as const;
+
+/** Ein Team einer Spieler:in, wie der Link-Dialog es liest: der Name und ob
+ *  die Selbstabholung dieses Teams eingeschaltet ist (#583). */
+export type LinkTeam = { name: string; abholbar: boolean };
+
+/** Der Hinweis im Link-Dialog (#583 AK 13): der Link zeigt die Termine aller
+ *  Teams der Spieler:in, in der Folge, in der sie geladen sind (`nachTeamname`). `ausgeschaltet`: Der Dialog gehört einem Team; bei
+ *  mehr als einem Team steht dazu, dass dessen ausgeschaltete Selbstabholung
+ *  den Link nicht sperrt, wenn ein anderes Team sie eingeschaltet hat.
+ *  Ohne Team: `null` (dort steht der Hinweis «ohne Team»). */
+export function linkTeamsText(vorname: string, teams: LinkTeam[], ausgeschaltet: boolean): string | null {
+  if (teams.length === 0) return null;
+  const erster = `Der Link zeigt die Termine aller Teams von ${vorname}: ${aufzaehlung(teams.map((t) => t.name))}.`;
+  if (!ausgeschaltet || teams.length < 2) return erster;
+  return `${erster} Eine hier ausgeschaltete Selbstabholung sperrt den Link nicht, wenn ein anderes Team von ${vorname} sie eingeschaltet hat.`;
+}
+
+/** Was die Bestätigung zum Erneuern sagt (#583 AK 15, 16), Satz für Satz:
+ *  wen es trifft, ob die Eltern den neuen Link abholen können. Die Teams in
+ *  der geladenen Folge (`nachTeamname`). */
+export function linkErneuernSaetze(vorname: string, teams: LinkTeam[]): string[] {
+  if (teams.length === 0)
+    return [
+      "Der bisherige Link und das Kalender-Abo enden. Abmeldungen bleiben bestehen.",
+      `${vorname} ist keinem Team zugeordnet; gib den neuen Link selbst weiter.`,
+    ];
+  const abholbar = teams.filter((t) => t.abholbar).map((t) => t.name);
+  return [
+    `Der bisherige Link und das Kalender-Abo enden für alle Teams von ${vorname}: ${aufzaehlung(teams.map((t) => t.name))}. Abmeldungen bleiben bestehen.`,
+    abholbar.length > 0
+      ? LINK_TEXT.erneuertAbholen(abholbar)
+      : "Keines dieser Teams hat die Selbstabholung eingeschaltet. Gib den neuen Link selbst weiter.",
+  ];
+}
+
+/** Die Teams für die Bestätigung zum Erneuern liessen sich nicht lesen
+ *  (etwa ohne Netz): Die Bestätigung schliesst, der Link bleibt, wie er war. */
+export const LINK_ERNEUERN_LADEFEHLER = "Die Teams liessen sich nicht laden. Der Link ist nicht erneuert; versuche es noch einmal.";
+
+/** Erneuern bekam keine Antwort (etwa ohne Netz): Ob der Link erneuert ist,
+ *  bleibt offen; der Dialog zeigt den bisher geladenen Link weiter. */
+export const LINK_ERNEUERN_OHNE_ANTWORT =
+  "Keine Antwort beim Erneuern. Vielleicht ist der Link schon erneuert: Schliesse den Dialog und öffne ihn neu, um den aktuellen zu sehen.";
+
+// ── Der private Link über mehrere Teams (#583) ──────────────────────────────
+
+/** Die Teams stehen im Kopf der Seite; jeder Termin trägt sein Team (AK 2, 3). */
+export const linkKopfTitel = (name: string) => `Termine für ${name}`;
+
+/** Die Teams haben keine Termine für die Spieler:in (AK 4). */
+export const LINK_KEINE_TERMINE_TITEL = "Keine anstehenden Termine";
+export const linkKeineTermineText = (vorname: string) => `Die Teams von ${vorname} haben zurzeit keine Termine für ${vorname}.`;
+
+/** Die Spieler:in ist keinem Team zugeordnet (AK 5): eigene Konstante, nicht Teil
+ *  von `LINK_TEXT` (der in die KI-Beschreibungen fliesst). */
+export const linkOhneTeamEltern = (vorname: string) =>
+  `${vorname} ist zurzeit keinem Team zugeordnet. Termine erscheinen hier, sobald ${vorname} einem Team zugeordnet ist. Bei Fragen hilft die Vereinsverwaltung.`;
+
+/** Eine Meldung traf einen Termin, der nicht mehr für die Spieler:in gilt (AK 7):
+ *  sie bleibt stehen, auch wenn die neu geladene Liste den Termin nicht mehr zeigt. */
+export const LINK_GILT_NICHT_TITEL = "Nicht gespeichert";
+export function linkGiltNichtText(art: "training" | "spiel", datum: string, vorname: string): string {
+  const was = art === "spiel" ? "Das Spiel" : "Das Training";
+  return `${was} vom ${tagOhneJahr(datum)} gilt nicht mehr für ${vorname}. Die Liste zeigt jetzt die aktuellen Termine.`;
+}
+
+/** Wohin mit Dringendem in «Fragen und Feedback» am Link (#544 AK 7, #583 AK 19,
+ *  #587 PC 2): die Antwort kommt nie über KiFu; ohne Team ist die
+ *  Vereinsverwaltung des Vereins die Stelle — mit seinem Namen. */
+export const feedbackDringend = (ohneTeam: boolean, verein: string) =>
+  `Bei Dringendem, etwa einer kurzfristigen Absage, wende dich ${ohneTeam ? `an die Vereinsverwaltung von «${verein}»` : "direkt an die Trainer:innen des Teams"}.`;
 
 // ── Am Link eingrenzen (#596) ────────────────────────────────────────────────
 
@@ -391,14 +635,14 @@ export function mitAbsagen(text: string, n: number): string {
   return text ? `${text} Ausserdem ${satz}` : `Damit ${satz}`;
 }
 
-/** Was mit den Anmeldungen von Probe-Spieler:innen geschieht (#555 AK 14,
+/** Was mit den Anmeldungen von schnuppernden Spieler:innen geschieht (#555 AK 14,
  *  PC 5) — als Satz an `text` gehängt wie `mitAbsagen`. */
 export function mitAnmeldungen(text: string, n: number): string {
   if (n === 0) return text;
   const satz =
     n === 1
-      ? "verfällt 1 Anmeldung einer Probe-Spieler:in: Sie gilt wieder als nicht angemeldet."
-      : `verfallen ${n} Anmeldungen von Probe-Spieler:innen: Sie gelten wieder als nicht angemeldet.`;
+      ? "verfällt 1 Anmeldung einer schnuppernden Spieler:in: Sie gilt wieder als nicht angemeldet."
+      : `verfallen ${n} Anmeldungen von schnuppernden Spieler:innen: Sie gelten wieder als nicht angemeldet.`;
   return text ? `${text} Ausserdem ${satz}` : `Damit ${satz}`;
 }
 
@@ -415,7 +659,7 @@ export function verfallBestaetigen(n: number, nachtraege = 0, absagen = 0, anmel
 }
 
 /** Am privaten Link: Der Termin wurde verlegt, seit sie abgemeldet — bzw. als
- *  Probe-Spieler:in angemeldet (#555 PC 5) — wurde (AK 2). */
+ *  schnuppernde Spieler:in angemeldet (#555 PC 5) — wurde (AK 2). */
 export function verfallenHinweis(vorher: { datum: string; beginn: string; anmeldung?: boolean }): string {
   return `Verlegt, vorher ${tagOhneJahr(vorher.datum)} um ${vorher.beginn}. Deine ${vorher.anmeldung ? "Anmeldung" : "Abmeldung"} gilt nicht mehr.`;
 }
@@ -435,11 +679,21 @@ export function abholUrl(origin: string, token: string): string {
 export const ABHOL_VERSUCHE = 5;
 export const ABHOL_SPERRE_MINUTEN = 15;
 
+/** Wer für die Angaben einer Spieler:in verantwortlich ist und wer sie sieht
+ *  (Story #580 PC 4, #587 PC 2) — eine Quelle für die Abholseite (ohne Namen,
+ *  oder mit dem der abgeholten Spieler:in) und den privaten Link (mit dem
+ *  Vornamen). Der Satz «Verantwortlich …» steht im selben Textblock wie «wer
+ *  die Angaben sieht»: Der Verein ist die Stelle, an die sich Eltern wenden.
+ *  Keine eigene Konstante in `LINK_TEXT`: Die fliesst in die KI-Beschreibungen. */
+export function angabenSehenText(verein: string, vorname?: string): string {
+  return `Verantwortlich für die Daten ${vorname ? `von ${vorname} ` : ""}ist der Verein «${verein}». Name, Jahrgang und Teams ${vorname ? `von ${vorname}` : "der Spieler:in"} sehen alle Trainer:innen des Vereins, alle Angaben die Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.`;
+}
+
 export const ABHOLUNG_TEXT = {
   /** AK 3, 5: was die Adresse kann und was Ausschalten bewirkt. */
   beschreibung:
-    "Über diese Adresse können Spieler:innen-Links mit Vorname, Nachname und Jahrgang abgeholt werden. Wer die Abholadresse hat und die Angaben der Spieler:in kennt, kann die Spieler:in ab- und anmelden; teile sie nur teamintern. Ausschalten stoppt neue Abholungen, bezogene Spieler:innen-Links gelten weiter.",
-  aus: "Ausgeschaltet. Eltern erhalten ihren Link nur von euch. Beim Einschalten gilt die bisherige Abholadresse wieder.",
+    "Über diese Adresse holen Eltern den privaten Link ihrer Spieler:in mit Vorname, Nachname und Jahrgang selbst ab. Der Link zeigt die Termine aller Teams der Spieler:in. Wer die Abholadresse hat und die Angaben der Spieler:in kennt, kann die Spieler:in ab- und anmelden; teile sie nur teamintern. Ausschalten stoppt neue Abholungen, bezogene Spieler:innen-Links gelten weiter.",
+  aus: "Ausgeschaltet. Eltern erhalten ihren Link von diesem Team nur von euch. Der Link zeigt die Termine aller Teams der Spieler:in; ausgeschaltet sperrt die Selbstabholung ihn nicht, wenn ein anderes Team der Spieler:in sie eingeschaltet hat. Beim Einschalten gilt die bisherige Abholadresse wieder.",
   /** AK 4, 5: vor dem Erneuern. */
   erneuern:
     "Die bisherige Adresse gilt danach nie mehr, auch nicht im Eltern-Chat. Spieler-Links, die Eltern schon bezogen haben, gelten weiter. Teile danach die neue Adresse im Eltern-Chat.",
@@ -452,8 +706,6 @@ export const ABHOLUNG_TEXT = {
     "Gib Vorname, Nachname und Jahrgang der Spieler:in ein. Du erhältst den privaten Link, mit dem du die Spieler:in für Trainings und Spiele ab- und anmelden kannst.",
   /** AK 7: was KiFu speichert, wer es sieht, wann es verschwindet. */
   speichertTitel: "Was KiFu speichert",
-  speichert:
-    "Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein Spiel nicht aufgeboten ist. Das sehen die Trainer:innen des Teams, KI-Assistenten, die sie mit KiFu verbunden haben, und wer den Link der Spieler:in hat. Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen und ihre KI-Assistenten. Nimmt das Team eine Spieler:in aus der Liste, verschwinden ihre Angaben überall.",
   /** AK 13, 14: immer derselbe Satz. */
   passtNicht: "Dazu finden wir keinen Link. Prüf die Schreibweise oder frag beim Team nach.",
   /** AK 16. */
@@ -465,10 +717,21 @@ export const ABHOLUNG_TEXT = {
   ungueltig: "Frag deine Trainerin oder deinen Trainer nach der aktuellen Abholadresse oder direkt nach dem Link der Spieler:in.",
 } as const;
 
-/** AK 10: wozu der Link dient, dass er privat ist, und wo es ihn wieder gibt. */
-export function abholErhaltText(name: string): { wozu: string; privat: string } {
+/** AK 7, #587 PC 2: was KiFu speichert, wer dafür verantwortlich ist, wer es
+ *  sieht, wann es verschwindet — auf dem Eingabe-Bildschirm der Abholseite. */
+export function abholSpeichertText(verein: string): string {
+  return `Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein Spiel nicht aufgeboten ist. ${angabenSehenText(verein)} Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen ihrer Teams und ihre KI-Assistenten. Nimmt ein Team eine Spieler:in heraus, bleiben ihre Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht.`;
+}
+
+/** AK 10: wozu der Link dient, dass er privat ist, und wo es ihn wieder gibt;
+ *  #587 PC 2: wer für die Daten verantwortlich ist, auch auf dem
+ *  Erhalt-Bildschirm. */
+export function abholErhaltText(name: string, verein: string): { wozu: string; teams: string; privat: string; daten: string } {
   return {
+    daten: `${angabenSehenText(verein, name)} Nimmt ein Team ${name} heraus, bleiben die Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung sie aus dem Verein löscht.`,
     wozu: `Mit diesem Link meldest du ${name} für Trainings ab und wieder an und für Spiele an oder ab, ohne Konto. Speichere ihn am besten als Lesezeichen.`,
+    // Über jedes Team mit Selbstabholung führt die Abholung zum selben Link; die Teams nennt die Seite nicht (#583 AK 12).
+    teams: `Der Link zeigt die Termine aller Teams von ${name}.`,
     privat: `Der Link ist privat. Wer ihn hat, kann ${name} ab- und anmelden. Geht er verloren, holst du ihn hier wieder ab.`,
   };
 }

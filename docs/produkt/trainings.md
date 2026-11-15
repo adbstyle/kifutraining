@@ -1,6 +1,6 @@
 # Trainings
 
-Stand 2026-10-16. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-11-15. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
 
 ## Die Altersstufe wird beim Anlegen gewählt
@@ -20,7 +20,7 @@ einem fremden.
 ## Der Aufbau ist vorgegeben
 
 Ein Kinderfussball-Training folgt vier Teilen in fester Reihenfolge: Auffangen, Einleitung,
-Hauptteil, Ausklang. Das Auffangen deckt die Zeit ab, in der die Kinder eintrudeln; es zählt
+Hauptteil, Ausklang. Das Auffangen deckt die Zeit ab, in der die Spieler:innen eintrudeln; es zählt
 nicht zur Trainingsdauer und trägt deshalb keine Zeitangaben. Der Hauptteil gliedert sich
 weiter in „Fussball spielen lernen", „Vielseitigkeit erleben" und „Fussball spielen", ebenfalls
 in dieser Reihenfolge — sie führt vom geführten Lernen über die Vielseitigkeit zum freien Spiel
@@ -229,13 +229,13 @@ es ist dasselbe Training.
 
 ## Gruppen
 
-Wer zwanzig oder dreissig Kinder vor sich hat, teilt sie auf und lässt mehrere Gruppen
+Wer zwanzig oder dreissig Spieler:innen vor sich hat, teilt sie auf und lässt mehrere Gruppen
 gleichzeitig an verschiedenen Übungen arbeiten. Diese Aufteilung lässt sich am Training
 festhalten, statt sie auf einem Zettel zu führen.
 
 Eine Gruppe ist eine Bezeichnung, mehr nicht — „Gruppe 1", „Torhüter", „Die Schnellen". Die
-Anwendung führt keine Kinder: Namen werden keine erfasst und einer Gruppe auch nicht zugeordnet.
-Eine Kinderzahl trägt eine Gruppe ebenso wenig, und weder die Anzahl der Gruppen noch ihre
+Gruppe führt keine Spieler:innen: Namen werden keine erfasst und einer Gruppe auch nicht zugeordnet.
+Eine Spielerzahl trägt eine Gruppe ebenso wenig, und weder die Anzahl der Gruppen noch ihre
 Zusammensetzung schlägt die Anwendung vor. Wie viele es sind, entscheidet der Trainer; es gibt
 keine Obergrenze, und eine Gruppe darf auch leer ausgehen — die Torhüter trainieren zeitweise
 für sich, und eine Gruppe lässt sich vorbereiten, bevor sie gebraucht wird.
@@ -339,7 +339,7 @@ Dort steht die Übung für sich, ohne Gruppen und ohne Notiz.
 
 ## Varianten des Hauptteils
 
-Wie viele Kinder kommen, weiss ein Trainer oft erst am Trainingstag, und wie der Platz aussieht
+Wie viele Spieler:innen kommen, weiss ein Trainer oft erst am Trainingstag, und wie der Platz aussieht
 ebenso. Damit er deswegen nicht zwei Trainings führen muss, kann ein Training mehrere benannte
 Varianten seines Hauptteils tragen: vorbereitete Alternativen, von denen er eine spielt, während
 die übrigen als dasselbe Training bestehen bleiben.
@@ -537,6 +537,30 @@ sich dann auf die erste Variante: Gespielt wird ohnehin nur eine, und die Summe 
 eine Dauer, die dieses Training nie hat. Team-Trainings erscheinen hier nicht;
 sie leben im Team-Bereich.
 
+## Konten ohne Verein
+
+Ein Konto ohne Verein (siehe [Verein](verein.md#rollen-nach-ort)) besitzt höchstens 30 eigene
+Trainings. Es zählen alle persönlichen Trainings: Entwürfe wie veröffentlichte, angelegte wie
+übernommene, auch die persönliche Kopie eines Team-Trainings. Team-Trainings und
+Termin-Trainings zählen nicht, ebenso wenig Varianten, Gruppen oder die Übungen eines Trainings.
+
+Den Stand zeigt „Meine Trainings" oben über der Liste, etwa „3 von 30 Trainings", ab der Grenze
+mit der Plakette „Nichts mehr frei", über der Grenze nur die Zahl, etwa „34 Trainings (höchstens
+30)" — immer für den ganzen Bestand, auch wenn ein Filter die Liste kürzt. Die Seite „Neues
+Training" zeigt den Stand vor der Eingabe; an der Grenze steht statt der Eingabe die Meldung
+„Nichts mehr frei: 30 von 30 Trainings" mit „Ohne Verein besitzt du höchstens 30 Trainings.
+Lösche eines, um Platz zu schaffen. In einem Verein gilt die Grenze nicht." und dem Weg „Zu
+meinen Trainings"; über der Grenze nennt der Satz, wie viele weg müssen. „Übernehmen" geht für
+ein Konto ohne Verein über einen Dialog, der den Stand frisch nennt, etwa „Du besitzt 3 von 30
+Trainings.", und an der Grenze nur „Schliessen" anbietet. Wird trotzdem abgewiesen, weil
+inzwischen anderswo ein Training entstanden ist, zeigt die Anwendung dieselbe Meldung.
+
+Was schon besteht, bleibt, auch über der Grenze: Bearbeiten, veröffentlichen, auf Entwurf setzen
+und löschen gehen weiter. In einem Verein gilt die Grenze nicht — ab der Aufnahme in ein Team oder
+eine Vereinsverwaltung sofort —, und Konten in einem Verein sehen weder Stand noch Dialog. In der
+Seitenleiste steht der Stand nicht. Ein verbundener KI-Assistent bekommt dieselbe Grenze und
+dieselbe Auskunft (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
+
 ## Bekannte Grenzen
 
 Ein Training trägt ausser Name, Altersstufe, Alterskategorien und Ziel keine eigenen Angaben —
@@ -546,7 +570,7 @@ Kinderfussball nennt die Anwendung gar keine.
 
 Die Materialliste eines Trainings kennt nur die Gleichzeitigkeit, die das Training selbst
 festhält. Ob Material einer Übung beim Aufbau der nächsten noch steht, berücksichtigt sie nicht,
-und nach der Zahl der Kinder, die kommen, richtet sie sich nicht. Die freien Ergänzungen zählt sie
+und nach der Zahl der Spieler:innen, die kommen, richtet sie sich nicht. Die freien Ergänzungen zählt sie
 nicht zusammen: Wer in zwei Übungen „Pfeife" notiert hat, liest sie zweimal.
 
 Die Altersstufe eines Trainings ändert sich nie, auch dann nicht, wenn eine Mannschaft
@@ -569,7 +593,7 @@ deren Fuss —, und in den Übersichten steht die Summe ohnehin nirgends. Einen 
 einzelne Gruppe oder für eine betreuende Person gibt es weder in der Durchführen-Ansicht noch im
 Druck. Wie lange ein Wechsel dauert, gibt die Anwendung nicht vor, ein Signal zum Wechseln gibt sie
 ebenso wenig, und heruntergezählt wird nichts. Unbesetzte Übungen und ungleich auf die Gruppen
-verteilte Übungen meldet sie nicht — beides kann gewollt sein —, und die Kinderzahl einer Übung
+verteilte Übungen meldet sie nicht — beides kann gewollt sein —, und die Anzahl Spieler:innen einer Übung
 gleicht sie nicht mit der Verteilung ab. Bearbeiten zwei Mitglieder desselben Teams dieselbe Stelle
 gleichzeitig — die Verteilung ebenso wie die Notiz einer Übung —, bemerkt die Anwendung das nicht;
 es gilt, was zuletzt gespeichert wurde.
@@ -587,9 +611,9 @@ mehrmals angefasst werden. Ein verbundener KI-Assistent legt die Reihenfolge der
 dagegen in einem Zug fest.
 
 Varianten gibt es allein für den Hauptteil; wer unterschiedliche Einleitungen oder Ausklänge
-braucht, führt zwei Trainings. Eine Kinderzahl hält die Anwendung weder am Training noch an einer
+braucht, führt zwei Trainings. Eine Spielerzahl hält die Anwendung weder am Training noch an einer
 Variante fest; eine Spielerzahl trägt allein ein Team-Termin, erwartet oder aus der
-Spielerliste des Teams (siehe [Team-Bereich](team-bereich.md#der-kalender-des-teams)). Welche Variante zu wie vielen Kindern
+Spielerliste des Teams (siehe [Team-Bereich](team-bereich.md#der-kalender-des-teams)). Welche Variante zu wie vielen Spieler:innen
 passt, schlägt sie nicht vor, auch nicht anhand dieser Zahl — die Bezeichnung ist der ganze
 Hinweis. Eine einzelne Übung lässt sich nicht von einer Variante in eine
 andere kopieren oder verschieben, und Übungen, die in mehreren Varianten stehen, werden nicht

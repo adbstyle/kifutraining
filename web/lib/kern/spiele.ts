@@ -38,6 +38,8 @@ export type SpielTeilnehmer = {
   /** Ihre Meldung ist mit einer Verlegung verfallen (AK 15). */
   verfallen: boolean;
   ehemalig: boolean;
+  /** Aus dem Team genommen, am begonnenen Spiel mit Namen geblieben (#579 PC 5, AK 18). */
+  nichtMehrImTeam: boolean;
   kader: string[];
   /** Der letzte Wechsel ihrer Meldung (ISO); `null` ohne Meldung (AK 25). */
   gewechseltAm: string | null;
@@ -91,6 +93,7 @@ type Zeile = {
   zustand: Meldung;
   verfallen: boolean;
   ehemalig: boolean;
+  nicht_mehr_im_team: boolean;
   kader: string[] | null;
   gewechselt_am: string | null;
   nicht_aufgeboten: boolean;
@@ -132,7 +135,7 @@ export async function teilnehmerAmTermin(
 async function spielSpielerVon(supabase: SupabaseClient, t: TerminMitStand, jetzt: string): Promise<KernErgebnis<SpielSpieler>> {
   const [teilnehmer, team] = await Promise.all([
     supabase.rpc("spiel_teilnehmer", { p_termin: t.id }),
-    supabase.from("spieler").select("id", { count: "exact", head: true }).eq("team_id", t.team_id),
+    supabase.from("team_spieler").select("spieler_id", { count: "exact", head: true }).eq("team_id", t.team_id),
   ]);
   if (teilnehmer.error) return ausDbFehler(teilnehmer.error);
   const begonnen = terminBegonnen(t.datum, t.beginn, jetzt);
@@ -147,6 +150,7 @@ async function spielSpielerVon(supabase: SupabaseClient, t: TerminMitStand, jetz
           meldung: r.zustand,
           verfallen: r.verfallen,
           ehemalig: r.ehemalig,
+          nichtMehrImTeam: r.nicht_mehr_im_team,
           kader: r.kader ?? [],
           gewechseltAm: r.gewechselt_am,
           nichtAufgeboten: r.nicht_aufgeboten,

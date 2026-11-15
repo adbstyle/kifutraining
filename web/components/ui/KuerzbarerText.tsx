@@ -8,7 +8,7 @@ import { ExternerLink } from "./ExternerLink";
 
 /* ── KuerzbarerText ───────────────────────────────────────────
    Ein längerer Freitext, gekürzt auf wenige Zeilen, mit «Ganz lesen» darunter
-   (#556: das Info-Schreiben in der Karte «Probetraining» und am privaten
+   (#556: das Info-Schreiben in der Karte «Schnuppertraining» und am privaten
    Link). Neu, weil `Freitext` immer ganz steht und die Karte der Übung
    (`line-clamp-2`) nur kürzt, ohne aufzuklappen.
 

@@ -1,14 +1,50 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardList, LayoutGrid, Shield } from "lucide-react";
+import { Building2, CalendarDays, ClipboardList, LayoutGrid, ListChecks, Settings, Shield, Users } from "lucide-react";
 import { Breadcrumbs, ChoiceChip, ChoiceChipGroup, Seitenleiste, SeitenleistenKnopf, leisteStil } from "@/components/ui";
-import type { SeitenleisteGruppe } from "@/components/ui";
+import type { BereichOption, SeitenleisteGruppe } from "@/components/ui";
 import type { Darstellung } from "@/lib/darstellung";
 
 /* Beispieldaten; die Ziele bleiben auf der Seite. */
-function gruppen(angemeldet: boolean): SeitenleisteGruppe[] {
+const BEREICHE: BereichOption[] = [
+  { schluessel: "team-db", href: "#team-db", label: "D-Junioren Db", kopf: "FC Beispiel · Team", untertitel: "Trainer:in", icon: Shield },
+  { schluessel: "team-ea", href: "#team-ea", label: "E-Junioren Ea", kopf: "FC Beispiel · Team", untertitel: "Trainer:in", icon: Shield },
+  {
+    schluessel: "verein",
+    href: "#verein",
+    label: "FC Beispiel",
+    kopf: "Verein",
+    untertitel: "Teams und Spieler:innen des Vereins",
+    icon: Building2,
+    trenner: true,
+  },
+];
+
+function gruppen(angemeldet: boolean, bereich: string): SeitenleisteGruppe[] {
+  const imVerein = bereich === "verein";
   return [
+    ...(angemeldet
+      ? [
+          imVerein
+            ? {
+                titel: "Verein",
+                eintraege: [
+                  { label: "Teams", href: "#verein-teams", icon: Shield, current: true },
+                  { label: "Spieler:innen", href: "#verein-spieler", icon: Users },
+                  { label: "Verwaltung", href: "#verein-verwaltung", icon: Settings },
+                ],
+              }
+            : {
+                titel: "Team",
+                eintraege: [
+                  { label: "Trainingsplan", href: "#plan", icon: CalendarDays, current: true },
+                  { label: "Trainings", href: "#team-trainings", icon: ListChecks },
+                  { label: "Team", href: "#team", icon: Users },
+                ],
+              },
+        ]
+      : []),
     {
       titel: "Bibliothek",
       eintraege: [
@@ -19,20 +55,10 @@ function gruppen(angemeldet: boolean): SeitenleisteGruppe[] {
     ...(angemeldet
       ? [
           {
-            titel: "Mein Bereich",
+            titel: "Meine Bibliothek",
             eintraege: [
               { label: "Meine Übungen", href: "#meine-uebungen", icon: LayoutGrid },
               { label: "Meine Trainings", href: "#meine-trainings", icon: ClipboardList },
-              {
-                label: "Teams",
-                href: "#teams",
-                icon: Shield,
-                bereichAktiv: true,
-                unterpunkte: [
-                  { label: "D-Junioren Db", href: "#team-db" },
-                  { label: "E-Junioren Ea", href: "#team-ea", current: true },
-                ],
-              },
             ],
           },
         ]
@@ -46,6 +72,7 @@ function gruppen(angemeldet: boolean): SeitenleisteGruppe[] {
 export function SeitenleisteDemo() {
   const [slim, setSlim] = useState(false);
   const [angemeldet, setAngemeldet] = useState(true);
+  const [bereich, setBereich] = useState("team-ea");
   // Nur die Demo: Die Wahl hier schaltet die Anwendung nicht um.
   const [darstellung, setDarstellung] = useState<Darstellung>("geraet");
 
@@ -66,7 +93,8 @@ export function SeitenleisteDemo() {
       >
         <Seitenleiste
           eingebettet
-          gruppen={gruppen(angemeldet)}
+          bereich={angemeldet ? { optionen: BEREICHE, aktiv: bereich, onWahl: setBereich } : undefined}
+          gruppen={gruppen(angemeldet, bereich)}
           konto={
             angemeldet
               ? { name: "Trainer Demo", email: "trainer@ki-fu.ch", href: "#konto" }
@@ -83,6 +111,7 @@ export function SeitenleisteDemo() {
             <SeitenleistenKnopf slim={slim} onClick={() => setSlim(!slim)} immer />
             <Breadcrumbs
               items={[
+                { label: "FC Beispiel", href: "#verein" },
                 { label: "Teams", href: "#teams" },
                 { label: "E-Junioren Ea" },
               ]}

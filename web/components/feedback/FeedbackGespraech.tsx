@@ -134,7 +134,7 @@ export function FeedbackGespraech({
   /** Die Seite, auf der die Person gerade ist (nur der Pfad). */
   seite: string;
   onSchliessen: () => void;
-  /** Am privaten Link: wohin mit Dringendem (#544). */
+  /** Am privaten Link: wohin mit Dringendem (#544) — in der Begrüssung und nach dem Absenden (#583 AK 19). */
   dringend?: string;
 }) {
   const [text, setText] = useState("");
@@ -195,6 +195,7 @@ export function FeedbackGespraech({
             Frage? Erzähl es in deinen Worten.
           </p>
           <p className="type-body-medium text-on-surface-mittel">Bitte gib keine sensiblen Angaben ein.</p>
+          {dringend && <p className="type-body-medium text-on-surface-mittel">{dringend}</p>}
         </div>
 
         {g.verlauf.map((n, i) => (

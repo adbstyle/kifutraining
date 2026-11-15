@@ -34,6 +34,7 @@
 import assert from "node:assert/strict";
 import { isDeepStrictEqual } from "node:util";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import ts from "typescript";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { erscheinungsform_juniorenSlugs, erscheinungsformSlugs, hauptteilkategorieSlugs } from "../lib/vocab";
@@ -155,28 +156,53 @@ import {
   type TerminTrainer,
 } from "../lib/trainer";
 import { aboDatei, aboPfad, aboUrl, aboTokenAus, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
-import { aboEintrag, aboKalenderName, aboStatus, spielerAboUrl, type AboFeedTermin } from "../lib/spieler-abo";
+import { ABO_KALENDER_NAME, aboEintrag, aboStatus, spielerAboUrl, type AboFeedTermin } from "../lib/spieler-abo";
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
 import { blattStand, handlungsMeldung, meldeStatus, nachMeldefrist, spielStatus, terminStatus } from "../lib/termin-status";
 import { meldefristVerpasst } from "../lib/spiel";
 import {
+  SPIELER_MAX,
   SPIELER_MELDUNG,
   SPIELER_TEXT,
+  ABHOLUNG_TEXT,
+  angabenSehenText,
+  HERAUSNEHMEN_TEXT,
+  aufzaehlung,
   bereinigeName,
+  herausnehmenFrage,
+  herausnehmenSaetze,
+  herausnehmenTitel,
+  imTeam,
   jahrgangAus,
+  LINK_TEXT,
+  linkErneuernSaetze,
+  linkTeamsText,
+  nachTeamname,
   nachSpielerName,
+  spielerDoppeltText,
   spielerProblem,
   spielerzahlKurz,
   spielerzahlLang,
+  verbleibendeTeams,
   spielerzahlVon,
   istAnwesend,
   teilnahmeStatus,
   statusNachSchalter,
   TEILNAHME_TEXT,
   verfallDialogText,
+  mitAnmeldungen,
   ABMELDUNG_TEXT,
+  LINK_GILT_NICHT_TITEL,
+  LINK_KEINE_TERMINE_TITEL,
+  abholErhaltText,
+  abholSpeichertText,
+  feedbackDringend,
+  linkGiltNichtText,
+  linkKeineTermineText,
+  linkKopfTitel,
+  linkOhneTeamEltern,
   EHEMALIGE_SPIELERIN,
   abweisungText,
   nachTeilnehmer,
@@ -241,19 +267,37 @@ import {
   IMPORT_TEXT,
   dekodiere,
   erkenneSpalten,
+  IMPORT_BYTES_MAX,
+  IMPORT_ZEILEN_MAX,
+  ausgangAus,
+  erwartetVon,
   importErgebnisText,
+  importErwartetForm,
+  importJsPlakette,
+  importMehrfachText,
+  importNeuText,
+  importNichtsZuTunText,
+  importUebernehmbar,
+  importUeberGrenzeText,
   importZeilen,
+  importZeilenForm,
+  importZeilenStimmen,
   jahrgangAusDatum,
   jsAus,
   leseDatei,
+  vorschauAus,
+  type ImportVorschau,
 } from "../lib/spieler-import";
 import { seitWann, terminBegonnen } from "../lib/zeit";
 import {
+  PROBE_MELDUNG,
   PROBE_TEXT,
   PROBE_VERFALL_MARKER,
+  linkProbeKopf,
   linkProbeVoll,
   linkProbeZaehler,
   probeAnzahlProblem,
+  probeAusschaltenText,
   probeEinschaltenText,
   probeFolgenAusFehler,
   probeInfoBereinigt,
@@ -268,6 +312,88 @@ import {
   ueberAnzahl,
   ueberAnzahlText,
 } from "../lib/probe";
+import {
+  PERSON_MELDUNG,
+  TEAM_NUR_VERWALTUNG,
+  VEREIN_MELDUNG,
+  VEREIN_TEAM_NICHT_GEFUNDEN,
+  KONTO_LOESCHEN_TEXT,
+  TEAMS_OHNE_VEREIN_TEXT,
+  VEREIN_GRUENDEN_TEXT,
+  VEREIN_LOESCHEN_TEXT,
+  VEREIN_UNSTIMMIG,
+  kontoEinzigePersonInzwischenText,
+  kontoEinzigePersonSaetze,
+  kontoLetzteVerwaltungSaetze,
+  vereinGeloeschtText,
+  vereinHeisstInzwischenText,
+  vereinLoeschenFolgen,
+  vereinLoeschenTitel,
+  VEREIN_NAME_MAX,
+  VEREIN_SPIELER_MAX,
+  VEREIN_TEAMS_MAX,
+  linkOhneTeamText,
+  spielerAendernAbgewiesenText,
+  spielerErfassenAbgewiesenText,
+  spielerErfassenEinleitung,
+  spielerKopfTeile,
+  spielerLoeschenSaetze,
+  spielerLoeschenTitel,
+  spielerVonText,
+  SPIELER_BESTAND_LEER,
+  SPIELER_BESTAND_LEER_MITGLIED,
+  SPIELER_FILTER,
+  SPIELER_KEINE_TREFFER,
+  SPIELER_OHNE_TEAM,
+  SPIELER_ZUORDNUNG_HINWEIS,
+  spielerAngezeigtText,
+  teamnameVergebenText,
+  vereinKopfText,
+  vereinsNameProblem,
+  zielWeg,
+  zugeordnetText,
+  zuordnenAbweisungText,
+  zuordnenEinleitung,
+  SCHNUPPERN_ZUORDNEN_HINWEIS,
+  SCHNUPPERN_ZUORDNEN_LABEL,
+  SCHNUPPERN_ZUORDNEN_TEXT,
+  schnuppernZugeordnetText,
+  vereinHerausgenommenText,
+} from "../lib/verein";
+import { liesListe, liesPositiveZahl, mitAnzahl } from "../lib/adresse";
+import {
+  KONTO_GRENZE_HINWEIS,
+  KONTO_GRENZE_SCHLUSS,
+  KONTO_GRENZE_WERKZEUG,
+  KONTO_MARKER,
+  KONTO_TRAININGS_MAX,
+  KONTO_UEBUNGEN_MAX,
+  bestandSatz,
+  bestandText,
+  bestandVollMeldung,
+  NICHTS_MEHR_FREI,
+  grenzeAusAbweisung,
+  grenzenOhneVerein,
+  istVoll,
+  kontoGrenzeAusFehler,
+  kontoGrenzeMeldung,
+  kontoGrenzeText,
+  kontoGrenzenAus,
+} from "../lib/konto-grenzen";
+import {
+  OHNE_TEAM_WERT,
+  SPIELER_SEITE,
+  bereinigeEingrenzung,
+  eingrenzungGesetzt,
+  bereinigteAdresse,
+  bereinigeSuche,
+  liesSpielerAnzahl,
+  liesSpielerEingrenzung,
+  teamFilterWerte,
+} from "../lib/verein-spielerliste";
+import { gruendungAus, kontoInfoAus, kontoLoeschAusgangAus, vereinLoeschAusgangAus } from "../lib/verein-antwort";
+import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
+import { bereichAusPfad } from "../lib/navigation";
 import { textMitLinks } from "../lib/text-links";
 
 let gelaufen = 0;
@@ -1179,7 +1305,12 @@ pruefe("Serien-Marker: kein Marker steckt in einem anderen (includes-Suche bleib
     ...Object.keys(SERIE_MELDUNG),
     ...Object.keys(SPIELER_MELDUNG),
     ...Object.keys(KADER_MELDUNG),
+    ...Object.keys(SPIEL_MELDUNG),
     ...Object.keys(TRAINER_MELDUNG),
+    ...Object.keys(PROBE_MELDUNG),
+    ...Object.keys(VEREIN_MELDUNG),
+    // Die Grenzen eines Kontos ohne Verein (#588): Marker mit Bestand dahinter.
+    ...Object.values(KONTO_MARKER),
     // Wird vor der Übersetzung abgefangen (lib/kern/kader.ts), darf aber
     // keinen Satz treffen.
     VERFALL_MARKER,
@@ -2185,7 +2316,8 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#327": ["termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen"],
     "#329": ["team_plan_abrufen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
-    "#434": ["spielerliste_abrufen", "spieler_aufnehmen", "spieler_aendern", "spieler_entfernen"],
+    "#434": ["spielerliste_abrufen", "spieler_aufnehmen", "spieler_aendern"],
+    "#579": ["spieler_aus_team_nehmen", "spielerliste_abrufen", "termin_spieler_abrufen", "termin_anwesenheit_setzen"],
     "#435": ["termin_spieler_abrufen", "termin_abmeldung_setzen"],
     "#436": ["spieler_link_abrufen", "spieler_link_erneuern"],
     "#438": ["selbstabholung_abrufen", "selbstabholung_schalten", "abholadresse_erneuern"],
@@ -2195,13 +2327,316 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#459": ["termin_festlegen", "termin_aendern", "termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen", "termin_entfernen", "team_plan_abrufen"],
     "#464": ["termin_spieler_abrufen", "termin_aufgebot_setzen"],
     "#487": ["termin_spieler_abrufen", "termin_anwesenheit_setzen", "team_plan_abrufen"],
-    "#556": ["probetraining_abrufen", "probetraining_festlegen"],
-    "#555": ["probetraining_abrufen", "probetraining_festlegen", "spieler_probe_setzen", "spielerliste_abrufen", "termin_spieler_abrufen"],
+    "#556": ["schnuppertraining_abrufen", "schnuppertraining_festlegen"],
+    "#555": ["schnuppertraining_abrufen", "schnuppertraining_festlegen", "spieler_schnuppern_setzen", "spielerliste_abrufen", "termin_spieler_abrufen"],
     "#561": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "team_plan_abrufen", "spieler_link_abrufen"],
+    "#589": ["teams_abrufen", "spielerliste_abrufen", "spieler_aus_team_nehmen", "spieler_link_abrufen", "spieler_link_erneuern"],
     "#590": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "team_plan_abrufen", "spieler_link_abrufen", "training_abrufen", "trainings_suchen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
+  // Story #579: Das Herausnehmen ersetzt das Entfernen, und gelöscht wird in
+  // keinem KI-Werkzeug (Löschen aus dem Verein nur in der Anwendung).
+  for (const alt of ["spieler_entfernen", "spieler_loeschen"]) assert.ok(!namen.includes(alt), `${alt} gibt es nicht mehr`);
+  // Story #584: Das Schnuppertraining heisst ohne Übergang neu (OoS 3). Geprüft wird an den
+  // registrierten Namen, nicht im Quelltext: `spieler_probe_setzen` bleibt der RPC-Name der Datenebene.
+  for (const alt of ["probetraining_abrufen", "probetraining_festlegen", "spieler_probe_setzen"])
+    assert.ok(!namen.includes(alt), `${alt} gibt es als Werkzeug nicht mehr (#584)`);
+  assert.ok(!namen.some((n) => /probe/i.test(n)), "kein Werkzeugname trägt «probe» (#584 AK 3)");
+});
+
+pruefe("Alte Namen abwesend: kein spieler_entfernen, kein spieler_loeschen, kein verein_* im KI-Weg (#579, Architekturplan §5.5)", () => {
+  const treffer: string[] = [];
+  for (const datei of quelldateien(web))
+    if (datei !== fileURLToPath(import.meta.url))
+      readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
+        if (/\bspieler_(entfernen|loeschen)\b/.test(zeile)) treffer.push(`${relative(web, datei)}:${i + 1}`);
+      });
+  assert.deepEqual(treffer, [], `alte Namen stehen noch in: ${treffer.join(", ")}`);
+  // Die Vereinsverwaltung geht nie über die KI (AP §4.1): unter lib/mcp steht keine verein_*-RPC.
+  const ki: string[] = [];
+  for (const datei of quelldateien(join(web, "lib/mcp")))
+    if (/\.rpc\(\s*["`']verein_/.test(readFileSync(datei, "utf8"))) ki.push(relative(web, datei));
+  assert.deepEqual(ki, [], `verein_*-RPC im KI-Weg: ${ki.join(", ")}`);
+});
+
+pruefe("Alte Namen abwesend: Team anlegen, auflösen und umbenennen gibt es nur noch am Verein-Ort (#581, Architekturplan §5.1)", () => {
+  // Treffer in supabase/migrations bleiben erlaubt (angewandte Migrationen); geprüft wird nur web/.
+  // `check:kern-db` prüft den Verein-Kern selbst und ruft ihn darum auf.
+  const vereinOrt = (d: string) =>
+    ["lib/kern/verein.ts", "lib/actions/verein.ts", "scripts/pruefe-kern-db.ts"].includes(d) ||
+    d.startsWith("app/(app)/verein/") ||
+    d.startsWith("components/verein/");
+  const treffer: string[] = [];
+  for (const datei of quelldateien(web)) {
+    if (datei === fileURLToPath(import.meta.url)) continue;
+    const rel = relative(web, datei);
+    readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
+      const ort = `${rel}:${i + 1}`;
+      // Überall verschwunden: die RPCs und Zustände des alten Auflösens.
+      if (/\b(create_team|loese_team_auf|team_aufloesen_wenn_leer|aufloesung_noetig|getTeamAufloesungsInfo)\b/.test(zeile)) treffer.push(ort);
+      // Der Teamname am Austritt ist weg; `p_teamname` gibt es nur noch beim Auflösen am Verein-Ort.
+      if (!vereinOrt(rel) && /\bp_teamname\b/.test(zeile)) treffer.push(ort);
+      // Umbenennen und Auflösen: nur am Verein-Ort, nie am Team-Ort.
+      if (!vereinOrt(rel) && /\b(benenneTeamUm|loeseTeamAuf)\b/.test(zeile)) treffer.push(ort);
+      if (/\bTeamAnsichten\b/.test(zeile)) treffer.push(ort);
+    });
+  }
+  assert.deepEqual(treffer, [], `alte Namen am falschen Ort, zu räumen: ${treffer.join(", ")}`);
+});
+
+pruefe("Verein-Kern nur für die Anwendung: kein MCP-Modul importiert ihn, kein anderer Kern ruft verein_* (#581, Architekturplan §5.5)", () => {
+  const treffer: string[] = [];
+  for (const datei of quelldateien(join(web, "lib/mcp")))
+    if (/lib\/kern\/verein["']/.test(readFileSync(datei, "utf8"))) treffer.push(relative(web, datei));
+  // Auch die übrigen Kerne bleiben frei von verein_*-RPCs: Was die KI ruft, endet nicht beim Verein.
+  for (const datei of quelldateien(join(web, "lib/kern")))
+    if (!datei.endsWith("kern/verein.ts") && /\.rpc\(\s*["`']verein_/.test(readFileSync(datei, "utf8"))) treffer.push(relative(web, datei));
+  // Und wer den Verein-Kern importiert, ist eine Action, eine Seite oder ein Skript — kein Kern.
+  for (const datei of quelldateien(join(web, "lib/kern")))
+    if (!datei.endsWith("kern/verein.ts") && /kern\/verein["']/.test(readFileSync(datei, "utf8"))) treffer.push(relative(web, datei));
+  assert.deepEqual(treffer, [], `Verein-Kern im KI-Weg: ${treffer.join(", ")}`);
+});
+
+pruefe("Rollen nach Ort (#581, Architekturplan §4): Team-Seiten und Team-Bausteine importieren weder Verein-Actions noch Verein-Kern", () => {
+  // Am Team-Ort wirkt nur die Mitgliedschaft; was die Verwaltung darf, liegt
+  // im Bereich «Verein». Die Vereinslage zu lesen (lib/queries/verein) bleibt erlaubt.
+  const treffer: string[] = [];
+  for (const ordner of ["components/team", "app/(app)/team"])
+    for (const datei of quelldateien(join(web, ordner)))
+      if (/lib\/(actions|kern)\/verein["']/.test(readFileSync(datei, "utf8"))) treffer.push(relative(web, datei));
+  assert.deepEqual(treffer, [], `Verein-Actions oder Verein-Kern am Team-Ort: ${treffer.join(", ")}`);
+});
+
+pruefe("Spielerbestand der Verwaltung (#582): Sätze zum Erfassen und Ändern, Doppelte mit Teams, ohne Team und gemischt (AK 4, 5)", () => {
+  const e = { vorname: "  Noah ", nachname: "Keller", jahrgang: 2015 };
+  const zusatz = "Ist es eine andere Spieler:in, unterscheide sie mit einem Zusatz im Vornamen.";
+  const zuordnen = "Ordne die vorhandene Spieler:in selbst einem Team zu.";
+  // Erfassen mit einem, zwei, drei Teams (Namen nach Name geordnet, wie am Team-Ort).
+  assert.equal(
+    spielerErfassenAbgewiesenText({ teams: ["Da"], ohne_team: false }, e, "FC Wyler"),
+    `Noah Keller (2015) wird im Verein «FC Wyler» schon im Team «Da» geführt. ${zuordnen} ${zusatz}`,
+  );
+  assert.equal(
+    spielerErfassenAbgewiesenText({ teams: ["Ea", "Da"], ohne_team: false }, e, "FC Wyler"),
+    `Noah Keller (2015) wird im Verein «FC Wyler» schon im Team «Da» und «Ea» geführt. ${zuordnen} ${zusatz}`,
+  );
+  assert.equal(
+    spielerErfassenAbgewiesenText({ teams: ["Ea", "Ca", "Da"], ohne_team: false }, e, "FC Wyler"),
+    `Noah Keller (2015) wird im Verein «FC Wyler» schon im Team «Ca», «Da» und «Ea» geführt. ${zuordnen} ${zusatz}`,
+  );
+  // Erfassen ohne Team: kein Verweis an «dein Team» (die Verwaltung ordnet selbst zu).
+  const ohne = spielerErfassenAbgewiesenText({ teams: [], ohne_team: true }, e, "FC Wyler");
+  assert.equal(ohne, `Noah Keller (2015) wird im Verein «FC Wyler» schon geführt, ist aber keinem Team zugeordnet. ${zuordnen} ${zusatz}`);
+  // Mischfall (Altdubletten): nur die Teams.
+  assert.equal(
+    spielerErfassenAbgewiesenText({ teams: ["Da"], ohne_team: true }, e, "FC Wyler"),
+    spielerErfassenAbgewiesenText({ teams: ["Da"], ohne_team: false }, e, "FC Wyler"),
+  );
+  // Ändern: Wortlaut des Team-Orts, ohne den Satz an die Trainer:in.
+  assert.equal(spielerAendernAbgewiesenText({ teams: ["Da"], ohne_team: false }), "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, im Team «Da».");
+  assert.equal(spielerAendernAbgewiesenText({ teams: ["Ea", "Da"], ohne_team: false }), "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, im Team «Da» und «Ea».");
+  assert.equal(spielerAendernAbgewiesenText({ teams: [], ohne_team: true }), "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, die keinem Team zugeordnet ist.");
+  assert.equal(spielerAendernAbgewiesenText({ teams: ["Da"], ohne_team: true }), spielerAendernAbgewiesenText({ teams: ["Da"], ohne_team: false }), "Mischfall: nur die Teams");
+  assert.equal(
+    spielerAendernAbgewiesenText({ teams: ["Eb", "Ea"], ohne_team: false }),
+    spielerDoppeltText({ eigenes_team: false, teams: ["Eb", "Ea"], ohne_team: false }, null),
+    "mit Teams derselbe Satz wie am Team-Ort",
+  );
+  for (const satz of [ohne, spielerAendernAbgewiesenText({ teams: [], ohne_team: true })])
+    assert.ok(!/dein|Vereinsverwaltung/.test(satz), `die Verwaltung wird nicht an sich selbst verwiesen: ${satz}`);
+  // Der Team-Ort und die KI behalten ihre Sätze, Wort für Wort: Die Trainer:in wird weiter an die Verwaltung verwiesen.
+  const kenn = { vorname: "Noah", nachname: "Keller", jahrgang: 2015 };
+  assert.equal(spielerDoppeltText({ eigenes_team: true, teams: ["Da"], ohne_team: false }, kenn), SPIELER_MELDUNG.SPIELER_DOPPELT);
+  assert.equal(
+    SPIELER_MELDUNG.SPIELER_DOPPELT,
+    "Diese Spieler:in steht schon auf der Liste. Unterscheide zwei Gleichnamige mit einem Zusatz im Vornamen.",
+  );
+  assert.equal(
+    spielerDoppeltText({ eigenes_team: false, teams: ["Eb", "Ea"], ohne_team: false }, kenn),
+    "Noah Keller (2015) wird im Verein schon im Team «Ea» und «Eb» geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+  );
+  assert.equal(
+    spielerDoppeltText({ eigenes_team: false, teams: [], ohne_team: true }, kenn),
+    "Noah Keller (2015) wird im Verein geführt, ist aber keinem Team zugeordnet. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+  );
+  assert.equal(
+    spielerDoppeltText({ eigenes_team: false, teams: ["Ea"], ohne_team: false }, null),
+    "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, im Team «Ea».",
+  );
+  assert.equal(
+    spielerDoppeltText({ eigenes_team: false, teams: [], ohne_team: true }, null),
+    "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, die keinem Team zugeordnet ist. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+  );
+  // Grenze (AK 7): der Satz zu VEREIN_VOLL, eine Quelle für App und KI — kein eigener Satz der Verwaltung.
+  assert.equal(fehlerMeldung("x VEREIN_VOLL y"), VEREIN_MELDUNG.VEREIN_VOLL);
+  assert.match(spielerErfassenEinleitung("FC Wyler"), /^Die Spieler:in kommt ohne Team in den Verein «FC Wyler»\. Einem Team ordnest du sie danach zu\.$/);
+});
+
+pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätigung, Zahlen und Leerzustand (AK 10, 13)", () => {
+  // Link ohne Team: eigene Konstante, nicht in LINK_TEXT (das in die KI-Beschreibungen fliesst).
+  assert.equal(
+    linkOhneTeamText("Elias"),
+    "Elias ist keinem Team zugeordnet. Die Spielervertretung sieht erst Termine, wenn Elias einem Team zugeordnet ist; der Link bleibt danach derselbe.",
+  );
+  // LINK_TEXT (Story #583): Wortlaut eingefroren, die geänderten Schlüssel bewusst neu festgehalten (erneuern, erneuertAbholen).
+  // `warnung` bleibt beim Wortlaut vor Story 7: Dass der Link alle Teams zeigt, sagt im Dialog `linkTeamsText` (einmal), und die
+  // KI-Beschreibung, in die `warnung` fliesst, spricht bis Story 13 von den Terminen des Teams.
+  const { erneuertAbholen, ...linkStatisch } = LINK_TEXT;
+  assert.deepEqual(
+    linkStatisch,
+    {
+      warnung:
+        "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
+      erneuern:
+        "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen.",
+      ungueltigTitel: "Dieser Link gilt nicht mehr",
+      ungueltig: "Den aktuellen erhältst du über eine Abholadresse, bei den Trainer:innen oder bei der Vereinsverwaltung.",
+      erneuert: "Link erneuert. Der bisherige gilt nicht mehr.",
+    },
+    "LINK_TEXT: Schlüssel und Wortlaut eingefroren",
+  );
+  assert.equal(erneuertAbholen(["A"]), "Die Eltern holen den neuen Link über die Abholadresse von A ab.");
+  // Löschen: ein, mehrere, kein Team.
+  assert.equal(spielerLoeschenTitel("Lina Meier"), "Lina Meier aus dem Verein löschen");
+  assert.deepEqual(spielerLoeschenSaetze("Lina", ["Ca"]), {
+    zuordnung: "Lina ist dem Team Ca zugeordnet und verschwindet daraus.",
+    link: "Der private Link und alle Meldungen von Lina entfallen endgültig.",
+    vergangen: "An vergangenen Terminen erscheint Lina ohne Namen.",
+  });
+  assert.equal(spielerLoeschenSaetze("Lina", ["Ca", "FF-15"]).zuordnung, "Lina ist den Teams Ca und FF-15 zugeordnet und verschwindet aus allen.");
+  assert.equal(spielerLoeschenSaetze("Lina", ["A", "B", "C"]).zuordnung, "Lina ist den Teams A, B und C zugeordnet und verschwindet aus allen.");
+  assert.equal(spielerLoeschenSaetze("Lina", []).zuordnung, "Lina ist keinem Team zugeordnet.");
+  // Kopfzeilen: Einzahl, ohne Team nur wenn es welche gibt, nie ein negativer Rest.
+  assert.deepEqual(spielerKopfTeile(144, 2), ["144 Spieler:innen", "2 ohne Team", "höchstens 1000 je Verein"]);
+  assert.deepEqual(spielerKopfTeile(1, 0), ["1 Spieler:in", "höchstens 1000 je Verein"]);
+  assert.deepEqual(spielerKopfTeile(1001, 1), ["1001 Spieler:innen", "1 ohne Team", "höchstens 1000 je Verein"]);
+  assert.equal(vereinKopfText(10, 144), "10 Teams · 144 Spieler:innen · höchstens 30 Teams");
+  assert.equal(vereinKopfText(1, 1), "1 Team · 1 Spieler:in · höchstens 30 Teams");
+  assert.equal(vereinKopfText(10), "10 Teams · höchstens 30 Teams", "ohne Recht keine Zahl der Spieler:innen");
+  assert.equal(spielerVonText(144), "144 von 1000");
+  assert.equal(spielerVonText(1000), "1000 von 1000");
+  assert.equal(spielerVonText(1003), "1003 (höchstens 1000 Spieler:innen)");
+  assert.equal(SPIELER_BESTAND_LEER.titel, "Noch keine Spieler:innen");
+  assert.equal(SPIELER_BESTAND_LEER.text, "Der Verein führt noch keine Spieler:innen. Erfasse die erste oder nimm sie in der Spielerliste eines Teams auf.");
+  // Eine gelöschte Spieler:in macht die offene Seite überholt (AK 15), wie ein aufgelöstes Team.
+  for (const f of ["team_id", "verein_id", "spieler_id"]) assert.equal(zielWeg(f), true, f);
+  for (const f of [undefined, "vorname", "name", "spieler_ids"]) assert.equal(zielWeg(f), false, String(f));
+  assert.equal(SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, "Spieler:in nicht gefunden.", "ohne Verweis auf ein Team, gilt auch für die Verwaltung");
+});
+
+pruefe("Spielerbestand der Verwaltung (#582, #585): Löschen, Import und Verein-Weg nur am Verein-Ort (Review Focus 4)", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Der Team-Ort kennt weder das Löschen einer Spieler:in noch einen Verein-Weg.
+  const treffer: string[] = [];
+  for (const ordner of ["components/team", "app/(app)/team"])
+    for (const datei of quelldateien(join(web, ordner)))
+      readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
+        if (/\b(loescheSpielerImVerein\w*|verein_spieler_\w+|VereinSpieler(Formular|LinkDialog|Loeschen|Liste|Import)|importiereInVerein\w*|pruefeVereinImport\w*)\b/.test(zeile)) treffer.push(`${relative(web, datei)}:${i + 1}`);
+      });
+  assert.deepEqual(treffer, [], `Verein-Weg am Team-Ort: ${treffer.join(", ")}`);
+  // Die Spielerliste eines Teams bietet kein Löschen.
+  assert.ok(!/loesche|Löschen["'`]/.test(lies("components/team/SpielerListe.tsx").replace(/\/\*[\s\S]*?\*\//g, "")), "Löschen gibt es im Team nicht");
+  // … und keine Spieler:in ohne Team: Sie liest nur die Zuordnungen des Kontextteams (eine Zeile je Zuordnung),
+  // nie `spieler` direkt. Dass auch kein Team-Weg sie erreicht, belegt supabase/tests/spielerbestand_verwaltung.sql (AK 14).
+  const liste = lies("lib/kern/spieler.ts").match(/export async function ladeSpielerliste[\s\S]*?\n}\n/)?.[0] ?? "";
+  assert.match(liste, /\.from\("team_spieler"\)[\s\S]*?\.eq\("team_id", e\.teamId\)/, "Team-Spielerliste über die Zuordnungen des Teams");
+  assert.ok(!/\.from\("spieler"\)/.test(liste), "Team-Spielerliste liest spieler direkt");
+  // Der Import gehört dem Verein-Ort (#585 AK 12): Den Team-Import mit seinen Namen gibt es nirgends mehr,
+  // der Dialog hängt allein an der Verwaltungsliste, und kein Team-Baustein kennt das Datei-Symbol.
+  const teamImport: string[] = [];
+  const dialogNutzer: string[] = [];
+  const rpcImport: string[] = [];
+  for (const datei of quelldateien(web)) {
+    const rel = relative(web, datei);
+    if (datei === fileURLToPath(import.meta.url) || rel === "scripts/pruefe-kern-db.ts") continue;
+    const text = readFileSync(datei, "utf8");
+    if (/(?<![A-Za-z])(SpielerImport|importiereSpieler\w*|pruefeSpielerImport\w*|importZuGross|importGrenzText)\b/.test(text)) teamImport.push(rel);
+    if (/import[^;]*\bVereinSpielerImport\b[^;]*from/.test(text)) dialogNutzer.push(rel);
+    if (/\.rpc\(\s*["`']verein_spieler_importieren["`']/.test(text)) rpcImport.push(rel);
+  }
+  assert.deepEqual(teamImport, [], `Team-Import-Namen stehen noch in: ${teamImport.join(", ")}`);
+  assert.deepEqual(dialogNutzer, ["components/verein/VereinSpielerListe.tsx"], "Import-Dialog nur in der Verwaltungsliste");
+  assert.deepEqual(rpcImport, ["lib/kern/verein.ts"], "verein_spieler_importieren nur im Verein-Kern");
+  assert.ok(!/FileUp/.test(lies("components/team/SpielerListe.tsx")), "kein Datei-Symbol in der Spielerliste des Teams");
+  assert.ok(!/CSV/.test(lies("components/team/SpielerListe.tsx").replace(/\/\*[\s\S]*?\*\//g, "")), "kein Hinweis auf den Import an der alten Stelle (#585 OoS 2)");
+  // Der Knopf steht in der Verwaltungsliste, der Dialog nur, solange er offen ist, und er schliesst beim Wechsel der Eingrenzung.
+  const verwaltungsliste = lies("components/verein/VereinSpielerListe.tsx");
+  assert.match(verwaltungsliste, /\{importOffen && <VereinSpielerImport /, "Dialog bedingt gemountet");
+  assert.match(verwaltungsliste, /setSchluesselVorher\(schluessel\);[\s\S]*?setImportOffen\(false\)/, "Eingrenzungswechsel schliesst den Import");
+  // Die Antwort `veraltet` ersetzt die Vorschau und zeigt das Band; die nächste selbst ausgelöste Vorschau löscht es.
+  const dialog = lies("components/verein/VereinSpielerImport.tsx");
+  assert.match(dialog, /function laden\([\s\S]*?setVeraltet\(false\)/, "Hinweisband verschwindet bei der nächsten Vorschau");
+  assert.match(dialog, /status === "veraltet"[\s\S]*?setVorschau\(r\.ausgang\.vorschau\);\s*setVeraltet\(true\)/, "veraltet: neue Vorschau mit Hinweisband");
+  // Das einzige Löschen einer Spieler:in im Web liegt im Verein-Kern und seiner Action.
+  const loescher: string[] = [];
+  for (const datei of quelldateien(web)) {
+    const rel = relative(web, datei);
+    if (datei === fileURLToPath(import.meta.url) || rel === "scripts/pruefe-kern-db.ts") continue;
+    if (/\.rpc\(\s*["`']verein_spieler_entfernen["`']/.test(readFileSync(datei, "utf8"))) loescher.push(rel);
+    if (/from\("spieler"\)\s*\.delete\(/.test(readFileSync(datei, "utf8"))) loescher.push(rel);
+  }
+  assert.deepEqual(loescher, ["lib/kern/verein.ts"], "verein_spieler_entfernen nur im Verein-Kern, kein direktes Löschen");
+  // Die geteilten Bausteine hängen an keiner Rolle: keine Actions, kein Kern.
+  for (const datei of quelldateien(join(web, "components/spieler")))
+    assert.ok(!/lib\/(actions|kern)\//.test(readFileSync(datei, "utf8")), `geteilter Baustein importiert Actions oder Kern: ${relative(web, datei)}`);
+  // Ob eine Meldung am Feld oder als Band steht, entscheidet die Art des Fehlers, nicht sein Wortlaut.
+  assert.ok(!/SPIELER_TEXT|FELD_TEXTE/.test(lies("components/verein/VereinSpielerFormular.tsx")), "Formular vergleicht Wortlaute");
+  assert.equal((lies("lib/actions/verein.ts").match(/feld: r\.feld, art: r\.art \}/g) ?? []).length, 2, "Erfassen und Ändern geben die Art weiter");
+  // Die Verein-Actions für Spieler:innen kommen aus der Datenebene, nicht aus der Liste: Teams für das Revalidieren aus der Antwort.
+  assert.match(lies("lib/actions/verein.ts"), /for \(const t of r\.wert\.teams\) revalidiereTeam\(t\.id\)/);
+});
+
+pruefe("Vereinsverwaltung (#581): Zwillinge, Sätze zum Aufnehmen und Bereich der Seitenleiste", () => {
+  // Zwilling des CHECK `verein_name`.
+  assert.equal(VEREIN_NAME_MAX, 60);
+  assert.equal(vereinsNameProblem("FC Wyler"), null);
+  assert.equal(vereinsNameProblem("  FC Wyler  "), null, "Leerraum am Rand zählt nicht");
+  assert.equal(vereinsNameProblem("x".repeat(60)), null);
+  assert.equal(vereinsNameProblem("x".repeat(61)), `Der Vereinsname darf höchstens 60 Zeichen lang sein.`);
+  assert.equal(vereinsNameProblem("   "), "Bitte einen Vereinsnamen angeben.");
+  // Teamname vergeben: Netz ohne Namen, Anwendung mit dem Team (AK 21); beide aus dem Marker erklärt.
+  assert.equal(VEREIN_MELDUNG.TEAMNAME_VERGEBEN, "Im Verein trägt schon ein anderes Team diesen Namen.");
+  assert.equal(teamnameVergebenText("Da Junioren"), "Im Verein trägt schon das Team «Da Junioren» diesen Namen.");
+  assert.equal(fehlerMeldung("x TEAMNAME_VERGEBEN y"), VEREIN_MELDUNG.TEAMNAME_VERGEBEN);
+  // Personensuche: genau diese fünf Status, ein Wortlaut für Team- und Verein-Ort.
+  assert.deepEqual(Object.keys(PERSON_MELDUNG).sort(), ["anderer_verein", "bereits_mitglied", "bereits_verwaltung", "gebremst", "nicht_gefunden"]);
+  assert.equal(PERSON_MELDUNG.anderer_verein, VEREIN_MELDUNG.ANDERER_VEREIN, "eine Konstante, nicht zwei Texte");
+  assert.equal(PERSON_MELDUNG.nicht_gefunden, "Zu dieser Adresse gibt es kein bestätigtes Konto. Die Person registriert sich zuerst selbst bei KiFu.");
+  assert.equal(PERSON_MELDUNG.bereits_mitglied, "Diese Person ist bereits im Team.");
+  assert.equal(PERSON_MELDUNG.bereits_verwaltung, "Diese Person gehört schon zur Vereinsverwaltung.");
+  assert.equal(PERSON_MELDUNG.gebremst, "Zu viele Versuche - bitte später erneut.");
+
+  // Bereich aus der Adresse (AP §7.1).
+  const T1 = "11111111-1111-4111-8111-111111111111";
+  const T2 = "22222222-2222-4222-8222-222222222222";
+  assert.deepEqual(bereichAusPfad(`/team/${T1}`, null), { art: "team", id: T1 });
+  assert.deepEqual(bereichAusPfad(`/team/${T1}/verwaltung`, null), { art: "team", id: T1 });
+  assert.deepEqual(bereichAusPfad("/verein", null), { art: "verein" });
+  assert.deepEqual(bereichAusPfad("/verein/team/abc", null), { art: "verein" });
+  assert.deepEqual(bereichAusPfad("/verein/verwaltung", null), { art: "verein" });
+  assert.deepEqual(bereichAusPfad(`/training/${T2}`, T1), { art: "team", id: T1 }, "ein Team-Training gehört zu seinem Team");
+  assert.equal(bereichAusPfad(`/training/${T2}`, null), null, "ein persönliches Training liegt in keinem Bereich");
+  for (const pfad of ["/", "/trainings", "/teams", "/konto", "/vereinsliste", `/teamx/${T1}`]) assert.equal(bereichAusPfad(pfad, null), null, pfad);
+  assert.equal(bereichAusPfad("/trainings", T1), null, "die Trainingsübersicht liegt in keinem Bereich");
+
+  // Cookie: lesen, schreiben, fremde Werte fallen weg.
+  assert.equal(BEREICH_COOKIE, "kifu-bereich");
+  assert.deepEqual(leseBereich("verein"), { art: "verein" });
+  assert.deepEqual(leseBereich(`team:${T1}`), { art: "team", id: T1 });
+  for (const wert of [undefined, "", "team:", "team:x", "team:../etc", "Verein", "verein;x", "team:" + T1 + "x"]) assert.equal(leseBereich(wert), null, String(wert));
+  assert.equal(bereichSchluessel({ art: "team", id: T1 }), `team:${T1}`);
+  assert.match(bereichCookie({ art: "verein" }), /^kifu-bereich=verein; path=\/; max-age=\d+; samesite=lax$/);
+
+  // Welcher Bereich gilt: Adresse vor Cookie vor erstem; Fremdes und Verwaistes fällt zurück.
+  const eigene: Bereich[] = [{ art: "team", id: T1 }, { art: "team", id: T2 }, { art: "verein" }];
+  assert.deepEqual(waehleBereich(eigene, { art: "verein" }, { art: "team", id: T2 }), { art: "verein" });
+  assert.deepEqual(waehleBereich(eigene, null, { art: "team", id: T2 }), { art: "team", id: T2 });
+  assert.deepEqual(waehleBereich(eigene, null, null), { art: "team", id: T1 }, "ohne alles der erste");
+  assert.deepEqual(waehleBereich(eigene, null, { art: "team", id: "99999999-9999-4999-8999-999999999999" }), { art: "team", id: T1 }, "verwaistes Team im Cookie");
+  assert.deepEqual(waehleBereich(eigene, { art: "team", id: "99999999-9999-4999-8999-999999999999" }, { art: "verein" }), { art: "verein" }, "fremdes Team in der Adresse: der gemerkte");
+  assert.deepEqual(waehleBereich([{ art: "verein" }], null, { art: "team", id: T1 }), { art: "verein" }, "Verwaltung ohne Team: nur der Verein");
+  assert.equal(waehleBereich([], { art: "verein" }, null), null, "ohne Bereiche kein Bereich");
 });
 
 /** Alle .ts/.tsx-Dateien unter einem Ordner, ohne node_modules und .next. */
@@ -2222,6 +2657,145 @@ pruefe("Kein «ansetzen» mehr in Oberfläche und KI-Texten (#323 PC 11)", () =>
         if (/ansetz|angesetzt|Ansetz|Angesetzt/.test(ohneKommentar)) treffer.push(`${relative(web, datei)}:${i + 1}`);
       });
   assert.deepEqual(treffer, [], `«ansetzen» steht noch in: ${treffer.join(", ")}`);
+});
+
+/** «Probe» in Oberflächentexten und KI-Texten (Story #584 AK 2, 3). Geprüft wird mit dem
+ *  Parser, was Menschen oder ein KI-Client zu sehen bekommen: Zeichenketten, Vorlagen und
+ *  JSX-Text (nicht Kommentare, Bezeichner, Importpfade, Typ-Literale) und unter `lib/mcp` die
+ *  Namen der Schema-Schlüssel. Die internen Namen der Datenebene (`PROBE_INTERN`, als ganze
+ *  Wörter) sind ausserhalb von `lib/mcp` erlaubt; unter `lib/mcp` nur, wo sie als Name gebraucht
+ *  werden (Argument von `.rpc()`, `.from()`, `.select()` u. ä.), damit keine KI-Beschreibung sie
+ *  nennt. Die alten Werkzeugnamen stehen nirgends ausser als solcher Name. Von Teams verfasste
+ *  Texte stehen nie im Quelltext. */
+const PROBE_INTERN =
+  /\b(?:team_probetraining\w*|spieler_probe_\w+|team_probe_staende|probe_seit|probe_stand\w*|probe_voll|probe_info|PROBE_[A-Z_]+)\b|\bprobe-info\b/g;
+/** Die Werkzeugnamen vor #584 (`spieler_probe_setzen` heisst die RPC weiterhin). */
+const ALTE_WERKZEUGNAMEN = /\b(?:probetraining_abrufen|probetraining_festlegen|spieler_probe_setzen)\b/;
+/** Methoden des Datenbank-Clients, deren Zeichenketten-Argument ein Name der Datenebene ist. */
+const NAMENS_AUFRUFE = ["rpc", "from", "select", "eq", "neq", "in", "is", "order", "insert", "update", "upsert", "match", "filter"];
+/** Aufrufe, deren Eingabe-Objekt die interne Eigenschaft `probe` trägt (Kern, nicht KI-Schema). */
+const PROBE_KERN_AUFRUFE = ["schalteProbe"];
+
+function probeTreffer(quelltext: string, rel: string): string[] {
+  const treffer: string[] = [];
+  const sf = ts.createSourceFile(rel, quelltext, ts.ScriptTarget.Latest, true, rel.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+  const ort = (n: ts.Node) => `${rel}:${sf.getLineAndCharacterOfPosition(n.getStart()).line + 1}`;
+  const imKi = rel.startsWith("lib/mcp/");
+  const besuche = (n: ts.Node) => {
+    const p = n.parent;
+    if (
+      ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n) || ts.isTemplateHead(n) ||
+      ts.isTemplateMiddle(n) || ts.isTemplateTail(n) || ts.isJsxText(n)
+    ) {
+      const modul = (ts.isImportDeclaration(p) || ts.isExportDeclaration(p)) && p.moduleSpecifier === n;
+      const dynamisch = ts.isCallExpression(p) && p.expression.kind === ts.SyntaxKind.ImportKeyword;
+      const typ = ts.isLiteralTypeNode(p);
+      const name =
+        ts.isCallExpression(p) && p.arguments.some((a) => a === n) &&
+        ts.isPropertyAccessExpression(p.expression) && NAMENS_AUFRUFE.includes(p.expression.name.text);
+      const rest = imKi && !name ? n.text : n.text.replace(PROBE_INTERN, "");
+      if (modul || dynamisch || typ) {
+        // Importpfade und Typ-Literale sieht niemand.
+      } else if (!name && ALTE_WERKZEUGNAMEN.test(n.text)) treffer.push(`${ort(n)} alter Werkzeugname «${n.text.slice(0, 60)}»`);
+      else if (/probe/i.test(rest)) treffer.push(`${ort(n)} Text «${n.text.slice(0, 60)}»`);
+    }
+    if (imKi && (ts.isPropertyAssignment(n) || ts.isPropertySignature(n) || ts.isShorthandPropertyAssignment(n)) && /probe/i.test(n.name.getText(sf))) {
+      let kernEingabe = false;
+      for (let a: ts.Node | undefined = n.parent; a; a = a.parent)
+        if (ts.isCallExpression(a) && ts.isIdentifier(a.expression) && PROBE_KERN_AUFRUFE.includes(a.expression.text)) kernEingabe = true;
+      if (!kernEingabe) treffer.push(`${ort(n)} Schlüssel «${n.name.getText(sf)}»`);
+    }
+    ts.forEachChild(n, besuche);
+  };
+  besuche(sf);
+  return treffer;
+}
+
+/** Vereinsnamen sind frei wählbar («FC Wyler», «Sportvereinigung Muster»): Ein Artikel oder eine
+ *  verschmolzene Präposition direkt vor dem eingesetzten Namen («im ${verein}», «des {vereinName}»)
+ *  passt nur für manche. Texte nennen den Namen nach dem Wort «Verein» in « » («im Verein «${verein}»»;
+ *  AP §5.3 «Vereinsname ohne Artikel»). Gefangen wird jede Einsetzung eines Bezeichners mit `verein`
+ *  im Namen (Vorlage `${…}` oder JSX `{…}`) unmittelbar hinter einem solchen Wort; Kommentare sieht niemand.
+ *  Nicht gefangen: ein Bezeichner ohne «verein» im Namen, JSX über einen Zeilenumbruch und Konkatenation
+ *  (`"im " + name`) — der Wächter ist ein Netz, kein Beweis. */
+const ARTIKEL_VOR_VEREINSNAME =
+  /\b(?:der|des|dem|den|im|in den|zum|zur|vom|beim|am|ins|für den|für das)\s+\$?\{\s*(?:\w+\??\.)*(?:verein|vereinName|vereinsname)\w*\b[^}]*\}/i;
+
+function artikelVorVereinsnameTreffer(quelltext: string, rel: string): string[] {
+  const treffer: string[] = [];
+  quelltext.split("\n").forEach((zeile, i) => {
+    if (/^\s*(\*|\/\/|\/\*)/.test(zeile)) return;
+    const ohneKommentar = zeile.replace(/\/\/.*$/, "").replace(/\/\*.*?\*\//g, "");
+    if (ARTIKEL_VOR_VEREINSNAME.test(ohneKommentar)) treffer.push(`${rel}:${i + 1}`);
+  });
+  return treffer;
+}
+
+pruefe("Kein Artikel vor dem Vereinsnamen in Oberfläche und KI-Texten (Phase D, AP §5.3)", () => {
+  // Der Wächter schlägt an …
+  for (const schlecht of [
+    "const a = `wird im ${verein} schon geführt`;",
+    "const a = `kommt in den ${vereinName}.`;",
+    "const a = `Sie gehört zum ${verein.name}`;",
+    "<p>Du verwaltest den {vereinName} danach nicht mehr.</p>",
+    "<h1>Verwaltung des {l.verein}</h1>",
+    "const a = `${wer} bleibt im ${l.verein ?? 'x'}`;",
+  ])
+    assert.equal(artikelVorVereinsnameTreffer(schlecht, "x.tsx").length, 1, schlecht);
+  // … und lässt die neutrale Form, andere Namen und Kommentare durch.
+  for (const gut of [
+    "const a = `wird im Verein «${verein}» schon geführt`;",
+    "<p>Du verwaltest den Verein «{vereinName}» danach nicht mehr.</p>",
+    "const a = `Vereinsverwaltung von «${verein}»`;",
+    "const a = `Der Link ist von ${vorname} im Team ${team}`;",
+    "const a = `für den ${spielerName}`;",
+    "// zum ${verein} gehört",
+    " * im ${verein}",
+  ])
+    assert.deepEqual(artikelVorVereinsnameTreffer(gut, "x.tsx"), [], gut);
+  const treffer: string[] = [];
+  for (const wurzel of ["app", "components", "lib"].map((p) => join(web, p)))
+    for (const datei of quelldateien(wurzel)) {
+      const rel = relative(web, datei);
+      // Generierte Typen schreibt niemand von Hand. Das generierte Produktwissen (lib/feedback/wissen.ts)
+      // ist seit Phase D nicht mehr ausgenommen.
+      if (rel === "lib/database.types.ts") continue;
+      treffer.push(...artikelVorVereinsnameTreffer(readFileSync(datei, "utf8"), rel));
+    }
+  assert.deepEqual(treffer, [], `Artikel vor dem Vereinsnamen in: ${treffer.join(", ")}`);
+});
+
+pruefe("Kein «Probe» in Oberflächentexten und KI: Texte, JSX, Schema-Schlüssel (#584 AK 2, 3)", () => {
+  // Der Wächter schlägt an: Text, JSX, Schlüssel im KI-Schema, `feld`; und lässt Internes durch.
+  assert.equal(probeTreffer('export const a = "Probetraining";', "lib/x.ts").length, 1);
+  assert.equal(probeTreffer("export const a = `${n} im Probe-Modus`;", "lib/x.ts").length, 1);
+  assert.equal(probeTreffer("export const a = <p>Probe-Spieler:in</p>;", "components/x.tsx").length, 1);
+  assert.equal(probeTreffer('export const a = { feld: "probe" };', "lib/kern/x.ts").length, 1);
+  assert.equal(probeTreffer("export const a = z.object({ probe: z.boolean() });", "lib/mcp/werkzeuge/x.ts").length, 1);
+  assert.equal(probeTreffer("export const a = { probe: z.boolean() };", "lib/kern/x.ts").length, 0, "Schlüssel zählen nur im KI-Weg");
+  assert.equal(probeTreffer("export const a = s.probe; // Probetraining", "lib/mcp/werkzeuge/x.ts").length, 0, "Lesen und Kommentare bleiben");
+  assert.equal(probeTreffer("schalteProbe(a, b, { teamId, probe: e.schnuppern });", "lib/mcp/werkzeuge/x.ts").length, 0, "Eingabe des Kerns");
+  assert.equal(
+    probeTreffer('import { x } from "@/lib/probe"; db.rpc("spieler_probe_setzen"); db.select("probe_seit, a"); const m = "PROBE_ANZAHL_FEHLT"; type G = "probe_voll";', "lib/x.ts").length,
+    0,
+    "interne Namen der Datenebene",
+  );
+  // Nur als ganzes Wort, und unter lib/mcp nur als Name eines Datenbank-Aufrufs.
+  assert.equal(probeTreffer('export const a = "Ein Xprobe_voll";', "lib/x.ts").length, 1, "ohne Wortgrenze keine Ausnahme");
+  assert.equal(probeTreffer('export const a = { description: "Ruft spieler_probe_setzen auf." };', "lib/mcp/werkzeuge/x.ts").length, 1, "RPC-Name in einer KI-Beschreibung");
+  assert.equal(probeTreffer('export const a = z.string().describe("Ist probe_voll, geht nichts.");', "lib/mcp/werkzeuge/x.ts").length, 1, "Spaltenname in einer KI-Beschreibung");
+  assert.equal(probeTreffer('db.rpc("spieler_probe_setzen"); db.from("team_probetraining").select("probe_seit");', "lib/mcp/werkzeuge/x.ts").length, 0, "als Name unter lib/mcp");
+  // Die alten Werkzeugnamen nirgends, ausser als RPC-Name.
+  for (const alt of ["probetraining_abrufen", "probetraining_festlegen", "spieler_probe_setzen"])
+    assert.equal(probeTreffer(`export const a = "Nutze ${alt}.";`, "components/x.tsx").length, 1, alt);
+  assert.equal(probeTreffer('supabase.rpc("spieler_probe_setzen", {}); db.rpc("team_probetraining_festlegen");', "lib/kern/x.ts").length, 0, "RPC-Namen im Kern");
+  const treffer: string[] = [];
+  for (const wurzel of ["app", "components", "lib"].map((p) => join(web, p)))
+    for (const datei of quelldateien(wurzel)) {
+      const rel = relative(web, datei);
+      treffer.push(...probeTreffer(readFileSync(datei, "utf8"), rel));
+    }
+  assert.deepEqual(treffer, [], `«Probe» steht noch in Oberflächen- oder KI-Texten: ${treffer.join("; ")}`);
 });
 
 pruefe("Kalenderblatt und Tag ohne Jahr: Wochentag, Tageszahl, Monat, nie das Jahr (#402 AK 1, #403 AK 8)", () => {
@@ -2322,12 +2896,12 @@ pruefe("Abo: Eine lange URL-Zeile wird gefaltet und fügt sich wieder zusammen",
 });
 
 const feedTermin = (t: Partial<AboFeedTermin> & { id: string }): AboFeedTermin => ({
-  datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: "Sportplatz", art: "training", bezeichnung: null,
+  team: "FC Test", datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: "Sportplatz", art: "training", bezeichnung: null,
   begonnen: false, abgemeldet: false, meldung: null, frist_abgelaufen: false, nicht_aufgeboten: false,
   hinweis_eltern: null, treffpunkte: null, ...t,
 });
 const elternAbo = (termine: AboFeedTermin[]) =>
-  kalenderText({ kalenderName: aboKalenderName("FC Test"), uidZusatz: "abo1", jetzt: ABO_JETZT, termine: termine.map((t) => aboEintrag(t, "FC Test")) });
+  kalenderText({ kalenderName: ABO_KALENDER_NAME, uidZusatz: "abo1", jetzt: ABO_JETZT, termine: termine.map((t) => aboEintrag(t)) });
 /** Ein Feed ohne Zeilenfaltung, damit Prüfungen ganze Zeilen sehen. */
 const ungefaltet = (text: string) => text.split("\r\n ").join("");
 
@@ -2353,19 +2927,19 @@ pruefe("Abos: der Kartenlink steht in der Beschreibung, nie als Verweis (#533 PC
 pruefe("Abo Spielervertretung: Training angemeldet = zugesagt, abgemeldet = abgesagt (#507 PC 3, AK 6)", () => {
   assert.equal(aboStatus(feedTermin({ id: "a" })), "zugesagt");
   assert.equal(aboStatus(feedTermin({ id: "a", abgemeldet: true })), "abgesagt");
-  const zu = aboEintrag(feedTermin({ id: "a" }), "FC Test");
+  const zu = aboEintrag(feedTermin({ id: "a" }));
   assert.equal(zu.titel, "✅ Training · FC Test", "Status vorn im Titel");
   assert.equal(zu.beschreibung, "Zugesagt");
   assert.equal(zu.status, "CONFIRMED");
   assert.equal(zu.frei, false);
-  const ab = aboEintrag(feedTermin({ id: "a", abgemeldet: true }), "FC Test");
+  const ab = aboEintrag(feedTermin({ id: "a", abgemeldet: true }));
   assert.equal(ab.titel, "❌ Training · FC Test");
   assert.equal(ab.frei, true, "abgesagt belegt keine Zeit");
 });
 
 pruefe("Abo Spielervertretung: nur Terminart, Team, Zeit, Ort, Status — kein Verweis, eigene UID (#507 PC 2, 5, 6; OoS 3)", () => {
   const text = elternAbo([feedTermin({ id: "a", ort: "Halle; Nord" })]);
-  assert.ok(text.includes("\r\nX-WR-CALNAME:Trainings und Spiele · FC Test\r\n"), "Kalender heisst nach dem Team");
+  assert.ok(text.includes("\r\nX-WR-CALNAME:Trainings und Spiele\r\n"), "Kalender heisst immer gleich, das Team steht im Titel (#583 AK 10)");
   assert.ok(text.includes("\r\nUID:a.abo1@ki-fu.ch\r\n"), "UID je Abo");
   assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20261007T180000\r\nDTEND;TZID=Europe/Zurich:20261007T193000"), "Schweizer Wanduhrzeit");
   assert.ok(text.includes("\r\nLOCATION:Halle\\; Nord\r\n"));
@@ -2378,6 +2952,58 @@ pruefe("Abo Spielervertretung: nur Terminart, Team, Zeit, Ort, Status — kein V
   assert.ok(elternAbo([feedTermin({ id: "a", abgemeldet: true })]).includes("\r\nTRANSP:TRANSPARENT\r\n"));
 });
 
+pruefe("Link und Abo über mehrere Teams: Team je Termin, konstanter Kalendername, ohne Team leer (#583 AK 8–10)", () => {
+  // AK 8, 10: Termine zweier Teams in einem Kalender; jeder Titel trägt sein Team, der Kalender heisst immer gleich.
+  const text = elternAbo([feedTermin({ id: "a", team: "Da Junioren" }), feedTermin({ id: "b", team: "Ea Junioren", art: "spiel", bezeichnung: "Spiel gegen FC Au" })]);
+  assert.equal(ABO_KALENDER_NAME, "Trainings und Spiele");
+  assert.ok(text.includes("\r\nX-WR-CALNAME:Trainings und Spiele\r\n"));
+  assert.ok(text.includes("\r\nSUMMARY:✅ Training · Da Junioren\r\n"));
+  assert.ok(text.includes("\r\nSUMMARY:❔ Spiel gegen FC Au · Ea Junioren\r\n"));
+  assert.equal(aboEintrag(feedTermin({ id: "a", team: "Da Junioren" })).titel, "✅ Training · Da Junioren");
+  // AK 9: ohne Team ein gültiger, leerer Feed.
+  const leer = elternAbo([]);
+  assert.ok(leer.startsWith("BEGIN:VCALENDAR") && leer.includes("X-WR-CALNAME:Trainings und Spiele") && !leer.includes("BEGIN:VEVENT"));
+});
+
+pruefe("Eltern-Seite über mehrere Teams: Kopf, Leerzustände und Meldung zu «gilt nicht» (#583 AK 2–5, 7, 17)", () => {
+  assert.equal(linkKopfTitel("Noah Keller"), "Termine für Noah Keller");
+  // AK 4: die Teams haben keine Termine; AK 5: ohne Team — Vorname statt Pronomen, die Vereinsverwaltung hilft.
+  assert.equal(LINK_KEINE_TERMINE_TITEL, "Keine anstehenden Termine");
+  assert.equal(linkKeineTermineText("Noah"), "Die Teams von Noah haben zurzeit keine Termine für Noah.");
+  assert.equal(
+    linkOhneTeamEltern("Elias"),
+    "Elias ist zurzeit keinem Team zugeordnet. Termine erscheinen hier, sobald Elias einem Team zugeordnet ist. Bei Fragen hilft die Vereinsverwaltung.",
+  );
+  // AK 7: Art und Tag bleiben in der Meldung, auch wenn der Termin aus der Liste verschwindet.
+  assert.equal(LINK_GILT_NICHT_TITEL, "Nicht gespeichert");
+  assert.equal(
+    linkGiltNichtText("training", "2026-11-05", "Noah"),
+    "Das Training vom Donnerstag, 5. November gilt nicht mehr für Noah. Die Liste zeigt jetzt die aktuellen Termine.",
+  );
+  assert.match(linkGiltNichtText("spiel", "2026-11-07", "Noah"), /^Das Spiel vom Samstag, 7\. November gilt nicht mehr für Noah\./);
+  // Die Abweisungstexte `giltNicht` erreichen nur Mitglieder und die KI (am Link steht `linkGiltNichtText`); dort ist die Ursache
+  // nie das Team (deren Wege antworten `nicht_gefunden`), darum ohne Team im Text — Wortlaut wie vor Story 7.
+  assert.equal(ABMELDUNG_TEXT.giltNicht, "Dieser Termin gilt nicht mehr für diese Spieler:in. Sieh dir die Termine noch einmal an.");
+  assert.equal(MELDUNG_TEXT.giltNicht, "Dieses Spiel gilt nicht mehr für diese Spieler:in. Sieh dir die Termine noch einmal an.");
+  const eltern = readFileSync(join(web, "components/privat/ElternAnsicht.tsx"), "utf8");
+  assert.match(eltern, /if \(r\.giltNicht\) setGiltNicht\(/, "am Link ersetzt die Meldung «Nicht gespeichert» den Abweisungstext");
+  // W5: nach `gilt_nicht` geht der Fokus auf die Meldung.
+  assert.match(eltern, /ref=\{giltNichtRef\} tabIndex=\{-1\}/);
+  assert.match(eltern, /if \(giltNicht\) giltNichtRef\.current\?\.focus\(\)/);
+  // AK 17: der ungültige Link nennt weder Team noch Spieler:in und weist drei Wege.
+  assert.ok(LINK_TEXT.ungueltig.includes("Abholadresse") && LINK_TEXT.ungueltig.includes("Vereinsverwaltung"));
+});
+
+pruefe("Abholseite und «Fragen und Feedback» am Link: alle Teams, Verweis bei Dringendem je nach Lage (#583 AK 12, 18, 19)", () => {
+  // AK 12: der Link zeigt alle Teams — ohne sie zu nennen.
+  const erhalt = abholErhaltText("Noah Keller", "FC Wyler");
+  assert.equal(erhalt.teams, "Der Link zeigt die Termine aller Teams von Noah Keller.");
+  // AK 19, #587 PC 2: mit Team die Trainer:innen, ohne Team die Vereinsverwaltung des Vereins — mit Namen,
+  // ohne Artikel davor (Vereinsnamen sind frei wählbar).
+  assert.equal(feedbackDringend(false, "FC Wyler"), "Bei Dringendem, etwa einer kurzfristigen Absage, wende dich direkt an die Trainer:innen des Teams.");
+  assert.equal(feedbackDringend(true, "FC Wyler"), "Bei Dringendem, etwa einer kurzfristigen Absage, wende dich an die Vereinsverwaltung von «FC Wyler».");
+});
+
 pruefe("Abo Spielervertretung: Spiel zugesagt, vielleicht bis zur Frist, sonst abgesagt (#508 PC 3–6, AK 2)", () => {
   const spiel = (t: Partial<AboFeedTermin>) => feedTermin({ id: "s", art: "spiel", bezeichnung: "Cup gegen Thun", ...t });
   assert.equal(aboStatus(spiel({ meldung: "angemeldet" })), "zugesagt", "PC 3");
@@ -2388,10 +3014,10 @@ pruefe("Abo Spielervertretung: Spiel zugesagt, vielleicht bis zur Frist, sonst a
   assert.equal(aboStatus(spiel({ nicht_aufgeboten: true })), "abgesagt");
   assert.equal(aboStatus(spiel({ meldung: "abgemeldet" })), "abgesagt");
   assert.equal(aboStatus(spiel({ meldung: "angemeldet", begonnen: true })), "zugesagt", "angemeldet bleibt zugesagt");
-  const vielleicht = aboEintrag(spiel({}), "FC Test");
+  const vielleicht = aboEintrag(spiel({}));
   assert.equal(vielleicht.titel, "❔ Cup gegen Thun · FC Test", "Bezeichnung statt Terminart");
   assert.deepEqual([vielleicht.status, vielleicht.frei], ["TENTATIVE", false]);
-  assert.equal(aboEintrag(spiel({ bezeichnung: null }), "FC Test").titel, "❔ Spiel · FC Test");
+  assert.equal(aboEintrag(spiel({ bezeichnung: null })).titel, "❔ Spiel · FC Test");
   // Ein Training kennt kein «vielleicht», auch ohne Meldung.
   assert.equal(aboStatus(feedTermin({ id: "t", meldung: null })), "zugesagt");
 });
@@ -2405,17 +3031,17 @@ pruefe("Abo Spielervertretung: Treffpunkte und Hinweis für Eltern wie am Link (
   const spiel = (t: Partial<AboFeedTermin>) =>
     feedTermin({ id: "s", art: "spiel", bezeichnung: "Cup", ort: "Wyler", treffpunkte, hinweis_eltern: "Leibchen mitnehmen", ...t });
   assert.equal(
-    aboEintrag(spiel({ meldung: "angemeldet" }), "FC Test").beschreibung,
+    aboEintrag(spiel({ meldung: "angemeldet" })).beschreibung,
     "Zugesagt\n\nTreffpunkte\nDi., 06.10., 19:00 · Car oder Vereinsbus\n16:30 · öV · Bahnhof; Gleis 3\n17:30 · vor Ort · Wyler\n\nLeibchen mitnehmen",
   );
   // Abgesagt oder begonnen: am Link gedämpft bzw. vorbei — keine Treffpunkte, der Hinweis bleibt.
-  assert.equal(aboEintrag(spiel({ meldung: "abgemeldet" }), "FC Test").beschreibung, "Abgesagt\n\nLeibchen mitnehmen");
-  assert.equal(aboEintrag(spiel({ meldung: "angemeldet", begonnen: true }), "FC Test").beschreibung, "Zugesagt\n\nLeibchen mitnehmen");
-  assert.equal(aboEintrag(spiel({ treffpunkte: [], hinweis_eltern: null }), "FC Test").beschreibung, "Vielleicht");
+  assert.equal(aboEintrag(spiel({ meldung: "abgemeldet" })).beschreibung, "Abgesagt\n\nLeibchen mitnehmen");
+  assert.equal(aboEintrag(spiel({ meldung: "angemeldet", begonnen: true })).beschreibung, "Zugesagt\n\nLeibchen mitnehmen");
+  assert.equal(aboEintrag(spiel({ treffpunkte: [], hinweis_eltern: null })).beschreibung, "Vielleicht");
   // #590 AK 12: auch ein Training trägt seinen Hinweis, abgesagt ebenso.
   const training = feedTermin({ id: "t", hinweis_eltern: "Pincode: 4702\nEintritt frühestens 15 min vorher" });
-  assert.equal(aboEintrag(training, "FC Test").beschreibung, "Zugesagt\n\nPincode: 4702\nEintritt frühestens 15 min vorher");
-  assert.equal(aboEintrag({ ...training, abgemeldet: true }, "FC Test").beschreibung, "Abgesagt\n\nPincode: 4702\nEintritt frühestens 15 min vorher");
+  assert.equal(aboEintrag(training).beschreibung, "Zugesagt\n\nPincode: 4702\nEintritt frühestens 15 min vorher");
+  assert.equal(aboEintrag({ ...training, abgemeldet: true }).beschreibung, "Abgesagt\n\nPincode: 4702\nEintritt frühestens 15 min vorher");
   // Weder Meldefrist noch Richtwert noch Zahl der Angemeldeten (OoS 1), kein Grund der Absage (OoS 2).
   const text = elternAbo([spiel({ nicht_aufgeboten: true })]);
   assert.ok(!/frist|aufgeboten|angemeldet|18:00/i.test(text.replace(/DTSTART[^\r]*|DTEND[^\r]*/g, "")));
@@ -2448,9 +3074,706 @@ pruefe("Spielerliste: Namen bereinigt, Grenzen der Angaben (#434 AK 6, 14)", () 
   );
 });
 
+pruefe("Aufzählung von Teamnamen (#583): ein, zwei, drei Teams; bestehende Sätze unverändert", () => {
+  assert.equal(aufzaehlung([]), "");
+  assert.equal(aufzaehlung(["A"]), "A");
+  assert.equal(aufzaehlung(["A", "B"]), "A und B");
+  assert.equal(aufzaehlung(["A", "B", "C"]), "A, B und C");
+  assert.equal(aufzaehlung(["A", "B"], "oder"), "A oder B");
+  assert.equal(aufzaehlung(["A", "B", "C"], "oder"), "A, B oder C");
+  // Die bestehenden Sätze, die sie nutzen, ändern sich im Wortlaut nicht.
+  assert.equal(imTeam(["A"]), "im Team «A»");
+  assert.equal(imTeam(["B", "A"]), "im Team «A» und «B»");
+  assert.equal(imTeam(["C", "A", "B"]), "im Team «A», «B» und «C»");
+  assert.equal(spielerLoeschenSaetze("Lina", ["Ca", "FF-15"]).zuordnung, "Lina ist den Teams Ca und FF-15 zugeordnet und verschwindet aus allen.");
+  assert.equal(spielerLoeschenSaetze("Lina", ["A", "B", "C"]).zuordnung, "Lina ist den Teams A, B und C zugeordnet und verschwindet aus allen.");
+});
+
+pruefe("Link am Team-Ort und Verein-Ort (#583 AK 13, 15, 16): Hinweis und Erneuern-Text je Lage", () => {
+  const ab = (name: string, abholbar: boolean) => ({ name, abholbar });
+  // Hinweis: ein Team ohne den zweiten Satz, mehrere mit; Verein-Ort nie mit; ohne Team keiner.
+  assert.equal(linkTeamsText("Lina", [ab("Ca", false)], true), "Der Link zeigt die Termine aller Teams von Lina: Ca.");
+  assert.equal(
+    linkTeamsText("Lina", [ab("Ca", false), ab("Cb", true)], true),
+    "Der Link zeigt die Termine aller Teams von Lina: Ca und Cb. Eine hier ausgeschaltete Selbstabholung sperrt den Link nicht, wenn ein anderes Team von Lina sie eingeschaltet hat.",
+  );
+  assert.equal(linkTeamsText("Lina", [ab("Ca", false), ab("Cb", true)], false), "Der Link zeigt die Termine aller Teams von Lina: Ca und Cb.");
+  assert.equal(linkTeamsText("Lina", [], true), null);
+  // Eine Ordnung der Teamnamen (D4): deutsch, Gross-/Kleinschreibung und Umlaute wie in allen Team-Listen der Vereins-Funktionen;
+  // geordnet wird beim Laden (Kern, Link-Ansicht), die Sätze übernehmen die Folge.
+  assert.deepEqual(["beta", "Zug", "Älpler", "Alpha"].sort(nachTeamname), ["Alpha", "Älpler", "beta", "Zug"]);
+  assert.deepEqual(linkTeamsText("Lina", [ab("Cb", false)].concat([ab("Ca", false)]), false), "Der Link zeigt die Termine aller Teams von Lina: Cb und Ca.");
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  assert.match(lies("lib/kern/spieler.ts"), /teams: \[\.\.\.r\.teams\]\.sort\(\(a, b\) => nachTeamname\(a\.name, b\.name\)\)/, "ladeSpielerTeams ordnet nicht");
+  assert.match(lies("lib/kern/verein.ts"), /const nachName = \(a: \{ name: string \}, b: \{ name: string \}\) => nachTeamname\(a\.name, b\.name\);/);
+  assert.match(lies("lib/privater-link.ts"), /teams: \[\.\.\.ansicht\.teams\]\.sort\(nachTeamname\)/, "Link-Ansicht ordnet die Teams nicht");
+  assert.ok(!/\.sort\(/.test(lies("components/privat/ElternAnsicht.tsx")), "die Eltern-Seite ordnet nicht noch einmal um");
+  // Erneuern: ein Team mit Abholung.
+  assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true)]), [
+    "Der bisherige Link und das Kalender-Abo enden für alle Teams von Lina: Ca. Abmeldungen bleiben bestehen.",
+    "Die Eltern holen den neuen Link über die Abholadresse von Ca ab.",
+  ]);
+  // Mehrere Teams, zwei mit Abholung; in der geladenen Folge (geordnet hat der Kern, `nachTeamname`).
+  assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true), ab("Cb", true), ab("Cc", false)]), [
+    "Der bisherige Link und das Kalender-Abo enden für alle Teams von Lina: Ca, Cb und Cc. Abmeldungen bleiben bestehen.",
+    "Die Eltern holen den neuen Link über die Abholadresse von Ca oder Cb ab.",
+  ]);
+  // Keines abholbar.
+  assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", false), ab("Cb", false)]), [
+    "Der bisherige Link und das Kalender-Abo enden für alle Teams von Lina: Ca und Cb. Abmeldungen bleiben bestehen.",
+    "Keines dieser Teams hat die Selbstabholung eingeschaltet. Gib den neuen Link selbst weiter.",
+  ]);
+  // Ohne Team.
+  assert.deepEqual(linkErneuernSaetze("Lina", []), [
+    "Der bisherige Link und das Kalender-Abo enden. Abmeldungen bleiben bestehen.",
+    "Lina ist keinem Team zugeordnet; gib den neuen Link selbst weiter.",
+  ]);
+});
+
+pruefe("Link in jedem Team (#583 AK 14, 16): kein Web-Code liest das «erste Team» für den Link", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Das «erste Team» (`spieler.team_id`) hat im Web keinen Leser mehr: `erstesTeam` ist weg; pruefe-kern-db.ts nennt es nur, um zu prüfen, dass die Liste es nicht mehr trägt.
+  const treffer: string[] = [];
+  for (const datei of quelldateien(web)) {
+    const rel = relative(web, datei);
+    if (datei === fileURLToPath(import.meta.url) || rel === "scripts/pruefe-kern-db.ts") continue;
+    readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
+      if (/\berstesTeam\b/.test(zeile)) treffer.push(`${rel}:${i + 1}`);
+    });
+  }
+  assert.deepEqual(treffer, [], `«erstesTeam» gelesen: ${treffer.join(", ")}`);
+  // Die Link-Wege des Kerns geben das Team mit (`p_team`), lesen weder `ladeSpieler` noch `team_id` der Spieler:in; ohne Team leitet `eigenesTeamVon` es ab.
+  const kern = lies("lib/kern/spieler.ts");
+  const link = kern.match(/async function linkRpc[\s\S]*?\n}\n/)?.[0] ?? "";
+  assert.match(link, /\.rpc\(name, \{ p_team: teamId, p_spieler: e\.spielerId \}\)/, "Link-RPC ohne p_team");
+  assert.match(link, /eigenesTeamVon\(/, "Ohne Team leitet der KI-Weg es nicht ab");
+  assert.ok(!/ladeSpieler\(|\.team_id\b|"team_id"\)/.test(link.replace(/\.eq\("id"/g, "")), "Link-Weg liest das erste Team der Spieler:in");
+  assert.match(kern, /name: "spieler_link_holen" \| "spieler_link_erneuern"/);
+  // Die Team-Actions nennen das Team der Seite; Erneuern lädt alle Teams und den Verein neu (AK 15).
+  const aktionen = lies("lib/actions/spieler.ts");
+  assert.match(aktionen, /holeSpielerLinkAktion\(teamId: string, spielerId: string\)/);
+  const erneuern = aktionen.match(/export async function erneuereSpielerLinkAktion[\s\S]*?\n}\n/)?.[0] ?? "";
+  assert.match(erneuern, /revalidiereAlleTeams\(\)[\s\S]*revalidiereVerein\(\)/, "Erneuern revalidiert nicht alle Teams und den Verein");
+  const vereinErneuern = lies("lib/actions/verein.ts").match(/export async function erneuereVereinSpielerLinkAktion[\s\S]*?\n}\n/)?.[0] ?? "";
+  assert.match(vereinErneuern, /revalidiereAlleTeams\(\)[\s\S]*revalidiereVerein\(\)/);
+  // Die Rückfrage zum Erneuern liegt im Link-Dialog: Der Dialog-Baustein reagiert nur auf eigene `close`/`cancel`, sonst
+  // schlösse Abbrechen, Escape oder das Erneuern selbst auch den Link-Dialog (React reicht die Ereignisse nach aussen weiter).
+  const dialog = lies("components/ui/Dialog.tsx");
+  assert.match(dialog, /onClose=\{\(e\) => \{\s*if \(e\.target === ref\.current\) onClose\(\);/);
+  assert.match(dialog, /onCancel=\{\(e\) => \{\s*if \(e\.target !== ref\.current\) return;/);
+  // Der Dialog hat kein `abholungAktiv` mehr.
+  assert.ok(!/abholungAktiv/.test(lies("components/spieler/LinkDialog.tsx") + lies("components/team/SpielerLinkDialog.tsx") + lies("components/team/SpielerListe.tsx")), "abholungAktiv ist gefallen");
+  // Der Link-Knopf der Spielerliste steht in jeder Zeile, an keiner Bedingung (früher `s.erstesTeam && (`): Zwischen dem Beginn
+  // der Knopfgruppe der Zeile und dem Kettenglied steht kein bedingtes Rendern.
+  const liste = lies("components/team/SpielerListe.tsx");
+  const gruppe = liste.indexOf('<span className="flex justify-end gap-1">');
+  const knopf = liste.indexOf("icon={Link2}", gruppe);
+  assert.ok(gruppe > 0 && knopf > gruppe, "Knopfgruppe mit Link-Knopf nicht gefunden");
+  assert.ok(!/&&\s*\(|\?\s*\(/.test(liste.slice(gruppe, knopf)), "Link-Knopf hängt an einer Bedingung");
+});
+
 pruefe("Spielerliste: Marker der Datenebene tragen die Sätze der Oberfläche", () => {
   for (const [marker, satz] of Object.entries(SPIELER_MELDUNG)) assert.equal(fehlerMeldung(`x ${marker} y`), satz, marker);
   assert.equal(fehlerMeldung('new row violates check constraint "spieler_jahrgang"'), SPIELER_TEXT.jahrgang);
+});
+
+pruefe("Doppelerfassung im Verein (#578, #579 AK 19): Satz je Lage, Teams nach Namen, Eingabe bereinigt, nie J+S", () => {
+  assert.equal(imTeam(["A"]), "im Team «A»");
+  assert.equal(imTeam(["B", "A"]), "im Team «A» und «B»");
+  assert.equal(imTeam(["C", "Ä", "B"]), "im Team «Ä», «B» und «C»");
+  const eingabe = { vorname: "  Lina ", nachname: "Muster\u00a0Meier", jahrgang: 2016 };
+  const d = (eigenes_team: boolean, teams: string[], ohne_team = false) => ({ eigenes_team, teams, ohne_team });
+  // AK 4: nur in anderen Teams — Eingabe, Jahrgang, Teams, Verweis auf die Verwaltung.
+  assert.equal(
+    spielerDoppeltText(d(false, ["Eb", "Ea"]), eingabe),
+    "Lina Muster Meier (2016) wird im Verein schon im Team «Ea» und «Eb» geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+  );
+  assert.equal(
+    spielerDoppeltText(d(false, ["Ea"]), eingabe),
+    "Lina Muster Meier (2016) wird im Verein schon im Team «Ea» geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+  );
+  // AK 3: im eigenen Team der bisherige Satz, auch bei weiteren Teams; beim Ändern ebenso.
+  assert.equal(spielerDoppeltText(d(true, ["Ea", "Eb"]), eingabe), SPIELER_MELDUNG.SPIELER_DOPPELT);
+  assert.equal(spielerDoppeltText(d(true, ["Ea"]), null), SPIELER_MELDUNG.SPIELER_DOPPELT);
+  assert.equal(spielerDoppeltText(d(true, [], true), eingabe), SPIELER_MELDUNG.SPIELER_DOPPELT, "im eigenen Team geht vor «ohne Team»");
+  // AK 6: Ändern nennt die Teams der anderen Spieler:in (Wortlaut der PO).
+  assert.equal(
+    spielerDoppeltText(d(false, ["Eb", "Ea", "D"]), null),
+    "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, im Team «D», «Ea» und «Eb».",
+  );
+  // #579 AK 19: in keinem Team — im Verein geführt, ohne Team, Zuordnung mit der Verwaltung klären (Wortlaut des Boards).
+  assert.equal(
+    spielerDoppeltText(d(false, [], true), { vorname: "Elias", nachname: "Brunner", jahrgang: 2014 }),
+    "Elias Brunner (2014) wird im Verein geführt, ist aber keinem Team zugeordnet. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+  );
+  assert.equal(
+    spielerDoppeltText(d(false, [], true), null),
+    "Im Verein wird schon eine andere Spieler:in mit diesen Angaben geführt, die keinem Team zugeordnet ist. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
+  );
+  assert.ok(!spielerDoppeltText(d(false, [], true), eingabe).includes("J+S"), "nie J+S-Nummer");
+  // Das Netz aus dem Trigger trägt den bisherigen Satz (Rennen); `SCHON_ZUGEORDNET` einen eigenen.
+  assert.equal(fehlerMeldung("x SPIELER_DOPPELT y"), SPIELER_MELDUNG.SPIELER_DOPPELT);
+  assert.equal(fehlerMeldung("x SCHON_ZUGEORDNET y"), "Diese Spieler:in ist dem Team schon zugeordnet.");
+});
+
+pruefe("Abholseite (#579 PC 12): Herausnehmen lässt die Angaben im Verein, erst das Löschen entfernt sie", () => {
+  const speichert = abholSpeichertText("FC Wyler");
+  assert.ok(speichert.includes("bleiben ihre Angaben im Verein"));
+  assert.ok(speichert.includes("wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht"));
+  assert.ok(!speichert.includes("verschwinden ihre Angaben überall"), "der alte Satz stimmt nicht mehr");
+});
+
+pruefe("Wer die Angaben sieht (#580 PC 4, #587 PC 2): ein Textblock für Abholseite und privaten Link, mit dem Verein als Verantwortlichem, nicht in LINK_TEXT", () => {
+  const rest =
+    "sehen alle Trainer:innen des Vereins, alle Angaben die Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.";
+  // Der Verein steht als Verantwortlicher im selben Textblock wie «wer die Angaben sieht».
+  assert.equal(angabenSehenText("FC Wyler"), `Verantwortlich für die Daten ist der Verein «FC Wyler». Name, Jahrgang und Teams der Spieler:in ${rest}`);
+  assert.equal(angabenSehenText("FC Wyler", "Noah"), `Verantwortlich für die Daten von Noah ist der Verein «FC Wyler». Name, Jahrgang und Teams von Noah ${rest}`);
+  // Die Abholseite trägt ihn anstelle der bisherigen Angabe; die übrigen Sätze bleiben.
+  const speichert = abholSpeichertText("FC Wyler");
+  assert.ok(speichert.includes(angabenSehenText("FC Wyler")));
+  assert.ok(!speichert.includes("Das sehen die Trainer:innen des Teams"), "die bisherige Angabe ist ersetzt");
+  assert.ok(
+    speichert.includes("sehen nur die Trainer:innen ihrer Teams und ihre KI-Assistenten"),
+    "der Stand der letzten Ab- und Anmeldung bleibt bei den Teams (#467)",
+  );
+  assert.ok(speichert.startsWith("Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang"));
+  // Der Verein ist verantwortlich — keine Person (OoS 6): überall, wo der Text steht, mit dem Namen des Vereins.
+  for (const t of [angabenSehenText("FC Wyler"), angabenSehenText("FC Wyler", "Noah"), speichert])
+    assert.ok(t.includes("Verantwortlich für die Daten") && t.includes("ist der Verein «FC Wyler»."), t);
+  // Auf dem Erhalt-Bildschirm der Abholseite derselbe Textblock mit dem Namen der Spieler:in.
+  const erhalt = abholErhaltText("Noah Keller", "FC Wyler");
+  assert.ok(erhalt.daten.startsWith(angabenSehenText("FC Wyler", "Noah Keller")));
+  assert.ok(erhalt.daten.endsWith("Nimmt ein Team Noah Keller heraus, bleiben die Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung sie aus dem Verein löscht."));
+  // Link und Abholseite lesen den Verein aus der Datenebene (Eingabe und Erhalt), nicht aus dem Browser.
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  assert.match(lies("components/privat/ElternAnsicht.tsx"), /\{angabenSehenText\(verein, spieler\.vorname\)\}/);
+  assert.match(lies("components/privat/AbholSeite.tsx"), /\{abholSpeichertText\(verein\)\}/);
+  assert.match(lies("components/privat/AbholSeite.tsx"), /abholErhaltText\(name, verein\)[\s\S]*?\{text\.daten\}/);
+  assert.match(lies("app/(privat)/abholen/[privaterLink]/page.tsx"), /<AbholSeite token=\{privaterLink\} team=\{ansicht\.team\} verein=\{ansicht\.verein\} \/>/);
+  assert.match(lies("app/(privat)/abmelden/[privaterLink]/page.tsx"), /verein=\{ansicht\.verein\}[\s\S]*?<FeedbackLink [^>]*verein=\{ansicht\.verein\}/);
+  assert.ok(!Object.values(LINK_TEXT).some((t) => typeof t === "string" && (t.includes("Trainer:innen des Vereins") || t.includes("Verantwortlich"))), "nichts davon in LINK_TEXT (KI-Beschreibungen)");
+});
+
+pruefe("Spieler:innen des Vereins (#580): Texte der Liste, Leerzustände, Hinweis, Filterleiste", () => {
+  assert.equal(SPIELER_OHNE_TEAM, "ohne Team");
+  assert.equal(SPIELER_BESTAND_LEER_MITGLIED, "Der Verein führt noch keine Spieler:innen.");
+  assert.deepEqual(SPIELER_KEINE_TREFFER, { titel: "Keine Spieler:in gefunden", text: "Ändere die Suche oder die Eingrenzung." });
+  assert.equal(SPIELER_ZUORDNUNG_HINWEIS, "Spieler:innen ordnet die Vereinsverwaltung einem Team zu.");
+  assert.deepEqual(SPIELER_FILTER, {
+    suche: "Spieler:innen durchsuchen",
+    team: "Team",
+    ohneTeam: "Ohne Team",
+    teamsGruppe: "Teams",
+    jahrgang: "Jahrgang",
+    zuruecksetzen: "Zurücksetzen",
+    weiter: "Weitere anzeigen",
+  });
+  assert.equal(spielerAngezeigtText(50, 144), "50 von 144 angezeigt");
+  // Weder «kein Team» noch «Kind» in den neuen Sätzen.
+  for (const t of [SPIELER_BESTAND_LEER_MITGLIED, SPIELER_KEINE_TREFFER.text, SPIELER_ZUORDNUNG_HINWEIS]) assert.ok(!/kein Team|Kind/.test(t), t);
+});
+
+pruefe("Adress-Parameter der Spieler:innen des Vereins (#580 AK 6–10): lesen, prüfen, verwerfen", () => {
+  const ea = "11111111-1111-4111-8111-111111111111";
+  const eb = "22222222-2222-4222-8222-222222222222";
+  // Nackte Adresse: keine Eingrenzung, eine Seite.
+  assert.deepEqual(liesSpielerEingrenzung({}), { suche: "", teamIds: [], ohneTeam: false, jahrgaenge: [] });
+  assert.equal(eingrenzungGesetzt(liesSpielerEingrenzung({})), false);
+  assert.equal(liesSpielerAnzahl({}), SPIELER_SEITE);
+  // Alles gesetzt: Suche ohne Rand- und Mehrfach-Leerzeichen, «ohne» neben den Kennungen, Jahrgänge geordnet und einmal.
+  const e = liesSpielerEingrenzung({ q: "  lina   beispiel ", team: `${ohne()},${ea},${eb},${ea}`, jahrgang: "2017,2016,2017" });
+  assert.deepEqual(e, { suche: "lina beispiel", teamIds: [ea, eb], ohneTeam: true, jahrgaenge: [2016, 2017] });
+  assert.equal(eingrenzungGesetzt(e), true);
+  assert.deepEqual(teamFilterWerte(e), [OHNE_TEAM_WERT, ea, eb], "so, wie AuswahlFilter und ?team= sie führen");
+  // Jedes für sich setzt «Zurücksetzen» frei.
+  for (const sp of [{ q: "x" }, { team: ohne() }, { team: ea }, { jahrgang: "2016" }]) assert.equal(eingrenzungGesetzt(liesSpielerEingrenzung(sp)), true, JSON.stringify(sp));
+  // Unbrauchbares fällt weg: keine Kennung, keine Zahl, zu kurz, zu lang, leer.
+  assert.deepEqual(liesSpielerEingrenzung({ team: "nicht-uuid,,123", jahrgang: "abc,99999,12,-2016,2016.5,0999,2e3" }), { suche: "", teamIds: [], ohneTeam: false, jahrgaenge: [] });
+  assert.equal(liesSpielerEingrenzung({ q: "   " }).suche, "");
+  // Die Suche wie die Datenebene bereinigt (spieler_text_bereinigt), nicht gekappt: Im Feld steht, wonach gesucht wird.
+  assert.equal(liesSpielerEingrenzung({ q: "a".repeat(500) }).suche.length, 500, "ungekappt — länger als jeder Name trifft eben niemanden");
+  assert.equal(liesSpielerEingrenzung({ q: "😀".repeat(70) }).suche, "😀".repeat(70), "kein halbes Zeichen");
+  assert.equal(liesSpielerEingrenzung({ q: "Zoe\u0308" }).suche, "Zo\u00eb", "NFC wie die Datenebene");
+  assert.equal(liesSpielerEingrenzung({ q: "\u00a0Léa\u202f\u2009 Müller\t\u0085" }).suche, "Léa Müller", "geschützte und schmale Leerzeichen, NEL");
+  assert.equal(liesSpielerEingrenzung({ q: "\ufeffLea" }).suche, "\ufeffLea", "U+FEFF ist für die Datenebene kein Leerraum");
+  assert.equal(liesSpielerEingrenzung({ q: "50% _a\\b 'c\" d," }).suche, "50% _a\\b 'c\" d,", "Sonderzeichen bleiben, wie sie sind");
+  assert.equal(liesSpielerEingrenzung({ q: ["eins", "zwei"] }).suche, "eins", "bei Wiederholung zählt der erste");
+  assert.deepEqual(liesSpielerEingrenzung({ team: [ea, eb] }).teamIds, [ea, eb], "auch mehrfach in der Adresse");
+  // Was es im Verein nicht gibt, fällt aus der Eingrenzung — die Seite fragt dann ohne es neu.
+  const bestand = { teams: [{ id: ea }], jahrgaenge: [2015, 2016] };
+  const sauber = bereinigeEingrenzung(e, bestand);
+  assert.deepEqual(sauber, { suche: "lina beispiel", teamIds: [ea], ohneTeam: true, jahrgaenge: [2016] });
+  assert.deepEqual(bereinigeEingrenzung(sauber, bestand), sauber, "Bereinigtes bleibt");
+  // Die Adresse sagt danach dasselbe wie Leiste und Abfrage: einmal weiterleiten, q und anzahl reisen mit.
+  const P = "/verein/spieler";
+  const sp = { q: "  lina   beispiel ", team: `${ohne()},${ea},${eb},${ea}`, jahrgang: "2017,2016,2017", anzahl: "100" };
+  const ziel = bereinigteAdresse(P, sp, sauber);
+  assert.equal(ziel, `${P}?q=++lina+++beispiel+&anzahl=100&team=${ohne()}%2C${ea}&jahrgang=2016`);
+  const zurueck = Object.fromEntries(new URL(ziel!, "http://x").searchParams);
+  assert.equal(bereinigteAdresse(P, zurueck, bereinigeEingrenzung(liesSpielerEingrenzung(zurueck), bestand)), null, "die bereinigte Adresse bleibt stehen");
+  for (const roh of [{}, { q: "x" }, { team: `${ohne()},${ea}` }, { team: [ohne(), ea] }, { jahrgang: "2015,2016" }])
+    assert.equal(bereinigteAdresse(P, roh, bereinigeEingrenzung(liesSpielerEingrenzung(roh), bestand)), null, JSON.stringify(roh));
+  assert.equal(bereinigteAdresse(P, { team: "abc", jahrgang: "1999" }, liesSpielerEingrenzung({})), P, "nichts übrig: die nackte Seite");
+  assert.equal(bereinigteAdresse(P, { team: eb }, bereinigeEingrenzung(liesSpielerEingrenzung({ team: eb }), bestand)), P, "im Verein unbekannt");
+  assert.equal(bereinigteAdresse(P, { jahrgang: "2016,2015" }, liesSpielerEingrenzung({ jahrgang: "2016,2015" })), `${P}?jahrgang=2015%2C2016`, "in der Schreibweise der Leiste");
+  // Die Suche: dieselbe Bereinigung für Adresse, Echo im Suchfeld und Datenebene.
+  assert.equal(bereinigeSuche("  Lea   M "), "Lea M");
+  assert.equal(bereinigeSuche("Lea "), "Lea", "Echo von «Lea »");
+  assert.equal(bereinigeSuche("Zoë"), "Zoë");
+  // Anzeige in Schritten: nie unter einer Seite, nie Müll.
+  assert.equal(liesSpielerAnzahl({ anzahl: "100" }), 100);
+  for (const a of ["-5", "0", "abc", "", undefined]) assert.equal(liesSpielerAnzahl({ anzahl: a }), SPIELER_SEITE, String(a));
+  assert.equal(liesSpielerAnzahl({ anzahl: "10" }), SPIELER_SEITE);
+  // Die gemeinsamen Hilfen der Seiten mit Adress-Filtern.
+  assert.deepEqual(liesListe("a,,b"), ["a", "b"]);
+  assert.deepEqual(liesListe(["a,b", "c"]), ["a", "b", "c"]);
+  assert.deepEqual(liesListe(undefined), []);
+  assert.equal(liesPositiveZahl("7"), 7);
+  assert.equal(liesPositiveZahl(["7", "9"]), 7);
+  assert.equal(liesPositiveZahl("0"), undefined);
+  assert.equal(liesPositiveZahl("x"), undefined);
+  assert.equal(mitAnzahl("/verein/spieler", { q: "li", team: [ea, eb], anzahl: "50", leer: undefined }, 100), `/verein/spieler?q=li&team=${ea}&team=${eb}&anzahl=100`, "alles reist mit, nur anzahl neu");
+  assert.equal(mitAnzahl("/", {}, 48), "/?anzahl=48");
+  function ohne() {
+    return OHNE_TEAM_WERT;
+  }
+});
+
+pruefe("Spieler:innen des Vereins (#580): für alle Mitglieder, Mitglieder-Form ohne Verwaltungsfelder, Leiste für alle", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Die Seite sperrt Mitglieder nicht mehr; ohne Verein geht es zu den Teams.
+  const seite = lies("app/(app)/verein/spieler/page.tsx");
+  assert.ok(!/redirect\("\/verein"\)/.test(seite), "kein Verweis der Mitglieder auf die Teamübersicht");
+  assert.match(seite, /if \(!verein\) redirect\("\/teams"\);/);
+  assert.match(seite, /r\.art === "nicht_gefunden"\) redirect\("\/teams"\)/, "wer inzwischen kein Mitglied mehr ist, geht zu den Teams");
+  // Der Eintrag «Spieler:innen» steht im Bereich «Verein» für alle, nur «Verwaltung» an der Rolle.
+  const nav = lies("components/layout/AppNavClient.tsx");
+  const vereinGruppe = nav.slice(nav.indexOf('titel: "Verein"'), nav.indexOf('titel: "Start"'));
+  assert.ok(vereinGruppe.indexOf('label: "Spieler:innen"') < vereinGruppe.indexOf("verein?.istVerwaltung"), "«Spieler:innen» vor der Rollenbedingung");
+  assert.ok(vereinGruppe.indexOf("verein?.istVerwaltung") < vereinGruppe.indexOf('label: "Verwaltung"'), "«Verwaltung» hinter der Rollenbedingung");
+  // Der Typ der Mitglieder-Zeile führt J+S, Link-Stand und Schnuppern gar nicht; der Kern setzt sie nur, wenn die Datenebene sie liefert.
+  const kern = lies("lib/kern/verein.ts");
+  const mitglied = kern.slice(kern.indexOf("export type VereinSpielerMitglied"), kern.indexOf("export type VereinSpieler ="));
+  assert.ok(mitglied.length > 0 && !/\b(js|linkBezogen|schnuppern|anzahl)\b/.test(mitglied.replace(/\/\*\*[\s\S]*?\*\//g, "")), "Mitglieder-Form ohne Verwaltungsfelder");
+  assert.match(kern, /if \(!passt\) return fehlschlag\("technisch"/, "Form gegen die Rolle der Antwort geprüft, sonst ein Fehler");
+  assert.match(kern, /if \(!r\.verwaltung\)\s+return ok\(\{ \.\.\.basis, verwaltung: false, spieler: zeilen\.map\(mitglied\)/, "Mitglieder-Zeilen Feld für Feld, nie ein undefined-Schlüssel");
+  // Die lesende Sicht kennt weder Aktionen noch Verwaltungsbausteine.
+  const ansicht = lies("components/verein/VereinSpielerAnsicht.tsx").replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.ok(!/actions\/|VereinSpieler(Formular|LinkDialog|Loeschen|Liste|Import)|OverflowMenu|Checkbox|AuswahlLeiste|"use client"/.test(ansicht), "nur lesen");
+  // Die Sicht wählt allein `verwaltung` aus der Antwort der Liste (eine Quelle), nicht die Vereinslage.
+  assert.match(seite, /\{liste\.verwaltung \? \(/);
+  assert.ok(!/istVerwaltung/.test(seite), "keine zweite Quelle für die Rolle");
+  assert.match(seite, /if \(sauber\) redirect\(sauber\);/, "unbekannte Eingrenzung: einmal weiterleiten, nicht zweimal abfragen");
+  assert.equal(seite.match(/ladeVereinSpielerliste\(/g)?.length, 1, "ein Abruf je Aufruf");
+  // «ohne Team» steht als Plakette in beiden Sichten auch schmal (AK 4; #582 AK 8): Die Teams-Zelle ist nie versteckt.
+  for (const d of ["components/verein/VereinSpielerAnsicht.tsx", "components/verein/VereinSpielerListe.tsx"])
+    assert.match(lies(d), /<span className="mt-1 block min-w-0 sm:mt-0">\s*<SpielerTeams /, d);
+  // Die Verwaltungsliste zeigt nur, was steht: die Auswahl leert sich mit Suche und Eingrenzung.
+  assert.match(lies("components/verein/VereinSpielerListe.tsx"), /schluessel !== schluesselVorher\) \{\s*setSchluesselVorher\(schluessel\);\s*setAuswahl\(\[\]\)/);
+});
+
+pruefe("Aus dem Team nehmen (#579 AK 13–16): nicht gelöscht, bleibt im Verein, was verfällt — mit weiteren Teams, als letztes Team, schnuppernd", () => {
+  const lage = { vorname: "Noah", nachname: "Keller", team: "Da Junioren", verein: "FC Wyler", verbleibend: ["Ea Junioren"], probe: false };
+  assert.equal(herausnehmenTitel(lage), "Noah Keller aus Da Junioren nehmen", "Titel des Boards");
+  // Mit weiterem Team: Wortlaut des Boards, ohne Pronomen.
+  assert.deepEqual(herausnehmenSaetze(lage), {
+    absaetze: [
+      "Noah wird dadurch nicht gelöscht und bleibt samt privatem Link im Verein «FC Wyler» und im Team Ea Junioren. Aus dem Verein löscht nur die Vereinsverwaltung.",
+    ],
+    warnung: "Künftige Abmeldungen, Spiel-Meldungen und Kader in Da Junioren verfallen.",
+    zusatz: "Vergangene Anwesenheiten bleiben mit dem Namen stehen.",
+  });
+  // Mehrere verbleibende Teams.
+  assert.match(herausnehmenSaetze({ ...lage, verbleibend: ["Ea Junioren", "Fa Junioren", "FF-15"] }).absaetze[0], /im Verein «FC Wyler» und in den Teams Ea Junioren, Fa Junioren und FF-15\. Aus dem Verein/);
+  // Letztes Team: keinem Team mehr zugeordnet, nur die Verwaltung führt sie (AK 16).
+  const letzte = herausnehmenSaetze({ ...lage, vorname: "Leon", nachname: "Graf", verbleibend: [] });
+  assert.deepEqual(letzte.absaetze, [
+    "Leon wird dadurch nicht gelöscht und bleibt samt privatem Link im Verein «FC Wyler», ist danach aber keinem Team mehr zugeordnet.",
+    "Ändern, einem Team zuordnen oder löschen kann dann nur die Vereinsverwaltung.",
+  ]);
+  // Vergangene Anwesenheiten bleiben auch beim letzten Team mit dem Namen stehen (PC 5).
+  assert.equal(letzte.zusatz, "Vergangene Anwesenheiten bleiben mit dem Namen stehen.");
+  // Schnuppernd: das Schnuppertraining endet mit (Board).
+  assert.equal(
+    herausnehmenSaetze({ ...lage, verbleibend: [], probe: true }).warnung,
+    "Das Schnuppertraining endet samt Zählung; künftige Abmeldungen, Spiel-Meldungen und Kader in Da Junioren verfallen.",
+  );
+  // Ohne bekannten Verein.
+  assert.match(herausnehmenSaetze({ ...lage, verein: null }).absaetze[0], /im Verein und im Team Ea Junioren/);
+  // Weder «gelöscht werden» noch eine Zahl der verfallenden Meldungen (Out of Scope 4); beides sagt, wer löscht.
+  for (const l of [lage, { ...lage, verbleibend: [] }]) {
+    const text = herausnehmenFrage(l);
+    assert.ok(text.includes("nicht gelöscht") && text.includes("nur die Vereinsverwaltung"), "AK 13");
+    assert.ok(!/\d/.test(text), "keine Zahl verfallender Meldungen");
+  }
+  assert.equal(herausnehmenFrage(lage).startsWith("Noah Keller aus Da Junioren nehmen?"), true);
+  assert.deepEqual(verbleibendeTeams([{ name: "Da Junioren", dieses: true }, { name: "Ea Junioren", dieses: false }]), ["Ea Junioren"]);
+  // Gleichnamige Teams gibt es im Bestand: Nur das, in dem man handelt, fällt weg.
+  assert.deepEqual(verbleibendeTeams([{ name: "Da Junioren", dieses: false }, { name: "Da Junioren", dieses: true }]), ["Da Junioren"]);
+  assert.equal(HERAUSNEHMEN_TEXT.geaendert, "Inzwischen hat sich etwas geändert. Lies den Hinweis noch einmal und bestätige erneut.");
+});
+
+pruefe("Herausnehmen über den KI-Assistenten (#589 AK 4): beim letzten eigenen Team der Zusatz «über den Assistenten nicht mehr erreichbar», nie im Dialog der Anwendung", () => {
+  const lage = { vorname: "Noah", nachname: "Keller", team: "Da Junioren", verein: "FC Wyler", verbleibend: ["Ea Junioren"], probe: false };
+  const zusatz = "Danach ist Noah über den Assistenten nicht mehr erreichbar: Noah gehört dann keinem deiner Teams mehr an.";
+  // Die Rückfrage an den Assistenten: dieselben Sätze wie die Bestätigung, beim letzten eigenen Team dazu der Zusatz.
+  assert.equal(herausnehmenFrage({ ...lage, letztesEigenes: true }), `${herausnehmenFrage(lage)} ${zusatz}`);
+  assert.equal(herausnehmenFrage({ ...lage, verbleibend: [], letztesEigenes: true }), `${herausnehmenFrage({ ...lage, verbleibend: [] })} ${zusatz}`);
+  assert.equal(herausnehmenFrage({ ...lage, letztesEigenes: false }), herausnehmenFrage(lage), "mit einem weiteren eigenen Team kein Zusatz");
+  assert.ok(!herausnehmenFrage(lage).includes("Assistenten"), "ohne das Feld kein Zusatz");
+  // Der Dialog der Anwendung bleibt, wie er ist: Die Sätze kennen das Feld nicht.
+  assert.deepEqual(herausnehmenSaetze({ ...lage, letztesEigenes: true }), herausnehmenSaetze(lage));
+  assert.deepEqual(herausnehmenSaetze({ ...lage, verbleibend: [], letztesEigenes: true }), herausnehmenSaetze({ ...lage, verbleibend: [] }));
+  // Und die Anwendung setzt das Feld nirgends und baut die Rückfrage nicht: Der Zusatz gelangt nicht in sie.
+  const treffer: string[] = [];
+  for (const ordner of ["app", "components", "lib/actions"])
+    for (const datei of quelldateien(join(web, ordner)))
+      if (/\b(letztesEigenes|herausnehmenFrage)\b/.test(readFileSync(datei, "utf8"))) treffer.push(relative(web, datei));
+  assert.deepEqual(treffer, [], `KI-Zusatz in der Anwendung: ${treffer.join(", ")}`);
+  // Ohne `stand` käme die Rückfrage des KI-Wegs samt Zusatz zurück: Jeder Aufruf in den Server-Actions gibt ihn mit.
+  const ohneStand = (text: string) => [...text.matchAll(/\bnimmSpielerAusTeam\(([^;]*?)\);/g)].filter((m) => !/\bstand\b/.test(m[1])).length;
+  const aufrufe: string[] = [];
+  let ohne = 0;
+  for (const datei of quelldateien(join(web, "lib/actions"))) {
+    const text = readFileSync(datei, "utf8");
+    const n = [...text.matchAll(/\bnimmSpielerAusTeam\(/g)].length;
+    if (n) aufrufe.push(relative(web, datei));
+    ohne += ohneStand(text);
+  }
+  assert.deepEqual(aufrufe, ["lib/actions/spieler.ts"], "die Anwendung ruft nimmSpielerAusTeam an einer Stelle auf");
+  assert.equal(ohne, 0, "nimmSpielerAusTeam ohne stand in lib/actions");
+  // Der Wächter schlägt an und lässt den Aufruf mit `stand` durch.
+  assert.equal(ohneStand("await nimmSpielerAusTeam(a.supabase, a.userId, { teamId, spielerId });"), 1);
+  assert.equal(ohneStand("await nimmSpielerAusTeam(a.supabase, a.userId, { teamId, spielerId, stand });"), 0);
+});
+
+pruefe("Zuordnen zum Schnuppern (#584 AK 7–12, 16): jede Abweisung, eine und mehrere Schnuppernde, Satz und Snackbar", () => {
+  const p = (vorname: string, nachname: string, jahrgang: number) => ({ id: vorname, vorname, nachname, jahrgang });
+  const leer = { bereits: [], gleich: [], schnuppert: [], ueber_grenze: 0 };
+  // AK 9, 10: Die Datenebene nennt genau einen Grund; der Satz steht allein.
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, grund: "schnuppern_hat_team" }, "Da Junioren", 1),
+    "Diese Spieler:in ist schon einem Team zugeordnet. Ordne sie ohne Schnuppern zu.",
+  );
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, grund: "schnuppern_anzahl_fehlt" }, "Da Junioren", 1),
+    "Das Team hat noch keine Anzahl Schnuppertrainings. Ein Mitglied des Teams legt sie zuerst fest.",
+  );
+  assert.deepEqual(Object.keys(SCHNUPPERN_ZUORDNEN_TEXT).sort(), ["schnuppern_anzahl_fehlt", "schnuppern_hat_team"]);
+  // AK 12: eine Schnuppernde nennt ihr Team und beide Auswege; einzeln ohne
+  // «Wähle ein anderes Team» — auch dort liesse sie sich nicht zuordnen.
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, schnuppert: [{ ...p("Leon", "Graf", 2015), team: "Da Junioren" }] }, "Ea Junioren", 1),
+    "Leon Graf (2015) schnuppert im Team «Da Junioren». Dort beendet zuerst ein Mitglied das Schnuppern, oder Leon wird aus dem Team genommen.",
+  );
+  assert.ok(
+    !zuordnenAbweisungText({ ...leer, gleich: [p("Elias", "Brunner", 2014)], schnuppert: [{ ...p("Elias", "Brunner", 2014), team: "Da Junioren" }] }, "Ea Junioren", 1).includes("anderes Team"),
+    "einzeln mit Schnuppern nie «anderes Team»",
+  );
+  // AK 16: gesammelt nennt jede Schnuppernde mit ihrem Team, in der Reihenfolge der Datenebene.
+  const mehrere = zuordnenAbweisungText(
+    {
+      ...leer,
+      schnuppert: [
+        { ...p("Leon", "Graf", 2015), team: "Da Junioren" },
+        { ...p("Mia", "Ott", 2016), team: "Fa Junioren" },
+      ],
+    },
+    "Ea Junioren",
+    3,
+  );
+  assert.equal(
+    mehrere,
+    "Leon Graf (2015) schnuppert im Team «Da Junioren». Dort beendet zuerst ein Mitglied das Schnuppern, oder Leon wird aus dem Team genommen. " +
+      "Mia Ott (2016) schnuppert im Team «Fa Junioren». Dort beendet zuerst ein Mitglied das Schnuppern, oder Mia wird aus dem Team genommen. " +
+      "Ändere die Auswahl und versuche es nochmals.",
+  );
+  // Schnuppernde zusammen mit anderen Befunden: keiner geht verloren.
+  const gemischt = zuordnenAbweisungText(
+    { ...leer, bereits: [p("Luis", "Ott", 2012)], schnuppert: [{ ...p("Leon", "Graf", 2015), team: "Da Junioren" }] },
+    "Ea Junioren",
+    2,
+  );
+  assert.ok(gemischt.includes("Luis Ott (2012) ist Ea Junioren schon zugeordnet.") && gemischt.includes("Leon Graf (2015) schnuppert im Team «Da Junioren»"));
+  // AK 7, 8, 11: Beschriftung, Satz unter der Auswahl, Snackbar.
+  assert.equal(SCHNUPPERN_ZUORDNEN_LABEL, "Zum Schnuppern zuordnen");
+  assert.equal(SCHNUPPERN_ZUORDNEN_HINWEIS, "Solange die Spieler:in schnuppert, lässt sie sich keinem weiteren Team zuordnen.");
+  assert.equal(schnuppernZugeordnetText("Noah Keller", "Da Junioren"), "Noah Keller ist jetzt dem Team Da Junioren zugeordnet und schnuppert dort.");
+  // AK 13: Endet beim Herausnehmen ein Schnuppern, das die Bestätigung nicht ankündigte, sagt es die Snackbar.
+  assert.equal(vereinHerausgenommenText("Noah", "Da Junioren", false), "Noah ist nicht mehr im Team Da Junioren.");
+  assert.equal(vereinHerausgenommenText("Noah", "Da Junioren", true), "Noah ist nicht mehr im Team Da Junioren. Das Schnuppertraining ist damit beendet.");
+  // Marker der Datenebene kommen beim Zuordnen als Satz an (der Verein-Kern übersetzt sie über `fachlicheMeldung`).
+  assert.equal(fachlicheMeldung("SCHNUPPERN_NUR_EINZELN"), "Zum Schnuppern lässt sich nur eine Spieler:in zuordnen.");
+  assert.equal(
+    fachlicheMeldung("SPIELER_SCHNUPPERT"),
+    "Diese Spieler:in schnuppert in einem anderen Team. Dort beendet zuerst ein Mitglied das Schnuppern, oder sie wird aus dem Team genommen.",
+  );
+  // Kein «Probe» in den Sätzen.
+  for (const t of [...Object.values(SCHNUPPERN_ZUORDNEN_TEXT), SCHNUPPERN_ZUORDNEN_LABEL, SCHNUPPERN_ZUORDNEN_HINWEIS, mehrere, gemischt])
+    assert.ok(!/probe/i.test(t), t);
+});
+
+pruefe("Zuordnen (#579 AK 4–7, 20–23): Abweisung einzeln und gesammelt, Zahl der Termine im Singular und Plural", () => {
+  const p = (vorname: string, nachname: string, jahrgang: number) => ({ id: vorname, vorname, nachname, jahrgang });
+  const leer = { bereits: [], gleich: [], schnuppert: [], ueber_grenze: 0 };
+  // Gleiche Angaben: Wortlaut des Boards; Schluss je nach Auswahl.
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, gleich: [p("Elias", "Brunner", 2014)] }, "Db Junioren", 2),
+    "Db Junioren führt schon eine Spieler:in mit gleichen Angaben wie Elias Brunner, 2014. Ändere die Auswahl und versuche es nochmals.",
+  );
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, gleich: [p("Elias", "Brunner", 2014)] }, "Db Junioren", 1),
+    "Db Junioren führt schon eine Spieler:in mit gleichen Angaben wie Elias Brunner, 2014. Wähle ein anderes Team und versuche es nochmals.",
+  );
+  // Schon zugeordnet, einzeln und mehrere.
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, bereits: [p("Luis", "Ott", 2012)] }, "Da Junioren", 1),
+    "Luis Ott (2012) ist Da Junioren schon zugeordnet. Wähle ein anderes Team und versuche es nochmals.",
+  );
+  assert.match(
+    zuordnenAbweisungText({ ...leer, bereits: [p("Luis", "Ott", 2012), p("Mia", "Graf", 2016)] }, "Da Junioren", 3),
+    /^Luis Ott \(2012\) und Mia Graf \(2016\) sind Da Junioren schon zugeordnet\./,
+  );
+  assert.match(
+    zuordnenAbweisungText({ ...leer, gleich: [p("Luis", "Ott", 2012), p("Mia", "Graf", 2016)] }, "Da Junioren", 3),
+    /^Da Junioren führt schon Spieler:innen mit gleichen Angaben wie Luis Ott \(2012\) und Mia Graf \(2016\)\./,
+  );
+  // Schnuppernd: nennt das Team, in dem sie schnuppert.
+  assert.match(
+    zuordnenAbweisungText({ ...leer, schnuppert: [{ ...p("Leon", "Graf", 2015), team: "Da Junioren" }] }, "Ea Junioren", 1),
+    /^Leon Graf \(2015\) schnuppert im Team «Da Junioren»\. Dort beendet zuerst ein Mitglied das Schnuppern, oder Leon wird aus dem Team genommen\./,
+  );
+  // Grenze: Wortlaut des Boards gesammelt («eine zu viel»), einzeln als Grenze des Teams.
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, ueber_grenze: 1 }, "Da Junioren", 2),
+    "Mit allen gewählten wären es 101 von 100, eine zu viel. Ändere die Auswahl und versuche es nochmals.",
+  );
+  assert.match(zuordnenAbweisungText({ ...leer, ueber_grenze: 3 }, "Da Junioren", 5), /^Mit allen gewählten wären es 103 von 100, 3 zu viel\./);
+  assert.match(zuordnenAbweisungText({ ...leer, ueber_grenze: 1 }, "Da Junioren", 1), /^Da Junioren umfasst schon 100 oder mehr Spieler:innen\. Die Grenze des Teams ist erreicht;/);
+  // Gesammelt nennt beides (AK 22), erst die Befunde, dann die Grenze.
+  const beides = zuordnenAbweisungText({ ...leer, gleich: [p("Elias", "Brunner", 2014)], ueber_grenze: 2 }, "Db Junioren", 4);
+  assert.ok(beides.indexOf("gleichen Angaben") < beides.indexOf("zu viel"), "Befunde vor der Grenze");
+  assert.ok(beides.includes("102 von 100, 2 zu viel"));
+  // Meldung nach dem Zuordnen: Namen bis drei, darüber die Zahl; Zahl der Termine Singular und Plural (AK 23).
+  assert.equal(zugeordnetText(["Elias Brunner"], "Da Junioren", 0), "Elias Brunner ist jetzt dem Team Da Junioren zugeordnet.");
+  assert.equal(zugeordnetText(["Elias Brunner", "Luis Ott"], "Da Junioren", 0), "Elias Brunner und Luis Ott sind jetzt dem Team Da Junioren zugeordnet.");
+  assert.equal(zugeordnetText(["A", "B", "C", "D"], "Da Junioren", 0), "4 Spieler:innen sind jetzt dem Team Da Junioren zugeordnet.");
+  assert.match(zugeordnetText(["A"], "Da", 1), /An 1 anstehenden Termin ist die erwartete Spielerzahl weggefallen/);
+  assert.match(zugeordnetText(["A"], "Da", 3), /An 3 anstehenden Terminen ist die erwartete Spielerzahl weggefallen/);
+  assert.ok(!zugeordnetText(["A"], "Da", 0).includes("Spielerzahl"), "ohne ersetzte Termine keine Zahl");
+  assert.equal(zuordnenEinleitung(["Elias Brunner", "Luis Ott"]), "Elias Brunner und Luis Ott kommen ins gewählte Team. Bisherige Teams bleiben bestehen.", "Wortlaut des Boards");
+  assert.equal(zuordnenEinleitung(["Elias Brunner"]), "Elias Brunner kommt ins gewählte Team. Bisherige Teams bleiben bestehen.");
+});
+
+pruefe("Kein Verweis auf den Index spieler_eindeutig (#578, Architekturplan §5.5)", () => {
+  const repo = join(web, "..");
+  const treffer: string[] = [];
+  const dateien = [
+    ...quelldateien(web),
+    ...[join(repo, "supabase/tests"), join(repo, ".github/workflows")].flatMap((w) =>
+      readdirSync(w, { recursive: true, encoding: "utf8" }).map((d) => join(w, d)).filter((d) => statSync(d).isFile()),
+    ),
+  ];
+  for (const datei of dateien)
+    if (datei !== fileURLToPath(import.meta.url) && /\bspieler_eindeutig\b/.test(readFileSync(datei, "utf8")))
+      treffer.push(relative(repo, datei));
+  assert.deepEqual(treffer, [], `spieler_eindeutig steht noch in: ${treffer.join(", ")}`);
+});
+
+/** Ein Aufruf oder Verweis auf die RPC `spieler_importieren` (Team-Import): `verein_spieler_importieren` zählt nicht. */
+const ALTER_IMPORT = /(?<![A-Za-z_])spieler_importieren\b/;
+
+pruefe("Kein Verweis auf spieler_importieren: der Team-Import ist weg, auch in Tests (#585 AK 12, Architekturplan §5.5)", () => {
+  // Der Wächter schlägt an und lässt den Verein-Namen durch.
+  assert.ok(ALTER_IMPORT.test("select spieler_importieren(a, b)"));
+  assert.ok(ALTER_IMPORT.test('await db.rpc("spieler_importieren", {})'));
+  assert.ok(!ALTER_IMPORT.test("select verein_spieler_importieren(a, b)"));
+  assert.ok(!ALTER_IMPORT.test('db.rpc("verein_spieler_importieren")'));
+  assert.ok(!ALTER_IMPORT.test("-- importieren Spieler"), "nur der Name der RPC");
+  const repo = join(web, "..");
+  const treffer: string[] = [];
+  // Frühere Migrationen sind unveränderlich und bleiben ausgenommen; `pruefe-kern-db.ts` belegt, dass der Aufruf scheitert.
+  const dateien = [
+    ...quelldateien(web),
+    ...[join(repo, "supabase/tests"), join(repo, ".github/workflows")].flatMap((w) =>
+      readdirSync(w, { recursive: true, encoding: "utf8" }).map((d) => join(w, d)).filter((d) => statSync(d).isFile()),
+    ),
+  ];
+  for (const datei of dateien) {
+    if (datei === fileURLToPath(import.meta.url) || relative(repo, datei) === "web/scripts/pruefe-kern-db.ts") continue;
+    if (ALTER_IMPORT.test(readFileSync(datei, "utf8"))) treffer.push(relative(repo, datei));
+  }
+  assert.deepEqual(treffer, [], `spieler_importieren steht noch in: ${treffer.join(", ")}`);
+});
+
+pruefe("Verein (#577): Marker der Datenebene tragen die Sätze der Oberfläche, Team- und Vereinsgrenze bleiben unterscheidbar", () => {
+  for (const [marker, satz] of Object.entries(VEREIN_MELDUNG)) assert.equal(fehlerMeldung(`x ${marker} y`), satz, marker);
+  for (const [marker, satz] of Object.entries(VEREIN_MELDUNG)) assert.equal(still(() => ausDbFehler({ message: marker })).meldung, satz, `ausDbFehler ${marker}`);
+  // Wortlaut nach Architekturplan §5.3.
+  assert.equal(SPIELER_MAX, 100);
+  assert.equal(VEREIN_SPIELER_MAX, 1000);
+  assert.equal(VEREIN_TEAMS_MAX, 30);
+  assert.equal(SPIELER_MELDUNG.SPIELERLISTE_VOLL, "Das Team hat schon 100 Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind.");
+  assert.equal(VEREIN_MELDUNG.VEREIN_VOLL, "Der Verein hat schon 1000 Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind.");
+  assert.equal(VEREIN_MELDUNG.VEREIN_TEAMS_VOLL, "Der Verein hat schon 30 Teams. Ein weiteres kommt erst dazu, wenn es weniger sind.");
+  // Kein Marker mehr (#581): eigene Konstante, nicht in der Markerliste.
+  assert.equal(TEAM_NUR_VERWALTUNG, "Neue Teams legt die Vereinsverwaltung an.");
+  assert.ok(!("TEAM_NUR_VERWALTUNG" in VEREIN_MELDUNG), "TEAM_NUR_VERWALTUNG steht wieder in VEREIN_MELDUNG");
+  // Verein-Ort: neutral, ohne den Zusatz des Team-Orts (die Verwaltung arbeitet ohne Mitgliedschaft).
+  assert.equal(VEREIN_TEAM_NICHT_GEFUNDEN, "Team nicht gefunden.");
+  assert.ok(SERIE_MELDUNG.TEAM_NICHT_GEFUNDEN.startsWith("Team nicht gefunden. Du kannst nur in Teams arbeiten"), "Satz des Team-Orts unverändert");
+  assert.equal(VEREIN_MELDUNG.VEREIN_NICHT_GEFUNDEN, "Verein nicht gefunden.");
+  assert.notEqual(SPIELER_MELDUNG.SPIELERLISTE_VOLL, VEREIN_MELDUNG.VEREIN_VOLL, "AK 7: Team- und Vereinsgrenze unterscheiden sich");
+  // Die heiklen Paare aus Architekturplan §5.2 sind je als Ganzes eindeutig.
+  for (const [a, b] of [["VEREIN_VOLL", "VEREIN_TEAMS_VOLL"]] as const) {
+    assert.equal(fehlerMeldung(`x ${a} y`), VEREIN_MELDUNG[a]);
+    assert.equal(fehlerMeldung(`x ${b} y`), VEREIN_MELDUNG[b]);
+  }
+});
+
+/** Eine Vorschau in der Form der Datenebene (Vertrag Story #585) — Zeilennummern wie in der Datei. */
+const importVorschau = (v: Partial<ImportVorschau>): ImportVorschau => ({ bestand: 0, ueber: 0, neu: [], js: [], gleich: [], mehrfach: [], ...v });
+
+pruefe("Import im Verein: Grenze 1000, Zeilendeckel und Dateigrösse haben je ihren Satz (#585 AK 6, 7)", () => {
+  assert.equal(IMPORT_ZEILEN_MAX, 1000);
+  assert.equal(SPIELER_MELDUNG.IMPORT_ZU_GROSS, `Eine Datei darf höchstens ${IMPORT_ZEILEN_MAX} Zeilen haben.`, "Satz und Zahl bleiben Zwillinge");
+  assert.equal(IMPORT_TEXT.zuGross, SPIELER_MELDUNG.IMPORT_ZU_GROSS, "Zeilen: derselbe Satz wie der Marker");
+  assert.notEqual(IMPORT_TEXT.zuGrossBytes, IMPORT_TEXT.zuGross, "die Dateigrösse hat einen eigenen Satz");
+  assert.equal(
+    IMPORT_TEXT.zuGrossBytes,
+    "Die Datei ist zu gross. Speichere die Datei nur mit den Spalten für Vorname, Nachname, Jahrgang und J+S-Nummer und wähle sie erneut.",
+  );
+  assert.equal(fehlerMeldung("x IMPORT_ZU_GROSS y"), SPIELER_MELDUNG.IMPORT_ZU_GROSS, "der Marker der Datenebene kommt als Satz an");
+  // Mit Zahl: um wie viele der Verein über 1000 läge (Beispiel des Boards). Ohne
+  // «Nichts übernommen.»: In der Vorschau ist noch nichts versucht; nach einer
+  // Übernahme sagt es das Band.
+  assert.ok(IMPORT_TEXT.veraltet.includes("Nichts übernommen."), "das Band sagt, dass nichts übernommen wurde");
+  assert.equal(
+    importUeberGrenzeText(importVorschau({ bestand: 997, ueber: 9, neu: Array.from({ length: 12 }, (_, i) => i + 2) })),
+    "Mit diesen 12 neuen wären es 1009 Spieler:innen, 9 mehr als 1000. Entferne Zeilen aus der Datei oder lösche zuerst Spieler:innen.",
+  );
+  assert.equal(
+    importUeberGrenzeText(importVorschau({ bestand: 1000, ueber: 1, neu: [2] })),
+    "Mit dieser neuen Spieler:in wären es 1001 Spieler:innen, 1 mehr als 1000. Entferne Zeilen aus der Datei oder lösche zuerst Spieler:innen.",
+  );
+});
+
+pruefe("Import im Verein: bestätigen nur mit Änderung und unter der Grenze (#585 AK 5, 6)", () => {
+  assert.equal(importUebernehmbar(importVorschau({ neu: [2] })), true, "eine Neue genügt");
+  assert.equal(importUebernehmbar(importVorschau({ js: [{ zeile: 2, alt: null, teams: [] }] })), true, "eine geänderte J+S-Nummer genügt");
+  assert.equal(importUebernehmbar(importVorschau({ gleich: [{ zeile: 2, teams: [] }] })), false, "nur Unveränderte: nichts zu übernehmen");
+  assert.equal(importUebernehmbar(importVorschau({ mehrfach: [{ zeile: 2, teams: [] }] })), false, "mehrfach allein genügt nicht (AK 5)");
+  assert.equal(importUebernehmbar(importVorschau({})), false);
+  assert.equal(importUebernehmbar(importVorschau({ bestand: 1000, ueber: 1, neu: [2] })), false, "über der Grenze gesperrt");
+  assert.equal(
+    importUebernehmbar(importVorschau({ bestand: 1005, ueber: 0, js: [{ zeile: 2, alt: "1", teams: [] }] })),
+    true,
+    "ein Bestand über der Grenze lässt J+S-Änderungen ohne Neue zu",
+  );
+});
+
+pruefe("Import im Verein: Sätze der Vorschau, mit Einzahl und ohne Team (#585 AK 3, 4, 5)", () => {
+  assert.equal(
+    importNeuText(12, 144, "FC Wyler"),
+    "12 Spieler:innen kommen neu in den Verein «FC Wyler», ohne Team. Alle Trainer:innen des Vereins sehen sie mit Name und Jahrgang; löschen lassen sie sich nur einzeln. Danach sind es 156 von 1000.",
+  );
+  assert.equal(
+    importNeuText(1, 0, "FC Wyler"),
+    "1 Spieler:in kommt neu in den Verein «FC Wyler», ohne Team. Alle Trainer:innen des Vereins sehen sie mit Name und Jahrgang; löschen lässt sie sich nur einzeln. Danach ist es 1 von 1000.",
+  );
+  assert.equal(IMPORT_TEXT.einleitung("FC Wyler"), "Neue Spieler:innen kommen ohne Team in den Verein «FC Wyler». Bestehende erkennt KiFu im ganzen Verein und legt sie nicht neu an.");
+  const ea = { id: "t2", name: "Ea Junioren" };
+  const da = { id: "t1", name: "Da Junioren" };
+  assert.equal(
+    importMehrfachText([{ name: "Mia Rossi", jahrgang: 2014, teams: [da, ea] }]),
+    "Mia Rossi, 2014, wird mehrfach im Verein geführt (Da Junioren und Ea Junioren). KiFu ändert bei keinem dieser Einträge die J+S-Nummer.",
+  );
+  assert.equal(
+    importMehrfachText([{ name: "Lio Doppel", jahrgang: 2015, teams: [] }]),
+    "Lio Doppel, 2015, wird mehrfach im Verein geführt. KiFu ändert bei keinem dieser Einträge die J+S-Nummer.",
+    "ohne Team entfällt die Klammer",
+  );
+  assert.equal(importMehrfachText([{ name: "A", jahrgang: 2014, teams: [] }, { name: "B", jahrgang: 2015, teams: [da] }]), IMPORT_TEXT.mehrfachViele);
+  assert.equal(importNichtsZuTunText(0), "Alle stehen schon so im Verein; es gibt nichts zu übernehmen.");
+  assert.equal(importNichtsZuTunText(2), "Alle stehen schon so im Verein; es gibt nichts zu übernehmen. Mehrfach geführte Spieler:innen ändert KiFu nicht.");
+  assert.equal(
+    IMPORT_TEXT.veraltet,
+    "Seit der Vorschau hat sich der Spielerbestand geändert. Nichts übernommen. Prüfe die neue Vorschau.",
+  );
+});
+
+pruefe("Import im Verein: Antwort der Datenebene wird zur Vorschau, Teams in deutscher Ordnung (#585 Vertrag)", () => {
+  const roh = importVorschau({
+    bestand: 5,
+    ueber: 0,
+    neu: [2, 5],
+    js: [{ zeile: 3, alt: null, teams: [{ id: "b", name: "Zebra" }, { id: "a", name: "Älpler" }, { id: "c", name: "Adler" }] }],
+    gleich: [{ zeile: 4, teams: [] }],
+    mehrfach: [{ zeile: 6, teams: [{ id: "b", name: "Zebra" }, { id: "a", name: "Älpler" }] }],
+  });
+  const v = vorschauAus({ status: "vorschau", ...roh })!;
+  assert.ok(v, "der Status der Antwort stört nicht");
+  assert.deepEqual(v.js[0].teams.map((t) => t.name), ["Adler", "Älpler", "Zebra"], "Ä sortiert wie A");
+  assert.deepEqual(v.mehrfach[0].teams.map((t) => t.name), ["Älpler", "Zebra"]);
+  assert.deepEqual(v.gleich, [{ zeile: 4, teams: [] }], "leer heisst ohne Team");
+  assert.deepEqual({ neu: v.neu, bestand: v.bestand, ueber: v.ueber }, { neu: [2, 5], bestand: 5, ueber: 0 });
+  assert.deepEqual(roh.js[0].teams.map((t) => t.name), ["Zebra", "Älpler", "Adler"], "die Antwort bleibt unangetastet");
+  // Übernommen und veraltet (Grund Bestand wie Grenze) kommen in Form des Kerns an.
+  assert.deepEqual(ausgangAus({ status: "uebernommen", neu: 12, js: 2 }), { status: "uebernommen", neu: 12, js: 2 });
+  assert.deepEqual(ausgangAus({ status: "veraltet", grund: "grenze", vorschau: roh }), { status: "veraltet", grund: "grenze", vorschau: v });
+  const bestand = ausgangAus({ status: "veraltet", grund: "bestand", vorschau: roh });
+  assert.ok(bestand?.status === "veraltet" && bestand.grund === "bestand");
+  // Passt die Form nicht, gibt es keine Vorschau (der Kern meldet einen technischen Fehler).
+  for (const kaputt of [
+    null,
+    [],
+    { ...roh, bestand: "5" },
+    { ...roh, neu: [2.5] },
+    { ...roh, mehrfach: undefined },
+    { ...roh, gleich: [{ zeile: 4 }] },
+    { ...roh, js: [{ zeile: 3, alt: 7, teams: [] }] },
+    { ...roh, js: [{ zeile: 3, alt: null, teams: [{ id: "a" }] }] },
+  ])
+    assert.equal(vorschauAus(kaputt), null, JSON.stringify(kaputt));
+  for (const kaputt of [
+    { status: "vorschau", ...roh },
+    { status: "uebernommen", neu: 1 },
+    { status: "veraltet", grund: "anders", vorschau: roh },
+    { status: "veraltet", grund: "bestand", vorschau: { ...roh, ueber: null } },
+    { neu: 1, js: 0 },
+  ])
+    assert.equal(ausgangAus(kaputt), null, JSON.stringify(kaputt));
+  // Was die Oberfläche der Übernahme mitgibt: die Zeilennummern der Vorschau.
+  assert.equal(IMPORT_TEXT.unstimmig, "Der Import liess sich gerade nicht auswerten. Bitte versuche es noch einmal.");
+  assert.deepEqual(erwartetVon(v), { neu: [2, 5], js: [{ zeile: 3, alt: null }], mehrfach: [6] }, "J+S mit der alten Nummer (D1)");
+});
+
+pruefe("Import im Verein: Zeilennummern der Antwort stammen aus den gesendeten Zeilen, keine doppelt (#585, Review W2)", () => {
+  const v = importVorschau({ neu: [2], js: [{ zeile: 3, alt: "1", teams: [] }], gleich: [{ zeile: 4, teams: [] }], mehrfach: [{ zeile: 5, teams: [] }] });
+  assert.equal(importZeilenStimmen(v, [2, 3, 4, 5]), true);
+  assert.equal(importZeilenStimmen(v, [2, 3, 4, 5, 6]), true, "überstimmte Zeilen fehlen still");
+  assert.equal(importZeilenStimmen(v, [2, 3, 4]), false, "Zeile 5 nicht gesendet");
+  assert.equal(importZeilenStimmen({ ...v, gleich: [{ zeile: 2, teams: [] }] }, [2, 3, 4, 5]), false, "Zeile 2 doppelt");
+  assert.equal(importZeilenStimmen({ ...v, neu: [2, 2] }, [2, 3, 4, 5]), false, "doppelt in derselben Liste");
+  assert.equal(importZeilenStimmen(importVorschau({}), []), true);
+});
+
+pruefe("Import im Verein: Eingaben einer Action in Form, sonst kein TypeError (#585, Review W4)", () => {
+  const z = { zeile: 2, vorname: "Mia", nachname: "Rossi", jahrgang: 2015, jsNummer: null };
+  assert.equal(importZeilenForm([z, { ...z, zeile: 3, jsNummer: "123" }]), true);
+  assert.equal(importZeilenForm([]), true);
+  for (const kaputt of [null, undefined, "x", {}, [null], [7], [{ ...z, zeile: "2" }], [{ ...z, vorname: 1 }], [{ ...z, jahrgang: "2015" }], [{ ...z, jsNummer: undefined }]])
+    assert.equal(importZeilenForm(kaputt), false, JSON.stringify(kaputt));
+  const e = { neu: [2], js: [{ zeile: 3, alt: null }, { zeile: 4, alt: "9" }], mehrfach: [] };
+  assert.equal(importErwartetForm(e), true);
+  for (const kaputt of [null, undefined, [], {}, { ...e, neu: null }, { ...e, js: [3] }, { ...e, js: [{ zeile: 3 }] }, { ...e, js: [{ zeile: 3, alt: 9 }] }, { ...e, mehrfach: ["6"] }])
+    assert.equal(importErwartetForm(kaputt), false, JSON.stringify(kaputt));
+});
+
+pruefe("Import im Verein: Plakette der J+S-Änderungen in Ein- und Mehrzahl (#585, Review W5)", () => {
+  assert.equal(importJsPlakette(1), "1 J+S-Nummer ändert sich");
+  assert.equal(importJsPlakette(3), "3 J+S-Nummern ändern sich");
 });
 
 pruefe("Spielerzahl: Liste vor erwartet, ausgefallen ohne Zahl (#434 AK 8, #435 AK 6, #437 AK 4)", () => {
@@ -2548,7 +3871,7 @@ pruefe("Abmelden: Abweisung nennt den Stand, Liste nach Name mit ehemaligen zule
   assert.equal(abweisungText("begonnen"), ABMELDUNG_TEXT.begonnen);
   assert.equal(abweisungText("ausgefallen"), ABMELDUNG_TEXT.ausgefallen);
   assert.equal(abweisungText("nicht_gefunden"), ABMELDUNG_TEXT.nichtGefunden);
-  const t = (vorname: string | null) => ({ spielerId: vorname, vorname, nachname: vorname && "X", abgemeldet: false, ehemalig: vorname === null, kader: [], gewechseltAm: null, nachgetragen: false });
+  const t = (vorname: string | null) => ({ spielerId: vorname, vorname, nachname: vorname && "X", abgemeldet: false, ehemalig: vorname === null, nichtMehrImTeam: false, kader: [], gewechseltAm: null, nachgetragen: false });
   assert.deepEqual(nachTeilnehmer([t(null), t("Noah"), t("Ayla")]).map((x) => x.vorname ?? EHEMALIGE_SPIELERIN), ["Ayla", "Noah", EHEMALIGE_SPIELERIN]);
 });
 
@@ -2605,8 +3928,13 @@ pruefe("CSV-Import: Zeichensatz, Trennzeichen, leere und fremde Dateien (#455 AK
   assert.deepEqual(leseDatei("x.csv", csvBytes("Vorname;Name\n;\n")), { ok: false, text: IMPORT_TEXT.nurKopf });
   assert.deepEqual(leseDatei("x.csv", new Uint8Array([0x4e, 0x81, 0x0a])), { ok: false, text: IMPORT_TEXT.zeichensatz });
   assert.equal(dekodiere(csvBytes("Müller", "latin1")), "Müller");
-  const zuViele = "Vorname;Name;Jahrgang\n" + "A;B;2017\n".repeat(1001);
-  assert.deepEqual(leseDatei("x.csv", csvBytes(zuViele)), { ok: false, text: IMPORT_TEXT.zuGross });
+  const zuViele = "Vorname;Name;Jahrgang\n" + "A;B;2017\n".repeat(IMPORT_ZEILEN_MAX + 1);
+  assert.deepEqual(leseDatei("x.csv", csvBytes(zuViele)), { ok: false, text: IMPORT_TEXT.zuGross }, "1001 Zeilen: Zeilendeckel");
+  const genau = "Vorname;Name;Jahrgang\n" + "A;B;2017\n".repeat(IMPORT_ZEILEN_MAX);
+  assert.ok(leseDatei("x.csv", csvBytes(genau)).ok, "1000 Zeilen gehen");
+  // Die Dateigrösse (1 MB) hat einen eigenen Satz, auch bei wenigen Zeilen.
+  const gross = "Vorname;Name;Jahrgang\n" + "A;B;2017;" + "x".repeat(IMPORT_BYTES_MAX) + "\n";
+  assert.deepEqual(leseDatei("x.csv", csvBytes(gross)), { ok: false, text: IMPORT_TEXT.zuGrossBytes }, "über 1 MB: Dateigrösse");
 });
 
 pruefe("CSV-Import: Spalten an ihren Köpfen erkennen (#455 AK 5–8)", () => {
@@ -2644,10 +3972,20 @@ pruefe("CSV-Import: Jahrgang, J+S-Nummer und ausgelassene Zeilen (#455 AK 17–2
   ]);
 });
 
-pruefe("CSV-Import: Meldung nach der Übernahme (#455 PC 6)", () => {
-  assert.equal(importErgebnisText({ neu: 12, js: 0, ersetzt: 3 }), "12 Spieler:innen aufgenommen. Die Spielerzahl kommt jetzt aus der Liste.");
-  assert.equal(importErgebnisText({ neu: 1, js: 2, ersetzt: 0 }), "1 Spieler:in aufgenommen, bei 2 die J+S-Nummer geändert.");
-  assert.equal(importErgebnisText({ neu: 0, js: 1, ersetzt: 0 }), "Bei 1 Spieler:in die J+S-Nummer geändert.");
+pruefe("CSV-Import: Meldung nach der Übernahme, die Neuen sind ohne Team (#585 AK 10)", () => {
+  const zuordnen = "einem Team ordnest du sie im Spielerbestand zu.";
+  assert.equal(
+    importErgebnisText({ neu: 12, js: 2 }),
+    `12 Spieler:innen aufgenommen, bei 2 die J+S-Nummer geändert. Die Neuen sind keinem Team zugeordnet; ${zuordnen}`,
+  );
+  assert.equal(importErgebnisText({ neu: 12, js: 0 }), `12 Spieler:innen aufgenommen. Die Neuen sind keinem Team zugeordnet; ${zuordnen}`);
+  assert.equal(
+    importErgebnisText({ neu: 1, js: 2 }),
+    `1 Spieler:in aufgenommen, bei 2 die J+S-Nummer geändert. Die neue Spieler:in ist keinem Team zugeordnet; ${zuordnen}`,
+  );
+  assert.equal(importErgebnisText({ neu: 1, js: 0 }), `1 Spieler:in aufgenommen. Die neue Spieler:in ist keinem Team zugeordnet; ${zuordnen}`);
+  assert.equal(importErgebnisText({ neu: 0, js: 1 }), "Bei 1 Spieler:in die J+S-Nummer geändert.", "ohne Neue kein Satz zu Teams");
+  assert.equal(importErgebnisText({ neu: 0, js: 3 }), "Bei 3 Spieler:innen die J+S-Nummer geändert.");
 });
 
 // ── Kader (Epic #447) ───────────────────────────────────────────────────────
@@ -2875,26 +4213,30 @@ pruefe("Spiele: Nachtrag - wer beim Anpfiff zählte, Verfall-Text (#487)", () =>
   assert.equal(NACHTRAG_TEXT.zurueck, "Nachtrag zurücknehmen");
 });
 
-pruefe("Probetraining: Anzahl, Plakette, Stand am Link, Hinweis über der Anzahl (#555 AK 2, 6, 7, 11, 12; PC 13)", () => {
+pruefe("Schnuppertraining: Anzahl, Plakette, Stand am Link, Hinweis über der Anzahl (#555 AK 2, 6, 7, 11, 12; PC 13; #584 AK 1)", () => {
   for (const n of [0, 21, 1.5, -1, null, undefined, Number.NaN]) assert.equal(probeAnzahlProblem(n as number), PROBE_TEXT.anzahlProblem, String(n));
   for (const n of [1, 4, 20]) assert.equal(probeAnzahlProblem(n), null);
   const stand = { anzahl: 4, besucht: 1, angemeldet: 2, moeglich: 1 };
-  assert.equal(probeKurz(stand), "Probe 1/4", "besuchte von der Anzahl, ohne Angemeldete");
-  assert.equal(probeLang(stand), "Probe: 1 von 4 Probetrainings besucht");
-  assert.equal(probeKurz({ ...stand, anzahl: null }), "Probe");
-  assert.equal(linkProbeZaehler(stand), "Noch 1 von 4 Probetrainings möglich");
-  assert.equal(linkProbeZaehler({ ...stand, angemeldet: 3, moeglich: 0 }), "Alle 4 Probetrainings vergeben");
-  // Bei einem Probetraining kein «Alle 1 Probetrainings».
+  assert.equal(probeKurz(stand), "Schnuppern 1/4", "besuchte von der Anzahl, ohne Angemeldete");
+  assert.equal(probeLang(stand), "Schnuppern: 1 von 4 Schnuppertrainings besucht");
+  assert.equal(probeKurz({ ...stand, anzahl: null }), "Schnuppern");
+  assert.equal(probeLang({ anzahl: null, besucht: 0 }), "Schnuppert");
+  // Die Verwaltung kennt nur Anzahl und besuchte: Das genügt der Plakette.
+  assert.equal(probeKurz({ anzahl: 4, besucht: 0 }), "Schnuppern 0/4");
+  assert.equal(linkProbeZaehler(stand), "Noch 1 von 4 Schnuppertrainings möglich");
+  assert.equal(linkProbeZaehler({ ...stand, angemeldet: 3, moeglich: 0 }), "Alle 4 Schnuppertrainings vergeben");
+  // Bei einem Schnuppertraining kein «Alle 1 Schnuppertrainings».
   const eins = { anzahl: 1, besucht: 0, angemeldet: 0, moeglich: 1 };
-  assert.equal(linkProbeZaehler(eins), "Noch 1 von 1 Probetraining möglich");
-  assert.equal(linkProbeZaehler({ ...eins, angemeldet: 1, moeglich: 0 }), "Das Probetraining ist vergeben");
-  assert.ok(linkProbeVoll("Mia", { ...eins, angemeldet: 1, moeglich: 0 }).startsWith("Das Probetraining ist vergeben. Meldest du Mia"));
-  assert.ok(linkProbeVoll("Mia", stand).startsWith("Alle 4 Probetrainings sind vergeben. Meldest du Mia"));
+  assert.equal(linkProbeZaehler(eins), "Noch 1 von 1 Schnuppertraining möglich");
+  assert.equal(linkProbeZaehler({ ...eins, angemeldet: 1, moeglich: 0 }), "Das Schnuppertraining ist vergeben");
+  assert.ok(linkProbeVoll("Mia", { ...eins, angemeldet: 1, moeglich: 0 }).startsWith("Das Schnuppertraining ist vergeben. Meldest du Mia"));
+  assert.ok(linkProbeVoll("Mia", stand).startsWith("Alle 4 Schnuppertrainings sind vergeben. Meldest du Mia"));
   assert.equal(
     linkProbeVoll("Mia", { anzahl: 4, besucht: 4, angemeldet: 0, moeglich: 0 }),
-    "Alle 4 Probetrainings sind vergeben. Für weitere Trainings wende dich an das Team.",
+    "Alle 4 Schnuppertrainings sind vergeben. Für weitere Trainings wende dich an das Team.",
     "alles besucht: nichts abzumelden",
   );
+  assert.equal(linkProbeKopf("Mia"), "Mia schnuppert. Melde Mia für die Trainings an, an denen Mia teilnimmt, und bis zum Beginn wieder ab.");
   // Zusatzentscheid PO 2026-10-29: über der Anzahl ein Hinweis, kein Verbot.
   assert.equal(ueberAnzahl(stand), false);
   assert.equal(ueberAnzahl({ ...stand, angemeldet: 3 }), false, "genau die Anzahl");
@@ -2902,11 +4244,11 @@ pruefe("Probetraining: Anzahl, Plakette, Stand am Link, Hinweis über der Anzahl
   assert.equal(ueberAnzahl(null), false);
   assert.equal(
     ueberAnzahlText("Mia Keller", { ...stand, angemeldet: 4, moeglich: 0 }),
-    "Mia Keller ist damit über der Anzahl Probetrainings: 1 besucht und 4 angemeldet, vorgesehen sind 4.",
+    "Mia Keller ist damit über der Anzahl Schnuppertrainings: 1 besucht und 4 angemeldet, vorgesehen sind 4.",
   );
 });
 
-pruefe("Probetraining: Einschalten - Bedeutung, Verfall aus der Datenebene, Texte (#555 AK 5, 16)", () => {
+pruefe("Schnuppertraining: Einschalten - Bedeutung, Verfall aus der Datenebene, Texte (#555 AK 5, 16)", () => {
   assert.equal(probeEinschaltenText("Mia", 4), "Mia meldet sich selbst für Trainings an, höchstens für 4. Spiele sieht Mia nicht.");
   assert.deepEqual(probeFolgenAusFehler(`${PROBE_VERFALL_MARKER} 4 2 1 1`), { abmeldungen: 2, meldungen: 1, kennzeichnungen: 1 });
   assert.equal(probeFolgenAusFehler("PROBE_ANZAHL_FEHLT"), null);
@@ -2923,12 +4265,52 @@ pruefe("Probetraining: Einschalten - Bedeutung, Verfall aus der Datenebene, Text
   assert.equal(verfallAnmeldungenAusFehler(`${VERFALL_MARKER} 3`), 0);
 });
 
-pruefe("Probetraining: Link-Abweisung, verfallene Anmeldung, Abo «vielleicht» (#555 AK 12; PC 5, 11)", () => {
+pruefe("Schnuppertraining: Link-Abweisung, verfallene Anmeldung, Abo «vielleicht» (#555 AK 12; PC 5, 11)", () => {
   assert.equal(abweisungText("probe_voll"), ABMELDUNG_TEXT.probeVoll);
+  assert.equal(ABMELDUNG_TEXT.probeVoll, "Alle Schnuppertrainings sind vergeben. Meldest du von einem anderen Training ab, wird ein Platz frei. Für weitere Trainings wende dich an das Team.");
   assert.equal(verfallenHinweis({ datum: "2026-11-09", beginn: "17:30", anmeldung: true }), "Verlegt, vorher Montag, 9. November um 17:30. Deine Anmeldung gilt nicht mehr.");
   assert.ok(verfallenHinweis({ datum: "2026-11-09", beginn: "17:30" }).endsWith("Deine Abmeldung gilt nicht mehr."));
   assert.equal(aboStatus(feedTermin({ id: "a", abgemeldet: true }), true), "vielleicht", "nicht angemeldet");
   assert.equal(aboStatus(feedTermin({ id: "a" }), true), "zugesagt");
+});
+
+pruefe("Schnuppern (#584 AK 1, 4, 6, 7, 13, 15): Sätze für Team-Ort, Link und KI wortgleich", () => {
+  // AK 1: der Begriff in der ganzen Einstellung.
+  assert.equal(PROBE_TEXT.titel, "Schnuppertraining");
+  assert.equal(PROBE_TEXT.imProbeModus, "Schnuppert");
+  assert.equal(PROBE_TEXT.checkbox, "Schnuppert");
+  assert.equal(PROBE_TEXT.einschalten, "Schnuppern einschalten");
+  assert.equal(PROBE_TEXT.imProbeModusZahl(1), "1 Spieler:in schnuppert");
+  assert.equal(PROBE_TEXT.imProbeModusZahl(3), "3 Spieler:innen schnuppern");
+  assert.equal(PROBE_TEXT.linkInfoTitel, "Infos zum Schnuppertraining");
+  assert.equal(PROBE_TEXT.vergeben, "Schnuppertrainings vergeben");
+  assert.equal(PROBE_TEXT.festgelegt, "Schnuppertraining gespeichert.");
+  // AK 4: unter dem Titel steht, für wen es gedacht ist.
+  assert.ok(PROBE_TEXT.karte.startsWith("Für Spieler:innen, die den Verein ausprobieren."), PROBE_TEXT.karte);
+  // AK 6, 7, 15: dieselben Sätze in Oberfläche und KI.
+  assert.equal(PROBE_TEXT.mehrereTeams, "Diese Spieler:in ist weiteren Teams zugeordnet und macht darum regulär in deinem Team mit.");
+  assert.equal(PROBE_TEXT.keinWeiteresTeam, "Solange die Spieler:in schnuppert, lässt sie sich keinem weiteren Team zuordnen.");
+  assert.equal(PROBE_MELDUNG.SCHNUPPERN_MEHRERE_TEAMS, PROBE_TEXT.mehrereTeams);
+  assert.equal(fachlicheMeldung("SCHNUPPERN_MEHRERE_TEAMS"), PROBE_TEXT.mehrereTeams, "die KI sagt, was die Anwendung sagt");
+  assert.equal(
+    PROBE_MELDUNG.SPIELER_SCHNUPPERT,
+    "Diese Spieler:in schnuppert in einem anderen Team. Dort beendet zuerst ein Mitglied das Schnuppern, oder sie wird aus dem Team genommen.",
+  );
+  assert.equal(PROBE_MELDUNG.SCHNUPPERN_NUR_EINZELN, "Zum Schnuppern lässt sich nur eine Spieler:in zuordnen.");
+  // Was das Einschalten und Ausschalten bedeutet.
+  assert.ok(probeAusschaltenText("Mia").endsWith("Schaltest du das Schnuppern später wieder ein, zählt es wieder ab null."));
+  // Das Verfallen einer Anmeldung nennt schnuppernde Spieler:innen.
+  assert.equal(mitAnmeldungen("", 1), "Damit verfällt 1 Anmeldung einer schnuppernden Spieler:in: Sie gilt wieder als nicht angemeldet.");
+  assert.equal(mitAnmeldungen("", 2), "Damit verfallen 2 Anmeldungen von schnuppernden Spieler:innen: Sie gelten wieder als nicht angemeldet.");
+  // AK 13: Herausnehmen beendet das Schnuppern samt Zählung (Bedingung kommt aus `spieler_teams`).
+  assert.ok(
+    herausnehmenSaetze({ vorname: "Noah", nachname: "Keller", team: "Da Junioren", verein: null, verbleibend: [], probe: true }).warnung.startsWith(
+      "Das Schnuppertraining endet samt Zählung;",
+    ),
+  );
+  // Der Zugang nennt das Schnuppertraining wie die Werkzeuge (PC 4: ohne neue Zustimmung).
+  const umfang = readFileSync(join(web, "lib/mcp/umfang.ts"), "utf8");
+  assert.ok(umfang.includes("ins Schnuppertraining nehmen und die Anzahl Schnuppertrainings samt Info-Schreiben festlegen"));
 });
 
 pruefe("Info-Schreiben: bereinigt wie die Datenebene, höchstens 2000 Zeichen als Codepunkte (#556 AK 1, 2; PC 2)", () => {
@@ -2997,14 +4379,710 @@ pruefe("Treffpunkt eines Trainings: Regeln, Abstand, Änderung und Abo (#561)", 
   assert.equal(still(() => fehlerMeldung(termin("tt_treffpunkt_art"))), TERMIN_TEXT.treffpunktNurTraining);
   // AK 13: im Abo wie am Link — nicht abgesagt, nicht nach Beginn; der Kartenlink gehört erkennbar zum Ort (AK 16).
   const training = feedTermin({ id: "t", treffpunkt: { zeit: "17:15", ort: "Garderoben Schulhaus Rain" }, hinweis_eltern: "Pincode 4702" });
-  assert.equal(aboEintrag(training, "FC Test").beschreibung, "Zugesagt\n\nTreffpunkt\n17:15 · Garderoben Schulhaus Rain\n\nPincode 4702");
-  assert.equal(aboEintrag({ ...training, abgemeldet: true }, "FC Test").beschreibung, "Abgesagt\n\nPincode 4702");
-  assert.equal(aboEintrag({ ...training, begonnen: true }, "FC Test").beschreibung, "Zugesagt\n\nPincode 4702");
+  assert.equal(aboEintrag(training).beschreibung, "Zugesagt\n\nTreffpunkt\n17:15 · Garderoben Schulhaus Rain\n\nPincode 4702");
+  assert.equal(aboEintrag({ ...training, abgemeldet: true }).beschreibung, "Abgesagt\n\nPincode 4702");
+  assert.equal(aboEintrag({ ...training, begonnen: true }).beschreibung, "Zugesagt\n\nPincode 4702");
   assert.equal(
-    aboEintrag({ ...training, abgemeldet: true }, "FC Test", true).beschreibung,
+    aboEintrag({ ...training, abgemeldet: true }, true).beschreibung,
     "Vielleicht\n\nTreffpunkt\n17:15 · Garderoben Schulhaus Rain\n\nPincode 4702",
     "auf Probe nicht angemeldet sieht ihn",
   );
+});
+
+// ── Verein gründen (Story #587) ─────────────────────────────────────────────
+
+pruefe("Verein gründen (#587 AK 1–5): Sätze des Dialogs und des Einstiegs, Marker mit eigenem Satz", () => {
+  assert.equal(VEREIN_MELDUNG.SCHON_IM_VEREIN, "Du gehörst schon einem Verein an. Einen Verein gründen kann nur, wer keinem angehört.");
+  assert.equal(
+    VEREIN_MELDUNG.BESTAETIGUNG_FEHLT,
+    "Bestätige zuerst, dass du für den Verein handeln darfst und der Verein für die Daten seiner Spieler:innen verantwortlich ist.",
+  );
+  // Die Datenebene meldet mit Markern; der Kern liest sie als Regel, nicht als technischen Fehler.
+  for (const marker of ["SCHON_IM_VEREIN", "BESTAETIGUNG_FEHLT"] as const) {
+    assert.equal(fehlerMeldung(`x ${marker} y`), VEREIN_MELDUNG[marker]);
+    assert.equal(still(() => ausDbFehler({ message: `ERROR: ${marker}` })).art, "regel", marker);
+  }
+  assert.deepEqual(VEREIN_GRUENDEN_TEXT, {
+    titel: "Verein gründen",
+    feld: "Name des Vereins",
+    info: "Höchstens 60 Zeichen. Den Namen kannst du später ändern.",
+    haken1: "Ich bin berechtigt, für diesen Verein zu handeln.",
+    haken2: "Der Verein ist für die Daten seiner Spieler:innen verantwortlich und Ansprechpartner ihrer Eltern und Vertretungen.",
+    erste: "Du wirst die erste Person der Vereinsverwaltung. Solange du dabei bist, kannst du keinem anderen Verein angehören.",
+    knopf: "Verein gründen",
+  });
+  assert.ok(VEREIN_GRUENDEN_TEXT.info.includes(String(VEREIN_NAME_MAX)), "der Hinweis nennt die Grenze des CHECK");
+  assert.equal(TEAMS_OHNE_VEREIN_TEXT.titel, "Willkommen bei KiFu");
+  assert.equal(TEAMS_OHNE_VEREIN_TEXT.gruenden.knopf, "Verein gründen");
+  for (const t of JSON.stringify(TEAMS_OHNE_VEREIN_TEXT).split('"')) assert.ok(!/FutAssist|Kind\b|Kinder/.test(t), `Produktname und Spieler:in: ${t}`);
+  assert.ok(TEAMS_OHNE_VEREIN_TEXT.aufnahme.text.includes("E-Mail-Adresse"), "der Einstieg sagt, was man weitergibt");
+});
+
+pruefe("Verein gründen (#587): Antwort der Datenebene wird auf ihre Form geprüft", () => {
+  const id = "4b3f9d0e-4c8a-4a39-9d57-0a8f2f7f1d11";
+  assert.deepEqual(gruendungAus({ status: "gegruendet", id, name: "FC Wyler" }), { id, name: "FC Wyler" });
+  for (const kaputt of [
+    null,
+    "gegruendet",
+    [],
+    {},
+    { status: "gegruendet" },
+    { status: "gegruendet", id, name: "" },
+    { status: "gegruendet", id: 7, name: "FC Wyler" },
+    { status: "gegruendet", id, name: 5 },
+    { status: "abgewiesen", id, name: "FC Wyler" },
+  ])
+    assert.equal(gruendungAus(kaputt), null, JSON.stringify(kaputt));
+});
+
+pruefe("Verein gründen (#587): ein Weg — RPC nur im Verein-Kern, Einstieg liest den Verein ohne Fehlerschlucken, Dialog sperrt ohne beide Häkchen", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const rpc: string[] = [];
+  for (const datei of quelldateien(web)) {
+    const rel = relative(web, datei);
+    if (datei === fileURLToPath(import.meta.url) || rel === "scripts/pruefe-kern-db.ts") continue;
+    if (/\.rpc\(\s*["`']verein_gruenden["`']/.test(readFileSync(datei, "utf8"))) rpc.push(rel);
+  }
+  assert.deepEqual(rpc, ["lib/kern/verein.ts"], "verein_gruenden nur im Verein-Kern");
+  // «Kein Verein» ist sicher von «Fehler beim Laden» unterschieden: Einem Mitglied wird nie «Verein gründen» angeboten.
+  const seite = lies("app/(app)/teams/page.tsx");
+  assert.match(seite, /getMeinVereinOderWurf\(\)/, "/teams liest die Vereinslage mit Wurf");
+  assert.ok(!/\bgetMeinVerein\(/.test(seite), "/teams nutzt nicht die tolerante Fassung");
+  assert.match(seite, /if \(!verein\)[\s\S]*?<OhneVereinStart/, "ohne Verein der Einstieg");
+  assert.ok(seite.lastIndexOf("TEAM_NUR_VERWALTUNG") > seite.indexOf("<OhneVereinStart"), "der Hinweis für Mitglieder steht erst nach dem Einstieg, nicht statt seiner");
+  // Der Dialog: beide Häkchen, Knopf gesperrt ohne sie, fester Hinweis hinter ⓘ, Weiterleitung in der Action.
+  const dialog = lies("components/verein/VereinGruenden.tsx");
+  assert.match(dialog, /const frei = berechtigt && verantwortlich;/);
+  assert.match(dialog, /disabled=\{!frei \|\| pending\}/, "Knopf gesperrt ohne beide Häkchen und während der Anfrage");
+  assert.match(dialog, /info=\{VEREIN_GRUENDEN_TEXT\.info\}/, "fester Hinweis hinter ⓘ");
+  assert.ok(!/router\.(push|replace)\(/.test(dialog), "die Weiterleitung steht in der Action");
+  assert.match(lies("lib/actions/verein.ts"), /export async function gruendeVereinAktion[\s\S]*?redirect\("\/verein"\);/);
+  // Die Seitenleiste lädt nach dem Gründen neu (Bereich «Verein»).
+  assert.match(lies("lib/actions/verein.ts"), /gruendeVerein\(a\.supabase[\s\S]*?revalidiereMitgliedschaften\(\);[\s\S]*?redirect/);
+});
+
+// ── Verein löschen, Konto löschen (Story #587) ──────────────────────────────
+
+pruefe("Verein löschen (#587 AK 10, 11): Sätze der Gefahrenzone und des Dialogs, Zahlen nur, wo es etwas gibt", () => {
+  assert.equal(
+    VEREIN_LOESCHEN_TEXT.beschreibung,
+    "Austreten betrifft nur dich; in deinen Teams bleibst du Trainer:in. Verein löschen entfernt alle Teams und alle Spieler:innen samt Links und Abos; alle Personen werden Konten ohne Verein und behalten ihre eigenen Übungen und Trainings.",
+  );
+  assert.equal(VEREIN_LOESCHEN_TEXT.knopf, "Verein löschen");
+  assert.equal(VEREIN_LOESCHEN_TEXT.endgueltig, "Das lässt sich nicht rückgängig machen.");
+  assert.equal(vereinLoeschenTitel("FC Wyler"), "FC Wyler löschen");
+  assert.equal(vereinGeloeschtText("FC Wyler"), "Der Verein «FC Wyler» ist gelöscht. Deine eigenen Übungen und Trainings bleiben.");
+  // Das Beispiel des Boards: Teams, Spieler:innen auch ohne Team, Personen.
+  assert.deepEqual(vereinLoeschenFolgen({ teams: 10, spieler: 144, ohneTeam: 2, personen: 23 }), {
+    geloescht: ["10 Teams, mit Terminen und Team-Trainings", "144 Spieler:innen, davon 2 ohne Team, samt Links, Abos und Abholadressen"],
+    personen: "Alle 23 Personen werden Konten ohne Verein und behalten ihre eigenen Übungen und Trainings.",
+  });
+  // Einzahl, ohne Spieler:innen ohne Team, ohne Spieler:innen und Teams.
+  assert.deepEqual(vereinLoeschenFolgen({ teams: 1, spieler: 1, ohneTeam: 0, personen: 2 }).geloescht, [
+    "1 Team, mit Terminen und Team-Trainings",
+    "1 Spieler:in samt Links, Abos und Abholadressen",
+  ]);
+  assert.deepEqual(vereinLoeschenFolgen({ teams: 0, spieler: 0, ohneTeam: 0, personen: 1 }).geloescht, [], "ein leerer Verein nennt nichts Leeres");
+  // Statt der leeren Liste ein klarer Satz (Fix-Lauf #587).
+  assert.equal(VEREIN_LOESCHEN_TEXT.leer, "Der Verein hat keine Teams und keine Spieler:innen.");
+  assert.match(
+    readFileSync(join(web, "components/verein/VereinLoeschen.tsx"), "utf8"),
+    /folgen\.geloescht\.length > 0 \?[\s\S]*?: \(\s*<p>\{VEREIN_LOESCHEN_TEXT\.leer\}<\/p>/,
+    "ohne Teams und Spieler:innen der Satz statt der Liste",
+  );
+  assert.equal(
+    vereinLoeschenFolgen({ teams: 0, spieler: 3, ohneTeam: 3, personen: 1 }).personen,
+    "Dein Konto bleibt bestehen, ohne Verein; deine eigenen Übungen und Trainings bleiben.",
+    "die einzige Person liest nicht «Alle 1 Personen»",
+  );
+  assert.equal(vereinLoeschenFolgen({ teams: 0, spieler: 3, ohneTeam: 3, personen: 1 }).geloescht[0], "3 Spieler:innen, davon 3 ohne Team, samt Links, Abos und Abholadressen");
+});
+
+pruefe("Verein und Konto löschen (#587 AK 14): jede Rückmeldung hat ihren eigenen Satz, Verein und Konto unterscheiden sich", () => {
+  const verein = vereinHeisstInzwischenText("FC Wyler", "verein");
+  const konto = vereinHeisstInzwischenText("FC Wyler", "konto");
+  assert.equal(verein, "Der Verein heisst inzwischen «FC Wyler». Gib diesen Namen ein, um fortzufahren. Der Verein bleibt unverändert.");
+  assert.equal(konto, "Der Verein heisst inzwischen «FC Wyler». Gib diesen Namen ein, um fortzufahren. Verein und Konto bleiben unverändert.");
+  assert.ok(!verein.includes("Konto"), "der Satz fürs Löschen des Vereins spricht nicht vom Konto");
+  // Die vier Antworten von delete_account und der technische Fehler: je ein anderer Satz.
+  const saetze = [
+    VEREIN_MELDUNG.LETZTE_VERWALTUNG,
+    KONTO_LOESCHEN_TEXT.weiterePerson,
+    kontoEinzigePersonInzwischenText("FC Wyler"),
+    konto,
+    KONTO_LOESCHEN_TEXT.fehler,
+    KONTO_LOESCHEN_TEXT.teilweise,
+  ];
+  assert.equal(new Set(saetze).size, saetze.length, "keine zwei Rückmeldungen mit demselben Satz");
+  // Nichts verspricht ein Löschen, das nicht geschehen ist.
+  for (const t of [KONTO_LOESCHEN_TEXT.weiterePerson, konto]) assert.ok(t.includes("bleiben unverändert"), t);
+  // Mit Namen gesendet, aber nicht mehr einzige Person: Der Satz stimmt für jede Ursache (weitere Person im
+  // Team oder in der Verwaltung, Verein inzwischen gelöscht) und schickt nicht in die Verwaltung.
+  assert.equal(
+    KONTO_LOESCHEN_TEXT.weiterePerson,
+    "Im Verein hat sich inzwischen etwas geändert. Verein und Konto bleiben unverändert. Prüfe die Angaben und versuche es noch einmal.",
+  );
+  assert.ok(kontoEinzigePersonInzwischenText("FC Wyler").includes("nichts gelöscht"));
+  // Die Antwort der Datenebene ist unlesbar: Der Satz schickt zum Nachsehen, nicht zum blinden Wiederholen.
+  assert.ok(VEREIN_UNSTIMMIG.loeschen.includes("prüfe, ob der Verein noch besteht"));
+  assert.ok(VEREIN_UNSTIMMIG.konto.includes("prüfe, ob dein Konto noch besteht"));
+});
+
+pruefe("Konto löschen (#587 AK 12, 13): drei Fälle des Dialogs im Wortlaut des Boards, ohne Teamnamen", () => {
+  assert.deepEqual(kontoLetzteVerwaltungSaetze("FC Wyler"), {
+    lage: "Du bist die letzte Person in der Vereinsverwaltung von «FC Wyler», und dem Verein gehören weitere Personen an.",
+    weg: "Nimm zuerst jemanden in die Verwaltung auf. Oder lösche den Verein unter Verein › Verwaltung.",
+  });
+  assert.equal(KONTO_LOESCHEN_TEXT.nichtLoeschbar, "Konto lässt sich noch nicht löschen");
+  assert.deepEqual(kontoEinzigePersonSaetze("FC Seefeld", 2, 31), {
+    titel: "Konto und Verein löschen",
+    lage: "Du bist die einzige Person im Verein «FC Seefeld». Mit deinem Konto wird der Verein gelöscht:",
+    geloescht: ["2 Teams, mit Terminen und Team-Trainings", "31 Spieler:innen samt Links, Abos und Abholadressen"],
+    endgueltig: "Das lässt sich nicht rückgängig machen.",
+    feld: "Vereinsname",
+    knopf: "Konto und Verein löschen",
+  });
+  assert.deepEqual(kontoEinzigePersonSaetze("FC Seefeld", 0, 1).geloescht, ["1 Spieler:in samt Links, Abos und Abholadressen"]);
+  assert.deepEqual(kontoEinzigePersonSaetze("FC Seefeld", 0, 0).geloescht, []);
+  // Ohne Liste kein Doppelpunkt ins Leere.
+  assert.equal(kontoEinzigePersonSaetze("FC Seefeld", 0, 0).lage, "Du bist die einzige Person im Verein «FC Seefeld». Mit deinem Konto wird der Verein gelöscht.");
+  assert.ok(kontoEinzigePersonSaetze("FC Seefeld", 0, 1).lage.endsWith("gelöscht:"));
+  assert.equal(
+    kontoEinzigePersonInzwischenText("FC Seefeld"),
+    "Dein Konto ist inzwischen die einzige Person im Verein «FC Seefeld». Mit dem Konto wird der Verein gelöscht: Bestätige das mit dem Vereinsnamen. Es ist nichts gelöscht.",
+  );
+  // Die Team-Zeile lautet in beiden Löschdialogen gleich.
+  assert.equal(kontoEinzigePersonSaetze("FC Seefeld", 3, 0).geloescht[0], vereinLoeschenFolgen({ teams: 3, spieler: 0, ohneTeam: 0, personen: 1 }).geloescht[0]);
+  assert.equal(KONTO_LOESCHEN_TEXT.vereinBleibt, "Gehörst du einem Verein an, bleibt er bestehen.");
+  // LETZTE_VERWALTUNG bleibt wörtlich; der Weg «im Bereich «Verein» löschen» gibt es jetzt wirklich.
+  assert.ok(VEREIN_MELDUNG.LETZTE_VERWALTUNG.endsWith("Du kannst den Verein auch im Bereich «Verein» löschen."));
+});
+
+pruefe("Verein und Konto löschen (#587): Antworten der Datenebene werden auf ihre Form geprüft", () => {
+  const bild = { id: "4b3f9d0e-4c8a-4a39-9d57-0a8f2f7f1d11", bild_url: "https://x.test/storage/v1/object/public/b/4b3f.webp" };
+  // verein_loeschen
+  assert.deepEqual(vereinLoeschAusgangAus({ status: "geloescht", name: "FC Wyler", bilder: [bild, { id: "a", bild_url: null }] }), {
+    status: "geloescht",
+    name: "FC Wyler",
+    bilder: [bild, { id: "a", bild_url: null }],
+  });
+  assert.deepEqual(vereinLoeschAusgangAus({ status: "geloescht", name: "FC Wyler", bilder: [] }), { status: "geloescht", name: "FC Wyler", bilder: [] });
+  assert.deepEqual(vereinLoeschAusgangAus({ status: "vereinsname_falsch", name: "FC Wyler 2" }), { status: "vereinsname_falsch", name: "FC Wyler 2" });
+  for (const kaputt of [
+    null,
+    "geloescht",
+    {},
+    { status: "geloescht", name: "FC Wyler" },
+    { status: "geloescht", name: "FC Wyler", bilder: null },
+    { status: "geloescht", name: "FC Wyler", bilder: [{ id: "a" }] },
+    { status: "geloescht", name: "FC Wyler", bilder: [{ id: 5, bild_url: null }] },
+    { status: "geloescht", name: "", bilder: [] },
+    { status: "vereinsname_falsch" },
+    { status: "unbekannt", name: "FC Wyler", bilder: [] },
+  ])
+    assert.equal(vereinLoeschAusgangAus(kaputt), null, JSON.stringify(kaputt));
+  // delete_account: alle vier Antworten des Vertrags
+  assert.deepEqual(kontoLoeschAusgangAus({ status: "geloescht", bilder: [] }), { status: "geloescht", bilder: [] });
+  assert.deepEqual(kontoLoeschAusgangAus({ status: "geloescht", bilder: [bild] }), { status: "geloescht", bilder: [bild] });
+  assert.deepEqual(kontoLoeschAusgangAus({ status: "letzte_verwaltung" }), { status: "letzte_verwaltung" });
+  assert.deepEqual(kontoLoeschAusgangAus({ status: "verein_bestaetigen", verein: "FC Seefeld", teams: 2, spieler: 31 }), {
+    status: "verein_bestaetigen",
+    verein: "FC Seefeld",
+    teams: 2,
+    spieler: 31,
+  });
+  assert.deepEqual(kontoLoeschAusgangAus({ status: "vereinsname_falsch", name: "FC Seefeld" }), { status: "vereinsname_falsch", name: "FC Seefeld" });
+  for (const kaputt of [
+    null,
+    [],
+    {},
+    { status: "geloescht" },
+    { status: "geloescht", bilder: {} },
+    { status: "verein_bestaetigen", verein: "FC Seefeld", teams: 2 },
+    { status: "verein_bestaetigen", verein: "", teams: 2, spieler: 1 },
+    { status: "verein_bestaetigen", verein: "FC Seefeld", teams: -1, spieler: 1 },
+    { status: "verein_bestaetigen", verein: "FC Seefeld", teams: 1.5, spieler: 1 },
+    { status: "verein_bestaetigen", verein: "FC Seefeld", teams: "2", spieler: 1 },
+    { status: "vereinsname_falsch" },
+    { status: "weiss_nicht" },
+  ])
+    assert.equal(kontoLoeschAusgangAus(kaputt), null, JSON.stringify(kaputt));
+  // konto_loeschen_info: die Zahlen stehen immer da, der Verein bei den beiden Fällen mit Verein
+  assert.deepEqual(kontoInfoAus({ fall: "frei", verein: null, teams: 0, spieler: 0 }), { fall: "frei" });
+  assert.deepEqual(kontoInfoAus({ fall: "letzte_verwaltung", verein: "FC Wyler", teams: 0, spieler: 0 }), { fall: "letzte_verwaltung", verein: "FC Wyler" });
+  assert.deepEqual(kontoInfoAus({ fall: "einzige_person", verein: "FC Seefeld", teams: 2, spieler: 31 }), {
+    fall: "einzige_person",
+    verein: "FC Seefeld",
+    teams: 2,
+    spieler: 31,
+  });
+  for (const kaputt of [
+    null,
+    "frei",
+    {},
+    { fall: "frei" },
+    { fall: "frei", verein: null, teams: 0 },
+    { fall: "letzte_verwaltung", verein: null, teams: 0, spieler: 0 },
+    { fall: "einzige_person", verein: "", teams: 1, spieler: 1 },
+    { fall: "einzige_person", verein: "FC Seefeld", teams: "1", spieler: 1 },
+    { fall: "anderer", verein: "FC Seefeld", teams: 1, spieler: 1 },
+  ])
+    assert.equal(kontoInfoAus(kaputt), null, JSON.stringify(kaputt));
+});
+
+pruefe("Verein und Konto löschen (#587): ein Weg je RPC, Bestätigung mit dem Baustein, Redirect in der Action, Bilder vor dem Entfernen der Anmeldung", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentar = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  // Jede der drei RPCs steht an genau einer Stelle: im Verein-Kern.
+  const rpcs = { verein_loeschen: [] as string[], konto_loeschen_info: [] as string[], delete_account: [] as string[] };
+  for (const datei of quelldateien(web)) {
+    const rel = relative(web, datei);
+    if (datei === fileURLToPath(import.meta.url) || rel === "scripts/pruefe-kern-db.ts") continue;
+    const text = readFileSync(datei, "utf8");
+    for (const name of Object.keys(rpcs) as (keyof typeof rpcs)[])
+      if (new RegExp(`\\.rpc\\(\\s*["\`']${name}["\`']`).test(text)) rpcs[name].push(rel);
+  }
+  assert.deepEqual(rpcs, {
+    verein_loeschen: ["lib/kern/verein.ts"],
+    konto_loeschen_info: ["lib/kern/verein.ts"],
+    delete_account: ["lib/kern/verein.ts"],
+  });
+  // Der Namensvergleich steht einmal: im Baustein; Verein und Konto nutzen ihn, nichts baut ihn nach.
+  const trimNfc: string[] = [];
+  for (const datei of quelldateien(web)) {
+    const rel = relative(web, datei);
+    if (datei !== fileURLToPath(import.meta.url) && /\.trim\(\)\.normalize\("NFC"\)/.test(readFileSync(datei, "utf8"))) trimNfc.push(rel);
+  }
+  assert.deepEqual(trimNfc, ["components/ui/NamenBestaetigen.tsx"], "Namensvergleich nicht duplizieren");
+  const loeschen = lies("components/verein/VereinLoeschen.tsx");
+  const konto = lies("app/(app)/konto/KontoClient.tsx");
+  for (const [name, text] of [["VereinLoeschen", loeschen], ["KontoClient", konto]] as const) {
+    assert.match(text, /<NamenBestaetigen[\s\S]*?gesperrt=\{pending\}/, `${name}: Bestätigung mit dem Baustein, Eingabe gesperrt während der Anfrage`);
+    assert.match(text, /namenStimmen\(eingabe, /, `${name}: Knopf nur bei passendem Namen`);
+    assert.match(text, /if \(pending \|\| !passt\) return|if \(!passt \|\| pending\) return/, `${name}: kein doppeltes Absenden`);
+  }
+  assert.match(loeschen, /variant="danger" disabled=\{!passt \|\| pending\}/);
+  assert.match(konto, /variant="danger" disabled=\{!passt \|\| pending\}/);
+  // Verein löschen: Redirect und Flash in der Action, Teil der Gefahrenzone, nicht am Team-Ort.
+  const aktionen = lies("lib/actions/verein.ts");
+  assert.match(aktionen, /export async function loescheVereinAktion[\s\S]*?raeumeVerwaisteBilder\(eigeneBildPfade\(r\.wert\.bilder\)\);\s*redirect\(`\/teams\?verein_weg=/);
+  assert.ok(!/router\.(push|replace)\(/.test(loeschen), "die Weiterleitung steht in der Action");
+  assert.match(lies("components/verein/VereinVerwaltung.tsx"), /<Gefahrenzone beschreibung=\{VEREIN_LOESCHEN_TEXT\.beschreibung\}>[\s\S]*?<VereinLoeschen\b/);
+  assert.match(lies("app/(app)/teams/page.tsx"), /sp\.verein_weg && <Flash message=\{vereinGeloeschtText\(/);
+  // Konto löschen: Datenebene → Bilder (eigene, dann Verein) → Anmeldung (mit Fehlerprüfung) → Cookies.
+  const auth = ohneKommentar(lies("lib/actions/auth.ts"));
+  const fluss = auth.slice(auth.indexOf("export async function deleteAccount"));
+  const stelle = (text: string) => {
+    const i = fluss.indexOf(text);
+    assert.ok(i >= 0, `deleteAccount enthält «${text}» nicht`);
+    return i;
+  };
+  assert.ok(
+    stelle("loescheKonto(") < stelle("storage.from(STORAGE_BUCKET).remove(paths)") &&
+      stelle("storage.from(STORAGE_BUCKET).remove(paths)") < stelle("raeumeVerwaisteBilder(eigeneBildPfade(a.bilder))") &&
+      stelle("raeumeVerwaisteBilder(eigeneBildPfade(a.bilder))") < stelle("auth.admin.deleteUser(uid)") &&
+      stelle("auth.admin.deleteUser(uid)") < stelle("auth.signOut()"),
+    "Reihenfolge: Datenebene, eigene Bilder, Bilder des Vereins, Anmeldung entfernen, Abmelden",
+  );
+  assert.match(fluss, /const \{ error: loeschFehler \} = await createAdminClient\(\)\.auth\.admin\.deleteUser\(uid\);\s*if \(loeschFehler\)/, "das Entfernen der Anmeldung wird geprüft");
+  assert.match(fluss, /KONTO_LOESCHEN_TEXT\.teilweise/, "der Teilzustand hat seinen Satz");
+  // Alle vier Antworten haben einen Zweig.
+  for (const status of ["letzte_verwaltung", "verein_bestaetigen", "vereinsname_falsch"]) assert.ok(fluss.includes(`a.status === "${status}"`), status);
+  // Der Dialog liest den Fall beim Rendern der Seite, nicht erst beim Klick.
+  assert.match(lies("app/(app)/konto/page.tsx"), /ladeKontoLoeschenInfo\(supabase, user\.id\)[\s\S]*?<KontoClient info=\{loeschInfo\.wert\} \/>/);
+  // Nie ein Namensfeld ohne Pflichtangabe: Die Eingabe geht nur im Fall «einzige Person» mit.
+  assert.match(konto, /deleteAccount\(verein \? eingabe : null\)/);
+  // Nach jeder Antwort ohne Löschen lädt der Dialog die Lage neu; Name und Zahlen gehen über Antwortfolgen nicht
+  // verloren, und eine neu geladene Lage entscheidet den Fall (Fix-Lauf #587).
+  assert.match(konto, /await deleteAccount\([\s\S]*?verein: neu\.verein \?\? \(neu\.letzteVerwaltung \? undefined : vorher\.verein\)[\s\S]*?router\.refresh\(\);/);
+  assert.match(konto, /if \(info !== infoStand\) \{\s*setInfoStand\(info\);\s*setZustand\(\(z\) => \(\{ fehler: meldungBleibt\(z, info\.fall\) \? z\.fehler : null \}\)\);/);
+  // Die stehen gebliebene Meldung passt zur frischen Lage oder fällt weg, nie doppelt zu den Sätzen der Lage (Schlusskorrektur #587).
+  assert.match(konto, /function meldungBleibt\([^)]*\): boolean \{\s*if \(z\.letzteVerwaltung\) return fall !== "letzte_verwaltung" && z\.fehler === KONTO_LOESCHEN_TEXT\.weiterePerson;\s*if \(z\.verein \|\| z\.aktuellerName !== undefined\) return fall === "einzige_person";\s*return true;\s*\}/);
+  // Teilzustand: Vor der Rückgabe revalidieren, damit Leiste und Seiten den gelöschten Verein nicht weiter zeigen.
+  assert.match(fluss, /if \(loeschFehler\) \{[\s\S]*?revalidiereVerein\(\);\s*revalidiereMitgliedschaften\(\);\s*return \{ fehler: KONTO_LOESCHEN_TEXT\.teilweise \}/);
+  // Team auflösen sperrt die Eingabe während der Anfrage wie die neuen Dialoge.
+  assert.match(lies("components/verein/VereinTeamVerwaltung.tsx"), /<NamenBestaetigen name=\{team\.name\}[^>]*gesperrt=\{pending\}/);
+  // Der Flash nennt höchstens einen Vereinsnamen voller Länge.
+  assert.match(lies("app/(app)/teams/page.tsx"), /vereinGeloeschtText\(sp\.verein_weg\.slice\(0, VEREIN_NAME_MAX\)\)/);
+  // Abholseite und Link: Fehlt der Verein (oder das Team) in der Antwort, gilt sie als ungültig, nie «undefined».
+  assert.match(lies("lib/abholung.ts"), /typeof r\.verein !== "string" \|\| !r\.verein\)\s*return \{ gueltig: false \};/);
+  assert.ok(!/return data as AbholAnsicht/.test(lies("lib/abholung.ts")), "keine ungeprüfte Übernahme");
+  assert.match(lies("lib/privater-link.ts"), /if \(ansicht\.gueltig && \(typeof ansicht\.verein !== "string" \|\| !ansicht\.verein\)\) return UNGUELTIG;/);
+  // Der Namensvergleich trimmt beide Seiten (gespeicherter Name mit Rand, Zwilling namen_stimmen); ein Name, der
+  // ohne Rand leer ist, stimmt nie (Schlusskorrektur #587).
+  assert.match(lies("components/ui/NamenBestaetigen.tsx"), /const verlangt = name\.trim\(\);\s*return verlangt !== "" && eingabe\.trim\(\)\.normalize\("NFC"\) === verlangt\.normalize\("NFC"\);/);
+  // Der Speicher wird in Stücken geräumt.
+  assert.match(lies("lib/storage-aufraeumen.ts"), /for \(let i = 0; i < pfade\.length; i \+= STUECK\)/);
+  // Kein Verein-Weg am Team-Ort, kein KI-Weg zu Gründen und Löschen (Ortsprüfung der Datenebene, Test 30).
+  for (const ordner of ["components/team", "app/(app)/team", "lib/mcp"])
+    for (const datei of quelldateien(join(web, ordner)))
+      assert.ok(!/\b(loescheVerein\w*|gruendeVerein\w*|loescheKonto|ladeKontoLoeschenInfo|verein_loeschen|verein_gruenden|delete_account|konto_loeschen_info)\b/.test(readFileSync(datei, "utf8")), relative(web, datei));
+});
+
+// ── Konten ohne Verein (Story #588) ─────────────────────────────────────────
+
+pruefe("Konto ohne Verein (#588): Zwillinge der Grenzen und feste Sätze, ohne Verein nur der Marker mit Bestand", () => {
+  assert.equal(KONTO_UEBUNGEN_MAX, 50);
+  assert.equal(KONTO_TRAININGS_MAX, 30);
+  assert.deepEqual(KONTO_MARKER, { uebungen: "KONTO_UEBUNGEN_VOLL", trainings: "KONTO_TRAININGS_VOLL" });
+  assert.equal(
+    KONTO_GRENZE_SCHLUSS,
+    "In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  assert.equal(KONTO_GRENZE_HINWEIS, "Es ist nichts entstanden.");
+  // Der Bestand steht hinter dem Marker; ohne Marker oder ohne Zahl nichts.
+  assert.deepEqual(kontoGrenzeAusFehler("ERROR: KONTO_UEBUNGEN_VOLL 50"), { art: "uebungen", bestand: 50 });
+  assert.deepEqual(kontoGrenzeAusFehler("x KONTO_TRAININGS_VOLL 62 y"), { art: "trainings", bestand: 62 });
+  assert.equal(kontoGrenzeAusFehler("KONTO_UEBUNGEN_VOLL"), null, "ohne Zahl kein Satz");
+  assert.equal(kontoGrenzeAusFehler("KONTO_UEBUNGEN_VOLL x"), null);
+  assert.equal(kontoGrenzeAusFehler("VEREIN_VOLL"), null);
+  assert.equal(kontoGrenzeMeldung("VEREIN_VOLL"), null);
+});
+
+pruefe("Konto ohne Verein (#588 AK 6): Satz bei der Abweisung — genau an, bei und über der Grenze", () => {
+  // Genau an der Grenze: «n von max», dazu Platz schaffen und der Verein.
+  assert.equal(
+    kontoGrenzeText("uebungen", 50),
+    "Du besitzt 50 von 50 Übungen. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  assert.equal(
+    kontoGrenzeText("trainings", 30),
+    "Du besitzt 30 von 30 Trainings. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  // Über der Grenze (Altbestand): nie «60 von 50».
+  assert.equal(
+    kontoGrenzeText("uebungen", 62),
+    "Du besitzt 62 Übungen, höchstens 50 sind erlaubt. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  assert.equal(
+    kontoGrenzeText("trainings", 31),
+    "Du besitzt 31 Trainings, höchstens 30 sind erlaubt. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.",
+  );
+  // Die Einzahl stimmt auch bei einer erfundenen Zahl.
+  assert.match(kontoGrenzeText("trainings", 1), /^Du besitzt 1 von 30 Trainings\./);
+  for (const art of ["uebungen", "trainings"] as const)
+    for (const n of [29, 30, 31, 50, 51, 100]) {
+      const satz = kontoGrenzeText(art, n);
+      assert.ok(!/wiederhol|nochmal|noch einmal/i.test(satz), `kein Wiederholen: ${satz}`);
+      assert.ok(!/loesch|_loeschen/.test(satz), "kein Löschwerkzeug des Assistenten");
+      assert.ok(!/FutAssist|\bKind\b|Kinder/.test(satz), satz);
+    }
+});
+
+pruefe("Konto ohne Verein (#588 AK 6, 7): Anwendung und KI lesen denselben Satz, der Marker ist eine Regel mit Hinweis", () => {
+  for (const [marker, art, bestand] of [
+    [KONTO_MARKER.uebungen, "uebungen", 50],
+    [KONTO_MARKER.uebungen, "uebungen", 57],
+    [KONTO_MARKER.trainings, "trainings", 30],
+    [KONTO_MARKER.trainings, "trainings", 44],
+  ] as const) {
+    const message = `${marker} ${bestand}`;
+    const satz = kontoGrenzeText(art, bestand);
+    // Anwendung: createExercise nutzt `fehlerMeldung`, der Kern `ausDbFehler` — beide denselben Satz.
+    assert.equal(fehlerMeldung(message), satz, message);
+    assert.equal(fehlerMeldung(`ERROR: ${message} (P0001)`), satz, "Postgres-Rahmen um den Marker");
+    const f = ausDbFehler({ message, code: "P0001" });
+    assert.equal(f.art, "regel", "eine Regel, kein technischer Fehler");
+    assert.equal(f.meldung, satz);
+    // KI: dieselbe Auskunft, nichts entstanden, kein Wiederholen.
+    assert.equal(f.hinweis, "Es ist nichts entstanden.");
+    assert.equal(f.wiederholbar, undefined, "nicht als wiederholbar gekennzeichnet");
+    assert.ok(!/wiederhol/i.test(`${f.meldung} ${f.hinweis}`));
+  }
+  // Der Marker wird erwartet und nicht als unerwarteter Fehler protokolliert.
+  const geloggt: unknown[] = [];
+  const orig = console.error;
+  console.error = (...a: unknown[]) => void geloggt.push(a);
+  try {
+    fehlerMeldung(`${KONTO_MARKER.uebungen} 50`);
+    ausDbFehler({ message: `${KONTO_MARKER.trainings} 30` });
+  } finally {
+    console.error = orig;
+  }
+  assert.deepEqual(geloggt, []);
+  // Ein Deadlock bleibt ein Konflikt; nur der Marker trägt den Hinweis der Grenze.
+  assert.equal(ausDbFehler({ message: "deadlock detected", code: "40P01" }).hinweis, undefined);
+  assert.equal(still(() => ausDbFehler({ message: "VEREIN_VOLL" })).hinweis, undefined);
+});
+
+pruefe("Konto ohne Verein (#588 PC 3): `grenzen` der Vereinslage wird auf ihre Form geprüft, `null` mit Verein", () => {
+  const g = { uebungen: { bestand: 12, max: 50 }, trainings: { bestand: 0, max: 30 } };
+  assert.equal(kontoGrenzenAus(null), null, "mit Verein keine Anzeige");
+  assert.deepEqual(kontoGrenzenAus(g), g);
+  assert.deepEqual(
+    kontoGrenzenAus({ uebungen: { bestand: 62, max: 50 }, trainings: { bestand: 31, max: 30 } }),
+    { uebungen: { bestand: 62, max: 50 }, trainings: { bestand: 31, max: 30 } },
+    "der Bestand darf über der Grenze liegen",
+  );
+  for (const kaputt of [
+    undefined,
+    "grenzen",
+    [],
+    7,
+    {},
+    { uebungen: g.uebungen },
+    { trainings: g.trainings },
+    { uebungen: { bestand: 12 }, trainings: g.trainings },
+    { uebungen: { bestand: -1, max: 50 }, trainings: g.trainings },
+    { uebungen: { bestand: 1.5, max: 50 }, trainings: g.trainings },
+    { uebungen: { bestand: "12", max: 50 }, trainings: g.trainings },
+    { uebungen: { bestand: 12, max: 0 }, trainings: g.trainings },
+    { uebungen: g.uebungen, trainings: null },
+    { uebungen: [], trainings: g.trainings },
+  ])
+    assert.equal(kontoGrenzenAus(kaputt), undefined, JSON.stringify(kaputt));
+});
+
+pruefe("Konto ohne Verein (#588, Fix-Lauf): ein Formfehler in `grenzen` reisst die Vereinslage nicht mit", () => {
+  // Ohne Verein: Formfehler → keine Anzeige, protokolliert; nie ein Fehler der ganzen Lage.
+  assert.deepEqual(grenzenOhneVerein({ uebungen: "kaputt" }), { grenzen: null, formfehler: true });
+  assert.deepEqual(grenzenOhneVerein(undefined), { grenzen: null, formfehler: true });
+  assert.deepEqual(grenzenOhneVerein(null), { grenzen: null, formfehler: false });
+  const g = { uebungen: { bestand: 3, max: 50 }, trainings: { bestand: 1, max: 30 } };
+  assert.deepEqual(grenzenOhneVerein(g), { grenzen: g, formfehler: false });
+  // Die Lage entsteht zuerst aus dem Verein; mit Verein wird `grenzen` gar nicht gelesen, und ein Formfehler gibt kein `fehler`.
+  const lage = readFileSync(join(web, "lib/queries/verein.ts"), "utf8");
+  assert.match(lage, /if \(lage\) return \{ lage, grenzen: null, fehler: null \};\s*[\s\S]*?grenzenOhneVerein\(roh\?\.grenzen\)/);
+  assert.match(lage, /if \(formfehler\) console\.error\([^)]*\);\s*return \{ lage: null, grenzen, fehler: null \};/);
+  assert.ok(!/grenzen hat nicht die erwartete Form"\) \}/.test(lage), "kein `fehler` aus einem Formfehler");
+});
+
+pruefe("Konto ohne Verein (#588 AK 5): Texte der Anzeige in jeder Lage — unter, an und über der Grenze", () => {
+  const u = (bestand: number) => ({ bestand, max: 50 });
+  const t = (bestand: number) => ({ bestand, max: 30 });
+  assert.deepEqual([0, 49, 50, 51].map((n) => istVoll(u(n))), [false, false, true, true]);
+  assert.deepEqual([29, 30, 31].map((n) => istVoll(t(n))), [false, true, true]);
+  assert.equal(bestandText("uebungen", u(0)), "0 von 50 Übungen");
+  assert.equal(bestandText("uebungen", u(12)), "12 von 50 Übungen");
+  assert.equal(bestandText("uebungen", u(49)), "49 von 50 Übungen");
+  assert.equal(bestandText("uebungen", u(50)), "50 von 50 Übungen");
+  assert.equal(bestandText("uebungen", u(62)), "62 Übungen (höchstens 50)", "nie ein negativer Rest");
+  assert.equal(bestandText("trainings", t(29)), "29 von 30 Trainings");
+  assert.equal(bestandText("trainings", t(30)), "30 von 30 Trainings");
+  assert.equal(bestandText("trainings", t(31)), "31 Trainings (höchstens 30)");
+  assert.equal(NICHTS_MEHR_FREI, "Nichts mehr frei");
+  // Eine Abweisung der Datenebene wird zum Stand der vollen Grenze: Bestand aus dem Marker, Grenze vom Zwilling.
+  assert.deepEqual(grenzeAusAbweisung({ art: "uebungen", bestand: 50 }), { bestand: 50, max: 50 });
+  assert.deepEqual(grenzeAusAbweisung({ art: "trainings", bestand: 34 }), { bestand: 34, max: 30 });
+  assert.equal(bestandSatz("uebungen", u(12)), "Du besitzt 12 von 50 Übungen.");
+  assert.equal(bestandSatz("trainings", t(31)), "Du besitzt 31 Trainings, höchstens 30 sind erlaubt.");
+  // Die Meldung an der Grenze, bevor Angaben gemacht werden: Board-Wortlaut, Link zur eigenen Übersicht.
+  assert.deepEqual(bestandVollMeldung("trainings", t(30)), {
+    titel: "Nichts mehr frei: 30 von 30 Trainings",
+    text: "Ohne Verein besitzt du höchstens 30 Trainings. Lösche eines, um Platz zu schaffen. In einem Verein gilt die Grenze nicht.",
+    link: "/trainings?mine=1",
+    linkText: "Zu meinen Trainings",
+  });
+  assert.deepEqual(bestandVollMeldung("uebungen", u(50)), {
+    titel: "Nichts mehr frei: 50 von 50 Übungen",
+    text: "Ohne Verein besitzt du höchstens 50 Übungen. Lösche eine, um Platz zu schaffen. In einem Verein gilt die Grenze nicht.",
+    link: "/?mine=1",
+    linkText: "Zu meinen Übungen",
+  });
+  assert.equal(bestandVollMeldung("uebungen", u(62)).titel, "Nichts mehr frei: 62 Übungen, höchstens 50");
+  assert.equal(bestandVollMeldung("trainings", t(31)).titel, "Nichts mehr frei: 31 Trainings, höchstens 30");
+});
+
+pruefe("Konto ohne Verein (#588 AK 5, Fix-Lauf): der Satz über der Grenze nennt, wie viele weg müssen", () => {
+  const u = (bestand: number) => ({ bestand, max: 50 });
+  const t = (bestand: number) => ({ bestand, max: 30 });
+  // Genau an der Grenze: eine bzw. eines.
+  assert.match(bestandVollMeldung("uebungen", u(50)).text, / Lösche eine, um Platz zu schaffen\. /);
+  assert.match(bestandVollMeldung("trainings", t(30)).text, / Lösche eines, um Platz zu schaffen\. /);
+  // Eine darüber: zwei müssen weg, bis eine neue Platz hat.
+  assert.equal(
+    bestandVollMeldung("uebungen", u(51)).text,
+    "Ohne Verein besitzt du höchstens 50 Übungen. Lösche 2 Übungen, um Platz für eine neue zu schaffen. In einem Verein gilt die Grenze nicht.",
+  );
+  assert.equal(
+    bestandVollMeldung("trainings", t(31)).text,
+    "Ohne Verein besitzt du höchstens 30 Trainings. Lösche 2 Trainings, um Platz für ein neues zu schaffen. In einem Verein gilt die Grenze nicht.",
+  );
+  // Weit darüber: Bestand − Grenze + 1.
+  assert.match(bestandVollMeldung("uebungen", u(62)).text, / Lösche 13 Übungen, um Platz für eine neue zu schaffen\. /);
+  assert.match(bestandVollMeldung("trainings", t(45)).text, / Lösche 16 Trainings, um Platz für ein neues zu schaffen\. /);
+});
+
+pruefe("Konto ohne Verein (#588 AK 7): Werkzeugtexte der KI nennen die Grenze, fordern nicht zum Wiederholen auf und kennen kein Löschwerkzeug", () => {
+  assert.match(KONTO_GRENZE_WERKZEUG.uebungen, /höchstens 50 Übungen/);
+  assert.match(KONTO_GRENZE_WERKZEUG.trainings, /höchstens 30 Trainings.*Team-Trainings nicht/);
+  for (const text of Object.values(KONTO_GRENZE_WERKZEUG)) {
+    assert.match(text, /«hinweis» sagt, dass nichts entstanden ist/);
+    assert.match(text, /statt den Aufruf zu wiederholen/);
+    assert.match(text, /In einem Verein gilt die Grenze nicht\.$/);
+    assert.ok(!/(uebung|training)_loeschen/.test(text), "kein Verweis auf ein Löschwerkzeug");
+  }
+});
+
+pruefe("Konto ohne Verein (#588): ein Weg für den Satz, die Hinweise im Kern, Zuordnen bleibt frei (AK 4), Einfüge-Wege vollständig", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Die Übersetzung steht in `fachlicheMeldung`: `createExercise` (fehlerMeldung) und der Kern (ausDbFehler) lesen sie dort.
+  assert.match(lies("lib/training-bedingungen.ts"), /const konto = kontoGrenzeMeldung\(message\);\s*if \(konto\) return konto;/);
+  assert.match(lies("lib/actions/exercises.ts"), /message: error \? fehlerMeldung\(error\.message\)/, "createExercise übersetzt");
+  // Der Hinweis der Datenebene erreicht jeden Weg: Kern, Übungskopie, Trainingskopie.
+  assert.match(lies("lib/kern/ergebnis.ts"), /const grenze = kontoGrenzeAusFehler\(e\.message\);\s*return fehlschlag\("regel", meldung, grenze \? \{ hinweis: KONTO_GRENZE_HINWEIS, grenze \} : \{\}\);/);
+  assert.match(lies("lib/fassung.ts"), /art: f\.art, \.\.\.\(f\.hinweis && \{ hinweis: f\.hinweis \}\), \.\.\.\(f\.grenze && \{ grenze: f\.grenze \}\)/);
+  assert.match(lies("lib/kern/uebungen.ts"), /hinweis: kopie\.hinweis \?\? nichtsEntstanden\(kopie\.art\),\s*\.\.\.\(kopie\.grenze && \{ grenze: kopie\.grenze \}\)/);
+  assert.match(lies("lib/kern/kopie.ts"), /return vorher\(f\.error, f\.art, f\);/);
+  // «Gefahrlos wiederholen» nur bei technisch/konflikt, auch beim Übernehmen eines Trainings (Fix-Lauf #588).
+  assert.match(lies("lib/kern/kopie.ts"), /kopie\.nichtsEntstanden \? \(kopie\.hinweis \?\? nichtsEntstanden\(kopie\.art\)\)/);
+  assert.match(lies("lib/kern/kopie.ts"), /return art === "technisch" \|\| art === "konflikt" \? HINWEIS_NICHTS_ENTSTANDEN : KEINE_KOPIE;/);
+  assert.ok(!/const nichts = \{ hinweis: HINWEIS_NICHTS_ENTSTANDEN \}/.test(lies("lib/kern/kopie.ts")));
+  // Das Merkmal `grenze` erreicht die Actions der Oberfläche; der KI-Weg lässt es weg.
+  assert.match(lies("lib/actions/exercises.ts"), /const grenze = error \? kontoGrenzeAusFehler\(error\.message\) : null;/);
+  assert.match(lies("lib/actions/exercises.ts"), /error: kopie\.meldung, \.\.\.\(kopie\.grenze && \{ grenze: kopie\.grenze \}\)/);
+  assert.match(lies("lib/actions/fassung.ts"), /error: kopie\.error, \.\.\.\(kopie\.grenze && \{ grenze: kopie\.grenze \}\)/);
+  assert.match(lies("lib/actions/trainings.ts"), /message: oberflaechenMeldung\(r\), \.\.\.\(r\.grenze && \{ grenze: r\.grenze \}\)/);
+  assert.match(lies("lib/actions/team-trainings.ts"), /error: oberflaechenMeldung\(r\), \.\.\.\(r\.grenze && \{ grenze: r\.grenze \}\)/);
+  assert.match(lies("lib/mcp/ergebnis.ts"), /grenze: _grenze, \.\.\.rest \} = f;/);
+  // Kein toter Code: updateExercise und erstelleTeamTraining können an der Grenze nie abweisen.
+  assert.equal((lies("lib/actions/exercises.ts").match(/kontoGrenzeAusFehler\(error\.message\)/g) ?? []).length, 1, "nur createExercise");
+  assert.equal((lies("lib/actions/team-trainings.ts").match(/r\.grenze/g) ?? []).length, 2, "kopie() — nicht erstelleTeamTraining");
+  // Ein Weg, der nicht zählt, kennt die Grenze nicht: Übung ins Training übernehmen.
+  assert.ok(!/konto-grenzen|KONTO_/.test(lies("lib/kern/fassung.ts")), "ordneUebungZu bleibt frei");
+  assert.ok(!/konto-grenzen|KONTO_/.test(lies("lib/actions/trainings.ts").split("export async function addTrainingExercise")[1]?.split("\nexport async function")[0] ?? ""));
+  // Alle vier Einfüge-Wege tragen die Grenze in ihrer Werkzeugbeschreibung.
+  for (const d of ["lib/mcp/werkzeuge/uebungen-bearbeiten.ts", "lib/mcp/werkzeuge/trainings.ts", "lib/mcp/werkzeuge/trainings-bestand.ts"])
+    assert.match(lies(d), /KONTO_GRENZE_WERKZEUG\.(uebungen|trainings)/, d);
+  assert.equal((lies("lib/mcp/werkzeuge/uebungen-bearbeiten.ts").match(/KONTO_GRENZE_WERKZEUG\.uebungen/g) ?? []).length, 2, "uebung_anlegen und uebung_kopieren");
+  assert.match(lies("lib/mcp/werkzeuge/trainings.ts"), /KONTO_GRENZE_WERKZEUG\.trainings/, "training_anlegen");
+  assert.match(lies("lib/mcp/werkzeuge/trainings-bestand.ts"), /KONTO_GRENZE_WERKZEUG\.trainings/, "training_kopieren");
+  // Die Vereinslage reicht `grenzen` durch, auf ihre Form geprüft; ein Weg, der den Verein kennt, zeigt sie nie.
+  assert.match(lies("lib/queries/verein.ts"), /const \{ grenzen, formfehler \} = grenzenOhneVerein\(roh\?\.grenzen\);/);
+  // Lage unbekannt (Fehler, Formfehler) ist nie «ohne Grenzen»: dritter Zustand.
+  const vq = lies("lib/queries/verein.ts");
+  assert.match(vq, /export type GrenzenLage = "mit" \| "ohne" \| "unbekannt";/);
+  assert.match(vq, /if \(fehler\) \{[^}]*return "unbekannt";\s*\}\s*if \(lage\) return "ohne";\s*return grenzen \? "mit" : "unbekannt";/);
+  assert.match(lies("lib/queries/verein.ts"), /if \(lage\) return \{ lage, grenzen: null, fehler: null \};/);
+  assert.match(lies("lib/kern/konto.ts"), /kontoGrenzenAus\(/);
+  // Die Schreibweise der Grenze steht in einer Datei: keine zweite 50/30 in den Werkzeugtexten.
+  for (const d of ["lib/mcp/werkzeuge/uebungen-bearbeiten.ts", "lib/mcp/werkzeuge/trainings.ts", "lib/mcp/werkzeuge/trainings-bestand.ts"])
+    assert.ok(!/höchstens (50|30) /.test(lies(d)), `${d}: Grenzen nur über konto-grenzen.ts`);
+});
+
+pruefe("Konto ohne Verein (#588 AK 5, PC 3): Anzeige nur ohne Verein und aus der Datenebene, nie hart verdrahtet, nie im Layout", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Kein hartes 50/30 in den Bausteinen der Anzeige: Die Zahl kommt aus `grenzen`, die Sätze aus lib/konto-grenzen.ts.
+  for (const d of ["components/ui/BestandAnzeige.tsx", "components/konto/BestandStufe.tsx", "lib/actions/konto-bestand.ts"])
+    assert.ok(!/\b(50|30)\b/.test(lies(d).replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "")), `${d}: keine feste Grenze im Code`);
+  // Die Übersichten zeigen den Stand nur in «Meine …» und lesen ihn von der Datenebene, nicht aus der Liste.
+  assert.match(lies("app/(app)/page.tsx"), /const grenzen = filters\.mine \? await getMeineGrenzen\(\) : null;/);
+  assert.match(lies("app/(app)/page.tsx"), /\{grenzen && <BestandAnzeige art="uebungen" grenze=\{grenzen\.uebungen\}/);
+  assert.match(lies("app/(app)/trainings/page.tsx"), /const grenzen = mine \? await getMeineGrenzen\(\) : null;/);
+  assert.match(lies("app/(app)/trainings/page.tsx"), /\{grenzen && <BestandAnzeige art="trainings" grenze=\{grenzen\.trainings\}/);
+  // Anlegen: Meldung statt der Maske erst an der Grenze (`istVoll`, auch darüber), darunter die Zeile; ohne `grenzen` nichts.
+  assert.match(lies("app/(app)/neu/page.tsx"), /const voll = grenzen !== null && istVoll\(grenzen\.uebungen\);/);
+  assert.match(lies("app/(app)/neu/page.tsx"), /\{grenzen && voll \? \(\s*<BestandAnzeige art="uebungen" grenze=\{grenzen\.uebungen\} variante="meldung" \/>/);
+  assert.match(lies("app/(app)/neu/page.tsx"), /bestand=\{grenzen\?\.uebungen\}/);
+  assert.match(lies("app/(app)/training/neu/page.tsx"), /const voll = grenzen !== null && istVoll\(grenzen\.trainings\);/);
+  assert.match(lies("app/(app)/training/neu/page.tsx"), /\{grenzen && voll \? \(\s*<BestandAnzeige art="trainings" grenze=\{grenzen\.trainings\} variante="meldung" \/>/);
+  assert.match(lies("app/(app)/training/neu/page.tsx"), /<TrainingCreateForm bestand=\{grenzen\?\.trainings\} \/>/);
+  // Weist die Datenebene beim Speichern ab (Rennen): dieselbe Meldung wie bei voller Grenze, erkannt am Merkmal
+  // `grenze`, und die Zeile mit dem alten Stand fällt weg — die Angaben bleiben in der Maske (Fix-Lauf).
+  for (const [d, art] of [["components/exercise/ExerciseForm.tsx", "uebungen"], ["components/training/TrainingCreateForm.tsx", "trainings"]] as const) {
+    const t = lies(d);
+    assert.match(t, new RegExp(`state\\.grenze \\? \\(\\s*<div ref=\\{grenzMeldungRef\\}[^>]*role="alert"[^>]*>\\s*<BestandAnzeige art="${art}" grenze=\\{grenzeAusAbweisung\\(state\\.grenze\\)\\} variante="meldung"`), d);
+    assert.match(t, new RegExp(`\\{bestand && !state\\.grenze && (?:\\(\\s*)?<BestandAnzeige art="${art}" grenze=\\{bestand\\}`), d);
+  }
+  // Die Zähler stehen in der Seite, nie im Layout: Das Layout rendert bei Navigation im Client nicht neu und zeigte einen
+  // Stand von gestern; eine Anzeige, die nie sperrt, darf veralten, eine Seite soll es nicht.
+  for (const datei of quelldateien(join(web, "components/layout")))
+    assert.ok(!/konto-grenzen|getMeineGrenzen|BestandAnzeige/.test(readFileSync(datei, "utf8")), relative(web, datei));
+  // Die Vereinslage liest je Anfrage (React-`cache`), nie über Anfragen hinweg.
+  assert.ok(!/unstable_cache|revalidate\s*=/.test(lies("lib/queries/verein.ts")), "kein Zwischenspeicher über Anfragen");
+  assert.match(lies("lib/queries/verein.ts"), /if \(lage\) return \{ lage, grenzen: null, fehler: null \};/, "mit Verein nie eine Anzeige");
+  // Die Seiten rendern je Aufruf frisch.
+  for (const d of ["app/(app)/page.tsx", "app/(app)/trainings/page.tsx", "app/(app)/neu/page.tsx", "app/(app)/training/neu/page.tsx"])
+    assert.match(lies(d), /export const dynamic = "force-dynamic";/, d);
+});
+
+pruefe("Konto ohne Verein (#588 AK 5, 6): die Stufe vor Kopieren, Übernehmen und «In die Bibliothek» — ein Klick mit Verein, frischer Stand ohne, gesperrt bis zur Zielseite, Abweisung am Merkmal", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Alle vier Einstiege gehen über die Stufe und geben das Ergebnis der Action samt Merkmal weiter.
+  for (const [d, art] of [
+    ["components/exercise/UebungKopierenButton.tsx", "uebungen"],
+    ["components/exercise/OwnerActions.tsx", "uebungen"],
+    ["components/training/InBibliothekButton.tsx", "uebungen"],
+    ["components/training/TrainingAktionen.tsx", "trainings"],
+  ] as const) {
+    const t = lies(d);
+    assert.match(t, new RegExp(`useBestandStufe\\(\\{\\s*art: "${art}"`), d);
+    assert.match(t, /\.dialog\b|\{(dialog|kopierDialog)\}/, `${d} zeigt die Stufe`);
+    assert.match(t, /if \(!res\.ok\) return res;/, `${d}: das Merkmal reist mit`);
+    // Der Auslöser sperrt fokussierbar (W6), nie `disabled` durch die Stufe.
+    assert.ok(!/disabled=\{(laeuft|kopierLaeuft|pending \|\| uebernehmenStufe\.laeuft)\}/.test(t), `${d}: kein disabled durch die Stufe`);
+  }
+  assert.match(lies("components/exercise/UebungKopierenButton.tsx"), /aria-disabled=\{laeuft \|\| undefined\}/);
+  assert.match(lies("components/training/InBibliothekButton.tsx"), /aria-disabled=\{laeuft \|\| undefined\}/);
+  assert.match(lies("components/exercise/OwnerActions.tsx"), /gesperrt=\{kopierLaeuft\}/);
+  assert.match(lies("components/training/TrainingAktionen.tsx"), /gesperrt=\{uebernehmenStufe\.laeuft\}/);
+  const menue = lies("components/ui/OverflowMenu.tsx");
+  assert.match(menue, /aria-disabled=\{gesperrt \|\| undefined\}/);
+  assert.match(menue, /if \(gesperrt\) return;\s*setOffen/);
+  // Die Seiten geben die Lage mit (W2): mit Verein kein Aufruf der Bestands-Action.
+  for (const d of ["app/(app)/uebung/[slug]/page.tsx", "app/(app)/training/[id]/page.tsx", "app/(app)/training/[id]/edit/page.tsx"]) {
+    const t = lies(d);
+    assert.match(t, /getMeineGrenzenLage\(\)\]\)/, `${d}: Lage parallel zu den anderen Abfragen`);
+    assert.match(t, /const mitGrenzen = grenzenLage !== "ohne";/, `${d}: unbekannt heisst nicht «ohne Grenzen»`);
+    assert.match(t, /<KontoGrenzenLage mitGrenzen=\{mitGrenzen\}>/, d);
+  }
+  const stufe = lies("components/konto/BestandStufe.tsx");
+  assert.match(stufe, /if \(!mitGrenzen\) \{\s*ausfuehrenGesichert\(nr, false\);\s*return;\s*\}/, "mit Verein sofort, ohne Rundreise");
+  assert.match(stufe, /ladeBestandAktion\(art\)/, "ohne Verein der Stand frisch, nicht von der Seite übernommen");
+  // W1: Die Aktion läuft in einer Transition; im Erfolg bleibt sie offen, bis die Zielseite steht.
+  assert.match(stufe, /const \[fuehrtAus, startAusfuehren\] = useTransition\(\);/);
+  assert.match(stufe, /startAusfuehren\(async \(\) => \{\s*let r: StufenFehler;\s*try \{\s*r = await ausfuehren\(\);/);
+  assert.match(stufe, /const laeuft = fragt \|\| fuehrtAus;/);
+  assert.match(stufe, /function starte\(\) \{\s*if \(belegt\.current \|\| laeuft \|\| offen\) return;/);
+  assert.match(stufe, /if \(belegt\.current \|\| laeuft\) return;\s*ausfuehrenGesichert\(\+\+lauf\.current, true\);/);
+  assert.match(stufe, /function schliessen\(\) \{\s*if \(belegt\.current \|\| fuehrtAus\) return;/);
+  assert.match(stufe, /if \(nr !== lauf\.current\) return;/, "überholte Antworten werden verworfen");
+  // W5: Die Abweisung an der Grenze erkennt die Stufe am Merkmal, nie am Text, und zeigt die Form der vollen Grenze.
+  assert.match(stufe, /if \(r\.grenze\) setOffen\(\{ grenze: grenzeAusAbweisung\(r\.grenze\), fehler: null, abgewiesen: true \}\);/);
+  assert.match(stufe, /const voll = grenze !== null && \(offen\?\.abgewiesen \|\| \(istVoll\(grenze\) && offen\?\.fehler == null\)\);/);
+  assert.match(stufe, /voll \? \(\s*<Button type="button" variant="outlined" onClick=\{schliessen\}>\s*Schliessen/);
+  assert.match(stufe, /<BestandAnzeige art=\{art\} grenze=\{grenze\} variante="meldung" \/>/, "mit dem Weg zur eigenen Übersicht");
+  assert.ok(!/endsWith|KONTO_GRENZE_SCHLUSS/.test(stufe), "keine Erkennung am Text");
+  assert.match(stufe, /else melde\(r\.error\);/);
+  // Die Action liest nur, prüft ihre Eingabe und gehört dem angemeldeten Konto.
+  const aktion = lies("lib/actions/konto-bestand.ts");
+  assert.match(aktion, /art !== "uebungen" && art !== "trainings"/);
+  assert.match(aktion, /angemeldet\(\)/);
+  assert.ok(!/\.insert\(|\.update\(|\.delete\(|\.rpc\(/.test(aktion), "nur lesen");
+});
+
+pruefe("Konto ohne Verein (#588 PC 2): Wer die Zugehörigkeit oder den Bestand ändert, lädt die Ansichten neu — Anlegen, Kopieren, Löschen, Aufnahme, Austritt, Auflösen, Verein löschen", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  /** Der Rumpf einer exportierten Funktion bis zur nächsten. */
+  const rumpf = (text: string, name: string): string => {
+    const i = text.search(new RegExp(`export async function ${name}\\b`));
+    assert.ok(i >= 0, `${name} nicht gefunden`);
+    const rest = text.slice(i + 1);
+    const j = rest.search(/\n(?:\/\*\*|export )/);
+    return j < 0 ? rest : rest.slice(0, j);
+  };
+  // Wer den Bestand ändert, verwirft die Liste, die ihn zeigt.
+  const exercises = lies("lib/actions/exercises.ts");
+  for (const name of ["createExercise", "kopiereUebung", "deleteExercise"]) assert.match(rumpf(exercises, name), /revalidateLists\(\)/, name);
+  assert.match(rumpf(lies("lib/actions/fassung.ts"), "kopiereInBibliothek"), /revalidatePath\("\/"\)/);
+  const trainings = lies("lib/actions/trainings.ts");
+  for (const name of ["createTraining", "deleteTraining"]) assert.match(rumpf(trainings, name), /revalidatePath\("\/trainings"\)/, name);
+  assert.match(rumpf(lies("lib/actions/team-trainings.ts"), "uebernimmTraining"), /revalidatePath\("\/trainings"\)/);
+  // Wer die eigene Zugehörigkeit ändert, rendert das Wurzel-Layout neu (Leiste, Wechsler) und verwirft den Router-Cache,
+  // damit `/` und `/trainings` bei der nächsten Navigation den Stand ohne oder mit Grenze zeigen.
+  const verein = lies("lib/actions/verein.ts");
+  for (const name of [
+    "gruendeVereinAktion",
+    "loeseTeamAufAktion",
+    "loescheVereinAktion",
+    "nimmMichInsTeamAktion",
+    "entferneAusTeamAktion",
+    "nimmInVerwaltungAufAktion",
+    "entferneAusVerwaltungAktion",
+  ])
+    assert.match(rumpf(verein, name), /revalidiereMitgliedschaften\(\)/, name);
+  assert.match(rumpf(lies("lib/actions/teams.ts"), "entferneMitglied"), /revalidiereMitgliedschaften\(\)/, "Austritt aus dem Team");
+  assert.match(lies("lib/actions/auth.ts"), /revalidiereVerein\(\);\s*revalidiereMitgliedschaften\(\);/, "Konto löschen mit Verein");
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

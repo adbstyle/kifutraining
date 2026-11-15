@@ -83,7 +83,7 @@ export async function terminSpielerVon(
 ): Promise<KernErgebnis<TerminSpieler>> {
   const [teilnehmer, team] = await Promise.all([
     supabase.rpc("termin_teilnehmer", { p_termin: t.id }),
-    supabase.from("spieler").select("id", { count: "exact", head: true }).eq("team_id", t.team_id),
+    supabase.from("team_spieler").select("spieler_id", { count: "exact", head: true }).eq("team_id", t.team_id),
   ]);
   const { data, error } = teilnehmer;
   if (error) return ausDbFehler(error);
@@ -95,6 +95,7 @@ export async function terminSpielerVon(
         nachname: string | null;
         abgemeldet: boolean;
         ehemalig: boolean;
+        nicht_mehr_im_team: boolean;
         kader: string[] | null;
         gewechselt_am: string | null;
         nachgetragen: boolean;
@@ -106,6 +107,7 @@ export async function terminSpielerVon(
       nachname: r.nachname,
       abgemeldet: r.abgemeldet,
       ehemalig: r.ehemalig,
+      nichtMehrImTeam: r.nicht_mehr_im_team,
       kader: r.kader ?? [],
       gewechseltAm: r.gewechselt_am,
       // Ein ausgefallener Termin zeigt keine Nachträge, auch der KI nicht (#475 AK 11).
@@ -156,7 +158,7 @@ type Antwort =
   | { status: "abgewiesen"; grund: AbmeldeGrund; stand?: AbmeldeStand };
 
 /** Eine Spieler:in für einen Termin ab- oder wieder anmelden (AK 1, 2, 9).
- *  Bei einer Probe-Spieler:in dazu ihr Stand (#555); meldet ein Mitglied
+ *  Bei einer schnuppernden Spieler:in dazu ihr Stand (#555); meldet ein Mitglied
  *  oder die KI sie über die Anzahl hinaus an, trägt `hinweis` den Satz dazu
  *  (Zusatzentscheid PO 2026-10-29) — an Oberfläche und KI wortgleich. */
 export async function setzeAbmeldung(

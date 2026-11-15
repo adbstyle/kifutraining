@@ -9,6 +9,7 @@ import { setzeAbmeldungAktion, setzeAnwesenheitAktion } from "@/lib/actions/abme
 import {
   ABMELDUNG_TEXT,
   EHEMALIGE_SPIELERIN,
+  NICHT_MEHR_IM_TEAM,
   TEILNAHME_TEXT,
   istAnwesend,
   spielerName,
@@ -103,7 +104,7 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
         });
         melde(r.error);
       } else {
-        // Eine Probe-Spieler:in über der Anzahl (#555, Zusatzentscheid).
+        // Eine schnuppernde Spieler:in über der Anzahl (#555, Zusatzentscheid).
         const hinweis = "hinweis" in r ? (r.hinweis as string | null) : null;
         if (hinweis) melde(hinweis);
       }
@@ -164,7 +165,11 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
           const eben = !nachtragen && s.spielerId !== null && s.spielerId in lokal && lokal[s.spielerId] !== gespeichert(s);
           const seit = eben ? "gerade eben" : s.gewechseltAm && seitWann(s.gewechseltAm, daten.gelesenAm);
           // Ab Beginn steht unter dem Namen, was vom Angemeldetsein abweicht.
-          const zeile2 = [...(nachtragen && status !== "angemeldet" ? [TEILNAHME_TEXT[status]] : []), ...s.kader].join(" · ");
+          const zeile2 = [
+            ...(nachtragen && status !== "angemeldet" ? [TEILNAHME_TEXT[status]] : []),
+            ...(s.nichtMehrImTeam ? [NICHT_MEHR_IM_TEAM] : []),
+            ...s.kader,
+          ].join(" · ");
           return (
             <li key={s.spielerId ?? `ehemalig-${i}`} className="state flex min-h-12 items-center gap-3 px-4 py-1.5">
               <span className="min-w-0 flex-1">

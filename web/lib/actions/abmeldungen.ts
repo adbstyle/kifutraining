@@ -20,7 +20,7 @@ export async function setzeAbmeldungAktion(
   const r = await setzeAbmeldung(a.supabase, a.userId, e);
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(teamId);
-  // Eine Probe-Spieler:in über der Anzahl (#555, Zusatzentscheid): ein Hinweis.
+  // Eine schnuppernde Spieler:in über der Anzahl (#555, Zusatzentscheid): ein Hinweis.
   return { ok: true, hinweis: r.wert.hinweis };
 }
 

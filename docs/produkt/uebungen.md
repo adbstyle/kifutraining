@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-10-30. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-11-15. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -53,7 +53,7 @@ lässt sich zusätzlich seine Grösse in Metern angeben, denn anders als Klein- 
 es nicht, wie gross abzustecken ist — freiwillig wie im Juniorenfussball, aber nur ganz. Wechselt
 der Feldtyp auf Kleinfeld oder Grossfeld, entfallen die Meter. Jede Manual-Übung trägt einen
 Feldtyp, so wie ihn die Abbildung im Manual erkennen lässt. Stehen sich zwei grosse Tore gegenüber,
-ist es Grossfeld. Kleinfeld ist es, wenn sich Minitore gegenüberstehen oder die Kinder 3:3 in einem
+ist es Grossfeld. Kleinfeld ist es, wenn sich Minitore gegenüberstehen oder die Spieler:innen 3:3 in einem
 abgegrenzten Feld spielen, dem Kleinfeld-Format des Manuals. Zeigt das Manual keins von beidem,
 gilt das freie Feld, und zwar ohne Meterangabe. Klein- und Grossfeld selbst tragen keine Masse;
 ein verbundener KI-Assistent kennt aber ihre Richtmasse je Alterskategorie nach den
@@ -266,9 +266,9 @@ sagt, welches gemeint ist. Der Kinderfussball-Hauptteil steht dort nicht als Gan
 seine drei Hauptteilkategorien: Gewählt wird in beiden Welten die feinste Ebene, die das jeweilige
 Lehrmittel kennt, und einen eigenen Hauptteilkategorie-Filter gibt es darum nicht. Weiter gefiltert
 wird nach Alterskategorie, Feldtyp, Erscheinungsform und Übungstyp, jeweils mit Mehrfachauswahl,
-sowie nach der Zahl der verfügbaren Kinder — dann erscheinen alle Übungen, die mit mindestens so
+sowie mit „Verfügbare Kinder" nach der Zahl der verfügbaren Spieler:innen — dann erscheinen alle Übungen, die mit mindestens so
 vielen durchführbar sind. Jede dieser Dimensionen ist ein Filterknopf, der zählt, wie viele Werte
-gewählt sind, die Zahl der verfügbaren Kinder ein Knopf mit dem gesetzten Wert (siehe
+gewählt sind, „Verfügbare Kinder" ein Knopf mit dem gesetzten Wert (siehe
 [Navigation](navigation.md#bedienung)). Auch diese Filter beschriften ihre Werte nach Altersstufe: die
 Erscheinungsformen beider Manuals, die Alterskategorien G bis A, und ebenso die zwei Filter, die
 ganz einer Altersstufe gehören — der Feldtyp dem Kinderfussball, der Übungstyp dem
@@ -380,6 +380,38 @@ Gedruckt wird mit den Bordmitteln des Geräts, auf dem Rechner wie auf dem Telef
 als PDF übernimmt der Druckdialog. Eine eigene PDF-Datei erzeugt die Anwendung nicht, und
 mehrere Übungen in einem Vorgang lassen sich nicht drucken.
 
+## Konten ohne Verein
+
+Ein Konto ohne Verein (siehe [Verein](verein.md#rollen-nach-ort)) besitzt höchstens 50 eigene
+Übungen. Es zählen alle eigenen Übungen: Entwürfe wie öffentliche, selbst erfasste wie kopierte,
+auch eine aus einem Training in die Bibliothek kopierte Vorlage. Nicht zählen der Manual-Bestand,
+die Übungen anderer und die Übungen in einem Training, denn diese Fassungen gehören zum Training
+(siehe [Trainings](trainings.md#jede-übung-im-training-ist-eine-eigene-fassung)). Eine Übung in
+ein Training zu übernehmen bleibt darum immer frei.
+
+Den Stand zeigt „Meine Übungen" oben über der Liste, etwa „12 von 50 Übungen", und ab der Grenze
+mit der Plakette „Nichts mehr frei". Er nennt immer den ganzen Bestand, auch wenn ein Filter die
+Liste kürzt. Liegt der Bestand über der Grenze — etwa nach dem Löschen des eigenen Vereins —,
+steht nur die Zahl, etwa „62 Übungen (höchstens 50)". Die Seite „Neue Übung" zeigt denselben
+Stand über der Maske; an der Grenze steht statt der Maske die Meldung „Nichts mehr frei: 50 von 50
+Übungen" mit „Ohne Verein besitzt du höchstens 50 Übungen. Lösche eine, um Platz zu schaffen. In
+einem Verein gilt die Grenze nicht." und dem Weg „Zu meinen Übungen". Über der Grenze nennt der
+Satz, wie viele weg müssen, etwa „Lösche 13 Übungen, um Platz für eine neue zu schaffen."
+
+Kopieren — aus dem Bestand wie aus einem Training mit „In meine Bibliothek kopieren" — geht für ein
+Konto ohne Verein über einen Dialog, der den Stand frisch nennt, etwa „Du besitzt 12 von 50
+Übungen.", und dann den Knopf der Aktion anbietet; an der Grenze steht dort dieselbe Meldung wie
+auf „Neue Übung", und der Dialog bietet nur „Schliessen". Wird beim Speichern trotzdem
+abgewiesen, weil inzwischen anderswo eine Übung entstanden ist, zeigt die Anwendung dieselbe
+Meldung; eingegebene Angaben bleiben stehen.
+
+Was schon besteht, bleibt, auch über der Grenze: Ändern, öffentlich schalten, zurückziehen,
+überführen und löschen gehen weiter; die Grenze hält nur Neues zurück. In einem Verein gilt sie
+nicht — ab der Aufnahme in ein Team oder eine Vereinsverwaltung sofort —, und Konten in einem
+Verein sehen weder Stand noch Dialog. In der Seitenleiste steht der Stand nicht. Ein verbundener
+KI-Assistent bekommt dieselbe Grenze und dieselbe Auskunft (siehe
+[Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
+
 ## Bekannte Grenzen
 
 Für den Juniorenfussball gibt es keinen kuratierten Bestand. Wer dort plant, erfasst seine
@@ -414,8 +446,8 @@ Farbe wählt, wer zeichnet, und die Anwendung prüft sie nicht gegen die Figuren
 
 Die Material-Liste zählt, was gezeichnet ist, nicht wofür. Vier Pylonen bleiben vier Pylonen,
 auch wenn sie ein Tor bilden, und Teller am Feldrand zählen wie Teller im Feld. Die Mengen
-folgen dem Diagramm, nicht der Zahl der Kinder, die tatsächlich kommen. Weil die Manual-Diagramme
-die Kinder fast durchwegs in zwei Farben zeichnen, schlägt der Vorschlag dort in aller Regel
+folgen dem Diagramm, nicht der Zahl der Spieler:innen, die tatsächlich kommen. Weil die Manual-Diagramme
+die Spieler:innen fast durchwegs in zwei Farben zeichnen, schlägt der Vorschlag dort in aller Regel
 Überziehleibchen für beide Farben vor; die Anwendung nimmt nicht an, dass ein Team in eigener
 Kleidung spielt. Eigene Material-Arten ausserhalb des Diagramm-Vorrats gibt es in der Liste
 nicht — dafür ist die Ergänzung da. Die Spielfeldgrösse leitet die Anwendung nie aus dem

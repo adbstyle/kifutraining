@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CalendarX2 } from "lucide-react";
 import { ExternerLink, FilterChip, Kalenderblatt, KuerzbarerText, Leerzustand, Lozenge, SectionMessage, Switch, TrainingsTreffpunkt } from "@/components/ui";
 import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
@@ -17,8 +17,15 @@ import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import type { LinkTermin } from "@/lib/privater-link";
 import {
   LINK_EINGRENZUNG,
+  angabenSehenText,
+  LINK_GILT_NICHT_TITEL,
+  LINK_KEINE_TERMINE_TITEL,
   linkEingrenzungLeer,
   linkEingrenzungStand,
+  linkGiltNichtText,
+  linkKeineTermineText,
+  linkKopfTitel,
+  linkOhneTeamEltern,
   spielerName,
   spielerzahlKurz,
   verfallenHinweis,
@@ -28,7 +35,8 @@ import { useLokalerStand } from "@/lib/use-lokaler-stand";
 import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaehler, type ProbeStand } from "@/lib/probe";
 
 /* Was die Spielervertretung über den privaten Link sieht (#436 AK 5–9): ihre
-   Spieler:in, das Team und die anstehenden Termine. Angemeldet ist der
+   Spieler:in, ihre Teams und die anstehenden Termine aller Teams — jeder
+   Termin nennt sein Team, auch bei nur einem (#583 AK 1–3). Angemeldet ist der
    Normalfall — man meldet nur ab, wenn sie nicht kann, und bis zum Beginn
    wieder an. Ein begonnener Termin bleibt bis Ende des Tages stehen,
    gesperrt; ein ausgefallener ist neutral gesperrt. Wurde ein Termin verlegt,
@@ -44,28 +52,32 @@ import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaeh
    (#472): «angemeldet» und «abgemeldet» meinen auf dieser Seite nur die
    eigene Spieler:in.
 
-   Im Probe-Modus (#555 AK 9–12) ist es umgekehrt: Die Spieler:in ist an
+   Schnuppert sie (#555 AK 9–12), ist es umgekehrt: Die Spieler:in ist an
    Trainings zuerst nicht angemeldet, Spiele stehen keine da. Der Kopf nennt,
-   wie viele Probetrainings noch möglich sind, mit einem Balken je
-   Probetraining (besucht gefüllt, angemeldet umrandet). Ist die Anzahl
+   wie viele Schnuppertrainings noch möglich sind, mit einem Balken je
+   Schnuppertraining (besucht gefüllt, angemeldet umrandet). Ist die Anzahl
    erreicht, sagt das eine Meldung über den Trainings, und die Schalter der
    übrigen sind gesperrt, bis ein Platz frei wird. Das Info-Schreiben des
    Teams (#556) steht davor, gekürzt mit «Ganz lesen» — man liest es, bevor
    man anmeldet (AK 4); Webadressen darin öffnen sich (AK 5). */
 export function ElternAnsicht({
   token,
-  team,
+  teams,
   spieler,
+  verein,
   probe,
   probeInfo,
   termine,
 }: {
   token: string;
-  team: string;
+  /** Die Teams der Spieler:in, alphabetisch, auch ohne Termine; leer ohne Team. */
+  teams: string[];
   spieler: { vorname: string; nachname: string };
-  /** Im Probe-Modus ihr Stand, sonst `null`. */
+  /** Der Verein, der für die Daten der Spieler:in verantwortlich ist (#587 PC 2). */
+  verein: string;
+  /** Schnuppert sie: ihr Stand, sonst `null`. */
   probe: ProbeStand | null;
-  /** Das Info-Schreiben des Teams, nur im Probe-Modus (#556). */
+  /** Das Info-Schreiben des Teams, nur beim Schnuppern (#556). */
   probeInfo: string | null;
   termine: LinkTermin[];
 }) {
@@ -75,9 +87,21 @@ export function ElternAnsicht({
   const meldungen = useLokalerStand<Meldung>(termine);
   const pending = abmeldungen.pending || meldungen.pending;
   const [fehler, setFehler] = useState<{ terminId: string; text: string } | null>(null);
+  // Gilt der Termin nicht mehr für die Spieler:in (#583 AK 7), zeigt die neu
+  // geladene Liste ihn nicht mehr: Die Meldung hält Art und Tag selbst fest und
+  // bleibt stehen, bis neu gemeldet wird.
+  const [giltNicht, setGiltNicht] = useState<{ art: LinkTermin["art"]; datum: string } | null>(null);
+  // Der gedrückte Schalter verschwindet mit seiner Karte: Der Fokus geht auf
+  // die Meldung, statt auf die Seite zu fallen (Tastatur, Vorlesehilfen).
+  const giltNichtRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (giltNicht) giltNichtRef.current?.focus();
+  }, [giltNicht]);
   // Ein inzwischen erneuerter Link: Die Seite lädt neu und sagt es.
-  const zeigeFehler = (terminId: string) => (r: { ungueltig: true } | { ungueltig?: false; error: string }) => {
-    if (!r.ungueltig) setFehler({ terminId, text: r.error });
+  const zeigeFehler = (t: LinkTermin) => (r: { ungueltig: true } | { ungueltig?: false; giltNicht?: boolean; error: string }) => {
+    if (r.ungueltig) return;
+    if (r.giltNicht) setGiltNicht({ art: t.art, datum: t.datum });
+    else setFehler({ terminId: t.id, text: r.error });
   };
 
   const name = spielerName(spieler);
@@ -85,10 +109,10 @@ export function ElternAnsicht({
   // ein Klick auf die gewählte hebt sie auf — wie «Meine Termine» im Team.
   // Bewusst nur im Zustand der Seite: Neu öffnen oder neu laden zeigt wieder
   // alles (PC 1), ein Melden lädt die Daten neu und lässt die Wahl stehen
-  // (AK 7). Im Probe-Modus stehen keine Spiele da, also keine Wahl (AK 8).
+  // (AK 7). Beim Schnuppern stehen keine Spiele da, also keine Wahl (AK 8).
   const [art, setArt] = useState<LinkTermin["art"] | null>(null);
   const eingrenzbar = !probe && termine.length > 0;
-  // Verschwinden die Chips (Probe-Modus, keine Termine mehr), fällt die Wahl
+  // Verschwinden die Chips (Schnuppern, keine Termine mehr), fällt die Wahl
   // weg, statt verdeckt weiterzuleben und beim Wiedererscheinen still zu gelten.
   if (!eingrenzbar && art) setArt(null);
   const sichtbar = art ? termine.filter((t) => t.art === art) : termine;
@@ -100,7 +124,7 @@ export function ElternAnsicht({
   const begonnen = sichtbar.filter((t) => t.begonnen);
   const uebrige = sichtbar.filter((t) => !t.begonnen);
 
-  // Der Probe-Stand folgt den lokalen Schaltern, bevor der Server antwortet.
+  // Der Schnupper-Stand folgt den lokalen Schaltern, bevor der Server antwortet.
   const probeLokal = probe && {
     ...probe,
     angemeldet:
@@ -115,22 +139,24 @@ export function ElternAnsicht({
 
   function umlegen(t: LinkTermin, an: boolean) {
     setFehler(null);
+    setGiltNicht(null);
     abmeldungen.aendere(
       t.id,
       !an,
       () => meldeUeberLinkAktion(token, { terminId: t.id, abgemeldet: !an, gesehen: { datum: t.datum, beginn: t.beginn } }),
-      zeigeFehler(t.id),
+      zeigeFehler(t),
     );
   }
 
   /** Ein Spiel melden (#463 AK 3): bis zur Meldefrist, sonst bis zum Anpfiff. */
   function melden(t: LinkTermin, an: boolean) {
     setFehler(null);
+    setGiltNicht(null);
     meldungen.aendere(
       t.id,
       an ? "angemeldet" : "abgemeldet",
       () => meldeSpielUeberLinkAktion(token, { terminId: t.id, angemeldet: an, gesehen: { datum: t.datum, beginn: t.beginn } }),
-      zeigeFehler(t.id),
+      zeigeFehler(t),
     );
   }
 
@@ -168,7 +194,7 @@ export function ElternAnsicht({
         : { quelle: "liste" as const, angemeldet: t.angemeldet + Number(t.abgemeldet) - Number(ab), gesamt: t.gesamt, anwesend: null }; // Eltern sehen den Stand bei Beginn (#475 AK 16).
     // «Fällt aus» sagt schon die Lozenge; ausgefallen bleibt der Ort stehen (#530 AK 5).
     const zweite = !t.ausgefallen && t.begonnen ? "Hat begonnen · nicht mehr änderbar" : null;
-    // Probe: Ist die Anzahl erreicht, lässt sich nur noch abmelden (AK 10, 12).
+    // Schnuppern: Ist die Anzahl erreicht, lässt sich nur noch abmelden (AK 10, 12).
     const vergeben = voll && ab && !t.ausgefallen && !t.begonnen;
     return { ab, zweite, zahl, probe: !!probe, vergeben };
   }
@@ -188,19 +214,29 @@ export function ElternAnsicht({
   return (
     <>
       <header className="flex flex-col gap-0.5 border-b border-linie px-4 pb-4 pt-6">
-        <p className="type-body-small text-on-surface-mittel">{team}</p>
         {/* Das Kalender-Abo (#507 AK 1) gleich hinter dem Namen: Es ist der
             Kalender dieser Spieler:in (PO 2026-10-24). */}
         <div className="flex items-center gap-1">
-          <h1 className="min-w-0 type-headline-small text-on-surface">{name}</h1>
+          <h1 className="min-w-0 type-headline-small text-on-surface">{linkKopfTitel(name)}</h1>
           <AboKnopf token={token} />
         </div>
+        {/* Die Teams alphabetisch, auch ohne Termine (#583 AK 3). */}
+        {teams.length > 0 && (
+          <ul aria-label="Teams" className="mt-1 flex flex-wrap gap-1">
+            {/* Gleichnamige Teams eines Vereins sind im Altbestand möglich: Schlüssel mit Stelle. */}
+            {teams.map((t, i) => (
+              <li key={`${i}:${t}`}>
+                <Lozenge appearance="neutral">{t}</Lozenge>
+              </li>
+            ))}
+          </ul>
+        )}
         {probeLokal ? (
           <>
             <p className="type-body-medium text-on-surface-mittel">{linkProbeKopf(spieler.vorname)}</p>
             <ProbeZaehler stand={probeLokal} />
           </>
-        ) : (
+        ) : teams.length === 0 ? null : (
           <p className="type-body-medium text-on-surface-mittel">
             {name} ist für jedes Training zuerst angemeldet. Kann {spieler.vorname} nicht, melde ab - und bis zum
             Beginn wieder an. Für ein Spiel ist {spieler.vorname} erst angemeldet, wenn du anmeldest.
@@ -240,10 +276,19 @@ export function ElternAnsicht({
           </SectionMessage>
         </div>
       )}
+      {giltNicht && (
+        <div ref={giltNichtRef} tabIndex={-1} className="px-4 pt-4 focus:outline-none">
+          <SectionMessage appearance="error">
+            <strong className="block font-semibold">{LINK_GILT_NICHT_TITEL}</strong>
+            {linkGiltNichtText(giltNicht.art, giltNicht.datum, spieler.vorname)}
+          </SectionMessage>
+        </div>
+      )}
       {termine.length === 0 ? (
         <div className="px-4 py-6">
-          <Leerzustand icon={CalendarX2} titel="Keine anstehenden Termine" dicht>
-            Sobald das Team Termine plant, stehen sie hier.
+          <Leerzustand icon={CalendarX2} titel={LINK_KEINE_TERMINE_TITEL} dicht>
+            {/* Ohne Team bleibt der Link gültig (#583 AK 5). */}
+            {teams.length === 0 ? linkOhneTeamEltern(spieler.vorname) : linkKeineTermineText(spieler.vorname)}
           </Leerzustand>
         </div>
       ) : art && sichtbar.length === 0 ? (
@@ -286,6 +331,8 @@ export function ElternAnsicht({
           ))}
         </div>
       )}
+      {/* Wer verantwortlich ist und wer die Angaben sieht (Story #580 PC 4, #587 PC 2), schlicht unter den Terminen. */}
+      <p className="type-body-small px-4 pb-6 text-on-surface-mittel">{angabenSehenText(verein, spieler.vorname)}</p>
     </>
   );
 }
@@ -296,9 +343,9 @@ type KarteProps = {
   /** Unter dem Ort: begonnen und nicht mehr änderbar. */
   zweite: string | null;
   zahl: Spielerzahl | null;
-  /** Im Probe-Modus: zuerst nicht angemeldet (#555). */
+  /** Beim Schnuppern: zuerst nicht angemeldet (#555). */
   probe: boolean;
-  /** Probe: Die Anzahl ist erreicht, anmelden geht hier nicht (AK 12). */
+  /** Schnuppern: Die Anzahl ist erreicht, anmelden geht hier nicht (AK 12). */
   vergeben: boolean;
   name: string;
   pending: boolean;
@@ -311,7 +358,7 @@ type KarteProps = {
 function trainingStatus(t: LinkTermin, ab: boolean, probe: boolean) {
   if (t.ausgefallen) return TERMIN_STATUS.faelltAus;
   if (!ab) return MELDE_STATUS.angemeldet;
-  // Probe: nicht angemeldet ist der Ausgangsstand, kein Absagen (#555).
+  // Schnuppern: nicht angemeldet ist der Ausgangsstand, kein Absagen (#555).
   return probe ? { wort: PROBE_TEXT.nichtAngemeldet, appearance: "neutral" as const } : MELDE_STATUS.abgemeldet;
 }
 
@@ -320,7 +367,7 @@ function trainingStatus(t: LinkTermin, ab: boolean, probe: boolean) {
    Schalter. Abgemeldet oder ausgefallen tritt die Karte gedämpft zurück. */
 function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUmlegen, hinweise }: KarteProps) {
   const status = trainingStatus(t, ab, probe);
-  // Probe: nicht angemeldet ist der Ausgangsstand, keine Absage - die Karte bleibt.
+  // Schnuppern: nicht angemeldet ist der Ausgangsstand, keine Absage - die Karte bleibt.
   const gedaempft = t.ausgefallen || (ab && !probe);
   return (
     <li className={cn("flex flex-col gap-2 rounded-flaeche px-3 py-3", gedaempft ? "kontur border-linie" : "bg-elev-01")}>
@@ -331,6 +378,8 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
           <span className={cn("type-body-medium", gedaempft ? "text-on-surface-mittel" : "text-on-surface")}>
             {t.beginn}–{t.ende}
           </span>
+          {/* Jeder Termin nennt sein Team (#583 AK 2). */}
+          <span className="type-body-small text-on-surface-mittel">{t.team}</span>
           {/* Der Ort steht ganz und auch nach Beginn (#534 AK 1, 2); mit
               Kartenlink als Link auf einer Zeile (#533 AK 6, 10, 11; PC 5). */}
           {t.ort &&
@@ -360,7 +409,7 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
         )}
       </div>
       {/* #561 AK 12: der Treffpunkt wie bei einem Spiel — nicht abgemeldet,
-          ausgefallen oder ab Beginn; nicht angemeldet auf Probe sieht ihn. */}
+          ausgefallen oder ab Beginn; nicht angemeldet beim Schnuppern sieht ihn. */}
       {!t.begonnen && !gedaempft && (
         <TrainingsTreffpunkt treffpunkt={t.treffpunkt ?? null} className="type-body-medium text-on-surface" />
       )}
@@ -391,8 +440,8 @@ function TeamZeile({ t, zahl, zusatz }: { t: LinkTermin; zahl: Spielerzahl | nul
   );
 }
 
-/** Wie viele Probetrainings noch möglich sind (#555 AK 11; PC 13): ein Balken
- *  je Probetraining — besucht gefüllt, künftig angemeldet umrandet, frei leer. */
+/** Wie viele Schnuppertrainings noch möglich sind (#555 AK 11; PC 13): ein Balken
+ *  je Schnuppertraining — besucht gefüllt, künftig angemeldet umrandet, frei leer. */
 function ProbeZaehler({ stand }: { stand: ProbeStand }) {
   const n = stand.anzahl ?? 0;
   return (

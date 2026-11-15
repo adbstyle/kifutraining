@@ -1,11 +1,15 @@
 # Release-Texte
 
-Stand: 2026-10-06 (#411)
+Stand: 2026-11-15 (#575)
 
 Jeder Merge nach `main` ist ein Release und bekommt einen GitHub-Release. Sein Titel und
 Text erscheinen unverändert in KiFu unter «Versionen» — Trainerinnen und Trainer lesen ihn
 also wörtlich. Darum gelten für jeden neuen Release die Regeln unten. Die Vorlage dazu ist
 [`vorlage.md`](vorlage.md). Ältere Release-Texte bleiben, wie sie sind.
+
+**Ablage:** Ab 1.48.0 liegt der Text im Repo als `docs/releases/<version>-<thema>.md`
+(`1.48.0-vereine.md`), ohne Titelzeile; der Titel steht nur im Befehl unten. Frühere Texte
+standen nur im GitHub-Release.
 
 ## Titel
 
@@ -82,7 +86,7 @@ Wie die Texte der Anwendung:
 3. Erst nach bestätigtem Merge den Release anlegen, den Text aus einer Datei:
 
    ```bash
-   gh release create vX.Y.Z --target main --title "KiFu X.Y.Z - Thema" --notes-file release.md
+   gh release create vX.Y.Z --target main --title "KiFu X.Y.Z - Thema" --notes-file docs/releases/X.Y.Z-thema.md
    ```
 
    `--target` braucht den Branch-Namen, keinen SHA.

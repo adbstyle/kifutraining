@@ -16,8 +16,9 @@ import { useBlurSpeichern } from "@/lib/use-blur-speichern";
    Bildschirmrand, ein gelungenes Speichern ebenfalls.
 
    Der Hinweis hinter dem ⓘ sagt, wer den Namen sieht — auch an öffentlichen
-   Vorlagen — und wer die E-Mail-Adresse: nur die Mitglieder der eigenen
-   Teams (#425). Er nennt auch die Spielervertretungen: Sie sehen den Namen
+   Vorlagen — und wer die E-Mail-Adresse: die Vereinsverwaltung bei jeder
+   Trainer:in des Vereins, die Mitglieder der eigenen Teams im Team (#425,
+   #581). Er nennt auch die Spielervertretungen: Sie sehen den Namen
    der Verantwortlichen eines Termins am privaten Link (#523 AK 6). */
 export function AnzeigenameForm({ aktuell }: { aktuell: string }) {
   const router = useRouter();
@@ -61,7 +62,7 @@ export function AnzeigenameForm({ aktuell }: { aktuell: string }) {
           setEntwurf(gilt);
         }
       }}
-      info="Für Team-Mitglieder und an deinen veröffentlichten Vorlagen öffentlich sichtbar. Bist du für einen Termin verantwortlich, sehen ihn auch die Spielervertretungen am privaten Link. Deine E-Mail-Adresse sehen nur die Mitglieder deiner Teams."
+      info="Für Team-Mitglieder und an deinen veröffentlichten Vorlagen öffentlich sichtbar. Bist du für einen Termin verantwortlich, sehen ihn auch die Spielervertretungen am privaten Link. Die Vereinsverwaltung sieht die E-Mail-Adresse jeder Trainer:in des Vereins, die Mitglieder deiner Teams sehen sie im Team."
     />
   );
 }

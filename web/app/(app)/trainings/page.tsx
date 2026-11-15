@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { ClipboardList, SearchX } from "lucide-react";
-import { ButtonLink, Leerzustand } from "@/components/ui";
+import { BestandAnzeige, ButtonLink, Leerzustand } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
 import { TrainingCard } from "@/components/training/TrainingCard";
 import { TrainingFilterBar } from "@/components/training/TrainingFilterBar";
 import { getTrainingPool } from "@/lib/queries/trainings";
 import { createClient } from "@/lib/supabase/server";
+import { getMeineGrenzen } from "@/lib/queries/verein";
 import { formatDate } from "@/lib/training";
 import { kategorienSlugs } from "@/lib/vocab";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
@@ -39,6 +40,9 @@ export default async function TrainingsPage({
   const filtersActive = !!q || stufen.length > 0;
 
   const trainings = await getTrainingPool({ q, stufen, mine });
+  // Nur in «Meine Trainings» und nur für ein Konto ohne Verein (#588 AK 5, PC 3):
+  // der Stand von der Datenebene, nie aus der gezählten Liste (Filter).
+  const grenzen = mine ? await getMeineGrenzen() : null;
 
   return (
     <Seitenrahmen
@@ -57,6 +61,8 @@ export default async function TrainingsPage({
       {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
       <h1 className="sr-only">{mine ? "Meine Trainings" : "Trainings"}</h1>
       {sp.deleted && <Flash message="Training gelöscht." param="deleted" />}
+
+      {grenzen && <BestandAnzeige art="trainings" grenze={grenzen.trainings} className="mb-4" />}
 
       <TrainingFilterBar q={q} stufen={stufen} mine={mine} showMine={!!user} />
 

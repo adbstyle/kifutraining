@@ -26,7 +26,14 @@ import {
 } from "./regeln";
 
 /** Antwort einer Dialog-RPC, wie die Datenbank sie liefert. */
-type RpcAntwort = { status: string; dialog?: string; nachricht?: number; vorschlag_bei?: number | null };
+type RpcAntwort = {
+  status: string;
+  dialog?: string;
+  nachricht?: number;
+  vorschlag_bei?: number | null;
+  /** Nur am privaten Link: Die Spieler:in hat kein Team (#583 AK 19). */
+  ohne_team?: boolean;
+};
 
 /** Die Verbindung eines Zugangs zur Datenbank. */
 export type Weg = {
@@ -143,6 +150,9 @@ export async function sendeNachricht(weg: Weg, e: NachrichtEingabe): Promise<Nac
   if (!kiVerfuegbar()) return nichtMoeglich;
 
   let dialog = e.dialog;
+  // Ob die Spieler:in hinter dem Link kein Team hat, sagt die Datenbank — beim
+  // Beginnen und bei jeder Nachricht, nie der Browser (#583 AK 19).
+  let ohneTeam: boolean | undefined;
   if (dialog === null) {
     if (verlauf.data.length > 0) return nichtMoeglich;
     const b = await weg.beginnen();
@@ -150,10 +160,12 @@ export async function sendeNachricht(weg: Weg, e: NachrichtEingabe): Promise<Nac
     if (b?.status === "ungueltig") return { ok: false, error: LINK_UNGUELTIG, ende: true };
     if (b?.status !== "ok" || !b.dialog) return nichtMoeglich;
     dialog = b.dialog;
+    ohneTeam = b.ohne_team;
   }
   const z = await weg.zaehlen(dialog);
   if (z?.status === "ungueltig") return { ok: false, error: LINK_UNGUELTIG, ende: true };
   if (z?.status !== "ok" || typeof z.nachricht !== "number") return nichtMoeglich;
+  ohneTeam = z.ohne_team ?? ohneTeam;
   // Der Browser kann den Verlauf nicht verlängern, ohne dass die Datenbank
   // mitzählt: Jede Nachricht der Person darin ist schon gezählt.
   if (verlauf.data.length / 2 !== z.nachricht - 1) return nichtMoeglich;
@@ -164,6 +176,7 @@ export async function sendeNachricht(weg: Weg, e: NachrichtEingabe): Promise<Nac
     seite: weg.seiteFest ?? seiteAus(e.seite),
     version: APP_VERSION,
     geraet: await geraet(),
+    ohneTeam,
     nachricht: z.nachricht,
     vorschlagBei,
     zusammenfassung: vorher?.success ? vorher.data : null,
