@@ -2485,14 +2485,14 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
   assert.equal(SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, "Spieler:in nicht gefunden.", "ohne Verweis auf ein Team, gilt auch für die Verwaltung");
 });
 
-pruefe("Spielerbestand der Verwaltung (#582): Löschen, Verein-Import und Verein-Weg nur am Verein-Ort (Review Focus 4)", () => {
+pruefe("Spielerbestand der Verwaltung (#582, #585): Löschen, Import und Verein-Weg nur am Verein-Ort (Review Focus 4)", () => {
   const lies = (d: string) => readFileSync(join(web, d), "utf8");
   // Der Team-Ort kennt weder das Löschen einer Spieler:in noch einen Verein-Weg.
   const treffer: string[] = [];
   for (const ordner of ["components/team", "app/(app)/team"])
     for (const datei of quelldateien(join(web, ordner)))
       readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
-        if (/\b(loescheSpielerImVerein\w*|verein_spieler_\w+|VereinSpieler(Formular|LinkDialog|Loeschen|Liste))\b/.test(zeile)) treffer.push(`${relative(web, datei)}:${i + 1}`);
+        if (/\b(loescheSpielerImVerein\w*|verein_spieler_\w+|VereinSpieler(Formular|LinkDialog|Loeschen|Liste|Import)|importiereInVerein\w*|pruefeVereinImport\w*)\b/.test(zeile)) treffer.push(`${relative(web, datei)}:${i + 1}`);
       });
   assert.deepEqual(treffer, [], `Verein-Weg am Team-Ort: ${treffer.join(", ")}`);
   // Die Spielerliste eines Teams bietet kein Löschen.
@@ -2502,9 +2502,32 @@ pruefe("Spielerbestand der Verwaltung (#582): Löschen, Verein-Import und Verein
   const liste = lies("lib/kern/spieler.ts").match(/export async function ladeSpielerliste[\s\S]*?\n}\n/)?.[0] ?? "";
   assert.match(liste, /\.from\("team_spieler"\)[\s\S]*?\.eq\("team_id", e\.teamId\)/, "Team-Spielerliste über die Zuordnungen des Teams");
   assert.ok(!/\.from\("spieler"\)/.test(liste), "Team-Spielerliste liest spieler direkt");
-  // Der Verein-Ort importiert nicht den Team-Import (CSV folgt in Story 9, nicht hier).
-  for (const datei of quelldateien(join(web, "components/verein")))
-    assert.ok(!/SpielerImport|importiereSpieler/.test(readFileSync(datei, "utf8")), `Verein-Import: ${relative(web, datei)}`);
+  // Der Import gehört dem Verein-Ort (#585 AK 12): Den Team-Import mit seinen Namen gibt es nirgends mehr,
+  // der Dialog hängt allein an der Verwaltungsliste, und kein Team-Baustein kennt das Datei-Symbol.
+  const teamImport: string[] = [];
+  const dialogNutzer: string[] = [];
+  const rpcImport: string[] = [];
+  for (const datei of quelldateien(web)) {
+    const rel = relative(web, datei);
+    if (datei === fileURLToPath(import.meta.url) || rel === "scripts/pruefe-kern-db.ts") continue;
+    const text = readFileSync(datei, "utf8");
+    if (/(?<![A-Za-z])(SpielerImport|importiereSpieler\w*|pruefeSpielerImport\w*|importZuGross|importGrenzText)\b/.test(text)) teamImport.push(rel);
+    if (/import[^;]*\bVereinSpielerImport\b[^;]*from/.test(text)) dialogNutzer.push(rel);
+    if (/\.rpc\(\s*["`']verein_spieler_importieren["`']/.test(text)) rpcImport.push(rel);
+  }
+  assert.deepEqual(teamImport, [], `Team-Import-Namen stehen noch in: ${teamImport.join(", ")}`);
+  assert.deepEqual(dialogNutzer, ["components/verein/VereinSpielerListe.tsx"], "Import-Dialog nur in der Verwaltungsliste");
+  assert.deepEqual(rpcImport, ["lib/kern/verein.ts"], "verein_spieler_importieren nur im Verein-Kern");
+  assert.ok(!/FileUp/.test(lies("components/team/SpielerListe.tsx")), "kein Datei-Symbol in der Spielerliste des Teams");
+  assert.ok(!/CSV/.test(lies("components/team/SpielerListe.tsx").replace(/\/\*[\s\S]*?\*\//g, "")), "kein Hinweis auf den Import an der alten Stelle (#585 OoS 2)");
+  // Der Knopf steht in der Verwaltungsliste, der Dialog nur, solange er offen ist, und er schliesst beim Wechsel der Eingrenzung.
+  const verwaltungsliste = lies("components/verein/VereinSpielerListe.tsx");
+  assert.match(verwaltungsliste, /\{importOffen && <VereinSpielerImport /, "Dialog bedingt gemountet");
+  assert.match(verwaltungsliste, /setSchluesselVorher\(schluessel\);[\s\S]*?setImportOffen\(false\)/, "Eingrenzungswechsel schliesst den Import");
+  // Die Antwort `veraltet` ersetzt die Vorschau und zeigt das Band; die nächste selbst ausgelöste Vorschau löscht es.
+  const dialog = lies("components/verein/VereinSpielerImport.tsx");
+  assert.match(dialog, /function laden\([\s\S]*?setVeraltet\(false\)/, "Hinweisband verschwindet bei der nächsten Vorschau");
+  assert.match(dialog, /status === "veraltet"[\s\S]*?setVorschau\(r\.ausgang\.vorschau\);\s*setVeraltet\(true\)/, "veraltet: neue Vorschau mit Hinweisband");
   // Das einzige Löschen einer Spieler:in im Web liegt im Verein-Kern und seiner Action.
   const loescher: string[] = [];
   for (const datei of quelldateien(web)) {
@@ -3231,7 +3254,7 @@ pruefe("Spieler:innen des Vereins (#580): für alle Mitglieder, Mitglieder-Form 
   assert.match(kern, /if \(!r\.verwaltung\)\s+return ok\(\{ \.\.\.basis, verwaltung: false, spieler: zeilen\.map\(mitglied\)/, "Mitglieder-Zeilen Feld für Feld, nie ein undefined-Schlüssel");
   // Die lesende Sicht kennt weder Aktionen noch Verwaltungsbausteine.
   const ansicht = lies("components/verein/VereinSpielerAnsicht.tsx").replace(/\/\*[\s\S]*?\*\//g, "");
-  assert.ok(!/actions\/|VereinSpieler(Formular|LinkDialog|Loeschen|Liste)|OverflowMenu|Checkbox|AuswahlLeiste|"use client"/.test(ansicht), "nur lesen");
+  assert.ok(!/actions\/|VereinSpieler(Formular|LinkDialog|Loeschen|Liste|Import)|OverflowMenu|Checkbox|AuswahlLeiste|"use client"/.test(ansicht), "nur lesen");
   // Die Sicht wählt allein `verwaltung` aus der Antwort der Liste (eine Quelle), nicht die Vereinslage.
   assert.match(seite, /\{liste\.verwaltung \? \(/);
   assert.ok(!/istVerwaltung/.test(seite), "keine zweite Quelle für die Rolle");
@@ -3416,6 +3439,32 @@ pruefe("Kein Verweis auf den Index spieler_eindeutig (#578, Architekturplan §5.
     if (datei !== fileURLToPath(import.meta.url) && /\bspieler_eindeutig\b/.test(readFileSync(datei, "utf8")))
       treffer.push(relative(repo, datei));
   assert.deepEqual(treffer, [], `spieler_eindeutig steht noch in: ${treffer.join(", ")}`);
+});
+
+/** Ein Aufruf oder Verweis auf die RPC `spieler_importieren` (Team-Import): `verein_spieler_importieren` zählt nicht. */
+const ALTER_IMPORT = /(?<![A-Za-z_])spieler_importieren\b/;
+
+pruefe("Kein Verweis auf spieler_importieren: der Team-Import ist weg, auch in Tests (#585 AK 12, Architekturplan §5.5)", () => {
+  // Der Wächter schlägt an und lässt den Verein-Namen durch.
+  assert.ok(ALTER_IMPORT.test("select spieler_importieren(a, b)"));
+  assert.ok(ALTER_IMPORT.test('await db.rpc("spieler_importieren", {})'));
+  assert.ok(!ALTER_IMPORT.test("select verein_spieler_importieren(a, b)"));
+  assert.ok(!ALTER_IMPORT.test('db.rpc("verein_spieler_importieren")'));
+  assert.ok(!ALTER_IMPORT.test("-- importieren Spieler"), "nur der Name der RPC");
+  const repo = join(web, "..");
+  const treffer: string[] = [];
+  // Frühere Migrationen sind unveränderlich und bleiben ausgenommen; `pruefe-kern-db.ts` belegt, dass der Aufruf scheitert.
+  const dateien = [
+    ...quelldateien(web),
+    ...[join(repo, "supabase/tests"), join(repo, ".github/workflows")].flatMap((w) =>
+      readdirSync(w, { recursive: true, encoding: "utf8" }).map((d) => join(w, d)).filter((d) => statSync(d).isFile()),
+    ),
+  ];
+  for (const datei of dateien) {
+    if (datei === fileURLToPath(import.meta.url) || relative(repo, datei) === "web/scripts/pruefe-kern-db.ts") continue;
+    if (ALTER_IMPORT.test(readFileSync(datei, "utf8"))) treffer.push(relative(repo, datei));
+  }
+  assert.deepEqual(treffer, [], `spieler_importieren steht noch in: ${treffer.join(", ")}`);
 });
 
 pruefe("Verein (#577): Marker der Datenebene tragen die Sätze der Oberfläche, Team- und Vereinsgrenze bleiben unterscheidbar", () => {

@@ -5,41 +5,75 @@ import { useRouter } from "next/navigation";
 import { FileText, FileUp } from "lucide-react";
 import { Button, Dialog, Disclosure, Lozenge, SectionMessage, Select, Tabelle, TabellenZeile } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
-import { importiereSpielerAktion, pruefeSpielerImportAktion } from "@/lib/actions/spieler";
+import { importiereInVereinAktion, pruefeVereinImportAktion } from "@/lib/actions/verein";
 import { spielerName } from "@/lib/spieler";
 import {
   IMPORT_ANGABEN,
+  IMPORT_TEXT,
   beispielVon,
   erkenneSpalten,
   erwartetVon,
   importErgebnisText,
+  importMehrfachText,
+  importNeuText,
+  importNichtsZuTunText,
+  importUebernehmbar,
+  importUeberGrenzeText,
   importZeilen,
-  importGrenzText,
-  importZuGross,
   leseDatei,
   zuordnungVollstaendig,
   type CsvTabelle,
   type ImportAngabe,
   type ImportEintrag,
   type ImportHinweis,
+  type ImportTeam,
   type ImportVorschau,
   type Zuordnung,
 } from "@/lib/spieler-import";
+import { OHNE_TEAM_WERT } from "@/lib/verein-spielerliste";
+import { SpielerTeams } from "./VereinSpielerTeile";
 
-/* Spieler:innen aus einer CSV-Datei übernehmen (Story #455, Leinwand
-   «KiFu CSV-Import Spielerliste»). Ein Dialog in zwei Stufen: schmal die
-   Datei wählen, dann breit die Vorschau mit der Zuordnung der Spalten.
-   Gelesen wird hier im Browser; an den Server gehen nur Vorname, Nachname,
-   Jahrgang und J+S-Nummer je Zeile. Die Datenebene ordnet die Zeilen ein
-   (neu, neue J+S-Nummer, unverändert) und übernimmt beim Bestätigen nur,
-   wenn ihre Einordnung noch der Vorschau entspricht — sonst steht allein
-   die Meldung da, wie bei einer zu grossen Liste (PO 2026-10-17). */
+/* Spieler:innen des Vereins aus einer CSV-Datei übernehmen (Epic Vereine
+   #575, Story #585; Vorgänger am Team-Ort: Story #455). Ein Dialog in zwei
+   Stufen: schmal die Datei wählen, dann breit die Vorschau mit der
+   Zuordnung der Spalten. Gelesen wird hier im Browser; an den Server gehen
+   nur Vorname, Nachname, Jahrgang und J+S-Nummer je Zeile.
+
+   Die Datenebene ordnet die Zeilen über den ganzen Verein ein (neu, neue
+   J+S-Nummer, unverändert, mehrfach im Verein geführt) und übernimmt beim
+   Bestätigen nur, wenn ihre Einordnung noch der Vorschau entspricht. Sonst
+   ist nichts geschehen: Die neue Vorschau ersetzt die alte, ein Hinweisband
+   sagt es (`veraltet`, AK 9) — es verschwindet mit der nächsten Vorschau, die
+   man selbst auslöst. Neue kommen ohne Team in den Bestand; danach nennt die
+   Snackbar es und bietet «Zuordnen» an: die Eingrenzung «Ohne Team».
+
+   Der Dialog steht nur, solange er offen ist (die Liste mountet ihn bedingt):
+   Datei, Vorschau und Hinweisband beginnen jedes Mal von vorn, auch wenn die
+   Eingrenzung der Liste wechselt.
+
+   Bausteine des Kits: Dialog, Button, SectionMessage, Select, Lozenge,
+   Tabelle, Disclosure; die Teams als `SpielerTeams` der Liste. Neu im Kit ist
+   nichts: Die Gruppen der Vorschau und die Namenszelle stehen lokal, und eine
+   Tabelle mit vielen Zeilen scrollt in einem Bereich von höchstens 18 rem,
+   damit «Übernehmen» bei 1000 Zeilen erreichbar bleibt (der Bereich ist
+   fokussierbar und benannt, damit die Tastatur ihn scrollt). */
 
 type Geladen = { name: string; tabelle: CsvTabelle; zuordnung: Zuordnung };
 
 const OHNE_JS = "ohne";
 
-export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offen: boolean; onClose: () => void }) {
+export function VereinSpielerImport({
+  vereinId,
+  vereinName,
+  pfad,
+  onClose,
+}: {
+  vereinId: string;
+  vereinName: string;
+  /** Die Adresse der Liste, für die Aktion «Zuordnen» der Snackbar. */
+  pfad: string;
+  onClose: () => void;
+}) {
   const router = useRouter();
   const melde = useSnackbar();
   // Die Vorschau liest nur; schliessen lässt sich der Dialog nur während der
@@ -49,8 +83,8 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
   const [geladen, setGeladen] = useState<Geladen | null>(null);
   const [dateiFehler, setDateiFehler] = useState<string | null>(null);
   const [vorschau, setVorschau] = useState<ImportVorschau | null>(null);
-  // Ein Fehler, nach dem nur eine neue Datei weiterhilft (Liste geändert).
-  const [gesperrt, setGesperrt] = useState<string | null>(null);
+  // Die Übernahme hat nichts geändert, weil der Bestand die Vorschau überholt hat.
+  const [veraltet, setVeraltet] = useState(false);
   const [fehler, setFehler] = useState<string | null>(null);
   const datei = useRef<HTMLInputElement>(null);
   // Verwirft die Antwort einer Vorschau, die eine neuere schon überholt hat.
@@ -62,12 +96,6 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
   function schliessen() {
     if (pending) return;
     lauf.current++;
-    setGeladen(null);
-    setZeilen({ eintraege: [], hinweise: [] });
-    setDateiFehler(null);
-    setVorschau(null);
-    setGesperrt(null);
-    setFehler(null);
     onClose();
   }
 
@@ -76,13 +104,14 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
     const nr = ++lauf.current;
     setGeladen(g);
     setVorschau(null);
+    setVeraltet(false);
     setFehler(null);
     if (!zuordnungVollstaendig(g.zuordnung)) return setZeilen({ eintraege: [], hinweise: [] });
     const z = importZeilen(g.tabelle, g.zuordnung);
     setZeilen(z);
     const { eintraege } = z;
     startVorschau(async () => {
-      const r = await pruefeSpielerImportAktion(teamId, eintraege);
+      const r = await pruefeVereinImportAktion(vereinId, eintraege);
       if (nr !== lauf.current) return;
       if (!r.ok) return setFehler(r.error);
       setVorschau(r.vorschau);
@@ -91,11 +120,11 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
 
   async function dateiGewaehlt(f: File) {
     const r = leseDatei(f.name, new Uint8Array(await f.arrayBuffer()));
-    setGesperrt(null);
     if (!r.ok) {
       lauf.current++;
       setGeladen(null);
       setVorschau(null);
+      setVeraltet(false);
       setDateiFehler(r.text);
       return;
     }
@@ -117,46 +146,49 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
   function uebernehmen() {
     if (!vorschau || pending || laedt) return;
     startTransition(async () => {
-      const r = await importiereSpielerAktion(teamId, zeilen.eintraege, erwartetVon(vorschau));
-      if (!r.ok) {
-        if (r.geaendert) setGesperrt(r.error);
-        else setFehler(r.error);
+      const r = await importiereInVereinAktion(vereinId, zeilen.eintraege, erwartetVon(vorschau));
+      if (!r.ok) return setFehler(r.error);
+      if (r.ausgang.status === "veraltet") {
+        // Nichts übernommen: die neue Vorschau steht an Stelle der alten.
+        setVorschau(r.ausgang.vorschau);
+        setVeraltet(true);
+        setFehler(null);
         return;
       }
       lauf.current++;
-      setGeladen(null);
-      setVorschau(null);
       onClose();
       router.refresh();
-      melde(importErgebnisText(r));
+      const { neu, js } = r.ausgang;
+      melde(
+        importErgebnisText({ neu, js }),
+        neu > 0 ? { label: "Zuordnen", onAction: () => router.push(`${pfad}?team=${OHNE_TEAM_WERT}`, { scroll: false }) } : undefined,
+      );
     });
   }
 
-  const zuGross = vorschau !== null && importZuGross(vorschau);
-  const meldung = gesperrt ?? (zuGross ? importGrenzText(vorschau.bestand) : null);
   const anzahlNeu = vorschau?.neu.length ?? 0;
   const anzahlJs = vorschau?.js.length ?? 0;
-  const kann = vorschau !== null && meldung === null && !fehler && !pending && !laedt && anzahlNeu + anzahlJs > 0;
+  const kann = vorschau !== null && importUebernehmbar(vorschau) && !fehler && !pending && !laedt;
   const nachZeile = new Map(zeilen.eintraege.map((e) => [e.zeile, e]));
   const eintragVon = (zeile: number) => nachZeile.get(zeile)!;
 
   const dateiFeld = (
-      <input
-        ref={datei}
-        type="file"
-        accept=".csv,text/csv"
-        hidden
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          e.target.value = "";
-          if (f) void dateiGewaehlt(f);
-        }}
-      />
+    <input
+      ref={datei}
+      type="file"
+      accept=".csv,text/csv"
+      hidden
+      onChange={(e) => {
+        const f = e.target.files?.[0];
+        e.target.value = "";
+        if (f) void dateiGewaehlt(f);
+      }}
+    />
   );
 
   return (
     <Dialog
-      open={offen}
+      open
       onClose={schliessen}
       breit={geladen !== null}
       title="Spieler:innen importieren"
@@ -177,7 +209,11 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
       {!geladen ? (
         <div className="flex flex-col gap-4">
           {dateiFehler && <SectionMessage appearance="error">{dateiFehler}</SectionMessage>}
-          <p>Wähle eine CSV-Datei mit deinen Spieler:innen. Du siehst zuerst eine Vorschau; übernommen wird erst, wenn du bestätigst.</p>
+          <p>
+            Wähle eine CSV-Datei mit den Spieler:innen des Vereins. Du siehst zuerst eine Vorschau; übernommen wird erst,
+            wenn du bestätigst.
+          </p>
+          <p>{IMPORT_TEXT.einleitung(vereinName)}</p>
           <div>
             <div className="flex items-center gap-3">
               <Button type="button" variant="outlined" onClick={() => datei.current?.click()}>
@@ -186,8 +222,8 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
               </Button>
             </div>
             <p className="type-body-small mt-1.5">
-              CSV mit Semikolon oder Komma. Nur Vorname, Nachname, Jahrgang und J+S-Nummer verlassen dein Gerät;
-              Elternkontakte, Geburtsdatum und alle übrigen Spalten nicht.
+              CSV mit Semikolon oder Komma, zum Beispiel aus ClubCorner. Nur Vorname, Nachname, Jahrgang und J+S-Nummer
+              verlassen dein Gerät; Elternkontakte, Geburtsdatum und alle übrigen Spalten nicht.
             </p>
           </div>
         </div>
@@ -206,23 +242,24 @@ export function SpielerImport({ teamId, offen, onClose }: { teamId: string; offe
             </Button>
           </div>
 
-          {meldung ? (
-            <SectionMessage appearance="error">{meldung}</SectionMessage>
+          {veraltet && <SectionMessage appearance="warning">{IMPORT_TEXT.veraltet}</SectionMessage>}
+          {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
+          <Spalten geladen={geladen} onZuordnen={zuordnen} />
+          {!zuordnungVollstaendig(geladen.zuordnung) ? (
+            <p className="kontur rounded-flaeche border-dashed border-kante px-6 py-8 text-center">
+              Sobald Vorname, Nachname und Geburtsdatum je einer Spalte zugeordnet sind, zeigt KiFu hier, wer neu
+              dazukommt.
+            </p>
           ) : (
-            <>
-              {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
-              <Spalten geladen={geladen} onZuordnen={zuordnen} />
-              {!zuordnungVollstaendig(geladen.zuordnung) ? (
-                <p className="kontur rounded-flaeche border-dashed border-kante px-6 py-8 text-center">
-                  Sobald Vorname, Nachname und Geburtsdatum je einer Spalte zugeordnet sind, zeigt KiFu hier, wer neu
-                  dazukommt.
-                </p>
-              ) : (
-                vorschau && (
-                  <Vorschau vorschau={vorschau} hinweise={zeilen.hinweise} eintragVon={eintragVon} leer={zeilen.eintraege.length === 0} />
-                )
-              )}
-            </>
+            vorschau && (
+              <Vorschau
+                vorschau={vorschau}
+                vereinName={vereinName}
+                hinweise={zeilen.hinweise}
+                eintragVon={eintragVon}
+                leer={zeilen.eintraege.length === 0}
+              />
+            )
           )}
         </div>
       )}
@@ -266,11 +303,13 @@ function Spalten({ geladen, onZuordnen }: { geladen: Geladen; onZuordnen: (a: Im
 
 function Vorschau({
   vorschau,
+  vereinName,
   hinweise: alle,
   eintragVon,
   leer,
 }: {
   vorschau: ImportVorschau;
+  vereinName: string;
   hinweise: ImportHinweis[];
   eintragVon: (zeile: number) => ImportEintrag;
   /** Keine Zeile der Datei taugt. */
@@ -278,20 +317,36 @@ function Vorschau({
 }) {
   // Eine Zeile, die eine spätere derselben Spieler:in überstimmt, nennt die
   // Vorschau nicht (#455 AK 21) — auch nicht ihre J+S-Nummer.
-  const genommen = new Set([...vorschau.neu, ...vorschau.js.map((j) => j.zeile), ...vorschau.gleich]);
+  const genommen = new Set([
+    ...vorschau.neu,
+    ...[...vorschau.js, ...vorschau.gleich, ...vorschau.mehrfach].map((z) => z.zeile),
+  ]);
   const hinweise = alle.filter((h) => h.ausgelassen || genommen.has(h.zeile));
   const ausgelassen = hinweise.filter((h) => h.ausgelassen).length;
+  const mehrfach = vorschau.mehrfach.map((m) => {
+    const e = eintragVon(m.zeile);
+    return { zeile: m.zeile, name: spielerName(e), jahrgang: e.jahrgang, teams: m.teams };
+  });
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
         {vorschau.neu.length > 0 && <Lozenge appearance="information">{vorschau.neu.length} neu</Lozenge>}
         {vorschau.js.length > 0 && <Lozenge appearance="warning">{vorschau.js.length} J+S-Nummer ändert sich</Lozenge>}
         {vorschau.gleich.length > 0 && <Lozenge>{vorschau.gleich.length} unverändert</Lozenge>}
+        {mehrfach.length > 0 && <Lozenge appearance="warning">{mehrfach.length} mehrfach im Verein geführt</Lozenge>}
         {ausgelassen > 0 && <Lozenge appearance="danger">{ausgelassen} ausgelassen</Lozenge>}
       </div>
 
+      {vorschau.ueber > 0 ? (
+        <SectionMessage appearance="error">{importUeberGrenzeText(vorschau)}</SectionMessage>
+      ) : (
+        vorschau.neu.length > 0 && (
+          <SectionMessage appearance="information">{importNeuText(vorschau.neu.length, vorschau.bestand, vereinName)}</SectionMessage>
+        )
+      )}
+
       {vorschau.neu.length > 0 && (
-        <Gruppe titel="Kommen auf die Liste" lozenge={<Lozenge appearance="information">Neu</Lozenge>}>
+        <Gruppe titel="Neu im Verein" lozenge={<Lozenge appearance="information">Neu</Lozenge>}>
           <Tabelle spalten="sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem]" kopf={["Name", "Jahrgang", "J+S-Nr."]}>
             {vorschau.neu.map((z) => {
               const e = eintragVon(z);
@@ -308,19 +363,44 @@ function Vorschau({
       )}
 
       {vorschau.js.length > 0 && (
-        <Gruppe titel="Erhalten eine neue J+S-Nummer" lozenge={<Lozenge appearance="warning">J+S</Lozenge>}>
-          <Tabelle spalten="sm:grid-cols-[minmax(0,1fr)_4.5rem_12rem]" kopf={["Name", "Jahrgang", "J+S-Nr. bisher → neu"]}>
-            {vorschau.js.map(({ zeile, alt }) => {
+        <Gruppe titel="Neue J+S-Nummer" lozenge={<Lozenge appearance="warning">J+S</Lozenge>}>
+          <Tabelle
+            spalten="sm:grid-cols-[minmax(0,1fr)_4.5rem_minmax(0,1fr)_10rem]"
+            kopf={["Name", "Jahrgang", "Teams", "J+S-Nr. bisher → neu"]}
+          >
+            {vorschau.js.map(({ zeile, alt, teams }) => {
               const e = eintragVon(zeile);
               const wechsel = `${alt ?? "–"} → ${e.jsNummer}`;
               return (
                 <TabellenZeile key={zeile}>
-                  <Name e={e} zusatz={[e.jahrgang, `J+S ${wechsel}`]} />
+                  <Name e={e} zusatz={[e.jahrgang, `J+S ${wechsel}`]} teams={teams} />
                   <span className="hidden sm:block">{e.jahrgang}</span>
+                  <TeamsZelle teams={teams} />
                   <span className="hidden truncate sm:block">
                     <span className={alt ? undefined : "text-on-surface-tief"}>{alt ?? "–"}</span> →{" "}
                     <span className="text-on-surface">{e.jsNummer}</span>
                   </span>
+                </TabellenZeile>
+              );
+            })}
+          </Tabelle>
+        </Gruppe>
+      )}
+
+      {mehrfach.length > 0 && (
+        <Gruppe
+          titel="Mehrfach im Verein geführt"
+          lozenge={<Lozenge appearance="warning">Mehrfach</Lozenge>}
+          hinweis={<SectionMessage appearance="warning">{importMehrfachText(mehrfach)}</SectionMessage>}
+        >
+          <Tabelle spalten="sm:grid-cols-[minmax(0,1fr)_4.5rem_minmax(0,1fr)]" kopf={["Name", "Jahrgang", "Teams"]}>
+            {mehrfach.map(({ zeile, teams }) => {
+              const e = eintragVon(zeile);
+              return (
+                <TabellenZeile key={zeile}>
+                  <Name e={e} zusatz={[e.jahrgang]} teams={teams} />
+                  <span className="hidden sm:block">{e.jahrgang}</span>
+                  <TeamsZelle teams={teams} />
                 </TabellenZeile>
               );
             })}
@@ -347,46 +427,90 @@ function Vorschau({
 
       {vorschau.gleich.length > 0 && (
         <Disclosure title="Unverändert" count={vorschau.gleich.length}>
-          <Tabelle spalten="sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem]" kopf={["Name", "Jahrgang", "J+S-Nr."]}>
-            {vorschau.gleich.map((z) => {
-              const e = eintragVon(z);
-              return (
-                <TabellenZeile key={z}>
-                  <Name e={e} zusatz={[e.jahrgang]} />
-                  <span className="hidden sm:block">{e.jahrgang}</span>
-                  <Js wert={e.jsNummer} />
-                </TabellenZeile>
-              );
-            })}
-          </Tabelle>
+          <Scroll titel="Unverändert">
+            <Tabelle
+              spalten="sm:grid-cols-[minmax(0,1fr)_4.5rem_minmax(0,1fr)_7rem]"
+              kopf={["Name", "Jahrgang", "Teams", "J+S-Nr."]}
+            >
+              {vorschau.gleich.map(({ zeile, teams }) => {
+                const e = eintragVon(zeile);
+                return (
+                  <TabellenZeile key={zeile}>
+                    <Name e={e} zusatz={[e.jahrgang]} teams={teams} />
+                    <span className="hidden sm:block">{e.jahrgang}</span>
+                    <TeamsZelle teams={teams} />
+                    <Js wert={e.jsNummer} />
+                  </TabellenZeile>
+                );
+              })}
+            </Tabelle>
+          </Scroll>
         </Disclosure>
       )}
 
       {vorschau.neu.length + vorschau.js.length === 0 && (
-        <p>{leer ? "Keine Zeile der Datei lässt sich übernehmen." : "Alle stehen schon so auf der Liste; es gibt nichts zu übernehmen."}</p>
+        <p>{leer ? "Keine Zeile der Datei lässt sich übernehmen." : importNichtsZuTunText(vorschau.mehrfach.length)}</p>
       )}
     </div>
   );
 }
 
-function Gruppe({ titel, lozenge, children }: { titel: string; lozenge: React.ReactNode; children: React.ReactNode }) {
+/** Eine Gruppe der Vorschau; ihre Tabelle scrollt ab einer gewissen Höhe. */
+function Gruppe({
+  titel,
+  lozenge,
+  hinweis,
+  children,
+}: {
+  titel: string;
+  lozenge: React.ReactNode;
+  /** Steht über der Tabelle und scrollt nicht mit. */
+  hinweis?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <section className="flex flex-col gap-2">
       <h3 className="type-title-small flex items-center gap-2 text-on-surface">
         {lozenge}
         {titel}
       </h3>
-      {children}
+      {hinweis}
+      <Scroll titel={titel}>{children}</Scroll>
     </section>
   );
 }
 
-/** Der Name, schmal mit den Angaben darunter (Muster der Spielerliste). */
-function Name({ e, zusatz }: { e: ImportEintrag; zusatz: (string | number | null | false)[] }) {
+/** Höchstens 18 rem hoch, dann scrollt der Bereich — fokussierbar und benannt,
+ *  damit die Tastatur ihn bedient. Bei 1000 Zeilen bliebe «Übernehmen» sonst
+ *  weit unten. */
+function Scroll({ titel, children }: { titel: string; children: React.ReactNode }) {
+  return (
+    <div role="region" aria-label={titel} tabIndex={0} className="focus-ring flex max-h-72 flex-col gap-2 overflow-y-auto rounded-flaeche">
+      {children}
+    </div>
+  );
+}
+
+/** Der Name, schmal mit den Angaben (und Teams) darunter (Muster der Spielerliste). */
+function Name({ e, zusatz, teams }: { e: ImportEintrag; zusatz: (string | number | null | false)[]; teams?: ImportTeam[] }) {
   return (
     <span className="min-w-0 flex-1">
       <span className="block truncate text-on-surface">{spielerName(e)}</span>
       <span className="type-body-small block sm:hidden">{zusatz.filter(Boolean).join(" · ")}</span>
+      {teams && (
+        <span className="mt-1 block sm:hidden">
+          <SpielerTeams teams={teams} />
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Die Teams der bestehenden Spieler:in ab sm als eigene Spalte, «ohne Team» als Warnung. */
+function TeamsZelle({ teams }: { teams: ImportTeam[] }) {
+  return (
+    <span className="hidden min-w-0 sm:block">
+      <SpielerTeams teams={teams} />
     </span>
   );
 }

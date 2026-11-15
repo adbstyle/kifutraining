@@ -2,18 +2,20 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Link2, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
+import { FileUp, Link2, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
 import {
   AuswahlLeiste,
   AuswahlListe,
   Button,
   Checkbox,
   Dialog,
+  IconButton,
   Lozenge,
   OverflowMenu,
   SectionMessage,
   Tabelle,
   TabellenZeile,
+  Tooltip,
 } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { ordneSpielerZuAktion } from "@/lib/actions/verein";
@@ -31,6 +33,7 @@ import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 import type { SpielerEingrenzung } from "@/lib/verein-spielerliste";
 import { VereinSpielerFilter } from "./VereinSpielerFilter";
 import { VereinSpielerFormular } from "./VereinSpielerFormular";
+import { VereinSpielerImport } from "./VereinSpielerImport";
 import { VereinSpielerLinkDialog } from "./VereinSpielerLinkDialog";
 import { VereinSpielerLoeschen } from "./VereinSpielerLoeschen";
 import { SpielerFuss, SpielerKopf, SpielerLeer, SpielerTeams } from "./VereinSpielerTeile";
@@ -100,6 +103,8 @@ export function VereinSpielerListe({
   const [formular, setFormular] = useState<{ spieler: VereinSpieler | null } | null>(null);
   const [link, setLink] = useState<VereinSpieler | null>(null);
   const [loeschen, setLoeschen] = useState<VereinSpieler | null>(null);
+  // Der Import steht nur, solange er offen ist: Datei und Vorschau beginnen jedes Mal von vorn.
+  const [importOffen, setImportOffen] = useState(false);
 
   // Andere Suche, andere Eingrenzung (auch über die Zurück-Taste): Auswahl
   // und Dialoge gelten nur für die Zeilen, die man sieht — die Auswahl
@@ -114,6 +119,7 @@ export function VereinSpielerListe({
     setFormular(null);
     setLink(null);
     setLoeschen(null);
+    setImportOffen(false);
   }
 
   // Nur, wer noch dasteht, bleibt ausgewählt.
@@ -157,10 +163,15 @@ export function VereinSpielerListe({
       gesamt={gesamt}
       ohneTeam={ohneTeam}
       aktion={
-        <Button variant="outlined" aria-haspopup="dialog" onClick={() => setFormular({ spieler: null })}>
-          <Plus size={18} strokeWidth={2} aria-hidden />
-          Spieler:in erfassen
-        </Button>
+        <span className="flex items-center gap-2">
+          <Tooltip label="Aus Datei importieren">
+            <IconButton icon={FileUp} label="Spieler:innen aus Datei importieren" aria-haspopup="dialog" onClick={() => setImportOffen(true)} />
+          </Tooltip>
+          <Button variant="outlined" aria-haspopup="dialog" onClick={() => setFormular({ spieler: null })}>
+            <Plus size={18} strokeWidth={2} aria-hidden />
+            Spieler:in erfassen
+          </Button>
+        </span>
       }
     />
   );
@@ -170,6 +181,7 @@ export function VereinSpielerListe({
       <VereinSpielerFormular offen={formular} vereinId={vereinId} vereinName={vereinName} onClose={() => setFormular(null)} />
       <VereinSpielerLinkDialog spieler={link} onClose={() => setLink(null)} />
       <VereinSpielerLoeschen spieler={loeschen} onClose={() => setLoeschen(null)} />
+      {importOffen && <VereinSpielerImport vereinId={vereinId} vereinName={vereinName} pfad={pfad} onClose={() => setImportOffen(false)} />}
     </>
   );
 
