@@ -560,10 +560,11 @@ export function linkGiltNichtText(art: "training" | "spiel", datum: string, vorn
   return `${was} vom ${tagOhneJahr(datum)} gilt nicht mehr für ${vorname}. Die Liste zeigt jetzt die aktuellen Termine.`;
 }
 
-/** Wohin mit Dringendem in «Fragen und Feedback» am Link (#544 AK 7, #583 AK 19):
- *  die Antwort kommt nie über KiFu; ohne Team ist die Vereinsverwaltung die Stelle. */
-export const feedbackDringend = (ohneTeam: boolean) =>
-  `Bei Dringendem, etwa einer kurzfristigen Absage, wende dich ${ohneTeam ? "an die Vereinsverwaltung" : "direkt an die Trainer:innen des Teams"}.`;
+/** Wohin mit Dringendem in «Fragen und Feedback» am Link (#544 AK 7, #583 AK 19,
+ *  #587 PC 2): die Antwort kommt nie über KiFu; ohne Team ist die
+ *  Vereinsverwaltung des Vereins die Stelle — mit seinem Namen. */
+export const feedbackDringend = (ohneTeam: boolean, verein: string) =>
+  `Bei Dringendem, etwa einer kurzfristigen Absage, wende dich ${ohneTeam ? `an die Vereinsverwaltung des ${verein}` : "direkt an die Trainer:innen des Teams"}.`;
 
 // ── Am Link eingrenzen (#596) ────────────────────────────────────────────────
 
@@ -668,11 +669,14 @@ export function abholUrl(origin: string, token: string): string {
 export const ABHOL_VERSUCHE = 5;
 export const ABHOL_SPERRE_MINUTEN = 15;
 
-/** Wer die Angaben einer Spieler:in sieht (Story #580 PC 4) — eine Quelle für
- *  die Abholseite («der Spieler:in») und den privaten Link (mit dem Vornamen).
+/** Wer für die Angaben einer Spieler:in verantwortlich ist und wer sie sieht
+ *  (Story #580 PC 4, #587 PC 2) — eine Quelle für die Abholseite (ohne Namen,
+ *  oder mit dem der abgeholten Spieler:in) und den privaten Link (mit dem
+ *  Vornamen). Der Satz «Verantwortlich …» steht im selben Textblock wie «wer
+ *  die Angaben sieht»: Der Verein ist die Stelle, an die sich Eltern wenden.
  *  Keine eigene Konstante in `LINK_TEXT`: Die fliesst in die KI-Beschreibungen. */
-export function angabenSehenText(vorname?: string): string {
-  return `Name, Jahrgang und Teams ${vorname ? `von ${vorname}` : "der Spieler:in"} sehen alle Trainer:innen des Vereins, alle Angaben die Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.`;
+export function angabenSehenText(verein: string, vorname?: string): string {
+  return `Verantwortlich für die Daten ${vorname ? `von ${vorname} ` : ""}ist der ${verein}. Name, Jahrgang und Teams ${vorname ? `von ${vorname}` : "der Spieler:in"} sehen alle Trainer:innen des Vereins, alle Angaben die Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.`;
 }
 
 export const ABHOLUNG_TEXT = {
@@ -692,7 +696,6 @@ export const ABHOLUNG_TEXT = {
     "Gib Vorname, Nachname und Jahrgang der Spieler:in ein. Du erhältst den privaten Link, mit dem du die Spieler:in für Trainings und Spiele ab- und anmelden kannst.",
   /** AK 7: was KiFu speichert, wer es sieht, wann es verschwindet. */
   speichertTitel: "Was KiFu speichert",
-  speichert: `Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein Spiel nicht aufgeboten ist. ${angabenSehenText()} Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen ihrer Teams und ihre KI-Assistenten. Nimmt ein Team eine Spieler:in heraus, bleiben ihre Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht.`,
   /** AK 13, 14: immer derselbe Satz. */
   passtNicht: "Dazu finden wir keinen Link. Prüf die Schreibweise oder frag beim Team nach.",
   /** AK 16. */
@@ -704,9 +707,18 @@ export const ABHOLUNG_TEXT = {
   ungueltig: "Frag deine Trainerin oder deinen Trainer nach der aktuellen Abholadresse oder direkt nach dem Link der Spieler:in.",
 } as const;
 
-/** AK 10: wozu der Link dient, dass er privat ist, und wo es ihn wieder gibt. */
-export function abholErhaltText(name: string): { wozu: string; teams: string; privat: string } {
+/** AK 7, #587 PC 2: was KiFu speichert, wer dafür verantwortlich ist, wer es
+ *  sieht, wann es verschwindet — auf dem Eingabe-Bildschirm der Abholseite. */
+export function abholSpeichertText(verein: string): string {
+  return `Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein Spiel nicht aufgeboten ist. ${angabenSehenText(verein)} Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen ihrer Teams und ihre KI-Assistenten. Nimmt ein Team eine Spieler:in heraus, bleiben ihre Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht.`;
+}
+
+/** AK 10: wozu der Link dient, dass er privat ist, und wo es ihn wieder gibt;
+ *  #587 PC 2: wer für die Daten verantwortlich ist, auch auf dem
+ *  Erhalt-Bildschirm. */
+export function abholErhaltText(name: string, verein: string): { wozu: string; teams: string; privat: string; daten: string } {
   return {
+    daten: `${angabenSehenText(verein, name)} Nimmt ein Team ${name} heraus, bleiben die Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung sie aus dem Verein löscht.`,
     wozu: `Mit diesem Link meldest du ${name} für Trainings ab und wieder an und für Spiele an oder ab, ohne Konto. Speichere ihn am besten als Lesezeichen.`,
     // Über jedes Team mit Selbstabholung führt die Abholung zum selben Link; die Teams nennt die Seite nicht (#583 AK 12).
     teams: `Der Link zeigt die Termine aller Teams von ${name}.`,

@@ -4,7 +4,15 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { ShieldAlert } from "lucide-react";
 import { Button, ButtonLink, KopierFeld, SectionMessage, TextField } from "@/components/ui";
 import { holeLinkAbAktion, type AbholAntwort } from "@/lib/actions/abholung";
-import { ABHOLUNG_TEXT, ABHOL_SPERRE_MINUTEN, JAHRGANG_STELLEN, LINK_FEHLER, abholErhaltText, nurZiffern } from "@/lib/spieler";
+import {
+  ABHOLUNG_TEXT,
+  ABHOL_SPERRE_MINUTEN,
+  JAHRGANG_STELLEN,
+  LINK_FEHLER,
+  abholErhaltText,
+  abholSpeichertText,
+  nurZiffern,
+} from "@/lib/spieler";
 import { GiltNicht } from "./GiltNicht";
 
 const LEER = { vorname: "", nachname: "", jahrgang: "" };
@@ -14,8 +22,9 @@ const LEER = { vorname: "", nachname: "", jahrgang: "" };
    speichert, steht vor dem Abholen (AK 7). Eine nicht passende Eingabe
    antwortet immer gleich (AK 13); nach zu vielen ist die Eingabe eine Weile
    gesperrt (AK 15, 16). Nach dem Erhalt geht es gleich mit der nächsten Spieler:in
-   weiter (AK 12). Fürs Handy gebaut. */
-export function AbholSeite({ token, team }: { token: string; team: string }) {
+   weiter (AK 12). Der Verein steht als verantwortlich für die Daten im Text, den
+   die Eingabe und der Erhalt tragen (#587 PC 2). Fürs Handy gebaut. */
+export function AbholSeite({ token, team, verein }: { token: string; team: string; verein: string }) {
   const [form, setForm] = useState(LEER);
   const [zustand, setZustand] = useState<"eingabe" | Exclude<AbholAntwort["status"], "ok">>("eingabe");
   const [erhalt, setErhalt] = useState<{ url: string; name: string } | null>(null);
@@ -67,7 +76,7 @@ export function AbholSeite({ token, team }: { token: string; team: string }) {
         <h1 className="type-headline-small text-on-surface">{erhalt ? `Link für ${erhalt.name}` : ABHOLUNG_TEXT.titel}</h1>
       </header>
       {erhalt ? (
-        <Erhalt url={erhalt.url} name={erhalt.name} onWeiteres={weiteres} />
+        <Erhalt url={erhalt.url} name={erhalt.name} verein={verein} onWeiteres={weiteres} />
       ) : (
         <form
           className="flex flex-col gap-4 p-4"
@@ -96,7 +105,7 @@ export function AbholSeite({ token, team }: { token: string; team: string }) {
           </Button>
           <SectionMessage>
             <strong className="block font-semibold">{ABHOLUNG_TEXT.speichertTitel}</strong>
-            {ABHOLUNG_TEXT.speichert}
+            {abholSpeichertText(verein)}
           </SectionMessage>
         </form>
       )}
@@ -104,8 +113,8 @@ export function AbholSeite({ token, team }: { token: string; team: string }) {
   );
 }
 
-function Erhalt({ url, name, onWeiteres }: { url: string; name: string; onWeiteres: () => void }) {
-  const text = abholErhaltText(name);
+function Erhalt({ url, name, verein, onWeiteres }: { url: string; name: string; verein: string; onWeiteres: () => void }) {
+  const text = abholErhaltText(name, verein);
   return (
     <div className="flex flex-col gap-4 p-4">
       <p className="type-body-medium text-on-surface-mittel">{text.wozu}</p>
@@ -115,6 +124,8 @@ function Erhalt({ url, name, onWeiteres }: { url: string; name: string; onWeiter
       <SectionMessage appearance="warning" icon={ShieldAlert}>
         {text.privat}
       </SectionMessage>
+      {/* Wer verantwortlich ist und wer die Angaben sieht (#587 PC 2). */}
+      <p className="type-body-small text-on-surface-mittel">{text.daten}</p>
       <div className="mt-2 flex flex-col gap-2">
         <ButtonLink href={url} className="w-full">
           Link öffnen

@@ -197,6 +197,7 @@ import {
   LINK_GILT_NICHT_TITEL,
   LINK_KEINE_TERMINE_TITEL,
   abholErhaltText,
+  abholSpeichertText,
   feedbackDringend,
   linkGiltNichtText,
   linkKeineTermineText,
@@ -2921,11 +2922,11 @@ pruefe("Eltern-Seite über mehrere Teams: Kopf, Leerzustände und Meldung zu «g
 
 pruefe("Abholseite und «Fragen und Feedback» am Link: alle Teams, Verweis bei Dringendem je nach Lage (#583 AK 12, 18, 19)", () => {
   // AK 12: der Link zeigt alle Teams — ohne sie zu nennen.
-  const erhalt = abholErhaltText("Noah Keller");
+  const erhalt = abholErhaltText("Noah Keller", "FC Wyler");
   assert.equal(erhalt.teams, "Der Link zeigt die Termine aller Teams von Noah Keller.");
-  // AK 19: mit Team die Trainer:innen, ohne Team die Vereinsverwaltung.
-  assert.equal(feedbackDringend(false), "Bei Dringendem, etwa einer kurzfristigen Absage, wende dich direkt an die Trainer:innen des Teams.");
-  assert.equal(feedbackDringend(true), "Bei Dringendem, etwa einer kurzfristigen Absage, wende dich an die Vereinsverwaltung.");
+  // AK 19, #587 PC 2: mit Team die Trainer:innen, ohne Team die Vereinsverwaltung des Vereins — mit Namen.
+  assert.equal(feedbackDringend(false, "FC Wyler"), "Bei Dringendem, etwa einer kurzfristigen Absage, wende dich direkt an die Trainer:innen des Teams.");
+  assert.equal(feedbackDringend(true, "FC Wyler"), "Bei Dringendem, etwa einer kurzfristigen Absage, wende dich an die Vereinsverwaltung des FC Wyler.");
 });
 
 pruefe("Abo Spielervertretung: Spiel zugesagt, vielleicht bis zur Frist, sonst abgesagt (#508 PC 3–6, AK 2)", () => {
@@ -3141,29 +3142,42 @@ pruefe("Doppelerfassung im Verein (#578, #579 AK 19): Satz je Lage, Teams nach N
 });
 
 pruefe("Abholseite (#579 PC 12): Herausnehmen lässt die Angaben im Verein, erst das Löschen entfernt sie", () => {
-  assert.ok(ABHOLUNG_TEXT.speichert.includes("bleiben ihre Angaben im Verein"));
-  assert.ok(ABHOLUNG_TEXT.speichert.includes("wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht"));
-  assert.ok(!ABHOLUNG_TEXT.speichert.includes("verschwinden ihre Angaben überall"), "der alte Satz stimmt nicht mehr");
+  const speichert = abholSpeichertText("FC Wyler");
+  assert.ok(speichert.includes("bleiben ihre Angaben im Verein"));
+  assert.ok(speichert.includes("wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht"));
+  assert.ok(!speichert.includes("verschwinden ihre Angaben überall"), "der alte Satz stimmt nicht mehr");
 });
 
-pruefe("Wer die Angaben sieht (#580 PC 4): ein Satz für Abholseite und privaten Link, ohne Verantwortliche, nicht in LINK_TEXT", () => {
+pruefe("Wer die Angaben sieht (#580 PC 4, #587 PC 2): ein Textblock für Abholseite und privaten Link, mit dem Verein als Verantwortlichem, nicht in LINK_TEXT", () => {
   const rest =
     "sehen alle Trainer:innen des Vereins, alle Angaben die Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.";
-  assert.equal(angabenSehenText(), `Name, Jahrgang und Teams der Spieler:in ${rest}`);
-  assert.equal(angabenSehenText("Noah"), `Name, Jahrgang und Teams von Noah ${rest}`);
+  // Der Verein steht als Verantwortlicher im selben Textblock wie «wer die Angaben sieht».
+  assert.equal(angabenSehenText("FC Wyler"), `Verantwortlich für die Daten ist der FC Wyler. Name, Jahrgang und Teams der Spieler:in ${rest}`);
+  assert.equal(angabenSehenText("FC Wyler", "Noah"), `Verantwortlich für die Daten von Noah ist der FC Wyler. Name, Jahrgang und Teams von Noah ${rest}`);
   // Die Abholseite trägt ihn anstelle der bisherigen Angabe; die übrigen Sätze bleiben.
-  assert.ok(ABHOLUNG_TEXT.speichert.includes(angabenSehenText()));
-  assert.ok(!ABHOLUNG_TEXT.speichert.includes("Das sehen die Trainer:innen des Teams"), "die bisherige Angabe ist ersetzt");
+  const speichert = abholSpeichertText("FC Wyler");
+  assert.ok(speichert.includes(angabenSehenText("FC Wyler")));
+  assert.ok(!speichert.includes("Das sehen die Trainer:innen des Teams"), "die bisherige Angabe ist ersetzt");
   assert.ok(
-    ABHOLUNG_TEXT.speichert.includes("sehen nur die Trainer:innen ihrer Teams und ihre KI-Assistenten"),
+    speichert.includes("sehen nur die Trainer:innen ihrer Teams und ihre KI-Assistenten"),
     "der Stand der letzten Ab- und Anmeldung bleibt bei den Teams (#467)",
   );
-  assert.ok(ABHOLUNG_TEXT.speichert.startsWith("Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang"));
-  // Keine Person und kein Verein als Verantwortliche (OoS 6; der Verein folgt mit Story 11).
-  for (const t of [angabenSehenText(), angabenSehenText("Noah"), ABHOLUNG_TEXT.speichert]) assert.ok(!t.includes("Verantwortlich"), t);
-  // Der private Link trägt ihn mit dem Vornamen; er fliesst nicht in die KI-Beschreibungen (LINK_TEXT).
-  assert.match(readFileSync(join(web, "components/privat/ElternAnsicht.tsx"), "utf8"), /\{angabenSehenText\(spieler\.vorname\)\}/);
-  assert.ok(!Object.values(LINK_TEXT).some((t) => typeof t === "string" && t.includes("Trainer:innen des Vereins")));
+  assert.ok(speichert.startsWith("Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang"));
+  // Der Verein ist verantwortlich — keine Person (OoS 6): überall, wo der Text steht, mit dem Namen des Vereins.
+  for (const t of [angabenSehenText("FC Wyler"), angabenSehenText("FC Wyler", "Noah"), speichert])
+    assert.ok(t.includes("Verantwortlich für die Daten") && t.includes("ist der FC Wyler."), t);
+  // Auf dem Erhalt-Bildschirm der Abholseite derselbe Textblock mit dem Namen der Spieler:in.
+  const erhalt = abholErhaltText("Noah Keller", "FC Wyler");
+  assert.ok(erhalt.daten.startsWith(angabenSehenText("FC Wyler", "Noah Keller")));
+  assert.ok(erhalt.daten.endsWith("Nimmt ein Team Noah Keller heraus, bleiben die Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung sie aus dem Verein löscht."));
+  // Link und Abholseite lesen den Verein aus der Datenebene (Eingabe und Erhalt), nicht aus dem Browser.
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  assert.match(lies("components/privat/ElternAnsicht.tsx"), /\{angabenSehenText\(verein, spieler\.vorname\)\}/);
+  assert.match(lies("components/privat/AbholSeite.tsx"), /\{abholSpeichertText\(verein\)\}/);
+  assert.match(lies("components/privat/AbholSeite.tsx"), /abholErhaltText\(name, verein\)[\s\S]*?\{text\.daten\}/);
+  assert.match(lies("app/(privat)/abholen/[privaterLink]/page.tsx"), /<AbholSeite token=\{privaterLink\} team=\{ansicht\.team\} verein=\{ansicht\.verein\} \/>/);
+  assert.match(lies("app/(privat)/abmelden/[privaterLink]/page.tsx"), /verein=\{ansicht\.verein\}[\s\S]*?<FeedbackLink [^>]*verein=\{ansicht\.verein\}/);
+  assert.ok(!Object.values(LINK_TEXT).some((t) => typeof t === "string" && (t.includes("Trainer:innen des Vereins") || t.includes("Verantwortlich"))), "nichts davon in LINK_TEXT (KI-Beschreibungen)");
 });
 
 pruefe("Spieler:innen des Vereins (#580): Texte der Liste, Leerzustände, Hinweis, Filterleiste", () => {

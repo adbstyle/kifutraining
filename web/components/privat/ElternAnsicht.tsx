@@ -64,6 +64,7 @@ export function ElternAnsicht({
   token,
   teams,
   spieler,
+  verein,
   probe,
   probeInfo,
   termine,
@@ -72,6 +73,8 @@ export function ElternAnsicht({
   /** Die Teams der Spieler:in, alphabetisch, auch ohne Termine; leer ohne Team. */
   teams: string[];
   spieler: { vorname: string; nachname: string };
+  /** Der Verein, der für die Daten der Spieler:in verantwortlich ist (#587 PC 2). */
+  verein: string;
   /** Schnuppert sie: ihr Stand, sonst `null`. */
   probe: ProbeStand | null;
   /** Das Info-Schreiben des Teams, nur beim Schnuppern (#556). */
@@ -328,8 +331,8 @@ export function ElternAnsicht({
           ))}
         </div>
       )}
-      {/* Wer die Angaben sieht (Story #580 PC 4), schlicht unter den Terminen. */}
-      <p className="type-body-small px-4 pb-6 text-on-surface-mittel">{angabenSehenText(spieler.vorname)}</p>
+      {/* Wer verantwortlich ist und wer die Angaben sieht (Story #580 PC 4, #587 PC 2), schlicht unter den Terminen. */}
+      <p className="type-body-small px-4 pb-6 text-on-surface-mittel">{angabenSehenText(verein, spieler.vorname)}</p>
     </>
   );
 }

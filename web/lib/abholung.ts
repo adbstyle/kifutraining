@@ -16,7 +16,8 @@ import { istLinkToken, jahrgangAus, spielerName } from "@/lib/spieler";
  * nimmt die Seite keine Eingabe an (lieber zu als ungeschützt).
  */
 
-export type AbholAnsicht = { gueltig: true; team: string } | { gueltig: false };
+/** `verein`: der Name des Vereins, der für die Daten der Spieler:innen verantwortlich ist (#587 PC 2). */
+export type AbholAnsicht = { gueltig: true; team: string; verein: string } | { gueltig: false };
 
 export async function ladeAbholAnsicht(token: string): Promise<AbholAnsicht> {
   if (!istLinkToken(token)) return { gueltig: false };

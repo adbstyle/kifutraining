@@ -89,11 +89,14 @@ export type LinkTermin = {
 };
 
 /** Was die Seite liest. Die Datenebene liefert dazu `team` (bei genau einem
- *  Team dessen Name, sonst der Vereinsname) und `verein`; beide haben im Web
- *  keinen Leser — den Verein nennt die Seite erst mit Story 11 (#583). */
+ *  Team dessen Name, sonst der Vereinsname); das hat im Web keinen Leser. Den
+ *  `verein` nennt die Seite als verantwortlich für die Daten und für Dringendes
+ *  (#587 PC 2). */
 export type LinkAnsicht =
   | {
       gueltig: true;
+      /** Der Name des Vereins, der für die Daten der Spieler:in verantwortlich ist. */
+      verein: string;
       /** Die Teams der Spieler:in, nach Namen wie alle Team-Listen
        *  (`nachTeamname`, hier geordnet), auch ohne Termine (AK 3); leer ohne
        *  Team (AK 5). */
