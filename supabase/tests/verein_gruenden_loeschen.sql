@@ -8,7 +8,8 @@
 --   danach einzige Verwaltung eines Vereins ohne Team, und andere Vereine
 --   nehmen die Person nicht mehr auf (AK 8)
 -- - Namensvergleich wie namenStimmen im Web (Leerzeichen am Rand nach JS
---   `trim()`, Unicode-Form zählen nicht, Gross/Klein schon)
+--   `trim()`, Unicode-Form zählen nicht, Gross/Klein schon), auch beim
+--   Auflösen eines Teams (verein_team_aufloesen)
 -- - verein_ansicht.personen, abholung_ansicht.verein (PC 2)
 -- - Verein löschen (AK 10, 14, 15, PC 3–5, Testfall 20): nur die eigene
 --   Verwaltung; falscher Name löscht nichts; danach ist nichts des Vereins
@@ -392,6 +393,31 @@ begin
   perform pg_temp.pruefe(not namen_stimmen('', 'FC Blau') and not namen_stimmen('   ', 'FC Blau'), 'leer');
   perform pg_temp.pruefe(namen_stimmen(null, 'FC Blau') is false and namen_stimmen('FC Blau', null) is false, 'null');
 end $$;
+
+-- Team auflösen vergleicht den Teamnamen ebenso (verein_team_aufloesen,
+-- Story 5): Tabulator und geschütztes Leerzeichen am Rand zählen nicht mehr,
+-- Gross/Klein schon. Im Unterblock, der zurückrollt: T3 bleibt für später.
+select pg_temp.als(pg_temp.id('verw'));
+do $$
+declare
+  r jsonb;
+begin
+  begin
+    r := verein_team_aufloesen(pg_temp.id('t3'), 'team leer');
+    perform pg_temp.pruefe(r = jsonb_build_object('status', 'name_falsch', 'name', 'Team Leer'), 'Teamname Gross/Klein: ' || r::text);
+    r := verein_team_aufloesen(pg_temp.id('t3'), null);
+    perform pg_temp.pruefe(r ->> 'status' = 'name_falsch', 'Teamname null: ' || r::text);
+    r := verein_team_aufloesen(pg_temp.id('t3'), U&'\0009Team Leer\00A0\000A');
+    perform pg_temp.pruefe(r ->> 'status' = 'aufgeloest' and r ->> 'name' = 'Team Leer', 'Teamname mit JS-Rand: ' || r::text);
+    perform pg_temp.pruefe(not (verein_ansicht(pg_temp.id('v')) -> 'teams') @> jsonb_build_array(jsonb_build_object('id', pg_temp.id('t3'))),
+                           'T3 aufgelöst');
+    raise exception 'ZURUECK';
+  exception when raise_exception then
+    if sqlerrm <> 'ZURUECK' then raise; end if;
+  end;
+end $$;
+reset role;
+select pg_temp.pruefe(exists (select 1 from teams where id = pg_temp.id('t3')), 'T3 wieder da');
 
 -- ── verein_ansicht.personen, abholung_ansicht.verein ───────────────────────
 

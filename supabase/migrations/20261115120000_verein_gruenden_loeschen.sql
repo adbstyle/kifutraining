@@ -14,7 +14,8 @@
 -- Der Name wird wie im Web verglichen (`namen_stimmen`, Zwilling von
 -- `namenStimmen` in web/components/ui/NamenBestaetigen.tsx): Gross/Klein
 -- zählt, Leerzeichen am Rand (alle, die JS `trim()` entfernt) und die
--- Unicode-Form nicht.
+-- Unicode-Form nicht. Ebenso jetzt der Teamname beim Auflösen eines Teams
+-- (`verein_team_aufloesen`, Story 5), der noch mit btrim verglich.
 --
 -- Sperrordnung (AP §4.1): Verein → Suche → Person → Teams aufsteigend →
 -- `spieler`-Zeile → Termin-Zeile. Gründen: Vereinssperre auf die neue,
@@ -163,6 +164,37 @@ begin
   end if;
   v_bilder := verein_loeschen_kern(p_verein);
   return jsonb_build_object('status', 'geloescht', 'name', v_name, 'bilder', v_bilder);
+end;
+$$;
+
+-- Rumpf wie in 20261114200000_vereine_verwaltung.sql; der Teamname wird nun
+-- wie der Vereinsname verglichen (`namen_stimmen`): btrim liess Tabulator,
+-- geschütztes Leerzeichen usw. am Rand stehen, die das Web (`namenStimmen`)
+-- wegnimmt — der Knopf war frei, die Datenebene antwortete name_falsch.
+--   {status: 'name_falsch', name} | {status: 'aufgeloest', name, bilder, spieler_bleiben}
+create or replace function verein_team_aufloesen(p_team uuid, p_teamname text) returns jsonb
+language plpgsql security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_name text;
+  v_bilder jsonb;
+  v_spieler int;
+begin
+  perform nur_in_der_anwendung();
+  perform verwaltung_team_sperren(p_team);
+  perform sperre_teams(array[p_team]);
+  select name into v_name from teams where id = p_team for update;
+  -- Netz: Aufgelöst wird nur unter der Vereinssperre; ein späterer Löschweg
+  -- ohne sie gäbe sonst name_falsch ohne Namen.
+  if not found then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
+  if not namen_stimmen(p_teamname, v_name) then                  -- auch null
+    return jsonb_build_object('status', 'name_falsch', 'name', v_name);
+  end if;
+  v_bilder := team_bilder(p_team);
+  v_spieler := (select count(*) from team_spieler where team_id = p_team);
+  delete from teams where id = p_team;
+  return jsonb_build_object('status', 'aufgeloest', 'name', v_name, 'bilder', v_bilder, 'spieler_bleiben', v_spieler);
 end;
 $$;
 
