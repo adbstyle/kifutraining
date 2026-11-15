@@ -25,3 +25,21 @@ export async function ladeKontoGrenzen(supabase: SupabaseClient): Promise<KernEr
   }
   return ok({ grenzen });
 }
+
+/** Der Verein der handelnden Person, wie `meine_vereinslage()` ihn nennt:
+ *  `null` für ein Konto ohne Verein. Eine Person gehört höchstens einem
+ *  Verein an (AP §3.1), der Verein ihrer Teams ist also dieser. Lesbar auch
+ *  ohne Team und mit einem KI-Token (keine `verein_*`-RPC, kein
+ *  `nur_in_der_anwendung()`) — für die KI-Werkzeuge `teams_abrufen`,
+ *  `spielerliste_abrufen` und die Rückfrage beim Herausnehmen (Story #589). */
+export type Vereinslage = { name: string; istVerwaltung: boolean } | null;
+
+export async function ladeVereinslage(supabase: SupabaseClient): Promise<KernErgebnis<Vereinslage>> {
+  const { data, error } = await supabase.rpc("meine_vereinslage");
+  if (error) {
+    console.error("[konto] Vereinslage lesen", error.message);
+    return fehlschlag("technisch", "Der Verein liess sich gerade nicht lesen. Bitte versuche es noch einmal.", { wiederholbar: true });
+  }
+  const v = (data as { verein: { name: string; ist_verwaltung: boolean } | null } | null)?.verein ?? null;
+  return ok(v ? { name: v.name, istVerwaltung: v.ist_verwaltung } : null);
+}

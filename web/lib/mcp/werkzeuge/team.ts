@@ -223,15 +223,31 @@ const SERIEN_MODELL =
 
 // ── teams_abrufen ───────────────────────────────────────────────────────────
 
+/** Ohne Team öffnet kein Team-Werkzeug etwas (#588 AK 9); das sagt der
+ *  Hinweis, statt den Assistenten an einer leeren Liste raten zu lassen
+ *  (#589 AK 10). Nur für die KI: Die Anwendung hat eigene Leerzustände. */
+const OHNE_TEAM_HINWEIS =
+  "Du gehörst keinem Team an. Teams, Spielerlisten und Kalender stehen nur Mitgliedern eines Teams offen; " +
+  "die Vereinsfunktionen gibt es nur in der Anwendung, nicht über den KI-Assistenten.";
+
+/** Dazu für die Vereinsverwaltung ohne Team: ihr Verein und der Weg ins Team. */
+const verwaltungOhneTeamHinweis = (verein: string) =>
+  `${OHNE_TEAM_HINWEIS} Du gehörst der Vereinsverwaltung des Vereins «${verein}» an: Im Bereich «Verein» der ` +
+  "Anwendung nimmst du dich selbst in ein Team auf.";
+
 export const teamsAbrufen = werkzeug({
   name: "teams_abrufen",
   titel: "Meine Teams",
   beschreibung:
-    "Nennt die Teams, in denen du Mitglied bist, alphabetisch mit Name und Zahl der " +
-    "Mitglieder. Die «id» ist die Kennung für «team_plan_abrufen», «trainings_suchen» " +
-    "(bestand: team) und für «team_id» in «training_anlegen» und «training_kopieren». Teams " +
-    "anlegen, umbenennen, auflösen oder Mitglieder verwalten lässt sich über den KI-Client " +
-    "nicht - neue Teams legt die Vereinsverwaltung in KiFu an, das Übrige geht nur im Team-Bereich von KiFu.",
+    "Nennt die Teams, in denen du Mitglied bist, alphabetisch mit Name, Zahl der Mitglieder und dem Namen ihres " +
+    "Vereins («verein»). Eine Person gehört höchstens einem Verein an; «verein» neben der Liste nennt ihn einmal, " +
+    "ohne Team nur, wenn du seiner Vereinsverwaltung angehörst, sonst null. Die «id» ist die Kennung für " +
+    "«team_plan_abrufen», «trainings_suchen» (bestand: team) und für «team_id» in «training_anlegen» und " +
+    "«training_kopieren». Gehörst du keinem Team an, ist die Liste leer, und «hinweis» sagt warum: Teams, " +
+    "Spielerlisten und Kalender stehen nur Mitgliedern eines Teams offen; der Vereinsverwaltung sagt er dazu, wie " +
+    "sie sich selbst in ein Team aufnimmt. Mit Teams ist «hinweis» null. Teams anlegen, umbenennen und auflösen " +
+    "kann nur die Vereinsverwaltung, im Bereich «Verein» der Anwendung; Mitglieder aufnehmen und entfernen geht " +
+    "nur in der Anwendung. Über den KI-Client lässt sich weder ein Team noch der Verein verwalten.",
   nurLesen: true,
   eingabe: z.object({}),
   ausgabe: z.object({
@@ -242,13 +258,24 @@ export const teamsAbrufen = werkzeug({
         mitglieder: z.number().int(),
         /** Der Team-Bereich in KiFu. */
         url: z.string(),
+        verein: z.string().nullable().describe("Der Name des Vereins, dem das Team angehört."),
       }),
     ),
+    verein: z.string().nullable().describe("Dein Verein; ohne Team nur für die Vereinsverwaltung, sonst null."),
+    hinweis: z.string().nullable().describe("Nur ohne Team: warum die Liste leer ist und was du tun kannst."),
   }),
   ausfuehren: async (_e, zugang) =>
-    abgebildet(await meineTeams(zugang.supabase, zugang.userId), (w) => ({
-      teams: w.teams.map((t) => ({ ...t, url: zugang.url("team", t.id) })),
-    })),
+    abgebildet(await meineTeams(zugang.supabase, zugang.userId), (w) => {
+      const verein = w.verein?.name ?? null;
+      const ohneTeam = w.teams.length === 0;
+      return {
+        // Mitglied eines Teams ist Mitglied seines Vereins, und eine Person gehört höchstens einem an.
+        teams: w.teams.map((t) => ({ ...t, url: zugang.url("team", t.id), verein })),
+        // AK 10: ohne Team den Verein nur der Vereinsverwaltung.
+        verein: ohneTeam && !w.verein?.istVerwaltung ? null : verein,
+        hinweis: !ohneTeam ? null : w.verein?.istVerwaltung ? verwaltungOhneTeamHinweis(w.verein.name) : OHNE_TEAM_HINWEIS,
+      };
+    }),
 });
 
 // ── team_plan_abrufen ───────────────────────────────────────────────────────

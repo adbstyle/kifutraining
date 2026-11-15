@@ -218,6 +218,11 @@ export type HerausnehmenLage = {
   verbleibend: string[];
   /** Sie schnuppert in diesem Team: Das Schnuppertraining endet mit. */
   probe: boolean;
+  /** Nur im KI-Weg (#589 AK 4): Es ist das letzte Team der handelnden Person
+   *  mit ihr, der Assistent erreicht sie danach nicht mehr. Die Sätze der
+   *  Bestätigung (`herausnehmenSaetze`) kennen das Feld nicht; nur
+   *  `herausnehmenFrage` hängt den Zusatz an. */
+  letztesEigenes?: boolean;
 };
 
 /** Die Teams, in denen sie nach dem Herausnehmen bleibt: alle ausser dem,
@@ -273,10 +278,15 @@ export function herausnehmenSaetze(l: HerausnehmenLage): { absaetze: string[]; w
 }
 
 /** Dasselbe als eine Rückfrage an den Assistenten (`spieler_aus_team_nehmen`
- *  ohne `stand`): nichts geschieht, bis er mit dem Stand wiederholt. */
+ *  ohne `stand`): nichts geschieht, bis er mit dem Stand wiederholt. Beim
+ *  letzten Team der handelnden Person mit ihr dazu, dass der Assistent sie
+ *  danach nicht mehr erreicht (#589 AK 4) — nur hier, nie im Dialog. */
 export function herausnehmenFrage(l: HerausnehmenLage): string {
   const s = herausnehmenSaetze(l);
-  return [herausnehmenTitel(l) + "?", ...s.absaetze, s.warnung, s.zusatz].filter(Boolean).join(" ");
+  const ki = l.letztesEigenes
+    ? `Danach ist ${l.vorname} über den Assistenten nicht mehr erreichbar: ${l.vorname} gehört dann keinem deiner Teams mehr an.`
+    : "";
+  return [herausnehmenTitel(l) + "?", ...s.absaetze, s.warnung, s.zusatz, ki].filter(Boolean).join(" ");
 }
 
 // ── Spielerzahl eines Termins ───────────────────────────────────────────────
@@ -479,8 +489,8 @@ export function spielerLinkUrl(origin: string, token: string): string {
 
 export const LINK_TEXT = {
   /** AK 2: was der Link kann — beim Holen, in der Oberfläche wie beim KI-Assistenten.
-   *  Dass er die Termine aller Teams zeigt, sagt im Link-Dialog `linkTeamsText`
-   *  (#583 AK 13); die KI-Beschreibung folgt mit Story 13. */
+   *  Dass er die Termine aller Teams zeigt, sagt `linkTeamsText`: im Link-Dialog
+   *  (#583 AK 13) und im Hinweis der KI-Link-Werkzeuge (#589 AK 9). */
   warnung:
     "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
   /** Was Erneuern bewirkt (AK 3, PC 3; #583 AK 15): für alle Teams der Spieler:in. */

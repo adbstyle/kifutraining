@@ -100,9 +100,9 @@ export const spielerSchnuppernSetzen = werkzeug({
   name: "spieler_schnuppern_setzen",
   titel: "Schnuppern ein- oder ausschalten",
   beschreibung:
-    "Schaltet das Schnuppern einer Spieler:in ein («schnuppern: true») oder aus («schnuppern: false»), im ältesten " +
-    "ihrer Teams, dem du angehörst. Gehört sie weiteren Teams an, weist das Werkzeug das Einschalten ab. Frag vorher " +
-    `nach, ob das so gewollt ist. ${SCHNUPPER_MODELL} ${SPIELER_KENNUNG_FEHLER}`,
+    "Schaltet das Schnuppern einer Spieler:in in ihrem Team ein («schnuppern: true») oder aus («schnuppern: false»). " +
+    "Schnuppern geht nur, solange sie genau einem Team angehört: Gehört sie weiteren Teams an, weist das Werkzeug das " +
+    `Einschalten ab. Frag vorher nach, ob das so gewollt ist. ${SCHNUPPER_MODELL} ${SPIELER_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     spieler_id: SpielerId,

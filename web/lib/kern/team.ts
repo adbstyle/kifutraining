@@ -7,6 +7,7 @@ import type { Eingrenzung } from "@/lib/trainer";
 import { ZEITRAUM_TEXT, zeitraumProblem } from "@/lib/monat";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import { fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
+import { ladeVereinslage, type Vereinslage } from "@/lib/kern/konto";
 
 /**
  * Die eigenen Teams und ihr Trainingsplan lesen (#198 AK 1/3, AK 11, NFR 1)
@@ -30,14 +31,18 @@ async function ohneWurf<T>(was: string, f: () => Promise<T>): Promise<KernErgebn
   }
 }
 
-/** Die Teams, in denen dieses Konto Mitglied ist, alphabetisch (#198 AK 1). */
+/** Die Teams, in denen dieses Konto Mitglied ist, alphabetisch (#198 AK 1),
+ *  und der Verein der Person (#589 AK 1, 10): der ihrer Teams und, ohne
+ *  Team, der ihrer Vereinsverwaltung; `null` für ein Konto ohne Verein. */
 export async function meineTeams(
   supabase: SupabaseClient,
   _userId: string,
-): Promise<KernErgebnis<{ teams: { id: string; name: string; mitglieder: number }[] }>> {
+): Promise<KernErgebnis<{ teams: { id: string; name: string; mitglieder: number }[]; verein: Vereinslage }>> {
   const r = await ohneWurf("meineTeams", () => getMeineTeamsFuer(supabase));
   if (!r.ok) return r;
-  return ok({ teams: r.wert.map((t) => ({ id: t.id, name: t.name, mitglieder: t.mitgliederAnzahl })) });
+  const verein = await ladeVereinslage(supabase);
+  if (!verein.ok) return verein;
+  return ok({ teams: r.wert.map((t) => ({ id: t.id, name: t.name, mitglieder: t.mitgliederAnzahl })), verein: verein.wert });
 }
 
 export type TeamPlan = {
