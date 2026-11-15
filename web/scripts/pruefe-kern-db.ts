@@ -4886,8 +4886,14 @@ try {
     const { count } = await admin.from("spieler").select("id", { count: "exact", head: true }).eq("verein_id", verein);
     const fehlend = VEREIN_SPIELER_MAX - (count ?? 0);
     assert.ok(fehlend > 0);
+    // Jahrgänge gestreut: Die Dublettenprüfung im Trigger spieler_vorher plant
+    // ihre Abfrage einmal je Statement, mit der Statistik der fast leeren
+    // Wegwerf-Tabelle. Greift dabei der Ausdrucksindex nicht, rechnet sie den
+    // Schlüssel jeder Vereinszeile mit gleichem Jahrgang neu — bei 1000 Zeilen
+    // eines Jahrgangs rund 1 Mio. Aufrufe, in der CI über die 8 s des
+    // statement_timeout. Mit 70 Jahrgängen bleibt es ein Bruchteil davon.
     for (let i = 0; i < fehlend; i += 500) {
-      const zeilen = Array.from({ length: Math.min(500, fehlend - i) }, (_, j) => ({ verein_id: verein, vorname: `Kind${i + j}`, nachname: "Verein", jahrgang: 2016 }));
+      const zeilen = Array.from({ length: Math.min(500, fehlend - i) }, (_, j) => ({ verein_id: verein, vorname: `Kind${i + j}`, nachname: "Verein", jahrgang: 1950 + ((i + j) % 70) }));
       assert.equal((await admin.from("spieler").insert(zeilen)).error, null);
     }
     const voll = fehler(await nimmSpielerAuf(a.supabase, a.id, { teamId: team, vorname: "Zuviel", nachname: "Verein", jahrgang: 2017 }), "regel", VEREIN_MELDUNG.VEREIN_VOLL);
