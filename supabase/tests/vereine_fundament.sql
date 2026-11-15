@@ -119,7 +119,9 @@ reset role;
 select pg_temp.als(pg_temp.id('ohne'));
 do $$
 begin
-  if meine_vereinslage() <> '{"verein": null, "grenzen": null}'::jsonb then
+  -- Seit Story 12 mit den Grenzen eines Kontos ohne Verein (konten_ohne_verein.sql).
+  if meine_vereinslage() <> '{"verein": null, "grenzen": {"uebungen": {"bestand": 0, "max": 50},
+                                                          "trainings": {"bestand": 0, "max": 30}}}'::jsonb then
     raise exception 'meine_vereinslage (ohne Verein): %', meine_vereinslage();
   end if;
   if exists (select 1 from vereine) then raise exception 'Konto ohne Verein sieht einen Verein'; end if;
@@ -290,7 +292,8 @@ begin
     'team_members_vorher()', 'verwaltung_vorher()', 'team_spieler_vorher()', 'team_spieler_nachher()',
     'spieler_teams_stand(uuid)', 'spieler_teams_auskunft(uuid,uuid)',
     'teamname_vergeben(uuid,text,uuid)', 'aufnahme_ziel(uuid,text,uuid,boolean)',
-    'spieler_aus_team_nehmen_kern(uuid,uuid,boolean,text)'] loop
+    'spieler_aus_team_nehmen_kern(uuid,uuid,boolean,text)',
+    'konto_grenze(text)', 'konto_anzahl(uuid,text)', 'konto_bestand(uuid)', 'konto_grenze_vorher()'] loop
     foreach r in array array['anon', 'authenticated'] loop
       if has_function_privilege(r, f, 'execute') then
         raise exception 'Testfall 26: % darf % ausführen', r, f;
