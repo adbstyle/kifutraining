@@ -15,7 +15,8 @@
 --
 -- Dazu (ab Story 3): Jede RPC `verein_*` beginnt mit nur_in_der_anwendung()
 -- und weist ein KI-Token ab; seit Story 9 nachweislich auch der Import
--- verein_spieler_importieren.
+-- verein_spieler_importieren, seit Story 11 Gründen und Löschen des Vereins
+-- sowie delete_account und konto_loeschen_info.
 --
 -- Selbsttest zuerst: vier Attrappen in `public` (plpgsql und SQL-Standard-
 -- Rumpf mit beiden Prädikatnamen, dazu je eine mit dem Team-Prädikat und dem
@@ -116,14 +117,34 @@ begin
   end if;
 end $$;
 
--- Die Abfragen erfassen die RPCs über ihren Namen; der Import (Story 9) muss
--- darunter sein, sonst prüften sie ihn still nicht.
+-- Die Abfragen erfassen die RPCs über ihren Namen; der Import (Story 9) und
+-- Gründen und Löschen des Vereins (Story 11) müssen darunter sein, sonst
+-- prüften sie sie still nicht.
 do $$
+declare
+  f text;
 begin
-  if to_regprocedure('verein_spieler_importieren(uuid,jsonb,jsonb)') is null
-     or not has_function_privilege('authenticated', 'verein_spieler_importieren(uuid,jsonb,jsonb)', 'execute') then
-    raise exception 'Ortsprüfung: verein_spieler_importieren fehlt oder hat kein API-Recht';
-  end if;
+  foreach f in array array['verein_spieler_importieren(uuid,jsonb,jsonb)', 'verein_gruenden(text,boolean)',
+                           'verein_loeschen(uuid,text)'] loop
+    if to_regprocedure(f) is null or not has_function_privilege('authenticated', f, 'execute') then
+      raise exception 'Ortsprüfung: % fehlt oder hat kein API-Recht', f;
+    end if;
+  end loop;
+end $$;
+
+-- Konto löschen und seine Vorschau heissen nicht verein_*, löschen aber den
+-- Verein der einzigen Person mit (Story 11): dieselbe Regel ausdrücklich.
+do $$
+declare
+  f text;
+begin
+  foreach f in array array['delete_account(text)', 'konto_loeschen_info()'] loop
+    if to_regprocedure(f) is null or not has_function_privilege('authenticated', f, 'execute')
+       or (select prosrc from pg_catalog.pg_proc where oid = to_regprocedure(f))
+          !~ '^\s*(declare\M.*?)?\mbegin\s+perform\s+nur_in_der_anwendung\(\);' then
+      raise exception 'Ortsprüfung: % fehlt, hat kein API-Recht oder beginnt nicht mit nur_in_der_anwendung()', f;
+    end if;
+  end loop;
 end $$;
 
 select set_config('request.jwt.claims',
@@ -149,6 +170,23 @@ begin
     end;
     if position('NUR_IN_DER_ANWENDUNG' in coalesce(meldung, '')) = 0 then
       raise exception '% mit KI-Token: erwartet NUR_IN_DER_ANWENDUNG, bekommen: %', r.f, coalesce(meldung, 'kein Fehler');
+    end if;
+  end loop;
+end $$;
+do $$
+declare
+  aufruf text;
+  meldung text;
+begin
+  foreach aufruf in array array['select delete_account(null)', 'select konto_loeschen_info()'] loop
+    meldung := null;
+    begin
+      execute aufruf;
+    exception when others then
+      meldung := sqlerrm;
+    end;
+    if position('NUR_IN_DER_ANWENDUNG' in coalesce(meldung, '')) = 0 then
+      raise exception '% mit KI-Token: erwartet NUR_IN_DER_ANWENDUNG, bekommen: %', aufruf, coalesce(meldung, 'kein Fehler');
     end if;
   end loop;
 end $$;

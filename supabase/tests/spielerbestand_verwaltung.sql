@@ -18,8 +18,8 @@
 -- - Teams für die Bestätigung, Löschen samt Folgen (AK 12, 13, #579 PC 10,
 --   11), danach SPIELER_NICHT_GEFUNDEN (AK 15)
 -- - Testfall 30: KI-Token löscht nicht
--- - Nur verein_spieler_entfernen löscht Spieler:innen; link_token nur über
---   die zwei Link-RPCs
+-- - Nur verein_spieler_entfernen (seit Story 11 auch verein_loeschen_kern)
+--   löscht Spieler:innen; link_token nur über die zwei Link-RPCs
 -- Alles in einer Transaktion mit rollback; hinterlässt nichts.
 
 \set ON_ERROR_STOP on
@@ -278,7 +278,7 @@ begin
   select e into s from jsonb_array_elements(l -> 'spieler') e where e ->> 'id' = pg_temp.id('x')::text;
   perform pg_temp.pruefe(s -> 'js' = 'null' and s -> 'teams' = '[]', 'Liste: x ' || s::text);
   -- Zahlen der Verwaltung: alle 6 Spieler:innen von V, davon x ohne Team.
-  perform pg_temp.pruefe(pg_temp.schluessel(v) = array['name', 'spieler_ohne_team', 'spieler_zahl', 'teams', 'verwaltung'],
+  perform pg_temp.pruefe(pg_temp.schluessel(v) = array['name', 'personen', 'spieler_ohne_team', 'spieler_zahl', 'teams', 'verwaltung'],
                          'Ansicht Verwaltung: Schlüssel ' || pg_temp.schluessel(v)::text);
   perform pg_temp.pruefe(v -> 'spieler_zahl' = '6' and v -> 'spieler_ohne_team' = '1',
                          'Ansicht Verwaltung: Zahlen ' || (v -> 'spieler_zahl')::text || '/' || (v -> 'spieler_ohne_team')::text);
@@ -529,7 +529,7 @@ reset role;
 select pg_temp.pruefe(exists (select 1 from spieler where id = pg_temp.id('s1'))
                       and not exists (select 1 from spieler where nachname = 'Ki'), 'KI-Token wirkte');
 
--- ── Löschen nur über verein_spieler_entfernen, link_token nur über die Link-RPCs ──
+-- ── Löschen nur über verein_spieler_entfernen (und das Vereinslöschen), link_token nur über die Link-RPCs ──
 
 do $$
 declare
@@ -540,7 +540,9 @@ begin
     from pg_proc p
    where p.pronamespace = 'public'::regnamespace
      and (p.prosrc || ' ' || coalesce(pg_get_function_sqlbody(p.oid), '')) ~* '\mdelete\s+from\s+(public\.)?spieler\M';
-  perform pg_temp.pruefe(x = 'verein_spieler_entfernen', 'delete from spieler steht in: ' || coalesce(x, '–'));
+  -- Seit Story 11 auch der Kern des Vereinslöschens (verein_loeschen,
+  -- delete_account der einzigen Person; ohne API-Recht).
+  perform pg_temp.pruefe(x = 'verein_loeschen_kern, verein_spieler_entfernen', 'delete from spieler steht in: ' || coalesce(x, '–'));
   foreach x in array array['anon', 'authenticated'] loop
     perform pg_temp.pruefe(not has_table_privilege(x, 'spieler', 'insert') and not has_table_privilege(x, 'spieler', 'update')
                            and not has_table_privilege(x, 'spieler', 'delete')

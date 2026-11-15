@@ -10,7 +10,8 @@
 -- - Grenzen 100 je Team und 1000 je Verein nur für Neues; Bestand darüber
 --   bleibt änderbar, und herausnehmen lässt sich weiter (Testfall 1, Story 1 PC 2); Schnuppernde
 --   und bestehende Doppeleinträge zählen mit (Story 1 PC 3)
--- - `delete_account()`: letzte Verwaltung, KI-Token, Erfolg
+-- - `delete_account()`: letzte Verwaltung, KI-Token, Erfolg (seit Story 11 mit
+--   `bilder`, leer ohne mitgelöschten Verein)
 -- - Funktionen ohne API-Zweck für anon und authenticated gesperrt (Testfall 26)
 -- Alles in einer Transaktion mit rollback; hinterlässt nichts. Die Rolle
 -- wechselt wie bei PostgREST über `role` und `request.jwt.claims`.
@@ -254,7 +255,7 @@ reset role;
 select pg_temp.als(pg_temp.id('verw'));
 do $$
 begin
-  if delete_account() <> '{"status": "geloescht"}'::jsonb then
+  if delete_account() <> '{"status": "geloescht", "bilder": []}'::jsonb then
     raise exception 'delete_account mit zweiter Verwaltung: kein Status geloescht';
   end if;
 end $$;
@@ -297,7 +298,7 @@ begin
     end loop;
   end loop;
   foreach f in array array['mein_verein()', 'ist_verein_mitglied(uuid)', 'ist_verein_verwaltung(uuid)',
-                           'meine_vereinslage()', 'delete_account()'] loop
+                           'meine_vereinslage()', 'delete_account(text)'] loop
     if has_function_privilege('anon', f, 'execute') or not has_function_privilege('authenticated', f, 'execute') then
       raise exception 'Testfall 26: Grant von % falsch', f;
     end if;
@@ -313,7 +314,7 @@ reset role;
 select pg_temp.als(pg_temp.id('a'));
 do $$
 begin
-  if delete_account() <> '{"status": "geloescht"}'::jsonb then
+  if delete_account() <> '{"status": "geloescht", "bilder": []}'::jsonb then
     raise exception 'delete_account eines Teammitglieds: kein Status geloescht';
   end if;
 end $$;
