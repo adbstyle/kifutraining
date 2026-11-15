@@ -262,7 +262,7 @@ Die Tabelle steht in der **Merge-Folge auf `develop`** (§9). Die Zeitstempel en
 | `<ts>_import_verein.sql` | 9 #585 | §3.7 |
 | `<ts>_verein_gruenden_loeschen.sql` | 11 #587 | §3.4 |
 | `<ts>_konten_ohne_verein.sql` | 12 #588 | §3.5 |
-| `<ts>_zuordnung_invarianten_validieren.sql` | gehört fachlich zu 3 #579, **angelegt im letzten PR vor dem Release-PR** (§6.1 Schritt 1) | `validate constraint` je FK aus §3.3 b |
+| `<ts>_zuordnung_invarianten_validieren.sql` (`20261115140000`) | gehört fachlich zu 3 #579, **angelegt im letzten PR vor dem Release-PR** (§6.1 Schritt 1) | `validate constraint` je FK aus §3.3 b (alle elf); die Zählabfragen «Zeilen, die die Validierung brächen» stehen im Plan, Phase G |
 | Contract (Nachlauf N1) | nach dem Release | §3.8 |
 
 **Warum die Validierung erst im letzten PR entsteht:** `deploy-staging.yml:42` und `deploy.yml:31` rufen `supabase db push` ohne `--include-all`. Läge auf Staging schon eine Datei mit spätem Zeitstempel, wiese `db push` jede spätere Story-Migration mit früherem Zeitstempel ab. Darum wird die Datei erst angelegt, wenn keine Story-Migration mehr folgt; so trägt sie den spätesten Zeitstempel des Release, ohne dass ein Zeitstempel vorgreift.
