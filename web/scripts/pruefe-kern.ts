@@ -316,8 +316,18 @@ import {
   TEAM_NUR_VERWALTUNG,
   VEREIN_MELDUNG,
   VEREIN_TEAM_NICHT_GEFUNDEN,
+  KONTO_LOESCHEN_TEXT,
   TEAMS_OHNE_VEREIN_TEXT,
   VEREIN_GRUENDEN_TEXT,
+  VEREIN_LOESCHEN_TEXT,
+  VEREIN_UNSTIMMIG,
+  kontoEinzigePersonInzwischenText,
+  kontoEinzigePersonSaetze,
+  kontoLetzteVerwaltungSaetze,
+  vereinGeloeschtText,
+  vereinHeisstInzwischenText,
+  vereinLoeschenFolgen,
+  vereinLoeschenTitel,
   VEREIN_NAME_MAX,
   VEREIN_SPIELER_MAX,
   VEREIN_TEAMS_MAX,
@@ -361,7 +371,7 @@ import {
   liesSpielerEingrenzung,
   teamFilterWerte,
 } from "../lib/verein-spielerliste";
-import { gruendungAus } from "../lib/verein-antwort";
+import { gruendungAus, kontoInfoAus, kontoLoeschAusgangAus, vereinLoeschAusgangAus } from "../lib/verein-antwort";
 import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
 import { bereichAusPfad } from "../lib/navigation";
 import { textMitLinks } from "../lib/text-links";
@@ -4326,6 +4336,223 @@ pruefe("Verein gründen (#587): ein Weg — RPC nur im Verein-Kern, Einstieg lie
   assert.match(lies("lib/actions/verein.ts"), /export async function gruendeVereinAktion[\s\S]*?redirect\("\/verein"\);/);
   // Die Seitenleiste lädt nach dem Gründen neu (Bereich «Verein»).
   assert.match(lies("lib/actions/verein.ts"), /gruendeVerein\(a\.supabase[\s\S]*?revalidiereMitgliedschaften\(\);[\s\S]*?redirect/);
+});
+
+// ── Verein löschen, Konto löschen (Story #587) ──────────────────────────────
+
+pruefe("Verein löschen (#587 AK 10, 11): Sätze der Gefahrenzone und des Dialogs, Zahlen nur, wo es etwas gibt", () => {
+  assert.equal(
+    VEREIN_LOESCHEN_TEXT.beschreibung,
+    "Austreten betrifft nur dich; in deinen Teams bleibst du Trainer:in. Verein löschen entfernt alle Teams und alle Spieler:innen samt Links und Abos; alle Personen werden Konten ohne Verein und behalten ihre eigenen Übungen und Trainings.",
+  );
+  assert.equal(VEREIN_LOESCHEN_TEXT.knopf, "Verein löschen");
+  assert.equal(VEREIN_LOESCHEN_TEXT.endgueltig, "Das lässt sich nicht rückgängig machen.");
+  assert.equal(vereinLoeschenTitel("FC Wyler"), "FC Wyler löschen");
+  assert.equal(vereinGeloeschtText("FC Wyler"), "Der Verein FC Wyler ist gelöscht. Deine eigenen Übungen und Trainings bleiben.");
+  // Das Beispiel des Boards: Teams, Spieler:innen auch ohne Team, Personen.
+  assert.deepEqual(vereinLoeschenFolgen({ teams: 10, spieler: 144, ohneTeam: 2, personen: 23 }), {
+    geloescht: ["10 Teams, mit Terminen und Team-Trainings", "144 Spieler:innen, davon 2 ohne Team, samt Links, Abos und Abholadressen"],
+    personen: "Alle 23 Personen werden Konten ohne Verein und behalten ihre eigenen Übungen und Trainings.",
+  });
+  // Einzahl, ohne Spieler:innen ohne Team, ohne Spieler:innen und Teams.
+  assert.deepEqual(vereinLoeschenFolgen({ teams: 1, spieler: 1, ohneTeam: 0, personen: 2 }).geloescht, [
+    "1 Team, mit Terminen und Team-Trainings",
+    "1 Spieler:in samt Links, Abos und Abholadressen",
+  ]);
+  assert.deepEqual(vereinLoeschenFolgen({ teams: 0, spieler: 0, ohneTeam: 0, personen: 1 }).geloescht, [], "ein leerer Verein nennt nichts Leeres");
+  assert.equal(
+    vereinLoeschenFolgen({ teams: 0, spieler: 3, ohneTeam: 3, personen: 1 }).personen,
+    "Dein Konto bleibt bestehen, ohne Verein; deine eigenen Übungen und Trainings bleiben.",
+    "die einzige Person liest nicht «Alle 1 Personen»",
+  );
+  assert.equal(vereinLoeschenFolgen({ teams: 0, spieler: 3, ohneTeam: 3, personen: 1 }).geloescht[0], "3 Spieler:innen, davon 3 ohne Team, samt Links, Abos und Abholadressen");
+});
+
+pruefe("Verein und Konto löschen (#587 AK 14): jede Rückmeldung hat ihren eigenen Satz, Verein und Konto unterscheiden sich", () => {
+  const verein = vereinHeisstInzwischenText("FC Wyler", "verein");
+  const konto = vereinHeisstInzwischenText("FC Wyler", "konto");
+  assert.equal(verein, "Der Verein heisst inzwischen «FC Wyler». Gib diesen Namen ein, um fortzufahren. Der Verein bleibt unverändert.");
+  assert.equal(konto, "Der Verein heisst inzwischen «FC Wyler». Gib diesen Namen ein, um fortzufahren. Verein und Konto bleiben unverändert.");
+  assert.ok(!verein.includes("Konto"), "der Satz fürs Löschen des Vereins spricht nicht vom Konto");
+  // Die vier Antworten von delete_account und der technische Fehler: je ein anderer Satz.
+  const saetze = [
+    VEREIN_MELDUNG.LETZTE_VERWALTUNG,
+    KONTO_LOESCHEN_TEXT.weiterePerson,
+    kontoEinzigePersonInzwischenText("FC Wyler"),
+    konto,
+    KONTO_LOESCHEN_TEXT.fehler,
+    KONTO_LOESCHEN_TEXT.teilweise,
+  ];
+  assert.equal(new Set(saetze).size, saetze.length, "keine zwei Rückmeldungen mit demselben Satz");
+  // Nichts verspricht ein Löschen, das nicht geschehen ist.
+  for (const t of [KONTO_LOESCHEN_TEXT.weiterePerson, konto]) assert.ok(t.includes("bleiben unverändert"), t);
+  assert.ok(kontoEinzigePersonInzwischenText("FC Wyler").includes("nichts gelöscht"));
+  // Die Antwort der Datenebene ist unlesbar: Der Satz schickt zum Nachsehen, nicht zum blinden Wiederholen.
+  assert.ok(VEREIN_UNSTIMMIG.loeschen.includes("prüfe, ob der Verein noch besteht"));
+  assert.ok(VEREIN_UNSTIMMIG.konto.includes("prüfe, ob dein Konto noch besteht"));
+});
+
+pruefe("Konto löschen (#587 AK 12, 13): drei Fälle des Dialogs im Wortlaut des Boards, ohne Teamnamen", () => {
+  assert.deepEqual(kontoLetzteVerwaltungSaetze("FC Wyler"), {
+    lage: "Du bist die letzte Person in der Vereinsverwaltung des FC Wyler, und dem Verein gehören weitere Personen an.",
+    weg: "Nimm zuerst jemanden in die Verwaltung auf. Oder lösche den Verein unter Verein › Verwaltung.",
+  });
+  assert.equal(KONTO_LOESCHEN_TEXT.nichtLoeschbar, "Konto lässt sich noch nicht löschen");
+  assert.deepEqual(kontoEinzigePersonSaetze("FC Seefeld", 2, 31), {
+    titel: "Konto und Verein löschen",
+    lage: "Du bist die einzige Person im FC Seefeld. Mit deinem Konto wird der Verein gelöscht:",
+    geloescht: ["2 Teams mit Kalender und Team-Trainings", "31 Spieler:innen samt Links, Abos und Abholadressen"],
+    endgueltig: "Das lässt sich nicht rückgängig machen.",
+    feld: "Vereinsname",
+    knopf: "Konto und Verein löschen",
+  });
+  assert.deepEqual(kontoEinzigePersonSaetze("FC Seefeld", 0, 1).geloescht, ["1 Spieler:in samt Links, Abos und Abholadressen"]);
+  assert.deepEqual(kontoEinzigePersonSaetze("FC Seefeld", 0, 0).geloescht, []);
+  assert.equal(KONTO_LOESCHEN_TEXT.vereinBleibt, "Gehörst du einem Verein an, bleibt er bestehen.");
+  // LETZTE_VERWALTUNG bleibt wörtlich; der Weg «im Bereich «Verein» löschen» gibt es jetzt wirklich.
+  assert.ok(VEREIN_MELDUNG.LETZTE_VERWALTUNG.endsWith("Du kannst den Verein auch im Bereich «Verein» löschen."));
+});
+
+pruefe("Verein und Konto löschen (#587): Antworten der Datenebene werden auf ihre Form geprüft", () => {
+  const bild = { id: "4b3f9d0e-4c8a-4a39-9d57-0a8f2f7f1d11", bild_url: "https://x.test/storage/v1/object/public/b/4b3f.webp" };
+  // verein_loeschen
+  assert.deepEqual(vereinLoeschAusgangAus({ status: "geloescht", name: "FC Wyler", bilder: [bild, { id: "a", bild_url: null }] }), {
+    status: "geloescht",
+    name: "FC Wyler",
+    bilder: [bild, { id: "a", bild_url: null }],
+  });
+  assert.deepEqual(vereinLoeschAusgangAus({ status: "geloescht", name: "FC Wyler", bilder: [] }), { status: "geloescht", name: "FC Wyler", bilder: [] });
+  assert.deepEqual(vereinLoeschAusgangAus({ status: "vereinsname_falsch", name: "FC Wyler 2" }), { status: "vereinsname_falsch", name: "FC Wyler 2" });
+  for (const kaputt of [
+    null,
+    "geloescht",
+    {},
+    { status: "geloescht", name: "FC Wyler" },
+    { status: "geloescht", name: "FC Wyler", bilder: null },
+    { status: "geloescht", name: "FC Wyler", bilder: [{ id: "a" }] },
+    { status: "geloescht", name: "FC Wyler", bilder: [{ id: 5, bild_url: null }] },
+    { status: "geloescht", name: "", bilder: [] },
+    { status: "vereinsname_falsch" },
+    { status: "unbekannt", name: "FC Wyler", bilder: [] },
+  ])
+    assert.equal(vereinLoeschAusgangAus(kaputt), null, JSON.stringify(kaputt));
+  // delete_account: alle vier Antworten des Vertrags
+  assert.deepEqual(kontoLoeschAusgangAus({ status: "geloescht", bilder: [] }), { status: "geloescht", bilder: [] });
+  assert.deepEqual(kontoLoeschAusgangAus({ status: "geloescht", bilder: [bild] }), { status: "geloescht", bilder: [bild] });
+  assert.deepEqual(kontoLoeschAusgangAus({ status: "letzte_verwaltung" }), { status: "letzte_verwaltung" });
+  assert.deepEqual(kontoLoeschAusgangAus({ status: "verein_bestaetigen", verein: "FC Seefeld", teams: 2, spieler: 31 }), {
+    status: "verein_bestaetigen",
+    verein: "FC Seefeld",
+    teams: 2,
+    spieler: 31,
+  });
+  assert.deepEqual(kontoLoeschAusgangAus({ status: "vereinsname_falsch", name: "FC Seefeld" }), { status: "vereinsname_falsch", name: "FC Seefeld" });
+  for (const kaputt of [
+    null,
+    [],
+    {},
+    { status: "geloescht" },
+    { status: "geloescht", bilder: {} },
+    { status: "verein_bestaetigen", verein: "FC Seefeld", teams: 2 },
+    { status: "verein_bestaetigen", verein: "", teams: 2, spieler: 1 },
+    { status: "verein_bestaetigen", verein: "FC Seefeld", teams: -1, spieler: 1 },
+    { status: "verein_bestaetigen", verein: "FC Seefeld", teams: 1.5, spieler: 1 },
+    { status: "verein_bestaetigen", verein: "FC Seefeld", teams: "2", spieler: 1 },
+    { status: "vereinsname_falsch" },
+    { status: "weiss_nicht" },
+  ])
+    assert.equal(kontoLoeschAusgangAus(kaputt), null, JSON.stringify(kaputt));
+  // konto_loeschen_info: die Zahlen stehen immer da, der Verein bei den beiden Fällen mit Verein
+  assert.deepEqual(kontoInfoAus({ fall: "frei", verein: null, teams: 0, spieler: 0 }), { fall: "frei" });
+  assert.deepEqual(kontoInfoAus({ fall: "letzte_verwaltung", verein: "FC Wyler", teams: 0, spieler: 0 }), { fall: "letzte_verwaltung", verein: "FC Wyler" });
+  assert.deepEqual(kontoInfoAus({ fall: "einzige_person", verein: "FC Seefeld", teams: 2, spieler: 31 }), {
+    fall: "einzige_person",
+    verein: "FC Seefeld",
+    teams: 2,
+    spieler: 31,
+  });
+  for (const kaputt of [
+    null,
+    "frei",
+    {},
+    { fall: "frei" },
+    { fall: "frei", verein: null, teams: 0 },
+    { fall: "letzte_verwaltung", verein: null, teams: 0, spieler: 0 },
+    { fall: "einzige_person", verein: "", teams: 1, spieler: 1 },
+    { fall: "einzige_person", verein: "FC Seefeld", teams: "1", spieler: 1 },
+    { fall: "anderer", verein: "FC Seefeld", teams: 1, spieler: 1 },
+  ])
+    assert.equal(kontoInfoAus(kaputt), null, JSON.stringify(kaputt));
+});
+
+pruefe("Verein und Konto löschen (#587): ein Weg je RPC, Bestätigung mit dem Baustein, Redirect in der Action, Bilder vor dem Entfernen der Anmeldung", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentar = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  // Jede der drei RPCs steht an genau einer Stelle: im Verein-Kern.
+  const rpcs = { verein_loeschen: [] as string[], konto_loeschen_info: [] as string[], delete_account: [] as string[] };
+  for (const datei of quelldateien(web)) {
+    const rel = relative(web, datei);
+    if (datei === fileURLToPath(import.meta.url) || rel === "scripts/pruefe-kern-db.ts") continue;
+    const text = readFileSync(datei, "utf8");
+    for (const name of Object.keys(rpcs) as (keyof typeof rpcs)[])
+      if (new RegExp(`\\.rpc\\(\\s*["\`']${name}["\`']`).test(text)) rpcs[name].push(rel);
+  }
+  assert.deepEqual(rpcs, {
+    verein_loeschen: ["lib/kern/verein.ts"],
+    konto_loeschen_info: ["lib/kern/verein.ts"],
+    delete_account: ["lib/kern/verein.ts"],
+  });
+  // Der Namensvergleich steht einmal: im Baustein; Verein und Konto nutzen ihn, nichts baut ihn nach.
+  const trimNfc: string[] = [];
+  for (const datei of quelldateien(web)) {
+    const rel = relative(web, datei);
+    if (datei !== fileURLToPath(import.meta.url) && /\.trim\(\)\.normalize\("NFC"\)/.test(readFileSync(datei, "utf8"))) trimNfc.push(rel);
+  }
+  assert.deepEqual(trimNfc, ["components/ui/NamenBestaetigen.tsx"], "Namensvergleich nicht duplizieren");
+  const loeschen = lies("components/verein/VereinLoeschen.tsx");
+  const konto = lies("app/(app)/konto/KontoClient.tsx");
+  for (const [name, text] of [["VereinLoeschen", loeschen], ["KontoClient", konto]] as const) {
+    assert.match(text, /<NamenBestaetigen[\s\S]*?gesperrt=\{pending\}/, `${name}: Bestätigung mit dem Baustein, Eingabe gesperrt während der Anfrage`);
+    assert.match(text, /namenStimmen\(eingabe, /, `${name}: Knopf nur bei passendem Namen`);
+    assert.match(text, /if \(pending \|\| !passt\) return|if \(!passt \|\| pending\) return/, `${name}: kein doppeltes Absenden`);
+  }
+  assert.match(loeschen, /variant="danger" disabled=\{!passt \|\| pending\}/);
+  assert.match(konto, /variant="danger" disabled=\{!passt \|\| pending\}/);
+  // Verein löschen: Redirect und Flash in der Action, Teil der Gefahrenzone, nicht am Team-Ort.
+  const aktionen = lies("lib/actions/verein.ts");
+  assert.match(aktionen, /export async function loescheVereinAktion[\s\S]*?raeumeVerwaisteBilder\(eigeneBildPfade\(r\.wert\.bilder\)\);\s*redirect\(`\/teams\?verein_weg=/);
+  assert.ok(!/router\.(push|replace)\(/.test(loeschen), "die Weiterleitung steht in der Action");
+  assert.match(lies("components/verein/VereinVerwaltung.tsx"), /<Gefahrenzone beschreibung=\{VEREIN_LOESCHEN_TEXT\.beschreibung\}>[\s\S]*?<VereinLoeschen\b/);
+  assert.match(lies("app/(app)/teams/page.tsx"), /sp\.verein_weg && <Flash message=\{vereinGeloeschtText\(/);
+  // Konto löschen: Datenebene → Bilder (eigene, dann Verein) → Anmeldung (mit Fehlerprüfung) → Cookies.
+  const auth = ohneKommentar(lies("lib/actions/auth.ts"));
+  const fluss = auth.slice(auth.indexOf("export async function deleteAccount"));
+  const stelle = (text: string) => {
+    const i = fluss.indexOf(text);
+    assert.ok(i >= 0, `deleteAccount enthält «${text}» nicht`);
+    return i;
+  };
+  assert.ok(
+    stelle("loescheKonto(") < stelle("storage.from(STORAGE_BUCKET).remove(paths)") &&
+      stelle("storage.from(STORAGE_BUCKET).remove(paths)") < stelle("raeumeVerwaisteBilder(eigeneBildPfade(a.bilder))") &&
+      stelle("raeumeVerwaisteBilder(eigeneBildPfade(a.bilder))") < stelle("auth.admin.deleteUser(uid)") &&
+      stelle("auth.admin.deleteUser(uid)") < stelle("auth.signOut()"),
+    "Reihenfolge: Datenebene, eigene Bilder, Bilder des Vereins, Anmeldung entfernen, Abmelden",
+  );
+  assert.match(fluss, /const \{ error: loeschFehler \} = await createAdminClient\(\)\.auth\.admin\.deleteUser\(uid\);\s*if \(loeschFehler\)/, "das Entfernen der Anmeldung wird geprüft");
+  assert.match(fluss, /KONTO_LOESCHEN_TEXT\.teilweise/, "der Teilzustand hat seinen Satz");
+  // Alle vier Antworten haben einen Zweig.
+  for (const status of ["letzte_verwaltung", "verein_bestaetigen", "vereinsname_falsch"]) assert.ok(fluss.includes(`a.status === "${status}"`), status);
+  // Der Dialog liest den Fall beim Rendern der Seite, nicht erst beim Klick.
+  assert.match(lies("app/(app)/konto/page.tsx"), /ladeKontoLoeschenInfo\(supabase, user\.id\)[\s\S]*?<KontoClient info=\{loeschInfo\.wert\} \/>/);
+  // Nie ein Namensfeld ohne Pflichtangabe: Die Eingabe geht nur im Fall «einzige Person» mit.
+  assert.match(konto, /deleteAccount\(verein \? eingabe : null\)/);
+  // Der Speicher wird in Stücken geräumt.
+  assert.match(lies("lib/storage-aufraeumen.ts"), /for \(let i = 0; i < pfade\.length; i \+= STUECK\)/);
+  // Kein Verein-Weg am Team-Ort, kein KI-Weg zu Gründen und Löschen (Ortsprüfung der Datenebene, Test 30).
+  for (const ordner of ["components/team", "app/(app)/team", "lib/mcp"])
+    for (const datei of quelldateien(join(web, ordner)))
+      assert.ok(!/\b(loescheVerein\w*|gruendeVerein\w*|loescheKonto|ladeKontoLoeschenInfo|verein_loeschen|verein_gruenden|delete_account|konto_loeschen_info)\b/.test(readFileSync(datei, "utf8")), relative(web, datei));
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

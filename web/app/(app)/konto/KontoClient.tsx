@@ -1,75 +1,153 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, useTransition } from "react";
 import { Trash2, AlertTriangle } from "lucide-react";
-import { Button, ButtonLink, Dialog, SectionMessage } from "@/components/ui";
+import { Button, ButtonLink, Dialog, NamenBestaetigen, SectionMessage, namenStimmen } from "@/components/ui";
 import { deleteAccount, type KontoLoeschenZustand } from "@/lib/actions/auth";
+import {
+  KONTO_LOESCHEN_TEXT,
+  kontoEinzigePersonSaetze,
+  kontoLetzteVerwaltungSaetze,
+} from "@/lib/verein";
+import type { KontoLoeschInfo } from "@/lib/verein-antwort";
 
 /* Konto-Löschung mit ausdrücklicher Bestätigung und Konsequenz-Hinweis
-   (Story 9 EK2/EK3). Bleibt das Konto, weil es die letzte Verwaltung eines
-   Vereins ist oder etwas schiefging, steht der Grund im Dialog (#577). Im
-   ersten Fall gibt es nichts erneut zu versuchen: Der Dialog führt zur
-   Verwaltung, wo sich jemand aufnehmen lässt (#581 AK 34). */
-export function KontoClient() {
+   (Story 9 EK2/EK3), in drei Fällen nach der Lage im Verein (#587 AK 12–14):
+
+   - frei: das Konto geht allein; ein Verein bleibt bestehen.
+   - letzte Verwaltung, weitere Personen im Verein: nichts zu bestätigen, der
+     Dialog führt zur Verwaltung, wo sich jemand aufnehmen oder der Verein
+     löschen lässt (#581 AK 34).
+   - einzige Person im Verein: Mit dem Konto verschwindet der Verein; der Dialog
+     nennt, was dazugehört, und verlangt den Vereinsnamen.
+
+   Die Seite liest den Fall beim Rendern (`konto_loeschen_info`), die Datenebene
+   prüft ihn beim Ausführen erneut. Hat sich die Lage inzwischen geändert, bleibt
+   alles unverändert, der Dialog zeigt den Grund und, wo es weitergeht, den
+   neuen Fall. Eine laufende Anfrage sperrt Eingabe und Knöpfe. */
+export function KontoClient({ info }: { info: KontoLoeschInfo }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button variant="danger" onClick={() => setOpen(true)}>
+      <Button variant="danger" aria-haspopup="dialog" onClick={() => setOpen(true)}>
         <Trash2 size={18} strokeWidth={2} aria-hidden />
         Konto löschen
       </Button>
       {/* Nur offen eingehängt: Schliessen verwirft die letzte Meldung. */}
-      {open && <KontoLoeschenDialog onClose={() => setOpen(false)} />}
+      {open && <KontoLoeschenDialog info={info} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
 const ANFANG: KontoLoeschenZustand = { fehler: null };
+const FORM = "konto-loeschen";
 
-function KontoLoeschenDialog({ onClose }: { onClose: () => void }) {
-  const [zustand, aktion, laeuft] = useActionState(deleteAccount, ANFANG);
+function KontoLoeschenDialog({ info, onClose }: { info: KontoLoeschInfo; onClose: () => void }) {
+  const [pending, startTransition] = useTransition();
+  const [zustand, setZustand] = useState<KontoLoeschenZustand>(ANFANG);
+  const [eingabe, setEingabe] = useState("");
+
+  // Der Fall, den die Datenebene beim Ausführen gesehen hat, geht dem der Seite vor.
+  const gesperrt = zustand.letzteVerwaltung === true || info.fall === "letzte_verwaltung";
+  const grundlage = zustand.verein ?? (info.fall === "einzige_person" ? { name: info.verein, teams: info.teams, spieler: info.spieler } : null);
+  const verein = !gesperrt && grundlage ? { ...grundlage, name: zustand.aktuellerName ?? grundlage.name } : null;
+  const passt = verein ? namenStimmen(eingabe, verein.name) : true;
+
+  function loeschen() {
+    if (pending || !passt) return;
+    startTransition(async () => {
+      // Gelingt es, leitet die Action selbst weiter und liefert nichts zurück.
+      setZustand(await deleteAccount(verein ? eingabe : null));
+    });
+  }
+
+  const schliessen = () => !pending && onClose();
+  const einzige = verein ? kontoEinzigePersonSaetze(verein.name, verein.teams, verein.spieler) : null;
+  const letzte = info.fall === "letzte_verwaltung" ? kontoLetzteVerwaltungSaetze(info.verein) : null;
+
   return (
     <Dialog
       open
-      onClose={onClose}
-      title="Konto wirklich löschen?"
+      onClose={schliessen}
+      title={einzige ? einzige.titel : gesperrt ? KONTO_LOESCHEN_TEXT.nichtLoeschbar : KONTO_LOESCHEN_TEXT.titel}
       actions={
         <>
-          <Button variant="outlined" onClick={onClose}>
-            {zustand.letzteVerwaltung ? "Schliessen" : "Abbrechen"}
+          <Button type="button" variant="outlined" onClick={schliessen} disabled={pending}>
+            {gesperrt ? "Schliessen" : "Abbrechen"}
           </Button>
-          {zustand.letzteVerwaltung ? (
+          {gesperrt ? (
             <ButtonLink href="/verein/verwaltung" variant="filled">
               Zur Verwaltung
             </ButtonLink>
           ) : (
-            <form action={aktion}>
-              <Button type="submit" variant="danger" disabled={laeuft}>
-                Konto endgültig löschen
-              </Button>
-            </form>
+            <Button type="submit" form={FORM} variant="danger" disabled={!passt || pending}>
+              {einzige ? einzige.knopf : "Konto endgültig löschen"}
+            </Button>
           )}
         </>
       }
     >
-      <div className="flex flex-col gap-3">
-        {zustand.fehler && <SectionMessage appearance="error">{zustand.fehler}</SectionMessage>}
-        {!zustand.letzteVerwaltung && (
+      <form
+        id={FORM}
+        noValidate
+        className="flex flex-col gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          loeschen();
+        }}
+      >
+        {zustand.fehler && !einzige && <SectionMessage appearance="error">{zustand.fehler}</SectionMessage>}
+        {letzte && (
           <>
-            <p className="flex items-start gap-2">
-              <AlertTriangle size={18} strokeWidth={2} className="mt-0.5 shrink-0 text-error" aria-hidden />
-              <span>Diese Aktion kann nicht rückgängig gemacht werden.</span>
-            </p>
+            <p>{letzte.lage}</p>
+            <p>{letzte.weg}</p>
+          </>
+        )}
+        {!gesperrt && (
+          <>
+            {einzige ? (
+              <>
+                <p>{einzige.lage}</p>
+                {einzige.geloescht.length > 0 && (
+                  <ul className="list-disc space-y-1 pl-5">
+                    {einzige.geloescht.map((zeile) => (
+                      <li key={zeile}>{zeile}</li>
+                    ))}
+                  </ul>
+                )}
+                <p className="font-medium text-on-surface">{einzige.endgueltig}</p>
+              </>
+            ) : (
+              <p className="flex items-start gap-2">
+                <AlertTriangle size={18} strokeWidth={2} className="mt-0.5 shrink-0 text-error" aria-hidden />
+                <span>Diese Aktion kann nicht rückgängig gemacht werden.</span>
+              </p>
+            )}
             <ul className="list-disc space-y-1 pl-5">
               <li>Deine <strong>öffentlichen</strong> Übungen bleiben anonymisiert erhalten und werden unveränderlich.</li>
               <li>Deine <strong>privaten</strong> Übungen werden samt Feld-Diagramm gelöscht.</li>
-              <li>Teams, in denen du die letzte Trainer:in bist, bleiben ohne Trainer:in bestehen.</li>
+              {!einzige && (
+                <>
+                  <li>Teams, in denen du die letzte Trainer:in bist, bleiben ohne Trainer:in bestehen.</li>
+                  <li>{KONTO_LOESCHEN_TEXT.vereinBleibt}</li>
+                </>
+              )}
               <li>Verbundene KI-Assistenten verlieren ihren Zugang.</li>
               <li>Du wirst abgemeldet und dein Konto entfernt.</li>
             </ul>
+            {einzige && verein && (
+              <NamenBestaetigen
+                name={verein.name}
+                wert={eingabe}
+                onChange={setEingabe}
+                label={einzige.feld}
+                fehler={zustand.fehler}
+                gesperrt={pending}
+              />
+            )}
           </>
         )}
-      </div>
+      </form>
     </Dialog>
   );
 }

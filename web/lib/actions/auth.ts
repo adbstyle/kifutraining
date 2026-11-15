@@ -8,8 +8,14 @@ import { oeffentlicherOrigin } from "@/lib/origin";
 import { sichererRuecksprung } from "@/lib/weiterleitung";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { eigeneBildPfade } from "@/lib/fassung";
-import { fachlicheMeldung } from "@/lib/training-bedingungen";
-import { VEREIN_MELDUNG } from "@/lib/verein";
+import { loescheKonto } from "@/lib/kern/verein";
+import { raeumeVerwaisteBilder } from "@/lib/storage-aufraeumen";
+import {
+  KONTO_LOESCHEN_TEXT,
+  VEREIN_MELDUNG,
+  kontoEinzigePersonInzwischenText,
+  vereinHeisstInzwischenText,
+} from "@/lib/verein";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PW = 8;
@@ -145,26 +151,37 @@ export async function signOut() {
   redirect("/");
 }
 
-/** Der Zustand des Dialogs «Konto löschen» (`useActionState`): `fehler` ist
- *  der Klartext, wenn das Konto bleibt — die letzte Verwaltung eines Vereins
- *  (#577) oder ein technischer Fehler; sonst `null`. `letzteVerwaltung` weist
- *  den ersten Fall aus: Dort führt der Dialog zur Verwaltung, statt es erneut
- *  versuchen zu lassen (#581 AK 34). Gelingt das Löschen, leitet die Action
- *  weiter. */
-export type KontoLoeschenZustand = { fehler: string | null; letzteVerwaltung?: boolean };
+/** Der Zustand des Dialogs «Konto löschen»: `fehler` ist der Klartext, wenn das
+ *  Konto bleibt — sonst `null`. Gelingt das Löschen, leitet die Action weiter.
+ *
+ *  - `letzteVerwaltung`: Das Konto ist die letzte Person der Verwaltung, und
+ *    dem Verein gehören weitere an (#577, #587 AK 13): Dort führt der Dialog zur
+ *    Verwaltung, statt es erneut versuchen zu lassen.
+ *  - `verein`: Das Konto ist inzwischen die einzige Person im Verein, der
+ *    Dialog verlangt jetzt dessen Namen (Zahlen aus der Datenebene).
+ *  - `aktuellerName`: Der Vereinsname stimmte nicht mehr; der Dialog zeigt
+ *    jetzt diesen. */
+export type KontoLoeschenZustand = {
+  fehler: string | null;
+  letzteVerwaltung?: boolean;
+  verein?: { name: string; teams: number; spieler: number };
+  aktuellerName?: string;
+};
 
-const KONTO_LOESCHEN_FEHLER = "Das Konto liess sich nicht löschen. Bitte versuche es noch einmal.";
-
-/** Konto löschen (Story 9). Öffentliche Übungen bleiben anonymisiert erhalten,
- *  private werden samt Feld-Diagramm gelöscht, danach der Auth-User. Teams
- *  bleiben bestehen, auch wenn das Konto ihr letztes Mitglied war (#581):
- *  Darum gibt es hier keinen Nachlauf für Bilder von Team-Trainings. Die letzte
- *  Verwaltung eines Vereins löscht ihr Konto nicht (#577): Die RPC meldet
- *  `letzte_verwaltung`, bevor sie etwas anfasst, und das Konto bleibt. */
-export async function deleteAccount(
-  _vorher: KontoLoeschenZustand,
-  _formData: FormData,
-): Promise<KontoLoeschenZustand> {
+/** Konto löschen (Story 9, #587). Öffentliche Übungen bleiben anonymisiert
+ *  erhalten, private werden samt Feld-Diagramm gelöscht, danach der Auth-User.
+ *  Teams bleiben bestehen, auch wenn das Konto ihr letztes Mitglied war (#581).
+ *  Ist das Konto die einzige Person eines Vereins, verschwindet der Verein mit
+ *  ihm — aber nur mit dem eingegebenen Vereinsnamen (`vereinsname`, sonst
+ *  `null`): Die Datenebene prüft ihn beim Ausführen selbst und antwortet
+ *  sonst, ohne etwas anzufassen (`verein_bestaetigen`, `vereinsname_falsch`).
+ *  Die letzte Verwaltung eines Vereins mit weiteren Personen löscht ihr Konto
+ *  nicht (`letzte_verwaltung`).
+ *
+ *  Reihenfolge: Datenebene → Bilder → Anmeldung. Scheitert das Entfernen der
+ *  Anmeldung, nachdem die Datenebene gelöscht hat, bleibt das Konto leer
+ *  zurück und angemeldet; ein zweiter Versuch geht durch (`teilweise`). */
+export async function deleteAccount(vereinsname: string | null): Promise<KontoLoeschenZustand> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -198,30 +215,46 @@ export async function deleteAccount(
     ...eigeneBildPfade(fassungen ?? []),
   ];
 
-  // Daten-Teil: anonymisiert öffentliche, löscht private Übungen + eigene Trainings.
-  const { data: status, error } = await supabase.rpc("delete_account");
-  if (error) {
-    const fachlich = fachlicheMeldung(error.message);
-    if (!fachlich) console.error("[konto] löschen", error);
-    return { fehler: fachlich ?? KONTO_LOESCHEN_FEHLER };
-  }
-  const geloescht = (status as { status?: string } | null)?.status;
-  if (geloescht === "letzte_verwaltung")
-    return { fehler: VEREIN_MELDUNG.LETZTE_VERWALTUNG, letzteVerwaltung: true };
-  if (geloescht !== "geloescht") return { fehler: KONTO_LOESCHEN_FEHLER };
+  // Daten-Teil: anonymisiert öffentliche, löscht private Übungen + eigene
+  // Trainings und, als einzige Person, den Verein.
+  const r = await loescheKonto(supabase, uid, { vereinsname });
+  if (!r.ok) return { fehler: r.meldung };
+  const a = r.wert;
+  if (a.status === "letzte_verwaltung")
+    return {
+      fehler: vereinsname?.trim() ? KONTO_LOESCHEN_TEXT.weiterePerson : VEREIN_MELDUNG.LETZTE_VERWALTUNG,
+      letzteVerwaltung: true,
+    };
+  if (a.status === "verein_bestaetigen")
+    return {
+      fehler: kontoEinzigePersonInzwischenText(a.verein),
+      verein: { name: a.verein, teams: a.teams, spieler: a.spieler },
+    };
+  if (a.status === "vereinsname_falsch")
+    return { fehler: vereinHeisstInzwischenText(a.name, "konto"), aktuellerName: a.name };
 
-  // Erst nach erfolgreichem RPC die verwaisten Diagramme entfernen.
+  // Erst nach erfolgreichem RPC die verwaisten Bilder entfernen: die eigenen
+  // mit der Sitzung, die des Vereins (Team-Trainings) mit dem Nachlauf — mit
+  // dem Verein erlischt das Recht daran. Vor dem Entfernen der Anmeldung.
   if (paths.length) await supabase.storage.from(STORAGE_BUCKET).remove(paths);
+  await raeumeVerwaisteBilder(eigeneBildPfade(a.bilder));
 
-  // Session-Cookies löschen (Best Effort) — darf den unwiderruflichen
-  // Auth-User-Löschschritt NICHT blockieren, falls signOut wirft.
+  // Die Anmeldung zuerst entfernen: Scheitert es, ist der Nutzer noch angemeldet
+  // und kann es noch einmal versuchen.
+  const { error: loeschFehler } = await createAdminClient().auth.admin.deleteUser(uid);
+  if (loeschFehler) {
+    console.error("[konto] Anmeldung entfernen", loeschFehler);
+    return { fehler: KONTO_LOESCHEN_TEXT.teilweise };
+  }
+
+  // Session-Cookies löschen (Best Effort): Das Konto ist weg, ein Fehlschlag
+  // darf die Weiterleitung nicht blockieren; Cookies werden spätestens beim
+  // nächsten getUser invalidiert.
   try {
     await supabase.auth.signOut();
   } catch {
-    /* ignorieren: Cookies werden spätestens beim nächsten getUser invalidiert */
+    /* ignorieren */
   }
-  const admin = createAdminClient();
-  await admin.auth.admin.deleteUser(uid);
 
   revalidatePath("/");
   redirect("/?account_deleted=1");

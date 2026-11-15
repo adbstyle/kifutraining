@@ -30,6 +30,7 @@ export function NamenBestaetigen({
   onChange,
   label,
   fehler,
+  gesperrt,
 }: {
   /** Der Name, der einzugeben ist. */
   name: string;
@@ -39,6 +40,9 @@ export function NamenBestaetigen({
   label: string;
   /** Meldung vom Server, z. B. weil der Name sich inzwischen geändert hat. */
   fehler?: string | null;
+  /** Während einer laufenden Anfrage: Das Feld lässt sich nicht mehr ändern,
+   *  behält aber den Fokus (`readOnly`, nicht `disabled`). */
+  gesperrt?: boolean;
 }) {
   const anleitungId = useId();
   const passt = namenStimmen(wert, name);
@@ -56,6 +60,7 @@ export function NamenBestaetigen({
         enterKeyHint="go"
         aria-describedby={anleitungId}
         autoFocus
+        readOnly={gesperrt}
         autoComplete="off"
         autoCapitalize="off"
         autoCorrect="off"

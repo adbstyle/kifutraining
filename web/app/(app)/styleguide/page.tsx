@@ -3446,6 +3446,22 @@ export default async function Styleguide() {
               <Button variant="outlined">Team verlassen</Button>
             </div>
           </Gefahrenzone>
+          <p className="type-body-medium mb-5 mt-8 max-w-2xl text-on-surface-mittel">
+            Stehen zwei Handlungen darin, geht die mildere als{" "}
+            <code>outlined</code> voran und die unwiderrufliche als{" "}
+            <code>danger</code> dahinter, nebeneinander und auf schmalem Schirm
+            untereinander (#587): in der Verwaltung des Vereins der eigene
+            Austritt und das Löschen des Vereins.
+          </p>
+          <Gefahrenzone
+            className="max-w-xl"
+            beschreibung="Austreten betrifft nur dich. Verein löschen entfernt alle Teams und alle Spieler:innen; alle Personen werden Konten ohne Verein."
+          >
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outlined">Aus der Verwaltung austreten</Button>
+              <Button variant="danger">Verein löschen</Button>
+            </div>
+          </Gefahrenzone>
         </Section>
 
         <Section id="namen-bestaetigen">
@@ -3469,6 +3485,10 @@ export default async function Styleguide() {
             über <code>aria-describedby</code> mit dem Feld und die Freigabe über
             eine Live-Region. Weicht der Name inzwischen ab, nennt der Dialog
             den aktuellen als Fehler (<code>fehler</code>) und bleibt offen.
+            Während einer laufenden Anfrage lässt sich das Feld nicht ändern
+            (<code>gesperrt</code>, #587); es bleibt nur schreibgeschützt und
+            behält den Fokus. Der Baustein trägt auch das Löschen eines Vereins
+            und das Löschen des Kontos als einzige Person eines Vereins.
           </p>
           <NamenBestaetigenDemo />
         </Section>

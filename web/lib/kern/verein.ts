@@ -20,6 +20,7 @@ import { teamNameProblem } from "@/lib/team";
 import {
   PERSON_MELDUNG,
   type PersonSchritt,
+  KONTO_LOESCHEN_TEXT,
   VEREIN_MELDUNG,
   VEREIN_NAME_UNGUELTIG,
   VEREIN_TEAM_NICHT_GEFUNDEN,
@@ -32,7 +33,15 @@ import {
   type SpielerDoppeltImVerein,
   type ZuordnenAbweisung,
 } from "@/lib/verein";
-import { gruendungAus } from "@/lib/verein-antwort";
+import {
+  gruendungAus,
+  kontoInfoAus,
+  kontoLoeschAusgangAus,
+  vereinLoeschAusgangAus,
+  type KontoLoeschAusgang,
+  type KontoLoeschInfo,
+  type VereinLoeschAusgang,
+} from "@/lib/verein-antwort";
 import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 import { argumente, eingabeFehler, spielerFehler } from "@/lib/kern/spieler";
 
@@ -259,13 +268,16 @@ export type VereinTeamZeile = {
 };
 
 /** `spielerZahl`: alle Spieler:innen des Vereins, gezählt wie die Grenze 1000;
- *  `spielerOhneTeam`: davon ohne Team. Beide nur für die Verwaltung. */
+ *  `spielerOhneTeam`: davon ohne Team; `personen`: verschiedene Konten in
+ *  Verwaltung und Teams (was das Löschen des Vereins zu Konten ohne Verein
+ *  macht, #587). Alle drei nur für die Verwaltung. */
 export type VereinAnsicht = {
   name: string;
   verwaltung: VerwaltungPerson[];
   teams: VereinTeamZeile[];
   spielerZahl?: number;
   spielerOhneTeam?: number;
+  personen?: number;
 };
 
 /** Eine Trainer:in in der Teamansicht der Verwaltung. */
@@ -328,9 +340,17 @@ export async function ladeVereinAnsicht(
   if (!istUuid(e.vereinId)) return vereinNichtGefunden();
   const { data, error } = await supabase.rpc("verein_ansicht", { p_verein: e.vereinId });
   if (error) return vereinFehler(error);
-  const r = data as { name: string; verwaltung: VerwaltungRoh[]; teams: TeamRoh[]; spieler_zahl?: number; spieler_ohne_team?: number };
+  const r = data as {
+    name: string;
+    verwaltung: VerwaltungRoh[];
+    teams: TeamRoh[];
+    spieler_zahl?: number;
+    spieler_ohne_team?: number;
+    personen?: number;
+  };
   return ok({
     name: r.name,
+    ...(r.personen !== undefined ? { personen: r.personen } : {}),
     ...(r.spieler_zahl !== undefined ? { spielerZahl: r.spieler_zahl } : {}),
     ...(r.spieler_ohne_team !== undefined ? { spielerOhneTeam: r.spieler_ohne_team } : {}),
     verwaltung: r.verwaltung.map((v) => ({
@@ -462,6 +482,67 @@ export async function gruendeVerein(
   }
   const g = gruendungAus(data);
   return g ? ok({ vereinId: g.id, name: g.name }) : fehlschlag("technisch", VEREIN_UNSTIMMIG.gruenden);
+}
+
+/** Den Verein löschen, nur mit dem bestätigten aktuellen Vereinsnamen (#587
+ *  AK 10, 11): alle Teams, der ganze Spielerbestand samt Links, Abos und
+ *  Abholadressen, die Verwaltung; die Personen bleiben als Konten ohne Verein,
+ *  ihre eigenen Übungen und Trainings ebenso. Die Antwort trägt die Bilder, die
+ *  der Aufrufer danach aus dem Speicher räumt. Stimmt der Name nicht mehr
+ *  (umbenannt), ist nichts gelöscht und der aktuelle Name steht da. Wer nicht
+ *  zur Verwaltung gehört, erfährt nur «nicht gefunden». Die Antwort der
+ *  Datenebene wird auf ihre Form geprüft: Ob gelöscht ist, sagt dann nur ein
+ *  Blick auf die Seite. */
+export async function loescheVerein(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { vereinId: string; vereinsname: string },
+): Promise<KernErgebnis<VereinLoeschAusgang>> {
+  if (!istUuid(e.vereinId)) return vereinNichtGefunden();
+  if (typeof e.vereinsname !== "string") return fehlschlag("eingabe", MELDUNG_WIEDERHOLEN, { feld: "vereinsname" });
+  const { data, error } = await supabase.rpc("verein_loeschen", { p_verein: e.vereinId, p_name: e.vereinsname.trim() });
+  if (error) return vereinFehler(error);
+  const ausgang = vereinLoeschAusgangAus(data);
+  return ausgang ? ok(ausgang) : fehlschlag("technisch", VEREIN_UNSTIMMIG.loeschen);
+}
+
+/** Wie das Löschen des eigenen Kontos zum Verein steht (#587 AK 12, 13): frei,
+ *  letzte Person der Verwaltung oder einzige Person im Verein. Nur lesend; die
+ *  Datenebene prüft beim Ausführen erneut. */
+export async function ladeKontoLoeschenInfo(supabase: SupabaseClient, _userId: string): Promise<KernErgebnis<KontoLoeschInfo>> {
+  const { data, error } = await supabase.rpc("konto_loeschen_info");
+  if (error) {
+    // Ein Lesefehler heisst hier «Angaben nicht lesbar», nicht «nicht speichern».
+    const f = ausDbFehler(error);
+    return f.art === "technisch" ? fehlschlag("technisch", VEREIN_UNSTIMMIG.info, { wiederholbar: true }) : f;
+  }
+  const info = kontoInfoAus(data);
+  return info ? ok(info) : fehlschlag("technisch", VEREIN_UNSTIMMIG.info);
+}
+
+/** Der Daten-Teil des Konto-Löschens (#587 AK 12–14): anonymisiert öffentliche,
+ *  löscht private Übungen und eigene Trainings — und den Verein, wenn das Konto
+ *  seine einzige Person ist und der Vereinsname stimmt (`vereinsname`: `null`
+ *  ohne Eingabe). Die vier Antworten der Datenebene: `geloescht` (mit den
+ *  Bildern des Vereins), `letzte_verwaltung`, `verein_bestaetigen`,
+ *  `vereinsname_falsch`. Die Anmeldung selbst entfernt die Action danach; dieser
+ *  Kern löscht sie nicht. */
+export async function loescheKonto(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { vereinsname: string | null },
+): Promise<KernErgebnis<KontoLoeschAusgang>> {
+  if (e.vereinsname !== null && typeof e.vereinsname !== "string")
+    return fehlschlag("eingabe", MELDUNG_WIEDERHOLEN, { feld: "vereinsname" });
+  const name = e.vereinsname?.trim() || null;
+  const { data, error } = await supabase.rpc("delete_account", { p_vereinsname: name });
+  if (error) {
+    // Ein unerwarteter Fehler heisst hier «Konto liess sich nicht löschen», nicht «nicht speichern».
+    const f = ausDbFehler(error);
+    return f.art === "technisch" ? fehlschlag("technisch", KONTO_LOESCHEN_TEXT.fehler, { wiederholbar: true }) : f;
+  }
+  const ausgang = kontoLoeschAusgangAus(data);
+  return ausgang ? ok(ausgang) : fehlschlag("technisch", VEREIN_UNSTIMMIG.konto);
 }
 
 /** Der Ausgang des Auflösens: aufgelöst (mit dem Namen des Teams und den

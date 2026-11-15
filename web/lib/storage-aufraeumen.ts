@@ -13,17 +13,24 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { STORAGE_BUCKET } from "@/lib/storage";
 
-/** Verwaiste Bilddateien entfernen (no-op bei leerer Liste).
+/** So viele Pfade gehen in einem Aufruf an den Speicher: Beim Löschen eines
+ *  ganzen Vereins können es viele sein, und eine Anfrage mit tausenden Pfaden
+ *  ist zu gross. */
+const STUECK = 100;
+
+/** Verwaiste Bilddateien entfernen (no-op bei leerer Liste), in Stücken.
  *
  *  Best effort mit Absicht: die Zeilen sind bereits weg, eine liegengebliebene
  *  Datei ist folgenlos, und ein Fehlschlag darf den auslösenden Vorgang nie
- *  scheitern lassen. Der Rückgabewert von `remove` wird deshalb bewusst nicht
- *  geprüft. */
+ *  scheitern lassen — auch ein gescheitertes Stück nicht die übrigen. Der
+ *  Rückgabewert von `remove` wird deshalb bewusst nicht geprüft. */
 export async function raeumeVerwaisteBilder(pfade: string[]): Promise<void> {
   if (pfade.length === 0) return;
-  try {
-    await createAdminClient().storage.from(STORAGE_BUCKET).remove(pfade);
-  } catch {
-    /* ignorieren: Waisen im Bildspeicher sind folgenlos */
+  for (let i = 0; i < pfade.length; i += STUECK) {
+    try {
+      await createAdminClient().storage.from(STORAGE_BUCKET).remove(pfade.slice(i, i + STUECK));
+    } catch {
+      /* ignorieren: Waisen im Bildspeicher sind folgenlos */
+    }
   }
 }

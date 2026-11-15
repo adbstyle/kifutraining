@@ -124,6 +124,107 @@ export const VEREIN_GRUENDEN_TEXT = {
  *  (`vereinsNameProblem`); diesen Satz sieht nur, wer die Prüfung umgeht. */
 export const VEREIN_NAME_UNGUELTIG = "Der Vereinsname ist ungültig.";
 
+// ── Verein löschen, Konto löschen (Story #587) ──────────────────────────────
+
+const anzahl = (zahl: number, eins: string, mehr: string) => `${zahl} ${zahl === 1 ? eins : mehr}`;
+
+/** Verein löschen in der Gefahrenzone der Verwaltung (#587 AK 10, 11): der
+ *  Satz der Gefahrenzone, die Beschriftungen und was der Dialog nennt. */
+export const VEREIN_LOESCHEN_TEXT = {
+  beschreibung:
+    "Austreten betrifft nur dich; in deinen Teams bleibst du Trainer:in. Verein löschen entfernt alle Teams und alle Spieler:innen samt Links und Abos; alle Personen werden Konten ohne Verein und behalten ihre eigenen Übungen und Trainings.",
+  knopf: "Verein löschen",
+  einleitung: "Mit dem Verein wird unwiderruflich gelöscht:",
+  feld: "Vereinsname",
+  endgueltig: "Das lässt sich nicht rückgängig machen.",
+} as const;
+
+export const vereinLoeschenTitel = (name: string) => `${name} löschen`;
+
+/** Die Meldung nach dem Löschen, auf `/teams` (PC 4: Übungen und Trainings
+ *  der Personen bleiben). */
+export const vereinGeloeschtText = (name: string) => `Der Verein ${name} ist gelöscht. Deine eigenen Übungen und Trainings bleiben.`;
+
+/** Was mit dem Verein verschwindet, für den Dialog: die Zeilen der Liste (nur,
+ *  was es gibt), dann was aus den Personen wird. `personen`: verschiedene
+ *  Konten in Verwaltung und Teams (`verein_ansicht`). */
+export function vereinLoeschenFolgen(f: { teams: number; spieler: number; ohneTeam: number; personen: number }): {
+  geloescht: string[];
+  personen: string;
+} {
+  const geloescht: string[] = [];
+  if (f.teams > 0) geloescht.push(`${anzahl(f.teams, "Team", "Teams")}, mit Terminen und Team-Trainings`);
+  if (f.spieler > 0)
+    geloescht.push(
+      `${anzahl(f.spieler, "Spieler:in", "Spieler:innen")}${f.ohneTeam > 0 ? `, davon ${f.ohneTeam} ohne Team,` : ""} samt Links, Abos und Abholadressen`,
+    );
+  return {
+    geloescht,
+    personen:
+      f.personen <= 1
+        ? "Dein Konto bleibt bestehen, ohne Verein; deine eigenen Übungen und Trainings bleiben."
+        : `Alle ${f.personen} Personen werden Konten ohne Verein und behalten ihre eigenen Übungen und Trainings.`,
+  };
+}
+
+/** Der Name stimmte beim Ausführen nicht mehr (der Verein wurde inzwischen
+ *  umbenannt): der aktuelle Name und dass nichts geschehen ist. Fürs Löschen
+ *  des Vereins und fürs Löschen des Kontos je ein eigener Satz (#587 AK 14). */
+export function vereinHeisstInzwischenText(name: string, was: "verein" | "konto"): string {
+  const anfang = `Der Verein heisst inzwischen «${name}». Gib diesen Namen ein, um fortzufahren.`;
+  return was === "verein" ? `${anfang} Der Verein bleibt unverändert.` : `${anfang} Verein und Konto bleiben unverändert.`;
+}
+
+/** Konto löschen (#587 AK 12–14): die Sätze der drei Fälle des Dialogs und der
+ *  Rückmeldungen der Datenebene beim Ausführen. */
+export const KONTO_LOESCHEN_TEXT = {
+  titel: "Konto wirklich löschen?",
+  /** Technischer Fehler: unverändert, ein zweiter Versuch ist möglich. */
+  fehler: "Das Konto liess sich nicht löschen. Bitte versuche es noch einmal.",
+  /** Die Datenebene hat gelöscht, die Anmeldung lässt sich aber nicht entfernen. */
+  teilweise:
+    "Deine Übungen, Trainings und gegebenenfalls dein Verein sind schon gelöscht, aber das Konto selbst liess sich nicht entfernen. Bitte versuche es noch einmal.",
+  /** Titel des Dialogs im Fall «letzte Verwaltung» (AK 13). */
+  nichtLoeschbar: "Konto lässt sich noch nicht löschen",
+  /** Fall frei: ein Verein, dem das Konto angehört, bleibt bestehen. */
+  vereinBleibt: "Gehörst du einem Verein an, bleibt er bestehen.",
+  /** Die einzige Person hat den Dialog mit dem Namen bestätigt, inzwischen
+   *  ist eine weitere dazugekommen: nichts ist gelöscht. */
+  weiterePerson:
+    "Dem Verein gehört inzwischen eine weitere Person an. Verein und Konto bleiben unverändert. Nimm zuerst jemanden in die Verwaltung auf, oder lösche den Verein unter Verein › Verwaltung.",
+} as const;
+
+/** Fall «letzte Verwaltung» (AK 13): nicht löschbar, solange weitere Personen
+ *  dem Verein angehören; der Weg heraus. */
+export function kontoLetzteVerwaltungSaetze(verein: string) {
+  return {
+    lage: `Du bist die letzte Person in der Vereinsverwaltung des ${verein}, und dem Verein gehören weitere Personen an.`,
+    weg: "Nimm zuerst jemanden in die Verwaltung auf. Oder lösche den Verein unter Verein › Verwaltung.",
+  };
+}
+
+/** Fall «einzige Person» (AK 12): Mit dem Konto verschwindet der Verein; die
+ *  Zeilen nennen nur, was es gibt. */
+export function kontoEinzigePersonSaetze(verein: string, teams: number, spieler: number) {
+  const geloescht: string[] = [];
+  if (teams > 0) geloescht.push(`${anzahl(teams, "Team", "Teams")} mit Kalender und Team-Trainings`);
+  if (spieler > 0) geloescht.push(`${anzahl(spieler, "Spieler:in", "Spieler:innen")} samt Links, Abos und Abholadressen`);
+  return {
+    titel: "Konto und Verein löschen",
+    lage: `Du bist die einzige Person im ${verein}. Mit deinem Konto wird der Verein gelöscht:`,
+    geloescht,
+    endgueltig: VEREIN_LOESCHEN_TEXT.endgueltig,
+    feld: VEREIN_LOESCHEN_TEXT.feld,
+    knopf: "Konto und Verein löschen",
+  };
+}
+
+/** Beim Ausführen zeigt die Datenebene: Das Konto ist inzwischen die einzige
+ *  Person im Verein (vorher gehörten weitere an). Nichts ist gelöscht; der
+ *  Dialog verlangt jetzt den Vereinsnamen. */
+export const kontoEinzigePersonInzwischenText = (verein: string) =>
+  `Dein Konto ist inzwischen die einzige Person im ${verein}. Mit dem Konto wird der Verein gelöscht: Bestätige das mit dem Vereinsnamen. Es ist nichts gelöscht.`;
+
 /** Wenn die Antwort der Datenebene nicht die Form des Vertrags hat: Ob der
  *  Vorgang geschehen ist, ist dann nicht gesagt; der Satz schickt zum Nachsehen
  *  statt zu einem blinden zweiten Versuch (`lib/verein-antwort.ts`). */
