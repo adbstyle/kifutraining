@@ -2330,6 +2330,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#556": ["schnuppertraining_abrufen", "schnuppertraining_festlegen"],
     "#555": ["schnuppertraining_abrufen", "schnuppertraining_festlegen", "spieler_schnuppern_setzen", "spielerliste_abrufen", "termin_spieler_abrufen"],
     "#561": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "team_plan_abrufen", "spieler_link_abrufen"],
+    "#589": ["teams_abrufen", "spielerliste_abrufen", "spieler_aus_team_nehmen", "spieler_link_abrufen", "spieler_link_erneuern"],
     "#590": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "team_plan_abrufen", "spieler_link_abrufen", "training_abrufen", "trainings_suchen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
@@ -3359,6 +3360,25 @@ pruefe("Aus dem Team nehmen (#579 AK 13–16): nicht gelöscht, bleibt im Verein
   // Gleichnamige Teams gibt es im Bestand: Nur das, in dem man handelt, fällt weg.
   assert.deepEqual(verbleibendeTeams([{ name: "Da Junioren", dieses: false }, { name: "Da Junioren", dieses: true }]), ["Da Junioren"]);
   assert.equal(HERAUSNEHMEN_TEXT.geaendert, "Inzwischen hat sich etwas geändert. Lies den Hinweis noch einmal und bestätige erneut.");
+});
+
+pruefe("Herausnehmen über den KI-Assistenten (#589 AK 4): beim letzten eigenen Team der Zusatz «über den Assistenten nicht mehr erreichbar», nie im Dialog der Anwendung", () => {
+  const lage = { vorname: "Noah", nachname: "Keller", team: "Da Junioren", verein: "FC Wyler", verbleibend: ["Ea Junioren"], probe: false };
+  const zusatz = "Danach ist Noah über den Assistenten nicht mehr erreichbar: Noah gehört dann keinem deiner Teams mehr an.";
+  // Die Rückfrage an den Assistenten: dieselben Sätze wie die Bestätigung, beim letzten eigenen Team dazu der Zusatz.
+  assert.equal(herausnehmenFrage({ ...lage, letztesEigenes: true }), `${herausnehmenFrage(lage)} ${zusatz}`);
+  assert.equal(herausnehmenFrage({ ...lage, verbleibend: [], letztesEigenes: true }), `${herausnehmenFrage({ ...lage, verbleibend: [] })} ${zusatz}`);
+  assert.equal(herausnehmenFrage({ ...lage, letztesEigenes: false }), herausnehmenFrage(lage), "mit einem weiteren eigenen Team kein Zusatz");
+  assert.ok(!herausnehmenFrage(lage).includes("Assistenten"), "ohne das Feld kein Zusatz");
+  // Der Dialog der Anwendung bleibt, wie er ist: Die Sätze kennen das Feld nicht.
+  assert.deepEqual(herausnehmenSaetze({ ...lage, letztesEigenes: true }), herausnehmenSaetze(lage));
+  assert.deepEqual(herausnehmenSaetze({ ...lage, verbleibend: [], letztesEigenes: true }), herausnehmenSaetze({ ...lage, verbleibend: [] }));
+  // Und die Anwendung setzt das Feld nirgends und baut die Rückfrage nicht: Der Zusatz gelangt nicht in sie.
+  const treffer: string[] = [];
+  for (const ordner of ["app", "components"])
+    for (const datei of quelldateien(join(web, ordner)))
+      if (/\b(letztesEigenes|herausnehmenFrage)\b/.test(readFileSync(datei, "utf8"))) treffer.push(relative(web, datei));
+  assert.deepEqual(treffer, [], `KI-Zusatz in der Anwendung: ${treffer.join(", ")}`);
 });
 
 pruefe("Zuordnen zum Schnuppern (#584 AK 7–12, 16): jede Abweisung, eine und mehrere Schnuppernde, Satz und Snackbar", () => {

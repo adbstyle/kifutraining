@@ -114,7 +114,7 @@ const {
   ladeKontoLoeschenInfo,
   loescheKonto,
 } = await import("../lib/kern/verein");
-const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, HERAUSNEHMEN_TEXT, abweisungText, herausnehmenFrage, spielerDoppeltText, spielerzahlVon, verfallBestaetigen } = await import("../lib/spieler");
+const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, HERAUSNEHMEN_TEXT, LINK_TEXT, abweisungText, herausnehmenFrage, spielerDoppeltText, spielerzahlVon, verfallBestaetigen } = await import("../lib/spieler");
 const { SPIEL_MELDUNG, SPIEL_TEXT, MELDUNG_TEXT, TREFFPUNKT_TEXT, meldefristZeitpunkt, spielBestaetigen, spielEntfernenText, spielVerfallText } =
   await import("../lib/spiel");
 const { setzeMeldung, setzeAufgebot, spielSpieler } = await import("../lib/kern/spiele");
@@ -4824,7 +4824,7 @@ try {
     fehler(
       await nimmSpielerAusTeam(a.supabase, a.id, { teamId: ziel, spielerId: noah }),
       "regel",
-      herausnehmenFrage({ vorname: "Noah", nachname: "Heraus", team: ZIEL, verein: "Kern-DB", verbleibend: [], probe: false }),
+      herausnehmenFrage({ vorname: "Noah", nachname: "Heraus", team: ZIEL, verein: "Kern-DB", verbleibend: [], probe: false, letztesEigenes: true }),
     );
     assert.deepEqual(
       (({ ohneTeam, letztesEigenesTeam }) => [ohneTeam, letztesEigenesTeam])(wert(await nimmHeraus(a, ziel, noah))),
@@ -4855,7 +4855,7 @@ try {
     fehler(
       await nimmSpielerAusTeam(a.supabase, a.id, { teamId: eins, spielerId: lena }),
       "regel",
-      herausnehmenFrage({ vorname: "Lena", nachname: "Gleich", team: NAME, verein: "Kern-DB", verbleibend: [ZWEI], probe: false }),
+      herausnehmenFrage({ vorname: "Lena", nachname: "Gleich", team: NAME, verein: "Kern-DB", verbleibend: [ZWEI], probe: false, letztesEigenes: true }),
     );
   });
 
@@ -8463,7 +8463,7 @@ try {
     fehler(
       await nimmSpielerAusTeam(a.supabase, a.id, { teamId: team, spielerId: lou }),
       "regel",
-      herausnehmenFrage({ vorname: "Lou", nachname: "Schnupper", team: T, verein: "Kern-DB", verbleibend: [], probe: true }),
+      herausnehmenFrage({ vorname: "Lou", nachname: "Schnupper", team: T, verein: "Kern-DB", verbleibend: [], probe: true, letztesEigenes: true }),
     );
     const auskunft = wert(await ladeSpielerTeams(a.supabase, a.id, { teamId: team, spielerId: lou }));
     assert.equal(auskunft.schnuppert, true);
@@ -8822,7 +8822,8 @@ try {
       fehler(await ladeSpielerliste(x.supabase, x.id, { teamId: team }), "nicht_gefunden");
       fehler(await terminSpieler(x.supabase, x.id, { terminId: termin }), "nicht_gefunden");
       fehler(await legeTerminFest(x.supabase, x.id, { art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:00" }), "nicht_gefunden");
-      assert.deepEqual(kiWert(await ki(x, "teams_abrufen", {})), { teams: [] });
+      // Den Hinweis dazu (#589 AK 10) prüft «KI und Vereine» unten.
+      assert.deepEqual((kiWert(await ki(x, "teams_abrufen", {})) as { teams: unknown[] }).teams, []);
       assert.equal(kiArt(await ki(x, "team_plan_abrufen", { team_id: team })), "nicht_gefunden");
       assert.equal(kiArt(await ki(x, "spielerliste_abrufen", { team_id: team })), "nicht_gefunden");
       assert.equal(kiArt(await ki(x, "termin_spieler_abrufen", { termin_id: termin })), "nicht_gefunden");
@@ -8836,6 +8837,223 @@ try {
     assert.ok((await verwaltungsListe()).spieler.some((x) => x.id === spieler));
     wert(await ladeVereinAnsicht(verwaltung.supabase, verwaltung.id, { vereinId: verein }));
     fehler(await ladeVereinAnsicht(k.supabase, k.id, { vereinId: verein }), "nicht_gefunden");
+  });
+
+  // ── KI-Assistent und Vereine (Story #589) ───────────────────────────────
+  // Der Weg über die registrierten KI-Werkzeuge (`ki`), wie ihn ein KI-Zugang
+  // geht: m gehört den Teams Ea und Fa an, m2 nur Ea. Lena steht in Ea und Fa,
+  // Mia nur in Ea, «Ohne» in keinem Team, «Fremd» nur in einem Team, dem m
+  // nicht angehört (a ist dort Mitglied).
+  const EA_589 = "Kern-DB-589-Ea";
+  const FA_589 = "Kern-DB-589-Fa";
+  const GA_589 = "Kern-DB-589-Ga";
+  const OHNE_TEAM_589 =
+    "Du gehörst keinem Team an. Teams, Spielerlisten und Kalender stehen nur Mitgliedern eines Teams offen; die Vereinsfunktionen gibt es nur in der Anwendung, nicht über den KI-Assistenten.";
+  const lage589 = async () => {
+    const m = await wegwerfKonto();
+    const m2 = await wegwerfKonto();
+    const ea = await neuesTeam(EA_589);
+    const fa = await neuesTeam(FA_589);
+    const fremd = await serienTeam("Kern-DB-589-Fremd");
+    for (const [team, k] of [[ea, m], [ea, m2], [fa, m]] as const)
+      assert.equal((await admin.from("team_members").insert({ team_id: team, user_id: k.id })).error, null);
+    const auf = async (team: string, vorname: string) =>
+      wert(await nimmSpielerAuf(m.supabase, m.id, { teamId: team, vorname, nachname: "Neunundachtzig", jahrgang: 2016 })).spielerId;
+    const lena = await auf(ea, "Lena");
+    const mia = await auf(ea, "Mia");
+    wert(await zuordnen(fa, FA_589, [lena]));
+    const ohne = wert(await legeSpielerImVereinAn(verwaltung.supabase, verwaltung.id, { vereinId: verein, vereinName: "Kern-DB", vorname: "Ohne", nachname: "Neunundachtzig", jahrgang: 2016 })).spielerId;
+    const fremder = (await neuerSpieler(fremd, "Fremd", "Neunundachtzig", 2016)).spielerId;
+    return { m, m2, ea, fa, fremd, lena, mia, ohne, fremder };
+  };
+  /** Die Fehlerangaben eines KI-Ergebnisses, wie der Assistent sie liest. */
+  const kiFehler = (r: KiErgebnis) => {
+    assert.equal(r.isError, true, `erwartet Fehler, bekam ${r.content[0]?.text}`);
+    return (r.structuredContent as { fehler: { art: string; meldung: string; feld?: string; hinweis?: string } }).fehler;
+  };
+  const standAus = (hinweis: string | undefined) => /stand: «([^»]+)»/.exec(hinweis ?? "")?.[1] ?? assert.fail(`kein stand in ${hinweis}`);
+  const tokenAus = (url: unknown) => String(url).split("/").at(-1)!;
+  const uuids = (x: unknown) => new Set(JSON.stringify(x).match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g) ?? []);
+
+  await pruefe("KI und Vereine (#589 AK 1, 10): teams_abrufen nennt je Team den Verein; ohne Team der Hinweis, für die Verwaltung mit Verein und Selbstaufnahme, sonst ohne Verein", async () => {
+    const { m, ea, fa } = await lage589();
+    const r = kiWert(await ki(m, "teams_abrufen", {})) as { teams: { id: string; name: string; mitglieder: number; url: string; verein: string }[]; verein: string | null; hinweis: string | null };
+    assert.deepEqual(r.teams.map(({ url: _url, ...t }) => t), [
+      { id: ea, name: EA_589, mitglieder: 2, verein: "Kern-DB" },
+      { id: fa, name: FA_589, mitglieder: 1, verein: "Kern-DB" },
+    ]);
+    assert.ok(r.teams.every((t) => t.url.endsWith(`/team/${t.id}`)));
+    assert.deepEqual([r.verein, r.hinweis], ["Kern-DB", null]);
+    // AK 10: ein Konto ohne Verein — der Hinweis, kein Verein.
+    const k = await wegwerfKonto();
+    assert.deepEqual(kiWert(await ki(k, "teams_abrufen", {})), { teams: [], verein: null, hinweis: OHNE_TEAM_589 });
+    // Die Verwaltung ohne Team: dazu der Verein und die Selbstaufnahme im Bereich «Verein».
+    assert.deepEqual(kiWert(await ki(verwaltung, "teams_abrufen", {})), {
+      teams: [],
+      verein: "Kern-DB",
+      hinweis: `${OHNE_TEAM_589} Du gehörst der Vereinsverwaltung des Vereins «Kern-DB» an: Im Bereich «Verein» der Anwendung nimmst du dich selbst in ein Team auf.`,
+    });
+    // Nimmt sie sich selbst in ein Team auf, ist sie Mitglied: Liste mit Verein, kein Hinweis.
+    wert(await nimmMichInsTeam(verwaltung.supabase, verwaltung.id, { teamId: fa }));
+    const nachher = kiWert(await ki(verwaltung, "teams_abrufen", {})) as { teams: { id: string; verein: string }[]; verein: string; hinweis: null };
+    assert.deepEqual([nachher.teams.map((t) => [t.id, t.verein]), nachher.verein, nachher.hinweis], [[[fa, "Kern-DB"]], "Kern-DB", null]);
+    wert(await entferneAusTeam(verwaltung.supabase, verwaltung.id, { teamId: fa, userId: verwaltung.id }));
+  });
+
+  await pruefe("KI und Vereine (#589 AK 2): spielerliste_abrufen nennt den Verein und je Spieler:in die weiteren Teams nur mit Namen, auch aus Teams ohne Mitgliedschaft; keine fremden Kennungen", async () => {
+    const { m, m2, ea, fa, lena, mia } = await lage589();
+    type Liste = { team: { id: string; name: string }; verein: string; spieler: { id: string; vorname: string; weitere_teams: string[] }[] };
+    const vonM = kiWert(await ki(m, "spielerliste_abrufen", { team_id: ea })) as Liste;
+    assert.deepEqual([vonM.team, vonM.verein], [{ id: ea, name: EA_589 }, "Kern-DB"]);
+    assert.deepEqual(vonM.spieler.map((s) => [s.vorname, s.weitere_teams]), [["Lena", [FA_589]], ["Mia", []]]);
+    // m2 gehört Fa nicht an: Der Name kommt, die Kennung nicht.
+    const vonM2 = kiWert(await ki(m2, "spielerliste_abrufen", { team_id: ea })) as Liste;
+    assert.deepEqual(vonM2.spieler.map((s) => [s.vorname, s.weitere_teams]), [["Lena", [FA_589]], ["Mia", []]]);
+    assert.deepEqual([...uuids(vonM2)].sort(), [ea, lena, mia].sort(), "nur Team und Spieler:innen der Liste");
+    assert.deepEqual((kiWert(await ki(m, "spielerliste_abrufen", { team_id: fa })) as Liste).spieler.map((s) => [s.vorname, s.weitere_teams]), [["Lena", [EA_589]]]);
+  });
+
+  await pruefe("KI und Vereine (#589 AK 3, 4, 6; Testfall 25): Herausnehmen erst nach der Rückfrage, beim letzten eigenen Team mit dem Zusatz; geänderter Stand ändert nichts; danach im Verein samt Link, für m2 nicht mehr gefunden", async () => {
+    const { m, m2, ea, fa, lena, mia } = await lage589();
+    const lage = { vorname: "Lena", nachname: "Neunundachtzig", team: EA_589, verein: "Kern-DB", verbleibend: [FA_589], probe: false };
+    // m gehört auch Fa an: die Sätze der Anwendung, ohne Zusatz.
+    const fuerM = kiFehler(await ki(m, "spieler_aus_team_nehmen", { team_id: ea, spieler_id: lena }));
+    assert.deepEqual([fuerM.art, fuerM.feld, fuerM.meldung], ["regel", "stand", herausnehmenFrage(lage)]);
+    assert.ok(!fuerM.meldung.includes("Assistenten"));
+    // m2 gehört nur Ea an: dazu, dass sie danach über den Assistenten nicht mehr erreichbar ist.
+    const fuerM2 = kiFehler(await ki(m2, "spieler_aus_team_nehmen", { team_id: ea, spieler_id: lena }));
+    assert.deepEqual([fuerM2.art, fuerM2.feld, fuerM2.meldung], ["regel", "stand", herausnehmenFrage({ ...lage, letztesEigenes: true })]);
+    assert.ok(fuerM2.meldung.includes("über den Assistenten nicht mehr erreichbar"));
+    assert.ok(fuerM2.meldung.includes("nicht gelöscht") && fuerM2.meldung.includes("Aus dem Verein löscht nur die Vereinsverwaltung"));
+    // Mias letztes Team überhaupt: ohne Team im Verein, und für m nicht mehr erreichbar.
+    assert.equal(
+      kiFehler(await ki(m, "spieler_aus_team_nehmen", { team_id: ea, spieler_id: mia })).meldung,
+      herausnehmenFrage({ ...lage, vorname: "Mia", verbleibend: [], letztesEigenes: true }),
+    );
+    // Testfall 25: keine fremden Kennungen, nur der Stand.
+    assert.deepEqual([...uuids(fuerM2)], []);
+    assert.equal((await admin.from("team_spieler").select("spieler_id").eq("team_id", ea).eq("spieler_id", lena)).data!.length, 1, "nichts geändert");
+
+    // AK 6: Inzwischen ordnet die Verwaltung sie einem dritten Team zu — der alte Stand ändert nichts.
+    const alterStand = standAus(fuerM2.hinweis);
+    const ga = await neuesTeam(GA_589);
+    wert(await zuordnen(ga, GA_589, [lena]));
+    const konflikt = kiFehler(await ki(m2, "spieler_aus_team_nehmen", { team_id: ea, spieler_id: lena, stand: alterStand }));
+    assert.deepEqual([konflikt.art, konflikt.feld, konflikt.meldung], ["konflikt", "stand", HERAUSNEHMEN_TEXT.geaendert]);
+    assert.ok(konflikt.hinweis!.includes(`${EA_589}, ${FA_589}, ${GA_589}`), konflikt.hinweis);
+    assert.equal((await admin.from("team_spieler").select("spieler_id").eq("team_id", ea).eq("spieler_id", lena)).data!.length, 1, "nichts geändert");
+    // Die neue Rückfrage nennt den neuen Stand; mit ihm geht es.
+    const neu = kiFehler(await ki(m2, "spieler_aus_team_nehmen", { team_id: ea, spieler_id: lena }));
+    assert.equal(neu.meldung, herausnehmenFrage({ ...lage, verbleibend: [FA_589, GA_589], letztesEigenes: true }));
+    assert.notEqual(standAus(neu.hinweis), alterStand);
+    const linkVorher = (await admin.from("spieler").select("link_token").eq("id", lena).single()).data!.link_token as string;
+    assert.deepEqual(kiWert(await ki(m2, "spieler_aus_team_nehmen", { team_id: ea, spieler_id: lena, stand: standAus(neu.hinweis) })), {
+      team_id: ea,
+      spieler_id: lena,
+      ohne_team: false,
+      letztes_eigenes_team: true,
+      schnuppern_beendet: false,
+    });
+    // AK 3: im Verein samt Link, in Fa und Ga; aus Ea genommen.
+    assert.equal((await admin.from("spieler").select("link_token").eq("id", lena).single()).data!.link_token, linkVorher, "derselbe Link");
+    assert.deepEqual((await admin.from("team_spieler").select("team_id").eq("spieler_id", lena)).data!.map((z) => z.team_id).sort(), [fa, ga].sort());
+    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: linkVorher })).data.gueltig, true);
+    // Für m2 gibt es kein gemeinsames Team mehr: nicht gefunden wie eine unbekannte Spieler:in.
+    const unbekannt = randomUUID();
+    assert.deepEqual(await ki(m2, "spieler_link_abrufen", { spieler_id: lena }), await ki(m2, "spieler_link_abrufen", { spieler_id: unbekannt }));
+    assert.deepEqual(
+      await ki(m2, "spieler_aus_team_nehmen", { team_id: ea, spieler_id: lena }),
+      await ki(m2, "spieler_aus_team_nehmen", { team_id: ea, spieler_id: unbekannt }),
+    );
+    assert.ok(!(kiWert(await ki(m2, "spielerliste_abrufen", { team_id: ea })) as { spieler: { id: string }[] }).spieler.some((s) => s.id === lena));
+    // m sieht sie in Fa weiter, mit den weiteren Teams.
+    assert.deepEqual(
+      (kiWert(await ki(m, "spielerliste_abrufen", { team_id: fa })) as { spieler: { id: string; weitere_teams: string[] }[] }).spieler.find((s) => s.id === lena)!.weitere_teams,
+      [GA_589],
+    );
+    // Testfall 25: Die Verwaltung ohne Mitgliedschaft ändert über die KI nicht — über den Verein schon.
+    const aenderung = { vorname: "Mia", nachname: "Neunundachtzig", jahrgang: 2015 };
+    assert.deepEqual(
+      await ki(verwaltung, "spieler_aendern", { spieler_id: mia, ...aenderung }),
+      await ki(verwaltung, "spieler_aendern", { spieler_id: unbekannt, ...aenderung }),
+    );
+    assert.equal(kiFehler(await ki(verwaltung, "spieler_aendern", { spieler_id: mia, ...aenderung })).art, "nicht_gefunden");
+    wert(await aendereSpielerImVerein(verwaltung.supabase, verwaltung.id, { spielerId: mia, ...aenderung }));
+    assert.equal((await admin.from("spieler").select("jahrgang").eq("id", mia).single()).data!.jahrgang, 2015);
+  });
+
+  await pruefe("KI und Vereine (#589 AK 7, 8): fremdes Team, nicht in diesem Team, ohne Team, nur in fremden Teams — jedes Werkzeug mit Spieler-Kennung antwortet wie bei einer unbekannten", async () => {
+    const { m, ea, fa, fremd, mia, ohne, fremder } = await lage589();
+    const unbekannt = randomUUID();
+    // AK 7: Herausnehmen aus einem fremden Team oder einem, dem sie nicht angehört — mit und ohne Stand.
+    for (const stand of [undefined, "abc"]) {
+      const s = stand === undefined ? {} : { stand };
+      const erwartet = await ki(m, "spieler_aus_team_nehmen", { team_id: ea, spieler_id: unbekannt, ...s });
+      assert.equal(kiFehler(erwartet).art, "nicht_gefunden");
+      for (const [team, spieler] of [[fremd, fremder], [fa, mia], [ea, ohne], [ea, fremder], [fremd, unbekannt]])
+        assert.deepEqual(await ki(m, "spieler_aus_team_nehmen", { team_id: team, spieler_id: spieler, ...s }), erwartet, `${team} ${spieler} ${stand}`);
+    }
+    // AK 8: jedes übrige Werkzeug mit Spieler-Kennung.
+    const kommend = wert(await legeTerminFest(m.supabase, m.id, { art: "training", teamId: ea, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    const spiel = wert(await legeTerminFest(m.supabase, m.id, { art: "spiel", bezeichnung: "Cup", teamId: ea, datum: tagCh(4), beginn: "10:00", ende: "12:00" })).terminId;
+    const begonnen = wert(await legeTerminFest(m.supabase, m.id, { art: "training", teamId: ea, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
+    const kader = wert(await legeKaderAn(m.supabase, m.id, { teamId: ea, name: "K-589" })).kaderId;
+    const aufrufe: [string, (id: string) => Record<string, unknown>][] = [
+      ["spieler_aendern", (id) => ({ spieler_id: id, vorname: "Zed", nachname: "Einzig", jahrgang: 2015 })],
+      ["spieler_aendern", (id) => ({ team_id: ea, spieler_id: id, vorname: "Zed", nachname: "Einzig", jahrgang: 2015 })],
+      ["spieler_link_abrufen", (id) => ({ spieler_id: id })],
+      ["spieler_link_erneuern", (id) => ({ spieler_id: id })],
+      ["spieler_link_erneuern", (id) => ({ spieler_id: id, bestaetigt: true })],
+      ["spieler_schnuppern_setzen", (id) => ({ spieler_id: id, schnuppern: true })],
+      ["spieler_schnuppern_setzen", (id) => ({ spieler_id: id, schnuppern: false })],
+      ["termin_abmeldung_setzen", (id) => ({ termin_id: kommend, spieler_id: id, abgemeldet: true, termin_datum: tagCh(3), termin_beginn: "18:00" })],
+      ["termin_aufgebot_setzen", (id) => ({ termin_id: spiel, spieler_id: id, nicht_aufgeboten: true, termin_datum: tagCh(4), termin_beginn: "10:00" })],
+      ["termin_anwesenheit_setzen", (id) => ({ termin_id: begonnen, spieler_id: id, da: false, termin_datum: tagCh(-1), termin_beginn: "18:00" })],
+      ["kader_zuteilen", (id) => ({ kader_id: kader, spieler_ids: [id] })],
+      ["kader_herausnehmen", (id) => ({ kader_id: kader, spieler_ids: [id], bestaetigt: true })],
+    ];
+    for (const [name, args] of aufrufe) {
+      const erwartet = await ki(m, name, args(unbekannt));
+      assert.equal(erwartet.isError, true, `${name}: unbekannt ist ein Fehler`);
+      for (const id of [ohne, fremder]) assert.deepEqual(await ki(m, name, args(id)), erwartet, `${name} ${id === ohne ? "ohne Team" : "nur fremd"}`);
+    }
+    // Nichts geschrieben: keine Angabe, keine Zuordnung, kein neuer Link.
+    for (const id of [ohne, fremder]) {
+      const z = (await admin.from("spieler").select("vorname").eq("id", id).single()).data!;
+      assert.notEqual(z.vorname, "Zed");
+    }
+  });
+
+  await pruefe("KI und Vereine (#589 AK 9): Link abrufen nennt die Teams und dass er ihre Termine zeigt; Erneuern ohne Bestätigung ändert nichts und nennt Teams und Folge, mit Bestätigung erneuert es", async () => {
+    const { m, m2, ea, lena } = await lage589();
+    const token = async () => (await admin.from("spieler").select("link_token").eq("id", lena).single()).data!.link_token as string;
+    const alt = await token();
+    for (const k of [m, m2]) {
+      const r = kiWert(await ki(k, "spieler_link_abrufen", { spieler_id: lena })) as { spieler_id: string; team_id: string; name: string; url: string; teams: string[]; hinweis: string };
+      assert.deepEqual([r.spieler_id, r.team_id, r.name, tokenAus(r.url), r.teams], [lena, ea, "Lena Neunundachtzig", alt, [EA_589, FA_589]]);
+      assert.equal(r.hinweis, `${LINK_TEXT.warnung} Der Link zeigt die Termine aller Teams von Lena: ${EA_589} und ${FA_589}.`);
+    }
+    // Ohne Bestätigung: nichts geändert, die Rückfrage nennt die Teams und die Folge.
+    for (const bestaetigt of [undefined, false]) {
+      const frage = kiFehler(await ki(m2, "spieler_link_erneuern", { spieler_id: lena, ...(bestaetigt === undefined ? {} : { bestaetigt }) }));
+      assert.deepEqual([frage.art, frage.feld], ["regel", "bestaetigt"]);
+      assert.equal(
+        frage.meldung,
+        `Den privaten Link von Lena Neunundachtzig erneuern? Der Link zeigt die Termine aller Teams von Lena: ${EA_589} und ${FA_589}. ` +
+          `Der neue gilt für alle diese Teams. Der bisherige Link und das Kalender-Abo enden für alle Teams von Lena: ${EA_589} und ${FA_589}. ` +
+          "Abmeldungen bleiben bestehen. Keines dieser Teams hat die Selbstabholung eingeschaltet. Gib den neuen Link selbst weiter.",
+      );
+      assert.equal(frage.hinweis, "Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist. Bis dahin gilt der bisherige Link.");
+      assert.equal(await token(), alt, "nichts erneuert");
+    }
+    // Mit Bestätigung: erneuert, der alte gilt nicht mehr.
+    const r = kiWert(await ki(m2, "spieler_link_erneuern", { spieler_id: lena, bestaetigt: true })) as { url: string; teams: string[]; hinweis: string; team_id: string };
+    const neu = await token();
+    assert.notEqual(neu, alt);
+    assert.deepEqual([tokenAus(r.url), r.teams, r.team_id], [neu, [EA_589, FA_589], ea]);
+    assert.equal(r.hinweis, `${LINK_TEXT.erneuern} Der Link zeigt die Termine aller Teams von Lena: ${EA_589} und ${FA_589}.`);
+    assert.deepEqual((await feldAnon.rpc("spieler_link_ansicht", { p_token: alt })).data, { gueltig: false });
+    assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: neu })).data.gueltig, true);
   });
 
 } finally {

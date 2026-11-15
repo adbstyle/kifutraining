@@ -46,6 +46,7 @@ import {
 import { loginAdresse, sichererRuecksprung } from "../lib/weiterleitung";
 import { KONTO_GRENZE_WERKZEUG, kontoGrenzeText } from "../lib/konto-grenzen";
 import { registriereWerkzeuge } from "../lib/mcp/server";
+import { ZUGANG_DARF, ZUGANG_DARF_NICHT } from "../lib/mcp/umfang";
 import {
   altersstufeSlugs,
   erscheinungsform_juniorenSlugs,
@@ -1158,6 +1159,122 @@ pruefe("Konto ohne Verein (#588 AK 7): die Werkzeugbeschreibungen der vier Wege 
   // Team bekommt «nicht gefunden». Kein Werkzeug listet fremde Teams, `teams_abrufen` nur die eigenen.
   for (const name of ["team_plan_abrufen", "team_mitglieder_abrufen", "spielerliste_abrufen", "kader_abrufen", "termin_festlegen", "spieler_aufnehmen"])
     assert.ok(teamKennung.get(name), `${name} verlangt «team_id»`);
+});
+
+// ── KI-Assistent und Vereine (Story #589) ───────────────────────────────────
+// Die Werkzeugbeschreibungen sind das ganze Modell des Assistenten (keine
+// Server-Anweisungen): Hier steht fest, was sie seit Story 13 über Verein,
+// weitere Teams, Herausnehmen, Löschen und den privaten Link sagen.
+/** Beschreibungen und Eingabefelder aller registrierten Werkzeuge. */
+function werkzeugTexte() {
+  const beschreibung = new Map<string, string>();
+  const eingabe = new Map<string, string[]>();
+  registriereWerkzeuge({
+    registerTool: (name: string, def: { description?: string; inputSchema?: { shape?: Record<string, unknown> } }) => {
+      beschreibung.set(name, def.description ?? "");
+      eingabe.set(name, Object.keys(def.inputSchema?.shape ?? {}));
+    },
+  } as never);
+  return { beschreibung, eingabe };
+}
+
+pruefe("Story 13 (#589 A2): der Werkzeugsatz bleibt, wie er ist - kein Werkzeug umbenannt, entfernt oder neu", () => {
+  assert.deepEqual([...werkzeugTexte().beschreibung.keys()].sort(), [
+    "abholadresse_erneuern", "diagramm_katalog_abrufen", "gruppe_anlegen", "gruppe_entfernen", "gruppe_umbenennen",
+    "kader_abrufen", "kader_anlegen", "kader_entfernen", "kader_herausnehmen", "kader_umbenennen", "kader_zuteilen",
+    "schnuppertraining_abrufen", "schnuppertraining_festlegen", "selbstabholung_abrufen", "selbstabholung_schalten",
+    "spieler_aendern", "spieler_aufnehmen", "spieler_aus_team_nehmen", "spieler_link_abrufen", "spieler_link_erneuern",
+    "spieler_schnuppern_setzen", "spielerliste_abrufen", "team_mitglieder_abrufen", "team_plan_abrufen",
+    "teams_abrufen", "termin_abmeldung_setzen", "termin_aendern", "termin_anwesenheit_setzen",
+    "termin_aufgebot_setzen", "termin_ausfall_zuruecknehmen", "termin_ausfallen_lassen", "termin_der_serie_folgen",
+    "termin_entfernen", "termin_festlegen", "termin_spieler_abrufen", "termin_trainer_absagen",
+    "termin_trainer_aendern", "terminserie_festlegen", "training_abrufen", "training_anlegen",
+    "training_auf_entwurf_setzen", "training_durchlauf_abrufen", "training_hinweise_abrufen",
+    "training_kategorien_setzen", "training_kopieren", "training_loeschen", "training_loesen",
+    "training_uebung_dauer_setzen", "training_uebung_durchlauf_setzen", "training_uebung_entfernen",
+    "training_uebung_notiz_setzen", "training_uebung_zuordnen", "training_uebungen_fuer_block",
+    "training_uebungen_ordnen", "training_umbenennen", "training_veroeffentlichen", "training_ziel_setzen",
+    "training_zuordnen", "trainings_suchen", "uebung_abrufen", "uebung_aendern", "uebung_anlegen",
+    "uebung_auf_entwurf_setzen", "uebung_diagramm_maengel_abrufen", "uebung_diagramm_setzen", "uebung_kopieren",
+    "uebung_veroeffentlichen", "uebungen_suchen", "variante_anlegen", "variante_entfernen", "variante_umbenennen",
+    "varianten_ordnen", "vokabular", "wer_bin_ich",
+  ]);
+});
+
+pruefe("Story 13 (#589 AK 1, 10): teams_abrufen nennt den Verein und den Hinweis ohne Team; Teams verwaltet nur die Vereinsverwaltung im Bereich «Verein»", () => {
+  const t = werkzeugTexte().beschreibung.get("teams_abrufen") ?? "";
+  assert.match(t, /«verein»/);
+  assert.match(t, /«hinweis»/);
+  assert.match(t, /Teams, Spielerlisten und Kalender stehen nur Mitgliedern eines Teams offen/);
+  assert.match(t, /Teams anlegen, umbenennen und auflösen kann nur die Vereinsverwaltung, im Bereich «Verein» der Anwendung/);
+  // Seit #581 falsch: Umbenennen und Auflösen gehen nicht im Team-Bereich.
+  assert.ok(!t.includes("nur im Team-Bereich von KiFu"), t);
+});
+
+pruefe("Story 13 (#589 AK 2, 5, 8): Spieler-Werkzeuge nennen weitere Teams, Herausnehmen statt Löschen, «nicht gefunden» ausserhalb der eigenen Teams", () => {
+  const { beschreibung } = werkzeugTexte();
+  const LOESCHEN = "Aus dem Verein löscht Spieler:innen nur die Vereinsverwaltung, in der Anwendung; kein Werkzeug löscht sie.";
+  for (const n of ["spielerliste_abrufen", "spieler_aufnehmen", "spieler_aendern", "spieler_aus_team_nehmen"])
+    assert.ok(beschreibung.get(n)?.includes(LOESCHEN), n);
+  assert.match(beschreibung.get("spielerliste_abrufen") ?? "", /«weitere_teams»/);
+  // Kein Werkzeug löscht Spieler:innen, und keine Beschreibung verweist auf ein Lösch-Werkzeug, das es nicht gibt.
+  for (const [n, text] of beschreibung) {
+    assert.ok(!/^spieler.*loeschen$/.test(n), n);
+    for (const m of text.matchAll(/\b[a-z]+(?:_[a-z]+)*_loeschen\b/g)) assert.ok(beschreibung.has(m[0]), `${n} verweist auf ${m[0]}`);
+  }
+  // AK 8: «nicht gefunden» schliesst Spieler:innen ohne Team und in fremden Teams ein; die Ausnahmen stehen dabei.
+  const fehlerText = beschreibung.get("spieler_aendern") ?? "";
+  assert.match(fehlerText, /sie gehört nur fremden Teams oder keinem Team des Vereins an/);
+  assert.match(fehlerText, /aus deinen Teams genommen oder aus dem Verein gelöscht/);
+  assert.match(fehlerText, /Abweisung einer Doppelerfassung/);
+  assert.match(fehlerText, /«nicht_mehr_im_team»/);
+  assert.ok(!fehlerText.includes("sie wurde entfernt"), "das Entfernen gibt es nicht mehr");
+});
+
+pruefe("Story 13 (#589 AK 4, 6, 7): spieler_aus_team_nehmen beschreibt die Rückfrage als «regel» mit «stand», den Zusatz zum letzten eigenen Team und die Auskunft bei fremdem Team", () => {
+  const t = werkzeugTexte().beschreibung.get("spieler_aus_team_nehmen") ?? "";
+  assert.match(t, /Fehlerart «regel», «feld»: «stand»/);
+  assert.match(t, /über den Assistenten nicht mehr erreichbar/);
+  assert.match(t, /Fehlerart «konflikt»/);
+  assert.match(t, /dieselbe Auskunft wie eine unbekannte Spieler:in/);
+});
+
+pruefe("Story 13 (#589 AK 9; A8, A9): Link-Werkzeuge über alle Teams, Erneuern zweistufig mit «bestaetigt», kein «team_id» als Eingabe", () => {
+  const { beschreibung, eingabe } = werkzeugTexte();
+  for (const n of ["spieler_link_abrufen", "spieler_link_erneuern"]) {
+    const t = beschreibung.get(n) ?? "";
+    assert.match(t, /die anstehenden Termine aller ihrer Teams/, n);
+    assert.match(t, /Ein erneuerter Link gilt für alle ihre Teams/, n);
+    assert.match(t, /«teams»/, n);
+    // Der Link zeigt seit Story 7 nicht mehr die Termine eines Teams.
+    assert.ok(!/den Teamnamen|Termine des Teams/.test(t), n);
+  }
+  assert.deepEqual(eingabe.get("spieler_link_abrufen"), ["spieler_id"]);
+  assert.deepEqual(eingabe.get("spieler_link_erneuern"), ["spieler_id", "bestaetigt"]);
+  assert.match(beschreibung.get("spieler_link_erneuern") ?? "", /Ohne «bestaetigt: true» ändert der Aufruf nichts/);
+  // A9: kein «team_id» an Link und Schnuppern — der Link gilt für alle Teams, Schnuppern nur bei genau einem.
+  assert.deepEqual(eingabe.get("spieler_schnuppern_setzen"), ["spieler_id", "schnuppern", "bestaetigt"]);
+  const schnuppern = beschreibung.get("spieler_schnuppern_setzen") ?? "";
+  assert.ok(!schnuppern.includes("im ältesten ihrer Teams"), schnuppern);
+  assert.match(schnuppern, /solange sie genau einem Team angehört/);
+  // Die Abholadresse eines Teams gibt den einen Link der Spieler:in heraus.
+  for (const n of ["selbstabholung_abrufen", "selbstabholung_schalten", "abholadresse_erneuern"])
+    assert.match(beschreibung.get(n) ?? "", /denselben, den die Abholadresse jedes ihrer Teams herausgibt/, n);
+});
+
+pruefe("Story 13 (#589 PC 1, 2): ZUGANG_DARF und ZUGANG_DARF_NICHT im Wortlaut, der Kopf von umfang.ts verlangt keine erneute Zustimmung", () => {
+  assert.equal(
+    ZUGANG_DARF[5],
+    "die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer, dazu der Verein deiner Teams und die Namen weiterer Teams einer Spieler:in) einsehen und führen, Spieler:innen aus einem deiner Teams nehmen (sie bleiben im Verein), Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die Anzahl Schnuppertrainings samt Info-Schreiben festlegen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link einer Spieler:in holen und erneuern, die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche Links bezogen wurden",
+  );
+  assert.deepEqual(ZUGANG_DARF_NICHT, [
+    "deine Favoriten",
+    "die Verwaltung deiner Teams und deines Vereins (Verein gründen, umbenennen und löschen, Teams anlegen, umbenennen und auflösen, Personen in Teams oder in die Vereinsverwaltung aufnehmen oder daraus entfernen, Spieler:innen Teams zuordnen, Spieler:innen aus dem Verein löschen und Spielerlisten importieren)",
+    "dein Konto selbst (Anzeigename, Passwort, Löschen)",
+  ]);
+  const kopf = readFileSync(join(fileURLToPath(new URL("..", import.meta.url)), "lib/mcp/umfang.ts"), "utf8").split("export")[0];
+  assert.ok(!kopf.includes("Frage nach erneuter Zustimmung"), "PC 2: keine erneute Zustimmung");
+  assert.match(kopf, /#589 PC 2/);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);
