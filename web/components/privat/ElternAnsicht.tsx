@@ -17,6 +17,7 @@ import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import type { LinkTermin } from "@/lib/privater-link";
 import {
   LINK_EINGRENZUNG,
+  angabenSehenText,
   LINK_GILT_NICHT_TITEL,
   LINK_KEINE_TERMINE_TITEL,
   linkEingrenzungLeer,
@@ -327,6 +328,8 @@ export function ElternAnsicht({
           ))}
         </div>
       )}
+      {/* Wer die Angaben sieht (Story #580 PC 4), schlicht unter den Terminen. */}
+      <p className="type-body-small px-4 pb-6 text-on-surface-mittel">{angabenSehenText(spieler.vorname)}</p>
     </>
   );
 }

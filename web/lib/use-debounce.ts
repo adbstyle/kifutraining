@@ -9,30 +9,51 @@ import { useEffect, useRef, useState } from "react";
 
    Rückgabe: der anzuzeigende Wert und der Setzer fürs onChange.
 
-     const [wert, aendern] = useDebouncedWert(filters.q ?? "", (v) => setScalar("q", v));
+   `bereinige` sagt, wie der übernommene Wert von aussen zurückkommt — so,
+   wie die Seite ihn bereinigt (der Katalog trimmt, die Vereinsliste
+   bereinigt wie die Datenebene; ohne Angabe kommt er unverändert zurück).
+   Daran erkennt der Hook das Echo der eigenen Übernahme: «Lea » geht als
+   «Lea» in die Adresse und kommt so zurück; das ist kein Wert von aussen,
+   und das Feld behält, was getippt ist (auch das Leerzeichen, hinter dem
+   gleich weitergetippt wird).
+
+     const [wert, aendern] = useDebouncedWert(filters.q ?? "", (v) => setScalar("q", v), (v) => v.trim());
      <TextField value={wert} onChange={(e) => aendern(e.target.value)} … /> */
 export function useDebouncedWert(
   initial: string,
   onCommit: (wert: string) => void,
+  bereinige: (wert: string) => string = (v) => v,
   ms = 300,
 ): [string, (wert: string) => void] {
   const [wert, setWert] = useState(initial);
+  /** Was im Feld steht — für den Vergleich, wenn ein Wert von aussen kommt. */
+  const wertRef = useRef(initial);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** Der zuletzt nach aussen übernommene Wert — nur um sein Echo zu erkennen. */
-  const gesendet = useRef<string | null>(null);
+  /** Das Echo der letzten Übernahme (bereinigt); `null`, wenn keines aussteht. */
+  const echo = useRef<string | null>(null);
 
-  // Änderungen von aussen (Zurücksetzen, Zurück-Navigation) spiegeln — und dabei
-  // einen noch laufenden Timer abräumen: sonst schriebe er kurz darauf den
-  // überholten Tippstand zurück (z. B. „Zurücksetzen" innerhalb der Tipppause).
-  // Ausgenommen ist das Echo der eigenen Übernahme: trägt der Wert von aussen
-  // genau das, was wir zuletzt geschickt haben, während schon weitergetippt
-  // wird, bleiben der neue Tippstand und sein Timer stehen.
+  // Ein Wert von aussen (Zurücksetzen, Zurück-Navigation, Echo):
+  // 1. Das Echo der letzten Übernahme, während schon weitergetippt wird:
+  //    Feld und Timer bleiben stehen, der Timer übernimmt gleich selbst.
+  // 2. Sagt das Feld bereinigt schon dasselbe, bleibt es, wie es ist (etwa
+  //    «Lea » beim Echo «Lea»: das Leerzeichen, hinter dem gleich
+  //    weitergetippt wird).
+  // 3. Sonst gilt der Wert von aussen, und ein laufender Timer wird
+  //    abgeräumt — er schriebe sonst den überholten Tippstand zurück (z. B.
+  //    «Zurücksetzen» innerhalb der Tipppause).
+  // Ein liegengebliebenes Echo (seine Navigation wurde von einer anderen
+  // verworfen) verschluckt so keine echte Änderung: Ohne laufenden Timer
+  // entscheidet allein der Vergleich mit dem Feld.
   useEffect(() => {
-    if (timer.current && initial === gesendet.current) return;
+    const eigenesEcho = echo.current !== null && initial === echo.current;
+    echo.current = null;
+    if (eigenesEcho && timer.current) return;
+    if (bereinige(wertRef.current) === initial) return;
     if (timer.current) {
       clearTimeout(timer.current);
       timer.current = null;
     }
+    wertRef.current = initial;
     setWert(initial);
   }, [initial]);
 
@@ -46,11 +67,12 @@ export function useDebouncedWert(
   );
 
   function aendern(neu: string) {
+    wertRef.current = neu;
     setWert(neu);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       timer.current = null;
-      gesendet.current = neu;
+      echo.current = bereinige(neu);
       onCommit(neu);
     }, ms);
   }

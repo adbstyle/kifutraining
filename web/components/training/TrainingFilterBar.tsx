@@ -3,7 +3,7 @@
 import { ClipboardList } from "lucide-react";
 import { AuswahlFilter, Button, FilterChip, FilterSuche } from "@/components/ui";
 import { stufenOptionen } from "@/lib/filter-optionen";
-import { useAdressFilter } from "@/lib/use-adress-filter";
+import { trimme, useAdressFilter } from "@/lib/use-adress-filter";
 
 /* Such-/Filterleiste für die Trainings-Übersicht.
    URL-basierter Zustand wie im Übungskatalog: jede Änderung schreibt in die URL
@@ -32,7 +32,7 @@ export function TrainingFilterBar({
     // Eine durchgehende, umbrechende Zeile: Suchfeld zuerst, dann die Filter
     // direkt dahinter angereiht — alle Elemente 36 px hoch (Epic #363).
     <div className="mb-6 flex flex-wrap items-center gap-2">
-      <FilterSuche label="Nach Trainingsnamen suchen" initial={q} onCommit={(v) => filter.setzeWert("q", v)} />
+      <FilterSuche label="Nach Trainingsnamen suchen" initial={q} bereinige={trimme} onCommit={(v) => filter.setzeWert("q", v)} />
 
       <AuswahlFilter
         label="Alterskategorie"

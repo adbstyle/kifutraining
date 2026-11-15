@@ -11,7 +11,8 @@
 -- AK 7), Umbenennen der Teams mit gleichem Schlüssel (Story 5 PC 6), die
 -- Altdublette am Verein-Ort ändern, löschen und neu erfassen (Story 6), eine
 -- Bestands-Spieler:in in zwei Teams über Link, Abo und Abholung (Story 7),
--- die Bestands-Schnuppernde über die neuen Schreibwege (Story 8). Teil B
+-- die Bestands-Schnuppernde über die neuen Schreibwege (Story 8), die
+-- Vereinsliste für ein Mitglied ohne Verwaltung (Story 4). Teil B
 -- ändert nichts bleibend (rollback). Spätere Stories ergänzen ihre Abfragen
 -- (Konten ohne Verein mit Story 12).
 
@@ -236,6 +237,47 @@ begin
     raise exception 'Story 2: Dublette nicht als zwei Datensätze erhalten oder Änderung fehlt';
   end if;
 end $$;
+
+-- Story 4 (AK 1, 3, 7, PC 2): trainer_b (nur Mitglied von t_f2) liest die
+-- Vereinsliste des Bestandsvereins: alle Spieler:innen, die Altdublette als
+-- zwei Zeilen, nur die vier Angaben; «ohne Team» trifft genau die
+-- Spieler:innen ohne Zuordnung. Erwartung als Eigentümer, Aufruf als
+-- Mitglied; vor Story 6, die eine der Altdubletten löscht.
+reset role;
+select set_config('prodweg.liste_erwartet', jsonb_build_object(
+         'verein', v.id,
+         'gesamt', (select count(*) from spieler s where s.verein_id = v.id),
+         'dublette', (select count(*) from spieler s where s.verein_id = v.id and s.nachname = 'Dublette'),
+         'ohne_team', (select count(*) from spieler s where s.verein_id = v.id
+                        and not exists (select 1 from team_spieler ts where ts.spieler_id = s.id)))::text, true)
+       is not null as prodweg_liste_erwartet
+  from (select verein_id as id from teams where id = prodweg.id('t_gross')) v \gset
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('trainer_b'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims_vereinsliste \gset
+set local role authenticated;
+do $$
+declare
+  e jsonb := current_setting('prodweg.liste_erwartet')::jsonb;
+  l jsonb := verein_spielerliste((e ->> 'verein')::uuid);
+  z jsonb;
+begin
+  if jsonb_array_length(l -> 'spieler') <> (e ->> 'gesamt')::int or l -> 'gesamt' <> e -> 'gesamt'
+     or l -> 'ohne_team' <> e -> 'ohne_team' or l -> 'verwaltung' <> 'false'
+     or (select count(*) from jsonb_array_elements(l -> 'spieler') x where x ->> 'nachname' = 'Dublette') <> (e ->> 'dublette')::int
+     or (e ->> 'dublette')::int < 2 then
+    raise exception 'Story 4: Vereinsliste des Mitglieds unvollständig: % gegen %', l - 'spieler', e;
+  end if;
+  for z in select * from jsonb_array_elements(l -> 'spieler') loop
+    if array(select k from jsonb_object_keys(z) k order by k) <> array['id', 'jahrgang', 'nachname', 'teams', 'vorname'] then
+      raise exception 'Story 4: Vereinsliste des Mitglieds mit Angaben der Verwaltung: %', z;
+    end if;
+  end loop;
+  if jsonb_array_length(verein_spielerliste((e ->> 'verein')::uuid, p_ohne_team => true) -> 'spieler') <> (e ->> 'ohne_team')::int then
+    raise exception 'Story 4: Eingrenzung «ohne Team» im Bestand: %', verein_spielerliste((e ->> 'verein')::uuid, p_ohne_team => true);
+  end if;
+end $$;
+reset role;
 
 -- Story 5 (PC 6, AK 22): Von den zwei Teams mit gleichem Schlüssel lässt sich
 -- eines auf eine andere Schreibweise und auf einen neuen Schlüssel umbenennen,

@@ -79,6 +79,7 @@ const { getTeamPlanFuer, nochNichtVorbereitet } = await import("../lib/queries/t
 const { ladeSpielerliste, anzahlSpieler, nimmSpielerAuf, aendereSpieler, ladeSpieler, ladeSpielerTeams, eigenesTeamVon, nimmSpielerAusTeam, holeSpielerLink, erneuereSpielerLink, leseAbholung, schalteAbholung, erneuereAbholung, pruefeSpielerImport, importiereSpieler } =
   await import("../lib/kern/spieler");
 const { IMPORT_TEXT, erwartetVon } = await import("../lib/spieler-import");
+const { OHNE_TEAM_WERT, bereinigeEingrenzung, liesSpielerEingrenzung } = await import("../lib/verein-spielerliste");
 const { VEREIN_MELDUNG, VEREIN_TEAM_NICHT_GEFUNDEN, VEREIN_SPIELER_MAX, VEREIN_TEAMS_MAX, PERSON_MELDUNG, SCHNUPPERN_ZUORDNEN_TEXT, teamnameVergebenText, zuordnenAbweisungText, zugeordnetText } =
   await import("../lib/verein");
 const {
@@ -340,6 +341,13 @@ try {
   // Verwaltung ist ein eigenes Konto ohne Team.
   const verwaltung = await wegwerfKonto();
   const verein = await testVerein("Kern-DB", verwaltung);
+  /** Die Spielerliste des Vereins, wie die Verwaltung sie liest (Story #580):
+   *  Die Prüfung scheitert, wenn die Datenebene nicht die Verwaltungsform liefert. */
+  const verwaltungsListe = async (vereinId = verein, k = verwaltung) => {
+    const l = wert(await ladeVereinSpielerliste(k.supabase, k.id, { vereinId }));
+    if (!l.verwaltung) throw new Error("Verwaltungsform erwartet");
+    return l;
+  };
   /** Ein Wegwerf-Team im Test-Verein, ohne Mitglieder. Jedes Team des Laufs
    *  entsteht hier; `pruefe` räumt es nach der Prüfung wieder ab. */
   async function neuesTeam(name: string): Promise<string> {
@@ -4588,7 +4596,10 @@ try {
     // Testfall 8, AK 3: Ein Mitglied ordnet nicht zu und sieht den Bestand nicht.
     fehler(await ordneSpielerZu(a.supabase, a.id, { teamId: ziel, teamName: ZIEL, spielerIds: [lena] }), "nicht_gefunden", VEREIN_TEAM_NICHT_GEFUNDEN);
     fehler(await ordneSpielerZu(b.supabase, b.id, { teamId: herkunft, teamName: HERKUNFT, spielerIds: [mia] }), "nicht_gefunden", VEREIN_TEAM_NICHT_GEFUNDEN);
-    fehler(await ladeVereinSpielerliste(a.supabase, a.id, { vereinId: verein }), "nicht_gefunden", NICHT_GEFUNDEN.verein);
+    // Seit #580 AK 2, 3 sieht ein Mitglied die Liste des Vereins — aber nur Vorname, Nachname, Jahrgang und Teams.
+    const alsMitgliedGelesen = wert(await ladeVereinSpielerliste(a.supabase, a.id, { vereinId: verein }));
+    assert.deepEqual(alsMitgliedGelesen.spieler.find((x) => x.id === lena), { id: lena, vorname: "Lena", nachname: "Zuordnen", jahrgang: 2016, teams: [{ id: herkunft, name: HERKUNFT }] });
+    assert.equal(alsMitgliedGelesen.verwaltung, false, "keine Verwaltungsform für ein Mitglied");
     // Die Verwaltung: kein unbekanntes Team, keine Spieler:in eines fremden Vereins.
     fehler(await zuordnen(randomUUID(), ZIEL, [lena]), "nicht_gefunden", VEREIN_TEAM_NICHT_GEFUNDEN);
     const fremd = await wegwerfKonto();
@@ -4604,7 +4615,7 @@ try {
     assert.equal(await zuordnungenVon(ziel), 0, "nichts zugeordnet");
 
     // AK 1: Die Verwaltung sieht alle mit Vorname, Nachname, Jahrgang und Teams, auch ohne Team; seit #582 AK 1 dazu J+S-Nummer und Link-Stand, nie den Link.
-    const vorher = wert(await ladeVereinSpielerliste(verwaltung.supabase, verwaltung.id, { vereinId: verein }));
+    const vorher = (await verwaltungsListe());
     const zeile = (l: typeof vorher, id: string) => l.spieler.find((x) => x.id === id)!;
     assert.deepEqual(zeile(vorher, lena), { id: lena, vorname: "Lena", nachname: "Zuordnen", jahrgang: 2016, js: "1234567", linkBezogen: false, teams: [{ id: herkunft, name: HERKUNFT }], schnuppern: null });
     assert.deepEqual(zeile(vorher, mia).teams, [], "ohne Team im Bestand");
@@ -4625,7 +4636,7 @@ try {
     assert.deepEqual((await kaderVon(ziel)).map((k) => [k.id, k.spielerIds]), [[kader, []]]);
     assert.deepEqual(spielerzahlVon(await standVon(ziel, bald)), { quelle: "liste", angemeldet: 2, gesamt: 2, anwesend: null });
     // Sie bleibt in ihrem bisherigen Team (AK 2).
-    const nachher = wert(await ladeVereinSpielerliste(verwaltung.supabase, verwaltung.id, { vereinId: verein }));
+    const nachher = (await verwaltungsListe());
     assert.deepEqual(zeile(nachher, lena).teams, [{ id: herkunft, name: HERKUNFT }, { id: ziel, name: ZIEL }]);
     assert.deepEqual(zeile(nachher, mia).teams, [{ id: ziel, name: ZIEL }]);
     // Ein Team mit Spieler:innen: keine Zahl fällt weg.
@@ -4798,7 +4809,7 @@ try {
       (({ ohneTeam, letztesEigenesTeam }) => [ohneTeam, letztesEigenesTeam])(wert(await nimmHeraus(a, ziel, noah))),
       [true, true],
     );
-    assert.deepEqual(wert(await ladeVereinSpielerliste(verwaltung.supabase, verwaltung.id, { vereinId: verein })).spieler.find((s) => s.id === noah)!.teams, []);
+    assert.deepEqual((await verwaltungsListe()).spieler.find((s) => s.id === noah)!.teams, []);
     // Löschen kann das Mitglied nicht: Die Tabelle lässt es nicht zu; dass die
     // alte RPC fehlt, prüfen zuordnen_herausnehmen.sql und check:kern (alte Namen abwesend).
     await a.supabase.from("spieler").delete().eq("id", lena);
@@ -4875,8 +4886,14 @@ try {
     const { count } = await admin.from("spieler").select("id", { count: "exact", head: true }).eq("verein_id", verein);
     const fehlend = VEREIN_SPIELER_MAX - (count ?? 0);
     assert.ok(fehlend > 0);
+    // Jahrgänge gestreut: Die Dublettenprüfung im Trigger spieler_vorher plant
+    // ihre Abfrage einmal je Statement, mit der Statistik der fast leeren
+    // Wegwerf-Tabelle. Greift dabei der Ausdrucksindex nicht, rechnet sie den
+    // Schlüssel jeder Vereinszeile mit gleichem Jahrgang neu — bei 1000 Zeilen
+    // eines Jahrgangs rund 1 Mio. Aufrufe, in der CI über die 8 s des
+    // statement_timeout. Mit 70 Jahrgängen bleibt es ein Bruchteil davon.
     for (let i = 0; i < fehlend; i += 500) {
-      const zeilen = Array.from({ length: Math.min(500, fehlend - i) }, (_, j) => ({ verein_id: verein, vorname: `Kind${i + j}`, nachname: "Verein", jahrgang: 2016 }));
+      const zeilen = Array.from({ length: Math.min(500, fehlend - i) }, (_, j) => ({ verein_id: verein, vorname: `Kind${i + j}`, nachname: "Verein", jahrgang: 1950 + ((i + j) % 70) }));
       assert.equal((await admin.from("spieler").insert(zeilen)).error, null);
     }
     const voll = fehler(await nimmSpielerAuf(a.supabase, a.id, { teamId: team, vorname: "Zuviel", nachname: "Verein", jahrgang: 2017 }), "regel", VEREIN_MELDUNG.VEREIN_VOLL);
@@ -7264,7 +7281,7 @@ try {
     assert.deepEqual(wert(await loescheSpielerImVerein(verwaltung.supabase, verwaltung.id, { spielerId: sina })), { teams: [{ id: eins, name: EINS }, { id: zwei, name: ZWEI }] });
     assert.equal((await admin.from("team_spieler").select("team_id").eq("spieler_id", sina)).data!.length, 0);
     assert.ok(!wert(await ladeSpielerliste(a.supabase, a.id, { teamId: eins })).spieler.some((s) => s.id === sina), "nicht mehr am Team-Ort");
-    assert.ok(!wert(await ladeVereinSpielerliste(verwaltung.supabase, verwaltung.id, { vereinId: verein })).spieler.some((s) => s.id === sina));
+    assert.ok(!(await verwaltungsListe()).spieler.some((s) => s.id === sina));
     // Ohne Team gelöscht: keine Teams.
     assert.deepEqual(wert(await loescheSpielerImVerein(verwaltung.supabase, verwaltung.id, { spielerId: xaver })), { teams: [] });
     // AK 15: danach nicht gefunden — an jedem Weg, am Feld spieler_id (der Dialog lädt die Liste neu).
@@ -7289,7 +7306,7 @@ try {
     const s = wert(await holeSpielerLinkImVerein(verwaltung.supabase, verwaltung.id, { spielerId: sina }));
     assert.deepEqual([s.ohneTeam, s.bezogen], [false, true]);
     // AK 1, 8: die Liste mit J+S und dem Stand, nie dem Link.
-    const liste = wert(await ladeVereinSpielerliste(verwaltung.supabase, verwaltung.id, { vereinId: verein })).spieler;
+    const liste = (await verwaltungsListe()).spieler;
     const zeile = (id: string) => liste.find((z) => z.id === id)!;
     assert.deepEqual([zeile(xaver).js, zeile(xaver).linkBezogen, zeile(xaver).teams], ["77", false, []]);
     assert.deepEqual([zeile(sina).js, zeile(sina).linkBezogen, zeile(sina).teams.map((t) => t.name)], [null, true, [EINS, ZWEI]]);
@@ -7348,6 +7365,264 @@ try {
       assert.equal((await admin.from("spieler").select("id").eq("id", xaver)).data!.length, 0);
     } finally {
       await admin.from("verein_verwaltung").delete().eq("verein_id", verein).eq("user_id", beides.id);
+    }
+  });
+
+  // ── Spieler:innen des Vereins überblicken (Story #580) ────────────────────
+  // Ein eigener Verein mit eigenen Konten: a und b gehören schon dem
+  // Test-Verein an (höchstens ein Verein je Person). Spieler:innen und
+  // Zuordnungen per Admin; gelesen wird über den Kern, also über PostgREST wie
+  // die Seite. Was psql deckt (Grants, alte Signatur weg, KI-Zugang
+  // NUR_IN_DER_ANWENDUNG, Altdubletten), steht in supabase/tests/verein_spielerliste.sql.
+  const liste580 = async (k: Konto, vereinId: string, e: { suche?: string; teamIds?: string[]; ohneTeam?: boolean; jahrgaenge?: number[] } = {}) =>
+    wert(await ladeVereinSpielerliste(k.supabase, k.id, { vereinId, ...e }));
+  const namen580 = (l: { spieler: { vorname: string; nachname: string; jahrgang: number }[] }) => l.spieler.map((s) => `${s.vorname} ${s.nachname} ${s.jahrgang}`);
+  /** Ein Verein mit Teams und Spieler:innen; `mitglied` ist Trainer:in im ersten Team. */
+  const verein580 = async (name: string, teamNamen: string[], spieler: [string, string, number, string | null, number[]][]) => {
+    const verw = await wegwerfKonto();
+    const vereinId = await testVerein(name, verw);
+    const teamIds: string[] = [];
+    for (const t of teamNamen) {
+      const { data, error } = await admin.from("teams").insert({ name: t, verein_id: vereinId }).select("id").single();
+      if (error) throw error;
+      teams.push(data.id);
+      teamIds.push(data.id as string);
+    }
+    const mitglied = await wegwerfKonto();
+    assert.equal((await admin.from("team_members").insert({ team_id: teamIds[0], user_id: mitglied.id })).error, null);
+    const ids: string[] = [];
+    for (let i = 0; i < spieler.length; i += 500) {
+      const teil = spieler.slice(i, i + 500);
+      const { data, error } = await admin
+        .from("spieler")
+        .insert(teil.map(([vorname, nachname, jahrgang, js]) => ({ verein_id: vereinId, vorname, nachname, jahrgang, js_nummer: js })))
+        .select("id");
+      if (error) throw error;
+      ids.push(...data.map((z) => z.id as string));
+    }
+    const zuordnungen = spieler.flatMap(([, , , , t], i) => t.map((n) => ({ team_id: teamIds[n], spieler_id: ids[i], verein_id: vereinId })));
+    for (let i = 0; i < zuordnungen.length; i += 500) assert.equal((await admin.from("team_spieler").insert(zuordnungen.slice(i, i + 500))).error, null);
+    return { verw, vereinId, teamIds, mitglied, ids };
+  };
+  const SPIELER_580: [string, string, number, string | null, number[]][] = [
+    ["Léa", "Brunner", 2014, "111", [0]],
+    ["Lea", "Brändli", 2015, null, [0, 1]],
+    ["Zoë", "Müller", 2016, null, [1]],
+    ["Jürg", "Mueller", 2016, null, []],
+    ["Ana-Lucía", "O'Neil", 2017, null, [0]],
+    ["Pro%zent", "Unter_strich", 2018, null, []],
+    ["Back\\slash", 'Zitat"', 2012, null, [1]],
+    // Gleicher Name, zwei Jahrgänge: Die Folge bei Gleichstand kommt aus der Datenebene (Jahrgang, dann Kennung).
+    ["Mia", "Gleich", 2016, null, [1]],
+    ["Mia", "Gleich", 2014, null, [1]],
+  ];
+
+  await pruefe("Spieler:innen des Vereins (#580 AK 1–5, 11; PC 1, 3): für alle Mitglieder, Form je Rolle, Kopf ungefiltert, nur der eigene Verein, nach Austritt nicht mehr", async () => {
+    const { verw, vereinId, teamIds, mitglied } = await verein580("Kern-DB-580", ["Ea 580", "Db 580", "Fa 580"], SPIELER_580);
+    const [ea, db, fa] = teamIds;
+    // Die Verwaltung: Form unverändert (J+S, Link-Stand, Schnuppern; anzahl je Team).
+    const v = await verwaltungsListe(vereinId, verw);
+    for (const s of v.spieler) assert.deepEqual(Object.keys(s).sort(), ["id", "jahrgang", "js", "linkBezogen", "nachname", "schnuppern", "teams", "vorname"]);
+    assert.deepEqual(v.teams.map((t) => Object.keys(t).sort()), [["anzahl", "id", "name"], ["anzahl", "id", "name"], ["anzahl", "id", "name"]]);
+    assert.deepEqual(v.teams.map((t) => [t.name, t.anzahl]), [["Db 580", 5], ["Ea 580", 3], ["Fa 580", 0]]);
+    assert.equal(v.spieler.find((s) => s.vorname === "Léa")!.js, "111");
+    // Ein Mitglied: genau die vier Angaben, auch bei Spieler:innen des eigenen Teams; Teams ohne anzahl.
+    const m = await liste580(mitglied, vereinId);
+    for (const s of m.spieler) {
+      assert.deepEqual(Object.keys(s).sort(), ["id", "jahrgang", "nachname", "teams", "vorname"], `${s.vorname}: nur die vier Angaben`);
+      for (const t of s.teams) assert.deepEqual(Object.keys(t).sort(), ["id", "name"]);
+    }
+    assert.deepEqual(m.teams, [{ id: db, name: "Db 580" }, { id: ea, name: "Ea 580" }, { id: fa, name: "Fa 580" }]);
+    const lea = m.spieler.find((s) => s.vorname === "Léa")!;
+    assert.deepEqual(lea, { id: lea.id, vorname: "Léa", nachname: "Brunner", jahrgang: 2014, teams: [{ id: ea, name: "Ea 580" }] }, "eigenes Team: nicht mehr");
+    assert.equal(m.verwaltung, false, "ein Mitglied bekommt nie die Verwaltungssicht");
+    assert.ok(!/111|link|schnupp|anzahl|js/i.test(JSON.stringify(m)), "nichts davon im Payload");
+    // Schon auf dem Draht (PostgREST, ohne Kern): Kopf und Zeile ohne Verwaltungsangaben.
+    const roh = (await mitglied.supabase.rpc("verein_spielerliste", { p_verein: vereinId })).data as Record<string, unknown> & { spieler: Record<string, unknown>[]; teams: Record<string, unknown>[] };
+    assert.deepEqual(Object.keys(roh).sort(), ["gesamt", "jahrgaenge", "ohne_team", "spieler", "teams", "verwaltung"]);
+    assert.equal(roh.verwaltung, false, "die eigene Rolle, sonst nichts");
+    assert.ok(roh.spieler.every((s) => !("js" in s || "link_bezogen" in s || "schnuppern" in s)) && roh.teams.every((t) => !("anzahl" in t)));
+    // Ein Mitglied bekommt genau die Zeilen der Verwaltung ohne deren Angaben.
+    const nurVier = {
+      ...v,
+      verwaltung: false,
+      spieler: v.spieler.map(({ id, vorname, nachname, jahrgang, teams }) => ({ id, vorname, nachname, jahrgang, teams })),
+      teams: v.teams.map(({ id, name }) => ({ id, name })),
+    };
+    assert.deepEqual(nurVier, m);
+    // Verwaltung und Mitglied zugleich: die Verwaltungsform.
+    const beides = await wegwerfKonto();
+    assert.equal((await admin.from("verein_verwaltung").insert({ verein_id: vereinId, user_id: beides.id })).error, null);
+    assert.equal((await admin.from("team_members").insert({ team_id: db, user_id: beides.id })).error, null);
+    assert.deepEqual(await verwaltungsListe(vereinId, beides), v);
+    // AK 1: Vorname, dann Nachname (deutsch); bei gleichem Namen die Folge der Datenebene (Jahrgang).
+    assert.deepEqual(namen580(m), [
+      "Ana-Lucía O'Neil 2017",
+      'Back\\slash Zitat" 2012',
+      "Jürg Mueller 2016",
+      "Lea Brändli 2015",
+      "Léa Brunner 2014",
+      "Mia Gleich 2014",
+      "Mia Gleich 2016",
+      "Pro%zent Unter_strich 2018",
+      "Zoë Müller 2016",
+    ]);
+    assert.deepEqual(namen580(v), namen580(m), "dieselbe Folge für beide Rollen");
+    // `teams` je Zeile vollständig, nach Namen; Kopf ungefiltert.
+    assert.deepEqual(m.spieler.find((s) => s.vorname === "Lea")!.teams.map((t) => t.name), ["Db 580", "Ea 580"]);
+    assert.deepEqual([m.jahrgaenge, m.gesamt, m.ohneTeam], [[2012, 2014, 2015, 2016, 2017, 2018], 9, 2]);
+    // Zugang: ohne Verein, Mitglied eines anderen Vereins, fremde Verwaltung, keine Kennung — «Verein nicht gefunden».
+    const fremd = await fremdeVerwaltung();
+    const fremdVerein = (await admin.from("verein_verwaltung").select("verein_id").eq("user_id", fremd.id).single()).data!.verein_id as string;
+    const { data: fs } = await admin.from("spieler").insert({ verein_id: fremdVerein, vorname: "Léa", nachname: "Fremd", jahrgang: 2014 }).select("id").single();
+    for (const k of [await wegwerfKonto(), a, fremd]) fehler(await ladeVereinSpielerliste(k.supabase, k.id, { vereinId }), "nicht_gefunden", NICHT_GEFUNDEN.verein);
+    fehler(await ladeVereinSpielerliste(mitglied.supabase, mitglied.id, { vereinId: "kein-uuid" }), "nicht_gefunden", NICHT_GEFUNDEN.verein);
+    fehler(await ladeVereinSpielerliste(mitglied.supabase, mitglied.id, { vereinId: fremdVerein }), "nicht_gefunden", NICHT_GEFUNDEN.verein);
+    // PC 1: nur der eigene Verein, auch mit Suche.
+    assert.deepEqual(namen580(await liste580(mitglied, vereinId, { suche: "léa" })), ["Lea Brändli 2015", "Léa Brunner 2014"]);
+    assert.ok((await liste580(fremd, fremdVerein)).spieler.some((s) => s.id === fs!.id), "der andere Verein sieht seine eigene");
+    // PC 3: nach dem Austritt nicht mehr — als Trainer:in und als Verwaltung.
+    const geht = await wegwerfKonto();
+    assert.equal((await admin.from("team_members").insert({ team_id: fa, user_id: geht.id })).error, null);
+    assert.equal((await liste580(geht, vereinId)).gesamt, 9, "solange Mitglied: alle");
+    assert.equal((await admin.from("team_members").delete().eq("team_id", fa).eq("user_id", geht.id)).error, null);
+    fehler(await ladeVereinSpielerliste(geht.supabase, geht.id, { vereinId }), "nicht_gefunden", NICHT_GEFUNDEN.verein);
+    assert.equal((await admin.from("verein_verwaltung").delete().eq("verein_id", vereinId).eq("user_id", beides.id)).error, null);
+    assert.equal((await liste580(beides, vereinId)).verwaltung, false, "nur noch Mitglied: die Form der Mitglieder");
+    assert.equal((await admin.from("team_members").delete().eq("team_id", db).eq("user_id", beides.id)).error, null);
+    fehler(await ladeVereinSpielerliste(beides.supabase, beides.id, { vereinId }), "nicht_gefunden", NICHT_GEFUNDEN.verein);
+    // AK 11: ein Verein ohne Spieler:innen — leer, mit Teams und Nullen.
+    const { verw: verwLeer, vereinId: leer, mitglied: mLeer } = await verein580("Kern-DB-580-Leer", ["Ea Leer"], []);
+    for (const k of [verwLeer, mLeer]) {
+      const l = await liste580(k, leer);
+      assert.deepEqual([l.spieler, l.jahrgaenge, l.gesamt, l.ohneTeam, l.teams.map((t) => t.name)], [[], [], 0, 0, ["Ea Leer"]]);
+      assert.equal(l.verwaltung, k === verwLeer, "die Rolle auch ohne Zeilen");
+    }
+    // Ohne Treffer und (für die Verwaltung) ohne Team: die Rolle sagt die Antwort, nicht die Schlüssel.
+    assert.equal((await liste580(mitglied, vereinId, { suche: "niemand" })).verwaltung, false);
+    assert.equal((await liste580(verw, vereinId, { suche: "niemand" })).verwaltung, true);
+    const leerVerw = await wegwerfKonto();
+    const ganzLeer = await testVerein("Kern-DB-580-Ganz-Leer", leerVerw);
+    assert.deepEqual(await liste580(leerVerw, ganzLeer), { verwaltung: true, spieler: [], teams: [], jahrgaenge: [], gesamt: 0, ohneTeam: 0 });
+    // Passt die Form nicht zur Rolle der Antwort, ist das ein Fehler — keine leere Liste, keine andere Sicht.
+    const gestellt = (data: unknown) => ({ rpc: async () => ({ data, error: null }) }) as unknown as typeof mitglied.supabase;
+    const kopf = { jahrgaenge: [2016], gesamt: 1, ohne_team: 0 };
+    const zeileM = { id: randomUUID(), vorname: "A", nachname: "B", jahrgang: 2016, teams: [] };
+    const zeileV = { ...zeileM, js: null, link_bezogen: false, schnuppern: null };
+    for (const [warum, data] of [
+      ["Verwaltung mit Mitglieder-Zeile", { ...kopf, verwaltung: true, spieler: [zeileM], teams: [] }],
+      ["Verwaltung mit halber Zeile", { ...kopf, verwaltung: true, spieler: [{ ...zeileM, link_bezogen: false }], teams: [] }],
+      ["Verwaltung mit Team ohne anzahl", { ...kopf, verwaltung: true, spieler: [zeileV], teams: [{ id: ea, name: "Ea" }] }],
+      ["Mitglied mit Verwaltungszeile", { ...kopf, verwaltung: false, spieler: [zeileV], teams: [] }],
+      ["Mitglied mit Team samt anzahl", { ...kopf, verwaltung: false, spieler: [zeileM], teams: [{ id: ea, name: "Ea", anzahl: 1 }] }],
+      ["ohne Rolle", { ...kopf, spieler: [], teams: [] }],
+    ] as const) {
+      const r = await ladeVereinSpielerliste(gestellt(data), mitglied.id, { vereinId });
+      assert.ok(!r.ok && r.art === "technisch", warum);
+    }
+    assert.deepEqual(wert(await ladeVereinSpielerliste(gestellt({ ...kopf, verwaltung: false, spieler: [zeileM], teams: [] }), mitglied.id, { vereinId })).spieler, [zeileM]);
+  });
+
+  await pruefe("Spieler:innen des Vereins: Suche und Eingrenzung über den Kern, Adresse bis zur Datenebene (#580 AK 6–10)", async () => {
+    const { vereinId, teamIds, mitglied } = await verein580("Kern-DB-580-Suche", ["Ea 580", "Db 580", "Fa 580"], SPIELER_580);
+    const [ea, db, fa] = teamIds;
+    const fremd = await fremdeVerwaltung();
+    const fremdVerein = (await admin.from("verein_verwaltung").select("verein_id").eq("user_id", fremd.id).single()).data!.verein_id as string;
+    const { data: ft } = await admin.from("teams").insert({ name: "Fremd 580", verein_id: fremdVerein }).select("id").single();
+    teams.push(ft!.id);
+    const suche = async (s: string) => namen580(await liste580(mitglied, vereinId, { suche: s }));
+    // AK 6: Teil des Vornamens, des Nachnamens, beider zusammen; Gross/Klein; Akzente in beide Richtungen.
+    assert.deepEqual(await suche("léa"), ["Lea Brändli 2015", "Léa Brunner 2014"]);
+    assert.deepEqual(await suche("LEA"), ["Lea Brändli 2015", "Léa Brunner 2014"], "ohne Akzent findet mit Akzent");
+    assert.deepEqual(await suche("brän"), ["Lea Brändli 2015"]);
+    assert.deepEqual(await suche("bran"), ["Lea Brändli 2015"]);
+    assert.deepEqual(await suche("a brun"), ["Léa Brunner 2014"], "über die Grenze von Vor- und Nachname");
+    assert.deepEqual(await suche("MÜLLER"), ["Zoë Müller 2016"]);
+    assert.deepEqual(await suche("zoe"), ["Zoë Müller 2016"]);
+    assert.deepEqual(await suche("jurg"), ["Jürg Mueller 2016"]);
+    // OoS 4: keine Umschreibung — «ue» findet «ü» nicht.
+    assert.deepEqual(await suche("mueller"), ["Jürg Mueller 2016"]);
+    assert.deepEqual(await suche("a-lucia o'n"), ["Ana-Lucía O'Neil 2017"]);
+    // Sonderzeichen sind gewöhnliche Zeichen, keine Platzhalter.
+    assert.deepEqual(await suche("%"), ["Pro%zent Unter_strich 2018"]);
+    assert.deepEqual(await suche("_"), ["Pro%zent Unter_strich 2018"]);
+    assert.deepEqual(await suche("\\"), ['Back\\slash Zitat" 2012']);
+    assert.deepEqual(await suche('"'), ['Back\\slash Zitat" 2012']);
+    assert.deepEqual(await suche("'"), ["Ana-Lucía O'Neil 2017"]);
+    assert.deepEqual(await suche("a%z"), [], "% ist kein Platzhalter");
+    // Nur Leerraum heisst keine Suche; länger als jeder Name trifft niemanden, ohne Fehler.
+    assert.equal((await suche("   ")).length, 9);
+    assert.deepEqual(await suche("a".repeat(200)), []);
+    // AK 7–9: Eingrenzungen einzeln und zusammen; Teams ODER ohne Team, Jahrgang, Suche — alles UND.
+    const grenze = async (e: { suche?: string; teamIds?: string[]; ohneTeam?: boolean; jahrgaenge?: number[] }) => liste580(mitglied, vereinId, e);
+    assert.deepEqual(namen580(await grenze({ teamIds: [ea] })), ["Ana-Lucía O'Neil 2017", "Lea Brändli 2015", "Léa Brunner 2014"]);
+    assert.deepEqual(namen580(await grenze({ ohneTeam: true })), ["Jürg Mueller 2016", "Pro%zent Unter_strich 2018"]);
+    assert.deepEqual(namen580(await grenze({ teamIds: [ea], ohneTeam: true })), ["Ana-Lucía O'Neil 2017", "Jürg Mueller 2016", "Lea Brändli 2015", "Léa Brunner 2014", "Pro%zent Unter_strich 2018"]);
+    assert.deepEqual(namen580(await grenze({ teamIds: [ea, db] })).length, 7, "mehrere Teams: ODER");
+    assert.deepEqual(namen580(await grenze({ jahrgaenge: [2016] })), ["Jürg Mueller 2016", "Mia Gleich 2016", "Zoë Müller 2016"]);
+    assert.deepEqual(namen580(await grenze({ jahrgaenge: [2014, 2018] })), ["Léa Brunner 2014", "Mia Gleich 2014", "Pro%zent Unter_strich 2018"]);
+    assert.deepEqual(namen580(await grenze({ teamIds: [db], jahrgaenge: [2016] })), ["Mia Gleich 2016", "Zoë Müller 2016"]);
+    assert.deepEqual(namen580(await grenze({ teamIds: [db], ohneTeam: true, jahrgaenge: [2016], suche: "ü" })), ["Jürg Mueller 2016", "Zoë Müller 2016"]);
+    assert.deepEqual(namen580(await grenze({ teamIds: [db], suche: "jürg" })), []);
+    assert.deepEqual(namen580(await grenze({ teamIds: [fa] })), [], "ein Team ohne Spieler:innen");
+    // Fremde und unbekannte Team-IDs treffen still nie — auch nicht zusammen mit «ohne Team».
+    assert.deepEqual(namen580(await grenze({ teamIds: [ft!.id, randomUUID()] })), []);
+    assert.deepEqual(namen580(await grenze({ teamIds: [ft!.id], ohneTeam: true })), ["Jürg Mueller 2016", "Pro%zent Unter_strich 2018"]);
+    // Leere Listen grenzen nicht ein.
+    assert.equal((await grenze({ teamIds: [], jahrgaenge: [], ohneTeam: false, suche: "" })).spieler.length, 9);
+    // Jede Zeile nennt weiter alle ihre Teams; der Kopf bleibt ungefiltert.
+    const gefiltert = await grenze({ teamIds: [ea], jahrgaenge: [2015] });
+    assert.deepEqual(gefiltert.spieler.map((s) => s.teams.map((t) => t.name)), [["Db 580", "Ea 580"]]);
+    for (const l of [gefiltert, await grenze({ suche: "niemand" }), await grenze({ ohneTeam: true })]) {
+      assert.deepEqual([l.teams.map((t) => t.name), l.jahrgaenge, l.gesamt, l.ohneTeam], [["Db 580", "Ea 580", "Fa 580"], [2012, 2014, 2015, 2016, 2017, 2018], 9, 2]);
+    }
+    // Die Adresse bis zur Datenebene: Was liesSpielerEingrenzung liest und bereinigeEingrenzung übrig lässt, ist, was ankommt.
+    const ausAdresse = async (sp: Record<string, string | string[]>) => {
+      const e0 = liesSpielerEingrenzung(sp);
+      const e = bereinigeEingrenzung(e0, await grenze({}));
+      return { e, namen: namen580(await grenze(e)) };
+    };
+    const r1 = await ausAdresse({ q: "  léa  ", team: `${OHNE_TEAM_WERT},${ea},${ft!.id},kein-team`, jahrgang: "2014,2018,1999,abc" });
+    assert.deepEqual(r1.e, { suche: "léa", teamIds: [ea], ohneTeam: true, jahrgaenge: [2014, 2018] }, "fremdes Team und unbekannter Jahrgang fallen weg");
+    assert.deepEqual(r1.namen, ["Léa Brunner 2014"]);
+    assert.deepEqual((await ausAdresse({ team: [ea, db] })).namen.length, 7, "Teams auch mehrfach in der Adresse");
+    // Leerraum: was die Adresse bereinigt, bereinigt die Datenebene gleich — roh und bereinigt dasselbe Ergebnis.
+    for (const c of ["\t", "\n", "\x1c", "\x85", "\u00a0", "\u1680", "\u2003", "\u2009", "\u202f", "\u2028", "\u205f", "\u3000", "  \u00a0 "]) {
+      const q = `${c}Léa${c}Brunner${c}`;
+      const e = liesSpielerEingrenzung({ q });
+      assert.equal(e.suche, "Léa Brunner", JSON.stringify(c));
+      assert.deepEqual(await suche(q), ["Léa Brunner 2014"], `roh: ${JSON.stringify(c)}`);
+      assert.deepEqual(await suche(e.suche), ["Léa Brunner 2014"]);
+    }
+    // U+FEFF ist für beide kein Leerraum; zerlegte Umlaute (NFD) finden wie zusammengesetzte.
+    assert.equal(liesSpielerEingrenzung({ q: "Léa\ufeffBrunner" }).suche, "Léa\ufeffBrunner");
+    assert.deepEqual(await suche("Léa\ufeffBrunner"), []);
+    const nfd = "Le\u0301a Bra\u0308n";
+    assert.equal(liesSpielerEingrenzung({ q: nfd }).suche, "Léa Brän");
+    assert.deepEqual(await suche(nfd), ["Lea Brändli 2015"], "zerlegt wie zusammengesetzt");
+    assert.deepEqual(await suche("Ba\u0308ck"), ['Back\\slash Zitat" 2012'], "ein Akzent in der Eingabe findet auch den Namen ohne");
+    assert.deepEqual(await suche("Zo\u0308e\u0308"), ["Zoë Müller 2016"]);
+    assert.deepEqual(await suche(liesSpielerEingrenzung({ q: "Bra\u0308ndli" }).suche), ["Lea Brändli 2015"]);
+    // Emoji und Zeichen aus der Adresse kommen unverändert an.
+    for (const q of ["😀", "50% _a\\b 'c\" d,", "a".repeat(130)]) {
+      assert.equal(liesSpielerEingrenzung({ q }).suche, q);
+      assert.deepEqual(await suche(q), []);
+    }
+  });
+
+  await pruefe("Spieler:innen des Vereins: 1000 in einem Aufruf über PostgREST, die Suche trifft auch die letzte (#580 AK 10; Testfall 32)", async () => {
+    const tausend: [string, string, number, string | null, number[]][] = Array.from({ length: VEREIN_SPIELER_MAX - 1 }, (_, i) => [`Spieler${String(i).padStart(4, "0")}`, "Tausend", 2012 + (i % 7), null, i < 150 && i % 3 !== 0 ? [i % 2] : []]);
+    tausend.push(["Zyra", "Letzte", 2018, null, []]);
+    const { verw, vereinId, mitglied } = await verein580("Kern-DB-580-Tausend", ["Ea 1000", "Db 1000"], tausend);
+    for (const k of [mitglied, verw]) {
+      const start = Date.now();
+      const l = await liste580(k, vereinId);
+      const ms = Date.now() - start;
+      assert.deepEqual([l.spieler.length, l.gesamt], [VEREIN_SPIELER_MAX, VEREIN_SPIELER_MAX], "nichts gekappt (max_rows)");
+      assert.equal(namen580(l).at(-1), "Zyra Letzte 2018");
+      assert.deepEqual(namen580(await liste580(k, vereinId, { suche: "zyra" })), ["Zyra Letzte 2018"]);
+      assert.equal((await liste580(k, vereinId, { ohneTeam: true })).spieler.length, l.ohneTeam);
+      console.log(`  1000 Spieler:innen (${k === verw ? "Verwaltung" : "Mitglied"}): ${ms} ms`);
     }
   });
 
@@ -7620,7 +7895,7 @@ try {
     ordneSpielerZu(verwaltung.supabase, verwaltung.id, { teamId, teamName, spielerIds, schnuppern });
   /** Der Zähler, wie die Verwaltung ihn in beiden Ansichten sieht. */
   const zaehlerImVerein = async (teamId: string, spielerId: string) => ({
-    liste: wert(await ladeVereinSpielerliste(verwaltung.supabase, verwaltung.id, { vereinId: verein })).spieler.find((x) => x.id === spielerId)!.schnuppern,
+    liste: (await verwaltungsListe()).spieler.find((x) => x.id === spielerId)!.schnuppern,
     team: wert(await ladeVereinTeamAnsicht(verwaltung.supabase, verwaltung.id, { teamId })).spieler.find((x) => x.id === spielerId)?.schnuppern ?? null,
   });
 

@@ -667,6 +667,13 @@ export function abholUrl(origin: string, token: string): string {
 export const ABHOL_VERSUCHE = 5;
 export const ABHOL_SPERRE_MINUTEN = 15;
 
+/** Wer die Angaben einer Spieler:in sieht (Story #580 PC 4) — eine Quelle für
+ *  die Abholseite («der Spieler:in») und den privaten Link (mit dem Vornamen).
+ *  Keine eigene Konstante in `LINK_TEXT`: Die fliesst in die KI-Beschreibungen. */
+export function angabenSehenText(vorname?: string): string {
+  return `Name, Jahrgang und Teams ${vorname ? `von ${vorname}` : "der Spieler:in"} sehen alle Trainer:innen des Vereins, alle Angaben die Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.`;
+}
+
 export const ABHOLUNG_TEXT = {
   /** AK 3, 5: was die Adresse kann und was Ausschalten bewirkt. */
   beschreibung:
@@ -684,8 +691,7 @@ export const ABHOLUNG_TEXT = {
     "Gib Vorname, Nachname und Jahrgang der Spieler:in ein. Du erhältst den privaten Link, mit dem du die Spieler:in für Trainings und Spiele ab- und anmelden kannst.",
   /** AK 7: was KiFu speichert, wer es sieht, wann es verschwindet. */
   speichertTitel: "Was KiFu speichert",
-  speichert:
-    "Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein Spiel nicht aufgeboten ist. Das sehen die Trainer:innen des Teams, KI-Assistenten, die sie mit KiFu verbunden haben, und wer den Link der Spieler:in hat. Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen und ihre KI-Assistenten. Nimmt ein Team eine Spieler:in heraus, bleiben ihre Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht.",
+  speichert: `Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein Spiel nicht aufgeboten ist. ${angabenSehenText()} Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen ihrer Teams und ihre KI-Assistenten. Nimmt ein Team eine Spieler:in heraus, bleiben ihre Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht.`,
   /** AK 13, 14: immer derselbe Satz. */
   passtNicht: "Dazu finden wir keinen Link. Prüf die Schreibweise oder frag beim Team nach.",
   /** AK 16. */

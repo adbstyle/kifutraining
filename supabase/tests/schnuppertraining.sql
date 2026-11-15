@@ -147,7 +147,7 @@ begin
   foreach f in array array['spieler_probe_folgen(uuid,uuid)', 'spieler_probe_setzen(uuid,uuid,boolean,integer)',
                            'verein_spieler_zuordnen(uuid,uuid[],boolean)', 'spieler_teams(uuid,uuid)',
                            'spieler_aus_team_nehmen(uuid,uuid,text)', 'verein_spieler_aus_team_nehmen(uuid,uuid)',
-                           'verein_team_ansicht(uuid)', 'verein_spielerliste(uuid)'] loop
+                           'verein_team_ansicht(uuid)', 'verein_spielerliste(uuid,text,uuid[],boolean,integer[])'] loop
     perform pg_temp.pruefe(not has_function_privilege('anon', f, 'execute')
                            and has_function_privilege('authenticated', f, 'execute'), 'Grant von ' || f);
   end loop;
@@ -425,10 +425,12 @@ begin
     select e into s from jsonb_array_elements(v -> 'spieler') e where e ->> 'id' = pg_temp.id('zwei')::text;
     perform pg_temp.pruefe(s -> 'schnuppern' = 'null', wer || ': Vereinsliste zwei ' || s::text);
   end loop;
-  -- Ein Mitglied ohne Verwaltung sieht die Vereinsansichten nicht.
+  -- Ein Mitglied ohne Verwaltung sieht die Teamansicht nicht und in der
+  -- Vereinsliste (seit Story 4) keinen Schnupper-Zähler.
   perform pg_temp.als(pg_temp.id('a'));
   perform pg_temp.erwarte(format('select verein_team_ansicht(%L)', pg_temp.id('t1')), 'VEREIN_NICHT_GEFUNDEN');
-  perform pg_temp.erwarte(format('select verein_spielerliste(%L)', pg_temp.id('v')), 'VEREIN_NICHT_GEFUNDEN');
+  perform pg_temp.pruefe(position('schnuppern' in verein_spielerliste(pg_temp.id('v'))::text) = 0,
+                         'Vereinsliste des Mitglieds mit Schnupper-Zähler');
 end $$;
 reset role;
 update team_spieler set probe_seit = null where team_id = pg_temp.id('t3') and spieler_id = pg_temp.id('nur3');

@@ -36,8 +36,9 @@ function teamFehler(e: { message: string; code?: string }) {
 
 /**
  * Der Spielerbestand des Vereins am Verein-Ort (Epic Vereine #575, Story
- * #579): die Grundfassung der Liste und das Zuordnen zu einem Team — nur für
- * die Vereinsverwaltung, nur in der Anwendung. Es gibt dafür kein KI-Werkzeug
+ * #579, #580): die Liste für alle Mitglieder (die Verwaltung mit mehr
+ * Angaben) und das Zuordnen zu einem Team — nur in der Anwendung, das
+ * Zuordnen nur für die Vereinsverwaltung. Es gibt dafür kein KI-Werkzeug
  * (Architekturplan §4.1, §5.5); der Kern steht hier, damit Seite und Action
  * dieselbe Regelquelle nutzen.
  *
@@ -45,53 +46,140 @@ function teamFehler(e: { message: string; code?: string }) {
  * Rolle als erste Anweisung und rufen `nur_in_der_anwendung()` auf.
  */
 
-export type VereinSpieler = {
+/** Eine Spieler:in, wie jedes Vereinsmitglied sie sieht (Story #580 AK 3):
+ *  nur diese vier Angaben, auch bei Spieler:innen der eigenen Teams. */
+export type VereinSpielerMitglied = {
   id: string;
   vorname: string;
   nachname: string;
   jahrgang: number;
-  /** Die J+S-Nummer; `null`, wenn keine erfasst ist. Nur die Verwaltung sieht sie. */
+  /** Die Teams der Spieler:in, nach Namen; leer, wenn sie keinem zugeordnet ist. */
+  teams: { id: string; name: string }[];
+};
+
+/** Dieselbe Spieler:in für die Vereinsverwaltung: dazu J+S-Nummer, Stand des
+ *  privaten Links und Schnuppern. Für Mitglieder liefert die Datenebene diese
+ *  Schlüssel gar nicht, sie fehlen dort ganz. */
+export type VereinSpieler = VereinSpielerMitglied & {
+  /** Die J+S-Nummer; `null`, wenn keine erfasst ist. */
   js: string | null;
   /** Der aktuelle private Link wurde schon bezogen (Spalte «Privater Link»). */
   linkBezogen: boolean;
-  /** Die Teams der Spieler:in, nach Namen; leer, wenn sie keinem zugeordnet ist. */
-  teams: { id: string; name: string }[];
   /** Wo und wie weit sie schnuppert (#584); `anzahl`: die vom Team festgelegte
    *  Zahl, `null` ohne; `besucht`: gezählt wie am Team-Ort. */
   schnuppern: { teamId: string; anzahl: number | null; besucht: number } | null;
 };
 
-/** Ein Team des Vereins; `anzahl`: Zuordnungen, gezählt wie die Grenze 100. */
-export type VereinTeam = { id: string; name: string; anzahl: number };
+/** Ein Team des Vereins, wie jedes Mitglied es sieht. */
+export type VereinTeamMitglied = { id: string; name: string };
+
+/** Dasselbe Team für die Verwaltung; `anzahl`: Zuordnungen, gezählt wie die Grenze 100. */
+export type VereinTeam = VereinTeamMitglied & { anzahl: number };
+
+/** Die Antwort der Datenebene: `spieler` mit Suche und Eingrenzung, alles
+ *  übrige ungefiltert — die Optionen der Filter und die Zahlen im Kopf
+ *  ändern sich nicht mit ihnen. `verwaltung` sagt die Datenebene selbst (die
+ *  eigene Rolle der aufrufenden Person); an ihm hängt die Form der Zeilen und
+ *  Teams, und die Seite wählt an ihm die Sicht — eine Quelle, auch bei 0
+ *  Treffern und 0 Teams. */
+type VereinSpielerliste = {
+  /** Alle vorkommenden Jahrgänge des Vereins, aufsteigend. */
+  jahrgaenge: number[];
+  /** Alle Spieler:innen des Vereins und davon die ohne Team. */
+  gesamt: number;
+  ohneTeam: number;
+} & (
+  | { verwaltung: true; spieler: VereinSpieler[]; teams: VereinTeam[] }
+  | { verwaltung: false; spieler: VereinSpielerMitglied[]; teams: VereinTeamMitglied[] }
+);
 
 const nachName = (a: { name: string }, b: { name: string }) => nachTeamname(a.name, b.name);
 
-/** Alle Spieler:innen und Teams des Vereins, nach Vorname und Nachname bzw.
- *  Teamname geordnet (#579 AK 1) — die Grundfassung, die Story #580 ersetzt. */
+type SpielerRoh = VereinSpielerMitglied & {
+  js?: string | null;
+  link_bezogen?: boolean;
+  schnuppern?: { team_id: string; anzahl: number | null; besucht: number } | null;
+};
+
+/** Die drei Schlüssel, die nur die Verwaltung bekommt. */
+const VERWALTUNGS_SCHLUESSEL = ["js", "link_bezogen", "schnuppern"] as const;
+
+/** Passt die Form nicht zur Rolle, die die Datenebene nennt, ist das ein
+ *  Fehler, keine leere Liste und keine andere Sicht. */
+const LISTE_UNSTIMMIG = "Die Spieler:innen liessen sich gerade nicht lesen. Bitte versuche es noch einmal.";
+
+/**
+ * Die Spieler:innen des Vereins mit Suche und Eingrenzung (Story #580): Die
+ * Datenebene sucht und grenzt über den ganzen Verein ein, nichts gekappt.
+ * Die Reihenfolge (AK 1: Vorname, dann Nachname) legt allein dieser Kern
+ * fest, mit derselben deutschen Ordnung wie die Spielerliste eines Teams
+ * (`nachSpielerName`) — unabhängig von der Collation der Datenbank. Bei
+ * gleichem Vor- und Nachnamen bleibt die Folge der Datenebene stehen
+ * (Jahrgang, dann Kennung; `sort` ist stabil). Weil die Daten ganz kommen,
+ * stört das weder Suche noch Anzeige in Schritten. `suche`: Teil von
+ * «Vorname Nachname», ohne Gross-/Kleinschreibung und Akzente. `teamIds` und
+ * `ohneTeam` gelten zusammen als ODER, `jahrgaenge` ebenso; Suche und beide
+ * Eingrenzungen als UND. Unbekannte Teams treffen nie. Jede Zeile nennt
+ * weiter alle Teams der Spieler:in. Die Form der Antwort entscheidet allein
+ * `verwaltung` aus der Datenebene; trägt eine Zeile oder ein Team eine
+ * andere Form, ist das ein technischer Fehler (nie eine leere Liste).
+ */
 export async function ladeVereinSpielerliste(
   supabase: SupabaseClient,
   _userId: string,
-  e: { vereinId: string },
-): Promise<KernErgebnis<{ spieler: VereinSpieler[]; teams: VereinTeam[] }>> {
+  e: { vereinId: string; suche?: string; teamIds?: string[]; ohneTeam?: boolean; jahrgaenge?: number[] },
+): Promise<KernErgebnis<VereinSpielerliste>> {
   if (!istUuid(e.vereinId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.verein, { feld: "verein_id" });
-  const { data, error } = await supabase.rpc("verein_spielerliste", { p_verein: e.vereinId });
+  const { data, error } = await supabase.rpc("verein_spielerliste", {
+    p_verein: e.vereinId,
+    // Die Datenebene bereinigt selbst (NFC, Leerraum); nur Leeres heisst null.
+    p_suche: e.suche || null,
+    p_teams: e.teamIds?.length ? e.teamIds : null,
+    p_ohne_team: e.ohneTeam ?? false,
+    p_jahrgaenge: e.jahrgaenge?.length ? e.jahrgaenge : null,
+  });
   if (error) return vereinFehler(error);
   const r = data as {
-    spieler: (Omit<VereinSpieler, "js" | "linkBezogen" | "schnuppern"> & {
-      js: string | null;
-      link_bezogen: boolean;
-      schnuppern: { team_id: string; anzahl: number | null; besucht: number } | null;
-    })[];
-    teams: VereinTeam[];
+    spieler: SpielerRoh[];
+    teams: (VereinTeamMitglied & { anzahl?: number })[];
+    jahrgaenge: number[];
+    gesamt: number;
+    ohne_team: number;
+    verwaltung: boolean;
   };
+  // Die Form folgt der Rolle, die die Datenebene nennt: Die Verwaltung hat je
+  // Zeile alle drei Zusatzangaben und je Team die Zahl, ein Mitglied keine davon.
+  const zusatz = (s: SpielerRoh) => VERWALTUNGS_SCHLUESSEL.filter((k) => k in s).length;
+  const passt =
+    typeof r.verwaltung === "boolean" &&
+    (r.verwaltung
+      ? r.spieler.every((s) => zusatz(s) === VERWALTUNGS_SCHLUESSEL.length) && r.teams.every((t) => "anzahl" in t)
+      : r.spieler.every((s) => zusatz(s) === 0) && r.teams.every((t) => !("anzahl" in t)));
+  if (!passt) return fehlschlag("technisch", LISTE_UNSTIMMIG, { wiederholbar: true });
+
+  const basis = { jahrgaenge: r.jahrgaenge, gesamt: r.gesamt, ohneTeam: r.ohne_team };
+  const zeilen = nachSpielerName(r.spieler);
+  const mitglied = (s: SpielerRoh): VereinSpielerMitglied => ({
+    id: s.id,
+    vorname: s.vorname,
+    nachname: s.nachname,
+    jahrgang: s.jahrgang,
+    teams: s.teams.map((t) => ({ id: t.id, name: t.name })).sort(nachName),
+  });
+  const teams = [...r.teams].sort(nachName);
+  if (!r.verwaltung)
+    return ok({ ...basis, verwaltung: false, spieler: zeilen.map(mitglied), teams: teams.map((t) => ({ id: t.id, name: t.name })) });
   return ok({
-    spieler: nachSpielerName(r.spieler).map(({ link_bezogen, schnuppern, ...s }) => ({
-      ...s,
-      linkBezogen: link_bezogen,
-      teams: [...s.teams].sort(nachName),
-      schnuppern: schnuppern ? { teamId: schnuppern.team_id, anzahl: schnuppern.anzahl, besucht: schnuppern.besucht } : null,
+    ...basis,
+    verwaltung: true,
+    spieler: zeilen.map((s) => ({
+      ...mitglied(s),
+      js: s.js ?? null,
+      linkBezogen: s.link_bezogen === true,
+      schnuppern: s.schnuppern ? { teamId: s.schnuppern.team_id, anzahl: s.schnuppern.anzahl, besucht: s.schnuppern.besucht } : null,
     })),
-    teams: [...r.teams].sort(nachName),
+    // `anzahl` steht bei jedem Team der Verwaltung (oben geprüft).
+    teams: teams.map((t) => ({ id: t.id, name: t.name, anzahl: t.anzahl as number })),
   });
 }
 
