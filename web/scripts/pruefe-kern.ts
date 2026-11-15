@@ -316,6 +316,8 @@ import {
   TEAM_NUR_VERWALTUNG,
   VEREIN_MELDUNG,
   VEREIN_TEAM_NICHT_GEFUNDEN,
+  TEAMS_OHNE_VEREIN_TEXT,
+  VEREIN_GRUENDEN_TEXT,
   VEREIN_NAME_MAX,
   VEREIN_SPIELER_MAX,
   VEREIN_TEAMS_MAX,
@@ -359,6 +361,7 @@ import {
   liesSpielerEingrenzung,
   teamFilterWerte,
 } from "../lib/verein-spielerliste";
+import { gruendungAus } from "../lib/verein-antwort";
 import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
 import { bereichAusPfad } from "../lib/navigation";
 import { textMitLinks } from "../lib/text-links";
@@ -4251,6 +4254,78 @@ pruefe("Treffpunkt eines Trainings: Regeln, Abstand, Änderung und Abo (#561)", 
     "Vielleicht\n\nTreffpunkt\n17:15 · Garderoben Schulhaus Rain\n\nPincode 4702",
     "auf Probe nicht angemeldet sieht ihn",
   );
+});
+
+// ── Verein gründen (Story #587) ─────────────────────────────────────────────
+
+pruefe("Verein gründen (#587 AK 1–5): Sätze des Dialogs und des Einstiegs, Marker mit eigenem Satz", () => {
+  assert.equal(VEREIN_MELDUNG.SCHON_IM_VEREIN, "Du gehörst schon einem Verein an. Einen Verein gründen kann nur, wer keinem angehört.");
+  assert.equal(
+    VEREIN_MELDUNG.BESTAETIGUNG_FEHLT,
+    "Bestätige zuerst, dass du für den Verein handeln darfst und der Verein für die Daten seiner Spieler:innen verantwortlich ist.",
+  );
+  // Die Datenebene meldet mit Markern; der Kern liest sie als Regel, nicht als technischen Fehler.
+  for (const marker of ["SCHON_IM_VEREIN", "BESTAETIGUNG_FEHLT"] as const) {
+    assert.equal(fehlerMeldung(`x ${marker} y`), VEREIN_MELDUNG[marker]);
+    assert.equal(still(() => ausDbFehler({ message: `ERROR: ${marker}` })).art, "regel", marker);
+  }
+  assert.deepEqual(VEREIN_GRUENDEN_TEXT, {
+    titel: "Verein gründen",
+    feld: "Name des Vereins",
+    info: "Höchstens 60 Zeichen. Den Namen kannst du später ändern.",
+    haken1: "Ich bin berechtigt, für diesen Verein zu handeln.",
+    haken2: "Der Verein ist für die Daten seiner Spieler:innen verantwortlich und Ansprechpartner ihrer Eltern und Vertretungen.",
+    erste: "Du wirst die erste Person der Vereinsverwaltung. Solange du dabei bist, kannst du keinem anderen Verein angehören.",
+    knopf: "Verein gründen",
+  });
+  assert.ok(VEREIN_GRUENDEN_TEXT.info.includes(String(VEREIN_NAME_MAX)), "der Hinweis nennt die Grenze des CHECK");
+  assert.equal(TEAMS_OHNE_VEREIN_TEXT.titel, "Willkommen bei KiFu");
+  assert.equal(TEAMS_OHNE_VEREIN_TEXT.gruenden.knopf, "Verein gründen");
+  for (const t of JSON.stringify(TEAMS_OHNE_VEREIN_TEXT).split('"')) assert.ok(!/FutAssist|Kind\b|Kinder/.test(t), `Produktname und Spieler:in: ${t}`);
+  assert.ok(TEAMS_OHNE_VEREIN_TEXT.aufnahme.text.includes("E-Mail-Adresse"), "der Einstieg sagt, was man weitergibt");
+});
+
+pruefe("Verein gründen (#587): Antwort der Datenebene wird auf ihre Form geprüft", () => {
+  const id = "4b3f9d0e-4c8a-4a39-9d57-0a8f2f7f1d11";
+  assert.deepEqual(gruendungAus({ status: "gegruendet", id, name: "FC Wyler" }), { id, name: "FC Wyler" });
+  for (const kaputt of [
+    null,
+    "gegruendet",
+    [],
+    {},
+    { status: "gegruendet" },
+    { status: "gegruendet", id, name: "" },
+    { status: "gegruendet", id: 7, name: "FC Wyler" },
+    { status: "gegruendet", id, name: 5 },
+    { status: "abgewiesen", id, name: "FC Wyler" },
+  ])
+    assert.equal(gruendungAus(kaputt), null, JSON.stringify(kaputt));
+});
+
+pruefe("Verein gründen (#587): ein Weg — RPC nur im Verein-Kern, Einstieg liest den Verein ohne Fehlerschlucken, Dialog sperrt ohne beide Häkchen", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const rpc: string[] = [];
+  for (const datei of quelldateien(web)) {
+    const rel = relative(web, datei);
+    if (datei === fileURLToPath(import.meta.url) || rel === "scripts/pruefe-kern-db.ts") continue;
+    if (/\.rpc\(\s*["`']verein_gruenden["`']/.test(readFileSync(datei, "utf8"))) rpc.push(rel);
+  }
+  assert.deepEqual(rpc, ["lib/kern/verein.ts"], "verein_gruenden nur im Verein-Kern");
+  // «Kein Verein» ist sicher von «Fehler beim Laden» unterschieden: Einem Mitglied wird nie «Verein gründen» angeboten.
+  const seite = lies("app/(app)/teams/page.tsx");
+  assert.match(seite, /getMeinVereinOderWurf\(\)/, "/teams liest die Vereinslage mit Wurf");
+  assert.ok(!/\bgetMeinVerein\(/.test(seite), "/teams nutzt nicht die tolerante Fassung");
+  assert.match(seite, /if \(!verein\)[\s\S]*?<OhneVereinStart/, "ohne Verein der Einstieg");
+  assert.ok(seite.lastIndexOf("TEAM_NUR_VERWALTUNG") > seite.indexOf("<OhneVereinStart"), "der Hinweis für Mitglieder steht erst nach dem Einstieg, nicht statt seiner");
+  // Der Dialog: beide Häkchen, Knopf gesperrt ohne sie, fester Hinweis hinter ⓘ, Weiterleitung in der Action.
+  const dialog = lies("components/verein/VereinGruenden.tsx");
+  assert.match(dialog, /const frei = berechtigt && verantwortlich;/);
+  assert.match(dialog, /disabled=\{!frei \|\| pending\}/, "Knopf gesperrt ohne beide Häkchen und während der Anfrage");
+  assert.match(dialog, /info=\{VEREIN_GRUENDEN_TEXT\.info\}/, "fester Hinweis hinter ⓘ");
+  assert.ok(!/router\.(push|replace)\(/.test(dialog), "die Weiterleitung steht in der Action");
+  assert.match(lies("lib/actions/verein.ts"), /export async function gruendeVereinAktion[\s\S]*?redirect\("\/verein"\);/);
+  // Die Seitenleiste lädt nach dem Gründen neu (Bereich «Verein»).
+  assert.match(lies("lib/actions/verein.ts"), /gruendeVerein\(a\.supabase[\s\S]*?revalidiereMitgliedschaften\(\);[\s\S]*?redirect/);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

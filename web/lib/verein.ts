@@ -63,6 +63,12 @@ export const VEREIN_MELDUNG = {
    *  Anwendung nennt mit `teamnameVergebenText` das Team. */
   TEAMNAME_VERGEBEN: "Im Verein trägt schon ein anderes Team diesen Namen.",
   NUR_IN_DER_ANWENDUNG: "Das geht nur in der Anwendung, nicht über einen KI-Assistenten.",
+  /** Das Gründen verlangt beide Bestätigungen (#587 AK 3); die Datenebene
+   *  prüft sie, auch wenn die Oberfläche den Knopf schon sperrt. */
+  BESTAETIGUNG_FEHLT:
+    "Bestätige zuerst, dass du für den Verein handeln darfst und der Verein für die Daten seiner Spieler:innen verantwortlich ist.",
+  /** Gründen kann nur, wer keinem Verein angehört (#587 AK 2). */
+  SCHON_IM_VEREIN: "Du gehörst schon einem Verein an. Einen Verein gründen kann nur, wer keinem angehört.",
 } as const;
 
 /** Zwilling des CHECK `verein_name`: so viele Zeichen darf ein Vereinsname
@@ -83,6 +89,50 @@ export function vereinsNameProblem(name: string): string | null {
 export function teamnameVergebenText(team: string): string {
   return `Im Verein trägt schon das Team «${team}» diesen Namen.`;
 }
+
+/** Der Einstieg für ein Konto ohne Verein auf `/teams` (#587 AK 5): zwei
+ *  Wege, einen Verein zu haben. Wortlaut des Boards. */
+export const TEAMS_OHNE_VEREIN_TEXT = {
+  titel: "Willkommen bei KiFu",
+  einleitung: "Übungen und Trainings bereitest du schon jetzt vor. Teams, Spielerlisten und Kalender gibt es in einem Verein.",
+  gruenden: {
+    titel: "Verein gründen",
+    text: "Du wirst die erste Person der Vereinsverwaltung. Danach legst du Teams an und nimmst Trainer:innen auf, dich selbst eingeschlossen.",
+    knopf: "Verein gründen",
+  },
+  aufnahme: {
+    titel: "In einen Verein aufgenommen werden",
+    text: "Trainer:innen eines Teams oder die Vereinsverwaltung nehmen dich mit deiner E-Mail-Adresse in ein Team oder in die Verwaltung auf. Gib ihnen diese Adresse; danach arbeitest du sofort im Verein mit.",
+    feld: "Deine E-Mail-Adresse",
+  },
+} as const;
+
+/** Der Dialog «Verein gründen» (#587 AK 1–3): Name, zwei Pflicht-Bestätigungen
+ *  und was das Gründen für die Person bedeutet. Der feste Hinweis zum Namen
+ *  steht hinter ⓘ (`info` am Feld). */
+export const VEREIN_GRUENDEN_TEXT = {
+  titel: "Verein gründen",
+  feld: "Name des Vereins",
+  info: `Höchstens ${VEREIN_NAME_MAX} Zeichen. Den Namen kannst du später ändern.`,
+  haken1: "Ich bin berechtigt, für diesen Verein zu handeln.",
+  haken2: "Der Verein ist für die Daten seiner Spieler:innen verantwortlich und Ansprechpartner ihrer Eltern und Vertretungen.",
+  erste: "Du wirst die erste Person der Vereinsverwaltung. Solange du dabei bist, kannst du keinem anderen Verein angehören.",
+  knopf: "Verein gründen",
+} as const;
+
+/** Der Name verletzt den CHECK `verein_name`, den das Web vorab prüft
+ *  (`vereinsNameProblem`); diesen Satz sieht nur, wer die Prüfung umgeht. */
+export const VEREIN_NAME_UNGUELTIG = "Der Vereinsname ist ungültig.";
+
+/** Wenn die Antwort der Datenebene nicht die Form des Vertrags hat: Ob der
+ *  Vorgang geschehen ist, ist dann nicht gesagt; der Satz schickt zum Nachsehen
+ *  statt zu einem blinden zweiten Versuch (`lib/verein-antwort.ts`). */
+export const VEREIN_UNSTIMMIG = {
+  gruenden: "Die Antwort liess sich nicht lesen. Lade die Seite neu und prüfe, ob der Verein angelegt ist.",
+  loeschen: "Die Antwort liess sich nicht lesen. Lade die Seite neu und prüfe, ob der Verein noch besteht.",
+  konto: "Die Antwort liess sich nicht lesen. Melde dich neu an und prüfe, ob dein Konto noch besteht.",
+  info: "Die Angaben zu deinem Konto liessen sich gerade nicht lesen. Bitte versuche es noch einmal.",
+} as const;
 
 /** Ein Schritt beim Aufnehmen einer Person (Suche oder Aufnahme): die Person
  *  samt Anzeigename — oder der fertige Satz (`PERSON_MELDUNG`), warum es nicht

@@ -2048,6 +2048,14 @@ export default async function Styleguide() {
             Hakens, und der Browser meldet «gemischt». Ein Klick macht daraus
             «gewählt»; zurück zum Strich geht es erst beim neuen Öffnen.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Pflicht-Bestätigung</strong> (#587): Im Dialog «Verein
+            gründen» stehen zwei Häkchen unter dem Namen, und der Knopf bleibt
+            gesperrt, bis beide gesetzt sind. Sie stehen nicht für eine Option,
+            sondern für eine Zusage - der Satz ist die Zusage selbst und darf
+            über mehrere Zeilen laufen. Wer das Häkchen umgeht, scheitert an der
+            Datenebene, die beide Zusagen beim Ausführen verlangt.
+          </p>
           <CheckboxDemo />
 
           <h4 className="mb-2 mt-8 type-title-medium text-on-surface">
@@ -3425,7 +3433,8 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Löscht eine Handlung für alle, bestätigt man sie durch die Eingabe
             des Namens (<Siehe id="namen-bestaetigen" />) - das Auflösen eines
-            Teams liegt im Bereich «Verein». Andere Handlungen bleiben bei der
+            Teams und das Löschen des Vereins (#587) liegen im Bereich
+            «Verein». Andere Handlungen bleiben bei der
             gewöhnlichen Rückfrage; die Eingabe ist dem vorbehalten, was mehrere
             Menschen trifft.
           </p>

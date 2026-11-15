@@ -21,7 +21,9 @@ import {
   PERSON_MELDUNG,
   type PersonSchritt,
   VEREIN_MELDUNG,
+  VEREIN_NAME_UNGUELTIG,
   VEREIN_TEAM_NICHT_GEFUNDEN,
+  VEREIN_UNSTIMMIG,
   teamnameVergebenText,
   spielerAendernAbgewiesenText,
   spielerErfassenAbgewiesenText,
@@ -30,7 +32,8 @@ import {
   type SpielerDoppeltImVerein,
   type ZuordnenAbweisung,
 } from "@/lib/verein";
-import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
+import { gruendungAus } from "@/lib/verein-antwort";
+import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 import { argumente, eingabeFehler, spielerFehler } from "@/lib/kern/spieler";
 
 /** Ein Fehler der `verein_*`-RPCs: «Verein nicht gefunden» ordnet nur dieser
@@ -433,6 +436,32 @@ export async function benenneVereinUm(
   const { data, error } = await supabase.rpc("verein_umbenennen", { p_verein: e.vereinId, p_name: e.name.trim() });
   if (error) return vereinFehler(error);
   return ok({ name: (data as { name: string }).name });
+}
+
+/** Einen Verein gründen (#587 AK 1–4): Die Person wird seine erste Verwaltung,
+ *  ohne Team. Das Web prüft den Namen vorab (`vereinsNameProblem`), die
+ *  Datenebene weist mit dem CHECK ab; `bestaetigt` sind die beiden
+ *  Bestätigungen zusammen, und die Datenebene verlangt sie selbst. Gehört die
+ *  Person inzwischen einem Verein an, ist `feld` `verein_id`: Die offene Seite
+ *  ist überholt, der Aufrufer lädt sie neu. */
+export async function gruendeVerein(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { name: string; bestaetigt: boolean },
+): Promise<KernErgebnis<{ vereinId: string; name: string }>> {
+  // Eine Action nimmt, was ein Aufruf schickt: ohne die Form kein TypeError.
+  if (typeof e.name !== "string") return fehlschlag("eingabe", VEREIN_NAME_UNGUELTIG, { feld: "name" });
+  const problem = vereinsNameProblem(e.name);
+  if (problem) return fehlschlag("eingabe", problem, { feld: "name" });
+  const { data, error } = await supabase.rpc("verein_gruenden", { p_name: e.name.trim(), p_bestaetigt: e.bestaetigt === true });
+  if (error) {
+    if (error.message.includes("SCHON_IM_VEREIN")) return fehlschlag("regel", VEREIN_MELDUNG.SCHON_IM_VEREIN, { feld: "verein_id" });
+    if (error.code === "23514" && error.message.includes("verein_name"))
+      return fehlschlag("eingabe", vereinsNameProblem(e.name) ?? VEREIN_NAME_UNGUELTIG, { feld: "name" });
+    return ausDbFehler(error);
+  }
+  const g = gruendungAus(data);
+  return g ? ok({ vereinId: g.id, name: g.name }) : fehlschlag("technisch", VEREIN_UNSTIMMIG.gruenden);
 }
 
 /** Der Ausgang des Auflösens: aufgelöst (mit dem Namen des Teams und den

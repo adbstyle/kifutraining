@@ -10,6 +10,7 @@ import {
   entferneAusVerwaltung,
   erneuereSpielerLinkImVerein,
   findePerson,
+  gruendeVerein,
   holeSpielerLinkImVerein,
   importiereInVerein,
   ladeSpielerTeamsImVerein,
@@ -76,6 +77,23 @@ function schrittFehler(r: KernFehler): PersonSchritt {
   return r.art === "nicht_gefunden" && (r.feld === "team_id" || r.feld === "verein_id")
     ? { ok: false, meldung: r.meldung, zielWeg: true }
     : { ok: false, meldung: r.meldung };
+}
+
+/** Einen Verein gründen (#587): Die Person wird seine erste Verwaltung.
+ *  `bestaetigt`: beide Häkchen des Dialogs zusammen; die Datenebene verlangt
+ *  sie selbst. Gelingt es, leitet die Action selbst in den Bereich «Verein»
+ *  um, nach dem Neurendern der Seitenleiste (sie kennt den Verein jetzt) —
+ *  eine Weiterleitung im Client träfe noch die Seite ohne Verein. Gehört die
+ *  Person inzwischen einem Verein an, meldet `feld: "verein_id"` die überholte
+ *  Seite; der Aufrufer lädt sie neu. */
+export async function gruendeVereinAktion(name: string, bestaetigt: boolean): Promise<Fehler> {
+  const a = await angemeldet();
+  if (!a) return keinKonto;
+  const r = await gruendeVerein(a.supabase, a.userId, { name, bestaetigt });
+  if (!r.ok) return { ok: false, error: r.meldung, art: r.art, feld: r.feld };
+  revalidiereVerein();
+  revalidiereMitgliedschaften();
+  redirect("/verein");
 }
 
 /** Ein Team anlegen; die Verwaltung wird dabei nicht Trainer:in. */
