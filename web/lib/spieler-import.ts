@@ -31,6 +31,8 @@ export const IMPORT_TEXT = {
   /** Die Datei selbst ist zu gross (1 MB), unabhängig von der Zeilenzahl. */
   zuGrossBytes:
     "Die Datei ist zu gross. Speichere nur die Spalten für Vorname, Nachname, Jahrgang und J+S-Nummer und wähle sie erneut.",
+  /** Die Antwort der Datenebene hat nicht die vereinbarte Form (technischer Fehler). */
+  unstimmig: "Der Import liess sich gerade nicht auswerten. Bitte versuche es noch einmal.",
   /** Die Einordnung stimmt nicht mehr mit der bestätigten Vorschau überein (#585 AK 9). */
   veraltet: "Seit der Vorschau hat sich der Spielerbestand geändert. Nichts übernommen. Prüfe die neue Vorschau.",
   vorname: "Der Vorname fehlt oder hat mehr als 60 Zeichen.",
@@ -300,24 +302,58 @@ export function erwartetVon(v: ImportVorschau): ImportErwartet {
   return { neu: v.neu, js: v.js.map((j) => j.zeile), mehrfach: v.mehrfach.map((m) => m.zeile) };
 }
 
-/** Die Vorschau in der Form der Datenebene, die Teams in deutscher Ordnung. */
-export function vorschauAus(roh: ImportVorschau): ImportVorschau {
-  const teams = (t: ImportTeam[]) => [...t].sort((a, b) => nachTeamname(a.name, b.name));
+/** Ein Objekt der Antwort, oder `null`. */
+const objekt = (x: unknown): Record<string, unknown> | null =>
+  typeof x === "object" && x !== null && !Array.isArray(x) ? (x as Record<string, unknown>) : null;
+const ganz = (x: unknown): x is number => Number.isInteger(x);
+const teamsForm = (x: unknown): x is ImportTeam[] =>
+  Array.isArray(x) && x.every((t) => typeof objekt(t)?.id === "string" && typeof objekt(t)?.name === "string");
+/** Eine Liste von Einträgen mit Zeilennummer und Teams, je mit `weiter` geprüft. */
+const eintraegeForm = (x: unknown, weiter: (e: Record<string, unknown>) => boolean = () => true) =>
+  Array.isArray(x) &&
+  x.every((e) => {
+    const o = objekt(e);
+    return o !== null && ganz(o.zeile) && teamsForm(o.teams) && weiter(o);
+  });
+
+/** Die Vorschau in der Form der Datenebene, die Teams in deutscher Ordnung —
+ *  oder `null`, wenn die Antwort diese Form nicht hat (der Kern meldet dann
+ *  einen technischen Fehler statt einer falschen Vorschau, wie die
+ *  Spielerliste des Vereins). Weitere Schlüssel (`status`) zählen nicht. */
+export function vorschauAus(antwort: unknown): ImportVorschau | null {
+  const r = objekt(antwort);
+  if (
+    !r ||
+    !ganz(r.bestand) ||
+    !ganz(r.ueber) ||
+    !Array.isArray(r.neu) ||
+    !r.neu.every(ganz) ||
+    !eintraegeForm(r.js, (e) => e.alt === null || typeof e.alt === "string") ||
+    !eintraegeForm(r.gleich) ||
+    !eintraegeForm(r.mehrfach)
+  )
+    return null;
+  const roh = r as ImportVorschau;
+  const teams = (t: ImportTeam[]) => t.map((x) => ({ id: x.id, name: x.name })).sort((a, b) => nachTeamname(a.name, b.name));
   return {
     bestand: roh.bestand,
     ueber: roh.ueber,
-    neu: roh.neu,
+    neu: [...roh.neu],
     js: roh.js.map((j) => ({ zeile: j.zeile, alt: j.alt, teams: teams(j.teams) })),
     gleich: roh.gleich.map((g) => ({ zeile: g.zeile, teams: teams(g.teams) })),
     mehrfach: roh.mehrfach.map((m) => ({ zeile: m.zeile, teams: teams(m.teams) })),
   };
 }
 
-/** Die Antwort der Übernahme (`status` `uebernommen` oder `veraltet`) als Ausgang. */
-export function ausgangAus(roh: ImportAusgang): ImportAusgang {
-  return roh.status === "uebernommen"
-    ? { status: "uebernommen", neu: roh.neu, js: roh.js }
-    : { status: "veraltet", grund: roh.grund, vorschau: vorschauAus(roh.vorschau) };
+/** Die Antwort der Übernahme (`status` `uebernommen` oder `veraltet`) als
+ *  Ausgang — oder `null`, wenn sie keine dieser Formen hat. */
+export function ausgangAus(antwort: unknown): ImportAusgang | null {
+  const r = objekt(antwort);
+  if (r?.status === "uebernommen")
+    return ganz(r.neu) && ganz(r.js) ? { status: "uebernommen", neu: r.neu, js: r.js } : null;
+  if (r?.status !== "veraltet" || (r.grund !== "bestand" && r.grund !== "grenze")) return null;
+  const vorschau = vorschauAus(r.vorschau);
+  return vorschau ? { status: "veraltet", grund: r.grund, vorschau } : null;
 }
 
 /** Bestätigen lässt sich nur, was etwas ändert: eine neue Spieler:in oder eine

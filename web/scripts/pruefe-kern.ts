@@ -3565,7 +3565,8 @@ pruefe("Import im Verein: Antwort der Datenebene wird zur Vorschau, Teams in deu
     gleich: [{ zeile: 4, teams: [] }],
     mehrfach: [{ zeile: 6, teams: [{ id: "b", name: "Zebra" }, { id: "a", name: "Älpler" }] }],
   });
-  const v = vorschauAus(roh);
+  const v = vorschauAus({ status: "vorschau", ...roh })!;
+  assert.ok(v, "der Status der Antwort stört nicht");
   assert.deepEqual(v.js[0].teams.map((t) => t.name), ["Adler", "Älpler", "Zebra"], "Ä sortiert wie A");
   assert.deepEqual(v.mehrfach[0].teams.map((t) => t.name), ["Älpler", "Zebra"]);
   assert.deepEqual(v.gleich, [{ zeile: 4, teams: [] }], "leer heisst ohne Team");
@@ -3575,8 +3576,29 @@ pruefe("Import im Verein: Antwort der Datenebene wird zur Vorschau, Teams in deu
   assert.deepEqual(ausgangAus({ status: "uebernommen", neu: 12, js: 2 }), { status: "uebernommen", neu: 12, js: 2 });
   assert.deepEqual(ausgangAus({ status: "veraltet", grund: "grenze", vorschau: roh }), { status: "veraltet", grund: "grenze", vorschau: v });
   const bestand = ausgangAus({ status: "veraltet", grund: "bestand", vorschau: roh });
-  assert.ok(bestand.status === "veraltet" && bestand.grund === "bestand");
+  assert.ok(bestand?.status === "veraltet" && bestand.grund === "bestand");
+  // Passt die Form nicht, gibt es keine Vorschau (der Kern meldet einen technischen Fehler).
+  for (const kaputt of [
+    null,
+    [],
+    { ...roh, bestand: "5" },
+    { ...roh, neu: [2.5] },
+    { ...roh, mehrfach: undefined },
+    { ...roh, gleich: [{ zeile: 4 }] },
+    { ...roh, js: [{ zeile: 3, alt: 7, teams: [] }] },
+    { ...roh, js: [{ zeile: 3, alt: null, teams: [{ id: "a" }] }] },
+  ])
+    assert.equal(vorschauAus(kaputt), null, JSON.stringify(kaputt));
+  for (const kaputt of [
+    { status: "vorschau", ...roh },
+    { status: "uebernommen", neu: 1 },
+    { status: "veraltet", grund: "anders", vorschau: roh },
+    { status: "veraltet", grund: "bestand", vorschau: { ...roh, ueber: null } },
+    { neu: 1, js: 0 },
+  ])
+    assert.equal(ausgangAus(kaputt), null, JSON.stringify(kaputt));
   // Was die Oberfläche der Übernahme mitgibt: die Zeilennummern der Vorschau.
+  assert.equal(IMPORT_TEXT.unstimmig, "Der Import liess sich gerade nicht auswerten. Bitte versuche es noch einmal.");
   assert.deepEqual(erwartetVon(v), { neu: [2, 5], js: [3], mehrfach: [6] });
 });
 

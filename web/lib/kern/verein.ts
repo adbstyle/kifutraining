@@ -737,8 +737,9 @@ export async function pruefeVereinImport(
   if (!istUuid(e.vereinId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.verein, { feld: "verein_id" });
   const { data, error } = await supabase.rpc("verein_spieler_importieren", importArgumente(e.vereinId, e.zeilen));
   if (error) return vereinFehler(error);
-  const { status: _status, ...vorschau } = data as { status: "vorschau" } & ImportVorschau;
-  return ok(vorschauAus(vorschau));
+  // Die Form prüft `vorschauAus`; passt sie nicht, keine falsche Vorschau.
+  const vorschau = (data as { status?: unknown } | null)?.status === "vorschau" ? vorschauAus(data) : null;
+  return vorschau ? ok(vorschau) : fehlschlag("technisch", IMPORT_TEXT.unstimmig, { wiederholbar: true });
 }
 
 /** Den Import übernehmen, ganz oder gar nicht (#585 PC 4): nur, wenn die
@@ -759,5 +760,6 @@ export async function importiereInVerein(
     p_erwartet: { neu: e.erwartet.neu, js: e.erwartet.js, mehrfach: e.erwartet.mehrfach },
   });
   if (error) return vereinFehler(error);
-  return ok(ausgangAus(data as ImportAusgang));
+  const ausgang = ausgangAus(data);
+  return ausgang ? ok(ausgang) : fehlschlag("technisch", IMPORT_TEXT.unstimmig, { wiederholbar: true });
 }

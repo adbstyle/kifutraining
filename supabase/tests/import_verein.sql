@@ -238,7 +238,7 @@ begin
                          'import_zeilennummern hat ein API-Recht');
   -- AK 12: Der Team-Import ist gelöscht, unter keinem Namen mit diesem Stamm
   -- und keiner Signatur mehr vorhanden.
-  perform pg_temp.pruefe(to_regprocedure('public.spieler_importieren' || '(uuid, jsonb, jsonb)') is null,
+  perform pg_temp.pruefe(to_regprocedure('public.spieler_' || 'importieren(uuid, jsonb, jsonb)') is null,
                          'der Import in ein Team besteht noch');
   perform pg_temp.pruefe(not exists (select 1 from pg_proc where proname = 'spieler_' || 'importieren'),
                          'eine Funktion des Team-Imports besteht noch');
