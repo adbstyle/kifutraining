@@ -9,7 +9,8 @@
 --   nehmen die Person nicht mehr auf (AK 8)
 -- - Namensvergleich wie namenStimmen im Web (Leerzeichen am Rand nach JS
 --   `trim()`, Unicode-Form zählen nicht, Gross/Klein schon), auch beim
---   Auflösen eines Teams (verein_team_aufloesen)
+--   Auflösen eines Teams (verein_team_aufloesen); der gespeicherte Name
+--   verliert den Rand ebenso, Gründen und Umbenennen speichern ohne ihn
 -- - verein_ansicht.personen, abholung_ansicht.verein (PC 2)
 -- - Verein löschen (AK 10, 14, 15, PC 3–5, Testfall 20): nur die eigene
 --   Verwaltung; falscher Name löscht nichts; danach ist nichts des Vereins
@@ -348,8 +349,8 @@ begin
   perform pg_temp.pruefe(to_regprocedure('delete_account()') is null, 'delete_account() besteht noch');
   perform pg_temp.pruefe((select count(*) from pg_proc where proname = 'delete_account'
                             and pronamespace = 'public'::regnamespace) = 1, 'mehr als eine delete_account');
-  foreach f in array array['verein_loeschen_kern(uuid)', 'namen_stimmen(text,text)', 'verein_personenzahl(uuid)',
-                           'konto_loeschen_fall(uuid,uuid)'] loop
+  foreach f in array array['verein_loeschen_kern(uuid)', 'namen_stimmen(text,text)', 'namen_ohne_rand(text)',
+                           'verein_personenzahl(uuid)', 'konto_loeschen_fall(uuid,uuid)'] loop
     perform pg_temp.pruefe(to_regprocedure(f) is not null, f || ' fehlt');
     perform pg_temp.pruefe(not has_function_privilege('anon', f, 'execute')
                            and not has_function_privilege('authenticated', f, 'execute'), f || ' hat API-Recht');
@@ -392,6 +393,12 @@ begin
   perform pg_temp.pruefe(not namen_stimmen(U&'FC Blau\0085', 'FC Blau'), 'U+0085 ist kein Leerzeichen für JS');
   perform pg_temp.pruefe(not namen_stimmen('', 'FC Blau') and not namen_stimmen('   ', 'FC Blau'), 'leer');
   perform pg_temp.pruefe(namen_stimmen(null, 'FC Blau') is false and namen_stimmen('FC Blau', null) is false, 'null');
+  -- Der gespeicherte Name verliert den Rand ebenso (Bestand, direkter Aufruf).
+  perform pg_temp.pruefe(namen_stimmen('Klub', U&'Klub\00A0') and namen_stimmen(U&' Klub\FEFF', U&'\0009Klub\3000'),
+                         'Rand am gespeicherten Namen');
+  perform pg_temp.pruefe(not namen_stimmen('klub', U&'Klub\00A0'), 'Rand am gespeicherten Namen, Gross/Klein');
+  perform pg_temp.pruefe(namen_ohne_rand(U&'\00A0FC Rand\FEFF\0009') = 'FC Rand' and namen_ohne_rand(null) is null,
+                         'namen_ohne_rand');
 end $$;
 
 -- Team auflösen vergleicht den Teamnamen ebenso (verein_team_aufloesen,
@@ -825,6 +832,50 @@ select pg_temp.als(pg_temp.id('ohne2'));
 select pg_temp.pruefe(delete_account('irgendwas') = jsonb_build_object('status', 'vereinsname_falsch', 'name', repeat('y', 60)),
                       'einzige Person, falscher Name');
 reset role;
+
+-- ── Gespeicherter Name mit Rand (Fix-Lauf Story 11) ─────────────────────────
+-- Der CHECK verein_name und der Teamname-CHECK prüfen nur btrim: Ein Name mit
+-- geschütztem Leerzeichen oder Tabulator am Rand kann gespeichert sein. Er
+-- lässt sich trotzdem bestätigen (Verein löschen, Konto der einzigen Person,
+-- Team auflösen); Gründen und Umbenennen speichern ihn ohne Rand.
+insert into ids (name) values ('rand1'), ('rand2'), ('rand3'), ('rand4'), ('rv1'), ('rv2'), ('rv3'), ('rt');
+insert into auth.users (id, email, email_confirmed_at)
+select id, name || '@gruenden-loeschen.test', now() from ids where name in ('rand1', 'rand2', 'rand3', 'rand4');
+set local session_replication_role = replica;
+insert into vereine (id, name) values
+  (pg_temp.id('rv1'), U&'Klub\00A0'), (pg_temp.id('rv2'), U&'\0009Einsam'), (pg_temp.id('rv3'), 'Rand-Verein');
+insert into verein_verwaltung (verein_id, user_id) values
+  (pg_temp.id('rv1'), pg_temp.id('rand1')), (pg_temp.id('rv2'), pg_temp.id('rand2')), (pg_temp.id('rv3'), pg_temp.id('rand3'));
+insert into teams (id, name, verein_id) values (pg_temp.id('rt'), U&'Rand-Team\00A0', pg_temp.id('rv3'));
+set local session_replication_role = origin;
+
+select pg_temp.als(pg_temp.id('rand1'));
+select pg_temp.pruefe(verein_loeschen(pg_temp.id('rv1'), 'klub') = jsonb_build_object('status', 'vereinsname_falsch', 'name', U&'Klub\00A0'),
+                      'Verein mit Rand, Gross/Klein');
+select pg_temp.pruefe(verein_loeschen(pg_temp.id('rv1'), 'Klub') ->> 'status' = 'geloescht', 'Verein mit Rand löschen');
+reset role;
+select pg_temp.pruefe(not exists (select 1 from vereine where id = pg_temp.id('rv1')), 'Verein mit Rand noch da');
+
+select pg_temp.als(pg_temp.id('rand2'));
+select pg_temp.pruefe(konto_loeschen_info() ->> 'fall' = 'einzige_person', 'rand2 einzige Person');
+select pg_temp.pruefe(delete_account('Einsam') = '{"status": "geloescht", "bilder": []}', 'Konto der einzigen Person, Verein mit Rand');
+reset role;
+select pg_temp.pruefe(not exists (select 1 from vereine where id = pg_temp.id('rv2')), 'Verein mit Rand nach Konto-Löschen noch da');
+
+select pg_temp.als(pg_temp.id('rand3'));
+select pg_temp.pruefe(verein_team_aufloesen(pg_temp.id('rt'), 'Rand-Team') ->> 'status' = 'aufgeloest', 'Team mit Rand auflösen');
+select pg_temp.pruefe(verein_umbenennen(pg_temp.id('rv3'), U&'\00A0Rand-Neu\2003') = '{"status": "umbenannt", "name": "Rand-Neu"}',
+                      'Umbenennen ohne Rand');
+reset role;
+select pg_temp.pruefe(not exists (select 1 from teams where id = pg_temp.id('rt'))
+                      and (select name from vereine where id = pg_temp.id('rv3')) = 'Rand-Neu', 'Team mit Rand bzw. Umbenennen');
+
+select pg_temp.als(pg_temp.id('rand4'));
+select verein_gruenden(U&'\00A0FC Rand\FEFF\0009', true) as rand_gegruendet \gset
+reset role;
+select pg_temp.pruefe(:'rand_gegruendet'::jsonb ->> 'name' = 'FC Rand'
+                      and (select name from vereine where id = (:'rand_gegruendet'::jsonb ->> 'id')::uuid) = 'FC Rand',
+                      'Gründen mit Rand speichert ohne Rand: ' || :'rand_gegruendet');
 
 rollback;
 

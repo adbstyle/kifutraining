@@ -13,9 +13,12 @@
 --
 -- Der Name wird wie im Web verglichen (`namen_stimmen`, Zwilling von
 -- `namenStimmen` in web/components/ui/NamenBestaetigen.tsx): Gross/Klein
--- zählt, Leerzeichen am Rand (alle, die JS `trim()` entfernt) und die
--- Unicode-Form nicht. Ebenso jetzt der Teamname beim Auflösen eines Teams
--- (`verein_team_aufloesen`, Story 5), der noch mit btrim verglich.
+-- zählt, Leerzeichen am Rand (alle, die JS `trim()` entfernt, auf beiden
+-- Seiten, also auch am gespeicherten Namen) und die Unicode-Form nicht.
+-- Ebenso jetzt der Teamname beim Auflösen eines Teams
+-- (`verein_team_aufloesen`, Story 5), der noch mit btrim verglich. Gründen
+-- und Umbenennen speichern den Vereinsnamen ohne diesen Rand
+-- (`namen_ohne_rand`), kein neuer CHECK.
 --
 -- Sperrordnung (AP §4.1): Verein → Suche → Person → Teams aufsteigend →
 -- `spieler`-Zeile → Termin-Zeile. Gründen: Vereinssperre auf die neue,
@@ -40,25 +43,40 @@
 -- weit unter dem PostgREST-Limit von 8 s. Ein lokales statement_timeout
 -- verlängert das laufende Statement nicht und fehlt darum.
 --
+-- Termin-Ort: termin_entfernen und termin_training_setzen nehmen jetzt zuerst
+-- die Teamsperre (Team → Termin), sonst 40P01 gegen das Löschen (rennen.sql).
+--
 -- Nur Funktionen: keine Tabelle, kein CHECK, kein NOT NULL.
 
 set lock_timeout = '5s';
 
 -- ── Funktionen: Helfer (kein API-Recht) ─────────────────────────────────────
 
+-- Der Name ohne Rand: entfernt am Anfang und Ende alles, was JS `trim()`
+-- entfernt (WhiteSpace und LineTerminator nach ECMAScript, nicht nur das
+-- Leerzeichen wie btrim). null bleibt null. Zwilling: `.trim()` in
+-- web/components/ui/NamenBestaetigen.tsx (namenStimmen) und vor dem Senden
+-- eines neuen Vereinsnamens.
+create function namen_ohne_rand(p_text text) returns text
+language sql immutable
+set search_path = public, pg_temp
+as $$
+  select regexp_replace(p_text,
+           '^[\u0009-\u000D    -     　﻿]+'
+           '|[\u0009-\u000D    -     　﻿]+$', '', 'g');
+$$;
+
 -- Bestätigung durch Eingabe des Namens. Zwilling: namenStimmen in
 -- web/components/ui/NamenBestaetigen.tsx (`eingabe.trim().normalize("NFC")
--- === name.normalize("NFC")`); der Rand umfasst WhiteSpace und
--- LineTerminator nach ECMAScript, nicht nur das Leerzeichen wie btrim.
+-- === name.trim().normalize("NFC")`). Beide Seiten ohne Rand: Ein
+-- gespeicherter Name mit Rand (Bestand, direkter Aufruf; teams_name_check
+-- und verein_name prüfen nur btrim) lässt sich so immer bestätigen.
 create function namen_stimmen(p_eingabe text, p_name text) returns boolean
 language sql immutable
 set search_path = public, pg_temp
 as $$
   select p_eingabe is not null and p_name is not null
-     and normalize(regexp_replace(p_eingabe,
-           '^[\u0009-\u000D    -     　﻿]+'
-           '|[\u0009-\u000D    -     　﻿]+$', '', 'g'), nfc)
-         = normalize(p_name, nfc);
+     and normalize(namen_ohne_rand(p_eingabe), nfc) = normalize(namen_ohne_rand(p_name), nfc);
 $$;
 
 -- Verschiedene Konten in Verwaltung und Teams des Vereins.
@@ -129,7 +147,7 @@ as $$
 declare
   v_uid uuid := auth.uid();
   v_id uuid := gen_random_uuid();
-  v_name text := coalesce(btrim(p_name), '');
+  v_name text := coalesce(namen_ohne_rand(p_name), '');   -- Rand wie im Vergleich (namen_stimmen)
 begin
   perform nur_in_der_anwendung();
   if v_uid is null then raise exception 'not authenticated'; end if;
@@ -164,6 +182,25 @@ begin
   end if;
   v_bilder := verein_loeschen_kern(p_verein);
   return jsonb_build_object('status', 'geloescht', 'name', v_name, 'bilder', v_bilder);
+end;
+$$;
+
+-- Rumpf wie in 20261114200000_vereine_verwaltung.sql; der neue Name verliert
+-- den Rand nun wie im Vergleich (namen_ohne_rand statt btrim), damit kein
+-- Vereinsname entsteht, den der CHECK verein_name zulässt, das Web aber nie
+-- bestätigen könnte.
+--   {status: 'umbenannt', name}
+create or replace function verein_umbenennen(p_verein uuid, p_name text) returns jsonb
+language plpgsql security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_name text := namen_ohne_rand(p_name);
+begin
+  perform nur_in_der_anwendung();
+  perform verwaltung_sperren(p_verein);
+  update vereine set name = v_name where id = p_verein;
+  return jsonb_build_object('status', 'umbenannt', 'name', v_name);
 end;
 $$;
 
@@ -250,6 +287,106 @@ begin
                                   and not exists (select 1 from team_spieler ts where ts.spieler_id = s.id)),
          'personen', verein_personenzahl(p_verein))
        else '{}'::jsonb end;
+end;
+$$;
+
+-- ── Funktionen: Termin-Ort (Team vor Termin) ────────────────────────────────
+
+-- termin_entfernen und termin_training_setzen sperrten zuerst die
+-- Termin-Zeile ohne Teamsperre und fassten danach das Termin-Training an
+-- (Trigger termin_training_aufraeumen). Die Kaskade beim Löschen eines
+-- Vereins oder Auflösen eines Teams (unter den Teamsperren) nimmt erst die
+-- Trainings (FK set null auf die Termin-Zeile), dann die Termine: 40P01,
+-- nachgestellt in rennen.sql (t1, t2). Jetzt zuerst die Teamsperre, dann die
+-- Termin-Zeile (Sperrordnung Team → Termin, AP §4.1, wie
+-- termin_kader_setzen). Rumpf sonst unverändert.
+
+-- Rumpf wie in 20260930211328_terminserien_aendern.sql.
+create or replace function termin_entfernen(p_termin uuid, p_erwartet jsonb default null)
+returns jsonb
+language plpgsql security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_termin training_termine;
+  v_termin_team uuid;
+begin
+  if auth.uid() is null then raise exception 'not authenticated'; end if;
+  select team_id into v_termin_team from training_termine where id = p_termin;
+  if v_termin_team is null or not ist_team_mitglied(v_termin_team) then raise exception 'TERMIN_NICHT_GEFUNDEN'; end if;
+  perform sperre_teams(array[v_termin_team]);                    -- Team vor Termin
+  select * into v_termin from training_termine where id = p_termin for update;
+  if not found or not ist_team_mitglied(v_termin.team_id) then
+    raise exception 'TERMIN_NICHT_GEFUNDEN';
+  end if;
+  if p_erwartet is not null
+     and v_termin.training_id is distinct from (p_erwartet->>'termin_training')::uuid then
+    raise exception 'TERMIN_BELEGUNG_GEAENDERT';
+  end if;
+  delete from training_termine where id = p_termin;
+  if v_termin.serie_id is not null then
+    insert into termin_serien_luecken (serie_id, tag)
+      values (v_termin.serie_id, v_termin.serien_tag) on conflict do nothing;
+    delete from termin_serien s
+     where s.id = v_termin.serie_id
+       and not exists (select 1 from training_termine where serie_id = s.id);
+  end if;
+  return jsonb_build_object('training', v_termin.training_id, 'team', v_termin.team_id);
+end;
+$$;
+
+-- Rumpf wie in 20261007100000_termin_trainings.sql.
+create or replace function termin_training_setzen(
+  p_termin uuid,
+  p_training uuid,
+  p_erwartet jsonb default null)
+returns jsonb
+language plpgsql security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_termin training_termine;
+  v_team uuid;
+  v_termin_team uuid;
+begin
+  if auth.uid() is null then raise exception 'not authenticated'; end if;
+  select team_id into v_termin_team from training_termine where id = p_termin;
+  if v_termin_team is null or not ist_team_mitglied(v_termin_team) then raise exception 'TERMIN_NICHT_GEFUNDEN'; end if;
+  perform sperre_teams(array[v_termin_team]);                    -- Team vor Termin
+  select * into v_termin from training_termine where id = p_termin for update;
+  if not found or not ist_team_mitglied(v_termin.team_id) then
+    raise exception 'TERMIN_NICHT_GEFUNDEN';
+  end if;
+  if p_erwartet is not null
+     and v_termin.training_id is distinct from (p_erwartet->>'termin_training')::uuid then
+    raise exception 'TERMIN_BELEGUNG_GEAENDERT';
+  end if;
+
+  -- Lösen: Ein Termin-Training fällt mit (Trigger unten), ein Training aus
+  -- dem Bestand bleibt dort.
+  if p_training is null then
+    update training_termine set training_id = null where id = p_termin;
+    return jsonb_build_object('bisher', v_termin.training_id);
+  end if;
+
+  if v_termin.ausgefallen then raise exception 'TERMIN_AUSGEFALLEN'; end if;
+
+  select team_id into v_team from trainings where id = p_training for update;
+  if not found then raise exception 'TRAINING_NICHT_GEFUNDEN'; end if;
+  if v_team is distinct from v_termin.team_id then
+    raise exception 'TERMIN_TRAINING_FREMDES_TEAM';
+  end if;
+  if v_termin.training_id = p_training then
+    return jsonb_build_object('bisher', null);
+  end if;
+  -- Rückhalt: Zugeordnet wird nur eine Kopie, die noch keinen Termin hat.
+  if exists (select 1 from training_termine where training_id = p_training) then
+    raise exception 'TRAINING_SCHON_EINGEPLANT';
+  end if;
+
+  update training_termine set training_id = p_training where id = p_termin;
+  update trainings set termin_training = true where id = p_training;
+  return jsonb_build_object('bisher', v_termin.training_id);
 end;
 $$;
 
@@ -388,6 +525,7 @@ $$;
 
 -- ── Grants ──────────────────────────────────────────────────────────────────
 
+revoke all on function namen_ohne_rand(text) from public, anon, authenticated;
 revoke all on function namen_stimmen(text, text) from public, anon, authenticated;
 revoke all on function verein_personenzahl(uuid) from public, anon, authenticated;
 revoke all on function konto_loeschen_fall(uuid, uuid) from public, anon, authenticated;
