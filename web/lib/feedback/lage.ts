@@ -27,7 +27,7 @@ export type Lage = {
 };
 
 const ROLLEN: Record<Rolle, string> = {
-  trainer: "Die Person ist Trainer:in und mit ihrem Konto angemeldet.",
+  trainer: "Die Person ist mit ihrem Konto angemeldet (Trainer:in, Vereinsverwaltung oder Konto ohne Verein).",
   spielervertretung:
     "Die Person nutzt KiFu ohne Konto über den privaten Link einer Spieler:in: Es sind die Eltern oder die Spieler:in selbst. Erkläre ihr nur, was hinter dem privaten Link sichtbar ist (im Produktwissen die Zeile «Eltern» der Sichtbarkeitsmatrix und was über den privaten Link steht). Funktionen, die nur Trainer:innen haben, erklärst du ihr nicht und sagst auch nicht, wo oder wie sie bei Trainer:innen gehen: Fragt sie danach, sag nur, dass das über den privaten Link nicht geht und die Trainer:innen des Teams dafür zuständig sind. Bei etwas Dringendem, etwa wenn das Abmelden kurz vor einem Termin nicht geht, verweise sie an die Trainer:innen des Teams.",
 };

@@ -26,7 +26,7 @@ Beschreibt eine Meldung ein Verhalten, das hier als Absicht oder als „Bekannte
 | **Wunsch, der schon erfüllt ist** | Die gewünschte Fähigkeit gibt es bereits. Antwort: zeigen, wo sie liegt. | „Ich hätte gern Alternativen für den Hauptteil." → Varianten des Hauptteils. |
 | **Wunsch nach anderem Verhalten** | Die Fähigkeit gibt es, sie soll sich aber anders verhalten als bewusst entschieden (Abschnitt 10). | „Abmeldungen sollen bei einer Verlegung bestehen bleiben." |
 | **Bedienproblem / Unklarheit** | Funktion existiert, Person findet sie nicht oder versteht sie falsch. | „Wo kann ich ein Training kopieren?" → drei Punkte → Übernehmen. |
-| **Datenschutz / Sicherheit** | Jemand sieht Daten, die er nicht sehen dürfte, oder ein Link/eine Adresse wurde missbraucht. Immer hoch priorisieren. | „Ich sehe die E-Mail einer Person, die nicht in meinem Team ist." |
+| **Datenschutz / Sicherheit** | Jemand sieht Daten, die er nicht sehen dürfte, oder ein Link/eine Adresse wurde missbraucht. Immer hoch priorisieren. | „Ich sehe die E-Mail einer Person, die nicht in meinem Team ist, und gehöre nicht zur Vereinsverwaltung." |
 
 Meldungen können mehrere Kategorien treffen (z. B. Fehler + Wunsch). Nenne dann beide.
 
@@ -85,7 +85,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - **Fassung** – Jede Übung in einem Training ist eine eigenständige Kopie (keine Verknüpfung zur Bibliothek).
 - **Variante** – alternativer Inhalt des **Hauptteils** eines Trainings (z. B. „21 Kinder", „bei Regen"). Immer der ganze Hauptteil.
 - **Gruppe** – Bezeichnung im Training (z. B. „Rot"), ohne Spieler:innen. **Durchlauf** – Reihenfolge der Gruppen an einer Hauptteil-Übung. **Wechsel** – Position im Durchlauf = Zeitfenster.
-- **Verein** – Dach über Teams und Spieler:innen; nur ein Name (1–60 Zeichen, nicht eindeutig). Jedes Team gehört genau einem Verein, für immer. Die bisherigen Teams gehören zum Verein „FC Wyler". Vereinsnamen stehen ohne Artikel nach „Verein": „im Verein «FC Wyler»".
+- **Verein** – Dach über Teams und Spieler:innen; nur ein Name (1–60 Zeichen, nicht eindeutig). Jedes Team gehört genau einem Verein, für immer. Die Teams aus der Zeit vor den Vereinen kamen gemeinsam in einen ersten Verein. Vereinsnamen stehen ohne Artikel nach „Verein": „im Verein «FC Muster»".
 - **Vereinsverwaltung** – Personen, die im Bereich „Verein" Teams, Trainer:innen, Spielerbestand und den Verein führen; gleichberechtigt, mindestens eine. Kann zugleich Trainer:in sein, hat im Team aber keine weiteren Rechte. Wer „Vereinsleitung" oder „Vorstand" schreibt, meint meist sie.
 - **Vereinsmitglied** – wer einem Team des Vereins oder seiner Verwaltung angehört; höchstens ein Verein je Person. Kein Rollenfeld, keine Plattform-Admin-Rolle.
 - **Konto ohne Verein** – Konto, das weder einem Team noch einer Vereinsverwaltung angehört (jede Neuregistrierung). Eigene Übungen und Trainings (höchstens 50/30), Bibliothek, KI-Assistent, Verein gründen; keine Teams, Spielerlisten, Kalender.

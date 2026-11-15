@@ -376,7 +376,9 @@ einer weiteren Aufnahme in die Verwaltung oder dem Löschen des Vereins löschen
 
 Vereinsnamen sind nicht eindeutig; zwei gleichnamige Vereine unterscheidet die Anwendung nicht,
 und wer aufgenommen wird, erkennt den Verein nur an seinem Namen. Ein Verein trägt nur seinen
-Namen — keine Adresse, kein Logo, keine Kontaktperson —, und ein Team wechselt nie den Verein. Zwei
+Namen — keine Adresse, kein Logo, keine Kontaktperson —, und ein Team wechselt nie den Verein. Eine Übersicht aller Vereine gibt es nicht. Ist die einzige Person der Vereinsverwaltung nicht
+mehr erreichbar, gibt es keinen Weg zu einer neuen Verwaltung; eine übergeordnete Rolle für KiFu
+selbst gibt es nicht. Zwei
 Vereine lassen sich nicht zusammenführen, ein Team nicht in einen anderen Verein verschieben, und
 eine Person kann nicht in zwei Vereinen zugleich mitarbeiten, auch nicht als Aushilfe.
 
@@ -399,7 +401,7 @@ Löschen kann die Verwaltung nur eine Spieler:in nach der anderen; einen Import 
 oder mehrere auf einmal löschen geht nicht. Gesammelt zugeordnet wird nur ohne Schnuppern, ein
 Verschieben von einem Team ins andere gibt es nicht — man ordnet zu und nimmt heraus. Spieler:innen
 ohne Team erfahren davon nichts; die Seite hinter ihrem Link sagt nur, dass Termine erst nach einer
-Zuordnung erscheinen. Doppelte Einträge aus der Zeit vor dem Verein bleiben bestehen, bis die
+Zuordnung erscheinen. Doppelte Einträge aus der Zeit vor dem Verein bleiben bestehen, je mit eigenem privatem Link, bis die
 Verwaltung einen davon löscht.
 
 Der Import liest nur CSV, keine Excel-Dateien, und nur mit Kopfzeile. Er ändert Vor- und

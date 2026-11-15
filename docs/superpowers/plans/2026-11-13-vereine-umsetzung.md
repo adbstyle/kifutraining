@@ -569,6 +569,8 @@ Frühestens zwei Wochen nach R ohne Befund.
 
 ---
 
+**Folgepunkt für Phase C (Entscheid des PO offen, nichts geändert):** «Kinder» statt «Spieler:innen» in sichtbaren Bestandstexten ausserhalb des Epics: `web/lib/termin.ts` um `:95`, `web/components/catalog/CatalogFilterBar.tsx` um `:98-101` («Verfügbare Kinder»), `TrainingEditor.tsx` um `:904`, `VarianteAnlegenDialog.tsx` um `:169`, KI-Texte `web/lib/mcp/eingaben.ts` um `:56` und `werkzeuge/gruppen.ts` um `:47`, Styleguide-Demos. Ebenso uneinheitlich (bestehend): « » um Teamnamen in `herausnehmenSaetze` gegenüber der Flash-Meldung «Das Team … ist aufgelöst.».
+
 ## Präzisierungen gegenüber dem Architekturplan
 
 Diese Punkte legt der Plan fest, weil der AP sie offen lässt oder die Reihenfolge es verlangt. Die PO hat sie am 13.11.2026 bestätigt; der AP ist an den betroffenen Stellen nachgeführt (§6.1, §6.2, §7.1, §7.11, §9, §11 F2).

@@ -2715,7 +2715,9 @@ function probeTreffer(quelltext: string, rel: string): string[] {
  *  verschmolzene Präposition direkt vor dem eingesetzten Namen («im ${verein}», «des {vereinName}»)
  *  passt nur für manche. Texte nennen den Namen nach dem Wort «Verein» in « » («im Verein «${verein}»»;
  *  AP §5.3 «Vereinsname ohne Artikel»). Gefangen wird jede Einsetzung eines Bezeichners mit `verein`
- *  im Namen (Vorlage `${…}` oder JSX `{…}`) unmittelbar hinter einem solchen Wort; Kommentare sieht niemand. */
+ *  im Namen (Vorlage `${…}` oder JSX `{…}`) unmittelbar hinter einem solchen Wort; Kommentare sieht niemand.
+ *  Nicht gefangen: ein Bezeichner ohne «verein» im Namen, JSX über einen Zeilenumbruch und Konkatenation
+ *  (`"im " + name`) — der Wächter ist ein Netz, kein Beweis. */
 const ARTIKEL_VOR_VEREINSNAME =
   /\b(?:der|des|dem|den|im|in den|zum|zur|vom|beim|am|ins|für den|für das)\s+\$?\{\s*(?:\w+\??\.)*(?:verein|vereinName|vereinsname)\w*\b[^}]*\}/i;
 
