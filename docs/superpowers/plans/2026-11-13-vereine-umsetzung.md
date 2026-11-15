@@ -308,19 +308,24 @@ Zusätzlich:
 
 **AP:** §4.3 (`verein_spielerliste`), §7.6. **Migration:** `verein_spielerliste` (drop + create).
 
-- [ ] Liste für alle Vereinsmitglieder; Suche und Eingrenzung auf dem Server, Mehrfachauswahl bei Teams und Jahrgängen.
-- [ ] **Aus Phase 5:** Der Leisteneintrag «Spieler:innen» im Bereich «Verein» und `/verein/spieler` gelten dann für alle Vereinsmitglieder (bis hierher nur für die Verwaltung, Kommentar in W`components/layout/AppNavClient.tsx`).
-- [ ] **Aus Phase 6:** Der Kopf von `/verein/spieler` rechnet «‹n› Spieler:innen · ‹m› ohne Team» heute aus der Liste (`components/verein/VereinSpielerListe.tsx`); liefern Suche und Filter Teilmengen, kommen die Zahlen aus `verein_ansicht` (`spieler_zahl`, `spieler_ohne_team`). Beim Umbau von `verein_spielerliste` bleiben `js` und `link_bezogen` für die Verwaltung erhalten (Spalten J+S und «Privater Link»).
-- [ ] **Aus Phase 8:** Beim Umbau von `verein_spielerliste` bleibt `schnuppern: {team_id, anzahl, besucht} | null` je Spieler:in erhalten (Plakette «Schnuppern n/m» in der Teams-Spalte).
-- [ ] Texte auf Abholseite und Link zum Empfängerkreis.
+- [x] Liste für alle Vereinsmitglieder; Suche und Eingrenzung auf dem Server, Mehrfachauswahl bei Teams und Jahrgängen.
+- [x] **Aus Phase 5:** Der Leisteneintrag «Spieler:innen» im Bereich «Verein» und `/verein/spieler` gelten dann für alle Vereinsmitglieder (bis hierher nur für die Verwaltung, Kommentar in W`components/layout/AppNavClient.tsx`).
+- [x] **Aus Phase 6:** Der Kopf von `/verein/spieler` rechnet «‹n› Spieler:innen · ‹m› ohne Team» heute aus der Liste (`components/verein/VereinSpielerListe.tsx`); liefern Suche und Filter Teilmengen, kommen die Zahlen aus `verein_ansicht` (`spieler_zahl`, `spieler_ohne_team`). Umgesetzt anders: `verein_spielerliste` liefert die Zahlen selbst ungefiltert (`gesamt`, `ohne_team`), für beide Rollen. Beim Umbau von `verein_spielerliste` bleiben `js` und `link_bezogen` für die Verwaltung erhalten (Spalten J+S und «Privater Link»).
+- [x] **Aus Phase 8:** Beim Umbau von `verein_spielerliste` bleibt `schnuppern: {team_id, anzahl, besucht} | null` je Spieler:in erhalten (Plakette «Schnuppern n/m» in der Teams-Spalte).
+- [x] Texte auf Abholseite und Link zum Empfängerkreis.
 
 **Testfälle:** 4 (Teil Vereinsliste), 32.
+
+**Umgesetzt** (Branch `feature/vereine-ueberblick-580`): Migration `20261115100000_verein_spielerliste.sql` (nur diese Funktion samt Rechten, drop + create): Zugang für jedes Vereinsmitglied, Mitglieder bekommen je Spieler:in nur Vorname, Nachname, Jahrgang und Teams, die Verwaltung wie bisher dazu J+S, Link-Stand, Schnuppern und `anzahl` je Team; Suche als Teilstring über `lower(unaccent(…))` mit `strpos` (`%`, `_`, `\` gewöhnlich), Eingabe bereinigt wie die Namen; Eingrenzung Teams ODER ohne Team, Jahrgänge, Suche, alles UND; fremde Team-IDs treffen still nie; Kopf ungefiltert (`teams`, `jahrgaenge`, `gesamt`, `ohne_team`). Tests: neu `verein_spielerliste.sql` (Testfall 32 mit 1001), bestehende auf die neue Signatur, Prod-Weg liest als Mitglied. Web: `/verein/spieler` für alle Mitglieder mit Filterleiste aus Kit-Bausteinen, Zustand in der Adresse, Anzeige in Schritten von 50, lesende Sicht für Mitglieder, Leerzustände, Leisteneintrag für alle; Satz «wer die Angaben sieht» auf Abholseite und privatem Link. Naht: die Verwaltungssicht nur, wenn Lage und Antwort sie tragen, die Mitgliedersicht nur mit den vier Angaben; Suche aus der Adresse bereinigt wie die Datenebene, ungekappt; Reihenfolge allein im Kern (deutsch), Gleichstand nach der Datenebene. `check:kern-db` prüft Form je Rolle, Zugang, Suche, Eingrenzung, Kopf, Adresse bis zur Datenebene und 1000 Spieler:innen über PostgREST.
+
+**Verschoben aus Phase 4:** der Import-Knopf in der Kopfzeile der Liste (Phase 9); «Verantwortlich ist der Verein» im selben Textblock wie «wer die Angaben sieht» (Phase 11); die Liste ist nicht über die KI abrufbar (OoS 5; Phase 13); Laufzeit mit 100 und 1000 Zeilen auf Staging messen sowie das Schema von `unaccent` und die Collation auf Prod prüfen (G).
 
 ### Phase 9 – #585 CSV-Import in den Spielerbestand
 
 **AP:** §3.7, §4.3, §7.9. **Migration:** `import_verein`.
 
 - [ ] Neuer Import am Verein-Ort; der Team-Import und sein Knopf fallen im selben PR.
+- [ ] **Aus Phase 4:** der Knopf «CSV importieren» in der Kopfzeile der Vereinsliste `/verein/spieler` (nur Verwaltung, AP §7.6).
 - [ ] grep-Wächter «kein `spieler_importieren(`» scharf stellen.
 
 **Testfälle:** 24.
@@ -331,6 +336,7 @@ Zusätzlich:
 
 - [ ] **Vor dem Merge:** Laufzeit von `verein_loeschen` mit 30 Teams und 1000 Spieler:innen auf Staging messen (AP §11 F4).
 - [ ] Reihenfolge: Gründen → Verein löschen → `delete_account(p_vereinsname)` mit dem Zweig der einzigen Person → Einstieg auf `/teams` für Konten ohne Verein.
+- [ ] **Aus Phase 4:** «Verantwortlich ist der Verein» im selben Textblock wie der Satz «wer die Angaben sieht» (`angabenSehenText`, W`lib/spieler.ts`) auf Abholseite und Link.
 - [ ] Verein als verantwortlich auf Abholseite und Link; dazu `verein` in den Web-Typ `LinkAnsicht` aufnehmen (die Datenebene liefert ihn seit Phase 7) und «Vereinsverwaltung des ‹Verein›» im Verweis bei Dringendem (`feedbackDringend`).
 - [ ] **Aus Phase 5:** `konto_loeschen_info` (bleibende Teams namentlich, `einzige_person`), das Feld `einzige_person` in `verein_verwaltung_entfernen`, die Löschzahlen in `verein_ansicht`, «Verein löschen» in der Gefahrenzone von `/verein/verwaltung`; den Wortlaut von `LETZTE_VERWALTUNG` («… im Bereich «Verein» löschen») gegen die fertige Oberfläche prüfen.
 
@@ -354,6 +360,7 @@ Zusätzlich:
 
 - [ ] **Aus Phase 7:** optionales `team_id` als Eingabe von `spieler_link_abrufen`/`spieler_link_erneuern` (der Kern nimmt es schon, ohne leitet er über `eigenesTeamVon` ab), `teams[]` in deren Antworten, `LINK_MODELL` auf den Link über alle Teams berichtigen.
 - [ ] **Aus Phase 8:** optionales `team_id` als Eingabe von `spieler_schnuppern_setzen` (der Kern nimmt es schon, ohne leitet er über `eigenesTeamVon` ab) und die übrigen Modelltexte (die Beschreibung von `spieler_schnuppern_setzen` nennt noch «im ältesten ihrer Teams, dem du angehörst»).
+- [ ] **Aus Phase 4:** Die Vereinsliste (`verein_spielerliste`) bleibt über die KI nicht abrufbar (#580 OoS 5); kein MCP-Werkzeug liest sie (Wächter «MCP ruft keine `verein_*`-RPC»).
 - [ ] Vereinsangaben in `teams_abrufen` und `spielerliste_abrufen`, optionales `team_id` mit Ableitung, Rückfrage beim Herausnehmen mit `stand`, Hinweis für Konten ohne Team.
 - [ ] Werkzeugtext von `teams_abrufen` (W`lib/mcp/werkzeuge/team.ts`) berichtigen: «… das Übrige geht nur im Team-Bereich von KiFu» schliesst Umbenennen und Auflösen ein und ist seit Phase 5 (#581) falsch; beides macht nur die Vereinsverwaltung im Bereich «Verein» (in Phase 5 bewusst nicht geändert, MCP-Werkzeuge gehören zu dieser Phase).
 - [ ] `ZUGANG_DARF` und `ZUGANG_DARF_NICHT`; der PR listet jede geänderte Zeile.
@@ -388,6 +395,7 @@ Mit Ankündigung, weil sie Staging-Daten und Testkonten ersetzt. Jeder Schritt, 
 - [ ] Sync aus `main`.
 - [ ] `deploy-staging.yml` aus `develop`: Die ganze Kette läuft auf Prod-Daten, samt Validierung. Laufzeit notieren; sie bestimmt die Länge des Fensters.
 - [ ] `supabase/tests/prodweg_pruefen.sql` gegen Staging, danach E2E-Schritt 16 und ein Rundgang.
+- [ ] **Aus Phase 4:** Laufzeit von `verein_spielerliste` mit 100 und 1000 Zeilen auf Staging messen (`explain analyze`, AP §10 Risiko 22); auf Prod (nur lesend, Freigabe) prüfen, in welchem Schema `unaccent` liegt (der `search_path` der Funktion nennt `public, extensions`) und welche Collation die Datenbank hat.
 - [ ] Review Focus 1: Migrationsliste von Prod mit `develop` vergleichen (`supabase migration list`, nur lesend, Freigabe). Liegt auf Prod eine Migration, die `develop` nicht kennt oder die später datiert ist als eine Vereine-Migration, wird das **vor** dem Fenster gelöst.
 - [ ] Übrige Prüfabfragen aus AP §6.4 auf Prod (Freigabe): Teams über 100, Spieler:innen gesamt, Teams gesamt, Konten ohne Team.
 - [ ] Firewall-Probe auf Staging (AP §6.1).
