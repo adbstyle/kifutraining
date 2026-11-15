@@ -1,6 +1,7 @@
 -- Privater Link, Kalender-Abo und Selbstabholung über mehrere Teams (Story 7
 -- #583; Architekturplan Vereine §4.4, §6.7 Testfälle 13 und 23, §7.7–§7.9).
--- Die Rennen stehen in rennen.sql, der Bestand (PC 5) im Prod-Weg.
+-- Die Rennen stehen in rennen.sql; den Bestand (PC 5) prüfte bis zum Release
+-- der CI-Job «Prod-Weg».
 -- - Link: Termine aller Teams in der Ordnung der Datenbank (heute begonnene
 --   zuerst, Datum, Beginn, Teamname), `team` je Termin, `teams` alphabetisch
 --   auch ohne Termine, `verein`; Kader nur des Termin-Teams (AK 1–3, PC 1)
