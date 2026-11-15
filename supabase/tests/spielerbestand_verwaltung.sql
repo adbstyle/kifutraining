@@ -156,7 +156,14 @@ begin
     end loop;
     perform pg_temp.erwarte(format($s$select verein_spieler_anlegen(%L, 'Recht', 'Recht', 2015, null)$s$, pg_temp.id('v')),
                             'VEREIN_NICHT_GEFUNDEN');
-    perform pg_temp.erwarte(format('select verein_spielerliste(%L)', pg_temp.id('v')), 'VEREIN_NICHT_GEFUNDEN');
+    -- Die Vereinsliste sieht seit Story 4 jedes Mitglied (ohne J+S und
+    -- Link-Stand, verein_spielerliste.sql); nur wer nicht im Verein ist, nicht.
+    if wer = 'a' then
+      perform pg_temp.pruefe(not (verein_spielerliste(pg_temp.id('v')) -> 'spieler' -> 0) ?| array['js', 'link_bezogen'],
+                             'Vereinsliste des Mitglieds mit J+S oder Link-Stand');
+    else
+      perform pg_temp.erwarte(format('select verein_spielerliste(%L)', pg_temp.id('v')), 'VEREIN_NICHT_GEFUNDEN');
+    end if;
     reset role;
   end loop;
   -- Die Verwaltung von V: Spieler:in eines anderen Vereins, unbekannt, null.
@@ -560,7 +567,7 @@ declare
 begin
   foreach f in array array['verein_spieler_anlegen(uuid,text,text,integer,text)',
     'verein_spieler_aendern(uuid,text,text,integer,text)', 'verein_spieler_entfernen(uuid)', 'verein_spieler_teams(uuid)',
-    'verein_spieler_link_holen(uuid)', 'verein_spieler_link_erneuern(uuid)', 'verein_spielerliste(uuid)',
+    'verein_spieler_link_holen(uuid)', 'verein_spieler_link_erneuern(uuid)', 'verein_spielerliste(uuid,text,uuid[],boolean,integer[])',
     'verein_ansicht(uuid)', 'verein_spieler_zuordnen(uuid,uuid[],boolean)'] loop
     if has_function_privilege('anon', f, 'execute') or not has_function_privilege('authenticated', f, 'execute') then
       raise exception 'Story 6: Grant von % falsch', f;

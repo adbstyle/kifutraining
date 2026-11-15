@@ -131,7 +131,7 @@ declare
 begin
   perform pg_temp.pruefe(to_regprocedure('spieler_entfernen(uuid)') is null, 'spieler_entfernen besteht noch');
   foreach f in array array['spieler_teams(uuid,uuid)', 'spieler_aus_team_nehmen(uuid,uuid,text)',
-                           'spieler_weitere_teams(uuid)', 'verein_spielerliste(uuid)',
+                           'spieler_weitere_teams(uuid)', 'verein_spielerliste(uuid,text,uuid[],boolean,integer[])',
                            'verein_spieler_zuordnen(uuid,uuid[],boolean)', 'termin_teilnehmer(uuid)',
                            'spiel_teilnehmer(uuid)', 'meine_team_ids()'] loop
     perform pg_temp.pruefe(not has_function_privilege('anon', f, 'execute')
@@ -144,13 +144,14 @@ begin
   end loop;
 end $$;
 
--- Testfall 8: Ein Mitglied ohne Verwaltung ordnet nicht zu und sieht die
--- Vereinsliste nicht; die Verwaltung nicht per KI-Token; fremde Spieler:innen
--- sind unbekannt.
+-- Testfall 8: Ein Mitglied ohne Verwaltung ordnet nicht zu; die Vereinsliste
+-- sieht es seit Story 4 nur ohne die Angaben der Verwaltung (Form und Zugang:
+-- verein_spielerliste.sql); die Verwaltung nicht per KI-Token; fremde
+-- Spieler:innen sind unbekannt.
 select pg_temp.als(pg_temp.id('a'));
 select pg_temp.erwarte(format('select verein_spieler_zuordnen(%L, array[%L]::uuid[])', pg_temp.id('t1'), pg_temp.id('s3')),
                        'VEREIN_NICHT_GEFUNDEN');
-select pg_temp.erwarte(format('select verein_spielerliste(%L)', pg_temp.id('v')), 'VEREIN_NICHT_GEFUNDEN');
+select pg_temp.pruefe(not (verein_spielerliste(pg_temp.id('v')) -> 'spieler' -> 0) ? 'js', 'Vereinsliste des Mitglieds mit J+S');
 select pg_temp.erwarte(format('select spieler_teams(%L, %L)', pg_temp.id('t2'), pg_temp.id('sb')), 'SPIELER_NICHT_GEFUNDEN');
 select pg_temp.erwarte(format('select spieler_aus_team_nehmen(%L, %L, null)', pg_temp.id('t2'), pg_temp.id('sb')),
                        'SPIELER_NICHT_GEFUNDEN');
