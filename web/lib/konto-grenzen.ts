@@ -110,11 +110,6 @@ export function istVoll(g: KontoGrenze): boolean {
   return g.bestand >= g.max;
 }
 
-/** Die Plakette der Seitenleiste: «12/50». */
-export function bestandKurz(g: KontoGrenze): string {
-  return `${g.bestand}/${g.max}`;
-}
-
 /** Das Wort der Plakette, sobald nichts mehr frei ist (an und über der Grenze). */
 export const NICHTS_MEHR_FREI = "Nichts mehr frei";
 

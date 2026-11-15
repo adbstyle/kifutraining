@@ -368,7 +368,6 @@ import {
   KONTO_MARKER,
   KONTO_TRAININGS_MAX,
   KONTO_UEBUNGEN_MAX,
-  bestandKurz,
   bestandSatz,
   bestandText,
   bestandVollMeldung,
@@ -4749,9 +4748,6 @@ pruefe("Konto ohne Verein (#588 PC 3): `grenzen` der Vereinslage wird auf ihre F
 pruefe("Konto ohne Verein (#588 AK 5): Texte der Anzeige in jeder Lage — unter, an und über der Grenze", () => {
   const u = (bestand: number) => ({ bestand, max: 50 });
   const t = (bestand: number) => ({ bestand, max: 30 });
-  assert.equal(bestandKurz(u(12)), "12/50");
-  assert.equal(bestandKurz(t(30)), "30/30");
-  assert.equal(bestandKurz(u(62)), "62/50", "die Plakette nennt den echten Bestand");
   assert.deepEqual([0, 49, 50, 51].map((n) => istVoll(u(n))), [false, false, true, true]);
   assert.deepEqual([29, 30, 31].map((n) => istVoll(t(n))), [false, true, true]);
   assert.equal(bestandText("uebungen", u(0)), "0 von 50 Übungen");

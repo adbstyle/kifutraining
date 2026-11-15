@@ -46,7 +46,7 @@ for (const n of ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY
 const { createBearerClient } = await import("../lib/supabase/bearer");
 const { legeTrainingAn, benenneTrainingUm, setzeStufen, setzeZiel, veroeffentliche, setzeAufEntwurf } =
   await import("../lib/kern/training");
-const { TRAGWEITE_VEROEFFENTLICHEN } = await import("../lib/training-bedingungen");
+const { TRAGWEITE_VEROEFFENTLICHEN, fehlerMeldung } = await import("../lib/training-bedingungen");
 const { ordneUebungZu, entferneUebung, setzeDauer, setzeNotiz, setzeUebungsfolge, vorlagenFuerBlock } =
   await import("../lib/kern/fassung");
 const { trainingAbrufen, trainingsSuchen } = await import("../lib/kern/lesen");
@@ -136,7 +136,7 @@ const {
   UEBUNG_QUELLE_NICHT_VERFUEGBAR,
 } = await import("../lib/kern/uebungen");
 const { aktualisiereZeile, UEBUNG_ZEILE } = await import("../lib/kern/zugriff");
-const { FASSUNG_INHALT_FELDER } = await import("../lib/fassung");
+const { FASSUNG_INHALT_FELDER, FASSUNG_KOPIE_SELECT, legeUebungsKopieAn } = await import("../lib/fassung");
 const { parseDiagramm } = await import("../lib/diagramm");
 const { setzeDiagramm, diagrammMaengel, DIAGRAMM_LEER, MATERIAL_MIT_DIAGRAMM } = await import(
   "../lib/kern/uebung-diagramm"
@@ -144,6 +144,8 @@ const { setzeDiagramm, diagrammMaengel, DIAGRAMM_LEER, MATERIAL_MIT_DIAGRAMM } =
 const { pruefeDiagramm, diagrammAusFormular } = await import("../lib/diagramm-pruefung");
 const { materialVorschlag } = await import("../lib/material");
 const { getExercisesFuer } = await import("../lib/queries/uebungen-fuer");
+const { KONTO_UEBUNGEN_MAX, KONTO_TRAININGS_MAX, KONTO_GRENZE_HINWEIS, kontoGrenzeText, kontoGrenzenAus } = await import("../lib/konto-grenzen");
+const { ladeKontoGrenzen } = await import("../lib/kern/konto");
 
 const URL_ = process.env.SUPABASE_URL!;
 const admin = createClient(URL_, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
@@ -350,6 +352,15 @@ try {
   // Verwaltung ist ein eigenes Konto ohne Team.
   const verwaltung = await wegwerfKonto();
   const verein = await testVerein("Kern-DB", verwaltung);
+  // Anker (Story #588): a besitzt im Lauf weit über 30 Trainings und 50
+  // Übungen, und zwischen zwei Prüfungen räumt `pruefe` ihre Teams ab. Ohne
+  // dauerhafte Zugehörigkeit wäre a ein Konto ohne Verein und stiesse an die
+  // Grenzen. Das Anker-Team steht nicht in `teams` (bleibt über alle
+  // Prüfungen), hat keine Termine und keine Spieler:innen und fällt erst mit
+  // dem Verein beim Aufräumen. Die Grenzen prüft ein eigenes Konto ohne Verein.
+  const ANKER = "Kern-DB-Anker";
+  const anker = (await admin.from("teams").insert({ name: ANKER, verein_id: verein }).select("id").single()).data!.id as string;
+  assert.equal((await admin.from("team_members").insert({ team_id: anker, user_id: a.id })).error, null, "a im Anker-Team");
   /** Die Spielerliste des Vereins, wie die Verwaltung sie liest (Story #580):
    *  Die Prüfung scheitert, wenn die Datenebene nicht die Verwaltungsform liefert. */
   const verwaltungsListe = async (vereinId = verein, k = verwaltung) => {
@@ -6792,7 +6803,10 @@ try {
   // ── Verein (#577) ────────────────────────────────────────────────────────
   // Die Regeln selbst prüft supabase/tests/vereine_fundament.sql per psql;
   // hier der Weg über den Nutzer-Client (PostgREST) und die Kern-Leser.
-  type Lage = { verein: { id: string; name: string; ist_verwaltung: boolean; ist_teammitglied: boolean } | null; grenzen: null };
+  type Lage = {
+    verein: { id: string; name: string; ist_verwaltung: boolean; ist_teammitglied: boolean } | null;
+    grenzen: { uebungen: { bestand: number; max: number }; trainings: { bestand: number; max: number } } | null;
+  };
   const lageVon = async (k: Konto) => {
     const { data, error } = await k.supabase.rpc("meine_vereinslage");
     assert.equal(error, null);
@@ -6801,7 +6815,12 @@ try {
 
   await pruefe("Verein: Lage je Konto, Teams nur durch die Verwaltung, der Verein eines Teams bleibt (#577 AK 4, 5; Testfall 2, 3; #581 AK 17, 26)", async () => {
     const ohne = await wegwerfKonto();
-    assert.deepEqual(await lageVon(ohne), { verein: null, grenzen: null }, "Konto ohne Verein");
+    // #588 PC 3: ohne Verein mit den Grenzen, max gleich den Zwillingen im Web.
+    assert.deepEqual(
+      await lageVon(ohne),
+      { verein: null, grenzen: { uebungen: { bestand: 0, max: KONTO_UEBUNGEN_MAX }, trainings: { bestand: 0, max: KONTO_TRAININGS_MAX } } },
+      "Konto ohne Verein",
+    );
     assert.deepEqual(await lageVon(verwaltung), {
       verein: { id: verein, name: "Kern-DB", ist_verwaltung: true, ist_teammitglied: false },
       grenzen: null,
@@ -8534,6 +8553,281 @@ try {
     assert.deepEqual((await admin.from("spieler").select("nachname, js_nummer").eq("id", ella).single()).data, { nachname: "Neu", js_nummer: "7654321" });
     kiWert(await ki(a, "spieler_aendern", { spieler_id: ella, vorname: "Ella", nachname: "Neu", jahrgang: 2017, js_nummer: "" }));
     assert.equal((await admin.from("spieler").select("js_nummer").eq("id", ella).single()).data!.js_nummer, null, "leer entfernt sie");
+  });
+
+  // ── Konten ohne Verein (#588) ────────────────────────────────────────────
+  // Die Regeln selbst (Trigger, Zählung, Rennen, Sperren, Prod-Weg mit einem
+  // Bestand über der Grenze) prüft supabase/tests/konten_ohne_verein.sql per
+  // psql; hier der Weg über Kern, Nutzer-Client und KI-Werkzeuge, je mit einem
+  // eigenen Konto ohne Verein (a gehört über das Anker-Team einem Verein an).
+  // Viele Zeilen entstehen per Admin in einem Insert je Stapel. Auch die
+  // Service-Rolle unterliegt der Grenze (ohne auth.uid()): Stapel bleiben
+  // darum unter 50/30 — oder das Konto steht in einem Team und tritt danach
+  // aus; so entsteht ein Bestand über der Grenze auch im Betrieb (Austritt,
+  // Team auflösen, Verein löschen).
+  const TEAM_FREMD_588 = "Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist.";
+  const uebungsVorlage588 = await (async () => {
+    const { data, error } = await admin.from("exercises").select("*").eq("id", ein).single();
+    if (error) throw error;
+    const { id: _i, slug: _s, search_text: _t, created_at: _c, updated_at: _u, anzahl_kinder_min: _m, ...rest } = data;
+    return rest;
+  })();
+  /** Eine eigene Übung des Kontos als Zeile (Kopie der Manual-Übung `ein`). */
+  const uebungsZeile588 = (ownerId: string, name: string) => ({
+    ...uebungsVorlage588,
+    name,
+    slug: `kern-db-588-${randomBytes(6).toString("hex")}`,
+    source: "user",
+    owner_id: ownerId,
+    visibility: "private",
+  });
+  /** n eigene Übungen bzw. Trainings des Kontos, je in einem Insert. */
+  const stapelUebungen = async (k: Konto, n: number) => {
+    const { error } = await admin.from("exercises").insert(Array.from({ length: n }, (_, i) => uebungsZeile588(k.id, `Kern-DB-588 Ü${i + 1}`)));
+    if (error) throw error;
+  };
+  const stapelTrainings = async (k: Konto, n: number) => {
+    const { error } = await admin
+      .from("trainings")
+      .insert(Array.from({ length: n }, (_, i) => ({ name: `Kern-DB-588 T${i + 1}`, altersstufe: "kinderfussball", stufen: ["F"], visibility: "private", owner_id: k.id })));
+    if (error) throw error;
+  };
+  const anzahl588 = async (k: Konto) => ({
+    uebungen: (await admin.from("exercises").select("id", { count: "exact", head: true }).eq("owner_id", k.id)).count,
+    trainings: (await admin.from("trainings").select("id", { count: "exact", head: true }).eq("owner_id", k.id)).count,
+  });
+  /** `grenzen` aus `meine_vereinslage()`, wie das Web sie liest (Formprüfung). */
+  const grenzenVon = async (k: Konto) => {
+    const { data, error } = await k.supabase.rpc("meine_vereinslage");
+    assert.equal(error, null);
+    const g = kontoGrenzenAus((data as { grenzen: unknown }).grenzen);
+    assert.notEqual(g, undefined, "grenzen in der Form des Vertrags");
+    // Die Dialogstufe liest denselben Stand über den Kern.
+    assert.deepEqual(wert(await ladeKontoGrenzen(k.supabase)), { grenzen: g });
+    return g;
+  };
+  const stand588 = (uebungen: number, trainings: number) => ({
+    uebungen: { bestand: uebungen, max: KONTO_UEBUNGEN_MAX },
+    trainings: { bestand: trainings, max: KONTO_TRAININGS_MAX },
+  });
+  const neueUebung588 = (k: Konto, name = "Kern-DB-588 Neu") =>
+    legeUebungAn(k.supabase, k.id, { altersstufe: "kinderfussball", name, einordnung: "einleitung", kategorien: ["F"], offenStarten: "Offen", ueben: "Üben", wetteifern: "Wett" });
+  const neuesTraining588 = (k: Konto, name = "Kern-DB-588 Neu", stufen = ["F"]) => legeTrainingAn(k.supabase, k.id, { name, altersstufe: "kinderfussball", stufen });
+  /** Die Abweisung der Grenze (AK 6, 7): der Satz mit dem Bestand, «regel»,
+   *  der Hinweis «Es ist nichts entstanden.», nicht wiederholbar. */
+  const grenzeAbgewiesen = (r: { ok: boolean; art?: string; meldung?: string; hinweis?: string; wiederholbar?: boolean }, art: "uebungen" | "trainings", bestand: number) => {
+    fehler(r, "regel", kontoGrenzeText(art, bestand));
+    assert.equal(r.hinweis, KONTO_GRENZE_HINWEIS);
+    assert.equal(r.wiederholbar, undefined, "nicht wiederholbar");
+  };
+  /** Dieselbe Abweisung über ein registriertes KI-Werkzeug (AK 7): dieselbe
+   *  Auskunft, kein Aufruf zum Wiederholen, kein Verweis auf ein Löschwerkzeug. */
+  const kiGrenze = (r: KiErgebnis, art: "uebungen" | "trainings", bestand: number) => {
+    assert.equal(r.isError, true, "erwartet Fehler");
+    assert.deepEqual((r.structuredContent as { fehler: unknown }).fehler, { art: "regel", meldung: kontoGrenzeText(art, bestand), hinweis: KONTO_GRENZE_HINWEIS });
+    assert.equal(r.content[0].text, `[regel] ${kontoGrenzeText(art, bestand)} ${KONTO_GRENZE_HINWEIS}`);
+    assert.doesNotMatch(r.content[0].text, /wiederhol|_loeschen/);
+  };
+  const ordner588 = async (k: Konto) =>
+    ((await admin.storage.from("exercise-images").list(`user/${k.id}`, { limit: 1000 })).data ?? []).map((d) => d.name).sort();
+
+  await pruefe("Konto ohne Verein, Übungen (#588 AK 1–3, 6–8; Vertrag B): bis 50 frei, danach weisen Anlegen, Kopieren und «In die Bibliothek» in Kern und KI mit Satz und Bestand ab, nichts bleibt zurück, auch kein Bild; in ein Training übernehmen bleibt frei (AK 4)", async () => {
+    const k = await wegwerfKonto();
+    assert.deepEqual(await grenzenVon(k), stand588(0, 0), "max gleich den Zwillingen im Web");
+    await stapelUebungen(k, 48);
+    // Die Quelle der Kopien, mit eigenem Bild, über den Kern (49).
+    const mitBild = wert(await neueUebung588(k, "Kern-DB-588 Bild"));
+    const pfad = `user/${k.id}/${mitBild.id}.webp`;
+    const { error: up } = await admin.storage
+      .from("exercise-images")
+      .upload(pfad, new Blob([new Uint8Array([82, 73, 70, 70, 0, 0, 0, 0, 87, 69, 66, 80])], { type: "image/webp" }), { contentType: "image/webp" });
+    if (up) throw up;
+    dateien.push(pfad);
+    assert.equal((await admin.from("exercises").update({ bild_url: bildUrl(pfad), bild_quelle: "foto" }).eq("id", mitBild.id)).error, null);
+    assert.deepEqual(await grenzenVon(k), stand588(49, 0));
+    // Die 50. geht (eine Kopie zählt wie eine angelegte, AK 1).
+    const fuenfzigste = wert(await kopiereUebungNach(k.supabase, k.id, { kennung: ein }));
+    assert.deepEqual(await grenzenVon(k), stand588(50, 0));
+
+    // AK 4: Übungen in ein Training übernehmen bleibt frei, auch an der Grenze.
+    const tr = wert(await neuesTraining588(k)).id;
+    const fassung = wert(await ordneUebungZu(k.supabase, k.id, { trainingId: tr, einordnung: "einleitung", exerciseId: mitBild.id }));
+    wert(await ordneUebungZu(k.supabase, k.id, { trainingId: tr, einordnung: "einleitung", exerciseId: ein }));
+    const ordnerVorher = await ordner588(k);
+    const fassungenVorher = (await positionen(tr, "einleitung")).length;
+
+    // Anlegen, Kopieren (eigene mit Bild, Manual) und «In die Bibliothek».
+    grenzeAbgewiesen(await neueUebung588(k), "uebungen", 50);
+    grenzeAbgewiesen(await kopiereUebungNach(k.supabase, k.id, { kennung: mitBild.id }), "uebungen", 50);
+    grenzeAbgewiesen(await kopiereUebungNach(k.supabase, k.id, { kennung: ein }), "uebungen", 50);
+    const { data: f, error: fFehler } = await k.supabase.from("training_exercises").select(FASSUNG_KOPIE_SELECT).eq("id", fassung.fassungId).single();
+    assert.equal(fFehler, null);
+    assert.deepEqual(await legeUebungsKopieAn(k.supabase, f as never, { ownerId: k.id, altersstufe: "kinderfussball" }), {
+      ok: false,
+      error: kontoGrenzeText("uebungen", 50),
+      art: "regel",
+      hinweis: KONTO_GRENZE_HINWEIS,
+    });
+    // Naht: So liefert PostgREST den Marker (Text und Code), und die Übersetzung
+    // trifft ihn — der Weg von «Übung erstellen» (`createExercise` über
+    // `fehlerMeldung`) und jeder Kern-Weg (`ausDbFehler`).
+    const roh = await k.supabase.from("exercises").insert(uebungsZeile588(k.id, "Kern-DB-588 Roh"));
+    assert.deepEqual([roh.error?.message, roh.error?.code], ["KONTO_UEBUNGEN_VOLL 50", "P0001"]);
+    assert.equal(fehlerMeldung(roh.error!.message), kontoGrenzeText("uebungen", 50));
+    // Kein Abfluss: Eine Zeile für ein anderes Konto weist die RLS ab, ohne
+    // Marker (sonst läse man dessen Bestand ab).
+    const fremd = await k.supabase.from("exercises").insert(uebungsZeile588(b.id, "Kern-DB-588 Fremd"));
+    assert.match(fremd.error?.message ?? "", /row-level security/);
+    assert.doesNotMatch(fremd.error?.message ?? "", /KONTO_/);
+
+    // KI: dieselbe Abweisung, derselbe Bestand.
+    kiGrenze(
+      await ki(k, "uebung_anlegen", { altersstufe: "kinderfussball", name: "Kern-DB-588 KI", einordnung: "einleitung", kategorien: ["F"], offen_starten: "Offen", ueben: "Üben", wetteifern: "Wett" }),
+      "uebungen",
+      50,
+    );
+    kiGrenze(await ki(k, "uebung_kopieren", { kennung: mitBild.id }), "uebungen", 50);
+
+    // Nichts ist entstanden: kein Platz belegt, keine Bildkopie, kein Bild im Ordner.
+    assert.deepEqual(await anzahl588(k), { uebungen: 50, trainings: 1 });
+    assert.deepEqual(await ordner588(k), ordnerVorher, "keine Bildkopie bleibt zurück");
+    assert.equal((await positionen(tr, "einleitung")).length, fassungenVorher);
+    wert(await ordneUebungZu(k.supabase, k.id, { trainingId: tr, einordnung: "einleitung", exerciseId: fuenfzigste.id }));
+
+    // Löschen schafft Platz (AK 6): danach geht genau eine wieder.
+    assert.equal((await k.supabase.from("exercises").delete().eq("id", fuenfzigste.id).eq("owner_id", k.id).eq("source", "user")).error, null);
+    assert.deepEqual(await grenzenVon(k), stand588(49, 1));
+    wert(await kopiereUebungNach(k.supabase, k.id, { kennung: mitBild.id }));
+    grenzeAbgewiesen(await neueUebung588(k), "uebungen", 50);
+  });
+
+  await pruefe("Konto ohne Verein, Trainings (#588 AK 1–3, 6–8): bis 30 frei, danach weisen Anlegen, Kopieren und Übernehmen in Kern und KI mit Satz und Bestand ab, nichts bleibt zurück; die Grenze kommt in der Datenebene vor STUFE_FEHLT", async () => {
+    const k = await wegwerfKonto();
+    await stapelTrainings(k, 28);
+    // Ein eigenes öffentliches Training mit Übungen (Quelle für Kopieren/Übernehmen; 29).
+    const quelle = wert(await neuesTraining588(k, "Kern-DB-588 Quelle")).id;
+    wert(await ordneUebungZu(k.supabase, k.id, { trainingId: quelle, einordnung: "einleitung", exerciseId: ein }));
+    wert(await ordneUebungZu(k.supabase, k.id, { trainingId: quelle, einordnung: "hauptteil", hauptteilkategorie: "fussball-spielen", exerciseId: frei }));
+    wert(await veroeffentliche(k.supabase, k.id, { trainingId: quelle }));
+    // Ein fremdes öffentliches Training (Übernehmen aus der Community).
+    const fremdes = wert(await legeTrainingAn(b.supabase, b.id, { name: "Kern-DB-588 Fremd", altersstufe: "kinderfussball", stufen: ["F"] })).id;
+    wert(await ordneUebungZu(b.supabase, b.id, { trainingId: fremdes, einordnung: "einleitung", exerciseId: ein }));
+    wert(await ordneUebungZu(b.supabase, b.id, { trainingId: fremdes, einordnung: "hauptteil", hauptteilkategorie: "fussball-spielen", exerciseId: frei }));
+    wert(await veroeffentliche(b.supabase, b.id, { trainingId: fremdes }));
+    try {
+      // Das 30. geht (eine übernommene Kopie zählt, AK 1).
+      const dreissigstes = wert(await kopiereTrainingNach(k.supabase, k.id, { quelleId: fremdes })).id;
+      assert.deepEqual(await grenzenVon(k), stand588(0, 30));
+      const fassungenVorher = (await admin.from("training_exercises").select("id", { count: "exact", head: true })).count;
+
+      grenzeAbgewiesen(await neuesTraining588(k), "trainings", 30);
+      grenzeAbgewiesen(await kopiereTrainingNach(k.supabase, k.id, { quelleId: quelle }), "trainings", 30);
+      grenzeAbgewiesen(await kopiereTrainingNach(k.supabase, k.id, { quelleId: fremdes }), "trainings", 30);
+      kiGrenze(await ki(k, "training_anlegen", { name: "Kern-DB-588 KI", altersstufe: "kinderfussball", stufen: ["F"] }), "trainings", 30);
+      // Der Hinweis «gefahrlos wiederholen» gilt bei der Grenze nicht.
+      kiGrenze(await ki(k, "training_kopieren", { training_id: fremdes }), "trainings", 30);
+      kiGrenze(await ki(k, "training_kopieren", { training_id: quelle }), "trainings", 30);
+
+      // Naht: der Marker über PostgREST; ohne Alterskategorie meldet die
+      // Datenebene zuerst die Grenze (Trigger «konto_grenze_neu» vor
+      // «trainings_stufe_pflicht»), der Kern prüft die Eingabe aber vorher.
+      const roh = await k.supabase.from("trainings").insert({ name: "Kern-DB-588 Roh", altersstufe: "kinderfussball", stufen: [], visibility: "private", owner_id: k.id });
+      assert.deepEqual([roh.error?.message, roh.error?.code], ["KONTO_TRAININGS_VOLL 30", "P0001"]);
+      assert.equal(ausDbFehler(roh.error!).meldung, kontoGrenzeText("trainings", 30));
+      fehler(await neuesTraining588(k, "Kern-DB-588 Ohne", []), "eingabe", "Bitte mindestens eine Alterskategorie wählen.");
+
+      // Nichts ist entstanden; die Kopie ist nach dem Insert der Trainingszeile gescheitert, nicht danach.
+      assert.deepEqual(await anzahl588(k), { uebungen: 0, trainings: 30 });
+      assert.equal((await admin.from("training_exercises").select("id", { count: "exact", head: true })).count, fassungenVorher);
+      // AK 4: Übungen zuordnen bleibt frei.
+      wert(await ordneUebungZu(k.supabase, k.id, { trainingId: dreissigstes, einordnung: "einleitung", exerciseId: ein }));
+      // Löschen schafft Platz.
+      wert(await loescheTraining(k.supabase, k.id, { trainingId: dreissigstes }));
+      wert(await neuesTraining588(k));
+      grenzeAbgewiesen(await neuesTraining588(k), "trainings", 30);
+    } finally {
+      await admin.from("trainings").update({ visibility: "private" }).eq("id", fremdes);
+      await loescheTrainingMitBildern(admin as never, fremdes);
+    }
+  });
+
+  await pruefe("Konto ohne Verein, Bestand über der Grenze und Aufnahme (#588 PC 1–3): Aufnahme hebt die Grenze sofort auf, Austritt setzt sie wieder; 62/34 bleiben änderbar, veröffentlichbar und löschbar, Neues wird mit dem tatsächlichen Bestand abgewiesen; grenzen in jeder Lage", async () => {
+    const k = await wegwerfKonto();
+    const team = await neuesTeam("Kern-DB-588-Aufnahme");
+    const email = await emailVon(k);
+    // PC 2, 3: aufgenommen gehört das Konto einem Verein — keine Grenzen, keine Anzeige.
+    assert.equal(wert(await nimmInsTeamAuf(verwaltung.supabase, verwaltung.id, { teamId: team, email })).ok, true);
+    assert.equal(await grenzenVon(k), null);
+    assert.equal(await grenzenVon(verwaltung), null, "die Verwaltung ohne Team gehört einem Verein an");
+    assert.equal(await grenzenVon(a), null);
+    await stapelUebungen(k, 61);
+    await stapelTrainings(k, 33);
+    wert(await neueUebung588(k));
+    wert(await neuesTraining588(k));
+    // Austritt: Die Grenze gilt sofort wieder, mit dem Bestand über ihr.
+    wert(await entferneAusTeam(verwaltung.supabase, verwaltung.id, { teamId: team, userId: k.id }));
+    assert.deepEqual(await grenzenVon(k), stand588(62, 34));
+    grenzeAbgewiesen(await neueUebung588(k), "uebungen", 62);
+    grenzeAbgewiesen(await neuesTraining588(k), "trainings", 34);
+    kiGrenze(await ki(k, "uebung_kopieren", { kennung: ein }), "uebungen", 62);
+    assert.equal(kontoGrenzeText("uebungen", 62).startsWith("Du besitzt 62 Übungen, höchstens 50 sind erlaubt."), true, "nie «62 von 50»");
+
+    // PC 1: Bestehendes bleibt änderbar — Übung ändern, veröffentlichen, auf Entwurf, löschen.
+    const uebung = (await admin.from("exercises").select("id").eq("owner_id", k.id).order("name").limit(1).single()).data!.id as string;
+    wert(await aendereUebung(k.supabase, k.id, { kennung: uebung, aenderung: { name: "Kern-DB-588 Geändert" } }));
+    wert(await veroeffentlicheUebung(k.supabase, k.id, { kennung: uebung }));
+    wert(await setzeUebungAufEntwurf(k.supabase, k.id, { kennung: uebung }));
+    assert.equal((await k.supabase.from("exercises").delete().eq("id", uebung).eq("owner_id", k.id).eq("source", "user")).error, null);
+    // Training umbenennen, Übungen zuordnen (AK 4), veröffentlichen, auf Entwurf, löschen.
+    const training = (await admin.from("trainings").select("id").eq("owner_id", k.id).order("name").limit(1).single()).data!.id as string;
+    wert(await benenneTrainingUm(k.supabase, k.id, { trainingId: training, name: "Kern-DB-588 Umbenannt" }));
+    wert(await ordneUebungZu(k.supabase, k.id, { trainingId: training, einordnung: "einleitung", exerciseId: ein }));
+    wert(await ordneUebungZu(k.supabase, k.id, { trainingId: training, einordnung: "hauptteil", hauptteilkategorie: "fussball-spielen", exerciseId: frei }));
+    wert(await veroeffentliche(k.supabase, k.id, { trainingId: training }));
+    wert(await setzeAufEntwurf(k.supabase, k.id, { trainingId: training }));
+    wert(await loescheTraining(k.supabase, k.id, { trainingId: training }));
+    // Über der Grenze schafft eines löschen noch keinen Platz.
+    assert.deepEqual(await grenzenVon(k), stand588(61, 33));
+    grenzeAbgewiesen(await neueUebung588(k), "uebungen", 61);
+    grenzeAbgewiesen(await kopiereTrainingNach(k.supabase, k.id, { quelleId: (await admin.from("trainings").select("id").eq("owner_id", k.id).limit(1).single()).data!.id }), "trainings", 33);
+
+    // PC 2: wieder aufgenommen, sofort wieder frei — in Kern und KI.
+    assert.equal(wert(await nimmInsTeamAuf(verwaltung.supabase, verwaltung.id, { teamId: team, email })).ok, true);
+    assert.equal(await grenzenVon(k), null);
+    wert(await neueUebung588(k));
+    kiWert(await ki(k, "training_anlegen", { name: "Kern-DB-588 KI", altersstufe: "kinderfussball", stufen: ["F"] }));
+    assert.deepEqual(await anzahl588(k), { uebungen: 62, trainings: 34 });
+  });
+
+  await pruefe("Konto ohne Team (#588 AK 9): Teams, Spielerliste und Kalender geben über Kern und KI-Werkzeuge nichts, für ein Konto ohne Verein wie für die Verwaltung ohne Team; diese behält den Bereich «Verein»", async () => {
+    const k = await wegwerfKonto();
+    const team = await serienTeam("Kern-DB-588-AK9");
+    const spieler = (await neuerSpieler(team, "Ella", "Ohneteam", 2016)).spielerId;
+    const termin = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    const kiArt = (r: KiErgebnis) => {
+      assert.equal(r.isError, true, "erwartet Fehler");
+      return (r.structuredContent as { fehler: { art: string } }).fehler.art;
+    };
+    for (const x of [k, verwaltung]) {
+      assert.deepEqual(wert(await meineTeams(x.supabase, x.id)).teams, []);
+      fehler(await teamPlan(x.supabase, x.id, { teamId: team }), "nicht_gefunden", TEAM_FREMD_588);
+      fehler(await ladeSpielerliste(x.supabase, x.id, { teamId: team }), "nicht_gefunden");
+      fehler(await terminSpieler(x.supabase, x.id, { terminId: termin }), "nicht_gefunden");
+      fehler(await legeTerminFest(x.supabase, x.id, { art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:00" }), "nicht_gefunden");
+      assert.deepEqual(kiWert(await ki(x, "teams_abrufen", {})), { teams: [] });
+      assert.equal(kiArt(await ki(x, "team_plan_abrufen", { team_id: team })), "nicht_gefunden");
+      assert.equal(kiArt(await ki(x, "spielerliste_abrufen", { team_id: team })), "nicht_gefunden");
+      assert.equal(kiArt(await ki(x, "termin_spieler_abrufen", { termin_id: termin })), "nicht_gefunden");
+      assert.equal(kiArt(await ki(x, "termin_festlegen", { team_id: team, art: "training", datum: tagCh(5), beginn: "18:00", ende: "19:00" })), "nicht_gefunden");
+      // Auch an der Anwendung vorbei liest die Datenebene nichts.
+      assert.equal((await x.supabase.from("training_termine").select("id").eq("team_id", team)).data!.length, 0);
+    }
+    assert.equal((await admin.from("training_termine").select("id").eq("team_id", team)).data!.length, 1, "nichts dazugekommen");
+    // Die Verwaltung ohne Team behält den Bereich «Verein» (Rechte-Matrix), das Konto ohne Verein hat keinen.
+    assert.ok(wert(await ladeVereinTeamAnsicht(verwaltung.supabase, verwaltung.id, { teamId: team })).spieler.some((x) => x.id === spieler));
+    assert.ok((await verwaltungsListe()).spieler.some((x) => x.id === spieler));
+    wert(await ladeVereinAnsicht(verwaltung.supabase, verwaltung.id, { vereinId: verein }));
+    fehler(await ladeVereinAnsicht(k.supabase, k.id, { vereinId: verein }), "nicht_gefunden");
   });
 
 } finally {
