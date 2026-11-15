@@ -65,7 +65,7 @@ export function VereinSpielerAnsicht({
             ))}
           </Tabelle>
         )}
-        <SpielerFuss angezeigt={spieler.length} treffer={treffer} weiterHref={weiterHref} />
+        <SpielerFuss angezeigt={spieler.length} treffer={treffer} eingrenzung={eingrenzung} weiterHref={weiterHref} />
       </div>
     </>
   );

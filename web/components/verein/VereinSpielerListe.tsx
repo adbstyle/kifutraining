@@ -41,8 +41,8 @@ import { SpielerFuss, SpielerKopf, SpielerLeer, SpielerTeams } from "./VereinSpi
    Sicht; Mitglieder haben ihre lesende (`VereinSpielerAnsicht`). Suche und
    Eingrenzung (Story #580) laufen auf dem Server: Die Liste bekommt die
    Treffer und zeigt davon eine Seite; Auswahl und Aktionen gelten für die
-   Zeilen, die stehen, und die Auswahl leert sich, wenn Suche oder
-   Eingrenzung wechseln.
+   Zeilen, die stehen: Wechseln Suche oder Eingrenzung, leert sich die
+   Auswahl, und offene Dialoge schliessen.
 
    Je Zeile liegen die Aktionen im ⋮-Menü (Story #582): Ändern, Privater Link,
    Einem Team zuordnen und — zweistufig, mit Bestätigung — Löschen. Über der
@@ -101,13 +101,19 @@ export function VereinSpielerListe({
   const [link, setLink] = useState<VereinSpieler | null>(null);
   const [loeschen, setLoeschen] = useState<VereinSpieler | null>(null);
 
-  // Andere Suche, andere Eingrenzung: Die Auswahl gilt nur für die Zeilen,
-  // die man sieht, und beginnt von vorn.
+  // Andere Suche, andere Eingrenzung (auch über die Zurück-Taste): Auswahl
+  // und Dialoge gelten nur für die Zeilen, die man sieht — die Auswahl
+  // beginnt von vorn, offene Dialoge schliessen, statt Spieler:innen zu
+  // behalten, die nicht mehr dastehen.
   const schluessel = JSON.stringify(eingrenzung);
   const [schluesselVorher, setSchluesselVorher] = useState(schluessel);
   if (schluessel !== schluesselVorher) {
     setSchluesselVorher(schluessel);
     setAuswahl([]);
+    setZuordnen(null);
+    setFormular(null);
+    setLink(null);
+    setLoeschen(null);
   }
 
   // Nur, wer noch dasteht, bleibt ausgewählt.
@@ -228,7 +234,7 @@ export function VereinSpielerListe({
           ))}
         </Tabelle>
       )}
-      <SpielerFuss angezeigt={spieler.length} treffer={treffer} weiterHref={weiterHref} />
+      <SpielerFuss angezeigt={spieler.length} treffer={treffer} eingrenzung={eingrenzung} weiterHref={weiterHref} />
 
       <AuswahlLeiste offen={gewaehlt.length > 0} titel={`${gewaehlt.length} ausgewählt`} onAufheben={() => setAuswahl([])}>
         <Button variant="filled" aria-haspopup="dialog" onClick={() => oeffnen(spieler.filter((s) => gewaehlt.includes(s.id)))}>

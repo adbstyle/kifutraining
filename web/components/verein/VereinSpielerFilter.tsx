@@ -4,7 +4,13 @@ import { useMemo } from "react";
 import { AuswahlFilter, Button, FilterSuche } from "@/components/ui";
 import { useAdressFilter } from "@/lib/use-adress-filter";
 import { SPIELER_FILTER } from "@/lib/verein";
-import { eingrenzungGesetzt, OHNE_TEAM_WERT, teamFilterWerte, type SpielerEingrenzung } from "@/lib/verein-spielerliste";
+import {
+  bereinigeSuche,
+  eingrenzungGesetzt,
+  OHNE_TEAM_WERT,
+  teamFilterWerte,
+  type SpielerEingrenzung,
+} from "@/lib/verein-spielerliste";
 
 /* Die Filterleiste von `/verein/spieler` (Story #580 AK 6–8): Suche, «Team»
    mit «Ohne Team» und darunter den Teams des Vereins, «Jahrgang», und
@@ -33,7 +39,12 @@ export function VereinSpielerFilter({
 
   return (
     <div className="mt-4 flex flex-wrap items-center gap-2">
-      <FilterSuche label={SPIELER_FILTER.suche} initial={eingrenzung.suche} onCommit={(v) => filter.setzeWert("q", v)} />
+      <FilterSuche
+        label={SPIELER_FILTER.suche}
+        initial={eingrenzung.suche}
+        bereinige={bereinigeSuche}
+        onCommit={(v) => filter.setzeWert("q", v, bereinigeSuche)}
+      />
       <AuswahlFilter
         label={SPIELER_FILTER.team}
         options={teamOptionen}

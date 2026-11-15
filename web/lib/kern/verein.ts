@@ -78,51 +78,20 @@ export type VereinTeam = VereinTeamMitglied & { anzahl: number };
 
 /** Die Antwort der Datenebene: `spieler` mit Suche und Eingrenzung, alles
  *  übrige ungefiltert — die Optionen der Filter und die Zahlen im Kopf
- *  ändern sich nicht mit ihnen. Welche Form die Zeilen haben, entscheidet
- *  die Datenebene nach der Rolle; `alsVerwaltung` liest sie als die der
- *  Verwaltung. */
-export type VereinSpielerliste = {
-  spieler: (VereinSpielerMitglied | VereinSpieler)[];
-  teams: (VereinTeamMitglied | VereinTeam)[];
+ *  ändern sich nicht mit ihnen. `verwaltung` sagt die Datenebene selbst (die
+ *  eigene Rolle der aufrufenden Person); an ihm hängt die Form der Zeilen und
+ *  Teams, und die Seite wählt an ihm die Sicht — eine Quelle, auch bei 0
+ *  Treffern und 0 Teams. */
+type VereinSpielerliste = {
   /** Alle vorkommenden Jahrgänge des Vereins, aufsteigend. */
   jahrgaenge: number[];
   /** Alle Spieler:innen des Vereins und davon die ohne Team. */
   gesamt: number;
   ohneTeam: number;
-};
-
-export type VereinSpielerlisteVerwaltung = Omit<VereinSpielerliste, "spieler" | "teams"> & { spieler: VereinSpieler[]; teams: VereinTeam[] };
-export type VereinSpielerlisteMitglied = Omit<VereinSpielerliste, "spieler" | "teams"> & {
-  spieler: VereinSpielerMitglied[];
-  teams: VereinTeamMitglied[];
-};
-
-const istVerwaltungsZeile = (s: VereinSpielerMitglied | VereinSpieler): s is VereinSpieler => "linkBezogen" in s;
-const istVerwaltungsTeam = (t: VereinTeamMitglied | VereinTeam): t is VereinTeam => "anzahl" in t;
-
-/** Die Liste als die der Vereinsverwaltung — nur, wenn die Datenebene sie so
- *  geliefert hat: jede Zeile mit den drei Zusatzangaben, jedes Team mit der
- *  Zahl der Zuordnungen. Sonst `null` (die Rolle fiel zwischen Vereinslage
- *  und Abfrage weg); die Seite zeigt dann die Sicht der Mitglieder, statt
- *  Zeilen still wegzulassen. */
-export function alsVerwaltung(l: VereinSpielerliste): VereinSpielerlisteVerwaltung | null {
-  if (!l.spieler.every(istVerwaltungsZeile) || !l.teams.every(istVerwaltungsTeam)) return null;
-  return { ...l, spieler: l.spieler, teams: l.teams };
-}
-
-/** Die Liste in der Form der Mitglieder (Story #580 AK 3): je Zeile genau
- *  Kennung, Vorname, Nachname, Jahrgang und Teams, je Team Kennung und Name.
- *  Die Seite reicht nur diese Form an die Sicht der Mitglieder weiter — auch
- *  dann, wenn die Rolle zwischen Vereinslage und Abfrage dazukam und die
- *  Datenebene mehr geliefert hat. */
-export function alsMitglied(l: VereinSpielerliste): VereinSpielerlisteMitglied {
-  const team = (t: VereinTeamMitglied) => ({ id: t.id, name: t.name });
-  return {
-    ...l,
-    spieler: l.spieler.map((s) => ({ id: s.id, vorname: s.vorname, nachname: s.nachname, jahrgang: s.jahrgang, teams: s.teams.map(team) })),
-    teams: l.teams.map(team),
-  };
-}
+} & (
+  | { verwaltung: true; spieler: VereinSpieler[]; teams: VereinTeam[] }
+  | { verwaltung: false; spieler: VereinSpielerMitglied[]; teams: VereinTeamMitglied[] }
+);
 
 const nachName = (a: { name: string }, b: { name: string }) => nachTeamname(a.name, b.name);
 
@@ -131,6 +100,13 @@ type SpielerRoh = VereinSpielerMitglied & {
   link_bezogen?: boolean;
   schnuppern?: { team_id: string; anzahl: number | null; besucht: number } | null;
 };
+
+/** Die drei Schlüssel, die nur die Verwaltung bekommt. */
+const VERWALTUNGS_SCHLUESSEL = ["js", "link_bezogen", "schnuppern"] as const;
+
+/** Passt die Form nicht zur Rolle, die die Datenebene nennt, ist das ein
+ *  Fehler, keine leere Liste und keine andere Sicht. */
+const LISTE_UNSTIMMIG = "Die Spieler:innen liessen sich gerade nicht lesen. Bitte versuche es noch einmal.";
 
 /**
  * Die Spieler:innen des Vereins mit Suche und Eingrenzung (Story #580): Die
@@ -144,7 +120,9 @@ type SpielerRoh = VereinSpielerMitglied & {
  * «Vorname Nachname», ohne Gross-/Kleinschreibung und Akzente. `teamIds` und
  * `ohneTeam` gelten zusammen als ODER, `jahrgaenge` ebenso; Suche und beide
  * Eingrenzungen als UND. Unbekannte Teams treffen nie. Jede Zeile nennt
- * weiter alle Teams der Spieler:in.
+ * weiter alle Teams der Spieler:in. Die Form der Antwort entscheidet allein
+ * `verwaltung` aus der Datenebene; trägt eine Zeile oder ein Team eine
+ * andere Form, ist das ein technischer Fehler (nie eine leere Liste).
  */
 export async function ladeVereinSpielerliste(
   supabase: SupabaseClient,
@@ -167,23 +145,41 @@ export async function ladeVereinSpielerliste(
     jahrgaenge: number[];
     gesamt: number;
     ohne_team: number;
+    verwaltung: boolean;
   };
+  // Die Form folgt der Rolle, die die Datenebene nennt: Die Verwaltung hat je
+  // Zeile alle drei Zusatzangaben und je Team die Zahl, ein Mitglied keine davon.
+  const zusatz = (s: SpielerRoh) => VERWALTUNGS_SCHLUESSEL.filter((k) => k in s).length;
+  const passt =
+    typeof r.verwaltung === "boolean" &&
+    (r.verwaltung
+      ? r.spieler.every((s) => zusatz(s) === VERWALTUNGS_SCHLUESSEL.length) && r.teams.every((t) => "anzahl" in t)
+      : r.spieler.every((s) => zusatz(s) === 0) && r.teams.every((t) => !("anzahl" in t)));
+  if (!passt) return fehlschlag("technisch", LISTE_UNSTIMMIG, { wiederholbar: true });
+
+  const basis = { jahrgaenge: r.jahrgaenge, gesamt: r.gesamt, ohneTeam: r.ohne_team };
+  const zeilen = nachSpielerName(r.spieler);
+  const mitglied = (s: SpielerRoh): VereinSpielerMitglied => ({
+    id: s.id,
+    vorname: s.vorname,
+    nachname: s.nachname,
+    jahrgang: s.jahrgang,
+    teams: s.teams.map((t) => ({ id: t.id, name: t.name })).sort(nachName),
+  });
+  const teams = [...r.teams].sort(nachName);
+  if (!r.verwaltung)
+    return ok({ ...basis, verwaltung: false, spieler: zeilen.map(mitglied), teams: teams.map((t) => ({ id: t.id, name: t.name })) });
   return ok({
-    spieler: nachSpielerName(r.spieler).map(({ link_bezogen, schnuppern, js, ...s }) => ({
-      ...s,
-      teams: [...s.teams].sort(nachName),
-      ...(link_bezogen !== undefined
-        ? {
-            js: js ?? null,
-            linkBezogen: link_bezogen,
-            schnuppern: schnuppern ? { teamId: schnuppern.team_id, anzahl: schnuppern.anzahl, besucht: schnuppern.besucht } : null,
-          }
-        : {}),
+    ...basis,
+    verwaltung: true,
+    spieler: zeilen.map((s) => ({
+      ...mitglied(s),
+      js: s.js ?? null,
+      linkBezogen: s.link_bezogen === true,
+      schnuppern: s.schnuppern ? { teamId: s.schnuppern.team_id, anzahl: s.schnuppern.anzahl, besucht: s.schnuppern.besucht } : null,
     })),
-    teams: [...r.teams].sort(nachName),
-    jahrgaenge: r.jahrgaenge,
-    gesamt: r.gesamt,
-    ohneTeam: r.ohne_team,
+    // `anzahl` steht bei jedem Team der Verwaltung (oben geprüft).
+    teams: teams.map((t) => ({ id: t.id, name: t.name, anzahl: t.anzahl as number })),
   });
 }
 

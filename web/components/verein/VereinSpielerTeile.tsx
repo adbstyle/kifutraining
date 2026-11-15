@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { SearchX, Users } from "lucide-react";
 import Link from "next/link";
 import { ButtonLink, Leerzustand, Lozenge } from "@/components/ui";
@@ -10,9 +10,9 @@ import {
   SPIELER_KEINE_TREFFER,
   SPIELER_OHNE_TEAM,
   spielerAngezeigtText,
-  spielerKopfText,
+  spielerKopfTeile,
 } from "@/lib/verein";
-import { SPIELER_SEITE } from "@/lib/verein-spielerliste";
+import { eingrenzungGesetzt, SPIELER_SEITE, type SpielerEingrenzung } from "@/lib/verein-spielerliste";
 
 /* Die Teile, die die Spielerliste des Vereins für Mitglieder
    (`VereinSpielerAnsicht`) und Verwaltung (`VereinSpielerListe`) teilt
@@ -20,15 +20,25 @@ import { SPIELER_SEITE } from "@/lib/verein-spielerliste";
    Zeile, der Fuss «x von y angezeigt», die zwei Leerzustände. Nichts davon
    bedient etwas der Verwaltung; die Aktionen stehen in der Verwaltungsliste. */
 
-/** Kopfzeile: «Spieler:innen» mit den Zahlen des ganzen Vereins; `aktion` rechts. */
+/** Kopfzeile: «Spieler:innen» mit den Zahlen des ganzen Vereins; `aktion`
+ *  rechts, immer einzeilig. Schmal bricht die Zeile nur zwischen den Teilen
+ *  («78 Spieler:innen» · «23 ohne Team» · «höchstens 1000 je Verein»): Jeder
+ *  Teil bleibt beisammen, der Punkt steht vor dem Teil, den er einleitet. */
 export function SpielerKopf({ gesamt, ohneTeam, aktion }: { gesamt: number; ohneTeam: number; aktion?: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <h2 className="type-title-large text-on-surface">
+      <h2 className="type-title-large min-w-0 text-on-surface">
         Spieler:innen
-        <span className="type-label-small ml-2 text-on-surface-mittel">{spielerKopfText(gesamt, ohneTeam)}</span>
+        <span className="type-label-small ml-2 text-on-surface-mittel">
+          {spielerKopfTeile(gesamt, ohneTeam).map((teil, i) => (
+            <Fragment key={teil}>
+              {i > 0 && " "}
+              <span className="whitespace-nowrap">{i > 0 ? `· ${teil}` : teil}</span>
+            </Fragment>
+          ))}
+        </span>
       </h2>
-      {aktion}
+      {aktion && <div className="shrink-0 whitespace-nowrap">{aktion}</div>}
     </div>
   );
 }
@@ -48,11 +58,24 @@ export function SpielerTeams({ teams, children }: { teams: readonly { id: string
   );
 }
 
-/** Unter der Liste: wie viele stehen, und der Weg zu mehr. Nur, wenn mehr
- *  Treffer da sind als eine Seite — Live-Region, damit die Sprachausgabe das
- *  Nachladen meldet. */
-export function SpielerFuss({ angezeigt, treffer, weiterHref }: { angezeigt: number; treffer: number; weiterHref: string | null }) {
-  if (treffer <= SPIELER_SEITE) return null;
+/** Unter der Liste: wie viele stehen, und der Weg zu mehr. Bei gesetzter
+ *  Suche oder Eingrenzung immer (der Kopf zählt den ganzen Verein, hier steht,
+ *  wie viele es getroffen hat), sonst nur, wenn mehr da sind als eine Seite;
+ *  ohne Treffer sagt es der Leerzustand. «Weitere anzeigen» nur, solange
+ *  nicht alle stehen. Live-Region, damit die Sprachausgabe Nachladen und
+ *  neue Trefferzahl meldet. */
+export function SpielerFuss({
+  angezeigt,
+  treffer,
+  eingrenzung,
+  weiterHref,
+}: {
+  angezeigt: number;
+  treffer: number;
+  eingrenzung: SpielerEingrenzung;
+  weiterHref: string | null;
+}) {
+  if (treffer === 0 || (!eingrenzungGesetzt(eingrenzung) && treffer <= SPIELER_SEITE)) return null;
   return (
     <p role="status" className="type-body-small mt-3 text-on-surface-mittel">
       {spielerAngezeigtText(angezeigt, treffer)}

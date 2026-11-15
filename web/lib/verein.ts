@@ -272,10 +272,11 @@ export function spielerLoeschenSaetze(vorname: string, teams: string[]): { zuord
 
 const spielerZahlWort = (n: number) => (n === 1 ? "1 Spieler:in" : `${n} Spieler:innen`);
 
-/** Die Kopfzeile von `/verein/spieler`: «144 Spieler:innen · 2 ohne Team ·
- *  höchstens 1000 je Verein». */
-export function spielerKopfText(spieler: number, ohneTeam: number): string {
-  return `${spielerZahlWort(spieler)}${ohneTeam > 0 ? ` · ${ohneTeam} ${SPIELER_OHNE_TEAM}` : ""} · höchstens ${VEREIN_SPIELER_MAX} je Verein`;
+/** Die Teile der Kopfzeile von `/verein/spieler`, die zusammen «144
+ *  Spieler:innen · 2 ohne Team · höchstens 1000 je Verein» lauten; die
+ *  Oberfläche bricht nur zwischen ihnen um. «· 0 ohne Team» entfällt. */
+export function spielerKopfTeile(spieler: number, ohneTeam: number): string[] {
+  return [spielerZahlWort(spieler), ...(ohneTeam > 0 ? [`${ohneTeam} ${SPIELER_OHNE_TEAM}`] : []), `höchstens ${VEREIN_SPIELER_MAX} je Verein`];
 }
 
 /** Die Kopfzeile von `/verein` für die Verwaltung: «10 Teams · 144

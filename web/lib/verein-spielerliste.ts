@@ -31,18 +31,25 @@ export type SpielerEingrenzung = {
 };
 
 /** Was die Antwort der Datenebene über den Bestand des Vereins weiss. */
-export type SpielerBestand = { teams: readonly { id: string }[]; jahrgaenge: readonly number[] };
+type SpielerBestand = { teams: readonly { id: string }[]; jahrgaenge: readonly number[] };
 
-/** Die Eingrenzung aus der Adresse: die Suche so bereinigt, wie die Datenebene
- *  sie bereinigt (NFC, Leerraum zu einem Leerzeichen, Rand weg), damit im
- *  Suchfeld genau steht, wonach gesucht wird — ungekappt: Eine Eingabe, die
- *  länger ist als jeder Name, trifft eben niemanden; Teams nur als Kennung oder «ohne»;
+/** Die Suche so bereinigt, wie die Datenebene sie bereinigt
+ *  (`spieler_text_bereinigt`: NFC, Leerraum zu einem Leerzeichen, Rand weg) —
+ *  ungekappt: Eine Eingabe, die länger ist als jeder Name, trifft eben
+ *  niemanden. Dieselbe Bereinigung schreibt das Suchfeld in die Adresse und
+ *  erkennt daran das Echo der Seite (`FilterSuche`, `bereinige`). */
+export function bereinigeSuche(q: string): string {
+  return q.normalize("NFC").replace(LEERRAUM, " ").replace(/^ | $/g, "");
+}
+
+/** Die Eingrenzung aus der Adresse: die Suche bereinigt (`bereinigeSuche`),
+ *  damit im Suchfeld genau steht, wonach gesucht wird; Teams nur als Kennung oder «ohne»;
  *  Jahrgänge nur als vierstellige Zahl ab `JAHRGANG_MIN`; jeder Wert höchstens einmal. */
 export function liesSpielerEingrenzung(sp: AdressParameter): SpielerEingrenzung {
   const q = Array.isArray(sp.q) ? sp.q[0] : sp.q;
   const teams = liesListe(sp.team);
   return {
-    suche: (q ?? "").normalize("NFC").replace(LEERRAUM, " ").replace(/^ | $/g, ""),
+    suche: bereinigeSuche(q ?? ""),
     teamIds: [...new Set(teams.filter(istUuid))],
     ohneTeam: teams.includes(OHNE_TEAM_WERT),
     jahrgaenge: [...new Set(liesListe(sp.jahrgang).filter((j) => /^\d{4}$/.test(j)).map(Number))]
@@ -53,7 +60,8 @@ export function liesSpielerEingrenzung(sp: AdressParameter): SpielerEingrenzung 
 
 /** Wirft weg, was es im Verein nicht gibt: Teams, die nicht zu ihm gehören,
  *  und Jahrgänge, die niemand trägt. Sie träfen nie und stünden doch als
- *  Filter da, den die Leiste nicht zeigt. */
+ *  Filter da, den die Leiste nicht zeigt (die Seite leitet dann auf
+ *  `bereinigteAdresse` weiter). */
 export function bereinigeEingrenzung(e: SpielerEingrenzung, bestand: SpielerBestand): SpielerEingrenzung {
   const teams = new Set(bestand.teams.map((t) => t.id));
   const jahre = new Set(bestand.jahrgaenge);
@@ -64,13 +72,28 @@ export function bereinigeEingrenzung(e: SpielerEingrenzung, bestand: SpielerBest
   };
 }
 
-export function gleicheEingrenzung(a: SpielerEingrenzung, b: SpielerEingrenzung): boolean {
-  return (
-    a.suche === b.suche &&
-    a.ohneTeam === b.ohneTeam &&
-    a.teamIds.join() === b.teamIds.join() &&
-    a.jahrgaenge.join() === b.jahrgaenge.join()
-  );
+/** Die Adresse, die dieselbe Eingrenzung sagt wie `e` — oder `null`, wenn
+ *  `sp` das schon tut. Verglichen werden `?team=` und `?jahrgang=` mit ihrer
+ *  Schreibweise aus der Leiste (Kennungen in der Folge der Adresse,
+ *  Jahrgänge aufsteigend, jeder Wert einmal); was davon abweicht —
+ *  Unbrauchbares, Doppeltes, im Verein Unbekanntes —, verschwindet mit einer
+ *  Weiterleitung, damit Adresse, Leiste und Abfrage dasselbe sagen und
+ *  «Weitere anzeigen» oder ein Filterwechsel nichts Altes mitschleppen.
+ *  Alles übrige (`q`, `anzahl`, …) reist unverändert mit. */
+export function bereinigteAdresse(pfad: string, sp: AdressParameter, e: SpielerEingrenzung): string | null {
+  const roh = (v: string | string[] | undefined) => (Array.isArray(v) ? v.join(",") : v ?? "");
+  const team = teamFilterWerte(e).join(",");
+  const jahrgang = e.jahrgaenge.join(",");
+  if (roh(sp.team) === team && roh(sp.jahrgang) === jahrgang) return null;
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(sp)) {
+    if (k === "team" || k === "jahrgang" || v === undefined) continue;
+    for (const w of Array.isArray(v) ? v : [v]) p.append(k, w);
+  }
+  if (team) p.set("team", team);
+  if (jahrgang) p.set("jahrgang", jahrgang);
+  const qs = p.toString();
+  return qs ? `${pfad}?${qs}` : pfad;
 }
 
 /** Ist etwas gesetzt — Suche oder irgendeine Eingrenzung? */

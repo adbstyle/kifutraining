@@ -310,7 +310,7 @@ import {
   spielerAendernAbgewiesenText,
   spielerErfassenAbgewiesenText,
   spielerErfassenEinleitung,
-  spielerKopfText,
+  spielerKopfTeile,
   spielerLoeschenSaetze,
   spielerLoeschenTitel,
   spielerVonText,
@@ -340,7 +340,8 @@ import {
   SPIELER_SEITE,
   bereinigeEingrenzung,
   eingrenzungGesetzt,
-  gleicheEingrenzung,
+  bereinigteAdresse,
+  bereinigeSuche,
   liesSpielerAnzahl,
   liesSpielerEingrenzung,
   teamFilterWerte,
@@ -2458,9 +2459,9 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
   assert.equal(spielerLoeschenSaetze("Lina", ["A", "B", "C"]).zuordnung, "Lina ist den Teams A, B und C zugeordnet und verschwindet aus allen.");
   assert.equal(spielerLoeschenSaetze("Lina", []).zuordnung, "Lina ist keinem Team zugeordnet.");
   // Kopfzeilen: Einzahl, ohne Team nur wenn es welche gibt, nie ein negativer Rest.
-  assert.equal(spielerKopfText(144, 2), "144 Spieler:innen · 2 ohne Team · höchstens 1000 je Verein");
-  assert.equal(spielerKopfText(1, 0), "1 Spieler:in · höchstens 1000 je Verein");
-  assert.equal(spielerKopfText(1001, 1), "1001 Spieler:innen · 1 ohne Team · höchstens 1000 je Verein");
+  assert.deepEqual(spielerKopfTeile(144, 2), ["144 Spieler:innen", "2 ohne Team", "höchstens 1000 je Verein"]);
+  assert.deepEqual(spielerKopfTeile(1, 0), ["1 Spieler:in", "höchstens 1000 je Verein"]);
+  assert.deepEqual(spielerKopfTeile(1001, 1), ["1001 Spieler:innen", "1 ohne Team", "höchstens 1000 je Verein"]);
   assert.equal(vereinKopfText(10, 144), "10 Teams · 144 Spieler:innen · höchstens 30 Teams");
   assert.equal(vereinKopfText(1, 1), "1 Team · 1 Spieler:in · höchstens 30 Teams");
   assert.equal(vereinKopfText(10), "10 Teams · höchstens 30 Teams", "ohne Recht keine Zahl der Spieler:innen");
@@ -3165,9 +3166,23 @@ pruefe("Adress-Parameter der Spieler:innen des Vereins (#580 AK 6–10): lesen, 
   const bestand = { teams: [{ id: ea }], jahrgaenge: [2015, 2016] };
   const sauber = bereinigeEingrenzung(e, bestand);
   assert.deepEqual(sauber, { suche: "lina beispiel", teamIds: [ea], ohneTeam: true, jahrgaenge: [2016] });
-  assert.equal(gleicheEingrenzung(e, sauber), false);
-  assert.equal(gleicheEingrenzung(sauber, bereinigeEingrenzung(sauber, bestand)), true, "Bereinigtes bleibt");
-  assert.equal(gleicheEingrenzung(liesSpielerEingrenzung({}), liesSpielerEingrenzung({ q: " " })), true);
+  assert.deepEqual(bereinigeEingrenzung(sauber, bestand), sauber, "Bereinigtes bleibt");
+  // Die Adresse sagt danach dasselbe wie Leiste und Abfrage: einmal weiterleiten, q und anzahl reisen mit.
+  const P = "/verein/spieler";
+  const sp = { q: "  lina   beispiel ", team: `${ohne()},${ea},${eb},${ea}`, jahrgang: "2017,2016,2017", anzahl: "100" };
+  const ziel = bereinigteAdresse(P, sp, sauber);
+  assert.equal(ziel, `${P}?q=++lina+++beispiel+&anzahl=100&team=${ohne()}%2C${ea}&jahrgang=2016`);
+  const zurueck = Object.fromEntries(new URL(ziel!, "http://x").searchParams);
+  assert.equal(bereinigteAdresse(P, zurueck, bereinigeEingrenzung(liesSpielerEingrenzung(zurueck), bestand)), null, "die bereinigte Adresse bleibt stehen");
+  for (const roh of [{}, { q: "x" }, { team: `${ohne()},${ea}` }, { team: [ohne(), ea] }, { jahrgang: "2015,2016" }])
+    assert.equal(bereinigteAdresse(P, roh, bereinigeEingrenzung(liesSpielerEingrenzung(roh), bestand)), null, JSON.stringify(roh));
+  assert.equal(bereinigteAdresse(P, { team: "abc", jahrgang: "1999" }, liesSpielerEingrenzung({})), P, "nichts übrig: die nackte Seite");
+  assert.equal(bereinigteAdresse(P, { team: eb }, bereinigeEingrenzung(liesSpielerEingrenzung({ team: eb }), bestand)), P, "im Verein unbekannt");
+  assert.equal(bereinigteAdresse(P, { jahrgang: "2016,2015" }, liesSpielerEingrenzung({ jahrgang: "2016,2015" })), `${P}?jahrgang=2015%2C2016`, "in der Schreibweise der Leiste");
+  // Die Suche: dieselbe Bereinigung für Adresse, Echo im Suchfeld und Datenebene.
+  assert.equal(bereinigeSuche("  Lea   M "), "Lea M");
+  assert.equal(bereinigeSuche("Lea "), "Lea", "Echo von «Lea »");
+  assert.equal(bereinigeSuche("Zoë"), "Zoë");
   // Anzeige in Schritten: nie unter einer Seite, nie Müll.
   assert.equal(liesSpielerAnzahl({ anzahl: "100" }), 100);
   for (const a of ["-5", "0", "abc", "", undefined]) assert.equal(liesSpielerAnzahl({ anzahl: a }), SPIELER_SEITE, String(a));
@@ -3203,14 +3218,16 @@ pruefe("Spieler:innen des Vereins (#580): für alle Mitglieder, Mitglieder-Form 
   const kern = lies("lib/kern/verein.ts");
   const mitglied = kern.slice(kern.indexOf("export type VereinSpielerMitglied"), kern.indexOf("export type VereinSpieler ="));
   assert.ok(mitglied.length > 0 && !/\b(js|linkBezogen|schnuppern|anzahl)\b/.test(mitglied.replace(/\/\*\*[\s\S]*?\*\//g, "")), "Mitglieder-Form ohne Verwaltungsfelder");
-  assert.match(kern, /\.\.\.\(link_bezogen !== undefined/, "Verwaltungsfelder nur bei vorhandenem Schlüssel, nie als undefined");
+  assert.match(kern, /if \(!passt\) return fehlschlag\("technisch"/, "Form gegen die Rolle der Antwort geprüft, sonst ein Fehler");
+  assert.match(kern, /if \(!r\.verwaltung\)\s+return ok\(\{ \.\.\.basis, verwaltung: false, spieler: zeilen\.map\(mitglied\)/, "Mitglieder-Zeilen Feld für Feld, nie ein undefined-Schlüssel");
   // Die lesende Sicht kennt weder Aktionen noch Verwaltungsbausteine.
   const ansicht = lies("components/verein/VereinSpielerAnsicht.tsx").replace(/\/\*[\s\S]*?\*\//g, "");
   assert.ok(!/actions\/|VereinSpieler(Formular|LinkDialog|Loeschen|Liste)|OverflowMenu|Checkbox|AuswahlLeiste|"use client"/.test(ansicht), "nur lesen");
-  // Die Sicht der Mitglieder bekommt nur die Mitglieder-Form (alsMitglied), die Verwaltungssicht nur, wenn Lage und Antwort sie tragen.
-  assert.match(seite, /<VereinSpielerAnsicht \{\.\.\.mitglied\(liste, anzahl\)\}/);
-  assert.match(seite, /const m = alsMitglied\(liste\);/);
-  assert.match(seite, /verein\.istVerwaltung \? alsVerwaltung\(liste\) : null/);
+  // Die Sicht wählt allein `verwaltung` aus der Antwort der Liste (eine Quelle), nicht die Vereinslage.
+  assert.match(seite, /\{liste\.verwaltung \? \(/);
+  assert.ok(!/istVerwaltung/.test(seite), "keine zweite Quelle für die Rolle");
+  assert.match(seite, /if \(sauber\) redirect\(sauber\);/, "unbekannte Eingrenzung: einmal weiterleiten, nicht zweimal abfragen");
+  assert.equal(seite.match(/ladeVereinSpielerliste\(/g)?.length, 1, "ein Abruf je Aufruf");
   // «ohne Team» steht als Plakette in beiden Sichten auch schmal (AK 4; #582 AK 8): Die Teams-Zelle ist nie versteckt.
   for (const d of ["components/verein/VereinSpielerAnsicht.tsx", "components/verein/VereinSpielerListe.tsx"])
     assert.match(lies(d), /<span className="mt-1 block min-w-0 sm:mt-0">\s*<SpielerTeams /, d);
