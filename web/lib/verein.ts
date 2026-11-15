@@ -275,7 +275,7 @@ const spielerZahlWort = (n: number) => (n === 1 ? "1 Spieler:in" : `${n} Spieler
 /** Die Kopfzeile von `/verein/spieler`: «144 Spieler:innen · 2 ohne Team ·
  *  höchstens 1000 je Verein». */
 export function spielerKopfText(spieler: number, ohneTeam: number): string {
-  return `${spielerZahlWort(spieler)}${ohneTeam > 0 ? ` · ${ohneTeam} ohne Team` : ""} · höchstens ${VEREIN_SPIELER_MAX} je Verein`;
+  return `${spielerZahlWort(spieler)}${ohneTeam > 0 ? ` · ${ohneTeam} ${SPIELER_OHNE_TEAM}` : ""} · höchstens ${VEREIN_SPIELER_MAX} je Verein`;
 }
 
 /** Die Kopfzeile von `/verein` für die Verwaltung: «10 Teams · 144
@@ -292,8 +292,40 @@ export function spielerVonText(n: number): string {
   return n <= VEREIN_SPIELER_MAX ? `${n} von ${VEREIN_SPIELER_MAX}` : `${n} (höchstens ${VEREIN_SPIELER_MAX} Spieler:innen)`;
 }
 
-/** Der Leerzustand von `/verein/spieler`, solange der Verein niemanden führt. */
+/** Der Leerzustand von `/verein/spieler` für die Verwaltung, solange der Verein niemanden führt. */
 export const SPIELER_BESTAND_LEER = {
   titel: "Noch keine Spieler:innen",
   text: "Der Verein führt noch keine Spieler:innen. Erfasse die erste oder nimm sie in der Spielerliste eines Teams auf.",
 } as const;
+
+/** Derselbe Leerzustand für ein Mitglied ohne Verwaltung (Story #580 AK 11):
+ *  Der Titel ist `SPIELER_BESTAND_LEER.titel`, erfassen kann es hier nicht. */
+export const SPIELER_BESTAND_LEER_MITGLIED = "Der Verein führt noch keine Spieler:innen.";
+
+/** Die Plakette einer Spieler:in ohne Team und ihr Wort im Kopf der Liste. */
+export const SPIELER_OHNE_TEAM = "ohne Team";
+
+/** Suche und Eingrenzung ergeben niemanden (Story #580 AK 11). */
+export const SPIELER_KEINE_TREFFER = {
+  titel: "Keine Spieler:in gefunden",
+  text: "Ändere die Suche oder die Eingrenzung.",
+} as const;
+
+/** Der Hinweis über der Liste für ein Mitglied ohne Verwaltung (Story #580 AK 5). */
+export const SPIELER_ZUORDNUNG_HINWEIS = "Spieler:innen ordnet die Vereinsverwaltung einem Team zu.";
+
+/** Die Beschriftungen der Filterleiste von `/verein/spieler` (Story #580 AK 6–8). */
+export const SPIELER_FILTER = {
+  suche: "Spieler:innen durchsuchen",
+  team: "Team",
+  ohneTeam: "Ohne Team",
+  teamsGruppe: "Teams",
+  jahrgang: "Jahrgang",
+  zuruecksetzen: "Zurücksetzen",
+  weiter: "Weitere anzeigen",
+} as const;
+
+/** Unter der Liste, wenn sie in Schritten steht: «50 von 144 angezeigt». */
+export function spielerAngezeigtText(angezeigt: number, treffer: number): string {
+  return `${angezeigt} von ${treffer} angezeigt`;
+}

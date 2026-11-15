@@ -11,11 +11,10 @@ import {
 } from "@/lib/queries/exercises";
 import { alsEinordnungsFilter, einordnungNachSpalten } from "@/lib/filter-optionen";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { liesListe, liesPositiveZahl, mitAnzahl, type AdressParameter } from "@/lib/adresse";
 
 // Server-only Datenzugriff (anon-Key + RLS); kein Prerender ohne DB.
 export const dynamic = "force-dynamic";
-
-type SearchParams = Record<string, string | string[] | undefined>;
 
 // Der Katalog zeigt die Kacheln seitenweise: Jede Kachel trägt ihr Diagramm als
 // serverseitig gezeichnetes SVG, und der ganze Bestand auf einmal kostete pro
@@ -24,34 +23,10 @@ type SearchParams = Record<string, string | string[] | undefined>;
 // (lib/use-adress-filter.ts).
 const SEITE = 24;
 
-function list(v: string | string[] | undefined): string[] {
-  if (!v) return [];
-  return (Array.isArray(v) ? v.join(",") : v).split(",").filter(Boolean);
-}
-
-function num(v: string | string[] | undefined): number | undefined {
-  const s = Array.isArray(v) ? v[0] : v;
-  const n = s ? Number.parseInt(s, 10) : NaN;
-  return Number.isFinite(n) && n > 0 ? n : undefined;
-}
-
-/** Dieselbe Adresse mit allen gesetzten Filtern, nur `anzahl` neu. Alles
- *  ausser `anzahl` reist mit, damit ein künftiger Filter nicht still
- *  verlorengeht; Hinweise wie `?deleted` entfernt der Flash ohnehin selbst. */
-function mitAnzahl(sp: SearchParams, anzahl: number): string {
-  const p = new URLSearchParams();
-  for (const [k, v] of Object.entries(sp)) {
-    if (k === "anzahl" || v === undefined) continue;
-    for (const w of Array.isArray(v) ? v : [v]) p.append(k, w);
-  }
-  p.set("anzahl", String(anzahl));
-  return `/?${p}`;
-}
-
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<SearchParams>;
+  searchParams: Promise<AdressParameter>;
 }) {
   const sp = await searchParams;
 
@@ -69,12 +44,12 @@ export default async function Home({
     // unsichtbarer, aber wirksamer Filter stehenzubleiben (Story #129 PC 3).
     // Den früheren `?hkat=`-Parameter liest der Katalog gar nicht mehr: die
     // Hauptteilkategorie wird ausschliesslich über diesen Filter gesteuert.
-    teil: alsEinordnungsFilter(list(sp.teil)),
-    kat: list(sp.kat),
-    feld: list(sp.feld),
-    form: list(sp.form),
-    typ: list(sp.typ),
-    kinder: num(sp.kinder),
+    teil: alsEinordnungsFilter(liesListe(sp.teil)),
+    kat: liesListe(sp.kat),
+    feld: liesListe(sp.feld),
+    form: liesListe(sp.form),
+    typ: liesListe(sp.typ),
+    kinder: liesPositiveZahl(sp.kinder),
     q: typeof sp.q === "string" ? sp.q : undefined,
     fav: sp.fav === "1",
     mine: !!user && sp.mine === "1",
@@ -87,7 +62,7 @@ export default async function Home({
     einordnung: einordnungNachSpalten(teil),
   };
 
-  const anzahl = Math.max(SEITE, num(sp.anzahl) ?? 0);
+  const anzahl = Math.max(SEITE, liesPositiveZahl(sp.anzahl) ?? 0);
 
   let rows: Awaited<ReturnType<typeof getExercises>> | null = null;
   let error: string | null = null;
@@ -176,7 +151,7 @@ export default async function Home({
                   </p>
                   {rows.length > anzahl && (
                     <ButtonLink
-                      href={mitAnzahl(sp, anzahl + SEITE)}
+                      href={mitAnzahl("/", sp, anzahl + SEITE)}
                       scroll={false}
                       variant="outlined"
                     >

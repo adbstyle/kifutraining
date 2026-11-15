@@ -2,14 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Link2, Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { Link2, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
 import {
   AuswahlLeiste,
   AuswahlListe,
   Button,
   Checkbox,
   Dialog,
-  Leerzustand,
   Lozenge,
   OverflowMenu,
   SectionMessage,
@@ -18,28 +17,32 @@ import {
 } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { ordneSpielerZuAktion } from "@/lib/actions/verein";
-import { TeamLozenges } from "@/components/team/TeamLozenges";
 import type { VereinSpieler, VereinTeam } from "@/lib/kern/verein";
 import { SPIELER_MAX, spielerName } from "@/lib/spieler";
 import {
   SCHNUPPERN_ZUORDNEN_HINWEIS,
   SCHNUPPERN_ZUORDNEN_LABEL,
-  SPIELER_BESTAND_LEER,
   schnuppernZugeordnetText,
-  spielerKopfText,
   zielWeg,
   zugeordnetText,
   zuordnenEinleitung,
 } from "@/lib/verein";
 import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
+import type { SpielerEingrenzung } from "@/lib/verein-spielerliste";
+import { VereinSpielerFilter } from "./VereinSpielerFilter";
 import { VereinSpielerFormular } from "./VereinSpielerFormular";
 import { VereinSpielerLinkDialog } from "./VereinSpielerLinkDialog";
 import { VereinSpielerLoeschen } from "./VereinSpielerLoeschen";
+import { SpielerFuss, SpielerKopf, SpielerLeer, SpielerTeams } from "./VereinSpielerTeile";
 
 /* Der Spielerbestand des Vereins (Epic Vereine #575): alle Spieler:innen mit
    Vorname, Nachname, Jahrgang, ihren Teams, J+S-Nummer und dem Stand ihres
-   privaten Links — auch die ohne Team. Nur die Vereinsverwaltung sieht sie;
-   Lesesicht für Mitglieder, Suche und Filter bringt Story #580.
+   privaten Links — auch die ohne Team. Nur die Vereinsverwaltung sieht diese
+   Sicht; Mitglieder haben ihre lesende (`VereinSpielerAnsicht`). Suche und
+   Eingrenzung (Story #580) laufen auf dem Server: Die Liste bekommt die
+   Treffer und zeigt davon eine Seite; Auswahl und Aktionen gelten für die
+   Zeilen, die stehen, und die Auswahl leert sich, wenn Suche oder
+   Eingrenzung wechseln.
 
    Je Zeile liegen die Aktionen im ⋮-Menü (Story #582): Ändern, Privater Link,
    Einem Team zuordnen und — zweistufig, mit Bestätigung — Löschen. Über der
@@ -61,12 +64,28 @@ export function VereinSpielerListe({
   vereinId,
   vereinName,
   spieler,
+  treffer,
+  gesamt,
+  ohneTeam,
   teams,
+  jahrgaenge,
+  eingrenzung,
+  weiterHref,
+  pfad,
 }: {
   vereinId: string;
   vereinName: string;
+  /** Die Zeilen, die stehen (eine Seite oder mehr); `treffer` zählt alle. */
   spieler: VereinSpieler[];
+  treffer: number;
+  /** Alle Spieler:innen des Vereins und davon die ohne Team, ungefiltert. */
+  gesamt: number;
+  ohneTeam: number;
   teams: VereinTeam[];
+  jahrgaenge: number[];
+  eingrenzung: SpielerEingrenzung;
+  weiterHref: string | null;
+  pfad: string;
 }) {
   const router = useRouter();
   const melde = useSnackbar();
@@ -82,9 +101,17 @@ export function VereinSpielerListe({
   const [link, setLink] = useState<VereinSpieler | null>(null);
   const [loeschen, setLoeschen] = useState<VereinSpieler | null>(null);
 
-  // Nur, wer noch im Bestand steht, bleibt ausgewählt.
+  // Andere Suche, andere Eingrenzung: Die Auswahl gilt nur für die Zeilen,
+  // die man sieht, und beginnt von vorn.
+  const schluessel = JSON.stringify(eingrenzung);
+  const [schluesselVorher, setSchluesselVorher] = useState(schluessel);
+  if (schluessel !== schluesselVorher) {
+    setSchluesselVorher(schluessel);
+    setAuswahl([]);
+  }
+
+  // Nur, wer noch dasteht, bleibt ausgewählt.
   const gewaehlt = auswahl.filter((id) => spieler.some((s) => s.id === id));
-  const ohneTeam = spieler.filter((s) => s.teams.length === 0).length;
 
   function oeffnen(wer: VereinSpieler[]) {
     setZuordnen(wer);
@@ -120,16 +147,16 @@ export function VereinSpielerListe({
   }
 
   const kopf = (
-    <div className="flex items-center justify-between gap-3">
-      <h2 className="type-title-large text-on-surface">
-        Spieler:innen
-        <span className="type-label-small ml-2 text-on-surface-mittel">{spielerKopfText(spieler.length, ohneTeam)}</span>
-      </h2>
-      <Button variant="outlined" aria-haspopup="dialog" onClick={() => setFormular({ spieler: null })}>
-        <Plus size={18} strokeWidth={2} aria-hidden />
-        Spieler:in erfassen
-      </Button>
-    </div>
+    <SpielerKopf
+      gesamt={gesamt}
+      ohneTeam={ohneTeam}
+      aktion={
+        <Button variant="outlined" aria-haspopup="dialog" onClick={() => setFormular({ spieler: null })}>
+          <Plus size={18} strokeWidth={2} aria-hidden />
+          Spieler:in erfassen
+        </Button>
+      }
+    />
   );
 
   const dialoge = (
@@ -140,83 +167,68 @@ export function VereinSpielerListe({
     </>
   );
 
-  if (spieler.length === 0)
-    return (
-      <>
-        {kopf}
-        <div className="mt-4">
-          <Leerzustand icon={Users} titel={SPIELER_BESTAND_LEER.titel}>
-            {SPIELER_BESTAND_LEER.text}
-          </Leerzustand>
-        </div>
-        {dialoge}
-      </>
-    );
-
   return (
     <>
       {kopf}
-      <Tabelle
-        className="mt-4"
-        spalten="sm:grid-cols-[1.5rem_minmax(0,1fr)_minmax(0,1fr)_4.5rem_minmax(0,1.5fr)_7rem_6rem_3rem]"
-        kopf={["", "Vorname", "Nachname", "Jahrgang", "Teams", "J+S-Nummer", "Privater Link", ""]}
-      >
-        {spieler.map((s) => (
-          <TabellenZeile key={s.id}>
-            <Checkbox
-              label={<span className="sr-only">{`${spielerName(s)} auswählen`}</span>}
-              checked={gewaehlt.includes(s.id)}
-              onChange={(e) => {
-                const an = e.target.checked;
-                setAuswahl((a) => (an ? [...a.filter((id) => id !== s.id), s.id] : a.filter((id) => id !== s.id)));
-              }}
-            />
-            <span className="min-w-0 flex-1 sm:contents">
-              <span className="type-body-medium block truncate text-on-surface">
-                {s.vorname}
-                <span className="sm:hidden"> {s.nachname}</span>
-              </span>
-              <span className="type-body-medium hidden truncate text-on-surface sm:block">{s.nachname}</span>
-              <span className="type-body-small block text-on-surface-mittel sm:hidden">
-                {s.jahrgang}
-                {s.js && ` · J+S ${s.js}`}
-                {s.teams.length === 0 && " · ohne Team"}
-                {` · Link ${s.linkBezogen ? "bezogen" : "offen"}`}
-              </span>
-              <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.jahrgang}</span>
-              <span className="hidden min-w-0 sm:block">
-                {s.teams.length > 0 ? (
-                  <span className="inline-flex flex-wrap gap-1">
-                    <TeamLozenges namen={s.teams.map((t) => t.name)} ids={s.teams.map((t) => t.id)} />
-                    {s.schnuppern && <SchnupperLozenge stand={s.schnuppern} />}
-                  </span>
-                ) : (
-                  <span className="type-body-medium text-on-surface-tief">ohne Team</span>
-                )}
-              </span>
-              <span className="mt-1 flex flex-wrap gap-1 sm:hidden">
-                <TeamLozenges namen={s.teams.map((t) => t.name)} ids={s.teams.map((t) => t.id)} />
-                {s.schnuppern && <SchnupperLozenge stand={s.schnuppern} />}
-              </span>
-              <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.js ?? "–"}</span>
-              <span className="hidden sm:block">
-                <Lozenge appearance={s.linkBezogen ? "success" : "neutral"}>{s.linkBezogen ? "bezogen" : "offen"}</Lozenge>
-              </span>
-            </span>
-            <span className="flex justify-end">
-              <OverflowMenu
-                label={`Weitere Aktionen zu ${spielerName(s)}`}
-                items={[
-                  { label: "Ändern", icon: Pencil, onSelect: () => setFormular({ spieler: s }) },
-                  { label: "Privater Link", icon: Link2, onSelect: () => setLink(s) },
-                  { label: "Einem Team zuordnen", icon: UserPlus, onSelect: () => oeffnen([s]) },
-                  { label: "Löschen", icon: Trash2, danger: true, trenner: true, onSelect: () => setLoeschen(s) },
-                ]}
+      {/* Die Leiste steht an derselben Stelle, ob Treffer da sind oder nicht:
+          Wer tippt, behält den Fokus im Suchfeld. */}
+      {gesamt > 0 && <VereinSpielerFilter eingrenzung={eingrenzung} teams={teams} jahrgaenge={jahrgaenge} />}
+      {treffer === 0 ? (
+        <div className="mt-4">
+          <SpielerLeer vereinLeer={gesamt === 0} verwaltung pfad={pfad} />
+        </div>
+      ) : (
+        <Tabelle
+          className="mt-4"
+          spalten="sm:grid-cols-[1.5rem_minmax(0,1fr)_minmax(0,1fr)_4.5rem_minmax(0,1.5fr)_7rem_6rem_3rem]"
+          kopf={["", "Vorname", "Nachname", "Jahrgang", "Teams", "J+S-Nummer", "Privater Link", ""]}
+        >
+          {spieler.map((s) => (
+            <TabellenZeile key={s.id}>
+              <Checkbox
+                label={<span className="sr-only">{`${spielerName(s)} auswählen`}</span>}
+                checked={gewaehlt.includes(s.id)}
+                onChange={(e) => {
+                  const an = e.target.checked;
+                  setAuswahl((a) => (an ? [...a.filter((id) => id !== s.id), s.id] : a.filter((id) => id !== s.id)));
+                }}
               />
-            </span>
-          </TabellenZeile>
-        ))}
-      </Tabelle>
+              <span className="min-w-0 flex-1 sm:contents">
+                <span className="type-body-medium block truncate text-on-surface">
+                  {s.vorname}
+                  <span className="sm:hidden"> {s.nachname}</span>
+                </span>
+                <span className="type-body-medium hidden truncate text-on-surface sm:block">{s.nachname}</span>
+                <span className="type-body-small block text-on-surface-mittel sm:hidden">
+                  {s.jahrgang}
+                  {s.js && ` · J+S ${s.js}`}
+                  {` · Link ${s.linkBezogen ? "bezogen" : "offen"}`}
+                </span>
+                <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.jahrgang}</span>
+                <span className="mt-1 block min-w-0 sm:mt-0">
+                  <SpielerTeams teams={s.teams}>{s.schnuppern && <SchnupperLozenge stand={s.schnuppern} />}</SpielerTeams>
+                </span>
+                <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.js ?? "–"}</span>
+                <span className="hidden sm:block">
+                  <Lozenge appearance={s.linkBezogen ? "success" : "neutral"}>{s.linkBezogen ? "bezogen" : "offen"}</Lozenge>
+                </span>
+              </span>
+              <span className="flex justify-end">
+                <OverflowMenu
+                  label={`Weitere Aktionen zu ${spielerName(s)}`}
+                  items={[
+                    { label: "Ändern", icon: Pencil, onSelect: () => setFormular({ spieler: s }) },
+                    { label: "Privater Link", icon: Link2, onSelect: () => setLink(s) },
+                    { label: "Einem Team zuordnen", icon: UserPlus, onSelect: () => oeffnen([s]) },
+                    { label: "Löschen", icon: Trash2, danger: true, trenner: true, onSelect: () => setLoeschen(s) },
+                  ]}
+                />
+              </span>
+            </TabellenZeile>
+          ))}
+        </Tabelle>
+      )}
+      <SpielerFuss angezeigt={spieler.length} treffer={treffer} weiterHref={weiterHref} />
 
       <AuswahlLeiste offen={gewaehlt.length > 0} titel={`${gewaehlt.length} ausgewählt`} onAufheben={() => setAuswahl([])}>
         <Button variant="filled" aria-haspopup="dialog" onClick={() => oeffnen(spieler.filter((s) => gewaehlt.includes(s.id)))}>

@@ -167,6 +167,7 @@ import {
   SPIELER_MELDUNG,
   SPIELER_TEXT,
   ABHOLUNG_TEXT,
+  angabenSehenText,
   HERAUSNEHMEN_TEXT,
   aufzaehlung,
   bereinigeName,
@@ -314,6 +315,12 @@ import {
   spielerLoeschenTitel,
   spielerVonText,
   SPIELER_BESTAND_LEER,
+  SPIELER_BESTAND_LEER_MITGLIED,
+  SPIELER_FILTER,
+  SPIELER_KEINE_TREFFER,
+  SPIELER_OHNE_TEAM,
+  SPIELER_ZUORDNUNG_HINWEIS,
+  spielerAngezeigtText,
   teamnameVergebenText,
   vereinKopfText,
   vereinsNameProblem,
@@ -327,6 +334,18 @@ import {
   schnuppernZugeordnetText,
   vereinHerausgenommenText,
 } from "../lib/verein";
+import { liesListe, liesPositiveZahl, mitAnzahl } from "../lib/adresse";
+import {
+  OHNE_TEAM_WERT,
+  SPIELER_SEITE,
+  SPIELER_SUCHE_MAX,
+  bereinigeEingrenzung,
+  eingrenzungGesetzt,
+  gleicheEingrenzung,
+  liesSpielerAnzahl,
+  liesSpielerEingrenzung,
+  teamFilterWerte,
+} from "../lib/verein-spielerliste";
 import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
 import { bereichAusPfad } from "../lib/navigation";
 import { textMitLinks } from "../lib/text-links";
@@ -3076,6 +3095,115 @@ pruefe("Abholseite (#579 PC 12): Herausnehmen lässt die Angaben im Verein, erst
   assert.ok(ABHOLUNG_TEXT.speichert.includes("bleiben ihre Angaben im Verein"));
   assert.ok(ABHOLUNG_TEXT.speichert.includes("wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht"));
   assert.ok(!ABHOLUNG_TEXT.speichert.includes("verschwinden ihre Angaben überall"), "der alte Satz stimmt nicht mehr");
+});
+
+pruefe("Wer die Angaben sieht (#580 PC 4): ein Satz für Abholseite und privaten Link, ohne Verantwortliche, nicht in LINK_TEXT", () => {
+  const rest =
+    "sehen alle Trainer:innen des Vereins, alle Angaben die Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.";
+  assert.equal(angabenSehenText(), `Name, Jahrgang und Teams der Spieler:in ${rest}`);
+  assert.equal(angabenSehenText("Noah"), `Name, Jahrgang und Teams von Noah ${rest}`);
+  // Die Abholseite trägt ihn anstelle der bisherigen Angabe; die übrigen Sätze bleiben.
+  assert.ok(ABHOLUNG_TEXT.speichert.includes(angabenSehenText()));
+  assert.ok(!ABHOLUNG_TEXT.speichert.includes("Das sehen die Trainer:innen des Teams"), "die bisherige Angabe ist ersetzt");
+  assert.ok(
+    ABHOLUNG_TEXT.speichert.includes("sehen nur die Trainer:innen ihrer Teams und ihre KI-Assistenten"),
+    "der Stand der letzten Ab- und Anmeldung bleibt bei den Teams (#467)",
+  );
+  assert.ok(ABHOLUNG_TEXT.speichert.startsWith("Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang"));
+  // Keine Person und kein Verein als Verantwortliche (OoS 6; der Verein folgt mit Story 11).
+  for (const t of [angabenSehenText(), angabenSehenText("Noah"), ABHOLUNG_TEXT.speichert]) assert.ok(!t.includes("Verantwortlich"), t);
+  // Der private Link trägt ihn mit dem Vornamen; er fliesst nicht in die KI-Beschreibungen (LINK_TEXT).
+  assert.match(readFileSync(join(web, "components/privat/ElternAnsicht.tsx"), "utf8"), /\{angabenSehenText\(spieler\.vorname\)\}/);
+  assert.ok(!Object.values(LINK_TEXT).some((t) => typeof t === "string" && t.includes("Trainer:innen des Vereins")));
+});
+
+pruefe("Spieler:innen des Vereins (#580): Texte der Liste, Leerzustände, Hinweis, Filterleiste", () => {
+  assert.equal(SPIELER_OHNE_TEAM, "ohne Team");
+  assert.equal(SPIELER_BESTAND_LEER_MITGLIED, "Der Verein führt noch keine Spieler:innen.");
+  assert.deepEqual(SPIELER_KEINE_TREFFER, { titel: "Keine Spieler:in gefunden", text: "Ändere die Suche oder die Eingrenzung." });
+  assert.equal(SPIELER_ZUORDNUNG_HINWEIS, "Spieler:innen ordnet die Vereinsverwaltung einem Team zu.");
+  assert.deepEqual(SPIELER_FILTER, {
+    suche: "Spieler:innen durchsuchen",
+    team: "Team",
+    ohneTeam: "Ohne Team",
+    teamsGruppe: "Teams",
+    jahrgang: "Jahrgang",
+    zuruecksetzen: "Zurücksetzen",
+    weiter: "Weitere anzeigen",
+  });
+  assert.equal(spielerAngezeigtText(50, 144), "50 von 144 angezeigt");
+  // Weder «kein Team» noch «Kind» in den neuen Sätzen.
+  for (const t of [SPIELER_BESTAND_LEER_MITGLIED, SPIELER_KEINE_TREFFER.text, SPIELER_ZUORDNUNG_HINWEIS]) assert.ok(!/kein Team|Kind/.test(t), t);
+});
+
+pruefe("Adress-Parameter der Spieler:innen des Vereins (#580 AK 6–10): lesen, prüfen, verwerfen", () => {
+  const ea = "11111111-1111-4111-8111-111111111111";
+  const eb = "22222222-2222-4222-8222-222222222222";
+  // Nackte Adresse: keine Eingrenzung, eine Seite.
+  assert.deepEqual(liesSpielerEingrenzung({}), { suche: "", teamIds: [], ohneTeam: false, jahrgaenge: [] });
+  assert.equal(eingrenzungGesetzt(liesSpielerEingrenzung({})), false);
+  assert.equal(liesSpielerAnzahl({}), SPIELER_SEITE);
+  // Alles gesetzt: Suche ohne Rand- und Mehrfach-Leerzeichen, «ohne» neben den Kennungen, Jahrgänge geordnet und einmal.
+  const e = liesSpielerEingrenzung({ q: "  lina   beispiel ", team: `${ohne()},${ea},${eb},${ea}`, jahrgang: "2017,2016,2017" });
+  assert.deepEqual(e, { suche: "lina beispiel", teamIds: [ea, eb], ohneTeam: true, jahrgaenge: [2016, 2017] });
+  assert.equal(eingrenzungGesetzt(e), true);
+  assert.deepEqual(teamFilterWerte(e), [OHNE_TEAM_WERT, ea, eb], "so, wie AuswahlFilter und ?team= sie führen");
+  // Jedes für sich setzt «Zurücksetzen» frei.
+  for (const sp of [{ q: "x" }, { team: ohne() }, { team: ea }, { jahrgang: "2016" }]) assert.equal(eingrenzungGesetzt(liesSpielerEingrenzung(sp)), true, JSON.stringify(sp));
+  // Unbrauchbares fällt weg: keine Kennung, keine Zahl, zu kurz, zu lang, leer.
+  assert.deepEqual(liesSpielerEingrenzung({ team: "nicht-uuid,,123", jahrgang: "abc,99999,12,-2016,2016.5,0999,2e3" }), { suche: "", teamIds: [], ohneTeam: false, jahrgaenge: [] });
+  assert.equal(liesSpielerEingrenzung({ q: "   " }).suche, "");
+  assert.equal(liesSpielerEingrenzung({ q: "a".repeat(500) }).suche.length, SPIELER_SUCHE_MAX);
+  assert.equal(liesSpielerEingrenzung({ q: ["eins", "zwei"] }).suche, "eins", "bei Wiederholung zählt der erste");
+  assert.deepEqual(liesSpielerEingrenzung({ team: [ea, eb] }).teamIds, [ea, eb], "auch mehrfach in der Adresse");
+  // Was es im Verein nicht gibt, fällt aus der Eingrenzung — die Seite fragt dann ohne es neu.
+  const bestand = { teams: [{ id: ea }], jahrgaenge: [2015, 2016] };
+  const sauber = bereinigeEingrenzung(e, bestand);
+  assert.deepEqual(sauber, { suche: "lina beispiel", teamIds: [ea], ohneTeam: true, jahrgaenge: [2016] });
+  assert.equal(gleicheEingrenzung(e, sauber), false);
+  assert.equal(gleicheEingrenzung(sauber, bereinigeEingrenzung(sauber, bestand)), true, "Bereinigtes bleibt");
+  assert.equal(gleicheEingrenzung(liesSpielerEingrenzung({}), liesSpielerEingrenzung({ q: " " })), true);
+  // Anzeige in Schritten: nie unter einer Seite, nie Müll.
+  assert.equal(liesSpielerAnzahl({ anzahl: "100" }), 100);
+  for (const a of ["-5", "0", "abc", "", undefined]) assert.equal(liesSpielerAnzahl({ anzahl: a }), SPIELER_SEITE, String(a));
+  assert.equal(liesSpielerAnzahl({ anzahl: "10" }), SPIELER_SEITE);
+  // Die gemeinsamen Hilfen der Seiten mit Adress-Filtern.
+  assert.deepEqual(liesListe("a,,b"), ["a", "b"]);
+  assert.deepEqual(liesListe(["a,b", "c"]), ["a", "b", "c"]);
+  assert.deepEqual(liesListe(undefined), []);
+  assert.equal(liesPositiveZahl("7"), 7);
+  assert.equal(liesPositiveZahl(["7", "9"]), 7);
+  assert.equal(liesPositiveZahl("0"), undefined);
+  assert.equal(liesPositiveZahl("x"), undefined);
+  assert.equal(mitAnzahl("/verein/spieler", { q: "li", team: [ea, eb], anzahl: "50", leer: undefined }, 100), `/verein/spieler?q=li&team=${ea}&team=${eb}&anzahl=100`, "alles reist mit, nur anzahl neu");
+  assert.equal(mitAnzahl("/", {}, 48), "/?anzahl=48");
+  function ohne() {
+    return OHNE_TEAM_WERT;
+  }
+});
+
+pruefe("Spieler:innen des Vereins (#580): für alle Mitglieder, Mitglieder-Form ohne Verwaltungsfelder, Leiste für alle", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Die Seite sperrt Mitglieder nicht mehr; ohne Verein geht es zu den Teams.
+  const seite = lies("app/(app)/verein/spieler/page.tsx");
+  assert.ok(!/redirect\("\/verein"\)/.test(seite), "kein Verweis der Mitglieder auf die Teamübersicht");
+  assert.match(seite, /if \(!verein\) redirect\("\/teams"\);/);
+  assert.match(seite, /r\.art === "nicht_gefunden"\) redirect\("\/teams"\)/, "wer inzwischen kein Mitglied mehr ist, geht zu den Teams");
+  // Der Eintrag «Spieler:innen» steht im Bereich «Verein» für alle, nur «Verwaltung» an der Rolle.
+  const nav = lies("components/layout/AppNavClient.tsx");
+  const vereinGruppe = nav.slice(nav.indexOf('titel: "Verein"'), nav.indexOf('titel: "Start"'));
+  assert.ok(vereinGruppe.indexOf('label: "Spieler:innen"') < vereinGruppe.indexOf("verein?.istVerwaltung"), "«Spieler:innen» vor der Rollenbedingung");
+  assert.ok(vereinGruppe.indexOf("verein?.istVerwaltung") < vereinGruppe.indexOf('label: "Verwaltung"'), "«Verwaltung» hinter der Rollenbedingung");
+  // Der Typ der Mitglieder-Zeile führt J+S, Link-Stand und Schnuppern gar nicht; der Kern setzt sie nur, wenn die Datenebene sie liefert.
+  const kern = lies("lib/kern/verein.ts");
+  const mitglied = kern.slice(kern.indexOf("export type VereinSpielerMitglied"), kern.indexOf("export type VereinSpieler ="));
+  assert.ok(mitglied.length > 0 && !/\b(js|linkBezogen|schnuppern|anzahl)\b/.test(mitglied.replace(/\/\*\*[\s\S]*?\*\//g, "")), "Mitglieder-Form ohne Verwaltungsfelder");
+  assert.match(kern, /\.\.\.\(link_bezogen !== undefined/, "Verwaltungsfelder nur bei vorhandenem Schlüssel, nie als undefined");
+  // Die lesende Sicht kennt weder Aktionen noch Verwaltungsbausteine.
+  const ansicht = lies("components/verein/VereinSpielerAnsicht.tsx").replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.ok(!/actions\/|VereinSpieler(Formular|LinkDialog|Loeschen|Liste)|OverflowMenu|Checkbox|AuswahlLeiste|"use client"/.test(ansicht), "nur lesen");
+  // Die Verwaltungsliste zeigt nur, was steht: die Auswahl leert sich mit Suche und Eingrenzung.
+  assert.match(lies("components/verein/VereinSpielerListe.tsx"), /schluessel !== schluesselVorher\) \{\s*setSchluesselVorher\(schluessel\);\s*setAuswahl\(\[\]\)/);
 });
 
 pruefe("Aus dem Team nehmen (#579 AK 13–16): nicht gelöscht, bleibt im Verein, was verfällt — mit weiteren Teams, als letztes Team, schnuppernd", () => {

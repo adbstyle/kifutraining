@@ -36,8 +36,9 @@ function teamFehler(e: { message: string; code?: string }) {
 
 /**
  * Der Spielerbestand des Vereins am Verein-Ort (Epic Vereine #575, Story
- * #579): die Grundfassung der Liste und das Zuordnen zu einem Team — nur für
- * die Vereinsverwaltung, nur in der Anwendung. Es gibt dafür kein KI-Werkzeug
+ * #579, #580): die Liste für alle Mitglieder (die Verwaltung mit mehr
+ * Angaben) und das Zuordnen zu einem Team — nur in der Anwendung, das
+ * Zuordnen nur für die Vereinsverwaltung. Es gibt dafür kein KI-Werkzeug
  * (Architekturplan §4.1, §5.5); der Kern steht hier, damit Seite und Action
  * dieselbe Regelquelle nutzen.
  *
@@ -45,53 +46,116 @@ function teamFehler(e: { message: string; code?: string }) {
  * Rolle als erste Anweisung und rufen `nur_in_der_anwendung()` auf.
  */
 
-export type VereinSpieler = {
+/** Eine Spieler:in, wie jedes Vereinsmitglied sie sieht (Story #580 AK 3):
+ *  nur diese vier Angaben, auch bei Spieler:innen der eigenen Teams. */
+export type VereinSpielerMitglied = {
   id: string;
   vorname: string;
   nachname: string;
   jahrgang: number;
-  /** Die J+S-Nummer; `null`, wenn keine erfasst ist. Nur die Verwaltung sieht sie. */
+  /** Die Teams der Spieler:in, nach Namen; leer, wenn sie keinem zugeordnet ist. */
+  teams: { id: string; name: string }[];
+};
+
+/** Dieselbe Spieler:in für die Vereinsverwaltung: dazu J+S-Nummer, Stand des
+ *  privaten Links und Schnuppern. Für Mitglieder liefert die Datenebene diese
+ *  Schlüssel gar nicht, sie fehlen dort ganz. */
+export type VereinSpieler = VereinSpielerMitglied & {
+  /** Die J+S-Nummer; `null`, wenn keine erfasst ist. */
   js: string | null;
   /** Der aktuelle private Link wurde schon bezogen (Spalte «Privater Link»). */
   linkBezogen: boolean;
-  /** Die Teams der Spieler:in, nach Namen; leer, wenn sie keinem zugeordnet ist. */
-  teams: { id: string; name: string }[];
   /** Wo und wie weit sie schnuppert (#584); `anzahl`: die vom Team festgelegte
    *  Zahl, `null` ohne; `besucht`: gezählt wie am Team-Ort. */
   schnuppern: { teamId: string; anzahl: number | null; besucht: number } | null;
 };
 
-/** Ein Team des Vereins; `anzahl`: Zuordnungen, gezählt wie die Grenze 100. */
-export type VereinTeam = { id: string; name: string; anzahl: number };
+/** Ein Team des Vereins, wie jedes Mitglied es sieht. */
+export type VereinTeamMitglied = { id: string; name: string };
+
+/** Dasselbe Team für die Verwaltung; `anzahl`: Zuordnungen, gezählt wie die Grenze 100. */
+export type VereinTeam = VereinTeamMitglied & { anzahl: number };
+
+/** Die Antwort der Datenebene: `spieler` mit Suche und Eingrenzung, alles
+ *  übrige ungefiltert — die Optionen der Filter und die Zahlen im Kopf
+ *  ändern sich nicht mit ihnen. Welche Form die Zeilen haben, entscheidet
+ *  die Datenebene nach der Rolle; `alsVerwaltung` liest sie als die der
+ *  Verwaltung. */
+export type VereinSpielerliste = {
+  spieler: (VereinSpielerMitglied | VereinSpieler)[];
+  teams: (VereinTeamMitglied | VereinTeam)[];
+  /** Alle vorkommenden Jahrgänge des Vereins, aufsteigend. */
+  jahrgaenge: number[];
+  /** Alle Spieler:innen des Vereins und davon die ohne Team. */
+  gesamt: number;
+  ohneTeam: number;
+};
+
+/** Die Liste für die Vereinsverwaltung: Ihre Zeilen tragen alle drei
+ *  Zusatzangaben, ihre Teams die Zahl der Zuordnungen. */
+export function alsVerwaltung(l: VereinSpielerliste): Omit<VereinSpielerliste, "spieler" | "teams"> & { spieler: VereinSpieler[]; teams: VereinTeam[] } {
+  return {
+    ...l,
+    spieler: l.spieler.filter((s): s is VereinSpieler => "linkBezogen" in s),
+    teams: l.teams.filter((t): t is VereinTeam => "anzahl" in t),
+  };
+}
 
 const nachName = (a: { name: string }, b: { name: string }) => nachTeamname(a.name, b.name);
 
-/** Alle Spieler:innen und Teams des Vereins, nach Vorname und Nachname bzw.
- *  Teamname geordnet (#579 AK 1) — die Grundfassung, die Story #580 ersetzt. */
+type SpielerRoh = VereinSpielerMitglied & {
+  js?: string | null;
+  link_bezogen?: boolean;
+  schnuppern?: { team_id: string; anzahl: number | null; besucht: number } | null;
+};
+
+/**
+ * Die Spieler:innen des Vereins mit Suche und Eingrenzung (Story #580): Die
+ * Datenebene sucht und grenzt über den ganzen Verein ein und ordnet nach
+ * Vorname, dann Nachname; hier wird nur noch nach der Ordnung der
+ * Oberfläche (deutsch) nachgeordnet, nichts gekappt. `suche`: Teil von
+ * «Vorname Nachname», ohne Gross-/Kleinschreibung und Akzente. `teamIds` und
+ * `ohneTeam` gelten zusammen als ODER, `jahrgaenge` ebenso; Suche und beide
+ * Eingrenzungen als UND. Unbekannte Teams treffen nie. Jede Zeile nennt
+ * weiter alle Teams der Spieler:in.
+ */
 export async function ladeVereinSpielerliste(
   supabase: SupabaseClient,
   _userId: string,
-  e: { vereinId: string },
-): Promise<KernErgebnis<{ spieler: VereinSpieler[]; teams: VereinTeam[] }>> {
+  e: { vereinId: string; suche?: string; teamIds?: string[]; ohneTeam?: boolean; jahrgaenge?: number[] },
+): Promise<KernErgebnis<VereinSpielerliste>> {
   if (!istUuid(e.vereinId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.verein, { feld: "verein_id" });
-  const { data, error } = await supabase.rpc("verein_spielerliste", { p_verein: e.vereinId });
+  const { data, error } = await supabase.rpc("verein_spielerliste", {
+    p_verein: e.vereinId,
+    p_suche: e.suche?.trim() || null,
+    p_teams: e.teamIds?.length ? e.teamIds : null,
+    p_ohne_team: e.ohneTeam ?? false,
+    p_jahrgaenge: e.jahrgaenge?.length ? e.jahrgaenge : null,
+  });
   if (error) return vereinFehler(error);
   const r = data as {
-    spieler: (Omit<VereinSpieler, "js" | "linkBezogen" | "schnuppern"> & {
-      js: string | null;
-      link_bezogen: boolean;
-      schnuppern: { team_id: string; anzahl: number | null; besucht: number } | null;
-    })[];
-    teams: VereinTeam[];
+    spieler: SpielerRoh[];
+    teams: (VereinTeamMitglied & { anzahl?: number })[];
+    jahrgaenge: number[];
+    gesamt: number;
+    ohne_team: number;
   };
   return ok({
-    spieler: nachSpielerName(r.spieler).map(({ link_bezogen, schnuppern, ...s }) => ({
+    spieler: nachSpielerName(r.spieler).map(({ link_bezogen, schnuppern, js, ...s }) => ({
       ...s,
-      linkBezogen: link_bezogen,
       teams: [...s.teams].sort(nachName),
-      schnuppern: schnuppern ? { teamId: schnuppern.team_id, anzahl: schnuppern.anzahl, besucht: schnuppern.besucht } : null,
+      ...(link_bezogen !== undefined
+        ? {
+            js: js ?? null,
+            linkBezogen: link_bezogen,
+            schnuppern: schnuppern ? { teamId: schnuppern.team_id, anzahl: schnuppern.anzahl, besucht: schnuppern.besucht } : null,
+          }
+        : {}),
     })),
     teams: [...r.teams].sort(nachName),
+    jahrgaenge: r.jahrgaenge,
+    gesamt: r.gesamt,
+    ohneTeam: r.ohne_team,
   });
 }
 

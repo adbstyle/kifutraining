@@ -167,17 +167,15 @@ export function AppNavClient({
           icon: Shield,
           current: pfad === "/verein" || pfad.startsWith("/verein/team/"),
         },
-        // Bis die Spielerliste für alle Mitglieder des Vereins steht (Story
-        // #580), gehört der Eintrag nur zur Verwaltung: Die Seite zeigt den
-        // Bestand und das Zuordnen, beides nur ihr.
+        {
+          label: "Spieler:innen",
+          href: "/verein/spieler",
+          icon: Users,
+          current: pfad.startsWith("/verein/spieler"),
+        },
+        // Die Seite «Verwaltung» sieht nur die Vereinsverwaltung.
         ...(verein?.istVerwaltung
           ? [
-              {
-                label: "Spieler:innen",
-                href: "/verein/spieler",
-                icon: Users,
-                current: pfad.startsWith("/verein/spieler"),
-              },
               {
                 label: "Verwaltung",
                 href: "/verein/verwaltung",
