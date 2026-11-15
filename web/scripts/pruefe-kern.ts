@@ -3375,10 +3375,25 @@ pruefe("Herausnehmen über den KI-Assistenten (#589 AK 4): beim letzten eigenen 
   assert.deepEqual(herausnehmenSaetze({ ...lage, verbleibend: [], letztesEigenes: true }), herausnehmenSaetze({ ...lage, verbleibend: [] }));
   // Und die Anwendung setzt das Feld nirgends und baut die Rückfrage nicht: Der Zusatz gelangt nicht in sie.
   const treffer: string[] = [];
-  for (const ordner of ["app", "components"])
+  for (const ordner of ["app", "components", "lib/actions"])
     for (const datei of quelldateien(join(web, ordner)))
       if (/\b(letztesEigenes|herausnehmenFrage)\b/.test(readFileSync(datei, "utf8"))) treffer.push(relative(web, datei));
   assert.deepEqual(treffer, [], `KI-Zusatz in der Anwendung: ${treffer.join(", ")}`);
+  // Ohne `stand` käme die Rückfrage des KI-Wegs samt Zusatz zurück: Jeder Aufruf in den Server-Actions gibt ihn mit.
+  const ohneStand = (text: string) => [...text.matchAll(/\bnimmSpielerAusTeam\(([^;]*?)\);/g)].filter((m) => !/\bstand\b/.test(m[1])).length;
+  const aufrufe: string[] = [];
+  let ohne = 0;
+  for (const datei of quelldateien(join(web, "lib/actions"))) {
+    const text = readFileSync(datei, "utf8");
+    const n = [...text.matchAll(/\bnimmSpielerAusTeam\(/g)].length;
+    if (n) aufrufe.push(relative(web, datei));
+    ohne += ohneStand(text);
+  }
+  assert.deepEqual(aufrufe, ["lib/actions/spieler.ts"], "die Anwendung ruft nimmSpielerAusTeam an einer Stelle auf");
+  assert.equal(ohne, 0, "nimmSpielerAusTeam ohne stand in lib/actions");
+  // Der Wächter schlägt an und lässt den Aufruf mit `stand` durch.
+  assert.equal(ohneStand("await nimmSpielerAusTeam(a.supabase, a.userId, { teamId, spielerId });"), 1);
+  assert.equal(ohneStand("await nimmSpielerAusTeam(a.supabase, a.userId, { teamId, spielerId, stand });"), 0);
 });
 
 pruefe("Zuordnen zum Schnuppern (#584 AK 7–12, 16): jede Abweisung, eine und mehrere Schnuppernde, Satz und Snackbar", () => {

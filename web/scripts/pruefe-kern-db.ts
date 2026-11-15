@@ -9010,6 +9010,7 @@ try {
       ["termin_aufgebot_setzen", (id) => ({ termin_id: spiel, spieler_id: id, nicht_aufgeboten: true, termin_datum: tagCh(4), termin_beginn: "10:00" })],
       ["termin_anwesenheit_setzen", (id) => ({ termin_id: begonnen, spieler_id: id, da: false, termin_datum: tagCh(-1), termin_beginn: "18:00" })],
       ["kader_zuteilen", (id) => ({ kader_id: kader, spieler_ids: [id] })],
+      ["kader_herausnehmen", (id) => ({ kader_id: kader, spieler_ids: [id] })],
       ["kader_herausnehmen", (id) => ({ kader_id: kader, spieler_ids: [id], bestaetigt: true })],
     ];
     for (const [name, args] of aufrufe) {
@@ -9031,7 +9032,7 @@ try {
     for (const k of [m, m2]) {
       const r = kiWert(await ki(k, "spieler_link_abrufen", { spieler_id: lena })) as { spieler_id: string; team_id: string; name: string; url: string; teams: string[]; hinweis: string };
       assert.deepEqual([r.spieler_id, r.team_id, r.name, tokenAus(r.url), r.teams], [lena, ea, "Lena Neunundachtzig", alt, [EA_589, FA_589]]);
-      assert.equal(r.hinweis, `${LINK_TEXT.warnung} Der Link zeigt die Termine aller Teams von Lena: ${EA_589} und ${FA_589}.`);
+      assert.equal(r.hinweis, `${LINK_TEXT.warnung} Der Link zeigt die Termine aller Teams von Lena: ${EA_589} und ${FA_589}. Ein erneuerter Link gilt für alle diese Teams.`);
     }
     // Ohne Bestätigung: nichts geändert, die Rückfrage nennt die Teams und die Folge.
     for (const bestaetigt of [undefined, false]) {
@@ -9040,7 +9041,7 @@ try {
       assert.equal(
         frage.meldung,
         `Den privaten Link von Lena Neunundachtzig erneuern? Der Link zeigt die Termine aller Teams von Lena: ${EA_589} und ${FA_589}. ` +
-          `Der neue gilt für alle diese Teams. Der bisherige Link und das Kalender-Abo enden für alle Teams von Lena: ${EA_589} und ${FA_589}. ` +
+          "Der neue gilt für alle diese Teams; der bisherige Link und das Kalender-Abo enden. " +
           "Abmeldungen bleiben bestehen. Keines dieser Teams hat die Selbstabholung eingeschaltet. Gib den neuen Link selbst weiter.",
       );
       assert.equal(frage.hinweis, "Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist. Bis dahin gilt der bisherige Link.");

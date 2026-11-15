@@ -15,6 +15,7 @@ import {
   nimmSpielerAusTeam,
   schalteAbholung,
 } from "@/lib/kern/spieler";
+import { ladeVereinslage } from "@/lib/kern/konto";
 import { istSpielAbweisung, setzeAbmeldung, setzeAnwesenheit, type TerminSpieler } from "@/lib/kern/abmeldungen";
 import { setzeAufgebot, setzeMeldung, teilnehmerAmTermin, type SpielSpieler, type SpielTeilnehmer } from "@/lib/kern/spiele";
 import { meldefristVerpasst, zaehlteBeimAnpfiff } from "@/lib/spiel";
@@ -125,10 +126,17 @@ export const spielerlisteAbrufen = werkzeug({
     anzahl: z.number().int(),
     spieler: z.array(SpielerAusgabe),
   }),
-  ausfuehren: async (e, zugang) =>
-    abgebildet(await ladeSpielerliste(zugang.supabase, zugang.userId, { teamId: e.team_id }), (w) => ({
+  ausfuehren: async (e, zugang) => {
+    // Der Verein ist der der Person (#589 AK 1); die Anwendung braucht ihn hier nicht.
+    const [liste, lage] = await Promise.all([
+      ladeSpielerliste(zugang.supabase, zugang.userId, { teamId: e.team_id }),
+      ladeVereinslage(zugang.supabase),
+    ]);
+    if (!liste.ok) return liste;
+    if (!lage.ok) return lage;
+    return abgebildet(liste, (w) => ({
       team: w.team,
-      verein: w.verein,
+      verein: lage.wert?.name ?? null,
       anzahl: w.spieler.length,
       spieler: w.spieler.map((s) => ({
         id: s.id,
@@ -141,7 +149,8 @@ export const spielerlisteAbrufen = werkzeug({
         weitere_teams: s.weitereTeams,
         schnuppern: s.probe,
       })),
-    })),
+    }));
+  },
 });
 
 // ── spieler_aufnehmen ───────────────────────────────────────────────────────
@@ -236,8 +245,7 @@ export const spielerAusTeamNehmen = werkzeug({
     "KI-Assistenten. Im Team verfallen ihre Abmeldungen, Spiel-Meldungen und Kader für noch nicht begonnene Termine; " +
     "begonnene Termine behalten sie mit Namen («nicht_mehr_im_team»), und ihre Anwesenheit lässt sich dort weiter " +
     "nachtragen. Ist es ihr letztes Team, ist sie danach keinem Team mehr zugeordnet, und nur die Vereinsverwaltung " +
-    "führt sie, ordnet sie einem Team zu oder löscht sie. Ist es das letzte deiner Teams mit ihr, ist sie danach über " +
-    "den Assistenten nicht mehr erreichbar. Ohne «stand» ändert der Aufruf nichts: Er liefert als Rückfrage " +
+    "führt sie, ordnet sie einem Team zu oder löscht sie. Ohne «stand» ändert der Aufruf nichts: Er liefert als Rückfrage " +
     "(Fehlerart «regel», «feld»: «stand») dieselben Sätze wie die Bestätigung in der Anwendung, beim letzten deiner " +
     "Teams mit ihr dazu, dass sie danach über den Assistenten nicht mehr erreichbar ist, und im «hinweis» den «stand» " +
     "der Teams. Frag die Person, ob das so gewollt ist, und wiederhole den Aufruf dann mit diesem «stand». Hat sich die " +
@@ -698,13 +706,13 @@ export const spielerLinkAbrufen = werkzeug({
   ausfuehren: async (e, zugang) => {
     const lage = await ladeLinkLage(zugang.supabase, zugang.userId, { spielerId: e.spieler_id });
     if (!lage.ok) return lage;
-    return abgebildet(await holeSpielerLink(zugang.supabase, zugang.userId, { spielerId: e.spieler_id, teamId: lage.wert.teamId }), (w) => ({
+    return abgebildet(await holeSpielerLink(zugang.supabase, zugang.userId, { spielerId: e.spieler_id, teamId: lage.wert.teamId, person: lage.wert }), (w) => ({
       spieler_id: e.spieler_id,
       team_id: w.teamId,
       name: w.name,
       url: zugang.url(LINK_PFAD, w.token),
       teams: lage.wert.teams.map((t) => t.name),
-      hinweis: `${LINK_TEXT.warnung} ${teamsSatz(lage.wert)}`,
+      hinweis: `${LINK_TEXT.warnung} ${teamsSatz(lage.wert)} Ein erneuerter Link gilt für alle diese Teams.`,
     }));
   },
 });
@@ -731,15 +739,23 @@ export const spielerLinkErneuern = werkzeug({
     if (e.bestaetigt !== true)
       return fehlschlag(
         "regel",
-        [`Den privaten Link von ${l.name} erneuern?`, teamsSatz(l), "Der neue gilt für alle diese Teams.", ...linkErneuernSaetze(l.vorname, l.teams)]
-          .filter(Boolean)
-          .join(" "),
+        [
+          `Den privaten Link von ${l.name} erneuern?`,
+          // Die Teamliste steht einmal (im Satz zum Link); der Rest ist `linkErneuernSaetze` ohne seine zweite Nennung.
+          ...(l.teams.length === 0
+            ? linkErneuernSaetze(l.vorname, l.teams)
+            : [
+                teamsSatz(l),
+                "Der neue gilt für alle diese Teams; der bisherige Link und das Kalender-Abo enden. Abmeldungen bleiben bestehen.",
+                ...linkErneuernSaetze(l.vorname, l.teams).slice(1),
+              ]),
+        ].join(" "),
         {
           feld: "bestaetigt",
           hinweis: "Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist. Bis dahin gilt der bisherige Link.",
         },
       );
-    return abgebildet(await erneuereSpielerLink(zugang.supabase, zugang.userId, { spielerId: e.spieler_id, teamId: l.teamId }), (w) => ({
+    return abgebildet(await erneuereSpielerLink(zugang.supabase, zugang.userId, { spielerId: e.spieler_id, teamId: l.teamId, person: l }), (w) => ({
       spieler_id: e.spieler_id,
       team_id: w.teamId,
       name: w.name,
@@ -756,7 +772,7 @@ const ABHOL_MODELL =
   "Mit der Selbstabholung holen Eltern den privaten Link ihrer Spieler:in selbst ab: Sie öffnen die Abholadresse eines " +
   "Teams ohne Konto und geben Vorname, Nachname und Jahrgang einer Spieler:in dieses Teams ein; passt die Eingabe (wie " +
   "die Eindeutigkeit der Liste: Gross- und Kleinschreibung, Leerzeichen, Bindestrich und Apostroph-Varianten zählen " +
-  "nicht), erhalten sie ihren privaten Link - denselben, den die Abholadresse jedes ihrer Teams herausgibt -, und er " +
+  "nicht), erhalten sie ihren privaten Link - denselben, den die Abholadresse jedes ihrer Teams mit eingeschalteter Selbstabholung herausgibt -, und er " +
   "gilt als bezogen («link_bezogen» in «spielerliste_abrufen», in allen ihren Teams). Nach " +
   `${ABHOL_VERSUCHE} nicht passenden Eingaben ist die ` +
   `Eingabe vom selben Anschluss ${ABHOL_SPERRE_MINUTEN} Minuten gesperrt. Die Selbstabholung ist aus, bis ein Mitglied ` +

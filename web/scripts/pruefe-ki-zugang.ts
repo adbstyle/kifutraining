@@ -1259,13 +1259,13 @@ pruefe("Story 13 (#589 AK 9; A8, A9): Link-Werkzeuge über alle Teams, Erneuern 
   assert.match(schnuppern, /solange sie genau einem Team angehört/);
   // Die Abholadresse eines Teams gibt den einen Link der Spieler:in heraus.
   for (const n of ["selbstabholung_abrufen", "selbstabholung_schalten", "abholadresse_erneuern"])
-    assert.match(beschreibung.get(n) ?? "", /denselben, den die Abholadresse jedes ihrer Teams herausgibt/, n);
+    assert.match(beschreibung.get(n) ?? "", /denselben, den die Abholadresse jedes ihrer Teams mit eingeschalteter Selbstabholung herausgibt/, n);
 });
 
 pruefe("Story 13 (#589 PC 1, 2): ZUGANG_DARF und ZUGANG_DARF_NICHT im Wortlaut, der Kopf von umfang.ts verlangt keine erneute Zustimmung", () => {
   assert.equal(
     ZUGANG_DARF[5],
-    "die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer, dazu der Verein deiner Teams und die Namen weiterer Teams einer Spieler:in) einsehen und führen, Spieler:innen aus einem deiner Teams nehmen (sie bleiben im Verein), Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die Anzahl Schnuppertrainings samt Info-Schreiben festlegen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link einer Spieler:in holen und erneuern, die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche Links bezogen wurden",
+    "die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen und führen, dazu den Verein deiner Teams und die Namen weiterer Teams einer Spieler:in sehen, Spieler:innen aus einem deiner Teams nehmen (sie bleiben im Verein), Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die Anzahl Schnuppertrainings samt Info-Schreiben festlegen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link einer Spieler:in holen und erneuern, die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche Links bezogen wurden",
   );
   assert.deepEqual(ZUGANG_DARF_NICHT, [
     "deine Favoriten",
