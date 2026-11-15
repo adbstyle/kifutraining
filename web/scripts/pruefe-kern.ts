@@ -2673,8 +2673,6 @@ const PROBE_INTERN =
 const ALTE_WERKZEUGNAMEN = /\b(?:probetraining_abrufen|probetraining_festlegen|spieler_probe_setzen)\b/;
 /** Methoden des Datenbank-Clients, deren Zeichenketten-Argument ein Name der Datenebene ist. */
 const NAMENS_AUFRUFE = ["rpc", "from", "select", "eq", "neq", "in", "is", "order", "insert", "update", "upsert", "match", "filter"];
-/** Ausgenommen: generiertes Produktwissen (kommt mit Phase D). */
-const PROBE_AUSNAHMEN = ["lib/feedback/wissen.ts"];
 /** Aufrufe, deren Eingabe-Objekt die interne Eigenschaft `probe` trägt (Kern, nicht KI-Schema). */
 const PROBE_KERN_AUFRUFE = ["schalteProbe"];
 
@@ -2757,8 +2755,9 @@ pruefe("Kein Artikel vor dem Vereinsnamen in Oberfläche und KI-Texten (Phase D,
   for (const wurzel of ["app", "components", "lib"].map((p) => join(web, p)))
     for (const datei of quelldateien(wurzel)) {
       const rel = relative(web, datei);
-      // Generiertes Produktwissen und Typen schreibt niemand von Hand.
-      if (PROBE_AUSNAHMEN.includes(rel) || rel === "lib/database.types.ts") continue;
+      // Generierte Typen schreibt niemand von Hand. Das generierte Produktwissen (lib/feedback/wissen.ts)
+      // ist seit Phase D nicht mehr ausgenommen.
+      if (rel === "lib/database.types.ts") continue;
       treffer.push(...artikelVorVereinsnameTreffer(readFileSync(datei, "utf8"), rel));
     }
   assert.deepEqual(treffer, [], `Artikel vor dem Vereinsnamen in: ${treffer.join(", ")}`);
@@ -2792,7 +2791,7 @@ pruefe("Kein «Probe» in Oberflächentexten und KI: Texte, JSX, Schema-Schlüss
   for (const wurzel of ["app", "components", "lib"].map((p) => join(web, p)))
     for (const datei of quelldateien(wurzel)) {
       const rel = relative(web, datei);
-      if (!PROBE_AUSNAHMEN.includes(rel)) treffer.push(...probeTreffer(readFileSync(datei, "utf8"), rel));
+      treffer.push(...probeTreffer(readFileSync(datei, "utf8"), rel));
     }
   assert.deepEqual(treffer, [], `«Probe» steht noch in Oberflächen- oder KI-Texten: ${treffer.join("; ")}`);
 });
