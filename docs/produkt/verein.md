@@ -180,8 +180,12 @@ Anzahl. Persönliche Trainings der Trainer:innen bleiben, auch Kopien aus dem Te
 Spieler:innen bleiben samt privatem Link im Verein; wer keinem anderen Team angehört, ist danach
 ohne Team, und dann ändert, ordnet zu oder löscht sie nur noch die Verwaltung. Danach steht man
 auf der Übersicht mit der Meldung, dass das Team aufgelöst ist. Trainer:innen, die das Team
-gerade offen haben, landen bei ihrer nächsten Aktion in der Teamübersicht mit „Dieses Team
-besteht nicht mehr - die Vereinsverwaltung hat es aufgelöst." Die Kalender-Abos der
+gerade offen haben, sehen das erst bei der nächsten Aktion, und die reagiert je nach Aktion
+verschieden: Verlässt jemand im offenen Tab das Team oder entfernt ein Mitglied, landet sie in
+der Teamübersicht mit „Dieses Team besteht nicht mehr - die Vereinsverwaltung hat es aufgelöst."
+Die übrigen Aktionen (zum Beispiel eine Spieler:in hinzufügen) bleiben auf der Seite und melden
+„Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist."; ein Neuladen
+oder Seitenwechsel führt ohne Hinweis in die Teamübersicht. Die Kalender-Abos der
 Trainer:innen für dieses Team erlöschen.
 
 ## Spielerbestand und Vereinsliste
