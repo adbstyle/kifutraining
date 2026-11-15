@@ -382,8 +382,8 @@ export function spielerErfassenAbgewiesenText(
 ): string {
   const name = `${spielerName({ vorname: bereinigeName(e.vorname), nachname: bereinigeName(e.nachname) })} (${e.jahrgang})`;
   const zuordnen = "Ordne die vorhandene Spieler:in selbst einem Team zu.";
-  if (d.teams.length > 0) return `${name} wird im ${verein} schon ${imTeam(d.teams)} geführt. ${zuordnen} ${ZUSATZ_IM_VORNAMEN}`;
-  return `${name} wird im ${verein} schon geführt, ist aber keinem Team zugeordnet. ${zuordnen} ${ZUSATZ_IM_VORNAMEN}`;
+  if (d.teams.length > 0) return `${name} wird im Verein «${verein}» schon ${imTeam(d.teams)} geführt. ${zuordnen} ${ZUSATZ_IM_VORNAMEN}`;
+  return `${name} wird im Verein «${verein}» schon geführt, ist aber keinem Team zugeordnet. ${zuordnen} ${ZUSATZ_IM_VORNAMEN}`;
 }
 
 /** Der Satz zur abgewiesenen Änderung (#582 AK 5): Wortlaut wie am Team-Ort,
@@ -395,7 +395,7 @@ export function spielerAendernAbgewiesenText(d: SpielerDoppeltImVerein): string 
 
 /** Der Satz über dem Dialog «Spieler:in erfassen». */
 export function spielerErfassenEinleitung(verein: string): string {
-  return `Die Spieler:in kommt ohne Team in den ${verein}. Einem Team ordnest du sie danach zu.`;
+  return `Die Spieler:in kommt ohne Team in den Verein «${verein}». Einem Team ordnest du sie danach zu.`;
 }
 
 /** Der Hinweis über dem Link einer Spieler:in ohne Team (#582 AK 10). Eigene

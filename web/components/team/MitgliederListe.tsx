@@ -116,7 +116,7 @@ export function MitgliederListe({
         titel="Trainer:in aufnehmen"
         einleitung="Die Person braucht ein Konto bei KiFu. Sie ist sofort im Team, ohne Einladung."
         tragweite={[
-          `Sie gehört damit zum ${vereinName ?? "Verein"}. Solange sie dabei ist, kann sie keinem anderen Verein beitreten und keinen gründen. Die Vereinsverwaltung und das Trainerteam sehen ihre E-Mail-Adresse. Prüfe, dass es das richtige Konto ist.`,
+          `Sie gehört damit zum Verein${vereinName ? ` «${vereinName}»` : ""}. Solange sie dabei ist, kann sie keinem anderen Verein beitreten und keinen gründen. Die Vereinsverwaltung und das Trainerteam sehen ihre E-Mail-Adresse. Prüfe, dass es das richtige Konto ist.`,
         ]}
         suche={(email) => sucheTrainer(teamId, email)}
         aufnahme={(email) => nimmMitgliedAuf(teamId, email)}

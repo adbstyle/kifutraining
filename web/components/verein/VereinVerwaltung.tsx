@@ -245,7 +245,7 @@ export function VereinVerwaltung({
         titel="Person in die Verwaltung aufnehmen"
         einleitung="Die Person braucht ein Konto bei KiFu. Sie ist sofort in der Verwaltung, ohne Annahme."
         tragweite={[
-          `Sie gehört damit zum ${vereinName} und verwaltet Teams, Spieler:innen und den Verein mit. Solange sie dabei ist, kann sie keinem anderen Verein beitreten und keinen eigenen gründen. Die Verwaltung und die Trainer:innen ihrer Teams sehen ihre E-Mail-Adresse. Prüfe, dass es das richtige Konto ist.`,
+          `Sie gehört damit zum Verein «${vereinName}» und verwaltet Teams, Spieler:innen und den Verein mit. Solange sie dabei ist, kann sie keinem anderen Verein beitreten und keinen eigenen gründen. Die Verwaltung und die Trainer:innen ihrer Teams sehen ihre E-Mail-Adresse. Prüfe, dass es das richtige Konto ist.`,
         ]}
         suche={async (email) => {
           const r = await sucheVereinPersonAktion(vereinId, email);
@@ -282,7 +282,7 @@ export function VereinVerwaltung({
           {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
           <p>
             <strong className="text-on-surface">{entfernen?.anzeigeName ?? "Vereinsverwaltung"}</strong>{" "}
-            <span className="break-all">({entfernen?.email})</span> verwaltet den {vereinName} danach nicht mehr. In
+            <span className="break-all">({entfernen?.email})</span> verwaltet den Verein «{vereinName}» danach nicht mehr. In
             den eigenen Teams bleibt die Person Trainer:in.
           </p>
         </div>
@@ -305,7 +305,7 @@ export function VereinVerwaltung({
       >
         <div className="flex flex-col gap-3">
           {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
-          <p>Du verwaltest den {vereinName} danach nicht mehr. In deinen Teams bleibst du Trainer:in.</p>
+          <p>Du verwaltest den Verein «{vereinName}» danach nicht mehr. In deinen Teams bleibst du Trainer:in.</p>
         </div>
       </Dialog>
     </div>

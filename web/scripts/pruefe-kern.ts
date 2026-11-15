@@ -2415,19 +2415,19 @@ pruefe("Spielerbestand der Verwaltung (#582): Sätze zum Erfassen und Ändern, D
   // Erfassen mit einem, zwei, drei Teams (Namen nach Name geordnet, wie am Team-Ort).
   assert.equal(
     spielerErfassenAbgewiesenText({ teams: ["Da"], ohne_team: false }, e, "FC Wyler"),
-    `Noah Keller (2015) wird im FC Wyler schon im Team «Da» geführt. ${zuordnen} ${zusatz}`,
+    `Noah Keller (2015) wird im Verein «FC Wyler» schon im Team «Da» geführt. ${zuordnen} ${zusatz}`,
   );
   assert.equal(
     spielerErfassenAbgewiesenText({ teams: ["Ea", "Da"], ohne_team: false }, e, "FC Wyler"),
-    `Noah Keller (2015) wird im FC Wyler schon im Team «Da» und «Ea» geführt. ${zuordnen} ${zusatz}`,
+    `Noah Keller (2015) wird im Verein «FC Wyler» schon im Team «Da» und «Ea» geführt. ${zuordnen} ${zusatz}`,
   );
   assert.equal(
     spielerErfassenAbgewiesenText({ teams: ["Ea", "Ca", "Da"], ohne_team: false }, e, "FC Wyler"),
-    `Noah Keller (2015) wird im FC Wyler schon im Team «Ca», «Da» und «Ea» geführt. ${zuordnen} ${zusatz}`,
+    `Noah Keller (2015) wird im Verein «FC Wyler» schon im Team «Ca», «Da» und «Ea» geführt. ${zuordnen} ${zusatz}`,
   );
   // Erfassen ohne Team: kein Verweis an «dein Team» (die Verwaltung ordnet selbst zu).
   const ohne = spielerErfassenAbgewiesenText({ teams: [], ohne_team: true }, e, "FC Wyler");
-  assert.equal(ohne, `Noah Keller (2015) wird im FC Wyler schon geführt, ist aber keinem Team zugeordnet. ${zuordnen} ${zusatz}`);
+  assert.equal(ohne, `Noah Keller (2015) wird im Verein «FC Wyler» schon geführt, ist aber keinem Team zugeordnet. ${zuordnen} ${zusatz}`);
   // Mischfall (Altdubletten): nur die Teams.
   assert.equal(
     spielerErfassenAbgewiesenText({ teams: ["Da"], ohne_team: true }, e, "FC Wyler"),
@@ -2470,7 +2470,7 @@ pruefe("Spielerbestand der Verwaltung (#582): Sätze zum Erfassen und Ändern, D
   );
   // Grenze (AK 7): der Satz zu VEREIN_VOLL, eine Quelle für App und KI — kein eigener Satz der Verwaltung.
   assert.equal(fehlerMeldung("x VEREIN_VOLL y"), VEREIN_MELDUNG.VEREIN_VOLL);
-  assert.match(spielerErfassenEinleitung("FC Wyler"), /^Die Spieler:in kommt ohne Team in den FC Wyler\. Einem Team ordnest du sie danach zu\.$/);
+  assert.match(spielerErfassenEinleitung("FC Wyler"), /^Die Spieler:in kommt ohne Team in den Verein «FC Wyler»\. Einem Team ordnest du sie danach zu\.$/);
 });
 
 pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätigung, Zahlen und Leerzustand (AK 10, 13)", () => {
@@ -2712,6 +2712,57 @@ function probeTreffer(quelltext: string, rel: string): string[] {
   besuche(sf);
   return treffer;
 }
+
+/** Vereinsnamen sind frei wählbar («FC Wyler», «Sportvereinigung Muster»): Ein Artikel oder eine
+ *  verschmolzene Präposition direkt vor dem eingesetzten Namen («im ${verein}», «des {vereinName}»)
+ *  passt nur für manche. Texte nennen den Namen nach dem Wort «Verein» in « » («im Verein «${verein}»»;
+ *  AP §5.3 «Vereinsname ohne Artikel»). Gefangen wird jede Einsetzung eines Bezeichners mit `verein`
+ *  im Namen (Vorlage `${…}` oder JSX `{…}`) unmittelbar hinter einem solchen Wort; Kommentare sieht niemand. */
+const ARTIKEL_VOR_VEREINSNAME =
+  /\b(?:der|des|dem|den|im|in den|zum|zur|vom|beim|am|ins|für den|für das)\s+\$?\{\s*(?:\w+\??\.)*(?:verein|vereinName|vereinsname)\w*\b[^}]*\}/i;
+
+function artikelVorVereinsnameTreffer(quelltext: string, rel: string): string[] {
+  const treffer: string[] = [];
+  quelltext.split("\n").forEach((zeile, i) => {
+    if (/^\s*(\*|\/\/|\/\*)/.test(zeile)) return;
+    const ohneKommentar = zeile.replace(/\/\/.*$/, "").replace(/\/\*.*?\*\//g, "");
+    if (ARTIKEL_VOR_VEREINSNAME.test(ohneKommentar)) treffer.push(`${rel}:${i + 1}`);
+  });
+  return treffer;
+}
+
+pruefe("Kein Artikel vor dem Vereinsnamen in Oberfläche und KI-Texten (Phase D, AP §5.3)", () => {
+  // Der Wächter schlägt an …
+  for (const schlecht of [
+    "const a = `wird im ${verein} schon geführt`;",
+    "const a = `kommt in den ${vereinName}.`;",
+    "const a = `Sie gehört zum ${verein.name}`;",
+    "<p>Du verwaltest den {vereinName} danach nicht mehr.</p>",
+    "<h1>Verwaltung des {l.verein}</h1>",
+    "const a = `${wer} bleibt im ${l.verein ?? 'x'}`;",
+  ])
+    assert.equal(artikelVorVereinsnameTreffer(schlecht, "x.tsx").length, 1, schlecht);
+  // … und lässt die neutrale Form, andere Namen und Kommentare durch.
+  for (const gut of [
+    "const a = `wird im Verein «${verein}» schon geführt`;",
+    "<p>Du verwaltest den Verein «{vereinName}» danach nicht mehr.</p>",
+    "const a = `Vereinsverwaltung von «${verein}»`;",
+    "const a = `Der Link ist von ${vorname} im Team ${team}`;",
+    "const a = `für den ${spielerName}`;",
+    "// zum ${verein} gehört",
+    " * im ${verein}",
+  ])
+    assert.deepEqual(artikelVorVereinsnameTreffer(gut, "x.tsx"), [], gut);
+  const treffer: string[] = [];
+  for (const wurzel of ["app", "components", "lib"].map((p) => join(web, p)))
+    for (const datei of quelldateien(wurzel)) {
+      const rel = relative(web, datei);
+      // Generiertes Produktwissen und Typen schreibt niemand von Hand.
+      if (PROBE_AUSNAHMEN.includes(rel) || rel === "lib/database.types.ts") continue;
+      treffer.push(...artikelVorVereinsnameTreffer(readFileSync(datei, "utf8"), rel));
+    }
+  assert.deepEqual(treffer, [], `Artikel vor dem Vereinsnamen in: ${treffer.join(", ")}`);
+});
 
 pruefe("Kein «Probe» in Oberflächentexten und KI: Texte, JSX, Schema-Schlüssel (#584 AK 2, 3)", () => {
   // Der Wächter schlägt an: Text, JSX, Schlüssel im KI-Schema, `feld`; und lässt Internes durch.
@@ -3327,17 +3378,17 @@ pruefe("Aus dem Team nehmen (#579 AK 13–16): nicht gelöscht, bleibt im Verein
   // Mit weiterem Team: Wortlaut des Boards, ohne Pronomen.
   assert.deepEqual(herausnehmenSaetze(lage), {
     absaetze: [
-      "Noah wird dadurch nicht gelöscht und bleibt samt privatem Link im FC Wyler und im Team Ea Junioren. Aus dem Verein löscht nur die Vereinsverwaltung.",
+      "Noah wird dadurch nicht gelöscht und bleibt samt privatem Link im Verein «FC Wyler» und im Team Ea Junioren. Aus dem Verein löscht nur die Vereinsverwaltung.",
     ],
     warnung: "Künftige Abmeldungen, Spiel-Meldungen und Kader in Da Junioren verfallen.",
     zusatz: "Vergangene Anwesenheiten bleiben mit dem Namen stehen.",
   });
   // Mehrere verbleibende Teams.
-  assert.match(herausnehmenSaetze({ ...lage, verbleibend: ["Ea Junioren", "Fa Junioren", "FF-15"] }).absaetze[0], /im FC Wyler und in den Teams Ea Junioren, Fa Junioren und FF-15\. Aus dem Verein/);
+  assert.match(herausnehmenSaetze({ ...lage, verbleibend: ["Ea Junioren", "Fa Junioren", "FF-15"] }).absaetze[0], /im Verein «FC Wyler» und in den Teams Ea Junioren, Fa Junioren und FF-15\. Aus dem Verein/);
   // Letztes Team: keinem Team mehr zugeordnet, nur die Verwaltung führt sie (AK 16).
   const letzte = herausnehmenSaetze({ ...lage, vorname: "Leon", nachname: "Graf", verbleibend: [] });
   assert.deepEqual(letzte.absaetze, [
-    "Leon wird dadurch nicht gelöscht und bleibt samt privatem Link im FC Wyler, ist danach aber keinem Team mehr zugeordnet.",
+    "Leon wird dadurch nicht gelöscht und bleibt samt privatem Link im Verein «FC Wyler», ist danach aber keinem Team mehr zugeordnet.",
     "Ändern, einem Team zuordnen oder löschen kann dann nur die Vereinsverwaltung.",
   ]);
   // Vergangene Anwesenheiten bleiben auch beim letzten Team mit dem Namen stehen (PC 5).
@@ -3624,13 +3675,13 @@ pruefe("Import im Verein: bestätigen nur mit Änderung und unter der Grenze (#5
 pruefe("Import im Verein: Sätze der Vorschau, mit Einzahl und ohne Team (#585 AK 3, 4, 5)", () => {
   assert.equal(
     importNeuText(12, 144, "FC Wyler"),
-    "12 Spieler:innen kommen neu in den FC Wyler, ohne Team. Alle Trainer:innen des Vereins sehen sie mit Name und Jahrgang; löschen lassen sie sich nur einzeln. Danach sind es 156 von 1000.",
+    "12 Spieler:innen kommen neu in den Verein «FC Wyler», ohne Team. Alle Trainer:innen des Vereins sehen sie mit Name und Jahrgang; löschen lassen sie sich nur einzeln. Danach sind es 156 von 1000.",
   );
   assert.equal(
     importNeuText(1, 0, "FC Wyler"),
-    "1 Spieler:in kommt neu in den FC Wyler, ohne Team. Alle Trainer:innen des Vereins sehen sie mit Name und Jahrgang; löschen lässt sie sich nur einzeln. Danach ist es 1 von 1000.",
+    "1 Spieler:in kommt neu in den Verein «FC Wyler», ohne Team. Alle Trainer:innen des Vereins sehen sie mit Name und Jahrgang; löschen lässt sie sich nur einzeln. Danach ist es 1 von 1000.",
   );
-  assert.equal(IMPORT_TEXT.einleitung("FC Wyler"), "Neue Spieler:innen kommen ohne Team in den FC Wyler. Bestehende erkennt KiFu im ganzen Verein und legt sie nicht neu an.");
+  assert.equal(IMPORT_TEXT.einleitung("FC Wyler"), "Neue Spieler:innen kommen ohne Team in den Verein «FC Wyler». Bestehende erkennt KiFu im ganzen Verein und legt sie nicht neu an.");
   const ea = { id: "t2", name: "Ea Junioren" };
   const da = { id: "t1", name: "Da Junioren" };
   assert.equal(

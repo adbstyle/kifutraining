@@ -61,7 +61,7 @@ export default async function VereinPage({
       {sp.aufgeloest && <Flash message={`Das Team ${sp.aufgeloest.slice(0, 120)} ist aufgelöst.`} param="aufgeloest" />}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
-          <h1 className="type-headline-small text-on-surface">Teams im {name}</h1>
+          <h1 className="type-headline-small text-on-surface">Teams im Verein «{name}»</h1>
           <p className="type-body-medium text-on-surface-mittel">
             {vereinKopfText(teams.length, spielerZahl)}
           </p>

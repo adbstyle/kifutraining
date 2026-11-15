@@ -249,7 +249,7 @@ export function herausnehmenTitel(l: Pick<HerausnehmenLage, "vorname" | "nachnam
  *  bleibt. Die Oberfläche setzt sie in den Dialog, der KI-Weg hängt sie zu
  *  einer Rückfrage zusammen (`herausnehmenFrage`). */
 export function herausnehmenSaetze(l: HerausnehmenLage): { absaetze: string[]; warnung: string; zusatz: string } {
-  const imVerein = l.verein ? `im ${l.verein}` : "im Verein";
+  const imVerein = l.verein ? `im Verein «${l.verein}»` : "im Verein";
   const wer = l.vorname;
   const verfall = `Abmeldungen, Spiel-Meldungen und Kader in ${l.team} verfallen.`;
   const warnung = l.probe ? `Das Schnuppertraining endet samt Zählung; künftige ${verfall}` : `Künftige ${verfall}`;

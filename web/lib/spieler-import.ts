@@ -42,7 +42,7 @@ export const IMPORT_TEXT = {
   js: (roh: string) => `«${roh}» ist keine J+S-Nummer und wird nicht übernommen.`,
   /** Vor der Dateiwahl: was mit Neuen und Bestehenden geschieht (#585 AK 3, 4). */
   einleitung: (verein: string) =>
-    `Neue Spieler:innen kommen ohne Team in den ${verein}. Bestehende erkennt KiFu im ganzen Verein und legt sie nicht neu an.`,
+    `Neue Spieler:innen kommen ohne Team in den Verein «${verein}». Bestehende erkennt KiFu im ganzen Verein und legt sie nicht neu an.`,
   mehrfachViele:
     "Diese Spieler:innen werden mehrfach im Verein geführt. KiFu ändert bei keinem dieser Einträge die J+S-Nummer.",
   nichtsZuTun: "Alle stehen schon so im Verein; es gibt nichts zu übernehmen.",
@@ -433,7 +433,7 @@ export function importNeuText(neu: number, bestand: number, verein: string): str
       ? ["1 Spieler:in kommt neu", "sehen sie mit Name und Jahrgang; löschen lässt sie sich nur einzeln"]
       : [`${neu} Spieler:innen kommen neu`, "sehen sie mit Name und Jahrgang; löschen lassen sie sich nur einzeln"];
   const danach = bestand + neu === 1 ? "Danach ist es" : "Danach sind es";
-  return `${kommen} in den ${verein}, ohne Team. Alle Trainer:innen des Vereins ${sehen}. ${danach} ${spielerVonText(bestand + neu)}.`;
+  return `${kommen} in den Verein «${verein}», ohne Team. Alle Trainer:innen des Vereins ${sehen}. ${danach} ${spielerVonText(bestand + neu)}.`;
 }
 
 /** Zeilen, die im Verein mehrfach geführt werden (AK 5): eine Einzelne mit
