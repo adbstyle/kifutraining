@@ -266,13 +266,26 @@ import {
   IMPORT_TEXT,
   dekodiere,
   erkenneSpalten,
+  IMPORT_BYTES_MAX,
+  IMPORT_ZEILEN_MAX,
+  ausgangAus,
+  erwartetVon,
   importErgebnisText,
+  importErwartetForm,
+  importJsPlakette,
+  importMehrfachText,
+  importNeuText,
+  importNichtsZuTunText,
+  importUebernehmbar,
+  importUeberGrenzeText,
   importZeilen,
-  importGrenzText,
-  importZuGross,
+  importZeilenForm,
+  importZeilenStimmen,
   jahrgangAusDatum,
   jsAus,
   leseDatei,
+  vorschauAus,
+  type ImportVorschau,
 } from "../lib/spieler-import";
 import { seitWann, terminBegonnen } from "../lib/zeit";
 import {
@@ -2476,14 +2489,14 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
   assert.equal(SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, "Spieler:in nicht gefunden.", "ohne Verweis auf ein Team, gilt auch für die Verwaltung");
 });
 
-pruefe("Spielerbestand der Verwaltung (#582): Löschen, Verein-Import und Verein-Weg nur am Verein-Ort (Review Focus 4)", () => {
+pruefe("Spielerbestand der Verwaltung (#582, #585): Löschen, Import und Verein-Weg nur am Verein-Ort (Review Focus 4)", () => {
   const lies = (d: string) => readFileSync(join(web, d), "utf8");
   // Der Team-Ort kennt weder das Löschen einer Spieler:in noch einen Verein-Weg.
   const treffer: string[] = [];
   for (const ordner of ["components/team", "app/(app)/team"])
     for (const datei of quelldateien(join(web, ordner)))
       readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
-        if (/\b(loescheSpielerImVerein\w*|verein_spieler_\w+|VereinSpieler(Formular|LinkDialog|Loeschen|Liste))\b/.test(zeile)) treffer.push(`${relative(web, datei)}:${i + 1}`);
+        if (/\b(loescheSpielerImVerein\w*|verein_spieler_\w+|VereinSpieler(Formular|LinkDialog|Loeschen|Liste|Import)|importiereInVerein\w*|pruefeVereinImport\w*)\b/.test(zeile)) treffer.push(`${relative(web, datei)}:${i + 1}`);
       });
   assert.deepEqual(treffer, [], `Verein-Weg am Team-Ort: ${treffer.join(", ")}`);
   // Die Spielerliste eines Teams bietet kein Löschen.
@@ -2493,9 +2506,32 @@ pruefe("Spielerbestand der Verwaltung (#582): Löschen, Verein-Import und Verein
   const liste = lies("lib/kern/spieler.ts").match(/export async function ladeSpielerliste[\s\S]*?\n}\n/)?.[0] ?? "";
   assert.match(liste, /\.from\("team_spieler"\)[\s\S]*?\.eq\("team_id", e\.teamId\)/, "Team-Spielerliste über die Zuordnungen des Teams");
   assert.ok(!/\.from\("spieler"\)/.test(liste), "Team-Spielerliste liest spieler direkt");
-  // Der Verein-Ort importiert nicht den Team-Import (CSV folgt in Story 9, nicht hier).
-  for (const datei of quelldateien(join(web, "components/verein")))
-    assert.ok(!/SpielerImport|importiereSpieler/.test(readFileSync(datei, "utf8")), `Verein-Import: ${relative(web, datei)}`);
+  // Der Import gehört dem Verein-Ort (#585 AK 12): Den Team-Import mit seinen Namen gibt es nirgends mehr,
+  // der Dialog hängt allein an der Verwaltungsliste, und kein Team-Baustein kennt das Datei-Symbol.
+  const teamImport: string[] = [];
+  const dialogNutzer: string[] = [];
+  const rpcImport: string[] = [];
+  for (const datei of quelldateien(web)) {
+    const rel = relative(web, datei);
+    if (datei === fileURLToPath(import.meta.url) || rel === "scripts/pruefe-kern-db.ts") continue;
+    const text = readFileSync(datei, "utf8");
+    if (/(?<![A-Za-z])(SpielerImport|importiereSpieler\w*|pruefeSpielerImport\w*|importZuGross|importGrenzText)\b/.test(text)) teamImport.push(rel);
+    if (/import[^;]*\bVereinSpielerImport\b[^;]*from/.test(text)) dialogNutzer.push(rel);
+    if (/\.rpc\(\s*["`']verein_spieler_importieren["`']/.test(text)) rpcImport.push(rel);
+  }
+  assert.deepEqual(teamImport, [], `Team-Import-Namen stehen noch in: ${teamImport.join(", ")}`);
+  assert.deepEqual(dialogNutzer, ["components/verein/VereinSpielerListe.tsx"], "Import-Dialog nur in der Verwaltungsliste");
+  assert.deepEqual(rpcImport, ["lib/kern/verein.ts"], "verein_spieler_importieren nur im Verein-Kern");
+  assert.ok(!/FileUp/.test(lies("components/team/SpielerListe.tsx")), "kein Datei-Symbol in der Spielerliste des Teams");
+  assert.ok(!/CSV/.test(lies("components/team/SpielerListe.tsx").replace(/\/\*[\s\S]*?\*\//g, "")), "kein Hinweis auf den Import an der alten Stelle (#585 OoS 2)");
+  // Der Knopf steht in der Verwaltungsliste, der Dialog nur, solange er offen ist, und er schliesst beim Wechsel der Eingrenzung.
+  const verwaltungsliste = lies("components/verein/VereinSpielerListe.tsx");
+  assert.match(verwaltungsliste, /\{importOffen && <VereinSpielerImport /, "Dialog bedingt gemountet");
+  assert.match(verwaltungsliste, /setSchluesselVorher\(schluessel\);[\s\S]*?setImportOffen\(false\)/, "Eingrenzungswechsel schliesst den Import");
+  // Die Antwort `veraltet` ersetzt die Vorschau und zeigt das Band; die nächste selbst ausgelöste Vorschau löscht es.
+  const dialog = lies("components/verein/VereinSpielerImport.tsx");
+  assert.match(dialog, /function laden\([\s\S]*?setVeraltet\(false\)/, "Hinweisband verschwindet bei der nächsten Vorschau");
+  assert.match(dialog, /status === "veraltet"[\s\S]*?setVorschau\(r\.ausgang\.vorschau\);\s*setVeraltet\(true\)/, "veraltet: neue Vorschau mit Hinweisband");
   // Das einzige Löschen einer Spieler:in im Web liegt im Verein-Kern und seiner Action.
   const loescher: string[] = [];
   for (const datei of quelldateien(web)) {
@@ -3222,7 +3258,7 @@ pruefe("Spieler:innen des Vereins (#580): für alle Mitglieder, Mitglieder-Form 
   assert.match(kern, /if \(!r\.verwaltung\)\s+return ok\(\{ \.\.\.basis, verwaltung: false, spieler: zeilen\.map\(mitglied\)/, "Mitglieder-Zeilen Feld für Feld, nie ein undefined-Schlüssel");
   // Die lesende Sicht kennt weder Aktionen noch Verwaltungsbausteine.
   const ansicht = lies("components/verein/VereinSpielerAnsicht.tsx").replace(/\/\*[\s\S]*?\*\//g, "");
-  assert.ok(!/actions\/|VereinSpieler(Formular|LinkDialog|Loeschen|Liste)|OverflowMenu|Checkbox|AuswahlLeiste|"use client"/.test(ansicht), "nur lesen");
+  assert.ok(!/actions\/|VereinSpieler(Formular|LinkDialog|Loeschen|Liste|Import)|OverflowMenu|Checkbox|AuswahlLeiste|"use client"/.test(ansicht), "nur lesen");
   // Die Sicht wählt allein `verwaltung` aus der Antwort der Liste (eine Quelle), nicht die Vereinslage.
   assert.match(seite, /\{liste\.verwaltung \? \(/);
   assert.ok(!/istVerwaltung/.test(seite), "keine zweite Quelle für die Rolle");
@@ -3409,6 +3445,32 @@ pruefe("Kein Verweis auf den Index spieler_eindeutig (#578, Architekturplan §5.
   assert.deepEqual(treffer, [], `spieler_eindeutig steht noch in: ${treffer.join(", ")}`);
 });
 
+/** Ein Aufruf oder Verweis auf die RPC `spieler_importieren` (Team-Import): `verein_spieler_importieren` zählt nicht. */
+const ALTER_IMPORT = /(?<![A-Za-z_])spieler_importieren\b/;
+
+pruefe("Kein Verweis auf spieler_importieren: der Team-Import ist weg, auch in Tests (#585 AK 12, Architekturplan §5.5)", () => {
+  // Der Wächter schlägt an und lässt den Verein-Namen durch.
+  assert.ok(ALTER_IMPORT.test("select spieler_importieren(a, b)"));
+  assert.ok(ALTER_IMPORT.test('await db.rpc("spieler_importieren", {})'));
+  assert.ok(!ALTER_IMPORT.test("select verein_spieler_importieren(a, b)"));
+  assert.ok(!ALTER_IMPORT.test('db.rpc("verein_spieler_importieren")'));
+  assert.ok(!ALTER_IMPORT.test("-- importieren Spieler"), "nur der Name der RPC");
+  const repo = join(web, "..");
+  const treffer: string[] = [];
+  // Frühere Migrationen sind unveränderlich und bleiben ausgenommen; `pruefe-kern-db.ts` belegt, dass der Aufruf scheitert.
+  const dateien = [
+    ...quelldateien(web),
+    ...[join(repo, "supabase/tests"), join(repo, ".github/workflows")].flatMap((w) =>
+      readdirSync(w, { recursive: true, encoding: "utf8" }).map((d) => join(w, d)).filter((d) => statSync(d).isFile()),
+    ),
+  ];
+  for (const datei of dateien) {
+    if (datei === fileURLToPath(import.meta.url) || relative(repo, datei) === "web/scripts/pruefe-kern-db.ts") continue;
+    if (ALTER_IMPORT.test(readFileSync(datei, "utf8"))) treffer.push(relative(repo, datei));
+  }
+  assert.deepEqual(treffer, [], `spieler_importieren steht noch in: ${treffer.join(", ")}`);
+});
+
 pruefe("Verein (#577): Marker der Datenebene tragen die Sätze der Oberfläche, Team- und Vereinsgrenze bleiben unterscheidbar", () => {
   for (const [marker, satz] of Object.entries(VEREIN_MELDUNG)) assert.equal(fehlerMeldung(`x ${marker} y`), satz, marker);
   for (const [marker, satz] of Object.entries(VEREIN_MELDUNG)) assert.equal(still(() => ausDbFehler({ message: marker })).meldung, satz, `ausDbFehler ${marker}`);
@@ -3434,19 +3496,148 @@ pruefe("Verein (#577): Marker der Datenebene tragen die Sätze der Oberfläche, 
   }
 });
 
-pruefe("Import-Vorprüfung: Bestand und neue Zeilen gegen die Teamgrenze 100 (#577 PC 2)", () => {
-  const vorschau = (bestand: number, neu: number) => ({ neu: Array.from({ length: neu }, (_, i) => i + 1), js: [], gleich: [], bestand });
-  assert.equal(importZuGross(vorschau(90, 10)), false, "genau 100 passt");
-  assert.equal(importZuGross(vorschau(90, 11)), true, "101 passt nicht");
-  assert.equal(importZuGross(vorschau(0, 100)), false);
-  assert.equal(importZuGross(vorschau(0, 101)), true);
-  assert.equal(importZuGross(vorschau(150, 0)), false, "Bestand über der Grenze, nichts Neues: durchlassen (PC 2)");
-  assert.equal(importZuGross(vorschau(150, 1)), true, "über der Grenze zählt jede neue Zeile");
-  assert.equal(IMPORT_TEXT.zuGross, `Die Datei ist zu gross. Eine Spielerliste fasst höchstens ${SPIELER_MAX} Spieler:innen.`);
-  // Text: an oder über der Grenze der Wortlaut der Teamgrenze, sonst passt die Datei nicht.
-  assert.equal(importGrenzText(SPIELER_MAX), SPIELER_MELDUNG.SPIELERLISTE_VOLL);
-  assert.equal(importGrenzText(150), SPIELER_MELDUNG.SPIELERLISTE_VOLL);
-  assert.equal(importGrenzText(SPIELER_MAX - 1), IMPORT_TEXT.zuGross);
+/** Eine Vorschau in der Form der Datenebene (Vertrag Story #585) — Zeilennummern wie in der Datei. */
+const importVorschau = (v: Partial<ImportVorschau>): ImportVorschau => ({ bestand: 0, ueber: 0, neu: [], js: [], gleich: [], mehrfach: [], ...v });
+
+pruefe("Import im Verein: Grenze 1000, Zeilendeckel und Dateigrösse haben je ihren Satz (#585 AK 6, 7)", () => {
+  assert.equal(IMPORT_ZEILEN_MAX, 1000);
+  assert.equal(SPIELER_MELDUNG.IMPORT_ZU_GROSS, `Eine Datei darf höchstens ${IMPORT_ZEILEN_MAX} Zeilen haben.`, "Satz und Zahl bleiben Zwillinge");
+  assert.equal(IMPORT_TEXT.zuGross, SPIELER_MELDUNG.IMPORT_ZU_GROSS, "Zeilen: derselbe Satz wie der Marker");
+  assert.notEqual(IMPORT_TEXT.zuGrossBytes, IMPORT_TEXT.zuGross, "die Dateigrösse hat einen eigenen Satz");
+  assert.equal(
+    IMPORT_TEXT.zuGrossBytes,
+    "Die Datei ist zu gross. Speichere die Datei nur mit den Spalten für Vorname, Nachname, Jahrgang und J+S-Nummer und wähle sie erneut.",
+  );
+  assert.equal(fehlerMeldung("x IMPORT_ZU_GROSS y"), SPIELER_MELDUNG.IMPORT_ZU_GROSS, "der Marker der Datenebene kommt als Satz an");
+  // Mit Zahl: um wie viele der Verein über 1000 läge (Beispiel des Boards). Ohne
+  // «Nichts übernommen.»: In der Vorschau ist noch nichts versucht; nach einer
+  // Übernahme sagt es das Band.
+  assert.ok(IMPORT_TEXT.veraltet.includes("Nichts übernommen."), "das Band sagt, dass nichts übernommen wurde");
+  assert.equal(
+    importUeberGrenzeText(importVorschau({ bestand: 997, ueber: 9, neu: Array.from({ length: 12 }, (_, i) => i + 2) })),
+    "Mit diesen 12 neuen wären es 1009 Spieler:innen, 9 mehr als 1000. Entferne Zeilen aus der Datei oder lösche zuerst Spieler:innen.",
+  );
+  assert.equal(
+    importUeberGrenzeText(importVorschau({ bestand: 1000, ueber: 1, neu: [2] })),
+    "Mit dieser neuen Spieler:in wären es 1001 Spieler:innen, 1 mehr als 1000. Entferne Zeilen aus der Datei oder lösche zuerst Spieler:innen.",
+  );
+});
+
+pruefe("Import im Verein: bestätigen nur mit Änderung und unter der Grenze (#585 AK 5, 6)", () => {
+  assert.equal(importUebernehmbar(importVorschau({ neu: [2] })), true, "eine Neue genügt");
+  assert.equal(importUebernehmbar(importVorschau({ js: [{ zeile: 2, alt: null, teams: [] }] })), true, "eine geänderte J+S-Nummer genügt");
+  assert.equal(importUebernehmbar(importVorschau({ gleich: [{ zeile: 2, teams: [] }] })), false, "nur Unveränderte: nichts zu übernehmen");
+  assert.equal(importUebernehmbar(importVorschau({ mehrfach: [{ zeile: 2, teams: [] }] })), false, "mehrfach allein genügt nicht (AK 5)");
+  assert.equal(importUebernehmbar(importVorschau({})), false);
+  assert.equal(importUebernehmbar(importVorschau({ bestand: 1000, ueber: 1, neu: [2] })), false, "über der Grenze gesperrt");
+  assert.equal(
+    importUebernehmbar(importVorschau({ bestand: 1005, ueber: 0, js: [{ zeile: 2, alt: "1", teams: [] }] })),
+    true,
+    "ein Bestand über der Grenze lässt J+S-Änderungen ohne Neue zu",
+  );
+});
+
+pruefe("Import im Verein: Sätze der Vorschau, mit Einzahl und ohne Team (#585 AK 3, 4, 5)", () => {
+  assert.equal(
+    importNeuText(12, 144, "FC Wyler"),
+    "12 Spieler:innen kommen neu in den FC Wyler, ohne Team. Alle Trainer:innen des Vereins sehen sie mit Name und Jahrgang; löschen lassen sie sich nur einzeln. Danach sind es 156 von 1000.",
+  );
+  assert.equal(
+    importNeuText(1, 0, "FC Wyler"),
+    "1 Spieler:in kommt neu in den FC Wyler, ohne Team. Alle Trainer:innen des Vereins sehen sie mit Name und Jahrgang; löschen lässt sie sich nur einzeln. Danach ist es 1 von 1000.",
+  );
+  assert.equal(IMPORT_TEXT.einleitung("FC Wyler"), "Neue Spieler:innen kommen ohne Team in den FC Wyler. Bestehende erkennt KiFu im ganzen Verein und legt sie nicht neu an.");
+  const ea = { id: "t2", name: "Ea Junioren" };
+  const da = { id: "t1", name: "Da Junioren" };
+  assert.equal(
+    importMehrfachText([{ name: "Mia Rossi", jahrgang: 2014, teams: [da, ea] }]),
+    "Mia Rossi, 2014, wird mehrfach im Verein geführt (Da Junioren und Ea Junioren). KiFu ändert bei keinem dieser Einträge die J+S-Nummer.",
+  );
+  assert.equal(
+    importMehrfachText([{ name: "Lio Doppel", jahrgang: 2015, teams: [] }]),
+    "Lio Doppel, 2015, wird mehrfach im Verein geführt. KiFu ändert bei keinem dieser Einträge die J+S-Nummer.",
+    "ohne Team entfällt die Klammer",
+  );
+  assert.equal(importMehrfachText([{ name: "A", jahrgang: 2014, teams: [] }, { name: "B", jahrgang: 2015, teams: [da] }]), IMPORT_TEXT.mehrfachViele);
+  assert.equal(importNichtsZuTunText(0), "Alle stehen schon so im Verein; es gibt nichts zu übernehmen.");
+  assert.equal(importNichtsZuTunText(2), "Alle stehen schon so im Verein; es gibt nichts zu übernehmen. Mehrfach geführte Spieler:innen ändert KiFu nicht.");
+  assert.equal(
+    IMPORT_TEXT.veraltet,
+    "Seit der Vorschau hat sich der Spielerbestand geändert. Nichts übernommen. Prüfe die neue Vorschau.",
+  );
+});
+
+pruefe("Import im Verein: Antwort der Datenebene wird zur Vorschau, Teams in deutscher Ordnung (#585 Vertrag)", () => {
+  const roh = importVorschau({
+    bestand: 5,
+    ueber: 0,
+    neu: [2, 5],
+    js: [{ zeile: 3, alt: null, teams: [{ id: "b", name: "Zebra" }, { id: "a", name: "Älpler" }, { id: "c", name: "Adler" }] }],
+    gleich: [{ zeile: 4, teams: [] }],
+    mehrfach: [{ zeile: 6, teams: [{ id: "b", name: "Zebra" }, { id: "a", name: "Älpler" }] }],
+  });
+  const v = vorschauAus({ status: "vorschau", ...roh })!;
+  assert.ok(v, "der Status der Antwort stört nicht");
+  assert.deepEqual(v.js[0].teams.map((t) => t.name), ["Adler", "Älpler", "Zebra"], "Ä sortiert wie A");
+  assert.deepEqual(v.mehrfach[0].teams.map((t) => t.name), ["Älpler", "Zebra"]);
+  assert.deepEqual(v.gleich, [{ zeile: 4, teams: [] }], "leer heisst ohne Team");
+  assert.deepEqual({ neu: v.neu, bestand: v.bestand, ueber: v.ueber }, { neu: [2, 5], bestand: 5, ueber: 0 });
+  assert.deepEqual(roh.js[0].teams.map((t) => t.name), ["Zebra", "Älpler", "Adler"], "die Antwort bleibt unangetastet");
+  // Übernommen und veraltet (Grund Bestand wie Grenze) kommen in Form des Kerns an.
+  assert.deepEqual(ausgangAus({ status: "uebernommen", neu: 12, js: 2 }), { status: "uebernommen", neu: 12, js: 2 });
+  assert.deepEqual(ausgangAus({ status: "veraltet", grund: "grenze", vorschau: roh }), { status: "veraltet", grund: "grenze", vorschau: v });
+  const bestand = ausgangAus({ status: "veraltet", grund: "bestand", vorschau: roh });
+  assert.ok(bestand?.status === "veraltet" && bestand.grund === "bestand");
+  // Passt die Form nicht, gibt es keine Vorschau (der Kern meldet einen technischen Fehler).
+  for (const kaputt of [
+    null,
+    [],
+    { ...roh, bestand: "5" },
+    { ...roh, neu: [2.5] },
+    { ...roh, mehrfach: undefined },
+    { ...roh, gleich: [{ zeile: 4 }] },
+    { ...roh, js: [{ zeile: 3, alt: 7, teams: [] }] },
+    { ...roh, js: [{ zeile: 3, alt: null, teams: [{ id: "a" }] }] },
+  ])
+    assert.equal(vorschauAus(kaputt), null, JSON.stringify(kaputt));
+  for (const kaputt of [
+    { status: "vorschau", ...roh },
+    { status: "uebernommen", neu: 1 },
+    { status: "veraltet", grund: "anders", vorschau: roh },
+    { status: "veraltet", grund: "bestand", vorschau: { ...roh, ueber: null } },
+    { neu: 1, js: 0 },
+  ])
+    assert.equal(ausgangAus(kaputt), null, JSON.stringify(kaputt));
+  // Was die Oberfläche der Übernahme mitgibt: die Zeilennummern der Vorschau.
+  assert.equal(IMPORT_TEXT.unstimmig, "Der Import liess sich gerade nicht auswerten. Bitte versuche es noch einmal.");
+  assert.deepEqual(erwartetVon(v), { neu: [2, 5], js: [{ zeile: 3, alt: null }], mehrfach: [6] }, "J+S mit der alten Nummer (D1)");
+});
+
+pruefe("Import im Verein: Zeilennummern der Antwort stammen aus den gesendeten Zeilen, keine doppelt (#585, Review W2)", () => {
+  const v = importVorschau({ neu: [2], js: [{ zeile: 3, alt: "1", teams: [] }], gleich: [{ zeile: 4, teams: [] }], mehrfach: [{ zeile: 5, teams: [] }] });
+  assert.equal(importZeilenStimmen(v, [2, 3, 4, 5]), true);
+  assert.equal(importZeilenStimmen(v, [2, 3, 4, 5, 6]), true, "überstimmte Zeilen fehlen still");
+  assert.equal(importZeilenStimmen(v, [2, 3, 4]), false, "Zeile 5 nicht gesendet");
+  assert.equal(importZeilenStimmen({ ...v, gleich: [{ zeile: 2, teams: [] }] }, [2, 3, 4, 5]), false, "Zeile 2 doppelt");
+  assert.equal(importZeilenStimmen({ ...v, neu: [2, 2] }, [2, 3, 4, 5]), false, "doppelt in derselben Liste");
+  assert.equal(importZeilenStimmen(importVorschau({}), []), true);
+});
+
+pruefe("Import im Verein: Eingaben einer Action in Form, sonst kein TypeError (#585, Review W4)", () => {
+  const z = { zeile: 2, vorname: "Mia", nachname: "Rossi", jahrgang: 2015, jsNummer: null };
+  assert.equal(importZeilenForm([z, { ...z, zeile: 3, jsNummer: "123" }]), true);
+  assert.equal(importZeilenForm([]), true);
+  for (const kaputt of [null, undefined, "x", {}, [null], [7], [{ ...z, zeile: "2" }], [{ ...z, vorname: 1 }], [{ ...z, jahrgang: "2015" }], [{ ...z, jsNummer: undefined }]])
+    assert.equal(importZeilenForm(kaputt), false, JSON.stringify(kaputt));
+  const e = { neu: [2], js: [{ zeile: 3, alt: null }, { zeile: 4, alt: "9" }], mehrfach: [] };
+  assert.equal(importErwartetForm(e), true);
+  for (const kaputt of [null, undefined, [], {}, { ...e, neu: null }, { ...e, js: [3] }, { ...e, js: [{ zeile: 3 }] }, { ...e, js: [{ zeile: 3, alt: 9 }] }, { ...e, mehrfach: ["6"] }])
+    assert.equal(importErwartetForm(kaputt), false, JSON.stringify(kaputt));
+});
+
+pruefe("Import im Verein: Plakette der J+S-Änderungen in Ein- und Mehrzahl (#585, Review W5)", () => {
+  assert.equal(importJsPlakette(1), "1 J+S-Nummer ändert sich");
+  assert.equal(importJsPlakette(3), "3 J+S-Nummern ändern sich");
 });
 
 pruefe("Spielerzahl: Liste vor erwartet, ausgefallen ohne Zahl (#434 AK 8, #435 AK 6, #437 AK 4)", () => {
@@ -3601,8 +3792,13 @@ pruefe("CSV-Import: Zeichensatz, Trennzeichen, leere und fremde Dateien (#455 AK
   assert.deepEqual(leseDatei("x.csv", csvBytes("Vorname;Name\n;\n")), { ok: false, text: IMPORT_TEXT.nurKopf });
   assert.deepEqual(leseDatei("x.csv", new Uint8Array([0x4e, 0x81, 0x0a])), { ok: false, text: IMPORT_TEXT.zeichensatz });
   assert.equal(dekodiere(csvBytes("Müller", "latin1")), "Müller");
-  const zuViele = "Vorname;Name;Jahrgang\n" + "A;B;2017\n".repeat(1001);
-  assert.deepEqual(leseDatei("x.csv", csvBytes(zuViele)), { ok: false, text: IMPORT_TEXT.zuGross });
+  const zuViele = "Vorname;Name;Jahrgang\n" + "A;B;2017\n".repeat(IMPORT_ZEILEN_MAX + 1);
+  assert.deepEqual(leseDatei("x.csv", csvBytes(zuViele)), { ok: false, text: IMPORT_TEXT.zuGross }, "1001 Zeilen: Zeilendeckel");
+  const genau = "Vorname;Name;Jahrgang\n" + "A;B;2017\n".repeat(IMPORT_ZEILEN_MAX);
+  assert.ok(leseDatei("x.csv", csvBytes(genau)).ok, "1000 Zeilen gehen");
+  // Die Dateigrösse (1 MB) hat einen eigenen Satz, auch bei wenigen Zeilen.
+  const gross = "Vorname;Name;Jahrgang\n" + "A;B;2017;" + "x".repeat(IMPORT_BYTES_MAX) + "\n";
+  assert.deepEqual(leseDatei("x.csv", csvBytes(gross)), { ok: false, text: IMPORT_TEXT.zuGrossBytes }, "über 1 MB: Dateigrösse");
 });
 
 pruefe("CSV-Import: Spalten an ihren Köpfen erkennen (#455 AK 5–8)", () => {
@@ -3640,10 +3836,20 @@ pruefe("CSV-Import: Jahrgang, J+S-Nummer und ausgelassene Zeilen (#455 AK 17–2
   ]);
 });
 
-pruefe("CSV-Import: Meldung nach der Übernahme (#455 PC 6)", () => {
-  assert.equal(importErgebnisText({ neu: 12, js: 0, ersetzt: 3 }), "12 Spieler:innen aufgenommen. Die Spielerzahl kommt jetzt aus der Liste.");
-  assert.equal(importErgebnisText({ neu: 1, js: 2, ersetzt: 0 }), "1 Spieler:in aufgenommen, bei 2 die J+S-Nummer geändert.");
-  assert.equal(importErgebnisText({ neu: 0, js: 1, ersetzt: 0 }), "Bei 1 Spieler:in die J+S-Nummer geändert.");
+pruefe("CSV-Import: Meldung nach der Übernahme, die Neuen sind ohne Team (#585 AK 10)", () => {
+  const zuordnen = "einem Team ordnest du sie im Spielerbestand zu.";
+  assert.equal(
+    importErgebnisText({ neu: 12, js: 2 }),
+    `12 Spieler:innen aufgenommen, bei 2 die J+S-Nummer geändert. Die Neuen sind keinem Team zugeordnet; ${zuordnen}`,
+  );
+  assert.equal(importErgebnisText({ neu: 12, js: 0 }), `12 Spieler:innen aufgenommen. Die Neuen sind keinem Team zugeordnet; ${zuordnen}`);
+  assert.equal(
+    importErgebnisText({ neu: 1, js: 2 }),
+    `1 Spieler:in aufgenommen, bei 2 die J+S-Nummer geändert. Die neue Spieler:in ist keinem Team zugeordnet; ${zuordnen}`,
+  );
+  assert.equal(importErgebnisText({ neu: 1, js: 0 }), `1 Spieler:in aufgenommen. Die neue Spieler:in ist keinem Team zugeordnet; ${zuordnen}`);
+  assert.equal(importErgebnisText({ neu: 0, js: 1 }), "Bei 1 Spieler:in die J+S-Nummer geändert.", "ohne Neue kein Satz zu Teams");
+  assert.equal(importErgebnisText({ neu: 0, js: 3 }), "Bei 3 Spieler:innen die J+S-Nummer geändert.");
 });
 
 // ── Kader (Epic #447) ───────────────────────────────────────────────────────

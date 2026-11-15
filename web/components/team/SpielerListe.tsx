@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FileUp, Link2, Pencil, Plus, Shirt, UserMinus } from "lucide-react";
+import { Link2, Pencil, Plus, Shirt, UserMinus } from "lucide-react";
 import {
   AuswahlLeiste,
   Button,
@@ -33,7 +33,6 @@ import {
 import { SpielerFelder, istFeldFehler, type SpielerAngaben, type SpielerFehler } from "@/components/spieler/SpielerFelder";
 import { SpielerLinkDialog } from "./SpielerLinkDialog";
 import { Selbstabholung } from "./Selbstabholung";
-import { SpielerImport } from "./SpielerImport";
 import { KaderLozenges } from "./KaderLozenge";
 import { TeamLozenges } from "./TeamLozenges";
 import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
@@ -57,8 +56,9 @@ import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
    Selbstabholung bezogen wurde (#438 AK 21), sagt ein grüner Punkt daran;
    «nicht bezogen» steht nur im Link-Dialog — in der Liste wäre es bei fast
    allen der lauteste Eindruck (PO 2026-10-18). Der
-   Abschnitt «Selbstabholung» steht zuoberst (#438). Das Datei-Symbol neben
-   dem Plus übernimmt eine ganze Mannschaft aus einer CSV-Datei (#455).
+   Abschnitt «Selbstabholung» steht zuoberst (#438). Einen Import aus einer
+   CSV-Datei gibt es hier nicht mehr: Ihn macht die Vereinsverwaltung im
+   Spielerbestand des Vereins (Story #585).
 
    Führt das Team Kader (#452), zeigt die Liste je Spieler:in ihre Kader
    (AK 7), grenzt sich über die Chips darüber auf einen Kader oder auf
@@ -114,7 +114,6 @@ export function SpielerListe({
   // die Bestätigung nennt; `hinweis`: Die Lage hat sich inzwischen geändert.
   const [herausnehmen, setHerausnehmen] = useState<{ spieler: Spieler; teams: SpielerTeams; hinweis?: string; fehler?: string } | null>(null);
   const [link, setLink] = useState<Spieler | null>(null);
-  const [importOffen, setImportOffen] = useState(false);
   // Wer eben aufgenommen wurde — im noch offenen Dialog.
   const [aufgenommen, setAufgenommen] = useState<string | null>(null);
   const erstesFeld = useRef<HTMLInputElement>(null);
@@ -336,14 +335,9 @@ export function SpielerListe({
             </span>
           </span>
         </h2>
-        <span className="flex gap-1">
-          <Tooltip label="Aus Datei importieren">
-            <IconButton icon={FileUp} label="Spieler:innen aus Datei importieren" aria-haspopup="dialog" onClick={() => setImportOffen(true)} />
-          </Tooltip>
-          <Tooltip label="Spieler:in hinzufügen" ende>
-            <IconButton icon={Plus} label="Spieler:in hinzufügen" aria-haspopup="dialog" onClick={() => oeffnen()} />
-          </Tooltip>
-        </span>
+        <Tooltip label="Spieler:in hinzufügen" ende>
+          <IconButton icon={Plus} label="Spieler:in hinzufügen" aria-haspopup="dialog" onClick={() => oeffnen()} />
+        </Tooltip>
       </div>
 
       <div className="mt-4">
@@ -511,8 +505,7 @@ export function SpielerListe({
         </Tabelle>
       ) : (
         <p className="type-body-medium mt-4 text-on-surface-mittel">
-          Noch niemand auf der Liste. Solange sie leer ist, planst du mit der erwarteten Spielerzahl. Eine ganze
-          Mannschaft übernimmst du aus einer CSV-Datei.
+          Noch niemand auf der Liste. Solange sie leer ist, planst du mit der erwarteten Spielerzahl.
         </p>
       )}
 
@@ -561,8 +554,6 @@ export function SpielerListe({
       />
 
       {verfall.dialog}
-
-      <SpielerImport teamId={teamId} offen={importOffen} onClose={() => setImportOffen(false)} />
 
       <SpielerLinkDialog teamId={teamId} spieler={link} onClose={() => setLink(null)} />
     </>

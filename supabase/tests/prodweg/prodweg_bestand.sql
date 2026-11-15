@@ -44,7 +44,8 @@
 --               spiel_anwesenheit_setzen, termin_spielerzahl_regel und
 --               serie_spielerzahl_regel (Insert mit Zahl).
 -- Nicht abgedeckt: die Schreibwege mit eigenem Testfall (spieler_aufnehmen,
--- spieler_importieren, Herausnehmen: Testfall 1 in prodweg_pruefen.sql;
+-- Herausnehmen: Testfall 1 in prodweg_pruefen.sql; den Import am Verein-Ort:
+-- Story 9 in prodweg_pruefen.sql;
 -- spieler_probe_setzen: Story 8 in prodweg_pruefen.sql; kader_entfernen_folgen
 -- beim Löschen eines Kaders)
 -- sowie das Festhalten beim Anlegen eines vergangenen Termins (Trigger, nur

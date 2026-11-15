@@ -209,20 +209,18 @@ select pg_temp.erwarte(format($$select spieler_aufnehmen(%L, 'Neu', 'Neu', 2015,
 -- 99 und eine Schnuppernde: das Team ist voll.
 select pg_temp.erwarte(format($$select spieler_aufnehmen(%L, 'Neu', 'Neu', 2016, null)$$, pg_temp.id('team2')),
                        'SPIELERLISTE_VOLL');
--- Ein Import nur mit J+S-Nummern geht über der Grenze durch, mit einer neuen
--- Zeile nicht (Story 1 PC 2).
+-- Eine J+S-Nummer lässt sich über der Grenze setzen (Story 1 PC 2; bis Story 9
+-- über den Team-Import, den es nicht mehr gibt; den Import in den Verein ohne
+-- Teamgrenze prüft import_verein.sql).
 do $$
 declare
-  v_name text := (select s.nachname from spieler s join team_spieler ts on ts.spieler_id = s.id
-                   where ts.team_id = pg_temp.id('team1') and s.vorname = 'Eins' limit 1);
-  v_js jsonb := jsonb_build_array(jsonb_build_object('zeile', 2, 'vorname', 'Eins', 'nachname', v_name, 'jahrgang', 2015, 'js', '4711'));
+  v_spieler uuid := (select s.id from spieler s join team_spieler ts on ts.spieler_id = s.id
+                      where ts.team_id = pg_temp.id('team1') and s.vorname = 'Eins' limit 1);
+  v_name text := (select nachname from spieler where id = v_spieler);
 begin
-  if spieler_importieren(pg_temp.id('team1'), v_js, '{"neu": [], "js": [2]}') ->> 'js' <> '1' then
-    raise exception 'Testfall 1: Import nur mit J+S-Nummern nicht übernommen';
+  if spieler_aendern(pg_temp.id('team1'), v_spieler, 'Eins', v_name, 2015, '4711') ->> 'status' <> 'geaendert' then
+    raise exception 'Testfall 1: J+S-Nummer über der Grenze nicht gesetzt';
   end if;
-  perform pg_temp.erwarte(format($s$select spieler_importieren(%L, %L, '{"neu": [3], "js": []}')$s$, pg_temp.id('team1'),
-                                 v_js || '[{"zeile": 3, "vorname": "Neu", "nachname": "Neu", "jahrgang": 2015}]'::jsonb),
-                          'SPIELERLISTE_VOLL');
 end $$;
 reset role;
 select pg_temp.als(pg_temp.id('c'));

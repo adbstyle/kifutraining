@@ -76,9 +76,11 @@ const { legeSerieFest, aendereSerie, entferneSerie, folgeDerSerie, aendereMitRei
   await import("../lib/kern/serien");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
 const { getTeamPlanFuer, nochNichtVorbereitet } = await import("../lib/queries/termine-fuer");
-const { ladeSpielerliste, anzahlSpieler, nimmSpielerAuf, aendereSpieler, ladeSpieler, ladeSpielerTeams, eigenesTeamVon, nimmSpielerAusTeam, holeSpielerLink, erneuereSpielerLink, leseAbholung, schalteAbholung, erneuereAbholung, pruefeSpielerImport, importiereSpieler } =
+const { ladeSpielerliste, anzahlSpieler, nimmSpielerAuf, aendereSpieler, ladeSpieler, ladeSpielerTeams, eigenesTeamVon, nimmSpielerAusTeam, holeSpielerLink, erneuereSpielerLink, leseAbholung, schalteAbholung, erneuereAbholung } =
   await import("../lib/kern/spieler");
-const { IMPORT_TEXT, erwartetVon } = await import("../lib/spieler-import");
+const { IMPORT_TEXT, erwartetVon, importUebernehmbar } = await import("../lib/spieler-import");
+type ImportEintrag = import("../lib/spieler-import").ImportEintrag;
+type ImportErwartet = import("../lib/spieler-import").ImportErwartet;
 const { OHNE_TEAM_WERT, bereinigeEingrenzung, liesSpielerEingrenzung } = await import("../lib/verein-spielerliste");
 const { VEREIN_MELDUNG, VEREIN_TEAM_NICHT_GEFUNDEN, VEREIN_SPIELER_MAX, VEREIN_TEAMS_MAX, PERSON_MELDUNG, SCHNUPPERN_ZUORDNEN_TEXT, teamnameVergebenText, zuordnenAbweisungText, zugeordnetText } =
   await import("../lib/verein");
@@ -104,6 +106,8 @@ const {
   loescheSpielerImVerein,
   holeSpielerLinkImVerein,
   erneuereSpielerLinkImVerein,
+  pruefeVereinImport,
+  importiereInVerein,
 } = await import("../lib/kern/verein");
 const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, HERAUSNEHMEN_TEXT, abweisungText, herausnehmenFrage, spielerDoppeltText, spielerzahlVon, verfallBestaetigen } = await import("../lib/spieler");
 const { SPIEL_MELDUNG, SPIEL_TEXT, MELDUNG_TEXT, TREFFPUNKT_TEXT, meldefristZeitpunkt, spielBestaetigen, spielEntfernenText, spielVerfallText } =
@@ -4904,10 +4908,6 @@ try {
       "regel",
       "Vorhanden Verein (2016) wird im Verein schon im Team «Kern-DB-Verein-Voll-Bestand» geführt. Kläre die Zuordnung zu deinem Team mit der Vereinsverwaltung.",
     );
-    const zeilen = [{ zeile: 2, vorname: "Zuviel", nachname: "Import", jahrgang: 2016, jsNummer: null }];
-    const v = wert(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen }));
-    fehler(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen, erwartet: erwartetVon(v) }), "regel", VEREIN_MELDUNG.VEREIN_VOLL);
-    assert.equal(await anzahlSpieler(a.supabase, team), 0, "nichts aufgenommen");
     // #582 AK 6, 7: Erfassen durch die Verwaltung — derselbe Satz der Grenze, eine Dublette zuerst; die Zahl in der Ansicht.
     const erfassen = (vorname: string, nachname: string, jahrgang: number) =>
       legeSpielerImVereinAn(verwaltung.supabase, verwaltung.id, { vereinId: verein, vereinName: "Kern-DB", vorname, nachname, jahrgang });
@@ -4920,68 +4920,6 @@ try {
     const ansicht = wert(await ladeVereinAnsicht(verwaltung.supabase, verwaltung.id, { vereinId: verein }));
     const mitTeam = new Set((await admin.from("team_spieler").select("spieler_id").eq("verein_id", verein)).data!.map((z) => z.spieler_id)).size;
     assert.deepEqual([ansicht.spielerZahl, ansicht.spielerOhneTeam], [VEREIN_SPIELER_MAX, VEREIN_SPIELER_MAX - mitTeam], "#582 A1.2: gezählt wie die Grenze, mit denen ohne Team");
-  });
-
-  await pruefe("CSV-Import: Vorschau schreibt nicht, letzte Zeile gewinnt, Übernahme nur mit passender Vorschau (#455)", async () => {
-    const team = await serienTeam("Kern-DB-Spieler-Import");
-    const bald = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", spielerzahl: 12 })).terminId;
-    const zeilen = [
-      { zeile: 2, vorname: "Lina Marie", nachname: "Aebi", jahrgang: 2016, jsNummer: "100517283" },
-      { zeile: 3, vorname: "Zoe", nachname: "Gerber", jahrgang: 2016, jsNummer: null },
-      { zeile: 4, vorname: "Zoe", nachname: "Gerber", jahrgang: 2016, jsNummer: "2734410" },
-    ];
-    const v = wert(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen }));
-    assert.deepEqual(v, { neu: [2, 4], js: [], gleich: [], bestand: 0 }, "AK 21: die letzte Zeile gewinnt");
-    assert.equal((await spielerVon(team)).length, 0, "die Vorschau schreibt nicht");
-    assert.deepEqual(wert(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen, erwartet: erwartetVon(v) })), { teamId: team, neu: 2, js: 0, ersetzt: 1 });
-    assert.deepEqual((await spielerVon(team)).map((x) => [x.vorname, x.js_nummer]), [["Lina Marie", "100517283"], ["Zoe", "2734410"]]);
-    assert.equal(spielerzahlVon(await standVon(team, bald)).quelle, "liste", "die erste Spieler:in ersetzt die erwartete Zahl");
-
-    // Weiterer Import: J+S-Nummer ändert sich, leere Zelle löscht nichts, neu, unverändert.
-    const folge = [
-      { zeile: 2, vorname: "lina marie", nachname: "AEBI", jahrgang: 2016, jsNummer: null },
-      { zeile: 3, vorname: "Zoe", nachname: "Gerber", jahrgang: 2016, jsNummer: "100388164" },
-      { zeile: 5, vorname: "Ronja", nachname: "Bühlmann", jahrgang: 2016, jsNummer: null },
-    ];
-    const v2 = wert(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen: folge }));
-    assert.deepEqual(v2, { neu: [5], js: [{ zeile: 3, alt: "2734410" }], gleich: [2], bestand: 2 });
-    // AK 27: Ein anderes Mitglied nimmt Ronja inzwischen auf — nichts wird übernommen.
-    await neuerSpieler(team, "Ronja", "Bühlmann", 2016);
-    fehler(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen: folge, erwartet: erwartetVon(v2) }), "konflikt", IMPORT_TEXT.geaendert);
-    assert.equal((await spielerVon(team)).find((x) => x.vorname === "Zoe")!.js_nummer, "2734410", "ganz oder gar nicht");
-    const v3 = wert(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen: folge }));
-    assert.deepEqual(wert(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen: folge, erwartet: erwartetVon(v3) })), { teamId: team, neu: 0, js: 1, ersetzt: 0 });
-    assert.deepEqual((await spielerVon(team)).map((x) => [x.vorname, x.js_nummer]), [["Lina Marie", "100517283"], ["Ronja", null], ["Zoe", "100388164"]]);
-
-    // Nur Mitglieder, nur gültige Angaben.
-    fehler(await pruefeSpielerImport(b.supabase, b.id, { teamId: team, zeilen }), "nicht_gefunden");
-    fehler(await importiereSpieler(b.supabase, b.id, { teamId: team, zeilen, erwartet: { neu: [], js: [] } }), "nicht_gefunden");
-    fehler(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen: [{ ...zeilen[0], vorname: " " }] }), "eingabe", SPIELER_TEXT.vorname);
-    fehler(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen: [{ ...zeilen[0], jsNummer: "k.A." }] }), "eingabe", IMPORT_TEXT.js("k.A."));
-  });
-
-  await pruefe("CSV-Import: über 100 übernimmt nichts, nur J+S-Nummern an der Grenze schon (#455 AK 22; #577 PC 2)", async () => {
-    const team = await serienTeam("Kern-DB-Spieler-Import-Voll");
-    await fuelleTeam(team, 99);
-    const zeilen = [
-      { zeile: 2, vorname: "Eins", nachname: "Neu", jahrgang: 2016, jsNummer: null },
-      { zeile: 3, vorname: "Zwei", nachname: "Neu", jahrgang: 2016, jsNummer: null },
-    ];
-    const v = wert(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen }));
-    assert.equal(v.bestand + v.neu.length, 101);
-    fehler(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen, erwartet: erwartetVon(v) }), "regel", IMPORT_TEXT.zuGross);
-    assert.equal((await spielerVon(team)).length, 99);
-    // Bei 100 geht ein Import ohne neue Zeilen durch; eine neue Zeile nicht.
-    await neuerSpieler(team, "Hundert");
-    const js = [{ zeile: 2, vorname: "Kind0", nachname: "Viele", jahrgang: 2017, jsNummer: "1234567" }];
-    const vj = wert(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen: js }));
-    assert.deepEqual(wert(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen: js, erwartet: erwartetVon(vj) })), { teamId: team, neu: 0, js: 1, ersetzt: 0 });
-    const mitNeu = [...js, { ...zeilen[0], zeile: 3 }];
-    const vn = wert(await pruefeSpielerImport(a.supabase, a.id, { teamId: team, zeilen: mitNeu }));
-    // An der Grenze nennt die Übernahme die Teamgrenze, nicht die Datei (wie die Vorschau, importGrenzText).
-    assert.equal(vn.bestand, 100);
-    fehler(await importiereSpieler(a.supabase, a.id, { teamId: team, zeilen: mitNeu, erwartet: erwartetVon(vn) }), "regel", SPIELER_MELDUNG.SPIELERLISTE_VOLL);
-    assert.equal(await anzahlSpieler(a.supabase, team), 100);
   });
 
   await pruefe("Spielerliste ersetzt die erwartete Zahl: erste Aufnahme leert sie an anstehenden Terminen und Serien (#434 AK 8, 9, PC 1, 2)", async () => {
@@ -7368,6 +7306,206 @@ try {
     }
   });
 
+  // ── Import in den Spielerbestand des Vereins (Story #585) ─────────────────
+  // Über den Verein-Kern, also über PostgREST wie die Oberfläche; die Actions
+  // revalidieren nur, geprüft wird die Antwort selbst. Was psql deckt
+  // (KI-Zugang NUR_IN_DER_ANWENDUNG, Grants, Rennen, Trigger-Ausnahme
+  // `kifu.import_verein`, Altdubletten dreifach), steht in
+  // supabase/tests/import_verein.sql.
+  const IMPORT_EINS = "Kern-DB-585-Eins";
+  const IMPORT_ZWEI = "Kern-DB-585-Zwei";
+  const zeile585 = (zeile: number, vorname: string, nachname: string, jahrgang: number, jsNummer: string | null = null): ImportEintrag =>
+    ({ zeile, vorname, nachname, jahrgang, jsNummer });
+  const vorschau585 = (k: Konto, zeilen: ImportEintrag[], vereinId = verein) => pruefeVereinImport(k.supabase, k.id, { vereinId, zeilen });
+  const uebernimm585 = (k: Konto, zeilen: ImportEintrag[], erwartet: ImportErwartet, vereinId = verein) =>
+    importiereInVerein(k.supabase, k.id, { vereinId, zeilen, erwartet });
+  const spielerImVerein = async (vereinId = verein) =>
+    (await admin.from("spieler").select("id", { count: "exact", head: true }).eq("verein_id", vereinId)).count!;
+  const zuordnungenImVerein = async () =>
+    (await admin.from("team_spieler").select("spieler_id", { count: "exact", head: true }).eq("verein_id", verein)).count!;
+  const jsVon = async (id: string) => (await admin.from("spieler").select("js_nummer").eq("id", id).single()).data!.js_nummer as string | null;
+
+  await pruefe("Import im Verein: Vorschau über den ganzen Verein — neu, J+S, unverändert, mehrfach, ohne Team und schnuppernd; Übernahme ohne Team (#585 AK 2–5, 10, PC 3–5)", async () => {
+    const eins = await serienTeam(IMPORT_EINS);
+    const zwei = await serienTeam(IMPORT_ZWEI);
+    const mia = (await neuerSpieler(eins, "Mia", "Import", 2015, "111")).spielerId;
+    wert(await ordneSpielerZu(verwaltung.supabase, verwaltung.id, { teamId: zwei, teamName: IMPORT_ZWEI, spielerIds: [mia] }));
+    const ohne = wert(await erfassen(verwaltung, { vorname: "Ohne", nachname: "Import", jahrgang: 2016 })).spielerId;
+    const gleich = wert(await erfassen(verwaltung, { vorname: "Gleich", nachname: "Import", jahrgang: 2014, jsNummer: "777" })).spielerId;
+    const nora = (await neuerSpieler(zwei, "Nora", "Import", 2016)).spielerId;
+    assert.equal((await admin.from("team_spieler").update({ probe_seit: new Date().toISOString() }).eq("team_id", zwei).eq("spieler_id", nora)).error, null);
+    const lea = (await neuerSpieler(eins, "Lea", "Import", 2017)).spielerId;
+    const lea2 = await altdublette("Lea", "Import", 2017);
+    const bestand = await spielerImVerein();
+    const zuordnungen = await zuordnungenImVerein();
+    const t1 = { id: eins, name: IMPORT_EINS };
+    const t2 = { id: zwei, name: IMPORT_ZWEI };
+
+    const zeilen = [
+      zeile585(2, "Neu", "Import", 2016, "222"),
+      zeile585(3, "mia", "IMPORT", 2015, "333"), // AK 2: andere Schreibung, J+S ändert sich
+      zeile585(4, "Ohne", "Import", 2016), // PC 3: leere J+S ändert nichts
+      zeile585(5, "Nora", "Import", 2016), // schnuppernd zählt wie alle
+      zeile585(6, "Lea", "Import", 2017, "444"), // AK 5: zwei Einträge im Verein
+      zeile585(7, "Zoe", "Import", 2016),
+      zeile585(8, "zoe", "import", 2016, "555"), // die letzte Zeile gewinnt
+      zeile585(9, "Gleich", "Import", 2014, "777"),
+    ];
+    const v = wert(await vorschau585(verwaltung, zeilen));
+    assert.deepEqual(v, {
+      bestand,
+      ueber: 0,
+      neu: [2, 8],
+      js: [{ zeile: 3, alt: "111", teams: [t1, t2] }],
+      gleich: [{ zeile: 4, teams: [] }, { zeile: 5, teams: [t2] }, { zeile: 9, teams: [] }],
+      mehrfach: [{ zeile: 6, teams: [t1] }],
+    }, "AK 3, 5: Teams je Bestehende, ohne Team leer, mehrfach mit der Vereinigung");
+    assert.ok(importUebernehmbar(v));
+    assert.deepEqual([await spielerImVerein(), await jsVon(mia)], [bestand, "111"], "die Vorschau schreibt nicht");
+
+    // AK 10: übernommen mit den Zahlen; die Neuen ohne Team, nichts zugeordnet, kein Schnuppern verändert (PC 5).
+    assert.deepEqual(wert(await uebernimm585(verwaltung, zeilen, erwartetVon(v))), { status: "uebernommen", neu: 2, js: 1 });
+    assert.equal(await spielerImVerein(), bestand + 2);
+    assert.equal(await zuordnungenImVerein(), zuordnungen, "PC 5: keine Zuordnung");
+    const neue = (await admin.from("spieler").select("vorname, nachname, jahrgang, js_nummer").eq("verein_id", verein).in("nachname", ["Import", "import"]).in("vorname", ["Neu", "zoe"]).order("vorname")).data!;
+    assert.deepEqual(neue, [
+      { vorname: "Neu", nachname: "Import", jahrgang: 2016, js_nummer: "222" },
+      { vorname: "zoe", nachname: "import", jahrgang: 2016, js_nummer: "555" },
+    ], "die gewinnende Zeile, so geschrieben");
+    assert.deepEqual(
+      [await jsVon(mia), await jsVon(ohne), await jsVon(gleich), await jsVon(lea), await jsVon(lea2)],
+      ["333", null, "777", null, null],
+      "PC 3 und AK 5: nur die eine J+S geändert, Mehrfache nie",
+    );
+    assert.ok((await admin.from("team_spieler").select("probe_seit").eq("spieler_id", nora).single()).data!.probe_seit, "schnuppert weiter");
+    const liste = await verwaltungsListe();
+    assert.deepEqual(liste.spieler.filter((s) => s.vorname === "Neu" || s.vorname === "zoe").map((s) => s.teams), [[], []], "AK 10: ohne Team");
+
+    // Dieselbe Datei noch einmal: nichts mehr zu tun; mehrfach allein lässt sich nicht bestätigen (AK 5) —
+    // die Datenebene nimmt eine solche Übernahme ohne Änderung hin.
+    const nochmal = wert(await vorschau585(verwaltung, zeilen));
+    assert.deepEqual([nochmal.neu, nochmal.js, nochmal.gleich.map((g) => g.zeile), nochmal.mehrfach.map((m) => m.zeile)], [[], [], [2, 3, 4, 5, 8, 9], [6]]);
+    assert.equal(importUebernehmbar(nochmal), false);
+    assert.deepEqual(wert(await uebernimm585(verwaltung, zeilen, erwartetVon(nochmal))), { status: "uebernommen", neu: 0, js: 0 });
+    assert.deepEqual([await spielerImVerein(), await jsVon(lea), await jsVon(lea2)], [bestand + 2, null, null]);
+  });
+
+  await pruefe("Import im Verein: veraltet, wenn der Bestand die Vorschau überholt — nichts übernommen, neue Vorschau; eine unbeteiligte Erfassung stört nicht (#585 AK 9, PC 4)", async () => {
+    const kai = wert(await erfassen(verwaltung, { vorname: "Kai", nachname: "Veraltet", jahrgang: 2014, jsNummer: "1" })).spielerId;
+    const zeilen = [zeile585(2, "Ida", "Veraltet", 2015), zeile585(3, "Jan", "Veraltet", 2015), zeile585(4, "Kai", "Veraltet", 2014, "2")];
+    const v = wert(await vorschau585(verwaltung, zeilen));
+    assert.deepEqual([v.neu, v.js.map((j) => j.zeile)], [[2, 3], [4]]);
+    // Inzwischen erfasst jemand Ida: Die Einordnung weicht ab, nichts geschieht (PC 4: auch Kai nicht).
+    wert(await erfassen(verwaltung, { vorname: "Ida", nachname: "Veraltet", jahrgang: 2015 }));
+    const bestand = await spielerImVerein();
+    const veraltet = wert(await uebernimm585(verwaltung, zeilen, erwartetVon(v)));
+    assert.deepEqual(veraltet, {
+      status: "veraltet",
+      grund: "bestand",
+      vorschau: { bestand, ueber: 0, neu: [3], js: [{ zeile: 4, alt: "1", teams: [] }], gleich: [{ zeile: 2, teams: [] }], mehrfach: [] },
+    });
+    assert.deepEqual([await spielerImVerein(), await jsVon(kai)], [bestand, "1"], "nichts übernommen");
+    // Mit der neuen Vorschau geht es durch, auch wenn inzwischen eine Unbeteiligte dazukam (die rohe Zahl zählt nicht).
+    wert(await erfassen(verwaltung, { vorname: "Unbeteiligt", nachname: "Veraltet", jahrgang: 2013 }));
+    assert.ok(veraltet.status === "veraltet");
+    assert.deepEqual(wert(await uebernimm585(verwaltung, zeilen, erwartetVon(veraltet.vorschau))), { status: "uebernommen", neu: 1, js: 1 });
+    assert.deepEqual([await spielerImVerein(), await jsVon(kai)], [bestand + 2, "2"]);
+  });
+
+  await pruefe("Import im Verein: J+S-Nummer seit der Vorschau geändert — veraltet, nichts überschrieben; mit unveränderter alter Nummer übernommen (#585 AK 9, Review D1)", async () => {
+    const uli = wert(await erfassen(verwaltung, { vorname: "Uli", nachname: "Nummer", jahrgang: 2014, jsNummer: "1" })).spielerId;
+    const zeilen = [zeile585(2, "Uli", "Nummer", 2014, "3")];
+    const v = wert(await vorschau585(verwaltung, zeilen));
+    assert.deepEqual(v.js, [{ zeile: 2, alt: "1", teams: [] }]);
+    assert.deepEqual(erwartetVon(v).js, [{ zeile: 2, alt: "1" }], "die Übernahme schickt die alte Nummer mit");
+    // Dazwischen ändert jemand die J+S-Nummer: Zeile 2 bleibt eine J+S-Änderung, aber mit anderer alter Nummer.
+    wert(await aendern(verwaltung, uli, { vorname: "Uli", nachname: "Nummer", jahrgang: 2014, jsNummer: "2" }));
+    const veraltet = wert(await uebernimm585(verwaltung, zeilen, erwartetVon(v)));
+    assert.deepEqual(veraltet, {
+      status: "veraltet",
+      grund: "bestand",
+      vorschau: { ...v, js: [{ zeile: 2, alt: "2", teams: [] }] },
+    });
+    assert.equal(await jsVon(uli), "2", "nicht still überschrieben");
+    // Gegenfall: Mit der neuen Vorschau (alte Nummer 2) geht es durch.
+    assert.ok(veraltet.status === "veraltet");
+    assert.deepEqual(wert(await uebernimm585(verwaltung, zeilen, erwartetVon(veraltet.vorschau))), { status: "uebernommen", neu: 0, js: 1 });
+    assert.equal(await jsVon(uli), "3");
+  });
+
+  await pruefe("Import im Verein: nur die Verwaltung; Eingaben wie beim Erfassen und in der vereinbarten Form; der Team-Import ist weg, auch für die Verwaltung (#585 AK 1, 11, 12)", async () => {
+    const team = await serienTeam(IMPORT_EINS);
+    const fremd = await fremdeVerwaltung();
+    const zeilen = [zeile585(2, "Rolle", "Import", 2016)];
+    const bestand = await spielerImVerein();
+    // AK 1, 11: Mitglied (a ist Trainer:in im Team), fremde Verwaltung, unbekannter Verein — ununterscheidbar.
+    for (const k of [a, fremd]) {
+      fehler(await vorschau585(k, zeilen), "nicht_gefunden", NG_VEREIN);
+      fehler(await uebernimm585(k, zeilen, { neu: [2], js: [], mehrfach: [] }), "nicht_gefunden", NG_VEREIN);
+    }
+    fehler(await vorschau585(verwaltung, zeilen, randomUUID()), "nicht_gefunden", NG_VEREIN);
+    fehler(await uebernimm585(verwaltung, zeilen, { neu: [2], js: [], mehrfach: [] }, "kein-verein"), "nicht_gefunden", NG_VEREIN);
+    assert.equal(await spielerImVerein(), bestand, "nichts aufgenommen");
+    // Eingaben: geprüft wie beim einzelnen Erfassen, J+S nur aus Ziffern, eindeutige Zeilennummern, höchstens 1000 Zeilen.
+    fehler(await vorschau585(verwaltung, [zeile585(2, " ", "Import", 2016)]), "eingabe", SPIELER_TEXT.vorname);
+    fehler(await vorschau585(verwaltung, [zeile585(2, "Rolle", "Import", 2016, "k.A.")]), "eingabe", IMPORT_TEXT.js("k.A."));
+    fehler(await vorschau585(verwaltung, [zeile585(2, "Rolle", "Import", 2016, "1".repeat(21))]), "eingabe", SPIELER_TEXT.jsNummer);
+    fehler(await vorschau585(verwaltung, [zeile585(2, "Rolle", "Import", 2016), zeile585(2, "Andere", "Import", 2016)]), "eingabe");
+    // Ein manipulierter Aufruf der Action (falsche Form) wird ein Kern-Fehler, kein TypeError (Review W4).
+    const roh585 = (x: unknown) => x as never;
+    fehler(await vorschau585(verwaltung, roh585(null)), "eingabe");
+    fehler(await vorschau585(verwaltung, roh585([{ zeile: 2, vorname: "Rolle" }])), "eingabe");
+    fehler(await uebernimm585(verwaltung, zeilen, roh585(null)), "eingabe");
+    fehler(await uebernimm585(verwaltung, zeilen, roh585({ neu: [2], js: [3], mehrfach: [] })), "eingabe");
+    fehler(await uebernimm585(verwaltung, roh585("x"), { neu: [2], js: [], mehrfach: [] }), "eingabe");
+    const viele = Array.from({ length: 1001 }, (_, i) => zeile585(i + 2, `Viele${i}`, "Import", 2016));
+    fehler(await vorschau585(verwaltung, viele), "regel", IMPORT_TEXT.zuGross);
+    // Die Datenebene weist dasselbe ab (Marker IMPORT_ZU_GROSS), mit demselben Satz.
+    const roh = await verwaltung.supabase.rpc("verein_spieler_importieren", {
+      p_verein: verein,
+      p_zeilen: viele.map((z) => ({ zeile: z.zeile, vorname: z.vorname, nachname: z.nachname, jahrgang: z.jahrgang, js: null })),
+    });
+    assert.ok(roh.error && /IMPORT_ZU_GROSS/.test(roh.error.message), "Marker der Datenebene");
+    fehler(ausDbFehler(roh.error), "regel", IMPORT_TEXT.zuGross);
+    // AK 12: Die RPC des Team-Imports gibt es nicht mehr — für niemanden.
+    for (const k of [verwaltung, a]) {
+      const alt = await k.supabase.rpc("spieler_importieren", { p_team: team, p_zeilen: [], p_erwartet: null });
+      assert.equal(alt.error?.code, "PGRST202", `alter Import scheitert: ${alt.error?.message}`);
+    }
+  });
+
+  await pruefe("Import im Verein: 1000 Neue eines Jahrgangs in einen leeren Verein über PostgREST, dann die Grenze — gesperrt mit Neuen, J+S geht auch bei 1000 (#585 AK 6, 7; Zettel A2)", async () => {
+    // Eine eigene Verwaltung: eine Person gehört höchstens einem Verein an.
+    const leer = await wegwerfKonto();
+    const vereinId = await testVerein("Kern-DB-585-Leer", leer);
+    // Alle eines Jahrgangs: Der Fall, der den Trigger je Zeile quadratisch machte (Commit 8190097).
+    const zeilen = Array.from({ length: VEREIN_SPIELER_MAX }, (_, i) => zeile585(i + 2, `Kind${i}`, "Leistung", 2016));
+    const v = wert(await vorschau585(leer, zeilen, vereinId));
+    assert.deepEqual([v.bestand, v.ueber, v.neu.length], [0, 0, VEREIN_SPIELER_MAX]);
+    const start = performance.now();
+    assert.deepEqual(wert(await uebernimm585(leer, zeilen, erwartetVon(v), vereinId)), { status: "uebernommen", neu: VEREIN_SPIELER_MAX, js: 0 });
+    const dauer = Math.round(performance.now() - start);
+    console.log(`  Übernahme von ${VEREIN_SPIELER_MAX} Neuen eines Jahrgangs: ${dauer} ms`);
+    // Grosszügig, damit es nicht flackert: der quadratische Fall läge über den 8 s des statement_timeout.
+    assert.ok(dauer < 5000, `Übernahme dauerte ${dauer} ms`);
+    assert.equal(await spielerImVerein(vereinId), VEREIN_SPIELER_MAX);
+
+    // AK 6: Bei 1000 sperrt jede Neue; die Vorschau nennt, um wie viele es zu viele wären.
+    const mitNeuen = [zeile585(2, "Kind0", "Leistung", 2016, "123"), zeile585(3, "Zuviel", "Leistung", 2016), zeile585(4, "Zuviel", "Leistung", 2017)];
+    const voll = wert(await vorschau585(leer, mitNeuen, vereinId));
+    assert.deepEqual([voll.bestand, voll.ueber, voll.neu, voll.js.map((j) => j.zeile)], [VEREIN_SPIELER_MAX, 2, [3, 4], [2]]);
+    assert.equal(importUebernehmbar(voll), false);
+    // Auch mit passender Vorschau schreibt die Übernahme nichts: veraltet, Grund die Grenze, mit neuer Vorschau.
+    assert.deepEqual(wert(await uebernimm585(leer, mitNeuen, erwartetVon(voll), vereinId)), { status: "veraltet", grund: "grenze", vorschau: voll });
+    assert.equal(await spielerImVerein(vereinId), VEREIN_SPIELER_MAX);
+    assert.equal((await admin.from("spieler").select("js_nummer").eq("verein_id", vereinId).eq("vorname", "Kind0").single()).data!.js_nummer, null, "auch die J+S nicht");
+    // AK 7: Ohne Neue geht ein Import auch bei 1000 durch.
+    const nurJs = mitNeuen.slice(0, 1);
+    const js = wert(await vorschau585(leer, nurJs, vereinId));
+    assert.equal(js.ueber, 0);
+    assert.deepEqual(wert(await uebernimm585(leer, nurJs, erwartetVon(js), vereinId)), { status: "uebernommen", neu: 0, js: 1 });
+  });
+
   // ── Spieler:innen des Vereins überblicken (Story #580) ────────────────────
   // Ein eigener Verein mit eigenen Konten: a und b gehören schon dem
   // Test-Verein an (höchstens ein Verein je Person). Spieler:innen und
@@ -7436,7 +7574,9 @@ try {
     const lea = m.spieler.find((s) => s.vorname === "Léa")!;
     assert.deepEqual(lea, { id: lea.id, vorname: "Léa", nachname: "Brunner", jahrgang: 2014, teams: [{ id: ea, name: "Ea 580" }] }, "eigenes Team: nicht mehr");
     assert.equal(m.verwaltung, false, "ein Mitglied bekommt nie die Verwaltungssicht");
-    assert.ok(!/111|link|schnupp|anzahl|js/i.test(JSON.stringify(m)), "nichts davon im Payload");
+    // Kennungen (UUIDs) vorher entfernen: Hex-Ziffern wie «111» kommen darin zufällig vor.
+    const ohneKennungen = JSON.stringify(m).replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, "");
+    assert.ok(!/111|link|schnupp|anzahl|js/i.test(ohneKennungen), "nichts davon im Payload");
     // Schon auf dem Draht (PostgREST, ohne Kern): Kopf und Zeile ohne Verwaltungsangaben.
     const roh = (await mitglied.supabase.rpc("verein_spielerliste", { p_verein: vereinId })).data as Record<string, unknown> & { spieler: Record<string, unknown>[]; teams: Record<string, unknown>[] };
     assert.deepEqual(Object.keys(roh).sort(), ["gesamt", "jahrgaenge", "ohne_team", "spieler", "teams", "verwaltung"]);

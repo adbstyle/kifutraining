@@ -6,7 +6,8 @@
 -- Herausnehmen; Story 5: 30 Teams, Teamname, leere Verwaltung, Team vor
 -- Termin; Story 6: Löschen, Erfassen, Link und Grenze 1000 am Verein-Ort;
 -- Story 7: Link über mehrere Teams, Abholen gegen Erneuern; Story 8:
--- Schnuppern in genau einem Team).
+-- Schnuppern in genau einem Team; Story 9: Import in den Verein gegen
+-- Erfassen, Löschen, Aufnehmen und einen zweiten Import).
 --
 -- Muster für «gleichzeitig, genau eines gelingt» (spätere Stories bauen ihre
 -- Fälle als weitere Blöcke nach diesem Vorbild):
@@ -1527,6 +1528,194 @@ delete from spieler where verein_id = (select id from rennen_test.ids where name
 delete from vereine where id = (select id from rennen_test.ids where name = 's_verein');
 delete from auth.users where id in (select id from rennen_test.ids where name in ('s_va', 's_m'));
 
+-- ── Fälle: Import in den Verein (Story 9 #585, AP §3.7, §4.1, Testfall 24) ──
+-- Verein «Rennen-Import» mit den Verwaltungen IA und IB (ohne Team) und
+-- Trainer:in IM in «Import-Eins». Über die RPCs wie PostgREST, mit
+-- rennen_test.verschraenkt; B wartet jeweils an der Vereinssperre
+-- (`advisory`). Die Erwartung der Übernahme ist die Vorschau vor dem Rennen.
+-- Das Netz im Trigger (SPIELER_DOPPELT, VEREIN_VOLL) wird für den Import nie
+-- sichtbar, und keine Reihenfolge endet in 40P01.
+-- (i1) Übernahme gegen Erfassen derselben Spieler:in: Das Erfassen weist
+--      danach `doppelt` ohne Team ab; der Schlüssel steht einmal.
+-- (i2) Erfassen gegen Übernahme: Die Übernahme antwortet `veraltet`
+--      (bestand) mit der neuen Vorschau und schreibt nichts, auch nicht die
+--      J+S-Änderung derselben Datei.
+-- (i3) Löschen gegen Übernahme: `veraltet`, die Gelöschte ist in der neuen
+--      Vorschau neu; nichts geschrieben.
+-- (i4) Übernahme gegen Löschen derselben Spieler:in, deren J+S-Nummer der
+--      Import ändert (Verein → Zeile auf beiden Seiten): Das Löschen wartet
+--      und löscht danach samt Team.
+-- (i5) Zwei Übernahmen derselben Datei: Die zweite antwortet `veraltet`, die
+--      neue steht einmal, die J+S-Nummer einmal gesetzt.
+-- (i6) Übernahme gegen Aufnehmen am Team-Ort: Das Aufnehmen antwortet
+--      `doppelt` ohne Team.
+-- (i7) Grenze: Bei 998 erfasst A eine, B übernimmt zwei neue →
+--      `veraltet` (grenze), es bleiben 999; bei 999 übernimmt A eine neue, B
+--      erfasst → VEREIN_VOLL (das Netz des Erfassens), es bleiben 1000.
+-- Ein harter Abbruch lässt den Verein «Rennen-Import» samt Teams und
+-- Spieler:innen und die Konten «rennen-i-…@rennen.test» stehen (von Hand löschen).
+
+select set_config('rennen.fehler_import', '', false) is not null as rennen_fehler_import_leer \gset
+
+begin;
+insert into rennen_test.ids (name) values ('i_verein'), ('i_va'), ('i_vb'), ('i_m'), ('i_t1'),
+  ('i_del'), ('i_js'), ('i_js2');
+insert into auth.users (id, email, email_confirmed_at)
+select id, 'rennen-' || replace(name, '_', '-') || '@rennen.test', now() from rennen_test.ids where name in ('i_va', 'i_vb', 'i_m');
+insert into vereine (id, name) values (rennen_test.z('i_verein'), 'Rennen-Import');
+insert into verein_verwaltung (verein_id, user_id) values
+  (rennen_test.z('i_verein'), rennen_test.z('i_va')), (rennen_test.z('i_verein'), rennen_test.z('i_vb'));
+insert into teams (id, name, verein_id) values (rennen_test.z('i_t1'), 'Import-Eins', rennen_test.z('i_verein'));
+insert into team_members (team_id, user_id) values (rennen_test.z('i_t1'), rennen_test.z('i_m'));
+insert into spieler (id, verein_id, vorname, nachname, jahrgang, js_nummer) values
+  (rennen_test.z('i_del'), rennen_test.z('i_verein'), 'Imke', 'Weg', 2015, null),
+  (rennen_test.z('i_js'), rennen_test.z('i_verein'), 'Ines', 'Nummer', 2015, '1'),
+  (rennen_test.z('i_js2'), rennen_test.z('i_verein'), 'Ida', 'Bleibt', 2015, '1');
+insert into team_spieler (team_id, spieler_id, verein_id) values (rennen_test.z('i_t1'), rennen_test.z('i_js'), rennen_test.z('i_verein'));
+commit;
+
+do $$
+declare
+  ziel   text := format(
+    'host=%s port=%s dbname=%s user=postgres password=postgres connect_timeout=5 options=''-c statement_timeout=30s''',
+    coalesce(host(inet_server_addr()), '127.0.0.1'), inet_server_port(), current_database());
+  v_verein uuid := rennen_test.z('i_verein');
+  v_va uuid := rennen_test.z('i_va');
+  v_vb uuid := rennen_test.z('i_vb');
+  v_m uuid := rennen_test.z('i_m');
+  v_t1 uuid := rennen_test.z('i_t1');
+  ergebnis text;
+  d jsonb;
+begin
+  -- (i1) Übernahme, dann Erfassen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format($q$select verein_spieler_importieren(%L, '[{"zeile": 1, "vorname": "Anna", "nachname": "Import", "jahrgang": 2015}]',
+                                                      '{"neu": [1]}')::text$q$, v_verein),
+    v_vb, format($q$select verein_spieler_anlegen(%L, 'ANNA', ' import ', 2015, null)::text$q$, v_verein), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:'
+     or ergebnis::jsonb <> '{"status": "abgewiesen", "grund": "doppelt", "teams": [], "ohne_team": true}' then
+    raise exception '(i1) Erfassen nach der Übernahme hätte doppelt ohne Team melden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from spieler where verein_id = v_verein and nachname ilike 'import' and vorname ilike 'anna') <> 1 then
+    raise exception '(i1) Schlüssel nicht genau einmal';
+  end if;
+
+  -- (i2) Erfassen, dann Übernahme.
+  d := '[{"zeile": 1, "vorname": "bea", "nachname": "IMPORT", "jahrgang": 2015},
+         {"zeile": 2, "vorname": "Ida", "nachname": "Bleibt", "jahrgang": 2015, "js": "2"}]';
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format($q$select verein_spieler_anlegen(%L, 'Bea', 'Import', 2015, null)::text$q$, v_verein),
+    v_vb, format($q$select verein_spieler_importieren(%L, %L, '{"neu": [1], "js": [{"zeile": 2, "alt": "1"}], "mehrfach": []}')::text$q$, v_verein, d),
+    'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'veraltet' or ergebnis::jsonb ->> 'grund' <> 'bestand'
+     or ergebnis::jsonb #> '{vorschau,neu}' <> '[]' or ergebnis::jsonb #> '{vorschau,gleich}' <> '[{"zeile": 1, "teams": []}]' then
+    raise exception '(i2) Übernahme nach dem Erfassen hätte veraltet melden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from spieler where verein_id = v_verein and vorname ilike 'bea') <> 1
+     or (select js_nummer from spieler where id = rennen_test.z('i_js2')) <> '1' then
+    raise exception '(i2) trotz veraltet geschrieben';
+  end if;
+
+  -- (i3) Löschen, dann Übernahme.
+  d := '[{"zeile": 1, "vorname": "Imke", "nachname": "Weg", "jahrgang": 2015, "js": "5"},
+         {"zeile": 2, "vorname": "Ida", "nachname": "Bleibt", "jahrgang": 2015, "js": "2"}]';
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('i_del')),
+    v_vb, format($q$select verein_spieler_importieren(%L, %L, '{"neu": [], "js": [{"zeile": 1, "alt": null}, {"zeile": 2, "alt": "1"}], "mehrfach": []}')::text$q$, v_verein, d),
+    'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'veraltet' or ergebnis::jsonb ->> 'grund' <> 'bestand'
+     or ergebnis::jsonb #> '{vorschau,neu}' <> '[1]' then
+    raise exception '(i3) Übernahme nach dem Löschen hätte veraltet melden müssen: %', ergebnis;
+  end if;
+  if exists (select 1 from spieler where verein_id = v_verein and nachname = 'Weg')
+     or (select js_nummer from spieler where id = rennen_test.z('i_js2')) <> '1' then
+    raise exception '(i3) trotz veraltet geschrieben oder Gelöschte wieder da';
+  end if;
+
+  -- (i4) Übernahme (J+S von Ines), dann Löschen von Ines.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format($q$select verein_spieler_importieren(%L, '[{"zeile": 1, "vorname": "Ines", "nachname": "Nummer", "jahrgang": 2015, "js": "7"}]',
+                                                      '{"js": [{"zeile": 1, "alt": "1"}]}')::text$q$, v_verein),
+    v_vb, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('i_js')), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:'
+     or ergebnis::jsonb <> jsonb_build_object('status', 'geloescht', 'teams',
+                                              jsonb_build_array(jsonb_build_object('id', v_t1, 'name', 'Import-Eins'))) then
+    raise exception '(i4) Löschen nach der Übernahme: %', ergebnis;
+  end if;
+  if exists (select 1 from spieler where id = rennen_test.z('i_js')) then
+    raise exception '(i4) Spieler:in nach dem Löschen da';
+  end if;
+
+  -- (i5) Zwei Übernahmen derselben Datei.
+  d := '[{"zeile": 1, "vorname": "Cleo", "nachname": "Import", "jahrgang": 2015},
+         {"zeile": 2, "vorname": "Ida", "nachname": "Bleibt", "jahrgang": 2015, "js": "3"}]';
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format($q$select verein_spieler_importieren(%L, %L, '{"neu": [1], "js": [{"zeile": 2, "alt": "1"}], "mehrfach": []}')::text$q$, v_verein, d),
+    v_vb, format($q$select verein_spieler_importieren(%L, %L, '{"neu": [1], "js": [{"zeile": 2, "alt": "1"}], "mehrfach": []}')::text$q$, v_verein, d),
+    'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'veraltet' or ergebnis::jsonb ->> 'grund' <> 'bestand'
+     or ergebnis::jsonb #> '{vorschau,neu}' <> '[]' or ergebnis::jsonb #> '{vorschau,js}' <> '[]' then
+    raise exception '(i5) zweite Übernahme hätte veraltet melden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from spieler where verein_id = v_verein and vorname = 'Cleo') <> 1
+     or (select js_nummer from spieler where id = rennen_test.z('i_js2')) <> '3' then
+    raise exception '(i5) erste Übernahme nicht genau einmal wirksam';
+  end if;
+
+  -- (i6) Übernahme, dann Aufnehmen am Team-Ort.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format($q$select verein_spieler_importieren(%L, '[{"zeile": 1, "vorname": "Dora", "nachname": "Import", "jahrgang": 2015}]',
+                                                      '{"neu": [1]}')::text$q$, v_verein),
+    v_m, format($q$select spieler_aufnehmen(%L, 'dora', 'IMPORT', 2015, null)::text$q$, v_t1), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:'
+     or ergebnis::jsonb <> '{"status": "abgewiesen", "grund": "doppelt", "eigenes_team": false, "teams": [], "ohne_team": true}' then
+    raise exception '(i6) Aufnehmen nach der Übernahme hätte doppelt ohne Team melden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from spieler where verein_id = v_verein and vorname ilike 'dora') <> 1
+     or exists (select 1 from team_spieler ts join spieler s on s.id = ts.spieler_id
+                 where s.verein_id = v_verein and s.vorname ilike 'dora') then
+    raise exception '(i6) Erwartet genau eine «Dora Import» ohne Team';
+  end if;
+
+  -- (i7) Grenze: auf 998 auffüllen (eigene Verbindung, committet).
+  perform extensions.dblink_exec(ziel, format(
+    $q$set session_replication_role = replica;
+       insert into public.spieler (verein_id, vorname, nachname, jahrgang)
+       select %L, 'Voll', 'Nr ' || i, 2014 from generate_series(1, %s) i$q$,
+    v_verein, 998 - (select count(*) from spieler where verein_id = v_verein)));
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format($q$select verein_spieler_anlegen(%L, 'Grenze', 'A', 2015, null)::text$q$, v_verein),
+    v_vb, format($q$select verein_spieler_importieren(%L,
+                      '[{"zeile": 1, "vorname": "Grenze", "nachname": "B", "jahrgang": 2015},
+                        {"zeile": 2, "vorname": "Grenze", "nachname": "C", "jahrgang": 2015}]',
+                      '{"neu": [1, 2]}')::text$q$, v_verein), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'veraltet' or ergebnis::jsonb ->> 'grund' <> 'grenze'
+     or (ergebnis::jsonb #>> '{vorschau,ueber}')::int <> 1 then
+    raise exception '(i7) Übernahme nach dem Erfassen an der Grenze hätte veraltet (grenze) melden müssen: %', ergebnis;
+  end if;
+  if (select count(*) from spieler where verein_id = v_verein) <> 999 then
+    raise exception '(i7) Erwartet 999, gefunden: %', (select count(*) from spieler where verein_id = v_verein);
+  end if;
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_va, format($q$select verein_spieler_importieren(%L, '[{"zeile": 1, "vorname": "Grenze", "nachname": "D", "jahrgang": 2015}]',
+                                                      '{"neu": [1]}')::text$q$, v_verein),
+    v_vb, format($q$select verein_spieler_anlegen(%L, 'Grenze', 'E', 2015, null)::text$q$, v_verein), 'advisory');
+  if position('VEREIN_VOLL' in ergebnis) = 0 then
+    raise exception '(i7) Erfassen nach der Übernahme bis 1000 hätte an VEREIN_VOLL scheitern müssen: %', ergebnis;
+  end if;
+  if (select count(*) from spieler where verein_id = v_verein) <> 1000
+     or not exists (select 1 from spieler where verein_id = v_verein and nachname = 'D') then
+    raise exception '(i7) Erwartet 1000 samt D, gefunden: %', (select count(*) from spieler where verein_id = v_verein);
+  end if;
+exception when others or query_canceled then
+  perform set_config('rennen.fehler_import', sqlerrm, false);
+end $$;
+
+delete from teams where verein_id = (select id from rennen_test.ids where name = 'i_verein');
+delete from spieler where verein_id = (select id from rennen_test.ids where name = 'i_verein');
+delete from vereine where id = (select id from rennen_test.ids where name = 'i_verein');
+delete from auth.users where id in (select id from rennen_test.ids where name in ('i_va', 'i_vb', 'i_m'));
+
 -- Aufräumen, auch nach einem Fehler.
 drop schema rennen_test cascade;
 \if :dblink_vorher
@@ -1562,5 +1751,8 @@ begin
   end if;
   if current_setting('rennen.fehler_schnuppern') <> '' then
     raise exception 'Rennen Schnuppern: %', current_setting('rennen.fehler_schnuppern');
+  end if;
+  if current_setting('rennen.fehler_import') <> '' then
+    raise exception 'Rennen Import in den Verein: %', current_setting('rennen.fehler_import');
   end if;
 end $$;

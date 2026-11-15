@@ -49,8 +49,9 @@ export const SPIELER_MELDUNG = {
   SPIELER_NICHT_GEFUNDEN: "Spieler:in nicht gefunden.",
   SPIELERLISTE_FUEHRT_ZAHL:
     "Das Team führt eine Spielerliste: Die Spielerzahl anstehender Termine kommt aus ihr und lässt sich nicht von Hand festlegen.",
-  /** Der Import trifft eine andere Liste als seine Vorschau (#455 AK 27). */
-  SPIELERLISTE_GEAENDERT: "Die Spielerliste hat sich inzwischen geändert. Wähle die Datei erneut.",
+  /** Der Import im Verein bekommt mehr Zeilen, als eine Datei haben darf
+   *  (#585): Zwilling von `IMPORT_ZEILEN_MAX` in lib/spieler-import.ts. */
+  IMPORT_ZU_GROSS: "Eine Datei darf höchstens 1000 Zeilen haben.",
 } as const;
 
 /** «A», «A und B», «A, B und C» — die eine Aufzählung von Namen (Teams,

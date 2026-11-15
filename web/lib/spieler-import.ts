@@ -1,19 +1,22 @@
-// Die Spielerliste aus einer CSV-Datei übernehmen (Story #455).
+// Die Spielerinnen und Spieler des Vereins aus einer CSV-Datei übernehmen
+// (Epic Vereine #575, Story #585; Vorgänger am Team-Ort: Story #455).
 //
 // Gelesen wird im Browser: Die Datei verlässt das Gerät nie, an den Server
-// gehen nur Vorname, Nachname, Jahrgang und J+S-Nummer je Zeile (#455 AK 28).
-// Hier stehen das Dekodieren (UTF-8 oder Windows-Zeichensatz), das Zerlegen
-// (Semikolon, Komma oder Tabulator), das Erkennen der Spalten an ihren Köpfen
-// und das Herleiten der vier Angaben. Ob eine Zeile eine bestehende
-// Spieler:in meint, entscheidet allein die Datenebene (`spieler_importieren`)
-// — wie bei der Eindeutigkeit der Liste.
+// gehen nur Vorname, Nachname, Jahrgang und J+S-Nummer je Zeile (#455 AK 28,
+// #585 Precondition 5). Hier stehen das Dekodieren (UTF-8 oder Windows-
+// Zeichensatz), das Zerlegen (Semikolon, Komma oder Tabulator), das Erkennen
+// der Spalten an ihren Köpfen, das Herleiten der vier Angaben und die Sätze
+// der Vorschau. Ob eine Zeile eine bestehende Spieler:in meint, entscheidet
+// allein die Datenebene (`verein_spieler_importieren`) — über den ganzen
+// Verein, mit demselben Schlüssel wie die Doppelerfassung.
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
-import { JS_MAX, SPIELER_MAX, SPIELER_MELDUNG, bereinigeName, jahrgangAus, spielerProblem } from "@/lib/spieler";
+import { VEREIN_SPIELER_MAX, spielerVonText } from "@/lib/verein";
+import { JS_MAX, SPIELER_MELDUNG, aufzaehlung, bereinigeName, jahrgangAus, nachTeamname, spielerProblem } from "@/lib/spieler";
 
-/** Grösser liest der Import nicht — eine Mannschaft passt weit darunter. */
+/** Grösser liest der Import nicht — ein Verein passt weit darunter. */
 export const IMPORT_BYTES_MAX = 1_000_000;
-/** So viele Datenzeilen nimmt der Server höchstens entgegen. */
+/** So viele Datenzeilen nimmt der Server höchstens entgegen (Marker `IMPORT_ZU_GROSS`). */
 export const IMPORT_ZEILEN_MAX = 1000;
 
 export const IMPORT_TEXT = {
@@ -23,13 +26,27 @@ export const IMPORT_TEXT = {
   nurKopf: "Die Datei hat nur eine Kopfzeile und keine Spieler:innen.",
   zeichensatz:
     "Der Zeichensatz der Datei lässt sich nicht sicher bestimmen; Umlaute würden verfälscht. Speichere sie als «CSV UTF-8» und wähle sie erneut.",
-  zuGross: `Die Datei ist zu gross. Eine Spielerliste fasst höchstens ${SPIELER_MAX} Spieler:innen.`,
-  geaendert: SPIELER_MELDUNG.SPIELERLISTE_GEAENDERT,
+  /** Zu viele Zeilen: derselbe Satz wie der Marker der Datenebene. */
+  zuGross: SPIELER_MELDUNG.IMPORT_ZU_GROSS,
+  /** Die Datei selbst ist zu gross (1 MB), unabhängig von der Zeilenzahl. */
+  zuGrossBytes:
+    "Die Datei ist zu gross. Speichere die Datei nur mit den Spalten für Vorname, Nachname, Jahrgang und J+S-Nummer und wähle sie erneut.",
+  /** Die Antwort der Datenebene hat nicht die vereinbarte Form (technischer Fehler). */
+  unstimmig: "Der Import liess sich gerade nicht auswerten. Bitte versuche es noch einmal.",
+  /** Die Einordnung stimmt nicht mehr mit der bestätigten Vorschau überein (#585 AK 9). */
+  veraltet: "Seit der Vorschau hat sich der Spielerbestand geändert. Nichts übernommen. Prüfe die neue Vorschau.",
   vorname: "Der Vorname fehlt oder hat mehr als 60 Zeichen.",
   nachname: "Der Nachname fehlt oder hat mehr als 60 Zeichen.",
   geburtFehlt: "Das Geburtsdatum fehlt.",
   geburt: (roh: string) => `Das Geburtsdatum «${roh}» hat keine vierstellige Jahreszahl.`,
   js: (roh: string) => `«${roh}» ist keine J+S-Nummer und wird nicht übernommen.`,
+  /** Vor der Dateiwahl: was mit Neuen und Bestehenden geschieht (#585 AK 3, 4). */
+  einleitung: (verein: string) =>
+    `Neue Spieler:innen kommen ohne Team in den ${verein}. Bestehende erkennt KiFu im ganzen Verein und legt sie nicht neu an.`,
+  mehrfachViele:
+    "Diese Spieler:innen werden mehrfach im Verein geführt. KiFu ändert bei keinem dieser Einträge die J+S-Nummer.",
+  nichtsZuTun: "Alle stehen schon so im Verein; es gibt nichts zu übernehmen.",
+  nichtsZuTunMehrfach: "Mehrfach geführte Spieler:innen ändert KiFu nicht.",
 } as const;
 
 // ── Datei lesen ─────────────────────────────────────────────────────────────
@@ -112,7 +129,7 @@ export function leseDatei(
 ): { ok: true; tabelle: CsvTabelle } | { ok: false; text: string } {
   if (/\.(xlsx?|xlsm|ods|numbers)$/i.test(name) || (bytes[0] === 0x50 && bytes[1] === 0x4b))
     return { ok: false, text: IMPORT_TEXT.keineCsv(name) };
-  if (bytes.length > IMPORT_BYTES_MAX) return { ok: false, text: IMPORT_TEXT.zuGross };
+  if (bytes.length > IMPORT_BYTES_MAX) return { ok: false, text: IMPORT_TEXT.zuGrossBytes };
   const text = dekodiere(bytes);
   if (text === null) return { ok: false, text: IMPORT_TEXT.zeichensatz };
   // Steuerzeichen ausser Tabulator und Zeilenende: keine Textdatei.
@@ -252,45 +269,201 @@ export function importZeilen(t: CsvTabelle, z: Zuordnung): { eintraege: ImportEi
 
 // ── Vorschau und Ergebnis ───────────────────────────────────────────────────
 
-/** Wie die Datenebene die Zeilen einordnet (`spieler_importieren`): Zeilen,
- *  die eine spätere Zeile derselben Spieler:in überstimmt, fehlen still
- *  (#455 AK 21). `bestand`: so viele stehen schon auf der Liste. */
+/** Ein Team einer bestehenden Spieler:in; ohne Team: leere Liste. */
+export type ImportTeam = { id: string; name: string };
+
+/** Wie die Datenebene die Zeilen einordnet (`verein_spieler_importieren`,
+ *  Vertrag Story #585): Zeilen, die eine spätere Zeile derselben Spieler:in
+ *  überstimmt, fehlen still (#455 AK 21). Alle Listen aufsteigend nach
+ *  `zeile`, die Teams nach Namen. `bestand`: so viele führt der Verein jetzt;
+ *  `ueber`: um wie viele er mit den Neuen über der Grenze läge (0, wenn es
+ *  passt oder niemand neu ist). `mehrfach`: mehrere Einträge im Verein
+ *  tragen dieselben Angaben — die Teams sind die Vereinigung aller. */
 export type ImportVorschau = {
-  neu: number[];
-  js: { zeile: number; alt: string | null }[];
-  gleich: number[];
   bestand: number;
+  ueber: number;
+  neu: number[];
+  js: { zeile: number; alt: string | null; teams: ImportTeam[] }[];
+  gleich: { zeile: number; teams: ImportTeam[] }[];
+  mehrfach: { zeile: number; teams: ImportTeam[] }[];
 };
 
 /** Was die Oberfläche nach der Vorschau bestätigt: Weicht die Einordnung bei
- *  der Übernahme davon ab, übernimmt die Datenebene nichts (AK 27). */
-export type ImportErwartet = { neu: number[]; js: number[] };
+ *  der Übernahme davon ab, übernimmt die Datenebene nichts (#585 AK 9). Bei
+ *  `js` zählt auch die bisherige Nummer: Wer sie inzwischen geändert hat,
+ *  wird nicht still überschrieben. */
+export type ImportErwartet = { neu: number[]; js: { zeile: number; alt: string | null }[]; mehrfach: number[] };
+
+/** Die Antwort der Übernahme: übernommen, oder nichts geändert, weil der
+ *  Bestand die Vorschau überholt hat (`grund`) — dann mit der neuen Vorschau. */
+export type ImportAusgang =
+  | { status: "uebernommen"; neu: number; js: number }
+  | { status: "veraltet"; grund: "bestand" | "grenze"; vorschau: ImportVorschau };
 
 export function erwartetVon(v: ImportVorschau): ImportErwartet {
-  return { neu: v.neu, js: v.js.map((j) => j.zeile) };
+  return { neu: v.neu, js: v.js.map(({ zeile, alt }) => ({ zeile, alt })), mehrfach: v.mehrfach.map((m) => m.zeile) };
 }
 
-/** Die Liste würde zu gross (AK 22). Nur neue Zeilen stossen an die Grenze:
- *  Ein Bestand über ihr bleibt, und ein Import ohne neue Zeilen — nur J+S-Nummern
- *  — geht weiter durch (#577 PC 2). Zwilling der Vorprüfung in
- *  `spieler_importieren`. */
-export function importZuGross(v: ImportVorschau): boolean {
-  return v.neu.length > 0 && v.bestand + v.neu.length > SPIELER_MAX;
+/** Ein Objekt der Antwort, oder `null`. */
+const objekt = (x: unknown): Record<string, unknown> | null =>
+  typeof x === "object" && x !== null && !Array.isArray(x) ? (x as Record<string, unknown>) : null;
+const ganz = (x: unknown): x is number => Number.isInteger(x);
+const teamsForm = (x: unknown): x is ImportTeam[] =>
+  Array.isArray(x) && x.every((t) => typeof objekt(t)?.id === "string" && typeof objekt(t)?.name === "string");
+/** Eine Liste von Einträgen mit Zeilennummer und Teams, je mit `weiter` geprüft. */
+const eintraegeForm = (x: unknown, weiter: (e: Record<string, unknown>) => boolean = () => true) =>
+  Array.isArray(x) &&
+  x.every((e) => {
+    const o = objekt(e);
+    return o !== null && ganz(o.zeile) && teamsForm(o.teams) && weiter(o);
+  });
+
+/** Die Vorschau in der Form der Datenebene, die Teams in deutscher Ordnung —
+ *  oder `null`, wenn die Antwort diese Form nicht hat (der Kern meldet dann
+ *  einen technischen Fehler statt einer falschen Vorschau, wie die
+ *  Spielerliste des Vereins). Weitere Schlüssel (`status`) zählen nicht. */
+export function vorschauAus(antwort: unknown): ImportVorschau | null {
+  const r = objekt(antwort);
+  if (
+    !r ||
+    !ganz(r.bestand) ||
+    !ganz(r.ueber) ||
+    !Array.isArray(r.neu) ||
+    !r.neu.every(ganz) ||
+    !eintraegeForm(r.js, (e) => e.alt === null || typeof e.alt === "string") ||
+    !eintraegeForm(r.gleich) ||
+    !eintraegeForm(r.mehrfach)
+  )
+    return null;
+  const roh = r as ImportVorschau;
+  const teams = (t: ImportTeam[]) => t.map((x) => ({ id: x.id, name: x.name })).sort((a, b) => nachTeamname(a.name, b.name));
+  return {
+    bestand: roh.bestand,
+    ueber: roh.ueber,
+    neu: [...roh.neu],
+    js: roh.js.map((j) => ({ zeile: j.zeile, alt: j.alt, teams: teams(j.teams) })),
+    gleich: roh.gleich.map((g) => ({ zeile: g.zeile, teams: teams(g.teams) })),
+    mehrfach: roh.mehrfach.map((m) => ({ zeile: m.zeile, teams: teams(m.teams) })),
+  };
 }
 
-/** Der Text, wenn neue Zeilen an die Teamgrenze stossen: Führt das Team
- *  schon so viele, wie es fassen kann, der Wortlaut der Teamgrenze; sonst
- *  passt die Datei nicht mehr hinein. In Vorschau und Übernahme gleich. */
-export function importGrenzText(bestand: number): string {
-  return bestand >= SPIELER_MAX ? SPIELER_MELDUNG.SPIELERLISTE_VOLL : IMPORT_TEXT.zuGross;
+/** Die Zeilennummern der Vorschau stammen alle aus den gesendeten Zeilen, und
+ *  keine steht doppelt — sonst passt die Antwort nicht zur Datei (der Kern
+ *  meldet einen technischen Fehler, die Oberfläche zeigt nichts Falsches). */
+export function importZeilenStimmen(v: ImportVorschau, gesendet: number[]): boolean {
+  const da = new Set(gesendet);
+  const alle = [...v.neu, ...[...v.js, ...v.gleich, ...v.mehrfach].map((z) => z.zeile)];
+  return alle.every((z) => da.has(z)) && new Set(alle).size === alle.length;
 }
 
-/** Die Meldung nach der Übernahme (AK 6 der Postconditions). */
-export function importErgebnisText(r: { neu: number; js: number; ersetzt: number }): string {
+/** Die Zeilen eines Aufrufs in der Form `ImportEintrag` (die Werte selbst
+ *  prüft der Kern danach wie beim Erfassen). Eine Action nimmt alles
+ *  entgegen, was ein Aufruf schickt; ohne diese Form kein TypeError. */
+export function importZeilenForm(x: unknown): x is ImportEintrag[] {
+  return (
+    Array.isArray(x) &&
+    x.every((e) => {
+      const o = objekt(e);
+      return (
+        o !== null &&
+        ganz(o.zeile) &&
+        typeof o.vorname === "string" &&
+        typeof o.nachname === "string" &&
+        typeof o.jahrgang === "number" &&
+        (o.jsNummer === null || typeof o.jsNummer === "string")
+      );
+    })
+  );
+}
+
+/** Die Erwartung eines Aufrufs in der Form `ImportErwartet`. */
+export function importErwartetForm(x: unknown): x is ImportErwartet {
+  const o = objekt(x);
+  return (
+    o !== null &&
+    Array.isArray(o.neu) &&
+    o.neu.every(ganz) &&
+    Array.isArray(o.mehrfach) &&
+    o.mehrfach.every(ganz) &&
+    Array.isArray(o.js) &&
+    o.js.every((e) => {
+      const j = objekt(e);
+      return j !== null && ganz(j.zeile) && (j.alt === null || typeof j.alt === "string");
+    })
+  );
+}
+
+/** Die Plakette der J+S-Änderungen in Ein- und Mehrzahl. */
+export function importJsPlakette(n: number): string {
+  return n === 1 ? "1 J+S-Nummer ändert sich" : `${n} J+S-Nummern ändern sich`;
+}
+
+/** Die Antwort der Übernahme (`status` `uebernommen` oder `veraltet`) als
+ *  Ausgang — oder `null`, wenn sie keine dieser Formen hat. */
+export function ausgangAus(antwort: unknown): ImportAusgang | null {
+  const r = objekt(antwort);
+  if (r?.status === "uebernommen")
+    return ganz(r.neu) && ganz(r.js) ? { status: "uebernommen", neu: r.neu, js: r.js } : null;
+  if (r?.status !== "veraltet" || (r.grund !== "bestand" && r.grund !== "grenze")) return null;
+  const vorschau = vorschauAus(r.vorschau);
+  return vorschau ? { status: "veraltet", grund: r.grund, vorschau } : null;
+}
+
+/** Bestätigen lässt sich nur, was etwas ändert: eine neue Spieler:in oder eine
+ *  geänderte J+S-Nummer — `mehrfach` allein genügt nicht (#585 AK 5) — und
+ *  nur, solange der Verein mit den Neuen unter der Grenze bleibt (AK 6). */
+export function importUebernehmbar(v: ImportVorschau): boolean {
+  return v.ueber === 0 && v.neu.length + v.js.length > 0;
+}
+
+/** Die Grenze des Vereins ist erreicht (AK 6): mit der Zahl, um die er
+ *  darüber läge. Vor der Übernahme ist nichts versucht; dass eine Übernahme
+ *  nichts übernommen hat, sagt das Band `IMPORT_TEXT.veraltet`. */
+export function importUeberGrenzeText(v: ImportVorschau): string {
+  const wer = v.neu.length === 1 ? "dieser neuen Spieler:in" : `diesen ${v.neu.length} neuen`;
+  return `Mit ${wer} wären es ${v.bestand + v.neu.length} Spieler:innen, ${v.ueber} mehr als ${VEREIN_SPIELER_MAX}. Entferne Zeilen aus der Datei oder lösche zuerst Spieler:innen.`;
+}
+
+/** Vor der Übernahme (AK 3, 4): wie viele neu sind, dass sie ohne Team
+ *  bleiben und wer sie sieht. «Danach sind es x von 1000» gibt es nur, wenn sie
+ *  hineinpassen. */
+export function importNeuText(neu: number, bestand: number, verein: string): string {
+  const [kommen, sehen] =
+    neu === 1
+      ? ["1 Spieler:in kommt neu", "sehen sie mit Name und Jahrgang; löschen lässt sie sich nur einzeln"]
+      : [`${neu} Spieler:innen kommen neu`, "sehen sie mit Name und Jahrgang; löschen lassen sie sich nur einzeln"];
+  const danach = bestand + neu === 1 ? "Danach ist es" : "Danach sind es";
+  return `${kommen} in den ${verein}, ohne Team. Alle Trainer:innen des Vereins ${sehen}. ${danach} ${spielerVonText(bestand + neu)}.`;
+}
+
+/** Zeilen, die im Verein mehrfach geführt werden (AK 5): eine Einzelne mit
+ *  Namen und Teams, mehrere in einem Satz über der Tabelle. */
+export function importMehrfachText(zeilen: { name: string; jahrgang: number; teams: ImportTeam[] }[]): string {
+  if (zeilen.length !== 1) return IMPORT_TEXT.mehrfachViele;
+  const [z] = zeilen;
+  const teams = z.teams.length > 0 ? ` (${aufzaehlung(z.teams.map((t) => t.name))})` : "";
+  return `${z.name}, ${z.jahrgang}, wird mehrfach im Verein geführt${teams}. KiFu ändert bei keinem dieser Einträge die J+S-Nummer.`;
+}
+
+/** Der Satz, wenn nichts zu übernehmen ist; Mehrfachgeführte ändert KiFu nie. */
+export function importNichtsZuTunText(mehrfach: number): string {
+  return mehrfach > 0 ? `${IMPORT_TEXT.nichtsZuTun} ${IMPORT_TEXT.nichtsZuTunMehrfach}` : IMPORT_TEXT.nichtsZuTun;
+}
+
+/** Die Meldung nach der Übernahme (AK 10): Zahlen, und dass die Neuen keinem
+ *  Team zugeordnet sind und man das im Spielerbestand tut — dort hängt
+ *  auch die Aktion «Zuordnen». */
+export function importErgebnisText(r: { neu: number; js: number }): string {
   const spieler = (n: number) => (n === 1 ? "1 Spieler:in" : `${n} Spieler:innen`);
   const teile: string[] = [];
   if (r.neu > 0) teile.push(`${spieler(r.neu)} aufgenommen`);
   if (r.js > 0) teile.push(r.neu > 0 ? `bei ${r.js} die J+S-Nummer geändert` : `Bei ${spieler(r.js)} die J+S-Nummer geändert`);
-  const satz = `${teile.join(", ")}.`;
-  return r.ersetzt > 0 ? `${satz} Die Spielerzahl kommt jetzt aus der Liste.` : satz;
+  const zuordnen = (wen: string) => `einem Team ordnest du ${wen} im Spielerbestand zu.`;
+  const ohneTeam =
+    r.neu === 0
+      ? ""
+      : r.neu === 1
+        ? ` Die neue Spieler:in ist keinem Team zugeordnet; ${zuordnen("sie")}`
+        : ` Die Neuen sind keinem Team zugeordnet; ${zuordnen("sie")}`;
+  return `${teile.join(", ")}.${ohneTeam}`;
 }

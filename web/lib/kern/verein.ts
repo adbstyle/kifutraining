@@ -1,7 +1,21 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
-import { nachSpielerName, nachTeamname, SPIELER_MELDUNG, type SpielerEingabe } from "@/lib/spieler";
+import { bereinigeName, jahrgangAus, nachSpielerName, nachTeamname, spielerProblem, SPIELER_MELDUNG, type SpielerEingabe } from "@/lib/spieler";
+import {
+  IMPORT_TEXT,
+  IMPORT_ZEILEN_MAX,
+  ausgangAus,
+  importErwartetForm,
+  importZeilenForm,
+  importZeilenStimmen,
+  jsAus,
+  vorschauAus,
+  type ImportAusgang,
+  type ImportEintrag,
+  type ImportErwartet,
+  type ImportVorschau,
+} from "@/lib/spieler-import";
 import { teamNameProblem } from "@/lib/team";
 import {
   PERSON_MELDUNG,
@@ -16,7 +30,7 @@ import {
   type SpielerDoppeltImVerein,
   type ZuordnenAbweisung,
 } from "@/lib/verein";
-import { NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
+import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 import { argumente, eingabeFehler, spielerFehler } from "@/lib/kern/spieler";
 
 /** Ein Fehler der `verein_*`-RPCs: «Verein nicht gefunden» ordnet nur dieser
@@ -678,4 +692,88 @@ export async function erneuereSpielerLinkImVerein(
   const { data, error } = await supabase.rpc("verein_spieler_link_erneuern", { p_spieler: e.spielerId });
   if (error) return spielerFehler(error);
   return ok({ token: (data as { link_token: string }).link_token });
+}
+
+// ── Import aus einer Datei (Story #585) ─────────────────────────────────────
+
+/** Die Zeilen, wie sie aus dem Browser kommen, geprüft wie beim einzelnen
+ *  Erfassen und auf eine J+S-Nummer aus Ziffern (#455 AK 17, 19). Mehr als
+ *  `IMPORT_ZEILEN_MAX` Zeilen weist schon der Kern ab, wie die Datenebene. */
+function importFehler(zeilen: unknown): KernFehler | null {
+  // Eine Action nimmt, was ein Aufruf schickt: ohne die Form kein TypeError.
+  if (!importZeilenForm(zeilen)) return fehlschlag("eingabe", MELDUNG_WIEDERHOLEN);
+  if (zeilen.length > IMPORT_ZEILEN_MAX) return fehlschlag("regel", IMPORT_TEXT.zuGross);
+  // Die Zeilennummer trägt die Einordnung zwischen Vorschau und Übernahme.
+  const nummern = zeilen.map((z) => z.zeile);
+  if (!nummern.every((n) => Number.isInteger(n) && n > 0) || new Set(nummern).size !== nummern.length)
+    return fehlschlag("eingabe", MELDUNG_WIEDERHOLEN);
+  for (const z of zeilen) {
+    const p = spielerProblem(z);
+    if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
+    if (z.jsNummer !== null && jsAus(z.jsNummer).wert !== z.jsNummer)
+      return fehlschlag("eingabe", IMPORT_TEXT.js(z.jsNummer), { feld: "js_nummer" });
+  }
+  return null;
+}
+
+function importArgumente(vereinId: string, zeilen: ImportEintrag[]) {
+  return {
+    p_verein: vereinId,
+    p_zeilen: zeilen.map((z) => ({
+      zeile: z.zeile,
+      vorname: bereinigeName(z.vorname),
+      nachname: bereinigeName(z.nachname),
+      jahrgang: jahrgangAus(z.jahrgang),
+      js: z.jsNummer,
+    })),
+  };
+}
+
+/** Die Vorschau eines Imports (#585 AK 3–7): wer neu ist, wer eine neue
+ *  J+S-Nummer erhält, wer unverändert bleibt oder mehrfach im Verein geführt
+ *  wird — über den ganzen Verein, ohne zu schreiben. Nur die Verwaltung. */
+export async function pruefeVereinImport(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { vereinId: string; zeilen: ImportEintrag[] },
+): Promise<KernErgebnis<ImportVorschau>> {
+  const problem = importFehler(e.zeilen);
+  if (problem) return problem;
+  if (!istUuid(e.vereinId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.verein, { feld: "verein_id" });
+  const { data, error } = await supabase.rpc("verein_spieler_importieren", importArgumente(e.vereinId, e.zeilen));
+  if (error) return vereinFehler(error);
+  // Die Form prüft `vorschauAus`, die Zeilennummern `importZeilenStimmen`;
+  // passt etwas nicht, keine falsche Vorschau.
+  const vorschau = (data as { status?: unknown } | null)?.status === "vorschau" ? vorschauAus(data) : null;
+  return vorschau && importZeilenStimmen(vorschau, e.zeilen.map((z) => z.zeile))
+    ? ok(vorschau)
+    : fehlschlag("technisch", IMPORT_TEXT.unstimmig, { wiederholbar: true });
+}
+
+/** Den Import übernehmen, ganz oder gar nicht (#585 PC 4): nur, wenn die
+ *  Datenebene dieselbe Einordnung sieht wie die bestätigte Vorschau und der
+ *  Verein unter der Grenze bleibt. Sonst ist nichts geschehen, und die
+ *  Antwort trägt die neue Vorschau (`veraltet`, AK 9). Die Neuen kommen ohne
+ *  Team; keine Zuordnung, kein Schnuppern, keine Termine (PC 5). */
+export async function importiereInVerein(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { vereinId: string; zeilen: ImportEintrag[]; erwartet: ImportErwartet },
+): Promise<KernErgebnis<ImportAusgang>> {
+  const problem = importFehler(e.zeilen);
+  if (problem) return problem;
+  if (!importErwartetForm(e.erwartet)) return fehlschlag("eingabe", MELDUNG_WIEDERHOLEN);
+  if (!istUuid(e.vereinId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.verein, { feld: "verein_id" });
+  const { data, error } = await supabase.rpc("verein_spieler_importieren", {
+    ...importArgumente(e.vereinId, e.zeilen),
+    p_erwartet: {
+      neu: e.erwartet.neu,
+      js: e.erwartet.js.map(({ zeile, alt }) => ({ zeile, alt })),
+      mehrfach: e.erwartet.mehrfach,
+    },
+  });
+  if (error) return vereinFehler(error);
+  const ausgang = ausgangAus(data);
+  const stimmt = ausgang?.status !== "veraltet" || importZeilenStimmen(ausgang.vorschau, e.zeilen.map((z) => z.zeile));
+  return ausgang && stimmt ? ok(ausgang) : fehlschlag("technisch", IMPORT_TEXT.unstimmig, { wiederholbar: true });
 }
