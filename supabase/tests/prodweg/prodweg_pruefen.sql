@@ -12,7 +12,8 @@
 -- Altdublette am Verein-Ort ändern, löschen und neu erfassen (Story 6), eine
 -- Bestands-Spieler:in in zwei Teams über Link, Abo und Abholung (Story 7),
 -- die Bestands-Schnuppernde über die neuen Schreibwege (Story 8), die
--- Vereinsliste für ein Mitglied ohne Verwaltung (Story 4). Teil B
+-- Vereinsliste für ein Mitglied ohne Verwaltung (Story 4), der Import in
+-- den Bestandsverein samt Altdublette (Story 9). Teil B
 -- ändert nichts bleibend (rollback). Spätere Stories ergänzen ihre Abfragen
 -- (Konten ohne Verein mit Story 12).
 
@@ -153,9 +154,10 @@ begin
   end if;
 end $$;
 
--- Testfall 1 (Story 1 PC 2): Ein Team mit 150 Bestand kann ändern,
--- herausnehmen (seit Story 3 statt löschen) und J+S importieren; die 151. Spieler:in und ein Import mit neuer Zeile
--- scheitern an der Teamgrenze. Als Trainer:in über die RPCs (wie PostgREST).
+-- Testfall 1 (Story 1 PC 2): Ein Team mit 150 Bestand kann ändern (auch die
+-- J+S-Nummer) und herausnehmen (seit Story 3 statt löschen); die 151.
+-- Spieler:in scheitert an der Teamgrenze. Als Trainer:in über die RPCs (wie
+-- PostgREST). Den Import ohne Teamgrenze am Verein-Ort prüft Story 9 unten.
 select set_config('request.jwt.claims',
          jsonb_build_object('sub', prodweg.id('trainer_a'), 'role', 'authenticated')::text, true) is not null
        as prodweg_claims \gset
@@ -168,7 +170,6 @@ declare
   -- Über die Zuordnung: spieler.team_id ist ab Story 8 für die Rolle nicht lesbar.
   v_eins uuid := (select s.id from spieler s join team_spieler ts on ts.spieler_id = s.id
                    where ts.team_id = v_team and s.nachname = 'Nr 1');
-  v_zeile jsonb := jsonb_build_object('zeile', 1, 'vorname', 'Gross', 'nachname', 'Nr 2', 'jahrgang', 2015, 'js', '4711');
   v_drei uuid;
   v jsonb;
   f text;
@@ -187,20 +188,10 @@ begin
   exception when others then
     if position('SPIELERLISTE_VOLL' in sqlerrm) = 0 then raise; end if;
   end;
-  -- Reiner J+S-Import bei Bestand über 100 geht durch.
-  v := spieler_importieren(v_team, jsonb_build_array(v_zeile));
-  v := spieler_importieren(v_team, jsonb_build_array(v_zeile),
-         jsonb_build_object('neu', v -> 'neu', 'js', (select jsonb_agg(j -> 'zeile') from jsonb_array_elements(v -> 'js') j)));
-  if (v ->> 'js')::int <> 1 then raise exception 'Testfall 1: J+S-Import ohne Wirkung: %', v; end if;
-  -- Mit einer neuen Zeile nicht.
-  v_zeile := jsonb_build_object('zeile', 1, 'vorname', 'Ganz', 'nachname', 'Neu', 'jahrgang', 2015);
-  v := spieler_importieren(v_team, jsonb_build_array(v_zeile));
-  begin
-    perform spieler_importieren(v_team, jsonb_build_array(v_zeile), jsonb_build_object('neu', v -> 'neu', 'js', '[]'::jsonb));
-    raise exception 'Testfall 1: Import mit neuer Zeile über der Teamgrenze';
-  exception when others then
-    if position('SPIELERLISTE_VOLL' in sqlerrm) = 0 then raise; end if;
-  end;
+  -- Eine J+S-Nummer bei Bestand über 100 setzen geht.
+  v := spieler_aendern(v_team, (select s.id from spieler s join team_spieler ts on ts.spieler_id = s.id
+                                 where ts.team_id = v_team and s.nachname = 'Nr 2'), 'Gross', 'Nr 2', 2015, '4711');
+  if v <> '{"status": "geaendert"}'::jsonb then raise exception 'Testfall 1: J+S über der Grenze: %', v; end if;
 
   -- Story 2 (PC 1, AK 7): Die Dublette über zwei Teams bleibt ohne
   -- Schlüsseländerung änderbar; eine dritte Erfassung mit demselben
@@ -230,7 +221,7 @@ do $$
 begin
   if (select count(*) from team_spieler where team_id = prodweg.id('t_gross')) <> 149
      or (select js_nummer from spieler where team_id = prodweg.id('t_gross') and nachname = 'Nr 2') <> '4711' then
-    raise exception 'Testfall 1: Bestand nach Ändern, Herausnehmen und Import falsch';
+    raise exception 'Testfall 1: Bestand nach Ändern und Herausnehmen falsch';
   end if;
   if (select count(*) from spieler where nachname = 'Dublette' and team_id in (prodweg.id('t_f1'), prodweg.id('t_f2'))) <> 2
      or (select js_nummer from spieler where team_id = prodweg.id('t_f1') and nachname = 'Dublette') <> '55' then
@@ -306,6 +297,63 @@ begin
   if v <> '{"status": "abgewiesen", "grund": "name_vergeben", "team": "Prodweg F-Junioren"}'::jsonb then
     raise exception 'Story 5: Umbenennen zurück auf vergebenen Schlüssel: %', v;
   end if;
+end $$;
+
+-- Story 9 (AK 2, 3, 5, 8; Testfall 24): Die Verwaltung importiert in den
+-- Bestandsverein. Eine Zeile trifft die Altdublette über zwei Teams
+-- (`mehrfach` mit beiden Teams, ihre J+S-Nummern bleiben), eine ändert die
+-- J+S-Nummer im Team mit 149 (keine Teamgrenze), eine ist neu und kommt ohne
+-- Team in den Verein. In einer Untertransaktion, die danach zurückrollt: Die
+-- folgenden Fälle sehen den Bestand unverändert.
+do $$
+declare
+  v_verein uuid := (select verein_id from teams where id = prodweg.id('t_gross'));
+  v_liste jsonb := verein_spielerliste(v_verein);
+  v_team jsonb := (select jsonb_agg(jsonb_build_object('id', e -> 'id', 'name', e -> 'name') order by e ->> 'name', e ->> 'id')
+                     from jsonb_array_elements(v_liste -> 'teams') e
+                    where (e ->> 'id')::uuid in (prodweg.id('t_f1'), prodweg.id('t_f2')));
+  v_gross jsonb := (select jsonb_build_array(jsonb_build_object('id', e -> 'id', 'name', e -> 'name'))
+                      from jsonb_array_elements(v_liste -> 'teams') e where (e ->> 'id')::uuid = prodweg.id('t_gross'));
+  v_nr4 jsonb := (select e from jsonb_array_elements(v_liste -> 'spieler') e
+                   where e ->> 'vorname' = 'Gross' and e ->> 'nachname' = 'Nr 4');
+  v_dubletten text := (select string_agg(coalesce(e ->> 'js', '-'), ',' order by e ->> 'id')
+                         from jsonb_array_elements(v_liste -> 'spieler') e where e ->> 'nachname' = 'Dublette');
+  v_zeilen jsonb := '[{"zeile": 2, "vorname": "Gross", "nachname": "Nr 4", "jahrgang": 2015, "js": "999"},
+                      {"zeile": 3, "vorname": "lea", "nachname": "DUBLETTE", "jahrgang": 2017, "js": "77"},
+                      {"zeile": 4, "vorname": "Prodweg", "nachname": "Import", "jahrgang": 2016}]';
+  v jsonb;
+begin
+  if v_nr4 is null or jsonb_array_length(v_team) <> 2 then
+    raise exception 'Story 9: Bestand für den Import nicht wie erwartet';
+  end if;
+  begin
+    v := verein_spieler_importieren(v_verein, v_zeilen);
+    if v <> jsonb_build_object('status', 'vorschau', 'bestand', (v_liste ->> 'gesamt')::int, 'ueber', 0,
+                               'neu', '[4]'::jsonb,
+                               'js', jsonb_build_array(jsonb_build_object('zeile', 2, 'alt', v_nr4 -> 'js', 'teams', v_gross)),
+                               'gleich', '[]'::jsonb,
+                               'mehrfach', jsonb_build_array(jsonb_build_object('zeile', 3, 'teams', v_team))) then
+      raise exception 'Story 9: Vorschau im Bestand: %', v;
+    end if;
+    v := verein_spieler_importieren(v_verein, v_zeilen, '{"neu": [4], "js": [2], "mehrfach": [3]}');
+    if v <> '{"status": "uebernommen", "neu": 1, "js": 1}'::jsonb then
+      raise exception 'Story 9: Übernahme im Bestand: %', v;
+    end if;
+    v_liste := verein_spielerliste(v_verein);
+    if (select e -> 'teams' from jsonb_array_elements(v_liste -> 'spieler') e
+         where e ->> 'vorname' = 'Prodweg' and e ->> 'nachname' = 'Import') is distinct from '[]'::jsonb
+       or (select e ->> 'js' from jsonb_array_elements(v_liste -> 'spieler') e
+            where e ->> 'vorname' = 'Gross' and e ->> 'nachname' = 'Nr 4') <> '999'
+       or (select string_agg(coalesce(e ->> 'js', '-'), ',' order by e ->> 'id')
+             from jsonb_array_elements(v_liste -> 'spieler') e where e ->> 'nachname' = 'Dublette') <> v_dubletten
+       or (select count(*) from jsonb_array_elements(v_liste -> 'teams') e
+            where (e ->> 'id')::uuid = prodweg.id('t_gross') and (e ->> 'anzahl')::int = 149) <> 1 then
+      raise exception 'Story 9: Bestand nach der Übernahme falsch: %', v_liste;
+    end if;
+    raise exception 'prodweg_story9_zurueck';
+  exception when others then
+    if sqlerrm <> 'prodweg_story9_zurueck' then raise; end if;
+  end;
 end $$;
 
 -- Story 6 (Zettel A2.6, A2.8): Am Verein-Ort bleibt die Altdublette ohne

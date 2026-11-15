@@ -14,7 +14,8 @@
 -- (`begin atomic … end`, dort ist `prosrc` leer), `pg_get_function_sqlbody`.
 --
 -- Dazu (ab Story 3): Jede RPC `verein_*` beginnt mit nur_in_der_anwendung()
--- und weist ein KI-Token ab.
+-- und weist ein KI-Token ab; seit Story 9 nachweislich auch der Import
+-- verein_spieler_importieren.
 --
 -- Selbsttest zuerst: vier Attrappen in `public` (plpgsql und SQL-Standard-
 -- Rumpf mit beiden Prädikatnamen, dazu je eine mit dem Team-Prädikat und dem
@@ -112,6 +113,16 @@ begin
      and p.prosrc !~ '^\s*(declare\M.*?)?\mbegin\s+perform\s+nur_in_der_anwendung\(\);';
   if ohne is not null then
     raise exception 'verein_*-RPCs ohne nur_in_der_anwendung() als erste Anweisung: %', ohne;
+  end if;
+end $$;
+
+-- Die Abfragen erfassen die RPCs über ihren Namen; der Import (Story 9) muss
+-- darunter sein, sonst prüften sie ihn still nicht.
+do $$
+begin
+  if to_regprocedure('verein_spieler_importieren(uuid,jsonb,jsonb)') is null
+     or not has_function_privilege('authenticated', 'verein_spieler_importieren(uuid,jsonb,jsonb)', 'execute') then
+    raise exception 'Ortsprüfung: verein_spieler_importieren fehlt oder hat kein API-Recht';
   end if;
 end $$;
 
