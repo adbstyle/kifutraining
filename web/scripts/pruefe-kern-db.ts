@@ -7574,7 +7574,9 @@ try {
     const lea = m.spieler.find((s) => s.vorname === "Léa")!;
     assert.deepEqual(lea, { id: lea.id, vorname: "Léa", nachname: "Brunner", jahrgang: 2014, teams: [{ id: ea, name: "Ea 580" }] }, "eigenes Team: nicht mehr");
     assert.equal(m.verwaltung, false, "ein Mitglied bekommt nie die Verwaltungssicht");
-    assert.ok(!/111|link|schnupp|anzahl|js/i.test(JSON.stringify(m)), "nichts davon im Payload");
+    // Kennungen (UUIDs) vorher entfernen: Hex-Ziffern wie «111» kommen darin zufällig vor.
+    const ohneKennungen = JSON.stringify(m).replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, "");
+    assert.ok(!/111|link|schnupp|anzahl|js/i.test(ohneKennungen), "nichts davon im Payload");
     // Schon auf dem Draht (PostgREST, ohne Kern): Kopf und Zeile ohne Verwaltungsangaben.
     const roh = (await mitglied.supabase.rpc("verein_spielerliste", { p_verein: vereinId })).data as Record<string, unknown> & { spieler: Record<string, unknown>[]; teams: Record<string, unknown>[] };
     assert.deepEqual(Object.keys(roh).sort(), ["gesamt", "jahrgaenge", "ohne_team", "spieler", "teams", "verwaltung"]);
