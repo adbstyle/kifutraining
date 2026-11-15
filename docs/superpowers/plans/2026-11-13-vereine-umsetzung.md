@@ -507,18 +507,50 @@ Ein PR auf `develop`, ohne Migration (Branch `docs/vereine-phase-d`; Commits ste
 
 ### A – Abschluss-PR (AP §3, §6.1 Schritt 1)
 
-- [ ] `<ts>_zuordnung_invarianten_validieren.sql` anlegen; sie trägt den spätesten Zeitstempel des Release.
-- [ ] `PUBLIC_TABLES` in `sync-staging.yml` um `team_spieler verein_verwaltung vereine` ergänzen, bytewise sortiert.
-- [ ] Ab diesem Merge gibt es **keinen Sync aus `develop`** mehr bis zum Release.
+Branch `chore/vereine-abschluss`, ein PR auf `develop`.
+
+- [x] `<ts>_zuordnung_invarianten_validieren.sql` anlegen; sie trägt den spätesten Zeitstempel des Release. *Erledigt:* `9759579`, `20261115140000_zuordnung_invarianten_validieren.sql` (später als alles auf `develop` und `main`). Sie validiert die elf FKs aus `20261114100000_zuordnung_invarianten.sql` (`ks_zuordnung`, `ta_zuordnung`, `sm_zuordnung`, `ta_termin_team`, `tsw_termin_team`, `sm_termin_team`, `te_termin_team`, `tk_termin_team`, `stp_termin_team`, `tn_eingefroren_team`, `st_eingefroren_team`), `lock_timeout` 5 s wie die übrigen Vereine-Migrationen, kein CHECK, kein NOT NULL. Weitere `not valid`-Constraints legt das Epic nicht an (Katalog der lokalen DB); ungeprüft bleiben nur die fünf von `training_exercises` aus der Zeit vor dem Epic (AP §6.5). Die Pflicht `verein_id` (AP §3.8) entsteht erst in N1. Tests: neu `supabase/tests/zuordnung_invarianten_validieren.sql` (die elf validiert, N1 nicht vorweggenommen, ungeprüft genau die fünf aus der Zeit vor dem Epic); Prod-Weg ohne Ausnahmeliste in `prodweg_pruefen.sql`, `prodweg_bestand.sql` mit je einer Altzeile in `termin_statuswechsel` und `spiel_treffpunkte`, damit jeder FK am Bestand validiert wird. Lokal geprüft: eine eingeschleuste Waise (`termin_statuswechsel` mit fremdem Team) lässt genau diese Datei scheitern, die Zählabfrage aus Phase G zeigt sie vorher an.
+- [x] `PUBLIC_TABLES` in `sync-staging.yml` um `team_spieler verein_verwaltung vereine` ergänzen, bytewise sortiert. *Erledigt:* `9759579`; die Liste (43 Tabellen) ist gleich der Guard-Abfrage gegen das lokale Schema. Sonst braucht der Workflow nichts: `vor_restore.sql` und `sync_bausteine.sql` ermitteln ihre Listen zur Laufzeit, `nach_restore.sql` und `sync:storage` nennen keine Tabellen, die neuen Tabellen tragen keine Geheimnisse.
+- [ ] Ab diesem Merge gibt es **keinen Sync aus `develop`** mehr bis zum Release. (Der Guard bricht ihn ab, weil Prod die drei Tabellen noch nicht hat; die Generalprobe synct aus `main`.)
 
 ### G – Generalprobe (AP §6.2, §6.5)
 
 Mit Ankündigung, weil sie Staging-Daten und Testkonten ersetzt. Jeder Schritt, der Prod liest, braucht die Freigabe im Moment.
 
 - [ ] `reset-staging.yml`: Staging-Schema auf `main`.
-- [ ] Sync aus `main`.
+- [ ] Sync aus `main`: `gh workflow run sync-staging.yml --ref main -f confirm=sync` (Eingabe `confirm`, Wert `sync`). Ein Lauf mit `--ref develop` bricht am Guard ab, bevor Staging angefasst wird.
+- [ ] Die Zählabfrage in der Variante «neues Schema» ist am 2026-11-15 auf Staging vor dem Merge von Phase A gelaufen. Ergebnis: siehe PR-Text von Phase A.
+- [ ] **Aus Phase A:** Vor `deploy-staging.yml` (Staging nach dem Sync aus `main`, altes Schema) und auf Prod (Freigabe, nur Aggregat) zählen, wie viele Zeilen die Validierung `20261115140000_zuordnung_invarianten_validieren.sql` brächen; Soll überall 0 (AP §6.4 «Waisen»). Ist ein Wert nicht 0, scheitert nur diese letzte Datei; dann vor dem Fenster mit dem PO bereinigen (AP §6.1, §10 Risiko 21). Rückfallweg: Die Zählabfrage der Generalprobe (elf Zahlen, Soll 0) soll den Fall vorher ausschliessen. Scheitert die Datei dennoch im Fenster, sind alle früheren Dateien angewandt und der fachliche Stand ist vollständig; die Datei ist wiederholbar (`validate constraint` auf ein schon gültiges Constraint ist ein No-op), bleibt aber offen, und jeder weitere `db push` scheitert wieder an ihr. Gangbar: (a) die verletzenden Zeilen im Fenster per SQL bereinigen (ausdrückliche Entscheidung des PO, Freigabe im Moment, nur mit vorheriger Zählung und Protokoll) und `db push` wiederholen; oder (b) eine Bereinigungs-Migration mit einem Zeitstempel zwischen `20261115130000` und `20261115140000` (Prod nimmt sie an, weil dort zuletzt `…130000` angewandt ist; Staging hat `…140000` schon und braucht danach `reset-staging`, Sync aus `main` und `deploy-staging`). Nicht gangbar: eine spätere Migration (sie kommt nie zum Zug) sowie die Datei ändern oder umbenennen (Staging hat sie angewandt). Im alten Schema steht die Zuordnung in `spieler.team_id`, aus der der Backfill `team_spieler` bildet:
+  ```sql
+  begin read only;
+  select
+    (select count(*) from public.kader_spieler x where not exists
+       (select 1 from public.spieler s where s.id = x.spieler_id and s.team_id = x.team_id))          as ks_zuordnung,
+    (select count(*) from public.termin_abmeldungen x where not exists
+       (select 1 from public.spieler s where s.id = x.spieler_id and s.team_id = x.team_id))          as ta_zuordnung,
+    (select count(*) from public.spiel_meldungen x where not exists
+       (select 1 from public.spieler s where s.id = x.spieler_id and s.team_id = x.team_id))          as sm_zuordnung,
+    (select count(*) from public.termin_abmeldungen x where not exists
+       (select 1 from public.training_termine t where t.id = x.termin_id and t.team_id = x.team_id))  as ta_termin_team,
+    (select count(*) from public.termin_statuswechsel x where not exists
+       (select 1 from public.training_termine t where t.id = x.termin_id and t.team_id = x.team_id))  as tsw_termin_team,
+    (select count(*) from public.spiel_meldungen x where not exists
+       (select 1 from public.training_termine t where t.id = x.termin_id and t.team_id = x.team_id))  as sm_termin_team,
+    (select count(*) from public.termin_eingefroren x where not exists
+       (select 1 from public.training_termine t where t.id = x.termin_id and t.team_id = x.team_id))  as te_termin_team,
+    (select count(*) from public.termin_kader x where not exists
+       (select 1 from public.training_termine t where t.id = x.termin_id and t.team_id = x.team_id))  as tk_termin_team,
+    (select count(*) from public.spiel_treffpunkte x where not exists
+       (select 1 from public.training_termine t where t.id = x.termin_id and t.team_id = x.team_id))  as stp_termin_team,
+    (select count(*) from public.termin_teilnahmen x where not exists
+       (select 1 from public.termin_eingefroren f where f.termin_id = x.termin_id and f.team_id = x.team_id)) as tn_eingefroren_team,
+    (select count(*) from public.spiel_teilnahmen x where not exists
+       (select 1 from public.termin_eingefroren f where f.termin_id = x.termin_id and f.team_id = x.team_id)) as st_eingefroren_team;
+  rollback;
+  ```
+  Im neuen Schema (etwa wenn die Validierung auf Staging gescheitert ist) dieselbe Abfrage, in den drei Zuordnungs-Zeilen mit `public.team_spieler z where z.spieler_id = x.spieler_id and z.team_id = x.team_id` statt `public.spieler s …`.
 - [ ] `deploy-staging.yml` aus `develop`: Die ganze Kette läuft auf Prod-Daten, samt Validierung. Laufzeit notieren; sie bestimmt die Länge des Fensters.
-- [ ] `supabase/tests/prodweg_pruefen.sql` gegen Staging, danach E2E-Schritt 16 und ein Rundgang.
+- [ ] `supabase/tests/prodweg/prodweg_pruefen.sql` gegen Staging, danach E2E-Schritt 16 und ein Rundgang.
 - [ ] **Aus Phase 4:** Laufzeit von `verein_spielerliste` mit 100 und 1000 Zeilen auf Staging messen (`explain analyze`, AP §10 Risiko 22); auf Prod (nur lesend, Freigabe) prüfen, in welchem Schema `unaccent` liegt (der `search_path` der Funktion nennt `public, extensions`) und welche Collation die Datenbank hat.
 - [ ] **Aus Phase 9:** Laufzeit von `verein_spieler_importieren` auf Staging messen: Vorschau und Übernahme von 1000 neuen Zeilen eines Jahrgangs in einen leeren Verein über die Anwendung (Datei `tausend.csv`-artig), dazu eine Vorschau über einen vollen Verein; Grenze 8 s `statement_timeout`, lokal unter 150 ms.
 - [ ] **Aus Phase 11:** Laufzeit von `verein_loeschen` (und `delete_account` der einzigen Person) mit 30 Teams und 1000 Spieler:innen auf Staging messen, über die Anwendung bzw. PostgREST (Rolle `authenticated`, Grenze 8 s `statement_timeout`); lokal rund 0,28 s auf nicht analysiertem Bestand. Der Plan-Punkt stand zuerst «vor dem Merge» in Phase 11 und ist wegen des grossen Abstands zur Grenze hierher verschoben (AP §11 F4).
@@ -539,7 +571,7 @@ Jeder Schritt auf Prod nur mit Freigabe im Moment.
 - [ ] PO: Bestandskonten ohne Team, die in einem Verein arbeiten sollen, in ein Team aufnehmen; Fenster ansetzen und die Trainer:innen informieren.
 - [ ] Firewall-Regel «Wartung» aktivieren und von aussen prüfen.
 - [ ] PR `develop` → `main` mergen; warten, bis `db push` grün **und** das neue Deployment auf der Produktionsdomain ist.
-- [ ] Review Focus 5: Bricht `db push` ab, bleibt die Sperre. Der Fehler wird als neue Migration behoben und erneut ausgerollt. Nur wenn schon die erste Datei scheitert, ist ein Vercel-Rollback eine Option.
+- [ ] Review Focus 5: Bricht `db push` ab, bleibt die Sperre. Der Fehler wird behoben und erneut ausgerollt; scheitert die Validierungs-Datei, gilt der Rückfallweg aus Phase G (bereinigen im Fenster oder Migration zwischen `…130000` und `…140000`, nie eine spätere). Nur wenn schon die erste Datei scheitert, ist ein Vercel-Rollback eine Option.
 - [ ] Prüfabfragen aus AP §6.5 auf Prod, nur lesend; Rundgang mit dem eigenen Konto durch die Sperre.
 - [ ] Review Focus 2: in einem vorher geöffneten Tab eine Aktion auslösen und in einem verbundenen KI-Client ein altes Werkzeug aufrufen; beides endet mit einer Meldung, ohne Wirkung.
 - [ ] Review Focus 2, Story 2: Ein altes Bundle oder ein verbundener KI-Client liest während des Einspielens eine Abweisung `{status: 'abgewiesen'}` von `spieler_aufnehmen` als Erfolg (meldet «aufgenommen», obwohl nichts gespeichert ist) und scheitert bei `spieler_aendern` an der alten Signatur. Darum die Schreibwege erst freigeben, wenn die Migrationen **und** der Vercel-Deploy durch sind.
@@ -556,6 +588,7 @@ C folgt unmittelbar auf R: Sobald `main` die Vereine-Migrationen trägt, setzt d
 
 - [ ] PR auf `develop`: CI-Job «Prod-Weg» samt `prodweg_bestand.sql` entfernen (passt nicht mehr zum Schema von `main`).
 - [ ] Der Sync läuft wieder normal, auch aus `main`.
+- [ ] **Aus Phase A:** In `sync-staging.yml` den Kommentar über `PUBLIC_TABLES` zum Abschluss-PR Vereine entfernen (Übergangs-Hinweis, gilt nur bis zum Release).
 - [ ] Danach, als eigener Schritt: Supabase-CLI auf Version 3 heben (#604). Bis dahin bleibt sie auf 2.122.1 festgelegt.
 
 ### N1 – Nachlauf (AP §3.8)

@@ -151,6 +151,12 @@ insert into termin_abmeldungen (termin_id, spieler_id, team_id, angemeldet) valu
 insert into spiel_meldungen (termin_id, spieler_id, team_id, zustand, gewechselt_am) values
   (prodweg.id('sp_kommend'), prodweg.id('p2'), prodweg.id('t_d'), 'angemeldet', now()),
   (prodweg.id('sp_kommend'), prodweg.id('p3'), prodweg.id('t_d'), 'abgemeldet', now());
+-- Je eine Altzeile in den übrigen Tabellen mit Termin-FK, damit die
+-- Validierung (Plan Phase A, `_validieren`) jeden der elf FKs am Bestand prüft.
+insert into termin_statuswechsel (termin_id, spieler_id, team_id, gewechselt_am) values
+  (prodweg.id('tr_kommend'), prodweg.id('p1'), prodweg.id('t_d'), now() - interval '1 day');
+insert into spiel_treffpunkte (termin_id, team_id, anreise, vorlauf_min, ort) values
+  (prodweg.id('sp_kommend'), prodweg.id('t_d'), 'vor_ort', 30, null);
 insert into team_abholung (team_id, aktiv) values (prodweg.id('t_d'), true);
 -- Zwei Kalender-Abos (Story 7 PC 5: jede bestehende Abo-Adresse liefert weiter).
 insert into spieler_abos (spieler_id) values (prodweg.id('p1')), (prodweg.id('p2'));
