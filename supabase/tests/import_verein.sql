@@ -38,8 +38,9 @@
 --   passenden alten Nummer geht die Übernahme durch; die frühere Form von
 --   p_erwartet.js als blosse Zeilennummern gilt als abweichend (`veraltet`)
 -- - Zeilennummern (D2): ein Element, das kein Objekt ist, eine fehlende, null,
---   nicht ganze, nicht positive oder doppelte `zeile` → technisch abgewiesen
---   (SQLSTATE 22023), für Vorschau und Übernahme
+--   nicht ganze, nicht positive, über 2147483647 liegende oder doppelte `zeile`
+--   → technisch abgewiesen (SQLSTATE 22023), für Vorschau und Übernahme;
+--   3.0 gilt als 3
 -- - Letzte Zeile ohne gültige J+S nach einer früheren mit gültiger, bei einer
 --   Bestehenden: `gleich`, die Nummer bleibt
 -- - Alles oder nichts (PC 4): eine ungültige Zeile mitten in 600 neuen lässt
@@ -518,6 +519,7 @@ begin
     jsonb_build_array(ok || '{"zeile": 0}'),
     jsonb_build_array(ok || '{"zeile": -3}'),
     jsonb_build_array(ok || '{"zeile": 2.5}'),
+    jsonb_build_array(ok || '{"zeile": 2147483648}'),                         -- über int
     jsonb_build_array(ok || '{"zeile": "2"}'),
     jsonb_build_array(ok || '{"zeile": 2}', ok || '{"zeile": 2, "vorname": "Andere"}'),   -- doppelt
     jsonb_build_array(ok || '{"zeile": 2}', '7'::jsonb),                      -- kein Objekt
@@ -527,6 +529,10 @@ begin
     perform pg_temp.erwarte(format('select verein_spieler_importieren(%L, %L, %L)', pg_temp.id('v'), kaputt,
                                    '{"neu": [2], "js": [], "mehrfach": []}'), '22023');
   end loop;
+  -- Eine ganze Zahl in Dezimalschreibweise (3.0) ist eine gültige Zeilennummer.
+  perform pg_temp.pruefe(
+    (verein_spieler_importieren(pg_temp.id('v'), jsonb_build_array(ok || '{"zeile": 3.0}')) -> 'neu') = '[3]'::jsonb,
+    'D2: zeile 3.0 wird wie 3 behandelt');
 end $$;
 reset role;
 select pg_temp.pruefe(pg_temp.stand(pg_temp.id('v')) = :'stand_v_d2', 'D2: eine abgewiesene Zeilennummer hat geschrieben');

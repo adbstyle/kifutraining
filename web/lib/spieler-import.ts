@@ -458,12 +458,12 @@ export function importErgebnisText(r: { neu: number; js: number }): string {
   const teile: string[] = [];
   if (r.neu > 0) teile.push(`${spieler(r.neu)} aufgenommen`);
   if (r.js > 0) teile.push(r.neu > 0 ? `bei ${r.js} die J+S-Nummer geändert` : `Bei ${spieler(r.js)} die J+S-Nummer geändert`);
-  const zuordnen = "Teams ordnest du im Spielerbestand zu.";
+  const zuordnen = (wen: string) => `einem Team ordnest du ${wen} im Spielerbestand zu.`;
   const ohneTeam =
     r.neu === 0
       ? ""
       : r.neu === 1
-        ? ` Sie ist keinem Team zugeordnet; ${zuordnen}`
-        : ` Die Neuen sind keinem Team zugeordnet; ${zuordnen}`;
+        ? ` Die neue Spieler:in ist keinem Team zugeordnet; ${zuordnen("sie")}`
+        : ` Die Neuen sind keinem Team zugeordnet; ${zuordnen("sie")}`;
   return `${teile.join(", ")}.${ohneTeam}`;
 }

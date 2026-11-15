@@ -40,12 +40,14 @@
 --   verglichen (die Reihenfolge des Aufrufers zählt nicht); bei `js` zählt
 --   auch die bisherige Nummer `alt`, damit eine inzwischen geänderte J+S-
 --   Nummer nicht still überschrieben wird. Ein `js`-Element ohne diese Form
---   (etwa eine blosse Zeilennummer) gilt als abweichend. Weicht etwas ab →
+--   gilt als abweichend. Weicht etwas ab →
 --   `veraltet`, grund 'bestand'; passt es, aber der Verein läge über 1000 →
 --   `veraltet`, grund 'grenze'. Beides schreibt nichts und liefert die neue
 --   Vorschau mit (AK 9).
 --   Die rohe Zahl `bestand` zählt nicht: eine unbeteiligte Erfassung macht die
 --   Vorschau nicht falsch.
+--   Abweichend sind blosse Zeilennummern, `alt` mit anderem Wert oder Typ und
+--   doppelte Zeilen; ein fehlendes `alt` gilt wie `null`.
 -- - Alles in einem Aufruf, also einer Transaktion (PC 4).
 --
 -- Rückgabe (jsonb):
@@ -185,7 +187,7 @@ begin
     with n as (select case when jsonb_typeof(z) = 'object' and jsonb_typeof(z -> 'zeile') = 'number'
                            then (z ->> 'zeile')::numeric end as zeile
                  from jsonb_array_elements(p_zeilen) z)
-    select 1 from n where zeile is null or zeile < 1 or zeile <> trunc(zeile)
+    select 1 from n where zeile is null or zeile < 1 or zeile > 2147483647 or zeile <> trunc(zeile)
     union all
     select 1 from n group by zeile having count(*) > 1
   ) then
@@ -195,7 +197,7 @@ begin
 
   -- Je Spieler:in der Datei die letzte Zeile, eingeordnet gegen den Verein.
   with roh as materialized (
-    select (z ->> 'zeile')::int as zeile,
+    select (z ->> 'zeile')::numeric::int as zeile,
            spieler_text_bereinigt(z ->> 'vorname') as vorname,
            spieler_text_bereinigt(z ->> 'nachname') as nachname,
            (z ->> 'jahrgang')::int as jahrgang,

@@ -3837,7 +3837,7 @@ pruefe("CSV-Import: Jahrgang, J+S-Nummer und ausgelassene Zeilen (#455 AK 17–2
 });
 
 pruefe("CSV-Import: Meldung nach der Übernahme, die Neuen sind ohne Team (#585 AK 10)", () => {
-  const zuordnen = "Teams ordnest du im Spielerbestand zu.";
+  const zuordnen = "einem Team ordnest du sie im Spielerbestand zu.";
   assert.equal(
     importErgebnisText({ neu: 12, js: 2 }),
     `12 Spieler:innen aufgenommen, bei 2 die J+S-Nummer geändert. Die Neuen sind keinem Team zugeordnet; ${zuordnen}`,
@@ -3845,9 +3845,9 @@ pruefe("CSV-Import: Meldung nach der Übernahme, die Neuen sind ohne Team (#585 
   assert.equal(importErgebnisText({ neu: 12, js: 0 }), `12 Spieler:innen aufgenommen. Die Neuen sind keinem Team zugeordnet; ${zuordnen}`);
   assert.equal(
     importErgebnisText({ neu: 1, js: 2 }),
-    `1 Spieler:in aufgenommen, bei 2 die J+S-Nummer geändert. Sie ist keinem Team zugeordnet; ${zuordnen}`,
+    `1 Spieler:in aufgenommen, bei 2 die J+S-Nummer geändert. Die neue Spieler:in ist keinem Team zugeordnet; ${zuordnen}`,
   );
-  assert.equal(importErgebnisText({ neu: 1, js: 0 }), `1 Spieler:in aufgenommen. Sie ist keinem Team zugeordnet; ${zuordnen}`);
+  assert.equal(importErgebnisText({ neu: 1, js: 0 }), `1 Spieler:in aufgenommen. Die neue Spieler:in ist keinem Team zugeordnet; ${zuordnen}`);
   assert.equal(importErgebnisText({ neu: 0, js: 1 }), "Bei 1 Spieler:in die J+S-Nummer geändert.", "ohne Neue kein Satz zu Teams");
   assert.equal(importErgebnisText({ neu: 0, js: 3 }), "Bei 3 Spieler:innen die J+S-Nummer geändert.");
 });

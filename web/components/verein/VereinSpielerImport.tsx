@@ -157,11 +157,21 @@ export function VereinSpielerImport({
     setFehler(null);
     startTransition(async () => {
       const r = await importiereInVereinAktion(vereinId, zeilen.eintraege, erwartetVon(vorschau));
-      if (nr !== lauf.current) {
-        // Überholt: nichts mehr anzeigen; was übernommen ist, zeigt die Liste.
-        if (r.ok && r.ausgang.status === "uebernommen") router.refresh();
+      // Ein Erfolg der Übernahme meldet immer das Ergebnis, auch wenn ein neuerer
+      // Lauf ihn überholt hat: geschrieben ist geschrieben. Verworfen werden nur
+      // Fehler und `veraltet` einer überholten Antwort.
+      if (r.ok && r.ausgang.status === "uebernommen") {
+        lauf.current++;
+        onClose();
+        router.refresh();
+        const { neu, js } = r.ausgang;
+        melde(
+          importErgebnisText({ neu, js }),
+          neu > 0 ? { label: "Zuordnen", onAction: () => router.push(`${pfad}?team=${OHNE_TEAM_WERT}`, { scroll: false }) } : undefined,
+        );
         return;
       }
+      if (nr !== lauf.current) return;
       // Ein Fehler sperrt nicht: «Übernehmen» bleibt für einen zweiten Versuch.
       if (!r.ok) return setFehler(r.error);
       if (r.ausgang.status === "veraltet") {
@@ -169,16 +179,7 @@ export function VereinSpielerImport({
         setVorschau(r.ausgang.vorschau);
         setVeraltet(true);
         setFehler(null);
-        return;
       }
-      lauf.current++;
-      onClose();
-      router.refresh();
-      const { neu, js } = r.ausgang;
-      melde(
-        importErgebnisText({ neu, js }),
-        neu > 0 ? { label: "Zuordnen", onAction: () => router.push(`${pfad}?team=${OHNE_TEAM_WERT}`, { scroll: false }) } : undefined,
-      );
     });
   }
 
