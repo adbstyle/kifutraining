@@ -10,6 +10,7 @@ import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { eigeneBildPfade } from "@/lib/fassung";
 import { loescheKonto } from "@/lib/kern/verein";
 import { raeumeVerwaisteBilder } from "@/lib/storage-aufraeumen";
+import { revalidiereMitgliedschaften, revalidiereVerein } from "@/lib/revalidate";
 import {
   KONTO_LOESCHEN_TEXT,
   VEREIN_MELDUNG,
@@ -244,6 +245,10 @@ export async function deleteAccount(vereinsname: string | null): Promise<KontoLo
   const { error: loeschFehler } = await createAdminClient().auth.admin.deleteUser(uid);
   if (loeschFehler) {
     console.error("[konto] Anmeldung entfernen", loeschFehler);
+    // Die Daten sind weg, ein Verein womöglich mit: Leiste und Seiten sollen ihn
+    // nicht weiter zeigen.
+    revalidiereVerein();
+    revalidiereMitgliedschaften();
     return { fehler: KONTO_LOESCHEN_TEXT.teilweise };
   }
 

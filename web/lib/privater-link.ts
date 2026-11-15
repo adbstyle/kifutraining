@@ -123,6 +123,8 @@ export async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
   // Seite sagt es trotzdem so, statt etwas über ihn preiszugeben.
   if (error || !data) return UNGUELTIG;
   const ansicht = data as LinkAnsicht;
+  // Ohne Vereinsnamen stünde «undefined» im Satz «Verantwortlich …»: wie ungültig.
+  if (ansicht.gueltig && (typeof ansicht.verein !== "string" || !ansicht.verein)) return UNGUELTIG;
   return ansicht.gueltig ? { ...ansicht, teams: [...ansicht.teams].sort(nachTeamname) } : ansicht;
 }
 

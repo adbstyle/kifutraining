@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Trash2, AlertTriangle } from "lucide-react";
 import { Button, ButtonLink, Dialog, NamenBestaetigen, SectionMessage, namenStimmen } from "@/components/ui";
 import { deleteAccount, type KontoLoeschenZustand } from "@/lib/actions/auth";
@@ -24,7 +25,9 @@ import type { KontoLoeschInfo } from "@/lib/verein-antwort";
    Die Seite liest den Fall beim Rendern (`konto_loeschen_info`), die Datenebene
    prüft ihn beim Ausführen erneut. Hat sich die Lage inzwischen geändert, bleibt
    alles unverändert, der Dialog zeigt den Grund und, wo es weitergeht, den
-   neuen Fall. Eine laufende Anfrage sperrt Eingabe und Knöpfe. */
+   neuen Fall. Nach jeder Antwort ohne Löschen lädt er die Lage neu
+   (`router.refresh()`); sobald sie da ist, gilt sie statt der Antwort, die
+   Meldung bleibt stehen. Eine laufende Anfrage sperrt Eingabe und Knöpfe. */
 export function KontoClient({ info }: { info: KontoLoeschInfo }) {
   const [open, setOpen] = useState(false);
   return (
@@ -43,9 +46,18 @@ const ANFANG: KontoLoeschenZustand = { fehler: null };
 const FORM = "konto-loeschen";
 
 function KontoLoeschenDialog({ info, onClose }: { info: KontoLoeschInfo; onClose: () => void }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [zustand, setZustand] = useState<KontoLoeschenZustand>(ANFANG);
   const [eingabe, setEingabe] = useState("");
+
+  // Neu geladene Lage (nach router.refresh): Sie ist frischer als die letzte
+  // Antwort und entscheidet den Fall; nur die Meldung bleibt.
+  const [infoStand, setInfoStand] = useState(info);
+  if (info !== infoStand) {
+    setInfoStand(info);
+    setZustand((z) => ({ fehler: z.fehler }));
+  }
 
   // Der Fall, den die Datenebene beim Ausführen gesehen hat, geht dem der Seite vor.
   const gesperrt = zustand.letzteVerwaltung === true || info.fall === "letzte_verwaltung";
@@ -57,7 +69,11 @@ function KontoLoeschenDialog({ info, onClose }: { info: KontoLoeschInfo; onClose
     if (pending || !passt) return;
     startTransition(async () => {
       // Gelingt es, leitet die Action selbst weiter und liefert nichts zurück.
-      setZustand(await deleteAccount(verein ? eingabe : null));
+      const neu = await deleteAccount(verein ? eingabe : null);
+      // Name und Zahlen des Vereins gehen über Antwortfolgen nicht verloren
+      // (etwa verein_bestaetigen, dann vereinsname_falsch).
+      setZustand((vorher) => ({ ...neu, verein: neu.verein ?? (neu.letzteVerwaltung ? undefined : vorher.verein) }));
+      router.refresh();
     });
   }
 

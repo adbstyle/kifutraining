@@ -137,13 +137,15 @@ export const VEREIN_LOESCHEN_TEXT = {
   einleitung: "Mit dem Verein wird unwiderruflich gelöscht:",
   feld: "Vereinsname",
   endgueltig: "Das lässt sich nicht rückgängig machen.",
+  /** Statt der Liste, wenn der Verein weder Teams noch Spieler:innen hat. */
+  leer: "Der Verein hat keine Teams und keine Spieler:innen.",
 } as const;
 
 export const vereinLoeschenTitel = (name: string) => `${name} löschen`;
 
 /** Die Meldung nach dem Löschen, auf `/teams` (PC 4: Übungen und Trainings
  *  der Personen bleiben). */
-export const vereinGeloeschtText = (name: string) => `Der Verein ${name} ist gelöscht. Deine eigenen Übungen und Trainings bleiben.`;
+export const vereinGeloeschtText = (name: string) => `Der Verein «${name}» ist gelöscht. Deine eigenen Übungen und Trainings bleiben.`;
 
 /** Was mit dem Verein verschwindet, für den Dialog: die Zeilen der Liste (nur,
  *  was es gibt), dann was aus den Personen wird. `personen`: verschiedene
@@ -188,17 +190,18 @@ export const KONTO_LOESCHEN_TEXT = {
   nichtLoeschbar: "Konto lässt sich noch nicht löschen",
   /** Fall frei: ein Verein, dem das Konto angehört, bleibt bestehen. */
   vereinBleibt: "Gehörst du einem Verein an, bleibt er bestehen.",
-  /** Die einzige Person hat den Dialog mit dem Namen bestätigt, inzwischen
-   *  ist eine weitere dazugekommen: nichts ist gelöscht. */
+  /** Die einzige Person hat den Dialog mit dem Namen bestätigt, ist es beim
+   *  Ausführen aber nicht mehr (weitere Person im Team oder in der Verwaltung,
+   *  oder der Verein ist inzwischen anderswo gelöscht): nichts ist gelöscht. */
   weiterePerson:
-    "Dem Verein gehört inzwischen eine weitere Person an. Verein und Konto bleiben unverändert. Nimm zuerst jemanden in die Verwaltung auf, oder lösche den Verein unter Verein › Verwaltung.",
+    "Im Verein hat sich inzwischen etwas geändert. Verein und Konto bleiben unverändert. Prüfe die Angaben und versuche es noch einmal.",
 } as const;
 
 /** Fall «letzte Verwaltung» (AK 13): nicht löschbar, solange weitere Personen
  *  dem Verein angehören; der Weg heraus. */
 export function kontoLetzteVerwaltungSaetze(verein: string) {
   return {
-    lage: `Du bist die letzte Person in der Vereinsverwaltung des ${verein}, und dem Verein gehören weitere Personen an.`,
+    lage: `Du bist die letzte Person in der Vereinsverwaltung von «${verein}», und dem Verein gehören weitere Personen an.`,
     weg: "Nimm zuerst jemanden in die Verwaltung auf. Oder lösche den Verein unter Verein › Verwaltung.",
   };
 }
@@ -207,11 +210,12 @@ export function kontoLetzteVerwaltungSaetze(verein: string) {
  *  Zeilen nennen nur, was es gibt. */
 export function kontoEinzigePersonSaetze(verein: string, teams: number, spieler: number) {
   const geloescht: string[] = [];
-  if (teams > 0) geloescht.push(`${anzahl(teams, "Team", "Teams")} mit Kalender und Team-Trainings`);
+  if (teams > 0) geloescht.push(`${anzahl(teams, "Team", "Teams")}, mit Terminen und Team-Trainings`);
   if (spieler > 0) geloescht.push(`${anzahl(spieler, "Spieler:in", "Spieler:innen")} samt Links, Abos und Abholadressen`);
   return {
     titel: "Konto und Verein löschen",
-    lage: `Du bist die einzige Person im ${verein}. Mit deinem Konto wird der Verein gelöscht:`,
+    // Ohne Liste kein Doppelpunkt ins Leere.
+    lage: `Du bist die einzige Person im Verein «${verein}». Mit deinem Konto wird der Verein gelöscht${geloescht.length > 0 ? ":" : "."}`,
     geloescht,
     endgueltig: VEREIN_LOESCHEN_TEXT.endgueltig,
     feld: VEREIN_LOESCHEN_TEXT.feld,
@@ -223,7 +227,7 @@ export function kontoEinzigePersonSaetze(verein: string, teams: number, spieler:
  *  Person im Verein (vorher gehörten weitere an). Nichts ist gelöscht; der
  *  Dialog verlangt jetzt den Vereinsnamen. */
 export const kontoEinzigePersonInzwischenText = (verein: string) =>
-  `Dein Konto ist inzwischen die einzige Person im ${verein}. Mit dem Konto wird der Verein gelöscht: Bestätige das mit dem Vereinsnamen. Es ist nichts gelöscht.`;
+  `Dein Konto ist inzwischen die einzige Person im Verein «${verein}». Mit dem Konto wird der Verein gelöscht: Bestätige das mit dem Vereinsnamen. Es ist nichts gelöscht.`;
 
 /** Wenn die Antwort der Datenebene nicht die Form des Vertrags hat: Ob der
  *  Vorgang geschehen ist, ist dann nicht gesagt; der Satz schickt zum Nachsehen

@@ -6,10 +6,12 @@ import { TextField } from "./TextField";
 
 /** Stimmt die Eingabe mit dem verlangten Namen überein? Genau, mit Gross- und
  *  Kleinschreibung; Leerzeichen am Rand und die Unicode-Normalform zählen nicht
- *  (#480 AK 6, 7). Dieselbe Regel wiederholt die Datenebene beim Ausführen —
- *  die Oberfläche gibt den Knopf nur frei, entscheidet aber nichts. */
+ *  (#480 AK 6, 7) — auf beiden Seiten: Auch ein gespeicherter Name mit Rand
+ *  (Bestand) lässt sich so bestätigen. Dieselbe Regel wiederholt die
+ *  Datenebene beim Ausführen (`namen_stimmen`) — die Oberfläche gibt den Knopf
+ *  nur frei, entscheidet aber nichts. */
 export function namenStimmen(eingabe: string, name: string): boolean {
-  return eingabe.trim().normalize("NFC") === name.normalize("NFC");
+  return eingabe.trim().normalize("NFC") === name.trim().normalize("NFC");
 }
 
 /* Die Bestätigung einer unwiderruflichen Handlung durch Eingabe des Namens

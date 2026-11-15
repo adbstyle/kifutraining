@@ -564,7 +564,7 @@ export function linkGiltNichtText(art: "training" | "spiel", datum: string, vorn
  *  #587 PC 2): die Antwort kommt nie über KiFu; ohne Team ist die
  *  Vereinsverwaltung des Vereins die Stelle — mit seinem Namen. */
 export const feedbackDringend = (ohneTeam: boolean, verein: string) =>
-  `Bei Dringendem, etwa einer kurzfristigen Absage, wende dich ${ohneTeam ? `an die Vereinsverwaltung des ${verein}` : "direkt an die Trainer:innen des Teams"}.`;
+  `Bei Dringendem, etwa einer kurzfristigen Absage, wende dich ${ohneTeam ? `an die Vereinsverwaltung von «${verein}»` : "direkt an die Trainer:innen des Teams"}.`;
 
 // ── Am Link eingrenzen (#596) ────────────────────────────────────────────────
 
@@ -676,7 +676,7 @@ export const ABHOL_SPERRE_MINUTEN = 15;
  *  die Angaben sieht»: Der Verein ist die Stelle, an die sich Eltern wenden.
  *  Keine eigene Konstante in `LINK_TEXT`: Die fliesst in die KI-Beschreibungen. */
 export function angabenSehenText(verein: string, vorname?: string): string {
-  return `Verantwortlich für die Daten ${vorname ? `von ${vorname} ` : ""}ist der ${verein}. Name, Jahrgang und Teams ${vorname ? `von ${vorname}` : "der Spieler:in"} sehen alle Trainer:innen des Vereins, alle Angaben die Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.`;
+  return `Verantwortlich für die Daten ${vorname ? `von ${vorname} ` : ""}ist der Verein «${verein}». Name, Jahrgang und Teams ${vorname ? `von ${vorname}` : "der Spieler:in"} sehen alle Trainer:innen des Vereins, alle Angaben die Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.`;
 }
 
 export const ABHOLUNG_TEXT = {

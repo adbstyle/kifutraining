@@ -2924,9 +2924,10 @@ pruefe("Abholseite und «Fragen und Feedback» am Link: alle Teams, Verweis bei 
   // AK 12: der Link zeigt alle Teams — ohne sie zu nennen.
   const erhalt = abholErhaltText("Noah Keller", "FC Wyler");
   assert.equal(erhalt.teams, "Der Link zeigt die Termine aller Teams von Noah Keller.");
-  // AK 19, #587 PC 2: mit Team die Trainer:innen, ohne Team die Vereinsverwaltung des Vereins — mit Namen.
+  // AK 19, #587 PC 2: mit Team die Trainer:innen, ohne Team die Vereinsverwaltung des Vereins — mit Namen,
+  // ohne Artikel davor (Vereinsnamen sind frei wählbar).
   assert.equal(feedbackDringend(false, "FC Wyler"), "Bei Dringendem, etwa einer kurzfristigen Absage, wende dich direkt an die Trainer:innen des Teams.");
-  assert.equal(feedbackDringend(true, "FC Wyler"), "Bei Dringendem, etwa einer kurzfristigen Absage, wende dich an die Vereinsverwaltung des FC Wyler.");
+  assert.equal(feedbackDringend(true, "FC Wyler"), "Bei Dringendem, etwa einer kurzfristigen Absage, wende dich an die Vereinsverwaltung von «FC Wyler».");
 });
 
 pruefe("Abo Spielervertretung: Spiel zugesagt, vielleicht bis zur Frist, sonst abgesagt (#508 PC 3–6, AK 2)", () => {
@@ -3152,8 +3153,8 @@ pruefe("Wer die Angaben sieht (#580 PC 4, #587 PC 2): ein Textblock für Abholse
   const rest =
     "sehen alle Trainer:innen des Vereins, alle Angaben die Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.";
   // Der Verein steht als Verantwortlicher im selben Textblock wie «wer die Angaben sieht».
-  assert.equal(angabenSehenText("FC Wyler"), `Verantwortlich für die Daten ist der FC Wyler. Name, Jahrgang und Teams der Spieler:in ${rest}`);
-  assert.equal(angabenSehenText("FC Wyler", "Noah"), `Verantwortlich für die Daten von Noah ist der FC Wyler. Name, Jahrgang und Teams von Noah ${rest}`);
+  assert.equal(angabenSehenText("FC Wyler"), `Verantwortlich für die Daten ist der Verein «FC Wyler». Name, Jahrgang und Teams der Spieler:in ${rest}`);
+  assert.equal(angabenSehenText("FC Wyler", "Noah"), `Verantwortlich für die Daten von Noah ist der Verein «FC Wyler». Name, Jahrgang und Teams von Noah ${rest}`);
   // Die Abholseite trägt ihn anstelle der bisherigen Angabe; die übrigen Sätze bleiben.
   const speichert = abholSpeichertText("FC Wyler");
   assert.ok(speichert.includes(angabenSehenText("FC Wyler")));
@@ -3165,7 +3166,7 @@ pruefe("Wer die Angaben sieht (#580 PC 4, #587 PC 2): ein Textblock für Abholse
   assert.ok(speichert.startsWith("Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang"));
   // Der Verein ist verantwortlich — keine Person (OoS 6): überall, wo der Text steht, mit dem Namen des Vereins.
   for (const t of [angabenSehenText("FC Wyler"), angabenSehenText("FC Wyler", "Noah"), speichert])
-    assert.ok(t.includes("Verantwortlich für die Daten") && t.includes("ist der FC Wyler."), t);
+    assert.ok(t.includes("Verantwortlich für die Daten") && t.includes("ist der Verein «FC Wyler»."), t);
   // Auf dem Erhalt-Bildschirm der Abholseite derselbe Textblock mit dem Namen der Spieler:in.
   const erhalt = abholErhaltText("Noah Keller", "FC Wyler");
   assert.ok(erhalt.daten.startsWith(angabenSehenText("FC Wyler", "Noah Keller")));
@@ -4362,7 +4363,7 @@ pruefe("Verein löschen (#587 AK 10, 11): Sätze der Gefahrenzone und des Dialog
   assert.equal(VEREIN_LOESCHEN_TEXT.knopf, "Verein löschen");
   assert.equal(VEREIN_LOESCHEN_TEXT.endgueltig, "Das lässt sich nicht rückgängig machen.");
   assert.equal(vereinLoeschenTitel("FC Wyler"), "FC Wyler löschen");
-  assert.equal(vereinGeloeschtText("FC Wyler"), "Der Verein FC Wyler ist gelöscht. Deine eigenen Übungen und Trainings bleiben.");
+  assert.equal(vereinGeloeschtText("FC Wyler"), "Der Verein «FC Wyler» ist gelöscht. Deine eigenen Übungen und Trainings bleiben.");
   // Das Beispiel des Boards: Teams, Spieler:innen auch ohne Team, Personen.
   assert.deepEqual(vereinLoeschenFolgen({ teams: 10, spieler: 144, ohneTeam: 2, personen: 23 }), {
     geloescht: ["10 Teams, mit Terminen und Team-Trainings", "144 Spieler:innen, davon 2 ohne Team, samt Links, Abos und Abholadressen"],
@@ -4374,6 +4375,13 @@ pruefe("Verein löschen (#587 AK 10, 11): Sätze der Gefahrenzone und des Dialog
     "1 Spieler:in samt Links, Abos und Abholadressen",
   ]);
   assert.deepEqual(vereinLoeschenFolgen({ teams: 0, spieler: 0, ohneTeam: 0, personen: 1 }).geloescht, [], "ein leerer Verein nennt nichts Leeres");
+  // Statt der leeren Liste ein klarer Satz (Fix-Lauf #587).
+  assert.equal(VEREIN_LOESCHEN_TEXT.leer, "Der Verein hat keine Teams und keine Spieler:innen.");
+  assert.match(
+    readFileSync(join(web, "components/verein/VereinLoeschen.tsx"), "utf8"),
+    /folgen\.geloescht\.length > 0 \?[\s\S]*?: \(\s*<p>\{VEREIN_LOESCHEN_TEXT\.leer\}<\/p>/,
+    "ohne Teams und Spieler:innen der Satz statt der Liste",
+  );
   assert.equal(
     vereinLoeschenFolgen({ teams: 0, spieler: 3, ohneTeam: 3, personen: 1 }).personen,
     "Dein Konto bleibt bestehen, ohne Verein; deine eigenen Übungen und Trainings bleiben.",
@@ -4400,6 +4408,12 @@ pruefe("Verein und Konto löschen (#587 AK 14): jede Rückmeldung hat ihren eige
   assert.equal(new Set(saetze).size, saetze.length, "keine zwei Rückmeldungen mit demselben Satz");
   // Nichts verspricht ein Löschen, das nicht geschehen ist.
   for (const t of [KONTO_LOESCHEN_TEXT.weiterePerson, konto]) assert.ok(t.includes("bleiben unverändert"), t);
+  // Mit Namen gesendet, aber nicht mehr einzige Person: Der Satz stimmt für jede Ursache (weitere Person im
+  // Team oder in der Verwaltung, Verein inzwischen gelöscht) und schickt nicht in die Verwaltung.
+  assert.equal(
+    KONTO_LOESCHEN_TEXT.weiterePerson,
+    "Im Verein hat sich inzwischen etwas geändert. Verein und Konto bleiben unverändert. Prüfe die Angaben und versuche es noch einmal.",
+  );
   assert.ok(kontoEinzigePersonInzwischenText("FC Wyler").includes("nichts gelöscht"));
   // Die Antwort der Datenebene ist unlesbar: Der Satz schickt zum Nachsehen, nicht zum blinden Wiederholen.
   assert.ok(VEREIN_UNSTIMMIG.loeschen.includes("prüfe, ob der Verein noch besteht"));
@@ -4408,20 +4422,29 @@ pruefe("Verein und Konto löschen (#587 AK 14): jede Rückmeldung hat ihren eige
 
 pruefe("Konto löschen (#587 AK 12, 13): drei Fälle des Dialogs im Wortlaut des Boards, ohne Teamnamen", () => {
   assert.deepEqual(kontoLetzteVerwaltungSaetze("FC Wyler"), {
-    lage: "Du bist die letzte Person in der Vereinsverwaltung des FC Wyler, und dem Verein gehören weitere Personen an.",
+    lage: "Du bist die letzte Person in der Vereinsverwaltung von «FC Wyler», und dem Verein gehören weitere Personen an.",
     weg: "Nimm zuerst jemanden in die Verwaltung auf. Oder lösche den Verein unter Verein › Verwaltung.",
   });
   assert.equal(KONTO_LOESCHEN_TEXT.nichtLoeschbar, "Konto lässt sich noch nicht löschen");
   assert.deepEqual(kontoEinzigePersonSaetze("FC Seefeld", 2, 31), {
     titel: "Konto und Verein löschen",
-    lage: "Du bist die einzige Person im FC Seefeld. Mit deinem Konto wird der Verein gelöscht:",
-    geloescht: ["2 Teams mit Kalender und Team-Trainings", "31 Spieler:innen samt Links, Abos und Abholadressen"],
+    lage: "Du bist die einzige Person im Verein «FC Seefeld». Mit deinem Konto wird der Verein gelöscht:",
+    geloescht: ["2 Teams, mit Terminen und Team-Trainings", "31 Spieler:innen samt Links, Abos und Abholadressen"],
     endgueltig: "Das lässt sich nicht rückgängig machen.",
     feld: "Vereinsname",
     knopf: "Konto und Verein löschen",
   });
   assert.deepEqual(kontoEinzigePersonSaetze("FC Seefeld", 0, 1).geloescht, ["1 Spieler:in samt Links, Abos und Abholadressen"]);
   assert.deepEqual(kontoEinzigePersonSaetze("FC Seefeld", 0, 0).geloescht, []);
+  // Ohne Liste kein Doppelpunkt ins Leere.
+  assert.equal(kontoEinzigePersonSaetze("FC Seefeld", 0, 0).lage, "Du bist die einzige Person im Verein «FC Seefeld». Mit deinem Konto wird der Verein gelöscht.");
+  assert.ok(kontoEinzigePersonSaetze("FC Seefeld", 0, 1).lage.endsWith("gelöscht:"));
+  assert.equal(
+    kontoEinzigePersonInzwischenText("FC Seefeld"),
+    "Dein Konto ist inzwischen die einzige Person im Verein «FC Seefeld». Mit dem Konto wird der Verein gelöscht: Bestätige das mit dem Vereinsnamen. Es ist nichts gelöscht.",
+  );
+  // Die Team-Zeile lautet in beiden Löschdialogen gleich.
+  assert.equal(kontoEinzigePersonSaetze("FC Seefeld", 3, 0).geloescht[0], vereinLoeschenFolgen({ teams: 3, spieler: 0, ohneTeam: 0, personen: 1 }).geloescht[0]);
   assert.equal(KONTO_LOESCHEN_TEXT.vereinBleibt, "Gehörst du einem Verein an, bleibt er bestehen.");
   // LETZTE_VERWALTUNG bleibt wörtlich; der Weg «im Bereich «Verein» löschen» gibt es jetzt wirklich.
   assert.ok(VEREIN_MELDUNG.LETZTE_VERWALTUNG.endsWith("Du kannst den Verein auch im Bereich «Verein» löschen."));
@@ -4561,6 +4584,22 @@ pruefe("Verein und Konto löschen (#587): ein Weg je RPC, Bestätigung mit dem B
   assert.match(lies("app/(app)/konto/page.tsx"), /ladeKontoLoeschenInfo\(supabase, user\.id\)[\s\S]*?<KontoClient info=\{loeschInfo\.wert\} \/>/);
   // Nie ein Namensfeld ohne Pflichtangabe: Die Eingabe geht nur im Fall «einzige Person» mit.
   assert.match(konto, /deleteAccount\(verein \? eingabe : null\)/);
+  // Nach jeder Antwort ohne Löschen lädt der Dialog die Lage neu; Name und Zahlen gehen über Antwortfolgen nicht
+  // verloren, und eine neu geladene Lage entscheidet den Fall (Fix-Lauf #587).
+  assert.match(konto, /await deleteAccount\([\s\S]*?verein: neu\.verein \?\? \(neu\.letzteVerwaltung \? undefined : vorher\.verein\)[\s\S]*?router\.refresh\(\);/);
+  assert.match(konto, /if \(info !== infoStand\) \{\s*setInfoStand\(info\);\s*setZustand\(\(z\) => \(\{ fehler: z\.fehler \}\)\);/);
+  // Teilzustand: Vor der Rückgabe revalidieren, damit Leiste und Seiten den gelöschten Verein nicht weiter zeigen.
+  assert.match(fluss, /if \(loeschFehler\) \{[\s\S]*?revalidiereVerein\(\);\s*revalidiereMitgliedschaften\(\);\s*return \{ fehler: KONTO_LOESCHEN_TEXT\.teilweise \}/);
+  // Team auflösen sperrt die Eingabe während der Anfrage wie die neuen Dialoge.
+  assert.match(lies("components/verein/VereinTeamVerwaltung.tsx"), /<NamenBestaetigen name=\{team\.name\}[^>]*gesperrt=\{pending\}/);
+  // Der Flash nennt höchstens einen Vereinsnamen voller Länge.
+  assert.match(lies("app/(app)/teams/page.tsx"), /vereinGeloeschtText\(sp\.verein_weg\.slice\(0, VEREIN_NAME_MAX\)\)/);
+  // Abholseite und Link: Fehlt der Verein (oder das Team) in der Antwort, gilt sie als ungültig, nie «undefined».
+  assert.match(lies("lib/abholung.ts"), /typeof r\.verein !== "string" \|\| !r\.verein\)\s*return \{ gueltig: false \};/);
+  assert.ok(!/return data as AbholAnsicht/.test(lies("lib/abholung.ts")), "keine ungeprüfte Übernahme");
+  assert.match(lies("lib/privater-link.ts"), /if \(ansicht\.gueltig && \(typeof ansicht\.verein !== "string" \|\| !ansicht\.verein\)\) return UNGUELTIG;/);
+  // Der Namensvergleich trimmt beide Seiten (gespeicherter Name mit Rand, Zwilling namen_stimmen).
+  assert.match(lies("components/ui/NamenBestaetigen.tsx"), /eingabe\.trim\(\)\.normalize\("NFC"\) === name\.trim\(\)\.normalize\("NFC"\)/);
   // Der Speicher wird in Stücken geräumt.
   assert.match(lies("lib/storage-aufraeumen.ts"), /for \(let i = 0; i < pfade\.length; i \+= STUECK\)/);
   // Kein Verein-Weg am Team-Ort, kein KI-Weg zu Gründen und Löschen (Ortsprüfung der Datenebene, Test 30).

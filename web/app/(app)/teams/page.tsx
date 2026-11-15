@@ -6,7 +6,7 @@ import { ButtonLink, Card, Leerzustand, SectionMessage } from "@/components/ui";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { getMeinVereinOderWurf } from "@/lib/queries/verein";
 import { OhneVereinStart } from "@/components/verein/OhneVereinStart";
-import { TEAM_NUR_VERWALTUNG, vereinGeloeschtText } from "@/lib/verein";
+import { TEAM_NUR_VERWALTUNG, VEREIN_NAME_MAX, vereinGeloeschtText } from "@/lib/verein";
 import { createClient } from "@/lib/supabase/server";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { Flash } from "@/components/Flash";
@@ -42,7 +42,7 @@ export default async function TeamsPage({
     return (
       <Seitenrahmen breite="5xl" krumen={[{ label: "Teams" }]}>
         {/* Die Verwaltung hat den Verein gelöscht (#587 PC 4); die Action leitet mit dem Namen hierher. */}
-        {sp.verein_weg && <Flash message={vereinGeloeschtText(sp.verein_weg.slice(0, 120))} param="verein_weg" />}
+        {sp.verein_weg && <Flash message={vereinGeloeschtText(sp.verein_weg.slice(0, VEREIN_NAME_MAX))} param="verein_weg" />}
         <OhneVereinStart email={user.email ?? null} />
       </Seitenrahmen>
     );

@@ -23,7 +23,12 @@ export async function ladeAbholAnsicht(token: string): Promise<AbholAnsicht> {
   if (!istLinkToken(token)) return { gueltig: false };
   const { data, error } = await createAnonClient().rpc("abholung_ansicht", { p_token: token });
   if (error || !data) return { gueltig: false };
-  return data as AbholAnsicht;
+  // Auf die Form geprüft (Muster lib/verein-antwort.ts): Fehlt Team oder
+  // Verein, gilt die Adresse wie jede ungültige, statt «undefined» zu zeigen.
+  const r = data as Record<string, unknown>;
+  if (r.gueltig !== true || typeof r.team !== "string" || !r.team || typeof r.verein !== "string" || !r.verein)
+    return { gueltig: false };
+  return { gueltig: true, team: r.team, verein: r.verein };
 }
 
 /** Der Anschluss einer Adresse: IPv4 ganz, IPv6 sein /64-Präfix — ein

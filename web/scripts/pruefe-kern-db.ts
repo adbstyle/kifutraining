@@ -7815,13 +7815,13 @@ try {
     return { trainingId: tr, bild: { id: f.fassungId, bild_url } };
   };
 
-  await pruefe("Namensvergleich: namen_stimmen (Datenebene) und namenStimmen (Web) entscheiden gleich, auch beim Auflösen eines Teams (#587, Zwilling; #480 AK 6, 7)", async () => {
+  await pruefe("Namensvergleich: namen_stimmen (Datenebene) und namenStimmen (Web) entscheiden gleich, auch beim Auflösen eines Teams und mit Rand im gespeicherten Namen (#587, Zwilling; #480 AK 6, 7)", async () => {
     // Der Web-Zwilling steht im Client-Baustein; unter der Bedingung react-server
     // fehlt dort `useEffect`, darum läuft er in einem Kindprozess ohne sie.
     const imWeb = (faelle: [string, string][]): boolean[] => {
       const code = `import { namenStimmen } from ${JSON.stringify(join(web, "components/ui/NamenBestaetigen.tsx"))};
         console.log(JSON.stringify(JSON.parse(process.argv.at(-1)).map(([e, n]) => namenStimmen(e, n))));`;
-      const aus = execFileSync(join(web, "node_modules/.bin/tsx"), ["--eval", code, JSON.stringify(faelle)], { encoding: "utf8" });
+      const aus = execFileSync(join(web, "node_modules/.bin/tsx"), ["--eval", code, JSON.stringify(faelle)], { encoding: "utf8", timeout: 60_000 });
       return JSON.parse(aus.trim().split("\n").at(-1)!);
     };
     const rand = " \t\n\v\f\r        　﻿";
@@ -7840,9 +7840,18 @@ try {
       ["Kern-DB  Name 11", "Kern-DB Name 11"],
       ["", "Kern-DB Name 12"],
       ["   ", "Kern-DB Name 13"],
+      // Rand im gespeicherten Namen (Bestand; der Teamname-CHECK prüft nur btrim): bestätigen geht trotzdem.
+      ["Kern-DB Name 14", "Kern-DB Name 14\u00a0"],
+      ["Kern-DB Name 15", "\tKern-DB Name 15"],
+      [" Kern-DB Name 16\ufeff", "\u3000Kern-DB Name 16\u2028"],
+      ["kern-db name 17", "Kern-DB Name 17\u00a0"],
     ];
     const web_ = imWeb(faelle);
-    assert.deepEqual(web_, [true, true, true, true, false, true, true, false, false, false, false, false, false], "Web wie erwartet");
+    assert.deepEqual(
+      web_,
+      [true, true, true, true, false, true, true, false, false, false, false, false, false, true, true, true, false],
+      "Web wie erwartet",
+    );
     // Die Datenebene ungetrimmt, direkt über die RPC (der Kern trimmt vorher):
     // aufgelöst heisst «stimmt».
     const db: boolean[] = [];

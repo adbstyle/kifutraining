@@ -142,8 +142,9 @@ export function VereinVerwaltung({
       </Card>
 
       <Card className="p-5 sm:p-6">
-        <div className="flex items-center justify-between gap-3">
-          <div>
+        {/* Schmal bricht der Knopf unter den Titel statt über den Rand. */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
             <h2 className="flex items-center gap-2 type-title-large text-on-surface">
               <Shield size={20} strokeWidth={2} aria-hidden />
               Vereinsverwaltung

@@ -92,7 +92,7 @@ export function VereinLoeschen({
           ausfuehren();
         }}
       >
-        {folgen.geloescht.length > 0 && (
+        {folgen.geloescht.length > 0 ? (
           <>
             <p>{VEREIN_LOESCHEN_TEXT.einleitung}</p>
             <ul className="list-disc space-y-1 pl-5">
@@ -101,6 +101,8 @@ export function VereinLoeschen({
               ))}
             </ul>
           </>
+        ) : (
+          <p>{VEREIN_LOESCHEN_TEXT.leer}</p>
         )}
         <p>{folgen.personen}</p>
         <p className="font-medium text-on-surface">{VEREIN_LOESCHEN_TEXT.endgueltig}</p>
