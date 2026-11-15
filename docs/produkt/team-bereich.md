@@ -1342,9 +1342,11 @@ beides macht die Verwaltung im Bereich „Verein" (siehe [Verein](verein.md#team
 Hat sie das Team aufgelöst, während jemand es offen hatte, zeigt sich das erst bei der nächsten
 Aktion. Verlässt die Person im offenen Tab das Team oder entfernt sie ein Mitglied, landet sie in
 der Teamübersicht mit der Meldung „Dieses Team besteht nicht mehr - die Vereinsverwaltung hat es
-aufgelöst." Die übrigen Aktionen (zum Beispiel eine Spieler:in hinzufügen) bleiben auf der Seite
-und melden „Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist."
-Ein Neuladen oder Seitenwechsel führt ohne Hinweis in die Teamübersicht.
+aufgelöst." Die übrigen Aktionen bleiben auf der Seite und melden einen Fehler – je nach Aktion
+„Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist." (zum Beispiel
+beim Hinzufügen einer Spieler:in), „Termin nicht gefunden.", „Kader nicht gefunden." oder beim
+Aufnehmen einer Trainer:in „Du bist nicht mehr Mitglied dieses Teams." Ein Neuladen oder der
+Wechsel in eine andere Ansicht des Teams führt ohne Hinweis in die Teamübersicht.
 
 ## Was beim Ausscheiden passiert
 
