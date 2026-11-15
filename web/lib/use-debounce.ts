@@ -26,28 +26,34 @@ export function useDebouncedWert(
   ms = 300,
 ): [string, (wert: string) => void] {
   const [wert, setWert] = useState(initial);
+  /** Was im Feld steht — für den Vergleich, wenn ein Wert von aussen kommt. */
+  const wertRef = useRef(initial);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** Das erwartete Echo der letzten Übernahme (bereinigt); `null`, wenn keines aussteht. */
+  /** Das Echo der letzten Übernahme (bereinigt); `null`, wenn keines aussteht. */
   const echo = useRef<string | null>(null);
-  /** Der Wert von aussen, wie er gerade steht — für den Timer, der später feuert. */
-  const aussen = useRef(initial);
 
-  // Änderungen von aussen (Zurücksetzen, Zurück-Navigation) spiegeln — und dabei
-  // einen noch laufenden Timer abräumen: sonst schriebe er kurz darauf den
-  // überholten Tippstand zurück (z. B. „Zurücksetzen" innerhalb der Tipppause).
-  // Ausgenommen ist das Echo der eigenen Übernahme: Es überschreibt nie, was
-  // im Feld steht, ob schon weitergetippt wird oder nicht.
+  // Ein Wert von aussen (Zurücksetzen, Zurück-Navigation, Echo):
+  // 1. Das Echo der letzten Übernahme, während schon weitergetippt wird:
+  //    Feld und Timer bleiben stehen, der Timer übernimmt gleich selbst.
+  // 2. Sagt das Feld bereinigt schon dasselbe, bleibt es, wie es ist (etwa
+  //    «Lea » beim Echo «Lea»: das Leerzeichen, hinter dem gleich
+  //    weitergetippt wird).
+  // 3. Sonst gilt der Wert von aussen, und ein laufender Timer wird
+  //    abgeräumt — er schriebe sonst den überholten Tippstand zurück (z. B.
+  //    «Zurücksetzen» innerhalb der Tipppause).
+  // Ein liegengebliebenes Echo (seine Navigation wurde von einer anderen
+  // verworfen) verschluckt so keine echte Änderung: Ohne laufenden Timer
+  // entscheidet allein der Vergleich mit dem Feld.
   useEffect(() => {
-    aussen.current = initial;
-    if (echo.current !== null && initial === echo.current) {
-      echo.current = null;
-      return;
-    }
+    const eigenesEcho = echo.current !== null && initial === echo.current;
     echo.current = null;
+    if (eigenesEcho && timer.current) return;
+    if (bereinige(wertRef.current) === initial) return;
     if (timer.current) {
       clearTimeout(timer.current);
       timer.current = null;
     }
+    wertRef.current = initial;
     setWert(initial);
   }, [initial]);
 
@@ -61,14 +67,12 @@ export function useDebouncedWert(
   );
 
   function aendern(neu: string) {
+    wertRef.current = neu;
     setWert(neu);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       timer.current = null;
-      // Bereinigt gleich wie das, was schon draussen steht: Es kommt kein
-      // neuer Wert zurück, also wird auch kein Echo erwartet.
-      const zurueck = bereinige(neu);
-      echo.current = zurueck === aussen.current ? null : zurueck;
+      echo.current = bereinige(neu);
       onCommit(neu);
     }, ms);
   }
