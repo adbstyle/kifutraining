@@ -292,19 +292,23 @@ export function ZahlFilter({
    Platzhalter sagen, wofür sie da ist —, dafür umrandet, denn neben den
    umrandeten Filterknöpfen stünde sonst ein Feld, das man nicht sieht. Wirkt
    nach einer Tipppause (300 ms); das Kreuz zum Leeren läuft über denselben
-   Weg. */
+   Weg. `bereinige`: wie die Seite den übernommenen Wert bereinigt zurückgibt
+   (`initial`) — dieselbe Funktion, mit der `useAdressFilter().setzeWert` ihn
+   in die Adresse schreibt; so verliert das Feld nie, was gerade getippt wird. */
 export function FilterSuche({
   label,
   initial,
   onCommit,
+  bereinige,
   className = "w-full sm:w-72",
 }: {
   label: string;
   initial: string;
   onCommit: (wert: string) => void;
+  bereinige?: (wert: string) => string;
   className?: string;
 }) {
-  const [wert, aendern] = useDebouncedWert(initial, onCommit);
+  const [wert, aendern] = useDebouncedWert(initial, onCommit, bereinige);
   return (
     <SearchField
       label={label}

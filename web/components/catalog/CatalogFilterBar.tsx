@@ -8,7 +8,7 @@ import {
   stufenOptionen,
   typOptionen,
 } from "@/lib/filter-optionen";
-import { useAdressFilter } from "@/lib/use-adress-filter";
+import { trimme, useAdressFilter } from "@/lib/use-adress-filter";
 
 export type CatalogFilters = {
   /** Die gewählten Einordnungen: Kinderfussball-Trainingsteile und die drei
@@ -59,6 +59,7 @@ export function CatalogFilterBar({
       <FilterSuche
         label="Übungen durchsuchen"
         initial={filters.q ?? ""}
+        bereinige={trimme}
         onCommit={(v) => filter.setzeWert("q", v)}
       />
 

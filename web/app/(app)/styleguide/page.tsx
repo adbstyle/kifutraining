@@ -2488,7 +2488,10 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Die Suche der Leiste (<code>FilterSuche</code>) steht ohne
             sichtbaren Namen, dafür umrandet und mit Platzhalter (<Siehe id="textfelder" />) - ohne Kante stünde neben den umrandeten
-            Knöpfen ein Feld, das man nicht sieht. Schalter wie «Meine Übungen»
+            Knöpfen ein Feld, das man nicht sieht. Bereinigt die Seite den
+            Suchtext (trimmen, Leerraum), bekommt das Feld dieselbe Funktion
+            als <code>bereinige</code>: Es erkennt daran das Echo und behält,
+            was gerade getippt wird. Schalter wie «Meine Übungen»
             bleiben <code>FilterChip</code> (<Siehe id="plaketten" />): Sie haben kein Panel, nur an
             und aus.
           </p>
