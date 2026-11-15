@@ -42,8 +42,14 @@ function mitNomen(art: KontoArt, n: number): string {
   return `${n} ${n === 1 ? NOMEN[art].eins : NOMEN[art].viele}`;
 }
 
+/** Eine Abweisung der Datenebene an der Grenze: welche Art, und der Bestand
+ *  hinter dem Marker. Die Actions reichen sie neben `error` an die Oberfläche
+ *  weiter, die daran (nicht am Text) erkennt, dass sie dieselbe Meldung wie bei
+ *  voller Grenze zeigen soll. */
+export type KontoAbweisung = { art: KontoArt; bestand: number };
+
 /** Der Bestand hinter dem Marker, samt Art; `null`, wenn die Meldung keinen trägt. */
-export function kontoGrenzeAusFehler(message: string): { art: KontoArt; bestand: number } | null {
+export function kontoGrenzeAusFehler(message: string): KontoAbweisung | null {
   for (const art of ["uebungen", "trainings"] as const) {
     const m = message.match(new RegExp(`${KONTO_MARKER[art]} (\\d+)`));
     if (m) return { art, bestand: Number(m[1]) };
@@ -67,6 +73,12 @@ function besitztSatz(art: KontoArt, bestand: number, max: number): string {
 }
 
 const MAX: Record<KontoArt, number> = { uebungen: KONTO_UEBUNGEN_MAX, trainings: KONTO_TRAININGS_MAX };
+
+/** Der Stand zu einer Abweisung, für die Meldung der vollen Grenze: der Bestand
+ *  aus dem Marker, die Grenze aus dem Zwilling (der Marker trägt sie nicht). */
+export function grenzeAusAbweisung(a: KontoAbweisung): KontoGrenze {
+  return { bestand: a.bestand, max: MAX[a.art] };
+}
 
 /** Der Satz zu einer Abweisung der Datenebene (AK 6; für den KI-Assistenten
  *  derselbe, AK 7): wie viele die Person besitzt, wie Platz entsteht, für wen
@@ -120,13 +132,6 @@ export function bestandText(art: KontoArt, g: KontoGrenze): string {
   return g.bestand <= g.max ? `${g.bestand} von ${g.max} ${NOMEN[art].viele}` : `${mitNomen(art, g.bestand)} (höchstens ${g.max})`;
 }
 
-/** Ist der Text einer Fehlermeldung die Abweisung der Kontogrenze? Eine Action
- *  gibt nur den Satz zurück, und der Aufrufer zeigt ihn dann bleibend statt
- *  flüchtig (der Satz hat drei Teile und ist für die Snackbar zu lang). */
-export function istKontoGrenzeMeldung(text: string): boolean {
-  return text.endsWith(KONTO_GRENZE_SCHLUSS);
-}
-
 /** Die Meldung an der Grenze, bevor die Person Angaben macht (AK 5): Titel,
  *  Text und der Link zurück zur eigenen Übersicht. */
 export function bestandVollMeldung(art: KontoArt, g: KontoGrenze): { titel: string; text: string; link: string; linkText: string } {
@@ -134,16 +139,23 @@ export function bestandVollMeldung(art: KontoArt, g: KontoGrenze): { titel: stri
     g.bestand <= g.max
       ? `Nichts mehr frei: ${g.bestand} von ${g.max} ${NOMEN[art].viele}`
       : `Nichts mehr frei: ${mitNomen(art, g.bestand)}, höchstens ${g.max}`;
+  // Genau an der Grenze genügt eine; darüber (Altbestand) nennt der Satz, wie
+  // viele weg müssen, bis wieder eine neue Platz hat: Bestand − Grenze + 1.
+  const zuViel = g.bestand - g.max + 1;
+  const loeschen =
+    zuViel <= 1
+      ? `Lösche ${art === "uebungen" ? "eine" : "eines"}, um Platz zu schaffen.`
+      : `Lösche ${mitNomen(art, zuViel)}, um Platz für ${art === "uebungen" ? "eine neue" : "ein neues"} zu schaffen.`;
   return art === "uebungen"
     ? {
         titel,
-        text: `Ohne Verein besitzt du höchstens ${g.max} Übungen. Lösche eine, um Platz zu schaffen. In einem Verein gilt die Grenze nicht.`,
+        text: `Ohne Verein besitzt du höchstens ${g.max} Übungen. ${loeschen} In einem Verein gilt die Grenze nicht.`,
         link: "/?mine=1",
         linkText: "Zu meinen Übungen",
       }
     : {
         titel,
-        text: `Ohne Verein besitzt du höchstens ${g.max} Trainings. Lösche eines, um Platz zu schaffen. In einem Verein gilt die Grenze nicht.`,
+        text: `Ohne Verein besitzt du höchstens ${g.max} Trainings. ${loeschen} In einem Verein gilt die Grenze nicht.`,
         link: "/trainings?mine=1",
         linkText: "Zu meinen Trainings",
       };
@@ -175,4 +187,14 @@ export function kontoGrenzenAus(x: unknown): KontoGrenzen | null | undefined {
   const uebungen = grenzeAus(x.uebungen);
   const trainings = grenzeAus(x.trainings);
   return uebungen && trainings ? { uebungen, trainings } : undefined;
+}
+
+/** `grenzen` eines Kontos ohne Verein für die Anzeige: Eine Antwort, die nicht
+ *  dem Vertrag entspricht, ergibt keine Anzeige (`null`) und `formfehler` zum
+ *  Protokollieren — nie einen Fehler der ganzen Vereinslage, an der auch
+ *  `/verein` und der Weg zur Gründung hängen. Ein Konto mit Verein liest
+ *  `grenzen` gar nicht erst (lib/queries/verein.ts). */
+export function grenzenOhneVerein(x: unknown): { grenzen: KontoGrenzen | null; formfehler: boolean } {
+  const grenzen = kontoGrenzenAus(x);
+  return grenzen === undefined ? { grenzen: null, formfehler: true } : { grenzen, formfehler: false };
 }

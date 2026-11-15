@@ -676,6 +676,7 @@ pruefe("fehlerErgebnis: jedes gesetzte Feld eines Kern-Fehlers kommt an", () => 
     kennzeichnungen: 1,
     anmeldungen: 1,
     treffpunktEntfaellt: true,
+    grenze: { art: "uebungen", bestand: 50 },
   };
   const SNAKE: Record<string, string> = {
     retryAfter: "retry_after",
@@ -686,11 +687,14 @@ pruefe("fehlerErgebnis: jedes gesetzte Feld eines Kern-Fehlers kommt an", () => 
   };
   const aussen = (k: string) => SNAKE[k] ?? k;
   const f = fehlerVon(fehlerErgebnis(voll));
+  // Einzige Ausnahme: `grenze` ist das Merkmal der Oberfläche (#588); der
+  // Assistent liest die Grenze aus Meldung und Hinweis.
   assert.deepEqual(
     Object.keys(f).sort(),
-    Object.keys(voll).map(aussen).sort(),
+    Object.keys(voll).filter((k) => k !== "grenze").map(aussen).sort(),
     "Schlüssel in structuredContent.fehler",
   );
+  assert.ok(!("grenze" in f));
   assert.deepEqual(f.bedingung, "einleitung");
   // Auch in `fehlend` snake_case (#196): aussen trägt nichts camelCase.
   assert.deepEqual(f.fehlend, [{ bedingung: "einleitung", variante_id: null }]);
@@ -1136,7 +1140,9 @@ pruefe("Konto ohne Verein (#588 AK 7): die Werkzeugbeschreibungen der vier Wege 
   for (const name of ["training_anlegen", "training_kopieren"])
     assert.ok(beschreibungen.get(name)?.includes(KONTO_GRENZE_WERKZEUG.trainings), name);
   const kopieren = beschreibungen.get("training_kopieren") ?? "";
-  assert.match(kopieren, /\(dann ist ein Wiederholen gefahrlos, ausser bei der Grenze unten, die ein zweiter Versuch nicht ändert\)/);
+  // «Gefahrlos wiederholen» nur bei «technisch» und «konflikt» — nie bei einer Regel wie der Grenze (Fix-Lauf #588).
+  assert.match(kopieren, /«hinweis» sagt, dass nichts entstanden ist - bei «technisch» oder «konflikt» mit dem Zusatz, dass ein Wiederholen gefahrlos ist -/);
+  assert.ok(!/ausser bei der Grenze unten/.test(kopieren));
   // Die Aufforderung, bei einer Ablehnung «noch einmal zu senden», gilt für Verstösse, nicht für die Grenze.
   const anlegen = beschreibungen.get("uebung_anlegen") ?? "";
   assert.match(anlegen, /Nach einer Ablehnung wegen verletzter Angaben die ganze Übung korrigiert noch einmal senden\./);

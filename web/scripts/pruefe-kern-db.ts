@@ -1224,7 +1224,8 @@ try {
         "nicht_gefunden",
         "Das Training ist nicht (mehr) verfügbar.",
       ) as { hinweis?: string };
-      assert.equal(f.hinweis, HINWEIS_NICHTS_ENTSTANDEN);
+      // Nicht gefunden ändert ein zweiter Versuch nicht: kein «gefahrlos wiederholen» (Fix-Lauf #588).
+      assert.equal(f.hinweis, "Es ist keine Kopie entstanden.");
     }
     // Ein fremdes Team: nicht gefunden, bevor etwas entsteht.
     fehler(
@@ -8615,9 +8616,15 @@ try {
   const neuesTraining588 = (k: Konto, name = "Kern-DB-588 Neu", stufen = ["F"]) => legeTrainingAn(k.supabase, k.id, { name, altersstufe: "kinderfussball", stufen });
   /** Die Abweisung der Grenze (AK 6, 7): der Satz mit dem Bestand, «regel»,
    *  der Hinweis «Es ist nichts entstanden.», nicht wiederholbar. */
-  const grenzeAbgewiesen = (r: { ok: boolean; art?: string; meldung?: string; hinweis?: string; wiederholbar?: boolean }, art: "uebungen" | "trainings", bestand: number) => {
+  const grenzeAbgewiesen = (
+    r: { ok: boolean; art?: string; meldung?: string; hinweis?: string; wiederholbar?: boolean; grenze?: unknown },
+    art: "uebungen" | "trainings",
+    bestand: number,
+  ) => {
     fehler(r, "regel", kontoGrenzeText(art, bestand));
     assert.equal(r.hinweis, KONTO_GRENZE_HINWEIS);
+    // Das Merkmal, an dem die Oberfläche die Abweisung erkennt (Fix-Lauf #588), reist durch jeden Kern-Weg.
+    assert.deepEqual(r.grenze, { art, bestand });
     assert.equal(r.wiederholbar, undefined, "nicht wiederholbar");
   };
   /** Dieselbe Abweisung über ein registriertes KI-Werkzeug (AK 7): dieselbe
@@ -8667,6 +8674,7 @@ try {
       error: kontoGrenzeText("uebungen", 50),
       art: "regel",
       hinweis: KONTO_GRENZE_HINWEIS,
+      grenze: { art: "uebungen", bestand: 50 },
     });
     // Naht: So liefert PostgREST den Marker (Text und Code), und die Übersetzung
     // trifft ihn — der Weg von «Übung erstellen» (`createExercise` über

@@ -372,7 +372,8 @@ import {
   bestandText,
   bestandVollMeldung,
   NICHTS_MEHR_FREI,
-  istKontoGrenzeMeldung,
+  grenzeAusAbweisung,
+  grenzenOhneVerein,
   istVoll,
   kontoGrenzeAusFehler,
   kontoGrenzeMeldung,
@@ -4745,6 +4746,20 @@ pruefe("Konto ohne Verein (#588 PC 3): `grenzen` der Vereinslage wird auf ihre F
     assert.equal(kontoGrenzenAus(kaputt), undefined, JSON.stringify(kaputt));
 });
 
+pruefe("Konto ohne Verein (#588, Fix-Lauf): ein Formfehler in `grenzen` reisst die Vereinslage nicht mit", () => {
+  // Ohne Verein: Formfehler → keine Anzeige, protokolliert; nie ein Fehler der ganzen Lage.
+  assert.deepEqual(grenzenOhneVerein({ uebungen: "kaputt" }), { grenzen: null, formfehler: true });
+  assert.deepEqual(grenzenOhneVerein(undefined), { grenzen: null, formfehler: true });
+  assert.deepEqual(grenzenOhneVerein(null), { grenzen: null, formfehler: false });
+  const g = { uebungen: { bestand: 3, max: 50 }, trainings: { bestand: 1, max: 30 } };
+  assert.deepEqual(grenzenOhneVerein(g), { grenzen: g, formfehler: false });
+  // Die Lage entsteht zuerst aus dem Verein; mit Verein wird `grenzen` gar nicht gelesen, und ein Formfehler gibt kein `fehler`.
+  const lage = readFileSync(join(web, "lib/queries/verein.ts"), "utf8");
+  assert.match(lage, /if \(lage\) return \{ lage, grenzen: null, fehler: null \};\s*[\s\S]*?grenzenOhneVerein\(roh\?\.grenzen\)/);
+  assert.match(lage, /if \(formfehler\) console\.error\([^)]*\);\s*return \{ lage: null, grenzen, fehler: null \};/);
+  assert.ok(!/grenzen hat nicht die erwartete Form"\) \}/.test(lage), "kein `fehler` aus einem Formfehler");
+});
+
 pruefe("Konto ohne Verein (#588 AK 5): Texte der Anzeige in jeder Lage — unter, an und über der Grenze", () => {
   const u = (bestand: number) => ({ bestand, max: 50 });
   const t = (bestand: number) => ({ bestand, max: 30 });
@@ -4759,10 +4774,9 @@ pruefe("Konto ohne Verein (#588 AK 5): Texte der Anzeige in jeder Lage — unter
   assert.equal(bestandText("trainings", t(30)), "30 von 30 Trainings");
   assert.equal(bestandText("trainings", t(31)), "31 Trainings (höchstens 30)");
   assert.equal(NICHTS_MEHR_FREI, "Nichts mehr frei");
-  // Der Satz der Abweisung ist erkennbar, auch nachdem eine Action nur den Text zurückgab.
-  assert.ok(istKontoGrenzeMeldung(kontoGrenzeText("uebungen", 50)));
-  assert.ok(istKontoGrenzeMeldung(kontoGrenzeText("trainings", 31)));
-  assert.ok(!istKontoGrenzeMeldung("Das liess sich nicht speichern. Bitte versuche es noch einmal."));
+  // Eine Abweisung der Datenebene wird zum Stand der vollen Grenze: Bestand aus dem Marker, Grenze vom Zwilling.
+  assert.deepEqual(grenzeAusAbweisung({ art: "uebungen", bestand: 50 }), { bestand: 50, max: 50 });
+  assert.deepEqual(grenzeAusAbweisung({ art: "trainings", bestand: 34 }), { bestand: 34, max: 30 });
   assert.equal(bestandSatz("uebungen", u(12)), "Du besitzt 12 von 50 Übungen.");
   assert.equal(bestandSatz("trainings", t(31)), "Du besitzt 31 Trainings, höchstens 30 sind erlaubt.");
   // Die Meldung an der Grenze, bevor Angaben gemacht werden: Board-Wortlaut, Link zur eigenen Übersicht.
@@ -4782,6 +4796,26 @@ pruefe("Konto ohne Verein (#588 AK 5): Texte der Anzeige in jeder Lage — unter
   assert.equal(bestandVollMeldung("trainings", t(31)).titel, "Nichts mehr frei: 31 Trainings, höchstens 30");
 });
 
+pruefe("Konto ohne Verein (#588 AK 5, Fix-Lauf): der Satz über der Grenze nennt, wie viele weg müssen", () => {
+  const u = (bestand: number) => ({ bestand, max: 50 });
+  const t = (bestand: number) => ({ bestand, max: 30 });
+  // Genau an der Grenze: eine bzw. eines.
+  assert.match(bestandVollMeldung("uebungen", u(50)).text, / Lösche eine, um Platz zu schaffen\. /);
+  assert.match(bestandVollMeldung("trainings", t(30)).text, / Lösche eines, um Platz zu schaffen\. /);
+  // Eine darüber: zwei müssen weg, bis eine neue Platz hat.
+  assert.equal(
+    bestandVollMeldung("uebungen", u(51)).text,
+    "Ohne Verein besitzt du höchstens 50 Übungen. Lösche 2 Übungen, um Platz für eine neue zu schaffen. In einem Verein gilt die Grenze nicht.",
+  );
+  assert.equal(
+    bestandVollMeldung("trainings", t(31)).text,
+    "Ohne Verein besitzt du höchstens 30 Trainings. Lösche 2 Trainings, um Platz für ein neues zu schaffen. In einem Verein gilt die Grenze nicht.",
+  );
+  // Weit darüber: Bestand − Grenze + 1.
+  assert.match(bestandVollMeldung("uebungen", u(62)).text, / Lösche 13 Übungen, um Platz für eine neue zu schaffen\. /);
+  assert.match(bestandVollMeldung("trainings", t(45)).text, / Lösche 16 Trainings, um Platz für ein neues zu schaffen\. /);
+});
+
 pruefe("Konto ohne Verein (#588 AK 7): Werkzeugtexte der KI nennen die Grenze, fordern nicht zum Wiederholen auf und kennen kein Löschwerkzeug", () => {
   assert.match(KONTO_GRENZE_WERKZEUG.uebungen, /höchstens 50 Übungen/);
   assert.match(KONTO_GRENZE_WERKZEUG.trainings, /höchstens 30 Trainings.*Team-Trainings nicht/);
@@ -4799,11 +4833,21 @@ pruefe("Konto ohne Verein (#588): ein Weg für den Satz, die Hinweise im Kern, Z
   assert.match(lies("lib/training-bedingungen.ts"), /const konto = kontoGrenzeMeldung\(message\);\s*if \(konto\) return konto;/);
   assert.match(lies("lib/actions/exercises.ts"), /message: error \? fehlerMeldung\(error\.message\)/, "createExercise übersetzt");
   // Der Hinweis der Datenebene erreicht jeden Weg: Kern, Übungskopie, Trainingskopie.
-  assert.match(lies("lib/kern/ergebnis.ts"), /kontoGrenzeAusFehler\(e\.message\) \? \{ hinweis: KONTO_GRENZE_HINWEIS \}/);
-  assert.match(lies("lib/fassung.ts"), /art: f\.art, \.\.\.\(f\.hinweis && \{ hinweis: f\.hinweis \}\)/);
-  assert.match(lies("lib/kern/uebungen.ts"), /hinweis: kopie\.hinweis \?\? nichtsEntstanden\(kopie\.art\)/);
-  assert.match(lies("lib/kern/kopie.ts"), /return vorher\(f\.error, f\.art, f\.hinweis\);/);
-  assert.match(lies("lib/kern/kopie.ts"), /kopie\.nichtsEntstanden \? \(kopie\.hinweis \?\? HINWEIS_NICHTS_ENTSTANDEN\)/);
+  assert.match(lies("lib/kern/ergebnis.ts"), /const grenze = kontoGrenzeAusFehler\(e\.message\);\s*return fehlschlag\("regel", meldung, grenze \? \{ hinweis: KONTO_GRENZE_HINWEIS, grenze \} : \{\}\);/);
+  assert.match(lies("lib/fassung.ts"), /art: f\.art, \.\.\.\(f\.hinweis && \{ hinweis: f\.hinweis \}\), \.\.\.\(f\.grenze && \{ grenze: f\.grenze \}\)/);
+  assert.match(lies("lib/kern/uebungen.ts"), /hinweis: kopie\.hinweis \?\? nichtsEntstanden\(kopie\.art\),\s*\.\.\.\(kopie\.grenze && \{ grenze: kopie\.grenze \}\)/);
+  assert.match(lies("lib/kern/kopie.ts"), /return vorher\(f\.error, f\.art, f\);/);
+  // «Gefahrlos wiederholen» nur bei technisch/konflikt, auch beim Übernehmen eines Trainings (Fix-Lauf #588).
+  assert.match(lies("lib/kern/kopie.ts"), /kopie\.nichtsEntstanden \? \(kopie\.hinweis \?\? nichtsEntstanden\(kopie\.art\)\)/);
+  assert.match(lies("lib/kern/kopie.ts"), /return art === "technisch" \|\| art === "konflikt" \? HINWEIS_NICHTS_ENTSTANDEN : KEINE_KOPIE;/);
+  assert.ok(!/const nichts = \{ hinweis: HINWEIS_NICHTS_ENTSTANDEN \}/.test(lies("lib/kern/kopie.ts")));
+  // Das Merkmal `grenze` erreicht die Actions der Oberfläche; der KI-Weg lässt es weg.
+  assert.match(lies("lib/actions/exercises.ts"), /const grenze = error \? kontoGrenzeAusFehler\(error\.message\) : null;/);
+  assert.match(lies("lib/actions/exercises.ts"), /error: kopie\.meldung, \.\.\.\(kopie\.grenze && \{ grenze: kopie\.grenze \}\)/);
+  assert.match(lies("lib/actions/fassung.ts"), /error: kopie\.error, \.\.\.\(kopie\.grenze && \{ grenze: kopie\.grenze \}\)/);
+  assert.match(lies("lib/actions/trainings.ts"), /message: oberflaechenMeldung\(r\), \.\.\.\(r\.grenze && \{ grenze: r\.grenze \}\)/);
+  assert.match(lies("lib/actions/team-trainings.ts"), /error: oberflaechenMeldung\(r\), \.\.\.\(r\.grenze && \{ grenze: r\.grenze \}\)/);
+  assert.match(lies("lib/mcp/ergebnis.ts"), /grenze: _grenze, \.\.\.rest \} = f;/);
   // Ein Weg, der nicht zählt, kennt die Grenze nicht: Übung ins Training übernehmen.
   assert.ok(!/konto-grenzen|KONTO_/.test(lies("lib/kern/fassung.ts")), "ordneUebungZu bleibt frei");
   assert.ok(!/konto-grenzen|KONTO_/.test(lies("lib/actions/trainings.ts").split("export async function addTrainingExercise")[1]?.split("\nexport async function")[0] ?? ""));
@@ -4814,8 +4858,8 @@ pruefe("Konto ohne Verein (#588): ein Weg für den Satz, die Hinweise im Kern, Z
   assert.match(lies("lib/mcp/werkzeuge/trainings.ts"), /KONTO_GRENZE_WERKZEUG\.trainings/, "training_anlegen");
   assert.match(lies("lib/mcp/werkzeuge/trainings-bestand.ts"), /KONTO_GRENZE_WERKZEUG\.trainings/, "training_kopieren");
   // Die Vereinslage reicht `grenzen` durch, auf ihre Form geprüft; ein Weg, der den Verein kennt, zeigt sie nie.
-  assert.match(lies("lib/queries/verein.ts"), /const grenzen = kontoGrenzenAus\(roh\?\.grenzen\);/);
-  assert.match(lies("lib/queries/verein.ts"), /grenzen: v \? null : grenzen,/);
+  assert.match(lies("lib/queries/verein.ts"), /const \{ grenzen, formfehler \} = grenzenOhneVerein\(roh\?\.grenzen\);/);
+  assert.match(lies("lib/queries/verein.ts"), /if \(lage\) return \{ lage, grenzen: null, fehler: null \};/);
   assert.match(lies("lib/kern/konto.ts"), /kontoGrenzenAus\(/);
   // Die Schreibweise der Grenze steht in einer Datei: keine zweite 50/30 in den Werkzeugtexten.
   for (const d of ["lib/mcp/werkzeuge/uebungen-bearbeiten.ts", "lib/mcp/werkzeuge/trainings.ts", "lib/mcp/werkzeuge/trainings-bestand.ts"])
@@ -4835,23 +4879,32 @@ pruefe("Konto ohne Verein (#588 AK 5, PC 3): Anzeige nur ohne Verein und aus der
   // Anlegen: Meldung statt der Maske erst an der Grenze (`istVoll`, auch darüber), darunter die Zeile; ohne `grenzen` nichts.
   assert.match(lies("app/(app)/neu/page.tsx"), /const voll = grenzen !== null && istVoll\(grenzen\.uebungen\);/);
   assert.match(lies("app/(app)/neu/page.tsx"), /\{grenzen && voll \? \(\s*<BestandAnzeige art="uebungen" grenze=\{grenzen\.uebungen\} variante="meldung" \/>/);
+  assert.match(lies("app/(app)/neu/page.tsx"), /bestand=\{grenzen\?\.uebungen\}/);
   assert.match(lies("app/(app)/training/neu/page.tsx"), /const voll = grenzen !== null && istVoll\(grenzen\.trainings\);/);
   assert.match(lies("app/(app)/training/neu/page.tsx"), /\{grenzen && voll \? \(\s*<BestandAnzeige art="trainings" grenze=\{grenzen\.trainings\} variante="meldung" \/>/);
+  assert.match(lies("app/(app)/training/neu/page.tsx"), /<TrainingCreateForm bestand=\{grenzen\?\.trainings\} \/>/);
+  // Weist die Datenebene beim Speichern ab (Rennen): dieselbe Meldung wie bei voller Grenze, erkannt am Merkmal
+  // `grenze`, und die Zeile mit dem alten Stand fällt weg — die Angaben bleiben in der Maske (Fix-Lauf).
+  for (const [d, art] of [["components/exercise/ExerciseForm.tsx", "uebungen"], ["components/training/TrainingCreateForm.tsx", "trainings"]] as const) {
+    const t = lies(d);
+    assert.match(t, new RegExp(`state\\.grenze \\? \\(\\s*<BestandAnzeige art="${art}" grenze=\\{grenzeAusAbweisung\\(state\\.grenze\\)\\} variante="meldung"`), d);
+    assert.match(t, new RegExp(`\\{bestand && !state\\.grenze && <BestandAnzeige art="${art}" grenze=\\{bestand\\}`), d);
+  }
   // Die Zähler stehen in der Seite, nie im Layout: Das Layout rendert bei Navigation im Client nicht neu und zeigte einen
   // Stand von gestern; eine Anzeige, die nie sperrt, darf veralten, eine Seite soll es nicht.
   for (const datei of quelldateien(join(web, "components/layout")))
     assert.ok(!/konto-grenzen|getMeineGrenzen|BestandAnzeige/.test(readFileSync(datei, "utf8")), relative(web, datei));
   // Die Vereinslage liest je Anfrage (React-`cache`), nie über Anfragen hinweg.
   assert.ok(!/unstable_cache|revalidate\s*=/.test(lies("lib/queries/verein.ts")), "kein Zwischenspeicher über Anfragen");
-  assert.match(lies("lib/queries/verein.ts"), /grenzen: v \? null : grenzen/, "mit Verein nie eine Anzeige");
+  assert.match(lies("lib/queries/verein.ts"), /if \(lage\) return \{ lage, grenzen: null, fehler: null \};/, "mit Verein nie eine Anzeige");
   // Die Seiten rendern je Aufruf frisch.
   for (const d of ["app/(app)/page.tsx", "app/(app)/trainings/page.tsx", "app/(app)/neu/page.tsx", "app/(app)/training/neu/page.tsx"])
     assert.match(lies(d), /export const dynamic = "force-dynamic";/, d);
 });
 
-pruefe("Konto ohne Verein (#588 AK 5, 6): die Stufe vor Kopieren, Übernehmen und «In die Bibliothek» — frischer Stand, ein Klick mit Verein, bleibende Meldung, gesperrt während der Anfrage", () => {
+pruefe("Konto ohne Verein (#588 AK 5, 6): die Stufe vor Kopieren, Übernehmen und «In die Bibliothek» — ein Klick mit Verein, frischer Stand ohne, gesperrt bis zur Zielseite, Abweisung am Merkmal", () => {
   const lies = (d: string) => readFileSync(join(web, d), "utf8");
-  // Alle vier Einstiege gehen über die Stufe; keiner startet seine Aktion mehr ohne sie.
+  // Alle vier Einstiege gehen über die Stufe und geben das Ergebnis der Action samt Merkmal weiter.
   for (const [d, art] of [
     ["components/exercise/UebungKopierenButton.tsx", "uebungen"],
     ["components/exercise/OwnerActions.tsx", "uebungen"],
@@ -4861,24 +4914,41 @@ pruefe("Konto ohne Verein (#588 AK 5, 6): die Stufe vor Kopieren, Übernehmen un
     const t = lies(d);
     assert.match(t, new RegExp(`useBestandStufe\\(\\{\\s*art: "${art}"`), d);
     assert.match(t, /\.dialog\b|\{(dialog|kopierDialog)\}/, `${d} zeigt die Stufe`);
+    assert.match(t, /if \(!res\.ok\) return res;/, `${d}: das Merkmal reist mit`);
+    // Der Auslöser sperrt fokussierbar (W6), nie `disabled` durch die Stufe.
+    assert.ok(!/disabled=\{(laeuft|kopierLaeuft|pending \|\| uebernehmenStufe\.laeuft)\}/.test(t), `${d}: kein disabled durch die Stufe`);
   }
-  assert.ok(!/useTransition/.test(lies("components/exercise/UebungKopierenButton.tsx")));
-  assert.ok(!/useTransition/.test(lies("components/training/InBibliothekButton.tsx")));
-  assert.ok(!/useTransition/.test(lies("components/exercise/OwnerActions.tsx")));
-  // Nur ein Weg zur Aktion: im Dialog und im direkten Pfad dieselbe `ausfuehren`.
+  assert.match(lies("components/exercise/UebungKopierenButton.tsx"), /aria-disabled=\{laeuft \|\| undefined\}/);
+  assert.match(lies("components/training/InBibliothekButton.tsx"), /aria-disabled=\{laeuft \|\| undefined\}/);
+  assert.match(lies("components/exercise/OwnerActions.tsx"), /gesperrt=\{kopierLaeuft\}/);
+  assert.match(lies("components/training/TrainingAktionen.tsx"), /gesperrt=\{uebernehmenStufe\.laeuft\}/);
+  const menue = lies("components/ui/OverflowMenu.tsx");
+  assert.match(menue, /aria-disabled=\{gesperrt \|\| undefined\}/);
+  assert.match(menue, /if \(gesperrt\) return;\s*setOffen/);
+  // Die Seiten geben die Lage mit (W2): mit Verein kein Aufruf der Bestands-Action.
+  for (const d of ["app/(app)/uebung/[slug]/page.tsx", "app/(app)/training/[id]/page.tsx", "app/(app)/training/[id]/edit/page.tsx"]) {
+    const t = lies(d);
+    assert.match(t, /await getMeineGrenzen\(\)\) !== null/, d);
+    assert.match(t, /<KontoGrenzenLage mitGrenzen=\{mitGrenzen\}>/, d);
+  }
   const stufe = lies("components/konto/BestandStufe.tsx");
-  assert.match(stufe, /ladeBestandAktion\(art\)/, "der Stand wird frisch gelesen, nicht von der Seite übernommen");
-  assert.match(stufe, /stand\.grenze === null\)\s*\{[\s\S]*?ausfuehrenGesichert\(nr, false\)/, "mit Verein sofort, wie bisher");
-  assert.match(stufe, /if \(imDialog \|\| istKontoGrenzeMeldung\(fehler\)\) setOffen/, "die Abweisung bleibt stehen, anderes meldet die Snackbar");
-  assert.match(stufe, /else melde\(fehler\);/);
-  // Gesperrt: laufende Anfrage sperrt Schliessen und Escape, ein zweiter Klick startet keine zweite Anfrage.
-  assert.match(stufe, /function schliessen\(\) \{\s*if \(belegt\.current && offen\) return;\s*lauf\.current\+\+;/);
-  assert.match(stufe, /function starte\(\) \{\s*if \(belegt\.current \|\| offen\) return;/);
-  assert.match(stufe, /disabled=\{laeuft\}/);
+  assert.match(stufe, /if \(!mitGrenzen\) \{\s*ausfuehrenGesichert\(nr, false\);\s*return;\s*\}/, "mit Verein sofort, ohne Rundreise");
+  assert.match(stufe, /ladeBestandAktion\(art\)/, "ohne Verein der Stand frisch, nicht von der Seite übernommen");
+  // W1: Die Aktion läuft in einer Transition; im Erfolg bleibt sie offen, bis die Zielseite steht.
+  assert.match(stufe, /const \[fuehrtAus, startAusfuehren\] = useTransition\(\);/);
+  assert.match(stufe, /startAusfuehren\(async \(\) => \{\s*let r: StufenFehler;\s*try \{\s*r = await ausfuehren\(\);/);
+  assert.match(stufe, /const laeuft = fragt \|\| fuehrtAus;/);
+  assert.match(stufe, /function starte\(\) \{\s*if \(belegt\.current \|\| laeuft \|\| offen\) return;/);
+  assert.match(stufe, /if \(belegt\.current \|\| laeuft\) return;\s*ausfuehrenGesichert\(\+\+lauf\.current, true\);/);
+  assert.match(stufe, /function schliessen\(\) \{\s*if \(belegt\.current \|\| fuehrtAus\) return;/);
   assert.match(stufe, /if \(nr !== lauf\.current\) return;/, "überholte Antworten werden verworfen");
-  // An der Grenze nur «Schliessen» (frisch gelesener Stand), nach einer Abweisung der Datenebene ein zweiter Versuch.
-  assert.match(stufe, /const voll = grenze !== null && istVoll\(grenze\) && offen\?\.fehler == null;/);
+  // W5: Die Abweisung an der Grenze erkennt die Stufe am Merkmal, nie am Text, und zeigt die Form der vollen Grenze.
+  assert.match(stufe, /if \(r\.grenze\) setOffen\(\{ grenze: grenzeAusAbweisung\(r\.grenze\), fehler: null, abgewiesen: true \}\);/);
+  assert.match(stufe, /const voll = grenze !== null && \(offen\?\.abgewiesen \|\| \(istVoll\(grenze\) && offen\?\.fehler == null\)\);/);
   assert.match(stufe, /voll \? \(\s*<Button type="button" variant="outlined" onClick=\{schliessen\}>\s*Schliessen/);
+  assert.match(stufe, /<BestandAnzeige art=\{art\} grenze=\{grenze\} variante="meldung" \/>/, "mit dem Weg zur eigenen Übersicht");
+  assert.ok(!/endsWith|KONTO_GRENZE_SCHLUSS/.test(stufe), "keine Erkennung am Text");
+  assert.match(stufe, /else melde\(r\.error\);/);
   // Die Action liest nur, prüft ihre Eingabe und gehört dem angemeldeten Konto.
   const aktion = lies("lib/actions/konto-bestand.ts");
   assert.match(aktion, /art !== "uebungen" && art !== "trainings"/);

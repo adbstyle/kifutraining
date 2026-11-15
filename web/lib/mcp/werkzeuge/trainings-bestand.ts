@@ -46,8 +46,8 @@ export const trainingKopieren = werkzeug({
     "Original bleibt in beiden Fällen, wie es ist. Ein Termin geht nie mit. " +
     "Scheitert das Kopieren mit einer " +
     "Meldung, räumt KiFu weg, was schon entstanden war, und «hinweis» sagt, dass nichts " +
-    "entstanden ist (dann ist ein Wiederholen gefahrlos, ausser bei der Grenze unten, die ein " +
-    "zweiter Versuch nicht ändert) - oder, falls auch das Aufräumen " +
+    "entstanden ist - bei «technisch» oder «konflikt» mit dem Zusatz, dass ein Wiederholen " +
+    "gefahrlos ist -, oder, falls auch das Aufräumen " +
     "scheiterte, welche unvollständige Kopie stehen blieb. Bricht der Vorgang dagegen ohne " +
     "Meldung ab - durch eine Zeitüberschreitung oder einen Absturz mitten im Kopieren -, kann " +
     "eine unvollständige Kopie stehen bleiben, die nicht als unfertig erkennbar ist, oder die " +

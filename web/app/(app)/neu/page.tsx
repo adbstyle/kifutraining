@@ -53,17 +53,15 @@ export default async function NeuePage({
       {grenzen && voll ? (
         <BestandAnzeige art="uebungen" grenze={grenzen.uebungen} variante="meldung" />
       ) : (
-        <>
-          {grenzen && <BestandAnzeige art="uebungen" grenze={grenzen.uebungen} className="mb-4" />}
-          <ExerciseForm
-            action={createExercise}
-            altersstufe={altersstufe}
-            stufenWahl="waehlbar"
-            kontext="bibliothek"
-            initial={{ trainingsteil: teil, hauptteilkategorie: kategorie }}
-            submitLabel="Übung speichern"
-          />
-        </>
+        <ExerciseForm
+          action={createExercise}
+          altersstufe={altersstufe}
+          stufenWahl="waehlbar"
+          kontext="bibliothek"
+          initial={{ trainingsteil: teil, hauptteilkategorie: kategorie }}
+          submitLabel="Übung speichern"
+          bestand={grenzen?.uebungen}
+        />
       )}
     </Seitenrahmen>
   );

@@ -66,7 +66,7 @@ export function OwnerActions({
     hinweis: "Die Kopie ist ein privater Entwurf in deinem Bestand.",
     ausfuehren: async () => {
       const res = await kopiereUebung(id);
-      if (!res.ok) return res.error;
+      if (!res.ok) return res;
       router.push(`/uebung/${res.slug}?kopiert=1`);
       return null;
     },
@@ -97,7 +97,7 @@ export function OwnerActions({
       {/* ⋮-Überlaufmenü — Kopieren und, davon abgesetzt, das Löschen. */}
       <OverflowMenu
         label={`Weitere Aktionen zu „${name}"`}
-        disabled={kopierLaeuft}
+        gesperrt={kopierLaeuft}
         items={[
           {
             label: "Kopieren",

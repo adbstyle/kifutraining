@@ -141,7 +141,7 @@ export function TrainingAktionen({
    *  Wahl mit einer Option ist bloss ein Klick mehr (AK 11). Ohne Team heisst
    *  auch: kein Verein durch ein Team — dann geht der frisch gelesene Stand
    *  voraus (#588); ein Konto in der Verwaltung ohne Team übernimmt wie bisher
-   *  mit einem Klick. */
+   *  mit einem Klick (die Seite gibt die Lage über `KontoGrenzenLage` mit). */
   const uebernehmenStufe = useBestandStufe({
     art: "trainings",
     titel: "Training übernehmen",
@@ -149,7 +149,7 @@ export function TrainingAktionen({
     hinweis: "Die Kopie ist ein privater Entwurf in deinem Bestand.",
     ausfuehren: async () => {
       const res = await uebernimmTraining(trainingId, { art: "persoenlich" });
-      if (!res.ok) return res.error;
+      if (!res.ok) return res;
       // PO-Entscheid Übungswelten-Epic: nach der Übernahme direkt zur Kopie.
       router.push(`/training/${res.trainingId}?uebernommen=1`);
       return null;
@@ -321,7 +321,8 @@ export function TrainingAktionen({
         {hatUeberlauf(rechte) && (
           <OverflowMenu
             label={`Weitere Aktionen zu „${name}"`}
-            disabled={pending || uebernehmenStufe.laeuft}
+            disabled={pending}
+            gesperrt={uebernehmenStufe.laeuft}
             items={eintraege}
           />
         )}

@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { kontoGrenzenAus, type KontoGrenzen } from "@/lib/konto-grenzen";
+import { grenzenOhneVerein, type KontoGrenzen } from "@/lib/konto-grenzen";
 
 /**
  * Query-Layer für den Verein (Epic Vereine #575, Story #577).
@@ -32,15 +32,17 @@ const leseVereinslage = cache(
     if (error) return { lage: null, grenzen: null, fehler: new Error(`meine_vereinslage: ${error.message}`) };
     const roh = data as VereinslageRoh | null;
     const v = roh?.verein;
-    // Die Form von `grenzen` ist Teil des Vertrags: Eine Antwort, die ihr nicht
-    // entspricht, ist ein technischer Fehler, keine halbe Auskunft.
-    const grenzen = kontoGrenzenAus(roh?.grenzen);
-    if (grenzen === undefined) return { lage: null, grenzen: null, fehler: new Error("meine_vereinslage: grenzen hat nicht die erwartete Form") };
-    return {
-      lage: v ? { id: v.id, name: v.name, istVerwaltung: v.ist_verwaltung, istTeammitglied: v.ist_teammitglied } : null,
-      grenzen: v ? null : grenzen,
-      fehler: null,
-    };
+    // Zuerst die Lage aus dem Verein: Sie trägt Seitenleiste, Teamkopf und
+    // `/verein` (den Weg zur Gründung). Ein Konto mit Verein hat keine Grenzen,
+    // dort zählt `grenzen` gar nicht.
+    const lage = v ? { id: v.id, name: v.name, istVerwaltung: v.ist_verwaltung, istTeammitglied: v.ist_teammitglied } : null;
+    if (lage) return { lage, grenzen: null, fehler: null };
+    // Ohne Verein: Eine Antwort, deren `grenzen` nicht dem Vertrag entspricht,
+    // ergibt keine Anzeige (protokolliert) — sie reisst die Lage nicht mit.
+    // Die Anzeige ist Auskunft; die Datenebene weist ab.
+    const { grenzen, formfehler } = grenzenOhneVerein(roh?.grenzen);
+    if (formfehler) console.error("[verein] meine_vereinslage: grenzen hat nicht die erwartete Form");
+    return { lage: null, grenzen, fehler: null };
   },
 );
 

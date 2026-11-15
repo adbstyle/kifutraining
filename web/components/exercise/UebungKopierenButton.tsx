@@ -38,7 +38,7 @@ export function UebungKopierenButton({
     hinweis: "Die Kopie ist ein privater Entwurf in deinem Bestand.",
     ausfuehren: async () => {
       const res = await kopiereUebung(exerciseId);
-      if (!res.ok) return res.error;
+      if (!res.ok) return res;
       router.push(`/uebung/${res.slug}?kopiert=1`);
       return null;
     },
@@ -50,7 +50,7 @@ export function UebungKopierenButton({
         <IconButton
           icon={Copy}
           label={`„${name}" in meinen Bestand kopieren`}
-          disabled={laeuft}
+          aria-disabled={laeuft || undefined}
           onClick={starte}
         />
       </Tooltip>

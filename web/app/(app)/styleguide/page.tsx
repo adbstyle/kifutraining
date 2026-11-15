@@ -3097,12 +3097,17 @@ export default async function Styleguide() {
             Verein sieht: Er nennt den frisch gelesenen Stand («Du besitzt 12 von
             50 Übungen.») und bietet die Aktion an; an der Grenze steht dort die
             Meldung und nur «Schliessen». Weist die Datenebene trotz freier
-            Anzeige ab (gleichzeitige Vorgänge, überholter Stand), bleibt die
-            Auskunft als Meldung im Dialog stehen - die Snackbar ist für drei
-            Sätze zu flüchtig -, und ein zweiter Versuch ist möglich. Die Anzeige
-            entscheidet nie: Kein Knopf bleibt wegen eines Zählers gesperrt, den
-            niemand gelesen hat. Ein Konto in einem Verein kopiert und
-            übernimmt weiter mit einem Klick.
+            Anzeige an der Grenze ab (gleichzeitige Vorgänge, überholter Stand),
+            zeigt der Dialog dieselbe Form: die Meldung mit dem Weg zur eigenen
+            Übersicht und nur «Schliessen»; auf <code>/neu</code> und{" "}
+            <code>/training/neu</code> ersetzt die Meldung die Zeile, und die
+            Angaben bleiben. Die Anzeige entscheidet nie: Kein Knopf bleibt
+            wegen eines Zählers gesperrt, den niemand gelesen hat. Ein Konto in
+            einem Verein kopiert und übernimmt weiter mit einem Klick. Während
+            die Aktion läuft, bis die Zielseite steht, ist der Auslöser mit{" "}
+            <code>aria-disabled</code> gesperrt (beim ⋮-Menü{" "}
+            <code>OverflowMenu gesperrt</code>): Er behält den Fokus, und ein
+            schneller zweiter Klick erzeugt keine zweite Kopie.
           </p>
         </Section>
 

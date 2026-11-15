@@ -7,6 +7,7 @@ import { loescheTraining } from "@/lib/kern/loeschen";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { legeTrainingAn } from "@/lib/kern/training";
 import { NICHT_ANGEMELDET, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
+import type { KontoAbweisung } from "@/lib/konto-grenzen";
 
 /**
  * Trainings zwischen Person und Team bewegen (Team-Epic Story 5).
@@ -19,7 +20,7 @@ import { NICHT_ANGEMELDET, angemeldet, oberflaechenMeldung } from "@/lib/actions
 
 export type TeamTrainingResult =
   | { ok: true; trainingId: string }
-  | { ok: false; error: string };
+  | { ok: false; error: string; grenze?: KontoAbweisung };
 
 /** Eine Kopie über den Kern (`kopiereTrainingNach`) — der Ablauf, den alle
  *  drei Kopier-Actions teilen. Die Meldung ist die der Oberfläche; der
@@ -30,7 +31,7 @@ async function kopie(e: KopieNach): Promise<TeamTrainingResult> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await kopiereTrainingNach(a.supabase, a.userId, e);
-  if (!r.ok) return { ok: false, error: oberflaechenMeldung(r) };
+  if (!r.ok) return { ok: false, error: oberflaechenMeldung(r), ...(r.grenze && { grenze: r.grenze }) };
   return { ok: true, trainingId: r.wert.id };
 }
 
@@ -105,7 +106,7 @@ export async function erstelleTeamTraining(
   const r = await legeTrainingAn(a.supabase, a.userId, { name, altersstufe, stufen, teamId });
   // Ein stilles `return` liesse den Dialog wortlos stehen: der Erfolg zeigt
   // sich nur an der Weiterleitung, ein Fehlschlag an gar nichts.
-  if (!r.ok) return { ok: false, error: oberflaechenMeldung(r) };
+  if (!r.ok) return { ok: false, error: oberflaechenMeldung(r), ...(r.grenze && { grenze: r.grenze }) };
 
   revalidiereTeam(teamId);
   revalidiereTraining(r.wert.id);

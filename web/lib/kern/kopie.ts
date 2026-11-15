@@ -27,6 +27,7 @@ import {
   type BildOrdner,
 } from "@/lib/fassung";
 import { ladeTrainingZumLesen, pruefeTeamMitglied } from "@/lib/kern/zugriff";
+import type { KontoAbweisung } from "@/lib/konto-grenzen";
 import {
   ausDbFehler,
   fehlschlag,
@@ -61,21 +62,25 @@ export type KopieZiel =
  *  bemerkt niemand — dann kommt gar kein Ergebnis zurück (#197 OoS 6). */
 export type KopieErgebnis =
   | { ok: true; neueId: string }
-  | ({ ok: false; error: string; art: FehlerArt; hinweis?: string } & (
+  | ({ ok: false; error: string; art: FehlerArt; hinweis?: string; grenze?: KontoAbweisung } & (
       | { nichtsEntstanden: true }
       | { nichtsEntstanden: false; rest: string }
     ));
 
 /** Ein Fehlschlag, bevor es eine Kopie gibt — da ist nie etwas entstanden. */
-function vorher(error: string, art: FehlerArt = "technisch", hinweis?: string): KopieErgebnis {
-  return { ok: false, error, art, ...(hinweis && { hinweis }), nichtsEntstanden: true };
+function vorher(
+  error: string,
+  art: FehlerArt = "technisch",
+  extra: { hinweis?: string; grenze?: KontoAbweisung } = {},
+): KopieErgebnis {
+  return { ok: false, error, art, ...(extra.hinweis && { hinweis: extra.hinweis }), ...(extra.grenze && { grenze: extra.grenze }), nichtsEntstanden: true };
 }
 
 /** Ein Datenbankfehler als Meldung samt Einordnung — die Meldung ist
  *  wortgleich mit `fehlerMeldung` (siehe `ausDbFehler`). */
-function db(e: { message: string; code?: string }): { error: string; art: FehlerArt; hinweis?: string } {
+function db(e: { message: string; code?: string }): { error: string; art: FehlerArt; hinweis?: string; grenze?: KontoAbweisung } {
   const f = ausDbFehler(e);
-  return { error: f.meldung, art: f.art, ...(f.hinweis && { hinweis: f.hinweis }) };
+  return { error: f.meldung, art: f.art, ...(f.hinweis && { hinweis: f.hinweis }), ...(f.grenze && { grenze: f.grenze }) };
 }
 
 /** Die Meldung, wenn die Quelle für dieses Konto nicht (mehr) sichtbar ist. */
@@ -216,7 +221,7 @@ export async function kopiereTraining(
     // Mit dem Hinweis der Datenebene: Bei der Grenze eines Kontos ohne Verein
     // (#588) steht für den Assistenten «nichts entstanden» — ohne Aufforderung
     // zum zweiten Versuch, den nur `HINWEIS_NICHTS_ENTSTANDEN` ausspräche.
-    return vorher(f.error, f.art, f.hinweis);
+    return vorher(f.error, f.art, f);
   }
 
   // Ab hier kann eine Teilkopie entstehen: jeder weitere Fehlerpfad räumt die
@@ -425,6 +430,16 @@ export async function kopiereTraining(
 export const HINWEIS_NICHTS_ENTSTANDEN =
   "Es ist keine Kopie entstanden - der Versuch lässt sich gefahrlos wiederholen.";
 
+/** Was beim Assistenten von einer gescheiterten Kopie ankommt, bevor etwas
+ *  entstand: Nur wo ein zweiter Versuch Erfolg verspricht (unerwarteter Fehler,
+ *  Nebenläufigkeit), steht die Aufforderung dazu da — eine unsichtbare Quelle,
+ *  fehlende Rechte oder eine verletzte Regel ändert ein zweiter Versuch nicht.
+ *  Für Übungen und Trainings derselbe Satz. */
+const KEINE_KOPIE = "Es ist keine Kopie entstanden.";
+export function nichtsEntstanden(art: FehlerArt): string {
+  return art === "technisch" || art === "konflikt" ? HINWEIS_NICHTS_ENTSTANDEN : KEINE_KOPIE;
+}
+
 /** Für den Assistenten: Das Aufräumen scheiterte, eine Teilkopie steht. */
 export function hinweisRest(rest: string): string {
   return `Eine unvollständige Kopie ist stehen geblieben (Kennung ${rest}); lösche sie mit training_loeschen.`;
@@ -454,20 +469,18 @@ export async function kopiereTrainingNach(
   userId: string,
   e: KopieNach,
 ): Promise<KernErgebnis<{ id: string; ziel: KopieWohin }>> {
-  const nichts = { hinweis: HINWEIS_NICHTS_ENTSTANDEN };
-
   // Vorab lesen: Kennungs-Guard und «nicht gefunden» wie überall im Kern,
   // bevor irgendetwas entsteht. Die Meldung bleibt die der Oberfläche.
   const quelle = await ladeTrainingZumLesen(supabase, e.quelleId);
   if (!quelle.ok)
     return quelle.art === "nicht_gefunden"
-      ? fehlschlag("nicht_gefunden", QUELLE_NICHT_VERFUEGBAR, { feld: "training_id", ...nichts })
-      : { ...quelle, ...nichts };
+      ? fehlschlag("nicht_gefunden", QUELLE_NICHT_VERFUEGBAR, { feld: "training_id", hinweis: nichtsEntstanden("nicht_gefunden") })
+      : { ...quelle, hinweis: nichtsEntstanden(quelle.art) };
 
   let wohin: KopieWohin = { art: "persoenlich" };
   if (e.teamId !== undefined) {
     const team = await pruefeTeamMitglied(supabase, e.teamId);
-    if (!team.ok) return { ...team, ...nichts };
+    if (!team.ok) return { ...team, hinweis: nichtsEntstanden(team.art) };
     wohin = { art: "team", team: team.wert };
   }
 
@@ -480,10 +493,11 @@ export async function kopiereTrainingNach(
   );
   if (!kopie.ok)
     return fehlschlag(kopie.art, kopie.error, {
-      // Eine Regel ändert ein zweiter Versuch nicht: Dann sagt nur der Hinweis
-      // der Datenebene, dass nichts entstanden ist (die Grenze, #588), sonst
-      // gilt der Satz «gefahrlos wiederholen».
-      hinweis: kopie.nichtsEntstanden ? (kopie.hinweis ?? HINWEIS_NICHTS_ENTSTANDEN) : hinweisRest(kopie.rest),
+      // «Gefahrlos wiederholen» nur, wo ein zweiter Versuch etwas ändern kann
+      // (`nichtsEntstanden`); bei der Grenze (#588) sagt der Hinweis der
+      // Datenebene, dass nichts entstanden ist.
+      hinweis: kopie.nichtsEntstanden ? (kopie.hinweis ?? nichtsEntstanden(kopie.art)) : hinweisRest(kopie.rest),
+      ...(kopie.grenze && { grenze: kopie.grenze }),
     });
 
   return ok({ id: kopie.neueId, ziel: wohin });

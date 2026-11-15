@@ -5,6 +5,8 @@ import { getTrainingForEdit } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { trainingsKrumen } from "@/lib/brotkrumen";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { KontoGrenzenLage } from "@/components/konto/BestandStufe";
+import { getMeineGrenzen } from "@/lib/queries/verein";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -33,6 +35,9 @@ export default async function TrainingEditPage({
   if (!training) redirect("/trainings?mine=1");
 
   const teams = await getMeineTeams();
+  // Gelten für das Konto Grenzen (#588)? Nur dann fragen Übernehmen und «In die
+  // Bibliothek» den Stand vorher; ein Konto in einem Verein bleibt beim Klick.
+  const mitGrenzen = (await getMeineGrenzen()) !== null;
 
   return (
     <Seitenrahmen breite="3xl" krumen={null} geteilt>
@@ -43,14 +48,16 @@ export default async function TrainingEditPage({
           nicht als fertiges Element: Ein Element aus einer Server-Komponente
           in eine Client-Komponente zu reichen, ist ein Umweg, den die Liste
           selbst nicht braucht. */}
-      <TrainingEditor
-        training={training}
-        teams={teams}
-        varianteParam={variante}
-        uebungParam={uebung}
-        bearbeitenParam={!!bearbeiten}
-        brotkrumen={trainingsKrumen(training)}
-      />
+      <KontoGrenzenLage mitGrenzen={mitGrenzen}>
+        <TrainingEditor
+          training={training}
+          teams={teams}
+          varianteParam={variante}
+          uebungParam={uebung}
+          bearbeitenParam={!!bearbeiten}
+          brotkrumen={trainingsKrumen(training)}
+        />
+      </KontoGrenzenLage>
     </Seitenrahmen>
   );
 }

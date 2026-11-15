@@ -16,8 +16,10 @@ import {
   Card,
   IconButton,
   Tooltip,
+  BestandAnzeige,
 } from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
+import { grenzeAusAbweisung, type KontoGrenze } from "@/lib/konto-grenzen";
 import {
   feldtyp as feldLabels,
   uebungstyp as uebungstypLabels,
@@ -118,6 +120,7 @@ export function ExerciseForm({
   diagramm: gespeichertesDiagramm,
   vorlagenAusser,
   inSpalte,
+  bestand,
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
@@ -161,6 +164,9 @@ export function ExerciseForm({
     onVerwerfen: () => void;
     onSchliessen: () => void;
   };
+  /** Nur beim Erfassen für ein Konto ohne Verein (#588 AK 5): der Stand der
+   *  eigenen Übungen, zuoberst als Zeile. */
+  bestand?: KontoGrenze;
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -881,11 +887,20 @@ export function ExerciseForm({
       // und Speichern stehen dann fest, dazwischen scrollen die Spalten.
       className={cn("flex flex-col gap-10", geteilt && "xl:min-h-0 xl:flex-1 xl:gap-6")}
     >
-      {state.message && (
-        <SectionMessage appearance="error" className={UEBER_BEIDEN}>
-          {state.message}
-        </SectionMessage>
+      {/* Weist die Datenebene an der Grenze ab (#588: Rennen, veraltete
+          Anzeige), steht dieselbe Meldung wie bei voller Grenze, samt Weg zur
+          eigenen Übersicht, und die Zeile mit dem alten Stand fällt weg; die
+          Angaben bleiben in der Maske. */}
+      {state.grenze ? (
+        <BestandAnzeige art="uebungen" grenze={grenzeAusAbweisung(state.grenze)} variante="meldung" className={UEBER_BEIDEN} />
+      ) : (
+        state.message && (
+          <SectionMessage appearance="error" className={UEBER_BEIDEN}>
+            {state.message}
+          </SectionMessage>
+        )
       )}
+      {bestand && !state.grenze && <BestandAnzeige art="uebungen" grenze={bestand} className={UEBER_BEIDEN} />}
 
       <VerlassenWarnung
         // Während des Speicherns nicht: Die Weiterleitung nach dem Speichern

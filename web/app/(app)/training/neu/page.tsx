@@ -31,10 +31,7 @@ export default async function NeuesTrainingPage() {
       {grenzen && voll ? (
         <BestandAnzeige art="trainings" grenze={grenzen.trainings} variante="meldung" />
       ) : (
-        <>
-          {grenzen && <BestandAnzeige art="trainings" grenze={grenzen.trainings} className="mb-4" />}
-          <TrainingCreateForm />
-        </>
+        <TrainingCreateForm bestand={grenzen?.trainings} />
       )}
     </Seitenrahmen>
   );

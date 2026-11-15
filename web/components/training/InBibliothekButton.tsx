@@ -38,7 +38,7 @@ export function InBibliothekButton({
     hinweis: "Die Übung kommt als private Vorlage in deine Bibliothek.",
     ausfuehren: async () => {
       const res = await kopiereInBibliothek(fassungId);
-      if (!res.ok) return res.error;
+      if (!res.ok) return res;
       melde(`„${name}" ist als private Vorlage in deiner Bibliothek.`);
       router.refresh();
       return null;
@@ -52,7 +52,7 @@ export function InBibliothekButton({
           icon={Copy}
           label={`${name} in meine Bibliothek kopieren`}
           onClick={starte}
-          disabled={laeuft}
+          aria-disabled={laeuft || undefined}
         />
       </Tooltip>
       {dialog}

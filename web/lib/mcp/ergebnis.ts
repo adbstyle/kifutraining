@@ -33,7 +33,7 @@ export function erfolg<T extends Record<string, unknown>>(wert: T): CallToolResu
  *  damit ein neues Feld in `KernFehler` ohne Zutun auch hier erscheint. */
 type FehlerAusgabe = Omit<
   KernFehler,
-  "ok" | "retryAfter" | "varianteId" | "fehlend" | "fristAbgelaufen" | "verfallendSpiele" | "treffpunktEntfaellt"
+  "ok" | "retryAfter" | "varianteId" | "fehlend" | "fristAbgelaufen" | "verfallendSpiele" | "treffpunktEntfaellt" | "grenze"
 > & {
   retry_after?: number;
   variante_id?: string;
@@ -73,7 +73,9 @@ export function fehlerText(f: Omit<KernFehler, "ok">): string {
  *  jedes gesetzte Feld des Kern-Fehlers erscheint in `structuredContent.fehler`,
  *  auch solche, die spätere Stories hinzufügen. */
 export function fehlerErgebnis(f: Omit<KernFehler, "ok"> & { ok?: false }): CallToolResult {
-  const { ok: _ok, retryAfter, varianteId, fehlend, fristAbgelaufen, verfallendSpiele, treffpunktEntfaellt, ...rest } = f;
+  // `grenze` ist das Merkmal der Oberfläche (#588); der Assistent liest die
+  // Grenze aus Meldung und Hinweis.
+  const { ok: _ok, retryAfter, varianteId, fehlend, fristAbgelaufen, verfallendSpiele, treffpunktEntfaellt, grenze: _grenze, ...rest } = f;
   const fehler: FehlerAusgabe = ohneLeere({
     ...rest,
     retry_after: retryAfter,
