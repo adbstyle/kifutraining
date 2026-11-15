@@ -17,7 +17,11 @@
 --   J+S-Nummern (Sperrordnung Verein → `spieler`-Zeile); er berührt weder
 --   Teams noch Zuordnungen noch Termine (PC 5).
 -- - p_zeilen: [{zeile, vorname, nachname, jahrgang, js}], kein Array oder
---   mehr als 1000 Elemente → IMPORT_ZU_GROSS.
+--   mehr als 1000 Elemente → IMPORT_ZU_GROSS. Ein Element, das kein Objekt
+--   ist, oder eine fehlende, nicht ganze, nicht positive oder doppelte
+--   `zeile` weist die Funktion technisch ab (SQLSTATE 22023, kein Marker; das
+--   Web prüft das schon vorab): Sonst hinge «die letzte gewinnt» und der
+--   Abgleich der Übernahme an zufälligen Werten.
 -- - Mehrere Zeilen derselben Spieler:in (Schlüssel der Doppelerfassung:
 --   spieler_text_schluessel von Vor- und Nachname, Jahrgang): die letzte
 --   gewinnt (PC 3 der Story-Vorbedingungen).
@@ -32,10 +36,14 @@
 -- - Grenze (AK 6, 7): ueber = bestand + neu − 1000, nur bei neu > 0, sonst 0.
 --   Keine Teamgrenze (AK 8).
 -- - Übernahme: Die Einordnung wird unter der Vereinssperre neu gerechnet und
---   mit p_erwartet = {neu, js, mehrfach} (Zeilennummern, die Reihenfolge des
---   Aufrufers zählt nicht) verglichen. Weicht sie ab → `veraltet`, grund
---   'bestand'; passt sie, aber der Verein läge über 1000 → `veraltet`, grund
---   'grenze'. Beides schreibt nichts und liefert die neue Vorschau mit (AK 9).
+--   mit p_erwartet = {neu: [zeile], js: [{zeile, alt}], mehrfach: [zeile]}
+--   verglichen (die Reihenfolge des Aufrufers zählt nicht); bei `js` zählt
+--   auch die bisherige Nummer `alt`, damit eine inzwischen geänderte J+S-
+--   Nummer nicht still überschrieben wird. Ein `js`-Element ohne diese Form
+--   (etwa eine blosse Zeilennummer) gilt als abweichend. Weicht etwas ab →
+--   `veraltet`, grund 'bestand'; passt es, aber der Verein läge über 1000 →
+--   `veraltet`, grund 'grenze'. Beides schreibt nichts und liefert die neue
+--   Vorschau mit (AK 9).
 --   Die rohe Zahl `bestand` zählt nicht: eine unbeteiligte Erfassung macht die
 --   Vorschau nicht falsch.
 -- - Alles in einem Aufruf, also einer Transaktion (PC 4).
@@ -67,7 +75,10 @@
 -- Schreibwege bleiben unverändert geschützt. Auslösbar ist das nur hier:
 -- API-Rollen erreichen die Datenbank allein über PostgREST, das keine
 -- Einstellungen setzen lässt, und keine andere Funktion mit API-Recht setzt
--- diese (import_verein.sql prüft beides am Katalog).
+-- diese. import_verein.sql prüft davon das Zweite am Katalog, dazu, dass die
+-- Einstellung nach der Übernahme zurückgesetzt ist, nur für ihren Verein gilt
+-- und nach einem gescheiterten INSERT, den der Aufrufer in einer
+-- Untertransaktion abfängt, nicht stehen bleibt.
 -- ============================================================================
 
 set lock_timeout = '5s';
@@ -84,6 +95,19 @@ set search_path = public, pg_temp
 as $$
   select coalesce(array_agg((e #>> '{}')::int order by (e #>> '{}')::int), '{}')
     from jsonb_array_elements(case when jsonb_typeof(p) = 'array' then p else '[]'::jsonb end) e;
+$$;
+
+-- Die J+S-Änderungen als geordnete Paare {zeile, alt}, aus p_erwartet wie
+-- aus der Vorschau gleich gebildet; kein Array zählt als leer, ein Element
+-- ohne Objektform ergibt {zeile: null, alt: null} und passt so nie. Kein
+-- API-Recht.
+create function import_js_paare(p jsonb) returns jsonb
+language sql immutable
+set search_path = public, pg_temp
+as $$
+  select coalesce(jsonb_agg(x order by x), '[]'::jsonb)
+    from (select jsonb_build_object('zeile', e -> 'zeile', 'alt', e -> 'alt') as x
+            from jsonb_array_elements(case when jsonb_typeof(p) = 'array' then p else '[]'::jsonb end) e) y;
 $$;
 
 -- Rumpf wie in 20261113200000_spieler_eindeutig_verein.sql; beim INSERT
@@ -156,6 +180,18 @@ begin
   end if;
   if jsonb_typeof(p_zeilen) is distinct from 'array' then raise exception 'IMPORT_ZU_GROSS'; end if;
   if jsonb_array_length(p_zeilen) > 1000 then raise exception 'IMPORT_ZU_GROSS'; end if;
+  -- Jede Zeile ein Objekt mit eigener, positiver, ganzer Zeilennummer (siehe Kopf).
+  if exists (
+    with n as (select case when jsonb_typeof(z) = 'object' and jsonb_typeof(z -> 'zeile') = 'number'
+                           then (z ->> 'zeile')::numeric end as zeile
+                 from jsonb_array_elements(p_zeilen) z)
+    select 1 from n where zeile is null or zeile < 1 or zeile <> trunc(zeile)
+    union all
+    select 1 from n group by zeile having count(*) > 1
+  ) then
+    raise exception using errcode = '22023',
+      message = 'verein_spieler_importieren: jede Zeile braucht ein Objekt mit eigener, positiver, ganzer Zeilennummer';
+  end if;
 
   -- Je Spieler:in der Datei die letzte Zeile, eingeordnet gegen den Verein.
   with roh as materialized (
@@ -232,8 +268,7 @@ begin
 
   if import_zeilennummern(p_erwartet -> 'neu')
        <> array(select (z ->> 'zeile')::int from jsonb_array_elements(v_zeilen) z where z ->> 'art' = 'neu' order by 1)
-     or import_zeilennummern(p_erwartet -> 'js')
-       <> array(select (z ->> 'zeile')::int from jsonb_array_elements(v_zeilen) z where z ->> 'art' = 'js' order by 1)
+     or import_js_paare(p_erwartet -> 'js') <> import_js_paare(v_vorschau -> 'js')
      or import_zeilennummern(p_erwartet -> 'mehrfach')
        <> array(select (z ->> 'zeile')::int from jsonb_array_elements(v_zeilen) z where z ->> 'art' = 'mehrfach' order by 1) then
     return jsonb_build_object('status', 'veraltet', 'grund', 'bestand', 'vorschau', v_vorschau);
@@ -262,6 +297,7 @@ $$;
 -- ── Grants ──────────────────────────────────────────────────────────────────
 
 revoke all on function import_zeilennummern(jsonb) from public, anon, authenticated;
+revoke all on function import_js_paare(jsonb) from public, anon, authenticated;
 revoke all on function verein_spieler_importieren(uuid, jsonb, jsonb) from public, anon;
 grant execute on function verein_spieler_importieren(uuid, jsonb, jsonb) to authenticated;
 

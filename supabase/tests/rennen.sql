@@ -1605,7 +1605,7 @@ begin
          {"zeile": 2, "vorname": "Ida", "nachname": "Bleibt", "jahrgang": 2015, "js": "2"}]';
   ergebnis := rennen_test.verschraenkt(ziel,
     v_va, format($q$select verein_spieler_anlegen(%L, 'Bea', 'Import', 2015, null)::text$q$, v_verein),
-    v_vb, format($q$select verein_spieler_importieren(%L, %L, '{"neu": [1], "js": [2], "mehrfach": []}')::text$q$, v_verein, d),
+    v_vb, format($q$select verein_spieler_importieren(%L, %L, '{"neu": [1], "js": [{"zeile": 2, "alt": "1"}], "mehrfach": []}')::text$q$, v_verein, d),
     'advisory');
   if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'veraltet' or ergebnis::jsonb ->> 'grund' <> 'bestand'
      or ergebnis::jsonb #> '{vorschau,neu}' <> '[]' or ergebnis::jsonb #> '{vorschau,gleich}' <> '[{"zeile": 1, "teams": []}]' then
@@ -1621,7 +1621,7 @@ begin
          {"zeile": 2, "vorname": "Ida", "nachname": "Bleibt", "jahrgang": 2015, "js": "2"}]';
   ergebnis := rennen_test.verschraenkt(ziel,
     v_va, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('i_del')),
-    v_vb, format($q$select verein_spieler_importieren(%L, %L, '{"neu": [], "js": [1, 2], "mehrfach": []}')::text$q$, v_verein, d),
+    v_vb, format($q$select verein_spieler_importieren(%L, %L, '{"neu": [], "js": [{"zeile": 1, "alt": null}, {"zeile": 2, "alt": "1"}], "mehrfach": []}')::text$q$, v_verein, d),
     'advisory');
   if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'veraltet' or ergebnis::jsonb ->> 'grund' <> 'bestand'
      or ergebnis::jsonb #> '{vorschau,neu}' <> '[1]' then
@@ -1635,7 +1635,7 @@ begin
   -- (i4) Übernahme (J+S von Ines), dann Löschen von Ines.
   ergebnis := rennen_test.verschraenkt(ziel,
     v_va, format($q$select verein_spieler_importieren(%L, '[{"zeile": 1, "vorname": "Ines", "nachname": "Nummer", "jahrgang": 2015, "js": "7"}]',
-                                                      '{"js": [1]}')::text$q$, v_verein),
+                                                      '{"js": [{"zeile": 1, "alt": "1"}]}')::text$q$, v_verein),
     v_vb, format('select verein_spieler_entfernen(%L)::text', rennen_test.z('i_js')), 'advisory');
   if left(ergebnis, 7) = 'FEHLER:'
      or ergebnis::jsonb <> jsonb_build_object('status', 'geloescht', 'teams',
@@ -1650,8 +1650,8 @@ begin
   d := '[{"zeile": 1, "vorname": "Cleo", "nachname": "Import", "jahrgang": 2015},
          {"zeile": 2, "vorname": "Ida", "nachname": "Bleibt", "jahrgang": 2015, "js": "3"}]';
   ergebnis := rennen_test.verschraenkt(ziel,
-    v_va, format($q$select verein_spieler_importieren(%L, %L, '{"neu": [1], "js": [2], "mehrfach": []}')::text$q$, v_verein, d),
-    v_vb, format($q$select verein_spieler_importieren(%L, %L, '{"neu": [1], "js": [2], "mehrfach": []}')::text$q$, v_verein, d),
+    v_va, format($q$select verein_spieler_importieren(%L, %L, '{"neu": [1], "js": [{"zeile": 2, "alt": "1"}], "mehrfach": []}')::text$q$, v_verein, d),
+    v_vb, format($q$select verein_spieler_importieren(%L, %L, '{"neu": [1], "js": [{"zeile": 2, "alt": "1"}], "mehrfach": []}')::text$q$, v_verein, d),
     'advisory');
   if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'veraltet' or ergebnis::jsonb ->> 'grund' <> 'bestand'
      or ergebnis::jsonb #> '{vorschau,neu}' <> '[]' or ergebnis::jsonb #> '{vorschau,js}' <> '[]' then

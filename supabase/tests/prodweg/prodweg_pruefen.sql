@@ -335,7 +335,8 @@ begin
                                'mehrfach', jsonb_build_array(jsonb_build_object('zeile', 3, 'teams', v_team))) then
       raise exception 'Story 9: Vorschau im Bestand: %', v;
     end if;
-    v := verein_spieler_importieren(v_verein, v_zeilen, '{"neu": [4], "js": [2], "mehrfach": [3]}');
+    v := verein_spieler_importieren(v_verein, v_zeilen, jsonb_build_object('neu', '[4]'::jsonb,
+           'js', jsonb_build_array(jsonb_build_object('zeile', 2, 'alt', v_nr4 -> 'js')), 'mehrfach', '[3]'::jsonb));
     if v <> '{"status": "uebernommen", "neu": 1, "js": 1}'::jsonb then
       raise exception 'Story 9: Übernahme im Bestand: %', v;
     end if;

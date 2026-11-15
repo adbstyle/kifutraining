@@ -2,8 +2,8 @@
 -- Vereine §3.7, §4.3, §7.9, Testfall 24). Auf DB-Ebene, Rollenwechsel wie
 -- PostgREST, Altdubletten und volle Vereine unter `replica`:
 -- - Rechte: neue Funktion für `authenticated`, nicht `anon`/`public`, genau
---   eine Funktion dieses Namens; der Helfer import_zeilennummern ohne
---   API-Recht; der Team-Import existiert nicht mehr und scheitert für jede
+--   eine Funktion dieses Namens; die Helfer import_zeilennummern und
+--   import_js_paare ohne API-Recht; der Team-Import existiert nicht mehr und scheitert für jede
 --   Rolle, auch für die Verwaltung (AK 12)
 -- - Zugang (AK 11): nur die Verwaltung des eigenen Vereins (auch mit
 --   Teamrolle); Mitglied ohne Verwaltung, fremde Verwaltung, Konto ohne
@@ -33,6 +33,15 @@
 --   verschwunden; grund 'grenze': Grenze inzwischen erreicht; jeweils nichts
 --   geschrieben und die neue Vorschau dabei; eine unbeteiligte Erfassung macht
 --   die Vorschau nicht veraltet; p_erwartet ohne Listen zählt als leer
+-- - J+S inzwischen geändert (D1 nach Review): die Vorschau nannte alt «1»,
+--   dazwischen steht «2» → `veraltet` grund 'bestand', «2» bleibt; mit der
+--   passenden alten Nummer geht die Übernahme durch; die frühere Form von
+--   p_erwartet.js als blosse Zeilennummern gilt als abweichend (`veraltet`)
+-- - Zeilennummern (D2): ein Element, das kein Objekt ist, eine fehlende, null,
+--   nicht ganze, nicht positive oder doppelte `zeile` → technisch abgewiesen
+--   (SQLSTATE 22023), für Vorschau und Übernahme
+-- - Letzte Zeile ohne gültige J+S nach einer früheren mit gültiger, bei einer
+--   Bestehenden: `gleich`, die Nummer bleibt
 -- - Alles oder nichts (PC 4): eine ungültige Zeile mitten in 600 neuen lässt
 --   keine Zeile und keine J+S-Änderung zurück
 -- - IMPORT_ZU_GROSS: 1001 Zeilen, kein Array, null; 1000 gehen
@@ -42,7 +51,9 @@
 --   Indexscans), je unter 2 s
 -- - Das Netz bleibt: Die Einstellung, mit der spieler_vorher die
 --   Dublettenprüfung je Zeile überspringt, ist nach der Übernahme
---   zurückgesetzt, gilt nur für ihren Verein, und keine andere Funktion mit
+--   zurückgesetzt, gilt nur für ihren Verein, bleibt nach einem gescheiterten
+--   INSERT, den der Aufrufer in einer Untertransaktion abfängt, nicht stehen
+--   (der Trigger prüft danach wieder), und keine andere Funktion mit
 --   API-Recht nennt sie
 -- Rennen: rennen.sql. Alles in einer Transaktion mit rollback; hinterlässt
 -- nichts.
@@ -236,6 +247,9 @@ begin
   perform pg_temp.pruefe(not has_function_privilege('anon', 'import_zeilennummern(jsonb)', 'execute')
                          and not has_function_privilege('authenticated', 'import_zeilennummern(jsonb)', 'execute'),
                          'import_zeilennummern hat ein API-Recht');
+  perform pg_temp.pruefe(not has_function_privilege('anon', 'import_js_paare(jsonb)', 'execute')
+                         and not has_function_privilege('authenticated', 'import_js_paare(jsonb)', 'execute'),
+                         'import_js_paare hat ein API-Recht');
   -- AK 12: Der Team-Import ist gelöscht, unter keinem Namen mit diesem Stamm
   -- und keiner Signatur mehr vorhanden.
   perform pg_temp.pruefe(to_regprocedure('public.spieler_' || 'importieren(uuid, jsonb, jsonb)') is null,
@@ -267,7 +281,7 @@ begin
     perform pg_temp.erwarte(format('select verein_spieler_importieren(%L, %L)', pg_temp.id('v'), pg_temp.datei()),
                             'VEREIN_NICHT_GEFUNDEN');
     perform pg_temp.erwarte(format('select verein_spieler_importieren(%L, %L, %L)', pg_temp.id('v'), pg_temp.datei(),
-                                   '{"neu": [6, 7, 10, 13], "js": [1, 4], "mehrfach": [5]}'), 'VEREIN_NICHT_GEFUNDEN');
+                                   '{"neu": [6, 7, 10, 13], "js": [{"zeile": 1, "alt": null}, {"zeile": 4, "alt": "1234567"}], "mehrfach": [5]}'), 'VEREIN_NICHT_GEFUNDEN');
     -- Auch eine zu grosse Datei verrät nichts vor der Rollenprüfung.
     perform pg_temp.erwarte(format('select verein_spieler_importieren(%L, %L)', pg_temp.id('v'), '{}'),
                             'VEREIN_NICHT_GEFUNDEN');
@@ -287,7 +301,7 @@ begin
   perform pg_temp.erwarte(format('select verein_spieler_importieren(%L, %L)', pg_temp.id('v'), pg_temp.datei()),
                           'NUR_IN_DER_ANWENDUNG');
   perform pg_temp.erwarte(format('select verein_spieler_importieren(%L, %L, %L)', pg_temp.id('v'), pg_temp.datei(),
-                                 '{"neu": [6, 7, 10, 13], "js": [1, 4], "mehrfach": [5]}'), 'NUR_IN_DER_ANWENDUNG');
+                                 '{"neu": [6, 7, 10, 13], "js": [{"zeile": 1, "alt": null}, {"zeile": 4, "alt": "1234567"}], "mehrfach": [5]}'), 'NUR_IN_DER_ANWENDUNG');
   reset role;
 end $$;
 select format('select verein_spieler_importieren(%L, %L)', pg_temp.id('v'), pg_temp.datei()) as anon_aufruf \gset
@@ -360,7 +374,7 @@ create temp table v_vorher as select id from spieler where verein_id = pg_temp.i
 select pg_temp.als(pg_temp.id('verw'));
 -- Die Reihenfolge der erwarteten Zeilen zählt nicht; `bestand` wird ignoriert.
 select pg_temp.pruefe(verein_spieler_importieren(pg_temp.id('v'), pg_temp.datei(),
-                        '{"neu": [13, 10, 7, 6], "js": [4, 1], "mehrfach": [5], "bestand": 0}')
+                        '{"neu": [13, 10, 7, 6], "js": [{"zeile": 4, "alt": "1234567"}, {"zeile": 1, "alt": null}], "mehrfach": [5], "bestand": 0}')
                       = '{"status": "uebernommen", "neu": 4, "js": 2}', 'Übernahme');
 select pg_temp.pruefe(current_setting('kifu.import_verein', true) = '', 'Einstellung nach der Übernahme nicht zurückgesetzt');
 reset role;
@@ -430,6 +444,23 @@ end $$;
 reset role;
 select pg_temp.pruefe(pg_temp.stand(pg_temp.id('v')) = :'stand_v_nach', 'Übernahme ohne Änderung hat geschrieben');
 
+-- PC 3 mit «letzte gewinnt»: Eine frühere Zeile mit gültiger J+S, die letzte
+-- derselben Bestehenden ohne → unverändert, die Nummer (55) bleibt.
+select pg_temp.als(pg_temp.id('verw'));
+do $$
+declare
+  d jsonb := '[{"zeile": 1, "vorname": "Ugo", "nachname": "Lang", "jahrgang": 2016, "js": "66"},
+               {"zeile": 2, "vorname": "ugo", "nachname": "LANG", "jahrgang": 2016, "js": null}]';
+  v jsonb := verein_spieler_importieren(pg_temp.id('v'), d);
+begin
+  perform pg_temp.pruefe(v -> 'js' = '[]' and v -> 'neu' = '[]' and v -> 'gleich' = '[{"zeile": 2, "teams": []}]',
+                         'frühere Zeile mit J+S, letzte ohne: ' || v::text);
+  perform pg_temp.pruefe(verein_spieler_importieren(pg_temp.id('v'), d, '{"neu": [], "js": [], "mehrfach": []}')
+                         = '{"status": "uebernommen", "neu": 0, "js": 0}', 'frühere Zeile mit J+S, letzte ohne: Übernahme');
+  perform pg_temp.pruefe(pg_temp.js(pg_temp.id('p_lang')) = '55', 'frühere Zeile mit J+S hat die Nummer gesetzt');
+end $$;
+reset role;
+
 -- Das Netz bleibt: Nach der Übernahme fängt der Trigger eine Dublette in
 -- derselben Transaktion; die Einstellung eines anderen Vereins hebt die
 -- Prüfung nicht auf.
@@ -472,6 +503,33 @@ begin
   perform pg_temp.erwarte(format('select verein_spieler_importieren(%L, null)', pg_temp.id('v')), 'IMPORT_ZU_GROSS');
 end $$;
 reset role;
+-- D2: Ohne eigene, positive, ganze Zeilennummer je Objekt weist die Funktion
+-- technisch ab (22023, kein Marker), Vorschau wie Übernahme, ohne zu schreiben.
+select pg_temp.stand(pg_temp.id('v')) as stand_v_d2 \gset
+do $$
+declare
+  ok jsonb := '{"vorname": "Zeile", "nachname": "Probe", "jahrgang": 2012}';
+  kaputt jsonb;
+begin
+  perform pg_temp.als(pg_temp.id('verw'));
+  foreach kaputt in array array[
+    jsonb_build_array(ok),                                                    -- zeile fehlt
+    jsonb_build_array(ok || '{"zeile": null}'),
+    jsonb_build_array(ok || '{"zeile": 0}'),
+    jsonb_build_array(ok || '{"zeile": -3}'),
+    jsonb_build_array(ok || '{"zeile": 2.5}'),
+    jsonb_build_array(ok || '{"zeile": "2"}'),
+    jsonb_build_array(ok || '{"zeile": 2}', ok || '{"zeile": 2, "vorname": "Andere"}'),   -- doppelt
+    jsonb_build_array(ok || '{"zeile": 2}', '7'::jsonb),                      -- kein Objekt
+    jsonb_build_array(ok || '{"zeile": 2}', '[{"zeile": 3}]'::jsonb)
+  ] loop
+    perform pg_temp.erwarte(format('select verein_spieler_importieren(%L, %L)', pg_temp.id('v'), kaputt), '22023');
+    perform pg_temp.erwarte(format('select verein_spieler_importieren(%L, %L, %L)', pg_temp.id('v'), kaputt,
+                                   '{"neu": [2], "js": [], "mehrfach": []}'), '22023');
+  end loop;
+end $$;
+reset role;
+select pg_temp.pruefe(pg_temp.stand(pg_temp.id('v')) = :'stand_v_d2', 'D2: eine abgewiesene Zeilennummer hat geschrieben');
 
 -- ── Grenze (AK 6, 7, 8) und veraltet wegen der Grenze (AK 9) ────────────────
 
@@ -500,7 +558,7 @@ begin
   perform pg_temp.pruefe((v ->> 'bestand')::int = 998 and (v ->> 'ueber')::int = 1 and v -> 'neu' = '[1, 2, 4]'
                          and v -> 'js' = jsonb_build_array(jsonb_build_object('zeile', 3, 'alt', null,
                                'teams', jsonb_build_array(pg_temp.team('tg')))), 'AK 6 Vorschau: ' || v::text);
-  v := verein_spieler_importieren(pg_temp.id('g'), drei, '{"neu": [1, 2, 4], "js": [3], "mehrfach": []}');
+  v := verein_spieler_importieren(pg_temp.id('g'), drei, '{"neu": [1, 2, 4], "js": [{"zeile": 3, "alt": null}], "mehrfach": []}');
   perform pg_temp.pruefe(v = jsonb_build_object('status', 'veraltet', 'grund', 'grenze',
                                                 'vorschau', verein_spieler_importieren(pg_temp.id('g'), drei) - 'status'),
                          'AK 6 Übernahme über 1000: ' || v::text);
@@ -514,7 +572,7 @@ begin
   perform pg_temp.pruefe((v ->> 'ueber')::int = 0 and v -> 'neu' = '[1, 2]', 'Vorschau mit zwei neuen: ' || v::text);
   perform pg_temp.pruefe(verein_spieler_anlegen(pg_temp.id('g'), 'Dazwischen', 'Erfasst', 2012, null) ->> 'status' = 'angelegt',
                          'Erfassen dazwischen');
-  v := verein_spieler_importieren(pg_temp.id('g'), zwei, '{"neu": [1, 2], "js": [3], "mehrfach": []}');
+  v := verein_spieler_importieren(pg_temp.id('g'), zwei, '{"neu": [1, 2], "js": [{"zeile": 3, "alt": null}], "mehrfach": []}');
   perform pg_temp.pruefe(v ->> 'status' = 'veraltet' and v ->> 'grund' = 'grenze'
                          and (v #>> '{vorschau,ueber}')::int = 1 and (v #>> '{vorschau,bestand}')::int = 999,
                          'AK 9 Grenze inzwischen erreicht: ' || v::text);
@@ -525,7 +583,7 @@ begin
   -- Genau 1000 geht; AK 8: J+S in einem vollen Team, keine Teamgrenze.
   v := verein_spieler_importieren(pg_temp.id('g'), zwei - 1);
   perform pg_temp.pruefe((v ->> 'ueber')::int = 0 and v -> 'neu' = '[1]', 'Vorschau bis 1000: ' || v::text);
-  perform pg_temp.pruefe(verein_spieler_importieren(pg_temp.id('g'), zwei - 1, '{"neu": [1], "js": [3], "mehrfach": []}')
+  perform pg_temp.pruefe(verein_spieler_importieren(pg_temp.id('g'), zwei - 1, '{"neu": [1], "js": [{"zeile": 3, "alt": null}], "mehrfach": []}')
                          = '{"status": "uebernommen", "neu": 1, "js": 1}', 'Übernahme bis genau 1000');
   perform pg_temp.pruefe(pg_temp.anzahl(pg_temp.id('g')) = 1000
                          and pg_temp.js(pg_temp.id('g_voll')) = '77'
@@ -547,7 +605,7 @@ begin
   v := verein_spieler_importieren(pg_temp.id('g'), nur_js);
   perform pg_temp.pruefe((v ->> 'bestand')::int = 1001 and (v ->> 'ueber')::int = 0 and v -> 'neu' = '[]',
                          'AK 7 Vorschau: ' || v::text);
-  perform pg_temp.pruefe(verein_spieler_importieren(pg_temp.id('g'), nur_js, '{"neu": [], "js": [1], "mehrfach": []}')
+  perform pg_temp.pruefe(verein_spieler_importieren(pg_temp.id('g'), nur_js, '{"neu": [], "js": [{"zeile": 1, "alt": "77"}], "mehrfach": []}')
                          = '{"status": "uebernommen", "neu": 0, "js": 1}', 'AK 7 Übernahme über 1000 ohne neue');
   perform pg_temp.pruefe(pg_temp.js(pg_temp.id('g_voll')) = '78', 'AK 7: J+S nicht gesetzt');
   v := verein_spieler_importieren(pg_temp.id('g'),
@@ -592,7 +650,8 @@ declare
 begin
   v := verein_spieler_importieren(pg_temp.id('r'), d);
   e := jsonb_build_object('neu', v -> 'neu',
-                          'js', (select coalesce(jsonb_agg(x -> 'zeile'), '[]'::jsonb) from jsonb_array_elements(v -> 'js') x),
+                          'js', (select coalesce(jsonb_agg(jsonb_build_object('zeile', x -> 'zeile', 'alt', x -> 'alt')), '[]'::jsonb)
+                                   from jsonb_array_elements(v -> 'js') x),
                           'mehrfach', (select coalesce(jsonb_agg(x -> 'zeile'), '[]'::jsonb) from jsonb_array_elements(v -> 'mehrfach') x));
   execute p_aenderung;
   ergebnis := verein_spieler_importieren(pg_temp.id('r'), d, e);
@@ -625,6 +684,15 @@ begin
                         format($s$select verein_spieler_aendern(%L, 'Rolf', 'Neu', 2013, null)$s$, pg_temp.id('r_ren')));
   perform pg_temp.pruefe(v ->> 'grund' = 'bestand' and v #> '{vorschau,neu}' = '[1, 3]'
                          and v #> '{vorschau,js}' = '[{"zeile": 2, "alt": "1", "teams": []}]', 'umbenannt: ' || v::text);
+  -- J+S inzwischen geändert (D1): Die Vorschau nannte bei Zeile 3 die alte
+  -- Nummer «1», dazwischen steht «2». Zeile 3 bleibt eine J+S-Änderung, aber
+  -- mit anderer alter Nummer: veraltet, «2» wird nicht still überschrieben.
+  v := pg_temp.veraltet('{"zeile": 3, "vorname": "Rea", "nachname": "Nummer", "jahrgang": 2013, "js": "3"}',
+                        format($s$select verein_spieler_aendern(%L, 'Rea', 'Nummer', 2013, '2')$s$, pg_temp.id('r_js')));
+  perform pg_temp.pruefe(v ->> 'grund' = 'bestand'
+                         and v #> '{vorschau,js}' = '[{"zeile": 2, "alt": "1", "teams": []}, {"zeile": 3, "alt": "2", "teams": []}]',
+                         'J+S inzwischen geändert: ' || v::text);
+  perform pg_temp.pruefe(pg_temp.js(pg_temp.id('r_js')) = '2', 'J+S inzwischen geändert: «2» überschrieben');
   -- J+S inzwischen gesetzt: Zeile 3 war eine J+S-Änderung und ist jetzt gleich.
   v := pg_temp.veraltet('{"zeile": 3, "vorname": "Rea", "nachname": "Nummer", "jahrgang": 2013, "js": "9"}',
                         format($s$select verein_spieler_aendern(%L, 'Rea', 'Nummer', 2013, '9')$s$, pg_temp.id('r_js')));
@@ -645,9 +713,16 @@ begin
   perform pg_temp.pruefe(verein_spieler_importieren(pg_temp.id('r'),
                            pg_temp.r_datei('{"zeile": 3, "vorname": "Rea", "nachname": "Nummer", "jahrgang": 2013}'), '{}') ->> 'grund'
                          = 'bestand', 'p_erwartet ohne Listen');
+  -- Die frühere Form (js als blosse Zeilennummern) gilt als abweichend (D1).
   perform pg_temp.pruefe(verein_spieler_importieren(pg_temp.id('r'),
                            pg_temp.r_datei('{"zeile": 3, "vorname": "Rea", "nachname": "Nummer", "jahrgang": 2013}'),
-                           '{"neu": [1], "js": [2], "mehrfach": []}') = '{"status": "uebernommen", "neu": 1, "js": 1}',
+                           '{"neu": [1], "js": [2], "mehrfach": []}') ->> 'grund' = 'bestand', 'p_erwartet.js als Zeilennummern');
+  perform pg_temp.pruefe(pg_temp.js(pg_temp.id('r_js2')) = '1', 'frühere Form hat geschrieben');
+  -- Gegenfall zu D1: Mit der alten Nummer der Vorschau («1») geht die Übernahme
+  -- durch, auch nach der unbeteiligten Erfassung.
+  perform pg_temp.pruefe(verein_spieler_importieren(pg_temp.id('r'),
+                           pg_temp.r_datei('{"zeile": 3, "vorname": "Rea", "nachname": "Nummer", "jahrgang": 2013}'),
+                           '{"neu": [1], "js": [{"zeile": 2, "alt": "1"}], "mehrfach": []}') = '{"status": "uebernommen", "neu": 1, "js": 1}',
                          'Übernahme nach unbeteiligter Erfassung');
   perform pg_temp.pruefe(pg_temp.da(pg_temp.id('r'), 'Geschrieben')
                          and pg_temp.js(pg_temp.id('r_js2')) = '2', 'Übernahme in R ohne Wirkung');
@@ -668,10 +743,17 @@ declare
 begin
   perform pg_temp.pruefe(jsonb_array_length(v -> 'neu') = 600 and jsonb_array_length(v -> 'js') = 1, 'PC 4 Vorschau');
   perform pg_temp.erwarte(format('select verein_spieler_importieren(%L, %L, %L)', pg_temp.id('r'), d,
-                                 jsonb_build_object('neu', v -> 'neu', 'js', '[601]'::jsonb)), 'spieler_jahrgang');
+                                 jsonb_build_object('neu', v -> 'neu', 'js', v -> 'js')), 'spieler_jahrgang');
 end $$;
 reset role;
 select pg_temp.pruefe(pg_temp.stand(pg_temp.id('r')) = :'stand_r_vorher', 'PC 4: ein gescheiterter Import hat Spuren hinterlassen');
+-- D3: Der INSERT scheiterte nach set_config; pg_temp.erwarte fing den Fehler
+-- in einer Untertransaktion ab. Die Einstellung steht danach nicht mehr auf R,
+-- und der Trigger prüft für R wieder auf Dubletten (Ruth Bleibt 2013 gibt es).
+select pg_temp.pruefe(coalesce(current_setting('kifu.import_verein', true), '') = '',
+                      'Einstellung nach gescheitertem INSERT stehen geblieben: ' || current_setting('kifu.import_verein', true));
+select pg_temp.erwarte(format($$insert into spieler (verein_id, vorname, nachname, jahrgang)
+                                values (%L, 'RUTH', 'bleibt', 2013)$$, pg_temp.id('r')), 'SPIELER_DOPPELT');
 
 -- ── Leistung (Zettel A2) ────────────────────────────────────────────────────
 
