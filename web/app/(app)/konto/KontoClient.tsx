@@ -26,8 +26,9 @@ import type { KontoLoeschInfo } from "@/lib/verein-antwort";
    prüft ihn beim Ausführen erneut. Hat sich die Lage inzwischen geändert, bleibt
    alles unverändert, der Dialog zeigt den Grund und, wo es weitergeht, den
    neuen Fall. Nach jeder Antwort ohne Löschen lädt er die Lage neu
-   (`router.refresh()`); sobald sie da ist, gilt sie statt der Antwort, die
-   Meldung bleibt stehen. Eine laufende Anfrage sperrt Eingabe und Knöpfe. */
+   (`router.refresh()`); sobald sie da ist, gilt sie statt der Antwort. Die
+   Meldung bleibt nur, wenn sie zur frischen Lage passt (`meldungBleibt`).
+   Eine laufende Anfrage sperrt Eingabe und Knöpfe. */
 export function KontoClient({ info }: { info: KontoLoeschInfo }) {
   const [open, setOpen] = useState(false);
   return (
@@ -45,6 +46,19 @@ export function KontoClient({ info }: { info: KontoLoeschInfo }) {
 const ANFANG: KontoLoeschenZustand = { fehler: null };
 const FORM = "konto-loeschen";
 
+/** Passt die Meldung der letzten Antwort zur neu geladenen Lage? Zur letzten
+ *  Verwaltung nicht, wenn dieser Fall noch gilt: Dann nennen ihn die Sätze der
+ *  Lage (sonst doppelt). Gilt ein anderer Fall, bleibt nur der neutrale Satz
+ *  «Im Verein hat sich inzwischen etwas geändert …»; der Satz zur letzten
+ *  Verwaltung widerspräche ihm. Zur einzigen Person (Name und Zahlen oder der
+ *  neue Name) nur, solange dieser Fall gilt. Eine Meldung ohne Fall
+ *  (technisch) bleibt. */
+function meldungBleibt(z: KontoLoeschenZustand, fall: KontoLoeschInfo["fall"]): boolean {
+  if (z.letzteVerwaltung) return fall !== "letzte_verwaltung" && z.fehler === KONTO_LOESCHEN_TEXT.weiterePerson;
+  if (z.verein || z.aktuellerName !== undefined) return fall === "einzige_person";
+  return true;
+}
+
 function KontoLoeschenDialog({ info, onClose }: { info: KontoLoeschInfo; onClose: () => void }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -52,11 +66,11 @@ function KontoLoeschenDialog({ info, onClose }: { info: KontoLoeschInfo; onClose
   const [eingabe, setEingabe] = useState("");
 
   // Neu geladene Lage (nach router.refresh): Sie ist frischer als die letzte
-  // Antwort und entscheidet den Fall; nur die Meldung bleibt.
+  // Antwort und entscheidet den Fall; die Meldung bleibt nur, wenn sie passt.
   const [infoStand, setInfoStand] = useState(info);
   if (info !== infoStand) {
     setInfoStand(info);
-    setZustand((z) => ({ fehler: z.fehler }));
+    setZustand((z) => ({ fehler: meldungBleibt(z, info.fall) ? z.fehler : null }));
   }
 
   // Der Fall, den die Datenebene beim Ausführen gesehen hat, geht dem der Seite vor.

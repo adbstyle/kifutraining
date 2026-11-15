@@ -4587,7 +4587,9 @@ pruefe("Verein und Konto löschen (#587): ein Weg je RPC, Bestätigung mit dem B
   // Nach jeder Antwort ohne Löschen lädt der Dialog die Lage neu; Name und Zahlen gehen über Antwortfolgen nicht
   // verloren, und eine neu geladene Lage entscheidet den Fall (Fix-Lauf #587).
   assert.match(konto, /await deleteAccount\([\s\S]*?verein: neu\.verein \?\? \(neu\.letzteVerwaltung \? undefined : vorher\.verein\)[\s\S]*?router\.refresh\(\);/);
-  assert.match(konto, /if \(info !== infoStand\) \{\s*setInfoStand\(info\);\s*setZustand\(\(z\) => \(\{ fehler: z\.fehler \}\)\);/);
+  assert.match(konto, /if \(info !== infoStand\) \{\s*setInfoStand\(info\);\s*setZustand\(\(z\) => \(\{ fehler: meldungBleibt\(z, info\.fall\) \? z\.fehler : null \}\)\);/);
+  // Die stehen gebliebene Meldung passt zur frischen Lage oder fällt weg, nie doppelt zu den Sätzen der Lage (Schlusskorrektur #587).
+  assert.match(konto, /function meldungBleibt\([^)]*\): boolean \{\s*if \(z\.letzteVerwaltung\) return fall !== "letzte_verwaltung" && z\.fehler === KONTO_LOESCHEN_TEXT\.weiterePerson;\s*if \(z\.verein \|\| z\.aktuellerName !== undefined\) return fall === "einzige_person";\s*return true;\s*\}/);
   // Teilzustand: Vor der Rückgabe revalidieren, damit Leiste und Seiten den gelöschten Verein nicht weiter zeigen.
   assert.match(fluss, /if \(loeschFehler\) \{[\s\S]*?revalidiereVerein\(\);\s*revalidiereMitgliedschaften\(\);\s*return \{ fehler: KONTO_LOESCHEN_TEXT\.teilweise \}/);
   // Team auflösen sperrt die Eingabe während der Anfrage wie die neuen Dialoge.
@@ -4598,8 +4600,9 @@ pruefe("Verein und Konto löschen (#587): ein Weg je RPC, Bestätigung mit dem B
   assert.match(lies("lib/abholung.ts"), /typeof r\.verein !== "string" \|\| !r\.verein\)\s*return \{ gueltig: false \};/);
   assert.ok(!/return data as AbholAnsicht/.test(lies("lib/abholung.ts")), "keine ungeprüfte Übernahme");
   assert.match(lies("lib/privater-link.ts"), /if \(ansicht\.gueltig && \(typeof ansicht\.verein !== "string" \|\| !ansicht\.verein\)\) return UNGUELTIG;/);
-  // Der Namensvergleich trimmt beide Seiten (gespeicherter Name mit Rand, Zwilling namen_stimmen).
-  assert.match(lies("components/ui/NamenBestaetigen.tsx"), /eingabe\.trim\(\)\.normalize\("NFC"\) === name\.trim\(\)\.normalize\("NFC"\)/);
+  // Der Namensvergleich trimmt beide Seiten (gespeicherter Name mit Rand, Zwilling namen_stimmen); ein Name, der
+  // ohne Rand leer ist, stimmt nie (Schlusskorrektur #587).
+  assert.match(lies("components/ui/NamenBestaetigen.tsx"), /const verlangt = name\.trim\(\);\s*return verlangt !== "" && eingabe\.trim\(\)\.normalize\("NFC"\) === verlangt\.normalize\("NFC"\);/);
   // Der Speicher wird in Stücken geräumt.
   assert.match(lies("lib/storage-aufraeumen.ts"), /for \(let i = 0; i < pfade\.length; i \+= STUECK\)/);
   // Kein Verein-Weg am Team-Ort, kein KI-Weg zu Gründen und Löschen (Ortsprüfung der Datenebene, Test 30).
