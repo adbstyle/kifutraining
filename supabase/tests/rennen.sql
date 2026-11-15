@@ -2067,6 +2067,77 @@ exception when others or query_canceled then
   perform set_config('rennen.fehler_termin_loeschen', sqlerrm, false);
 end $$;
 
+-- ── Fall: Serie entfernen gegen Löschen des Vereins (Story 11 #587, Schlusskorrektur) ──
+-- terminserie_entfernen (über terminserie_entfernen_rechnen) sperrte die
+-- Termin-Zeilen der Serie ohne Teamsperre und löschte danach die Termine
+-- (Trigger termin_training_aufraeumen löscht das Termin-Training): derselbe
+-- Mechanismus wie bei termin_entfernen (t1). Jetzt zuerst die Teamsperre.
+-- Je Fall ein Verein aus rennen_test.s11_bauen, Termin in einer Serie, mit
+-- Termin-Training:
+-- (t5) terminserie_entfernen gegen Löschen: B wartet an der Teamsperre und löscht.
+-- (t5b) A hält nur die Teamsperre; terminserie_entfernen wartet daran, ohne
+--      eine Termin-Zeile zu halten (A sperrt sie mit `for update nowait`).
+select set_config('rennen.fehler_serie_loeschen', '', false) is not null as rennen_fehler_serie_loeschen_leer \gset
+
+begin;
+do $$
+declare
+  x text;
+  v_tag date := current_date + 7;
+begin
+  foreach x in array array['t5', 't5b'] loop
+    perform rennen_test.s11_bauen(x);
+    insert into rennen_test.ids (name) values ('s11_' || x || '_ttr'), ('s11_' || x || '_serie');
+    insert into termin_serien (id, team_id, wochentage, beginn_datum, end_datum, beginn, ende) values
+      (rennen_test.z('s11_' || x || '_serie'), rennen_test.z('s11_' || x || '_team'),
+       array[extract(isodow from v_tag)::smallint], v_tag, v_tag, '18:00', '19:30');
+    insert into trainings (id, name, team_id, visibility, altersstufe, stufen, termin_training) values
+      (rennen_test.z('s11_' || x || '_ttr'), 'Termin-Training ' || x, rennen_test.z('s11_' || x || '_team'), 'private',
+       'kinderfussball', array['F'], true);
+    update training_termine
+       set training_id = rennen_test.z('s11_' || x || '_ttr'), serie_id = rennen_test.z('s11_' || x || '_serie'), serien_tag = v_tag
+     where id = rennen_test.z('s11_' || x || '_termin');
+  end loop;
+end $$;
+commit;
+
+do $$
+declare
+  ziel   text := format(
+    'host=%s port=%s dbname=%s user=postgres password=postgres connect_timeout=5 options=''-c statement_timeout=30s''',
+    coalesce(host(inet_server_addr()), '127.0.0.1'), inet_server_port(), current_database());
+  ergebnis text;
+begin
+  -- (t5) terminserie_entfernen gegen Löschen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_t5_m'), format($q$select terminserie_entfernen(%L, 'alle')::text$q$, rennen_test.z('s11_t5_termin')),
+    rennen_test.z('s11_t5_va'), format($q$select verein_loeschen(%L, 'Rennen-s11-t5')::text$q$, rennen_test.z('s11_t5_verein')),
+    'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'geloescht' then
+    raise exception '(t5) Löschen nach terminserie_entfernen: %', ergebnis;
+  end if;
+  if exists (select 1 from vereine where id = rennen_test.z('s11_t5_verein'))
+     or exists (select 1 from trainings where id = rennen_test.z('s11_t5_ttr')) then
+    raise exception '(t5) Verein oder Termin-Training nicht gelöscht';
+  end if;
+
+  -- (t5b) Team vor Termin: Serie entfernen wartet an der Teamsperre.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_t5b_m'), format('select rennen_test.nur_teamsperre(%L)', rennen_test.z('s11_t5b_team')),
+    rennen_test.z('s11_t5b_m'), format($q$select terminserie_entfernen(%L, 'alle')::text$q$, rennen_test.z('s11_t5b_termin')),
+    'advisory', format('select rennen_test.termin_frei(%L)', rennen_test.z('s11_t5b_termin')));
+  if left(ergebnis, 7) = 'FEHLER:' or (ergebnis::jsonb ->> 'entfallend_anzahl')::int <> 1 then
+    raise exception '(t5b) terminserie_entfernen nach der Teamsperre: %', ergebnis;
+  end if;
+  if exists (select 1 from trainings where id = rennen_test.z('s11_t5b_ttr'))
+     or exists (select 1 from training_termine where id = rennen_test.z('s11_t5b_termin'))
+     or exists (select 1 from termin_serien where id = rennen_test.z('s11_t5b_serie')) then
+    raise exception '(t5b) Termin-Training, Termin oder Serie nicht weg';
+  end if;
+exception when others or query_canceled then
+  perform set_config('rennen.fehler_serie_loeschen', sqlerrm, false);
+end $$;
+
 delete from teams where verein_id in (select id from rennen_test.ids where name like 's11\_%')
    or verein_id in (select verein_id from verein_verwaltung where user_id in (select id from rennen_test.ids where name like 's11\_%'));
 delete from spieler where verein_id in (select id from rennen_test.ids where name like 's11\_%');
@@ -2119,5 +2190,8 @@ begin
   end if;
   if current_setting('rennen.fehler_termin_loeschen') <> '' then
     raise exception 'Rennen Termin-RPCs gegen Löschen: %', current_setting('rennen.fehler_termin_loeschen');
+  end if;
+  if current_setting('rennen.fehler_serie_loeschen') <> '' then
+    raise exception 'Rennen Serie entfernen gegen Löschen: %', current_setting('rennen.fehler_serie_loeschen');
   end if;
 end $$;

@@ -70,12 +70,15 @@ $$;
 -- web/components/ui/NamenBestaetigen.tsx (`eingabe.trim().normalize("NFC")
 -- === name.trim().normalize("NFC")`). Beide Seiten ohne Rand: Ein
 -- gespeicherter Name mit Rand (Bestand, direkter Aufruf; teams_name_check
--- und verein_name prüfen nur btrim) lässt sich so immer bestätigen.
+-- und verein_name prüfen nur btrim) lässt sich so immer bestätigen. Ein
+-- Name, der ohne Rand leer ist (nur Unicode-Leerraum, z. B. U+00A0), stimmt
+-- nie, auch nicht mit leerer Eingabe.
 create function namen_stimmen(p_eingabe text, p_name text) returns boolean
 language sql immutable
 set search_path = public, pg_temp
 as $$
   select p_eingabe is not null and p_name is not null
+     and namen_ohne_rand(p_name) <> ''
      and normalize(namen_ohne_rand(p_eingabe), nfc) = normalize(namen_ohne_rand(p_name), nfc);
 $$;
 
@@ -387,6 +390,78 @@ begin
   update training_termine set training_id = p_training where id = p_termin;
   update trainings set termin_training = true where id = p_training;
   return jsonb_build_object('bisher', v_termin.training_id);
+end;
+$$;
+
+-- terminserie_entfernen (Rechen-Helfer terminserie_entfernen_rechnen, auch
+-- für die Vorschau) sperrte ebenso zuerst die Termin-Zeilen der Serie ohne
+-- Teamsperre und löschte danach die Termine samt Termin-Trainings: gleicher
+-- Zyklus mit der Kaskade, nachgestellt in rennen.sql (t5). Jetzt zuerst die
+-- Teamsperre wie in terminserie_aendern: Team ungesperrt lesen, Mitgliedschaft
+-- prüfen (gleicher Fehler, nichts verraten), sperren. Rumpf sonst wie in
+-- 20260930211328_terminserien_aendern.sql; Signatur und Rechte unverändert.
+create or replace function terminserie_entfernen_rechnen(
+  p_termin uuid, p_reichweite text, p_version integer, p_entfallend uuid[])
+returns jsonb
+language plpgsql
+set search_path = public, pg_temp
+as $$
+declare
+  v_heute date := heute_am_trainingsort();
+  t training_termine;
+  s termin_serien;
+  v_entfallend uuid[];
+  v_belegt uuid[];
+  v_liste jsonb;
+  v_vergangen integer;
+  v_termin_team uuid;
+begin
+  select team_id into v_termin_team from training_termine where id = p_termin;
+  if v_termin_team is null or not ist_team_mitglied(v_termin_team) then raise exception 'TERMIN_NICHT_GEFUNDEN'; end if;
+  perform sperre_teams(array[v_termin_team]);                    -- Team vor Termin
+  select * into t from training_termine where id = p_termin for update;
+  if not found or not ist_team_mitglied(t.team_id) then raise exception 'TERMIN_NICHT_GEFUNDEN'; end if;
+  if t.serie_id is null then raise exception 'TERMIN_OHNE_SERIE'; end if;
+  if p_reichweite is null or p_reichweite not in ('dieser_und_folgende', 'alle') then
+    raise exception 'REICHWEITE_UNGUELTIG';
+  end if;
+  select * into s from termin_serien where id = t.serie_id for update;
+  if p_version is not null and s.version <> p_version then raise exception 'SERIE_GEAENDERT'; end if;
+  perform 1 from training_termine where serie_id = s.id for update;
+
+  v_entfallend := array(select id from training_termine
+                         where serie_id = s.id and (p_reichweite = 'alle' or datum >= t.datum));
+  v_belegt := array(select id from training_termine
+                     where id = any(v_entfallend) and training_id is not null order by id);
+  if p_entfallend is not null
+     and v_belegt is distinct from array(select e from unnest(p_entfallend) e order by e) then
+    raise exception 'SERIE_BELEGUNG_GEAENDERT';
+  end if;
+  v_liste := coalesce((
+    select jsonb_agg(jsonb_build_object(
+             'id', tt.id, 'datum', tt.datum, 'beginn', to_char(tt.beginn, 'HH24:MI'),
+             'training', jsonb_build_object('id', tr.id, 'name', tr.name))
+           order by tt.datum, tt.beginn nulls last)
+      from training_termine tt join trainings tr on tr.id = tt.training_id
+     where tt.id = any(v_entfallend)), '[]'::jsonb);
+  select count(*) into v_vergangen from training_termine where id = any(v_entfallend) and datum < v_heute;
+
+  delete from training_termine where id = any(v_entfallend);
+  if p_reichweite = 'alle' or not exists (select 1 from training_termine where serie_id = s.id) then
+    delete from termin_serien where id = s.id;
+  else
+    update termin_serien
+       set end_datum = t.datum - 1, beginn_datum = least(beginn_datum, t.datum - 1)
+     where id = s.id;
+    delete from termin_serien_luecken where serie_id = s.id and tag >= t.datum;
+  end if;
+
+  return jsonb_build_object(
+    'serie', (select id from termin_serien where id = s.id),
+    'version_vorher', s.version,
+    'entfallend', v_liste,
+    'entfallend_anzahl', cardinality(v_entfallend),
+    'vergangene', v_vergangen);
 end;
 $$;
 

@@ -7845,11 +7845,14 @@ try {
       ["Kern-DB Name 15", "\tKern-DB Name 15"],
       [" Kern-DB Name 16\ufeff", "\u3000Kern-DB Name 16\u2028"],
       ["kern-db name 17", "Kern-DB Name 17\u00a0"],
+      // Ein Name nur aus Unicode-Leerraum (der Teamname-CHECK lässt ihn zu) stimmt nie, auch nicht mit leerer
+      // Eingabe. Nur ein solcher Fall: Zwei Namen nur aus Leerraum gälten im Verein als derselbe Teamname.
+      ["", "\u00a0\u3000"],
     ];
     const web_ = imWeb(faelle);
     assert.deepEqual(
       web_,
-      [true, true, true, true, false, true, true, false, false, false, false, false, false, true, true, true, false],
+      [true, true, true, true, false, true, true, false, false, false, false, false, false, true, true, true, false, false],
       "Web wie erwartet",
     );
     // Die Datenebene ungetrimmt, direkt über die RPC (der Kern trimmt vorher):

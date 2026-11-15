@@ -397,6 +397,9 @@ begin
   perform pg_temp.pruefe(namen_stimmen('Klub', U&'Klub\00A0') and namen_stimmen(U&' Klub\FEFF', U&'\0009Klub\3000'),
                          'Rand am gespeicherten Namen');
   perform pg_temp.pruefe(not namen_stimmen('klub', U&'Klub\00A0'), 'Rand am gespeicherten Namen, Gross/Klein');
+  -- Ein Name nur aus Unicode-Rand (teams_name_check lässt ihn zu) stimmt nie, auch nicht mit leerer Eingabe.
+  perform pg_temp.pruefe(not namen_stimmen('', U&'\00A0') and not namen_stimmen(U&'\00A0', U&'\3000\00A0')
+                         and not namen_stimmen('', ''), 'Name nur aus Rand');
   perform pg_temp.pruefe(namen_ohne_rand(U&'\00A0FC Rand\FEFF\0009') = 'FC Rand' and namen_ohne_rand(null) is null,
                          'namen_ohne_rand');
 end $$;
@@ -425,6 +428,17 @@ begin
 end $$;
 reset role;
 select pg_temp.pruefe(exists (select 1 from teams where id = pg_temp.id('t3')), 'T3 wieder da');
+
+-- Ein Teamname nur aus Unicode-Rand (Bestand, teams_name_check prüft nur
+-- btrim) lässt sich weder mit leerer Eingabe noch mit dem Rand selbst
+-- bestätigen; das Team bleibt.
+update teams set name = U&'\00A0' where id = pg_temp.id('t3');
+select pg_temp.als(pg_temp.id('verw'));
+select pg_temp.pruefe(verein_team_aufloesen(pg_temp.id('t3'), '') ->> 'status' = 'name_falsch', 'Teamname nur Rand, Eingabe leer');
+select pg_temp.pruefe(verein_team_aufloesen(pg_temp.id('t3'), U&'\00A0') ->> 'status' = 'name_falsch', 'Teamname nur Rand, Eingabe Rand');
+reset role;
+select pg_temp.pruefe(exists (select 1 from teams where id = pg_temp.id('t3')), 'T3 mit Namen nur aus Rand bleibt');
+update teams set name = 'Team Leer' where id = pg_temp.id('t3');
 
 -- ── verein_ansicht.personen, abholung_ansicht.verein ───────────────────────
 
@@ -492,6 +506,8 @@ select pg_temp.erwarte($$select verein_gruenden('FC Neu', null)$$, 'BESTAETIGUNG
 select pg_temp.erwarte($$select verein_gruenden('', true)$$, '23514');
 select pg_temp.erwarte($$select verein_gruenden('   ', true)$$, '23514');
 select pg_temp.erwarte($$select verein_gruenden(null, true)$$, '23514');
+select pg_temp.erwarte($$select verein_gruenden(U&'\00A0\3000\FEFF', true)$$, '23514');
+select pg_temp.erwarte($$select verein_gruenden(U&'\00A0\3000\FEFF', true)$$, 'verein_name');
 select pg_temp.erwarte(format('select verein_gruenden(%L, true)', repeat('x', 61)), '23514');
 select pg_temp.erwarte(format('select verein_gruenden(%L, true)', repeat('x', 61)), 'verein_name');
 reset role;
