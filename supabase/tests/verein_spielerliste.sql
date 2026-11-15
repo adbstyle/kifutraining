@@ -6,7 +6,8 @@
 --   bekommt je Spieler:in nur id, Vorname, Nachname, Jahrgang und Teams,
 --   auch für die Spieler:innen der eigenen Teams (kein J+S, kein Link-Stand,
 --   kein Schnupper-Zähler) und am Kopf die Teams ohne `anzahl`; die
---   Verwaltung (auch mit beiden Rollen) bekommt alles wie bisher
+--   Verwaltung (auch mit beiden Rollen) bekommt alles wie bisher; am Kopf
+--   `verwaltung` (die eigene Rolle), auch bei 0 Treffern und im leeren Verein
 -- - Verträglichkeit: ein Aufruf nur mit `p_verein` liefert der Verwaltung
 --   dieselben `spieler` und `teams` wie die Fassung aus Story 8
 -- - Zugang (AK 2, PC 1, PC 3): Mitglied und Verwaltung ja; Konto ohne
@@ -18,15 +19,18 @@
 -- - Suche (AK 6, OoS 4): Teile von Vor- und Nachname und beides zusammen,
 --   Gross/Klein, Akzente in beide Richtungen, Zerlegungsform, keine
 --   Umschreibung «ue»; `%`, `_` und `\` sind gewöhnliche Zeichen; Leerzeichen
---   am Rand und innere Folgen zählen nicht; sehr lange Eingabe
+--   am Rand und innere Folgen zählen nicht; sehr lange Eingabe; eine
+--   vergebene J+S-Nummer findet nichts (kein Orakel für andere Felder)
 -- - Eingrenzung (AK 7–9): Teams und «ohne Team» als ODER, Jahrgänge, alles
 --   zusammen als UND; fremde und unbekannte Team-IDs treffen still nie;
---   leere Listen grenzen nicht ein; jede Zeile nennt alle Teams
+--   leere Listen und Listen aus lauter null grenzen nicht ein, null neben
+--   Werten fällt weg; jede Zeile nennt alle Teams
 -- - Teams, Jahrgänge und Zahlen am Kopf bleiben bei gesetztem Filter
 --   ungefiltert
 -- - Testfall 32: 1001 Spieler:innen in einem Aufruf, gefilterte Teilmengen
---   stimmen mit der direkten Zählung
--- - Rechte: neue Signatur für `authenticated`, nicht `anon`; die alte ist weg
+--   stimmen mit der direkten Zählung — für ein Mitglied und die Verwaltung
+-- - Rechte: neue Signatur für `authenticated`, nicht `anon`; die alte ist weg,
+--   und es gibt genau eine Funktion dieses Namens (keine Überladung)
 -- Alles in einer Transaktion mit rollback; hinterlässt nichts.
 
 \set ON_ERROR_STOP on
@@ -73,7 +77,7 @@ language sql immutable as $$ select array(select k from jsonb_object_keys(p) k o
 
 create temp table ids (name text primary key, id uuid not null default gen_random_uuid());
 insert into ids (name) values ('verw'), ('verw2'), ('a'), ('b'), ('c'), ('wverw'), ('ohne'), ('m3'),
-  ('v'), ('w'), ('v3'), ('t1'), ('t2'), ('tw'), ('t3'),
+  ('v3verw'), ('v4verw'), ('v'), ('w'), ('v3'), ('v4'), ('t1'), ('t2'), ('tw'), ('t3'),
   ('s1'), ('s2'), ('s3'), ('x'), ('u1'), ('u2'), ('u3'), ('sw');
 -- Feste IDs für die Altdubletten: Bei gleichem Namen und Jahrgang entscheidet
 -- die id über die Reihenfolge.
@@ -92,15 +96,17 @@ $$;
 
 insert into auth.users (id, email, email_confirmed_at)
 select id, name || '@vereinsliste.test', now() from ids
- where name in ('verw', 'verw2', 'a', 'b', 'c', 'wverw', 'ohne', 'm3');
+ where name in ('verw', 'verw2', 'a', 'b', 'c', 'wverw', 'ohne', 'm3', 'v3verw', 'v4verw');
 
 -- Verein V: Verwaltung verw (ohne Team) und verw2 (auch Mitglied in T1),
 -- Mitglieder a (T1) und b (T2). Verein W: Verwaltung wverw, c in TW.
--- Verein V3 (Testfall 32): m3 in T3.
+-- Verein V3 (Testfall 32): m3 in T3, Verwaltung v3verw. Verein V4: leer, nur
+-- die Verwaltung v4verw (kein Team, keine Spieler:in).
 insert into vereine (id, name) values (pg_temp.id('v'), 'Listen-Verein'), (pg_temp.id('w'), 'Anderer Verein'),
-  (pg_temp.id('v3'), 'Grosser Verein');
+  (pg_temp.id('v3'), 'Grosser Verein'), (pg_temp.id('v4'), 'Leerer Verein');
 insert into verein_verwaltung (verein_id, user_id) values
-  (pg_temp.id('v'), pg_temp.id('verw')), (pg_temp.id('v'), pg_temp.id('verw2')), (pg_temp.id('w'), pg_temp.id('wverw'));
+  (pg_temp.id('v'), pg_temp.id('verw')), (pg_temp.id('v'), pg_temp.id('verw2')), (pg_temp.id('w'), pg_temp.id('wverw')),
+  (pg_temp.id('v3'), pg_temp.id('v3verw')), (pg_temp.id('v4'), pg_temp.id('v4verw'));
 insert into teams (id, name, verein_id) values
   (pg_temp.id('t1'), 'Team Eins', pg_temp.id('v')), (pg_temp.id('t2'), 'Team Zwei', pg_temp.id('v')),
   (pg_temp.id('tw'), 'Team W', pg_temp.id('w')), (pg_temp.id('t3'), 'Team Drei', pg_temp.id('v3'));
@@ -177,6 +183,8 @@ declare
 begin
   perform pg_temp.pruefe(to_regprocedure('verein_spielerliste(uuid)') is null, 'alte Signatur besteht noch');
   perform pg_temp.pruefe(to_regprocedure(f) is not null, 'neue Signatur fehlt');
+  perform pg_temp.pruefe((select count(*) from pg_proc where proname = 'verein_spielerliste') = 1,
+                         'mehr als eine Funktion verein_spielerliste (Überladung)');
   perform pg_temp.pruefe(not has_function_privilege('anon', f, 'execute')
                          and not has_function_privilege('public', f, 'execute')
                          and has_function_privilege('authenticated', f, 'execute'), 'Grant von ' || f);
@@ -222,7 +230,7 @@ declare
   l jsonb;
   s jsonb;
   t jsonb;
-  kopf constant text[] := array['gesamt', 'jahrgaenge', 'ohne_team', 'spieler', 'teams'];
+  kopf constant text[] := array['gesamt', 'jahrgaenge', 'ohne_team', 'spieler', 'teams', 'verwaltung'];
 begin
   -- Mitglieder ohne Verwaltung: a (T1) und b (T2). Auch die Spieler:innen der
   -- eigenen Teams nur mit den vier Angaben.
@@ -230,6 +238,9 @@ begin
     perform pg_temp.als(pg_temp.id(wer));
     l := verein_spielerliste(pg_temp.id('v'));
     perform pg_temp.pruefe(pg_temp.schluessel(l) = kopf, wer || ': Kopf ' || pg_temp.schluessel(l)::text);
+    perform pg_temp.pruefe(l -> 'verwaltung' = 'false', wer || ': Rolle ' || (l -> 'verwaltung')::text);
+    -- Auch ohne Treffer sagt die Antwort die Rolle (die Form hängt nicht an Zeilen).
+    perform pg_temp.pruefe(verein_spielerliste(pg_temp.id('v'), 'fremd') -> 'verwaltung' = 'false', wer || ': Rolle ohne Treffer');
     perform pg_temp.pruefe(jsonb_array_length(l -> 'spieler') = 9, wer || ': nicht alle Spieler:innen ' || l::text);
     for s in select * from jsonb_array_elements(l -> 'spieler') loop
       perform pg_temp.pruefe(pg_temp.schluessel(s) = array['id', 'jahrgang', 'nachname', 'teams', 'vorname'],
@@ -258,9 +269,13 @@ begin
     perform pg_temp.pruefe(l = verein_spielerliste(pg_temp.id('v'), null, null, false, null)
                            and l = verein_spielerliste(pg_temp.id('v'), '', '{}', null, '{}'),
                            wer || ': Defaults und leere Eingaben weichen ab');
+    perform pg_temp.pruefe(l = verein_spielerliste(pg_temp.id('v'), null, array[null]::uuid[], false, array[null]::integer[]),
+                           wer || ': Listen aus lauter null grenzen ein');
+    perform pg_temp.pruefe(verein_spielerliste(pg_temp.id('v'), 'fremd') -> 'verwaltung' = 'true', wer || ': Rolle ohne Treffer');
     reset role;
     perform pg_temp.pruefe(pg_temp.schluessel(l) = kopf, wer || ': Kopf ' || pg_temp.schluessel(l)::text);
-    perform pg_temp.pruefe(l - array['gesamt', 'jahrgaenge', 'ohne_team'] = pg_temp.alte_liste(pg_temp.id('v')),
+    perform pg_temp.pruefe(l -> 'verwaltung' = 'true', wer || ': Rolle ' || (l -> 'verwaltung')::text);
+    perform pg_temp.pruefe(l - array['gesamt', 'jahrgaenge', 'ohne_team', 'verwaltung'] = pg_temp.alte_liste(pg_temp.id('v')),
                            wer || ': weicht von der bisherigen Liste ab: ' || l::text);
     for s in select * from jsonb_array_elements(l -> 'spieler') loop
       perform pg_temp.pruefe(pg_temp.schluessel(s) = array['id', 'jahrgang', 'js', 'link_bezogen', 'nachname', 'schnuppern', 'teams', 'vorname'],
@@ -280,6 +295,18 @@ begin
                              jsonb_build_object('id', pg_temp.id('t2'), 'name', 'Team Zwei', 'anzahl', 4)),
                            wer || ': Teams am Kopf ' || (l -> 'teams')::text);
   end loop;
+end $$;
+
+-- Der leere Verein: keine Zeile, kein Team — die Rolle steht trotzdem da.
+do $$
+declare
+  l jsonb;
+begin
+  perform pg_temp.als(pg_temp.id('v4verw'));
+  l := verein_spielerliste(pg_temp.id('v4'));
+  reset role;
+  perform pg_temp.pruefe(l = '{"spieler": [], "teams": [], "jahrgaenge": [], "gesamt": 0, "ohne_team": 0, "verwaltung": true}',
+                         'leerer Verein: ' || l::text);
 end $$;
 
 -- ── Vollständigkeit, Reihenfolge, Kopf (AK 1, 4, 11, PC 1, PC 2) ────────────
@@ -342,7 +369,9 @@ begin
         ('   ', 's3,u3,d1,d2,s2,s1,u1,u2,x'),           -- nur Leerzeichen: keine Suche
         ('', 's3,u3,d1,d2,s2,s1,u1,u2,x'),
         (repeat('lena müller ', 2000), ''),              -- sehr lange Eingabe
-        ('fremd', '')) v(suche, erwartet) loop
+        ('fremd', ''),
+        ('1234567', ''),                                -- J+S-Nummer von s1: kein Orakel
+        ('7654321', '')) v(suche, erwartet) loop
       l := verein_spielerliste(pg_temp.id('v'), r.suche);
       perform pg_temp.pruefe(pg_temp.treffer(l) = r.erwartet,
                              format('%s: Suche «%s» ergibt «%s» statt «%s»', wer, left(r.suche, 30), pg_temp.treffer(l), r.erwartet));
@@ -379,6 +408,10 @@ begin
         (null, array[tw, t1], false, null, 'd1,s2,s1,u2'),
         (null, array[tw], true, null, 'u1,x'),
         (null, array[null, t1]::uuid[], false, null, 'd1,s2,s1,u2'),
+        (null, array[null]::uuid[], false, null, 's3,u3,d1,d2,s2,s1,u1,u2,x'),  -- lauter null: keine Eingrenzung
+        (null, array[null, null]::uuid[], true, null, 'u1,x'),
+        (null, null, false, array[null]::integer[], 's3,u3,d1,d2,s2,s1,u1,u2,x'),
+        (null, null, false, array[null, 2014], 's3,s2'),
         (null, '{}', false, null, 's3,u3,d1,d2,s2,s1,u1,u2,x'),           -- leer: keine Eingrenzung
         (null, null, null, null, 's3,u3,d1,d2,s2,s1,u1,u2,x'),
         (null, null, false, array[2014], 's3,s2'),
@@ -428,19 +461,30 @@ declare
   n_alles int := (select count(*) from spieler s where s.verein_id = pg_temp.id('v3') and s.jahrgang = 2012
                      and not exists (select 1 from team_spieler ts where ts.spieler_id = s.id)
                      and strpos(s.vorname || ' ' || s.nachname, '1') > 0);
+  wer text;
+  zeile text[];
 begin
-  perform pg_temp.als(pg_temp.id('m3'));
-  l := verein_spielerliste(v3);
-  perform pg_temp.pruefe(jsonb_array_length(l -> 'spieler') = 1001 and l -> 'gesamt' = '1001'
-                         and (l ->> 'ohne_team')::int = 1001 - n_team, 'Testfall 32: ' || (l - 'spieler')::text);
-  perform pg_temp.pruefe(jsonb_array_length(verein_spielerliste(v3, 'OR10') -> 'spieler') = n_suche, 'Testfall 32: Suche');
-  perform pg_temp.pruefe(jsonb_array_length(verein_spielerliste(v3, null, array[pg_temp.id('t3')]) -> 'spieler') = n_team,
-                         'Testfall 32: Team');
-  perform pg_temp.pruefe(jsonb_array_length(verein_spielerliste(v3, null, null, false, array[2011, 2013]) -> 'spieler') = n_jg,
-                         'Testfall 32: Jahrgang');
-  perform pg_temp.pruefe(jsonb_array_length(verein_spielerliste(v3, '1', null, true, array[2012]) -> 'spieler') = n_alles,
-                         'Testfall 32: alles zusammen');
-  reset role;
+  -- Ein Mitglied (m3) und die Verwaltung (v3verw), je in ihrer Form.
+  foreach wer in array array['m3', 'v3verw'] loop
+    zeile := case wer when 'm3' then array['id', 'jahrgang', 'nachname', 'teams', 'vorname']
+                  else array['id', 'jahrgang', 'js', 'link_bezogen', 'nachname', 'schnuppern', 'teams', 'vorname'] end;
+    perform pg_temp.als(pg_temp.id(wer));
+    l := verein_spielerliste(v3);
+    perform pg_temp.pruefe(jsonb_array_length(l -> 'spieler') = 1001 and l -> 'gesamt' = '1001'
+                           and (l ->> 'ohne_team')::int = 1001 - n_team, wer || ': Testfall 32: ' || (l - 'spieler')::text);
+    perform pg_temp.pruefe(l -> 'verwaltung' = to_jsonb(wer = 'v3verw')
+                           and not exists (select 1 from jsonb_array_elements(l -> 'spieler') e
+                                            where pg_temp.schluessel(e) <> zeile),
+                           wer || ': Testfall 32: Form');
+    perform pg_temp.pruefe(jsonb_array_length(verein_spielerliste(v3, 'OR10') -> 'spieler') = n_suche, wer || ': Testfall 32: Suche');
+    perform pg_temp.pruefe(jsonb_array_length(verein_spielerliste(v3, null, array[pg_temp.id('t3')]) -> 'spieler') = n_team,
+                           wer || ': Testfall 32: Team');
+    perform pg_temp.pruefe(jsonb_array_length(verein_spielerliste(v3, null, null, false, array[2011, 2013]) -> 'spieler') = n_jg,
+                           wer || ': Testfall 32: Jahrgang');
+    perform pg_temp.pruefe(jsonb_array_length(verein_spielerliste(v3, '1', null, true, array[2012]) -> 'spieler') = n_alles,
+                           wer || ': Testfall 32: alles zusammen');
+    reset role;
+  end loop;
 end $$;
 
 -- ── Nach dem Austritt nicht mehr (PC 3) ─────────────────────────────────────
@@ -462,7 +506,8 @@ begin
   delete from verein_verwaltung where user_id = pg_temp.id('verw2');
   perform pg_temp.als(pg_temp.id('verw2'));
   perform pg_temp.pruefe(pg_temp.schluessel(verein_spielerliste(pg_temp.id('v')) -> 'spieler' -> 0)
-                         = array['id', 'jahrgang', 'nachname', 'teams', 'vorname'], 'verw2 nach dem Austritt aus der Verwaltung');
+                         = array['id', 'jahrgang', 'nachname', 'teams', 'vorname']
+                         and verein_spielerliste(pg_temp.id('v')) -> 'verwaltung' = 'false', 'verw2 nach dem Austritt aus der Verwaltung');
   reset role;
 end $$;
 

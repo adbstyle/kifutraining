@@ -22,11 +22,16 @@
 --   und `\` sind gewöhnliche Zeichen. Keine Umschreibung wie «ue» für «ü»
 --   (OoS 4).
 -- - Eingrenzung (AK 7–9): p_teams ODER p_ohne_team bilden eine Bedingung,
---   p_jahrgaenge eine zweite, Suche und beide gelten zusammen. Null, leere
---   Listen und p_ohne_team = false grenzen nicht ein. Team-IDs ausserhalb des
+--   p_jahrgaenge eine zweite, Suche und beide gelten zusammen. null-Elemente
+--   fallen zuerst aus den Listen; null, eine danach leere Liste und
+--   p_ohne_team = false grenzen nicht ein. Team-IDs ausserhalb des
 --   Vereins treffen still nie (die Zuordnung trägt den Verein der
 --   Spieler:in, FK tsp_spieler); kein Marker verrät einen anderen Verein.
 --   Jede Zeile nennt weiter alle Teams der Spieler:in.
+-- - Rolle (`verwaltung`): ob die aufrufende Person der Verwaltung dieses
+--   Vereins angehört — sie erfährt damit nur ihre eigene Rolle. Die Form der
+--   Zeilen und Teams folgt genau diesem Wert; der Kern entscheidet an ihm,
+--   nicht an vorhandenen Schlüsseln (auch bei 0 Treffern und 0 Teams).
 -- - Kopf ungefiltert (AK 11): alle Teams des Vereins, die vorkommenden
 --   Jahrgänge, `gesamt` und `ohne_team`. Für Mitglieder kein neuer Einblick
 --   (sie sehen alle Zeilen); die Zahlen tragen den Kopf der Seite und
@@ -41,7 +46,7 @@
 --               (nur Verwaltung:) js, link_bezogen,
 --               schnuppern: {team_id, anzahl, besucht} | null}],
 --    teams: [{id, name (nur Verwaltung:) anzahl}],
---    jahrgaenge: [int], gesamt: int, ohne_team: int}
+--    jahrgaenge: [int], gesamt: int, ohne_team: int, verwaltung: boolean}
 -- ============================================================================
 
 drop function verein_spielerliste(uuid);
@@ -63,8 +68,8 @@ begin
   if not ist_verein_mitglied(p_verein) then raise exception 'VEREIN_NICHT_GEFUNDEN'; end if;
   v_verwaltung := ist_verein_verwaltung(p_verein);
   v_suche := nullif(lower(unaccent(spieler_text_bereinigt(p_suche))), '');
-  v_teams := case when cardinality(p_teams) > 0 then p_teams end;
-  v_jahrgaenge := case when cardinality(p_jahrgaenge) > 0 then p_jahrgaenge end;
+  v_teams := nullif(array_remove(p_teams, null), '{}');
+  v_jahrgaenge := nullif(array_remove(p_jahrgaenge, null), '{}');
 
   return (
     with treffer as (
@@ -107,7 +112,8 @@ begin
       'gesamt', (select count(*) from spieler s where s.verein_id = p_verein),
       'ohne_team', (select count(*) from spieler s
                      where s.verein_id = p_verein
-                       and not exists (select 1 from team_spieler ts where ts.spieler_id = s.id))));
+                       and not exists (select 1 from team_spieler ts where ts.spieler_id = s.id)),
+      'verwaltung', v_verwaltung));
 end;
 $$;
 
