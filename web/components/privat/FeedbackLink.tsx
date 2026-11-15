@@ -18,7 +18,17 @@ import { feedbackDringend } from "@/lib/spieler";
    immer erreichbar. Er steht auch einer Spieler:in ohne Team offen (#583 AK 18). Bei einer kurzen Seite steht die Leiste am unteren Rand
    (`mt-auto` im Stapel des Layouts). Er öffnet denselben Dialog wie bei
    Trainer:innen, hier bildschirmfüllend. */
-export function FeedbackLink({ token, ohneTeam }: { token: string; /** Aus der Datenbank (`teams` des Links), nie vom Browser. */ ohneTeam: boolean }) {
+export function FeedbackLink({
+  token,
+  ohneTeam,
+  verein,
+}: {
+  token: string;
+  /** Aus der Datenbank (`teams` des Links), nie vom Browser. */
+  ohneTeam: boolean;
+  /** Der Verein der Spieler:in, aus der Datenbank: Ohne Team ist seine Verwaltung die Stelle für Dringendes. */
+  verein: string;
+}) {
   const { offen, lauf, oeffnen, schliessen } = useFeedbackOffen();
   return (
     <>
@@ -30,12 +40,12 @@ export function FeedbackLink({ token, ohneTeam }: { token: string; /** Aus der D
       </div>
       {/* Ausserhalb der Leiste: Ihr z-10 begrenzte sonst die Ebene des
           bildschirmfüllenden Dialogs. */}
-      {offen && <Gespraech key={lauf} token={token} ohneTeam={ohneTeam} onSchliessen={schliessen} />}
+      {offen && <Gespraech key={lauf} token={token} ohneTeam={ohneTeam} verein={verein} onSchliessen={schliessen} />}
     </>
   );
 }
 
-function Gespraech({ token, ohneTeam, onSchliessen }: { token: string; ohneTeam: boolean; onSchliessen: () => void }) {
+function Gespraech({ token, ohneTeam, verein, onSchliessen }: { token: string; ohneTeam: boolean; verein: string; onSchliessen: () => void }) {
   const aktionen = useMemo<FeedbackAktionen>(
     () => ({
       nachricht: (e) => feedbackLinkNachrichtAktion(token, e),
@@ -47,7 +57,7 @@ function Gespraech({ token, ohneTeam, onSchliessen }: { token: string; ohneTeam:
   return (
     <FeedbackFlaeche form="vollbild" onSchliessen={onSchliessen}>
       {/* Die Seite setzt der Server selbst — ohne das Geheimnis im Pfad (PC 3). */}
-      <FeedbackGespraech g={g} seite="/" onSchliessen={onSchliessen} dringend={feedbackDringend(ohneTeam)} />
+      <FeedbackGespraech g={g} seite="/" onSchliessen={onSchliessen} dringend={feedbackDringend(ohneTeam, verein)} />
     </FeedbackFlaeche>
   );
 }

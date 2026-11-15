@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Pencil, Plus, Shield, X } from "lucide-react";
+import { LogOut, Pencil, Plus, Shield, Trash2, X } from "lucide-react";
 import {
   Button,
   Card,
@@ -24,17 +24,19 @@ import {
   sucheVereinPersonAktion,
 } from "@/lib/actions/verein";
 import type { VerwaltungPerson } from "@/lib/kern/verein";
-import { VEREIN_MELDUNG, VEREIN_TEAMS_MAX, spielerVonText, vereinsNameProblem, zielWeg } from "@/lib/verein";
+import { VereinLoeschen } from "@/components/verein/VereinLoeschen";
+import { VEREIN_LOESCHEN_TEXT, VEREIN_MELDUNG, VEREIN_TEAMS_MAX, spielerVonText, vereinsNameProblem, zielWeg } from "@/lib/verein";
 
 /* Die Verwaltung des Vereins (Epic Vereine #575, Story #581 AK 3, 6, 23,
    30–34): Vereinsname, die Personen der Vereinsverwaltung mit Adresse,
-   Aufnehmen und Entfernen und — als Gefahrenzone — der eigene Austritt. Nur für
-   die Verwaltung; wer sie nicht ist, sieht die Seite nicht.
+   Aufnehmen und Entfernen und — als Gefahrenzone — der eigene Austritt und das
+   Löschen des Vereins (#587). Nur für die Verwaltung; wer sie nicht ist, sieht
+   die Seite nicht.
 
    Alle Personen der Verwaltung sind gleichberechtigt. Die letzte kann weder
    entfernt werden noch austreten (AK 33, 34): Der Knopf ist dann gesperrt und
-   der Satz dazu steht sichtbar daneben. «Verein löschen» gibt es hier noch
-   nicht (Story #587). */
+   der Satz dazu steht sichtbar daneben und nennt den Ausweg: den Verein
+   löschen, was jede Person der Verwaltung darf. */
 
 /** Die Verwaltung, die die Seite zeigt: nur wer zur Verwaltung gehört, sieht
  *  sie, darum tragen alle Einträge Kennung und Adresse. */
@@ -50,6 +52,8 @@ export function VereinVerwaltung({
   vereinName,
   anzahlTeams,
   anzahlSpieler,
+  spielerOhneTeam,
+  anzahlPersonen,
   verwaltung,
 }: {
   vereinId: string;
@@ -57,6 +61,10 @@ export function VereinVerwaltung({
   anzahlTeams: number;
   /** Alle Spieler:innen des Vereins, gezählt wie die Grenze 1000 (mit denen ohne Team). */
   anzahlSpieler: number;
+  /** Davon ohne Team. */
+  spielerOhneTeam: number;
+  /** Verschiedene Konten in Verwaltung und Teams: Sie werden beim Löschen zu Konten ohne Verein. */
+  anzahlPersonen: number;
   verwaltung: VerwaltungEintrag[];
 }) {
   const router = useRouter();
@@ -66,6 +74,7 @@ export function VereinVerwaltung({
   const [aufnahme, setAufnahme] = useState(false);
   const [entfernen, setEntfernen] = useState<VerwaltungEintrag | null>(null);
   const [austreten, setAustreten] = useState(false);
+  const [loeschen, setLoeschen] = useState(false);
   const [fehler, setFehler] = useState<string | null>(null);
 
   const ich = verwaltung.find((v) => v.ich);
@@ -133,8 +142,9 @@ export function VereinVerwaltung({
       </Card>
 
       <Card className="p-5 sm:p-6">
-        <div className="flex items-center justify-between gap-3">
-          <div>
+        {/* Schmal bricht der Knopf unter den Titel statt über den Rand. */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
             <h2 className="flex items-center gap-2 type-title-large text-on-surface">
               <Shield size={20} strokeWidth={2} aria-hidden />
               Vereinsverwaltung
@@ -187,21 +197,27 @@ export function VereinVerwaltung({
         </Tabelle>
       </Card>
 
-      <Gefahrenzone beschreibung="Austreten betrifft nur dich; in deinen Teams bleibst du Trainer:in.">
+      <Gefahrenzone beschreibung={VEREIN_LOESCHEN_TEXT.beschreibung}>
         <div className="flex flex-col items-start gap-3">
-          <Button
-            variant="outlined"
-            disabled={letzte || !ich}
-            aria-describedby={letzte ? "letzte-verwaltung" : undefined}
-            aria-haspopup="dialog"
-            onClick={() => {
-              setFehler(null);
-              setAustreten(true);
-            }}
-          >
-            <LogOut size={18} strokeWidth={2} aria-hidden />
-            Aus der Verwaltung austreten
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outlined"
+              disabled={letzte || !ich}
+              aria-describedby={letzte ? "letzte-verwaltung" : undefined}
+              aria-haspopup="dialog"
+              onClick={() => {
+                setFehler(null);
+                setAustreten(true);
+              }}
+            >
+              <LogOut size={18} strokeWidth={2} aria-hidden />
+              Aus der Verwaltung austreten
+            </Button>
+            <Button variant="danger" aria-haspopup="dialog" onClick={() => setLoeschen(true)}>
+              <Trash2 size={18} strokeWidth={2} aria-hidden />
+              {VEREIN_LOESCHEN_TEXT.knopf}
+            </Button>
+          </div>
           {letzte && (
             <SectionMessage appearance="warning">
               <span id="letzte-verwaltung">{VEREIN_MELDUNG.LETZTE_VERWALTUNG}</span>
@@ -209,6 +225,17 @@ export function VereinVerwaltung({
           )}
         </div>
       </Gefahrenzone>
+
+      <VereinLoeschen
+        offen={loeschen}
+        onClose={() => setLoeschen(false)}
+        vereinId={vereinId}
+        vereinName={vereinName}
+        anzahlTeams={anzahlTeams}
+        anzahlSpieler={anzahlSpieler}
+        spielerOhneTeam={spielerOhneTeam}
+        anzahlPersonen={anzahlPersonen}
+      />
 
       <VereinUmbenennen offen={umbenennen} onClose={() => setUmbenennen(false)} vereinId={vereinId} name={vereinName} />
 

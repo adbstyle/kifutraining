@@ -89,11 +89,14 @@ export type LinkTermin = {
 };
 
 /** Was die Seite liest. Die Datenebene liefert dazu `team` (bei genau einem
- *  Team dessen Name, sonst der Vereinsname) und `verein`; beide haben im Web
- *  keinen Leser — den Verein nennt die Seite erst mit Story 11 (#583). */
+ *  Team dessen Name, sonst der Vereinsname); das hat im Web keinen Leser. Den
+ *  `verein` nennt die Seite als verantwortlich für die Daten und für Dringendes
+ *  (#587 PC 2). */
 export type LinkAnsicht =
   | {
       gueltig: true;
+      /** Der Name des Vereins, der für die Daten der Spieler:in verantwortlich ist. */
+      verein: string;
       /** Die Teams der Spieler:in, nach Namen wie alle Team-Listen
        *  (`nachTeamname`, hier geordnet), auch ohne Termine (AK 3); leer ohne
        *  Team (AK 5). */
@@ -120,6 +123,8 @@ export async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
   // Seite sagt es trotzdem so, statt etwas über ihn preiszugeben.
   if (error || !data) return UNGUELTIG;
   const ansicht = data as LinkAnsicht;
+  // Ohne Vereinsnamen stünde «undefined» im Satz «Verantwortlich …»: wie ungültig.
+  if (ansicht.gueltig && (typeof ansicht.verein !== "string" || !ansicht.verein)) return UNGUELTIG;
   return ansicht.gueltig ? { ...ansicht, teams: [...ansicht.teams].sort(nachTeamname) } : ansicht;
 }
 

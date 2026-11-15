@@ -13,7 +13,8 @@
 -- Bestands-Spieler:in in zwei Teams über Link, Abo und Abholung (Story 7),
 -- die Bestands-Schnuppernde über die neuen Schreibwege (Story 8), die
 -- Vereinsliste für ein Mitglied ohne Verwaltung (Story 4), der Import in
--- den Bestandsverein samt Altdublette (Story 9). Teil B
+-- den Bestandsverein samt Altdublette (Story 9), Gründen durch das Konto
+-- ohne Team und Löschen des Bestandsvereins (Story 11, zuletzt). Teil B
 -- ändert nichts bleibend (rollback). Spätere Stories ergänzen ihre Abfragen
 -- (Konten ohne Verein mit Story 12).
 
@@ -544,6 +545,75 @@ begin
   if not training_abgemeldet(prodweg.id('tr_kommend'), v_neu) or termin_gilt_fuer(prodweg.id('sp_kommend'), v_neu)
      or probe_stand(v_neu) ->> 'besucht' <> '0' then
     raise exception 'Story 8: zum Schnuppern zugeordnet, aber angemeldet, Spiel gilt oder zählt nicht ab null: %', probe_stand(v_neu);
+  end if;
+end $$;
+
+-- Story 11 (AK 1, 10–13, PC 1, 3, 4; Testfälle 20, 21): Auf dem migrierten
+-- Bestand gründet das Konto ohne Team einen Verein und ist dessen einzige
+-- Person. Die Verwaltung des Bestandsvereins ist letzte Verwaltung mit
+-- weiteren Personen, sieht deren Zahl und löscht den Verein mit seinem
+-- Namen (ein falscher löscht nichts). Danach ist nichts des Bestandsvereins
+-- mehr da, alle Personen sind Konten ohne Verein, der neue Verein bleibt.
+-- Letzter Fall von Teil B (der Bestand ist danach weg; rollback).
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('ohne_team'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims_gruenden \gset
+set local role authenticated;
+do $$
+declare
+  v jsonb;
+begin
+  v := verein_gruenden('Prodweg Neu', true);
+  if v ->> 'status' <> 'gegruendet' or v ->> 'name' <> 'Prodweg Neu' then raise exception 'Story 11: Gründen: %', v; end if;
+  v := konto_loeschen_info();
+  if v <> '{"fall": "einzige_person", "verein": "Prodweg Neu", "teams": 0, "spieler": 0}' then
+    raise exception 'Story 11: Vorschau nach dem Gründen: %', v;
+  end if;
+end $$;
+reset role;
+select set_config('request.jwt.claims',
+         jsonb_build_object('sub', prodweg.id('verwaltung'), 'role', 'authenticated')::text, true) is not null
+       as prodweg_claims_loeschen \gset
+set local role authenticated;
+do $$
+declare
+  v_verein uuid := (select verein_id from teams where id = prodweg.id('t_gross'));   -- RLS: nur eigene Teams
+  v_ansicht jsonb := verein_ansicht(v_verein);
+  v jsonb;
+begin
+  perform set_config('prodweg.verein', v_verein::text, true);
+  v := konto_loeschen_info();
+  if v <> jsonb_build_object('fall', 'letzte_verwaltung', 'verein', v_ansicht ->> 'name', 'teams', 0, 'spieler', 0) then
+    raise exception 'Story 11: Vorschau der letzten Verwaltung: %', v;
+  end if;
+  if v_ansicht -> 'personen' <> '3' then raise exception 'Story 11: personen: %', v_ansicht -> 'personen'; end if;
+  v := verein_loeschen(v_verein, upper(v_ansicht ->> 'name'));
+  if v <> jsonb_build_object('status', 'vereinsname_falsch', 'name', v_ansicht ->> 'name') then
+    raise exception 'Story 11: falscher Name: %', v;
+  end if;
+  v := verein_loeschen(v_verein, ' ' || (v_ansicht ->> 'name') || ' ');
+  if v ->> 'status' <> 'geloescht' or jsonb_typeof(v -> 'bilder') <> 'array' then
+    raise exception 'Story 11: Löschen des Bestandsvereins: %', v;
+  end if;
+end $$;
+reset role;
+do $$
+declare
+  v_verein uuid := current_setting('prodweg.verein')::uuid;
+begin
+  if exists (select 1 from vereine where id = v_verein)
+     or exists (select 1 from teams where verein_id = v_verein or id in (select id from prodweg.ids))
+     or exists (select 1 from spieler where verein_id = v_verein)
+     or exists (select 1 from training_termine where team_id in (select id from prodweg.ids))
+     or exists (select 1 from verein_verwaltung where verein_id = v_verein) then
+    raise exception 'Story 11: Bestandsverein nicht vollständig gelöscht';
+  end if;
+  if person_verein(prodweg.id('verwaltung')) is not null or person_verein(prodweg.id('trainer_a')) is not null
+     or person_verein(prodweg.id('trainer_b')) is not null then
+    raise exception 'Story 11: Personen des Bestandsvereins haben noch einen Verein';
+  end if;
+  if (select v.name from vereine v where v.id = person_verein(prodweg.id('ohne_team'))) is distinct from 'Prodweg Neu' then
+    raise exception 'Story 11: neuer Verein betroffen';
   end if;
 end $$;
 

@@ -2048,6 +2048,14 @@ export default async function Styleguide() {
             Hakens, und der Browser meldet «gemischt». Ein Klick macht daraus
             «gewählt»; zurück zum Strich geht es erst beim neuen Öffnen.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Pflicht-Bestätigung</strong> (#587): Im Dialog «Verein
+            gründen» stehen zwei Häkchen unter dem Namen, und der Knopf bleibt
+            gesperrt, bis beide gesetzt sind. Sie stehen nicht für eine Option,
+            sondern für eine Zusage - der Satz ist die Zusage selbst und darf
+            über mehrere Zeilen laufen. Wer das Häkchen umgeht, scheitert an der
+            Datenebene, die beide Zusagen beim Ausführen verlangt.
+          </p>
           <CheckboxDemo />
 
           <h4 className="mb-2 mt-8 type-title-medium text-on-surface">
@@ -3425,7 +3433,8 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Löscht eine Handlung für alle, bestätigt man sie durch die Eingabe
             des Namens (<Siehe id="namen-bestaetigen" />) - das Auflösen eines
-            Teams liegt im Bereich «Verein». Andere Handlungen bleiben bei der
+            Teams und das Löschen des Vereins (#587) liegen im Bereich
+            «Verein». Andere Handlungen bleiben bei der
             gewöhnlichen Rückfrage; die Eingabe ist dem vorbehalten, was mehrere
             Menschen trifft.
           </p>
@@ -3435,6 +3444,22 @@ export default async function Styleguide() {
           >
             <div className="flex flex-wrap gap-2">
               <Button variant="outlined">Team verlassen</Button>
+            </div>
+          </Gefahrenzone>
+          <p className="type-body-medium mb-5 mt-8 max-w-2xl text-on-surface-mittel">
+            Stehen zwei Handlungen darin, geht die mildere als{" "}
+            <code>outlined</code> voran und die unwiderrufliche als{" "}
+            <code>danger</code> dahinter, nebeneinander und auf schmalem Schirm
+            untereinander (#587): in der Verwaltung des Vereins der eigene
+            Austritt und das Löschen des Vereins.
+          </p>
+          <Gefahrenzone
+            className="max-w-xl"
+            beschreibung="Austreten betrifft nur dich. Verein löschen entfernt alle Teams und alle Spieler:innen; alle Personen werden Konten ohne Verein."
+          >
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outlined">Aus der Verwaltung austreten</Button>
+              <Button variant="danger">Verein löschen</Button>
             </div>
           </Gefahrenzone>
         </Section>
@@ -3460,6 +3485,10 @@ export default async function Styleguide() {
             über <code>aria-describedby</code> mit dem Feld und die Freigabe über
             eine Live-Region. Weicht der Name inzwischen ab, nennt der Dialog
             den aktuellen als Fehler (<code>fehler</code>) und bleibt offen.
+            Während einer laufenden Anfrage lässt sich das Feld nicht ändern
+            (<code>gesperrt</code>, #587); es bleibt nur schreibgeschützt und
+            behält den Fokus. Der Baustein trägt auch das Löschen eines Vereins
+            und das Löschen des Kontos als einzige Person eines Vereins.
           </p>
           <NamenBestaetigenDemo />
         </Section>

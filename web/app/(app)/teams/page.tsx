@@ -4,8 +4,9 @@ import { redirect } from "next/navigation";
 import { ChevronRight, Shield } from "lucide-react";
 import { ButtonLink, Card, Leerzustand, SectionMessage } from "@/components/ui";
 import { getMeineTeams } from "@/lib/queries/teams";
-import { getMeinVerein } from "@/lib/queries/verein";
-import { TEAM_NUR_VERWALTUNG } from "@/lib/verein";
+import { getMeinVereinOderWurf } from "@/lib/queries/verein";
+import { OhneVereinStart } from "@/components/verein/OhneVereinStart";
+import { TEAM_NUR_VERWALTUNG, VEREIN_NAME_MAX, vereinGeloeschtText } from "@/lib/verein";
 import { createClient } from "@/lib/supabase/server";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { Flash } from "@/components/Flash";
@@ -17,11 +18,13 @@ export const metadata: Metadata = { title: "Teams - KiFu", robots: { index: fals
    Mitgliedern sichtbar — es gibt keine öffentliche Team-Liste. Der Verein
    steht als erste Krume und führt in seinen Bereich (#577, #581). Die
    Vereinsverwaltung legt Teams dort an und nimmt sich dort selbst in eines
-   auf; ohne eigenes Team zeigt diese Seite darum den Weg dorthin. */
+   auf; ohne eigenes Team zeigt diese Seite darum den Weg dorthin. Ein Konto
+   ohne Verein findet hier den Einstieg: Verein gründen oder sich aufnehmen
+   lassen (#587). */
 export default async function TeamsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ weg?: string }>;
+  searchParams: Promise<{ weg?: string; verein_weg?: string }>;
 }) {
   const sp = await searchParams;
   const supabase = await createClient();
@@ -30,12 +33,24 @@ export default async function TeamsPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [teams, verein] = await Promise.all([getMeineTeams(), getMeinVerein()]);
+  // Wirft bei einem Datenbankfehler, statt «kein Verein» zu behaupten: Einem
+  // Mitglied darf nie «Verein gründen» angeboten werden, nur weil das Lesen
+  // gescheitert ist.
+  const [teams, verein] = await Promise.all([getMeineTeams(), getMeinVereinOderWurf()]);
+
+  if (!verein)
+    return (
+      <Seitenrahmen breite="5xl" krumen={[{ label: "Teams" }]}>
+        {/* Die Verwaltung hat den Verein gelöscht (#587 PC 4); die Action leitet mit dem Namen hierher. */}
+        {sp.verein_weg && <Flash message={vereinGeloeschtText(sp.verein_weg.slice(0, VEREIN_NAME_MAX))} param="verein_weg" />}
+        <OhneVereinStart email={user.email ?? null} />
+      </Seitenrahmen>
+    );
 
   return (
     <Seitenrahmen
       breite="voll"
-      krumen={verein ? [{ label: verein.name, href: "/verein" }, { label: "Teams" }] : [{ label: "Teams" }]}
+      krumen={[{ label: verein.name, href: "/verein" }, { label: "Teams" }]}
     >
       {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
       <h1 className="sr-only">Teams</h1>
@@ -43,16 +58,15 @@ export default async function TeamsPage({
       {sp.weg && (
         <Flash message="Dieses Team besteht nicht mehr - die Vereinsverwaltung hat es aufgelöst." param="weg" />
       )}
-      {/* Teams legt die Vereinsverwaltung an; ein Konto ohne Verein sieht in
-          Story #577 denselben Hinweis (der eigene kommt mit Story 11, #587).
-          Der Verwaltung selbst sagt er nichts Neues. */}
-      {!verein?.istVerwaltung && (
+      {/* Teams legt die Vereinsverwaltung an. Der Verwaltung selbst sagt der
+          Hinweis nichts Neues. */}
+      {!verein.istVerwaltung && (
         <SectionMessage appearance="information" className="mb-4">
           {TEAM_NUR_VERWALTUNG}
         </SectionMessage>
       )}
       {teams.length === 0 ? (
-        verein?.istVerwaltung ? (
+        verein.istVerwaltung ? (
           <Leerzustand
             icon={Shield}
             titel="Noch kein Team"

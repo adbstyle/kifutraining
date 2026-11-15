@@ -595,7 +595,7 @@ function TeamAufloesen({ offen, onClose, team }: { offen: boolean; onClose: () =
             Vereinsverwaltung.
           </p>
         )}
-        <NamenBestaetigen name={team.name} wert={eingabe} onChange={setEingabe} label="Teamname" fehler={fehler} />
+        <NamenBestaetigen name={team.name} wert={eingabe} onChange={setEingabe} label="Teamname" fehler={fehler} gesperrt={pending} />
       </form>
     </Dialog>
   );

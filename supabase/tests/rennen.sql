@@ -7,7 +7,9 @@
 -- Termin; Story 6: Löschen, Erfassen, Link und Grenze 1000 am Verein-Ort;
 -- Story 7: Link über mehrere Teams, Abholen gegen Erneuern; Story 8:
 -- Schnuppern in genau einem Team; Story 9: Import in den Verein gegen
--- Erfassen, Löschen, Aufnehmen und einen zweiten Import).
+-- Erfassen, Löschen, Aufnehmen und einen zweiten Import; Story 11: Verein
+-- gründen und löschen gegen Aufnehmen, Termine, Umbenennen und Konto
+-- löschen, Termin-RPCs mit Termin-Training gegen Löschen).
 --
 -- Muster für «gleichzeitig, genau eines gelingt» (spätere Stories bauen ihre
 -- Fälle als weitere Blöcke nach diesem Vorbild):
@@ -1716,6 +1718,434 @@ delete from spieler where verein_id = (select id from rennen_test.ids where name
 delete from vereine where id = (select id from rennen_test.ids where name = 'i_verein');
 delete from auth.users where id in (select id from rennen_test.ids where name in ('i_va', 'i_vb', 'i_m'));
 
+-- ── Fälle: Verein gründen und löschen (Story 11 #587 AK 9, 14, AP §4.1, Testfälle 15, 20) ──
+-- Je Fall ein eigener Verein «Rennen-s11-…» (rennen_test.s11_bauen: Verwaltung
+-- VA und VB, Trainer:in M im Team mit Termin und Spieler:in, Konto Q ohne
+-- Verein; mit p_einzig nur VA und das Team ohne Mitglied) und eigene Konten
+-- ohne Verein. Über die RPCs wie PostgREST, mit rennen_test.verschraenkt; B
+-- wartet jeweils an einer Beratungssperre (`advisory`). Kein Fall endet in
+-- 40P01.
+-- (g1) Gründen gegen Gründen derselben Person: B SCHON_IM_VEREIN, ein Verein.
+-- (g2) Aufnahme in eine Verwaltung gegen Gründen: B SCHON_IM_VEREIN.
+-- (g3) Gründen gegen Aufnahme ins Team durch die Verwaltung bzw. (g4) am
+--      Team-Ort: B anderer_verein (ohne Verein zu nennen).
+-- (l1) Löschen gegen Aufnahme in die Verwaltung: VEREIN_NICHT_GEFUNDEN.
+-- (l2) Löschen gegen Aufnahme am Team-Ort: «not a member of this team».
+-- (l3) Löschen gegen Kader am Termin: TERMIN_NICHT_GEFUNDEN.
+-- (l4) Kader am Termin bzw. (l5) Abmelden über den Link gegen Löschen: Das
+--      Löschen wartet an der Teamsperre und löscht danach.
+-- (l6) Löschen gegen Löschen: VEREIN_NICHT_GEFUNDEN.
+-- (l7) Umbenennen gegen Löschen (AK 14): vereinsname_falsch mit neuem Namen.
+-- (l8) Löschen gegen Löschen einer Spieler:in: SPIELER_NICHT_GEFUNDEN.
+-- (k1) Aufnahme in die Verwaltung gegen Konto löschen der einzigen Person
+--      mit Vereinsnamen (AK 14): letzte_verwaltung, Verein und Konto bleiben,
+--      obwohl sie danach nicht mehr letzte Verwaltung ist.
+-- (k2) Konto löschen der einzigen Person gegen Aufnahme ins Team:
+--      VEREIN_NICHT_GEFUNDEN, Verein weg, das Konto ohne Verein.
+-- (k3) Umbenennen gegen Konto löschen der einzigen Person: vereinsname_falsch.
+-- Ein harter Abbruch lässt Vereine «Rennen-s11-…» bzw. «Gründung …» samt
+-- Teams und die Konten «rennen-s11-…@rennen.test» stehen (von Hand löschen).
+
+select set_config('rennen.fehler_gruenden', '', false) is not null as rennen_fehler_gruenden_leer \gset
+
+begin;
+create function rennen_test.s11_bauen(p text, p_einzig boolean default false) returns void
+language plpgsql as $f$
+begin
+  insert into rennen_test.ids (name) select 's11_' || p || x
+    from unnest(array['_verein', '_va', '_vb', '_m', '_q', '_team', '_termin', '_sp']) x;
+  insert into auth.users (id, email, email_confirmed_at)
+  select id, 'rennen-' || replace(name, '_', '-') || '@rennen.test', now() from rennen_test.ids
+   where name in ('s11_' || p || '_va', 's11_' || p || '_q')
+      or (not p_einzig and name in ('s11_' || p || '_vb', 's11_' || p || '_m'));
+  insert into vereine (id, name) values (rennen_test.z('s11_' || p || '_verein'), 'Rennen-s11-' || p);
+  insert into verein_verwaltung (verein_id, user_id) values (rennen_test.z('s11_' || p || '_verein'), rennen_test.z('s11_' || p || '_va'));
+  if not p_einzig then
+    insert into verein_verwaltung (verein_id, user_id) values (rennen_test.z('s11_' || p || '_verein'), rennen_test.z('s11_' || p || '_vb'));
+  end if;
+  insert into teams (id, name, verein_id) values (rennen_test.z('s11_' || p || '_team'), 'Team ' || p, rennen_test.z('s11_' || p || '_verein'));
+  if not p_einzig then
+    insert into team_members (team_id, user_id) values (rennen_test.z('s11_' || p || '_team'), rennen_test.z('s11_' || p || '_m'));
+  end if;
+  insert into training_termine (id, team_id, datum, beginn, ende) values
+    (rennen_test.z('s11_' || p || '_termin'), rennen_test.z('s11_' || p || '_team'), current_date + 7, '18:00', '19:30');
+  set local session_replication_role = replica;
+  insert into spieler (id, team_id, verein_id, vorname, nachname, jahrgang) values
+    (rennen_test.z('s11_' || p || '_sp'), rennen_test.z('s11_' || p || '_team'), rennen_test.z('s11_' || p || '_verein'),
+     'Rena', 'Rennen', 2015);
+  insert into team_spieler (team_id, spieler_id, verein_id) values
+    (rennen_test.z('s11_' || p || '_team'), rennen_test.z('s11_' || p || '_sp'), rennen_test.z('s11_' || p || '_verein'));
+  set local session_replication_role = origin;
+end $f$;
+-- Konten ohne Verein für die Gründungen.
+insert into rennen_test.ids (name) values ('s11_gp'), ('s11_gr'), ('s11_gs'), ('s11_gt');
+insert into auth.users (id, email, email_confirmed_at)
+select id, 'rennen-' || replace(name, '_', '-') || '@rennen.test', now() from rennen_test.ids
+ where name in ('s11_gp', 's11_gr', 's11_gs', 's11_gt');
+do $$
+begin
+  perform rennen_test.s11_bauen(x) from unnest(array['g2', 'l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8']) x;
+  perform rennen_test.s11_bauen(x, true) from unnest(array['k1', 'k2', 'k3']) x;
+end $$;
+commit;
+
+do $$
+declare
+  ziel   text := format(
+    'host=%s port=%s dbname=%s user=postgres password=postgres connect_timeout=5 options=''-c statement_timeout=30s''',
+    coalesce(host(inet_server_addr()), '127.0.0.1'), inet_server_port(), current_database());
+  ergebnis text;
+  f text;
+begin
+  -- (g1) Gründen gegen Gründen derselben Person.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_gp'), $q$select verein_gruenden('Gründung A', true)::text$q$,
+    rennen_test.z('s11_gp'), $q$select verein_gruenden('Gründung B', true)::text$q$, 'advisory');
+  if position('SCHON_IM_VEREIN' in ergebnis) = 0 then
+    raise exception '(g1) B hätte SCHON_IM_VEREIN melden müssen: %', ergebnis;
+  end if;
+  if (select array_agg(v.name) from verein_verwaltung w join vereine v on v.id = w.verein_id
+       where w.user_id = rennen_test.z('s11_gp')) is distinct from array['Gründung A']
+     or exists (select 1 from vereine where name = 'Gründung B') then
+    raise exception '(g1) nicht genau ein Verein «Gründung A»';
+  end if;
+
+  -- (g2) Aufnahme in die Verwaltung gegen Gründen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_g2_va'), format($q$select verein_verwaltung_aufnehmen(%L, 'rennen-s11-gr@rennen.test')::text$q$,
+                                       rennen_test.z('s11_g2_verein')),
+    rennen_test.z('s11_gr'), $q$select verein_gruenden('Gründung R', true)::text$q$, 'advisory');
+  if position('SCHON_IM_VEREIN' in ergebnis) = 0 then
+    raise exception '(g2) B hätte SCHON_IM_VEREIN melden müssen: %', ergebnis;
+  end if;
+  if person_verein(rennen_test.z('s11_gr')) is distinct from rennen_test.z('s11_g2_verein')
+     or exists (select 1 from vereine where name = 'Gründung R') then
+    raise exception '(g2) Person nicht genau im aufnehmenden Verein';
+  end if;
+
+  -- (g3) Gründen gegen Aufnahme ins Team durch die Verwaltung.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_gs'), $q$select verein_gruenden('Gründung S', true)::text$q$,
+    rennen_test.z('s11_g2_va'), format($q$select verein_team_aufnehmen(%L, 'rennen-s11-gs@rennen.test')::text$q$,
+                                       rennen_test.z('s11_g2_team')), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"status": "anderer_verein"}' then
+    raise exception '(g3) B hätte anderer_verein melden müssen: %', ergebnis;
+  end if;
+  if (select v.name from vereine v where v.id = person_verein(rennen_test.z('s11_gs'))) is distinct from 'Gründung S' then
+    raise exception '(g3) Person nicht genau im gegründeten Verein';
+  end if;
+
+  -- (g4) Gründen gegen Aufnahme am Team-Ort.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_gt'), $q$select verein_gruenden('Gründung T', true)::text$q$,
+    rennen_test.z('s11_g2_m'), format($q$select add_team_member(%L, 'rennen-s11-gt@rennen.test')::text$q$,
+                                      rennen_test.z('s11_g2_team')), 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"status": "anderer_verein"}' then
+    raise exception '(g4) B hätte anderer_verein melden müssen: %', ergebnis;
+  end if;
+  if (select v.name from vereine v where v.id = person_verein(rennen_test.z('s11_gt'))) is distinct from 'Gründung T' then
+    raise exception '(g4) Person nicht genau im gegründeten Verein';
+  end if;
+
+  -- (l1) Löschen gegen Aufnahme in die Verwaltung.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_l1_va'), format($q$select verein_loeschen(%L, 'Rennen-s11-l1')::text$q$, rennen_test.z('s11_l1_verein')),
+    rennen_test.z('s11_l1_vb'), format($q$select verein_verwaltung_aufnehmen(%L, 'rennen-s11-l1-q@rennen.test')::text$q$,
+                                       rennen_test.z('s11_l1_verein')), 'advisory');
+  if position('VEREIN_NICHT_GEFUNDEN' in ergebnis) = 0 then
+    raise exception '(l1) B hätte VEREIN_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+  if exists (select 1 from vereine where id = rennen_test.z('s11_l1_verein')) or person_verein(rennen_test.z('s11_l1_q')) is not null then
+    raise exception '(l1) Verein nicht gelöscht oder Q in einem Verein';
+  end if;
+
+  -- (l2) Löschen gegen Aufnahme am Team-Ort.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_l2_va'), format($q$select verein_loeschen(%L, 'Rennen-s11-l2')::text$q$, rennen_test.z('s11_l2_verein')),
+    rennen_test.z('s11_l2_m'), format($q$select add_team_member(%L, 'rennen-s11-l2-q@rennen.test')::text$q$,
+                                      rennen_test.z('s11_l2_team')), 'advisory');
+  if position('not a member of this team' in ergebnis) = 0 then
+    raise exception '(l2) B hätte «not a member of this team» melden müssen: %', ergebnis;
+  end if;
+  if exists (select 1 from vereine where id = rennen_test.z('s11_l2_verein')) or person_verein(rennen_test.z('s11_l2_q')) is not null then
+    raise exception '(l2) Verein nicht gelöscht oder Q in einem Verein';
+  end if;
+
+  -- (l3) Löschen gegen Kader am Termin.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_l3_va'), format($q$select verein_loeschen(%L, 'Rennen-s11-l3')::text$q$, rennen_test.z('s11_l3_verein')),
+    rennen_test.z('s11_l3_m'), format($q$select termin_kader_setzen(%L, '{}')::text$q$, rennen_test.z('s11_l3_termin')), 'advisory');
+  if position('TERMIN_NICHT_GEFUNDEN' in ergebnis) = 0 then
+    raise exception '(l3) B hätte TERMIN_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+
+  -- (l4) Kader am Termin gegen Löschen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_l4_m'), format($q$select termin_kader_setzen(%L, '{}')::text$q$, rennen_test.z('s11_l4_termin')),
+    rennen_test.z('s11_l4_va'), format($q$select verein_loeschen(%L, 'Rennen-s11-l4')::text$q$, rennen_test.z('s11_l4_verein')),
+    'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'geloescht' then
+    raise exception '(l4) Löschen nach dem Kader am Termin: %', ergebnis;
+  end if;
+
+  -- (l5) Abmelden über den Link gegen Löschen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_l5_m'), format($q$select spieler_link_abmelden(%L, %L, true, null, null)::text$q$,
+                                      (select link_token from spieler where id = rennen_test.z('s11_l5_sp')), rennen_test.z('s11_l5_termin')),
+    rennen_test.z('s11_l5_va'), format($q$select verein_loeschen(%L, 'Rennen-s11-l5')::text$q$, rennen_test.z('s11_l5_verein')),
+    'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'geloescht' then
+    raise exception '(l5) Löschen nach dem Abmelden: %', ergebnis;
+  end if;
+  if exists (select 1 from vereine where id in (rennen_test.z('s11_l3_verein'), rennen_test.z('s11_l4_verein'), rennen_test.z('s11_l5_verein')))
+     or exists (select 1 from training_termine where id in (rennen_test.z('s11_l3_termin'), rennen_test.z('s11_l4_termin'),
+                                                             rennen_test.z('s11_l5_termin'))) then
+    raise exception '(l3–l5) Verein oder Termin nicht gelöscht';
+  end if;
+
+  -- (l6) Löschen gegen Löschen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_l6_va'), format($q$select verein_loeschen(%L, 'Rennen-s11-l6')::text$q$, rennen_test.z('s11_l6_verein')),
+    rennen_test.z('s11_l6_vb'), format($q$select verein_loeschen(%L, 'Rennen-s11-l6')::text$q$, rennen_test.z('s11_l6_verein')),
+    'advisory');
+  if position('VEREIN_NICHT_GEFUNDEN' in ergebnis) = 0 then
+    raise exception '(l6) B hätte VEREIN_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+
+  -- (l7) Umbenennen gegen Löschen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_l7_va'), format($q$select verein_umbenennen(%L, 'Rennen-s11-l7-neu')::text$q$, rennen_test.z('s11_l7_verein')),
+    rennen_test.z('s11_l7_vb'), format($q$select verein_loeschen(%L, 'Rennen-s11-l7')::text$q$, rennen_test.z('s11_l7_verein')),
+    'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"status": "vereinsname_falsch", "name": "Rennen-s11-l7-neu"}' then
+    raise exception '(l7) B hätte vereinsname_falsch mit dem neuen Namen melden müssen: %', ergebnis;
+  end if;
+  if not exists (select 1 from teams where id = rennen_test.z('s11_l7_team')) then
+    raise exception '(l7) trotz vereinsname_falsch gelöscht';
+  end if;
+
+  -- (l8) Löschen gegen Löschen einer Spieler:in.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_l8_va'), format($q$select verein_loeschen(%L, 'Rennen-s11-l8')::text$q$, rennen_test.z('s11_l8_verein')),
+    rennen_test.z('s11_l8_vb'), format($q$select verein_spieler_entfernen(%L)::text$q$, rennen_test.z('s11_l8_sp')), 'advisory');
+  if position('SPIELER_NICHT_GEFUNDEN' in ergebnis) = 0 then
+    raise exception '(l8) B hätte SPIELER_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+
+  -- (k1) Aufnahme gegen Konto löschen der einzigen Person.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_k1_va'), format($q$select verein_verwaltung_aufnehmen(%L, 'rennen-s11-k1-q@rennen.test')::text$q$,
+                                       rennen_test.z('s11_k1_verein')),
+    rennen_test.z('s11_k1_va'), $q$select delete_account('Rennen-s11-k1')::text$q$, 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"status": "letzte_verwaltung"}' then
+    raise exception '(k1) B hätte letzte_verwaltung melden müssen: %', ergebnis;
+  end if;
+  if not exists (select 1 from teams where id = rennen_test.z('s11_k1_team'))
+     or (select count(*) from verein_verwaltung where verein_id = rennen_test.z('s11_k1_verein')) <> 2 then
+    raise exception '(k1) Verein oder Verwaltung verändert';
+  end if;
+
+  -- (k2) Konto löschen der einzigen Person gegen Aufnahme ins Team.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_k2_va'), $q$select delete_account('Rennen-s11-k2')::text$q$,
+    rennen_test.z('s11_k2_va'), format($q$select verein_team_aufnehmen(%L, 'rennen-s11-k2-q@rennen.test')::text$q$,
+                                       rennen_test.z('s11_k2_team')), 'advisory');
+  if position('VEREIN_NICHT_GEFUNDEN' in ergebnis) = 0 then
+    raise exception '(k2) B hätte VEREIN_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+  if exists (select 1 from vereine where id = rennen_test.z('s11_k2_verein')) or person_verein(rennen_test.z('s11_k2_q')) is not null then
+    raise exception '(k2) Verein nicht gelöscht oder Q in einem Verein';
+  end if;
+
+  -- (k3) Umbenennen gegen Konto löschen der einzigen Person.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_k3_va'), format($q$select verein_umbenennen(%L, 'Rennen-s11-k3-neu')::text$q$, rennen_test.z('s11_k3_verein')),
+    rennen_test.z('s11_k3_va'), $q$select delete_account('Rennen-s11-k3')::text$q$, 'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"status": "vereinsname_falsch", "name": "Rennen-s11-k3-neu"}' then
+    raise exception '(k3) B hätte vereinsname_falsch mit dem neuen Namen melden müssen: %', ergebnis;
+  end if;
+  if not exists (select 1 from teams where id = rennen_test.z('s11_k3_team')) then
+    raise exception '(k3) trotz vereinsname_falsch gelöscht';
+  end if;
+exception when others or query_canceled then
+  perform set_config('rennen.fehler_gruenden', sqlerrm, false);
+end $$;
+
+-- ── Fälle: Termin-RPCs gegen Löschen des Vereins (Story 11 #587, Fix-Lauf; AP §4.1) ──
+-- termin_entfernen und termin_training_setzen sperrten zuerst die Termin-Zeile
+-- ohne Teamsperre und fassten danach das Termin-Training an (Trigger
+-- termin_training_aufraeumen); die Kaskade des Löschens nimmt erst die
+-- Trainings (FK set null auf die Termin-Zeile), dann die Termine. Hielt A die
+-- Termin-Zeile wie der erste Schritt der alten Fassung und löschte B den
+-- Verein, endeten beide RPCs in 40P01 («deadlock detected … while deleting
+-- tuple in relation training_termine»). Jetzt nehmen beide zuerst die
+-- Teamsperre (Team → Termin). Je Fall ein Verein aus rennen_test.s11_bauen
+-- mit Termin-Training am Termin:
+-- (t1) termin_entfernen gegen Löschen: B wartet an der Teamsperre und löscht.
+-- (t2) Löschen gegen termin_training_setzen (Lösen): TERMIN_NICHT_GEFUNDEN.
+-- (t3) A hält nur die Teamsperre; termin_training_setzen (Lösen) und
+--      termin_entfernen warten daran, ohne die Termin-Zeile zu halten (A sperrt
+--      sie währenddessen mit `for update nowait`).
+-- (t4) termin_training_setzen (Lösen) gegen Löschen: B löscht danach.
+-- Ein harter Abbruch lässt Vereine «Rennen-s11-t…» stehen (wie oben).
+select set_config('rennen.fehler_termin_loeschen', '', false) is not null as rennen_fehler_termin_loeschen_leer \gset
+
+begin;
+do $$
+declare
+  x text;
+begin
+  foreach x in array array['t1', 't2', 't3', 't4'] loop
+    perform rennen_test.s11_bauen(x);
+    insert into rennen_test.ids (name) values ('s11_' || x || '_ttr');
+    insert into trainings (id, name, team_id, visibility, altersstufe, stufen, termin_training) values
+      (rennen_test.z('s11_' || x || '_ttr'), 'Termin-Training ' || x, rennen_test.z('s11_' || x || '_team'), 'private',
+       'kinderfussball', array['F'], true);
+    update training_termine set training_id = rennen_test.z('s11_' || x || '_ttr') where id = rennen_test.z('s11_' || x || '_termin');
+  end loop;
+end $$;
+commit;
+
+do $$
+declare
+  ziel   text := format(
+    'host=%s port=%s dbname=%s user=postgres password=postgres connect_timeout=5 options=''-c statement_timeout=30s''',
+    coalesce(host(inet_server_addr()), '127.0.0.1'), inet_server_port(), current_database());
+  ergebnis text;
+begin
+  -- (t1) termin_entfernen gegen Löschen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_t1_m'), format('select termin_entfernen(%L)::text', rennen_test.z('s11_t1_termin')),
+    rennen_test.z('s11_t1_va'), format($q$select verein_loeschen(%L, 'Rennen-s11-t1')::text$q$, rennen_test.z('s11_t1_verein')),
+    'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'geloescht' then
+    raise exception '(t1) Löschen nach termin_entfernen: %', ergebnis;
+  end if;
+
+  -- (t2) Löschen gegen termin_training_setzen (Lösen).
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_t2_va'), format($q$select verein_loeschen(%L, 'Rennen-s11-t2')::text$q$, rennen_test.z('s11_t2_verein')),
+    rennen_test.z('s11_t2_m'), format('select termin_training_setzen(%L, null)::text', rennen_test.z('s11_t2_termin')),
+    'advisory');
+  if position('TERMIN_NICHT_GEFUNDEN' in ergebnis) = 0 then
+    raise exception '(t2) B hätte TERMIN_NICHT_GEFUNDEN melden müssen: %', ergebnis;
+  end if;
+
+  -- (t3) Team vor Termin: Lösen, dann Entfernen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_t3_m'), format('select rennen_test.nur_teamsperre(%L)', rennen_test.z('s11_t3_team')),
+    rennen_test.z('s11_t3_m'), format('select termin_training_setzen(%L, null)::text', rennen_test.z('s11_t3_termin')),
+    'advisory', format('select rennen_test.termin_frei(%L)', rennen_test.z('s11_t3_termin')));
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'bisher' <> rennen_test.z('s11_t3_ttr')::text then
+    raise exception '(t3) termin_training_setzen nach der Teamsperre: %', ergebnis;
+  end if;
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_t3_m'), format('select rennen_test.nur_teamsperre(%L)', rennen_test.z('s11_t3_team')),
+    rennen_test.z('s11_t3_m'), format('select termin_entfernen(%L)::text', rennen_test.z('s11_t3_termin')),
+    'advisory', format('select rennen_test.termin_frei(%L)', rennen_test.z('s11_t3_termin')));
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'team' <> rennen_test.z('s11_t3_team')::text then
+    raise exception '(t3) termin_entfernen nach der Teamsperre: %', ergebnis;
+  end if;
+  if exists (select 1 from trainings where id = rennen_test.z('s11_t3_ttr'))
+     or exists (select 1 from training_termine where id = rennen_test.z('s11_t3_termin')) then
+    raise exception '(t3) Termin-Training oder Termin nicht weg';
+  end if;
+
+  -- (t4) termin_training_setzen (Lösen) gegen Löschen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_t4_m'), format('select termin_training_setzen(%L, null)::text', rennen_test.z('s11_t4_termin')),
+    rennen_test.z('s11_t4_va'), format($q$select verein_loeschen(%L, 'Rennen-s11-t4')::text$q$, rennen_test.z('s11_t4_verein')),
+    'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'geloescht' then
+    raise exception '(t4) Löschen nach termin_training_setzen: %', ergebnis;
+  end if;
+  if exists (select 1 from vereine where id in (rennen_test.z('s11_t1_verein'), rennen_test.z('s11_t2_verein'), rennen_test.z('s11_t4_verein')))
+     or exists (select 1 from trainings where id in (rennen_test.z('s11_t1_ttr'), rennen_test.z('s11_t2_ttr'), rennen_test.z('s11_t4_ttr'))) then
+    raise exception '(t1, t2, t4) Verein oder Termin-Training nicht gelöscht';
+  end if;
+exception when others or query_canceled then
+  perform set_config('rennen.fehler_termin_loeschen', sqlerrm, false);
+end $$;
+
+-- ── Fall: Serie entfernen gegen Löschen des Vereins (Story 11 #587, Schlusskorrektur) ──
+-- terminserie_entfernen (über terminserie_entfernen_rechnen) sperrte die
+-- Termin-Zeilen der Serie ohne Teamsperre und löschte danach die Termine
+-- (Trigger termin_training_aufraeumen löscht das Termin-Training): derselbe
+-- Mechanismus wie bei termin_entfernen (t1). Jetzt zuerst die Teamsperre.
+-- Je Fall ein Verein aus rennen_test.s11_bauen, Termin in einer Serie, mit
+-- Termin-Training:
+-- (t5) terminserie_entfernen gegen Löschen: B wartet an der Teamsperre und löscht.
+-- (t5b) A hält nur die Teamsperre; terminserie_entfernen wartet daran, ohne
+--      eine Termin-Zeile zu halten (A sperrt sie mit `for update nowait`).
+select set_config('rennen.fehler_serie_loeschen', '', false) is not null as rennen_fehler_serie_loeschen_leer \gset
+
+begin;
+do $$
+declare
+  x text;
+  v_tag date := current_date + 7;
+begin
+  foreach x in array array['t5', 't5b'] loop
+    perform rennen_test.s11_bauen(x);
+    insert into rennen_test.ids (name) values ('s11_' || x || '_ttr'), ('s11_' || x || '_serie');
+    insert into termin_serien (id, team_id, wochentage, beginn_datum, end_datum, beginn, ende) values
+      (rennen_test.z('s11_' || x || '_serie'), rennen_test.z('s11_' || x || '_team'),
+       array[extract(isodow from v_tag)::smallint], v_tag, v_tag, '18:00', '19:30');
+    insert into trainings (id, name, team_id, visibility, altersstufe, stufen, termin_training) values
+      (rennen_test.z('s11_' || x || '_ttr'), 'Termin-Training ' || x, rennen_test.z('s11_' || x || '_team'), 'private',
+       'kinderfussball', array['F'], true);
+    update training_termine
+       set training_id = rennen_test.z('s11_' || x || '_ttr'), serie_id = rennen_test.z('s11_' || x || '_serie'), serien_tag = v_tag
+     where id = rennen_test.z('s11_' || x || '_termin');
+  end loop;
+end $$;
+commit;
+
+do $$
+declare
+  ziel   text := format(
+    'host=%s port=%s dbname=%s user=postgres password=postgres connect_timeout=5 options=''-c statement_timeout=30s''',
+    coalesce(host(inet_server_addr()), '127.0.0.1'), inet_server_port(), current_database());
+  ergebnis text;
+begin
+  -- (t5) terminserie_entfernen gegen Löschen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_t5_m'), format($q$select terminserie_entfernen(%L, 'alle')::text$q$, rennen_test.z('s11_t5_termin')),
+    rennen_test.z('s11_t5_va'), format($q$select verein_loeschen(%L, 'Rennen-s11-t5')::text$q$, rennen_test.z('s11_t5_verein')),
+    'advisory');
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'geloescht' then
+    raise exception '(t5) Löschen nach terminserie_entfernen: %', ergebnis;
+  end if;
+  if exists (select 1 from vereine where id = rennen_test.z('s11_t5_verein'))
+     or exists (select 1 from trainings where id = rennen_test.z('s11_t5_ttr')) then
+    raise exception '(t5) Verein oder Termin-Training nicht gelöscht';
+  end if;
+
+  -- (t5b) Team vor Termin: Serie entfernen wartet an der Teamsperre.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    rennen_test.z('s11_t5b_m'), format('select rennen_test.nur_teamsperre(%L)', rennen_test.z('s11_t5b_team')),
+    rennen_test.z('s11_t5b_m'), format($q$select terminserie_entfernen(%L, 'alle')::text$q$, rennen_test.z('s11_t5b_termin')),
+    'advisory', format('select rennen_test.termin_frei(%L)', rennen_test.z('s11_t5b_termin')));
+  if left(ergebnis, 7) = 'FEHLER:' or (ergebnis::jsonb ->> 'entfallend_anzahl')::int <> 1 then
+    raise exception '(t5b) terminserie_entfernen nach der Teamsperre: %', ergebnis;
+  end if;
+  if exists (select 1 from trainings where id = rennen_test.z('s11_t5b_ttr'))
+     or exists (select 1 from training_termine where id = rennen_test.z('s11_t5b_termin'))
+     or exists (select 1 from termin_serien where id = rennen_test.z('s11_t5b_serie')) then
+    raise exception '(t5b) Termin-Training, Termin oder Serie nicht weg';
+  end if;
+exception when others or query_canceled then
+  perform set_config('rennen.fehler_serie_loeschen', sqlerrm, false);
+end $$;
+
+delete from teams where verein_id in (select id from rennen_test.ids where name like 's11\_%')
+   or verein_id in (select verein_id from verein_verwaltung where user_id in (select id from rennen_test.ids where name like 's11\_%'));
+delete from spieler where verein_id in (select id from rennen_test.ids where name like 's11\_%');
+delete from vereine where id in (select id from rennen_test.ids where name like 's11\_%')
+   or id in (select verein_id from verein_verwaltung where user_id in (select id from rennen_test.ids where name like 's11\_%'));
+delete from trainer_suchversuche where user_id in (select id from rennen_test.ids where name like 's11\_%');
+delete from auth.users where id in (select id from rennen_test.ids where name like 's11\_%');
+
 -- Aufräumen, auch nach einem Fehler.
 drop schema rennen_test cascade;
 \if :dblink_vorher
@@ -1754,5 +2184,14 @@ begin
   end if;
   if current_setting('rennen.fehler_import') <> '' then
     raise exception 'Rennen Import in den Verein: %', current_setting('rennen.fehler_import');
+  end if;
+  if current_setting('rennen.fehler_gruenden') <> '' then
+    raise exception 'Rennen Verein gründen und löschen: %', current_setting('rennen.fehler_gruenden');
+  end if;
+  if current_setting('rennen.fehler_termin_loeschen') <> '' then
+    raise exception 'Rennen Termin-RPCs gegen Löschen: %', current_setting('rennen.fehler_termin_loeschen');
+  end if;
+  if current_setting('rennen.fehler_serie_loeschen') <> '' then
+    raise exception 'Rennen Serie entfernen gegen Löschen: %', current_setting('rennen.fehler_serie_loeschen');
   end if;
 end $$;

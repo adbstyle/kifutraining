@@ -10,12 +10,14 @@ import {
   entferneAusVerwaltung,
   erneuereSpielerLinkImVerein,
   findePerson,
+  gruendeVerein,
   holeSpielerLinkImVerein,
   importiereInVerein,
   ladeSpielerTeamsImVerein,
   legeSpielerImVereinAn,
   legeTeamAn,
   loescheSpielerImVerein,
+  loescheVerein,
   loeseTeamAuf,
   nimmInVerwaltungAuf,
   nimmInsTeamAuf,
@@ -31,7 +33,7 @@ import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
 import type { FehlerArt, KernFehler } from "@/lib/kern/ergebnis";
 import { spielerLinkUrl, type SpielerEingabe } from "@/lib/spieler";
 import type { ImportAusgang, ImportEintrag, ImportErwartet, ImportVorschau } from "@/lib/spieler-import";
-import type { PersonSchritt } from "@/lib/verein";
+import { vereinHeisstInzwischenText, type PersonSchritt } from "@/lib/verein";
 
 /**
  * Der Spielerbestand des Vereins (Story #579) — dünne Adapter über den
@@ -76,6 +78,23 @@ function schrittFehler(r: KernFehler): PersonSchritt {
   return r.art === "nicht_gefunden" && (r.feld === "team_id" || r.feld === "verein_id")
     ? { ok: false, meldung: r.meldung, zielWeg: true }
     : { ok: false, meldung: r.meldung };
+}
+
+/** Einen Verein gründen (#587): Die Person wird seine erste Verwaltung.
+ *  `bestaetigt`: beide Häkchen des Dialogs zusammen; die Datenebene verlangt
+ *  sie selbst. Gelingt es, leitet die Action selbst in den Bereich «Verein»
+ *  um, nach dem Neurendern der Seitenleiste (sie kennt den Verein jetzt) —
+ *  eine Weiterleitung im Client träfe noch die Seite ohne Verein. Gehört die
+ *  Person inzwischen einem Verein an, meldet `feld: "verein_id"` die überholte
+ *  Seite; der Aufrufer lädt sie neu. */
+export async function gruendeVereinAktion(name: string, bestaetigt: boolean): Promise<Fehler> {
+  const a = await angemeldet();
+  if (!a) return keinKonto;
+  const r = await gruendeVerein(a.supabase, a.userId, { name, bestaetigt });
+  if (!r.ok) return { ok: false, error: r.meldung, art: r.art, feld: r.feld };
+  revalidiereVerein();
+  revalidiereMitgliedschaften();
+  redirect("/verein");
 }
 
 /** Ein Team anlegen; die Verwaltung wird dabei nicht Trainer:in. */
@@ -148,6 +167,39 @@ export async function loeseTeamAufAktion(
   revalidiereMitgliedschaften();
   await raeumeVerwaisteBilder(eigeneBildPfade(r.wert.bilder));
   redirect(`/verein?aufgeloest=${encodeURIComponent(r.wert.name)}`);
+}
+
+/** Den Verein löschen, nur mit dem bestätigten Vereinsnamen (#587 AK 10, 11).
+ *  Danach räumt die Action die Bilder aus dem Speicher: Mit dem Verein erlischt
+ *  das Recht daran, darum der Service-Role-Nachlauf (gestückelt). `feld:
+ *  "vereinsname"` meldet einen Namen, der nicht mehr stimmt, samt dem
+ *  aktuellen (`aktuellerName`); die offene Seite lädt dann neu.
+ *
+ *  Gelingt es, leitet die Action selbst nach `/teams` um, mit dem Namen aus der
+ *  Antwort der Datenebene für die Meldung: Die Seite der Verwaltung gibt es
+ *  danach nicht mehr, und ihre Neuberechnung in der Antwort leitete sonst
+ *  gegen eine Weiterleitung im Client um (wie beim Auflösen eines Teams). */
+export async function loescheVereinAktion(
+  vereinId: string,
+  vereinsname: string,
+): Promise<Fehler & { aktuellerName?: string }> {
+  const a = await angemeldet();
+  if (!a) return keinKonto;
+  const r = await loescheVerein(a.supabase, a.userId, { vereinId, vereinsname });
+  if (!r.ok) return { ok: false, error: r.meldung, art: r.art, feld: r.feld };
+  if (r.wert.status === "vereinsname_falsch") {
+    revalidiereVerein();
+    return {
+      ok: false,
+      error: vereinHeisstInzwischenText(r.wert.name, "verein"),
+      feld: "vereinsname",
+      aktuellerName: r.wert.name,
+    };
+  }
+  revalidiereVerein();
+  revalidiereMitgliedschaften();
+  await raeumeVerwaisteBilder(eigeneBildPfade(r.wert.bilder));
+  redirect(`/teams?verein_weg=${encodeURIComponent(r.wert.name)}`);
 }
 
 /** Nachsehen, wer hinter der Adresse steckt — mit `teamId` für ein Team, ohne

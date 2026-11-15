@@ -6,10 +6,14 @@ import { TextField } from "./TextField";
 
 /** Stimmt die Eingabe mit dem verlangten Namen überein? Genau, mit Gross- und
  *  Kleinschreibung; Leerzeichen am Rand und die Unicode-Normalform zählen nicht
- *  (#480 AK 6, 7). Dieselbe Regel wiederholt die Datenebene beim Ausführen —
- *  die Oberfläche gibt den Knopf nur frei, entscheidet aber nichts. */
+ *  (#480 AK 6, 7) — auf beiden Seiten: Auch ein gespeicherter Name mit Rand
+ *  (Bestand) lässt sich so bestätigen. Ein Name, der ohne Rand leer ist (nur
+ *  Unicode-Leerraum), stimmt nie. Dieselbe Regel wiederholt die Datenebene
+ *  beim Ausführen (`namen_stimmen`) — die Oberfläche gibt den Knopf nur frei,
+ *  entscheidet aber nichts. */
 export function namenStimmen(eingabe: string, name: string): boolean {
-  return eingabe.trim().normalize("NFC") === name.normalize("NFC");
+  const verlangt = name.trim();
+  return verlangt !== "" && eingabe.trim().normalize("NFC") === verlangt.normalize("NFC");
 }
 
 /* Die Bestätigung einer unwiderruflichen Handlung durch Eingabe des Namens
@@ -30,6 +34,7 @@ export function NamenBestaetigen({
   onChange,
   label,
   fehler,
+  gesperrt,
 }: {
   /** Der Name, der einzugeben ist. */
   name: string;
@@ -39,6 +44,9 @@ export function NamenBestaetigen({
   label: string;
   /** Meldung vom Server, z. B. weil der Name sich inzwischen geändert hat. */
   fehler?: string | null;
+  /** Während einer laufenden Anfrage: Das Feld lässt sich nicht mehr ändern,
+   *  behält aber den Fokus (`readOnly`, nicht `disabled`). */
+  gesperrt?: boolean;
 }) {
   const anleitungId = useId();
   const passt = namenStimmen(wert, name);
@@ -56,6 +64,7 @@ export function NamenBestaetigen({
         enterKeyHint="go"
         aria-describedby={anleitungId}
         autoFocus
+        readOnly={gesperrt}
         autoComplete="off"
         autoCapitalize="off"
         autoCorrect="off"
