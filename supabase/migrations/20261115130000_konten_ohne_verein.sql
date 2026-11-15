@@ -144,8 +144,9 @@ $$;
 --   {verein: {id, name, ist_verwaltung, ist_teammitglied}, grenzen: null}      mit Verein
 --   {verein: null, grenzen: {uebungen: {bestand, max}, trainings: {bestand, max}}}   ohne Verein
 -- `bestand` kann über `max` liegen. Rumpf sonst wie in
--- 20261113100000_vereine_fundament.sql. Ohne nur_in_der_anwendung: der
--- KI-Hinweis braucht sie.
+-- 20261113100000_vereine_fundament.sql. Die Funktion ruft bewusst kein
+-- nur_in_der_anwendung() auf, weil auch der KI-Zugang die Vereinslage lesen
+-- muss.
 create or replace function meine_vereinslage() returns jsonb
 language plpgsql stable security definer
 set search_path = public, pg_temp

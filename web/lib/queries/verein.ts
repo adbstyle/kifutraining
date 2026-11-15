@@ -66,6 +66,23 @@ export const getMeineGrenzen = async (): Promise<KontoGrenzen | null> => {
   return grenzen;
 };
 
+/** Ob für das Konto Grenzen gelten (#588), als drei Zustände: `"mit"` (ohne
+ *  Verein, Grenzen gelten), `"ohne"` (Konto in einem Verein, keine Grenzen) und
+ *  `"unbekannt"` (Datenbank- oder Formfehler: die Lage ist nicht bekannt, und
+ *  unbekannt heisst nie «ohne Grenzen»). Die Seiten geben nur `"ohne"` als
+ *  Abkürzung weiter; bei `"unbekannt"` fragt die Stufe den Stand selbst. */
+export type GrenzenLage = "mit" | "ohne" | "unbekannt";
+
+export const getMeineGrenzenLage = async (): Promise<GrenzenLage> => {
+  const { lage, grenzen, fehler } = await leseVereinslage();
+  if (fehler) {
+    console.error("[verein] Vereinslage lesen", fehler);
+    return "unbekannt";
+  }
+  if (lage) return "ohne";
+  return grenzen ? "mit" : "unbekannt";
+};
+
 /** Wie `getMeinVerein`, aber ein Datenbankfehler wirft: Die Seiten unter
  *  `/verein` dürfen nicht so tun, als gäbe es keinen Verein. */
 export async function getMeinVereinOderWurf(): Promise<Vereinslage | null> {

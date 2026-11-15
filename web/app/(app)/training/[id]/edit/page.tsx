@@ -6,7 +6,7 @@ import { getMeineTeams } from "@/lib/queries/teams";
 import { trainingsKrumen } from "@/lib/brotkrumen";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { KontoGrenzenLage } from "@/components/konto/BestandStufe";
-import { getMeineGrenzen } from "@/lib/queries/verein";
+import { getMeineGrenzenLage } from "@/lib/queries/verein";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -34,10 +34,11 @@ export default async function TrainingEditPage({
   // zugriff auf fremde Trainings, Story #12 AC8).
   if (!training) redirect("/trainings?mine=1");
 
-  const teams = await getMeineTeams();
   // Gelten für das Konto Grenzen (#588)? Nur dann fragen Übernehmen und «In die
   // Bibliothek» den Stand vorher; ein Konto in einem Verein bleibt beim Klick.
-  const mitGrenzen = (await getMeineGrenzen()) !== null;
+  // Ist die Lage unbekannt, fragt die Stufe selbst.
+  const [teams, grenzenLage] = await Promise.all([getMeineTeams(), getMeineGrenzenLage()]);
+  const mitGrenzen = grenzenLage !== "ohne";
 
   return (
     <Seitenrahmen breite="3xl" krumen={null} geteilt>

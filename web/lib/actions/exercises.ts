@@ -241,11 +241,9 @@ export async function updateExercise(
     // entfernen — ausser es hat den weiterhin referenzierten alten Pfad
     // überschrieben (gleicher Pfad), dann zeigt die DB korrekt darauf.
     if (neuPfad && neuPfad !== altPfad) await entferneStorageObjekt(supabase, neuPfad);
-    const grenze = error ? kontoGrenzeAusFehler(error.message) : null;
     return {
       status: "error",
       message: error ? fehlerMeldung(error.message) : "Speichern fehlgeschlagen.",
-      ...(grenze && { grenze }),
     };
   }
 

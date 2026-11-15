@@ -4848,6 +4848,9 @@ pruefe("Konto ohne Verein (#588): ein Weg für den Satz, die Hinweise im Kern, Z
   assert.match(lies("lib/actions/trainings.ts"), /message: oberflaechenMeldung\(r\), \.\.\.\(r\.grenze && \{ grenze: r\.grenze \}\)/);
   assert.match(lies("lib/actions/team-trainings.ts"), /error: oberflaechenMeldung\(r\), \.\.\.\(r\.grenze && \{ grenze: r\.grenze \}\)/);
   assert.match(lies("lib/mcp/ergebnis.ts"), /grenze: _grenze, \.\.\.rest \} = f;/);
+  // Kein toter Code: updateExercise und erstelleTeamTraining können an der Grenze nie abweisen.
+  assert.equal((lies("lib/actions/exercises.ts").match(/kontoGrenzeAusFehler\(error\.message\)/g) ?? []).length, 1, "nur createExercise");
+  assert.equal((lies("lib/actions/team-trainings.ts").match(/r\.grenze/g) ?? []).length, 2, "kopie() — nicht erstelleTeamTraining");
   // Ein Weg, der nicht zählt, kennt die Grenze nicht: Übung ins Training übernehmen.
   assert.ok(!/konto-grenzen|KONTO_/.test(lies("lib/kern/fassung.ts")), "ordneUebungZu bleibt frei");
   assert.ok(!/konto-grenzen|KONTO_/.test(lies("lib/actions/trainings.ts").split("export async function addTrainingExercise")[1]?.split("\nexport async function")[0] ?? ""));
@@ -4859,6 +4862,10 @@ pruefe("Konto ohne Verein (#588): ein Weg für den Satz, die Hinweise im Kern, Z
   assert.match(lies("lib/mcp/werkzeuge/trainings-bestand.ts"), /KONTO_GRENZE_WERKZEUG\.trainings/, "training_kopieren");
   // Die Vereinslage reicht `grenzen` durch, auf ihre Form geprüft; ein Weg, der den Verein kennt, zeigt sie nie.
   assert.match(lies("lib/queries/verein.ts"), /const \{ grenzen, formfehler \} = grenzenOhneVerein\(roh\?\.grenzen\);/);
+  // Lage unbekannt (Fehler, Formfehler) ist nie «ohne Grenzen»: dritter Zustand.
+  const vq = lies("lib/queries/verein.ts");
+  assert.match(vq, /export type GrenzenLage = "mit" \| "ohne" \| "unbekannt";/);
+  assert.match(vq, /if \(fehler\) \{[^}]*return "unbekannt";\s*\}\s*if \(lage\) return "ohne";\s*return grenzen \? "mit" : "unbekannt";/);
   assert.match(lies("lib/queries/verein.ts"), /if \(lage\) return \{ lage, grenzen: null, fehler: null \};/);
   assert.match(lies("lib/kern/konto.ts"), /kontoGrenzenAus\(/);
   // Die Schreibweise der Grenze steht in einer Datei: keine zweite 50/30 in den Werkzeugtexten.
@@ -4887,8 +4894,8 @@ pruefe("Konto ohne Verein (#588 AK 5, PC 3): Anzeige nur ohne Verein und aus der
   // `grenze`, und die Zeile mit dem alten Stand fällt weg — die Angaben bleiben in der Maske (Fix-Lauf).
   for (const [d, art] of [["components/exercise/ExerciseForm.tsx", "uebungen"], ["components/training/TrainingCreateForm.tsx", "trainings"]] as const) {
     const t = lies(d);
-    assert.match(t, new RegExp(`state\\.grenze \\? \\(\\s*<BestandAnzeige art="${art}" grenze=\\{grenzeAusAbweisung\\(state\\.grenze\\)\\} variante="meldung"`), d);
-    assert.match(t, new RegExp(`\\{bestand && !state\\.grenze && <BestandAnzeige art="${art}" grenze=\\{bestand\\}`), d);
+    assert.match(t, new RegExp(`state\\.grenze \\? \\(\\s*<div ref=\\{grenzMeldungRef\\}[^>]*role="alert"[^>]*>\\s*<BestandAnzeige art="${art}" grenze=\\{grenzeAusAbweisung\\(state\\.grenze\\)\\} variante="meldung"`), d);
+    assert.match(t, new RegExp(`\\{bestand && !state\\.grenze && (?:\\(\\s*)?<BestandAnzeige art="${art}" grenze=\\{bestand\\}`), d);
   }
   // Die Zähler stehen in der Seite, nie im Layout: Das Layout rendert bei Navigation im Client nicht neu und zeigte einen
   // Stand von gestern; eine Anzeige, die nie sperrt, darf veralten, eine Seite soll es nicht.
@@ -4928,7 +4935,8 @@ pruefe("Konto ohne Verein (#588 AK 5, 6): die Stufe vor Kopieren, Übernehmen un
   // Die Seiten geben die Lage mit (W2): mit Verein kein Aufruf der Bestands-Action.
   for (const d of ["app/(app)/uebung/[slug]/page.tsx", "app/(app)/training/[id]/page.tsx", "app/(app)/training/[id]/edit/page.tsx"]) {
     const t = lies(d);
-    assert.match(t, /await getMeineGrenzen\(\)\) !== null/, d);
+    assert.match(t, /getMeineGrenzenLage\(\)\]\)/, `${d}: Lage parallel zu den anderen Abfragen`);
+    assert.match(t, /const mitGrenzen = grenzenLage !== "ohne";/, `${d}: unbekannt heisst nicht «ohne Grenzen»`);
     assert.match(t, /<KontoGrenzenLage mitGrenzen=\{mitGrenzen\}>/, d);
   }
   const stufe = lies("components/konto/BestandStufe.tsx");

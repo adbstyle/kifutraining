@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import {
   TextArea,
   Button,
@@ -29,6 +29,14 @@ export function TrainingCreateForm({
     status: "idle",
   });
   const [pending, startTransition] = useTransition();
+  // Weist die Datenebene an der Grenze ab (#588), rückt die Meldung ins Bild und
+  // bekommt den Fokus (die Vorlesehilfe sagt sie an).
+  const grenzMeldungRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!state.grenze) return;
+    grenzMeldungRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    grenzMeldungRef.current?.focus({ preventScroll: true });
+  }, [state]);
   const [name, setName] = useState("");
   const [ziel, setZiel] = useState("");
   // Bewusst OHNE Vorbelegung: Die Altersstufe eines Trainings bindet lebenslang
@@ -76,11 +84,14 @@ export function TrainingCreateForm({
       {/* Abweisung an der Grenze (#588): dieselbe Meldung wie bei voller
           Grenze, die Zeile mit dem alten Stand fällt weg, die Angaben bleiben. */}
       {state.status === "error" && state.grenze ? (
-        <BestandAnzeige art="trainings" grenze={grenzeAusAbweisung(state.grenze)} variante="meldung" />
+        <div ref={grenzMeldungRef} tabIndex={-1} role="alert" className="outline-none">
+          <BestandAnzeige art="trainings" grenze={grenzeAusAbweisung(state.grenze)} variante="meldung" />
+        </div>
       ) : (
         state.status === "error" && state.message && <SectionMessage appearance="error">{state.message}</SectionMessage>
       )}
-      {bestand && !state.grenze && <BestandAnzeige art="trainings" grenze={bestand} />}
+      {/* Eng über dem ersten Feld (16 px statt gap-10): -mb-6 nimmt 24 zurück. */}
+      {bestand && !state.grenze && <BestandAnzeige art="trainings" grenze={bestand} className="-mb-6" />}
 
       <div className="flex flex-col gap-5">
         <TextField

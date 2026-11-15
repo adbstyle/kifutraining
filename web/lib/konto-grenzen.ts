@@ -80,9 +80,12 @@ export function grenzeAusAbweisung(a: KontoAbweisung): KontoGrenze {
   return { bestand: a.bestand, max: MAX[a.art] };
 }
 
-/** Der Satz zu einer Abweisung der Datenebene (AK 6; für den KI-Assistenten
- *  derselbe, AK 7): wie viele die Person besitzt, wie Platz entsteht, für wen
- *  die Grenze nicht gilt. */
+/** Der Satz zu einer Abweisung der Datenebene (AK 6, AK 7): wie viele die Person
+ *  besitzt, wie Platz entsteht, für wen die Grenze nicht gilt. Er erreicht den
+ *  KI-Assistenten. Die Anwendung zeigt eine Abweisung mit dem Merkmal `grenze`
+ *  als `bestandVollMeldung` (mit dem Weg zur eigenen Übersicht); dieser Satz
+ *  erscheint dort nur noch als Rückfall, wenn eine Abweisung ohne das Merkmal
+ *  ankommt. */
 export function kontoGrenzeText(art: KontoArt, bestand: number): string {
   return `${besitztSatz(art, bestand, MAX[art])} ${KONTO_GRENZE_SCHLUSS}`;
 }

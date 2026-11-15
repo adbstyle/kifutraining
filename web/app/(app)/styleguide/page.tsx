@@ -1580,6 +1580,19 @@ export default async function Styleguide() {
           </div>
 
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
+            Gesperrt, aber im Fokus: <code>aria-disabled</code> statt <code>disabled</code> - solange eine Aktion
+            läuft und der Knopf den Fokus behalten soll
+          </p>
+          <div className="flex items-center gap-4">
+            <IconButton icon={Copy} label="Kopieren" aria-disabled />
+            <span className="type-label-small text-on-surface-mittel">
+              Ein <code>disabled</code>-Knopf verliert den Fokus, und die Tastatur- und Vorlesehilfe-Person steht
+              im Leeren. Mit <code>aria-disabled</code> bleibt er fokussierbar und sieht gesperrt aus; der
+              Klick-Handler des Aufrufers fängt den Klick ab (<code>if (laeuft) return</code>).
+            </span>
+          </div>
+
+          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Punkt am Zeichen (<code>ZeichenPunkt</code>, <code>punkt</code>) - wie die Benachrichtigung an einem App-Symbol
           </p>
           <div className="flex items-center gap-4">
@@ -1690,6 +1703,11 @@ export default async function Styleguide() {
             dann den eigenen Trigger nicht mehr - das Menü togglet doppelt und
             öffnet sofort wieder. In Listen gehört der Gegenstand ins{" "}
             <code>label</code> („Weitere Aktionen zu …"); der Tooltip bleibt kurz.
+          </p>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <code>gesperrt</code> sperrt den Auslöser, solange eine Aktion aus dem Menü läuft (dritte Reihe unten):
+            Er setzt <code>aria-disabled</code> statt <code>disabled</code>, behält also den Fokus, und das Menü
+            öffnet sich nicht mehr.
           </p>
           <OverflowMenuDemo />
 

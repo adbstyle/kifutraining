@@ -9,7 +9,7 @@ import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
 import { KontoGrenzenLage } from "@/components/konto/BestandStufe";
-import { getMeineGrenzen } from "@/lib/queries/verein";
+import { getMeineGrenzenLage } from "@/lib/queries/verein";
 import { TrainingAktionen } from "@/components/training/TrainingAktionen";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import { TrainingTeile } from "@/components/training/TrainingTeile";
@@ -74,10 +74,14 @@ export default async function TrainingViewPage({
   // Die Teams sind Ziel zweier Aktionen: Übernehmen (an jedem öffentlichen
   // Training) und Ins-Team-Stellen (am eigenen, auch am privaten). Darum für
   // jeden Angemeldeten geladen, nicht mehr nur bei öffentlichen.
-  const teams = user ? await getMeineTeams() : [];
   // Gelten für das Konto Grenzen (#588)? Nur dann fragen Übernehmen und «In die
   // Bibliothek» den Stand vorher; ein Konto in einem Verein bleibt beim Klick.
-  const mitGrenzen = user ? (await getMeineGrenzen()) !== null : false;
+  // Ist die Lage unbekannt, fragt die Stufe selbst. Beide Abfragen sind
+  // unabhängig und laufen zusammen.
+  const [teams, grenzenLage] = user
+    ? await Promise.all([getMeineTeams(), getMeineGrenzenLage()])
+    : [[], "ohne" as const];
+  const mitGrenzen = grenzenLage !== "ohne";
   // Was dem Training zum Veröffentlichen fehlt — dieselbe Funktion, die der
   // Editor und die Server Action nutzen. Gebraucht wird sie nur, wo die Aktion
   // überhaupt offensteht: am eigenen, nicht dem Team gehörenden Training.

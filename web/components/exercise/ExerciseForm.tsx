@@ -186,6 +186,15 @@ export function ExerciseForm({
       );
     ziel?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [state]);
+  // Weist die Datenebene an der Grenze ab, steht die Meldung zuoberst der
+  // Maske, in der geteilten Maske womöglich ausserhalb des Sichtbaren: Sie rückt
+  // ins Bild und bekommt den Fokus (die Vorlesehilfe sagt sie an).
+  const grenzMeldungRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!state.grenze) return;
+    grenzMeldungRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    grenzMeldungRef.current?.focus({ preventScroll: true });
+  }, [state]);
   const err = state.errors ?? {};
 
   const [stufe, setStufe] = useState<Altersstufe>(initialeStufe);
@@ -892,7 +901,9 @@ export function ExerciseForm({
           eigenen Übersicht, und die Zeile mit dem alten Stand fällt weg; die
           Angaben bleiben in der Maske. */}
       {state.grenze ? (
-        <BestandAnzeige art="uebungen" grenze={grenzeAusAbweisung(state.grenze)} variante="meldung" className={UEBER_BEIDEN} />
+        <div ref={grenzMeldungRef} tabIndex={-1} role="alert" className={cn("outline-none", UEBER_BEIDEN)}>
+          <BestandAnzeige art="uebungen" grenze={grenzeAusAbweisung(state.grenze)} variante="meldung" />
+        </div>
       ) : (
         state.message && (
           <SectionMessage appearance="error" className={UEBER_BEIDEN}>
@@ -900,7 +911,11 @@ export function ExerciseForm({
           </SectionMessage>
         )
       )}
-      {bestand && !state.grenze && <BestandAnzeige art="uebungen" grenze={bestand} className={UEBER_BEIDEN} />}
+      {/* Die Zeile gehört eng über das erste Feld (mb-4): `-mb-6` nimmt vom
+          Abstand der Maske (gap-10) so viel zurück, dass 16 px bleiben. */}
+      {bestand && !state.grenze && (
+        <BestandAnzeige art="uebungen" grenze={bestand} className={cn(UEBER_BEIDEN, !geteilt && "-mb-6")} />
+      )}
 
       <VerlassenWarnung
         // Während des Speicherns nicht: Die Weiterleitung nach dem Speichern

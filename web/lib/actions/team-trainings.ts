@@ -106,7 +106,7 @@ export async function erstelleTeamTraining(
   const r = await legeTrainingAn(a.supabase, a.userId, { name, altersstufe, stufen, teamId });
   // Ein stilles `return` liesse den Dialog wortlos stehen: der Erfolg zeigt
   // sich nur an der Weiterleitung, ein Fehlschlag an gar nichts.
-  if (!r.ok) return { ok: false, error: oberflaechenMeldung(r), ...(r.grenze && { grenze: r.grenze }) };
+  if (!r.ok) return { ok: false, error: oberflaechenMeldung(r) };
 
   revalidiereTeam(teamId);
   revalidiereTraining(r.wert.id);
