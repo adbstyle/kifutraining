@@ -6,10 +6,13 @@
 -- - Nachlauf N1 ist nicht vorweggenommen: `verein_id` auf `teams` und
 --   `spieler` bleibt nullable, die Pflicht-Constraints gibt es noch nicht
 --   (Expand jetzt, Contract nach dem Release, AP §3.8). Mit N1 fällt dieser
---   Teil hier weg.
+--   Teil hier weg. N1 macht diesen Test selbst rot (`teams_verein_pflicht`,
+--   `spieler_verein_pflicht` als `not valid`); dann wird dieser Teil angepasst.
 -- - Sonst ist in `public` nur ungeprüft, was schon vor dem Epic ungeprüft war:
 --   die fünf Constraints von `training_exercises` (AP §6.5). Ausdrückliche
 --   Liste, damit niemand nebenbei etwas validiert oder ungeprüft hinzufügt.
+--   Wird der Test wegen einer neuen `not valid`-Migration rot, den Constraint in
+--   diese Liste aufnehmen, bis die zugehörige `validate`-Migration folgt.
 
 \set ON_ERROR_STOP on
 

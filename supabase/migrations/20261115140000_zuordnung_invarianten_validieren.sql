@@ -22,12 +22,27 @@
 --   Termins bzw. Kaders; `authenticated` hatte auf diese Tabellen nur `select`.
 -- - Termin-FKs (`*_termin_team`) und Historie (`*_eingefroren_team`): Dieselben
 --   RPCs übernahmen `team_id` aus dem Termin bzw. dem festgehaltenen Termin.
--- Bis zu dieser Datei haben keine Migration und kein Schreibweg Zeilen
--- erzeugt, die die FKs nicht schon beim Schreiben prüften. Die Zählabfragen
--- «Zeilen, die die Validierung brächen» für die Generalprobe stehen im Plan,
--- Phase G. Scheitert nur diese Datei, ist der fachliche Stand vollständig;
--- die Validierung kommt dann nach der Bereinigung als Vorwärts-Migration
--- (AP §6.1 «Reihenfolge innerhalb des Release», §10 Risiko 21).
+-- Geschrieben haben in diese elf Tabellen bisher nur DEFINER-RPCs und Trigger.
+-- Eine theoretische Lücke: `authenticated` durfte auf dem alten Schema
+-- `training_termine` direkt ändern (RLS nur mit Team-Mitgliedschaft, kein
+-- Trigger auf `team_id`); ein Mitglied zweier Teams hätte einen Termin per
+-- direktem API-Aufruf umhängen können. Die Anwendung tut das nie, und die
+-- Zählabfrage der Generalprobe (Plan, Phase G) deckt es auf.
+-- Rückfallweg: Die Zählabfrage der Generalprobe (elf Zahlen, Soll 0) soll den
+-- Fall vorher ausschliessen. Scheitert die Datei dennoch im Fenster, sind alle
+-- früheren Dateien angewandt und der fachliche Stand ist vollständig; die
+-- Datei ist wiederholbar (`validate constraint` auf ein schon gültiges
+-- Constraint ist ein No-op), bleibt aber offen, und jeder weitere `db push`
+-- scheitert wieder an ihr. Gangbar: (a) die verletzenden Zeilen im Fenster per
+-- SQL bereinigen (ausdrückliche Entscheidung des PO, Freigabe im Moment, nur
+-- mit vorheriger Zählung und Protokoll) und `db push` wiederholen; oder (b)
+-- eine Bereinigungs-Migration mit einem Zeitstempel zwischen `20261115130000`
+-- und `20261115140000` (Prod nimmt sie an, weil dort zuletzt `…130000`
+-- angewandt ist; Staging hat `…140000` schon und braucht danach
+-- `reset-staging`, Sync aus `main` und `deploy-staging`). Nicht gangbar: eine
+-- spätere Migration (sie kommt nie zum Zug) sowie die Datei ändern oder
+-- umbenennen (Staging hat sie angewandt). (AP §6.1 «Reihenfolge innerhalb des
+-- Release», §10 Risiko 21.)
 --
 -- `validate constraint` nimmt auf der Tabelle nur SHARE UPDATE EXCLUSIVE
 -- (Lesen und Schreiben laufen weiter) und auf der referenzierten Tabelle
