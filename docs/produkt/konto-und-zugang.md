@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-10-29. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-11-15. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -30,8 +30,10 @@ an. Mehr Profilangaben gibt es nicht — kein Bild, keine Postadresse, keine Ver
 ## Der Anzeigename
 
 Der Anzeigename ist das, was andere von einer Person zu sehen bekommen. Die E-Mail-Adresse
-sehen nur die Mitglieder der eigenen Teams, in der Mitgliederliste und bei der Wahl der
-Trainer:innen eines Termins; allen anderen bleibt sie verborgen. Der Name steht als Urheber
+sehen die Mitglieder der eigenen Teams, in der Mitgliederliste und bei der Wahl der
+Trainer:innen eines Termins, und die Vereinsverwaltung bei jeder Trainer:in des Vereins und bei
+den Personen der Verwaltung; allen anderen bleibt sie verborgen. Den übrigen Mitgliedern des
+Vereins zeigt der Bereich „Verein" von der Verwaltung nur den Anzeigenamen. Der Name steht als Urheber
 an veröffentlichten Trainings, in den Mitgliederlisten der Teams, an den Terminen, zu denen man
 eingeladen ist, und in den Kalender-Abos der anderen Eingeladenen. Ist man für einen Termin
 verantwortlich, sehen ihn auch die Eltern und Spieler:innen am privaten Link; das sagt der
@@ -42,11 +44,25 @@ Gesetzt wird er im Konto in einem einzigen Feld. Es zeigt den aktuellen Namen, a
 automatische Kennung, solange kein eigener gewählt ist, und speichert beim Verlassen oder mit der
 Eingabetaste — nur wenn sich etwas geändert hat; Escape nimmt die Eingabe zurück. Ein leeres
 Feld oder ein abgewiesener Name fällt auf den gespeicherten zurück, und die Anwendung sagt am
-Bildschirmrand, warum. Wer den Namen sieht, sagt der Hinweis hinter dem ⓘ.
+Bildschirmrand, warum. Wer den Namen und wer die E-Mail-Adresse sieht, sagt der Hinweis hinter
+dem ⓘ.
 
 Ein einmal gesetzter Name lässt sich ersetzen, aber nicht mehr entfernen. Das ist Absicht: An
 bereits veröffentlichten Trainings soll nicht plötzlich wieder eine Zufallskennung auftauchen.
 Der Name ist auf vierzig Zeichen begrenzt.
+
+## Konto ohne Verein
+
+Wer sich registriert, hat zunächst ein Konto ohne Verein: Es gehört weder einem Team noch einer
+Vereinsverwaltung an. Damit stehen die Bibliothek, eigene Übungen und Trainings und ein
+KI-Assistent offen; Teams, Spielerlisten und Kalender gibt es erst in einem Verein. Unter „Teams"
+findet ein solches Konto den Einstieg, um einen Verein zu gründen oder sich mit der eigenen
+E-Mail-Adresse in einen aufnehmen zu lassen (siehe [Verein](verein.md#einstieg-für-konten-ohne-verein)).
+Ein Konto ohne Verein besitzt höchstens 50 eigene Übungen und 30 eigene Trainings (siehe
+[Übungen](uebungen.md#konten-ohne-verein) und [Trainings](trainings.md#konten-ohne-verein)). Die
+Grenzen fallen weg, sobald die Person einem Team oder einer Vereinsverwaltung angehört, und gelten
+wieder, sobald sie keinem mehr angehört — etwa nach dem Verlassen des letzten Teams oder wenn der
+Verein gelöscht wird; was sie dann schon besitzt, bleibt und bleibt änderbar.
 
 ## KI-Assistent verbinden
 
@@ -56,7 +72,12 @@ Bestand, den man auch selbst in der Anwendung sieht, mit denselben Filtern und d
 für Altersstufe, Trainingsteil und die übrigen Angaben. Private Übungen anderer bleiben auch
 dem Assistenten verborgen.
 
-Eigene Übungen beider Altersstufen legt der Assistent ebenfalls an. Er erfährt dafür, welche
+Eigene Übungen beider Altersstufen legt der Assistent ebenfalls an. Für ein Konto ohne Verein gilt
+dabei dieselbe Grenze wie in der Anwendung, beim Anlegen wie beim Kopieren von Übungen und beim
+Anlegen und Übernehmen von Trainings: Ist sie erreicht, entsteht nichts, und der Assistent bekommt
+denselben Bestand genannt, etwa „Du besitzt 50 von 50 Übungen. In der Anwendung schaffst du durch
+Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.", und dass nichts
+entstanden ist; ein zweiter Versuch ändert daran nichts. Er erfährt dafür, welche
 Angaben eine Übung der gewählten Altersstufe führt, welche davon je nach Einordnung und
 Hauptteilkategorie Pflicht sind und welche Werte zulässig sind, und setzt dieselben Angaben wie
 das Formular — ohne Foto; ein Feld-Diagramm kann er gleich mitgeben (siehe unten). Die Übung
@@ -237,7 +258,10 @@ bleibt der Termin ohne Training im Kalender des Teams, und der Assistent erfähr
 fremdes Training lässt sich nicht löschen.
 
 Auch in den eigenen Teams arbeitet der Assistent. Er nennt die Teams, in denen man Mitglied ist,
-mit Namen und Mitgliederzahl, und die Mitglieder eines Teams mit ihrem Anzeigenamen und einer
+mit Namen, Mitgliederzahl und dem Namen ihres Vereins. Gehört man keinem Team an, ist die Liste
+leer, und er erfährt warum: Teams, Spielerlisten und Kalender stehen nur Mitgliedern eines Teams
+offen; der Vereinsverwaltung sagt er dazu, wie sie sich in der Anwendung selbst in ein Team
+aufnimmt. Er nennt die Mitglieder eines Teams mit ihrem Anzeigenamen und einer
 Kennung — nie mit der E-Mail-Adresse —, wobei er erfährt, welches davon man selbst ist. Er sucht
 im Trainingsbestand eines Teams wie im eigenen — Termin-Trainings stehen nicht darin, die nennt
 der Kalender —; ein älteres Bestands-Training, das einem Termin zugeordnet ist, nennt dabei
@@ -312,8 +336,16 @@ ordnet das Training dann zu.
 
 Auch die Spielerliste eines Teams führt der Assistent nach den Regeln des
 [Team-Bereichs](team-bereich.md#spielerliste). Er liest sie mit Vorname, Nachname, Jahrgang,
-J+S-Nummer und ob der Link jeder Spieler:in bezogen ist, nimmt Spieler:innen auf, ändert und
-entfernt sie; beim ersten Aufnehmen erfährt er, wie viele anstehende Termine ihre erwartete Zahl
+J+S-Nummer und ob der Link jeder Spieler:in bezogen ist, dazu den Verein des Teams und je
+Spieler:in die Namen ihrer weiteren Teams; die Liste des ganzen Vereins liest er nicht. Er nimmt
+Spieler:innen auf und ändert sie. Mit „spieler_aus_team_nehmen" nimmt er eine Spieler:in aus einem
+der eigenen Teams, aber erst nach einer Rückfrage: Der erste Aufruf ändert nichts und liefert
+dieselben Sätze wie die Bestätigung in der Anwendung — sie bleibt samt Link im Verein und in ihren
+weiteren Teams, was im Team verfällt, beim letzten Team, dass sie danach keinem Team mehr
+angehört —, beim letzten der eigenen Teams mit ihr dazu, dass sie danach über den Assistenten
+nicht mehr erreichbar ist; erst der zweite Aufruf nimmt sie heraus. Hat sich die Lage inzwischen
+geändert, geschieht nichts, und er fragt neu. Löschen kann er keine Spieler:in; das macht nur die
+Vereinsverwaltung in der Anwendung. Beim ersten Aufnehmen erfährt er, wie viele anstehende Termine ihre erwartete Zahl
 verloren. Jeder Termin, den er nennt, trägt neben der erwarteten Zahl die Spielerzahl, mit der
 geplant wird, samt Quelle: aus der Spielerliste mit den Angemeldeten — ab Beginn den Anwesenden
 — und allen auf der Liste, erwartet oder unbekannt — unbekannt auch an einem ausgefallenen
@@ -324,16 +356,18 @@ da waren. Er meldet ab und wieder an und trägt ab Beginn nach, ob eine Spieler:
 nennt dafür Datum und Beginn, wie er den Termin zuletzt gelesen hat; wurde er inzwischen
 verlegt, weist die Anwendung mit dem neuen Stand ab.
 
-Das Probetraining führt der Assistent nach denselben Regeln (siehe
-[Team-Bereich](team-bereich.md#probetraining)): Er liest die Anzahl Probetrainings und das
-Info-Schreiben eines Teams, legt beides fest oder ändert es — ein leeres Info-Schreiben entfernt
-es, ohne Angabe bleibt es stehen — und schaltet den Probe-Modus einer Spieler:in ein und aus. Lässt
-das Einschalten Abmeldungen, Meldungen oder Kennzeichnungen verfallen, kommt zuerst eine Rückfrage
-mit ihrer Zahl, und er muss das Einschalten ausdrücklich bestätigen. In der Spielerliste erfährt er
-je Probe-Spieler:in die Anzahl, wie viele Probetrainings sie besucht hat, für wie viele sie
-angemeldet ist und wie viele über den Link noch möglich sind, am Termin, wer im Probe-Modus ist.
-Meldet er eine Probe-Spieler:in über die Anzahl hinaus an, erhält er denselben Hinweis wie die
-Oberfläche.
+Das Schnuppertraining führt der Assistent nach denselben Regeln (siehe
+[Team-Bereich](team-bereich.md#schnuppertraining)): Mit „schnuppertraining_abrufen" und
+„schnuppertraining_festlegen" liest er die Anzahl Schnuppertrainings und das Info-Schreiben eines
+Teams und legt beides fest oder ändert es — ein leeres Info-Schreiben entfernt es, ohne Angabe
+bleibt es stehen —, und mit „spieler_schnuppern_setzen" schaltet er das Schnuppern einer
+Spieler:in ein und aus. Einschalten geht nur, solange sie genau einem Team angehört. Lässt das
+Einschalten Abmeldungen, Meldungen oder Kennzeichnungen verfallen, kommt zuerst eine Rückfrage mit
+ihrer Zahl, und er muss das Einschalten ausdrücklich bestätigen. In der Spielerliste erfährt er je
+schnuppernder Spieler:in die Anzahl, wie viele Schnuppertrainings sie besucht hat, für wie viele
+sie angemeldet ist und wie viele über den Link noch möglich sind, am Termin, wer schnuppert.
+Meldet er eine schnuppernde Spieler:in über die Anzahl hinaus an, erhält er denselben Hinweis wie
+die Oberfläche. Zum Schnuppern einem Team zuordnen kann er niemanden.
 
 An einem Spiel erfährt der Assistent für jede Spieler:in ihre Meldung oder dass sie noch ohne
 Meldung ist, ob sie als nicht aufgeboten gekennzeichnet ist und ob sie die Meldefrist verpasst
@@ -342,8 +376,10 @@ nicht Aufgebotenen sowie Mindest- und Höchstzahl und die Meldefrist. Wie die Za
 steht, sagt ihm die Anwendung nicht; das beurteilt er selbst. Er meldet Spieler:innen für Spiele
 an und ab — wie ein Mitglied bis zum Anpfiff, auch nach der Meldefrist —, kennzeichnet sie als
 nicht aufgeboten und hebt das auf und trägt ab dem Anpfiff nach, wer nicht oder doch erschienen
-ist, jeweils mit Datum und Anpfiff, wie er das Spiel zuletzt gelesen hat. Er holt und erneuert
-den privaten Link einer Spieler:in, sieht, ob die Selbstabholung eingeschaltet ist, schaltet sie
+ist, jeweils mit Datum und Anpfiff, wie er das Spiel zuletzt gelesen hat. Er holt den privaten
+Link einer Spieler:in und erneuert ihn in zwei Schritten: Der erste Aufruf von
+„spieler_link_erneuern" ändert nichts und nennt die Teams, für die der bisherige Link endet und der
+neue gilt; erst mit der ausdrücklichen Bestätigung erneuert er. Er sieht, ob die Selbstabholung eingeschaltet ist, schaltet sie
 ein und aus und holt und erneuert die Abholadresse. Vor- und Nachnamen, Jahrgänge und
 J+S-Nummern der Spieler:innen, wann sie sich ab- und angemeldet haben, ihre Meldungen zu Spielen,
 wer nicht aufgeboten und wer nicht oder doch erschienen ist, ihre privaten Links und die
@@ -363,9 +399,9 @@ freiwillige Spielfeldgrösse der Platzbedarf einer Übung. Ob ein Training zu Pl
 Spielerzahl eines Termins passt, beurteilt der Assistent aus diesen Angaben selbst.
 
 Es gelten dieselben Regeln wie in der Anwendung, und abgewiesen wird mit denselben Sätzen.
-Nachfragen muss der Assistent nicht: Er entfernt, ersetzt, löst und lässt ausfallen ohne
-Bestätigung, ebenso entfernt er Spieler:innen und erneuert Links und die Abholadresse. Ausgenommen
-sind Änderungen und Entfernungen einer Serie für folgende oder alle Termine, die vergangene Termine
+Nachfragen muss der Assistent meist nicht: Er entfernt, ersetzt, löst und lässt ausfallen ohne
+Bestätigung, ebenso entfernt er Kader und erneuert die Abholadresse. Ausgenommen sind das
+Herausnehmen von Spieler:innen und das Erneuern eines privaten Links (siehe oben) und Änderungen und Entfernungen einer Serie für folgende oder alle Termine, die vergangene Termine
 erfassen oder entfallen lassen: Die führt die Anwendung erst aus, wenn der Aufruf das ausdrücklich
 bestätigt, und nennt vorher, wie viele vergangene Termine es trifft. Ebenso verlangt sie eine
 Bestätigung, wenn eine Änderung von Datum oder Beginn Abmeldungen verfallen lässt — am einzelnen
@@ -379,7 +415,10 @@ mit ihnen gelöscht wurde oder im Bestand blieb, welches Termin-Training beim Zu
 welches Training ein ersetztes oder gelöstes war und ob es gelöscht wurde und, falls eine
 gescheiterte Kopie nicht ganz aufgeräumt werden konnte, was davon stehen blieb. Ein Team, in dem man
 nicht Mitglied ist, gilt als nicht gefunden. Kalender-Abos — die der Mitglieder wie die am privaten
-Link einer Spieler:in — holt, zeigt und widerruft der Assistent nicht, und Teams gründen, umbenennen, auflösen oder Mitglieder verwalten kann er nicht. Damit legt
+Link einer Spieler:in — holt, zeigt und widerruft der Assistent nicht. Verwalten kann er weder Teams
+noch den Verein, auch nicht für eine Person der Vereinsverwaltung: Teams anlegen, umbenennen und
+auflösen, Personen aufnehmen oder entfernen, Spieler:innen Teams zuordnen, aus dem Verein löschen
+oder importieren und den Verein gründen, umbenennen oder löschen geht nur in der Anwendung. Damit legt
 der Assistent Trainings beider Altersstufen an und führt sie samt dem Kalender der Teams weitgehend
 wie die Anwendung; was ihm fehlt, steht unter den bekannten Grenzen.
 
@@ -405,18 +444,23 @@ wieder lösen, Trainer:innen einladen, ausladen, absagen und wieder zusagen und 
 verantwortlich ist, Ausfälle festhalten und zurücknehmen sowie die Termine eines Zeitraums
 abrufen"; „die Anzeigenamen der Mitglieder deiner Teams lesen (ohne
 E-Mail-Adressen)"; „die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen
-und führen, Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins
-Probetraining nehmen und die Anzahl Probetrainings samt Info-Schreiben festlegen, Spieler:innen
+und führen, dazu den Verein deiner Teams und die Namen weiterer Teams einer Spieler:in sehen,
+Spieler:innen aus einem deiner Teams nehmen (sie bleiben im Verein), Kader anlegen, umbenennen und
+entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die
+Anzahl Schnuppertrainings samt Info-Schreiben festlegen, Spieler:innen
 für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten
 kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab
 Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link
 einer Spieler:in holen und erneuern, die Selbstabholung ein- und ausschalten, die Abholadresse holen
 und erneuern und sehen, welche Links bezogen wurden". Nie erreichbar sind „deine Favoriten", „die
-Verwaltung deiner Teams (gründen, umbenennen, Mitglieder aufnehmen oder entfernen)" und „dein Konto
-selbst (Anzeigename, Passwort, Löschen)". Kommt eine dieser Fähigkeiten dazu, muss man nicht erneut
-zustimmen; auch wer seinen Zugang erlaubt hat, bevor der Kalender, Platz, Spielerzahl und Treffpunkt der
-Termine, die Spielerliste samt Abmeldungen, Links und Selbstabholung, die Kader, die Spiele oder das Probetraining
-dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt
+Verwaltung deiner Teams und deines Vereins (Verein gründen, umbenennen und löschen, Teams anlegen,
+umbenennen und auflösen, Personen in Teams oder in die Vereinsverwaltung aufnehmen oder daraus
+entfernen, Spieler:innen Teams zuordnen, Spieler:innen aus dem Verein löschen und Spielerlisten
+importieren)" und „dein Konto selbst (Anzeigename, Passwort, Löschen)". Kommt eine dieser
+Fähigkeiten dazu, muss man nicht erneut zustimmen; auch wer seinen Zugang erlaubt hat, bevor der
+Kalender, Platz, Spielerzahl und Treffpunkt der Termine, die Spielerliste samt Abmeldungen, Links und
+Selbstabholung, die Kader, die Spiele, das Schnuppertraining (früher Probetraining) oder der Verein
+mit den weiteren Teams einer Spieler:in dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt
 die Seite, nur zu erlauben, wenn man das Verbinden eben selbst gestartet hat.
 
 Beim Erlauben kann man dem Zugang einen eigenen Namen geben, etwa „Claude auf dem Laptop",
@@ -446,8 +490,8 @@ derselben Warnung, dass er persönlich ist. Ohne Abo steht ein Hinweis, wo man e
 
 Jedes Abo lässt sich einzeln widerrufen, nach einer Bestätigung, die sagt, dass der Link danach
 keine Termine mehr liefert und dass man sich im Team jederzeit einen neuen holen kann. Von
-selbst erlischt ein Abo, wenn man das Team verlässt, daraus entfernt wird, das Konto löscht oder
-das Team aufgelöst wird. Ein erloschener Link liefert ab dem nächsten Abruf keine Termine mehr
+selbst erlischt ein Abo, wenn man das Team verlässt, daraus entfernt wird, das Konto löscht, die
+Vereinsverwaltung das Team auflöst oder den Verein löscht. Ein erloschener Link liefert ab dem nächsten Abruf keine Termine mehr
 und wird nie wieder gültig, auch nicht nach einer erneuten Aufnahme ins Team; der neue Link ist
 ein anderer. Über einen KI-Assistenten lassen sich Abos weder holen noch einsehen noch
 widerrufen.
@@ -457,7 +501,7 @@ widerrufen.
 Der gesamte Übungsbestand und alle öffentlichen Trainings sind ohne Anmeldung
 zugänglich — ansehen, durchsuchen, filtern, durchführen und drucken inbegriffen. Verwehrt
 bleibt alles Eigene: Übungen und Trainings anlegen oder bearbeiten, favorisieren, Trainings
-übernehmen, Teams. Die Gruppe „Mein Bereich" der Seitenleiste erscheint gar nicht erst, und
+übernehmen, Teams. Die Gruppe „Meine Bibliothek" der Seitenleiste erscheint gar nicht erst, und
 wer eine geschützte Adresse direkt aufruft, landet bei der Anmeldung und wird danach dorthin
 zurückgeführt, wo er hinwollte. Eine Ausnahme ist das Kalender-Abo: Das Kalenderprogramm ruft die Termine ohne
 Anmeldung ab, denn der Link selbst ist die Berechtigung; der Verweis in einem Kalendereintrag
@@ -479,11 +523,34 @@ Konkret werden die Favoriten entfernt, die privaten Übungen samt ihren Feld-Dia
 gelöscht und die persönlichen Trainings mitsamt den Bildern ihrer Übungsfassungen. Öffentliche
 Übungen und öffentliche Trainings bleiben bestehen, künftig ohne Urheberangabe.
 
-Bei Teams entscheidet die Mitgliederzahl: Ist noch jemand anderes im Team, bleibt es samt allen
-Trainings und Terminen unangetastet, und nur die gelöschte Person verschwindet aus der
-Mitgliederliste. War sie die letzte, löst sich das Team auf — mit seinen Trainings, Terminen,
-Terminserien, Bildern und seiner Spielerliste; deren private Links und die Abholadresse gelten
-danach nicht mehr.
+Teams bleiben samt allen Trainings, Terminen und Spielerlisten unangetastet; die gelöschte
+Person verschwindet nur aus der Mitgliederliste. War sie die letzte Trainer:in, bleibt das Team
+ohne Trainer:in bestehen, bis die Vereinsverwaltung jemanden aufnimmt oder es auflöst.
+
+Wie das Löschen ausgeht, hängt von der Lage im Verein ab; der Dialog kennt drei Fälle:
+
+- **Frei.** Wer keinem Verein angehört, nur Trainer:in ist oder in der Verwaltung weitere
+  Personen neben sich hat, löscht das Konto mit „Konto endgültig löschen". Der Dialog nennt dazu,
+  dass Teams, in denen man die letzte Trainer:in ist, ohne Trainer:in bestehen bleiben, und „Gehörst
+  du einem Verein an, bleibt er bestehen."
+- **Letzte Verwaltung.** Ist man die letzte Person der Vereinsverwaltung und gehören dem Verein
+  weitere Personen an, lässt sich das Konto noch nicht löschen. Der Dialog „Konto lässt sich noch
+  nicht löschen" sagt, dass man die letzte Person in der Verwaltung ist und weitere dem Verein
+  angehören, und nennt den Weg: zuerst jemanden in die Verwaltung aufnehmen oder den Verein unter
+  Verein › Verwaltung löschen; „Zur Verwaltung" führt dorthin.
+- **Einzige Person.** Gehört ausser einem selbst niemand dem Verein an, weder in der
+  Verwaltung noch in einem seiner Teams, geht der Verein mit dem Konto. Der Dialog „Konto und Verein löschen"
+  zählt auf, was mit dem Verein gelöscht wird — die Teams mit Terminen und Team-Trainings, die
+  Spieler:innen samt Links, Abos und Abholadressen, je mit Anzahl —, sagt, dass sich das nicht
+  rückgängig machen lässt, und verlangt den Vereinsnamen, genau mit Gross- und Kleinschreibung,
+  bevor „Konto und Verein löschen" frei wird (siehe [Verein](verein.md#verein-löschen)).
+
+Geprüft wird beim Ausführen erneut. Hat sich im Verein inzwischen etwas geändert — ist etwa eine
+weitere Person dazugekommen, der Verein umbenannt oder man inzwischen die einzige Person —, löscht
+die Anwendung nichts, sagt, was sich geändert hat, und verlangt gegebenenfalls den aktuellen
+Vereinsnamen; Konto und Verein bleiben dann unverändert. Scheitert das Löschen, sagt der Dialog es,
+und ein zweiter Versuch ist möglich. Sind die Daten schon gelöscht, lässt sich aber das Konto
+selbst nicht entfernen, sagt er auch das; ein zweiter Versuch löscht dann das Konto.
 
 Aus allen anstehenden Terminen und Terminserien wird die Person ausgeladen.
 An vergangenen Terminen bleibt ihr Eintrag ohne Namen als „Ehemaliges Mitglied" stehen, auch in
@@ -493,16 +560,20 @@ steht nicht in der Bestätigung.
 Alle KI-Zugänge werden entzogen; ein verbundener Assistent kommt danach nicht mehr ins Konto.
 
 Abgegebenes Feedback (siehe [Navigation](navigation.md#fragen-und-feedback)) bleibt bestehen,
-verliert aber den Bezug zum Konto; nach 12 Monaten wird es wie jedes Feedback gelöscht.
+verliert aber den Bezug zum Konto; nach 12 Monaten wird es wie jedes Feedback gelöscht. Ebenso
+bleibt Feedback bestehen, wenn ein Team oder Verein gelöscht wird, verliert dann aber den Bezug zum
+Team.
 
 ## Bekannte Grenzen
 
-Es gibt keine Rollen und keine Rechteabstufung, weder anwendungsweit noch innerhalb eines
-Teams; alle Mitglieder eines Teams dürfen dasselbe. Eine Einladung an jemanden ohne Konto ist
-nicht möglich — ins Team kommt nur, wer bereits registriert und bestätigt ist. Ein Profilbild
+Rollen gibt es nur zwei: Trainer:in eines Teams und Vereinsverwaltung (siehe
+[Verein](verein.md#rollen-nach-ort)); innerhalb eines Teams dürfen alle Mitglieder dasselbe, und
+eine weitere Abstufung, etwa eine nur lesende Rolle, gibt es nicht. Eine Person gehört höchstens
+einem Verein an. Eine Einladung an jemanden ohne Konto ist nicht möglich — ins Team oder in die
+Verwaltung kommt nur, wer bereits registriert und bestätigt ist. Ein Profilbild
 ist nicht vorgesehen, und der Anzeigename lässt sich nicht mehr auf die automatische Kennung
-zurücksetzen. Die eigene E-Mail-Adresse lässt sich vor den Mitgliedern der eigenen Teams nicht
-verbergen, und wer beim Aufnehmen eine falsche, aber registrierte Adresse trifft, zeigt dieser
+zurücksetzen. Die eigene E-Mail-Adresse lässt sich vor den Mitgliedern der eigenen Teams und vor der
+Vereinsverwaltung nicht verbergen, und wer beim Aufnehmen eine falsche, aber registrierte Adresse trifft, zeigt dieser
 Person die Adressen aller Mitglieder, bis er sie wieder entfernt. Ob und wann ein Kalenderprogramm ein Abo zuletzt abgerufen hat, ist nicht
 einsehbar, und einem Abo lässt sich kein eigener Name geben.
 
@@ -532,8 +603,8 @@ in der Anwendung selbst erscheinen diese Mängel nirgends. Fotos lädt er nicht 
 einzelne Übung kopiert oder verschiebt er nicht von einer Variante in eine andere. Anders als
 der Dialog der Anwendung erzwingt der Weg über den Assistenten beim Anlegen der zweiten Variante
 keinen neuen Namen für die bisherige. Die Reihenfolge
-der Gruppen untereinander ändert er nicht. Die Favoriten erreicht er nicht, Teams gründet oder
-besetzt er nicht, und Kalender-Abos holt oder widerruft er nicht. Eine Übung überführt er nicht in die andere Altersstufe, und die Altersstufe eines Trainings wechselt er so
+der Gruppen untereinander ändert er nicht. Die Favoriten erreicht er nicht, Teams und den Verein verwaltet er nicht, Spieler:innen
+löscht oder importiert er nicht, Spieler:innen ohne Team und die Vereinsliste erreicht er nicht, und Kalender-Abos holt oder widerruft er nicht. Eine Übung überführt er nicht in die andere Altersstufe, und die Altersstufe eines Trainings wechselt er so
 wenig wie die Anwendung. Für den Juniorenfussball gibt es keinen kuratierten Übungsbestand; ein
 Block, zu dem der sichtbare Bestand nichts führt, bleibt leer und wird gemeldet. Die
 Zeitrichtwerte erzwingt die Anwendung weder beim Speichern noch beim Veröffentlichen. Was im
@@ -565,8 +636,9 @@ Verlegung oder eine Änderung an Kadern —, die Meldefrist eines Spiels ins Abg
 Spiel mit Meldungen oder Kennzeichnungen entfernt wird, verlangt die Anwendung eine Bestätigung im
 Aufruf und nennt vorher, was es trifft. Ob ein Termin stattgefunden hat, kennt die Anwendung auch
 über den Assistenten nicht, und wer dabei war, nur aus dem Stand bei Beginn und den Nachträgen; ob
-jemand die Anwesenheit geprüft hat, erfährt er nicht. Auch beim Entfernen von Spieler:innen und
-Kadern, beim Erneuern von Links und der Abholadresse und beim Schalten der Selbstabholung verlangt
-die Anwendung keine Bestätigung; ob er vorher nachfragt, liegt bei ihm. Die Liste aller
+jemand die Anwesenheit geprüft hat, erfährt er nicht. Beim Entfernen von Kadern, beim Erneuern der
+Abholadresse und beim Schalten der Selbstabholung verlangt die Anwendung keine Bestätigung; ob er
+vorher nachfragt, liegt bei ihm. Beim Herausnehmen einer Spieler:in und beim Erneuern eines Links
+verlangt sie eine, prüft aber nicht, ob er die Person wirklich gefragt hat. Die Liste aller
 Spieler:innen mit ihren Abmeldungen für mehrere Termine auf einmal liest er nicht; wer an einem
 Termin kommt, ruft er Termin für Termin ab.

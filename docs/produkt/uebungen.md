@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-10-30. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-11-15. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -379,6 +379,38 @@ Druckdialog des Geräts öffnet sich sofort. Auf dem Blatt bleibt von der Bedien
 Gedruckt wird mit den Bordmitteln des Geräts, auf dem Rechner wie auf dem Telefon; das Sichern
 als PDF übernimmt der Druckdialog. Eine eigene PDF-Datei erzeugt die Anwendung nicht, und
 mehrere Übungen in einem Vorgang lassen sich nicht drucken.
+
+## Konten ohne Verein
+
+Ein Konto ohne Verein (siehe [Verein](verein.md#rollen-nach-ort)) besitzt höchstens 50 eigene
+Übungen. Es zählen alle eigenen Übungen: Entwürfe wie öffentliche, selbst erfasste wie kopierte,
+auch eine aus einem Training in die Bibliothek kopierte Vorlage. Nicht zählen der Manual-Bestand,
+die Übungen anderer und die Übungen in einem Training, denn diese Fassungen gehören zum Training
+(siehe [Trainings](trainings.md#jede-übung-im-training-ist-eine-eigene-fassung)). Eine Übung in
+ein Training zu übernehmen bleibt darum immer frei.
+
+Den Stand zeigt „Meine Übungen" oben über der Liste, etwa „12 von 50 Übungen", und ab der Grenze
+mit der Plakette „Nichts mehr frei". Er nennt immer den ganzen Bestand, auch wenn ein Filter die
+Liste kürzt. Liegt der Bestand über der Grenze — etwa nach dem Löschen des eigenen Vereins —,
+steht nur die Zahl, etwa „62 Übungen (höchstens 50)". Die Seite „Neue Übung" zeigt denselben
+Stand über der Maske; an der Grenze steht statt der Maske die Meldung „Nichts mehr frei: 50 von 50
+Übungen" mit „Ohne Verein besitzt du höchstens 50 Übungen. Lösche eine, um Platz zu schaffen. In
+einem Verein gilt die Grenze nicht." und dem Weg „Zu meinen Übungen". Über der Grenze nennt der
+Satz, wie viele weg müssen, etwa „Lösche 13 Übungen, um Platz für eine neue zu schaffen."
+
+Kopieren — aus dem Bestand wie aus einem Training mit „In meine Bibliothek kopieren" — geht für ein
+Konto ohne Verein über einen Dialog, der den Stand frisch nennt, etwa „Du besitzt 12 von 50
+Übungen.", und dann den Knopf der Aktion anbietet; an der Grenze steht dort dieselbe Meldung wie
+auf „Neue Übung", und der Dialog bietet nur „Schliessen". Wird beim Speichern trotzdem
+abgewiesen, weil inzwischen anderswo eine Übung entstanden ist, zeigt die Anwendung dieselbe
+Meldung; eingegebene Angaben bleiben stehen.
+
+Was schon besteht, bleibt, auch über der Grenze: Ändern, öffentlich schalten, zurückziehen,
+überführen und löschen gehen weiter; die Grenze hält nur Neues zurück. In einem Verein gilt sie
+nicht — ab der Aufnahme in ein Team oder eine Vereinsverwaltung sofort —, und Konten in einem
+Verein sehen weder Stand noch Dialog. In der Seitenleiste steht der Stand nicht. Ein verbundener
+KI-Assistent bekommt dieselbe Grenze und dieselbe Auskunft (siehe
+[Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
 
 ## Bekannte Grenzen
 

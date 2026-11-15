@@ -1,6 +1,6 @@
 # Trainings
 
-Stand 2026-10-16. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-11-15. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
 
 ## Die Altersstufe wird beim Anlegen gewählt
@@ -536,6 +536,30 @@ Teams; sonst bliebe verborgen, dass es Alternativen gibt. Übungszahl und Dauer 
 sich dann auf die erste Variante: Gespielt wird ohnehin nur eine, und die Summe über alle wäre
 eine Dauer, die dieses Training nie hat. Team-Trainings erscheinen hier nicht;
 sie leben im Team-Bereich.
+
+## Konten ohne Verein
+
+Ein Konto ohne Verein (siehe [Verein](verein.md#rollen-nach-ort)) besitzt höchstens 30 eigene
+Trainings. Es zählen alle persönlichen Trainings: Entwürfe wie veröffentlichte, angelegte wie
+übernommene, auch die persönliche Kopie eines Team-Trainings. Team-Trainings und
+Termin-Trainings zählen nicht, ebenso wenig Varianten, Gruppen oder die Übungen eines Trainings.
+
+Den Stand zeigt „Meine Trainings" oben über der Liste, etwa „3 von 30 Trainings", ab der Grenze
+mit der Plakette „Nichts mehr frei", über der Grenze nur die Zahl, etwa „34 Trainings (höchstens
+30)" — immer für den ganzen Bestand, auch wenn ein Filter die Liste kürzt. Die Seite „Neues
+Training" zeigt den Stand vor der Eingabe; an der Grenze steht statt der Eingabe die Meldung
+„Nichts mehr frei: 30 von 30 Trainings" mit „Ohne Verein besitzt du höchstens 30 Trainings.
+Lösche eines, um Platz zu schaffen. In einem Verein gilt die Grenze nicht." und dem Weg „Zu
+meinen Trainings"; über der Grenze nennt der Satz, wie viele weg müssen. „Übernehmen" geht für
+ein Konto ohne Verein über einen Dialog, der den Stand frisch nennt, etwa „Du besitzt 3 von 30
+Trainings.", und an der Grenze nur „Schliessen" anbietet. Wird trotzdem abgewiesen, weil
+inzwischen anderswo ein Training entstanden ist, zeigt die Anwendung dieselbe Meldung.
+
+Was schon besteht, bleibt, auch über der Grenze: Bearbeiten, veröffentlichen, auf Entwurf setzen
+und löschen gehen weiter. In einem Verein gilt die Grenze nicht — ab der Aufnahme in ein Team oder
+eine Vereinsverwaltung sofort —, und Konten in einem Verein sehen weder Stand noch Dialog. In der
+Seitenleiste steht der Stand nicht. Ein verbundener KI-Assistent bekommt dieselbe Grenze und
+dieselbe Auskunft (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
 
 ## Bekannte Grenzen
 

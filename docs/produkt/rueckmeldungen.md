@@ -1,6 +1,6 @@
 # Rückmeldungen
 
-Stand 2026-10-16. Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
+Stand 2026-11-15. Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
 
 ## Zwei Arten, etwas zu sagen
 
@@ -29,7 +29,10 @@ gescheiterte erste nicht mehr da —, und dieselbe Rückmeldung steht nie zweima
 Nach sechs Sekunden verschwindet die Zeile von selbst. Solange der Zeiger auf ihr liegt oder
 sie mit der Tastatur angesteuert ist, wartet sie; über das Kreuz lässt sie sich jederzeit
 sofort schliessen, und wer sie mit der Tastatur schliesst, steht danach wieder dort, wo er
-vorher war. Ob ein Vorgang gescheitert ist, sagt ihr Text, nicht ihre Farbe. Wer mit
+vorher war. Ob ein Vorgang gescheitert ist, sagt ihr Text, nicht ihre Farbe. Eine einzige
+Rückmeldung trägt einen Knopf für den nächsten Schritt: Nach einem Import in den Spielerbestand
+eines Vereins führt „Zuordnen" zu den Spieler:innen ohne Team (siehe
+[Verein](verein.md#import-aus-einer-datei)). Wer mit
 einer Vorlesehilfe arbeitet, hört jede Rückmeldung, ohne dabei unterbrochen zu werden.
 
 Die Zeile gehört zu der Ansicht, in der sie entstand: Wechselt der Trainer von sich aus auf

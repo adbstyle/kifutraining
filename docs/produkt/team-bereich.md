@@ -1,31 +1,47 @@
 # Team-Bereich
 
-Stand 2026-10-30. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-11-15. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
-Jede angemeldete Person kann ein Team anlegen und ist damit sofort dessen erstes Mitglied.
-Weitere Trainerinnen und Trainer kommen über ihre E-Mail-Adresse dazu, sofern sie bereits ein
-bestätigtes Konto haben. Wer aufgenommen wird, muss nicht zustimmen — wer nicht mag, verlässt
-das Team wieder. Das Plus im Kopf der Mitgliederliste öffnet dafür einen Dialog: erst die Adresse
-suchen, dann im selben Dialog bestätigen — die Vorschau zeigt, wer sich hinter der Adresse verbirgt;
-erfolglose Suchen sind auf zehn je Stunde gebremst, damit sich die Anwendung nicht als
-Auskunftsmittel über registrierte Adressen missbrauchen lässt.
+Jedes Team gehört zu einem Verein (siehe [Verein](verein.md)). Angelegt, umbenannt und aufgelöst
+wird es von der Vereinsverwaltung im Bereich „Verein"; selbst gründen kann ein Team niemand. Die
+Teamübersicht sagt das allen ausser der Verwaltung: „Neue Teams legt die Vereinsverwaltung an."
+Sie zeigt die eigenen Teams als Karten mit der Zahl ihrer Mitglieder; die erste Brotkrume nennt
+den Verein und führt in seinen Bereich. Wer noch keinem Team angehört, findet dort den Weg
+hinein — als Konto ohne Verein den Einstieg zum Gründen eines Vereins oder zur Aufnahme, als
+Vereinsverwaltung den Hinweis, dass sie sich im Bereich „Verein" selbst in ein Team aufnimmt.
+
+Trainerinnen und Trainer kommen über ihre E-Mail-Adresse ins Team, sofern sie bereits ein
+bestätigtes Konto haben und keinem anderen Verein angehören. Wer aufgenommen wird, muss nicht
+zustimmen — wer nicht mag, verlässt das Team wieder —, und gehört damit dem Verein an. Das Plus im
+Kopf der Mitgliederliste öffnet dafür den Dialog „Trainer:in aufnehmen": erst die Adresse
+eingeben und „Suchen", dann den gefundenen Anzeigenamen samt Adresse prüfen und „Aufnehmen". Vor
+dem Suchen sagt der Dialog, dass die Person damit zum Verein gehört, solange keinem anderen
+beitreten und keinen gründen kann und dass die Vereinsverwaltung und das Trainerteam ihre
+E-Mail-Adresse sehen. Gehört sie schon einem anderen Verein an, nennt die Anwendung diesen nicht,
+sondern sagt nur, dass sie sich erst aufnehmen lässt, wenn sie ihn verlassen hat. Erfolglose
+Suchen sind auf zehn je Stunde gebremst, damit sich die Anwendung nicht als Auskunftsmittel über
+registrierte Adressen missbrauchen lässt. Auch die Vereinsverwaltung nimmt Trainer:innen in jedes
+Team auf, im Bereich „Verein".
 
 Die Mitgliederliste ist eine Tabelle wie die Spielerliste; das Kreuz in einer Zeile entfernt das
-Mitglied nach Rückfrage, die eigene Zeile hat keins. Jedes Mitglied steht mit Anzeigename und E-Mail-Adresse, damit erkennbar
-ist, wer hinter einer automatischen Kennung oder einem Kürzel steckt. Die Adresse sehen nur die
-aktuellen Mitglieder eines gemeinsamen Teams — auch bei Mitgliedschaften, die schon vor dieser
-Anzeige bestanden. Wer aufgenommen wird, sieht ab dann die Adressen der übrigen und sie seine,
-ohne dass er gefragt wird; wer kein Team mehr mit einer Person teilt, sieht ihre Adresse nicht
-mehr. Der KI-Assistent bekommt die Adressen nicht.
+Mitglied nach Rückfrage, die eigene Zeile hat keins. Jedes Mitglied steht mit Anzeigename und
+E-Mail-Adresse, damit erkennbar ist, wer hinter einer automatischen Kennung oder einem Kürzel
+steckt; wer der Vereinsverwaltung angehört, trägt die Plakette „Vereinsverwaltung". Die Adresse
+sehen die aktuellen Mitglieder eines gemeinsamen Teams und die Vereinsverwaltung. Wer
+aufgenommen wird, sieht ab dann die Adressen der übrigen und sie seine, ohne dass er gefragt wird;
+wer kein Team mehr mit einer Person teilt, sieht ihre Adresse nicht mehr. Der KI-Assistent bekommt
+die Adressen nicht.
 
-Im Team sind alle gleichberechtigt: jedes Mitglied darf umbenennen, aufnehmen, entfernen,
-Trainings und Termine bearbeiten, die Spielerliste führen und das Team auflösen. Abgestufte Rollen gibt es nicht. Ein
-Team ohne Mitglieder besteht nicht fort — verlässt die letzte Person das Team, verschwindet es
-samt seinen Trainings, Terminen, Terminserien und seiner Spielerliste — deren private Links und die
-Abholadresse gelten danach nicht mehr. Auflösen und der Austritt als letztes Mitglied gehen nur
-mit Eingabe des Teamnamens (siehe „Team verlassen und auflösen").
+Im Team sind alle gleichberechtigt: Jedes Mitglied darf Trainings und Termine planen, die
+Spielerliste führen und Mitglieder aufnehmen und entfernen, auch solche der Vereinsverwaltung.
+Abgestufte Rollen gibt es im Team nicht, und wer zugleich der Vereinsverwaltung angehört, hat im
+Team keine weiteren Rechte. Name und Verein stehen unter „Team" in der Karte „Teamangaben" mit dem
+Satz, dass Umbenennen und Auflösen die Vereinsverwaltung im Bereich „Verein" macht. Ein Team
+besteht auch ohne Mitglieder weiter — verlässt die letzte Person das Team, bleibt es samt
+Trainings, Terminen und Spielerliste bestehen, bis die Vereinsverwaltung neue Trainer:innen
+aufnimmt oder es auflöst (siehe „Team verlassen").
 
 ## Trainings gehören dem Team
 
@@ -52,11 +68,11 @@ Trainings; einzig beim Zuordnen eines Trainings zu einem Termin stehen die eigen
 (siehe unten).
 
 Deshalb bleibt der Team-Bereich auch dann bestehen, wenn ein Team-Training geöffnet ist: Die
-Seitenleiste hält „Teams" hervorgehoben — beim Ansehen, Bearbeiten und Durchführen ebenso
-wie beim Bearbeiten einer Übung und ihres Feld-Diagramms, und gleichgültig, ob das Training
-aus dem Team heraus, über einen geteilten Link oder ein Lesezeichen geöffnet wurde. Die
-Brotkrumen führen entsprechend zurück: über das Team in die Teamübersicht, und dazwischen
-dorthin, wo das Training tatsächlich liegt. Ein Team-Training ohne Termin führt über eine Stufe
+Seitenleiste bleibt im Bereich dieses Teams und hält „Trainingsplan" hervorgehoben — beim
+Ansehen, Bearbeiten und Durchführen ebenso wie beim Bearbeiten einer Übung und ihres
+Feld-Diagramms, und gleichgültig, ob das Training aus dem Team heraus, über einen geteilten Link
+oder ein Lesezeichen geöffnet wurde. Die Brotkrumen führen entsprechend zurück: über das Team in
+die Teamübersicht, und dazwischen dorthin, wo das Training tatsächlich liegt. Ein Team-Training ohne Termin führt über eine Stufe
 „Trainings" in den Bestand des Teams; ein eingeplantes trägt stattdessen sein Termindatum im
 Namen, und die Stufe des Teams führt direkt in den Trainingsplan — eine eigene Plan-Stufe gibt
 es nicht, weil das Team ohnehin dort beginnt. Ein Termin-Training (siehe „Trainings
@@ -471,8 +487,8 @@ abgesagt hat, Spielerzahl, Felder,
 Hinweis für Eltern („Für Eltern: …") und Bemerkung des Termins, jedes Feld mit Grösse, Toren je Torart und Untergrund; was zu einem
 Feld nicht erfasst ist, steht dort ausdrücklich als unbekannt. Den Treffpunkt nennt sie nicht.
 
-Eine eigene Überschrift trägt der Trainingsplan nicht, sie steht schon im Umschalter der
-Team-Ansichten. Über den Terminen liegt eine Zeile: links die Eingrenzungen „Meine Termine" und „Eingeladen",
+Eine eigene Überschrift trägt der Trainingsplan nicht, sie steht schon in der Seitenleiste.
+Über den Terminen liegt eine Zeile: links die Eingrenzungen „Meine Termine" und „Eingeladen",
 rechts „Termin erstellen" und ein Menü mit „Kalender abonnieren". „Termin erstellen" belegt
 kein Datum vor.
 
@@ -559,7 +575,7 @@ mehr, öffnet sich der Trainingsplan mit dem Hinweis „Diesen Termin gibt es ni
 nicht Mitglied des Teams ist, landet in der Teamübersicht.
 
 Ein Abo erlischt, wenn man es widerruft, das Team verlässt, daraus entfernt wird, das Konto
-löscht oder das Team aufgelöst wird. Ab dem nächsten Abruf liefert der Link dann keine Termine
+löscht, die Vereinsverwaltung das Team auflöst oder den Verein löscht. Ab dem nächsten Abruf liefert der Link dann keine Termine
 mehr. Ein erloschenes Abo bleibt erloschen, auch wenn man später wieder ins Team kommt; einen
 neuen Link holt man sich jederzeit wieder im Trainingsplan.
 
@@ -569,51 +585,58 @@ Eltern und Spieler:innen abonnieren die Termine der Spieler:in über ihren priva
 ## Spielerliste
 
 Ein Team kann seine Spieler:innen in einer Liste führen. Sie steht unter „Team" als eigene Karte
-zwischen Teamname und den Kadern (siehe „Kader"); ihr Kopf nennt, wie viele auf der Liste stehen und wie viele
-Links davon bezogen sind (siehe „Selbstabholung"), etwa „15 · 9 Links bezogen". Jede Spieler:in
-trägt Vorname, Nachname und Jahrgang, auf Wunsch dazu ihre J+S-Nummer. Vor- und Nachname haben je
-1 bis 60 Zeichen, der Jahrgang ist eine vierstellige Jahreszahl, die J+S-Nummer höchstens 20
-Zeichen lang; eine Liste fasst höchstens 200 Spieler:innen. Das Plus im Kopf öffnet den Dialog
-„Spieler:in hinzufügen" mit den vier Feldern untereinander; „Hinzufügen" oder die
-Eingabetaste nimmt auf, der Dialog sagt, wer dazukam, und bleibt für die nächste offen, bis
-„Abbrechen" ihn ohne Speichern schliesst. Die Liste ist nach Vor-
-und Nachname geordnet; jede Zeile nennt Name, Jahrgang, J+S-Nummer und, sobald das Team Kader führt, ihre Kader,
-dazu Knöpfe für den privaten Link, „Ändern" — derselbe Dialog mit den bisherigen Angaben —
-und „Entfernen". Auf dem Telefon stehen Jahrgang und J+S-Nummer unter dem Namen. Eine
-Spieler:in im Probe-Modus trägt neben dem Namen die Plakette „Probe 1/4" (siehe „Probetraining").
+zwischen den Teamangaben und dem Schnuppertraining (siehe „Schnuppertraining"); ihr Kopf nennt,
+wie viele auf der Liste stehen und wie viele Links davon bezogen sind (siehe „Selbstabholung"),
+etwa „15 · 9 Links bezogen". Jede Spieler:in trägt Vorname, Nachname und Jahrgang, auf Wunsch dazu
+ihre J+S-Nummer. Vor- und Nachname haben je 1 bis 60 Zeichen, der Jahrgang ist eine vierstellige
+Jahreszahl, die J+S-Nummer höchstens 20 Zeichen lang; ein Team führt höchstens 100 Spieler:innen.
+Das Plus im Kopf öffnet den Dialog „Spieler:in hinzufügen" mit den vier Feldern untereinander;
+„Hinzufügen" oder die Eingabetaste nimmt auf, der Dialog sagt, wer dazukam, und bleibt für die
+nächste offen, bis „Abbrechen" ihn ohne Speichern schliesst. Die Liste ist nach Vor- und Nachname
+geordnet; jede Zeile nennt Name, Jahrgang, J+S-Nummer, sobald das Team Kader führt, ihre Kader,
+unter „Auch in" die weiteren Teams des Vereins, denen sie zugeordnet ist, dazu Knöpfe für den
+privaten Link, „Ändern" — derselbe Dialog mit den bisherigen Angaben — und „Aus dem Team nehmen".
+Auf dem Telefon stehen Jahrgang, J+S-Nummer und die weiteren Teams unter dem Namen. Eine
+schnuppernde Spieler:in trägt neben dem Namen die Plakette „Schnuppern 1/4" (siehe
+„Schnuppertraining").
 
-Dieselbe Spieler:in steht nur einmal auf der Liste: Vorname, Nachname und Jahrgang zusammen sind
-im Team eindeutig, wobei Gross- und Kleinschreibung, überzählige Leerzeichen, Bindestrich gegen
+Die Spieler:innen gehören dem Verein, nicht dem Team (siehe [Verein](verein.md)). Wer im Team
+hinzugefügt wird, kommt damit in den Verein und ist diesem Team zugeordnet; dieselbe Spieler:in
+kann zugleich weiteren Teams des Vereins zugeordnet sein und hat überall dieselben Angaben und
+denselben Link. Eine Änderung an Name, Jahrgang oder J+S-Nummer gilt sofort in allen ihren
+Teams, auch an vergangenen Terminen. Eine Spieler:in, die der Verein schon führt, nimmt die
+Spielerliste nicht ein zweites Mal auf: Vorname, Nachname und Jahrgang zusammen sind im ganzen
+Verein eindeutig, wobei Gross- und Kleinschreibung, überzählige Leerzeichen, Bindestrich gegen
 Leerzeichen und verschiedene Apostrophe nicht unterscheiden — „Anna-Lena" und „anna lena" gelten
-als dieselbe, „Müller" und „Mueller" nicht. Zwei Kinder mit gleichen Angaben unterscheidet man mit
-einem Zusatz im Vornamen; die Meldung beim Aufnehmen sagt das. Angezeigt wird überall Vor- und
-Nachname, Jahrgang und J+S-Nummer nur in der Liste. Ein geänderter Name gilt sofort überall, auch an
-vergangenen Terminen. Einsehen und führen können die Liste nur die Mitglieder des Teams.
+als dieselbe, „Müller" und „Mueller" nicht. Steht sie schon in diesem Team, sagt die Meldung
+„Diese Spieler:in steht schon auf der Liste. Unterscheide zwei Gleichnamige mit einem Zusatz im
+Vornamen." Steht sie in anderen Teams, nennt die Meldung deren Namen und bittet, die Zuordnung
+mit der Vereinsverwaltung zu klären; ebenso, wenn sie im Verein keinem Team zugeordnet ist.
+Einem weiteren Team zuordnen kann eine bestehende Spieler:in nur die Vereinsverwaltung. Zwei
+Spieler:innen mit gleichen Angaben unterscheidet man mit einem Zusatz im Vornamen. An die Grenze
+stösst, wer eine 101. Spieler:in aufnimmt — „Das Team hat schon 100 Spieler:innen. Weitere kommen
+erst dazu, wenn es weniger sind." — oder eine neue, wenn der Verein schon 1000 führt; die Meldung
+sagt jeweils, welche Grenze erreicht ist. Angezeigt wird überall Vor- und Nachname, Jahrgang und
+J+S-Nummer nur in der Liste. Einsehen und führen können die Liste nur die Mitglieder des Teams;
+Name, Jahrgang und Teams aller Spieler:innen sehen zudem alle Trainer:innen des Vereins in der
+Vereinsliste.
 
-Eine ganze Mannschaft übernimmt man aus einer CSV-Datei: Das Datei-Symbol neben dem Plus öffnet den
-Dialog „Spieler:innen importieren". Gelesen wird die Datei im Browser; an KiFu gehen nur Vorname,
-Nachname, Jahrgang und J+S-Nummer, Elternkontakte, Geburtsdatum und alle übrigen Spalten nicht.
-Angenommen werden CSV-Dateien mit Semikolon oder Komma in UTF-8 oder im Windows-Zeichensatz, wie
-Excel und der Kader-Export von ClubCorner sie speichern, mit Spaltenköpfen in der ersten Zeile; eine
-leere, eine fremde oder eine Datei mit unsicherem Zeichensatz weist der Dialog mit dem Grund ab. Die
-Spalten erkennt KiFu an ihren Köpfen, unabhängig von Reihenfolge und weiteren Spalten — „Name" gilt
-als Nachname, „Jahrgang" geht „Geburtsdatum" vor —, und lässt eine Angabe offen, wenn mehrere Spalten
-gleich gut passen. Jede Zuordnung lässt sich ändern; Vorname, Nachname und Geburtsdatum brauchen je
-eine Spalte, die J+S-Nummer nicht. Aus dem Geburtsdatum übernimmt KiFu nur den Jahrgang, und nur mit
-vierstelliger Jahreszahl. Eine J+S-Nummer muss aus Ziffern bestehen; „k.A." oder Ähnliches gilt wie
-eine leere Zelle. Die Vorschau sagt, wer neu auf die Liste kommt, wer eine neue J+S-Nummer erhält
-(mit der bisherigen) und wer unverändert bleibt, und nennt jede ausgelassene Zeile mit dem Grund.
-Bestehende erkennt der Import nach derselben Regel wie die Eindeutigkeit der Liste; stehen dieselben
-Angaben mehrmals in der Datei, gilt die letzte Zeile. Eine J+S-Nummer aus der Datei ersetzt eine
-abweichende, eine leere Zelle löscht nichts, und wer in der Datei fehlt, bleibt auf der Liste.
-Übernommen wird erst nach „Übernehmen", ganz oder gar nicht; danach meldet die Anwendung, wie viele
-dazukamen und bei wie vielen sich die J+S-Nummer änderte. Würde die Liste mehr als 200 umfassen oder
-hat sie sich seit der Vorschau geändert, übernimmt der Dialog nichts und sagt nur das.
+Einen Import aus einer Datei gibt es in der Spielerliste eines Teams nicht; ihn macht die
+Vereinsverwaltung im Spielerbestand des Vereins (siehe [Verein](verein.md#import-aus-einer-datei)).
+Spieler:innen hinzufügen geht im Team weiterhin einzeln.
 
-Entfernen fragt nach und sagt, was folgt: Der private Link der Spieler:in gilt danach nicht mehr,
-die Selbstabholung findet sie nicht mehr, an anstehenden Terminen zählt sie nicht mehr, und an
-vergangenen steht sie nur noch ohne Namen als „Ehemalige Spieler:in", die Spielerzahl dort bleibt.
-Ihre Angaben verschwinden damit überall aus dem Team.
+„Aus dem Team nehmen" löscht die Spieler:in nicht. Die Rückfrage nennt, was bleibt und was
+verfällt: Sie bleibt samt privatem Link im Verein und in ihren weiteren Teams — aus dem Verein
+löscht nur die Vereinsverwaltung —; war es ihr letztes Team, ist sie danach keinem Team mehr
+zugeordnet, und ändern, einem Team zuordnen oder löschen kann sie dann nur die Vereinsverwaltung.
+Künftige Abmeldungen, Meldungen zu Spielen und Kader in diesem Team verfallen, ein
+Schnuppertraining endet samt Zählung, und vergangene Anwesenheiten bleiben mit dem Namen stehen.
+Hat sich seit dem Öffnen etwas geändert, nimmt die Anwendung sie nicht heraus und bittet, den
+Hinweis noch einmal zu lesen. Danach meldet sie „… ist nicht mehr im Team …". An Terminen, die
+schon begonnen haben, steht die Spieler:in weiter mit Namen und dem Kennzeichen „nicht mehr im
+Team", und ihre Anwesenheit lässt sich dort nachtragen; an anstehenden Terminen zählt sie nicht
+mehr. Ein Löschen gibt es in der Spielerliste nicht, für kein Mitglied, auch nicht für eines, das
+der Vereinsverwaltung angehört; gelöscht wird im Bereich „Verein".
 
 Sobald die Liste jemanden enthält, kommt die Spielerzahl anstehender Termine aus ihr: Jede
 Spieler:in, für die der Termin gilt (siehe „Kader"), zählt, bis sie abgemeldet ist — an einem
@@ -623,8 +646,8 @@ sonst ausgeschrieben „12 von 15 angemeldet"; auch 0 steht da. Beim ersten Aufn
 anstehenden Termine und alle Serien des Teams ihre erwartete Zahl — die Meldung nennt, wie viele
 Termine es betraf —, und solange die Liste jemanden enthält, nimmt die Anwendung für anstehende
 Termine und für Serien keine erwartete Zahl an. Im Dialog steht an Stelle des Feldes „Die
-Spielerzahl kommt aus der Spielerliste des Teams." Gäste und Probetrainings kommen dafür auf die
-Liste und zählen, bis man sie entfernt. Wird die Liste wieder leer, ist die Spielerzahl anstehender
+Spielerzahl kommt aus der Spielerliste des Teams." Gäste und Schnuppernde kommen dafür auf die
+Liste und zählen, bis man sie herausnimmt. Wird die Liste wieder leer, ist die Spielerzahl anstehender
 Termine unbekannt, bis jemand eine erwartete festlegt. Ein Team ohne Spielerliste plant unverändert
 mit der erwarteten Zahl.
 
@@ -642,7 +665,7 @@ eine Liste führt. Wie ein begonnenes Spiel wieder offen wird, steht unter „Sp
 
 Ein Team kann Teile seiner Spielerliste als Kader benennen, etwa „Stärkeklasse 1", „Torhüterinnen",
 „Schnupperlis" oder „Aushilfe", und Termine auf sie beschränken. Die Karte „Kader" steht unter
-„Team" zwischen Probetraining und Mitgliedern; ihr Kopf zählt, wie viele Kader das Team führt, etwa
+„Team" zwischen Schnuppertraining und Mitgliedern; ihr Kopf zählt, wie viele Kader das Team führt, etwa
 „4 von 20", das Plus legt einen an. Jede Zeile nennt den Namen und wie viele Spieler:innen ihm
 angehören, dazu Knöpfe zum Umbenennen und Entfernen. Ein Name hat 1 bis 30 Zeichen und steht im
 Team nur einmal, wobei Gross- und Kleinschreibung und überzählige Leerzeichen nicht unterscheiden —
@@ -704,59 +727,71 @@ dazugehörte und wer abgemeldet war —, auch wenn sich Kader oder Zuteilungen d
 entfernter Kader steht dort als „Ehemaliger Kader". Wird das Team aufgelöst, gehen seine Kader
 mit. Ein Team ohne Kader plant unverändert.
 
-## Probetraining
+## Schnuppertraining
 
-Ein Team kann neue Spieler:innen zuerst einige Trainings auf Probe besuchen lassen. Die Karte
-„Probetraining" steht unter „Team" zwischen Spielerliste und Kadern. Solange das Team nichts
-festgelegt hat, zeigt sie „Noch kein Probetraining" mit dem Link „Probetraining konfigurieren";
-danach nennt ihr Kopf, wie viele Spieler:innen im Probe-Modus sind, etwa „2 Spieler:innen im
-Probe-Modus", und sie zeigt die Anzahl Probetrainings, das Info-Schreiben — gekürzt auf drei Zeilen
-mit „Ganz lesen" — und wer im Probe-Modus ist, je mit Plakette. Der Stift öffnet den Dialog
-„Probetraining bearbeiten". Die Anzahl Probetrainings ist eine ganze Zahl von 1 bis 20 und zählt
-besuchte und angemeldete Trainings; sie gilt für alle Probe-Spieler:innen des Teams und lässt sich
-ändern, aber nicht mehr entfernen. Das Info-Schreiben ist optional, reiner Text mit höchstens 2000
-Zeichen und einem Zähler darunter; das ⓘ sagt, dass es die Eltern aller Probe-Spieler:innen oben in
+Ein Team kann neue Spieler:innen zuerst einige Trainings schnuppern lassen; früher hiess das
+Probetraining. Die Karte „Schnuppertraining" steht unter „Team" zwischen Spielerliste und Kadern
+und sagt unter dem Titel, für wen sie gedacht ist: „Für Spieler:innen, die den Verein
+ausprobieren. Sie melden sich über ihren Link selbst für Trainings an, höchstens für so viele, wie
+das Team festlegt. Spiele sehen sie nicht." Solange das Team nichts festgelegt hat, zeigt sie
+„Noch kein Schnuppertraining" mit dem Link „Schnuppertraining konfigurieren"; danach nennt ihr
+Kopf, wie viele schnuppern, etwa „2 Spieler:innen schnuppern", und sie zeigt die Anzahl
+Schnuppertrainings, das Info-Schreiben — gekürzt auf drei Zeilen mit „Ganz lesen" — und wer
+schnuppert, je mit Plakette. Der Stift öffnet den Dialog „Schnuppertraining bearbeiten". Die
+Anzahl Schnuppertrainings ist eine ganze Zahl von 1 bis 20 und zählt besuchte und angemeldete
+Trainings; sie gilt für alle schnuppernden Spieler:innen des Teams und lässt sich ändern, aber
+nicht mehr entfernen. Das Info-Schreiben ist optional, reiner Text mit höchstens 2000 Zeichen und
+einem Zähler darunter; das ⓘ sagt, dass es die Eltern aller schnuppernden Spieler:innen oben in
 ihrem Link sehen. Zeilenumbrüche bleiben, Webadressen werden im Link anklickbar, leer gespeichert
 ist es entfernt. Eine Änderung sehen die Eltern beim nächsten Öffnen.
 
-Den Probe-Modus schaltet ein Mitglied im Dialog „Spieler:in ändern" mit der Checkbox „Im
-Probetraining" ein und aus; beim Hinzufügen und beim Import gibt es sie nicht. Solange das Team
-keine Anzahl festgelegt hat, ist sie gesperrt und sagt, wo man das tut. Darunter steht, was der
-Modus bedeutet, etwa „Mia meldet sich selbst für Trainings an, höchstens für 4. Spiele sieht Mia
-nicht." Beim Einschalten heisst der Knopf „Probetraining einschalten". Verfallen dabei Abmeldungen
-von kommenden Trainings, Meldungen zu kommenden Spielen oder Kennzeichnungen als nicht
-aufgeboten, warnt der Dialog vor dem Speichern mit ihrer Zahl, etwa „Damit verfällt 1 Abmeldung
-von einem Training"; hat sich die Zahl inzwischen geändert, nennt er den neuen Stand. Beim Ausschalten
-sagt er, dass die Spieler:in danach an allen kommenden Trainings angemeldet ist und Spiele wie alle
-sieht und dass das Probetraining bei erneutem Einschalten wieder ab null zählt. Der private Link
-bleibt in beiden Fällen derselbe.
+Schnuppern gibt es nur für eine Spieler:in, die genau einem Team zugeordnet ist. Ein Mitglied
+schaltet es im Dialog „Spieler:in ändern" mit der Checkbox „Schnuppert" ein und aus; beim
+Hinzufügen gibt es sie nicht. Solange das Team keine Anzahl festgelegt hat, ist sie gesperrt und
+sagt, wo man das tut. Ist die Spieler:in weiteren Teams zugeordnet, steht statt der Checkbox
+„Diese Spieler:in ist weiteren Teams zugeordnet und macht darum regulär in deinem Team mit."
+Unter der Checkbox steht, was das Schnuppern bedeutet, etwa „Mia meldet sich selbst für
+Trainings an, höchstens für 4. Spiele sieht Mia nicht.", und vor dem Einschalten dazu „Solange die
+Spieler:in schnuppert, lässt sie sich keinem weiteren Team zuordnen." Beim Einschalten heisst
+der Knopf „Schnuppern einschalten". Verfallen dabei Abmeldungen von kommenden Trainings,
+Meldungen zu kommenden Spielen oder Kennzeichnungen als nicht aufgeboten, warnt der Dialog vor
+dem Speichern mit ihrer Zahl, etwa „Damit verfällt 1 Abmeldung von einem Training"; hat sich die
+Zahl inzwischen geändert, nennt er den neuen Stand. Beim Ausschalten sagt er, dass die
+Spieler:in danach an allen kommenden Trainings angemeldet ist und Spiele wie alle sieht und dass
+das Schnuppern bei erneutem Einschalten wieder ab null zählt. Der private Link bleibt in beiden
+Fällen derselbe. Die Vereinsverwaltung kann eine Spieler:in ohne Team auch gleich zum Schnuppern
+einem Team zuordnen, sofern dieses eine Anzahl festgelegt hat (siehe
+[Verein](verein.md#spielerbestand-und-vereinsliste)). Eine schnuppernde Spieler:in lässt sich
+keinem weiteren Team zuordnen, bis ein Mitglied das Schnuppern beendet oder sie aus dem Team
+nimmt; nimmt man sie heraus, endet das Schnuppern samt Zählung.
 
-Eine Probe-Spieler:in ist an jedem noch nicht begonnenen Training zuerst nicht angemeldet und wird
-angemeldet — über ihren Link durch die Eltern (siehe „Privater Link"), durch ein Mitglied im
-geöffneten Termin oder über den KI-Assistenten. Über den Link geht das nur, solange besuchte und
-künftig angemeldete Probetrainings samt dieser Anmeldung die Anzahl nicht übersteigen. Ein Mitglied
-darf darüber hinaus anmelden und erhält dann einen kurzen Hinweis, etwa „Mia Keller ist damit über
-der Anzahl Probetrainings: 0 besucht und 3 angemeldet, vorgesehen sind 2." Als besucht zählt jedes
-Training, das nach dem Einschalten begonnen hat und bei dem sie bei Beginn angemeldet war oder als
-doch erschienen nachgetragen ist, ausser sie ist als nicht erschienen nachgetragen. Ein
-ausgefallenes Training zählt weder als besucht noch als angemeldet; die Anmeldung ruht, bis der
-Ausfall zurückgenommen wird. Wird die Anzahl gesenkt, bleiben bestehende Anmeldungen. In der
-Spielerliste trägt sie neben dem Namen die violette Plakette „Probe 1/4" — besuchte von der Anzahl;
-für welche Trainings sie angemeldet ist, steht am jeweiligen Training, und ein Satz unter der Liste
-erklärt das. Am Training zählt sie unter allen, für die es gilt, und unter den Angemeldeten nur,
-wenn sie angemeldet ist; nicht angemeldet steht sie dort wie eine abgemeldete, ohne eigene
-Kennzeichnung. Spiele gelten für sie nicht: Sie steht in keinem Spiel und zählt dort nicht mit.
+Eine schnuppernde Spieler:in ist an jedem noch nicht begonnenen Training zuerst nicht angemeldet
+und wird angemeldet — über ihren Link durch die Eltern (siehe „Privater Link"), durch ein Mitglied
+im geöffneten Termin oder über den KI-Assistenten. Über den Link geht das nur, solange besuchte und
+künftig angemeldete Schnuppertrainings samt dieser Anmeldung die Anzahl nicht übersteigen. Ein
+Mitglied darf darüber hinaus anmelden und erhält dann einen kurzen Hinweis, etwa „Mia Keller ist
+damit über der Anzahl Schnuppertrainings: 0 besucht und 3 angemeldet, vorgesehen sind 2." Als
+besucht zählt jedes Training, das nach dem Einschalten begonnen hat und bei dem sie bei Beginn
+angemeldet war oder als doch erschienen nachgetragen ist, ausser sie ist als nicht erschienen
+nachgetragen. Ein ausgefallenes Training zählt weder als besucht noch als angemeldet; die
+Anmeldung ruht, bis der Ausfall zurückgenommen wird. Wird die Anzahl gesenkt, bleiben bestehende
+Anmeldungen. In der Spielerliste trägt sie neben dem Namen die violette Plakette „Schnuppern 1/4"
+— besuchte von der Anzahl; für welche Trainings sie angemeldet ist, steht am jeweiligen Training,
+und ein Satz unter der Liste erklärt das. Am Training zählt sie unter allen, für die es gilt, und
+unter den Angemeldeten nur, wenn sie angemeldet ist; nicht angemeldet steht sie dort wie eine
+abgemeldete, ohne eigene Kennzeichnung. Spiele gelten für sie nicht: Sie steht in keinem Spiel und
+zählt dort nicht mit.
 
 Wird ein Training verlegt — einzeln oder über die Serie — oder gilt es durch eine Kader-Änderung
 nicht mehr für sie, verfällt ihre Anmeldung wie eine Abmeldung. Die Rückfrage vor dem Speichern
-nennt verfallende Anmeldungen eigens, etwa „Damit verfällt 1 Anmeldung einer Probe-Spieler:in: Sie
-gilt wieder als nicht angemeldet."
+nennt verfallende Anmeldungen eigens, etwa „Damit verfällt 1 Anmeldung einer schnuppernden
+Spieler:in: Sie gilt wieder als nicht angemeldet."
 Gilt ein Training durch Kader wieder für sie, ist sie dort nicht angemeldet.
 
 ## Ab- und Anmelden
 
 Jede Spieler:in der Liste ist für jedes Training, das für sie gilt (siehe „Kader"), angemeldet,
-bis sie abgemeldet wird — ausser im Probe-Modus, wo es umgekehrt ist (siehe „Probetraining"); einen Zustand wie „keine Rückmeldung" gibt es bei Trainings nicht. Für
+bis sie abgemeldet wird — ausser sie schnuppert, dann ist es umgekehrt (siehe „Schnuppertraining"); einen Zustand wie „keine Rückmeldung" gibt es bei Trainings nicht. Für
 Spiele melden sich die Spieler:innen dagegen ausdrücklich (siehe „Spiele"); was hier steht, gilt
 für Trainings. Wer fehlt, ohne sich abzumelden, zählt bis zum Beginn mit —
 die Zahl ist darum eine Obergrenze; danach lässt es sich nachtragen (siehe „Nachtragen, wer da
@@ -779,7 +814,7 @@ die genauere, gerechnet nach Schweizer Zeit mit Wochen von Montag bis Sonntag. E
 wer an diesem Termin je zwischen angemeldet und abgemeldet gewechselt hat; jeder Wechsel setzt sie
 neu, derselbe Stand ein zweites Mal gesetzt nicht. Eine Verlegung von Datum oder Beginn und ein
 Wegfall durch Kader setzen sie zurück, ein Ausfall lässt sie ruhen, ab Beginn bleibt die des
-letzten Wechsels davor stehen, und wer aus der Liste entfernt wird, nimmt sie überall mit. Die
+letzten Wechsels davor stehen, und wer aus dem Verein gelöscht wird, nimmt sie überall mit. Die
 Angabe gilt ab dem Öffnen des Termins. Ein ausgefallener Termin nennt weder Zahl noch
 Abmeldungen, sondern nur, dass sich für ihn niemand an- oder abmelden lässt. Führt das Team keine
 Liste, sagt der Reiter, wo sie zu finden ist; an einem Termin, der begann, als die Liste leer war,
@@ -833,8 +868,10 @@ Fällt ein Termin aus, ruhen seine Nachträge wie seine Abmeldungen: nicht zu se
 Zeitpunkt verlegt, der noch bevorsteht, verfallen seine Nachträge mit dem Stand bei Beginn; vor dem
 Speichern nennt die Rückfrage auch sie, etwa „Damit verfällt auch 1 Nachtrag zur Anwesenheit.",
 bei einer Serienänderung in derselben Rückfrage. Auf einen anderen vergangenen Zeitpunkt verlegt,
-bleiben sie. Wer aus der Liste entfernt wird, steht an vergangenen Terminen weiter als ehemalige
-Spieler:in ohne Namen, samt Nachtrag, und zählt dort weiter; ändern lässt sich das nicht mehr.
+bleiben sie. Wer aus dem Verein gelöscht wird, steht an vergangenen Terminen weiter als ehemalige
+Spieler:in ohne Namen, samt Nachtrag, und zählt dort weiter; ändern lässt sich das nicht mehr. Wer
+nur aus dem Team genommen wird, bleibt an begonnenen Terminen mit Namen und dem Kennzeichen „nicht
+mehr im Team" stehen, und sein Nachtrag lässt sich dort weiter setzen.
 
 ## Spiele
 
@@ -1003,27 +1040,34 @@ reicht, beurteilt er selbst.
 ## Privater Link
 
 Jede Spieler:in hat einen privaten Link, über den ihre Eltern oder sie selbst sie ohne Konto ab- und
-wieder anmelden. Ein Mitglied holt ihn über das Kettenglied in ihrer Zeile der Spielerliste: Der
-Dialog „Privater Link für …" bietet ihn zum Kopieren an, sagt, ob er bezogen ist, und warnt: „Wer
-diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist
-sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst." Weitergeben muss
-ihn das Mitglied selbst, oder die Eltern holen ihn ab (siehe „Selbstabholung"); die Anwendung
-verschickt nichts und kennt keine Kontaktdaten. Der Link bleibt derselbe, bis jemand ihn erneuert:
-„Link erneuern" im selben Dialog macht den bisherigen sofort ungültig, die Abmeldungen bleiben; der
-Dialog sagt dazu, dass ein Kalender-Abo der Spieler:in damit erlischt und über den neuen Link neu zu
-holen ist. Ist die Selbstabholung eingeschaltet, sagt der Dialog dazu, dass die Eltern den neuen dort wieder
-abholen. Je Spieler:in und Team gibt es genau einen Link.
+wieder anmelden. Es ist ein einziger Link für die Spieler:in im ganzen Verein: Er zeigt die Termine
+aller Teams, denen sie zugeordnet ist. Ein Mitglied jedes dieser Teams holt ihn über das
+Kettenglied in ihrer Zeile der Spielerliste: Der Dialog „Privater Link für …" bietet ihn zum
+Kopieren an, sagt, ob er bezogen ist, nennt die Teams, deren Termine er zeigt — bei mehreren dazu,
+dass eine hier ausgeschaltete Selbstabholung den Link nicht sperrt, wenn ein anderes Team sie
+eingeschaltet hat —, und warnt: „Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele
+ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern
+oder ihr selbst." Weitergeben muss ihn das Mitglied selbst, oder die Eltern holen ihn ab (siehe
+„Selbstabholung"); die Anwendung verschickt nichts und kennt keine Kontaktdaten. Der Link bleibt
+derselbe, bis jemand ihn erneuert: „Link erneuern" im selben Dialog fragt zuerst nach und nennt,
+dass der bisherige Link und das Kalender-Abo für alle Teams der Spieler:in enden, mit deren Namen,
+und ob die Eltern den neuen über die Abholadresse eines dieser Teams holen können oder man ihn
+selbst weitergibt. Danach ist der bisherige sofort ungültig; die Abmeldungen bleiben. Erneuern
+können die Mitglieder jedes ihrer Teams und die Vereinsverwaltung. Gültig bleibt der Link, wenn
+die Spieler:in aus einem Team genommen oder ein Team aufgelöst wird, auch wenn sie danach keinem
+Team mehr angehört.
 
 Wer den Link öffnet, braucht weder Konto noch Anmeldung. Die Seite ist fürs Telefon gebaut, kommt
-ohne Seitenleiste aus — unten am Bildschirmrand klebt nur eine schmale Leiste mit „Fragen und
-Feedback" (siehe [Navigation](navigation.md#fragen-und-feedback)) — und nennt Teamname und Name der Spieler:in mit dem Satz, dass sie für jedes
-Training zuerst angemeldet ist und man sie abmeldet, wenn sie nicht kann, und bis zum Beginn wieder
+ohne Seitenleiste aus; unten am Bildschirmrand klebt nur eine schmale Leiste mit „Fragen und
+Feedback" (siehe [Navigation](navigation.md#fragen-und-feedback)). Ihr Kopf lautet „Termine für"
+mit dem Namen der Spieler:in, darunter stehen ihre Teams alphabetisch als Plaketten und der Satz,
+dass sie für jedes Training zuerst angemeldet ist und man sie abmeldet, wenn sie nicht kann, und bis zum Beginn wieder
 anmeldet, und dass sie für ein Spiel erst angemeldet ist, wenn man sie anmeldet. Eine Karte „Als
 Nächstes" gibt es hier nicht: Ein Termin von heute, der schon begonnen hat, steht zuoberst unter
 „Heute", gesperrt bis Ende des Tages. Darunter folgen alle übrigen anstehenden Termine, die für die
 Spieler:in gelten, unter Monatsüberschriften wie „Oktober 2026", jedes Training als Karte mit dem
 Kalenderblatt, dem Status der Spieler:in als Plakette — „Angemeldet" grün, „Abgemeldet" rot, „Fällt
-aus" grau —, Beginn und Ende, Ort, bei einem Termin mit Kadern den Kadern der Spieler:in, über die
+aus" grau —, dem Namen seines Teams, Beginn und Ende, Ort, bei einem Termin mit Kadern den Kadern der Spieler:in, über die
 er für sie gilt, der Spielerzahl, wer verantwortlich ist — etwa „Verantwortlich: Anna Keller", ohne
 Verantwortliche:n nichts — und einem Schalter. Der Schalter ist derselbe ruhige wie im Reiter
 „Spieler:innen": ein grauer Knopf, angemeldet rechts mit Haken, abgemeldet links mit Kreuz. An einem
@@ -1043,7 +1087,7 @@ Ein begonnener Termin ist gesperrt mit „Hat begonnen · nicht mehr änderbar";
 dem Ort, der auch dann stehen bleibt. Hat ein Training einen Treffpunkt, steht auf der Karte, vor
 einem Hinweis für Eltern, eine Zeile wie bei den Treffpunkten eines Spiels, etwa „Treffpunkt  17:45  Garderoben Schulhaus" — nur,
 solange der Termin nicht begonnen hat, nicht ausfällt und die Spieler:in nicht abgemeldet ist; eine
-Probe-Spieler:in, die nicht angemeldet ist, sieht ihn. Wird ein Ausfall zurückgenommen, steht er
+schnuppernde Spieler:in, die nicht angemeldet ist, sieht ihn. Wird ein Ausfall zurückgenommen, steht er
 wieder da. Ein neuer oder geänderter Treffpunkt ist beim nächsten Öffnen zu sehen, ohne als
 Änderung gekennzeichnet zu sein; ohne Treffpunkt sagt die Karte dazu nichts, und es gelten Ort und
 Beginn. Trägt ein Termin einen Hinweis für Eltern, steht er unter
@@ -1066,26 +1110,40 @@ und dass man die Auswahl aufhebt, um alle Termine zu sehen. Eine Sprachausgabe s
 Wechsel, wie viele Termine der Art nun dastehen. Scheitert eine Meldung an einem Termin, den die
 Eingrenzung gerade ausblendet, steht der Fehler mit dem Tag über der Liste. Die Wahl bleibt beim
 Ab- und Anmelden stehen, gilt aber nur, solange die Seite offen ist: Wer den Link neu öffnet oder die Seite neu
-lädt, sieht wieder alle Termine. Im Probe-Modus gibt es die Chips nicht, weil dort keine Spiele
-stehen; ebenso nicht, solange keine Termine anstehen. Das Kalender-Abo enthält unabhängig davon
-alle Termine, und der Zähler der Probetrainings zählt immer alle Trainings.
+lädt, sieht wieder alle Termine. Schnuppert die Spieler:in, gibt es die Chips nicht, weil dort keine
+Spiele stehen; ebenso nicht, solange keine Termine anstehen. Das Kalender-Abo enthält unabhängig
+davon alle Termine, und der Zähler der Schnuppertrainings zählt immer alle Trainings.
 
-Ist die Spieler:in im Probe-Modus (siehe „Probetraining"), sagt der Kopf statt dessen etwa „Mia ist
-im Probetraining. Melde Mia für die Trainings an, an denen Mia teilnimmt, und bis zum Beginn wieder
-ab." Darunter steht, wie viele Probetrainings noch möglich sind, etwa „Noch 2 von 4 Probetrainings
-möglich", mit einem Balken je Probetraining — besucht gefüllt, angemeldet umrandet — und darunter
-„1 besucht · 1 angemeldet". Führt das Team ein Info-Schreiben, folgt es unter „Infos zum
-Probetraining", auf vier Zeilen gekürzt mit „Ganz lesen", mit seinen Zeilenumbrüchen und mit
+Haben die Teams zurzeit keine Termine für die Spieler:in, steht „Keine anstehenden Termine". Ist sie
+keinem Team zugeordnet — etwa nachdem sie aus ihrem letzten Team genommen wurde —, bleibt der Link
+gültig, zeigt keine Teams und keine Termine und sagt, dass Termine erscheinen, sobald sie einem
+Team zugeordnet ist, und dass bei Fragen die Vereinsverwaltung hilft; Kalender-Abo und „Fragen und
+Feedback" bleiben. Nach dem Herausnehmen verschwinden die Termine dieses Teams vom Link, auch ein
+heute begonnener. Melden Eltern sie für einen Termin, der inzwischen nicht mehr für sie gilt, an
+oder ab, hält die Seite „Nicht gespeichert" mit Art und Tag des Termins fest und zeigt die
+aktuellen Termine.
+
+Unten auf der Seite steht, wer für die Daten verantwortlich ist — der Verein mit seinem Namen —
+und wer sie sieht: Name, Jahrgang und Teams alle Trainer:innen des Vereins, alle Angaben die
+Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die
+KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.
+
+Schnuppert die Spieler:in (siehe „Schnuppertraining"), sagt der Kopf statt dessen etwa „Mia
+schnuppert. Melde Mia für die Trainings an, an denen Mia teilnimmt, und bis zum Beginn wieder ab."
+Darunter steht, wie viele Schnuppertrainings noch möglich sind, etwa „Noch 2 von 4
+Schnuppertrainings möglich", mit einem Balken je Schnuppertraining — besucht gefüllt, angemeldet
+umrandet — und darunter „1 besucht · 1 angemeldet". Führt das Team ein Info-Schreiben, folgt es
+unter „Infos zum Schnuppertraining", auf vier Zeilen gekürzt mit „Ganz lesen", mit seinen Zeilenumbrüchen und mit
 Webadressen als Links, die ausserhalb der Anwendung öffnen. Spiele zeigt die Seite nicht. Jedes
 Training steht zuerst als „Nicht angemeldet" in Grau, ohne dass die Karte zurücktritt, und der
-Schalter meldet an. Sind alle Probetrainings vergeben, sagt der Kopf „Alle 4 Probetrainings
-vergeben" — bei einem einzigen „Das Probetraining ist vergeben" —, über den Trainings steht etwa
-„Alle 4 Probetrainings sind vergeben. Meldest du Mia von einem Training ab, wird der Platz wieder
-frei. Für weitere Trainings wende dich an das Team." — ist schon alles besucht, ohne den mittleren
-Satz —, und die Schalter der übrigen Trainings sind mit „Probetrainings vergeben" gesperrt;
-abmelden geht weiterhin. Ist eine Anmeldung mit einer Verlegung verfallen, steht dort „… Deine
-Anmeldung gilt nicht mehr." Schaltet ein Mitglied den Probe-Modus aus, zeigt derselbe Link wieder
-die gewohnte Seite.
+Schalter meldet an. Sind alle Schnuppertrainings vergeben, sagt der Kopf „Alle 4
+Schnuppertrainings vergeben" — bei einem einzigen „Das Schnuppertraining ist vergeben" —, über den
+Trainings steht etwa „Alle 4 Schnuppertrainings sind vergeben. Meldest du Mia von einem Training
+ab, wird der Platz wieder frei. Für weitere Trainings wende dich an das Team." — ist schon alles
+besucht, ohne den mittleren Satz —, und die Schalter der übrigen Trainings sind mit
+„Schnuppertrainings vergeben" gesperrt; abmelden geht weiterhin. Ist eine Anmeldung mit einer
+Verlegung verfallen, steht dort „… Deine Anmeldung gilt nicht mehr." Schaltet ein Mitglied das
+Schnuppern aus, zeigt derselbe Link wieder die gewohnte Seite.
 
 Den Ort zeigt jede Karte ganz, auch wenn er lang ist, und umbricht ihn dafür. Hat der Ort einen
 Kartenlink, ist er selbst der Link: violett und unterstrichen, mit einem Zeichen am Ende, das sagt,
@@ -1111,10 +1169,11 @@ steht etwa „Verlegt, vorher Dienstag, 20. Oktober um 18:00." dabei, auch wenn 
 gegebenenfalls „Die Kennzeichnung als nicht aufgeboten gilt nicht mehr." Ab dem Anpfiff zeigt die
 Karte die Zahl beim Anpfiff; Nachträge sehen die Eltern nicht.
 
-Ein erneuerter, entfernter oder unbekannter Link führt auf dieselbe neutrale Seite „Dieser Link gilt
-nicht mehr", die weder Team noch Spieler:in nennt und auf die Abholadresse des Teams oder die
-Trainer:innen verweist; ob es den Link je gab, ist nicht zu erkennen. Ebenso ungültig wird er, wenn
-das Team aufgelöst wird. Die Vorschau, die ein Chat beim Teilen zeigt, trägt einen festen Titel ohne
+Ein erneuerter oder unbekannter Link und der Link einer Spieler:in, die die Vereinsverwaltung aus
+dem Verein gelöscht hat, führen auf dieselbe neutrale Seite „Dieser Link gilt nicht mehr", die
+weder Team noch Spieler:in nennt: „Den aktuellen erhältst du über eine Abholadresse, bei den
+Trainer:innen oder bei der Vereinsverwaltung." Ob es den Link je gab, ist nicht zu erkennen.
+Ebenso ungültig wird er, wenn die Vereinsverwaltung den Verein löscht. Die Vorschau, die ein Chat beim Teilen zeigt, trägt einen festen Titel ohne
 Team und Namen; Suchmaschinen nehmen die Seite nicht auf, die Besucherstatistik zählt sie nicht, und
 im Browser legt sie nichts ab.
 
@@ -1138,9 +1197,9 @@ Zeitpunkt, ein ausgefallener fehlt; vergangene Tage fallen heraus wie am Link. D
 vorn den Status, dann „Training" oder die Bezeichnung des Spiels und den Teamnamen, etwa
 „✅ Training · FC Beispiel" oder „❔ Cup gegen Thun · FC Beispiel":
 
-- Training: angemeldet ✅ zugesagt, abgemeldet ❌ abgesagt; im Probe-Modus nicht angemeldet ❔
+- Training: angemeldet ✅ zugesagt, abgemeldet ❌ abgesagt; schnuppernd nicht angemeldet ❔
   vielleicht, auch wenn sich keines mehr anmelden lässt. Spiele enthält das Abo einer
-  Probe-Spieler:in nicht, das Info-Schreiben ebenso wenig.
+  schnuppernden Spieler:in nicht, das Info-Schreiben ebenso wenig.
 - Spiel: angemeldet ✅ zugesagt; ohne Meldung ❔ vielleicht, bis die Meldefrist abläuft — ohne
   Meldefrist bis zum Anpfiff —, danach ❌ abgesagt; abgemeldet oder nicht aufgeboten ❌ abgesagt,
   nicht aufgeboten auch dann, wenn die Spieler:in angemeldet ist.
@@ -1154,11 +1213,15 @@ beginnt weiterhin zum Beginn, nicht zum Treffpunkt. Weiter gelangen nur
 Beginn, Ende und Ort ins Kalenderprogramm, dazu in der Beschreibung der Kartenlink zum Ort als
 „Karte zum Ort: …" — er führt zum Ort des Termins, nicht zum Treffpunkt; kein Name der Spieler:in, keine Meldefrist, kein
 Richtwert, keine Spielerzahl, kein Grund einer Absage und kein Verweis, der den privaten Link
-verriete. Der Kalender heisst „Trainings und Spiele · Teamname"; wer mehrere Abos hat, benennt sie
-im Kalenderprogramm selbst. Die Zeiten gelten als Schweizer Zeit.
+verriete. Das Abo enthält die Termine aller Teams der Spieler:in, und der Titel jedes Eintrags nennt
+sein Team. Der Kalender heisst „Trainings und Spiele", ohne Teamnamen; ein früher abonnierter
+Kalender behält im Kalenderprogramm allenfalls seinen bisherigen Namen, und wer mehrere Abos hat,
+benennt sie dort selbst. Ohne Team liefert die Adresse einen leeren Kalender, der die Termine
+zeigt, sobald die Spieler:in wieder einem Team zugeordnet ist. Die Zeiten gelten als Schweizer Zeit.
 
-Das Abo erlischt, wenn ein Mitglied den Link erneuert, die Spieler:in entfernt wird, das Team
-aufgelöst wird oder Eltern es selbst widerrufen: „Abo widerrufen" im selben Dialog fragt nach, sagt
+Das Abo erlischt, wenn jemand den Link erneuert, die Vereinsverwaltung die Spieler:in aus dem
+Verein löscht oder den Verein löscht, oder wenn Eltern es selbst widerrufen; das Herausnehmen aus
+einem Team und das Auflösen eines Teams lassen es bestehen. Widerrufen geht so: „Abo widerrufen" im selben Dialog fragt nach, sagt
 dazu, dass die bisherige Abo-Adresse danach für alle, die sie nutzen, keine Termine mehr liefert,
 und bestätigt es danach; der Link und die Meldungen bleiben. Ab dem nächsten Abruf liefert die
 Adresse einen leeren Kalender. Ein erloschenes Abo bleibt erloschen; über den gültigen Link holt man
@@ -1167,30 +1230,39 @@ eine Spieler:in ein Abo besteht.
 
 ## Selbstabholung
 
-Damit niemand jedem Elternteil einzeln schreiben muss, holen Eltern den Link ihres Kindes auf
+Damit niemand jedem Elternteil einzeln schreiben muss, holen Eltern den Link ihrer Spieler:in auf
 Wunsch selbst ab. Der Abschnitt „Selbstabholung" zuoberst in der Karte der Spielerliste trägt dafür
 einen Schalter; ausgeschaltet ist er, bis ein Mitglied ihn einschaltet. Eingeschaltet zeigt er die
 Abholadresse des Teams in einem Kasten nur zum Lesen, mit dem Knopf zum Kopieren daneben, und sagt,
 was sie kann: Wer sie hat und Vorname, Nachname und Jahrgang einer Spieler:in kennt, erhält deren
-Link und kann sie damit ab- und anmelden — geteilt wird sie darum nur teamintern. Im Menü daneben lässt sie sich nach einer Bestätigung
-erneuern; die bisherige gilt dann nie mehr. Ausschalten stoppt neue Abholungen, und wieder
-eingeschaltet gilt dieselbe Adresse wie vorher. Weder Erneuern noch Ausschalten berührt die Links,
-die Eltern schon bezogen haben; beides sagt die Anwendung dabei.
+Link und kann sie damit ab- und anmelden — geteilt wird sie darum nur teamintern —, und dass der
+Link die Termine aller Teams der Spieler:in zeigt. Im Menü daneben lässt sie sich nach einer
+Bestätigung erneuern; die bisherige gilt dann nie mehr. Ausschalten stoppt neue Abholungen über
+dieses Team, und wieder eingeschaltet gilt dieselbe Adresse wie vorher. Weder Erneuern noch
+Ausschalten berührt die Links, die Eltern schon bezogen haben; beides sagt die Anwendung dabei.
+Ausgeschaltet sagt der Abschnitt dazu, dass die Selbstabholung den Link nicht sperrt, wenn ein
+anderes Team der Spieler:in sie eingeschaltet hat: Über die Abholadresse jedes ihrer Teams, das
+die Selbstabholung eingeschaltet hat, kommen Eltern zum selben Link.
 
 Auch die Abholseite braucht kein Konto und ist fürs Telefon gebaut. Unter dem Teamnamen und
-„Spieler:in-Link abholen" gibt man Vorname, Nachname und Jahrgang der Spieler:in ein. Unter dem
-Knopf „Link abholen" steht unter „Was KiFu speichert", welche Angaben die Anwendung zu einer
-Spieler:in führt — Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen, An-
-und Abmeldungen zu Spielen und ob sie für ein Spiel nicht aufgeboten ist —, wer sie sieht — die
-Trainer:innen des Teams, KI-Assistenten, die sie verbunden haben, und wer den Link der Spieler:in
-hat; wann sie sich zuletzt ab- oder wieder angemeldet hat, nur die Trainer:innen und ihre
-KI-Assistenten — und dass sie verschwinden, wenn das Team sie aus der Liste nimmt. Abgeglichen wird
-wie bei der Eindeutigkeit der Liste; Umlaute, Akzente und alles Übrige müssen stimmen, die
-J+S-Nummer gehört nicht dazu. Passt die Eingabe, erscheint der Link zum Kopieren mit „Link öffnen"
-und „Weitere Spieler:in abholen", dazu, wozu er dient, dass er privat ist und dass man ihn bei
-Verlust hier wieder abholt; man erhält jedes Mal den gültigen Link. Passt sie nicht, kommt immer
+„Spieler:in-Link abholen" gibt man Vorname, Nachname und Jahrgang der Spieler:in ein; gefunden
+werden die Spieler:innen dieses Teams. Unter dem Knopf „Link abholen" steht unter „Was KiFu
+speichert", welche Angaben die Anwendung zu einer Spieler:in führt — Vorname, Nachname, Jahrgang,
+falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein
+Spiel nicht aufgeboten ist —, dass der Verein mit seinem Namen für die Daten verantwortlich ist, wer
+sie sieht — Name, Jahrgang und Teams alle Trainer:innen des Vereins, alle Angaben die Trainer:innen
+ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese
+Personen verbunden haben, und wer den Link hat; wann sie sich zuletzt ab- oder wieder angemeldet
+hat, nur die Trainer:innen ihrer Teams und ihre KI-Assistenten — und dass die Angaben im Verein
+bleiben, wenn ein Team die Spieler:in herausnimmt, und erst verschwinden, wenn die
+Vereinsverwaltung sie aus dem Verein löscht. Abgeglichen wird wie bei der Eindeutigkeit der Liste;
+Umlaute, Akzente und alles Übrige müssen stimmen, die J+S-Nummer gehört nicht dazu. Passt die
+Eingabe, erscheint der Link zum Kopieren mit „Link öffnen" und „Weitere Spieler:in abholen", dazu,
+wozu er dient, dass er die Termine aller Teams der Spieler:in zeigt, dass er privat ist, dass man
+ihn bei Verlust hier wieder abholt und wer für die Daten verantwortlich ist; man erhält jedes Mal
+den gültigen Link. Passt sie nicht, kommt immer
 derselbe Satz: „Dazu finden wir keinen Link. Prüf die Schreibweise oder frag beim Team nach." Welche
-Angabe nicht stimmt oder ob es ein solches Kind gibt, verrät er nicht.
+Angabe nicht stimmt oder ob es eine solche Spieler:in gibt, verrät er nicht.
 
 Nach fünf nicht passenden Eingaben innerhalb von 15 Minuten nimmt die Abholung vom selben
 Internetanschluss 15 Minuten lang keine Eingabe mehr an, bei keinem Team, und die Seite sagt, dass
@@ -1200,7 +1272,7 @@ unbekannte Adresse zeigt die neutrale Seite „Diese Abholadresse gilt nicht" oh
 im Chat, Suchmaschinen, Besucherstatistik und Browser behandelt die Abholseite wie den Link.
 
 In der Spielerliste trägt das Kettenglied einen grünen Punkt, wenn der aktuelle Link der
-Spieler:in über die Abholadresse herausgegeben wurde; der Tooltip sagt dann „bezogen". Ob ein
+Spieler:in über eine Abholadresse herausgegeben wurde, gleich über welches ihrer Teams; der Tooltip sagt dann „bezogen". Ob ein
 Link bezogen ist oder nicht, sagt auch der Dialog „Privater Link für …". Wer ihn holte und wie oft, hält die Anwendung nicht fest.
 Erneuert ein Mitglied den Link, gilt er wieder als nicht bezogen; der neue lässt sich über die
 Abholadresse erneut abholen.
@@ -1231,8 +1303,10 @@ eine Serie ohne Angabe zu den Trainer:innen fest, sind wie in der Anwendung alle
 eingeladen und er selbst verantwortlich. Wer dabei ist, wer abgesagt hat und seit wann, wer
 verantwortlich ist und wie viele die Mindestbesetzung verlangt, erfährt er bei jedem Termin. Platz und Spielerzahl erfährt er bei
 jedem Termin, samt der Angabe, ob die Zahl aus der Spielerliste stammt oder erwartet ist, und kann
-ein Training darauf ausrichten; ob es passt, beurteilt er selbst. Kalender-Abos und die Teams selbst
-verwaltet er nicht.
+ein Training darauf ausrichten; ob es passt, beurteilt er selbst. Er kennt den Verein der Teams
+und die Namen weiterer Teams einer Spieler:in; aus einem Team nimmt er sie erst nach einer
+Rückfrage, die dieselben Sätze nennt wie die Anwendung, und löschen kann er keine. Kalender-Abos,
+die Teams selbst und den Verein verwaltet er nicht.
 
 ## Veröffentlichen
 
@@ -1251,29 +1325,23 @@ Team-Trainings lassen sich nicht direkt veröffentlichen — wer eine Team-Arbei
 übernimmt sie zuerst zu sich. An jedem öffentlichen Training steht der Anzeigename seines
 Urhebers; bei gelöschten Konten bleibt es anonymisiert erhalten.
 
-## Team verlassen und auflösen
+## Team verlassen
 
-Verlassen und Auflösen stehen unter „Team" in einem eigenen Bereich „Gefahrenzone", mit Kontur
-und Überschrift in der Fehlerfarbe und dem Satz, dass Verlassen nur die eigene Person betrifft —
-ausser sie ist das letzte Mitglied —, Auflösen aber das Team samt allen Inhalten für alle
-Mitglieder löscht. „Team verlassen" fragt kurz nach und sagt, dass das Team für die übrigen
-bestehen bleibt und die eigenen persönlichen Trainings unberührt bleiben.
+„Team verlassen" steht unter „Team" in einem eigenen Bereich „Gefahrenzone", mit Kontur und
+Überschrift in der Fehlerfarbe und dem Satz „Du verlierst den Zugang zu Kalender, Spieler:innen und
+Team-Trainings. Das Team bleibt bestehen, auch wenn du die letzte Person bist." Die Rückfrage sagt,
+dass man die Trainings und Termine des Teams danach nicht mehr sieht, das Team bestehen bleibt und
+die eigenen persönlichen Trainings — auch Kopien, die man zu sich übernommen hat — unberührt
+bleiben. Ist man die letzte Trainer:in, sagt sie dazu, dass das Team ohne Trainer:in bestehen
+bleibt, neue die Vereinsverwaltung aufnimmt und nur sie das Team auflösen kann; einen Teamnamen
+muss man dafür nicht eingeben. Danach geht es zur Teamübersicht. Wer in keinem Team mehr ist und
+nicht der Vereinsverwaltung angehört, ist danach ein Konto ohne Verein.
 
-„Team auflösen" öffnet eine Bestätigung, die aufzählt, was für alle Mitglieder unwiderruflich
-verschwindet — Trainings, Termine, Spiele, die Spielerliste und die Kader, je mit Anzahl —, und
-den Namen nennt, den man eingeben muss. Der Knopf zum Auflösen ist erst frei, wenn die Eingabe
-dem Teamnamen genau entspricht, mit Gross- und Kleinschreibung; Leerzeichen am Anfang und am
-Ende zählen nicht, und Einfügen ist erlaubt. Das Feld korrigiert und ergänzt nichts von selbst,
-und die Vorlesehilfe hört, welcher Name gefragt ist und wann der Knopf frei wird. Wer als
-letztes Mitglied austritt, erhält dieselbe Bestätigung mit dem Hinweis, dass sich das Team mit
-dem Austritt auflöst.
-
-Geprüft wird beim Ausführen, nicht beim Öffnen: Sind inzwischen alle anderen gegangen, schlägt
-ein gewöhnlicher Austritt in die Bestätigung um („Inzwischen bist du das letzte Mitglied. Mit
-deinem Austritt löst sich das Team auf."). Hat jemand das Team inzwischen umbenannt, nennt die
-Bestätigung den neuen Namen und verlangt ihn; hat es ein anderes Mitglied schon aufgelöst, geht
-es zur Teamübersicht mit einer Meldung. Diese Regel gilt auch ausserhalb der Oberfläche: Ohne den
-aktuellen Teamnamen löst sich kein Team auf.
+Auflösen und Umbenennen gibt es im Team nicht, auch nicht für Mitglieder der Vereinsverwaltung;
+beides macht die Verwaltung im Bereich „Verein" (siehe [Verein](verein.md#teams-und-trainerinnen-führen)).
+Hat sie das Team aufgelöst, während jemand es offen hatte, landet diese Person bei ihrem nächsten
+Schritt in der Teamübersicht mit der Meldung „Dieses Team besteht nicht mehr - die
+Vereinsverwaltung hat es aufgelöst."
 
 ## Was beim Ausscheiden passiert
 
@@ -1287,34 +1355,29 @@ Verlassen nicht.
 
 Löscht jemand sein Konto, gilt dasselbe in allen seinen Teams; an vergangenen Terminen bleibt
 sein Eintrag ohne Namen als „Ehemaliges Mitglied" stehen — auch in Teams, die er schon früher
-verlassen hatte. War er das letzte Mitglied eines Teams, verschwindet dieses Team samt
-Trainings, Terminen, Terminserien, Bilddateien und Spielerliste; deren private Links und die
-Abholadresse gelten danach nicht mehr. Auf die Spielerliste wirkt das Ausscheiden eines
-Mitglieds sonst nicht.
+verlassen hatte. War er das letzte Mitglied eines Teams, bleibt das Team samt Trainings,
+Terminen, Terminserien und Spielerliste ohne Trainer:in bestehen. Auf die Spielerliste wirkt das
+Ausscheiden eines Mitglieds nicht.
 
-## Drei Ansichten
+## Drei Seiten
 
-Der Team-Bereich gliedert sich in drei Ansichten, zwischen denen ein Umschalter direkt unter
-den Brotkrumen wechselt; den Namen des Teams nennt die Brotkrume. Wer ein Team öffnet, landet
-im Trainingsplan — was als Nächstes ansteht, ist beim Öffnen die häufigste Frage. Daneben
-liegen die Trainings, also der Bestand, aus dem geplant wird, und unter „Team" der Teamname,
-die Spielerliste samt Selbstabholung und die Mitglieder samt Verlassen und Auflösen. Ein
-geöffneter Termin ist keine eigene Ansicht; er steht im Trainingsplan daneben.
+Der Team-Bereich gliedert sich in drei Seiten, die in der Seitenleiste unter dem gewählten Team
+stehen: „Trainingsplan", „Trainings" und „Team". Den Namen des Teams nennt die Brotkrume, davor
+den Verein. Wer ein Team öffnet, landet im Trainingsplan — was als Nächstes ansteht, ist beim
+Öffnen die häufigste Frage. Daneben liegen die Trainings, also der Bestand, aus dem geplant wird,
+und unter „Team" die Teamangaben, die Spielerliste samt Selbstabholung, das Schnuppertraining, die
+Kader, die Mitglieder und die Gefahrenzone mit „Team verlassen". Ein geöffneter Termin ist keine
+eigene Seite; er steht im Trainingsplan daneben.
 
-Umbenannt wird das Team im Feld „Teamname" unter „Team". Gespeichert wird beim Verlassen des
-Felds, ohne Knopf und ohne Rückfrage; eine kurze Meldung am Bildschirmrand sagt, dass es
-geklappt hat. Ein leerer Name wird nicht gespeichert: Das Feld fällt auf den bisherigen Namen
-zurück, und die Meldung sagt warum. Dasselbe gilt, wenn das Speichern scheitert.
-
-Jede Ansicht hat ihre eigene Adresse, der Trainingsplan samt der Eingrenzung auf die eigenen
+Jede Seite hat ihre eigene Adresse, der Trainingsplan samt der Eingrenzung auf die eigenen
 Termine und dem geöffneten Termin mit seinem Reiter; der gezeigte Monat steht nicht darin. Adressen des früheren Monatsüberblicks führen in
 den Trainingsplan, wie er sich sonst öffnet, die Eingrenzung bleibt. Eine Adresse lässt sich einem Mitglied
 schicken, als Lesezeichen ablegen, und der Zurück-Schritt des Browsers führt in die zuvor
-geöffnete Ansicht. Wer eine Adresse eines Teams aufruft, in dem er nicht ist, landet in der
-Teamübersicht — ob es das Team nicht gibt oder ob er nicht dazugehört, bleibt
-ununterscheidbar.
+geöffnete Seite. Wer eine Adresse eines Teams aufruft, in dem er nicht ist — auch als
+Vereinsverwaltung —, landet in der Teamübersicht; ob es das Team nicht gibt oder ob er nicht
+dazugehört, bleibt ununterscheidbar.
 
-Eine Handlung bleibt in der Ansicht, in der sie ausgelöst wurde, und meldet ihr Ergebnis dort:
+Eine Handlung bleibt auf der Seite, auf der sie ausgelöst wurde, und meldet ihr Ergebnis dort:
 Wer im Trainingsbestand ein Training einem Termin zuordnet, bleibt im Bestand; das Training
 dort bleibt unverändert. Nach dem Löschen eines Team-Trainings kehrt die Ansicht in die
 Trainings zurück, nach dem Löschen eines Trainings mit Termin in den Trainingsplan.
@@ -1327,8 +1390,9 @@ Einladungen und Absagen oder eine fehlende Mindestbesetzung; eine Lücke zeigt n
 Trainingsplan, das Kalender-Abo nennt sie in der Beschreibung. Der Kalender führt
 Trainings und Spiele, aber keine anderen Anlässe, und nur ein Spiel trägt eine eigene Bezeichnung;
 wer mehrere Mannschaften getrennt plant, führt sie als eigene Teams. Die Termine
-mehrerer Teams stehen nirgends gemeinsam, weder in einem Kalender noch in einem Abo, und ein
-Wechsel zwischen Teams ohne Umweg über die Teamübersicht ist nicht vorgesehen. Überschneidende
+mehrerer Teams stehen für Trainer:innen nirgends gemeinsam, weder in einem Kalender noch in einem
+Abo, auch nicht für die Vereinsverwaltung; nur der private Link einer Spieler:in führt die Termine
+ihrer Teams zusammen. Überschneidende
 Termine verhindert die Anwendung nicht, sie prüft keine Platzbelegung — auch nicht, ob die Felder
 eines Termins schon von einem anderen Termin oder Team belegt sind — und gleicht Beginn und
 Ende nicht mit den Zeitangaben der Übungen ab.
@@ -1406,15 +1470,16 @@ ihn ersetzen will, widerruft das Abo und holt einen neuen. Beim Verlassen oder A
 und beim Löschen des Kontos sagt die Anwendung nicht, dass Abos erlöschen. Gedacht ist das Abo für
 die Trainerinnen und Trainer des Teams, nicht für den Verein.
 
-Löscht das letzte Mitglied sein Konto, löst sich das Team ohne Eingabe des Teamnamens auf. Die
-Namenseingabe unterscheidet gleichnamige Teams nicht. Die übrigen Mitglieder und die Eltern
-erfahren nichts von einer Auflösung, vorher lässt sich weder die Spielerliste noch ein Training
-exportieren, und ein aufgelöstes Team lässt sich nicht wiederherstellen.
+Ein Team ohne Trainer:in bleibt bestehen, bis die Vereinsverwaltung jemanden aufnimmt oder es
+auflöst; erinnert wird sie daran nur durch die Plakette „ohne Trainer:in" in der Übersicht des
+Vereins. Die Mitglieder und die Eltern erfahren nichts davon, wenn die Verwaltung ein Team auflöst
+oder umbenennt; vorher lässt sich weder die Spielerliste noch ein Training exportieren, und ein
+aufgelöstes Team lässt sich nicht wiederherstellen.
 
 Für das Abo am privaten Link gilt dasselbe zur Abrufhäufigkeit und zu bereits geladenen Einträgen.
 Zu- oder Absagen im Kalenderprogramm wirken nicht zurück, gemeldet wird über den Link. Das Abo
 erinnert weder an Termine noch an fehlende Meldungen und führt nie die Termine mehrerer
-Spieler:innen oder Teams zusammen. Ob eine Abo-Adresse weitergegeben wurde, erkennt die Anwendung
+Spieler:innen zusammen, auch nicht von Geschwistern. Ob eine Abo-Adresse weitergegeben wurde, erkennt die Anwendung
 nicht; alle, die denselben Link haben, teilen sich dieselbe Adresse, und ein Widerruf trifft sie
 alle. Dass ein Abo erloschen ist, erfahren Eltern nicht von selbst. Wie die Zeichen im Titel
 aussehen und ob ein Programm vorläufige oder freie Einträge eigens darstellt, bestimmt das
@@ -1426,14 +1491,16 @@ sich Abos am privaten Link weder holen noch einsehen noch widerrufen.
 
 Die Spielerliste führt nur Vorname, Nachname, Jahrgang und J+S-Nummer — weder Geburtsdatum noch
 Position oder Kontaktdaten der Eltern; Torhüter:innen und andere Teile des Teams bildet man mit
-Kadern ab. Sie lässt sich weder aus einem anderen Team
-übernehmen noch mit einem teilen; dasselbe Kind in zwei Teams hat zwei Einträge und zwei Links, und
-für Geschwister gibt es keinen gemeinsamen Link. Aus dem Jahrgang leitet die Anwendung keine
+Kadern ab. Eine Spieler:in, die der Verein schon führt, holen Trainer:innen nicht selbst in ihr
+Team, und einen Vorschlag beim Tippen gibt es nicht; zuordnen kann nur die Vereinsverwaltung. Für
+Geschwister gibt es keinen gemeinsamen Link. Aus dem Jahrgang leitet die Anwendung keine
 Alterskategorie ab, und ob er zum Team passt, prüft sie nicht. Ausgetretene bleiben auf der Liste,
-bis jemand sie entfernt. Gruppen eines Trainings bleiben Bezeichnungen ohne Spieler:innen. Mit
-Spielerliste lässt sich die Zahl nicht von Hand um Gäste ergänzen. An einem begonnenen Termin
-bietet „Termin ändern" das Feld für die erwartete Zahl weiter an; gezeigt wird sie dort aber nur,
-wenn die Liste bei Beginn leer war.
+bis jemand sie aus dem Team nimmt, und im Verein, bis die Vereinsverwaltung sie löscht. Gruppen
+eines Trainings bleiben Bezeichnungen ohne Spieler:innen. Mit Spielerliste lässt sich die Zahl
+nicht von Hand um Gäste ergänzen. An einem begonnenen Termin bietet „Termin ändern" das Feld für
+die erwartete Zahl weiter an; gezeigt wird sie dort aber nur, wenn die Liste bei Beginn leer war.
+Ändert ein Team Name, Jahrgang oder J+S-Nummer einer Spieler:in, gilt das auch in ihren anderen
+Teams, ohne dass deren Trainer:innen davon erfahren.
 
 Ein Kader trägt nur seinen Namen — keine Farbe, Beschreibung oder zuständige Trainer:innen — und
 bildet weder Mannschaftszuteilung noch Spielberechtigung des Verbands ab. Er gilt nur in seinem
@@ -1443,26 +1510,19 @@ nicht zu. Einzelne Spieler:innen lassen sich keinem Termin direkt zuordnen; wer 
 einen Kader wie „Aushilfe". Kader beschränken nicht, was Mitglieder sehen: Trainingsplan und
 Kalender-Abo der Mitglieder zeigen immer alle Termine und lassen sich nicht nach Kadern eingrenzen. Eine
 verfallene Abmeldung kehrt nicht zurück, und Eltern erfahren nicht von selbst, dass ein Termin
-nicht mehr für ihr Kind gilt. Wer über die Abholadresse den Link eines fremden Kindes holt, sieht
-auch dessen Kader. Die Selbstabholung lässt sich nicht auf einzelne Kader beschränken, und ihr
+nicht mehr für ihre Spieler:in gilt. Wer über die Abholadresse den Link einer fremden Spieler:in holt, sieht
+auch deren Kader. Die Selbstabholung lässt sich nicht auf einzelne Kader beschränken, und ihr
 Hinweis, was KiFu speichert, nennt die Kader nicht.
 
-Das Probetraining beschränkt nicht, welche Trainings eine Probe-Spieler:in sieht, und endet nicht
-von selbst, auch nicht beim Erreichen der Anzahl. Die Anzahl gilt für das ganze Team, nicht je
-Spieler:in, und lässt sich nicht mehr entfernen. Den Probe-Modus gibt es nicht beim Hinzufügen
-oder beim Import, die Spielerliste lässt sich nicht auf Probe-Spieler:innen eingrenzen, und am
-Training ist eine Probe-Spieler:in nicht eigens gekennzeichnet. Das Info-Schreiben kennt keine
-Formatierung wie Fett, Listen oder Bilder, gilt für das ganze Team statt je Spieler:in oder Kader
-und steht weder im Kalender-Abo noch bei der Selbstabholung. Fällt ein Training durch eine
-Kader-Änderung für eine Probe-Spieler:in weg, verschwindet es am Link ohne Hinweis.
-
-Der Import liest nur CSV, keine Excel-Dateien, und nur mit Kopfzeile. Er ändert Vor- und Nachnamen
-und Jahrgänge bestehender Spieler:innen nicht: Wer nach einem Import auf den Rufnamen gekürzt wurde,
-kommt beim nächsten Import mit dem vollen Vornamen ein zweites Mal auf die Liste. Umschriebene
-Umlaute und Tippfehler erkennt er so wenig wie die Selbstabholung. Einzelne Zeilen lassen sich in der
-Vorschau weder bearbeiten noch abwählen, und ein zweistelliges Geburtsjahr
-lässt die Zeile aus. Zwei Kinder mit gleichen Angaben in einer Datei werden zu einem. Einen eigenen
-Import über den KI-Assistenten gibt es nicht; er nimmt Spieler:innen einzeln auf.
+Das Schnuppertraining beschränkt nicht, welche Trainings eine schnuppernde Spieler:in sieht, und
+endet nicht von selbst, auch nicht beim Erreichen der Anzahl. Die Anzahl gilt für das ganze Team,
+nicht je Spieler:in, und lässt sich nicht mehr entfernen. Schnuppern gibt es nur in genau einem
+Team und nicht beim Hinzufügen; mehrere Spieler:innen lassen sich nicht gesammelt zum Schnuppern
+zuordnen. Die Spielerliste lässt sich nicht auf Schnuppernde eingrenzen, und am Training ist eine
+schnuppernde Spieler:in nicht eigens gekennzeichnet. Das Info-Schreiben kennt keine Formatierung
+wie Fett, Listen oder Bilder, gilt für das ganze Team statt je Spieler:in oder Kader und steht
+weder im Kalender-Abo noch bei der Selbstabholung. Fällt ein Training durch eine Kader-Änderung für
+eine schnuppernde Spieler:in weg, verschwindet es am Link ohne Hinweis.
 
 Die Anwendung benachrichtigt niemanden über Ab- und Anmeldungen, und Eltern erfahren nicht von
 selbst, dass ein Termin verlegt wurde, ausfällt oder ihre Abmeldung oder Meldung verfallen ist —
@@ -1506,23 +1566,25 @@ Meldungen noch Spielerzahl, und eine erwartete Zahl lässt sich an einem Spiel n
 
 Ob ein privater Link weitergegeben wurde, erkennt die Anwendung nicht, und ob ein Elternteil oder
 die Spieler:in selbst abmeldet, unterscheidet sie nicht. Sperren lässt sich ein Link nur, indem
-man ihn erneuert, und erneuert wird jeder einzeln, nie alle auf einmal. Was gespeichert ist, sagt
-nur die Abholseite, weder die Spielerliste noch die Seite hinter dem Link. Eine vollständige
+man ihn erneuert — das gilt dann für alle Teams der Spieler:in —, und erneuert wird jeder einzeln,
+nie alle auf einmal. Welche Angaben gespeichert sind, sagt nur die Abholseite; die Seite hinter dem
+Link nennt, wer sie sieht und wer verantwortlich ist. Eine vollständige
 Datenschutzerklärung gibt es nicht (siehe [Navigation](navigation.md#bekannte-grenzen)).
 
 Die Eingrenzung auf Trainings oder Spiele merkt sich die Seite nicht: Neu geöffnet oder neu geladen
 zeigt sie wieder alle Termine. Sie grenzt nur die Liste ein, nicht das Kalender-Abo, und nur nach
-der Art, nicht nach einem Zeitraum; im Probe-Modus und ohne anstehende Termine gibt es sie nicht.
+der Art, nicht nach einem Zeitraum; für eine schnuppernde Spieler:in und ohne anstehende Termine gibt es sie nicht.
 
 Die Abholung erkennt keine Schreibvarianten: Umschriebene Umlaute, Rufnamen oder Tippfehler
-passen nicht. Wer die Abholadresse hat und Vorname, Nachname und Jahrgang eines Kindes kennt — im
-Eltern-Chat also jede und jeder —, kann auch fremde Kinder ab- und anmelden; das trägt das Team
-bewusst. Die Sperre nach Fehlversuchen trifft den Internetanschluss, nicht die Person: Eltern am
+passen nicht. Wer die Abholadresse hat und Vorname, Nachname und Jahrgang einer Spieler:in kennt — im
+Eltern-Chat also jede und jeder —, kann auch fremde Spieler:innen ab- und anmelden, und zwar für die
+Termine aller ihrer Teams; das trägt das Team bewusst. Die Sperre nach Fehlversuchen trifft den Internetanschluss, nicht die Person: Eltern am
 selben Anschluss, etwa im selben WLAN, können mitgesperrt sein, und wer den Anschluss wechselt,
 kann weiter eingeben. „Bezogen" sagt nur, dass der aktuelle Link herausgegeben wurde, nicht wer ihn
 hat oder wie oft er abgeholt wurde. Die Selbstabholung gilt für alle Spieler:innen des Teams; für
-einzelne lässt sie sich nicht ausschalten, und ein erneuerter Link lässt sich über die Abholadresse
-wieder abholen.
+einzelne lässt sie sich nicht ausschalten, ein erneuerter Link lässt sich über die Abholadresse
+wieder abholen, und ein Team, das sie ausschaltet, sperrt den Link nicht, wenn ein anderes Team der
+Spieler:in sie eingeschaltet hat.
 
 Gleichzeitiges Bearbeiten desselben Trainings durch mehrere Mitglieder erkennt die Anwendung
 nicht; die zuletzt gespeicherte Fassung gilt. Ebenso gilt bei einem einzelnen Termin die zuletzt
