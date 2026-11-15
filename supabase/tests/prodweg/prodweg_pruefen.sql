@@ -263,7 +263,7 @@ declare
   z jsonb;
 begin
   if jsonb_array_length(l -> 'spieler') <> (e ->> 'gesamt')::int or l -> 'gesamt' <> e -> 'gesamt'
-     or l -> 'ohne_team' <> e -> 'ohne_team'
+     or l -> 'ohne_team' <> e -> 'ohne_team' or l -> 'verwaltung' <> 'false'
      or (select count(*) from jsonb_array_elements(l -> 'spieler') x where x ->> 'nachname' = 'Dublette') <> (e ->> 'dublette')::int
      or (e ->> 'dublette')::int < 2 then
     raise exception 'Story 4: Vereinsliste des Mitglieds unvollständig: % gegen %', l - 'spieler', e;
