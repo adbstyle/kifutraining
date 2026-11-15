@@ -341,15 +341,15 @@ begin
   perform pg_temp.pruefe(jsonb_array_length(v -> 'trainer') = 2, 'zwei Trainer:innen');
   perform pg_temp.pruefe(jsonb_array_length(v -> 'spieler') = 3, 'drei Spieler:innen');
   for x in select * from jsonb_array_elements(v -> 'spieler') loop
-    perform pg_temp.pruefe(pg_temp.schluessel(x) = array['id', 'jahrgang', 'nachname', 'schnuppert', 'teams', 'vorname'],
+    perform pg_temp.pruefe(pg_temp.schluessel(x) = array['id', 'jahrgang', 'nachname', 'schnuppern', 'teams', 'vorname'],
                            'Spieler:in: ' || x::text);
   end loop;
   select e into s from jsonb_array_elements(v -> 'spieler') e where e ->> 'id' = pg_temp.id('s3')::text;
   perform pg_temp.pruefe(s -> 'teams' = jsonb_build_array(jsonb_build_object('id', pg_temp.id('t1'), 'name', 'Team Eins'),
                                                          jsonb_build_object('id', pg_temp.id('t2'), 'name', 'Team Zwei'))
-                         and not (s ->> 'schnuppert')::boolean, 'Teams von s3: ' || s::text);
+                         and s -> 'schnuppern' = 'null', 'Teams von s3: ' || s::text);
   select e into s from jsonb_array_elements(v -> 'spieler') e where e ->> 'id' = pg_temp.id('s2')::text;
-  perform pg_temp.pruefe((s ->> 'schnuppert')::boolean, 's2 schnuppert');
+  perform pg_temp.pruefe(s -> 'schnuppern' = '{"anzahl": 3, "besucht": 0}', 's2 schnuppert: ' || s::text);
   -- AK 10: keine J+S-Nummer, kein Link, kein Token.
   perform pg_temp.pruefe(position('9876543' in v::text) = 0
                          and position(current_setting('test.token') in v::text) = 0
@@ -597,9 +597,9 @@ select pg_temp.pruefe(exists (select 1 from verein_verwaltung where user_id = pg
 
 select pg_temp.pruefe(not exists (select 1 from termin_eingefroren where termin_id = pg_temp.id('tr_t2_vorbei')), 'tr_t2_vorbei festgehalten');
 select pg_temp.als(pg_temp.id('verw'));
-select pg_temp.pruefe(verein_spieler_aus_team_nehmen(pg_temp.id('t2'), pg_temp.id('s3')) = '{"status": "herausgenommen", "ohne_team": false}',
+select pg_temp.pruefe(verein_spieler_aus_team_nehmen(pg_temp.id('t2'), pg_temp.id('s3')) = '{"status": "herausgenommen", "ohne_team": false, "schnuppern_beendet": false}',
                       'herausnehmen mit weiterem Team');
-select pg_temp.pruefe(verein_spieler_aus_team_nehmen(pg_temp.id('t2'), pg_temp.id('sb')) = '{"status": "herausgenommen", "ohne_team": true}',
+select pg_temp.pruefe(verein_spieler_aus_team_nehmen(pg_temp.id('t2'), pg_temp.id('sb')) = '{"status": "herausgenommen", "ohne_team": true, "schnuppern_beendet": false}',
                       'herausnehmen ohne weiteres Team');
 select pg_temp.erwarte(format('select verein_spieler_aus_team_nehmen(%L, %L)', pg_temp.id('t2'), pg_temp.id('sb')), 'SPIELER_NICHT_GEFUNDEN');
 select pg_temp.erwarte(format('select verein_spieler_aus_team_nehmen(%L, %L)', pg_temp.id('t2'), gen_random_uuid()), 'SPIELER_NICHT_GEFUNDEN');

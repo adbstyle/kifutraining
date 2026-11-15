@@ -23,7 +23,8 @@
 --   lesend      spielstand (→ spielstand_training, spiel_stand, auch direkt),
 --               termin_teilnehmer, spiel_teilnehmer, training_meldestand,
 --               training_abgemeldet, termin_gilt_fuer, probe_stand,
---               team_probe_staende, spieler_link_ansicht (ohne die mit Story 7
+--               team_probe_staende, die Zeilen von team_probetraining
+--               (Anzahl, Info-Schreiben), spieler_link_ansicht (ohne die mit Story 7
 --               dazugekommenen Schlüssel), Gültigkeit für Fragen und Feedback
 --               über den Link (feedback_link_team bzw. ab Story 7
 --               feedback_link_gueltig), spieler_abo_termine zweier Abos (ohne
@@ -44,7 +45,8 @@
 --               serie_spielerzahl_regel (Insert mit Zahl).
 -- Nicht abgedeckt: die Schreibwege mit eigenem Testfall (spieler_aufnehmen,
 -- spieler_importieren, Herausnehmen: Testfall 1 in prodweg_pruefen.sql;
--- spieler_probe_setzen, kader_entfernen_folgen beim Löschen eines Kaders)
+-- spieler_probe_setzen: Story 8 in prodweg_pruefen.sql; kader_entfernen_folgen
+-- beim Löschen eines Kaders)
 -- sowie das Festhalten beim Anlegen eines vergangenen Termins (Trigger, nur
 -- im alten Schema ausgelöst). Die Rechteprüfungen laufen nur für trainer_a.
 -- training_abgemeldet nur für Spieler:innen des Termin-Teams (siehe dort).
@@ -290,6 +292,9 @@ begin
                 from spieler_abos a where a.spieler_id = any(v_spieler)),
       'abholung', (select md5(string_agg(t.team_id || ':' || t.token || ':' || t.aktiv, ',' order by t.team_id))
                      from team_abholung t where t.team_id = any(v_teams))),
+    -- Anzahl und Info-Schreiben der Teams bleiben zeilengleich (Story 8 PC 3).
+    'team_probetraining', (select md5(string_agg(p.team_id || ':' || p.anzahl || ':' || coalesce(p.info, '∅'), ',' order by p.team_id))
+                             from team_probetraining p where p.team_id = any(v_teams)),
     'team_probe_staende', (select jsonb_object_agg(x, (select coalesce(jsonb_agg(to_jsonb(r) order by r.spieler_id), '[]')
                                                           from team_probe_staende(x) r))
                              from unnest(v_teams) x),

@@ -16,25 +16,25 @@ import {
   type Probetraining,
 } from "@/lib/probe";
 import { nurZiffern, spielerName, type Spieler } from "@/lib/spieler";
-import { ProbeLozenge } from "./ProbeLozenge";
+import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 
-/* Das Probetraining eines Teams (Epic #554, Story #555): gelesen in der
-   Karte, bearbeitet im Dialog (PO 2026-10-29). Ohne Anzahl steht das
-   Leerfeld mit dem einen Weg heraus — «Probetraining konfigurieren»; danach
-   nennt die Karte die Anzahl und wer im Probe-Modus ist, je mit Plakette.
-   Den Probe-Modus selbst schaltet man im Dialog «Spieler:in ändern».
+/* Das Schnuppertraining eines Teams (Epic #554, Story #555, #584; intern
+   `probe`): gelesen in der Karte, bearbeitet im Dialog (PO 2026-10-29). Ohne
+   Anzahl steht das Leerfeld mit dem einen Weg heraus — «Schnuppertraining
+   konfigurieren»; danach nennt die Karte die Anzahl und wer schnuppert, je mit
+   Plakette. Das Schnuppern selbst schaltet man im Dialog «Spieler:in ändern».
 
    Das Info-Schreiben (#556) steht im selben Dialog unter der Anzahl: wer es
    sieht hinter dem ⓘ (AK 3), darunter, dass es nur Text ist, und der Zähler
    (AK 2). In der Karte steht es gekürzt mit «Ganz lesen» (AK 7). */
-export function ProbeKarte({
+export function SchnupperKarte({
   teamId,
   probetraining,
   spieler,
 }: {
   teamId: string;
   probetraining: Probetraining;
-  /** Die ganze Spielerliste; die Karte nennt, wer im Probe-Modus ist. */
+  /** Die ganze Spielerliste; die Karte nennt, wer schnuppert. */
   spieler: Spieler[];
 }) {
   const router = useRouter();
@@ -114,7 +114,7 @@ export function ProbeKarte({
                 {probe.map((s) => (
                   <li key={s.id} className="inline-flex items-center gap-2">
                     {spielerName(s)}
-                    {s.probe && <ProbeLozenge stand={s.probe} />}
+                    {s.probe && <SchnupperLozenge stand={s.probe} />}
                   </li>
                 ))}
               </ul>

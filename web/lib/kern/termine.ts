@@ -490,7 +490,7 @@ export type Verfallend = {
   nachtraege: number;
   /** Absagen von Trainer:innen (#520 AK 11). */
   absagen: number;
-  /** Anmeldungen von Probe-Spieler:innen (#555 AK 14, PC 5). */
+  /** Anmeldungen von schnuppernden Spieler:innen (#555 AK 14, PC 5). */
   anmeldungen: number;
   summe: number;
   /** Nur an einem Spiel (#463 AK 13, 26; #464 AK 10): verfallende Meldungen

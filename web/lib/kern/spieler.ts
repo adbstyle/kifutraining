@@ -45,12 +45,10 @@ import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type 
 
 export const SPIELER_FELD = { feld: "spieler_id" } as const;
 
-const SPIELER_SPALTEN = "id, team_id, vorname, nachname, jahrgang, js_nummer, link_bezogen, kader_spieler(kader_id, team_id)";
+const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, kader_spieler(kader_id, team_id)";
 
 type SpielerRoh = {
   id: string;
-  /** Ihr erstes Team (Übergang bis Phase 7/8, Entscheid A.1); `null` ohne Team. */
-  team_id: string | null;
   vorname: string;
   nachname: string;
   jahrgang: number;
@@ -65,7 +63,7 @@ type SpielerRoh = {
  *  (`probe_seit`) hängt an der Zuordnung, nicht an der Spieler:in. */
 type ZuordnungRoh = { probe_seit: string | null; spieler: SpielerRoh | null };
 
-/** Die Spieler:in ohne Probe-Stand und weitere Teams; `kaderIds` nur die
+/** Die Spieler:in ohne Schnupper-Stand und weitere Teams; `kaderIds` nur die
  *  Kader von `teamId` (Story #579 AK 9: Eine Spieler:in steht in mehreren
  *  Teams, ihre Kader gehören je einem). */
 function kopfAusRoh(s: SpielerRoh, teamId: string): Omit<Spieler, "probe" | "weitereTeams"> {
@@ -90,7 +88,7 @@ function ausRoh(z: ZuordnungRoh & { spieler: SpielerRoh }, teamId: string): Spie
   };
 }
 
-/** Die Stände der Probe-Spieler:innen eines Teams (#555 AK 7), aus der
+/** Die Stände der schnuppernden Spieler:innen eines Teams (#555 AK 7), aus der
  *  Datenebene (`team_probe_staende`): besucht seit dem Einschalten, künftig
  *  angemeldet, noch möglich. */
 async function mitProbeStand(
@@ -227,20 +225,16 @@ async function herausnehmenLage(
 ): Promise<KernErgebnis<HerausnehmenLage>> {
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
-  const { data, error } = await supabase
-    .from("team_spieler")
-    .select("probe_seit, spieler:spieler!tsp_spieler(vorname, nachname)")
-    .eq("team_id", e.teamId)
-    .eq("spieler_id", e.spielerId)
-    .maybeSingle<{ probe_seit: string | null; spieler: { vorname: string; nachname: string } | null }>();
-  if (error) return ausDbFehler(error);
-  if (!data?.spieler) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
+  const spieler = await ladeSpieler(supabase, e.teamId, e.spielerId);
+  if (!spieler.ok) return spieler;
   return ok({
-    ...data.spieler,
+    vorname: spieler.wert.vorname,
+    nachname: spieler.wert.nachname,
     team: team.wert.name,
     verein: await vereinsname(supabase),
     verbleibend: verbleibendeTeams(teams.teams),
-    probe: data.probe_seit !== null,
+    // Ob sie in diesem Team schnuppert, nennt `spieler_teams` (eine Quelle).
+    probe: teams.schnuppert,
   });
 }
 
@@ -259,7 +253,7 @@ export async function nimmSpielerAusTeam(
   supabase: SupabaseClient,
   userId: string,
   e: { teamId: string; spielerId: string; stand?: string },
-): Promise<KernErgebnis<{ teamId: string; spielerId: string; ohneTeam: boolean; letztesEigenesTeam: boolean }>> {
+): Promise<KernErgebnis<{ teamId: string; spielerId: string; ohneTeam: boolean; letztesEigenesTeam: boolean; schnuppernBeendet: boolean }>> {
   if (e.stand === undefined) {
     const teams = await ladeSpielerTeams(supabase, userId, e);
     if (!teams.ok) return teams;
@@ -279,7 +273,7 @@ export async function nimmSpielerAusTeam(
   });
   if (error) return spielerFehler(error);
   const r = data as
-    | { status: "herausgenommen"; ohne_team: boolean; letztes_eigenes_team: boolean }
+    | { status: "herausgenommen"; ohne_team: boolean; letztes_eigenes_team: boolean; schnuppern_beendet: boolean }
     | ({ status: "stand_geaendert" } & SpielerTeams);
   // Nie als Erfolg lesen: Es wurde nichts geändert.
   if (r.status === "stand_geaendert")
@@ -289,28 +283,35 @@ export async function nimmSpielerAusTeam(
         `Die Teams der Spieler:in haben sich geändert (jetzt: ${r.teams.map((t) => t.name).join(", ") || "keines"}). ` +
         "Rufe das Werkzeug ohne stand erneut auf, um die Rückfrage mit dem neuen Stand zu erhalten.",
     });
-  return ok({ teamId: e.teamId, spielerId: e.spielerId, ohneTeam: r.ohne_team, letztesEigenesTeam: r.letztes_eigenes_team });
+  return ok({
+    teamId: e.teamId,
+    spielerId: e.spielerId,
+    ohneTeam: r.ohne_team,
+    letztesEigenesTeam: r.letztes_eigenes_team,
+    schnuppernBeendet: r.schnuppern_beendet,
+  });
 }
 
-/** Eine Spieler:in samt Team, soweit die RLS sie zeigt — ohne Schnupper-Stand
- *  und weitere Teams, die nur im Kontext eines Teams gelten
- *  (`ladeSpielerliste`). Das Team ist bis Phase 7/8 das erste der Spieler:in
- *  (`spieler.team_id`, Architekturplan Story #579 Entscheid A.1); eine
- *  Spieler:in ohne Team gibt es hier nicht. Den Link liest dieses Team nicht
- *  mehr (Story #583); nur noch das Schnuppern (Story 8) hängt an ihm. */
+/** Eine Spieler:in aus der Liste eines Teams, soweit die RLS sie zeigt — ohne
+ *  Schnupper-Stand und weitere Teams, die nur im Kontext eines Teams gelten
+ *  (`ladeSpielerliste`). «Im Team» heisst: eine Zuordnung in `team_spieler`;
+ *  die Zeile `spieler` allein genügt nicht (Architekturplan §4.2). */
 export async function ladeSpieler(
   supabase: SupabaseClient,
+  teamId: string,
   spielerId: string,
-): Promise<KernErgebnis<Omit<Spieler, "probe" | "weitereTeams"> & { teamId: string }>> {
+): Promise<KernErgebnis<Omit<Spieler, "probe" | "weitereTeams">>> {
+  if (!istUuid(teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
   if (!istUuid(spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
   const { data, error } = await supabase
-    .from("spieler")
-    .select(SPIELER_SPALTEN)
-    .eq("id", spielerId)
-    .maybeSingle<SpielerRoh>();
+    .from("team_spieler")
+    .select(`spieler:spieler!tsp_spieler(${SPIELER_SPALTEN})`)
+    .eq("team_id", teamId)
+    .eq("spieler_id", spielerId)
+    .maybeSingle<{ spieler: SpielerRoh | null }>();
   if (error) return ausDbFehler(error);
-  if (!data?.team_id) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
-  return ok({ ...kopfAusRoh(data, data.team_id), teamId: data.team_id });
+  if (!data?.spieler) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
+  return ok(kopfAusRoh(data.spieler, teamId));
 }
 
 /** Das älteste Team der Spieler:in, dem die handelnde Person angehört — für

@@ -34,6 +34,7 @@
 import assert from "node:assert/strict";
 import { isDeepStrictEqual } from "node:util";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import ts from "typescript";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { erscheinungsform_juniorenSlugs, erscheinungsformSlugs, hauptteilkategorieSlugs } from "../lib/vocab";
@@ -190,6 +191,7 @@ import {
   statusNachSchalter,
   TEILNAHME_TEXT,
   verfallDialogText,
+  mitAnmeldungen,
   ABMELDUNG_TEXT,
   LINK_GILT_NICHT_TITEL,
   LINK_KEINE_TERMINE_TITEL,
@@ -276,9 +278,11 @@ import {
   PROBE_MELDUNG,
   PROBE_TEXT,
   PROBE_VERFALL_MARKER,
+  linkProbeKopf,
   linkProbeVoll,
   linkProbeZaehler,
   probeAnzahlProblem,
+  probeAusschaltenText,
   probeEinschaltenText,
   probeFolgenAusFehler,
   probeInfoBereinigt,
@@ -317,6 +321,11 @@ import {
   zugeordnetText,
   zuordnenAbweisungText,
   zuordnenEinleitung,
+  SCHNUPPERN_ZUORDNEN_HINWEIS,
+  SCHNUPPERN_ZUORDNEN_LABEL,
+  SCHNUPPERN_ZUORDNEN_TEXT,
+  schnuppernZugeordnetText,
+  vereinHerausgenommenText,
 } from "../lib/verein";
 import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
 import { bereichAusPfad } from "../lib/navigation";
@@ -2251,8 +2260,8 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#459": ["termin_festlegen", "termin_aendern", "termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen", "termin_entfernen", "team_plan_abrufen"],
     "#464": ["termin_spieler_abrufen", "termin_aufgebot_setzen"],
     "#487": ["termin_spieler_abrufen", "termin_anwesenheit_setzen", "team_plan_abrufen"],
-    "#556": ["probetraining_abrufen", "probetraining_festlegen"],
-    "#555": ["probetraining_abrufen", "probetraining_festlegen", "spieler_probe_setzen", "spielerliste_abrufen", "termin_spieler_abrufen"],
+    "#556": ["schnuppertraining_abrufen", "schnuppertraining_festlegen"],
+    "#555": ["schnuppertraining_abrufen", "schnuppertraining_festlegen", "spieler_schnuppern_setzen", "spielerliste_abrufen", "termin_spieler_abrufen"],
     "#561": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "team_plan_abrufen", "spieler_link_abrufen"],
     "#590": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "team_plan_abrufen", "spieler_link_abrufen", "training_abrufen", "trainings_suchen"],
   };
@@ -2261,6 +2270,11 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
   // Story #579: Das Herausnehmen ersetzt das Entfernen, und gelöscht wird in
   // keinem KI-Werkzeug (Löschen aus dem Verein nur in der Anwendung).
   for (const alt of ["spieler_entfernen", "spieler_loeschen"]) assert.ok(!namen.includes(alt), `${alt} gibt es nicht mehr`);
+  // Story #584: Das Schnuppertraining heisst ohne Übergang neu (OoS 3). Geprüft wird an den
+  // registrierten Namen, nicht im Quelltext: `spieler_probe_setzen` bleibt der RPC-Name der Datenebene.
+  for (const alt of ["probetraining_abrufen", "probetraining_festlegen", "spieler_probe_setzen"])
+    assert.ok(!namen.includes(alt), `${alt} gibt es als Werkzeug nicht mehr (#584)`);
+  assert.ok(!namen.some((n) => /probe/i.test(n)), "kein Werkzeugname trägt «probe» (#584 AK 3)");
 });
 
 pruefe("Alte Namen abwesend: kein spieler_entfernen, kein spieler_loeschen, kein verein_* im KI-Weg (#579, Architekturplan §5.5)", () => {
@@ -2552,6 +2566,93 @@ pruefe("Kein «ansetzen» mehr in Oberfläche und KI-Texten (#323 PC 11)", () =>
         if (/ansetz|angesetzt|Ansetz|Angesetzt/.test(ohneKommentar)) treffer.push(`${relative(web, datei)}:${i + 1}`);
       });
   assert.deepEqual(treffer, [], `«ansetzen» steht noch in: ${treffer.join(", ")}`);
+});
+
+/** «Probe» in Oberflächentexten und KI-Texten (Story #584 AK 2, 3). Geprüft wird mit dem
+ *  Parser, was Menschen oder ein KI-Client zu sehen bekommen: Zeichenketten, Vorlagen und
+ *  JSX-Text (nicht Kommentare, Bezeichner, Importpfade, Typ-Literale) und unter `lib/mcp` die
+ *  Namen der Schema-Schlüssel. Die internen Namen der Datenebene (`PROBE_INTERN`, als ganze
+ *  Wörter) sind ausserhalb von `lib/mcp` erlaubt; unter `lib/mcp` nur, wo sie als Name gebraucht
+ *  werden (Argument von `.rpc()`, `.from()`, `.select()` u. ä.), damit keine KI-Beschreibung sie
+ *  nennt. Die alten Werkzeugnamen stehen nirgends ausser als solcher Name. Von Teams verfasste
+ *  Texte stehen nie im Quelltext. */
+const PROBE_INTERN =
+  /\b(?:team_probetraining\w*|spieler_probe_\w+|team_probe_staende|probe_seit|probe_stand\w*|probe_voll|probe_info|PROBE_[A-Z_]+)\b|\bprobe-info\b/g;
+/** Die Werkzeugnamen vor #584 (`spieler_probe_setzen` heisst die RPC weiterhin). */
+const ALTE_WERKZEUGNAMEN = /\b(?:probetraining_abrufen|probetraining_festlegen|spieler_probe_setzen)\b/;
+/** Methoden des Datenbank-Clients, deren Zeichenketten-Argument ein Name der Datenebene ist. */
+const NAMENS_AUFRUFE = ["rpc", "from", "select", "eq", "neq", "in", "is", "order", "insert", "update", "upsert", "match", "filter"];
+/** Ausgenommen: generiertes Produktwissen (kommt mit Phase D). */
+const PROBE_AUSNAHMEN = ["lib/feedback/wissen.ts"];
+/** Aufrufe, deren Eingabe-Objekt die interne Eigenschaft `probe` trägt (Kern, nicht KI-Schema). */
+const PROBE_KERN_AUFRUFE = ["schalteProbe"];
+
+function probeTreffer(quelltext: string, rel: string): string[] {
+  const treffer: string[] = [];
+  const sf = ts.createSourceFile(rel, quelltext, ts.ScriptTarget.Latest, true, rel.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+  const ort = (n: ts.Node) => `${rel}:${sf.getLineAndCharacterOfPosition(n.getStart()).line + 1}`;
+  const imKi = rel.startsWith("lib/mcp/");
+  const besuche = (n: ts.Node) => {
+    const p = n.parent;
+    if (
+      ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n) || ts.isTemplateHead(n) ||
+      ts.isTemplateMiddle(n) || ts.isTemplateTail(n) || ts.isJsxText(n)
+    ) {
+      const modul = (ts.isImportDeclaration(p) || ts.isExportDeclaration(p)) && p.moduleSpecifier === n;
+      const dynamisch = ts.isCallExpression(p) && p.expression.kind === ts.SyntaxKind.ImportKeyword;
+      const typ = ts.isLiteralTypeNode(p);
+      const name =
+        ts.isCallExpression(p) && p.arguments.some((a) => a === n) &&
+        ts.isPropertyAccessExpression(p.expression) && NAMENS_AUFRUFE.includes(p.expression.name.text);
+      const rest = imKi && !name ? n.text : n.text.replace(PROBE_INTERN, "");
+      if (modul || dynamisch || typ) {
+        // Importpfade und Typ-Literale sieht niemand.
+      } else if (!name && ALTE_WERKZEUGNAMEN.test(n.text)) treffer.push(`${ort(n)} alter Werkzeugname «${n.text.slice(0, 60)}»`);
+      else if (/probe/i.test(rest)) treffer.push(`${ort(n)} Text «${n.text.slice(0, 60)}»`);
+    }
+    if (imKi && (ts.isPropertyAssignment(n) || ts.isPropertySignature(n) || ts.isShorthandPropertyAssignment(n)) && /probe/i.test(n.name.getText(sf))) {
+      let kernEingabe = false;
+      for (let a: ts.Node | undefined = n.parent; a; a = a.parent)
+        if (ts.isCallExpression(a) && ts.isIdentifier(a.expression) && PROBE_KERN_AUFRUFE.includes(a.expression.text)) kernEingabe = true;
+      if (!kernEingabe) treffer.push(`${ort(n)} Schlüssel «${n.name.getText(sf)}»`);
+    }
+    ts.forEachChild(n, besuche);
+  };
+  besuche(sf);
+  return treffer;
+}
+
+pruefe("Kein «Probe» in Oberflächentexten und KI: Texte, JSX, Schema-Schlüssel (#584 AK 2, 3)", () => {
+  // Der Wächter schlägt an: Text, JSX, Schlüssel im KI-Schema, `feld`; und lässt Internes durch.
+  assert.equal(probeTreffer('export const a = "Probetraining";', "lib/x.ts").length, 1);
+  assert.equal(probeTreffer("export const a = `${n} im Probe-Modus`;", "lib/x.ts").length, 1);
+  assert.equal(probeTreffer("export const a = <p>Probe-Spieler:in</p>;", "components/x.tsx").length, 1);
+  assert.equal(probeTreffer('export const a = { feld: "probe" };', "lib/kern/x.ts").length, 1);
+  assert.equal(probeTreffer("export const a = z.object({ probe: z.boolean() });", "lib/mcp/werkzeuge/x.ts").length, 1);
+  assert.equal(probeTreffer("export const a = { probe: z.boolean() };", "lib/kern/x.ts").length, 0, "Schlüssel zählen nur im KI-Weg");
+  assert.equal(probeTreffer("export const a = s.probe; // Probetraining", "lib/mcp/werkzeuge/x.ts").length, 0, "Lesen und Kommentare bleiben");
+  assert.equal(probeTreffer("schalteProbe(a, b, { teamId, probe: e.schnuppern });", "lib/mcp/werkzeuge/x.ts").length, 0, "Eingabe des Kerns");
+  assert.equal(
+    probeTreffer('import { x } from "@/lib/probe"; db.rpc("spieler_probe_setzen"); db.select("probe_seit, a"); const m = "PROBE_ANZAHL_FEHLT"; type G = "probe_voll";', "lib/x.ts").length,
+    0,
+    "interne Namen der Datenebene",
+  );
+  // Nur als ganzes Wort, und unter lib/mcp nur als Name eines Datenbank-Aufrufs.
+  assert.equal(probeTreffer('export const a = "Ein Xprobe_voll";', "lib/x.ts").length, 1, "ohne Wortgrenze keine Ausnahme");
+  assert.equal(probeTreffer('export const a = { description: "Ruft spieler_probe_setzen auf." };', "lib/mcp/werkzeuge/x.ts").length, 1, "RPC-Name in einer KI-Beschreibung");
+  assert.equal(probeTreffer('export const a = z.string().describe("Ist probe_voll, geht nichts.");', "lib/mcp/werkzeuge/x.ts").length, 1, "Spaltenname in einer KI-Beschreibung");
+  assert.equal(probeTreffer('db.rpc("spieler_probe_setzen"); db.from("team_probetraining").select("probe_seit");', "lib/mcp/werkzeuge/x.ts").length, 0, "als Name unter lib/mcp");
+  // Die alten Werkzeugnamen nirgends, ausser als RPC-Name.
+  for (const alt of ["probetraining_abrufen", "probetraining_festlegen", "spieler_probe_setzen"])
+    assert.equal(probeTreffer(`export const a = "Nutze ${alt}.";`, "components/x.tsx").length, 1, alt);
+  assert.equal(probeTreffer('supabase.rpc("spieler_probe_setzen", {}); db.rpc("team_probetraining_festlegen");', "lib/kern/x.ts").length, 0, "RPC-Namen im Kern");
+  const treffer: string[] = [];
+  for (const wurzel of ["app", "components", "lib"].map((p) => join(web, p)))
+    for (const datei of quelldateien(wurzel)) {
+      const rel = relative(web, datei);
+      if (!PROBE_AUSNAHMEN.includes(rel)) treffer.push(...probeTreffer(readFileSync(datei, "utf8"), rel));
+    }
+  assert.deepEqual(treffer, [], `«Probe» steht noch in Oberflächen- oder KI-Texten: ${treffer.join("; ")}`);
 });
 
 pruefe("Kalenderblatt und Tag ohne Jahr: Wochentag, Tageszahl, Monat, nie das Jahr (#402 AK 1, #403 AK 8)", () => {
@@ -3018,6 +3119,72 @@ pruefe("Aus dem Team nehmen (#579 AK 13–16): nicht gelöscht, bleibt im Verein
   assert.equal(HERAUSNEHMEN_TEXT.geaendert, "Inzwischen hat sich etwas geändert. Lies den Hinweis noch einmal und bestätige erneut.");
 });
 
+pruefe("Zuordnen zum Schnuppern (#584 AK 7–12, 16): jede Abweisung, eine und mehrere Schnuppernde, Satz und Snackbar", () => {
+  const p = (vorname: string, nachname: string, jahrgang: number) => ({ id: vorname, vorname, nachname, jahrgang });
+  const leer = { bereits: [], gleich: [], schnuppert: [], ueber_grenze: 0 };
+  // AK 9, 10: Die Datenebene nennt genau einen Grund; der Satz steht allein.
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, grund: "schnuppern_hat_team" }, "Da Junioren", 1),
+    "Diese Spieler:in ist schon einem Team zugeordnet. Ordne sie ohne Schnuppern zu.",
+  );
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, grund: "schnuppern_anzahl_fehlt" }, "Da Junioren", 1),
+    "Das Team hat noch keine Anzahl Schnuppertrainings. Ein Mitglied des Teams legt sie zuerst fest.",
+  );
+  assert.deepEqual(Object.keys(SCHNUPPERN_ZUORDNEN_TEXT).sort(), ["schnuppern_anzahl_fehlt", "schnuppern_hat_team"]);
+  // AK 12: eine Schnuppernde nennt ihr Team und beide Auswege; einzeln ohne
+  // «Wähle ein anderes Team» — auch dort liesse sie sich nicht zuordnen.
+  assert.equal(
+    zuordnenAbweisungText({ ...leer, schnuppert: [{ ...p("Leon", "Graf", 2015), team: "Da Junioren" }] }, "Ea Junioren", 1),
+    "Leon Graf (2015) schnuppert im Team «Da Junioren». Dort beendet zuerst ein Mitglied das Schnuppern, oder Leon wird aus dem Team genommen.",
+  );
+  assert.ok(
+    !zuordnenAbweisungText({ ...leer, gleich: [p("Elias", "Brunner", 2014)], schnuppert: [{ ...p("Elias", "Brunner", 2014), team: "Da Junioren" }] }, "Ea Junioren", 1).includes("anderes Team"),
+    "einzeln mit Schnuppern nie «anderes Team»",
+  );
+  // AK 16: gesammelt nennt jede Schnuppernde mit ihrem Team, in der Reihenfolge der Datenebene.
+  const mehrere = zuordnenAbweisungText(
+    {
+      ...leer,
+      schnuppert: [
+        { ...p("Leon", "Graf", 2015), team: "Da Junioren" },
+        { ...p("Mia", "Ott", 2016), team: "Fa Junioren" },
+      ],
+    },
+    "Ea Junioren",
+    3,
+  );
+  assert.equal(
+    mehrere,
+    "Leon Graf (2015) schnuppert im Team «Da Junioren». Dort beendet zuerst ein Mitglied das Schnuppern, oder Leon wird aus dem Team genommen. " +
+      "Mia Ott (2016) schnuppert im Team «Fa Junioren». Dort beendet zuerst ein Mitglied das Schnuppern, oder Mia wird aus dem Team genommen. " +
+      "Ändere die Auswahl und versuche es nochmals.",
+  );
+  // Schnuppernde zusammen mit anderen Befunden: keiner geht verloren.
+  const gemischt = zuordnenAbweisungText(
+    { ...leer, bereits: [p("Luis", "Ott", 2012)], schnuppert: [{ ...p("Leon", "Graf", 2015), team: "Da Junioren" }] },
+    "Ea Junioren",
+    2,
+  );
+  assert.ok(gemischt.includes("Luis Ott (2012) ist Ea Junioren schon zugeordnet.") && gemischt.includes("Leon Graf (2015) schnuppert im Team «Da Junioren»"));
+  // AK 7, 8, 11: Beschriftung, Satz unter der Auswahl, Snackbar.
+  assert.equal(SCHNUPPERN_ZUORDNEN_LABEL, "Zum Schnuppern zuordnen");
+  assert.equal(SCHNUPPERN_ZUORDNEN_HINWEIS, "Solange die Spieler:in schnuppert, lässt sie sich keinem weiteren Team zuordnen.");
+  assert.equal(schnuppernZugeordnetText("Noah Keller", "Da Junioren"), "Noah Keller ist jetzt dem Team Da Junioren zugeordnet und schnuppert dort.");
+  // AK 13: Endet beim Herausnehmen ein Schnuppern, das die Bestätigung nicht ankündigte, sagt es die Snackbar.
+  assert.equal(vereinHerausgenommenText("Noah", "Da Junioren", false), "Noah ist nicht mehr im Team Da Junioren.");
+  assert.equal(vereinHerausgenommenText("Noah", "Da Junioren", true), "Noah ist nicht mehr im Team Da Junioren. Das Schnuppertraining ist damit beendet.");
+  // Marker der Datenebene kommen beim Zuordnen als Satz an (der Verein-Kern übersetzt sie über `fachlicheMeldung`).
+  assert.equal(fachlicheMeldung("SCHNUPPERN_NUR_EINZELN"), "Zum Schnuppern lässt sich nur eine Spieler:in zuordnen.");
+  assert.equal(
+    fachlicheMeldung("SPIELER_SCHNUPPERT"),
+    "Diese Spieler:in schnuppert in einem anderen Team. Dort beendet zuerst ein Mitglied das Schnuppern, oder sie wird aus dem Team genommen.",
+  );
+  // Kein «Probe» in den Sätzen.
+  for (const t of [...Object.values(SCHNUPPERN_ZUORDNEN_TEXT), SCHNUPPERN_ZUORDNEN_LABEL, SCHNUPPERN_ZUORDNEN_HINWEIS, mehrere, gemischt])
+    assert.ok(!/probe/i.test(t), t);
+});
+
 pruefe("Zuordnen (#579 AK 4–7, 20–23): Abweisung einzeln und gesammelt, Zahl der Termine im Singular und Plural", () => {
   const p = (vorname: string, nachname: string, jahrgang: number) => ({ id: vorname, vorname, nachname, jahrgang });
   const leer = { bereits: [], gleich: [], schnuppert: [], ueber_grenze: 0 };
@@ -3046,7 +3213,7 @@ pruefe("Zuordnen (#579 AK 4–7, 20–23): Abweisung einzeln und gesammelt, Zahl
   // Schnuppernd: nennt das Team, in dem sie schnuppert.
   assert.match(
     zuordnenAbweisungText({ ...leer, schnuppert: [{ ...p("Leon", "Graf", 2015), team: "Da Junioren" }] }, "Ea Junioren", 1),
-    /^Leon Graf \(2015\) schnuppert im Team Da Junioren und lässt sich keinem weiteren Team zuordnen\./,
+    /^Leon Graf \(2015\) schnuppert im Team «Da Junioren»\. Dort beendet zuerst ein Mitglied das Schnuppern, oder Leon wird aus dem Team genommen\./,
   );
   // Grenze: Wortlaut des Boards gesammelt («eine zu viel»), einzeln als Grenze des Teams.
   assert.equal(
@@ -3547,26 +3714,30 @@ pruefe("Spiele: Nachtrag - wer beim Anpfiff zählte, Verfall-Text (#487)", () =>
   assert.equal(NACHTRAG_TEXT.zurueck, "Nachtrag zurücknehmen");
 });
 
-pruefe("Probetraining: Anzahl, Plakette, Stand am Link, Hinweis über der Anzahl (#555 AK 2, 6, 7, 11, 12; PC 13)", () => {
+pruefe("Schnuppertraining: Anzahl, Plakette, Stand am Link, Hinweis über der Anzahl (#555 AK 2, 6, 7, 11, 12; PC 13; #584 AK 1)", () => {
   for (const n of [0, 21, 1.5, -1, null, undefined, Number.NaN]) assert.equal(probeAnzahlProblem(n as number), PROBE_TEXT.anzahlProblem, String(n));
   for (const n of [1, 4, 20]) assert.equal(probeAnzahlProblem(n), null);
   const stand = { anzahl: 4, besucht: 1, angemeldet: 2, moeglich: 1 };
-  assert.equal(probeKurz(stand), "Probe 1/4", "besuchte von der Anzahl, ohne Angemeldete");
-  assert.equal(probeLang(stand), "Probe: 1 von 4 Probetrainings besucht");
-  assert.equal(probeKurz({ ...stand, anzahl: null }), "Probe");
-  assert.equal(linkProbeZaehler(stand), "Noch 1 von 4 Probetrainings möglich");
-  assert.equal(linkProbeZaehler({ ...stand, angemeldet: 3, moeglich: 0 }), "Alle 4 Probetrainings vergeben");
-  // Bei einem Probetraining kein «Alle 1 Probetrainings».
+  assert.equal(probeKurz(stand), "Schnuppern 1/4", "besuchte von der Anzahl, ohne Angemeldete");
+  assert.equal(probeLang(stand), "Schnuppern: 1 von 4 Schnuppertrainings besucht");
+  assert.equal(probeKurz({ ...stand, anzahl: null }), "Schnuppern");
+  assert.equal(probeLang({ anzahl: null, besucht: 0 }), "Schnuppert");
+  // Die Verwaltung kennt nur Anzahl und besuchte: Das genügt der Plakette.
+  assert.equal(probeKurz({ anzahl: 4, besucht: 0 }), "Schnuppern 0/4");
+  assert.equal(linkProbeZaehler(stand), "Noch 1 von 4 Schnuppertrainings möglich");
+  assert.equal(linkProbeZaehler({ ...stand, angemeldet: 3, moeglich: 0 }), "Alle 4 Schnuppertrainings vergeben");
+  // Bei einem Schnuppertraining kein «Alle 1 Schnuppertrainings».
   const eins = { anzahl: 1, besucht: 0, angemeldet: 0, moeglich: 1 };
-  assert.equal(linkProbeZaehler(eins), "Noch 1 von 1 Probetraining möglich");
-  assert.equal(linkProbeZaehler({ ...eins, angemeldet: 1, moeglich: 0 }), "Das Probetraining ist vergeben");
-  assert.ok(linkProbeVoll("Mia", { ...eins, angemeldet: 1, moeglich: 0 }).startsWith("Das Probetraining ist vergeben. Meldest du Mia"));
-  assert.ok(linkProbeVoll("Mia", stand).startsWith("Alle 4 Probetrainings sind vergeben. Meldest du Mia"));
+  assert.equal(linkProbeZaehler(eins), "Noch 1 von 1 Schnuppertraining möglich");
+  assert.equal(linkProbeZaehler({ ...eins, angemeldet: 1, moeglich: 0 }), "Das Schnuppertraining ist vergeben");
+  assert.ok(linkProbeVoll("Mia", { ...eins, angemeldet: 1, moeglich: 0 }).startsWith("Das Schnuppertraining ist vergeben. Meldest du Mia"));
+  assert.ok(linkProbeVoll("Mia", stand).startsWith("Alle 4 Schnuppertrainings sind vergeben. Meldest du Mia"));
   assert.equal(
     linkProbeVoll("Mia", { anzahl: 4, besucht: 4, angemeldet: 0, moeglich: 0 }),
-    "Alle 4 Probetrainings sind vergeben. Für weitere Trainings wende dich an das Team.",
+    "Alle 4 Schnuppertrainings sind vergeben. Für weitere Trainings wende dich an das Team.",
     "alles besucht: nichts abzumelden",
   );
+  assert.equal(linkProbeKopf("Mia"), "Mia schnuppert. Melde Mia für die Trainings an, an denen Mia teilnimmt, und bis zum Beginn wieder ab.");
   // Zusatzentscheid PO 2026-10-29: über der Anzahl ein Hinweis, kein Verbot.
   assert.equal(ueberAnzahl(stand), false);
   assert.equal(ueberAnzahl({ ...stand, angemeldet: 3 }), false, "genau die Anzahl");
@@ -3574,11 +3745,11 @@ pruefe("Probetraining: Anzahl, Plakette, Stand am Link, Hinweis über der Anzahl
   assert.equal(ueberAnzahl(null), false);
   assert.equal(
     ueberAnzahlText("Mia Keller", { ...stand, angemeldet: 4, moeglich: 0 }),
-    "Mia Keller ist damit über der Anzahl Probetrainings: 1 besucht und 4 angemeldet, vorgesehen sind 4.",
+    "Mia Keller ist damit über der Anzahl Schnuppertrainings: 1 besucht und 4 angemeldet, vorgesehen sind 4.",
   );
 });
 
-pruefe("Probetraining: Einschalten - Bedeutung, Verfall aus der Datenebene, Texte (#555 AK 5, 16)", () => {
+pruefe("Schnuppertraining: Einschalten - Bedeutung, Verfall aus der Datenebene, Texte (#555 AK 5, 16)", () => {
   assert.equal(probeEinschaltenText("Mia", 4), "Mia meldet sich selbst für Trainings an, höchstens für 4. Spiele sieht Mia nicht.");
   assert.deepEqual(probeFolgenAusFehler(`${PROBE_VERFALL_MARKER} 4 2 1 1`), { abmeldungen: 2, meldungen: 1, kennzeichnungen: 1 });
   assert.equal(probeFolgenAusFehler("PROBE_ANZAHL_FEHLT"), null);
@@ -3595,12 +3766,52 @@ pruefe("Probetraining: Einschalten - Bedeutung, Verfall aus der Datenebene, Text
   assert.equal(verfallAnmeldungenAusFehler(`${VERFALL_MARKER} 3`), 0);
 });
 
-pruefe("Probetraining: Link-Abweisung, verfallene Anmeldung, Abo «vielleicht» (#555 AK 12; PC 5, 11)", () => {
+pruefe("Schnuppertraining: Link-Abweisung, verfallene Anmeldung, Abo «vielleicht» (#555 AK 12; PC 5, 11)", () => {
   assert.equal(abweisungText("probe_voll"), ABMELDUNG_TEXT.probeVoll);
+  assert.equal(ABMELDUNG_TEXT.probeVoll, "Alle Schnuppertrainings sind vergeben. Meldest du von einem anderen Training ab, wird ein Platz frei. Für weitere Trainings wende dich an das Team.");
   assert.equal(verfallenHinweis({ datum: "2026-11-09", beginn: "17:30", anmeldung: true }), "Verlegt, vorher Montag, 9. November um 17:30. Deine Anmeldung gilt nicht mehr.");
   assert.ok(verfallenHinweis({ datum: "2026-11-09", beginn: "17:30" }).endsWith("Deine Abmeldung gilt nicht mehr."));
   assert.equal(aboStatus(feedTermin({ id: "a", abgemeldet: true }), true), "vielleicht", "nicht angemeldet");
   assert.equal(aboStatus(feedTermin({ id: "a" }), true), "zugesagt");
+});
+
+pruefe("Schnuppern (#584 AK 1, 4, 6, 7, 13, 15): Sätze für Team-Ort, Link und KI wortgleich", () => {
+  // AK 1: der Begriff in der ganzen Einstellung.
+  assert.equal(PROBE_TEXT.titel, "Schnuppertraining");
+  assert.equal(PROBE_TEXT.imProbeModus, "Schnuppert");
+  assert.equal(PROBE_TEXT.checkbox, "Schnuppert");
+  assert.equal(PROBE_TEXT.einschalten, "Schnuppern einschalten");
+  assert.equal(PROBE_TEXT.imProbeModusZahl(1), "1 Spieler:in schnuppert");
+  assert.equal(PROBE_TEXT.imProbeModusZahl(3), "3 Spieler:innen schnuppern");
+  assert.equal(PROBE_TEXT.linkInfoTitel, "Infos zum Schnuppertraining");
+  assert.equal(PROBE_TEXT.vergeben, "Schnuppertrainings vergeben");
+  assert.equal(PROBE_TEXT.festgelegt, "Schnuppertraining gespeichert.");
+  // AK 4: unter dem Titel steht, für wen es gedacht ist.
+  assert.ok(PROBE_TEXT.karte.startsWith("Für Spieler:innen, die den Verein ausprobieren."), PROBE_TEXT.karte);
+  // AK 6, 7, 15: dieselben Sätze in Oberfläche und KI.
+  assert.equal(PROBE_TEXT.mehrereTeams, "Diese Spieler:in ist weiteren Teams zugeordnet und macht darum regulär in deinem Team mit.");
+  assert.equal(PROBE_TEXT.keinWeiteresTeam, "Solange die Spieler:in schnuppert, lässt sie sich keinem weiteren Team zuordnen.");
+  assert.equal(PROBE_MELDUNG.SCHNUPPERN_MEHRERE_TEAMS, PROBE_TEXT.mehrereTeams);
+  assert.equal(fachlicheMeldung("SCHNUPPERN_MEHRERE_TEAMS"), PROBE_TEXT.mehrereTeams, "die KI sagt, was die Anwendung sagt");
+  assert.equal(
+    PROBE_MELDUNG.SPIELER_SCHNUPPERT,
+    "Diese Spieler:in schnuppert in einem anderen Team. Dort beendet zuerst ein Mitglied das Schnuppern, oder sie wird aus dem Team genommen.",
+  );
+  assert.equal(PROBE_MELDUNG.SCHNUPPERN_NUR_EINZELN, "Zum Schnuppern lässt sich nur eine Spieler:in zuordnen.");
+  // Was das Einschalten und Ausschalten bedeutet.
+  assert.ok(probeAusschaltenText("Mia").endsWith("Schaltest du das Schnuppern später wieder ein, zählt es wieder ab null."));
+  // Das Verfallen einer Anmeldung nennt schnuppernde Spieler:innen.
+  assert.equal(mitAnmeldungen("", 1), "Damit verfällt 1 Anmeldung einer schnuppernden Spieler:in: Sie gilt wieder als nicht angemeldet.");
+  assert.equal(mitAnmeldungen("", 2), "Damit verfallen 2 Anmeldungen von schnuppernden Spieler:innen: Sie gelten wieder als nicht angemeldet.");
+  // AK 13: Herausnehmen beendet das Schnuppern samt Zählung (Bedingung kommt aus `spieler_teams`).
+  assert.ok(
+    herausnehmenSaetze({ vorname: "Noah", nachname: "Keller", team: "Da Junioren", verein: null, verbleibend: [], probe: true }).warnung.startsWith(
+      "Das Schnuppertraining endet samt Zählung;",
+    ),
+  );
+  // Der Zugang nennt das Schnuppertraining wie die Werkzeuge (PC 4: ohne neue Zustimmung).
+  const umfang = readFileSync(join(web, "lib/mcp/umfang.ts"), "utf8");
+  assert.ok(umfang.includes("ins Schnuppertraining nehmen und die Anzahl Schnuppertrainings samt Info-Schreiben festlegen"));
 });
 
 pruefe("Info-Schreiben: bereinigt wie die Datenebene, höchstens 2000 Zeichen als Codepunkte (#556 AK 1, 2; PC 2)", () => {

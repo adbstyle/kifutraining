@@ -157,7 +157,7 @@ import {
 } from "@/lib/farben";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { KaderLozenge } from "@/components/team/KaderLozenge";
-import { ProbeLozenge } from "@/components/team/ProbeLozenge";
+import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 import { VERZEICHNIS_COOKIE, leseVerzeichnis } from "@/lib/verzeichnis";
 
 export const metadata: Metadata = {
@@ -2752,17 +2752,23 @@ export default async function Styleguide() {
             <KaderLozenge name={null} />
           </div>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-            <strong>Probe</strong> (<code>ProbeLozenge</code>, #555): eine
-            Spieler:in im Probe-Modus, neben dem Namen in der Spielerliste und in
-            der Karte «Probetraining». <code>discovery</code> - etwas Zusätzliches,
-            kein Status. Die Zahl nennt besuchte Probetrainings von der Anzahl
-            des Teams (PO 2026-10-29); angemeldete stehen am jeweiligen Training.
-            Derselbe Ton trägt am privaten Link den Balken der Probetrainings:
-            besucht gefüllt, angemeldet umrandet.
+            <strong>Schnuppern</strong> (<code>SchnupperLozenge</code>, #555, #584):
+            eine Spieler:in, die im Team schnuppert, neben dem Namen in der
+            Spielerliste und in der Karte «Schnuppertraining», und für die
+            Verwaltung in der Teams-Spalte der Vereinsliste und in der
+            Spielerliste unter Verein › Team - ein Baustein für beide Orte
+            (<code>components/spieler</code>).{" "}
+            <code>discovery</code> - etwas Zusätzliches, kein Status. Die Zahl
+            nennt besuchte Schnuppertrainings von der Anzahl des Teams (PO
+            2026-10-29); angemeldete stehen am jeweiligen Training. Ohne
+            festgelegte Anzahl steht nur «Schnuppern». Derselbe Ton trägt am
+            privaten Link den Balken der Schnuppertrainings: besucht gefüllt,
+            angemeldet umrandet.
           </p>
           <div className="mb-6 flex flex-wrap items-center gap-2">
-            <ProbeLozenge stand={{ anzahl: 4, besucht: 1, angemeldet: 2, moeglich: 1 }} />
-            <ProbeLozenge stand={{ anzahl: 4, besucht: 3, angemeldet: 0, moeglich: 1 }} />
+            <SchnupperLozenge stand={{ anzahl: 4, besucht: 1 }} />
+            <SchnupperLozenge stand={{ anzahl: 4, besucht: 3 }} />
+            <SchnupperLozenge stand={{ anzahl: null, besucht: 0 }} />
           </div>
           <div className="mb-6 flex flex-wrap items-center gap-3 rounded-flaeche bg-[linear-gradient(135deg,#f5f5f0,#9aa79c)] p-3">
             <HerkunftLozenge herkunft="manual" aufBild />
@@ -3807,7 +3813,7 @@ export default async function Styleguide() {
             <strong>Kürzbarer Text</strong> - <code>KuerzbarerText</code>: ein längerer
             Freitext ohne Formatierung, gekürzt auf wenige Zeilen (Vorgabe drei) mit
             «Ganz lesen» als Link darunter - das Info-Schreiben in der Karte
-            «Probetraining» und am privaten Link (#556). Der Link steht nur, wenn der
+            «Schnuppertraining» und am privaten Link (#556). Der Link steht nur, wenn der
             Text wirklich länger ist (gemessen); aufgeklappt heisst er «Weniger
             anzeigen». Zeilenumbrüche bleiben, Webadressen (http, https, www.) werden
             zu externen Links (<code>ExternerLink</code>). Neu, weil{" "}

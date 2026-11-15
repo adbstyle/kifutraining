@@ -132,7 +132,7 @@ begin
   perform pg_temp.pruefe(to_regprocedure('spieler_entfernen(uuid)') is null, 'spieler_entfernen besteht noch');
   foreach f in array array['spieler_teams(uuid,uuid)', 'spieler_aus_team_nehmen(uuid,uuid,text)',
                            'spieler_weitere_teams(uuid)', 'verein_spielerliste(uuid)',
-                           'verein_spieler_zuordnen(uuid,uuid[])', 'termin_teilnehmer(uuid)',
+                           'verein_spieler_zuordnen(uuid,uuid[],boolean)', 'termin_teilnehmer(uuid)',
                            'spiel_teilnehmer(uuid)', 'meine_team_ids()'] loop
     perform pg_temp.pruefe(not has_function_privilege('anon', f, 'execute')
                            and has_function_privilege('authenticated', f, 'execute'), 'Grant von ' || f);
@@ -278,9 +278,9 @@ insert into training_termine (id, team_id, datum, beginn, ende) values
 insert into termin_abmeldungen (termin_id, spieler_id, team_id, angemeldet) values
   (pg_temp.id('tv'), pg_temp.id('d1'), pg_temp.id('t4'), false);
 select pg_temp.als(pg_temp.id('a'));
-select pg_temp.erwarte(format('select spieler_probe_folgen(%L)', pg_temp.id('d1')), 'SCHNUPPERN_MEHRERE_TEAMS');
-select pg_temp.erwarte(format('select spieler_probe_setzen(%L, true, 1)', pg_temp.id('d1')), 'SCHNUPPERN_MEHRERE_TEAMS');
-select pg_temp.pruefe(spieler_probe_setzen(pg_temp.id('d1'), false) = '{"probe": false, "verfallen": 0}', 'Ausschalten');
+select pg_temp.erwarte(format('select spieler_probe_folgen(%L, %L)', pg_temp.id('t1'), pg_temp.id('d1')), 'SCHNUPPERN_MEHRERE_TEAMS');
+select pg_temp.erwarte(format('select spieler_probe_setzen(%L, %L, true, 1)', pg_temp.id('t1'), pg_temp.id('d1')), 'SCHNUPPERN_MEHRERE_TEAMS');
+select pg_temp.pruefe(spieler_probe_setzen(pg_temp.id('t1'), pg_temp.id('d1'), false) = '{"probe": false, "verfallen": 0}', 'Ausschalten');
 reset role;
 select pg_temp.pruefe(exists (select 1 from termin_abmeldungen where termin_id = pg_temp.id('tv') and spieler_id = pg_temp.id('d1'))
                       and not exists (select 1 from team_spieler where spieler_id = pg_temp.id('d1') and probe_seit is not null),
@@ -331,7 +331,7 @@ begin
   -- Testfall 29 (zweiter Teil): ohne oder mit falschem Stand ändert sich nichts.
   v := spieler_aus_team_nehmen(pg_temp.id('t1'), pg_temp.id('s1'), null);
   perform pg_temp.pruefe(v = jsonb_build_object('status', 'stand_geaendert', 'teams', v_auskunft -> 'teams',
-                                                'stand', v_auskunft -> 'stand'), 'ohne Stand: ' || v::text);
+                                                'schnuppert', false, 'stand', v_auskunft -> 'stand'), 'ohne Stand: ' || v::text);
   v := spieler_aus_team_nehmen(pg_temp.id('t1'), pg_temp.id('s1'), 'veraltet');
   perform pg_temp.pruefe(v ->> 'status' = 'stand_geaendert'
                          and exists (select 1 from team_spieler where team_id = pg_temp.id('t1') and spieler_id = pg_temp.id('s1')),
@@ -339,7 +339,7 @@ begin
 
   -- AK 10: herausnehmen; sie bleibt in T2, das letzte eigene Team von a war T1.
   v := spieler_aus_team_nehmen(pg_temp.id('t1'), pg_temp.id('s1'), v_auskunft ->> 'stand');
-  perform pg_temp.pruefe(v = '{"status": "herausgenommen", "ohne_team": false, "letztes_eigenes_team": true}', 'herausnehmen: ' || v::text);
+  perform pg_temp.pruefe(v = '{"status": "herausgenommen", "ohne_team": false, "letztes_eigenes_team": true, "schnuppern_beendet": false}', 'herausnehmen: ' || v::text);
 
   -- PC 7: J+S und Zeile nur noch für Mitglieder weiterer Teams.
   perform pg_temp.pruefe((select count(*) from spieler where id = pg_temp.id('s1')) = 0, 'nach dem Herausnehmen sichtbar');
@@ -399,7 +399,7 @@ declare
 begin
   perform pg_temp.pruefe(v_auskunft -> 'teams' = '[{"name": "Team Zwei", "eigen": true, "dieses": true, "abholbar": false}]', 'Auskunft letztes Team: ' || v_auskunft::text);
   v := spieler_aus_team_nehmen(pg_temp.id('t2'), pg_temp.id('s1'), v_auskunft ->> 'stand');
-  perform pg_temp.pruefe(v = '{"status": "herausgenommen", "ohne_team": true, "letztes_eigenes_team": true}', 'letztes Team: ' || v::text);
+  perform pg_temp.pruefe(v = '{"status": "herausgenommen", "ohne_team": true, "letztes_eigenes_team": true, "schnuppern_beendet": false}', 'letztes Team: ' || v::text);
 end $$;
 reset role;
 select pg_temp.pruefe(exists (select 1 from spieler where id = pg_temp.id('s1') and team_id is null), 'ohne Team nicht im Verein');
@@ -436,7 +436,7 @@ insert into team_spieler (team_id, spieler_id, verein_id) values (pg_temp.id('t2
 -- b ist auch Mitglied von T3: Aus T2 genommen bleibt s3 in einem eigenen Team.
 select pg_temp.als(pg_temp.id('b'));
 select pg_temp.pruefe(spieler_aus_team_nehmen(pg_temp.id('t2'), pg_temp.id('s3'), spieler_teams(pg_temp.id('t2'), pg_temp.id('s3')) ->> 'stand')
-                        = '{"status": "herausgenommen", "ohne_team": false, "letztes_eigenes_team": false}', 'letztes_eigenes_team bei weiterem eigenem Team');
+                        = '{"status": "herausgenommen", "ohne_team": false, "letztes_eigenes_team": false, "schnuppern_beendet": false}', 'letztes_eigenes_team bei weiterem eigenem Team');
 reset role;
 insert into team_spieler (team_id, spieler_id, verein_id) values (pg_temp.id('t2'), pg_temp.id('s3'), pg_temp.id('v'));
 delete from teams where id = pg_temp.id('t3');

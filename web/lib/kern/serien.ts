@@ -200,7 +200,7 @@ export type SerienFolge = {
   nachtraegeVerfallend: number;
   /** Wie viele Absagen von Trainer:innen die Verlegung verfallen lässt (#520 AK 11). */
   absagenVerfallend: number;
-  /** Wie viele Anmeldungen von Probe-Spieler:innen verfallen — durch Verlegung
+  /** Wie viele Anmeldungen von schnuppernden Spieler:innen verfallen — durch Verlegung
    *  oder weil ein Termin nicht mehr für sie gilt (#555 AK 14). */
   anmeldungenVerfallend: number;
   /** Die anstehenden Termine, deren Treffpunkt die Zeitänderung nimmt, weil

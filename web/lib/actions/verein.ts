@@ -37,15 +37,17 @@ import type { PersonSchritt } from "@/lib/verein";
  */
 
 /** Spieler:innen einem Team zuordnen, alle oder keine (#579 AK 2, 20, 21).
- *  `ersetzt`: anstehende Termine, die ihre erwartete Spielerzahl verloren. */
+ *  `ersetzt`: anstehende Termine, die ihre erwartete Spielerzahl verloren.
+ *  `schnuppern`: zum Schnuppern, nur einzeln (#584 AK 8–11). */
 export async function ordneSpielerZuAktion(
   teamId: string,
   teamName: string,
   spielerIds: string[],
+  schnuppern = false,
 ): Promise<{ ok: true; anzahl: number; ersetzt: number } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await ordneSpielerZu(a.supabase, a.userId, { teamId, teamName, spielerIds });
+  const r = await ordneSpielerZu(a.supabase, a.userId, { teamId, teamName, spielerIds, schnuppern });
   if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld };
   revalidiereTeam(teamId);
   revalidiereVerein();
@@ -225,18 +227,19 @@ export async function entferneAusVerwaltungAktion(vereinId: string, userId: stri
   return { ok: true };
 }
 
-/** Eine Spieler:in aus einem Team nehmen; `ohneTeam`: danach in keinem mehr. */
+/** Eine Spieler:in aus einem Team nehmen; `ohneTeam`: danach in keinem mehr;
+ *  `schnuppernBeendet`: Schnuppern und Zählung sind damit beendet (#584). */
 export async function nimmSpielerAusTeamImVereinAktion(
   teamId: string,
   spielerId: string,
-): Promise<{ ok: true; ohneTeam: boolean } | Fehler> {
+): Promise<{ ok: true; ohneTeam: boolean; schnuppernBeendet: boolean } | Fehler> {
   const a = await angemeldet();
   if (!a) return keinKonto;
   const r = await nimmSpielerAusTeamImVerein(a.supabase, a.userId, { teamId, spielerId });
   if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld };
   revalidiereTeam(teamId);
   revalidiereVerein();
-  return { ok: true, ohneTeam: r.wert.ohneTeam };
+  return { ok: true, ohneTeam: r.wert.ohneTeam, schnuppernBeendet: r.wert.schnuppernBeendet };
 }
 
 // ── Spielerbestand der Verwaltung (Story #582) ──────────────────────────────

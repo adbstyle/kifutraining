@@ -6,6 +6,7 @@
 // (lib/training-bedingungen.ts) übersetzt sie in diese Sätze.
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
+import { PROBE_TEXT } from "@/lib/probe";
 import { SPIELER_MAX, aufzaehlung, bereinigeName, imTeam, spielerName } from "@/lib/spieler";
 
 /** Zwilling der Grenze im Trigger `spieler_vorher` (Marker `VEREIN_VOLL`): So
@@ -115,7 +116,36 @@ export type ZuordnenAbweisung = {
   gleich: SpielerKurz[];
   schnuppert: (SpielerKurz & { team: string })[];
   ueber_grenze: number;
+  /** Nur beim Zuordnen zum Schnuppern (#584): der Grund, dann sind die vier
+   *  Listen leer bzw. 0. */
+  grund?: "schnuppern_hat_team" | "schnuppern_anzahl_fehlt";
 };
+
+/** Die Sätze der Abweisungen beim Zuordnen zum Schnuppern (#584 AK 9, 10). */
+export const SCHNUPPERN_ZUORDNEN_TEXT = {
+  schnuppern_hat_team: "Diese Spieler:in ist schon einem Team zugeordnet. Ordne sie ohne Schnuppern zu.",
+  schnuppern_anzahl_fehlt: "Das Team hat noch keine Anzahl Schnuppertrainings. Ein Mitglied des Teams legt sie zuerst fest.",
+} as const;
+
+/** Beschriftung der Checkbox im Dialog «Einem Team zuordnen» (#584 AK 8). */
+export const SCHNUPPERN_ZUORDNEN_LABEL = "Zum Schnuppern zuordnen";
+
+/** Der Satz unter der angehakten Checkbox (#584 AK 7) — derselbe wie beim
+ *  Einschalten am Team-Ort. */
+export const SCHNUPPERN_ZUORDNEN_HINWEIS = PROBE_TEXT.keinWeiteresTeam;
+
+/** Die Meldung nach dem Zuordnen zum Schnuppern (#584 AK 11). */
+export function schnuppernZugeordnetText(name: string, team: string): string {
+  return `${name} ist jetzt dem Team ${team} zugeordnet und schnuppert dort.`;
+}
+
+/** Die Meldung nach dem Herausnehmen am Verein-Ort. Endete dabei ein
+ *  Schnuppertraining, das die Bestätigung nicht angekündigt hat (ein Mitglied
+ *  schaltete es nach dem Laden der Seite ein), sagt es der Zusatz (#584 AK 13). */
+export function vereinHerausgenommenText(vorname: string, team: string, schnuppernUnangekuendigt: boolean): string {
+  const satz = `${vorname} ist nicht mehr im Team ${team}.`;
+  return schnuppernUnangekuendigt ? `${satz} Das Schnuppertraining ist damit beendet.` : satz;
+}
 
 /** Bis drei beim Namen, darüber die Zahl. */
 function wer(namen: string[]): string {
@@ -125,12 +155,14 @@ function wer(namen: string[]): string {
 const mitJahrgang = (p: SpielerKurz) => `${spielerName(p)} (${p.jahrgang})`;
 
 /** Der Satz zur Abweisung einer einzelnen oder gesammelten Zuordnung
- *  (#579 AK 4–7, 21, 22): zuerst gleiche Angaben und bestehende Zuordnungen,
+ *  (#579 AK 4–7, 21, 22; #584 AK 9, 10, 12, 16): zuerst gleiche Angaben und bestehende Zuordnungen,
  *  dann die Schnuppernden, zuletzt die Grenze des Teams. `gewaehlt`: wie
  *  viele Spieler:innen zur Wahl standen — bei einer ist es eine einzelne
  *  Zuordnung. Wortlaut des Boards (Gleiche Angaben, Grenze gesammelt), das
  *  Übrige im selben Stil. */
 export function zuordnenAbweisungText(a: ZuordnenAbweisung, team: string, gewaehlt: number): string {
+  // Beim Zuordnen zum Schnuppern nennt die Datenebene genau einen Grund (#584 AK 9, 10).
+  if (a.grund) return SCHNUPPERN_ZUORDNEN_TEXT[a.grund];
   const saetze: string[] = [];
   if (a.bereits.length === 1) saetze.push(`${mitJahrgang(a.bereits[0])} ist ${team} schon zugeordnet.`);
   else if (a.bereits.length > 1) saetze.push(`${aufzaehlung(a.bereits.map(mitJahrgang))} sind ${team} schon zugeordnet.`);
@@ -141,14 +173,17 @@ export function zuordnenAbweisungText(a: ZuordnenAbweisung, team: string, gewaeh
     saetze.push(`${team} führt schon Spieler:innen mit gleichen Angaben wie ${aufzaehlung(a.gleich.map(mitJahrgang))}.`);
   }
   for (const p of a.schnuppert)
-    saetze.push(`${mitJahrgang(p)} schnuppert im Team ${p.team} und lässt sich keinem weiteren Team zuordnen.`);
+    saetze.push(`${mitJahrgang(p)} schnuppert im Team «${p.team}». Dort beendet zuerst ein Mitglied das Schnuppern, oder ${p.vorname} wird aus dem Team genommen.`);
   if (a.ueber_grenze > 0)
     saetze.push(
       gewaehlt === 1
         ? `${team} umfasst schon ${SPIELER_MAX} oder mehr Spieler:innen. Die Grenze des Teams ist erreicht; eine weitere Spieler:in lässt sich nicht zuordnen.`
         : `Mit allen gewählten wären es ${SPIELER_MAX + a.ueber_grenze} von ${SPIELER_MAX}, ${a.ueber_grenze === 1 ? "eine" : a.ueber_grenze} zu viel.`,
     );
-  saetze.push(gewaehlt === 1 ? "Wähle ein anderes Team und versuche es nochmals." : "Ändere die Auswahl und versuche es nochmals.");
+  // Eine einzelne Schnuppernde lässt sich auch keinem anderen Team zuordnen:
+  // Dann gilt nur der Ausweg aus ihrem Satz (#584 AK 12), kein «anderes Team».
+  if (gewaehlt !== 1) saetze.push("Ändere die Auswahl und versuche es nochmals.");
+  else if (a.schnuppert.length === 0) saetze.push("Wähle ein anderes Team und versuche es nochmals.");
   return saetze.join(" ");
 }
 

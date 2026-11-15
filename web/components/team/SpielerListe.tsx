@@ -39,7 +39,7 @@ import { TeamLozenges } from "./TeamLozenges";
 import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
 import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
-import { ProbeLozenge } from "./ProbeLozenge";
+import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
    Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet einen
@@ -68,9 +68,10 @@ import { ProbeLozenge } from "./ProbeLozenge";
    Spieler:innen aus Terminen, für die sie abgemeldet waren, fragt sie vorher
    nach (#453 AK 10).
 
-   Probetraining (#555): Eine Probe-Spieler:in trägt die Plakette «Probe 1/4»
-   neben dem Namen. Den Probe-Modus schaltet die Checkbox im Dialog «Spieler:in
-   ändern» — gesperrt, solange das Team keine Anzahl festgelegt hat. Was das
+   Schnuppertraining (#555, #584): Eine schnuppernde Spieler:in trägt die
+   Plakette «Schnuppern 1/4» neben dem Namen. Das Schnuppern schaltet die
+   Checkbox im Dialog «Spieler:in ändern» — gesperrt, solange das Team keine
+   Anzahl festgelegt hat. Was das
    Einschalten verfallen liesse, steht vor dem Speichern als Warnung im Dialog;
    was das Ausschalten bewirkt, als Information. */
 
@@ -98,14 +99,14 @@ export function SpielerListe({
   kader: Kader[];
   /** Die Selbstabholung des Teams (#438); `url` fehlt, solange es keine Adresse gibt. */
   abholung: { url: string | null; aktiv: boolean };
-  /** Die Anzahl Probetrainings des Teams (#555); `null`, solange keine festgelegt ist. */
+  /** Die Anzahl Schnuppertrainings des Teams (#555); `null`, solange keine festgelegt ist. */
   probeAnzahl: number | null;
 }) {
   const router = useRouter();
   const melde = useSnackbar();
   const [pending, startTransition] = useTransition();
   // `null`: zu; sonst neu (`id` leer) oder die geänderte Spieler:in.
-  // `probe`: ihr Probe-Modus beim Öffnen — dagegen zählt, was sich ändert.
+  // `probe`: ihr Schnuppern beim Öffnen — dagegen zählt, was sich ändert.
   const [offen, setOffen] = useState<{ id: string | null; probe: boolean } | null>(null);
   const [form, setForm] = useState<Form>(LEER);
   const [fehler, setFehler] = useState<SpielerFehler | null>(null);
@@ -126,7 +127,7 @@ export function SpielerListe({
   const [auswahl, setAuswahl] = useState<string[]>([]);
   const [zuteilenOffen, setZuteilenOffen] = useState(false);
   const verfall = useVerfallRueckfrage(pending);
-  // Was das Einschalten des Probe-Modus verfallen liesse (#555 AK 5), sobald die Checkbox an ist.
+  // Was das Einschalten des Schnupperns verfallen liesse (#555 AK 5), sobald die Checkbox an ist.
   const [probeFolgen, setProbeFolgen] = useState<ProbeFolgen | null>(null);
   const [probeFehler, setProbeFehler] = useState<string | null>(null);
 
@@ -172,7 +173,7 @@ export function SpielerListe({
     );
   }
 
-  /** Die Checkbox «Im Probetraining»: beim Einschalten erst holen, was
+  /** Die Checkbox «Schnuppert»: beim Einschalten erst holen, was
    *  verfiele (AK 5, 16) — die Warnung steht vor dem Speichern. */
   function probeSchalten(id: string, an: boolean) {
     setForm((f) => ({ ...f, probe: an }));
@@ -180,7 +181,7 @@ export function SpielerListe({
     setProbeFolgen(null);
     if (!an || offen?.probe) return;
     startTransition(async () => {
-      const r = await probeFolgenAktion(id);
+      const r = await probeFolgenAktion(teamId, id);
       if (!r.ok) return setProbeFehler(r.error);
       setProbeFolgen(r.folgen);
     });
@@ -208,7 +209,7 @@ export function SpielerListe({
         // und erst der nächste Klick schaltet.
         let folgen = probeFolgen;
         if (probeWechsel && form.probe && !folgen) {
-          const f = await probeFolgenAktion(id);
+          const f = await probeFolgenAktion(teamId, id);
           if (!f.ok) return setProbeFehler(f.error);
           folgen = f.folgen;
           setProbeFehler(null);
@@ -228,7 +229,7 @@ export function SpielerListe({
           const p = await schalteProbeAktion(teamId, id, form.probe, form.probe && folgen ? probeFolgenSumme(folgen) : null);
           if (!p.ok) {
             router.refresh();
-            const f = await probeFolgenAktion(id);
+            const f = await probeFolgenAktion(teamId, id);
             if (f.ok) setProbeFolgen(f.folgen);
             return setProbeFehler(p.error);
           }
@@ -268,7 +269,7 @@ export function SpielerListe({
         router.refresh();
         return melde(r.error);
       }
-      setHerausnehmen({ spieler: s, teams: { teams: r.teams, stand: r.stand } });
+      setHerausnehmen({ spieler: s, teams: { teams: r.teams, stand: r.stand, schnuppert: r.schnuppert } });
     });
   }
 
@@ -295,7 +296,7 @@ export function SpielerListe({
         router.refresh();
         return setHerausnehmen({ spieler: s, teams, fehler: neu.error });
       }
-      setHerausnehmen({ spieler: s, teams: { teams: neu.teams, stand: neu.stand }, hinweis: HERAUSNEHMEN_TEXT.geaendert });
+      setHerausnehmen({ spieler: s, teams: { teams: neu.teams, stand: neu.stand, schnuppert: neu.schnuppert }, hinweis: HERAUSNEHMEN_TEXT.geaendert });
     });
   }
 
@@ -444,12 +445,21 @@ export function SpielerListe({
               <span className="min-w-0 flex-1">
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="type-body-medium truncate text-on-surface">{spielerName(s)}</span>
-                  {s.probe && <ProbeLozenge stand={s.probe} />}
+                  {s.probe && (
+                    <span className="hidden shrink-0 sm:inline-flex">
+                      <SchnupperLozenge stand={s.probe} />
+                    </span>
+                  )}
                 </span>
-                {/* Schmal stehen Jahrgang, J+S-Nummer und Kader unter dem Namen. */}
+                {/* Schmal stehen Jahrgang, J+S-Nummer, Schnuppern und Kader unter dem Namen: Der Name bleibt lesbar. */}
                 <span className="type-body-small block text-on-surface-mittel sm:hidden">
                   {[s.jahrgang, s.jsNummer && `J+S ${s.jsNummer}`].filter(Boolean).join(" · ")}
                 </span>
+                {s.probe && (
+                  <span className="mt-1 flex sm:hidden">
+                    <SchnupperLozenge stand={s.probe} />
+                  </span>
+                )}
                 <KaderLozenges namen={namenVon(s)} className="mt-1 sm:hidden" />
                 <TeamLozenges namen={s.weitereTeams} className="mt-1 sm:hidden" />
               </span>
@@ -582,7 +592,8 @@ function HerausnehmenText({
     team,
     verein,
     verbleibend: verbleibendeTeams(teams.teams),
-    probe: spieler.probe !== null,
+    // Aus `spieler_teams` (dieses Team), nicht aus der Liste: eine Quelle.
+    probe: teams.schnuppert,
   });
   return (
     <div className="flex flex-col gap-3">
@@ -607,8 +618,9 @@ function aufzaehlung(namen: string[]): string {
   return namen.length <= 1 ? (namen[0] ?? "") : `${namen.slice(0, -1).join(", ")} und ${namen[namen.length - 1]}`;
 }
 
-/** Die Checkbox «Im Probetraining» im Dialog «Spieler:in ändern» (#555 AK 3–5,
- *  16, 18, 19): darunter, was der Probe-Modus bedeutet; ohne Anzahl gesperrt
+/** Die Checkbox «Schnuppert» im Dialog «Spieler:in ändern» (#555 AK 3–5,
+ *  16, 18, 19; #584 AK 6, 7): darunter, was das Schnuppern bedeutet, und vor
+ *  dem Einschalten, dass sie sich dann keinem weiteren Team zuordnen lässt; ohne Anzahl gesperrt
  *  mit dem Weg dahin; beim Einschalten die Warnung, was verfällt, beim
  *  Ausschalten, was danach gilt. Wer weiteren Teams zugeordnet ist, schnuppert
  *  nicht (Vereine AP §5.3): statt der Checkbox nur der Hinweis. */
@@ -656,6 +668,9 @@ function ProbeFeld({
             <span className="type-body-small text-on-surface-mittel">
               {gesperrt ? PROBE_TEXT.anzahlFehlt : probeEinschaltenText(vorname, anzahl)}
             </span>
+            {/* AK 7: beim Einschalten; schnuppert sie schon, sagt es nichts Neues,
+                und beim Ausschalten widerspräche es dem Hinweis darunter. */}
+            {!gesperrt && !vorher && <span className="type-body-small text-on-surface-mittel">{PROBE_TEXT.keinWeiteresTeam}</span>}
           </span>
         }
       />

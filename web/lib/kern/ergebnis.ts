@@ -111,7 +111,7 @@ export type KernFehler = {
   nachtraege?: number;
   /** Davon Absagen von Trainer:innen (#520 AK 11). */
   absagen?: number;
-  /** Davon Anmeldungen von Probe-Spieler:innen (#555 AK 14) — beim Verlegen
+  /** Davon Anmeldungen von schnuppernden Spieler:innen (#555 AK 14) — beim Verlegen
    *  und bei Kader-Änderungen. */
   anmeldungen?: number;
   /** Nur an einem Spiel (#463 AK 13, 26): Die Verlegung rückt die Meldefrist

@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ladeSpielerliste, leseAbholung } from "@/lib/kern/spieler";
 import { ladeKader } from "@/lib/kern/kader";
 import { KaderKarte } from "@/components/team/KaderKarte";
-import { ProbeKarte } from "@/components/team/ProbeKarte";
+import { SchnupperKarte } from "@/components/team/SchnupperKarte";
 import { leseProbetraining } from "@/lib/kern/probe";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { abholUrl } from "@/lib/spieler";
@@ -23,7 +23,7 @@ import { getMeinVerein } from "@/lib/queries/verein";
  * Person zugleich Mitglied des Teams ist; am Team-Ort gibt es für sie keine
  * Verwaltungsaktion.
  *
- * Das Probetraining (#555) und die Kader (#452) stehen unter der
+ * Das Schnuppertraining (#555, #584) und die Kader (#452) stehen unter der
  * Spielerliste: Sie betreffen deren Spieler:innen.
  *
  * Das gehört zusammen, weil es das Team selbst betrifft und nicht die
@@ -97,7 +97,7 @@ export default async function TeamVerwaltungPage({
       </Card>
 
       <Card className="p-5 sm:p-6">
-        <ProbeKarte teamId={team.id} probetraining={probe.wert} spieler={liste.wert.spieler} />
+        <SchnupperKarte teamId={team.id} probetraining={probe.wert} spieler={liste.wert.spieler} />
       </Card>
 
       <Card className="p-5 sm:p-6">

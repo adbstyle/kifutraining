@@ -78,7 +78,7 @@ export type LinkTermin = {
   abgemeldet: boolean;
   /** Verlegt, seit sie abgemeldet wurde (#437 AK 2): der Zeitpunkt vorher —
    *  die Abmeldung gilt nicht mehr. `anmeldung`: Es war die Anmeldung einer
-   *  Probe-Spieler:in (#555 PC 5). */
+   *  schnuppernden Spieler:in (#555 PC 5). */
   verfallen: { datum: string; beginn: string; anmeldung?: boolean } | null;
   /** Die Kader der Spieler:in, über die der Termin für sie gilt (#454 AK 2);
    *  leer bei einem Termin für alle. Fremde Kader nennt der Link nie (AK 3). */
@@ -99,10 +99,10 @@ export type LinkAnsicht =
        *  Team (AK 5). */
       teams: string[];
       spieler: { vorname: string; nachname: string };
-      /** Im Probe-Modus ihr Stand (#555 AK 11), sonst `null`; fehlt bei einer
+      /** Schnuppert sie, ihr Stand (#555 AK 11), sonst `null`; fehlt bei einer
        *  Datenebene vor der Migration. */
       probe?: ProbeStand | null;
-      /** Das Info-Schreiben des Teams, nur im Probe-Modus (#556 AK 4). */
+      /** Das Info-Schreiben des Teams, nur wenn sie schnuppert (#556 AK 4). */
       probe_info?: string | null;
       /** In der Ordnung der Datenebene: heute begonnene zuerst, dann nach
        *  Datum, Beginn und Teamname (AK 1). Das Web sortiert nicht um. */

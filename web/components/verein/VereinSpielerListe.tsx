@@ -21,7 +21,17 @@ import { ordneSpielerZuAktion } from "@/lib/actions/verein";
 import { TeamLozenges } from "@/components/team/TeamLozenges";
 import type { VereinSpieler, VereinTeam } from "@/lib/kern/verein";
 import { SPIELER_MAX, spielerName } from "@/lib/spieler";
-import { SPIELER_BESTAND_LEER, spielerKopfText, zielWeg, zugeordnetText, zuordnenEinleitung } from "@/lib/verein";
+import {
+  SCHNUPPERN_ZUORDNEN_HINWEIS,
+  SCHNUPPERN_ZUORDNEN_LABEL,
+  SPIELER_BESTAND_LEER,
+  schnuppernZugeordnetText,
+  spielerKopfText,
+  zielWeg,
+  zugeordnetText,
+  zuordnenEinleitung,
+} from "@/lib/verein";
+import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 import { VereinSpielerFormular } from "./VereinSpielerFormular";
 import { VereinSpielerLinkDialog } from "./VereinSpielerLinkDialog";
 import { VereinSpielerLoeschen } from "./VereinSpielerLoeschen";
@@ -39,7 +49,10 @@ import { VereinSpielerLoeschen } from "./VereinSpielerLoeschen";
    ihrem Füllstand «16 von 100» zeigt. Gesammelt gilt ganz oder gar nicht (AK
    21): Lässt sich eine nicht zuordnen, bleibt der Dialog offen und nennt die
    Befunde (AK 22). Danach nennt die Snackbar, wo die erwartete Spielerzahl
-   wegfiel (AK 23). Bausteine des Kits: Tabelle, Checkbox, AuswahlLeiste,
+   wegfiel (AK 23). Bei genau einer gewählten Spieler:in ohne Team bietet der
+   Dialog zusätzlich «Zum Schnuppern zuordnen» (#584 AK 8): sonst gar nicht,
+   nie als gesperrtes Feld; angehakt steht der Satz zur Regel darunter. Die
+   Teams-Spalte zeigt «Schnuppern n/m». Bausteine des Kits: Tabelle, Checkbox, AuswahlLeiste,
    AuswahlListe, OverflowMenu, Dialog, SectionMessage, Lozenge. */
 
 const TITEL_ABWEISUNG = "Keine Spieler:in zugeordnet";
@@ -63,6 +76,7 @@ export function VereinSpielerListe({
   const [zuordnen, setZuordnen] = useState<VereinSpieler[] | null>(null);
   const [teamId, setTeamId] = useState<string | null>(null);
   const [abweisung, setAbweisung] = useState<string | null>(null);
+  const [schnuppern, setSchnuppern] = useState(false);
   // Der Dialog zum Erfassen (`{ spieler: null }`) oder Ändern, der Link, das Löschen.
   const [formular, setFormular] = useState<{ spieler: VereinSpieler | null } | null>(null);
   const [link, setLink] = useState<VereinSpieler | null>(null);
@@ -76,14 +90,19 @@ export function VereinSpielerListe({
     setZuordnen(wer);
     setTeamId(null);
     setAbweisung(null);
+    setSchnuppern(false);
   }
+
+  // Zum Schnuppern lässt sich nur eine einzelne Spieler:in ohne Team zuordnen (#584 AK 8).
+  const kannSchnuppern = zuordnen !== null && zuordnen.length === 1 && zuordnen[0].teams.length === 0;
 
   function ausfuehren() {
     const team = teams.find((t) => t.id === teamId);
     if (!zuordnen || !team) return;
     const wer = zuordnen;
     startTransition(async () => {
-      const r = await ordneSpielerZuAktion(team.id, team.name, wer.map((s) => s.id));
+      const zumSchnuppern = kannSchnuppern && schnuppern;
+      const r = await ordneSpielerZuAktion(team.id, team.name, wer.map((s) => s.id), zumSchnuppern);
       if (!r.ok) {
         setAbweisung(r.error);
         // Das Team ist inzwischen aufgelöst (oder das Recht weg): Die Seite
@@ -94,7 +113,9 @@ export function VereinSpielerListe({
       setZuordnen(null);
       setAuswahl([]);
       router.refresh();
-      melde(zugeordnetText(wer.map(spielerName), team.name, r.ersetzt));
+      melde(
+        zumSchnuppern ? schnuppernZugeordnetText(spielerName(wer[0]), team.name) : zugeordnetText(wer.map(spielerName), team.name, r.ersetzt),
+      );
     });
   }
 
@@ -165,12 +186,18 @@ export function VereinSpielerListe({
               <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.jahrgang}</span>
               <span className="hidden min-w-0 sm:block">
                 {s.teams.length > 0 ? (
-                  <TeamLozenges namen={s.teams.map((t) => t.name)} ids={s.teams.map((t) => t.id)} />
+                  <span className="inline-flex flex-wrap gap-1">
+                    <TeamLozenges namen={s.teams.map((t) => t.name)} ids={s.teams.map((t) => t.id)} />
+                    {s.schnuppern && <SchnupperLozenge stand={s.schnuppern} />}
+                  </span>
                 ) : (
                   <span className="type-body-medium text-on-surface-tief">ohne Team</span>
                 )}
               </span>
-              <TeamLozenges namen={s.teams.map((t) => t.name)} ids={s.teams.map((t) => t.id)} className="mt-1 sm:hidden" />
+              <span className="mt-1 flex flex-wrap gap-1 sm:hidden">
+                <TeamLozenges namen={s.teams.map((t) => t.name)} ids={s.teams.map((t) => t.id)} />
+                {s.schnuppern && <SchnupperLozenge stand={s.schnuppern} />}
+              </span>
               <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.js ?? "–"}</span>
               <span className="hidden sm:block">
                 <Lozenge appearance={s.linkBezogen ? "success" : "neutral"}>{s.linkBezogen ? "bezogen" : "offen"}</Lozenge>
@@ -238,6 +265,20 @@ export function VereinSpielerListe({
                   setAbweisung(null);
                 }}
               />
+            )}
+            {kannSchnuppern && teams.length > 0 && (
+              <div className="flex flex-col gap-1">
+                <Checkbox
+                  label={SCHNUPPERN_ZUORDNEN_LABEL}
+                  checked={schnuppern}
+                  disabled={pending}
+                  onChange={(e) => {
+                    setSchnuppern(e.target.checked);
+                    setAbweisung(null);
+                  }}
+                />
+                {schnuppern && <p className="type-body-small text-on-surface-mittel">{SCHNUPPERN_ZUORDNEN_HINWEIS}</p>}
+              </div>
             )}
           </div>
         )}
