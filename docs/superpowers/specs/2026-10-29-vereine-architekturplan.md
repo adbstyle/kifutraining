@@ -1243,6 +1243,8 @@ Alle Stories gehen gemeinsam in **einem** Release nach `main` (Epic #575). Ein k
 3. `deploy-staging.yml` aus `develop` auslösen: Alle Release-Migrationen laufen in Reihenfolge auf Prod-Daten, die Laufzeit steht im Log.
 4. `psql -f supabase/tests/prodweg/prodweg_pruefen.sql` (§6.5) gegen Staging, danach E2E auf staging.ki-fu.ch.
 
+*Stand 2026-11-15 (Generalprobe, Einzelheiten im Umsetzungsplan, Phase G):* Schritte 1–3 gelaufen (Reset 56 s, Sync aus `main` 5 min 4 s, `deploy-staging` ganze Kette ohne Fehler, 21 s). Schritt 4 abweichend: `prodweg_pruefen.sql` lief nicht gegen Staging (auf den synthetischen Altbestand zugeschnitten, lokal Exit 0), stattdessen Zählwerte auf Staging und Prod. E2E auf Staging ohne Release-Blocker. Offen: Rundgang des PO im echten Verein, Kalender-Abo in einer Kalender-App, KI-Assistent im echten Client, Firewall-Probe, Schritte mit zweitem Konto.
+
 ### 6.3 Backfill «FC Wyler» (Fundament-Migration, idempotent, nur ergänzend)
 
 ```sql
@@ -1980,8 +1982,8 @@ Story 0 (#576) und Story 10 (#586) entfallen. Alle Stories gehen gemeinsam in **
 | 18 | Eine Person landet durch gleichzeitige Aufnahmen bzw. Gründung in zwei Vereinen | Personensperre in beiden Triggern und in `verein_gruenden` (Story 11 AK 9) |
 | 19 | Bestandskonten ohne Team verlieren mit dem Release Teamanlage und erhalten Grenzen | PO ordnet sie vor dem Release zu (PO 10); Abfrage «Konten ohne Team mit Bestand über 50/30» (§6.4); ihr Bestand bleibt (L17) |
 | 20 | Anwesenheit Herausgenommener an begonnenen Terminen wird durch die neue Zuordnungsprüfung gesperrt | Prüfung bei begonnenen Terminen gegen den festgehaltenen Stand (L12), Testfall zu Story 3 AK 18 |
-| 21 | VALIDATE scheitert an Altzeilen | Waisen-Abfragen vorab (§6.4); scheitert die Datei dennoch: im Fenster per SQL bereinigen (PO-Freigabe, Zählung, Protokoll) oder Bereinigungs-Migration mit Zeitstempel zwischen `20261115130000` und `20261115140000`; eine spätere Migration kommt nie zum Zug (§6.1) |
-| 22 | Leistung von `sp_select`, `tsp_select` und `verein_spielerliste` | `meine_team_ids()` als InitPlan, Index `team_spieler_spieler_idx`, `explain analyze` mit 100 bzw. 1000 Zeilen auf Staging, Suche serverseitig |
+| 21 | VALIDATE scheitert an Altzeilen | Waisen-Abfragen vorab (§6.4); scheitert die Datei dennoch: im Fenster per SQL bereinigen (PO-Freigabe, Zählung, Protokoll) oder Bereinigungs-Migration mit Zeitstempel zwischen `20261115130000` und `20261115140000`; eine spätere Migration kommt nie zum Zug (§6.1). **Stand 2026-11-15:** Alle elf Waisen-Zähler auf Staging (altes Schema, Prod-Daten) und Prod 0; die Validierung lief auf Staging ohne Fehler. |
+| 22 | Leistung von `sp_select`, `tsp_select` und `verein_spielerliste` | `meine_team_ids()` als InitPlan, Index `team_spieler_spieler_idx`, `explain analyze` mit 100 bzw. 1000 Zeilen auf Staging, Suche serverseitig. **Stand 2026-11-15:** Gemessen auf Staging (Grenze 8 s): Vereinsliste mit 106 bzw. 1000 Spieler:innen 321–739 ms, Blättern 111–199 ms; `explain analyze` offen. Prod: `unaccent`/`pg_trgm` im Schema `public`, Collation `en_US.UTF-8`. |
 | 23 | Parallele Epics fassen dieselben Funktionen neu | Vereine zuerst; #482, #504/#505 und #514 warten (PO 12); Rückfall-Migration erst kurz vor dem Release erzeugen |
 | 24 | Zeitgleiche Termine einer Spieler:in in zwei Teams | bewusst ohne Prüfung (Epic OoS 12) |
 | 25 | Adresse der Plattform-Admin im öffentlichen Repo | Migration und Plan nutzen nur die Konto-ID (§6.3) |
