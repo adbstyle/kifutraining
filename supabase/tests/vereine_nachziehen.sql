@@ -130,8 +130,9 @@ end $$;
 rollback;
 
 -- Block 2: nur ein unbestätigtes Konto, dann ohne Konto → keine Verwaltung.
--- (Nicht der Default: In einer DB nach prodweg_bestand.sql gibt es das Konto
--- mit der Default-ID. Den Default prüft der CI-Prod-Weg.)
+-- (Nicht der Default: In einer lokalen DB, in die einmal der Bestand des
+-- früheren CI-Jobs «Prod-Weg» geladen wurde, gibt es das Konto mit der
+-- Default-ID. Den Default prüfte bis zum Release dieser Job.)
 begin;
 set local statement_timeout = '60s';
 set local session_replication_role = replica;
