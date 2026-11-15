@@ -11,6 +11,8 @@ Monorepo mit **zwei Teilprojekten**:
 
 **Zwei Altersstufen** (Epics #71 und #120): Jede Übung und jedes Training gehört zu genau einer Altersstufe — Kinderfussball (Alterskategorien G/F/E; Auffangen, Einleitung, Hauptteil, Ausklang) oder Juniorenfussball (D/C/B/A; Auffangen, Einstieg, Hauptteil, Abschluss — vier Teile mit zusammen sieben Blöcken). Die Altersstufe ist eine geführte Angabe (`altersstufe`-Spalte), wird bei Übungen beim Erfassen gewählt und per Umwandlung geändert, bei Trainings beim Anlegen gewählt und danach nie mehr. Fachliche Gating-Quelle ist `web/lib/altersstufe.ts` — jede Funktion nennt dort ihren SQL-Constraint-Zwilling (Migration `altersstufe_regeln`). Die Abbildungsregel (`docs/superpowers/specs/2026-08-15-junioren-abbildungsregel.md`) dient nur noch als Einordnungs-Vorschlag beim Umwandeln einer Übung; einen Schema-Wechsel von Trainings und eine Nacharbeit gibt es nicht mehr.
 
+**Vereine** (Epic #575): Jedes Team gehört genau einem Verein (`teams.verein_id`, unveränderlich); Spieler:innen gehören dem Verein und sind über `team_spieler` keinem, einem oder mehreren Teams zugeordnet, mit einem privaten Link für alle Teams. Vereinsmitglied ist abgeleitet (Team oder `verein_verwaltung`), höchstens ein Verein je Person; kein Rollenfeld, keine Plattform-Admin-Rolle. **Rollen nach Ort:** im Team (`/team/[id]`, RPC mit `p_team`, `ist_team_mitglied`) gilt nur Trainer:in, im Bereich „Verein" (`/verein/…`, `verein_*`-RPC mit `p_verein`, `ist_verein_verwaltung`) nur Verwaltung. Ein Konto ohne Verein (kein Team, keine Verwaltung) hat keine Teams und höchstens 50 eigene Übungen / 30 eigene Trainings. Fachlich: `docs/produkt/verein.md`; Architektur: `docs/superpowers/specs/2026-10-29-vereine-architekturplan.md`.
+
 ## Commands
 
 ### Übungs-Datenbank (Root)
@@ -35,10 +37,19 @@ Die `supabase`-CLI läuft aus `web/` heraus mit `--workdir ..` — die `supabase
 
 ## Architektur & Gotchas
 
-- **Lokale authed-Flows / E2E:** Auth ist E-Mail/Passwort, **kein geseedeter Test-User**. Bestätigten User via Admin-API anlegen (`$SR` = `SUPABASE_SERVICE_ROLE_KEY` aus `web/.env.local`): `curl -X POST http://127.0.0.1:54321/auth/v1/admin/users -H "apikey: $SR" -H "Authorization: Bearer $SR" -H "Content-Type: application/json" -d '{"email":"e2e@test.local","password":"Test1234!","email_confirm":true}'`
+- **Lokale authed-Flows / E2E:** Auth ist E-Mail/Passwort, **kein geseedeter Test-User**. Bestätigten User via Admin-API anlegen (`$SR` = `SUPABASE_SERVICE_ROLE_KEY` aus `web/.env.local`): `curl -X POST http://127.0.0.1:54321/auth/v1/admin/users -H "apikey: $SR" -H "Authorization: Bearer $SR" -H "Content-Type: application/json" -d '{"email":"e2e@test.local","password":"Test1234!","email_confirm":true}'`. Ein frisches Konto ist ein **Konto ohne Verein**: `/teams` zeigt den Einstieg, keine Teams, Grenze 50 Übungen / 30 Trainings. Für Team-Flows erst einen Verein gründen (Einstieg) und sich als Verwaltung in ein angelegtes Team aufnehmen, oder von einem Vereinskonto aufnehmen lassen; Testkonten mit vielen Übungen brauchen einen Verein.
 - **Eine Vokabular-Quelle:** `data/vokabular.yaml` ist kanonisch. `web/lib/vocab.ts` ist **auto-generiert** (`npm run gen:vocab`) — **nie von Hand editieren** (wird überschrieben). Schema-Enums hängen an derselben Quelle.
 - **Supabase ist server-only:** **keine `NEXT_PUBLIC_*`-Variablen.** DB-Credentials verlassen nie den Server. Client wird über `web/lib/supabase/server.ts` (request-gebunden) bzw. `admin.ts` (Seed) erzeugt — keinen Browser-Client einführen.
-- **RLS + RPC:** Zugriffskontrolle via Row Level Security; mehrstufige Mutationen laufen über `SECURITY DEFINER`-RPCs (`supabase/migrations/*_rpc_functions.sql`) mit Owner-Check als erster Anweisung.
+- **RLS + RPC:** Zugriffskontrolle via Row Level Security; mehrstufige Mutationen laufen über `SECURITY DEFINER`-RPCs (`supabase/migrations/*_rpc_functions.sql`) mit der Rechteprüfung (Eigentum, Teammitglied bzw. Vereinsverwaltung) als erster Anweisung.
+- **Vereine – Regeln für neuen Code** (AP §4, §5.6):
+  - Kein Prädikat und keine RPC verknüpft Mitglied **oder** Verwaltung; `ist_team_mitglied` ist nie vereinsbewusst, Team-Inhalte gibt es auch für die Verwaltung nur als Mitglied. Keine Policy mit Verwaltungsklausel; was die Verwaltung ausserhalb ihrer Teams sieht, liefern nur `verein_*`-RPCs. Gemeinsame Logik in `*_kern`-Funktionen ohne API-Recht (Ortsprüfung `supabase/tests/ortspruefung.sql`).
+  - Jede `verein_*`-RPC (dazu `verein_gruenden`, `delete_account`) ruft als **erste Anweisung** `nur_in_der_anwendung()`. Unter `web/lib/mcp/` ruft nichts eine `verein_*`-RPC (Wächter in `check:kern`).
+  - **Sperrordnung:** Verein → Suche → Person → Teams (aufsteigend nach UUID) → `spieler`-Zeile → Termin. Stufen auslassen ja, umkehren nie; löschende RPCs sperren vor dem DELETE.
+  - Grenzen (30 Teams/1000/100 Spieler:innen, 50/30 für Konten ohne Verein via `konto_grenze_vorher`) und Eindeutigkeit sitzen in Triggern; jede TS-Konstante nennt ihren SQL-Zwilling. Kein DEFINER-Weg legt zählende Zeilen (eigene Übung/eigenes Training, Besitzwechsel) für ein anderes Konto als `auth.uid()` an; **keine Upserts auf zählende Zeilen** (BEFORE-INSERT-Trigger feuert vor der Konfliktprüfung).
+  - Neue Funktionen ohne API-Zweck: `revoke all … from public, anon, authenticated`.
+  - psql-Tests (`supabase/tests/`) setzen nach `pg_temp.als(..)` Rolle **und** Claims zurück (`pg_temp.zurueck()`).
+  - `probe_*` (intern) = Schnuppern (aussen); „Probe" in Oberflächen- und KI-Texten fängt ein Wächter. Vereinsnamen stehen ohne Artikel nach „Verein" in « » („im Verein «${name}»", nie „im ${verein}"; Wächter).
+  - Bis zum Nachlauf N1: `spieler.team_id`/`probe_seit` sind tot (kein Leserecht); neue Spalten nie als `NOT NULL`/`CHECK`, solange der Sync Prod-Zeilen ohne sie lädt.
 - **Styleguide-first UI:** Vor neuen UI-Komponenten am Styleguide/Kit (`web/app/(app)/styleguide`, `web/components/ui`) orientieren; Neues begründen und im Styleguide ergänzen.
 - **Bilder** kommen aus Supabase Storage (öffentliche URLs); erlaubte Hosts stehen in `web/next.config.ts`. Trainer-Uploads werden **client-seitig** verkleinert (`web/lib/image-compress.ts`: browser-image-compression + heic-to → WebP ≤2000px) — keine serverseitige Bildverarbeitung einführen. Bild-Constraints sind Single Source in `web/lib/image.ts` (Client + Server); die Server Action validiert die gespeicherte Datei als Trust-Boundary (`storedImageError`).
 - **Migrationen vs. Prod-Daten:** CI prüft Migrationen gegen eine **leere** Wegwerf-DB, Prod hat Daten. Eine Migration, die eine Invariante auf einer bestehenden Tabelle verschärft (neuer `NOT NULL`/`CHECK`), muss `NOT VALID` (+ spätere `VALIDATE`-Migration) nutzen oder vorher backfillen — sonst bricht `supabase db push` an Altzeilen.
@@ -72,6 +83,6 @@ Die `supabase`-CLI läuft aus `web/` heraus mit `--workdir ..` — die `supabase
 | `supabase/migrations/` | DB-Schema + RPCs |
 | `web/lib/supabase/` | server-only Clients (`server.ts`, `admin.ts`, `middleware.ts`) |
 | `docs/superpowers/specs/` | Architektur-/Requirements-Specs (Aufträge) |
-| `docs/produkt/` | Produktdokumentation — was die Anwendung kann (Ist-Zustand) |
+| `docs/produkt/` | Produktdokumentation — was die Anwendung kann (Ist-Zustand); Vereine in `docs/produkt/verein.md` |
 | `docs/feedback-triage.md` | Produktdoku verdichtet als Kontext für die Einordnung von Fehlermeldungen und Feature-Wünschen |
-| `docs/releases/` | Regeln und Vorlage für Release-Texte |
+| `docs/releases/` | Regeln und Vorlage für Release-Texte; ab 1.48.0 auch die Texte selbst (`<version>-<thema>.md`) |
