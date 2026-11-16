@@ -132,7 +132,9 @@ export function TrainingTabelle({
               <SortierKopf {...kopf("name")} className="w-full">
                 {SORTIER_LABEL.name}
               </SortierKopf>
-              {mitUrheber && <SortierKopf className="whitespace-nowrap">Sichtbarkeit / Urheber</SortierKopf>}
+              {/* Der Kopf darf umbrechen: Sonst bestimmte er mit seiner Länge die
+                  Breite der Spalte statt ihr Inhalt (#636 AK 3). */}
+              {mitUrheber && <SortierKopf>Sichtbarkeit / Urheber</SortierKopf>}
               <SortierKopf {...kopf("uebungen")} ausrichtung="end" className="w-24">
                 {SORTIER_LABEL.uebungen}
               </SortierKopf>
