@@ -278,6 +278,10 @@ jobs:
           SUPABASE_STAGING_DB_URL: ${{ secrets.SUPABASE_STAGING_DB_URL }}
           STAGING_TESTKONTO_PASSWORT: ${{ secrets.STAGING_TESTKONTO_PASSWORT }}
         run: |
+          if ! test -f supabase/sync/testkonto.sql; then
+            echo "::error::Sync-Baustein supabase/sync/testkonto.sql fehlt im Checkout."
+            exit 1
+          fi
           if [ -z "$STAGING_TESTKONTO_PASSWORT" ]; then
             echo "::warning::Secret STAGING_TESTKONTO_PASSWORT fehlt: kein Testkonto auf Staging."
           fi

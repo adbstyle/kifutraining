@@ -14,12 +14,9 @@
 begin;
 set local statement_timeout = '60s';
 
-do $$
-begin
-  if exists (select 1 from auth.users where email = 'claude@tester.ch') then
-    raise exception 'Vorbedingung: claude@tester.ch besteht lokal schon';
-  end if;
-end $$;
+-- Ein lokal schon bestehendes claude@tester.ch weicht für diesen Test aus
+-- (rollback stellt es wieder her).
+update auth.users set email = 'claude-ausweich@tester.local' where email = 'claude@tester.ch';
 
 -- Attrappen, falls die Manual-Übungen fehlen (Werte gemäss ablauf_je_einordnung
 -- und fahrplan_vollstaendig).

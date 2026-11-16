@@ -60,7 +60,7 @@ begin
     is_sso_user, is_anonymous)
   values (
     '00000000-0000-0000-0000-000000000000', v_uid, 'authenticated', 'authenticated', v_email,
-    extensions.crypt(v_pw, extensions.gen_salt('bf')), now(),
+    extensions.crypt(v_pw, extensions.gen_salt('bf', 10)), now(),
     '{"provider":"email","providers":["email"]}', '{"email_verified":true}', now(), now(),
     '', '', '', '', '', '', '', '', false, false);
   insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
@@ -87,6 +87,7 @@ declare
   ex public.exercises;
   v_anzahl int;
   v_id uuid := gen_random_uuid();
+  v_diagramm jsonb;
 begin
   select count(*) into v_anzahl from public.exercises
    where source = 'manual' and visibility = 'public' and altersstufe = 'kinderfussball'
@@ -98,12 +99,13 @@ begin
    where source = 'manual' and visibility = 'public' and altersstufe = 'kinderfussball'
      and trainingsteil = p_teil and hauptteilkategorie is not distinct from p_hkat
    order by slug offset (p_n % v_anzahl) limit 1;
+  v_diagramm := pg_temp.diagramm_kopie(ex.diagramm);
   insert into public.training_exercises (
     id, training_id, trainingsteil, hauptteilkategorie, variante_id, position, duration_min, altersstufe,
     name, kategorien, erscheinungsform, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, anzahl_kinder,
     material, material_liste, material_basis, methodischer_fahrplan, uebungstyp, aufbau, varianten_text,
     bild_quelle, diagramm)
-  select v_id, p_training, p_teil, p_hkat, p_variante,
+  values (v_id, p_training, p_teil, p_hkat, p_variante,
          coalesce((select max(position) + 1 from public.training_exercises te
                     where te.training_id = p_training and te.trainingsteil = p_teil
                       and te.hauptteilkategorie is not distinct from p_hkat
@@ -113,8 +115,7 @@ begin
          ex.spielfeld_laenge_m, ex.spielfeld_breite_m, ex.anzahl_kinder, ex.material,
          ex.material_liste, ex.material_basis, ex.methodischer_fahrplan, ex.uebungstyp, ex.aufbau,
          ex.varianten_text,
-         case when d.diagramm is null then null else ex.bild_quelle end, d.diagramm
-    from (select pg_temp.diagramm_kopie(ex.diagramm) as diagramm) d;
+         case when v_diagramm is null then null else ex.bild_quelle end, v_diagramm);
   return v_id;
 end $$;
 
@@ -138,6 +139,7 @@ declare
   v_var_a uuid;
   v_var_b uuid;
   v_mapping jsonb;
+  v_antwort jsonb;
   v_termin uuid;
   v_sp record;
   v_tag date;
@@ -157,8 +159,12 @@ begin
 
   -- Verein und Team wie in der Anwendung (Einstieg → Verein gründen; Verwaltung
   -- legt ein Team an und nimmt sich auf).
-  v_verein := (public.verein_gruenden('Testverein Claude', true) ->> 'id')::uuid;
-  v_team := (public.verein_team_anlegen(v_verein, 'Claude Testteam F') ->> 'id')::uuid;
+  v_antwort := public.verein_gruenden('Testverein Claude', true);
+  v_verein := (v_antwort ->> 'id')::uuid;
+  if v_verein is null then raise exception 'testkonto: Verein nicht gegründet: %', v_antwort; end if;
+  v_antwort := public.verein_team_anlegen(v_verein, 'Claude Testteam F');
+  v_team := (v_antwort ->> 'id')::uuid;
+  if v_team is null then raise exception 'testkonto: Team nicht angelegt: %', v_antwort; end if;
   perform public.verein_team_beitreten(v_team);
 
   -- Erfundene Spieler:innen.
