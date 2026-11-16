@@ -293,3 +293,32 @@ jobs:
                 -v ON_ERROR_STOP=1 \
                 -v passwort="$STAGING_TESTKONTO_PASSWORT" \
                 --quiet
+
+      # Anmeldeprobe wie in der App (Passwort-Anmeldung bei Supabase Auth):
+      # beweist, dass Konto und Passwort zusammenpassen. Das Passwort geht
+      # über stdin an curl, die Antwort wird nie ausgegeben.
+      - name: Anmeldung des Testkontos prüfen
+        env:
+          SUPABASE_STAGING_URL: ${{ secrets.SUPABASE_STAGING_URL }}
+          SUPABASE_STAGING_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_STAGING_SERVICE_ROLE_KEY }}
+          STAGING_TESTKONTO_PASSWORT: ${{ secrets.STAGING_TESTKONTO_PASSWORT }}
+        run: |
+          if [ -z "$STAGING_TESTKONTO_PASSWORT" ]; then
+            echo "Kein Passwort-Secret, keine Anmeldeprobe."
+            exit 0
+          fi
+          code=$(jq -n --arg pw "$STAGING_TESTKONTO_PASSWORT" \
+                   '{email: "claude@tester.ch", password: $pw}' \
+                 | curl -sS -o antwort.json -w '%{http_code}' \
+                     -X POST "$SUPABASE_STAGING_URL/auth/v1/token?grant_type=password" \
+                     -H "apikey: $SUPABASE_STAGING_SERVICE_ROLE_KEY" \
+                     -H "Content-Type: application/json" \
+                     --data-binary @-)
+          ok=$(jq -r 'if (.access_token // "") != "" and .user.email == "claude@tester.ch" then "ja" else "nein" end' antwort.json 2>/dev/null || echo nein)
+          fehler=$(jq -r '.error_code // .error // empty' antwort.json 2>/dev/null || true)
+          rm -f antwort.json
+          if [ "$code" != "200" ] || [ "$ok" != "ja" ]; then
+            echo "::error::Anmeldung als claude@tester.ch scheitert (HTTP $code${fehler:+, $fehler})."
+            exit 1
+          fi
+          echo "Anmeldung als claude@tester.ch klappt (HTTP 200, Sitzung erhalten)."
