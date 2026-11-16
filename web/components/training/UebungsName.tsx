@@ -10,7 +10,7 @@ import { cn } from "@/lib/cn";
  * Breite erst messen müsste.
  *
  * Breit ist die ganze Zeile die Fläche des Knopfs und hellt beim Überfahren
- * auf wie eine Trainingskachel der Übersicht — die Zeile trägt dafür `state`
+ * auf wie eine Zeile der Trainingsübersicht — die Zeile trägt dafür `state`
  * und ist `relative`; was in ihr selbst bedienbar ist, liegt mit `relative`
  * darüber.
  *
@@ -36,7 +36,7 @@ export function UebungsName({
         title={offen ? "Übung schliessen" : "Übung öffnen"}
         className={cn(
           // Die Fläche des Knopfs reicht über die ganze Zeile (`before:`), wie
-          // der Link einer Trainingskachel über die Kachel: Die Zeile öffnet,
+          // der Name einer Zeile der Trainingsübersicht: Die Zeile öffnet,
           // wo sie keinen eigenen Knopf trägt. Aufgehellt wird sie von der
           // Zeile selbst (`state`), nicht vom Namen.
           "focus-ring hidden min-w-0 cursor-pointer truncate rounded-flaeche text-left type-body-large xl:block",

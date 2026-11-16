@@ -6,6 +6,7 @@ import type { Fahrplan } from "@/lib/queries/exercises";
 import type { KategorieSlug, TrainingsteilSlug } from "@/lib/vocab";
 import { JUNIOREN_BLOCK_SLUGS, type Einordnung } from "@/lib/junioren";
 import type { Altersstufe } from "@/lib/altersstufe";
+import { sortiereTrainings, type TrainingSortierung } from "@/lib/training-sortierung";
 import { FASSUNG_INHALT_FELDER, FASSUNG_ZUORDNUNG_FELDER } from "@/lib/fassung";
 import type { Variante } from "@/lib/varianten";
 import { kurzeZeit, mapTrainer } from "@/lib/queries/termine-fuer";
@@ -441,6 +442,11 @@ export type TrainingPoolFilter = TrainingListFilters & {
   nurOeffentlich?: boolean;
   /** Höchstens so viele Zeilen; ohne Angabe alle (die Oberfläche). */
   limit?: number;
+  /** Eine feste Ordnung (die Übersicht, #629): gilt auch mit Suchbegriff —
+   *  die Suche grenzt dann nur ein (AK 7). Ohne Angabe (der KI-Assistent,
+   *  Out of Scope 5) wie bisher: ohne Suche nach Aktualität, mit Suche nach
+   *  Namens-Relevanz. */
+  sortierung?: TrainingSortierung;
 };
 
 /** Trainings-Übersicht — der Einstieg, genau wie der Übungsbestand aufgebaut.
@@ -456,8 +462,9 @@ export type TrainingPoolFilter = TrainingListFilters & {
  *  werden — die RLS lässt sie für Mitglieder durch, und ohne
  *  Sichtbarkeitsfilter fiele dieser Ausschluss sonst weg.
  *
- *  Ohne Suche nach Aktualität; mit Suche nach Namens-Relevanz (kürzerer Name
- *  ⇒ näher am Begriff) sortiert. */
+ *  Mit `sortierung` in dieser Ordnung (die Übersicht). Sonst ohne Suche nach
+ *  Aktualität, mit Suche nach Namens-Relevanz (kürzerer Name ⇒ näher am
+ *  Begriff) — so findet der KI-Assistent, was am ehesten gemeint ist. */
 export async function getTrainingPoolFuer(
   supabase: SupabaseClient,
   userId: string | null,
@@ -475,23 +482,27 @@ export async function getTrainingPoolFuer(
   if (f.stufen?.length) query = query.overlaps("stufen", f.stufen);
 
   const hasQuery = !!f.q?.trim();
-  if (hasQuery) {
-    query = query.ilike("search_text", likePattern(f.q!));
-  } else {
-    query = query.order("updated_at", { ascending: false }).order("id");
-    // Ohne Suche sortiert die Datenbank — dann darf sie auch begrenzen. Mit
-    // Suche sortiert erst JS nach Relevanz, die Grenze greift danach.
+  if (hasQuery) query = query.ilike("search_text", likePattern(f.q!));
+  // Die Datenbank ordnet nach Aktualität, auch wenn danach JS sortiert: Greift
+  // `max_rows` von PostgREST, bleiben so die neuesten.
+  if (!hasQuery || f.sortierung) query = query.order("updated_at", { ascending: false }).order("id");
+  if (!hasQuery && !f.sortierung) {
+    // Nur wenn die Datenbank die endgültige Ordnung liefert, darf sie auch
+    // begrenzen. Sonst sortiert erst JS (Relevanz oder feste Ordnung), die
+    // Grenze greift danach.
     if (f.limit) query = query.limit(f.limit);
   }
 
   const { data, error } = await query;
   if (error) throw error;
-  const rows = (data ?? []).map((r) =>
+  let rows = (data ?? []).map((r) =>
     mapListRow(r as unknown as RawListTraining, userId ?? undefined),
   );
 
-  // Relevanz-Sortierung bei aktiver Suche: kürzerer Treffer zuerst, dann Name.
-  if (hasQuery) {
+  if (f.sortierung) {
+    rows = sortiereTrainings(rows, f.sortierung);
+  } else if (hasQuery) {
+    // Relevanz bei aktiver Suche: kürzerer Treffer zuerst, dann Name.
     rows.sort(
       (a, b) =>
         a.name.length - b.name.length || a.name.localeCompare(b.name, "de"),

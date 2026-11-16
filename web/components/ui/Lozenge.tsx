@@ -182,7 +182,7 @@ export function HerkunftLozenge({
 /* Sichtbarkeit eines persönlichen Trainings — dieselbe Zuordnung wie bei der
    Übung, nur heisst die öffentliche Fassung hier «Öffentlich»: Ein Training
    stammt nie aus dem Manual, darum gibt es nichts, wovon «Community» es
-   abgrenzen müsste. Für Trainingskarte, Eigenschaften und Trainingskopf. */
+   abgrenzen müsste. Für Trainingstabelle, Detail, Eigenschaften und Trainingskopf. */
 export function SichtbarkeitLozenge({ oeffentlich }: { oeffentlich: boolean }) {
   return oeffentlich ? (
     <HerkunftArtLozenge art="oeffentlich" label="Öffentlich" />

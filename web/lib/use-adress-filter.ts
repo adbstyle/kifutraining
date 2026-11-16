@@ -19,11 +19,15 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
      const filter = useAdressFilter();
      <AuswahlFilter value={kat} onChange={(v) => filter.setzeListe("kat", v)} />
      <FilterChip selected={mine} onClick={() => filter.schalte("mine", !mine)} />
-     <FilterSuche initial={q} bereinige={trimme} onCommit={(v) => filter.setzeWert("q", v)} /> */
+     <FilterSuche initial={q} bereinige={trimme} onCommit={(v) => filter.setzeWert("q", v)} />
+
+   `behalte` nennt Parameter, die keine Filter sind und darum auch das
+   Zurücksetzen überstehen — die Sortierung der Trainingsübersicht (#629 PC 2).
+   Die übrigen Änderungen lassen fremde Parameter ohnehin stehen. */
 /** Die Bereinigung eines getippten Werts, wenn die Seite keine eigene hat. */
 export const trimme = (wert: string) => wert.trim();
 
-export function useAdressFilter() {
+export function useAdressFilter({ behalte = [] }: { behalte?: readonly string[] } = {}) {
   const router = useRouter();
   const pathname = usePathname();
   // Koppelt die Leiste an jeden Adresswechsel (auch Browser-Zurück), damit
@@ -62,7 +66,12 @@ export function useAdressFilter() {
         if (an) p.set(key, "1");
         else p.delete(key);
       }),
-    /** Alle Filter weg — die nackte Seite. */
-    zuruecksetzen: () => router.push(pathname, { scroll: false }),
+    /** Alle Filter weg — die nackte Seite, bis auf die `behalte`-Parameter. */
+    zuruecksetzen: () =>
+      schreiben((p) => {
+        for (const key of Array.from(p.keys())) {
+          if (!behalte.includes(key)) p.delete(key);
+        }
+      }),
   };
 }
