@@ -319,14 +319,17 @@ export async function deleteTraining(trainingId: string, zurueck?: unknown): Pro
     // Zurück in die Ansicht, aus der das Training verschwunden ist — dort
     // erwartet der Trainer den Beleg, dass es weg ist (Story 17): mit Termin
     // der Trainingsplan (ein Termin-Training steht nur dort), sonst der Bestand.
-    redirect(r.wert.terminBleibt ? `/team/${r.wert.teamId}` : `/team/${r.wert.teamId}/trainings`);
+    // Aus dem Detail des Bestands zurück in denselben Bestand, mit Suche,
+    // Filter und Sortierung (#637 PC 5).
+    const bestand = `/team/${r.wert.teamId}/trainings`;
+    redirect(r.wert.terminBleibt ? `/team/${r.wert.teamId}` : (rueckwegNachLoeschen(zurueck, bestand) ?? bestand));
   }
   revalidatePath("/trainings");
   // Aus dem Detail der Übersicht zurück in dieselbe Übersicht — Suche, Filter
   // und Sortierung bleiben, das Detail schliesst (#630 PC 4). Die Angabe kommt
   // vom Client: nur eine Adresse der Übersicht zählt. Gebunden als zweites
   // Argument; ohne sie steht an dieser Stelle das FormData des Formulars.
-  redirect(rueckwegNachLoeschen(zurueck) ?? "/trainings?mine=1&deleted=1");
+  redirect(rueckwegNachLoeschen(zurueck, "/trainings") ?? "/trainings?mine=1&deleted=1");
 }
 
 // ── Story #11: Dauer je Zuordnung erfassen/ändern/entfernen ──────────────────

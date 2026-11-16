@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { kopiereTrainingNach, type KopieNach } from "@/lib/kern/kopie";
-import { loescheTraining } from "@/lib/kern/loeschen";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { legeTrainingAn } from "@/lib/kern/training";
 import { NICHT_ANGEMELDET, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
@@ -57,32 +56,6 @@ export async function uebernimmZuMir(teamTrainingId: string): Promise<TeamTraini
   const r = await kopie({ quelleId: teamTrainingId });
   if (r.ok) revalidatePath("/trainings");
   return r;
-}
-
-/** Ein Training aus dem Team-Bestand entfernen (AK 7). Ein zugeordneter Termin
- *  bleibt dabei ohne Training im Kalender; der Dialog nennt ihn vorher.
- *  Persönliche Kopien, die jemand übernommen hat, bleiben unberührt. */
-export async function entferneTeamTraining(
-  teamTrainingId: string,
-): Promise<{ ok: boolean; error?: string }> {
-  const a = await angemeldet();
-  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-
-  const r = await loescheTraining(a.supabase, a.userId, { trainingId: teamTrainingId, nurTeam: true });
-  // Die bisherigen Texte des Team-Bestands: unsichtbar oder persönlich heisst
-  // hier «Team-Training nicht gefunden.», ein abgewiesenes Löschen
-  // «Entfernen fehlgeschlagen.».
-  if (!r.ok)
-    return {
-      ok: false,
-      error:
-        r.art === "nicht_gefunden" || r.art === "keine_rechte"
-          ? "Team-Training nicht gefunden."
-          : "Entfernen fehlgeschlagen.",
-    };
-
-  revalidiereTeam(r.wert.teamId!);
-  return { ok: true };
 }
 
 /** Ein leeres Training direkt im Team anlegen (AK 5) — analog zum

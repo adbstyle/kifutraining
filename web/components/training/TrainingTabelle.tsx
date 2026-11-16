@@ -13,7 +13,6 @@ import {
   type SortierSpalte,
   type TrainingSortierung,
 } from "@/lib/training-sortierung";
-import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { ANSICHT_PARAM, auswahlHref } from "@/lib/training-auswahl";
 import { cn } from "@/lib/cn";
 import { TabellenAuswahl } from "./TabellenAuswahl";
@@ -23,8 +22,14 @@ import { TabellenAuswahl } from "./TabellenAuswahl";
    nur, wonach und in welcher Richtung (AK 6), und bietet die nächste Wahl als
    Link an.
 
-   Breit (ab md) eine echte Tabelle mit sechs Spalten; die Köpfe sortieren
-   (`SortierKopf`). Schmal bleibt nur die Namensspalte, die übrigen Angaben
+   Breit (ab md) eine echte Tabelle; die Köpfe sortieren (`SortierKopf`).
+   Altersstufe und Alterskategorien stehen nicht in der Zeile (#636, hebt
+   #629 AK 1/3 auf) — sie bleiben dem Detail. Der Name nimmt allen Platz, den
+   die übrigen Spalten nicht brauchen (#636 AK 3): Seine Spalte ist `w-full`,
+   «Sichtbarkeit / Urheber» nur so breit wie ihr Inhalt, ein langer Urheber
+   gekürzt und beim Überfahren ganz zu lesen (AK 4). Dieselbe Tabelle trägt
+   den Bestand eines Teams (#637), dort ohne diese Spalte (`mitUrheber`):
+   Team-Trainings gehören dem Team, nicht einer Person. Schmal bleibt nur die Namensspalte, die übrigen Angaben
    stehen als zweite Zeile darunter, und sortiert wird über den Chip über der
    Tabelle (`TrainingSortierWahl`) — die Seite scrollt nie seitwärts. */
 
@@ -39,19 +44,19 @@ function zeilenZiel(training: TrainingListRow, pfad: string, parameter: Record<s
   return auswahlHref(pfad, parameter, { training: training.id, ansicht });
 }
 
-/** Die Alterskategorien als Satz, z. B. «Kategorien F, E»; leer, solange ein
- *  Entwurf keine trägt. */
-function kategorienText(training: TrainingListRow): string | null {
-  if (training.stufen.length === 0) return null;
-  return `${training.stufen.length === 1 ? "Kategorie" : "Kategorien"} ${training.stufen.join(", ")}`;
-}
-
 /** Am eigenen Training der Stand, an einem fremden der Urheber — leer, wenn
- *  es keinen mehr führt (AK 2, Story 15). Schmal steht «von» davor. */
+ *  es keinen mehr führt (AK 2, Story 15). Schmal steht «von» davor. Der
+ *  Stand bleibt in jeder Breite ganz (#636 AK 3); ein langer Urheber wird
+ *  gekürzt und steht ganz im Hinweis beim Überfahren (AK 4). */
 function standOderUrheber(training: TrainingListRow, schmal: boolean) {
   if (training.istEigen) return <SichtbarkeitLozenge oeffentlich={training.visibility === "public"} />;
   if (!training.urheber) return null;
-  return schmal ? <span>von {training.urheber}</span> : training.urheber;
+  if (schmal) return <span>von {training.urheber}</span>;
+  return (
+    <span title={training.urheber} className="relative z-10 block max-w-40 truncate">
+      {training.urheber}
+    </span>
+  );
 }
 
 export function TrainingTabelle({
@@ -60,6 +65,7 @@ export function TrainingTabelle({
   pfad,
   parameter,
   ausgewaehlt,
+  mitUrheber = true,
 }: {
   trainings: TrainingListRow[];
   sortierung: TrainingSortierung;
@@ -70,6 +76,8 @@ export function TrainingTabelle({
   parameter: Record<string, string>;
   /** Das ausgewählte Training, dessen Detail daneben steht (#630). */
   ausgewaehlt?: string;
+  /** Die Spalte «Sichtbarkeit / Urheber» — im Team-Bestand ohne (#637). */
+  mitUrheber?: boolean;
 }) {
   const href = (s: TrainingSortierung) => sortierHref(pfad, parameter, s);
   const kopf = (spalte: SortierSpalte) => ({
@@ -121,11 +129,10 @@ export function TrainingTabelle({
           </caption>
           <thead className="hidden md:table-header-group">
             <tr className="border-b border-linie">
-              <SortierKopf {...kopf("stufe")} className="w-40">
-                {SORTIER_LABEL.stufe}
+              <SortierKopf {...kopf("name")} className="w-full">
+                {SORTIER_LABEL.name}
               </SortierKopf>
-              <SortierKopf {...kopf("name")}>{SORTIER_LABEL.name}</SortierKopf>
-              <SortierKopf className="w-44">Sichtbarkeit / Urheber</SortierKopf>
+              {mitUrheber && <SortierKopf className="whitespace-nowrap">Sichtbarkeit / Urheber</SortierKopf>}
               <SortierKopf {...kopf("uebungen")} ausrichtung="end" className="w-24">
                 {SORTIER_LABEL.uebungen}
               </SortierKopf>
@@ -141,8 +148,6 @@ export function TrainingTabelle({
             {trainings.map((training) => {
               const ziel = zeilenZiel(training, pfad, parameter);
               const gewaehlt = training.id === ausgewaehlt;
-              const altersstufe = altersstufeLabels[training.altersstufe];
-              const kategorien = kategorienText(training);
               const dauer = training.hasAnyDuration ? formatDuration(training.totalDuration) : null;
               const geaendert = formatDate(training.updatedAt);
               const zelle = "hidden px-2 py-2 align-middle type-body-medium md:table-cell";
@@ -155,19 +160,7 @@ export function TrainingTabelle({
                 // Zeile in Leiste und Verzeichnis; ihr Link trägt
                 // `aria-current`.
                 <tr key={training.id} className={cn("state", gewaehlt && "betont")}>
-                  {/* Altersstufe als Text; die Alterskategorien erkennbar, ohne
-                      die Zeile zu belegen (#629 AK 3): beim Überfahren und für
-                      die Vorlesehilfe. */}
-                  <td className={`${zelle} pl-4 text-on-surface`}>
-                    {/* `relative z-10`: über der Fläche des Links, sonst
-                        erreichte das Überfahren den Hinweis nie. */}
-                    <span title={kategorien ?? undefined} className="relative z-10">
-                      {altersstufe}
-                      {kategorien && <span className="sr-only">, {kategorien}</span>}
-                    </span>
-                  </td>
-
-                  <th scope="row" className="py-2 pl-4 pr-4 text-left align-middle font-normal md:pl-2 md:pr-2">
+                  <th scope="row" className="py-2 pl-4 pr-4 text-left align-middle font-normal md:pr-2">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <Link
                         href={ziel}
@@ -187,14 +180,9 @@ export function TrainingTabelle({
                         </SecondaryLozenge>
                       )}
                     </div>
-                    {/* Schmal die übrigen Spalten als zweite Zeile. Ohne
-                        Überfahren sind die Kategorien hier sichtbar. */}
+                    {/* Schmal die übrigen Spalten als zweite Zeile. */}
                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 type-body-small text-on-surface-mittel md:hidden">
-                      <span>
-                        {altersstufe}
-                        {kategorien && ` · ${training.stufen.join(", ")}`}
-                      </span>
-                      {standOderUrheber(training, true)}
+                      {mitUrheber && standOderUrheber(training, true)}
                       <span>
                         {training.exerciseCount} {training.exerciseCount === 1 ? "Übung" : "Übungen"}
                       </span>
@@ -203,7 +191,13 @@ export function TrainingTabelle({
                     </div>
                   </th>
 
-                  <td className={`${zelle} text-on-surface-mittel`}>{standOderUrheber(training, false)}</td>
+                  {mitUrheber && (
+                    // `relative z-10` am Urheber: über der Fläche des Links,
+                    // sonst erreichte das Überfahren den Hinweis nie.
+                    <td className={`${zelle} whitespace-nowrap text-on-surface-mittel`}>
+                      {standOderUrheber(training, false)}
+                    </td>
+                  )}
 
                   <td className={`${zelle} text-right tabular-nums text-on-surface`}>
                     {training.exerciseCount}

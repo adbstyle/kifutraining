@@ -1,7 +1,8 @@
 import { istUuid } from "@/lib/kennung";
 import { VARIANTE_PARAM } from "@/lib/varianten";
 
-/* Das ausgewählte Training der Übersicht (#630). Die Auswahl steht in der
+/* Das ausgewählte Training der Übersicht (#630) und des Team-Bestands
+   (#637). Die Auswahl steht in der
    Adresse wie Suche, Filter und Sortierung (`?training=<id>`, dazu die
    angezeigte Variante `variante=<id>` und die offene Ansicht
    `ansicht=eigenschaften`), damit Neuladen und ein geteilter Link dasselbe
@@ -55,21 +56,33 @@ export function auswahlHref(
   return qs ? `${pfad}?${qs}` : pfad;
 }
 
-/** Wohin das Löschen aus dem Detail zurückführt (#630 PC 4): dieselbe
- *  Übersicht mit Suche, Filter und Sortierung, ohne Auswahl, mit der
- *  einmaligen Meldung. `null`, wenn die Angabe nicht auf die Übersicht zeigt —
- *  sie kommt vom Client und darf nirgends sonst hinführen. */
-export function rueckwegNachLoeschen(angabe: unknown): string | null {
-  if (typeof angabe !== "string" || !angabe.startsWith("/trainings")) return null;
+/** Die Adressparameter als einfache Werte, ohne die genannten — was Sortier-,
+ *  Auswahl- und Schliessen-Links mitnehmen. Mehrfachwerte zählen nicht. */
+export function adressParameter(
+  sp: Record<string, string | string[] | undefined>,
+  ohne: readonly string[] = [],
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === "string" && !ohne.includes(e[0])),
+  );
+}
+
+/** Wohin das Löschen aus dem Detail zurückführt (#630 PC 4, #637 PC 5):
+ *  dieselbe Übersicht — die Trainingsübersicht oder der Bestand eines Teams,
+ *  `pfad` — mit Suche, Filter und Sortierung, ohne Auswahl, mit der
+ *  einmaligen Meldung. `null`, wenn die Angabe nicht auf genau diese Seite
+ *  zeigt — sie kommt vom Client und darf nirgends sonst hinführen. */
+export function rueckwegNachLoeschen(angabe: unknown, pfad: string): string | null {
+  if (typeof angabe !== "string" || !angabe.startsWith(pfad)) return null;
   let url: URL;
   try {
     url = new URL(angabe, "http://intern.invalid");
   } catch {
     return null;
   }
-  if (url.origin !== "http://intern.invalid" || url.pathname !== "/trainings") return null;
-  const ohneAuswahl = auswahlHref("/trainings", Object.fromEntries(url.searchParams), null);
+  if (url.origin !== "http://intern.invalid" || url.pathname !== pfad) return null;
+  const ohneAuswahl = auswahlHref(pfad, Object.fromEntries(url.searchParams), null);
   const p = new URLSearchParams(ohneAuswahl.split("?")[1] ?? "");
   p.set("deleted", "1");
-  return `/trainings?${p.toString()}`;
+  return `${pfad}?${p.toString()}`;
 }

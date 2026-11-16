@@ -13,7 +13,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { eigeneBildPfade, entferneStorageObjekte, type BildKandidat } from "@/lib/fassung";
 import { ladeTrainingZumBearbeiten } from "@/lib/kern/zugriff";
 import {
-  NICHT_GEFUNDEN,
   ausDbFehler,
   fehlschlag,
   ok,
@@ -70,14 +69,11 @@ export type TrainingGeloescht = {
  *  Es fragt nicht nach (#197 OoS 2); was mitging, steht im Ergebnis und wird
  *  VOR dem Löschen gelesen — danach sind die Zeilen weg. Kopien, die andere
  *  übernommen haben, sind eigene Trainings und bleiben (PC 7); wiederherstellen
- *  lässt sich nichts (OoS 3).
- *
- *  `nurTeam` beschränkt auf Team-Trainings (der Team-Bestand der Oberfläche):
- *  ein persönliches Training heisst dort «nicht gefunden». */
+ *  lässt sich nichts (OoS 3). */
 export async function loescheTraining(
   supabase: SupabaseClient,
   userId: string,
-  e: { trainingId: string; nurTeam?: boolean },
+  e: { trainingId: string },
 ): Promise<KernErgebnis<TrainingGeloescht>> {
   const geladen = await ladeTrainingZumBearbeiten<{ name: string }>(
     supabase,
@@ -87,8 +83,6 @@ export async function loescheTraining(
   );
   if (!geladen.ok) return geladen;
   const { zeile } = geladen.wert;
-  if (e.nurTeam && !zeile.team_id)
-    return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.training, { feld: "training_id" });
 
   const [fassungen, termin] = await Promise.all([
     supabase
