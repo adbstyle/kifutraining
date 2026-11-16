@@ -159,7 +159,7 @@ export function TrainingTabelle({
                     </span>
                   </td>
 
-                  <td className="py-2 pl-4 pr-4 align-middle md:pl-2 md:pr-2">
+                  <th scope="row" className="py-2 pl-4 pr-4 text-left align-middle font-normal md:pl-2 md:pr-2">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <Link
                         href={ziel}
@@ -197,7 +197,7 @@ export function TrainingTabelle({
                       <span>{dauer ?? "Keine Dauer"}</span>
                       <span>Geändert {geaendert}</span>
                     </div>
-                  </td>
+                  </th>
 
                   {/* Am eigenen Training der Stand, an einem fremden der
                       Urheber — leer, wenn es keinen mehr führt (AK 2,

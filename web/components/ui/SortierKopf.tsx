@@ -68,7 +68,7 @@ export function SortierKopf({
             size={14}
             strokeWidth={2}
             aria-hidden
-            className={cn("shrink-0", richtung ? "text-primary" : "opacity-60")}
+            className={cn("shrink-0", richtung && "text-primary")}
           />
         </Link>
       ) : (

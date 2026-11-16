@@ -483,8 +483,10 @@ export async function getTrainingPoolFuer(
 
   const hasQuery = !!f.q?.trim();
   if (hasQuery) query = query.ilike("search_text", likePattern(f.q!));
+  // Die Datenbank ordnet nach Aktualität, auch wenn danach JS sortiert: Greift
+  // `max_rows` von PostgREST, bleiben so die neuesten.
+  if (!hasQuery || f.sortierung) query = query.order("updated_at", { ascending: false }).order("id");
   if (!hasQuery && !f.sortierung) {
-    query = query.order("updated_at", { ascending: false }).order("id");
     // Nur wenn die Datenbank die endgültige Ordnung liefert, darf sie auch
     // begrenzen. Sonst sortiert erst JS (Relevanz oder feste Ordnung), die
     // Grenze greift danach.

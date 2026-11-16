@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
-import { Clock } from "lucide-react";
-import { Lozenge, KategorieLozenge } from "@/components/ui";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
-import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { Flash } from "@/components/Flash";
 import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
@@ -12,6 +9,7 @@ import { KontoGrenzenLage } from "@/components/konto/BestandStufe";
 import { TrainingAktionen } from "@/components/training/TrainingAktionen";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import { TrainingTeile } from "@/components/training/TrainingTeile";
+import { TrainingKopfAngaben } from "@/components/training/TrainingKopfAngaben";
 import { TrainingEigenschaften } from "@/components/training/TrainingEigenschaften";
 import {
   AnsichtFlaeche,
@@ -169,30 +167,17 @@ export default async function TrainingViewPage({
                   von {training.urheber}
                 </p>
               )}
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                {/* Die Altersstufe benennen, nicht nur andeuten (Story 5 AK 3):
-                    Dieselbe neutrale Lozenge wie im Editor und auf der Trainingskarte.
-                    Für ein fremdes öffentliches Training ist diese Seite die einzige
-                    Sicht — dort stünde die Angabe sonst nirgends. */}
-                <Lozenge>{altersstufeLabels[training.altersstufe]}</Lozenge>
-                {training.stufen.map((k) => (
-                  <KategorieLozenge key={k} k={k} />
-                ))}
-                <span className="inline-flex items-center gap-1.5 type-label-large text-on-surface-mittel">
-                  <Clock size={16} strokeWidth={2} aria-hidden />
-                  {dauerText}
-                </span>
-              </div>
-
-              {/* Das Ziel sehen auch Betrachter eines veröffentlichten Trainings:
-                  feldweises Verbergen kennt das Zugriffsmodell nicht (Story 10
-                  PC 1). Ohne Ziel bleibt der Bereich weg (PC 2). */}
-              {training.ziel && (
-                <p className="mt-3 type-body-medium text-on-surface">
-                  <span className="type-label-small text-on-surface-mittel">Ziel: </span>
-                  {training.ziel}
-                </p>
-              )}
+              {/* Die Altersstufe benennen, nicht nur andeuten (Story 5 AK 3): Für
+                  ein fremdes öffentliches Training ist diese Seite die einzige
+                  Sicht — dort stünde die Angabe sonst nirgends. */}
+              <TrainingKopfAngaben
+                className="mt-3"
+                zielClassName="mt-3"
+                altersstufe={training.altersstufe}
+                stufen={training.stufen}
+                dauerText={dauerText}
+                ziel={training.ziel}
+              />
             </div>
           </header>
 

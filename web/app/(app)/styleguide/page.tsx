@@ -3687,7 +3687,7 @@ export default async function Styleguide() {
             Kopf ist ein Link, der die Sortierung in die Adresse schreibt: Der
             Server sortiert, die Wahl übersteht Neuladen und geteilte Links. Die
             aktive Spalte trägt den Pfeil in Primary (aufwärts = aufsteigend), die
-            übrigen sortierbaren den Doppelpfeil gedämpft; die Vorlesehilfe hört
+            übrigen sortierbaren den Doppelpfeil gedämpft; die Vorlesehilfe hört{" "}
             <code>aria-sort</code>. Ein Klick auf die aktive Spalte kehrt die
             Richtung um, eine neue beginnt bei Text mit A-Z, bei Zahlen und Datum
             mit dem Grössten. Ohne <code>href</code> ist ein Kopf fest (hier
@@ -3695,8 +3695,9 @@ export default async function Styleguide() {
             einziger Link ist der Name, dessen Fläche über die Zeile reicht. Er
             wählt die Zeile aus, ihr Detail steht daneben (<Siehe id="detail-kopf" />):
             Die ausgewählte Zeile ist betont (<code>betont</code>), ihr Link
-            trägt <code>aria-current</code>. Schmal fallen die Köpfe weg, die Angaben stehen unter dem Namen, und
-            sortiert wird über einen <code>ChipMenu</code> über der Tabelle.
+            trägt <code>aria-current</code>. Schmal fallen die Köpfe weg, die Angaben
+            stehen unter dem Namen, und sortiert wird über einen{" "}
+            <code>ChipMenu</code> über der Tabelle.
           </p>
           <div className="overflow-hidden rounded-flaeche bg-elev-01">
             <table className="w-full border-collapse">

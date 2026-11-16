@@ -14,7 +14,7 @@ import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { ListeMitDetail } from "@/components/layout/ListeMitDetail";
 import { TrainingDetailSpalte } from "@/components/training/TrainingDetailSpalte";
 import { ladeTrainingAnsicht } from "@/lib/queries/training-ansicht";
-import { ANSICHT_PARAM, AUSWAHL_PARAM, auswahlHref, leseAuswahl } from "@/lib/training-auswahl";
+import { ANSICHT_PARAM, AUSWAHL_PARAM, auswahlHref, leseAuswahl, type DetailAnsicht } from "@/lib/training-auswahl";
 import { VARIANTE_PARAM } from "@/lib/varianten";
 
 export const dynamic = "force-dynamic";
@@ -74,7 +74,7 @@ export default async function TrainingsPage({
   const parameter = Object.fromEntries(
     Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === "string" && !ohne.includes(e[0])),
   );
-  const detailHref = (wahl: { variante?: string; ansicht: "uebungen" | "eigenschaften" } | null) =>
+  const detailHref = (wahl: { variante?: string; ansicht: DetailAnsicht } | null) =>
     auswahlHref("/trainings", parameter, wahl && detail ? { training: detail.training.id, ...wahl } : null);
   // Nur in «Meine Trainings» und nur für ein Konto ohne Verein (#588 AK 5, PC 3):
   // der Stand von der Datenebene, nie aus der gezählten Liste (Filter).
@@ -151,7 +151,6 @@ export default async function TrainingsPage({
                 offen={auswahl.ansicht}
                 hrefFuer={detailHref}
                 schliessenHref={detailHref(null)}
-                nachLoeschen={detailHref(null)}
               />
             )
           }

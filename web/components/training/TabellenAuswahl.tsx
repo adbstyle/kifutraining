@@ -9,8 +9,10 @@ import { useEffect, useRef } from "react";
      kommt ins Bild, falls sie es nicht schon ist — die Tabelle wechselt beim
      Öffnen in ihre eigene Scrollfläche, ein geteilter Link zeigt sonst eine
      Zeile weit unten nicht. Steht sie schon im Bild (der Klick), bewegt sich
-     nichts. Beim Laden per Link landet auch der Fokus dort, wie im
-     Trainingsplan eines Teams.
+     nichts. Der Fokus geht nach einem Wechsel auf die Überschrift des Detail
+     (`data-detail-titel`), damit man dort weiterliest. Beim Laden per Link
+     bleibt er auf der Zeile, wie im Trainingsplan eines Teams; schmal, wo die
+     Liste ausgeblendet ist, geht er ebenfalls aufs Detail.
    - Geschlossen: Der Fokus geht auf den Link der zuvor ausgewählten Zeile
      zurück, sonst fiele er mit dem Detail ins Leere. */
 export function TabellenAuswahl({ ausgewaehlt }: { ausgewaehlt?: string }) {
@@ -27,11 +29,22 @@ export function TabellenAuswahl({ ausgewaehlt }: { ausgewaehlt?: string }) {
     const link = id ? document.querySelector<HTMLElement>(`[data-training-zeile="${CSS.escape(id)}"]`) : null;
     if (!link) return;
     if (!imBild(link)) link.scrollIntoView({ block: "center" });
-    // Beim ersten Lauf nur mit Auswahl (geteilter Link), beim Schliessen immer.
-    if (zuvor === undefined ? jetzt !== null : jetzt === null) link.focus({ preventScroll: true });
+    const titel = document.querySelector<HTMLElement>("[data-detail-titel]");
+    if (jetzt === null) {
+      link.focus({ preventScroll: true });
+    } else if (zuvor === undefined && sichtbar(link)) {
+      link.focus({ preventScroll: true });
+    } else {
+      (titel ?? link).focus({ preventScroll: true });
+    }
   }, [ausgewaehlt]);
 
   return null;
+}
+
+/** Ist das Element dargestellt (nicht per `display: none` ausgeblendet)? */
+function sichtbar(el: HTMLElement): boolean {
+  return el.getClientRects().length > 0;
 }
 
 /** Steht das Element ganz im Bild — im Fenster und in jeder scrollenden

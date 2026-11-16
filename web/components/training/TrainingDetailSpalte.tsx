@@ -1,46 +1,39 @@
-import { Clock } from "lucide-react";
-import { DetailKopf, KategorieLozenge, Lozenge, TabNav } from "@/components/ui";
+import { DetailKopf, TabNav } from "@/components/ui";
 import { KontoGrenzenLage } from "@/components/konto/BestandStufe";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { TrainingAktionen } from "@/components/training/TrainingAktionen";
+import { TrainingKopfAngaben } from "@/components/training/TrainingKopfAngaben";
 import { TrainingEigenschaften } from "@/components/training/TrainingEigenschaften";
 import { TrainingTeile } from "@/components/training/TrainingTeile";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import { angezeigteVariante, type TrainingAnsicht } from "@/lib/queries/training-ansicht";
 import type { DetailAnsicht } from "@/lib/training-auswahl";
 import { varianteAus } from "@/lib/varianten";
-import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 
 /* Das ausgewählte Training neben der Trainingsübersicht (#630, Design A2).
    Lesend (Out of Scope 1): kein Bearbeiten an Ort, keine Übung zum Öffnen —
-   darum die schlichten Zeilen wie im Reiter «Training» eines Termins, nicht
-   die Bausteine der Ansichtsseite (`AnsichtFlaeche`).
+   darum die schlichten Zeilen wie im Reiter «Training» eines Termins.
 
    Zwei Reiter, «Übungen» und «Eigenschaften» (AK 4, 5): Die Spalte ist zu
-   schmal für Übungen und Eigenschaften nebeneinander, wie sie die
-   Ansichtsseite breit zeigt, und untereinander stünden die Eigenschaften
-   unter einer langen Übungsliste, wo man sie nicht sucht. Als Reiter mit
-   Adresse (`&ansicht=eigenschaften`) zeigt Neuladen und ein geteilter Link
-   dieselben Angaben (PC 1), wie die Reiter eines Termins im Team.
-
-   Was der USER mit dem Training tun darf, kommt aus derselben
-   Zusammenstellung wie auf der Ansichtsseite (`ladeTrainingAnsicht`) und
-   steht im Kopf (`DetailKopf`, AK 7, 8). */
+   schmal für beides nebeneinander, untereinander stünden die Eigenschaften
+   unter einer langen Übungsliste. Die Reiter haben eine Adresse
+   (`&ansicht=eigenschaften`), Neuladen und geteilte Links zeigen dasselbe
+   (PC 1). Die Rechte des USERs kommen aus `ladeTrainingAnsicht` wie auf der
+   Ansichtsseite. */
 export function TrainingDetailSpalte({
   ansicht,
   varianteParam,
   offen,
   hrefFuer,
   schliessenHref,
-  nachLoeschen,
 }: {
   ansicht: TrainingAnsicht;
   varianteParam: string | undefined;
   offen: DetailAnsicht;
   /** Dieselbe Übersicht mit diesem Training in einer Variante und Ansicht. */
   hrefFuer: (wahl: { variante?: string; ansicht: DetailAnsicht }) => string;
+  /** Die Übersicht ohne Auswahl: Ziel des X und nach dem Löschen. */
   schliessenHref: string;
-  nachLoeschen: string;
 }) {
   const { training, angemeldet, bearbeitungsziel, teams, mitGrenzen, fehlendeBedingungen } = ansicht;
   // Zu Beginn die vorderste Variante (AK 6); eine unbekannte Angabe ebenso.
@@ -70,7 +63,7 @@ export function TrainingDetailSpalte({
               fehlendeBedingungen={fehlendeBedingungen}
               varianten={training.varianten}
               aktiveVarianteId={aktive?.id}
-              nachLoeschen={nachLoeschen}
+              nachLoeschen={schliessenHref}
             />
           }
         />
@@ -105,25 +98,12 @@ export function TrainingDetailSpalte({
             />
           ) : (
             <>
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Lozenge>{altersstufeLabels[training.altersstufe]}</Lozenge>
-                  {training.stufen.map((k) => (
-                    <KategorieLozenge key={k} k={k} />
-                  ))}
-                  {/* Die Dauer der angezeigten Variante. */}
-                  <span className="inline-flex items-center gap-1.5 type-label-large text-on-surface-mittel">
-                    <Clock size={16} strokeWidth={2} aria-hidden />
-                    {dauerText}
-                  </span>
-                </div>
-                {training.ziel && (
-                  <p className="mt-2 type-body-medium text-on-surface">
-                    <span className="type-label-small text-on-surface-mittel">Ziel: </span>
-                    {training.ziel}
-                  </p>
-                )}
-              </div>
+              <TrainingKopfAngaben
+                altersstufe={training.altersstufe}
+                stufen={training.stufen}
+                dauerText={dauerText}
+                ziel={training.ziel}
+              />
 
               <VariantenLinks
                 scroll={false}

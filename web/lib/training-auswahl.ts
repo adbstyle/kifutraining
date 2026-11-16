@@ -16,7 +16,7 @@ export const ANSICHT_PARAM = "ansicht";
  *  (Vorgabe) oder die Eigenschaften (AK 5). */
 export type DetailAnsicht = "uebungen" | "eigenschaften";
 
-export type TrainingAuswahl = {
+type TrainingAuswahl = {
   training: string;
   variante?: string;
   ansicht: DetailAnsicht;
@@ -68,10 +68,8 @@ export function rueckwegNachLoeschen(angabe: unknown): string | null {
     return null;
   }
   if (url.origin !== "http://intern.invalid" || url.pathname !== "/trainings") return null;
-  const p = url.searchParams;
-  p.delete(AUSWAHL_PARAM);
-  p.delete(VARIANTE_PARAM);
-  p.delete(ANSICHT_PARAM);
+  const ohneAuswahl = auswahlHref("/trainings", Object.fromEntries(url.searchParams), null);
+  const p = new URLSearchParams(ohneAuswahl.split("?")[1] ?? "");
   p.set("deleted", "1");
   return `/trainings?${p.toString()}`;
 }

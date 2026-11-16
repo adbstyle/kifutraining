@@ -12,11 +12,11 @@ import { ALTERSSTUFEN, type Altersstufe } from "@/lib/altersstufe";
 
 export const SORTIER_SPALTEN = ["stufe", "name", "uebungen", "dauer", "geaendert"] as const;
 export type SortierSpalte = (typeof SORTIER_SPALTEN)[number];
-export type SortierRichtung = "auf" | "ab";
+type SortierRichtung = "auf" | "ab";
 export type TrainingSortierung = { spalte: SortierSpalte; richtung: SortierRichtung };
 
 /** Ohne Wahl: das Datum der letzten Änderung, absteigend (#629 AK 7). */
-export const SORTIERUNG_VORGABE: TrainingSortierung = { spalte: "geaendert", richtung: "ab" };
+const SORTIERUNG_VORGABE: TrainingSortierung = { spalte: "geaendert", richtung: "ab" };
 
 /** Die Beschriftung jeder Spalte — Spaltenkopf und kompakte Sortierwahl. */
 export const SORTIER_LABEL: Record<SortierSpalte, string> = {
@@ -57,7 +57,7 @@ export function naechsteSortierung(aktuell: TrainingSortierung, spalte: SortierS
 }
 
 /** Die Adresse mit einer Sortierung; alle übrigen Parameter (Suche, Filter,
- *  später die Auswahl #630) bleiben stehen. Die Vorgabe schreibt keine
+ *  die Auswahl des Detail #630) bleiben stehen. Die Vorgabe schreibt keine
  *  Parameter — sie ist die nackte Ordnung. */
 export function sortierHref(
   pfad: string,
@@ -76,7 +76,7 @@ export function sortierHref(
 }
 
 /** Was die Sortierung von einer Zeile braucht — `TrainingListRow` erfüllt es. */
-export type SortierbareZeile = {
+type SortierbareZeile = {
   id: string;
   name: string;
   altersstufe: Altersstufe;
