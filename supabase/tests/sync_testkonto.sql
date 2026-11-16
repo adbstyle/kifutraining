@@ -31,6 +31,9 @@ select x.slug, x.slug, x.teil, x.hkat, 'manual', 'public', 'kinderfussball', 'Au
                     where e.source = 'manual' and e.visibility = 'public' and e.altersstufe = 'kinderfussball'
                       and e.trainingsteil = x.teil and e.hauptteilkategorie is not distinct from x.hkat);
 
+-- Wie im Workflow (TESTKONTO_EMAIL).
+\set email 'claude@tester.ch'
+
 -- (a) Kein Passwort, kein Konto: nichts.
 \set passwort ''
 \ir ../sync/testkonto.sql

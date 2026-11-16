@@ -85,6 +85,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  # Testkonto auf Staging (supabase/sync/testkonto.sql und Anmeldeprobe).
+  TESTKONTO_EMAIL: claude@tester.ch
   # Single Source für Dump, TRUNCATE und Vollständigkeits-Guard.
   # Bytewise sortiert (collate "C", d. h. '_' vor Buchstaben) — muss der
   # Sortierung im Guard-Query entsprechen. Neue public-Tabelle in einer
@@ -291,34 +293,55 @@ jobs:
             echo 'commit;'
           } | psql "$SUPABASE_STAGING_DB_URL" \
                 -v ON_ERROR_STOP=1 \
+                -v email="$TESTKONTO_EMAIL" \
                 -v passwort="$STAGING_TESTKONTO_PASSWORT" \
                 --quiet
 
-      # Anmeldeprobe wie in der App (Passwort-Anmeldung bei Supabase Auth):
-      # beweist, dass Konto und Passwort zusammenpassen. Das Passwort geht
-      # über stdin an curl, die Antwort wird nie ausgegeben.
+      # Anmeldeprobe wie in der App: Passwort-Anmeldung bei Supabase Auth mit
+      # dem Anon-Key (den Vercel der App gibt; hier über die Management-API
+      # geholt, weil er kein GitHub-Secret ist). Beweist, dass Konto und
+      # Passwort zusammenpassen. Das Passwort geht über stdin an curl, die
+      # Antwort (mit Sitzung) liegt nur in $RUNNER_TEMP und wird nie
+      # ausgegeben. curl wiederholt vorübergehende Fehler (u. a. 429, 5xx).
       - name: Anmeldung des Testkontos prüfen
         env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_STAGING_REF: ${{ secrets.SUPABASE_STAGING_REF }}
           SUPABASE_STAGING_URL: ${{ secrets.SUPABASE_STAGING_URL }}
-          SUPABASE_STAGING_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_STAGING_SERVICE_ROLE_KEY }}
           STAGING_TESTKONTO_PASSWORT: ${{ secrets.STAGING_TESTKONTO_PASSWORT }}
         run: |
           if [ -z "$STAGING_TESTKONTO_PASSWORT" ]; then
             echo "Kein Passwort-Secret, keine Anmeldeprobe."
             exit 0
           fi
-          code=$(jq -n --arg pw "$STAGING_TESTKONTO_PASSWORT" \
-                   '{email: "claude@tester.ch", password: $pw}' \
-                 | curl -sS -o antwort.json -w '%{http_code}' \
-                     -X POST "$SUPABASE_STAGING_URL/auth/v1/token?grant_type=password" \
-                     -H "apikey: $SUPABASE_STAGING_SERVICE_ROLE_KEY" \
-                     -H "Content-Type: application/json" \
-                     --data-binary @-)
-          ok=$(jq -r 'if (.access_token // "") != "" and .user.email == "claude@tester.ch" then "ja" else "nein" end' antwort.json 2>/dev/null || echo nein)
-          fehler=$(jq -r '.error_code // .error // empty' antwort.json 2>/dev/null || true)
-          rm -f antwort.json
-          if [ "$code" != "200" ] || [ "$ok" != "ja" ]; then
-            echo "::error::Anmeldung als claude@tester.ch scheitert (HTTP $code${fehler:+, $fehler})."
+          antwort=$(mktemp "$RUNNER_TEMP/anmeldung.XXXXXX")
+          trap 'rm -f "$antwort"' EXIT
+          scheitern() {
+            echo "::error::Anmeldung als $TESTKONTO_EMAIL scheitert ($1)."
             exit 1
+          }
+
+          anon=$(curl -fsS --retry 3 --retry-all-errors \
+                   -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+                   "https://api.supabase.com/v1/projects/$SUPABASE_STAGING_REF/api-keys" \
+                 | jq -r '.[] | select(.name == "anon") | .api_key') \
+            || scheitern "Anon-Key über die Management-API nicht abrufbar"
+          [ -n "$anon" ] || scheitern "kein Anon-Key im Staging-Projekt"
+          echo "::add-mask::$anon"
+
+          code=$(jq -n --arg email "$TESTKONTO_EMAIL" --arg pw "$STAGING_TESTKONTO_PASSWORT" \
+                   '{email: $email, password: $pw}' \
+                 | curl -sS --retry 3 --retry-all-errors -o "$antwort" -w '%{http_code}' \
+                     -X POST "${SUPABASE_STAGING_URL%/}/auth/v1/token?grant_type=password" \
+                     -H "apikey: $anon" \
+                     -H "Content-Type: application/json" \
+                     --data-binary @-) \
+            || scheitern "Auth nicht erreichbar, curl-Exit $?"
+          ok=$(jq -r --arg email "$TESTKONTO_EMAIL" \
+                 'if (.access_token // "") != "" and .user.email == $email then "ja" else "nein" end' \
+                 "$antwort" 2>/dev/null || echo nein)
+          fehler=$(jq -r '.error_code // .error // empty' "$antwort" 2>/dev/null || true)
+          if [ "$code" != "200" ] || [ "$ok" != "ja" ]; then
+            scheitern "HTTP $code${fehler:+, $fehler}"
           fi
-          echo "Anmeldung als claude@tester.ch klappt (HTTP 200, Sitzung erhalten)."
+          echo "Anmeldung als $TESTKONTO_EMAIL klappt (HTTP 200, Sitzung erhalten)."

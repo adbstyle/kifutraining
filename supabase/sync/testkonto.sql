@@ -3,7 +3,8 @@
 --
 -- Der Sync spiegelt `auth.users` aus Prod und löscht damit jedes Staging-
 -- Testkonto, ebenso reset-staging (danach fährt man ohnehin den Sync). Dieser
--- Baustein legt das Konto `claude@tester.ch` neu an und gibt ihm erfundene
+-- Baustein legt das Testkonto (psql-Variable `email`, auf Staging
+-- `claude@tester.ch`) neu an und gibt ihm erfundene
 -- Testdaten:
 -- - einen Verein, das Konto in der Vereinsverwaltung,
 -- - ein Team, das Konto als Trainer:in,
@@ -19,7 +20,8 @@
 -- dieselben RPCs wie in der Anwendung, unter den Claims des Kontos
 -- (`request.jwt.claims`); Trainings und Termine wie in `lib/kern/` per Insert.
 --
--- Erwartet die psql-Variable `passwort` (GitHub-Secret
+-- Erwartet die psql-Variablen `email` (im Workflow TESTKONTO_EMAIL) und
+-- `passwort` (GitHub-Secret
 -- STAGING_TESTKONTO_PASSWORT). Das Passwort steht nie im Repo; ist es leer und
 -- fehlt das Konto, geschieht nichts (Warnung). Besteht das Konto schon,
 -- braucht es kein Passwort und behält seines.
@@ -33,12 +35,13 @@
 -- Ohne eigenes begin/commit: der Workflow (bzw. der Test) umschliesst den
 -- Baustein mit seiner Transaktion.
 set local session_replication_role = origin;
-select set_config('testkonto.passwort', :'passwort', true) is not null as testkonto_passwort_gesetzt \gset
+select set_config('testkonto.passwort', :'passwort', true) is not null as testkonto_passwort_gesetzt,
+       set_config('testkonto.email', :'email', true) is not null as testkonto_email_gesetzt \gset
 
 -- 1) Das Konto (wie GoTrue es bei «Auto Confirm» anlegt).
 do $$
 declare
-  v_email constant text := 'claude@tester.ch';
+  v_email constant text := current_setting('testkonto.email');
   v_pw text := current_setting('testkonto.passwort');
   v_uid uuid;
 begin
@@ -73,7 +76,7 @@ end $$;
 -- 2) Die Claims des Kontos: auth.uid() in RPCs und Triggern.
 select set_config('request.jwt.claims',
          coalesce((select jsonb_build_object('sub', id::text, 'role', 'authenticated', 'email', email)::text
-                     from auth.users where email = 'claude@tester.ch'), '{}'),
+                     from auth.users where email = current_setting('testkonto.email')), '{}'),
          true) is not null as testkonto_claims_gesetzt \gset
 
 -- Eine Manual-Übung als Fassung ins Training legen (wie `ordneUebungZu` in
