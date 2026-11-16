@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-11-15. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-11-16. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -804,10 +804,15 @@ fest, es gilt die zuletzt gesetzte. Einen Grund trägt eine Abmeldung nicht.
 Im Reiter „Spieler:innen" des geöffneten Termins steht jede Spieler:in mit einem Schalter, der beim
 Umlegen sofort speichert: an heisst angemeldet, aus abgemeldet, und abgemeldete Namen stehen
 gedämpft. Der Schalter ist hier ruhig gehalten und bewertet nicht: Sein Knopf bleibt grau,
-angemeldet steht er rechts mit einem Haken, abgemeldet links mit einem Kreuz. Darüber steht „12 von 15 angemeldet" und bis wann sich das ändern lässt, etwa „Änderbar
+angemeldet steht er rechts mit einem Haken, abgemeldet links mit einem Kreuz. Die Spieler:innen stehen in zwei Gruppen, „Angemeldet" und
+„Abgemeldet", jede mit ihrer Anzahl; eine schnuppernde Spieler:in, die nicht angemeldet ist, steht
+bei den Abgemeldeten. Wer umgelegt wird, steht sofort in der anderen Gruppe, und der Fokus folgt
+ihr dorthin. Eine leere Gruppe fehlt, innerhalb einer Gruppe gilt die Reihenfolge nach Vorname und
+Nachname, und ist die Liste auf einen Kader eingegrenzt, zählt die Gruppe, was die Eingrenzung
+zeigt. Darüber steht „12 von 15 angemeldet" und bis wann sich das ändern lässt, etwa „Änderbar
 bis 18:00". Ab Beginn gilt der „Stand bei Beginn", die Schalter sagen dann, wer da war (siehe
-„Nachtragen, wer da war"), und ehemalige Spieler:innen stehen ohne Namen am Ende, ihr Schalter
-gesperrt. Links vom Schalter steht, seit wann der Status einer
+„Nachtragen, wer da war"), die Gruppen heissen „Da" und „Nicht da", und ehemalige Spieler:innen
+stehen ohne Namen am Ende ihrer Gruppe, ihr Schalter gesperrt. Links vom Schalter steht, seit wann der Status einer
 Spieler:in gilt — „gerade eben", „vor 25 Minuten", „vor 3 Stunden" (heute), „gestern",
 „vorgestern", „diese Woche", „letzte Woche", sonst das Datum mit Jahr; passen zwei Angaben, gilt
 die genauere, gerechnet nach Schweizer Zeit mit Wochen von Montag bis Sonntag. Eine Zeit trägt nur,
@@ -962,14 +967,16 @@ Team."
 Der Reiter „Spieler:innen" eines Spiels nennt oben den Status des Spiels samt Detail, darunter gross
 die Zahl, etwa „7 von 14 angemeldet", wie viele ohne Meldung, abgemeldet und nicht aufgeboten sind
 und bis wann gemeldet wird, etwa „Eltern melden bis Do., 29.10., 20:00 · Mitglieder bis zum
-Anpfiff". Darunter stehen alle in einer Liste ohne Gruppen, jede mit ihrem Status als Plakette:
+Anpfiff". Darunter stehen sie in Gruppen nach ihrem Status, in dieser Reihenfolge: „Angemeldet",
+„Ohne Meldung", „Abgemeldet" und „Nicht aufgeboten", jede mit ihrer Anzahl; eine leere Gruppe
+fehlt. Jede Zeile trägt ihren Status als Plakette:
 „Ohne Meldung" gelb, „Angemeldet" grün, „Abgemeldet" rot, „Nicht aufgeboten" rot. Nach Ablauf der
-Meldefrist heisst „Ohne Meldung" „Meldefrist verpasst" und ist rot: Das Team rechnet nicht mehr mit
+Meldefrist heisst „Ohne Meldung" „Meldefrist verpasst" und ist rot, ebenso die Gruppe: Das Team rechnet nicht mehr mit
 ihr, kann sie aber bis zum Anpfiff anfragen und melden; das gilt auch für jemanden, für den das
 Spiel erst nach der Frist gilt. Ein Tipp auf die Plakette öffnet ein Menü mit den möglichen
 Wechseln, jeder mit der Plakette, zu der er führt: „Anmelden" und „Abmelden", soweit sie etwas
-ändern, und nach einem Trenner „Nicht aufbieten". Gespeichert wird sofort, und die Zeile bleibt an
-ihrem Platz. Unter dem Namen steht wie bei Trainings, seit wann die Meldung gilt, sonst warum es
+ändern, und nach einem Trenner „Nicht aufbieten". Gespeichert wird sofort, und die Zeile steht
+gleich in ihrer neuen Gruppe; der Fokus folgt ihr. Unter dem Namen steht wie bei Trainings, seit wann die Meldung gilt, sonst warum es
 keine gibt — „noch keine Meldung", „keine Meldung bis zur Frist" oder „Meldung mit der Verlegung
 verfallen" —, dazu die Kader. Abgemeldete und nicht Aufgebotene stehen gedämpft. Eingrenzung nach
 Kadern und der Hinweis, für wie viele des Teams das Spiel nicht gilt, sind dieselben wie bei
@@ -993,7 +1000,9 @@ unbefristet. Ohne Nachtrag war da, wer angemeldet und nicht als nicht aufgeboten
 war; nur für sie lässt sich „Nicht erschienen" nachtragen, „Doch erschienen" für jede andere im
 Stand beim Anpfiff — ohne Meldung, mit verpasster Meldefrist, abgemeldet oder nicht aufgeboten.
 Der Reiter nennt oben „Stand beim Anpfiff · nachtragen, wer da war" und die Anwesenden, etwa „11
-von 14 da", mit dem Status des Spiels, nun gegen die Anwesenden bewertet. Jede Zeile trägt als
+von 14 da", mit dem Status des Spiels, nun gegen die Anwesenden bewertet. Die Liste ist dann in „Da" und „Nicht da" gegliedert: da ist, wer
+beim Anpfiff als angemeldet zählte oder als doch erschienen nachgetragen ist, ohne die als nicht
+erschienen Nachgetragenen. Jede Zeile trägt als
 Plakette den Stand beim Anpfiff oder ihren Nachtrag, „Nicht erschienen" rot oder „Doch erschienen"
 grün; ihr Menü bietet den möglichen Nachtrag oder „Nachtrag zurücknehmen" mit dem Hinweis „Zurück
 zum Stand beim Anpfiff". Unter dem Namen steht, wie sie beim Anpfiff stand, etwa „war abgemeldet"
