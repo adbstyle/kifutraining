@@ -8557,8 +8557,8 @@ try {
   });
 
   // ── Konten ohne Verein (#588) ────────────────────────────────────────────
-  // Die Regeln selbst (Trigger, Zählung, Rennen, Sperren, Prod-Weg mit einem
-  // Bestand über der Grenze) prüft supabase/tests/konten_ohne_verein.sql per
+  // Die Regeln selbst (Trigger, Zählung, Rennen, Sperren, ein Bestand über
+  // der Grenze) prüft supabase/tests/konten_ohne_verein.sql per
   // psql; hier der Weg über Kern, Nutzer-Client und KI-Werkzeuge, je mit einem
   // eigenen Konto ohne Verein (a gehört über das Anker-Team einem Verein an).
   // Viele Zeilen entstehen per Admin in einem Insert je Stapel. Auch die

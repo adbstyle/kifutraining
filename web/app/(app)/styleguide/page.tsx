@@ -52,6 +52,8 @@ import {
   KopierFeld,
   Tabelle,
   TabellenZeile,
+  SortierKopf,
+  DetailKopf,
   Gefahrenzone,
 } from "@/components/ui";
 import { HinweisEltern } from "@/components/privat/HinweisEltern";
@@ -81,10 +83,10 @@ import { MaterialDemo } from "./MaterialDemo";
 import { FelderDemo } from "./FelderDemo";
 import { MiniMonatDemo } from "./MiniMonatDemo";
 import { LozengeAuswahlDemo } from "./LozengeAuswahlDemo";
+import { ListenGruppenDemo } from "./ListenGruppenDemo";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { ErscheinungsbildDemo } from "./ErscheinungsbildDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
-import { TrainingCard } from "@/components/training/TrainingCard";
 import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
 import {
   Search,
@@ -126,6 +128,10 @@ import {
   Clock,
   LandPlot,
   History,
+  Play,
+  Printer,
+  Maximize2,
+  MoreVertical,
   type LucideIcon,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
@@ -270,6 +276,7 @@ const GLIEDERUNG = [
         titel: "Layout und Struktur",
         eintraege: [
           { id: "liste-detail", titel: "Liste mit Detail daneben" },
+          { id: "detail-kopf", titel: "Detailkopf" },
           { id: "disclosure", titel: "Disclosure" },
           { id: "gefahrenzone", titel: "Gefahrenzone" },
           { id: "namen-bestaetigen", titel: "Namen bestätigen" },
@@ -286,7 +293,7 @@ const GLIEDERUNG = [
       {
         titel: "Training und Termine",
         eintraege: [
-          { id: "karten", titel: "Übungs- und Trainingskarten" },
+          { id: "karten", titel: "Übungskarten" },
           { id: "fahrplan", titel: "Methodischer Fahrplan" },
           { id: "feld-diagramm", titel: "Feld-Diagramm" },
           { id: "material", titel: "Material" },
@@ -2743,6 +2750,16 @@ export default async function Styleguide() {
             <LozengeAuswahlDemo />
           </div>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>ListenGruppen</strong> (#599): eine Liste in Gruppen - je Gruppe eine kleine Überschrift mit
+            Anzahl, etwa «Angemeldet · 5», darunter ihre Zeilen auf einer Fläche. Neu, weil die Spieler:innen eines
+            Termins nach ihrem Status getrennt stehen; die Überschrift folgt den Gruppen im Reiter «Trainer:innen».
+            Leere Gruppen erscheinen nicht. Wechselt eine Zeile die Gruppe, folgt ihr der Fokus
+            (<code>useFokusFolgt</code>). Jede Gruppe ist ein benannter Abschnitt.
+          </p>
+          <div className="mb-6">
+            <ListenGruppenDemo />
+          </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Treffpunkte</strong> (<code>TreffpunktListe</code>, #465): die Treffpunkte eines Spiels in drei
             Spalten - Anreiseart, Zeit, Ort -, frühester zuerst. Das Datum steht nur bei einem Treffpunkt, der nicht am
             Spieltag liegt; vor Ort nennt den aktuellen Ort des Spiels. Kein eigener Baustein für die Liste der
@@ -3420,7 +3437,7 @@ export default async function Styleguide() {
             statt auf eine eigene Seite zu führen (Epic #369) - der Trainer
             behält die Zusammenstellung im Blick. Breit ist darum{" "}
             <strong>die ganze Zeile die Fläche, die öffnet</strong>, und hellt
-            beim Überfahren auf wie eine Trainingskachel der Übersicht (<Siehe id="karten" />): Die
+            beim Überfahren auf wie eine Zeile der Trainingsübersicht (<Siehe id="tabelle" />): Die
             Zustands-Ebene (<code>state</code>, <Siehe id="zustaende" />) liegt auf der Zeile, der Knopf
             dazu ist der Name (<code>UebungsName</code>), dessen Fläche über die
             Zeile reicht. Was die Zeile sonst trägt - Umsortieren, Entfernen,
@@ -3450,6 +3467,53 @@ export default async function Styleguide() {
             </li>
           </ul>
           <OeffnenZeileDemo />
+        </Section>
+
+        <Section id="detail-kopf">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Der Kopf eines Detail, das neben einer Liste steht - das ausgewählte
+            Training neben der Trainingsübersicht (#630). Neu als Baustein
+            (<code>DetailKopf</code>), weil der Seitenkopf (Brotkrumen und
+            Aktionen) zur Seite gehört und nicht zu einem Eintrag in ihr: Name,
+            Aktionen und Schliessen stehen hier in einer Zeile über dem Detail.
+            Links der Name als Überschrift, die umbricht statt die Knöpfe zu
+            verdrängen; rechts auf Titelhöhe die Icon-Knöpfe - vorne
+            Bearbeiten am eigenen bzw. Öffnen am fremden Eintrag, dann die
+            übrigen Aktionen und das ⋮. Ein senkrechter Trenner (1 px, 20 px hoch,{" "}
+            <code>linie</code>) scheidet sie vom X, das das Detail schliesst:
+            Schliessen betrifft die Ansicht, nicht den Eintrag. Das X ist ein Link
+            ohne Sprung (<code>scroll=&#123;false&#125;</code>) auf die Adresse
+            ohne Auswahl - die Liste behält ihre Stelle, der Fokus kehrt auf die
+            zuvor gewählte Zeile zurück.
+          </p>
+          <div className="max-w-md rounded-flaeche bg-elev-02 p-4">
+            <DetailKopf
+              titel="Passspiel im Quadrat"
+              schliessenHref="#detail-kopf"
+              aktionen={
+                <>
+                  <IconButtonLink href="#detail-kopf" icon={Pencil} label="Bearbeiten" />
+                  <IconButtonLink href="#detail-kopf" icon={Play} label="Durchführen" />
+                  <IconButtonLink href="#detail-kopf" icon={Printer} label="Drucken" />
+                  <IconButton icon={MoreVertical} label="Weitere Aktionen" />
+                </>
+              }
+            />
+          </div>
+          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">Fremder Eintrag, langer Name</p>
+          <div className="max-w-md rounded-flaeche bg-elev-02 p-4">
+            <DetailKopf
+              titel="Abschluss unter Druck mit zwei Toren und wechselnden Zonen"
+              schliessenHref="#detail-kopf"
+              aktionen={
+                <>
+                  <IconButtonLink href="#detail-kopf" icon={Maximize2} label="Öffnen" />
+                  <IconButtonLink href="#detail-kopf" icon={Play} label="Durchführen" />
+                  <IconButtonLink href="#detail-kopf" icon={Printer} label="Drucken" />
+                </>
+              }
+            />
+          </div>
         </Section>
 
         <Section id="disclosure">
@@ -3610,6 +3674,68 @@ export default async function Styleguide() {
             Wer die Liste eingrenzt, behält nur sichtbare Einträge in der Auswahl.
           </p>
           <TabelleAuswahlDemo />
+
+          <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+            Sortierbar
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Wo man Einträge vergleicht statt bearbeitet - die Trainingsübersicht
+            (#629) -, steht eine echte Tabelle (<code>table</code>) mit
+            sortierbaren Spaltenköpfen. Neu als Baustein (<code>SortierKopf</code>),
+            weil die <code>Tabelle</code> oben ihren Kopf nur fürs Auge trägt und
+            weder Spaltenbezug noch Sortierung vorlesen kann. Ein sortierbarer
+            Kopf ist ein Link, der die Sortierung in die Adresse schreibt: Der
+            Server sortiert, die Wahl übersteht Neuladen und geteilte Links. Die
+            aktive Spalte trägt den Pfeil in Primary (aufwärts = aufsteigend), die
+            übrigen sortierbaren den Doppelpfeil gedämpft; die Vorlesehilfe hört{" "}
+            <code>aria-sort</code>. Ein Klick auf die aktive Spalte kehrt die
+            Richtung um, eine neue beginnt bei Text mit A-Z, bei Zahlen und Datum
+            mit dem Grössten. Ohne <code>href</code> ist ein Kopf fest (hier
+            «Sichtbarkeit»). Die ganze Zeile hellt beim Überfahren auf; ihr
+            einziger Link ist der Name, dessen Fläche über die Zeile reicht. Er
+            wählt die Zeile aus, ihr Detail steht daneben (<Siehe id="detail-kopf" />):
+            Die ausgewählte Zeile ist betont (<code>betont</code>), ihr Link
+            trägt <code>aria-current</code>. Schmal fallen die Köpfe weg, die Angaben
+            stehen unter dem Namen, und sortiert wird über einen{" "}
+            <code>ChipMenu</code> über der Tabelle.
+          </p>
+          <div className="overflow-hidden rounded-flaeche bg-elev-01">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-linie">
+                  <SortierKopf href="#tabelle" richtung="auf">Name</SortierKopf>
+                  <SortierKopf className="w-36">Sichtbarkeit</SortierKopf>
+                  <SortierKopf href="#tabelle" ausrichtung="end" className="w-28">
+                    Übungen
+                  </SortierKopf>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-linie">
+                {[
+                  ["Abschluss unter Druck", true, 5],
+                  ["Halle oder Rasen", false, 8],
+                  ["Passspiel im Quadrat", true, 6],
+                ].map(([name, oeffentlich, uebungen]) => (
+                  <tr key={String(name)} className="state">
+                    <td className="py-2 pl-4 pr-2 type-body-medium">
+                      <a
+                        href="#tabelle"
+                        className="focus-ring rounded-klein text-on-surface before:absolute before:inset-0 before:content-[''] hover:underline"
+                      >
+                        {name}
+                      </a>
+                    </td>
+                    <td className="px-2 py-2">
+                      <SichtbarkeitLozenge oeffentlich={Boolean(oeffentlich)} />
+                    </td>
+                    <td className="py-2 pl-2 pr-4 text-right tabular-nums type-body-medium text-on-surface">
+                      {uebungen}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Section>
 
         <Section id="eigenschaften">
@@ -3821,71 +3947,6 @@ export default async function Styleguide() {
             />
           </div>
 
-          <p className="type-body-medium mb-5 mt-8 max-w-2xl text-on-surface-mittel">
-            Die <strong>Trainingskachel</strong> (<code>TrainingCard</code>) folgt
-            derselben Regel: Höhenstufe ohne Rand, die Zustands-Ebene auf dem
-            Link, der die ganze Kachel deckt. Ein Bild hat sie nicht; oben stehen
-            die Alterskategorien - nur ohne Kategorie die Altersstufe -, ab zwei
-            Varianten die <code>discovery</code>-Lozenge und am eigenen Eintrag,
-            ob er ein Entwurf oder öffentlich ist. Darunter der Name, die
-            Kennzahlen der ersten Variante (Übungen, Gesamtdauer) und zuunterst
-            Urheber oder Änderungsdatum.
-          </p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <TrainingCard
-              href="#"
-              zeigeUrheber={false}
-              training={{
-                id: "t1",
-                name: "Passspiel im Quadrat",
-                visibility: "private",
-                istEigen: true,
-                altersstufe: "kinderfussball",
-                stufen: ["F", "E"],
-                updatedAt: "2026-10-01T18:00:00Z",
-                exerciseCount: 6,
-                totalDuration: 75,
-                hasAnyDuration: true,
-                variantenZahl: 1,
-                urheber: null,
-              }}
-            />
-            <TrainingCard
-              href="#"
-              zeigeUrheber={false}
-              training={{
-                id: "t2",
-                name: "Halle oder Rasen",
-                visibility: "public",
-                istEigen: true,
-                altersstufe: "kinderfussball",
-                stufen: ["G", "F"],
-                updatedAt: "2026-09-28T18:00:00Z",
-                exerciseCount: 8,
-                totalDuration: 90,
-                hasAnyDuration: true,
-                variantenZahl: 2,
-                urheber: null,
-              }}
-            />
-            <TrainingCard
-              href="#"
-              training={{
-                id: "t3",
-                name: "Abschluss unter Druck",
-                visibility: "public",
-                istEigen: false,
-                altersstufe: "juniorenfussball",
-                stufen: ["C", "B"],
-                updatedAt: "2026-09-20T18:00:00Z",
-                exerciseCount: 5,
-                totalDuration: 0,
-                hasAnyDuration: false,
-                variantenZahl: 1,
-                urheber: "Trainerin Muster",
-              }}
-            />
-          </div>
         </Section>
 
         <Section id="fahrplan">

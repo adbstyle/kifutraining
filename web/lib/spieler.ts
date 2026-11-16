@@ -456,6 +456,17 @@ export const TEILNAHME_TEXT: Record<TeilnahmeStatus, string> = {
   doch_erschienen: "abgemeldet, doch erschienen",
 };
 
+/** Wie die Gruppen im Reiter «Spieler:innen» heissen (#599): vor Beginn
+ *  eines Trainings angemeldet und abgemeldet, ab Beginn jedes Termins da und
+ *  nicht da. Die Gruppen eines Spiels vor dem Anpfiff heissen wie seine
+ *  Status (`MELDE_STATUS`). */
+export const GRUPPE_TEXT = {
+  angemeldet: "Angemeldet",
+  abgemeldet: "Abgemeldet",
+  da: "Da",
+  nichtDa: "Nicht da",
+} as const;
+
 /** Wie eine ehemalige Spieler:in überall heisst. */
 export const EHEMALIGE_SPIELERIN = "Ehemalige Spieler:in";
 

@@ -7,6 +7,7 @@ import {
   Copy,
   Download,
   Globe,
+  Maximize2,
   Pencil,
   Play,
   Printer,
@@ -66,6 +67,11 @@ import { mitVariante, type Variante } from "@/lib/varianten";
    hierher ein gefüllter Knopf war. Die Reihe trägt `print:hidden`: Auf dem
    Blatt hat kein Bedienelement etwas verloren (NFR 3).
 
+   Im Detail der Trainingsübersicht (`ort="uebersicht"`, #630) steht die
+   Reihe im `DetailKopf`: vorne Bearbeiten am eigenen bzw. Öffnen am fremden
+   Training (AK 8) — von dort erreicht man Bearbeitung und Ansicht —, dann
+   Durchführen, Drucken und das ⋮.
+
    Was der Betrachter darf, rechnet `trainingAktionsRechte` aus. Hier steht
    keine Rechtebedingung mehr — die Server Actions und die RLS bleiben die
    Trust-Boundary, diese Reihe ist die Auskunft darüber. */
@@ -83,8 +89,9 @@ export function TrainingAktionen({
   fehlendeBedingungen,
   varianten,
   aktiveVarianteId,
+  nachLoeschen,
 }: {
-  ort: "ansicht" | "editor";
+  ort: "ansicht" | "editor" | "uebersicht";
   trainingId: string;
   /** Für die a11y-Namen und den Löschdialog: ohne ihn hiesse jedes ⋮-Menü
    *  gleich. */
@@ -108,6 +115,10 @@ export function TrainingAktionen({
   /** Die angezeigte Variante — sie reist an Durchführen, Drucken und
    *  Bearbeiten mit (#203 AK 1). */
   aktiveVarianteId?: string;
+  /** Wohin das Löschen zurückführt, wenn nicht in die eigenen Trainings —
+   *  aus dem Detail der Übersicht dieselbe Übersicht (#630 PC 4). Die Action
+   *  prüft die Angabe. */
+  nachLoeschen?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -237,6 +248,16 @@ export function TrainingAktionen({
     });
   }
 
+  const bearbeitenKnopf = (
+    <Tooltip label="Bearbeiten">
+      <IconButtonLink
+        href={ziel(`/training/${trainingId}/edit`)}
+        icon={Pencil}
+        label={`„${name}" bearbeiten`}
+      />
+    </Tooltip>
+  );
+
   /* Die Einträge des Überlaufmenüs — immer in dieser Reihenfolge, was auch
      immer davon offensteht (AK 6). Löschen zuletzt und als einziges in
      Error-Schrift. */
@@ -289,6 +310,17 @@ export function TrainingAktionen({
       {/* Rechtsbündig und im Druck ausgeblendet wird die Leiste von der
           Kopfzeile (`SeitenKopf`) — ausserhalb von ihr fehlt beides. */}
       <div className="flex items-center gap-0.5">
+        {ort === "uebersicht" &&
+          (rechte.bearbeiten ? bearbeitenKnopf : (
+            <Tooltip label="Öffnen">
+              <IconButtonLink
+                href={ziel(`/training/${trainingId}`)}
+                icon={Maximize2}
+                label={`„${name}" öffnen`}
+              />
+            </Tooltip>
+          ))}
+
         <Tooltip label="Durchführen">
           <IconButtonLink
             href={ziel(`/training/${trainingId}/durchfuehren`)}
@@ -308,15 +340,7 @@ export function TrainingAktionen({
           />
         </Tooltip>
 
-        {ort === "ansicht" && rechte.bearbeiten && (
-          <Tooltip label="Bearbeiten">
-            <IconButtonLink
-              href={ziel(`/training/${trainingId}/edit`)}
-              icon={Pencil}
-              label={`„${name}" bearbeiten`}
-            />
-          </Tooltip>
-        )}
+        {ort === "ansicht" && rechte.bearbeiten && bearbeitenKnopf}
 
         {hatUeberlauf(rechte) && (
           <OverflowMenu
@@ -376,7 +400,7 @@ export function TrainingAktionen({
               <Button variant="outlined" onClick={() => setLoeschen(false)}>
                 Abbrechen
               </Button>
-              <form action={deleteTraining.bind(null, trainingId)}>
+              <form action={deleteTraining.bind(null, trainingId, nachLoeschen)}>
                 <Button type="submit" variant="danger">
                   Endgültig löschen
                 </Button>

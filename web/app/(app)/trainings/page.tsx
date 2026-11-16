@@ -1,16 +1,22 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { ClipboardList, SearchX } from "lucide-react";
-import { BestandAnzeige, ButtonLink, Leerzustand } from "@/components/ui";
+import { BestandAnzeige, ButtonLink, Leerzustand, SectionMessage } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
-import { TrainingCard } from "@/components/training/TrainingCard";
+import { TrainingTabelle } from "@/components/training/TrainingTabelle";
 import { TrainingFilterBar } from "@/components/training/TrainingFilterBar";
 import { getTrainingPool } from "@/lib/queries/trainings";
 import { createClient } from "@/lib/supabase/server";
 import { getMeineGrenzen } from "@/lib/queries/verein";
-import { formatDate } from "@/lib/training";
+import { leseSortierung } from "@/lib/training-sortierung";
 import { kategorienSlugs } from "@/lib/vocab";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { ListeMitDetail } from "@/components/layout/ListeMitDetail";
+import { TrainingDetailSpalte } from "@/components/training/TrainingDetailSpalte";
+import { ladeTrainingAnsicht } from "@/lib/queries/training-ansicht";
+import { ANSICHT_PARAM, AUSWAHL_PARAM, auswahlHref, leseAuswahl, type DetailAnsicht } from "@/lib/training-auswahl";
+import { VARIANTE_PARAM } from "@/lib/varianten";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -25,6 +31,14 @@ export default async function TrainingsPage({
     stufen?: string;
     mine?: string;
     deleted?: string;
+    /** Die Sortierung (#629): Spalte und Richtung, ohne Angabe die Vorgabe. */
+    sort?: string;
+    dir?: string;
+    /** Das ausgewählte Training, sein Detail steht daneben (#630), mit der
+     *  angezeigten Variante und der offenen Ansicht des Detail. */
+    training?: string;
+    variante?: string;
+    ansicht?: string;
   }>;
 }) {
   const sp = await searchParams;
@@ -39,10 +53,41 @@ export default async function TrainingsPage({
   const mine = !!user && sp.mine === "1";
   const filtersActive = !!q || stufen.length > 0;
 
-  const trainings = await getTrainingPool({ q, stufen, mine });
+  const sortierung = leseSortierung(sp.sort, sp.dir);
+  // Die Übersicht gibt die Ordnung immer vor — auch mit Suchbegriff ordnet sie
+  // nach der Wahl bzw. dem Datum der letzten Änderung, nie nach Relevanz
+  // (#629 AK 7). Das Detail nur, wenn etwas ausgewählt ist — dann zusammen
+  // mit der Liste geladen.
+  const auswahl = leseAuswahl(sp);
   // Nur in «Meine Trainings» und nur für ein Konto ohne Verein (#588 AK 5, PC 3):
   // der Stand von der Datenebene, nie aus der gezählten Liste (Filter).
-  const grenzen = mine ? await getMeineGrenzen() : null;
+  const [trainings, ansicht, grenzen] = await Promise.all([
+    getTrainingPool({ q, stufen, mine, sortierung }),
+    auswahl ? ladeTrainingAnsicht(auswahl.training, user) : Promise.resolve(null),
+    mine ? getMeineGrenzen() : Promise.resolve(null),
+  ]);
+  // Nicht zugänglich (fremder Entwurf, gelöscht): die Übersicht mit Hinweis
+  // (PC 2). Zugänglich, aber nicht in der Liste — ausgefiltert oder ein
+  // Team-Training, das hier nie steht: Das Detail schliesst, und mit ihm die
+  // Auswahl in der Adresse (PC 3) — sonst kehrte es mit dem Zurücknehmen des
+  // Filters ungefragt wieder.
+  const nichtVerfuegbar = !!auswahl && !ansicht;
+  if (ansicht && !trainings.some((t) => t.id === ansicht.training.id)) {
+    const alle = Object.fromEntries(
+      Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === "string"),
+    );
+    redirect(auswahlHref("/trainings", alle, null));
+  }
+  const detail = ansicht;
+  // Was die Sortier-Links mitnehmen: alle Parameter ausser der einmaligen
+  // Meldung (#629 PC 2) — auch solche, die erst später dazukommen. Eine
+  // Auswahl ohne Detail (PC 2, 3) reist nicht weiter: Sie ist geschlossen.
+  const ohne = detail ? ["deleted"] : ["deleted", AUSWAHL_PARAM, VARIANTE_PARAM, ANSICHT_PARAM];
+  const parameter = Object.fromEntries(
+    Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === "string" && !ohne.includes(e[0])),
+  );
+  const detailHref = (wahl: { variante?: string; ansicht: DetailAnsicht } | null) =>
+    auswahlHref("/trainings", parameter, wahl && detail ? { training: detail.training.id, ...wahl } : null);
 
   return (
     <Seitenrahmen
@@ -62,9 +107,16 @@ export default async function TrainingsPage({
       <h1 className="sr-only">{mine ? "Meine Trainings" : "Trainings"}</h1>
       {sp.deleted && <Flash message="Training gelöscht." param="deleted" />}
 
-      {grenzen && <BestandAnzeige art="trainings" grenze={grenzen.trainings} className="mb-4" />}
+      {/* Schmal ersetzt das Detail die ganze Übersicht samt Filtern (AK 9). */}
+      <div className={detail ? "max-lg:hidden" : undefined}>
+        {grenzen && <BestandAnzeige art="trainings" grenze={grenzen.trainings} className="mb-4" />}
 
-      <TrainingFilterBar q={q} stufen={stufen} mine={mine} showMine={!!user} />
+        <TrainingFilterBar q={q} stufen={stufen} mine={mine} showMine={!!user} />
+
+        {/* Ein Zustand der Adresse, kein Vorgang: als Section Message, nicht
+            als Snackbar. Sie bleibt, bis man ein anderes Training wählt. */}
+        {nichtVerfuegbar && <SectionMessage className="mb-4">Dieses Training ist nicht verfügbar.</SectionMessage>}
+      </div>
 
       {trainings.length === 0 ? (
         <Leerzustand
@@ -86,29 +138,32 @@ export default async function TrainingsPage({
                 : "Es wurde noch kein Training veröffentlicht. Schau später wieder vorbei."}
         </Leerzustand>
       ) : (
-        <>
-          <p className="type-label-small mb-4 text-on-surface-mittel">
-            {trainings.length} {trainings.length === 1 ? "Training" : "Trainings"}
-          </p>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
-            {trainings.map((training) => (
-              <TrainingCard
-                key={training.id}
-                training={training}
-                // Je Eintrag, nicht je Ansicht: die Übersicht mischt beide
-                // Bestände, das eigene Training führt in den Editor, ein
-                // fremdes in die Ansicht (Story B AK 5).
-                href={
-                  training.istEigen
-                    ? `/training/${training.id}/edit`
-                    : `/training/${training.id}`
-                }
-                zeigeUrheber={!training.istEigen}
-                updatedLabel={formatDate(training.updatedAt)}
+        // Immer dieselbe Fläche, auch ohne Detail: So bleibt die Tabelle beim
+        // Öffnen und Schliessen dasselbe Element und weiss, welche Zeile zuvor
+        // ausgewählt war (Fokus, NFR 2).
+        <ListeMitDetail
+          spaltenName="Trainingsdetail"
+          links={
+            <TrainingTabelle
+              trainings={trainings}
+              sortierung={sortierung}
+              pfad="/trainings"
+              parameter={parameter}
+              ausgewaehlt={detail?.training.id}
+            />
+          }
+          rechts={
+            detail && auswahl && (
+              <TrainingDetailSpalte
+                ansicht={detail}
+                varianteParam={auswahl.variante}
+                offen={auswahl.ansicht}
+                hrefFuer={detailHref}
+                schliessenHref={detailHref(null)}
               />
-            ))}
-          </div>
-        </>
+            )
+          }
+        />
       )}
 
       {!user && <AnmeldeHinweis className="mt-8" />}

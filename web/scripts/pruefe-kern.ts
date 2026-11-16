@@ -4968,7 +4968,8 @@ pruefe("Konto ohne Verein (#588 AK 5, PC 3): Anzeige nur ohne Verein und aus der
   // Die Übersichten zeigen den Stand nur in «Meine …» und lesen ihn von der Datenebene, nicht aus der Liste.
   assert.match(lies("app/(app)/page.tsx"), /const grenzen = filters\.mine \? await getMeineGrenzen\(\) : null;/);
   assert.match(lies("app/(app)/page.tsx"), /\{grenzen && <BestandAnzeige art="uebungen" grenze=\{grenzen\.uebungen\}/);
-  assert.match(lies("app/(app)/trainings/page.tsx"), /const grenzen = mine \? await getMeineGrenzen\(\) : null;/);
+  // Die Trainingsübersicht lädt ihn mit Liste und Detail zusammen (#630).
+  assert.match(lies("app/(app)/trainings/page.tsx"), /mine \? getMeineGrenzen\(\) : Promise\.resolve\(null\),/);
   assert.match(lies("app/(app)/trainings/page.tsx"), /\{grenzen && <BestandAnzeige art="trainings" grenze=\{grenzen\.trainings\}/);
   // Anlegen: Meldung statt der Maske erst an der Grenze (`istVoll`, auch darüber), darunter die Zeile; ohne `grenzen` nichts.
   assert.match(lies("app/(app)/neu/page.tsx"), /const voll = grenzen !== null && istVoll\(grenzen\.uebungen\);/);
@@ -5020,12 +5021,22 @@ pruefe("Konto ohne Verein (#588 AK 5, 6): die Stufe vor Kopieren, Übernehmen un
   assert.match(menue, /aria-disabled=\{gesperrt \|\| undefined\}/);
   assert.match(menue, /if \(gesperrt\) return;\s*setOffen/);
   // Die Seiten geben die Lage mit (W2): mit Verein kein Aufruf der Bestands-Action.
-  for (const d of ["app/(app)/uebung/[slug]/page.tsx", "app/(app)/training/[id]/page.tsx", "app/(app)/training/[id]/edit/page.tsx"]) {
+  for (const d of ["app/(app)/uebung/[slug]/page.tsx", "app/(app)/training/[id]/edit/page.tsx"]) {
     const t = lies(d);
     assert.match(t, /getMeineGrenzenLage\(\)\]\)/, `${d}: Lage parallel zu den anderen Abfragen`);
     assert.match(t, /const mitGrenzen = grenzenLage !== "ohne";/, `${d}: unbekannt heisst nicht «ohne Grenzen»`);
     assert.match(t, /<KontoGrenzenLage mitGrenzen=\{mitGrenzen\}>/, d);
   }
+  // Ansichtsseite und Detail der Trainingsübersicht (#630) teilen die
+  // Zusammenstellung (`ladeTrainingAnsicht`).
+  const ansicht = lies("lib/queries/training-ansicht.ts");
+  assert.match(ansicht, /Promise\.all\(\[\s*getTrainingView\(id\),[^;]*getMeineGrenzenLage\(\)/, "Lage parallel zu den anderen Abfragen");
+  assert.match(ansicht, /mitGrenzen: grenzenLage !== "ohne",/, "unbekannt heisst nicht «ohne Grenzen»");
+  for (const d of ["app/(app)/training/[id]/page.tsx", "components/training/TrainingDetailSpalte.tsx"]) {
+    assert.match(lies(d), /<KontoGrenzenLage mitGrenzen=\{mitGrenzen\}>/, d);
+  }
+  assert.match(lies("app/(app)/training/[id]/page.tsx"), /await ladeTrainingAnsicht\(id\)/);
+  assert.match(lies("app/(app)/trainings/page.tsx"), /ladeTrainingAnsicht\(auswahl\.training, user\)/);
   const stufe = lies("components/konto/BestandStufe.tsx");
   assert.match(stufe, /if \(!mitGrenzen\) \{\s*ausfuehrenGesichert\(nr, false\);\s*return;\s*\}/, "mit Verein sofort, ohne Rundreise");
   assert.match(stufe, /ladeBestandAktion\(art\)/, "ohne Verein der Stand frisch, nicht von der Seite übernommen");

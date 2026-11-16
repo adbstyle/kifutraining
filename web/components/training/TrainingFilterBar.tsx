@@ -1,5 +1,7 @@
 "use client";
 
+import { ANSICHT_PARAM, AUSWAHL_PARAM } from "@/lib/training-auswahl";
+import { VARIANTE_PARAM } from "@/lib/varianten";
 import { ClipboardList } from "lucide-react";
 import { AuswahlFilter, Button, FilterChip, FilterSuche } from "@/components/ui";
 import { stufenOptionen } from "@/lib/filter-optionen";
@@ -24,7 +26,10 @@ export function TrainingFilterBar({
   mine?: boolean;
   showMine?: boolean;
 }) {
-  const filter = useAdressFilter();
+  // Die Sortierung ist kein Filter: Sie übersteht auch das Zurücksetzen
+  // (#629 PC 2), ebenso die Auswahl samt Detail (#630) — ohne Filter steht
+  // das ausgewählte Training sicher in der Liste.
+  const filter = useAdressFilter({ behalte: ["sort", "dir", AUSWAHL_PARAM, VARIANTE_PARAM, ANSICHT_PARAM] });
 
   const anyActive = q.trim().length > 0 || stufen.length > 0 || mine;
 

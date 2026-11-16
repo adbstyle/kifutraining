@@ -42,6 +42,7 @@ export function VariantenLinks({
   aktiv,
   hrefFuer,
   className,
+  scroll,
 }: {
   varianten: readonly Variante[];
   /** Die angezeigte Variante. `undefined` nur im Grenzfall eines Trainings
@@ -51,6 +52,9 @@ export function VariantenLinks({
   hrefFuer: (varianteId: string) => string;
   /** Vom Aufrufer, etwa `print:hidden` im Druck. */
   className?: string;
+  /** `false`: Der Wechsel bleibt an der Stelle — im Detail neben einer Liste
+   *  (Trainingsübersicht, #630). */
+  scroll?: boolean;
 }) {
   if (varianten.length < 2) return null;
 
@@ -67,6 +71,7 @@ export function VariantenLinks({
         <Link
           key={v.id}
           href={hrefFuer(v.id)}
+          scroll={scroll}
           aria-current={v.id === aktiv ? "page" : undefined}
           className={cn(
             chipTextBase,

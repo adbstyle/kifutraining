@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-11-15. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-11-16. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Seitenleiste
 
@@ -157,7 +157,8 @@ Jede Seite beginnt links neben der Leiste, nichts steht zentriert in der Mitte. 
 Übungen, Trainings, Teams, der Bereich eines Teams und die Übersicht der Teams und Spieler:innen
 eines Vereins — nutzen die ganze Breite des Fensters;
 die Kacheln reihen sich so dicht, wie Platz ist, auf einem breiten Bildschirm also in mehr
-Spalten. Formulare und Seiten zum Lesen behalten eine angenehme Lesebreite und stehen ebenfalls
+Spalten. Die Trainingsübersicht ist eine Tabelle; ein ausgewähltes Training steht daneben im
+Detail, auf einem schmalen Bildschirm an Stelle der Tabelle. Formulare und Seiten zum Lesen behalten eine angenehme Lesebreite und stehen ebenfalls
 links; geteilte Seiten — eine Übung, ein Training — nutzen auf einem breiten Bildschirm die ganze
 Fläche (siehe unten). Auch die Durchführung steht links.
 

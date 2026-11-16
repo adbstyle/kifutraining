@@ -7,8 +7,8 @@ import {
   ladeTrainingDetail,
   type TeamTrainingRow,
   type TrainingDetail,
-  type TrainingListFilters,
   type TrainingListRow,
+  type TrainingPoolFilter,
 } from "@/lib/queries/trainings-fuer";
 
 /**
@@ -117,7 +117,7 @@ export const getTrainingNavKontext = cache(
 /** Trainings-Übersicht mit der Anmeldung aus den Cookies — Regeln, Filter und
  *  Sortierung in `getTrainingPoolFuer`. */
 export async function getTrainingPool(
-  f: TrainingListFilters = {},
+  f: TrainingPoolFilter = {},
 ): Promise<TrainingListRow[]> {
   const supabase = await createClient();
   const {

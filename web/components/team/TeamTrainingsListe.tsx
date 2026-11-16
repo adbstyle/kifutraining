@@ -124,15 +124,12 @@ export function TeamTrainingsListe({
                 {t.stufen.map((k) => (
                   <KategorieLozenge key={k} k={k} />
                 ))}
-                {/* Dieselbe Marke wie auf der Trainings-Kachel, an derselben
-                    Stelle der Chip-Zeile: der Trainingsbestand des Teams
-                    zeigt Varianten genauso an (#206 AK 1). Die Liste
-                    dupliziert die Kachel-Anzeige bewusst — sie trägt eigene
-                    Aktionen und lässt sich darum nicht durch TrainingCard
-                    ersetzen. Als `discovery`-Lozenge wie auf der Karte: Die
-                    Zahl meldet etwas Zusätzliches am Training und keine
-                    Alterskategorie; Plural immer, die Marke erscheint
-                    erst ab zwei (AK 3). */}
+                {/* Der Trainingsbestand des Teams zeigt Varianten an
+                    (#206 AK 1) — er behält seine Kachel-Darstellung, die
+                    Trainingsübersicht ist seit #629 eine Tabelle (dort OOS 1).
+                    Als `discovery`-Lozenge: Die Zahl meldet etwas
+                    Zusätzliches am Training und keine Alterskategorie;
+                    Plural immer, die Marke erscheint erst ab zwei (AK 3). */}
                 {t.variantenZahl > 1 && (
                   <Lozenge appearance="discovery" iconBefore={Layers}>
                     {t.variantenZahl} Varianten
