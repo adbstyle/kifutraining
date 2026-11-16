@@ -320,9 +320,10 @@ export async function deleteTraining(trainingId: string, zurueck?: unknown): Pro
     // erwartet der Trainer den Beleg, dass es weg ist (Story 17): mit Termin
     // der Trainingsplan (ein Termin-Training steht nur dort), sonst der Bestand.
     // Aus dem Detail des Bestands zurück in denselben Bestand, mit Suche,
-    // Filter und Sortierung (#637 PC 5).
+    // Filter und Sortierung (#637 PC 5) — auch bei einem Altfall mit Termin:
+    // Wer im Bestand löscht, bleibt im Bestand.
     const bestand = `/team/${r.wert.teamId}/trainings`;
-    redirect(r.wert.terminBleibt ? `/team/${r.wert.teamId}` : (rueckwegNachLoeschen(zurueck, bestand) ?? bestand));
+    redirect(rueckwegNachLoeschen(zurueck, bestand) ?? (r.wert.terminBleibt ? `/team/${r.wert.teamId}` : bestand));
   }
   revalidatePath("/trainings");
   // Aus dem Detail der Übersicht zurück in dieselbe Übersicht — Suche, Filter

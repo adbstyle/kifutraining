@@ -9,16 +9,8 @@ import { TrainingFilterBar } from "@/components/training/TrainingFilterBar";
 import { TrainingTabelle } from "@/components/training/TrainingTabelle";
 import { getTeamTrainings } from "@/lib/queries/trainings";
 import { ladeTrainingAnsicht } from "@/lib/queries/training-ansicht";
-import {
-  ANSICHT_PARAM,
-  AUSWAHL_PARAM,
-  adressParameter,
-  auswahlHref,
-  leseAuswahl,
-  type DetailAnsicht,
-} from "@/lib/training-auswahl";
+import { auswahlLage, leseAuswahl } from "@/lib/training-auswahl";
 import { leseSortierung } from "@/lib/training-sortierung";
-import { VARIANTE_PARAM } from "@/lib/varianten";
 import { kategorienSlugs } from "@/lib/vocab";
 
 /* Der Trainingsbestand eines Teams (Story 17) — das Material, aus dem geplant
@@ -56,21 +48,14 @@ export default async function TeamTrainingsPage({
   const auswahl = leseAuswahl(sp);
 
   const [trainings, ansicht] = await Promise.all([
-    getTeamTrainings(id, { q, stufen, sortierung }),
+    getTeamTrainings(id, { q, stufen, sortierung, ohneTermin: true }),
     auswahl ? ladeTrainingAnsicht(auswahl.training) : Promise.resolve(null),
   ]);
-  // Wie in der Übersicht (#630 PC 2/3): nicht zugänglich → Hinweis;
-  // zugänglich, aber nicht in diesem Bestand (ausgefiltert, ein
-  // Termin-Training, ein fremdes) → die Auswahl schliesst.
-  const nichtVerfuegbar = !!auswahl && !ansicht;
-  if (ansicht && !trainings.some((t) => t.id === ansicht.training.id)) {
-    redirect(auswahlHref(pfad, adressParameter(sp), null));
-  }
-  const detail = ansicht;
-  const ohne = detail ? ["deleted"] : ["deleted", AUSWAHL_PARAM, VARIANTE_PARAM, ANSICHT_PARAM];
-  const parameter = adressParameter(sp, ohne);
-  const detailHref = (wahl: { variante?: string; ansicht: DetailAnsicht } | null) =>
-    auswahlHref(pfad, parameter, wahl && detail ? { training: detail.training.id, ...wahl } : null);
+  // Wie in der Übersicht: ein Termin-Training oder ein fremdes steht nicht
+  // in diesem Bestand — die Auswahl schliesst.
+  const lage = auswahlLage(sp, pfad, auswahl, ansicht, trainings);
+  if (lage.schliessenZu) redirect(lage.schliessenZu);
+  const { detail, nichtVerfuegbar, parameter, detailHref } = lage;
 
   return (
     <section>

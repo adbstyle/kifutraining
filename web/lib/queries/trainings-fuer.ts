@@ -562,6 +562,9 @@ export type TeamTrainingFilter = {
   /** Eine feste Ordnung (die Oberfläche, #637) wie in der Übersicht: gilt
    *  auch mit Suchbegriff. Ohne Angabe (der KI-Assistent) wie bisher. */
   sortierung?: TrainingSortierung;
+  /** Ohne den eingebetteten Termin (`termin` bleibt `null`): Die Tabelle des
+   *  Bestands nennt keinen (#637 OoS 2) und spart die Einbettung. */
+  ohneTermin?: boolean;
 };
 
 /** Der Trainingsbestand eines Teams. Team-Trainings erscheinen NIE im
@@ -583,7 +586,11 @@ export async function getTeamTrainingsFuer(
   if (!istUuid(teamId)) return [];
   // Der Bestand: ohne Termin-Trainings — sie leben mit ihrem Termin und
   // stehen nur im Trainingsplan (PO 2026-10-06).
-  let query = supabase.from("trainings").select(TEAM_LIST_SELECT).eq("team_id", teamId).eq("termin_training", false);
+  let query = supabase
+    .from("trainings")
+    .select(f.ohneTermin ? LIST_SELECT : TEAM_LIST_SELECT)
+    .eq("team_id", teamId)
+    .eq("termin_training", false);
   if (f.stufen?.length) query = query.overlaps("stufen", f.stufen);
 
   const hasQuery = !!f.q?.trim();

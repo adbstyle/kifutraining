@@ -15,15 +15,7 @@ import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { ListeMitDetail } from "@/components/layout/ListeMitDetail";
 import { TrainingDetailSpalte } from "@/components/training/TrainingDetailSpalte";
 import { ladeTrainingAnsicht } from "@/lib/queries/training-ansicht";
-import {
-  ANSICHT_PARAM,
-  AUSWAHL_PARAM,
-  adressParameter,
-  auswahlHref,
-  leseAuswahl,
-  type DetailAnsicht,
-} from "@/lib/training-auswahl";
-import { VARIANTE_PARAM } from "@/lib/varianten";
+import { auswahlLage, leseAuswahl } from "@/lib/training-auswahl";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -78,18 +70,9 @@ export default async function TrainingsPage({
   // Team-Training, das hier nie steht: Das Detail schliesst, und mit ihm die
   // Auswahl in der Adresse (PC 3) — sonst kehrte es mit dem Zurücknehmen des
   // Filters ungefragt wieder.
-  const nichtVerfuegbar = !!auswahl && !ansicht;
-  if (ansicht && !trainings.some((t) => t.id === ansicht.training.id)) {
-    redirect(auswahlHref("/trainings", adressParameter(sp), null));
-  }
-  const detail = ansicht;
-  // Was die Sortier-Links mitnehmen: alle Parameter ausser der einmaligen
-  // Meldung (#629 PC 2) — auch solche, die erst später dazukommen. Eine
-  // Auswahl ohne Detail (PC 2, 3) reist nicht weiter: Sie ist geschlossen.
-  const ohne = detail ? ["deleted"] : ["deleted", AUSWAHL_PARAM, VARIANTE_PARAM, ANSICHT_PARAM];
-  const parameter = adressParameter(sp, ohne);
-  const detailHref = (wahl: { variante?: string; ansicht: DetailAnsicht } | null) =>
-    auswahlHref("/trainings", parameter, wahl && detail ? { training: detail.training.id, ...wahl } : null);
+  const lage = auswahlLage(sp, "/trainings", auswahl, ansicht, trainings);
+  if (lage.schliessenZu) redirect(lage.schliessenZu);
+  const { detail, nichtVerfuegbar, parameter, detailHref } = lage;
 
   return (
     <Seitenrahmen

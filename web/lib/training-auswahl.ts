@@ -67,6 +67,35 @@ export function adressParameter(
   );
 }
 
+/** Was eine Übersicht mit Detail aus Adresse, Liste und geladenem Training
+ *  macht — EINE Regel für die Trainingsübersicht (#630) und den Bestand
+ *  eines Teams (#637):
+ *  - nicht zugänglich (fremder Entwurf, gelöscht) → kein Detail, Hinweis
+ *    (`nichtVerfuegbar`, PC 2);
+ *  - zugänglich, aber nicht in der Liste (ausgefiltert, anderswo zu Hause) →
+ *    die Auswahl schliesst samt Adresse (`schliessenZu`, PC 3) — sonst kehrte
+ *    sie mit dem Zurücknehmen des Filters ungefragt wieder;
+ *  - `parameter`: was Sortier- und Zeilen-Links mitnehmen — ohne die
+ *    einmalige Meldung, und ohne eine geschlossene Auswahl. */
+export function auswahlLage<D extends { training: { id: string } }>(
+  sp: Record<string, string | string[] | undefined>,
+  pfad: string,
+  auswahl: TrainingAuswahl | null,
+  geladen: D | null,
+  liste: readonly { id: string }[],
+) {
+  const schliessenZu =
+    geladen && !liste.some((t) => t.id === geladen.training.id) ? auswahlHref(pfad, adressParameter(sp), null) : null;
+  const detail = schliessenZu ? null : geladen;
+  const parameter = adressParameter(
+    sp,
+    detail ? ["deleted"] : ["deleted", AUSWAHL_PARAM, VARIANTE_PARAM, ANSICHT_PARAM],
+  );
+  const detailHref = (wahl: { variante?: string; ansicht: DetailAnsicht } | null) =>
+    auswahlHref(pfad, parameter, wahl && detail ? { training: detail.training.id, ...wahl } : null);
+  return { detail, nichtVerfuegbar: !!auswahl && !geladen, schliessenZu, parameter, detailHref };
+}
+
 /** Wohin das Löschen aus dem Detail zurückführt (#630 PC 4, #637 PC 5):
  *  dieselbe Übersicht — die Trainingsübersicht oder der Bestand eines Teams,
  *  `pfad` — mit Suche, Filter und Sortierung, ohne Auswahl, mit der
