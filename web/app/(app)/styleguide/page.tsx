@@ -81,6 +81,7 @@ import { MaterialDemo } from "./MaterialDemo";
 import { FelderDemo } from "./FelderDemo";
 import { MiniMonatDemo } from "./MiniMonatDemo";
 import { LozengeAuswahlDemo } from "./LozengeAuswahlDemo";
+import { ListenGruppenDemo } from "./ListenGruppenDemo";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { ErscheinungsbildDemo } from "./ErscheinungsbildDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
@@ -2741,6 +2742,16 @@ export default async function Styleguide() {
           </p>
           <div className="mb-6">
             <LozengeAuswahlDemo />
+          </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>ListenGruppen</strong> (#599): eine Liste in Gruppen - je Gruppe eine kleine Überschrift mit
+            Anzahl, etwa «Angemeldet · 5», darunter ihre Zeilen auf einer Fläche. Neu, weil die Spieler:innen eines
+            Termins nach ihrem Status getrennt stehen; die Überschrift folgt den Gruppen im Reiter «Trainer:innen».
+            Leere Gruppen erscheinen nicht. Wechselt eine Zeile die Gruppe, folgt ihr der Fokus
+            (<code>useFokusFolgt</code>). Jede Gruppe ist ein benannter Abschnitt.
+          </p>
+          <div className="mb-6">
+            <ListenGruppenDemo />
           </div>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Treffpunkte</strong> (<code>TreffpunktListe</code>, #465): die Treffpunkte eines Spiels in drei
