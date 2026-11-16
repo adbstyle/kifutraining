@@ -53,6 +53,7 @@ import {
   Tabelle,
   TabellenZeile,
   SortierKopf,
+  DetailKopf,
   Gefahrenzone,
 } from "@/components/ui";
 import { HinweisEltern } from "@/components/privat/HinweisEltern";
@@ -127,6 +128,10 @@ import {
   Clock,
   LandPlot,
   History,
+  Play,
+  Printer,
+  Maximize2,
+  MoreVertical,
   type LucideIcon,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
@@ -271,6 +276,7 @@ const GLIEDERUNG = [
         titel: "Layout und Struktur",
         eintraege: [
           { id: "liste-detail", titel: "Liste mit Detail daneben" },
+          { id: "detail-kopf", titel: "Detailkopf" },
           { id: "disclosure", titel: "Disclosure" },
           { id: "gefahrenzone", titel: "Gefahrenzone" },
           { id: "namen-bestaetigen", titel: "Namen bestätigen" },
@@ -3463,6 +3469,53 @@ export default async function Styleguide() {
           <OeffnenZeileDemo />
         </Section>
 
+        <Section id="detail-kopf">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Der Kopf eines Detail, das neben einer Liste steht - das ausgewählte
+            Training neben der Trainingsübersicht (#630). Neu als Baustein
+            (<code>DetailKopf</code>), weil der Seitenkopf (Brotkrumen und
+            Aktionen) zur Seite gehört und nicht zu einem Eintrag in ihr: Name,
+            Aktionen und Schliessen stehen hier in einer Zeile über dem Detail.
+            Links der Name als Überschrift, die umbricht statt die Knöpfe zu
+            verdrängen; rechts auf Titelhöhe die Icon-Knöpfe - vorne
+            Bearbeiten am eigenen bzw. Öffnen am fremden Eintrag, dann die
+            übrigen Aktionen und das ⋮. Ein senkrechter Trenner (1 px, 20 px hoch,{" "}
+            <code>linie</code>) scheidet sie vom X, das das Detail schliesst:
+            Schliessen betrifft die Ansicht, nicht den Eintrag. Das X ist ein Link
+            ohne Sprung (<code>scroll=&#123;false&#125;</code>) auf die Adresse
+            ohne Auswahl - die Liste behält ihre Stelle, der Fokus kehrt auf die
+            zuvor gewählte Zeile zurück.
+          </p>
+          <div className="max-w-md rounded-flaeche bg-elev-02 p-4">
+            <DetailKopf
+              titel="Passspiel im Quadrat"
+              schliessenHref="#detail-kopf"
+              aktionen={
+                <>
+                  <IconButtonLink href="#detail-kopf" icon={Pencil} label="Bearbeiten" />
+                  <IconButtonLink href="#detail-kopf" icon={Play} label="Durchführen" />
+                  <IconButtonLink href="#detail-kopf" icon={Printer} label="Drucken" />
+                  <IconButton icon={MoreVertical} label="Weitere Aktionen" />
+                </>
+              }
+            />
+          </div>
+          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">Fremder Eintrag, langer Name</p>
+          <div className="max-w-md rounded-flaeche bg-elev-02 p-4">
+            <DetailKopf
+              titel="Abschluss unter Druck mit zwei Toren und wechselnden Zonen"
+              schliessenHref="#detail-kopf"
+              aktionen={
+                <>
+                  <IconButtonLink href="#detail-kopf" icon={Maximize2} label="Öffnen" />
+                  <IconButtonLink href="#detail-kopf" icon={Play} label="Durchführen" />
+                  <IconButtonLink href="#detail-kopf" icon={Printer} label="Drucken" />
+                </>
+              }
+            />
+          </div>
+        </Section>
+
         <Section id="disclosure">
           <p className="type-body-medium max-w-2xl text-on-surface-mittel">
             Ein Abschnitt, der zugeklappt beginnt. Gedacht für lange Listen, die
@@ -3639,8 +3692,10 @@ export default async function Styleguide() {
             Richtung um, eine neue beginnt bei Text mit A-Z, bei Zahlen und Datum
             mit dem Grössten. Ohne <code>href</code> ist ein Kopf fest (hier
             «Sichtbarkeit»). Die ganze Zeile hellt beim Überfahren auf; ihr
-            einziger Link ist der Name, dessen Fläche über die Zeile reicht.
-            Schmal fallen die Köpfe weg, die Angaben stehen unter dem Namen, und
+            einziger Link ist der Name, dessen Fläche über die Zeile reicht. Er
+            wählt die Zeile aus, ihr Detail steht daneben (<Siehe id="detail-kopf" />):
+            Die ausgewählte Zeile ist betont (<code>betont</code>), ihr Link
+            trägt <code>aria-current</code>. Schmal fallen die Köpfe weg, die Angaben stehen unter dem Namen, und
             sortiert wird über einen <code>ChipMenu</code> über der Tabelle.
           </p>
           <div className="overflow-hidden rounded-flaeche bg-elev-01">

@@ -11,7 +11,7 @@ import { useSeitenleiste } from "./AppRahmen";
  * (Cookie über `useSeitenleiste`), die laufende beim Ziehen und die
  * tatsächlich gemessene Spur (Vorlesehilfe, Pfeiltasten). Die Spalte ist die
  * dritte Spur des Rasters von `flaeche` (Inhalt · Griff · Spalte). Geteilt von
- * `ZweiSpalten` und dem Trainingsplan mit geöffnetem Termin (`PlanGeteilt`).
+ * `ZweiSpalten` und dem Trainingsplan mit geöffnetem Termin und der Trainingsübersicht mit ausgewähltem Training (`ListeMitDetail`).
  */
 export function useSpaltenGriff(flaeche: RefObject<HTMLDivElement | null>, spaltenName: string) {
   const { spalte: gespeichert, setzeSpalte } = useSeitenleiste();

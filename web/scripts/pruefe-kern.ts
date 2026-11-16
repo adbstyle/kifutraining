@@ -5020,12 +5020,22 @@ pruefe("Konto ohne Verein (#588 AK 5, 6): die Stufe vor Kopieren, Übernehmen un
   assert.match(menue, /aria-disabled=\{gesperrt \|\| undefined\}/);
   assert.match(menue, /if \(gesperrt\) return;\s*setOffen/);
   // Die Seiten geben die Lage mit (W2): mit Verein kein Aufruf der Bestands-Action.
-  for (const d of ["app/(app)/uebung/[slug]/page.tsx", "app/(app)/training/[id]/page.tsx", "app/(app)/training/[id]/edit/page.tsx"]) {
+  for (const d of ["app/(app)/uebung/[slug]/page.tsx", "app/(app)/training/[id]/edit/page.tsx"]) {
     const t = lies(d);
     assert.match(t, /getMeineGrenzenLage\(\)\]\)/, `${d}: Lage parallel zu den anderen Abfragen`);
     assert.match(t, /const mitGrenzen = grenzenLage !== "ohne";/, `${d}: unbekannt heisst nicht «ohne Grenzen»`);
     assert.match(t, /<KontoGrenzenLage mitGrenzen=\{mitGrenzen\}>/, d);
   }
+  // Ansichtsseite und Detail der Trainingsübersicht (#630) teilen die
+  // Zusammenstellung (`ladeTrainingAnsicht`).
+  const ansicht = lies("lib/queries/training-ansicht.ts");
+  assert.match(ansicht, /Promise\.all\(\[\s*getTrainingView\(id\),[^;]*getMeineGrenzenLage\(\)/, "Lage parallel zu den anderen Abfragen");
+  assert.match(ansicht, /mitGrenzen: grenzenLage !== "ohne",/, "unbekannt heisst nicht «ohne Grenzen»");
+  for (const d of ["app/(app)/training/[id]/page.tsx", "components/training/TrainingDetailSpalte.tsx"]) {
+    assert.match(lies(d), /<KontoGrenzenLage mitGrenzen=\{mitGrenzen\}>/, d);
+  }
+  assert.match(lies("app/(app)/training/[id]/page.tsx"), /await ladeTrainingAnsicht\(id\)/);
+  assert.match(lies("app/(app)/trainings/page.tsx"), /ladeTrainingAnsicht\(auswahl\.training, user\)/);
   const stufe = lies("components/konto/BestandStufe.tsx");
   assert.match(stufe, /if \(!mitGrenzen\) \{\s*ausfuehrenGesichert\(nr, false\);\s*return;\s*\}/, "mit Verein sofort, ohne Rundreise");
   assert.match(stufe, /ladeBestandAktion\(art\)/, "ohne Verein der Stand frisch, nicht von der Seite übernommen");

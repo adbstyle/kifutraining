@@ -43,6 +43,7 @@ export { TextField } from "./TextField";
 export { KopierFeld } from "./KopierFeld";
 export { Tabelle, TabellenZeile } from "./Tabelle";
 export { SortierKopf } from "./SortierKopf";
+export { DetailKopf } from "./DetailKopf";
 export type { TextFieldProps } from "./TextField";
 export { HeadlineField } from "./HeadlineField";
 export type { HeadlineFieldProps } from "./HeadlineField";

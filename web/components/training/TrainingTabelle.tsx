@@ -14,6 +14,9 @@ import {
   type TrainingSortierung,
 } from "@/lib/training-sortierung";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
+import { ANSICHT_PARAM, auswahlHref } from "@/lib/training-auswahl";
+import { cn } from "@/lib/cn";
+import { TabellenAuswahl } from "./TabellenAuswahl";
 
 /* Die Trainingsübersicht als Tabelle (#629, Design-Variante A2). Die Zeilen
    kommen bereits sortiert vom Server (`sortiereTrainings`); die Tabelle zeigt
@@ -25,11 +28,15 @@ import { altersstufe as altersstufeLabels } from "@/lib/vocab";
    stehen als zweite Zeile darunter, und sortiert wird über den Chip über der
    Tabelle (`TrainingSortierWahl`) — die Seite scrollt nie seitwärts. */
 
-/** Wohin eine Zeile führt — an EINER Stelle: das eigene Training in den
- *  Editor, ein fremdes in die Ansicht (#629 AK 10, Story B AK 5). Der Name ist
- *  der einzige Link der Zeile; seine Fläche reicht über die ganze Zeile. */
-function zeilenZiel(training: TrainingListRow): string {
-  return training.istEigen ? `/training/${training.id}/edit` : `/training/${training.id}`;
+/** Wohin eine Zeile führt — an EINER Stelle: in dieselbe Übersicht mit
+ *  diesem Training ausgewählt; sein Detail steht daneben (#630 AK 1). Die
+ *  offene Ansicht des Detail bleibt beim Wechsel, die Variante beginnt wieder
+ *  bei der vordersten. Bearbeitung und Ansicht erreicht man aus dem Detail
+ *  (hebt #629 AK 10 auf). Der Name ist der einzige Link der Zeile; seine
+ *  Fläche reicht über die ganze Zeile. */
+function zeilenZiel(training: TrainingListRow, pfad: string, parameter: Record<string, string>): string {
+  const ansicht = parameter[ANSICHT_PARAM] === "eigenschaften" ? "eigenschaften" : undefined;
+  return auswahlHref(pfad, parameter, { training: training.id, ansicht });
 }
 
 /** Die Alterskategorien als Satz, z. B. «Kategorien F, E»; leer, solange ein
@@ -44,6 +51,7 @@ export function TrainingTabelle({
   sortierung,
   pfad,
   parameter,
+  ausgewaehlt,
 }: {
   trainings: TrainingListRow[];
   sortierung: TrainingSortierung;
@@ -52,6 +60,8 @@ export function TrainingTabelle({
   /** Die übrigen Adressparameter (Suche, Filter); die Sortier-Links nehmen sie
    *  mit (#629 PC 2). */
   parameter: Record<string, string>;
+  /** Das ausgewählte Training, dessen Detail daneben steht (#630). */
+  ausgewaehlt?: string;
 }) {
   const href = (s: TrainingSortierung) => sortierHref(pfad, parameter, s);
   const kopf = (spalte: SortierSpalte) => ({
@@ -94,6 +104,7 @@ export function TrainingTabelle({
         />
       </div>
 
+      <TabellenAuswahl ausgewaehlt={ausgewaehlt} />
       <div className="overflow-hidden rounded-flaeche bg-elev-01">
         <table className="w-full border-collapse">
           <caption className="sr-only">
@@ -120,7 +131,8 @@ export function TrainingTabelle({
           </thead>
           <tbody className="divide-y divide-linie">
             {trainings.map((training) => {
-              const ziel = zeilenZiel(training);
+              const ziel = zeilenZiel(training, pfad, parameter);
+              const gewaehlt = training.id === ausgewaehlt;
               const altersstufe = altersstufeLabels[training.altersstufe];
               const kategorien = kategorienText(training);
               const dauer = training.hasAnyDuration ? formatDuration(training.totalDuration) : null;
@@ -131,7 +143,10 @@ export function TrainingTabelle({
                 // `relative`); die Fläche des Namens-Links reicht über sie,
                 // wie in den Übungszeilen eines Trainings (`UebungsName`):
                 // ein Link, ein Tabstopp, die ganze Zeile als Trefferfläche.
-                <tr key={training.id} className="state">
+                // Die ausgewählte Zeile ist betont (#630 AK 2) wie die aktive
+                // Zeile in Leiste und Verzeichnis; ihr Link trägt
+                // `aria-current`.
+                <tr key={training.id} className={cn("state", gewaehlt && "betont")}>
                   {/* Altersstufe als Text; die Alterskategorien erkennbar, ohne
                       die Zeile zu belegen (#629 AK 3): beim Überfahren und für
                       die Vorlesehilfe. */}
@@ -148,6 +163,10 @@ export function TrainingTabelle({
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <Link
                         href={ziel}
+                        // Die Tabelle bleibt an ihrer Stelle (NFR 1).
+                        scroll={false}
+                        aria-current={gewaehlt ? "true" : undefined}
+                        data-training-zeile={training.id}
                         className="focus-ring rounded-klein type-body-medium text-on-surface before:absolute before:inset-0 before:content-[''] hover:underline"
                       >
                         {training.name}

@@ -8,6 +8,7 @@ import { ZIEL_MAX } from "@/lib/training";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { loescheTraining } from "@/lib/kern/loeschen";
 import { kategorienSlugs } from "@/lib/vocab";
+import { rueckwegNachLoeschen } from "@/lib/training-auswahl";
 import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag } from "@/lib/kern/ergebnis";
 import {
   TEAM_OHNE_ENTWURF,
@@ -304,7 +305,7 @@ export async function removeTrainingExercise(
  *  Ein Team-Training löscht das ganze Team-Exemplar — jedes Mitglied darf das
  *  (Story 6); die Rückkehr führt dann in den Team-Bereich statt in die eigene
  *  Übersicht. Wer nur seine eigene Kopie will, übernimmt sie vorher zu sich. */
-export async function deleteTraining(trainingId: string): Promise<void> {
+export async function deleteTraining(trainingId: string, zurueck?: unknown): Promise<void> {
   const a = await angemeldet();
   if (!a) return;
 
@@ -321,7 +322,11 @@ export async function deleteTraining(trainingId: string): Promise<void> {
     redirect(r.wert.terminBleibt ? `/team/${r.wert.teamId}` : `/team/${r.wert.teamId}/trainings`);
   }
   revalidatePath("/trainings");
-  redirect("/trainings?mine=1&deleted=1");
+  // Aus dem Detail der Übersicht zurück in dieselbe Übersicht — Suche, Filter
+  // und Sortierung bleiben, das Detail schliesst (#630 PC 4). Die Angabe kommt
+  // vom Client: nur eine Adresse der Übersicht zählt. Gebunden als zweites
+  // Argument; ohne sie steht an dieser Stelle das FormData des Formulars.
+  redirect(rueckwegNachLoeschen(zurueck) ?? "/trainings?mine=1&deleted=1");
 }
 
 // ── Story #11: Dauer je Zuordnung erfassen/ändern/entfernen ──────────────────
