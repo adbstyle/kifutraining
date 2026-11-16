@@ -1,6 +1,6 @@
 # KiFu – Produktwissen für die Einordnung von User-Feedback
 
-Stand 2026-11-15 (Release 1.48.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
+Stand 2026-11-16 (Release 1.49.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
 gedacht als Kontext für ein kleines Modell (z. B. Haiku), das Rückmeldungen von Nutzer:innen
 einordnet. Rückmeldungen sind **Fehlermeldungen ebenso wie Feature-Wünsche**: Das Modell erkennt,
 was die Person meint, gleicht es mit dem heutigen Stand ab und stellt die Rückfragen, mit denen sich
@@ -259,7 +259,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Konto ohne Verein: höchstens 30 eigene Trainings.** Zählen: alle persönlichen (Entwurf/öffentlich, angelegt/übernommen, persönliche Kopie eines Team-Trainings). Nicht: Team- und Termin-Trainings, Varianten, Gruppen, Übungen. Anzeige in „Meine Trainings" („3 von 30 Trainings", „Nichts mehr frei", „34 Trainings (höchstens 30)"); „Neues Training" an der Grenze mit Meldung „Nichts mehr frei: 30 von 30 Trainings"; „Übernehmen" über Dialog mit Stand. Bestehendes bleibt bearbeitbar/löschbar. In einem Verein keine Grenze.
 
-**Trainingsübersicht:** öffentliche + eigene (inkl. Entwürfe), Schalter „nur eigene". Suche über Namen, Filter Alterskategorie. Ohne Suchbegriff zuletzt geändert oben. Marke mit Variantenzahl; Übungszahl/Dauer beziehen sich auf die erste Variante. **Team-Trainings erscheinen hier nie.**
+**Trainingsübersicht:** öffentliche + eigene (inkl. Entwürfe), Schalter „nur eigene". **Tabelle** (keine Kacheln mehr): Altersstufe (Kategorien beim Überfahren; schmal in 2. Zeile), Name (+ Marke „2 Varianten"), Sichtbarkeit/Urheber, Übungen, Dauer („Keine Dauer"), Geändert. Übungszahl/Dauer = vorderste Variante. Sortierbar nach Altersstufe, Name, Übungen, Dauer, Geändert (Spaltenkopf; schmal eigener Knopf), steht in der Adresse und bleibt bei Suche/Filter. Ohne Wahl: zuletzt geändert oben, **auch mit Suchbegriff** (Suche grenzt nur ein, keine Relevanz-Ordnung). Gleichstand → Änderungsdatum; ohne Dauer immer am Ende. Klick auf Zeile → **Detail daneben** (schmal: ersetzt Tabelle): Reiter Übungen/Eigenschaften, Varianten umschaltbar, Aktionen wie in der Ansicht, nichts direkt änderbar. Unzugängliches Training in der Adresse → „Dieses Training ist nicht verfügbar." Detail schliesst, wenn das Training herausgefiltert oder gelöscht wird. **Team-Trainings erscheinen hier nie.**
 
 ---
 
@@ -342,6 +342,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Verlegen oder Kader-Wegfall → ihre Anmeldung **verfällt** (Rückfrage nennt „Anmeldung einer schnuppernden Spieler:in"); gilt das Training wieder → nicht angemeldet.
 
 **Ab- und Anmelden (Trainings):** Jede Spieler:in ist **standardmässig angemeldet**, bis abgemeldet. Kein „keine Rückmeldung". Bis Beginn, nie an ausgefallenem Termin. Durch Mitglieder (Reiter „Spieler:innen", Schalter) oder Eltern (privater Link). Wer gesetzt hat, wird nicht festgehalten; letzte gilt. Kein Grund.
+- Liste in Gruppen „Angemeldet" / „Abgemeldet" (nicht angemeldete Schnuppernde bei den Abgemeldeten), ab Beginn „Da" / „Nicht da"; mit Anzahl, leere ausgeblendet, Zahl folgt der Kader-Eingrenzung. Umgelegte Zeile springt sofort in die andere Gruppe.
 - Zeitangabe links vom Schalter: seit wann der Status gilt („gerade eben", „vor 3 Stunden", „gestern", …); nur bei echtem Wechsel.
 - **Datum oder Beginn geändert** (noch nicht begonnen) → **alle Abmeldungen verfallen**, alle wieder angemeldet (Rückfrage mit Zahl; Eltern sehen „Deine Abmeldung gilt nicht mehr"). Ende/Ort/Treffpunkt/Bemerkung/Hinweis für Eltern/Felder/Training ändern lässt sie stehen (reine Treffpunktänderung = keine Verlegung).
 - Ab- oder Anmelden an inzwischen verlegtem/ausgefallenem/begonnenem Termin → abgewiesen mit aktuellem Stand („Der Termin wurde inzwischen verlegt …").
@@ -349,7 +350,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Spiele:** Art „Spiel"; Bezeichnung Pflicht (max. 120); Anpfiff muss **in der Zukunft** liegen (kein Nachtragen vergangener Spiele, keine Verlegung in die Vergangenheit). Kein Training, keine Felder, keine erwartete Zahl, keine Serie. Optional: Ort, Bemerkung (nur fürs Team), Hinweis für Eltern (**für Eltern sichtbar**, ausser bei Ausfall; frühere Spiel-Bemerkungen sind seit #590 dorthin umgezogen), Kader, Mindestbesetzung, Mindest-/Höchstzahl (1–200, begrenzt Anmeldungen nicht), Meldefrist (vor Anpfiff, max. 1 Jahr, vergangene erlaubt), Treffpunkte (je Anreiseart max. 1, total max. 5; „vor Ort" ohne eigenen Ort).
 - **Status** (Plan): „Zu wenig" rot (< Min), „Knapp" gelb (= Min), „Genügend" grün (bis Max), „Zu viel" rot (> Max). Ohne Richtwert oder ohne Spielerliste kein Status.
-- **Melden:** Jede Spieler:in **zuerst ohne Meldung**; gezählt nur Angemeldete. Zurück auf „ohne Meldung" unmöglich. Mitglieder bis Anpfiff (auch nach Frist), Eltern bis Meldefrist (ohne Frist bis Anpfiff). Plaketten: „Ohne Meldung" gelb, „Angemeldet" grün, „Abgemeldet" rot, „Nicht aufgeboten" rot; nach Frist „Meldefrist verpasst" rot. Menü auf der Plakette.
+- **Melden:** Jede Spieler:in **zuerst ohne Meldung**; gezählt nur Angemeldete. Zurück auf „ohne Meldung" unmöglich. Mitglieder bis Anpfiff (auch nach Frist), Eltern bis Meldefrist (ohne Frist bis Anpfiff). Plaketten: „Ohne Meldung" gelb, „Angemeldet" grün, „Abgemeldet" rot, „Nicht aufgeboten" rot; nach Frist „Meldefrist verpasst" rot. Menü auf der Plakette. Liste in Gruppen Angemeldet · Ohne Meldung (nach Frist „Meldefrist verpasst") · Abgemeldet · Nicht aufgeboten, mit Anzahl, leere ausgeblendet; ab Anpfiff „Da" / „Nicht da". Zeile springt beim Wechsel sofort in die neue Gruppe.
 - **Nicht aufbieten** (nur Mitglieder): Meldung bleibt darunter, zählt nicht als angemeldet; Eltern sehen die Kennzeichnung.
 - Nach Meldefrist (mit Richtwert + Spielerliste): grosse Karte in der Liste mit Handlungshinweis („Es fehlen 2 bis zur Mindestzahl 9 …"). Erscheint erst beim nächsten Laden.
 - Ab Anpfiff: Stand beim Anpfiff, Nachträge wie bei Trainings.
@@ -433,6 +434,10 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Termin-Training wurde gelöscht, nachdem es vom Termin gelöst/ersetzt oder der Termin entfernt wurde.
 - Ein Training/Team-Training erscheint nicht in der allgemeinen Trainingsübersicht (Team-Trainings leben nur im Team).
 - Ein Termin-Training steht nicht im Team-Bestand.
+- Suche in der Trainingsübersicht ordnet nicht nach Treffergüte → Absicht seit 1.49.0: zuletzt geändert oben bzw. gewählte Sortierung.
+- Trainingsübersicht zeigt keine Kacheln mehr, sondern eine Tabelle; eine Umschaltung zurück gibt es nicht.
+- Spieler:in steht nach dem Umlegen/Melden an anderer Stelle → sie ist in die Gruppe ihres neuen Status gesprungen.
+- Gruppe fehlt im Reiter „Spieler:innen" → leere Gruppen sind ausgeblendet. Meldefrist, Beginn und Änderungen anderer erscheinen erst nach dem Neuladen.
 - Änderung an einem öffentlichen Training wird abgelehnt (würde Veröffentlichungsbedingung verletzen → erst auf Entwurf).
 - Änderungen an einer Bibliotheks-Übung kommen nicht im Training an (und umgekehrt).
 - Kopie einer Manual-Übung heisst gleich wie das Original; Kopie einer eigenen heisst „… (Kopie)".

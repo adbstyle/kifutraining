@@ -1,6 +1,6 @@
 # Trainings
 
-Stand 2026-11-15. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-11-16. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
 
 ## Die Altersstufe wird beim Anlegen gewählt
@@ -522,20 +522,46 @@ entsteht eine private, frei bearbeitbare Kopie des ganzen Trainings, samt seinem
 
 Die Übersicht zeigt beides zusammen: die öffentlichen Trainings der Community, die auch ohne
 Konto zugänglich sind, und die eigenen, Entwürfe eingeschlossen. Ein Schalter grenzt auf die
-eigenen ein. An jedem Eintrag stehen die Alterskategorien, an denen sich auch die Altersstufe
-abliest; die Altersstufe selbst ist nur angeschrieben, solange ein Entwurf noch keine Kategorie
-hat. An jedem eigenen Eintrag steht zusätzlich, ob er ein Entwurf oder öffentlich ist; er führt
-in die Bearbeitung, ein fremder in die Ansicht. Den Abschluss jedes Eintrags bilden Urheber (nur
-an fremden) und das Datum der letzten Änderung in kurzer Form (16.09.26). Besucher ohne Konto sehen ausschliesslich die öffentlichen Trainings. Gesucht wird
-über den Namen, gefiltert nach Alterskategorie, deren Werte wie im Übungskatalog nach
-Altersstufe beschriftet sind; das Suchfeld lässt sich wie dort mit einem Klick auf das Kreuz
-leeren. Ohne Suchbegriff steht das zuletzt Geänderte
-oben, mit Suchbegriff das, was am ehesten gemeint ist. Führt ein Training mehr als eine Variante
-seines Hauptteils, steht deren Zahl als Marke am Eintrag — hier wie im Trainingsbestand eines
-Teams; sonst bliebe verborgen, dass es Alternativen gibt. Übungszahl und Dauer daneben beziehen
-sich dann auf die erste Variante: Gespielt wird ohnehin nur eine, und die Summe über alle wäre
-eine Dauer, die dieses Training nie hat. Team-Trainings erscheinen hier nicht;
-sie leben im Team-Bereich.
+eigenen ein. Besucher ohne Konto sehen ausschliesslich die öffentlichen Trainings. Team-Trainings
+erscheinen hier nicht; sie leben im Team-Bereich.
+
+Die Trainings stehen als Tabelle, ein Training je Zeile, über der Tabelle ihre Zahl. Die Spalten
+sind Altersstufe, Name, Sichtbarkeit bzw. Urheber, Übungen, Dauer und „Geändert" (das Datum der
+letzten Änderung in kurzer Form, 16.09.26). Die Alterskategorien zeigt die Altersstufe beim
+Überfahren, und Vorlesehilfen lesen sie mit. An einem eigenen Training steht, ob es ein Entwurf
+oder öffentlich ist, an einem fremden sein Urheber, sofern es einen führt. Führt ein Training mehr
+als eine Variante seines Hauptteils, steht deren Zahl als Marke neben dem Namen, etwa „2
+Varianten" — hier wie im Trainingsbestand eines Teams; sonst bliebe verborgen, dass es
+Alternativen gibt. Übungszahl und Dauer beziehen sich dann auf die vorderste Variante: Gespielt
+wird ohnehin nur eine, und die Summe über alle wäre eine Dauer, die dieses Training nie hat. Ohne
+erfasste Dauer steht „Keine Dauer". Auf einem schmalen Bildschirm stehen die übrigen Angaben samt
+Alterskategorien in einer zweiten Zeile unter dem Namen.
+
+Sortieren lässt sich nach Altersstufe, Name, Übungen, Dauer und „Geändert", je auf- und
+absteigend, mit einem Klick auf den Spaltenkopf; ein Pfeil zeigt, wonach und in welcher Richtung
+sortiert ist. Auf einem schmalen Bildschirm wählt man die Sortierung über einen eigenen Knopf.
+Solange keine gewählt ist, steht das zuletzt Geänderte oben, auch mit Suchbegriff: Die Suche
+grenzt nur ein. Bei gleichem Wert entscheidet das Datum der letzten Änderung, und Trainings ohne
+Dauer stehen beim Sortieren nach Dauer in beiden Richtungen am Ende. Die gewählte Sortierung steht
+in der Adresse, übersteht also Neuladen und geteilte Links, und bleibt, wenn man Suchbegriff oder
+Filter ändert. Gesucht wird über den Namen, gefiltert nach Alterskategorie, deren Werte wie im
+Übungskatalog nach Altersstufe beschriftet sind; das Suchfeld lässt sich wie dort mit einem Klick
+auf das Kreuz leeren.
+
+Ein Klick auf eine Zeile wählt das Training aus: Es ist in der Tabelle hervorgehoben und steht
+daneben im Detail, auf einem schmalen Bildschirm an Stelle der Tabelle, bis man es schliesst. Das
+Detail zeigt wie die Ansicht Name, Alterskategorien, Dauer und Ziel, darunter in zwei Reitern die
+Trainingsteile mit ihren Übungen, deren Dauer und Feld-Diagramm oder Bild, oder die Eigenschaften.
+Führt das Training mehrere Varianten, lässt sich jede anzeigen, beginnend mit der vordersten. Die
+Aktionen sind dieselben wie in der Ansicht, je nach Berechtigung: durchführen und drucken (mit der
+angezeigten Variante), bearbeiten, übernehmen, veröffentlichen oder auf Entwurf setzen, ins Team
+stellen, einem Team-Termin zuordnen und löschen; ein fremdes Training lässt sich zudem in seiner
+Ansicht öffnen. Ändern lässt sich im Detail selbst nichts. Auswahl, Variante und Reiter stehen in
+der Adresse; ist ein so geöffnetes Training nicht zugänglich, steht die Übersicht ohne Detail da,
+mit dem Hinweis „Dieses Training ist nicht verfügbar." Fällt das ausgewählte Training durch Suche
+oder Filter aus der Tabelle, schliesst sich das Detail; wer den Filter zurücknimmt, sieht es
+wieder. Nach dem Löschen schliesst es sich ebenfalls. Nach dem Schliessen steht der Fokus wieder
+auf der Zeile.
 
 ## Konten ohne Verein
 
