@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Leerzustand, Switch } from "@/components/ui";
+import { Leerzustand, ListenGruppen, Switch } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { setzeAbmeldungAktion, setzeAnwesenheitAktion } from "@/lib/actions/abmeldungen";
 import {
   ABMELDUNG_TEXT,
   EHEMALIGE_SPIELERIN,
+  GRUPPE_TEXT,
   NICHT_MEHR_IM_TEAM,
   TEILNAHME_TEXT,
   istAnwesend,
@@ -18,6 +19,7 @@ import {
 } from "@/lib/spieler";
 import type { TerminSpieler } from "@/lib/kern/abmeldungen";
 import { seitWann } from "@/lib/zeit";
+import { useFokusFolgt } from "@/lib/use-fokus-folgt";
 import { Shirt } from "lucide-react";
 import { KADER_TEXT, uebrigeText } from "@/lib/kader";
 import { KaderLozenges } from "./KaderLozenge";
@@ -46,11 +48,18 @@ import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
    Spieler:in bei Beginn gemeldet war, und wer ihn umlegt, trägt nach, wer
    nicht erschienen oder doch erschienen ist — oder nimmt den Nachtrag
    zurück. Die Zahl oben zählt dann die Anwesenden; der Zeitpunkt bleibt
-   der des letzten Wechsels vor Beginn. */
+   der des letzten Wechsels vor Beginn.
+
+   Die Spieler:innen stehen in Gruppen (#599 AK 2, 3): vor Beginn
+   angemeldet und abgemeldet — eine schnuppernde, die nicht angemeldet ist,
+   bei den Abgemeldeten —, ab Beginn da und nicht da. Wer umgelegt wird,
+   steht sofort in der anderen Gruppe; die Gruppenzahl zählt, was die
+   Eingrenzung zeigt. */
 export function SpielerReiter({ teamId, daten }: { teamId: string; daten: TerminSpieler }) {
   const router = useRouter();
   const melde = useSnackbar();
   const [pending, startTransition] = useTransition();
+  const fokusFolgt = useFokusFolgt(!pending);
   // Was gerade umgelegt wird, steht sofort so da (der Schalter: angemeldet,
   // ab Beginn da); scheitert es, zurück.
   const [lokal, setLokal] = useState<Record<string, boolean>>({});
@@ -91,6 +100,7 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
   function umlegen(s: Teilnehmer, wert: boolean) {
     const id = s.spielerId;
     if (!id) return;
+    fokusFolgt(id);
     setLokal((l) => ({ ...l, [id]: wert }));
     startTransition(async () => {
       const gesehen = { datum: daten.datum, beginn: daten.beginn };
@@ -110,6 +120,41 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
       }
       router.refresh();
     });
+  }
+
+  function zeile(s: Teilnehmer, i: number) {
+    const name = s.vorname !== null ? spielerName({ vorname: s.vorname, nachname: s.nachname ?? "" }) : EHEMALIGE_SPIELERIN;
+    const wert = an(s);
+    const status = statusNachSchalter(s, wert, nachtragen);
+    // Eben selbst umgelegt: Der Wechsel steht schon da, bevor die Antwort
+    // kommt. Ein Nachtrag ist kein Wechsel, die Zeit bleibt (#475 PC 1).
+    const eben = !nachtragen && s.spielerId !== null && s.spielerId in lokal && lokal[s.spielerId] !== gespeichert(s);
+    const seit = eben ? "gerade eben" : s.gewechseltAm && seitWann(s.gewechseltAm, daten.gelesenAm);
+    // Ab Beginn steht unter dem Namen, was vom Angemeldetsein abweicht.
+    const zeile2 = [
+      ...(nachtragen && status !== "angemeldet" ? [TEILNAHME_TEXT[status]] : []),
+      ...(s.nichtMehrImTeam ? [NICHT_MEHR_IM_TEAM] : []),
+      ...s.kader,
+    ].join(" · ");
+    return (
+      <li key={s.spielerId ?? `ehemalig-${i}`} data-fokus-ziel={s.spielerId ?? undefined} className="state flex min-h-12 items-center gap-3 px-4 py-1.5">
+        <span className="min-w-0 flex-1">
+          <span className={`block truncate type-body-medium ${!wert || s.ehemalig ? "text-on-surface-mittel" : "text-on-surface"}`}>
+            {name}
+            {!(nachtragen && status !== "angemeldet") && <span className="sr-only">, {TEILNAHME_TEXT[status]}</span>}
+          </span>
+          {zeile2 && <span className="block truncate type-body-small text-on-surface-mittel">{zeile2}</span>}
+        </span>
+        {seit && <span className="shrink-0 whitespace-nowrap type-body-small text-on-surface-mittel">{seit}</span>}
+        <Switch
+          ton="ruhig"
+          checked={wert}
+          disabled={s.ehemalig || pending}
+          onChange={(e) => umlegen(s, e.target.checked)}
+          aria-label={`${name} ${nachtragen ? "da" : "angemeldet"}`}
+        />
+      </li>
+    );
   }
 
   const uebrige = uebrigeText(daten.uebrige);
@@ -154,43 +199,16 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
           {KADER_TEXT.leerKaderTermin}
         </EingrenzungLeer>
       )}
-      {daten.gesamt > 0 && sichtbar.length > 0 && (
-      <ul className="divide-y divide-linie rounded-flaeche bg-elev-01">
-        {sichtbar.map((s, i) => {
-          const name = s.vorname !== null ? spielerName({ vorname: s.vorname, nachname: s.nachname ?? "" }) : EHEMALIGE_SPIELERIN;
-          const wert = an(s);
-          const status = statusNachSchalter(s, wert, nachtragen);
-          // Eben selbst umgelegt: Der Wechsel steht schon da, bevor die Antwort
-          // kommt. Ein Nachtrag ist kein Wechsel, die Zeit bleibt (#475 PC 1).
-          const eben = !nachtragen && s.spielerId !== null && s.spielerId in lokal && lokal[s.spielerId] !== gespeichert(s);
-          const seit = eben ? "gerade eben" : s.gewechseltAm && seitWann(s.gewechseltAm, daten.gelesenAm);
-          // Ab Beginn steht unter dem Namen, was vom Angemeldetsein abweicht.
-          const zeile2 = [
-            ...(nachtragen && status !== "angemeldet" ? [TEILNAHME_TEXT[status]] : []),
-            ...(s.nichtMehrImTeam ? [NICHT_MEHR_IM_TEAM] : []),
-            ...s.kader,
-          ].join(" · ");
-          return (
-            <li key={s.spielerId ?? `ehemalig-${i}`} className="state flex min-h-12 items-center gap-3 px-4 py-1.5">
-              <span className="min-w-0 flex-1">
-                <span className={`block truncate type-body-medium ${!wert || s.ehemalig ? "text-on-surface-mittel" : "text-on-surface"}`}>
-                  {name}
-                  {!(nachtragen && status !== "angemeldet") && <span className="sr-only">, {TEILNAHME_TEXT[status]}</span>}
-                </span>
-                {zeile2 && <span className="block truncate type-body-small text-on-surface-mittel">{zeile2}</span>}
-              </span>
-              {seit && <span className="shrink-0 whitespace-nowrap type-body-small text-on-surface-mittel">{seit}</span>}
-              <Switch
-                ton="ruhig"
-                checked={wert}
-                disabled={s.ehemalig || pending}
-                onChange={(e) => umlegen(s, e.target.checked)}
-                aria-label={`${name} ${nachtragen ? "da" : "angemeldet"}`}
-              />
-            </li>
-          );
-        })}
-      </ul>
+      {daten.gesamt > 0 && (
+        <ListenGruppen
+          gruppen={[
+            { schluessel: "an", titel: nachtragen ? GRUPPE_TEXT.da : GRUPPE_TEXT.angemeldet, an: true },
+            { schluessel: "aus", titel: nachtragen ? GRUPPE_TEXT.nichtDa : GRUPPE_TEXT.abgemeldet, an: false },
+          ].map(({ an: gruppeAn, ...g }) => ({
+            ...g,
+            zeilen: sichtbar.flatMap((s, i) => (an(s) === gruppeAn ? [zeile(s, i)] : [])),
+          }))}
+        />
       )}
       {uebrige && <p className="type-body-small text-on-surface-mittel">{uebrige}</p>}
     </div>

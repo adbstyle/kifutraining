@@ -61,6 +61,8 @@ export type { MenuItemDef } from "./Menu";
 export { OverflowMenu } from "./OverflowMenu";
 export { ChipMenu } from "./ChipMenu";
 export { LozengeAuswahl } from "./LozengeAuswahl";
+export { ListenGruppen } from "./ListenGruppen";
+export type { ListenGruppe } from "./ListenGruppen";
 export type { Wechsel } from "./LozengeAuswahl";
 export { BereichWechsler } from "./BereichWechsler";
 export type { BereichOption, BereichWechslerProps } from "./BereichWechsler";
