@@ -62,6 +62,13 @@ name: Sync Staging (Prod-Spiegel, manuell)
 # - nach dem Restore, vor der Geheimnis-Nachbehandlung, `nach_restore.sql`: ruft
 #   `public.staging_nach_sync()` auf, sofern es die Funktion gibt.
 # Ohne Staging-eigene Tabellen und ohne die Funktion bewirken beide nichts.
+#
+# Testkonto: Nach dem Restore legt `supabase/sync/testkonto.sql` in einer
+# eigenen Transaktion (alle Trigger aktiv) das Konto claude@tester.ch und
+# erfundene Testdaten an (Verein, Team, Spieler:innen, Trainings, Termine).
+# Das Passwort kommt aus dem Secret STAGING_TESTKONTO_PASSWORT; fehlt es,
+# bleibt es bei einer Warnung. reset-staging löscht das Konto ebenfalls —
+# danach diesen Sync fahren, dann ist es wieder da.
 on:
   workflow_dispatch:
     inputs:
@@ -262,4 +269,27 @@ jobs:
                 -v public_tables="$PUBLIC_TABLES" \
                 -v prod_ref="$SUPABASE_PROD_REF" \
                 -v staging_ref="$SUPABASE_STAGING_REF" \
+                --quiet
+
+      # Eigene Transaktion nach dem Restore: Scheitert sie, bleibt der
+      # gespiegelte Stand stehen, nur Konto und Testdaten fehlen.
+      - name: Testkonto claude@tester.ch und Testdaten anlegen
+        env:
+          SUPABASE_STAGING_DB_URL: ${{ secrets.SUPABASE_STAGING_DB_URL }}
+          STAGING_TESTKONTO_PASSWORT: ${{ secrets.STAGING_TESTKONTO_PASSWORT }}
+        run: |
+          if ! test -f supabase/sync/testkonto.sql; then
+            echo "::error::Sync-Baustein supabase/sync/testkonto.sql fehlt im Checkout."
+            exit 1
+          fi
+          if [ -z "$STAGING_TESTKONTO_PASSWORT" ]; then
+            echo "::warning::Secret STAGING_TESTKONTO_PASSWORT fehlt: kein Testkonto auf Staging."
+          fi
+          {
+            echo 'begin;'
+            cat supabase/sync/testkonto.sql
+            echo 'commit;'
+          } | psql "$SUPABASE_STAGING_DB_URL" \
+                -v ON_ERROR_STOP=1 \
+                -v passwort="$STAGING_TESTKONTO_PASSWORT" \
                 --quiet
