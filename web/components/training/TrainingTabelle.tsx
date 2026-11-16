@@ -46,6 +46,14 @@ function kategorienText(training: TrainingListRow): string | null {
   return `${training.stufen.length === 1 ? "Kategorie" : "Kategorien"} ${training.stufen.join(", ")}`;
 }
 
+/** Am eigenen Training der Stand, an einem fremden der Urheber — leer, wenn
+ *  es keinen mehr führt (AK 2, Story 15). Schmal steht «von» davor. */
+function standOderUrheber(training: TrainingListRow, schmal: boolean) {
+  if (training.istEigen) return <SichtbarkeitLozenge oeffentlich={training.visibility === "public"} />;
+  if (!training.urheber) return null;
+  return schmal ? <span>von {training.urheber}</span> : training.urheber;
+}
+
 export function TrainingTabelle({
   trainings,
   sortierung,
@@ -186,11 +194,7 @@ export function TrainingTabelle({
                         {altersstufe}
                         {kategorien && ` · ${training.stufen.join(", ")}`}
                       </span>
-                      {training.istEigen ? (
-                        <SichtbarkeitLozenge oeffentlich={training.visibility === "public"} />
-                      ) : (
-                        training.urheber && <span>von {training.urheber}</span>
-                      )}
+                      {standOderUrheber(training, true)}
                       <span>
                         {training.exerciseCount} {training.exerciseCount === 1 ? "Übung" : "Übungen"}
                       </span>
@@ -199,16 +203,7 @@ export function TrainingTabelle({
                     </div>
                   </th>
 
-                  {/* Am eigenen Training der Stand, an einem fremden der
-                      Urheber — leer, wenn es keinen mehr führt (AK 2,
-                      Story 15). */}
-                  <td className={`${zelle} text-on-surface-mittel`}>
-                    {training.istEigen ? (
-                      <SichtbarkeitLozenge oeffentlich={training.visibility === "public"} />
-                    ) : (
-                      training.urheber
-                    )}
-                  </td>
+                  <td className={`${zelle} text-on-surface-mittel`}>{standOderUrheber(training, false)}</td>
 
                   <td className={`${zelle} text-right tabular-nums text-on-surface`}>
                     {training.exerciseCount}

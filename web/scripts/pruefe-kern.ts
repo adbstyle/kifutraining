@@ -4968,7 +4968,8 @@ pruefe("Konto ohne Verein (#588 AK 5, PC 3): Anzeige nur ohne Verein und aus der
   // Die Übersichten zeigen den Stand nur in «Meine …» und lesen ihn von der Datenebene, nicht aus der Liste.
   assert.match(lies("app/(app)/page.tsx"), /const grenzen = filters\.mine \? await getMeineGrenzen\(\) : null;/);
   assert.match(lies("app/(app)/page.tsx"), /\{grenzen && <BestandAnzeige art="uebungen" grenze=\{grenzen\.uebungen\}/);
-  assert.match(lies("app/(app)/trainings/page.tsx"), /const grenzen = mine \? await getMeineGrenzen\(\) : null;/);
+  // Die Trainingsübersicht lädt ihn mit Liste und Detail zusammen (#630).
+  assert.match(lies("app/(app)/trainings/page.tsx"), /mine \? getMeineGrenzen\(\) : Promise\.resolve\(null\),/);
   assert.match(lies("app/(app)/trainings/page.tsx"), /\{grenzen && <BestandAnzeige art="trainings" grenze=\{grenzen\.trainings\}/);
   // Anlegen: Meldung statt der Maske erst an der Grenze (`istVoll`, auch darüber), darunter die Zeile; ohne `grenzen` nichts.
   assert.match(lies("app/(app)/neu/page.tsx"), /const voll = grenzen !== null && istVoll\(grenzen\.uebungen\);/);

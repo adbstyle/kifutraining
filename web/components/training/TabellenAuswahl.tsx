@@ -11,8 +11,7 @@ import { useEffect, useRef } from "react";
      Zeile weit unten nicht. Steht sie schon im Bild (der Klick), bewegt sich
      nichts. Der Fokus geht nach einem Wechsel auf die Überschrift des Detail
      (`data-detail-titel`), damit man dort weiterliest. Beim Laden per Link
-     bleibt er auf der Zeile, wie im Trainingsplan eines Teams; schmal, wo die
-     Liste ausgeblendet ist, geht er ebenfalls aufs Detail.
+     rührt er sich nicht.
    - Geschlossen: Der Fokus geht auf den Link der zuvor ausgewählten Zeile
      zurück, sonst fiele er mit dem Detail ins Leere. */
 export function TabellenAuswahl({ ausgewaehlt }: { ausgewaehlt?: string }) {
@@ -29,22 +28,18 @@ export function TabellenAuswahl({ ausgewaehlt }: { ausgewaehlt?: string }) {
     const link = id ? document.querySelector<HTMLElement>(`[data-training-zeile="${CSS.escape(id)}"]`) : null;
     if (!link) return;
     if (!imBild(link)) link.scrollIntoView({ block: "center" });
-    const titel = document.querySelector<HTMLElement>("[data-detail-titel]");
+    // Beim Laden (geteilter Link, Zurück aus dem Editor) bleibt der Fokus am
+    // Seitenanfang: Wer vorliest, beginnt bei Brotkrume und Überschrift.
+    if (zuvor === undefined) return;
     if (jetzt === null) {
       link.focus({ preventScroll: true });
-    } else if (zuvor === undefined && sichtbar(link)) {
-      link.focus({ preventScroll: true });
     } else {
+      const titel = document.querySelector<HTMLElement>("[data-detail-titel]");
       (titel ?? link).focus({ preventScroll: true });
     }
   }, [ausgewaehlt]);
 
   return null;
-}
-
-/** Ist das Element dargestellt (nicht per `display: none` ausgeblendet)? */
-function sichtbar(el: HTMLElement): boolean {
-  return el.getClientRects().length > 0;
 }
 
 /** Steht das Element ganz im Bild — im Fenster und in jeder scrollenden

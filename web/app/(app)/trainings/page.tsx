@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { ClipboardList, SearchX } from "lucide-react";
 import { BestandAnzeige, ButtonLink, Leerzustand, SectionMessage } from "@/components/ui";
 import { Flash } from "@/components/Flash";
@@ -58,15 +59,26 @@ export default async function TrainingsPage({
   // (#629 AK 7). Das Detail nur, wenn etwas ausgewählt ist — dann zusammen
   // mit der Liste geladen.
   const auswahl = leseAuswahl(sp);
-  const [trainings, ansicht] = await Promise.all([
+  // Nur in «Meine Trainings» und nur für ein Konto ohne Verein (#588 AK 5, PC 3):
+  // der Stand von der Datenebene, nie aus der gezählten Liste (Filter).
+  const [trainings, ansicht, grenzen] = await Promise.all([
     getTrainingPool({ q, stufen, mine, sortierung }),
     auswahl ? ladeTrainingAnsicht(auswahl.training, user) : Promise.resolve(null),
+    mine ? getMeineGrenzen() : Promise.resolve(null),
   ]);
   // Nicht zugänglich (fremder Entwurf, gelöscht): die Übersicht mit Hinweis
   // (PC 2). Zugänglich, aber nicht in der Liste — ausgefiltert oder ein
-  // Team-Training, das hier nie steht: kein Detail und kein Hinweis (PC 3).
+  // Team-Training, das hier nie steht: Das Detail schliesst, und mit ihm die
+  // Auswahl in der Adresse (PC 3) — sonst kehrte es mit dem Zurücknehmen des
+  // Filters ungefragt wieder.
   const nichtVerfuegbar = !!auswahl && !ansicht;
-  const detail = ansicht && trainings.some((t) => t.id === ansicht.training.id) ? ansicht : null;
+  if (ansicht && !trainings.some((t) => t.id === ansicht.training.id)) {
+    const alle = Object.fromEntries(
+      Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === "string"),
+    );
+    redirect(auswahlHref("/trainings", alle, null));
+  }
+  const detail = ansicht;
   // Was die Sortier-Links mitnehmen: alle Parameter ausser der einmaligen
   // Meldung (#629 PC 2) — auch solche, die erst später dazukommen. Eine
   // Auswahl ohne Detail (PC 2, 3) reist nicht weiter: Sie ist geschlossen.
@@ -76,9 +88,6 @@ export default async function TrainingsPage({
   );
   const detailHref = (wahl: { variante?: string; ansicht: DetailAnsicht } | null) =>
     auswahlHref("/trainings", parameter, wahl && detail ? { training: detail.training.id, ...wahl } : null);
-  // Nur in «Meine Trainings» und nur für ein Konto ohne Verein (#588 AK 5, PC 3):
-  // der Stand von der Datenebene, nie aus der gezählten Liste (Filter).
-  const grenzen = mine ? await getMeineGrenzen() : null;
 
   return (
     <Seitenrahmen
