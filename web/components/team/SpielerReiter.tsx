@@ -141,7 +141,6 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
         <span className="min-w-0 flex-1">
           <span className={`block truncate type-body-medium ${!wert || s.ehemalig ? "text-on-surface-mittel" : "text-on-surface"}`}>
             {name}
-            {!(nachtragen && status !== "angemeldet") && <span className="sr-only">, {TEILNAHME_TEXT[status]}</span>}
           </span>
           {zeile2 && <span className="block truncate type-body-small text-on-surface-mittel">{zeile2}</span>}
         </span>
@@ -199,7 +198,7 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
           {KADER_TEXT.leerKaderTermin}
         </EingrenzungLeer>
       )}
-      {daten.gesamt > 0 && (
+      {sichtbar.length > 0 && (
         <ListenGruppen
           gruppen={[
             { schluessel: "an", titel: nachtragen ? GRUPPE_TEXT.da : GRUPPE_TEXT.angemeldet, an: true },

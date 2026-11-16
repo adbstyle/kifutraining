@@ -27,7 +27,7 @@ import { useFokusFolgt } from "@/lib/use-fokus-folgt";
 import { KaderLozenges } from "./KaderLozenge";
 import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
 
-/** Wofür eine Spieler:in im Kopf zählt: ohne Meldung (nach der Meldefrist
+/** Wofür eine Spieler:in im Kopf zählt und in welcher Gruppe sie steht (#599): ohne Meldung (nach der Meldefrist
  *  «Meldefrist verpasst», #496), angemeldet, abgemeldet oder — gleich welche
  *  Meldung sie trägt — nicht aufgeboten (#464). */
 type Gruppe = "ohne" | "angemeldet" | "abgemeldet" | "nicht_aufgeboten";
@@ -198,28 +198,30 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
       {/* In Gruppen nach Status (#599 AK 1, hebt PO 2026-10-22 auf): Wer den
           Status wechselt, steht sofort in der Gruppe des neuen; die
           Gruppenzahl zählt, was die Eingrenzung zeigt. */}
-      <ListenGruppen
-        gruppen={GRUPPEN.map((g) => ({
-          schluessel: g,
-          titel: GRUPPE_TITEL[g](verpasst),
-          zeilen: sichtbar
-            .filter((s) => gruppeVon(s) === g)
-            .map((s) => (
-              <SpielZeile
-                key={s.spielerId}
-                s={s}
-                meldung={meldungVon(s)}
-                nichtAufgeboten={aufgebotVon(s)}
-                fristAbgelaufen={verpasst}
-                eben={meldungen.hat(s.spielerId) && meldungVon(s) !== s.meldung}
-                gelesenAm={daten.gelesenAm}
-                pending={pending}
-                onMelden={(an) => s.spielerId && melden(s.spielerId, an)}
-                onAufgebot={(nein) => s.spielerId && aufbieten(s.spielerId, nein)}
-              />
-            )),
-        }))}
-      />
+      {sichtbar.length > 0 && (
+        <ListenGruppen
+          gruppen={GRUPPEN.map((g) => ({
+            schluessel: g,
+            titel: GRUPPE_TITEL[g](verpasst),
+            zeilen: sichtbar
+              .filter((s) => gruppeVon(s) === g)
+              .map((s) => (
+                <SpielZeile
+                  key={s.spielerId}
+                  s={s}
+                  meldung={meldungVon(s)}
+                  nichtAufgeboten={aufgebotVon(s)}
+                  fristAbgelaufen={verpasst}
+                  eben={meldungen.hat(s.spielerId) && meldungVon(s) !== s.meldung}
+                  gelesenAm={daten.gelesenAm}
+                  pending={pending}
+                  onMelden={(an) => s.spielerId && melden(s.spielerId, an)}
+                  onAufgebot={(nein) => s.spielerId && aufbieten(s.spielerId, nein)}
+                />
+              )),
+          }))}
+        />
+      )}
       {uebrige && <p className="type-body-small text-on-surface-mittel">{uebrige}</p>}
     </div>
   );
