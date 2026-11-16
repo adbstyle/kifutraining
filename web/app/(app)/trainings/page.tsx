@@ -3,12 +3,12 @@ import { ClipboardList, SearchX } from "lucide-react";
 import { BestandAnzeige, ButtonLink, Leerzustand } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
-import { TrainingCard } from "@/components/training/TrainingCard";
+import { TrainingTabelle } from "@/components/training/TrainingTabelle";
 import { TrainingFilterBar } from "@/components/training/TrainingFilterBar";
 import { getTrainingPool } from "@/lib/queries/trainings";
 import { createClient } from "@/lib/supabase/server";
 import { getMeineGrenzen } from "@/lib/queries/verein";
-import { formatDate } from "@/lib/training";
+import { leseSortierung } from "@/lib/training-sortierung";
 import { kategorienSlugs } from "@/lib/vocab";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
@@ -25,6 +25,9 @@ export default async function TrainingsPage({
     stufen?: string;
     mine?: string;
     deleted?: string;
+    /** Die Sortierung (#629): Spalte und Richtung, ohne Angabe die Vorgabe. */
+    sort?: string;
+    dir?: string;
   }>;
 }) {
   const sp = await searchParams;
@@ -39,7 +42,18 @@ export default async function TrainingsPage({
   const mine = !!user && sp.mine === "1";
   const filtersActive = !!q || stufen.length > 0;
 
-  const trainings = await getTrainingPool({ q, stufen, mine });
+  const sortierung = leseSortierung(sp.sort, sp.dir);
+  // Die Übersicht gibt die Ordnung immer vor — auch mit Suchbegriff ordnet sie
+  // nach der Wahl bzw. dem Datum der letzten Änderung, nie nach Relevanz
+  // (#629 AK 7).
+  const trainings = await getTrainingPool({ q, stufen, mine, sortierung });
+  // Was die Sortier-Links mitnehmen: alle Parameter ausser der einmaligen
+  // Meldung (#629 PC 2) — auch solche, die erst später dazukommen.
+  const parameter = Object.fromEntries(
+    Object.entries(sp).filter(
+      (e): e is [string, string] => typeof e[1] === "string" && e[0] !== "deleted",
+    ),
+  );
   // Nur in «Meine Trainings» und nur für ein Konto ohne Verein (#588 AK 5, PC 3):
   // der Stand von der Datenebene, nie aus der gezählten Liste (Filter).
   const grenzen = mine ? await getMeineGrenzen() : null;
@@ -86,29 +100,7 @@ export default async function TrainingsPage({
                 : "Es wurde noch kein Training veröffentlicht. Schau später wieder vorbei."}
         </Leerzustand>
       ) : (
-        <>
-          <p className="type-label-small mb-4 text-on-surface-mittel">
-            {trainings.length} {trainings.length === 1 ? "Training" : "Trainings"}
-          </p>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
-            {trainings.map((training) => (
-              <TrainingCard
-                key={training.id}
-                training={training}
-                // Je Eintrag, nicht je Ansicht: die Übersicht mischt beide
-                // Bestände, das eigene Training führt in den Editor, ein
-                // fremdes in die Ansicht (Story B AK 5).
-                href={
-                  training.istEigen
-                    ? `/training/${training.id}/edit`
-                    : `/training/${training.id}`
-                }
-                zeigeUrheber={!training.istEigen}
-                updatedLabel={formatDate(training.updatedAt)}
-              />
-            ))}
-          </div>
-        </>
+        <TrainingTabelle trainings={trainings} sortierung={sortierung} pfad="/trainings" parameter={parameter} />
       )}
 
       {!user && <AnmeldeHinweis className="mt-8" />}

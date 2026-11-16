@@ -24,7 +24,9 @@ export function TrainingFilterBar({
   mine?: boolean;
   showMine?: boolean;
 }) {
-  const filter = useAdressFilter();
+  // Die Sortierung ist kein Filter: Sie übersteht auch das Zurücksetzen
+  // (#629 PC 2).
+  const filter = useAdressFilter({ behalte: ["sort", "dir"] });
 
   const anyActive = q.trim().length > 0 || stufen.length > 0 || mine;
 
