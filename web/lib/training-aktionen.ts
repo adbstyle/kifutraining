@@ -30,9 +30,13 @@ export type TrainingAktionsRechte = {
    *  einen der beiden Knöpfe nie zu brauchen. */
   sichtbarkeit: "veroeffentlichen" | "auf_entwurf" | null;
   insTeamStellen: boolean;
-  /** Einem Termin eines eigenen Teams zuordnen (#328 AK 2) — als Kopie, nur
-   *  vom persönlichen Training aus und wenn es ein Team gibt. */
+  /** Einem Team-Termin zuordnen — immer als Kopie: vom persönlichen Training
+   *  aus, wenn es ein Team gibt (#328 AK 2), und vom Training im Bestand
+   *  eines Teams aus, dann in dessen Termine (#637). */
   terminZuordnen: boolean;
+  /** Ein Training aus dem Bestand eines Teams als persönliche Kopie zu sich
+   *  nehmen (Team-Epic Story 5) — bis #637 nur an der Kachel des Bestands. */
+  zuMirUebernehmen: boolean;
   /** Ein Termin-Training bewusst in den Bestand seines Teams kopieren (PO
    *  2026-10-06) — das Original bleibt am Termin. */
   inBestandKopieren: boolean;
@@ -55,9 +59,10 @@ export type TrainingAktionsRechte = {
  *  öffnet, ist kein Angebot. Beim Übernehmen ist es umgekehrt kein
  *  Ausschlussgrund — dort bleibt man selbst immer ein gültiges Ziel.
  *
- *  Dem Termin zuordnen (#328) gibt es wie Ins-Team-Stellen nur am persönlichen
- *  Training und nur mit einem Team: Ein Team-Training liegt schon im Bestand
- *  und wird dort zugeordnet. */
+ *  Dem Termin zuordnen gibt es am persönlichen Training nur mit einem Team
+ *  (#328), am Team-Training nur im Bestand: Ein Termin-Training gehört
+ *  schon seinem Termin. Dasselbe gilt fürs Übernehmen zu sich — ein
+ *  Termin-Training kopiert man erst in den Bestand. */
 export function trainingAktionsRechte(
   training: { visibility: "public" | "private"; teamId: string | null; terminTraining: boolean },
   angemeldet: boolean,
@@ -67,13 +72,15 @@ export function trainingAktionsRechte(
   const darfBearbeiten = bearbeitungsziel !== null;
   const persoenlich = darfBearbeiten && training.teamId === null;
   const oeffentlich = training.visibility === "public";
+  const imBestand = darfBearbeiten && training.teamId !== null && !training.terminTraining;
 
   return {
     bearbeiten: darfBearbeiten,
     uebernehmen: angemeldet && oeffentlich,
     sichtbarkeit: persoenlich ? (oeffentlich ? "auf_entwurf" : "veroeffentlichen") : null,
     insTeamStellen: persoenlich && hatTeams,
-    terminZuordnen: persoenlich && hatTeams,
+    terminZuordnen: (persoenlich && hatTeams) || imBestand,
+    zuMirUebernehmen: imBestand,
     inBestandKopieren: darfBearbeiten && training.teamId !== null && training.terminTraining,
     loeschen: darfBearbeiten,
   };
@@ -88,6 +95,7 @@ export function hatUeberlauf(rechte: TrainingAktionsRechte): boolean {
     rechte.sichtbarkeit !== null ||
     rechte.insTeamStellen ||
     rechte.terminZuordnen ||
+    rechte.zuMirUebernehmen ||
     rechte.inBestandKopieren ||
     rechte.loeschen
   );

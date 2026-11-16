@@ -1,6 +1,7 @@
-import { ALTERSSTUFEN, type Altersstufe } from "@/lib/altersstufe";
-
-/* Sortierung der Trainingsübersicht (#629). Die Wahl steht in der Adresse
+/* Sortierung der Trainingsübersicht (#629) und des Team-Bestands (#637).
+   Nach der Altersstufe sortiert man nicht mehr (#636): Sie steht nicht mehr
+   in der Zeile, und eine alte Adresse mit `sort=stufe` fällt still auf die
+   Vorgabe zurück (`leseSortierung`). Die Wahl steht in der Adresse
    (`?sort=<spalte>&dir=<auf|ab>`), damit sie das Neuladen und einen geteilten
    Link übersteht (PC 1) und jede Such- oder Filteränderung mitnimmt (PC 2).
    Ohne Wahl: zuletzt Geändertes zuerst, auch mit Suchbegriff (AK 7).
@@ -10,7 +11,7 @@ import { ALTERSSTUFEN, type Altersstufe } from "@/lib/altersstufe";
    die Datenbank kennt sie nicht. Bei einigen hundert Zeilen ist das eine
    Sache von Millisekunden (NFR 1). */
 
-export const SORTIER_SPALTEN = ["stufe", "name", "uebungen", "dauer", "geaendert"] as const;
+export const SORTIER_SPALTEN = ["name", "uebungen", "dauer", "geaendert"] as const;
 export type SortierSpalte = (typeof SORTIER_SPALTEN)[number];
 type SortierRichtung = "auf" | "ab";
 export type TrainingSortierung = { spalte: SortierSpalte; richtung: SortierRichtung };
@@ -20,7 +21,6 @@ const SORTIERUNG_VORGABE: TrainingSortierung = { spalte: "geaendert", richtung: 
 
 /** Die Beschriftung jeder Spalte — Spaltenkopf und kompakte Sortierwahl. */
 export const SORTIER_LABEL: Record<SortierSpalte, string> = {
-  stufe: "Altersstufe",
   name: "Name",
   uebungen: "Übungen",
   dauer: "Dauer",
@@ -31,7 +31,7 @@ export const SORTIER_LABEL: Record<SortierSpalte, string> = {
  *  Zahlen und Datum vom Grössten bzw. Neusten her — das, wonach man meist
  *  sucht. */
 export function ersteRichtung(spalte: SortierSpalte): SortierRichtung {
-  return spalte === "name" || spalte === "stufe" ? "auf" : "ab";
+  return spalte === "name" ? "auf" : "ab";
 }
 
 function istSpalte(wert: string | undefined): wert is SortierSpalte {
@@ -79,7 +79,6 @@ export function sortierHref(
 type SortierbareZeile = {
   id: string;
   name: string;
-  altersstufe: Altersstufe;
   exerciseCount: number;
   totalDuration: number;
   hasAnyDuration: boolean;
@@ -90,8 +89,6 @@ const namen = new Intl.Collator("de");
 
 /** Die Zeilen in der gewählten Ordnung, als neue Liste.
  *
- *  - Altersstufe aufsteigend: Kinderfussball vor Juniorenfussball (die
- *    Reihenfolge des Vokabulars).
  *  - Trainings ohne erfasste Dauer stehen beim Sortieren nach Dauer in BEIDEN
  *    Richtungen am Ende (#629 AK 9) — «keine Dauer» ist keine kurze Dauer.
  *  - Gleichstand: zuletzt Geändertes zuerst (AK 8), danach die Kennung, damit
@@ -101,8 +98,6 @@ export function sortiereTrainings<T extends SortierbareZeile>(zeilen: readonly T
 
   function vergleicheSpalte(a: T, b: T): number {
     switch (s.spalte) {
-      case "stufe":
-        return faktor * (ALTERSSTUFEN.indexOf(a.altersstufe) - ALTERSSTUFEN.indexOf(b.altersstufe));
       case "name":
         return faktor * namen.compare(a.name, b.name);
       case "uebungen":

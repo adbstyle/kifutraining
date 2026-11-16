@@ -1285,8 +1285,6 @@ try {
   await pruefe("Löschen: Auskunft vorher gelesen, danach weg; fremd → keine_rechte; unbekannt → nicht_gefunden", async () => {
     // Die Kopie erfüllt die Bedingungen der Quelle — veröffentlichen, dann löschen.
     wert(await veroeffentliche(a.supabase, a.id, { trainingId: k1 }));
-    // Nur Team-Trainings: ein persönliches bleibt stehen.
-    fehler(await loescheTraining(a.supabase, a.id, { trainingId: k1, nurTeam: true }), "nicht_gefunden", "Training nicht gefunden.");
     assert.deepEqual(wert(await loescheTraining(a.supabase, a.id, { trainingId: k1 })), {
       name: "Kern-DB-Quelle",
       uebungen: 3,

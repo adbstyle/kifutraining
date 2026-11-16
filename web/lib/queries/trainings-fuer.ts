@@ -559,6 +559,12 @@ export type TeamTrainingFilter = {
   stufen?: string[];
   /** Höchstens so viele Zeilen; ohne Angabe alle (die Oberfläche). */
   limit?: number;
+  /** Eine feste Ordnung (die Oberfläche, #637) wie in der Übersicht: gilt
+   *  auch mit Suchbegriff. Ohne Angabe (der KI-Assistent) wie bisher. */
+  sortierung?: TrainingSortierung;
+  /** Ohne den eingebetteten Termin (`termin` bleibt `null`): Die Tabelle des
+   *  Bestands nennt keinen (#637 OoS 2) und spart die Einbettung. */
+  ohneTermin?: boolean;
 };
 
 /** Der Trainingsbestand eines Teams. Team-Trainings erscheinen NIE im
@@ -580,16 +586,17 @@ export async function getTeamTrainingsFuer(
   if (!istUuid(teamId)) return [];
   // Der Bestand: ohne Termin-Trainings — sie leben mit ihrem Termin und
   // stehen nur im Trainingsplan (PO 2026-10-06).
-  let query = supabase.from("trainings").select(TEAM_LIST_SELECT).eq("team_id", teamId).eq("termin_training", false);
+  let query = supabase
+    .from("trainings")
+    .select(f.ohneTermin ? LIST_SELECT : TEAM_LIST_SELECT)
+    .eq("team_id", teamId)
+    .eq("termin_training", false);
   if (f.stufen?.length) query = query.overlaps("stufen", f.stufen);
 
   const hasQuery = !!f.q?.trim();
-  if (hasQuery) {
-    query = query.ilike("search_text", likePattern(f.q!));
-  } else {
-    query = query.order("updated_at", { ascending: false }).order("id");
-    if (f.limit) query = query.limit(f.limit);
-  }
+  if (hasQuery) query = query.ilike("search_text", likePattern(f.q!));
+  if (!hasQuery || f.sortierung) query = query.order("updated_at", { ascending: false }).order("id");
+  if (!hasQuery && !f.sortierung && f.limit) query = query.limit(f.limit);
   const { data, error } = await query;
   if (error) throw error;
 
@@ -651,6 +658,10 @@ export async function getTeamTrainingsFuer(
     };
   });
 
+  if (f.sortierung) {
+    const sortiert = sortiereTrainings(rows, f.sortierung);
+    return f.limit ? sortiert.slice(0, f.limit) : sortiert;
+  }
   if (hasQuery)
     rows.sort((a, b) => a.name.length - b.name.length || a.name.localeCompare(b.name, "de"));
   return f.limit ? rows.slice(0, f.limit) : rows;
