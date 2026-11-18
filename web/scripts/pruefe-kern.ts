@@ -162,6 +162,9 @@ import { istVeraltet } from "../lib/veraltet";
 import {
   BENACHRICHTIGEN_HINWEIS,
   BENACHRICHTIGEN_MODELL,
+  BENACHRICHTIGEN_WERKZEUG,
+  istVerlegung,
+  mitteilbarBeimAendern,
   BENACHRICHTIGEN_TEXT,
   BENACHRICHTIGUNG_TAGE,
   ELTERN_TEXT,
@@ -5358,6 +5361,54 @@ pruefe("Benachrichtigungen (#643 AK 1, 2; OoS 1): Ausfall und Rücknahme mit dem
   assert.equal(bereich.match(/lasseAusfallenAktion\([^()]*, true, false\)/g)?.length, 3, "die drei Wege «nur Grund»");
   assert.match(bereich, /if \(t\.datum >= heute\) \{[^}]*setRuecknahme\(t\)/);
   assert.match(bereich, /nimmAusfallZurueckAktion\(t\.id, false\)/);
+});
+
+pruefe("Benachrichtigungen (#644 AK 1, 2; OoS 1): istVerlegung und mitteilbarBeimAendern als Zwillinge der Datenebene; alle Werkzeugtexte nennen den Standard", () => {
+  const stand = { datum: "2026-12-02", beginn: "18:00:00", ende: "19:30:00", ort: "Halle" };
+  // Sekunden aus der Datenbank, Minuten aus dem Dialog: gleich.
+  assert.equal(istVerlegung(stand, { ...stand, beginn: "18:00", ende: "19:30" }), false);
+  assert.equal(istVerlegung(stand, { ...stand, ort: " Halle " }), false);
+  for (const [feld, wert] of [["datum", "2026-12-03"], ["beginn", "18:30"], ["ende", "20:00"], ["ort", "Wiese"], ["ort", null]] as const)
+    assert.equal(istVerlegung(stand, { ...stand, [feld]: wert }), true, feld);
+  const heute = "2026-12-01";
+  const fall = (
+    vorher: Partial<typeof stand> & { ausgefallen?: boolean },
+    nachher: Partial<typeof stand>,
+    art: "training" | "spiel" = "training",
+    serie: { regelGeaendert?: boolean; serieEnde?: string | null } = {},
+  ) =>
+    mitteilbarBeimAendern({
+      vorher: { ...stand, ausgefallen: false, ...vorher },
+      nachher: { ...stand, ...vorher, ...nachher },
+      art,
+      regelGeaendert: serie.regelGeaendert ?? false,
+      serieEnde: serie.serieEnde ?? null,
+      heute,
+    });
+  // Nur der Kartenlink (gleiche Angaben): nein (OoS 1). Datum in die Vergangenheit: nein.
+  assert.equal(fall({}, {}), false, "nur Kartenlink");
+  assert.equal(fall({}, { datum: "2026-11-30" }), false, "in die Vergangenheit");
+  assert.equal(fall({}, { datum: heute }), true, "auf heute");
+  assert.equal(fall({}, { ende: "20:00" }), true, "nur Ende");
+  // Ausgefallen: ein Training findet nur mit neuem Datum ab heute wieder statt, ein Spiel mit Datum oder Beginn.
+  assert.equal(fall({ ausgefallen: true }, { beginn: "18:30" }), false, "ausgefallenes Training, nur Zeit");
+  assert.equal(fall({ ausgefallen: true }, { datum: "2026-12-04" }), true, "ausgefallenes Training verlegt");
+  assert.equal(fall({ ausgefallen: true, datum: "2026-11-28" }, { datum: "2026-12-02" }), true, "ausgefallenes Training auf morgen");
+  assert.equal(fall({ ausgefallen: true }, { beginn: "18:30" }, "spiel"), true, "ausgefallenes Spiel, Zeit");
+  assert.equal(fall({ ausgefallen: true }, { ende: "20:00" }, "spiel"), false, "ausgefallenes Spiel, nur Ende");
+  // Über die Serie: Ende ab heute und Regel, Zeit oder Ort geändert.
+  assert.equal(fall({ datum: "2026-11-20" }, { beginn: "17:00" }, "training", { serieEnde: "2026-12-20" }), true, "Serie Zeit");
+  assert.equal(fall({}, {}, "training", { regelGeaendert: true, serieEnde: "2026-12-20" }), true, "Serie Regel");
+  assert.equal(fall({}, { ort: "Wiese" }, "training", { serieEnde: "2026-12-20" }), true, "Serie Ort");
+  assert.equal(fall({}, {}, "training", { serieEnde: "2026-12-20" }), false, "Serie ohne Verlegung");
+  assert.equal(fall({}, { beginn: "17:00" }, "training", { serieEnde: "2026-11-30" }), false, "Serie vorbei");
+  assert.equal(BENACHRICHTIGEN_HINWEIS.verlegung, "Sie sehen die neuen Angaben am privaten Link.");
+  // Prinzip 4: jeder Werkzeugtext mit «benachrichtigen» nennt den Standard und was still bleibt.
+  const team = readFileSync(join(web, "lib/mcp/werkzeuge/team.ts"), "utf8");
+  assert.match(team, /BENACHRICHTIGEN_MODELL\("verlegung"\)/);
+  assert.equal(team.match(/\$\{BENACHRICHTIGEN_WERKZEUG\}/g)?.length, 5, "termin_festlegen, termin_aendern, termin_der_serie_folgen, Ausfall, Rücknahme");
+  assert.ok(BENACHRICHTIGEN_WERKZEUG.startsWith("Standardmässig erhalten die Spielervertretungen"));
+  assert.ok(!/\bProbe/.test(BENACHRICHTIGEN_WERKZEUG));
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

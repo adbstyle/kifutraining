@@ -176,6 +176,8 @@ export async function aendereTrainer(
     aenderung,
     erwartet: e.erwartet,
     bestaetigt: e.bestaetigt,
+    // Nur Trainer:innen: nichts, was bestimmt, ob, wann oder wo (Prinzip 1).
+    benachrichtigen: false,
   });
   return r.ok ? ok({ terminId: t.id, teamId: r.wert.teamId, serie: r.wert }) : r;
 }

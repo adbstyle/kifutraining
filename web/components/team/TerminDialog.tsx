@@ -32,6 +32,8 @@ import type { FolgeAngabe } from "@/lib/kern/serien";
 import { TrainerWahl, gleicheMenge, trainerAenderung, trainerStart, type TrainerAenderung, type TrainerWert } from "./TrainerWahl";
 import { KEINE_BESETZUNG, MindestbesetzungFeld, besetzungAusEingabe, besetzungEingabe, type BesetzungEingabe } from "./MindestbesetzungFeld";
 import { besetzungText } from "@/lib/besetzung";
+import { mitteilbarBeimAendern } from "@/lib/benachrichtigung";
+import { BenachrichtigenFeld } from "./BenachrichtigenFeld";
 import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
 import { terminBegonnen } from "@/lib/zeit";
@@ -179,7 +181,8 @@ export function TerminDialog({
   spielerGesamt?: number;
   /** Der Termin hat begonnen: Seine Kader stehen fest (AK 13). */
   begonnen?: boolean;
-  onFolgen?: (angabe: FolgeAngabe) => void;
+  /** `benachrichtigen`: Entscheid des Häkchens (#644); false, wenn es nicht erscheint. */
+  onFolgen?: (angabe: FolgeAngabe, benachrichtigen: boolean) => void;
   onClose: () => void;
   /** `regel` nur bei einem Serientermin: Wochentage und Zeitraum, wie sie im
    *  Dialog stehen (geändert oder nicht). `trainer` nur, wenn sich die Wahl
@@ -192,6 +195,9 @@ export function TerminDialog({
     grund?: string,
     /** Nur, wenn sich die Kader geändert haben (#453). */
     kaderIds?: string[],
+    /** Der Entscheid des Häkchens «Spielervertretungen benachrichtigen» (#644);
+     *  false, solange es nicht erscheint. */
+    benachrichtigen?: boolean,
   ) => void;
 }) {
   const [felder, setFelder] = useState<TerminFelder>({ datum: "" });
@@ -207,6 +213,8 @@ export function TerminDialog({
   const kaderStart = terminKader.flatMap((k) => (k.id ? [k.id] : []));
   const [kaderWahl, setKaderWahl] = useState<string[]>([]);
   const [treffpunkt, setTreffpunkt] = useState<TrainingsTreffpunktEingabe>(null);
+  // #644: Vorbelegt an, bei jedem Öffnen neu (Epic #641, Prinzip 4).
+  const [benachrichtigen, setBenachrichtigen] = useState(true);
   const platz = usePlatzAngaben();
   const istSpiel = start?.art === "spiel";
   const spiel = useSpielAngaben(felder.datum, felder.beginn ?? "");
@@ -248,6 +256,7 @@ export function TerminDialog({
     setGrund(ausfall?.grund ?? "");
     setGrundFehler(undefined);
     setKaderWahl(kaderStart);
+    setBenachrichtigen(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -284,6 +293,32 @@ export function TerminDialog({
   // heute — bei einem Spiel jede Verlegung, auch nur der Zeit (#459 PC 5).
   const verlegt = felder.datum !== terminDatum || (felder.beginn ?? "") !== (start?.beginn ?? "");
   const ausfallEndet = !!ausfall && (istSpiel ? verlegt : felder.datum !== terminDatum && felder.datum >= heute);
+
+  // #644 AK 1, 2: Das Häkchen erscheint, wenn die Änderung den
+  // Spielervertretungen mitteilbar ist (Zwilling der Datenregel). Bei einem
+  // Serientermin steht die Reichweite erst nach dem Speichern fest: Er zählt
+  // als mitteilbar, wenn «nur dieser» (Datum) oder die Serie (Wochentage, Zeit,
+  // Ort bei unverändertem Datum) eine Verlegung ergäbe; die Datenebene
+  // entscheidet dann genau.
+  const vorherStand = {
+    datum: terminDatum,
+    beginn: start?.beginn ?? null,
+    ende: start?.ende ?? null,
+    ort: start?.ort ?? null,
+    ausgefallen: !!ausfall,
+  };
+  const nachherStand = { datum: felder.datum, beginn: felder.beginn ?? null, ende: felder.ende ?? null, ort: felder.ort ?? null };
+  const artKurz = istSpiel ? "spiel" : "training";
+  const regelNeu = !!serie && !!regelAenderung(serie, regel);
+  const mitteilbarSpeichern =
+    !!felder.datum &&
+    (mitteilbarBeimAendern({ vorher: vorherStand, nachher: nachherStand, art: artKurz, regelGeaendert: false, serieEnde: null, heute }) ||
+      (!!serie &&
+        felder.datum === terminDatum &&
+        mitteilbarBeimAendern({ vorher: vorherStand, nachher: nachherStand, art: artKurz, regelGeaendert: regelNeu, serieEnde: regel.bis, heute })));
+  // Der Serie folgen: nur Zeit und Ort verlegen; nur bei einem Termin ab heute, der nicht ausgefallen ist.
+  const mitteilbarFolgen = !ausfall && terminDatum >= heute && (folgenKann.includes("zeit") || folgenKann.includes("ort"));
+  const benachrichtigenSichtbar = mitteilbarSpeichern || mitteilbarFolgen;
 
   function regelPruefen(): boolean {
     if (!serie) return true;
@@ -335,6 +370,7 @@ export function TerminDialog({
       trainerAenderung(besetzung, besetzungStart) ?? undefined,
       grundNeu,
       gleicheMenge(kaderWahl, kaderStart) ? undefined : kaderWahl,
+      mitteilbarSpeichern && benachrichtigen,
     );
   }
 
@@ -497,7 +533,7 @@ export function TerminDialog({
                     {ANGABE[a]} {MEHRZAHL.includes(a) ? "weichen" : "weicht"} von der Serie ab.
                     {a === "ort" && eigenerLinkWeg && <> {TERMIN_TEXT.kartenlinkFolgtSerie}</>}
                   </span>
-                  <Button variant="link" aria-label={FOLGEN_LABEL[a]} disabled={pending} onClick={() => onFolgen?.(a)}>Der Serie folgen</Button>
+                  <Button variant="link" aria-label={FOLGEN_LABEL[a]} disabled={pending} onClick={() => onFolgen?.(a, (a === "zeit" || a === "ort") && mitteilbarFolgen && benachrichtigen)}>Der Serie folgen</Button>
                 </li>
               ))}
             </ul>
@@ -521,6 +557,9 @@ export function TerminDialog({
             <p className="type-body-small">{SERIE_MELDUNG.REGEL_NUR_SERIE}</p>
           </div>
         </section>
+      )}
+      {benachrichtigenSichtbar && (
+        <BenachrichtigenFeld className="mt-4" vorgang="verlegung" checked={benachrichtigen} onChange={setBenachrichtigen} disabled={pending} />
       )}
     </Dialog>
   );

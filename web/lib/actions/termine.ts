@@ -106,6 +106,11 @@ export async function legeTerminFestAktion(
   return { ok: true, terminId: r.wert.terminId, ...(fehlt ? { benachrichtigungFehlt: true as const } : {}) };
 }
 
+/** Ob die gesendeten Felder eine Verlegung sind (#644): Der Dialog sendet nur
+ *  Geändertes, also genügt, dass Datum, Zeit oder Ort dabei sind. */
+const verlegtFelder = (f: Partial<TerminFelder>) =>
+  f.datum !== undefined || f.beginn !== undefined || f.ende !== undefined || f.ort !== undefined;
+
 /** Der Dialog sendet nur, was sich gegenüber seinen Startwerten geändert hat
  *  (`geaenderteFelder`, PO 17): `undefined` heisst unverändert, ein leerer
  *  Text «leeren». Beginn und Ende kommen als Paar, die Felder des Platzes
@@ -114,13 +119,17 @@ export async function aendereTerminAktion(
   terminId: string,
   felder: Partial<TerminFelder>,
   erwartetesTraining: string | null,
+  /** Die Spielervertretungen benachrichtigen (#644 AK 1); wirkt nur bei
+   *  einer Verlegung (Datum, Beginn, Ende, Ort). */
+  benachrichtigen: boolean,
   /** Die bestätigte Zahl verfallender Abmeldungen (#437 AK 1); sie
    *  bestätigt auch einen entfallenden Treffpunkt (#561 PC 5). */
   bestaetigt: number | false = false,
-): Promise<{ ok: true } | Fehler> {
+): Promise<{ ok: true; benachrichtigungFehlt?: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await aendereTermin(a.supabase, a.userId, {
+    benachrichtigen,
     bestaetigt,
     treffpunktWeg: bestaetigt !== false,
     terminId,
@@ -156,7 +165,10 @@ export async function aendereTerminAktion(
     };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.trainingId) revalidiereTraining(r.wert.trainingId);
-  return { ok: true };
+  // Die Änderung steht; nur die Benachrichtigung ist nicht entstanden. Ob es
+  // eine Verlegung war, weiss der Kern: dann ist `benachrichtigt` eine Zahl.
+  const fehlt = benachrichtigen && r.wert.benachrichtigt === null && verlegtFelder(felder);
+  return { ok: true, ...(fehlt ? { benachrichtigungFehlt: true as const } : {}) };
 }
 
 export async function entferneTerminAktion(
@@ -350,13 +362,27 @@ async function serienLauf(
  *  nach der Bestätigung. Die entfallenden Termine vergleicht die Vorschau
  *  nicht — sie liefert sie erst. */
 export async function vorschauSerieAktion(terminId: string, reichweite: Serienweit, aenderung: SerienAenderung, version: number) {
-  return serienLauf((s, u) => aendereSerie(s, u, { terminId, reichweite, aenderung, vorschau: true, erwartet: { version, entfallend: [] } }));
+  // Die Vorschau legt nie ab; `folge.mitteilbar` sagt, wie viele Spieler:innen
+  // eine Benachrichtigung erhielten (#644 AK 2).
+  return serienLauf((s, u) =>
+    aendereSerie(s, u, { terminId, reichweite, aenderung, vorschau: true, erwartet: { version, entfallend: [] }, benachrichtigen: false }),
+  );
 }
 
-export async function aendereSerieAktion(terminId: string, reichweite: Serienweit, aenderung: SerienAenderung, erwartet: Erwartet) {
-  const r = await serienLauf((s, u) => aendereSerie(s, u, { terminId, reichweite, aenderung, erwartet }));
-  if (r.ok) revalidiereTeam(r.folge.teamId);
-  return r;
+export async function aendereSerieAktion(
+  terminId: string,
+  reichweite: Serienweit,
+  aenderung: SerienAenderung,
+  erwartet: Erwartet,
+  /** Die Spielervertretungen benachrichtigen (#644 AK 2). */
+  benachrichtigen: boolean,
+): Promise<{ ok: true; folge: SerienFolge; benachrichtigungFehlt?: true } | Fehler> {
+  const r = await serienLauf((s, u) => aendereSerie(s, u, { terminId, reichweite, aenderung, erwartet, benachrichtigen }));
+  if (!r.ok) return r;
+  revalidiereTeam(r.folge.teamId);
+  // Die Serie ist geändert; nur die Benachrichtigung ist nicht entstanden.
+  const fehlt = benachrichtigen && r.folge.benachrichtigt === null;
+  return { ...r, ...(fehlt ? { benachrichtigungFehlt: true as const } : {}) };
 }
 
 export async function vorschauSerieEntfernenAktion(terminId: string, reichweite: Serienweit, version: number) {
@@ -373,13 +399,16 @@ export async function entferneSerieAktion(terminId: string, reichweite: Serienwe
 export async function folgeDerSerieAktion(
   terminId: string,
   angaben: FolgeAngabe[],
+  /** Die Spielervertretungen benachrichtigen, wenn der Termin damit verlegt
+   *  ist (#644 AK 1). */
+  benachrichtigen: boolean,
   /** `true` bestätigt eine Verlegung (#437), eine Zahl verfallende
    *  Abmeldungen durch Kader (#453 AK 10, 12). */
   bestaetigt: boolean | number = false,
-): Promise<{ ok: true } | Fehler> {
+): Promise<{ ok: true; benachrichtigungFehlt?: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await folgeDerSerie(a.supabase, a.userId, { terminId, angaben, bestaetigt });
+  const r = await folgeDerSerie(a.supabase, a.userId, { terminId, angaben, bestaetigt, benachrichtigen });
   if (!r.ok)
     return {
       ok: false,
@@ -390,5 +419,7 @@ export async function folgeDerSerieAktion(
       treffpunktEntfaellt: r.treffpunktEntfaellt,
     };
   revalidiereTeam(r.wert.teamId);
-  return { ok: true };
+  // Die Angabe folgt; nur die Benachrichtigung ist nicht entstanden.
+  const fehlt = benachrichtigen && r.wert.benachrichtigt === null;
+  return { ok: true, ...(fehlt ? { benachrichtigungFehlt: true as const } : {}) };
 }

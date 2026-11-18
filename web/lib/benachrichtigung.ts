@@ -248,3 +248,67 @@ export function BENACHRICHTIGEN_MODELL(vorgang: BenachrichtigungEreignis): strin
     "Standard true; false lässt die Spielervertretungen still. Nur bei Terminen von heute oder später, nie für ausgefallene."
   );
 }
+
+/** Der Satz im Werkzeugtext jedes KI-Werkzeugs mit `benachrichtigen`
+ *  (Prinzip 4): Standard ja, und was still bleibt (Prinzipien 1, 2). Gleich
+ *  für alle Vorgänge des Epics #641; die Einzelheiten stehen im Parameter
+ *  (`BENACHRICHTIGEN_MODELL`). */
+export const BENACHRICHTIGEN_WERKZEUG =
+  "Standardmässig erhalten die Spielervertretungen dazu eine Benachrichtigung am privaten Link («benachrichtigen»: false " +
+  "lässt sie still); still bleiben Termine vor heute, ausgefallene Termine und alle Änderungen ausser neuem Spiel, " +
+  "Ausfall, Rücknahme, Verlegung von Datum, Zeit oder Ort und Entfernen.";
+
+/* ── Verlegung (#644) ──────────────────────────────────────────────────────── */
+
+/** Die Angaben eines Termins, die eine Verlegung ausmachen (Prinzip 1):
+ *  Datum «YYYY-MM-DD», Beginn und Ende («HH:MM» oder «HH:MM:SS»), Ort. */
+export type VerlegungStand = {
+  datum: string;
+  beginn: string | null;
+  ende: string | null;
+  ort: string | null;
+};
+
+const uhr = (z: string | null | undefined) => (z ? z.slice(0, 5) : null);
+const ortWert = (o: string | null | undefined) => (o && o.trim() ? o.trim() : null);
+
+/** Ob ein Termin verlegt ist: Datum, Beginn, Ende oder Ort anders — der
+ *  Kartenlink allein nicht (#644 OoS 1). SQL-Zwilling:
+ *  `benachrichtigung_verlegt` (20261119120000_benachrichtigungen_verlegung.sql). */
+export function istVerlegung(vorher: VerlegungStand, nachher: VerlegungStand): boolean {
+  return (
+    vorher.datum !== nachher.datum ||
+    uhr(vorher.beginn) !== uhr(nachher.beginn) ||
+    uhr(vorher.ende) !== uhr(nachher.ende) ||
+    ortWert(vorher.ort) !== ortWert(nachher.ort)
+  );
+}
+
+/** Ob eine Änderung den Spielervertretungen mitgeteilt werden kann — dann
+ *  zeigt der Dialog das Häkchen (#644 AK 1, 2). Zwilling der Regel der
+ *  Datenebene (`termin_benachrichtigen` 'verlegung', `benachrichtigung_verlegt`):
+ *  - Einzeln (`serieEnde: null`): verlegt, danach heute oder später und nicht
+ *    ausgefallen. Ein ausgefallenes Training findet wieder statt, wenn sein
+ *    Datum auf heute oder später wechselt (#327 PC 4), ein ausgefallenes
+ *    Spiel bei jeder Änderung von Datum oder Beginn (Trigger
+ *    `spiel_zeitpunkt_vorher`); sonst bleibt es ausgefallen und still.
+ *  - Über die Serie (`serieEnde` = Ende der Serie nach der Änderung): Die
+ *    Serie reicht bis heute oder später, und Wochentage (`regelGeaendert`),
+ *    Zeit oder Ort ändern sich. Genau zählt die Vorschau (`mitteilbar`).
+ *  `heute` ist der Tag am Trainingsort («YYYY-MM-DD»). */
+export function mitteilbarBeimAendern(e: {
+  vorher: VerlegungStand & { ausgefallen: boolean };
+  nachher: VerlegungStand;
+  art: "training" | "spiel";
+  regelGeaendert: boolean;
+  serieEnde: string | null;
+  heute: string;
+}): boolean {
+  const verlegt = istVerlegung(e.vorher, e.nachher);
+  if (e.serieEnde !== null) return e.serieEnde >= e.heute && (e.regelGeaendert || verlegt);
+  if (!verlegt || e.nachher.datum < e.heute) return false;
+  if (!e.vorher.ausgefallen) return true;
+  return e.art === "spiel"
+    ? e.vorher.datum !== e.nachher.datum || uhr(e.vorher.beginn) !== uhr(e.nachher.beginn)
+    : e.vorher.datum !== e.nachher.datum;
+}

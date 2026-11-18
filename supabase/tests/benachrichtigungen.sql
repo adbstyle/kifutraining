@@ -22,6 +22,17 @@
 -- - Tagesgrenze (AK 1): vergangene Termine still
 -- - Empfänger (PC 1): auch eine abgemeldete Spieler:in
 -- - Inhalt (AK 3, 4): Ausfall mit Grund (auch `null`), Rücknahme ohne Grund
+-- Story 3 (#644): Verlegung
+-- - Einzeln (`termin_benachrichtigen` 'verlegung'): neuer Stand im Inhalt,
+--   `wieder` nur auf Wunsch; ausgefallen oder vergangen still (0)
+-- - Vergleich: nur der Kartenlink still (OoS 1)
+-- - Serie ändern: Vorschau schreibt nichts und nennt `mitteilbar`; ohne
+--   Entscheid nichts; mit: genau eine Zeile `serie` je Spieler:in mit `ab`
+--   (erster verlegter Termin, vergangene und ausgefallene zählen nicht) und
+--   den geänderten Angaben; abweichende Termine, die sich nicht ändern, und
+--   neu angelegte lösen nichts aus; Wochentag-Tausch
+-- - Der Serie folgen: Zeit → `verlegung` mit dem Stand der Serie; ohne
+--   Entscheid oder ohne Änderung nichts
 -- Alles in einer Transaktion mit rollback; hinterlässt nichts.
 
 \set ON_ERROR_STOP on
@@ -366,5 +377,187 @@ select pg_temp.als(pg_temp.id('m'));
 select pg_temp.pruefe(pg_temp.benachrichtige('a3', 'ruecknahme') = 0, '#643 vergangene Rücknahme');
 select pg_temp.zurueck();
 select pg_temp.pruefe(pg_temp.empfaenger('a3') = '', '#643 vergangen abgelegt');
+
+-- ── Verlegung (#644) ────────────────────────────────────────────────────────
+
+-- Eigenes Team «Möwen» (Mitglied m) mit s5 und s6. Eine Serie am Wochentag
+-- von morgen (d), vom d-7 bis d+14: Termine d-7, d, d+7, d+14.
+insert into ids (name) values ('tm'), ('s5'), ('s6'), ('e1'), ('e2'), ('e3');
+set local session_replication_role = replica;
+insert into teams (id, name, verein_id) values (pg_temp.id('tm'), 'Möwen', pg_temp.id('v'));
+insert into team_members (team_id, user_id) values (pg_temp.id('tm'), pg_temp.id('m'));
+insert into spieler (id, team_id, verein_id, vorname, nachname, jahrgang) values
+  (pg_temp.id('s5'), pg_temp.id('tm'), pg_temp.id('v'), 'Mia', 'Möwe', 2015),
+  (pg_temp.id('s6'), pg_temp.id('tm'), pg_temp.id('v'), 'Moritz', 'Möwe', 2015);
+insert into team_spieler (team_id, spieler_id, verein_id, probe_seit) values
+  (pg_temp.id('tm'), pg_temp.id('s5'), pg_temp.id('v'), null),
+  (pg_temp.id('tm'), pg_temp.id('s6'), pg_temp.id('v'), null);
+-- Einzelne Termine: e1 (morgen), e2 (gestern), e3 (morgen, ausgefallen).
+insert into training_termine (id, team_id, datum, beginn, ende, ort, ausgefallen) values
+  (pg_temp.id('e1'), pg_temp.id('tm'), heute_am_trainingsort() + 1, '18:00', '19:00', 'Halle', false),
+  (pg_temp.id('e2'), pg_temp.id('tm'), heute_am_trainingsort() - 1, '18:00', '19:00', 'Halle', false),
+  (pg_temp.id('e3'), pg_temp.id('tm'), heute_am_trainingsort() + 1, '18:00', '19:00', 'Halle', true);
+set local session_replication_role = origin;
+
+create temp table serie_v (d date, w smallint, termin uuid, serie uuid);
+insert into serie_v (d, w) select heute_am_trainingsort() + 1, extract(isodow from heute_am_trainingsort() + 1)::smallint;
+grant select, update on serie_v to authenticated;
+create function pg_temp.d(p_tage int default 0) returns date language sql stable as $$ select d + p_tage from serie_v $$;
+create function pg_temp.st(p_tage int) returns uuid language sql stable as $$
+  select t.id from training_termine t where t.team_id = pg_temp.id('tm') and t.serie_id is not null and t.datum = pg_temp.d(p_tage) $$;
+-- Die Zeilen eines Ereignisses an Spieler:innen der Möwen.
+create function pg_temp.moewen(p_ereignis text) returns setof spieler_benachrichtigungen language sql stable as $$
+  select * from spieler_benachrichtigungen where spieler_id in (pg_temp.id('s5'), pg_temp.id('s6')) and ereignis = p_ereignis $$;
+grant execute on function pg_temp.d(int), pg_temp.st(int) to authenticated;
+
+select pg_temp.als(pg_temp.id('m'));
+select terminserie_festlegen(pg_temp.id('tm'), array[(select w from serie_v)], pg_temp.d(-7), pg_temp.d(14),
+                             '18:00', '19:30', 'Allmend', null, '{}', pg_temp.id('m'));
+select pg_temp.zurueck();
+update serie_v set termin = pg_temp.st(0), serie = (select serie_id from training_termine where id = pg_temp.st(0));
+select pg_temp.pruefe((select count(*) from training_termine where serie_id = (select serie from serie_v)) = 4, '#644 Serie angelegt');
+
+-- Einzeln (AK 1, 3): neuer Stand, `wieder` nur auf Wunsch; ausgefallen und gestern still.
+update training_termine set datum = heute_am_trainingsort() + 2, ort = 'Wiese' where id = pg_temp.id('e1');
+select pg_temp.als(pg_temp.id('m'));
+select pg_temp.pruefe(termin_benachrichtigen(pg_temp.id('e1'), 'verlegung', true) = 2, '#644 einzeln');
+select pg_temp.pruefe(termin_benachrichtigen(pg_temp.id('e2'), 'verlegung') = 0, '#644 gestern');
+select pg_temp.pruefe(termin_benachrichtigen(pg_temp.id('e3'), 'verlegung') = 0, '#644 ausgefallen');
+select pg_temp.zurueck();
+select pg_temp.pruefe(
+  (select bool_and(inhalt = jsonb_build_object('team', 'Möwen', 'art', 'training', 'bezeichnung', null,
+                                               'datum', to_char(heute_am_trainingsort() + 2, 'YYYY-MM-DD'),
+                                               'beginn', '18:00', 'ende', '19:00', 'ort', 'Wiese', 'wieder', true))
+     and count(*) = 2 from pg_temp.moewen('verlegung')),
+  '#644 Inhalt einzeln: ' || (select string_agg(inhalt::text, ' ') from pg_temp.moewen('verlegung')));
+
+-- Vergleich (OoS 1): nur der Kartenlink ist keine Verlegung; der Ort schon.
+do $$
+declare
+  v jsonb := benachrichtigung_stand(array[pg_temp.id('e1')]);
+begin
+  perform pg_temp.pruefe(v -> pg_temp.id('e1')::text ->> 'datum' = to_char(heute_am_trainingsort() + 2, 'YYYY-MM-DD')
+                         and jsonb_array_length(v -> pg_temp.id('e1')::text -> 'empfaenger') = 2, '#644 Stand: ' || v::text);
+  update training_termine set ort_link = 'https://maps.app.goo.gl/abc' where id = pg_temp.id('e1');
+  perform pg_temp.pruefe(benachrichtigung_vergleich(v, 'einzeln', true) = 0, '#644 Kartenlink allein');
+  update training_termine set ort = 'Halle' where id = pg_temp.id('e1');
+  perform pg_temp.pruefe(benachrichtigung_vergleich(v, 'einzeln', false) = 2, '#644 Ort zählt');
+  perform pg_temp.pruefe((select count(*) from pg_temp.moewen('verlegung')) = 2, '#644 Zählen legt ab');
+end $$;
+
+-- Serie ändern: Vorschau schreibt nichts und nennt `mitteilbar` (AK 2).
+select pg_temp.als(pg_temp.id('m'));
+do $$
+declare
+  v jsonb := terminserie_aendern(p_termin => (select termin from serie_v), p_reichweite => 'alle',
+                                 p_aenderung => '{"beginn": "19:00", "ende": "20:30"}', p_ausfuehren => false,
+                                 p_benachrichtigen => true);
+begin
+  perform pg_temp.pruefe((v ->> 'mitteilbar')::int = 2 and not v ? 'benachrichtigt', '#644 Vorschau: ' || v::text);
+  -- Ohne Entscheid: geändert, nichts abgelegt.
+  v := terminserie_aendern((select termin from serie_v), 'alle', '{"beginn": "19:00", "ende": "20:30"}');
+  perform pg_temp.pruefe(v -> 'benachrichtigt' = 'null'::jsonb, '#644 ohne Entscheid: ' || v::text);
+end $$;
+select pg_temp.zurueck();
+select pg_temp.pruefe(not exists (select 1 from pg_temp.moewen('serie')), '#644 Vorschau oder ohne Entscheid abgelegt');
+
+-- Mit Entscheid: d-7 ist vergangen, d ausgefallen, d+7 hat einen eigenen Ort.
+-- Der Ort der Serie ändert sich: verlegt sind nur d+14 (ab) — d+7 behält
+-- seinen Ort, d bleibt ausgefallen.
+update training_termine set ausgefallen = true where id = pg_temp.st(0);
+update training_termine set ort = 'Eigen', ort_abweichend = true where id = pg_temp.st(7);
+select pg_temp.als(pg_temp.id('m'));
+select pg_temp.pruefe(
+  (terminserie_aendern((select termin from serie_v), 'alle', '{"ort": "Schachen"}', p_benachrichtigen => true) ->> 'benachrichtigt')::int = 2,
+  '#644 Serie Ort');
+select pg_temp.zurueck();
+do $$ begin
+  perform pg_temp.pruefe((select count(*) from pg_temp.moewen('serie')) = 2
+                         and (select count(distinct vorgang) from pg_temp.moewen('serie')) = 1, '#644 eine Zeile je Spieler:in');
+  perform pg_temp.pruefe(
+    (select bool_and(termin_id = pg_temp.st(14)
+                     and inhalt = jsonb_build_object('team', 'Möwen', 'art', 'training',
+                                                     'ab', to_char(pg_temp.d(14), 'YYYY-MM-DD'),
+                                                     'angaben', jsonb_build_object('ort', 'Schachen'), 'wegfall', null))
+       from pg_temp.moewen('serie')),
+    '#644 Inhalt Serie: ' || (select string_agg(inhalt::text, ' ') from pg_temp.moewen('serie')));
+end $$;
+
+-- Nur neue Termine (das Ende rückt hinaus): niemand. Der eigene Ort von d+7
+-- bleibt, auch beim Ändern auf denselben Ort.
+select pg_temp.als(pg_temp.id('m'));
+select pg_temp.pruefe(
+  (terminserie_aendern((select termin from serie_v), 'alle', jsonb_build_object('end_datum', pg_temp.d(21)),
+                       p_benachrichtigen => true) ->> 'benachrichtigt')::int = 0, '#644 neue Termine');
+select pg_temp.pruefe(
+  (terminserie_aendern((select termin from serie_v), 'alle', '{"ort": "Schachen"}', p_benachrichtigen => true) ->> 'benachrichtigt')::int = 0,
+  '#644 nichts geändert');
+select pg_temp.zurueck();
+select pg_temp.pruefe((select count(*) from pg_temp.moewen('serie')) = 2, '#644 neue oder unveränderte Termine abgelegt');
+
+-- Wochentag-Tausch (AK 2, 4): die Termine wandern um einen Tag; ab dem
+-- ersten verlegten von heute oder später, Angaben = neue Wochentage.
+delete from spieler_benachrichtigungen where spieler_id in (pg_temp.id('s5'), pg_temp.id('s6'));
+update training_termine set ausgefallen = false where id = pg_temp.st(0);
+select pg_temp.als(pg_temp.id('m'));
+select pg_temp.pruefe(
+  (terminserie_aendern((select termin from serie_v), 'alle',
+                       jsonb_build_object('wochentage', array[case when (select w from serie_v) = 7 then 6 else (select w from serie_v) + 1 end]),
+                       p_benachrichtigen => true) ->> 'benachrichtigt')::int = 2, '#644 Tausch');
+select pg_temp.zurueck();
+do $$
+declare
+  w2 smallint := case when (select w from serie_v) = 7 then 6 else (select w from serie_v) + 1 end;
+  ab date := pg_temp.d(w2 - (select w from serie_v));
+begin
+  perform pg_temp.pruefe(
+    (select bool_and(inhalt -> 'angaben' = jsonb_build_object('wochentage', jsonb_build_array(w2))
+                     and inhalt ->> 'ab' = to_char(ab, 'YYYY-MM-DD')
+                     and termin_id = (select id from training_termine where team_id = pg_temp.id('tm') and serie_id is not null and datum = ab))
+       and count(*) = 2 from pg_temp.moewen('serie')),
+    '#644 Inhalt Tausch: ' || (select string_agg(inhalt::text, ' ') from pg_temp.moewen('serie')));
+end $$;
+
+-- Der Serie folgen (AK 1): der Termin mit eigener Zeit folgt der Zeit der Serie.
+update training_termine set beginn = '17:00', ende = '18:00', zeit_abweichend = true
+ where id = (select termin from serie_v);
+select pg_temp.als(pg_temp.id('m'));
+select pg_temp.pruefe(termin_der_serie_folgen((select termin from serie_v), array['bemerkung'], null, true) ->> 'benachrichtigt' = '0',
+                      '#644 folgen ohne Änderung');
+select pg_temp.pruefe(termin_der_serie_folgen((select termin from serie_v), array['zeit'], null, true) ->> 'benachrichtigt' = '2',
+                      '#644 folgen Zeit');
+select pg_temp.zurueck();
+select pg_temp.pruefe(
+  (select bool_and(termin_id = (select termin from serie_v) and inhalt ->> 'beginn' = '19:00' and inhalt ->> 'ende' = '20:30'
+                   and not inhalt ? 'wieder')
+     and count(*) = 2 from pg_temp.moewen('verlegung') where termin_id = (select termin from serie_v)),
+  '#644 Inhalt folgen: ' || (select string_agg(inhalt::text, ' ') from pg_temp.moewen('verlegung')));
+-- Ohne Entscheid: nichts.
+update training_termine set beginn = '17:00', ende = '18:00', zeit_abweichend = true
+ where id = (select termin from serie_v);
+select pg_temp.als(pg_temp.id('m'));
+select pg_temp.pruefe(termin_der_serie_folgen((select termin from serie_v), array['zeit']) -> 'benachrichtigt' = 'null'::jsonb,
+                      '#644 folgen ohne Entscheid');
+select pg_temp.zurueck();
+select pg_temp.pruefe((select count(*) from pg_temp.moewen('verlegung') where termin_id = (select termin from serie_v)) = 2,
+                      '#644 folgen ohne Entscheid abgelegt');
+
+-- Rechte der neuen Bausteine.
+do $$
+declare
+  r text;
+begin
+  foreach r in array array['anon', 'authenticated'] loop
+    perform pg_temp.pruefe(not has_function_privilege(r, f, 'execute'), r || ' darf ' || f)
+       from unnest(array['benachrichtigung_stand(uuid[])', 'benachrichtigung_serie_angaben(uuid)',
+                         'benachrichtigung_verlegt(jsonb)',
+                         'benachrichtigung_vergleich(jsonb, text, boolean, jsonb, uuid)']) f;
+  end loop;
+  perform pg_temp.pruefe(not has_function_privilege('anon', 'terminserie_aendern(uuid, text, jsonb, integer, uuid[], boolean, integer, boolean)', 'execute')
+                         and has_function_privilege('authenticated', 'terminserie_aendern(uuid, text, jsonb, integer, uuid[], boolean, integer, boolean)', 'execute')
+                         and not has_function_privilege('anon', 'termin_der_serie_folgen(uuid, text[], integer, boolean)', 'execute')
+                         and has_function_privilege('authenticated', 'termin_der_serie_folgen(uuid, text[], integer, boolean)', 'execute'),
+                         '#644 Rechte der Hüllen');
+end $$;
 
 rollback;

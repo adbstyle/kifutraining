@@ -159,6 +159,8 @@ type ReichweiteFrage = {
   aenderung?: SerienAenderung;
   /** Der geänderte Ausfallgrund — er gilt nur für diesen Termin (#402 PC 4). */
   grund?: string;
+  /** Der Entscheid des Häkchens (#644), für «nur dieser» und die Serie. */
+  benachrichtigen: boolean;
 };
 
 /** Die Felder sind gespeichert, die Trainer:innen nicht — weil der USER
@@ -179,6 +181,7 @@ type SerienSchritt = {
   aenderung?: SerienAenderung;
   folge: SerienFolge;
   grund?: string;
+  benachrichtigen: boolean;
 };
 
 export function TerminBereich({
@@ -301,8 +304,9 @@ export function TerminBereich({
   function aendereEinzeln(
     t: TerminZeile,
     geaendert: Partial<TerminFelder> | null | undefined,
-    trainer?: TrainerAenderung,
-    grund?: string,
+    trainer: TrainerAenderung | undefined,
+    grund: string | undefined,
+    benachrichtigen: boolean,
     bestaetigt: number | false = false,
     kaderIds?: string[],
     kaderBestaetigt: number | false = false,
@@ -310,8 +314,10 @@ export function TerminBereich({
     const nr = laufNr.current;
     const gilt = () => laufNr.current === nr;
     startTransition(async () => {
+      // Die Änderung steht, nur die Benachrichtigung ist nicht entstanden (#644).
+      let fehlt = false;
       if (geaendert) {
-        const r = await aendereTerminAktion(t.id, geaendert, t.training?.id ?? null, bestaetigt);
+        const r = await aendereTerminAktion(t.id, geaendert, t.training?.id ?? null, benachrichtigen, bestaetigt);
         // #437 AK 1: Verfallen Abmeldungen, erst nachfragen; der Dialog bleibt offen.
         // Ein Spiel fragt auch, wenn nur die Frist ins Abgelaufene rückt (#463 AK 26),
         // ein Training, wenn nur der Treffpunkt entfiele (#561 PC 5).
@@ -319,12 +325,13 @@ export function TerminBereich({
           const anzahl = r.verfallend ?? 0;
           if (gilt())
             return verfall.nachVerlegung({ ...r, verfallend: anzahl }, () =>
-              aendereEinzeln(t, geaendert, trainer, grund, anzahl, kaderIds),
+              aendereEinzeln(t, geaendert, trainer, grund, benachrichtigen, anzahl, kaderIds),
             );
           // Abgebrochen, bevor die Rückfrage kam: Gespeichert ist nichts.
           return melde(NICHT_GEAENDERT);
         }
         if (!r.ok) return einzelnGescheitert(r.error, gilt());
+        fehlt = !!r.benachrichtigungFehlt;
       }
       if (trainer) {
         if (geaendert && !gilt()) {
@@ -350,7 +357,7 @@ export function TerminBereich({
         if (!k.ok && k.verfallend) {
           if (davor) router.refresh();
           if (gilt()) {
-            verfall.nachKader(k, kaderBestaetigt, (n) => aendereEinzeln(t, null, undefined, grund, false, kaderIds, n));
+            verfall.nachKader(k, kaderBestaetigt, (n) => aendereEinzeln(t, null, undefined, grund, false, false, kaderIds, n));
             return;
           }
           return melde(davor ?? NICHT_GEAENDERT);
@@ -372,7 +379,7 @@ export function TerminBereich({
         setBearbeiten(null);
         setDialogFehler(undefined);
       }
-      melde("Termin geändert.");
+      melde(fehlt ? `Termin geändert. ${BENACHRICHTIGEN_TEXT.gescheitert}` : "Termin geändert.");
     });
   }
 
@@ -424,10 +431,13 @@ export function TerminBereich({
   async function fuehreAus(b: SerienSchritt, nr: number) {
     const erwartet = { version: b.folge.versionVorher, entfallend: b.folge.entfallend.map((e) => e.terminId) };
     const r = b.art === "aendern"
-      ? await aendereSerieAktion(b.t.id, b.reichweite, b.aenderung ?? {}, {
-          ...erwartet,
-          verfallend: verfallSumme(b.folge),
-        })
+      ? await aendereSerieAktion(
+          b.t.id,
+          b.reichweite,
+          b.aenderung ?? {},
+          { ...erwartet, verfallend: verfallSumme(b.folge) },
+          b.benachrichtigen,
+        )
       : await entferneSerieAktion(b.t.id, b.reichweite, erwartet);
     if (!r.ok) return serienFehler(b.art, r.error, laufNr.current !== nr);
     // Der Grund gilt nur für diesen Termin (#402 PC 4); er folgt der Serie nicht.
@@ -435,7 +445,12 @@ export function TerminBereich({
     const g = b.grund !== undefined ? await lasseAusfallenAktion(b.t.id, b.grund, true, false) : null;
     router.refresh();
     serieSchliessen();
-    melde(b.art === "aendern" ? `Terminserie geändert.${g && !g.ok ? ` ${g.error}` : ""}` : "Termine entfernt.");
+    const fehlt = "benachrichtigungFehlt" in r && r.benachrichtigungFehlt;
+    melde(
+      b.art === "aendern"
+        ? `Terminserie geändert.${g && !g.ok ? ` ${g.error}` : ""}${fehlt ? ` ${BENACHRICHTIGEN_TEXT.gescheitert}` : ""}`
+        : "Termine entfernt.",
+    );
   }
 
   /** Speichern im Termin-Dialog. Ein einzelner Termin geht direkt; ein
@@ -450,6 +465,7 @@ export function TerminBereich({
     trainer?: TrainerAenderung,
     grund?: string,
     kaderIds?: string[],
+    benachrichtigen = false,
   ) {
     const geaendert = geaenderteFelder(f, startWerte(t));
     const regelNeu = t.serie && regel ? regelAenderung(t.serie, regel) : null;
@@ -459,7 +475,7 @@ export function TerminBereich({
       // (#402 PC 4); er bleibt still (#643 OoS 1).
       return lauf(() => lasseAusfallenAktion(t.id, grund, true, false), () => "Grund gespeichert.", () => setBearbeiten(null), true, laufNr.current);
     }
-    if (!t.serie) return aendereEinzeln(t, geaendert, trainer, grund, false, kaderIds);
+    if (!t.serie) return aendereEinzeln(t, geaendert, trainer, grund, benachrichtigen, false, kaderIds);
     const datum = geaendert?.datum !== undefined;
     const namenlose = !!trainer?.nurNamenlose;
     const erlaubt = erlaubteReichweiten({ datum, regel: !!regelNeu, namenlose });
@@ -484,6 +500,7 @@ export function TerminBereich({
       trainer,
       kader: kaderIds,
       grund,
+      benachrichtigen,
       // Für folgende und alle gehen die Trainer:innen mit der übrigen
       // Änderung in EINE Serienänderung (#519 AK 12). Die Serienrechnung
       // ersetzt damit an jedem erfassten Termin ALLE Eingeladenen durch diese
@@ -510,7 +527,7 @@ export function TerminBereich({
       // mit dem Training geschieht (#322; PO 2026-10-06).
       if (art === "entfernen") return setEntfernen(t);
       if (!frage.geaendert && !frage.trainer && !frage.kader) return;
-      return aendereEinzeln(t, frage.geaendert, frage.trainer, frage.grund, false, frage.kader);
+      return aendereEinzeln(t, frage.geaendert, frage.trainer, frage.grund, frage.benachrichtigen, false, frage.kader);
     }
     const version = t.serie?.version ?? 0;
     const nr = laufNr.current;
@@ -522,7 +539,7 @@ export function TerminBereich({
       if (laufNr.current !== nr) return;
       if (!v.ok) return serienFehler(art, v.error);
       setReichweite(null);
-      const schritt: SerienSchritt = { art, t, reichweite: r, aenderung: frage.aenderung, folge: v.folge, grund: frage.grund };
+      const schritt: SerienSchritt = { art, t, reichweite: r, aenderung: frage.aenderung, folge: v.folge, grund: frage.grund, benachrichtigen: frage.benachrichtigen };
       // AK 8: bestätigen, wenn Termine wegfallen — beim Entfernen immer; ebenso,
       // wenn Abmeldungen verfallen (#437 AK 1) oder Treffpunkte entfallen (#561 PC 5).
       if (art === "entfernen" || v.folge.entfallendAnzahl > 0 || verfallSumme(v.folge) > 0)
@@ -533,10 +550,10 @@ export function TerminBereich({
 
   /** Eine Angabe wieder der Serie folgen lassen (#326 AK 6). Folgt die Zeit
    *  und verfallen damit Abmeldungen, erst nachfragen (#437 AK 1). */
-  function folgen(t: TerminZeile, angabe: FolgeAngabe, bestaetigt: boolean | number = false) {
+  function folgen(t: TerminZeile, angabe: FolgeAngabe, benachrichtigen: boolean, bestaetigt: boolean | number = false) {
     lauf(
-      () => folgeDerSerieAktion(t.id, [angabe], bestaetigt),
-      () => FOLGT_WIEDER[angabe],
+      () => folgeDerSerieAktion(t.id, [angabe], benachrichtigen, bestaetigt),
+      (r) => `${FOLGT_WIEDER[angabe]}${r.ok && r.benachrichtigungFehlt ? ` ${BENACHRICHTIGEN_TEXT.gescheitert}` : ""}`,
       () => setBearbeiten(null),
       true,
       laufNr.current,
@@ -544,9 +561,9 @@ export function TerminBereich({
         // #453: Folgen die Kader, bestätigt die Zahl (erst `false`, dann die
         // gemeldete); die Zeit bestätigt `true`.
         if (angabe === "kader")
-          return verfall.nachKader(r, typeof bestaetigt === "number" ? bestaetigt : false, (n) => folgen(t, angabe, n));
+          return verfall.nachKader(r, typeof bestaetigt === "number" ? bestaetigt : false, (n) => folgen(t, angabe, benachrichtigen, n));
         if (r.ok || (!r.verfallend && !r.treffpunktEntfaellt)) return false;
-        verfall.nachVerlegung({ ...r, verfallend: r.verfallend ?? 0 }, () => folgen(t, angabe, true));
+        verfall.nachVerlegung({ ...r, verfallend: r.verfallend ?? 0 }, () => folgen(t, angabe, benachrichtigen, true));
         return true;
       },
     );
@@ -578,7 +595,7 @@ export function TerminBereich({
       setDialogFehler(undefined);
       if (t.serie) {
         neuerLauf();
-        setReichweite({ art: "entfernen", t, erlaubt: JEDE_REICHWEITE });
+        setReichweite({ art: "entfernen", t, erlaubt: JEDE_REICHWEITE, benachrichtigen: false });
       }
       else setEntfernen(t);
     },
@@ -681,7 +698,7 @@ export function TerminBereich({
         terminKader={bearbeiten?.kader}
         spielerGesamt={spielerGesamt}
         begonnen={!!bearbeiten && terminBegonnen(bearbeiten.datum, bearbeiten.beginn)}
-        onFolgen={(angabe) => bearbeiten && folgen(bearbeiten, angabe)}
+        onFolgen={(angabe, benachrichtigen) => bearbeiten && folgen(bearbeiten, angabe, benachrichtigen)}
         onClose={() => {
           // Nur ein Abbruch durch den USER zählt; schliesst der Code den
           // Dialog, ist `bearbeiten` schon leer (gilt für alle drei Dialoge).
@@ -689,8 +706,8 @@ export function TerminBereich({
           neuerLauf();
           setBearbeiten(null);
         }}
-        onSpeichern={(f, regel, trainer, grund, kaderIds) =>
-          bearbeiten && speichereBearbeitung(bearbeiten, f, regel, trainer, grund, kaderIds)
+        onSpeichern={(f, regel, trainer, grund, kaderIds, benachrichtigen) =>
+          bearbeiten && speichereBearbeitung(bearbeiten, f, regel, trainer, grund, kaderIds, benachrichtigen)
         }
       />
 

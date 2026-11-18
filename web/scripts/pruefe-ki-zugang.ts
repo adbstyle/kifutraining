@@ -47,7 +47,7 @@ import { loginAdresse, sichererRuecksprung } from "../lib/weiterleitung";
 import { KONTO_GRENZE_WERKZEUG, kontoGrenzeText } from "../lib/konto-grenzen";
 import { registriereWerkzeuge } from "../lib/mcp/server";
 import { ZUGANG_DARF, ZUGANG_DARF_NICHT, ZUGANG_ERWEITERUNG } from "../lib/mcp/umfang";
-import { BENACHRICHTIGEN_HINWEIS, BENACHRICHTIGEN_MODELL } from "../lib/benachrichtigung";
+import { BENACHRICHTIGEN_HINWEIS, BENACHRICHTIGEN_MODELL, BENACHRICHTIGEN_WERKZEUG } from "../lib/benachrichtigung";
 import {
   altersstufeSlugs,
   erscheinungsform_juniorenSlugs,
@@ -1303,6 +1303,32 @@ pruefe("Benachrichtigungen (#643 AK 1, 2): termin_ausfallen_lassen und termin_au
   // Ohne Angabe: benachrichtigen (Prinzip 4).
   assert.equal(ausfall?.parse?.(undefined), true);
   assert.equal(ruecknahme?.parse?.(undefined), true);
+});
+
+pruefe("Benachrichtigungen (#644 AK 1, 2): termin_aendern und termin_der_serie_folgen beschreiben «benachrichtigen» wie die Oberfläche (Standard true); jeder Werkzeugtext nennt den Standard", () => {
+  const felder = new Map<string, Map<string, { description?: string; parse?: (x: unknown) => unknown }>>();
+  const texte = new Map<string, string>();
+  registriereWerkzeuge({
+    registerTool: (name: string, def: { description?: string; inputSchema?: { shape?: Record<string, { description?: string }> } }) => {
+      felder.set(name, new Map(Object.entries(def.inputSchema?.shape ?? {})));
+      texte.set(name, def.description ?? "");
+    },
+  } as never);
+  const aendern = felder.get("termin_aendern")?.get("benachrichtigen");
+  const folgen = felder.get("termin_der_serie_folgen")?.get("benachrichtigen");
+  // UI = KI: derselbe Hinweis wie unter dem Häkchen, einzeln und über die Serie.
+  assert.ok(aendern?.description?.includes(BENACHRICHTIGEN_MODELL("verlegung")), aendern?.description);
+  assert.ok(aendern?.description?.includes(BENACHRICHTIGEN_HINWEIS.verlegung));
+  assert.ok(aendern?.description?.includes(BENACHRICHTIGEN_HINWEIS.serie));
+  assert.ok(aendern?.description?.includes("der Kartenlink allein nicht"), "OoS 1");
+  assert.ok(folgen?.description?.endsWith(BENACHRICHTIGEN_MODELL("verlegung")), folgen?.description);
+  // Ohne Angabe: benachrichtigen (Prinzip 4).
+  assert.equal(aendern?.parse?.(undefined), true);
+  assert.equal(folgen?.parse?.(undefined), true);
+  // Jedes Werkzeug mit «benachrichtigen» nennt den Standard im Werkzeugtext, und nur diese.
+  const mit = [...felder].filter(([, f]) => f.has("benachrichtigen")).map(([n]) => n).sort();
+  assert.deepEqual(mit, ["termin_aendern", "termin_ausfall_zuruecknehmen", "termin_ausfallen_lassen", "termin_der_serie_folgen", "termin_festlegen"]);
+  for (const [name, text] of texte) assert.equal(text.includes(BENACHRICHTIGEN_WERKZEUG), mit.includes(name), name);
 });
 
 pruefe("Story 13 (#589 PC 1, 2): ZUGANG_DARF und ZUGANG_DARF_NICHT im Wortlaut, der Kopf von umfang.ts verlangt keine erneute Zustimmung", () => {

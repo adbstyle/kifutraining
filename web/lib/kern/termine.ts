@@ -4,6 +4,7 @@ import { verfallBestaetigen, type Spielstand } from "@/lib/spieler";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
 import { benachrichtige } from "@/lib/kern/benachrichtigungen";
+import { istVerlegung } from "@/lib/benachrichtigung";
 import {
   KONFLIKT_MARKER,
   TERMIN_MELDUNG,
@@ -491,6 +492,11 @@ export type TerminAendern = {
    *  PC 4) — nur mit `true`, sonst kommt ein Fehler mit `treffpunktEntfaellt`
    *  (PC 5). Die KI fragt nicht nach und sendet `true` (PC 6). */
   treffpunktWeg?: boolean;
+  /** Ob die Spielervertretungen eine Verlegung erfahren (#644 AK 1). Pflicht,
+   *  damit jeder Weg ausdrücklich entscheidet; Oberfläche und KI: Standard
+   *  ja. Wirkt nur, wenn sich Datum, Beginn, Ende oder Ort ändern; ob der
+   *  Termin danach zählt und nicht ausgefallen ist, prüft die Datenebene. */
+  benachrichtigen: boolean;
 };
 
 /** Was eine Verlegung verfallen lässt: Abmeldungen (#437 AK 1) und, wird
@@ -642,6 +648,10 @@ export async function aendereTermin(
     kartenlinkEntfallen: boolean;
     /** Der Treffpunkt fiel mit dem neuen Beginn weg (#561 PC 6). */
     treffpunktEntfallen: boolean;
+    /** Wie viele Spieler:innen die Verlegung erfahren (#644 PC 1); `null`,
+     *  wenn nicht benachrichtigt werden sollte, es keine Verlegung war oder
+     *  das Ablegen scheiterte. */
+    benachrichtigt: number | null;
   }>
 > {
   const geladen = await ladeTermin(supabase, e.terminId);
@@ -854,6 +864,12 @@ export async function aendereTermin(
       return error ? ausDbFehler(error) : warumNichtGeschrieben(supabase, t.id, e.erwartetesTraining === undefined);
     }
   }
+  // #644 PC 1: nach dem Schreiben, nur bei einer Verlegung (Datum, Beginn,
+  // Ende, Ort; der Kartenlink allein nicht, OoS 1). `wieder` (AK 3): Der
+  // Termin war ausgefallen — bleibt er es, legt die Datenebene nichts ab (0),
+  // ebenso für einen Termin vor heute.
+  const benachrichtigt =
+    e.benachrichtigen && istVerlegung(t, neu) ? await benachrichtige(supabase, t.id, "verlegung", t.ausgefallen) : null;
   return ok({
     terminId: t.id,
     teamId: t.team_id,
@@ -861,6 +877,7 @@ export async function aendereTermin(
     abmeldungenVerfallen: verfallen,
     kartenlinkEntfallen: t.ort_link !== null && neu.ortLink === null && e.ortLink === undefined,
     treffpunktEntfallen: treffpunktEntfaellt,
+    benachrichtigt,
   });
 }
 
