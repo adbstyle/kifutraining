@@ -8554,6 +8554,36 @@ try {
     assert.equal((await admin.from("spieler").select("js_nummer").eq("id", ella).single()).data!.js_nummer, null, "leer entfernt sie");
   });
 
+  await pruefe("Infos zum Team (#598 AK 1, 3, 5, 7, 9): Kern, KI-Werkzeuge und privater Link teilen denselben Text", async () => {
+    const { leseTeamInfos, legeTeamInfosFest } = await import("../lib/kern/team-infos");
+    const { TEAM_INFOS_TEXT } = await import("../lib/team-infos");
+    const { ladeLinkAnsicht } = await import("../lib/privater-link");
+    const k = await probeTeam("Kern-DB-598", 2);
+    assert.deepEqual(wert(await leseTeamInfos(a.supabase, a.id, { teamId: k.team })), { teamId: k.team, text: null, stand: null });
+    const heute = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Zurich" });
+    // KI verfasst (AK 9), der Kern liest dieselbe Fassung samt Stand (AK 7).
+    const text = "## Trainings\n- Dienstag 17:30\n\n**Abmelden** bis Beginn: www.fc-wyler.ch";
+    assert.deepEqual(kiWert(await ki(a, "team_infos_festlegen", { team_id: k.team, text: `  ${text}\n` })), { team_id: k.team, text, stand: heute });
+    assert.deepEqual(kiWert(await ki(a, "team_infos_abrufen", { team_id: k.team })), { team_id: k.team, text, stand: heute });
+    assert.deepEqual(wert(await leseTeamInfos(a.supabase, a.id, { teamId: k.team })), { teamId: k.team, text, stand: heute });
+    // Zu lang: Kern und KI mit demselben Satz, die Fassung bleibt (AK 3).
+    fehler(await legeTeamInfosFest(a.supabase, a.id, { teamId: k.team, text: "x".repeat(10001) }), "eingabe", TEAM_INFOS_TEXT.zuLang);
+    assert.equal(kiMeldung(await ki(a, "team_infos_festlegen", { team_id: k.team, text: "x".repeat(10001) })), TEAM_INFOS_TEXT.zuLang);
+    assert.match((await a.supabase.rpc("team_infos_festlegen", { p_team: k.team, p_text: "x".repeat(10001) })).error?.message ?? "", /TEAM_INFOS_ZU_LANG/);
+    assert.equal(wert(await leseTeamInfos(a.supabase, a.id, { teamId: k.team })).text, text);
+    // Privater Link (AK 5, 6): mit Teamname und Stand; beim Schnuppern keine.
+    const lena = await ladeLinkAnsicht(await k.token(k.lena));
+    assert.ok(lena.gueltig);
+    assert.deepEqual(lena.gueltig && lena.team_infos, [{ team: "Kern-DB-598", text, stand: heute }]);
+    wert(await schalteProbe(a.supabase, a.id, { teamId: k.team, spielerId: k.mia, probe: true }));
+    const mia = await ladeLinkAnsicht(await k.token(k.mia));
+    assert.deepEqual(mia.gueltig && mia.team_infos, []);
+    // Leer entfernt (AK 1): kein Abschnitt mehr am Link (PC 1).
+    assert.equal(wert(await legeTeamInfosFest(a.supabase, a.id, { teamId: k.team, text: " \n " })).text, null);
+    const leer = await ladeLinkAnsicht(await k.token(k.lena));
+    assert.deepEqual(leer.gueltig && leer.team_infos, []);
+  });
+
   // ── Konten ohne Verein (#588) ────────────────────────────────────────────
   // Die Regeln selbst (Trigger, Zählung, Rennen, Sperren, ein Bestand über
   // der Grenze) prüft supabase/tests/konten_ohne_verein.sql per

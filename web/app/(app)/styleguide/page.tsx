@@ -37,6 +37,7 @@ import {
   Select,
   MethodischerFahrplan,
   Freitext,
+  GegliederterText,
   KuerzbarerText,
   MaterialListe,
   Eigenschaften,
@@ -3841,7 +3842,8 @@ export default async function Styleguide() {
             30 Versionen stehen gleich da,
             die älteren erst nach «… ältere Versionen anzeigen» (<code>?alle=1</code>); das
             Verzeichnis nennt alle und führt bei einer älteren dorthin. Das Markdown ist eine Ausnahme: Was Trainer:innen selbst
-            schreiben, bleibt Freitext ohne Markdown.
+            schreiben, bleibt Freitext ohne Markdown - ausser den Infos zum Team (#598), die wenige
+            Kürzel kennen (<code>GegliederterText</code>).
           </p>
           <article className="flex max-w-3xl flex-col gap-3">
             <header className="flex flex-col gap-1">
@@ -4004,6 +4006,26 @@ export default async function Styleguide() {
           <Card className="flex max-w-sm flex-col gap-3 p-3">
             <span className="type-body-small text-on-surface-mittel">Verantwortlich: Anna Keller</span>
             <HinweisEltern text={"Pincode: 4702\nEintritt frühestens 15 min vor Trainingsbeginn"} gedaempft={false} />
+          </Card>
+          <p className="type-body-medium mb-3 mt-8 max-w-2xl text-on-surface-mittel">
+            <strong>Gegliederter Text</strong> - <code>GegliederterText</code>: die Infos zum
+            Team (#598), der einzige Text von Trainer:innen mit Gliederung. Wenige Kürzel, die die
+            Leiste im Bearbeiten-Dialog einsetzt: «## » Zwischentitel (<code>type-title-small</code>,
+            eine Ebene unter der umgebenden Überschrift), «- » Aufzählung, «1. » nummeriert,
+            «**…**» fett; eine Leerzeile trennt Absätze. Webadressen werden zu{" "}
+            <code>ExternerLink</code>. Links mit eigenem Text, Bilder, Tabellen und HTML bleiben
+            Text. Neu, weil <code>Freitext</code> nur Listen kennt und <code>ReleaseText</code>{" "}
+            fertiges Markdown samt Linktext zeigt. In der Karte gekürzt: <code>KuerzbarerText</code>{" "}
+            mit <code>gegliedert</code> kürzt auf die Höhe der Zeilen statt per <code>line-clamp</code>.
+            Webadressen in Fliesstext setzt überall <code>TextMitLinks</code> (Kürzbarer Text,
+            Gegliederter Text, Info-Schreiben am Link).
+          </p>
+          <Card className="max-w-xl p-6">
+            <GegliederterText
+              text={
+                "## Trainings\n- Dienstag und Donnerstag, 17:30 bis 19:00\n- Zehn Minuten vorher in der Garderobe\n\n## Abmelden\nKann eure Spielerin nicht, meldet sie am Link ab, **spätestens bis Trainingsbeginn**.\n\n## Ausrüstung\n1. Schienbeinschoner und Nockenschuhe\n2. Trinkflasche mit Namen\n\nMehr zum Verein: www.fc-beispiel.ch"
+              }
+            />
           </Card>
         </Section>
 

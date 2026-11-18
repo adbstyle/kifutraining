@@ -107,6 +107,10 @@ export type LinkAnsicht =
       probe?: ProbeStand | null;
       /** Das Info-Schreiben des Teams, nur wenn sie schnuppert (#556 AK 4). */
       probe_info?: string | null;
+      /** Die Infos zum Team jedes Teams mit Infos, nach Teamname (#598 AK 5–7);
+       *  leer, solange sie schnuppert. `stand` als «YYYY-MM-DD». Fehlt bei einer
+       *  Datenebene vor der Migration. */
+      team_infos?: { team: string; text: string; stand: string }[];
       /** In der Ordnung der Datenebene: heute begonnene zuerst, dann nach
        *  Datum, Beginn und Teamname (AK 1). Das Web sortiert nicht um. */
       termine: LinkTermin[];
@@ -125,7 +129,14 @@ export async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
   const ansicht = data as LinkAnsicht;
   // Ohne Vereinsnamen stünde «undefined» im Satz «Verantwortlich …»: wie ungültig.
   if (ansicht.gueltig && (typeof ansicht.verein !== "string" || !ansicht.verein)) return UNGUELTIG;
-  return ansicht.gueltig ? { ...ansicht, teams: [...ansicht.teams].sort(nachTeamname) } : ansicht;
+  return ansicht.gueltig
+    ? {
+        ...ansicht,
+        teams: [...ansicht.teams].sort(nachTeamname),
+        // Dieselbe Ordnung wie die Teams im Kopf (#598 AK 6).
+        team_infos: ansicht.team_infos && [...ansicht.team_infos].sort((a, b) => nachTeamname(a.team, b.team)),
+      }
+    : ansicht;
 }
 
 export type LinkAbmeldung = { terminId: string; abgemeldet: boolean; gesehen: { datum: string; beginn: string } };

@@ -573,6 +573,26 @@ export const linkKeineTermineText = (vorname: string) => `Die Teams von ${vornam
 export const linkOhneTeamEltern = (vorname: string) =>
   `${vorname} ist zurzeit keinem Team zugeordnet. Termine erscheinen hier, sobald ${vorname} einem Team zugeordnet ist. Bei Fragen hilft die Vereinsverwaltung.`;
 
+// ── Die Infos am privaten Link (#598 AK 10) ──────────────────────────────────
+// Alle Erklärungen an einem Ort hinter dem ⓘ, eigene Konstanten (nicht Teil
+// von `LINK_TEXT`, der in die KI-Beschreibungen fliesst).
+
+export const LINK_INFOS = {
+  titel: "Infos",
+  /** Das ⓘ neben dem Namen. */
+  knopf: "Infos und Erklärungen",
+  zurueck: "Zurück zu den Terminen",
+  angaben: "Wer deine Angaben sieht",
+} as const;
+
+export const linkMeldenTitel = (vorname: string) => `So meldest du ${vorname}`;
+
+/** Wie man meldet (bis #598 offen im Kopf der Seite). */
+export const linkMeldenText = (name: string, vorname: string) =>
+  `${name} ist für jedes Training zuerst angemeldet. Kann ${vorname} nicht, melde ab - und bis zum Beginn wieder an. Für ein Spiel ist ${vorname} erst angemeldet, wenn du anmeldest.`;
+
+export const linkSchnuppernTitel = (vorname: string) => `So schnuppert ${vorname}`;
+
 /** Eine Meldung traf einen Termin, der nicht mehr für die Spieler:in gilt (AK 7):
  *  sie bleibt stehen, auch wenn die neu geladene Liste den Termin nicht mehr zeigt. */
 export const LINK_GILT_NICHT_TITEL = "Nicht gespeichert";
