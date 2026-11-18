@@ -5135,6 +5135,13 @@ pruefe("Infos zum Team: die Werkzeugleiste setzt und entfernt Kürzel (#598 AK 2
   assert.deepEqual(f, { text: "ganz **wichtig**", start: 7, ende: 14 });
   assert.equal(gliedere(f, "fett").text, "ganz wichtig");
   assert.equal(gliedere({ text: "", start: 0, ende: 0 }, "fett").text, "**fett**");
+  // Auf einer leeren Zeile beginnt die Leiste eine Liste (E2E/Review #598).
+  assert.equal(gliedere({ text: "", start: 0, ende: 0 }, "aufzaehlung").text, "- ");
+  assert.equal(gliedere({ text: "abc\n", start: 4, ende: 4 }, "titel").text, "abc\n## ");
+  // Fett hebt nur auf, was die Auswahl selbst umschliesst, nicht Nachbarn.
+  assert.equal(gliedere({ text: "**x** y **z**", start: 5, ende: 8 }, "fett").text, "**x**** y ****z**");
+  // Über mehrere Zeilen: jede Zeile für sich.
+  assert.equal(gliedere({ text: "a\nb", start: 0, ende: 3 }, "fett").text, "**a**\n**b**");
 });
 
 pruefe("Infos zum Team: bereinigt wie die Datenebene, höchstens 10'000 Zeichen samt Gliederung (#598 AK 3, 7)", () => {

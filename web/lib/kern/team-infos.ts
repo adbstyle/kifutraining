@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
 import { TEAM_INFOS_TEXT, teamInfosBereinigt, teamInfosProblem, type TeamInfos } from "@/lib/team-infos";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
+import { TRAININGS_ZEITZONE } from "@/lib/zeit";
 import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 
 /**
@@ -23,7 +24,7 @@ function teamInfosFehler(e: { message: string; code?: string }): KernFehler {
 
 /** «YYYY-MM-DD» am Trainingsort, wie die Datenebene den Stand nennt. */
 function standAmTrainingsort(zeitpunkt: string): string {
-  return new Date(zeitpunkt).toLocaleDateString("sv-SE", { timeZone: "Europe/Zurich" });
+  return new Date(zeitpunkt).toLocaleDateString("sv-SE", { timeZone: TRAININGS_ZEITZONE });
 }
 
 /** Die Infos des Teams (AK 7): `text` leer = keine. */

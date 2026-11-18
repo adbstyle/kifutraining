@@ -5,6 +5,8 @@
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
 
+import { infoTextBereinigt, infoTextLaenge } from "./info-text";
+
 /** Zwilling des Checks `team_infos_text` und der Prüfung in
  *  `team_infos_festlegen` (AK 3): samt Gliederung, in Zeichen wie `char_length`. */
 export const TEAM_INFOS_MAX = 10000;
@@ -13,7 +15,8 @@ export const TEAM_INFOS_MAX = 10000;
  *  Textänderung als «YYYY-MM-DD» (AK 7). */
 export type TeamInfos = { text: string | null; stand: string | null };
 
-/** «1'486» wie in der Schweiz. */
+/** «1'486» wie in der Schweiz — bewusst nicht `Intl.NumberFormat("de-CH")`,
+ *  das den typografischen Apostroph «’» setzt. */
 export function zahlCh(n: number): string {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "'");
 }
@@ -69,13 +72,12 @@ export function teamInfosLinkTitel(team: string): string {
  *  Leerraum am Anfang und Ende weg, leer = keine (Zwilling von
  *  `team_infos_festlegen`). */
 export function teamInfosBereinigt(text: string | null | undefined): string | null {
-  const t = (text ?? "").replace(/\r\n/g, "\n").replace(/^[ \t\n\r]+|[ \t\n\r]+$/g, "");
-  return t === "" ? null : t;
+  return infoTextBereinigt(text);
 }
 
-/** Zeichen wie `char_length`: Codepunkte, nicht UTF-16-Einheiten. */
+/** Zeichen wie `char_length`. */
 export function teamInfosLaenge(text: string | null | undefined): number {
-  return [...(teamInfosBereinigt(text) ?? "")].length;
+  return infoTextLaenge(text);
 }
 
 /** Was an den Infos nicht stimmt, sonst `null` (AK 3). */

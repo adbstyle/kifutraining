@@ -126,18 +126,32 @@ export function gliedere(a: Auswahl, art: Gliederung): Auswahl {
     const markiert = a.text.slice(a.start, a.ende);
     const davor = a.text.slice(0, a.start);
     const danach = a.text.slice(a.ende);
-    if (davor.endsWith("**") && danach.startsWith("**")) {
+    // Nur aufheben, wenn die Auswahl genau in einem fetten Stück steht: Davor
+    // auf der Zeile steht eine ungerade Zahl «**» (sonst gehörten sie zu
+    // Nachbarn wie in «**x** y **z**»).
+    const zeileDavor = davor.slice(davor.lastIndexOf("\n") + 1);
+    const innen = (zeileDavor.match(/\*\*/g) ?? []).length % 2 === 1;
+    if (innen && zeileDavor.endsWith("**") && danach.startsWith("**") && !markiert.includes("\n")) {
       return { text: davor.slice(0, -2) + markiert + danach.slice(2), start: a.start - 2, ende: a.ende - 2 };
     }
-    const inhalt = markiert || "fett";
-    return { text: `${davor}**${inhalt}**${danach}`, start: a.start + 2, ende: a.start + 2 + inhalt.length };
+    // Fett gilt je Zeile: Über mehrere Zeilen wird jede für sich umschlossen.
+    const inhalt = (markiert || "fett")
+      .split("\n")
+      .map((z) => (z.trim() ? `**${z}**` : z))
+      .join("\n");
+    const start = markiert.includes("\n") ? a.start : a.start + 2;
+    const ende = markiert.includes("\n") ? a.start + inhalt.length : a.start + inhalt.length - 2;
+    return { text: davor + inhalt + danach, start, ende };
   }
   const { von, bis } = zeilenDerAuswahl(a);
   const zeilen = a.text.slice(von, bis).split("\n");
-  const alle = zeilen.every((z) => !z.trim() || PRAEFIX[art].test(z));
+  // Eine leere Zeile allein bekommt das Kürzel (so beginnt man eine Liste);
+  // in einer Auswahl über mehrere Zeilen bleiben leere Zeilen leer.
+  const mitInhalt = zeilen.some((z) => z.trim());
+  const alle = mitInhalt && zeilen.every((z) => !z.trim() || PRAEFIX[art].test(z));
   let n = 0;
   const neu = zeilen.map((z) => {
-    if (!z.trim() && zeilen.length > 1) return z;
+    if (!z.trim() && mitInhalt) return z;
     const ohne = z.replace(JEDES_PRAEFIX, "");
     if (alle) return ohne;
     n += 1;

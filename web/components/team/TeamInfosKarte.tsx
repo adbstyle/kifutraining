@@ -81,10 +81,17 @@ export function TeamInfosKarte({ teamId, infos }: { teamId: string; infos: TeamI
   function speichern() {
     if (pending) return;
     const problem = teamInfosProblem(text);
-    if (problem) return setFehler(problem);
+    if (problem) {
+      setVorschau(false);
+      return setFehler(problem);
+    }
     startTransition(async () => {
       const r = await legeTeamInfosFestAktion(teamId, text);
-      if (!r.ok) return setFehler(r.error);
+      // Der Fehler steht unter dem Textfeld: aus der Vorschau dorthin zurück.
+      if (!r.ok) {
+        setVorschau(false);
+        return setFehler(r.error);
+      }
       setOffen(false);
       router.refresh();
       melde(r.entfernt ? TEAM_INFOS_TEXT.entfernt : TEAM_INFOS_TEXT.gespeichert);
@@ -175,6 +182,7 @@ export function TeamInfosKarte({ teamId, infos }: { teamId: string; infos: TeamI
                 {LEISTE.map((w) => (
                   <Tooltip key={w.art} label={w.label}>
                     <IconButton
+                      type="button"
                       icon={w.icon}
                       label={w.label}
                       // Die Auswahl im Textfeld bleibt, solange der Knopf den Fokus nicht nimmt.
