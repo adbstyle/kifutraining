@@ -33,6 +33,16 @@
 --   neu angelegte lösen nichts aus; Wochentag-Tausch
 -- - Der Serie folgen: Zeit → `verlegung` mit dem Stand der Serie; ohne
 --   Entscheid oder ohne Änderung nichts
+-- Story 4 (#645): Wegfall
+-- - Einzeln entfernen: `wegfall` an alle, für die der Termin bis dahin galt
+--   (auch abgemeldete), mit dem Inhalt vor dem Löschen; ausgefallen,
+--   vergangen oder ohne Entscheid nichts; der Eintrag bleibt am Link
+-- - Serie entfernen: Vorschau schreibt nichts und nennt `mitteilbar`;
+--   ausgeführt eine Zeile `serie` je Spieler:in mit `wegfall` (ohne
+--   ausgefallene Termine)
+-- - Serie ändern: kürzerer Zeitraum und neue Zeit in EINER Zeile (`angaben`
+--   und `wegfall`); ein Wochentag fällt weg
+-- - Team auflösen und Verein löschen legen nichts ab (Protokoll-Trigger)
 -- Alles in einer Transaktion mit rollback; hinterlässt nichts.
 
 \set ON_ERROR_STOP on
@@ -542,6 +552,179 @@ select pg_temp.zurueck();
 select pg_temp.pruefe((select count(*) from pg_temp.moewen('verlegung') where termin_id = (select termin from serie_v)) = 2,
                       '#644 folgen ohne Entscheid abgelegt');
 
+-- ── Wegfall (#645) ──────────────────────────────────────────────────────────
+
+-- Eigenes Team «Kraniche» (Mitglied m, Verwaltung verw) mit s7 und s8; s8 ist
+-- vom Training w1 abgemeldet. Einzelne Termine: w1 (Training in 3 Tagen),
+-- w2 (ausgefallen), w3 (gestern), w4 (ohne Entscheid), w5 (Spiel).
+insert into ids (name) values ('tk'), ('s7'), ('s8'), ('w1'), ('w2'), ('w3'), ('w4'), ('w5'), ('verw');
+insert into auth.users (id, email, email_confirmed_at)
+select id, name || '@benachrichtigungen.test', now() from ids where name = 'verw';
+set local session_replication_role = replica;
+insert into teams (id, name, verein_id) values (pg_temp.id('tk'), 'Kraniche', pg_temp.id('v'));
+insert into team_members (team_id, user_id) values (pg_temp.id('tk'), pg_temp.id('m'));
+insert into verein_verwaltung (verein_id, user_id) values (pg_temp.id('v'), pg_temp.id('verw'));
+insert into spieler (id, team_id, verein_id, vorname, nachname, jahrgang) values
+  (pg_temp.id('s7'), pg_temp.id('tk'), pg_temp.id('v'), 'Kim', 'Kranich', 2015),
+  (pg_temp.id('s8'), pg_temp.id('tk'), pg_temp.id('v'), 'Kai', 'Abgemeldet', 2015);
+insert into team_spieler (team_id, spieler_id, verein_id, probe_seit) values
+  (pg_temp.id('tk'), pg_temp.id('s7'), pg_temp.id('v'), null),
+  (pg_temp.id('tk'), pg_temp.id('s8'), pg_temp.id('v'), null);
+insert into training_termine (id, team_id, datum, beginn, ende, ort, art, bezeichnung, ausgefallen) values
+  (pg_temp.id('w1'), pg_temp.id('tk'), heute_am_trainingsort() + 3, '18:00', '19:30', 'Halle', 'training', null, false),
+  (pg_temp.id('w2'), pg_temp.id('tk'), heute_am_trainingsort() + 3, '17:00', '18:00', null, 'training', null, true),
+  (pg_temp.id('w3'), pg_temp.id('tk'), heute_am_trainingsort() - 1, '18:00', '19:30', null, 'training', null, false),
+  (pg_temp.id('w4'), pg_temp.id('tk'), heute_am_trainingsort() + 4, '18:00', '19:30', null, 'training', null, false),
+  (pg_temp.id('w5'), pg_temp.id('tk'), heute_am_trainingsort() + 5, '10:00', '11:00', 'Schachen', 'spiel', 'Match Kraniche', false);
+insert into termin_abmeldungen (termin_id, spieler_id, team_id) values (pg_temp.id('w1'), pg_temp.id('s8'), pg_temp.id('tk'));
+set local session_replication_role = origin;
+
+-- Die Zeilen eines Ereignisses an Spieler:innen der Kraniche.
+create function pg_temp.kraniche(p_ereignis text) returns setof spieler_benachrichtigungen language sql stable as $$
+  select * from spieler_benachrichtigungen where spieler_id in (pg_temp.id('s7'), pg_temp.id('s8')) and ereignis = p_ereignis $$;
+
+create temp table wegfall_z (fall text primary key, v jsonb);
+grant select, insert on wegfall_z to authenticated;
+select pg_temp.als(pg_temp.id('m'));
+insert into wegfall_z values
+  ('w1', termin_entfernen(pg_temp.id('w1'), null, true)),
+  ('w2', termin_entfernen(pg_temp.id('w2'), null, true)),
+  ('w3', termin_entfernen(pg_temp.id('w3'), null, true)),
+  ('w4', termin_entfernen(pg_temp.id('w4'))),
+  ('w5', termin_entfernen(p_termin => pg_temp.id('w5'), p_benachrichtigen => true));
+select pg_temp.zurueck();
+
+do $$
+declare
+  z jsonb := (select jsonb_object_agg(fall, v -> 'benachrichtigt') from wegfall_z);
+  a jsonb := spieler_link_benachrichtigungen((select link_token from spieler where id = pg_temp.id('s8')));
+begin
+  -- AK 1: ausgefallen, gestern und ohne Entscheid still.
+  perform pg_temp.pruefe(z = '{"w1": 2, "w2": 0, "w3": 0, "w4": null, "w5": 2}', '#645 Zahlen: ' || z::text);
+  perform pg_temp.pruefe(not exists (select 1 from training_termine where team_id = pg_temp.id('tk')), '#645 entfernt');
+  -- PC 1: auch die abgemeldete s8.
+  perform pg_temp.pruefe(pg_temp.empfaenger('w1', 'wegfall') = 's7 s8', '#645 Empfänger: ' || pg_temp.empfaenger('w1', 'wegfall'));
+  perform pg_temp.pruefe(pg_temp.empfaenger('w2') || pg_temp.empfaenger('w3') || pg_temp.empfaenger('w4') = '', '#645 still abgelegt');
+  -- AK 2: der Termin vor dem Löschen; beim Spiel die Bezeichnung.
+  perform pg_temp.pruefe(
+    (select bool_and(inhalt = jsonb_build_object('team', 'Kraniche', 'art', 'training', 'bezeichnung', null,
+                                                 'datum', to_char(heute_am_trainingsort() + 3, 'YYYY-MM-DD'),
+                                                 'beginn', '18:00', 'ende', '19:30', 'ort', 'Halle'))
+       from spieler_benachrichtigungen where termin_id = pg_temp.id('w1')),
+    '#645 Inhalt einzeln: ' || (select string_agg(inhalt::text, ' ') from spieler_benachrichtigungen where termin_id = pg_temp.id('w1')));
+  perform pg_temp.pruefe(
+    (select bool_and(ereignis = 'wegfall' and inhalt ->> 'art' = 'spiel' and inhalt ->> 'bezeichnung' = 'Match Kraniche'
+                     and inhalt ->> 'ort' = 'Schachen')
+       from spieler_benachrichtigungen where termin_id = pg_temp.id('w5')), '#645 Inhalt Spiel');
+  -- Erhalten ist erhalten: der Eintrag bleibt am Link, obwohl der Termin weg ist.
+  perform pg_temp.pruefe(
+    (select count(*) from jsonb_array_elements(a -> 'eintraege') e
+      where e ->> 'ereignis' = 'wegfall' and e ->> 'termin_id' in (pg_temp.id('w1')::text, pg_temp.id('w5')::text)) = 2,
+    '#645 am Link: ' || a::text);
+end $$;
+
+-- Eine Serie am Wochentag von morgen (d, w), von d bis d+21: d, d+7, d+14, d+21.
+delete from spieler_benachrichtigungen where spieler_id in (pg_temp.id('s7'), pg_temp.id('s8'));
+create function pg_temp.kt(p_tage int) returns uuid language sql stable as $$
+  select t.id from training_termine t where t.team_id = pg_temp.id('tk') and t.serie_id is not null and t.datum = pg_temp.d(p_tage) $$;
+grant execute on function pg_temp.kt(int) to authenticated;
+select pg_temp.als(pg_temp.id('m'));
+select terminserie_festlegen(pg_temp.id('tk'), array[(select w from serie_v)], pg_temp.d(0), pg_temp.d(21),
+                             '18:00', '19:30', 'Allmend', null, '{}', pg_temp.id('m'));
+-- Serie entfernen, Vorschau (AK 1): schreibt nichts, nennt `mitteilbar`.
+do $$
+declare
+  v jsonb := terminserie_entfernen(pg_temp.kt(7), 'dieser_und_folgende', p_ausfuehren => false, p_benachrichtigen => true);
+begin
+  perform pg_temp.pruefe((v ->> 'mitteilbar')::int = 2 and not v ? 'benachrichtigt' and (v ->> 'entfallend_anzahl')::int = 3,
+                         '#645 Vorschau: ' || v::text);
+end $$;
+select pg_temp.zurueck();
+select pg_temp.pruefe(not exists (select 1 from pg_temp.kraniche('serie'))
+                      and (select count(*) from training_termine where team_id = pg_temp.id('tk')) = 4, '#645 Vorschau abgelegt');
+
+-- Serie ändern (PC 3): kürzer (bis d+7) und neue Zeit — EINE Zeile je
+-- Spieler:in mit den neuen Angaben ab d und dem Wegfall von d+14 und d+21.
+select pg_temp.als(pg_temp.id('m'));
+select pg_temp.pruefe(
+  (terminserie_aendern(pg_temp.kt(0), 'alle', jsonb_build_object('end_datum', pg_temp.d(7), 'beginn', '17:00', 'ende', '18:30'),
+                       p_benachrichtigen => true) ->> 'benachrichtigt')::int = 2, '#645 Serie ändern');
+select pg_temp.zurueck();
+do $$ begin
+  perform pg_temp.pruefe((select count(*) from pg_temp.kraniche('serie')) = 2
+                         and (select count(distinct vorgang) from pg_temp.kraniche('serie')) = 1, '#645 eine Zeile je Spieler:in');
+  perform pg_temp.pruefe(
+    (select bool_and(termin_id = pg_temp.kt(0)
+                     and inhalt = jsonb_build_object('team', 'Kraniche', 'art', 'training',
+                                                     'ab', to_char(pg_temp.d(0), 'YYYY-MM-DD'),
+                                                     'angaben', jsonb_build_object('beginn', '17:00', 'ende', '18:30'),
+                                                     'wegfall', jsonb_build_object('von', to_char(pg_temp.d(14), 'YYYY-MM-DD'),
+                                                                                   'bis', to_char(pg_temp.d(21), 'YYYY-MM-DD'),
+                                                                                   'wochentage', jsonb_build_array((select w from serie_v)),
+                                                                                   'anzahl', 2)))
+       from pg_temp.kraniche('serie')),
+    '#645 Inhalt Verlegung und Wegfall: ' || (select string_agg(inhalt::text, ' ') from pg_temp.kraniche('serie')));
+end $$;
+
+-- Serie entfernen (AK 3; PC 2): d ist ausgefallen und zählt nicht; d+7 fällt weg.
+delete from spieler_benachrichtigungen where spieler_id in (pg_temp.id('s7'), pg_temp.id('s8'));
+update training_termine set ausgefallen = true where id = pg_temp.kt(0);
+select pg_temp.als(pg_temp.id('m'));
+select pg_temp.pruefe((terminserie_entfernen(pg_temp.kt(0), 'alle', p_benachrichtigen => true) ->> 'benachrichtigt')::int = 2,
+                      '#645 Serie entfernen');
+select pg_temp.zurueck();
+select pg_temp.pruefe(
+  (select bool_and(termin_id is null
+                   and inhalt = jsonb_build_object('team', 'Kraniche', 'art', 'training', 'ab', null, 'angaben', null,
+                                                   'wegfall', jsonb_build_object('von', to_char(pg_temp.d(7), 'YYYY-MM-DD'),
+                                                                                 'bis', to_char(pg_temp.d(7), 'YYYY-MM-DD'),
+                                                                                 'wochentage', jsonb_build_array((select w from serie_v)),
+                                                                                 'anzahl', 1)))
+     and count(*) = 2 from pg_temp.kraniche('serie')),
+  '#645 Inhalt Serie entfernen: ' || (select string_agg(inhalt::text, ' ') from pg_temp.kraniche('serie')));
+
+-- Ein Wochentag fällt weg: Serie an w und w2 (d bis d+13: d, d+1, d+7, d+8);
+-- nur noch w — d+1 und d+8 fallen weg, nichts ist verlegt.
+delete from spieler_benachrichtigungen where spieler_id in (pg_temp.id('s7'), pg_temp.id('s8'));
+select pg_temp.als(pg_temp.id('m'));
+select terminserie_festlegen(pg_temp.id('tk'), array[(select w from serie_v), (select w % 7 + 1 from serie_v)::smallint],
+                             pg_temp.d(0), pg_temp.d(13), '18:00', '19:30', 'Allmend', null, '{}', pg_temp.id('m'));
+select pg_temp.pruefe(
+  (terminserie_aendern(pg_temp.kt(0), 'alle', jsonb_build_object('wochentage', array[(select w from serie_v)]),
+                       p_benachrichtigen => true) ->> 'benachrichtigt')::int = 2, '#645 Wochentag weg');
+select pg_temp.zurueck();
+select pg_temp.pruefe(
+  (select bool_and(inhalt -> 'angaben' = 'null'::jsonb and inhalt -> 'ab' = 'null'::jsonb
+                   and inhalt -> 'wegfall' = jsonb_build_object('von', to_char(pg_temp.d(1), 'YYYY-MM-DD'),
+                                                                'bis', to_char(pg_temp.d(8), 'YYYY-MM-DD'),
+                                                                'wochentage', jsonb_build_array((select w % 7 + 1 from serie_v)),
+                                                                'anzahl', 2))
+     and count(*) = 2 from pg_temp.kraniche('serie')),
+  '#645 Inhalt Wochentag weg: ' || (select string_agg(inhalt::text, ' ') from pg_temp.kraniche('serie')));
+
+-- Team auflösen und Verein löschen (OoS 1): nichts wird abgelegt — auch
+-- nicht kurz (ein Protokoll-Trigger zählt jede neue Zeile, bevor das
+-- Löschen der Spieler:innen sie wieder mitnähme).
+create temp table protokoll (n int);
+grant insert on protokoll to public;
+create function benachrichtigung_test_protokoll() returns trigger language plpgsql as $$
+begin
+  insert into pg_temp.protokoll values (1);
+  return null;
+end $$;
+create trigger benachrichtigung_test_protokoll after insert on spieler_benachrichtigungen
+  for each row execute function benachrichtigung_test_protokoll();
+set local session_replication_role = replica;
+insert into training_termine (id, team_id, datum, beginn, ende) values
+  (gen_random_uuid(), pg_temp.id('tk'), heute_am_trainingsort() + 2, '18:00', '19:00'),
+  (gen_random_uuid(), pg_temp.id('tm'), heute_am_trainingsort() + 2, '18:00', '19:00');
+set local session_replication_role = origin;
+select pg_temp.als(pg_temp.id('verw'));
+select pg_temp.pruefe(verein_team_aufloesen(pg_temp.id('tk'), 'Kraniche') ->> 'status' = 'aufgeloest', '#645 Team auflösen');
+select pg_temp.pruefe(verein_loeschen(pg_temp.id('v'), 'Benachrichtigungs-Verein') ->> 'status' = 'geloescht', '#645 Verein löschen');
+select pg_temp.zurueck();
+select pg_temp.pruefe(not exists (select 1 from pg_temp.protokoll), '#645 Auflösen oder Löschen legte ab');
+
 -- Rechte der neuen Bausteine.
 do $$
 declare
@@ -551,13 +734,19 @@ begin
     perform pg_temp.pruefe(not has_function_privilege(r, f, 'execute'), r || ' darf ' || f)
        from unnest(array['benachrichtigung_stand(uuid[])', 'benachrichtigung_serie_angaben(uuid)',
                          'benachrichtigung_verlegt(jsonb)',
-                         'benachrichtigung_vergleich(jsonb, text, boolean, jsonb, uuid)']) f;
+                         'benachrichtigung_vergleich(jsonb, text, boolean, jsonb, uuid)',
+                         'benachrichtigung_weggefallen(jsonb)', 'benachrichtigung_serie_zeilen(jsonb, jsonb)']) f;
   end loop;
   perform pg_temp.pruefe(not has_function_privilege('anon', 'terminserie_aendern(uuid, text, jsonb, integer, uuid[], boolean, integer, boolean)', 'execute')
                          and has_function_privilege('authenticated', 'terminserie_aendern(uuid, text, jsonb, integer, uuid[], boolean, integer, boolean)', 'execute')
                          and not has_function_privilege('anon', 'termin_der_serie_folgen(uuid, text[], integer, boolean)', 'execute')
                          and has_function_privilege('authenticated', 'termin_der_serie_folgen(uuid, text[], integer, boolean)', 'execute'),
                          '#644 Rechte der Hüllen');
+  perform pg_temp.pruefe(not has_function_privilege('anon', 'termin_entfernen(uuid, jsonb, boolean)', 'execute')
+                         and has_function_privilege('authenticated', 'termin_entfernen(uuid, jsonb, boolean)', 'execute')
+                         and not has_function_privilege('anon', 'terminserie_entfernen(uuid, text, integer, uuid[], boolean, boolean)', 'execute')
+                         and has_function_privilege('authenticated', 'terminserie_entfernen(uuid, text, integer, uuid[], boolean, boolean)', 'execute'),
+                         '#645 Rechte');
 end $$;
 
 rollback;

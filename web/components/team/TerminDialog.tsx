@@ -299,7 +299,9 @@ export function TerminDialog({
   // Serientermin steht die Reichweite erst nach dem Speichern fest: Er zählt
   // als mitteilbar, wenn «nur dieser» (Datum) oder die Serie (Wochentage, Zeit,
   // Ort bei unverändertem Datum) eine Verlegung ergäbe; die Datenebene
-  // entscheidet dann genau.
+  // entscheidet dann genau. Der Entscheid gilt bei der Serie auch für Termine,
+  // die wegfallen (#645 PC 3): Ein kürzerer Zeitraum kann sie bis zum
+  // bisherigen Ende treffen, darum zählt das spätere der beiden Enden.
   const vorherStand = {
     datum: terminDatum,
     beginn: start?.beginn ?? null,
@@ -315,7 +317,7 @@ export function TerminDialog({
     (mitteilbarBeimAendern({ vorher: vorherStand, nachher: nachherStand, art: artKurz, regelGeaendert: false, serieEnde: null, heute }) ||
       (!!serie &&
         felder.datum === terminDatum &&
-        mitteilbarBeimAendern({ vorher: vorherStand, nachher: nachherStand, art: artKurz, regelGeaendert: regelNeu, serieEnde: regel.bis, heute })));
+        mitteilbarBeimAendern({ vorher: vorherStand, nachher: nachherStand, art: artKurz, regelGeaendert: regelNeu, serieEnde: regel.bis > serie.endDatum ? regel.bis : serie.endDatum, heute })));
   // Der Serie folgen: nur Zeit und Ort verlegen; nur bei einem Termin ab heute, der nicht ausgefallen ist.
   const mitteilbarFolgen = !ausfall && terminDatum >= heute && (folgenKann.includes("zeit") || folgenKann.includes("ort"));
   const benachrichtigenSichtbar = mitteilbarSpeichern || mitteilbarFolgen;

@@ -1427,7 +1427,7 @@ try {
     const c2 = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t1.terminId, trainingId: tt2.id })).trainingId;
     fehler(await aendereTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t1.terminId, ort: "x", erwartetesTraining: null }), "konflikt", TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT);
     assert.equal((await zeile(t1.terminId))!.ort, "Platz", "abgewiesen heisst unverändert");
-    fehler(await entferneTermin(a.supabase, a.id, { terminId: t1.terminId, erwartetesTraining: null }), "konflikt", TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT);
+    fehler(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t1.terminId, erwartetesTraining: null }), "konflikt", TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT);
     assert.ok(await zeile(t1.terminId), "der Termin steht noch");
     // KI-Weg ohne erwartetes Training: geprüft wird gegen den gelesenen Stand.
     assert.deepEqual(
@@ -1439,16 +1439,16 @@ try {
     const tt3 = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Drei", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
     const c3 = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t3.terminId, trainingId: tt3.id })).trainingId;
     // Entfernen nimmt das Termin-Training mit; die Quelle bleibt im Bestand.
-    assert.deepEqual(wert(await entferneTermin(a.supabase, a.id, { terminId: t3.terminId })), { teamId: team, training: { trainingId: c3, geloescht: true } });
+    assert.deepEqual(wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t3.terminId })), { teamId: team, training: { trainingId: c3, geloescht: true }, benachrichtigt: null });
     assert.equal(await zeile(t3.terminId), null);
     assert.equal(await ladeTrainingDetail(a.supabase, c3), null, "das Termin-Training ist weg");
     assert.ok(await ladeTrainingDetail(a.supabase, tt3.id), "die Quelle bleibt im Team-Bestand");
-    assert.deepEqual(wert(await entferneTermin(a.supabase, a.id, { terminId: t1.terminId, erwartetesTraining: c2 })), { teamId: team, training: { trainingId: c2, geloescht: true } });
+    assert.deepEqual(wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t1.terminId, erwartetesTraining: c2 })), { teamId: team, training: { trainingId: c2, geloescht: true }, benachrichtigt: null });
     assert.ok(await ladeTrainingDetail(a.supabase, tt2.id), "die Quelle bleibt im Team-Bestand");
-    fehler(await entferneTermin(a.supabase, a.id, { terminId: t1.terminId }), "nicht_gefunden", "Termin nicht gefunden.");
+    fehler(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t1.terminId }), "nicht_gefunden", "Termin nicht gefunden.");
     fehler(await aendereTermin(b.supabase, b.id, { benachrichtigen: false, terminId: t0.terminId, ort: "x" }), "nicht_gefunden", "Termin nicht gefunden.");
     // Die SECURITY-DEFINER-Sperre: ein Nicht-Mitglied ändert nichts, auch nicht direkt über die RPC.
-    fehler(await entferneTermin(b.supabase, b.id, { terminId: t0.terminId }), "nicht_gefunden", "Termin nicht gefunden.");
+    fehler(await entferneTermin(b.supabase, b.id, { benachrichtigen: false, terminId: t0.terminId }), "nicht_gefunden", "Termin nicht gefunden.");
     assert.ok(await zeile(t0.terminId), "der Termin des fremden Teams steht noch");
     const { error: direkt } = await b.supabase.rpc("termin_training_setzen", { p_termin: t0.terminId, p_training: null });
     assert.ok(direkt?.message.includes("TERMIN_NICHT_GEFUNDEN"), "RPC weist Nicht-Mitglieder ab");
@@ -1537,7 +1537,7 @@ try {
     assert.equal(await traegt(morgen), null);
     assert.equal(await gibtEs(amMorgen!), false);
     // Entfernen des Termins nimmt sein Termin-Training mit.
-    assert.deepEqual(wert(await entferneTermin(a.supabase, a.id, { terminId: gestern })).training, { trainingId: z2.trainingId, geloescht: true });
+    assert.deepEqual(wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: gestern })).training, { trainingId: z2.trainingId, geloescht: true });
     assert.equal(await gibtEs(z2.trainingId), false);
 
     // PC 8: Scheitert das Verknüpfen, geht die Kopie wieder.
@@ -1984,7 +1984,7 @@ try {
     const donnerstag = t.find((x) => x.datum === "2030-01-03")!;
     const amDo = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: donnerstag.id, trainingId: tt.id })).trainingId;
     // Einzeln entfernt: Der 8.1. kommt bei keiner Änderung zurück (PC 10).
-    wert(await entferneTermin(a.supabase, a.id, { terminId: t.find((x) => x.datum === "2030-01-08")!.id }));
+    wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t.find((x) => x.datum === "2030-01-08")!.id }));
 
     // Tausch Do → Fr (PC 8): samt Training in dieselbe Woche.
     const v = wert(await aendereSerie(a.supabase, a.id, { benachrichtigen: false, terminId: t[0].id, reichweite: "alle", aenderung: { wochentage: [2, 5] }, vorschau: true }));
@@ -2020,10 +2020,10 @@ try {
     assert.deepEqual(t.map((x) => x.datum), ["2030-01-01", "2030-01-15", "2030-01-22", "2030-01-29", "2030-02-05", "2030-02-12"]);
 
     // Entfernen «dieser und folgende» (PC 11) und «alle» (PC 12, 14).
-    const e1 = wert(await entferneSerie(a.supabase, a.id, { terminId: t[3].id, reichweite: "dieser_und_folgende" }));
+    const e1 = wert(await entferneSerie(a.supabase, a.id, { benachrichtigen: false, terminId: t[3].id, reichweite: "dieser_und_folgende" }));
     assert.equal(e1.entfallendAnzahl, 3);
     assert.equal((await admin.from("termin_serien").select("end_datum").eq("id", s.serieId).single()).data!.end_datum, "2030-01-28");
-    wert(await entferneSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle" }));
+    wert(await entferneSerie(a.supabase, a.id, { benachrichtigen: false, terminId: t[0].id, reichweite: "alle" }));
     assert.equal((await admin.from("termin_serien").select("id").eq("id", s.serieId).maybeSingle()).data, null);
   });
 
@@ -2050,7 +2050,7 @@ try {
     for (const art of ["aendern", "entfernen"] as const) {
       const veraltet = art === "aendern"
         ? wert(await aendereSerie(a.supabase, a.id, { benachrichtigen: false, terminId: t[0].id, reichweite: "alle", aenderung: { ort: "Halle" }, vorschau: true }))
-        : wert(await entferneSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", vorschau: true }));
+        : wert(await entferneSerie(a.supabase, a.id, { benachrichtigen: false, terminId: t[0].id, reichweite: "alle", vorschau: true }));
       // Mitglied b teilt die Serie an einem späteren Termin — die
       // Serie S behält ihre Zeile, ihre Version steigt aber (Teilung).
       // Beim zweiten Durchgang liegt t[3] schon in der Teilserie; geteilt wird
@@ -2058,7 +2058,7 @@ try {
       wert(await aendereSerie(b.supabase, b.id, { benachrichtigen: false, terminId: art === "aendern" ? t[3].id : t[2].id, reichweite: "dieser_und_folgende", aenderung: { ort: "Andere" } }));
       const r = art === "aendern"
         ? await aendereSerie(a.supabase, a.id, { benachrichtigen: false, terminId: t[0].id, reichweite: "alle", aenderung: { ort: "Halle" }, erwartet: { version: veraltet.versionVorher, entfallend: [] } })
-        : await entferneSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", erwartet: { version: veraltet.versionVorher, entfallend: [] } });
+        : await entferneSerie(a.supabase, a.id, { benachrichtigen: false, terminId: t[0].id, reichweite: "alle", erwartet: { version: veraltet.versionVorher, entfallend: [] } });
       fehler(r, "konflikt", SERIE_MELDUNG.SERIE_GEAENDERT);
       // Die Serie ist unverändert geblieben: noch immer t[0] da, kein Löschen.
       assert.ok((await admin.from("training_termine").select("id").eq("id", t[0].id).maybeSingle()).data);
@@ -2101,10 +2101,10 @@ try {
     fehler(await aendereMitReichweite(a.supabase, a.id, { benachrichtigen: false, terminId: einzel.terminId, reichweite: "alle", ort: "Q" }), "regel", SERIE_MELDUNG.TERMIN_OHNE_SERIE);
     wert(await aendereMitReichweite(a.supabase, a.id, { benachrichtigen: false, terminId: einzel.terminId, ort: "Q" }));
     // Entfernen: Reichweite Pflicht; «nur dieser» lässt eine Lücke, «alle» löscht die Serie.
-    fehler(await entferneMitReichweite(a.supabase, a.id, { terminId: t[2].id }), "regel", SERIE_MELDUNG.REICHWEITE_FEHLT);
-    wert(await entferneMitReichweite(a.supabase, a.id, { terminId: t[2].id, reichweite: "nur_dieser" }));
+    fehler(await entferneMitReichweite(a.supabase, a.id, { benachrichtigen: false, terminId: t[2].id }), "regel", SERIE_MELDUNG.REICHWEITE_FEHLT);
+    wert(await entferneMitReichweite(a.supabase, a.id, { benachrichtigen: false, terminId: t[2].id, reichweite: "nur_dieser" }));
     assert.equal((await termineDer(s.serieId)).some((x) => x.id === t[2].id), false);
-    wert(await entferneMitReichweite(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle" }));
+    wert(await entferneMitReichweite(a.supabase, a.id, { benachrichtigen: false, terminId: t[0].id, reichweite: "alle" }));
     assert.equal((await admin.from("termin_serien").select("id").eq("id", s.serieId).maybeSingle()).data, null);
   });
 
@@ -2121,13 +2121,13 @@ try {
     const vorher = await anzahl();
 
     // «Dieser und folgende» ab einem vergangenen Termin, «alle»: ohne Bestätigung nichts.
-    fehler(await entferneMitReichweite(a.supabase, a.id, { terminId: t[1].id, reichweite: "dieser_und_folgende" }), "regel", /vergangene/);
-    fehler(await entferneMitReichweite(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle" }), "regel", /vergangene/);
+    fehler(await entferneMitReichweite(a.supabase, a.id, { benachrichtigen: false, terminId: t[1].id, reichweite: "dieser_und_folgende" }), "regel", /vergangene/);
+    fehler(await entferneMitReichweite(a.supabase, a.id, { benachrichtigen: false, terminId: t[0].id, reichweite: "alle" }), "regel", /vergangene/);
     assert.equal(await anzahl(), vorher, "nichts gelöscht");
     assert.ok((await admin.from("termin_serien").select("id").eq("id", s.serieId).maybeSingle()).data);
 
     // Bestätigt: die Serie ist weg samt Termin-Training, die Quelle bleibt im Bestand.
-    const weg = wert(await entferneMitReichweite(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", bestaetigt: true }));
+    const weg = wert(await entferneMitReichweite(a.supabase, a.id, { benachrichtigen: false, terminId: t[0].id, reichweite: "alle", bestaetigt: true }));
     assert.deepEqual(weg.serie!.entfallend.map((e) => e.training), [{ id: amTermin, name: "Kern-DB-Serie-Vergangen", terminTraining: true }]);
     assert.equal(await anzahl(), 0);
     assert.equal((await admin.from("termin_serien").select("id").eq("id", s.serieId).maybeSingle()).data, null);
@@ -3858,7 +3858,7 @@ try {
     // Ausfall zurücknehmen bringt den Termin wieder; Entfernen nimmt ihn weg.
     wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: aus.terminId, benachrichtigen: false }));
     assert.deepEqual(await ids(), [aus.terminId, rand.terminId], "Datumsfolge: heute+2, heute+4");
-    wert(await entferneTermin(a.supabase, a.id, { terminId: aus.terminId }));
+    wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: aus.terminId }));
     assert.deepEqual(await ids(), [rand.terminId], "PC 5: entfernt");
   });
 
@@ -5413,7 +5413,7 @@ try {
     assert.equal((await standVon(team, u)).spielstand?.angemeldet, 2);
     // PC 5: Entfernen nimmt die Abmeldungen mit.
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: u, spielerId: lena, abgemeldet: true }));
-    wert(await entferneTermin(a.supabase, a.id, { terminId: u }));
+    wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: u }));
     assert.equal((await admin.from("termin_abmeldungen").select("spieler_id").eq("termin_id", u)).data?.length, 0);
   });
 
@@ -6261,9 +6261,9 @@ try {
     wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t, benachrichtigen: false }));
     assert.equal((await meldungen(t)).Lena, "angemeldet");
     // AK 27; PC 9: Entfernen nur mit der Zahl der verschwindenden Meldungen.
-    const e = fehler(await entferneTermin(a.supabase, a.id, { terminId: t }), "regel", spielBestaetigen(spielEntfernenText(1))) as { verschwindend?: number };
+    const e = fehler(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t }), "regel", spielBestaetigen(spielEntfernenText(1))) as { verschwindend?: number };
     assert.equal(e.verschwindend, 1);
-    wert(await entferneTermin(a.supabase, a.id, { terminId: t, bestaetigt: 1 }));
+    wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t, bestaetigt: 1 }));
     assert.equal((await admin.from("spiel_meldungen").select("termin_id").eq("termin_id", t)).data!.length, 0);
   });
 
@@ -6432,7 +6432,7 @@ try {
     assert.equal(ausDbFehler(amTraining.error!).meldung, SPIEL_TEXT.nurSpiel);
     assert.equal((await imLink(t)).treffpunkte.length, 2, "nichts geschrieben");
     // Mit dem Spiel verschwinden sie.
-    wert(await entferneTermin(a.supabase, a.id, { terminId: t }));
+    wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t }));
     const rest = await a.supabase.from("spiel_treffpunkte").select("anreise").eq("termin_id", t);
     assert.deepEqual(rest.data, []);
   });
@@ -6560,12 +6560,12 @@ try {
 
     // AK 10, 13: Entfernen zählt Meldungen und Kennzeichnungen (Lenas verfiel mit der Verlegung).
     wert(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.lena, angemeldet: true }));
-    const e =fehler(await entferneTermin(a.supabase, a.id, { terminId: t }), "regel", spielBestaetigen(spielEntfernenText(1, 1))) as {
+    const e =fehler(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t }), "regel", spielBestaetigen(spielEntfernenText(1, 1))) as {
       verschwindend?: number;
       kennzeichnungen?: number;
     };
     assert.deepEqual([e.verschwindend, e.kennzeichnungen], [2, 1]);
-    wert(await entferneTermin(a.supabase, a.id, { terminId: t, bestaetigt: true }));
+    wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t, bestaetigt: true }));
   });
 
 
@@ -8496,6 +8496,70 @@ try {
     wert(await aendereTermin(a.supabase, a.id, { benachrichtigen: false, terminId: zweiter.id, ort: "Eigen" }));
     assert.equal(kiWert(await ki(a, "termin_der_serie_folgen", { termin_id: zweiter.id, angaben: ["ort"] })).benachrichtigt, 2);
     assert.equal(kiWert(await ki(a, "termin_der_serie_folgen", { termin_id: zweiter.id, angaben: ["zeit"], benachrichtigen: false })).benachrichtigt, null);
+  });
+
+  await pruefe("Benachrichtigungen (#645 AK 1–3; PC 1–3): Wegfall einzeln und über die Serie, Serie ändern mit Verlegung und Wegfall in einer Zeile; ausgefallen und vergangen still; KI standardmässig ja", async () => {
+    const name = "Kern-DB-Glocke-Wegfall";
+    const team = await serienTeam(name);
+    const lea = (await neuerSpieler(team, "Lea", "Wegfall", 2016)).spielerId;
+    const max = (await neuerSpieler(team, "Max", "Wegfall", 2016)).spielerId;
+    const zeilen = async (terminId: string) =>
+      (await admin.from("spieler_benachrichtigungen").select("spieler_id, ereignis, inhalt").eq("termin_id", terminId)).data ?? [];
+    const serienZeilen = async () =>
+      (await admin.from("spieler_benachrichtigungen").select("spieler_id, termin_id, inhalt").in("spieler_id", [lea, max]).eq("ereignis", "serie").order("erstellt_am")).data ?? [];
+    const training = async (tage: number) =>
+      wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(tage), beginn: "18:00", ende: "19:30", ort: "Halle" })).terminId;
+
+    // Einzeln (AK 1, 2; PC 1): je Spieler:in ein `wegfall` mit dem Termin vor dem Löschen; die Zeilen bleiben.
+    const t = await training(3);
+    assert.equal(wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: true, terminId: t })).benachrichtigt, 2);
+    const z = await zeilen(t);
+    assert.deepEqual(z.map((x) => x.spieler_id).sort(), [lea, max].sort());
+    assert.ok(z.every((x) => x.ereignis === "wegfall"));
+    assert.deepEqual(z[0].inhalt, { team: name, art: "training", bezeichnung: null, datum: tagCh(3), beginn: "18:00", ende: "19:30", ort: "Halle" });
+    // Ausgefallen, vergangen: 0; ohne Entscheid: null, keine Zeile.
+    const aus = await training(4);
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus, grund: "Regen", benachrichtigen: false }));
+    assert.equal(wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: true, terminId: aus })).benachrichtigt, 0);
+    const vorbei = await training(-2);
+    assert.equal(wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: true, terminId: vorbei })).benachrichtigt, 0);
+    const still = await training(5);
+    assert.equal(wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: still })).benachrichtigt, null);
+    assert.deepEqual([(await zeilen(aus)).length, (await zeilen(vorbei)).length, (await zeilen(still)).length], [0, 0, 0]);
+
+    // Serie entfernen (AK 3; PC 2): Vorschau nennt `mitteilbar` und legt nichts ab; ausgeführt eine Zeile je Spieler:in.
+    const tag = wochentagVon(tagCh(1));
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [tag], von: tagCh(1), bis: tagCh(15), beginn: "18:00", ende: "19:00", ort: "Allmend" }));
+    const [, zweiter] = await termineDer(s.serieId);
+    const v = wert(await entferneSerie(a.supabase, a.id, { benachrichtigen: true, terminId: zweiter.id, reichweite: "dieser_und_folgende", vorschau: true }));
+    assert.deepEqual([v.mitteilbar, v.benachrichtigt, (await serienZeilen()).length], [2, null, 0]);
+    const f = wert(await entferneSerie(a.supabase, a.id, {
+      benachrichtigen: true, terminId: zweiter.id, reichweite: "dieser_und_folgende", erwartet: { version: v.versionVorher, entfallend: [] },
+    }));
+    assert.equal(f.benachrichtigt, 2);
+    let sz = await serienZeilen();
+    assert.deepEqual(sz.map((x) => x.spieler_id).sort(), [lea, max].sort());
+    assert.ok(sz.every((x) => x.termin_id === null));
+    assert.deepEqual(sz[0].inhalt, { team: name, art: "training", ab: null, angaben: null, wegfall: { von: tagCh(8), bis: tagCh(15), wochentage: [tag], anzahl: 2 } });
+
+    // Serie ändern (PC 3): kürzer und neue Zeit — EINE Zeile je Spieler:in mit `angaben` und `wegfall`.
+    const s2 = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [tag], von: tagCh(1), bis: tagCh(22), beginn: "18:00", ende: "19:00", ort: "Allmend" }));
+    const [erster2] = await termineDer(s2.serieId);
+    const g = wert(await aendereSerie(a.supabase, a.id, {
+      benachrichtigen: true, terminId: erster2.id, reichweite: "alle", aenderung: { bis: tagCh(8), beginn: "17:00", ende: "18:30" }, bestaetigt: true,
+    }));
+    assert.equal(g.benachrichtigt, 2);
+    sz = (await serienZeilen()).slice(2);
+    assert.equal(sz.length, 2);
+    assert.ok(sz.every((x) => x.termin_id === erster2.id));
+    assert.deepEqual(sz[0].inhalt, {
+      team: name, art: "training", ab: tagCh(1), angaben: { beginn: "17:00", ende: "18:30" }, wegfall: { von: tagCh(15), bis: tagCh(22), wochentage: [tag], anzahl: 2 },
+    });
+
+    // KI (Prinzip 4): ohne Angabe benachrichtigt — einzeln und über die Serie; mit false still.
+    assert.equal(kiWert(await ki(a, "termin_entfernen", { termin_id: await training(6) })).benachrichtigt, 2);
+    assert.equal(kiWert(await ki(a, "termin_entfernen", { termin_id: await training(7), benachrichtigen: false })).benachrichtigt, null);
+    assert.equal(kiWert(await ki(a, "termin_entfernen", { termin_id: erster2.id, reichweite: "alle", bestaetigt: true })).benachrichtigt, 2);
   });
 
   await pruefe("Schnuppern (#584 AK 5, 6, 14, 15): Ein- und Ausschalten im Team der Liste, nicht in einem fremden, bei weiteren Teams der Satz aus AK 6; Netz in der Datenebene", async () => {

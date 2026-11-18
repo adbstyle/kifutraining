@@ -763,18 +763,38 @@ export const terminEntfernen = werkzeug({
     "Bestätigung nennt das Ergebnis, was entfiele. Ein einzelner Termin oder «nur_dieser» wird " +
     "sofort entfernt - ein Spiel mit Meldungen oder Kennzeichnungen als nicht aufgeboten erst mit «bestaetigt: true»; ohne " +
     "nennt der Fehler, wie viele verschwinden («verschwindend», davon «kennzeichnungen»). " +
-    `${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
+    "Über die Serie erhält jede Spieler:in eine einzige Benachrichtigung mit den Terminen, die für sie wegfallen. " +
+    `${BENACHRICHTIGEN_WERKZEUG} ${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
-  eingabe: z.object({ termin_id: TerminId, reichweite: Reichweite.optional(), bestaetigt: Bestaetigt }),
-  ausgabe: z.object({ training: VerlassenSchema, entfallen_mit_training: EntfallenMitTraining }),
+  eingabe: z.object({
+    termin_id: TerminId,
+    reichweite: Reichweite.optional(),
+    bestaetigt: Bestaetigt,
+    benachrichtigen: z.boolean().default(true).describe(BENACHRICHTIGEN_MODELL("wegfall")),
+  }),
+  ausgabe: z.object({
+    training: VerlassenSchema,
+    entfallen_mit_training: EntfallenMitTraining,
+    benachrichtigt: z
+      .number()
+      .int()
+      .nullable()
+      .describe("Wie viele Spieler:innen eine Benachrichtigung erhielten; null, wenn nicht benachrichtigt werden sollte."),
+  }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
       await entferneMitReichweite(zugang.supabase, zugang.userId, {
         terminId: e.termin_id,
         reichweite: e.reichweite,
         bestaetigt: e.bestaetigt,
+        // Ohne gegenteiligen Entscheid benachrichtigen (#645 AK 1).
+        benachrichtigen: e.benachrichtigen !== false,
       }),
-      (w) => ({ training: verlassenAus(w.training), entfallen_mit_training: entfallenMitTraining(w.serie) }),
+      (w) => ({
+        training: verlassenAus(w.training),
+        entfallen_mit_training: entfallenMitTraining(w.serie),
+        benachrichtigt: w.benachrichtigt,
+      }),
     ),
 });
 

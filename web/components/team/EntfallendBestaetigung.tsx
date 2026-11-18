@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { TriangleAlert } from "lucide-react";
 import { Button, Dialog } from "@/components/ui";
 import { verfallDialogText } from "@/lib/spieler";
@@ -7,6 +8,7 @@ import { kaderVerfallText } from "@/lib/kader";
 import { TERMIN_TEXT, trainingOhneTermin } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { SerienFolge } from "@/lib/kern/serien";
+import { BenachrichtigenFeld } from "./BenachrichtigenFeld";
 
 /* Fallen Termine weg, muss das bestätigt werden (#326 AK 8). Genannt werden
    nur die wegfallenden Termine MIT Training (OoS 2), je mit dem, was ihrem
@@ -21,6 +23,12 @@ import type { SerienFolge } from "@/lib/kern/serien";
    werden (#475 AK 12). Nimmt die Zeitänderung Treffpunkte, weil sie am
    Vortag lägen, nennt er jeden dieser Termine (#561 PC 5).
 
+   Beim Entfernen entscheidet der Dialog, ob die Spielervertretungen vom
+   Wegfall erfahren (#645 AK 1; vorbelegt an) — nur, wenn die Vorschau
+   Spieler:innen nennt, die eine Benachrichtigung erhielten (`mitteilbar`).
+   Beim Ändern fiel der Entscheid schon im Termin-Dialog (#644); er gilt dort
+   für Verlegung und Wegfall zusammen (#645 PC 3), hier kein zweites Feld.
+
    `SerienFolge` ist ein reiner Typ: `import type` zieht nichts aus dem
    server-only Fachkern in das Client-Bundle. */
 export function EntfallendBestaetigung({
@@ -34,8 +42,14 @@ export function EntfallendBestaetigung({
   aktion: "aendern" | "entfernen";
   pending?: boolean;
   onClose: () => void;
-  onBestaetigen: () => void;
+  /** Der Entscheid; beim Ändern und ohne Feld immer `false`. */
+  onBestaetigen: (benachrichtigen: boolean) => void;
 }) {
+  const [benachrichtigen, setBenachrichtigen] = useState(true);
+  useEffect(() => {
+    setBenachrichtigen(true);
+  }, [folge]);
+  const mitteilbar = aktion === "entfernen" && (folge?.mitteilbar ?? 0) > 0;
   const wegfall = aktion === "entfernen" || (folge?.entfallendAnzahl ?? 0) > 0;
   const nachtraege = folge?.nachtraegeVerfallend ?? 0;
   const absagen = folge?.absagenVerfallend ?? 0;
@@ -65,7 +79,7 @@ export function EntfallendBestaetigung({
       actions={
         <>
           <Button variant="outlined" onClick={onClose}>Abbrechen</Button>
-          <Button variant="danger" disabled={pending} onClick={onBestaetigen}>
+          <Button variant="danger" disabled={pending} onClick={() => onBestaetigen(mitteilbar && benachrichtigen)}>
             {aktion === "entfernen" ? "Entfernen" : "Ändern"}
           </Button>
         </>
@@ -114,6 +128,11 @@ export function EntfallendBestaetigung({
             ))}
           </ul>
         </>
+      )}
+      {mitteilbar && (
+        <div className="mt-4 border-t border-linie pt-4">
+          <BenachrichtigenFeld vorgang="wegfall" className="px-3.5" checked={benachrichtigen} onChange={setBenachrichtigen} disabled={pending} />
+        </div>
       )}
     </Dialog>
   );

@@ -209,13 +209,14 @@ export type SerienFolge = {
   teamId: string;
   /** Der Kartenlink der Serie fiel mit dem Ort weg (#533 AK 14). */
   kartenlinkEntfallen?: boolean;
-  /** Nur in der Vorschau einer Änderung: wie viele Spieler:innen eine
-   *  Benachrichtigung erhielten (#644 AK 2) — die Oberfläche zeigt das
-   *  Häkchen nur, wenn es mehr als 0 sind. Sonst `null`. */
+  /** Nur in der Vorschau einer Änderung oder des Entfernens: wie viele
+   *  Spieler:innen eine Benachrichtigung erhielten (#644 AK 2, #645 AK 1) —
+   *  verlegte und entfallende Termine zusammen, jede Spieler:in einmal. Die
+   *  Oberfläche zeigt das Häkchen nur, wenn es mehr als 0 sind. Sonst `null`. */
   mitteilbar: number | null;
-  /** Nach dem Ausführen einer Änderung: wie viele Spieler:innen eine
-   *  Benachrichtigung erhielten (#644 PC 2); `null`, wenn nicht benachrichtigt
-   *  werden sollte (oder beim Entfernen bis #645). */
+  /** Nach dem Ausführen: wie viele Spieler:innen eine Benachrichtigung
+   *  erhielten (#644 PC 2, #645 PC 2); `null`, wenn nicht benachrichtigt
+   *  werden sollte. */
   benachrichtigt: number | null;
 };
 
@@ -233,7 +234,7 @@ type Roh = {
   nachtraege_verfallend?: number;
   absagen_verfallend?: number;
   anmeldungen_verfallend?: number;
-  /** Nur beim Ändern (#644): in der Vorschau bzw. nach dem Ausführen. */
+  /** In der Vorschau bzw. nach dem Ausführen (#644, #645). */
   mitteilbar?: number | null;
   benachrichtigt?: number | null;
 };
@@ -493,7 +494,14 @@ export async function aendereSerie(
 export async function entferneSerie(
   supabase: SupabaseClient,
   _userId: string,
-  e: { terminId: string; reichweite: "dieser_und_folgende" | "alle" } & Lauf,
+  e: {
+    terminId: string;
+    reichweite: "dieser_und_folgende" | "alle";
+    /** Ob die Spielervertretungen erfahren, welche Termine wegfallen (#645
+     *  AK 1, 3; PC 2). Gilt nur beim Ausführen; die Vorschau legt nie ab und
+     *  nennt `mitteilbar`. */
+    benachrichtigen: boolean;
+  } & Lauf,
 ): Promise<KernErgebnis<SerienFolge>> {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
@@ -506,6 +514,7 @@ export async function entferneSerie(
       p_version: erwartet?.version ?? null,
       p_entfallend: ausfuehren ? (erwartet?.entfallend ?? null) : null,
       p_ausfuehren: ausfuehren,
+      p_benachrichtigen: ausfuehren && e.benachrichtigen,
     }),
   );
 }
@@ -773,8 +782,23 @@ export async function aendereMitReichweite(
 export async function entferneMitReichweite(
   supabase: SupabaseClient,
   userId: string,
-  e: { terminId: string; reichweite?: Reichweite; bestaetigt?: boolean },
-): Promise<KernErgebnis<{ teamId: string; training: Verlassen; serie: SerienFolge | null }>> {
+  e: {
+    terminId: string;
+    reichweite?: Reichweite;
+    bestaetigt?: boolean;
+    /** Ob die Spielervertretungen vom Wegfall erfahren (#645 AK 1). */
+    benachrichtigen: boolean;
+  },
+): Promise<
+  KernErgebnis<{
+    teamId: string;
+    training: Verlassen;
+    serie: SerienFolge | null;
+    /** Wie viele Spieler:innen eine Benachrichtigung erhielten (#645 PC 1,
+     *  2); `null`, wenn nicht benachrichtigt werden sollte. */
+    benachrichtigt: number | null;
+  }>
+> {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
   const t = geladen.wert;
@@ -787,13 +811,20 @@ export async function entferneMitReichweite(
     return fehlschlag("regel", SERIE_MELDUNG.TERMIN_OHNE_SERIE, { feld: "reichweite" });
   if (!t.serie_id || e.reichweite === "nur_dieser") {
     // Ein Spiel mit Meldungen nur bestätigt (#463 AK 27).
-    const r = await entferneTermin(supabase, userId, { terminId: t.id, bestaetigt: e.bestaetigt });
+    const r = await entferneTermin(supabase, userId, {
+      terminId: t.id,
+      bestaetigt: e.bestaetigt,
+      benachrichtigen: e.benachrichtigen,
+    });
     return r.ok ? ok({ ...r.wert, serie: null }) : r;
   }
   const r = await entferneSerie(supabase, userId, {
     terminId: t.id,
     reichweite: e.reichweite as "dieser_und_folgende" | "alle",
     bestaetigt: e.bestaetigt,
+    benachrichtigen: e.benachrichtigen,
   });
-  return r.ok ? ok({ teamId: r.wert.teamId, training: null, serie: r.wert }) : r;
+  return r.ok
+    ? ok({ teamId: r.wert.teamId, training: null, serie: r.wert, benachrichtigt: r.wert.benachrichtigt })
+    : r;
 }

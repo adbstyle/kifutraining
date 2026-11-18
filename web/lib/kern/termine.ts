@@ -901,8 +901,11 @@ export async function entferneTermin(
      *  die bestätigte Summe (Oberfläche) oder `true` (KI). Ohne kommt ein
      *  Fehler mit `verschwindend`. */
     bestaetigt?: boolean | number;
+    /** Ob die Spielervertretungen erfahren, dass der Termin wegfällt
+     *  (#645 AK 1, PC 1); still bleiben ausgefallene und vergangene. */
+    benachrichtigen: boolean;
   },
-): Promise<KernErgebnis<{ teamId: string; training: Verlassen }>> {
+): Promise<KernErgebnis<{ teamId: string; training: Verlassen; benachrichtigt: number | null }>> {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   const { data: vorher } = await supabase
     .from("training_termine")
@@ -925,11 +928,12 @@ export async function entferneTermin(
   const { data, error } = await supabase.rpc("termin_entfernen", {
     p_termin: e.terminId,
     p_erwartet: e.erwartetesTraining === undefined ? null : { termin_training: e.erwartetesTraining },
+    p_benachrichtigen: e.benachrichtigen,
   });
   if (error) return kalenderFehler(error);
-  const r = data as { training: string | null; team: string };
+  const r = data as { training: string | null; team: string; benachrichtigt?: number | null };
   await raeumeBilderAb(supabase, bilder);
-  return ok({ teamId: r.team, training: await verlassen(supabase, r.training) });
+  return ok({ teamId: r.team, training: await verlassen(supabase, r.training), benachrichtigt: r.benachrichtigt ?? null });
 }
 
 // ── Zuordnen und lösen (#323; Termin-Trainings, PO 2026-10-06) ───────────────

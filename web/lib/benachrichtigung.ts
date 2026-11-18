@@ -292,9 +292,12 @@ export function istVerlegung(vorher: VerlegungStand, nachher: VerlegungStand): b
  *    Datum auf heute oder später wechselt (#327 PC 4), ein ausgefallenes
  *    Spiel bei jeder Änderung von Datum oder Beginn (Trigger
  *    `spiel_zeitpunkt_vorher`); sonst bleibt es ausgefallen und still.
- *  - Über die Serie (`serieEnde` = Ende der Serie nach der Änderung): Die
- *    Serie reicht bis heute oder später, und Wochentage (`regelGeaendert`),
- *    Zeit oder Ort ändern sich. Genau zählt die Vorschau (`mitteilbar`).
+ *  - Über die Serie (`serieEnde` = das spätere Ende der Serie vor oder nach
+ *    der Änderung — ein kürzerer Zeitraum lässt Termine bis zum bisherigen
+ *    Ende wegfallen, #645): Die Serie reicht bis heute oder später, und
+ *    Wochentage oder Zeitraum (`regelGeaendert`), Zeit oder Ort ändern sich.
+ *    Genau zählt die Vorschau (`mitteilbar`), verlegte und wegfallende
+ *    Termine zusammen. SQL-Zwilling auch `benachrichtigung_weggefallen`.
  *  `heute` ist der Tag am Trainingsort («YYYY-MM-DD»). */
 export function mitteilbarBeimAendern(e: {
   vorher: VerlegungStand & { ausgefallen: boolean };

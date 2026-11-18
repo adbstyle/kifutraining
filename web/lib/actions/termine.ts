@@ -174,17 +174,22 @@ export async function aendereTerminAktion(
 export async function entferneTerminAktion(
   terminId: string,
   erwartetesTraining: string | null,
+  /** Die Spielervertretungen benachrichtigen, dass der Termin wegfällt
+   *  (#645 AK 1); die Datenebene lässt ausgefallene und vergangene still. */
+  benachrichtigen: boolean,
   /** Ein Spiel: die bestätigte Zahl verschwindender Meldungen und
    *  Kennzeichnungen (#463 AK 27, #464 AK 10). */
   bestaetigt: number | false = false,
-): Promise<{ ok: true } | Fehler> {
+): Promise<{ ok: true; benachrichtigungFehlt?: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await entferneTermin(a.supabase, a.userId, { terminId, erwartetesTraining, bestaetigt });
+  const r = await entferneTermin(a.supabase, a.userId, { terminId, erwartetesTraining, bestaetigt, benachrichtigen });
   if (!r.ok) return { ok: false, error: r.meldung, verschwindend: r.verschwindend, kennzeichnungen: r.kennzeichnungen };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.training) revalidiereTraining(r.wert.training.trainingId);
-  return { ok: true };
+  // Der Termin ist entfernt; nur die Benachrichtigung ist nicht entstanden.
+  const fehlt = benachrichtigen && r.wert.benachrichtigt === null;
+  return { ok: true, ...(fehlt ? { benachrichtigungFehlt: true as const } : {}) };
 }
 
 /** Einen Termin ausfallen lassen oder den Grund eines ausgefallenen ändern
@@ -386,13 +391,26 @@ export async function aendereSerieAktion(
 }
 
 export async function vorschauSerieEntfernenAktion(terminId: string, reichweite: Serienweit, version: number) {
-  return serienLauf((s, u) => entferneSerie(s, u, { terminId, reichweite, vorschau: true, erwartet: { version, entfallend: [] } }));
+  // Die Vorschau legt nie ab; `folge.mitteilbar` sagt, wie viele Spieler:innen
+  // eine Benachrichtigung erhielten (#645 AK 1).
+  return serienLauf((s, u) =>
+    entferneSerie(s, u, { terminId, reichweite, vorschau: true, erwartet: { version, entfallend: [] }, benachrichtigen: false }),
+  );
 }
 
-export async function entferneSerieAktion(terminId: string, reichweite: Serienweit, erwartet: Erwartet) {
-  const r = await serienLauf((s, u) => entferneSerie(s, u, { terminId, reichweite, erwartet }));
-  if (r.ok) revalidiereTeam(r.folge.teamId);
-  return r;
+export async function entferneSerieAktion(
+  terminId: string,
+  reichweite: Serienweit,
+  erwartet: Erwartet,
+  /** Die Spielervertretungen benachrichtigen, welche Termine wegfallen (#645 AK 1). */
+  benachrichtigen: boolean,
+): Promise<{ ok: true; folge: SerienFolge; benachrichtigungFehlt?: true } | Fehler> {
+  const r = await serienLauf((s, u) => entferneSerie(s, u, { terminId, reichweite, erwartet, benachrichtigen }));
+  if (!r.ok) return r;
+  revalidiereTeam(r.folge.teamId);
+  // Die Serie ist entfernt; nur die Benachrichtigung ist nicht entstanden.
+  const fehlt = benachrichtigen && r.folge.benachrichtigt === null;
+  return { ...r, ...(fehlt ? { benachrichtigungFehlt: true as const } : {}) };
 }
 
 /** Abweichende Angaben wieder der Serie folgen lassen (#326 AK 6). */

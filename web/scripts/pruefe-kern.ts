@@ -176,6 +176,7 @@ import {
   eintragZusaetze,
   erhaltenText,
   gruppiere,
+  wegfallText,
   knopfLabel,
   neuZahl,
   type BenachrichtigungEreignis,
@@ -5406,9 +5407,54 @@ pruefe("Benachrichtigungen (#644 AK 1, 2; OoS 1): istVerlegung und mitteilbarBei
   // Prinzip 4: jeder Werkzeugtext mit «benachrichtigen» nennt den Standard und was still bleibt.
   const team = readFileSync(join(web, "lib/mcp/werkzeuge/team.ts"), "utf8");
   assert.match(team, /BENACHRICHTIGEN_MODELL\("verlegung"\)/);
-  assert.equal(team.match(/\$\{BENACHRICHTIGEN_WERKZEUG\}/g)?.length, 5, "termin_festlegen, termin_aendern, termin_der_serie_folgen, Ausfall, Rücknahme");
+  assert.equal(
+    team.match(/\$\{BENACHRICHTIGEN_WERKZEUG\}/g)?.length,
+    6,
+    "termin_festlegen, termin_aendern, termin_der_serie_folgen, Ausfall, Rücknahme, termin_entfernen",
+  );
   assert.ok(BENACHRICHTIGEN_WERKZEUG.startsWith("Standardmässig erhalten die Spielervertretungen"));
   assert.ok(!/\bProbe/.test(BENACHRICHTIGEN_WERKZEUG));
+});
+
+pruefe("Benachrichtigungen (#645 AK 1, 3; PC 3): Wegfall in Oberfläche und KI; Serie mit Verlegung und Wegfall in einem Eintrag", () => {
+  assert.equal(BENACHRICHTIGEN_HINWEIS.wegfall, "Sie erfahren, dass der Termin wegfällt, obwohl er aus ihren Terminen verschwindet.");
+  // Die Form der Datenebene (benachrichtigung_serie_zeilen): von, bis, ISO-Wochentage, Anzahl.
+  assert.equal(wegfallText({ von: "2026-12-02", bis: "2026-12-16", wochentage: [3], anzahl: 3 }), "Es fallen 3 Trainings am Mittwoch weg (2.–16. Dez.).");
+  assert.equal(wegfallText({ von: "2026-12-02", bis: "2026-12-02", wochentage: [3], anzahl: 1 }), "Es fällt 1 Training am Mittwoch weg (2. Dez.).");
+  assert.equal(
+    wegfallText({ von: "2026-11-30", bis: "2026-12-17", wochentage: [1, 4], anzahl: 6 }),
+    "Es fallen 6 Trainings am Montag und Donnerstag weg (30. Nov.–17. Dez.).",
+  );
+  const serie = (inhalt: Record<string, unknown>) =>
+    ({ id: "x", termin_id: null, erstellt: 0, erstellt_tag: "2026-12-01", ereignis: "serie", inhalt: { team: "Ea", art: "training", ...inhalt } }) as never;
+  // PC 3: dieselbe Zeile nennt die neuen Angaben und den Wegfall.
+  assert.deepEqual(
+    eintragZusaetze(serie({ ab: "2026-12-08", angaben: { beginn: "17:30" }, wegfall: { von: "2026-12-10", bis: "2026-12-17", wochentage: [4], anzahl: 2 } })),
+    ["Neu ab 17:30", "Es fallen 2 Trainings am Donnerstag weg (10.–17. Dez.)."],
+  );
+  // Nur Wegfall: ohne «Ab …», nur der Wegfall.
+  const nurWeg = serie({ ab: null, angaben: null, wegfall: { von: "2026-12-10", bis: "2026-12-10", wochentage: [4], anzahl: 1 } });
+  assert.equal(eintragWann(nurWeg), null);
+  assert.deepEqual(eintragZusaetze(nurWeg), ["Es fällt 1 Training am Donnerstag weg (10. Dez.)."]);
+  // Der einzelne Wegfall trägt den Termin vor dem Löschen (AK 2).
+  const einzeln = {
+    id: "y", termin_id: "t", erstellt: 0, erstellt_tag: "2026-12-01", ereignis: "wegfall",
+    inhalt: { team: "Ea", art: "spiel", bezeichnung: "Turnier", datum: "2026-12-05", beginn: "14:00", ende: "15:30", ort: "Halle" },
+  } as never;
+  assert.equal(eintragTitel(einzeln), "Turnier · Ea");
+  assert.equal(eintragWo(einzeln), "Halle");
+  assert.equal(EREIGNIS_WORT.wegfall, "Fällt weg");
+  // Oberfläche: das Feld beim einzelnen Entfernen nur bei nicht ausgefallen und ab heute, beim Entfernen der Serie nur mit `mitteilbar`.
+  const bereich = readFileSync(join(web, "components/team/TerminBereich.tsx"), "utf8");
+  assert.match(bereich, /const entfernenMitteilbar = !!entfernen && !entfernen\.ausgefallen && entfernen\.datum >= heute;/);
+  assert.match(bereich, /entfernenMitteilbar && entfernenBenachrichtigen/);
+  assert.match(bereich, /<BenachrichtigenFeld\s+vorgang="wegfall"/);
+  const bestaetigung = readFileSync(join(web, "components/team/EntfallendBestaetigung.tsx"), "utf8");
+  assert.match(bestaetigung, /const mitteilbar = aktion === "entfernen" && \(folge\?\.mitteilbar \?\? 0\) > 0;/);
+  assert.match(bestaetigung, /onBestaetigen\(mitteilbar && benachrichtigen\)/);
+  // Beim Ändern der Serie zählt das spätere Ende: Ein kürzerer Zeitraum lässt Termine bis zum bisherigen Ende wegfallen.
+  assert.match(readFileSync(join(web, "components/team/TerminDialog.tsx"), "utf8"), /serieEnde: regel\.bis > serie\.endDatum \? regel\.bis : serie\.endDatum/);
+  assert.match(readFileSync(join(web, "lib/mcp/werkzeuge/team.ts"), "utf8"), /BENACHRICHTIGEN_MODELL\("wegfall"\)/);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

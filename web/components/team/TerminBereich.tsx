@@ -7,6 +7,7 @@ import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { AusfallDialog } from "./AusfallDialog";
 import { AusfallZuruecknehmenDialog } from "./AusfallZuruecknehmenDialog";
 import { EntfallendBestaetigung } from "./EntfallendBestaetigung";
+import { BenachrichtigenFeld } from "./BenachrichtigenFeld";
 import { ReichweiteDialog } from "./ReichweiteDialog";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
 import { NeuerTerminDialog } from "./NeuerTerminDialog";
@@ -218,7 +219,16 @@ export function TerminBereich({
   const [neu, setNeu] = useState(false);
   const [bearbeiten, setBearbeiten] = useState<TerminZeile | null>(null);
   const [zuordnen, setZuordnen] = useState<TerminZeile | null>(null);
-  const [entfernen, setEntfernen] = useState<TerminZeile | null>(null);
+  const [entfernen, setEntfernenRoh] = useState<TerminZeile | null>(null);
+  // #645 AK 1: der Entscheid im Entfernen-Dialog, beim Öffnen vorbelegt an;
+  // er bleibt über die Rückfrage zu verschwindenden Meldungen erhalten.
+  const [entfernenBenachrichtigen, setEntfernenBenachrichtigen] = useState(true);
+  const setEntfernen = (t: TerminZeile | null) => {
+    if (t) setEntfernenBenachrichtigen(true);
+    setEntfernenRoh(t);
+  };
+  // Nur ein Termin von heute oder später, der nicht ausgefallen ist (Prinzipien 1, 2).
+  const entfernenMitteilbar = !!entfernen && !entfernen.ausgefallen && entfernen.datum >= heute;
   // Ein Spiel (#463 AK 27, #464 AK 10): wie viele Meldungen und
   // Kennzeichnungen mit ihm verschwinden — aus dem Plan, oder der aktuelle
   // Stand, wenn er sich inzwischen geändert hat.
@@ -438,7 +448,7 @@ export function TerminBereich({
           { ...erwartet, verfallend: verfallSumme(b.folge) },
           b.benachrichtigen,
         )
-      : await entferneSerieAktion(b.t.id, b.reichweite, erwartet);
+      : await entferneSerieAktion(b.t.id, b.reichweite, erwartet, b.benachrichtigen);
     if (!r.ok) return serienFehler(b.art, r.error, laufNr.current !== nr);
     // Der Grund gilt nur für diesen Termin (#402 PC 4); er folgt der Serie nicht.
     // Nur der Grund: bleibt still (#643 OoS 1).
@@ -449,7 +459,7 @@ export function TerminBereich({
     melde(
       b.art === "aendern"
         ? `Terminserie geändert.${g && !g.ok ? ` ${g.error}` : ""}${fehlt ? ` ${BENACHRICHTIGEN_TEXT.gescheitert}` : ""}`
-        : "Termine entfernt.",
+        : `Termine entfernt.${fehlt ? ` ${BENACHRICHTIGEN_TEXT.gescheitert}` : ""}`,
     );
   }
 
@@ -756,10 +766,13 @@ export function TerminBereich({
           neuerLauf();
           setBestaetigen(null);
         }}
-        onBestaetigen={() => {
+        onBestaetigen={(benachrichtigen) => {
           const b = bestaetigen;
           const nr = laufNr.current;
-          if (b) startTransition(() => fuehreAus(b, nr));
+          // Beim Entfernen entscheidet dieser Dialog (#645 AK 1); beim Ändern
+          // galt der Entscheid des Termin-Dialogs schon (#644), auch für den
+          // Wegfall (#645 PC 3).
+          if (b) startTransition(() => fuehreAus(b.art === "entfernen" ? { ...b, benachrichtigen } : b, nr));
         }}
       />
 
@@ -860,8 +873,16 @@ export function TerminBereich({
               onClick={() =>
                 entfernen &&
                 lauf(
-                  () => entferneTerminAktion(entfernen.id, entfernen.training?.id ?? null, entfernenZahl),
-                  () => (entfernen.spiel ? "Spiel entfernt." : "Termin entfernt."),
+                  () =>
+                    entferneTerminAktion(
+                      entfernen.id,
+                      entfernen.training?.id ?? null,
+                      entfernenMitteilbar && entfernenBenachrichtigen,
+                      entfernenZahl,
+                    ),
+                  // Der Termin ist entfernt; nur die Benachrichtigung ist nicht entstanden (#645).
+                  (r) =>
+                    `${entfernen.spiel ? "Spiel entfernt." : "Termin entfernt."}${r.ok && r.benachrichtigungFehlt ? ` ${BENACHRICHTIGEN_TEXT.gescheitert}` : ""}`,
                   () => {
                     setEntfernen(null);
                     setVerschwindend(null);
@@ -891,6 +912,17 @@ export function TerminBereich({
             <> <strong className="text-on-surface">{entfernen.training.name}</strong> {trainingOhneTermin(entfernen.training.terminTraining)}.</>
           )}
         </p>
+        {entfernenMitteilbar && (
+          <div className="mt-4 border-t border-linie pt-4">
+            <BenachrichtigenFeld
+              vorgang="wegfall"
+              className="px-3.5"
+              checked={entfernenBenachrichtigen}
+              onChange={setEntfernenBenachrichtigen}
+              disabled={pending}
+            />
+          </div>
+        )}
       </Dialog>
 
       {/* Lösen eines Termin-Trainings löscht es — darum diese Rückfrage. */}

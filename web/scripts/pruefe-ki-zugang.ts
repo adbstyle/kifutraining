@@ -1327,8 +1327,35 @@ pruefe("Benachrichtigungen (#644 AK 1, 2): termin_aendern und termin_der_serie_f
   assert.equal(folgen?.parse?.(undefined), true);
   // Jedes Werkzeug mit «benachrichtigen» nennt den Standard im Werkzeugtext, und nur diese.
   const mit = [...felder].filter(([, f]) => f.has("benachrichtigen")).map(([n]) => n).sort();
-  assert.deepEqual(mit, ["termin_aendern", "termin_ausfall_zuruecknehmen", "termin_ausfallen_lassen", "termin_der_serie_folgen", "termin_festlegen"]);
+  assert.deepEqual(mit, [
+    "termin_aendern",
+    "termin_ausfall_zuruecknehmen",
+    "termin_ausfallen_lassen",
+    "termin_der_serie_folgen",
+    "termin_entfernen",
+    "termin_festlegen",
+  ]);
   for (const [name, text] of texte) assert.equal(text.includes(BENACHRICHTIGEN_WERKZEUG), mit.includes(name), name);
+});
+
+pruefe("Benachrichtigungen (#645 AK 1): termin_entfernen beschreibt «benachrichtigen» wie die Oberfläche (Standard true) und nennt «benachrichtigt»", () => {
+  const felder = new Map<string, Map<string, { description?: string; parse?: (x: unknown) => unknown }>>();
+  const ausgaben = new Map<string, Record<string, unknown>>();
+  registriereWerkzeuge({
+    registerTool: (
+      name: string,
+      def: { inputSchema?: { shape?: Record<string, { description?: string }> }; outputSchema?: { shape?: Record<string, unknown> } },
+    ) => {
+      felder.set(name, new Map(Object.entries(def.inputSchema?.shape ?? {})));
+      ausgaben.set(name, def.outputSchema?.shape ?? {});
+    },
+  } as never);
+  const entfernen = felder.get("termin_entfernen")?.get("benachrichtigen");
+  assert.equal(entfernen?.description, BENACHRICHTIGEN_MODELL("wegfall"));
+  assert.ok(entfernen?.description?.includes(BENACHRICHTIGEN_HINWEIS.wegfall), "UI = KI: derselbe Hinweis");
+  assert.equal(entfernen?.parse?.(undefined), true, "Prinzip 4: ohne Angabe benachrichtigen");
+  assert.equal(entfernen?.parse?.(false), false);
+  assert.ok("benachrichtigt" in (ausgaben.get("termin_entfernen") ?? {}), "Ausgabe benachrichtigt");
 });
 
 pruefe("Story 13 (#589 PC 1, 2): ZUGANG_DARF und ZUGANG_DARF_NICHT im Wortlaut, der Kopf von umfang.ts verlangt keine erneute Zustimmung", () => {
