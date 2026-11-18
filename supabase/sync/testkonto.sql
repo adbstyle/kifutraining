@@ -7,12 +7,17 @@
 -- `claude@tester.ch`) neu an und gibt ihm erfundene
 -- Testdaten:
 -- - einen Verein, das Konto in der Vereinsverwaltung,
--- - ein Team, das Konto als Trainer:in,
--- - erfundene Spieler:innen im Team,
+-- - drei Teams: «Claude Testteam F» und «Claude Testteam E» mit dem Konto
+--   als Trainer:in, «Claude Testteam D» nur verwaltet (das Konto ist dort
+--   nicht Mitglied: Rollen nach Ort),
+-- - erfundene Spieler:innen: Lena und Noah in F und E, Mia in F und D (ein
+--   privater Link über mehrere Teams), dazu je Team eigene, und Ole ohne
+--   Team (nur im Verein),
 -- - drei eigene Trainings (Kinderfussball): eines mit zwei Hauptteil-
 --   Varianten, eines vollständig und veröffentlichbar (bleibt Entwurf), eines
 --   unvollständig,
--- - Termine im Team in den nächsten Wochen: drei Trainings und ein Spiel.
+-- - Termine in F in den nächsten Wochen: drei Trainings und ein Spiel; in E
+--   zwei Trainings, in D eines.
 --
 -- Läuft in einer eigenen Transaktion NACH dem Restore, mit
 -- `session_replication_role = origin`: alle Trigger (Grenzen, Eindeutigkeit,
@@ -138,6 +143,9 @@ declare
   v_uid uuid := auth.uid();
   v_verein uuid;
   v_team uuid;
+  v_team_e uuid;
+  v_team_d uuid;
+  v_ids uuid[];
   v_tr uuid;
   v_var_a uuid;
   v_var_b uuid;
@@ -179,6 +187,28 @@ begin
   loop
     perform public.spieler_aufnehmen(v_team, v_sp.vorname, v_sp.nachname, v_sp.jahrgang, null);
   end loop;
+
+  -- Zwei weitere Teams: E mit dem Konto als Trainer:in, D nur verwaltet.
+  v_team_e := (public.verein_team_anlegen(v_verein, 'Claude Testteam E') ->> 'id')::uuid;
+  v_team_d := (public.verein_team_anlegen(v_verein, 'Claude Testteam D') ->> 'id')::uuid;
+  if v_team_e is null or v_team_d is null then raise exception 'testkonto: weitere Teams nicht angelegt'; end if;
+  perform public.verein_team_beitreten(v_team_e);
+  perform public.spieler_aufnehmen(v_team_e, 'Sara', 'Erdacht', 2016, null);
+  perform public.spieler_aufnehmen(v_team_e, 'Tim', 'Ausgedacht', 2016, null);
+  -- Spieler:innen des Vereins legt die Verwaltung an und ordnet sie zu (D: ohne Mitgliedschaft).
+  for v_sp in
+    select * from (values ('Nina', 'Gedacht', 2014), ('Ben', 'Annahme', 2014), ('Ole', 'Ohneteam', 2015))
+      as s(vorname, nachname, jahrgang)
+  loop
+    v_ids := v_ids || ((public.verein_spieler_anlegen(v_verein, v_sp.vorname, v_sp.nachname, v_sp.jahrgang, null)) ->> 'id')::uuid;
+  end loop;
+  -- Nina und Ben nach D, Ole bleibt ohne Team.
+  perform public.verein_spieler_zuordnen(v_team_d, v_ids[1:2]);
+  -- Mehrere Teams je Spieler:in: Lena und Noah auch in E, Mia auch in D.
+  perform public.verein_spieler_zuordnen(v_team_e, array(
+    select s.id from public.spieler s where s.verein_id = v_verein and s.vorname in ('Lena', 'Noah')));
+  perform public.verein_spieler_zuordnen(v_team_d, array(
+    select s.id from public.spieler s where s.verein_id = v_verein and s.vorname = 'Mia'));
 
   -- Training mit zwei Hauptteil-Varianten (vollständig je Variante).
   insert into public.trainings (name, ziel, altersstufe, stufen, visibility, owner_id)
@@ -228,7 +258,16 @@ begin
   values (v_team, 'spiel', 'Testturnier', 6, 10, 2880, v_start + 12, '09:00', '12:00', 'Testplatz')
   returning id into v_termin;
   perform public.termin_trainer_aendern(v_termin, array[v_uid], '{}', v_uid);
+  -- E: zwei Trainings mit dem Konto als Verantwortliche; D: eines ohne Trainer:in.
+  foreach v_tag in array array[v_start + 3, v_start + 10] loop
+    insert into public.training_termine (team_id, art, datum, beginn, ende, ort)
+    values (v_team_e, 'training', v_tag, '18:00', '19:30', 'Testhalle')
+    returning id into v_termin;
+    perform public.termin_trainer_aendern(v_termin, array[v_uid], '{}', v_uid);
+  end loop;
+  insert into public.training_termine (team_id, art, datum, beginn, ende, ort)
+  values (v_team_d, 'training', v_start + 4, '17:00', '18:30', 'Testplatz');
 
-  raise warning 'testkonto: Testdaten angelegt (Verein %, Team %)', v_verein, v_team;
+  raise warning 'testkonto: Testdaten angelegt (Verein %, Teams %, %, %)', v_verein, v_team, v_team_e, v_team_d;
 end $$;
 
