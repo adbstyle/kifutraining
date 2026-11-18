@@ -1,9 +1,11 @@
 -- Sync-Baustein supabase/sync/testkonto.sql (sync-staging.yml):
 -- (a) Ohne Passwort und ohne Konto geschieht nichts.
--- (b) Mit Passwort entstehen Konto, Verein mit Verwaltung, Team mit dem Konto
---     als Trainer:in, Spieler:innen, drei Trainings (eines mit zwei Varianten
---     und vollständig, eines vollständig mit einer Variante, eines
---     unvollständig) und vier anstehende Termine, davon ein Spiel.
+-- (b) Mit Passwort entstehen Konto, Verein mit Verwaltung, drei Teams (F und
+--     E mit dem Konto als Trainer:in, D nur verwaltet), Spieler:innen (Lena
+--     und Noah in F und E, Mia in F und D, Ole ohne Team), drei Trainings
+--     (eines mit zwei Varianten und vollständig, eines vollständig mit einer
+--     Variante, eines unvollständig) und in F vier anstehende Termine, davon
+--     ein Spiel, in E zwei, in D einer.
 -- (c) Ein zweiter Lauf ändert nichts.
 -- Braucht die Manual-Übungen (in der CI läuft der Seed vor den psql-Tests
 -- nicht: dann fehlen sie, und der Test legt je Block eine Attrappe an).
@@ -65,8 +67,31 @@ begin
   if not exists (select 1 from public.verein_verwaltung vv where vv.user_id = v_uid) then
     raise exception '(b) Verwaltung fehlt';
   end if;
-  select tm.team_id into v_team from public.team_members tm where tm.user_id = v_uid;
+  select t.id into v_team from public.teams t where t.name = 'Claude Testteam F'
+     and exists (select 1 from public.team_members tm where tm.team_id = t.id and tm.user_id = v_uid);
   if v_team is null then raise exception '(b) Team fehlt'; end if;
+  if (select array_agg(t.name order by t.name) from public.team_members tm join public.teams t on t.id = tm.team_id
+       where tm.user_id = v_uid) is distinct from array['Claude Testteam E', 'Claude Testteam F'] then
+    raise exception '(b) erwartet Mitgliedschaft in E und F';
+  end if;
+  if (select count(*) from public.teams t join public.verein_verwaltung vv on vv.verein_id = t.verein_id
+       where vv.user_id = v_uid) <> 3 then
+    raise exception '(b) erwartet drei Teams im Verein';
+  end if;
+  if (select array_agg(s.vorname order by s.vorname) from public.spieler s
+       where (select count(*) from public.team_spieler ts where ts.spieler_id = s.id) = 2
+         and s.verein_id = (select verein_id from public.verein_verwaltung where user_id = v_uid))
+     is distinct from array['Lena', 'Mia', 'Noah'] then
+    raise exception '(b) erwartet Lena, Mia und Noah in zwei Teams';
+  end if;
+  if not exists (select 1 from public.spieler s where s.vorname = 'Ole'
+                  and not exists (select 1 from public.team_spieler ts where ts.spieler_id = s.id)) then
+    raise exception '(b) Ole ohne Team fehlt';
+  end if;
+  if (select count(*) from public.training_termine tt join public.teams t on t.id = tt.team_id
+       where t.name in ('Claude Testteam E', 'Claude Testteam D') and tt.datum > current_date) <> 3 then
+    raise exception '(b) erwartet drei Termine in E und D';
+  end if;
   if (select count(*) from public.team_spieler where team_id = v_team) < 3 then
     raise exception '(b) zu wenige Spieler:innen';
   end if;
