@@ -200,15 +200,22 @@ begin
     select * from (values ('Nina', 'Gedacht', 2014), ('Ben', 'Annahme', 2014), ('Ole', 'Ohneteam', 2015))
       as s(vorname, nachname, jahrgang)
   loop
-    v_ids := v_ids || ((public.verein_spieler_anlegen(v_verein, v_sp.vorname, v_sp.nachname, v_sp.jahrgang, null)) ->> 'id')::uuid;
+    v_antwort := public.verein_spieler_anlegen(v_verein, v_sp.vorname, v_sp.nachname, v_sp.jahrgang, null);
+    if v_antwort ->> 'status' is distinct from 'angelegt' then
+      raise exception 'testkonto: % nicht angelegt: %', v_sp.vorname, v_antwort;
+    end if;
+    v_ids := v_ids || (v_antwort ->> 'id')::uuid;
   end loop;
   -- Nina und Ben nach D, Ole bleibt ohne Team.
-  perform public.verein_spieler_zuordnen(v_team_d, v_ids[1:2]);
+  v_antwort := public.verein_spieler_zuordnen(v_team_d, v_ids[1:2]);
+  if v_antwort ->> 'status' = 'abgewiesen' then raise exception 'testkonto: Zuordnung abgewiesen: %', v_antwort; end if;
   -- Mehrere Teams je Spieler:in: Lena und Noah auch in E, Mia auch in D.
-  perform public.verein_spieler_zuordnen(v_team_e, array(
+  v_antwort := public.verein_spieler_zuordnen(v_team_e, array(
     select s.id from public.spieler s where s.verein_id = v_verein and s.vorname in ('Lena', 'Noah')));
-  perform public.verein_spieler_zuordnen(v_team_d, array(
+  if v_antwort ->> 'status' = 'abgewiesen' then raise exception 'testkonto: Zuordnung abgewiesen: %', v_antwort; end if;
+  v_antwort := public.verein_spieler_zuordnen(v_team_d, array(
     select s.id from public.spieler s where s.verein_id = v_verein and s.vorname = 'Mia'));
+  if v_antwort ->> 'status' = 'abgewiesen' then raise exception 'testkonto: Zuordnung abgewiesen: %', v_antwort; end if;
 
   -- Training mit zwei Hauptteil-Varianten (vollständig je Variante).
   insert into public.trainings (name, ziel, altersstufe, stufen, visibility, owner_id)
