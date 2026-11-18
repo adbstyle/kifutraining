@@ -50,6 +50,7 @@ import type { FolgeAngabe, SerienAenderung, SerienFolge } from "@/lib/kern/serie
 import { istVeraltet } from "@/lib/veraltet";
 import { datumKurz, terminBegonnen } from "@/lib/zeit";
 import { setzeTerminKaderAktion } from "@/lib/actions/kader";
+import { BENACHRICHTIGEN_TEXT } from "@/lib/benachrichtigung";
 import type { Kader } from "@/lib/kader";
 import type { TeamTrainingRow, TrainingListRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
@@ -638,8 +639,10 @@ export function TerminBereich({
           t.art === "serie"
             ? lauf(() => legeSerieFestAktion(teamId, t.felder), () => "Terminserie erstellt.", () => setNeu(false), true, laufNr.current)
             : lauf(
-                () => legeTerminFestAktion(teamId, { ...t.felder, mindestbesetzung: t.trainer.mindestbesetzung }, t.kaderIds, t.trainer),
-                () => "Termin erstellt.",
+                () =>
+                  legeTerminFestAktion(teamId, { ...t.felder, mindestbesetzung: t.trainer.mindestbesetzung }, t.kaderIds, t.trainer, t.benachrichtigen),
+                // Das Spiel steht; nur die Benachrichtigung ist nicht entstanden (#642).
+                (r) => (r.ok && r.benachrichtigungFehlt ? `Termin erstellt. ${BENACHRICHTIGEN_TEXT.gescheitert}` : "Termin erstellt."),
                 () => setNeu(false),
                 true,
                 laufNr.current,

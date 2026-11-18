@@ -1,7 +1,9 @@
 /* Seiten hinter einem privaten Link (Epic #433): ohne Konto, ohne Sitzung und
    ohne das App-Chrome — kein Menü, kein Team-Kontext, keine Snackbar. Fürs
    Handy gebaut, eine schmale Spalte. Die Middleware lässt diese Pfade aus
-   (keine Sitzung, kein Cookie), die Besucherstatistik zählt sie nicht.
+   (keine Sitzung, kein Anmelde-Cookie), die Besucherstatistik zählt sie nicht.
+   Das einzige Cookie dort merkt sich je Gerät, welche Benachrichtigungen
+   schon angezeigt wurden (#642).
 
    Die Spalte ist ein Flex-Stapel über die ganze Höhe: Was am Seitenende
    stehen soll («Fragen und Feedback», #544), schiebt sich mit `mt-auto` an

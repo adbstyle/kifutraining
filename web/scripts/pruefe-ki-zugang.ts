@@ -46,7 +46,8 @@ import {
 import { loginAdresse, sichererRuecksprung } from "../lib/weiterleitung";
 import { KONTO_GRENZE_WERKZEUG, kontoGrenzeText } from "../lib/konto-grenzen";
 import { registriereWerkzeuge } from "../lib/mcp/server";
-import { ZUGANG_DARF, ZUGANG_DARF_NICHT } from "../lib/mcp/umfang";
+import { ZUGANG_DARF, ZUGANG_DARF_NICHT, ZUGANG_ERWEITERUNG } from "../lib/mcp/umfang";
+import { BENACHRICHTIGEN_HINWEIS, BENACHRICHTIGEN_MODELL } from "../lib/benachrichtigung";
 import {
   altersstufeSlugs,
   erscheinungsform_juniorenSlugs,
@@ -1261,6 +1262,20 @@ pruefe("Story 13 (#589 AK 9; A8, A9): Link-Werkzeuge über alle Teams, Erneuern 
   // Die Abholadresse eines Teams gibt den einen Link der Spieler:in heraus.
   for (const n of ["selbstabholung_abrufen", "selbstabholung_schalten", "abholadresse_erneuern"])
     assert.match(beschreibung.get(n) ?? "", /denselben, den die Abholadresse jedes ihrer Teams mit eingeschalteter Selbstabholung herausgibt/, n);
+});
+
+pruefe("Benachrichtigungen (#642 AK 6): termin_festlegen beschreibt «benachrichtigen» wie die Oberfläche; der Zugang nennt es ohne neue Zustimmung", () => {
+  const felder = new Map<string, { description?: string }>();
+  registriereWerkzeuge({
+    registerTool: (name: string, def: { inputSchema?: { shape?: Record<string, { description?: string }> } }) => {
+      if (name === "termin_festlegen") for (const [k, v] of Object.entries(def.inputSchema?.shape ?? {})) felder.set(k, v);
+    },
+  } as never);
+  const beschreibung = felder.get("benachrichtigen")?.description ?? "";
+  assert.equal(beschreibung, `Nur bei einem Spiel. ${BENACHRICHTIGEN_MODELL("neues_spiel")}`);
+  assert.ok(beschreibung.includes(BENACHRICHTIGEN_HINWEIS.neues_spiel), "UI = KI: derselbe Hinweis");
+  assert.ok(ZUGANG_DARF[3].includes("beim Festlegen eines Spiels dabei entscheiden, ob die Spielervertretungen am privaten Link benachrichtigt werden"));
+  assert.ok(ZUGANG_ERWEITERUNG.includes("nicht erneut zustimmen"));
 });
 
 pruefe("Story 13 (#589 PC 1, 2): ZUGANG_DARF und ZUGANG_DARF_NICHT im Wortlaut, der Kopf von umfang.ts verlangt keine erneute Zustimmung", () => {

@@ -14,6 +14,7 @@ import { datumKurz } from "@/lib/zeit";
 import { tagOhneJahr } from "@/lib/monat";
 import { SPIEL_TEXT } from "@/lib/spiel";
 import { PROBE_TEXT, type ProbeStand } from "@/lib/probe";
+import { BENACHRICHTIGUNG_TAGE } from "@/lib/benachrichtigung";
 
 /** Zwillinge der Checks `spieler_vorname`, `spieler_nachname`, `spieler_js`
  *  und `spieler_jahrgang`. */
@@ -749,9 +750,10 @@ export const ABHOLUNG_TEXT = {
 } as const;
 
 /** AK 7, #587 PC 2: was KiFu speichert, wer dafür verantwortlich ist, wer es
- *  sieht, wann es verschwindet — auf dem Eingabe-Bildschirm der Abholseite. */
+ *  sieht, wann es verschwindet — auf dem Eingabe-Bildschirm der Abholseite.
+ *  #642 AK 5: dazu die Benachrichtigungen und wie lange sie bleiben. */
 export function abholSpeichertText(verein: string): string {
-  return `Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein Spiel nicht aufgeboten ist. ${angabenSehenText(verein)} Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen ihrer Teams und ihre KI-Assistenten. Nimmt ein Team eine Spieler:in heraus, bleiben ihre Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht.`;
+  return `Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein Spiel nicht aufgeboten ist. Benachrichtigungen zu ihren Terminen bewahrt KiFu ${BENACHRICHTIGUNG_TAGE} Tage auf; sie sieht nur, wer den Link hat. ${angabenSehenText(verein)} Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen ihrer Teams und ihre KI-Assistenten. Nimmt ein Team eine Spieler:in heraus, bleiben ihre Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht.`;
 }
 
 /** AK 10: wozu der Link dient, dass er privat ist, und wo es ihn wieder gibt;

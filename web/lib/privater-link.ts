@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { istUuid } from "@/lib/kennung";
 import { LINK_FEHLER, abweisungText, istLinkToken, nachTeamname, type AbmeldeGrund, type AbmeldeStand, type Spielstand } from "@/lib/spieler";
@@ -6,6 +7,7 @@ import { meldungAbweisungText, type Meldung, type Treffpunkt } from "@/lib/spiel
 import type { MeldeAntwort } from "@/lib/kern/spiele";
 import { spielerAboUrl } from "@/lib/spieler-abo";
 import type { ProbeStand } from "@/lib/probe";
+import type { LinkBenachrichtigungen } from "@/lib/benachrichtigung";
 
 /**
  * Die Seite hinter dem privaten Link einer Spieler:in (Epic #433, Story #436)
@@ -137,6 +139,26 @@ export async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
         team_infos: ansicht.team_infos && [...ansicht.team_infos].sort((a, b) => nachTeamname(a.team, b.team)),
       }
     : ansicht;
+}
+
+/** Die Benachrichtigungen der Spieler:in (#642 AK 1) — `null` bei einem
+ *  ungültigen Link und bei jedem Fehler der Datenebene (auch vor der
+ *  Migration): Dann zeigt die Seite keine Glocke, statt etwas zu behaupten. */
+export async function ladeBenachrichtigungen(token: string): Promise<LinkBenachrichtigungen | null> {
+  if (!istLinkToken(token)) return null;
+  const { data, error } = await createAnonClient().rpc("spieler_link_benachrichtigungen", { p_token: token });
+  if (error || !data) return null;
+  const r = data as ({ gueltig: true } & LinkBenachrichtigungen) | { gueltig: false };
+  if (!r.gueltig || !Array.isArray(r.eintraege)) return null;
+  return { jetzt: Number(r.jetzt), heute: r.heute, eintraege: r.eintraege };
+}
+
+/** Der Schlüssel, unter dem das Gerät den Gelesen-Stand eines Links ablegt
+ *  (#642 AK 2): aus dem Link abgeleitet, damit ein erneuerter Link neu
+ *  beginnt, ohne das Geheimnis selbst im Cookie zu tragen — sha256, base64url,
+ *  die ersten 12 Zeichen. Nur auf dem Server. */
+export function linkSchluessel(token: string): string {
+  return createHash("sha256").update(token).digest("base64url").slice(0, 12);
 }
 
 export type LinkAbmeldung = { terminId: string; abgemeldet: boolean; gesehen: { datum: string; beginn: string } };

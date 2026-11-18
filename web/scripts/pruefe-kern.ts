@@ -158,6 +158,34 @@ import {
 import { aboDatei, aboPfad, aboUrl, aboTokenAus, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
 import { ABO_KALENDER_NAME, aboEintrag, aboStatus, spielerAboUrl, type AboFeedTermin } from "../lib/spieler-abo";
 import { istVeraltet } from "../lib/veraltet";
+import {
+  BENACHRICHTIGEN_HINWEIS,
+  BENACHRICHTIGEN_MODELL,
+  BENACHRICHTIGEN_TEXT,
+  BENACHRICHTIGUNG_TAGE,
+  ELTERN_TEXT,
+  EREIGNIS_NEGATIV,
+  EREIGNIS_WORT,
+  eintragTitel,
+  eintragWann,
+  eintragWo,
+  eintragZusaetze,
+  erhaltenText,
+  gruppiere,
+  knopfLabel,
+  neuZahl,
+  type BenachrichtigungEreignis,
+  type LinkBenachrichtigung,
+} from "../lib/benachrichtigung";
+import {
+  BENACHRICHTIGUNG_COOKIE,
+  BENACHRICHTIGUNG_MAX_LINKS,
+  benachrichtigungCookie,
+  leseGesehenStand,
+  mitGesehen,
+  wertAusCookieString,
+} from "../lib/benachrichtigung-gesehen";
+import { SPEICHERUNGEN } from "../lib/browser-speicher";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
 import { blattStand, handlungsMeldung, meldeStatus, nachMeldefrist, spielStatus, terminStatus } from "../lib/termin-status";
@@ -3226,6 +3254,17 @@ pruefe("Abholseite (#579 PC 12): Herausnehmen lässt die Angaben im Verein, erst
   assert.ok(!speichert.includes("verschwinden ihre Angaben überall"), "der alte Satz stimmt nicht mehr");
 });
 
+pruefe("Abholseite (#642 AK 5): nennt die Benachrichtigungen, ihre 90 Tage und wer sie sieht", () => {
+  const speichert = abholSpeichertText("FC Wyler");
+  assert.equal(BENACHRICHTIGUNG_TAGE, 90);
+  assert.ok(
+    speichert.includes("Benachrichtigungen zu ihren Terminen bewahrt KiFu 90 Tage auf; sie sieht nur, wer den Link hat."),
+    speichert,
+  );
+  // Vor dem Block «wer die Angaben sieht», nach den gespeicherten Angaben.
+  assert.ok(speichert.indexOf("Benachrichtigungen") < speichert.indexOf(angabenSehenText("FC Wyler")));
+});
+
 pruefe("Wer die Angaben sieht (#580 PC 4, #587 PC 2): ein Textblock für Abholseite und privaten Link, mit dem Verein als Verantwortlichem, nicht in LINK_TEXT", () => {
   const rest =
     "sehen alle Trainer:innen des Vereins, alle Angaben die Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.";
@@ -5171,6 +5210,133 @@ pruefe("Infos am privaten Link: die Erklärungen stehen hinter dem ⓘ, nicht me
   assert.ok(!/defaultOpen/.test(infos), "OoS 9: nichts öffnet sich von selbst");
   for (const da of ["angabenSehenText", "linkProbeKopf", "linkMeldenText", "teamInfosLinkTitel", "PROBE_TEXT.linkInfoTitel"])
     assert.ok(infos.includes(da), da);
+});
+
+// ── Benachrichtigungen am privaten Link (Epic #641, Story #642) ──────────────
+const BN_K1 = "abcdefghijkl";
+const BN_K2 = "ABCDEFGHIJ-_";
+
+pruefe("Benachrichtigungen (#642 AK 2): das Cookie merkt sich je Link den Stand — Rundlauf, Grenze 20, sinkt nie, Müll fällt weg", () => {
+  assert.equal(leseGesehenStand(undefined, BN_K1), null, "ein Gerät ohne Eintrag kennt den Link nicht");
+  assert.equal(leseGesehenStand("", BN_K1), null);
+  const a = mitGesehen(undefined, BN_K1, 1_790_000_000_000);
+  assert.equal(leseGesehenStand(a, BN_K1), 1_790_000_000_000, "Rundlauf");
+  assert.equal(leseGesehenStand(a, BN_K2), null);
+  // Nie senken, aber höher geht.
+  assert.equal(leseGesehenStand(mitGesehen(a, BN_K1, 5), BN_K1), 1_790_000_000_000);
+  assert.equal(leseGesehenStand(mitGesehen(a, BN_K1, 1_800_000_000_000), BN_K1), 1_800_000_000_000);
+  // Mehrere Links; der zuletzt geschriebene steht zuerst.
+  const b = mitGesehen(a, BN_K2, 7);
+  assert.ok(b.startsWith(`${BN_K2}:`), b);
+  assert.equal(leseGesehenStand(b, BN_K1), 1_790_000_000_000);
+  assert.equal(leseGesehenStand(b, BN_K2), 7);
+  // Höchstens 20, der älteste fällt zuerst heraus.
+  let wert: string | undefined;
+  for (let i = 0; i < BENACHRICHTIGUNG_MAX_LINKS + 5; i++) wert = mitGesehen(wert, `k${String(i).padStart(11, "0")}`, i + 1);
+  assert.equal(wert!.split(".").length, BENACHRICHTIGUNG_MAX_LINKS);
+  assert.equal(leseGesehenStand(wert, "k00000000000"), null, "der älteste ist verdrängt");
+  assert.equal(leseGesehenStand(wert, `k${String(BENACHRICHTIGUNG_MAX_LINKS + 4).padStart(11, "0")}`), BENACHRICHTIGUNG_MAX_LINKS + 5);
+  // Müll: Unlesbares fällt weg, Lesbares bleibt; nichts wirft.
+  for (const muell of ["x", "::", "a:b:c", "zu-kurz:1", `${BN_K1}:`, `${BN_K1}:-5`, `${BN_K1}:ZZ`, ".", "..", `${BN_K1}:1:2`])
+    assert.equal(leseGesehenStand(muell, BN_K1), null, muell);
+  assert.equal(leseGesehenStand(`muell.${BN_K1}:${(42).toString(36)}`, BN_K1), 42, "ein kaputter Eintrag nimmt die anderen nicht mit");
+  assert.equal(mitGesehen("muell", BN_K1, 3), `${BN_K1}:3`);
+  assert.equal(mitGesehen(a, "kurz", 9), a, "ein ungültiger Schlüssel ändert nichts");
+  assert.equal(mitGesehen(a, BN_K1, Number.NaN), a);
+  assert.equal(mitGesehen(a, BN_K1, -1), a);
+  // Das Cookie: Name, Pfad nur der Links, ein Jahr, kein Klartext-Token.
+  const c = benachrichtigungCookie(a);
+  assert.ok(c.startsWith(`${BENACHRICHTIGUNG_COOKIE}=`) && c.includes("; path=/abmelden;") && c.includes("max-age=31536000") && c.includes("samesite=lax"), c);
+  assert.equal(wertAusCookieString(`x=1; ${BENACHRICHTIGUNG_COOKIE}=${encodeURIComponent(a)}; y=2`), a);
+  assert.equal(wertAusCookieString("x=1; y=2"), undefined);
+  assert.equal(wertAusCookieString(`${BENACHRICHTIGUNG_COOKIE}=%E0%A4%A`), undefined, "kaputte Kodierung wirft nicht");
+  // Browser-Speicher: die Seite «Cookies» nennt es (#409).
+  assert.ok(SPEICHERUNGEN.some((x) => x.name === BENACHRICHTIGUNG_COOKIE), "SPEICHERUNGEN enthält das Cookie");
+});
+
+/** Ein Eintrag für die Prüfungen, wie `spieler_link_benachrichtigungen` ihn liefert. */
+function bnEintrag(ereignis: BenachrichtigungEreignis, inhalt: unknown, extra: Partial<LinkBenachrichtigung> = {}): LinkBenachrichtigung {
+  return { id: `id-${ereignis}`, termin_id: "t1", erstellt: 1000, erstellt_tag: "2026-12-01", ereignis, inhalt, ...extra } as LinkBenachrichtigung;
+}
+const BN_SPIEL = { team: "E-Junioren", art: "spiel", bezeichnung: "FC Wyler - FC Aarau", datum: "2026-12-05", beginn: "14:00", ende: "15:30", ort: "Sportplatz Wyler" };
+const BN_TRAINING = { team: "E-Junioren", art: "training", bezeichnung: null, datum: "2026-12-02", beginn: "18:00", ende: null, ort: null };
+
+pruefe("Benachrichtigungen (#642): gruppiere und neuZahl — ohne Stand ist nichts neu, sonst zählt nur, was danach entstand", () => {
+  const e = [bnEintrag("neues_spiel", BN_SPIEL, { id: "a", erstellt: 300 }), bnEintrag("neues_spiel", BN_SPIEL, { id: "b", erstellt: 200 }), bnEintrag("neues_spiel", BN_SPIEL, { id: "c", erstellt: 100 })];
+  assert.equal(neuZahl(e, null), 0, "Erstanzeige: alles Bisherige gilt als gesehen");
+  assert.equal(neuZahl(e, 0), 3);
+  assert.equal(neuZahl(e, 100), 2, "gleich alt ist nicht neu");
+  assert.equal(neuZahl(e, 300), 0);
+  assert.equal(neuZahl([], 5), 0);
+  const g = gruppiere(e, 150);
+  assert.deepEqual(g.neu.map((x) => x.id), ["a", "b"], "die Reihenfolge bleibt");
+  assert.deepEqual(g.frueher.map((x) => x.id), ["c"]);
+  assert.deepEqual(gruppiere(e, null).neu, []);
+  assert.equal(knopfLabel(0), "Benachrichtigungen");
+  assert.equal(knopfLabel(3), "Benachrichtigungen, 3 neu");
+});
+
+pruefe("Benachrichtigungen (#642 AK 3): Titel, Wann, Wo und Zusatz je Ereignis — auch die sechs, die erst #643-#645 erzeugen", () => {
+  const spiel = bnEintrag("neues_spiel", BN_SPIEL);
+  assert.equal(eintragTitel(spiel), "FC Wyler - FC Aarau · E-Junioren");
+  assert.equal(eintragWann(spiel), "Samstag, 5. Dezember · 14:00–15:30");
+  assert.equal(eintragWo(spiel), "Sportplatz Wyler");
+  assert.deepEqual(eintragZusaetze(spiel), []);
+  assert.equal(eintragTitel(bnEintrag("neues_spiel", { ...BN_SPIEL, bezeichnung: null })), "Spiel · E-Junioren");
+  // Training ohne Ende und ohne Ort.
+  const training = bnEintrag("verlegung", BN_TRAINING);
+  assert.equal(eintragTitel(training), "Training · E-Junioren");
+  assert.equal(eintragWann(training), "Mittwoch, 2. Dezember · ab 18:00");
+  assert.equal(eintragWo(training), null);
+  assert.equal(eintragWann(bnEintrag("verlegung", { ...BN_TRAINING, beginn: null })), "Mittwoch, 2. Dezember");
+  assert.deepEqual(eintragZusaetze(bnEintrag("verlegung", { ...BN_TRAINING, wieder: true })), ["Findet wieder statt."]);
+  assert.deepEqual(eintragZusaetze(training), []);
+  // Ausfall mit und ohne Grund; die Rücknahme sagt es im Wort.
+  assert.deepEqual(eintragZusaetze(bnEintrag("ausfall", { ...BN_SPIEL, grund: "Platz gesperrt" })), ["Grund: Platz gesperrt"]);
+  assert.deepEqual(eintragZusaetze(bnEintrag("ausfall", { ...BN_SPIEL, grund: null })), []);
+  assert.deepEqual(eintragZusaetze(bnEintrag("ruecknahme", BN_SPIEL)), []);
+  assert.equal(EREIGNIS_WORT.ruecknahme, "Findet wieder statt");
+  // Die Serie: neue Angaben und Wegfall — auch mit Wegfall allein.
+  const serie = bnEintrag("serie", {
+    team: "E-Junioren", art: "training", ab: "2026-12-01",
+    angaben: { wochentage: [2], beginn: "18:00", ende: "19:30" },
+    wegfall: { von: "2026-12-02", bis: "2026-12-16", wochentage: [3], anzahl: 3 },
+  });
+  assert.equal(eintragTitel(serie), "Training · E-Junioren");
+  assert.equal(eintragWann(serie), "Ab Dienstag, 1. Dezember");
+  assert.equal(eintragWo(serie), null);
+  assert.deepEqual(eintragZusaetze(serie), ["Neu jeweils Dienstag · 18:00–19:30", "Es fallen 3 Trainings am Mittwoch weg (2.–16. Dez.)."]);
+  const nurWegfall = bnEintrag("serie", { team: "E-Junioren", art: "training", ab: null, angaben: null, wegfall: { von: "2026-11-28", bis: "2026-12-16", wochentage: [2, 4], anzahl: 1 } });
+  assert.equal(eintragWann(nurWegfall), null);
+  assert.deepEqual(eintragZusaetze(nurWegfall), ["Es fällt 1 Training am Dienstag und Donnerstag weg (28. Nov.–16. Dez.)."]);
+  const nurAngaben = bnEintrag("serie", { team: "E-Junioren", art: "training", ab: "2026-12-01", angaben: { ort: "Halle" }, wegfall: null });
+  assert.deepEqual(eintragZusaetze(nurAngaben), ["Neu Halle"]);
+  assert.deepEqual(eintragZusaetze(bnEintrag("serie", { team: "E-Junioren", art: "training", ab: null, angaben: {}, wegfall: null })), []);
+  // Rot nur bei Ausfall und Wegfall.
+  assert.deepEqual(Object.entries(EREIGNIS_NEGATIV).filter(([, v]) => v).map(([k]) => k), ["ausfall", "wegfall"]);
+  // Jedes Ereignis hat sein Wort.
+  assert.deepEqual(Object.keys(EREIGNIS_WORT).sort(), ["ausfall", "neues_spiel", "ruecknahme", "serie", "verlegung", "wegfall"]);
+});
+
+pruefe("Benachrichtigungen (#642): erhaltenText — heute, gestern, sonst das Datum", () => {
+  assert.equal(erhaltenText("2026-12-01", "2026-12-01"), "Erhalten heute");
+  assert.equal(erhaltenText("2026-11-30", "2026-12-01"), "Erhalten gestern");
+  assert.equal(erhaltenText("2026-11-03", "2026-12-01"), "Erhalten am 3. Nov.");
+  assert.equal(erhaltenText("2026-12-02", "2026-12-01"), "Erhalten heute", "ein später gestelltes Gerät lügt nicht über die Zukunft");
+});
+
+pruefe("Benachrichtigungen (#642 AK 5, 6): Texte als Konstanten; Oberfläche und KI nennen dasselbe; keine Browser-Formatierung in lib/benachrichtigung.ts", () => {
+  assert.equal(ELTERN_TEXT.speicher, "KiFu bewahrt Benachrichtigungen 90 Tage auf. Welche du schon gesehen hast, merkt sich nur dieses Gerät.");
+  assert.equal(BENACHRICHTIGEN_TEXT.label, "Spielervertretungen benachrichtigen");
+  assert.equal(BENACHRICHTIGEN_HINWEIS.neues_spiel, "Sie sehen das neue Spiel am privaten Link unter «Benachrichtigungen».");
+  const modell = BENACHRICHTIGEN_MODELL("neues_spiel");
+  assert.ok(modell.includes(BENACHRICHTIGEN_TEXT.label) && modell.includes(BENACHRICHTIGEN_HINWEIS.neues_spiel) && modell.includes("Standard true"), modell);
+  // Der Zwilling in der KI: das Werkzeug nimmt den Text der Oberfläche (Beschreibung selbst: check:ki-zugang).
+  assert.match(readFileSync(join(web, "lib/mcp/werkzeuge/team.ts"), "utf8"), /BENACHRICHTIGEN_MODELL\("neues_spiel"\)/);
+  // Hydration: nur Funktionen aus monat.ts/serie.ts, nie der Browser selbst.
+  const quelle = readFileSync(join(web, "lib/benachrichtigung.ts"), "utf8");
+  assert.ok(!/toLocale|new Date\(|Intl\./.test(quelle), "keine Formatierung des Browsers");
+  assert.ok(!/\bProbe/.test(Object.values(ELTERN_TEXT).join(" ") + Object.values(BENACHRICHTIGEN_HINWEIS).join(" ")), "kein «Probe» in Oberflächentexten");
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

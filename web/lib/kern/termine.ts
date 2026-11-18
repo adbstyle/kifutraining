@@ -3,6 +3,7 @@ import { KADER_MELDUNG } from "@/lib/kader";
 import { verfallBestaetigen, type Spielstand } from "@/lib/spieler";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
+import { benachrichtige } from "@/lib/kern/benachrichtigungen";
 import {
   KONFLIKT_MARKER,
   TERMIN_MELDUNG,
@@ -239,6 +240,10 @@ export type TerminFestlegen = {
   kaderIds?: string[];
   /** Wie viele Trainer:innen mindestens dabei sein sollen (#521); ohne: keine. */
   mindestbesetzung?: Mindestbesetzung;
+  /** Nur an einem Spiel (#642 AK 6): ob die Spielervertretungen der
+   *  Spieler:innen, für die es gilt, benachrichtigt werden. Pflicht, damit
+   *  jeder Weg ausdrücklich entscheidet; Oberfläche und KI: Standard ja. */
+  benachrichtigen: boolean;
 } & TrainerWahl;
 
 /** Was ein Spiel trägt und ein Training nicht (#459 AK 2, 5, 10, 11, 16) —
@@ -340,7 +345,7 @@ export async function legeTerminFest(
   supabase: SupabaseClient,
   userId: string,
   e: TerminFestlegen,
-): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
+): Promise<KernErgebnis<{ terminId: string; teamId: string; benachrichtigt: number | null }>> {
   if (!istTerminArt(e.art)) return fehlschlag("eingabe", SPIEL_TEXT.art, { feld: "art" });
   // Den Treffpunkt prüft beim Spiel `artFehler` (nur an einem Training).
   const problem = feldFehler(terminProblem(e.art === "spiel" ? { ...e, treffpunkt: undefined } : e));
@@ -425,7 +430,13 @@ export async function legeTerminFest(
     const weg = await supabase.from("training_termine").delete().eq("id", data.id);
     return weg.error ? ausDbFehler(weg.error) : kalenderFehler(b.error);
   }
-  return ok({ terminId: data.id, teamId: e.teamId });
+  // Ganz am Ende, wenn das Spiel mit Treffpunkten, Kadern und Besetzung steht
+  // (#642 PC 1): Die Benachrichtigung zeigt es, wie es gilt. `benachrichtigt`
+  // ist `null`, wenn nicht benachrichtigt werden sollte, es ein Training ist
+  // oder das Ablegen scheiterte — dann bleibt der Termin trotzdem.
+  const benachrichtigt =
+    e.art === "spiel" && e.benachrichtigen ? await benachrichtige(supabase, data.id, "neues_spiel") : null;
+  return ok({ terminId: data.id, teamId: e.teamId, benachrichtigt });
 }
 
 export type TerminAendern = {

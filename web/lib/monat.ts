@@ -40,6 +40,12 @@ export function kalenderblatt(iso: string): { wochentag: string; tag: number; mo
   return { wochentag: WOCHENTAG_KURZ[wochentagVon(iso)], tag: t, monat: MONATE_KURZ[m - 1] };
 }
 
+/** Ein Tag knapp, ohne Jahr: «2. Dez.» (Benachrichtigungen, #642). */
+export function tagMonatKurz(iso: string): string {
+  const [, m, t] = iso.split("-").map(Number);
+  return `${t}. ${MONATE_KURZ[m - 1]}`;
+}
+
 /** Ein Tag ausgeschrieben, ohne Jahr: «Dienstag, 6. Oktober» — der nächste
  *  Termin (#403 AK 8, OoS 4). */
 export function tagOhneJahr(iso: string): string {

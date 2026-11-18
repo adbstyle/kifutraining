@@ -1335,13 +1335,13 @@ try {
       (await admin.from("training_termine").select("datum, beginn, ende, ort, bemerkung, training_id").eq("id", id).single()).data;
 
     // AK 1, 2, 4: ohne Training, auch vergangen; Beginn und Ende Pflicht.
-    fehler(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tag(2), beginn: "18:30", ende: "" }), "eingabe", TERMIN_TEXT.zeitPflicht);
-    fehler(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tag(2), beginn: "18:30", ende: "18:00" }), "eingabe", TERMIN_TEXT.endeNachBeginn);
-    const t1 = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tag(2), beginn: "18:30", ende: "20:00", ort: " Allmend " }));
-    const t0 = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tag(-3), beginn: "10:00", ende: "11:30" }));
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tag(2), beginn: "18:30", ende: "" }), "eingabe", TERMIN_TEXT.zeitPflicht);
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tag(2), beginn: "18:30", ende: "18:00" }), "eingabe", TERMIN_TEXT.endeNachBeginn);
+    const t1 = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tag(2), beginn: "18:30", ende: "20:00", ort: " Allmend " }));
+    const t0 = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tag(-3), beginn: "10:00", ende: "11:30" }));
     assert.deepEqual(await zeile(t1.terminId), { datum: tag(2), beginn: "18:30:00", ende: "20:00:00", ort: "Allmend", bemerkung: null, training_id: null });
     // AK 22: nur Mitglieder.
-    fehler(await legeTerminFest(b.supabase, b.id, { art: "training", teamId: team, datum: tag(2), beginn: "18:30", ende: "20:00" }), "nicht_gefunden", TEAM_FREMD);
+    fehler(await legeTerminFest(b.supabase, b.id, { benachrichtigen: false, art: "training", teamId: team, datum: tag(2), beginn: "18:30", ende: "20:00" }), "nicht_gefunden", TEAM_FREMD);
 
     // PO 17: geschrieben wird nur, was übergeben wurde — eine gleichzeitige
     // Änderung eines anderen Feldes bleibt stehen. Der Client protokolliert
@@ -1435,7 +1435,7 @@ try {
       { terminId: t1.terminId, teamId: team, trainingId: c2, abmeldungenVerfallen: 0, kartenlinkEntfallen: false, treffpunktEntfallen: false },
     );
     assert.equal((await zeile(t1.terminId))!.ort, "KI-Ort");
-    const t3 = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tag(9), beginn: "18:00", ende: "19:00" }));
+    const t3 = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tag(9), beginn: "18:00", ende: "19:00" }));
     const tt3 = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Drei", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
     const c3 = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t3.terminId, trainingId: tt3.id })).trainingId;
     // Entfernen nimmt das Termin-Training mit; die Quelle bleibt im Bestand.
@@ -1472,7 +1472,7 @@ try {
     const heute = new Date();
     const tag = (d: number) => new Date(heute.getTime() + d * 86_400_000).toISOString().slice(0, 10);
     const termin = async (d: number, teamId = team) =>
-      wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId, datum: tag(d), beginn: "18:00", ende: "19:30" })).terminId;
+      wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId, datum: tag(d), beginn: "18:00", ende: "19:30" })).terminId;
     const training = async (name: string, teamId: string = team) =>
       wert(await legeTrainingAn(a.supabase, a.id, { name, altersstufe: "kinderfussball", stufen: ["F"], teamId })).id;
     const traegt = async (terminId: string) =>
@@ -1577,8 +1577,8 @@ try {
     const tt = await neuesTraining("Kern-DB-Lesen", team);
     const vergangenes = await neuesTraining("Kern-DB-Lesen-Vergangen", team);
     const persoenlich = await neuesTraining("Kern-DB-Lesen-Persönlich");
-    const t1 = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tag(2), beginn: "18:30", ende: "20:00", ort: " Allmend ", bemerkung: "Leibchen" }));
-    const t0 = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tag(-1), beginn: "10:00", ende: "11:30" }));
+    const t1 = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tag(2), beginn: "18:30", ende: "20:00", ort: " Allmend ", bemerkung: "Leibchen" }));
+    const t0 = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tag(-1), beginn: "10:00", ende: "11:30" }));
     // Bestands-Trainings mit Termin, wie es sie vor den Termin-Trainings gab
     // (bis 2026-10-06 wurde direkt verknüpft); Suche und Auskunft nennen ihn.
     await admin.from("training_termine").update({ training_id: tt }).eq("id", t1.terminId);
@@ -1597,10 +1597,10 @@ try {
     // absteigend; max_rows kappt sonst die neuesten): die zusammengeführte
     // Liste bleibt aufsteigend, die Teilung unverändert. Drei vergangene,
     // zwei anstehende.
-    const v3 = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tag(-3), beginn: "17:00", ende: "18:00" }));
-    const v2a = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tag(-2), beginn: "09:00", ende: "10:00" }));
-    const v2b = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tag(-2), beginn: "16:00", ende: "17:00" }));
-    const k0 = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tag(0), beginn: "08:00", ende: "09:00" }));
+    const v3 = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tag(-3), beginn: "17:00", ende: "18:00" }));
+    const v2a = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tag(-2), beginn: "09:00", ende: "10:00" }));
+    const v2b = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tag(-2), beginn: "16:00", ende: "17:00" }));
+    const k0 = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tag(0), beginn: "08:00", ende: "09:00" }));
     const reihe = (ts: { terminId: string }[]) => ts.map((t) => t.terminId);
     const aufsteigend = (await getTeamPlanFuer(a.supabase, team, { heute: tag(0) })).map((t) => t.id);
     assert.deepEqual(aufsteigend, reihe([v3, v2a, v2b, t0, k0, t1]), "aufsteigend über beide Hälften");
@@ -1698,7 +1698,7 @@ try {
 
   await pruefe("Serie festlegen: je Wochentag ein Termin, Regeln, bestehende Termine bleiben (#324)", async () => {
     const team = await serienTeam("Kern-DB-Serie");
-    const einzel = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: "2030-01-01", beginn: "10:00", ende: "11:00" }));
+    const einzel = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: "2030-01-01", beginn: "10:00", ende: "11:00" }));
     const s = wert(
       await legeSerieFest(a.supabase, a.id, {
         teamId: team, wochentage: [2, 4], von: "2030-01-01", bis: "2030-01-30", beginn: "18:00", ende: "19:30", ort: "Allmend",
@@ -1733,9 +1733,9 @@ try {
       (await admin.from("training_termine").select("ort, ort_link, ort_abweichend").eq("id", id).single()).data!;
 
     // AK 1, 4, 5: einzelner Termin, nur mit Ort, nur https, bis 500 Zeichen.
-    fehler(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", ortLink: L1 }), "eingabe", TERMIN_TEXT.kartenlinkOhneOrt);
-    fehler(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", ort: "Halle", ortLink: "maps.app.goo.gl/x" }), "eingabe", TERMIN_TEXT.kartenlinkUngueltig);
-    const e = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", ort: "Halle", ortLink: L1 })).terminId;
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", ortLink: L1 }), "eingabe", TERMIN_TEXT.kartenlinkOhneOrt);
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", ort: "Halle", ortLink: "maps.app.goo.gl/x" }), "eingabe", TERMIN_TEXT.kartenlinkUngueltig);
+    const e = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", ort: "Halle", ortLink: L1 })).terminId;
     assert.deepEqual(await link(e), { ort: "Halle", ort_link: L1, ort_abweichend: false });
     // Die Datenebene als Untergrenze: kein http, kein Link ohne Ort (Trigger).
     assert.ok((await admin.from("training_termine").update({ ort_link: "http://x.ch" }).eq("id", e)).error, "tt_ort_link");
@@ -1783,8 +1783,8 @@ try {
     const vonSerie = async (id: string) => (await admin.from("termin_serien").select("hinweis_eltern").eq("id", id).single()).data!.hinweis_eltern;
 
     // AK 1, 16: am einzelnen Termin, neben der Bemerkung; höchstens 500 Zeichen.
-    fehler(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", hinweisEltern: "x".repeat(501) }), "eingabe", TERMIN_TEXT.hinweisElternLang);
-    const e = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", bemerkung: "Schlüssel", hinweisEltern: " Pincode 4702 " })).terminId;
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", hinweisEltern: "x".repeat(501) }), "eingabe", TERMIN_TEXT.hinweisElternLang);
+    const e = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", bemerkung: "Schlüssel", hinweisEltern: " Pincode 4702 " })).terminId;
     assert.deepEqual(await hinweis(e), { hinweis_eltern: "Pincode 4702", hinweis_eltern_abweichend: false, bemerkung: "Schlüssel" });
     assert.ok((await admin.from("training_termine").update({ hinweis_eltern: "x".repeat(501) }).eq("id", e)).error, "tt_hinweis_eltern_laenge");
     wert(await aendereTermin(a.supabase, a.id, { terminId: e, hinweisEltern: "" }));
@@ -1841,10 +1841,10 @@ try {
     const garderobe = { zeit: "17:15", ort: "Garderoben Schulhaus Rain" };
 
     // AK 3, 5, 6: nicht nach dem Beginn, Ort Pflicht; gespeichert als Abstand.
-    fehler(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "17:30", ende: "19:00", treffpunkt: { zeit: "17:45", ort: "G" } }), "eingabe");
-    fehler(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "17:30", ende: "19:00", treffpunkt: { zeit: "17:15", ort: "" } }), "eingabe", TERMIN_TEXT.treffpunktPflicht);
-    fehler(await legeTerminFest(a.supabase, a.id, { art: "spiel", teamId: team, bezeichnung: "Cup", datum: tagCh(3), beginn: "17:30", ende: "19:00", treffpunkt: garderobe }), "eingabe", TERMIN_TEXT.treffpunktNurTraining);
-    const e = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "17:30", ende: "19:00", ort: "Allmend", treffpunkt: garderobe })).terminId;
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "17:30", ende: "19:00", treffpunkt: { zeit: "17:45", ort: "G" } }), "eingabe");
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "17:30", ende: "19:00", treffpunkt: { zeit: "17:15", ort: "" } }), "eingabe", TERMIN_TEXT.treffpunktPflicht);
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "spiel", teamId: team, bezeichnung: "Cup", datum: tagCh(3), beginn: "17:30", ende: "19:00", treffpunkt: garderobe }), "eingabe", TERMIN_TEXT.treffpunktNurTraining);
+    const e = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "17:30", ende: "19:00", ort: "Allmend", treffpunkt: garderobe })).terminId;
     assert.deepEqual(await tp(e), { beginn: "17:30:00", treffpunkt_vorlauf_min: 15, treffpunkt_ort: "Garderoben Schulhaus Rain", treffpunkt_abweichend: false });
     assert.ok((await admin.from("training_termine").update({ treffpunkt_vorlauf_min: 2000 }).eq("id", e)).error, "tt_treffpunkt_termintag");
     assert.ok((await admin.from("training_termine").update({ treffpunkt_ort: null }).eq("id", e)).error, "tt_treffpunkt_angabe");
@@ -1909,7 +1909,7 @@ try {
     wert(await folgeDerSerie(a.supabase, a.id, { terminId: t[1].id, angaben: ["zeit", "treffpunkt"], bestaetigt: true }));
     assert.deepEqual(await tp(t[1].id), { beginn: "00:05:00", treffpunkt_vorlauf_min: 5, treffpunkt_ort: "Halle", treffpunkt_abweichend: false });
     // An einem Spiel zuerst «nur an einem Training», nicht die Regeln des Trainings-Treffpunkts.
-    fehler(await legeTerminFest(a.supabase, a.id, { art: "spiel", teamId: team, bezeichnung: "Cup", datum: tagCh(3), beginn: "17:30", ende: "19:00", treffpunkt: { zeit: "19:00", ort: "" } }), "eingabe", TERMIN_TEXT.treffpunktNurTraining);
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "spiel", teamId: team, bezeichnung: "Cup", datum: tagCh(3), beginn: "17:30", ende: "19:00", treffpunkt: { zeit: "19:00", ort: "" } }), "eingabe", TERMIN_TEXT.treffpunktNurTraining);
   });
 
   await pruefe("Serie ändern: nur dieser, folgende teilt, alle erfasst Vergangenes, Abweichungen bleiben (#326)", async () => {
@@ -2097,7 +2097,7 @@ try {
     fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: t[1].id, reichweite: "nur_dieser", bis: tagCh(40) }), "regel", SERIE_MELDUNG.REGEL_NUR_SERIE);
     fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: t[1].id, reichweite: "alle", datum: tagCh(9) }), "regel", SERIE_MELDUNG.DATUM_NUR_EINZELN);
     // Ein Einzeltermin kennt keine Reichweite ausser «nur dieser».
-    const einzel = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "10:00", ende: "11:00" }));
+    const einzel = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "10:00", ende: "11:00" }));
     fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: einzel.terminId, reichweite: "alle", ort: "Q" }), "regel", SERIE_MELDUNG.TERMIN_OHNE_SERIE);
     wert(await aendereMitReichweite(a.supabase, a.id, { terminId: einzel.terminId, ort: "Q" }));
     // Entfernen: Reichweite Pflicht; «nur dieser» lässt eine Lücke, «alle» löscht die Serie.
@@ -2161,11 +2161,11 @@ try {
     assert.ok(m.every((x) => !("email" in x)), "ohne E-Mail (PC 10)");
 
     // Ohne Angabe: alle Mitglieder eingeladen, wer festlegt verantwortlich.
-    const ohne = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" }));
+    const ohne = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" }));
     assert.deepEqual(await eingeladeneVon(ohne.terminId), [a.id, b.id].sort());
     assert.equal(await verantwortlichVon(ohne.terminId), a.id);
     // Mit Angabe: die Verantwortliche ist damit eingeladen (PC 13).
-    const mit = wert(await legeTerminFest(b.supabase, b.id, { art: "spiel", bezeichnung: "Cup", teamId: team, datum: tagCh(4), beginn: "10:00", ende: "11:00", eingeladene: [], verantwortlich: a.id }));
+    const mit = wert(await legeTerminFest(b.supabase, b.id, { benachrichtigen: false, art: "spiel", bezeichnung: "Cup", teamId: team, datum: tagCh(4), beginn: "10:00", ende: "11:00", eingeladene: [], verantwortlich: a.id }));
     assert.deepEqual(await eingeladeneVon(mit.terminId), [a.id]);
     assert.equal(await verantwortlichVon(mit.terminId), a.id);
 
@@ -2173,19 +2173,19 @@ try {
     const vorher = await anzahl();
     // AK 3: genau eine Verantwortliche — `null` ist keine.
     fehler(
-      await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:00", verantwortlich: null }),
+      await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:00", verantwortlich: null }),
       "regel",
       TRAINER_TEXT.verantwortlichPflicht,
     );
     fehler(
-      await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:00", eingeladene: ["kein-uuid"] }),
+      await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:00", eingeladene: ["kein-uuid"] }),
       "eingabe",
       TRAINER_TEXT.kennungUngueltig,
     );
     // AK 11: Wer nicht (mehr) Mitglied ist, lässt sich nicht einladen; der Termin bleibt nicht stehen.
     const fremd = await wegwerfKonto();
     fehler(
-      await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:00", eingeladene: [fremd.id] }),
+      await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:00", eingeladene: [fremd.id] }),
       "regel",
       TERMIN_MELDUNG.NICHT_MEHR_MITGLIED,
     );
@@ -2209,7 +2209,7 @@ try {
     const team = await serienTeam("Kern-DB-Trainer-Einzeln");
     const c = await wegwerfKonto();
     await admin.from("team_members").insert([{ team_id: team, user_id: b.id }, { team_id: team, user_id: c.id }]);
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-2), beginn: "18:00", ende: "19:00", eingeladene: [a.id] })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-2), beginn: "18:00", ende: "19:00", eingeladene: [a.id] })).terminId;
 
     // AK 16: auch an vergangenen Terminen. AK 6: ohne Zustimmung, wer verantwortlich wird, ist eingeladen.
     wert(await aendereTrainer(b.supabase, b.id, { terminId: t, einladen: [b.id] }));
@@ -2338,8 +2338,8 @@ try {
     assert.deepEqual(await eingeladeneVon(vergangen.id), [a.id, x.id].sort());
 
     // PC 9: Konto löschen — anstehend und Serie ohne es, vergangen anonym und zuletzt, auch nach dem Austritt.
-    const alt = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-3), beginn: "10:00", ende: "11:00", eingeladene: [a.id, d.id, x.id], verantwortlich: d.id })).terminId;
-    const bald = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "10:00", ende: "11:00", eingeladene: [d.id], verantwortlich: d.id })).terminId;
+    const alt = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-3), beginn: "10:00", ende: "11:00", eingeladene: [a.id, d.id, x.id], verantwortlich: d.id })).terminId;
+    const bald = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "10:00", ende: "11:00", eingeladene: [d.id], verantwortlich: d.id })).terminId;
     assert.deepEqual(await d.supabase.rpc("delete_account").then((r) => [r.error, r.data]), [null, { status: "geloescht", bilder: [] }]);
     assert.deepEqual(await eingeladeneVon(bald), []);
     assert.deepEqual(await eingeladeneVon(alt), [null, a.id, x.id].sort());
@@ -2357,7 +2357,7 @@ try {
   await pruefe("Absagen: für sich und andere, nur bis Beginn, nie am Ausfall, veraltet abgewiesen (#520 AK 1–3, 6, 10)", async () => {
     const team = await serienTeam("Kern-DB-Absagen");
     await admin.from("team_members").insert({ team_id: team, user_id: b.id });
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", verantwortlich: a.id })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", verantwortlich: a.id })).terminId;
     const absage = async (terminId: string, userId: string) =>
       (await admin.from("termin_trainer").select("abgesagt_am").eq("termin_id", terminId).eq("user_id", userId).single()).data!.abgesagt_am as string | null;
     // AK 1: auch für andere. PC 9: mit Zeitpunkt; wieder zusagen entfernt ihn.
@@ -2390,7 +2390,7 @@ try {
     wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
     assert.ok(await absage(t, b.id), "gilt wieder");
     // AK 3: ab Beginn nicht mehr.
-    const vorbei = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
+    const vorbei = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
     fehler(await setzeAbsage(a.supabase, a.id, { terminId: vorbei, userId: b.id, abgesagt: true }), "regel", TRAINER_MELDUNG.ABSAGE_BEGONNEN);
     // Fremde sehen den Termin nicht.
     fehler(await setzeAbsage(c.supabase, c.id, { terminId: randomUUID(), userId: c.id, abgesagt: true }), "nicht_gefunden");
@@ -2399,7 +2399,7 @@ try {
   await pruefe("Absagen der Verantwortlichen: erst übergeben, sonst ohne Verantwortliche:n; Verantwortung hebt die Absage auf (#520 AK 4, 5, 19, PC 1, 11)", async () => {
     const team = await serienTeam("Kern-DB-Absagen-Verantwortung");
     await admin.from("team_members").insert({ team_id: team, user_id: b.id });
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Cup", teamId: team, datum: tagCh(4), beginn: "10:00", ende: "11:00", verantwortlich: a.id })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "spiel", bezeichnung: "Cup", teamId: team, datum: tagCh(4), beginn: "10:00", ende: "11:00", verantwortlich: a.id })).terminId;
     // AK 4: B ist dabei → A kann nicht einfach absagen.
     fehler(await setzeAbsage(a.supabase, a.id, { terminId: t, userId: a.id, abgesagt: true }), "regel", TRAINER_MELDUNG.VERANTWORTUNG_UEBERGEBEN);
     fehler(await setzeAbsage(a.supabase, a.id, { terminId: t, userId: a.id, abgesagt: true, uebernimmt: a.id }), "regel", TRAINER_MELDUNG.UEBERNAHME_UNGUELTIG);
@@ -2424,7 +2424,7 @@ try {
     const abgesagte = async (terminId: string) =>
       (await admin.from("termin_trainer").select("user_id").eq("termin_id", terminId).not("abgesagt_am", "is", null)).data!.length;
     // Einzeln: Ort ändern lässt sie (PC 4), Beginn ändern verlangt Bestätigung, dann verfallen sie (PC 2).
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", verantwortlich: a.id })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", verantwortlich: a.id })).terminId;
     wert(await setzeAbsage(b.supabase, b.id, { terminId: t, userId: b.id, abgesagt: true }));
     wert(await aendereTermin(a.supabase, a.id, { terminId: t, ort: "Neu" }));
     assert.equal(await abgesagte(t), 1);
@@ -2435,7 +2435,7 @@ try {
     wert(await aendereTermin(a.supabase, a.id, { terminId: t, beginn: "17:00", ende: "19:00", bestaetigt: 1 }));
     assert.equal(await abgesagte(t), 0);
     // Ein Spiel: nur mit einem anderen Datum (PC 3).
-    const s = wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Cup", teamId: team, datum: tagCh(5), beginn: "10:00", ende: "11:00", verantwortlich: a.id })).terminId;
+    const s = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "spiel", bezeichnung: "Cup", teamId: team, datum: tagCh(5), beginn: "10:00", ende: "11:00", verantwortlich: a.id })).terminId;
     wert(await setzeAbsage(b.supabase, b.id, { terminId: s, userId: b.id, abgesagt: true }));
     wert(await aendereTermin(a.supabase, a.id, { terminId: s, beginn: "11:00", ende: "12:00", bestaetigt: true }));
     assert.equal(await abgesagte(s), 1, "andere Zeit am selben Tag: bleibt");
@@ -2457,7 +2457,7 @@ try {
   await pruefe("Absagen über die KI: termin_trainer_absagen und die Auskunft mit abgesagt_am (#520 AK 12, 13, 23)", async () => {
     const team = await serienTeam("Kern-DB-Absagen-KI");
     await admin.from("team_members").insert({ team_id: team, user_id: b.id });
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00", verantwortlich: a.id })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00", verantwortlich: a.id })).terminId;
     wert(await setzeAbsage(a.supabase, a.id, { terminId: t, userId: b.id, abgesagt: true }));
     const plan = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
     const eintrag = plan.kommend.find((x) => x.id === t)!.trainer.find((x) => x.userId === b.id)!;
@@ -2470,7 +2470,7 @@ try {
     const besetzungVon = async (terminId: string) =>
       (await admin.from("training_termine").select("besetzung_art, besetzung_zahl, besetzung_abweichend").eq("id", terminId).single()).data!;
     // Einzeln: festlegen, ändern, entfernen (AK 1, 2).
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", mindestbesetzung: { art: "fest", zahl: 2 } })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", mindestbesetzung: { art: "fest", zahl: 2 } })).terminId;
     assert.deepEqual(await besetzungVon(t), { besetzung_art: "fest", besetzung_zahl: 2, besetzung_abweichend: false });
     wert(await aendereTermin(a.supabase, a.id, { terminId: t, mindestbesetzung: { art: "verhaeltnis", zahl: 12 } }));
     assert.deepEqual((await teamPlan(a.supabase, a.id, { teamId: team }).then(wert)).kommend.find((x) => x.id === t)!.mindestbesetzung, { art: "verhaeltnis", zahl: 12 });
@@ -2518,8 +2518,8 @@ try {
   await pruefe("Trainingsplan eingrenzen: dabei und eingeladen, mit Zeitraum (#519 AK 19, 26, #329)", async () => {
     const team = await serienTeam("Kern-DB-Trainer-Eingrenzen");
     await admin.from("team_members").insert({ team_id: team, user_id: b.id });
-    const meiner = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00", eingeladene: [a.id] })).terminId;
-    const fremder = wert(await legeTerminFest(b.supabase, b.id, { art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:00", eingeladene: [b.id] })).terminId;
+    const meiner = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00", eingeladene: [a.id] })).terminId;
+    const fremder = wert(await legeTerminFest(b.supabase, b.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:00", eingeladene: [b.id] })).terminId;
     const ids = (p: { kommend: { id: string }[]; vergangen: { id: string }[] }) => [...p.kommend, ...p.vergangen].map((x) => x.id).sort();
     for (const eingrenzung of ["dabei", "eingeladen"] as const)
       assert.deepEqual(ids(wert(await teamPlan(a.supabase, a.id, { teamId: team, eingrenzung }))), [meiner], eingrenzung);
@@ -2568,7 +2568,7 @@ try {
   await pruefe("Ausfall: das Training ruht am Termin, Grund, zurücknehmen, verlegen (#327, PO 2026-10-06)", async () => {
     const team = await serienTeam("Kern-DB-Ausfall");
     const tr = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Ausfall", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30", bemerkung: "Leibchen" }));
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30", bemerkung: "Leibchen" }));
     const amTermin = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t.terminId, trainingId: tr.id })).trainingId;
     // Zu langer Grund: vorab abgewiesen, der Termin bleibt unverändert.
     fehler(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "x".repeat(501) }), "eingabe", TERMIN_TEXT.grundLang);
@@ -2621,7 +2621,7 @@ try {
 
   await pruefe("Ausfall: ein inzwischen geänderter Ausfall-Zustand weist ab, nichts wird überschrieben (PO 17)", async () => {
     const team = await serienTeam("Kern-DB-Ausfall-Konflikt");
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30" }));
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30" }));
     const zeile = async () => (await admin.from("training_termine").select("ausgefallen, ausfall_grund").eq("id", t.terminId).single()).data!;
     // (a) «Grund ändern»: Ein anderes Mitglied hat den Ausfall inzwischen zurückgenommen.
     wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Regen" }));
@@ -3640,8 +3640,8 @@ try {
   await pruefe("Persönliches Training: nur als Kopie, Original unberührt, jede Zuordnung eine neue Kopie (#328)", async () => {
     const team = await serienTeam("Kern-DB-Persoenlich");
     const anderes = await serienTeam("Kern-DB-Persoenlich-Anderes");
-    const t1 = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" }));
-    const t2 = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-2), beginn: "18:00", ende: "19:00" }));
+    const t1 = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" }));
+    const t2 = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-2), beginn: "18:00", ende: "19:00" }));
     const p = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Meins", altersstufe: "juniorenfussball", stufen: ["D"] })).id;
 
     // AK 1, 8, PC 1, 3, 4: Kopie als Termin-Training, auch vergangen; jede Zuordnung eine neue.
@@ -3668,7 +3668,7 @@ try {
     const team = await serienTeam("Kern-DB-Persoenlich-Belegt");
     const anzahl = async () =>
       (await admin.from("trainings").select("*", { count: "exact", head: true }).eq("team_id", team)).count;
-    const termin = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    const termin = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
     const traegt = async () => (await admin.from("training_termine").select("training_id").eq("id", termin).single()).data!.training_id;
     const p = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Persoenlich-Kinder", altersstufe: "kinderfussball", stufen: ["F"] })).id;
 
@@ -3840,9 +3840,9 @@ try {
     const team = await serienTeam("Kern-DB-Abo-Kern");
     const tagCh = (d: number) => plusTage(kalendertagAmTrainingsort(), d);
     const token = (await holen(a, team)).token!;
-    const alt = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-29), beginn: "10:00", ende: "11:00" }));
-    const rand = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-28), beginn: "10:00", ende: "11:00" }));
-    const aus = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "10:00", ende: "11:00" }));
+    const alt = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-29), beginn: "10:00", ende: "11:00" }));
+    const rand = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-28), beginn: "10:00", ende: "11:00" }));
+    const aus = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "10:00", ende: "11:00" }));
     wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus.terminId }));
     const ids = async () => (await feed(token)).termine!.map((t) => t.id);
     assert.deepEqual(await ids(), [rand.terminId], "PC 1, 5: heute−28 ja, heute−29 und Ausgefallene nein");
@@ -3867,8 +3867,8 @@ try {
     await admin.from("team_members").insert({ team_id: team, user_id: b.id });
     const tagCh = (d: number) => plusTage(kalendertagAmTrainingsort(), d);
     const token = (await holen(b, team)).token!;
-    const mit = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", mindestbesetzung: { art: "fest", zahl: 3 } })).terminId;
-    const ohne = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:00", eingeladene: [a.id] })).terminId;
+    const mit = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", mindestbesetzung: { art: "fest", zahl: 3 } })).terminId;
+    const ohne = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:00", eingeladene: [a.id] })).terminId;
     type Eintrag = AboTrainerTermin & { id: string; geaendert: string };
     const eintraege = async () => (await feed(token)).termine as unknown as Eintrag[];
     // AK 1, PC 3: nur, wozu B eingeladen ist.
@@ -4090,24 +4090,25 @@ try {
   await pruefe("Felder: festlegen, ändern, entfernen, ungültig abgewiesen, Plan und Auskunft (#389 AK 1–9, 12–15)", async () => {
     const team = await serienTeam("Kern-DB-Felder");
     // AK 8: ohne Felder.
-    const ohne = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:30" }));
+    const ohne = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:30" }));
     assert.equal(await felderVon(ohne.terminId), null);
     // AK 1–6: mehrere Felder, Angaben einzeln offen, «keine» als 0; fehlende Angaben werden unbekannt.
     const t = wert(
       await legeTerminFest(a.supabase, a.id, {
+        benachrichtigen: false,
         art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30",
         felder: [{ laenge_m: 30, breite_m: 25, tore: { minitor: 2, tor_5m: 0 }, untergrund: "kunstrasen" }, {}],
       }),
     );
     assert.deepEqual(await felderVon(t.terminId), [KUNSTRASEN, UNBEKANNT]);
     // Eine leere Liste heisst ohne Felder.
-    const leer = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:30", felder: [] }));
+    const leer = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:30", felder: [] }));
     assert.equal(await felderVon(leer.terminId), null);
 
     // AK 9, 15: vorab abgewiesen, mit dem Satz der Oberfläche und der Stelle; es entsteht nichts.
     const vorher = (await admin.from("training_termine").select("id", { count: "exact", head: true }).eq("team_id", team)).count;
     const r = fehler(
-      await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:30", felder: [{}, { laenge_m: 30 }] }),
+      await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:30", felder: [{}, { laenge_m: 30 }] }),
       "eingabe",
       MASS_TEXT.paarweise,
     ) as { feld?: string };
@@ -4189,7 +4190,7 @@ try {
 
   await pruefe("Felder bleiben beim Zuordnen, Ersetzen, Lösen und Ausfallen; nicht im Abo (#389 PC 1, OoS 4)", async () => {
     const team = await serienTeam("Kern-DB-Felder-Bestand");
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30", ort: "Platz", felder: [KUNSTRASEN] }));
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30", ort: "Platz", felder: [KUNSTRASEN] }));
     const t1 = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Felder-1", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
     const t2 = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Felder-2", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
     wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t.terminId, trainingId: t1.id }));
@@ -4214,15 +4215,15 @@ try {
 
   await pruefe("Spielerzahl: festlegen, ändern, entfernen, abgewiesen, KI-Parität, Plan und Auskunft (#390 AK 1–7)", async () => {
     const team = await serienTeam("Kern-DB-Spielerzahl");
-    const ohne = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:30" }));
+    const ohne = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:30" }));
     assert.equal(await zahlVon(ohne.terminId), null, "PC 2: ohne Angabe unbekannt");
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30", spielerzahl: 12 }));
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30", spielerzahl: 12 }));
     assert.equal(await zahlVon(t.terminId), 12);
     // AK 3: nur ganze Zahlen von 1 bis 200; vorab abgewiesen, es entsteht nichts.
     for (const schlecht of [0, 201, 12.5])
-      fehler(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:30", spielerzahl: schlecht }), "eingabe", TERMIN_TEXT.spielerzahl);
+      fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:30", spielerzahl: schlecht }), "eingabe", TERMIN_TEXT.spielerzahl);
     assert.equal((await admin.from("training_termine").select("id", { count: "exact", head: true }).eq("team_id", team)).count, 2);
-    wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:30", spielerzahl: 200 }));
+    wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:30", spielerzahl: 200 }));
     // AK 2: ändern und entfernen; eine andere Angabe lässt die Zahl stehen.
     wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, spielerzahl: 1 }));
     assert.equal(await zahlVon(t.terminId), 1);
@@ -4270,7 +4271,7 @@ try {
 
   await pruefe("Spielerzahl bleibt beim Zuordnen, Ersetzen, Lösen und Ausfallen; nicht im Abo (#390 PC 1, OoS 5)", async () => {
     const team = await serienTeam("Kern-DB-Spielerzahl-Bestand");
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30", spielerzahl: 12 }));
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30", spielerzahl: 12 }));
     const t1 = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Zahl-1", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
     const t2 = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Zahl-2", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
     wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t.terminId, trainingId: t1.id }));
@@ -4606,9 +4607,9 @@ try {
     );
     // Das Ziel ohne Spieler:innen: anstehende Termine und eine Serie mit erwarteter Zahl, ein vergangener.
     const kader = wert(await legeKaderAn(a.supabase, a.id, { teamId: ziel, name: "Ziel-Kader" })).kaderId;
-    const bald = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: ziel, datum: tagCh(3), beginn: "18:00", ende: "19:00", spielerzahl: 12 })).terminId;
+    const bald = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: ziel, datum: tagCh(3), beginn: "18:00", ende: "19:00", spielerzahl: 12 })).terminId;
     const serie = wert(await legeSerieFest(a.supabase, a.id, { teamId: ziel, wochentage: [wochentagVon(tagCh(7))], von: tagCh(7), bis: tagCh(14), beginn: "18:00", ende: "19:30", spielerzahl: 14 })).serieId;
-    const vorbei = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: ziel, datum: tagCh(-3), beginn: "18:00", ende: "19:00", spielerzahl: 9 })).terminId;
+    const vorbei = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: ziel, datum: tagCh(-3), beginn: "18:00", ende: "19:00", spielerzahl: 9 })).terminId;
     const anstehend = (await admin.from("training_termine").select("id").eq("team_id", ziel).gt("datum", heuteCh).not("erwartete_spielerzahl", "is", null)).data!.length;
     assert.equal(anstehend, 3, "der Einzeltermin und zwei der Serie");
 
@@ -4744,10 +4745,10 @@ try {
     fehler(await eigenesTeamVon(b.supabase, noah), "nicht_gefunden");
 
     // Termine in beiden Teams. PC 3: Eine Abmeldung im Ziel berührt die Herkunft nicht und bleibt dort, wo sie gilt.
-    const tH = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: herkunft, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
-    const tZ = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: ziel, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
-    const sZ = wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Cup", teamId: ziel, datum: tagCh(3), beginn: "10:00", ende: "12:00" })).terminId;
-    const gZ = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: ziel, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
+    const tH = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: herkunft, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const tZ = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: ziel, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const sZ = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "spiel", bezeichnung: "Cup", teamId: ziel, datum: tagCh(3), beginn: "10:00", ende: "12:00" })).terminId;
+    const gZ = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: ziel, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: tZ, spielerId: lena, abgemeldet: true }));
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: tH, spielerId: elias, abgemeldet: true }));
     wert(await setzeMeldung(a.supabase, a.id, { terminId: sZ, spielerId: lena, angemeldet: true }));
@@ -4882,9 +4883,9 @@ try {
     // PC 8: Zuordnen nach Beginn ändert den festgehaltenen Stand nicht. PC 2: Kader-Termine gelten erst mit Kader.
     const k = wert(await legeKaderAn(a.supabase, a.id, { teamId: team, name: "Nur Lena" })).kaderId;
     wert(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [lena], dazu: [k] }));
-    const gestern = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
-    const morgen = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(1), beginn: "18:00", ende: "19:00" })).terminId;
-    const mitKader = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00", kaderIds: [k] })).terminId;
+    const gestern = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
+    const morgen = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(1), beginn: "18:00", ende: "19:00" })).terminId;
+    const mitKader = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00", kaderIds: [k] })).terminId;
     wert(await zuordnen(team, "Kern-DB-OhneTeam", [mia]));
     const namen = async (t: string) => wert(await terminSpieler(a.supabase, a.id, { terminId: t })).spieler.map((s) => s.vorname);
     assert.deepEqual(await namen(gestern), ["Lena"], "PC 8: begonnen, ohne die Zugeordnete");
@@ -4939,8 +4940,8 @@ try {
 
   await pruefe("Spielerliste ersetzt die erwartete Zahl: erste Aufnahme leert sie an anstehenden Terminen und Serien (#434 AK 8, 9, PC 1, 2)", async () => {
     const team = await serienTeam("Kern-DB-Spieler-Zahl");
-    const vorbei = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-3), beginn: "18:00", ende: "19:00", spielerzahl: 9 })).terminId;
-    const bald = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", spielerzahl: 12 })).terminId;
+    const vorbei = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-3), beginn: "18:00", ende: "19:00", spielerzahl: 9 })).terminId;
+    const bald = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", spielerzahl: 12 })).terminId;
     const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [wochentagVon(tagCh(7))], von: tagCh(7), bis: tagCh(14), beginn: "18:00", ende: "19:30", spielerzahl: 14 }));
     assert.equal(spielerzahlVon(await standVon(team, bald)).quelle, "erwartet", "PC 1: ohne Liste wie bisher");
     const erste = await neuerSpieler(team, "Lena");
@@ -4951,7 +4952,7 @@ try {
     assert.deepEqual(spielerzahlVon(await standVon(team, bald)), { quelle: "liste", angemeldet: 1, gesamt: 1, anwesend: null });
     assert.deepEqual(spielerzahlVon(await standVon(team, vorbei)), { quelle: "erwartet", zahl: 9 }, "bei Beginn war die Liste leer");
     // AK 9: keine Handzahl an anstehenden Terminen und Serien; der vergangene bleibt korrigierbar.
-    fehler(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:00", spielerzahl: 8 }), "regel", SPIELER_MELDUNG.SPIELERLISTE_FUEHRT_ZAHL);
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:00", spielerzahl: 8 }), "regel", SPIELER_MELDUNG.SPIELERLISTE_FUEHRT_ZAHL);
     fehler(await aendereTermin(a.supabase, a.id, { terminId: bald, spielerzahl: 8 }), "regel", SPIELER_MELDUNG.SPIELERLISTE_FUEHRT_ZAHL);
     fehler(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: tagCh(20), bis: tagCh(30), beginn: "18:00", ende: "19:00", spielerzahl: 8 }), "regel", SPIELER_MELDUNG.SPIELERLISTE_FUEHRT_ZAHL);
     wert(await aendereTermin(a.supabase, a.id, { terminId: vorbei, spielerzahl: 10 }));
@@ -4967,8 +4968,8 @@ try {
     const lena = await neuerSpieler(team, "Lena");
     const ella = await neuerSpieler(team, "Ella");
     // Beim Festlegen schon begonnen: Der Stand gilt sofort (#435 PC 2).
-    const gestern = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
-    const morgen = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(1), beginn: "18:00", ende: "19:00" })).terminId;
+    const gestern = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
+    const morgen = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(1), beginn: "18:00", ende: "19:00" })).terminId;
     const noah = await neuerSpieler(team, "Noah");
     assert.equal((await standVon(team, gestern)).spielstand?.gesamt, 2, "wer danach kam, zählt am vergangenen nicht");
     assert.equal((await standVon(team, morgen)).spielstand?.gesamt, 3);
@@ -5020,7 +5021,7 @@ try {
     const team = await serienTeam("Kern-DB-Abmelden");
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     const noah = (await neuerSpieler(team, "Noah")).spielerId;
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
     const gesehen = { datum: tagCh(2), beginn: "18:00" };
     // AK 3: ohne Abmeldung alle angemeldet.
     assert.deepEqual((await standVon(team, t)).spielstand, { gesamt: 2, angemeldet: 2, eingefroren: false, anwesend: null });
@@ -5041,14 +5042,14 @@ try {
     wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: null }));
     fehler(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true, gesehen }), "regel", ABMELDUNG_TEXT.ausgefallen);
     // AK 4: begonnen → abgewiesen.
-    const gestern = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
+    const gestern = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
     fehler(await setzeAbmeldung(a.supabase, a.id, { terminId: gestern, spielerId: lena, abgemeldet: true }), "regel", ABMELDUNG_TEXT.begonnen);
     assert.equal(wert(await terminSpieler(a.supabase, a.id, { terminId: gestern })).begonnen, true);
     // Fremde: weder Team noch Spieler:in sichtbar; eine Spieler:in eines anderen Teams passt nicht.
     fehler(await setzeAbmeldung(b.supabase, b.id, { terminId: t, spielerId: lena, abgemeldet: true }), "nicht_gefunden");
     const anderes = await serienTeam("Kern-DB-Abmelden-Anders");
     const fremd = (await neuerSpieler(anderes, "Fremd")).spielerId;
-    const offen = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    const offen = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
     fehler(await setzeAbmeldung(a.supabase, a.id, { terminId: offen, spielerId: fremd, abgemeldet: true }), "nicht_gefunden");
     // Nur über die RPC: kein direktes Schreiben, die interne Regel nicht aufrufbar, anon ohne Zugang.
     assert.ok((await a.supabase.from("termin_abmeldungen").insert({ termin_id: offen, spieler_id: lena, team_id: team })).error);
@@ -5060,7 +5061,7 @@ try {
     const team = await serienTeam("Kern-DB-Abmelden-Stand");
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     const noah = (await neuerSpieler(team, "Noah")).spielerId;
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(1), beginn: "18:00", ende: "19:00" })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(1), beginn: "18:00", ende: "19:00" })).terminId;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: noah, abgemeldet: true }));
     // In die Vergangenheit verlegt: begonnen — die Abmeldung bleibt im festgehaltenen Stand.
     wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(-1) }));
@@ -5086,9 +5087,9 @@ try {
     const team = await serienTeam("Kern-DB-Link");
     const lena = (await neuerSpieler(team, "Lena", "Meier")).spielerId;
     await neuerSpieler(team, "Noah");
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler" })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler" })).terminId;
     // Gestern: vergangen, erscheint nicht.
-    const gestern = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
+    const gestern = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
     const link = wert(await holeSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lena }));
     assert.match(link.token, /^[0-9a-f]{64}$/);
     assert.equal(link.name, "Lena Meier");
@@ -5158,7 +5159,7 @@ try {
     // «nie» und «nicht mehr» nicht); ein unbekannter (etwa gelöschter) Termin
     // antwortet gleich, damit der Link nicht erfährt, ob es ihn gibt.
     const anderes = await serienTeam("Kern-DB-Link-Anders");
-    const fremd = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: anderes, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const fremd = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: anderes, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
     const r = (await feldAnon.rpc("spieler_link_abmelden", { p_token: link.token, p_termin: fremd, p_abgemeldet: true, p_gesehen_datum: null, p_gesehen_beginn: null })).data;
     assert.deepEqual(r, { status: "abgewiesen", grund: "gilt_nicht" });
     const weg = (await feldAnon.rpc("spieler_link_abmelden", { p_token: link.token, p_termin: randomUUID(), p_abgemeldet: true, p_gesehen_datum: null, p_gesehen_beginn: null })).data;
@@ -5177,7 +5178,7 @@ try {
     const team = await serienTeam("Kern-DB-Link-Erneuern");
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     const noah = (await neuerSpieler(team, "Noah")).spielerId;
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
     const alt = wert(await holeSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lena })).token;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
     const neu = wert(await erneuereSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lena })).token;
@@ -5213,7 +5214,7 @@ try {
   await pruefe("Abo Spielervertretung: über den Link holen, dieselbe Adresse, nur lesend, nie ableitbar (#507 AK 1, 5, 8–10; OoS 7)", async () => {
     const team = await serienTeam("Kern-DB-Eltern-Abo");
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
     const link = await linkVon(team, lena);
     const abo = (await aboHolen(link))!;
     assert.match(abo, /^[0-9a-f]{64}$/, "AK 9: nicht erratbar");
@@ -5249,11 +5250,11 @@ try {
     const kader = wert(await legeKaderAn(a.supabase, a.id, { teamId: team, name: "Nur Noah" })).kaderId;
     wert(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [noah], dazu: [kader] }));
     const neu = (tage: number, beginn = "18:00") =>
-      legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(tage), beginn, ende: "21:00" }).then((r) => wert(r).terminId);
+      legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(tage), beginn, ende: "21:00" }).then((r) => wert(r).terminId);
     const offen = await neu(2);
     const ab = await neu(3);
     const aus = await neu(4);
-    const fremd = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:00" })).terminId;
+    const fremd = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:00" })).terminId;
     const { setzeTerminKader } = await import("../lib/kern/kader");
     wert(await setzeTerminKader(a.supabase, a.id, { terminId: fremd, kaderIds: [kader] }));
     await admin.from("training_termine").insert({ team_id: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" });
@@ -5314,7 +5315,7 @@ try {
     const team = await serienTeam("Kern-DB-Eltern-Abo-Widerruf");
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     const noah = (await neuerSpieler(team, "Noah")).spielerId;
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
     const link = await linkVon(team, lena);
     const alt = (await aboHolen(link))!;
@@ -5346,7 +5347,7 @@ try {
     const team = await serienTeam("Kern-DB-Verlegen");
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     await neuerSpieler(team, "Noah");
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
     // PC 3: Ende, Ort, Bemerkung lassen sie stehen — ohne Rückfrage.
     assert.equal(wert(await aendereTermin(a.supabase, a.id, { terminId: t, ende: "19:30", beginn: "18:00", ort: "Wyler", bemerkung: "x" })).abmeldungenVerfallen, 0);
@@ -5382,7 +5383,7 @@ try {
     const team = await serienTeam("Kern-DB-Verlegen-Stand");
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     await neuerSpieler(team, "Noah");
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
     // PC 2: begonnen durch die Verlegung — kein Verfall, keine Rückfrage.
     assert.equal(wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(-1) })).abmeldungenVerfallen, 0);
@@ -5395,7 +5396,7 @@ try {
     assert.deepEqual((await linkAnsicht(team, lena)).termine.find((x) => x.id === t)!.verfallen, { datum: tagCh(-1), beginn: "18:00", anmeldung: false });
 
     // PC 4: Ein Ausfall lässt die Abmeldung ruhen; zurückgenommen gilt sie wieder.
-    const u = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    const u = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: u, spielerId: lena, abgemeldet: true }));
     wert(await lasseAusfallen(a.supabase, a.id, { terminId: u, grund: null }));
     const ausgefallen = (await linkAnsicht(team, lena)).termine.find((x) => x.id === u)!;
@@ -5636,7 +5637,7 @@ try {
     return { team, s1, s2, lena, mia, noah };
   };
   const anstehend = (team: string, kaderIds: string[] = [], tage = 7) =>
-    legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(tage), beginn: "18:00", ende: "19:30", kaderIds });
+    legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(tage), beginn: "18:00", ende: "19:30", kaderIds });
 
   await pruefe("Kader am Termin: gilt nur für ihre Spieler:innen, Zahl und Liste nur über sie, für niemanden 0 von 0 (#453 AK 1, 4-7)", async () => {
     const k = await kaderTeam("Kern-DB-Termin-Kader");
@@ -5801,7 +5802,7 @@ try {
     const team = await serienTeam("Kern-DB-Statuswechsel");
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     const noah = (await neuerSpieler(team, "Noah")).spielerId;
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
     assert.deepEqual(await seit(t), { Lena: null, Noah: null }, "AK 2: nie gewechselt");
     // Anmelden einer Angemeldeten ist kein Wechsel.
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: noah, abgemeldet: false }));
@@ -5837,7 +5838,7 @@ try {
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     const noah = (await neuerSpieler(team, "Noah")).spielerId;
     // PC 3: Eine Verlegung setzt alle zurück, auch Wieder-Angemeldete.
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: false }));
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: noah, abgemeldet: true }));
@@ -5856,7 +5857,7 @@ try {
 
     // PC 6, 7: Der Stand bei Beginn behält die Zeit; wer gelöscht wird, nimmt sie mit, wer
     // aus dem Team genommen wird, behält sie dort (#579 PC 5).
-    const u = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(1), beginn: "18:00", ende: "19:00" })).terminId;
+    const u = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(1), beginn: "18:00", ende: "19:00" })).terminId;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: u, spielerId: noah, abgemeldet: true }));
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: u, spielerId: lena, abgemeldet: true }));
     const zeiten = await seit(u);
@@ -5914,7 +5915,7 @@ try {
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     const noah = (await neuerSpieler(team, "Noah")).spielerId;
     await neuerSpieler(team, "Mia");
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(1), beginn: "18:00", ende: "19:00" })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(1), beginn: "18:00", ende: "19:00" })).terminId;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: noah, abgemeldet: true }));
     wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(-1) }));
     return { team, t, lena, noah, gesehen: { datum: tagCh(-1), beginn: "18:00" } };
@@ -5939,14 +5940,14 @@ try {
     assert.deepEqual((await anwesenheit(t)).Lena, [false, false]);
     assert.equal((await seit(t)).Noah, zeitNoah, "PC 1: ein Nachtrag ist kein Statuswechsel");
     // AK 4: ohne Frist — auch ein Termin von vor einem Monat.
-    const alt = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-30), beginn: "18:00", ende: "19:00" })).terminId;
+    const alt = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-30), beginn: "18:00", ende: "19:00" })).terminId;
     wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: alt, spielerId: lena, da: false }));
     assert.deepEqual((await anwesenheit(alt)).Lena, [false, true]);
   });
 
   await pruefe("Nachtrag: Abweisungen — vor Beginn, ausgefallen, verlegt, nicht dabei, Fremde, nur über die RPC (#475 AK 4–7, 11; PC 4)", async () => {
     const { team, t, lena, gesehen } = await gestrigerTermin("Kern-DB-Nachtrag-Regeln");
-    const offen = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const offen = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
     fehler(await setzeAnwesenheit(a.supabase, a.id, { terminId: offen, spielerId: lena, da: false }), "regel", ABMELDUNG_TEXT.nichtBegonnen);
     fehler(
       await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: lena, da: false, gesehen: { datum: tagCh(-2), beginn: "18:00" } }),
@@ -5958,7 +5959,7 @@ try {
     fehler(await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: spaet, da: true, gesehen }), "regel", ABMELDUNG_TEXT.nichtDabei);
     // Ein Team, das bei Beginn keine Liste führte: Niemand ist dabei.
     const ohne = await serienTeam("Kern-DB-Nachtrag-Ohne-Liste");
-    const ohneTermin = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: ohne, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
+    const ohneTermin = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: ohne, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
     const neu = (await neuerSpieler(ohne, "Neu")).spielerId;
     fehler(await setzeAnwesenheit(a.supabase, a.id, { terminId: ohneTermin, spielerId: neu, da: false }), "regel", ABMELDUNG_TEXT.nichtDabei);
     // AK 6, 11: ausgefallen — weder setzen noch sehen; die Rücknahme lässt sie wieder gelten (PC 4).
@@ -5981,7 +5982,7 @@ try {
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     await neuerSpieler(team, "Noah");
     // Heute um Mitternacht: begonnen und für die Spielervertretung noch sichtbar.
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(0), beginn: "00:00", ende: "00:30" })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(0), beginn: "00:00", ende: "00:30" })).terminId;
     wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: lena, da: false }));
     const termin = (await linkAnsicht(team, lena)).termine.find((x) => x.id === t)!;
     assert.deepEqual([termin.abgemeldet, termin.angemeldet, termin.gesamt], [false, 2, 2], "AK 16");
@@ -6048,16 +6049,16 @@ try {
     const lena = (await neuerSpieler(team, "Lena")).spielerId;
     const spiel = { art: "spiel" as const, teamId: team, datum: tagCh(5), beginn: "10:00", ende: "11:30" };
     // AK 2, 10, 11: Bezeichnung Pflicht, Richtwert 1–200, Mindestzahl nicht über Höchstzahl.
-    fehler(await legeTerminFest(a.supabase, a.id, { ...spiel, bezeichnung: "  " }), "eingabe", SPIEL_TEXT.bezeichnung);
-    fehler(await legeTerminFest(a.supabase, a.id, { ...spiel, bezeichnung: "x".repeat(121) }), "eingabe", SPIEL_TEXT.bezeichnungLang);
-    fehler(await legeTerminFest(a.supabase, a.id, { ...spiel, bezeichnung: "Cup", richtwertMin: 0 }), "eingabe", SPIEL_TEXT.richtwert);
-    fehler(await legeTerminFest(a.supabase, a.id, { ...spiel, bezeichnung: "Cup", richtwertMin: 12, richtwertMax: 9 }), "eingabe", SPIEL_TEXT.richtwertReihenfolge);
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, ...spiel, bezeichnung: "  " }), "eingabe", SPIEL_TEXT.bezeichnung);
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, ...spiel, bezeichnung: "x".repeat(121) }), "eingabe", SPIEL_TEXT.bezeichnungLang);
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, ...spiel, bezeichnung: "Cup", richtwertMin: 0 }), "eingabe", SPIEL_TEXT.richtwert);
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, ...spiel, bezeichnung: "Cup", richtwertMin: 12, richtwertMax: 9 }), "eingabe", SPIEL_TEXT.richtwertReihenfolge);
     // AK 16: keine Felder, keine erwartete Spielerzahl; ein Training keine Spielangaben.
-    fehler(await legeTerminFest(a.supabase, a.id, { ...spiel, bezeichnung: "Cup", spielerzahl: 9 }), "eingabe", SPIEL_TEXT.nurTraining);
-    fehler(await legeTerminFest(a.supabase, a.id, { ...spiel, art: "training", bezeichnung: "Cup" }), "eingabe", SPIEL_TEXT.nurSpiel);
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, ...spiel, bezeichnung: "Cup", spielerzahl: 9 }), "eingabe", SPIEL_TEXT.nurTraining);
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, ...spiel, art: "training", bezeichnung: "Cup" }), "eingabe", SPIEL_TEXT.nurSpiel);
     // AK 21: nur ein bevorstehender Anpfiff.
-    fehler(await legeTerminFest(a.supabase, a.id, { ...spiel, bezeichnung: "Cup", datum: tagCh(-1) }), "regel", SPIEL_MELDUNG.SPIEL_ANPFIFF_VERGANGEN);
-    const t = wert(await legeTerminFest(a.supabase, a.id, { ...spiel, bezeichnung: " Meisterschaft gegen FC Bümpliz ", richtwertMin: 9, richtwertMax: 12 })).terminId;
+    fehler(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, ...spiel, bezeichnung: "Cup", datum: tagCh(-1) }), "regel", SPIEL_MELDUNG.SPIEL_ANPFIFF_VERGANGEN);
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, ...spiel, bezeichnung: " Meisterschaft gegen FC Bümpliz ", richtwertMin: 9, richtwertMax: 12 })).terminId;
     const plan = await standVon(team, t);
     assert.equal(plan.art, "spiel");
     assert.deepEqual(plan.spiel, { bezeichnung: "Meisterschaft gegen FC Bümpliz", richtwertMin: 9, richtwertMax: 12, meldefrist: null, vorher: null, treffpunkte: [] });
@@ -6111,8 +6112,8 @@ try {
 
     // AK 15, 22: nie «noch nicht vorbereitet», kann der nächste Termin sein.
     const spielTeam = await serienTeam("Kern-DB-Spiel-Naechster");
-    wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: spielTeam, datum: tagCh(9), beginn: "18:00", ende: "19:00" }));
-    const naechstes = wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Turnier", teamId: spielTeam, datum: tagCh(4), beginn: "09:00", ende: "13:00" })).terminId;
+    wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: spielTeam, datum: tagCh(9), beginn: "18:00", ende: "19:00" }));
+    const naechstes = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "spiel", bezeichnung: "Turnier", teamId: spielTeam, datum: tagCh(4), beginn: "09:00", ende: "13:00" })).terminId;
     const kommend = wert(await teamPlan(a.supabase, a.id, { teamId: spielTeam })).kommend;
     assert.equal(kommend[0].id, naechstes);
     assert.equal(nochNichtVorbereitet(kommend[0], tagCh(0)), false);
@@ -6131,6 +6132,7 @@ try {
     const noah = (await neuerSpieler(team, "Noah")).spielerId;
     const spiel = (tage = 7, extra: Record<string, unknown> = {}) =>
       legeTerminFest(a.supabase, a.id, {
+        benachrichtigen: false,
         art: "spiel",
         bezeichnung: "Cup",
         teamId: team,
@@ -6164,7 +6166,7 @@ try {
     assert.deepEqual((await standVon(k.team, t)).spielstand, { gesamt: 3, angemeldet: 1, abgemeldet: 1, ohne_meldung: 1, nicht_aufgeboten: 0, meldungen: 2, eingefroren: false, anwesend: null });
     // Fremde und Trainings.
     fehler(await setzeMeldung(b.supabase, b.id, { terminId: t, spielerId: k.lena, angemeldet: true }), "nicht_gefunden", MELDUNG_TEXT.nichtGefunden);
-    const training = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: k.team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    const training = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: k.team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
     fehler(await setzeMeldung(a.supabase, a.id, { terminId: training, spielerId: k.lena, angemeldet: true }), "nicht_gefunden");
     // AK 17: veraltet gesehen.
     const f = fehler(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.noah, angemeldet: true, gesehen: { datum: tagCh(6), beginn: "10:00" } }), "konflikt");
@@ -6276,7 +6278,7 @@ try {
     };
     // Kurz vor Mitternacht ginge «heute später» nicht (bis plus 90 Minuten) — dann überspringen.
     if (h * 60 + m > 24 * 60 - 100) return;
-    const t = wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Gleich", teamId: k.team, datum: heute, beginn: plus(1), ende: plus(60) })).terminId;
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "spiel", bezeichnung: "Gleich", teamId: k.team, datum: heute, beginn: plus(1), ende: plus(60) })).terminId;
     wert(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.lena, angemeldet: true }));
     wert(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.mia, angemeldet: false }));
     // #464 PC 2: Die Kennzeichnung wird mit festgehalten.
@@ -6360,6 +6362,7 @@ try {
     // Ein Training trägt keine (OoS 1).
     fehler(
       await legeTerminFest(a.supabase, a.id, {
+        benachrichtigen: false,
         art: "training", teamId: k.team, datum: tag, beginn: "18:00", ende: "19:00",
         treffpunkte: [{ anreise: "vor_ort", zeitpunkt: `${tag}T17:45` }],
       }),
@@ -6401,7 +6404,7 @@ try {
       { anreise: "vor_ort", zeitpunkt: `${tagCh(8)}T07:30`, ort: null },
     ]);
     const training = wert(
-      await legeTerminFest(a.supabase, a.id, { art: "training", teamId: k.team, datum: tagCh(3), beginn: "18:00", ende: "19:00", bemerkung: "Nur intern", hinweisEltern: "Pincode: 4702" }),
+      await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: k.team, datum: tagCh(3), beginn: "18:00", ende: "19:00", bemerkung: "Nur intern", hinweisEltern: "Pincode: 4702" }),
     ).terminId;
     const tr = await imLink(training);
     assert.deepEqual([tr.hinweis_eltern, "bemerkung" in tr, tr.treffpunkte], ["Pincode: 4702", false, null], "#590 AK 9, 13: Hinweis ja, Bemerkung nie");
@@ -6439,7 +6442,7 @@ try {
     const offen = wert(await k.spiel(7, { treffpunkte: [{ anreise: "oev", zeitpunkt: `${tagCh(7)}T09:00`, ort: "Bahnhof" }], bemerkung: "Intern", hinweisEltern: "Leibchen" })).terminId;
     const vorbei = wert(await k.spiel(5, { meldefrist: `${tagCh(-1)}T20:00` })).terminId;
     const aus = wert(await k.spiel(6)).terminId;
-    const training = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: k.team, datum: tagCh(4), beginn: "18:00", ende: "19:00", hinweisEltern: "Pincode", treffpunkt: { zeit: "17:45", ort: "Garderoben" } })).terminId;
+    const training = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: k.team, datum: tagCh(4), beginn: "18:00", ende: "19:00", hinweisEltern: "Pincode", treffpunkt: { zeit: "17:45", ort: "Garderoben" } })).terminId;
     wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus }));
     wert(await setzeAufgebot(a.supabase, a.id, { terminId: offen, spielerId: k.lena, nichtAufgeboten: true }));
     const link = await linkVon(k.team, k.lena);
@@ -6506,7 +6509,7 @@ try {
     assert.ok((await feldAnon.rpc("termin_aufgebot_setzen", { p_termin: t, p_spieler: k.lena, p_nicht_aufgeboten: true })).error);
     const f = fehler(await setzeAufgebot(a.supabase, a.id, { terminId: t, spielerId: k.lena, nichtAufgeboten: true, gesehen: { datum: tagCh(5), beginn: "10:00" } }), "konflikt");
     assert.ok(f.meldung?.startsWith("Das Spiel wurde inzwischen verlegt"));
-    const training = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: k.team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    const training = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: k.team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
     fehler(await setzeAufgebot(a.supabase, a.id, { terminId: training, spielerId: k.lena, nichtAufgeboten: true }), "nicht_gefunden"); // OoS 1: nicht an Trainings
     wert(await lasseAusfallen(a.supabase, a.id, { terminId: t }));
     fehler(await setzeAufgebot(a.supabase, a.id, { terminId: t, spielerId: k.lena, nichtAufgeboten: true }), "regel", MELDUNG_TEXT.ausgefallen);
@@ -6573,7 +6576,7 @@ try {
     const k = await spielTeam(name);
     if (anzahl !== null) wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: k.team, anzahl, info: null }));
     const training = async (tage: number, kaderIds: string[] = []) =>
-      wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: k.team, datum: tagCh(tage), beginn: "18:00", ende: "19:30", kaderIds })).terminId;
+      wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: k.team, datum: tagCh(tage), beginn: "18:00", ende: "19:30", kaderIds })).terminId;
     const token = async (spielerId: string) => wert(await holeSpielerLink(a.supabase, a.id, { teamId: k.team, spielerId })).token;
     const ueberLink = async (tok: string, terminId: string, tage: number, abgemeldet: boolean) =>
       (await feldAnon.rpc("spieler_link_abmelden", { p_token: tok, p_termin: terminId, p_abgemeldet: abgemeldet, p_gesehen_datum: tagCh(tage), p_gesehen_beginn: "18:00" })).data as {
@@ -7058,7 +7061,7 @@ try {
     await admin.from("team_spieler").insert({ team_id: ohneA, spieler_id: lena, verein_id: verein });
     await admin.from("team_spieler").update({ probe_seit: new Date().toISOString() }).eq("team_id", mitA).eq("spieler_id", mia);
     assert.equal((await admin.from("training_termine").insert({ team_id: mitA, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).error, null);
-    wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Cup", teamId: mitA, datum: tagCh(4), beginn: "10:00", ende: "11:00", eingeladene: [], verantwortlich: a.id }));
+    wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "spiel", bezeichnung: "Cup", teamId: mitA, datum: tagCh(4), beginn: "10:00", ende: "11:00", eingeladene: [], verantwortlich: a.id }));
     await neuerKader(mitA, "S1");
     const zweite = await wegwerfKonto();
     await admin.from("verein_verwaltung").insert({ verein_id: verein, user_id: zweite.id });
@@ -7938,7 +7941,7 @@ try {
     const t2 = await team587(vereinId, "Kern-DB-587 L2");
     const lina = wert(await nimmSpielerAuf(m.supabase, m.id, { teamId: t1, vorname: "Lina", nachname: "Löschen", jahrgang: 2016 })).spielerId;
     const ohne = wert(await legeSpielerImVereinAn(verw.supabase, verw.id, { vereinId, vereinName: "Kern-DB-587 Löschen", vorname: "Otto", nachname: "Ohne", jahrgang: 2015 })).spielerId;
-    const termin = wert(await legeTerminFest(m.supabase, m.id, { art: "training", teamId: t1, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    const termin = wert(await legeTerminFest(m.supabase, m.id, { benachrichtigen: false, art: "training", teamId: t1, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
     const { trainingId: teamTraining, bild } = await bildTraining587(m, t1);
     const eigenes = wert(await legeTrainingAn(m.supabase, m.id, { name: "Kern-DB-587 Eigenes", altersstufe: "kinderfussball", stufen: ["F"] })).id;
     const link = wert(await holeSpielerLink(m.supabase, m.id, { teamId: t1, spielerId: lina })).token;
@@ -8069,14 +8072,14 @@ try {
     const { aboEintrag, ABO_KALENDER_NAME } = await import("../lib/spieler-abo");
     const { GET: aboRoute } = await import("../app/api/kalender/spieler/[datei]/route");
     const training = async (team: string, tage: number, kaderIds: string[] = []) =>
-      wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(tage), beginn: "18:00", ende: "19:00", kaderIds })).terminId;
+      wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(tage), beginn: "18:00", ende: "19:00", kaderIds })).terminId;
     const fremderKader = wert(await legeKaderAn(a.supabase, a.id, { teamId: tA, name: "K-Fremd" })).kaderId;
     const linasKader = wert(await legeKaderAn(a.supabase, a.id, { teamId: tA, name: "K-Lina" })).kaderId;
     wert(await aendereZuteilung(a.supabase, a.id, { teamId: tA, spielerIds: [lina], dazu: [linasKader] }));
     // Gleicher Tag und Beginn in B (zuerst angelegt) und A: A steht vorn (AK 1).
     const inB = await training(tB, 2);
     const inA = await training(tA, 2);
-    const spiel = wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Cup", teamId: tB, datum: tagCh(3), beginn: "10:00", ende: "12:00" })).terminId;
+    const spiel = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "spiel", bezeichnung: "Cup", teamId: tB, datum: tagCh(3), beginn: "10:00", ende: "12:00" })).terminId;
     const nurFremd = await training(tA, 4, [fremderKader]);
     const mitLina = await training(tA, 5, [linasKader]);
     const inC = await training(tC, 2);
@@ -8171,10 +8174,10 @@ try {
     const { ABO_KALENDER_NAME } = await import("../lib/spieler-abo");
     const { rpcWeg } = await import("../lib/feedback/dialog");
     const fremd = wert(await legeKaderAn(a.supabase, a.id, { teamId: tA, name: "K-Fremd" })).kaderId;
-    const inA = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: tA, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
-    const nurFremd = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: tA, datum: tagCh(2), beginn: "17:00", ende: "18:00", kaderIds: [fremd] })).terminId;
-    const spielA = wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Cup", teamId: tA, datum: tagCh(3), beginn: "10:00", ende: "12:00" })).terminId;
-    const inB = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: tB, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const inA = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: tA, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const nurFremd = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: tA, datum: tagCh(2), beginn: "17:00", ende: "18:00", kaderIds: [fremd] })).terminId;
+    const spielA = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "spiel", bezeichnung: "Cup", teamId: tA, datum: tagCh(3), beginn: "10:00", ende: "12:00" })).terminId;
+    const inB = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: tB, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
     const token = wert(await holeSpielerLink(a.supabase, a.id, { teamId: tA, spielerId: lina })).token;
     const abo = (await aboHolen(token))!;
     const gesehen = { datum: tagCh(2), beginn: "18:00" };
@@ -8311,6 +8314,58 @@ try {
     team: wert(await ladeVereinTeamAnsicht(verwaltung.supabase, verwaltung.id, { teamId })).spieler.find((x) => x.id === spielerId)?.schnuppern ?? null,
   });
 
+  await pruefe("Benachrichtigungen (#642 AK 1, 6; PC 1, 2): ein neues Spiel mit Benachrichtigung je Spieler:in, ohne keine, ein Training nie; KI standardmässig ja; am Link lesbar, nach dem Erneuern leer", async () => {
+    const name = "Kern-DB-Glocke";
+    const team = await serienTeam(name);
+    const lea = (await neuerSpieler(team, "Lea", "Glocke", 2016)).spielerId;
+    const max = (await neuerSpieler(team, "Max", "Glocke", 2016)).spielerId;
+    const { ladeBenachrichtigungen, linkSchluessel } = await import("../lib/privater-link");
+    const zeilen = async (terminId: string) =>
+      (await admin.from("spieler_benachrichtigungen").select("spieler_id, ereignis, inhalt").eq("termin_id", terminId)).data ?? [];
+    const spiel = (benachrichtigen: boolean, tage: number) =>
+      legeTerminFest(a.supabase, a.id, { benachrichtigen, art: "spiel", bezeichnung: "Cup", teamId: team, datum: tagCh(tage), beginn: "10:00", ende: "12:00", ort: "Allmend" });
+
+    // Mit Benachrichtigung: eine Zeile je Spieler:in, Inhalt wie beim Erfassen (PC 1, AK 3).
+    const mit = wert(await spiel(true, 3));
+    assert.equal(mit.benachrichtigt, 2);
+    const z = await zeilen(mit.terminId);
+    assert.deepEqual(z.map((x) => x.spieler_id).sort(), [lea, max].sort());
+    assert.ok(z.every((x) => x.ereignis === "neues_spiel"));
+    assert.deepEqual(z[0].inhalt, { team: name, art: "spiel", bezeichnung: "Cup", datum: tagCh(3), beginn: "10:00", ende: "12:00", ort: "Allmend" });
+    // Ohne: keine; ein Training nie, auch mit `true`.
+    const ohne = wert(await spiel(false, 4));
+    assert.deepEqual([ohne.benachrichtigt, (await zeilen(ohne.terminId)).length], [null, 0]);
+    const training = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: true, art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:00" }));
+    assert.deepEqual([training.benachrichtigt, (await zeilen(training.terminId)).length], [null, 0]);
+
+    // KI (AK 6): ohne Angabe benachrichtigt, mit false still.
+    const kiMit = kiWert(await ki(a, "termin_festlegen", { team_id: team, art: "spiel", bezeichnung: "KI-Cup", datum: tagCh(6), beginn: "10:00", ende: "11:00" }));
+    assert.equal(kiMit.benachrichtigt, 2);
+    const kiOhne = kiWert(await ki(a, "termin_festlegen", { team_id: team, art: "spiel", bezeichnung: "KI-Still", datum: tagCh(7), beginn: "10:00", ende: "11:00", benachrichtigen: false }));
+    assert.deepEqual([kiOhne.benachrichtigt, (await zeilen(kiOhne.termin_id as string)).length], [null, 0]);
+
+    // Am Link (AK 1): beide Benachrichtigungen, neueste zuerst, mit Tag und Zeit der Datenebene.
+    const token = wert(await holeSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lea })).token;
+    const b = await ladeBenachrichtigungen(token);
+    assert.ok(b, "Benachrichtigungen gelesen");
+    assert.deepEqual(b.eintraege.map((e) => e.termin_id), [kiMit.termin_id, mit.terminId]);
+    assert.deepEqual(b.eintraege[1].inhalt, z[0].inhalt);
+    assert.equal(b.heute, tagCh(0));
+    assert.ok(Math.abs(b.jetzt - Date.now()) < 60_000 && b.eintraege.every((e) => e.erstellt <= b.jetzt && e.erstellt_tag === tagCh(0)));
+    assert.equal(await ladeBenachrichtigungen("0".repeat(64)), null, "unbekannter Link");
+    assert.equal(await ladeBenachrichtigungen("kein-link"), null, "keine Linkform");
+    // Der Schlüssel des Geräts: aus dem Link abgeleitet, ohne ihn zu verraten.
+    assert.match(linkSchluessel(token), /^[A-Za-z0-9_-]{12}$/);
+    assert.ok(!token.includes(linkSchluessel(token)));
+
+    // Erneuern (PC 2): der neue Link beginnt leer, der alte gilt nicht; Max behält seine.
+    const neu = wert(await erneuereSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lea })).token;
+    assert.deepEqual((await ladeBenachrichtigungen(neu))!.eintraege, []);
+    assert.equal(await ladeBenachrichtigungen(token), null);
+    assert.notEqual(linkSchluessel(neu), linkSchluessel(token));
+    assert.equal((await admin.from("spieler_benachrichtigungen").select("id").eq("spieler_id", max)).data!.length, 2);
+  });
+
   await pruefe("Schnuppern (#584 AK 5, 6, 14, 15): Ein- und Ausschalten im Team der Liste, nicht in einem fremden, bei weiteren Teams der Satz aus AK 6; Netz in der Datenebene", async () => {
     const k = await probeTeam("Kern-DB-584-Ein", 3);
     const ZWEITES = "Kern-DB-584-Ein-Zwei";
@@ -8374,9 +8429,9 @@ try {
     const mit = await serienTeam(MIT);
     const ohne = await serienTeam(OHNE);
     wert(await legeProbetrainingFest(a.supabase, a.id, { teamId: mit, anzahl: 3, info: null }));
-    const vorbei = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: mit, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
-    const bald = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: mit, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
-    const spiel = wert(await legeTerminFest(a.supabase, a.id, { art: "spiel", bezeichnung: "Cup", teamId: mit, datum: tagCh(4), beginn: "10:00", ende: "11:00", richtwertMin: 2 })).terminId;
+    const vorbei = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: mit, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
+    const bald = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: mit, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    const spiel = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "spiel", bezeichnung: "Cup", teamId: mit, datum: tagCh(4), beginn: "10:00", ende: "11:00", richtwertMin: 2 })).terminId;
     const lou = await ohneTeam584("Lou");
     const tim = await ohneTeam584("Tim");
     const mitTeam = (await neuerSpieler(ohne, "Ava", "Schnupper", 2016)).spielerId;
@@ -8449,7 +8504,7 @@ try {
     const zaehlerAmTeamOrt = async (id: string) => wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler.find((x) => x.id === id)?.probe ?? null;
     const besuchtEins = async (id: string, tage: number) => {
       await admin.from("team_spieler").update({ probe_seit: new Date(Date.now() - (tage + 2) * 864e5).toISOString() }).eq("team_id", team).eq("spieler_id", id);
-      const t = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(-tage), beginn: "18:00", ende: "19:00" })).terminId;
+      const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-tage), beginn: "18:00", ende: "19:00" })).terminId;
       wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: id, da: true }));
     };
 
@@ -8839,7 +8894,7 @@ try {
     const k = await wegwerfKonto();
     const team = await serienTeam("Kern-DB-588-AK9");
     const spieler = (await neuerSpieler(team, "Ella", "Ohneteam", 2016)).spielerId;
-    const termin = wert(await legeTerminFest(a.supabase, a.id, { art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    const termin = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
     const kiArt = (r: KiErgebnis) => {
       assert.equal(r.isError, true, "erwartet Fehler");
       return (r.structuredContent as { fehler: { art: string } }).fehler.art;
@@ -8849,7 +8904,7 @@ try {
       fehler(await teamPlan(x.supabase, x.id, { teamId: team }), "nicht_gefunden", TEAM_FREMD_588);
       fehler(await ladeSpielerliste(x.supabase, x.id, { teamId: team }), "nicht_gefunden");
       fehler(await terminSpieler(x.supabase, x.id, { terminId: termin }), "nicht_gefunden");
-      fehler(await legeTerminFest(x.supabase, x.id, { art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:00" }), "nicht_gefunden");
+      fehler(await legeTerminFest(x.supabase, x.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:00" }), "nicht_gefunden");
       // Den Hinweis dazu (#589 AK 10) prüft «KI und Vereine» unten.
       assert.deepEqual((kiWert(await ki(x, "teams_abrufen", {})) as { teams: unknown[] }).teams, []);
       assert.equal(kiArt(await ki(x, "team_plan_abrufen", { team_id: team })), "nicht_gefunden");
@@ -9022,9 +9077,9 @@ try {
         assert.deepEqual(await ki(m, "spieler_aus_team_nehmen", { team_id: team, spieler_id: spieler, ...s }), erwartet, `${team} ${spieler} ${stand}`);
     }
     // AK 8: jedes übrige Werkzeug mit Spieler-Kennung.
-    const kommend = wert(await legeTerminFest(m.supabase, m.id, { art: "training", teamId: ea, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
-    const spiel = wert(await legeTerminFest(m.supabase, m.id, { art: "spiel", bezeichnung: "Cup", teamId: ea, datum: tagCh(4), beginn: "10:00", ende: "12:00" })).terminId;
-    const begonnen = wert(await legeTerminFest(m.supabase, m.id, { art: "training", teamId: ea, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
+    const kommend = wert(await legeTerminFest(m.supabase, m.id, { benachrichtigen: false, art: "training", teamId: ea, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    const spiel = wert(await legeTerminFest(m.supabase, m.id, { benachrichtigen: false, art: "spiel", bezeichnung: "Cup", teamId: ea, datum: tagCh(4), beginn: "10:00", ende: "12:00" })).terminId;
+    const begonnen = wert(await legeTerminFest(m.supabase, m.id, { benachrichtigen: false, art: "training", teamId: ea, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
     const kader = wert(await legeKaderAn(m.supabase, m.id, { teamId: ea, name: "K-589" })).kaderId;
     const aufrufe: [string, (id: string) => Record<string, unknown>][] = [
       ["spieler_aendern", (id) => ({ spieler_id: id, vorname: "Zed", nachname: "Einzig", jahrgang: 2015 })],

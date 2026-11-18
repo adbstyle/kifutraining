@@ -69,12 +69,15 @@ export async function legeTerminFestAktion(
   kaderIds: string[],
   /** Die Eingeladenen und die Verantwortliche (#519 AK 1). */
   trainer: { eingeladene: string[]; verantwortlich: string | null },
-): Promise<{ ok: true; terminId: string } | Fehler> {
+  /** Nur an einem Spiel (#642 AK 6): die Spielervertretungen benachrichtigen. */
+  benachrichtigen: boolean,
+): Promise<{ ok: true; terminId: string; benachrichtigungFehlt?: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const art = felder.art ?? "training";
   const r = await legeTerminFest(a.supabase, a.userId, {
     teamId,
-    art: felder.art ?? "training",
+    art,
     bezeichnung: felder.bezeichnung,
     richtwertMin: felder.richtwertMin,
     richtwertMax: felder.richtwertMax,
@@ -94,10 +97,13 @@ export async function legeTerminFestAktion(
     kaderIds,
     eingeladene: trainer.eingeladene,
     verantwortlich: trainer.verantwortlich,
+    benachrichtigen,
   });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
-  return { ok: true, terminId: r.wert.terminId };
+  // Das Spiel steht; nur die Benachrichtigung ist nicht entstanden.
+  const fehlt = art === "spiel" && benachrichtigen && r.wert.benachrichtigt === null;
+  return { ok: true, terminId: r.wert.terminId, ...(fehlt ? { benachrichtigungFehlt: true as const } : {}) };
 }
 
 /** Der Dialog sendet nur, was sich gegenüber seinen Startwerten geändert hat

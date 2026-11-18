@@ -25,6 +25,8 @@ name: Sync Staging (Prod-Spiegel, manuell)
 #   Ebenso `spieler_abos` (Abo-Adressen der Spielervertretungen, #507) — der
 #   Trigger, der sie beim Erneuern des Links löscht, schweigt im Restore
 #   (`session_replication_role = replica`).
+#   Ebenso `spieler_benachrichtigungen` (#642): Die Links bekommen neue
+#   Werte, ein erneuerter Link beginnt ohne Benachrichtigungen.
 # - `spieler.link_token` und `team_abholung.token` bekommen nach dem Restore
 #   neue Werte (private Links der Spieler:innen #436, Abholadressen #438):
 #   Prod-Links gelten auf Staging nicht; «bezogen» fällt damit zurück.
@@ -239,6 +241,8 @@ jobs:
           -- sie nicht; wer dort testet, holt sich einen neuen.
           delete from public.kalender_abos;
           delete from public.spieler_abos;
+          -- Benachrichtigungen hängen an den Links (#642 PC 2); der Trigger schweigt im Restore.
+          delete from public.spieler_benachrichtigungen;
           -- Ebenso die privaten Links der Spieler:innen (#436 PC 4) und die
           -- Abholadressen (#438 PC 7).
           update public.spieler

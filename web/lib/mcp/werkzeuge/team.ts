@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { kategorieStufe } from "@/lib/labels";
+import { BENACHRICHTIGEN_MODELL } from "@/lib/benachrichtigung";
 import { abgebildet } from "@/lib/kern/ergebnis";
 import { meineTeams, teamPlan } from "@/lib/kern/team";
 import { aendereTrainer, setzeAbsage, teamMitglieder } from "@/lib/kern/trainer";
@@ -534,8 +535,9 @@ export const terminFestlegen = werkzeug({
     eingeladene: EINGELADENE.optional(),
     verantwortlich: VERANTWORTLICH.optional(),
     mindestbesetzung: BesetzungEingabe.optional().describe(`Ohne Angabe keine. ${BESETZUNG_MODELL}`),
+    benachrichtigen: z.boolean().default(true).describe(`Nur bei einem Spiel. ${BENACHRICHTIGEN_MODELL("neues_spiel")}`),
   }),
-  ausgabe: z.object({ termin_id: z.string(), team_id: z.string() }),
+  ausgabe: z.object({ termin_id: z.string(), team_id: z.string(), benachrichtigt: z.number().int().nullable() }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
       await legeTerminFest(zugang.supabase, zugang.userId, {
@@ -560,8 +562,11 @@ export const terminFestlegen = werkzeug({
         eingeladene: e.eingeladene,
         verantwortlich: e.verantwortlich,
         mindestbesetzung: alsBesetzung(e.mindestbesetzung),
+        // Ohne gegenteiligen Entscheid benachrichtigen (#642 AK 6) — auch wenn
+        // die Eingabe nicht durch das Schema mit seinem Standard lief.
+        benachrichtigen: e.benachrichtigen !== false,
       }),
-      (w) => ({ termin_id: w.terminId, team_id: w.teamId }),
+      (w) => ({ termin_id: w.terminId, team_id: w.teamId, benachrichtigt: w.benachrichtigt }),
     ),
 });
 

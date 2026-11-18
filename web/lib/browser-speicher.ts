@@ -1,3 +1,4 @@
+import { BENACHRICHTIGUNG_COOKIE } from "@/lib/benachrichtigung-gesehen";
 import { BEREICH_COOKIE } from "@/lib/bereich";
 import { DARSTELLUNG_COOKIE } from "@/lib/darstellung";
 import { LEISTE_COOKIE } from "@/lib/seitenleiste";
@@ -75,5 +76,12 @@ export const SPEICHERUNGEN: Speicherung[] = [
     zweck: "Merkt sich, bis zu welcher Version du die Seite «Versionen» gesehen hast, damit die Seitenleiste neue Versionen markiert.",
     dauer: "Ein Jahr.",
     ohne: "Die Seitenleiste markiert keine neuen Versionen.",
+  },
+  {
+    name: BENACHRICHTIGUNG_COOKIE,
+    titel: "Gesehene Benachrichtigungen",
+    zweck: "Auf der Seite hinter dem privaten Link einer Spieler:in: merkt sich, bis wann dieses Gerät die Benachrichtigungen angezeigt hat, damit nur neue als neu zählen. Je Link ein Eintrag, nur ein Kürzel des Links, nie der Link selbst; gilt nur für die privaten Links.",
+    dauer: "Ein Jahr.",
+    ohne: "Die Seite kann nicht zeigen, was auf diesem Gerät neu ist.",
   },
 ];
