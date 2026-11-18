@@ -10,6 +10,8 @@ import { ladeKader } from "@/lib/kern/kader";
 import { KaderKarte } from "@/components/team/KaderKarte";
 import { SchnupperKarte } from "@/components/team/SchnupperKarte";
 import { leseProbetraining } from "@/lib/kern/probe";
+import { TeamInfosKarte } from "@/components/team/TeamInfosKarte";
+import { leseTeamInfos } from "@/lib/kern/team-infos";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { abholUrl } from "@/lib/spieler";
 import { getMeinVerein } from "@/lib/queries/verein";
@@ -22,6 +24,9 @@ import { getMeinVerein } from "@/lib/queries/verein";
  * Vereinsverwaltung im Bereich «Verein» (#581 AK 27) — auch dann, wenn die
  * Person zugleich Mitglied des Teams ist; am Team-Ort gibt es für sie keine
  * Verwaltungsaktion.
+ *
+ * Die Infos zum Team (#598) stehen gleich nach den Teamangaben: Sie sagen den
+ * Eltern, wie das Team arbeitet.
  *
  * Das Schnuppertraining (#555, #584) und die Kader (#452) stehen unter der
  * Spielerliste: Sie betreffen deren Spieler:innen.
@@ -45,7 +50,7 @@ export default async function TeamVerwaltungPage({
 
   // Der Rahmen hat das Team bereits geladen und die Zugehörigkeit geprüft;
   // `getTeam` antwortet hier aus dem Request-Cache.
-  const [team, verein, liste, kader, abholung, origin, probe] = await Promise.all([
+  const [team, verein, liste, kader, abholung, origin, probe, infos] = await Promise.all([
     getTeam(id),
     getMeinVerein(),
     ladeSpielerliste(supabase, user.id, { teamId: id }),
@@ -53,11 +58,13 @@ export default async function TeamVerwaltungPage({
     leseAbholung(supabase, user.id, { teamId: id }),
     oeffentlicherOrigin(),
     leseProbetraining(supabase, user.id, { teamId: id }),
+    leseTeamInfos(supabase, user.id, { teamId: id }),
   ]);
   if (!team) redirect("/teams");
   if (!liste.ok) throw new Error(liste.meldung);
   if (!kader.ok) throw new Error(kader.meldung);
   if (!probe.ok) throw new Error(probe.meldung);
+  if (!infos.ok) throw new Error(infos.meldung);
 
   return (
     <div className="flex flex-col gap-4">
@@ -79,6 +86,10 @@ export default async function TeamVerwaltungPage({
         <p className="type-body-small mt-1 text-on-surface-mittel">
           Umbenennen und Auflösen macht die Vereinsverwaltung im Bereich «Verein».
         </p>
+      </Card>
+
+      <Card className="p-5 sm:p-6">
+        <TeamInfosKarte teamId={team.id} infos={infos.wert} />
       </Card>
 
       <Card className="p-5 sm:p-6">

@@ -395,6 +395,8 @@ import { gruendungAus, kontoInfoAus, kontoLoeschAusgangAus, vereinLoeschAusgangA
 import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
 import { bereichAusPfad } from "../lib/navigation";
 import { textMitLinks } from "../lib/text-links";
+import { gliedere, gliederungAlsText, gliederungBloecke } from "../lib/gliederung";
+import { TEAM_INFOS_MAX, TEAM_INFOS_TEXT, standDatum, teamInfosBereinigt, teamInfosProblem, zahlCh } from "../lib/team-infos";
 
 let gelaufen = 0;
 
@@ -2328,6 +2330,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#464": ["termin_spieler_abrufen", "termin_aufgebot_setzen"],
     "#487": ["termin_spieler_abrufen", "termin_anwesenheit_setzen", "team_plan_abrufen"],
     "#556": ["schnuppertraining_abrufen", "schnuppertraining_festlegen"],
+    "#598": ["team_infos_abrufen", "team_infos_festlegen"],
     "#555": ["schnuppertraining_abrufen", "schnuppertraining_festlegen", "spieler_schnuppern_setzen", "spielerliste_abrufen", "termin_spieler_abrufen"],
     "#561": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "team_plan_abrufen", "spieler_link_abrufen"],
     "#589": ["teams_abrufen", "spielerliste_abrufen", "spieler_aus_team_nehmen", "spieler_link_abrufen", "spieler_link_erneuern"],
@@ -3247,11 +3250,14 @@ pruefe("Wer die Angaben sieht (#580 PC 4, #587 PC 2): ein Textblock für Abholse
   assert.ok(erhalt.daten.endsWith("Nimmt ein Team Noah Keller heraus, bleiben die Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung sie aus dem Verein löscht."));
   // Link und Abholseite lesen den Verein aus der Datenebene (Eingabe und Erhalt), nicht aus dem Browser.
   const lies = (d: string) => readFileSync(join(web, d), "utf8");
-  assert.match(lies("components/privat/ElternAnsicht.tsx"), /\{angabenSehenText\(verein, spieler\.vorname\)\}/);
+  // Seit #598 auf der Infos-Seite des Links.
+  assert.match(lies("components/privat/LinkInfos.tsx"), /\{angabenSehenText\(verein, vorname\)\}/);
+  assert.match(lies("app/(privat)/abmelden/[privaterLink]/infos/page.tsx"), /verein=\{ansicht\.verein\}/);
   assert.match(lies("components/privat/AbholSeite.tsx"), /\{abholSpeichertText\(verein\)\}/);
   assert.match(lies("components/privat/AbholSeite.tsx"), /abholErhaltText\(name, verein\)[\s\S]*?\{text\.daten\}/);
   assert.match(lies("app/(privat)/abholen/[privaterLink]/page.tsx"), /<AbholSeite token=\{privaterLink\} team=\{ansicht\.team\} verein=\{ansicht\.verein\} \/>/);
-  assert.match(lies("app/(privat)/abmelden/[privaterLink]/page.tsx"), /verein=\{ansicht\.verein\}[\s\S]*?<FeedbackLink [^>]*verein=\{ansicht\.verein\}/);
+  assert.match(lies("app/(privat)/abmelden/[privaterLink]/page.tsx"), /<FeedbackLink [^>]*verein=\{ansicht\.verein\}/);
+  assert.match(lies("app/(privat)/abmelden/[privaterLink]/infos/page.tsx"), /verein=\{ansicht\.verein\}[\s\S]*?<FeedbackLink [^>]*verein=\{ansicht\.verein\}/);
   assert.ok(!Object.values(LINK_TEXT).some((t) => typeof t === "string" && (t.includes("Trainer:innen des Vereins") || t.includes("Verantwortlich"))), "nichts davon in LINK_TEXT (KI-Beschreibungen)");
 });
 
@@ -5094,6 +5100,70 @@ pruefe("Konto ohne Verein (#588 PC 2): Wer die Zugehörigkeit oder den Bestand �
     assert.match(rumpf(verein, name), /revalidiereMitgliedschaften\(\)/, name);
   assert.match(rumpf(lies("lib/actions/teams.ts"), "entferneMitglied"), /revalidiereMitgliedschaften\(\)/, "Austritt aus dem Team");
   assert.match(lies("lib/actions/auth.ts"), /revalidiereVerein\(\);\s*revalidiereMitgliedschaften\(\);/, "Konto löschen mit Verein");
+});
+
+pruefe("Infos zum Team: Gliederung mit Zwischentiteln, Listen und Fett, sonst Text (#598 AK 2; OoS 1)", () => {
+  const b = gliederungBloecke("## Trainings\r\n- Dienstag\n- **Donnerstag** 17:30\n\nText eins\nText zwei\n1. Schoner\n2. Flasche\n# Ende");
+  assert.deepEqual(b.map((x) => x.art), ["titel", "aufzaehlung", "absatz", "nummeriert", "titel"]);
+  assert.deepEqual(b[1], {
+    art: "aufzaehlung",
+    punkte: [[{ art: "text", text: "Dienstag" }], [{ art: "fett", text: "Donnerstag" }, { art: "text", text: " 17:30" }]],
+  });
+  assert.equal(b[2].art === "absatz" && b[2].zeilen.length, 2, "ein Umbruch im Absatz bleibt");
+  assert.equal(b[3].art === "nummeriert" && b[3].start, 1);
+  // Leerzeile beendet eine Liste; Text direkt nach der Liste ist ein Absatz.
+  assert.deepEqual(gliederungBloecke("- a\n\n- b").map((x) => x.art), ["aufzaehlung", "aufzaehlung"]);
+  assert.deepEqual(gliederungBloecke("- a\nweiter").map((x) => x.art), ["aufzaehlung", "absatz"]);
+  // Kein Markdown darüber hinaus: Links mit Linktext, Bilder, HTML bleiben Text.
+  const roh = "[Link](https://x.ch) ![Bild](a.png) <b>fett</b> ** offen";
+  assert.deepEqual(gliederungBloecke(roh), [{ art: "absatz", zeilen: [[{ art: "text", text: roh }]] }]);
+  assert.equal(gliederungAlsText("## Titel\n- a\n- b"), "Titel · a · b");
+  assert.deepEqual(gliederungBloecke(" \n "), []);
+});
+
+pruefe("Infos zum Team: die Werkzeugleiste setzt und entfernt Kürzel (#598 AK 2)", () => {
+  // Zwischentitel auf der Zeile des Cursors, nochmals = weg.
+  const t = gliedere({ text: "Hallo\nWelt", start: 7, ende: 7 }, "titel");
+  assert.deepEqual(t, { text: "Hallo\n## Welt", start: 6, ende: 13 });
+  assert.equal(gliedere(t, "titel").text, "Hallo\nWelt");
+  // Aufzählung über mehrere Zeilen; Nummerierung ersetzt sie und zählt.
+  const l = gliedere({ text: "a\nb\nc", start: 0, ende: 5 }, "aufzaehlung");
+  assert.equal(l.text, "- a\n- b\n- c");
+  assert.equal(gliedere(l, "nummeriert").text, "1. a\n2. b\n3. c");
+  // Fett um die Auswahl, ohne Auswahl ein Platzhalter, nochmals = weg.
+  const f = gliedere({ text: "ganz wichtig", start: 5, ende: 12 }, "fett");
+  assert.deepEqual(f, { text: "ganz **wichtig**", start: 7, ende: 14 });
+  assert.equal(gliedere(f, "fett").text, "ganz wichtig");
+  assert.equal(gliedere({ text: "", start: 0, ende: 0 }, "fett").text, "**fett**");
+});
+
+pruefe("Infos zum Team: bereinigt wie die Datenebene, höchstens 10'000 Zeichen samt Gliederung (#598 AK 3, 7)", () => {
+  assert.equal(TEAM_INFOS_MAX, 10000);
+  assert.equal(teamInfosBereinigt("  \r\n## Hallo\r\n "), "## Hallo");
+  assert.equal(teamInfosBereinigt(" \n "), null, "leer = keine");
+  assert.equal(teamInfosProblem("x".repeat(10000)), null);
+  assert.equal(teamInfosProblem("x".repeat(10001)), TEAM_INFOS_TEXT.zuLang);
+  assert.equal(teamInfosProblem("⚽".repeat(10000)), null, "Codepunkte wie char_length");
+  assert.equal(zahlCh(10000), "10'000");
+  assert.equal(standDatum("2026-11-12"), "12.11.2026");
+  // Zwilling: dieselbe Zahl in der Migration.
+  const sql = readFileSync(join(web, "../supabase/migrations/20261118100000_team_infos.sql"), "utf8");
+  assert.match(sql, /char_length\(text\) between 1 and 10000/);
+  assert.match(sql, /char_length\(v_text\) > 10000/);
+  // Der Zugang nennt die Infos (PC 2: ohne neue Zustimmung).
+  assert.ok(readFileSync(join(web, "lib/mcp/umfang.ts"), "utf8").includes("die Infos zum Team für die Eltern verfassen, ändern und entfernen"));
+});
+
+pruefe("Infos am privaten Link: die Erklärungen stehen hinter dem ⓘ, nicht mehr auf der Termin-Seite (#598 AK 10; OoS 10)", () => {
+  const ansicht = readFileSync(join(web, "components/privat/ElternAnsicht.tsx"), "utf8");
+  for (const weg of ["angabenSehenText", "linkProbeKopf", "KuerzbarerText", "ist für jedes Training zuerst angemeldet"])
+    assert.ok(!ansicht.includes(weg), `${weg} gehört auf die Infos-Seite`);
+  assert.match(ansicht, /\/abmelden\/\$\{token\}\/infos/);
+  assert.match(ansicht, /ProbeZaehler stand=\{probeLokal\}/, "der Schnupperstand bleibt bei den Terminen");
+  const infos = readFileSync(join(web, "components/privat/LinkInfos.tsx"), "utf8");
+  assert.ok(!/defaultOpen/.test(infos), "OoS 9: nichts öffnet sich von selbst");
+  for (const da of ["angabenSehenText", "linkProbeKopf", "linkMeldenText", "teamInfosLinkTitel", "PROBE_TEXT.linkInfoTitel"])
+    assert.ok(infos.includes(da), da);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import { textMitLinks } from "@/lib/text-links";
 import { Button } from "./Button";
 import { ExternerLink } from "./ExternerLink";
+import { GegliederterText } from "./GegliederterText";
 
 /* ── KuerzbarerText ───────────────────────────────────────────
    Ein längerer Freitext, gekürzt auf wenige Zeilen, mit «Ganz lesen» darunter
@@ -17,20 +18,27 @@ import { ExternerLink } from "./ExternerLink";
    «Ganz lesen» steht nur, wenn der Text wirklich länger ist — gemessen, nicht
    geschätzt; aufgeklappt heisst der Link «Weniger anzeigen». Der Link ist
    `variant="link"`: eine Handlung im Inhalt, kein Knopf (PO 2026-10-25).
-   Alles läuft als React-Text — eingegebenes HTML wird nie ausgeführt. */
+   Alles läuft als React-Text — eingegebenes HTML wird nie ausgeführt.
+
+   `gegliedert` (#598, Infos zum Team): Der Text steht als `GegliederterText`;
+   gekürzt wird dann auf die Höhe der Zeilen, nicht per line-clamp (der greift
+   nur in einem einzelnen Absatz). */
 export function KuerzbarerText({
   text,
   zeilen = 3,
+  gegliedert = false,
   className,
 }: {
   text: string;
+  /** Mit Zwischentiteln, Listen und Hervorhebung (`GegliederterText`). */
+  gegliedert?: boolean;
   /** Wie viele Zeilen gekürzt stehen (Vorgabe 3). */
   zeilen?: 2 | 3 | 4 | 5;
   className?: string;
 }) {
   const [offen, setOffen] = useState(false);
   const [laenger, setLaenger] = useState(false);
-  const ref = useRef<HTMLParagraphElement>(null);
+  const ref = useRef<HTMLDivElement & HTMLParagraphElement>(null);
   const id = useId();
 
   // Gekürzt messen: Ist der Inhalt höher als die Fläche, braucht es den Link.
@@ -42,25 +50,36 @@ export function KuerzbarerText({
     const ro = new ResizeObserver(messen);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [text, offen]);
+  }, [text, offen, gegliedert]);
 
   return (
     <div className={cn("flex flex-col items-start gap-1", className)}>
-      <p
-        id={id}
-        ref={ref}
-        className={cn("max-w-full whitespace-pre-line break-words", !offen && KUERZUNG[zeilen])}
-      >
-        {textMitLinks(text).map((t, i) =>
-          t.art === "link" ? (
-            <ExternerLink key={i} href={t.href}>
-              {t.text}
-            </ExternerLink>
-          ) : (
-            t.text
-          ),
-        )}
-      </p>
+      {gegliedert ? (
+        <div
+          id={id}
+          ref={ref}
+          className="max-w-full overflow-hidden"
+          style={offen ? undefined : { maxHeight: `${zeilen * 1.5}rem` }}
+        >
+          <GegliederterText text={text} />
+        </div>
+      ) : (
+        <p
+          id={id}
+          ref={ref}
+          className={cn("max-w-full whitespace-pre-line break-words", !offen && KUERZUNG[zeilen])}
+        >
+          {textMitLinks(text).map((t, i) =>
+            t.art === "link" ? (
+              <ExternerLink key={i} href={t.href}>
+                {t.text}
+              </ExternerLink>
+            ) : (
+              t.text
+            ),
+          )}
+        </p>
+      )}
       {(laenger || offen) && (
         <Button variant="link" aria-expanded={offen} aria-controls={id} onClick={() => setOffen((o) => !o)}>
           {offen ? "Weniger anzeigen" : "Ganz lesen"}

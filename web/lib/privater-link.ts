@@ -107,6 +107,10 @@ export type LinkAnsicht =
       probe?: ProbeStand | null;
       /** Das Info-Schreiben des Teams, nur wenn sie schnuppert (#556 AK 4). */
       probe_info?: string | null;
+      /** Die Infos zum Team jedes Teams mit Infos, nach Teamname (#598 AK 5–7);
+       *  leer, solange sie schnuppert. `stand` als «YYYY-MM-DD». Fehlt bei einer
+       *  Datenebene vor der Migration. */
+      team_infos?: { team: string; text: string; stand: string }[];
       /** In der Ordnung der Datenebene: heute begonnene zuerst, dann nach
        *  Datum, Beginn und Teamname (AK 1). Das Web sortiert nicht um. */
       termine: LinkTermin[];

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CalendarX2 } from "lucide-react";
-import { ExternerLink, FilterChip, Kalenderblatt, KuerzbarerText, Leerzustand, Lozenge, SectionMessage, Switch, TrainingsTreffpunkt } from "@/components/ui";
+import { CalendarX2, Info } from "lucide-react";
+import { ExternerLink, FilterChip, IconButtonLink, Kalenderblatt, Leerzustand, Lozenge, SectionMessage, Switch, Tooltip, TrainingsTreffpunkt } from "@/components/ui";
 import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
 import type { Meldung } from "@/lib/spiel";
 import { SpielKarte } from "./SpielKarte";
@@ -17,7 +17,7 @@ import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import type { LinkTermin } from "@/lib/privater-link";
 import {
   LINK_EINGRENZUNG,
-  angabenSehenText,
+  LINK_INFOS,
   LINK_GILT_NICHT_TITEL,
   LINK_KEINE_TERMINE_TITEL,
   linkEingrenzungLeer,
@@ -32,7 +32,7 @@ import {
   type Spielerzahl,
 } from "@/lib/spieler";
 import { useLokalerStand } from "@/lib/use-lokaler-stand";
-import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaehler, type ProbeStand } from "@/lib/probe";
+import { PROBE_TEXT, linkProbeStand, linkProbeVoll, linkProbeZaehler, type ProbeStand } from "@/lib/probe";
 
 /* Was die Spielervertretung über den privaten Link sieht (#436 AK 5–9): ihre
    Spieler:in, ihre Teams und die anstehenden Termine aller Teams — jeder
@@ -57,28 +57,26 @@ import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaeh
    wie viele Schnuppertrainings noch möglich sind, mit einem Balken je
    Schnuppertraining (besucht gefüllt, angemeldet umrandet). Ist die Anzahl
    erreicht, sagt das eine Meldung über den Trainings, und die Schalter der
-   übrigen sind gesperrt, bis ein Platz frei wird. Das Info-Schreiben des
-   Teams (#556) steht davor, gekürzt mit «Ganz lesen» — man liest es, bevor
-   man anmeldet (AK 4); Webadressen darin öffnen sich (AK 5). */
+   übrigen sind gesperrt, bis ein Platz frei wird.
+
+   Alle Erklärungen — wie man meldet bzw. wie das Schnuppern geht, das
+   Info-Schreiben, die Infos zum Team und wer die Angaben sieht — stehen
+   hinter dem ⓘ neben dem Namen auf einer eigenen Seite (#598 AK 10, löst
+   #556 AK 4 ab): Sie halten beim Melden nicht auf. Hier bleiben nur der
+   Schnupperstand, Hinweise zu Terminen und Fehler (OoS 10). */
 export function ElternAnsicht({
   token,
   teams,
   spieler,
-  verein,
   probe,
-  probeInfo,
   termine,
 }: {
   token: string;
   /** Die Teams der Spieler:in, alphabetisch, auch ohne Termine; leer ohne Team. */
   teams: string[];
   spieler: { vorname: string; nachname: string };
-  /** Der Verein, der für die Daten der Spieler:in verantwortlich ist (#587 PC 2). */
-  verein: string;
   /** Schnuppert sie: ihr Stand, sonst `null`. */
   probe: ProbeStand | null;
-  /** Das Info-Schreiben des Teams, nur beim Schnuppern (#556). */
-  probeInfo: string | null;
   termine: LinkTermin[];
 }) {
   // Was gerade umgelegt wird, steht sofort so da; scheitert es, zurück. Bei
@@ -214,10 +212,13 @@ export function ElternAnsicht({
   return (
     <>
       <header className="flex flex-col gap-0.5 border-b border-linie px-4 pb-4 pt-6">
-        {/* Das Kalender-Abo (#507 AK 1) gleich hinter dem Namen: Es ist der
-            Kalender dieser Spieler:in (PO 2026-10-24). */}
+        {/* Die Infos (#598 AK 10) und das Kalender-Abo (#507 AK 1) gleich
+            hinter dem Namen: Es ist der Kalender dieser Spieler:in (PO 2026-10-24). */}
         <div className="flex items-center gap-1">
           <h1 className="min-w-0 type-headline-small text-on-surface">{linkKopfTitel(name)}</h1>
+          <Tooltip label={LINK_INFOS.knopf}>
+            <IconButtonLink icon={Info} label={LINK_INFOS.knopf} href={`/abmelden/${token}/infos`} />
+          </Tooltip>
           <AboKnopf token={token} />
         </div>
         {/* Die Teams alphabetisch, auch ohne Termine (#583 AK 3). */}
@@ -231,26 +232,8 @@ export function ElternAnsicht({
             ))}
           </ul>
         )}
-        {probeLokal ? (
-          <>
-            <p className="type-body-medium text-on-surface-mittel">{linkProbeKopf(spieler.vorname)}</p>
-            <ProbeZaehler stand={probeLokal} />
-          </>
-        ) : teams.length === 0 ? null : (
-          <p className="type-body-medium text-on-surface-mittel">
-            {name} ist für jedes Training zuerst angemeldet. Kann {spieler.vorname} nicht, melde ab - und bis zum
-            Beginn wieder an. Für ein Spiel ist {spieler.vorname} erst angemeldet, wenn du anmeldest.
-          </p>
-        )}
+        {probeLokal && <ProbeZaehler stand={probeLokal} />}
       </header>
-      {probeLokal && probeInfo && (
-        <section aria-labelledby="probe-info" className="mx-4 mt-4 rounded-flaeche bg-elev-01 px-3 py-3">
-          <h2 id="probe-info" className="type-title-small text-on-surface">
-            {PROBE_TEXT.linkInfoTitel}
-          </h2>
-          <KuerzbarerText text={probeInfo} zeilen={4} className="mt-1 type-body-medium text-on-surface" />
-        </section>
-      )}
       {voll && probeLokal && (
         <div className="px-4 pt-4">
           <SectionMessage>{linkProbeVoll(spieler.vorname, probeLokal)}</SectionMessage>
@@ -331,8 +314,6 @@ export function ElternAnsicht({
           ))}
         </div>
       )}
-      {/* Wer verantwortlich ist und wer die Angaben sieht (Story #580 PC 4, #587 PC 2), schlicht unter den Terminen. */}
-      <p className="type-body-small px-4 pb-6 text-on-surface-mittel">{angabenSehenText(verein, spieler.vorname)}</p>
     </>
   );
 }
