@@ -9,10 +9,11 @@
 -- schnuppert; weder im Abo noch bei der Selbstabholung (OoS 3).
 --
 -- Stand (AK 7) ist der Tag, an dem sich der Text zuletzt verändert hat: Ein
--- Speichern ohne Änderung lässt ihn stehen.
+-- Speichern ohne Änderung lässt ihn stehen. Den Tag nennt nur die Datenebene
+-- (`team_infos_stand`); gelesen und geschrieben wird nur über RPCs.
 --
--- Forward-only: eine neue Tabelle (team_infos, steht in PUBLIC_TABLES), eine
--- neue Funktion, eine neu gefasste (spieler_link_ansicht).
+-- Forward-only: eine neue Tabelle (team_infos, steht in PUBLIC_TABLES), neue
+-- Funktionen, eine neu gefasste (spieler_link_ansicht).
 -- ============================================================================
 set lock_timeout = '5s';
 
@@ -24,10 +25,34 @@ create table team_infos (
   geaendert_am timestamptz not null default now()
 );
 alter table team_infos enable row level security;
--- Mitglieder lesen die Infos ihres Teams; geschrieben wird nur über die RPC.
-create policy ti_select on team_infos for select to authenticated using (ist_team_mitglied(team_id));
+-- Kein direkter Zugriff: Lesen und Schreiben nur über die RPCs, die den Stand
+-- als Tag nennen.
 revoke all on team_infos from anon, authenticated;
-grant select on team_infos to authenticated;
+
+-- Der Stand als Tag am Trainingsort, «YYYY-MM-DD» — die eine Stelle, die ihn
+-- berechnet (Festlegen, Lesen, privater Link). Ohne API-Recht.
+create function team_infos_stand(p_zeit timestamptz) returns text
+language sql stable
+set search_path = public, pg_temp
+as $$ select to_char(p_zeit at time zone 'Europe/Zurich', 'YYYY-MM-DD') $$;
+revoke all on function team_infos_stand(timestamptz) from public, anon, authenticated;
+
+-- Lesen (AK 7): die Infos des Teams samt Stand; ohne Infos beides null.
+create function team_infos_lesen(p_team uuid) returns jsonb
+language plpgsql stable security definer
+set search_path = public, pg_temp
+as $$
+declare
+  i team_infos;
+begin
+  if auth.uid() is null then raise exception 'not authenticated'; end if;
+  if p_team is null or not ist_team_mitglied(p_team) then raise exception 'TEAM_NICHT_GEFUNDEN'; end if;
+  select * into i from team_infos where team_id = p_team;
+  return jsonb_build_object('text', i.text, 'stand', case when i.team_id is not null then team_infos_stand(i.geaendert_am) end);
+end;
+$$;
+revoke all on function team_infos_lesen(uuid) from public, anon;
+grant execute on function team_infos_lesen(uuid) to authenticated;
 
 -- Festlegen (AK 1, 3): leer oder nur Leerraum entfernt die Infos. Zeilen-
 -- umbrüche bleiben, nur Leerraum am Anfang und Ende fällt. Zu lang → Fehler,
@@ -54,8 +79,7 @@ begin
           geaendert_am = case when team_infos.text is distinct from excluded.text
                               then now() else team_infos.geaendert_am end
     returning geaendert_am into v_stand;
-  return jsonb_build_object('text', v_text,
-                            'stand', to_char(v_stand at time zone 'Europe/Zurich', 'YYYY-MM-DD'));
+  return jsonb_build_object('text', v_text, 'stand', team_infos_stand(v_stand));
 end;
 $$;
 revoke all on function team_infos_festlegen(uuid, text) from public, anon;
@@ -101,7 +125,7 @@ begin
                                          where ts.spieler_id = s.id and ts.probe_seit is not null) then
       coalesce((select jsonb_agg(jsonb_build_object(
                          'team', t.name, 'text', i.text,
-                         'stand', to_char(i.geaendert_am at time zone 'Europe/Zurich', 'YYYY-MM-DD'))
+                         'stand', team_infos_stand(i.geaendert_am))
                        order by t.name, t.id)
                   from team_spieler ts join teams t on t.id = ts.team_id
                   join team_infos i on i.team_id = ts.team_id

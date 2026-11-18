@@ -1,7 +1,8 @@
 -- Infos zum Team (#598), Migration 20261118100000_team_infos.sql:
 -- - Rechte: Lesen und Festlegen nur als Mitglied des Teams (Nicht-Mitglied,
---   Verwaltung ohne Mitgliedschaft, anon: abgewiesen); direktes Schreiben
---   in die Tabelle ist entzogen; die RPC hat kein Recht für anon
+--   Verwaltung ohne Mitgliedschaft, anon: abgewiesen); kein direkter Zugriff
+--   auf die Tabelle; die RPCs haben kein Recht für anon, der Stand-Helfer
+--   keines für die API
 -- - Festlegen (AK 1, 3): bereinigt (CRLF, Rand), leer entfernt die Zeile,
 --   10'000 Zeichen gehen, 10'001 nicht und die bisherige Fassung bleibt
 -- - Stand (AK 7): rückt nur, wenn sich der Text ändert
@@ -94,14 +95,20 @@ $$;
 
 select pg_temp.pruefe(not has_function_privilege('anon', 'team_infos_festlegen(uuid, text)', 'execute'),
   'anon darf team_infos_festlegen nicht ausführen');
-select pg_temp.pruefe(not has_table_privilege('authenticated', 'team_infos', 'insert')
+select pg_temp.pruefe(not has_function_privilege('anon', 'team_infos_lesen(uuid)', 'execute'),
+  'anon darf team_infos_lesen nicht ausführen');
+select pg_temp.pruefe(not has_function_privilege('authenticated', 'team_infos_stand(timestamptz)', 'execute'),
+  'der Stand-Helfer hat kein API-Recht');
+select pg_temp.pruefe(not has_table_privilege('authenticated', 'team_infos', 'select')
+                      and not has_table_privilege('authenticated', 'team_infos', 'insert')
                       and not has_table_privilege('authenticated', 'team_infos', 'update')
-                      and not has_table_privilege('authenticated', 'team_infos', 'delete'),
-  'direktes Schreiben in team_infos ist entzogen');
-select pg_temp.pruefe(not has_table_privilege('anon', 'team_infos', 'select'), 'anon liest team_infos nicht');
+                      and not has_table_privilege('authenticated', 'team_infos', 'delete')
+                      and not has_table_privilege('anon', 'team_infos', 'select'),
+  'kein direkter Zugriff auf team_infos');
 
 select pg_temp.als(pg_temp.id('b'));
 select pg_temp.erwarte(format('select team_infos_festlegen(%L, %L)', pg_temp.id('t1'), 'Fremd'), 'TEAM_NICHT_GEFUNDEN');
+select pg_temp.erwarte(format('select team_infos_lesen(%L)', pg_temp.id('t1')), 'TEAM_NICHT_GEFUNDEN');
 select pg_temp.zurueck();
 select pg_temp.als(pg_temp.id('va'));
 select pg_temp.erwarte(format('select team_infos_festlegen(%L, %L)', pg_temp.id('t1'), 'Verwaltung'), 'TEAM_NICHT_GEFUNDEN');
@@ -114,10 +121,12 @@ select pg_temp.als(pg_temp.id('a'));
 select pg_temp.pruefe(
   team_infos_festlegen(pg_temp.id('t1'), E'  \r\n## Willkommen\r\n- Dienstag\r\n  ') ->> 'text' = E'## Willkommen\n- Dienstag',
   'bereinigt: CRLF zu LF, Rand weg');
-select pg_temp.pruefe((select count(*) from team_infos) = 1, 'das Mitglied liest die Infos seines Teams');
-select pg_temp.zurueck();
-select pg_temp.als(pg_temp.id('b'));
-select pg_temp.pruefe((select count(*) from team_infos) = 0, 'ein Nicht-Mitglied liest keine Infos');
+select pg_temp.pruefe(team_infos_lesen(pg_temp.id('t1'))
+                      = jsonb_build_object('text', E'## Willkommen\n- Dienstag',
+                                           'stand', to_char(now() at time zone 'Europe/Zurich', 'YYYY-MM-DD')),
+  'das Mitglied liest die Infos seines Teams samt Stand');
+select pg_temp.pruefe(team_infos_lesen(pg_temp.id('t2')) = '{"text": null, "stand": null}'::jsonb,
+  'ohne Infos: beides null');
 select pg_temp.zurueck();
 
 -- Der Stand rückt nur mit dem Text: zurückdatieren, gleich speichern, ändern.
@@ -137,7 +146,7 @@ select pg_temp.als(pg_temp.id('a'));
 select pg_temp.pruefe(char_length(team_infos_festlegen(pg_temp.id('t2'), repeat('ä', 10000)) ->> 'text') = 10000,
   '10000 Zeichen gehen');
 select pg_temp.erwarte(format('select team_infos_festlegen(%L, repeat(%L, 10001))', pg_temp.id('t2'), 'x'), 'TEAM_INFOS_ZU_LANG');
-select pg_temp.pruefe((select char_length(text) from team_infos where team_id = pg_temp.id('t2')) = 10000,
+select pg_temp.pruefe(char_length(team_infos_lesen(pg_temp.id('t2')) ->> 'text') = 10000,
   'zu lang: die bisherige Fassung bleibt');
 select team_infos_festlegen(pg_temp.id('t2'), E'**Fett** www.fc-wyler.ch');
 select pg_temp.zurueck();

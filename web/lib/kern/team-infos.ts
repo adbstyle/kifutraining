@@ -2,16 +2,15 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
 import { TEAM_INFOS_TEXT, teamInfosBereinigt, teamInfosProblem, type TeamInfos } from "@/lib/team-infos";
-import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
-import { TRAININGS_ZEITZONE } from "@/lib/zeit";
 import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 
 /**
  * Infos zum Team (#598): lesen und festlegen — dieselben Funktionen für die
  * Karte «Infos zum Team» und die KI-Werkzeuge (AK 9).
  *
- * Geschrieben wird nur über die RPC `team_infos_festlegen`; Grenze, Leeren
- * und Stand (nur bei verändertem Text) stehen in der Datenebene.
+ * Gelesen und geschrieben wird nur über die RPCs `team_infos_lesen` und
+ * `team_infos_festlegen`; Grenze, Leeren und Stand (nur bei verändertem Text,
+ * als Tag am Trainingsort) stehen allein in der Datenebene.
  */
 
 function teamInfosFehler(e: { message: string; code?: string }): KernFehler {
@@ -22,30 +21,17 @@ function teamInfosFehler(e: { message: string; code?: string }): KernFehler {
   return ausDbFehler(e);
 }
 
-/** «YYYY-MM-DD» am Trainingsort, wie die Datenebene den Stand nennt. */
-function standAmTrainingsort(zeitpunkt: string): string {
-  return new Date(zeitpunkt).toLocaleDateString("sv-SE", { timeZone: TRAININGS_ZEITZONE });
-}
-
 /** Die Infos des Teams (AK 7): `text` leer = keine. */
 export async function leseTeamInfos(
   supabase: SupabaseClient,
   _userId: string,
   e: { teamId: string },
 ): Promise<KernErgebnis<TeamInfos & { teamId: string }>> {
-  const team = await pruefeTeamMitglied(supabase, e.teamId);
-  if (!team.ok) return team;
-  const { data, error } = await supabase
-    .from("team_infos")
-    .select("text, geaendert_am")
-    .eq("team_id", e.teamId)
-    .maybeSingle<{ text: string; geaendert_am: string }>();
-  if (error) return ausDbFehler(error);
-  return ok({
-    teamId: e.teamId,
-    text: data?.text ?? null,
-    stand: data ? standAmTrainingsort(data.geaendert_am) : null,
-  });
+  if (!istUuid(e.teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
+  const { data, error } = await supabase.rpc("team_infos_lesen", { p_team: e.teamId });
+  if (error) return teamInfosFehler(error);
+  const r = data as TeamInfos;
+  return ok({ teamId: e.teamId, text: r.text, stand: r.stand });
 }
 
 /** Die Infos verfassen, ändern oder — leer — entfernen (AK 1, 3). */
