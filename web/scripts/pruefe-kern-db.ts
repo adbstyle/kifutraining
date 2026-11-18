@@ -1526,10 +1526,10 @@ try {
 
     // Ausfall: Das Training ruht am Termin und ist nach der Rücknahme wieder da.
     const amMorgen = await traegt(morgen);
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: morgen, grund: "Regen" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: morgen, grund: "Regen", benachrichtigen: false }));
     assert.equal(await traegt(morgen), amMorgen);
     fehler(await ordne(morgen, y), "regel", TERMIN_MELDUNG.TERMIN_AUSGEFALLEN);
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: morgen }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: morgen, benachrichtigen: false }));
     assert.equal(await traegt(morgen), amMorgen);
 
     // AK 12: Lösen löscht das Termin-Training.
@@ -1862,7 +1862,7 @@ try {
     assert.equal(wert(await aendereTermin(a.supabase, a.id, { terminId: e, beginn: "00:10", ende: "01:00", bestaetigt: 0, treffpunktWeg: true })).treffpunktEntfallen, true);
     assert.deepEqual(await tp(e), { beginn: "00:10:00", treffpunkt_vorlauf_min: null, treffpunkt_ort: null, treffpunkt_abweichend: false });
     // AK 1: entfernen und neu setzen, auch an einem ausgefallenen Termin.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: e }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: e, benachrichtigen: false }));
     wert(await aendereTermin(a.supabase, a.id, { terminId: e, treffpunkt: { zeit: "00:00", ort: "Eingang" } }));
     assert.equal((await tp(e)).treffpunkt_vorlauf_min, 10);
 
@@ -2384,10 +2384,10 @@ try {
     fehler(await setzeAbsage(a.supabase, a.id, { terminId: t, userId: c.id, abgesagt: true }), "regel", TRAINER_MELDUNG.TRAINER_NICHT_EINGELADEN);
 
     // AK 3, 6: Am ausgefallenen Termin ruht die Absage und lässt sich nicht ändern; zurückgenommen gilt sie wieder (PC 5).
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, benachrichtigen: false }));
     fehler(await setzeAbsage(b.supabase, b.id, { terminId: t, userId: b.id, abgesagt: false }), "regel", TRAINER_MELDUNG.ABSAGE_AUSGEFALLEN);
     assert.ok(await absage(t, b.id), "ruht");
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t, benachrichtigen: false }));
     assert.ok(await absage(t, b.id), "gilt wieder");
     // AK 3: ab Beginn nicht mehr.
     const vorbei = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
@@ -2571,10 +2571,10 @@ try {
     const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30", bemerkung: "Leibchen" }));
     const amTermin = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t.terminId, trainingId: tr.id })).trainingId;
     // Zu langer Grund: vorab abgewiesen, der Termin bleibt unverändert.
-    fehler(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "x".repeat(501) }), "eingabe", TERMIN_TEXT.grundLang);
+    fehler(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "x".repeat(501), benachrichtigen: false }), "eingabe", TERMIN_TEXT.grundLang);
     // Kein Ausfall zum Zurücknehmen.
-    fehler(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }), "regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN);
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Platz gesperrt" }));
+    fehler(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId, benachrichtigen: false }), "regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN);
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Platz gesperrt", benachrichtigen: false }));
     const zeile = async () => (await admin.from("training_termine").select("ausgefallen, ausfall_grund, training_id, bemerkung").eq("id", t.terminId).single()).data!;
     assert.deepEqual(await zeile(), { ausgefallen: true, ausfall_grund: "Platz gesperrt", training_id: amTermin, bemerkung: "Leibchen" });
     // AK 9: kein Training auf einen ausgefallenen Termin.
@@ -2583,29 +2583,29 @@ try {
     const { error: rpcFehler } = await a.supabase.rpc("termin_training_setzen", { p_termin: t.terminId, p_training: tr.id });
     assert.match(rpcFehler!.message, /TERMIN_AUSGEFALLEN/);
     // Ohne Angabe bleibt der Grund eines ausgefallenen Termins stehen …
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, benachrichtigen: false }));
     assert.equal((await zeile()).ausfall_grund, "Platz gesperrt", "grund weggelassen = unverändert");
     // … «» und null leeren ihn, ein neuer Text ersetzt ihn.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Neu" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Neu", benachrichtigen: false }));
     assert.equal((await zeile()).ausfall_grund, "Neu");
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "", benachrichtigen: false }));
     assert.equal((await zeile()).ausfall_grund, null);
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Nochmal" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Nochmal", benachrichtigen: false }));
     // AK 3: Grund ändern und leeren, ohne den Ausfall zurückzunehmen.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: null }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: null, benachrichtigen: false }));
     assert.equal((await zeile()).ausfall_grund, null);
     // PC 3: zurücknehmen → normal, ohne Grund, mit dem Training, das ruhte.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Nochmal" }));
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Nochmal", benachrichtigen: false }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId, benachrichtigen: false }));
     // Ein zweites Zurücknehmen (etwa eines anderen Mitglieds) weist ab.
-    fehler(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }), "regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN);
+    fehler(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId, benachrichtigen: false }), "regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN);
     // Ein neu markierter Termin ohne Grund trägt keinen.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, benachrichtigen: false }));
     assert.equal((await zeile()).ausfall_grund, null);
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId, benachrichtigen: false }));
     assert.deepEqual(await zeile(), { ausgefallen: false, ausfall_grund: null, training_id: amTermin, bemerkung: "Leibchen" });
     // PC 4/5: Einzeln auf heute oder später verlegt endet der Ausfall, auf gestern nicht.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Regen" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Regen", benachrichtigen: false }));
     wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, datum: tagCh(-1) }));
     assert.equal((await zeile()).ausgefallen, true);
     // Ein anderes Feld beendet den Ausfall nicht.
@@ -2614,7 +2614,7 @@ try {
     wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, datum: tagCh(4) }));
     assert.deepEqual(await zeile(), { ausgefallen: false, ausfall_grund: null, training_id: amTermin, bemerkung: "Leibchen" });
     // PC 4, Grenze: Genau auf heute verlegt endet der Ausfall ebenfalls.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Schnee" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Schnee", benachrichtigen: false }));
     wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, datum: tagCh(0) }));
     assert.deepEqual(await zeile(), { ausgefallen: false, ausfall_grund: null, training_id: amTermin, bemerkung: "Leibchen" });
   });
@@ -2624,28 +2624,28 @@ try {
     const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30" }));
     const zeile = async () => (await admin.from("training_termine").select("ausgefallen, ausfall_grund").eq("id", t.terminId).single()).data!;
     // (a) «Grund ändern»: Ein anderes Mitglied hat den Ausfall inzwischen zurückgenommen.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Regen" }));
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Regen", benachrichtigen: false }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId, benachrichtigen: false }));
     fehler(
-      await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Schnee", erwartetAusgefallen: true }),
+      await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Schnee", erwartetAusgefallen: true, benachrichtigen: false }),
       "konflikt",
       TERMIN_MELDUNG.AUSFALL_GEAENDERT,
     );
     assert.deepEqual(await zeile(), { ausgefallen: false, ausfall_grund: null }, "bleibt nicht ausgefallen");
     // (b) «Ausfallen lassen»: Ein anderes Mitglied ist zuvorgekommen, sein Grund bleibt.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Fremder Grund" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Fremder Grund", benachrichtigen: false }));
     fehler(
-      await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Eigener Grund", erwartetAusgefallen: false }),
+      await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Eigener Grund", erwartetAusgefallen: false, benachrichtigen: false }),
       "konflikt",
       TERMIN_MELDUNG.AUSFALL_GEAENDERT,
     );
     assert.deepEqual(await zeile(), { ausgefallen: true, ausfall_grund: "Fremder Grund" }, "fremder Grund bleibt");
     // Passt die Erwartung, schreibt es; ohne Angabe (KI) gilt der eben gelesene Stand.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Neu", erwartetAusgefallen: true }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Neu", erwartetAusgefallen: true, benachrichtigen: false }));
     assert.equal((await zeile()).ausfall_grund, "Neu");
     // Termin weg → nicht gefunden.
     await admin.from("training_termine").delete().eq("id", t.terminId);
-    fehler(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "x", erwartetAusgefallen: true }), "nicht_gefunden", TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN);
+    fehler(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "x", erwartetAusgefallen: true, benachrichtigen: false }), "nicht_gefunden", TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN);
   });
 
   await pruefe("Ausfall in der Serie: Tausch behält ihn, Serienänderung wirkt wie bei anderen, keine Abweichung (#327 PC 5, 7, 8)", async () => {
@@ -2655,13 +2655,13 @@ try {
     const z = async (id: string) =>
       (await admin.from("training_termine").select("datum, serien_tag, ort, ausgefallen, ausfall_grund, zeit_abweichend, ort_abweichend, bemerkung_abweichend").eq("id", id).single()).data!;
     // PC 8: Markieren und Zurücknehmen setzt kein Abweichungs-Flag.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t[1].id, grund: "Platz gesperrt" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t[1].id, grund: "Platz gesperrt", benachrichtigen: false }));
     let r = await z(t[1].id);
     assert.deepEqual([r.ausgefallen, r.zeit_abweichend, r.ort_abweichend, r.bemerkung_abweichend, r.datum === r.serien_tag], [true, false, false, false, true]);
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t[1].id }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t[1].id, benachrichtigen: false }));
     r = await z(t[1].id);
     assert.deepEqual([r.ausgefallen, r.zeit_abweichend, r.ort_abweichend, r.bemerkung_abweichend], [false, false, false, false]);
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t[1].id, grund: "Platz gesperrt" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t[1].id, grund: "Platz gesperrt", benachrichtigen: false }));
     // PC 7: Eine Serienänderung trifft den ausgefallenen Termin wie jeden anderen.
     wert(await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { ort: "Halle" } }));
     r = await z(t[1].id);
@@ -3657,7 +3657,7 @@ try {
     fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: t1.terminId, trainingId: fremd }), "regel", TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM);
     // AK 9: nicht auf einen ausgefallenen Termin — und es entsteht keine Kopie.
     wert(await loeseTraining(a.supabase, a.id, { terminId: t1.terminId }));
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t1.terminId }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t1.terminId, benachrichtigen: false }));
     const vorher = (await admin.from("trainings").select("*", { count: "exact", head: true }).eq("team_id", team)).count;
     fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: t1.terminId, trainingId: p }), "regel", TERMIN_MELDUNG.TERMIN_AUSGEFALLEN);
     assert.equal((await admin.from("trainings").select("*", { count: "exact", head: true }).eq("team_id", team)).count, vorher);
@@ -3843,7 +3843,7 @@ try {
     const alt = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-29), beginn: "10:00", ende: "11:00" }));
     const rand = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-28), beginn: "10:00", ende: "11:00" }));
     const aus = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(2), beginn: "10:00", ende: "11:00" }));
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus.terminId }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus.terminId, benachrichtigen: false }));
     const ids = async () => (await feed(token)).termine!.map((t) => t.id);
     assert.deepEqual(await ids(), [rand.terminId], "PC 1, 5: heute−28 ja, heute−29 und Ausgefallene nein");
     assert.ok(!(await ids()).includes(alt.terminId));
@@ -3856,7 +3856,7 @@ try {
       { id: rand.terminId, datum: tagCh(4), beginn: "17:00", ende: "18:30", ort: "Halle" },
     );
     // Ausfall zurücknehmen bringt den Termin wieder; Entfernen nimmt ihn weg.
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: aus.terminId }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: aus.terminId, benachrichtigen: false }));
     assert.deepEqual(await ids(), [aus.terminId, rand.terminId], "Datumsfolge: heute+2, heute+4");
     wert(await entferneTermin(a.supabase, a.id, { terminId: aus.terminId }));
     assert.deepEqual(await ids(), [rand.terminId], "PC 5: entfernt");
@@ -4199,9 +4199,9 @@ try {
     assert.deepEqual(await felderVon(t.terminId), [KUNSTRASEN], "ersetzen");
     wert(await loeseTraining(a.supabase, a.id, { terminId: t.terminId }));
     assert.deepEqual(await felderVon(t.terminId), [KUNSTRASEN], "lösen");
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Regen" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Regen", benachrichtigen: false }));
     assert.deepEqual(await felderVon(t.terminId), [KUNSTRASEN], "ausfallen");
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId, benachrichtigen: false }));
     assert.deepEqual(await felderVon(t.terminId), [KUNSTRASEN], "zurücknehmen");
     // OoS 4: Das Abo nennt nur Zeit und Ort.
     const token = (await holen(a, team)).token!;
@@ -4277,9 +4277,9 @@ try {
     wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t.terminId, trainingId: t1.id }));
     wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t.terminId, trainingId: t2.id }));
     wert(await loeseTraining(a.supabase, a.id, { terminId: t.terminId }));
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Regen" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Regen", benachrichtigen: false }));
     assert.equal(await zahlVon(t.terminId), 12, "zuordnen, ersetzen, lösen, ausfallen");
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId, benachrichtigen: false }));
     assert.equal(await zahlVon(t.terminId), 12);
     // OoS 5: Das Abo nennt nur Zeit und Ort.
     const imFeed = (await feed((await holen(a, team)).token!)).termine!.find((x) => x.id === t.terminId)!;
@@ -5039,7 +5039,7 @@ try {
       "konflikt", abweisungText("verlegt", { datum: tagCh(2), beginn: "18:00", ende: "19:00", ausgefallen: false }));
     assert.equal((await standVon(team, t)).spielstand?.angemeldet, 2);
     // #437 AK 3: ausgefallen → keine Ab- oder Anmeldung.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: null }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: null, benachrichtigen: false }));
     fehler(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true, gesehen }), "regel", ABMELDUNG_TEXT.ausgefallen);
     // AK 4: begonnen → abgewiesen.
     const gestern = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" })).terminId;
@@ -5127,16 +5127,16 @@ try {
     // #533 AK 6: der Kartenlink zum Ort am privaten Link.
     wert(await aendereTermin(a.supabase, a.id, { terminId: t, ortLink: "https://maps.app.goo.gl/wyler" }));
     assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].ort_link, "https://maps.app.goo.gl/wyler");
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Platz gesperrt\nNachholen offen" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Platz gesperrt\nNachholen offen", benachrichtigen: false }));
     const ausgefallen = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0];
     assert.equal(ausgefallen.verantwortlich, null, "ausgefallen: keine");
     assert.equal(ausgefallen.ort_link, null, "#533 AK 7: ausgefallen kein Kartenlink");
     // #530 AK 1, 4: der Grund ganz, samt Zeilenumbruch.
     assert.equal(ausgefallen.ausfall_grund, "Platz gesperrt\nNachholen offen");
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: null }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: null, benachrichtigen: false }));
     assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].ausfall_grund, null, "#530 PC 1, 2: geleert");
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Regen" }));
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Regen", benachrichtigen: false }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t, benachrichtigen: false }));
     assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: link.token })).data.termine[0].ausfall_grund, null, "#530 PC 3: zurückgenommen");
 
     const abmelden = (token: string, abgemeldet: boolean) =>
@@ -5259,7 +5259,7 @@ try {
     wert(await setzeTerminKader(a.supabase, a.id, { terminId: fremd, kaderIds: [kader] }));
     await admin.from("training_termine").insert({ team_id: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00" });
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: ab, spielerId: lena, abgemeldet: true }));
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus, benachrichtigen: false }));
     const link = await linkVon(team, lena);
     const abo = (await aboHolen(link))!;
     const ansicht = (await feldAnon.rpc("spieler_link_ansicht", { p_token: link })).data as { termine: { id: string; ausgefallen: boolean }[] };
@@ -5270,8 +5270,8 @@ try {
     assert.deepEqual((await aboFeed(abo)).termine!.map((x) => x.abgemeldet), [false, true], "PC 3");
     // PC 4: Verlegt erscheint er genau einmal am neuen Zeitpunkt, ausgefallen fehlt er.
     wert(await aendereTermin(a.supabase, a.id, { terminId: offen, datum: tagCh(6) }));
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: aus }));
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: ab }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: aus, benachrichtigen: false }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: ab, benachrichtigen: false }));
     const danach = (await aboFeed(abo)).termine!;
     assert.deepEqual(danach.map((x) => [x.id, x.datum]), [[aus, tagCh(4)], [offen, tagCh(6)]]);
   });
@@ -5398,18 +5398,18 @@ try {
     // PC 4: Ein Ausfall lässt die Abmeldung ruhen; zurückgenommen gilt sie wieder.
     const u = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: u, spielerId: lena, abgemeldet: true }));
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: u, grund: null }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: u, grund: null, benachrichtigen: false }));
     const ausgefallen = (await linkAnsicht(team, lena)).termine.find((x) => x.id === u)!;
     assert.equal(ausgefallen.abgemeldet, true);
     // AK 4, #472: Ausgefallen nennt der Link keine Zahl, auch nicht von wie vielen.
     assert.deepEqual([ausgefallen.angemeldet, ausgefallen.gesamt], [null, null]);
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: u }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: u, benachrichtigen: false }));
     assert.equal((await standVon(team, u)).spielstand?.angemeldet, 1);
     // PC 1: Auch während des Ausfalls verfällt sie beim Verlegen.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: u, grund: null }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: u, grund: null, benachrichtigen: false }));
     fehler(await aendereTermin(a.supabase, a.id, { terminId: u, beginn: "17:00", ende: "18:00" }), "regel");
     wert(await aendereTermin(a.supabase, a.id, { terminId: u, beginn: "17:00", ende: "18:00", bestaetigt: true }));
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: u }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: u, benachrichtigen: false }));
     assert.equal((await standVon(team, u)).spielstand?.angemeldet, 2);
     // PC 5: Entfernen nimmt die Abmeldungen mit.
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: u, spielerId: lena, abgemeldet: true }));
@@ -5678,7 +5678,7 @@ try {
     const gesehen = { datum: tagCh(7), beginn: "18:00" };
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: k.lena, abgemeldet: true, gesehen }));
     // Auch an einem ausgefallenen Termin (PC 1).
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "", benachrichtigen: false }));
     const weg = { teamId: k.team, spielerIds: [k.lena], weg: [k.s1] };
     const r = fehler(await aendereZuteilung(a.supabase, a.id, weg), "regel", kaderVerfallBestaetigen(1)) as { verfallend?: number };
     assert.equal(r.verfallend, 1);
@@ -5690,7 +5690,7 @@ try {
     // Wieder zugeteilt: angemeldet, die Abmeldung kehrt nicht zurück (OoS 5).
     wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.lena], dazu: [k.s1] }));
     // Die KI bestätigt mit «true», der Kern nennt die Zahl selbst.
-    await nimmAusfallZurueck(a.supabase, a.id, { terminId: t });
+    await nimmAusfallZurueck(a.supabase, a.id, { terminId: t, benachrichtigen: false });
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: k.mia, abgemeldet: true, gesehen }));
     assert.equal(wert(await setzeTerminKader(a.supabase, a.id, { terminId: t, kaderIds: [k.s2], bestaetigt: true })).verfallen, 1);
   });
@@ -5851,8 +5851,8 @@ try {
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
     const vorher = (await seit(t)).Lena;
     assert.ok(vorher);
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "" }));
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "", benachrichtigen: false }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t, benachrichtigen: false }));
     assert.equal((await seit(t)).Lena, vorher);
 
     // PC 6, 7: Der Stand bei Beginn behält die Zeit; wer gelöscht wird, nimmt sie mit, wer
@@ -5964,11 +5964,11 @@ try {
     fehler(await setzeAnwesenheit(a.supabase, a.id, { terminId: ohneTermin, spielerId: neu, da: false }), "regel", ABMELDUNG_TEXT.nichtDabei);
     // AK 6, 11: ausgefallen — weder setzen noch sehen; die Rücknahme lässt sie wieder gelten (PC 4).
     wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: lena, da: false, gesehen }));
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: null }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: null, benachrichtigen: false }));
     fehler(await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: lena, da: true, gesehen }), "regel", ABMELDUNG_TEXT.ausgefallenNachtrag);
     const ausgefallen = wert(await terminSpieler(a.supabase, a.id, { terminId: t }));
     assert.deepEqual([ausgefallen.anwesend, ausgefallen.spieler.some((s) => s.nachgetragen)], [null, false]);
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t, benachrichtigen: false }));
     assert.deepEqual((await anwesenheit(t)).Lena, [false, true]);
     // Fremde und ohne Konto: nichts; direkt schreiben geht nicht.
     fehler(await setzeAnwesenheit(b.supabase, b.id, { terminId: t, spielerId: lena, da: true }), "nicht_gefunden");
@@ -6079,7 +6079,7 @@ try {
     assert.equal(ausDbFehler(art.error!).meldung, SPIEL_MELDUNG.TERMIN_ART_FEST);
 
     // PC 5: Eine Verlegung beendet den Ausfall — auch nur der Zeit.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Platz gesperrt" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Platz gesperrt", benachrichtigen: false }));
     wert(await aendereTermin(a.supabase, a.id, { terminId: t, beginn: "11:00", ende: "12:30" }));
     const z = (await admin.from("training_termine").select("ausgefallen, ausfall_grund").eq("id", t).single()).data;
     assert.deepEqual(z, { ausgefallen: false, ausfall_grund: null });
@@ -6255,10 +6255,10 @@ try {
     assert.equal((await meldungen(t)).Mia, null, "gilt es wieder, ist sie ohne Meldung");
     // AK 18, 19; PC 5: Ausfall — keine Meldung, nichts zu sehen; danach gilt die ruhende wieder.
     wert(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.lena, angemeldet: true }));
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, benachrichtigen: false }));
     fehler(await setzeMeldung(a.supabase, a.id, { terminId: t, spielerId: k.mia, angemeldet: true }), "regel", MELDUNG_TEXT.ausgefallen);
     assert.deepEqual(wert(await spielSpieler(a.supabase, a.id, { terminId: t })).spieler, []);
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t, benachrichtigen: false }));
     assert.equal((await meldungen(t)).Lena, "angemeldet");
     // AK 27; PC 9: Entfernen nur mit der Zahl der verschwindenden Meldungen.
     const e = fehler(await entferneTermin(a.supabase, a.id, { terminId: t }), "regel", spielBestaetigen(spielEntfernenText(1))) as { verschwindend?: number };
@@ -6315,10 +6315,10 @@ try {
     wert(await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: k.lena, da: true }));
     assert.equal(wert(await spielSpieler(a.supabase, a.id, { terminId: t })).anwesend, 3);
     // AK 6, 12; PC 4: ausgefallen — keine Nachträge, keine Zahl; danach gelten sie wieder.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, benachrichtigen: false }));
     fehler(await setzeAnwesenheit(a.supabase, a.id, { terminId: t, spielerId: k.lena, da: false }), "regel", ABMELDUNG_TEXT.ausgefallenNachtrag);
     assert.equal(wert(await spielSpieler(a.supabase, a.id, { terminId: t })).anwesend, null);
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t, benachrichtigen: false }));
     assert.equal(wert(await spielSpieler(a.supabase, a.id, { terminId: t })).anwesend, 3);
 
     // PC 7, 8: am selben Tag auf später — wieder offen mit den bisherigen Meldungen; Zoe neu ohne.
@@ -6410,10 +6410,10 @@ try {
     assert.deepEqual([tr.hinweis_eltern, "bemerkung" in tr, tr.treffpunkte], ["Pincode: 4702", false, null], "#590 AK 9, 13: Hinweis ja, Bemerkung nie");
     // PC 3; #530; #590 AK 11, PC 4: ausgefallen nur der Grund, kein Hinweis und keine
     // Treffpunkte; der Ausfall endet, Hinweis und Treffpunkte sind wieder da.
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Platz gesperrt" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Platz gesperrt", benachrichtigen: false }));
     const aus = await imLink(t);
     assert.deepEqual([aus.ausfall_grund, aus.hinweis_eltern, aus.treffpunkte], ["Platz gesperrt", null, null]);
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t, benachrichtigen: false }));
     const wieder = await imLink(t);
     assert.deepEqual([wieder.ausfall_grund, wieder.hinweis_eltern, wieder.treffpunkte.length], [null, "Schienbeinschoner mitnehmen.", 2]);
 
@@ -6443,7 +6443,7 @@ try {
     const vorbei = wert(await k.spiel(5, { meldefrist: `${tagCh(-1)}T20:00` })).terminId;
     const aus = wert(await k.spiel(6)).terminId;
     const training = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: k.team, datum: tagCh(4), beginn: "18:00", ende: "19:00", hinweisEltern: "Pincode", treffpunkt: { zeit: "17:45", ort: "Garderoben" } })).terminId;
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus, benachrichtigen: false }));
     wert(await setzeAufgebot(a.supabase, a.id, { terminId: offen, spielerId: k.lena, nichtAufgeboten: true }));
     const link = await linkVon(k.team, k.lena);
     const abo = (await aboHolen(link))!;
@@ -6511,10 +6511,10 @@ try {
     assert.ok(f.meldung?.startsWith("Das Spiel wurde inzwischen verlegt"));
     const training = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: k.team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
     fehler(await setzeAufgebot(a.supabase, a.id, { terminId: training, spielerId: k.lena, nichtAufgeboten: true }), "nicht_gefunden"); // OoS 1: nicht an Trainings
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, benachrichtigen: false }));
     fehler(await setzeAufgebot(a.supabase, a.id, { terminId: t, spielerId: k.lena, nichtAufgeboten: true }), "regel", MELDUNG_TEXT.ausgefallen);
     // PC 2: Sie ruht beim Ausfall und gilt danach wieder.
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t, benachrichtigen: false }));
     assert.equal(wert(await spielSpieler(a.supabase, a.id, { terminId: t })).spieler.find((x) => x.vorname === "Mia")!.nichtAufgeboten, true);
   });
 
@@ -6701,11 +6701,11 @@ try {
     // PC 7: ein ausgefallenes Training zählt weder als angemeldet noch als besucht und ruht.
     wert(await setzeAbmeldung(a.supabase, a.id, { terminId: morgen, spielerId: k.mia, abgemeldet: false }));
     assert.equal((await k.probeVon(k.mia))!.angemeldet, 1);
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: morgen, grund: null }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: morgen, grund: null, benachrichtigen: false }));
     assert.equal((await k.probeVon(k.mia))!.angemeldet, 0);
-    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: morgen }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: morgen, benachrichtigen: false }));
     assert.equal((await k.probeVon(k.mia))!.angemeldet, 1, "die Anmeldung kehrt zurück");
-    wert(await lasseAusfallen(a.supabase, a.id, { terminId: gestern, grund: null }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: gestern, grund: null, benachrichtigen: false }));
     assert.equal((await k.probeVon(k.mia))!.besucht, 0);
   });
 
@@ -8364,6 +8364,58 @@ try {
     assert.equal(await ladeBenachrichtigungen(token), null);
     assert.notEqual(linkSchluessel(neu), linkSchluessel(token));
     assert.equal((await admin.from("spieler_benachrichtigungen").select("id").eq("spieler_id", max)).data!.length, 2);
+  });
+
+  await pruefe("Benachrichtigungen (#643 AK 1, 3, 4; PC 1; OoS 1): Ausfall mit Grund und Rücknahme je Spieler:in; Grund ändern still, ohne Entscheid keine, vergangen 0; KI standardmässig ja", async () => {
+    const name = "Kern-DB-Glocke-Ausfall";
+    const team = await serienTeam(name);
+    const lea = (await neuerSpieler(team, "Lea", "Ausfall", 2016)).spielerId;
+    const max = (await neuerSpieler(team, "Max", "Ausfall", 2016)).spielerId;
+    const zeilen = async (terminId: string) =>
+      (await admin.from("spieler_benachrichtigungen").select("spieler_id, ereignis, inhalt").eq("termin_id", terminId).order("erstellt_am")).data ?? [];
+    const training = async (tage: number) =>
+      wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(tage), beginn: "18:00", ende: "19:30", ort: "Halle" })).terminId;
+
+    // Ausfall mit Benachrichtigung: je Spieler:in eine Zeile mit Grund (AK 3, PC 1).
+    const t = await training(3);
+    assert.equal(wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Halle besetzt", erwartetAusgefallen: false, benachrichtigen: true })).benachrichtigt, 2);
+    let z = await zeilen(t);
+    assert.deepEqual(z.map((x) => x.spieler_id).sort(), [lea, max].sort());
+    assert.ok(z.every((x) => x.ereignis === "ausfall"));
+    assert.deepEqual(z[0].inhalt, { team: name, art: "training", bezeichnung: null, datum: tagCh(3), beginn: "18:00", ende: "19:30", ort: "Halle", grund: "Halle besetzt" });
+    // Grund ändern am ausgefallenen Termin, auch mit true: still (OoS 1) — über die Oberfläche und ohne Erwartung.
+    assert.equal(wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Neu", erwartetAusgefallen: true, benachrichtigen: true })).benachrichtigt, null);
+    assert.equal(wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Nochmal", benachrichtigen: true })).benachrichtigt, null);
+    assert.equal((await zeilen(t)).length, 2);
+    // Die erhaltene Benachrichtigung bleibt, wie sie war (OoS 3).
+    assert.equal((await zeilen(t))[0].inhalt.grund, "Halle besetzt");
+
+    // Rücknahme mit Benachrichtigung: Zeile `ruecknahme` ohne Grund (AK 4).
+    assert.equal(wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t, benachrichtigen: true })).benachrichtigt, 2);
+    z = (await zeilen(t)).filter((x) => x.ereignis === "ruecknahme");
+    assert.equal(z.length, 2);
+    assert.deepEqual(z[0].inhalt, { team: name, art: "training", bezeichnung: null, datum: tagCh(3), beginn: "18:00", ende: "19:30", ort: "Halle" });
+
+    // Ohne Entscheid für die Benachrichtigung: keine Zeile.
+    const still = await training(4);
+    assert.equal(wert(await lasseAusfallen(a.supabase, a.id, { terminId: still, grund: null, benachrichtigen: false })).benachrichtigt, null);
+    assert.equal(wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: still, benachrichtigen: false })).benachrichtigt, null);
+    assert.equal((await zeilen(still)).length, 0);
+
+    // Vergangener Termin (AK 1): auch mit true nichts.
+    const gestern = await training(-1);
+    assert.equal(wert(await lasseAusfallen(a.supabase, a.id, { terminId: gestern, grund: null, benachrichtigen: true })).benachrichtigt, 0);
+    assert.equal(wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: gestern, benachrichtigen: true })).benachrichtigt, 0);
+    assert.equal((await zeilen(gestern)).length, 0);
+
+    // KI (Prinzip 4): ohne Angabe benachrichtigt, mit false still.
+    const k = await training(5);
+    assert.deepEqual(kiWert(await ki(a, "termin_ausfallen_lassen", { termin_id: k, grund: "Schnee" })), { termin_id: k, benachrichtigt: 2 });
+    assert.deepEqual(kiWert(await ki(a, "termin_ausfallen_lassen", { termin_id: k, grund: "Eis" })), { termin_id: k, benachrichtigt: null });
+    assert.deepEqual(kiWert(await ki(a, "termin_ausfall_zuruecknehmen", { termin_id: k, benachrichtigen: false })), { termin_id: k, benachrichtigt: null });
+    assert.deepEqual(kiWert(await ki(a, "termin_ausfallen_lassen", { termin_id: k, benachrichtigen: false })), { termin_id: k, benachrichtigt: null });
+    assert.deepEqual(kiWert(await ki(a, "termin_ausfall_zuruecknehmen", { termin_id: k })), { termin_id: k, benachrichtigt: 2 });
+    assert.deepEqual((await zeilen(k)).map((x) => x.ereignis), ["ausfall", "ausfall", "ruecknahme", "ruecknahme"]);
   });
 
   await pruefe("Schnuppern (#584 AK 5, 6, 14, 15): Ein- und Ausschalten im Team der Liste, nicht in einem fremden, bei weiteren Teams der Satz aus AK 6; Netz in der Datenebene", async () => {

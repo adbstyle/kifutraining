@@ -16,6 +16,12 @@
 --   bleibt nach dem Entfernen des Spiels und dem Herausnehmen aus dem Team
 -- - Link erneuern leert (PC 2), Spieler:in löschen leert (PC 3; Verein
 --   löschen prüft verein_gruenden_loeschen.sql), Frist-Funktion und Job
+-- Story 2 (#643): Ausfall und Rücknahme
+-- - Zustand (Prinzip 1): `ausfall` nur an einem ausgefallenen, `ruecknahme`
+--   nur an einem stattfindenden Termin, sonst still (0)
+-- - Tagesgrenze (AK 1): vergangene Termine still
+-- - Empfänger (PC 1): auch eine abgemeldete Spieler:in
+-- - Inhalt (AK 3, 4): Ausfall mit Grund (auch `null`), Rücknahme ohne Grund
 -- Alles in einer Transaktion mit rollback; hinterlässt nichts.
 
 \set ON_ERROR_STOP on
@@ -293,5 +299,72 @@ begin
   perform pg_temp.pruefe((select array_agg(inhalt ->> 'f') from spieler_benachrichtigungen where inhalt ? 'f') = array['frisch'],
                          'Frist: ' || (select string_agg(inhalt ->> 'f', ' ') from spieler_benachrichtigungen where inhalt ? 'f'));
 end $$;
+
+-- ── Ausfall und Rücknahme (#643) ────────────────────────────────────────────
+
+-- Eigenes Team «Falken» (Mitglied m) mit s3 und s4; s4 ist vom Training a1
+-- abgemeldet. Trainings: a1 (ausgefallen mit Grund), a2 (findet statt),
+-- a3 (gestern, ausgefallen), a4 (ausgefallen ohne Grund).
+insert into ids (name) values ('ta'), ('s3'), ('s4'), ('a1'), ('a2'), ('a3'), ('a4');
+set local session_replication_role = replica;
+insert into teams (id, name, verein_id) values (pg_temp.id('ta'), 'Falken', pg_temp.id('v'));
+insert into team_members (team_id, user_id) values (pg_temp.id('ta'), pg_temp.id('m'));
+insert into spieler (id, team_id, verein_id, vorname, nachname, jahrgang) values
+  (pg_temp.id('s3'), pg_temp.id('ta'), pg_temp.id('v'), 'Tina', 'Da', 2015),
+  (pg_temp.id('s4'), pg_temp.id('ta'), pg_temp.id('v'), 'Tom', 'Abgemeldet', 2015);
+insert into team_spieler (team_id, spieler_id, verein_id, probe_seit) values
+  (pg_temp.id('ta'), pg_temp.id('s3'), pg_temp.id('v'), null),
+  (pg_temp.id('ta'), pg_temp.id('s4'), pg_temp.id('v'), null);
+insert into training_termine (id, team_id, datum, beginn, ende, ort, ausgefallen, ausfall_grund) values
+  (pg_temp.id('a1'), pg_temp.id('ta'), heute_am_trainingsort() + 3, '18:00', '19:30', 'Halle', true, 'Halle besetzt'),
+  (pg_temp.id('a2'), pg_temp.id('ta'), heute_am_trainingsort() + 3, '17:00', '18:00', null, false, null),
+  (pg_temp.id('a3'), pg_temp.id('ta'), heute_am_trainingsort() - 1, '18:00', '19:30', null, true, null),
+  (pg_temp.id('a4'), pg_temp.id('ta'), heute_am_trainingsort() + 2, '18:00', '19:30', null, true, null);
+insert into termin_abmeldungen (termin_id, spieler_id, team_id) values (pg_temp.id('a1'), pg_temp.id('s4'), pg_temp.id('ta'));
+set local session_replication_role = origin;
+
+-- Die Empfänger:innen eines Termins zu einem Ereignis.
+create function pg_temp.empfaenger(p_termin text, p_ereignis text) returns text language sql stable as $$
+  select coalesce(string_agg(i.name, ' ' order by i.name), '')
+    from spieler_benachrichtigungen b join ids i on i.id = b.spieler_id
+   where b.termin_id = pg_temp.id(p_termin) and b.ereignis = p_ereignis $$;
+
+delete from zahl;
+select pg_temp.als(pg_temp.id('m'));
+insert into zahl select x || ':' || e, pg_temp.benachrichtige(x, e)
+  from unnest(array['a1', 'a2', 'a3', 'a4']) x, unnest(array['ausfall', 'ruecknahme']) e;
+select pg_temp.zurueck();
+
+do $$
+declare
+  z jsonb := (select jsonb_object_agg(termin, n) from zahl);
+begin
+  -- Ausfall nur am ausgefallenen, Rücknahme nur am stattfindenden; gestern still.
+  perform pg_temp.pruefe(z = '{"a1:ausfall":2,"a1:ruecknahme":0,"a2:ausfall":0,"a2:ruecknahme":2,'
+                             '"a3:ausfall":0,"a3:ruecknahme":0,"a4:ausfall":2,"a4:ruecknahme":0}', '#643 Zahlen: ' || z::text);
+  -- PC 1: auch die abgemeldete s4.
+  perform pg_temp.pruefe(pg_temp.empfaenger('a1', 'ausfall') = 's3 s4', '#643 Empfänger: ' || pg_temp.empfaenger('a1', 'ausfall'));
+  -- AK 3: mit Grund; ohne Grund steht er als null da.
+  perform pg_temp.pruefe(
+    (select inhalt from spieler_benachrichtigungen where termin_id = pg_temp.id('a1') and spieler_id = pg_temp.id('s4'))
+      = jsonb_build_object('team', 'Falken', 'art', 'training', 'bezeichnung', null,
+                           'datum', to_char(heute_am_trainingsort() + 3, 'YYYY-MM-DD'), 'beginn', '18:00', 'ende', '19:30',
+                           'ort', 'Halle', 'grund', 'Halle besetzt'),
+    '#643 Inhalt Ausfall: ' || (select inhalt::text from spieler_benachrichtigungen
+                                 where termin_id = pg_temp.id('a1') and spieler_id = pg_temp.id('s4')));
+  perform pg_temp.pruefe((select bool_and(inhalt ? 'grund' and inhalt -> 'grund' = 'null'::jsonb)
+                            from spieler_benachrichtigungen where termin_id = pg_temp.id('a4')), '#643 Ausfall ohne Grund');
+  -- AK 4: Rücknahme ohne Grund und ohne «wieder».
+  perform pg_temp.pruefe(
+    (select bool_and(not inhalt ? 'grund' and not inhalt ? 'wieder' and inhalt ->> 'team' = 'Falken' and inhalt ->> 'beginn' = '17:00')
+       from spieler_benachrichtigungen where termin_id = pg_temp.id('a2')), '#643 Inhalt Rücknahme');
+end $$;
+
+-- Rücknahme des gestrigen Ausfalls: still (AK 1).
+update training_termine set ausgefallen = false, ausfall_grund = null where id = pg_temp.id('a3');
+select pg_temp.als(pg_temp.id('m'));
+select pg_temp.pruefe(pg_temp.benachrichtige('a3', 'ruecknahme') = 0, '#643 vergangene Rücknahme');
+select pg_temp.zurueck();
+select pg_temp.pruefe(pg_temp.empfaenger('a3') = '', '#643 vergangen abgelegt');
 
 rollback;

@@ -209,7 +209,8 @@ export const ELTERN_TEXT = {
   neu: "Neu",
   frueher: "Früher",
   leerTitel: "Noch keine Benachrichtigungen",
-  leer: "Sobald ein Team ein neues Spiel erfasst, steht es hier.",
+  // Gilt für alle Ereignisse des Epics #641 (ab #643 auch Ausfall und Rücknahme).
+  leer: "Sobald ein Team ein neues Spiel erfasst oder dir eine Änderung mitteilt, steht es hier.",
   zumTermin: "Zum Termin",
   zurueck: "Zurück zu den Terminen",
   nichtMehr: "Steht nicht mehr in deinen Terminen",

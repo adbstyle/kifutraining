@@ -184,23 +184,33 @@ export async function lasseAusfallenAktion(
   terminId: string,
   grund: string,
   erwartetAusgefallen: boolean,
-): Promise<{ ok: true } | Fehler> {
+  /** Die Spielervertretungen benachrichtigen (#643 AK 1); wirkt nur beim
+   *  Ausfallen lassen, nie beim Ändern des Grunds. */
+  benachrichtigen: boolean,
+): Promise<{ ok: true; benachrichtigungFehlt?: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await lasseAusfallen(a.supabase, a.userId, { terminId, grund, erwartetAusgefallen });
+  const r = await lasseAusfallen(a.supabase, a.userId, { terminId, grund, erwartetAusgefallen, benachrichtigen });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
-  return { ok: true };
+  // Der Ausfall steht; nur die Benachrichtigung ist nicht entstanden.
+  const fehlt = benachrichtigen && !erwartetAusgefallen && r.wert.benachrichtigt === null;
+  return { ok: true, ...(fehlt ? { benachrichtigungFehlt: true as const } : {}) };
 }
 
-/** Den Ausfall eines Termins zurücknehmen (#327 AK 6). */
-export async function nimmAusfallZurueckAktion(terminId: string): Promise<{ ok: true } | Fehler> {
+/** Den Ausfall eines Termins zurücknehmen (#327 AK 6), auf Wunsch mit
+ *  Benachrichtigung (#643 AK 1). */
+export async function nimmAusfallZurueckAktion(
+  terminId: string,
+  benachrichtigen: boolean,
+): Promise<{ ok: true; benachrichtigungFehlt?: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await nimmAusfallZurueck(a.supabase, a.userId, { terminId });
+  const r = await nimmAusfallZurueck(a.supabase, a.userId, { terminId, benachrichtigen });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
-  return { ok: true };
+  const fehlt = benachrichtigen && r.wert.benachrichtigt === null;
+  return { ok: true, ...(fehlt ? { benachrichtigungFehlt: true as const } : {}) };
 }
 
 /** Einem Termin ein Training zuordnen — immer als stille Kopie, die ein

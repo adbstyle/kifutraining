@@ -82,6 +82,7 @@ import {
   KONFLIKT_MARKER,
   ausfallProblem,
   TERMIN_TEXT,
+  AUSFALL_ZURUECKNEHMEN_TEXT,
   ZUORDNEN_ERFOLG,
   geaenderteFelder,
   KARTENLINK_MAX,
@@ -5337,6 +5338,26 @@ pruefe("Benachrichtigungen (#642 AK 5, 6): Texte als Konstanten; Oberfläche und
   const quelle = readFileSync(join(web, "lib/benachrichtigung.ts"), "utf8");
   assert.ok(!/toLocale|new Date\(|Intl\./.test(quelle), "keine Formatierung des Browsers");
   assert.ok(!/\bProbe/.test(Object.values(ELTERN_TEXT).join(" ") + Object.values(BENACHRICHTIGEN_HINWEIS).join(" ")), "kein «Probe» in Oberflächentexten");
+});
+
+pruefe("Benachrichtigungen (#643 AK 1, 2; OoS 1): Ausfall und Rücknahme mit dem Häkchen der Oberfläche und der KI; Grund ändern und vergangene Termine still", () => {
+  assert.equal(BENACHRICHTIGEN_HINWEIS.ausfall, "Den Grund sehen sie auch in der Benachrichtigung.");
+  assert.equal(BENACHRICHTIGEN_HINWEIS.ruecknahme, "Sie sehen, dass der Termin doch stattfindet.");
+  assert.deepEqual(AUSFALL_ZURUECKNEHMEN_TEXT, { titel: "Ausfall zurücknehmen", knopf: "Zurücknehmen", erfolg: "Ausfall zurückgenommen." });
+  const team = readFileSync(join(web, "lib/mcp/werkzeuge/team.ts"), "utf8");
+  assert.match(team, /BENACHRICHTIGEN_MODELL\("ausfall"\)/);
+  assert.match(team, /BENACHRICHTIGEN_MODELL\("ruecknahme"\)/);
+  // Der Ausfall-Dialog: das Feld nur beim Ausfallen lassen eines Termins von heute oder später.
+  const ausfall = readFileSync(join(web, "components/team/AusfallDialog.tsx"), "utf8");
+  assert.match(ausfall, /const mitFeld = termin !== null && !istAusfall && termin\.datum >= heute;/);
+  assert.match(ausfall, /onSpeichern\(grund, mitFeld && benachrichtigen\)/);
+  assert.match(ausfall, /<BenachrichtigenFeld vorgang="ausfall"/);
+  assert.match(readFileSync(join(web, "components/team/AusfallZuruecknehmenDialog.tsx"), "utf8"), /<BenachrichtigenFeld vorgang="ruecknahme"/);
+  // TerminBereich: «nur Grund ändern» sendet immer false; die Rücknahme fragt nur ab heute.
+  const bereich = readFileSync(join(web, "components/team/TerminBereich.tsx"), "utf8");
+  assert.equal(bereich.match(/lasseAusfallenAktion\([^()]*, true, false\)/g)?.length, 3, "die drei Wege «nur Grund»");
+  assert.match(bereich, /if \(t\.datum >= heute\) \{[^}]*setRuecknahme\(t\)/);
+  assert.match(bereich, /nimmAusfallZurueckAktion\(t\.id, false\)/);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

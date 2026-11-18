@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button, Dialog } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { AusfallDialog } from "./AusfallDialog";
+import { AusfallZuruecknehmenDialog } from "./AusfallZuruecknehmenDialog";
 import { EntfallendBestaetigung } from "./EntfallendBestaetigung";
 import { ReichweiteDialog } from "./ReichweiteDialog";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
@@ -36,7 +37,7 @@ import {
   vorschauSerieEntfernenAktion,
   type TerminFelder,
 } from "@/lib/actions/termine";
-import { geaenderteFelder, trainingOhneTermin, ZUORDNEN_ERFOLG } from "@/lib/termin";
+import { AUSFALL_ZURUECKNEHMEN_TEXT, geaenderteFelder, trainingOhneTermin, ZUORDNEN_ERFOLG } from "@/lib/termin";
 import {
   SERIE_MELDUNG,
   SERIE_TEXT,
@@ -227,6 +228,7 @@ export function TerminBereich({
   const entfernenZahl = entfernenStand.meldungen + entfernenStand.kennzeichnungen;
   const [loesen, setLoesen] = useState<TerminZeile | null>(null);
   const [ausfall, setAusfall] = useState<TerminZeile | null>(null);
+  const [ruecknahme, setRuecknahme] = useState<TerminZeile | null>(null);
   const [reichweite, setReichweite] = useState<ReichweiteFrage | null>(null);
   const [bestaetigen, setBestaetigen] = useState<SerienSchritt | null>(null);
   /** Eine Verlegung oder eine Änderung an Kadern liesse Abmeldungen
@@ -361,7 +363,8 @@ export function TerminBereich({
           router.refresh();
           return melde(vorher);
         }
-        const g = await lasseAusfallenAktion(t.id, grund, true);
+        // Nur der Grund eines ausgefallenen Termins: bleibt still (#643 OoS 1).
+        const g = await lasseAusfallenAktion(t.id, grund, true, false);
         if (!g.ok) return einzelnGescheitert(g.error, gilt(), vorher);
       }
       router.refresh();
@@ -428,7 +431,8 @@ export function TerminBereich({
       : await entferneSerieAktion(b.t.id, b.reichweite, erwartet);
     if (!r.ok) return serienFehler(b.art, r.error, laufNr.current !== nr);
     // Der Grund gilt nur für diesen Termin (#402 PC 4); er folgt der Serie nicht.
-    const g = b.grund !== undefined ? await lasseAusfallenAktion(b.t.id, b.grund, true) : null;
+    // Nur der Grund: bleibt still (#643 OoS 1).
+    const g = b.grund !== undefined ? await lasseAusfallenAktion(b.t.id, b.grund, true, false) : null;
     router.refresh();
     serieSchliessen();
     melde(b.art === "aendern" ? `Terminserie geändert.${g && !g.ok ? ` ${g.error}` : ""}` : "Termine entfernt.");
@@ -451,8 +455,9 @@ export function TerminBereich({
     const regelNeu = t.serie && regel ? regelAenderung(t.serie, regel) : null;
     if (!geaendert && !regelNeu && !trainer && !kaderIds) {
       if (grund === undefined) return setBearbeiten(null);
-      // Nur der Grund: Er gilt für diesen Termin, eine Reichweite gibt es nicht (#402 PC 4).
-      return lauf(() => lasseAusfallenAktion(t.id, grund, true), () => "Grund gespeichert.", () => setBearbeiten(null), true, laufNr.current);
+      // Nur der Grund: Er gilt für diesen Termin, eine Reichweite gibt es nicht
+      // (#402 PC 4); er bleibt still (#643 OoS 1).
+      return lauf(() => lasseAusfallenAktion(t.id, grund, true, false), () => "Grund gespeichert.", () => setBearbeiten(null), true, laufNr.current);
     }
     if (!t.serie) return aendereEinzeln(t, geaendert, trainer, grund, false, kaderIds);
     const datum = geaendert?.datum !== undefined;
@@ -580,7 +585,14 @@ export function TerminBereich({
     ausfallen: (t) => { neuerLauf(); setDialogFehler(undefined); setAusfall(t); },
     ausfallZuruecknehmen: (t) => {
       if (pending) return;
-      lauf(() => nimmAusfallZurueckAktion(t.id), () => "Ausfall zurückgenommen.", () => {});
+      // Heute oder später: erst der Dialog mit dem Entscheid (#643 AK 1);
+      // ein vergangener Termin benachrichtigt nie, dort bleibt es ein Klick.
+      if (t.datum >= heute) {
+        neuerLauf();
+        setDialogFehler(undefined);
+        return setRuecknahme(t);
+      }
+      lauf(() => nimmAusfallZurueckAktion(t.id, false), () => AUSFALL_ZURUECKNEHMEN_TEXT.erfolg, () => {});
     },
     trainer: (t, aenderung, meldung) => {
       if (pending) return;
@@ -763,6 +775,7 @@ export function TerminBereich({
 
       <AusfallDialog
         termin={ausfall}
+        heute={heute}
         pending={pending}
         fehler={dialogFehler}
         onClose={() => {
@@ -770,14 +783,41 @@ export function TerminBereich({
           neuerLauf();
           setAusfall(null);
         }}
-        onSpeichern={(grund) => {
+        onSpeichern={(grund, benachrichtigen) => {
           const t = ausfall;
           if (!t) return;
           // Der Grund geht immer als Text mit; «» leert ihn (ausdrücklich «Grund setzen»).
           lauf(
-            () => lasseAusfallenAktion(t.id, grund, t.ausgefallen),
-            () => (t.ausgefallen ? "Grund gespeichert." : "Termin als ausgefallen markiert."),
+            () => lasseAusfallenAktion(t.id, grund, t.ausgefallen, benachrichtigen),
+            (r) =>
+              t.ausgefallen
+                ? "Grund gespeichert."
+                : // Der Ausfall steht; nur die Benachrichtigung ist nicht entstanden (#643).
+                  `Termin als ausgefallen markiert.${r.ok && r.benachrichtigungFehlt ? ` ${BENACHRICHTIGEN_TEXT.gescheitert}` : ""}`,
             () => setAusfall(null),
+            true,
+            laufNr.current,
+          );
+        }}
+      />
+
+      <AusfallZuruecknehmenDialog
+        termin={ruecknahme}
+        pending={pending}
+        fehler={dialogFehler}
+        onClose={() => {
+          if (!ruecknahme) return;
+          neuerLauf();
+          setRuecknahme(null);
+        }}
+        onZuruecknehmen={(benachrichtigen) => {
+          const t = ruecknahme;
+          if (!t) return;
+          lauf(
+            () => nimmAusfallZurueckAktion(t.id, benachrichtigen),
+            (r) =>
+              `${AUSFALL_ZURUECKNEHMEN_TEXT.erfolg}${r.ok && r.benachrichtigungFehlt ? ` ${BENACHRICHTIGEN_TEXT.gescheitert}` : ""}`,
+            () => setRuecknahme(null),
             true,
             laufNr.current,
           );

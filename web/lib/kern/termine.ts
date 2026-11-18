@@ -1046,8 +1046,13 @@ export async function lasseAusfallen(
      *  es, PO 17): Hat ein anderes Mitglied den Ausfall inzwischen gesetzt oder
      *  zurückgenommen, wird nicht geschrieben (`AUSFALL_GEAENDERT`). */
     erwartetAusgefallen?: boolean;
+    /** Ob die Spielervertretungen den Ausfall erfahren (#643 AK 1). Pflicht,
+     *  damit jeder Weg ausdrücklich entscheidet; Oberfläche und KI: Standard
+     *  ja. Wirkt nur, wenn der Termin vorher stattfand — ein geänderter Grund
+     *  bleibt immer still (OoS 1). */
+    benachrichtigen: boolean;
   },
-): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
+): Promise<KernErgebnis<{ terminId: string; teamId: string; benachrichtigt: number | null }>> {
   const p = ausfallProblem(e.grund);
   if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
   const geladen = await ladeTermin(supabase, e.terminId);
@@ -1068,7 +1073,14 @@ export async function lasseAusfallen(
       ? fehlschlag("konflikt", TERMIN_MELDUNG.AUSFALL_GEAENDERT)
       : fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   }
-  return ok({ terminId: t.id, teamId: t.team_id });
+  // Nach dem Schreiben, nur beim Wechsel zu «fällt aus» (#643 PC 1, OoS 1):
+  // Mit `erwartetAusgefallen` traf das Update genau diesen Stand, sonst gilt
+  // der geladene. Tag und Empfänger prüft die Datenebene. `null`: nicht
+  // benachrichtigt werden sollte, oder das Ablegen scheiterte — der Ausfall
+  // bleibt trotzdem.
+  const vorher = e.erwartetAusgefallen ?? t.ausgefallen;
+  const benachrichtigt = e.benachrichtigen && !vorher ? await benachrichtige(supabase, t.id, "ausfall") : null;
+  return ok({ terminId: t.id, teamId: t.team_id, benachrichtigt });
 }
 
 /** Den Ausfall zurücknehmen (#327 AK 6, PC 3): wieder ein normaler Termin,
@@ -1076,8 +1088,13 @@ export async function lasseAusfallen(
 export async function nimmAusfallZurueck(
   supabase: SupabaseClient,
   _userId: string,
-  e: { terminId: string },
-): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
+  e: {
+    terminId: string;
+    /** Ob die Spielervertretungen erfahren, dass der Termin wieder
+     *  stattfindet (#643 AK 1). Pflicht wie bei `lasseAusfallen`. */
+    benachrichtigen: boolean;
+  },
+): Promise<KernErgebnis<{ terminId: string; teamId: string; benachrichtigt: number | null }>> {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
   if (!geladen.wert.ausgefallen) return fehlschlag("regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN, TERMIN_FELD);
@@ -1097,5 +1114,8 @@ export async function nimmAusfallZurueck(
       ? fehlschlag("regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN, TERMIN_FELD)
       : fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   }
-  return ok({ terminId: e.terminId, teamId: geladen.wert.team_id });
+  // Nach dem Schreiben (#643 PC 1); einen vergangenen Termin lässt die
+  // Datenebene still (0).
+  const benachrichtigt = e.benachrichtigen ? await benachrichtige(supabase, e.terminId, "ruecknahme") : null;
+  return ok({ terminId: e.terminId, teamId: geladen.wert.team_id, benachrichtigt });
 }

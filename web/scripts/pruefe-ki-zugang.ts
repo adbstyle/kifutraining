@@ -1274,8 +1274,35 @@ pruefe("Benachrichtigungen (#642 AK 6): termin_festlegen beschreibt «benachrich
   const beschreibung = felder.get("benachrichtigen")?.description ?? "";
   assert.equal(beschreibung, `Nur bei einem Spiel. ${BENACHRICHTIGEN_MODELL("neues_spiel")}`);
   assert.ok(beschreibung.includes(BENACHRICHTIGEN_HINWEIS.neues_spiel), "UI = KI: derselbe Hinweis");
-  assert.ok(ZUGANG_DARF[3].includes("beim Festlegen eines Spiels dabei entscheiden, ob die Spielervertretungen am privaten Link benachrichtigt werden"));
+  // Der Satz gilt für alle Vorgänge des Epics #641 (#642–#645).
+  assert.ok(
+    ZUGANG_DARF[3].endsWith(
+      "; bei neuen Spielen, Ausfällen und ihrer Rücknahme, Verlegungen und beim Entfernen jeweils entscheiden, ob die Spielervertretungen am privaten Link benachrichtigt werden",
+    ),
+  );
   assert.ok(ZUGANG_ERWEITERUNG.includes("nicht erneut zustimmen"));
+});
+
+pruefe("Benachrichtigungen (#643 AK 1, 2): termin_ausfallen_lassen und termin_ausfall_zuruecknehmen beschreiben «benachrichtigen» wie die Oberfläche (Standard true)", () => {
+  const felder = new Map<string, Map<string, { description?: string; parse?: (x: unknown) => unknown }>>();
+  registriereWerkzeuge({
+    registerTool: (name: string, def: { inputSchema?: { shape?: Record<string, { description?: string }> } }) => {
+      if (name === "termin_ausfallen_lassen" || name === "termin_ausfall_zuruecknehmen")
+        felder.set(name, new Map(Object.entries(def.inputSchema?.shape ?? {})));
+    },
+  } as never);
+  const ausfall = felder.get("termin_ausfallen_lassen")?.get("benachrichtigen");
+  const ruecknahme = felder.get("termin_ausfall_zuruecknehmen")?.get("benachrichtigen");
+  assert.equal(
+    ausfall?.description,
+    `Nur beim Ausfallen lassen; den Grund eines schon ausgefallenen ändern bleibt still. ${BENACHRICHTIGEN_MODELL("ausfall")}`,
+  );
+  assert.ok(ausfall?.description?.includes(BENACHRICHTIGEN_HINWEIS.ausfall), "UI = KI: derselbe Hinweis (AK 2)");
+  assert.equal(ruecknahme?.description, BENACHRICHTIGEN_MODELL("ruecknahme"));
+  assert.ok(ruecknahme?.description?.includes(BENACHRICHTIGEN_HINWEIS.ruecknahme), "UI = KI: derselbe Hinweis");
+  // Ohne Angabe: benachrichtigen (Prinzip 4).
+  assert.equal(ausfall?.parse?.(undefined), true);
+  assert.equal(ruecknahme?.parse?.(undefined), true);
 });
 
 pruefe("Story 13 (#589 PC 1, 2): ZUGANG_DARF und ZUGANG_DARF_NICHT im Wortlaut, der Kopf von umfang.ts verlangt keine erneute Zustimmung", () => {

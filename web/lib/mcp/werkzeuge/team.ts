@@ -951,12 +951,22 @@ export const terminAusfallenLassen = werkzeug({
     grund: BEMERKUNG.nullable()
       .optional()
       .describe("Grund, frei, höchstens 500 Zeichen. Weggelassen: ein vorhandener Grund bleibt. null: leert ihn."),
+    benachrichtigen: z
+      .boolean()
+      .default(true)
+      .describe(`Nur beim Ausfallen lassen; den Grund eines schon ausgefallenen ändern bleibt still. ${BENACHRICHTIGEN_MODELL("ausfall")}`),
   }),
-  ausgabe: z.object({ termin_id: z.string() }),
+  ausgabe: z.object({ termin_id: z.string(), benachrichtigt: z.number().int().nullable() }),
   ausfuehren: async (e, zugang) =>
-    abgebildet(await lasseAusfallen(zugang.supabase, zugang.userId, { terminId: e.termin_id, grund: e.grund }), (w) => ({
-      termin_id: w.terminId,
-    })),
+    abgebildet(
+      await lasseAusfallen(zugang.supabase, zugang.userId, {
+        terminId: e.termin_id,
+        grund: e.grund,
+        // Ohne gegenteiligen Entscheid benachrichtigen (#643 AK 1).
+        benachrichtigen: e.benachrichtigen !== false,
+      }),
+      (w) => ({ termin_id: w.terminId, benachrichtigt: w.benachrichtigt }),
+    ),
 });
 
 // ── termin_ausfall_zuruecknehmen ────────────────────────────────────────────
@@ -968,12 +978,17 @@ export const terminAusfallZuruecknehmen = werkzeug({
     "Nimmt den Ausfall eines Termins zurück: Er ist danach wieder ein normaler Termin ohne Grund; " +
     `ein Training, das am Termin ruhte, ist wieder da. ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
-  eingabe: z.object({ termin_id: TerminId }),
-  ausgabe: z.object({ termin_id: z.string() }),
+  eingabe: z.object({
+    termin_id: TerminId,
+    benachrichtigen: z.boolean().default(true).describe(BENACHRICHTIGEN_MODELL("ruecknahme")),
+  }),
+  ausgabe: z.object({ termin_id: z.string(), benachrichtigt: z.number().int().nullable() }),
   ausfuehren: async (e, zugang) =>
-    abgebildet(await nimmAusfallZurueck(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) => ({
-      termin_id: w.terminId,
-    })),
+    abgebildet(
+      // Ohne gegenteiligen Entscheid benachrichtigen (#643 AK 1).
+      await nimmAusfallZurueck(zugang.supabase, zugang.userId, { terminId: e.termin_id, benachrichtigen: e.benachrichtigen !== false }),
+      (w) => ({ termin_id: w.terminId, benachrichtigt: w.benachrichtigt }),
+    ),
 });
 
 // ── team_mitglieder_abrufen ─────────────────────────────────────────────────
