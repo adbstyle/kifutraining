@@ -129,7 +129,14 @@ export async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
   const ansicht = data as LinkAnsicht;
   // Ohne Vereinsnamen stünde «undefined» im Satz «Verantwortlich …»: wie ungültig.
   if (ansicht.gueltig && (typeof ansicht.verein !== "string" || !ansicht.verein)) return UNGUELTIG;
-  return ansicht.gueltig ? { ...ansicht, teams: [...ansicht.teams].sort(nachTeamname) } : ansicht;
+  return ansicht.gueltig
+    ? {
+        ...ansicht,
+        teams: [...ansicht.teams].sort(nachTeamname),
+        // Dieselbe Ordnung wie die Teams im Kopf (#598 AK 6).
+        team_infos: ansicht.team_infos && [...ansicht.team_infos].sort((a, b) => nachTeamname(a.team, b.team)),
+      }
+    : ansicht;
 }
 
 export type LinkAbmeldung = { terminId: string; abgemeldet: boolean; gesehen: { datum: string; beginn: string } };

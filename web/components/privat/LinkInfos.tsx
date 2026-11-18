@@ -1,5 +1,5 @@
 import { ArrowLeft } from "lucide-react";
-import { Disclosure, ExternerLink, GegliederterText, IconButtonLink } from "@/components/ui";
+import { Disclosure, GegliederterText, IconButtonLink, TextMitLinks } from "@/components/ui";
 import { PROBE_TEXT, linkProbeKopf } from "@/lib/probe";
 import {
   LINK_INFOS,
@@ -10,7 +10,6 @@ import {
   spielerName,
 } from "@/lib/spieler";
 import { teamInfosLinkTitel, teamInfosStand } from "@/lib/team-infos";
-import { textMitLinks } from "@/lib/text-links";
 
 /* Die Infos am privaten Link (#598 AK 10): an einem Ort, was die
    Spielervertretung nachlesen will, aber beim Melden nicht braucht — jeder
@@ -59,15 +58,7 @@ export function LinkInfos({
               {probeInfo && (
                 <Abschnitt titel={PROBE_TEXT.linkInfoTitel}>
                   <p className="whitespace-pre-line break-words">
-                    {textMitLinks(probeInfo).map((t, i) =>
-                      t.art === "link" ? (
-                        <ExternerLink key={i} href={t.href}>
-                          {t.text}
-                        </ExternerLink>
-                      ) : (
-                        t.text
-                      ),
-                    )}
+                    <TextMitLinks text={probeInfo} />
                   </p>
                 </Abschnitt>
               )}

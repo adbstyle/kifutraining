@@ -4017,6 +4017,8 @@ export default async function Styleguide() {
             Text. Neu, weil <code>Freitext</code> nur Listen kennt und <code>ReleaseText</code>{" "}
             fertiges Markdown samt Linktext zeigt. In der Karte gekürzt: <code>KuerzbarerText</code>{" "}
             mit <code>gegliedert</code> kürzt auf die Höhe der Zeilen statt per <code>line-clamp</code>.
+            Webadressen in Fliesstext setzt überall <code>TextMitLinks</code> (Kürzbarer Text,
+            Gegliederter Text, Info-Schreiben am Link).
           </p>
           <Card className="max-w-xl p-6">
             <GegliederterText

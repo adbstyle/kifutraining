@@ -37,6 +37,7 @@ export { EigenschaftText, EigenschaftAuswahl } from "./EigenschaftBearbeitbar";
 export { InlineWert } from "./InlineWert";
 export { Freitext } from "./Freitext";
 export { GegliederterText } from "./GegliederterText";
+export { TextMitLinks } from "./TextMitLinks";
 export { PrintButton } from "./PrintButton";
 export type { FahrplanData } from "./MethodischerFahrplan";
 export { AltersstufeField } from "./AltersstufeField";

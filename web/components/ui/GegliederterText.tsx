@@ -1,8 +1,7 @@
 import { Fragment } from "react";
 import { cn } from "@/lib/cn";
 import { gliederungBloecke, type GliederungInline } from "@/lib/gliederung";
-import { textMitLinks } from "@/lib/text-links";
-import { ExternerLink } from "./ExternerLink";
+import { TextMitLinks } from "./TextMitLinks";
 
 /* ── GegliederterText ─────────────────────────────────────────
    Ein Text, den Trainer:innen selbst gliedern: Zwischentitel, Aufzählungen,
@@ -67,15 +66,7 @@ export function GegliederterText({
 
 function Zeile({ teile }: { teile: GliederungInline[] }) {
   return teile.map((t, i) => {
-    const inhalt = textMitLinks(t.text).map((s, j) =>
-      s.art === "link" ? (
-        <ExternerLink key={j} href={s.href}>
-          {s.text}
-        </ExternerLink>
-      ) : (
-        <Fragment key={j}>{s.text}</Fragment>
-      ),
-    );
+    const inhalt = <TextMitLinks text={t.text} />;
     return t.art === "fett" ? (
       <strong key={i} className="font-semibold">
         {inhalt}

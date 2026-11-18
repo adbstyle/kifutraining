@@ -2,9 +2,8 @@
 
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
-import { textMitLinks } from "@/lib/text-links";
 import { Button } from "./Button";
-import { ExternerLink } from "./ExternerLink";
+import { TextMitLinks } from "./TextMitLinks";
 import { GegliederterText } from "./GegliederterText";
 
 /* ── KuerzbarerText ───────────────────────────────────────────
@@ -59,7 +58,8 @@ export function KuerzbarerText({
           id={id}
           ref={ref}
           className="max-w-full overflow-hidden"
-          style={offen ? undefined : { maxHeight: `${zeilen * 1.5}rem` }}
+          // 21 px: die Zeilenhöhe von type-body-medium, darin steht der Text.
+          style={offen ? undefined : { maxHeight: `${zeilen * 21}px` }}
         >
           <GegliederterText text={text} />
         </div>
@@ -69,15 +69,7 @@ export function KuerzbarerText({
           ref={ref}
           className={cn("max-w-full whitespace-pre-line break-words", !offen && KUERZUNG[zeilen])}
         >
-          {textMitLinks(text).map((t, i) =>
-            t.art === "link" ? (
-              <ExternerLink key={i} href={t.href}>
-                {t.text}
-              </ExternerLink>
-            ) : (
-              t.text
-            ),
-          )}
+          <TextMitLinks text={text} />
         </p>
       )}
       {(laenger || offen) && (
