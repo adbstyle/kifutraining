@@ -3,13 +3,14 @@ import { Button, Lozenge } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
   ELTERN_TEXT,
-  EREIGNIS_NEGATIV,
-  EREIGNIS_WORT,
+  eintragNegativ,
   eintragTitel,
   eintragWann,
   eintragWo,
+  eintragWort,
   eintragZusaetze,
   erhaltenText,
+  nurWegfall,
   type BenachrichtigungEreignis,
   type LinkBenachrichtigung,
 } from "@/lib/benachrichtigung";
@@ -28,7 +29,7 @@ const ICON: Record<BenachrichtigungEreignis, LucideIcon> = {
    des Ereignisses im runden Feld, das Wort dazu und — solange der Eintrag neu
    ist — die Lozenge «Neu»; darunter «Titel · Team», wann, wo und, was sich
    sonst geändert hat. Rot trägt nur, was nicht mehr stattfindet (Ausfall,
-   Wegfall). Eine Momentaufnahme: Der Eintrag zeigt den Stand beim Ereignis,
+   Wegfall, auch der reine Wegfall einer Serie). Eine Momentaufnahme: Der Eintrag zeigt den Stand beim Ereignis,
    spätere Änderungen übernimmt er nicht.
 
    «Zum Termin» führt zur Karte, solange der Termin am Link steht (`amLink`);
@@ -49,8 +50,8 @@ export function BenachrichtigungEintrag({
   amLink: boolean;
   onZumTermin?: () => void;
 }) {
-  const negativ = EREIGNIS_NEGATIV[e.ereignis];
-  const Icon = ICON[e.ereignis];
+  const negativ = eintragNegativ(e);
+  const Icon = nurWegfall(e) ? ICON.wegfall : ICON[e.ereignis];
   const wann = eintragWann(e);
   const wo = eintragWo(e);
   const zusaetze = eintragZusaetze(e);
@@ -67,7 +68,7 @@ export function BenachrichtigungEintrag({
       </span>
       <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
         <span className="flex flex-wrap items-center gap-2">
-          <span className={cn("type-label-medium", negativ ? "text-error" : "text-on-surface-mittel")}>{EREIGNIS_WORT[e.ereignis]}</span>
+          <span className={cn("type-label-medium", negativ ? "text-error" : "text-on-surface-mittel")}>{eintragWort(e)}</span>
           {neu && <Lozenge appearance="discovery">{ELTERN_TEXT.neu}</Lozenge>}
         </span>
         <span className="max-w-full break-words type-title-small text-on-surface">{eintragTitel(e)}</span>
