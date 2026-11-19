@@ -86,6 +86,36 @@ export const EREIGNIS_WORT: Record<BenachrichtigungEreignis, string> = {
   serie: "Trainings geändert",
 };
 
+/** Eine Serienänderung, die nur Termine wegfallen lässt (Serie ganz
+ *  entfernen oder verkürzen): Sie heisst und wirkt wie ein Wegfall, nicht wie
+ *  eine Änderung. */
+export function nurWegfall(e: LinkBenachrichtigung): boolean {
+  return e.ereignis === "serie" && !!e.inhalt.wegfall && !(e.inhalt.angaben && angabenText(e.inhalt.angaben));
+}
+
+/** Das Wort über dem Titel eines Eintrags: `EREIGNIS_WORT`, beim reinen
+ *  Wegfall einer Serie «Trainings fallen weg» bzw. «Training fällt weg». */
+export function eintragWort(e: LinkBenachrichtigung): string {
+  if (e.ereignis === "serie" && nurWegfall(e)) {
+    return e.inhalt.wegfall?.anzahl === 1 ? "Training fällt weg" : "Trainings fallen weg";
+  }
+  return EREIGNIS_WORT[e.ereignis];
+}
+
+/** Rot für den Eintrag: `EREIGNIS_NEGATIV`, dazu der reine Wegfall einer Serie. */
+export function eintragNegativ(e: LinkBenachrichtigung): boolean {
+  return EREIGNIS_NEGATIV[e.ereignis] || nurWegfall(e);
+}
+
+/** Der Termin, zu dem «Zum Termin» führt (#641 AK 3, #642 AK 4): der
+ *  betroffene Termin, solange er am Link steht; sonst `null`. Eine
+ *  Serienänderung betrifft mehrere Termine und führt zu keinem — ihre
+ *  `termin_id` (der erste verlegte Termin) dient nur der Datenebene. */
+export function zumTermin(e: LinkBenachrichtigung, amLink: ReadonlySet<string>): string | null {
+  if (e.ereignis === "serie" || e.termin_id === null) return null;
+  return amLink.has(e.termin_id) ? e.termin_id : null;
+}
+
 /** Rot nur dort, wo etwas nicht mehr stattfindet. */
 export const EREIGNIS_NEGATIV: Record<BenachrichtigungEreignis, boolean> = {
   neues_spiel: false,

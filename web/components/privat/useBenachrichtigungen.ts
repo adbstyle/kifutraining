@@ -20,7 +20,11 @@ const ANSICHT = "benachrichtigungen";
    OFFEN steht in der Adresse (`?ansicht=benachrichtigungen`): Die Rück-Taste
    des Telefons führt aus der Ansicht zurück zu den Terminen, und ein Neuladen
    bleibt dort. Der Server kennt die Adresse und rendert dieselbe Ansicht wie
-   der Browser.
+   der Browser. Öffnen und Schliessen setzen den Zustand zusätzlich selbst und
+   lesen die Rück-Taste über `popstate`: Next.js übernimmt ein `pushState` erst
+   in `useSearchParams`, wenn sein Router den Verlauf schon übernommen hat —
+   ein Klick gleich nach der Hydrierung stellte sonst die Adresse um, ohne die
+   Ansicht zu zeigen.
 
    GESEHEN rechnet der Server aus dem Cookie (`gesehenBis`) und der Browser
    aus denselben Props — beim ersten Rendern zeigt der Browser nichts, was nur
@@ -42,7 +46,20 @@ export function useBenachrichtigungen({
   schluessel: string;
 }) {
   const parameter = useSearchParams().get(PARAMETER);
-  const offen = daten !== null && parameter === ANSICHT;
+  const [ansicht, setAnsicht] = useState(parameter === ANSICHT);
+  // Ändert Next.js die Adresse (Navigation), gilt sie.
+  const [letzterParameter, setLetzterParameter] = useState(parameter);
+  if (parameter !== letzterParameter) {
+    setLetzterParameter(parameter);
+    setAnsicht(parameter === ANSICHT);
+  }
+  // Rück- und Vorwärts-Taste des Browsers, auch ohne Next.js.
+  useEffect(() => {
+    const ausAdresse = () => setAnsicht(new URL(window.location.href).searchParams.get(PARAMETER) === ANSICHT);
+    window.addEventListener("popstate", ausAdresse);
+    return () => window.removeEventListener("popstate", ausAdresse);
+  }, []);
+  const offen = daten !== null && ansicht;
   // Was der Browser selbst geschrieben hat; der Server liest es erst beim nächsten Laden.
   const [lokal, setLokal] = useState<number | null>(null);
   const gesehen = lokal === null ? gesehenBis : Math.max(lokal, gesehenBis ?? -1);
@@ -83,9 +100,11 @@ export function useBenachrichtigungen({
     const url = new URL(window.location.href);
     url.searchParams.set(PARAMETER, ANSICHT);
     window.history.pushState(null, "", url);
+    setAnsicht(true);
   }, []);
 
   const schliessen = useCallback(() => {
+    setAnsicht(false);
     if (hierGeoeffnet.current) {
       hierGeoeffnet.current = false;
       window.history.back();

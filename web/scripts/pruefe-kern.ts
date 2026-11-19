@@ -172,6 +172,9 @@ import {
   BENACHRICHTIGUNG_TAGE,
   ELTERN_TEXT,
   EREIGNIS_NEGATIV,
+  eintragNegativ,
+  eintragWort,
+  zumTermin,
   EREIGNIS_WORT,
   eintragTitel,
   eintragWann,
@@ -5320,6 +5323,24 @@ pruefe("Benachrichtigungen (#642 AK 3): Titel, Wann, Wo und Zusatz je Ereignis �
   const nurAngaben = bnEintrag("serie", { team: "E-Junioren", art: "training", ab: "2026-12-01", angaben: { ort: "Halle" }, wegfall: null });
   assert.deepEqual(eintragZusaetze(nurAngaben), ["Neu Halle"]);
   assert.deepEqual(eintragZusaetze(bnEintrag("serie", { team: "E-Junioren", art: "training", ab: null, angaben: {}, wegfall: null })), []);
+  // Wort und Farbe: Die Änderung heisst «Trainings geändert», der reine Wegfall wie ein Wegfall.
+  assert.equal(eintragWort(serie), "Trainings geändert");
+  assert.equal(eintragNegativ(serie), false);
+  assert.equal(eintragWort(nurAngaben), "Trainings geändert");
+  assert.equal(eintragWort(nurWegfall), "Training fällt weg");
+  assert.equal(eintragNegativ(nurWegfall), true);
+  const ganzWeg = bnEintrag("serie", { team: "E-Junioren", art: "training", ab: null, angaben: {}, wegfall: { von: "2026-11-26", bis: "2026-12-17", wochentage: [4], anzahl: 4 } });
+  assert.equal(eintragWort(ganzWeg), "Trainings fallen weg");
+  assert.equal(eintragNegativ(ganzWeg), true);
+  assert.equal(eintragWort(spiel), "Neues Spiel");
+  assert.equal(eintragNegativ(bnEintrag("ausfall", BN_SPIEL)), true);
+  // «Zum Termin»: nur zum betroffenen Termin, solange er am Link steht; nie bei der Serie.
+  const amLink = new Set(["t1"]);
+  assert.equal(zumTermin(spiel, amLink), "t1");
+  assert.equal(zumTermin(spiel, new Set()), null);
+  assert.equal(zumTermin(bnEintrag("wegfall", BN_SPIEL, { termin_id: null }), amLink), null);
+  assert.equal(zumTermin(serie, amLink), null, "Die Serienänderung führt zu keinem einzelnen Termin");
+  assert.equal(zumTermin(ganzWeg, amLink), null);
   // Rot nur bei Ausfall und Wegfall.
   assert.deepEqual(Object.entries(EREIGNIS_NEGATIV).filter(([, v]) => v).map(([k]) => k), ["ausfall", "wegfall"]);
   // Jedes Ereignis hat sein Wort.
