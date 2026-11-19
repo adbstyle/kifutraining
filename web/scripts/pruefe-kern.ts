@@ -174,6 +174,7 @@ import {
   EREIGNIS_NEGATIV,
   eintragNegativ,
   eintragWort,
+  zumTermin,
   EREIGNIS_WORT,
   eintragTitel,
   eintragWann,
@@ -5333,6 +5334,13 @@ pruefe("Benachrichtigungen (#642 AK 3): Titel, Wann, Wo und Zusatz je Ereignis �
   assert.equal(eintragNegativ(ganzWeg), true);
   assert.equal(eintragWort(spiel), "Neues Spiel");
   assert.equal(eintragNegativ(bnEintrag("ausfall", BN_SPIEL)), true);
+  // «Zum Termin»: nur zum betroffenen Termin, solange er am Link steht; nie bei der Serie.
+  const amLink = new Set(["t1"]);
+  assert.equal(zumTermin(spiel, amLink), "t1");
+  assert.equal(zumTermin(spiel, new Set()), null);
+  assert.equal(zumTermin(bnEintrag("wegfall", BN_SPIEL, { termin_id: null }), amLink), null);
+  assert.equal(zumTermin(serie, amLink), null, "Die Serienänderung führt zu keinem einzelnen Termin");
+  assert.equal(zumTermin(ganzWeg, amLink), null);
   // Rot nur bei Ausfall und Wegfall.
   assert.deepEqual(Object.entries(EREIGNIS_NEGATIV).filter(([, v]) => v).map(([k]) => k), ["ausfall", "wegfall"]);
   // Jedes Ereignis hat sein Wort.

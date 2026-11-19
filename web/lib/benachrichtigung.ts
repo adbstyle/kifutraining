@@ -107,6 +107,15 @@ export function eintragNegativ(e: LinkBenachrichtigung): boolean {
   return EREIGNIS_NEGATIV[e.ereignis] || nurWegfall(e);
 }
 
+/** Der Termin, zu dem «Zum Termin» führt (#641 AK 3, #642 AK 4): der
+ *  betroffene Termin, solange er am Link steht; sonst `null`. Eine
+ *  Serienänderung betrifft mehrere Termine und führt zu keinem — ihre
+ *  `termin_id` (der erste verlegte Termin) dient nur der Datenebene. */
+export function zumTermin(e: LinkBenachrichtigung, amLink: ReadonlySet<string>): string | null {
+  if (e.ereignis === "serie" || e.termin_id === null) return null;
+  return amLink.has(e.termin_id) ? e.termin_id : null;
+}
+
 /** Rot nur dort, wo etwas nicht mehr stattfindet. */
 export const EREIGNIS_NEGATIV: Record<BenachrichtigungEreignis, boolean> = {
   neues_spiel: false,

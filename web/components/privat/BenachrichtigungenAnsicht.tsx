@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { ArrowLeft, Bell } from "lucide-react";
 import { Button, Leerzustand } from "@/components/ui";
-import { ELTERN_TEXT, gruppiere, type LinkBenachrichtigungen } from "@/lib/benachrichtigung";
+import { ELTERN_TEXT, gruppiere, zumTermin, type LinkBenachrichtigungen } from "@/lib/benachrichtigung";
 import { BenachrichtigungEintrag } from "./BenachrichtigungEintrag";
 
 /* Die Ansicht «Benachrichtigungen» am privaten Link (#642 AK 1, 2, 4, 5): ersetzt
@@ -40,15 +40,15 @@ export function BenachrichtigungenAnsicht({
         {(istNeu || neu.length > 0) && <h3 className="type-title-small text-on-surface">{titel}</h3>}
         <ul className="flex flex-col gap-2">
           {eintraege.map((e) => {
-            const amLink = e.termin_id !== null && terminIds.has(e.termin_id);
+            const ziel = zumTermin(e, terminIds);
             return (
               <BenachrichtigungEintrag
                 key={e.id}
                 e={e}
                 neu={istNeu}
                 heute={daten.heute}
-                amLink={amLink}
-                onZumTermin={amLink && e.termin_id ? () => onZumTermin(e.termin_id!) : undefined}
+                amLink={ziel !== null}
+                onZumTermin={ziel ? () => onZumTermin(ziel) : undefined}
               />
             );
           })}
