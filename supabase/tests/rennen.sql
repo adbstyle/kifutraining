@@ -1984,10 +1984,13 @@ end $$;
 -- Teamsperre (Team → Termin). Je Fall ein Verein aus rennen_test.s11_bauen
 -- mit Termin-Training am Termin:
 -- (t1) termin_entfernen gegen Löschen: B wartet an der Teamsperre und löscht.
+--      Seit #645 mit Benachrichtigung: A hält den Stand (liest team_spieler,
+--      fügt ohne FK ein) nach der Termin-Sperre; die Zeile der Spieler:in
+--      geht mit dem Verein.
 -- (t2) Löschen gegen termin_training_setzen (Lösen): TERMIN_NICHT_GEFUNDEN.
 -- (t3) A hält nur die Teamsperre; termin_training_setzen (Lösen) und
---      termin_entfernen warten daran, ohne die Termin-Zeile zu halten (A sperrt
---      sie währenddessen mit `for update nowait`).
+--      termin_entfernen (mit Benachrichtigung, #645) warten daran, ohne die
+--      Termin-Zeile zu halten (A sperrt sie währenddessen mit `for update nowait`).
 -- (t4) termin_training_setzen (Lösen) gegen Löschen: B löscht danach.
 -- Ein harter Abbruch lässt Vereine «Rennen-s11-t…» stehen (wie oben).
 select set_config('rennen.fehler_termin_loeschen', '', false) is not null as rennen_fehler_termin_loeschen_leer \gset
@@ -2017,11 +2020,14 @@ declare
 begin
   -- (t1) termin_entfernen gegen Löschen.
   ergebnis := rennen_test.verschraenkt(ziel,
-    rennen_test.z('s11_t1_m'), format('select termin_entfernen(%L)::text', rennen_test.z('s11_t1_termin')),
+    rennen_test.z('s11_t1_m'), format('select termin_entfernen(%L, null, true)::text', rennen_test.z('s11_t1_termin')),
     rennen_test.z('s11_t1_va'), format($q$select verein_loeschen(%L, 'Rennen-s11-t1')::text$q$, rennen_test.z('s11_t1_verein')),
     'advisory');
   if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'geloescht' then
     raise exception '(t1) Löschen nach termin_entfernen: %', ergebnis;
+  end if;
+  if exists (select 1 from spieler_benachrichtigungen where spieler_id = rennen_test.z('s11_t1_sp')) then
+    raise exception '(t1) Benachrichtigung der gelöschten Spieler:in blieb';
   end if;
 
   -- (t2) Löschen gegen termin_training_setzen (Lösen).
@@ -2043,9 +2049,10 @@ begin
   end if;
   ergebnis := rennen_test.verschraenkt(ziel,
     rennen_test.z('s11_t3_m'), format('select rennen_test.nur_teamsperre(%L)', rennen_test.z('s11_t3_team')),
-    rennen_test.z('s11_t3_m'), format('select termin_entfernen(%L)::text', rennen_test.z('s11_t3_termin')),
+    rennen_test.z('s11_t3_m'), format('select termin_entfernen(%L, null, true)::text', rennen_test.z('s11_t3_termin')),
     'advisory', format('select rennen_test.termin_frei(%L)', rennen_test.z('s11_t3_termin')));
-  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'team' <> rennen_test.z('s11_t3_team')::text then
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'team' <> rennen_test.z('s11_t3_team')::text
+     or (ergebnis::jsonb ->> 'benachrichtigt')::int <> 1 then
     raise exception '(t3) termin_entfernen nach der Teamsperre: %', ergebnis;
   end if;
   if exists (select 1 from trainings where id = rennen_test.z('s11_t3_ttr'))
@@ -2079,6 +2086,8 @@ end $$;
 -- (t5) terminserie_entfernen gegen Löschen: B wartet an der Teamsperre und löscht.
 -- (t5b) A hält nur die Teamsperre; terminserie_entfernen wartet daran, ohne
 --      eine Termin-Zeile zu halten (A sperrt sie mit `for update nowait`).
+-- Beide seit #645 mit Benachrichtigung: Die Hülle nimmt die Teamsperre vor
+-- dem Stand, die Rechnung danach die Termin-Zeilen (Team → Termin).
 select set_config('rennen.fehler_serie_loeschen', '', false) is not null as rennen_fehler_serie_loeschen_leer \gset
 
 begin;
@@ -2112,7 +2121,7 @@ declare
 begin
   -- (t5) terminserie_entfernen gegen Löschen.
   ergebnis := rennen_test.verschraenkt(ziel,
-    rennen_test.z('s11_t5_m'), format($q$select terminserie_entfernen(%L, 'alle')::text$q$, rennen_test.z('s11_t5_termin')),
+    rennen_test.z('s11_t5_m'), format($q$select terminserie_entfernen(%L, 'alle', p_benachrichtigen => true)::text$q$, rennen_test.z('s11_t5_termin')),
     rennen_test.z('s11_t5_va'), format($q$select verein_loeschen(%L, 'Rennen-s11-t5')::text$q$, rennen_test.z('s11_t5_verein')),
     'advisory');
   if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'geloescht' then
@@ -2126,9 +2135,10 @@ begin
   -- (t5b) Team vor Termin: Serie entfernen wartet an der Teamsperre.
   ergebnis := rennen_test.verschraenkt(ziel,
     rennen_test.z('s11_t5b_m'), format('select rennen_test.nur_teamsperre(%L)', rennen_test.z('s11_t5b_team')),
-    rennen_test.z('s11_t5b_m'), format($q$select terminserie_entfernen(%L, 'alle')::text$q$, rennen_test.z('s11_t5b_termin')),
+    rennen_test.z('s11_t5b_m'), format($q$select terminserie_entfernen(%L, 'alle', p_benachrichtigen => true)::text$q$, rennen_test.z('s11_t5b_termin')),
     'advisory', format('select rennen_test.termin_frei(%L)', rennen_test.z('s11_t5b_termin')));
-  if left(ergebnis, 7) = 'FEHLER:' or (ergebnis::jsonb ->> 'entfallend_anzahl')::int <> 1 then
+  if left(ergebnis, 7) = 'FEHLER:' or (ergebnis::jsonb ->> 'entfallend_anzahl')::int <> 1
+     or (ergebnis::jsonb ->> 'benachrichtigt')::int <> 1 then
     raise exception '(t5b) terminserie_entfernen nach der Teamsperre: %', ergebnis;
   end if;
   if exists (select 1 from trainings where id = rennen_test.z('s11_t5b_ttr'))

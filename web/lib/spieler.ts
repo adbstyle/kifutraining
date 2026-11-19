@@ -14,6 +14,7 @@ import { datumKurz } from "@/lib/zeit";
 import { tagOhneJahr } from "@/lib/monat";
 import { SPIEL_TEXT } from "@/lib/spiel";
 import { PROBE_TEXT, type ProbeStand } from "@/lib/probe";
+import { BENACHRICHTIGUNG_TAGE } from "@/lib/benachrichtigung";
 
 /** Zwillinge der Checks `spieler_vorname`, `spieler_nachname`, `spieler_js`
  *  und `spieler_jahrgang`. */
@@ -504,9 +505,10 @@ export const LINK_TEXT = {
    *  (#583 AK 13) und im Hinweis der KI-Link-Werkzeuge (#589 AK 9). */
   warnung:
     "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
-  /** Was Erneuern bewirkt (AK 3, PC 3; #583 AK 15): für alle Teams der Spieler:in. */
+  /** Was Erneuern bewirkt (AK 3, PC 3; #583 AK 15): für alle Teams der
+   *  Spieler:in; die Benachrichtigungen enden mit (#642 PC 2). */
   erneuern:
-    "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen.",
+    "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen. Die bisherigen Benachrichtigungen enden ebenfalls.",
   /** AK 10: ein erneuerter, unbekannter oder entfernter Link. */
   ungueltigTitel: "Dieser Link gilt nicht mehr",
   ungueltig: "Den aktuellen erhältst du über eine Abholadresse, bei den Trainer:innen oder bei der Vereinsverwaltung.",
@@ -538,12 +540,12 @@ export function linkTeamsText(vorname: string, teams: LinkTeam[], ausgeschaltet:
 export function linkErneuernSaetze(vorname: string, teams: LinkTeam[]): string[] {
   if (teams.length === 0)
     return [
-      "Der bisherige Link und das Kalender-Abo enden. Abmeldungen bleiben bestehen.",
+      "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden. Abmeldungen bleiben bestehen.",
       `${vorname} ist keinem Team zugeordnet; gib den neuen Link selbst weiter.`,
     ];
   const abholbar = teams.filter((t) => t.abholbar).map((t) => t.name);
   return [
-    `Der bisherige Link und das Kalender-Abo enden für alle Teams von ${vorname}: ${aufzaehlung(teams.map((t) => t.name))}. Abmeldungen bleiben bestehen.`,
+    `Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von ${vorname}: ${aufzaehlung(teams.map((t) => t.name))}. Abmeldungen bleiben bestehen.`,
     abholbar.length > 0
       ? LINK_TEXT.erneuertAbholen(abholbar)
       : "Keines dieser Teams hat die Selbstabholung eingeschaltet. Gib den neuen Link selbst weiter.",
@@ -749,9 +751,10 @@ export const ABHOLUNG_TEXT = {
 } as const;
 
 /** AK 7, #587 PC 2: was KiFu speichert, wer dafür verantwortlich ist, wer es
- *  sieht, wann es verschwindet — auf dem Eingabe-Bildschirm der Abholseite. */
+ *  sieht, wann es verschwindet — auf dem Eingabe-Bildschirm der Abholseite.
+ *  #642 AK 5: dazu die Benachrichtigungen und wie lange sie bleiben. */
 export function abholSpeichertText(verein: string): string {
-  return `Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein Spiel nicht aufgeboten ist. ${angabenSehenText(verein)} Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen ihrer Teams und ihre KI-Assistenten. Nimmt ein Team eine Spieler:in heraus, bleiben ihre Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht.`;
+  return `Zu jeder Spieler:in nur Vorname, Nachname, Jahrgang, falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein Spiel nicht aufgeboten ist. Benachrichtigungen zu ihren Terminen bewahrt KiFu ${BENACHRICHTIGUNG_TAGE} Tage auf; sie sieht nur, wer den Link hat. ${angabenSehenText(verein)} Wann sich eine Spieler:in zuletzt ab- oder wieder angemeldet hat, sehen nur die Trainer:innen ihrer Teams und ihre KI-Assistenten. Nimmt ein Team eine Spieler:in heraus, bleiben ihre Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung die Spieler:in aus dem Verein löscht.`;
 }
 
 /** AK 10: wozu der Link dient, dass er privat ist, und wo es ihn wieder gibt;

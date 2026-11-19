@@ -70,6 +70,7 @@ import { OeffnenZeileDemo } from "./OeffnenZeileDemo";
 import { EigenschaftBearbeitbarDemo } from "./EigenschaftBearbeitbarDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { CheckboxDemo } from "./CheckboxDemo";
+import { BenachrichtigungDemo } from "./BenachrichtigungDemo";
 import { SwitchDemo } from "./SwitchDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
@@ -126,6 +127,7 @@ import {
   LayoutGrid,
   ListChecks,
   MapPin,
+  Bell,
   Clock,
   LandPlot,
   History,
@@ -301,6 +303,7 @@ const GLIEDERUNG = [
           { id: "kalenderblatt", titel: "Kalenderblatt" },
           { id: "mini-monat", titel: "Mini-Monat" },
           { id: "platz-spielerzahl", titel: "Platz und Spielerzahl eines Termins" },
+          { id: "benachrichtigungen", titel: "Benachrichtigungen" },
         ],
       },
     ],
@@ -1601,6 +1604,16 @@ export default async function Styleguide() {
           </div>
 
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
+            Zähler am Zeichen (<code>zahl</code>, <code>Badge</code>) - die Zahl dessen, was der Knopf noch nicht
+            gezeigt hat, an der Glocke der Benachrichtigungen (<Siehe id="benachrichtigungen" />). Stumm - die Zahl
+            steht im Namen des Knopfs («Benachrichtigungen, 3 neu»); ab zehn «9+», bei null kein Zähler
+          </p>
+          <div className="flex items-center gap-4">
+            <IconButton icon={Bell} zahl={3} label="Benachrichtigungen, 3 neu" />
+            <IconButton icon={Bell} zahl={12} label="Benachrichtigungen, 12 neu" />
+          </div>
+
+          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Punkt am Zeichen (<code>ZeichenPunkt</code>, <code>punkt</code>) - wie die Benachrichtigung an einem App-Symbol
           </p>
           <div className="flex items-center gap-4">
@@ -2083,6 +2096,12 @@ export default async function Styleguide() {
             sondern für eine Zusage - der Satz ist die Zusage selbst und darf
             über mehrere Zeilen laufen. Wer das Häkchen umgeht, scheitert an der
             Datenebene, die beide Zusagen beim Ausführen verlangt.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Mit Hinweis</strong> (<code>hinweis</code>, #642): eine zweite, leise Zeile unter dem Namen - was
+            das Häkchen bewirkt, wie «Spielervertretungen benachrichtigen» im Dialog eines Spiels (siehe{" "}
+            <Siehe id="benachrichtigungen" />). Sie gehört zur Klickfläche und hängt per <code>aria-describedby</code>{" "}
+            am Kästchen, damit die Vorlesehilfe sie nach dem Namen liest.
           </p>
           <CheckboxDemo />
 
@@ -4456,6 +4475,43 @@ export default async function Styleguide() {
             den Regeln des Fachkerns.
           </p>
           <FelderDemo />
+        </Section>
+
+        <Section id="benachrichtigungen">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Benachrichtigungen am privaten Link (Epic #641): was am Team geschieht, sieht die Spielervertretung
+            dort, ohne dass das Team es im Eltern-Chat ankündigt. Aus bestehenden Teilen gebaut -{" "}
+            <code>IconButton</code> mit <code>zahl</code>, <code>Lozenge</code>, <code>Button</code> und{" "}
+            <code>Leerzustand</code> - plus dem Eintrag als einzigem neuem Baustein.
+          </p>
+          <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+            <li>
+              <strong>Glocke im Kopf</strong> - hinter dem Namen, bei den anderen Kopf-Knöpfen. Der Zähler (
+              <code>Badge</code>) nennt, was dieses Gerät noch nicht angezeigt hat; auf einem Gerät, das den Link zum
+              ersten Mal zeigt, steht keiner. Ein Klick öffnet die Ansicht an Stelle der Terminliste (die
+              Rück-Taste führt zurück), der Kopf bleibt.
+            </li>
+            <li>
+              <strong>Eintrag</strong> - das Zeichen des Ereignisses im runden Feld, das Wort dazu (<em>Neues Spiel,
+              Fällt aus, Findet wieder statt, Verlegt, Fällt weg, Trainings geändert</em>) und bei Neuem die Lozenge{" "}
+              «Neu»; darunter «Titel · Team», wann, wo, was sich sonst geändert hat und wann er entstand. Rot trägt
+              nur, was nicht mehr stattfindet. Er ist eine Momentaufnahme: spätere Änderungen übernimmt er nicht. «Zum
+              Termin» führt zur Karte, solange der Termin am Link steht, sonst sagt ein Satz, dass er nicht mehr dort
+              steht.
+            </li>
+            <li>
+              <strong>Gruppen «Neu» und «Früher»</strong> - neu ist, was nach dem letzten Anzeigen entstand; die
+              Gruppen bleiben stehen, solange die Ansicht offen ist. Am Ende der Satz, was KiFu speichert (90 Tage) und
+              was das Gerät festhält.
+            </li>
+            <li>
+              <strong>Häkchen im Dialog</strong> - «Spielervertretungen benachrichtigen» (<code>Checkbox</code> mit{" "}
+              <code>hinweis</code>), vorbelegt an, die Zeile darunter sagt je Vorgang, was die Spielervertretung
+              sieht. Wörter und Zeilen stehen in <code>lib/benachrichtigung.ts</code>; die KI-Beschreibung nimmt
+              dieselben.
+            </li>
+          </ul>
+          <BenachrichtigungDemo />
         </Section>
       </VerzeichnisFlaeche>
     </Seitenrahmen>

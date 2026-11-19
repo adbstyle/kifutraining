@@ -135,6 +135,11 @@ insert into team_spieler (team_id, spieler_id, verein_id) values
   (pg_temp.id('t2'), pg_temp.id('s2'), pg_temp.id('v')), (pg_temp.id('tw'), pg_temp.id('sw'), pg_temp.id('w')),
   (pg_temp.id('te'), pg_temp.id('se'), pg_temp.id('e'));
 insert into spieler_abos (spieler_id) values (pg_temp.id('s1')), (pg_temp.id('s3')), (pg_temp.id('sw')), (pg_temp.id('se'));
+-- Benachrichtigungen (#642) ohne FK: Der Trigger beim Löschen der Spieler:innen räumt sie ab.
+insert into spieler_benachrichtigungen (spieler_id, vorgang, ereignis, termin_id, inhalt) values
+  (pg_temp.id('s1'), gen_random_uuid(), 'neues_spiel', pg_temp.id('sp1'), '{}'),
+  (pg_temp.id('s3'), gen_random_uuid(), 'neues_spiel', null, '{}'),
+  (pg_temp.id('sw'), gen_random_uuid(), 'neues_spiel', pg_temp.id('tr_w'), '{}');
 insert into team_abholung (team_id, aktiv) values (pg_temp.id('t1'), true), (pg_temp.id('t2'), false), (pg_temp.id('tw'), true),
   (pg_temp.id('te'), true);
 insert into team_probetraining (team_id, anzahl, info) values (pg_temp.id('t1'), 3, 'Schienbeinschoner');
@@ -229,6 +234,7 @@ language sql stable as $$
                                                           or spieler_id = any(pg_temp.b('spieler', p))),
     'spieler', (select count(*) from spieler where id = any(pg_temp.b('spieler', p))),
     'spieler_abos', (select count(*) from spieler_abos where spieler_id = any(pg_temp.b('spieler', p))),
+    'spieler_benachrichtigungen', (select count(*) from spieler_benachrichtigungen where spieler_id = any(pg_temp.b('spieler', p))),
     'team_abholung', (select count(*) from team_abholung where team_id = any(pg_temp.b('team', p))),
     'team_probetraining', (select count(*) from team_probetraining where team_id = any(pg_temp.b('team', p))),
     'kader', (select count(*) from kader where id = any(pg_temp.b('kader', p))),

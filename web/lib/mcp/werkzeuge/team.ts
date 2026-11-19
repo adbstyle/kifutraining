@@ -1,6 +1,8 @@
 import "server-only";
 import { z } from "zod";
 import { kategorieStufe } from "@/lib/labels";
+import { BENACHRICHTIGEN_MODELL, BENACHRICHTIGEN_TEXT, BENACHRICHTIGEN_WERKZEUG } from "@/lib/benachrichtigung";
+import type { Benachrichtigt } from "@/lib/kern/benachrichtigungen";
 import { abgebildet } from "@/lib/kern/ergebnis";
 import { meineTeams, teamPlan } from "@/lib/kern/team";
 import { aendereTrainer, setzeAbsage, teamMitglieder } from "@/lib/kern/trainer";
@@ -498,6 +500,26 @@ export const teamPlanAbrufen = werkzeug({
 
 // ── termin_festlegen ────────────────────────────────────────────────────────
 
+/** Was ein KI-Werkzeug über die Benachrichtigung meldet (Epic #641): die Zahl
+ *  der Spieler:innen (`null`, wenn nicht benachrichtigt werden sollte oder es
+ *  nichts mitzuteilen gab) und — nur auf den Wegen, die direkt schreiben —
+ *  einen Hinweis, wenn sie nicht entstanden ist; wortgleich zur Oberfläche. */
+const BenachrichtigtAusgabe = {
+  benachrichtigt: z
+    .number()
+    .int()
+    .nullable()
+    .describe("Wie viele Spieler:innen eine Benachrichtigung erhielten; null, wenn nicht benachrichtigt werden sollte oder es nichts mitzuteilen gab."),
+  hinweis: z
+    .string()
+    .optional()
+    .describe(`Nur, wenn die Benachrichtigung nicht entstanden ist: «${BENACHRICHTIGEN_TEXT.gescheitert}» Der Vorgang selbst gilt.`),
+};
+const benachrichtigtAus = (b: Benachrichtigt) => ({
+  benachrichtigt: b.benachrichtigt ?? null,
+  ...(b.benachrichtigungFehlt ? { hinweis: BENACHRICHTIGEN_TEXT.gescheitert } : {}),
+});
+
 export const terminFestlegen = werkzeug({
   name: "termin_festlegen",
   titel: "Termin festlegen",
@@ -506,7 +528,7 @@ export const terminFestlegen = werkzeug({
     "Vergangenheit) oder ein Spiel - «art» ist Pflicht. Datum, Beginn und Ende sind Pflicht, das Ende liegt am selben Tag nach dem " +
     "Beginn; Ort, Bemerkung, Hinweis für Eltern und Kader sind frei. Ohne Angabe sind alle Mitglieder eingeladen und du bist verantwortlich. Ein Training trägt auf Wunsch Treffpunkt, Felder und erwartete Spielerzahl; einen Inhalt ordnest du " +
     "danach mit «training_zuordnen» zu. Ein Spiel braucht eine Bezeichnung und trägt auf Wunsch Mindest- und Höchstzahl. " +
-    `${TERMIN_MODELL} ${KADER_TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
+    `${BENACHRICHTIGEN_WERKZEUG} ${TERMIN_MODELL} ${KADER_TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     team_id: TeamId,
@@ -534,8 +556,9 @@ export const terminFestlegen = werkzeug({
     eingeladene: EINGELADENE.optional(),
     verantwortlich: VERANTWORTLICH.optional(),
     mindestbesetzung: BesetzungEingabe.optional().describe(`Ohne Angabe keine. ${BESETZUNG_MODELL}`),
+    benachrichtigen: z.boolean().default(true).describe(`Nur bei einem Spiel. ${BENACHRICHTIGEN_MODELL("neues_spiel")}`),
   }),
-  ausgabe: z.object({ termin_id: z.string(), team_id: z.string() }),
+  ausgabe: z.object({ termin_id: z.string(), team_id: z.string(), ...BenachrichtigtAusgabe }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
       await legeTerminFest(zugang.supabase, zugang.userId, {
@@ -560,12 +583,23 @@ export const terminFestlegen = werkzeug({
         eingeladene: e.eingeladene,
         verantwortlich: e.verantwortlich,
         mindestbesetzung: alsBesetzung(e.mindestbesetzung),
+        // Ohne gegenteiligen Entscheid benachrichtigen (#642 AK 6) — auch wenn
+        // die Eingabe nicht durch das Schema mit seinem Standard lief.
+        benachrichtigen: e.benachrichtigen !== false,
       }),
-      (w) => ({ termin_id: w.terminId, team_id: w.teamId }),
+      (w) => ({ termin_id: w.terminId, team_id: w.teamId, ...benachrichtigtAus(w) }),
     ),
 });
 
 // ── termin_aendern ──────────────────────────────────────────────────────────
+
+/** `benachrichtigen` beim Ändern (#644 AK 1, 2; #645 PC 3): wirkt nur, wenn
+ *  sich Datum, Zeit oder Ort ändern oder Termine wegfallen; über die Serie
+ *  eine Benachrichtigung je Spieler:in. Hinweis wie im Termin-Dialog. */
+const AENDERN_BENACHRICHTIGEN =
+  "Nur wenn sich Datum, Zeit oder Ort eines Termins ändern (der Kartenlink allein nicht) oder Termine der Serie wegfallen; " +
+  "ein ausgefallener Termin, der dadurch wieder stattfindet, meldet das; über die Serie eine Benachrichtigung je Spieler:in. " +
+  BENACHRICHTIGEN_MODELL("aendern");
 
 export const AendernEingabe = z.object({
   termin_id: TerminId,
@@ -631,6 +665,7 @@ export const AendernEingabe = z.object({
   ),
   bis: DATUM.optional().describe("Neues Enddatum der Serie (nur mit «dieser_und_folgende» oder «alle»)."),
   bestaetigt: BestaetigtVerlegen,
+  benachrichtigen: z.boolean().default(true).describe(AENDERN_BENACHRICHTIGEN),
 });
 
 const EntfallenMitTraining = z.array(
@@ -674,7 +709,7 @@ export const terminAendern = werkzeug({
     "zugeordnete Training bleibt dasselbe. Für einen Termin einer Serie ist «reichweite» Pflicht; " +
     "das Datum ändert nur «nur_dieser», Wochentage und Zeitraum nur «dieser_und_folgende» oder " +
     "«alle». Das Ergebnis nennt entfallene Termine mit Training; Termin-Trainings gehen mit ihnen, " +
-    `andere bleiben im Bestand. ${VERFALL_MODELL} ${KADER_TERMIN_MODELL} ${SERIEN_MODELL} ${TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
+    `andere bleiben im Bestand. ${BENACHRICHTIGEN_WERKZEUG} ${VERFALL_MODELL} ${KADER_TERMIN_MODELL} ${SERIEN_MODELL} ${TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: AendernEingabe,
   ausgabe: z.object({
@@ -688,6 +723,7 @@ export const terminAendern = werkzeug({
     treffpunkt_entfallen: z
       .array(z.string())
       .describe("Die Daten der Termine, deren Treffpunkt mit dem neuen Beginn am Vortag läge und darum entfiel; leer ohne."),
+    ...BenachrichtigtAusgabe,
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
@@ -715,6 +751,8 @@ export const terminAendern = werkzeug({
         von: e.von,
         bis: e.bis,
         bestaetigt: e.bestaetigt,
+        // Ohne gegenteiligen Entscheid benachrichtigen (#644 AK 1, 2).
+        benachrichtigen: e.benachrichtigen !== false,
       }),
       (w) => ({
         termin_id: w.terminId,
@@ -723,6 +761,7 @@ export const terminAendern = werkzeug({
         abmeldungen_verfallen: w.abmeldungenVerfallen,
         kartenlink_entfallen: w.kartenlinkEntfallen,
         treffpunkt_entfallen: w.treffpunktEntfallen,
+        ...benachrichtigtAus(w),
       }),
     ),
 });
@@ -742,18 +781,38 @@ export const terminEntfernen = werkzeug({
     "Bestätigung nennt das Ergebnis, was entfiele. Ein einzelner Termin oder «nur_dieser» wird " +
     "sofort entfernt - ein Spiel mit Meldungen oder Kennzeichnungen als nicht aufgeboten erst mit «bestaetigt: true»; ohne " +
     "nennt der Fehler, wie viele verschwinden («verschwindend», davon «kennzeichnungen»). " +
-    `${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
+    "Über die Serie erhält jede Spieler:in eine einzige Benachrichtigung mit den Terminen, die für sie wegfallen. " +
+    `${BENACHRICHTIGEN_WERKZEUG} ${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
-  eingabe: z.object({ termin_id: TerminId, reichweite: Reichweite.optional(), bestaetigt: Bestaetigt }),
-  ausgabe: z.object({ training: VerlassenSchema, entfallen_mit_training: EntfallenMitTraining }),
+  eingabe: z.object({
+    termin_id: TerminId,
+    reichweite: Reichweite.optional(),
+    bestaetigt: Bestaetigt,
+    benachrichtigen: z.boolean().default(true).describe(BENACHRICHTIGEN_MODELL("entfernen")),
+  }),
+  ausgabe: z.object({
+    training: VerlassenSchema,
+    entfallen_mit_training: EntfallenMitTraining,
+    benachrichtigt: z
+      .number()
+      .int()
+      .nullable()
+      .describe("Wie viele Spieler:innen eine Benachrichtigung erhielten; null, wenn nicht benachrichtigt werden sollte."),
+  }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
       await entferneMitReichweite(zugang.supabase, zugang.userId, {
         terminId: e.termin_id,
         reichweite: e.reichweite,
         bestaetigt: e.bestaetigt,
+        // Ohne gegenteiligen Entscheid benachrichtigen (#645 AK 1).
+        benachrichtigen: e.benachrichtigen !== false,
       }),
-      (w) => ({ training: verlassenAus(w.training), entfallen_mit_training: entfallenMitTraining(w.serie) }),
+      (w) => ({
+        training: verlassenAus(w.training),
+        entfallen_mit_training: entfallenMitTraining(w.serie),
+        benachrichtigt: w.benachrichtigt ?? null,
+      }),
     ),
 });
 
@@ -825,7 +884,7 @@ export const terminDerSerieFolgen = werkzeug({
   beschreibung:
     "Lässt abweichende Angaben eines Serientermins wieder seiner Serie folgen: Zeit, Ort, " +
     "Bemerkung, Hinweis für Eltern («hinweis_eltern»), Treffpunkt («treffpunkt»), Eingeladene, Verantwortung, Mindestbesetzung («besetzung»), Felder, erwartete Spielerzahl («spielerzahl») oder Kader übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
-    `lässt sich nicht zurücksetzen («datum» wird abgewiesen). ${VERFALL_MODELL} ${KADER_TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
+    `lässt sich nicht zurücksetzen («datum» wird abgewiesen). ${BENACHRICHTIGEN_WERKZEUG} ${VERFALL_MODELL} ${KADER_TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     termin_id: TerminId,
@@ -848,6 +907,10 @@ export const terminDerSerieFolgen = werkzeug({
       )
       .min(1),
     bestaetigt: z.boolean().optional().describe("Nur nötig, wenn mit «zeit» oder «kader» Abmeldungen verfallen."),
+    benachrichtigen: z
+      .boolean()
+      .default(true)
+      .describe(`Nur wenn der Termin mit «zeit» oder «ort» eine andere Zeit oder einen anderen Ort erhält. ${BENACHRICHTIGEN_MODELL("aendern")}`),
   }),
   ausgabe: z.object({
     termin_id: z.string(),
@@ -858,6 +921,11 @@ export const terminDerSerieFolgen = werkzeug({
     treffpunkt_entfallen: z
       .boolean()
       .describe("Mit «zeit» fiel der eigene Treffpunkt weg, weil er mit dem Beginn der Serie am Vortag läge."),
+    benachrichtigt: z
+      .number()
+      .int()
+      .nullable()
+      .describe("Wie viele Spieler:innen eine Benachrichtigung erhielten; null, wenn nicht benachrichtigt werden sollte."),
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
@@ -866,12 +934,15 @@ export const terminDerSerieFolgen = werkzeug({
         angaben: e.angaben,
         bestaetigt: e.bestaetigt ? true : undefined,
         treffpunktWeg: true,
+        // Ohne gegenteiligen Entscheid benachrichtigen (#644 AK 1).
+        benachrichtigen: e.benachrichtigen !== false,
       }),
       (w) => ({
         termin_id: w.terminId,
         abmeldungen_verfallen: w.verfallen,
         kartenlink_entfallen: w.kartenlinkEntfallen,
         treffpunkt_entfallen: w.treffpunktEntfallen,
+        benachrichtigt: w.benachrichtigt ?? null,
       }),
     ),
 });
@@ -939,19 +1010,29 @@ export const terminAusfallenLassen = werkzeug({
     "Grund eines schon ausgefallenen. Ohne «grund» bleibt ein vorhandener Grund stehen; «grund»: " +
     `null (oder leer) leert ihn. ${TERMIN_TEXT.grundSichtbar} Trägt der Termin ein Training, ruht es am Termin und ist wieder da, ` +
     "wenn der Ausfall zurückgenommen wird. Ein ausgefallener Termin gilt nicht als unvorbereitet " +
-    `und nimmt kein neues Training an. Einzeln auf heute oder später verlegt, findet er wieder statt. ${TERMIN_KENNUNG_FEHLER}`,
+    `und nimmt kein neues Training an. Einzeln auf heute oder später verlegt, findet er wieder statt. ${BENACHRICHTIGEN_WERKZEUG} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     termin_id: TerminId,
     grund: BEMERKUNG.nullable()
       .optional()
       .describe("Grund, frei, höchstens 500 Zeichen. Weggelassen: ein vorhandener Grund bleibt. null: leert ihn."),
+    benachrichtigen: z
+      .boolean()
+      .default(true)
+      .describe(`Nur beim Ausfallen lassen; den Grund eines schon ausgefallenen ändern bleibt still. ${BENACHRICHTIGEN_MODELL("ausfall")}`),
   }),
-  ausgabe: z.object({ termin_id: z.string() }),
+  ausgabe: z.object({ termin_id: z.string(), ...BenachrichtigtAusgabe }),
   ausfuehren: async (e, zugang) =>
-    abgebildet(await lasseAusfallen(zugang.supabase, zugang.userId, { terminId: e.termin_id, grund: e.grund }), (w) => ({
-      termin_id: w.terminId,
-    })),
+    abgebildet(
+      await lasseAusfallen(zugang.supabase, zugang.userId, {
+        terminId: e.termin_id,
+        grund: e.grund,
+        // Ohne gegenteiligen Entscheid benachrichtigen (#643 AK 1).
+        benachrichtigen: e.benachrichtigen !== false,
+      }),
+      (w) => ({ termin_id: w.terminId, ...benachrichtigtAus(w) }),
+    ),
 });
 
 // ── termin_ausfall_zuruecknehmen ────────────────────────────────────────────
@@ -961,14 +1042,19 @@ export const terminAusfallZuruecknehmen = werkzeug({
   titel: "Ausfall zurücknehmen",
   beschreibung:
     "Nimmt den Ausfall eines Termins zurück: Er ist danach wieder ein normaler Termin ohne Grund; " +
-    `ein Training, das am Termin ruhte, ist wieder da. ${TERMIN_KENNUNG_FEHLER}`,
+    `ein Training, das am Termin ruhte, ist wieder da. ${BENACHRICHTIGEN_WERKZEUG} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
-  eingabe: z.object({ termin_id: TerminId }),
-  ausgabe: z.object({ termin_id: z.string() }),
+  eingabe: z.object({
+    termin_id: TerminId,
+    benachrichtigen: z.boolean().default(true).describe(BENACHRICHTIGEN_MODELL("ruecknahme")),
+  }),
+  ausgabe: z.object({ termin_id: z.string(), ...BenachrichtigtAusgabe }),
   ausfuehren: async (e, zugang) =>
-    abgebildet(await nimmAusfallZurueck(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) => ({
-      termin_id: w.terminId,
-    })),
+    abgebildet(
+      // Ohne gegenteiligen Entscheid benachrichtigen (#643 AK 1).
+      await nimmAusfallZurueck(zugang.supabase, zugang.userId, { terminId: e.termin_id, benachrichtigen: e.benachrichtigen !== false }),
+      (w) => ({ termin_id: w.terminId, ...benachrichtigtAus(w) }),
+    ),
 });
 
 // ── team_mitglieder_abrufen ─────────────────────────────────────────────────

@@ -12,7 +12,8 @@ export const config = {
   // dort sinnlos. `api/kalender` trägt ein Abo-Token statt einer Sitzung (#330),
   // `api/versionen` ist öffentlich und braucht keine (#410). Hinter
   // `abmelden/` und `abholen/` steht ein privater Link ohne Konto (#436,
-  // #438): keine Sitzung, kein Cookie.
+  // #438): keine Sitzung, kein Anmelde-Cookie (das Cookie der gesehenen
+  // Benachrichtigungen setzt der Browser selbst, #642).
   // `/oauth/consent` bleibt drin — dort braucht es die Session.
   // `api/mcp` ist die einzige unvermeidbare Kopie von MCP_PFAD
   // (lib/mcp/pfad.ts): Next.js verlangt hier ein statisches Literal.

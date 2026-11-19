@@ -46,7 +46,8 @@ import {
 import { loginAdresse, sichererRuecksprung } from "../lib/weiterleitung";
 import { KONTO_GRENZE_WERKZEUG, kontoGrenzeText } from "../lib/konto-grenzen";
 import { registriereWerkzeuge } from "../lib/mcp/server";
-import { ZUGANG_DARF, ZUGANG_DARF_NICHT } from "../lib/mcp/umfang";
+import { ZUGANG_DARF, ZUGANG_DARF_NICHT, ZUGANG_ERWEITERUNG } from "../lib/mcp/umfang";
+import { BENACHRICHTIGEN_HINWEIS, BENACHRICHTIGEN_MODELL, BENACHRICHTIGEN_TEXT, BENACHRICHTIGEN_WERKZEUG } from "../lib/benachrichtigung";
 import {
   altersstufeSlugs,
   erscheinungsform_juniorenSlugs,
@@ -1261,6 +1262,112 @@ pruefe("Story 13 (#589 AK 9; A8, A9): Link-Werkzeuge über alle Teams, Erneuern 
   // Die Abholadresse eines Teams gibt den einen Link der Spieler:in heraus.
   for (const n of ["selbstabholung_abrufen", "selbstabholung_schalten", "abholadresse_erneuern"])
     assert.match(beschreibung.get(n) ?? "", /denselben, den die Abholadresse jedes ihrer Teams mit eingeschalteter Selbstabholung herausgibt/, n);
+});
+
+pruefe("Benachrichtigungen (#642 AK 6): termin_festlegen beschreibt «benachrichtigen» wie die Oberfläche; der Zugang nennt es ohne neue Zustimmung", () => {
+  const felder = new Map<string, { description?: string }>();
+  registriereWerkzeuge({
+    registerTool: (name: string, def: { inputSchema?: { shape?: Record<string, { description?: string }> } }) => {
+      if (name === "termin_festlegen") for (const [k, v] of Object.entries(def.inputSchema?.shape ?? {})) felder.set(k, v);
+    },
+  } as never);
+  const beschreibung = felder.get("benachrichtigen")?.description ?? "";
+  assert.equal(beschreibung, `Nur bei einem Spiel. ${BENACHRICHTIGEN_MODELL("neues_spiel")}`);
+  assert.ok(beschreibung.includes(BENACHRICHTIGEN_HINWEIS.neues_spiel), "UI = KI: derselbe Hinweis");
+  // Der Satz gilt für alle Vorgänge des Epics #641 (#642–#645).
+  assert.ok(
+    ZUGANG_DARF[3].endsWith(
+      "; bei neuen Spielen, Ausfällen und ihrer Rücknahme, Verlegungen und beim Entfernen jeweils entscheiden, ob die Spielervertretungen am privaten Link benachrichtigt werden",
+    ),
+  );
+  assert.ok(ZUGANG_ERWEITERUNG.includes("nicht erneut zustimmen"));
+});
+
+pruefe("Benachrichtigungen (#643 AK 1, 2): termin_ausfallen_lassen und termin_ausfall_zuruecknehmen beschreiben «benachrichtigen» wie die Oberfläche (Standard true)", () => {
+  const felder = new Map<string, Map<string, { description?: string; parse?: (x: unknown) => unknown }>>();
+  registriereWerkzeuge({
+    registerTool: (name: string, def: { inputSchema?: { shape?: Record<string, { description?: string }> } }) => {
+      if (name === "termin_ausfallen_lassen" || name === "termin_ausfall_zuruecknehmen")
+        felder.set(name, new Map(Object.entries(def.inputSchema?.shape ?? {})));
+    },
+  } as never);
+  const ausfall = felder.get("termin_ausfallen_lassen")?.get("benachrichtigen");
+  const ruecknahme = felder.get("termin_ausfall_zuruecknehmen")?.get("benachrichtigen");
+  assert.equal(
+    ausfall?.description,
+    `Nur beim Ausfallen lassen; den Grund eines schon ausgefallenen ändern bleibt still. ${BENACHRICHTIGEN_MODELL("ausfall")}`,
+  );
+  assert.ok(ausfall?.description?.includes(BENACHRICHTIGEN_HINWEIS.ausfall), "UI = KI: derselbe Hinweis (AK 2)");
+  assert.equal(ruecknahme?.description, BENACHRICHTIGEN_MODELL("ruecknahme"));
+  assert.ok(ruecknahme?.description?.includes(BENACHRICHTIGEN_HINWEIS.ruecknahme), "UI = KI: derselbe Hinweis");
+  // Ohne Angabe: benachrichtigen (Prinzip 4).
+  assert.equal(ausfall?.parse?.(undefined), true);
+  assert.equal(ruecknahme?.parse?.(undefined), true);
+});
+
+pruefe("Benachrichtigungen (#644 AK 1, 2): termin_aendern und termin_der_serie_folgen beschreiben «benachrichtigen» wie die Oberfläche (Standard true); jeder Werkzeugtext nennt den Standard", () => {
+  const felder = new Map<string, Map<string, { description?: string; parse?: (x: unknown) => unknown }>>();
+  const texte = new Map<string, string>();
+  registriereWerkzeuge({
+    registerTool: (name: string, def: { description?: string; inputSchema?: { shape?: Record<string, { description?: string }> } }) => {
+      felder.set(name, new Map(Object.entries(def.inputSchema?.shape ?? {})));
+      texte.set(name, def.description ?? "");
+    },
+  } as never);
+  const aendern = felder.get("termin_aendern")?.get("benachrichtigen");
+  const folgen = felder.get("termin_der_serie_folgen")?.get("benachrichtigen");
+  // UI = KI: derselbe Hinweis wie unter dem Häkchen des Termin-Dialogs, einzeln
+  // und über die Serie — und kein weiterer (#641 Prinzip 4).
+  assert.ok(aendern?.description?.endsWith(BENACHRICHTIGEN_MODELL("aendern")), aendern?.description);
+  for (const [v, h] of Object.entries(BENACHRICHTIGEN_HINWEIS))
+    if (v !== "aendern") assert.ok(!aendern?.description?.includes(h), `termin_aendern nennt den Hinweis «${v}»`);
+  assert.ok(aendern?.description?.includes("der Kartenlink allein nicht"), "OoS 1");
+  assert.ok(folgen?.description?.endsWith(BENACHRICHTIGEN_MODELL("aendern")), folgen?.description);
+  // Ohne Angabe: benachrichtigen (Prinzip 4).
+  assert.equal(aendern?.parse?.(undefined), true);
+  assert.equal(folgen?.parse?.(undefined), true);
+  // Jedes Werkzeug mit «benachrichtigen» nennt den Standard im Werkzeugtext, und nur diese.
+  const mit = [...felder].filter(([, f]) => f.has("benachrichtigen")).map(([n]) => n).sort();
+  assert.deepEqual(mit, [
+    "termin_aendern",
+    "termin_ausfall_zuruecknehmen",
+    "termin_ausfallen_lassen",
+    "termin_der_serie_folgen",
+    "termin_entfernen",
+    "termin_festlegen",
+  ]);
+  for (const [name, text] of texte) assert.equal(text.includes(BENACHRICHTIGEN_WERKZEUG), mit.includes(name), name);
+});
+
+pruefe("Benachrichtigungen (#645 AK 1): termin_entfernen beschreibt «benachrichtigen» wie die Oberfläche (Standard true) und nennt «benachrichtigt»", () => {
+  const felder = new Map<string, Map<string, { description?: string; parse?: (x: unknown) => unknown }>>();
+  const ausgaben = new Map<string, Record<string, unknown>>();
+  registriereWerkzeuge({
+    registerTool: (
+      name: string,
+      def: { inputSchema?: { shape?: Record<string, { description?: string }> }; outputSchema?: { shape?: Record<string, unknown> } },
+    ) => {
+      felder.set(name, new Map(Object.entries(def.inputSchema?.shape ?? {})));
+      ausgaben.set(name, def.outputSchema?.shape ?? {});
+    },
+  } as never);
+  const entfernen = felder.get("termin_entfernen")?.get("benachrichtigen");
+  assert.equal(entfernen?.description, BENACHRICHTIGEN_MODELL("entfernen"));
+  assert.ok(entfernen?.description?.includes(BENACHRICHTIGEN_HINWEIS.entfernen), "UI = KI: derselbe Hinweis");
+  assert.equal(entfernen?.parse?.(undefined), true, "Prinzip 4: ohne Angabe benachrichtigen");
+  assert.equal(entfernen?.parse?.(false), false);
+  assert.ok("benachrichtigt" in (ausgaben.get("termin_entfernen") ?? {}), "Ausgabe benachrichtigt");
+  // Befund 3: Die Wege, die direkt schreiben, sagen ein Scheitern der
+  // Benachrichtigung im «hinweis» — wortgleich zur Oberfläche. Die RPC-Wege
+  // legen in derselben Transaktion ab und kennen es nicht.
+  const mitHinweis = ["termin_aendern", "termin_ausfall_zuruecknehmen", "termin_ausfallen_lassen", "termin_festlegen"];
+  for (const n of [...mitHinweis, "termin_entfernen", "termin_der_serie_folgen"]) {
+    const hinweis = ausgaben.get(n)?.hinweis as { description?: string; parse?: (x: unknown) => unknown } | undefined;
+    assert.equal(!!hinweis, mitHinweis.includes(n), `${n}: hinweis`);
+    if (!hinweis) continue;
+    assert.ok(hinweis.description?.includes(BENACHRICHTIGEN_TEXT.gescheitert), hinweis.description);
+    assert.equal(hinweis.parse?.(undefined), undefined, "ohne Scheitern kein hinweis");
+  }
 });
 
 pruefe("Story 13 (#589 PC 1, 2): ZUGANG_DARF und ZUGANG_DARF_NICHT im Wortlaut, der Kopf von umfang.ts verlangt keine erneute Zustimmung", () => {

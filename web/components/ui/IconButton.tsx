@@ -3,6 +3,7 @@ import type { ButtonHTMLAttributes, ComponentProps } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { Badge } from "./Lozenge";
 import { ZeichenPunkt, type ZeichenPunktTon } from "./ZeichenPunkt";
 
 type IconBtnVariant = "standard" | "overlay";
@@ -64,6 +65,9 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
   punkt?: ZeichenPunktTon;
   /** Hauptaktion: gefüllt in Primary wie `Button variant="filled"` — kein Umschalter. */
   primary?: boolean;
+  /** Eine Zahl am Zeichen (`Badge` oben rechts), etwa die neuen Benachrichtigungen;
+   *  ab 10 «9+», bei 0 nichts. Stumm — die Zahl gehört in `label`. */
+  zahl?: number;
 }
 
 /* Icon-Knopf: gezeichnetes Icon (Lucide) + Zustands-Ebene statt Füllung.
@@ -71,7 +75,7 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
    `active` aktiviert Toggle-Semantik (aria-pressed); ohne `active` = reiner Aktions-Button. */
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   (
-    { icon: Icon, label, active, variant = "standard", iconProps, punkt, primary, className, ...props },
+    { icon: Icon, label, active, variant = "standard", iconProps, punkt, primary, zahl, className, ...props },
     ref,
   ) => {
     const isToggle = active !== undefined;
@@ -83,10 +87,13 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         className={iconButtonClasses(variant, active, className, primary)}
         {...props}
       >
-        {punkt ? (
+        {punkt || (zahl ?? 0) > 0 ? (
           <span className="relative">
             <Icon size={ICON} strokeWidth={2} aria-hidden {...iconProps} />
-            <ZeichenPunkt ton={punkt} />
+            {punkt && <ZeichenPunkt ton={punkt} />}
+            {zahl !== undefined && zahl > 0 && (
+              <Badge className="absolute -right-2 -top-2 ring-2 ring-[var(--zeichen-grund,var(--color-elev-01))]">{zahl > 9 ? "9+" : zahl}</Badge>
+            )}
           </span>
         ) : (
           <Icon size={ICON} strokeWidth={2} aria-hidden {...iconProps} />

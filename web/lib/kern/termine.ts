@@ -4,6 +4,14 @@ import { verfallBestaetigen, type Spielstand } from "@/lib/spieler";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
 import {
+  benachrichtige,
+  holeVerlegungNach,
+  NICHT_BENACHRICHTIGT,
+  type AusstehendeVerlegung,
+  type Benachrichtigt,
+} from "@/lib/kern/benachrichtigungen";
+import { istVerlegung } from "@/lib/benachrichtigung";
+import {
   KONFLIKT_MARKER,
   TERMIN_MELDUNG,
   ausfallProblem,
@@ -239,6 +247,10 @@ export type TerminFestlegen = {
   kaderIds?: string[];
   /** Wie viele Trainer:innen mindestens dabei sein sollen (#521); ohne: keine. */
   mindestbesetzung?: Mindestbesetzung;
+  /** Nur an einem Spiel (#642 AK 6): ob die Spielervertretungen der
+   *  Spieler:innen, für die es gilt, benachrichtigt werden. Pflicht, damit
+   *  jeder Weg ausdrücklich entscheidet; Oberfläche und KI: Standard ja. */
+  benachrichtigen: boolean;
 } & TrainerWahl;
 
 /** Was ein Spiel trägt und ein Training nicht (#459 AK 2, 5, 10, 11, 16) —
@@ -340,7 +352,7 @@ export async function legeTerminFest(
   supabase: SupabaseClient,
   userId: string,
   e: TerminFestlegen,
-): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
+): Promise<KernErgebnis<{ terminId: string; teamId: string } & Benachrichtigt>> {
   if (!istTerminArt(e.art)) return fehlschlag("eingabe", SPIEL_TEXT.art, { feld: "art" });
   // Den Treffpunkt prüft beim Spiel `artFehler` (nur an einem Training).
   const problem = feldFehler(terminProblem(e.art === "spiel" ? { ...e, treffpunkt: undefined } : e));
@@ -425,7 +437,11 @@ export async function legeTerminFest(
     const weg = await supabase.from("training_termine").delete().eq("id", data.id);
     return weg.error ? ausDbFehler(weg.error) : kalenderFehler(b.error);
   }
-  return ok({ terminId: data.id, teamId: e.teamId });
+  // Ganz am Ende, wenn das Spiel mit Treffpunkten, Kadern und Besetzung steht
+  // (#642 PC 1): Die Benachrichtigung zeigt es, wie es gilt. Scheitert sie,
+  // bleibt der Termin trotzdem (`benachrichtigungFehlt`).
+  const n = e.art === "spiel" && e.benachrichtigen ? await benachrichtige(supabase, data.id, "neues_spiel") : NICHT_BENACHRICHTIGT;
+  return ok({ terminId: data.id, teamId: e.teamId, ...n });
 }
 
 export type TerminAendern = {
@@ -480,6 +496,17 @@ export type TerminAendern = {
    *  PC 4) — nur mit `true`, sonst kommt ein Fehler mit `treffpunktEntfaellt`
    *  (PC 5). Die KI fragt nicht nach und sendet `true` (PC 6). */
   treffpunktWeg?: boolean;
+  /** Ob die Spielervertretungen eine Verlegung erfahren (#644 AK 1). Pflicht,
+   *  damit jeder Weg ausdrücklich entscheidet; Oberfläche und KI: Standard
+   *  ja. Wirkt nur, wenn sich Datum, Beginn, Ende oder Ort ändern; ob der
+   *  Termin danach zählt und nicht ausgefallen ist, prüft die Datenebene. */
+  benachrichtigen: boolean;
+  /** Setzt der Aufrufer danach noch die Kader, gilt die Benachrichtigung erst
+   *  für die neuen (#644 PC 1: nach dem letzten Schritt). Dann legt der Kern
+   *  nichts ab und liefert die Verlegung in `ausstehend`; der Aufrufer holt
+   *  sie nach dem Kader-Schritt nach (`holeVerlegungNach`) — scheitert der,
+   *  entsteht keine. */
+  kaderFolgen?: boolean;
 };
 
 /** Was eine Verlegung verfallen lässt: Abmeldungen (#437 AK 1) und, wird
@@ -631,7 +658,10 @@ export async function aendereTermin(
     kartenlinkEntfallen: boolean;
     /** Der Treffpunkt fiel mit dem neuen Beginn weg (#561 PC 6). */
     treffpunktEntfallen: boolean;
-  }>
+    /** Mit `kaderFolgen`: die Verlegung, deren Benachrichtigung der
+     *  Aufrufer nachholt; sonst `null`. */
+    ausstehend: AusstehendeVerlegung | null;
+  } & Benachrichtigt>
 > {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
@@ -843,6 +873,13 @@ export async function aendereTermin(
       return error ? ausDbFehler(error) : warumNichtGeschrieben(supabase, t.id, e.erwartetesTraining === undefined);
     }
   }
+  // #644 PC 1: nach dem Schreiben, nur bei einer Verlegung (Datum, Beginn,
+  // Ende, Ort; der Kartenlink allein nicht, OoS 1). `wieder` (AK 3): Der
+  // Termin war ausgefallen — bleibt er es, legt die Datenebene nichts ab (0),
+  // ebenso für einen Termin vor heute. Folgen noch Kader, holt der Aufrufer
+  // die Benachrichtigung danach nach.
+  const verlegung = e.benachrichtigen && istVerlegung(t, neu) ? { terminId: t.id, wieder: t.ausgefallen } : null;
+  const b = e.kaderFolgen ? NICHT_BENACHRICHTIGT : await holeVerlegungNach(supabase, verlegung);
   return ok({
     terminId: t.id,
     teamId: t.team_id,
@@ -850,6 +887,8 @@ export async function aendereTermin(
     abmeldungenVerfallen: verfallen,
     kartenlinkEntfallen: t.ort_link !== null && neu.ortLink === null && e.ortLink === undefined,
     treffpunktEntfallen: treffpunktEntfaellt,
+    ausstehend: e.kaderFolgen ? verlegung : null,
+    ...b,
   });
 }
 
@@ -873,8 +912,20 @@ export async function entferneTermin(
      *  die bestätigte Summe (Oberfläche) oder `true` (KI). Ohne kommt ein
      *  Fehler mit `verschwindend`. */
     bestaetigt?: boolean | number;
+    /** Ob die Spielervertretungen erfahren, dass der Termin wegfällt
+     *  (#645 AK 1, PC 1); still bleiben ausgefallene und vergangene. */
+    benachrichtigen: boolean;
   },
-): Promise<KernErgebnis<{ teamId: string; training: Verlassen }>> {
+): Promise<
+  KernErgebnis<{
+    teamId: string;
+    training: Verlassen;
+    /** Wie viele Spieler:innen vom Wegfall erfuhren (#645 PC 1); fehlt, wenn
+     *  nicht benachrichtigt werden sollte. Die Datenebene legt in derselben
+     *  Transaktion ab: ohne Benachrichtigung kein Entfernen. */
+    benachrichtigt?: number;
+  }>
+> {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   const { data: vorher } = await supabase
     .from("training_termine")
@@ -897,11 +948,12 @@ export async function entferneTermin(
   const { data, error } = await supabase.rpc("termin_entfernen", {
     p_termin: e.terminId,
     p_erwartet: e.erwartetesTraining === undefined ? null : { termin_training: e.erwartetesTraining },
+    p_benachrichtigen: e.benachrichtigen,
   });
   if (error) return kalenderFehler(error);
-  const r = data as { training: string | null; team: string };
+  const r = data as { training: string | null; team: string; benachrichtigt?: number | null };
   await raeumeBilderAb(supabase, bilder);
-  return ok({ teamId: r.team, training: await verlassen(supabase, r.training) });
+  return ok({ teamId: r.team, training: await verlassen(supabase, r.training), benachrichtigt: r.benachrichtigt ?? undefined });
 }
 
 // ── Zuordnen und lösen (#323; Termin-Trainings, PO 2026-10-06) ───────────────
@@ -1035,8 +1087,13 @@ export async function lasseAusfallen(
      *  es, PO 17): Hat ein anderes Mitglied den Ausfall inzwischen gesetzt oder
      *  zurückgenommen, wird nicht geschrieben (`AUSFALL_GEAENDERT`). */
     erwartetAusgefallen?: boolean;
+    /** Ob die Spielervertretungen den Ausfall erfahren (#643 AK 1). Pflicht,
+     *  damit jeder Weg ausdrücklich entscheidet; Oberfläche und KI: Standard
+     *  ja. Wirkt nur, wenn der Termin vorher stattfand — ein geänderter Grund
+     *  bleibt immer still (OoS 1). */
+    benachrichtigen: boolean;
   },
-): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
+): Promise<KernErgebnis<{ terminId: string; teamId: string } & Benachrichtigt>> {
   const p = ausfallProblem(e.grund);
   if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
   const geladen = await ladeTermin(supabase, e.terminId);
@@ -1057,7 +1114,13 @@ export async function lasseAusfallen(
       ? fehlschlag("konflikt", TERMIN_MELDUNG.AUSFALL_GEAENDERT)
       : fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   }
-  return ok({ terminId: t.id, teamId: t.team_id });
+  // Nach dem Schreiben, nur beim Wechsel zu «fällt aus» (#643 PC 1, OoS 1):
+  // Mit `erwartetAusgefallen` traf das Update genau diesen Stand, sonst gilt
+  // der geladene. Tag und Empfänger prüft die Datenebene. Scheitert das
+  // Ablegen, bleibt der Ausfall trotzdem (`benachrichtigungFehlt`).
+  const vorher = e.erwartetAusgefallen ?? t.ausgefallen;
+  const b = e.benachrichtigen && !vorher ? await benachrichtige(supabase, t.id, "ausfall") : NICHT_BENACHRICHTIGT;
+  return ok({ terminId: t.id, teamId: t.team_id, ...b });
 }
 
 /** Den Ausfall zurücknehmen (#327 AK 6, PC 3): wieder ein normaler Termin,
@@ -1065,8 +1128,13 @@ export async function lasseAusfallen(
 export async function nimmAusfallZurueck(
   supabase: SupabaseClient,
   _userId: string,
-  e: { terminId: string },
-): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
+  e: {
+    terminId: string;
+    /** Ob die Spielervertretungen erfahren, dass der Termin wieder
+     *  stattfindet (#643 AK 1). Pflicht wie bei `lasseAusfallen`. */
+    benachrichtigen: boolean;
+  },
+): Promise<KernErgebnis<{ terminId: string; teamId: string } & Benachrichtigt>> {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
   if (!geladen.wert.ausgefallen) return fehlschlag("regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN, TERMIN_FELD);
@@ -1086,5 +1154,8 @@ export async function nimmAusfallZurueck(
       ? fehlschlag("regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN, TERMIN_FELD)
       : fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   }
-  return ok({ terminId: e.terminId, teamId: geladen.wert.team_id });
+  // Nach dem Schreiben (#643 PC 1); einen vergangenen Termin lässt die
+  // Datenebene still (0).
+  const b = e.benachrichtigen ? await benachrichtige(supabase, e.terminId, "ruecknahme") : NICHT_BENACHRICHTIGT;
+  return ok({ terminId: e.terminId, teamId: geladen.wert.team_id, ...b });
 }

@@ -32,6 +32,8 @@ import type { FolgeAngabe } from "@/lib/kern/serien";
 import { TrainerWahl, gleicheMenge, trainerAenderung, trainerStart, type TrainerAenderung, type TrainerWert } from "./TrainerWahl";
 import { KEINE_BESETZUNG, MindestbesetzungFeld, besetzungAusEingabe, besetzungEingabe, type BesetzungEingabe } from "./MindestbesetzungFeld";
 import { besetzungText } from "@/lib/besetzung";
+import { ausfallEndet, benachrichtigungZaehlt, mitteilbarEinzeln, mitteilbarSerie } from "@/lib/benachrichtigung";
+import { useBenachrichtigen } from "./BenachrichtigenFeld";
 import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
 import { terminBegonnen } from "@/lib/zeit";
@@ -179,7 +181,8 @@ export function TerminDialog({
   spielerGesamt?: number;
   /** Der Termin hat begonnen: Seine Kader stehen fest (AK 13). */
   begonnen?: boolean;
-  onFolgen?: (angabe: FolgeAngabe) => void;
+  /** `benachrichtigen`: Entscheid des Häkchens (#644); false, wenn es nicht erscheint. */
+  onFolgen?: (angabe: FolgeAngabe, benachrichtigen: boolean) => void;
   onClose: () => void;
   /** `regel` nur bei einem Serientermin: Wochentage und Zeitraum, wie sie im
    *  Dialog stehen (geändert oder nicht). `trainer` nur, wenn sich die Wahl
@@ -187,11 +190,14 @@ export function TerminDialog({
    *  solange der Ausfall bestehen bleibt. */
   onSpeichern: (
     felder: TerminFelder,
-    regel?: SerienRegel,
-    trainer?: TrainerAenderung,
-    grund?: string,
+    regel: SerienRegel | undefined,
+    trainer: TrainerAenderung | undefined,
+    grund: string | undefined,
     /** Nur, wenn sich die Kader geändert haben (#453). */
-    kaderIds?: string[],
+    kaderIds: string[] | undefined,
+    /** Der Entscheid des Häkchens «Spielervertretungen benachrichtigen» (#644);
+     *  false, solange es nicht erscheint. */
+    benachrichtigen: boolean,
   ) => void;
 }) {
   const [felder, setFelder] = useState<TerminFelder>({ datum: "" });
@@ -280,10 +286,44 @@ export function TerminDialog({
   const terminDatum = start?.datum ?? "";
   const verschoben = !!serienTag && !!abweichungen?.includes("datum");
   const folgenKann = FOLGEN_KANN.filter((a) => abweichungen?.includes(a));
-  // Dieselbe Regel wie der Fachkern (`aendereTermin`): ein anderes Datum ab
-  // heute — bei einem Spiel jede Verlegung, auch nur der Zeit (#459 PC 5).
+  // Ein Spiel mit anderem Anpfiff liegt nur in der Zukunft (#459 PC 5).
   const verlegt = felder.datum !== terminDatum || (felder.beginn ?? "") !== (start?.beginn ?? "");
-  const ausfallEndet = !!ausfall && (istSpiel ? verlegt : felder.datum !== terminDatum && felder.datum >= heute);
+  // #644 AK 1, 2: Das Häkchen erscheint, wenn die Änderung den
+  // Spielervertretungen mitteilbar ist (Zwilling der Datenregel). Bei einem
+  // Serientermin steht die Reichweite erst nach dem Speichern fest: Er zählt
+  // als mitteilbar, wenn «nur dieser» (Datum) oder die Serie (Wochentage, Zeit,
+  // Ort bei unverändertem Datum) eine Verlegung ergäbe; die Datenebene
+  // entscheidet dann genau. Der Entscheid gilt bei der Serie auch für Termine,
+  // die wegfallen (#645 PC 3): Ein kürzerer Zeitraum kann sie bis zum
+  // bisherigen Ende treffen, darum zählt das spätere der beiden Enden.
+  const vorherStand = {
+    datum: terminDatum,
+    beginn: start?.beginn ?? null,
+    ende: start?.ende ?? null,
+    ort: start?.ort ?? null,
+    ausgefallen: !!ausfall,
+  };
+  const nachherStand = { datum: felder.datum, beginn: felder.beginn ?? null, ende: felder.ende ?? null, ort: felder.ort ?? null };
+  const artKurz = istSpiel ? "spiel" : "training";
+  // Dieselbe Regel wie der Fachkern (`aendereTermin`) und die Datenebene
+  // (#327 PC 4, #459 PC 5): Der Ausfall endet mit dieser Änderung.
+  const endetAusfall = !!ausfall && ausfallEndet(vorherStand, nachherStand, artKurz, heute);
+  const mitteilbarSpeichern =
+    !!felder.datum &&
+    (mitteilbarEinzeln({ vorher: vorherStand, nachher: nachherStand, art: artKurz, heute }) ||
+      (!!serie &&
+        felder.datum === terminDatum &&
+        mitteilbarSerie({
+          vorher: vorherStand,
+          nachher: nachherStand,
+          regelGeaendert: !!regelAenderung(serie, regel),
+          serieEnde: regel.bis > serie.endDatum ? regel.bis : serie.endDatum,
+          heute,
+        })));
+  // Der Serie folgen: nur Zeit und Ort verlegen; nur bei einem Termin ab heute, der nicht ausgefallen ist.
+  const mitteilbarFolgen =
+    !ausfall && benachrichtigungZaehlt(terminDatum, heute) && (folgenKann.includes("zeit") || folgenKann.includes("ort"));
+  const benachrichtigen = useBenachrichtigen("aendern", { offen: open, sichtbar: mitteilbarSpeichern || mitteilbarFolgen, pending });
 
   function regelPruefen(): boolean {
     if (!serie) return true;
@@ -317,7 +357,7 @@ export function TerminDialog({
     setProblem(p);
     const angaben = istSpiel ? spiel.pruefe() : platz.pruefe();
     const regelOk = regelPruefen();
-    const gp = ausfall && !ausfallEndet ? ausfallProblem(grund) : null;
+    const gp = ausfall && !endetAusfall ? ausfallProblem(grund) : null;
     setGrundFehler(gp?.text);
     const m = besetzungAusEingabe(mindest);
     setMindestFehler(m.ok ? undefined : m.text);
@@ -326,7 +366,7 @@ export function TerminDialog({
       setProblem({ feld: "beginn", text: SPIEL_MELDUNG.SPIEL_ANPFIFF_VERGANGEN });
       return;
     }
-    const grundNeu = ausfall && !ausfallEndet && grund.trim() !== (ausfall.grund ?? "") ? grund : undefined;
+    const grundNeu = ausfall && !endetAusfall && grund.trim() !== (ausfall.grund ?? "") ? grund : undefined;
     onSpeichern(
       istSpiel
         ? { ...felder, art: "spiel", ...angaben, mindestbesetzung: m.wert }
@@ -335,6 +375,7 @@ export function TerminDialog({
       trainerAenderung(besetzung, besetzungStart) ?? undefined,
       grundNeu,
       gleicheMenge(kaderWahl, kaderStart) ? undefined : kaderWahl,
+      mitteilbarSpeichern && benachrichtigen.wert,
     );
   }
 
@@ -354,7 +395,7 @@ export function TerminDialog({
       {serverFehler && <SectionMessage appearance="error" className="mb-4">{serverFehler}</SectionMessage>}
       {ausfall && (
         <div className="mb-4 flex flex-col gap-3">
-          {ausfallEndet ? (
+          {endetAusfall ? (
             <SectionMessage appearance="information">
               {istSpiel
                 ? "Verlegt findet das Spiel statt: Mit dem Speichern endet sein Ausfall, und der Grund entfällt."
@@ -497,7 +538,7 @@ export function TerminDialog({
                     {ANGABE[a]} {MEHRZAHL.includes(a) ? "weichen" : "weicht"} von der Serie ab.
                     {a === "ort" && eigenerLinkWeg && <> {TERMIN_TEXT.kartenlinkFolgtSerie}</>}
                   </span>
-                  <Button variant="link" aria-label={FOLGEN_LABEL[a]} disabled={pending} onClick={() => onFolgen?.(a)}>Der Serie folgen</Button>
+                  <Button variant="link" aria-label={FOLGEN_LABEL[a]} disabled={pending} onClick={() => onFolgen?.(a, (a === "zeit" || a === "ort") && mitteilbarFolgen && benachrichtigen.wert)}>Der Serie folgen</Button>
                 </li>
               ))}
             </ul>
@@ -522,6 +563,7 @@ export function TerminDialog({
           </div>
         </section>
       )}
+      {benachrichtigen.feld}
     </Dialog>
   );
 }
