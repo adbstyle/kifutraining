@@ -288,6 +288,15 @@ export function spielerzahlText(n: number): string {
   return `${n} ${n === 1 ? "Spieler:in" : "Spieler:innen"}`;
 }
 
+/** Den Ausfall zurücknehmen (#327 AK 6): Titel, Knopf und Meldung. Bei einem
+ *  Termin von heute oder später als Dialog mit dem Entscheid, ob die
+ *  Spielervertretungen benachrichtigt werden (#643 AK 1), sonst ein Klick. */
+export const AUSFALL_ZURUECKNEHMEN_TEXT = {
+  titel: "Ausfall zurücknehmen",
+  knopf: "Zurücknehmen",
+  erfolg: "Ausfall zurückgenommen.",
+} as const;
+
 /** Der Grund eines Ausfalls folgt den Regeln der Bemerkung (#327 AK 4);
  *  Zwilling des Checks `tt_ausfall_grund`. */
 export function ausfallProblem(grund: string | null | undefined): { feld: "grund"; text: string } | null {

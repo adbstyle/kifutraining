@@ -64,8 +64,10 @@ export function SpielKarte({
   const treffpunkte = !t.begonnen && !gedaempft && t.treffpunkte && t.treffpunkte.length > 0 ? t.treffpunkte : null;
   return (
     <li
+      id={`termin-${t.id}`}
+      tabIndex={-1}
       className={cn(
-        "flex flex-col gap-3 rounded-flaeche",
+        "flex flex-col gap-3 rounded-flaeche focus:outline-none",
         "px-3 py-3",
         gedaempft ? "kontur border-linie bg-transparent" : "bg-elev-01",
       )}

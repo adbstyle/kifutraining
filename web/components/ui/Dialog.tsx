@@ -90,7 +90,7 @@ export function Dialog({
       )}
       <div className="type-body-medium text-on-surface-mittel">{children}</div>
       {actions && (
-        <div className="mt-5 flex justify-end gap-2">{actions}</div>
+        <div className="mt-5 flex flex-wrap justify-end gap-2">{actions}</div>
       )}
     </dialog>
   );

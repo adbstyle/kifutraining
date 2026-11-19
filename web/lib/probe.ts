@@ -12,6 +12,8 @@
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
 
+import { infoTextBereinigt, infoTextLaenge } from "./info-text";
+
 /** Zwilling des Checks `team_probetraining_anzahl`. */
 export const PROBE_ANZAHL_MIN = 1;
 export const PROBE_ANZAHL_MAX = 20;
@@ -71,7 +73,7 @@ export const PROBE_TEXT = {
   info: "Info-Schreiben",
   infoFeld: "Info-Schreiben (optional)",
   /** AK 3: wer es sieht — fest hinter dem ⓘ. */
-  infoWer: "Das sehen die Eltern aller schnuppernden Spieler:innen oben in ihrem Link.",
+  infoWer: "Das sehen die Eltern aller schnuppernden Spieler:innen an ihrem Link unter «Infos».",
   infoUnter: "Nur Text. Webadressen werden im Link anklickbar.",
   infoZuLang: `Das Info-Schreiben darf höchstens ${PROBE_INFO_MAX} Zeichen lang sein.`,
   infoKeines: "Keines",
@@ -168,13 +170,12 @@ export const PROBE_CHECKS: [string, string][] = [
  *  Leerraum am Anfang und Ende weg, leer = keines (Zwilling von
  *  `team_probetraining_festlegen`). */
 export function probeInfoBereinigt(text: string | null | undefined): string | null {
-  const t = (text ?? "").replace(/\r\n/g, "\n").replace(/^[ \t\n\r]+|[ \t\n\r]+$/g, "");
-  return t === "" ? null : t;
+  return infoTextBereinigt(text);
 }
 
 /** Zeichen wie `char_length`: Codepunkte, nicht UTF-16-Einheiten. */
 export function probeInfoLaenge(text: string | null | undefined): number {
-  return [...(probeInfoBereinigt(text) ?? "")].length;
+  return infoTextLaenge(text);
 }
 
 /** Was am Info-Schreiben nicht stimmt, sonst `null` (AK 2). */

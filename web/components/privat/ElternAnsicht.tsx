@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CalendarX2 } from "lucide-react";
-import { ExternerLink, FilterChip, Kalenderblatt, KuerzbarerText, Leerzustand, Lozenge, SectionMessage, Switch, TrainingsTreffpunkt } from "@/components/ui";
+import { Bell, CalendarX2, Info } from "lucide-react";
+import { ExternerLink, FilterChip, IconButton, IconButtonLink, Kalenderblatt, Leerzustand, Lozenge, SectionMessage, Switch, Tooltip, TrainingsTreffpunkt } from "@/components/ui";
 import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
 import type { Meldung } from "@/lib/spiel";
 import { SpielKarte } from "./SpielKarte";
 import { AusfallGrund } from "./AusfallGrund";
 import { HinweisEltern } from "./HinweisEltern";
 import { AboKnopf } from "./AboKnopf";
+import { BenachrichtigungenAnsicht } from "./BenachrichtigungenAnsicht";
+import { useBenachrichtigungen } from "./useBenachrichtigungen";
+import { knopfLabel, type LinkBenachrichtigungen } from "@/lib/benachrichtigung";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
 import { meldeSpielUeberLinkAktion, meldeUeberLinkAktion } from "@/lib/actions/spieler-link";
@@ -17,7 +20,7 @@ import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import type { LinkTermin } from "@/lib/privater-link";
 import {
   LINK_EINGRENZUNG,
-  angabenSehenText,
+  LINK_INFOS,
   LINK_GILT_NICHT_TITEL,
   LINK_KEINE_TERMINE_TITEL,
   linkEingrenzungLeer,
@@ -32,7 +35,7 @@ import {
   type Spielerzahl,
 } from "@/lib/spieler";
 import { useLokalerStand } from "@/lib/use-lokaler-stand";
-import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaehler, type ProbeStand } from "@/lib/probe";
+import { PROBE_TEXT, linkProbeStand, linkProbeVoll, linkProbeZaehler, type ProbeStand } from "@/lib/probe";
 
 /* Was die Spielervertretung über den privaten Link sieht (#436 AK 5–9): ihre
    Spieler:in, ihre Teams und die anstehenden Termine aller Teams — jeder
@@ -57,29 +60,42 @@ import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaeh
    wie viele Schnuppertrainings noch möglich sind, mit einem Balken je
    Schnuppertraining (besucht gefüllt, angemeldet umrandet). Ist die Anzahl
    erreicht, sagt das eine Meldung über den Trainings, und die Schalter der
-   übrigen sind gesperrt, bis ein Platz frei wird. Das Info-Schreiben des
-   Teams (#556) steht davor, gekürzt mit «Ganz lesen» — man liest es, bevor
-   man anmeldet (AK 4); Webadressen darin öffnen sich (AK 5). */
+   übrigen sind gesperrt, bis ein Platz frei wird.
+
+   Alle Erklärungen — wie man meldet bzw. wie das Schnuppern geht, das
+   Info-Schreiben, die Infos zum Team und wer die Angaben sieht — stehen
+   hinter dem ⓘ neben dem Namen auf einer eigenen Seite (#598 AK 10, löst
+   #556 AK 4 ab): Sie halten beim Melden nicht auf. Hier bleiben nur der
+   Schnupperstand, Hinweise zu Terminen und Fehler (OoS 10).
+
+   Die Glocke hinter dem Namen zeigt, wie viele Benachrichtigungen dieses
+   Gerät noch nicht angezeigt hat (#642 AK 2), und öffnet deren Ansicht an
+   Stelle der Chips und der Liste; der Kopf bleibt. Von einem Eintrag führt
+   «Zum Termin» zur Karte in der Liste (AK 4). Fehlen die Daten
+   (`benachrichtigungen` ist `null`), gibt es keine Glocke. */
 export function ElternAnsicht({
   token,
   teams,
   spieler,
-  verein,
   probe,
-  probeInfo,
   termine,
+  benachrichtigungen,
+  gesehenBis,
+  schluessel,
 }: {
   token: string;
   /** Die Teams der Spieler:in, alphabetisch, auch ohne Termine; leer ohne Team. */
   teams: string[];
   spieler: { vorname: string; nachname: string };
-  /** Der Verein, der für die Daten der Spieler:in verantwortlich ist (#587 PC 2). */
-  verein: string;
   /** Schnuppert sie: ihr Stand, sonst `null`. */
   probe: ProbeStand | null;
-  /** Das Info-Schreiben des Teams, nur beim Schnuppern (#556). */
-  probeInfo: string | null;
   termine: LinkTermin[];
+  /** Die Benachrichtigungen der Spieler:in; `null`, wenn sie nicht zu laden waren. */
+  benachrichtigungen: LinkBenachrichtigungen | null;
+  /** Bis wann dieses Gerät sie angezeigt hat (aus dem Cookie); `null` auf einem Gerät, das den Link noch nicht kennt. */
+  gesehenBis: number | null;
+  /** Aus dem Link abgeleiteter Schlüssel des Cookies (nie der Link selbst). */
+  schluessel: string;
 }) {
   // Was gerade umgelegt wird, steht sofort so da; scheitert es, zurück. Bei
   // Spielen die Meldung (#463) ebenso.
@@ -105,6 +121,23 @@ export function ElternAnsicht({
   };
 
   const name = spielerName(spieler);
+  const glocke = useBenachrichtigungen({ daten: benachrichtigungen, gesehenBis, schluessel });
+  const glockeRef = useRef<HTMLButtonElement>(null);
+  // Zu welchem Termin «Zum Termin» führen soll, sobald die Liste wieder steht.
+  const ziel = useRef<string | null>(null);
+  const warOffen = useRef(glocke.offen);
+  useEffect(() => {
+    if (warOffen.current && !glocke.offen) {
+      const karte = ziel.current ? document.getElementById(`termin-${ziel.current}`) : null;
+      ziel.current = null;
+      if (karte) {
+        const ruhig = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        karte.scrollIntoView({ behavior: ruhig ? "auto" : "smooth", block: "center" });
+        karte.focus({ preventScroll: true });
+      } else glockeRef.current?.focus();
+    }
+    warOffen.current = glocke.offen;
+  }, [glocke.offen]);
   // Auf Trainings oder Spiele eingrenzen (#596): Es gilt höchstens eine Art,
   // ein Klick auf die gewählte hebt sie auf — wie «Meine Termine» im Team.
   // Bewusst nur im Zustand der Seite: Neu öffnen oder neu laden zeigt wieder
@@ -116,6 +149,13 @@ export function ElternAnsicht({
   // weg, statt verdeckt weiterzuleben und beim Wiedererscheinen still zu gelten.
   if (!eingrenzbar && art) setArt(null);
   const sichtbar = art ? termine.filter((t) => t.art === art) : termine;
+  /** «Zum Termin» (#642 AK 4): Eine Eingrenzung, die den Termin ausschlösse, fällt weg, die Ansicht schliesst, die Karte erhält den Fokus. */
+  function zeigeTermin(id: string) {
+    const t = termine.find((x) => x.id === id);
+    if (art && t && t.art !== art) setArt(null);
+    ziel.current = id;
+    glocke.schliessen();
+  }
   // Ein Fehler beim Melden steht an seiner Karte; ist sie weggefiltert, steht
   // er mit dem Tag über der Liste, damit er nicht ungesehen verschwindet.
   const fehlerVerdeckt = fehler && !sichtbar.some((t) => t.id === fehler.terminId) ? termine.find((t) => t.id === fehler.terminId) : undefined;
@@ -214,11 +254,26 @@ export function ElternAnsicht({
   return (
     <>
       <header className="flex flex-col gap-0.5 border-b border-linie px-4 pb-4 pt-6">
-        {/* Das Kalender-Abo (#507 AK 1) gleich hinter dem Namen: Es ist der
-            Kalender dieser Spieler:in (PO 2026-10-24). */}
+        {/* Die Infos (#598 AK 10) und das Kalender-Abo (#507 AK 1) gleich
+            hinter dem Namen: Es ist der Kalender dieser Spieler:in (PO 2026-10-24). */}
         <div className="flex items-center gap-1">
           <h1 className="min-w-0 type-headline-small text-on-surface">{linkKopfTitel(name)}</h1>
+          <Tooltip label={LINK_INFOS.knopf}>
+            <IconButtonLink icon={Info} label={LINK_INFOS.knopf} href={`/abmelden/${token}/infos`} />
+          </Tooltip>
           <AboKnopf token={token} />
+          {benachrichtigungen && (
+            <Tooltip label={knopfLabel(glocke.neu)}>
+              <IconButton
+                ref={glockeRef}
+                icon={Bell}
+                zahl={glocke.neu}
+                label={knopfLabel(glocke.neu)}
+                active={glocke.offen}
+                onClick={glocke.offen ? glocke.schliessen : glocke.oeffnen}
+              />
+            </Tooltip>
+          )}
         </div>
         {/* Die Teams alphabetisch, auch ohne Termine (#583 AK 3). */}
         {teams.length > 0 && (
@@ -231,108 +286,100 @@ export function ElternAnsicht({
             ))}
           </ul>
         )}
-        {probeLokal ? (
-          <>
-            <p className="type-body-medium text-on-surface-mittel">{linkProbeKopf(spieler.vorname)}</p>
-            <ProbeZaehler stand={probeLokal} />
-          </>
-        ) : teams.length === 0 ? null : (
-          <p className="type-body-medium text-on-surface-mittel">
-            {name} ist für jedes Training zuerst angemeldet. Kann {spieler.vorname} nicht, melde ab - und bis zum
-            Beginn wieder an. Für ein Spiel ist {spieler.vorname} erst angemeldet, wenn du anmeldest.
-          </p>
-        )}
+        {probeLokal && <ProbeZaehler stand={probeLokal} />}
       </header>
-      {probeLokal && probeInfo && (
-        <section aria-labelledby="probe-info" className="mx-4 mt-4 rounded-flaeche bg-elev-01 px-3 py-3">
-          <h2 id="probe-info" className="type-title-small text-on-surface">
-            {PROBE_TEXT.linkInfoTitel}
-          </h2>
-          <KuerzbarerText text={probeInfo} zeilen={4} className="mt-1 type-body-medium text-on-surface" />
-        </section>
-      )}
-      {voll && probeLokal && (
-        <div className="px-4 pt-4">
-          <SectionMessage>{linkProbeVoll(spieler.vorname, probeLokal)}</SectionMessage>
-        </div>
-      )}
-      {eingrenzbar && (
-        <div role="group" aria-label="Termine eingrenzen" className="flex flex-wrap gap-2 px-4 pt-4">
-          {(["training", "spiel"] as const).map((a) => (
-            <FilterChip key={a} selected={art === a} onClick={() => setArt(art === a ? null : a)}>
-              {LINK_EINGRENZUNG[a].chip}
-            </FilterChip>
-          ))}
-          {/* Nach dem Wechsel sagt eine Sprachausgabe, was nun dasteht. */}
-          <p role="status" className="sr-only">
-            {art ? linkEingrenzungStand(art, sichtbar.length) : ""}
-          </p>
-        </div>
-      )}
-      {fehlerVerdeckt && fehler && (
-        <div className="px-4 pt-4">
-          <SectionMessage appearance="error">
-            {tagText(fehlerVerdeckt.datum)}: {fehler.text}
-          </SectionMessage>
-        </div>
-      )}
-      {giltNicht && (
-        <div ref={giltNichtRef} tabIndex={-1} className="px-4 pt-4 focus:outline-none">
-          <SectionMessage appearance="error">
-            <strong className="block font-semibold">{LINK_GILT_NICHT_TITEL}</strong>
-            {linkGiltNichtText(giltNicht.art, giltNicht.datum, spieler.vorname)}
-          </SectionMessage>
-        </div>
-      )}
-      {termine.length === 0 ? (
-        <div className="px-4 py-6">
-          <Leerzustand icon={CalendarX2} titel={LINK_KEINE_TERMINE_TITEL} dicht>
-            {/* Ohne Team bleibt der Link gültig (#583 AK 5). */}
-            {teams.length === 0 ? linkOhneTeamEltern(spieler.vorname) : linkKeineTermineText(spieler.vorname)}
-          </Leerzustand>
-        </div>
-      ) : art && sichtbar.length === 0 ? (
-        // Die Eingrenzung lässt nichts übrig (AK 6); der Weg zurück ist der
-        // gewählte Chip darüber.
-        <div className="px-4 py-6">
-          <Leerzustand icon={CalendarX2} titel={LINK_EINGRENZUNG[art].leer} dicht>
-            {linkEingrenzungLeer(art)}
-          </Leerzustand>
-        </div>
+      {glocke.offen && benachrichtigungen ? (
+        <BenachrichtigungenAnsicht
+          daten={benachrichtigungen}
+          neuSeit={glocke.neuSeit}
+          terminIds={new Set(termine.map((t) => t.id))}
+          onZurueck={glocke.schliessen}
+          onZumTermin={zeigeTermin}
+        />
       ) : (
-        <div className="flex flex-col gap-4 px-4 py-4">
-          {begonnen.length > 0 && (
-            <section>
-              <h2 className="type-title-small text-on-surface">Heute</h2>
-              <ul className="mt-2 flex flex-col gap-2">
-                {begonnen.map((t) =>
-                  t.art === "spiel" ? (
-                    spielKarte(t)
-                  ) : (
-                    <TerminKarte key={t.id} t={t} {...stand(t)} name={name} pending={pending} onUmlegen={(an) => umlegen(t, an)} hinweise={hinweise(t, stand(t).ab)} />
-                  ),
-                )}
-              </ul>
-            </section>
+        <>
+          {voll && probeLokal && (
+            <div className="px-4 pt-4">
+              <SectionMessage>{linkProbeVoll(spieler.vorname, probeLokal)}</SectionMessage>
+            </div>
           )}
-          {nachMonatUndTag(uebrige).map((m) => (
-            <section key={m.monat}>
-              <h2 className="type-title-small text-on-surface">{monatsName(m.monat)}</h2>
-              <ul className="mt-2 flex flex-col gap-2">
-                {m.tage.flatMap((tag) => tag.termine).map((t) =>
-                  t.art === "spiel" ? (
-                    spielKarte(t)
-                  ) : (
-                    <TerminKarte key={t.id} t={t} {...stand(t)} name={name} pending={pending} onUmlegen={(an) => umlegen(t, an)} hinweise={hinweise(t, stand(t).ab)} />
-                  ),
-                )}
-              </ul>
-            </section>
-          ))}
-        </div>
+          {eingrenzbar && (
+            <div role="group" aria-label="Termine eingrenzen" className="flex flex-wrap gap-2 px-4 pt-4">
+              {(["training", "spiel"] as const).map((a) => (
+                <FilterChip key={a} selected={art === a} onClick={() => setArt(art === a ? null : a)}>
+                  {LINK_EINGRENZUNG[a].chip}
+                </FilterChip>
+              ))}
+              {/* Nach dem Wechsel sagt eine Sprachausgabe, was nun dasteht. */}
+              <p role="status" className="sr-only">
+                {art ? linkEingrenzungStand(art, sichtbar.length) : ""}
+              </p>
+            </div>
+          )}
+          {fehlerVerdeckt && fehler && (
+            <div className="px-4 pt-4">
+              <SectionMessage appearance="error">
+                {tagText(fehlerVerdeckt.datum)}: {fehler.text}
+              </SectionMessage>
+            </div>
+          )}
+          {giltNicht && (
+            <div ref={giltNichtRef} tabIndex={-1} className="px-4 pt-4 focus:outline-none">
+              <SectionMessage appearance="error">
+                <strong className="block font-semibold">{LINK_GILT_NICHT_TITEL}</strong>
+                {linkGiltNichtText(giltNicht.art, giltNicht.datum, spieler.vorname)}
+              </SectionMessage>
+            </div>
+          )}
+          {termine.length === 0 ? (
+            <div className="px-4 py-6">
+              <Leerzustand icon={CalendarX2} titel={LINK_KEINE_TERMINE_TITEL} dicht>
+                {/* Ohne Team bleibt der Link gültig (#583 AK 5). */}
+                {teams.length === 0 ? linkOhneTeamEltern(spieler.vorname) : linkKeineTermineText(spieler.vorname)}
+              </Leerzustand>
+            </div>
+          ) : art && sichtbar.length === 0 ? (
+            // Die Eingrenzung lässt nichts übrig (AK 6); der Weg zurück ist der
+            // gewählte Chip darüber.
+            <div className="px-4 py-6">
+              <Leerzustand icon={CalendarX2} titel={LINK_EINGRENZUNG[art].leer} dicht>
+                {linkEingrenzungLeer(art)}
+              </Leerzustand>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 px-4 py-4">
+              {begonnen.length > 0 && (
+                <section>
+                  <h2 className="type-title-small text-on-surface">Heute</h2>
+                  <ul className="mt-2 flex flex-col gap-2">
+                    {begonnen.map((t) =>
+                      t.art === "spiel" ? (
+                        spielKarte(t)
+                      ) : (
+                        <TerminKarte key={t.id} t={t} {...stand(t)} name={name} pending={pending} onUmlegen={(an) => umlegen(t, an)} hinweise={hinweise(t, stand(t).ab)} />
+                      ),
+                    )}
+                  </ul>
+                </section>
+              )}
+              {nachMonatUndTag(uebrige).map((m) => (
+                <section key={m.monat}>
+                  <h2 className="type-title-small text-on-surface">{monatsName(m.monat)}</h2>
+                  <ul className="mt-2 flex flex-col gap-2">
+                    {m.tage.flatMap((tag) => tag.termine).map((t) =>
+                      t.art === "spiel" ? (
+                        spielKarte(t)
+                      ) : (
+                        <TerminKarte key={t.id} t={t} {...stand(t)} name={name} pending={pending} onUmlegen={(an) => umlegen(t, an)} hinweise={hinweise(t, stand(t).ab)} />
+                      ),
+                    )}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          )}
+        </>
       )}
-      {/* Wer verantwortlich ist und wer die Angaben sieht (Story #580 PC 4, #587 PC 2), schlicht unter den Terminen. */}
-      <p className="type-body-small px-4 pb-6 text-on-surface-mittel">{angabenSehenText(verein, spieler.vorname)}</p>
     </>
   );
 }
@@ -370,7 +417,11 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
   // Schnuppern: nicht angemeldet ist der Ausgangsstand, keine Absage - die Karte bleibt.
   const gedaempft = t.ausgefallen || (ab && !probe);
   return (
-    <li className={cn("flex flex-col gap-2 rounded-flaeche px-3 py-3", gedaempft ? "kontur border-linie" : "bg-elev-01")}>
+    <li
+      id={`termin-${t.id}`}
+      tabIndex={-1}
+      className={cn("flex flex-col gap-2 rounded-flaeche px-3 py-3 focus:outline-none", gedaempft ? "kontur border-linie" : "bg-elev-01")}
+    >
       <div className="flex items-start gap-3">
         <Kalenderblatt datum={t.datum} stand={gedaempft ? "gestrichen" : "leise"} />
         <div className="flex min-w-0 flex-1 flex-col items-start gap-1">

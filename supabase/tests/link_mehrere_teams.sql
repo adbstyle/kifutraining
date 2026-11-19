@@ -168,7 +168,7 @@ begin
   perform pg_temp.pruefe(v ->> 'team' = 'Alpha' and v -> 'teams' = '["Alpha"]' and v ->> 'verein' = 'Link-Verein',
                          'Link e: ' || v::text);
   perform pg_temp.pruefe(pg_temp.schluessel(v)
-                         = array['gueltig', 'probe', 'probe_info', 'spieler', 'team', 'teams', 'termine', 'verein'],
+                         = array['gueltig', 'probe', 'probe_info', 'spieler', 'team', 'team_infos', 'teams', 'termine', 'verein'],
                          'Schlüssel e: ' || pg_temp.schluessel(v)::text);
   perform pg_temp.pruefe(pg_temp.schluessel(v -> 'termine' -> 0)
                          = array['abgemeldet', 'angemeldet', 'art', 'aufgebot_verfallen', 'ausfall_grund', 'ausgefallen', 'beginn',

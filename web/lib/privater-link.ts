@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { istUuid } from "@/lib/kennung";
 import { LINK_FEHLER, abweisungText, istLinkToken, nachTeamname, type AbmeldeGrund, type AbmeldeStand, type Spielstand } from "@/lib/spieler";
@@ -6,6 +7,7 @@ import { meldungAbweisungText, type Meldung, type Treffpunkt } from "@/lib/spiel
 import type { MeldeAntwort } from "@/lib/kern/spiele";
 import { spielerAboUrl } from "@/lib/spieler-abo";
 import type { ProbeStand } from "@/lib/probe";
+import type { LinkBenachrichtigungen } from "@/lib/benachrichtigung";
 
 /**
  * Die Seite hinter dem privaten Link einer Spieler:in (Epic #433, Story #436)
@@ -107,6 +109,10 @@ export type LinkAnsicht =
       probe?: ProbeStand | null;
       /** Das Info-Schreiben des Teams, nur wenn sie schnuppert (#556 AK 4). */
       probe_info?: string | null;
+      /** Die Infos zum Team jedes Teams mit Infos, nach Teamname (#598 AK 5–7);
+       *  leer, solange sie schnuppert. `stand` als «YYYY-MM-DD». Fehlt bei einer
+       *  Datenebene vor der Migration. */
+      team_infos?: { team: string; text: string; stand: string }[];
       /** In der Ordnung der Datenebene: heute begonnene zuerst, dann nach
        *  Datum, Beginn und Teamname (AK 1). Das Web sortiert nicht um. */
       termine: LinkTermin[];
@@ -125,7 +131,34 @@ export async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
   const ansicht = data as LinkAnsicht;
   // Ohne Vereinsnamen stünde «undefined» im Satz «Verantwortlich …»: wie ungültig.
   if (ansicht.gueltig && (typeof ansicht.verein !== "string" || !ansicht.verein)) return UNGUELTIG;
-  return ansicht.gueltig ? { ...ansicht, teams: [...ansicht.teams].sort(nachTeamname) } : ansicht;
+  return ansicht.gueltig
+    ? {
+        ...ansicht,
+        teams: [...ansicht.teams].sort(nachTeamname),
+        // Dieselbe Ordnung wie die Teams im Kopf (#598 AK 6).
+        team_infos: ansicht.team_infos && [...ansicht.team_infos].sort((a, b) => nachTeamname(a.team, b.team)),
+      }
+    : ansicht;
+}
+
+/** Die Benachrichtigungen der Spieler:in (#642 AK 1) — `null` bei einem
+ *  ungültigen Link und bei jedem Fehler der Datenebene (auch vor der
+ *  Migration): Dann zeigt die Seite keine Glocke, statt etwas zu behaupten. */
+export async function ladeBenachrichtigungen(token: string): Promise<LinkBenachrichtigungen | null> {
+  if (!istLinkToken(token)) return null;
+  const { data, error } = await createAnonClient().rpc("spieler_link_benachrichtigungen", { p_token: token });
+  if (error || !data) return null;
+  const r = data as ({ gueltig: true } & LinkBenachrichtigungen) | { gueltig: false };
+  if (!r.gueltig || !Array.isArray(r.eintraege)) return null;
+  return { jetzt: Number(r.jetzt), heute: r.heute, eintraege: r.eintraege };
+}
+
+/** Der Schlüssel, unter dem das Gerät den Gelesen-Stand eines Links ablegt
+ *  (#642 AK 2): aus dem Link abgeleitet, damit ein erneuerter Link neu
+ *  beginnt, ohne das Geheimnis selbst im Cookie zu tragen — sha256, base64url,
+ *  die ersten 12 Zeichen. Nur auf dem Server. */
+export function linkSchluessel(token: string): string {
+  return createHash("sha256").update(token).digest("base64url").slice(0, 12);
 }
 
 export type LinkAbmeldung = { terminId: string; abgemeldet: boolean; gesehen: { datum: string; beginn: string } };

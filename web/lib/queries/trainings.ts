@@ -5,6 +5,7 @@ import {
   getTeamTrainingsFuer,
   getTrainingPoolFuer,
   ladeTrainingDetail,
+  type TeamTrainingFilter,
   type TeamTrainingRow,
   type TrainingDetail,
   type TrainingListRow,
@@ -130,6 +131,6 @@ export async function getTrainingPool(
 
 /** Der Trainingsbestand eines Teams mit der Anmeldung aus den Cookies —
  *  Abfrage und Mapping in `getTeamTrainingsFuer`. */
-export async function getTeamTrainings(teamId: string): Promise<TeamTrainingRow[]> {
-  return getTeamTrainingsFuer(await createClient(), teamId);
+export async function getTeamTrainings(teamId: string, f: TeamTrainingFilter = {}): Promise<TeamTrainingRow[]> {
+  return getTeamTrainingsFuer(await createClient(), teamId, f);
 }

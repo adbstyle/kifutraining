@@ -41,7 +41,7 @@ import {
   setzeTrainingAufEntwurf,
   veroeffentlicheTraining,
 } from "@/lib/actions/trainings";
-import { stelleInsTeam, uebernimmTraining } from "@/lib/actions/team-trainings";
+import { stelleInsTeam, uebernimmTraining, uebernimmZuMir } from "@/lib/actions/team-trainings";
 import type { Bearbeitungsziel } from "@/lib/training-zugriff";
 import type { FehlendeBedingung } from "@/lib/training-bedingungen";
 import type { TeamUebersicht } from "@/lib/queries/teams";
@@ -70,7 +70,9 @@ import { mitVariante, type Variante } from "@/lib/varianten";
    Im Detail der Trainingsübersicht (`ort="uebersicht"`, #630) steht die
    Reihe im `DetailKopf`: vorne Bearbeiten am eigenen bzw. Öffnen am fremden
    Training (AK 8) — von dort erreicht man Bearbeitung und Ansicht —, dann
-   Durchführen, Drucken und das ⋮.
+   Durchführen, Drucken und das ⋮. Dasselbe Detail steht neben dem Bestand
+   eines Teams (#637); dort trägt das ⋮ die Aktionen, die früher an der
+   Kachel standen: Termin zuordnen, Zu mir übernehmen, Löschen.
 
    Was der Betrachter darf, rechnet `trainingAktionsRechte` aus. Hier steht
    keine Rechtebedingung mehr — die Server Actions und die RLS bleiben die
@@ -206,6 +208,15 @@ export function TrainingAktionen({
     });
   }
 
+  /** Ein Training des Team-Bestands als persönliche Kopie zu sich nehmen —
+   *  die Kopie entsteht still, das Original bleibt im Team. */
+  function zuMirJetzt() {
+    startTransition(async () => {
+      const res = await uebernimmZuMir(trainingId);
+      melde(res.ok ? `„${name}" liegt jetzt als eigene Kopie bei dir.` : res.error);
+    });
+  }
+
   /** Eine Kopie des Termin-Trainings in den Bestand des Teams — bewusst und
    *  von Hand; das Original bleibt am Termin (PO 2026-10-06). */
   function inBestandJetzt() {
@@ -264,6 +275,8 @@ export function TrainingAktionen({
   const eintraege: MenuItemDef[] = [];
   if (rechte.uebernehmen)
     eintraege.push({ label: "Übernehmen", icon: Download, onSelect: uebernehmenStarten });
+  if (rechte.zuMirUebernehmen)
+    eintraege.push({ label: "Zu mir übernehmen", icon: Download, onSelect: zuMirJetzt });
   if (rechte.sichtbarkeit === "veroeffentlichen")
     eintraege.push({
       label: "Veröffentlichen",
@@ -385,7 +398,9 @@ export function TrainingAktionen({
           open={terminZuordnen}
           trainingId={trainingId}
           name={name}
-          teams={teams}
+          // Vom Team-Training aus in die Termine seines Teams (#637), vom
+          // persönlichen aus in die eines der eigenen Teams.
+          teams={teamId ? teams.filter((t) => t.id === teamId) : teams}
           onClose={() => setTerminZuordnen(false)}
         />
       )}
@@ -415,6 +430,13 @@ export function TrainingAktionen({
           {terminDatum && (
             <p className="mt-3">
               Der Termin am {datumKurz(terminDatum)} bleibt ohne Training im Trainingsplan des Teams bestehen.
+            </p>
+          )}
+          {/* Ein Training des Bestands gehört allen im Team (#637). */}
+          {teamId && !terminTraining && (
+            <p className="mt-3">
+              Es verschwindet damit für das ganze Team. Persönliche Kopien, die
+              jemand zu sich übernommen hat, bleiben bestehen.
             </p>
           )}
           {/* Beim öffentlichen Training ist das Löschen mehr als ein Aufräumen

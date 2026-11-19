@@ -82,6 +82,7 @@ import {
   KONFLIKT_MARKER,
   ausfallProblem,
   TERMIN_TEXT,
+  AUSFALL_ZURUECKNEHMEN_TEXT,
   ZUORDNEN_ERFOLG,
   geaenderteFelder,
   KARTENLINK_MAX,
@@ -158,6 +159,44 @@ import {
 import { aboDatei, aboPfad, aboUrl, aboTokenAus, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
 import { ABO_KALENDER_NAME, aboEintrag, aboStatus, spielerAboUrl, type AboFeedTermin } from "../lib/spieler-abo";
 import { istVeraltet } from "../lib/veraltet";
+import {
+  BENACHRICHTIGEN_HINWEIS,
+  BENACHRICHTIGEN_MODELL,
+  BENACHRICHTIGEN_WERKZEUG,
+  ausfallEndet,
+  benachrichtigungZaehlt,
+  istVerlegung,
+  mitteilbarEinzeln,
+  mitteilbarSerie,
+  BENACHRICHTIGEN_TEXT,
+  BENACHRICHTIGUNG_TAGE,
+  ELTERN_TEXT,
+  EREIGNIS_NEGATIV,
+  eintragNegativ,
+  eintragWort,
+  zumTermin,
+  EREIGNIS_WORT,
+  eintragTitel,
+  eintragWann,
+  eintragWo,
+  eintragZusaetze,
+  erhaltenText,
+  gruppiere,
+  wegfallText,
+  knopfLabel,
+  neuZahl,
+  type BenachrichtigungEreignis,
+  type LinkBenachrichtigung,
+} from "../lib/benachrichtigung";
+import {
+  BENACHRICHTIGUNG_COOKIE,
+  BENACHRICHTIGUNG_MAX_LINKS,
+  benachrichtigungCookie,
+  leseGesehenStand,
+  mitGesehen,
+  wertAusCookieString,
+} from "../lib/benachrichtigung-gesehen";
+import { SPEICHERUNGEN } from "../lib/browser-speicher";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
 import { blattStand, handlungsMeldung, meldeStatus, nachMeldefrist, spielStatus, terminStatus } from "../lib/termin-status";
@@ -395,6 +434,8 @@ import { gruendungAus, kontoInfoAus, kontoLoeschAusgangAus, vereinLoeschAusgangA
 import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
 import { bereichAusPfad } from "../lib/navigation";
 import { textMitLinks } from "../lib/text-links";
+import { gliedere, gliederungAlsText, gliederungBloecke } from "../lib/gliederung";
+import { TEAM_INFOS_MAX, TEAM_INFOS_TEXT, standDatum, teamInfosBereinigt, teamInfosProblem, zahlCh } from "../lib/team-infos";
 
 let gelaufen = 0;
 
@@ -2328,6 +2369,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#464": ["termin_spieler_abrufen", "termin_aufgebot_setzen"],
     "#487": ["termin_spieler_abrufen", "termin_anwesenheit_setzen", "team_plan_abrufen"],
     "#556": ["schnuppertraining_abrufen", "schnuppertraining_festlegen"],
+    "#598": ["team_infos_abrufen", "team_infos_festlegen"],
     "#555": ["schnuppertraining_abrufen", "schnuppertraining_festlegen", "spieler_schnuppern_setzen", "spielerliste_abrufen", "termin_spieler_abrufen"],
     "#561": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "team_plan_abrufen", "spieler_link_abrufen"],
     "#589": ["teams_abrufen", "spielerliste_abrufen", "spieler_aus_team_nehmen", "spieler_link_abrufen", "spieler_link_erneuern"],
@@ -2489,7 +2531,7 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
       warnung:
         "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
       erneuern:
-        "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen.",
+        "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen. Die bisherigen Benachrichtigungen enden ebenfalls.",
       ungueltigTitel: "Dieser Link gilt nicht mehr",
       ungueltig: "Den aktuellen erhältst du über eine Abholadresse, bei den Trainer:innen oder bei der Vereinsverwaltung.",
       erneuert: "Link erneuert. Der bisherige gilt nicht mehr.",
@@ -3110,22 +3152,22 @@ pruefe("Link am Team-Ort und Verein-Ort (#583 AK 13, 15, 16): Hinweis und Erneue
   assert.ok(!/\.sort\(/.test(lies("components/privat/ElternAnsicht.tsx")), "die Eltern-Seite ordnet nicht noch einmal um");
   // Erneuern: ein Team mit Abholung.
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true)]), [
-    "Der bisherige Link und das Kalender-Abo enden für alle Teams von Lina: Ca. Abmeldungen bleiben bestehen.",
+    "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von Lina: Ca. Abmeldungen bleiben bestehen.",
     "Die Eltern holen den neuen Link über die Abholadresse von Ca ab.",
   ]);
   // Mehrere Teams, zwei mit Abholung; in der geladenen Folge (geordnet hat der Kern, `nachTeamname`).
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true), ab("Cb", true), ab("Cc", false)]), [
-    "Der bisherige Link und das Kalender-Abo enden für alle Teams von Lina: Ca, Cb und Cc. Abmeldungen bleiben bestehen.",
+    "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von Lina: Ca, Cb und Cc. Abmeldungen bleiben bestehen.",
     "Die Eltern holen den neuen Link über die Abholadresse von Ca oder Cb ab.",
   ]);
   // Keines abholbar.
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", false), ab("Cb", false)]), [
-    "Der bisherige Link und das Kalender-Abo enden für alle Teams von Lina: Ca und Cb. Abmeldungen bleiben bestehen.",
+    "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von Lina: Ca und Cb. Abmeldungen bleiben bestehen.",
     "Keines dieser Teams hat die Selbstabholung eingeschaltet. Gib den neuen Link selbst weiter.",
   ]);
   // Ohne Team.
   assert.deepEqual(linkErneuernSaetze("Lina", []), [
-    "Der bisherige Link und das Kalender-Abo enden. Abmeldungen bleiben bestehen.",
+    "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden. Abmeldungen bleiben bestehen.",
     "Lina ist keinem Team zugeordnet; gib den neuen Link selbst weiter.",
   ]);
 });
@@ -3223,6 +3265,17 @@ pruefe("Abholseite (#579 PC 12): Herausnehmen lässt die Angaben im Verein, erst
   assert.ok(!speichert.includes("verschwinden ihre Angaben überall"), "der alte Satz stimmt nicht mehr");
 });
 
+pruefe("Abholseite (#642 AK 5): nennt die Benachrichtigungen, ihre 90 Tage und wer sie sieht", () => {
+  const speichert = abholSpeichertText("FC Wyler");
+  assert.equal(BENACHRICHTIGUNG_TAGE, 90);
+  assert.ok(
+    speichert.includes("Benachrichtigungen zu ihren Terminen bewahrt KiFu 90 Tage auf; sie sieht nur, wer den Link hat."),
+    speichert,
+  );
+  // Vor dem Block «wer die Angaben sieht», nach den gespeicherten Angaben.
+  assert.ok(speichert.indexOf("Benachrichtigungen") < speichert.indexOf(angabenSehenText("FC Wyler")));
+});
+
 pruefe("Wer die Angaben sieht (#580 PC 4, #587 PC 2): ein Textblock für Abholseite und privaten Link, mit dem Verein als Verantwortlichem, nicht in LINK_TEXT", () => {
   const rest =
     "sehen alle Trainer:innen des Vereins, alle Angaben die Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.";
@@ -3247,11 +3300,14 @@ pruefe("Wer die Angaben sieht (#580 PC 4, #587 PC 2): ein Textblock für Abholse
   assert.ok(erhalt.daten.endsWith("Nimmt ein Team Noah Keller heraus, bleiben die Angaben im Verein; sie verschwinden erst, wenn die Vereinsverwaltung sie aus dem Verein löscht."));
   // Link und Abholseite lesen den Verein aus der Datenebene (Eingabe und Erhalt), nicht aus dem Browser.
   const lies = (d: string) => readFileSync(join(web, d), "utf8");
-  assert.match(lies("components/privat/ElternAnsicht.tsx"), /\{angabenSehenText\(verein, spieler\.vorname\)\}/);
+  // Seit #598 auf der Infos-Seite des Links.
+  assert.match(lies("components/privat/LinkInfos.tsx"), /\{angabenSehenText\(verein, vorname\)\}/);
+  assert.match(lies("app/(privat)/abmelden/[privaterLink]/infos/page.tsx"), /verein=\{ansicht\.verein\}/);
   assert.match(lies("components/privat/AbholSeite.tsx"), /\{abholSpeichertText\(verein\)\}/);
   assert.match(lies("components/privat/AbholSeite.tsx"), /abholErhaltText\(name, verein\)[\s\S]*?\{text\.daten\}/);
   assert.match(lies("app/(privat)/abholen/[privaterLink]/page.tsx"), /<AbholSeite token=\{privaterLink\} team=\{ansicht\.team\} verein=\{ansicht\.verein\} \/>/);
-  assert.match(lies("app/(privat)/abmelden/[privaterLink]/page.tsx"), /verein=\{ansicht\.verein\}[\s\S]*?<FeedbackLink [^>]*verein=\{ansicht\.verein\}/);
+  assert.match(lies("app/(privat)/abmelden/[privaterLink]/page.tsx"), /<FeedbackLink [^>]*verein=\{ansicht\.verein\}/);
+  assert.match(lies("app/(privat)/abmelden/[privaterLink]/infos/page.tsx"), /verein=\{ansicht\.verein\}[\s\S]*?<FeedbackLink [^>]*verein=\{ansicht\.verein\}/);
   assert.ok(!Object.values(LINK_TEXT).some((t) => typeof t === "string" && (t.includes("Trainer:innen des Vereins") || t.includes("Verantwortlich"))), "nichts davon in LINK_TEXT (KI-Beschreibungen)");
 });
 
@@ -5094,6 +5150,307 @@ pruefe("Konto ohne Verein (#588 PC 2): Wer die Zugehörigkeit oder den Bestand �
     assert.match(rumpf(verein, name), /revalidiereMitgliedschaften\(\)/, name);
   assert.match(rumpf(lies("lib/actions/teams.ts"), "entferneMitglied"), /revalidiereMitgliedschaften\(\)/, "Austritt aus dem Team");
   assert.match(lies("lib/actions/auth.ts"), /revalidiereVerein\(\);\s*revalidiereMitgliedschaften\(\);/, "Konto löschen mit Verein");
+});
+
+pruefe("Infos zum Team: Gliederung mit Zwischentiteln, Listen und Fett, sonst Text (#598 AK 2; OoS 1)", () => {
+  const b = gliederungBloecke("## Trainings\r\n- Dienstag\n- **Donnerstag** 17:30\n\nText eins\nText zwei\n1. Schoner\n2. Flasche\n# Ende");
+  assert.deepEqual(b.map((x) => x.art), ["titel", "aufzaehlung", "absatz", "nummeriert", "titel"]);
+  assert.deepEqual(b[1], {
+    art: "aufzaehlung",
+    punkte: [[{ art: "text", text: "Dienstag" }], [{ art: "fett", text: "Donnerstag" }, { art: "text", text: " 17:30" }]],
+  });
+  assert.equal(b[2].art === "absatz" && b[2].zeilen.length, 2, "ein Umbruch im Absatz bleibt");
+  assert.equal(b[3].art === "nummeriert" && b[3].start, 1);
+  // Leerzeile beendet eine Liste; Text direkt nach der Liste ist ein Absatz.
+  assert.deepEqual(gliederungBloecke("- a\n\n- b").map((x) => x.art), ["aufzaehlung", "aufzaehlung"]);
+  assert.deepEqual(gliederungBloecke("- a\nweiter").map((x) => x.art), ["aufzaehlung", "absatz"]);
+  // Kein Markdown darüber hinaus: Links mit Linktext, Bilder, HTML bleiben Text.
+  const roh = "[Link](https://x.ch) ![Bild](a.png) <b>fett</b> ** offen";
+  assert.deepEqual(gliederungBloecke(roh), [{ art: "absatz", zeilen: [[{ art: "text", text: roh }]] }]);
+  assert.equal(gliederungAlsText("## Titel\n- a\n- b"), "Titel · a · b");
+  assert.deepEqual(gliederungBloecke(" \n "), []);
+});
+
+pruefe("Infos zum Team: die Werkzeugleiste setzt und entfernt Kürzel (#598 AK 2)", () => {
+  // Zwischentitel auf der Zeile des Cursors, nochmals = weg.
+  const t = gliedere({ text: "Hallo\nWelt", start: 7, ende: 7 }, "titel");
+  assert.deepEqual(t, { text: "Hallo\n## Welt", start: 6, ende: 13 });
+  assert.equal(gliedere(t, "titel").text, "Hallo\nWelt");
+  // Aufzählung über mehrere Zeilen; Nummerierung ersetzt sie und zählt.
+  const l = gliedere({ text: "a\nb\nc", start: 0, ende: 5 }, "aufzaehlung");
+  assert.equal(l.text, "- a\n- b\n- c");
+  assert.equal(gliedere(l, "nummeriert").text, "1. a\n2. b\n3. c");
+  // Fett um die Auswahl, ohne Auswahl ein Platzhalter, nochmals = weg.
+  const f = gliedere({ text: "ganz wichtig", start: 5, ende: 12 }, "fett");
+  assert.deepEqual(f, { text: "ganz **wichtig**", start: 7, ende: 14 });
+  assert.equal(gliedere(f, "fett").text, "ganz wichtig");
+  assert.equal(gliedere({ text: "", start: 0, ende: 0 }, "fett").text, "**fett**");
+  // Auf einer leeren Zeile beginnt die Leiste eine Liste (E2E/Review #598).
+  assert.equal(gliedere({ text: "", start: 0, ende: 0 }, "aufzaehlung").text, "- ");
+  assert.equal(gliedere({ text: "abc\n", start: 4, ende: 4 }, "titel").text, "abc\n## ");
+  // Fett hebt nur auf, was die Auswahl selbst umschliesst, nicht Nachbarn.
+  assert.equal(gliedere({ text: "**x** y **z**", start: 5, ende: 8 }, "fett").text, "**x**** y ****z**");
+  // Über mehrere Zeilen: jede Zeile für sich.
+  assert.equal(gliedere({ text: "a\nb", start: 0, ende: 3 }, "fett").text, "**a**\n**b**");
+});
+
+pruefe("Infos zum Team: bereinigt wie die Datenebene, höchstens 10'000 Zeichen samt Gliederung (#598 AK 3, 7)", () => {
+  assert.equal(TEAM_INFOS_MAX, 10000);
+  assert.equal(teamInfosBereinigt("  \r\n## Hallo\r\n "), "## Hallo");
+  assert.equal(teamInfosBereinigt(" \n "), null, "leer = keine");
+  assert.equal(teamInfosProblem("x".repeat(10000)), null);
+  assert.equal(teamInfosProblem("x".repeat(10001)), TEAM_INFOS_TEXT.zuLang);
+  assert.equal(teamInfosProblem("⚽".repeat(10000)), null, "Codepunkte wie char_length");
+  assert.equal(zahlCh(10000), "10'000");
+  assert.equal(standDatum("2026-11-12"), "12.11.2026");
+  // Zwilling: dieselbe Zahl in der Migration.
+  const sql = readFileSync(join(web, "../supabase/migrations/20261118100000_team_infos.sql"), "utf8");
+  assert.match(sql, /char_length\(text\) between 1 and 10000/);
+  assert.match(sql, /char_length\(v_text\) > 10000/);
+  // Der Zugang nennt die Infos (PC 2: ohne neue Zustimmung).
+  assert.ok(readFileSync(join(web, "lib/mcp/umfang.ts"), "utf8").includes("die Infos zum Team für die Eltern verfassen, ändern und entfernen"));
+});
+
+pruefe("Infos am privaten Link: die Erklärungen stehen hinter dem ⓘ, nicht mehr auf der Termin-Seite (#598 AK 10; OoS 10)", () => {
+  const ansicht = readFileSync(join(web, "components/privat/ElternAnsicht.tsx"), "utf8");
+  for (const weg of ["angabenSehenText", "linkProbeKopf", "KuerzbarerText", "ist für jedes Training zuerst angemeldet"])
+    assert.ok(!ansicht.includes(weg), `${weg} gehört auf die Infos-Seite`);
+  assert.match(ansicht, /\/abmelden\/\$\{token\}\/infos/);
+  assert.match(ansicht, /ProbeZaehler stand=\{probeLokal\}/, "der Schnupperstand bleibt bei den Terminen");
+  const infos = readFileSync(join(web, "components/privat/LinkInfos.tsx"), "utf8");
+  assert.ok(!/defaultOpen/.test(infos), "OoS 9: nichts öffnet sich von selbst");
+  for (const da of ["angabenSehenText", "linkProbeKopf", "linkMeldenText", "teamInfosLinkTitel", "PROBE_TEXT.linkInfoTitel"])
+    assert.ok(infos.includes(da), da);
+});
+
+// ── Benachrichtigungen am privaten Link (Epic #641, Story #642) ──────────────
+const BN_K1 = "abcdefghijkl";
+const BN_K2 = "ABCDEFGHIJ-_";
+
+pruefe("Benachrichtigungen (#642 AK 2): das Cookie merkt sich je Link den Stand — Rundlauf, Grenze 20, sinkt nie, Müll fällt weg", () => {
+  assert.equal(leseGesehenStand(undefined, BN_K1), null, "ein Gerät ohne Eintrag kennt den Link nicht");
+  assert.equal(leseGesehenStand("", BN_K1), null);
+  const a = mitGesehen(undefined, BN_K1, 1_790_000_000_000);
+  assert.equal(leseGesehenStand(a, BN_K1), 1_790_000_000_000, "Rundlauf");
+  assert.equal(leseGesehenStand(a, BN_K2), null);
+  // Nie senken, aber höher geht.
+  assert.equal(leseGesehenStand(mitGesehen(a, BN_K1, 5), BN_K1), 1_790_000_000_000);
+  assert.equal(leseGesehenStand(mitGesehen(a, BN_K1, 1_800_000_000_000), BN_K1), 1_800_000_000_000);
+  // Mehrere Links; der zuletzt geschriebene steht zuerst.
+  const b = mitGesehen(a, BN_K2, 7);
+  assert.ok(b.startsWith(`${BN_K2}:`), b);
+  assert.equal(leseGesehenStand(b, BN_K1), 1_790_000_000_000);
+  assert.equal(leseGesehenStand(b, BN_K2), 7);
+  // Höchstens 20, der älteste fällt zuerst heraus.
+  let wert: string | undefined;
+  for (let i = 0; i < BENACHRICHTIGUNG_MAX_LINKS + 5; i++) wert = mitGesehen(wert, `k${String(i).padStart(11, "0")}`, i + 1);
+  assert.equal(wert!.split(".").length, BENACHRICHTIGUNG_MAX_LINKS);
+  assert.equal(leseGesehenStand(wert, "k00000000000"), null, "der älteste ist verdrängt");
+  assert.equal(leseGesehenStand(wert, `k${String(BENACHRICHTIGUNG_MAX_LINKS + 4).padStart(11, "0")}`), BENACHRICHTIGUNG_MAX_LINKS + 5);
+  // Müll: Unlesbares fällt weg, Lesbares bleibt; nichts wirft.
+  for (const muell of ["x", "::", "a:b:c", "zu-kurz:1", `${BN_K1}:`, `${BN_K1}:-5`, `${BN_K1}:ZZ`, ".", "..", `${BN_K1}:1:2`])
+    assert.equal(leseGesehenStand(muell, BN_K1), null, muell);
+  assert.equal(leseGesehenStand(`muell.${BN_K1}:${(42).toString(36)}`, BN_K1), 42, "ein kaputter Eintrag nimmt die anderen nicht mit");
+  assert.equal(mitGesehen("muell", BN_K1, 3), `${BN_K1}:3`);
+  assert.equal(mitGesehen(a, "kurz", 9), a, "ein ungültiger Schlüssel ändert nichts");
+  assert.equal(mitGesehen(a, BN_K1, Number.NaN), a);
+  assert.equal(mitGesehen(a, BN_K1, -1), a);
+  // Das Cookie: Name, Pfad nur der Links, ein Jahr, kein Klartext-Token.
+  const c = benachrichtigungCookie(a);
+  assert.ok(c.startsWith(`${BENACHRICHTIGUNG_COOKIE}=`) && c.includes("; path=/abmelden;") && c.includes("max-age=31536000") && c.includes("samesite=lax"), c);
+  assert.equal(wertAusCookieString(`x=1; ${BENACHRICHTIGUNG_COOKIE}=${encodeURIComponent(a)}; y=2`), a);
+  assert.equal(wertAusCookieString("x=1; y=2"), undefined);
+  assert.equal(wertAusCookieString(`${BENACHRICHTIGUNG_COOKIE}=%E0%A4%A`), undefined, "kaputte Kodierung wirft nicht");
+  // Browser-Speicher: die Seite «Cookies» nennt es (#409).
+  assert.ok(SPEICHERUNGEN.some((x) => x.name === BENACHRICHTIGUNG_COOKIE), "SPEICHERUNGEN enthält das Cookie");
+});
+
+/** Ein Eintrag für die Prüfungen, wie `spieler_link_benachrichtigungen` ihn liefert. */
+function bnEintrag(ereignis: BenachrichtigungEreignis, inhalt: unknown, extra: Partial<LinkBenachrichtigung> = {}): LinkBenachrichtigung {
+  return { id: `id-${ereignis}`, termin_id: "t1", erstellt: 1000, erstellt_tag: "2026-12-01", ereignis, inhalt, ...extra } as LinkBenachrichtigung;
+}
+const BN_SPIEL = { team: "E-Junioren", art: "spiel", bezeichnung: "FC Wyler - FC Aarau", datum: "2026-12-05", beginn: "14:00", ende: "15:30", ort: "Sportplatz Wyler" };
+const BN_TRAINING = { team: "E-Junioren", art: "training", bezeichnung: null, datum: "2026-12-02", beginn: "18:00", ende: null, ort: null };
+
+pruefe("Benachrichtigungen (#642): gruppiere und neuZahl — ohne Stand ist nichts neu, sonst zählt nur, was danach entstand", () => {
+  const e = [bnEintrag("neues_spiel", BN_SPIEL, { id: "a", erstellt: 300 }), bnEintrag("neues_spiel", BN_SPIEL, { id: "b", erstellt: 200 }), bnEintrag("neues_spiel", BN_SPIEL, { id: "c", erstellt: 100 })];
+  assert.equal(neuZahl(e, null), 0, "Erstanzeige: alles Bisherige gilt als gesehen");
+  assert.equal(neuZahl(e, 0), 3);
+  assert.equal(neuZahl(e, 100), 2, "gleich alt ist nicht neu");
+  assert.equal(neuZahl(e, 300), 0);
+  assert.equal(neuZahl([], 5), 0);
+  const g = gruppiere(e, 150);
+  assert.deepEqual(g.neu.map((x) => x.id), ["a", "b"], "die Reihenfolge bleibt");
+  assert.deepEqual(g.frueher.map((x) => x.id), ["c"]);
+  assert.deepEqual(gruppiere(e, null).neu, []);
+  assert.equal(knopfLabel(0), "Benachrichtigungen");
+  assert.equal(knopfLabel(3), "Benachrichtigungen, 3 neu");
+});
+
+pruefe("Benachrichtigungen (#642 AK 3): Titel, Wann, Wo und Zusatz je Ereignis — auch die sechs, die erst #643-#645 erzeugen", () => {
+  const spiel = bnEintrag("neues_spiel", BN_SPIEL);
+  assert.equal(eintragTitel(spiel), "FC Wyler - FC Aarau · E-Junioren");
+  assert.equal(eintragWann(spiel), "Samstag, 5. Dezember · 14:00–15:30");
+  assert.equal(eintragWo(spiel), "Sportplatz Wyler");
+  assert.deepEqual(eintragZusaetze(spiel), []);
+  assert.equal(eintragTitel(bnEintrag("neues_spiel", { ...BN_SPIEL, bezeichnung: null })), "Spiel · E-Junioren");
+  // Training ohne Ende und ohne Ort.
+  const training = bnEintrag("verlegung", BN_TRAINING);
+  assert.equal(eintragTitel(training), "Training · E-Junioren");
+  assert.equal(eintragWann(training), "Mittwoch, 2. Dezember · ab 18:00");
+  assert.equal(eintragWo(training), null);
+  assert.equal(eintragWann(bnEintrag("verlegung", { ...BN_TRAINING, beginn: null })), "Mittwoch, 2. Dezember");
+  assert.deepEqual(eintragZusaetze(bnEintrag("verlegung", { ...BN_TRAINING, wieder: true })), ["Findet wieder statt."]);
+  assert.deepEqual(eintragZusaetze(training), []);
+  // Ausfall mit und ohne Grund; die Rücknahme sagt es im Wort.
+  assert.deepEqual(eintragZusaetze(bnEintrag("ausfall", { ...BN_SPIEL, grund: "Platz gesperrt" })), ["Grund: Platz gesperrt"]);
+  assert.deepEqual(eintragZusaetze(bnEintrag("ausfall", { ...BN_SPIEL, grund: null })), []);
+  assert.deepEqual(eintragZusaetze(bnEintrag("ruecknahme", BN_SPIEL)), []);
+  assert.equal(EREIGNIS_WORT.ruecknahme, "Findet wieder statt");
+  // Die Serie: neue Angaben und Wegfall — auch mit Wegfall allein.
+  const serie = bnEintrag("serie", {
+    team: "E-Junioren", art: "training", ab: "2026-12-01",
+    angaben: { wochentage: [2], beginn: "18:00", ende: "19:30" },
+    wegfall: { von: "2026-12-02", bis: "2026-12-16", wochentage: [3], anzahl: 3 },
+  });
+  assert.equal(eintragTitel(serie), "Training · E-Junioren");
+  assert.equal(eintragWann(serie), "Ab Dienstag, 1. Dezember");
+  assert.equal(eintragWo(serie), null);
+  assert.deepEqual(eintragZusaetze(serie), ["Neu jeweils Dienstag · 18:00–19:30", "Es fallen 3 Trainings am Mittwoch weg (2.–16. Dez.)."]);
+  const nurWegfall = bnEintrag("serie", { team: "E-Junioren", art: "training", ab: null, angaben: null, wegfall: { von: "2026-11-28", bis: "2026-12-16", wochentage: [2, 4], anzahl: 1 } });
+  assert.equal(eintragWann(nurWegfall), null);
+  assert.deepEqual(eintragZusaetze(nurWegfall), ["Es fällt 1 Training am Dienstag und Donnerstag weg (28. Nov.–16. Dez.)."]);
+  const nurAngaben = bnEintrag("serie", { team: "E-Junioren", art: "training", ab: "2026-12-01", angaben: { ort: "Halle" }, wegfall: null });
+  assert.deepEqual(eintragZusaetze(nurAngaben), ["Neu Halle"]);
+  assert.deepEqual(eintragZusaetze(bnEintrag("serie", { team: "E-Junioren", art: "training", ab: null, angaben: {}, wegfall: null })), []);
+  // Wort und Farbe: Die Änderung heisst «Trainings geändert», der reine Wegfall wie ein Wegfall.
+  assert.equal(eintragWort(serie), "Trainings geändert");
+  assert.equal(eintragNegativ(serie), false);
+  assert.equal(eintragWort(nurAngaben), "Trainings geändert");
+  assert.equal(eintragWort(nurWegfall), "Training fällt weg");
+  assert.equal(eintragNegativ(nurWegfall), true);
+  const ganzWeg = bnEintrag("serie", { team: "E-Junioren", art: "training", ab: null, angaben: {}, wegfall: { von: "2026-11-26", bis: "2026-12-17", wochentage: [4], anzahl: 4 } });
+  assert.equal(eintragWort(ganzWeg), "Trainings fallen weg");
+  assert.equal(eintragNegativ(ganzWeg), true);
+  assert.equal(eintragWort(spiel), "Neues Spiel");
+  assert.equal(eintragNegativ(bnEintrag("ausfall", BN_SPIEL)), true);
+  // «Zum Termin»: nur zum betroffenen Termin, solange er am Link steht; nie bei der Serie.
+  const amLink = new Set(["t1"]);
+  assert.equal(zumTermin(spiel, amLink), "t1");
+  assert.equal(zumTermin(spiel, new Set()), null);
+  assert.equal(zumTermin(bnEintrag("wegfall", BN_SPIEL, { termin_id: null }), amLink), null);
+  assert.equal(zumTermin(serie, amLink), null, "Die Serienänderung führt zu keinem einzelnen Termin");
+  assert.equal(zumTermin(ganzWeg, amLink), null);
+  // Rot nur bei Ausfall und Wegfall.
+  assert.deepEqual(Object.entries(EREIGNIS_NEGATIV).filter(([, v]) => v).map(([k]) => k), ["ausfall", "wegfall"]);
+  // Jedes Ereignis hat sein Wort.
+  assert.deepEqual(Object.keys(EREIGNIS_WORT).sort(), ["ausfall", "neues_spiel", "ruecknahme", "serie", "verlegung", "wegfall"]);
+});
+
+pruefe("Benachrichtigungen (#642): erhaltenText — heute, gestern, sonst das Datum", () => {
+  assert.equal(erhaltenText("2026-12-01", "2026-12-01"), "Erhalten heute");
+  assert.equal(erhaltenText("2026-11-30", "2026-12-01"), "Erhalten gestern");
+  assert.equal(erhaltenText("2026-11-03", "2026-12-01"), "Erhalten am 3. Nov.");
+  assert.equal(erhaltenText("2026-12-02", "2026-12-01"), "Erhalten heute", "ein später gestelltes Gerät lügt nicht über die Zukunft");
+});
+
+pruefe("Benachrichtigungen (#642 AK 5, 6): Texte als Konstanten; Oberfläche und KI nennen dasselbe; keine Browser-Formatierung in lib/benachrichtigung.ts", () => {
+  assert.equal(ELTERN_TEXT.speicher, "KiFu bewahrt Benachrichtigungen 90 Tage auf. Welche du schon gesehen hast, merkt sich nur dieses Gerät.");
+  // Je Dialog ein Hinweis (Epic #641, Prinzip 4); die KI-Beschreibung desselben
+  // Vorgangs nennt Label und Hinweis wortgleich und den Standard.
+  assert.deepEqual(Object.keys(BENACHRICHTIGEN_HINWEIS).sort(), ["aendern", "ausfall", "entfernen", "neues_spiel", "ruecknahme"]);
+  const team = readFileSync(join(web, "lib/mcp/werkzeuge/team.ts"), "utf8");
+  for (const v of Object.keys(BENACHRICHTIGEN_HINWEIS) as (keyof typeof BENACHRICHTIGEN_HINWEIS)[]) {
+    const modell = BENACHRICHTIGEN_MODELL(v);
+    assert.ok(modell.startsWith(`${BENACHRICHTIGEN_TEXT.label}: ${BENACHRICHTIGEN_HINWEIS[v]} `) && modell.includes("Standard true"), modell);
+    assert.ok(team.includes(`BENACHRICHTIGEN_MODELL("${v}")`), `UI = KI: kein KI-Werkzeug für «${v}»`);
+  }
+  // Die Rücknahme sagt es wie das Ereigniswort (#643 AK 4), auch als Zusatz einer Verlegung.
+  assert.ok(BENACHRICHTIGEN_HINWEIS.ruecknahme.includes("wieder stattfindet"), BENACHRICHTIGEN_HINWEIS.ruecknahme);
+  assert.deepEqual(eintragZusaetze(bnEintrag("verlegung", { ...BN_TRAINING, wieder: true })), [`${EREIGNIS_WORT.ruecknahme}.`]);
+  // Hydration: nur Funktionen aus monat.ts/serie.ts, nie der Browser selbst.
+  const quelle = readFileSync(join(web, "lib/benachrichtigung.ts"), "utf8");
+  assert.ok(!/toLocale|new Date\(|Intl\./.test(quelle), "keine Formatierung des Browsers");
+  assert.ok(
+    !/\bProbe/.test(Object.values(ELTERN_TEXT).join(" ") + Object.values(BENACHRICHTIGEN_HINWEIS).join(" ") + BENACHRICHTIGEN_WERKZEUG),
+    "kein «Probe» in Oberflächen- und KI-Texten",
+  );
+  assert.ok(BENACHRICHTIGEN_WERKZEUG.startsWith("Standardmässig erhalten die Spielervertretungen"));
+});
+
+pruefe("Benachrichtigungen (Prinzip 2; #643 AK 1, #645 AK 1): benachrichtigungZaehlt — heute oder später am Trainingsort", () => {
+  assert.equal(benachrichtigungZaehlt("2026-12-01", "2026-12-01"), true, "heute");
+  assert.equal(benachrichtigungZaehlt("2026-12-02", "2026-12-01"), true, "morgen");
+  assert.equal(benachrichtigungZaehlt("2026-11-30", "2026-12-01"), false, "gestern");
+  assert.deepEqual(AUSFALL_ZURUECKNEHMEN_TEXT, { titel: "Ausfall zurücknehmen", knopf: "Zurücknehmen", erfolg: "Ausfall zurückgenommen." });
+});
+
+pruefe("Benachrichtigungen (#644 AK 1–3; OoS 1): istVerlegung, ausfallEndet, mitteilbarEinzeln und mitteilbarSerie als Zwillinge der Datenebene", () => {
+  const stand = { datum: "2026-12-02", beginn: "18:00:00", ende: "19:30:00", ort: "Halle" };
+  // Sekunden aus der Datenbank, Minuten aus dem Dialog: gleich.
+  assert.equal(istVerlegung(stand, { ...stand, beginn: "18:00", ende: "19:30" }), false);
+  assert.equal(istVerlegung(stand, { ...stand, ort: " Halle " }), false);
+  for (const [feld, wert] of [["datum", "2026-12-03"], ["beginn", "18:30"], ["ende", "20:00"], ["ort", "Wiese"], ["ort", null]] as const)
+    assert.equal(istVerlegung(stand, { ...stand, [feld]: wert }), true, feld);
+  const heute = "2026-12-01";
+  // Der Ausfall endet: ein Training mit neuem Datum ab heute, ein Spiel mit neuem Datum oder Beginn.
+  assert.equal(ausfallEndet(stand, { ...stand, datum: "2026-12-04" }, "training", heute), true);
+  assert.equal(ausfallEndet(stand, { ...stand, datum: "2026-11-30" }, "training", heute), false, "Training in die Vergangenheit");
+  assert.equal(ausfallEndet(stand, { ...stand, beginn: "18:30" }, "training", heute), false, "Training, nur Zeit");
+  assert.equal(ausfallEndet(stand, { ...stand, beginn: "18:30" }, "spiel", heute), true, "Spiel, Zeit");
+  assert.equal(ausfallEndet(stand, { ...stand, datum: "2026-11-30" }, "spiel", heute), true, "Spiel, auch in die Vergangenheit (Trigger)");
+  assert.equal(ausfallEndet(stand, stand, "spiel", heute), false);
+  const einzeln = (vorher: Partial<typeof stand> & { ausgefallen?: boolean }, nachher: Partial<typeof stand>, art: "training" | "spiel" = "training") =>
+    mitteilbarEinzeln({ vorher: { ...stand, ausgefallen: false, ...vorher }, nachher: { ...stand, ...vorher, ...nachher }, art, heute });
+  // Nur der Kartenlink (gleiche Angaben): nein (OoS 1). Datum in die Vergangenheit: nein.
+  assert.equal(einzeln({}, {}), false, "nur Kartenlink");
+  assert.equal(einzeln({}, { datum: "2026-11-30" }), false, "in die Vergangenheit");
+  assert.equal(einzeln({}, { datum: heute }), true, "auf heute");
+  assert.equal(einzeln({}, { ende: "20:00" }), true, "nur Ende");
+  // Ausgefallen: nur, wenn der Ausfall damit endet.
+  assert.equal(einzeln({ ausgefallen: true }, { beginn: "18:30" }), false, "ausgefallenes Training, nur Zeit");
+  assert.equal(einzeln({ ausgefallen: true }, { datum: "2026-12-04" }), true, "ausgefallenes Training verlegt");
+  assert.equal(einzeln({ ausgefallen: true, datum: "2026-11-28" }, { datum: "2026-12-02" }), true, "ausgefallenes Training auf morgen");
+  assert.equal(einzeln({ ausgefallen: true }, { beginn: "18:30" }, "spiel"), true, "ausgefallenes Spiel, Zeit");
+  assert.equal(einzeln({ ausgefallen: true }, { ende: "20:00" }, "spiel"), false, "ausgefallenes Spiel, nur Ende");
+  // Über die Serie: Ende ab heute und Regel, Zeit oder Ort geändert.
+  const serie = (nachher: Partial<typeof stand>, regelGeaendert: boolean, serieEnde: string) =>
+    mitteilbarSerie({ vorher: stand, nachher: { ...stand, ...nachher }, regelGeaendert, serieEnde, heute });
+  assert.equal(serie({ beginn: "17:00" }, false, "2026-12-20"), true, "Serie Zeit");
+  assert.equal(serie({}, true, "2026-12-20"), true, "Serie Regel");
+  assert.equal(serie({ ort: "Wiese" }, false, "2026-12-20"), true, "Serie Ort");
+  assert.equal(serie({}, false, "2026-12-20"), false, "Serie ohne Verlegung");
+  assert.equal(serie({ beginn: "17:00" }, false, "2026-11-30"), false, "Serie vorbei");
+  assert.equal(serie({}, true, heute), true, "Serie endet heute");
+});
+
+pruefe("Benachrichtigungen (#645 AK 1, 3; PC 3): Wegfall am Link; Serie mit Verlegung und Wegfall in einem Eintrag", () => {
+  // Die Form der Datenebene (benachrichtigung_serie_zeilen): von, bis, ISO-Wochentage, Anzahl.
+  assert.equal(wegfallText({ von: "2026-12-02", bis: "2026-12-16", wochentage: [3], anzahl: 3 }), "Es fallen 3 Trainings am Mittwoch weg (2.–16. Dez.).");
+  assert.equal(wegfallText({ von: "2026-12-02", bis: "2026-12-02", wochentage: [3], anzahl: 1 }), "Es fällt 1 Training am Mittwoch weg (2. Dez.).");
+  assert.equal(
+    wegfallText({ von: "2026-11-30", bis: "2026-12-17", wochentage: [1, 4], anzahl: 6 }),
+    "Es fallen 6 Trainings am Montag und Donnerstag weg (30. Nov.–17. Dez.).",
+  );
+  const serie = (inhalt: Record<string, unknown>) =>
+    ({ id: "x", termin_id: null, erstellt: 0, erstellt_tag: "2026-12-01", ereignis: "serie", inhalt: { team: "Ea", art: "training", ...inhalt } }) as never;
+  // PC 3: dieselbe Zeile nennt die neuen Angaben und den Wegfall.
+  assert.deepEqual(
+    eintragZusaetze(serie({ ab: "2026-12-08", angaben: { beginn: "17:30" }, wegfall: { von: "2026-12-10", bis: "2026-12-17", wochentage: [4], anzahl: 2 } })),
+    ["Neu ab 17:30", "Es fallen 2 Trainings am Donnerstag weg (10.–17. Dez.)."],
+  );
+  // Nur Wegfall: ohne «Ab …», nur der Wegfall.
+  const nurWeg = serie({ ab: null, angaben: null, wegfall: { von: "2026-12-10", bis: "2026-12-10", wochentage: [4], anzahl: 1 } });
+  assert.equal(eintragWann(nurWeg), null);
+  assert.deepEqual(eintragZusaetze(nurWeg), ["Es fällt 1 Training am Donnerstag weg (10. Dez.)."]);
+  // Der einzelne Wegfall trägt den Termin vor dem Löschen (AK 2).
+  const einzeln = {
+    id: "y", termin_id: "t", erstellt: 0, erstellt_tag: "2026-12-01", ereignis: "wegfall",
+    inhalt: { team: "Ea", art: "spiel", bezeichnung: "Turnier", datum: "2026-12-05", beginn: "14:00", ende: "15:30", ort: "Halle" },
+  } as never;
+  assert.equal(eintragTitel(einzeln), "Turnier · Ea");
+  assert.equal(eintragWo(einzeln), "Halle");
+  assert.equal(EREIGNIS_NEGATIV.wegfall, true);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

@@ -46,7 +46,8 @@ import {
 import { loginAdresse, sichererRuecksprung } from "../lib/weiterleitung";
 import { KONTO_GRENZE_WERKZEUG, kontoGrenzeText } from "../lib/konto-grenzen";
 import { registriereWerkzeuge } from "../lib/mcp/server";
-import { ZUGANG_DARF, ZUGANG_DARF_NICHT } from "../lib/mcp/umfang";
+import { ZUGANG_DARF, ZUGANG_DARF_NICHT, ZUGANG_ERWEITERUNG } from "../lib/mcp/umfang";
+import { BENACHRICHTIGEN_HINWEIS, BENACHRICHTIGEN_MODELL, BENACHRICHTIGEN_TEXT, BENACHRICHTIGEN_WERKZEUG } from "../lib/benachrichtigung";
 import {
   altersstufeSlugs,
   erscheinungsform_juniorenSlugs,
@@ -1178,13 +1179,14 @@ function werkzeugTexte() {
   return { beschreibung, eingabe };
 }
 
-pruefe("Story 13 (#589 A2): der Werkzeugsatz bleibt, wie er ist - kein Werkzeug umbenannt, entfernt oder neu", () => {
+pruefe("Story 13 (#589 A2): der Werkzeugsatz bleibt, wie er ist - kein Werkzeug umbenannt, entfernt oder neu (seither neu: #598 team_infos_*)", () => {
   assert.deepEqual([...werkzeugTexte().beschreibung.keys()].sort(), [
     "abholadresse_erneuern", "diagramm_katalog_abrufen", "gruppe_anlegen", "gruppe_entfernen", "gruppe_umbenennen",
     "kader_abrufen", "kader_anlegen", "kader_entfernen", "kader_herausnehmen", "kader_umbenennen", "kader_zuteilen",
     "schnuppertraining_abrufen", "schnuppertraining_festlegen", "selbstabholung_abrufen", "selbstabholung_schalten",
     "spieler_aendern", "spieler_aufnehmen", "spieler_aus_team_nehmen", "spieler_link_abrufen", "spieler_link_erneuern",
-    "spieler_schnuppern_setzen", "spielerliste_abrufen", "team_mitglieder_abrufen", "team_plan_abrufen",
+    "spieler_schnuppern_setzen", "spielerliste_abrufen", "team_infos_abrufen", "team_infos_festlegen",
+    "team_mitglieder_abrufen", "team_plan_abrufen",
     "teams_abrufen", "termin_abmeldung_setzen", "termin_aendern", "termin_anwesenheit_setzen",
     "termin_aufgebot_setzen", "termin_ausfall_zuruecknehmen", "termin_ausfallen_lassen", "termin_der_serie_folgen",
     "termin_entfernen", "termin_festlegen", "termin_spieler_abrufen", "termin_trainer_absagen",
@@ -1262,10 +1264,116 @@ pruefe("Story 13 (#589 AK 9; A8, A9): Link-Werkzeuge über alle Teams, Erneuern 
     assert.match(beschreibung.get(n) ?? "", /denselben, den die Abholadresse jedes ihrer Teams mit eingeschalteter Selbstabholung herausgibt/, n);
 });
 
+pruefe("Benachrichtigungen (#642 AK 6): termin_festlegen beschreibt «benachrichtigen» wie die Oberfläche; der Zugang nennt es ohne neue Zustimmung", () => {
+  const felder = new Map<string, { description?: string }>();
+  registriereWerkzeuge({
+    registerTool: (name: string, def: { inputSchema?: { shape?: Record<string, { description?: string }> } }) => {
+      if (name === "termin_festlegen") for (const [k, v] of Object.entries(def.inputSchema?.shape ?? {})) felder.set(k, v);
+    },
+  } as never);
+  const beschreibung = felder.get("benachrichtigen")?.description ?? "";
+  assert.equal(beschreibung, `Nur bei einem Spiel. ${BENACHRICHTIGEN_MODELL("neues_spiel")}`);
+  assert.ok(beschreibung.includes(BENACHRICHTIGEN_HINWEIS.neues_spiel), "UI = KI: derselbe Hinweis");
+  // Der Satz gilt für alle Vorgänge des Epics #641 (#642–#645).
+  assert.ok(
+    ZUGANG_DARF[3].endsWith(
+      "; bei neuen Spielen, Ausfällen und ihrer Rücknahme, Verlegungen und beim Entfernen jeweils entscheiden, ob die Spielervertretungen am privaten Link benachrichtigt werden",
+    ),
+  );
+  assert.ok(ZUGANG_ERWEITERUNG.includes("nicht erneut zustimmen"));
+});
+
+pruefe("Benachrichtigungen (#643 AK 1, 2): termin_ausfallen_lassen und termin_ausfall_zuruecknehmen beschreiben «benachrichtigen» wie die Oberfläche (Standard true)", () => {
+  const felder = new Map<string, Map<string, { description?: string; parse?: (x: unknown) => unknown }>>();
+  registriereWerkzeuge({
+    registerTool: (name: string, def: { inputSchema?: { shape?: Record<string, { description?: string }> } }) => {
+      if (name === "termin_ausfallen_lassen" || name === "termin_ausfall_zuruecknehmen")
+        felder.set(name, new Map(Object.entries(def.inputSchema?.shape ?? {})));
+    },
+  } as never);
+  const ausfall = felder.get("termin_ausfallen_lassen")?.get("benachrichtigen");
+  const ruecknahme = felder.get("termin_ausfall_zuruecknehmen")?.get("benachrichtigen");
+  assert.equal(
+    ausfall?.description,
+    `Nur beim Ausfallen lassen; den Grund eines schon ausgefallenen ändern bleibt still. ${BENACHRICHTIGEN_MODELL("ausfall")}`,
+  );
+  assert.ok(ausfall?.description?.includes(BENACHRICHTIGEN_HINWEIS.ausfall), "UI = KI: derselbe Hinweis (AK 2)");
+  assert.equal(ruecknahme?.description, BENACHRICHTIGEN_MODELL("ruecknahme"));
+  assert.ok(ruecknahme?.description?.includes(BENACHRICHTIGEN_HINWEIS.ruecknahme), "UI = KI: derselbe Hinweis");
+  // Ohne Angabe: benachrichtigen (Prinzip 4).
+  assert.equal(ausfall?.parse?.(undefined), true);
+  assert.equal(ruecknahme?.parse?.(undefined), true);
+});
+
+pruefe("Benachrichtigungen (#644 AK 1, 2): termin_aendern und termin_der_serie_folgen beschreiben «benachrichtigen» wie die Oberfläche (Standard true); jeder Werkzeugtext nennt den Standard", () => {
+  const felder = new Map<string, Map<string, { description?: string; parse?: (x: unknown) => unknown }>>();
+  const texte = new Map<string, string>();
+  registriereWerkzeuge({
+    registerTool: (name: string, def: { description?: string; inputSchema?: { shape?: Record<string, { description?: string }> } }) => {
+      felder.set(name, new Map(Object.entries(def.inputSchema?.shape ?? {})));
+      texte.set(name, def.description ?? "");
+    },
+  } as never);
+  const aendern = felder.get("termin_aendern")?.get("benachrichtigen");
+  const folgen = felder.get("termin_der_serie_folgen")?.get("benachrichtigen");
+  // UI = KI: derselbe Hinweis wie unter dem Häkchen des Termin-Dialogs, einzeln
+  // und über die Serie — und kein weiterer (#641 Prinzip 4).
+  assert.ok(aendern?.description?.endsWith(BENACHRICHTIGEN_MODELL("aendern")), aendern?.description);
+  for (const [v, h] of Object.entries(BENACHRICHTIGEN_HINWEIS))
+    if (v !== "aendern") assert.ok(!aendern?.description?.includes(h), `termin_aendern nennt den Hinweis «${v}»`);
+  assert.ok(aendern?.description?.includes("der Kartenlink allein nicht"), "OoS 1");
+  assert.ok(folgen?.description?.endsWith(BENACHRICHTIGEN_MODELL("aendern")), folgen?.description);
+  // Ohne Angabe: benachrichtigen (Prinzip 4).
+  assert.equal(aendern?.parse?.(undefined), true);
+  assert.equal(folgen?.parse?.(undefined), true);
+  // Jedes Werkzeug mit «benachrichtigen» nennt den Standard im Werkzeugtext, und nur diese.
+  const mit = [...felder].filter(([, f]) => f.has("benachrichtigen")).map(([n]) => n).sort();
+  assert.deepEqual(mit, [
+    "termin_aendern",
+    "termin_ausfall_zuruecknehmen",
+    "termin_ausfallen_lassen",
+    "termin_der_serie_folgen",
+    "termin_entfernen",
+    "termin_festlegen",
+  ]);
+  for (const [name, text] of texte) assert.equal(text.includes(BENACHRICHTIGEN_WERKZEUG), mit.includes(name), name);
+});
+
+pruefe("Benachrichtigungen (#645 AK 1): termin_entfernen beschreibt «benachrichtigen» wie die Oberfläche (Standard true) und nennt «benachrichtigt»", () => {
+  const felder = new Map<string, Map<string, { description?: string; parse?: (x: unknown) => unknown }>>();
+  const ausgaben = new Map<string, Record<string, unknown>>();
+  registriereWerkzeuge({
+    registerTool: (
+      name: string,
+      def: { inputSchema?: { shape?: Record<string, { description?: string }> }; outputSchema?: { shape?: Record<string, unknown> } },
+    ) => {
+      felder.set(name, new Map(Object.entries(def.inputSchema?.shape ?? {})));
+      ausgaben.set(name, def.outputSchema?.shape ?? {});
+    },
+  } as never);
+  const entfernen = felder.get("termin_entfernen")?.get("benachrichtigen");
+  assert.equal(entfernen?.description, BENACHRICHTIGEN_MODELL("entfernen"));
+  assert.ok(entfernen?.description?.includes(BENACHRICHTIGEN_HINWEIS.entfernen), "UI = KI: derselbe Hinweis");
+  assert.equal(entfernen?.parse?.(undefined), true, "Prinzip 4: ohne Angabe benachrichtigen");
+  assert.equal(entfernen?.parse?.(false), false);
+  assert.ok("benachrichtigt" in (ausgaben.get("termin_entfernen") ?? {}), "Ausgabe benachrichtigt");
+  // Befund 3: Die Wege, die direkt schreiben, sagen ein Scheitern der
+  // Benachrichtigung im «hinweis» — wortgleich zur Oberfläche. Die RPC-Wege
+  // legen in derselben Transaktion ab und kennen es nicht.
+  const mitHinweis = ["termin_aendern", "termin_ausfall_zuruecknehmen", "termin_ausfallen_lassen", "termin_festlegen"];
+  for (const n of [...mitHinweis, "termin_entfernen", "termin_der_serie_folgen"]) {
+    const hinweis = ausgaben.get(n)?.hinweis as { description?: string; parse?: (x: unknown) => unknown } | undefined;
+    assert.equal(!!hinweis, mitHinweis.includes(n), `${n}: hinweis`);
+    if (!hinweis) continue;
+    assert.ok(hinweis.description?.includes(BENACHRICHTIGEN_TEXT.gescheitert), hinweis.description);
+    assert.equal(hinweis.parse?.(undefined), undefined, "ohne Scheitern kein hinweis");
+  }
+});
+
 pruefe("Story 13 (#589 PC 1, 2): ZUGANG_DARF und ZUGANG_DARF_NICHT im Wortlaut, der Kopf von umfang.ts verlangt keine erneute Zustimmung", () => {
   assert.equal(
     ZUGANG_DARF[5],
-    "die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen und führen, dazu den Verein deiner Teams und die Namen weiterer Teams einer Spieler:in sehen, Spieler:innen aus einem deiner Teams nehmen (sie bleiben im Verein), Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die Anzahl Schnuppertrainings samt Info-Schreiben festlegen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link einer Spieler:in holen und erneuern, die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche Links bezogen wurden",
+    "die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen und führen, dazu den Verein deiner Teams und die Namen weiterer Teams einer Spieler:in sehen, Spieler:innen aus einem deiner Teams nehmen (sie bleiben im Verein), Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die Anzahl Schnuppertrainings samt Info-Schreiben festlegen, die Infos zum Team für die Eltern verfassen, ändern und entfernen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link einer Spieler:in holen und erneuern, die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche Links bezogen wurden",
   );
   assert.deepEqual(ZUGANG_DARF_NICHT, [
     "deine Favoriten",
@@ -1275,6 +1383,19 @@ pruefe("Story 13 (#589 PC 1, 2): ZUGANG_DARF und ZUGANG_DARF_NICHT im Wortlaut, 
   const kopf = readFileSync(join(fileURLToPath(new URL("..", import.meta.url)), "lib/mcp/umfang.ts"), "utf8").split("export")[0];
   assert.ok(!kopf.includes("Frage nach erneuter Zustimmung"), "PC 2: keine erneute Zustimmung");
   assert.match(kopf, /#589 PC 2/);
+});
+
+pruefe("#598 AK 9: die Infos zum Team über zwei Werkzeuge, mit Gliederung, Grenze und wer sie sieht", () => {
+  const { beschreibung, eingabe } = werkzeugTexte();
+  assert.deepEqual(eingabe.get("team_infos_abrufen"), ["team_id"]);
+  assert.deepEqual(eingabe.get("team_infos_festlegen"), ["team_id", "text"]);
+  for (const n of ["team_infos_abrufen", "team_infos_festlegen"]) {
+    const t = beschreibung.get(n) ?? "";
+    assert.match(t, /10000 Zeichen samt Gliederung/, n);
+    assert.match(t, /nicht, solange die Spieler:in schnuppert/, n);
+    assert.match(t, /«## »/, n);
+  }
+  assert.match(beschreibung.get("team_infos_festlegen") ?? "", /leerer Text/);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

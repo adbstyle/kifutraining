@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-11-16. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-11-19. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -66,6 +66,30 @@ Team-Trainings tauchen in der allgemeinen Trainingsübersicht nie auf — sie le
 ausschliesslich im Team-Bereich. Umgekehrt zeigt der Team-Bereich keine persönlichen
 Trainings; einzig beim Zuordnen eines Trainings zu einem Termin stehen die eigenen zur Wahl
 (siehe unten).
+
+Der Bestand eines Teams unter „Trainings" sieht aus und bedient sich wie die Trainingsübersicht
+(siehe [Trainings](trainings.md#finden)): eine Tabelle, ein Training je Zeile, darüber ihre Zahl,
+die Suche nach dem Namen und der Filter nach Alterskategorie. Die Spalten sind Name, Übungen, Dauer
+und „Geändert"; führt ein Training mehrere Varianten seines Hauptteils, steht deren Zahl als Marke
+neben dem Namen, und Übungszahl und Dauer beziehen sich auf die vorderste. Eine Spalte für
+Sichtbarkeit oder Urheber gibt es nicht, denn ein Team-Training gehört dem Team und nennt keine
+Person, und ebenso wenig einen Schalter für die eigenen Trainings. Altersstufe, Alterskategorien und
+Termine nennt die Zeile nicht. Sortiert wird wie dort nach Name, Übungen, Dauer und „Geändert", ohne
+Wahl das zuletzt Geänderte oben, auch mit Suchbegriff; Sortierung, Suche und Filter stehen in der
+Adresse. Ohne Trainings steht „Noch kein Training im Team" mit dem Satz „Erstelle eines hier oder
+stelle eine Kopie eines eigenen Trainings ins Team."; findet die Suche nichts, sagt das der Hinweis
+„Keine Trainings gefunden". Der Knopf zum Erstellen steht über der Suche.
+
+Ein Klick auf eine Zeile öffnet das Training nicht zum Bearbeiten, sondern wählt es aus: Es steht
+daneben im Detail, auf einem schmalen Bildschirm an Stelle des Bestands, bis man es schliesst, mit
+Übungen und Eigenschaften und jeder Variante. Von dort führt man es durch, druckt es mit der
+angezeigten Variante und bearbeitet es; hinter den drei Punkten liegen „Zu mir übernehmen", „Einem
+Team-Termin zuordnen" — gleich mit den Terminen dieses Teams — und „Löschen". Der Löschdialog
+„Training löschen?" sagt, dass das Training damit für das ganze Team verschwindet und persönliche
+Kopien bestehen bleiben. Ändern lässt sich im Detail selbst nichts. Auswahl und Variante stehen in
+der Adresse; ist ein so geöffnetes Training nicht zugänglich, steht der Bestand ohne Detail da, mit
+dem Hinweis „Dieses Training ist nicht verfügbar." Fällt das ausgewählte Training durch Suche oder
+Filter heraus oder wird es gelöscht, schliesst sich das Detail.
 
 Deshalb bleibt der Team-Bereich auch dann bestehen, wenn ein Team-Training geöffnet ist: Die
 Seitenleiste bleibt im Bereich dieses Teams und hält „Trainingsplan" hervorgehoben — beim
@@ -181,8 +205,9 @@ Termine gibt es nur im Team. Wer kein Team hat, führt keinen Kalender.
 
 Ein Training kommt ausschliesslich über einen bestehenden Termin auf ein Datum. Ein Termin
 trägt höchstens ein Training. Zugeordnet wird von beiden Seiten: am Termin über „Training
-hinzufügen" bzw. „Training ersetzen" oder vom Training im Team-Bestand aus über „Termin
-zuordnen".
+hinzufügen" bzw. „Training ersetzen" oder vom Training im Team-Bestand aus über „Einem
+Team-Termin zuordnen" hinter den drei Punkten, im Detail des Bestands wie in der Ansicht und
+beim Bearbeiten. Dort stehen gleich die Termine dieses Teams zur Wahl.
 
 Was immer man zuordnet, der Termin bekommt still eine eigene Kopie, ein Termin-Training — ohne
 Rückfrage, ob kopiert oder verschoben werden soll. Die Quelle bleibt unverändert, wo sie ist;
@@ -217,7 +242,7 @@ die Meldung die unvollständige Kopie, die dann im Team-Bestand steht.
 
 Ein Training mit Termin trägt sein Termindatum in den Brotkrumen, solange es geöffnet ist, in
 derselben Schreibweise wie im Trainingsplan, etwa „Mi., 23.09.2026". Ältere Bestands-Trainings
-mit Termin zeigen es im Bestand zusätzlich als Plakette „Eingeplant".
+mit Termin nennen es im Bestand nur im Detail, unter den Eigenschaften.
 
 ## Terminserien
 
@@ -298,6 +323,11 @@ trägt, und sagt, was mit dessen Training geschieht — ein Termin-Training wird
 älteres Training aus dem Bestand bleibt dort; Termine ohne
 Training, mit Eingeladenen oder mit abweichenden Angaben nennt sie nicht, eine Anzahl auch
 nicht. Geändert oder entfernt werden entweder alle betroffenen Termine oder keiner.
+Ändert sich dabei Wochentag, Zeitraum, Zeit oder Ort von Terminen, die heute oder später liegen,
+oder fallen solche Termine weg, entscheidet das Mitglied, ob die Spielervertretungen eine
+Benachrichtigung erhalten: beim Ändern im Dialog „Termin ändern", beim Entfernen in der Rückfrage.
+Jede Spieler:in erhält dann eine einzige Benachrichtigung mit dem, was neu gilt und was für sie
+wegfällt (siehe „Benachrichtigungen am privaten Link").
 
 ## Trainer:innen
 
@@ -416,6 +446,11 @@ durch den Wochentag-Tausch seiner Serie verschoben, bleibt er ausgefallen; ein S
 dagegen nach jeder Verlegung wieder statt (siehe „Spiele"). Ändern und
 entfernen lässt er sich wie jeder andere Termin, und Serienänderungen behandeln ihn wie jeden
 anderen Termin der Serie. In den Zahlen des Trainingsplans und in „Meine Termine" zählt er mit.
+
+Beim Ausfallen lassen eines Termins von heute oder später und beim Zurücknehmen eines solchen
+Ausfalls entscheidet das Mitglied, ob die Spielervertretungen davon eine Benachrichtigung am
+privaten Link erhalten; einen solchen Ausfall nimmt es darum im Dialog „Ausfall zurücknehmen"
+zurück. Ein geänderter Grund bleibt still (siehe „Benachrichtigungen am privaten Link").
 
 ## Trainingsplan
 
@@ -582,10 +617,47 @@ neuen Link holt man sich jederzeit wieder im Trainingsplan.
 Eltern und Spieler:innen abonnieren die Termine der Spieler:in über ihren privaten Link (siehe
 „Kalender-Abo am privaten Link"); dieses Abo hier gilt nur für Mitglieder.
 
+## Infos zum Team
+
+Ein Team kann für die Eltern seiner Spieler:innen aufschreiben, wie es arbeitet — Trainingszeiten,
+Abmelden, Ausrüstung —, und den Text laufend aktuell halten. Die Karte „Infos zum Team" steht unter
+„Team" gleich nach den Teamangaben und sagt unter dem Titel, wer sie sieht: „Für die Eltern am
+privaten Link, nicht beim Schnuppern", sobald es Infos gibt dazu den Stand, etwa „Stand 12.11.2026".
+Solange das Team keine Infos führt, zeigt sie „Noch keine Infos zum Team" mit dem Satz „Schreib auf,
+wie euer Team trainiert, abmeldet und was mitkommt. Die Eltern lesen es an ihrem privaten Link." und
+dem Link „Infos verfassen"; danach steht der Text gegliedert in der Karte, auf etwa fünf Zeilen
+gekürzt mit „Ganz lesen", und der Stift öffnet den Dialog „Infos zum Team bearbeiten". Verfassen,
+ändern und entfernen darf jedes Mitglied des Teams; die Vereinsverwaltung nur, wenn sie selbst
+Mitglied ist.
+
+Der Dialog sagt zuerst, wer den Text liest: „Die Eltern aller Spieler:innen des Teams lesen das an
+ihrem privaten Link, und alle, denen sie den Link weitergeben. Wer schnuppert, sieht stattdessen das
+Info-Schreiben." Mit „Schreiben" und „Vorschau" wechselt man zwischen dem Textfeld und der
+Darstellung, wie die Eltern sie sehen. Über dem Textfeld liegt eine Leiste mit vier Knöpfen:
+„Zwischentitel", „Fett", „Aufzählung" und „Nummerierung". Sie setzen kurze Zeichen in den Text — „##
+" vor einen Zwischentitel, „- " vor einen Aufzählungspunkt, „1. ", „2. " vor nummerierte Punkte und
+zwei Sternchen vor und nach einer hervorgehobenen Stelle —, die man ebenso von Hand tippen kann;
+auch „# " und „### " ergeben einen Zwischentitel, „* " einen Aufzählungspunkt. Ein zweiter Druck auf
+einen Zeilen-Knopf nimmt das Zeichen wieder weg. Eine Leerzeile trennt Absätze, ein Zeilenumbruch
+bleibt stehen, und Webadressen werden für die Eltern anklickbar. Andere Schreibweisen — kursiv,
+Links mit eigenem Text, Tabellen — kennt der Text nicht; sie stehen als Zeichen da. Unter dem Feld
+stehen „Webadressen werden anklickbar. Leer gespeichert, sind die Infos entfernt." und ein Zähler,
+etwa „1'486 / 10'000". Die Infos dürfen samt diesen Zeichen höchstens 10'000 Zeichen lang sein;
+längere nimmt die Anwendung nicht an, sagt „Die Infos zum Team dürfen samt Gliederung höchstens
+10'000 Zeichen lang sein." und behält die bisherige Fassung. Gibt es schon Infos, nennt der Dialog
+unten „Zuletzt geändert am 12.11.2026". Nach dem Speichern bestätigt die Anwendung „Infos zum Team
+gespeichert." bzw. „Infos zum Team entfernt."
+
+Der Stand ist der Tag, an dem sich der Text zuletzt verändert hat; wer speichert, ohne etwas zu
+ändern, lässt ihn stehen. Es gilt immer die zuletzt gespeicherte Fassung, und die Eltern sehen sie
+beim nächsten Öffnen ihres Links (siehe „Infos am privaten Link"). Die Infos lassen sich auch über
+einen verbundenen KI-Assistenten führen (siehe [Konto und
+Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
+
 ## Spielerliste
 
 Ein Team kann seine Spieler:innen in einer Liste führen. Sie steht unter „Team" als eigene Karte
-zwischen den Teamangaben und dem Schnuppertraining (siehe „Schnuppertraining"); ihr Kopf nennt,
+zwischen den Infos zum Team und dem Schnuppertraining (siehe „Schnuppertraining"); ihr Kopf nennt,
 wie viele auf der Liste stehen und wie viele Links davon bezogen sind (siehe „Selbstabholung"),
 etwa „15 · 9 Links bezogen". Jede Spieler:in trägt Vorname, Nachname und Jahrgang, auf Wunsch dazu
 ihre J+S-Nummer. Vor- und Nachname haben je 1 bis 60 Zeichen, der Jahrgang ist eine vierstellige
@@ -741,9 +813,9 @@ schnuppert, je mit Plakette. Der Stift öffnet den Dialog „Schnuppertraining b
 Anzahl Schnuppertrainings ist eine ganze Zahl von 1 bis 20 und zählt besuchte und angemeldete
 Trainings; sie gilt für alle schnuppernden Spieler:innen des Teams und lässt sich ändern, aber
 nicht mehr entfernen. Das Info-Schreiben ist optional, reiner Text mit höchstens 2000 Zeichen und
-einem Zähler darunter; das ⓘ sagt, dass es die Eltern aller schnuppernden Spieler:innen oben in
-ihrem Link sehen. Zeilenumbrüche bleiben, Webadressen werden im Link anklickbar, leer gespeichert
-ist es entfernt. Eine Änderung sehen die Eltern beim nächsten Öffnen.
+einem Zähler darunter; das ⓘ sagt, dass es die Eltern aller schnuppernden Spieler:innen an ihrem Link unter „Infos"
+sehen; dort steht es zugeklappt (siehe „Infos am privaten Link"). Zeilenumbrüche bleiben, Webadressen werden im Link anklickbar, leer gespeichert ist es
+entfernt. Formatieren lässt es sich nicht; das geht nur in den Infos zum Team. Eine Änderung sehen die Eltern beim nächsten Öffnen.
 
 Schnuppern gibt es nur für eine Spieler:in, die genau einem Team zugeordnet ist. Ein Mitglied
 schaltet es im Dialog „Spieler:in ändern" mit der Checkbox „Schnuppert" ein und aus; beim
@@ -1033,6 +1105,9 @@ Grund, ohne Hinweis für Eltern. Wird der Ausfall zurückgenommen, gilt alles wi
 ausgefallenes Spiel wieder statt, sobald es verlegt wird, auch nur auf eine andere Zeit; der
 Dialog sagt das vor dem Speichern. „Spiel entfernen" fragt nach und nennt, wie viele Meldungen und
 Kennzeichnungen mit dem Spiel verschwinden.
+Ein neues Spiel, ein Ausfall und seine Rücknahme, eine Verlegung und das Entfernen
+lassen sich den Spielervertretungen am privaten Link mitteilen; das Kästchen dafür ist beim
+Erfassen eines Spiels immer angekreuzt (siehe „Benachrichtigungen am privaten Link").
 
 ### Kalender-Abo und KI-Assistent
 
@@ -1042,7 +1117,8 @@ Status der Spieler:in, den Treffpunkten und dem Hinweis für Eltern (siehe „Ka
 Link"). Ein verbundener KI-Assistent führt Spiele nach
 denselben Regeln (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)): Er legt sie
 samt Richtwert, Meldefrist und Treffpunkten fest, ändert und entfernt sie, meldet an und ab,
-kennzeichnet als nicht aufgeboten und trägt nach. Er erfährt die Zahlen — Angemeldete, ohne Meldung,
+kennzeichnet als nicht aufgeboten und trägt nach. Wie in der Anwendung benachrichtigt er dabei die
+Spielervertretungen, wenn der Aufruf es nicht ausdrücklich abwählt. Er erfährt die Zahlen — Angemeldete, ohne Meldung,
 mit verpasster Meldefrist, nicht aufgeboten, Mindest- und Höchstzahl —, aber nicht den Status: Ob es
 reicht, beurteilt er selbst.
 
@@ -1059,7 +1135,7 @@ ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib
 oder ihr selbst." Weitergeben muss ihn das Mitglied selbst, oder die Eltern holen ihn ab (siehe
 „Selbstabholung"); die Anwendung verschickt nichts und kennt keine Kontaktdaten. Der Link bleibt
 derselbe, bis jemand ihn erneuert: „Link erneuern" im selben Dialog fragt zuerst nach und nennt,
-dass der bisherige Link und das Kalender-Abo für alle Teams der Spieler:in enden, mit deren Namen,
+dass der bisherige Link, das Kalender-Abo und die Benachrichtigungen für alle Teams der Spieler:in enden, mit deren Namen,
 und ob die Eltern den neuen über die Abholadresse eines dieser Teams holen können oder man ihn
 selbst weitergibt. Danach ist der bisherige sofort ungültig; die Abmeldungen bleiben. Erneuern
 können die Mitglieder jedes ihrer Teams und die Vereinsverwaltung. Gültig bleibt der Link, wenn
@@ -1069,9 +1145,11 @@ Team mehr angehört.
 Wer den Link öffnet, braucht weder Konto noch Anmeldung. Die Seite ist fürs Telefon gebaut, kommt
 ohne Seitenleiste aus; unten am Bildschirmrand klebt nur eine schmale Leiste mit „Fragen und
 Feedback" (siehe [Navigation](navigation.md#fragen-und-feedback)). Ihr Kopf lautet „Termine für"
-mit dem Namen der Spieler:in, darunter stehen ihre Teams alphabetisch als Plaketten und der Satz,
-dass sie für jedes Training zuerst angemeldet ist und man sie abmeldet, wenn sie nicht kann, und bis zum Beginn wieder
-anmeldet, und dass sie für ein Spiel erst angemeldet ist, wenn man sie anmeldet. Eine Karte „Als
+mit dem Namen der Spieler:in; gleich dahinter stehen das ⓘ „Infos und Erklärungen", das
+Kalender-Zeichen und die Glocke der Benachrichtigungen, darunter ihre Teams alphabetisch als
+Plaketten. Erklärungen stehen im Kopf keine: Wie man meldet, die Infos zum Team und wer die
+Angaben sieht, liegen hinter dem ⓘ auf der Seite „Infos" (siehe „Infos am privaten Link"), damit
+sie beim Melden nicht aufhalten. Eine Karte „Als
 Nächstes" gibt es hier nicht: Ein Termin von heute, der schon begonnen hat, steht zuoberst unter
 „Heute", gesperrt bis Ende des Tages. Darunter folgen alle übrigen anstehenden Termine, die für die
 Spieler:in gelten, unter Monatsüberschriften wie „Oktober 2026", jedes Training als Karte mit dem
@@ -1132,18 +1210,18 @@ heute begonnener. Melden Eltern sie für einen Termin, der inzwischen nicht mehr
 oder ab, hält die Seite „Nicht gespeichert" mit Art und Tag des Termins fest und zeigt die
 aktuellen Termine.
 
-Unten auf der Seite steht, wer für die Daten verantwortlich ist — der Verein mit seinem Namen —
-und wer sie sieht: Name, Jahrgang und Teams alle Trainer:innen des Vereins, alle Angaben die
-Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die
-KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.
+Wer für die Daten verantwortlich ist — der Verein mit seinem Namen — und wer sie sieht, steht auf
+der Seite „Infos" unter „Wer deine Angaben sieht": Name, Jahrgang und Teams alle Trainer:innen des
+Vereins, alle Angaben die Trainer:innen ihrer Teams, J+S-Nummer und Link auch die
+Vereinsverwaltung, dazu die KI-Assistenten, die diese Personen verbunden haben, und wer den Link
+hat. Unter den Terminen steht dazu nichts.
 
-Schnuppert die Spieler:in (siehe „Schnuppertraining"), sagt der Kopf statt dessen etwa „Mia
-schnuppert. Melde Mia für die Trainings an, an denen Mia teilnimmt, und bis zum Beginn wieder ab."
-Darunter steht, wie viele Schnuppertrainings noch möglich sind, etwa „Noch 2 von 4
+Schnuppert die Spieler:in (siehe „Schnuppertraining"), steht im Kopf unter den Teams, wie viele
+Schnuppertrainings noch möglich sind, etwa „Noch 2 von 4
 Schnuppertrainings möglich", mit einem Balken je Schnuppertraining — besucht gefüllt, angemeldet
-umrandet — und darunter „1 besucht · 1 angemeldet". Führt das Team ein Info-Schreiben, folgt es
-unter „Infos zum Schnuppertraining", auf vier Zeilen gekürzt mit „Ganz lesen", mit seinen Zeilenumbrüchen und mit
-Webadressen als Links, die ausserhalb der Anwendung öffnen. Spiele zeigt die Seite nicht. Jedes
+umrandet — und darunter „1 besucht · 1 angemeldet". Wie das Schnuppern geht und das Info-Schreiben des Teams
+stehen auf der Seite „Infos" (siehe „Infos am privaten Link"), nicht über den Terminen. Spiele
+zeigt die Seite nicht. Jedes
 Training steht zuerst als „Nicht angemeldet" in Grau, ohne dass die Karte zurücktritt, und der
 Schalter meldet an. Sind alle Schnuppertrainings vergeben, sagt der Kopf „Alle 4
 Schnuppertrainings vergeben" — bei einem einzigen „Das Schnuppertraining ist vergeben" —, über den
@@ -1184,11 +1262,43 @@ weder Team noch Spieler:in nennt: „Den aktuellen erhältst du über eine Abhol
 Trainer:innen oder bei der Vereinsverwaltung." Ob es den Link je gab, ist nicht zu erkennen.
 Ebenso ungültig wird er, wenn die Vereinsverwaltung den Verein löscht. Die Vorschau, die ein Chat beim Teilen zeigt, trägt einen festen Titel ohne
 Team und Namen; Suchmaschinen nehmen die Seite nicht auf, die Besucherstatistik zählt sie nicht, und
-im Browser legt sie nichts ab.
+im Browser legt sie nur ab, welche Benachrichtigungen das Gerät schon angezeigt hat (siehe
+„Benachrichtigungen am privaten Link").
+
+### Infos am privaten Link
+
+Das ⓘ „Infos und Erklärungen" gleich hinter dem Namen führt auf die Seite „Infos" — dieselbe Adresse
+wie der Link mit „/infos" dahinter, kein zweiter Link. Ihr Kopf trägt einen Pfeil „Zurück zu den
+Terminen", den Titel „Infos" und darunter den Namen der Spieler:in; unten steht wie auf der
+Termin-Seite „Fragen und Feedback". Hier steht, was die Eltern nachlesen wollen, beim Melden aber
+nicht brauchen, in Abschnitten, die alle zugeklappt sind, auch beim ersten Öffnen; jeder öffnet sich
+für sich.
+
+Gehört die Spieler:in einem Team an, steht zuerst „So meldest du Mia" mit dem Satz, dass sie für
+jedes Training zuerst angemeldet ist, man sie abmeldet, wenn sie nicht kann, und bis zum Beginn
+wieder anmeldet, und dass sie für ein Spiel erst angemeldet ist, wenn man sie anmeldet. Danach folgt
+für jedes ihrer Teams, das Infos zum Team führt, ein Abschnitt mit dem Teamnamen, etwa „Infos zum
+Team FF11", in derselben Reihenfolge wie die Teams im Kopf. Er nennt den Stand, etwa „Stand
+12.11.2026", und zeigt den Text ganz, mit Zwischentiteln, Aufzählungen, Hervorhebungen und
+Webadressen als Links, die ausserhalb der Anwendung öffnen. Ein Team ohne Infos erscheint hier
+nicht, und die Seite weist auch nicht darauf hin.
+
+Schnuppert die Spieler:in, stehen statt dessen „So schnuppert Mia" mit dem Satz „Mia schnuppert.
+Melde Mia für die Trainings an, an denen Mia teilnimmt, und bis zum Beginn wieder ab." und, führt
+das Team eines, das Info-Schreiben unter „Infos zum Schnuppertraining", ganz, mit seinen
+Zeilenumbrüchen und Webadressen als Links. Die Infos zum Team sehen die Eltern in dieser Zeit nicht.
+
+Zuletzt steht immer „Wer deine Angaben sieht": dass der Verein mit seinem Namen für die Daten
+verantwortlich ist und wer welche Angaben sieht (siehe oben). Ist die Spieler:in keinem Team
+zugeordnet, steht nur dieser Abschnitt da. Die Seite liest bei jedem Aufruf neu; eine Änderung des
+Teams ist beim nächsten Öffnen zu sehen, ohne als Änderung gekennzeichnet zu sein. Ein erneuerter
+oder unbekannter Link führt auch hier auf „Dieser Link gilt nicht mehr"; Titel, Suchmaschinen und
+Besucherstatistik behandelt die Seite wie die Termin-Seite. Die Infos zum Team stehen weder im
+Kalender-Abo noch auf der Abholseite.
 
 ### Kalender-Abo am privaten Link
 
-Über das Kalender-Zeichen gleich hinter dem Namen der Spieler:in holen Eltern oder die Spieler:in selbst eine
+Über das Kalender-Zeichen hinter dem Namen der Spieler:in holen Eltern oder die Spieler:in selbst eine
 Abo-Adresse, mit der ihr Kalenderprogramm die Termine der Spieler:in abruft. Der Dialog „Im
 Kalender abonnieren" erklärt die Zeichen — „Im Kalender steht vor jedem Termin ✅ zugesagt, ❔
 vielleicht (noch nicht angemeldet) oder ❌ abgesagt." —, sagt, dass das Abo nur anzeigt und weiterhin
@@ -1237,6 +1347,80 @@ Adresse einen leeren Kalender. Ein erloschenes Abo bleibt erloschen; über den g
 jederzeit eine neue Adresse, nach dem Widerrufen gleich im Dialog. Mitglieder sehen nicht, ob für
 eine Spieler:in ein Abo besteht.
 
+### Benachrichtigungen am privaten Link
+
+Was ein Team den Spielervertretungen mitteilt, steht am privaten Link unter „Benachrichtigungen".
+Eine Benachrichtigung entsteht bei fünf Vorgängen eines Mitglieds, in der Anwendung wie über den
+KI-Assistenten: wenn es ein Spiel erfasst, einen Termin ausfallen lässt, einen Ausfall zurücknimmt,
+Datum, Beginn, Ende oder Ort eines Termins ändert oder einen Termin entfernt. Alles andere bleibt
+still — neue Trainings und Terminserien, ein geänderter Ausfallgrund, Treffpunkt, Hinweis für
+Eltern, Bemerkung, Kader, Trainer:innen, Meldefrist und ein geänderter Kartenlink allein. Mitgeteilt
+werden nur Termine von heute oder später, wie der Link sie zeigt; bei einer Verlegung zählt der neue
+Tag, beim Entfernen der bisherige, und ein Termin von heute zählt auch nach seinem Beginn. Ein
+ausgefallener Termin meldet nur noch, dass er wieder stattfindet; wird er entfernt oder bleibt er
+bei einer Änderung ausgefallen, entsteht nichts.
+
+Ob benachrichtigt wird, entscheidet das Mitglied bei jedem dieser Vorgänge mit dem Kästchen
+„Spielervertretungen benachrichtigen", das bei jedem Öffnen des Dialogs angekreuzt ist. Darunter
+steht, was die Spielervertretungen davon sehen, beim Ausfall etwa „Den Grund sehen sie auch in der
+Benachrichtigung." Das Kästchen erscheint nur, wo eine Benachrichtigung entstehen kann: beim
+Erfassen nur für ein Spiel, beim Ausfallen lassen nur für einen Termin von heute oder später und nie
+beim Ändern des Grunds, beim Ändern eines Termins erst, sobald sich Datum, Zeit oder Ort so ändern,
+dass es etwas mitzuteilen gibt — bei einer Serie auch Wochentage und Zeitraum —, und ebenso, wenn
+Zeit oder Ort wieder der Serie folgen. Den Ausfall eines Termins von heute oder später nimmt man
+darum im Dialog „Ausfall zurücknehmen" mit dem Kästchen und „Zurücknehmen" zurück; bei einem
+vergangenen Termin bleibt es ein Klick. Beim Entfernen steht das Kästchen in der Rückfrage, bei
+einer Serie nur, wenn Spieler:innen eine Benachrichtigung erhielten. Lässt eine Änderung der Serie
+Termine wegfallen, gilt das Kästchen aus „Termin ändern" auch dafür; die Rückfrage fragt nicht noch
+einmal. Ist der Vorgang gespeichert, die Benachrichtigung aber nicht entstanden, ergänzt die Meldung
+„Gespeichert, aber die Benachrichtigung ist nicht entstanden."; der Vorgang gilt trotzdem. Was
+abgelegt ist und ob eine Spielervertretung es gesehen hat, erfahren die Mitglieder nicht.
+
+Eine Benachrichtigung erhalten alle Spieler:innen, für die der Termin im Moment des Vorgangs gilt —
+bei einem Termin mit Kadern nur deren Spieler:innen, beim Entfernen alle, für die er bis dahin galt
+—, auch abgemeldete. Wer später über ein Kader oder ein Team dazukommt, erhält nichts nachträglich.
+Ein Vorgang ergibt je Spieler:in eine Benachrichtigung, ein Spiel höchstens eine zu seinem Erfassen;
+wer mehrere Spiele nacheinander erfasst, löst je Spiel eine aus. Eine Änderung oder das Entfernen
+einer Terminserie fasst alles in einer einzigen Benachrichtigung je Spieler:in zusammen, sofern
+mindestens einer ihrer Termine von heute oder später, der nicht ausgefallen ist, sich ändert oder
+wegfällt; Termine, die die Änderung neu anlegt, zählen nicht.
+
+Am Link steht hinter dem Namen, nach ⓘ und dem Kalender-Zeichen, eine Glocke. Ihre Zahl sagt, wie
+viele Benachrichtigungen dieses Gerät noch nicht angezeigt hat, ab zehn „9+"; ohne neue steht keine
+Zahl. Ein Tipp öffnet die Ansicht „Benachrichtigungen" an Stelle der Chips und der Termine; der Kopf
+der Seite bleibt. „Zurück zu den Terminen", ein zweiter Tipp auf die Glocke oder die Zurück-Taste
+führen zurück, und wer neu lädt, bleibt in der Ansicht. Die neuesten stehen zuoberst: unter „Neu",
+je mit der Plakette „Neu", was seit dem letzten Anzeigen auf diesem Gerät entstanden ist, darunter
+unter „Früher" die übrigen; ohne neue steht die Liste ohne Überschrift. Ein Eintrag nennt mit einem
+Zeichen, was geschehen ist — „Neues Spiel", „Fällt aus", „Findet wieder statt", „Verlegt", „Fällt
+weg" oder bei einer Serie „Trainings geändert", verliert sie nur Termine „Trainings fallen weg" bzw.
+„Training fällt weg"; rot steht nur, was nicht mehr stattfindet. Darunter folgen Training oder die
+Bezeichnung des Spiels mit dem Team, etwa „Cup gegen Thun · FC Beispiel", Tag und Zeit, etwa
+„Samstag, 5. Dezember · 14:00–15:30", der Ort, bei einem Ausfall der Grund mit „Grund:", bei einer
+Verlegung, durch die ein ausgefallener Termin wieder stattfindet, „Findet wieder statt.", und wann
+sie entstand: „Erhalten heute", „Erhalten gestern" oder etwa „Erhalten am 3. Nov.". Eine Änderung
+der Serie nennt statt Tag und Ort, ab wann sie gilt, etwa „Ab Dienstag, 1. Dezember", die geänderten
+Angaben, etwa „Neu jeweils Dienstag · 18:00–19:30 · Halle", und zusammengefasst, was für die
+Spieler:in wegfällt, etwa „Es fallen 3 Trainings am Mittwoch weg (2.–16. Dez.)." Jeder Eintrag zeigt
+den Stand beim Vorgang; spätere Änderungen übernimmt er nicht, massgeblich ist der Termin in der
+Liste. Ob die Spieler:in angemeldet ist oder eine Abmeldung oder Meldung verfällt, sagt keine
+Benachrichtigung; das steht an der Karte des Termins. Steht der Termin noch am Link, führt „Zum
+Termin" zu seiner Karte und hebt dafür eine Eingrenzung auf, die ihn ausblendet; sonst steht „Steht
+nicht mehr in deinen Terminen". Eine Änderung der Serie führt zu keinem einzelnen Termin und sagt
+dazu nichts. Ohne Einträge steht „Noch keine Benachrichtigungen" mit dem Satz, dass hier steht, was
+ein Team neu erfasst oder mitteilt.
+
+Unten in der Ansicht steht „KiFu bewahrt Benachrichtigungen 90 Tage auf. Welche du schon gesehen
+hast, merkt sich nur dieses Gerät." Angezeigt werden die bis zu 200 neuesten der letzten 90 Tage,
+auch zu Terminen, die inzwischen geändert, entfernt oder vergangen sind oder nicht mehr für die
+Spieler:in gelten, etwa nach dem Herausnehmen aus einem Team. Alle Benachrichtigungen einer
+Spieler:in enden, wenn jemand ihren Link erneuert, die Vereinsverwaltung sie aus dem Verein löscht
+oder den Verein löscht. Was schon gesehen ist, merkt sich jedes Gerät und jeder Browser für sich, je
+Link, für bis zu 20 Links: Gesehen ist eine Benachrichtigung, sobald die Ansicht sie auf diesem
+Gerät angezeigt hat. Öffnet ein Gerät den Link zum ersten Mal, gilt alles Bisherige als gesehen, und
+die Glocke zeigt keine Zahl. Neue Benachrichtigungen erscheinen erst, wenn man die Seite neu öffnet
+oder lädt.
+
 ## Selbstabholung
 
 Damit niemand jedem Elternteil einzeln schreiben muss, holen Eltern den Link ihrer Spieler:in auf
@@ -1258,7 +1442,8 @@ Auch die Abholseite braucht kein Konto und ist fürs Telefon gebaut. Unter dem T
 werden die Spieler:innen dieses Teams. Unter dem Knopf „Link abholen" steht unter „Was KiFu
 speichert", welche Angaben die Anwendung zu einer Spieler:in führt — Vorname, Nachname, Jahrgang,
 falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein
-Spiel nicht aufgeboten ist —, dass der Verein mit seinem Namen für die Daten verantwortlich ist, wer
+Spiel nicht aufgeboten ist —, dass KiFu die Benachrichtigungen zu ihren Terminen 90 Tage aufbewahrt
+und sie nur sieht, wer den Link hat, dass der Verein mit seinem Namen für die Daten verantwortlich ist, wer
 sie sieht — Name, Jahrgang und Teams alle Trainer:innen des Vereins, alle Angaben die Trainer:innen
 ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese
 Personen verbunden haben, und wer den Link hat; wann sie sich zuletzt ab- oder wieder angemeldet
@@ -1278,7 +1463,8 @@ Internetanschluss 15 Minuten lang keine Eingabe mehr an, bei keinem Team, und di
 es danach wieder geht; für andere Anschlüsse bleibt sie offen. Ein Treffer zwischendurch setzt die
 Zählung nicht zurück. Eine erneuerte, ausgeschaltete oder
 unbekannte Adresse zeigt die neutrale Seite „Diese Abholadresse gilt nicht" ohne Teamname. Vorschau
-im Chat, Suchmaschinen, Besucherstatistik und Browser behandelt die Abholseite wie den Link.
+im Chat, Suchmaschinen und Besucherstatistik behandelt die Abholseite wie den Link; im Browser legt
+sie nichts ab.
 
 In der Spielerliste trägt das Kettenglied einen grünen Punkt, wenn der aktuelle Link der
 Spieler:in über eine Abholadresse herausgegeben wurde, gleich über welches ihrer Teams; der Tooltip sagt dann „bezogen". Ob ein
@@ -1305,7 +1491,7 @@ sich auch über einen verbundenen KI-Assistenten führen, samt Treffpunkt, Felde
 Zugang](konto-und-zugang.md#ki-assistent-verbinden)), ebenso Spiele samt Richtwert, Meldefrist und
 Treffpunkten, die Spielerliste, die Kader samt Zuteilung und den Kadern von Terminen und Serien, die
 Ab- und Anmeldungen, die Meldungen zu Spielen und die Kennzeichnungen als nicht aufgeboten, die
-Nachträge, die privaten Links und die Selbstabholung. Es gelten dieselben Regeln, und was er
+Nachträge, die privaten Links, die Selbstabholung und die Infos zum Team. Es gelten dieselben Regeln, und was er
 festlegt, steht im selben Kalender; verfallen durch eine Verlegung oder eine Änderung an Kadern
 Abmeldungen, Meldungen oder Absagen, verlangt auch er eine Bestätigung. Legt er einen Termin oder
 eine Serie ohne Angabe zu den Trainer:innen fest, sind wie in der Anwendung alle Mitglieder
@@ -1379,7 +1565,7 @@ Der Team-Bereich gliedert sich in drei Seiten, die in der Seitenleiste unter dem
 stehen: „Trainingsplan", „Trainings" und „Team". Den Namen des Teams nennt die Brotkrume, davor
 den Verein. Wer ein Team öffnet, landet im Trainingsplan — was als Nächstes ansteht, ist beim
 Öffnen die häufigste Frage. Daneben liegen die Trainings, also der Bestand, aus dem geplant wird,
-und unter „Team" die Teamangaben, die Spielerliste samt Selbstabholung, das Schnuppertraining, die
+und unter „Team" die Teamangaben, die Infos zum Team, die Spielerliste samt Selbstabholung, das Schnuppertraining, die
 Kader, die Mitglieder und die Gefahrenzone mit „Team verlassen". Ein geöffneter Termin ist keine
 eigene Seite; er steht im Trainingsplan daneben.
 
@@ -1393,14 +1579,18 @@ dazugehört, bleibt ununterscheidbar.
 
 Eine Handlung bleibt auf der Seite, auf der sie ausgelöst wurde, und meldet ihr Ergebnis dort:
 Wer im Trainingsbestand ein Training einem Termin zuordnet, bleibt im Bestand; das Training
-dort bleibt unverändert. Nach dem Löschen eines Team-Trainings kehrt die Ansicht in die
-Trainings zurück, nach dem Löschen eines Trainings mit Termin in den Trainingsplan.
+dort bleibt unverändert. Wer ein Training im Detail des Bestands löscht, bleibt im Bestand, mit
+derselben Suche, demselben Filter und derselben Sortierung, und liest „Training gelöscht." — auch
+bei einem älteren Training mit Termin. Aus der Ansicht oder der Bearbeitung heraus kehrt die
+Anwendung nach dem Löschen eines Team-Trainings in die Trainings zurück, nach dem Löschen eines
+Trainings mit Termin in den Trainingsplan.
 
 ## Bekannte Grenzen
 
-Die Anwendung erinnert an keinen Termin und benachrichtigt niemanden — weder Eingeladene noch
-Verantwortliche noch andere Mitglieder — über neue, geänderte oder ausgefallene Termine, über
-Einladungen und Absagen oder eine fehlende Mindestbesetzung; eine Lücke zeigt nur der
+Die Anwendung erinnert an keinen Termin und benachrichtigt keine Mitglieder — weder Eingeladene
+noch Verantwortliche noch andere — über neue, geänderte oder ausgefallene Termine, über
+Einladungen und Absagen oder eine fehlende Mindestbesetzung; Benachrichtigungen gibt es nur für
+die Spielervertretungen am privaten Link (siehe „Benachrichtigungen am privaten Link"); eine Lücke zeigt nur der
 Trainingsplan, das Kalender-Abo nennt sie in der Beschreibung. Der Kalender führt
 Trainings und Spiele, aber keine anderen Anlässe, und nur ein Spiel trägt eine eigene Bezeichnung;
 wer mehrere Mannschaften getrennt plant, führt sie als eigene Teams. Die Termine
@@ -1471,8 +1661,11 @@ in den Ferien, der nicht als ausgefallen markiert ist, gilt als nächster Termin
 Tag. Die Liste lässt sich nicht durchsuchen
 und nur auf die eigenen Termine eingrenzen, nicht auf einen Zeitraum. Ein Archivieren
 vergangener Einheiten gibt es nicht: Der Rückblick fasst sie zusammen. Mehrere Kopien desselben
-Trainings heissen alle gleich; im Bestand lassen sich nur ältere eingeplante am Termindatum
-auseinanderhalten.
+Trainings heissen alle gleich; im Bestand unterscheiden sie sich höchstens am Datum der letzten
+Änderung, und ältere eingeplante nennen ihr Termindatum erst im Detail. Der Bestand zeigt in der
+Zeile weder Altersstufe noch Alterskategorien, nennt nicht, wer ein Training angelegt hat, und
+lässt sich nicht auf die eigenen Trainings eingrenzen; zur früheren Darstellung mit Kacheln lässt
+sich nicht zurückschalten.
 
 Wie oft ein Kalenderprogramm das Abo abruft, bestimmt das Programm, nicht die Anwendung; eine
 Änderung kann dort deshalb erst nach einer Weile erscheinen, und ob ein Programm nach dem Erlöschen
@@ -1538,9 +1731,22 @@ wie Fett, Listen oder Bilder, gilt für das ganze Team statt je Spieler:in oder 
 weder im Kalender-Abo noch bei der Selbstabholung. Fällt ein Training durch eine Kader-Änderung für
 eine schnuppernde Spieler:in weg, verschwindet es am Link ohne Hinweis.
 
-Die Anwendung benachrichtigt niemanden über Ab- und Anmeldungen, und Eltern erfahren nicht von
-selbst, dass ein Termin verlegt wurde, ausfällt oder ihre Abmeldung oder Meldung verfallen ist —
-nur, wenn sie den Link öffnen. Wer sich zu einem Training nicht geäussert hat, ist nicht zu
+Die Infos zum Team sind ein einziger Text je Team, weder je Kader noch je Spieler:in, und kennen
+keine Platzhalter wie den Namen der Spieler:in. Bilder, Tabellen, Anhänge und Links mit eigenem Text
+gibt es darin nicht, und Zwischentitel haben nur eine Grösse. Infos des Vereins, die für alle Teams
+gelten, gibt es nicht. Die Anwendung benachrichtigt die Eltern nicht über neue oder geänderte Infos
+und kennzeichnet keine geänderten Stellen; nur der Stand verrät, dass sich etwas geändert hat.
+Bearbeiten zwei Mitglieder die Infos zugleich, gilt ohne Warnung, wer zuletzt speichert, und frühere
+Fassungen bleiben nicht erhalten. Ob der Text Namen, Telefonnummern oder andere heikle Angaben
+enthält, prüft die Anwendung nicht; den Inhalt verantwortet das Team. Die Infos stehen weder im
+Kalender-Abo noch auf der Abholseite, und solange eine Spieler:in schnuppert, sehen ihre Eltern sie
+nicht. Die Abschnitte der Seite „Infos" öffnen sich nie von selbst, auch nicht beim ersten Öffnen
+eines Links.
+
+Die Anwendung benachrichtigt niemanden über Ab- und Anmeldungen. Dass ein Termin verlegt wurde,
+ausfällt oder wegfällt, erfahren Eltern nur, wenn sie den Link öffnen — unter „Benachrichtigungen",
+sofern das Team es mitgeteilt hat —, und dass ihre Abmeldung oder Meldung verfallen ist, nur an
+der Karte des Termins. Wer sich zu einem Training nicht geäussert hat, ist nicht zu
 erkennen, denn bei Trainings gilt jede Spieler:in als angemeldet. Eine Abmeldung trägt keinen Grund,
 gilt immer für genau einen Termin und lässt sich nicht für mehrere in einem Schritt setzen; die
 Frist ist bei Trainings immer der Beginn und lässt sich je Team nicht einstellen. Eine verfallene
@@ -1564,8 +1770,9 @@ Kalendern übernimmt sie keine Spiele — jedes wird von Hand erfasst. Ein Spiel
 Tag, lässt sich nicht als Serie anlegen, nicht nach dem Anpfiff erfassen und nicht auf einen
 vergangenen Zeitpunkt verlegen; seine Art lässt sich nicht ändern, und ein Training trägt es nie.
 Eine eigene Art „Turnier" gibt es nicht. Die Anwendung erinnert Eltern nicht an fehlende Meldungen
-und benachrichtigt niemanden über neue, verlegte oder ausgefallene Spiele, über eine abgelaufene
-Meldefrist oder darüber, dass ein Spiel Handlungsbedarf hat. Die grosse Karte nach der Meldefrist
+und benachrichtigt niemanden über eine abgelaufene Meldefrist oder darüber, dass ein Spiel
+Handlungsbedarf hat; neue, verlegte, ausgefallene und entfernte Spiele erfahren nur die Eltern, am
+privaten Link unter „Benachrichtigungen", die Mitglieder nicht. Die grosse Karte nach der Meldefrist
 sieht nur, wer den Trainingsplan öffnet, und wie der übrige Plan zeigt sie den Stand beim Laden:
 Eine inzwischen abgelaufene Frist erscheint erst nach dem nächsten Laden. Eine abgegebene Meldung
 lässt sich nicht auf „ohne Meldung" zurücksetzen, und gemeldet, gekennzeichnet und nachgetragen
@@ -1581,13 +1788,29 @@ Meldungen noch Spielerzahl, und eine erwartete Zahl lässt sich an einem Spiel n
 Ob ein privater Link weitergegeben wurde, erkennt die Anwendung nicht, und ob ein Elternteil oder
 die Spieler:in selbst abmeldet, unterscheidet sie nicht. Sperren lässt sich ein Link nur, indem
 man ihn erneuert — das gilt dann für alle Teams der Spieler:in —, und erneuert wird jeder einzeln,
-nie alle auf einmal. Welche Angaben gespeichert sind, sagt nur die Abholseite; die Seite hinter dem
-Link nennt, wer sie sieht und wer verantwortlich ist. Eine vollständige
+nie alle auf einmal. Welche Angaben gespeichert sind, sagt nur die Abholseite; die Seite „Infos" hinter dem
+Link nennt, wer sie sieht und wer verantwortlich ist, und die Ansicht „Benachrichtigungen" nur, wie
+lange diese bleiben und dass das Gerät sich das Gesehene merkt. Eine vollständige
 Datenschutzerklärung gibt es nicht (siehe [Navigation](navigation.md#bekannte-grenzen)).
 
 Die Eingrenzung auf Trainings oder Spiele merkt sich die Seite nicht: Neu geöffnet oder neu geladen
 zeigt sie wieder alle Termine. Sie grenzt nur die Liste ein, nicht das Kalender-Abo, und nur nach
 der Art, nicht nach einem Zeitraum; für eine schnuppernde Spieler:in und ohne anstehende Termine gibt es sie nicht.
+
+Benachrichtigungen erscheinen nur am privaten Link: Aufs Handy, per E-Mail oder ins Kalender-Abo
+gelangen sie nicht, und die offene Seite holt neue nicht von selbst. Neue Trainings und
+Terminserien, geänderte Treffpunkte, Hinweise für Eltern, Kader, Trainer:innen und Meldefristen
+teilt die Anwendung nicht mit, ebenso wenig das Auflösen eines Teams oder das Löschen des Vereins;
+ein entfernter Termin steht nicht als entfallen in der Liste. Eine Benachrichtigung nennt weder den
+früheren Zeitpunkt noch einen mitgewanderten Treffpunkt noch, ob eine Abmeldung oder Meldung
+verfällt. Eltern können Benachrichtigungen weder löschen noch abbestellen, und Mitglieder sehen
+weder, was benachrichtigt wurde, noch ob es gesehen ist; beim Zurücknehmen eines Ausfalls erkennt
+das Mitglied nicht, ob der Ausfall mitgeteilt worden war. Wer zur Spieler:in später über ein Kader
+oder ein Team dazukommt, erhält frühere Benachrichtigungen nicht. Was gesehen ist, gilt je Gerät und
+Browser: Auf einem anderen Gerät oder nach dem Löschen der Cookies gilt beim nächsten Öffnen alles
+Bisherige als gesehen, ein Browser, der keine Cookies behält, zeigt nie eine Zahl, und ein Gerät
+merkt sich höchstens 20 Links. Geschwister mit eigenen Links haben keine gemeinsamen
+Benachrichtigungen. Nach dem Erneuern des Links sind die bisherigen verloren.
 
 Die Abholung erkennt keine Schreibvarianten: Umschriebene Umlaute, Rufnamen oder Tippfehler
 passen nicht. Wer die Abholadresse hat und Vorname, Nachname und Jahrgang einer Spieler:in kennt — im
