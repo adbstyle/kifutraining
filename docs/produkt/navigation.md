@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-11-16. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-11-19. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Seitenleiste
 
@@ -127,7 +127,9 @@ Anmeldung. Er zeigt die Farben beider Erscheinungsbilder nebeneinander.
 Die Seite „Cookies" nennt alles, was KiFu im Browser ablegt: die Anmeldung, die gewählte
 Breite der Seitenleiste, die gezogene Breite der Spalte und des Verzeichnisses unter
 „Versionen" und im Styleguide, die gewählte Darstellung, den zuletzt gewählten Bereich der
-Seitenleiste und bis zu welcher Version man „Versionen" gesehen hat — je mit Zweck, Dauer, Namen und dem, was ohne sie nicht mehr geht.
+Seitenleiste, bis zu welcher Version man „Versionen" gesehen hat und, nur auf den Seiten hinter
+einem privaten Link, bis wann das Gerät die Benachrichtigungen angezeigt hat — je mit Zweck, Dauer,
+Namen und dem, was ohne sie nicht mehr geht.
 Sie nennt auch die Besucherstatistik: KiFu zählt auf ki-fu.ch Seitenaufrufe mit Vercel Web
 Analytics nach Seite, Herkunft, Land und Gerätetyp. Diese legt nichts im Browser ab, kennt keine
 Personen und erhält die Adresse ohne Suchbegriffe und Filter; eine unbekannte Adresse zählt sie
@@ -157,8 +159,8 @@ Jede Seite beginnt links neben der Leiste, nichts steht zentriert in der Mitte. 
 Übungen, Trainings, Teams, der Bereich eines Teams und die Übersicht der Teams und Spieler:innen
 eines Vereins — nutzen die ganze Breite des Fensters;
 die Kacheln reihen sich so dicht, wie Platz ist, auf einem breiten Bildschirm also in mehr
-Spalten. Die Trainingsübersicht ist eine Tabelle; ein ausgewähltes Training steht daneben im
-Detail, auf einem schmalen Bildschirm an Stelle der Tabelle. Formulare und Seiten zum Lesen behalten eine angenehme Lesebreite und stehen ebenfalls
+Spalten. Die Trainingsübersicht und der Trainingsbestand eines Teams sind Tabellen; ein
+ausgewähltes Training steht daneben im Detail, auf einem schmalen Bildschirm an Stelle der Tabelle. Formulare und Seiten zum Lesen behalten eine angenehme Lesebreite und stehen ebenfalls
 links; geteilte Seiten — eine Übung, ein Training — nutzen auf einem breiten Bildschirm die ganze
 Fläche (siehe unten). Auch die Durchführung steht links.
 
@@ -271,10 +273,12 @@ ebenso die Bestätigung beim Verbinden eines KI-Assistenten.
 Die Seite, über die Eltern eine Spieler:in ab- und anmelden, und die Abholseite eines Teams (siehe
 [Team-Bereich](team-bereich.md#privater-link)) sind für Menschen ohne Konto gedacht und fürs
 Telefon gebaut: eine schmale Spalte ohne Seitenleiste, ohne Brotkrumen und ohne Meldungen am
-Bildschirmrand. Auf der Seite der Spieler:in klebt unten am Bildschirmrand eine schmale Leiste mit
-dem Link „Fragen und Feedback"; die Abholseite hat unten nichts. In den
+Bildschirmrand. Auf der Seite der Spieler:in und ihrer Seite „Infos" (hinter dem ⓘ neben dem Namen) klebt unten
+am Bildschirmrand eine schmale Leiste mit dem Link „Fragen und Feedback"; die Abholseite hat unten
+nichts. In den
 übrigen Teil der Anwendung führen sie nicht. Eine Anmeldung kennen sie nicht — auch wer ein Konto
-hat, ist dort niemand Bestimmtes —, und sie legen nichts im Browser ab. Ihr Titel ist fest und nennt weder Team noch Spieler:in,
+hat, ist dort niemand Bestimmtes —, und im Browser liegt von ihnen nur, welche Benachrichtigungen
+ein Gerät am privaten Link schon angezeigt hat. Ihr Titel ist fest und nennt weder Team noch Spieler:in,
 damit ein Chat beim Teilen keine Namen in die Vorschau setzt; Suchmaschinen nehmen sie nicht auf,
 die Besucherstatistik zählt sie nicht, und in eine fremde Seite einbetten lassen sie sich nicht.
 
@@ -338,8 +342,9 @@ beschreibt nur, was im Browser liegt, und die Besucherstatistik. Diese lässt si
 abwählen, und eine Seite, die über einen ungültigen Link nicht gefunden wird (etwa ein
 Training, das es nicht gibt), zählt sie unter dem eingegebenen Pfad. Eine eigene Einstellung, um Cookies abzuschalten, gibt
 es nicht — das geht über den Browser. Die Seite „Cookies" erwähnt die Seiten hinter einem
-privaten Link nicht, und diese verweisen weder auf sie noch auf eine andere Erklärung; was zu
-Spieler:innen gespeichert ist, sagt allein die Abholseite.
+privaten Link nur mit dem Merker der gesehenen Benachrichtigungen, und diese verweisen weder auf
+sie noch auf eine andere Erklärung; was zu Spieler:innen gespeichert ist, sagt allein die
+Abholseite, wie lange Benachrichtigungen bleiben, auch deren Ansicht.
 
 „Versionen" zeigt die Texte so, wie sie veröffentlicht wurden; ältere enthalten Technisches,
 Nummern von Aufgaben und Aussagen, die inzwischen überholt sind. Nummern von Aufgaben sind dort kein Link,

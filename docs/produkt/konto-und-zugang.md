@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-11-15. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-11-19. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -369,6 +369,14 @@ sie angemeldet ist und wie viele über den Link noch möglich sind, am Termin, w
 Meldet er eine schnuppernde Spieler:in über die Anzahl hinaus an, erhält er denselben Hinweis wie
 die Oberfläche. Zum Schnuppern einem Team zuordnen kann er niemanden.
 
+Die Infos zum Team (siehe [Team-Bereich](team-bereich.md#infos-zum-team)) liest der Assistent mit
+„team_infos_abrufen" samt dem Tag der letzten Textänderung und verfasst, ändert oder entfernt sie
+mit „team_infos_festlegen". Er übergibt dabei immer den ganzen Text — für eine Änderung liest er
+ihn zuerst —, und ein leerer Text entfernt die Infos. Er gliedert mit denselben Zeichen wie die
+Leiste in der Anwendung, und es gilt dieselbe Grenze von 10'000 Zeichen samt Gliederung mit
+demselben Hinweis. Die Eltern sehen die neue Fassung beim nächsten Öffnen ihres Links; frühere
+Fassungen bleiben auch hier nicht erhalten.
+
 An einem Spiel erfährt der Assistent für jede Spieler:in ihre Meldung oder dass sie noch ohne
 Meldung ist, ob sie als nicht aufgeboten gekennzeichnet ist und ob sie die Meldefrist verpasst
 hat, dazu die Zahl der Angemeldeten, der noch ohne Meldung, der mit verpasster Meldefrist und der
@@ -409,7 +417,15 @@ Termin, über die Serie oder wenn die Zeit wieder der Serie folgt —, und nennt
 nach einer Änderung erfährt der Assistent, wie viele verfallen sind. Bei einem Spiel verlangt sie
 die Bestätigung, wenn ein anderes Datum Meldungen oder Kennzeichnungen als nicht aufgeboten
 verfallen lässt, wenn eine Verlegung Nachträge verfallen lässt oder die Meldefrist ins Abgelaufene
-rückt, und beim Entfernen eines Spiels, das Meldungen oder Kennzeichnungen trägt. Nach jedem Schritt
+rückt, und beim Entfernen eines Spiels, das Meldungen oder Kennzeichnungen trägt.
+Beim Erfassen eines Spiels, beim Ausfallen lassen und
+Zurücknehmen eines Ausfalls, beim Ändern von Datum, Zeit oder Ort eines Termins oder einer Serie,
+wenn Zeit oder Ort wieder der Serie folgen, und beim Entfernen benachrichtigt der Assistent die
+Spielervertretungen am privaten Link nach denselben Regeln wie das Kästchen in der Anwendung, ohne
+gegenteilige Angabe immer; abwählen muss es der Aufruf ausdrücklich. Danach erfährt er, wie viele
+Spieler:innen eine Benachrichtigung erhielten, und, falls sie nicht entstanden ist, den Satz
+„Gespeichert, aber die Benachrichtigung ist nicht entstanden." Was abgelegt ist und ob es gesehen
+wurde, erfährt er nicht. Nach jedem Schritt
 erfährt der Assistent, was geschehen ist — welche entfallenen Termine ein Training trugen und ob es
 mit ihnen gelöscht wurde oder im Bestand blieb, welches Termin-Training beim Zuordnen entstand,
 welches Training ein ersetztes oder gelöstes war und ob es gelöscht wurde und, falls eine
@@ -442,13 +458,14 @@ Spielerzahl, Kadern und Mindestbesetzung sowie Spiele mit Bezeichnung, Richtwert
 entfernen, ihnen als Kopie Trainings aus dem Team oder deine persönlichen Trainings zuordnen und sie
 wieder lösen, Trainer:innen einladen, ausladen, absagen und wieder zusagen und bestimmen, wer
 verantwortlich ist, Ausfälle festhalten und zurücknehmen sowie die Termine eines Zeitraums
-abrufen"; „die Anzeigenamen der Mitglieder deiner Teams lesen (ohne
+abrufen; bei neuen Spielen, Ausfällen und ihrer Rücknahme, Verlegungen und beim Entfernen jeweils
+entscheiden, ob die Spielervertretungen am privaten Link benachrichtigt werden"; „die Anzeigenamen der Mitglieder deiner Teams lesen (ohne
 E-Mail-Adressen)"; „die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen
 und führen, dazu den Verein deiner Teams und die Namen weiterer Teams einer Spieler:in sehen,
 Spieler:innen aus einem deiner Teams nehmen (sie bleiben im Verein), Kader anlegen, umbenennen und
 entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die
-Anzahl Schnuppertrainings samt Info-Schreiben festlegen, Spieler:innen
-für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten
+Anzahl Schnuppertrainings samt Info-Schreiben festlegen, die Infos zum Team für die Eltern verfassen,
+ändern und entfernen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten
 kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab
 Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link
 einer Spieler:in holen und erneuern, die Selbstabholung ein- und ausschalten, die Abholadresse holen
@@ -459,8 +476,9 @@ entfernen, Spieler:innen Teams zuordnen, Spieler:innen aus dem Verein löschen u
 importieren)" und „dein Konto selbst (Anzeigename, Passwort, Löschen)". Kommt eine dieser
 Fähigkeiten dazu, muss man nicht erneut zustimmen; auch wer seinen Zugang erlaubt hat, bevor der
 Kalender, Platz, Spielerzahl und Treffpunkt der Termine, die Spielerliste samt Abmeldungen, Links und
-Selbstabholung, die Kader, die Spiele, das Schnuppertraining (früher Probetraining) oder der Verein
-mit den weiteren Teams einer Spieler:in dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt
+Selbstabholung, die Kader, die Spiele, das Schnuppertraining (früher Probetraining), der Verein
+mit den weiteren Teams einer Spieler:in, die Infos zum Team oder das Benachrichtigen der
+Spielervertretungen dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt
 die Seite, nur zu erlauben, wenn man das Verbinden eben selbst gestartet hat.
 
 Beim Erlauben kann man dem Zugang einen eigenen Namen geben, etwa „Claude auf dem Laptop",
