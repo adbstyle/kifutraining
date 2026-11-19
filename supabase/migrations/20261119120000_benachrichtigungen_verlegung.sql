@@ -135,17 +135,18 @@ revoke all on function benachrichtigung_serie_angaben(uuid) from public, anon, a
 -- vorher und jetzt da, Datum, Beginn, Ende oder Ort anders (der Kartenlink
 -- zählt nicht, OoS 1), jetzt heute oder später und nicht ausgefallen. Neu
 -- angelegte Termine stehen nicht im Stand und zählen darum nicht (OoS 4).
--- Verglichen wird mit den Werten der Momentaufnahme (Zeiten minutengenau
--- wie alle Eingaben). Zwilling: istVerlegung in web/lib/benachrichtigung.ts.
+-- Verglichen wird die Momentaufnahme vorher mit der Momentaufnahme jetzt,
+-- beide aus benachrichtigung_inhalt: was dort gleich aussieht (Zeiten
+-- minutengenau), ist nicht verlegt. Zwilling: istVerlegung in web/lib/benachrichtigung.ts.
 create function benachrichtigung_verlegt(p_vorher jsonb) returns setof training_termine
 language sql stable
 set search_path = public, pg_temp
 as $$
   select tt.* from training_termine tt
     join jsonb_each(coalesce(p_vorher, '{}'::jsonb)) x(k, e) on tt.id = x.k::uuid
-   where (tt.datum, tt.beginn, tt.ende, tt.ort)
-         is distinct from ((x.e -> 'inhalt' ->> 'datum')::date, (x.e -> 'inhalt' ->> 'beginn')::time,
-                           (x.e -> 'inhalt' ->> 'ende')::time, x.e -> 'inhalt' ->> 'ort')
+    cross join lateral (select benachrichtigung_inhalt(tt) as n, x.e -> 'inhalt' as v) i
+   where (i.n -> 'datum', i.n -> 'beginn', i.n -> 'ende', i.n -> 'ort')
+         is distinct from (i.v -> 'datum', i.v -> 'beginn', i.v -> 'ende', i.v -> 'ort')
      and benachrichtigung_zaehlt(tt.datum)
      and not tt.ausgefallen
 $$;

@@ -69,7 +69,11 @@ create table spieler_benachrichtigungen (
   termin_id uuid,
   -- Momentaufnahme (Prinzip 6), Form siehe benachrichtigung_inhalt.
   inhalt jsonb not null,
-  erstellt_am timestamptz not null default now(),
+  -- Der Moment des Einfügens, nicht der Beginn der Transaktion: Das Gerät
+  -- merkt sich «gesehen bis» als Zeitpunkt; eine Benachrichtigung aus einer
+  -- länger laufenden Änderung (Serie) gälte sonst als gesehen, bevor sie
+  -- sichtbar ist.
+  erstellt_am timestamptz not null default clock_timestamp(),
   constraint spieler_benachrichtigungen_vorgang unique (vorgang, spieler_id)
 );
 create index spieler_benachrichtigungen_spieler_idx on spieler_benachrichtigungen (spieler_id, erstellt_am desc);
@@ -260,7 +264,8 @@ grant execute on function termin_benachrichtigen(uuid, text, boolean) to authent
 -- Die Benachrichtigungen der Spieler:in der letzten 90 Tage, neueste zuerst,
 -- höchstens 200 — auch zu Terminen, die es nicht mehr gibt oder die nicht
 -- mehr für sie gelten (AK 1). `jetzt` (ms) und `heute` (Trainingsort) gibt
--- die Datenebene mit, damit die Seite ohne eigene Uhr rechnet; `erstellt`
+-- die Datenebene mit, damit die Seite ohne eigene Uhr rechnet (`jetzt` wie
+-- `erstellt_am` von der laufenden Uhr, nicht vom Beginn der Transaktion); `erstellt`
 -- in ms, `erstellt_tag` als Tag am Trainingsort. Ungültig, erneuert oder
 -- entfernt sind wie in spieler_link_ansicht nicht zu unterscheiden.
 create function spieler_link_benachrichtigungen(p_token text) returns jsonb
@@ -274,7 +279,7 @@ begin
   if not found then return jsonb_build_object('gueltig', false); end if;
   return jsonb_build_object(
     'gueltig', true,
-    'jetzt', (extract(epoch from now()) * 1000)::bigint,
+    'jetzt', (extract(epoch from clock_timestamp()) * 1000)::bigint,
     'heute', to_char(heute_am_trainingsort(), 'YYYY-MM-DD'),
     'eintraege', coalesce((
       select jsonb_agg(jsonb_build_object(
