@@ -5,7 +5,8 @@ import { Button, Dialog, SectionMessage, TextArea } from "@/components/ui";
 import { BEMERKUNG_MAX, TERMIN_TEXT, ausfallProblem } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { TerminZeile } from "@/lib/queries/termine";
-import { BenachrichtigenFeld } from "./BenachrichtigenFeld";
+import { benachrichtigungZaehlt } from "@/lib/benachrichtigung";
+import { useBenachrichtigen } from "./BenachrichtigenFeld";
 
 /* Einen Termin ausfallen lassen oder den Grund eines ausgefallenen ändern
    (Team-Kalender #327 AK 1–3). Ein zugeordnetes Training bleibt am Termin
@@ -34,16 +35,18 @@ export function AusfallDialog({
 }) {
   const [grund, setGrund] = useState("");
   const [eigenerFehler, setEigenerFehler] = useState<string>();
-  const [benachrichtigen, setBenachrichtigen] = useState(true);
   useEffect(() => {
     setGrund(termin?.ausfallGrund ?? "");
     setEigenerFehler(undefined);
-    setBenachrichtigen(true);
   }, [termin]);
 
   const istAusfall = termin?.ausgefallen ?? false;
   // Nur beim Ausfallen lassen eines Termins von heute oder später (#643 AK 1).
-  const mitFeld = termin !== null && !istAusfall && termin.datum >= heute;
+  const benachrichtigen = useBenachrichtigen("ausfall", {
+    offen: termin,
+    sichtbar: termin !== null && !istAusfall && benachrichtigungZaehlt(termin.datum, heute),
+    pending,
+  });
 
   return (
     <Dialog
@@ -59,7 +62,7 @@ export function AusfallDialog({
             onClick={() => {
               const p = ausfallProblem(grund);
               setEigenerFehler(p?.text);
-              if (!p) onSpeichern(grund, mitFeld && benachrichtigen);
+              if (!p) onSpeichern(grund, benachrichtigen.wert);
             }}
           >
             {istAusfall ? "Speichern" : "Ausfallen lassen"}
@@ -83,11 +86,7 @@ export function AusfallDialog({
         error={!!eigenerFehler}
         supportingText={eigenerFehler}
       />
-      {mitFeld && (
-        <div className="mt-4 border-t border-linie pt-4">
-          <BenachrichtigenFeld vorgang="ausfall" className="px-3.5" checked={benachrichtigen} onChange={setBenachrichtigen} disabled={pending} />
-        </div>
-      )}
+      {benachrichtigen.feld}
     </Dialog>
   );
 }

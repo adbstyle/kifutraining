@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { TriangleAlert } from "lucide-react";
 import { Button, Dialog } from "@/components/ui";
 import { verfallDialogText } from "@/lib/spieler";
@@ -8,7 +7,7 @@ import { kaderVerfallText } from "@/lib/kader";
 import { TERMIN_TEXT, trainingOhneTermin } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { SerienFolge } from "@/lib/kern/serien";
-import { BenachrichtigenFeld } from "./BenachrichtigenFeld";
+import { useBenachrichtigen } from "./BenachrichtigenFeld";
 
 /* Fallen Termine weg, muss das bestätigt werden (#326 AK 8). Genannt werden
    nur die wegfallenden Termine MIT Training (OoS 2), je mit dem, was ihrem
@@ -45,11 +44,11 @@ export function EntfallendBestaetigung({
   /** Der Entscheid; beim Ändern und ohne Feld immer `false`. */
   onBestaetigen: (benachrichtigen: boolean) => void;
 }) {
-  const [benachrichtigen, setBenachrichtigen] = useState(true);
-  useEffect(() => {
-    setBenachrichtigen(true);
-  }, [folge]);
-  const mitteilbar = aktion === "entfernen" && (folge?.mitteilbar ?? 0) > 0;
+  const benachrichtigen = useBenachrichtigen("entfernen", {
+    offen: folge,
+    sichtbar: aktion === "entfernen" && (folge?.mitteilbar ?? 0) > 0,
+    pending,
+  });
   const wegfall = aktion === "entfernen" || (folge?.entfallendAnzahl ?? 0) > 0;
   const nachtraege = folge?.nachtraegeVerfallend ?? 0;
   const absagen = folge?.absagenVerfallend ?? 0;
@@ -79,7 +78,7 @@ export function EntfallendBestaetigung({
       actions={
         <>
           <Button variant="outlined" onClick={onClose}>Abbrechen</Button>
-          <Button variant="danger" disabled={pending} onClick={() => onBestaetigen(mitteilbar && benachrichtigen)}>
+          <Button variant="danger" disabled={pending} onClick={() => onBestaetigen(benachrichtigen.wert)}>
             {aktion === "entfernen" ? "Entfernen" : "Ändern"}
           </Button>
         </>
@@ -129,11 +128,7 @@ export function EntfallendBestaetigung({
           </ul>
         </>
       )}
-      {mitteilbar && (
-        <div className="mt-4 border-t border-linie pt-4">
-          <BenachrichtigenFeld vorgang="wegfall" className="px-3.5" checked={benachrichtigen} onChange={setBenachrichtigen} disabled={pending} />
-        </div>
-      )}
+      {benachrichtigen.feld}
     </Dialog>
   );
 }

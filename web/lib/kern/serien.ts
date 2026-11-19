@@ -45,6 +45,7 @@ import {
 import { NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
 import { KADER_MELDUNG, kaderVerfallBestaetigen } from "@/lib/kader";
 import { mitVerfall, setzeTerminKader, type VerfallBestaetigt } from "@/lib/kern/kader";
+import { holeVerlegungNach, NICHT_BENACHRICHTIGT, type AusstehendeVerlegung, type Benachrichtigt } from "@/lib/kern/benachrichtigungen";
 
 /**
  * Terminserien (#324, #326): festlegen, mit Reichweite ändern und entfernen,
@@ -212,12 +213,12 @@ export type SerienFolge = {
   /** Nur in der Vorschau einer Änderung oder des Entfernens: wie viele
    *  Spieler:innen eine Benachrichtigung erhielten (#644 AK 2, #645 AK 1) —
    *  verlegte und entfallende Termine zusammen, jede Spieler:in einmal. Die
-   *  Oberfläche zeigt das Häkchen nur, wenn es mehr als 0 sind. Sonst `null`. */
-  mitteilbar: number | null;
+   *  Oberfläche zeigt das Häkchen nur, wenn es mehr als 0 sind. */
+  mitteilbar?: number;
   /** Nach dem Ausführen: wie viele Spieler:innen eine Benachrichtigung
-   *  erhielten (#644 PC 2, #645 PC 2); `null`, wenn nicht benachrichtigt
-   *  werden sollte. */
-  benachrichtigt: number | null;
+   *  erhielten (#644 PC 2, #645 PC 2); fehlt, wenn nicht benachrichtigt
+   *  werden sollte. Die Datenebene legt in derselben Transaktion ab. */
+  benachrichtigt?: number;
 };
 
 type Roh = {
@@ -258,8 +259,8 @@ function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): Se
     anmeldungenVerfallend: r.anmeldungen_verfallend ?? 0,
     treffpunktEntfallend: (r.treffpunkt_entfallend ?? []).map((x) => ({ terminId: x.id, datum: x.datum })),
     teamId,
-    mitteilbar: r.mitteilbar ?? null,
-    benachrichtigt: r.benachrichtigt ?? null,
+    mitteilbar: r.mitteilbar ?? undefined,
+    benachrichtigt: r.benachrichtigt ?? undefined,
   };
 }
 
@@ -576,9 +577,10 @@ export async function folgeDerSerie(
     verfallen: number;
     kartenlinkEntfallen: boolean;
     treffpunktEntfallen: boolean;
-    /** Wie viele Spieler:innen die Verlegung erfahren; `null`, wenn nicht
-     *  benachrichtigt werden sollte (#644 PC 1). */
-    benachrichtigt: number | null;
+    /** Wie viele Spieler:innen die Verlegung erfahren; fehlt, wenn nicht
+     *  benachrichtigt werden sollte (#644 PC 1). Die Datenebene legt in
+     *  derselben Transaktion ab. */
+    benachrichtigt?: number;
   }>
 > {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
@@ -643,7 +645,7 @@ export async function folgeDerSerie(
         kartenlinkEntfallen: r.wert.kartenlink_entfallen === true,
         // #561 PC 6: Ein eigener Treffpunkt fiel mit der Zeit der Serie weg.
         treffpunktEntfallen: r.wert.treffpunkt_entfallen === true,
-        benachrichtigt: r.wert.benachrichtigt ?? null,
+        benachrichtigt: r.wert.benachrichtigt ?? undefined,
       })
     : r;
 }
@@ -675,10 +677,7 @@ export async function aendereMitReichweite(
     kartenlinkEntfallen: boolean;
     /** Die Daten der Termine, deren Treffpunkt die Zeitänderung nahm (#561 PC 6). */
     treffpunktEntfallen: string[];
-    /** Wie viele Spieler:innen eine Benachrichtigung erhielten (#644 PC 1, 2);
-     *  `null`, wenn nicht benachrichtigt werden sollte. */
-    benachrichtigt: number | null;
-  }>
+  } & Benachrichtigt>
 > {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
@@ -721,26 +720,39 @@ export async function aendereMitReichweite(
     let verfallen = 0;
     let teamId = t.team_id;
     let kartenlinkEntfallen = false;
-    let benachrichtigt: number | null = null;
+    let b: Benachrichtigt = NICHT_BENACHRICHTIGT;
+    let ausstehend: AusstehendeVerlegung | null = null;
     const treffpunktEntfallen: string[] = [];
-    // Der Entscheid geht mit dem Schritt, der die Felder schreibt; die Kader
-    // danach benachrichtigen nie (Prinzip 1).
+    // Die Kader selbst benachrichtigen nie (Prinzip 1). Folgen sie auf eine
+    // Verlegung, kommt deren Benachrichtigung erst nach ihnen — für die neuen
+    // Kader (#644 PC 1); scheitert der Kader-Schritt, entsteht keine.
     if (!nurKader) {
       // #561 PC 6: Die KI fragt nach keinem entfallenden Treffpunkt; das Ergebnis nennt ihn.
-      const r = await aendereTermin(supabase, userId, { ...felder, treffpunktWeg: true });
+      const r = await aendereTermin(supabase, userId, { ...felder, treffpunktWeg: true, kaderFolgen: kaderIds !== undefined });
       if (!r.ok) return r;
       verfallen = r.wert.abmeldungenVerfallen;
       teamId = r.wert.teamId;
       kartenlinkEntfallen = r.wert.kartenlinkEntfallen;
-      benachrichtigt = r.wert.benachrichtigt;
+      b = r.wert;
+      ausstehend = r.wert.ausstehend;
       if (r.wert.treffpunktEntfallen) treffpunktEntfallen.push(felder.datum ?? t.datum);
     }
     if (kaderIds !== undefined) {
       const k = await setzeTerminKader(supabase, userId, { terminId: t.id, kaderIds, bestaetigt: e.bestaetigt === true ? true : undefined });
       if (!k.ok) return k;
       verfallen += k.wert.verfallen;
+      b = await holeVerlegungNach(supabase, ausstehend);
     }
-    return ok({ terminId: t.id, teamId, serie: null, abmeldungenVerfallen: verfallen, kartenlinkEntfallen, treffpunktEntfallen, benachrichtigt });
+    return ok({
+      terminId: t.id,
+      teamId,
+      serie: null,
+      abmeldungenVerfallen: verfallen,
+      kartenlinkEntfallen,
+      treffpunktEntfallen,
+      benachrichtigt: b.benachrichtigt,
+      benachrichtigungFehlt: b.benachrichtigungFehlt,
+    });
   }
   if (e.datum !== undefined) return fehlschlag("regel", SERIE_MELDUNG.DATUM_NUR_EINZELN, { feld: "datum" });
   const r = await aendereSerie(supabase, userId, {
@@ -774,6 +786,7 @@ export async function aendereMitReichweite(
         kartenlinkEntfallen: r.wert.kartenlinkEntfallen ?? false,
         treffpunktEntfallen: r.wert.treffpunktEntfallend.map((x) => x.datum),
         benachrichtigt: r.wert.benachrichtigt,
+        benachrichtigungFehlt: false,
       })
     : r;
 }
@@ -795,8 +808,8 @@ export async function entferneMitReichweite(
     training: Verlassen;
     serie: SerienFolge | null;
     /** Wie viele Spieler:innen eine Benachrichtigung erhielten (#645 PC 1,
-     *  2); `null`, wenn nicht benachrichtigt werden sollte. */
-    benachrichtigt: number | null;
+     *  2); fehlt, wenn nicht benachrichtigt werden sollte. */
+    benachrichtigt?: number;
   }>
 > {
   const geladen = await ladeTermin(supabase, e.terminId);

@@ -446,13 +446,13 @@ do $$
 declare
   v jsonb := benachrichtigung_stand(array[pg_temp.id('e1')]);
 begin
-  perform pg_temp.pruefe(v -> pg_temp.id('e1')::text ->> 'datum' = to_char(heute_am_trainingsort() + 2, 'YYYY-MM-DD')
+  perform pg_temp.pruefe(v -> pg_temp.id('e1')::text -> 'inhalt' ->> 'datum' = to_char(heute_am_trainingsort() + 2, 'YYYY-MM-DD')
                          and jsonb_array_length(v -> pg_temp.id('e1')::text -> 'empfaenger') = 2, '#644 Stand: ' || v::text);
   update training_termine set ort_link = 'https://maps.app.goo.gl/abc' where id = pg_temp.id('e1');
-  perform pg_temp.pruefe(benachrichtigung_vergleich(v, 'einzeln', true) = 0, '#644 Kartenlink allein');
+  perform pg_temp.pruefe(benachrichtigung_einzeln(v) = 0, '#644 Kartenlink allein');
   update training_termine set ort = 'Halle' where id = pg_temp.id('e1');
-  perform pg_temp.pruefe(benachrichtigung_vergleich(v, 'einzeln', false) = 2, '#644 Ort zählt');
-  perform pg_temp.pruefe((select count(*) from pg_temp.moewen('verlegung')) = 2, '#644 Zählen legt ab');
+  perform pg_temp.pruefe(benachrichtigung_einzeln(v) = 2, '#644 Ort zählt');
+  perform pg_temp.pruefe((select count(*) from pg_temp.moewen('verlegung')) = 4, '#644 Ort legt ab');
 end $$;
 
 -- Serie ändern: Vorschau schreibt nichts und nennt `mitteilbar` (AK 2).
@@ -733,8 +733,8 @@ begin
   foreach r in array array['anon', 'authenticated'] loop
     perform pg_temp.pruefe(not has_function_privilege(r, f, 'execute'), r || ' darf ' || f)
        from unnest(array['benachrichtigung_stand(uuid[])', 'benachrichtigung_serie_angaben(uuid)',
-                         'benachrichtigung_verlegt(jsonb)',
-                         'benachrichtigung_vergleich(jsonb, text, boolean, jsonb, uuid)',
+                         'benachrichtigung_verlegt(jsonb)', 'benachrichtigung_einzeln(jsonb)',
+                         'benachrichtigung_serie(jsonb, boolean, jsonb, uuid)',
                          'benachrichtigung_weggefallen(jsonb)', 'benachrichtigung_serie_zeilen(jsonb, jsonb)']) f;
   end loop;
   perform pg_temp.pruefe(not has_function_privilege('anon', 'terminserie_aendern(uuid, text, jsonb, integer, uuid[], boolean, integer, boolean)', 'execute')

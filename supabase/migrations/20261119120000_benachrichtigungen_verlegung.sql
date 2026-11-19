@@ -20,11 +20,12 @@
 --   `wieder` (AK 3) sagt der Kern: Der Termin war vorher ausgefallen.
 -- - Der Serie folgen (`termin_der_serie_folgen`) und die Serie ändern
 --   (`terminserie_aendern`): Die Hülle hält vor der Rechnung den Stand fest
---   (`benachrichtigung_stand`) und vergleicht danach
---   (`benachrichtigung_vergleich`). Einzeln entsteht eine `verlegung`, über
---   die Serie EINE Zeile `serie` je Spieler:in (Prinzip 5, PO 11) mit dem
---   ersten verlegten Termin dieser Spieler:in (`ab`, `termin_id`) und den
---   geänderten Angaben der Serie in ihrer neuen Fassung (`angaben`, AK 4).
+--   (`benachrichtigung_stand`) und vergleicht danach. Einzeln
+--   (`benachrichtigung_einzeln`) entsteht eine `verlegung`, über die Serie
+--   (`benachrichtigung_serie`) EINE Zeile `serie` je Spieler:in (Prinzip 5,
+--   PO 11) mit dem ersten verlegten Termin dieser Spieler:in (`ab`,
+--   `termin_id`) und den geänderten Angaben der Serie in ihrer neuen Fassung
+--   (`angaben`, AK 4).
 --
 -- Beide Hüllen bekommen `p_benachrichtigen boolean default false` als letzten
 -- Parameter (DB-Standard false, damit ein altes Bundle beim Deploy niemanden
@@ -41,12 +42,12 @@
 -- ohnehin sperrt (mit `kader` davor die Teamsperre, wie bisher).
 -- `terminserie_rechnen` bleibt unberührt.
 --
--- #645 (Wegfall) ergänzt `benachrichtigung_vergleich` per `create or replace`
--- um weggefallene Termine (vorher da, nachher nicht; Empfänger aus dem
--- Vorher-Stand) — die Stelle ist im Rumpf markiert.
+-- #645 (Wegfall) ersetzt `benachrichtigung_einzeln` und
+-- `benachrichtigung_serie_zeilen` per `create or replace` um weggefallene
+-- Termine (vorher da, nachher nicht; Empfänger aus dem Vorher-Stand).
 --
 -- Forward-only: `create or replace` von `termin_benachrichtigen` (gleiche
--- Signatur), zwei neue interne Bausteine, zwei Hüllen mit neuer Signatur
+-- Signatur), neue interne Bausteine, zwei Hüllen mit neuer Signatur
 -- (drop + create, Rechte neu).
 -- ============================================================================
 set lock_timeout = '5s';
@@ -92,20 +93,18 @@ grant execute on function termin_benachrichtigen(uuid, text, boolean) to authent
 
 -- ── Stand und Vergleich (ohne API-Recht) ────────────────────────────────────
 
--- Der Stand von Terminen vor einer Änderung: je Termin-ID die Angaben, die
--- eine Verlegung ausmachen (Prinzip 1; der Kartenlink nicht, OoS 1), ob er
--- ausgefallen ist, und die Spieler:innen, für die er jetzt gilt — nur, wenn
--- er zählt und nicht ausgefallen ist (Prinzipien 2, 3; für den Wegfall,
--- #645). Form: {"<id>": {datum, beginn, ende, ort, ausgefallen, empfaenger:[…]}}.
+-- Der Stand von Terminen vor einer Änderung: je Termin-ID die Momentaufnahme
+-- (`inhalt`, Prinzip 6 — der Vergleich liest daraus Datum, Beginn, Ende und
+-- Ort; #645 legt sie beim Wegfall ab), ob er ausgefallen ist, und die
+-- Spieler:innen, für die er jetzt gilt — nur, wenn er zählt und nicht
+-- ausgefallen ist (Prinzipien 2, 3; für den Wegfall, #645; danach lässt es
+-- sich nicht mehr erfragen). Form: {"<id>": {inhalt, ausgefallen, empfaenger:[…]}}.
 create function benachrichtigung_stand(p_ids uuid[]) returns jsonb
 language sql stable
 set search_path = public, pg_temp
 as $$
   select coalesce(jsonb_object_agg(t.id, jsonb_build_object(
-           'datum', to_char(t.datum, 'YYYY-MM-DD'),
-           'beginn', to_char(t.beginn, 'HH24:MI'),
-           'ende', to_char(t.ende, 'HH24:MI'),
-           'ort', t.ort,
+           'inhalt', benachrichtigung_inhalt(t),
            'ausgefallen', t.ausgefallen,
            'empfaenger', case when benachrichtigung_zaehlt(t.datum) and not t.ausgefallen
                               then to_jsonb(array(select benachrichtigung_empfaenger(t.id)))
@@ -136,35 +135,72 @@ revoke all on function benachrichtigung_serie_angaben(uuid) from public, anon, a
 -- vorher und jetzt da, Datum, Beginn, Ende oder Ort anders (der Kartenlink
 -- zählt nicht, OoS 1), jetzt heute oder später und nicht ausgefallen. Neu
 -- angelegte Termine stehen nicht im Stand und zählen darum nicht (OoS 4).
--- Zwilling: istVerlegung in web/lib/benachrichtigung.ts.
+-- Verglichen wird mit den Werten der Momentaufnahme (Zeiten minutengenau
+-- wie alle Eingaben). Zwilling: istVerlegung in web/lib/benachrichtigung.ts.
 create function benachrichtigung_verlegt(p_vorher jsonb) returns setof training_termine
 language sql stable
 set search_path = public, pg_temp
 as $$
   select tt.* from training_termine tt
-   where p_vorher ? tt.id::text
-     and (to_char(tt.datum, 'YYYY-MM-DD'), to_char(tt.beginn, 'HH24:MI'), to_char(tt.ende, 'HH24:MI'), tt.ort)
-         is distinct from (p_vorher -> tt.id::text ->> 'datum', p_vorher -> tt.id::text ->> 'beginn',
-                           p_vorher -> tt.id::text ->> 'ende', p_vorher -> tt.id::text ->> 'ort')
+    join jsonb_each(coalesce(p_vorher, '{}'::jsonb)) x(k, e) on tt.id = x.k::uuid
+   where (tt.datum, tt.beginn, tt.ende, tt.ort)
+         is distinct from ((x.e -> 'inhalt' ->> 'datum')::date, (x.e -> 'inhalt' ->> 'beginn')::time,
+                           (x.e -> 'inhalt' ->> 'ende')::time, x.e -> 'inhalt' ->> 'ort')
      and benachrichtigung_zaehlt(tt.datum)
      and not tt.ausgefallen
 $$;
 revoke all on function benachrichtigung_verlegt(jsonb) from public, anon, authenticated;
 
--- Vergleicht den Stand vor einer Änderung (`benachrichtigung_stand`) mit dem
--- jetzigen und legt die Benachrichtigungen ab (`p_ablegen`) oder zählt nur,
--- wie viele Spieler:innen eine erhielten (Vorschau). Liefert die Zahl der
--- Spieler:innen. Empfänger eines verlegten Termins: für wen er jetzt gilt.
--- - `einzeln` (der Serie folgen): je verlegtem Termin eine `verlegung` mit
---   dem neuen Stand; `wieder`, wenn er vorher ausgefallen war (AK 3).
--- - `serie` (die Serie ändern): je Spieler:in EINE Zeile `serie` (PC 2,
---   Prinzip 5) mit `ab` und `termin_id` = ihr erster verlegter Termin und
---   den geänderten Angaben der Serie (`p_serie_vorher` gegen die Serie
---   `p_serie` danach) — nur die Schlüssel, die sich änderten; keiner → null.
---   Zwilling: BenachrichtigungSerie in web/lib/benachrichtigung.ts.
-create function benachrichtigung_vergleich(
+-- Ein einzelner Termin (der Serie folgen): je verlegtem Termin aus dem Stand
+-- eine `verlegung` mit dem neuen Stand an die Spieler:innen, für die er
+-- jetzt gilt; `wieder`, wenn er vorher ausgefallen war (AK 3). Liefert die
+-- Zahl der Benachrichtigungen. #645 ergänzt den Wegfall.
+create function benachrichtigung_einzeln(p_vorher jsonb) returns integer
+language plpgsql
+set search_path = public, pg_temp
+as $$
+declare
+  t training_termine;
+  v_n integer := 0;
+begin
+  for t in select * from benachrichtigung_verlegt(p_vorher) loop
+    v_n := v_n + benachrichtigung_ablegen(gen_random_uuid(), 'verlegung', t.id,
+                   benachrichtigung_inhalt(t, (p_vorher -> t.id::text ->> 'ausgefallen')::boolean),
+                   array(select benachrichtigung_empfaenger(t.id)));
+  end loop;
+  return v_n;
+end;
+$$;
+revoke all on function benachrichtigung_einzeln(jsonb) from public, anon, authenticated;
+
+-- Die Zeilen einer Serienbenachrichtigung: je Spieler:in EINE (Prinzip 5,
+-- PC 2) mit `ab` und `termin_id` = ihr erster verlegter Termin (Empfänger
+-- nachher) und den geänderten Angaben der Serie (`p_angaben`). #645 ergänzt
+-- den Wegfall. Zwilling: BenachrichtigungSerie in web/lib/benachrichtigung.ts.
+create function benachrichtigung_serie_zeilen(p_vorher jsonb, p_angaben jsonb)
+returns table (spieler_id uuid, termin_id uuid, inhalt jsonb)
+language sql stable
+set search_path = public, pg_temp
+as $$
+  with erster as (
+    select distinct on (e.spieler_id) e.spieler_id, v.id as termin_id, v.team_id, v.datum
+      from benachrichtigung_verlegt(p_vorher) v
+      cross join lateral benachrichtigung_empfaenger(v.id) e(spieler_id)
+     order by e.spieler_id, v.datum, v.beginn nulls last, v.id)
+  select x.spieler_id, x.termin_id,
+         jsonb_build_object('team', (select name from teams where id = x.team_id), 'art', 'training',
+                            'ab', x.datum, 'angaben', p_angaben, 'wegfall', null)
+    from erster x
+$$;
+revoke all on function benachrichtigung_serie_zeilen(jsonb, jsonb) from public, anon, authenticated;
+
+-- Eine Serienänderung (PC 2): vergleicht den Stand vor der Änderung mit dem
+-- jetzigen und legt je Spieler:in EINE Zeile `serie` ab (`p_ablegen`) oder
+-- zählt nur, wie viele Spieler:innen eine erhielten (Vorschau). Die Angaben
+-- nennen nur, was sich an der Serie änderte (`p_serie_vorher` gegen die
+-- Serie `p_serie` danach); keine → null, ebenso ohne Serie danach.
+create function benachrichtigung_serie(
   p_vorher jsonb,
-  p_modus text,
   p_ablegen boolean,
   p_serie_vorher jsonb default null,
   p_serie uuid default null)
@@ -173,55 +209,30 @@ language plpgsql
 set search_path = public, pg_temp
 as $$
 declare
-  t training_termine;
-  v_n integer := 0;
   v_nachher jsonb;
   v_angaben jsonb;
+  v_n integer;
   v_vorgang uuid := gen_random_uuid();
 begin
-  if p_modus is null or p_modus not in ('einzeln', 'serie') then raise exception 'MODUS_UNGUELTIG'; end if;
-  if p_modus = 'einzeln' then
-    for t in select * from benachrichtigung_verlegt(p_vorher) loop
-      v_n := v_n + case when p_ablegen
-        then benachrichtigung_ablegen(gen_random_uuid(), 'verlegung', t.id,
-               benachrichtigung_inhalt(t, coalesce((p_vorher -> t.id::text ->> 'ausgefallen')::boolean, false)),
-               array(select benachrichtigung_empfaenger(t.id)))
-        else (select count(*)::int from benachrichtigung_empfaenger(t.id)) end;
-    end loop;
-    return v_n;
-  end if;
-
-  -- #645 ergänzt hier den Wegfall: Termine aus `p_vorher`, die es nicht mehr
-  -- gibt, vorher gezählt und nicht ausgefallen (Empfänger dort aus
-  -- `empfaenger`); dieselbe Zeile je Spieler:in trägt dann `wegfall`.
   if not p_ablegen then
-    return (select count(distinct e.spieler_id)::int
-              from benachrichtigung_verlegt(p_vorher) v
-              cross join lateral benachrichtigung_empfaenger(v.id) e(spieler_id));
+    return (select count(*)::int from benachrichtigung_serie_zeilen(p_vorher, null));
   end if;
   v_nachher := benachrichtigung_serie_angaben(p_serie);
   select jsonb_object_agg(k, v_nachher -> k) into v_angaben
     from jsonb_object_keys(coalesce(v_nachher, '{}'::jsonb)) k
    where (v_nachher -> k) is distinct from (p_serie_vorher -> k);
-  with erster as (
-    select distinct on (e.spieler_id) e.spieler_id, v.id as termin_id, v.team_id, v.datum
-      from benachrichtigung_verlegt(p_vorher) v
-      cross join lateral benachrichtigung_empfaenger(v.id) e(spieler_id)
-     order by e.spieler_id, v.datum, v.beginn nulls last, v.id),
-  neu as (
+  with neu as (
     -- Prinzip 5: ein Vorgang, eine Zeile je Spieler:in (unique (vorgang, spieler_id)).
     insert into spieler_benachrichtigungen (spieler_id, vorgang, ereignis, termin_id, inhalt)
-    select x.spieler_id, v_vorgang, 'serie', x.termin_id,
-           jsonb_build_object('team', (select name from teams where id = x.team_id), 'art', 'training',
-                              'ab', to_char(x.datum, 'YYYY-MM-DD'), 'angaben', v_angaben, 'wegfall', null)
-      from erster x
+    select z.spieler_id, v_vorgang, 'serie', z.termin_id, z.inhalt
+      from benachrichtigung_serie_zeilen(p_vorher, v_angaben) z
     on conflict do nothing
     returning 1)
   select count(*)::int into v_n from neu;
   return v_n;
 end;
 $$;
-revoke all on function benachrichtigung_vergleich(jsonb, text, boolean, jsonb, uuid) from public, anon, authenticated;
+revoke all on function benachrichtigung_serie(jsonb, boolean, jsonb, uuid) from public, anon, authenticated;
 
 -- ── Der Serie folgen (AK 1) ─────────────────────────────────────────────────
 
@@ -325,7 +336,7 @@ begin
   return jsonb_build_object('team', t.team_id, 'training', t.training_id, 'verfallen', v_verfallen,
     'kartenlink_entfallen', 'ort' = any(p_angaben) and t.ort_link is not null and t.ort_link is distinct from s.ort_link,
     'treffpunkt_entfallen', not ('treffpunkt' = any(p_angaben)) and not treffpunkt_passt(t.treffpunkt_vorlauf_min, v_beginn),
-    'benachrichtigt', case when p_benachrichtigen then benachrichtigung_vergleich(v_stand, 'einzeln', true) end);
+    'benachrichtigt', case when p_benachrichtigen then benachrichtigung_einzeln(v_stand) end);
 end;
 $$;
 revoke all on function termin_der_serie_folgen(uuid, text[], integer, boolean) from public, anon;
@@ -402,7 +413,7 @@ begin
                                    'anmeldungen_verfallend', v_verlegt_an + v_kader[2],
                                    'nachtraege_verfallend', v_nachtraege, 'absagen_verfallend', v_absagen,
                                    'benachrichtigt', case when p_benachrichtigen then
-                                     benachrichtigung_vergleich(v_stand, 'serie', true, v_serie_vorher, (v ->> 'serie')::uuid) end);
+                                     benachrichtigung_serie(v_stand, true, v_serie_vorher, (v ->> 'serie')::uuid) end);
   end if;
   begin
     v := terminserie_rechnen(p_termin, p_reichweite, p_aenderung, p_version, null);
@@ -416,8 +427,7 @@ begin
                                  'nachtraege_verfallend', serie_nachtraege_verfallen(v_vorher),
                                  'absagen_verfallend', serie_absagen_verfallen(v_absagen_vorher),
                                  -- #644: wie viele Spieler:innen eine Benachrichtigung erhielten.
-                                 'mitteilbar', benachrichtigung_vergleich(v_stand, 'serie', false, v_serie_vorher,
-                                                                           (v ->> 'serie')::uuid));
+                                 'mitteilbar', benachrichtigung_serie(v_stand, false));
     raise exception 'VORSCHAU_ZURUECK';
   exception when raise_exception then
     if sqlerrm = 'VORSCHAU_ZURUECK' then return v; end if;

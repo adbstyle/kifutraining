@@ -1432,18 +1432,18 @@ try {
     // KI-Weg ohne erwartetes Training: geprüft wird gegen den gelesenen Stand.
     assert.deepEqual(
       wert(await aendereTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t1.terminId, ort: "KI-Ort" })),
-      { terminId: t1.terminId, teamId: team, trainingId: c2, abmeldungenVerfallen: 0, kartenlinkEntfallen: false, treffpunktEntfallen: false, benachrichtigt: null },
+      { terminId: t1.terminId, teamId: team, trainingId: c2, abmeldungenVerfallen: 0, kartenlinkEntfallen: false, treffpunktEntfallen: false, ausstehend: null, benachrichtigungFehlt: false },
     );
     assert.equal((await zeile(t1.terminId))!.ort, "KI-Ort");
     const t3 = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tag(9), beginn: "18:00", ende: "19:00" }));
     const tt3 = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Drei", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
     const c3 = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t3.terminId, trainingId: tt3.id })).trainingId;
     // Entfernen nimmt das Termin-Training mit; die Quelle bleibt im Bestand.
-    assert.deepEqual(wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t3.terminId })), { teamId: team, training: { trainingId: c3, geloescht: true }, benachrichtigt: null });
+    assert.deepEqual(wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t3.terminId })), { teamId: team, training: { trainingId: c3, geloescht: true }, benachrichtigt: undefined });
     assert.equal(await zeile(t3.terminId), null);
     assert.equal(await ladeTrainingDetail(a.supabase, c3), null, "das Termin-Training ist weg");
     assert.ok(await ladeTrainingDetail(a.supabase, tt3.id), "die Quelle bleibt im Team-Bestand");
-    assert.deepEqual(wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t1.terminId, erwartetesTraining: c2 })), { teamId: team, training: { trainingId: c2, geloescht: true }, benachrichtigt: null });
+    assert.deepEqual(wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t1.terminId, erwartetesTraining: c2 })), { teamId: team, training: { trainingId: c2, geloescht: true }, benachrichtigt: undefined });
     assert.ok(await ladeTrainingDetail(a.supabase, tt2.id), "die Quelle bleibt im Team-Bestand");
     fehler(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t1.terminId }), "nicht_gefunden", "Termin nicht gefunden.");
     fehler(await aendereTermin(b.supabase, b.id, { benachrichtigen: false, terminId: t0.terminId, ort: "x" }), "nicht_gefunden", "Termin nicht gefunden.");
@@ -8334,9 +8334,9 @@ try {
     assert.deepEqual(z[0].inhalt, { team: name, art: "spiel", bezeichnung: "Cup", datum: tagCh(3), beginn: "10:00", ende: "12:00", ort: "Allmend" });
     // Ohne: keine; ein Training nie, auch mit `true`.
     const ohne = wert(await spiel(false, 4));
-    assert.deepEqual([ohne.benachrichtigt, (await zeilen(ohne.terminId)).length], [null, 0]);
+    assert.deepEqual([ohne.benachrichtigt, (await zeilen(ohne.terminId)).length], [undefined, 0]);
     const training = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: true, art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:00" }));
-    assert.deepEqual([training.benachrichtigt, (await zeilen(training.terminId)).length], [null, 0]);
+    assert.deepEqual([training.benachrichtigt, (await zeilen(training.terminId)).length], [undefined, 0]);
 
     // KI (AK 6): ohne Angabe benachrichtigt, mit false still.
     const kiMit = kiWert(await ki(a, "termin_festlegen", { team_id: team, art: "spiel", bezeichnung: "KI-Cup", datum: tagCh(6), beginn: "10:00", ende: "11:00" }));
@@ -8384,8 +8384,8 @@ try {
     assert.ok(z.every((x) => x.ereignis === "ausfall"));
     assert.deepEqual(z[0].inhalt, { team: name, art: "training", bezeichnung: null, datum: tagCh(3), beginn: "18:00", ende: "19:30", ort: "Halle", grund: "Halle besetzt" });
     // Grund ändern am ausgefallenen Termin, auch mit true: still (OoS 1) — über die Oberfläche und ohne Erwartung.
-    assert.equal(wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Neu", erwartetAusgefallen: true, benachrichtigen: true })).benachrichtigt, null);
-    assert.equal(wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Nochmal", benachrichtigen: true })).benachrichtigt, null);
+    assert.equal(wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Neu", erwartetAusgefallen: true, benachrichtigen: true })).benachrichtigt, undefined);
+    assert.equal(wert(await lasseAusfallen(a.supabase, a.id, { terminId: t, grund: "Nochmal", benachrichtigen: true })).benachrichtigt, undefined);
     assert.equal((await zeilen(t)).length, 2);
     // Die erhaltene Benachrichtigung bleibt, wie sie war (OoS 3).
     assert.equal((await zeilen(t))[0].inhalt.grund, "Halle besetzt");
@@ -8398,8 +8398,8 @@ try {
 
     // Ohne Entscheid für die Benachrichtigung: keine Zeile.
     const still = await training(4);
-    assert.equal(wert(await lasseAusfallen(a.supabase, a.id, { terminId: still, grund: null, benachrichtigen: false })).benachrichtigt, null);
-    assert.equal(wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: still, benachrichtigen: false })).benachrichtigt, null);
+    assert.equal(wert(await lasseAusfallen(a.supabase, a.id, { terminId: still, grund: null, benachrichtigen: false })).benachrichtigt, undefined);
+    assert.equal(wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: still, benachrichtigen: false })).benachrichtigt, undefined);
     assert.equal((await zeilen(still)).length, 0);
 
     // Vergangener Termin (AK 1): auch mit true nichts.
@@ -8441,8 +8441,8 @@ try {
     // Nur das Ende: auch eine Verlegung.
     assert.equal(wert(await aendereTermin(a.supabase, a.id, { benachrichtigen: true, terminId: t, beginn: "18:00", ende: "20:00" })).benachrichtigt, 2);
     // Nur der Kartenlink (OoS 1) und ohne Entscheid: keine Zeile.
-    assert.equal(wert(await aendereTermin(a.supabase, a.id, { benachrichtigen: true, terminId: t, ortLink: L })).benachrichtigt, null);
-    assert.equal(wert(await aendereTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t, ort: "Wiese", ortLink: L })).benachrichtigt, null);
+    assert.equal(wert(await aendereTermin(a.supabase, a.id, { benachrichtigen: true, terminId: t, ortLink: L })).benachrichtigt, undefined);
+    assert.equal(wert(await aendereTermin(a.supabase, a.id, { benachrichtigen: false, terminId: t, ort: "Wiese", ortLink: L })).benachrichtigt, undefined);
     assert.equal((await zeilen(t)).length, 4);
 
     // Ausgefallenes Training: nur die Zeit bleibt still (bleibt ausgefallen), auf morgen findet es wieder statt (AK 3).
@@ -8467,18 +8467,18 @@ try {
     }));
     const [erster, zweiter] = await termineDer(s.serieId);
     const v = wert(await aendereSerie(a.supabase, a.id, { benachrichtigen: true, terminId: erster.id, reichweite: "alle", aenderung: { ort: "Wyler" }, vorschau: true }));
-    assert.deepEqual([v.mitteilbar, v.benachrichtigt, (await serienZeilen()).length], [2, null, 0]);
+    assert.deepEqual([v.mitteilbar, v.benachrichtigt, (await serienZeilen()).length], [2, undefined, 0]);
     const f = wert(await aendereSerie(a.supabase, a.id, {
       benachrichtigen: true, terminId: erster.id, reichweite: "alle", aenderung: { ort: "Wyler" }, erwartet: { version: v.versionVorher, entfallend: [] },
     }));
-    assert.deepEqual([f.benachrichtigt, f.mitteilbar], [2, null]);
+    assert.deepEqual([f.benachrichtigt, f.mitteilbar], [2, undefined]);
     const sz = await serienZeilen();
     assert.deepEqual(sz.map((x) => x.spieler_id).sort(), [lea, max].sort());
     assert.ok(sz.every((x) => x.termin_id === erster.id));
     assert.deepEqual(sz[0].inhalt, { team: name, art: "training", ab: tagCh(1), angaben: { ort: "Wyler" }, wegfall: null });
     // Ohne Entscheid: geändert, nichts abgelegt.
     const still = wert(await aendereSerie(a.supabase, a.id, { benachrichtigen: false, terminId: erster.id, reichweite: "alle", aenderung: { ort: "Schachen" }, bestaetigt: true }));
-    assert.deepEqual([still.benachrichtigt, (await serienZeilen()).length], [null, 2]);
+    assert.deepEqual([still.benachrichtigt, (await serienZeilen()).length], [undefined, 2]);
 
     // Der Serie folgen (AK 1): eigene Zeit zurück auf die der Serie.
     wert(await aendereTermin(a.supabase, a.id, { benachrichtigen: false, terminId: zweiter.id, beginn: "17:00", ende: "18:00", bestaetigt: true }));
@@ -8496,6 +8496,39 @@ try {
     wert(await aendereTermin(a.supabase, a.id, { benachrichtigen: false, terminId: zweiter.id, ort: "Eigen" }));
     assert.equal(kiWert(await ki(a, "termin_der_serie_folgen", { termin_id: zweiter.id, angaben: ["ort"] })).benachrichtigt, 2);
     assert.equal(kiWert(await ki(a, "termin_der_serie_folgen", { termin_id: zweiter.id, angaben: ["zeit"], benachrichtigen: false })).benachrichtigt, null);
+  });
+
+  await pruefe("Benachrichtigungen (#644 PC 1, Review-Befund 1): Verlegung und neue Kader in einem Zug benachrichtigen erst nach den Kadern, nur die neuen; scheitert der Kader-Schritt, keine", async () => {
+    const name = "Kern-DB-Glocke-Kader";
+    const { setzeTerminKader } = await import("../lib/kern/kader");
+    const { holeVerlegungNach } = await import("../lib/kern/benachrichtigungen");
+    const team = await serienTeam(name);
+    const lea = (await neuerSpieler(team, "Lea", "Kaderwechsel", 2016)).spielerId;
+    const max = (await neuerSpieler(team, "Max", "Kaderwechsel", 2016)).spielerId;
+    const kA = wert(await legeKaderAn(a.supabase, a.id, { teamId: team, name: "Kader A" })).kaderId;
+    const kB = wert(await legeKaderAn(a.supabase, a.id, { teamId: team, name: "Kader B" })).kaderId;
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [lea], dazu: [kA] }));
+    wert(await aendereZuteilung(a.supabase, a.id, { teamId: team, spielerIds: [max], dazu: [kB] }));
+    const empfaenger = async (terminId: string) =>
+      ((await admin.from("spieler_benachrichtigungen").select("spieler_id").eq("termin_id", terminId)).data ?? []).map((x) => x.spieler_id);
+    const training = async (tage: number) =>
+      wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(tage), beginn: "18:00", ende: "19:00", kaderIds: [kA] })).terminId;
+
+    // KI «nur dieser» bzw. einzeln: verlegt und von Kader A zu Kader B — nur Max erfährt es.
+    const t = await training(3);
+    assert.equal(kiWert(await ki(a, "termin_aendern", { termin_id: t, datum: tagCh(4), kader_ids: [kB] })).benachrichtigt, 1);
+    assert.deepEqual(await empfaenger(t), [max]);
+    // Scheitert der Kader-Schritt (unbekannter Kader), entsteht keine Benachrichtigung.
+    const t2 = await training(3);
+    kiMeldung(await ki(a, "termin_aendern", { termin_id: t2, datum: tagCh(5), kader_ids: [crypto.randomUUID()] }));
+    assert.deepEqual(await empfaenger(t2), []);
+    // Der Kern stellt zurück und liefert, was nachzuholen ist; nachgeholt gilt der Stand danach.
+    const t3 = await training(3);
+    const r = wert(await aendereTermin(a.supabase, a.id, { benachrichtigen: true, kaderFolgen: true, terminId: t3, datum: tagCh(6) }));
+    assert.deepEqual([r.ausstehend, r.benachrichtigt, await empfaenger(t3)], [{ terminId: t3, wieder: false }, undefined, []]);
+    wert(await setzeTerminKader(a.supabase, a.id, { terminId: t3, kaderIds: [kB] }));
+    assert.deepEqual(await holeVerlegungNach(a.supabase, r.ausstehend), { benachrichtigt: 1, benachrichtigungFehlt: false });
+    assert.deepEqual(await empfaenger(t3), [max]);
   });
 
   await pruefe("Benachrichtigungen (#645 AK 1–3; PC 1–3): Wegfall einzeln und über die Serie, Serie ändern mit Verlegung und Wegfall in einer Zeile; ausgefallen und vergangen still; KI standardmässig ja", async () => {
@@ -8524,7 +8557,7 @@ try {
     const vorbei = await training(-2);
     assert.equal(wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: true, terminId: vorbei })).benachrichtigt, 0);
     const still = await training(5);
-    assert.equal(wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: still })).benachrichtigt, null);
+    assert.equal(wert(await entferneTermin(a.supabase, a.id, { benachrichtigen: false, terminId: still })).benachrichtigt, undefined);
     assert.deepEqual([(await zeilen(aus)).length, (await zeilen(vorbei)).length, (await zeilen(still)).length], [0, 0, 0]);
 
     // Serie entfernen (AK 3; PC 2): Vorschau nennt `mitteilbar` und legt nichts ab; ausgeführt eine Zeile je Spieler:in.
@@ -8532,7 +8565,7 @@ try {
     const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [tag], von: tagCh(1), bis: tagCh(15), beginn: "18:00", ende: "19:00", ort: "Allmend" }));
     const [, zweiter] = await termineDer(s.serieId);
     const v = wert(await entferneSerie(a.supabase, a.id, { benachrichtigen: true, terminId: zweiter.id, reichweite: "dieser_und_folgende", vorschau: true }));
-    assert.deepEqual([v.mitteilbar, v.benachrichtigt, (await serienZeilen()).length], [2, null, 0]);
+    assert.deepEqual([v.mitteilbar, v.benachrichtigt, (await serienZeilen()).length], [2, undefined, 0]);
     const f = wert(await entferneSerie(a.supabase, a.id, {
       benachrichtigen: true, terminId: zweiter.id, reichweite: "dieser_und_folgende", erwartet: { version: v.versionVorher, entfallend: [] },
     }));
@@ -9320,7 +9353,7 @@ try {
       assert.equal(
         frage.meldung,
         `Den privaten Link von Lena Neunundachtzig erneuern? Der Link zeigt die Termine aller Teams von Lena: ${EA_589} und ${FA_589}. ` +
-          "Der neue gilt für alle diese Teams; der bisherige Link und das Kalender-Abo enden. " +
+          "Der neue gilt für alle diese Teams; der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden. " +
           "Abmeldungen bleiben bestehen. Keines dieser Teams hat die Selbstabholung eingeschaltet. Gib den neuen Link selbst weiter.",
       );
       assert.equal(frage.hinweis, "Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist. Bis dahin gilt der bisherige Link.");

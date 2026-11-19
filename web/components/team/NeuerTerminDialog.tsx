@@ -42,7 +42,7 @@ import { usePlatzAngaben } from "./usePlatzAngaben";
 import { terminBegonnen } from "@/lib/zeit";
 import type { Kader } from "@/lib/kader";
 import { KaderWahl } from "./KaderWahl";
-import { BenachrichtigenFeld } from "./BenachrichtigenFeld";
+import { useBenachrichtigen } from "./BenachrichtigenFeld";
 import { OrtFelder } from "./OrtFelder";
 import { TreffpunktFelder, treffpunktAusEingabe, type TrainingsTreffpunktEingabe } from "./TreffpunktFelder";
 
@@ -143,7 +143,7 @@ export function NeuerTerminDialog({
   // der USER um, ist er verworfen — bis zum nächsten Speichern.
   const [verworfen, setVerworfen] = useState<string | undefined>();
   // Die Spielervertretungen benachrichtigen (#642 AK 6): vorbelegt an, nur bei einem Spiel.
-  const [benachrichtigen, setBenachrichtigen] = useState(true);
+  const benachrichtigen = useBenachrichtigen("neues_spiel", { offen: open, sichtbar: art === "spiel", pending, imStapel: true });
   const fehlerAnzeigen = serverFehler && serverFehler !== verworfen ? serverFehler : undefined;
 
   // Beim Öffnen leeren — der Dialog überlebt sonst mit den Werten des letzten
@@ -164,7 +164,6 @@ export function NeuerTerminDialog({
     platz.zuruecksetzen();
     setTreffpunkt(null);
     setVerworfen(undefined);
-    setBenachrichtigen(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -274,7 +273,7 @@ export function NeuerTerminDialog({
       setProblem({ feld: "beginn", text: SPIEL_MELDUNG.SPIEL_ANPFIFF_VERGANGEN });
       return;
     }
-    senden({ art: "einzeln", felder: { ...felder, ...angaben }, trainer: besetzung, kaderIds: f.kaderIds, benachrichtigen });
+    senden({ art: "einzeln", felder: { ...felder, ...angaben }, trainer: besetzung, kaderIds: f.kaderIds, benachrichtigen: benachrichtigen.wert });
   }
 
   const istSpiel = art === "spiel";
@@ -431,11 +430,7 @@ export function NeuerTerminDialog({
             <FelderField {...platz.felderProps} disabled={pending} />
           </div>
         )}
-        {istSpiel && (
-          <div className="border-t border-linie pt-4">
-            <BenachrichtigenFeld vorgang="neues_spiel" className="px-3.5" checked={benachrichtigen} onChange={setBenachrichtigen} disabled={pending} />
-          </div>
-        )}
+        {benachrichtigen.feld}
       </div>
     </Dialog>
   );

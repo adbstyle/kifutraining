@@ -43,8 +43,15 @@
 -- `spieler_link_benachrichtigungen` (mit dem Link). Mitglieder sehen nicht,
 -- was abgelegt ist (OoS 5).
 --
--- Forward-only: eine neue Tabelle (noch nicht in PUBLIC_TABLES; Staging
--- leert sie nach dem Abgleich), neue Funktionen, ein Cron-Job.
+-- Bekannte Grenze: Ein Mitglied kann `termin_benachrichtigen` auch direkt und
+-- wiederholt aufrufen (etwa zweimal `ausfall`) und so doppelte
+-- Benachrichtigungen ablegen; nur `neues_spiel` ist dagegen geschützt. Das
+-- schliesst erst die spätere Härtung der Schreibwege in die Datenbank (der
+-- Vorgang benachrichtigt dann selbst, ohne eigenen Aufruf).
+--
+-- Forward-only: eine neue Tabelle (steht ab diesem Feature-PR in
+-- PUBLIC_TABLES von sync-staging.yml; Staging leert sie nach dem Abgleich),
+-- neue Funktionen, ein Cron-Job.
 -- ============================================================================
 set lock_timeout = '5s';
 

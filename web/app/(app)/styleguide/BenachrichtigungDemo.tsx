@@ -5,7 +5,7 @@ import { Bell } from "lucide-react";
 import { IconButton } from "@/components/ui";
 import { BenachrichtigungEintrag } from "@/components/privat/BenachrichtigungEintrag";
 import { BenachrichtigenFeld } from "@/components/team/BenachrichtigenFeld";
-import { knopfLabel, type BenachrichtigungEreignis, type BenachrichtigungSerie, type BenachrichtigungTermin, type LinkBenachrichtigung } from "@/lib/benachrichtigung";
+import { knopfLabel, type BenachrichtigenVorgang, type BenachrichtigungSerie, type BenachrichtigungTermin, type LinkBenachrichtigung } from "@/lib/benachrichtigung";
 
 /* Die Benachrichtigungen an ihren Anwendungsfällen (Epic #641): die Glocke mit
    Zähler im Kopf des privaten Links, ein Eintrag je Ereignis und das Häkchen
@@ -29,10 +29,10 @@ const BEISPIELE: { e: LinkBenachrichtigung; neu: boolean; amLink: boolean }[] = 
   { e: { id: "6", ereignis: "serie", termin_id: null, erstellt: 1, erstellt_tag: "2026-11-10", inhalt: SERIE }, neu: false, amLink: false },
 ];
 
-const VORGAENGE: BenachrichtigungEreignis[] = ["neues_spiel", "ausfall", "serie"];
+const VORGAENGE: BenachrichtigenVorgang[] = ["neues_spiel", "ausfall", "aendern"];
 
 export function BenachrichtigungDemo() {
-  const [an, setAn] = useState<Record<string, boolean>>({ neues_spiel: true, ausfall: true, serie: true });
+  const [an, setAn] = useState<Record<string, boolean>>({ neues_spiel: true, ausfall: true, aendern: true });
   return (
     <div className="flex flex-col gap-8">
       <div>

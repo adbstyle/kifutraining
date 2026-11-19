@@ -129,7 +129,8 @@ export function eintragWann(e: LinkBenachrichtigung): string | null {
   return zeit ? `${tagOhneJahr(i.datum)} · ${zeit}` : tagOhneJahr(i.datum);
 }
 
-/** Wo: der Ort nach dem Ereignis; bei der Serie nur, wenn er sich änderte. */
+/** Wo: der Ort nach dem Ereignis. Bei einer Serienänderung keiner — ein
+ *  geänderter Ort steht in den neuen Angaben (`eintragZusaetze`). */
 export function eintragWo(e: LinkBenachrichtigung): string | null {
   if (e.ereignis === "serie") return null;
   return e.inhalt.ort || null;
@@ -175,7 +176,7 @@ export function eintragZusaetze(e: LinkBenachrichtigung): string[] {
   }
   const i = e.inhalt;
   if (e.ereignis === "ausfall") return i.grund ? [`Grund: ${i.grund}`] : [];
-  if (e.ereignis === "verlegung" && i.wieder) return ["Findet wieder statt."];
+  if (e.ereignis === "verlegung" && i.wieder) return [`${EREIGNIS_WORT.ruecknahme}.`];
   return [];
 }
 
@@ -209,7 +210,6 @@ export const ELTERN_TEXT = {
   neu: "Neu",
   frueher: "Früher",
   leerTitel: "Noch keine Benachrichtigungen",
-  // Gilt für alle Ereignisse des Epics #641 (ab #643 auch Ausfall und Rücknahme).
   leer: "Sobald ein Team ein neues Spiel erfasst oder dir eine Änderung mitteilt, steht es hier.",
   zumTermin: "Zum Termin",
   zurueck: "Zurück zu den Terminen",
@@ -230,19 +230,25 @@ export const BENACHRICHTIGEN_TEXT = {
   gescheitert: "Gespeichert, aber die Benachrichtigung ist nicht entstanden.",
 } as const;
 
-/** Die Zeile unter dem Häkchen, je Vorgang. */
-export const BENACHRICHTIGEN_HINWEIS: Record<BenachrichtigungEreignis, string> = {
+/** Die Dialoge, in denen das Häkchen steht (Prinzip 4) — je Vorgang des
+ *  Mitglieds, nicht je Ereignis: Ändern kann verlegen, wegfallen lassen oder
+ *  beides, einzeln oder über die Serie. */
+export type BenachrichtigenVorgang = "neues_spiel" | "ausfall" | "ruecknahme" | "aendern" | "entfernen";
+
+/** Die Zeile unter dem Häkchen, je Vorgang; sie stimmt für einen Termin wie
+ *  für die Serie. */
+export const BENACHRICHTIGEN_HINWEIS: Record<BenachrichtigenVorgang, string> = {
   neues_spiel: "Sie sehen das neue Spiel am privaten Link unter «Benachrichtigungen».",
   ausfall: "Den Grund sehen sie auch in der Benachrichtigung.",
-  ruecknahme: "Sie sehen, dass der Termin doch stattfindet.",
-  verlegung: "Sie sehen die neuen Angaben am privaten Link.",
-  serie: "Eine Benachrichtigung je Spieler:in mit den neuen Angaben.",
-  wegfall: "Sie erfahren, dass der Termin wegfällt, obwohl er aus ihren Terminen verschwindet.",
+  ruecknahme: "Sie sehen, dass der Termin wieder stattfindet.",
+  aendern: "Sie sehen am privaten Link, was neu gilt und was wegfällt.",
+  entfernen: "Sie erfahren, was wegfällt, obwohl es aus ihren Terminen verschwindet.",
 };
 
 /** Die Beschreibung des Parameters `benachrichtigen` eines KI-Werkzeugs: Label
- *  und Hinweis der Oberfläche, dazu die Regel (Prinzipien 2 und 4). */
-export function BENACHRICHTIGEN_MODELL(vorgang: BenachrichtigungEreignis): string {
+ *  und Hinweis der Oberfläche desselben Vorgangs, dazu die Regel (Prinzipien
+ *  2 und 4). */
+export function BENACHRICHTIGEN_MODELL(vorgang: BenachrichtigenVorgang): string {
   return (
     `${BENACHRICHTIGEN_TEXT.label}: ${BENACHRICHTIGEN_HINWEIS[vorgang]} ` +
     "Standard true; false lässt die Spielervertretungen still. Nur bei Terminen von heute oder später, nie für ausgefallene."
@@ -258,7 +264,15 @@ export const BENACHRICHTIGEN_WERKZEUG =
   "lässt sie still); still bleiben Termine vor heute, ausgefallene Termine und alle Änderungen ausser neuem Spiel, " +
   "Ausfall, Rücknahme, Verlegung von Datum, Zeit oder Ort und Entfernen.";
 
-/* ── Verlegung (#644) ──────────────────────────────────────────────────────── */
+/* ── Wann das Häkchen erscheint (Zwillinge der Datenebene) ─────────────── */
+
+/** Ob ein Termin an diesem Tag den Spielervertretungen mitgeteilt wird
+ *  (Prinzip 2): heute oder später am Trainingsort; bei einer Verlegung zählt
+ *  der neue, beim Entfernen der bisherige Tag. Beide Tage als «YYYY-MM-DD».
+ *  SQL-Zwilling: `benachrichtigung_zaehlt` (20261119100000_benachrichtigungen.sql). */
+export function benachrichtigungZaehlt(datum: string, heute: string): boolean {
+  return datum >= heute;
+}
 
 /** Die Angaben eines Termins, die eine Verlegung ausmachen (Prinzip 1):
  *  Datum «YYYY-MM-DD», Beginn und Ende («HH:MM» oder «HH:MM:SS»), Ort. */
@@ -284,34 +298,53 @@ export function istVerlegung(vorher: VerlegungStand, nachher: VerlegungStand): b
   );
 }
 
-/** Ob eine Änderung den Spielervertretungen mitgeteilt werden kann — dann
- *  zeigt der Dialog das Häkchen (#644 AK 1, 2). Zwilling der Regel der
- *  Datenebene (`termin_benachrichtigen` 'verlegung', `benachrichtigung_verlegt`):
- *  - Einzeln (`serieEnde: null`): verlegt, danach heute oder später und nicht
- *    ausgefallen. Ein ausgefallenes Training findet wieder statt, wenn sein
- *    Datum auf heute oder später wechselt (#327 PC 4), ein ausgefallenes
- *    Spiel bei jeder Änderung von Datum oder Beginn (Trigger
- *    `spiel_zeitpunkt_vorher`); sonst bleibt es ausgefallen und still.
- *  - Über die Serie (`serieEnde` = das spätere Ende der Serie vor oder nach
- *    der Änderung — ein kürzerer Zeitraum lässt Termine bis zum bisherigen
- *    Ende wegfallen, #645): Die Serie reicht bis heute oder später, und
- *    Wochentage oder Zeitraum (`regelGeaendert`), Zeit oder Ort ändern sich.
- *    Genau zählt die Vorschau (`mitteilbar`), verlegte und wegfallende
- *    Termine zusammen. SQL-Zwilling auch `benachrichtigung_weggefallen`.
- *  `heute` ist der Tag am Trainingsort («YYYY-MM-DD»). */
-export function mitteilbarBeimAendern(e: {
+/** Ob ein ausgefallener Termin durch eine Änderung wieder stattfindet (#327
+ *  PC 4): ein Training, wenn sein Datum auf heute oder später wechselt (der
+ *  Fachkern hebt den Ausfall auf), ein Spiel bei jeder Änderung von Datum
+ *  oder Beginn (Trigger `spiel_zeitpunkt_vorher`). Der Termin-Dialog sagt es
+ *  an, und nur dann kann die Verlegung mitgeteilt werden (#644 AK 3). */
+export function ausfallEndet(
+  vorher: Pick<VerlegungStand, "datum" | "beginn">,
+  nachher: Pick<VerlegungStand, "datum" | "beginn">,
+  art: "training" | "spiel",
+  heute: string,
+): boolean {
+  return art === "spiel"
+    ? vorher.datum !== nachher.datum || uhr(vorher.beginn) !== uhr(nachher.beginn)
+    : vorher.datum !== nachher.datum && benachrichtigungZaehlt(nachher.datum, heute);
+}
+
+/** Ob die Änderung eines einzelnen Termins mitgeteilt werden kann — dann
+ *  zeigt der Dialog das Häkchen (#644 AK 1): verlegt, danach heute oder
+ *  später und nicht ausgefallen (ein ausgefallener nur, wenn der Ausfall
+ *  damit endet). Zwilling der Datenebene (`termin_benachrichtigen`
+ *  'verlegung', `benachrichtigung_verlegt`). `heute` am Trainingsort. */
+export function mitteilbarEinzeln(e: {
   vorher: VerlegungStand & { ausgefallen: boolean };
   nachher: VerlegungStand;
   art: "training" | "spiel";
-  regelGeaendert: boolean;
-  serieEnde: string | null;
   heute: string;
 }): boolean {
-  const verlegt = istVerlegung(e.vorher, e.nachher);
-  if (e.serieEnde !== null) return e.serieEnde >= e.heute && (e.regelGeaendert || verlegt);
-  if (!verlegt || e.nachher.datum < e.heute) return false;
-  if (!e.vorher.ausgefallen) return true;
-  return e.art === "spiel"
-    ? e.vorher.datum !== e.nachher.datum || uhr(e.vorher.beginn) !== uhr(e.nachher.beginn)
-    : e.vorher.datum !== e.nachher.datum;
+  return (
+    istVerlegung(e.vorher, e.nachher) &&
+    benachrichtigungZaehlt(e.nachher.datum, e.heute) &&
+    (!e.vorher.ausgefallen || ausfallEndet(e.vorher, e.nachher, e.art, e.heute))
+  );
+}
+
+/** Ob eine Änderung über die Serie mitgeteilt werden kann (#644 AK 2, #645
+ *  PC 3): Die Serie reicht bis heute oder später (`serieEnde` = das spätere
+ *  Ende vor oder nach der Änderung — ein kürzerer Zeitraum lässt Termine bis
+ *  zum bisherigen Ende wegfallen), und Wochentage oder Zeitraum
+ *  (`regelGeaendert`), Zeit oder Ort ändern sich. Genau zählt die Vorschau
+ *  (`mitteilbar`), verlegte und wegfallende Termine zusammen. Zwilling der
+ *  Datenebene: `benachrichtigung_serie_zeilen`. */
+export function mitteilbarSerie(e: {
+  vorher: VerlegungStand;
+  nachher: VerlegungStand;
+  regelGeaendert: boolean;
+  serieEnde: string;
+  heute: string;
+}): boolean {
+  return benachrichtigungZaehlt(e.serieEnde, e.heute) && (e.regelGeaendert || istVerlegung(e.vorher, e.nachher));
 }

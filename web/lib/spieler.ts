@@ -505,9 +505,10 @@ export const LINK_TEXT = {
    *  (#583 AK 13) und im Hinweis der KI-Link-Werkzeuge (#589 AK 9). */
   warnung:
     "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
-  /** Was Erneuern bewirkt (AK 3, PC 3; #583 AK 15): für alle Teams der Spieler:in. */
+  /** Was Erneuern bewirkt (AK 3, PC 3; #583 AK 15): für alle Teams der
+   *  Spieler:in; die Benachrichtigungen enden mit (#642 PC 2). */
   erneuern:
-    "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen.",
+    "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen. Die bisherigen Benachrichtigungen enden ebenfalls.",
   /** AK 10: ein erneuerter, unbekannter oder entfernter Link. */
   ungueltigTitel: "Dieser Link gilt nicht mehr",
   ungueltig: "Den aktuellen erhältst du über eine Abholadresse, bei den Trainer:innen oder bei der Vereinsverwaltung.",
@@ -539,12 +540,12 @@ export function linkTeamsText(vorname: string, teams: LinkTeam[], ausgeschaltet:
 export function linkErneuernSaetze(vorname: string, teams: LinkTeam[]): string[] {
   if (teams.length === 0)
     return [
-      "Der bisherige Link und das Kalender-Abo enden. Abmeldungen bleiben bestehen.",
+      "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden. Abmeldungen bleiben bestehen.",
       `${vorname} ist keinem Team zugeordnet; gib den neuen Link selbst weiter.`,
     ];
   const abholbar = teams.filter((t) => t.abholbar).map((t) => t.name);
   return [
-    `Der bisherige Link und das Kalender-Abo enden für alle Teams von ${vorname}: ${aufzaehlung(teams.map((t) => t.name))}. Abmeldungen bleiben bestehen.`,
+    `Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von ${vorname}: ${aufzaehlung(teams.map((t) => t.name))}. Abmeldungen bleiben bestehen.`,
     abholbar.length > 0
       ? LINK_TEXT.erneuertAbholen(abholbar)
       : "Keines dieser Teams hat die Selbstabholung eingeschaltet. Gib den neuen Link selbst weiter.",

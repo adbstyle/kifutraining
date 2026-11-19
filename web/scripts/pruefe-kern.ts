@@ -163,8 +163,11 @@ import {
   BENACHRICHTIGEN_HINWEIS,
   BENACHRICHTIGEN_MODELL,
   BENACHRICHTIGEN_WERKZEUG,
+  ausfallEndet,
+  benachrichtigungZaehlt,
   istVerlegung,
-  mitteilbarBeimAendern,
+  mitteilbarEinzeln,
+  mitteilbarSerie,
   BENACHRICHTIGEN_TEXT,
   BENACHRICHTIGUNG_TAGE,
   ELTERN_TEXT,
@@ -2525,7 +2528,7 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
       warnung:
         "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
       erneuern:
-        "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen.",
+        "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen. Die bisherigen Benachrichtigungen enden ebenfalls.",
       ungueltigTitel: "Dieser Link gilt nicht mehr",
       ungueltig: "Den aktuellen erhältst du über eine Abholadresse, bei den Trainer:innen oder bei der Vereinsverwaltung.",
       erneuert: "Link erneuert. Der bisherige gilt nicht mehr.",
@@ -3146,22 +3149,22 @@ pruefe("Link am Team-Ort und Verein-Ort (#583 AK 13, 15, 16): Hinweis und Erneue
   assert.ok(!/\.sort\(/.test(lies("components/privat/ElternAnsicht.tsx")), "die Eltern-Seite ordnet nicht noch einmal um");
   // Erneuern: ein Team mit Abholung.
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true)]), [
-    "Der bisherige Link und das Kalender-Abo enden für alle Teams von Lina: Ca. Abmeldungen bleiben bestehen.",
+    "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von Lina: Ca. Abmeldungen bleiben bestehen.",
     "Die Eltern holen den neuen Link über die Abholadresse von Ca ab.",
   ]);
   // Mehrere Teams, zwei mit Abholung; in der geladenen Folge (geordnet hat der Kern, `nachTeamname`).
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true), ab("Cb", true), ab("Cc", false)]), [
-    "Der bisherige Link und das Kalender-Abo enden für alle Teams von Lina: Ca, Cb und Cc. Abmeldungen bleiben bestehen.",
+    "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von Lina: Ca, Cb und Cc. Abmeldungen bleiben bestehen.",
     "Die Eltern holen den neuen Link über die Abholadresse von Ca oder Cb ab.",
   ]);
   // Keines abholbar.
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", false), ab("Cb", false)]), [
-    "Der bisherige Link und das Kalender-Abo enden für alle Teams von Lina: Ca und Cb. Abmeldungen bleiben bestehen.",
+    "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von Lina: Ca und Cb. Abmeldungen bleiben bestehen.",
     "Keines dieser Teams hat die Selbstabholung eingeschaltet. Gib den neuen Link selbst weiter.",
   ]);
   // Ohne Team.
   assert.deepEqual(linkErneuernSaetze("Lina", []), [
-    "Der bisherige Link und das Kalender-Abo enden. Abmeldungen bleiben bestehen.",
+    "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden. Abmeldungen bleiben bestehen.",
     "Lina ist keinem Team zugeordnet; gib den neuen Link selbst weiter.",
   ]);
 });
@@ -5332,39 +5335,36 @@ pruefe("Benachrichtigungen (#642): erhaltenText — heute, gestern, sonst das Da
 
 pruefe("Benachrichtigungen (#642 AK 5, 6): Texte als Konstanten; Oberfläche und KI nennen dasselbe; keine Browser-Formatierung in lib/benachrichtigung.ts", () => {
   assert.equal(ELTERN_TEXT.speicher, "KiFu bewahrt Benachrichtigungen 90 Tage auf. Welche du schon gesehen hast, merkt sich nur dieses Gerät.");
-  assert.equal(BENACHRICHTIGEN_TEXT.label, "Spielervertretungen benachrichtigen");
-  assert.equal(BENACHRICHTIGEN_HINWEIS.neues_spiel, "Sie sehen das neue Spiel am privaten Link unter «Benachrichtigungen».");
-  const modell = BENACHRICHTIGEN_MODELL("neues_spiel");
-  assert.ok(modell.includes(BENACHRICHTIGEN_TEXT.label) && modell.includes(BENACHRICHTIGEN_HINWEIS.neues_spiel) && modell.includes("Standard true"), modell);
-  // Der Zwilling in der KI: das Werkzeug nimmt den Text der Oberfläche (Beschreibung selbst: check:ki-zugang).
-  assert.match(readFileSync(join(web, "lib/mcp/werkzeuge/team.ts"), "utf8"), /BENACHRICHTIGEN_MODELL\("neues_spiel"\)/);
+  // Je Dialog ein Hinweis (Epic #641, Prinzip 4); die KI-Beschreibung desselben
+  // Vorgangs nennt Label und Hinweis wortgleich und den Standard.
+  assert.deepEqual(Object.keys(BENACHRICHTIGEN_HINWEIS).sort(), ["aendern", "ausfall", "entfernen", "neues_spiel", "ruecknahme"]);
+  const team = readFileSync(join(web, "lib/mcp/werkzeuge/team.ts"), "utf8");
+  for (const v of Object.keys(BENACHRICHTIGEN_HINWEIS) as (keyof typeof BENACHRICHTIGEN_HINWEIS)[]) {
+    const modell = BENACHRICHTIGEN_MODELL(v);
+    assert.ok(modell.startsWith(`${BENACHRICHTIGEN_TEXT.label}: ${BENACHRICHTIGEN_HINWEIS[v]} `) && modell.includes("Standard true"), modell);
+    assert.ok(team.includes(`BENACHRICHTIGEN_MODELL("${v}")`), `UI = KI: kein KI-Werkzeug für «${v}»`);
+  }
+  // Die Rücknahme sagt es wie das Ereigniswort (#643 AK 4), auch als Zusatz einer Verlegung.
+  assert.ok(BENACHRICHTIGEN_HINWEIS.ruecknahme.includes("wieder stattfindet"), BENACHRICHTIGEN_HINWEIS.ruecknahme);
+  assert.deepEqual(eintragZusaetze(bnEintrag("verlegung", { ...BN_TRAINING, wieder: true })), [`${EREIGNIS_WORT.ruecknahme}.`]);
   // Hydration: nur Funktionen aus monat.ts/serie.ts, nie der Browser selbst.
   const quelle = readFileSync(join(web, "lib/benachrichtigung.ts"), "utf8");
   assert.ok(!/toLocale|new Date\(|Intl\./.test(quelle), "keine Formatierung des Browsers");
-  assert.ok(!/\bProbe/.test(Object.values(ELTERN_TEXT).join(" ") + Object.values(BENACHRICHTIGEN_HINWEIS).join(" ")), "kein «Probe» in Oberflächentexten");
+  assert.ok(
+    !/\bProbe/.test(Object.values(ELTERN_TEXT).join(" ") + Object.values(BENACHRICHTIGEN_HINWEIS).join(" ") + BENACHRICHTIGEN_WERKZEUG),
+    "kein «Probe» in Oberflächen- und KI-Texten",
+  );
+  assert.ok(BENACHRICHTIGEN_WERKZEUG.startsWith("Standardmässig erhalten die Spielervertretungen"));
 });
 
-pruefe("Benachrichtigungen (#643 AK 1, 2; OoS 1): Ausfall und Rücknahme mit dem Häkchen der Oberfläche und der KI; Grund ändern und vergangene Termine still", () => {
-  assert.equal(BENACHRICHTIGEN_HINWEIS.ausfall, "Den Grund sehen sie auch in der Benachrichtigung.");
-  assert.equal(BENACHRICHTIGEN_HINWEIS.ruecknahme, "Sie sehen, dass der Termin doch stattfindet.");
+pruefe("Benachrichtigungen (Prinzip 2; #643 AK 1, #645 AK 1): benachrichtigungZaehlt — heute oder später am Trainingsort", () => {
+  assert.equal(benachrichtigungZaehlt("2026-12-01", "2026-12-01"), true, "heute");
+  assert.equal(benachrichtigungZaehlt("2026-12-02", "2026-12-01"), true, "morgen");
+  assert.equal(benachrichtigungZaehlt("2026-11-30", "2026-12-01"), false, "gestern");
   assert.deepEqual(AUSFALL_ZURUECKNEHMEN_TEXT, { titel: "Ausfall zurücknehmen", knopf: "Zurücknehmen", erfolg: "Ausfall zurückgenommen." });
-  const team = readFileSync(join(web, "lib/mcp/werkzeuge/team.ts"), "utf8");
-  assert.match(team, /BENACHRICHTIGEN_MODELL\("ausfall"\)/);
-  assert.match(team, /BENACHRICHTIGEN_MODELL\("ruecknahme"\)/);
-  // Der Ausfall-Dialog: das Feld nur beim Ausfallen lassen eines Termins von heute oder später.
-  const ausfall = readFileSync(join(web, "components/team/AusfallDialog.tsx"), "utf8");
-  assert.match(ausfall, /const mitFeld = termin !== null && !istAusfall && termin\.datum >= heute;/);
-  assert.match(ausfall, /onSpeichern\(grund, mitFeld && benachrichtigen\)/);
-  assert.match(ausfall, /<BenachrichtigenFeld vorgang="ausfall"/);
-  assert.match(readFileSync(join(web, "components/team/AusfallZuruecknehmenDialog.tsx"), "utf8"), /<BenachrichtigenFeld vorgang="ruecknahme"/);
-  // TerminBereich: «nur Grund ändern» sendet immer false; die Rücknahme fragt nur ab heute.
-  const bereich = readFileSync(join(web, "components/team/TerminBereich.tsx"), "utf8");
-  assert.equal(bereich.match(/lasseAusfallenAktion\([^()]*, true, false\)/g)?.length, 3, "die drei Wege «nur Grund»");
-  assert.match(bereich, /if \(t\.datum >= heute\) \{[^}]*setRuecknahme\(t\)/);
-  assert.match(bereich, /nimmAusfallZurueckAktion\(t\.id, false\)/);
 });
 
-pruefe("Benachrichtigungen (#644 AK 1, 2; OoS 1): istVerlegung und mitteilbarBeimAendern als Zwillinge der Datenebene; alle Werkzeugtexte nennen den Standard", () => {
+pruefe("Benachrichtigungen (#644 AK 1–3; OoS 1): istVerlegung, ausfallEndet, mitteilbarEinzeln und mitteilbarSerie als Zwillinge der Datenebene", () => {
   const stand = { datum: "2026-12-02", beginn: "18:00:00", ende: "19:30:00", ort: "Halle" };
   // Sekunden aus der Datenbank, Minuten aus dem Dialog: gleich.
   assert.equal(istVerlegung(stand, { ...stand, beginn: "18:00", ende: "19:30" }), false);
@@ -5372,52 +5372,38 @@ pruefe("Benachrichtigungen (#644 AK 1, 2; OoS 1): istVerlegung und mitteilbarBei
   for (const [feld, wert] of [["datum", "2026-12-03"], ["beginn", "18:30"], ["ende", "20:00"], ["ort", "Wiese"], ["ort", null]] as const)
     assert.equal(istVerlegung(stand, { ...stand, [feld]: wert }), true, feld);
   const heute = "2026-12-01";
-  const fall = (
-    vorher: Partial<typeof stand> & { ausgefallen?: boolean },
-    nachher: Partial<typeof stand>,
-    art: "training" | "spiel" = "training",
-    serie: { regelGeaendert?: boolean; serieEnde?: string | null } = {},
-  ) =>
-    mitteilbarBeimAendern({
-      vorher: { ...stand, ausgefallen: false, ...vorher },
-      nachher: { ...stand, ...vorher, ...nachher },
-      art,
-      regelGeaendert: serie.regelGeaendert ?? false,
-      serieEnde: serie.serieEnde ?? null,
-      heute,
-    });
+  // Der Ausfall endet: ein Training mit neuem Datum ab heute, ein Spiel mit neuem Datum oder Beginn.
+  assert.equal(ausfallEndet(stand, { ...stand, datum: "2026-12-04" }, "training", heute), true);
+  assert.equal(ausfallEndet(stand, { ...stand, datum: "2026-11-30" }, "training", heute), false, "Training in die Vergangenheit");
+  assert.equal(ausfallEndet(stand, { ...stand, beginn: "18:30" }, "training", heute), false, "Training, nur Zeit");
+  assert.equal(ausfallEndet(stand, { ...stand, beginn: "18:30" }, "spiel", heute), true, "Spiel, Zeit");
+  assert.equal(ausfallEndet(stand, { ...stand, datum: "2026-11-30" }, "spiel", heute), true, "Spiel, auch in die Vergangenheit (Trigger)");
+  assert.equal(ausfallEndet(stand, stand, "spiel", heute), false);
+  const einzeln = (vorher: Partial<typeof stand> & { ausgefallen?: boolean }, nachher: Partial<typeof stand>, art: "training" | "spiel" = "training") =>
+    mitteilbarEinzeln({ vorher: { ...stand, ausgefallen: false, ...vorher }, nachher: { ...stand, ...vorher, ...nachher }, art, heute });
   // Nur der Kartenlink (gleiche Angaben): nein (OoS 1). Datum in die Vergangenheit: nein.
-  assert.equal(fall({}, {}), false, "nur Kartenlink");
-  assert.equal(fall({}, { datum: "2026-11-30" }), false, "in die Vergangenheit");
-  assert.equal(fall({}, { datum: heute }), true, "auf heute");
-  assert.equal(fall({}, { ende: "20:00" }), true, "nur Ende");
-  // Ausgefallen: ein Training findet nur mit neuem Datum ab heute wieder statt, ein Spiel mit Datum oder Beginn.
-  assert.equal(fall({ ausgefallen: true }, { beginn: "18:30" }), false, "ausgefallenes Training, nur Zeit");
-  assert.equal(fall({ ausgefallen: true }, { datum: "2026-12-04" }), true, "ausgefallenes Training verlegt");
-  assert.equal(fall({ ausgefallen: true, datum: "2026-11-28" }, { datum: "2026-12-02" }), true, "ausgefallenes Training auf morgen");
-  assert.equal(fall({ ausgefallen: true }, { beginn: "18:30" }, "spiel"), true, "ausgefallenes Spiel, Zeit");
-  assert.equal(fall({ ausgefallen: true }, { ende: "20:00" }, "spiel"), false, "ausgefallenes Spiel, nur Ende");
+  assert.equal(einzeln({}, {}), false, "nur Kartenlink");
+  assert.equal(einzeln({}, { datum: "2026-11-30" }), false, "in die Vergangenheit");
+  assert.equal(einzeln({}, { datum: heute }), true, "auf heute");
+  assert.equal(einzeln({}, { ende: "20:00" }), true, "nur Ende");
+  // Ausgefallen: nur, wenn der Ausfall damit endet.
+  assert.equal(einzeln({ ausgefallen: true }, { beginn: "18:30" }), false, "ausgefallenes Training, nur Zeit");
+  assert.equal(einzeln({ ausgefallen: true }, { datum: "2026-12-04" }), true, "ausgefallenes Training verlegt");
+  assert.equal(einzeln({ ausgefallen: true, datum: "2026-11-28" }, { datum: "2026-12-02" }), true, "ausgefallenes Training auf morgen");
+  assert.equal(einzeln({ ausgefallen: true }, { beginn: "18:30" }, "spiel"), true, "ausgefallenes Spiel, Zeit");
+  assert.equal(einzeln({ ausgefallen: true }, { ende: "20:00" }, "spiel"), false, "ausgefallenes Spiel, nur Ende");
   // Über die Serie: Ende ab heute und Regel, Zeit oder Ort geändert.
-  assert.equal(fall({ datum: "2026-11-20" }, { beginn: "17:00" }, "training", { serieEnde: "2026-12-20" }), true, "Serie Zeit");
-  assert.equal(fall({}, {}, "training", { regelGeaendert: true, serieEnde: "2026-12-20" }), true, "Serie Regel");
-  assert.equal(fall({}, { ort: "Wiese" }, "training", { serieEnde: "2026-12-20" }), true, "Serie Ort");
-  assert.equal(fall({}, {}, "training", { serieEnde: "2026-12-20" }), false, "Serie ohne Verlegung");
-  assert.equal(fall({}, { beginn: "17:00" }, "training", { serieEnde: "2026-11-30" }), false, "Serie vorbei");
-  assert.equal(BENACHRICHTIGEN_HINWEIS.verlegung, "Sie sehen die neuen Angaben am privaten Link.");
-  // Prinzip 4: jeder Werkzeugtext mit «benachrichtigen» nennt den Standard und was still bleibt.
-  const team = readFileSync(join(web, "lib/mcp/werkzeuge/team.ts"), "utf8");
-  assert.match(team, /BENACHRICHTIGEN_MODELL\("verlegung"\)/);
-  assert.equal(
-    team.match(/\$\{BENACHRICHTIGEN_WERKZEUG\}/g)?.length,
-    6,
-    "termin_festlegen, termin_aendern, termin_der_serie_folgen, Ausfall, Rücknahme, termin_entfernen",
-  );
-  assert.ok(BENACHRICHTIGEN_WERKZEUG.startsWith("Standardmässig erhalten die Spielervertretungen"));
-  assert.ok(!/\bProbe/.test(BENACHRICHTIGEN_WERKZEUG));
+  const serie = (nachher: Partial<typeof stand>, regelGeaendert: boolean, serieEnde: string) =>
+    mitteilbarSerie({ vorher: stand, nachher: { ...stand, ...nachher }, regelGeaendert, serieEnde, heute });
+  assert.equal(serie({ beginn: "17:00" }, false, "2026-12-20"), true, "Serie Zeit");
+  assert.equal(serie({}, true, "2026-12-20"), true, "Serie Regel");
+  assert.equal(serie({ ort: "Wiese" }, false, "2026-12-20"), true, "Serie Ort");
+  assert.equal(serie({}, false, "2026-12-20"), false, "Serie ohne Verlegung");
+  assert.equal(serie({ beginn: "17:00" }, false, "2026-11-30"), false, "Serie vorbei");
+  assert.equal(serie({}, true, heute), true, "Serie endet heute");
 });
 
-pruefe("Benachrichtigungen (#645 AK 1, 3; PC 3): Wegfall in Oberfläche und KI; Serie mit Verlegung und Wegfall in einem Eintrag", () => {
-  assert.equal(BENACHRICHTIGEN_HINWEIS.wegfall, "Sie erfahren, dass der Termin wegfällt, obwohl er aus ihren Terminen verschwindet.");
+pruefe("Benachrichtigungen (#645 AK 1, 3; PC 3): Wegfall am Link; Serie mit Verlegung und Wegfall in einem Eintrag", () => {
   // Die Form der Datenebene (benachrichtigung_serie_zeilen): von, bis, ISO-Wochentage, Anzahl.
   assert.equal(wegfallText({ von: "2026-12-02", bis: "2026-12-16", wochentage: [3], anzahl: 3 }), "Es fallen 3 Trainings am Mittwoch weg (2.–16. Dez.).");
   assert.equal(wegfallText({ von: "2026-12-02", bis: "2026-12-02", wochentage: [3], anzahl: 1 }), "Es fällt 1 Training am Mittwoch weg (2. Dez.).");
@@ -5443,18 +5429,7 @@ pruefe("Benachrichtigungen (#645 AK 1, 3; PC 3): Wegfall in Oberfläche und KI; 
   } as never;
   assert.equal(eintragTitel(einzeln), "Turnier · Ea");
   assert.equal(eintragWo(einzeln), "Halle");
-  assert.equal(EREIGNIS_WORT.wegfall, "Fällt weg");
-  // Oberfläche: das Feld beim einzelnen Entfernen nur bei nicht ausgefallen und ab heute, beim Entfernen der Serie nur mit `mitteilbar`.
-  const bereich = readFileSync(join(web, "components/team/TerminBereich.tsx"), "utf8");
-  assert.match(bereich, /const entfernenMitteilbar = !!entfernen && !entfernen\.ausgefallen && entfernen\.datum >= heute;/);
-  assert.match(bereich, /entfernenMitteilbar && entfernenBenachrichtigen/);
-  assert.match(bereich, /<BenachrichtigenFeld\s+vorgang="wegfall"/);
-  const bestaetigung = readFileSync(join(web, "components/team/EntfallendBestaetigung.tsx"), "utf8");
-  assert.match(bestaetigung, /const mitteilbar = aktion === "entfernen" && \(folge\?\.mitteilbar \?\? 0\) > 0;/);
-  assert.match(bestaetigung, /onBestaetigen\(mitteilbar && benachrichtigen\)/);
-  // Beim Ändern der Serie zählt das spätere Ende: Ein kürzerer Zeitraum lässt Termine bis zum bisherigen Ende wegfallen.
-  assert.match(readFileSync(join(web, "components/team/TerminDialog.tsx"), "utf8"), /serieEnde: regel\.bis > serie\.endDatum \? regel\.bis : serie\.endDatum/);
-  assert.match(readFileSync(join(web, "lib/mcp/werkzeuge/team.ts"), "utf8"), /BENACHRICHTIGEN_MODELL\("wegfall"\)/);
+  assert.equal(EREIGNIS_NEGATIV.wegfall, true);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

@@ -746,7 +746,7 @@ export const spielerLinkErneuern = werkzeug({
             ? linkErneuernSaetze(l.vorname, l.teams)
             : [
                 teamsSatz(l),
-                "Der neue gilt für alle diese Teams; der bisherige Link und das Kalender-Abo enden. Abmeldungen bleiben bestehen.",
+                "Der neue gilt für alle diese Teams; der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden. Abmeldungen bleiben bestehen.",
                 ...linkErneuernSaetze(l.vorname, l.teams).slice(1),
               ]),
         ].join(" "),
