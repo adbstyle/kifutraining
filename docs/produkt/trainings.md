@@ -1,6 +1,6 @@
 # Trainings
 
-Stand 2026-11-16. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-11-19. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
 
 ## Die Altersstufe wird beim Anlegen gewählt
@@ -15,7 +15,7 @@ Die Wahl steht danach fest. Ein Training wechselt die Altersstufe nie; wer für 
 plant, legt ein neues an. Der Grund liegt im Aufbau selbst: Die beiden Manuals gliedern eine
 Einheit verschieden, und ein Wechsel liesse ein Training zurück, dessen Inhalt zu seiner
 Gliederung nicht mehr passt. An jedem Training steht seine Altersstufe angeschrieben, auch an
-einem fremden.
+einem fremden: in seiner Ansicht und im Detail der Übersichten, nicht aber in deren Zeilen.
 
 ## Der Aufbau ist vorgegeben
 
@@ -73,10 +73,11 @@ bestätigen; war ein Team-Training einem Termin zugeordnet, sagt der Dialog, das
 Training im Trainingsplan des Teams bestehen bleibt. Angeboten wird jeweils nur, was dem
 Betrachter offensteht: Wer ein fremdes Training bloss ansieht, findet die drei Punkte gar nicht,
 Ins-Team-Stellen und das Zuordnen zu einem Team-Termin gibt es nur für jemanden, der in einem
-Team ist, und an einem Team-Training gibt es weder Veröffentlichen noch Ins-Team-Stellen noch
-dieses Zuordnen — ein Team-Training wird im Team selbst einem Termin zugeordnet. Ein
-Termin-Training hat dafür „In den Team-Bestand kopieren": Es legt eine Kopie im Bestand an und
-bleibt selbst an seinem Termin.
+Team ist. An einem Team-Training gibt es weder Veröffentlichen noch Ins-Team-Stellen; steht es im
+Bestand des Teams, liegen dafür „Zu mir übernehmen" — eine persönliche Kopie, das Original bleibt
+im Team — und „Einem Team-Termin zuordnen", das ohne Frage nach dem Team gleich die Termine
+seines Teams anbietet. Ein Termin-Training hat beides nicht, sondern „In den Team-Bestand
+kopieren": Es legt eine Kopie im Bestand an und bleibt selbst an seinem Termin.
 
 Trainings beider Altersstufen lassen sich auch im Gespräch mit einem verbundenen KI-Assistenten
 anlegen, zusammenstellen, veröffentlichen, übernehmen und löschen (siehe
@@ -526,25 +527,29 @@ eigenen ein. Besucher ohne Konto sehen ausschliesslich die öffentlichen Trainin
 erscheinen hier nicht; sie leben im Team-Bereich.
 
 Die Trainings stehen als Tabelle, ein Training je Zeile, über der Tabelle ihre Zahl. Die Spalten
-sind Altersstufe, Name, Sichtbarkeit bzw. Urheber, Übungen, Dauer und „Geändert" (das Datum der
-letzten Änderung in kurzer Form, 16.09.26). Die Alterskategorien zeigt die Altersstufe beim
-Überfahren, und Vorlesehilfen lesen sie mit. An einem eigenen Training steht, ob es ein Entwurf
-oder öffentlich ist, an einem fremden sein Urheber, sofern es einen führt. Führt ein Training mehr
+sind Name, Sichtbarkeit bzw. Urheber, Übungen, Dauer und „Geändert" (das Datum der letzten
+Änderung in kurzer Form, 16.09.26). Altersstufe und Alterskategorien nennt die Zeile nicht; sie
+stehen im Detail. Der Name hat Vorrang: Er bekommt allen Platz, den die übrigen Spalten nicht
+brauchen, und bricht darum so selten wie möglich um. An einem eigenen Training steht, ob es ein
+Entwurf oder öffentlich ist, und das immer ganz; an einem fremden steht sein Urheber, sofern es
+einen führt. Ein langer Urheber wird gekürzt und erscheint beim Überfahren ganz. Führt ein Training mehr
 als eine Variante seines Hauptteils, steht deren Zahl als Marke neben dem Namen, etwa „2
 Varianten" — hier wie im Trainingsbestand eines Teams; sonst bliebe verborgen, dass es
 Alternativen gibt. Übungszahl und Dauer beziehen sich dann auf die vorderste Variante: Gespielt
 wird ohnehin nur eine, und die Summe über alle wäre eine Dauer, die dieses Training nie hat. Ohne
-erfasste Dauer steht „Keine Dauer". Auf einem schmalen Bildschirm stehen die übrigen Angaben samt
-Alterskategorien in einer zweiten Zeile unter dem Namen.
+erfasste Dauer steht „Keine Dauer". Auf einem schmalen Bildschirm stehen die übrigen Angaben in
+einer zweiten Zeile unter dem Namen, der Urheber dort ungekürzt als „von …". Der Trainingsbestand
+eines Teams steht in derselben Tabelle (siehe [Team-Bereich](team-bereich.md#trainings-gehören-dem-team)).
 
-Sortieren lässt sich nach Altersstufe, Name, Übungen, Dauer und „Geändert", je auf- und
+Sortieren lässt sich nach Name, Übungen, Dauer und „Geändert", je auf- und
 absteigend, mit einem Klick auf den Spaltenkopf; ein Pfeil zeigt, wonach und in welcher Richtung
 sortiert ist. Auf einem schmalen Bildschirm wählt man die Sortierung über einen eigenen Knopf.
 Solange keine gewählt ist, steht das zuletzt Geänderte oben, auch mit Suchbegriff: Die Suche
 grenzt nur ein. Bei gleichem Wert entscheidet das Datum der letzten Änderung, und Trainings ohne
 Dauer stehen beim Sortieren nach Dauer in beiden Richtungen am Ende. Die gewählte Sortierung steht
 in der Adresse, übersteht also Neuladen und geteilte Links, und bleibt, wenn man Suchbegriff oder
-Filter ändert. Gesucht wird über den Namen, gefiltert nach Alterskategorie, deren Werte wie im
+Filter ändert. Eine ältere Adresse, die noch nach Altersstufe sortiert, zeigt die Übersicht in der
+Grundordnung, das zuletzt Geänderte oben. Gesucht wird über den Namen, gefiltert nach Alterskategorie, deren Werte wie im
 Übungskatalog nach Altersstufe beschriftet sind; das Suchfeld lässt sich wie dort mit einem Klick
 auf das Kreuz leeren.
 
@@ -605,7 +610,10 @@ etwa E und D zusammen, lassen sich nicht abbilden: Wer beide in einer Einheit ha
 sich für ein Manual und plant darin. Für den Juniorenfussball gibt es zudem keinen kuratierten
 Übungsbestand; wer dort veröffentlichen will, erfasst seine Übungen zuerst selbst. Die
 Trainingsübersicht trennt die Altersstufen nicht — sie stehen zusammen in einer Liste,
-eingegrenzt wird über die Alterskategorie.
+eingegrenzt wird über die Alterskategorie. Die Zeile nennt weder Altersstufe noch
+Alterskategorien, und nach der Altersstufe sortieren lässt sich nicht; wer sie wissen will,
+wählt das Training aus. Einen gekürzten Urheber zeigt die Tabelle nur beim Überfahren mit der
+Maus ganz; auf einem Tablet steht er vollständig erst im Detail.
 
 Teil- und Gesamtdauer rechnen die Übungen weiterhin nacheinander. Bei einem auf Gruppen
 verteilten Hauptteil entsprechen sie darum nicht der tatsächlichen Länge des Trainings: Was
