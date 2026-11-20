@@ -1426,7 +1426,8 @@ Spieler:in enden, wenn jemand ihren Link erneuert, die Vereinsverwaltung sie aus
 oder den Verein löscht. Was schon gesehen ist, merkt sich jedes Gerät und jeder Browser für sich, je
 Link, für bis zu 20 Links: Gesehen ist eine Benachrichtigung, sobald die Ansicht sie auf diesem
 Gerät angezeigt hat. Öffnet ein Gerät den Link zum ersten Mal, gilt alles Bisherige als gesehen, und
-die Glocke zeigt keine Zahl; die abgelegte App zählt dabei als eigener Browser. Neue
+die Glocke zeigt keine Zahl; die abgelegte App kann dabei je nach Gerät, etwa auf dem iPhone, als
+eigener Browser zählen. Neue
 Benachrichtigungen erscheinen erst, wenn man die Seite neu öffnet oder lädt.
 
 ### Als App ablegen
@@ -1483,9 +1484,9 @@ ohne Rückfrage.
 Lehnt man die Abfrage des Mobiles ab, steht „Dein Mobile lässt keine Mitteilungen zu." mit dem
 Hinweis, sie in den Einstellungen des Mobiles für diese Seite bzw. die abgelegte App zu erlauben.
 Ein Browser, der keine Mitteilungen von Webseiten zulässt — auch der Browser in einer anderen App
-wie WhatsApp —, zeigt keinen Schalter, sondern „Dieser Browser lässt keine Mitteilungen zu. Öffne
+wie WhatsApp —, zeigt den Schalter ausgegraut und darunter „Dieser Browser lässt keine Mitteilungen zu. Öffne
 den Link im Browser deines Mobiles, etwa in Safari oder Chrome." Auf dem iPhone gehen Mitteilungen
-nur in der abgelegten App: Im Browser steht statt des Schalters „Auf dem iPhone nur in der abgelegten
+nur in der abgelegten App: Im Browser ist der Schalter ausgegraut, und darunter steht „Auf dem iPhone nur in der abgelegten
 App." und darunter, man solle die Seite als App auf den Home-Bildschirm legen und die Termine dort
 öffnen, mit „So geht’s" zur Anleitung (siehe „Als App ablegen").
 
@@ -1494,7 +1495,7 @@ Karte, dass sie schon auf 10 Geräten eingeschaltet sind und man sie auf einem d
 soll. Jede Spieler:in hat ihre eigenen Mitteilungen: Für Geschwister schaltet man sie an jedem Link
 bzw. in jeder App einzeln ein, und jede kommt für sich.
 
-Eine Mitteilung trägt als Titel, was geschehen ist, und das Team, etwa „Fällt aus · FC Beispiel",
+Eine Mitteilung trägt als Titel, was geschehen ist, und das Team, etwa „Fällt aus · E-Junioren",
 und als Text den Vornamen und die Angaben der Benachrichtigung, etwa „Mia: Training · Samstag, 5.
 Dezember · 14:00–15:30 · Halle · Grund: Platz gesperrt"; ein langer Text wird gekürzt. Antippen
 öffnet die Ansicht „Benachrichtigungen" dieses Links. Kann das Gerät den Inhalt nicht lesen,
@@ -1510,7 +1511,7 @@ die Zustellung, versucht KiFu es bis zu fünfmal. Termin und Benachrichtigung bl
 auch wenn keine Mitteilung ankommt. Meldet der Mitteilungsdienst, dass ein Gerät keine Mitteilungen
 mehr annimmt — etwa nach dem Löschen der App oder der Daten der Website —, fällt es weg. Alle
 Mitteilungen eines Links enden, wenn ihn ein Mitglied oder die Vereinsverwaltung erneuert oder die
-Vereinsverwaltung die Spieler:in aus dem Verein löscht; die Spielervertretung erfährt davon nichts.
+Vereinsverwaltung die Spieler:in aus dem Verein löscht oder den Verein löscht; die Spielervertretung erfährt davon nichts.
 
 Ob für eine Spieler:in Mitteilungen eingeschaltet sind, zeigt die Spalte „Mobile" der Spielerliste
 (siehe „Spielerliste"), und der KI-Assistent erfährt es mit der Spielerliste; welche Geräte es sind
@@ -1913,16 +1914,16 @@ oder ein Team dazukommt, erhält frühere Benachrichtigungen nicht. Was gesehen 
 Browser: Auf einem anderen Gerät oder nach dem Löschen der Cookies gilt beim nächsten Öffnen alles
 Bisherige als gesehen, ein Browser, der keine Cookies behält, zeigt nie eine Zahl, und ein Gerät
 merkt sich höchstens 20 Links. Geschwister mit eigenen Links haben keine gemeinsamen
-Benachrichtigungen. Nach dem Erneuern des Links sind die bisherigen verloren. Die abgelegte App und
-der Browser desselben Geräts führen den Gesehen-Stand nicht gemeinsam.
+Benachrichtigungen. Nach dem Erneuern des Links sind die bisherigen verloren. Je nach Gerät, etwa auf
+dem iPhone, führen die abgelegte App und der Browser den Gesehen-Stand nicht gemeinsam.
 
 Mitteilungen aufs Mobile kommen ohne Zusicherung: KiFu zeigt nicht, ob eine angekommen oder gelesen
 ist, und die Glocke in der Spalte „Mobile" sagt nur den letzten bekannten Stand — ein Gerät, das
 die App gelöscht hat, kann dort noch zählen, bis der Mitteilungsdienst es meldet. Den Stand zeigt nur
 die Spielerliste eines Teams, nicht der Spielerbestand des Vereins. Ohne Internetverbindung kommt
 keine Mitteilung, und ist ein Gerät länger als einen Tag nicht erreichbar, verfällt sie. Wer
-Mitteilungen auf demselben Gerät im Browser und in der abgelegten App einschaltet, erhält jede
-doppelt; Mitteilungen für Geschwister fasst KiFu nicht zusammen. Eine versandte Mitteilung ändert sich
+Mitteilungen auf demselben Gerät in zwei verschiedenen Browsern einschaltet, erhält jede doppelt;
+Mitteilungen für Geschwister fasst KiFu nicht zusammen. Eine versandte Mitteilung ändert sich
 nicht, wenn sich der Termin danach ändert, und Benachrichtigungen aus der Zeit vor dem Einschalten
 gehen nicht nachträglich hinaus. Ruhezeiten gibt es nicht: Eine Mitteilung geht hinaus, sobald das
 Mitglied speichert, auch nachts. Dass ihre Mitteilungen geendet haben, etwa nach dem Erneuern des
