@@ -9,6 +9,8 @@ import type { MeldeAntwort } from "@/lib/kern/spiele";
 import { spielerAboUrl } from "@/lib/spieler-abo";
 import type { ProbeStand } from "@/lib/probe";
 import type { LinkBenachrichtigungen } from "@/lib/benachrichtigung";
+import { MITTEILUNGEN_TEXT, istPushAbo, istPushEndpunkt } from "@/lib/push";
+import { istGueltigerPunkt, pushOeffentlich } from "@/lib/push/schluessel";
 
 /**
  * Die Seite hinter dem privaten Link einer Spieler:in (Epic #433, Story #436)
@@ -250,4 +252,52 @@ export async function widerrufeAbo(token: string): Promise<AboWiderrufErgebnis> 
   const { data, error } = await createAnonClient().rpc("spieler_abo_widerrufen", { p_link: token });
   if (error || !data) return { ok: false, error: LINK_FEHLER };
   return data === "ungueltig" ? { ok: false, ungueltig: true } : { ok: true };
+}
+
+// ── Mitteilungen aufs Mobile (#483) ─────────────────────────────────────────
+
+export type PushSchaltErgebnis =
+  | { ok: true }
+  | { ok: false; ungueltig: true }
+  | { ok: false; ungueltig?: false; grenze?: boolean; error: string };
+
+/** Mitteilungen für den Link auf diesem Gerät einschalten (AK 1, 5): die
+ *  Anmeldung des Browsers samt dem Kürzel des Schlüssels dieser Umgebung
+ *  (PC 5). Ohne Mitteilungen in der Umgebung, mit unbekanntem Dienst oder
+ *  unlesbaren Schlüsseln: Fehler. `grenze`: schon 10 Geräte. */
+export async function schaltePushEin(token: string, abo: unknown): Promise<PushSchaltErgebnis> {
+  if (!istLinkToken(token)) return { ok: false, ungueltig: true };
+  const vapid = pushOeffentlich();
+  if (!vapid || !istPushAbo(abo) || !istGueltigerPunkt(abo.keys.p256dh)) return { ok: false, error: MITTEILUNGEN_TEXT.fehler };
+  const { data, error } = await createAnonClient().rpc("spieler_push_anmelden", {
+    p_link: token,
+    p_endpoint: abo.endpoint,
+    p_p256dh: abo.keys.p256dh,
+    p_auth: abo.keys.auth,
+    p_schluessel: vapid.schluessel,
+  });
+  if (error || typeof data !== "string") return { ok: false, error: MITTEILUNGEN_TEXT.fehler };
+  if (data === "ungueltig") return { ok: false, ungueltig: true };
+  if (data === "grenze") return { ok: false, grenze: true, error: MITTEILUNGEN_TEXT.fehler };
+  if (data !== "ok") return { ok: false, error: MITTEILUNGEN_TEXT.fehler };
+  return { ok: true };
+}
+
+/** Mitteilungen auf diesem Gerät ausschalten (AK 7) — sofort. */
+export async function schaltePushAus(token: string, endpoint: unknown): Promise<PushSchaltErgebnis> {
+  if (!istLinkToken(token)) return { ok: false, ungueltig: true };
+  if (!istPushEndpunkt(endpoint)) return { ok: true };
+  const { data, error } = await createAnonClient().rpc("spieler_push_abmelden", { p_link: token, p_endpoint: endpoint });
+  if (error || typeof data !== "string") return { ok: false, error: MITTEILUNGEN_TEXT.fehler };
+  return data === "ungueltig" ? { ok: false, ungueltig: true } : { ok: true };
+}
+
+/** Ob dieses Gerät eingeschaltet ist (AK 6); `null` bei einem Fehler der
+ *  Datenebene — dann zeigt die Seite «aus», statt etwas zu behaupten. */
+export async function pushStand(token: string, endpoint: unknown): Promise<"an" | "aus" | "ungueltig" | null> {
+  if (!istLinkToken(token)) return "ungueltig";
+  if (!istPushEndpunkt(endpoint)) return "aus";
+  const { data, error } = await createAnonClient().rpc("spieler_push_status", { p_link: token, p_endpoint: endpoint });
+  if (error || (data !== "an" && data !== "aus" && data !== "ungueltig")) return null;
+  return data;
 }

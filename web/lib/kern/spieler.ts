@@ -144,7 +144,15 @@ export async function ladeSpielerliste(
   const weitere = await supabase.rpc("spieler_weitere_teams", { p_team: e.teamId });
   if (weitere.error) return ausDbFehler(weitere.error);
   const weitereVon = new Map(((weitere.data ?? []) as { spieler_id: string; teams: string[] }[]).map((w) => [w.spieler_id, w.teams]));
-  const liste = zeilen.map((z) => ({ ...ausRoh(z, e.teamId), weitereTeams: weitereVon.get(z.spieler.id) ?? [] }));
+  // Wer Mitteilungen aufs Mobile eingeschaltet hat (#483 AK 11, 12): nur ja/nein.
+  const mitteilungen = await supabase.rpc("team_spieler_mitteilungen", { p_team: e.teamId });
+  if (mitteilungen.error) return ausDbFehler(mitteilungen.error);
+  const mitMitteilungen = new Set((mitteilungen.data ?? []) as string[]);
+  const liste = zeilen.map((z) => ({
+    ...ausRoh(z, e.teamId),
+    weitereTeams: weitereVon.get(z.spieler.id) ?? [],
+    mitteilungen: mitMitteilungen.has(z.spieler.id),
+  }));
   const spieler = await mitProbeStand(supabase, e.teamId, nachSpielerName(liste));
   if (!spieler.ok) return spieler;
   return ok({ team: team.wert, spieler: spieler.wert });

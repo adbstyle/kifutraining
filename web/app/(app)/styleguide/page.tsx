@@ -72,6 +72,7 @@ import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { CheckboxDemo } from "./CheckboxDemo";
 import { BenachrichtigungDemo } from "./BenachrichtigungDemo";
 import { AppAblegenDemo, SchliessbareMeldung } from "./AppAblegenDemo";
+import { MitteilungenDemo } from "./MitteilungenDemo";
 import { SwitchDemo } from "./SwitchDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
@@ -306,6 +307,7 @@ const GLIEDERUNG = [
           { id: "platz-spielerzahl", titel: "Platz und Spielerzahl eines Termins" },
           { id: "benachrichtigungen", titel: "Benachrichtigungen" },
           { id: "app-ablegen", titel: "Als App ablegen" },
+          { id: "mitteilungen", titel: "Mitteilungen aufs Mobile" },
         ],
       },
     ],
@@ -4547,6 +4549,34 @@ export default async function Styleguide() {
             </li>
           </ul>
           <AppAblegenDemo />
+        </Section>
+
+        <Section id="mitteilungen">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Mitteilungen aufs Mobile (Story #483): Jede Benachrichtigung am privaten Link geht auch an die Geräte, auf
+            denen die Spielervertretung sie eingeschaltet hat. Aus bestehenden Teilen gebaut - Fläche
+            <code> elev-01</code> wie ein Eintrag der Benachrichtigungen, <code>Switch</code>,{" "}
+            <code>SectionMessage</code> und <code>Dialog</code>. Begriff durchgängig «Mobile».
+          </p>
+          <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+            <li>
+              <strong>Karte oben in der Glocken-Ansicht</strong> - Schalter und eine Zustandszeile, die sagt, was für
+              dieses Gerät gilt. Auf dem iPhone im Safari-Tab ist der Schalter gesperrt; ein Hinweis führt mit
+              «So geht’s» zur Anleitung «als App ablegen». Hat das Mobile sie abgelehnt, sagt ein Hinweis, wo man
+              sie wieder erlaubt. Nur wenn die Umgebung Mitteilungen hat (VAPID gesetzt).
+            </li>
+            <li>
+              <strong>Dialog vor dem Einschalten</strong> - was KiFu speichert, wer zustellt und wann es
+              verschwindet; erst «Einschalten» ruft die Abfrage des Browsers auf. Ausschalten gilt sofort.
+            </li>
+            <li>
+              <strong>Spalte «Mobile» in der Spielerliste eines Teams</strong> - Glocke (<code>Bell</code>, Schrift
+              on-surface) bzw. durchgestrichene Glocke (<code>BellOff</code>, on-surface-mittel), nie Primary; nur
+              das Zeichen mit <code>aria-label</code>. Der feste Hinweis steht hinter ⓘ im Spaltenkopf - dafür nimmt
+              <code> Tabelle</code> im Kopf neben Text auch ein Element an. Texte in <code>lib/push.ts</code>.
+            </li>
+          </ul>
+          <MitteilungenDemo />
         </Section>
       </VerzeichnisFlaeche>
     </Seitenrahmen>

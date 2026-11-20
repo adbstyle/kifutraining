@@ -173,12 +173,16 @@ export function linkManifest({ token, vorname, verein }: { token: string; vornam
   } as const;
 }
 
-/** Die Texte (Begriff durchgängig «Mobile»). Die Mitteilungen
- *  nennt der Hinweis erst mit Story 2 (#483). */
+/** Der Zusatz zum Hinweis, wenn es Mitteilungen gibt (#483 AK 4). */
+export const APP_ABLEGEN_MITTEILUNGEN = "In der App kannst du ausserdem Mitteilungen aufs Mobile einschalten.";
+
+/** Die Texte (Begriff durchgängig «Mobile»). Gibt es in der Umgebung
+ *  Mitteilungen (#483 AK 4), nennt der Hinweis sie dazu. */
 export const APP_ABLEGEN_TEXT = {
   hinweisTitel: (vorname: string) => `Termine von ${vorname} als App`,
-  hinweisText: (vorname: string) =>
-    `Lege diese Seite auf den Home-Bildschirm. Dann öffnest du ${genitiv(vorname)} Termine mit einem Tipp, ohne den Link im Chat zu suchen.`,
+  hinweisText: (vorname: string, mitteilungen = false) =>
+    `Lege diese Seite auf den Home-Bildschirm. Dann öffnest du ${genitiv(vorname)} Termine mit einem Tipp, ohne den Link im Chat zu suchen.` +
+    (mitteilungen ? ` ${APP_ABLEGEN_MITTEILUNGEN}` : ""),
   /** AK 8: in einem Browser in einer App. */
   inApp: "Hier lässt sich die Seite nicht als App ablegen. Öffne den Link im Browser deines Mobiles, etwa in Safari oder Chrome.",
   schliessen: "Hinweis schliessen",

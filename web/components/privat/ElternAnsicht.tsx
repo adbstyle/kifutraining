@@ -12,6 +12,7 @@ import { AboKnopf } from "./AboKnopf";
 import { BenachrichtigungenAnsicht } from "./BenachrichtigungenAnsicht";
 import { useBenachrichtigungen } from "./useBenachrichtigungen";
 import { AppAblegenAnleitung, AppAblegenHinweis, AppAblegenKnopf, useAppAblegen } from "./AppAblegen";
+import { Mitteilungen } from "./Mitteilungen";
 import { appName } from "@/lib/app-ablegen";
 import { knopfLabel, type LinkBenachrichtigungen } from "@/lib/benachrichtigung";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
@@ -79,7 +80,12 @@ import { PROBE_TEXT, linkProbeStand, linkProbeVoll, linkProbeZaehler, type Probe
    Als App ablegen (#650): Auf dem Mobile steht ab dem zweiten Besuch ein
    schliessbarer Hinweis über den Terminen, unter ihnen immer ein ruhiger
    Knopf — beides nicht in der abgelegten App. Erst nach dem Einhängen: Der
-   Server kennt weder Gerät noch Speicher. */
+   Server kennt weder Gerät noch Speicher.
+
+   Mitteilungen aufs Mobile (#483): Oben in der Glocken-Ansicht steht die
+   Karte mit dem Schalter, wenn die Umgebung Mitteilungen hat
+   (`mitteilungen`); dann nennt sie auch der Hinweis zum Ablegen. Auf dem
+   iPhone im Safari-Tab führt «So geht’s» zur selben Anleitung. */
 export function ElternAnsicht({
   token,
   verein,
@@ -90,6 +96,7 @@ export function ElternAnsicht({
   benachrichtigungen,
   gesehenBis,
   schluessel,
+  mitteilungen,
 }: {
   token: string;
   /** Der Verein der Spieler:in: Teil des App-Namens (#650 AK 4). */
@@ -106,6 +113,9 @@ export function ElternAnsicht({
   gesehenBis: number | null;
   /** Aus dem Link abgeleiteter Schlüssel des Cookies (nie der Link selbst). */
   schluessel: string;
+  /** Der öffentliche VAPID-Schlüssel, wenn die Umgebung Mitteilungen hat
+   *  (#483); sonst `null`: kein Schalter, der Hinweis nennt sie nicht. */
+  mitteilungen: string | null;
 }) {
   // Was gerade umgelegt wird, steht sofort so da; scheitert es, zurück. Bei
   // Spielen die Meldung (#463) ebenso.
@@ -308,12 +318,23 @@ export function ElternAnsicht({
           terminIds={new Set(termine.map((t) => t.id))}
           onZurueck={glocke.schliessen}
           onZumTermin={zeigeTermin}
+          kopf={
+            mitteilungen && (
+              <Mitteilungen link={token} vorname={spieler.vorname} publicKey={mitteilungen} onSoGehts={app.oeffneAnleitung} />
+            )
+          }
         />
       ) : (
         <>
           {app.lage?.hinweis && (
             <div className="px-4 pt-4">
-              <AppAblegenHinweis vorname={spieler.vorname} geraet={app.lage.geraet} onSchliessen={app.schliessen} onAktion={app.ablegen} />
+              <AppAblegenHinweis
+                vorname={spieler.vorname}
+                geraet={app.lage.geraet}
+                mitteilungen={!!mitteilungen}
+                onSchliessen={app.schliessen}
+                onAktion={app.ablegen}
+              />
             </div>
           )}
           {voll && probeLokal && (

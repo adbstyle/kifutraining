@@ -68,7 +68,7 @@ function schreibeSpeicher(wert: string) {
 }
 
 /** In der abgelegten App (AK 3): ohne Browser-Leiste. `navigator.standalone` meldet es auf dem iPhone. */
-function istAbgelegt(): boolean {
+export function istAbgelegt(): boolean {
   return window.matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
 }
 
@@ -133,11 +133,14 @@ export function useAppAblegen(schluessel: string) {
 export function AppAblegenHinweis({
   vorname,
   geraet,
+  mitteilungen = false,
   onSchliessen,
   onAktion,
 }: {
   vorname: string;
   geraet: Geraet;
+  /** Gibt es Mitteilungen, nennt der Hinweis sie (#483 AK 4). */
+  mitteilungen?: boolean;
   onSchliessen: () => void;
   /** «So geht’s» (iPhone) bzw. «Als App ablegen» (Android). */
   onAktion: () => void;
@@ -156,7 +159,7 @@ export function AppAblegenHinweis({
       }
     >
       <strong className="block font-semibold">{APP_ABLEGEN_TEXT.hinweisTitel(vorname)}</strong>
-      {geraet.inApp ? APP_ABLEGEN_TEXT.inApp : APP_ABLEGEN_TEXT.hinweisText(vorname)}
+      {geraet.inApp ? APP_ABLEGEN_TEXT.inApp : APP_ABLEGEN_TEXT.hinweisText(vorname, mitteilungen)}
     </SectionMessage>
   );
 }

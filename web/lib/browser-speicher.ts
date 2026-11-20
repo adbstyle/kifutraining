@@ -6,6 +6,7 @@ import { LEISTE_COOKIE } from "@/lib/seitenleiste";
 import { SPALTE_COOKIE } from "@/lib/spalte";
 import { VERZEICHNIS_COOKIE } from "@/lib/verzeichnis";
 import { GESEHEN_COOKIE } from "@/lib/versionen-gesehen";
+import { SERVICE_WORKER_PFAD } from "@/lib/push";
 
 /* Alles, was KiFu im Browser ablegt (#409) — die eine Liste, aus der die
    Seite «Cookies» liest. Wer eine neue Speicherung einführt, trägt sie hier
@@ -93,5 +94,14 @@ export const SPEICHERUNGEN: Speicherung[] = [
     zweck: "Auf der Seite hinter dem privaten Link einer Spieler:in, im lokalen Speicher des Browsers: zählt die Besuche dieses Geräts und merkt sich, wann du den Hinweis «als App ablegen» geschlossen hast. Je Link ein Eintrag, nur ein Kürzel des Links, nie der Link selbst.",
     dauer: "Bis du die Daten der Website im Browser löschst.",
     ohne: "Der Hinweis erscheint nicht; der Knopf unter den Terminen bleibt.",
+  },
+  {
+    // Kein Cookie: ein Service Worker je Link und seine Anmeldung beim
+    // Mitteilungsdienst (#483). Nur wer Mitteilungen einschaltet, bekommt sie.
+    name: `Service Worker ${SERVICE_WORKER_PFAD} mit Anmeldung beim Mitteilungsdienst`,
+    titel: "Mitteilungen aufs Mobile",
+    zweck: "Auf der Seite hinter dem privaten Link einer Spieler:in, erst wenn du Mitteilungen einschaltest: ein kleines Programm des Browsers zeigt die Mitteilungen an und öffnet beim Antippen die Benachrichtigungen. Es meldet dieses Gerät beim Mitteilungsdienst des Herstellers an; KiFu bewahrt dessen Adresse zusammen mit dem Link auf. Es speichert keine Seiten und liest nichts mit.",
+    dauer: "Bis du die Mitteilungen ausschaltest, das Team den Link erneuert oder du die Daten der Website im Browser löschst.",
+    ohne: "Dieses Gerät erhält keine Mitteilungen; Neues siehst du am Link unter «Benachrichtigungen».",
   },
 ];

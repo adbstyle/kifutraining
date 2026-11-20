@@ -8595,6 +8595,117 @@ try {
     assert.equal(kiWert(await ki(a, "termin_entfernen", { termin_id: erster2.id, reichweite: "alle", bestaetigt: true })).benachrichtigt, 2);
   });
 
+  await pruefe("Mitteilungen (#483 AK 1, 5–7, 11, 12; PC 1, 3, 4): einschalten über den Link, Grenze 10, ein Auftrag je Gerät, Abarbeiten mit Stub — 410 löscht das Abo, 2xx den Auftrag; Mitglied und KI sehen nur ja/nein; Erneuern leert", async () => {
+    const name = "Kern-DB-Mitteilungen";
+    const team = await serienTeam(name);
+    const lea = (await neuerSpieler(team, "Lea", "Mobile", 2016)).spielerId;
+    const max = (await neuerSpieler(team, "Max", "Mobile", 2016)).spielerId;
+    const { schaltePushEin, schaltePushAus, pushStand } = await import("../lib/privater-link");
+    const { arbeitePushAb, pushZugang } = await import("../lib/kern/push");
+    const { PUSH_MAX_GERAETE } = await import("../lib/push");
+    const token = wert(await holeSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lea })).token;
+    const ep = (n: number) => `https://fcm.googleapis.com/fcm/send/kern-db-${n}`;
+    // Ein gültiger P-256-Punkt (der Link prüft ihn, #483).
+    const { createECDH } = await import("node:crypto");
+    const punkt = createECDH("prime256v1");
+    punkt.generateKeys();
+    const p256dh = punkt.getPublicKey().toString("base64url");
+    const abo = (n: number) => ({ endpoint: ep(n), keys: { p256dh, auth: "A".repeat(22) } });
+    const abos = async (spieler: string) => (await admin.from("push_abos").select("id, endpoint, schluessel").eq("spieler_id", spieler)).data ?? [];
+    const auftraege = async (aboIds: string[]) => (await admin.from("push_auftraege").select("id, abo_id").in("abo_id", aboIds)).data ?? [];
+
+    // Ohne VAPID in der Umgebung lehnt der Link ab; mit (für die Prüfung gesetzt) schaltet er ein.
+    const vorher = { pub: process.env.VAPID_PUBLIC_KEY, priv: process.env.VAPID_PRIVATE_KEY, sub: process.env.VAPID_SUBJECT };
+    process.env.VAPID_PUBLIC_KEY = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U";
+    process.env.VAPID_PRIVATE_KEY = "kern-db";
+    process.env.VAPID_SUBJECT = "mailto:pruefung@kifu.invalid";
+    try {
+      const { pushSchluessel } = await import("../lib/push/schluessel");
+      const schluessel = pushSchluessel(process.env.VAPID_PUBLIC_KEY);
+      // AK 1, 6, 7: einschalten, Stand, ausschalten; ungültiger Link und fremder Dienst.
+      assert.deepEqual(await schaltePushEin(token, abo(1)), { ok: true });
+      assert.deepEqual(await schaltePushEin(token, abo(1)), { ok: true }, "dasselbe Gerät nochmals");
+      assert.equal(await pushStand(token, ep(1)), "an");
+      assert.equal(await pushStand(token, ep(2)), "aus");
+      assert.deepEqual(await schaltePushEin("0".repeat(64), abo(1)), { ok: false, ungueltig: true });
+      assert.equal((await schaltePushEin(token, { ...abo(1), endpoint: "https://angreifer.example/x" })).ok, false);
+      assert.equal((await schaltePushEin(token, { ...abo(1), keys: { p256dh: `B${"A".repeat(86)}`, auth: "A".repeat(22) } })).ok, false, "kein gültiger Punkt");
+      assert.deepEqual(await schaltePushAus(token, ep(1)), { ok: true });
+      assert.equal(await pushStand(token, ep(1)), "aus");
+      // AK 5: mehrere Geräte, höchstens 10.
+      for (let n = 1; n <= PUSH_MAX_GERAETE; n++) assert.deepEqual(await schaltePushEin(token, abo(n)), { ok: true }, `Gerät ${n}`);
+      const voll = await schaltePushEin(token, abo(PUSH_MAX_GERAETE + 1));
+      assert.ok(!voll.ok && !voll.ungueltig && voll.grenze, "das 11. Gerät");
+      const leaAbos = await abos(lea);
+      assert.equal(leaAbos.length, PUSH_MAX_GERAETE);
+      assert.ok(leaAbos.every((x) => x.schluessel === schluessel), "Schlüssel der Umgebung (PC 5)");
+
+      // AK 11, 12: Mitglied und KI sehen nur ja/nein.
+      const liste = wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler;
+      assert.deepEqual(liste.map((s) => [s.vorname, s.mitteilungen]), [["Lea", true], ["Max", false]]);
+      const kiListe = kiWert(await ki(a, "spielerliste_abrufen", { team_id: team })) as { spieler: { vorname: string; mitteilungen: boolean }[] };
+      assert.deepEqual(kiListe.spieler.map((s) => [s.vorname, s.mitteilungen]), [["Lea", true], ["Max", false]]);
+      assert.ok(!JSON.stringify(kiListe).includes("fcm.googleapis.com"), "keine Adressen");
+
+      // PC 1: ein neues Spiel legt je Gerät von Lea einen Auftrag ab, für Max keinen.
+      const spiel = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: true, art: "spiel", bezeichnung: "Cup", teamId: team, datum: tagCh(3), beginn: "10:00", ende: "12:00", ort: "Allmend" }));
+      assert.equal(spiel.benachrichtigt, 2);
+      const ids = leaAbos.map((x) => x.id);
+      assert.equal((await auftraege(ids)).length, PUSH_MAX_GERAETE);
+
+      // Abarbeiten mit Stub-Sender (Service-Role statt Geheimnis, nur hier): Gerät 1 nimmt nichts mehr an (410),
+      // Gerät 2 scheitert (500), Gerät 3 antwortet nicht (Zeitlimit), die übrigen nehmen an.
+      const gesendet: { endpoint: string; titel: string; text: string; url: string }[] = [];
+      const bilanz = await arbeitePushAb({
+        zugang: pushZugang(admin, null, schluessel),
+        timeoutMs: 200,
+        senden: async (g, m) => {
+          gesendet.push({ endpoint: g.endpoint, ...m });
+          if (g.endpoint === ep(1)) return 410;
+          if (g.endpoint === ep(2)) return 500;
+          if (g.endpoint === ep(3)) return new Promise<number>(() => {});
+          return 201;
+        },
+      });
+      // Auch Aufträge anderer Prüfungen dieser Umgebung können dabei sein; gezählt werden die eigenen.
+      const eigene = gesendet.filter((g) => g.endpoint.startsWith("https://fcm.googleapis.com/fcm/send/kern-db-"));
+      assert.equal(eigene.length, PUSH_MAX_GERAETE);
+      assert.ok(bilanz.berechtigt && bilanz.weg >= 1 && bilanz.fehler >= 2 && bilanz.zugestellt >= PUSH_MAX_GERAETE - 3);
+      // AK 8, 9: Vorname und Benachrichtigung, Antippen führt zu den Benachrichtigungen des Links.
+      assert.deepEqual(
+        { titel: eigene[0].titel, url: eigene[0].url },
+        { titel: `Neues Spiel · ${name}`, url: `/abmelden/${token}?ansicht=benachrichtigungen` },
+      );
+      assert.match(eigene[0].text, /^Lea: Cup · .* · 10:00–12:00 · Allmend$/);
+      // PC 4: 410 löscht das Abo; zugestellte Aufträge sind weg, gescheiterte warten auf den nächsten Versuch.
+      const nachher = await abos(lea);
+      assert.equal(nachher.length, PUSH_MAX_GERAETE - 1);
+      assert.ok(!nachher.some((x) => x.endpoint === ep(1)), "410 → Abo weg");
+      const rest = (await admin.from("push_auftraege").select("abo_id, versuche, gesperrt_bis").in("abo_id", ids)).data ?? [];
+      const endpointVon = new Map(leaAbos.map((x) => [x.id, x.endpoint]));
+      assert.deepEqual(rest.map((r) => endpointVon.get(r.abo_id)).sort(), [ep(2), ep(3)].sort());
+      assert.ok(rest.every((r) => r.versuche === 1 && r.gesperrt_bis && new Date(r.gesperrt_bis).getTime() > Date.now()));
+      // Ein zweiter Lauf jetzt holt sie nicht (sie warten), und ohne Berechtigung nichts.
+      const leer = await arbeitePushAb({ zugang: pushZugang(admin, null, schluessel), senden: async () => 201 });
+      assert.equal(leer.zugestellt, 0);
+      const { createAnonClient } = await import("../lib/supabase/anon");
+      assert.equal((await arbeitePushAb({ zugang: pushZugang(createAnonClient(), "x".repeat(40), schluessel), senden: async () => 201 })).berechtigt, false);
+
+      // PC 3: Erneuern beendet die Mitteilungen aller Geräte samt Aufträgen.
+      wert(await erneuereSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lea }));
+      assert.equal((await abos(lea)).length, 0);
+      assert.equal((await auftraege(ids)).length, 0);
+      assert.equal(await pushStand(token, ep(2)), "ungueltig");
+      assert.equal(wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler.find((s) => s.id === lea)?.mitteilungen, false);
+      void max;
+    } finally {
+      for (const [k, v] of [["VAPID_PUBLIC_KEY", vorher.pub], ["VAPID_PRIVATE_KEY", vorher.priv], ["VAPID_SUBJECT", vorher.sub]] as const)
+        if (v === undefined) delete process.env[k];
+        else process.env[k] = v;
+    }
+  });
+
+
   await pruefe("Schnuppern (#584 AK 5, 6, 14, 15): Ein- und Ausschalten im Team der Liste, nicht in einem fremden, bei weiteren Teams der Satz aus AK 6; Netz in der Datenebene", async () => {
     const k = await probeTeam("Kern-DB-584-Ein", 3);
     const ZWEITES = "Kern-DB-584-Ein-Zwei";
@@ -9354,7 +9465,8 @@ try {
         frage.meldung,
         `Den privaten Link von Lena Neunundachtzig erneuern? Der Link zeigt die Termine aller Teams von Lena: ${EA_589} und ${FA_589}. ` +
           "Der neue gilt für alle diese Teams; der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden. " +
-          "Abmeldungen bleiben bestehen. Keines dieser Teams hat die Selbstabholung eingeschaltet. Gib den neuen Link selbst weiter.",
+          "Abmeldungen bleiben bestehen. Mitteilungen aufs Mobile enden ebenfalls: Die Spielervertretung schaltet sie mit " +
+          "dem neuen Link neu ein und legt die App neu ab. Keines dieser Teams hat die Selbstabholung eingeschaltet. Gib den neuen Link selbst weiter.",
       );
       assert.equal(frage.hinweis, "Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist. Bis dahin gilt der bisherige Link.");
       assert.equal(await token(), alt, "nichts erneuert");

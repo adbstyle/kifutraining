@@ -25,4 +25,15 @@ export const env = {
   /** Schlüssel für das Gesprächsmodell des Feedback-Dialogs (Epic #541).
    *  Fehlt er, ist Feedback nicht möglich; der Rest der App läuft weiter. */
   anthropicApiKey: () => process.env.ANTHROPIC_API_KEY || null,
+  /** Mitteilungen aufs Mobile (#483): VAPID-Schlüsselpaar und Kontakt je
+   *  Umgebung (`npx web-push generate-vapid-keys`). Fehlt einer der drei
+   *  Werte, gibt es keine Mitteilungen: Der Schalter am Link ist
+   *  ausgeblendet, die Route stellt nichts zu. Den öffentlichen Schlüssel
+   *  bekommt der Browser als Prop, nie als NEXT_PUBLIC_-Variable. */
+  vapid: (): { publicKey: string; privateKey: string; subject: string } | null => {
+    const publicKey = process.env.VAPID_PUBLIC_KEY;
+    const privateKey = process.env.VAPID_PRIVATE_KEY;
+    const subject = process.env.VAPID_SUBJECT;
+    return publicKey && privateKey && subject ? { publicKey, privateKey, subject } : null;
+  },
 };
