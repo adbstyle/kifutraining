@@ -3,7 +3,7 @@
 // kann (nur `push` und `notificationclick`, kein `fetch`, kein Cache). REIN.
 //
 // Jeder Push zeigt eine Mitteilung, auch ohne lesbare Nutzlast: Safari wertet
-// einen Push ohne Mitteilung als stillen Push und entzieht nach wenigen die
+// einen Push ohne Mitteilung als stillen Push und entzieht nach wenigen Pushes die
 // Erlaubnis. Dann steht ein Ersatztitel da, Antippen öffnet die
 // Benachrichtigungen des Links.
 export const MITTEILUNG_ERSATZ = { titel: "Neues bei KiFu", text: "Tippe, um es anzusehen." } as const;
