@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   PUSH_ANZAHL_JE_RUNDE,
-  PUSH_TIMEOUT_MS,
+  PUSH_ZEITLIMIT_MS,
   mitteilungInhalt,
   pushErgebnis,
   type Mitteilung,
@@ -16,8 +16,8 @@ import {
  * Aufrufer ein (die Route web-push, die Prüfung check:kern-db einen Stub).
  *
  * Ablauf je Runde: Aufträge holen (`push_auftraege_holen`, vergeben mit
- * `skip locked`), allen Geräten gleichzeitig zustellen (`allSettled`, je
- * Gerät höchstens `PUSH_TIMEOUT_MS`), das Ergebnis melden
+ * `skip locked`), allen Geräten gleichzeitig zustellen (`allSettled`; das
+ * Zeitlimit je Gerät hält der Sender, `PUSH_TIMEOUT_MS`), das Ergebnis melden
  * (`push_auftraege_melden`: zugestellt → weg, 404/410 → Abo weg, sonst ein
  * Versuch mehr). Weiter, solange volle Runden kommen und Zeit bleibt.
  *
@@ -37,8 +37,9 @@ export type PushZugang = {
 
 /** Holen und Melden über die RPCs, mit dem Geheimnis (Route) — oder ohne,
  *  mit dem Service-Role-Client der Prüfung. `schluessel`: das Kürzel des
- *  VAPID-Public-Keys dieser Umgebung (PC 5). */
-export function pushZugang(supabase: SupabaseClient, geheimnis: string | null, schluessel: string): PushZugang {
+ *  VAPID-Public-Keys dieser Umgebung (PC 5); `null` ohne VAPID — dann
+ *  verwirft das Holen alle Aufträge und liefert keine. */
+export function pushZugang(supabase: SupabaseClient, geheimnis: string | null, schluessel: string | null): PushZugang {
   return {
     holen: async (anzahl) => {
       const { data, error } = await supabase.rpc("push_auftraege_holen", {
@@ -64,6 +65,10 @@ export function pushZugang(supabase: SupabaseClient, geheimnis: string | null, s
  *  heraus (falsches Geheimnis oder Fehler der Datenebene). */
 export type PushBilanz = { berechtigt: boolean; runden: number; zugestellt: number; weg: number; fehler: number };
 
+/** Notbremse gegen einen Sender, der nie antwortet. Länger als das Zeitlimit
+ *  des Senders selbst (`PUSH_ZEITLIMIT_MS` > `PUSH_TIMEOUT_MS`): Sonst
+ *  meldete die Route «fehler», während web-push noch zustellt, und der
+ *  nächste Versuch brächte die Mitteilung doppelt. */
 function mitZeitlimit(p: Promise<number | null>, ms: number): Promise<number | null> {
   let uhr: ReturnType<typeof setTimeout> | undefined;
   const ablauf = new Promise<null>((r) => {
@@ -73,13 +78,14 @@ function mitZeitlimit(p: Promise<number | null>, ms: number): Promise<number | n
 }
 
 /** Holt, stellt zu und meldet, bis eine Runde nicht voll ist oder
- *  `zeitbudgetMs` verbraucht ist. */
+ *  `zeitbudgetMs` verbraucht ist. Budget plus eine Runde (höchstens
+ *  `PUSH_ZEITLIMIT_MS`) bleiben unter `maxDuration` der Route (30 s). */
 export async function arbeitePushAb({
   zugang,
   senden,
   anzahl = PUSH_ANZAHL_JE_RUNDE,
-  zeitbudgetMs = 20_000,
-  timeoutMs = PUSH_TIMEOUT_MS,
+  zeitbudgetMs = 15_000,
+  timeoutMs = PUSH_ZEITLIMIT_MS,
   jetzt = () => Date.now(),
 }: {
   zugang: PushZugang;

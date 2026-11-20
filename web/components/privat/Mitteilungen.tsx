@@ -125,11 +125,25 @@ export function useMitteilungen({ link, vorname, publicKey }: { link: string; vo
   }
 
   /** «Einschalten» im Dialog: zuerst die Abfrage des Browsers (sie braucht
-   *  den Klick), dann Service Worker, Anmeldung und Datenebene. */
+   *  den Klick), dann Service Worker, Anmeldung und Datenebene.
+   *
+   *  Scheitert es, meldet sich das Gerät nur ab, wenn die Anmeldung in diesem
+   *  Durchgang NEU entstand (`neu`). Eine wiederverwendete kann die
+   *  Datenebene schon kennen; sie abzumelden liesse dort ein Abo ohne Gerät
+   *  stehen (das Team sähe eine falsche Glocke). Dann prüft die Karte den
+   *  Stand neu. */
   async function einschalten() {
     setDialog(false);
     setPending(true);
     let anmeldung: PushSubscription | null = null;
+    let neu = false;
+    /** Nach einem Fehlschlag: die neue Anmeldung zurücknehmen, sonst den Stand neu prüfen. */
+    const zuruecknehmen = async () => {
+      if (anmeldung && neu) {
+        await anmeldung.unsubscribe().catch(() => false);
+        setStand(unterstuetzt() && Notification.permission === "denied" ? "abgelehnt" : "aus");
+      } else await pruefen();
+    };
     try {
       const erlaubnis = await Notification.requestPermission();
       if (erlaubnis === "denied") return setStand("abgelehnt");
@@ -141,18 +155,19 @@ export function useMitteilungen({ link, vorname, publicKey }: { link: string; vo
         await anmeldung.unsubscribe().catch(() => false);
         anmeldung = null;
       }
-      anmeldung ??= await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: schluesselBytes(publicKey) });
+      if (!anmeldung) {
+        anmeldung = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: schluesselBytes(publicKey) });
+        neu = true;
+      }
       const r = await schaltePushEinAktion(link, anmeldung.toJSON());
       if (r.ok) return setStand("an");
       if (r.ungueltig) return router.refresh();
-      // Abgewiesen: Die Anmeldung am Gerät bleibt nicht stehen.
-      await anmeldung.unsubscribe().catch(() => false);
-      setStand("aus");
+      // Abgewiesen: Eine neue Anmeldung am Gerät bleibt nicht stehen.
+      await zuruecknehmen();
       setMeldung({ art: "error", text: r.grenze ? MITTEILUNGEN_TEXT.grenze(vorname) : r.error });
     } catch (e) {
       console.error("[mitteilungen] einschalten:", e);
-      await anmeldung?.unsubscribe().catch(() => false);
-      setStand(unterstuetzt() && Notification.permission === "denied" ? "abgelehnt" : "aus");
+      await zuruecknehmen().catch(() => setStand("aus"));
       setMeldung({ art: "error", text: MITTEILUNGEN_TEXT.fehler });
     } finally {
       setPending(false);

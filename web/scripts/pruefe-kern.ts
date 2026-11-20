@@ -206,7 +206,9 @@ import {
   PUSH_ENDPUNKT,
   PUSH_MAX_GERAETE,
   PUSH_MAX_VERSUCHE,
+  PUSH_TIMEOUT_MS,
   PUSH_TTL_SEKUNDEN,
+  PUSH_ZEITLIMIT_MS,
   SERVICE_WORKER_PFAD,
   gleicherSchluessel,
   istPushAbo,
@@ -216,7 +218,7 @@ import {
   pushErgebnis,
   schluesselBytes,
 } from "../lib/push";
-import { SERVICE_WORKER_QUELLE } from "../lib/push-service-worker";
+import { MITTEILUNG_ERSATZ, SERVICE_WORKER_QUELLE } from "../lib/push-service-worker";
 import {
   APP_ABLEGEN_MAX_LINKS,
   APP_ABLEGEN_MITTEILUNGEN,
@@ -5757,6 +5759,79 @@ pruefe("Mitteilungen (#483): Service Worker — nur push und notificationclick, 
   // Der Bereich je Link ist derselbe wie der des Manifests (#650).
   const link = "b".repeat(43);
   assert.equal(pushBereich(link), linkManifest({ token: link, vorname: "X", verein: "Y" }).scope);
+});
+
+pruefe("Mitteilungen (#652 Review): Service Worker zeigt jeden Push als Mitteilung — ohne oder mit unlesbarer Nutzlast einen Ersatz, der die Benachrichtigungen öffnet", () => {
+  const bereich = `https://ki-fu.ch/abmelden/${"b".repeat(43)}`;
+  const hoerer = new Map<string, (e: unknown) => void>();
+  const gezeigt: { titel: string; body: string; url: unknown }[] = [];
+  const swSelf = {
+    addEventListener: (n: string, f: (e: unknown) => void) => hoerer.set(n, f),
+    registration: {
+      scope: bereich,
+      showNotification: (titel: string, o: { body: string; data: { url: unknown } }) => {
+        gezeigt.push({ titel, body: o.body, url: o.data.url });
+        return Promise.resolve();
+      },
+    },
+    location: { origin: "https://ki-fu.ch" },
+  };
+  new Function("self", SERVICE_WORKER_QUELLE)(swSelf);
+  const push = (data: unknown) => hoerer.get("push")!({ data, waitUntil: () => {} });
+  push(null);
+  push({ json: () => { throw new SyntaxError("kaputt"); } });
+  push({ json: () => ({ text: "ohne Titel" }) });
+  push({ json: () => ({ titel: "Neues Spiel · Adler", text: "Lea: Cup", url: "/abmelden/x?ansicht=benachrichtigungen", tag: "t" }) });
+  assert.equal(gezeigt.length, 4, "jeder Push zeigt eine Mitteilung (Safari: kein stiller Push)");
+  for (const g of gezeigt.slice(0, 3))
+    assert.deepEqual(g, { titel: MITTEILUNG_ERSATZ.titel, body: MITTEILUNG_ERSATZ.text, url: `${bereich}?ansicht=benachrichtigungen` });
+  assert.deepEqual(gezeigt[3], { titel: "Neues Spiel · Adler", body: "Lea: Cup", url: "/abmelden/x?ansicht=benachrichtigungen" });
+});
+
+pruefe("Mitteilungen (#652 Review): Notbremse länger als das Zeitlimit des Senders; ohne VAPID verwirft die Route die Aufträge", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Meldete die Notbremse «fehler», während web-push noch zustellt, käme die Mitteilung doppelt.
+  assert.ok(PUSH_ZEITLIMIT_MS > PUSH_TIMEOUT_MS);
+  assert.match(lies("lib/kern/push.ts"), /timeoutMs = PUSH_ZEITLIMIT_MS,/);
+  assert.match(lies("lib/push/senden.ts"), /timeout: PUSH_TIMEOUT_MS,/);
+  // Ohne VAPID holt die Route ohne Schlüssel (alle Aufträge fallen weg), statt sie liegen zu lassen (#444).
+  assert.match(lies("app/api/push/abarbeiten/route.ts"), /if \(!vapid\) \{\s*const verworfen = await pushZugang\(createAnonClient\(\), geheimnis, null\)\.holen\(1\);/);
+  assert.match(PUSH_MIGRATION, /if p_schluessel is null then\s*delete from push_auftraege where true;[^\n]*\n\s*return '\[\]'::jsonb;/);
+});
+
+pruefe("Mitteilungen (#652 Review): Spielerliste fragt Glocken gleichzeitig; Einschalten nimmt nur eine in diesem Durchgang neue Anmeldung zurück", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  assert.match(lies("lib/kern/spieler.ts"), /Promise\.all\(\[[\s\S]{0,300}"spieler_weitere_teams"[\s\S]{0,120}"team_spieler_mitteilungen"/);
+  const m = lies("components/privat/Mitteilungen.tsx");
+  const ein = m.slice(m.indexOf("async function einschalten()"), m.indexOf("return { stand"));
+  // Eine wiederverwendete Anmeldung kennt die Datenebene vielleicht schon: abmelden nur, wenn neu, sonst neu prüfen.
+  assert.match(ein, /if \(anmeldung && neu\) \{\s*await anmeldung\.unsubscribe\(\)[\s\S]*?\} else await pruefen\(\);/);
+  assert.match(ein, /subscribe\(\{[^}]*\}\);\s*neu = true;/);
+  // Ausser beim fremden Schlüssel (taugt nie) meldet nur `zuruecknehmen` ab.
+  assert.equal((ein.match(/\.unsubscribe\(\)/g) ?? []).length, 2);
+});
+
+const KOPF_REGELN = await (await import("../next.config")).default.headers!();
+pruefe("Manifest des Links (#652 Review): schlanke Abfrage und zwischenspeicherbar, die übrigen Schutz-Header bleiben", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const route = lies("app/(privat)/abmelden/[privaterLink]/manifest.webmanifest/route.ts");
+  assert.ok(!/ladeLinkAnsicht|spieler_link_ansicht/.test(route), "nicht die ganze Ansicht");
+  assert.match(route, /ladeLinkApp\(/);
+  assert.match(lies("lib/privater-link.ts"), /\.rpc\("spieler_link_app"/);
+  const fuer = (pfad: string) => {
+    const kopf = new Map<string, string>();
+    // Wie Next: Jede passende Regel setzt ihre Header, eine spätere überschreibt denselben Schlüssel.
+    for (const r of KOPF_REGELN) {
+      const muster = new RegExp(`^${r.source.replace(/\./g, "\\.").replace(/:\w+\*/g, ".*").replace(/:\w+/g, "[^/]+")}$`);
+      if (muster.test(pfad)) for (const h of r.headers) kopf.set(h.key, h.value);
+    }
+    return kopf;
+  };
+  const link = "b".repeat(43);
+  const manifest = fuer(`/abmelden/${link}/manifest.webmanifest`);
+  assert.match(manifest.get("Cache-Control") ?? "", /^private, max-age=\d+$/);
+  for (const k of ["Referrer-Policy", "X-Robots-Tag", "X-Frame-Options", "Content-Security-Policy"]) assert.ok(manifest.has(k), k);
+  assert.equal(fuer(`/abmelden/${link}`).get("Cache-Control"), "private, no-store", "die Seite selbst nirgends zwischenspeichern");
 });
 
 pruefe("Mitteilungen (#483): Route und Schlüssel — force-dynamic, nodejs, kein Service-Role-Schlüssel, keine NEXT_PUBLIC", () => {

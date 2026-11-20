@@ -11,8 +11,10 @@ import { webPushSender } from "@/lib/push/senden";
    antwortet sonst `null`). Kein Service-Role-Schlüssel, keine Sitzung
    (Middleware schliesst /api/push aus).
 
-   Antworten: 401 ohne gültiges Geheimnis, 503 ohne VAPID (die Aufträge
-   bleiben liegen), sonst 200 mit den Zahlen — nie Adressen oder Links. */
+   Antworten: 401 ohne gültiges Geheimnis; 503 ohne VAPID — dann stellt diese
+   Umgebung nichts zu, und die Aufträge fallen weg (Holen ohne Schlüssel),
+   sonst stiesse das Netz die Route bis 24 h lang jede Minute an (#444);
+   sonst 200 mit den Zahlen — nie Adressen oder Links. */
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -22,7 +24,10 @@ export async function POST(request: Request) {
   const geheimnis = /^Bearer (\S{32,512})$/.exec(kopf)?.[1];
   if (!geheimnis) return new Response(null, { status: 401 });
   const vapid = env.vapid();
-  if (!vapid) return new Response(null, { status: 503 });
+  if (!vapid) {
+    const verworfen = await pushZugang(createAnonClient(), geheimnis, null).holen(1);
+    return new Response(null, { status: verworfen === null ? 401 : 503 });
+  }
   const bilanz = await arbeitePushAb({
     zugang: pushZugang(createAnonClient(), geheimnis, pushSchluessel(vapid.publicKey)),
     senden: webPushSender(vapid),

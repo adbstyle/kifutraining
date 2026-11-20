@@ -30,8 +30,14 @@ export const PUSH_MAX_VERSUCHE = 5;
 /** Wie viele Aufträge die Route je Runde holt; höchstens 200 (SQL). */
 export const PUSH_ANZAHL_JE_RUNDE = 50;
 
-/** Wie lange die Route auf einen Mitteilungsdienst wartet. */
+/** Wie lange die Route auf einen Mitteilungsdienst wartet (web-push bricht
+ *  die Anfrage danach selbst ab). */
 export const PUSH_TIMEOUT_MS = 5000;
+
+/** Die Notbremse des Abarbeiters gegen einen Sender, der nie antwortet —
+ *  bewusst länger als `PUSH_TIMEOUT_MS`, damit sie nie «fehler» meldet,
+ *  während web-push noch zustellt (sonst käme die Mitteilung doppelt). */
+export const PUSH_ZEITLIMIT_MS = 2 * PUSH_TIMEOUT_MS;
 
 /** Die Mitteilungsdienste, an die KiFu zustellt: Google (auch Samsung und
  *  Opera), Apple, Mozilla, Microsoft. SQL-Zwilling: Check

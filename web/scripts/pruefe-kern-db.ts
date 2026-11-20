@@ -8622,6 +8622,12 @@ try {
     try {
       const { pushSchluessel } = await import("../lib/push/schluessel");
       const schluessel = pushSchluessel(process.env.VAPID_PUBLIC_KEY);
+      // Manifest des Links (#652 Review): nur Vorname und Verein über die schlanke RPC.
+      const { ladeLinkApp } = await import("../lib/privater-link");
+      const app = await ladeLinkApp(token);
+      assert.equal(app?.vorname, "Lea");
+      assert.ok(app && app.verein.length > 0);
+      assert.equal(await ladeLinkApp("0".repeat(64)), null);
       // AK 1, 6, 7: einschalten, Stand, ausschalten; ungültiger Link und fremder Dienst.
       assert.deepEqual(await schaltePushEin(token, abo(1)), { ok: true });
       assert.deepEqual(await schaltePushEin(token, abo(1)), { ok: true }, "dasselbe Gerät nochmals");
@@ -8690,6 +8696,11 @@ try {
       assert.equal(leer.zugestellt, 0);
       const { createAnonClient } = await import("../lib/supabase/anon");
       assert.equal((await arbeitePushAb({ zugang: pushZugang(createAnonClient(), "x".repeat(40), schluessel), senden: async () => 201 })).berechtigt, false);
+
+      // Ohne VAPID (#652 Review): Holen ohne Schlüssel verwirft die wartenden Aufträge, statt sie liegen zu lassen.
+      assert.ok((await auftraege(ids)).length > 0);
+      assert.deepEqual(await pushZugang(admin, null, null).holen(1), []);
+      assert.equal((await auftraege(ids)).length, 0);
 
       // PC 3: Erneuern beendet die Mitteilungen aller Geräte samt Aufträgen.
       wert(await erneuereSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lea }));

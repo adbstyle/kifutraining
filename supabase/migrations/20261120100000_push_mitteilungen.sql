@@ -100,14 +100,18 @@ revoke all on push_auftraege from anon, authenticated;
 -- Höchstens 10 Geräte je Spieler:in (PO), Zwilling PUSH_MAX_GERAETE in
 -- web/lib/push.ts. Der Advisory-Lock serialisiert die Zählung (Muster
 -- spieler_import.sql); kein Upsert auf diese Tabelle (der Trigger feuert vor
--- der Konfliktprüfung).
+-- der Konfliktprüfung). Ein Gerät, das die Spieler:in schon hat, zählt nicht
+-- als weiteres: Schaltet dasselbe Gerät gleichzeitig zweimal ein, sieht der
+-- zweite Aufruf nach dem Lock die Zeile des ersten und läuft in den
+-- unique-Konflikt (in `spieler_push_anmelden` 'ok') statt in die Grenze.
 create function push_abos_grenze() returns trigger
 language plpgsql security definer
 set search_path = public, pg_temp
 as $$
 begin
   perform pg_advisory_xact_lock(hashtextextended('push:' || new.spieler_id::text, 0));
-  if (select count(*) from push_abos where spieler_id = new.spieler_id) >= 10 then
+  if not exists (select 1 from push_abos where spieler_id = new.spieler_id and endpoint = new.endpoint)
+     and (select count(*) from push_abos where spieler_id = new.spieler_id) >= 10 then
     raise exception 'PUSH_GRENZE';
   end if;
   return new;
@@ -291,8 +295,10 @@ revoke all on function push_darf(text) from public, anon, authenticated;
 -- Bis zu `p_anzahl` offene Aufträge für Abos mit dem Schlüssel der Umgebung
 -- (`p_schluessel`, PC 5) — vergeben für 2 Minuten (`skip locked`: zwei
 -- Aufrufe teilen nie einen Auftrag). Aufträge für Abos eines anderen
--- Schlüssels liefert keine Umgebung je aus; sie fallen weg. `null` ohne
--- Berechtigung. Je Auftrag Adresse und Schlüssel des Geräts, Vorname und
+-- Schlüssels liefert keine Umgebung je aus; sie fallen weg. Ohne Schlüssel
+-- (`p_schluessel` null: der Umgebung fehlt VAPID) fallen alle Aufträge weg
+-- und es kommt `[]` — sonst stiesse das Netz die Route bis 24 h lang jede
+-- Minute an (#444). `null` ohne Berechtigung. Je Auftrag Adresse und Schlüssel des Geräts, Vorname und
 -- Link der Spieler:in (für die Adresse in der Mitteilung) und die
 -- Benachrichtigung in der Form von `spieler_link_benachrichtigungen`.
 create function push_auftraege_holen(p_geheimnis text, p_schluessel text, p_anzahl integer default 50)
@@ -305,6 +311,10 @@ declare
 begin
   if not push_darf(p_geheimnis) then return null; end if;
   perform push_auftraege_aufraeumen();
+  if p_schluessel is null then
+    delete from push_auftraege where true;   -- pg_safeupdate verlangt ein where
+    return '[]'::jsonb;
+  end if;
   delete from push_auftraege q using push_abos a
    where a.id = q.abo_id and a.schluessel is distinct from p_schluessel;
   with frei as (
@@ -460,6 +470,21 @@ end;
 $$;
 revoke all on function spieler_push_status(text, text) from public;
 grant execute on function spieler_push_status(text, text) to anon, authenticated;
+
+-- Was das Manifest des Links braucht (#650 AK 4): Vorname und Verein, sonst
+-- nichts — das Manifest holt der Browser bei jedem Seitenaufruf, die ganze
+-- Ansicht (`spieler_link_ansicht` mit allen Terminen) wäre dafür zu teuer.
+-- `null` für einen ungültigen Link (wie die Ansicht nicht unterscheidbar).
+create function spieler_link_app(p_token text) returns jsonb
+language sql stable security definer
+set search_path = public, pg_temp
+as $$
+  select jsonb_build_object('vorname', s.vorname, 'verein', v.name)
+    from spieler s join vereine v on v.id = s.verein_id
+   where s.link_token = p_token
+$$;
+revoke all on function spieler_link_app(text) from public;
+grant execute on function spieler_link_app(text) to anon, authenticated;
 
 -- ── Für Mitglieder (AK 11, 12) ──────────────────────────────────────────────
 

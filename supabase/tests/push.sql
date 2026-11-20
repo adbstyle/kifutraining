@@ -14,6 +14,9 @@
 -- - Anstoss: ohne Vault-Eintrag kein Aufruf (net.http_request_queue bleibt
 --   gleich), mit beiden Einträgen genau ein Aufruf je Anweisung mit Bearer;
 --   die Anfrage geht nie hinaus (rollback)
+-- - Ohne VAPID: Holen ohne Schlüssel verwirft alle Aufträge, das Netz
+--   stösst danach nicht mehr an; ein vorhandenes Gerät an der Grenze ist
+--   der unique-Konflikt, nicht die Grenze; Manifest-RPC spieler_link_app
 -- - Holen/Melden: falsches Geheimnis null, richtiges liefert die Aufträge
 --   des eigenen Schlüssels (fremde fallen weg), vergibt sie (zweites Holen
 --   leer); 'weg' löscht das Abo (PC 4), 'fehler' zählt hoch und löscht nach
@@ -148,7 +151,8 @@ begin
                          'push_darf(text)']) f;
     perform pg_temp.pruefe(has_function_privilege(r, f, 'execute'), r || ' darf nicht ' || f)
        from unnest(array['spieler_push_anmelden(text, text, text, text, text)',
-                         'spieler_push_abmelden(text, text)', 'spieler_push_status(text, text)']) f;
+                         'spieler_push_abmelden(text, text)', 'spieler_push_status(text, text)',
+                         'spieler_link_app(text)']) f;
   end loop;
   perform pg_temp.pruefe(not has_function_privilege('anon', 'team_spieler_mitteilungen(uuid)', 'execute')
                          and has_function_privilege('authenticated', 'team_spieler_mitteilungen(uuid)', 'execute'),
@@ -161,6 +165,12 @@ begin
   perform pg_temp.pruefe(exists (select 1 from cron.job where jobname = 'push-netz' and schedule = '* * * * *'),
                          'Netz-Job fehlt');
 end $$;
+
+-- Manifest des Links (#652 Review): nur Vorname und Verein, ungültig null.
+select pg_temp.anon();
+select pg_temp.pruefe(spieler_link_app(pg_temp.link('s1')) = '{"vorname":"Lea","verein":"Push-Verein"}'::jsonb, 'Manifest: Vorname und Verein');
+select pg_temp.pruefe(spieler_link_app('falsch') is null and spieler_link_app(null) is null, 'Manifest: ungültiger Link');
+select pg_temp.zurueck();
 
 select pg_temp.anon();
 select pg_temp.erwarte('select count(*) from push_abos', '42501');
@@ -211,6 +221,11 @@ select pg_temp.zurueck();
 select pg_temp.pruefe(pg_temp.abos('s1') = 10 and pg_temp.abos('s2') = 1, 'Grenze 10');
 select pg_temp.erwarte(format('insert into push_abos (spieler_id, endpoint, p256dh, auth, schluessel) values (%L, %L, %L, %L, %L)',
                               pg_temp.id('s1'), pg_temp.ep(50), pg_temp.p256dh(), pg_temp.auth(), 'test'), 'PUSH_GRENZE');
+-- Ein schon vorhandenes Gerät zählt nicht als weiteres (#652 Review): an der
+-- Grenze der unique-Konflikt (den `spieler_push_anmelden` als 'ok' auffängt),
+-- nicht die Grenze. Das Rennen dazu steht in rennen.sql (p3).
+select pg_temp.erwarte(format('insert into push_abos (spieler_id, endpoint, p256dh, auth, schluessel) values (%L, %L, %L, %L, %L)',
+                              pg_temp.id('s1'), pg_temp.ep(1), pg_temp.p256dh(), pg_temp.auth(), 'test'), '23505');
 
 -- ── Mitglieder (AK 11) ──────────────────────────────────────────────────────
 
@@ -333,6 +348,20 @@ select pg_temp.zurueck();
 update push_auftraege set erstellt_am = now() - interval '25 hours';
 select pg_temp.pruefe(push_auftraege_aufraeumen() > 0, 'TTL 24 h räumt auf');
 select pg_temp.pruefe(not exists (select 1 from push_auftraege), 'TTL 24 h: nichts bleibt');
+
+-- Ohne VAPID (#652 Review): Die Route holt ohne Schlüssel, alle Aufträge
+-- fallen weg, und das Netz stösst danach nicht mehr jede Minute an (#444).
+select pg_temp.pruefe(benachrichtigung_ablegen(gen_random_uuid(), 'ausfall', pg_temp.id('spiel'), '{"team":"Adler"}'::jsonb,
+                                               array[pg_temp.id('s1')]) = 1, 'Ausfall für s1');
+update push_auftraege set erstellt_am = now() - interval '1 minute';
+select pg_temp.pruefe(pg_temp.auftraege('s1') = 9 and push_netz() = true, 'liegen geblieben: das Netz stösst an');
+select pg_temp.anon();
+select pg_temp.pruefe(push_auftraege_holen('falsch', null) is null, 'ohne VAPID: falsches Geheimnis');
+select pg_temp.pruefe(push_auftraege_holen(repeat('g', 40), null) = '[]'::jsonb, 'ohne VAPID: nichts zuzustellen');
+select pg_temp.zurueck();
+select pg_temp.pruefe(not exists (select 1 from push_auftraege), 'ohne VAPID: alle Aufträge fallen weg');
+select pg_temp.pruefe(pg_temp.abos('s1') = 9, 'ohne VAPID: die Abos bleiben');
+select pg_temp.pruefe(push_netz() = false, 'ohne VAPID: das Netz stösst nicht mehr an');
 
 -- ── Enden (PC 3) ────────────────────────────────────────────────────────────
 

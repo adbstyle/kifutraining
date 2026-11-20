@@ -146,6 +146,18 @@ export const ladeLinkAnsicht = cache(async function ladeLinkAnsicht(token: strin
     : ansicht;
 });
 
+/** Was das Manifest eines Links braucht (#650 AK 4): Vorname und Verein —
+ *  eine schlanke Abfrage statt der ganzen Ansicht, denn der Browser holt das
+ *  Manifest bei jedem Seitenaufruf. `null` für einen ungültigen Link und bei
+ *  jedem Fehler der Datenebene. */
+export async function ladeLinkApp(token: string): Promise<{ vorname: string; verein: string } | null> {
+  if (!istLinkToken(token)) return null;
+  const { data, error } = await createAnonClient().rpc("spieler_link_app", { p_token: token });
+  if (error || !data) return null;
+  const { vorname, verein } = data as { vorname?: unknown; verein?: unknown };
+  return typeof vorname === "string" && typeof verein === "string" && verein ? { vorname, verein } : null;
+}
+
 /** Die Benachrichtigungen der Spieler:in (#642 AK 1) — `null` bei einem
  *  ungültigen Link und bei jedem Fehler der Datenebene (auch vor der
  *  Migration): Dann zeigt die Seite keine Glocke, statt etwas zu behaupten. */
