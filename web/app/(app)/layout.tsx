@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { FigurenSprite } from "@/components/diagramm/figur";
 import { FeedbackProvider } from "@/components/feedback/FeedbackKontext";
@@ -7,12 +8,18 @@ import { DarstellungProvider } from "@/components/layout/DarstellungKontext";
 import { SnackbarProvider } from "@/components/layout/SnackbarKontext";
 import { TeamKontextProvider } from "@/components/layout/TeamKontext";
 import { VersionenProvider } from "@/components/layout/VersionenKontext";
+import { KONTO_APP_METADATA } from "@/lib/app-ablegen";
 import { getNeuesteVeroeffentlichung } from "@/lib/releases";
 import { getUserImRequest } from "@/lib/supabase/server";
 import { GESEHEN_COOKIE, leseGesehen } from "@/lib/versionen-gesehen";
 import { DARSTELLUNG_COOKIE, leseDarstellung } from "@/lib/darstellung";
 import { LEISTE_COOKIE, leseLeiste } from "@/lib/seitenleiste";
 import { SPALTE_COOKIE, leseSpalte } from "@/lib/spalte";
+
+/* KiFu als App (#651): Manifest «KiFu» und die Angaben fürs iPhone — nur hier
+   und bei den Anmelde-Seiten, nicht im Wurzel-Layout, damit die Seiten eines
+   privaten Links allein ihr eigenes Manifest tragen (#650). */
+export const metadata: Metadata = KONTO_APP_METADATA;
 
 /* App-Chrome für alle Seiten ausser den Anmelde-Seiten unter `(auth)`:
    Seitenleiste links, Inhalt rechts. Route-Gruppen wirken nicht auf die URL. */

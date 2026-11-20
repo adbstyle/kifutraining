@@ -4,6 +4,9 @@ import { oeffentlicherOrigin } from "@/lib/origin";
 import {
   holeAbo,
   meldeSpielUeberLink,
+  pushStand,
+  schaltePushAus,
+  schaltePushEin,
   meldeUeberLink,
   widerrufeAbo,
   type AboHolenErgebnis,
@@ -12,6 +15,7 @@ import {
   type LinkAbmeldung,
   type LinkMeldeErgebnis,
   type LinkMeldung,
+  type PushSchaltErgebnis,
 } from "@/lib/privater-link";
 
 /** Über den privaten Link ab- oder wieder anmelden (#436 AK 8) — ohne
@@ -34,4 +38,19 @@ export async function holeAboUeberLinkAktion(token: string): Promise<AboHolenErg
 /** Das Abo über den privaten Link widerrufen (#509 AK 1). */
 export async function widerrufeAboUeberLinkAktion(token: string): Promise<AboWiderrufErgebnis> {
   return widerrufeAbo(token);
+}
+
+/** Mitteilungen aufs Mobile einschalten (#483 AK 1): die Anmeldung des Browsers. */
+export async function schaltePushEinAktion(token: string, abo: unknown): Promise<PushSchaltErgebnis> {
+  return schaltePushEin(token, abo);
+}
+
+/** Mitteilungen auf diesem Gerät ausschalten (#483 AK 7). */
+export async function schaltePushAusAktion(token: string, endpoint: unknown): Promise<PushSchaltErgebnis> {
+  return schaltePushAus(token, endpoint);
+}
+
+/** Ob dieses Gerät eingeschaltet ist (#483 AK 6). */
+export async function pushStandAktion(token: string, endpoint: unknown): Promise<"an" | "aus" | "ungueltig" | null> {
+  return pushStand(token, endpoint);
 }

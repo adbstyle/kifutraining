@@ -106,6 +106,12 @@ const SpielerAusgabe = z.object({
     })
     .nullable()
     .describe("Nur wenn sie im Team schnuppert, sonst null."),
+  mitteilungen: z
+    .boolean()
+    .describe(
+      "true: Nach dem letzten bekannten Stand erhält mindestens ein Mobile ihrer Spielervertretung Mitteilungen zu ihren " +
+        "Benachrichtigungen. Ankommen ist damit nicht gesichert; false: kein Gerät, sie sieht Neues nur am privaten Link.",
+    ),
 });
 
 // ── spielerliste_abrufen ────────────────────────────────────────────────────
@@ -116,7 +122,8 @@ export const spielerlisteAbrufen = werkzeug({
   beschreibung:
     "Nennt die Spielerliste eines deiner Teams, nach Vorname und Nachname geordnet, mit Jahrgang und J+S-Nummer, " +
     "dazu den Verein des Teams («verein») und je Spieler:in die Namen ihrer weiteren Teams («weitere_teams», nur " +
-    "Namen). Eine leere Liste heisst: Das Team plant mit der erwarteten Spielerzahl. Die Spielerliste des ganzen " +
+    "Namen) und ob Mitteilungen aufs Mobile eingeschaltet sind («mitteilungen»: nur ja oder nein nach dem letzten " +
+    "bekannten Stand, keine Zusicherung, dass sie ankommen; Adressen und Geräte nennt KiFu nie). Eine leere Liste heisst: Das Team plant mit der erwarteten Spielerzahl. Die Spielerliste des ganzen " +
     `Vereins gibt es nur in der Anwendung. ${SPIELER_MODELL} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: z.object({ team_id: TeamId }),
@@ -148,6 +155,7 @@ export const spielerlisteAbrufen = werkzeug({
         kader_ids: s.kaderIds,
         weitere_teams: s.weitereTeams,
         schnuppern: s.probe,
+        mitteilungen: s.mitteilungen ?? false,
       })),
     }));
   },

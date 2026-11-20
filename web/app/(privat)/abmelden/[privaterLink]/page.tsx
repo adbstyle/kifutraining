@@ -6,6 +6,7 @@ import { GiltNicht } from "@/components/privat/GiltNicht";
 import { BENACHRICHTIGUNG_COOKIE, leseGesehenStand } from "@/lib/benachrichtigung-gesehen";
 import { ladeBenachrichtigungen, ladeLinkAnsicht, linkSchluessel } from "@/lib/privater-link";
 import { LINK_TEXT } from "@/lib/spieler";
+import { pushOeffentlich } from "@/lib/push/schluessel";
 
 /* Der private Link einer Spieler:in (#436): Ihre Spielervertretung meldet sie
    ohne Konto für anstehende Termine aller ihrer Teams ab und wieder an (#583). Jeder Aufruf liest neu —
@@ -36,6 +37,7 @@ export default async function SpielerLinkSeite({ params }: { params: Promise<{ p
     <>
       <ElternAnsicht
         token={privaterLink}
+        verein={ansicht.verein}
         teams={ansicht.teams}
         spieler={ansicht.spieler}
         probe={ansicht.probe ?? null}
@@ -43,6 +45,7 @@ export default async function SpielerLinkSeite({ params }: { params: Promise<{ p
         benachrichtigungen={benachrichtigungen}
         gesehenBis={gesehenBis}
         schluessel={schluessel}
+        mitteilungen={pushOeffentlich()?.publicKey ?? null}
       />
       {/* Fragen und Feedback ohne Konto (#544), am Ende der Seite. */}
       <FeedbackLink token={privaterLink} ohneTeam={ansicht.teams.length === 0} verein={ansicht.verein} />

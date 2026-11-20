@@ -169,6 +169,8 @@ import {
   mitteilbarEinzeln,
   mitteilbarSerie,
   BENACHRICHTIGEN_TEXT,
+  BENACHRICHTIGEN_MOBILE,
+  benachrichtigenHinweis,
   BENACHRICHTIGUNG_TAGE,
   ELTERN_TEXT,
   EREIGNIS_NEGATIV,
@@ -197,6 +199,48 @@ import {
   wertAusCookieString,
 } from "../lib/benachrichtigung-gesehen";
 import { SPEICHERUNGEN } from "../lib/browser-speicher";
+import {
+  MITTEILUNGEN_SPALTE,
+  MITTEILUNGEN_TEXT,
+  MITTEILUNG_TEXT_MAX,
+  PUSH_ENDPUNKT,
+  PUSH_MAX_GERAETE,
+  PUSH_MAX_VERSUCHE,
+  PUSH_TIMEOUT_MS,
+  PUSH_TTL_SEKUNDEN,
+  PUSH_ZEITLIMIT_MS,
+  SERVICE_WORKER_PFAD,
+  gleicherSchluessel,
+  istPushAbo,
+  istPushEndpunkt,
+  mitteilungInhalt,
+  pushBereich,
+  pushErgebnis,
+  schluesselBytes,
+} from "../lib/push";
+import { MITTEILUNG_ERSATZ, SERVICE_WORKER_QUELLE } from "../lib/push-service-worker";
+import {
+  APP_ABLEGEN_MAX_LINKS,
+  APP_ABLEGEN_MITTEILUNGEN,
+  APP_ABLEGEN_SPEICHER,
+  APP_ABLEGEN_TEXT,
+  APP_ICONS,
+  BESUCH_ABSTAND_MS,
+  HINWEIS_PAUSE_MS,
+  KONTO_APP_METADATA,
+  KONTO_MANIFEST_PFAD,
+  THEME_FARBEN,
+  ablageFuer,
+  appName,
+  erkenneGeraet,
+  genitiv,
+  kontoManifest,
+  liesAblage,
+  linkManifest,
+  mitBesuch,
+  mitGeschlossen,
+  zeigeHinweis,
+} from "../lib/app-ablegen";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
 import { blattStand, handlungsMeldung, meldeStatus, nachMeldefrist, spielStatus, terminStatus } from "../lib/termin-status";
@@ -217,6 +261,7 @@ import {
   jahrgangAus,
   LINK_TEXT,
   linkErneuernSaetze,
+  LINK_ERNEUERN_MITTEILUNGEN,
   linkTeamsText,
   nachTeamname,
   nachSpielerName,
@@ -237,6 +282,7 @@ import {
   LINK_KEINE_TERMINE_TITEL,
   abholErhaltText,
   abholSpeichertText,
+  ABHOL_MITTEILUNGEN,
   feedbackDringend,
   linkGiltNichtText,
   linkKeineTermineText,
@@ -2531,7 +2577,7 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
       warnung:
         "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
       erneuern:
-        "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen. Die bisherigen Benachrichtigungen enden ebenfalls.",
+        "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen. Die bisherigen Benachrichtigungen enden ebenfalls. Mitteilungen aufs Mobile enden ebenfalls: Die Spielervertretung schaltet sie mit dem neuen Link neu ein und legt die App neu ab.",
       ungueltigTitel: "Dieser Link gilt nicht mehr",
       ungueltig: "Den aktuellen erhältst du über eine Abholadresse, bei den Trainer:innen oder bei der Vereinsverwaltung.",
       erneuert: "Link erneuert. Der bisherige gilt nicht mehr.",
@@ -3153,21 +3199,25 @@ pruefe("Link am Team-Ort und Verein-Ort (#583 AK 13, 15, 16): Hinweis und Erneue
   // Erneuern: ein Team mit Abholung.
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true)]), [
     "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von Lina: Ca. Abmeldungen bleiben bestehen.",
+    LINK_ERNEUERN_MITTEILUNGEN,
     "Die Eltern holen den neuen Link über die Abholadresse von Ca ab.",
   ]);
   // Mehrere Teams, zwei mit Abholung; in der geladenen Folge (geordnet hat der Kern, `nachTeamname`).
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true), ab("Cb", true), ab("Cc", false)]), [
     "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von Lina: Ca, Cb und Cc. Abmeldungen bleiben bestehen.",
+    LINK_ERNEUERN_MITTEILUNGEN,
     "Die Eltern holen den neuen Link über die Abholadresse von Ca oder Cb ab.",
   ]);
   // Keines abholbar.
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", false), ab("Cb", false)]), [
     "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von Lina: Ca und Cb. Abmeldungen bleiben bestehen.",
+    LINK_ERNEUERN_MITTEILUNGEN,
     "Keines dieser Teams hat die Selbstabholung eingeschaltet. Gib den neuen Link selbst weiter.",
   ]);
   // Ohne Team.
   assert.deepEqual(linkErneuernSaetze("Lina", []), [
     "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden. Abmeldungen bleiben bestehen.",
+    LINK_ERNEUERN_MITTEILUNGEN,
     "Lina ist keinem Team zugeordnet; gib den neuen Link selbst weiter.",
   ]);
 });
@@ -5451,6 +5501,423 @@ pruefe("Benachrichtigungen (#645 AK 1, 3; PC 3): Wegfall am Link; Serie mit Verl
   assert.equal(eintragTitel(einzeln), "Turnier · Ea");
   assert.equal(eintragWo(einzeln), "Halle");
   assert.equal(EREIGNIS_NEGATIV.wegfall, true);
+});
+
+const AA_K1 = "AbCdEf123456";
+const AA_K2 = "zyxwvu-_9876";
+const UA = {
+  iphoneSafari: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+  iphoneChrome: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/131.0.6778.73 Mobile/15E148 Safari/604.1",
+  iphoneInstagram: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 357.0.0.25.101",
+  iphoneFacebook: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/FBIOS;FBAV/490.0.0.40.107;FBBV/1]",
+  ipad: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15",
+  androidChrome: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+  androidWebView: "Mozilla/5.0 (Linux; Android 14; Pixel 8; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/131.0.0.0 Mobile Safari/537.36",
+  androidWhatsApp: "Mozilla/5.0 (Linux; Android 14; SM-S911B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36 WhatsApp/2.24.1",
+  macChrome: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+};
+
+pruefe("App ablegen (#650 AK 1, 8; OoS 4): erkenneGeraet — iPhone, Android, Browser in Apps, Computer", () => {
+  assert.deepEqual(erkenneGeraet(UA.iphoneSafari, 5), { system: "ios", inApp: false });
+  assert.deepEqual(erkenneGeraet(UA.iphoneChrome, 5), { system: "ios", inApp: false }, "Chrome auf dem iPhone legt über «Teilen» ab");
+  assert.deepEqual(erkenneGeraet(UA.iphoneInstagram, 5), { system: "ios", inApp: true });
+  assert.deepEqual(erkenneGeraet(UA.iphoneFacebook, 5), { system: "ios", inApp: true });
+  assert.deepEqual(erkenneGeraet(UA.ipad, 5), { system: "ios", inApp: false }, "das iPad meldet sich als Mac mit Touchscreen");
+  assert.deepEqual(erkenneGeraet(UA.ipad, 0), { system: "andere", inApp: false }, "ein Mac ohne Touchscreen ist ein Computer");
+  assert.deepEqual(erkenneGeraet(UA.androidChrome, 5), { system: "android", inApp: false });
+  assert.deepEqual(erkenneGeraet(UA.androidWebView, 5), { system: "android", inApp: true });
+  assert.deepEqual(erkenneGeraet(UA.androidWhatsApp, 5), { system: "android", inApp: true });
+  assert.deepEqual(erkenneGeraet(UA.macChrome, 0), { system: "andere", inApp: false });
+  assert.deepEqual(erkenneGeraet(UA.windows, 0), { system: "andere", inApp: false });
+  assert.deepEqual(erkenneGeraet("", 0), { system: "andere", inApp: false });
+});
+
+pruefe("App ablegen (#650 AK 6, 7): Besuche je Link, ab dem zweiten der Hinweis, nach dem Schliessen 7 Tage Ruhe", () => {
+  const t0 = 1_800_000_000_000;
+  const iphone = erkenneGeraet(UA.iphoneSafari, 5);
+  const hinweis = (wert: string, jetzt: number, extra: Partial<Parameters<typeof zeigeHinweis>[0]> = {}) =>
+    zeigeHinweis({ geraet: iphone, standalone: false, stand: ablageFuer(wert, AA_K1), jetzt, ...extra });
+  // Erster Besuch: kein Hinweis.
+  let w = mitBesuch(null, AA_K1, t0);
+  assert.deepEqual(ablageFuer(w, AA_K1), { k: AA_K1, b: 1, l: t0, z: null });
+  assert.equal(hinweis(w, t0), false);
+  // Neu laden kurz danach ist derselbe Besuch.
+  w = mitBesuch(w, AA_K1, t0 + BESUCH_ABSTAND_MS - 1);
+  assert.equal(ablageFuer(w, AA_K1)?.b, 1);
+  assert.equal(hinweis(w, t0 + BESUCH_ABSTAND_MS - 1), false);
+  // Zweiter Besuch: der Hinweis.
+  const t1 = t0 + BESUCH_ABSTAND_MS;
+  w = mitBesuch(w, AA_K1, t1);
+  assert.equal(ablageFuer(w, AA_K1)?.b, 2);
+  assert.equal(hinweis(w, t1), true);
+  // Nicht in der abgelegten App, nicht am Computer (OoS 4), nicht ohne Stand.
+  assert.equal(hinweis(w, t1, { standalone: true }), false);
+  assert.equal(hinweis(w, t1, { geraet: erkenneGeraet(UA.macChrome, 0) }), false);
+  assert.equal(hinweis(w, t1, { geraet: erkenneGeraet(UA.androidChrome, 5) }), true);
+  assert.equal(hinweis(w, t1, { geraet: erkenneGeraet(UA.iphoneInstagram, 5) }), true, "im Browser einer App sagt er, wo es geht (AK 8)");
+  assert.equal(zeigeHinweis({ geraet: iphone, standalone: false, stand: null, jetzt: t1 }), false);
+  // Geschlossen: ruht 7 Tage, auch über weitere Besuche hinweg.
+  w = mitGeschlossen(w, AA_K1, t1);
+  assert.equal(ablageFuer(w, AA_K1)?.z, t1);
+  assert.equal(ablageFuer(w, AA_K1)?.b, 2, "Schliessen zählt keinen Besuch");
+  const t2 = t1 + HINWEIS_PAUSE_MS - 1;
+  w = mitBesuch(w, AA_K1, t2);
+  assert.equal(hinweis(w, t2), false);
+  assert.equal(hinweis(w, t1 + HINWEIS_PAUSE_MS), true, "nach 7 Tagen wieder");
+  // Je Link getrennt: Ein anderer Link beginnt bei 1, der zuletzt besuchte steht zuerst.
+  w = mitBesuch(w, AA_K2, t2);
+  assert.deepEqual(liesAblage(w).map((s) => [s.k, s.b]), [[AA_K2, 1], [AA_K1, 3]]);
+  assert.equal(zeigeHinweis({ geraet: iphone, standalone: false, stand: ablageFuer(w, AA_K2), jetzt: t2 }), false);
+  // Schliessen eines unbekannten Links legt ihn an.
+  assert.deepEqual(ablageFuer(mitGeschlossen(null, AA_K1, t0), AA_K1), { k: AA_K1, b: 1, l: t0, z: t0 });
+  // Höchstens 20 Links; der älteste fällt heraus.
+  let viele: string | null = null;
+  for (let i = 0; i < APP_ABLEGEN_MAX_LINKS + 3; i++) viele = mitBesuch(viele, `k${String(i).padStart(11, "0")}`, t0 + i);
+  const liste = liesAblage(viele);
+  assert.equal(liste.length, APP_ABLEGEN_MAX_LINKS);
+  assert.equal(liste[0].k, `k${String(APP_ABLEGEN_MAX_LINKS + 2).padStart(11, "0")}`);
+  assert.equal(liste.some((s) => s.k === "k00000000000"), false);
+  // Müll: Unlesbares fällt weg, nichts wirft; ein ungültiger Schlüssel ändert nichts.
+  for (const muell of ["x", "{}", "[1]", '[{"k":"kurz","b":1,"l":1,"z":null}]', '[{"k":"AbCdEf123456","b":-1,"l":1,"z":null}]', '[{"k":"AbCdEf123456","b":1,"l":1,"z":"x"}]'])
+    assert.equal(ablageFuer(muell, AA_K1), null, muell);
+  const gut = JSON.stringify([{ k: AA_K1, b: 2, l: 5, z: null }]);
+  assert.equal(ablageFuer(`[{"k":"kaputt"},${gut.slice(1)}`, AA_K1)?.b, 2, "ein kaputter Eintrag nimmt die anderen nicht mit");
+  assert.equal(mitBesuch(gut, "kurz", t0), gut);
+  assert.equal(mitBesuch(gut, AA_K1, Number.NaN), gut);
+  assert.equal(mitGeschlossen(gut, AA_K1, -1), gut);
+  // Kein Klartext-Link im Speicher, und die Seite «Cookies» nennt ihn (#409).
+  assert.ok(SPEICHERUNGEN.some((x) => x.name === APP_ABLEGEN_SPEICHER), "SPEICHERUNGEN enthält den lokalen Speicher");
+});
+
+pruefe("App ablegen (#650 AK 1, 3–5): Manifest je Link — Name «Vorname · Verein», id, start_url und scope mit dem Link", () => {
+  const token = "a".repeat(43);
+  const m = linkManifest({ token, vorname: "Lena", verein: "FC Wyler" });
+  assert.equal(m.name, "Lena · FC Wyler");
+  assert.equal(appName("Lena", "FC Wyler"), m.name);
+  assert.equal(m.id, `/abmelden/${token}`);
+  assert.equal(m.start_url, `/abmelden/${token}`);
+  // Ohne Schrägstrich am Ende: Sonst läge die Startseite selbst nicht im Bereich.
+  assert.equal(m.scope, `/abmelden/${token}`);
+  assert.ok(m.start_url.startsWith(m.scope));
+  assert.equal(m.display, "standalone");
+  assert.ok(!("short_name" in m), "kein Kurzname: der Verein gehört zum Namen");
+  // Zwei Spieler:innen, zwei Apps (AK 5).
+  assert.notEqual(linkManifest({ token: "b".repeat(43), vorname: "Noah", verein: "FC Wyler" }).id, m.id);
+  // Icons: 192, 512 und ein maskierbares; die Dateien liegen da.
+  assert.deepEqual(APP_ICONS.map((i) => `${i.sizes}:${i.purpose}`), ["192x192:any", "512x512:any", "512x512:maskable"]);
+  for (const i of APP_ICONS) assert.ok(existsSync(join(web, "public", i.src)), i.src);
+});
+
+pruefe("KiFu als App (#651 AK 1–3): Manifest «KiFu» ab /teams, nur in App und Anmeldung verlinkt, kein Service Worker", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const m = kontoManifest();
+  assert.equal(m.name, "KiFu");
+  assert.equal(m.short_name, "KiFu");
+  assert.equal(m.start_url, "/teams");
+  assert.equal(m.id, "/");
+  assert.equal(m.scope, "/");
+  assert.equal(m.display, "standalone");
+  assert.deepEqual(m.icons, APP_ICONS, "dieselbe Bildmarke wie beim Link");
+  assert.equal(KONTO_APP_METADATA.manifest, KONTO_MANIFEST_PFAD);
+  assert.equal(KONTO_APP_METADATA.appleWebApp.title, "KiFu");
+  // Die Route liegt da, wo der Pfad hinzeigt, und ist fest (ohne Daten einer Person).
+  const route = lies(`app${KONTO_MANIFEST_PFAD}/route.ts`);
+  assert.match(route, /kontoManifest\(\)/);
+  assert.match(route, /force-static/);
+  // Verlinkt nur in den Layouts von App und Anmeldung — nie im Wurzel-Layout und
+  // nie per `app/manifest.ts`: beides überdeckte das Manifest des Links (#650).
+  for (const d of ["app/(app)/layout.tsx", "app/(auth)/layout.tsx"])
+    assert.match(lies(d), /export const metadata: Metadata = KONTO_APP_METADATA;/, d);
+  assert.ok(!/KONTO_APP_METADATA|manifest:/.test(lies("app/layout.tsx")), "Wurzel ohne Manifest");
+  assert.ok(!/KONTO_APP_METADATA/.test(lies("app/(privat)/layout.tsx")), "Link-Seiten ohne KiFu-Manifest");
+  for (const d of ["app/manifest.ts", "app/manifest.json", "app/manifest.webmanifest/page.tsx", "public/manifest.webmanifest", "public/manifest.json"])
+    assert.ok(!existsSync(join(web, d)), `${d}: Manifest per Dateikonvention hinge an jeder Seite`);
+  // Die Middleware lässt den Pfad aus (keine Sitzung, der Browser schickt keine Cookies).
+  assert.match(lies("middleware.ts"), /\|manifest\\\\\.webmanifest\|/);
+  // Kein Service Worker für Konten (OoS 1, 2): einziger ist der des Links (#483).
+  assert.ok(!/serviceWorker/.test(lies("app/(app)/layout.tsx") + lies("app/(auth)/layout.tsx") + route));
+  // Systemleiste hell/dunkel im Grund (Zwilling --color-elev-00).
+  assert.match(lies("app/layout.tsx"), /themeColor: \[\.\.\.THEME_FARBEN\]/);
+  const grund = lies("app/globals.css").match(/--color-elev-00: light-dark\((#[0-9a-f]{6}), (#[0-9a-f]{6})\)/);
+  assert.ok(grund);
+  assert.deepEqual(THEME_FARBEN.map((f) => f.color), [grund[1], grund[2]]);
+});
+
+pruefe("App ablegen (#650 AK 2, 6, 8): Texte — Genitiv des Vornamens, Begriff «Mobile», Mitteilungen nur mit #483", () => {
+  assert.equal(genitiv("Lena"), "Lenas");
+  assert.equal(genitiv("Jonas"), "Jonas’");
+  assert.equal(genitiv("Max"), "Max’");
+  assert.equal(genitiv("Fritz"), "Fritz’");
+  assert.equal(genitiv("Alice"), "Alice’");
+  assert.equal(APP_ABLEGEN_TEXT.hinweisTitel("Lena"), "Termine von Lena als App");
+  assert.equal(
+    APP_ABLEGEN_TEXT.hinweisText("Lena"),
+    "Lege diese Seite auf den Home-Bildschirm. Dann öffnest du Lenas Termine mit einem Tipp, ohne den Link im Chat zu suchen.",
+  );
+  assert.equal(APP_ABLEGEN_TEXT.inApp, "Hier lässt sich die Seite nicht als App ablegen. Öffne den Link im Browser deines Mobiles, etwa in Safari oder Chrome.");
+  const alle = JSON.stringify(APP_ABLEGEN_TEXT) + APP_ABLEGEN_TEXT.hinweisText("X") + APP_ABLEGEN_TEXT.hinweisTitel("X");
+  assert.ok(!/Handy/i.test(alle), "«Mobile», nie «Handy»");
+  assert.ok(!/Mitteilung/i.test(alle), "ohne Mitteilungen in der Umgebung nennt der Hinweis sie nicht");
+  assert.equal(APP_ABLEGEN_TEXT.ios.length, 3);
+  assert.equal(APP_ABLEGEN_TEXT.android.length, 3);
+  assert.match(APP_ABLEGEN_TEXT.ios[1], /«Zum Home-Bildschirm»/);
+  assert.match(APP_ABLEGEN_TEXT.ios[2], /«Hinzufügen»/);
+  assert.match(APP_ABLEGEN_TEXT.android[1], /«Zum Startbildschirm hinzufügen»/);
+});
+
+// ── Mitteilungen aufs Mobile (#483) ─────────────────────────────────────────
+
+const PUSH_MIGRATION = readFileSync(join(web, "../supabase/migrations/20261120100000_push_mitteilungen.sql"), "utf8");
+const P256DH_OK = `B${"A".repeat(86)}`;
+const AUTH_OK = "A".repeat(22);
+
+pruefe("Mitteilungen (#483 AK 5, PC 4, 5): Zwillinge zur Datenebene — Grenze, Dienste, TTL, Versuche", () => {
+  assert.equal(PUSH_MAX_GERAETE, 10);
+  assert.match(PUSH_MIGRATION, new RegExp(`where spieler_id = new\\.spieler_id\\) >= ${PUSH_MAX_GERAETE} then`), "Grenze im Trigger");
+  // Dieselbe Liste der Dienste: die Quelle des TS-Musters ohne die Schrägstrich-Masken steht im Check.
+  assert.ok(PUSH_MIGRATION.includes(`endpoint ~ '${PUSH_ENDPUNKT.source.replace(/\\\//g, "/")}'`), "PUSH_ENDPUNKT ≠ Check push_abos_endpunkt");
+  assert.match(PUSH_MIGRATION, /length\(endpoint\) <= 1024/);
+  assert.equal(PUSH_TTL_SEKUNDEN, 24 * 60 * 60);
+  assert.match(PUSH_MIGRATION, /erstellt_am < now\(\) - interval '24 hours' or versuche >= 5/);
+  assert.equal(PUSH_MAX_VERSUCHE, 5);
+  assert.match(PUSH_MIGRATION, /and versuche >= 5;/);
+  // Kein Upsert auf die zählende Tabelle (CLAUDE.md).
+  assert.ok(!/insert into push_abos[^;]*on conflict/i.test(PUSH_MIGRATION), "kein Upsert auf push_abos");
+  // Der Anstoss nur mit beiden Vault-Einträgen.
+  assert.match(PUSH_MIGRATION, /if k\.url is null or k\.geheimnis is null then return false; end if;/);
+});
+
+pruefe("Mitteilungen (#483 AK 1): nur Anmeldungen bekannter Dienste mit lesbaren Schlüsseln", () => {
+  const abo = (endpoint: string, p256dh = P256DH_OK, auth = AUTH_OK) => ({ endpoint, keys: { p256dh, auth } });
+  for (const gut of [
+    "https://fcm.googleapis.com/fcm/send/abc:def",
+    "https://fcm.googleapis.com/wp/abc",
+    "https://web.push.apple.com/QGv",
+    "https://updates.push.services.mozilla.com/wpush/v2/gAAA",
+    "https://wns2-par02p.notify.windows.com/w/?token=x",
+  ])
+    assert.ok(istPushAbo(abo(gut)) && istPushEndpunkt(gut), gut);
+  for (const schlecht of [
+    "http://fcm.googleapis.com/fcm/send/x",
+    "https://fcm.googleapis.com.angreifer.example/x",
+    "https://angreifer.example/fcm.googleapis.com/x",
+    "https://evilpush.apple.com.example/x",
+    "https://127.0.0.1/x",
+    "https://fcm.googleapis.com",
+    `https://fcm.googleapis.com/${"x".repeat(1100)}`,
+  ])
+    assert.ok(!istPushAbo(abo(schlecht)) && !istPushEndpunkt(schlecht), schlecht);
+  assert.ok(!istPushAbo(abo("https://fcm.googleapis.com/x", "kaputt")));
+  assert.ok(!istPushAbo(abo("https://fcm.googleapis.com/x", P256DH_OK, "<script>")));
+  assert.ok(!istPushAbo(null) && !istPushAbo({ endpoint: "https://fcm.googleapis.com/x" }) && !istPushEndpunkt(42));
+});
+
+pruefe("Mitteilungen (#483 PC 4): Antworten der Dienste — 2xx zugestellt, 404/410 weg, sonst nochmals", () => {
+  assert.equal(pushErgebnis(201), "zugestellt");
+  assert.equal(pushErgebnis(200), "zugestellt");
+  assert.equal(pushErgebnis(404), "weg");
+  assert.equal(pushErgebnis(410), "weg");
+  for (const s of [400, 403, 413, 429, 500, 503, null]) assert.equal(pushErgebnis(s), "fehler", String(s));
+});
+
+pruefe("Mitteilungen (#483 AK 8, 9): Titel mit Ereignis und Team, Text mit Vorname, Antippen öffnet die Benachrichtigungen", () => {
+  const link = "a".repeat(43);
+  const termin = { team: "E-Junioren", art: "spiel" as const, bezeichnung: "Match gegen Uster", datum: "2026-12-05", beginn: "14:00", ende: "15:30", ort: "Allmend" };
+  const basis = { id: "11111111-1111-4111-8111-111111111111", termin_id: null, erstellt: 1, erstellt_tag: "2026-11-20" };
+  const neu = mitteilungInhalt({ vorname: "Lena", link, eintrag: { ...basis, ereignis: "neues_spiel", inhalt: termin } });
+  assert.deepEqual(neu, {
+    titel: "Neues Spiel · E-Junioren",
+    text: "Lena: Match gegen Uster · Samstag, 5. Dezember · 14:00–15:30 · Allmend",
+    url: `/abmelden/${link}?ansicht=benachrichtigungen`,
+    tag: basis.id,
+  });
+  assert.ok(neu.url.startsWith(pushBereich(link)), "im Bereich des Service Workers");
+  const aus = mitteilungInhalt({ vorname: "Noah", link, eintrag: { ...basis, ereignis: "ausfall", inhalt: { ...termin, art: "training", bezeichnung: null, ort: null, grund: "Platz gesperrt" } } });
+  assert.equal(aus.titel, "Fällt aus · E-Junioren");
+  assert.equal(aus.text, "Noah: Training · Samstag, 5. Dezember · 14:00–15:30 · Grund: Platz gesperrt");
+  const serie = mitteilungInhalt({
+    vorname: "Mia",
+    link,
+    eintrag: { ...basis, ereignis: "serie", inhalt: { team: "E-Junioren", art: "training", ab: "2026-12-01", angaben: { beginn: "18:00", ende: "19:30" }, wegfall: null } },
+  });
+  assert.equal(serie.titel, "Trainings geändert · E-Junioren");
+  assert.equal(serie.text, "Mia: Training · Ab Dienstag, 1. Dezember · Neu 18:00–19:30");
+  const lang = mitteilungInhalt({ vorname: "Lena", link, eintrag: { ...basis, ereignis: "ausfall", inhalt: { ...termin, grund: "x".repeat(500) } } });
+  assert.equal(lang.text.length, MITTEILUNG_TEXT_MAX);
+  assert.ok(lang.text.endsWith("…"));
+});
+
+pruefe("Mitteilungen (#483): Service Worker — nur push und notificationclick, kein fetch, kein Cache, nur im eigenen Bereich", () => {
+  assert.equal(SERVICE_WORKER_PFAD, "/abmelden/sw.js");
+  assert.ok(existsSync(join(web, "app/(privat)/abmelden/sw.js/route.ts")));
+  const ereignisse = [...SERVICE_WORKER_QUELLE.matchAll(/addEventListener\("([a-z]+)"/g)].map((m) => m[1]).sort();
+  assert.deepEqual(ereignisse, ["activate", "install", "notificationclick", "push"]);
+  assert.ok(!/fetch|caches|importScripts|indexedDB/.test(SERVICE_WORKER_QUELLE), "kein fetch, kein Cache");
+  assert.match(SERVICE_WORKER_QUELLE, /u\.origin === self\.location\.origin/, "nur die eigene Herkunft");
+  assert.match(SERVICE_WORKER_QUELLE, /startsWith\(bereich/, "nur innerhalb des Links");
+  // Der Bereich je Link ist derselbe wie der des Manifests (#650).
+  const link = "b".repeat(43);
+  assert.equal(pushBereich(link), linkManifest({ token: link, vorname: "X", verein: "Y" }).scope);
+});
+
+pruefe("Mitteilungen (#652 Review): Service Worker zeigt jeden Push als Mitteilung — ohne oder mit unlesbarer Nutzlast einen Ersatz, der die Benachrichtigungen öffnet", () => {
+  const bereich = `https://ki-fu.ch/abmelden/${"b".repeat(43)}`;
+  const hoerer = new Map<string, (e: unknown) => void>();
+  const gezeigt: { titel: string; body: string; url: unknown }[] = [];
+  const swSelf = {
+    addEventListener: (n: string, f: (e: unknown) => void) => hoerer.set(n, f),
+    registration: {
+      scope: bereich,
+      showNotification: (titel: string, o: { body: string; data: { url: unknown } }) => {
+        gezeigt.push({ titel, body: o.body, url: o.data.url });
+        return Promise.resolve();
+      },
+    },
+    location: { origin: "https://ki-fu.ch" },
+  };
+  new Function("self", SERVICE_WORKER_QUELLE)(swSelf);
+  const push = (data: unknown) => hoerer.get("push")!({ data, waitUntil: () => {} });
+  push(null);
+  push({ json: () => { throw new SyntaxError("kaputt"); } });
+  push({ json: () => ({ text: "ohne Titel" }) });
+  push({ json: () => ({ titel: "Neues Spiel · Adler", text: "Lea: Cup", url: "/abmelden/x?ansicht=benachrichtigungen", tag: "t" }) });
+  assert.equal(gezeigt.length, 4, "jeder Push zeigt eine Mitteilung (Safari: kein stiller Push)");
+  for (const g of gezeigt.slice(0, 3))
+    assert.deepEqual(g, { titel: MITTEILUNG_ERSATZ.titel, body: MITTEILUNG_ERSATZ.text, url: `${bereich}?ansicht=benachrichtigungen` });
+  assert.deepEqual(gezeigt[3], { titel: "Neues Spiel · Adler", body: "Lea: Cup", url: "/abmelden/x?ansicht=benachrichtigungen" });
+});
+
+pruefe("Mitteilungen (#652 Review): Notbremse länger als das Zeitlimit des Senders; ohne VAPID verwirft die Route die Aufträge", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // Meldete die Notbremse «fehler», während web-push noch zustellt, käme die Mitteilung doppelt.
+  assert.ok(PUSH_ZEITLIMIT_MS > PUSH_TIMEOUT_MS);
+  assert.match(lies("lib/kern/push.ts"), /timeoutMs = PUSH_ZEITLIMIT_MS,/);
+  assert.match(lies("lib/push/senden.ts"), /timeout: PUSH_TIMEOUT_MS,/);
+  // Ohne VAPID holt die Route ohne Schlüssel (alle Aufträge fallen weg), statt sie liegen zu lassen (#444).
+  assert.match(lies("app/api/push/abarbeiten/route.ts"), /if \(!vapid\) \{\s*const verworfen = await pushZugang\(createAnonClient\(\), geheimnis, null\)\.holen\(1\);/);
+  assert.match(PUSH_MIGRATION, /if p_schluessel is null then\s*delete from push_auftraege where true;[^\n]*\n\s*return '\[\]'::jsonb;/);
+});
+
+pruefe("Mitteilungen (#652 Review): Spielerliste fragt Glocken gleichzeitig; Einschalten nimmt nur eine in diesem Durchgang neue Anmeldung zurück", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  assert.match(lies("lib/kern/spieler.ts"), /Promise\.all\(\[[\s\S]{0,300}"spieler_weitere_teams"[\s\S]{0,120}"team_spieler_mitteilungen"/);
+  const m = lies("components/privat/Mitteilungen.tsx");
+  const ein = m.slice(m.indexOf("async function einschalten()"), m.indexOf("return { stand"));
+  // Eine wiederverwendete Anmeldung kennt die Datenebene vielleicht schon: abmelden nur, wenn neu, sonst neu prüfen.
+  assert.match(ein, /if \(anmeldung && neu\) \{\s*await anmeldung\.unsubscribe\(\)[\s\S]*?\} else await pruefen\(\);/);
+  assert.match(ein, /subscribe\(\{[^}]*\}\);\s*neu = true;/);
+  // Ausser beim fremden Schlüssel (taugt nie) meldet nur `zuruecknehmen` ab.
+  assert.equal((ein.match(/\.unsubscribe\(\)/g) ?? []).length, 2);
+});
+
+const KOPF_REGELN = await (await import("../next.config")).default.headers!();
+pruefe("Manifest des Links (#652 Review): schlanke Abfrage und zwischenspeicherbar, die übrigen Schutz-Header bleiben", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const route = lies("app/(privat)/abmelden/[privaterLink]/manifest.webmanifest/route.ts");
+  assert.ok(!/ladeLinkAnsicht|spieler_link_ansicht/.test(route), "nicht die ganze Ansicht");
+  assert.match(route, /ladeLinkApp\(/);
+  assert.match(lies("lib/privater-link.ts"), /\.rpc\("spieler_link_app"/);
+  const fuer = (pfad: string) => {
+    const kopf = new Map<string, string>();
+    // Wie Next: Jede passende Regel setzt ihre Header, eine spätere überschreibt denselben Schlüssel.
+    for (const r of KOPF_REGELN) {
+      const muster = new RegExp(`^${r.source.replace(/\./g, "\\.").replace(/:\w+\*/g, ".*").replace(/:\w+/g, "[^/]+")}$`);
+      if (muster.test(pfad)) for (const h of r.headers) kopf.set(h.key, h.value);
+    }
+    return kopf;
+  };
+  const link = "b".repeat(43);
+  const manifest = fuer(`/abmelden/${link}/manifest.webmanifest`);
+  assert.match(manifest.get("Cache-Control") ?? "", /^private, max-age=\d+$/);
+  for (const k of ["Referrer-Policy", "X-Robots-Tag", "X-Frame-Options", "Content-Security-Policy"]) assert.ok(manifest.has(k), k);
+  assert.equal(fuer(`/abmelden/${link}`).get("Cache-Control"), "private, no-store", "die Seite selbst nirgends zwischenspeichern");
+});
+
+pruefe("Mitteilungen (#483): Route und Schlüssel — force-dynamic, nodejs, kein Service-Role-Schlüssel, keine NEXT_PUBLIC", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const route = lies("app/api/push/abarbeiten/route.ts");
+  assert.match(route, /export const dynamic = "force-dynamic";/);
+  assert.match(route, /export const runtime = "nodejs";/);
+  assert.match(route, /createAnonClient\(\)/);
+  for (const d of ["app/api/push/abarbeiten/route.ts", "lib/kern/push.ts", "lib/push/senden.ts", "lib/push/schluessel.ts"])
+    assert.ok(!/SERVICE_ROLE|supabaseServiceRoleKey|supabase\/admin/.test(lies(d)), `${d}: Service-Role zur Laufzeit`);
+  for (const d of ["lib/env.ts", "lib/push.ts", "lib/push/schluessel.ts", "components/privat/Mitteilungen.tsx", "app/(privat)/abmelden/[privaterLink]/page.tsx", "../.env.example".replace("../", "")])
+    if (existsSync(join(web, d))) assert.ok(!/NEXT_PUBLIC_VAPID/.test(lies(d)), `${d}: NEXT_PUBLIC`);
+  assert.match(lies("lib/env.ts"), /VAPID_PUBLIC_KEY[\s\S]*VAPID_PRIVATE_KEY[\s\S]*VAPID_SUBJECT/);
+  assert.match(lies(".env.example"), /VAPID_PUBLIC_KEY/);
+  assert.match(lies("middleware.ts"), /\|api\/push\|/, "keine Sitzung für die Route");
+  // Der öffentliche Schlüssel als Bytes, und der Vergleich einer bestehenden Anmeldung.
+  const key = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U";
+  const bytes = schluesselBytes(key);
+  assert.equal(bytes.length, 65);
+  assert.equal(bytes[0], 4, "unkomprimierter P-256-Punkt");
+  assert.ok(gleicherSchluessel(bytes.buffer, key));
+  assert.ok(!gleicherSchluessel(schluesselBytes(key.replace("BEl6", "BEl7")).buffer, key));
+  assert.ok(!gleicherSchluessel(null, key));
+});
+
+pruefe("Mitteilungen (#483 PC 5): sync-staging leert die Geräte nach dem Restore, die Tabellen stehen in PUBLIC_TABLES", () => {
+  const yml = readFileSync(join(web, "../.github/workflows/sync-staging.yml"), "utf8");
+  const liste = /PUBLIC_TABLES: "([^"]+)"/.exec(yml)?.[1].split(" ") ?? [];
+  assert.ok(liste.includes("push_abos") && liste.includes("push_auftraege"));
+  assert.deepEqual(liste, [...liste].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)), "bytewise sortiert");
+  assert.match(yml, /delete from public\.push_auftraege;\s*\n\s*delete from public\.push_abos;/);
+});
+
+pruefe("Mitteilungen (#483 AK 2–4, 10, 11, 13; PC 6): Texte — Begriff «Mobile», was gespeichert wird, wer zustellt, wann es verschwindet", () => {
+  const v = "Lena";
+  const dialog = [
+    MITTEILUNGEN_TEXT.dialogTitel(v),
+    MITTEILUNGEN_TEXT.speichert,
+    MITTEILUNGEN_TEXT.zusteller,
+    MITTEILUNGEN_TEXT.verschwindet(v),
+  ].join(" ");
+  assert.equal(MITTEILUNGEN_TEXT.dialogTitel(v), "Mitteilungen für Lena einschalten");
+  assert.match(dialog, /Keine Telefonnummer, keine E-Mail-Adresse/);
+  assert.match(dialog, /Apple, Google oder Mozilla/);
+  assert.match(dialog, /Server im Ausland/);
+  assert.match(dialog, /verschlüsselt/);
+  for (const wann of ["ausschaltest", "keine mehr annimmt", "Link erneuert", "nicht mehr im Verein"]) assert.ok(dialog.includes(wann), wann);
+  assert.equal(MITTEILUNGEN_TEXT.stand.aus, "Aus. Neues siehst du nur hier.");
+  assert.equal(MITTEILUNGEN_TEXT.stand.an, "Auf diesem Gerät eingeschaltet. Andere Mobiles schaltest du dort ein.");
+  assert.equal(MITTEILUNGEN_TEXT.stand.ios_browser, "Auf dem iPhone nur in der abgelegten App.");
+  assert.equal(MITTEILUNGEN_TEXT.stand.abgelehnt, "Dein Mobile lässt keine Mitteilungen zu.");
+  assert.match(MITTEILUNGEN_TEXT.grenze(v), new RegExp(`${PUSH_MAX_GERAETE} Geräten`));
+  // AK 4: der Hinweis zum Ablegen nennt die Mitteilungen, wenn es sie gibt.
+  assert.ok(APP_ABLEGEN_TEXT.hinweisText(v, true).endsWith(APP_ABLEGEN_MITTEILUNGEN));
+  assert.match(APP_ABLEGEN_MITTEILUNGEN, /Mitteilungen aufs Mobile/);
+  // AK 10: das Häkchen.
+  for (const vorgang of ["neues_spiel", "ausfall", "ruecknahme", "aendern", "entfernen"] as const)
+    assert.ok(benachrichtigenHinweis(vorgang).endsWith(BENACHRICHTIGEN_MOBILE), vorgang);
+  assert.match(BENACHRICHTIGEN_MOBILE, /als Mitteilung aufs Mobile/);
+  // AK 11: die Spalte.
+  assert.equal(MITTEILUNGEN_SPALTE.kopf, "Mobile");
+  assert.equal(
+    MITTEILUNGEN_SPALTE.hinweis,
+    "Glocke heisst: Nach dem letzten bekannten Stand erhält mindestens ein Mobile Mitteilungen für diese Spieler:in. Ankommen ist damit nicht gesichert.",
+  );
+  // AK 13: Link erneuern.
+  assert.ok(LINK_TEXT.erneuern.endsWith(LINK_ERNEUERN_MITTEILUNGEN));
+  assert.match(LINK_ERNEUERN_MITTEILUNGEN, /neu ein und legt die App neu ab/);
+  // PC 6: die Auskunft, was KiFu speichert.
+  assert.ok(abholSpeichertText("FC Wyler").includes(ABHOL_MITTEILUNGEN));
+  assert.match(ABHOL_MITTEILUNGEN, /ohne Telefonnummer und E-Mail-Adresse/);
+  // Die Seite «Cookies» nennt Service Worker und Anmeldung (#409).
+  assert.ok(SPEICHERUNGEN.some((x) => x.name.includes(SERVICE_WORKER_PFAD)), "SPEICHERUNGEN nennt den Service Worker");
+  const alle =
+    JSON.stringify(MITTEILUNGEN_TEXT) +
+    dialog +
+    MITTEILUNGEN_TEXT.iosHinweis(v) +
+    MITTEILUNGEN_TEXT.grenze(v) +
+    JSON.stringify(MITTEILUNGEN_SPALTE) +
+    BENACHRICHTIGEN_MOBILE +
+    LINK_ERNEUERN_MITTEILUNGEN +
+    ABHOL_MITTEILUNGEN +
+    APP_ABLEGEN_MITTEILUNGEN +
+    JSON.stringify(SPEICHERUNGEN);
+  assert.ok(!/Handy/i.test(alle), "«Mobile», nie «Handy»");
+  assert.ok(!/\bKind/.test(alle) && !/\bProbe/.test(alle), "Spieler:in, nie Kind; kein «Probe»");
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

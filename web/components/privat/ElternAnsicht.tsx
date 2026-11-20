@@ -11,6 +11,9 @@ import { HinweisEltern } from "./HinweisEltern";
 import { AboKnopf } from "./AboKnopf";
 import { BenachrichtigungenAnsicht } from "./BenachrichtigungenAnsicht";
 import { useBenachrichtigungen } from "./useBenachrichtigungen";
+import { AppAblegenAnleitung, AppAblegenHinweis, AppAblegenKnopf, useAppAblegen } from "./AppAblegen";
+import { Mitteilungen } from "./Mitteilungen";
+import { appName } from "@/lib/app-ablegen";
 import { knopfLabel, type LinkBenachrichtigungen } from "@/lib/benachrichtigung";
 import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
@@ -72,9 +75,20 @@ import { PROBE_TEXT, linkProbeStand, linkProbeVoll, linkProbeZaehler, type Probe
    Gerät noch nicht angezeigt hat (#642 AK 2), und öffnet deren Ansicht an
    Stelle der Chips und der Liste; der Kopf bleibt. Von einem Eintrag führt
    «Zum Termin» zur Karte in der Liste (AK 4). Fehlen die Daten
-   (`benachrichtigungen` ist `null`), gibt es keine Glocke. */
+   (`benachrichtigungen` ist `null`), gibt es keine Glocke.
+
+   Als App ablegen (#650): Auf dem Mobile steht ab dem zweiten Besuch ein
+   schliessbarer Hinweis über den Terminen, unter ihnen immer ein ruhiger
+   Knopf — beides nicht in der abgelegten App. Erst nach dem Einhängen: Der
+   Server kennt weder Gerät noch Speicher.
+
+   Mitteilungen aufs Mobile (#483): Oben in der Glocken-Ansicht steht die
+   Karte mit dem Schalter, wenn die Umgebung Mitteilungen hat
+   (`mitteilungen`); dann nennt sie auch der Hinweis zum Ablegen. Auf dem
+   iPhone im Safari-Tab führt «So geht’s» zur selben Anleitung. */
 export function ElternAnsicht({
   token,
+  verein,
   teams,
   spieler,
   probe,
@@ -82,8 +96,11 @@ export function ElternAnsicht({
   benachrichtigungen,
   gesehenBis,
   schluessel,
+  mitteilungen,
 }: {
   token: string;
+  /** Der Verein der Spieler:in: Teil des App-Namens (#650 AK 4). */
+  verein: string;
   /** Die Teams der Spieler:in, alphabetisch, auch ohne Termine; leer ohne Team. */
   teams: string[];
   spieler: { vorname: string; nachname: string };
@@ -96,6 +113,9 @@ export function ElternAnsicht({
   gesehenBis: number | null;
   /** Aus dem Link abgeleiteter Schlüssel des Cookies (nie der Link selbst). */
   schluessel: string;
+  /** Der öffentliche VAPID-Schlüssel, wenn die Umgebung Mitteilungen hat
+   *  (#483); sonst `null`: kein Schalter, der Hinweis nennt sie nicht. */
+  mitteilungen: string | null;
 }) {
   // Was gerade umgelegt wird, steht sofort so da; scheitert es, zurück. Bei
   // Spielen die Meldung (#463) ebenso.
@@ -122,6 +142,9 @@ export function ElternAnsicht({
 
   const name = spielerName(spieler);
   const glocke = useBenachrichtigungen({ daten: benachrichtigungen, gesehenBis, schluessel });
+  const app = useAppAblegen(schluessel);
+  // Der Knopf auf dem Mobile, am Computer nur, wenn der Browser selbst ablegen kann (OoS 4).
+  const appKnopf = !!app.lage && !app.lage.abgelegt && (app.lage.geraet.system !== "andere" || app.installierbar);
   const glockeRef = useRef<HTMLButtonElement>(null);
   // Zu welchem Termin «Zum Termin» führen soll, sobald die Liste wieder steht.
   const ziel = useRef<string | null>(null);
@@ -295,9 +318,25 @@ export function ElternAnsicht({
           terminIds={new Set(termine.map((t) => t.id))}
           onZurueck={glocke.schliessen}
           onZumTermin={zeigeTermin}
+          kopf={
+            mitteilungen && (
+              <Mitteilungen link={token} vorname={spieler.vorname} publicKey={mitteilungen} onSoGehts={app.oeffneAnleitung} />
+            )
+          }
         />
       ) : (
         <>
+          {app.lage?.hinweis && (
+            <div className="px-4 pt-4">
+              <AppAblegenHinweis
+                vorname={spieler.vorname}
+                geraet={app.lage.geraet}
+                mitteilungen={!!mitteilungen}
+                onSchliessen={app.schliessen}
+                onAktion={app.ablegen}
+              />
+            </div>
+          )}
           {voll && probeLokal && (
             <div className="px-4 pt-4">
               <SectionMessage>{linkProbeVoll(spieler.vorname, probeLokal)}</SectionMessage>
@@ -378,7 +417,20 @@ export function ElternAnsicht({
               ))}
             </div>
           )}
+          {appKnopf && (
+            <div className="flex flex-col px-4 pb-6 pt-2">
+              <AppAblegenKnopf onClick={app.ablegen} />
+            </div>
+          )}
         </>
+      )}
+      {app.lage && (
+        <AppAblegenAnleitung
+          open={app.anleitung}
+          onClose={app.schliesseAnleitung}
+          geraet={app.lage.geraet}
+          name={appName(spieler.vorname, verein)}
+        />
       )}
     </>
   );

@@ -2,13 +2,14 @@
 
 import { useId, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Link2, Pencil, Plus, Shirt, UserMinus } from "lucide-react";
+import { Bell, BellOff, Link2, Pencil, Plus, Shirt, UserMinus } from "lucide-react";
 import {
   AuswahlLeiste,
   Button,
   Checkbox,
   Dialog,
   IconButton,
+  InfoKnopf,
   MultiSelect,
   SectionMessage,
   Tabelle,
@@ -39,6 +40,7 @@ import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
 import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
 import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
+import { MITTEILUNGEN_SPALTE } from "@/lib/push";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
    Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet einen
@@ -50,7 +52,10 @@ import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
    nach (#579): Die Spieler:in wird nicht gelöscht und bleibt samt Link im
    Verein; der Dialog nennt die Teams, in denen sie bleibt, oder dass sie
    danach keinem Team mehr angehört. Die Spalte «Auch in» nennt ihre weiteren
-   Teams (#579 AK 9). Löschen gibt es im Team nicht — das macht nur die
+   Teams (#579 AK 9). Die Spalte «Mobile» zeigt mit Glocke bzw.
+   durchgestrichener Glocke, ob nach dem letzten bekannten Stand mindestens ein
+   Gerät Mitteilungen für sie eingeschaltet hat (#483 AK 11), mit dem festen
+   Hinweis hinter ⓘ, dass das kein Ankommen sichert. Löschen gibt es im Team nicht — das macht nur die
    Vereinsverwaltung.
    Das Kettenglied zeigt ihren privaten Link (#436); ob er über die
    Selbstabholung bezogen wurde (#438 AK 21), sagt ein grüner Punkt daran;
@@ -316,11 +321,18 @@ export function SpielerListe({
   const probeVorher = !!offen?.probe;
   const mitProbe = spieler.some((s) => s.probe);
   const spalten = mitKadern
-    ? "sm:grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_minmax(0,1fr)_7.5rem]"
-    : "sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_7.5rem]";
+    ? "sm:grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_minmax(0,1fr)_5rem_7.5rem]"
+    : "sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_5rem_7.5rem]";
+  // Die Spalte «Mobile» (#483 AK 11) mit ihrem festen Hinweis hinter ⓘ.
+  const mobileKopf = (
+    <span className="-my-2 flex items-center gap-0.5">
+      <span aria-hidden>{MITTEILUNGEN_SPALTE.kopf}</span>
+      <InfoKnopf label={`Spalte ${MITTEILUNGEN_SPALTE.kopf}`}>{MITTEILUNGEN_SPALTE.hinweis}</InfoKnopf>
+    </span>
+  );
   const kopf = mitKadern
-    ? ["", "Name", "Jahrgang", "J+S-Nr.", "Kader", "Auch in", ""]
-    : ["Name", "Jahrgang", "J+S-Nr.", "Auch in", ""];
+    ? ["", "Name", "Jahrgang", "J+S-Nr.", "Kader", "Auch in", mobileKopf, ""]
+    : ["Name", "Jahrgang", "J+S-Nr.", "Auch in", mobileKopf, ""];
 
   return (
     <>
@@ -423,6 +435,9 @@ export function SpielerListe({
           </EingrenzungLeer>
         </div>
       ) : spieler.length > 0 ? (
+        <>
+        {/* Der Hinweis zur Spalte «Mobile» für die Vorlesehilfe (das Panel hinter ⓘ ist nur fürs Auge). */}
+        <p className="sr-only">{MITTEILUNGEN_SPALTE.hinweis}</p>
         <Tabelle className="mt-4" spalten={spalten} kopf={kopf}>
           {sichtbar.map((s) => (
             <TabellenZeile key={s.id}>
@@ -477,6 +492,14 @@ export function SpielerListe({
                   <span className="type-body-medium text-on-surface-tief">–</span>
                 )}
               </span>
+              {/* Nur ein Zeichen, keine Primärfarbe (PO): eingeschaltet in Schriftfarbe, sonst gedämpft. */}
+              <span
+                role="img"
+                aria-label={`${spielerName(s)}: ${s.mitteilungen ? MITTEILUNGEN_SPALTE.an : MITTEILUNGEN_SPALTE.aus}`}
+                className={`flex shrink-0 items-center ${s.mitteilungen ? "text-on-surface" : "text-on-surface-mittel"}`}
+              >
+                {s.mitteilungen ? <Bell size={18} strokeWidth={2} aria-hidden /> : <BellOff size={18} strokeWidth={2} aria-hidden />}
+              </span>
               <span className="flex justify-end gap-1">
                 {/* Der Link gehört der Spieler:in und geht in jedem ihrer Teams (#583 AK 14). */}
                 <Tooltip label={s.linkBezogen ? "Privater Link · bezogen" : "Privater Link"}>
@@ -503,6 +526,7 @@ export function SpielerListe({
             </TabellenZeile>
           ))}
         </Tabelle>
+        </>
       ) : (
         <p className="type-body-medium mt-4 text-on-surface-mittel">
           Noch niemand auf der Liste. Solange sie leer ist, planst du mit der erwarteten Spielerzahl.
