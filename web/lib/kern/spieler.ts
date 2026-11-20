@@ -145,9 +145,11 @@ export async function ladeSpielerliste(
   if (weitere.error) return ausDbFehler(weitere.error);
   const weitereVon = new Map(((weitere.data ?? []) as { spieler_id: string; teams: string[] }[]).map((w) => [w.spieler_id, w.teams]));
   // Wer Mitteilungen aufs Mobile eingeschaltet hat (#483 AK 11, 12): nur ja/nein.
+  // Scheitert nur diese Angabe (etwa im Fenster zwischen Vercel-Deploy und
+  // Migration), kommt die Liste trotzdem — dann ohne Glocken.
   const mitteilungen = await supabase.rpc("team_spieler_mitteilungen", { p_team: e.teamId });
-  if (mitteilungen.error) return ausDbFehler(mitteilungen.error);
-  const mitMitteilungen = new Set((mitteilungen.data ?? []) as string[]);
+  if (mitteilungen.error) console.error("[kern] team_spieler_mitteilungen:", mitteilungen.error.message);
+  const mitMitteilungen = new Set((mitteilungen.error ? [] : (mitteilungen.data ?? [])) as string[]);
   const liste = zeilen.map((z) => ({
     ...ausRoh(z, e.teamId),
     weitereTeams: weitereVon.get(z.spieler.id) ?? [],

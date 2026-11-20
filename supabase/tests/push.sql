@@ -182,6 +182,11 @@ select pg_temp.pruefe(spieler_push_anmelden(pg_temp.link('s1'), pg_temp.ep(1), '
                       'unlesbarer Schlüssel');
 select pg_temp.pruefe(pg_temp.an('s1', pg_temp.ep(1)) = 'ok', 'Einschalten');
 select pg_temp.pruefe(pg_temp.an('s1', pg_temp.ep(1)) = 'ok', 'dasselbe Gerät nochmals');
+-- Auch beim Nachführen eines bekannten Geräts: 'abgewiesen' statt Fehler.
+select pg_temp.pruefe(spieler_push_anmelden(pg_temp.link('s1'), pg_temp.ep(1), 'kaputt', pg_temp.auth(), 'test') = 'abgewiesen',
+                      'unlesbarer Schlüssel beim bekannten Gerät');
+select pg_temp.pruefe(spieler_push_anmelden(pg_temp.link('s1'), pg_temp.ep(1), pg_temp.p256dh(), 'kaputt', 'test') = 'abgewiesen',
+                      'unlesbares Auth beim bekannten Gerät');
 select pg_temp.pruefe(pg_temp.an('s1', 'https://web.push.apple.com/QAbc') = 'ok', 'Apple');
 select pg_temp.pruefe(pg_temp.an('s1', 'https://updates.push.services.mozilla.com/wpush/v2/x') = 'ok', 'Mozilla');
 select pg_temp.pruefe(pg_temp.an('s1', 'https://wns2-par02p.notify.windows.com/w/?token=x') = 'ok', 'Microsoft');

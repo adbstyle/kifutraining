@@ -104,12 +104,21 @@ export function useMitteilungen({ link, vorname, publicKey }: { link: string; vo
     setPending(true);
     try {
       const anmeldung = await anmeldungFuer(link).catch(() => null);
-      const endpoint = anmeldung?.endpoint ?? null;
-      // Zuerst am Gerät: Selbst wenn KiFu nicht erreichbar ist, kommt nichts mehr an.
-      await anmeldung?.unsubscribe().catch(() => false);
-      const r = endpoint ? await schaltePushAusAktion(link, endpoint) : ({ ok: true } as const);
-      if (!r.ok && r.ungueltig) return router.refresh();
+      // Zuerst bei KiFu, erst danach am Gerät: Meldet sich das Gerät zuerst ab
+      // und scheitert KiFu, bleibt ein Abo ohne Gerät stehen und belegt einen
+      // der Plätze (PUSH_MAX_GERAETE), ohne dass ein zweiter Versuch mit
+      // derselben Adresse möglich wäre. So bleibt der Schalter an und lässt
+      // sich noch einmal betätigen.
+      if (anmeldung) {
+        const r = await schaltePushAusAktion(link, anmeldung.endpoint);
+        if (!r.ok && r.ungueltig) return router.refresh();
+        if (!r.ok) return setMeldung({ art: "error", text: MITTEILUNGEN_TEXT.fehler });
+        await anmeldung.unsubscribe().catch(() => false);
+      }
       setStand("aus");
+    } catch (e) {
+      console.error("[mitteilungen] ausschalten:", e);
+      setMeldung({ art: "error", text: MITTEILUNGEN_TEXT.fehler });
     } finally {
       setPending(false);
     }

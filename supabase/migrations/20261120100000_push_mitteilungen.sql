@@ -42,7 +42,8 @@
 --
 -- Sperrordnung: Die RPCs sperren die spieler-Zeile (key share), danach den
 -- Advisory-Lock der Grenze. Der Auftrags-Trigger nimmt nur KEY SHARE auf
--- `push_abos` und `spieler_benachrichtigungen` (FK), nie auf `spieler`.
+-- `push_abos` (ausdrücklich, damit wegfallende Abos übersprungen werden) und
+-- `spieler_benachrichtigungen` (FK), nie auf `spieler`.
 --
 -- Forward-only: neue Extension (pg_net), zwei neue Tabellen (stehen in
 -- PUBLIC_TABLES von sync-staging.yml und werden nach dem Restore geleert),
@@ -197,6 +198,11 @@ revoke all on function push_anstossen() from public, anon, authenticated;
 -- Je neue Benachrichtigung ein Auftrag je Abo ihrer Spieler:in. Je Anweisung
 -- einmal: Eine Serienänderung legt viele Benachrichtigungen in einer
 -- Anweisung ab.
+-- `for key share of a`: Ein Abo, das gleichzeitig wegfällt (Gerät nimmt nichts
+-- mehr an, Ausschalten), überspringt die Abfrage nach dem Warten; ein
+-- gesperrtes bleibt bis zum Commit stehen. Ohne die Sperre sähe die Abfrage
+-- das Abo noch im Snapshot, und die FK-Prüfung bräche den Termin bzw. die
+-- Benachrichtigung ab (PC 2). Der Ausnahmeblock ist das Netz dafür.
 create function push_auftraege_ablegen() returns trigger
 language plpgsql security definer
 set search_path = public, pg_temp
@@ -204,7 +210,11 @@ as $$
 begin
   insert into push_auftraege (abo_id, benachrichtigung_id)
   select a.id, n.id from neu n join push_abos a on a.spieler_id = n.spieler_id
+  for key share of a
   on conflict do nothing;
+  return null;
+exception when foreign_key_violation then
+  raise warning 'push_auftraege_ablegen: %', sqlerrm;
   return null;
 end;
 $$;
@@ -387,17 +397,23 @@ declare
 begin
   select id into v_spieler from spieler where link_token = p_link for key share;
   if not found then return 'ungueltig'; end if;
-  update push_abos set p256dh = p_p256dh, auth = p_auth, schluessel = p_schluessel
-   where spieler_id = v_spieler and endpoint = p_endpoint;
-  if found then return 'ok'; end if;
+  -- Der äussere Block fängt unlesbare Werte auf jedem Weg ab: beim
+  -- Nachführen, beim Anlegen und im Handler des gleichzeitigen Einschaltens
+  -- (eine Ausnahme im Handler fangen dessen Geschwister nicht).
   begin
-    insert into push_abos (spieler_id, endpoint, p256dh, auth, schluessel)
-    values (v_spieler, p_endpoint, p_p256dh, p_auth, p_schluessel);
+    update push_abos set p256dh = p_p256dh, auth = p_auth, schluessel = p_schluessel
+     where spieler_id = v_spieler and endpoint = p_endpoint;
+    if found then return 'ok'; end if;
+    begin
+      insert into push_abos (spieler_id, endpoint, p256dh, auth, schluessel)
+      values (v_spieler, p_endpoint, p_p256dh, p_auth, p_schluessel);
+    exception
+      when unique_violation then
+        -- Ein gleichzeitiges Einschalten desselben Geräts: steht schon.
+        update push_abos set p256dh = p_p256dh, auth = p_auth, schluessel = p_schluessel
+         where spieler_id = v_spieler and endpoint = p_endpoint;
+    end;
   exception
-    when unique_violation then
-      -- Ein gleichzeitiges Einschalten desselben Geräts: steht schon.
-      update push_abos set p256dh = p_p256dh, auth = p_auth, schluessel = p_schluessel
-       where spieler_id = v_spieler and endpoint = p_endpoint;
     when check_violation or not_null_violation then
       return 'abgewiesen';
     when raise_exception then
