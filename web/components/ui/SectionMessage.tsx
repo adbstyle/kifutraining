@@ -5,9 +5,11 @@ import {
   Info,
   MessageCircleQuestion,
   TriangleAlert,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { IconButton } from "./IconButton";
 
 /* ── Section Message ──────────────────────────────────────────
    Atlassians «Section Message», wie Jira sie zeigt — der EINE Baustein für
@@ -42,7 +44,13 @@ import { cn } from "@/lib/cn";
    (`alert`), alles andere reiht sich ein (`status`). Eine Meldung mit
    BEDIENELEMENT trägt immer `status` — `alert` ist atomar, jede Änderung darin
    liesse die ganze Meldung unterbrechend neu vorlesen, und ARIA verlangt für
-   `alert` Inhalt ohne Fokus. */
+   `alert` Inhalt ohne Fokus.
+
+   Schliessbar (`onSchliessen`, #650): ein Icon-Knopf ✕ oben rechts für einen
+   Hinweis, den man ablehnen darf, ohne zu antworten — etwa «Termine als App»
+   am privaten Link. Der Knopf trägt sein Label (`schliessenLabel`) und
+   ragt mit seinem 36-px-Feld in die Polsterung, damit das Zeichen mit dem
+   der Darstellung auf einer Linie steht. */
 type Appearance = "information" | "warning" | "error" | "success" | "discovery";
 
 const darstellungen: Record<Appearance, { icon: LucideIcon; flaeche: string; zeichen: string }> = {
@@ -60,6 +68,8 @@ export function SectionMessage({
   children,
   actions,
   role,
+  onSchliessen,
+  schliessenLabel = "Schliessen",
   className,
 }: {
   /** `error`: etwas ging nicht. `information` (Vorgabe): alles andere. */
@@ -72,6 +82,10 @@ export function SectionMessage({
   actions?: ReactNode;
   /** Vorgabe: `alert` beim Fehler ohne Knöpfe, sonst `status`. */
   role?: "alert" | "status";
+  /** Macht die Meldung schliessbar: Icon-Knopf ✕ oben rechts. */
+  onSchliessen?: () => void;
+  /** Label des Schliessen-Knopfs, Vorgabe «Schliessen». */
+  schliessenLabel?: string;
   className?: string;
 }) {
   const d = darstellungen[appearance];
@@ -91,6 +105,9 @@ export function SectionMessage({
             den Schnitt des Texts darüber. */}
         {actions && <div className="type-body-medium mt-2 flex flex-wrap gap-x-4 gap-y-1">{actions}</div>}
       </div>
+      {onSchliessen && (
+        <IconButton icon={X} label={schliessenLabel} onClick={onSchliessen} className="-my-1.5 -mr-2 shrink-0" />
+      )}
     </div>
   );
 }

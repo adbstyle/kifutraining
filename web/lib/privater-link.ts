@@ -1,5 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
+import { cache } from "react";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { istUuid } from "@/lib/kennung";
 import { LINK_FEHLER, abweisungText, istLinkToken, nachTeamname, type AbmeldeGrund, type AbmeldeStand, type Spielstand } from "@/lib/spieler";
@@ -121,8 +122,10 @@ export type LinkAnsicht =
 
 const UNGUELTIG = { gueltig: false } as const;
 
-/** Was der Link zeigt — oder einheitlich «ungültig». */
-export async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
+/** Was der Link zeigt — oder einheitlich «ungültig». Je Anfrage einmal
+ *  (`cache`): Das Layout liest daraus den Namen der App (#650 AK 4), die
+ *  Seite dieselbe Antwort. */
+export const ladeLinkAnsicht = cache(async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
   if (!istLinkToken(token)) return UNGUELTIG;
   const { data, error } = await createAnonClient().rpc("spieler_link_ansicht", { p_token: token });
   // Ein Fehler der Datenebene ist kein Beweis, dass der Link nicht gilt — die
@@ -139,7 +142,7 @@ export async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
         team_infos: ansicht.team_infos && [...ansicht.team_infos].sort((a, b) => nachTeamname(a.team, b.team)),
       }
     : ansicht;
-}
+});
 
 /** Die Benachrichtigungen der Spieler:in (#642 AK 1) — `null` bei einem
  *  ungültigen Link und bei jedem Fehler der Datenebene (auch vor der

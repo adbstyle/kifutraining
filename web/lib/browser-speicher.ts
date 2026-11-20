@@ -1,3 +1,4 @@
+import { APP_ABLEGEN_SPEICHER } from "@/lib/app-ablegen";
 import { BENACHRICHTIGUNG_COOKIE } from "@/lib/benachrichtigung-gesehen";
 import { BEREICH_COOKIE } from "@/lib/bereich";
 import { DARSTELLUNG_COOKIE } from "@/lib/darstellung";
@@ -83,5 +84,14 @@ export const SPEICHERUNGEN: Speicherung[] = [
     zweck: "Auf der Seite hinter dem privaten Link einer Spieler:in: merkt sich, bis wann dieses Gerät die Benachrichtigungen angezeigt hat, damit nur neue als neu zählen. Je Link ein Eintrag, nur ein Kürzel des Links, nie der Link selbst; gilt nur für die privaten Links.",
     dauer: "Ein Jahr.",
     ohne: "Die Seite kann nicht zeigen, was auf diesem Gerät neu ist.",
+  },
+  {
+    // Kein Cookie, sondern der lokale Speicher des Browsers: Der Server
+    // braucht es nie (#650).
+    name: APP_ABLEGEN_SPEICHER,
+    titel: "Hinweis «als App ablegen»",
+    zweck: "Auf der Seite hinter dem privaten Link einer Spieler:in, im lokalen Speicher des Browsers: zählt die Besuche dieses Geräts und merkt sich, wann du den Hinweis «als App ablegen» geschlossen hast. Je Link ein Eintrag, nur ein Kürzel des Links, nie der Link selbst.",
+    dauer: "Bis du die Daten der Website im Browser löschst.",
+    ohne: "Der Hinweis erscheint nicht; der Knopf unter den Terminen bleibt.",
   },
 ];

@@ -197,6 +197,23 @@ import {
   wertAusCookieString,
 } from "../lib/benachrichtigung-gesehen";
 import { SPEICHERUNGEN } from "../lib/browser-speicher";
+import {
+  APP_ABLEGEN_MAX_LINKS,
+  APP_ABLEGEN_SPEICHER,
+  APP_ABLEGEN_TEXT,
+  APP_ICONS,
+  BESUCH_ABSTAND_MS,
+  HINWEIS_PAUSE_MS,
+  ablageFuer,
+  appName,
+  erkenneGeraet,
+  genitiv,
+  liesAblage,
+  linkManifest,
+  mitBesuch,
+  mitGeschlossen,
+  zeigeHinweis,
+} from "../lib/app-ablegen";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
 import { blattStand, handlungsMeldung, meldeStatus, nachMeldefrist, spielStatus, terminStatus } from "../lib/termin-status";
@@ -5451,6 +5468,134 @@ pruefe("Benachrichtigungen (#645 AK 1, 3; PC 3): Wegfall am Link; Serie mit Verl
   assert.equal(eintragTitel(einzeln), "Turnier · Ea");
   assert.equal(eintragWo(einzeln), "Halle");
   assert.equal(EREIGNIS_NEGATIV.wegfall, true);
+});
+
+const AA_K1 = "AbCdEf123456";
+const AA_K2 = "zyxwvu-_9876";
+const UA = {
+  iphoneSafari: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+  iphoneChrome: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/131.0.6778.73 Mobile/15E148 Safari/604.1",
+  iphoneInstagram: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 357.0.0.25.101",
+  iphoneFacebook: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/FBIOS;FBAV/490.0.0.40.107;FBBV/1]",
+  ipad: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15",
+  androidChrome: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+  androidWebView: "Mozilla/5.0 (Linux; Android 14; Pixel 8; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/131.0.0.0 Mobile Safari/537.36",
+  androidWhatsApp: "Mozilla/5.0 (Linux; Android 14; SM-S911B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36 WhatsApp/2.24.1",
+  macChrome: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+};
+
+pruefe("App ablegen (#650 AK 1, 8; OoS 4): erkenneGeraet — iPhone, Android, Browser in Apps, Computer", () => {
+  assert.deepEqual(erkenneGeraet(UA.iphoneSafari, 5), { system: "ios", inApp: false });
+  assert.deepEqual(erkenneGeraet(UA.iphoneChrome, 5), { system: "ios", inApp: false }, "Chrome auf dem iPhone legt über «Teilen» ab");
+  assert.deepEqual(erkenneGeraet(UA.iphoneInstagram, 5), { system: "ios", inApp: true });
+  assert.deepEqual(erkenneGeraet(UA.iphoneFacebook, 5), { system: "ios", inApp: true });
+  assert.deepEqual(erkenneGeraet(UA.ipad, 5), { system: "ios", inApp: false }, "das iPad meldet sich als Mac mit Touchscreen");
+  assert.deepEqual(erkenneGeraet(UA.ipad, 0), { system: "andere", inApp: false }, "ein Mac ohne Touchscreen ist ein Computer");
+  assert.deepEqual(erkenneGeraet(UA.androidChrome, 5), { system: "android", inApp: false });
+  assert.deepEqual(erkenneGeraet(UA.androidWebView, 5), { system: "android", inApp: true });
+  assert.deepEqual(erkenneGeraet(UA.androidWhatsApp, 5), { system: "android", inApp: true });
+  assert.deepEqual(erkenneGeraet(UA.macChrome, 0), { system: "andere", inApp: false });
+  assert.deepEqual(erkenneGeraet(UA.windows, 0), { system: "andere", inApp: false });
+  assert.deepEqual(erkenneGeraet("", 0), { system: "andere", inApp: false });
+});
+
+pruefe("App ablegen (#650 AK 6, 7): Besuche je Link, ab dem zweiten der Hinweis, nach dem Schliessen 7 Tage Ruhe", () => {
+  const t0 = 1_800_000_000_000;
+  const iphone = erkenneGeraet(UA.iphoneSafari, 5);
+  const hinweis = (wert: string, jetzt: number, extra: Partial<Parameters<typeof zeigeHinweis>[0]> = {}) =>
+    zeigeHinweis({ geraet: iphone, standalone: false, stand: ablageFuer(wert, AA_K1), jetzt, ...extra });
+  // Erster Besuch: kein Hinweis.
+  let w = mitBesuch(null, AA_K1, t0);
+  assert.deepEqual(ablageFuer(w, AA_K1), { k: AA_K1, b: 1, l: t0, z: null });
+  assert.equal(hinweis(w, t0), false);
+  // Neu laden kurz danach ist derselbe Besuch.
+  w = mitBesuch(w, AA_K1, t0 + BESUCH_ABSTAND_MS - 1);
+  assert.equal(ablageFuer(w, AA_K1)?.b, 1);
+  assert.equal(hinweis(w, t0 + BESUCH_ABSTAND_MS - 1), false);
+  // Zweiter Besuch: der Hinweis.
+  const t1 = t0 + BESUCH_ABSTAND_MS;
+  w = mitBesuch(w, AA_K1, t1);
+  assert.equal(ablageFuer(w, AA_K1)?.b, 2);
+  assert.equal(hinweis(w, t1), true);
+  // Nicht in der abgelegten App, nicht am Computer (OoS 4), nicht ohne Stand.
+  assert.equal(hinweis(w, t1, { standalone: true }), false);
+  assert.equal(hinweis(w, t1, { geraet: erkenneGeraet(UA.macChrome, 0) }), false);
+  assert.equal(hinweis(w, t1, { geraet: erkenneGeraet(UA.androidChrome, 5) }), true);
+  assert.equal(hinweis(w, t1, { geraet: erkenneGeraet(UA.iphoneInstagram, 5) }), true, "im Browser einer App sagt er, wo es geht (AK 8)");
+  assert.equal(zeigeHinweis({ geraet: iphone, standalone: false, stand: null, jetzt: t1 }), false);
+  // Geschlossen: ruht 7 Tage, auch über weitere Besuche hinweg.
+  w = mitGeschlossen(w, AA_K1, t1);
+  assert.equal(ablageFuer(w, AA_K1)?.z, t1);
+  assert.equal(ablageFuer(w, AA_K1)?.b, 2, "Schliessen zählt keinen Besuch");
+  const t2 = t1 + HINWEIS_PAUSE_MS - 1;
+  w = mitBesuch(w, AA_K1, t2);
+  assert.equal(hinweis(w, t2), false);
+  assert.equal(hinweis(w, t1 + HINWEIS_PAUSE_MS), true, "nach 7 Tagen wieder");
+  // Je Link getrennt: Ein anderer Link beginnt bei 1, der zuletzt besuchte steht zuerst.
+  w = mitBesuch(w, AA_K2, t2);
+  assert.deepEqual(liesAblage(w).map((s) => [s.k, s.b]), [[AA_K2, 1], [AA_K1, 3]]);
+  assert.equal(zeigeHinweis({ geraet: iphone, standalone: false, stand: ablageFuer(w, AA_K2), jetzt: t2 }), false);
+  // Schliessen eines unbekannten Links legt ihn an.
+  assert.deepEqual(ablageFuer(mitGeschlossen(null, AA_K1, t0), AA_K1), { k: AA_K1, b: 1, l: t0, z: t0 });
+  // Höchstens 20 Links; der älteste fällt heraus.
+  let viele: string | null = null;
+  for (let i = 0; i < APP_ABLEGEN_MAX_LINKS + 3; i++) viele = mitBesuch(viele, `k${String(i).padStart(11, "0")}`, t0 + i);
+  const liste = liesAblage(viele);
+  assert.equal(liste.length, APP_ABLEGEN_MAX_LINKS);
+  assert.equal(liste[0].k, `k${String(APP_ABLEGEN_MAX_LINKS + 2).padStart(11, "0")}`);
+  assert.equal(liste.some((s) => s.k === "k00000000000"), false);
+  // Müll: Unlesbares fällt weg, nichts wirft; ein ungültiger Schlüssel ändert nichts.
+  for (const muell of ["x", "{}", "[1]", '[{"k":"kurz","b":1,"l":1,"z":null}]', '[{"k":"AbCdEf123456","b":-1,"l":1,"z":null}]', '[{"k":"AbCdEf123456","b":1,"l":1,"z":"x"}]'])
+    assert.equal(ablageFuer(muell, AA_K1), null, muell);
+  const gut = JSON.stringify([{ k: AA_K1, b: 2, l: 5, z: null }]);
+  assert.equal(ablageFuer(`[{"k":"kaputt"},${gut.slice(1)}`, AA_K1)?.b, 2, "ein kaputter Eintrag nimmt die anderen nicht mit");
+  assert.equal(mitBesuch(gut, "kurz", t0), gut);
+  assert.equal(mitBesuch(gut, AA_K1, Number.NaN), gut);
+  assert.equal(mitGeschlossen(gut, AA_K1, -1), gut);
+  // Kein Klartext-Link im Speicher, und die Seite «Cookies» nennt ihn (#409).
+  assert.ok(SPEICHERUNGEN.some((x) => x.name === APP_ABLEGEN_SPEICHER), "SPEICHERUNGEN enthält den lokalen Speicher");
+});
+
+pruefe("App ablegen (#650 AK 1, 3–5): Manifest je Link — Name «Vorname · Verein», id, start_url und scope mit dem Link", () => {
+  const token = "a".repeat(43);
+  const m = linkManifest({ token, vorname: "Lena", verein: "FC Wyler" });
+  assert.equal(m.name, "Lena · FC Wyler");
+  assert.equal(appName("Lena", "FC Wyler"), m.name);
+  assert.equal(m.id, `/abmelden/${token}`);
+  assert.equal(m.start_url, `/abmelden/${token}`);
+  // Ohne Schrägstrich am Ende: Sonst läge die Startseite selbst nicht im Bereich.
+  assert.equal(m.scope, `/abmelden/${token}`);
+  assert.ok(m.start_url.startsWith(m.scope));
+  assert.equal(m.display, "standalone");
+  assert.ok(!("short_name" in m), "kein Kurzname: der Verein gehört zum Namen");
+  // Zwei Spieler:innen, zwei Apps (AK 5).
+  assert.notEqual(linkManifest({ token: "b".repeat(43), vorname: "Noah", verein: "FC Wyler" }).id, m.id);
+  // Icons: 192, 512 und ein maskierbares; die Dateien liegen da.
+  assert.deepEqual(APP_ICONS.map((i) => `${i.sizes}:${i.purpose}`), ["192x192:any", "512x512:any", "512x512:maskable"]);
+  for (const i of APP_ICONS) assert.ok(existsSync(join(web, "public", i.src)), i.src);
+});
+
+pruefe("App ablegen (#650 AK 2, 6, 8): Texte — Genitiv des Vornamens, Begriff «Mobile», noch keine Mitteilungen", () => {
+  assert.equal(genitiv("Lena"), "Lenas");
+  assert.equal(genitiv("Jonas"), "Jonas’");
+  assert.equal(genitiv("Max"), "Max’");
+  assert.equal(genitiv("Fritz"), "Fritz’");
+  assert.equal(genitiv("Alice"), "Alice’");
+  assert.equal(APP_ABLEGEN_TEXT.hinweisTitel("Lena"), "Termine von Lena als App");
+  assert.equal(
+    APP_ABLEGEN_TEXT.hinweisText("Lena"),
+    "Lege diese Seite auf den Home-Bildschirm. Dann öffnest du Lenas Termine mit einem Tipp, ohne den Link im Chat zu suchen.",
+  );
+  assert.equal(APP_ABLEGEN_TEXT.inApp, "Hier lässt sich die Seite nicht als App ablegen. Öffne den Link im Browser deines Mobiles, etwa in Safari oder Chrome.");
+  const alle = JSON.stringify(APP_ABLEGEN_TEXT) + APP_ABLEGEN_TEXT.hinweisText("X") + APP_ABLEGEN_TEXT.hinweisTitel("X");
+  assert.ok(!/Handy/i.test(alle), "«Mobile», nie «Handy»");
+  assert.ok(!/Mitteilung/i.test(alle), "Mitteilungen erst mit #483");
+  assert.equal(APP_ABLEGEN_TEXT.ios.length, 3);
+  assert.equal(APP_ABLEGEN_TEXT.android.length, 3);
+  assert.match(APP_ABLEGEN_TEXT.ios[1], /«Zum Home-Bildschirm»/);
+  assert.match(APP_ABLEGEN_TEXT.ios[2], /«Hinzufügen»/);
+  assert.match(APP_ABLEGEN_TEXT.android[1], /«Zum Startbildschirm hinzufügen»/);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

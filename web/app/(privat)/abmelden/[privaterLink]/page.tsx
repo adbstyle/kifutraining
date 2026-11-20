@@ -36,6 +36,7 @@ export default async function SpielerLinkSeite({ params }: { params: Promise<{ p
     <>
       <ElternAnsicht
         token={privaterLink}
+        verein={ansicht.verein}
         teams={ansicht.teams}
         spieler={ansicht.spieler}
         probe={ansicht.probe ?? null}
