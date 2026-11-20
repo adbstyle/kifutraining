@@ -1,4 +1,4 @@
-import { GRUND_HELL } from "@/lib/farben";
+import { GRUND, GRUND_HELL } from "@/lib/farben";
 
 /* Die Seite des privaten Links als App ablegen (#650): wann der Hinweis
    erscheint, auf welchem Gerät welcher Weg gilt, und das Manifest je Link.
@@ -172,6 +172,60 @@ export function linkManifest({ token, vorname, verein }: { token: string; vornam
     icons: APP_ICONS,
   } as const;
 }
+
+/* ── KiFu für Personen mit Konto als App (#651) ──────────────────────────────
+   Ein Manifest für die ganze Anwendung, verlinkt nur im Layout der App und der
+   Anmelde-Seiten — nie unter /abmelden oder /abholen: Dort gilt das Manifest
+   des Links (#650) bzw. keines. Darum kein `app/manifest.ts` (Next hängt das
+   an jede Seite und überdeckt das Manifest des Links). Kein Service Worker:
+   keine Mitteilungen, nichts ohne Netz (#651 OoS 1, 2). */
+
+/** Wo das Manifest liegt (`app/manifest.webmanifest/route.ts`); die Middleware
+ *  lässt den Pfad aus — der Browser holt es ohne Cookies. */
+export const KONTO_MANIFEST_PFAD = "/manifest.webmanifest";
+
+/** Der Name auf dem Home-Bildschirm (AK 2), auch für das iPhone. */
+export const KONTO_APP_NAME = "KiFu";
+
+/** Die Startseite der abgelegten App: die Teams. Ohne Sitzung führt die
+ *  Middleware zur Anmeldung und danach zurück hierher (AK 3). */
+export const KONTO_APP_START = "/teams";
+
+/** Das Manifest für Personen mit Konto (AK 1, 2): `id` fest auf «/», damit eine
+ *  spätere andere Startseite keine zweite App ergibt; der Bereich ist die ganze
+ *  Anwendung, sonst stünde beim Wechsel etwa in den Katalog die Leiste des
+ *  Browsers da. Name «KiFu», Bildmarke wie beim Link (`APP_ICONS`). */
+export function kontoManifest() {
+  return {
+    id: "/",
+    name: KONTO_APP_NAME,
+    short_name: KONTO_APP_NAME,
+    description: "Übungen, Trainings und Termine deiner Teams.",
+    lang: "de-CH",
+    dir: "ltr",
+    start_url: KONTO_APP_START,
+    scope: "/",
+    display: "standalone",
+    background_color: GRUND_HELL,
+    theme_color: GRUND_HELL,
+    icons: APP_ICONS,
+  } as const;
+}
+
+/** Die Farbe der Systemleiste: der Grund im jeweiligen Erscheinungsbild
+ *  (Zwilling `--color-elev-00` in globals.css). Gilt für alle Seiten. */
+export const THEME_FARBEN = [
+  { media: "(prefers-color-scheme: light)", color: GRUND_HELL },
+  { media: "(prefers-color-scheme: dark)", color: GRUND },
+] as const;
+
+/** Die Angaben im Kopf der App und der Anmelde-Seiten (AK 1, 2): Manifest
+ *  und, fürs iPhone, Vollbild und Name unter dem Symbol. Das Symbol selbst
+ *  kommt aus `app/apple-icon.png` (jede Seite). */
+export const KONTO_APP_METADATA = {
+  manifest: KONTO_MANIFEST_PFAD,
+  appleWebApp: { capable: true, title: KONTO_APP_NAME, statusBarStyle: "default" },
+} as const;
 
 /** Der Zusatz zum Hinweis, wenn es Mitteilungen gibt (#483 AK 4). */
 export const APP_ABLEGEN_MITTEILUNGEN = "In der App kannst du ausserdem Mitteilungen aufs Mobile einschalten.";

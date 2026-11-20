@@ -225,10 +225,14 @@ import {
   APP_ICONS,
   BESUCH_ABSTAND_MS,
   HINWEIS_PAUSE_MS,
+  KONTO_APP_METADATA,
+  KONTO_MANIFEST_PFAD,
+  THEME_FARBEN,
   ablageFuer,
   appName,
   erkenneGeraet,
   genitiv,
+  kontoManifest,
   liesAblage,
   linkManifest,
   mitBesuch,
@@ -5601,6 +5605,41 @@ pruefe("App ablegen (#650 AK 1, 3–5): Manifest je Link — Name «Vorname · V
   // Icons: 192, 512 und ein maskierbares; die Dateien liegen da.
   assert.deepEqual(APP_ICONS.map((i) => `${i.sizes}:${i.purpose}`), ["192x192:any", "512x512:any", "512x512:maskable"]);
   for (const i of APP_ICONS) assert.ok(existsSync(join(web, "public", i.src)), i.src);
+});
+
+pruefe("KiFu als App (#651 AK 1–3): Manifest «KiFu» ab /teams, nur in App und Anmeldung verlinkt, kein Service Worker", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const m = kontoManifest();
+  assert.equal(m.name, "KiFu");
+  assert.equal(m.short_name, "KiFu");
+  assert.equal(m.start_url, "/teams");
+  assert.equal(m.id, "/");
+  assert.equal(m.scope, "/");
+  assert.equal(m.display, "standalone");
+  assert.deepEqual(m.icons, APP_ICONS, "dieselbe Bildmarke wie beim Link");
+  assert.equal(KONTO_APP_METADATA.manifest, KONTO_MANIFEST_PFAD);
+  assert.equal(KONTO_APP_METADATA.appleWebApp.title, "KiFu");
+  // Die Route liegt da, wo der Pfad hinzeigt, und ist fest (ohne Daten einer Person).
+  const route = lies(`app${KONTO_MANIFEST_PFAD}/route.ts`);
+  assert.match(route, /kontoManifest\(\)/);
+  assert.match(route, /force-static/);
+  // Verlinkt nur in den Layouts von App und Anmeldung — nie im Wurzel-Layout und
+  // nie per `app/manifest.ts`: beides überdeckte das Manifest des Links (#650).
+  for (const d of ["app/(app)/layout.tsx", "app/(auth)/layout.tsx"])
+    assert.match(lies(d), /export const metadata: Metadata = KONTO_APP_METADATA;/, d);
+  assert.ok(!/KONTO_APP_METADATA|manifest:/.test(lies("app/layout.tsx")), "Wurzel ohne Manifest");
+  assert.ok(!/KONTO_APP_METADATA/.test(lies("app/(privat)/layout.tsx")), "Link-Seiten ohne KiFu-Manifest");
+  for (const d of ["app/manifest.ts", "app/manifest.json", "app/manifest.webmanifest/page.tsx", "public/manifest.webmanifest", "public/manifest.json"])
+    assert.ok(!existsSync(join(web, d)), `${d}: Manifest per Dateikonvention hinge an jeder Seite`);
+  // Die Middleware lässt den Pfad aus (keine Sitzung, der Browser schickt keine Cookies).
+  assert.match(lies("middleware.ts"), /\|manifest\\\\\.webmanifest\|/);
+  // Kein Service Worker für Konten (OoS 1, 2): einziger ist der des Links (#483).
+  assert.ok(!/serviceWorker/.test(lies("app/(app)/layout.tsx") + lies("app/(auth)/layout.tsx") + route));
+  // Systemleiste hell/dunkel im Grund (Zwilling --color-elev-00).
+  assert.match(lies("app/layout.tsx"), /themeColor: \[\.\.\.THEME_FARBEN\]/);
+  const grund = lies("app/globals.css").match(/--color-elev-00: light-dark\((#[0-9a-f]{6}), (#[0-9a-f]{6})\)/);
+  assert.ok(grund);
+  assert.deepEqual(THEME_FARBEN.map((f) => f.color), [grund[1], grund[2]]);
 });
 
 pruefe("App ablegen (#650 AK 2, 6, 8): Texte — Genitiv des Vornamens, Begriff «Mobile», Mitteilungen nur mit #483", () => {

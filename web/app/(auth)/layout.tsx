@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { DarstellungsMarke } from "@/components/layout/DarstellungKontext";
+import { KONTO_APP_METADATA } from "@/lib/app-ablegen";
 import { DARSTELLUNG_COOKIE, leseDarstellung } from "@/lib/darstellung";
+
+/* Auch von der Anmeldung aus lässt sich KiFu als App ablegen (#651); sie
+   startet dann bei den Teams (über die Anmeldung, falls nötig). */
+export const metadata: Metadata = KONTO_APP_METADATA;
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   // Die Wahl aus der App gilt auch hier (#567) — wählen lässt sie sich nur dort.
