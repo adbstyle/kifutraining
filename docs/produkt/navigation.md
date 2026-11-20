@@ -1,12 +1,13 @@
 # Navigation
 
-Stand 2026-11-19. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-11-20. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Seitenleiste
 
 Die Hauptnavigation steht als Leiste am linken Rand. Oben steht die Marke — das Zeichen von
 FutAssist, ein F mit einem Punkt darüber, mit dem Namen KiFu —, die zum Übungsbestand führt.
-Dasselbe Zeichen steht im Tab des Browsers und auf dem Home-Bildschirm.
+Dasselbe Zeichen steht im Tab des Browsers und auf dem Home-Bildschirm, auch als Symbol der
+abgelegten App (siehe [Konto und Zugang](konto-und-zugang.md#kifu-als-app)).
 
 Angemeldet folgt darunter der Bereich-Wechsler. Er wählt, woran man gerade arbeitet: eines der
 eigenen Teams — mit dem Untertitel „Trainer:in", alphabetisch — oder den Verein mit dem
@@ -71,7 +72,8 @@ der Rechner auf dunkel gestellt, ist KiFu dunkel, sonst hell — auch wenn das G
 angibt. Stellt man das Gerät um, geht KiFu sofort mit, ohne Neuladen. Beide Erscheinungsbilder
 haben dieselben Farben der Marke mit dem Violett als Akzent; hell liegen weisse Karten auf einem
 leise grünlich-grauen Grund, dunkel bleibt der Grund das dunkle Rasengrün. Gedruckt wird immer
-hell, wie bisher.
+hell, wie bisher. Die Leiste des Mobiles färbt sich im Grund des Erscheinungsbilds, das das Gerät
+eingestellt hat, auch in der abgelegten App.
 
 Angemeldet lässt sich die Darstellung selbst wählen: „Darstellung" unten in der Leiste öffnet ein
 Menü mit „Wie das Gerät", „Hell" und „Dunkel"; die gewählte trägt einen Haken. In der schmalen Leiste
@@ -128,8 +130,14 @@ Die Seite „Cookies" nennt alles, was KiFu im Browser ablegt: die Anmeldung, di
 Breite der Seitenleiste, die gezogene Breite der Spalte und des Verzeichnisses unter
 „Versionen" und im Styleguide, die gewählte Darstellung, den zuletzt gewählten Bereich der
 Seitenleiste, bis zu welcher Version man „Versionen" gesehen hat und, nur auf den Seiten hinter
-einem privaten Link, bis wann das Gerät die Benachrichtigungen angezeigt hat — je mit Zweck, Dauer,
-Namen und dem, was ohne sie nicht mehr geht.
+einem privaten Link, bis wann das Gerät die Benachrichtigungen angezeigt hat, unter „Hinweis «als App
+ablegen»" wie oft das Gerät den Link besucht und wann es den Hinweis zum Ablegen geschlossen hat —
+je Link nur ein Kürzel, im lokalen Speicher des Browsers, bis man die Daten der Website löscht —
+und unter „Mitteilungen aufs Mobile" das kleine Programm des Browsers, das erst beim Einschalten der
+Mitteilungen dazukommt, sie anzeigt, beim Antippen die Benachrichtigungen öffnet und das Gerät beim
+Mitteilungsdienst des Herstellers anmeldet, bis man die Mitteilungen ausschaltet, das Team den Link
+erneuert oder man die Daten der Website löscht — je mit Zweck, Dauer, Namen und dem, was ohne sie
+nicht mehr geht. Die abgelegte App von KiFu für Personen mit Konto legt nichts Zusätzliches ab.
 Sie nennt auch die Besucherstatistik: KiFu zählt auf ki-fu.ch Seitenaufrufe mit Vercel Web
 Analytics nach Seite, Herkunft, Land und Gerätetyp. Diese legt nichts im Browser ab, kennt keine
 Personen und erhält die Adresse ohne Suchbegriffe und Filter; eine unbekannte Adresse zählt sie
@@ -278,7 +286,10 @@ am Bildschirmrand eine schmale Leiste mit dem Link „Fragen und Feedback"; die 
 nichts. In den
 übrigen Teil der Anwendung führen sie nicht. Eine Anmeldung kennen sie nicht — auch wer ein Konto
 hat, ist dort niemand Bestimmtes —, und im Browser liegt von ihnen nur, welche Benachrichtigungen
-ein Gerät am privaten Link schon angezeigt hat. Ihr Titel ist fest und nennt weder Team noch Spieler:in,
+ein Gerät am privaten Link schon angezeigt hat, wie oft es den Link besucht und wann es den Hinweis
+zum Ablegen als App geschlossen hat und, wer Mitteilungen aufs Mobile einschaltet, das kleine
+Programm des Browsers, das sie zeigt. Die Seite der Spieler:in lässt sich als eigene App auf den
+Home-Bildschirm legen (siehe [Team-Bereich](team-bereich.md#als-app-ablegen)). Ihr Titel ist fest und nennt weder Team noch Spieler:in,
 damit ein Chat beim Teilen keine Namen in die Vorschau setzt; Suchmaschinen nehmen sie nicht auf,
 die Besucherstatistik zählt sie nicht, und in eine fremde Seite einbetten lassen sie sich nicht.
 
@@ -342,9 +353,11 @@ beschreibt nur, was im Browser liegt, und die Besucherstatistik. Diese lässt si
 abwählen, und eine Seite, die über einen ungültigen Link nicht gefunden wird (etwa ein
 Training, das es nicht gibt), zählt sie unter dem eingegebenen Pfad. Eine eigene Einstellung, um Cookies abzuschalten, gibt
 es nicht — das geht über den Browser. Die Seite „Cookies" erwähnt die Seiten hinter einem
-privaten Link nur mit dem Merker der gesehenen Benachrichtigungen, und diese verweisen weder auf
+privaten Link nur mit dem Merker der gesehenen Benachrichtigungen, dem Hinweis zum Ablegen als App
+und den Mitteilungen aufs Mobile, und diese verweisen weder auf
 sie noch auf eine andere Erklärung; was zu Spieler:innen gespeichert ist, sagt allein die
-Abholseite, wie lange Benachrichtigungen bleiben, auch deren Ansicht.
+Abholseite, wie lange Benachrichtigungen bleiben, auch deren Ansicht, und was KiFu für Mitteilungen
+aufs Mobile speichert, auch der Dialog vor dem Einschalten.
 
 „Versionen" zeigt die Texte so, wie sie veröffentlicht wurden; ältere enthalten Technisches,
 Nummern von Aufgaben und Aussagen, die inzwischen überholt sind. Nummern von Aufgaben sind dort kein Link,

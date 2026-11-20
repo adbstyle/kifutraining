@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-11-19. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-11-20. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -26,6 +26,19 @@ Die Konto-Seite zeigt die eigene E-Mail-Adresse, bietet das Abmelden an, führt 
 Übungen, lässt den Anzeigenamen setzen, listet die verbundenen KI-Assistenten und die
 Kalender-Abos, führt zur Seite „Cookies" (siehe Navigation) und bietet das Löschen des Kontos
 an. Mehr Profilangaben gibt es nicht — kein Bild, keine Postadresse, keine Vereinszugehörigkeit.
+
+## KiFu als App
+
+Wer ein Konto hat, legt KiFu auf dem Mobile als App auf den Home-Bildschirm, auf dem iPhone über
+„Teilen" und „Zum Home-Bildschirm", auf einem Android-Telefon über das Menü des Browsers, „Zum
+Startbildschirm hinzufügen" oder „App installieren"; Chrome bietet es auch am Computer an. Das geht
+von jeder Seite der Anwendung und von der Anmeldung aus. Die App heisst „KiFu", trägt die Bildmarke
+und öffnet ohne die Leiste des Browsers bei den Teams; ohne Anmeldung führt sie zuerst zur Anmeldung
+und danach dorthin. Wer sich in der App einmal anmeldet, bleibt darin so lange angemeldet wie im
+Browser. Die ganze Anwendung lässt sich darin bedienen, auch Übungen, Trainings und Konto. Eine
+Anleitung oder einen Hinweis zum Ablegen zeigt die Anwendung für Personen mit Konto nicht; das gibt
+es nur am privaten Link einer Spieler:in (siehe [Team-Bereich](team-bereich.md#als-app-ablegen)).
+Die Leiste des Mobiles färbt die App im Grund des Erscheinungsbilds, das das Gerät eingestellt hat.
 
 ## Der Anzeigename
 
@@ -336,8 +349,10 @@ ordnet das Training dann zu.
 
 Auch die Spielerliste eines Teams führt der Assistent nach den Regeln des
 [Team-Bereichs](team-bereich.md#spielerliste). Er liest sie mit Vorname, Nachname, Jahrgang,
-J+S-Nummer und ob der Link jeder Spieler:in bezogen ist, dazu den Verein des Teams und je
-Spieler:in die Namen ihrer weiteren Teams; die Liste des ganzen Vereins liest er nicht. Er nimmt
+J+S-Nummer und ob der Link jeder Spieler:in bezogen ist, dazu den Verein des Teams, je
+Spieler:in die Namen ihrer weiteren Teams und ob nach dem letzten bekannten Stand mindestens ein
+Gerät Mitteilungen aufs Mobile für sie eingeschaltet hat — nur ja oder nein, ohne Zusicherung, dass
+sie ankommen; Geräte und Adressen erfährt er nie, und neu zustimmen muss dafür niemand; die Liste des ganzen Vereins liest er nicht. Er nimmt
 Spieler:innen auf und ändert sie. Mit „spieler_aus_team_nehmen" nimmt er eine Spieler:in aus einem
 der eigenen Teams, aber erst nach einer Rückfrage: Der erste Aufruf ändert nichts und liefert
 dieselben Sätze wie die Bestätigung in der Anwendung — sie bleibt samt Link im Verein und in ihren
@@ -387,7 +402,7 @@ nicht aufgeboten und hebt das auf und trägt ab dem Anpfiff nach, wer nicht oder
 ist, jeweils mit Datum und Anpfiff, wie er das Spiel zuletzt gelesen hat. Er holt den privaten
 Link einer Spieler:in und erneuert ihn in zwei Schritten: Der erste Aufruf von
 „spieler_link_erneuern" ändert nichts und nennt die Teams, für die der bisherige Link endet und der
-neue gilt; erst mit der ausdrücklichen Bestätigung erneuert er. Er sieht, ob die Selbstabholung eingeschaltet ist, schaltet sie
+neue gilt, und dass die Mitteilungen aufs Mobile enden; erst mit der ausdrücklichen Bestätigung erneuert er. Er sieht, ob die Selbstabholung eingeschaltet ist, schaltet sie
 ein und aus und holt und erneuert die Abholadresse. Vor- und Nachnamen, Jahrgänge und
 J+S-Nummern der Spieler:innen, wann sie sich ab- und angemeldet haben, ihre Meldungen zu Spielen,
 wer nicht aufgeboten und wer nicht oder doch erschienen ist, ihre privaten Links und die
@@ -421,7 +436,8 @@ rückt, und beim Entfernen eines Spiels, das Meldungen oder Kennzeichnungen trä
 Beim Erfassen eines Spiels, beim Ausfallen lassen und
 Zurücknehmen eines Ausfalls, beim Ändern von Datum, Zeit oder Ort eines Termins oder einer Serie,
 wenn Zeit oder Ort wieder der Serie folgen, und beim Entfernen benachrichtigt der Assistent die
-Spielervertretungen am privaten Link nach denselben Regeln wie das Kästchen in der Anwendung, ohne
+Spielervertretungen am privaten Link — wo eingeschaltet, auch als Mitteilung aufs Mobile — nach
+denselben Regeln wie das Kästchen in der Anwendung, ohne
 gegenteilige Angabe immer; abwählen muss es der Aufruf ausdrücklich. Danach erfährt er, wie viele
 Spieler:innen eine Benachrichtigung erhielten, und, falls sie nicht entstanden ist, den Satz
 „Gespeichert, aber die Benachrichtigung ist nicht entstanden." Was abgelegt ist und ob es gesehen
@@ -528,8 +544,12 @@ einer Spieler:in, über den ihre Eltern oder sie selbst sie für Termine ab- und
 Termine abonnieren, und die
 Abholadresse eines Teams, über die Eltern diesen Link abholen (siehe
 [Team-Bereich](team-bereich.md#privater-link)). Wer sie öffnet, wird weder angemeldet noch zum
-Mitglied, und im Browser bleibt nichts zurück; erreichbar ist nur, was zu dieser einen Spieler:in
-bzw. zur Abholung gehört.
+Mitglied; im Browser bleibt vom privaten Link nur, welche Benachrichtigungen das Gerät gesehen hat,
+wie oft es den Link besucht und wann es den Hinweis zum Ablegen als App geschlossen hat und, wer
+Mitteilungen aufs Mobile einschaltet, das kleine Programm des Browsers, das sie zeigt (siehe
+[Navigation](navigation.md#cookies)); von der Abholadresse bleibt nichts. Erreichbar ist nur, was zu
+dieser einen Spieler:in bzw. zur Abholung gehört. Die Seite des privaten Links lässt sich als
+eigene App ablegen (siehe [Team-Bereich](team-bereich.md#als-app-ablegen)).
 
 ## Konto löschen
 
@@ -594,6 +614,12 @@ zurücksetzen. Die eigene E-Mail-Adresse lässt sich vor den Mitgliedern der eig
 Vereinsverwaltung nicht verbergen, und wer beim Aufnehmen eine falsche, aber registrierte Adresse trifft, zeigt dieser
 Person die Adressen aller Mitglieder, bis er sie wieder entfernt. Ob und wann ein Kalenderprogramm ein Abo zuletzt abgerufen hat, ist nicht
 einsehbar, und einem Abo lässt sich kein eigener Name geben.
+
+KiFu als App erhält keine Mitteilungen aufs Mobile — die gibt es nur für die Spielervertretungen am
+privaten Link —, zeigt ohne Internetverbindung nichts an und steht in keinem App-Store. Links aus
+E-Mails von KiFu, etwa zum Bestätigen der Adresse oder zum Zurücksetzen des Passworts, öffnen sich im
+Browser, nicht in der abgelegten App. Die Farbe der Leiste des Mobiles folgt der Einstellung des
+Geräts, nicht der unter „Darstellung" gewählten.
 
 Ein KI-Zugang reicht so weit wie das Konto selbst; begrenzt wird er allein durch die
 Fähigkeiten, die die Anwendung dem Assistenten anbietet, nicht durch eine abgestufte
