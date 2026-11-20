@@ -27,6 +27,9 @@ name: Sync Staging (Prod-Spiegel, manuell)
 #   (`session_replication_role = replica`).
 #   Ebenso `spieler_benachrichtigungen` (#642): Die Links bekommen neue
 #   Werte, ein erneuerter Link beginnt ohne Benachrichtigungen.
+#   Ebenso `push_abos` und `push_auftraege` (#483): Adressen der Geräte mit
+#   Mitteilungen aus der Produktion gehören nie auf Staging (PC 5); Adresse
+#   und Geheimnis der Route stehen in Vault, das nicht gedumpt wird.
 # - `spieler.link_token` und `team_abholung.token` bekommen nach dem Restore
 #   neue Werte (private Links der Spieler:innen #436, Abholadressen #438):
 #   Prod-Links gelten auf Staging nicht; «bezogen» fällt damit zurück.
@@ -94,10 +97,11 @@ env:
   # Sortierung im Guard-Query entsprechen. Neue public-Tabelle in einer
   # Migration? -> hier ergänzen, sonst bricht der Guard den Sync bewusst ab
   # (statt die Tabelle still leer zu lassen). team_infos (#598) und
-  # spieler_benachrichtigungen (#642) stehen hier ab dem Feature-PR; Prod
+  # spieler_benachrichtigungen (#642), push_abos und push_auftraege (#483)
+  # stehen hier ab dem Feature-PR; Prod
   # bekommt sie erst mit dem Release: Ein Sync aus develop bricht
   # bis dahin am Guard ab (gewollt). Aus main synct die Liste von main.
-  PUBLIC_TABLES: "abholung_sperren exercise_favorites exercises feedback feedback_dialoge kader kader_spieler kalender_abos ki_aufrufe ki_zugang_namen profiles spiel_meldungen spiel_teilnahmen spiel_treffpunkte spieler spieler_abos spieler_benachrichtigungen team_abholung team_infos team_members team_probetraining team_spieler teams termin_abmeldungen termin_eingefroren termin_kader termin_serien termin_serien_kader termin_serien_luecken termin_serien_trainer termin_serien_verantwortliche termin_statuswechsel termin_teilnahmen termin_trainer termin_trainer_stand termin_verantwortliche trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings verein_verwaltung vereine"
+  PUBLIC_TABLES: "abholung_sperren exercise_favorites exercises feedback feedback_dialoge kader kader_spieler kalender_abos ki_aufrufe ki_zugang_namen profiles push_abos push_auftraege spiel_meldungen spiel_teilnahmen spiel_treffpunkte spieler spieler_abos spieler_benachrichtigungen team_abholung team_infos team_members team_probetraining team_spieler teams termin_abmeldungen termin_eingefroren termin_kader termin_serien termin_serien_kader termin_serien_luecken termin_serien_trainer termin_serien_verantwortliche termin_statuswechsel termin_teilnahmen termin_trainer termin_trainer_stand termin_verantwortliche trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings verein_verwaltung vereine"
 
 jobs:
   sync:
@@ -243,6 +247,9 @@ jobs:
           delete from public.spieler_abos;
           -- Benachrichtigungen hängen an den Links (#642 PC 2); der Trigger schweigt im Restore.
           delete from public.spieler_benachrichtigungen;
+          -- Mitteilungen aufs Mobile (#483 PC 5): keine Prod-Geräte auf Staging.
+          delete from public.push_auftraege;
+          delete from public.push_abos;
           -- Ebenso die privaten Links der Spieler:innen (#436 PC 4) und die
           -- Abholadressen (#438 PC 7).
           update public.spieler

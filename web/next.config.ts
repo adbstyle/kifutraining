@@ -38,6 +38,15 @@ const nextConfig: NextConfig = {
           { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
         ],
       })),
+      // Das Manifest eines Links (#650) holt der Browser bei jedem
+      // Seitenaufruf; es nennt nur Vorname, Verein und den Link selbst. Darum
+      // darf es im Browser (nie in einem geteilten Cache) einen Tag liegen.
+      // Die Regel steht nach der obigen: Next lässt bei gleichem Schlüssel die
+      // spätere gelten, die übrigen Schutz-Header bleiben.
+      {
+        source: "/abmelden/:link/manifest.webmanifest",
+        headers: [{ key: "Cache-Control", value: "private, max-age=86400" }],
+      },
     ];
   },
   // Apple-Geräte kennen kein SVG-Icon und raten ohne Verweis eine Reihe

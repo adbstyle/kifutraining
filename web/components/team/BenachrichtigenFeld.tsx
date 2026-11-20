@@ -3,11 +3,12 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Checkbox } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { BENACHRICHTIGEN_HINWEIS, BENACHRICHTIGEN_TEXT, type BenachrichtigenVorgang } from "@/lib/benachrichtigung";
+import { BENACHRICHTIGEN_TEXT, benachrichtigenHinweis, type BenachrichtigenVorgang } from "@/lib/benachrichtigung";
 
 /* Das Häkchen «Spielervertretungen benachrichtigen» (Epic #641, Prinzip 4) in
    den Dialogen der Mitglieder — vorbelegt an, mit der Zeile darunter, was die
-   Spielervertretung davon sieht. Label und Zeilen stehen in
+   Spielervertretung davon sieht — am privaten Link und, wo eingeschaltet, als
+   Mitteilung aufs Mobile (#483 AK 10). Label und Zeilen stehen in
    `lib/benachrichtigung.ts`, dieselben Wörter trägt die Beschreibung des
    KI-Werkzeugs. Ob das Feld erscheint, entscheidet der Dialog (nur dort, wo
    eine Benachrichtigung entstehen kann); es trägt nichts, was nicht
@@ -28,7 +29,7 @@ export function BenachrichtigenFeld({
   return (
     <Checkbox
       label={BENACHRICHTIGEN_TEXT.label}
-      hinweis={BENACHRICHTIGEN_HINWEIS[vorgang]}
+      hinweis={benachrichtigenHinweis(vorgang)}
       className={className}
       checked={checked}
       disabled={disabled}

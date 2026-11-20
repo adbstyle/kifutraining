@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-11-19. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-11-20. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -666,11 +666,15 @@ Das Plus im Kopf öffnet den Dialog „Spieler:in hinzufügen" mit den vier Feld
 „Hinzufügen" oder die Eingabetaste nimmt auf, der Dialog sagt, wer dazukam, und bleibt für die
 nächste offen, bis „Abbrechen" ihn ohne Speichern schliesst. Die Liste ist nach Vor- und Nachname
 geordnet; jede Zeile nennt Name, Jahrgang, J+S-Nummer, sobald das Team Kader führt, ihre Kader,
-unter „Auch in" die weiteren Teams des Vereins, denen sie zugeordnet ist, dazu Knöpfe für den
+unter „Auch in" die weiteren Teams des Vereins, denen sie zugeordnet ist, unter „Mobile" eine
+Glocke, wenn nach dem letzten bekannten Stand mindestens ein Gerät Mitteilungen für sie eingeschaltet
+hat (siehe „Mitteilungen aufs Mobile"), sonst eine durchgestrichene Glocke, dazu Knöpfe für den
 privaten Link, „Ändern" — derselbe Dialog mit den bisherigen Angaben — und „Aus dem Team nehmen".
 Auf dem Telefon stehen Jahrgang, J+S-Nummer und die weiteren Teams unter dem Namen. Eine
 schnuppernde Spieler:in trägt neben dem Namen die Plakette „Schnuppern 1/4" (siehe
-„Schnuppertraining").
+„Schnuppertraining"). Das ⓘ im Kopf der Spalte „Mobile" sagt: „Glocke heisst: Nach dem letzten
+bekannten Stand erhält mindestens ein Mobile Mitteilungen für diese Spieler:in. Ankommen ist damit
+nicht gesichert."
 
 Die Spieler:innen gehören dem Verein, nicht dem Team (siehe [Verein](verein.md)). Wer im Team
 hinzugefügt wird, kommt damit in den Verein und ist diesem Team zugeordnet; dieselbe Spieler:in
@@ -1133,10 +1137,11 @@ dass eine hier ausgeschaltete Selbstabholung den Link nicht sperrt, wenn ein and
 eingeschaltet hat —, und warnt: „Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele
 ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern
 oder ihr selbst." Weitergeben muss ihn das Mitglied selbst, oder die Eltern holen ihn ab (siehe
-„Selbstabholung"); die Anwendung verschickt nichts und kennt keine Kontaktdaten. Der Link bleibt
+„Selbstabholung"); die Anwendung verschickt ihn nicht und kennt keine Kontaktdaten. Der Link bleibt
 derselbe, bis jemand ihn erneuert: „Link erneuern" im selben Dialog fragt zuerst nach und nennt,
 dass der bisherige Link, das Kalender-Abo und die Benachrichtigungen für alle Teams der Spieler:in enden, mit deren Namen,
-und ob die Eltern den neuen über die Abholadresse eines dieser Teams holen können oder man ihn
+dass auch die Mitteilungen aufs Mobile enden und die Spielervertretung sie mit dem neuen Link neu
+einschaltet und die App neu ablegt, und ob die Eltern den neuen über die Abholadresse eines dieser Teams holen können oder man ihn
 selbst weitergibt. Danach ist der bisherige sofort ungültig; die Abmeldungen bleiben. Erneuern
 können die Mitglieder jedes ihrer Teams und die Vereinsverwaltung. Gültig bleibt der Link, wenn
 die Spieler:in aus einem Team genommen oder ein Team aufgelöst wird, auch wenn sie danach keinem
@@ -1263,7 +1268,9 @@ Trainer:innen oder bei der Vereinsverwaltung." Ob es den Link je gab, ist nicht 
 Ebenso ungültig wird er, wenn die Vereinsverwaltung den Verein löscht. Die Vorschau, die ein Chat beim Teilen zeigt, trägt einen festen Titel ohne
 Team und Namen; Suchmaschinen nehmen die Seite nicht auf, die Besucherstatistik zählt sie nicht, und
 im Browser legt sie nur ab, welche Benachrichtigungen das Gerät schon angezeigt hat (siehe
-„Benachrichtigungen am privaten Link").
+„Benachrichtigungen am privaten Link"), wie oft das Gerät den Link besucht und wann es den Hinweis
+zum Ablegen geschlossen hat (siehe „Als App ablegen") und, erst wenn jemand Mitteilungen einschaltet,
+das kleine Programm des Browsers, das sie zeigt (siehe „Mitteilungen aufs Mobile").
 
 ### Infos am privaten Link
 
@@ -1363,7 +1370,8 @@ bei einer Änderung ausgefallen, entsteht nichts.
 Ob benachrichtigt wird, entscheidet das Mitglied bei jedem dieser Vorgänge mit dem Kästchen
 „Spielervertretungen benachrichtigen", das bei jedem Öffnen des Dialogs angekreuzt ist. Darunter
 steht, was die Spielervertretungen davon sehen, beim Ausfall etwa „Den Grund sehen sie auch in der
-Benachrichtigung." Das Kästchen erscheint nur, wo eine Benachrichtigung entstehen kann: beim
+Benachrichtigung.", und „Wo eingeschaltet, erhalten sie sie auch als Mitteilung aufs Mobile." (siehe
+„Mitteilungen aufs Mobile"). Das Kästchen erscheint nur, wo eine Benachrichtigung entstehen kann: beim
 Erfassen nur für ein Spiel, beim Ausfallen lassen nur für einen Termin von heute oder später und nie
 beim Ändern des Grunds, beim Ändern eines Termins erst, sobald sich Datum, Zeit oder Ort so ändern,
 dass es etwas mitzuteilen gibt — bei einer Serie auch Wochentage und Zeitraum —, und ebenso, wenn
@@ -1418,8 +1426,97 @@ Spieler:in enden, wenn jemand ihren Link erneuert, die Vereinsverwaltung sie aus
 oder den Verein löscht. Was schon gesehen ist, merkt sich jedes Gerät und jeder Browser für sich, je
 Link, für bis zu 20 Links: Gesehen ist eine Benachrichtigung, sobald die Ansicht sie auf diesem
 Gerät angezeigt hat. Öffnet ein Gerät den Link zum ersten Mal, gilt alles Bisherige als gesehen, und
-die Glocke zeigt keine Zahl. Neue Benachrichtigungen erscheinen erst, wenn man die Seite neu öffnet
-oder lädt.
+die Glocke zeigt keine Zahl; die abgelegte App kann dabei je nach Gerät, etwa auf dem iPhone, als
+eigener Browser zählen. Neue
+Benachrichtigungen erscheinen erst, wenn man die Seite neu öffnet oder lädt.
+
+### Als App ablegen
+
+Die Seite des privaten Links lässt sich auf dem Mobile als App auf den Home-Bildschirm legen, auf
+dem iPhone wie auf einem Android-Telefon. Die abgelegte App öffnet direkt die Termine dieser
+Spieler:in, ohne dass man den Link erneut aufruft, und zeigt sie ohne die Leiste des Browsers; die
+Seite „Infos" und die Benachrichtigungen liegen darin. Ihr Symbol ist die Bildmarke von KiFu, und
+darunter steht der Vorname mit dem Verein, etwa „Mia · FC Beispiel". Für jede Spieler:in lässt sich
+eine eigene App ablegen, auch auf demselben Gerät; Geschwister haben je ihre eigene.
+
+Unter den Terminen steht auf dem Mobile immer der ruhige Knopf „Diese Seite als App ablegen", am
+Computer nur, wenn der Browser die Seite selbst ablegen kann. Ab dem zweiten Besuch des Links auf
+diesem Gerät steht auf dem Mobile zudem über den Terminen der Hinweis „Termine von Mia als App":
+„Lege diese Seite auf den Home-Bildschirm. Dann öffnest du Mias Termine mit einem Tipp, ohne den
+Link im Chat zu suchen.", und dazu „In der App kannst du ausserdem Mitteilungen aufs Mobile
+einschalten." Als neuer Besuch zählt ein Aufruf erst, wenn der letzte mindestens eine halbe Stunde
+zurückliegt; neu laden oder der Weg zurück aus den Infos zählen nicht. Der Hinweis lässt sich
+schliessen und erscheint auf diesem Gerät frühestens nach 7 Tagen wieder. In der abgelegten App
+stehen weder Hinweis noch Knopf, am Computer nie ein Hinweis.
+
+Kann der Browser die Seite selbst ablegen, etwa Chrome auf einem Android-Telefon, fragt „Als App
+ablegen" ihn direkt, und nach dem Ablegen ruht der Hinweis. Sonst, und auf dem iPhone mit „So
+geht’s", öffnet sich die Anleitung „Diese Seite als App ablegen" mit drei Schritten für das Gerät —
+auf dem iPhone über „Teilen" und „Zum Home-Bildschirm", auf Android über das Menü ⋮ und „Zum
+Startbildschirm hinzufügen" oder „App installieren" — und darunter, wie die App auf dem
+Home-Bildschirm heisst. Öffnet jemand den Link im Browser einer anderen App, etwa aus WhatsApp oder
+Instagram heraus, lässt sich die Seite dort nicht ablegen; Hinweis und Anleitung sagen dann nur:
+„Hier lässt sich die Seite nicht als App ablegen. Öffne den Link im Browser deines Mobiles, etwa in
+Safari oder Chrome."
+
+Wie oft das Gerät den Link besucht hat und wann der Hinweis geschlossen wurde, merkt sich der
+Browser je Link für bis zu 20 Links, nur mit einem Kürzel, nie mit dem Link selbst (siehe
+[Navigation](navigation.md#cookies)). Ein erneuerter Link beginnt damit neu; eine bisher abgelegte
+App führt dann auf „Dieser Link gilt nicht mehr" und ist mit dem neuen Link neu abzulegen.
+
+### Mitteilungen aufs Mobile
+
+Zu jeder Benachrichtigung am privaten Link kann ein Gerät zusätzlich eine Mitteilung erhalten, wie
+Apps sie auf dem Mobile zeigen, ohne dass jemand den Link öffnet. Eingeschaltet wird das je Gerät
+und je Spieler:in in der Ansicht „Benachrichtigungen" hinter der Glocke: Zuoberst steht dort die
+Karte „Mitteilungen aufs Mobile" mit einem Schalter und einer Zeile zum Stand dieses Geräts — „Aus.
+Neues siehst du nur hier." oder „Auf diesem Gerät eingeschaltet. Andere Mobiles schaltest du dort
+ein." Einschalten öffnet zuerst den Dialog „Mitteilungen für Mia einschalten": Zu jeder
+Benachrichtigung für Mia erhält dieses Gerät eine Mitteilung; unter „Was KiFu speichert" steht, dass
+KiFu eine Adresse, über die das Gerät Mitteilungen erhält, zusammen mit dem Link speichert, keine
+Telefonnummer und keine E-Mail-Adresse, unter „Wer zustellt" der Mitteilungsdienst des
+Geräteherstellers, etwa Apple, Google oder Mozilla, auch über Server im Ausland, der den Inhalt
+verschlüsselt erhält, und unter „Wann es verschwindet": beim Ausschalten, wenn das Gerät keine
+Mitteilungen mehr annimmt, wenn das Team den Link erneuert oder wenn die Spieler:in nicht mehr im
+Verein ist. Erst „Einschalten" lässt das Mobile um Erlaubnis fragen. Ausschalten wirkt sofort und
+ohne Rückfrage.
+
+Lehnt man die Abfrage des Mobiles ab, steht „Dein Mobile lässt keine Mitteilungen zu." mit dem
+Hinweis, sie in den Einstellungen des Mobiles für diese Seite bzw. die abgelegte App zu erlauben.
+Ein Browser, der keine Mitteilungen von Webseiten zulässt — auch der Browser in einer anderen App
+wie WhatsApp —, zeigt den Schalter ausgegraut und darunter „Dieser Browser lässt keine Mitteilungen zu. Öffne
+den Link im Browser deines Mobiles, etwa in Safari oder Chrome." Auf dem iPhone gehen Mitteilungen
+nur in der abgelegten App: Im Browser ist der Schalter ausgegraut, und darunter steht „Auf dem iPhone nur in der abgelegten
+App." und darunter, man solle die Seite als App auf den Home-Bildschirm legen und die Termine dort
+öffnen, mit „So geht’s" zur Anleitung (siehe „Als App ablegen").
+
+Für denselben Link lassen sich Mitteilungen auf bis zu 10 Geräten einschalten; beim elften sagt die
+Karte, dass sie schon auf 10 Geräten eingeschaltet sind und man sie auf einem davon ausschalten
+soll. Jede Spieler:in hat ihre eigenen Mitteilungen: Für Geschwister schaltet man sie an jedem Link
+bzw. in jeder App einzeln ein, und jede kommt für sich.
+
+Eine Mitteilung trägt als Titel, was geschehen ist, und das Team, etwa „Fällt aus · E-Junioren",
+und als Text den Vornamen und die Angaben der Benachrichtigung, etwa „Mia: Training · Samstag, 5.
+Dezember · 14:00–15:30 · Halle · Grund: Platz gesperrt"; ein langer Text wird gekürzt. Antippen
+öffnet die Ansicht „Benachrichtigungen" dieses Links. Kann das Gerät den Inhalt nicht lesen,
+steht „Neues bei KiFu" mit „Tippe, um es anzusehen."
+
+Eine Mitteilung entsteht genau dort, wo am Link eine Benachrichtigung entsteht (siehe
+„Benachrichtigungen am privaten Link"); derselbe Entscheid des Mitglieds steuert beide Wege, in der
+Anwendung wie über den KI-Assistenten. Unter dem Kästchen „Spielervertretungen benachrichtigen"
+steht darum zusätzlich „Wo eingeschaltet, erhalten sie sie auch als Mitteilung aufs Mobile."
+Benachrichtigungen, die vor dem Einschalten entstanden sind, gehen nicht nachträglich hinaus. Ist ein
+Gerät gerade nicht erreichbar, hält der Mitteilungsdienst die Mitteilung bis zu einem Tag; scheitert
+die Zustellung, versucht KiFu es bis zu fünfmal. Termin und Benachrichtigung bleiben gespeichert,
+auch wenn keine Mitteilung ankommt. Meldet der Mitteilungsdienst, dass ein Gerät keine Mitteilungen
+mehr annimmt — etwa nach dem Löschen der App oder der Daten der Website —, fällt es weg. Alle
+Mitteilungen eines Links enden, wenn ihn ein Mitglied oder die Vereinsverwaltung erneuert oder die
+Vereinsverwaltung die Spieler:in aus dem Verein löscht oder den Verein löscht; die Spielervertretung erfährt davon nichts.
+
+Ob für eine Spieler:in Mitteilungen eingeschaltet sind, zeigt die Spalte „Mobile" der Spielerliste
+(siehe „Spielerliste"), und der KI-Assistent erfährt es mit der Spielerliste; welche Geräte es sind
+und ihre Adressen sieht niemand. Was KiFu dazu speichert, steht auch auf der Abholseite unter „Was
+KiFu speichert" (siehe „Selbstabholung").
 
 ## Selbstabholung
 
@@ -1443,7 +1540,10 @@ werden die Spieler:innen dieses Teams. Unter dem Knopf „Link abholen" steht un
 speichert", welche Angaben die Anwendung zu einer Spieler:in führt — Vorname, Nachname, Jahrgang,
 falls eingetragen die J+S-Nummer, Abmeldungen, An- und Abmeldungen zu Spielen und ob sie für ein
 Spiel nicht aufgeboten ist —, dass KiFu die Benachrichtigungen zu ihren Terminen 90 Tage aufbewahrt
-und sie nur sieht, wer den Link hat, dass der Verein mit seinem Namen für die Daten verantwortlich ist, wer
+und sie nur sieht, wer den Link hat, dass KiFu je Gerät mit eingeschalteten Mitteilungen eine
+Adresse des Mitteilungsdiensts des Geräteherstellers speichert, ohne Telefonnummer und
+E-Mail-Adresse, dass die Trainer:innen ihrer Teams und ihre KI-Assistenten davon nur sehen, ob
+mindestens ein Gerät eingeschaltet ist, und wann diese Adresse verschwindet, dass der Verein mit seinem Namen für die Daten verantwortlich ist, wer
 sie sieht — Name, Jahrgang und Teams alle Trainer:innen des Vereins, alle Angaben die Trainer:innen
 ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese
 Personen verbunden haben, und wer den Link hat; wann sie sich zuletzt ab- oder wieder angemeldet
@@ -1589,8 +1689,9 @@ Trainings mit Termin in den Trainingsplan.
 
 Die Anwendung erinnert an keinen Termin und benachrichtigt keine Mitglieder — weder Eingeladene
 noch Verantwortliche noch andere — über neue, geänderte oder ausgefallene Termine, über
-Einladungen und Absagen oder eine fehlende Mindestbesetzung; Benachrichtigungen gibt es nur für
-die Spielervertretungen am privaten Link (siehe „Benachrichtigungen am privaten Link"); eine Lücke zeigt nur der
+Einladungen und Absagen oder eine fehlende Mindestbesetzung; Benachrichtigungen und Mitteilungen
+aufs Mobile gibt es nur für die Spielervertretungen am privaten Link (siehe „Benachrichtigungen am
+privaten Link" und „Mitteilungen aufs Mobile"), Personen mit Konto erhalten keine Mitteilungen; eine Lücke zeigt nur der
 Trainingsplan, das Kalender-Abo nennt sie in der Beschreibung. Der Kalender führt
 Trainings und Spiele, aber keine anderen Anlässe, und nur ein Spiel trägt eine eigene Bezeichnung;
 wer mehrere Mannschaften getrennt plant, führt sie als eigene Teams. Die Termine
@@ -1744,8 +1845,8 @@ nicht. Die Abschnitte der Seite „Infos" öffnen sich nie von selbst, auch nich
 eines Links.
 
 Die Anwendung benachrichtigt niemanden über Ab- und Anmeldungen. Dass ein Termin verlegt wurde,
-ausfällt oder wegfällt, erfahren Eltern nur, wenn sie den Link öffnen — unter „Benachrichtigungen",
-sofern das Team es mitgeteilt hat —, und dass ihre Abmeldung oder Meldung verfallen ist, nur an
+ausfällt oder wegfällt, erfahren Eltern am Link unter „Benachrichtigungen", sofern das Team es
+mitgeteilt hat, und als Mitteilung aufs Mobile nur, wenn sie diese eingeschaltet haben; dass ihre Abmeldung oder Meldung verfallen ist, nur an
 der Karte des Termins. Wer sich zu einem Training nicht geäussert hat, ist nicht zu
 erkennen, denn bei Trainings gilt jede Spieler:in als angemeldet. Eine Abmeldung trägt keinen Grund,
 gilt immer für genau einen Termin und lässt sich nicht für mehrere in einem Schritt setzen; die
@@ -1772,7 +1873,8 @@ vergangenen Zeitpunkt verlegen; seine Art lässt sich nicht ändern, und ein Tra
 Eine eigene Art „Turnier" gibt es nicht. Die Anwendung erinnert Eltern nicht an fehlende Meldungen
 und benachrichtigt niemanden über eine abgelaufene Meldefrist oder darüber, dass ein Spiel
 Handlungsbedarf hat; neue, verlegte, ausgefallene und entfernte Spiele erfahren nur die Eltern, am
-privaten Link unter „Benachrichtigungen", die Mitglieder nicht. Die grosse Karte nach der Meldefrist
+privaten Link unter „Benachrichtigungen" und, wo eingeschaltet, als Mitteilung aufs Mobile, die
+Mitglieder nicht. Die grosse Karte nach der Meldefrist
 sieht nur, wer den Trainingsplan öffnet, und wie der übrige Plan zeigt sie den Stand beim Laden:
 Eine inzwischen abgelaufene Frist erscheint erst nach dem nächsten Laden. Eine abgegebene Meldung
 lässt sich nicht auf „ohne Meldung" zurücksetzen, und gemeldet, gekennzeichnet und nachgetragen
@@ -1789,28 +1891,52 @@ Ob ein privater Link weitergegeben wurde, erkennt die Anwendung nicht, und ob ei
 die Spieler:in selbst abmeldet, unterscheidet sie nicht. Sperren lässt sich ein Link nur, indem
 man ihn erneuert — das gilt dann für alle Teams der Spieler:in —, und erneuert wird jeder einzeln,
 nie alle auf einmal. Welche Angaben gespeichert sind, sagt nur die Abholseite; die Seite „Infos" hinter dem
-Link nennt, wer sie sieht und wer verantwortlich ist, und die Ansicht „Benachrichtigungen" nur, wie
-lange diese bleiben und dass das Gerät sich das Gesehene merkt. Eine vollständige
+Link nennt, wer sie sieht und wer verantwortlich ist, die Ansicht „Benachrichtigungen" nur, wie
+lange diese bleiben und dass das Gerät sich das Gesehene merkt, und der Dialog vor dem Einschalten
+der Mitteilungen, was KiFu dafür speichert. Eine vollständige
 Datenschutzerklärung gibt es nicht (siehe [Navigation](navigation.md#bekannte-grenzen)).
 
 Die Eingrenzung auf Trainings oder Spiele merkt sich die Seite nicht: Neu geöffnet oder neu geladen
 zeigt sie wieder alle Termine. Sie grenzt nur die Liste ein, nicht das Kalender-Abo, und nur nach
 der Art, nicht nach einem Zeitraum; für eine schnuppernde Spieler:in und ohne anstehende Termine gibt es sie nicht.
 
-Benachrichtigungen erscheinen nur am privaten Link: Aufs Handy, per E-Mail oder ins Kalender-Abo
-gelangen sie nicht, und die offene Seite holt neue nicht von selbst. Neue Trainings und
+Benachrichtigungen erscheinen am privaten Link und, wo eingeschaltet, als Mitteilung aufs Mobile;
+per E-Mail oder ins Kalender-Abo gelangen sie nicht, und die offene Seite holt neue nicht von selbst. Neue Trainings und
 Terminserien, geänderte Treffpunkte, Hinweise für Eltern, Kader, Trainer:innen und Meldefristen
 teilt die Anwendung nicht mit, ebenso wenig das Auflösen eines Teams oder das Löschen des Vereins;
 ein entfernter Termin steht nicht als entfallen in der Liste. Eine Benachrichtigung nennt weder den
 früheren Zeitpunkt noch einen mitgewanderten Treffpunkt noch, ob eine Abmeldung oder Meldung
-verfällt. Eltern können Benachrichtigungen weder löschen noch abbestellen, und Mitglieder sehen
+verfällt. Eltern können Benachrichtigungen am Link weder löschen noch abbestellen — ausschalten lassen sich
+nur die Mitteilungen aufs Mobile —, und Mitglieder sehen
 weder, was benachrichtigt wurde, noch ob es gesehen ist; beim Zurücknehmen eines Ausfalls erkennt
 das Mitglied nicht, ob der Ausfall mitgeteilt worden war. Wer zur Spieler:in später über ein Kader
 oder ein Team dazukommt, erhält frühere Benachrichtigungen nicht. Was gesehen ist, gilt je Gerät und
 Browser: Auf einem anderen Gerät oder nach dem Löschen der Cookies gilt beim nächsten Öffnen alles
 Bisherige als gesehen, ein Browser, der keine Cookies behält, zeigt nie eine Zahl, und ein Gerät
 merkt sich höchstens 20 Links. Geschwister mit eigenen Links haben keine gemeinsamen
-Benachrichtigungen. Nach dem Erneuern des Links sind die bisherigen verloren.
+Benachrichtigungen. Nach dem Erneuern des Links sind die bisherigen verloren. Je nach Gerät, etwa auf
+dem iPhone, führen die abgelegte App und der Browser den Gesehen-Stand nicht gemeinsam.
+
+Mitteilungen aufs Mobile kommen ohne Zusicherung: KiFu zeigt nicht, ob eine angekommen oder gelesen
+ist, und die Glocke in der Spalte „Mobile" sagt nur den letzten bekannten Stand — ein Gerät, das
+die App gelöscht hat, kann dort noch zählen, bis der Mitteilungsdienst es meldet. Den Stand zeigt nur
+die Spielerliste eines Teams, nicht der Spielerbestand des Vereins. Ohne Internetverbindung kommt
+keine Mitteilung, und ist ein Gerät länger als einen Tag nicht erreichbar, verfällt sie. Wer
+Mitteilungen auf demselben Gerät in zwei verschiedenen Browsern einschaltet, erhält jede doppelt;
+Mitteilungen für Geschwister fasst KiFu nicht zusammen. Eine versandte Mitteilung ändert sich
+nicht, wenn sich der Termin danach ändert, und Benachrichtigungen aus der Zeit vor dem Einschalten
+gehen nicht nachträglich hinaus. Ruhezeiten gibt es nicht: Eine Mitteilung geht hinaus, sobald das
+Mitglied speichert, auch nachts. Dass ihre Mitteilungen geendet haben, etwa nach dem Erneuern des
+Links, erfährt die Spielervertretung nicht. Auf dem iPhone gehen Mitteilungen nur aus der abgelegten
+App, und in einem Browser, der keine Mitteilungen von Webseiten zulässt, lassen sie sich nicht
+einschalten; mehr als 10 Geräte je Spieler:in gehen nicht. Erinnerungen an Termine oder Meldefristen
+gibt es auch als Mitteilung nicht.
+
+Die abgelegte App zeigt ohne Internetverbindung nichts an und ist keine App aus einem App-Store. Ob
+die Seite auf einem Gerät schon als App abgelegt ist, erkennt der Hinweis zum Ablegen nicht in jedem
+Fall; er kann im Browser weiter erscheinen. Am Computer erscheint kein Hinweis. Wer den Link im
+Browser einer anderen App wie WhatsApp öffnet, muss ihn zum Ablegen erst im Browser des Mobiles
+öffnen. Nach dem Erneuern des Links führt eine bisher abgelegte App ins Leere und ist neu abzulegen.
 
 Die Abholung erkennt keine Schreibvarianten: Umschriebene Umlaute, Rufnamen oder Tippfehler
 passen nicht. Wer die Abholadresse hat und Vorname, Nachname und Jahrgang einer Spieler:in kennt — im

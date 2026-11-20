@@ -11,7 +11,8 @@
 -- gründen und löschen gegen Aufnehmen, Termine, Umbenennen und Konto
 -- löschen, Termin-RPCs mit Termin-Training gegen Löschen; Story 12: Grenzen
 -- der Konten ohne Verein gegen gleichzeitige Anlage, Aufnahme und Konto
--- löschen).
+-- löschen; Mitteilungen aufs Mobile #483: Grenze 10 Geräte, Auftrag gegen
+-- wegfallendes Abo, dasselbe Gerät zweimal an der Grenze).
 --
 -- Muster für «gleichzeitig, genau eines gelingt» (spätere Stories bauen ihre
 -- Fälle als weitere Blöcke nach diesem Vorbild):
@@ -2351,6 +2352,172 @@ delete from vereine where id = (select id from rennen_test.ids where name = 's12
 delete from trainer_suchversuche where user_id in (select id from rennen_test.ids where name like 's12\_%');
 delete from auth.users where id in (select id from rennen_test.ids where name like 's12\_%');
 
+-- ── Fälle: Mitteilungen aufs Mobile (Epic #482, Story 2 #483 AK 5, PC 2) ────
+-- (p1) Grenze 10: Die Spieler:in hat 9 Geräte. A schaltet das 10. ein und
+--      hält die Transaktion offen; B schaltet gleichzeitig ein weiteres ein
+--      und wartet am Advisory-Lock der Grenze (`push_abos_grenze`). Nach dem
+--      Commit von A liefert B 'grenze'; es bleiben genau 10 Abos.
+-- (p2) Auftrag gegen wegfallendes Abo: A löscht ein Abo (wie 'weg' in
+--      `push_auftraege_melden` oder das Ausschalten) und hält die Transaktion
+--      offen; B legt gleichzeitig eine Benachrichtigung ab, der Trigger
+--      `push_auftraege_ablegen` wartet an der Zeilensperre. Nach dem Commit
+--      von A gelingt B (PC 2: kein FK-Fehler), mit Aufträgen nur für die
+--      verbliebenen 9 Abos.
+-- (p3) Dasselbe Gerät zweimal an der Grenze (#652 Review): Nach (p2) hat die
+--      Spieler:in 9 Geräte. A schaltet das 11. Gerät ein (das 10. Abo) und
+--      hält die Transaktion offen; B schaltet gleichzeitig DASSELBE Gerät ein
+--      und wartet am Advisory-Lock. Nach dem Commit von A liefert B 'ok'
+--      (nicht 'grenze': das Gerät hat schon ein Abo); es bleiben 10 Abos.
+-- Die Testzeilen sind committet und werden danach entfernt; ein harter
+-- Abbruch lässt den Verein «Rennen-Push-Verein» samt Team, Spieler:in und
+-- Benachrichtigung stehen (von Hand löschen).
+
+select set_config('rennen.fehler_push', '', false) is not null as rennen_fehler_push_leer \gset
+
+begin;
+insert into rennen_test.ids (name) values ('push_verein'), ('push_team'), ('push_spieler'), ('push_vorgang');
+insert into vereine (id, name) select id, 'Rennen-Push-Verein' from rennen_test.ids where name = 'push_verein';
+insert into teams (id, name, verein_id)
+select (select id from rennen_test.ids where name = 'push_team'), 'Rennen-Push-Team', (select id from rennen_test.ids where name = 'push_verein');
+insert into spieler (id, team_id, verein_id, vorname, nachname, jahrgang)
+select (select id from rennen_test.ids where name = 'push_spieler'), (select id from rennen_test.ids where name = 'push_team'),
+       (select id from rennen_test.ids where name = 'push_verein'), 'Rennen', 'Push', 2015;
+create function rennen_test.push_ep(n integer) returns text language sql immutable as $f$
+  select 'https://fcm.googleapis.com/fcm/send/rennen-' || n $f$;
+create function rennen_test.push_an(n integer) returns text language sql as $f$
+  select public.spieler_push_anmelden(
+    (select link_token from public.spieler where id = (select id from rennen_test.ids where name = 'push_spieler')),
+    rennen_test.push_ep(n), 'B' || repeat('A', 86), repeat('A', 22), 'test') $f$;
+do $$ begin
+  if exists (select 1 from generate_series(1, 9) n where rennen_test.push_an(n) <> 'ok') then
+    raise exception 'Rennen Push: 9 Geräte liessen sich nicht einschalten';
+  end if;
+end $$;
+commit;
+
+do $$
+declare
+  ziel   text := format(
+    'host=%s port=%s dbname=%s user=postgres password=postgres connect_timeout=5 options=''-c statement_timeout=30s''',
+    coalesce(host(inet_server_addr()), '127.0.0.1'), inet_server_port(), current_database());
+  v_spieler uuid := (select id from rennen_test.ids where name = 'push_spieler');
+  v_vorgang uuid := (select id from rennen_test.ids where name = 'push_vorgang');
+  frist  timestamptz;
+  ergebnis text;
+  meldung text;
+  n      text;
+begin
+  perform extensions.dblink_connect('rennen_a', ziel || ' application_name=rennen_a');
+  perform extensions.dblink_connect('rennen_b', ziel || ' application_name=rennen_b');
+
+  -- (p1) A schaltet das 10. Gerät ein und hält den Advisory-Lock.
+  perform extensions.dblink_exec('rennen_a', 'begin');
+  select t.r into ergebnis from extensions.dblink('rennen_a', $q$select rennen_test.push_an(10)$q$) as t(r text);
+  if ergebnis is distinct from 'ok' then
+    raise exception '(p1) A hätte das 10. Gerät einschalten müssen: %', ergebnis;
+  end if;
+  perform extensions.dblink_send_query('rennen_b', $q$select rennen_test.push_an(11)$q$);
+  frist := clock_timestamp() + interval '10 seconds';
+  loop
+    perform pg_stat_clear_snapshot();
+    exit when exists (
+      select 1 from pg_stat_activity
+       where application_name = 'rennen_b' and wait_event_type = 'Lock');
+    if clock_timestamp() > frist then
+      raise exception '(p1) B wartet nach 10 s nicht auf eine Sperre';
+    end if;
+    perform pg_sleep(0.05);
+  end loop;
+  perform extensions.dblink_exec('rennen_a', 'commit');
+  select t.r into ergebnis from extensions.dblink_get_result('rennen_b', false) as t(r text);
+  meldung := extensions.dblink_error_message('rennen_b');
+  perform * from extensions.dblink_get_result('rennen_b', false) as t(r text);
+  if ergebnis is distinct from 'grenze' then
+    raise exception '(p1) B hätte ''grenze'' liefern müssen (Ergebnis: %, Meldung: %)', ergebnis, meldung;
+  end if;
+  if (select count(*) from push_abos where spieler_id = v_spieler) <> 10 then
+    raise exception '(p1) Erwartet genau 10 Abos, gefunden: %', (select count(*) from push_abos where spieler_id = v_spieler);
+  end if;
+
+  -- (p2) A löscht das Abo des 1. Geräts und hält die Zeilensperre.
+  perform extensions.dblink_exec('rennen_a', 'begin');
+  perform extensions.dblink_exec('rennen_a',
+    format('delete from public.push_abos where spieler_id = %L and endpoint = %L', v_spieler, rennen_test.push_ep(1)));
+  perform extensions.dblink_send_query('rennen_b', format(
+    $q$insert into public.spieler_benachrichtigungen (spieler_id, vorgang, ereignis, inhalt) values (%L, %L, 'ausfall', '{}'::jsonb)$q$,
+    v_spieler, v_vorgang));
+  frist := clock_timestamp() + interval '10 seconds';
+  loop
+    perform pg_stat_clear_snapshot();
+    exit when exists (
+      select 1 from pg_stat_activity
+       where application_name = 'rennen_b' and wait_event_type = 'Lock');
+    if clock_timestamp() > frist then
+      raise exception '(p2) B wartet nach 10 s nicht auf eine Sperre';
+    end if;
+    perform pg_sleep(0.05);
+  end loop;
+  perform extensions.dblink_exec('rennen_a', 'commit');
+  select t.status into ergebnis from extensions.dblink_get_result('rennen_b', false) as t(status text);
+  meldung := extensions.dblink_error_message('rennen_b');
+  perform * from extensions.dblink_get_result('rennen_b', false) as t(status text);
+  if ergebnis is distinct from 'INSERT 0 1' then
+    raise exception '(p2) B hätte die Benachrichtigung ablegen müssen (Status: %, Meldung: %)', ergebnis, meldung;
+  end if;
+  if (select count(*) from push_auftraege q join spieler_benachrichtigungen b on b.id = q.benachrichtigung_id
+       where b.vorgang = v_vorgang) <> 9
+     or exists (select 1 from push_abos where spieler_id = v_spieler and endpoint = rennen_test.push_ep(1)) then
+    raise exception '(p2) Erwartet 9 Aufträge ohne das gelöschte Abo, gefunden: %',
+      (select count(*) from push_auftraege q join spieler_benachrichtigungen b on b.id = q.benachrichtigung_id
+        where b.vorgang = v_vorgang);
+  end if;
+
+  -- (p3) A schaltet das 11. Gerät ein (10. Abo), B dasselbe Gerät gleichzeitig.
+  perform extensions.dblink_exec('rennen_a', 'begin');
+  select t.r into ergebnis from extensions.dblink('rennen_a', $q$select rennen_test.push_an(11)$q$) as t(r text);
+  if ergebnis is distinct from 'ok' then
+    raise exception '(p3) A hätte das Gerät einschalten müssen: %', ergebnis;
+  end if;
+  perform extensions.dblink_send_query('rennen_b', $q$select rennen_test.push_an(11)$q$);
+  frist := clock_timestamp() + interval '10 seconds';
+  loop
+    perform pg_stat_clear_snapshot();
+    exit when exists (
+      select 1 from pg_stat_activity
+       where application_name = 'rennen_b' and wait_event_type = 'Lock');
+    if clock_timestamp() > frist then
+      raise exception '(p3) B wartet nach 10 s nicht auf eine Sperre';
+    end if;
+    perform pg_sleep(0.05);
+  end loop;
+  perform extensions.dblink_exec('rennen_a', 'commit');
+  select t.r into ergebnis from extensions.dblink_get_result('rennen_b', false) as t(r text);
+  meldung := extensions.dblink_error_message('rennen_b');
+  perform * from extensions.dblink_get_result('rennen_b', false) as t(r text);
+  if ergebnis is distinct from 'ok' then
+    raise exception '(p3) B hätte ''ok'' liefern müssen (Ergebnis: %, Meldung: %)', ergebnis, meldung;
+  end if;
+  if (select count(*) from push_abos where spieler_id = v_spieler) <> 10
+     or (select count(*) from push_abos where spieler_id = v_spieler and endpoint = rennen_test.push_ep(11)) <> 1 then
+    raise exception '(p3) Erwartet 10 Abos mit dem Gerät genau einmal, gefunden: %',
+      (select count(*) from push_abos where spieler_id = v_spieler);
+  end if;
+
+  perform extensions.dblink_disconnect('rennen_a');
+  perform extensions.dblink_disconnect('rennen_b');
+exception when others or query_canceled then
+  foreach n in array coalesce(extensions.dblink_get_connections(), '{}') loop
+    perform extensions.dblink_disconnect(n);
+  end loop;
+  perform set_config('rennen.fehler_push', sqlerrm, false);
+end $$;
+
+-- Die Spieler:in nimmt Abos und Aufträge mit; die Benachrichtigung hat keinen FK.
+delete from spieler_benachrichtigungen where spieler_id = (select id from rennen_test.ids where name = 'push_spieler');
+delete from spieler where id = (select id from rennen_test.ids where name = 'push_spieler');
+delete from teams where id = (select id from rennen_test.ids where name = 'push_team');
+delete from vereine where id = (select id from rennen_test.ids where name = 'push_verein');
+
 -- Aufräumen, auch nach einem Fehler.
 drop schema rennen_test cascade;
 \if :dblink_vorher
@@ -2401,5 +2568,8 @@ begin
   end if;
   if current_setting('rennen.fehler_konten') <> '' then
     raise exception 'Rennen Konten ohne Verein: %', current_setting('rennen.fehler_konten');
+  end if;
+  if current_setting('rennen.fehler_push') <> '' then
+    raise exception 'Rennen Mitteilungen aufs Mobile: %', current_setting('rennen.fehler_push');
   end if;
 end $$;

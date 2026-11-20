@@ -134,17 +134,27 @@ export async function ladeSpielerliste(
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
   // Über die Zuordnungen des Kontextteams, nicht über `spieler.team_id`:
-  // «Zeile sichtbar» heisst nicht «im Team» (Architekturplan §4.2).
-  const { data, error } = await supabase
-    .from("team_spieler")
-    .select(`probe_seit, spieler:spieler!tsp_spieler(${SPIELER_SPALTEN})`)
-    .eq("team_id", e.teamId);
+  // «Zeile sichtbar» heisst nicht «im Team» (Architekturplan §4.2). Dazu die
+  // weiteren Teams und wer Mitteilungen aufs Mobile eingeschaltet hat (#483
+  // AK 11, 12: nur ja/nein) — alle drei hängen nur am Team, also gleichzeitig.
+  // Scheitert nur die Angabe zu den Mitteilungen (etwa im Fenster zwischen
+  // Vercel-Deploy und Migration), kommt die Liste trotzdem — dann ohne Glocken.
+  const [{ data, error }, weitere, mitteilungen] = await Promise.all([
+    supabase.from("team_spieler").select(`probe_seit, spieler:spieler!tsp_spieler(${SPIELER_SPALTEN})`).eq("team_id", e.teamId),
+    supabase.rpc("spieler_weitere_teams", { p_team: e.teamId }),
+    supabase.rpc("team_spieler_mitteilungen", { p_team: e.teamId }),
+  ]);
   if (error) return ausDbFehler(error);
   const zeilen = ((data ?? []) as unknown as ZuordnungRoh[]).filter((z): z is ZuordnungRoh & { spieler: SpielerRoh } => z.spieler !== null);
-  const weitere = await supabase.rpc("spieler_weitere_teams", { p_team: e.teamId });
   if (weitere.error) return ausDbFehler(weitere.error);
   const weitereVon = new Map(((weitere.data ?? []) as { spieler_id: string; teams: string[] }[]).map((w) => [w.spieler_id, w.teams]));
-  const liste = zeilen.map((z) => ({ ...ausRoh(z, e.teamId), weitereTeams: weitereVon.get(z.spieler.id) ?? [] }));
+  if (mitteilungen.error) console.error("[kern] team_spieler_mitteilungen:", mitteilungen.error.message);
+  const mitMitteilungen = new Set((mitteilungen.error ? [] : (mitteilungen.data ?? [])) as string[]);
+  const liste = zeilen.map((z) => ({
+    ...ausRoh(z, e.teamId),
+    weitereTeams: weitereVon.get(z.spieler.id) ?? [],
+    mitteilungen: mitMitteilungen.has(z.spieler.id),
+  }));
   const spieler = await mitProbeStand(supabase, e.teamId, nachSpielerName(liste));
   if (!spieler.ok) return spieler;
   return ok({ team: team.wert, spieler: spieler.wert });

@@ -71,6 +71,8 @@ import { EigenschaftBearbeitbarDemo } from "./EigenschaftBearbeitbarDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { CheckboxDemo } from "./CheckboxDemo";
 import { BenachrichtigungDemo } from "./BenachrichtigungDemo";
+import { AppAblegenDemo, SchliessbareMeldung } from "./AppAblegenDemo";
+import { MitteilungenDemo } from "./MitteilungenDemo";
 import { SwitchDemo } from "./SwitchDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
@@ -304,6 +306,8 @@ const GLIEDERUNG = [
           { id: "mini-monat", titel: "Mini-Monat" },
           { id: "platz-spielerzahl", titel: "Platz und Spielerzahl eines Termins" },
           { id: "benachrichtigungen", titel: "Benachrichtigungen" },
+          { id: "app-ablegen", titel: "Als App ablegen" },
+          { id: "mitteilungen", titel: "Mitteilungen aufs Mobile" },
         ],
       },
     ],
@@ -3077,6 +3081,13 @@ export default async function Styleguide() {
             Konto der <code>AnmeldeHinweis</code>: eine Meldung mit eigenem
             Zeichen und dem Weg zum Konto als Aktion. Auf Papier fehlt er.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Schliessbar</strong> (<code>onSchliessen</code>, #650): ein
+            Icon-Knopf ✕ oben rechts mit eigenem Label, für einen Hinweis, den man
+            ablehnen darf, ohne zu antworten - etwa «Termine als App» am privaten
+            Link (<Siehe id="app-ablegen" />). Was danach geschieht (wann er
+            wiederkommt), bestimmt der Aufrufer.
+          </p>
           <div className="grid max-w-2xl gap-4">
             <SectionMessage appearance="error">
               Das Training konnte nicht gespeichert werden. Bitte versuche es noch
@@ -3102,6 +3113,7 @@ export default async function Styleguide() {
               Das Feld-Diagramm zeigt inzwischen anderes Material: Hürden: 0 → 1.
             </SectionMessage>
             <AnmeldeHinweis />
+            <SchliessbareMeldung />
             <SectionMessage appearance="warning">
               warning - im Kit, derzeit ohne Ort.
             </SectionMessage>
@@ -4512,6 +4524,59 @@ export default async function Styleguide() {
             </li>
           </ul>
           <BenachrichtigungDemo />
+        </Section>
+
+        <Section id="app-ablegen">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Die Seite des privaten Links als App auf dem Home-Bildschirm (Story #650): je Spieler:in eine eigene
+            App, benannt «Vorname · Verein». Aus bestehenden Teilen gebaut - <code>SectionMessage</code> (neu
+            schliessbar), <code>Button</code> und <code>Dialog</code>.
+          </p>
+          <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+            <li>
+              <strong>Hinweis über den Terminen</strong> - nur auf dem Mobile, nicht in der abgelegten App, ab dem
+              zweiten Besuch des Links auf diesem Gerät; geschlossen ruht er 7 Tage. Die Aktion heisst auf dem iPhone
+              «So geht’s» (Anleitung), auf Android «Als App ablegen» (der Browser fragt selbst, sonst die
+              Anleitung). Im Browser einer App sagt er nur, dass es dort nicht geht und wohin.
+            </li>
+            <li>
+              <strong>Knopf unter den Terminen</strong> - immer da ausser in der abgelegten App, ruhig als Secondary
+              Button (<code>outlined</code>); am Computer nur, wenn der Browser selbst ablegen kann.
+            </li>
+            <li>
+              <strong>Anleitung</strong> - drei Schritte je Gerät und darunter, wie die App auf dem Home-Bildschirm
+              heisst. Texte in <code>lib/app-ablegen.ts</code>.
+            </li>
+          </ul>
+          <AppAblegenDemo />
+        </Section>
+
+        <Section id="mitteilungen">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Mitteilungen aufs Mobile (Story #483): Jede Benachrichtigung am privaten Link geht auch an die Geräte, auf
+            denen die Spielervertretung sie eingeschaltet hat. Aus bestehenden Teilen gebaut - Fläche
+            <code> elev-01</code> wie ein Eintrag der Benachrichtigungen, <code>Switch</code>,{" "}
+            <code>SectionMessage</code> und <code>Dialog</code>. Begriff durchgängig «Mobile».
+          </p>
+          <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+            <li>
+              <strong>Karte oben in der Glocken-Ansicht</strong> - Schalter und eine Zustandszeile, die sagt, was für
+              dieses Gerät gilt. Auf dem iPhone im Safari-Tab ist der Schalter gesperrt; ein Hinweis führt mit
+              «So geht’s» zur Anleitung «als App ablegen». Hat das Mobile sie abgelehnt, sagt ein Hinweis, wo man
+              sie wieder erlaubt. Nur wenn die Umgebung Mitteilungen hat (VAPID gesetzt).
+            </li>
+            <li>
+              <strong>Dialog vor dem Einschalten</strong> - was KiFu speichert, wer zustellt und wann es
+              verschwindet; erst «Einschalten» ruft die Abfrage des Browsers auf. Ausschalten gilt sofort.
+            </li>
+            <li>
+              <strong>Spalte «Mobile» in der Spielerliste eines Teams</strong> - Glocke (<code>Bell</code>, Schrift
+              on-surface) bzw. durchgestrichene Glocke (<code>BellOff</code>, on-surface-mittel), nie Primary; nur
+              das Zeichen mit <code>aria-label</code>. Der feste Hinweis steht hinter ⓘ im Spaltenkopf - dafür nimmt
+              <code> Tabelle</code> im Kopf neben Text auch ein Element an. Texte in <code>lib/push.ts</code>.
+            </li>
+          </ul>
+          <MitteilungenDemo />
         </Section>
       </VerzeichnisFlaeche>
     </Seitenrahmen>

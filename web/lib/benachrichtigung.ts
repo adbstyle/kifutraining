@@ -275,12 +275,22 @@ export const BENACHRICHTIGEN_HINWEIS: Record<BenachrichtigenVorgang, string> = {
   entfernen: "Sie erfahren, was wegfällt, obwohl es aus ihren Terminen verschwindet.",
 };
 
+/** Der Satz unter jedem Hinweis (#483 AK 10): Wo eingeschaltet, geht die
+ *  Benachrichtigung auch als Mitteilung aufs Mobile. */
+export const BENACHRICHTIGEN_MOBILE = "Wo eingeschaltet, erhalten sie sie auch als Mitteilung aufs Mobile.";
+
+/** Was unter dem Häkchen steht: der Hinweis des Vorgangs und der Satz zu den
+ *  Mitteilungen aufs Mobile. Oberfläche und KI-Beschreibung gleich. */
+export function benachrichtigenHinweis(vorgang: BenachrichtigenVorgang): string {
+  return `${BENACHRICHTIGEN_HINWEIS[vorgang]} ${BENACHRICHTIGEN_MOBILE}`;
+}
+
 /** Die Beschreibung des Parameters `benachrichtigen` eines KI-Werkzeugs: Label
  *  und Hinweis der Oberfläche desselben Vorgangs, dazu die Regel (Prinzipien
  *  2 und 4). */
 export function BENACHRICHTIGEN_MODELL(vorgang: BenachrichtigenVorgang): string {
   return (
-    `${BENACHRICHTIGEN_TEXT.label}: ${BENACHRICHTIGEN_HINWEIS[vorgang]} ` +
+    `${BENACHRICHTIGEN_TEXT.label}: ${benachrichtigenHinweis(vorgang)} ` +
     "Standard true; false lässt die Spielervertretungen still. Nur bei Terminen von heute oder später, nie für ausgefallene."
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { Besucherstatistik } from "@/components/layout/Besucherstatistik";
+import { THEME_FARBEN } from "@/lib/app-ablegen";
 import "./globals.css";
 
 // Eine Familie für die ganze Anwendung: Display, Titel, Fliesstext und
@@ -23,9 +24,12 @@ export const metadata: Metadata = {
    `<meta name="color-scheme" content="light dark">` lässt den Browser seine
    Leinwand schon passend zeichnen, bevor das CSS geladen ist (kein Blitz im
    anderen Erscheinungsbild). Zwilling ist `color-scheme` auf `:root` in
-   globals.css, das der Druck auf hell umstellt. */
+   globals.css, das der Druck auf hell umstellt.
+   `themeColor` färbt die Systemleiste der abgelegten App (#651) und des
+   Browsers im Grund des Erscheinungsbilds; sie folgt dem Gerät. */
 export const viewport: Viewport = {
   colorScheme: "light dark",
+  themeColor: [...THEME_FARBEN],
 };
 
 /* Wurzel: nur Dokument, Schrift, globale Styles und die Besucherstatistik —
