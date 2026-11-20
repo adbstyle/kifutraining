@@ -1,6 +1,6 @@
 # Verein
 
-Stand 2026-11-19. Wie ein Verein in der Anwendung entsteht, wer ihn führt und was er mit seinen
+Stand 2026-11-20. Wie ein Verein in der Anwendung entsteht, wer ihn führt und was er mit seinen
 Teams, Trainer:innen und Spieler:innen tun kann. Was ein Team im Alltag plant, steht im
 [Team-Bereich](team-bereich.md).
 
@@ -232,7 +232,8 @@ ohne), den Stand des privaten Links als „bezogen" oder „offen" (siehe
   einer Spieler:in ohne Team sagt er, dass die Spielervertretung erst Termine sieht, wenn sie einem
   Team zugeordnet ist, und der Link danach derselbe bleibt. Erneuern fragt vorher nach und nennt
   die Teams, für die der bisherige Link endet, dass mit ihm Kalender-Abo und Benachrichtigungen
-  enden, und ob die Eltern den neuen über eine Abholadresse holen können; ohne Team gibt man ihn
+  enden, dass auch die Mitteilungen aufs Mobile enden und die Spielervertretung sie mit dem neuen
+  Link neu einschaltet und die App neu ablegt, und ob die Eltern den neuen über eine Abholadresse holen können; ohne Team gibt man ihn
   selbst weiter.
 - **Einem Team zuordnen** öffnet die Wahl der Teams, je mit „18 von 100"; volle Teams stehen
   gedämpft. Die Spieler:in kommt ins gewählte Team, bisherige Teams bleiben. Für mehrere auf einmal
@@ -252,8 +253,8 @@ ohne), den Stand des privaten Links als „bezogen" oder „offen" (siehe
 - **Löschen** nimmt die Spieler:in aus dem Verein. Die Rückfrage „… aus dem Verein löschen" nennt
   die Teams, aus denen sie verschwindet, oder dass sie keinem zugeordnet ist, dass ihr privater
   Link und alle ihre Meldungen endgültig entfallen und dass sie an vergangenen Terminen ohne Namen
-  erscheint. Mit ihr verschwinden auch die Benachrichtigungen an ihrem Link; die Rückfrage nennt sie
-  nicht. Löschen kann nur die Verwaltung, nur hier und nur einzeln.
+  erscheint. Mit ihr verschwinden auch die Benachrichtigungen an ihrem Link und die Mitteilungen aufs Mobile
+  aller Geräte; die Rückfrage nennt beides nicht. Löschen kann nur die Verwaltung, nur hier und nur einzeln.
 
 Ist eine Spieler:in inzwischen gelöscht, sagt jeder Dialog „Spieler:in nicht gefunden." und die
 Liste lädt neu.
@@ -401,7 +402,7 @@ sie nicht.
 Niemand wird benachrichtigt: weder bei einer Aufnahme oder Entfernung, noch wenn die Verwaltung ein
 Team auflöst, eine Spieler:in zuordnet, herausnimmt oder löscht, noch wenn der Verein gelöscht
 wird — auch die Spielervertretungen nicht: Die Termine eines aufgelösten Teams verschwinden vom
-privaten Link ohne Benachrichtigung. Wer eine Seite des Vereins offen hat, landet nach einem Löschen ohne Erklärung auf dem
+privaten Link ohne Benachrichtigung und ohne Mitteilung aufs Mobile. Wer eine Seite des Vereins offen hat, landet nach einem Löschen ohne Erklärung auf dem
 Einstieg. Ein gelöschter Verein, ein aufgelöstes Team und eine gelöschte Spieler:in lassen sich
 nicht wiederherstellen, und vorher lässt sich nichts exportieren — weder der Spielerbestand noch
 Termine oder Trainings. Feedback zu einem gelöschten Team oder Verein bleibt ohne Bezug zum Team.
