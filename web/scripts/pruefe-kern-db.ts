@@ -5761,7 +5761,7 @@ try {
   });
 
   // ── Der private Link mit Kadern (#454) ───────────────────────────────────
-  await pruefe("Privater Link: nur geltende Termine, nur die eigenen Kader, Zahl nur über Geltende (#454 AK 1-5, PC 1)", async () => {
+  await pruefe("Privater Link: nur geltende Termine, keine Kadernamen, Zahl nur über Geltende (#454 AK 1-5, PC 1; #663 AK 1)", async () => {
     const k = await kaderTeam("Kern-DB-Link-Kader");
     const aushilfe = await neuerKader(k.team, "Aushilfe");
     wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.lena], dazu: [aushilfe] }));
@@ -5775,7 +5775,8 @@ try {
       };
     const lena = await ansicht(k.lena);
     assert.deepEqual(lena.termine.map((t) => t.id), [s1, gemischt, alle], "S2 betrifft Lena nicht");
-    assert.deepEqual(lena.termine.map((t) => t.kader), [["S1"], ["Aushilfe"], []], "nur ihre Kader, nie S2");
+    // #663 AK 1: Der Link nennt keine Kader mehr, auch nicht die eigenen (Platzhalter bis N1).
+    assert.deepEqual(lena.termine.map((t) => t.kader), [[], [], []], "keine Kadernamen");
     assert.deepEqual(lena.termine.map((t) => t.angemeldet), [2, 2, 3]);
     // #472 AK 2: Von wie vielen, gezählt wie für die Mitglieder — am gemischten
     // Termin auch über S2, ohne S2 zu nennen.
@@ -5790,7 +5791,7 @@ try {
     // PC 1: Gilt er wieder für sie, steht sie dort angemeldet.
     wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.lena], dazu: [k.s2] }));
     const wieder = (await ansicht(k.lena)).termine.find((t) => t.id === s2) as { abgemeldet?: boolean; kader: string[] } | undefined;
-    assert.ok(wieder && wieder.abgemeldet === false && wieder.kader[0] === "S2");
+    assert.ok(wieder && wieder.abgemeldet === false && wieder.kader.length === 0);
   });
 
   // ── Zeitpunkt des letzten Statuswechsels (#467) ──────────────────────────
@@ -8066,7 +8067,7 @@ try {
     return { A, B, tA, tB, tC, c, lina };
   };
 
-  await pruefe("Link über mehrere Teams: Termine beider Teams, Team je Termin, Ordnung nach Teamname, Kader nur des Termin-Teams; Abo mit Team im Titel (#583 AK 1–3, 8, 10)", async () => {
+  await pruefe("Link über mehrere Teams: Termine beider Teams, Team je Termin, Ordnung nach Teamname, Kader-Termine ohne Kadernamen; Abo mit Team im Titel (#583 AK 1–3, 8, 10)", async () => {
     const { A, B, tA, tB, tC, lina } = await mehrTeams("Kern-DB-Mehr");
     const { ladeLinkAnsicht } = await import("../lib/privater-link");
     const { aboEintrag, ABO_KALENDER_NAME } = await import("../lib/spieler-abo");
@@ -8092,7 +8093,8 @@ try {
     assert.deepEqual([ansicht.teams, (ansicht as unknown as { team: string }).team, ansicht.probe], [[A, B], "Kern-DB", null]);
     assert.deepEqual(ansicht.termine.map((x) => [x.id, x.team]), [[inA, A], [inB, B], [spiel, B], [mitLina, A]]);
     assert.ok(![nurFremd, inC].some((id) => ansicht.termine.some((x) => x.id === id)), "kein fremder Kader, kein fremdes Team");
-    assert.deepEqual(ansicht.termine.find((x) => x.id === mitLina)!.kader, ["K-Lina"]);
+    // #663 AK 1: Der Kader-Termin steht da, ohne seinen Kader zu nennen.
+    assert.ok(!JSON.stringify((await feldAnon.rpc("spieler_link_ansicht", { p_token: token })).data).includes("K-Lina"), "kein Kadername");
     // Die Zahl am Termin bleibt die seines Teams.
     assert.deepEqual([ansicht.termine[0].gesamt, ansicht.termine[1].gesamt], [1, 1]);
 

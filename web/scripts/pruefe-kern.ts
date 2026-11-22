@@ -4118,6 +4118,30 @@ pruefe("Kader: Zugehörigkeit einer Auswahl und Kader einer Spieler:in (#452 AK 
   assert.deepEqual(kaderVon("b", [k, { id: "j", name: "S1", spielerIds: ["c"] }]).map((x) => x.id), ["k"]);
 });
 
+pruefe("Kader am privaten Link ausgeblendet; die Kader-Karte sagt, dass nur das Team sie sieht (#663 AK 1, 2)", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // AK 1: Keine Datei des privaten Links zeigt Kader-Plaketten, der Typ trägt keine Kader.
+  for (const d of quelldateien(join(web, "components/privat")))
+    assert.ok(!/KaderLozenge/.test(readFileSync(d, "utf8")), `${relative(web, d)} zeigt keine Kader`);
+  assert.ok(!/^\s*kader\s*:/m.test(lies("lib/privater-link.ts")), "LinkTermin trägt keine Kader");
+  // AK 1, Datenebene: die jüngste Fassung von spieler_link_ansicht liefert keine Kadernamen
+  // (Platzhalter `[]` bis N1), filtert die Termine aber weiter über die Kader (OoS 1).
+  const ordner = join(web, "../supabase/migrations");
+  const juengste = readdirSync(ordner)
+    .filter((d) => d.endsWith(".sql") && /create or replace function spieler_link_ansicht\(/.test(readFileSync(join(ordner, d), "utf8")))
+    .sort()
+    .at(-1)!;
+  const rumpf = readFileSync(join(ordner, juengste), "utf8");
+  assert.match(rumpf, /'kader', '\[\]'::jsonb\)/, `${juengste}: kader als leere Liste`);
+  assert.ok(!/jsonb_agg\(k\.name/.test(rumpf), `${juengste}: keine Kadernamen`);
+  assert.match(rumpf, /termin_gilt_fuer\(t\.id, s\.id\)/, `${juengste}: Termine weiter nur, wenn sie für sie gelten`);
+  // AK 2: die Karte zeigt den Satz immer, nicht nur mit Kadern; der Namenshinweis widerspricht nicht.
+  assert.match(KADER_TEXT.sichtbarkeit, /^Kader sieht nur das Team\. Am privaten Link erscheinen sie nicht/);
+  assert.ok(!/Eltern sehen/.test(KADER_TEXT.heikel));
+  const karte = lies("components/team/KaderKarte.tsx");
+  assert.ok(karte.indexOf("KADER_TEXT.sichtbarkeit") < karte.indexOf("kader.length > 0 ?"), "vor der Unterscheidung mit/ohne Kader");
+});
+
 pruefe("Kader: verfallende Abmeldungen - Zahl aus der Datenebene, Texte (#453 AK 10, 12, 16)", () => {
   assert.equal(verfallAusFehler(`${VERFALL_MARKER} 3`), 3);
   assert.equal(verfallAusFehler("KADER_DOPPELT"), null);

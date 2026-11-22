@@ -314,10 +314,11 @@ export function SpielerListe({
   const namenVon = (s: Spieler) => kaderVon(s.id, kader).map((k) => k.name);
   const gewaehlteNamen = kader.filter((k) => form.kaderIds.includes(k.id)).map((k) => k.name);
   const wer = form.vorname.trim() || "Die Spieler:in";
+  // Welche Termine für sie gelten — ohne Aussage darüber, was der Link zeigt (#663).
   const kaderHinweis =
     gewaehlteNamen.length === 0
-      ? `${wer} sieht nur Termine ohne Kader.`
-      : `${wer} sieht Termine ohne Kader und die Termine von ${aufzaehlung(gewaehlteNamen)}.`;
+      ? `${wer} ist nur bei Terminen ohne Kader dabei.`
+      : `${wer} ist bei Terminen ohne Kader und bei den Terminen von ${aufzaehlung(gewaehlteNamen)} dabei.`;
   const probeVorher = !!offen?.probe;
   const mitProbe = spieler.some((s) => s.probe);
   const spalten = mitKadern

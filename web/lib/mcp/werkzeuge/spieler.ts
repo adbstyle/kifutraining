@@ -673,7 +673,7 @@ export const terminAnwesenheitSetzen = werkzeug({
 const LINK_MODELL =
   "Jede Spieler:in hat einen privaten Link, denselben für alle ihre Teams: Wer ihn öffnet, sieht ohne Konto Vor- und " +
   "Nachnamen dieser Spieler:in, die Namen ihrer Teams und die anstehenden Termine aller ihrer Teams, die für sie " +
-  "gelten, je Termin mit seinem Team (bei Terminen mit Kadern nur die ihrer Kader, samt dieser Kader), mit der Zahl " +
+  "gelten, je Termin mit seinem Team (bei Terminen mit Kadern nur die ihrer Kader, ohne einen Kader zu nennen), mit der Zahl " +
   "der Angemeldeten und derer, für die er gilt, und meldet sie bis zum Beginn ab und wieder an. An Trainings und " +
   "Spielen sieht sie den Hinweis für Eltern, nie die Bemerkung; an einem Training seinen Treffpunkt, solange sie " +
   "angemeldet ist und es nicht begonnen hat. Spiele meldet sie an oder ab bis zur Meldefrist (ohne Frist bis zum " +

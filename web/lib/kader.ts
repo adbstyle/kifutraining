@@ -16,12 +16,18 @@ export const KADER_MAX = 20;
 
 export const KADER_TEXT = {
   name: `Bitte einen Namen mit höchstens ${KADER_NAME_MAX} Zeichen angeben.`,
-  /** AK 13: beim Anlegen und Umbenennen — KiFu prüft die Namen nicht (OoS 7). */
+  /** AK 13: beim Anlegen und Umbenennen — KiFu prüft die Namen nicht (OoS 7).
+   *  Seit #663 sieht sie nur noch das Team; heikle Namen bleiben trotzdem tabu. */
   heikel:
-    "Eltern sehen die Kader ihrer Spieler:in. Nenne darum keine Angaben zur Gesundheit oder vergleichbar heikle Einstufungen wie «verletzt» oder «Förderbedarf».",
+    "Kader sieht nur das Team. Nenne trotzdem keine Angaben zur Gesundheit oder vergleichbar heikle Einstufungen wie «verletzt» oder «Förderbedarf».",
+  /** #663 AK 2: Wer die Kader führt, liest, dass sie nur im Team sichtbar sind
+   *  — immer über der Liste, auch ohne Kader. Zwilling: `spieler_link_ansicht`
+   *  liefert keine Kadernamen (Migration link_ansicht_ohne_kader). */
+  sichtbarkeit:
+    "Kader sieht nur das Team. Am privaten Link erscheinen sie nicht: Spieler:innen und Eltern sehen nur die Termine, die für sie gelten.",
   /** Was ein Kader bewirkt — über der Liste der Kader. */
   wirkung:
-    "Ein Termin mit Kadern gilt für die Spieler:innen seiner Kader, ein Termin ohne Kader für alle. Wer keinem Kader angehört, sieht nur Termine ohne Kader.",
+    "Ein Termin mit Kadern gilt für die Spieler:innen seiner Kader, ein Termin ohne Kader für alle. Wer keinem Kader angehört, ist nur bei Terminen ohne Kader dabei.",
   einleitung:
     "Ein Kader fasst Spieler:innen zusammen, für die eigene Termine gelten, etwa «Stärkeklasse 1», «Torhüterinnen» oder «Aushilfe».",
   leer:

@@ -2,7 +2,6 @@
 
 import { Clock, Shirt } from "lucide-react";
 import { Button, ExternerLink, Kalenderblatt, Lozenge, SectionMessage, TreffpunktListe, ZeichenZahl } from "@/components/ui";
-import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr, tagText } from "@/lib/monat";
 import type { LinkTermin } from "@/lib/privater-link";
@@ -114,7 +113,6 @@ export function SpielKarte({
           ) : (
             <span className="type-body-small text-on-surface-mittel">Das Team führt keine Spielerliste.</span>
           )}
-          {t.kader.length > 0 && <KaderLozenges namen={t.kader} />}
         </div>
       )}
       {offen && (
