@@ -40,7 +40,23 @@ import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type Ke
 
 export const SPIELER_FELD = { feld: "spieler_id" } as const;
 
-const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, link_zugestellt, kader_spieler(kader_id, team_id)";
+const SPIELER_SPALTEN_VOR_657 = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, kader_spieler(kader_id, team_id)";
+const SPIELER_SPALTEN = SPIELER_SPALTEN_VOR_657.replace("link_bezogen", "link_bezogen, link_zugestellt");
+
+/** Bis N1: Im Fenster zwischen Vercel-Deploy und Migration 20261122110000
+ *  (oder in einer Vorschau gegen ein älteres Schema) fehlt `link_zugestellt`,
+ *  und PostgREST lehnt den ganzen Select ab. Dann noch einmal ohne die Spalte —
+ *  die Liste kommt, alle Links gelten als nicht zugestellt. Wie im Verein-Kern,
+ *  der den Schlüssel optional liest. */
+async function mitZugestelltRueckfall<T extends { error: { message: string; code?: string } | null }>(
+  abfrage: (spalten: string) => PromiseLike<T>,
+): Promise<T> {
+  const r = await abfrage(SPIELER_SPALTEN);
+  // 42703 undefined_column: «column spieler_1.link_zugestellt does not exist».
+  if (r.error?.code !== "42703" || !r.error.message.includes("link_zugestellt")) return r;
+  console.error("[kern] spieler.link_zugestellt fehlt:", r.error.message);
+  return abfrage(SPIELER_SPALTEN_VOR_657);
+}
 
 type SpielerRoh = {
   id: string;
@@ -50,8 +66,9 @@ type SpielerRoh = {
   js_nummer: string | null;
   /** abgeholt (#438); Spaltenname bleibt wegen des Sync. */
   link_bezogen: boolean;
-  /** Nullable bis N1: gelesen als `=== true`. */
-  link_zugestellt: boolean | null;
+  /** Nullable bis N1: gelesen als `=== true`; fehlt im Fenster vor der
+   *  Migration (`mitZugestelltRueckfall`). */
+  link_zugestellt?: boolean | null;
   /** Alle Kader der Spieler:in, die die RLS zeigt — auch die anderer Teams,
    *  denen die handelnde Person angehört; `kopfAusRoh` grenzt auf das Team ein. */
   kader_spieler: { kader_id: string; team_id: string }[] | null;
@@ -143,9 +160,12 @@ export async function ladeSpielerliste(
   // weiteren Teams und wer Mitteilungen aufs Mobile eingeschaltet hat (#483
   // AK 11, 12: nur ja/nein) — alle drei hängen nur am Team, also gleichzeitig.
   // Scheitert nur die Angabe zu den Mitteilungen (etwa im Fenster zwischen
-  // Vercel-Deploy und Migration), kommt die Liste trotzdem — dann ohne Glocken.
+  // Vercel-Deploy und Migration), kommt die Liste trotzdem — dann ohne Glocken;
+  // fehlt `link_zugestellt`, ohne Zustellung (`mitZugestelltRueckfall`).
   const [{ data, error }, weitere, mitteilungen] = await Promise.all([
-    supabase.from("team_spieler").select(`probe_seit, spieler:spieler!tsp_spieler(${SPIELER_SPALTEN})`).eq("team_id", e.teamId),
+    mitZugestelltRueckfall((spalten) =>
+      supabase.from("team_spieler").select(`probe_seit, spieler:spieler!tsp_spieler(${spalten})`).eq("team_id", e.teamId),
+    ),
     supabase.rpc("spieler_weitere_teams", { p_team: e.teamId }),
     supabase.rpc("team_spieler_mitteilungen", { p_team: e.teamId }),
   ]);
@@ -310,12 +330,14 @@ export async function ladeSpieler(
 ): Promise<KernErgebnis<Omit<Spieler, "probe" | "weitereTeams">>> {
   if (!istUuid(teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
   if (!istUuid(spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
-  const { data, error } = await supabase
-    .from("team_spieler")
-    .select(`spieler:spieler!tsp_spieler(${SPIELER_SPALTEN})`)
-    .eq("team_id", teamId)
-    .eq("spieler_id", spielerId)
-    .maybeSingle<{ spieler: SpielerRoh | null }>();
+  const { data, error } = await mitZugestelltRueckfall((spalten) =>
+    supabase
+      .from("team_spieler")
+      .select(`spieler:spieler!tsp_spieler(${spalten})`)
+      .eq("team_id", teamId)
+      .eq("spieler_id", spielerId)
+      .maybeSingle<{ spieler: SpielerRoh | null }>(),
+  );
   if (error) return ausDbFehler(error);
   if (!data?.spieler) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
   return ok(kopfAusRoh(data.spieler, teamId));
