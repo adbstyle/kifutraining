@@ -4,11 +4,11 @@ import { Card } from "@/components/ui";
 import { AnzeigenameForm } from "./AnzeigenameForm";
 import { KontoRahmen } from "./KontoRahmen";
 import { createClient } from "@/lib/supabase/server";
-import { getMeinAnzeigename } from "@/lib/queries/profil";
+import { getAnzeigenameFuer } from "@/lib/queries/profil";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Konto - KiFu", robots: { index: false } };
+export const metadata: Metadata = { title: "Profil im Konto - KiFu", robots: { index: false } };
 
 /* Konto › Profil (#662 AK 2): die E-Mail-Adresse zum Lesen, der Anzeigename
    zum Ändern und der Weg zu einem neuen Passwort. Abmelden steht im
@@ -18,7 +18,8 @@ export default async function KontoProfilPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const anzeigeName = await getMeinAnzeigename();
+  // Mit dem schon geholten User direkt, ohne zweites getUser() (Verbrauch #444).
+  const anzeigeName = user ? await getAnzeigenameFuer(supabase, user.id) : null;
 
   return (
     <KontoRahmen reiter="profil">

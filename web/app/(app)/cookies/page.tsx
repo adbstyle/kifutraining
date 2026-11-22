@@ -11,8 +11,8 @@ export const metadata: Metadata = { title: "Cookies - KiFu" };
    der Speicherungen aus lib/browser-speicher.ts. Die Seite braucht selbst
    nichts aus dem Browser und steht darum auch dem offen, der Cookies sperrt.
    Sie hängt am Konto (Verweis unter «Daten und Konto», Brotkrume «Konto ›
-   Daten und Konto › Cookies»); ohne Konto
-   steht sie für sich und ist über die Anmeldeseiten erreichbar. */
+   Daten und Konto › Cookies»); ohne Konto steht sie für sich und ist über
+   die Anmeldeseiten erreichbar. */
 export default async function CookiesPage() {
   const supabase = await createClient();
   const {

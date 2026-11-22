@@ -22,12 +22,13 @@ export default async function KontoVerbindungenPage() {
 
   return (
     <KontoRahmen reiter="verbindungen">
-      {/* KI-Zugänge (Story #142 AK 5, AK 6). Die Adresse steht hier, weil der
-          Trainer sie in seinen KI-Client eintragen muss; ein Geheimnis gibt es
-          nicht (NFR 4) — erlaubt wird im Browser. */}
+      {/* KI-Zugänge (Story #142 AK 5, AK 6), überschrieben «KI-Assistenten» wie
+          im Entwurf und in #662 AK 3; die Zeilen der Liste bleiben Zugänge. Die
+          Adresse steht hier, weil der Trainer sie in seinen KI-Client eintragen
+          muss; ein Geheimnis gibt es nicht (NFR 4) — erlaubt wird im Browser. */}
       <Card className="mb-4 p-6">
         <div className="flex items-baseline justify-between gap-3">
-          <h2 className="type-title-large text-on-surface">KI-Zugänge</h2>
+          <h2 className="type-title-large text-on-surface">KI-Assistenten</h2>
           {zugaenge && (
             <span className="type-body-medium shrink-0 text-on-surface-mittel">
               {zugaenge.length} von {KI_ZUGAENGE_MAX}
