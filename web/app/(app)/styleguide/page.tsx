@@ -541,10 +541,10 @@ const kategorien: KategorieSlug[] = ["G", "F", "E", "D", "C", "B", "A"];
    daneben, wie die Komponente sie führt. */
 const lozengeBedeutung: [LozengeAppearance, string][] = [
   ["neutral", "Herkunft, Entwurf, Altersstufe, Termin ausgefallen"],
-  ["information", "gilt nach aussen: öffentlich, Community"],
+  ["information", "gilt nach aussen: öffentlich, Community, Link zugestellt"],
   ["discovery", "etwas Zusätzliches: mehrere Varianten, neue Version"],
   ["warning", "braucht Aufmerksamkeit: Termin ohne Training"],
-  ["success", "erledigt - im Kit, derzeit ohne Ort"],
+  ["success", "erledigt: Link abgeholt"],
   ["danger", "blockiert - im Kit, derzeit ohne Ort"],
 ];
 
@@ -675,10 +675,10 @@ const zeichenJeSache: [LucideIcon[], string, string][] = [
   [[CalendarDays, CalendarPlus, CalendarOff], "CalendarDays · CalendarPlus · CalendarOff", "Termin"],
   [[Repeat], "Repeat", "Terminserie"],
   [[ClipboardList], "ClipboardList", "Training, auch «Meine Trainings»"],
-  [[LayoutGrid], "LayoutGrid", "Übung, auch «Meine Übungen»"],
+  [[LayoutGrid], "LayoutGrid", "Übung"],
   [[ListChecks], "ListChecks", "nur die Zahl der Übungen in einem Training"],
   [[Layers, MapPin, Clock, LandPlot], "Layers · MapPin · Clock · LandPlot", "Variante · Ort · Zeit · Platz"],
-  [[History], "History", "Version (Versionszeile und Release-History)"],
+  [[History], "History", "Version («Was ist neu» im Konto-Menü und Release-History)"],
 ];
 
 /* Beispieltexte für die drei Stufen des methodischen Fahrplans; die
@@ -1101,8 +1101,8 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Browser ohne <code>light-dark()</code> (Safari vor 17.5, also iOS 16 und frühe 17er)
             bekommen fest das Helle: ein Ersatz-Block mit den hellen Hälften, geschrieben von{" "}
-            <code>gen:farb-ersatz</code> und geprüft von <code>check:farben</code>. Die Zeile
-            «Darstellung» fehlt dort in der Seitenleiste - umschalten liesse sich nichts.
+            <code>gen:farb-ersatz</code> und geprüft von <code>check:farben</code>. Die
+            Gruppe «Darstellung» fehlt dort im Konto-Menü - umschalten liesse sich nichts.
           </p>
           <ErscheinungsbildDemo />
         </Section>
@@ -1627,11 +1627,14 @@ export default async function Styleguide() {
                 <ZeichenPunkt ton="primary" />
               </span>
             </span>
-            <IconButton icon={Link2} label="Privater Link, bezogen" punkt="success" />
+            <IconButton icon={Link2} label="Privater Link, abgeholt" punkt="success" />
+            <IconButton icon={Link2} label="Privater Link, zugestellt" punkt="information" />
             <span className="type-label-small text-on-surface-mittel">
-              primary: Neues (Version, schmale Leiste) · success: ein erreichter Zustand (Link bezogen). Nur das
-              Bemerkenswerte trägt einen Punkt, der Normalfall keinen - sonst wird die Liste laut. Stumm - was er
-              meldet, steht im Namen des Knopfs.
+              primary: Neues (Version, schmale Leiste) · success: ein erreichter Zustand (Link abgeholt) ·
+              information: ein gemeldeter Zustand ohne Gewissheit (Link zugestellt, #657) - blau wie die
+              Information-Lozenge des Stands im Link-Dialog, damit Punkt und Plakette dasselbe sagen. Nur das
+              Bemerkenswerte trägt einen Punkt, der Normalfall keinen (Link offen) - sonst wird die Liste laut.
+              Stumm - was er meldet, steht im Namen des Knopfs.
             </span>
           </div>
 
@@ -1690,7 +1693,11 @@ export default async function Styleguide() {
           </p>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             Mehrere Sichten auf denselben Gegenstand - etwa ein Termin mit
-            Termin, Training, Spieler:innen und Trainer:innen. Zwischen den
+            Termin, Training, Spieler:innen und Trainer:innen, die
+            Team-Verwaltung mit Spieler:innen, Kader &amp; Schnuppern, Privater
+            Link und Trainer:innen (#656): ein Eintrag «Team» in der
+            Seitenleiste, darunter die Reiter, oder das Konto mit Profil,
+            Verbindungen sowie Daten und Konto (#662). Zwischen den
             Seiten eines Bereichs (Team, Verein) wechselt dagegen die
             Seitenleiste (<Siehe id="navigation" />). Bewusst Links statt
             Schaltflächen: jede Ansicht hat ihre eigene Adresse, ist damit
@@ -1701,7 +1708,12 @@ export default async function Styleguide() {
             lebt im Formularzustand. Die Leiste trennt sich nach
             unten mit <code>border-linie</code>, die offene Ansicht trägt einen
             2 px starken Strich in Primary. Die Reiter stehen in{" "}
-            <code>type-title-small</code>, normal gesetzt.
+            <code>type-title-small</code>, normal gesetzt. Reicht die Breite
+            nicht, brechen die Reiter in eine zweite Zeile um, statt seitlich zu
+            rollen: Mobile Browser zeigen keine Scrollleiste, ein Reiter
+            ausserhalb des Bilds wäre weder als offen noch als vorhanden zu
+            erkennen (die vier Bereiche der Team-Verwaltung brauchen gut 500 px,
+            auf dem Handy bleiben rund 340 px).
           </p>
           <TabNav
             ariaLabel="Beispiel-Ansichten"
@@ -1813,7 +1825,7 @@ export default async function Styleguide() {
             nicht während man im Feld arbeitet, und auf Touch-Geräten gar nicht
             (PO 2026-10-04). Muss man den Hinweis auch dort lesen, bevor man
             weitermacht - dass die Altersstufe eines Trainings lebenslang bindet
-            oder dass die Eltern den Grund eines Ausfalls sehen -,
+            oder dass Spieler:innen und Eltern den Grund eines Ausfalls sehen -,
             zeigt <code>infoAufTouch</code> ihn auf Touch-Geräten als Hinweis
             unter dem Feld. Das ⓘ hängt am Namen (PO 2026-10-31): Steht der
             Name über dem Feld, steht es oben hinter ihm, mittig zu seiner Zeile
@@ -2186,7 +2198,7 @@ export default async function Styleguide() {
             in einem neuen Tab und gibt weder die Herkunftsseite noch das Fenster preis.
             Neu, weil <code>ButtonLink</code> nur innerhalb der Anwendung führt. Mit
             <code> einzeilig</code> kürzt ein langer Text mit «…», das Zeichen bleibt
-            stehen - so steht der Ort mit Kartenlink auf der Karte der Eltern (#533).
+            stehen - so steht der Ort mit Kartenlink auf der Karte am privaten Link (#533).
           </p>
           <div className="flex max-w-xs flex-col items-start gap-3 type-body-medium">
             <ExternerLink href="https://maps.app.goo.gl/MRWFZj3ZQtsYGBFi9">Auf der Karte öffnen</ExternerLink>
@@ -2554,6 +2566,15 @@ export default async function Styleguide() {
             bleiben <code>FilterChip</code> (<Siehe id="plaketten" />): Sie haben kein Panel, nur an
             und aus.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Dieselbe Leiste steht über den Spieler:innen des Vereins und über der
+            Spielerliste eines Teams (#601: Suche, Kader samt «Ohne Kader»,
+            Jahrgang, Privater Link) - kein eigenes Muster je Liste. Der Zustand
+            steht in der Adresse (<code>useAdressFilter</code>); die Reiter der
+            Team-Verwaltung tragen ihn weiter. Die Kader-Chips mit Zahl bleiben
+            den Reitern «Spieler:innen» an Trainings und Spielen, wo genau ein
+            Kader zur Zeit gilt.
+          </p>
           <FilterKnopfDemo />
         </Section>
 
@@ -2567,8 +2588,9 @@ export default async function Styleguide() {
             Schrift, nie als Fläche. Steht das Menü für eine Wahl unter wenigen
             Möglichkeiten (Darstellung, #567), tragen die Einträge{" "}
             <code>gewaehlt</code>: Sie werden zu <code>menuitemradio</code>, die
-            gewählte zeigt rechts den Haken in Primary. Ein Satz, der für alle
-            Einträge gilt, steht als <code>fuss</code> leise darunter.
+            gewählte zeigt rechts den Haken in Primary. Ein Satz, der für die
+            Wahl gilt («Gilt in diesem Browser.»), steht als <code>hinweis</code>{" "}
+            unter der letzten Zeile.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Error trägt hier als Fliesstext: Das Panel liegt auf 08dp, und dort
@@ -2586,6 +2608,22 @@ export default async function Styleguide() {
             <code>hinweis</code> setzt einen leisen Satz unter die Zeile, mit ihr verknüpft
             (<code>aria-describedby</code>), etwa wohin ein Rückgängig führt; <code>trailing</code> nimmt
             neben einem Kürzel auch ein Element, etwa Pfeil und Ziel-Lozenge eines Wechsels.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Ziel und Gruppe</strong> (#661, für das Konto-Menü der Seitenleiste):{" "}
+            <code>href</code> macht die Zeile zu einem Link (<code>menuitem</code>) statt einem Knopf.{" "}
+            <em>Warum neu:</em> Das Konto-Menü führt zu Seiten («Konto und Einstellungen», «Was ist
+            neu», «Anmelden»), und wer ungesicherte Angaben auf der Seite hat, soll davor gewarnt werden
+            wie bei jedem Link der Leiste (#246) - die Warnung fängt nur Links ab. <code>gruppe</code>{" "}
+            fasst aufeinanderfolgende Zeilen mit demselben Wert zusammen (<code>role=&quot;group&quot;</code>)
+            und setzt ihren Namen als leise Überschrift darüber (<code>type-label-small</code>, mittel);{" "}
+            <em>warum neu:</em> Im Konto-Menü steht die Wahl der Darstellung zwischen Zielen und
+            Aktionen, und «Hell» allein sagte nicht, wofür es gilt. Vorgelesen wird der Name einmal, an
+            der Gruppe. <code>current</code> (nur mit <code>href</code>) markiert das Ziel als offene
+            Seite: <code>aria-current=&quot;page&quot;</code>, die Zeile betont, das Zeichen in Primary
+            wie der offene Eintrag der Leiste; <em>warum neu:</em> «Konto und Einstellungen» und «Was ist
+            neu» standen vorher als Einträge in der Leiste und trugen die offene Seite dort - im Menü
+            soll sie Vorlesehilfen weiter genannt werden.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Tastatur:</strong> Beim Öffnen springt der Fokus auf den
@@ -2812,7 +2850,7 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Kader</strong> (<code>KaderLozenge</code>, Epic #447): ein
             Teil des Teams, den die Trainer:innen selbst benennen - in der
-            Spielerliste, im Trainingsplan, am Termin und am privaten Link.
+            Spielerliste, im Trainingsplan und am Termin; am privaten Link nie (#663).
             Neutral und ohne Zeichen, nur der Name (PO 2026-10-18): Ein Kader
             trägt keine Farbe, und ein Zeichen machte aus jeder Zeile mit drei
             Kadern ein Muster. Ein entfernter Kader steht an begonnenen Terminen
@@ -3338,29 +3376,41 @@ export default async function Styleguide() {
             <code>bg-elev-01</code> mit <code>border-linie</code> zum Inhalt. Sie
             ist Rahmen, keine schwebende Fläche, und trägt darum keinen Schatten.
             Oben die Marke (die Bildmarke F mit Punkt, dieselbe Datei wie das Favicon, und der Name), darunter die Einträge in
-            Gruppen, unten «Fragen und Feedback» (nur angemeldet; ein Knopf, kein Link - er öffnet
-            den Dialog neben der Seite, siehe <Siehe id="feedback-dialog" />), «Darstellung», die
-            Versionszeile und die Konto-Karte: Avatar, Anzeigename
-            und E-Mail führen als Ganzes ins Konto. Die Versionszeile (Zeichen und Nummer, ruhiger als
-            ein Eintrag) führt zur Release-History; schmal bleibt das Zeichen. Diese Seite führt die
+            Gruppen, unten nur noch die Konto-Karte (siehe «Konto-Menü» gleich darunter). Diese Seite führt die
             Leiste nicht (PO 2026-10-30): Sie ist Werkzeug fürs Entwickeln, nicht für Nutzer:innen,
-            und bleibt unter <code>/styleguide</code> erreichbar. Ist ein Release
-            erschienen, den dieser Browser noch nicht gesehen hat, trägt die Versionszeile die Plakette «Neu»
-            (<code>discovery</code>: etwas Zusätzliches) - schmal stattdessen einen Punkt in Primary
-            am Zeichen, die einzige Punkt-Markierung im Kit. Sie drängt sich nicht auf und
-            verschwindet, sobald die Versionen angezeigt wurden. Abmelden steht im Konto, nicht in der
-            Leiste. Der offene Eintrag ist betont (<code>betont</code>, die Schrift
+            und bleibt unter <code>/styleguide</code> erreichbar. Eigene Übungen und Trainings haben keine eigenen Einträge (#660): Der Chip «Meine
+            Übungen» bzw. «Meine Trainings» grenzt die Bibliothek ein, und «Übungen» bzw. «Trainings»
+            bleibt dabei der offene Eintrag. Der offene Eintrag ist betont (<code>betont</code>, die Schrift
             zu 8 % über der Leiste) und trägt sein Zeichen in Primary; aufklappbare
             Einträge (Teams) haben einen eigenen Pfeil, damit der Name selbst
             zur Übersicht führen kann.
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
-            <strong>Darstellung</strong> (#567) steht angemeldet zwischen «Fragen und Feedback» und
-            der Version: das Zeichen der aktuellen Wahl (Bildschirm, Sonne, Mond), breit dazu ihr
-            Name. Die Zeile öffnet ein Menü mit «Wie das Gerät», «Hell» und «Dunkel»; die gewählte
-            Zeile trägt den Haken (<code>menuitemradio</code>), am Fuss steht, dass die Wahl in diesem
-            Browser gilt. Breit klappt es über der Zeile auf, schmal rechts neben der Leiste - es steht
-            darum <code>fixed</code> und ragt aus der Leiste hinaus. Umgeschaltet wird sofort und ohne
+            <strong>Konto-Menü</strong> (#661): Die Konto-Karte unten - Avatar, Name und zweite Zeile,
+            rechts ein Auf-Ab-Zeichen - ist ein Knopf und öffnet ein Menü (<code>Menu</code>, siehe{" "}
+            <Siehe id="menue" />). Angemeldet: «Konto und Einstellungen», die Gruppe «Darstellung» mit
+            «Wie das Gerät», «Hell» und «Dunkel» (#567; nur wo der Browser umschalten kann, die gewählte
+            mit Haken, darunter «Gilt in diesem Browser.»), «Fragen und Feedback» (ein Knopf, kein Link -
+            er öffnet den Dialog neben der Seite, siehe <Siehe id="feedback-dialog" />), «Was ist neu»
+            (die Release-History) und nach einem Strich «Abmelden». Ohne
+            Anmeldung trägt die Karte ein Personenzeichen, «Nicht angemeldet» und «Anmelden oder Konto
+            erstellen»; ihr Menü bietet «Anmelden», «Konto erstellen» und «Was ist neu». Ziele sind
+            Links (<code>href</code>), damit die Warnung vor ungesicherten Angaben greift. Ist ein
+            Release erschienen, den dieser Browser noch nicht gesehen hat, trägt der Avatar einen Punkt
+            in Primary (<code>ZeichenPunkt</code>) - breit wie schmal, die einzige Punkt-Markierung der
+            Leiste - und «Was ist neu» die Plakette «Neu» (<code>discovery</code>: etwas Zusätzliches);
+            sonst steht dort die laufende Versionsnummer. Beides drängt sich nicht auf und verschwindet,
+            sobald die Versionen angezeigt wurden. Breit klappt das Menü über der Karte auf, so breit
+            wie sie, schmal rechts neben der Leiste - es steht darum <code>fixed</code> und ragt aus der
+            Leiste hinaus. Höher als der Platz bis zum oberen Fensterrand wird es nie; reicht er nicht
+            (Drawer auf einem Handy quer), scrollt das Menü in sich. Tastatur nach dem Menü-Muster; Tab
+            schliesst und gibt den Fokus an die Karte, Escape im Drawer schliesst nur das Menü, ein
+            Seitenwechsel schliesst es ebenfalls. Vorgelesen heisst es «Konto» bzw. ohne Anmeldung «Ohne
+            Konto» (der Hinweis am schmalen Knopf bleibt «Anmelden»). Die offene Seite («Konto und
+            Einstellungen» auf jeder Konto-Seite, «Was ist neu» auf den Versionen) trägt im Menü{" "}
+            <code>current</code>. «Abmelden» ist kein Link; es fragt die Warnung vor ungesicherten
+            Angaben darum selbst (<code>nachRueckfrage</code>). Die Wahl der Darstellung lässt den
+            Drawer offen, Ziele und Aktionen schliessen ihn. Umgeschaltet wird sofort und ohne
             Neuladen; Ungespeichertes auf der Seite bleibt stehen.
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
@@ -3380,7 +3430,7 @@ export default async function Styleguide() {
             Leiste gewarnt. Tastatur nach dem Menü-Muster: beim Öffnen steht der Fokus auf dem offenen
             Bereich, ↑/↓ laufen im Kreis, Escape schliesst und gibt den Fokus zurück. Die Beschriftung
             für Vorlesehilfen ist «Bereich wählen». Schmal bleibt vom Knopf das Zeichen des Bereichs, die
-            Liste klappt (<code>fixed</code>, wie «Darstellung») rechts neben der Leiste auf. Welcher
+            Liste klappt (<code>fixed</code>, wie das Konto-Menü) rechts neben der Leiste auf. Welcher
             Bereich offen ist, folgt aus der Adresse; auf Seiten ohne Bereich (Bibliotheken, Konto) bleibt
             der zuletzt gewählte, gemerkt im Cookie <code>kifu-bereich</code>. Reine Navigation: Rechte
             hängen daran keine.
@@ -3590,7 +3640,8 @@ export default async function Styleguide() {
             nicht zurücknehmen lassen und andere mittreffen - in der
             Teamverwaltung das Verlassen des Teams, in der Vereinsverwaltung das
             Auflösen eines Teams und der Austritt aus der Verwaltung (#480,
-            #581). Eine Karte auf <code>elev-01</code> wie jede andere, aber mit
+            #581), im Konto unter «Daten und Konto» das Löschen des Kontos
+            (#662). Eine Karte auf <code>elev-01</code> wie jede andere, aber mit
             voller Kontur und Überschrift in Error: {v(kontrast(ERROR, elev(1)))}{" "}
             als Schrift, als Kontur mindestens 3:1 auf jeder Stufe und im
             Druck. Getönt wird die Fläche nicht - <code>section-danger</code>{" "}
@@ -4027,7 +4078,7 @@ export default async function Styleguide() {
             />
           </Card>
           <p className="type-body-medium mb-3 mt-8 max-w-2xl text-on-surface-mittel">
-            <strong>Hinweis für Eltern</strong> - <code>HinweisEltern</code>: der Fuss
+            <strong>Hinweis am privaten Link</strong> - <code>HinweisEltern</code>: der Fuss
             einer Termin- oder Spielkarte am privaten Link (#590). Eine Haarlinie trennt
             ihn vom Kopf der Karte, darunter ein <code>KuerzbarerText</code> auf vier
             Zeilen. An einer gedämpften Karte (abgemeldet) tritt er gedämpft zurück.
@@ -4071,8 +4122,10 @@ export default async function Styleguide() {
             sitzt ohne Autosave als <code>DiagrammFeld</code> unter der
             Zuordnung, beim Erfassen wie beim Bearbeiten. Dort wacht{" "}
             <code>VerlassenWarnung</code> über ungesicherte Angaben - ein
-            Bestätigungs-Dialog aus dem Kit für Links (auch die der Seitenleiste) und
-            Browser-Zurück, die Abfrage des Browsers für Neuladen und Schliessen.
+            Bestätigungs-Dialog aus dem Kit für Links (auch die der Seitenleiste),
+            Browser-Zurück und «Abmelden» im Konto-Menü (das über{" "}
+            <code>nachRueckfrage</code> anfragt), die Abfrage des Browsers für Neuladen
+            und Schliessen.
             Symbol-Geometrie ist im Register verankert (Anker = Mittelpunkt),
             damit zentrale Symbol-Updates bestehende Diagramme nie verschieben.
           </p>
@@ -4492,7 +4545,7 @@ export default async function Styleguide() {
         <Section id="benachrichtigungen">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Benachrichtigungen am privaten Link (Epic #641): was am Team geschieht, sieht die Spielervertretung
-            dort, ohne dass das Team es im Eltern-Chat ankündigt. Aus bestehenden Teilen gebaut -{" "}
+            dort, ohne dass das Team es im Chat mit Spieler:innen und Eltern ankündigt. Aus bestehenden Teilen gebaut -{" "}
             <code>IconButton</code> mit <code>zahl</code>, <code>Lozenge</code>, <code>Button</code> und{" "}
             <code>Leerzustand</code> - plus dem Eintrag als einzigem neuem Baustein.
           </p>

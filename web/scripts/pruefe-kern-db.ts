@@ -77,7 +77,7 @@ const { legeSerieFest, aendereSerie, entferneSerie, folgeDerSerie, aendereMitRei
   await import("../lib/kern/serien");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
 const { getTeamPlanFuer, nochNichtVorbereitet } = await import("../lib/queries/termine-fuer");
-const { ladeSpielerliste, anzahlSpieler, nimmSpielerAuf, aendereSpieler, ladeSpieler, ladeSpielerTeams, eigenesTeamVon, nimmSpielerAusTeam, holeSpielerLink, erneuereSpielerLink, leseAbholung, schalteAbholung, erneuereAbholung } =
+const { ladeSpielerliste, anzahlSpieler, nimmSpielerAuf, aendereSpieler, ladeSpieler, ladeSpielerTeams, eigenesTeamVon, nimmSpielerAusTeam, holeSpielerLink, erneuereSpielerLink, setzeLinkZugestellt, leseAbholung, schalteAbholung, erneuereAbholung } =
   await import("../lib/kern/spieler");
 const { IMPORT_TEXT, erwartetVon, importUebernehmbar } = await import("../lib/spieler-import");
 type ImportEintrag = import("../lib/spieler-import").ImportEintrag;
@@ -107,6 +107,7 @@ const {
   loescheSpielerImVerein,
   holeSpielerLinkImVerein,
   erneuereSpielerLinkImVerein,
+  setzeLinkZugestelltImVerein,
   pruefeVereinImport,
   importiereInVerein,
   gruendeVerein,
@@ -114,7 +115,7 @@ const {
   ladeKontoLoeschenInfo,
   loescheKonto,
 } = await import("../lib/kern/verein");
-const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, HERAUSNEHMEN_TEXT, LINK_TEXT, abweisungText, herausnehmenFrage, spielerDoppeltText, spielerzahlVon, verfallBestaetigen } = await import("../lib/spieler");
+const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, HERAUSNEHMEN_TEXT, LINK_TEXT, LINK_STAND_TEXT, abweisungText, herausnehmenFrage, spielerDoppeltText, spielerzahlVon, verfallBestaetigen } = await import("../lib/spieler");
 const { SPIEL_MELDUNG, SPIEL_TEXT, MELDUNG_TEXT, TREFFPUNKT_TEXT, meldefristZeitpunkt, spielBestaetigen, spielEntfernenText, spielVerfallText } =
   await import("../lib/spiel");
 const { setzeMeldung, setzeAufgebot, spielSpieler } = await import("../lib/kern/spiele");
@@ -4637,7 +4638,7 @@ try {
     // AK 1: Die Verwaltung sieht alle mit Vorname, Nachname, Jahrgang und Teams, auch ohne Team; seit #582 AK 1 dazu J+S-Nummer und Link-Stand, nie den Link.
     const vorher = (await verwaltungsListe());
     const zeile = (l: typeof vorher, id: string) => l.spieler.find((x) => x.id === id)!;
-    assert.deepEqual(zeile(vorher, lena), { id: lena, vorname: "Lena", nachname: "Zuordnen", jahrgang: 2016, js: "1234567", linkBezogen: false, teams: [{ id: herkunft, name: HERKUNFT }], schnuppern: null });
+    assert.deepEqual(zeile(vorher, lena), { id: lena, vorname: "Lena", nachname: "Zuordnen", jahrgang: 2016, js: "1234567", linkStand: "offen", teams: [{ id: herkunft, name: HERKUNFT }], schnuppern: null });
     assert.deepEqual(zeile(vorher, mia).teams, [], "ohne Team im Bestand");
     assert.ok(!vorher.spieler.some((x) => x.id === fremde), "kein fremder Verein");
     assert.deepEqual(vorher.teams.filter((t) => [herkunft, ziel].includes(t.id)), [
@@ -5482,13 +5483,13 @@ try {
     assert.equal((await abholen(an.token, k, "Anna–Lena", "O`BRIEN", 2017)).status, "ok");
     assert.equal((await abholen(an.token, k, "Anna-Lena", "O’Bríen", 2017)).status, "passt_nicht");
     assert.deepEqual(await abholen(an.token, k, "Anna-Lena", "O’Brien", 2018), { status: "passt_nicht" }, "AK 13: dieselbe Antwort");
-    // PC 2, 3: bezogen — bis der Link erneuert wird.
-    assert.equal(wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler[0].linkBezogen, true);
+    // PC 2, 3: abgeholt — bis der Link erneuert wird.
+    assert.equal(wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler[0].linkStand, "abgeholt");
     const neuLink = wert(await erneuereSpielerLink(a.supabase, a.id, { teamId: team, spielerId: lena })).token;
-    assert.equal(wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler[0].linkBezogen, false);
+    assert.equal(wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler[0].linkStand, "offen");
     assert.equal((await abholen(an.token, anschluss(3), "Anna-Lena", "O’Brien", 2017)).token, neuLink, "OoS 5: wieder abholbar");
 
-    // PC 4, 6: erneuert gilt die alte nie wieder; bezogene Links bleiben.
+    // PC 4, 6: erneuert gilt die alte nie wieder; abgeholte Links bleiben.
     const erneuert = wert(await erneuereAbholung(a.supabase, a.id, { teamId: team }));
     assert.notEqual(erneuert.token, an.token);
     assert.deepEqual((await feldAnon.rpc("abholung_ansicht", { p_token: an.token })).data, { gueltig: false });
@@ -5761,7 +5762,7 @@ try {
   });
 
   // ── Der private Link mit Kadern (#454) ───────────────────────────────────
-  await pruefe("Privater Link: nur geltende Termine, nur die eigenen Kader, Zahl nur über Geltende (#454 AK 1-5, PC 1)", async () => {
+  await pruefe("Privater Link: nur geltende Termine, keine Kadernamen, Zahl nur über Geltende (#454 AK 1-5, PC 1; #663 AK 1)", async () => {
     const k = await kaderTeam("Kern-DB-Link-Kader");
     const aushilfe = await neuerKader(k.team, "Aushilfe");
     wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.lena], dazu: [aushilfe] }));
@@ -5775,7 +5776,8 @@ try {
       };
     const lena = await ansicht(k.lena);
     assert.deepEqual(lena.termine.map((t) => t.id), [s1, gemischt, alle], "S2 betrifft Lena nicht");
-    assert.deepEqual(lena.termine.map((t) => t.kader), [["S1"], ["Aushilfe"], []], "nur ihre Kader, nie S2");
+    // #663 AK 1: Der Link nennt keine Kader mehr, auch nicht die eigenen (Platzhalter bis N1).
+    assert.deepEqual(lena.termine.map((t) => t.kader), [[], [], []], "keine Kadernamen");
     assert.deepEqual(lena.termine.map((t) => t.angemeldet), [2, 2, 3]);
     // #472 AK 2: Von wie vielen, gezählt wie für die Mitglieder — am gemischten
     // Termin auch über S2, ohne S2 zu nennen.
@@ -5790,7 +5792,7 @@ try {
     // PC 1: Gilt er wieder für sie, steht sie dort angemeldet.
     wert(await aendereZuteilung(a.supabase, a.id, { teamId: k.team, spielerIds: [k.lena], dazu: [k.s2] }));
     const wieder = (await ansicht(k.lena)).termine.find((t) => t.id === s2) as { abgemeldet?: boolean; kader: string[] } | undefined;
-    assert.ok(wieder && wieder.abgemeldet === false && wieder.kader[0] === "S2");
+    assert.ok(wieder && wieder.abgemeldet === false && wieder.kader.length === 0);
   });
 
   // ── Zeitpunkt des letzten Statuswechsels (#467) ──────────────────────────
@@ -7263,20 +7265,20 @@ try {
   await pruefe("Verein: privater Link holen und erneuern, Liste mit J+S und Link-Stand, Zahlen nur für die Verwaltung (#582 AK 1, 8–11; A1.2)", async () => {
     const { sina, xaver } = await bestand582();
     const tokenVon = async (id: string) => (await admin.from("spieler").select("link_token, link_bezogen").eq("id", id).single()).data!;
-    // AK 9, 10: der Link, auch ohne Team; `ohneTeam` und `bezogen` aus der Datenebene.
+    // AK 9, 10: der Link, auch ohne Team; `ohneTeam` und der Stand aus der Datenebene.
     const x = wert(await holeSpielerLinkImVerein(verwaltung.supabase, verwaltung.id, { spielerId: xaver }));
-    assert.deepEqual(x, { token: (await tokenVon(xaver)).link_token, ohneTeam: true, bezogen: false });
+    assert.deepEqual(x, { token: (await tokenVon(xaver)).link_token, ohneTeam: true, stand: "offen" });
     assert.equal((await admin.from("spieler").update({ link_bezogen: true }).eq("id", sina)).error, null);
     const s = wert(await holeSpielerLinkImVerein(verwaltung.supabase, verwaltung.id, { spielerId: sina }));
-    assert.deepEqual([s.ohneTeam, s.bezogen], [false, true]);
+    assert.deepEqual([s.ohneTeam, s.stand], [false, "abgeholt"]);
     // AK 1, 8: die Liste mit J+S und dem Stand, nie dem Link.
     const liste = (await verwaltungsListe()).spieler;
     const zeile = (id: string) => liste.find((z) => z.id === id)!;
-    assert.deepEqual([zeile(xaver).js, zeile(xaver).linkBezogen, zeile(xaver).teams], ["77", false, []]);
-    assert.deepEqual([zeile(sina).js, zeile(sina).linkBezogen, zeile(sina).teams.map((t) => t.name)], [null, true, [EINS, ZWEI]]);
-    assert.deepEqual(Object.keys(zeile(sina)).sort(), ["id", "jahrgang", "js", "linkBezogen", "nachname", "schnuppern", "teams", "vorname"], "kein Link in der Liste");
+    assert.deepEqual([zeile(xaver).js, zeile(xaver).linkStand, zeile(xaver).teams], ["77", "offen", []]);
+    assert.deepEqual([zeile(sina).js, zeile(sina).linkStand, zeile(sina).teams.map((t) => t.name)], [null, "abgeholt", [EINS, ZWEI]]);
+    assert.deepEqual(Object.keys(zeile(sina)).sort(), ["id", "jahrgang", "js", "linkStand", "nachname", "schnuppern", "teams", "vorname"], "kein Link in der Liste");
     assert.deepEqual([zeile(sina).schnuppern, zeile(xaver).schnuppern], [null, null], "#584: niemand schnuppert");
-    // AK 11: erneuern — der bisherige gilt nicht mehr, «bezogen» fällt zurück, auch mit Teams.
+    // AK 11: erneuern — der bisherige gilt nicht mehr, der Stand ist wieder offen, auch mit Teams.
     const alt = s.token;
     const neu = wert(await erneuereSpielerLinkImVerein(verwaltung.supabase, verwaltung.id, { spielerId: sina })).token;
     assert.notEqual(neu, alt);
@@ -7586,7 +7588,7 @@ try {
     const [ea, db, fa] = teamIds;
     // Die Verwaltung: Form unverändert (J+S, Link-Stand, Schnuppern; anzahl je Team).
     const v = await verwaltungsListe(vereinId, verw);
-    for (const s of v.spieler) assert.deepEqual(Object.keys(s).sort(), ["id", "jahrgang", "js", "linkBezogen", "nachname", "schnuppern", "teams", "vorname"]);
+    for (const s of v.spieler) assert.deepEqual(Object.keys(s).sort(), ["id", "jahrgang", "js", "linkStand", "nachname", "schnuppern", "teams", "vorname"]);
     assert.deepEqual(v.teams.map((t) => Object.keys(t).sort()), [["anzahl", "id", "name"], ["anzahl", "id", "name"], ["anzahl", "id", "name"]]);
     assert.deepEqual(v.teams.map((t) => [t.name, t.anzahl]), [["Db 580", 5], ["Ea 580", 3], ["Fa 580", 0]]);
     assert.equal(v.spieler.find((s) => s.vorname === "Léa")!.js, "111");
@@ -7607,7 +7609,7 @@ try {
     const roh = (await mitglied.supabase.rpc("verein_spielerliste", { p_verein: vereinId })).data as Record<string, unknown> & { spieler: Record<string, unknown>[]; teams: Record<string, unknown>[] };
     assert.deepEqual(Object.keys(roh).sort(), ["gesamt", "jahrgaenge", "ohne_team", "spieler", "teams", "verwaltung"]);
     assert.equal(roh.verwaltung, false, "die eigene Rolle, sonst nichts");
-    assert.ok(roh.spieler.every((s) => !("js" in s || "link_bezogen" in s || "schnuppern" in s)) && roh.teams.every((t) => !("anzahl" in t)));
+    assert.ok(roh.spieler.every((s) => !("js" in s || "link_bezogen" in s || "link_zugestellt" in s || "schnuppern" in s)) && roh.teams.every((t) => !("anzahl" in t)));
     // Ein Mitglied bekommt genau die Zeilen der Verwaltung ohne deren Angaben.
     const nurVier = {
       ...v,
@@ -8066,7 +8068,7 @@ try {
     return { A, B, tA, tB, tC, c, lina };
   };
 
-  await pruefe("Link über mehrere Teams: Termine beider Teams, Team je Termin, Ordnung nach Teamname, Kader nur des Termin-Teams; Abo mit Team im Titel (#583 AK 1–3, 8, 10)", async () => {
+  await pruefe("Link über mehrere Teams: Termine beider Teams, Team je Termin, Ordnung nach Teamname, Kader-Termine ohne Kadernamen; Abo mit Team im Titel (#583 AK 1–3, 8, 10)", async () => {
     const { A, B, tA, tB, tC, lina } = await mehrTeams("Kern-DB-Mehr");
     const { ladeLinkAnsicht } = await import("../lib/privater-link");
     const { aboEintrag, ABO_KALENDER_NAME } = await import("../lib/spieler-abo");
@@ -8092,7 +8094,8 @@ try {
     assert.deepEqual([ansicht.teams, (ansicht as unknown as { team: string }).team, ansicht.probe], [[A, B], "Kern-DB", null]);
     assert.deepEqual(ansicht.termine.map((x) => [x.id, x.team]), [[inA, A], [inB, B], [spiel, B], [mitLina, A]]);
     assert.ok(![nurFremd, inC].some((id) => ansicht.termine.some((x) => x.id === id)), "kein fremder Kader, kein fremdes Team");
-    assert.deepEqual(ansicht.termine.find((x) => x.id === mitLina)!.kader, ["K-Lina"]);
+    // #663 AK 1: Der Kader-Termin steht da, ohne seinen Kader zu nennen.
+    assert.ok(!JSON.stringify((await feldAnon.rpc("spieler_link_ansicht", { p_token: token })).data).includes("K-Lina"), "kein Kadername");
     // Die Zahl am Termin bleibt die seines Teams.
     assert.deepEqual([ansicht.termine[0].gesamt, ansicht.termine[1].gesamt], [1, 1]);
 
@@ -8138,10 +8141,10 @@ try {
     assert.equal(wert(await erneuereSpielerLink(c.supabase, c.id, { spielerId: lina })).teamId, tA);
   });
 
-  await pruefe("Selbstabholung über mehrere Teams: beide Adressen führen zum selben Link, «bezogen» gilt in beiden Teams, Erneuern setzt es zurück; abholbar je Team (#583 AK 12–16; PC 4)", async () => {
+  await pruefe("Selbstabholung über mehrere Teams: beide Adressen führen zum selben Link, «abgeholt» gilt in beiden Teams, Erneuern setzt es zurück; abholbar je Team (#583 AK 12–16; PC 4)", async () => {
     const { A, B, tA, tB, lina } = await mehrTeams("Kern-DB-Mehr-Abholen");
     const { holeLinkAb } = await import("../lib/abholung");
-    const bezogen = async (team: string) => wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler.find((s) => s.id === lina)!.linkBezogen;
+    const bezogen = async (team: string) => wert(await ladeSpielerliste(a.supabase, a.id, { teamId: team })).spieler.find((s) => s.id === lina)!.linkStand === "abgeholt";
     const abholbar = async (team: string) => wert(await ladeSpielerTeams(a.supabase, a.id, { teamId: team, spielerId: lina })).teams.map((t) => [t.name, t.dieses, t.abholbar]);
     const imVerein = async () => wert(await ladeSpielerTeamsImVerein(verwaltung.supabase, verwaltung.id, { spielerId: lina })).teams.map((t) => [t.name, t.abholbar]);
     assert.deepEqual(await abholbar(tB), [[A, false, false], [B, true, false]]);
@@ -8153,7 +8156,7 @@ try {
     assert.deepEqual([await bezogen(tA), await bezogen(tB)], [false, false]);
     const ueberA = await holeLinkAb(adresseA, anschluss(81), { vorname: "Lina", nachname: "Zwei", jahrgang: "2016" });
     assert.deepEqual(ueberA, { status: "ok", token: link, name: "Lina Zwei" });
-    assert.deepEqual([await bezogen(tA), await bezogen(tB)], [true, true], "PC 4: bezogen je Spieler:in");
+    assert.deepEqual([await bezogen(tA), await bezogen(tB)], [true, true], "PC 4: abgeholt je Spieler:in");
     assert.deepEqual(await holeLinkAb(adresseB, anschluss(82), { vorname: "lina", nachname: "zwei", jahrgang: "2016" }), { status: "ok", token: link, name: "Lina Zwei" });
     // B schaltet aus: A gibt den Link weiter heraus (AK 13), B nicht.
     wert(await schalteAbholung(a.supabase, a.id, { teamId: tB, aktiv: false }));
@@ -8161,7 +8164,7 @@ try {
     assert.deepEqual(await imVerein(), [[A, true], [B, false]]);
     assert.deepEqual(await holeLinkAb(adresseB, anschluss(83), { vorname: "Lina", nachname: "Zwei", jahrgang: "2016" }), { status: "ungueltig" });
     assert.equal((await holeLinkAb(adresseA, anschluss(84), { vorname: "Lina", nachname: "Zwei", jahrgang: "2016" })).status, "ok");
-    // Erneuern in B setzt «bezogen» in beiden Teams zurück; über A gibt es den neuen.
+    // Erneuern in B setzt «abgeholt» in beiden Teams zurück; über A gibt es den neuen.
     const neu = wert(await erneuereSpielerLink(a.supabase, a.id, { teamId: tB, spielerId: lina })).token;
     assert.deepEqual([await bezogen(tA), await bezogen(tB)], [false, false]);
     assert.deepEqual(await holeLinkAb(adresseA, anschluss(85), { vorname: "Lina", nachname: "Zwei", jahrgang: "2016" }), { status: "ok", token: neu, name: "Lina Zwei" });
@@ -9438,6 +9441,8 @@ try {
       ["spieler_link_abrufen", (id) => ({ spieler_id: id })],
       ["spieler_link_erneuern", (id) => ({ spieler_id: id })],
       ["spieler_link_erneuern", (id) => ({ spieler_id: id, bestaetigt: true })],
+      ["spieler_link_zugestellt", (id) => ({ spieler_id: id, zugestellt: true })],
+      ["spieler_link_zugestellt", (id) => ({ spieler_id: id, zugestellt: false })],
       ["spieler_schnuppern_setzen", (id) => ({ spieler_id: id, schnuppern: true })],
       ["spieler_schnuppern_setzen", (id) => ({ spieler_id: id, schnuppern: false })],
       ["termin_abmeldung_setzen", (id) => ({ termin_id: kommend, spieler_id: id, abgemeldet: true, termin_datum: tagCh(3), termin_beginn: "18:00" })],
@@ -9452,10 +9457,11 @@ try {
       assert.equal(erwartet.isError, true, `${name}: unbekannt ist ein Fehler`);
       for (const id of [ohne, fremder]) assert.deepEqual(await ki(m, name, args(id)), erwartet, `${name} ${id === ohne ? "ohne Team" : "nur fremd"}`);
     }
-    // Nichts geschrieben: keine Angabe, keine Zuordnung, kein neuer Link.
+    // Nichts geschrieben: keine Angabe, keine Zuordnung, kein neuer Link, keine Zustellung.
     for (const id of [ohne, fremder]) {
-      const z = (await admin.from("spieler").select("vorname").eq("id", id).single()).data!;
+      const z = (await admin.from("spieler").select("vorname, link_zugestellt").eq("id", id).single()).data!;
       assert.notEqual(z.vorname, "Zed");
+      assert.equal(z.link_zugestellt, false, "#657: nicht zugestellt");
     }
   });
 
@@ -9490,6 +9496,55 @@ try {
     assert.equal(r.hinweis, `${LINK_TEXT.erneuern} Der Link zeigt die Termine aller Teams von Lena: ${EA_589} und ${FA_589}.`);
     assert.deepEqual((await feldAnon.rpc("spieler_link_ansicht", { p_token: alt })).data, { gueltig: false });
     assert.equal((await feldAnon.rpc("spieler_link_ansicht", { p_token: neu })).data.gueltig, true);
+  });
+
+  await pruefe("Link als zugestellt (#657 AK 1–3, PC 1–4): Team-Kern, Verein-Kern und KI führen denselben Stand — offen → zugestellt → abgeholt → erneuert → offen", async () => {
+    const { m, m2, ea, fa, lena, ohne } = await lage589();
+    const stand = async (team: string) => wert(await ladeSpielerliste(m.supabase, m.id, { teamId: team })).spieler.find((s) => s.id === lena)!.linkStand;
+    const imVerein = async (id: string) => (await verwaltungsListe()).spieler.find((s) => s.id === id)!.linkStand;
+    const ueberall = async () => [await stand(ea), await stand(fa), await imVerein(lena)];
+    assert.deepEqual(await ueberall(), ["offen", "offen", "offen"]);
+    // AK 1: Team-Kern im Team Ea; PC 1: derselbe Stand in Fa und im Verein.
+    assert.deepEqual(wert(await setzeLinkZugestellt(m2.supabase, m2.id, { teamId: ea, spielerId: lena, zugestellt: true })), { teamId: ea, linkStand: "zugestellt", geaendert: true });
+    assert.deepEqual(await ueberall(), ["zugestellt", "zugestellt", "zugestellt"]);
+    // m2 gehört Fa nicht an, die Verwaltung keinem Team: nicht gefunden, nichts geändert.
+    fehler(await setzeLinkZugestellt(m2.supabase, m2.id, { teamId: fa, spielerId: lena, zugestellt: false }), "nicht_gefunden", NG_SPIELER);
+    fehler(await setzeLinkZugestellt(verwaltung.supabase, verwaltung.id, { teamId: ea, spielerId: lena, zugestellt: false }), "nicht_gefunden", NG_SPIELER);
+    fehler(await setzeLinkZugestellt(m.supabase, m.id, { teamId: ea, spielerId: ohne, zugestellt: true }), "nicht_gefunden", NG_SPIELER);
+    assert.equal(await stand(ea), "zugestellt");
+    // AK 3: der KI-Assistent fragt ab, nimmt zurück und markiert wieder.
+    assert.equal((kiWert(await ki(m, "spieler_link_abrufen", { spieler_id: lena })) as { link_stand: string }).link_stand, "zugestellt");
+    const liste = kiWert(await ki(m, "spielerliste_abrufen", { team_id: ea })) as { spieler: Record<string, unknown>[] };
+    assert.equal(liste.spieler.find((s) => s.id === lena)!.link_stand, "zugestellt");
+    assert.ok(liste.spieler.every((s) => !("link_bezogen" in s)), "kein link_bezogen mehr");
+    assert.deepEqual(kiWert(await ki(m, "spieler_link_zugestellt", { spieler_id: lena, zugestellt: false })), {
+      spieler_id: lena, name: "Lena Neunundachtzig", link_stand: "offen", geaendert: true, hinweis: LINK_STAND_TEXT.zurueckgenommen,
+    });
+    assert.deepEqual(kiWert(await ki(m, "spieler_link_zugestellt", { spieler_id: lena, zugestellt: true })), {
+      spieler_id: lena, name: "Lena Neunundachtzig", link_stand: "zugestellt", geaendert: true, hinweis: `${LINK_STAND_TEXT.markiert} ${LINK_STAND_TEXT.erklaerung}`,
+    });
+    assert.deepEqual(await ueberall(), ["zugestellt", "zugestellt", "zugestellt"]);
+    // AK 2: die Verwaltung, auch ohne Team; ein Mitglied am Verein-Ort nicht.
+    assert.deepEqual(wert(await setzeLinkZugestelltImVerein(verwaltung.supabase, verwaltung.id, { spielerId: ohne, zugestellt: true })), { linkStand: "zugestellt", geaendert: true });
+    assert.equal(wert(await holeSpielerLinkImVerein(verwaltung.supabase, verwaltung.id, { spielerId: ohne })).stand, "zugestellt");
+    assert.equal(await imVerein(ohne), "zugestellt");
+    fehler(await setzeLinkZugestelltImVerein(m.supabase, m.id, { spielerId: lena, zugestellt: false }), "nicht_gefunden", NG_SPIELER);
+    fehler(await setzeLinkZugestelltImVerein(verwaltung.supabase, verwaltung.id, { spielerId: randomUUID(), zugestellt: true }), "nicht_gefunden", NG_SPIELER);
+    // PC 2: Abholen macht ihn abgeholt; danach ändert Zustellen nichts, an keinem Ort.
+    const adresse = wert(await schalteAbholung(m.supabase, m.id, { teamId: ea, aktiv: true })).token;
+    assert.equal((await abholen(adresse, anschluss(657), "Lena", "Neunundachtzig", 2016)).status, "ok");
+    assert.deepEqual(await ueberall(), ["abgeholt", "abgeholt", "abgeholt"]);
+    assert.deepEqual(wert(await setzeLinkZugestellt(m.supabase, m.id, { teamId: fa, spielerId: lena, zugestellt: false })), { teamId: fa, linkStand: "abgeholt", geaendert: false });
+    assert.deepEqual(wert(await setzeLinkZugestelltImVerein(verwaltung.supabase, verwaltung.id, { spielerId: lena, zugestellt: true })), { linkStand: "abgeholt", geaendert: false });
+    const ki2 = kiWert(await ki(m, "spieler_link_zugestellt", { spieler_id: lena, zugestellt: true })) as { link_stand: string; geaendert: boolean; hinweis: string };
+    assert.deepEqual([ki2.link_stand, ki2.geaendert, ki2.hinweis], ["abgeholt", false, LINK_STAND_TEXT.schonAbgeholt]);
+    assert.equal(wert(await holeSpielerLinkImVerein(verwaltung.supabase, verwaltung.id, { spielerId: lena })).stand, "abgeholt");
+    // PC 3: Erneuern macht ihn offen, am Team-Ort (KI) wie am Verein-Ort.
+    const r = kiWert(await ki(m2, "spieler_link_erneuern", { spieler_id: lena, bestaetigt: true })) as { link_stand: string };
+    assert.equal(r.link_stand, "offen");
+    assert.deepEqual(await ueberall(), ["offen", "offen", "offen"]);
+    wert(await erneuereSpielerLinkImVerein(verwaltung.supabase, verwaltung.id, { spielerId: ohne }));
+    assert.equal(await imVerein(ohne), "offen");
   });
 
 } finally {

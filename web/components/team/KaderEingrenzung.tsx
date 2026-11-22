@@ -4,11 +4,13 @@ import { Badge, Button, FilterChip, Leerzustand } from "@/components/ui";
 import { KADER_TEXT } from "@/lib/kader";
 import { cn } from "@/lib/cn";
 
-/* Die Eingrenzung einer Liste auf einen Kader (#452 AK 8, 9; #447) — in der
-   Spielerliste und im Reiter «Spieler:innen» am Termin dieselbe: Chips mit
-   der Zahl als Badge, einer zur Zeit (PO 2026-10-18), ein zweiter Klick hebt
-   die Eingrenzung auf. Trifft sie niemanden, steht statt der Liste das
-   Leerfeld mit «Eingrenzung aufheben». */
+/* Die Eingrenzung einer Liste auf einen Kader (#452 AK 8, 9; #447) — in den
+   Reitern «Spieler:innen» an Trainings und Spielen: Chips mit der Zahl als
+   Badge, einer zur Zeit (PO 2026-10-18), ein zweiter Klick hebt die
+   Eingrenzung auf. Trifft sie niemanden, steht statt der Liste das Leerfeld
+   mit «Eingrenzung aufheben». Die Spielerliste des Teams grenzt seit #601
+   über eine Filterleiste ein (`TeamSpielerFilter`) und teilt nur das
+   Leerfeld, dort mit «Zurücksetzen» wie die Leiste. */
 
 export type EingrenzungsChip = { schluessel: string; name: string; anzahl: number };
 
@@ -49,10 +51,13 @@ export function EingrenzungLeer({
   titel,
   children,
   onAufheben,
+  aufhebenText = KADER_TEXT.eingrenzungAufheben,
 }: {
   titel: string;
   children: ReactNode;
   onAufheben: () => void;
+  /** Der Knopf; die Spielerliste sagt «Zurücksetzen» wie ihre Filterleiste (#601). */
+  aufhebenText?: string;
 }) {
   return (
     <Leerzustand
@@ -61,7 +66,7 @@ export function EingrenzungLeer({
       dicht
       aktion={
         <Button variant="text" onClick={onAufheben}>
-          {KADER_TEXT.eingrenzungAufheben}
+          {aufhebenText}
         </Button>
       }
     >

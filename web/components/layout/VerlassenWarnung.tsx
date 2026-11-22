@@ -19,10 +19,27 @@ const traegtMarke = (state: unknown) =>
  *  aus, gab es keinen Eintrag davor (neuer Tab) — die Seite bleibt. */
 const ZURUECK_FRIST_MS = 500;
 
+/** Das Ereignis, mit dem ein Weg hinaus ohne Link anfragt (siehe unten). */
+const ANFRAGE = "kifu-verlassen-anfrage";
+
+/**
+ * Für einen Weg hinaus, der kein Link ist — «Abmelden» im Konto-Menü (#661)
+ * ruft eine Server Action, deren Weiterleitung weder einen Klick noch ein
+ * `beforeunload` auslöst. Ist eine Warnung scharf, fängt sie die Anfrage ab
+ * und führt `weiter` erst nach «Verlassen» aus; sonst läuft es sofort. Ein
+ * Ereignis statt eines Kontexts: Die Warnung sitzt in der Seite, der Weg
+ * hinaus in der Leiste, und dazwischen liegt kein gemeinsamer Anbieter.
+ */
+export function nachRueckfrage(weiter: () => void) {
+  const anfrage = new CustomEvent<Ausstehend>(ANFRAGE, { cancelable: true, detail: { weiter } });
+  if (window.dispatchEvent(anfrage)) weiter();
+}
+
 /**
  * Warnt vor dem Verlassen einer Seite mit ungesicherten Angaben (#246 AK 7).
  *
- * Drei Wege führen hinaus, und jeder braucht seinen eigenen Griff:
+ * Drei Wege führen hinaus, und jeder braucht seinen eigenen Griff (dazu
+ * Abmelden, das über `nachRueckfrage` anfragt):
  * - Neuladen, Schliessen, eine fremde Adresse: `beforeunload`. Den Wortlaut
  *   bestimmt dort der Browser, nicht die App.
  * - Ein Link in der App: Next navigiert, ohne die Seite zu entladen. Der Klick
@@ -108,6 +125,14 @@ export function VerlassenWarnung({
       setAusstehend({ weiter: () => (aufWaechter() ? router.replace(href) : router.push(href)) });
     };
 
+    // Ein Weg hinaus ohne Link (`nachRueckfrage`). Wie beim Klick fragt nur
+    // eine Warnung, falls mehrere scharf sind.
+    const anfrage = (e: Event) => {
+      if (e.defaultPrevented) return;
+      e.preventDefault();
+      setAusstehend({ weiter: (e as CustomEvent<Ausstehend>).detail.weiter });
+    };
+
     // Zurück vom Wächter auf die Seite selbst: Der Router zeigt dieselbe
     // Seite, sie bleibt stehen — jetzt wird gefragt. Führt das Ereignis
     // dagegen vorwärts auf den Wächter, ist nichts zu tun.
@@ -143,11 +168,13 @@ export function VerlassenWarnung({
     if (!aufWaechter()) legeWaechter();
     window.addEventListener("beforeunload", vorEntladen);
     document.addEventListener("click", klick, true);
+    window.addEventListener(ANFRAGE, anfrage);
     window.addEventListener("popstate", zurueck);
     return () => {
       if (zurueckFrist.current) clearTimeout(zurueckFrist.current);
       window.removeEventListener("beforeunload", vorEntladen);
       document.removeEventListener("click", klick, true);
+      window.removeEventListener(ANFRAGE, anfrage);
       window.removeEventListener("popstate", zurueck);
       // Am Ort gesichert oder verworfen, und der Wächter ist noch der
       // aktuelle Eintrag: einen Schritt zurück auf den Eintrag darunter —

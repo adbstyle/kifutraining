@@ -15,7 +15,6 @@ import { AppAblegenAnleitung, AppAblegenHinweis, AppAblegenKnopf, useAppAblegen 
 import { Mitteilungen } from "./Mitteilungen";
 import { appName } from "@/lib/app-ablegen";
 import { knopfLabel, type LinkBenachrichtigungen } from "@/lib/benachrichtigung";
-import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
 import { meldeSpielUeberLinkAktion, meldeUeberLinkAktion } from "@/lib/actions/spieler-link";
 import { monatsName, tagText } from "@/lib/monat";
@@ -462,7 +461,7 @@ function trainingStatus(t: LinkTermin, ab: boolean, probe: boolean) {
 }
 
 /* Ein Training in der Liste (Epic #490, Tafel 9 Gruppe 4): Kalenderblatt,
-   der Status als Lozenge, Zeit, Ort, Kader und Spielerzahl, rechts der
+   der Status als Lozenge, Zeit, Ort und Spielerzahl, rechts der
    Schalter. Abgemeldet oder ausgefallen tritt die Karte gedämpft zurück. */
 function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUmlegen, hinweise }: KarteProps) {
   const status = trainingStatus(t, ab, probe);
@@ -495,7 +494,7 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
             ))}
           {zweite && <span className="type-body-small text-on-surface-mittel">{zweite}</span>}
           <AusfallGrund grund={t.ausfall_grund} />
-          <TeamZeile t={t} zahl={zahl} zusatz={vergeben ? PROBE_TEXT.vergeben : null} />
+          <TeamZeile zahl={zahl} zusatz={vergeben ? PROBE_TEXT.vergeben : null} />
           {t.verantwortlich && <span className="type-body-small text-on-surface-mittel">Verantwortlich: {t.verantwortlich}</span>}
         </div>
         {/* Fällt der Termin aus, gibt es nichts zu wählen: kein Schalter — ein
@@ -522,13 +521,12 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
   );
 }
 
-/* Kader und Spielerzahl knapp: «S1 15/16». Die Zahl wird nie gekürzt (#472
-   NFR 1) und bleibt ungefärbt. */
-function TeamZeile({ t, zahl, zusatz }: { t: LinkTermin; zahl: Spielerzahl | null; zusatz: string | null }) {
-  if (t.kader.length === 0 && zahl?.quelle !== "liste" && !zusatz) return null;
+/* Spielerzahl knapp: «15/16». Die Zahl wird nie gekürzt (#472 NFR 1) und
+   bleibt ungefärbt. Kader nennt der Link nicht (#663 AK 1). */
+function TeamZeile({ zahl, zusatz }: { zahl: Spielerzahl | null; zusatz: string | null }) {
+  if (zahl?.quelle !== "liste" && !zusatz) return null;
   return (
     <span className="flex flex-wrap items-center gap-2 type-body-small text-on-surface-mittel">
-      <KaderLozenges namen={t.kader} />
       {zahl?.quelle === "liste" && (
         <>
           <span aria-hidden className="tabular-nums">{spielerzahlKurz(zahl)}</span>

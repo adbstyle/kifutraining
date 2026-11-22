@@ -60,8 +60,8 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
   variant?: "standard" | "overlay";
   /** Pass-Through an das Lucide-Icon (z. B. `fill` für den Favoriten-Herz). */
   iconProps?: Partial<ComponentProps<LucideIcon>>;
-  /** Ein Punkt am Zeichen (`ZeichenPunkt`), etwa ob der private Link bezogen
-   *  ist. Stumm — was er meldet, gehört in `label`. */
+  /** Ein Punkt am Zeichen (`ZeichenPunkt`), etwa ob der private Link abgeholt
+   *  oder zugestellt ist. Stumm — was er meldet, gehört in `label`. */
   punkt?: ZeichenPunktTon;
   /** Hauptaktion: gefüllt in Primary wie `Button variant="filled"` — kein Umschalter. */
   primary?: boolean;

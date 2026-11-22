@@ -159,7 +159,7 @@ begin
     -- Die Vereinsliste sieht seit Story 4 jedes Mitglied (ohne J+S und
     -- Link-Stand, verein_spielerliste.sql); nur wer nicht im Verein ist, nicht.
     if wer = 'a' then
-      perform pg_temp.pruefe(not (verein_spielerliste(pg_temp.id('v')) -> 'spieler' -> 0) ?| array['js', 'link_bezogen'],
+      perform pg_temp.pruefe(not (verein_spielerliste(pg_temp.id('v')) -> 'spieler' -> 0) ?| array['js', 'link_bezogen', 'link_zugestellt'],
                              'Vereinsliste des Mitglieds mit J+S oder Link-Stand');
     else
       perform pg_temp.erwarte(format('select verein_spielerliste(%L)', pg_temp.id('v')), 'VEREIN_NICHT_GEFUNDEN');
@@ -270,7 +270,7 @@ declare
 begin
   perform pg_temp.pruefe(jsonb_array_length(l -> 'spieler') = 6, 'Liste: Anzahl ' || l::text);
   for s in select * from jsonb_array_elements(l -> 'spieler') loop
-    perform pg_temp.pruefe(pg_temp.schluessel(s) = array['id', 'jahrgang', 'js', 'link_bezogen', 'nachname', 'schnuppern', 'teams', 'vorname'],
+    perform pg_temp.pruefe(pg_temp.schluessel(s) = array['id', 'jahrgang', 'js', 'link_bezogen', 'link_zugestellt', 'nachname', 'schnuppern', 'teams', 'vorname'],
                            'Liste: Schlüssel ' || s::text);
   end loop;
   select e into s from jsonb_array_elements(l -> 'spieler') e where e ->> 'id' = pg_temp.id('s1')::text;
@@ -410,10 +410,10 @@ declare
   r jsonb;
 begin
   r := verein_spieler_link_holen(pg_temp.id('s1'));
-  perform pg_temp.pruefe(r = jsonb_build_object('link_token', current_setting('test.alt_s1'), 'ohne_team', false, 'bezogen', true),
+  perform pg_temp.pruefe(r = jsonb_build_object('link_token', current_setting('test.alt_s1'), 'ohne_team', false, 'bezogen', true, 'zugestellt', false),
                          'Link s1: ' || pg_temp.schluessel(r)::text);
   r := verein_spieler_link_holen(pg_temp.id('x'));
-  perform pg_temp.pruefe(r = jsonb_build_object('link_token', current_setting('test.alt_x'), 'ohne_team', true, 'bezogen', false),
+  perform pg_temp.pruefe(r = jsonb_build_object('link_token', current_setting('test.alt_x'), 'ohne_team', true, 'bezogen', false, 'zugestellt', false),
                          'Link x: ' || pg_temp.schluessel(r)::text);
   r := verein_spieler_link_erneuern(pg_temp.id('s1'));
   perform pg_temp.pruefe(pg_temp.schluessel(r) = array['link_token'] and r ->> 'link_token' <> current_setting('test.alt_s1'),
@@ -422,7 +422,7 @@ begin
   r := verein_spieler_link_erneuern(pg_temp.id('x'));
   perform set_config('test.neu_x', r ->> 'link_token', true);
   perform pg_temp.pruefe(verein_spieler_link_holen(pg_temp.id('s1'))
-                         = jsonb_build_object('link_token', current_setting('test.neu_s1'), 'ohne_team', false, 'bezogen', false),
+                         = jsonb_build_object('link_token', current_setting('test.neu_s1'), 'ohne_team', false, 'bezogen', false, 'zugestellt', false),
                          'Link nach dem Erneuern');
 end $$;
 reset role;

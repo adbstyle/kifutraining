@@ -11,7 +11,7 @@ const KOPIEREN_FEHLER = "Kopieren ging nicht - markiere den Link und kopiere ihn
 
 /* Der persönliche Abo-Link (#330). Er ist ein Geheimnis: Wer ihn hat, sieht
    Zeit und Ort der Termine (AK 3) — die Warnung steht darum immer bei ihm,
-   im Team wie unter «Konto». Anleitung für die vier genannten
+   im Team wie unter «Konto › Verbindungen». Anleitung für die vier genannten
    Kalenderprogramme (AK 2).
 
    Das Ergebnis des Kopierens steht IM Dialog, nicht in der Snackbar: Sie liegt
@@ -115,7 +115,7 @@ function AboInhalt({ url }: { url: string }) {
         verschwindet der Termin beim nächsten Abgleich.
       </p>
       <p className="type-body-small mt-2">
-        Unter «Konto» findest du deine Abos wieder und kannst sie widerrufen. Wie oft dein
+        Unter «Konto › Verbindungen» findest du deine Abos wieder und kannst sie widerrufen. Wie oft dein
         Kalenderprogramm nachsieht, bestimmt es selbst.
       </p>
     </>

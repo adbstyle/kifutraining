@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useId, useRef } from "react";
 import type { ReactNode, RefObject } from "react";
+import Link from "next/link";
 import { Check } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -17,9 +18,7 @@ export const bedienzeile = "state type-body-medium flex min-h-9 items-center gap
  *  statt über Refs, damit die Reihenfolge auch dann stimmt, wenn `items`
  *  zwischen zwei Renders wechselt. */
 function eintraege(wurzel: HTMLElement | null) {
-  return Array.from(
-    wurzel?.querySelectorAll<HTMLButtonElement>('[role^="menuitem"]') ?? [],
-  );
+  return Array.from(wurzel?.querySelectorAll<HTMLElement>('[role^="menuitem"]') ?? []);
 }
 
 export interface MenuItemDef {
@@ -36,7 +35,33 @@ export interface MenuItemDef {
   /** Eine von mehreren Möglichkeiten (#567, Darstellung): Gesetzt wird die
    *  Zeile zur Auswahl (`menuitemradio`), die gewählte trägt den Haken. */
   gewaehlt?: boolean;
+  /** Ein Ziel statt einer Aktion (#661, Konto-Menü): Die Zeile wird ein Link
+   *  (`menuitem`), damit die Warnung vor ungesicherten Angaben (#246) sie
+   *  abfängt wie jeden Link der Leiste. `onSelect` läuft trotzdem mit. */
+  href?: string;
+  /** Nur mit `href`: Das Ziel ist die offene Seite (#661, «Konto und
+   *  Einstellungen» auf /konto) → `aria-current="page"`, die Zeile betont. */
+  current?: boolean;
+  /** Eine leise Überschrift über mehreren Zeilen (#661, «Darstellung» im
+   *  Konto-Menü): Aufeinanderfolgende Zeilen mit demselben Wert bilden eine
+   *  Gruppe (`role="group"`), die Überschrift ist ihr Name. */
+  gruppe?: string;
   onSelect?: () => void;
+}
+
+/** Aufeinanderfolgende Zeilen mit derselben `gruppe` zusammen; jede Zeile
+ *  behält ihren Index (Kennung ihres Hinweises). */
+function abschnitte(items: MenuItemDef[]) {
+  const liste: { gruppe?: string; zeilen: { item: MenuItemDef; i: number }[] }[] = [];
+  items.forEach((item, i) => {
+    const letzter = liste[liste.length - 1];
+    if (letzter && item.gruppe !== undefined && letzter.gruppe === item.gruppe) {
+      letzter.zeilen.push({ item, i });
+    } else {
+      liste.push({ gruppe: item.gruppe, zeilen: [{ item, i }] });
+    }
+  });
+  return liste;
 }
 
 /* M2 Menu — verankertes Dropdown. In einen `relative` Wrapper neben den
@@ -62,7 +87,6 @@ export function Menu({
   className,
   triggerRef,
   label,
-  fuss,
 }: {
   open: boolean;
   onClose: () => void;
@@ -71,8 +95,6 @@ export function Menu({
   triggerRef?: RefObject<HTMLElement | null>;
   /** Name des Menüs für die Vorlesehilfe, wo der Auslöser ihn nicht schon nennt. */
   label?: string;
-  /** Ein leiser Satz am Fuss, der für alle Einträge gilt («Gilt in diesem Browser.»). */
-  fuss?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -119,7 +141,7 @@ export function Menu({
   function onNavKey(e: React.KeyboardEvent<HTMLDivElement>) {
     const liste = eintraege(ref.current);
     if (liste.length === 0) return;
-    const i = liste.indexOf(document.activeElement as HTMLButtonElement);
+    const i = liste.indexOf(document.activeElement as HTMLElement);
     const richtung = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
 
     let ziel: number;
@@ -147,77 +169,110 @@ export function Menu({
   // `aria-expanded="true"` (siehe ChipMenu).
   if (!open || items.length === 0) return null;
 
+  function zeile({ item, i }: { item: MenuItemDef; i: number }) {
+    const Icon = item.icon;
+    const auswahl = () => {
+      item.onSelect?.();
+      schliessenMitFokus();
+    };
+    /* Die Zeile trägt die Zustands-Ebene selbst (Hover, Tastaturfokus);
+       ein eigener Ring bliebe im Panel ohnehin am Rand hängen, darum
+       outline-none. Destruktives steht in Error-Schrift neben seinem
+       Zeichen — und trägt dort als Fliesstext: Das Panel liegt auf
+       08dp, wo Error 5.22:1 erreicht. Keine Abweichung mehr, seit der
+       Ton eine Stufe heller ist; die Zahl rechnet der Styleguide
+       (15 «Menü») nach. Icon und Wortlaut sagen die Zerstörung
+       trotzdem mit — Farbe allein trägt hier nie. */
+    const aktuell = !!item.href && item.current;
+    const klassen = cn(
+      bedienzeile,
+      "w-full text-left focus-visible:outline-none",
+      item.danger ? "text-error" : "text-on-surface",
+      aktuell && "betont",
+    );
+    const inhalt = (
+      <>
+        {Icon && (
+          <Icon
+            size={18}
+            strokeWidth={2}
+            className={item.danger ? undefined : aktuell ? "text-primary" : "text-on-surface-mittel"}
+            aria-hidden
+          />
+        )}
+        <span className="flex-1">{item.label}</span>
+        {item.trailing && (
+          <span className="type-label-small text-on-surface-mittel">{item.trailing}</span>
+        )}
+        {item.gewaehlt && (
+          <Check size={16} strokeWidth={2.5} className="text-primary" aria-hidden />
+        )}
+      </>
+    );
+    const beschrieben = item.hinweis ? `${menuId}-${i}` : undefined;
+    return (
+      <Fragment key={i}>
+        {item.trenner && <div role="separator" className="my-1 h-px bg-linie" />}
+        {item.href ? (
+          <Link
+            href={item.href}
+            role="menuitem"
+            aria-current={aktuell ? "page" : undefined}
+            aria-describedby={beschrieben}
+            onClick={auswahl}
+            className={klassen}
+          >
+            {inhalt}
+          </Link>
+        ) : (
+          <button
+            role={item.gewaehlt === undefined ? "menuitem" : "menuitemradio"}
+            aria-checked={item.gewaehlt}
+            aria-describedby={beschrieben}
+            type="button"
+            onClick={auswahl}
+            className={klassen}
+          >
+            {inhalt}
+          </button>
+        )}
+        {item.hinweis && (
+          <p id={beschrieben} className="px-3 pb-2 type-body-small text-on-surface-mittel">
+            {item.hinweis}
+          </p>
+        )}
+      </Fragment>
+    );
+  }
+
   return (
     <div
       ref={ref}
       role="menu"
       aria-label={label}
-      aria-describedby={fuss ? `${menuId}-fuss` : undefined}
       onKeyDown={onNavKey}
       className={cn(
         "absolute z-50 mt-1 min-w-48 rounded-flaeche border border-linie bg-elev-08 py-1 shadow-dp-08",
         className,
       )}
     >
-      {items.map((item, i) => {
-        const Icon = item.icon;
+      {abschnitte(items).map((a) => {
+        const [erste, ...rest] = a.zeilen;
+        if (a.gruppe === undefined) return <Fragment key={`a-${erste.i}`}>{a.zeilen.map(zeile)}</Fragment>;
         return (
-          <Fragment key={i}>
-          {item.trenner && <div role="separator" className="my-1 h-px bg-linie" />}
-          <button
-            role={item.gewaehlt === undefined ? "menuitem" : "menuitemradio"}
-            aria-checked={item.gewaehlt}
-            aria-describedby={item.hinweis ? `${menuId}-${i}` : undefined}
-            type="button"
-            onClick={() => {
-              item.onSelect?.();
-              schliessenMitFokus();
-            }}
-            /* Die Zeile trägt die Zustands-Ebene selbst (Hover, Tastaturfokus);
-               ein eigener Ring bliebe im Panel ohnehin am Rand hängen, darum
-               outline-none. Destruktives steht in Error-Schrift neben seinem
-               Zeichen — und trägt dort als Fliesstext: Das Panel liegt auf
-               08dp, wo Error 5.22:1 erreicht. Keine Abweichung mehr, seit der
-               Ton eine Stufe heller ist; die Zahl rechnet der Styleguide
-               (15 «Menü») nach. Icon und Wortlaut sagen die Zerstörung
-               trotzdem mit — Farbe allein trägt hier nie. */
-            className={cn(
-              bedienzeile,
-              "w-full text-left focus-visible:outline-none",
-              item.danger ? "text-error" : "text-on-surface",
-            )}
-          >
-            {Icon && (
-              <Icon
-                size={18}
-                strokeWidth={2}
-                className={item.danger ? undefined : "text-on-surface-mittel"}
-                aria-hidden
-              />
-            )}
-            <span className="flex-1">{item.label}</span>
-            {item.trailing && (
-              <span className="type-label-small text-on-surface-mittel">
-                {item.trailing}
-              </span>
-            )}
-            {item.gewaehlt && (
-              <Check size={16} strokeWidth={2.5} className="text-primary" aria-hidden />
-            )}
-          </button>
-          {item.hinweis && (
-            <p id={`${menuId}-${i}`} className="px-3 pb-2 type-body-small text-on-surface-mittel">
-              {item.hinweis}
-            </p>
-          )}
+          <Fragment key={`gruppe-${erste.i}`}>
+            {erste.item.trenner && <div role="separator" className="my-1 h-px bg-linie" />}
+            {/* Die Überschrift ist der Name der Gruppe; sichtbar steht sie
+                einmal, vorgelesen über aria-label — nicht doppelt. */}
+            <div role="group" aria-label={a.gruppe}>
+              <p aria-hidden className="px-3 pt-2 pb-1 type-label-small text-on-surface-mittel">
+                {a.gruppe}
+              </p>
+              {[{ ...erste, item: { ...erste.item, trenner: false } }, ...rest].map(zeile)}
+            </div>
           </Fragment>
         );
       })}
-      {fuss && (
-        <p id={`${menuId}-fuss`} className="px-3 pt-1 pb-2 type-body-small text-on-surface-mittel">
-          {fuss}
-        </p>
-      )}
     </div>
   );
 }

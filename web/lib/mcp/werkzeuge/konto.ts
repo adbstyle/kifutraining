@@ -26,7 +26,7 @@ export const werBinIch = werkzeug({
   titel: "Verbundenes Konto",
   beschreibung:
     "Zeigt, mit welchem KiFu-Konto dieser Zugang verbunden ist: den Anzeigenamen und " +
-    "die Adresse der Konto-Seite, auf der sich der Zugang widerrufen lässt.",
+    "die Adresse der Seite «Verbindungen» im Konto, auf der sich der Zugang widerrufen lässt.",
   nurLesen: true,
   eingabe: LeereEingabe,
   ausgabe: WerBinIchAusgabe,
@@ -35,7 +35,7 @@ export const werBinIch = werkzeug({
       p_user: zugang.userId,
     });
     if (error) throw error; // → «technisch», Rohtext nur im Server-Log
-    return ok({ anzeigename: String(data ?? ""), konto_url: zugang.url("konto") });
+    return ok({ anzeigename: String(data ?? ""), konto_url: zugang.url("konto", "verbindungen") });
   },
 });
 

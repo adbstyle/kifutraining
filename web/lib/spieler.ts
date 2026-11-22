@@ -170,8 +170,8 @@ export type Spieler = {
   nachname: string;
   jahrgang: number;
   jsNummer: string | null;
-  /** Der aktuelle Link wurde über die Selbstabholung herausgegeben (#438 PC 2). */
-  linkBezogen: boolean;
+  /** Stand des aktuellen privaten Links, teamübergreifend (#657 PC 1). */
+  linkStand: LinkStand;
   /** Die Kader des Teams, in dessen Liste sie steht (#452 AK 5). */
   kaderIds: string[];
   /** Die Namen der weiteren Teams des Vereins, denen sie zugeordnet ist,
@@ -513,7 +513,7 @@ export const LINK_TEXT = {
    *  Dass er die Termine aller Teams zeigt, sagt `linkTeamsText`: im Link-Dialog
    *  (#583 AK 13) und im Hinweis der KI-Link-Werkzeuge (#589 AK 9). */
   warnung:
-    "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
+    "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur der Spieler:in selbst oder ihren Eltern.",
   /** Was Erneuern bewirkt (AK 3, PC 3; #583 AK 15): für alle Teams der
    *  Spieler:in; die Benachrichtigungen enden mit (#642 PC 2), ebenso die
    *  Mitteilungen aufs Mobile (#483 AK 13). */
@@ -522,10 +522,103 @@ export const LINK_TEXT = {
   ungueltigTitel: "Dieser Link gilt nicht mehr",
   ungueltig: "Den aktuellen erhältst du über eine Abholadresse, bei den Trainer:innen oder bei der Vereinsverwaltung.",
   erneuert: "Link erneuert. Der bisherige gilt nicht mehr.",
-  /** Mit eingeschalteter Selbstabholung (#438, #583 AK 15): woher die Eltern
-   *  den neuen holen — bei den Teams, die sie eingeschaltet haben. */
-  erneuertAbholen: (teams: string[]): string => `Die Eltern holen den neuen Link über die Abholadresse von ${aufzaehlung(teams, "oder")} ab.`,
+  /** Mit eingeschalteter Selbstabholung (#438, #583 AK 15): woher Spieler:in
+   *  und Eltern den neuen holen — bei den Teams, die sie eingeschaltet haben. */
+  erneuertAbholen: (teams: string[]): string => `Die Spieler:in oder ihre Eltern holen den neuen Link über die Abholadresse von ${aufzaehlung(teams, "oder")} ab.`,
 } as const;
+
+// ── Stand des privaten Links (#657) ─────────────────────────────────────────
+
+/** abgeholt: über eine Abholadresse herausgegeben (#438 PC 2; Spalte
+ *  `link_bezogen`); zugestellt: Trainer:in, Verwaltung oder KI-Assistent hat
+ *  ihn als ausserhalb von KiFu weitergegeben markiert; offen: weder noch. */
+export const LINK_STAENDE = ["abgeholt", "zugestellt", "offen"] as const;
+export type LinkStand = (typeof LINK_STAENDE)[number];
+
+/** Der Stand aus den zwei Spalten — die einzige Ableitung im Code. Abgeholt
+ *  hat Vorrang. SQL-Zwilling: Trigger `spieler_link_zugestellt_fallen` und
+ *  `link_zugestellt_kern` (Migration 20261122110000) — Abholen und Erneuern
+ *  setzen «zugestellt» zurück, ein abgeholter Link wird nie markiert. */
+export function linkStandAus(abgeholt: boolean, zugestellt: boolean): LinkStand {
+  if (abgeholt) return "abgeholt";
+  return zugestellt ? "zugestellt" : "offen";
+}
+
+/** Überall dieselben Wörter (#657 PC 4): in Liste, Dialog, Verein und KI. */
+export const LINK_STAND_TEXT = {
+  label: { abgeholt: "abgeholt", zugestellt: "zugestellt", offen: "offen" } satisfies Record<LinkStand, string>,
+  /** Knopf im Link-Dialog, nur solange der Link nicht abgeholt ist (AK 1, 2). */
+  markieren: "Als zugestellt markieren",
+  zuruecknehmen: "Zustellung zurücknehmen",
+  /** Hinter ⓘ neben dem Knopf. */
+  erklaerung:
+    "Du hast den Link der Spieler:in oder den Eltern gegeben. Ob sie ihn geöffnet haben, weiss KiFu nicht. Abholen oder Erneuern ändert den Stand.",
+  markiert: "Als zugestellt markiert.",
+  zurueckgenommen: "Zustellung zurückgenommen.",
+  /** Der Link wurde inzwischen abgeholt; nichts geändert. */
+  schonAbgeholt: "Der Link wurde inzwischen abgeholt. Eine Zustellung braucht es nicht mehr.",
+  /** Ohne Antwort (etwa ohne Netz) ist offen, ob der Stand geändert ist. */
+  ohneAntwort: "Keine Antwort erhalten. Ob der Stand geändert ist, zeigt die Liste nach dem Neuladen.",
+} as const;
+
+/** Wie viele Links je Stand (#658 AK 1) — über alle Zeilen, die der Aufrufer
+ *  gibt; im Bereich «Privater Link» die ganze Spielerliste des Teams samt
+ *  Schnuppernden. */
+export function zaehleLinkStaende(spieler: readonly { linkStand: LinkStand }[]): Record<LinkStand, number> {
+  const zahl: Record<LinkStand, number> = { abgeholt: 0, zugestellt: 0, offen: 0 };
+  for (const s of spieler) zahl[s.linkStand]++;
+  return zahl;
+}
+
+/** Die Übersicht der Link-Stände im Bereich «Privater Link» (#658). */
+export const LINK_UEBERSICHT = {
+  titel: "Wer hat den Link?",
+  einleitung: "Spieler:innen oder Eltern holen ihn selbst ab, oder du gibst ihn weiter und markierst ihn als zugestellt. Schnuppernde zählen mit.",
+  /** Neben der Lozenge des Stands: woher der Stand kommt. */
+  beschreibung: {
+    abgeholt: "selbst über die Abholadresse",
+    zugestellt: "als zugestellt markiert",
+    offen: "weder abgeholt noch zugestellt",
+  } satisfies Record<LinkStand, string>,
+  /** AK 2: der Sprung in die Spielerliste, eingegrenzt auf «offen». Kurz,
+      weil der Knopf eine feste Höhe hat und nicht umbrechen darf (375px
+      mobil, schmale 2fr-Spalte ab lg); den Zusammenhang liefert die Zeile
+      «offen» darüber. */
+  offeneZeigen: (anzahl: number): string => `Offene zeigen (${anzahl})`,
+  hinweis: "Link selbst weitergegeben? Markiere ihn unter «Spieler:innen» im Link-Dialog der Spieler:in als zugestellt. Erneuern setzt ihn auf offen zurück.",
+} as const;
+
+/** Die Filterleiste der Spielerliste eines Teams (#601) — aus denselben
+ *  Bausteinen und mit denselben Wörtern wie die Spieler:innen des Vereins
+ *  (`SPIELER_FILTER` in lib/verein.ts). */
+export const TEAM_SPIELER_FILTER = {
+  suche: "Spieler:innen durchsuchen",
+  kader: "Kader",
+  /** AK 2: «Ohne Kader» steht vor den Kadern des Teams. */
+  ohneKader: "Ohne Kader",
+  kaderGruppe: "Kader des Teams",
+  jahrgang: "Jahrgang",
+  link: "Privater Link",
+  /** Die Werte des Filters «Privater Link» (AK 4): «zugestellt» und «offen» zusammen sind «nicht abgeholt». */
+  linkStand: { abgeholt: "Abgeholt", zugestellt: "Zugestellt", offen: "Offen" } satisfies Record<LinkStand, string>,
+  zuruecksetzen: "Zurücksetzen",
+  /** AK 7: Keine Spieler:in erfüllt die Eingrenzung. */
+  leerTitel: "Keine Spieler:in gefunden",
+  leerText: "Ändere die Suche oder die Eingrenzung.",
+} as const;
+
+/** Die Zahl im Kopf der Spielerliste (PO 2026-11-22): die ganze Liste, bei
+ *  gesetzter Eingrenzung «12 von 35». */
+export function teamSpielerAnzahlText(sichtbar: number, gesamt: number, eingegrenzt: boolean): string {
+  return eingegrenzt && gesamt > 0 ? `${sichtbar} von ${gesamt}` : String(gesamt);
+}
+
+/** Was der Link-Knopf einer Zeile sagt: Tooltip und Name (AK 4). Offen bleibt
+ *  unmarkiert — der Stand fehlt im Text wie der Punkt am Knopf. */
+export function linkKnopfText(name: string, stand: LinkStand): { tooltip: string; label: string } {
+  if (stand === "offen") return { tooltip: "Privater Link", label: `Privater Link für ${name}` };
+  return { tooltip: `Privater Link · ${LINK_STAND_TEXT.label[stand]}`, label: `Privater Link für ${name}, ${LINK_STAND_TEXT.label[stand]}` };
+}
 
 /** Ein Team einer Spieler:in, wie der Link-Dialog es liest: der Name und ob
  *  die Selbstabholung dieses Teams eingeschaltet ist (#583). */
@@ -544,7 +637,7 @@ export function linkTeamsText(vorname: string, teams: LinkTeam[], ausgeschaltet:
 }
 
 /** Was die Bestätigung zum Erneuern sagt (#583 AK 15, 16), Satz für Satz:
- *  wen es trifft, ob die Eltern den neuen Link abholen können. Die Teams in
+ *  wen es trifft, ob Spieler:in und Eltern den neuen Link abholen können. Die Teams in
  *  der geladenen Folge (`nachTeamname`). */
 export function linkErneuernSaetze(vorname: string, teams: LinkTeam[]): string[] {
   if (teams.length === 0)
@@ -727,7 +820,7 @@ export const ABHOL_SPERRE_MINUTEN = 15;
  *  (Story #580 PC 4, #587 PC 2) — eine Quelle für die Abholseite (ohne Namen,
  *  oder mit dem der abgeholten Spieler:in) und den privaten Link (mit dem
  *  Vornamen). Der Satz «Verantwortlich …» steht im selben Textblock wie «wer
- *  die Angaben sieht»: Der Verein ist die Stelle, an die sich Eltern wenden.
+ *  die Angaben sieht»: Der Verein ist die Stelle, an die sich Spieler:innen und Eltern wenden.
  *  Keine eigene Konstante in `LINK_TEXT`: Die fliesst in die KI-Beschreibungen. */
 export function angabenSehenText(verein: string, vorname?: string): string {
   return `Verantwortlich für die Daten ${vorname ? `von ${vorname} ` : ""}ist der Verein «${verein}». Name, Jahrgang und Teams ${vorname ? `von ${vorname}` : "der Spieler:in"} sehen alle Trainer:innen des Vereins, alle Angaben die Trainer:innen ihrer Teams, J+S-Nummer und Link auch die Vereinsverwaltung, dazu die KI-Assistenten, die diese Personen verbunden haben, und wer den Link hat.`;
@@ -736,14 +829,14 @@ export function angabenSehenText(verein: string, vorname?: string): string {
 export const ABHOLUNG_TEXT = {
   /** AK 3, 5: was die Adresse kann und was Ausschalten bewirkt. */
   beschreibung:
-    "Über diese Adresse holen Eltern den privaten Link ihrer Spieler:in mit Vorname, Nachname und Jahrgang selbst ab. Der Link zeigt die Termine aller Teams der Spieler:in. Wer die Abholadresse hat und die Angaben der Spieler:in kennt, kann die Spieler:in ab- und anmelden; teile sie nur teamintern. Ausschalten stoppt neue Abholungen, bezogene Spieler:innen-Links gelten weiter.",
-  aus: "Ausgeschaltet. Eltern erhalten ihren Link von diesem Team nur von euch. Der Link zeigt die Termine aller Teams der Spieler:in; ausgeschaltet sperrt die Selbstabholung ihn nicht, wenn ein anderes Team der Spieler:in sie eingeschaltet hat. Beim Einschalten gilt die bisherige Abholadresse wieder.",
+    "Über diese Adresse holen Spieler:innen oder ihre Eltern den privaten Link mit Vorname, Nachname und Jahrgang selbst ab. Der Link zeigt die Termine aller Teams der Spieler:in. Wer die Abholadresse hat und die Angaben der Spieler:in kennt, kann die Spieler:in ab- und anmelden; teile sie nur teamintern. Ausschalten stoppt neue Abholungen, abgeholte Spieler:innen-Links gelten weiter.",
+  aus: "Ausgeschaltet. Spieler:innen und Eltern erhalten den Link von diesem Team nur von euch. Der Link zeigt die Termine aller Teams der Spieler:in; ausgeschaltet sperrt die Selbstabholung ihn nicht, wenn ein anderes Team der Spieler:in sie eingeschaltet hat. Beim Einschalten gilt die bisherige Abholadresse wieder.",
   /** AK 4, 5: vor dem Erneuern. */
   erneuern:
-    "Die bisherige Adresse gilt danach nie mehr, auch nicht im Eltern-Chat. Spieler-Links, die Eltern schon bezogen haben, gelten weiter. Teile danach die neue Adresse im Eltern-Chat.",
+    "Die bisherige Adresse gilt danach nie mehr, auch nicht dort, wo ihr sie geteilt habt. Links, die Spieler:innen oder Eltern schon abgeholt haben, gelten weiter. Teile danach die neue Adresse im Chat mit Spieler:innen und Eltern.",
   eingeschaltet: "Selbstabholung eingeschaltet.",
-  ausgeschaltet: "Selbstabholung ausgeschaltet. Bezogene Links gelten weiter.",
-  erneuert: "Abholadresse erneuert. Teile die neue im Eltern-Chat.",
+  ausgeschaltet: "Selbstabholung ausgeschaltet. Abgeholte Links gelten weiter.",
+  erneuert: "Abholadresse erneuert. Teile die neue im Chat mit Spieler:innen und Eltern.",
   // ── Die Abholseite ──
   titel: "Spieler:in-Link abholen",
   einleitung:

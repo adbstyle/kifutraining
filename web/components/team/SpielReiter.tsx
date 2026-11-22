@@ -18,6 +18,7 @@ import {
   type Meldung,
 } from "@/lib/spiel";
 import { MELDE_STATUS, TERMIN_STATUS, meldeStatus, spielStatus } from "@/lib/termin-status";
+import { LINK_KANAL } from "@/lib/termin";
 import type { SpielSpieler, SpielTeilnehmer } from "@/lib/kern/spiele";
 import { seitWann } from "@/lib/zeit";
 import { KADER_TEXT, uebrigeText } from "@/lib/kader";
@@ -76,14 +77,14 @@ function Kopf({ zahl, gesamt, wort, min, max, children }: { zahl: number; gesamt
    einer Gruppe (#599). Jede Zeile
    trägt ihren Status als `LozengeAuswahl`: Ein Tipp darauf öffnet die
    möglichen Wechsel — «Anmelden» und «Abmelden» bis zum Anpfiff, auch nach
-   der Meldefrist der Eltern, nach einem Trenner «Nicht aufbieten» bzw.
+   der Meldefrist am privaten Link, nach einem Trenner «Nicht aufbieten» bzw.
    «Aufbieten». Eine abgegebene Meldung lässt sich nicht zurück auf «ohne»
    setzen. Nach der Meldefrist heisst «ohne Meldung» «Meldefrist verpasst»
    (#496): Das Team rechnet nicht mit ihr, kann sie aber bis zum Anpfiff
    anfragen und melden.
 
    Oben der Status des Spiels mit Detail, die Zahl gross und ungefärbt, dazu,
-   bis wann Eltern und Mitglieder melden. Kader wie bei Trainings. Ab dem
+   bis wann am privaten Link und im Team gemeldet wird. Kader wie bei Trainings. Ab dem
    Anpfiff gilt der Stand beim Anpfiff, nachgetragen wird in
    `SpielNachAnpfiff` (#487). */
 export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpieler }) {
@@ -159,8 +160,8 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
   const eingrenzung = mitChips && gewaehlterKader !== null && kaderNamen.includes(gewaehlterKader) ? gewaehlterKader : null;
   const sichtbar = eingrenzung === null ? daten.spieler : daten.spieler.filter((s) => s.kader.includes(eingrenzung));
   const melden_bis = daten.frist
-    ? `Eltern melden bis ${zeitpunktKurz(daten.frist)}${verpasst ? " (abgelaufen)" : ""} · Mitglieder bis zum Anpfiff`
-    : "Eltern und Mitglieder melden bis zum Anpfiff";
+    ? `${LINK_KANAL.meldefrist}: ${zeitpunktKurz(daten.frist)}${verpasst ? " (abgelaufen)" : ""} · Mitglieder melden bis zum Anpfiff`
+    : "Ohne Meldefrist: Alle melden bis zum Anpfiff";
 
   return (
     <div className="flex flex-col gap-3">

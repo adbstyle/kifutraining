@@ -1,6 +1,6 @@
 # Trainings
 
-Stand 2026-11-19. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-11-22 (Release 1.52.0). Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
 
 ## Die Altersstufe wird beim Anlegen gewählt
@@ -441,7 +441,7 @@ Durchführen-Ansicht zuoberst den Termin: Datum, Beginn und Ende, Ort, wer veran
 dabei ist und wer abgesagt hat, die
 Spielerzahl — führt das Team eine Spielerliste, die angemeldeten von allen, etwa „12 von 15
 angemeldet", sonst die erwartete —, die Felder des Platzes je mit Grösse, Toren und Untergrund,
-den Hinweis für Eltern („Für Eltern: …") und die Bemerkung; was zu einem Feld nicht erfasst ist, steht als
+den Hinweis am privaten Link („Am Link: …") und die Bemerkung; was zu einem Feld nicht erfasst ist, steht als
 unbekannt da. Wer angemeldet ist, steht nicht dort, sondern am Termin im Trainingsplan (siehe
 [Team-Bereich](team-bereich.md#ab--und-anmelden)).
 
@@ -522,8 +522,12 @@ entsteht eine private, frei bearbeitbare Kopie des ganzen Trainings, samt seinem
 ## Finden
 
 Die Übersicht zeigt beides zusammen: die öffentlichen Trainings der Community, die auch ohne
-Konto zugänglich sind, und die eigenen, Entwürfe eingeschlossen. Ein Schalter grenzt auf die
-eigenen ein. Besucher ohne Konto sehen ausschliesslich die öffentlichen Trainings. Team-Trainings
+Konto zugänglich sind, und die eigenen, Entwürfe eingeschlossen. Der Chip «Meine Trainings» grenzt
+auf die selbst angelegten und übernommenen ein, Entwürfe wie veröffentlichte. Einen eigenen
+Eintrag in der Seitenleiste haben die eigenen Trainings nicht; mit gesetztem Chip bleibt dort
+«Trainings» der offene Eintrag, die Brotkrume lautet „Trainings › Meine Trainings", und die
+Adresse trägt die Eingrenzung mit, sodass auch bisherige Adressen und Verweise auf die eigenen
+Trainings so ankommen. Besucher ohne Konto sehen ausschliesslich die öffentlichen Trainings. Team-Trainings
 erscheinen hier nicht; sie leben im Team-Bereich.
 
 Die Trainings stehen als Tabelle, ein Training je Zeile, über der Tabelle ihre Zahl. Die Spalten
@@ -575,7 +579,8 @@ Trainings. Es zählen alle persönlichen Trainings: Entwürfe wie veröffentlich
 übernommene, auch die persönliche Kopie eines Team-Trainings. Team-Trainings und
 Termin-Trainings zählen nicht, ebenso wenig Varianten, Gruppen oder die Übungen eines Trainings.
 
-Den Stand zeigt „Meine Trainings" oben über der Liste, etwa „3 von 30 Trainings", ab der Grenze
+Den Stand zeigt die Übersicht, sobald der Chip «Meine Trainings» gesetzt ist, oben über der
+Liste, etwa „3 von 30 Trainings", ab der Grenze
 mit der Plakette „Nichts mehr frei", über der Grenze nur die Zahl, etwa „34 Trainings (höchstens
 30)" — immer für den ganzen Bestand, auch wenn ein Filter die Liste kürzt. Die Seite „Neues
 Training" zeigt den Stand vor der Eingabe; an der Grenze steht statt der Eingabe die Meldung

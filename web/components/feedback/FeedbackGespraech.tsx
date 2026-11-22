@@ -9,7 +9,7 @@ import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
 import { AUFBEWAHRUNG_MONATE, NACHRICHT_MAX } from "@/lib/feedback/regeln";
 import type { GespraechZustand } from "./useFeedbackGespraech";
 
-/** Der Name des Dialogs — in der Seitenleiste, im Kopf und am privaten Link. */
+/** Der Name des Dialogs — im Konto-Menü der Seitenleiste, im Kopf und am privaten Link. */
 export const FEEDBACK_TITEL = "Fragen und Feedback";
 
 /** Mit Zeiger (Maus, Trackpad) — dieselbe Weiche wie `hover: hover` in globals.css. */

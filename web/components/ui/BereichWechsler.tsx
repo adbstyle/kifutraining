@@ -45,7 +45,7 @@ export interface BereichWechslerProps {
    einen Bereich, ist es eine Anzeige ohne Liste — es gäbe nichts zu wählen.
 
    Die Liste steht `fixed` und rechnet ihre Lage beim Öffnen aus dem Knopf
-   (wie «Darstellung»): Die Leiste schneidet ihren Inhalt ab, schmal ragte sie
+   (wie das Konto-Menü): Die Leiste schneidet ihren Inhalt ab, schmal ragte sie
    sonst nicht hinaus. Ändert sich das Fenster oder scrollt etwas darunter,
    geht sie zu. Schmal bleibt vom Knopf das Zeichen des Bereichs; der Name
    steht für Vorlesehilfen weiter da und beim Überfahren als Hinweis daneben.
@@ -130,7 +130,14 @@ export function BereichWechsler({
       knopfRef.current?.focus();
       return;
     }
-    if (e.key === "Tab") return zu();
+    // Tab schliesst und gibt den Fokus an den Knopf (wie das Konto-Menü): Die
+    // Liste verschwindet beim Schliessen, der Fokus fiele sonst aus dem Drawer.
+    if (e.key === "Tab") {
+      e.preventDefault();
+      zu();
+      knopfRef.current?.focus();
+      return;
+    }
     const i = liste.indexOf(document.activeElement as HTMLElement);
     let ziel: number;
     if (e.key === "ArrowDown") ziel = i < 0 ? 0 : (i + 1) % liste.length;

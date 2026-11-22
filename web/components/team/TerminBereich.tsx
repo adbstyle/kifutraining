@@ -39,7 +39,7 @@ import {
   vorschauSerieEntfernenAktion,
   type TerminFelder,
 } from "@/lib/actions/termine";
-import { AUSFALL_ZURUECKNEHMEN_TEXT, geaenderteFelder, trainingOhneTermin, ZUORDNEN_ERFOLG } from "@/lib/termin";
+import { AUSFALL_ZURUECKNEHMEN_TEXT, geaenderteFelder, LINK_KANAL, trainingOhneTermin, ZUORDNEN_ERFOLG } from "@/lib/termin";
 import {
   SERIE_MELDUNG,
   SERIE_TEXT,
@@ -136,7 +136,7 @@ const FOLGT_WIEDER: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit folgt wieder der Serie.",
   ort: "Der Ort folgt wieder der Serie.",
   bemerkung: "Die Bemerkung folgt wieder der Serie.",
-  hinweis_eltern: "Der Hinweis für Eltern folgt wieder der Serie.",
+  hinweis_eltern: `Der ${LINK_KANAL.hinweis} folgt wieder der Serie.`,
   treffpunkt: "Der Treffpunkt folgt wieder der Serie.",
   eingeladene: "Die Eingeladenen folgen wieder der Serie.",
   verantwortung: "Die Verantwortung folgt wieder der Serie.",

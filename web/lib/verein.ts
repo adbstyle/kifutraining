@@ -115,7 +115,7 @@ export const VEREIN_GRUENDEN_TEXT = {
   feld: "Name des Vereins",
   info: `Höchstens ${VEREIN_NAME_MAX} Zeichen. Den Namen kannst du später ändern.`,
   haken1: "Ich bin berechtigt, für diesen Verein zu handeln.",
-  haken2: "Der Verein ist für die Daten seiner Spieler:innen verantwortlich und Ansprechpartner ihrer Eltern und Vertretungen.",
+  haken2: "Der Verein ist für die Daten seiner Spieler:innen verantwortlich und Ansprechpartner für sie, ihre Eltern und Vertretungen.",
   erste: "Du wirst die erste Person der Vereinsverwaltung. Solange du dabei bist, kannst du keinem anderen Verein angehören.",
   knopf: "Verein gründen",
 } as const;

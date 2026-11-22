@@ -146,9 +146,13 @@ begin
                          'Termine s: ' || pg_temp.termine(v));
   perform pg_temp.pruefe(v -> 'teams' = '["Alpha", "Beta", "Gamma"]', 'teams s: ' || (v -> 'teams')::text);
   perform pg_temp.pruefe(v ->> 'team' = 'Link-Verein' and v ->> 'verein' = 'Link-Verein', 'team/verein s: ' || v::text);
+  -- #663 AK 1: x3 steht da (s gehört K-Beta an), nennt aber keinen Kader —
+  -- `kader` bleibt bis N1 als leere Liste, kein Kadername steht im Text.
   perform pg_temp.pruefe((select e -> 'kader' from jsonb_array_elements(v -> 'termine') e
-                           where e ->> 'id' = pg_temp.id('x3')::text) = '["K-Beta"]',
-                         'Kader an x3: nur der eigene, nie K-Beta-Zwei ohne s');
+                           where e ->> 'id' = pg_temp.id('x3')::text) = '[]',
+                         'Kader an x3: keiner genannt');
+  perform pg_temp.pruefe(position('K-Beta' in v::text) = 0 and position('K-Alpha' in v::text) = 0,
+                         'kein Kadername am Link');
   perform pg_temp.pruefe(v -> 'probe' = 'null' and v -> 'probe_info' = 'null', 'probe bei mehreren Teams');
 end $$;
 

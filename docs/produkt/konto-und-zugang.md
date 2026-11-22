@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-11-20. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-11-22 (Release 1.52.0). Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -22,10 +22,25 @@ Weg, das Passwort im laufenden Betrieb ohne diesen Mailversand zu wechseln, gibt
 
 ## Was im Konto steht
 
-Die Konto-Seite zeigt die eigene E-Mail-Adresse, bietet das Abmelden an, führt zu den eigenen
-Übungen, lässt den Anzeigenamen setzen, listet die verbundenen KI-Assistenten und die
-Kalender-Abos, führt zur Seite „Cookies" (siehe Navigation) und bietet das Löschen des Kontos
-an. Mehr Profilangaben gibt es nicht — kein Bild, keine Postadresse, keine Vereinszugehörigkeit.
+Das Konto öffnet man über „Konto und Einstellungen" im Konto-Menü an der Konto-Karte unten in
+der Seitenleiste (siehe [Navigation](navigation.md)). Es heisst „Dein Konto" und ist in drei
+Reiter gegliedert, jeder mit eigener Adresse, damit sich jedes Thema für sich anzeigen und
+verlinken lässt; Zurück im Browser führt zum vorigen Reiter:
+
+- **Profil** (`/konto`) zeigt die eigene E-Mail-Adresse zum Lesen, mit dem Hinweis, dass man sich
+  damit anmeldet und dass die Mitglieder der eigenen Teams und die Vereinsverwaltung sie sehen,
+  lässt den Anzeigenamen setzen und sagt unter „Passwort", dass ein neues Passwort über einen Link
+  per E-Mail gesetzt wird; „Passwort vergessen?" führt dorthin.
+- **Verbindungen** (`/konto/verbindungen`) führt, was von aussen am Konto hängt: die
+  „KI-Assistenten" (siehe unten) und die „Kalender-Abos".
+- **Daten und Konto** (`/konto/daten`) zählt unter „In deinem Browser" auf, was KiFu im Browser
+  ablegt — dieselbe Liste wie die Seite „Cookies", zu der „Alles zu Cookies" mit den Einzelheiten
+  führt (siehe [Navigation](navigation.md#cookies)) —, und bietet darunter das Löschen des Kontos
+  an. Die Seite „Cookies" trägt für Angemeldete die Brotkrume „Konto › Daten und Konto › Cookies".
+
+Abmelden lässt sich nur im Konto-Menü der Seitenleiste, nicht im Konto selbst; sind auf der
+offenen Seite Angaben ungesichert, fragt die Anwendung vorher nach. Mehr Profilangaben gibt es
+nicht — kein Bild, keine Postadresse, keine Vereinszugehörigkeit.
 
 ## KiFu als App
 
@@ -291,7 +306,7 @@ Schweiz, die Einheit von heute zählt noch zum Anstehenden, und der Assistent mu
 rechnen. Auf Wunsch beschränkt er die Auskunft auf einen Zeitraum, dessen Von- und Bis-Tag
 beide mitzählen und der höchstens bis zum gleichen Kalendertag im Folgejahr reicht, und auf die
 Termine, an denen man dabei ist, oder auf alle, zu denen man eingeladen ist; ein Zeitraum ohne Termine ergibt eine leere
-Auskunft. Jeder Termin nennt Datum, Beginn, Ende, Ort samt Kartenlink, Bemerkung und Hinweis für Eltern, bei einem Training den
+Auskunft. Jeder Termin nennt Datum, Beginn, Ende, Ort samt Kartenlink, Bemerkung und Hinweis am privaten Link, bei einem Training den
 Treffpunkt mit Uhrzeit und Ort, die Felder des Platzes je
 mit Grösse, Toren je Torart und Untergrund, die erwartete Spielerzahl, sein Training oder dass er
 keines trägt, seine Trainer:innen — wer eingeladen, wer dabei ist, wer wann abgesagt hat und wer
@@ -299,7 +314,7 @@ verantwortlich ist —, die Mindestbesetzung und wie viele sie verlangt, ob er a
 aus welchem Grund, und bei
 einem Serientermin die Serie und die Angaben, in denen er von ihr abweicht — Felder,
 Spielerzahl und Treffpunkt eingeschlossen. Zu jeder Serie erfährt er Wochentage, Zeitraum, Zeit, Ort samt Kartenlink,
-Treffpunkt, Bemerkung, Hinweis für Eltern, Trainer:innen, Mindestbesetzung, Felder und erwartete Spielerzahl. Dabei unterscheidet er bei jeder
+Treffpunkt, Bemerkung, Hinweis am privaten Link, Trainer:innen, Mindestbesetzung, Felder und erwartete Spielerzahl. Dabei unterscheidet er bei jeder
 Angabe zu Platz und Spielerzahl, ob sie unbekannt ist oder ob ausdrücklich nichts da ist: Ein
 Termin ohne Felder hat einen unbekannten Platz, eine leere Grösse, Toranzahl oder
 Untergrundangabe gilt als unbekannt, ebenso eine nicht erfasste Spielerzahl; 0 Tore einer
@@ -315,18 +330,18 @@ ein Spiel ist. Ein Spiel legt er wie in der Anwendung mit Bezeichnung und einem 
 noch bevorsteht, auf Wunsch mit Mindest- und Höchstzahl, Meldefrist und Treffpunkten, die er stets
 als ganze Liste angibt; Felder und erwartete Spielerzahl weist die Anwendung an einem Spiel ab. Dazu
 kommen wöchentliche Terminserien, immer aus Trainings, mit Wochentagen, Zeitraum, Zeit, Ort samt Kartenlink,
-Treffpunkt, Bemerkung, Hinweis für Eltern, Trainer:innen, Mindestbesetzung, Feldern und erwarteter Spielerzahl; eine erwartete Zahl weist die
+Treffpunkt, Bemerkung, Hinweis am privaten Link, Trainer:innen, Mindestbesetzung, Feldern und erwarteter Spielerzahl; eine erwartete Zahl weist die
 Anwendung wie dort ab, solange das Team eine Spielerliste führt, ausser an einem Termin, der schon
 begonnen hat. Den Kartenlink gibt er wie in der Anwendung nur mit einem Ort an, mit https:// und
 höchstens 500 Zeichen; ändert er den Ort ohne neuen Link, fällt der bisherige weg, und die Antwort
 sagt ihm das, ebenso wenn ein Termin, der wieder der Serie folgt, seinen eigenen Link verliert.
-Dass die Eltern den Hinweis für Eltern sehen und die Bemerkung nicht, sagen ihm die Werkzeuge wie
+Dass Spieler:innen und Eltern den Hinweis am privaten Link sehen und die Bemerkung nicht, sagen ihm die Werkzeuge wie
 die Hinweise in der Anwendung; einen Hinweis entfernt er wie dort, an einem einzelnen Serientermin
 mit derselben Wirkung: Der Termin weicht ab und ist bewusst ohne.
 Einem Training und einer Serie gibt er wie in der Anwendung einen Treffpunkt aus Uhrzeit und Ort,
 am Tag des Trainings und nicht nach dem Beginn, den Ort höchstens 100 Zeichen lang; er ändert ihn und
 entfernt ihn, an einem einzelnen Serientermin ebenfalls als bewusst ohne. Die Werkzeuge sagen ihm wie
-der Hinweis hinter dem ⓘ, dass die Eltern den Treffpunkt sehen und dass er beim Verlegen seinen
+der Hinweis hinter dem ⓘ, dass Spieler:innen und Eltern den Treffpunkt sehen und dass er beim Verlegen seinen
 Abstand zum Beginn behält; einem Spiel gibt er statt dessen Treffpunkte je Anreiseart. Läge der
 Treffpunkt nach einer Zeitänderung am Vortag, entfällt er an denselben Terminen wie in der
 Anwendung, aber ohne Rückfrage; die Antwort nennt die Daten dieser Termine. Er ändert und entfernt Termine; bei einem Serientermin muss er sagen, ob es nur für
@@ -334,7 +349,7 @@ diesen, für diesen und alle folgenden oder für alle Termine der Serie gilt, so
 Anwendung ab. Felder gibt er dabei stets als ganze Liste an, die die bisherige ersetzt; Felder und
 Spielerzahl entfernt er auch wieder, an einem einzelnen Serientermin mit derselben Wirkung wie in
 der Anwendung: Der Termin weicht dann ab und gilt als unbekannt. Eine abweichende Angabe lässt er
-wieder der Serie folgen, Felder, Spielerzahl, Hinweis für Eltern und Treffpunkt eingeschlossen, das Datum ausgenommen. Er ordnet
+wieder der Serie folgen, Felder, Spielerzahl, Hinweis am privaten Link und Treffpunkt eingeschlossen, das Datum ausgenommen. Er ordnet
 Terminen Trainings zu — aus dem Bestand des Teams, das Training eines anderen Termins oder ein
 eigenes persönliches Training jeder Altersstufe —, ersetzt und löst sie. Wie in der Anwendung
 bekommt der Termin dabei immer still eine eigene Kopie, ein Termin-Training, das nicht in den
@@ -349,7 +364,7 @@ ordnet das Training dann zu.
 
 Auch die Spielerliste eines Teams führt der Assistent nach den Regeln des
 [Team-Bereichs](team-bereich.md#spielerliste). Er liest sie mit Vorname, Nachname, Jahrgang,
-J+S-Nummer und ob der Link jeder Spieler:in bezogen ist, dazu den Verein des Teams, je
+J+S-Nummer und den Stand des privaten Links jeder Spieler:in — „abgeholt", „zugestellt" oder „offen" —, dazu den Verein des Teams, je
 Spieler:in die Namen ihrer weiteren Teams und ob nach dem letzten bekannten Stand mindestens ein
 Gerät Mitteilungen aufs Mobile für sie eingeschaltet hat — nur ja oder nein, ohne Zusicherung, dass
 sie ankommen; Geräte und Adressen erfährt er nie, und neu zustimmen muss dafür niemand; die Liste des ganzen Vereins liest er nicht. Er nimmt
@@ -389,7 +404,7 @@ Die Infos zum Team (siehe [Team-Bereich](team-bereich.md#infos-zum-team)) liest 
 mit „team_infos_festlegen". Er übergibt dabei immer den ganzen Text — für eine Änderung liest er
 ihn zuerst —, und ein leerer Text entfernt die Infos. Er gliedert mit denselben Zeichen wie die
 Leiste in der Anwendung, und es gilt dieselbe Grenze von 10'000 Zeichen samt Gliederung mit
-demselben Hinweis. Die Eltern sehen die neue Fassung beim nächsten Öffnen ihres Links; frühere
+demselben Hinweis. Spieler:innen und Eltern sehen die neue Fassung beim nächsten Öffnen ihres Links; frühere
 Fassungen bleiben auch hier nicht erhalten.
 
 An einem Spiel erfährt der Assistent für jede Spieler:in ihre Meldung oder dass sie noch ohne
@@ -402,7 +417,7 @@ nicht aufgeboten und hebt das auf und trägt ab dem Anpfiff nach, wer nicht oder
 ist, jeweils mit Datum und Anpfiff, wie er das Spiel zuletzt gelesen hat. Er holt den privaten
 Link einer Spieler:in und erneuert ihn in zwei Schritten: Der erste Aufruf von
 „spieler_link_erneuern" ändert nichts und nennt die Teams, für die der bisherige Link endet und der
-neue gilt, und dass die Mitteilungen aufs Mobile enden; erst mit der ausdrücklichen Bestätigung erneuert er. Er sieht, ob die Selbstabholung eingeschaltet ist, schaltet sie
+neue gilt, und dass die Mitteilungen aufs Mobile enden; erst mit der ausdrücklichen Bestätigung erneuert er. Mit „spieler_link_zugestellt" markiert er den Link als zugestellt oder nimmt die Markierung zurück, wenn jemand ihn ausserhalb von KiFu weitergegeben hat — ohne Rückfrage und nur, solange er nicht abgeholt ist; ein abgeholter Link bleibt unverändert, und der Assistent erfährt das. Den Stand erfährt er mit der Spielerliste und beim Holen des Links; ein erneuerter Link ist wieder offen, und wer ihn über die Abholadresse holt, hat ihn abgeholt. Er sieht, ob die Selbstabholung eingeschaltet ist, schaltet sie
 ein und aus und holt und erneuert die Abholadresse. Vor- und Nachnamen, Jahrgänge und
 J+S-Nummern der Spieler:innen, wann sie sich ab- und angemeldet haben, ihre Meldungen zu Spielen,
 wer nicht aufgeboten und wer nicht oder doch erschienen ist, ihre privaten Links und die
@@ -455,7 +470,8 @@ der Assistent Trainings beider Altersstufen an und führt sie samt dem Kalender 
 wie die Anwendung; was ihm fehlt, steht unter den bekannten Grenzen.
 
 Verbunden wird in zwei Schritten. Zuerst trägt man die Adresse `https://ki-fu.ch/api/mcp` in
-den Assistenten ein; die Konto-Seite nennt sie ebenfalls und zeigt die zwei gängigen Wege: In
+den Assistenten ein; der Reiter „Verbindungen" im Konto nennt sie unter „KI-Assistenten" ebenfalls
+und zeigt, eingeklappt, die zwei gängigen Wege: In
 Claude Desktop oder auf claude.ai unter Einstellungen → Connectors als «Custom connector», in
 Claude Code im Terminal mit dem dort genannten Befehl. Jeder andere Assistent, der Werkzeuge über
 MCP einbindet, geht gleich. Der Assistent öffnet daraufhin im Browser eine Seite der Anwendung,
@@ -480,12 +496,12 @@ E-Mail-Adressen)"; „die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang
 und führen, dazu den Verein deiner Teams und die Namen weiterer Teams einer Spieler:in sehen,
 Spieler:innen aus einem deiner Teams nehmen (sie bleiben im Verein), Kader anlegen, umbenennen und
 entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die
-Anzahl Schnuppertrainings samt Info-Schreiben festlegen, die Infos zum Team für die Eltern verfassen,
+Anzahl Schnuppertrainings samt Info-Schreiben festlegen, die Infos zum Team für Spieler:innen und Eltern verfassen,
 ändern und entfernen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten
 kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab
 Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link
-einer Spieler:in holen und erneuern, die Selbstabholung ein- und ausschalten, die Abholadresse holen
-und erneuern und sehen, welche Links bezogen wurden". Nie erreichbar sind „deine Favoriten", „die
+einer Spieler:in holen, erneuern und als zugestellt markieren, die Selbstabholung ein- und ausschalten, die Abholadresse holen
+und erneuern und sehen, welche Links abgeholt oder zugestellt sind". Nie erreichbar sind „deine Favoriten", „die
 Verwaltung deiner Teams und deines Vereins (Verein gründen, umbenennen und löschen, Teams anlegen,
 umbenennen und auflösen, Personen in Teams oder in die Vereinsverwaltung aufnehmen oder daraus
 entfernen, Spieler:innen Teams zuordnen, Spieler:innen aus dem Verein löschen und Spielerlisten
@@ -493,8 +509,8 @@ importieren)" und „dein Konto selbst (Anzeigename, Passwort, Löschen)". Kommt
 Fähigkeiten dazu, muss man nicht erneut zustimmen; auch wer seinen Zugang erlaubt hat, bevor der
 Kalender, Platz, Spielerzahl und Treffpunkt der Termine, die Spielerliste samt Abmeldungen, Links und
 Selbstabholung, die Kader, die Spiele, das Schnuppertraining (früher Probetraining), der Verein
-mit den weiteren Teams einer Spieler:in, die Infos zum Team oder das Benachrichtigen der
-Spielervertretungen dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt
+mit den weiteren Teams einer Spieler:in, die Infos zum Team, das Benachrichtigen der
+Spielervertretungen oder das Markieren zugestellter Links dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt
 die Seite, nur zu erlauben, wenn man das Verbinden eben selbst gestartet hat.
 
 Beim Erlauben kann man dem Zugang einen eigenen Namen geben, etwa „Claude auf dem Laptop",
@@ -503,22 +519,26 @@ stehen lässt, sieht den Zugang später unter diesem Namen. Nach dem Erlauben ge
 weiteres Zutun zurück zum Assistenten, der damit verbunden ist.
 
 Ein Konto kann höchstens fünf Zugänge gleichzeitig haben. Ist die Grenze erreicht, sagt die
-Seite das und führt zum Konto, wo man zuerst einen bestehenden Zugang widerruft; ablehnen geht
-weiterhin. Ein Assistent, der schon verbunden ist und sich neu anmeldet, zählt nicht doppelt.
+Seite das — „Widerrufe zuerst einen davon im Konto unter «Verbindungen» und starte das Verbinden
+dann neu." — und führt mit „Zu den Verbindungen" in den gleichnamigen Reiter des Kontos, wo man
+zuerst einen bestehenden Zugang widerruft; ablehnen geht weiterhin. Ein Assistent, der schon verbunden ist und sich neu anmeldet, zählt nicht doppelt.
 Zusammen dürfen alle Zugänge eines Kontos höchstens 600 Aufrufe je Stunde auslösen; darüber
 bekommt der Assistent den Grund und die Wartezeit genannt. Weitere Zugänge erhöhen diese Zahl
 nicht.
 
-Unter „KI-Zugänge" auf der Konto-Seite stehen alle Zugänge mit ihrem Namen und dem Tag der
-Erlaubnis, bei einem eigenen Namen zusätzlich der Name des Assistenten. Jeder Zugang lässt sich
-einzeln widerrufen; das wirkt sofort, auch auf eine noch laufende Sitzung, und die übrigen
-Zugänge bleiben bestehen. Von selbst verfällt ein Zugang nicht.
+Unter „KI-Assistenten" im Reiter „Verbindungen" des Kontos stehen, mit ihrer Zahl („2 von 5"),
+alle Zugänge mit ihrem Namen und dem Tag der Erlaubnis, bei einem eigenen Namen zusätzlich der
+Name des Assistenten. Jeder Zugang lässt sich einzeln widerrufen; das wirkt sofort, auch auf eine
+noch laufende Sitzung, und die übrigen Zugänge bleiben bestehen. Von selbst verfällt ein Zugang
+nicht. Gefragt, mit welchem Konto er verbunden ist, nennt der Assistent den Anzeigenamen und die
+Adresse dieses Reiters, auf dem sich der Zugang widerrufen lässt.
 
 ## Kalender-Abos
 
-Unter „Kalender-Abos" auf der Konto-Seite stehen alle gültigen Abos mit dem Namen ihres Teams.
-Geholt wird ein Abo im Trainingsplan des Teams; was es liefert und wie es ins Kalenderprogramm
-kommt, beschreibt der [Team-Bereich](team-bereich.md#kalender-abo). Hier lässt sich der Link
+Unter „Kalender-Abos" im Reiter „Verbindungen" des Kontos stehen alle gültigen Abos mit dem
+Namen ihres Teams. Geholt wird ein Abo im Trainingsplan des Teams; was es liefert und wie es ins
+Kalenderprogramm kommt, beschreibt der [Team-Bereich](team-bereich.md#kalender-abo). Der Dialog
+des Abos verweist dafür auf „Konto › Verbindungen". Hier lässt sich der Link
 jedes gültigen Abos jederzeit wieder anzeigen und kopieren — im selben Dialog wie im Team und mit
 derselben Warnung, dass er persönlich ist. Ohne Abo steht ein Hinweis, wo man eines holt.
 
@@ -535,14 +555,15 @@ widerrufen.
 Der gesamte Übungsbestand und alle öffentlichen Trainings sind ohne Anmeldung
 zugänglich — ansehen, durchsuchen, filtern, durchführen und drucken inbegriffen. Verwehrt
 bleibt alles Eigene: Übungen und Trainings anlegen oder bearbeiten, favorisieren, Trainings
-übernehmen, Teams. Die Gruppe „Meine Bibliothek" der Seitenleiste erscheint gar nicht erst, und
-wer eine geschützte Adresse direkt aufruft, landet bei der Anmeldung und wird danach dorthin
+übernehmen, Teams. Die Chips „Meine Übungen" und „Meine Trainings" erscheinen gar nicht erst;
+an der Stelle der Konto-Karte steht unten in der Seitenleiste „Nicht angemeldet", und ihr Menü
+bietet nur „Anmelden", „Konto erstellen" und „Was ist neu". Wer eine geschützte Adresse direkt aufruft, landet bei der Anmeldung und wird danach dorthin
 zurückgeführt, wo er hinwollte. Eine Ausnahme ist das Kalender-Abo: Das Kalenderprogramm ruft die Termine ohne
 Anmeldung ab, denn der Link selbst ist die Berechtigung; der Verweis in einem Kalendereintrag
 führt dagegen über die Anmeldung in den Trainingsplan. Ebenso ohne Konto gehen der private Link
 einer Spieler:in, über den ihre Eltern oder sie selbst sie für Termine ab- und anmelden und ihre
 Termine abonnieren, und die
-Abholadresse eines Teams, über die Eltern diesen Link abholen (siehe
+Abholadresse eines Teams, über die Spieler:innen und Eltern diesen Link abholen (siehe
 [Team-Bereich](team-bereich.md#privater-link)). Wer sie öffnet, wird weder angemeldet noch zum
 Mitglied; im Browser bleibt vom privaten Link nur, welche Benachrichtigungen das Gerät gesehen hat,
 wie oft es den Link besucht und wann es den Hinweis zum Ablegen als App geschlossen hat und, wer
