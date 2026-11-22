@@ -7,6 +7,7 @@
 //
 // REIN: importiert nur lib/termin.ts (ebenfalls rein) — `check:kern` lädt sie mit tsx.
 import {
+  LINK_KANAL,
   TERMIN_TEXT,
   istKalendertag,
   kartenlinkOhneOrt,
@@ -232,7 +233,7 @@ export const SERIE_MELDUNG = {
     "Seit deiner Auswahl hat sich geändert, wie viele Abmeldungen verfallen oder Treffpunkte entfallen. Sieh dir die Änderung noch einmal an.",
   KEINE_AENDERUNG: "Gib mindestens eine Angabe an, die sich ändern soll.",
   SERIE_ANGABEN_UNGUELTIG:
-    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Hinweis für Eltern, Treffpunkt, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.",
+    `Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, ${LINK_KANAL.hinweis}, Treffpunkt, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.`,
 } as const;
 
 /** Was die Vorschau einer Serienänderung verfallen oder entfallen lässt — die

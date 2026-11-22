@@ -315,13 +315,13 @@ const ABMELDE_MODELL =
   `begonnenen Terminen weiter mit Namen («nicht_mehr_im_team: true») und ihr Nachtrag bleibt möglich; erst wer aus dem Verein gelöscht wird, steht dort als «${EHEMALIGE_SPIELERIN}» ohne Namen. Eine Abmeldung und ein Nachtrag tragen ` +
   "keinen Grund, und KiFu benachrichtigt niemanden. Spiele (art «spiel») sind anders: Jede Spieler:in ist zuerst ohne " +
   "Meldung («meldung: null»), bis sie an- oder abgemeldet wird; danach wechselt sie nur noch zwischen angemeldet und " +
-  "abgemeldet. Mitglieder (und du) melden bis zum Anpfiff, auch nach der Meldefrist; Eltern über ihren Link nur bis zur " +
+  "abgemeldet. Mitglieder (und du) melden bis zum Anpfiff, auch nach der Meldefrist; Spieler:innen und Eltern über den privaten Link nur bis zur " +
   "Meldefrist. Wer nach Ablauf der Meldefrist noch ohne Meldung ist, hat die Meldefrist verpasst («meldefrist_verpasst»): " +
   "Das Team rechnet nicht mit ihr, sie lässt sich aber bis zum Anpfiff weiter melden. Ein anderes Datum lässt alle Meldungen eines Spiels verfallen, eine andere Zeit am selben Tag nicht. " +
   "Mitglieder (und du) können eine Spieler:in für ein Spiel als nicht aufgeboten kennzeichnen (termin_aufgebot_setzen), " +
   "gleich welche Meldung sie trägt: Die Meldung bleibt darunter stehen, zählt aber nicht als angemeldet, und bis die " +
   "Kennzeichnung aufgehoben ist, nimmt das Spiel für sie keine Meldung an. Die Kennzeichnung trägt keinen Grund, " +
-  "verfällt mit den Meldungen und wird beim Anpfiff mit ihnen festgehalten; die Eltern sehen sie über ihren Link. " +
+  "verfällt mit den Meldungen und wird beim Anpfiff mit ihnen festgehalten; Spieler:innen und Eltern sehen sie über den privaten Link. " +
   "Ab dem Anpfiff tragen Mitglieder (und du) nach, wer nicht oder doch erschienen ist (termin_anwesenheit_setzen): " +
   "Gezählt hat beim Anpfiff, wer angemeldet und nicht als nicht aufgeboten gekennzeichnet war; «nicht_erschienen» gilt " +
   "für sie, «doch_erschienen» für alle anderen. Jede Verlegung eines begonnenen Spiels lässt seine Nachträge verfallen. " +
@@ -374,7 +374,7 @@ export const terminSpielerAbrufen = werkzeug({
     meldefrist: z
       .string()
       .nullable()
-      .describe("Nur an einem Spiel: bis wann Eltern melden, als YYYY-MM-DDTHH:MM (Uhr am Trainingsort); null ohne Frist (bis zum Anpfiff)."),
+      .describe("Nur an einem Spiel: bis wann am privaten Link gemeldet wird, als YYYY-MM-DDTHH:MM (Uhr am Trainingsort); null ohne Frist (bis zum Anpfiff)."),
     anwesend: z
       .number()
       .int()
@@ -686,13 +686,13 @@ const LINK_MODELL =
   "Nachnamen dieser Spieler:in, die Namen ihrer Teams und die anstehenden Termine aller ihrer Teams, die für sie " +
   "gelten, je Termin mit seinem Team (bei Terminen mit Kadern nur die ihrer Kader, ohne einen Kader zu nennen), mit der Zahl " +
   "der Angemeldeten und derer, für die er gilt, und meldet sie bis zum Beginn ab und wieder an. An Trainings und " +
-  "Spielen sieht sie den Hinweis für Eltern, nie die Bemerkung; an einem Training seinen Treffpunkt, solange sie " +
+  "Spielen sieht sie den Hinweis am privaten Link, nie die Bemerkung; an einem Training seinen Treffpunkt, solange sie " +
   "angemeldet ist und es nicht begonnen hat. Spiele meldet sie an oder ab bis zur Meldefrist (ohne Frist bis zum " +
   "Anpfiff) und sieht dort Bezeichnung, Richtwert, Meldefrist, Treffpunkte und ob die Spieler:in nicht aufgeboten " +
   "ist. An einem ausgefallenen Training oder Spiel sieht sie den Grund des Ausfalls, ganz, und keinen Hinweis — " +
   "keine Namen anderer, kein Training, keine Nachträge, nichts Vergangenes. Schnuppert sie, sieht sie keine Spiele, " +
   "meldet die Spieler:in für Trainings an statt ab und das nur bis zur Anzahl Schnuppertrainings, und sieht, wie " +
-  "viele noch möglich sind. Über den Link holen Eltern auch ein Kalender-Abo der Termine aller ihrer Teams; das " +
+  "viele noch möglich sind. Über den Link lässt sich auch ein Kalender-Abo der Termine aller ihrer Teams holen; das " +
   "kannst du weder holen noch einsehen noch widerrufen. Ein erneuerter Link gilt für alle ihre Teams, der bisherige " +
   "in keinem mehr. Ist sie keinem Team mehr zugeordnet, bleibt der Link gültig und zeigt keine Termine. KiFu " +
   "verschickt den Link nicht. Gib ihn nur der Person weiter, die ihn verlangt, und nie in einer Gruppe. " +
@@ -717,7 +717,7 @@ export const spielerLinkAbrufen = werkzeug({
   name: "spieler_link_abrufen",
   titel: "Privater Link einer Spieler:in",
   beschreibung:
-    "Holt den privaten Link einer Spieler:in, damit du ihn ihrer Spielervertretung (Eltern oder ihr selbst) weitergibst. " +
+    "Holt den privaten Link einer Spieler:in, damit du ihn ihrer Spielervertretung (ihr selbst oder ihren Eltern) weitergibst. " +
     "Er bleibt derselbe, bis ihn jemand erneuert. «teams» nennt die Namen aller ihrer Teams; «hinweis» sagt, was der " +
     `Link kann und dass er die Termine aller dieser Teams zeigt. ${LINK_MODELL} ${SPIELER_KENNUNG_FEHLER}`,
   nurLesen: true,
@@ -838,7 +838,7 @@ export const spielerLinkZugestellt = werkzeug({
 // ── Selbstabholung (#438) ───────────────────────────────────────────────────
 
 const ABHOL_MODELL =
-  "Mit der Selbstabholung holen Eltern den privaten Link ihrer Spieler:in selbst ab: Sie öffnen die Abholadresse eines " +
+  "Mit der Selbstabholung holen Spieler:innen oder ihre Eltern den privaten Link selbst ab: Sie öffnen die Abholadresse eines " +
   "Teams ohne Konto und geben Vorname, Nachname und Jahrgang einer Spieler:in dieses Teams ein; passt die Eingabe (wie " +
   "die Eindeutigkeit der Liste: Gross- und Kleinschreibung, Leerzeichen, Bindestrich und Apostroph-Varianten zählen " +
   "nicht), erhalten sie ihren privaten Link - denselben, den die Abholadresse jedes ihrer Teams mit eingeschalteter Selbstabholung herausgibt -, und er " +
@@ -874,7 +874,7 @@ export const selbstabholungAbrufen = werkzeug({
   titel: "Selbstabholung eines Teams",
   beschreibung:
     "Nennt, ob die Selbstabholung eines deiner Teams eingeschaltet ist, und ihre Abholadresse, damit du sie weitergibst " +
-    `(nur im Eltern-Chat des Teams). Welche Links abgeholt sind, steht in «spielerliste_abrufen». ${ABHOL_MODELL} ${TEAM_KENNUNG_FEHLER}`,
+    `(nur im Chat des Teams mit Spieler:innen und Eltern). Welche Links abgeholt sind, steht in «spielerliste_abrufen». ${ABHOL_MODELL} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: z.object({ team_id: TeamId }),
   ausgabe: AbholAusgabe,

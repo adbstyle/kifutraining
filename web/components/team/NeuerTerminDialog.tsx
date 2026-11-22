@@ -23,6 +23,7 @@ import { maxEnddatum, serieProblem, wochentagVon, type SerieFeld, type Wochentag
 import {
   BEMERKUNG_MAX,
   HINWEIS_ELTERN_MAX,
+  LINK_KANAL,
   TERMIN_TEXT,
   istKalendertag,
   terminProblem,
@@ -369,7 +370,7 @@ export function NeuerTerminDialog({
         {istSpiel && <RichtwertFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <MeldefristFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <TreffpunkteFelder angaben={spiel} spieltag={f.von} disabled={pending} />}
-        <TextArea label="Hinweis für Eltern (optional)" rows={3} maxLength={HINWEIS_ELTERN_MAX} value={f.hinweisEltern} onChange={(e) => setze("hinweisEltern", e.target.value)} info={TERMIN_TEXT.hinweisElternSichtbar} infoAufTouch error={!!fehlerAn("hinweisEltern")} supportingText={fehlerAn("hinweisEltern")} />
+        <TextArea label={`${LINK_KANAL.hinweis} (optional)`} rows={3} maxLength={HINWEIS_ELTERN_MAX} value={f.hinweisEltern} onChange={(e) => setze("hinweisEltern", e.target.value)} info={TERMIN_TEXT.hinweisElternSichtbar} infoAufTouch error={!!fehlerAn("hinweisEltern")} supportingText={fehlerAn("hinweisEltern")} />
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={f.bemerkung} onChange={(e) => setze("bemerkung", e.target.value)} info={TERMIN_TEXT.bemerkungIntern} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         {(kader.length > 0 || !istSpiel) && (
           <FormAbschnitt titel="Spieler:innen" untertitel="Für wen der Termin gilt und mit wie vielen gerechnet wird." imDialog>

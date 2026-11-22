@@ -61,6 +61,16 @@ export const HINWEIS_ELTERN_MAX = 500;
 /** Zwilling der Checks `tt_ort_link` und `ts_ort_link` (#533 AK 5). */
 export const KARTENLINK_MAX = 500;
 
+/** Wie Angaben am privaten Link heissen (#659 AK 2): nach dem Kanal, nicht
+ *  nach einer Lesergruppe — den Link nutzen Spieler:innen und Eltern. Die
+ *  Felder heissen intern weiter `hinweis_eltern` / `hinweisEltern`. */
+export const LINK_KANAL = {
+  hinweis: "Hinweis am privaten Link",
+  meldefrist: "Meldefrist am privaten Link",
+  /** Vor dem Hinweis in knappen Zeilen (nächster Termin, Durchführen). */
+  kurz: "Am Link:",
+} as const;
+
 /** Die erwartete Spielerzahl (#390, PO 7): ganze Zahl von 1 bis 200 wie der
  *  Kinder-Filter der Übungssuche. Zwilling des Checks `tt_spielerzahl`. */
 export const SPIELERZAHL_MIN = 1;
@@ -73,20 +83,20 @@ export const TERMIN_TEXT = {
   endeNachBeginn: "Das Ende muss am selben Tag nach dem Beginn liegen.",
   ortLang: `Der Ort darf höchstens ${ORT_MAX} Zeichen lang sein.`,
   bemerkungLang: `Die Bemerkung darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
-  hinweisElternLang: `Der Hinweis für Eltern darf höchstens ${HINWEIS_ELTERN_MAX} Zeichen lang sein.`,
+  hinweisElternLang: `Der ${LINK_KANAL.hinweis} darf höchstens ${HINWEIS_ELTERN_MAX} Zeichen lang sein.`,
   /** Wer den Hinweis liest und wer die Bemerkung (#590 AK 6, 7, 15) — als
    *  Hinweis am Feld und im KI-Werkzeug. */
   hinweisElternSichtbar:
-    "Die Eltern sehen den Hinweis über ihren privaten Link und im Kalender-Abo, ausser der Termin fällt aus.",
-  bemerkungIntern: "Die Bemerkung ist für das Team. Die Eltern sehen sie nicht.",
+    "Spieler:innen und Eltern sehen den Hinweis über den privaten Link und im Kalender-Abo, ausser der Termin fällt aus.",
+  bemerkungIntern: "Die Bemerkung ist für das Team. Am privaten Link steht sie nicht.",
   grundLang: `Der Grund darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
   /** Wer den Grund liest (#530 AK 6, 7) — als Hinweis am Feld und im KI-Werkzeug. */
-  grundSichtbar: "Die Eltern sehen den Grund des Ausfalls über ihren privaten Link.",
+  grundSichtbar: "Spieler:innen und Eltern sehen den Grund des Ausfalls über den privaten Link.",
   kartenlinkUngueltig: "Füge den ganzen Link ein, er beginnt mit https://.",
   kartenlinkLang: `Der Kartenlink darf höchstens ${KARTENLINK_MAX} Zeichen lang sein.`,
   kartenlinkOhneOrt: "Gib zuerst einen Ort an.",
   /** Wer den Link öffnet (#533) — als Hinweis am Feld und im KI-Werkzeug. */
-  kartenlinkSichtbar: "Die Eltern öffnen den Kartenlink über ihren privaten Link.",
+  kartenlinkSichtbar: "Spieler:innen und Eltern öffnen den Kartenlink über den privaten Link.",
   /** #533 AK 12, 13: vor dem Speichern, wenn der Link mit dem Ort wegfällt. */
   kartenlinkFaelltWeg: "Der Kartenlink gehörte zum bisherigen Ort und fällt weg. Füge den Link zum neuen Ort ein.",
   kartenlinkFolgtSerie: "Mit dem Ort der Serie gilt auch ihr Kartenlink, der eigene Kartenlink dieses Termins fällt weg.",
@@ -99,8 +109,8 @@ export const TERMIN_TEXT = {
   /** Wer den Treffpunkt sieht und was beim Verlegen geschieht (#561 AK 11) —
    *  als Hinweis am Feld und im KI-Werkzeug. */
   treffpunktSichtbar:
-    "Wann und wo sich das Team vor dem Beginn trifft, etwa bei den Garderoben. Die Eltern sehen den Treffpunkt " +
-    "über ihren privaten Link und im Kalender-Abo. Wird der Termin verlegt, behält er seinen Abstand zum Beginn.",
+    "Wann und wo sich das Team vor dem Beginn trifft, etwa bei den Garderoben. Spieler:innen und Eltern sehen den " +
+    "Treffpunkt über den privaten Link und im Kalender-Abo. Wird der Termin verlegt, behält er seinen Abstand zum Beginn.",
   treffpunktNurTraining: "Einen Treffpunkt mit Uhrzeit und Ort gibt es nur an einem Training; ein Spiel hat Treffpunkte je Anreiseart.",
   /** #561 PC 5, 6: vor dem Speichern und im Ergebnis der KI. */
   treffpunktEntfaellt: "Mit dem neuen Beginn läge der Treffpunkt am Vortag. Er entfällt, das Training hat danach keinen Treffpunkt.",

@@ -50,7 +50,7 @@ import { KaderId, KADER_KENNUNG_FEHLER } from "@/lib/mcp/werkzeuge/kader";
 
 /**
  * Teams und Kalender (Stories #198, #322, #323, #324, #326; Felder #389,
- * erwartete Spielerzahl #390, beide an der Serie #391; Hinweis für Eltern #590).
+ * erwartete Spielerzahl #390, beide an der Serie #391; Hinweis am privaten Link #590).
  *
  * Dünne Adapter über den Fachkern (lib/kern/team.ts, lib/kern/termine.ts) —
  * dieselben Funktionen wie Team-Übersicht, Trainingsplan und Termin-Dialog
@@ -69,7 +69,7 @@ import { KaderId, KADER_KENNUNG_FEHLER } from "@/lib/mcp/werkzeuge/kader";
 
 /** Was jede Beschreibung eines Termin-Werkzeugs über das Modell sagt. */
 const TERMIN_MODELL =
-  "Der Kalender eines Teams besteht aus Terminen: Datum, Beginn, Ende, Ort, Bemerkung, Hinweis für Eltern, die Felder " +
+  "Der Kalender eines Teams besteht aus Terminen: Datum, Beginn, Ende, Ort, Bemerkung, Hinweis am privaten Link, die Felder " +
   "des Platzes und die erwartete Spielerzahl, mit oder ohne Training. Einzelne Termine entstehen mit «termin_festlegen», wöchentliche Serien mit " +
   "«terminserie_festlegen»; ein Training kommt ausschliesslich durch «training_zuordnen» an einen " +
   "bestehenden Termin auf ein Datum. Ein Termin trägt höchstens " +
@@ -87,12 +87,12 @@ const TERMIN_MODELL =
   "erwartete Spielerzahl. Beginn heisst bei einem Spiel Anpfiff; ein Spiel lässt sich nur mit einem noch bevorstehenden Anpfiff " +
   "festlegen und nur auf einen solchen verlegen, und eine Verlegung beendet seinen Ausfall. Treten Mannschaften eines Turniers zu " +
   "verschiedenen Zeiten an, ist es je Mannschaft ein Spiel. " +
-  `Trainings und Spiele tragen einen Hinweis für Eltern («hinweis_eltern»): ${TERMIN_TEXT.hinweisElternSichtbar} ` +
-  `${TERMIN_TEXT.bemerkungIntern} Was die Eltern wissen sollen (etwa ein Zugangscode oder der Einlass), gehört in den Hinweis. ` +
+  `Trainings und Spiele tragen einen Hinweis am privaten Link («hinweis_eltern»): ${TERMIN_TEXT.hinweisElternSichtbar} ` +
+  `${TERMIN_TEXT.bemerkungIntern} Was Spieler:innen und Eltern wissen sollen (etwa ein Zugangscode oder der Einlass), gehört in den Hinweis. ` +
   "Ein Training trägt auf Wunsch einen Treffpunkt («treffpunkt»: Uhrzeit und Ort, etwa bei den Garderoben, wenn sie nicht beim " +
   "Platz liegen) - nicht zu verwechseln mit den «treffpunkte» eines Spiels je Anreiseart. Er liegt am Tag des Trainings und nicht " +
-  "nach dem Beginn; die Eltern sehen ihn über ihren Link und im Kalender-Abo, ausser das Training fällt aus, hat begonnen oder ihre " +
-  "Spieler:in ist abgemeldet. Wird das Training verlegt, behält er seinen Abstand zum Beginn; ein geänderter Ort lässt ihn stehen.";
+  "nach dem Beginn; Spieler:innen und Eltern sehen ihn über den privaten Link und im Kalender-Abo, ausser das Training fällt aus, " +
+  "hat begonnen oder die Spieler:in ist abgemeldet. Wird das Training verlegt, behält er seinen Abstand zum Beginn; ein geänderter Ort lässt ihn stehen.";
 
 const ART = z.enum(TERMIN_ARTEN as ["training", "spiel"]).describe("«training» oder «spiel»; bleibt nach dem Festlegen.");
 const BEZEICHNUNG = z
@@ -101,8 +101,8 @@ const BEZEICHNUNG = z
 const MELDEFRIST = z
   .string()
   .describe(
-    "Meldefrist eines Spiels für die Eltern als JJJJ-MM-TTTHH:MM (Uhr am Trainingsort), vor dem Anpfiff, höchstens ein Jahr " +
-      "davor. Ohne Frist melden Eltern bis zum Anpfiff. Eine Verlegung nimmt sie im selben Abstand mit.",
+    "Meldefrist eines Spiels am privaten Link als JJJJ-MM-TTTHH:MM (Uhr am Trainingsort), vor dem Anpfiff, höchstens ein Jahr " +
+      "davor. Ohne Frist melden Spieler:innen und Eltern bis zum Anpfiff. Eine Verlegung nimmt sie im selben Abstand mit.",
   );
 const TREFFPUNKTE = z
   .array(
@@ -121,9 +121,9 @@ const TREFFPUNKTE = z
     }),
   )
   .describe(
-    `Treffpunkte eines Spiels als GANZE Liste, höchstens ${TREFFPUNKTE_MAX}, je Anreiseart einer. Die Eltern sehen sie über ihren ` +
-      "Link (nicht an einem ausgefallenen Spiel). Eine Verlegung nimmt sie im selben Abstand zum Anpfiff mit. Eine Rückkehr gehört " +
-      "in den Hinweis für Eltern.",
+    `Treffpunkte eines Spiels als GANZE Liste, höchstens ${TREFFPUNKTE_MAX}, je Anreiseart einer. Spieler:innen und Eltern sehen sie ` +
+      "über den privaten Link (nicht an einem ausgefallenen Spiel). Eine Verlegung nimmt sie im selben Abstand zum Anpfiff mit. Eine Rückkehr gehört " +
+      "in den Hinweis am privaten Link.",
   );
 /** Der Treffpunkt eines Trainings (#561) — eine Angabe aus Uhrzeit und Ort. */
 const TREFFPUNKT = z
@@ -147,7 +147,7 @@ const ORT = z.string().describe("Ort, frei formuliert, höchstens 100 Zeichen, e
 const BEMERKUNG = z.string().describe("Bemerkung, frei formuliert, höchstens 500 Zeichen.");
 const HINWEIS_ELTERN = z
   .string()
-  .describe(`Hinweis für Eltern, frei formuliert, höchstens ${HINWEIS_ELTERN_MAX} Zeichen. ${TERMIN_TEXT.hinweisElternSichtbar}`);
+  .describe(`Hinweis am privaten Link, frei formuliert, höchstens ${HINWEIS_ELTERN_MAX} Zeichen. ${TERMIN_TEXT.hinweisElternSichtbar}`);
 const KARTENLINK_MODELL =
   `Eine vollständige Webadresse mit https://, höchstens ${KARTENLINK_MAX} Zeichen, meist ein geteilter Link aus einer ` +
   "Karten-App. Nur zusammen mit einem Ort; ändert sich der Ort ohne neuen Kartenlink, fällt der bisherige weg. " +
@@ -174,7 +174,7 @@ const VERFALL_MODELL =
   "Ändern sich Datum oder Beginn eines Trainings und hat es danach noch nicht begonnen, verfallen seine Abmeldungen: " +
   "Alle Spieler:innen gelten wieder als angemeldet (auch über die Serie, auch an einem ausgefallenen Termin). " +
   "Verfallen dadurch Abmeldungen, kommt zuerst ein Fehler mit «verfallend» (Anzahl); frag nach und wiederhole den " +
-  "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Hinweis für Eltern, Treffpunkt, Felder, Trainer:innen und Training lassen sie stehen. " +
+  "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Hinweis am privaten Link, Treffpunkt, Felder, Trainer:innen und Training lassen sie stehen. " +
   "Läge der Treffpunkt eines Trainings mit dem neuen Beginn am Vortag, entfällt er an denselben Terminen ohne Rückfrage; " +
   "«treffpunkt_entfallen» im Ergebnis nennt sie - sag es der Person. " +
   "Ebenso verfallen die Absagen der Trainer:innen (an einem Spiel nur mit einem anderen Datum); «absagen» im Fehler nennt, wie viele. " +
@@ -217,8 +217,8 @@ const SERIEN_MODELL =
   "Eine Terminserie läuft wöchentlich an einem oder mehreren Wochentagen zwischen Beginn- und " +
   "Enddatum (höchstens bis zum gleichen Kalendertag im Folgejahr) und legt ihre Termine als " +
   "einzelne Termine an. Ein Termin einer Serie kann je Angabe abweichen (Datum, Zeit, Ort, " +
-  "Bemerkung, Hinweis für Eltern, Treffpunkt, Eingeladene, Verantwortung, Mindestbesetzung, Felder, erwartete Spielerzahl, Kader) und behält die Abweichung bei späteren Serienänderungen; " +
-  "wer an nur einem Serientermin den Hinweis für Eltern oder den Treffpunkt entfernt, führt ihn bewusst ohne, bis er wieder der Serie folgt; " +
+  "Bemerkung, Hinweis am privaten Link, Treffpunkt, Eingeladene, Verantwortung, Mindestbesetzung, Felder, erwartete Spielerzahl, Kader) und behält die Abweichung bei späteren Serienänderungen; " +
+  "wer an nur einem Serientermin den Hinweis am privaten Link oder den Treffpunkt entfernt, führt ihn bewusst ohne, bis er wieder der Serie folgt; " +
   "das Datum gilt immer, wie es ist. Die Felder sind eine Angabe (die ganze Liste), die Spielerzahl eine zweite. " +
   "Wer an nur einem Serientermin Felder oder Spielerzahl entfernt, macht ihn bewusst leer: Er weicht ab und gilt " +
   "als unbekannt, bis er wieder der Serie folgt. Einzeln entfernte Termine legt keine Serienänderung wieder an.";
@@ -305,7 +305,7 @@ const PlanEintrag = z.object({
   /** Der Kartenlink zum Ort (#533 AK 3); `null` ohne. */
   kartenlink: z.string().nullable(),
   bemerkung: z.string().nullable(),
-  /** Der Hinweis für Eltern (#590); `null` ohne. */
+  /** Der Hinweis am privaten Link (#590); `null` ohne. */
   hinweis_eltern: z.string().nullable(),
   treffpunkt: z
     .object({ uhrzeit: z.string(), ort: z.string() })
@@ -452,11 +452,11 @@ export const teamPlanAbrufen = werkzeug({
     "Liefert den Kalender eines deiner Teams (Trainings und Spiele, je mit «art»), bereits geteilt wie im Team-Bereich: «kommend» (ab " +
     "heute, aufsteigend; der heutige Tag zählt ganz dazu) und «vergangen» (der jüngste zuerst). " +
     "«heute» ist der Tag, an dem geteilt wurde - gemessen am Trainingsort (Schweiz), nicht in deiner " +
-    "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung, Hinweis für Eltern, Treffpunkt, die Felder " +
+    "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung, Hinweis am privaten Link, Treffpunkt, die Felder " +
     "des Platzes, die erwartete Spielerzahl, «spielerzahl» (die Zahl, mit der geplant wird, samt Quelle - aus der Spielerliste, " +
     "sobald das Team eine führt) und das zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
     "Training ohne Training-Inhalt, das nicht ausgefallen ist, ist noch nicht vorbereitet; ein Spiel nie. Spiele nennen Bezeichnung, Mindest- und Höchstzahl. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
-    "Ort, Bemerkung, Hinweis für Eltern, Treffpunkt, Trainer:innen, Felder, erwartete Spielerzahl und Kader jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
+    "Ort, Bemerkung, Hinweis am privaten Link, Treffpunkt, Trainer:innen, Felder, erwartete Spielerzahl und Kader jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
     "von ihr abweicht. Jeder Eintrag nennt seine Trainer:innen und seine Kader («kader» leer: für alle); «eingrenzung» grenzt auf " +
     "deine Termine ein. " +
     `${TRAINER_MODELL} ` +
@@ -526,7 +526,7 @@ export const terminFestlegen = werkzeug({
   beschreibung:
     "Legt im Kalender eines deiner Teams einen einzelnen Termin fest: ein Training (ohne Training-Inhalt, auch in der " +
     "Vergangenheit) oder ein Spiel - «art» ist Pflicht. Datum, Beginn und Ende sind Pflicht, das Ende liegt am selben Tag nach dem " +
-    "Beginn; Ort, Bemerkung, Hinweis für Eltern und Kader sind frei. Ohne Angabe sind alle Mitglieder eingeladen und du bist verantwortlich. Ein Training trägt auf Wunsch Treffpunkt, Felder und erwartete Spielerzahl; einen Inhalt ordnest du " +
+    "Beginn; Ort, Bemerkung, Hinweis am privaten Link und Kader sind frei. Ohne Angabe sind alle Mitglieder eingeladen und du bist verantwortlich. Ein Training trägt auf Wunsch Treffpunkt, Felder und erwartete Spielerzahl; einen Inhalt ordnest du " +
     "danach mit «training_zuordnen» zu. Ein Spiel braucht eine Bezeichnung und trägt auf Wunsch Mindest- und Höchstzahl. " +
     `${BENACHRICHTIGEN_WERKZEUG} ${TERMIN_MODELL} ${KADER_TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
   nurLesen: false,
@@ -622,7 +622,7 @@ export const AendernEingabe = z.object({
   bemerkung: BEMERKUNG.nullable().optional().describe("Neue Bemerkung; null leert sie, ohne Angabe unverändert."),
   hinweis_eltern: HINWEIS_ELTERN.nullable()
     .optional()
-    .describe(`Neuer Hinweis für Eltern; null leert ihn, ohne Angabe unverändert. ${TERMIN_TEXT.hinweisElternSichtbar}`),
+    .describe(`Neuer Hinweis am privaten Link; null leert ihn, ohne Angabe unverändert. ${TERMIN_TEXT.hinweisElternSichtbar}`),
   treffpunkt: TREFFPUNKT.nullable()
     .optional()
     .describe(
@@ -703,7 +703,7 @@ export const terminAendern = werkzeug({
   name: "termin_aendern",
   titel: "Termin ändern",
   beschreibung:
-    "Ändert Datum, Zeit, Ort, Bemerkung, Hinweis für Eltern, Treffpunkt, die Felder, die erwartete Spielerzahl oder die Kader eines Termins, bei einem Spiel auch " +
+    "Ändert Datum, Zeit, Ort, Bemerkung, Hinweis am privaten Link, Treffpunkt, die Felder, die erwartete Spielerzahl oder die Kader eines Termins, bei einem Spiel auch " +
     "Bezeichnung, Mindest- und Höchstzahl - nur, was du mitgibst; die Art bleibt. Beginn und Ende " +
     "lassen sich nicht leeren; ändert sich die Zeit, braucht der Termin danach beide. Das " +
     "zugeordnete Training bleibt dasselbe. Für einen Termin einer Serie ist «reichweite» Pflicht; " +
@@ -824,7 +824,7 @@ export const terminserieFestlegen = werkzeug({
   beschreibung:
     "Legt für eines deiner Teams eine wöchentliche Terminserie fest: je gewähltem Wochentag " +
     "zwischen «von» und «bis» (beide eingeschlossen) einen Termin ohne Training mit Beginn, Ende, " +
-    "Ort, Bemerkung, Hinweis für Eltern, Treffpunkt, Eingeladenen, Verantwortlicher, Feldern, erwarteter Spielerzahl und Kadern der Serie - auch ganz oder teilweise in " +
+    "Ort, Bemerkung, Hinweis am privaten Link, Treffpunkt, Eingeladenen, Verantwortlicher, Feldern, erwarteter Spielerzahl und Kadern der Serie - auch ganz oder teilweise in " +
     "der Vergangenheit. Bestehende " +
     "Termine an denselben Tagen bleiben daneben stehen. Ohne Angabe sind alle Mitglieder eingeladen und du bist verantwortlich. " +
     `${SERIEN_MODELL} ${KADER_TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
@@ -883,7 +883,7 @@ export const terminDerSerieFolgen = werkzeug({
   titel: "Termin wieder der Serie folgen lassen",
   beschreibung:
     "Lässt abweichende Angaben eines Serientermins wieder seiner Serie folgen: Zeit, Ort, " +
-    "Bemerkung, Hinweis für Eltern («hinweis_eltern»), Treffpunkt («treffpunkt»), Eingeladene, Verantwortung, Mindestbesetzung («besetzung»), Felder, erwartete Spielerzahl («spielerzahl») oder Kader übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
+    "Bemerkung, Hinweis am privaten Link («hinweis_eltern»), Treffpunkt («treffpunkt»), Eingeladene, Verantwortung, Mindestbesetzung («besetzung»), Felder, erwartete Spielerzahl («spielerzahl») oder Kader übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
     `lässt sich nicht zurücksetzen («datum» wird abgewiesen). ${BENACHRICHTIGEN_WERKZEUG} ${VERFALL_MODELL} ${KADER_TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({

@@ -73,7 +73,7 @@ export const PROBE_TEXT = {
   info: "Info-Schreiben",
   infoFeld: "Info-Schreiben (optional)",
   /** AK 3: wer es sieht — fest hinter dem ⓘ. */
-  infoWer: "Das sehen die Eltern aller schnuppernden Spieler:innen an ihrem Link unter «Infos».",
+  infoWer: "Das sehen alle schnuppernden Spieler:innen und ihre Eltern am privaten Link unter «Infos».",
   infoUnter: "Nur Text. Webadressen werden im Link anklickbar.",
   infoZuLang: `Das Info-Schreiben darf höchstens ${PROBE_INFO_MAX} Zeichen lang sein.`,
   infoKeines: "Keines",

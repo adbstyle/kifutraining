@@ -1824,7 +1824,7 @@ export default async function Styleguide() {
             nicht während man im Feld arbeitet, und auf Touch-Geräten gar nicht
             (PO 2026-10-04). Muss man den Hinweis auch dort lesen, bevor man
             weitermacht - dass die Altersstufe eines Trainings lebenslang bindet
-            oder dass die Eltern den Grund eines Ausfalls sehen -,
+            oder dass Spieler:innen und Eltern den Grund eines Ausfalls sehen -,
             zeigt <code>infoAufTouch</code> ihn auf Touch-Geräten als Hinweis
             unter dem Feld. Das ⓘ hängt am Namen (PO 2026-10-31): Steht der
             Name über dem Feld, steht es oben hinter ihm, mittig zu seiner Zeile
@@ -2197,7 +2197,7 @@ export default async function Styleguide() {
             in einem neuen Tab und gibt weder die Herkunftsseite noch das Fenster preis.
             Neu, weil <code>ButtonLink</code> nur innerhalb der Anwendung führt. Mit
             <code> einzeilig</code> kürzt ein langer Text mit «…», das Zeichen bleibt
-            stehen - so steht der Ort mit Kartenlink auf der Karte der Eltern (#533).
+            stehen - so steht der Ort mit Kartenlink auf der Karte am privaten Link (#533).
           </p>
           <div className="flex max-w-xs flex-col items-start gap-3 type-body-medium">
             <ExternerLink href="https://maps.app.goo.gl/MRWFZj3ZQtsYGBFi9">Auf der Karte öffnen</ExternerLink>
@@ -4047,7 +4047,7 @@ export default async function Styleguide() {
             />
           </Card>
           <p className="type-body-medium mb-3 mt-8 max-w-2xl text-on-surface-mittel">
-            <strong>Hinweis für Eltern</strong> - <code>HinweisEltern</code>: der Fuss
+            <strong>Hinweis am privaten Link</strong> - <code>HinweisEltern</code>: der Fuss
             einer Termin- oder Spielkarte am privaten Link (#590). Eine Haarlinie trennt
             ihn vom Kopf der Karte, darunter ein <code>KuerzbarerText</code> auf vier
             Zeilen. An einer gedämpften Karte (abgemeldet) tritt er gedämpft zurück.
@@ -4512,7 +4512,7 @@ export default async function Styleguide() {
         <Section id="benachrichtigungen">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Benachrichtigungen am privaten Link (Epic #641): was am Team geschieht, sieht die Spielervertretung
-            dort, ohne dass das Team es im Eltern-Chat ankündigt. Aus bestehenden Teilen gebaut -{" "}
+            dort, ohne dass das Team es im Chat mit Spieler:innen und Eltern ankündigt. Aus bestehenden Teilen gebaut -{" "}
             <code>IconButton</code> mit <code>zahl</code>, <code>Lozenge</code>, <code>Button</code> und{" "}
             <code>Leerzustand</code> - plus dem Eintrag als einzigem neuem Baustein.
           </p>

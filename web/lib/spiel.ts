@@ -357,7 +357,7 @@ export function spielVerfallText(meldungen: number, fristAbgelaufen: boolean, ke
     teile.push(
       `${meldungen > 0 ? "Ausserdem" : "Damit"} ${kennzeichnungen + nachtraege === 1 ? "verfällt" : "verfallen"} ${weitere.join(" und ")}.`,
     );
-  if (fristAbgelaufen) teile.push("Die Meldefrist ist danach schon abgelaufen; Eltern können nicht mehr melden.");
+  if (fristAbgelaufen) teile.push("Die Meldefrist ist danach schon abgelaufen; am privaten Link kann niemand mehr melden.");
   return teile.join(" ");
 }
 

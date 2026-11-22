@@ -9,6 +9,7 @@ import type { TerminZeile } from "@/lib/queries/termine-fuer";
 import { dabeiZahl, eingeladenZahl, noetigeVon, verantwortlichText } from "@/lib/trainer";
 import { FUER_ALLE } from "@/lib/kader";
 import { richtwertStufeText, richtwertText, zeitpunktKurz } from "@/lib/spiel";
+import { LINK_KANAL } from "@/lib/termin";
 import { KaderLozenges } from "./KaderLozenge";
 
 /** Der Status eines Spiels als Lozenge mit seinem Detail; ohne Richtwert nichts. */
@@ -109,9 +110,9 @@ export function TerminEigenschaften({
           {richtwertText(t.spiel.richtwertMin, t.spiel.richtwertMax) && (
             <Eigenschaft label="Richtwert">{richtwertText(t.spiel.richtwertMin, t.spiel.richtwertMax)} Spieler:innen</Eigenschaft>
           )}
-          {/* #463 AK 8: bis wann Eltern melden; ohne Frist bis zum Anpfiff. */}
+          {/* #463 AK 8: bis wann am privaten Link gemeldet wird; ohne Frist bis zum Anpfiff. */}
           <Eigenschaft label="Meldefrist">
-            {t.spiel.meldefrist ? `Eltern bis ${zeitpunktKurz(t.spiel.meldefrist)}` : "Bis zum Anpfiff"}
+            {t.spiel.meldefrist ? `Am Link bis ${zeitpunktKurz(t.spiel.meldefrist)}` : "Bis zum Anpfiff"}
           </Eigenschaft>
         </>
       ) : (
@@ -133,7 +134,7 @@ export function TerminEigenschaften({
         </>
       )}
       {t.hinweisEltern && (
-        <Eigenschaft label="Hinweis für Eltern">
+        <Eigenschaft label={LINK_KANAL.hinweis}>
           <span className="whitespace-pre-line">{t.hinweisEltern}</span>
         </Eigenschaft>
       )}

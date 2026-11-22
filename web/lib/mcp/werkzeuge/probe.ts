@@ -21,7 +21,7 @@ export const SCHNUPPER_MODELL =
   "Ein Team kann Spieler:innen der Spielerliste schnuppern lassen - aber nur, solange sie genau diesem einen Team " +
   "zugeordnet sind: Wer weiteren Teams angehört, macht regulär mit und schnuppert nicht; wer schnuppert, lässt sich " +
   "keinem weiteren Team zuordnen. Eine schnuppernde Spieler:in ist an Trainings " +
-  "zuerst nicht angemeldet und wird angemeldet - über ihren privaten Link von den Eltern, höchstens für so viele " +
+  "zuerst nicht angemeldet und wird angemeldet - über ihren privaten Link, von der Spieler:in oder ihren Eltern, höchstens für so viele " +
   `Trainings, wie das Team festlegt (die Anzahl, ${PROBE_ANZAHL_MIN} bis ${PROBE_ANZAHL_MAX}; besuchte und künftig ` +
   "angemeldete zählen). Mitglieder (und du) melden sie ohne diese Grenze an; geht eine Anmeldung über die Anzahl, " +
   "kommt «hinweis» mit dem Stand zurück. Spiele gelten für sie nicht. Einschalten geht nur, wenn das Team eine " +

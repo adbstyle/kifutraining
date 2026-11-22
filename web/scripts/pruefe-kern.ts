@@ -81,6 +81,7 @@ import {
   TERMIN_MELDUNG,
   KONFLIKT_MARKER,
   ausfallProblem,
+  LINK_KANAL,
   TERMIN_TEXT,
   AUSFALL_ZURUECKNEHMEN_TEXT,
   ZUORDNEN_ERFOLG,
@@ -1551,7 +1552,7 @@ pruefe("Serie: Felder und Spielerzahl mit denselben Sätzen, jede Reichweite, fo
   assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false }), ["nur_dieser", "dieser_und_folgende", "alle"]);
   assert.equal(
     SERIE_MELDUNG.SERIE_ANGABEN_UNGUELTIG,
-    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Hinweis für Eltern, Treffpunkt, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.",
+    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Hinweis am privaten Link, Treffpunkt, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.",
   );
 });
 
@@ -2599,7 +2600,7 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
     linkStatisch,
     {
       warnung:
-        "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
+        "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur der Spieler:in selbst oder ihren Eltern.",
       erneuern:
         "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen. Die bisherigen Benachrichtigungen enden ebenfalls. Mitteilungen aufs Mobile enden ebenfalls: Die Spielervertretung schaltet sie mit dem neuen Link neu ein und legt die App neu ab.",
       ungueltigTitel: "Dieser Link gilt nicht mehr",
@@ -2608,7 +2609,7 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
     },
     "LINK_TEXT: Schlüssel und Wortlaut eingefroren",
   );
-  assert.equal(erneuertAbholen(["A"]), "Die Eltern holen den neuen Link über die Abholadresse von A ab.");
+  assert.equal(erneuertAbholen(["A"]), "Die Spieler:in oder ihre Eltern holen den neuen Link über die Abholadresse von A ab.");
   // Löschen: ein, mehrere, kein Team.
   assert.equal(spielerLoeschenTitel("Lina Meier"), "Lina Meier aus dem Verein löschen");
   assert.deepEqual(spielerLoeschenSaetze("Lina", ["Ca"]), {
@@ -2941,6 +2942,116 @@ pruefe("Kein «Probe» in Oberflächentexten und KI: Texte, JSX, Schema-Schlüss
   assert.deepEqual(treffer, [], `«Probe» steht noch in Oberflächen- oder KI-Texten: ${treffer.join("; ")}`);
 });
 
+/** Was Menschen oder ein KI-Client von einer Quelldatei zu lesen bekommen: Zeichenketten,
+ *  Vorlagen und JSX-Text — nicht Kommentare, Bezeichner, Importpfade, Typ-Literale und nicht
+ *  Namen der Datenebene (Argument von `.rpc()`, `.select()` u. ä.). Unter `lib/mcp` dazu die
+ *  Schema-Schlüssel, die der KI-Client als Feldnamen sieht. Für die Wortlaut-Wächter von #659. */
+function sichtbareTexte(quelltext: string, rel: string): { ort: string; text: string; schluessel?: true }[] {
+  const texte: { ort: string; text: string; schluessel?: true }[] = [];
+  const sf = ts.createSourceFile(rel, quelltext, ts.ScriptTarget.Latest, true, rel.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+  const ort = (n: ts.Node) => `${rel}:${sf.getLineAndCharacterOfPosition(n.getStart()).line + 1}`;
+  const besuche = (n: ts.Node) => {
+    const p = n.parent;
+    if (
+      ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n) || ts.isTemplateHead(n) ||
+      ts.isTemplateMiddle(n) || ts.isTemplateTail(n) || ts.isJsxText(n)
+    ) {
+      const modul = (ts.isImportDeclaration(p) || ts.isExportDeclaration(p)) && p.moduleSpecifier === n;
+      const dynamisch = ts.isCallExpression(p) && p.expression.kind === ts.SyntaxKind.ImportKeyword;
+      const name =
+        ts.isCallExpression(p) && p.arguments.some((a) => a === n) &&
+        ts.isPropertyAccessExpression(p.expression) && NAMENS_AUFRUFE.includes(p.expression.name.text);
+      if (!modul && !dynamisch && !name && !ts.isLiteralTypeNode(p)) texte.push({ ort: ort(n), text: n.text });
+    }
+    if (rel.startsWith("lib/mcp/") && (ts.isPropertyAssignment(n) || ts.isPropertySignature(n) || ts.isShorthandPropertyAssignment(n)))
+      texte.push({ ort: ort(n), text: n.name.getText(sf), schluessel: true });
+    ts.forEachChild(n, besuche);
+  };
+  besuche(sf);
+  return texte;
+}
+
+/** «bezogen» heisst überall «abgeholt» (#657 PC 4, #659). Erlaubt bleibt nur der Name der
+ *  Spalte `link_bezogen` (Sync-Risiko, fällt mit N1) als ganzes Wort, etwa in einer
+ *  Spaltenliste; den Schlüssel `bezogen` der RPC-Antworten lesen nur Bezeichner. */
+function bezogenTreffer(quelltext: string, rel: string): string[] {
+  return sichtbareTexte(quelltext, rel)
+    .filter((t) => /bezogen/i.test(t.schluessel ? t.text : t.text.replace(/\blink_bezogen\b/g, "")))
+    .map((t) => `${t.ort} ${t.schluessel ? "Schlüssel" : "Text"} «${t.text.slice(0, 60)}»`);
+}
+
+/** Den privaten Link nutzen Spieler:innen und Eltern (#659 AK 1–3): Ein Satz, der «Eltern»
+ *  nennt, nennt im selben Satz auch die Spieler:in — sonst richtet er sich nur an Eltern.
+ *  Angaben am Link heissen nach dem Kanal (`LINK_KANAL`). Felder und Bausteine (`hinweis_eltern`,
+ *  `hinweisEltern`, `ElternAnsicht`) sind Bezeichner und zählen nicht. Ein Satz endet an
+ *  «.», «!» oder «?» vor einem Leerraum; ein über mehrere Zeichenketten verteilter Satz zählt
+ *  je Zeichenkette — der Wächter ist ein Netz, kein Beweis. */
+function nurElternTreffer(quelltext: string, rel: string): string[] {
+  const treffer: string[] = [];
+  for (const t of sichtbareTexte(quelltext, rel)) {
+    if (t.schluessel) continue;
+    for (const satz of t.text.split(/(?<=[.!?])\s+/))
+      if (/\bEltern\b/.test(satz) && !/Spieler:in/.test(satz)) treffer.push(`${t.ort} «${satz.replace(/\s+/g, " ").trim().slice(0, 80)}»`);
+  }
+  return treffer;
+}
+
+/** Die Dateien der Wortlaut-Wächter: Oberfläche, Kern und KI. Ausgenommen sind die generierten
+ *  Typen und `lib/feedback/` (Anweisungen und Produktwissen des Feedback-Modells, aus
+ *  docs/feedback-triage.md generiert — sie ziehen mit der Produktdoku beim Release nach). */
+function wortlautDateien(): { rel: string; text: string }[] {
+  const dateien: { rel: string; text: string }[] = [];
+  for (const wurzel of ["app", "components", "lib"].map((p) => join(web, p)))
+    for (const datei of quelldateien(wurzel)) {
+      const rel = relative(web, datei);
+      if (rel === "lib/database.types.ts" || rel.startsWith("lib/feedback/")) continue;
+      dateien.push({ rel, text: readFileSync(datei, "utf8") });
+    }
+  return dateien;
+}
+
+pruefe("Kein «bezogen» in Oberfläche und KI, nur die Spalte link_bezogen als Name (#657 PC 4, #659)", () => {
+  // Der Wächter schlägt an …
+  assert.equal(bezogenTreffer('export const a = "3 Links bezogen";', "components/x.tsx").length, 1);
+  assert.equal(bezogenTreffer("export const a = <span>Bezogen</span>;", "components/x.tsx").length, 1);
+  assert.equal(bezogenTreffer("export const a = `${n} bezogen`;", "lib/x.ts").length, 1);
+  assert.equal(bezogenTreffer("export const a = z.object({ link_bezogen: z.boolean() });", "lib/mcp/werkzeuge/x.ts").length, 1, "Schlüssel im KI-Schema");
+  // … und lässt Spaltennamen, Bezeichner und Kommentare durch.
+  for (const gut of [
+    'db.from("spieler").select("id, link_bezogen");',
+    'const SPALTEN = "id, vorname, link_bezogen, kader_spieler(kader_id)";',
+    "const r = data as { bezogen: boolean }; // bezogen heisst abgeholt",
+    "export const b = s.link_bezogen === true;",
+  ])
+    assert.deepEqual(bezogenTreffer(gut, "lib/kern/x.ts"), [], gut);
+  const treffer = wortlautDateien().flatMap((d) => bezogenTreffer(d.text, d.rel));
+  assert.deepEqual(treffer, [], `«bezogen» steht noch in Oberflächen- oder KI-Texten: ${treffer.join("; ")}`);
+});
+
+pruefe("Angaben am privaten Link für Spieler:innen und Eltern, nie nur für Eltern (#659 AK 1–3)", () => {
+  // Der Wächter schlägt an …
+  for (const schlecht of [
+    'export const a = "Die Eltern sehen den Hinweis.";',
+    "export const a = <label>Hinweis für Eltern</label>;",
+    "export const a = `Eltern melden bis ${frist}`;",
+    'export const a = "Abholadresse erneuert. Teile die neue im Eltern-Chat.";',
+  ])
+    assert.equal(nurElternTreffer(schlecht, "components/x.tsx").length, 1, schlecht);
+  // … und lässt beide Lesergruppen, Bezeichner, Zusammensetzungen und Kommentare durch.
+  for (const gut of [
+    'export const a = "Spieler:innen und Eltern sehen den Hinweis.";',
+    'export const a = "Gib ihn nur der Spieler:in selbst oder ihren Eltern.";',
+    "export const a = { hinweisEltern: t.hinweis_eltern }; // der Hinweis für Eltern",
+    'import { HinweisEltern } from "./HinweisEltern";',
+    'export const a = "Elternkontakte bleiben auf deinem Gerät.";',
+  ])
+    assert.deepEqual(nurElternTreffer(gut, "components/x.tsx"), [], gut);
+  // Die Kanalbezeichnungen (kurze Labels).
+  assert.deepEqual(LINK_KANAL, { hinweis: "Hinweis am privaten Link", meldefrist: "Meldefrist am privaten Link", kurz: "Am Link:" });
+  const treffer = wortlautDateien().flatMap((d) => nurElternTreffer(d.text, d.rel));
+  assert.deepEqual(treffer, [], `Texte nur für Eltern: ${treffer.join("; ")}`);
+});
+
 pruefe("Kalenderblatt und Tag ohne Jahr: Wochentag, Tageszahl, Monat, nie das Jahr (#402 AK 1, #403 AK 8)", () => {
   assert.deepEqual(kalenderblatt("2026-10-06"), { wochentag: "Di", tag: 6, monat: "Okt." });
   assert.deepEqual(kalenderblatt("2027-03-01"), { wochentag: "Mo", tag: 1, monat: "März" });
@@ -3255,13 +3366,13 @@ pruefe("Link am Team-Ort und Verein-Ort (#583 AK 13, 15, 16): Hinweis und Erneue
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true)]), [
     "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von Lina: Ca. Abmeldungen bleiben bestehen.",
     LINK_ERNEUERN_MITTEILUNGEN,
-    "Die Eltern holen den neuen Link über die Abholadresse von Ca ab.",
+    "Die Spieler:in oder ihre Eltern holen den neuen Link über die Abholadresse von Ca ab.",
   ]);
   // Mehrere Teams, zwei mit Abholung; in der geladenen Folge (geordnet hat der Kern, `nachTeamname`).
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true), ab("Cb", true), ab("Cc", false)]), [
     "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von Lina: Ca, Cb und Cc. Abmeldungen bleiben bestehen.",
     LINK_ERNEUERN_MITTEILUNGEN,
-    "Die Eltern holen den neuen Link über die Abholadresse von Ca oder Cb ab.",
+    "Die Spieler:in oder ihre Eltern holen den neuen Link über die Abholadresse von Ca oder Cb ab.",
   ]);
   // Keines abholbar.
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", false), ab("Cb", false)]), [
@@ -4759,7 +4870,7 @@ pruefe("Verein gründen (#587 AK 1–5): Sätze des Dialogs und des Einstiegs, M
     feld: "Name des Vereins",
     info: "Höchstens 60 Zeichen. Den Namen kannst du später ändern.",
     haken1: "Ich bin berechtigt, für diesen Verein zu handeln.",
-    haken2: "Der Verein ist für die Daten seiner Spieler:innen verantwortlich und Ansprechpartner ihrer Eltern und Vertretungen.",
+    haken2: "Der Verein ist für die Daten seiner Spieler:innen verantwortlich und Ansprechpartner für sie, ihre Eltern und Vertretungen.",
     erste: "Du wirst die erste Person der Vereinsverwaltung. Solange du dabei bist, kannst du keinem anderen Verein angehören.",
     knopf: "Verein gründen",
   });
@@ -5504,7 +5615,7 @@ pruefe("Infos zum Team: bereinigt wie die Datenebene, höchstens 10'000 Zeichen 
   assert.match(sql, /char_length\(text\) between 1 and 10000/);
   assert.match(sql, /char_length\(v_text\) > 10000/);
   // Der Zugang nennt die Infos (PC 2: ohne neue Zustimmung).
-  assert.ok(readFileSync(join(web, "lib/mcp/umfang.ts"), "utf8").includes("die Infos zum Team für die Eltern verfassen, ändern und entfernen"));
+  assert.ok(readFileSync(join(web, "lib/mcp/umfang.ts"), "utf8").includes("die Infos zum Team für Spieler:innen und Eltern verfassen, ändern und entfernen"));
 });
 
 pruefe("Infos am privaten Link: die Erklärungen stehen hinter dem ⓘ, nicht mehr auf der Termin-Seite (#598 AK 10; OoS 10)", () => {

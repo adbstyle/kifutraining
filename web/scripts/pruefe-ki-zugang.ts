@@ -1385,7 +1385,7 @@ pruefe("Benachrichtigungen (#645 AK 1): termin_entfernen beschreibt «benachrich
 pruefe("Story 13 (#589 PC 1, 2): ZUGANG_DARF und ZUGANG_DARF_NICHT im Wortlaut, der Kopf von umfang.ts verlangt keine erneute Zustimmung", () => {
   assert.equal(
     ZUGANG_DARF[5],
-    "die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen und führen, dazu den Verein deiner Teams und die Namen weiterer Teams einer Spieler:in sehen, Spieler:innen aus einem deiner Teams nehmen (sie bleiben im Verein), Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die Anzahl Schnuppertrainings samt Info-Schreiben festlegen, die Infos zum Team für die Eltern verfassen, ändern und entfernen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link einer Spieler:in holen, erneuern und als zugestellt markieren, die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche Links abgeholt oder zugestellt sind",
+    "die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen und führen, dazu den Verein deiner Teams und die Namen weiterer Teams einer Spieler:in sehen, Spieler:innen aus einem deiner Teams nehmen (sie bleiben im Verein), Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die Anzahl Schnuppertrainings samt Info-Schreiben festlegen, die Infos zum Team für Spieler:innen und Eltern verfassen, ändern und entfernen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link einer Spieler:in holen, erneuern und als zugestellt markieren, die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche Links abgeholt oder zugestellt sind",
   );
   assert.deepEqual(ZUGANG_DARF_NICHT, [
     "deine Favoriten",
@@ -1408,6 +1408,21 @@ pruefe("#598 AK 9: die Infos zum Team über zwei Werkzeuge, mit Gliederung, Gren
     assert.match(t, /«## »/, n);
   }
   assert.match(beschreibung.get("team_infos_festlegen") ?? "", /leerer Text/);
+});
+
+pruefe("#659 AK 3: der KI-Assistent beschreibt Angaben am privaten Link als für Spieler:innen und Eltern bestimmt", () => {
+  const { beschreibung } = werkzeugTexte();
+  // Kein Satz einer Werkzeugbeschreibung nennt «Eltern» ohne die Spieler:in (Zwilling des Wächters in check:kern).
+  for (const [name, text] of beschreibung)
+    for (const satz of text.split(/(?<=[.!?])\s+/))
+      assert.ok(!/\bEltern\b/.test(satz) || /Spieler:in/.test(satz), `${name}: «${satz}»`);
+  for (const [name, text] of beschreibung) assert.ok(!/Hinweis für Eltern|Eltern-Chat/.test(text), name);
+  // Die Angaben selbst: Hinweis, Infos zum Team, Meldefrist.
+  assert.match(beschreibung.get("team_plan_abrufen") ?? "", /Hinweis am privaten Link/);
+  assert.match(beschreibung.get("termin_festlegen") ?? "", /Spieler:innen und Eltern sehen den Hinweis über den privaten Link/);
+  for (const n of ["team_infos_abrufen", "team_infos_festlegen"])
+    assert.match(beschreibung.get(n) ?? "", /ein Text je Team für Spieler:innen und Eltern/, n);
+  assert.match(beschreibung.get("termin_spieler_abrufen") ?? "", /Spieler:innen und Eltern über den privaten Link nur bis zur Meldefrist/);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);
