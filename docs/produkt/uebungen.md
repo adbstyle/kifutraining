@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-11-15. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-11-22 (Release 1.52.0). Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -280,7 +280,12 @@ nächsten 24 dazu; über dem Knopf steht, wie viele von wie vielen zu sehen sind
 Trefferzahl über den Kacheln nennt immer die ganze Auswahl. Wer einen Filter ändert oder die
 Filter zurücksetzt, beginnt wieder bei den ersten 24.
 
-Angemeldete haben zwei weitere Sichten: die eigenen Übungen und die Favoriten. Favorisieren
+Angemeldete grenzen den Katalog mit zwei weiteren Chips ein: «Meine Übungen» zeigt nur die
+selbst angelegten, Entwürfe wie öffentliche, «Favoriten» nur die favorisierten. Beide lassen sich
+mit den übrigen Filtern und miteinander verbinden. Einen eigenen Eintrag in der Seitenleiste
+haben die eigenen Übungen nicht; mit gesetztem «Meine Übungen» bleibt dort «Übungen» der offene
+Eintrag, die Brotkrume lautet „Übungen › Meine Übungen", und die Adresse trägt die Eingrenzung
+mit, sodass auch bisherige Adressen und Verweise auf die eigenen Übungen so ankommen. Favorisieren
 kann jeder jede sichtbare Übung, auch die aus dem Manual und die fremder Trainer.
 
 Derselbe Bestand lässt sich auch im Gespräch mit einem verbundenen KI-Assistenten durchsuchen
@@ -389,7 +394,7 @@ die Übungen anderer und die Übungen in einem Training, denn diese Fassungen ge
 (siehe [Trainings](trainings.md#jede-übung-im-training-ist-eine-eigene-fassung)). Eine Übung in
 ein Training zu übernehmen bleibt darum immer frei.
 
-Den Stand zeigt „Meine Übungen" oben über der Liste, etwa „12 von 50 Übungen", und ab der Grenze
+Den Stand zeigt der Katalog, sobald der Chip «Meine Übungen» gesetzt ist, oben über der Liste, etwa „12 von 50 Übungen", und ab der Grenze
 mit der Plakette „Nichts mehr frei". Er nennt immer den ganzen Bestand, auch wenn ein Filter die
 Liste kürzt. Liegt der Bestand über der Grenze — etwa nach dem Löschen des eigenen Vereins —,
 steht nur die Zahl, etwa „62 Übungen (höchstens 50)". Die Seite „Neue Übung" zeigt denselben
