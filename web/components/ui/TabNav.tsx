@@ -18,7 +18,13 @@ export interface TabNavItem {
 
    Die offene Ansicht trägt einen Strich in Primary, die Reiter stehen in
    `type-title-small` und normal gesetzt. `aria-current` macht die offene
-   Ansicht auch ohne die Farbe erkennbar. */
+   Ansicht auch ohne die Farbe erkennbar.
+
+   Reicht die Breite nicht, brechen die Reiter in eine zweite Zeile um, statt
+   seitlich zu rollen: Mobile Browser zeigen keine Scrollleiste, ein Reiter
+   ausserhalb des Bilds wäre weder als offen noch als vorhanden zu erkennen
+   (gemessen #656: vier Bereiche brauchen 505 px, bei 375 px Fensterbreite
+   bleiben 343 px). */
 export function TabNav({
   items,
   ariaLabel,
@@ -38,7 +44,7 @@ export function TabNav({
       aria-label={ariaLabel}
       className={cn("border-b border-linie", className)}
     >
-      <ul className="-mb-px flex gap-1 overflow-x-auto">
+      <ul className="-mb-px flex flex-wrap gap-x-1">
         {items.map((item) => (
           // Der Name und nicht das Ziel: Zwei Reiter dürfen auf dieselbe
           // Adresse zeigen (im Styleguide tun es drei), gleich heissen dürfen

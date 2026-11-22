@@ -1704,7 +1704,12 @@ export default async function Styleguide() {
             lebt im Formularzustand. Die Leiste trennt sich nach
             unten mit <code>border-linie</code>, die offene Ansicht trägt einen
             2 px starken Strich in Primary. Die Reiter stehen in{" "}
-            <code>type-title-small</code>, normal gesetzt.
+            <code>type-title-small</code>, normal gesetzt. Reicht die Breite
+            nicht, brechen die Reiter in eine zweite Zeile um, statt seitlich zu
+            rollen: Mobile Browser zeigen keine Scrollleiste, ein Reiter
+            ausserhalb des Bilds wäre weder als offen noch als vorhanden zu
+            erkennen (die vier Bereiche der Team-Verwaltung brauchen gut 500 px,
+            auf dem Handy bleiben rund 340 px).
           </p>
           <TabNav
             ariaLabel="Beispiel-Ansichten"
