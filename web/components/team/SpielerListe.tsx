@@ -21,13 +21,15 @@ import { aendereSpielerAktion, ladeSpielerTeamsAktion, nimmSpielerAufAktion, nim
 import { aendereZuteilungAktion } from "@/lib/actions/kader";
 import { probeFolgenAktion, schalteProbeAktion } from "@/lib/actions/probe";
 import { PROBE_TEXT, probeAusschaltenText, probeEinschaltenText, probeFolgenSumme, probeVerfallFolge, probeVerfallTitel, type ProbeFolgen } from "@/lib/probe";
-import { KADER_TEXT, kaderVon, type Kader } from "@/lib/kader";
+import { kaderVon, type Kader } from "@/lib/kader";
 import {
   HERAUSNEHMEN_TEXT,
   herausnehmenSaetze,
   herausnehmenTitel,
   linkKnopfText,
   spielerName,
+  TEAM_SPIELER_FILTER,
+  teamSpielerAnzahlText,
   verbleibendeTeams,
   type Spieler,
   type SpielerTeams,
@@ -38,10 +40,19 @@ import { LINK_STAND_PUNKT } from "./LinkStandLozenge";
 import { KaderLozenges } from "./KaderLozenge";
 import { TeamLozenges } from "./TeamLozenges";
 import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
-import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
+import { EingrenzungLeer } from "./KaderEingrenzung";
+import { TeamSpielerFilter } from "./TeamSpielerFilter";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
 import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 import { MITTEILUNGEN_SPALTE } from "@/lib/push";
+import { useAdressFilter } from "@/lib/use-adress-filter";
+import {
+  filtereSpieler,
+  jahrgaengeDerListe,
+  sichtbareAuswahl,
+  teamEingrenzungGesetzt,
+  type TeamEingrenzung,
+} from "@/lib/team-spielerliste";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
    Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet einen
@@ -68,12 +79,19 @@ import { MITTEILUNGEN_SPALTE } from "@/lib/push";
    Spielerbestand des Vereins (Story #585).
 
    Führt das Team Kader (#452), zeigt die Liste je Spieler:in ihre Kader
-   (AK 7), grenzt sich über die Chips darüber auf einen Kader oder auf
-   «Ohne Kader» ein (AK 8, 9; ein Chip zur Zeit, PO 2026-10-18) und teilt
-   über die Auswahl mehreren in einem Schritt zu (AK 6). Der Dialog führt die
-   Kader einer Spieler:in als Mehrfachauswahl (AK 5). Nimmt eine Änderung
-   Spieler:innen aus Terminen, für die sie abgemeldet waren, fragt sie vorher
-   nach (#453 AK 10).
+   (AK 7) und teilt über die Auswahl mehreren in einem Schritt zu (AK 6). Der
+   Dialog führt die Kader einer Spieler:in als Mehrfachauswahl (AK 5). Nimmt
+   eine Änderung Spieler:innen aus Terminen, für die sie abgemeldet waren,
+   fragt sie vorher nach (#453 AK 10).
+
+   Eingrenzen (#601): Die Filterleiste über der Liste grenzt nach Name oder
+   J+S-Nummer, Kadern samt «Ohne Kader», Jahrgängen und dem Stand des Links
+   ein (hebt «ein Chip zur Zeit» aus #452 AK 8, 9 auf; am Termin bleibt es
+   bei einem Kader). Der Zustand steht in der Adresse, die Seite liest und
+   bereinigt ihn (`eingrenzung`), die Liste filtert im Browser. Der Kopf
+   zählt dann «12 von 35»; trifft die Eingrenzung niemanden, steht das
+   Leerfeld mit «Zurücksetzen». Zugeteilt wird nur, wer ausgewählt ist und
+   sichtbar bleibt (AK 10).
 
    Schnuppertraining (#555, #584): Eine schnuppernde Spieler:in trägt die
    Plakette «Schnuppern 1/4» neben dem Namen. Das Schnuppern schaltet die
@@ -85,9 +103,6 @@ import { MITTEILUNGEN_SPALTE } from "@/lib/push";
 type Form = { vorname: string; nachname: string; jahrgang: string; jsNummer: string; kaderIds: string[]; probe: boolean };
 const LEER: Form = { vorname: "", nachname: "", jahrgang: "", jsNummer: "", kaderIds: [], probe: false };
 
-/** Die Eingrenzung auf Spieler:innen ohne Kader; sonst die id eines Kaders. */
-const OHNE = "ohne";
-
 export function SpielerListe({
   teamId,
   teamName,
@@ -95,6 +110,7 @@ export function SpielerListe({
   spieler,
   kader,
   probeAnzahl,
+  eingrenzung,
 }: {
   teamId: string;
   teamName: string;
@@ -105,6 +121,8 @@ export function SpielerListe({
   kader: Kader[];
   /** Die Anzahl Schnuppertrainings des Teams (#555); `null`, solange keine festgelegt ist. */
   probeAnzahl: number | null;
+  /** Suche und Eingrenzung aus der Adresse, bereinigt (#601). */
+  eingrenzung: TeamEingrenzung;
 }) {
   const router = useRouter();
   const melde = useSnackbar();
@@ -122,11 +140,7 @@ export function SpielerListe({
   const [aufgenommen, setAufgenommen] = useState<string | null>(null);
   const erstesFeld = useRef<HTMLInputElement>(null);
   const formId = useId();
-  // Die id des Kaders, auf den die Liste eingegrenzt ist, `OHNE` oder `null`.
-  const [gewaehlteEingrenzung, setEingrenzung] = useState<string | null>(null);
-  // Fällt der eingegrenzte Kader weg (eben entfernt), gilt wieder die ganze Liste.
-  const eingegrenzterKader = kader.find((k) => k.id === gewaehlteEingrenzung);
-  const eingrenzung = gewaehlteEingrenzung === OHNE || eingegrenzterKader ? gewaehlteEingrenzung : null;
+  const filter = useAdressFilter();
   const [auswahl, setAuswahl] = useState<string[]>([]);
   const [zuteilenOffen, setZuteilenOffen] = useState(false);
   const verfall = useVerfallRueckfrage(pending);
@@ -135,14 +149,11 @@ export function SpielerListe({
   const [probeFehler, setProbeFehler] = useState<string | null>(null);
 
   const mitKadern = kader.length > 0;
-  const sichtbar = useMemo(() => {
-    if (eingrenzung === null) return spieler;
-    if (eingrenzung === OHNE) return spieler.filter((s) => s.kaderIds.length === 0);
-    return spieler.filter((s) => s.kaderIds.includes(eingrenzung));
-  }, [spieler, eingrenzung]);
-  // Nur, wer noch da und sichtbar ist, bleibt ausgewählt.
-  const gewaehlt = auswahl.filter((id) => sichtbar.some((s) => s.id === id));
-  const ohneKader = spieler.filter((s) => s.kaderIds.length === 0).length;
+  const eingegrenzt = teamEingrenzungGesetzt(eingrenzung);
+  const sichtbar = useMemo(() => filtereSpieler(spieler, eingrenzung), [spieler, eingrenzung]);
+  const jahrgaenge = useMemo(() => jahrgaengeDerListe(spieler), [spieler]);
+  // Nur, wer noch da und sichtbar ist, bleibt ausgewählt (#601 AK 10).
+  const gewaehlt = sichtbareAuswahl(auswahl, sichtbar);
 
   /** Eine Zuteilung ausführen; liesse sie Abmeldungen verfallen, erst
    *  nachfragen (#453 AK 10, 12). */
@@ -341,7 +352,7 @@ export function SpielerListe({
           <span>
             Spieler:innen
             <span className="type-label-small ml-2 text-on-surface-mittel">
-              {spieler.length}
+              {teamSpielerAnzahlText(sichtbar.length, spieler.length, eingegrenzt)}
             </span>
           </span>
         </h2>
@@ -404,28 +415,18 @@ export function SpielerListe({
         </form>
       </Dialog>
 
-      {spieler.length > 0 && mitKadern && (
-        <KaderChips
-          label="Spielerliste eingrenzen"
-          className="mt-5"
-          chips={[
-            ...kader.map((k) => ({ schluessel: k.id, name: k.name, anzahl: k.spielerIds.length })),
-            { schluessel: OHNE, name: KADER_TEXT.ohneKader, anzahl: ohneKader },
-          ]}
-          gewaehlt={eingrenzung}
-          onWahl={setEingrenzung}
-        />
-      )}
+      {spieler.length > 0 && <TeamSpielerFilter eingrenzung={eingrenzung} kader={kader} jahrgaenge={jahrgaenge} />}
 
-      {/* Grenzt ein Chip auf niemanden ein, steht statt des leeren Tabellenkopfs
-          das Leerfeld — mit dem Weg zurück zur ganzen Liste. */}
-      {spieler.length > 0 && eingrenzung !== null && sichtbar.length === 0 ? (
+      {/* Trifft die Eingrenzung niemanden, steht statt des leeren Tabellenkopfs
+          das Leerfeld — mit dem Weg zurück zur ganzen Liste (#601 AK 7, 8). */}
+      {spieler.length > 0 && sichtbar.length === 0 ? (
         <div className="mt-4">
           <EingrenzungLeer
-            titel={eingegrenzterKader ? KADER_TEXT.leerKader(eingegrenzterKader.name) : KADER_TEXT.leerOhne}
-            onAufheben={() => setEingrenzung(null)}
+            titel={TEAM_SPIELER_FILTER.leerTitel}
+            aufhebenText={TEAM_SPIELER_FILTER.zuruecksetzen}
+            onAufheben={filter.zuruecksetzen}
           >
-            {eingegrenzterKader ? KADER_TEXT.leerKaderText : KADER_TEXT.leerOhneText}
+            {TEAM_SPIELER_FILTER.leerText}
           </EingrenzungLeer>
         </div>
       ) : spieler.length > 0 ? (

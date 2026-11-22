@@ -2565,6 +2565,15 @@ export default async function Styleguide() {
             bleiben <code>FilterChip</code> (<Siehe id="plaketten" />): Sie haben kein Panel, nur an
             und aus.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Dieselbe Leiste steht über den Spieler:innen des Vereins und über der
+            Spielerliste eines Teams (#601: Suche, Kader samt «Ohne Kader»,
+            Jahrgang, Privater Link) - kein eigenes Muster je Liste. Der Zustand
+            steht in der Adresse (<code>useAdressFilter</code>); die Reiter der
+            Team-Verwaltung tragen ihn weiter. Die Kader-Chips mit Zahl bleiben
+            den Reitern «Spieler:innen» an Trainings und Spielen, wo genau ein
+            Kader zur Zeit gilt.
+          </p>
           <FilterKnopfDemo />
         </Section>
 

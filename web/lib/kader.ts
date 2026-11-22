@@ -32,20 +32,13 @@ export const KADER_TEXT = {
     "Ein Kader fasst Spieler:innen zusammen, für die eigene Termine gelten, etwa «Stärkeklasse 1», «Torhüterinnen» oder «Aushilfe».",
   leer:
     "Noch keine Kader. Ohne Kader gilt jeder Termin für alle Spieler:innen. Mit Kadern wie «Stärkeklasse 1» oder «Torhüterinnen» bestimmst du, für wen ein Termin gilt.",
-  /** Die Eingrenzung der Spielerliste auf Spieler:innen ohne Kader (AK 9). */
-  ohneKader: "Ohne Kader",
   /** Ein Termin, dessen Kadern niemand angehört (#453 AK 7, 8) — im Dialog
    *  und am Termin derselbe Satz. */
   niemand: "Gilt für niemanden: Diesen Kadern gehört keine Spieler:in an.",
-  /** Die Spielerliste, eingegrenzt auf einen leeren Kader bzw. auf «Ohne
-   *  Kader», wenn jede einem angehört (Leerzustand). */
+  /** Am Termin (Reiter «Spieler:innen»), eingegrenzt auf einen leeren Kader (Leerzustand). */
   leerKader: (name: string) => `Niemand in «${name}»`,
-  leerKaderText:
-    "Diesem Kader gehört noch keine Spieler:in an. Hebe die Eingrenzung auf, wähle Spieler:innen aus und teile sie über «Kader zuteilen» zu.",
   /** Am Termin (Reiter «Spieler:innen»): Dem Kader gehört niemand an. */
   leerKaderTermin: "Diesem Kader gehört keine Spieler:in an.",
-  leerOhne: "Alle haben einen Kader",
-  leerOhneText: "Jede Spieler:in auf der Liste gehört mindestens einem Kader an.",
   eingrenzungAufheben: "Eingrenzung aufheben",
 } as const;
 

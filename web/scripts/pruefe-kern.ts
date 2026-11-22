@@ -303,6 +303,9 @@ import {
   LINK_STAND_TEXT,
   linkKnopfText,
   linkStandAus,
+  TEAM_SPIELER_FILTER,
+  teamSpielerAnzahlText,
+  type LinkStand,
 } from "../lib/spieler";
 import {
   BEZEICHNUNG_MAX,
@@ -484,6 +487,18 @@ import { gruendungAus, kontoInfoAus, kontoLoeschAusgangAus, vereinLoeschAusgangA
 import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
 import { bereichAusPfad } from "../lib/navigation";
 import { FILTER_SCHLUESSEL, TEAM_BEREICHE, teamBereichAusPfad, teamBereichHref } from "../lib/team-bereiche";
+import {
+  OHNE_KADER_WERT,
+  bereinigeTeamEingrenzung,
+  bereinigteTeamAdresse,
+  falteSuchtext,
+  filtereSpieler,
+  jahrgaengeDerListe,
+  kaderFilterWerte,
+  liesTeamEingrenzung,
+  sichtbareAuswahl,
+  teamEingrenzungGesetzt,
+} from "../lib/team-spielerliste";
 import { textMitLinks } from "../lib/text-links";
 import { gliedere, gliederungAlsText, gliederungBloecke } from "../lib/gliederung";
 import { TEAM_INFOS_MAX, TEAM_INFOS_TEXT, standDatum, teamInfosBereinigt, teamInfosProblem, zahlCh } from "../lib/team-infos";
@@ -4195,6 +4210,101 @@ pruefe("Team-Verwaltung in vier Bereichen mit eigener Adresse; die bisherige zei
   assert.ok(!/Selbstabholung/.test(ohneKommentare(readFileSync(join(web, "components/team/SpielerListe.tsx"), "utf8"))), "die Spielerliste zeigt die Selbstabholung nicht mehr");
   // Die Seitenleiste markiert «Team» in jedem Bereich.
   assert.match(readFileSync(join(web, "components/layout/AppNavClient.tsx"), "utf8"), /pfad\.startsWith\(`\$\{basis\}\/verwaltung\/`\)/);
+});
+
+pruefe("Spielerliste eingrenzen: Suche, Kader, Jahrgang, Link-Stand; Adresse und Auswahl (#601)", () => {
+  const ka = "11111111-1111-4111-8111-111111111111";
+  const kb = "22222222-2222-4222-8222-222222222222";
+  const kx = "33333333-3333-4333-8333-333333333333";
+  const zeile = (id: string, vorname: string, nachname: string, jahrgang: number, kaderIds: string[], linkStand: LinkStand, jsNummer: string | null = null) =>
+    ({ id, vorname, nachname, jahrgang, kaderIds, linkStand, jsNummer });
+  const liste = [
+    zeile("lea", "Léa", "Müller", 2016, [ka], "abgeholt", "1234567"),
+    zeile("noah", "Noah", "Strauß", 2017, [ka, kb], "zugestellt"),
+    zeile("mia", "Mia", "Øster", 2016, [], "offen", "7654321"),
+    zeile("ole", "Ole", "Beispiel", 2015, [kb], "offen"),
+  ];
+  const ids = (e: Parameters<typeof filtereSpieler>[1]) => filtereSpieler(liste, e).map((s) => s.id);
+  const leer = liesTeamEingrenzung({});
+  // Nackte Adresse: nichts gesetzt, alle sichtbar, der Kopf zählt die ganze Liste.
+  assert.deepEqual(leer, { suche: "", kaderIds: [], ohneKader: false, jahrgaenge: [], linkStaende: [] });
+  assert.equal(teamEingrenzungGesetzt(leer), false);
+  assert.deepEqual(ids(leer), ["lea", "noah", "mia", "ole"]);
+  assert.equal(teamSpielerAnzahlText(4, 4, false), "4");
+  assert.equal(teamSpielerAnzahlText(1, 4, true), "1 von 4");
+  // AK 1: Vorname, Nachname, beide in jeder Reihenfolge, J+S-Nummer; ohne Gross/Klein und Akzente.
+  const q = (text: string) => ids(liesTeamEingrenzung({ q: text }));
+  assert.deepEqual(q("lea"), ["lea"]);
+  assert.deepEqual(q("MUELLER"), [], "keine Umschreibung «ue» für «ü»");
+  assert.deepEqual(q("muller"), ["lea"]);
+  assert.deepEqual(q("léa müller"), ["lea"]);
+  assert.deepEqual(q("muller lea"), ["lea"], "Nachname vor Vorname");
+  assert.deepEqual(q("  LEA   MÜL "), ["lea"], "bereinigt wie die Datenebene");
+  assert.deepEqual(q("strauss"), ["noah"], "ß wie unaccent");
+  assert.deepEqual(q("oster"), ["mia"], "ø wie unaccent");
+  assert.deepEqual(q("4567"), ["lea"], "J+S-Nummer als Teiltext");
+  assert.deepEqual(q("a m"), ["lea"], "über die Grenze zwischen Vor- und Nachname");
+  assert.deepEqual(q("xyz"), []);
+  assert.equal(falteSuchtext("Zoë ÅSA"), "zoe asa");
+  // AK 2: mehrere Kader und «Ohne Kader» — wer mindestens eine Bedingung erfüllt.
+  const k = (wert: string) => ids(liesTeamEingrenzung({ kader: wert }));
+  assert.deepEqual(k(ka), ["lea", "noah"]);
+  assert.deepEqual(k(`${ka},${kb}`), ["lea", "noah", "ole"]);
+  assert.deepEqual(k(OHNE_KADER_WERT), ["mia"]);
+  assert.deepEqual(k(`${OHNE_KADER_WERT},${kb}`), ["noah", "mia", "ole"]);
+  // AK 3: Jahrgänge mehrfach; zur Wahl stehen die Jahrgänge der ganzen Liste.
+  assert.deepEqual(ids(liesTeamEingrenzung({ jahrgang: "2016,2015" })), ["lea", "mia", "ole"]);
+  assert.deepEqual(jahrgaengeDerListe(liste), [2015, 2016, 2017]);
+  // AK 4: abgeholt oder nicht abgeholt (zugestellt und offen).
+  assert.deepEqual(ids(liesTeamEingrenzung({ link: "abgeholt" })), ["lea"]);
+  assert.deepEqual(ids(liesTeamEingrenzung({ link: "zugestellt,offen" })), ["noah", "mia", "ole"]);
+  assert.deepEqual(Object.keys(TEAM_SPIELER_FILTER.linkStand), [...LINK_STAENDE]);
+  // AK 5: zwischen den Filtern und.
+  assert.deepEqual(ids(liesTeamEingrenzung({ kader: kb, jahrgang: "2017", link: "zugestellt" })), ["noah"]);
+  assert.deepEqual(ids(liesTeamEingrenzung({ q: "lea", link: "offen" })), [], "AK 7: niemand");
+  // AK 6, 8: jedes für sich gilt als gesetzt (Zurücksetzen, Zahl im Kopf).
+  for (const sp of [{ q: "x" }, { kader: OHNE_KADER_WERT }, { kader: ka }, { jahrgang: "2016" }, { link: "offen" }])
+    assert.equal(teamEingrenzungGesetzt(liesTeamEingrenzung(sp)), true, JSON.stringify(sp));
+  // Lesen: Unbrauchbares fällt weg, jeder Wert einmal, Stände in fester Folge.
+  assert.deepEqual(liesTeamEingrenzung({ kader: `kaputt,,${ka},${ka},${OHNE_KADER_WERT}`, jahrgang: "abc,12,2016,2016", link: "offen,bezogen,abgeholt,offen" }), {
+    suche: "",
+    kaderIds: [ka],
+    ohneKader: true,
+    jahrgaenge: [2016],
+    linkStaende: ["abgeholt", "offen"],
+  });
+  // Bereinigen: entfernte oder fremde Kader, Jahrgänge, die niemand trägt, «ohne» bei einem Team ohne Kader.
+  const bestand = { kader: [{ id: ka }, { id: kb }], jahrgaenge: jahrgaengeDerListe(liste) };
+  const roh = liesTeamEingrenzung({ kader: `${kx},${ka},${OHNE_KADER_WERT}`, jahrgang: "2014,2016" });
+  const sauber = bereinigeTeamEingrenzung(roh, bestand);
+  assert.deepEqual(sauber.kaderIds, [ka]);
+  assert.deepEqual(sauber.jahrgaenge, [2016]);
+  assert.deepEqual(kaderFilterWerte(sauber), [OHNE_KADER_WERT, ka], "so, wie AuswahlFilter und ?kader= sie führen");
+  assert.equal(bereinigeTeamEingrenzung(liesTeamEingrenzung({ kader: OHNE_KADER_WERT }), { kader: [], jahrgaenge: [] }).ohneKader, false);
+  // Die Adresse: einmal weiterleiten, q und Fremdes reisen mit; die bereinigte bleibt stehen.
+  const P = "/team/x/verwaltung";
+  const sp = { q: "lea", kader: `${kx},${ka},${OHNE_KADER_WERT}`, jahrgang: "2016,2014", link: "offen,abgeholt" };
+  const ziel = bereinigteTeamAdresse(P, sp, bereinigeTeamEingrenzung(liesTeamEingrenzung(sp), bestand));
+  assert.equal(ziel, `${P}?q=lea&kader=${OHNE_KADER_WERT}%2C${ka}&jahrgang=2016&link=abgeholt%2Coffen`);
+  const zurueck = Object.fromEntries(new URL(ziel!, "http://x").searchParams);
+  assert.equal(bereinigteTeamAdresse(P, zurueck, bereinigeTeamEingrenzung(liesTeamEingrenzung(zurueck), bestand)), null);
+  for (const r of [{}, { q: "x" }, { kader: [OHNE_KADER_WERT, ka] }, { jahrgang: "2015,2016" }, { link: "zugestellt,offen" }])
+    assert.equal(bereinigteTeamAdresse(P, r, bereinigeTeamEingrenzung(liesTeamEingrenzung(r), bestand)), null, JSON.stringify(r));
+  assert.equal(bereinigteTeamAdresse(P, { kader: kx, link: "kaputt" }, bereinigeTeamEingrenzung(liesTeamEingrenzung({ kader: kx }), bestand)), P, "nichts übrig: die nackte Seite");
+  // AK 9: Die Reiter tragen genau diese Schlüssel weiter.
+  assert.deepEqual(Object.keys(sp).sort(), [...FILTER_SCHLUESSEL].sort());
+  // AK 10: Zugeteilt wird nur, wer ausgewählt und sichtbar ist.
+  const sichtbar = filtereSpieler(liste, liesTeamEingrenzung({ jahrgang: "2016" }));
+  assert.deepEqual(sichtbareAuswahl(["ole", "mia", "lea", "weg"], sichtbar), ["mia", "lea"]);
+  const quelle = (d: string) => readFileSync(join(web, d), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const listeQuelle = quelle("components/team/SpielerListe.tsx");
+  assert.match(listeQuelle, /const gewaehlt = sichtbareAuswahl\(auswahl, sichtbar\)/, "die Auswahl schneidet auf die sichtbaren");
+  assert.match(listeQuelle, /auswahl=\{gewaehlt\}/, "Kader zuteilen bekommt nur die sichtbare Auswahl");
+  assert.ok(!/KaderChips/.test(listeQuelle), "die Spielerliste hat keine Kader-Chips mehr (ein Chip zur Zeit gilt nur am Termin)");
+  // Dieselben Bausteine wie die Leiste des Vereins, kein neues Muster.
+  const leiste = quelle("components/team/TeamSpielerFilter.tsx");
+  for (const b of ["FilterSuche", "AuswahlFilter", "useAdressFilter", "zuruecksetzen"]) assert.ok(leiste.includes(b), `TeamSpielerFilter nutzt ${b}`);
+  assert.match(quelle("app/(app)/team/[id]/verwaltung/page.tsx"), /bereinigteTeamAdresse\(/, "die Seite leitet auf die bereinigte Adresse weiter");
 });
 
 pruefe("Kader am privaten Link ausgeblendet; die Kader-Karte sagt, dass nur das Team sie sieht (#663 AK 1, 2)", () => {

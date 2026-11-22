@@ -561,6 +561,31 @@ export const LINK_STAND_TEXT = {
   ohneAntwort: "Keine Antwort erhalten. Ob der Stand geändert ist, zeigt die Liste nach dem Neuladen.",
 } as const;
 
+/** Die Filterleiste der Spielerliste eines Teams (#601) — aus denselben
+ *  Bausteinen und mit denselben Wörtern wie die Spieler:innen des Vereins
+ *  (`SPIELER_FILTER` in lib/verein.ts). */
+export const TEAM_SPIELER_FILTER = {
+  suche: "Spieler:innen durchsuchen",
+  kader: "Kader",
+  /** AK 2: «Ohne Kader» steht vor den Kadern des Teams. */
+  ohneKader: "Ohne Kader",
+  kaderGruppe: "Kader des Teams",
+  jahrgang: "Jahrgang",
+  link: "Privater Link",
+  /** Die Werte des Filters «Privater Link» (AK 4): «zugestellt» und «offen» zusammen sind «nicht abgeholt». */
+  linkStand: { abgeholt: "Abgeholt", zugestellt: "Zugestellt", offen: "Offen" } satisfies Record<LinkStand, string>,
+  zuruecksetzen: "Zurücksetzen",
+  /** AK 7: Keine Spieler:in erfüllt die Eingrenzung. */
+  leerTitel: "Keine Spieler:in gefunden",
+  leerText: "Ändere die Suche oder die Eingrenzung.",
+} as const;
+
+/** Die Zahl im Kopf der Spielerliste (PO 2026-11-22): die ganze Liste, bei
+ *  gesetzter Eingrenzung «12 von 35». */
+export function teamSpielerAnzahlText(sichtbar: number, gesamt: number, eingegrenzt: boolean): string {
+  return eingegrenzt ? `${sichtbar} von ${gesamt}` : String(gesamt);
+}
+
 /** Was der Link-Knopf einer Zeile sagt: Tooltip und Name (AK 4). Offen bleibt
  *  unmarkiert — der Stand fehlt im Text wie der Punkt am Knopf. */
 export function linkKnopfText(name: string, stand: LinkStand): { tooltip: string; label: string } {
