@@ -610,7 +610,7 @@ export const TEAM_SPIELER_FILTER = {
 /** Die Zahl im Kopf der Spielerliste (PO 2026-11-22): die ganze Liste, bei
  *  gesetzter Eingrenzung «12 von 35». */
 export function teamSpielerAnzahlText(sichtbar: number, gesamt: number, eingegrenzt: boolean): string {
-  return eingegrenzt ? `${sichtbar} von ${gesamt}` : String(gesamt);
+  return eingegrenzt && gesamt > 0 ? `${sichtbar} von ${gesamt}` : String(gesamt);
 }
 
 /** Was der Link-Knopf einer Zeile sagt: Tooltip und Name (AK 4). Offen bleibt

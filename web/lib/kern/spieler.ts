@@ -452,21 +452,15 @@ export async function erneuereSpielerLink(
 }
 
 /** Den aktuellen Link als zugestellt markieren oder die Markierung
- *  zurücknehmen (#657 AK 1, 3), im Team `teamId` oder — ohne (KI-Weg) — im
- *  ältesten ihrer Teams, dem die handelnde Person angehört. Nur solange er
+ *  zurücknehmen (#657 AK 1, 3), im Team `teamId`. Nur solange er
  *  nicht abgeholt ist: Sonst ändert die Datenebene nichts und nennt
  *  `abgeholt` mit `geaendert: false` (kein Fehler). */
 export async function setzeLinkZugestellt(
   supabase: SupabaseClient,
   _userId: string,
-  e: { spielerId: string; zugestellt: boolean; teamId?: string },
+  e: { spielerId: string; zugestellt: boolean; teamId: string },
 ): Promise<KernErgebnis<{ teamId: string; linkStand: LinkStand; geaendert: boolean }>> {
-  let teamId = e.teamId;
-  if (teamId === undefined) {
-    const eigenes = await eigenesTeamVon(supabase, e.spielerId);
-    if (!eigenes.ok) return eigenes;
-    teamId = eigenes.wert;
-  }
+  const { teamId } = e;
   if (!istUuid(teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
   if (!istUuid(e.spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
   const { data, error } = await supabase.rpc("spieler_link_zugestellt_setzen", {

@@ -2832,7 +2832,7 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Kader</strong> (<code>KaderLozenge</code>, Epic #447): ein
             Teil des Teams, den die Trainer:innen selbst benennen - in der
-            Spielerliste, im Trainingsplan, am Termin und am privaten Link.
+            Spielerliste, im Trainingsplan und am Termin; am privaten Link nie (#663).
             Neutral und ohne Zeichen, nur der Name (PO 2026-10-18): Ein Kader
             trägt keine Farbe, und ein Zeichen machte aus jeder Zeile mit drei
             Kadern ein Muster. Ein entfernter Kader steht an begonnenen Terminen

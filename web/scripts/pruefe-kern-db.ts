@@ -9510,7 +9510,7 @@ try {
     // m2 gehört Fa nicht an, die Verwaltung keinem Team: nicht gefunden, nichts geändert.
     fehler(await setzeLinkZugestellt(m2.supabase, m2.id, { teamId: fa, spielerId: lena, zugestellt: false }), "nicht_gefunden", NG_SPIELER);
     fehler(await setzeLinkZugestellt(verwaltung.supabase, verwaltung.id, { teamId: ea, spielerId: lena, zugestellt: false }), "nicht_gefunden", NG_SPIELER);
-    fehler(await setzeLinkZugestellt(m.supabase, m.id, { spielerId: ohne, zugestellt: true }), "nicht_gefunden", NG_SPIELER);
+    fehler(await setzeLinkZugestellt(m.supabase, m.id, { teamId: ea, spielerId: ohne, zugestellt: true }), "nicht_gefunden", NG_SPIELER);
     assert.equal(await stand(ea), "zugestellt");
     // AK 3: der KI-Assistent fragt ab, nimmt zurück und markiert wieder.
     assert.equal((kiWert(await ki(m, "spieler_link_abrufen", { spieler_id: lena })) as { link_stand: string }).link_stand, "zugestellt");

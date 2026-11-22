@@ -52,7 +52,7 @@ export const PROBE_TEXT = {
   /** Die Checkbox im Dialog «Spieler:in ändern». */
   checkbox: "Schnuppert",
   /** Ohne festgelegte Anzahl lässt sich nichts einschalten (AK 4, 18). */
-  anzahlFehlt: "Lege zuerst in der Karte «Schnuppertraining» fest, wie viele Trainings eine Spieler:in zum Schnuppern besuchen darf.",
+  anzahlFehlt: "Lege zuerst im Bereich «Kader & Schnuppern» in der Karte «Schnuppertraining» fest, wie viele Trainings eine Spieler:in zum Schnuppern besuchen darf.",
   einschalten: "Schnuppern einschalten",
   /** Wer weiteren Teams zugeordnet ist, schnuppert nicht (Vereine AP §5.3, AK 6). */
   mehrereTeams: "Diese Spieler:in ist weiteren Teams zugeordnet und macht darum regulär in deinem Team mit.",

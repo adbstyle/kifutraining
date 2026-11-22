@@ -102,7 +102,7 @@ export const TERMIN_TEXT = {
   kartenlinkFolgtSerie: "Mit dem Ort der Serie gilt auch ihr Kartenlink, der eigene Kartenlink dieses Termins fällt weg.",
   spielerzahl: `Die erwartete Spielerzahl ist eine ganze Zahl von ${SPIELERZAHL_MIN} bis ${SPIELERZAHL_MAX}.`,
   /** Was die Zahl zählt (PO 7) — als Hinweis am Feld und im KI-Werkzeug. */
-  spielerzahlZaehlt: "Alle erwarteten Kinder einschliesslich Torhüter:innen, ohne Trainer:innen.",
+  spielerzahlZaehlt: "Alle erwarteten Spieler:innen einschliesslich Torhüter:innen, ohne Trainer:innen.",
   treffpunktPflicht: "Bitte für den Treffpunkt Uhrzeit und Ort angeben.",
   /** Zwilling der Checks `tt_treffpunkt_termintag` und `ts_treffpunkt_termintag`. */
   treffpunktTermintag: "Der Treffpunkt liegt am Tag des Trainings und nicht nach dem Beginn.",

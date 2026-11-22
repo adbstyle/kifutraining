@@ -2997,8 +2997,9 @@ function nurElternTreffer(quelltext: string, rel: string): string[] {
 }
 
 /** Die Dateien der Wortlaut-Wächter: Oberfläche, Kern und KI. Ausgenommen sind die generierten
- *  Typen und `lib/feedback/` (Anweisungen und Produktwissen des Feedback-Modells, aus
- *  docs/feedback-triage.md generiert — sie ziehen mit der Produktdoku beim Release nach). */
+ *  Typen und `lib/feedback/`: wissen.ts ist aus docs/feedback-triage.md generiert, die übrigen
+ *  Dateien (Prompt, Lage, Regeln) beschreiben das Produkt für das Feedback-Modell nach derselben
+ *  Doku — alle ziehen mit der Produktdoku beim Release nach. */
 function wortlautDateien(): { rel: string; text: string }[] {
   const dateien: { rel: string; text: string }[] = [];
   for (const wurzel of ["app", "components", "lib"].map((p) => join(web, p)))

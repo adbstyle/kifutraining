@@ -96,7 +96,7 @@ export function teamSpielerHref(teamId: string, e: Partial<TeamEingrenzung> = {}
   const werte: [string, string][] = [
     ["q", voll.suche],
     ["kader", kaderFilterWerte(voll).join(",")],
-    ["jahrgang", voll.jahrgaenge.join(",")],
+    ["jahrgang", [...new Set(voll.jahrgaenge)].sort((a, b) => a - b).join(",")],
     ["link", LINK_STAENDE.filter((s) => voll.linkStaende.includes(s)).join(",")],
   ];
   for (const [k, v] of werte) if (v) p.set(k, v);
