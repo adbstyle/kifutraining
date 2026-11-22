@@ -1,6 +1,6 @@
 # Rückmeldungen
 
-Stand 2026-11-15. Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
+Stand 2026-11-22 (Release 1.52.0). Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
 
 ## Zwei Arten, etwas zu sagen
 
@@ -44,11 +44,21 @@ die Bestätigung dort. Sie erscheint ein einziges Mal: Wer die Seite danach neu 
 Scheitert ein Vorgang in einem Dialog, der danach offen bleibt, etwa beim Verlassen oder
 Auflösen eines Teams, steht der Grund oben im Dialog selbst und nicht am Bildschirmrand, wo
 der Dialog ihn verdecken würde. Ebenso meldet der Dialog mit dem privaten Link einer Spieler:in
-ein Erneuern in sich selbst.
+in sich selbst, wenn der Link erneuert, als zugestellt markiert oder das zurückgenommen wurde;
+war der Link inzwischen schon abgeholt, sagt er das, ohne es als Fehler zu werten.
 
 Auf den Seiten hinter einem privaten Link, die Eltern ohne Konto öffnen, gibt es die Zeile nicht.
 Scheitert dort das Umlegen eines Schalters, springt er zurück, und der Grund steht als Hinweis
 an der Karte des Termins; auf der Abholseite steht jede Antwort als Hinweis über dem Knopf.
+
+## Neue Version
+
+Ist eine neue Version erschienen, die in diesem Browser noch nicht angesehen wurde, trägt der
+Avatar auf der Konto-Karte unten in der Seitenleiste einen Punkt, und im Konto-Menü steht bei
+«Was ist neu» die Plakette «Neu» statt der Versionsnummer. Beides bleibt stehen, bis die Seite
+mit den Versionen geöffnet wurde. Das gilt auch ohne Anmeldung: Die Karte «Nicht angemeldet»
+führt ebenso zu «Was ist neu». Im selben Menü steht für angemeldete Trainer «Fragen und
+Feedback», der Weg, der Anwendung selbst etwas zu melden (siehe [Navigation](navigation.md)).
 
 ## Bekannte Grenzen
 

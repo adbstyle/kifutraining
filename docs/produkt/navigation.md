@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-11-20. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-11-22 (Release 1.52.0). Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Seitenleiste
 
@@ -16,7 +16,8 @@ Knopf zeigt in einer kleinen Zeile die Art, etwa „Verein" oder bei einem Team 
 „· Team", und darunter den Namen; ein Klick klappt die Liste auf, die sich auch mit den Pfeiltasten
 bedienen lässt. Gibt es nur einen Bereich, ist es eine Anzeige ohne Liste. Darunter stehen nur die
 Einträge des gewählten Bereichs: bei einem Team „Trainingsplan", „Trainings" und „Team" (siehe
-[Team-Bereich](team-bereich.md#drei-seiten)), beim Verein „Teams", „Spieler:innen" und, nur für
+[Team-Bereich](team-bereich.md#drei-seiten)) — „Team" führt in die Verwaltung des Teams mit
+ihren Reitern und bleibt in jedem davon hervorgehoben —, beim Verein „Teams", „Spieler:innen" und, nur für
 die Vereinsverwaltung, „Verwaltung" (siehe [Verein](verein.md#der-bereich-verein)).
 
 Wer welche Bereiche sieht, folgt aus der Lage im Verein: eine Trainer:in die eigenen Teams und den
@@ -29,33 +30,47 @@ Seiten ohne Bereich — Bibliotheken, Teamübersicht, Konto — bleibt der zulet
 merkt sich der Browser (siehe „Cookies"). Ein neues, umbenanntes oder aufgelöstes Team erscheint im
 Wechsler nach der eigenen Aktion ohne Neuladen.
 
-Es folgen zwei Gruppen. Unter „Bibliothek" stehen „Übungen" und „Trainings", der ganze Bestand.
-Unter „Meine Bibliothek" stehen „Meine Übungen" und „Meine Trainings", also derselbe Bestand,
-eingegrenzt auf das Eigene; ohne Anmeldung fehlt sie. Die Grenzen eines Kontos ohne Verein stehen
-nicht in der Leiste, sondern in „Meine Übungen" und „Meine Trainings".
+Es folgt die Gruppe „Bibliothek" mit „Übungen" und „Trainings", dem ganzen Bestand. Eine eigene
+Gruppe für das Eigene gibt es nicht: Eigene Übungen und Trainings findet man über den Chip „Meine
+Übungen" bzw. „Meine Trainings" über der Übersicht, der den Bestand auf das Eigene eingrenzt; die
+Brotkrume heisst dann etwa „Übungen › Meine Übungen", und „Übungen" bzw. „Trainings" bleibt in der
+Leiste hervorgehoben. Die Grenzen eines Kontos ohne Verein stehen nicht in der Leiste, sondern in
+„Meine Übungen" und „Meine Trainings".
 
 Hervorgehoben ist, wo man gerade steht. Ein geöffnetes Team-Training hält „Trainingsplan" seines
 Teams hervor, wie im Team-Bereich beschrieben.
 
-Angemeldet steht darüber „Fragen und Feedback" (siehe unten). Es ist ein Knopf, kein Link: Er
-öffnet das Gespräch neben der Seite, statt die Seite zu wechseln. Darunter steht, ebenfalls nur
-angemeldet, „Darstellung" mit der gewählten Darstellung (siehe „Hell und dunkel").
+Ganz unten steht die Konto-Karte: Initialen, Anzeigename und E-Mail-Adresse. Feedback,
+Darstellung und Version stehen nicht als eigene Zeilen in der Leiste, sondern im Konto-Menü, das
+ein Klick auf die Karte öffnet. Breit klappt es über der Karte auf, so breit wie
+sie, in der schmalen Leiste rechts neben der Leiste. Es enthält:
 
-Über dem Konto steht die Version, die gerade läuft. Ein Klick darauf öffnet „Versionen" (siehe
-unten); in der schmalen Leiste bleibt ihr Zeichen, die Nummer zeigt der Hinweis daneben.
+- „Konto und Einstellungen" — führt ins Konto (siehe [Konto und Zugang](konto-und-zugang.md)).
+- „Darstellung" mit „Wie das Gerät", „Hell" und „Dunkel" (siehe „Hell und dunkel").
+- „Fragen und Feedback" (siehe unten). Es ist ein Knopf, kein Link: Er öffnet das Gespräch neben
+  der Seite, statt die Seite zu wechseln.
+- „Was ist neu" — führt zu „Versionen" (siehe unten) und zeigt daneben die Version, die gerade läuft.
+- „Abmelden". Abgemeldet wird nur hier; trägt die Seite ungesicherte Angaben, fragt KiFu vorher nach.
 
-Ist seit dem letzten Blick in „Versionen" eine neue Version erschienen, trägt die Versionszeile
-die Plakette „Neu", in der schmalen Leiste einen Punkt am Zeichen. Sie unterbricht nichts und
-verschwindet, sobald „Versionen" die neuen Versionen angezeigt hat — konnte die Seite nur einen
-älteren Stand zeigen, bleibt sie. Jede neu veröffentlichte Version gilt als neu, auch eine ohne
-spürbare Änderung; eine nachträglich korrigierte nicht. Wer KiFu in einem Browser zum ersten
-Mal öffnet, sieht keine Markierung. Eine neue Version erscheint spätestens eine Stunde nach
-ihrer Veröffentlichung, und zwar beim nächsten Seitenwechsel; eine offene Seite ändert sich
-nicht von selbst.
+Ist eine Seite des Kontos offen, ist die Karte hervorgehoben, im Menü die Zeile „Konto und
+Einstellungen". Das Menü lässt sich mit den Pfeiltasten bedienen; Escape oder ein Klick daneben
+schliesst es, Tab ebenfalls und gibt den Fokus an die Karte zurück. Auch ein Seitenwechsel, ein
+Scrollen der Seite oder eine Änderung der Fenstergrösse schliesst es. Reicht der Platz nicht für
+alle Zeilen, etwa auf einem Telefon quer, scrollt das Menü in sich.
 
-Ganz unten steht das Konto: Initialen, Anzeigename und E-Mail-Adresse. Ein Klick darauf führt
-ins Konto, wo auch das Abmelden zu finden ist. Ohne Anmeldung steht an dieser Stelle
-„Anmelden", und Bereich-Wechsler und „Meine Bibliothek" fehlen.
+Ist seit dem letzten Blick in „Versionen" eine neue Version erschienen, trägt die Karte einen Punkt
+am Avatar, breit wie schmal, und „Was ist neu" im Menü die Plakette „Neu" an Stelle der
+Versionsnummer. Das unterbricht nichts und verschwindet, sobald „Versionen" die neuen Versionen
+angezeigt hat — konnte die Seite nur einen älteren Stand zeigen, bleibt es. Jede neu
+veröffentlichte Version gilt als neu, auch eine ohne spürbare Änderung; eine nachträglich
+korrigierte nicht. Wer KiFu in einem Browser zum ersten Mal öffnet, sieht keine Markierung. Eine
+neue Version erscheint spätestens eine Stunde nach ihrer Veröffentlichung, und zwar beim nächsten
+Seitenwechsel; eine offene Seite ändert sich nicht von selbst.
+
+Ohne Anmeldung steht an dieser Stelle die Karte „Nicht angemeldet" mit der Zeile „Anmelden oder
+Konto erstellen". Ihr Menü enthält „Anmelden", „Konto erstellen" und „Was ist neu", mit Plakette
+und Punkt wie angemeldet; „Darstellung" und „Fragen und Feedback" fehlen darin, ebenso der
+Bereich-Wechsler in der Leiste.
 
 ## Breit oder schmal
 
@@ -75,9 +90,10 @@ leise grünlich-grauen Grund, dunkel bleibt der Grund das dunkle Rasengrün. Ged
 hell, wie bisher. Die Leiste des Mobiles färbt sich im Grund des Erscheinungsbilds, das das Gerät
 eingestellt hat, auch in der abgelegten App.
 
-Angemeldet lässt sich die Darstellung selbst wählen: „Darstellung" unten in der Leiste öffnet ein
-Menü mit „Wie das Gerät", „Hell" und „Dunkel"; die gewählte trägt einen Haken. In der schmalen Leiste
-klappt das Menü rechts neben der Leiste auf. Umgeschaltet wird sofort und ohne Neuladen — was man
+Angemeldet lässt sich die Darstellung selbst wählen: Im Konto-Menü steht unter „Darstellung"
+„Wie das Gerät", „Hell" und „Dunkel"; die gewählte trägt einen Haken, darunter steht „Gilt in
+diesem Browser.". Die Wahl schliesst das Menü nicht, auch nicht die geöffnete Leiste auf einem
+Telefon — so sieht man gleich, wie es aussieht. Umgeschaltet wird sofort und ohne Neuladen — was man
 auf der Seite gerade eingibt, bleibt stehen. Die Wahl gilt in diesem Browser für alle, die ihn
 benutzen, auch abgemeldet auf den Seiten zum Anmelden, Registrieren und Zurücksetzen des
 Passworts; sie bleibt beim nächsten Besuch. „Wie das Gerät" stellt den Anfang wieder her.
@@ -89,7 +105,7 @@ Wahl, und es wird nichts gespeichert.
 
 ## Versionen
 
-Die Seite „Versionen" zeigt, was jede Version von KiFu gebracht hat, die neueste zuerst — alle
+Die Seite „Versionen", erreichbar über „Was ist neu" im Konto-Menü, zeigt, was jede Version von KiFu gebracht hat, die neueste zuerst — alle
 seit 1.0.0. Zu jeder steht ihr Thema als Titel, die Versionsnummer, der Tag der
 Veröffentlichung und der Text, wie er auf der öffentlichen Projektseite auf GitHub steht: unverändert, mit Gliederung,
 Hervorhebungen und Links, auch mit technischen Abschnitten und Nummern von Aufgaben. Ein Verweis
@@ -107,7 +123,7 @@ eigene Adresse, die sich weitergeben lässt.
 
 Eine neue oder geänderte Version auf GitHub erscheint spätestens nach einer Stunde. Ist GitHub
 gerade nicht erreichbar, zeigt die Seite den zuletzt bekannten Stand mit einem Hinweis, dass er
-womöglich nicht aktuell ist; die Versionsnummer in der Leiste steht trotzdem.
+womöglich nicht aktuell ist; die Versionsnummer im Konto-Menü steht trotzdem.
 
 ## Styleguide
 
@@ -145,7 +161,8 @@ nicht. Was man unter „Fragen und Feedback" schreibt, geht an Anthropic in den 
 KI-Modell Haiku läuft, das das Gespräch führt; auch dafür liegt nichts im Browser. Ausserdem sagt
 die Seite, wie man Cookies in den
 Einstellungen des Browsers sperrt oder löscht. Sie hängt
-am Konto (Brotkrume „Konto › Cookies") und ist ohne Anmeldung über einen Verweis unten auf den
+am Konto — ein Verweis steht im Reiter „Daten und Konto", die Brotkrume lautet „Konto › Daten und
+Konto › Cookies" — und ist ohne Anmeldung über einen Verweis unten auf den
 Seiten ohne Leiste erreichbar, etwa beim Anmelden und Registrieren — nicht aber auf den Seiten
 hinter einem privaten Link (siehe unten); sie funktioniert auch mit gesperrten Cookies.
 
@@ -264,7 +281,9 @@ Auf einem Telefon oder einem schmalen Fenster steht oben eine Kopfzeile mit dem 
 Er öffnet die Leiste von links über dem Inhalt. Dort zeigt sie immer alle Namen.
 Schliessen lässt sie sich über das Kreuz, einen Klick daneben, die Escape-Taste oder die
 Wahl eines Eintrags; auch jeder Seitenwechsel schliesst sie. Solange sie offen ist, bleibt die
-Tastatur in ihr. Den Knopf zum Verkleinern gibt es dort nicht.
+Tastatur in ihr. Den Knopf zum Verkleinern gibt es dort nicht. Das Konto-Menü öffnet sich auch
+dort über der Konto-Karte; ein Ziel oder eine Aktion darin schliesst die Leiste, die Wahl der
+Darstellung nicht.
 
 ## Seiten, die es nicht gibt
 
@@ -278,7 +297,7 @@ ebenso die Bestätigung beim Verbinden eines KI-Assistenten.
 
 ## Seiten hinter einem privaten Link
 
-Die Seite, über die Eltern eine Spieler:in ab- und anmelden, und die Abholseite eines Teams (siehe
+Die Seite, über die Spieler:innen und Eltern eine Spieler:in ab- und anmelden, und die Abholseite eines Teams (siehe
 [Team-Bereich](team-bereich.md#privater-link)) sind für Menschen ohne Konto gedacht und fürs
 Telefon gebaut: eine schmale Spalte ohne Seitenleiste, ohne Brotkrumen und ohne Meldungen am
 Bildschirmrand. Auf der Seite der Spieler:in und ihrer Seite „Infos" (hinter dem ⓘ neben dem Namen) klebt unten
@@ -295,7 +314,7 @@ die Besucherstatistik zählt sie nicht, und in eine fremde Seite einbetten lasse
 
 ## Fragen und Feedback
 
-Wer angemeldet ist, meldet über „Fragen und Feedback" in der Seitenleiste einen Fehler, einen
+Wer angemeldet ist, meldet über „Fragen und Feedback" im Konto-Menü einen Fehler, einen
 Wunsch oder eine Frage zu KiFu, von jeder Seite aus. Eltern und Spieler:innen erreichen dasselbe
 über einen Link am unteren Rand der Seite hinter ihrem privaten Link. Das Gespräch führt Haiku, ein
 KI-Modell von Anthropic in den USA; das steht zu Beginn, zusammen mit der Bitte, keine sensiblen
@@ -335,7 +354,7 @@ gerade nicht möglich ist.
 Die gewählte Darstellung merkt sich der Browser, nicht das Konto: Auf einem anderen Gerät gilt
 wieder die Einstellung des Geräts, und wer einen Browser teilt, teilt auch die Wahl. Ältere
 Browser — etwa Safari vor Version 17.5, also iPhones mit iOS 16 oder einem frühen iOS 17 —
-zeigen KiFu immer hell; dort fehlt „Darstellung" in der Leiste. Ohne Anmeldung lässt sich die
+zeigen KiFu immer hell; dort fehlt „Darstellung" im Konto-Menü. Ohne Anmeldung lässt sich die
 Darstellung nicht wählen, und die Seiten hinter einem privaten Link kennen keine eigene Wahl.
 
 Wird jemand von einem anderen Konto in ein Team oder in die Vereinsverwaltung aufgenommen,
@@ -361,10 +380,11 @@ aufs Mobile speichert, auch der Dialog vor dem Einschalten.
 
 „Versionen" zeigt die Texte so, wie sie veröffentlicht wurden; ältere enthalten Technisches,
 Nummern von Aufgaben und Aussagen, die inzwischen überholt sind. Nummern von Aufgaben sind dort kein Link,
-Bilder in einem Release-Text erscheinen nicht. Kurz nach einem Release kann die Version in der
-Leiste schon neuer sein als der neueste Eintrag unter „Versionen" oder umgekehrt. Ob eine
+Bilder in einem Release-Text erscheinen nicht. Kurz nach einem Release kann die Version im
+Konto-Menü schon neuer sein als der neueste Eintrag unter „Versionen" oder umgekehrt. Ob eine
 Version gesehen ist, merkt sich jeder Browser für sich, nicht das Konto: Auf einem anderen
-Gerät steht „Neu" weiter. Auf dem Telefon ist die Markierung erst im geöffneten Menü zu sehen,
+Gerät steht „Neu" weiter. Auf dem Telefon ist die Markierung erst in der geöffneten Leiste zu sehen — der Menüknopf
+oben trägt keinen Punkt —,
 und „Versionen" hebt nicht hervor, welche Einträge seit dem letzten Besuch neu sind. Ein
 Browser, der keine Cookies behält, zeigt nie eine Markierung.
 

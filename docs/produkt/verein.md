@@ -1,6 +1,6 @@
 # Verein
 
-Stand 2026-11-20. Wie ein Verein in der Anwendung entsteht, wer ihn führt und was er mit seinen
+Stand 2026-11-22 (Release 1.52.0). Wie ein Verein in der Anwendung entsteht, wer ihn führt und was er mit seinen
 Teams, Trainer:innen und Spieler:innen tun kann. Was ein Team im Alltag plant, steht im
 [Team-Bereich](team-bereich.md).
 
@@ -71,7 +71,7 @@ mit, und die Grenzen für eigene Übungen und Trainings fallen weg.
 Gründen kann nur ein Konto ohne Verein. Der Dialog „Verein gründen" verlangt den „Name des
 Vereins" — höchstens 60 Zeichen, später änderbar — und zwei Bestätigungen: „Ich bin berechtigt,
 für diesen Verein zu handeln." und „Der Verein ist für die Daten seiner Spieler:innen
-verantwortlich und Ansprechpartner ihrer Eltern und Vertretungen." Erst mit beiden Häkchen ist
+verantwortlich und Ansprechpartner für sie, ihre Eltern und Vertretungen." Erst mit beiden Häkchen ist
 der Knopf frei; gespeichert werden die Bestätigungen nicht. Darunter steht, dass man die erste
 Person der Vereinsverwaltung wird und solange keinem anderen Verein angehören kann. Ein leerer
 Name oder einer über 60 Zeichen wird am Feld abgewiesen.
@@ -219,8 +219,9 @@ gesetzter Suche oder Eingrenzung steht unter der Liste, wie viele es getroffen h
 37 angezeigt".
 
 **Was die Verwaltung dazu sieht und tut.** Die Verwaltung sieht zusätzlich die J+S-Nummer („–"
-ohne), den Stand des privaten Links als „bezogen" oder „offen" (siehe
-[Team-Bereich](team-bereich.md#selbstabholung)) und bei Schnuppernden die Plakette „Schnuppern
+ohne), den Stand des privaten Links als Plakette „abgeholt", „zugestellt" oder „offen" — derselbe
+Stand wie in allen Teams der Spieler:in (siehe [Team-Bereich](team-bereich.md#privater-link)) —
+und bei Schnuppernden die Plakette „Schnuppern
 1/4". Jede Zeile hat ein Menü mit „Ändern", „Privater Link", „Einem Team zuordnen" und „Löschen";
 über der Liste stehen „Spieler:in erfassen" und das Zeichen „Spieler:innen aus Datei importieren".
 
@@ -228,13 +229,21 @@ ohne), den Stand des privaten Links als „bezogen" oder „offen" (siehe
   auf, nach denselben Regeln wie die Spielerliste eines Teams. Sie kommt ohne Team in den Verein;
   einem Team ordnet man sie danach zu. **Ändern** gilt für jede Spieler:in des Vereins, auch ohne
   Team, und wirkt sofort in allen ihren Teams.
-- **Privater Link** zeigt den Link wie im Team. Er nennt die Teams, deren Termine er zeigt; bei
+- **Privater Link** zeigt den Link wie im Team, mit dem Stand als Plakette. Ist er nicht
+  abgeholt, steht daneben „Als zugestellt markieren" bzw. bei einem zugestellten „Zustellung
+  zurücknehmen", mit der Erklärung hinter ⓘ: „Du hast den Link der Spieler:in oder den Eltern
+  gegeben. Ob sie ihn geöffnet haben, weiss KiFu nicht. Abholen oder Erneuern ändert den Stand."
+  Das geht für jede Spieler:in des Vereins, auch ohne Team, und gilt sofort in allen ihren Teams;
+  danach steht „Als zugestellt markiert." bzw. „Zustellung zurückgenommen." im Dialog. Ist der
+  Link inzwischen abgeholt, ändert sich nichts, und der Dialog sagt „Der Link wurde inzwischen
+  abgeholt. Eine Zustellung braucht es nicht mehr." Der Link nennt die Teams, deren Termine er zeigt; bei
   einer Spieler:in ohne Team sagt er, dass die Spielervertretung erst Termine sieht, wenn sie einem
   Team zugeordnet ist, und der Link danach derselbe bleibt. Erneuern fragt vorher nach und nennt
   die Teams, für die der bisherige Link endet, dass mit ihm Kalender-Abo und Benachrichtigungen
   enden, dass auch die Mitteilungen aufs Mobile enden und die Spielervertretung sie mit dem neuen
-  Link neu einschaltet und die App neu ablegt, und ob die Eltern den neuen über eine Abholadresse holen können; ohne Team gibt man ihn
-  selbst weiter.
+  Link neu einschaltet und die App neu ablegt, und ob die Spieler:in oder ihre Eltern den neuen
+  über eine Abholadresse abholen können; ohne Team gibt man ihn selbst weiter. Ein erneuerter
+  Link ist wieder „offen".
 - **Einem Team zuordnen** öffnet die Wahl der Teams, je mit „18 von 100"; volle Teams stehen
   gedämpft. Die Spieler:in kommt ins gewählte Team, bisherige Teams bleiben. Für mehrere auf einmal
   hat jede Zeile ein Kästchen; sobald jemand gewählt ist, schwebt unten eine Leiste mit der Zahl
@@ -406,6 +415,10 @@ privaten Link ohne Benachrichtigung und ohne Mitteilung aufs Mobile. Wer eine Se
 Einstieg. Ein gelöschter Verein, ein aufgelöstes Team und eine gelöschte Spieler:in lassen sich
 nicht wiederherstellen, und vorher lässt sich nichts exportieren — weder der Spielerbestand noch
 Termine oder Trainings. Feedback zu einem gelöschten Team oder Verein bleibt ohne Bezug zum Team.
+
+Als zugestellt markiert die Verwaltung nur einzeln im Dialog „Privater Link", nicht mehrere auf
+einmal, und die Vereinsliste lässt sich nicht nach dem Stand des Links eingrenzen. Ob ein
+zugestellter Link angekommen ist, weiss KiFu nicht.
 
 Löschen kann die Verwaltung nur eine Spieler:in nach der anderen; einen Import rückgängig machen
 oder mehrere auf einmal löschen geht nicht. Gesammelt zugeordnet wird nur ohne Schnuppern, ein
