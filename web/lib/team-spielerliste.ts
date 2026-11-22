@@ -52,12 +52,16 @@ export function liesTeamEingrenzung(sp: AdressParameter): TeamEingrenzung {
 /** Wirft weg, was es im Team nicht gibt: fremde oder entfernte Kader,
  *  Jahrgänge, die auf der Liste niemand trägt (AK 3) — und «Ohne Kader»,
  *  solange das Team keine Kader führt: Die Leiste zeigt den Filter dann
- *  nicht, er stünde unsichtbar da. */
+ *  nicht, er stünde unsichtbar da. Aus demselben Grund fällt bei leerer
+ *  Liste (keine Jahrgänge) alles weg, auch Suche und Link-Stand. */
 export function bereinigeTeamEingrenzung(e: TeamEingrenzung, bestand: TeamBestand): TeamEingrenzung {
   const kader = new Set(bestand.kader.map((k) => k.id));
   const jahre = new Set(bestand.jahrgaenge);
+  const leer = jahre.size === 0;
   return {
     ...e,
+    suche: leer ? "" : e.suche,
+    linkStaende: leer ? [] : e.linkStaende,
     kaderIds: e.kaderIds.filter((id) => kader.has(id)),
     ohneKader: e.ohneKader && kader.size > 0,
     jahrgaenge: e.jahrgaenge.filter((j) => jahre.has(j)),
@@ -68,13 +72,15 @@ export function bereinigeTeamEingrenzung(e: TeamEingrenzung, bestand: TeamBestan
  *  `sp` das schon tut. Verglichen werden `?kader=`, `?jahrgang=` und
  *  `?link=` in der Schreibweise der Leiste («ohne» vor den Kennungen in der
  *  Folge der Adresse, Jahrgänge aufsteigend, Stände in der Folge von
- *  `LINK_STAENDE`); alles übrige reist unverändert mit. */
+ *  `LINK_STAENDE`); `?q=` nur, wenn `e` keine Suche mehr hat (so wird
+ *  der Tippstand nie umgeschrieben); alles übrige reist unverändert mit. */
 export function bereinigteTeamAdresse(pfad: string, sp: AdressParameter, e: TeamEingrenzung): string | null {
   const roh = (v: string | string[] | undefined) => (Array.isArray(v) ? v.join(",") : v ?? "");
   const soll: Record<string, string> = {
     kader: kaderFilterWerte(e).join(","),
     jahrgang: e.jahrgaenge.join(","),
     link: e.linkStaende.join(","),
+    ...(e.suche === "" ? { q: "" } : {}),
   };
   if (Object.entries(soll).every(([k, v]) => roh(sp[k]) === v)) return null;
   const p = new URLSearchParams();

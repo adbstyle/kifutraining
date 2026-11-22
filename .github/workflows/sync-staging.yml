@@ -255,8 +255,18 @@ jobs:
           -- Abholadressen (#438 PC 7).
           update public.spieler
           set link_token = replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''),
-              link_bezogen = false,
-              link_zugestellt = false;
+              link_bezogen = false;
+          -- «zugestellt» (#657) nur, wo die Spalte schon besteht: Nach
+          -- reset-staging trägt Staging das Schema von main, bis #657 dort
+          -- ist ohne sie. Bis N1; danach direkt im UPDATE oben.
+          do $$
+          begin
+            if exists (select 1 from information_schema.columns
+                        where table_schema = 'public' and table_name = 'spieler'
+                          and column_name = 'link_zugestellt') then
+              update public.spieler set link_zugestellt = false;
+            end if;
+          end $$;
           update public.team_abholung
           set token = replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
           delete from public.abholung_sperren;

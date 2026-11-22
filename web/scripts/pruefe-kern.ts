@@ -4396,6 +4396,12 @@ pruefe("Spielerliste eingrenzen: Suche, Kader, Jahrgang, Link-Stand; Adresse und
   assert.deepEqual(sauber.jahrgaenge, [2016]);
   assert.deepEqual(kaderFilterWerte(sauber), [OHNE_KADER_WERT, ka], "so, wie AuswahlFilter und ?kader= sie führen");
   assert.equal(bereinigeTeamEingrenzung(liesTeamEingrenzung({ kader: OHNE_KADER_WERT }), { kader: [], jahrgaenge: [] }).ohneKader, false);
+  // Leere Liste: Die Leiste fehlt, also fällt auch Suche und Link-Stand weg (sonst unsichtbar).
+  const leerSp = { q: "lea", link: "offen", fremd: "1" };
+  const leerE = bereinigeTeamEingrenzung(liesTeamEingrenzung(leerSp), { kader: [], jahrgaenge: [] });
+  assert.deepEqual([leerE.suche, leerE.linkStaende], ["", []]);
+  assert.equal(bereinigteTeamAdresse("/t", leerSp, leerE), "/t?fremd=1");
+  assert.equal(bereinigteTeamAdresse("/t", { q: "   " }, liesTeamEingrenzung({ q: "   " })), "/t", "leere Suche fällt aus der Adresse");
   // Die Adresse: einmal weiterleiten, q und Fremdes reisen mit; die bereinigte bleibt stehen.
   const P = "/team/x/verwaltung";
   const sp = { q: "lea", kader: `${kx},${ka},${OHNE_KADER_WERT}`, jahrgang: "2016,2014", link: "offen,abgeholt" };
