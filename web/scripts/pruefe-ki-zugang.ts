@@ -1398,4 +1398,45 @@ pruefe("#598 AK 9: die Infos zum Team über zwei Werkzeuge, mit Gliederung, Gren
   assert.match(beschreibung.get("team_infos_festlegen") ?? "", /leerer Text/);
 });
 
+// ── wer_bin_ich führt zu «Verbindungen» (#662 AK 5) ─────────────────────────
+// Am echten Werkzeug mit Wrapper: Ein Zugang mit Origin, ein `fetch`, das
+// Supabase spielt (Aufruf-Zählung, Anzeigename) — die Adresse entsteht über
+// `zugang.url(...)` und endet dort, wo sich der Zugang widerrufen lässt.
+const werBinIchErgebnis = await (async () => {
+  let aufruf: ((args: unknown, ctx: unknown) => Promise<CallToolResult>) | undefined;
+  registriereWerkzeuge({
+    registerTool: (name: string, _def: unknown, cb: (args: unknown, ctx: unknown) => Promise<CallToolResult>) => {
+      if (name === "wer_bin_ich") aufruf = cb;
+    },
+  } as never);
+  assert.ok(aufruf, "wer_bin_ich ist registriert");
+  const vorher = { fetch: globalThis.fetch, url: process.env.SUPABASE_URL, key: process.env.SUPABASE_ANON_KEY };
+  process.env.SUPABASE_URL = "https://supabase.test";
+  process.env.SUPABASE_ANON_KEY = "anon";
+  globalThis.fetch = (async (eingabe: RequestInfo | URL) => {
+    const url = String(eingabe instanceof Request ? eingabe.url : eingabe);
+    const wert = url.endsWith("/rpc/ki_aufruf_zaehlen") ? { status: "ok" } : url.endsWith("/rpc/anzeige_name") ? "Adrian" : null;
+    return new Response(JSON.stringify(wert), { status: wert === null ? 404 : 200, headers: { "content-type": "application/json" } });
+  }) as typeof fetch;
+  try {
+    return await aufruf({}, { http: { authInfo: { token: "t", clientId: "c", scopes: [], extra: { userId: "u", origin: "https://ki-fu.test/" } } } });
+  } finally {
+    globalThis.fetch = vorher.fetch;
+    if (vorher.url === undefined) delete process.env.SUPABASE_URL;
+    else process.env.SUPABASE_URL = vorher.url;
+    if (vorher.key === undefined) delete process.env.SUPABASE_ANON_KEY;
+    else process.env.SUPABASE_ANON_KEY = vorher.key;
+  }
+})();
+
+pruefe("#662 AK 5: wer_bin_ich nennt als konto_url die Seite «Verbindungen» im Konto", () => {
+  assert.notEqual(werBinIchErgebnis.isError, true, JSON.stringify(werBinIchErgebnis));
+  assert.deepEqual(werBinIchErgebnis.structuredContent, {
+    anzeigename: "Adrian",
+    konto_url: "https://ki-fu.test/konto/verbindungen",
+  });
+  assert.match(werkzeugTexte().beschreibung.get("wer_bin_ich") ?? "", /Seite «Verbindungen» im Konto/);
+  assert.match(MELDUNG_ZUGAENGE_GRENZE, /im Konto unter «Verbindungen»/);
+});
+
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

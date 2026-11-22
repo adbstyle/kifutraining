@@ -2705,7 +2705,7 @@ pruefe("Vereinsverwaltung (#581): Zwillinge, Sätze zum Aufnehmen und Bereich de
   assert.deepEqual(bereichAusPfad("/verein/verwaltung", null), { art: "verein" });
   assert.deepEqual(bereichAusPfad(`/training/${T2}`, T1), { art: "team", id: T1 }, "ein Team-Training gehört zu seinem Team");
   assert.equal(bereichAusPfad(`/training/${T2}`, null), null, "ein persönliches Training liegt in keinem Bereich");
-  for (const pfad of ["/", "/trainings", "/teams", "/konto", "/vereinsliste", `/teamx/${T1}`]) assert.equal(bereichAusPfad(pfad, null), null, pfad);
+  for (const pfad of ["/", "/trainings", "/teams", "/konto", "/konto/verbindungen", "/konto/daten", "/vereinsliste", `/teamx/${T1}`]) assert.equal(bereichAusPfad(pfad, null), null, pfad);
   assert.equal(bereichAusPfad("/trainings", T1), null, "die Trainingsübersicht liegt in keinem Bereich");
 
   // Cookie: lesen, schreiben, fremde Werte fallen weg.
@@ -4795,7 +4795,7 @@ pruefe("Verein und Konto löschen (#587): ein Weg je RPC, Bestätigung mit dem B
   // Alle vier Antworten haben einen Zweig.
   for (const status of ["letzte_verwaltung", "verein_bestaetigen", "vereinsname_falsch"]) assert.ok(fluss.includes(`a.status === "${status}"`), status);
   // Der Dialog liest den Fall beim Rendern der Seite, nicht erst beim Klick.
-  assert.match(lies("app/(app)/konto/page.tsx"), /ladeKontoLoeschenInfo\(supabase, user\.id\)[\s\S]*?<KontoClient info=\{loeschInfo\.wert\} \/>/);
+  assert.match(lies("app/(app)/konto/daten/page.tsx"), /ladeKontoLoeschenInfo\(supabase, user\.id\)[\s\S]*?<KontoClient info=\{loeschInfo\.wert\} \/>/);
   // Nie ein Namensfeld ohne Pflichtangabe: Die Eingabe geht nur im Fall «einzige Person» mit.
   assert.match(konto, /deleteAccount\(verein \? eingabe : null\)/);
   // Nach jeder Antwort ohne Löschen lädt der Dialog die Lage neu; Name und Zahlen gehen über Antwortfolgen nicht
@@ -6037,6 +6037,71 @@ pruefe("Konto-Menü in der Navigation (#661): eine Stelle für Konto, Darstellun
   // Im Styleguide zeigt die Demo das Menü angemeldet und ohne Anmeldung.
   const demo = ohneKommentare(lies("app/(app)/styleguide/SeitenleisteDemo.tsx"));
   assert.match(demo, /menue: kontoMenue\(angemeldet, neu, darstellung, setDarstellung\)/);
+});
+
+pruefe("Konto in Themen gegliedert (#662): Profil, Verbindungen sowie Daten und Konto je mit eigener Adresse; Verweise führen zu «Verbindungen»", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  // AK 1: drei Reiter, genau diese drei Adressen; jede Seite setzt ihren Reiter.
+  const rahmen = ohneKommentare(lies("app/(app)/konto/KontoRahmen.tsx"));
+  assert.deepEqual(
+    [...rahmen.matchAll(/\{ id: "(\w+)", label: "([^"]+)", href: "([^"]+)" \}/g)].map((m) => [m[1], m[2], m[3]]),
+    [
+      ["profil", "Profil", "/konto"],
+      ["verbindungen", "Verbindungen", "/konto/verbindungen"],
+      ["daten", "Daten und Konto", "/konto/daten"],
+    ],
+  );
+  assert.match(rahmen, /<TabNav\s+ariaLabel="Bereiche des Kontos"/);
+  assert.match(rahmen, /current: r\.id === reiter/);
+  for (const [seite, reiter] of [
+    ["app/(app)/konto/page.tsx", "profil"],
+    ["app/(app)/konto/verbindungen/page.tsx", "verbindungen"],
+    ["app/(app)/konto/daten/page.tsx", "daten"],
+  ] as const) {
+    const text = ohneKommentare(lies(seite));
+    assert.match(text, new RegExp(`<KontoRahmen reiter="${reiter}">`), seite);
+    assert.match(text, /export const dynamic = "force-dynamic";/, `${seite}: je Anfrage frisch`);
+    assert.match(text, /export const metadata: Metadata = \{ title: "[^"]+ - KiFu", robots: \{ index: false \} \};/, seite);
+  }
+  // Abmelden gibt es nur im Konto-Menü (#661), «Meine Übungen» nur über den Chip der Bibliothek (#660).
+  for (const datei of quelldateien(join(web, "app/(app)/konto"))) {
+    const text = ohneKommentare(readFileSync(datei, "utf8"));
+    assert.ok(!/signOut/.test(text), `${relative(web, datei)}: kein Abmelden auf den Konto-Seiten`);
+    assert.ok(!/mine=1|Meine Übungen/.test(text), `${relative(web, datei)}: kein Verweis «Meine Übungen»`);
+  }
+  // AK 2: E-Mail zum Lesen, Anzeigename zum Ändern, der Weg zu einem neuen Passwort.
+  const profil = ohneKommentare(lies("app/(app)/konto/page.tsx"));
+  assert.match(profil, /\{user\.email\}/);
+  assert.match(profil, /<AnzeigenameForm aktuell=\{anzeigeName\} \/>/);
+  assert.match(profil, /href="\/passwort-vergessen"/);
+  // AK 3: KI-Zugänge (Adresse, Anleitung, Widerruf) und Kalender-Abos.
+  const verbindungen = ohneKommentare(lies("app/(app)/konto/verbindungen/page.tsx"));
+  assert.match(verbindungen, /<KopierFeld label="Adresse für den KI-Assistenten" value=\{adresse\}/);
+  assert.match(verbindungen, /<Disclosure title="So verbindest du Claude Desktop, claude\.ai oder Claude Code"/);
+  assert.match(verbindungen, /<KiZugaengeListe zugaenge=\{zugaenge\} \/>/);
+  assert.match(verbindungen, /<AbosListe abos=\{abos\} \/>/);
+  // AK 4: Die Kurzfassung leitet sich aus der einen Liste der Speicherungen ab; Löschen in der Gefahrenzone.
+  const daten = ohneKommentare(lies("app/(app)/konto/daten/page.tsx"));
+  assert.match(daten, /SPEICHERUNGEN\.map\(\(s\) => s\.titel\)/);
+  assert.match(daten, /href="\/cookies"/);
+  assert.match(daten, /<Gefahrenzone>[\s\S]*<KontoClient info=\{loeschInfo\.wert\} \/>[\s\S]*<\/Gefahrenzone>/);
+  // Die Aktionen frischen das Thema auf, das ihre Liste zeigt.
+  assert.match(lies("lib/actions/abos.ts"), /revalidatePath\("\/konto\/verbindungen"\);/);
+  const kiAktionen = lies("lib/actions/ki-zugaenge.ts");
+  assert.equal(kiAktionen.match(/revalidatePath\("\/konto\/verbindungen"\);/g)?.length, 2, "erlauben und widerrufen");
+  assert.ok(!/revalidatePath\("\/konto"\)/.test(kiAktionen + lies("lib/actions/abos.ts")), "nicht mehr das Profil");
+  // AK 5: Jeder Verweis auf KI-Zugänge oder Abos führt zu «Verbindungen».
+  assert.match(lies("app/(auth)/oauth/consent/page.tsx"), /<ButtonLink href="\/konto\/verbindungen" variant="link">\s*Zu den Verbindungen/);
+  assert.match(lies("app/(auth)/oauth/consent/ZustimmungFormular.tsx"), /im Konto unter «Verbindungen» widerrufen/);
+  assert.match(lies("components/team/AboDialog.tsx"), /Unter «Konto › Verbindungen» findest du deine Abos wieder/);
+  assert.match(lies("lib/mcp/regeln.ts"), /"Widerrufe zuerst einen davon im Konto unter «Verbindungen» /);
+  assert.match(lies("lib/mcp/werkzeuge/konto.ts"), /konto_url: zugang\.url\("konto", "verbindungen"\)/);
+  // Die Seite «Cookies» hängt unter «Daten und Konto».
+  assert.match(
+    lies("app/(app)/cookies/page.tsx"),
+    /\[\{ label: "Konto", href: "\/konto" \}, \{ label: "Daten und Konto", href: "\/konto\/daten" \}, \{ label: "Cookies" \}\]/,
+  );
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

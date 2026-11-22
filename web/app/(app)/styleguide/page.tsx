@@ -1690,7 +1690,8 @@ export default async function Styleguide() {
           </p>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             Mehrere Sichten auf denselben Gegenstand - etwa ein Termin mit
-            Termin, Training, Spieler:innen und Trainer:innen. Zwischen den
+            Termin, Training, Spieler:innen und Trainer:innen, oder das Konto
+            mit Profil, Verbindungen sowie Daten und Konto (#662). Zwischen den
             Seiten eines Bereichs (Team, Verein) wechselt dagegen die
             Seitenleiste (<Siehe id="navigation" />). Bewusst Links statt
             Schaltflächen: jede Ansicht hat ihre eigene Adresse, ist damit
@@ -3619,7 +3620,8 @@ export default async function Styleguide() {
             nicht zurücknehmen lassen und andere mittreffen - in der
             Teamverwaltung das Verlassen des Teams, in der Vereinsverwaltung das
             Auflösen eines Teams und der Austritt aus der Verwaltung (#480,
-            #581). Eine Karte auf <code>elev-01</code> wie jede andere, aber mit
+            #581), im Konto unter «Daten und Konto» das Löschen des Kontos
+            (#662). Eine Karte auf <code>elev-01</code> wie jede andere, aber mit
             voller Kontur und Überschrift in Error: {v(kontrast(ERROR, elev(1)))}{" "}
             als Schrift, als Kontur mindestens 3:1 auf jeder Stufe und im
             Druck. Getönt wird die Fläche nicht - <code>section-danger</code>{" "}
