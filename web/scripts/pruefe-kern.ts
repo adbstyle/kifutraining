@@ -479,6 +479,7 @@ import {
 import { gruendungAus, kontoInfoAus, kontoLoeschAusgangAus, vereinLoeschAusgangAus } from "../lib/verein-antwort";
 import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
 import { bereichAusPfad } from "../lib/navigation";
+import { FILTER_SCHLUESSEL, TEAM_BEREICHE, teamBereichAusPfad, teamBereichHref } from "../lib/team-bereiche";
 import { textMitLinks } from "../lib/text-links";
 import { gliedere, gliederungAlsText, gliederungBloecke } from "../lib/gliederung";
 import { TEAM_INFOS_MAX, TEAM_INFOS_TEXT, standDatum, teamInfosBereinigt, teamInfosProblem, zahlCh } from "../lib/team-infos";
@@ -2700,6 +2701,7 @@ pruefe("Vereinsverwaltung (#581): Zwillinge, Sätze zum Aufnehmen und Bereich de
   const T2 = "22222222-2222-4222-8222-222222222222";
   assert.deepEqual(bereichAusPfad(`/team/${T1}`, null), { art: "team", id: T1 });
   assert.deepEqual(bereichAusPfad(`/team/${T1}/verwaltung`, null), { art: "team", id: T1 });
+  assert.deepEqual(bereichAusPfad(`/team/${T1}/verwaltung/link`, null), { art: "team", id: T1 }, "ein Bereich der Team-Verwaltung (#656)");
   assert.deepEqual(bereichAusPfad("/verein", null), { art: "verein" });
   assert.deepEqual(bereichAusPfad("/verein/team/abc", null), { art: "verein" });
   assert.deepEqual(bereichAusPfad("/verein/verwaltung", null), { art: "verein" });
@@ -4116,6 +4118,48 @@ pruefe("Kader: Zugehörigkeit einer Auswahl und Kader einer Spieler:in (#452 AK 
   assert.equal(zugehoerigkeit(k, ["a", "c"]), "teil");
   assert.equal(zugehoerigkeit(k, ["c"]), "keine");
   assert.deepEqual(kaderVon("b", [k, { id: "j", name: "S1", spielerIds: ["c"] }]).map((x) => x.id), ["k"]);
+});
+
+pruefe("Team-Verwaltung in vier Bereichen mit eigener Adresse; die bisherige zeigt die Spieler:innen (#656)", () => {
+  const T = "11111111-1111-4111-8111-111111111111";
+  // AK 3: die vier Bereiche in dieser Reihenfolge, unterscheidbar benannt.
+  assert.deepEqual(TEAM_BEREICHE.map((b) => b.label), ["Spieler:innen", "Kader & Schnuppern", "Privater Link", "Trainer:innen"]);
+  // AK 1, 2, PC 1: jeder Bereich hat seine Adresse, die bisherige ist «Spieler:innen».
+  assert.equal(teamBereichHref(T, "spieler"), `/team/${T}/verwaltung`);
+  assert.equal(teamBereichHref(T, "trainer"), `/team/${T}/verwaltung/trainer`);
+  for (const b of TEAM_BEREICHE) {
+    const href = teamBereichHref(T, b.schluessel);
+    assert.equal(teamBereichAusPfad(href, T), b.schluessel, href);
+    const seite = join(web, "app/(app)/team/[id]/verwaltung", b.pfad.slice(1), "page.tsx");
+    assert.ok(existsSync(seite), `${relative(web, seite)} fehlt`);
+  }
+  assert.equal(teamBereichAusPfad(`/team/${T}/verwaltung/`, T), "spieler");
+  assert.equal(teamBereichAusPfad(`/team/${T}`, T), null);
+  assert.equal(teamBereichAusPfad(`/team/${T}/verwaltung/unbekannt`, T), null);
+  // Die Reiter tragen nur die Eingrenzung der Spielerliste weiter (#601).
+  assert.deepEqual([...FILTER_SCHLUESSEL], ["q", "kader", "jahrgang", "link"]);
+  const suche = new URLSearchParams("jahrgang=2016&fremd=1&kader=a&kader=ohne&q=lea");
+  assert.equal(teamBereichHref(T, "link", suche), `/team/${T}/verwaltung/link?q=lea&kader=a&kader=ohne&jahrgang=2016`);
+  assert.equal(teamBereichHref(T, "kader", new URLSearchParams("fremd=1")), `/team/${T}/verwaltung/kader`);
+  // AK 4: was die eine Seite bot, steht jetzt in genau einem Bereich.
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const lies = (d: string) => ohneKommentare(readFileSync(join(web, "app/(app)/team/[id]/verwaltung", d), "utf8"));
+  const ort: Record<string, string> = {
+    SpielerListe: "page.tsx",
+    KaderKarte: "kader/page.tsx",
+    SchnupperKarte: "kader/page.tsx",
+    Selbstabholung: "link/page.tsx",
+    TeamInfosKarte: "link/page.tsx",
+    MitgliederListe: "trainer/page.tsx",
+    TeamGefahrenzone: "trainer/page.tsx",
+    Teamangaben: "trainer/page.tsx",
+  };
+  const seiten = ["page.tsx", "kader/page.tsx", "link/page.tsx", "trainer/page.tsx"];
+  for (const [teil, datei] of Object.entries(ort))
+    for (const s of seiten) assert.equal(new RegExp(`\\b${teil}\\b`).test(lies(s)), s === datei, `${teil} in ${s}`);
+  assert.ok(!/Selbstabholung/.test(ohneKommentare(readFileSync(join(web, "components/team/SpielerListe.tsx"), "utf8"))), "die Spielerliste zeigt die Selbstabholung nicht mehr");
+  // Die Seitenleiste markiert «Team» in jedem Bereich.
+  assert.match(readFileSync(join(web, "components/layout/AppNavClient.tsx"), "utf8"), /pfad\.startsWith\(`\$\{basis\}\/verwaltung\/`\)/);
 });
 
 pruefe("Kader am privaten Link ausgeblendet; die Kader-Karte sagt, dass nur das Team sie sieht (#663 AK 1, 2)", () => {

@@ -1690,7 +1690,10 @@ export default async function Styleguide() {
           </p>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             Mehrere Sichten auf denselben Gegenstand - etwa ein Termin mit
-            Termin, Training, Spieler:innen und Trainer:innen. Zwischen den
+            Termin, Training, Spieler:innen und Trainer:innen, oder die
+            Team-Verwaltung mit Spieler:innen, Kader &amp; Schnuppern, Privater
+            Link und Trainer:innen (#656): ein Eintrag «Team» in der
+            Seitenleiste, darunter die Reiter. Zwischen den
             Seiten eines Bereichs (Team, Verein) wechselt dagegen die
             Seitenleiste (<Siehe id="navigation" />). Bewusst Links statt
             Schaltflächen: jede Ansicht hat ihre eigene Adresse, ist damit

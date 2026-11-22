@@ -33,7 +33,6 @@ import {
 } from "@/lib/spieler";
 import { SpielerFelder, istFeldFehler, type SpielerAngaben, type SpielerFehler } from "@/components/spieler/SpielerFelder";
 import { SpielerLinkDialog } from "./SpielerLinkDialog";
-import { Selbstabholung } from "./Selbstabholung";
 import { KaderLozenges } from "./KaderLozenge";
 import { TeamLozenges } from "./TeamLozenges";
 import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
@@ -60,8 +59,8 @@ import { MITTEILUNGEN_SPALTE } from "@/lib/push";
    Das Kettenglied zeigt ihren privaten Link (#436); ob er über die
    Selbstabholung bezogen wurde (#438 AK 21), sagt ein grüner Punkt daran;
    «nicht bezogen» steht nur im Link-Dialog — in der Liste wäre es bei fast
-   allen der lauteste Eindruck (PO 2026-10-18). Der
-   Abschnitt «Selbstabholung» steht zuoberst (#438). Einen Import aus einer
+   allen der lauteste Eindruck (PO 2026-10-18). Die Selbstabholung (#438)
+   steht im Bereich «Privater Link» der Team-Verwaltung (#656). Einen Import aus einer
    CSV-Datei gibt es hier nicht mehr: Ihn macht die Vereinsverwaltung im
    Spielerbestand des Vereins (Story #585).
 
@@ -92,7 +91,6 @@ export function SpielerListe({
   vereinName,
   spieler,
   kader,
-  abholung,
   probeAnzahl,
 }: {
   teamId: string;
@@ -102,8 +100,6 @@ export function SpielerListe({
   spieler: Spieler[];
   /** Die Kader des Teams (#452), nach Namen. */
   kader: Kader[];
-  /** Die Selbstabholung des Teams (#438); `url` fehlt, solange es keine Adresse gibt. */
-  abholung: { url: string | null; aktiv: boolean };
   /** Die Anzahl Schnuppertrainings des Teams (#555); `null`, solange keine festgelegt ist. */
   probeAnzahl: number | null;
 }) {
@@ -351,10 +347,6 @@ export function SpielerListe({
         <Tooltip label="Spieler:in hinzufügen" ende>
           <IconButton icon={Plus} label="Spieler:in hinzufügen" aria-haspopup="dialog" onClick={() => oeffnen()} />
         </Tooltip>
-      </div>
-
-      <div className="mt-4">
-        <Selbstabholung teamId={teamId} start={abholung} />
       </div>
 
       <Dialog
