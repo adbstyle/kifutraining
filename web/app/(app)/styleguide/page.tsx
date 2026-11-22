@@ -675,7 +675,7 @@ const zeichenJeSache: [LucideIcon[], string, string][] = [
   [[CalendarDays, CalendarPlus, CalendarOff], "CalendarDays · CalendarPlus · CalendarOff", "Termin"],
   [[Repeat], "Repeat", "Terminserie"],
   [[ClipboardList], "ClipboardList", "Training, auch «Meine Trainings»"],
-  [[LayoutGrid], "LayoutGrid", "Übung, auch «Meine Übungen»"],
+  [[LayoutGrid], "LayoutGrid", "Übung"],
   [[ListChecks], "ListChecks", "nur die Zahl der Übungen in einem Training"],
   [[Layers, MapPin, Clock, LandPlot], "Layers · MapPin · Clock · LandPlot", "Variante · Ort · Zeit · Platz"],
   [[History], "History", "Version (Versionszeile und Release-History)"],
@@ -3349,7 +3349,9 @@ export default async function Styleguide() {
             (<code>discovery</code>: etwas Zusätzliches) - schmal stattdessen einen Punkt in Primary
             am Zeichen, die einzige Punkt-Markierung im Kit. Sie drängt sich nicht auf und
             verschwindet, sobald die Versionen angezeigt wurden. Abmelden steht im Konto, nicht in der
-            Leiste. Der offene Eintrag ist betont (<code>betont</code>, die Schrift
+            Leiste. Eigene Übungen und Trainings haben keine eigenen Einträge (#660): Der Chip «Meine
+            Übungen» bzw. «Meine Trainings» grenzt die Bibliothek ein, und «Übungen» bzw. «Trainings»
+            bleibt dabei der offene Eintrag. Der offene Eintrag ist betont (<code>betont</code>, die Schrift
             zu 8 % über der Leiste) und trägt sein Zeichen in Primary; aufklappbare
             Einträge (Teams) haben einen eigenen Pfeil, damit der Name selbst
             zur Übersicht führen kann.

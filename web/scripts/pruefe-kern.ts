@@ -478,7 +478,7 @@ import {
 } from "../lib/verein-spielerliste";
 import { gruendungAus, kontoInfoAus, kontoLoeschAusgangAus, vereinLoeschAusgangAus } from "../lib/verein-antwort";
 import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
-import { bereichAusPfad } from "../lib/navigation";
+import { aktiveBereiche, bereichAusPfad } from "../lib/navigation";
 import { textMitLinks } from "../lib/text-links";
 import { gliedere, gliederungAlsText, gliederungBloecke } from "../lib/gliederung";
 import { TEAM_INFOS_MAX, TEAM_INFOS_TEXT, standDatum, teamInfosBereinigt, teamInfosProblem, zahlCh } from "../lib/team-infos";
@@ -5918,6 +5918,39 @@ pruefe("Mitteilungen (#483 AK 2–4, 10, 11, 13; PC 6): Texte — Begriff «Mobi
     JSON.stringify(SPEICHERUNGEN);
   assert.ok(!/Handy/i.test(alle), "«Mobile», nie «Handy»");
   assert.ok(!/\bKind/.test(alle) && !/\bProbe/.test(alle), "Spieler:in, nie Kind; kein «Probe»");
+});
+
+pruefe("Eigene Inhalte über die Bibliothek (#660): kein Eintrag «Meine Bibliothek», der Chip grenzt ein, Bestand und alte Adressen bleiben", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  // AK 1: Die Leiste führt keine eigenen Einträge für eigene Übungen und Trainings.
+  const nav = ohneKommentare(lies("components/layout/AppNavClient.tsx"));
+  assert.ok(!/Meine Bibliothek|Meine Übungen|Meine Trainings/.test(nav), "keine Gruppe «Meine Bibliothek»");
+  assert.ok(!/aktiv\.meine|mine=1|get\("mine"\)/.test(nav), "die Leiste liest `?mine=1` nicht mehr");
+  const demo = ohneKommentare(lies("app/(app)/styleguide/SeitenleisteDemo.tsx"));
+  assert.ok(!/Meine Bibliothek/.test(demo), "die Demo im Styleguide ebenso");
+  // Die Eingrenzung ändert den offenen Eintrag nicht: «Übungen» bzw. «Trainings» bleibt aktiv.
+  assert.ok(!/\bmine\b/.test(ohneKommentare(lies("lib/navigation.ts"))), "navigation.ts kennt `mine` nicht");
+  assert.equal(aktiveBereiche.length, 2, "aktiveBereiche(pfad, imTeamBereich)");
+  assert.deepEqual(aktiveBereiche("/", false), { uebungen: true, trainings: false });
+  assert.deepEqual(aktiveBereiche("/uebung/abc", false), { uebungen: true, trainings: false });
+  assert.deepEqual(aktiveBereiche("/trainings", false), { uebungen: false, trainings: true });
+  assert.deepEqual(aktiveBereiche("/training/abc", false), { uebungen: false, trainings: true });
+  assert.deepEqual(aktiveBereiche("/training/abc", true), { uebungen: false, trainings: false }, "ein Team-Training gehört zum Team");
+  assert.deepEqual(aktiveBereiche("/konto", false), { uebungen: false, trainings: false });
+  // AK 2, AK 3, PC 1: Die Bibliotheken lesen `?mine=1` weiter (bisherige Adressen und Verweise),
+  // bieten den Chip und zeigen eingegrenzt den Bestand von der Grenze.
+  for (const [seite, filterleiste, art] of [
+    ["app/(app)/page.tsx", "CatalogFilterBar", "uebungen"],
+    ["app/(app)/trainings/page.tsx", "TrainingFilterBar", "trainings"],
+  ] as const) {
+    const text = lies(seite);
+    assert.match(text, /sp\.mine === "1"/, `${seite}: liest ?mine=1`);
+    assert.match(text, new RegExp(`<${filterleiste} [^>]*showMine=\\{!!user\\}`), `${seite}: Chip für Angemeldete`);
+    assert.match(text, new RegExp(`\\{grenzen && <BestandAnzeige art="${art}"`), `${seite}: Bestand bei Eingrenzung`);
+  }
+  assert.match(lies("components/catalog/CatalogFilterBar.tsx"), /filter\.schalte\("mine"/);
+  assert.match(lies("components/training/TrainingFilterBar.tsx"), /filter\.schalte\("mine"/);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

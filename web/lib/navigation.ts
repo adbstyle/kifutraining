@@ -5,30 +5,25 @@ import type { Bereich } from "@/lib/bereich";
 
 export type AktiveBereiche = {
   uebungen: boolean;
-  meineUebungen: boolean;
   trainings: boolean;
-  meineTrainings: boolean;
 };
 
 /**
+ * Eigene Inhalte haben keinen eigenen Eintrag (#660): `?mine=1` grenzt die
+ * Bibliothek nur ein, „Übungen" bzw. „Trainings" bleibt aktiv.
+ *
  * @param pfad    `usePathname()`
- * @param mine    `?mine=1` — „Meine Übungen" und „Meine Trainings" sind
- *                derselbe Pool wie „Übungen" und „Trainings", vorgefiltert.
  * @param imTeamBereich  Das geöffnete Training gehört einem Team (#156). Es
  *                liegt unter `/training/…`, gehört aber zu „Teams" und in
  *                keine Trainingsübersicht.
  */
-export function aktiveBereiche(pfad: string, mine: boolean, imTeamBereich: boolean): AktiveBereiche {
-  const meineUebungen = pfad === "/" && mine;
-  const meineTrainings = pfad === "/trainings" && mine;
+export function aktiveBereiche(pfad: string, imTeamBereich: boolean): AktiveBereiche {
   return {
     // Katalog und Detailseiten.
-    uebungen: (pfad === "/" || pfad.startsWith("/uebung")) && !meineUebungen,
-    meineUebungen,
+    uebungen: pfad === "/" || pfad.startsWith("/uebung"),
     // Pool, Editor, Einzel-, Durchführungs- und Druckansicht — `/training`
     // deckt als Präfix auch `/trainings` ab.
-    trainings: pfad.startsWith("/training") && !imTeamBereich && !meineTrainings,
-    meineTrainings,
+    trainings: pfad.startsWith("/training") && !imTeamBereich,
   };
 }
 

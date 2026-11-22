@@ -60,7 +60,6 @@ export function AppNavClient({
 }) {
   const pfad = usePathname();
   const suche = useSearchParams();
-  const mine = suche.get("mine") === "1";
   const teamImTraining = useTeamBereich(teamImTrainingVomServer);
   const imTeamBereich = teamImTraining !== null;
   const { slim, drawerOffen, setzeDrawerOffen } = useSeitenleiste();
@@ -74,7 +73,7 @@ export function AppNavClient({
   const feedback = useFeedback();
   const { darstellung, waehle, umschaltbar } = useDarstellung();
 
-  const aktiv = aktiveBereiche(pfad, mine, imTeamBereich);
+  const aktiv = aktiveBereiche(pfad, imTeamBereich);
 
   // Die Bereiche dieses Kontos: erst die eigenen Teams, dann der Verein.
   const bereiche: Bereich[] = [
@@ -130,6 +129,8 @@ export function AppNavClient({
         },
   );
 
+  // Eigene Übungen und Trainings haben keinen Eintrag (#660): Der Chip
+  // «Meine Übungen» bzw. «Meine Trainings» grenzt die Bibliothek ein.
   const bibliotheken: SeitenleisteGruppe = {
     titel: "Bibliothek",
     eintraege: [
@@ -195,21 +196,6 @@ export function AppNavClient({
     });
   }
   gruppen.push(bibliotheken);
-  // „Meine Bibliothek" nur angemeldet: Eigenes gibt es nur mit Konto.
-  if (konto) {
-    gruppen.push({
-      titel: "Meine Bibliothek",
-      eintraege: [
-        { label: "Meine Übungen", href: "/?mine=1", icon: LayoutGrid, current: aktiv.meineUebungen },
-        {
-          label: "Meine Trainings",
-          href: "/trainings?mine=1",
-          icon: ClipboardList,
-          current: aktiv.meineTrainings,
-        },
-      ],
-    });
-  }
 
   return (
     <Seitenleiste

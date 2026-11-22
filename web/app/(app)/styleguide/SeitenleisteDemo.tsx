@@ -45,6 +45,7 @@ function gruppen(angemeldet: boolean, bereich: string): SeitenleisteGruppe[] {
               },
         ]
       : []),
+    // Eigene Inhalte ohne eigenen Eintrag (#660): der Chip in der Bibliothek grenzt ein.
     {
       titel: "Bibliothek",
       eintraege: [
@@ -52,17 +53,6 @@ function gruppen(angemeldet: boolean, bereich: string): SeitenleisteGruppe[] {
         { label: "Trainings", href: "#trainings", icon: ClipboardList },
       ],
     },
-    ...(angemeldet
-      ? [
-          {
-            titel: "Meine Bibliothek",
-            eintraege: [
-              { label: "Meine Übungen", href: "#meine-uebungen", icon: LayoutGrid },
-              { label: "Meine Trainings", href: "#meine-trainings", icon: ClipboardList },
-            ],
-          },
-        ]
-      : []),
   ];
 }
 
