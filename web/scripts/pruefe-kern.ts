@@ -5953,4 +5953,75 @@ pruefe("Eigene Inhalte über die Bibliothek (#660): kein Eintrag «Meine Bibliot
   assert.match(lies("components/training/TrainingFilterBar.tsx"), /filter\.schalte\("mine"/);
 });
 
+pruefe("Konto-Menü in der Navigation (#661): eine Stelle für Konto, Darstellung, Feedback, Neuigkeiten und Abmelden, auch ohne Anmeldung", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  // Kit: Die Fusszeilen der Leiste (Feedback, Darstellung, Version) und der Anmelde-Knopf sind weg;
+  // unten steht nur die Konto-Karte, ein Knopf mit Menü.
+  const leiste = ohneKommentare(lies("components/ui/Seitenleiste.tsx"));
+  const props = leiste.slice(leiste.indexOf("export interface SeitenleisteProps"), leiste.indexOf("/* ── Breite"));
+  assert.ok(props.length > 0, "SeitenleisteProps gefunden");
+  for (const weg of ["version", "feedback", "darstellung", "anmeldenHref"])
+    assert.ok(!new RegExp(`\\b${weg}\\??:`).test(props), `Seitenleiste ohne Prop «${weg}»`);
+  assert.match(props, /\bkonto: SeitenleisteKonto;/, "die Konto-Karte gibt es immer, auch ohne Anmeldung");
+  assert.ok(!/DarstellungZeile|DARSTELLUNGEN|ButtonLink|SeitenleisteVersion|SeitenleisteFeedback|SeitenleisteDarstellung/.test(leiste), "keine Reste der Fusszeilen");
+  assert.ok(!/SeitenleisteVersion|SeitenleisteFeedback|SeitenleisteDarstellung/.test(lies("components/ui/index.ts")), "keine Exporte der alten Typen");
+  const karte = leiste.slice(leiste.indexOf("function KontoKarte"), leiste.indexOf("function Marke"));
+  assert.match(karte, /aria-haspopup="menu"/);
+  assert.match(karte, /aria-expanded=\{!!lage\}/);
+  assert.match(karte, /data-hinweis=\{lage \? undefined : hinweis\}/, "offen weicht der Hinweis dem Menü");
+  assert.match(karte, /e\.key !== "Tab"\) return;\s*e\.preventDefault\(\);\s*zu\(\);\s*knopfRef\.current\?\.focus\(\);/, "Tab schliesst und gibt den Fokus an die Karte");
+  assert.match(karte, /m\.gewaehlt === undefined\s*\?[\s\S]*?onNavigiert\(\);/, "Ziele und Aktionen schliessen den Drawer, die Darstellung nicht");
+  assert.match(karte, /\{neu && \(\s*<span[^>]*>\s*<ZeichenPunkt ton="primary" \/>/, "Punkt am Avatar bei neuer Version, breit wie schmal");
+  assert.match(karte, /<span className="sr-only">, neue Version erschienen<\/span>/, "der Punkt hat seinen Text");
+  // Die Fokusfalle des Drawers überlässt Escape und Tab dem offenen Menü (es steht `fixed`).
+  assert.match(leiste, /const imMenue = [^;]*closest\?\.\('\[role="menu"\]'\)/);
+  assert.match(leiste, /if \(e\.key !== "Tab" \|\| !navRef\.current \|\| imMenue\) return;/);
+
+  // Menü: Ziele werden Links (die Warnung vor ungesicherten Angaben fängt nur Links ab), Gruppen
+  // haben einen Namen; `fuss` ist ungenutzt und weg.
+  const menu = ohneKommentare(lies("components/ui/Menu.tsx"));
+  assert.match(menu, /\{item\.href \? \(\s*<Link\s+href=\{item\.href\}\s+role="menuitem"/);
+  assert.match(menu, /<div role="group" aria-label=\{a\.gruppe\}>/);
+  assert.ok(!/\bfuss\b/.test(menu), "Menü ohne `fuss`");
+
+  // Navigation: die Einträge des Menüs in der Reihenfolge des Entwurfs.
+  const nav = ohneKommentare(lies("components/layout/AppNavClient.tsx"));
+  const stelle = (t: string, s: string) => {
+    const i = t.indexOf(s);
+    assert.ok(i >= 0, `«${s}» fehlt`);
+    return i;
+  };
+  const angemeldet = nav.slice(stelle(nav, "const menue: MenuItemDef[] = konto"), stelle(nav, '{ label: "Anmelden"'));
+  const reihe = [
+    '{ label: "Konto und Einstellungen", icon: Settings, href: "/konto" }',
+    "...(umschaltbar",
+    'gruppe: "Darstellung"',
+    'hinweis: i === DARSTELLUNGEN.length - 1 ? "Gilt in diesem Browser." : undefined',
+    "{ label: FEEDBACK_TITEL, icon: MessageSquare, trenner: umschaltbar, onSelect: feedback.oeffnen }",
+    "wasIstNeu,",
+    'label: "Abmelden"',
+    "void signOut();",
+  ].map((s) => stelle(angemeldet, s));
+  assert.deepEqual(reihe, [...reihe].sort((a, b) => a - b), "angemeldet: Konto, Darstellung, Feedback, Was ist neu, Abmelden");
+  const anonym = nav.slice(stelle(nav, '{ label: "Anmelden"'), stelle(nav, "return ("));
+  const reiheAnonym = [
+    '{ label: "Anmelden", icon: LogIn, href: "/login" }',
+    '{ label: "Konto erstellen", icon: UserPlus, href: "/registrieren" }',
+    "{ ...wasIstNeu, trenner: true }",
+  ].map((s) => stelle(anonym, s));
+  assert.deepEqual(reiheAnonym, [...reiheAnonym].sort((a, b) => a - b), "ohne Anmeldung: Anmelden, Konto erstellen, Was ist neu");
+  assert.ok(!/FEEDBACK_TITEL|waehle|signOut/.test(anonym), "ohne Konto weder Feedback, Darstellung noch Abmelden");
+  const neuigkeiten = nav.slice(stelle(nav, "const wasIstNeu: MenuItemDef"), stelle(nav, "const menue"));
+  assert.match(neuigkeiten, /href: "\/versionen"/);
+  assert.match(neuigkeiten, /trailing: neu \? \([\s\S]*<Lozenge appearance="discovery">[\s\S]*\) : \([\s\S]*\{version\}/, "Plakette «Neu» oder die Versionsnummer");
+  assert.equal(nav.match(/signOut/g)?.length, 2, "signOut: ein Import, ein Aufruf");
+  assert.match(nav, /current: pfad === "\/konto" \|\| pfad\.startsWith\("\/konto\/"\)/, "die Karte ist auf jeder Konto-Seite hervorgehoben");
+  assert.match(nav, /name: "Nicht angemeldet", email: "Anmelden oder Konto erstellen", anonym: true, neu, menue/);
+  assert.match(ohneKommentare(lies("components/layout/AppNav.tsx")), /version=\{APP_VERSION\}/, "die Nummer kommt vom Server");
+  // Im Styleguide zeigt die Demo das Menü angemeldet und ohne Anmeldung.
+  const demo = ohneKommentare(lies("app/(app)/styleguide/SeitenleisteDemo.tsx"));
+  assert.match(demo, /menue: kontoMenue\(angemeldet, neu, darstellung, setDarstellung\)/);
+});
+
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

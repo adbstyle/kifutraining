@@ -6,23 +6,16 @@ import Link from "next/link";
 import { AB_LG } from "@/lib/breite";
 import {
   ChevronDown,
-  History,
-  LogIn,
+  ChevronsUpDown,
   Menu as MenuIcon,
-  MessageSquare,
-  Monitor,
-  Moon,
   PanelLeftClose,
   PanelLeftOpen,
-  Sun,
+  UserRound,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import type { Darstellung } from "@/lib/darstellung";
-import { ButtonLink } from "./Button";
-import { Menu } from "./Menu";
-import { Lozenge } from "./Lozenge";
+import { Menu, type MenuItemDef } from "./Menu";
 import { IconButton } from "./IconButton";
 import { ZeichenPunkt } from "./ZeichenPunkt";
 import { tooltipFlaeche } from "./Tooltip";
@@ -57,38 +50,23 @@ export interface SeitenleisteGruppe {
   eintraege: SeitenleisteEintrag[];
 }
 
+/** Die Konto-Karte unten in der Leiste (#661): ein Knopf, der das
+ *  Konto-Menü öffnet — angemeldet wie ohne Anmeldung. */
 export interface SeitenleisteKonto {
+  /** Angemeldet der Anzeigename, sonst «Nicht angemeldet». */
   name: string;
+  /** Die zweite Zeile: angemeldet die E-Mail, sonst «Anmelden oder Konto erstellen». */
   email?: string;
-  href: string;
-  current?: boolean;
-}
-
-/** Die laufende Version unten in der Leiste; führt zur Release-History. */
-export interface SeitenleisteVersion {
-  /** Die Versionsnummer, z. B. «1.27.0». */
-  nummer: string;
-  href: string;
+  /** Ohne Anmeldung: ein Personenzeichen statt der Initialen. */
+  anonym?: boolean;
+  /** Eine Seite des Kontos ist offen → die Karte ist hervorgehoben. */
   current?: boolean;
   /** Ein Release ist erschienen, den dieser Browser noch nicht gesehen hat
-   *  (#410): breit die Plakette «Neu», schmal ein Punkt am Zeichen. */
+   *  (#410): ein Punkt am Avatar, im Menü die Plakette bei «Was ist neu». */
   neu?: boolean;
-}
-
-/** «Fragen und Feedback» unten in der Leiste (#542): kein Link, sondern ein
- *  Knopf — er öffnet den Dialog neben der Seite, statt sie zu wechseln. */
-export interface SeitenleisteFeedback {
-  label: string;
-  /** Der Dialog steht offen → der Eintrag ist hervorgehoben. */
-  offen: boolean;
-  onOeffnen: () => void;
-}
-
-/** «Darstellung» unten in der Leiste (#567): öffnet ein Menü mit «Wie das
- *  Gerät», «Hell» und «Dunkel»; nur angemeldet. */
-export interface SeitenleisteDarstellung {
-  wahl: Darstellung;
-  onWahl: (darstellung: Darstellung) => void;
+  /** Die Einträge des Menüs. Ziele tragen `href` (Links, #246), Aktionen
+   *  `onSelect`; Zeilen mit `gewaehlt` (Darstellung) lassen den Drawer offen. */
+  menue: MenuItemDef[];
 }
 
 export interface SeitenleisteProps {
@@ -96,15 +74,8 @@ export interface SeitenleisteProps {
    *  Verein. Fehlt er (kein Verein, kein Team), steht nichts an seiner Stelle. */
   bereich?: BereichWechslerProps;
   gruppen: SeitenleisteGruppe[];
-  /** Angemeldet: Konto-Karte unten. Sonst `anmeldenHref`. */
-  konto?: SeitenleisteKonto;
-  anmeldenHref?: string;
-  /** Laufende Version über der Konto-Karte. */
-  version?: SeitenleisteVersion;
-  /** «Fragen und Feedback» über der Version; nur angemeldet. */
-  feedback?: SeitenleisteFeedback;
-  /** «Darstellung» zwischen Feedback und Version; nur angemeldet. */
-  darstellung?: SeitenleisteDarstellung;
+  /** Die Konto-Karte unten mit dem Konto-Menü — auch ohne Anmeldung. */
+  konto: SeitenleisteKonto;
   /** Schmal (nur Zeichen). Wirkt ab `lg`; darunter ist die Leiste ein Drawer
    *  und zeigt immer alles. */
   slim: boolean;
@@ -181,10 +152,6 @@ export function Seitenleiste({
   bereich,
   gruppen,
   konto,
-  anmeldenHref = "/login",
-  version,
-  feedback,
-  darstellung,
   slim,
   drawerOffen = false,
   onDrawerOffenChange = keineAktion,
@@ -208,13 +175,16 @@ export function Seitenleiste({
     if (!offen) return;
     schliessenRef.current?.focus();
     function onKey(e: KeyboardEvent) {
-      // Escape in einem offenen Menü der Leiste (Darstellung) schliesst nur
-      // das Menü — das Menü hört selbst darauf und gibt den Fokus zurück.
+      // Escape in einem offenen Menü der Leiste (Konto, Bereich) schliesst
+      // nur das Menü — das Menü hört selbst darauf und gibt den Fokus zurück.
+      // Tab ebenso: Die Menüs stehen `fixed` (fehlen also unter den Zielen
+      // unten) und schliessen bei Tab selbst.
+      const imMenue = (e.target as Element | null)?.closest?.('[role="menu"]');
       if (e.key === "Escape") {
-        if ((e.target as Element | null)?.closest?.('[role="menu"]')) return;
+        if (imMenue) return;
         return onDrawerOffenChange(false);
       }
-      if (e.key !== "Tab" || !navRef.current) return;
+      if (e.key !== "Tab" || !navRef.current || imMenue) return;
       const ziele = [...navRef.current.querySelectorAll<HTMLElement>("a[href], button")].filter(
         (el) => el.offsetParent !== null,
       );
@@ -291,7 +261,7 @@ export function Seitenleiste({
         // Ab lg: feste Spalte, klebt beim Scrollen. `sticky` bildet einen
         // eigenen Stapelkontext — ohne Ebene malte später folgender Inhalt
         // (Karten, Seitenkopf z-20) über alles, was aus der Leiste ragt, etwa
-        // das Menü «Darstellung» der schmalen Leiste. z-30: über dem Inhalt,
+        // das Konto-Menü der schmalen Leiste. z-30: über dem Inhalt,
         // unter Snackbar und Auswahlleiste.
         "lg:sticky lg:top-0 lg:z-30 lg:h-dvh lg:w-(--leiste-breite) lg:shrink-0 lg:self-start lg:overflow-hidden lg:border-r lg:border-linie lg:bg-elev-01 lg:transition-[width] lg:duration-200",
       );
@@ -386,127 +356,19 @@ export function Seitenleiste({
           ))}
         </div>
 
-        {/* Feedback, Darstellung und Version (führt zur Release-History,
-            #408) stehen gleich über der Linie zum Konto. Schmal bleibt das
-            Zeichen, der Name steht dann im Hinweis daneben. Den Styleguide
-            führt die Leiste nicht: Er ist Werkzeug fürs Entwickeln, nicht für
+        {/* Die Konto-Karte öffnet das Konto-Menü (#661): Konto, Darstellung,
+            Fragen und Feedback, Was ist neu und Abmelden — ohne Anmeldung
+            Anmelden, Konto erstellen und Was ist neu. Den Styleguide führt
+            die Leiste nicht: Er ist Werkzeug fürs Entwickeln, nicht für
             Nutzer:innen, und bleibt unter /styleguide erreichbar. */}
-        {(version || feedback || darstellung) && (
-          <div className="flex shrink-0 flex-col gap-0.5 px-4 pb-2">
-            {feedback && (
-              <button
-                type="button"
-                aria-expanded={feedback.offen}
-                data-hinweis={feedback.label}
-                onClick={() => {
-                  schliessen();
-                  feedback.onOeffnen();
-                }}
-                className={cn(
-                  zeile,
-                  "type-body-small h-9 gap-3 px-2.5 text-left",
-                  k?.mitte,
-                  feedback.offen ? zeileAktiv : zeileRuhe,
-                )}
-              >
-                <MessageSquare
-                  size={18}
-                  strokeWidth={2}
-                  aria-hidden
-                  className={cn("shrink-0", feedback.offen && "text-primary")}
-                />
-                <span className={cn("truncate", k?.textWeg)}>{feedback.label}</span>
-              </button>
-            )}
-            {darstellung && (
-              <DarstellungZeile
-                {...darstellung}
-                schmalAb={schmalAb}
-                navRef={navRef}
-              />
-            )}
-            {version && (
-              <Link
-                href={version.href}
-                aria-current={version.current ? "page" : undefined}
-                data-hinweis={`Version ${version.nummer}${version.neu ? " - Neu" : ""}`}
-                onClick={schliessen}
-                className={cn(
-                  zeile,
-                  "type-body-small h-9 gap-3 px-2.5",
-                  k?.mitte,
-                  version.current ? zeileAktiv : zeileRuhe,
-                )}
-              >
-                <span className="relative shrink-0">
-                  <History
-                    size={18}
-                    strokeWidth={2}
-                    aria-hidden
-                    className={cn(version.current && "text-primary")}
-                  />
-                  {/* Schmal fehlt die Plakette; dann trägt das Zeichen den Punkt. */}
-                  {version.neu && schmalAb && (
-                    <ZeichenPunkt ton="primary" className={cn(schmalAb === "lg" && "max-lg:hidden")} />
-                  )}
-                </span>
-                <span className={cn("truncate", k?.textWeg)}>Version {version.nummer}</span>
-                {version.neu && (
-                  <>
-                    <Lozenge appearance="discovery" className={k?.nurBreit}>
-                      <span aria-hidden>Neu</span>
-                    </Lozenge>
-                    <span className="sr-only">, neue Version erschienen</span>
-                  </>
-                )}
-              </Link>
-            )}
-          </div>
-        )}
-
         <div className="mx-4 shrink-0 border-t border-linie py-3">
-          {konto ? (
-            <Link
-              href={konto.href}
-              aria-current={konto.current ? "page" : undefined}
-              data-hinweis="Konto"
-              onClick={schliessen}
-              className={cn(
-                zeile,
-                "gap-3 p-2",
-                k?.konto,
-                konto.current ? zeileAktiv : "text-on-surface",
-              )}
-            >
-              <span
-                aria-hidden
-                className={cn(
-                  "type-label-medium grid h-10 w-10 shrink-0 place-items-center rounded-full betont text-on-surface",
-                  konto.current && "outline-2 outline-primary",
-                )}
-              >
-                {initialen(konto.name)}
-              </span>
-              <span className={cn("flex min-w-0 flex-col", k?.textWeg)}>
-                <span className="type-title-small truncate">{konto.name}</span>
-                {konto.email && (
-                  <span className="type-body-small truncate text-on-surface-mittel">
-                    {konto.email}
-                  </span>
-                )}
-              </span>
-            </Link>
-          ) : (
-            <ButtonLink
-              href={anmeldenHref}
-              data-hinweis="Anmelden"
-              onClick={schliessen}
-              className={cn("w-full", k?.anmelden)}
-            >
-              <LogIn size={18} strokeWidth={2.5} aria-hidden className="shrink-0" />
-              <span className={k?.textWeg}>Anmelden</span>
-            </ButtonLink>
-          )}
+          <KontoKarte
+            {...konto}
+            schmalAb={schmalAb}
+            navRef={navRef}
+            onNavigiert={schliessen}
+            onOeffnen={() => setHinweis(null)}
+          />
         </div>
       </nav>
 
@@ -523,44 +385,50 @@ export function Seitenleiste({
   );
 }
 
-const DARSTELLUNGEN: { wert: Darstellung; label: string; kurz: string; icon: LucideIcon }[] = [
-  { wert: "geraet", label: "Wie das Gerät", kurz: "Gerät", icon: Monitor },
-  { wert: "hell", label: "Hell", kurz: "Hell", icon: Sun },
-  { wert: "dunkel", label: "Dunkel", kurz: "Dunkel", icon: Moon },
-];
-
-/* Darstellung (#567, Entwurf A): eine Zeile wie Feedback und Version, die
-   ein Menü öffnet. Breit klappt es über der Zeile auf, schmal rechts neben
+/* Konto-Karte (#661, Entwurf «Seitenleiste mit Konto-Menü» und «Ohne Konto ·
+   B»): Avatar, Name und zweite Zeile als ein Knopf, der das Konto-Menü öffnet.
+   Breit klappt es über der Karte auf, so breit wie sie, schmal rechts neben
    der Leiste. Das Menü steht `fixed`, weil die Leiste ihren Inhalt
    abschneidet (`overflow-hidden`) — schmal ragte es sonst nicht hinaus. Die
-   Lage wird beim Öffnen aus der Zeile gerechnet; ändert sich das Fenster
-   oder scrollt etwas darunter, geht es zu, statt von der Zeile abzureissen. Die Wahl lässt den Drawer offen: Wer umschaltet, will sehen,
-   wie es aussieht. */
-function DarstellungZeile({
-  wahl,
-  onWahl,
+   Lage wird beim Öffnen aus der Karte gerechnet; ändert sich das Fenster oder
+   scrollt etwas darunter, geht es zu, statt von der Karte abzureissen.
+
+   Ziele und Aktionen schliessen auch den Drawer; die Wahl der Darstellung
+   lässt ihn offen: Wer umschaltet, will sehen, wie es aussieht. Tastatur nach
+   dem Menü-Muster, dazu schliesst Tab und gibt den Fokus an die Karte. */
+function KontoKarte({
+  name,
+  email,
+  anonym,
+  current,
+  neu,
+  menue,
   schmalAb,
   navRef,
-}: SeitenleisteDarstellung & {
+  onNavigiert,
+  onOeffnen,
+}: SeitenleisteKonto & {
   schmalAb: SchmalAb | null;
   navRef: React.RefObject<HTMLElement | null>;
+  onNavigiert: () => void;
+  /** Das Menü geht auf — der Hinweis daneben (schmal) muss weichen. */
+  onOeffnen: () => void;
 }) {
   const knopfRef = useRef<HTMLButtonElement>(null);
   const [lage, setLage] = useState<CSSProperties | null>(null);
   const k = schmalAb ? SCHMAL_KLASSEN[schmalAb] : null;
-  const aktuell = DARSTELLUNGEN.find((d) => d.wert === wahl) ?? DARSTELLUNGEN[0];
-  const Icon = aktuell.icon;
+  const zu = () => setLage(null);
 
   useEffect(() => {
     if (!lage) return;
-    const zu = () => setLage(null);
-    window.addEventListener("resize", zu);
+    const schliessen = () => setLage(null);
+    window.addEventListener("resize", schliessen);
     // Capture: Auch ein Scrollbereich ausserhalb des Fensters (Styleguide)
-    // verschiebt die Zeile.
-    window.addEventListener("scroll", zu, true);
+    // verschiebt die Karte.
+    window.addEventListener("scroll", schliessen, true);
     return () => {
-      window.removeEventListener("resize", zu);
-      window.removeEventListener("scroll", zu, true);
+      window.removeEventListener("resize", schliessen);
+      window.removeEventListener("scroll", schliessen, true);
     };
   }, [lage]);
 
@@ -570,12 +438,27 @@ function DarstellungZeile({
     const schmal =
       schmalAb === "immer" || (schmalAb === "lg" && window.matchMedia(AB_LG).matches);
     const kante = navRef.current?.getBoundingClientRect().right ?? r.right;
+    onOeffnen();
     setLage(
       schmal
-        ? { left: kante + 8, bottom: window.innerHeight - r.bottom }
+        ? { left: kante + 8, bottom: window.innerHeight - r.bottom, width: "16rem" }
         : { left: r.left, bottom: window.innerHeight - r.top + 4, width: r.width },
     );
   }
+
+  // Ziele und Aktionen schliessen den Drawer, die Wahl einer Darstellung nicht.
+  const eintraege = menue.map((m) =>
+    m.gewaehlt === undefined
+      ? {
+          ...m,
+          onSelect: () => {
+            onNavigiert();
+            m.onSelect?.();
+          },
+        }
+      : m,
+  );
+  const hinweis = anonym ? "Anmelden" : "Konto";
 
   return (
     <>
@@ -584,37 +467,64 @@ function DarstellungZeile({
         type="button"
         aria-haspopup="menu"
         aria-expanded={!!lage}
-        data-hinweis={`Darstellung: ${aktuell.kurz}`}
-        onClick={() => (lage ? setLage(null) : oeffnen())}
+        // Offen steht das Menü dort, wo schmal der Hinweis stünde.
+        data-hinweis={lage ? undefined : hinweis}
+        onClick={() => (lage ? zu() : oeffnen())}
         className={cn(
           zeile,
-          "type-body-small h-9 gap-3 px-2.5 text-left",
-          k?.mitte,
-          lage ? zeileAktiv : zeileRuhe,
+          "w-full gap-3 p-2 text-left",
+          k?.konto,
+          lage || current ? zeileAktiv : "text-on-surface",
         )}
       >
-        <Icon size={18} strokeWidth={2} aria-hidden className="shrink-0" />
-        <span className={cn("flex-1 truncate", k?.textWeg)}>Darstellung</span>
-        <span className={cn("text-on-surface-mittel", k?.nurBreit)}>
-          <span className="sr-only">: </span>
-          {aktuell.kurz}
+        <span
+          aria-hidden
+          className={cn(
+            "type-label-medium relative grid h-10 w-10 shrink-0 place-items-center rounded-full betont text-on-surface",
+            current && "outline-2 outline-primary",
+          )}
+        >
+          {anonym ? <UserRound size={20} strokeWidth={2} /> : initialen(name)}
+          {/* Neue Version: ein Punkt am Avatar, breit wie schmal (Entwurf
+              «Ohne Konto · B»); was er meldet, sagt der sr-only-Text unten. */}
+          {neu && (
+            <span className="absolute top-1 right-1 h-2 w-2">
+              <ZeichenPunkt ton="primary" />
+            </span>
+          )}
         </span>
+        <span className={cn("flex min-w-0 flex-1 flex-col", k?.textWeg)}>
+          <span className="type-title-small truncate">{name}</span>
+          {email && (
+            <span className="type-body-small truncate text-on-surface-mittel">{email}</span>
+          )}
+          {neu && <span className="sr-only">, neue Version erschienen</span>}
+        </span>
+        <ChevronsUpDown
+          size={16}
+          strokeWidth={2}
+          aria-hidden
+          className={cn("shrink-0 text-on-surface-mittel", k?.nurBreit)}
+        />
       </button>
       {lage && (
-        <div className="fixed z-50" style={lage}>
+        <div
+          className="fixed z-50"
+          style={lage}
+          onKeyDown={(e) => {
+            if (e.key !== "Tab") return;
+            e.preventDefault();
+            zu();
+            knopfRef.current?.focus();
+          }}
+        >
           <Menu
             open
-            onClose={() => setLage(null)}
+            onClose={zu}
             triggerRef={knopfRef}
-            label="Darstellung"
-            fuss="Gilt in diesem Browser."
+            label={hinweis}
             className="bottom-0 left-0 mt-0 w-full"
-            items={DARSTELLUNGEN.map((d) => ({
-              label: d.label,
-              icon: d.icon,
-              gewaehlt: d.wert === wahl,
-              onSelect: () => onWahl(d.wert),
-            }))}
+            items={eintraege}
           />
         </div>
       )}

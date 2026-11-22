@@ -45,7 +45,7 @@ export interface BereichWechslerProps {
    einen Bereich, ist es eine Anzeige ohne Liste — es gäbe nichts zu wählen.
 
    Die Liste steht `fixed` und rechnet ihre Lage beim Öffnen aus dem Knopf
-   (wie «Darstellung»): Die Leiste schneidet ihren Inhalt ab, schmal ragte sie
+   (wie das Konto-Menü): Die Leiste schneidet ihren Inhalt ab, schmal ragte sie
    sonst nicht hinaus. Ändert sich das Fenster oder scrollt etwas darunter,
    geht sie zu. Schmal bleibt vom Knopf das Zeichen des Bereichs; der Name
    steht für Vorlesehilfen weiter da und beim Überfahren als Hinweis daneben.
