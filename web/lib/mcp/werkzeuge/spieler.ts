@@ -14,6 +14,7 @@ import {
   nimmSpielerAuf,
   nimmSpielerAusTeam,
   schalteAbholung,
+  setzeLinkZugestellt,
 } from "@/lib/kern/spieler";
 import { ladeVereinslage } from "@/lib/kern/konto";
 import { istSpielAbweisung, setzeAbmeldung, setzeAnwesenheit, type TerminSpieler } from "@/lib/kern/abmeldungen";
@@ -27,6 +28,8 @@ import {
   EHEMALIGE_SPIELERIN,
   JS_MAX,
   LINK_PFAD,
+  LINK_STAENDE,
+  LINK_STAND_TEXT,
   LINK_TEXT,
   NAME_MAX,
   linkErneuernSaetze,
@@ -86,13 +89,21 @@ const NACHNAME = z.string().describe(`Nachname, 1 bis ${NAME_MAX} Zeichen.`);
 const JAHRGANG = z.number().describe("Jahrgang als vierstellige Jahreszahl, etwa 2017.");
 const JS_NUMMER = z.string().describe(`J+S-Nummer, höchstens ${JS_MAX} Zeichen; leer heisst keine.`);
 
+/** Stand des privaten Links (#657), überall mit denselben Wörtern (PC 4). */
+const LinkStandAusgabe = z
+  .enum(LINK_STAENDE)
+  .describe(
+    "Stand ihres aktuellen privaten Links, gleich in allen ihren Teams: «abgeholt» (über eine Abholadresse geholt), " +
+      "«zugestellt» (als ausserhalb von KiFu weitergegeben markiert, «spieler_link_zugestellt») oder «offen».",
+  );
+
 const SpielerAusgabe = z.object({
   id: z.string(),
   vorname: z.string(),
   nachname: z.string(),
   jahrgang: z.number().int(),
   js_nummer: z.string().nullable(),
-  link_bezogen: z.boolean().describe("Der aktuelle private Link wurde über die Selbstabholung herausgegeben."),
+  link_stand: LinkStandAusgabe,
   kader_ids: z.array(z.string()).describe("Die Kader, denen sie angehört («kader_abrufen» nennt die Namen)."),
   weitere_teams: z
     .array(z.string())
@@ -151,7 +162,7 @@ export const spielerlisteAbrufen = werkzeug({
         nachname: s.nachname,
         jahrgang: s.jahrgang,
         js_nummer: s.jsNummer,
-        link_bezogen: s.linkBezogen,
+        link_stand: s.linkStand,
         kader_ids: s.kaderIds,
         weitere_teams: s.weitereTeams,
         schnuppern: s.probe,
@@ -304,13 +315,13 @@ const ABMELDE_MODELL =
   `begonnenen Terminen weiter mit Namen («nicht_mehr_im_team: true») und ihr Nachtrag bleibt möglich; erst wer aus dem Verein gelöscht wird, steht dort als «${EHEMALIGE_SPIELERIN}» ohne Namen. Eine Abmeldung und ein Nachtrag tragen ` +
   "keinen Grund, und KiFu benachrichtigt niemanden. Spiele (art «spiel») sind anders: Jede Spieler:in ist zuerst ohne " +
   "Meldung («meldung: null»), bis sie an- oder abgemeldet wird; danach wechselt sie nur noch zwischen angemeldet und " +
-  "abgemeldet. Mitglieder (und du) melden bis zum Anpfiff, auch nach der Meldefrist; Eltern über ihren Link nur bis zur " +
+  "abgemeldet. Mitglieder (und du) melden bis zum Anpfiff, auch nach der Meldefrist; Spieler:innen und Eltern über den privaten Link nur bis zur " +
   "Meldefrist. Wer nach Ablauf der Meldefrist noch ohne Meldung ist, hat die Meldefrist verpasst («meldefrist_verpasst»): " +
   "Das Team rechnet nicht mit ihr, sie lässt sich aber bis zum Anpfiff weiter melden. Ein anderes Datum lässt alle Meldungen eines Spiels verfallen, eine andere Zeit am selben Tag nicht. " +
   "Mitglieder (und du) können eine Spieler:in für ein Spiel als nicht aufgeboten kennzeichnen (termin_aufgebot_setzen), " +
   "gleich welche Meldung sie trägt: Die Meldung bleibt darunter stehen, zählt aber nicht als angemeldet, und bis die " +
   "Kennzeichnung aufgehoben ist, nimmt das Spiel für sie keine Meldung an. Die Kennzeichnung trägt keinen Grund, " +
-  "verfällt mit den Meldungen und wird beim Anpfiff mit ihnen festgehalten; die Eltern sehen sie über ihren Link. " +
+  "verfällt mit den Meldungen und wird beim Anpfiff mit ihnen festgehalten; Spieler:innen und Eltern sehen sie über den privaten Link. " +
   "Ab dem Anpfiff tragen Mitglieder (und du) nach, wer nicht oder doch erschienen ist (termin_anwesenheit_setzen): " +
   "Gezählt hat beim Anpfiff, wer angemeldet und nicht als nicht aufgeboten gekennzeichnet war; «nicht_erschienen» gilt " +
   "für sie, «doch_erschienen» für alle anderen. Jede Verlegung eines begonnenen Spiels lässt seine Nachträge verfallen. " +
@@ -363,7 +374,7 @@ export const terminSpielerAbrufen = werkzeug({
     meldefrist: z
       .string()
       .nullable()
-      .describe("Nur an einem Spiel: bis wann Eltern melden, als YYYY-MM-DDTHH:MM (Uhr am Trainingsort); null ohne Frist (bis zum Anpfiff)."),
+      .describe("Nur an einem Spiel: bis wann am privaten Link gemeldet wird, als YYYY-MM-DDTHH:MM (Uhr am Trainingsort); null ohne Frist (bis zum Anpfiff)."),
     anwesend: z
       .number()
       .int()
@@ -673,15 +684,15 @@ export const terminAnwesenheitSetzen = werkzeug({
 const LINK_MODELL =
   "Jede Spieler:in hat einen privaten Link, denselben für alle ihre Teams: Wer ihn öffnet, sieht ohne Konto Vor- und " +
   "Nachnamen dieser Spieler:in, die Namen ihrer Teams und die anstehenden Termine aller ihrer Teams, die für sie " +
-  "gelten, je Termin mit seinem Team (bei Terminen mit Kadern nur die ihrer Kader, samt dieser Kader), mit der Zahl " +
+  "gelten, je Termin mit seinem Team (bei Terminen mit Kadern nur die ihrer Kader, ohne einen Kader zu nennen), mit der Zahl " +
   "der Angemeldeten und derer, für die er gilt, und meldet sie bis zum Beginn ab und wieder an. An Trainings und " +
-  "Spielen sieht sie den Hinweis für Eltern, nie die Bemerkung; an einem Training seinen Treffpunkt, solange sie " +
+  "Spielen sieht sie den Hinweis am privaten Link, nie die Bemerkung; an einem Training seinen Treffpunkt, solange sie " +
   "angemeldet ist und es nicht begonnen hat. Spiele meldet sie an oder ab bis zur Meldefrist (ohne Frist bis zum " +
   "Anpfiff) und sieht dort Bezeichnung, Richtwert, Meldefrist, Treffpunkte und ob die Spieler:in nicht aufgeboten " +
   "ist. An einem ausgefallenen Training oder Spiel sieht sie den Grund des Ausfalls, ganz, und keinen Hinweis — " +
   "keine Namen anderer, kein Training, keine Nachträge, nichts Vergangenes. Schnuppert sie, sieht sie keine Spiele, " +
   "meldet die Spieler:in für Trainings an statt ab und das nur bis zur Anzahl Schnuppertrainings, und sieht, wie " +
-  "viele noch möglich sind. Über den Link holen Eltern auch ein Kalender-Abo der Termine aller ihrer Teams; das " +
+  "viele noch möglich sind. Über den Link lässt sich auch ein Kalender-Abo der Termine aller ihrer Teams holen; das " +
   "kannst du weder holen noch einsehen noch widerrufen. Ein erneuerter Link gilt für alle ihre Teams, der bisherige " +
   "in keinem mehr. Ist sie keinem Team mehr zugeordnet, bleibt der Link gültig und zeigt keine Termine. KiFu " +
   "verschickt den Link nicht. Gib ihn nur der Person weiter, die ihn verlangt, und nie in einer Gruppe. " +
@@ -691,6 +702,7 @@ const LinkAusgabe = z.object({
   spieler_id: z.string(),
   team_id: z.string().describe("Das älteste ihrer Teams, dem du angehörst - dort wurde der Link geholt."),
   name: z.string(),
+  link_stand: LinkStandAusgabe,
   url: z.string().describe("Der private Link. Ein Geheimnis: Wer ihn hat, kann diese Spieler:in für Trainings ab- und anmelden und für Spiele melden."),
   teams: z
     .array(z.string())
@@ -705,7 +717,7 @@ export const spielerLinkAbrufen = werkzeug({
   name: "spieler_link_abrufen",
   titel: "Privater Link einer Spieler:in",
   beschreibung:
-    "Holt den privaten Link einer Spieler:in, damit du ihn ihrer Spielervertretung (Eltern oder ihr selbst) weitergibst. " +
+    "Holt den privaten Link einer Spieler:in, damit du ihn ihrer Spielervertretung (ihr selbst oder ihren Eltern) weitergibst. " +
     "Er bleibt derselbe, bis ihn jemand erneuert. «teams» nennt die Namen aller ihrer Teams; «hinweis» sagt, was der " +
     `Link kann und dass er die Termine aller dieser Teams zeigt. ${LINK_MODELL} ${SPIELER_KENNUNG_FEHLER}`,
   nurLesen: true,
@@ -718,6 +730,7 @@ export const spielerLinkAbrufen = werkzeug({
       spieler_id: e.spieler_id,
       team_id: w.teamId,
       name: w.name,
+      link_stand: lage.wert.stand,
       url: zugang.url(LINK_PFAD, w.token),
       teams: lage.wert.teams.map((t) => t.name),
       hinweis: `${LINK_TEXT.warnung} ${teamsSatz(lage.wert)} Ein erneuerter Link gilt für alle diese Teams.`,
@@ -767,6 +780,8 @@ export const spielerLinkErneuern = werkzeug({
       spieler_id: e.spieler_id,
       team_id: w.teamId,
       name: w.name,
+      // Ein erneuerter Link ist offen (#657 PC 3).
+      link_stand: "offen" as const,
       url: zugang.url(LINK_PFAD, w.token),
       teams: l.teams.map((t) => t.name),
       hinweis: `${LINK_TEXT.erneuern} ${teamsSatz(l)}`,
@@ -774,18 +789,64 @@ export const spielerLinkErneuern = werkzeug({
   },
 });
 
+// ── spieler_link_zugestellt (#657) ─────────────────────────────────────────
+
+export const spielerLinkZugestellt = werkzeug({
+  name: "spieler_link_zugestellt",
+  titel: "Privaten Link als zugestellt markieren",
+  beschreibung:
+    "Markiert den aktuellen privaten Link einer Spieler:in als zugestellt («zugestellt: true») oder nimmt die Markierung " +
+    "zurück («zugestellt: false») — wenn du oder jemand aus dem Team ihn ausserhalb von KiFu ihrer Spielervertretung " +
+    "gegeben hast. Eine reine Markierung: KiFu verschickt nichts und weiss nicht, ob der Link geöffnet wurde. Nur solange " +
+    "der Link nicht abgeholt ist; ist er abgeholt, ändert der Aufruf nichts und nennt «link_stand»: «abgeholt» mit " +
+    "«geaendert»: false. Holt jemand den Link über eine Abholadresse, ist er abgeholt; ein erneuerter Link ist wieder " +
+    "offen. Der Stand gilt in allen ihren Teams; den aktuellen nennen «spielerliste_abrufen» und «spieler_link_abrufen». " +
+    `Immer eine Spieler:in je Aufruf. ${SPIELER_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({
+    spieler_id: SpielerId,
+    zugestellt: z.boolean().describe("true: als zugestellt markieren; false: die Markierung zurücknehmen."),
+  }),
+  ausgabe: z.object({
+    spieler_id: z.string(),
+    name: z.string(),
+    link_stand: LinkStandAusgabe,
+    geaendert: z.boolean().describe("false: Der Link war schon abgeholt, nichts geändert."),
+    hinweis: z.string(),
+  }),
+  ausfuehren: async (e, zugang) => {
+    // Der Name kommt vor dem Schreiben (wie beim Link), das Team aus derselben Lage.
+    const lage = await ladeLinkLage(zugang.supabase, zugang.userId, { spielerId: e.spieler_id });
+    if (!lage.ok) return lage;
+    return abgebildet(
+      await setzeLinkZugestellt(zugang.supabase, zugang.userId, { spielerId: e.spieler_id, zugestellt: e.zugestellt, teamId: lage.wert.teamId }),
+      (w) => ({
+        spieler_id: e.spieler_id,
+        name: lage.wert.name,
+        link_stand: w.linkStand,
+        geaendert: w.geaendert,
+        hinweis: !w.geaendert
+          ? LINK_STAND_TEXT.schonAbgeholt
+          : e.zugestellt
+            ? `${LINK_STAND_TEXT.markiert} ${LINK_STAND_TEXT.erklaerung}`
+            : LINK_STAND_TEXT.zurueckgenommen,
+      }),
+    );
+  },
+});
+
 // ── Selbstabholung (#438) ───────────────────────────────────────────────────
 
 const ABHOL_MODELL =
-  "Mit der Selbstabholung holen Eltern den privaten Link ihrer Spieler:in selbst ab: Sie öffnen die Abholadresse eines " +
+  "Mit der Selbstabholung holen Spieler:innen oder ihre Eltern den privaten Link selbst ab: Sie öffnen die Abholadresse eines " +
   "Teams ohne Konto und geben Vorname, Nachname und Jahrgang einer Spieler:in dieses Teams ein; passt die Eingabe (wie " +
   "die Eindeutigkeit der Liste: Gross- und Kleinschreibung, Leerzeichen, Bindestrich und Apostroph-Varianten zählen " +
   "nicht), erhalten sie ihren privaten Link - denselben, den die Abholadresse jedes ihrer Teams mit eingeschalteter Selbstabholung herausgibt -, und er " +
-  "gilt als bezogen («link_bezogen» in «spielerliste_abrufen», in allen ihren Teams). Nach " +
+  "gilt als abgeholt («link_stand» in «spielerliste_abrufen», in allen ihren Teams). Nach " +
   `${ABHOL_VERSUCHE} nicht passenden Eingaben ist die ` +
   `Eingabe vom selben Anschluss ${ABHOL_SPERRE_MINUTEN} Minuten gesperrt. Die Selbstabholung ist aus, bis ein Mitglied ` +
-  "sie einschaltet; aus und wieder ein gilt dieselbe Adresse. Erneuern macht die bisherige für immer ungültig. Bezogene " +
-  "Spieler-Links gelten in jedem Fall weiter; ein erneuerter Spieler-Link gilt wieder als nicht bezogen. KiFu verschickt " +
+  "sie einschaltet; aus und wieder ein gilt dieselbe Adresse. Erneuern macht die bisherige für immer ungültig. Abgeholte " +
+  "Spieler-Links gelten in jedem Fall weiter; ein erneuerter Spieler-Link ist wieder offen. KiFu verschickt " +
   "die Adresse nicht.";
 
 const AbholAusgabe = z.object({
@@ -813,7 +874,7 @@ export const selbstabholungAbrufen = werkzeug({
   titel: "Selbstabholung eines Teams",
   beschreibung:
     "Nennt, ob die Selbstabholung eines deiner Teams eingeschaltet ist, und ihre Abholadresse, damit du sie weitergibst " +
-    `(nur im Eltern-Chat des Teams). Welche Links bezogen sind, steht in «spielerliste_abrufen». ${ABHOL_MODELL} ${TEAM_KENNUNG_FEHLER}`,
+    `(nur im Chat des Teams mit Spieler:innen und Eltern). Welche Links abgeholt sind, steht in «spielerliste_abrufen». ${ABHOL_MODELL} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: z.object({ team_id: TeamId }),
   ausgabe: AbholAusgabe,
@@ -828,7 +889,7 @@ export const selbstabholungSchalten = werkzeug({
   titel: "Selbstabholung ein- oder ausschalten",
   beschreibung:
     "Schaltet die Selbstabholung eines deiner Teams ein («aktiv: true») oder aus. Ausschalten stoppt neue Abholungen; " +
-    `bezogene Links gelten weiter. ${ABHOL_MODELL} ${TEAM_KENNUNG_FEHLER}`,
+    `abgeholte Links gelten weiter. ${ABHOL_MODELL} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ team_id: TeamId, aktiv: z.boolean() }),
   ausgabe: AbholAusgabe,

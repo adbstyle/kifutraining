@@ -10,7 +10,6 @@ import {
   Checkbox,
   Dialog,
   IconButton,
-  Lozenge,
   OverflowMenu,
   SectionMessage,
   Tabelle,
@@ -20,7 +19,7 @@ import {
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { ordneSpielerZuAktion } from "@/lib/actions/verein";
 import type { VereinSpieler, VereinTeam } from "@/lib/kern/verein";
-import { SPIELER_MAX, spielerName } from "@/lib/spieler";
+import { LINK_STAND_TEXT, SPIELER_MAX, spielerName } from "@/lib/spieler";
 import {
   SCHNUPPERN_ZUORDNEN_HINWEIS,
   SCHNUPPERN_ZUORDNEN_LABEL,
@@ -30,6 +29,7 @@ import {
   zuordnenEinleitung,
 } from "@/lib/verein";
 import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
+import { LinkStandLozenge } from "@/components/team/LinkStandLozenge";
 import type { SpielerEingrenzung } from "@/lib/verein-spielerliste";
 import { VereinSpielerFilter } from "./VereinSpielerFilter";
 import { VereinSpielerFormular } from "./VereinSpielerFormular";
@@ -59,7 +59,8 @@ import { SpielerFuss, SpielerKopf, SpielerLeer, SpielerTeams } from "./VereinSpi
    Dialog zusätzlich «Zum Schnuppern zuordnen» (#584 AK 8): sonst gar nicht,
    nie als gesperrtes Feld; angehakt steht der Satz zur Regel darunter. Die
    Teams-Spalte zeigt «Schnuppern n/m». Bausteine des Kits: Tabelle, Checkbox, AuswahlLeiste,
-   AuswahlListe, OverflowMenu, Dialog, SectionMessage, Lozenge. */
+   AuswahlListe, OverflowMenu, Dialog, SectionMessage, Lozenge (Stand des
+   Links: abgeholt, zugestellt, offen; #657). */
 
 const TITEL_ABWEISUNG = "Keine Spieler:in zugeordnet";
 
@@ -220,7 +221,7 @@ export function VereinSpielerListe({
                 <span className="type-body-small block text-on-surface-mittel sm:hidden">
                   {s.jahrgang}
                   {s.js && ` · J+S ${s.js}`}
-                  {` · Link ${s.linkBezogen ? "bezogen" : "offen"}`}
+                  {` · Link ${LINK_STAND_TEXT.label[s.linkStand]}`}
                 </span>
                 <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.jahrgang}</span>
                 <span className="mt-1 block min-w-0 sm:mt-0">
@@ -228,7 +229,7 @@ export function VereinSpielerListe({
                 </span>
                 <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.js ?? "–"}</span>
                 <span className="hidden sm:block">
-                  <Lozenge appearance={s.linkBezogen ? "success" : "neutral"}>{s.linkBezogen ? "bezogen" : "offen"}</Lozenge>
+                  <LinkStandLozenge stand={s.linkStand} />
                 </span>
               </span>
               <span className="flex justify-end">

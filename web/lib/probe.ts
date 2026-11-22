@@ -52,7 +52,7 @@ export const PROBE_TEXT = {
   /** Die Checkbox im Dialog «Spieler:in ändern». */
   checkbox: "Schnuppert",
   /** Ohne festgelegte Anzahl lässt sich nichts einschalten (AK 4, 18). */
-  anzahlFehlt: "Lege zuerst in der Karte «Schnuppertraining» fest, wie viele Trainings eine Spieler:in zum Schnuppern besuchen darf.",
+  anzahlFehlt: "Lege zuerst im Bereich «Kader & Schnuppern» in der Karte «Schnuppertraining» fest, wie viele Trainings eine Spieler:in zum Schnuppern besuchen darf.",
   einschalten: "Schnuppern einschalten",
   /** Wer weiteren Teams zugeordnet ist, schnuppert nicht (Vereine AP §5.3, AK 6). */
   mehrereTeams: "Diese Spieler:in ist weiteren Teams zugeordnet und macht darum regulär in deinem Team mit.",
@@ -73,7 +73,7 @@ export const PROBE_TEXT = {
   info: "Info-Schreiben",
   infoFeld: "Info-Schreiben (optional)",
   /** AK 3: wer es sieht — fest hinter dem ⓘ. */
-  infoWer: "Das sehen die Eltern aller schnuppernden Spieler:innen an ihrem Link unter «Infos».",
+  infoWer: "Das sehen alle schnuppernden Spieler:innen und ihre Eltern am privaten Link unter «Infos».",
   infoUnter: "Nur Text. Webadressen werden im Link anklickbar.",
   infoZuLang: `Das Info-Schreiben darf höchstens ${PROBE_INFO_MAX} Zeichen lang sein.`,
   infoKeines: "Keines",

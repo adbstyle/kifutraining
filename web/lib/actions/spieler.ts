@@ -5,12 +5,14 @@ import {
   erneuereAbholung,
   erneuereSpielerLink,
   holeSpielerLink,
+  ladeSpieler,
   ladeSpielerTeams,
   nimmSpielerAuf,
   nimmSpielerAusTeam,
   schalteAbholung,
+  setzeLinkZugestellt,
 } from "@/lib/kern/spieler";
-import { abholUrl, spielerLinkUrl, type SpielerEingabe, type SpielerFeld, type SpielerTeams } from "@/lib/spieler";
+import { abholUrl, spielerLinkUrl, type LinkStand, type SpielerEingabe, type SpielerFeld, type SpielerTeams } from "@/lib/spieler";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { revalidiereAlleTeams, revalidiereTeam, revalidiereVerein } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
@@ -76,19 +78,40 @@ export async function nimmSpielerAusTeamAktion(
   return { ok: true };
 }
 
-/** Den privaten Link einer Spieler:in holen (#436 AK 1) — als Adresse. Im
- *  Team, in dessen Liste man sie sieht (#583 AK 14): in jedem ihrer Teams. */
-export async function holeSpielerLinkAktion(teamId: string, spielerId: string): Promise<{ ok: true; url: string } | Fehler> {
+/** Den privaten Link einer Spieler:in holen (#436 AK 1) — als Adresse, mit
+ *  dem frischen Stand (#657). Im Team, in dessen Liste man sie sieht (#583
+ *  AK 14): in jedem ihrer Teams. Ohne lesbaren Stand bleibt der der Liste. */
+export async function holeSpielerLinkAktion(teamId: string, spielerId: string): Promise<{ ok: true; url: string; stand?: LinkStand } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await holeSpielerLink(a.supabase, a.userId, { teamId, spielerId });
+  const [r, s] = await Promise.all([
+    holeSpielerLink(a.supabase, a.userId, { teamId, spielerId }),
+    ladeSpieler(a.supabase, teamId, spielerId),
+  ]);
   if (!r.ok) return fehler(r);
-  return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token) };
+  return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token), stand: s.ok ? s.wert.linkStand : undefined };
+}
+
+/** Den Link als zugestellt markieren oder zurücknehmen (#657 AK 1). Der
+ *  Stand gilt in allen Teams der Spieler:in und im Verein (PC 1), darum laden
+ *  alle neu. `geaendert` false: Er war inzwischen abgeholt. */
+export async function setzeLinkZugestelltAktion(
+  teamId: string,
+  spielerId: string,
+  zugestellt: boolean,
+): Promise<{ ok: true; stand: LinkStand; geaendert: boolean } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await setzeLinkZugestellt(a.supabase, a.userId, { teamId, spielerId, zugestellt });
+  if (!r.ok) return fehler(r);
+  revalidiereAlleTeams();
+  revalidiereVerein();
+  return { ok: true, stand: r.wert.linkStand, geaendert: r.wert.geaendert };
 }
 
 /** Den privaten Link erneuern (#436 AK 3): Der bisherige gilt nie wieder, in
- *  allen Teams der Spieler:in (#583 AK 15). «Bezogen» steht in jeder Liste
- *  zurückgesetzt; die Antwort nennt die anderen Teams nicht, darum laden alle
+ *  allen Teams der Spieler:in (#583 AK 15). Der Stand ist in jeder Liste
+ *  wieder offen; die Antwort nennt die anderen Teams nicht, darum laden alle
  *  neu, dazu der Spielerbestand des Vereins. */
 export async function erneuereSpielerLinkAktion(teamId: string, spielerId: string): Promise<{ ok: true; url: string } | Fehler> {
   const a = await angemeldet();

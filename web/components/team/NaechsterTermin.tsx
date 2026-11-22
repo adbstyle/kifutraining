@@ -7,7 +7,7 @@ import { Button, ButtonLink, Kalenderblatt, Lozenge, OverflowMenu, SectionMessag
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage } from "@/lib/serie";
-import { zeitText } from "@/lib/termin";
+import { LINK_KANAL, zeitText } from "@/lib/termin";
 import { datumKurz, terminBegonnen } from "@/lib/zeit";
 import { richtwertStufeText, zeitpunktKurz } from "@/lib/spiel";
 import { felderKurz } from "@/lib/termin-felder";
@@ -161,10 +161,10 @@ export function NaechsterTermin({
         )}
         {/* #561 AK 10: der Treffpunkt eines Trainings wie die eines Spiels. */}
         <TrainingsTreffpunkt treffpunkt={t.treffpunkt} className="type-body-medium text-on-surface" />
-        {/* #590: der Hinweis für Eltern mit «Für Eltern:» davor, damit er sich von der Bemerkung abhebt. */}
+        {/* #590, #659: der Hinweis am privaten Link mit «Am Link:» davor, damit er sich von der Bemerkung abhebt. */}
         {t.hinweisEltern && (
           <p className="whitespace-pre-line type-body-medium text-on-surface">
-            <span className="text-on-surface-mittel">Für Eltern: </span>
+            <span className="text-on-surface-mittel">{LINK_KANAL.kurz} </span>
             {t.hinweisEltern}
           </p>
         )}

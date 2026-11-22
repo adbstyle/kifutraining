@@ -85,9 +85,6 @@ export type LinkTermin = {
    *  die Abmeldung gilt nicht mehr. `anmeldung`: Es war die Anmeldung einer
    *  schnuppernden Spieler:in (#555 PC 5). */
   verfallen: { datum: string; beginn: string; anmeldung?: boolean } | null;
-  /** Die Kader der Spieler:in, über die der Termin für sie gilt (#454 AK 2);
-   *  leer bei einem Termin für alle. Fremde Kader nennt der Link nie (AK 3). */
-  kader: string[];
   /** Wer den Termin vorbereitet und leitet (#523), mit Anzeigenamen; `null`
    *  ohne Verantwortliche:n oder an einem ausgefallenen Termin. */
   verantwortlich: string | null;

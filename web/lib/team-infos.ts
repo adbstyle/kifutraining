@@ -30,12 +30,12 @@ export function standDatum(stand: string): string {
 export const TEAM_INFOS_TEXT = {
   titel: "Infos zum Team",
   /** AK 4: wer sie sieht — unter dem Titel der Karte. */
-  wer: "Für die Eltern am privaten Link, nicht beim Schnuppern",
+  wer: "Für Spieler:innen und Eltern am privaten Link, nicht beim Schnuppern",
   /** AK 4: ausführlich im Dialog. */
   werDialog:
-    "Die Eltern aller Spieler:innen des Teams lesen das an ihrem privaten Link, und alle, denen sie den Link weitergeben. Wer schnuppert, sieht stattdessen das Info-Schreiben.",
+    "Alle Spieler:innen des Teams und ihre Eltern lesen das am privaten Link, und alle, denen sie den Link weitergeben. Wer schnuppert, sieht stattdessen das Info-Schreiben.",
   leerTitel: "Noch keine Infos zum Team",
-  leer: "Schreib auf, wie euer Team trainiert, abmeldet und was mitkommt. Die Eltern lesen es an ihrem privaten Link.",
+  leer: "Schreib auf, wie euer Team trainiert, abmeldet und was mitkommt. Spieler:innen und Eltern lesen es am privaten Link.",
   verfassen: "Infos verfassen",
   bearbeiten: "Infos zum Team bearbeiten",
   feld: "Infos zum Team",

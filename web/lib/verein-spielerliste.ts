@@ -52,10 +52,16 @@ export function liesSpielerEingrenzung(sp: AdressParameter): SpielerEingrenzung 
     suche: bereinigeSuche(q ?? ""),
     teamIds: [...new Set(teams.filter(istUuid))],
     ohneTeam: teams.includes(OHNE_TEAM_WERT),
-    jahrgaenge: [...new Set(liesListe(sp.jahrgang).filter((j) => /^\d{4}$/.test(j)).map(Number))]
-      .filter((j) => j >= JAHRGANG_MIN)
-      .sort((a, b) => a - b),
+    jahrgaenge: liesJahrgaenge(sp.jahrgang),
   };
+}
+
+/** Die Jahrgänge aus `?jahrgang=`: nur vierstellige Zahlen ab `JAHRGANG_MIN`,
+ *  aufsteigend, jeder einmal — im Verein und in der Spielerliste des Teams (#601). */
+export function liesJahrgaenge(v: string | string[] | undefined): number[] {
+  return [...new Set(liesListe(v).filter((j) => /^\d{4}$/.test(j)).map(Number))]
+    .filter((j) => j >= JAHRGANG_MIN)
+    .sort((a, b) => a - b);
 }
 
 /** Wirft weg, was es im Verein nicht gibt: Teams, die nicht zu ihm gehören,

@@ -20,7 +20,8 @@ import type { KategorieSlug } from "@/lib/vocab";
    Die Darstellungen tragen Atlassians Namen und Bedeutungen:
    - `neutral` — benennt bloss: Herkunft, Entwurf, Altersstufe, eingeplant,
      ausgefallen, ohne Training.
-   - `information` — gilt nach aussen: öffentlich, Community.
+   - `information` — gilt nach aussen: öffentlich, Community, ein privater
+     Link als zugestellt markiert (#657).
    - `discovery` — etwas Zusätzliches: mehrere Varianten, eine neue Version.
    - `success` / `warning` / `danger` — erledigt / braucht Aufmerksamkeit /
      blockiert: der Status eines Termins oder einer Spieler:in in einem Wort

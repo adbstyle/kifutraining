@@ -25,13 +25,14 @@ import {
   nimmSpielerAusTeamImVerein,
   ordneSpielerZu,
   pruefeVereinImport,
+  setzeLinkZugestelltImVerein,
 } from "@/lib/kern/verein";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { revalidiereAlleTeams, revalidiereMitgliedschaften, revalidiereTeam, revalidiereVerein } from "@/lib/revalidate";
 import { raeumeVerwaisteBilder } from "@/lib/storage-aufraeumen";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
 import type { FehlerArt, KernFehler } from "@/lib/kern/ergebnis";
-import { spielerLinkUrl, type SpielerEingabe } from "@/lib/spieler";
+import { spielerLinkUrl, type LinkStand, type SpielerEingabe } from "@/lib/spieler";
 import type { ImportAusgang, ImportEintrag, ImportErwartet, ImportVorschau } from "@/lib/spieler-import";
 import { vereinHeisstInzwischenText, type PersonSchritt } from "@/lib/verein";
 
@@ -351,19 +352,35 @@ export async function loescheSpielerImVereinAktion(spielerId: string): Promise<{
 }
 
 /** Den privaten Link einer Spieler:in holen — als Adresse. `ohneTeam` und
- *  `bezogen` stammen aus der Datenebene, nicht aus der offenen Liste. */
+ *  `stand` stammen aus der Datenebene, nicht aus der offenen Liste. */
 export async function holeVereinSpielerLinkAktion(
   spielerId: string,
-): Promise<{ ok: true; url: string; ohneTeam: boolean; bezogen: boolean } | Fehler> {
+): Promise<{ ok: true; url: string; ohneTeam: boolean; stand: LinkStand } | Fehler> {
   const a = await angemeldet();
   if (!a) return keinKonto;
   const r = await holeSpielerLinkImVerein(a.supabase, a.userId, { spielerId });
   if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld };
-  return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token), ohneTeam: r.wert.ohneTeam, bezogen: r.wert.bezogen };
+  return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token), ohneTeam: r.wert.ohneTeam, stand: r.wert.stand };
 }
 
-/** Den privaten Link erneuern: Der bisherige gilt nie wieder. Der Stand
- *  «bezogen» in den Team-Listen ist zurückgesetzt, darum laden sie neu. */
+/** Den Link als zugestellt markieren oder zurücknehmen (#657 AK 2). Der
+ *  Stand gilt auch in den Team-Listen (PC 1), darum laden sie neu.
+ *  `geaendert` false: Er war inzwischen abgeholt. */
+export async function setzeLinkZugestelltImVereinAktion(
+  spielerId: string,
+  zugestellt: boolean,
+): Promise<{ ok: true; stand: LinkStand; geaendert: boolean } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return keinKonto;
+  const r = await setzeLinkZugestelltImVerein(a.supabase, a.userId, { spielerId, zugestellt });
+  if (!r.ok) return { ok: false, error: r.meldung, feld: r.feld };
+  revalidiereAlleTeams();
+  revalidiereVerein();
+  return { ok: true, stand: r.wert.linkStand, geaendert: r.wert.geaendert };
+}
+
+/** Den privaten Link erneuern: Der bisherige gilt nie wieder. Der Stand in
+ *  den Team-Listen ist wieder offen, darum laden sie neu. */
 export async function erneuereVereinSpielerLinkAktion(spielerId: string): Promise<{ ok: true; url: string } | Fehler> {
   const a = await angemeldet();
   if (!a) return keinKonto;

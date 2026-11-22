@@ -24,7 +24,7 @@ export function CheckboxDemo() {
       <div className="mt-2 flex max-w-md flex-col gap-1">
         <Checkbox label="Ich bin berechtigt, für diesen Verein zu handeln." checked={berechtigt} onChange={(e) => setBerechtigt(e.target.checked)} />
         <Checkbox
-          label="Der Verein ist für die Daten seiner Spieler:innen verantwortlich und Ansprechpartner ihrer Eltern und Vertretungen."
+          label="Der Verein ist für die Daten seiner Spieler:innen verantwortlich und Ansprechpartner für sie, ihre Eltern und Vertretungen."
           checked={verantwortlich}
           onChange={(e) => setVerantwortlich(e.target.checked)}
         />
