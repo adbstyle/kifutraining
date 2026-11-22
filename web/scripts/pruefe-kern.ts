@@ -81,6 +81,7 @@ import {
   TERMIN_MELDUNG,
   KONFLIKT_MARKER,
   ausfallProblem,
+  LINK_KANAL,
   TERMIN_TEXT,
   AUSFALL_ZURUECKNEHMEN_TEXT,
   ZUORDNEN_ERFOLG,
@@ -299,6 +300,15 @@ import {
   verfallenHinweis,
   ABHOL_PFAD,
   abholUrl,
+  LINK_STAENDE,
+  LINK_STAND_TEXT,
+  linkKnopfText,
+  linkStandAus,
+  TEAM_SPIELER_FILTER,
+  teamSpielerAnzahlText,
+  zaehleLinkStaende,
+  LINK_UEBERSICHT,
+  type LinkStand,
 } from "../lib/spieler";
 import {
   BEZEICHNUNG_MAX,
@@ -479,6 +489,20 @@ import {
 import { gruendungAus, kontoInfoAus, kontoLoeschAusgangAus, vereinLoeschAusgangAus } from "../lib/verein-antwort";
 import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
 import { aktiveBereiche, bereichAusPfad } from "../lib/navigation";
+import { FILTER_SCHLUESSEL, TEAM_BEREICHE, teamBereichAusPfad, teamBereichHref } from "../lib/team-bereiche";
+import {
+  OHNE_KADER_WERT,
+  bereinigeTeamEingrenzung,
+  bereinigteTeamAdresse,
+  falteSuchtext,
+  filtereSpieler,
+  jahrgaengeDerListe,
+  kaderFilterWerte,
+  liesTeamEingrenzung,
+  sichtbareAuswahl,
+  teamEingrenzungGesetzt,
+  teamSpielerHref,
+} from "../lib/team-spielerliste";
 import { textMitLinks } from "../lib/text-links";
 import { gliedere, gliederungAlsText, gliederungBloecke } from "../lib/gliederung";
 import { TEAM_INFOS_MAX, TEAM_INFOS_TEXT, standDatum, teamInfosBereinigt, teamInfosProblem, zahlCh } from "../lib/team-infos";
@@ -1528,7 +1552,7 @@ pruefe("Serie: Felder und Spielerzahl mit denselben Sätzen, jede Reichweite, fo
   assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false }), ["nur_dieser", "dieser_und_folgende", "alle"]);
   assert.equal(
     SERIE_MELDUNG.SERIE_ANGABEN_UNGUELTIG,
-    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Hinweis für Eltern, Treffpunkt, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.",
+    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Hinweis am privaten Link, Treffpunkt, Eingeladene, Verantwortung, Mindestbesetzung, Felder, Spielerzahl oder Kader.",
   );
 });
 
@@ -2416,6 +2440,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#487": ["termin_spieler_abrufen", "termin_anwesenheit_setzen", "team_plan_abrufen"],
     "#556": ["schnuppertraining_abrufen", "schnuppertraining_festlegen"],
     "#598": ["team_infos_abrufen", "team_infos_festlegen"],
+    "#657": ["spieler_link_zugestellt", "spielerliste_abrufen", "spieler_link_abrufen"],
     "#555": ["schnuppertraining_abrufen", "schnuppertraining_festlegen", "spieler_schnuppern_setzen", "spielerliste_abrufen", "termin_spieler_abrufen"],
     "#561": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "team_plan_abrufen", "spieler_link_abrufen"],
     "#589": ["teams_abrufen", "spielerliste_abrufen", "spieler_aus_team_nehmen", "spieler_link_abrufen", "spieler_link_erneuern"],
@@ -2575,7 +2600,7 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
     linkStatisch,
     {
       warnung:
-        "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur ihren Eltern oder ihr selbst.",
+        "Wer diesen Link hat, kann diese Spieler:in für Trainings und Spiele ab- und anmelden. Für ein Spiel ist sie erst nach ihrer Meldung angemeldet. Gib ihn nur der Spieler:in selbst oder ihren Eltern.",
       erneuern:
         "Erneuern macht den bisherigen Link sofort ungültig, für alle Teams der Spieler:in. Abmeldungen bleiben. Ein Kalender-Abo dieser Spieler:in erlischt damit und ist über den neuen Link neu zu holen. Die bisherigen Benachrichtigungen enden ebenfalls. Mitteilungen aufs Mobile enden ebenfalls: Die Spielervertretung schaltet sie mit dem neuen Link neu ein und legt die App neu ab.",
       ungueltigTitel: "Dieser Link gilt nicht mehr",
@@ -2584,7 +2609,7 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
     },
     "LINK_TEXT: Schlüssel und Wortlaut eingefroren",
   );
-  assert.equal(erneuertAbholen(["A"]), "Die Eltern holen den neuen Link über die Abholadresse von A ab.");
+  assert.equal(erneuertAbholen(["A"]), "Die Spieler:in oder ihre Eltern holen den neuen Link über die Abholadresse von A ab.");
   // Löschen: ein, mehrere, kein Team.
   assert.equal(spielerLoeschenTitel("Lina Meier"), "Lina Meier aus dem Verein löschen");
   assert.deepEqual(spielerLoeschenSaetze("Lina", ["Ca"]), {
@@ -2611,6 +2636,36 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
   for (const f of ["team_id", "verein_id", "spieler_id"]) assert.equal(zielWeg(f), true, f);
   for (const f of [undefined, "vorname", "name", "spieler_ids"]) assert.equal(zielWeg(f), false, String(f));
   assert.equal(SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, "Spieler:in nicht gefunden.", "ohne Verweis auf ein Team, gilt auch für die Verwaltung");
+});
+
+pruefe("Link als zugestellt (#657 AK 4, PC 1–4): eine Ableitung des Stands, überall dieselben Wörter, offen unmarkiert", () => {
+  // Abgeholt hat Vorrang (Zwilling: Trigger spieler_link_zugestellt_fallen, link_zugestellt_kern).
+  assert.deepEqual(
+    [linkStandAus(true, true), linkStandAus(true, false), linkStandAus(false, true), linkStandAus(false, false)],
+    ["abgeholt", "abgeholt", "zugestellt", "offen"],
+  );
+  assert.deepEqual(LINK_STAENDE, ["abgeholt", "zugestellt", "offen"]);
+  for (const st of LINK_STAENDE) assert.equal(LINK_STAND_TEXT.label[st], st, "PC 4: das Wort ist der Stand");
+  // AK 4: offen nennt keinen Stand, die anderen im Tooltip und im Namen des Knopfs.
+  assert.deepEqual(linkKnopfText("Lena Muster", "offen"), { tooltip: "Privater Link", label: "Privater Link für Lena Muster" });
+  assert.deepEqual(linkKnopfText("Lena Muster", "zugestellt"), { tooltip: "Privater Link · zugestellt", label: "Privater Link für Lena Muster, zugestellt" });
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const punkt = lies("components/team/LinkStandLozenge.tsx");
+  assert.match(punkt, /abgeholt: "success",\s*zugestellt: "information",\s*offen: undefined/, "Punkt: grün, blau, keiner");
+  assert.match(lies("components/ui/ZeichenPunkt.tsx"), /information: "bg-icon-information"/);
+  // Eine Ableitung: Die Spalte `link_zugestellt` lesen nur die beiden Kerne, und nur über linkStandAus.
+  const leser: string[] = [];
+  for (const ordner of ["lib", "components", "app"])
+    for (const datei of quelldateien(join(web, ordner)))
+      if (/\blink_zugestellt\b/.test(readFileSync(datei, "utf8"))) leser.push(relative(web, datei));
+  assert.deepEqual(leser.sort(), ["lib/kern/spieler.ts", "lib/kern/verein.ts"], "link_zugestellt ausserhalb der Kerne");
+  for (const d of ["lib/kern/spieler.ts", "lib/kern/verein.ts"]) assert.match(lies(d), /linkStandAus\(/, d);
+  // Gesetzt wird nur über die zwei RPCs, der KI-Weg nur über den Team-Ort.
+  assert.match(lies("lib/kern/spieler.ts"), /\.rpc\("spieler_link_zugestellt_setzen"/);
+  assert.match(lies("lib/kern/verein.ts"), /\.rpc\("verein_spieler_link_zugestellt_setzen"/);
+  const ki = lies("lib/mcp/werkzeuge/spieler.ts");
+  assert.match(ki, /setzeLinkZugestellt\(/);
+  assert.ok(!/ImVerein|verein_spieler_link_zugestellt/.test(ki), "KI-Werkzeug am Verein-Ort");
 });
 
 pruefe("Spielerbestand der Verwaltung (#582, #585): Löschen, Import und Verein-Weg nur am Verein-Ort (Review Focus 4)", () => {
@@ -2700,6 +2755,7 @@ pruefe("Vereinsverwaltung (#581): Zwillinge, Sätze zum Aufnehmen und Bereich de
   const T2 = "22222222-2222-4222-8222-222222222222";
   assert.deepEqual(bereichAusPfad(`/team/${T1}`, null), { art: "team", id: T1 });
   assert.deepEqual(bereichAusPfad(`/team/${T1}/verwaltung`, null), { art: "team", id: T1 });
+  assert.deepEqual(bereichAusPfad(`/team/${T1}/verwaltung/link`, null), { art: "team", id: T1 }, "ein Bereich der Team-Verwaltung (#656)");
   assert.deepEqual(bereichAusPfad("/verein", null), { art: "verein" });
   assert.deepEqual(bereichAusPfad("/verein/team/abc", null), { art: "verein" });
   assert.deepEqual(bereichAusPfad("/verein/verwaltung", null), { art: "verein" });
@@ -2884,6 +2940,117 @@ pruefe("Kein «Probe» in Oberflächentexten und KI: Texte, JSX, Schema-Schlüss
       treffer.push(...probeTreffer(readFileSync(datei, "utf8"), rel));
     }
   assert.deepEqual(treffer, [], `«Probe» steht noch in Oberflächen- oder KI-Texten: ${treffer.join("; ")}`);
+});
+
+/** Was Menschen oder ein KI-Client von einer Quelldatei zu lesen bekommen: Zeichenketten,
+ *  Vorlagen und JSX-Text — nicht Kommentare, Bezeichner, Importpfade, Typ-Literale und nicht
+ *  Namen der Datenebene (Argument von `.rpc()`, `.select()` u. ä.). Unter `lib/mcp` dazu die
+ *  Schema-Schlüssel, die der KI-Client als Feldnamen sieht. Für die Wortlaut-Wächter von #659. */
+function sichtbareTexte(quelltext: string, rel: string): { ort: string; text: string; schluessel?: true }[] {
+  const texte: { ort: string; text: string; schluessel?: true }[] = [];
+  const sf = ts.createSourceFile(rel, quelltext, ts.ScriptTarget.Latest, true, rel.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+  const ort = (n: ts.Node) => `${rel}:${sf.getLineAndCharacterOfPosition(n.getStart()).line + 1}`;
+  const besuche = (n: ts.Node) => {
+    const p = n.parent;
+    if (
+      ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n) || ts.isTemplateHead(n) ||
+      ts.isTemplateMiddle(n) || ts.isTemplateTail(n) || ts.isJsxText(n)
+    ) {
+      const modul = (ts.isImportDeclaration(p) || ts.isExportDeclaration(p)) && p.moduleSpecifier === n;
+      const dynamisch = ts.isCallExpression(p) && p.expression.kind === ts.SyntaxKind.ImportKeyword;
+      const name =
+        ts.isCallExpression(p) && p.arguments.some((a) => a === n) &&
+        ts.isPropertyAccessExpression(p.expression) && NAMENS_AUFRUFE.includes(p.expression.name.text);
+      if (!modul && !dynamisch && !name && !ts.isLiteralTypeNode(p)) texte.push({ ort: ort(n), text: n.text });
+    }
+    if (rel.startsWith("lib/mcp/") && (ts.isPropertyAssignment(n) || ts.isPropertySignature(n) || ts.isShorthandPropertyAssignment(n)))
+      texte.push({ ort: ort(n), text: n.name.getText(sf), schluessel: true });
+    ts.forEachChild(n, besuche);
+  };
+  besuche(sf);
+  return texte;
+}
+
+/** «bezogen» heisst überall «abgeholt» (#657 PC 4, #659). Erlaubt bleibt nur der Name der
+ *  Spalte `link_bezogen` (Sync-Risiko, fällt mit N1) als ganzes Wort, etwa in einer
+ *  Spaltenliste; den Schlüssel `bezogen` der RPC-Antworten lesen nur Bezeichner. */
+function bezogenTreffer(quelltext: string, rel: string): string[] {
+  return sichtbareTexte(quelltext, rel)
+    .filter((t) => /bezogen/i.test(t.schluessel ? t.text : t.text.replace(/\blink_bezogen\b/g, "")))
+    .map((t) => `${t.ort} ${t.schluessel ? "Schlüssel" : "Text"} «${t.text.slice(0, 60)}»`);
+}
+
+/** Den privaten Link nutzen Spieler:innen und Eltern (#659 AK 1–3): Ein Satz, der «Eltern»
+ *  nennt, nennt im selben Satz auch die Spieler:in — sonst richtet er sich nur an Eltern.
+ *  Angaben am Link heissen nach dem Kanal (`LINK_KANAL`). Felder und Bausteine (`hinweis_eltern`,
+ *  `hinweisEltern`, `ElternAnsicht`) sind Bezeichner und zählen nicht. Ein Satz endet an
+ *  «.», «!» oder «?» vor einem Leerraum; ein über mehrere Zeichenketten verteilter Satz zählt
+ *  je Zeichenkette — der Wächter ist ein Netz, kein Beweis. */
+function nurElternTreffer(quelltext: string, rel: string): string[] {
+  const treffer: string[] = [];
+  for (const t of sichtbareTexte(quelltext, rel)) {
+    if (t.schluessel) continue;
+    for (const satz of t.text.split(/(?<=[.!?])\s+/))
+      if (/\bEltern\b/.test(satz) && !/Spieler:in/.test(satz)) treffer.push(`${t.ort} «${satz.replace(/\s+/g, " ").trim().slice(0, 80)}»`);
+  }
+  return treffer;
+}
+
+/** Die Dateien der Wortlaut-Wächter: Oberfläche, Kern und KI. Ausgenommen sind die generierten
+ *  Typen und `lib/feedback/`: wissen.ts ist aus docs/feedback-triage.md generiert, die übrigen
+ *  Dateien (Prompt, Lage, Regeln) beschreiben das Produkt für das Feedback-Modell nach derselben
+ *  Doku — alle ziehen mit der Produktdoku beim Release nach. */
+function wortlautDateien(): { rel: string; text: string }[] {
+  const dateien: { rel: string; text: string }[] = [];
+  for (const wurzel of ["app", "components", "lib"].map((p) => join(web, p)))
+    for (const datei of quelldateien(wurzel)) {
+      const rel = relative(web, datei);
+      if (rel === "lib/database.types.ts" || rel.startsWith("lib/feedback/")) continue;
+      dateien.push({ rel, text: readFileSync(datei, "utf8") });
+    }
+  return dateien;
+}
+
+pruefe("Kein «bezogen» in Oberfläche und KI, nur die Spalte link_bezogen als Name (#657 PC 4, #659)", () => {
+  // Der Wächter schlägt an …
+  assert.equal(bezogenTreffer('export const a = "3 Links bezogen";', "components/x.tsx").length, 1);
+  assert.equal(bezogenTreffer("export const a = <span>Bezogen</span>;", "components/x.tsx").length, 1);
+  assert.equal(bezogenTreffer("export const a = `${n} bezogen`;", "lib/x.ts").length, 1);
+  assert.equal(bezogenTreffer("export const a = z.object({ link_bezogen: z.boolean() });", "lib/mcp/werkzeuge/x.ts").length, 1, "Schlüssel im KI-Schema");
+  // … und lässt Spaltennamen, Bezeichner und Kommentare durch.
+  for (const gut of [
+    'db.from("spieler").select("id, link_bezogen");',
+    'const SPALTEN = "id, vorname, link_bezogen, kader_spieler(kader_id)";',
+    "const r = data as { bezogen: boolean }; // bezogen heisst abgeholt",
+    "export const b = s.link_bezogen === true;",
+  ])
+    assert.deepEqual(bezogenTreffer(gut, "lib/kern/x.ts"), [], gut);
+  const treffer = wortlautDateien().flatMap((d) => bezogenTreffer(d.text, d.rel));
+  assert.deepEqual(treffer, [], `«bezogen» steht noch in Oberflächen- oder KI-Texten: ${treffer.join("; ")}`);
+});
+
+pruefe("Angaben am privaten Link für Spieler:innen und Eltern, nie nur für Eltern (#659 AK 1–3)", () => {
+  // Der Wächter schlägt an …
+  for (const schlecht of [
+    'export const a = "Die Eltern sehen den Hinweis.";',
+    "export const a = <label>Hinweis für Eltern</label>;",
+    "export const a = `Eltern melden bis ${frist}`;",
+    'export const a = "Abholadresse erneuert. Teile die neue im Eltern-Chat.";',
+  ])
+    assert.equal(nurElternTreffer(schlecht, "components/x.tsx").length, 1, schlecht);
+  // … und lässt beide Lesergruppen, Bezeichner, Zusammensetzungen und Kommentare durch.
+  for (const gut of [
+    'export const a = "Spieler:innen und Eltern sehen den Hinweis.";',
+    'export const a = "Gib ihn nur der Spieler:in selbst oder ihren Eltern.";',
+    "export const a = { hinweisEltern: t.hinweis_eltern }; // der Hinweis für Eltern",
+    'import { HinweisEltern } from "./HinweisEltern";',
+    'export const a = "Elternkontakte bleiben auf deinem Gerät.";',
+  ])
+    assert.deepEqual(nurElternTreffer(gut, "components/x.tsx"), [], gut);
+  // Die Kanalbezeichnungen (kurze Labels).
+  assert.deepEqual(LINK_KANAL, { hinweis: "Hinweis am privaten Link", meldefrist: "Meldefrist am privaten Link", kurz: "Am Link:" });
+  const treffer = wortlautDateien().flatMap((d) => nurElternTreffer(d.text, d.rel));
+  assert.deepEqual(treffer, [], `Texte nur für Eltern: ${treffer.join("; ")}`);
 });
 
 pruefe("Kalenderblatt und Tag ohne Jahr: Wochentag, Tageszahl, Monat, nie das Jahr (#402 AK 1, #403 AK 8)", () => {
@@ -3200,13 +3367,13 @@ pruefe("Link am Team-Ort und Verein-Ort (#583 AK 13, 15, 16): Hinweis und Erneue
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true)]), [
     "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von Lina: Ca. Abmeldungen bleiben bestehen.",
     LINK_ERNEUERN_MITTEILUNGEN,
-    "Die Eltern holen den neuen Link über die Abholadresse von Ca ab.",
+    "Die Spieler:in oder ihre Eltern holen den neuen Link über die Abholadresse von Ca ab.",
   ]);
   // Mehrere Teams, zwei mit Abholung; in der geladenen Folge (geordnet hat der Kern, `nachTeamname`).
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", true), ab("Cb", true), ab("Cc", false)]), [
     "Der bisherige Link, das Kalender-Abo und die Benachrichtigungen enden für alle Teams von Lina: Ca, Cb und Cc. Abmeldungen bleiben bestehen.",
     LINK_ERNEUERN_MITTEILUNGEN,
-    "Die Eltern holen den neuen Link über die Abholadresse von Ca oder Cb ab.",
+    "Die Spieler:in oder ihre Eltern holen den neuen Link über die Abholadresse von Ca oder Cb ab.",
   ]);
   // Keines abholbar.
   assert.deepEqual(linkErneuernSaetze("Lina", [ab("Ca", false), ab("Cb", false)]), [
@@ -3461,7 +3628,7 @@ pruefe("Spieler:innen des Vereins (#580): für alle Mitglieder, Mitglieder-Form 
   // Der Typ der Mitglieder-Zeile führt J+S, Link-Stand und Schnuppern gar nicht; der Kern setzt sie nur, wenn die Datenebene sie liefert.
   const kern = lies("lib/kern/verein.ts");
   const mitglied = kern.slice(kern.indexOf("export type VereinSpielerMitglied"), kern.indexOf("export type VereinSpieler ="));
-  assert.ok(mitglied.length > 0 && !/\b(js|linkBezogen|schnuppern|anzahl)\b/.test(mitglied.replace(/\/\*\*[\s\S]*?\*\//g, "")), "Mitglieder-Form ohne Verwaltungsfelder");
+  assert.ok(mitglied.length > 0 && !/\b(js|linkStand|schnuppern|anzahl)\b/.test(mitglied.replace(/\/\*\*[\s\S]*?\*\//g, "")), "Mitglieder-Form ohne Verwaltungsfelder");
   assert.match(kern, /if \(!passt\) return fehlschlag\("technisch"/, "Form gegen die Rolle der Antwort geprüft, sonst ein Fehler");
   assert.match(kern, /if \(!r\.verwaltung\)\s+return ok\(\{ \.\.\.basis, verwaltung: false, spieler: zeilen\.map\(mitglied\)/, "Mitglieder-Zeilen Feld für Feld, nie ein undefined-Schlüssel");
   // Die lesende Sicht kennt weder Aktionen noch Verwaltungsbausteine.
@@ -4118,6 +4285,203 @@ pruefe("Kader: Zugehörigkeit einer Auswahl und Kader einer Spieler:in (#452 AK 
   assert.deepEqual(kaderVon("b", [k, { id: "j", name: "S1", spielerIds: ["c"] }]).map((x) => x.id), ["k"]);
 });
 
+pruefe("Team-Verwaltung in vier Bereichen mit eigener Adresse; die bisherige zeigt die Spieler:innen (#656)", () => {
+  const T = "11111111-1111-4111-8111-111111111111";
+  // AK 3: die vier Bereiche in dieser Reihenfolge, unterscheidbar benannt.
+  assert.deepEqual(TEAM_BEREICHE.map((b) => b.label), ["Spieler:innen", "Kader & Schnuppern", "Privater Link", "Trainer:innen"]);
+  // AK 1, 2, PC 1: jeder Bereich hat seine Adresse, die bisherige ist «Spieler:innen».
+  assert.equal(teamBereichHref(T, "spieler"), `/team/${T}/verwaltung`);
+  assert.equal(teamBereichHref(T, "trainer"), `/team/${T}/verwaltung/trainer`);
+  for (const b of TEAM_BEREICHE) {
+    const href = teamBereichHref(T, b.schluessel);
+    assert.equal(teamBereichAusPfad(href, T), b.schluessel, href);
+    const seite = join(web, "app/(app)/team/[id]/verwaltung", b.pfad.slice(1), "page.tsx");
+    assert.ok(existsSync(seite), `${relative(web, seite)} fehlt`);
+  }
+  assert.equal(teamBereichAusPfad(`/team/${T}/verwaltung/`, T), "spieler");
+  assert.equal(teamBereichAusPfad(`/team/${T}`, T), null);
+  assert.equal(teamBereichAusPfad(`/team/${T}/verwaltung/unbekannt`, T), null);
+  // Die Reiter tragen nur die Eingrenzung der Spielerliste weiter (#601).
+  assert.deepEqual([...FILTER_SCHLUESSEL], ["q", "kader", "jahrgang", "link"]);
+  const suche = new URLSearchParams("jahrgang=2016&fremd=1&kader=a&kader=ohne&q=lea");
+  assert.equal(teamBereichHref(T, "link", suche), `/team/${T}/verwaltung/link?q=lea&kader=a&kader=ohne&jahrgang=2016`);
+  assert.equal(teamBereichHref(T, "kader", new URLSearchParams("fremd=1")), `/team/${T}/verwaltung/kader`);
+  // AK 4: was die eine Seite bot, steht jetzt in genau einem Bereich.
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const lies = (d: string) => ohneKommentare(readFileSync(join(web, "app/(app)/team/[id]/verwaltung", d), "utf8"));
+  const ort: Record<string, string> = {
+    SpielerListe: "page.tsx",
+    KaderKarte: "kader/page.tsx",
+    SchnupperKarte: "kader/page.tsx",
+    Selbstabholung: "link/page.tsx",
+    TeamInfosKarte: "link/page.tsx",
+    MitgliederListe: "trainer/page.tsx",
+    TeamGefahrenzone: "trainer/page.tsx",
+    Teamangaben: "trainer/page.tsx",
+  };
+  const seiten = ["page.tsx", "kader/page.tsx", "link/page.tsx", "trainer/page.tsx"];
+  for (const [teil, datei] of Object.entries(ort))
+    for (const s of seiten) assert.equal(new RegExp(`\\b${teil}\\b`).test(lies(s)), s === datei, `${teil} in ${s}`);
+  assert.ok(!/Selbstabholung/.test(ohneKommentare(readFileSync(join(web, "components/team/SpielerListe.tsx"), "utf8"))), "die Spielerliste zeigt die Selbstabholung nicht mehr");
+  // Die Seitenleiste markiert «Team» in jedem Bereich.
+  assert.match(readFileSync(join(web, "components/layout/AppNavClient.tsx"), "utf8"), /pfad\.startsWith\(`\$\{basis\}\/verwaltung\/`\)/);
+});
+
+pruefe("Spielerliste eingrenzen: Suche, Kader, Jahrgang, Link-Stand; Adresse und Auswahl (#601)", () => {
+  const ka = "11111111-1111-4111-8111-111111111111";
+  const kb = "22222222-2222-4222-8222-222222222222";
+  const kx = "33333333-3333-4333-8333-333333333333";
+  const zeile = (id: string, vorname: string, nachname: string, jahrgang: number, kaderIds: string[], linkStand: LinkStand, jsNummer: string | null = null) =>
+    ({ id, vorname, nachname, jahrgang, kaderIds, linkStand, jsNummer });
+  const liste = [
+    zeile("lea", "Léa", "Müller", 2016, [ka], "abgeholt", "1234567"),
+    zeile("noah", "Noah", "Strauß", 2017, [ka, kb], "zugestellt"),
+    zeile("mia", "Mia", "Øster", 2016, [], "offen", "7654321"),
+    zeile("ole", "Ole", "Beispiel", 2015, [kb], "offen"),
+  ];
+  const ids = (e: Parameters<typeof filtereSpieler>[1]) => filtereSpieler(liste, e).map((s) => s.id);
+  const leer = liesTeamEingrenzung({});
+  // Nackte Adresse: nichts gesetzt, alle sichtbar, der Kopf zählt die ganze Liste.
+  assert.deepEqual(leer, { suche: "", kaderIds: [], ohneKader: false, jahrgaenge: [], linkStaende: [] });
+  assert.equal(teamEingrenzungGesetzt(leer), false);
+  assert.deepEqual(ids(leer), ["lea", "noah", "mia", "ole"]);
+  assert.equal(teamSpielerAnzahlText(4, 4, false), "4");
+  assert.equal(teamSpielerAnzahlText(1, 4, true), "1 von 4");
+  // AK 1: Vorname, Nachname, beide in jeder Reihenfolge, J+S-Nummer; ohne Gross/Klein und Akzente.
+  const q = (text: string) => ids(liesTeamEingrenzung({ q: text }));
+  assert.deepEqual(q("lea"), ["lea"]);
+  assert.deepEqual(q("MUELLER"), [], "keine Umschreibung «ue» für «ü»");
+  assert.deepEqual(q("muller"), ["lea"]);
+  assert.deepEqual(q("léa müller"), ["lea"]);
+  assert.deepEqual(q("muller lea"), ["lea"], "Nachname vor Vorname");
+  assert.deepEqual(q("  LEA   MÜL "), ["lea"], "bereinigt wie die Datenebene");
+  assert.deepEqual(q("strauss"), ["noah"], "ß wie unaccent");
+  assert.deepEqual(q("oster"), ["mia"], "ø wie unaccent");
+  assert.deepEqual(q("4567"), ["lea"], "J+S-Nummer als Teiltext");
+  assert.deepEqual(q("a m"), ["lea"], "über die Grenze zwischen Vor- und Nachname");
+  assert.deepEqual(q("xyz"), []);
+  assert.equal(falteSuchtext("Zoë ÅSA"), "zoe asa");
+  // AK 2: mehrere Kader und «Ohne Kader» — wer mindestens eine Bedingung erfüllt.
+  const k = (wert: string) => ids(liesTeamEingrenzung({ kader: wert }));
+  assert.deepEqual(k(ka), ["lea", "noah"]);
+  assert.deepEqual(k(`${ka},${kb}`), ["lea", "noah", "ole"]);
+  assert.deepEqual(k(OHNE_KADER_WERT), ["mia"]);
+  assert.deepEqual(k(`${OHNE_KADER_WERT},${kb}`), ["noah", "mia", "ole"]);
+  // AK 3: Jahrgänge mehrfach; zur Wahl stehen die Jahrgänge der ganzen Liste.
+  assert.deepEqual(ids(liesTeamEingrenzung({ jahrgang: "2016,2015" })), ["lea", "mia", "ole"]);
+  assert.deepEqual(jahrgaengeDerListe(liste), [2015, 2016, 2017]);
+  // AK 4: abgeholt oder nicht abgeholt (zugestellt und offen).
+  assert.deepEqual(ids(liesTeamEingrenzung({ link: "abgeholt" })), ["lea"]);
+  assert.deepEqual(ids(liesTeamEingrenzung({ link: "zugestellt,offen" })), ["noah", "mia", "ole"]);
+  assert.deepEqual(Object.keys(TEAM_SPIELER_FILTER.linkStand), [...LINK_STAENDE]);
+  // AK 5: zwischen den Filtern und.
+  assert.deepEqual(ids(liesTeamEingrenzung({ kader: kb, jahrgang: "2017", link: "zugestellt" })), ["noah"]);
+  assert.deepEqual(ids(liesTeamEingrenzung({ q: "lea", link: "offen" })), [], "AK 7: niemand");
+  // AK 6, 8: jedes für sich gilt als gesetzt (Zurücksetzen, Zahl im Kopf).
+  for (const sp of [{ q: "x" }, { kader: OHNE_KADER_WERT }, { kader: ka }, { jahrgang: "2016" }, { link: "offen" }])
+    assert.equal(teamEingrenzungGesetzt(liesTeamEingrenzung(sp)), true, JSON.stringify(sp));
+  // Lesen: Unbrauchbares fällt weg, jeder Wert einmal, Stände in fester Folge.
+  assert.deepEqual(liesTeamEingrenzung({ kader: `kaputt,,${ka},${ka},${OHNE_KADER_WERT}`, jahrgang: "abc,12,2016,2016", link: "offen,bezogen,abgeholt,offen" }), {
+    suche: "",
+    kaderIds: [ka],
+    ohneKader: true,
+    jahrgaenge: [2016],
+    linkStaende: ["abgeholt", "offen"],
+  });
+  // Bereinigen: entfernte oder fremde Kader, Jahrgänge, die niemand trägt, «ohne» bei einem Team ohne Kader.
+  const bestand = { kader: [{ id: ka }, { id: kb }], jahrgaenge: jahrgaengeDerListe(liste) };
+  const roh = liesTeamEingrenzung({ kader: `${kx},${ka},${OHNE_KADER_WERT}`, jahrgang: "2014,2016" });
+  const sauber = bereinigeTeamEingrenzung(roh, bestand);
+  assert.deepEqual(sauber.kaderIds, [ka]);
+  assert.deepEqual(sauber.jahrgaenge, [2016]);
+  assert.deepEqual(kaderFilterWerte(sauber), [OHNE_KADER_WERT, ka], "so, wie AuswahlFilter und ?kader= sie führen");
+  assert.equal(bereinigeTeamEingrenzung(liesTeamEingrenzung({ kader: OHNE_KADER_WERT }), { kader: [], jahrgaenge: [] }).ohneKader, false);
+  // Leere Liste: Die Leiste fehlt, also fällt auch Suche und Link-Stand weg (sonst unsichtbar).
+  const leerSp = { q: "lea", link: "offen", fremd: "1" };
+  const leerE = bereinigeTeamEingrenzung(liesTeamEingrenzung(leerSp), { kader: [], jahrgaenge: [] });
+  assert.deepEqual([leerE.suche, leerE.linkStaende], ["", []]);
+  assert.equal(bereinigteTeamAdresse("/t", leerSp, leerE), "/t?fremd=1");
+  assert.equal(bereinigteTeamAdresse("/t", { q: "   " }, liesTeamEingrenzung({ q: "   " })), "/t", "leere Suche fällt aus der Adresse");
+  // Die Adresse: einmal weiterleiten, q und Fremdes reisen mit; die bereinigte bleibt stehen.
+  const P = "/team/x/verwaltung";
+  const sp = { q: "lea", kader: `${kx},${ka},${OHNE_KADER_WERT}`, jahrgang: "2016,2014", link: "offen,abgeholt" };
+  const ziel = bereinigteTeamAdresse(P, sp, bereinigeTeamEingrenzung(liesTeamEingrenzung(sp), bestand));
+  assert.equal(ziel, `${P}?q=lea&kader=${OHNE_KADER_WERT}%2C${ka}&jahrgang=2016&link=abgeholt%2Coffen`);
+  const zurueck = Object.fromEntries(new URL(ziel!, "http://x").searchParams);
+  assert.equal(bereinigteTeamAdresse(P, zurueck, bereinigeTeamEingrenzung(liesTeamEingrenzung(zurueck), bestand)), null);
+  for (const r of [{}, { q: "x" }, { kader: [OHNE_KADER_WERT, ka] }, { jahrgang: "2015,2016" }, { link: "zugestellt,offen" }])
+    assert.equal(bereinigteTeamAdresse(P, r, bereinigeTeamEingrenzung(liesTeamEingrenzung(r), bestand)), null, JSON.stringify(r));
+  assert.equal(bereinigteTeamAdresse(P, { kader: kx, link: "kaputt" }, bereinigeTeamEingrenzung(liesTeamEingrenzung({ kader: kx }), bestand)), P, "nichts übrig: die nackte Seite");
+  // AK 9: Die Reiter tragen genau diese Schlüssel weiter.
+  assert.deepEqual(Object.keys(sp).sort(), [...FILTER_SCHLUESSEL].sort());
+  // AK 10: Zugeteilt wird nur, wer ausgewählt und sichtbar ist.
+  const sichtbar = filtereSpieler(liste, liesTeamEingrenzung({ jahrgang: "2016" }));
+  assert.deepEqual(sichtbareAuswahl(["ole", "mia", "lea", "weg"], sichtbar), ["mia", "lea"]);
+  const quelle = (d: string) => readFileSync(join(web, d), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const listeQuelle = quelle("components/team/SpielerListe.tsx");
+  assert.match(listeQuelle, /const gewaehlt = sichtbareAuswahl\(auswahl, sichtbar\)/, "die Auswahl schneidet auf die sichtbaren");
+  assert.match(listeQuelle, /auswahl=\{gewaehlt\}/, "Kader zuteilen bekommt nur die sichtbare Auswahl");
+  assert.ok(!/KaderChips/.test(listeQuelle), "die Spielerliste hat keine Kader-Chips mehr (ein Chip zur Zeit gilt nur am Termin)");
+  // Dieselben Bausteine wie die Leiste des Vereins, kein neues Muster.
+  const leiste = quelle("components/team/TeamSpielerFilter.tsx");
+  for (const b of ["FilterSuche", "AuswahlFilter", "useAdressFilter", "zuruecksetzen"]) assert.ok(leiste.includes(b), `TeamSpielerFilter nutzt ${b}`);
+  assert.match(quelle("app/(app)/team/[id]/verwaltung/page.tsx"), /bereinigteTeamAdresse\(/, "die Seite leitet auf die bereinigte Adresse weiter");
+});
+
+pruefe("Stand der Links im Team überblicken: Zahlen je Stand, Sprung auf die offenen (#658)", () => {
+  const T = "11111111-1111-4111-8111-111111111111";
+  // AK 1: je Stand gezählt, über alle Zeilen; ein leeres Team hat überall null.
+  const staende: LinkStand[] = ["abgeholt", "offen", "zugestellt", "offen", "abgeholt", "offen"];
+  assert.deepEqual(zaehleLinkStaende(staende.map((linkStand) => ({ linkStand }))), { abgeholt: 2, zugestellt: 1, offen: 3 });
+  assert.deepEqual(zaehleLinkStaende([]), { abgeholt: 0, zugestellt: 0, offen: 0 });
+  assert.deepEqual(Object.keys(LINK_UEBERSICHT.beschreibung), [...LINK_STAENDE]);
+  // AK 2: der Sprung führt auf die Spielerliste, eingegrenzt auf «offen» — in der
+  // Schreibweise der Leiste, die Seite leitet also nicht noch einmal weiter.
+  const ziel = teamSpielerHref(T, { linkStaende: ["offen"] });
+  assert.equal(ziel, `/team/${T}/verwaltung?link=offen`);
+  const sp = Object.fromEntries(new URL(ziel, "http://x").searchParams);
+  assert.deepEqual(filtereSpieler(
+    staende.map((linkStand, i) => ({ vorname: `V${i}`, nachname: "N", jsNummer: null, jahrgang: 2016, kaderIds: [], linkStand })),
+    liesTeamEingrenzung(sp),
+  ).map((s) => s.linkStand), ["offen", "offen", "offen"]);
+  assert.equal(bereinigteTeamAdresse(`/team/${T}/verwaltung`, sp, liesTeamEingrenzung(sp)), null);
+  assert.equal(teamSpielerHref(T), `/team/${T}/verwaltung`);
+  assert.equal(teamSpielerHref(T, { linkStaende: ["offen", "abgeholt"], jahrgaenge: [2016] }), `/team/${T}/verwaltung?jahrgang=2016&link=abgeholt%2Coffen`);
+  // Die Übersicht steht im Bereich «Privater Link», gezählt über die ganze
+  // Spielerliste (samt Schnuppernden), und springt über teamSpielerHref.
+  const quelle = (d: string) => readFileSync(join(web, d), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const seite = quelle("app/(app)/team/[id]/verwaltung/link/page.tsx");
+  assert.match(seite, /<LinkUebersicht teamId=\{id\} spieler=\{liste\.wert\.spieler\} \/>/);
+  assert.match(seite, /ladeSpielerliste\(/);
+  const karte = quelle("components/team/LinkUebersicht.tsx");
+  assert.match(karte, /teamSpielerHref\(teamId, \{ linkStaende: \["offen"\] \}\)/);
+  assert.match(karte, /zaehleLinkStaende\(spieler\)/);
+});
+
+pruefe("Kader am privaten Link ausgeblendet; die Kader-Karte sagt, dass nur das Team sie sieht (#663 AK 1, 2)", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  // AK 1: Keine Datei des privaten Links zeigt Kader-Plaketten, der Typ trägt keine Kader.
+  for (const d of quelldateien(join(web, "components/privat")))
+    assert.ok(!/KaderLozenge/.test(readFileSync(d, "utf8")), `${relative(web, d)} zeigt keine Kader`);
+  assert.ok(!/^\s*kader\s*:/m.test(lies("lib/privater-link.ts")), "LinkTermin trägt keine Kader");
+  // AK 1, Datenebene: die jüngste Fassung von spieler_link_ansicht liefert keine Kadernamen
+  // (Platzhalter `[]` bis N1), filtert die Termine aber weiter über die Kader (OoS 1).
+  const ordner = join(web, "../supabase/migrations");
+  const juengste = readdirSync(ordner)
+    .filter((d) => d.endsWith(".sql") && /create or replace function spieler_link_ansicht\(/.test(readFileSync(join(ordner, d), "utf8")))
+    .sort()
+    .at(-1)!;
+  const rumpf = readFileSync(join(ordner, juengste), "utf8");
+  assert.match(rumpf, /'kader', '\[\]'::jsonb\)/, `${juengste}: kader als leere Liste`);
+  assert.ok(!/jsonb_agg\(k\.name/.test(rumpf), `${juengste}: keine Kadernamen`);
+  assert.match(rumpf, /termin_gilt_fuer\(t\.id, s\.id\)/, `${juengste}: Termine weiter nur, wenn sie für sie gelten`);
+  // AK 2: die Karte zeigt den Satz immer, nicht nur mit Kadern; der Namenshinweis widerspricht nicht.
+  assert.match(KADER_TEXT.sichtbarkeit, /^Kader sieht nur das Team\. Am privaten Link erscheinen sie nicht/);
+  assert.ok(!/Eltern sehen/.test(KADER_TEXT.heikel));
+  const karte = lies("components/team/KaderKarte.tsx");
+  assert.ok(karte.indexOf("KADER_TEXT.sichtbarkeit") < karte.indexOf("kader.length > 0 ?"), "vor der Unterscheidung mit/ohne Kader");
+});
+
 pruefe("Kader: verfallende Abmeldungen - Zahl aus der Datenebene, Texte (#453 AK 10, 12, 16)", () => {
   assert.equal(verfallAusFehler(`${VERFALL_MARKER} 3`), 3);
   assert.equal(verfallAusFehler("KADER_DOPPELT"), null);
@@ -4513,7 +4877,7 @@ pruefe("Verein gründen (#587 AK 1–5): Sätze des Dialogs und des Einstiegs, M
     feld: "Name des Vereins",
     info: "Höchstens 60 Zeichen. Den Namen kannst du später ändern.",
     haken1: "Ich bin berechtigt, für diesen Verein zu handeln.",
-    haken2: "Der Verein ist für die Daten seiner Spieler:innen verantwortlich und Ansprechpartner ihrer Eltern und Vertretungen.",
+    haken2: "Der Verein ist für die Daten seiner Spieler:innen verantwortlich und Ansprechpartner für sie, ihre Eltern und Vertretungen.",
     erste: "Du wirst die erste Person der Vereinsverwaltung. Solange du dabei bist, kannst du keinem anderen Verein angehören.",
     knopf: "Verein gründen",
   });
@@ -5258,7 +5622,7 @@ pruefe("Infos zum Team: bereinigt wie die Datenebene, höchstens 10'000 Zeichen 
   assert.match(sql, /char_length\(text\) between 1 and 10000/);
   assert.match(sql, /char_length\(v_text\) > 10000/);
   // Der Zugang nennt die Infos (PC 2: ohne neue Zustimmung).
-  assert.ok(readFileSync(join(web, "lib/mcp/umfang.ts"), "utf8").includes("die Infos zum Team für die Eltern verfassen, ändern und entfernen"));
+  assert.ok(readFileSync(join(web, "lib/mcp/umfang.ts"), "utf8").includes("die Infos zum Team für Spieler:innen und Eltern verfassen, ändern und entfernen"));
 });
 
 pruefe("Infos am privaten Link: die Erklärungen stehen hinter dem ⓘ, nicht mehr auf der Termin-Seite (#598 AK 10; OoS 10)", () => {

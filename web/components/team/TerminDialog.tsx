@@ -5,6 +5,7 @@ import { Button, DateField, Dialog, FormAbschnitt, SectionMessage, TextArea, Tim
 import {
   BEMERKUNG_MAX,
   HINWEIS_ELTERN_MAX,
+  LINK_KANAL,
   TERMIN_TEXT,
   ausfallProblem,
   leerZuNull,
@@ -57,7 +58,7 @@ const ANGABE: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit",
   ort: "Der Ort",
   bemerkung: "Die Bemerkung",
-  hinweis_eltern: "Der Hinweis für Eltern",
+  hinweis_eltern: `Der ${LINK_KANAL.hinweis}`,
   treffpunkt: "Der Treffpunkt",
   eingeladene: "Die Eingeladenen",
   verantwortung: "Die Verantwortung",
@@ -86,7 +87,7 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   zeit: "Zeit wieder der Serie folgen lassen",
   ort: "Ort wieder der Serie folgen lassen",
   bemerkung: "Bemerkung wieder der Serie folgen lassen",
-  hinweis_eltern: "Hinweis für Eltern wieder der Serie folgen lassen",
+  hinweis_eltern: `${LINK_KANAL.hinweis} wieder der Serie folgen lassen`,
   treffpunkt: "Treffpunkt wieder der Serie folgen lassen",
   eingeladene: "Eingeladene wieder der Serie folgen lassen",
   verantwortung: "Verantwortung wieder der Serie folgen lassen",
@@ -452,7 +453,7 @@ export function TerminDialog({
         {istSpiel && <RichtwertFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <MeldefristFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <TreffpunkteFelder angaben={spiel} spieltag={felder.datum} disabled={pending} />}
-        <TextArea label="Hinweis für Eltern (optional)" rows={3} maxLength={HINWEIS_ELTERN_MAX} value={felder.hinweisEltern ?? ""} onChange={(e) => setze("hinweisEltern")(e.target.value)} info={TERMIN_TEXT.hinweisElternSichtbar} infoAufTouch error={!!fehlerAn("hinweisEltern")} supportingText={fehlerAn("hinweisEltern")} />
+        <TextArea label={`${LINK_KANAL.hinweis} (optional)`} rows={3} maxLength={HINWEIS_ELTERN_MAX} value={felder.hinweisEltern ?? ""} onChange={(e) => setze("hinweisEltern")(e.target.value)} info={TERMIN_TEXT.hinweisElternSichtbar} infoAufTouch error={!!fehlerAn("hinweisEltern")} supportingText={fehlerAn("hinweisEltern")} />
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} info={TERMIN_TEXT.bemerkungIntern} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         {(kader.length > 0 || terminKader.length > 0 || !istSpiel) && (
           <FormAbschnitt titel="Spieler:innen" untertitel="Für wen der Termin gilt und mit wie vielen gerechnet wird." imDialog>

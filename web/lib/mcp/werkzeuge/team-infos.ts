@@ -14,8 +14,8 @@ import { werkzeug } from "@/lib/mcp/werkzeug";
 
 /** Was jede Beschreibung über die Infos sagt. */
 export const TEAM_INFOS_MODELL =
-  "Die Infos zum Team sind ein Text je Team für die Eltern: Regelbetrieb und Vorgehen des Teams (Trainingszeiten, " +
-  "Abmelden, Ausrüstung). Die Eltern jeder Spieler:in des Teams lesen sie an ihrem privaten Link, mit Teamname und " +
+  "Die Infos zum Team sind ein Text je Team für Spieler:innen und Eltern: Regelbetrieb und Vorgehen des Teams (Trainingszeiten, " +
+  "Abmelden, Ausrüstung). Jede Spieler:in des Teams und ihre Eltern lesen sie am privaten Link, mit Teamname und " +
   "Stand (Tag der letzten Textänderung) - nicht, solange die Spieler:in schnuppert (dafür gibt es das Info-Schreiben " +
   "des Schnuppertrainings), und weder im Kalender-Abo noch bei der Selbstabholung. Gliederung: eine Zeile mit «## » " +
   "ist ein Zwischentitel, eine mit «- » ein Aufzählungspunkt, eine mit «1. » ein nummerierter, «**Text**» ist " +
@@ -53,7 +53,7 @@ export const teamInfosFestlegen = werkzeug({
   titel: "Infos zum Team festlegen",
   beschreibung:
     "Verfasst die Infos zum Team eines deiner Teams, ersetzt sie oder entfernt sie (leerer Text). Übergib immer den " +
-    "ganzen Text: Für eine Änderung zuerst «team_infos_abrufen», dann den geänderten Text. Die Eltern sehen die neue " +
+    "ganzen Text: Für eine Änderung zuerst «team_infos_abrufen», dann den geänderten Text. Spieler:innen und Eltern sehen die neue " +
     `Fassung sofort. ${TEAM_INFOS_MODELL} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({

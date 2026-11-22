@@ -22,7 +22,7 @@ import {
   meldefristProblem,
   richtwertProblem,
 } from "@/lib/spiel";
-import { zahlOderNull } from "@/lib/termin";
+import { LINK_KANAL, zahlOderNull } from "@/lib/termin";
 
 /** Ein Treffpunkt im Dialog (#465), solange getippt wird als Text. */
 export type TreffpunktZeileEingabe = { key: string; anreise: Anreise | ""; datum: string; zeit: string; ort: string };
@@ -69,7 +69,8 @@ export function fristEingabe(frist: string | null | undefined): Pick<SpielEingab
 }
 
 /** Was die Meldefrist bedeutet — ein fester Hinweis hinter dem ⓘ (#463 AK 9, 10). */
-const MELDEFRIST_INFO = "Bis dann melden Eltern über ihren Link. Ohne Frist melden sie bis zum Anpfiff. Mitglieder melden immer bis zum Anpfiff.";
+const MELDEFRIST_INFO =
+  "Bis dann melden Spieler:innen und Eltern über den privaten Link. Ohne Frist melden sie bis zum Anpfiff. Mitglieder melden immer bis zum Anpfiff.";
 
 type Feld = "bezeichnung" | "mindestzahl" | "hoechstzahl" | "meldefrist" | "treffpunkte";
 
@@ -207,7 +208,7 @@ export function RichtwertFelder({ angaben, disabled }: { angaben: Angaben; disab
   );
 }
 
-/** Die Meldefrist der Eltern (#463 AK 8): Datum und Uhrzeit, beide frei,
+/** Die Meldefrist am privaten Link (#463 AK 8): Datum und Uhrzeit, beide frei,
  *  nur zusammen. */
 export function MeldefristFelder({ angaben, disabled }: { angaben: Angaben; disabled?: boolean }) {
   const { wert, setze } = angaben;
@@ -215,7 +216,7 @@ export function MeldefristFelder({ angaben, disabled }: { angaben: Angaben; disa
   return (
     <div className="flex flex-col gap-4 sm:flex-row">
       <DateField
-        label="Meldefrist für Eltern (optional)"
+        label={`${LINK_KANAL.meldefrist} (optional)`}
         className="flex-1"
         value={wert.fristDatum}
         disabled={disabled}
@@ -238,7 +239,7 @@ export function MeldefristFelder({ angaben, disabled }: { angaben: Angaben; disa
 
 /** Was Treffpunkte sind — ein fester Hinweis hinter dem ⓘ (#465). */
 const TREFFPUNKTE_INFO =
-  "Wann sich das Team vor Ort und wann und wo es sich je Anreiseart trifft, je Anreiseart einmal. Die Eltern sehen die Treffpunkte über ihren Link. Wird das Spiel verlegt, behalten sie ihren Abstand zum Anpfiff.";
+  "Wann sich das Team vor Ort und wann und wo es sich je Anreiseart trifft, je Anreiseart einmal. Spieler:innen und Eltern sehen die Treffpunkte über den privaten Link. Wird das Spiel verlegt, behalten sie ihren Abstand zum Anpfiff.";
 
 /* Die Treffpunkte eines Spiels (#465 AK 1–7): je Treffpunkt ein umrandeter
    Block wie die Felder des Platzes (FelderField) — Anreiseart, Datum und

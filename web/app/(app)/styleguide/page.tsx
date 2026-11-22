@@ -541,10 +541,10 @@ const kategorien: KategorieSlug[] = ["G", "F", "E", "D", "C", "B", "A"];
    daneben, wie die Komponente sie führt. */
 const lozengeBedeutung: [LozengeAppearance, string][] = [
   ["neutral", "Herkunft, Entwurf, Altersstufe, Termin ausgefallen"],
-  ["information", "gilt nach aussen: öffentlich, Community"],
+  ["information", "gilt nach aussen: öffentlich, Community, Link zugestellt"],
   ["discovery", "etwas Zusätzliches: mehrere Varianten, neue Version"],
   ["warning", "braucht Aufmerksamkeit: Termin ohne Training"],
-  ["success", "erledigt - im Kit, derzeit ohne Ort"],
+  ["success", "erledigt: Link abgeholt"],
   ["danger", "blockiert - im Kit, derzeit ohne Ort"],
 ];
 
@@ -1627,11 +1627,14 @@ export default async function Styleguide() {
                 <ZeichenPunkt ton="primary" />
               </span>
             </span>
-            <IconButton icon={Link2} label="Privater Link, bezogen" punkt="success" />
+            <IconButton icon={Link2} label="Privater Link, abgeholt" punkt="success" />
+            <IconButton icon={Link2} label="Privater Link, zugestellt" punkt="information" />
             <span className="type-label-small text-on-surface-mittel">
-              primary: Neues (Version, schmale Leiste) · success: ein erreichter Zustand (Link bezogen). Nur das
-              Bemerkenswerte trägt einen Punkt, der Normalfall keinen - sonst wird die Liste laut. Stumm - was er
-              meldet, steht im Namen des Knopfs.
+              primary: Neues (Version, schmale Leiste) · success: ein erreichter Zustand (Link abgeholt) ·
+              information: ein gemeldeter Zustand ohne Gewissheit (Link zugestellt, #657) - blau wie die
+              Information-Lozenge des Stands im Link-Dialog, damit Punkt und Plakette dasselbe sagen. Nur das
+              Bemerkenswerte trägt einen Punkt, der Normalfall keinen (Link offen) - sonst wird die Liste laut.
+              Stumm - was er meldet, steht im Namen des Knopfs.
             </span>
           </div>
 
@@ -1690,8 +1693,11 @@ export default async function Styleguide() {
           </p>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             Mehrere Sichten auf denselben Gegenstand - etwa ein Termin mit
-            Termin, Training, Spieler:innen und Trainer:innen, oder das Konto
-            mit Profil, Verbindungen sowie Daten und Konto (#662). Zwischen den
+            Termin, Training, Spieler:innen und Trainer:innen, die
+            Team-Verwaltung mit Spieler:innen, Kader &amp; Schnuppern, Privater
+            Link und Trainer:innen (#656): ein Eintrag «Team» in der
+            Seitenleiste, darunter die Reiter, oder das Konto mit Profil,
+            Verbindungen sowie Daten und Konto (#662). Zwischen den
             Seiten eines Bereichs (Team, Verein) wechselt dagegen die
             Seitenleiste (<Siehe id="navigation" />). Bewusst Links statt
             Schaltflächen: jede Ansicht hat ihre eigene Adresse, ist damit
@@ -1702,7 +1708,12 @@ export default async function Styleguide() {
             lebt im Formularzustand. Die Leiste trennt sich nach
             unten mit <code>border-linie</code>, die offene Ansicht trägt einen
             2 px starken Strich in Primary. Die Reiter stehen in{" "}
-            <code>type-title-small</code>, normal gesetzt.
+            <code>type-title-small</code>, normal gesetzt. Reicht die Breite
+            nicht, brechen die Reiter in eine zweite Zeile um, statt seitlich zu
+            rollen: Mobile Browser zeigen keine Scrollleiste, ein Reiter
+            ausserhalb des Bilds wäre weder als offen noch als vorhanden zu
+            erkennen (die vier Bereiche der Team-Verwaltung brauchen gut 500 px,
+            auf dem Handy bleiben rund 340 px).
           </p>
           <TabNav
             ariaLabel="Beispiel-Ansichten"
@@ -1814,7 +1825,7 @@ export default async function Styleguide() {
             nicht während man im Feld arbeitet, und auf Touch-Geräten gar nicht
             (PO 2026-10-04). Muss man den Hinweis auch dort lesen, bevor man
             weitermacht - dass die Altersstufe eines Trainings lebenslang bindet
-            oder dass die Eltern den Grund eines Ausfalls sehen -,
+            oder dass Spieler:innen und Eltern den Grund eines Ausfalls sehen -,
             zeigt <code>infoAufTouch</code> ihn auf Touch-Geräten als Hinweis
             unter dem Feld. Das ⓘ hängt am Namen (PO 2026-10-31): Steht der
             Name über dem Feld, steht es oben hinter ihm, mittig zu seiner Zeile
@@ -2187,7 +2198,7 @@ export default async function Styleguide() {
             in einem neuen Tab und gibt weder die Herkunftsseite noch das Fenster preis.
             Neu, weil <code>ButtonLink</code> nur innerhalb der Anwendung führt. Mit
             <code> einzeilig</code> kürzt ein langer Text mit «…», das Zeichen bleibt
-            stehen - so steht der Ort mit Kartenlink auf der Karte der Eltern (#533).
+            stehen - so steht der Ort mit Kartenlink auf der Karte am privaten Link (#533).
           </p>
           <div className="flex max-w-xs flex-col items-start gap-3 type-body-medium">
             <ExternerLink href="https://maps.app.goo.gl/MRWFZj3ZQtsYGBFi9">Auf der Karte öffnen</ExternerLink>
@@ -2555,6 +2566,15 @@ export default async function Styleguide() {
             bleiben <code>FilterChip</code> (<Siehe id="plaketten" />): Sie haben kein Panel, nur an
             und aus.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Dieselbe Leiste steht über den Spieler:innen des Vereins und über der
+            Spielerliste eines Teams (#601: Suche, Kader samt «Ohne Kader»,
+            Jahrgang, Privater Link) - kein eigenes Muster je Liste. Der Zustand
+            steht in der Adresse (<code>useAdressFilter</code>); die Reiter der
+            Team-Verwaltung tragen ihn weiter. Die Kader-Chips mit Zahl bleiben
+            den Reitern «Spieler:innen» an Trainings und Spielen, wo genau ein
+            Kader zur Zeit gilt.
+          </p>
           <FilterKnopfDemo />
         </Section>
 
@@ -2830,7 +2850,7 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Kader</strong> (<code>KaderLozenge</code>, Epic #447): ein
             Teil des Teams, den die Trainer:innen selbst benennen - in der
-            Spielerliste, im Trainingsplan, am Termin und am privaten Link.
+            Spielerliste, im Trainingsplan und am Termin; am privaten Link nie (#663).
             Neutral und ohne Zeichen, nur der Name (PO 2026-10-18): Ein Kader
             trägt keine Farbe, und ein Zeichen machte aus jeder Zeile mit drei
             Kadern ein Muster. Ein entfernter Kader steht an begonnenen Terminen
@@ -4058,7 +4078,7 @@ export default async function Styleguide() {
             />
           </Card>
           <p className="type-body-medium mb-3 mt-8 max-w-2xl text-on-surface-mittel">
-            <strong>Hinweis für Eltern</strong> - <code>HinweisEltern</code>: der Fuss
+            <strong>Hinweis am privaten Link</strong> - <code>HinweisEltern</code>: der Fuss
             einer Termin- oder Spielkarte am privaten Link (#590). Eine Haarlinie trennt
             ihn vom Kopf der Karte, darunter ein <code>KuerzbarerText</code> auf vier
             Zeilen. An einer gedämpften Karte (abgemeldet) tritt er gedämpft zurück.
@@ -4525,7 +4545,7 @@ export default async function Styleguide() {
         <Section id="benachrichtigungen">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Benachrichtigungen am privaten Link (Epic #641): was am Team geschieht, sieht die Spielervertretung
-            dort, ohne dass das Team es im Eltern-Chat ankündigt. Aus bestehenden Teilen gebaut -{" "}
+            dort, ohne dass das Team es im Chat mit Spieler:innen und Eltern ankündigt. Aus bestehenden Teilen gebaut -{" "}
             <code>IconButton</code> mit <code>zahl</code>, <code>Lozenge</code>, <code>Button</code> und{" "}
             <code>Leerzustand</code> - plus dem Eintrag als einzigem neuem Baustein.
           </p>

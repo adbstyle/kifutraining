@@ -179,7 +179,13 @@ export function AppNavClient({
           bereichAktiv: imTeamBereich,
         },
         { label: "Trainings", href: `${basis}/trainings`, icon: ListChecks, current: pfad === `${basis}/trainings` },
-        { label: "Team", href: `${basis}/verwaltung`, icon: Users, current: pfad === `${basis}/verwaltung` },
+        // «Team» bleibt in allen Bereichen der Team-Verwaltung markiert (#656).
+        {
+          label: "Team",
+          href: `${basis}/verwaltung`,
+          icon: Users,
+          current: pfad === `${basis}/verwaltung` || pfad.startsWith(`${basis}/verwaltung/`),
+        },
       ],
     });
   } else if (konto && offen?.art === "verein") {

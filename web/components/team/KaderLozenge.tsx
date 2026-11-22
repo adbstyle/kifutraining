@@ -4,8 +4,8 @@ import { Lozenge } from "@/components/ui";
 export const EHEMALIGER_KADER = "Ehemaliger Kader";
 
 /** Ein Kader als Plakette (#447): neutral und ohne Symbol, nur sein Name —
- *  in der Spielerliste, im Trainingsplan, am Termin und am privaten Link
- *  (PO 2026-10-18). Ein Kader trägt keine Farbe (#452 OoS 1). Ohne Namen:
+ *  in der Spielerliste, im Trainingsplan und am Termin (PO 2026-10-18); am
+ *  privaten Link nie (#663). Ein Kader trägt keine Farbe (#452 OoS 1). Ohne Namen:
  *  der ehemalige Kader eines begonnenen Termins, gedämpft. */
 export function KaderLozenge({ name, className }: { name: string | null; className?: string }) {
   return (

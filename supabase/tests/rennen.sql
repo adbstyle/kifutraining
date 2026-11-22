@@ -5,7 +5,8 @@
 -- Doppelerfassung im Verein beim Erfassen und Ändern; Story 3: Zuordnen und
 -- Herausnehmen; Story 5: 30 Teams, Teamname, leere Verwaltung, Team vor
 -- Termin; Story 6: Löschen, Erfassen, Link und Grenze 1000 am Verein-Ort;
--- Story 7: Link über mehrere Teams, Abholen gegen Erneuern; Story 8:
+-- Story 7: Link über mehrere Teams, Abholen gegen Erneuern und (#657)
+-- gegen Zustellen; Story 8:
 -- Schnuppern in genau einem Team; Story 9: Import in den Verein gegen
 -- Erfassen, Löschen, Aufnehmen und einen zweiten Import; Story 11: Verein
 -- gründen und löschen gegen Aufnehmen, Termine, Umbenennen und Konto
@@ -1157,6 +1158,10 @@ delete from auth.users where id in (select id from rennen_test.ids where name in
 --      Abmeldung mit dem Herausnehmen; nie eine Meldung ohne Zuordnung.
 -- (z4) Erneuern am Team-Ort gegen Herausnehmen aus diesem Team: nachher
 --      SPIELER_NICHT_GEFUNDEN und der Link bleibt; vorher gelingt beides.
+-- (z5) Zustellen gegen Abholen (#657), beide Reihenfolgen: Endstand ist
+--      immer abgeholt ohne «zugestellt», nie beides. Zustellen → Abholen:
+--      der Trigger setzt zurück; Abholen → Zustellen: `abgeholt`, `geaendert`
+--      false.
 -- Ein harter Abbruch lässt den Verein «Rennen-Link» samt Teams und
 -- Spieler:innen und die Konten «rennen-l-…@rennen.test» stehen (von Hand löschen).
 
@@ -1164,7 +1169,8 @@ select set_config('rennen.fehler_link', '', false) is not null as rennen_fehler_
 
 begin;
 insert into rennen_test.ids (name) values ('l_verein'), ('l_va'), ('l_m'), ('l_tr'), ('l_sp'),
-  ('l_a1'), ('l_a2'), ('l_a3'), ('l_d1'), ('l_d2'), ('l_d3'), ('l_h1'), ('l_h2'), ('l_h3'), ('l_e1'), ('l_e2');
+  ('l_a1'), ('l_a2'), ('l_a3'), ('l_d1'), ('l_d2'), ('l_d3'), ('l_h1'), ('l_h2'), ('l_h3'), ('l_e1'), ('l_e2'),
+  ('l_z1'), ('l_z2');
 insert into rennen_test.ids (name, id) values
   ('l_gross', 'ffffffff-ffff-4fff-bfff-ffffffff0583'), ('l_klein', '00000000-0000-4000-8000-000000000583');
 insert into auth.users (id, email, email_confirmed_at)
@@ -1182,12 +1188,12 @@ insert into training_termine (id, team_id, datum, beginn, ende) values
 insert into training_termine (id, team_id, datum, beginn, ende, art, bezeichnung) values
   (rennen_test.z('l_sp'), rennen_test.z('l_klein'), current_date + 8, '10:00', '12:00', 'spiel', 'Link-Spiel');
 insert into spieler (id, verein_id, vorname, nachname, jahrgang)
-select id, rennen_test.z('l_verein'), 'Link', name, 2015 from rennen_test.ids where name ~ '^l_[adhe][0-9]$';
+select id, rennen_test.z('l_verein'), 'Link', name, 2015 from rennen_test.ids where name ~ '^l_[adhez][0-9]$';
 insert into team_spieler (team_id, spieler_id, verein_id, created_at)
 select rennen_test.z('l_gross'), id, rennen_test.z('l_verein'), now() - interval '1 day'
-  from rennen_test.ids where name ~ '^l_[adhe][0-9]$';
+  from rennen_test.ids where name ~ '^l_[adhez][0-9]$';
 insert into team_spieler (team_id, spieler_id, verein_id)
-select rennen_test.z('l_klein'), id, rennen_test.z('l_verein') from rennen_test.ids where name ~ '^l_[adhe][0-9]$';
+select rennen_test.z('l_klein'), id, rennen_test.z('l_verein') from rennen_test.ids where name ~ '^l_[adhez][0-9]$';
 commit;
 
 do $$
@@ -1326,6 +1332,24 @@ begin
      or (select link_token from spieler where id = rennen_test.z('l_e2')) = v_alt then
     raise exception '(z4) Herausnehmen nach dem Erneuern: %', ergebnis;
   end if;
+
+  -- (z5) Zustellen am Team-Ort, dann Abholen.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format('select spieler_link_zugestellt_setzen(%L, %L, true)::text', v_klein, rennen_test.z('l_z1')),
+    v_m, format($q$select abholung_abholen(%L, %L, 'Link', 'l_z1', 2015)::text$q$, v_abholung, repeat('o', 32)));
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb ->> 'status' <> 'ok'
+     or (select (link_bezogen, link_zugestellt) from spieler where id = rennen_test.z('l_z1')) is distinct from (true, false) then
+    raise exception '(z5) Abholen nach dem Zustellen: % / %', ergebnis,
+      (select link_bezogen || '/' || link_zugestellt from spieler where id = rennen_test.z('l_z1'));
+  end if;
+  -- Abholen, dann Zustellen am Verein-Ort.
+  ergebnis := rennen_test.verschraenkt(ziel,
+    v_m, format($q$select abholung_abholen(%L, %L, 'Link', 'l_z2', 2015)::text$q$, v_abholung, repeat('p', 32)),
+    v_va, format('select verein_spieler_link_zugestellt_setzen(%L, true)::text', rennen_test.z('l_z2')));
+  if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"link_stand": "abgeholt", "geaendert": false}'
+     or (select (link_bezogen, link_zugestellt) from spieler where id = rennen_test.z('l_z2')) is distinct from (true, false) then
+    raise exception '(z5) Zustellen nach dem Abholen: %', ergebnis;
+  end if;
 exception when others or query_canceled then
   perform set_config('rennen.fehler_link', sqlerrm, false);
 end $$;
@@ -1334,7 +1358,7 @@ delete from teams where verein_id = (select id from rennen_test.ids where name =
 delete from spieler where verein_id = (select id from rennen_test.ids where name = 'l_verein');
 delete from vereine where id = (select id from rennen_test.ids where name = 'l_verein');
 delete from auth.users where id in (select id from rennen_test.ids where name in ('l_va', 'l_m'));
-delete from abholung_sperren where schluessel in (repeat('l', 32), repeat('m', 32), repeat('n', 32));
+delete from abholung_sperren where schluessel in (repeat('l', 32), repeat('m', 32), repeat('n', 32), repeat('o', 32), repeat('p', 32));
 
 -- ── Fälle: Schnuppern in genau einem Team (Story 8 #584, AP §3.3 f, §4.1, Testfall 19) ──
 -- Verein «Rennen-Schnuppern» mit Verwaltung SVA (ohne Team) und Trainer:in

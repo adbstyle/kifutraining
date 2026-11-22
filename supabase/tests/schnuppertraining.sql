@@ -413,7 +413,7 @@ begin
 
     v := verein_spielerliste(pg_temp.id('v'));
     for x in select * from jsonb_array_elements(v -> 'spieler') loop
-      perform pg_temp.pruefe(pg_temp.schluessel(x) = array['id', 'jahrgang', 'js', 'link_bezogen', 'nachname', 'schnuppern', 'teams', 'vorname'],
+      perform pg_temp.pruefe(pg_temp.schluessel(x) = array['id', 'jahrgang', 'js', 'link_bezogen', 'link_zugestellt', 'nachname', 'schnuppern', 'teams', 'vorname'],
                              'Vereinsliste, Schlüssel: ' || x::text);
     end loop;
     select e into s from jsonb_array_elements(v -> 'spieler') e where e ->> 'id' = pg_temp.id('frei')::text;

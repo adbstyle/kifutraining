@@ -16,30 +16,29 @@ export const KADER_MAX = 20;
 
 export const KADER_TEXT = {
   name: `Bitte einen Namen mit höchstens ${KADER_NAME_MAX} Zeichen angeben.`,
-  /** AK 13: beim Anlegen und Umbenennen — KiFu prüft die Namen nicht (OoS 7). */
+  /** AK 13: beim Anlegen und Umbenennen — KiFu prüft die Namen nicht (OoS 7).
+   *  Seit #663 sieht sie nur noch das Team; heikle Namen bleiben trotzdem tabu. */
   heikel:
-    "Eltern sehen die Kader ihrer Spieler:in. Nenne darum keine Angaben zur Gesundheit oder vergleichbar heikle Einstufungen wie «verletzt» oder «Förderbedarf».",
+    "Kader sieht nur das Team. Nenne trotzdem keine Angaben zur Gesundheit oder vergleichbar heikle Einstufungen wie «verletzt» oder «Förderbedarf».",
+  /** #663 AK 2: Wer die Kader führt, liest, dass sie nur im Team sichtbar sind
+   *  — immer über der Liste, auch ohne Kader. Zwilling: `spieler_link_ansicht`
+   *  liefert keine Kadernamen (Migration link_ansicht_ohne_kader). */
+  sichtbarkeit:
+    "Kader sieht nur das Team. Am privaten Link erscheinen sie nicht: Spieler:innen und Eltern sehen nur die Termine, die für sie gelten.",
   /** Was ein Kader bewirkt — über der Liste der Kader. */
   wirkung:
-    "Ein Termin mit Kadern gilt für die Spieler:innen seiner Kader, ein Termin ohne Kader für alle. Wer keinem Kader angehört, sieht nur Termine ohne Kader.",
+    "Ein Termin mit Kadern gilt für die Spieler:innen seiner Kader, ein Termin ohne Kader für alle. Wer keinem Kader angehört, ist nur bei Terminen ohne Kader dabei.",
   einleitung:
     "Ein Kader fasst Spieler:innen zusammen, für die eigene Termine gelten, etwa «Stärkeklasse 1», «Torhüterinnen» oder «Aushilfe».",
   leer:
     "Noch keine Kader. Ohne Kader gilt jeder Termin für alle Spieler:innen. Mit Kadern wie «Stärkeklasse 1» oder «Torhüterinnen» bestimmst du, für wen ein Termin gilt.",
-  /** Die Eingrenzung der Spielerliste auf Spieler:innen ohne Kader (AK 9). */
-  ohneKader: "Ohne Kader",
   /** Ein Termin, dessen Kadern niemand angehört (#453 AK 7, 8) — im Dialog
    *  und am Termin derselbe Satz. */
   niemand: "Gilt für niemanden: Diesen Kadern gehört keine Spieler:in an.",
-  /** Die Spielerliste, eingegrenzt auf einen leeren Kader bzw. auf «Ohne
-   *  Kader», wenn jede einem angehört (Leerzustand). */
+  /** Am Termin (Reiter «Spieler:innen»), eingegrenzt auf einen leeren Kader (Leerzustand). */
   leerKader: (name: string) => `Niemand in «${name}»`,
-  leerKaderText:
-    "Diesem Kader gehört noch keine Spieler:in an. Hebe die Eingrenzung auf, wähle Spieler:innen aus und teile sie über «Kader zuteilen» zu.",
   /** Am Termin (Reiter «Spieler:innen»): Dem Kader gehört niemand an. */
   leerKaderTermin: "Diesem Kader gehört keine Spieler:in an.",
-  leerOhne: "Alle haben einen Kader",
-  leerOhneText: "Jede Spieler:in auf der Liste gehört mindestens einem Kader an.",
   eingrenzungAufheben: "Eingrenzung aufheben",
 } as const;
 

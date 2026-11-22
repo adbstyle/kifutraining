@@ -7,6 +7,7 @@ import {
   bereinigeName,
   herausnehmenFrage,
   jahrgangAus,
+  linkStandAus,
   nachSpielerName,
   nachTeamname,
   spielerDoppeltText,
@@ -14,6 +15,7 @@ import {
   spielerProblem,
   verbleibendeTeams,
   type HerausnehmenLage,
+  type LinkStand,
   type LinkTeam,
   type Spieler,
   type SpielerDoppelt,
@@ -38,7 +40,23 @@ import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type Ke
 
 export const SPIELER_FELD = { feld: "spieler_id" } as const;
 
-const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, kader_spieler(kader_id, team_id)";
+const SPIELER_SPALTEN_VOR_657 = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, kader_spieler(kader_id, team_id)";
+const SPIELER_SPALTEN = SPIELER_SPALTEN_VOR_657.replace("link_bezogen", "link_bezogen, link_zugestellt");
+
+/** Bis N1: Im Fenster zwischen Vercel-Deploy und Migration 20261122110000
+ *  (oder in einer Vorschau gegen ein älteres Schema) fehlt `link_zugestellt`,
+ *  und PostgREST lehnt den ganzen Select ab. Dann noch einmal ohne die Spalte —
+ *  die Liste kommt, alle Links gelten als nicht zugestellt. Wie im Verein-Kern,
+ *  der den Schlüssel optional liest. */
+async function mitZugestelltRueckfall<T extends { error: { message: string; code?: string } | null }>(
+  abfrage: (spalten: string) => PromiseLike<T>,
+): Promise<T> {
+  const r = await abfrage(SPIELER_SPALTEN);
+  // 42703 undefined_column: «column spieler_1.link_zugestellt does not exist».
+  if (r.error?.code !== "42703" || !r.error.message.includes("link_zugestellt")) return r;
+  console.error("[kern] spieler.link_zugestellt fehlt:", r.error.message);
+  return abfrage(SPIELER_SPALTEN_VOR_657);
+}
 
 type SpielerRoh = {
   id: string;
@@ -46,7 +64,11 @@ type SpielerRoh = {
   nachname: string;
   jahrgang: number;
   js_nummer: string | null;
+  /** abgeholt (#438); Spaltenname bleibt wegen des Sync. */
   link_bezogen: boolean;
+  /** Nullable bis N1: gelesen als `=== true`; fehlt im Fenster vor der
+   *  Migration (`mitZugestelltRueckfall`). */
+  link_zugestellt?: boolean | null;
   /** Alle Kader der Spieler:in, die die RLS zeigt — auch die anderer Teams,
    *  denen die handelnde Person angehört; `kopfAusRoh` grenzt auf das Team ein. */
   kader_spieler: { kader_id: string; team_id: string }[] | null;
@@ -66,7 +88,7 @@ function kopfAusRoh(s: SpielerRoh, teamId: string): Omit<Spieler, "probe" | "wei
     nachname: s.nachname,
     jahrgang: s.jahrgang,
     jsNummer: s.js_nummer,
-    linkBezogen: s.link_bezogen,
+    linkStand: linkStandAus(s.link_bezogen, s.link_zugestellt === true),
     kaderIds: (s.kader_spieler ?? []).filter((k) => k.team_id === teamId).map((k) => k.kader_id),
   };
 }
@@ -138,9 +160,12 @@ export async function ladeSpielerliste(
   // weiteren Teams und wer Mitteilungen aufs Mobile eingeschaltet hat (#483
   // AK 11, 12: nur ja/nein) — alle drei hängen nur am Team, also gleichzeitig.
   // Scheitert nur die Angabe zu den Mitteilungen (etwa im Fenster zwischen
-  // Vercel-Deploy und Migration), kommt die Liste trotzdem — dann ohne Glocken.
+  // Vercel-Deploy und Migration), kommt die Liste trotzdem — dann ohne Glocken;
+  // fehlt `link_zugestellt`, ohne Zustellung (`mitZugestelltRueckfall`).
   const [{ data, error }, weitere, mitteilungen] = await Promise.all([
-    supabase.from("team_spieler").select(`probe_seit, spieler:spieler!tsp_spieler(${SPIELER_SPALTEN})`).eq("team_id", e.teamId),
+    mitZugestelltRueckfall((spalten) =>
+      supabase.from("team_spieler").select(`probe_seit, spieler:spieler!tsp_spieler(${spalten})`).eq("team_id", e.teamId),
+    ),
     supabase.rpc("spieler_weitere_teams", { p_team: e.teamId }),
     supabase.rpc("team_spieler_mitteilungen", { p_team: e.teamId }),
   ]);
@@ -305,12 +330,14 @@ export async function ladeSpieler(
 ): Promise<KernErgebnis<Omit<Spieler, "probe" | "weitereTeams">>> {
   if (!istUuid(teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
   if (!istUuid(spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
-  const { data, error } = await supabase
-    .from("team_spieler")
-    .select(`spieler:spieler!tsp_spieler(${SPIELER_SPALTEN})`)
-    .eq("team_id", teamId)
-    .eq("spieler_id", spielerId)
-    .maybeSingle<{ spieler: SpielerRoh | null }>();
+  const { data, error } = await mitZugestelltRueckfall((spalten) =>
+    supabase
+      .from("team_spieler")
+      .select(`spieler:spieler!tsp_spieler(${spalten})`)
+      .eq("team_id", teamId)
+      .eq("spieler_id", spielerId)
+      .maybeSingle<{ spieler: SpielerRoh | null }>(),
+  );
   if (error) return ausDbFehler(error);
   if (!data?.spieler) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
   return ok(kopfAusRoh(data.spieler, teamId));
@@ -381,7 +408,7 @@ async function linkRpc(
 
 /** Was der KI-Weg über den privaten Link einer Spieler:in nennt (#589 AK 9):
  *  das Team, in dem er ihn holt (das älteste ihrer Teams, dem die handelnde
- *  Person angehört), ihr Name und alle ihre Teams — auch die, denen die
+ *  Person angehört), ihr Name, der Stand des Links (#657 AK 3) und alle ihre Teams — auch die, denen die
  *  Person nicht angehört, nur mit Namen (`spieler_teams`). Keine eigene,
  *  keine fremde Spieler:in ausserhalb der eigenen Teams: `nicht_gefunden`
  *  wie eine unbekannte (#589 AK 8). */
@@ -389,7 +416,7 @@ export async function ladeLinkLage(
   supabase: SupabaseClient,
   userId: string,
   e: { spielerId: string },
-): Promise<KernErgebnis<{ teamId: string; vorname: string; nachname: string; name: string; teams: LinkTeam[] }>> {
+): Promise<KernErgebnis<{ teamId: string; vorname: string; nachname: string; name: string; stand: LinkStand; teams: LinkTeam[] }>> {
   const team = await eigenesTeamVon(supabase, e.spielerId);
   if (!team.ok) return team;
   const spieler = await ladeSpieler(supabase, team.wert, e.spielerId);
@@ -401,6 +428,7 @@ export async function ladeLinkLage(
     vorname: spieler.wert.vorname,
     nachname: spieler.wert.nachname,
     name: spielerName(spieler.wert),
+    stand: spieler.wert.linkStand,
     teams: teams.wert.teams.map(({ name, abholbar }) => ({ name, abholbar })),
   });
 }
@@ -421,6 +449,28 @@ export async function erneuereSpielerLink(
   e: { spielerId: string; teamId?: string; person?: { vorname: string; nachname: string } },
 ): Promise<LinkErgebnis> {
   return linkRpc(supabase, e, "spieler_link_erneuern");
+}
+
+/** Den aktuellen Link als zugestellt markieren oder die Markierung
+ *  zurücknehmen (#657 AK 1, 3), im Team `teamId`. Nur solange er
+ *  nicht abgeholt ist: Sonst ändert die Datenebene nichts und nennt
+ *  `abgeholt` mit `geaendert: false` (kein Fehler). */
+export async function setzeLinkZugestellt(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { spielerId: string; zugestellt: boolean; teamId: string },
+): Promise<KernErgebnis<{ teamId: string; linkStand: LinkStand; geaendert: boolean }>> {
+  const { teamId } = e;
+  if (!istUuid(teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
+  if (!istUuid(e.spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
+  const { data, error } = await supabase.rpc("spieler_link_zugestellt_setzen", {
+    p_team: teamId,
+    p_spieler: e.spielerId,
+    p_zugestellt: e.zugestellt,
+  });
+  if (error) return spielerFehler(error);
+  const r = data as { link_stand: LinkStand; geaendert: boolean };
+  return ok({ teamId, linkStand: r.link_stand, geaendert: r.geaendert });
 }
 
 // ── Selbstabholung (#438) ───────────────────────────────────────────────────

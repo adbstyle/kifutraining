@@ -18,7 +18,8 @@ import { useVerfallRueckfrage } from "./VerfallBestaetigung";
    soll (AK 13), steht als Hinweis unter dem Namensfeld, solange kein Fehler
    dasteht — bewusst nicht hinter dem ⓘ: Er muss gelesen werden, bevor man
    tippt, und im niedrigen Dialog schnitte dieser das Panel ab (PO
-   2026-10-18). Entfernen fragt nach (AK 4) und nennt, was danach gilt. */
+   2026-10-18). Entfernen fragt nach (AK 4) und nennt, was danach gilt.
+   Dass Kader nur das Team sieht, steht als Meldung über der Liste (#663 AK 2). */
 export function KaderKarte({ teamId, kader }: { teamId: string; kader: Kader[] }) {
   const router = useRouter();
   const melde = useSnackbar();
@@ -97,9 +98,12 @@ export function KaderKarte({ teamId, kader }: { teamId: string; kader: Kader[] }
         </Tooltip>
       </div>
 
+      {/* #663 AK 2: Kader sieht nur das Team — immer, auch ohne Kader. */}
+      <SectionMessage className="mt-3 max-w-2xl">{KADER_TEXT.sichtbarkeit}</SectionMessage>
+
       {kader.length > 0 ? (
         <>
-          <p className="type-body-medium mt-2 max-w-2xl text-on-surface-mittel">{KADER_TEXT.wirkung}</p>
+          <p className="type-body-medium mt-4 max-w-2xl text-on-surface-mittel">{KADER_TEXT.wirkung}</p>
           <Tabelle className="mt-4" spalten="sm:grid-cols-[minmax(0,1fr)_8.5rem_5rem]" kopf={["Name", "Spieler:innen", ""]}>
             {kader.map((k) => (
               <TabellenZeile key={k.id}>

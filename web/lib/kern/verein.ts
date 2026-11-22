@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
-import { bereinigeName, jahrgangAus, nachSpielerName, nachTeamname, spielerProblem, SPIELER_MELDUNG, type SpielerEingabe } from "@/lib/spieler";
+import { bereinigeName, jahrgangAus, linkStandAus, nachSpielerName, nachTeamname, spielerProblem, SPIELER_MELDUNG, type LinkStand, type SpielerEingabe } from "@/lib/spieler";
 import {
   IMPORT_TEXT,
   IMPORT_ZEILEN_MAX,
@@ -89,8 +89,8 @@ export type VereinSpielerMitglied = {
 export type VereinSpieler = VereinSpielerMitglied & {
   /** Die J+S-Nummer; `null`, wenn keine erfasst ist. */
   js: string | null;
-  /** Der aktuelle private Link wurde schon bezogen (Spalte «Privater Link»). */
-  linkBezogen: boolean;
+  /** Stand des aktuellen privaten Links (Spalte «Privater Link», #657). */
+  linkStand: LinkStand;
   /** Wo und wie weit sie schnuppert (#584); `anzahl`: die vom Team festgelegte
    *  Zahl, `null` ohne; `besucht`: gezählt wie am Team-Ort. */
   schnuppern: { teamId: string; anzahl: number | null; besucht: number } | null;
@@ -123,7 +123,11 @@ const nachName = (a: { name: string }, b: { name: string }) => nachTeamname(a.na
 
 type SpielerRoh = VereinSpielerMitglied & {
   js?: string | null;
+  /** abgeholt; der Schlüssel heisst bis N1 wie die Spalte. */
   link_bezogen?: boolean;
+  /** Bis N1 optional (altes Schema ohne ihn im Fenster); dann in
+   *  VERWALTUNGS_SCHLUESSEL. */
+  link_zugestellt?: boolean;
   schnuppern?: { team_id: string; anzahl: number | null; besucht: number } | null;
 };
 
@@ -201,7 +205,7 @@ export async function ladeVereinSpielerliste(
     spieler: zeilen.map((s) => ({
       ...mitglied(s),
       js: s.js ?? null,
-      linkBezogen: s.link_bezogen === true,
+      linkStand: linkStandAus(s.link_bezogen === true, s.link_zugestellt === true),
       schnuppern: s.schnuppern ? { teamId: s.schnuppern.team_id, anzahl: s.schnuppern.anzahl, besucht: s.schnuppern.besucht } : null,
     })),
     // `anzahl` steht bei jedem Team der Verwaltung (oben geprüft).
@@ -778,21 +782,41 @@ export async function loescheSpielerImVerein(
 
 /** Den privaten Link einer Spieler:in des Vereins holen (#582 AK 9, 10) — das
  *  Geheimnis, nicht die Adresse. `ohneTeam`: Die Spielervertretung sähe noch
- *  keine Termine; `bezogen`: Der Link wurde schon bezogen. */
+ *  keine Termine; `stand`: abgeholt, zugestellt oder offen (#657). */
 export async function holeSpielerLinkImVerein(
   supabase: SupabaseClient,
   _userId: string,
   e: { spielerId: string },
-): Promise<KernErgebnis<{ token: string; ohneTeam: boolean; bezogen: boolean }>> {
+): Promise<KernErgebnis<{ token: string; ohneTeam: boolean; stand: LinkStand }>> {
   if (!istUuid(e.spielerId)) return spielerNichtGefunden();
   const { data, error } = await supabase.rpc("verein_spieler_link_holen", { p_spieler: e.spielerId });
   if (error) return spielerFehler(error);
-  const r = data as { link_token: string; ohne_team: boolean; bezogen: boolean };
-  return ok({ token: r.link_token, ohneTeam: r.ohne_team, bezogen: r.bezogen });
+  // `bezogen` heisst abgeholt; `zugestellt` fehlt nur im Fenster vor der Migration.
+  const r = data as { link_token: string; ohne_team: boolean; bezogen: boolean; zugestellt?: boolean };
+  return ok({ token: r.link_token, ohneTeam: r.ohne_team, stand: linkStandAus(r.bezogen, r.zugestellt === true) });
+}
+
+/** Den aktuellen Link als zugestellt markieren oder die Markierung
+ *  zurücknehmen (#657 AK 2), für jede Spieler:in des Vereins, auch ohne Team.
+ *  Ein abgeholter Link bleibt abgeholt (`geaendert: false`, kein Fehler). Nur
+ *  in der Anwendung, nie im KI-Weg. */
+export async function setzeLinkZugestelltImVerein(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { spielerId: string; zugestellt: boolean },
+): Promise<KernErgebnis<{ linkStand: LinkStand; geaendert: boolean }>> {
+  if (!istUuid(e.spielerId)) return spielerNichtGefunden();
+  const { data, error } = await supabase.rpc("verein_spieler_link_zugestellt_setzen", {
+    p_spieler: e.spielerId,
+    p_zugestellt: e.zugestellt,
+  });
+  if (error) return spielerFehler(error);
+  const r = data as { link_stand: LinkStand; geaendert: boolean };
+  return ok({ linkStand: r.link_stand, geaendert: r.geaendert });
 }
 
 /** Den privaten Link erneuern (#582 AK 11): Der bisherige gilt nie wieder, ein
- *  Kalender-Abo endet, der Stand «bezogen» ist zurückgesetzt. */
+ *  Kalender-Abo endet, der Stand ist wieder offen. */
 export async function erneuereSpielerLinkImVerein(
   supabase: SupabaseClient,
   _userId: string,

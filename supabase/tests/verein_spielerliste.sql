@@ -157,7 +157,7 @@ language sql stable as $$
   select jsonb_build_object(
     'spieler', (select coalesce(jsonb_agg(jsonb_build_object(
                   'id', s.id, 'vorname', s.vorname, 'nachname', s.nachname, 'jahrgang', s.jahrgang,
-                  'js', s.js_nummer, 'link_bezogen', s.link_bezogen,
+                  'js', s.js_nummer, 'link_bezogen', s.link_bezogen, 'link_zugestellt', s.link_zugestellt is true,
                   'teams', (select coalesce(jsonb_agg(jsonb_build_object('id', t.id, 'name', t.name)
                                                       order by t.name, t.id), '[]'::jsonb)
                               from public.team_spieler ts join public.teams t on t.id = ts.team_id
@@ -278,7 +278,7 @@ begin
     perform pg_temp.pruefe(l - array['gesamt', 'jahrgaenge', 'ohne_team', 'verwaltung'] = pg_temp.alte_liste(pg_temp.id('v')),
                            wer || ': weicht von der bisherigen Liste ab: ' || l::text);
     for s in select * from jsonb_array_elements(l -> 'spieler') loop
-      perform pg_temp.pruefe(pg_temp.schluessel(s) = array['id', 'jahrgang', 'js', 'link_bezogen', 'nachname', 'schnuppern', 'teams', 'vorname'],
+      perform pg_temp.pruefe(pg_temp.schluessel(s) = array['id', 'jahrgang', 'js', 'link_bezogen', 'link_zugestellt', 'nachname', 'schnuppern', 'teams', 'vorname'],
                              wer || ': Schlüssel der Zeile ' || s::text);
     end loop;
     for t in select * from jsonb_array_elements(l -> 'teams') loop
@@ -467,7 +467,7 @@ begin
   -- Ein Mitglied (m3) und die Verwaltung (v3verw), je in ihrer Form.
   foreach wer in array array['m3', 'v3verw'] loop
     zeile := case wer when 'm3' then array['id', 'jahrgang', 'nachname', 'teams', 'vorname']
-                  else array['id', 'jahrgang', 'js', 'link_bezogen', 'nachname', 'schnuppern', 'teams', 'vorname'] end;
+                  else array['id', 'jahrgang', 'js', 'link_bezogen', 'link_zugestellt', 'nachname', 'schnuppern', 'teams', 'vorname'] end;
     perform pg_temp.als(pg_temp.id(wer));
     l := verein_spielerliste(v3);
     perform pg_temp.pruefe(jsonb_array_length(l -> 'spieler') = 1001 and l -> 'gesamt' = '1001'
