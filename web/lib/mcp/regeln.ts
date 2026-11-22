@@ -87,7 +87,7 @@ export const MELDUNG_ANFRAGE_UNBEKANNT =
 
 export const MELDUNG_ZUGAENGE_GRENZE =
   `Dein Konto hat bereits ${KI_ZUGAENGE_MAX} KI-Zugänge. ` +
-  "Widerrufe zuerst einen davon im Konto und starte das Verbinden dann neu.";
+  "Widerrufe zuerst einen davon im Konto unter «Verbindungen» und starte das Verbinden dann neu.";
 
 /** Die Meldung an den KI-Client, wenn die Aufruf-Begrenzung greift (PC 9):
  *  sie nennt Grund und Wartezeit, damit der Assistent nicht blind wiederholt. */

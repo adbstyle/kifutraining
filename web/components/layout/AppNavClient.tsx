@@ -2,9 +2,28 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Building2, CalendarDays, ClipboardList, LayoutGrid, ListChecks, Settings, Shield, Users } from "lucide-react";
-import { Seitenleiste } from "@/components/ui";
-import type { BereichOption, SeitenleisteGruppe } from "@/components/ui";
+import {
+  Building2,
+  CalendarDays,
+  ClipboardList,
+  History,
+  LayoutGrid,
+  ListChecks,
+  LogIn,
+  LogOut,
+  MessageSquare,
+  Monitor,
+  Moon,
+  Settings,
+  Shield,
+  Sun,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import { Lozenge, Seitenleiste } from "@/components/ui";
+import type { BereichOption, MenuItemDef, SeitenleisteGruppe } from "@/components/ui";
+import { signOut } from "@/lib/actions/auth";
+import type { Darstellung } from "@/lib/darstellung";
 import {
   bereichCookie,
   bereichSchluessel,
@@ -19,6 +38,7 @@ import { FEEDBACK_TITEL } from "@/components/feedback/FeedbackGespraech";
 import { useSeitenleiste } from "./AppRahmen";
 import { useDarstellung } from "./DarstellungKontext";
 import { useTeamBereich } from "./TeamKontext";
+import { nachRueckfrage } from "./VerlassenWarnung";
 import { useVersionen } from "./VersionenKontext";
 
 /* App-Chrome, Client-Teil: baut aus Adresse und Team-Kontext die Einträge
@@ -33,7 +53,10 @@ import { useVersionen } from "./VersionenKontext";
    hängen daran keine.
 
    Alle Einträge sind Links — die Warnung vor ungesicherten Angaben (#246)
-   fängt sie von sich aus ab. */
+   fängt sie von sich aus ab. Im Konto-Menü (#661) sind es die Ziele ebenso;
+   Aktionen (Feedback, Abmelden) und die Wahl der Darstellung sind Knöpfe.
+   Abmelden gibt es nur dort; es verlässt die Seite ohne Link und fragt die
+   Warnung darum selbst (`nachRueckfrage`). */
 export function AppNavClient({
   konto,
   teams,
@@ -55,12 +78,12 @@ export function AppNavClient({
    *  den Erstaufbau; ab der ersten Client-Navigation gilt, was das Layout
    *  unter `/training/[id]` gemeldet hat. */
   teamImTraining: string | null;
-  /** Die laufende Versionsnummer (#408). */
+  /** Die laufende Versionsnummer (#408): im Konto-Menü bei «Was ist neu»,
+   *  solange keine neue Version ungesehen ist. */
   version: string;
 }) {
   const pfad = usePathname();
   const suche = useSearchParams();
-  const mine = suche.get("mine") === "1";
   const teamImTraining = useTeamBereich(teamImTrainingVomServer);
   const imTeamBereich = teamImTraining !== null;
   const { slim, drawerOffen, setzeDrawerOffen } = useSeitenleiste();
@@ -74,7 +97,7 @@ export function AppNavClient({
   const feedback = useFeedback();
   const { darstellung, waehle, umschaltbar } = useDarstellung();
 
-  const aktiv = aktiveBereiche(pfad, mine, imTeamBereich);
+  const aktiv = aktiveBereiche(pfad, imTeamBereich);
 
   // Die Bereiche dieses Kontos: erst die eigenen Teams, dann der Verein.
   const bereiche: Bereich[] = [
@@ -130,6 +153,8 @@ export function AppNavClient({
         },
   );
 
+  // Eigene Übungen und Trainings haben keinen Eintrag (#660): Der Chip
+  // «Meine Übungen» bzw. «Meine Trainings» grenzt die Bibliothek ein.
   const bibliotheken: SeitenleisteGruppe = {
     titel: "Bibliothek",
     eintraege: [
@@ -201,37 +226,91 @@ export function AppNavClient({
     });
   }
   gruppen.push(bibliotheken);
-  // „Meine Bibliothek" nur angemeldet: Eigenes gibt es nur mit Konto.
-  if (konto) {
-    gruppen.push({
-      titel: "Meine Bibliothek",
-      eintraege: [
-        { label: "Meine Übungen", href: "/?mine=1", icon: LayoutGrid, current: aktiv.meineUebungen },
+
+  // «Was ist neu» führt zur Release-History (#408): bei einer ungesehenen
+  // Version mit der Plakette «Neu», sonst mit der laufenden Nummer.
+  const wasIstNeu: MenuItemDef = {
+    label: "Was ist neu",
+    icon: History,
+    href: "/versionen",
+    current: pfad === "/versionen",
+    trailing: neu ? (
+      <>
+        <Lozenge appearance="discovery">
+          <span aria-hidden>Neu</span>
+        </Lozenge>
+        <span className="sr-only">, neue Version erschienen</span>
+      </>
+    ) : (
+      <>
+        <span className="sr-only">Version </span>
+        {version}
+      </>
+    ),
+  };
+  // Eine Seite des Kontos ist offen: die Karte hervorgehoben, im Menü die Zeile.
+  const imKonto = pfad === "/konto" || pfad.startsWith("/konto/");
+  const menue: MenuItemDef[] = konto
+    ? [
+        { label: "Konto und Einstellungen", icon: Settings, href: "/konto", current: imKonto },
+        // Wählen nur, wo der Browser umschalten kann (#567).
+        ...(umschaltbar
+          ? DARSTELLUNGEN.map(
+              (d, i): MenuItemDef => ({
+                label: d.label,
+                icon: d.icon,
+                gruppe: "Darstellung",
+                trenner: i === 0,
+                gewaehlt: d.wert === darstellung,
+                hinweis: i === DARSTELLUNGEN.length - 1 ? "Gilt in diesem Browser." : undefined,
+                onSelect: () => waehle(d.wert),
+              }),
+            )
+          : []),
+        // Ein Knopf, kein Link: öffnet den Dialog neben der Seite (#542).
+        { label: FEEDBACK_TITEL, icon: MessageSquare, trenner: umschaltbar, onSelect: feedback.oeffnen },
+        wasIstNeu,
         {
-          label: "Meine Trainings",
-          href: "/trainings?mine=1",
-          icon: ClipboardList,
-          current: aktiv.meineTrainings,
+          label: "Abmelden",
+          icon: LogOut,
+          trenner: true,
+          onSelect: () =>
+            nachRueckfrage(() => {
+              void signOut();
+            }),
         },
-      ],
-    });
-  }
+      ]
+    : // Ohne Konto weder Feedback (Spielervertretungen melden am privaten
+      // Link) noch Darstellung (nach aussen immer hell, #569).
+      [
+        { label: "Anmelden", icon: LogIn, href: "/login" },
+        { label: "Konto erstellen", icon: UserPlus, href: "/registrieren" },
+        { ...wasIstNeu, trenner: true },
+      ];
 
   return (
     <Seitenleiste
       bereich={konto && offen && optionen.length > 0 ? { optionen, aktiv: bereichSchluessel(offen), onWahl: wahl } : undefined}
       gruppen={gruppen}
-      konto={konto ? { ...konto, href: "/konto", current: pfad === "/konto" } : undefined}
-      version={{ nummer: version, href: "/versionen", current: pfad === "/versionen", neu }}
-      // Feedback nur mit Konto (#542); Spielervertretungen melden am privaten Link.
-      feedback={
-        konto ? { label: FEEDBACK_TITEL, offen: feedback.offen, onOeffnen: feedback.oeffnen } : undefined
+      konto={
+        konto
+          ? {
+              ...konto,
+              current: imKonto,
+              neu,
+              menue,
+            }
+          : { name: "Nicht angemeldet", email: "Anmelden oder Konto erstellen", anonym: true, neu, menue }
       }
-      // Wählen nur mit Konto (#567) und nur, wo der Browser umschalten kann.
-      darstellung={konto && umschaltbar ? { wahl: darstellung, onWahl: waehle } : undefined}
       slim={slim}
       drawerOffen={drawerOffen}
       onDrawerOffenChange={setzeDrawerOffen}
     />
   );
 }
+
+const DARSTELLUNGEN: { wert: Darstellung; label: string; icon: typeof Monitor }[] = [
+  { wert: "geraet", label: "Wie das Gerät", icon: Monitor },
+  { wert: "hell", label: "Hell", icon: Sun },
+  { wert: "dunkel", label: "Dunkel", icon: Moon },
+];

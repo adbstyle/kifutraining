@@ -488,7 +488,7 @@ import {
 } from "../lib/verein-spielerliste";
 import { gruendungAus, kontoInfoAus, kontoLoeschAusgangAus, vereinLoeschAusgangAus } from "../lib/verein-antwort";
 import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
-import { bereichAusPfad } from "../lib/navigation";
+import { aktiveBereiche, bereichAusPfad } from "../lib/navigation";
 import { FILTER_SCHLUESSEL, TEAM_BEREICHE, teamBereichAusPfad, teamBereichHref } from "../lib/team-bereiche";
 import {
   OHNE_KADER_WERT,
@@ -2761,7 +2761,7 @@ pruefe("Vereinsverwaltung (#581): Zwillinge, Sätze zum Aufnehmen und Bereich de
   assert.deepEqual(bereichAusPfad("/verein/verwaltung", null), { art: "verein" });
   assert.deepEqual(bereichAusPfad(`/training/${T2}`, T1), { art: "team", id: T1 }, "ein Team-Training gehört zu seinem Team");
   assert.equal(bereichAusPfad(`/training/${T2}`, null), null, "ein persönliches Training liegt in keinem Bereich");
-  for (const pfad of ["/", "/trainings", "/teams", "/konto", "/vereinsliste", `/teamx/${T1}`]) assert.equal(bereichAusPfad(pfad, null), null, pfad);
+  for (const pfad of ["/", "/trainings", "/teams", "/konto", "/konto/verbindungen", "/konto/daten", "/vereinsliste", `/teamx/${T1}`]) assert.equal(bereichAusPfad(pfad, null), null, pfad);
   assert.equal(bereichAusPfad("/trainings", T1), null, "die Trainingsübersicht liegt in keinem Bereich");
 
   // Cookie: lesen, schreiben, fremde Werte fallen weg.
@@ -5159,7 +5159,7 @@ pruefe("Verein und Konto löschen (#587): ein Weg je RPC, Bestätigung mit dem B
   // Alle vier Antworten haben einen Zweig.
   for (const status of ["letzte_verwaltung", "verein_bestaetigen", "vereinsname_falsch"]) assert.ok(fluss.includes(`a.status === "${status}"`), status);
   // Der Dialog liest den Fall beim Rendern der Seite, nicht erst beim Klick.
-  assert.match(lies("app/(app)/konto/page.tsx"), /ladeKontoLoeschenInfo\(supabase, user\.id\)[\s\S]*?<KontoClient info=\{loeschInfo\.wert\} \/>/);
+  assert.match(lies("app/(app)/konto/daten/page.tsx"), /ladeKontoLoeschenInfo\(supabase, user\.id\)[\s\S]*?<KontoClient info=\{loeschInfo\.wert\} \/>/);
   // Nie ein Namensfeld ohne Pflichtangabe: Die Eingabe geht nur im Fall «einzige Person» mit.
   assert.match(konto, /deleteAccount\(verein \? eingabe : null\)/);
   // Nach jeder Antwort ohne Löschen lädt der Dialog die Lage neu; Name und Zahlen gehen über Antwortfolgen nicht
@@ -6282,6 +6282,190 @@ pruefe("Mitteilungen (#483 AK 2–4, 10, 11, 13; PC 6): Texte — Begriff «Mobi
     JSON.stringify(SPEICHERUNGEN);
   assert.ok(!/Handy/i.test(alle), "«Mobile», nie «Handy»");
   assert.ok(!/\bKind/.test(alle) && !/\bProbe/.test(alle), "Spieler:in, nie Kind; kein «Probe»");
+});
+
+pruefe("Eigene Inhalte über die Bibliothek (#660): kein Eintrag «Meine Bibliothek», der Chip grenzt ein, Bestand und alte Adressen bleiben", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  // AK 1: Die Leiste führt keine eigenen Einträge für eigene Übungen und Trainings.
+  const nav = ohneKommentare(lies("components/layout/AppNavClient.tsx"));
+  assert.ok(!/Meine Bibliothek|Meine Übungen|Meine Trainings/.test(nav), "keine Gruppe «Meine Bibliothek»");
+  assert.ok(!/aktiv\.meine|mine=1|get\("mine"\)/.test(nav), "die Leiste liest `?mine=1` nicht mehr");
+  const demo = ohneKommentare(lies("app/(app)/styleguide/SeitenleisteDemo.tsx"));
+  assert.ok(!/Meine Bibliothek/.test(demo), "die Demo im Styleguide ebenso");
+  // Die Eingrenzung ändert den offenen Eintrag nicht: «Übungen» bzw. «Trainings» bleibt aktiv.
+  assert.ok(!/\bmine\b/.test(ohneKommentare(lies("lib/navigation.ts"))), "navigation.ts kennt `mine` nicht");
+  assert.equal(aktiveBereiche.length, 2, "aktiveBereiche(pfad, imTeamBereich)");
+  assert.deepEqual(aktiveBereiche("/", false), { uebungen: true, trainings: false });
+  assert.deepEqual(aktiveBereiche("/uebung/abc", false), { uebungen: true, trainings: false });
+  assert.deepEqual(aktiveBereiche("/trainings", false), { uebungen: false, trainings: true });
+  assert.deepEqual(aktiveBereiche("/training/abc", false), { uebungen: false, trainings: true });
+  assert.deepEqual(aktiveBereiche("/training/abc", true), { uebungen: false, trainings: false }, "ein Team-Training gehört zum Team");
+  assert.deepEqual(aktiveBereiche("/konto", false), { uebungen: false, trainings: false });
+  // AK 2, AK 3, PC 1: Die Bibliotheken lesen `?mine=1` weiter (bisherige Adressen und Verweise),
+  // bieten den Chip und zeigen eingegrenzt den Bestand von der Grenze.
+  for (const [seite, filterleiste, art] of [
+    ["app/(app)/page.tsx", "CatalogFilterBar", "uebungen"],
+    ["app/(app)/trainings/page.tsx", "TrainingFilterBar", "trainings"],
+  ] as const) {
+    const text = lies(seite);
+    assert.match(text, /sp\.mine === "1"/, `${seite}: liest ?mine=1`);
+    assert.match(text, new RegExp(`<${filterleiste} [^>]*showMine=\\{!!user\\}`), `${seite}: Chip für Angemeldete`);
+    assert.match(text, new RegExp(`\\{grenzen && <BestandAnzeige art="${art}"`), `${seite}: Bestand bei Eingrenzung`);
+  }
+  assert.match(lies("components/catalog/CatalogFilterBar.tsx"), /filter\.schalte\("mine"/);
+  assert.match(lies("components/training/TrainingFilterBar.tsx"), /filter\.schalte\("mine"/);
+});
+
+pruefe("Konto-Menü in der Navigation (#661): eine Stelle für Konto, Darstellung, Feedback, Neuigkeiten und Abmelden, auch ohne Anmeldung", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  // Kit: Die Fusszeilen der Leiste (Feedback, Darstellung, Version) und der Anmelde-Knopf sind weg;
+  // unten steht nur die Konto-Karte, ein Knopf mit Menü.
+  const leiste = ohneKommentare(lies("components/ui/Seitenleiste.tsx"));
+  const props = leiste.slice(leiste.indexOf("export interface SeitenleisteProps"), leiste.indexOf("/* ── Breite"));
+  assert.ok(props.length > 0, "SeitenleisteProps gefunden");
+  for (const weg of ["version", "feedback", "darstellung", "anmeldenHref"])
+    assert.ok(!new RegExp(`\\b${weg}\\??:`).test(props), `Seitenleiste ohne Prop «${weg}»`);
+  assert.match(props, /\bkonto: SeitenleisteKonto;/, "die Konto-Karte gibt es immer, auch ohne Anmeldung");
+  assert.ok(!/DarstellungZeile|DARSTELLUNGEN|ButtonLink|SeitenleisteVersion|SeitenleisteFeedback|SeitenleisteDarstellung/.test(leiste), "keine Reste der Fusszeilen");
+  assert.ok(!/SeitenleisteVersion|SeitenleisteFeedback|SeitenleisteDarstellung/.test(lies("components/ui/index.ts")), "keine Exporte der alten Typen");
+  const karte = leiste.slice(leiste.indexOf("function KontoKarte"), leiste.indexOf("function Marke"));
+  assert.match(karte, /aria-haspopup="menu"/);
+  assert.match(karte, /aria-expanded=\{!!lage\}/);
+  assert.match(karte, /data-hinweis=\{lage \? undefined : hinweis\}/, "offen weicht der Hinweis dem Menü");
+  assert.match(karte, /e\.key !== "Tab"\) return;\s*e\.preventDefault\(\);\s*zu\(\);\s*knopfRef\.current\?\.focus\(\);/, "Tab schliesst und gibt den Fokus an die Karte");
+  assert.match(karte, /m\.gewaehlt === undefined\s*\?[\s\S]*?onNavigiert\(\);/, "Ziele und Aktionen schliessen den Drawer, die Darstellung nicht");
+  assert.match(karte, /\{neu && \(\s*<span[^>]*>\s*<ZeichenPunkt ton="primary" \/>/, "Punkt am Avatar bei neuer Version, breit wie schmal");
+  assert.match(karte, /<span className="sr-only">, neue Version erschienen<\/span>/, "der Punkt hat seinen Text");
+  // Das Menü passt ins Fenster (Drawer auf einem Handy quer) und scrollt in sich, ohne zuzugehen.
+  assert.match(karte, /"--konto-menue-hoehe": `\$\{Math\.max\(unterkante - 8, 0\)\}px`/, "Höchsthöhe aus dem Platz über der Unterkante");
+  assert.match(karte, /max-h-\(--konto-menue-hoehe\)[^"]*overflow-y-auto/, "das Menü scrollt in sich");
+  assert.match(karte, /if \(menueRef\.current\?\.contains\(e\.target as Node\)\) return;\s*schliessen\(\);/, "Scrollen im Menü schliesst es nicht");
+  assert.match(karte, /useEffect\(\(\) => setLage\(null\), \[pfad\]\);/, "ein Seitenwechsel schliesst das Menü (auch nach der Warnung #246)");
+  assert.match(karte, /const menueName = anonym \? "Ohne Konto" : "Konto";[\s\S]*label=\{menueName\}/, "Menüname getrennt vom Hinweis «Anmelden»");
+  // Die Fokusfalle des Drawers überlässt Escape und Tab dem offenen Menü (es steht `fixed`).
+  assert.match(leiste, /const imMenue = [^;]*closest\?\.\('\[role="menu"\]'\)/);
+  assert.match(leiste, /if \(e\.key !== "Tab" \|\| !navRef\.current \|\| imMenue\) return;/);
+
+  // Menü: Ziele werden Links (die Warnung vor ungesicherten Angaben fängt nur Links ab), Gruppen
+  // haben einen Namen; `fuss` ist ungenutzt und weg.
+  const menu = ohneKommentare(lies("components/ui/Menu.tsx"));
+  assert.match(menu, /\{item\.href \? \(\s*<Link\s+href=\{item\.href\}\s+role="menuitem"/);
+  assert.match(menu, /<div role="group" aria-label=\{a\.gruppe\}>/);
+  assert.match(menu, /role="menuitem"\s+aria-current=\{aktuell \? "page" : undefined\}/, "die offene Seite ist am Ziel genannt");
+  assert.ok(!/\bfuss\b/.test(menu), "Menü ohne `fuss`");
+
+  // Navigation: die Einträge des Menüs in der Reihenfolge des Entwurfs.
+  const nav = ohneKommentare(lies("components/layout/AppNavClient.tsx"));
+  const stelle = (t: string, s: string) => {
+    const i = t.indexOf(s);
+    assert.ok(i >= 0, `«${s}» fehlt`);
+    return i;
+  };
+  const angemeldet = nav.slice(stelle(nav, "const menue: MenuItemDef[] = konto"), stelle(nav, '{ label: "Anmelden"'));
+  const reihe = [
+    '{ label: "Konto und Einstellungen", icon: Settings, href: "/konto", current: imKonto }',
+    "...(umschaltbar",
+    'gruppe: "Darstellung"',
+    'hinweis: i === DARSTELLUNGEN.length - 1 ? "Gilt in diesem Browser." : undefined',
+    "{ label: FEEDBACK_TITEL, icon: MessageSquare, trenner: umschaltbar, onSelect: feedback.oeffnen }",
+    "wasIstNeu,",
+    'label: "Abmelden"',
+    "nachRueckfrage(() => {",
+    "void signOut();",
+  ].map((s) => stelle(angemeldet, s));
+  assert.deepEqual(reihe, [...reihe].sort((a, b) => a - b), "angemeldet: Konto, Darstellung, Feedback, Was ist neu, Abmelden");
+  const anonym = nav.slice(stelle(nav, '{ label: "Anmelden"'), stelle(nav, "return ("));
+  const reiheAnonym = [
+    '{ label: "Anmelden", icon: LogIn, href: "/login" }',
+    '{ label: "Konto erstellen", icon: UserPlus, href: "/registrieren" }',
+    "{ ...wasIstNeu, trenner: true }",
+  ].map((s) => stelle(anonym, s));
+  assert.deepEqual(reiheAnonym, [...reiheAnonym].sort((a, b) => a - b), "ohne Anmeldung: Anmelden, Konto erstellen, Was ist neu");
+  assert.ok(!/FEEDBACK_TITEL|waehle|signOut/.test(anonym), "ohne Konto weder Feedback, Darstellung noch Abmelden");
+  const neuigkeiten = nav.slice(stelle(nav, "const wasIstNeu: MenuItemDef"), stelle(nav, "const menue"));
+  assert.match(neuigkeiten, /href: "\/versionen",\s*current: pfad === "\/versionen",/);
+  assert.match(neuigkeiten, /trailing: neu \? \([\s\S]*<Lozenge appearance="discovery">[\s\S]*\) : \([\s\S]*\{version\}/, "Plakette «Neu» oder die Versionsnummer");
+  assert.equal(nav.match(/signOut/g)?.length, 2, "signOut: ein Import, ein Aufruf");
+  assert.match(nav, /const imKonto = pfad === "\/konto" \|\| pfad\.startsWith\("\/konto\/"\);/);
+  assert.match(nav, /\.\.\.konto,\s*current: imKonto,/, "die Karte ist auf jeder Konto-Seite hervorgehoben");
+  // Abmelden ist kein Link: Es fragt die Warnung vor ungesicherten Angaben selbst (#246).
+  const warnung = ohneKommentare(lies("components/layout/VerlassenWarnung.tsx"));
+  assert.match(warnung, /export function nachRueckfrage\(weiter: \(\) => void\)/);
+  assert.match(warnung, /if \(window\.dispatchEvent\(anfrage\)\) weiter\(\);/, "ohne scharfe Warnung läuft es sofort");
+  assert.match(warnung, /window\.addEventListener\(ANFRAGE, anfrage\);/);
+  assert.match(warnung, /window\.removeEventListener\(ANFRAGE, anfrage\);/);
+  assert.match(nav, /name: "Nicht angemeldet", email: "Anmelden oder Konto erstellen", anonym: true, neu, menue/);
+  assert.match(ohneKommentare(lies("components/layout/AppNav.tsx")), /version=\{APP_VERSION\}/, "die Nummer kommt vom Server");
+  // Im Styleguide zeigt die Demo das Menü angemeldet und ohne Anmeldung.
+  const demo = ohneKommentare(lies("app/(app)/styleguide/SeitenleisteDemo.tsx"));
+  assert.match(demo, /menue: kontoMenue\(angemeldet, neu, darstellung, setDarstellung\)/);
+});
+
+pruefe("Konto in Themen gegliedert (#662): Profil, Verbindungen sowie Daten und Konto je mit eigener Adresse; Verweise führen zu «Verbindungen»", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  // AK 1: drei Reiter, genau diese drei Adressen; jede Seite setzt ihren Reiter.
+  const rahmen = ohneKommentare(lies("app/(app)/konto/KontoRahmen.tsx"));
+  assert.deepEqual(
+    [...rahmen.matchAll(/\{ id: "(\w+)", label: "([^"]+)", href: "([^"]+)" \}/g)].map((m) => [m[1], m[2], m[3]]),
+    [
+      ["profil", "Profil", "/konto"],
+      ["verbindungen", "Verbindungen", "/konto/verbindungen"],
+      ["daten", "Daten und Konto", "/konto/daten"],
+    ],
+  );
+  assert.match(rahmen, /<TabNav\s+ariaLabel="Bereiche des Kontos"/);
+  assert.match(rahmen, /current: r\.id === reiter/);
+  for (const [seite, reiter] of [
+    ["app/(app)/konto/page.tsx", "profil"],
+    ["app/(app)/konto/verbindungen/page.tsx", "verbindungen"],
+    ["app/(app)/konto/daten/page.tsx", "daten"],
+  ] as const) {
+    const text = ohneKommentare(lies(seite));
+    assert.match(text, new RegExp(`<KontoRahmen reiter="${reiter}">`), seite);
+    assert.match(text, /export const dynamic = "force-dynamic";/, `${seite}: je Anfrage frisch`);
+    assert.match(text, /export const metadata: Metadata = \{ title: "[^"]+ - KiFu", robots: \{ index: false \} \};/, seite);
+  }
+  // Abmelden gibt es nur im Konto-Menü (#661), «Meine Übungen» nur über den Chip der Bibliothek (#660).
+  for (const datei of quelldateien(join(web, "app/(app)/konto"))) {
+    const text = ohneKommentare(readFileSync(datei, "utf8"));
+    assert.ok(!/signOut/.test(text), `${relative(web, datei)}: kein Abmelden auf den Konto-Seiten`);
+    assert.ok(!/mine=1|Meine Übungen/.test(text), `${relative(web, datei)}: kein Verweis «Meine Übungen»`);
+  }
+  // AK 2: E-Mail zum Lesen, Anzeigename zum Ändern, der Weg zu einem neuen Passwort.
+  const profil = ohneKommentare(lies("app/(app)/konto/page.tsx"));
+  assert.match(profil, /\{user\.email\}/);
+  assert.match(profil, /<AnzeigenameForm aktuell=\{anzeigeName\} \/>/);
+  assert.match(profil, /href="\/passwort-vergessen"/);
+  // AK 3: KI-Zugänge (Adresse, Anleitung, Widerruf) und Kalender-Abos.
+  const verbindungen = ohneKommentare(lies("app/(app)/konto/verbindungen/page.tsx"));
+  assert.match(verbindungen, /<KopierFeld label="Adresse für den KI-Assistenten" value=\{adresse\}/);
+  assert.match(verbindungen, /<Disclosure title="So verbindest du Claude Desktop, claude\.ai oder Claude Code"/);
+  assert.match(verbindungen, /<KiZugaengeListe zugaenge=\{zugaenge\} \/>/);
+  assert.match(verbindungen, /<AbosListe abos=\{abos\} \/>/);
+  // AK 4: Die Kurzfassung leitet sich aus der einen Liste der Speicherungen ab; Löschen in der Gefahrenzone.
+  const daten = ohneKommentare(lies("app/(app)/konto/daten/page.tsx"));
+  assert.match(daten, /SPEICHERUNGEN\.map\(\(s\) => s\.titel\)/);
+  assert.match(daten, /href="\/cookies"/);
+  assert.match(daten, /<Gefahrenzone>[\s\S]*<KontoClient info=\{loeschInfo\.wert\} \/>[\s\S]*<\/Gefahrenzone>/);
+  // Die Aktionen frischen das Thema auf, das ihre Liste zeigt.
+  assert.match(lies("lib/actions/abos.ts"), /revalidatePath\("\/konto\/verbindungen"\);/);
+  const kiAktionen = lies("lib/actions/ki-zugaenge.ts");
+  assert.equal(kiAktionen.match(/revalidatePath\("\/konto\/verbindungen"\);/g)?.length, 2, "erlauben und widerrufen");
+  assert.ok(!/revalidatePath\("\/konto"\)/.test(kiAktionen + lies("lib/actions/abos.ts")), "nicht mehr das Profil");
+  // AK 5: Jeder Verweis auf KI-Zugänge oder Abos führt zu «Verbindungen».
+  assert.match(lies("app/(auth)/oauth/consent/page.tsx"), /<ButtonLink href="\/konto\/verbindungen" variant="link">\s*Zu den Verbindungen/);
+  assert.match(lies("app/(auth)/oauth/consent/ZustimmungFormular.tsx"), /im Konto unter «Verbindungen» widerrufen/);
+  assert.match(lies("components/team/AboDialog.tsx"), /Unter «Konto › Verbindungen» findest du deine Abos wieder/);
+  assert.match(lies("lib/mcp/regeln.ts"), /"Widerrufe zuerst einen davon im Konto unter «Verbindungen» /);
+  assert.match(lies("lib/mcp/werkzeuge/konto.ts"), /konto_url: zugang\.url\("konto", "verbindungen"\)/);
+  // Die Seite «Cookies» hängt unter «Daten und Konto».
+  assert.match(
+    lies("app/(app)/cookies/page.tsx"),
+    /\[\{ label: "Konto", href: "\/konto" \}, \{ label: "Daten und Konto", href: "\/konto\/daten" \}, \{ label: "Cookies" \}\]/,
+  );
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

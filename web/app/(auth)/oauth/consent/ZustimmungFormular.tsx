@@ -109,7 +109,7 @@ export function ZustimmungFormular({
       </div>
 
       <p className="type-body-small mt-5 text-on-surface-mittel">
-        Du kannst den Zugang jederzeit im Konto unter «KI-Zugänge» widerrufen.
+        Du kannst den Zugang jederzeit im Konto unter «Verbindungen» widerrufen.
       </p>
     </form>
   );

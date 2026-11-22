@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/server";
 
 /**
  * Query-Layer für den Anzeigenamen (Team-Epic Story 2).
@@ -12,19 +11,8 @@ import { createClient } from "@/lib/supabase/server";
  * Urheber-Angaben.
  */
 
-/** Der aktuelle Anzeigename des angemeldeten Kontos (nie leer). `null` nur
- *  ohne Anmeldung. */
-export async function getMeinAnzeigename(): Promise<string | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-  return getAnzeigenameFuer(supabase, user.id);
-}
-
-/** Der Anzeigename eines Kontos — für einen Aufrufer, der den Client und den
- *  User schon hat (die Navigation). */
+/** Der Anzeigename eines Kontos (nie leer) — für einen Aufrufer, der den
+ *  Client und den User schon hat (die Navigation, das Profil im Konto). */
 export async function getAnzeigenameFuer(
   supabase: SupabaseClient,
   userId: string,

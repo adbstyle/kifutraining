@@ -140,7 +140,7 @@ export async function erlaubeZugang(
     return { status: "fehler", meldung: MELDUNG_NICHT_ERLAUBT };
   }
 
-  revalidatePath("/konto");
+  revalidatePath("/konto/verbindungen");
   // 8 — Zurück zum Client, der damit ohne weiteres Zutun verbunden ist (PC 4).
   return { status: "weiter", url: zustimmung.redirect_url };
 }
@@ -198,6 +198,6 @@ export async function widerrufeZugang(clientId: string): Promise<WiderrufErgebni
     .match({ user_id: user.id, client_id: clientId });
   if (nameFehler) console.error("[ki-zugang] Name entfernen", nameFehler);
 
-  revalidatePath("/konto");
+  revalidatePath("/konto/verbindungen");
   return { ok: true };
 }
