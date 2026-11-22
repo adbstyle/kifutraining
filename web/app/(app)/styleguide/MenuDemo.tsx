@@ -9,7 +9,8 @@ export function MenuDemo() {
   const [open, setOpen] = useState(false);
   const [last, setLast] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  // Zweites Menü: ein Ziel (`href`) und eine Wahl in einer Gruppe (`gruppe`), wie im Konto-Menü (#661).
+  // Zweites Menü: ein Ziel (`href`, hier als offene Seite: `current`) und eine Wahl in einer
+  // Gruppe (`gruppe`), wie im Konto-Menü (#661).
   const [offen2, setOffen2] = useState(false);
   const [dichte, setDichte] = useState<"normal" | "kompakt">("normal");
   const trigger2Ref = useRef<HTMLButtonElement>(null);
@@ -21,7 +22,7 @@ export function MenuDemo() {
   ];
 
   const items2: MenuItemDef[] = [
-    { label: "Einstellungen", icon: Settings, href: "#menue" },
+    { label: "Einstellungen", icon: Settings, href: "#menue", current: true },
     {
       label: "Normal",
       icon: Rows3,

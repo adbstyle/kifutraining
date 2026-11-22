@@ -39,6 +39,9 @@ export interface MenuItemDef {
    *  (`menuitem`), damit die Warnung vor ungesicherten Angaben (#246) sie
    *  abfängt wie jeden Link der Leiste. `onSelect` läuft trotzdem mit. */
   href?: string;
+  /** Nur mit `href`: Das Ziel ist die offene Seite (#661, «Konto und
+   *  Einstellungen» auf /konto) → `aria-current="page"`, die Zeile betont. */
+  current?: boolean;
   /** Eine leise Überschrift über mehreren Zeilen (#661, «Darstellung» im
    *  Konto-Menü): Aufeinanderfolgende Zeilen mit demselben Wert bilden eine
    *  Gruppe (`role="group"`), die Überschrift ist ihr Name. */
@@ -180,10 +183,12 @@ export function Menu({
        Ton eine Stufe heller ist; die Zahl rechnet der Styleguide
        (15 «Menü») nach. Icon und Wortlaut sagen die Zerstörung
        trotzdem mit — Farbe allein trägt hier nie. */
+    const aktuell = !!item.href && item.current;
     const klassen = cn(
       bedienzeile,
       "w-full text-left focus-visible:outline-none",
       item.danger ? "text-error" : "text-on-surface",
+      aktuell && "betont",
     );
     const inhalt = (
       <>
@@ -191,7 +196,7 @@ export function Menu({
           <Icon
             size={18}
             strokeWidth={2}
-            className={item.danger ? undefined : "text-on-surface-mittel"}
+            className={item.danger ? undefined : aktuell ? "text-primary" : "text-on-surface-mittel"}
             aria-hidden
           />
         )}
@@ -212,6 +217,7 @@ export function Menu({
           <Link
             href={item.href}
             role="menuitem"
+            aria-current={aktuell ? "page" : undefined}
             aria-describedby={beschrieben}
             onClick={auswahl}
             className={klassen}

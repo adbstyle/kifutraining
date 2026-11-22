@@ -5974,6 +5974,12 @@ pruefe("Konto-Menü in der Navigation (#661): eine Stelle für Konto, Darstellun
   assert.match(karte, /m\.gewaehlt === undefined\s*\?[\s\S]*?onNavigiert\(\);/, "Ziele und Aktionen schliessen den Drawer, die Darstellung nicht");
   assert.match(karte, /\{neu && \(\s*<span[^>]*>\s*<ZeichenPunkt ton="primary" \/>/, "Punkt am Avatar bei neuer Version, breit wie schmal");
   assert.match(karte, /<span className="sr-only">, neue Version erschienen<\/span>/, "der Punkt hat seinen Text");
+  // Das Menü passt ins Fenster (Drawer auf einem Handy quer) und scrollt in sich, ohne zuzugehen.
+  assert.match(karte, /"--konto-menue-hoehe": `\$\{Math\.max\(unterkante - 8, 0\)\}px`/, "Höchsthöhe aus dem Platz über der Unterkante");
+  assert.match(karte, /max-h-\(--konto-menue-hoehe\)[^"]*overflow-y-auto/, "das Menü scrollt in sich");
+  assert.match(karte, /if \(menueRef\.current\?\.contains\(e\.target as Node\)\) return;\s*schliessen\(\);/, "Scrollen im Menü schliesst es nicht");
+  assert.match(karte, /useEffect\(\(\) => setLage\(null\), \[pfad\]\);/, "ein Seitenwechsel schliesst das Menü (auch nach der Warnung #246)");
+  assert.match(karte, /const menueName = anonym \? "Ohne Konto" : "Konto";[\s\S]*label=\{menueName\}/, "Menüname getrennt vom Hinweis «Anmelden»");
   // Die Fokusfalle des Drawers überlässt Escape und Tab dem offenen Menü (es steht `fixed`).
   assert.match(leiste, /const imMenue = [^;]*closest\?\.\('\[role="menu"\]'\)/);
   assert.match(leiste, /if \(e\.key !== "Tab" \|\| !navRef\.current \|\| imMenue\) return;/);
@@ -5983,6 +5989,7 @@ pruefe("Konto-Menü in der Navigation (#661): eine Stelle für Konto, Darstellun
   const menu = ohneKommentare(lies("components/ui/Menu.tsx"));
   assert.match(menu, /\{item\.href \? \(\s*<Link\s+href=\{item\.href\}\s+role="menuitem"/);
   assert.match(menu, /<div role="group" aria-label=\{a\.gruppe\}>/);
+  assert.match(menu, /role="menuitem"\s+aria-current=\{aktuell \? "page" : undefined\}/, "die offene Seite ist am Ziel genannt");
   assert.ok(!/\bfuss\b/.test(menu), "Menü ohne `fuss`");
 
   // Navigation: die Einträge des Menüs in der Reihenfolge des Entwurfs.
@@ -5994,13 +6001,14 @@ pruefe("Konto-Menü in der Navigation (#661): eine Stelle für Konto, Darstellun
   };
   const angemeldet = nav.slice(stelle(nav, "const menue: MenuItemDef[] = konto"), stelle(nav, '{ label: "Anmelden"'));
   const reihe = [
-    '{ label: "Konto und Einstellungen", icon: Settings, href: "/konto" }',
+    '{ label: "Konto und Einstellungen", icon: Settings, href: "/konto", current: imKonto }',
     "...(umschaltbar",
     'gruppe: "Darstellung"',
     'hinweis: i === DARSTELLUNGEN.length - 1 ? "Gilt in diesem Browser." : undefined',
     "{ label: FEEDBACK_TITEL, icon: MessageSquare, trenner: umschaltbar, onSelect: feedback.oeffnen }",
     "wasIstNeu,",
     'label: "Abmelden"',
+    "nachRueckfrage(() => {",
     "void signOut();",
   ].map((s) => stelle(angemeldet, s));
   assert.deepEqual(reihe, [...reihe].sort((a, b) => a - b), "angemeldet: Konto, Darstellung, Feedback, Was ist neu, Abmelden");
@@ -6013,10 +6021,17 @@ pruefe("Konto-Menü in der Navigation (#661): eine Stelle für Konto, Darstellun
   assert.deepEqual(reiheAnonym, [...reiheAnonym].sort((a, b) => a - b), "ohne Anmeldung: Anmelden, Konto erstellen, Was ist neu");
   assert.ok(!/FEEDBACK_TITEL|waehle|signOut/.test(anonym), "ohne Konto weder Feedback, Darstellung noch Abmelden");
   const neuigkeiten = nav.slice(stelle(nav, "const wasIstNeu: MenuItemDef"), stelle(nav, "const menue"));
-  assert.match(neuigkeiten, /href: "\/versionen"/);
+  assert.match(neuigkeiten, /href: "\/versionen",\s*current: pfad === "\/versionen",/);
   assert.match(neuigkeiten, /trailing: neu \? \([\s\S]*<Lozenge appearance="discovery">[\s\S]*\) : \([\s\S]*\{version\}/, "Plakette «Neu» oder die Versionsnummer");
   assert.equal(nav.match(/signOut/g)?.length, 2, "signOut: ein Import, ein Aufruf");
-  assert.match(nav, /current: pfad === "\/konto" \|\| pfad\.startsWith\("\/konto\/"\)/, "die Karte ist auf jeder Konto-Seite hervorgehoben");
+  assert.match(nav, /const imKonto = pfad === "\/konto" \|\| pfad\.startsWith\("\/konto\/"\);/);
+  assert.match(nav, /\.\.\.konto,\s*current: imKonto,/, "die Karte ist auf jeder Konto-Seite hervorgehoben");
+  // Abmelden ist kein Link: Es fragt die Warnung vor ungesicherten Angaben selbst (#246).
+  const warnung = ohneKommentare(lies("components/layout/VerlassenWarnung.tsx"));
+  assert.match(warnung, /export function nachRueckfrage\(weiter: \(\) => void\)/);
+  assert.match(warnung, /if \(window\.dispatchEvent\(anfrage\)\) weiter\(\);/, "ohne scharfe Warnung läuft es sofort");
+  assert.match(warnung, /window\.addEventListener\(ANFRAGE, anfrage\);/);
+  assert.match(warnung, /window\.removeEventListener\(ANFRAGE, anfrage\);/);
   assert.match(nav, /name: "Nicht angemeldet", email: "Anmelden oder Konto erstellen", anonym: true, neu, menue/);
   assert.match(ohneKommentare(lies("components/layout/AppNav.tsx")), /version=\{APP_VERSION\}/, "die Nummer kommt vom Server");
   // Im Styleguide zeigt die Demo das Menü angemeldet und ohne Anmeldung.

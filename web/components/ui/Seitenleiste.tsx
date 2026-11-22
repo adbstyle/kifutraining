@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AB_LG } from "@/lib/breite";
 import {
   ChevronDown,
@@ -391,11 +392,17 @@ export function Seitenleiste({
    der Leiste. Das Menü steht `fixed`, weil die Leiste ihren Inhalt
    abschneidet (`overflow-hidden`) — schmal ragte es sonst nicht hinaus. Die
    Lage wird beim Öffnen aus der Karte gerechnet; ändert sich das Fenster oder
-   scrollt etwas darunter, geht es zu, statt von der Karte abzureissen.
+   scrollt etwas darunter, geht es zu, statt von der Karte abzureissen. Höher
+   als der Platz über (breit) bzw. bis zur Unterkante (schmal) der Karte wird
+   es nie: Im Drawer auf einem Handy quer reicht der nicht für alle Zeilen,
+   dann scrollt das Menü in sich — das schliesst es nicht.
 
    Ziele und Aktionen schliessen auch den Drawer; die Wahl der Darstellung
    lässt ihn offen: Wer umschaltet, will sehen, wie es aussieht. Tastatur nach
-   dem Menü-Muster, dazu schliesst Tab und gibt den Fokus an die Karte. */
+   dem Menü-Muster, dazu schliesst Tab und gibt den Fokus an die Karte. Ein
+   Seitenwechsel schliesst es auch: Fängt die Warnung vor ungesicherten
+   Angaben (#246) den Klick auf ein Ziel ab, erreicht er die Zeile nie, und
+   nach «Verlassen» stünde das Menü sonst offen auf der neuen Seite. */
 function KontoKarte({
   name,
   email,
@@ -415,20 +422,27 @@ function KontoKarte({
   onOeffnen: () => void;
 }) {
   const knopfRef = useRef<HTMLButtonElement>(null);
+  const menueRef = useRef<HTMLDivElement>(null);
   const [lage, setLage] = useState<CSSProperties | null>(null);
   const k = schmalAb ? SCHMAL_KLASSEN[schmalAb] : null;
   const zu = () => setLage(null);
+  const pfad = usePathname();
+  useEffect(() => setLage(null), [pfad]);
 
   useEffect(() => {
     if (!lage) return;
     const schliessen = () => setLage(null);
-    window.addEventListener("resize", schliessen);
     // Capture: Auch ein Scrollbereich ausserhalb des Fensters (Styleguide)
-    // verschiebt die Karte.
-    window.addEventListener("scroll", schliessen, true);
+    // verschiebt die Karte — das Menü selbst nicht.
+    const beiScroll = (e: Event) => {
+      if (menueRef.current?.contains(e.target as Node)) return;
+      schliessen();
+    };
+    window.addEventListener("resize", schliessen);
+    window.addEventListener("scroll", beiScroll, true);
     return () => {
       window.removeEventListener("resize", schliessen);
-      window.removeEventListener("scroll", schliessen, true);
+      window.removeEventListener("scroll", beiScroll, true);
     };
   }, [lage]);
 
@@ -439,11 +453,15 @@ function KontoKarte({
       schmalAb === "immer" || (schmalAb === "lg" && window.matchMedia(AB_LG).matches);
     const kante = navRef.current?.getBoundingClientRect().right ?? r.right;
     onOeffnen();
-    setLage(
-      schmal
-        ? { left: kante + 8, bottom: window.innerHeight - r.bottom, width: "16rem" }
-        : { left: r.left, bottom: window.innerHeight - r.top + 4, width: r.width },
-    );
+    // Breit endet das Menü 4 px über der Karte, schmal auf ihrer Unterkante;
+    // nach oben bleiben 8 px bis zum Fensterrand.
+    const unterkante = schmal ? r.bottom : r.top - 4;
+    const stil: CSSProperties & Record<`--${string}`, string> = {
+      ...(schmal ? { left: kante + 8, width: "16rem" } : { left: r.left, width: r.width }),
+      bottom: window.innerHeight - unterkante,
+      "--konto-menue-hoehe": `${Math.max(unterkante - 8, 0)}px`,
+    };
+    setLage(stil);
   }
 
   // Ziele und Aktionen schliessen den Drawer, die Wahl einer Darstellung nicht.
@@ -458,7 +476,10 @@ function KontoKarte({
         }
       : m,
   );
+  // Schmal der Hinweis am Knopf; der Name des Menüs ist ein anderer: Ohne
+  // Anmeldung steht «Anmelden» schon als Zeile darin (Entwurf «Ohne Konto · B»).
   const hinweis = anonym ? "Anmelden" : "Konto";
+  const menueName = anonym ? "Ohne Konto" : "Konto";
 
   return (
     <>
@@ -509,6 +530,7 @@ function KontoKarte({
       </button>
       {lage && (
         <div
+          ref={menueRef}
           className="fixed z-50"
           style={lage}
           onKeyDown={(e) => {
@@ -522,8 +544,8 @@ function KontoKarte({
             open
             onClose={zu}
             triggerRef={knopfRef}
-            label={hinweis}
-            className="bottom-0 left-0 mt-0 w-full"
+            label={menueName}
+            className="bottom-0 left-0 mt-0 max-h-(--konto-menue-hoehe) w-full overflow-y-auto"
             items={eintraege}
           />
         </div>

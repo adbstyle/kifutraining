@@ -2598,7 +2598,11 @@ export default async function Styleguide() {
             und setzt ihren Namen als leise Überschrift darüber (<code>type-label-small</code>, mittel);{" "}
             <em>warum neu:</em> Im Konto-Menü steht die Wahl der Darstellung zwischen Zielen und
             Aktionen, und «Hell» allein sagte nicht, wofür es gilt. Vorgelesen wird der Name einmal, an
-            der Gruppe.
+            der Gruppe. <code>current</code> (nur mit <code>href</code>) markiert das Ziel als offene
+            Seite: <code>aria-current=&quot;page&quot;</code>, die Zeile betont, das Zeichen in Primary
+            wie der offene Eintrag der Leiste; <em>warum neu:</em> «Konto und Einstellungen» und «Was ist
+            neu» standen vorher als Einträge in der Leiste und trugen die offene Seite dort - im Menü
+            soll sie Vorlesehilfen weiter genannt werden.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Tastatur:</strong> Beim Öffnen springt der Fokus auf den
@@ -3377,10 +3381,16 @@ export default async function Styleguide() {
             sonst steht dort die laufende Versionsnummer. Beides drängt sich nicht auf und verschwindet,
             sobald die Versionen angezeigt wurden. Breit klappt das Menü über der Karte auf, so breit
             wie sie, schmal rechts neben der Leiste - es steht darum <code>fixed</code> und ragt aus der
-            Leiste hinaus. Tastatur nach dem Menü-Muster; Tab schliesst und gibt den Fokus an die Karte,
-            Escape im Drawer schliesst nur das Menü. Die Wahl der Darstellung lässt den Drawer offen,
-            Ziele und Aktionen schliessen ihn. Umgeschaltet wird sofort und ohne Neuladen;
-            Ungespeichertes auf der Seite bleibt stehen.
+            Leiste hinaus. Höher als der Platz bis zum oberen Fensterrand wird es nie; reicht er nicht
+            (Drawer auf einem Handy quer), scrollt das Menü in sich. Tastatur nach dem Menü-Muster; Tab
+            schliesst und gibt den Fokus an die Karte, Escape im Drawer schliesst nur das Menü, ein
+            Seitenwechsel schliesst es ebenfalls. Vorgelesen heisst es «Konto» bzw. ohne Anmeldung «Ohne
+            Konto» (der Hinweis am schmalen Knopf bleibt «Anmelden»). Die offene Seite («Konto und
+            Einstellungen» auf jeder Konto-Seite, «Was ist neu» auf den Versionen) trägt im Menü{" "}
+            <code>current</code>. «Abmelden» ist kein Link; es fragt die Warnung vor ungesicherten
+            Angaben darum selbst (<code>nachRueckfrage</code>). Die Wahl der Darstellung lässt den
+            Drawer offen, Ziele und Aktionen schliessen ihn. Umgeschaltet wird sofort und ohne
+            Neuladen; Ungespeichertes auf der Seite bleibt stehen.
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             <strong>Bereich-Wechsler</strong> (<code>BereichWechsler</code>, Story #581) steht oben in
@@ -4090,8 +4100,10 @@ export default async function Styleguide() {
             sitzt ohne Autosave als <code>DiagrammFeld</code> unter der
             Zuordnung, beim Erfassen wie beim Bearbeiten. Dort wacht{" "}
             <code>VerlassenWarnung</code> über ungesicherte Angaben - ein
-            Bestätigungs-Dialog aus dem Kit für Links (auch die der Seitenleiste) und
-            Browser-Zurück, die Abfrage des Browsers für Neuladen und Schliessen.
+            Bestätigungs-Dialog aus dem Kit für Links (auch die der Seitenleiste),
+            Browser-Zurück und «Abmelden» im Konto-Menü (das über{" "}
+            <code>nachRueckfrage</code> anfragt), die Abfrage des Browsers für Neuladen
+            und Schliessen.
             Symbol-Geometrie ist im Register verankert (Anker = Mittelpunkt),
             damit zentrale Symbol-Updates bestehende Diagramme nie verschieben.
           </p>

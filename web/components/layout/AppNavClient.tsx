@@ -38,6 +38,7 @@ import { FEEDBACK_TITEL } from "@/components/feedback/FeedbackGespraech";
 import { useSeitenleiste } from "./AppRahmen";
 import { useDarstellung } from "./DarstellungKontext";
 import { useTeamBereich } from "./TeamKontext";
+import { nachRueckfrage } from "./VerlassenWarnung";
 import { useVersionen } from "./VersionenKontext";
 
 /* App-Chrome, Client-Teil: baut aus Adresse und Team-Kontext die Einträge
@@ -54,7 +55,8 @@ import { useVersionen } from "./VersionenKontext";
    Alle Einträge sind Links — die Warnung vor ungesicherten Angaben (#246)
    fängt sie von sich aus ab. Im Konto-Menü (#661) sind es die Ziele ebenso;
    Aktionen (Feedback, Abmelden) und die Wahl der Darstellung sind Knöpfe.
-   Abmelden gibt es nur dort. */
+   Abmelden gibt es nur dort; es verlässt die Seite ohne Link und fragt die
+   Warnung darum selbst (`nachRueckfrage`). */
 export function AppNavClient({
   konto,
   teams,
@@ -225,6 +227,7 @@ export function AppNavClient({
     label: "Was ist neu",
     icon: History,
     href: "/versionen",
+    current: pfad === "/versionen",
     trailing: neu ? (
       <>
         <Lozenge appearance="discovery">
@@ -239,9 +242,11 @@ export function AppNavClient({
       </>
     ),
   };
+  // Eine Seite des Kontos ist offen: die Karte hervorgehoben, im Menü die Zeile.
+  const imKonto = pfad === "/konto" || pfad.startsWith("/konto/");
   const menue: MenuItemDef[] = konto
     ? [
-        { label: "Konto und Einstellungen", icon: Settings, href: "/konto" },
+        { label: "Konto und Einstellungen", icon: Settings, href: "/konto", current: imKonto },
         // Wählen nur, wo der Browser umschalten kann (#567).
         ...(umschaltbar
           ? DARSTELLUNGEN.map(
@@ -263,9 +268,10 @@ export function AppNavClient({
           label: "Abmelden",
           icon: LogOut,
           trenner: true,
-          onSelect: () => {
-            void signOut();
-          },
+          onSelect: () =>
+            nachRueckfrage(() => {
+              void signOut();
+            }),
         },
       ]
     : // Ohne Konto weder Feedback (Spielervertretungen melden am privaten
@@ -284,7 +290,7 @@ export function AppNavClient({
         konto
           ? {
               ...konto,
-              current: pfad === "/konto" || pfad.startsWith("/konto/"),
+              current: imKonto,
               neu,
               menue,
             }
