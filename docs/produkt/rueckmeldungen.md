@@ -57,7 +57,7 @@ Ist eine neue Version erschienen, die in diesem Browser noch nicht angesehen wur
 Avatar auf der Konto-Karte unten in der Seitenleiste einen Punkt, und im Konto-Menü steht bei
 «Was ist neu» die Plakette «Neu» statt der Versionsnummer. Beides bleibt stehen, bis die Seite
 mit den Versionen geöffnet wurde. Das gilt auch ohne Anmeldung: Die Karte «Nicht angemeldet»
-führt ebenso zu «Was ist neu». Im selben Menü steht für angemeldete Trainer «Fragen und
+führt ebenso zu «Was ist neu». Im selben Menü steht für Angemeldete «Fragen und
 Feedback», der Weg, der Anwendung selbst etwas zu melden (siehe [Navigation](navigation.md)).
 
 ## Bekannte Grenzen

@@ -92,8 +92,8 @@ eingestellt hat, auch in der abgelegten App.
 
 Angemeldet lässt sich die Darstellung selbst wählen: Im Konto-Menü steht unter „Darstellung"
 „Wie das Gerät", „Hell" und „Dunkel"; die gewählte trägt einen Haken, darunter steht „Gilt in
-diesem Browser.". Die Wahl schliesst das Menü nicht, auch nicht die geöffnete Leiste auf einem
-Telefon — so sieht man gleich, wie es aussieht. Umgeschaltet wird sofort und ohne Neuladen — was man
+diesem Browser.". Die Wahl schliesst das Menü, auf einem Telefon aber nicht die geöffnete Leiste
+— so sieht man gleich, wie es aussieht. Umgeschaltet wird sofort und ohne Neuladen — was man
 auf der Seite gerade eingibt, bleibt stehen. Die Wahl gilt in diesem Browser für alle, die ihn
 benutzen, auch abgemeldet auf den Seiten zum Anmelden, Registrieren und Zurücksetzen des
 Passworts; sie bleibt beim nächsten Besuch. „Wie das Gerät" stellt den Anfang wieder her.
