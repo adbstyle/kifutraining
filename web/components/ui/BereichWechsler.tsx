@@ -130,7 +130,14 @@ export function BereichWechsler({
       knopfRef.current?.focus();
       return;
     }
-    if (e.key === "Tab") return zu();
+    // Tab schliesst und gibt den Fokus an den Knopf (wie das Konto-Menü): Die
+    // Liste verschwindet beim Schliessen, der Fokus fiele sonst aus dem Drawer.
+    if (e.key === "Tab") {
+      e.preventDefault();
+      zu();
+      knopfRef.current?.focus();
+      return;
+    }
     const i = liste.indexOf(document.activeElement as HTMLElement);
     let ziel: number;
     if (e.key === "ArrowDown") ziel = i < 0 ? 0 : (i + 1) % liste.length;
