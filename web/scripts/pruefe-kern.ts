@@ -299,6 +299,10 @@ import {
   verfallenHinweis,
   ABHOL_PFAD,
   abholUrl,
+  LINK_STAENDE,
+  LINK_STAND_TEXT,
+  linkKnopfText,
+  linkStandAus,
 } from "../lib/spieler";
 import {
   BEZEICHNUNG_MAX,
@@ -2417,6 +2421,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#487": ["termin_spieler_abrufen", "termin_anwesenheit_setzen", "team_plan_abrufen"],
     "#556": ["schnuppertraining_abrufen", "schnuppertraining_festlegen"],
     "#598": ["team_infos_abrufen", "team_infos_festlegen"],
+    "#657": ["spieler_link_zugestellt", "spielerliste_abrufen", "spieler_link_abrufen"],
     "#555": ["schnuppertraining_abrufen", "schnuppertraining_festlegen", "spieler_schnuppern_setzen", "spielerliste_abrufen", "termin_spieler_abrufen"],
     "#561": ["termin_festlegen", "termin_aendern", "terminserie_festlegen", "termin_der_serie_folgen", "team_plan_abrufen", "spieler_link_abrufen"],
     "#589": ["teams_abrufen", "spielerliste_abrufen", "spieler_aus_team_nehmen", "spieler_link_abrufen", "spieler_link_erneuern"],
@@ -2612,6 +2617,36 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
   for (const f of ["team_id", "verein_id", "spieler_id"]) assert.equal(zielWeg(f), true, f);
   for (const f of [undefined, "vorname", "name", "spieler_ids"]) assert.equal(zielWeg(f), false, String(f));
   assert.equal(SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, "Spieler:in nicht gefunden.", "ohne Verweis auf ein Team, gilt auch für die Verwaltung");
+});
+
+pruefe("Link als zugestellt (#657 AK 4, PC 1–4): eine Ableitung des Stands, überall dieselben Wörter, offen unmarkiert", () => {
+  // Abgeholt hat Vorrang (Zwilling: Trigger spieler_link_zugestellt_fallen, link_zugestellt_kern).
+  assert.deepEqual(
+    [linkStandAus(true, true), linkStandAus(true, false), linkStandAus(false, true), linkStandAus(false, false)],
+    ["abgeholt", "abgeholt", "zugestellt", "offen"],
+  );
+  assert.deepEqual(LINK_STAENDE, ["abgeholt", "zugestellt", "offen"]);
+  for (const st of LINK_STAENDE) assert.equal(LINK_STAND_TEXT.label[st], st, "PC 4: das Wort ist der Stand");
+  // AK 4: offen nennt keinen Stand, die anderen im Tooltip und im Namen des Knopfs.
+  assert.deepEqual(linkKnopfText("Lena Muster", "offen"), { tooltip: "Privater Link", label: "Privater Link für Lena Muster" });
+  assert.deepEqual(linkKnopfText("Lena Muster", "zugestellt"), { tooltip: "Privater Link · zugestellt", label: "Privater Link für Lena Muster, zugestellt" });
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const punkt = lies("components/team/LinkStandLozenge.tsx");
+  assert.match(punkt, /abgeholt: "success",\s*zugestellt: "information",\s*offen: undefined/, "Punkt: grün, blau, keiner");
+  assert.match(lies("components/ui/ZeichenPunkt.tsx"), /information: "bg-icon-information"/);
+  // Eine Ableitung: Die Spalte `link_zugestellt` lesen nur die beiden Kerne, und nur über linkStandAus.
+  const leser: string[] = [];
+  for (const ordner of ["lib", "components", "app"])
+    for (const datei of quelldateien(join(web, ordner)))
+      if (/\blink_zugestellt\b/.test(readFileSync(datei, "utf8"))) leser.push(relative(web, datei));
+  assert.deepEqual(leser.sort(), ["lib/kern/spieler.ts", "lib/kern/verein.ts"], "link_zugestellt ausserhalb der Kerne");
+  for (const d of ["lib/kern/spieler.ts", "lib/kern/verein.ts"]) assert.match(lies(d), /linkStandAus\(/, d);
+  // Gesetzt wird nur über die zwei RPCs, der KI-Weg nur über den Team-Ort.
+  assert.match(lies("lib/kern/spieler.ts"), /\.rpc\("spieler_link_zugestellt_setzen"/);
+  assert.match(lies("lib/kern/verein.ts"), /\.rpc\("verein_spieler_link_zugestellt_setzen"/);
+  const ki = lies("lib/mcp/werkzeuge/spieler.ts");
+  assert.match(ki, /setzeLinkZugestellt\(/);
+  assert.ok(!/ImVerein|verein_spieler_link_zugestellt/.test(ki), "KI-Werkzeug am Verein-Ort");
 });
 
 pruefe("Spielerbestand der Verwaltung (#582, #585): Löschen, Import und Verein-Weg nur am Verein-Ort (Review Focus 4)", () => {
@@ -3463,7 +3498,7 @@ pruefe("Spieler:innen des Vereins (#580): für alle Mitglieder, Mitglieder-Form 
   // Der Typ der Mitglieder-Zeile führt J+S, Link-Stand und Schnuppern gar nicht; der Kern setzt sie nur, wenn die Datenebene sie liefert.
   const kern = lies("lib/kern/verein.ts");
   const mitglied = kern.slice(kern.indexOf("export type VereinSpielerMitglied"), kern.indexOf("export type VereinSpieler ="));
-  assert.ok(mitglied.length > 0 && !/\b(js|linkBezogen|schnuppern|anzahl)\b/.test(mitglied.replace(/\/\*\*[\s\S]*?\*\//g, "")), "Mitglieder-Form ohne Verwaltungsfelder");
+  assert.ok(mitglied.length > 0 && !/\b(js|linkStand|schnuppern|anzahl)\b/.test(mitglied.replace(/\/\*\*[\s\S]*?\*\//g, "")), "Mitglieder-Form ohne Verwaltungsfelder");
   assert.match(kern, /if \(!passt\) return fehlschlag\("technisch"/, "Form gegen die Rolle der Antwort geprüft, sonst ein Fehler");
   assert.match(kern, /if \(!r\.verwaltung\)\s+return ok\(\{ \.\.\.basis, verwaltung: false, spieler: zeilen\.map\(mitglied\)/, "Mitglieder-Zeilen Feld für Feld, nie ein undefined-Schlüssel");
   // Die lesende Sicht kennt weder Aktionen noch Verwaltungsbausteine.

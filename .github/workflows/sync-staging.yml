@@ -32,7 +32,8 @@ name: Sync Staging (Prod-Spiegel, manuell)
 #   und Geheimnis der Route stehen in Vault, das nicht gedumpt wird.
 # - `spieler.link_token` und `team_abholung.token` bekommen nach dem Restore
 #   neue Werte (private Links der Spieler:innen #436, Abholadressen #438):
-#   Prod-Links gelten auf Staging nicht; «bezogen» fällt damit zurück.
+#   Prod-Links gelten auf Staging nicht; «abgeholt» (link_bezogen) und
+#   «zugestellt» (link_zugestellt, #657) fallen damit zurück.
 #   `abholung_sperren` (Fehlversuche je Anschluss) wird geleert.
 # - `feedback` und `feedback_dialoge` werden geleert (#542 PC 9): Feedback aus
 #   der Produktion gelangt nie in eine Testumgebung.
@@ -254,7 +255,8 @@ jobs:
           -- Abholadressen (#438 PC 7).
           update public.spieler
           set link_token = replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''),
-              link_bezogen = false;
+              link_bezogen = false,
+              link_zugestellt = false;
           update public.team_abholung
           set token = replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
           delete from public.abholung_sperren;

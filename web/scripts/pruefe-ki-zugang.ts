@@ -1179,13 +1179,13 @@ function werkzeugTexte() {
   return { beschreibung, eingabe };
 }
 
-pruefe("Story 13 (#589 A2): der Werkzeugsatz bleibt, wie er ist - kein Werkzeug umbenannt, entfernt oder neu (seither neu: #598 team_infos_*)", () => {
+pruefe("Story 13 (#589 A2): der Werkzeugsatz bleibt, wie er ist - kein Werkzeug umbenannt, entfernt oder neu (seither neu: #598 team_infos_*, #657 spieler_link_zugestellt)", () => {
   assert.deepEqual([...werkzeugTexte().beschreibung.keys()].sort(), [
     "abholadresse_erneuern", "diagramm_katalog_abrufen", "gruppe_anlegen", "gruppe_entfernen", "gruppe_umbenennen",
     "kader_abrufen", "kader_anlegen", "kader_entfernen", "kader_herausnehmen", "kader_umbenennen", "kader_zuteilen",
     "schnuppertraining_abrufen", "schnuppertraining_festlegen", "selbstabholung_abrufen", "selbstabholung_schalten",
     "spieler_aendern", "spieler_aufnehmen", "spieler_aus_team_nehmen", "spieler_link_abrufen", "spieler_link_erneuern",
-    "spieler_schnuppern_setzen", "spielerliste_abrufen", "team_infos_abrufen", "team_infos_festlegen",
+    "spieler_link_zugestellt", "spieler_schnuppern_setzen", "spielerliste_abrufen", "team_infos_abrufen", "team_infos_festlegen",
     "team_mitglieder_abrufen", "team_plan_abrufen",
     "teams_abrufen", "termin_abmeldung_setzen", "termin_aendern", "termin_anwesenheit_setzen",
     "termin_aufgebot_setzen", "termin_ausfall_zuruecknehmen", "termin_ausfallen_lassen", "termin_der_serie_folgen",
@@ -1262,6 +1262,18 @@ pruefe("Story 13 (#589 AK 9; A8, A9): Link-Werkzeuge über alle Teams, Erneuern 
   // Die Abholadresse eines Teams gibt den einen Link der Spieler:in heraus.
   for (const n of ["selbstabholung_abrufen", "selbstabholung_schalten", "abholadresse_erneuern"])
     assert.match(beschreibung.get(n) ?? "", /denselben, den die Abholadresse jedes ihrer Teams mit eingeschalteter Selbstabholung herausgibt/, n);
+});
+
+pruefe("Link als zugestellt (#657 AK 3, PC 4): ein Werkzeug je Spieler:in, reine Markierung, nur solange nicht abgeholt; derselbe Stand in Liste und Link", () => {
+  const { beschreibung, eingabe } = werkzeugTexte();
+  assert.deepEqual(eingabe.get("spieler_link_zugestellt"), ["spieler_id", "zugestellt"], "einzeln, nie gesammelt (OoS 1)");
+  const t = beschreibung.get("spieler_link_zugestellt") ?? "";
+  assert.match(t, /KiFu verschickt nichts/);
+  assert.match(t, /Nur solange der Link nicht abgeholt ist/);
+  assert.match(t, /ein erneuerter Link ist wieder offen/);
+  assert.match(t, /Immer eine Spieler:in je Aufruf/);
+  // PC 4: überall abgeholt/zugestellt/offen, nirgends «bezogen».
+  for (const [n, text] of beschreibung) assert.ok(!/bezogen/i.test(text), `${n} sagt «bezogen»`);
 });
 
 pruefe("Benachrichtigungen (#642 AK 6): termin_festlegen beschreibt «benachrichtigen» wie die Oberfläche; der Zugang nennt es ohne neue Zustimmung", () => {
@@ -1373,7 +1385,7 @@ pruefe("Benachrichtigungen (#645 AK 1): termin_entfernen beschreibt «benachrich
 pruefe("Story 13 (#589 PC 1, 2): ZUGANG_DARF und ZUGANG_DARF_NICHT im Wortlaut, der Kopf von umfang.ts verlangt keine erneute Zustimmung", () => {
   assert.equal(
     ZUGANG_DARF[5],
-    "die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen und führen, dazu den Verein deiner Teams und die Namen weiterer Teams einer Spieler:in sehen, Spieler:innen aus einem deiner Teams nehmen (sie bleiben im Verein), Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die Anzahl Schnuppertrainings samt Info-Schreiben festlegen, die Infos zum Team für die Eltern verfassen, ändern und entfernen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link einer Spieler:in holen und erneuern, die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche Links bezogen wurden",
+    "die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen und führen, dazu den Verein deiner Teams und die Namen weiterer Teams einer Spieler:in sehen, Spieler:innen aus einem deiner Teams nehmen (sie bleiben im Verein), Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die Anzahl Schnuppertrainings samt Info-Schreiben festlegen, die Infos zum Team für die Eltern verfassen, ändern und entfernen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link einer Spieler:in holen, erneuern und als zugestellt markieren, die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche Links abgeholt oder zugestellt sind",
   );
   assert.deepEqual(ZUGANG_DARF_NICHT, [
     "deine Favoriten",

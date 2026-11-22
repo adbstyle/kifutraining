@@ -541,10 +541,10 @@ const kategorien: KategorieSlug[] = ["G", "F", "E", "D", "C", "B", "A"];
    daneben, wie die Komponente sie führt. */
 const lozengeBedeutung: [LozengeAppearance, string][] = [
   ["neutral", "Herkunft, Entwurf, Altersstufe, Termin ausgefallen"],
-  ["information", "gilt nach aussen: öffentlich, Community"],
+  ["information", "gilt nach aussen: öffentlich, Community, Link zugestellt"],
   ["discovery", "etwas Zusätzliches: mehrere Varianten, neue Version"],
   ["warning", "braucht Aufmerksamkeit: Termin ohne Training"],
-  ["success", "erledigt - im Kit, derzeit ohne Ort"],
+  ["success", "erledigt: Link abgeholt"],
   ["danger", "blockiert - im Kit, derzeit ohne Ort"],
 ];
 
@@ -1627,11 +1627,14 @@ export default async function Styleguide() {
                 <ZeichenPunkt ton="primary" />
               </span>
             </span>
-            <IconButton icon={Link2} label="Privater Link, bezogen" punkt="success" />
+            <IconButton icon={Link2} label="Privater Link, abgeholt" punkt="success" />
+            <IconButton icon={Link2} label="Privater Link, zugestellt" punkt="information" />
             <span className="type-label-small text-on-surface-mittel">
-              primary: Neues (Version, schmale Leiste) · success: ein erreichter Zustand (Link bezogen). Nur das
-              Bemerkenswerte trägt einen Punkt, der Normalfall keinen - sonst wird die Liste laut. Stumm - was er
-              meldet, steht im Namen des Knopfs.
+              primary: Neues (Version, schmale Leiste) · success: ein erreichter Zustand (Link abgeholt) ·
+              information: ein gemeldeter Zustand ohne Gewissheit (Link zugestellt, #657) - blau wie die
+              Information-Lozenge des Stands im Link-Dialog, damit Punkt und Plakette dasselbe sagen. Nur das
+              Bemerkenswerte trägt einen Punkt, der Normalfall keinen (Link offen) - sonst wird die Liste laut.
+              Stumm - was er meldet, steht im Namen des Knopfs.
             </span>
           </div>
 

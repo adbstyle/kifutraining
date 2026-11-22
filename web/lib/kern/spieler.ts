@@ -7,6 +7,7 @@ import {
   bereinigeName,
   herausnehmenFrage,
   jahrgangAus,
+  linkStandAus,
   nachSpielerName,
   nachTeamname,
   spielerDoppeltText,
@@ -14,6 +15,7 @@ import {
   spielerProblem,
   verbleibendeTeams,
   type HerausnehmenLage,
+  type LinkStand,
   type LinkTeam,
   type Spieler,
   type SpielerDoppelt,
@@ -38,7 +40,7 @@ import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type Ke
 
 export const SPIELER_FELD = { feld: "spieler_id" } as const;
 
-const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, kader_spieler(kader_id, team_id)";
+const SPIELER_SPALTEN = "id, vorname, nachname, jahrgang, js_nummer, link_bezogen, link_zugestellt, kader_spieler(kader_id, team_id)";
 
 type SpielerRoh = {
   id: string;
@@ -46,7 +48,10 @@ type SpielerRoh = {
   nachname: string;
   jahrgang: number;
   js_nummer: string | null;
+  /** abgeholt (#438); Spaltenname bleibt wegen des Sync. */
   link_bezogen: boolean;
+  /** Nullable bis N1: gelesen als `=== true`. */
+  link_zugestellt: boolean | null;
   /** Alle Kader der Spieler:in, die die RLS zeigt — auch die anderer Teams,
    *  denen die handelnde Person angehört; `kopfAusRoh` grenzt auf das Team ein. */
   kader_spieler: { kader_id: string; team_id: string }[] | null;
@@ -66,7 +71,7 @@ function kopfAusRoh(s: SpielerRoh, teamId: string): Omit<Spieler, "probe" | "wei
     nachname: s.nachname,
     jahrgang: s.jahrgang,
     jsNummer: s.js_nummer,
-    linkBezogen: s.link_bezogen,
+    linkStand: linkStandAus(s.link_bezogen, s.link_zugestellt === true),
     kaderIds: (s.kader_spieler ?? []).filter((k) => k.team_id === teamId).map((k) => k.kader_id),
   };
 }
@@ -381,7 +386,7 @@ async function linkRpc(
 
 /** Was der KI-Weg über den privaten Link einer Spieler:in nennt (#589 AK 9):
  *  das Team, in dem er ihn holt (das älteste ihrer Teams, dem die handelnde
- *  Person angehört), ihr Name und alle ihre Teams — auch die, denen die
+ *  Person angehört), ihr Name, der Stand des Links (#657 AK 3) und alle ihre Teams — auch die, denen die
  *  Person nicht angehört, nur mit Namen (`spieler_teams`). Keine eigene,
  *  keine fremde Spieler:in ausserhalb der eigenen Teams: `nicht_gefunden`
  *  wie eine unbekannte (#589 AK 8). */
@@ -389,7 +394,7 @@ export async function ladeLinkLage(
   supabase: SupabaseClient,
   userId: string,
   e: { spielerId: string },
-): Promise<KernErgebnis<{ teamId: string; vorname: string; nachname: string; name: string; teams: LinkTeam[] }>> {
+): Promise<KernErgebnis<{ teamId: string; vorname: string; nachname: string; name: string; stand: LinkStand; teams: LinkTeam[] }>> {
   const team = await eigenesTeamVon(supabase, e.spielerId);
   if (!team.ok) return team;
   const spieler = await ladeSpieler(supabase, team.wert, e.spielerId);
@@ -401,6 +406,7 @@ export async function ladeLinkLage(
     vorname: spieler.wert.vorname,
     nachname: spieler.wert.nachname,
     name: spielerName(spieler.wert),
+    stand: spieler.wert.linkStand,
     teams: teams.wert.teams.map(({ name, abholbar }) => ({ name, abholbar })),
   });
 }
@@ -421,6 +427,34 @@ export async function erneuereSpielerLink(
   e: { spielerId: string; teamId?: string; person?: { vorname: string; nachname: string } },
 ): Promise<LinkErgebnis> {
   return linkRpc(supabase, e, "spieler_link_erneuern");
+}
+
+/** Den aktuellen Link als zugestellt markieren oder die Markierung
+ *  zurücknehmen (#657 AK 1, 3), im Team `teamId` oder — ohne (KI-Weg) — im
+ *  ältesten ihrer Teams, dem die handelnde Person angehört. Nur solange er
+ *  nicht abgeholt ist: Sonst ändert die Datenebene nichts und nennt
+ *  `abgeholt` mit `geaendert: false` (kein Fehler). */
+export async function setzeLinkZugestellt(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { spielerId: string; zugestellt: boolean; teamId?: string },
+): Promise<KernErgebnis<{ teamId: string; linkStand: LinkStand; geaendert: boolean }>> {
+  let teamId = e.teamId;
+  if (teamId === undefined) {
+    const eigenes = await eigenesTeamVon(supabase, e.spielerId);
+    if (!eigenes.ok) return eigenes;
+    teamId = eigenes.wert;
+  }
+  if (!istUuid(teamId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
+  if (!istUuid(e.spielerId)) return fehlschlag("nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN, SPIELER_FELD);
+  const { data, error } = await supabase.rpc("spieler_link_zugestellt_setzen", {
+    p_team: teamId,
+    p_spieler: e.spielerId,
+    p_zugestellt: e.zugestellt,
+  });
+  if (error) return spielerFehler(error);
+  const r = data as { link_stand: LinkStand; geaendert: boolean };
+  return ok({ teamId, linkStand: r.link_stand, geaendert: r.geaendert });
 }
 
 // ── Selbstabholung (#438) ───────────────────────────────────────────────────

@@ -26,6 +26,7 @@ import {
   HERAUSNEHMEN_TEXT,
   herausnehmenSaetze,
   herausnehmenTitel,
+  linkKnopfText,
   spielerName,
   verbleibendeTeams,
   type Spieler,
@@ -33,6 +34,7 @@ import {
 } from "@/lib/spieler";
 import { SpielerFelder, istFeldFehler, type SpielerAngaben, type SpielerFehler } from "@/components/spieler/SpielerFelder";
 import { SpielerLinkDialog } from "./SpielerLinkDialog";
+import { LINK_STAND_PUNKT } from "./LinkStandLozenge";
 import { KaderLozenges } from "./KaderLozenge";
 import { TeamLozenges } from "./TeamLozenges";
 import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
@@ -56,10 +58,11 @@ import { MITTEILUNGEN_SPALTE } from "@/lib/push";
    Gerät Mitteilungen für sie eingeschaltet hat (#483 AK 11), mit dem festen
    Hinweis hinter ⓘ, dass das kein Ankommen sichert. Löschen gibt es im Team nicht — das macht nur die
    Vereinsverwaltung.
-   Das Kettenglied zeigt ihren privaten Link (#436); ob er über die
-   Selbstabholung bezogen wurde (#438 AK 21), sagt ein grüner Punkt daran;
-   «nicht bezogen» steht nur im Link-Dialog — in der Liste wäre es bei fast
-   allen der lauteste Eindruck (PO 2026-10-18). Die Selbstabholung (#438)
+   Das Kettenglied zeigt ihren privaten Link (#436); seinen Stand (#657 AK 4)
+   ein Punkt daran: grün abgeholt (über die Selbstabholung, #438 AK 21), blau
+   zugestellt. Offen bleibt unmarkiert und steht nur im Link-Dialog — in der
+   Liste wäre es bei fast allen der lauteste Eindruck (PO 2026-10-18). Die
+   Zahlen je Stand stehen im Bereich «Privater Link», nicht im Kopf. Die Selbstabholung (#438)
    steht im Bereich «Privater Link» der Team-Verwaltung (#656). Einen Import aus einer
    CSV-Datei gibt es hier nicht mehr: Ihn macht die Vereinsverwaltung im
    Spielerbestand des Vereins (Story #585).
@@ -306,7 +309,6 @@ export function SpielerListe({
     setAufgenommen(null);
   };
 
-  const bezogen = spieler.filter((s) => s.linkBezogen).length;
   const namenVon = (s: Spieler) => kaderVon(s.id, kader).map((k) => k.name);
   const gewaehlteNamen = kader.filter((k) => form.kaderIds.includes(k.id)).map((k) => k.name);
   const wer = form.vorname.trim() || "Die Spieler:in";
@@ -340,7 +342,6 @@ export function SpielerListe({
             Spieler:innen
             <span className="type-label-small ml-2 text-on-surface-mittel">
               {spieler.length}
-              {spieler.length > 0 && ` · ${bezogen} ${bezogen === 1 ? "Link" : "Links"} bezogen`}
             </span>
           </span>
         </h2>
@@ -495,11 +496,11 @@ export function SpielerListe({
               </span>
               <span className="flex justify-end gap-1">
                 {/* Der Link gehört der Spieler:in und geht in jedem ihrer Teams (#583 AK 14). */}
-                <Tooltip label={s.linkBezogen ? "Privater Link · bezogen" : "Privater Link"}>
+                <Tooltip label={linkKnopfText(spielerName(s), s.linkStand).tooltip}>
                   <IconButton
                     icon={Link2}
-                    label={`Privater Link für ${spielerName(s)}${s.linkBezogen ? ", bezogen" : ""}`}
-                    punkt={s.linkBezogen ? "success" : undefined}
+                    label={linkKnopfText(spielerName(s), s.linkStand).label}
+                    punkt={LINK_STAND_PUNKT[s.linkStand]}
                     onClick={() => setLink(s)}
                   />
                 </Tooltip>
