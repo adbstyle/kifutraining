@@ -305,6 +305,8 @@ import {
   linkStandAus,
   TEAM_SPIELER_FILTER,
   teamSpielerAnzahlText,
+  zaehleLinkStaende,
+  LINK_UEBERSICHT,
   type LinkStand,
 } from "../lib/spieler";
 import {
@@ -498,6 +500,7 @@ import {
   liesTeamEingrenzung,
   sichtbareAuswahl,
   teamEingrenzungGesetzt,
+  teamSpielerHref,
 } from "../lib/team-spielerliste";
 import { textMitLinks } from "../lib/text-links";
 import { gliedere, gliederungAlsText, gliederungBloecke } from "../lib/gliederung";
@@ -4305,6 +4308,36 @@ pruefe("Spielerliste eingrenzen: Suche, Kader, Jahrgang, Link-Stand; Adresse und
   const leiste = quelle("components/team/TeamSpielerFilter.tsx");
   for (const b of ["FilterSuche", "AuswahlFilter", "useAdressFilter", "zuruecksetzen"]) assert.ok(leiste.includes(b), `TeamSpielerFilter nutzt ${b}`);
   assert.match(quelle("app/(app)/team/[id]/verwaltung/page.tsx"), /bereinigteTeamAdresse\(/, "die Seite leitet auf die bereinigte Adresse weiter");
+});
+
+pruefe("Stand der Links im Team überblicken: Zahlen je Stand, Sprung auf die offenen (#658)", () => {
+  const T = "11111111-1111-4111-8111-111111111111";
+  // AK 1: je Stand gezählt, über alle Zeilen; ein leeres Team hat überall null.
+  const staende: LinkStand[] = ["abgeholt", "offen", "zugestellt", "offen", "abgeholt", "offen"];
+  assert.deepEqual(zaehleLinkStaende(staende.map((linkStand) => ({ linkStand }))), { abgeholt: 2, zugestellt: 1, offen: 3 });
+  assert.deepEqual(zaehleLinkStaende([]), { abgeholt: 0, zugestellt: 0, offen: 0 });
+  assert.deepEqual(Object.keys(LINK_UEBERSICHT.beschreibung), [...LINK_STAENDE]);
+  // AK 2: der Sprung führt auf die Spielerliste, eingegrenzt auf «offen» — in der
+  // Schreibweise der Leiste, die Seite leitet also nicht noch einmal weiter.
+  const ziel = teamSpielerHref(T, { linkStaende: ["offen"] });
+  assert.equal(ziel, `/team/${T}/verwaltung?link=offen`);
+  const sp = Object.fromEntries(new URL(ziel, "http://x").searchParams);
+  assert.deepEqual(filtereSpieler(
+    staende.map((linkStand, i) => ({ vorname: `V${i}`, nachname: "N", jsNummer: null, jahrgang: 2016, kaderIds: [], linkStand })),
+    liesTeamEingrenzung(sp),
+  ).map((s) => s.linkStand), ["offen", "offen", "offen"]);
+  assert.equal(bereinigteTeamAdresse(`/team/${T}/verwaltung`, sp, liesTeamEingrenzung(sp)), null);
+  assert.equal(teamSpielerHref(T), `/team/${T}/verwaltung`);
+  assert.equal(teamSpielerHref(T, { linkStaende: ["offen", "abgeholt"], jahrgaenge: [2016] }), `/team/${T}/verwaltung?jahrgang=2016&link=abgeholt%2Coffen`);
+  // Die Übersicht steht im Bereich «Privater Link», gezählt über die ganze
+  // Spielerliste (samt Schnuppernden), und springt über teamSpielerHref.
+  const quelle = (d: string) => readFileSync(join(web, d), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const seite = quelle("app/(app)/team/[id]/verwaltung/link/page.tsx");
+  assert.match(seite, /<LinkUebersicht teamId=\{id\} spieler=\{liste\.wert\.spieler\} \/>/);
+  assert.match(seite, /ladeSpielerliste\(/);
+  const karte = quelle("components/team/LinkUebersicht.tsx");
+  assert.match(karte, /teamSpielerHref\(teamId, \{ linkStaende: \["offen"\] \}\)/);
+  assert.match(karte, /zaehleLinkStaende\(spieler\)/);
 });
 
 pruefe("Kader am privaten Link ausgeblendet; die Kader-Karte sagt, dass nur das Team sie sieht (#663 AK 1, 2)", () => {

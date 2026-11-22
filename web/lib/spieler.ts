@@ -561,6 +561,30 @@ export const LINK_STAND_TEXT = {
   ohneAntwort: "Keine Antwort erhalten. Ob der Stand geändert ist, zeigt die Liste nach dem Neuladen.",
 } as const;
 
+/** Wie viele Links je Stand (#658 AK 1) — über alle Zeilen, die der Aufrufer
+ *  gibt; im Bereich «Privater Link» die ganze Spielerliste des Teams samt
+ *  Schnuppernden. */
+export function zaehleLinkStaende(spieler: readonly { linkStand: LinkStand }[]): Record<LinkStand, number> {
+  const zahl: Record<LinkStand, number> = { abgeholt: 0, zugestellt: 0, offen: 0 };
+  for (const s of spieler) zahl[s.linkStand]++;
+  return zahl;
+}
+
+/** Die Übersicht der Link-Stände im Bereich «Privater Link» (#658). */
+export const LINK_UEBERSICHT = {
+  titel: "Wer hat den Link?",
+  einleitung: "Spieler:innen oder Eltern holen ihn selbst ab, oder du gibst ihn weiter und markierst ihn als zugestellt. Schnuppernde zählen mit.",
+  /** Neben der Lozenge des Stands: woher der Stand kommt. */
+  beschreibung: {
+    abgeholt: "selbst über die Abholadresse",
+    zugestellt: "als zugestellt markiert",
+    offen: "weder abgeholt noch zugestellt",
+  } satisfies Record<LinkStand, string>,
+  /** AK 2: der Sprung in die Spielerliste, eingegrenzt auf «offen». */
+  offeneZeigen: (anzahl: number): string => `Spieler:innen mit offenem Link zeigen (${anzahl})`,
+  hinweis: "Link selbst weitergegeben? Markiere ihn unter «Spieler:innen» im Link-Dialog der Spieler:in als zugestellt. Erneuern setzt ihn auf offen zurück.",
+} as const;
+
 /** Die Filterleiste der Spielerliste eines Teams (#601) — aus denselben
  *  Bausteinen und mit denselben Wörtern wie die Spieler:innen des Vereins
  *  (`SPIELER_FILTER` in lib/verein.ts). */

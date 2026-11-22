@@ -1,6 +1,7 @@
 import { liesListe, type AdressParameter } from "@/lib/adresse";
 import { istUuid } from "@/lib/kennung";
 import { LINK_STAENDE, type LinkStand, type Spieler } from "@/lib/spieler";
+import { teamVerwaltungPfad } from "@/lib/team-bereiche";
 import { bereinigeSuche, liesJahrgaenge } from "@/lib/verein-spielerliste";
 
 /* Suche und Eingrenzung der Spielerliste eines Teams in der Adresse (Story
@@ -84,6 +85,23 @@ export function bereinigteTeamAdresse(pfad: string, sp: AdressParameter, e: Team
   for (const [k, v] of Object.entries(soll)) if (v) p.set(k, v);
   const qs = p.toString();
   return qs ? `${pfad}?${qs}` : pfad;
+}
+
+/** Die Adresse der Spielerliste mit einer Eingrenzung, in der Schreibweise
+ *  der Leiste — etwa der Sprung aus der Übersicht der Link-Stände auf die
+ *  offenen (#658 AK 2). Was `e` nicht nennt, bleibt ungesetzt. */
+export function teamSpielerHref(teamId: string, e: Partial<TeamEingrenzung> = {}): string {
+  const voll: TeamEingrenzung = { suche: "", kaderIds: [], ohneKader: false, jahrgaenge: [], linkStaende: [], ...e };
+  const p = new URLSearchParams();
+  const werte: [string, string][] = [
+    ["q", voll.suche],
+    ["kader", kaderFilterWerte(voll).join(",")],
+    ["jahrgang", voll.jahrgaenge.join(",")],
+    ["link", LINK_STAENDE.filter((s) => voll.linkStaende.includes(s)).join(",")],
+  ];
+  for (const [k, v] of werte) if (v) p.set(k, v);
+  const qs = p.toString();
+  return `${teamVerwaltungPfad(teamId)}${qs ? `?${qs}` : ""}`;
 }
 
 /** Ist etwas gesetzt — Suche oder irgendeine Eingrenzung (AK 6, 8)? */
