@@ -580,8 +580,11 @@ export const LINK_UEBERSICHT = {
     zugestellt: "als zugestellt markiert",
     offen: "weder abgeholt noch zugestellt",
   } satisfies Record<LinkStand, string>,
-  /** AK 2: der Sprung in die Spielerliste, eingegrenzt auf «offen». */
-  offeneZeigen: (anzahl: number): string => `Spieler:innen mit offenem Link zeigen (${anzahl})`,
+  /** AK 2: der Sprung in die Spielerliste, eingegrenzt auf «offen». Kurz,
+      weil der Knopf eine feste Höhe hat und nicht umbrechen darf (375px
+      mobil, schmale 2fr-Spalte ab lg); den Zusammenhang liefert die Zeile
+      «offen» darüber. */
+  offeneZeigen: (anzahl: number): string => `Offene zeigen (${anzahl})`,
   hinweis: "Link selbst weitergegeben? Markiere ihn unter «Spieler:innen» im Link-Dialog der Spieler:in als zugestellt. Erneuern setzt ihn auf offen zurück.",
 } as const;
 
