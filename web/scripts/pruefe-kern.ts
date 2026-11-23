@@ -514,7 +514,7 @@ import {
   katalogWeiterleitung,
   nurMitKontoZiel,
 } from "../lib/startseite";
-import { NUR_MIT_KONTO_PRAEFIXE, istNurMitKonto, nurMitKontoAdresse } from "../lib/weiterleitung";
+import { NUR_MIT_KONTO_PRAEFIXE, abfrageAus, istNurMitKonto, nurMitKontoAdresse } from "../lib/weiterleitung";
 import { HERKUNFT_LABEL } from "../lib/labels";
 import {
   FREIGEGEBEN,
@@ -6354,12 +6354,12 @@ pruefe("Eigene Inhalte über die Bibliothek (#660): kein Eintrag «Meine Bibliot
     const text = lies(seite);
     assert.match(text, /sp\.mine === "1"/, `${seite}: liest ?mine=1`);
     // Nur mit Konto (#669): die Seite setzt die Anmeldung voraus, der Chip steht immer.
-    assert.match(text, /if \(!user\) redirect\("\/login\?redirect=/, `${seite}: nur mit Konto`);
+    assert.match(text, /if \(!user\) redirect\(loginAdresse\(/, `${seite}: nur mit Konto, Rücksprung samt Abfrage`);
     assert.ok(!/!!user/.test(ohneKommentare(text)), `${seite}: kein Zweig ohne Konto`);
     assert.match(text, new RegExp(`\\{grenzen && <BestandAnzeige art="${art}"`), `${seite}: Bestand bei Eingrenzung`);
   }
-  assert.match(lies("app/(app)/trainings/page.tsx"), /<TrainingFilterBar [^>]*showMine \/>/, "Chip in den Trainings");
-  assert.ok(!/canFavorite|showMine/.test(lies("components/catalog/CatalogFilterBar.tsx")), "Katalog: Chips ohne Schalter");
+  for (const d of ["components/catalog/CatalogFilterBar.tsx", "components/training/TrainingFilterBar.tsx", "app/(app)/trainings/page.tsx"])
+    assert.ok(!/canFavorite|showMine/.test(lies(d)), `${d}: Chips ohne Schalter`);
   assert.match(lies("components/catalog/CatalogFilterBar.tsx"), /filter\.schalte\("mine"/);
   assert.match(lies("components/training/TrainingFilterBar.tsx"), /filter\.schalte\("mine"/);
 });
@@ -6699,6 +6699,9 @@ pruefe("Übungen und Trainings nur mit Konto (#669): Umleitung mit Hinweis und R
   for (const p of ["/", "/uebungenx", "/trainingsplan", "/team/x/trainings", "/startseite", "/abmelden/x"]) assert.ok(!istNurMitKonto(p), p);
   // PC 2: Der Rücksprung trägt Pfad und Abfrage, die Startseite liest ihn nur sicher.
   assert.equal(nurMitKontoAdresse("/uebungen", "?kat=F&q=tor"), "/?nur_mit_konto=1&redirect=%2Fuebungen%3Fkat%3DF%26q%3Dtor");
+  // Schickt eine Seite selbst zur Anmeldung, geht die Abfrage mit (Review #677).
+  assert.equal(abfrageAus({}), "");
+  assert.equal(abfrageAus({ kat: ["F", "E"], q: "tor", leer: undefined }), "?kat=F&kat=E&q=tor");
   assert.equal(nurMitKontoZiel({ nur_mit_konto: "1", redirect: "/training/x?variante=2" }), "/training/x?variante=2");
   assert.equal(nurMitKontoZiel({ nur_mit_konto: "1", redirect: "//boese.example" }), UEBUNGEN_PFAD, "fremdes Ziel fällt auf den Katalog");
   assert.equal(nurMitKontoZiel({ nur_mit_konto: "1" }), UEBUNGEN_PFAD);
@@ -6764,9 +6767,14 @@ pruefe("Übungen und Trainings nur mit Konto (#669): Umleitung mit Hinweis und R
 pruefe("Auffindbar und Link-Vorschau (#673 AK 1–3): robots nur auf Produktion offen, Sitemap, eine Marken-Vorschau für alle Adressen", () => {
   const lies = (d: string) => readFileSync(join(web, d), "utf8");
   const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  // AK 1: Produktion gibt nur Startseite (genau «/»), Versionen, Impressum und Datenschutz frei (#672), dazu die Vorschaubilder.
+  // AK 1: Produktion gibt nur Startseite (genau «/»; «/startseite» nur, damit ihr noindex gelesen wird), Versionen,
+  // Impressum und Datenschutz frei (#672), dazu die Vorschaubilder und was die Seiten zum Darstellen laden.
   const prod = robotsRegeln("production");
-  assert.deepEqual(prod[0], { userAgent: "*", allow: ["/$", "/versionen", "/impressum", "/datenschutz", "/opengraph-image", "/twitter-image"], disallow: "/" });
+  assert.deepEqual(prod[0], {
+    userAgent: "*",
+    allow: ["/$", "/startseite", "/versionen", "/impressum", "/datenschutz", "/opengraph-image", "/twitter-image", "/_next/static/", "/_next/image", "/icon.svg"],
+    disallow: "/",
+  });
   assert.deepEqual([...FREIGEGEBEN], prod[0].allow);
   // Entscheid 2: Dienste der Link-Vorschau dürfen jede Adresse lesen — sie indexieren nicht.
   assert.deepEqual(prod[1], { userAgent: [...VORSCHAU_DIENSTE], allow: "/" });

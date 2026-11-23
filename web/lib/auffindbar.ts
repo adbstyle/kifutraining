@@ -21,8 +21,23 @@ export const VORSCHAU_CLAIM = "Mehr Fussball. Weniger Bürokratie.";
 
 /** Was Suchmaschinen auf Produktion lesen dürfen. «/$» ist genau die
  *  Startseite (sonst gälte «/» als Präfix für alles). Die Vorschaubilder sind
- *  frei, damit Dienste, die robots.txt achten, sie laden können. */
-export const FREIGEGEBEN = ["/$", "/versionen", "/impressum", "/datenschutz", "/opengraph-image", "/twitter-image"] as const;
+ *  frei, damit Dienste, die robots.txt achten, sie laden können. Dazu, was die
+ *  freien Seiten zum Darstellen laden: Stile und Skripte (`/_next/static/`),
+ *  die Bilder der Beispielkarten (`/_next/image`) und die Bildmarke — sonst
+ *  rendert die Suchmaschine die Startseite ohne sie. «/startseite» ist frei,
+ *  damit Suchmaschinen ihr `noindex` und canonical «/» überhaupt lesen. */
+export const FREIGEGEBEN = [
+  "/$",
+  "/startseite",
+  "/versionen",
+  "/impressum",
+  "/datenschutz",
+  "/opengraph-image",
+  "/twitter-image",
+  "/_next/static/",
+  "/_next/image",
+  "/icon.svg",
+] as const;
 
 /** Die Seiten der Sitemap (Pfade unter dem Origin). */
 export const SITEMAP_PFADE = ["/", "/versionen", "/impressum", "/datenschutz"] as const;

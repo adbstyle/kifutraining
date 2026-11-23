@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { abfrageAus, loginAdresse } from "@/lib/weiterleitung";
 import { redirect } from "next/navigation";
 import { ClipboardList, SearchX } from "lucide-react";
 import { BestandAnzeige, ButtonLink, Leerzustand, SectionMessage } from "@/components/ui";
@@ -48,7 +49,7 @@ export default async function TrainingsPage({
     data: { user },
   } = await supabase.auth.getUser();
   // Nur mit Konto (#669): ohne Anmeldung leitet die Middleware vorher auf die Startseite.
-  if (!user) redirect("/login?redirect=/trainings");
+  if (!user) redirect(loginAdresse("/trainings", abfrageAus(sp)));
   const mine = sp.mine === "1";
   const filtersActive = !!q || stufen.length > 0;
 
@@ -94,7 +95,7 @@ export default async function TrainingsPage({
       <div className={detail ? "max-lg:hidden" : undefined}>
         {grenzen && <BestandAnzeige art="trainings" grenze={grenzen.trainings} className="mb-4" />}
 
-        <TrainingFilterBar q={q} stufen={stufen} mine={mine} showMine />
+        <TrainingFilterBar q={q} stufen={stufen} mine={mine} />
 
         {/* Ein Zustand der Adresse, kein Vorgang: als Section Message, nicht
             als Snackbar. Sie bleibt, bis man ein anderes Training wählt. */}

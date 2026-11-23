@@ -8,7 +8,7 @@
 
 import type { AdressParameter } from "@/lib/adresse";
 import { UEBUNGEN_PFAD } from "@/lib/navigation";
-import { NUR_MIT_KONTO_PARAMETER, sichererRuecksprung } from "@/lib/weiterleitung";
+import { NUR_MIT_KONTO_PARAMETER, abfrageAus, sichererRuecksprung } from "@/lib/weiterleitung";
 
 /** Die Parameter, die der Übungskatalog liest (#674). Eine Adresse «/?…» mit
  *  einem davon war ein geteilter Katalog und führt dorthin. Der Hinweis nach
@@ -20,11 +20,7 @@ export const KATALOG_PARAMETER = ["teil", "kat", "feld", "form", "typ", "kinder"
  *  Startseite gilt). */
 export function katalogWeiterleitung(sp: AdressParameter): string | null {
   if (!KATALOG_PARAMETER.some((k) => sp[k] !== undefined)) return null;
-  const abfrage = new URLSearchParams();
-  for (const [k, v] of Object.entries(sp)) {
-    for (const w of Array.isArray(v) ? v : v === undefined ? [] : [v]) abfrage.append(k, w);
-  }
-  return `${UEBUNGEN_PFAD}?${abfrage}`;
+  return `${UEBUNGEN_PFAD}${abfrageAus(sp)}`;
 }
 
 /** Kam die Besucher:in über einen Verweis auf eine Übung, ein Training oder

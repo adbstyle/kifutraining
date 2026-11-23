@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { abfrageAus, loginAdresse } from "@/lib/weiterleitung";
 import type { Metadata } from "next";
 import { UEBUNGEN_PFAD } from "@/lib/navigation";
 import {
@@ -75,7 +76,7 @@ export default async function ExerciseDetailPage({
   } = await supabase.auth.getUser();
   // Nur mit Konto (#669): ohne Anmeldung leitet die Middleware vorher auf die
   // Startseite, und die RLS gäbe die Übung gar nicht heraus.
-  if (!user) redirect(`/login?redirect=${encodeURIComponent(`/uebung/${slug}`)}`);
+  if (!user) redirect(loginAdresse(`/uebung/${slug}`, abfrageAus(sp)));
   const isOwner = ex.source === "user" && ex.owner_id === user.id;
   // Gelten für das Konto Grenzen (#588)? Nur dann fragt Kopieren den Stand
   // vorher; ein Konto in einem Verein kopiert mit einem Klick. Ist die Lage

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { abfrageAus, loginAdresse } from "@/lib/weiterleitung";
 import { SearchX, Heart } from "lucide-react";
 import { BestandAnzeige, ExerciseCard, ButtonLink, Leerzustand, SectionMessage } from "@/components/ui";
 import { Flash } from "@/components/Flash";
@@ -38,7 +39,7 @@ export default async function Home({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login?redirect=/uebungen");
+  if (!user) redirect(loginAdresse(UEBUNGEN_PFAD, abfrageAus(sp)));
 
   const filters: CatalogFilters = {
     // Nur wählbare Einordnungen zählen. Ein Wert aus einem früher geteilten

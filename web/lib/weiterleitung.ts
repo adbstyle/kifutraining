@@ -44,3 +44,15 @@ export function istNurMitKonto(pfad: string): boolean {
 export function nurMitKontoAdresse(pfad: string, abfrage: string): string {
   return `/?${new URLSearchParams({ [NUR_MIT_KONTO_PARAMETER]: "1", redirect: pfad + abfrage })}`;
 }
+
+/** Die Abfrage einer Seite aus ihren Suchparametern, samt «?» (leer ohne
+ *  Parameter) — für `loginAdresse`, wo eine Seite statt der Middleware zur
+ *  Anmeldung schickt. Mehrfache Werte bleiben in ihrer Reihenfolge. */
+export function abfrageAus(sp: Record<string, string | string[] | undefined>): string {
+  const abfrage = new URLSearchParams();
+  for (const [k, v] of Object.entries(sp)) {
+    for (const w of Array.isArray(v) ? v : v === undefined ? [] : [v]) abfrage.append(k, w);
+  }
+  const text = abfrage.toString();
+  return text ? `?${text}` : "";
+}
