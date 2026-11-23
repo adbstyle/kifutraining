@@ -53,7 +53,7 @@ export const SucheEingabe = z.object({
     .max(200)
     .optional()
     .describe(
-      "Verfügbare Kinder: liefert Übungen, deren Mindestzahl damit erreicht ist (oder die keine nennen).",
+      "Verfügbare Spieler:innen: liefert Übungen, deren Mindestzahl damit erreicht ist (oder die keine nennen).",
     ),
   nur_eigene: z
     .boolean()
