@@ -515,7 +515,7 @@ import {
   katalogWeiterleitung,
   nurMitKontoZiel,
 } from "../lib/startseite";
-import { NUR_MIT_KONTO_PRAEFIXE, abfrageAus, istNurMitKonto, nurMitKontoAdresse } from "../lib/weiterleitung";
+import { NUR_MIT_KONTO_PRAEFIXE, abfrageAus, angemeldetWeiter, istNurMitKonto, nurMitKontoAdresse } from "../lib/weiterleitung";
 import { HERKUNFT_LABEL } from "../lib/labels";
 import {
   FREIGEGEBEN,
@@ -6755,6 +6755,16 @@ pruefe("Übungen und Trainings nur mit Konto (#669): Umleitung mit Hinweis und R
   // Schickt eine Seite selbst zur Anmeldung, geht die Abfrage mit (Review #677).
   assert.equal(abfrageAus({}), "");
   assert.equal(abfrageAus({ kat: ["F", "E"], q: "tor", leer: undefined }), "?kat=F&kat=E&q=tor");
+  // Angemeldet führen Anmelden und Registrieren weiter (PO 2026-11-23): zum sicheren Ziel bzw. in den Arbeitsbereich.
+  const q = (t: string) => new URLSearchParams(t);
+  assert.equal(angemeldetWeiter("/login", q("")), "/");
+  assert.equal(angemeldetWeiter("/login", q("redirect=%2Fuebung%2Fautorennen%3Fv%3D1")), "/uebung/autorennen?v=1");
+  assert.equal(angemeldetWeiter("/login", q("redirect=https%3A%2F%2Fevil.example")), "/", "fremdes Ziel");
+  assert.equal(angemeldetWeiter("/login", q("redirect=%2Flogin%3Fredirect%3D%2Fteams")), "/", "keine Schleife");
+  assert.equal(angemeldetWeiter("/login", q("redirect=%2Fregistrieren")), "/", "keine Schleife");
+  assert.equal(angemeldetWeiter("/registrieren", q("redirect=%2Fteams")), "/");
+  for (const p of ["/", "/passwort-neu", "/passwort-vergessen", "/oauth/zustimmen", "/loginx"]) assert.equal(angemeldetWeiter(p, q("")), null, p);
+  assert.match(ohneKommentare(readFileSync(join(web, "lib/supabase/middleware.ts"), "utf8")), /const weiter = user \? angemeldetWeiter\(request\.nextUrl\.pathname, request\.nextUrl\.searchParams\) : null;/);
   assert.equal(nurMitKontoZiel({ nur_mit_konto: "1", redirect: "/training/x?variante=2" }), "/training/x?variante=2");
   assert.equal(nurMitKontoZiel({ nur_mit_konto: "1", redirect: "//boese.example" }), UEBUNGEN_PFAD, "fremdes Ziel fällt auf den Katalog");
   assert.equal(nurMitKontoZiel({ nur_mit_konto: "1" }), UEBUNGEN_PFAD);

@@ -56,3 +56,18 @@ export function abfrageAus(sp: Record<string, string | string[] | undefined>): s
   const text = abfrage.toString();
   return text ? `?${text}` : "";
 }
+
+/** Anmelden und Registrieren sind für Angemeldete nichts mehr (PO 2026-11-23):
+ *  Ein leeres Formular wirkte wie abgemeldet und lüde zu einem zweiten Konto
+ *  ein. Wohin sie stattdessen führen — `/login` zum sicheren Ziel aus
+ *  `redirect` (wie nach einer Anmeldung), sonst und von `/registrieren` auf
+ *  «/» und damit in den Arbeitsbereich (#671). `null` für alle anderen Pfade.
+ *  Ein Ziel, das selbst wieder Anmelden oder Registrieren wäre, fällt auf «/». */
+export const ANMELDE_SEITEN = ["/login", "/registrieren"] as const;
+
+export function angemeldetWeiter(pfad: string, abfrage: URLSearchParams): string | null {
+  if (!(ANMELDE_SEITEN as readonly string[]).includes(pfad)) return null;
+  const ziel = pfad === "/login" ? sichererRuecksprung(abfrage.get("redirect")) : "/";
+  const zielPfad = ziel.split(/[?#]/)[0];
+  return (ANMELDE_SEITEN as readonly string[]).includes(zielPfad) ? "/" : ziel;
+}
