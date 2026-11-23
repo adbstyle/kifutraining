@@ -956,7 +956,7 @@ export const trainingZuordnen = werkzeug({
     "Ordnet einem Termin ein Training zu: Der Termin bekommt immer eine eigene Kopie als " +
     "Termin-Training; die Quelle bleibt unverändert, und in den Bestand des Teams kommt nichts. " +
     "Quelle kann ein Training aus dem Bestand desselben Teams, das Training eines anderen Termins " +
-    "oder ein eigenes persönliches Training sein (jeder Altersstufe, Entwurf oder öffentlich). " +
+    "oder ein eigenes persönliches Training sein (jeder Altersstufe, Entwurf oder in der Community). " +
     "Trainings eines anderen Teams lassen sich nicht zuordnen. Trägt der Termin schon eins, wird es " +
     "ersetzt («ersetzt»): ein Termin-Training wird dabei gelöscht, ein älteres Training aus dem " +
     "Bestand bleibt dort. Scheitert die Zuordnung, entfernt KiFu die Kopie wieder; «hinweis» sagt, " +

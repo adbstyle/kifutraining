@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ClipboardList,
   Code2,
+  Lock,
   MapPin,
   Sparkles,
   UserCheck,
@@ -17,9 +18,11 @@ import {
   GEPLANTER_PREIS_CHF,
   KONTO_GELOESCHT_TEXT,
   MANUAL_UEBUNGEN_ANZAHL,
+  NUR_MIT_KONTO_TEXT,
   REPO_URL,
   SFV_HINWEIS,
 } from "@/lib/startseite";
+import { loginAdresse } from "@/lib/weiterleitung";
 
 /* Die Startseite (#670): was KiFu für Verein, Team und Training leistet, für
    Trainer:innen und Vereinsverwaltungen, die KiFu noch nicht kennen. Eine
@@ -34,17 +37,42 @@ import {
 export function Startseite({
   beispiele,
   kontoGeloescht,
+  nurMitKonto,
   angemeldet,
 }: {
   /** Die Manual-Beispiele als Karten; leer, wenn sie nicht zu lesen waren. */
   beispiele: ExerciseCardData[];
   /** Nach «Konto löschen» (PC 2): die Bestätigung oben. */
   kontoGeloescht: boolean;
+  /** Nach einem Verweis auf Übung, Training oder Katalog ohne Anmeldung
+   *  (#669 PC 1): das Ziel des Verweises, sonst `null`. Der Hinweis oben
+   *  führt über die Anmeldung dorthin zurück (PC 2). */
+  nurMitKonto: string | null;
   /** Angemeldet (über «/startseite»): statt Registrieren der Weg zurück. */
   angemeldet: boolean;
 }) {
   return (
     <>
+      {nurMitKonto && (
+        <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6">
+          <SectionMessage
+            icon={Lock}
+            actions={
+              <>
+                <ButtonLink href={loginAdresse(nurMitKonto, "")} variant="link">
+                  Anmelden
+                </ButtonLink>
+                <ButtonLink href="/registrieren" variant="link">
+                  Kostenlos registrieren
+                </ButtonLink>
+              </>
+            }
+          >
+            {NUR_MIT_KONTO_TEXT}
+          </SectionMessage>
+        </div>
+      )}
+
       {kontoGeloescht && (
         <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6">
           <SectionMessage appearance="success">

@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { ClipboardList, SearchX } from "lucide-react";
 import { BestandAnzeige, ButtonLink, Leerzustand, SectionMessage } from "@/components/ui";
 import { Flash } from "@/components/Flash";
-import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
 import { TrainingTabelle } from "@/components/training/TrainingTabelle";
 import { TrainingFilterBar } from "@/components/training/TrainingFilterBar";
 import { getTrainingPool } from "@/lib/queries/trainings";
@@ -117,10 +116,8 @@ export default async function TrainingsPage({
           {filtersActive
             ? "Kein Training entspricht der aktiven Suche oder den Filtern. Passe die Kriterien an."
             : mine
-              ? "Stelle aus dem Übungsbestand dein erstes Training zusammen - es bleibt ein Entwurf, bis du es veröffentlichst."
-              : user
-                ? "Stelle dein erstes Training zusammen. Veröffentlichst du es, steht es der Community zur Verfügung."
-                : "Es wurde noch kein Training veröffentlicht. Schau später wieder vorbei."}
+              ? "Stelle aus dem Übungsbestand dein erstes Training zusammen - es bleibt ein Entwurf, bis du es in die Community stellst."
+              : "Stelle dein erstes Training zusammen. Stellst du es in die Community, steht es allen angemeldeten Konten zur Verfügung."}
         </Leerzustand>
       ) : (
         // Immer dieselbe Fläche, auch ohne Detail: So bleibt die Tabelle beim
@@ -150,8 +147,6 @@ export default async function TrainingsPage({
           }
         />
       )}
-
-      {!user && <AnmeldeHinweis className="mt-8" />}
     </Seitenrahmen>
   );
 }

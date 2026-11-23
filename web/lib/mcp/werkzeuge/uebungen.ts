@@ -136,7 +136,7 @@ export const uebungenSuchen = werkzeug({
   titel: "Übungen suchen",
   beschreibung:
     "Durchsucht den Übungsbestand, den dein Konto in KiFu sieht (Kifu-Manual, " +
-    "öffentliche Community-Übungen und eigene Übungen), mit denselben Filtern und " +
+    "Community-Übungen und eigene Übungen), mit denselben Filtern und " +
     "derselben Sortierung (nach Name) wie der Katalog. Dimensionen wirken als UND, " +
     "mehrere Werte innerhalb einer Dimension als ODER. Die zulässigen Werte und ihre " +
     "Zugehörigkeit liefert «vokabular». Liefert je Treffer die Angaben der Katalog-Karte " +

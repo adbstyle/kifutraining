@@ -310,7 +310,7 @@ function baueAltersstufe(stufe: Altersstufe): z.infer<typeof AltersstufeSchema> 
  *  wortgleich in den Beschreibungen von «vokabular» und «training_abrufen». */
 export const RICHTWERTE_HINWEIS =
   "Die Zeitrichtwerte stammen aus dem Manual Fussball Jugendliche und sind Orientierung, " +
-  "keine Bedingung: Speichern und Veröffentlichen gelingen auch ausserhalb. Der " +
+  "keine Bedingung: Speichern und In-die-Community-Stellen gelingen auch ausserhalb. Der " +
   "Kinderfussball gibt keine Zeiten vor. Das Auffangen zählt nicht zur Trainingszeit und " +
   "trägt weder Dauer noch Richtwert.";
 

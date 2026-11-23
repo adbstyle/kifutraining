@@ -74,7 +74,7 @@ export const VarianteId = kennung(
 export const KENNUNG_FEHLER =
   "Fehlerarten zur Kennung: «nicht_gefunden» - für dein Konto nicht sichtbar (es gibt sie " +
   "nicht, sie wurde gelöscht oder gehört jemand anderem privat; bewusst nicht " +
-  "unterscheidbar); «keine_rechte» - ein öffentliches Training eines anderen Kontos: " +
+  "unterscheidbar); «keine_rechte» - ein Training eines anderen Kontos in der Community: " +
   "ansehen und übernehmen ja, ändern nein.";
 
 /** Die Kennung eines Teams (#198). Sichtbar sind nur die eigenen Teams. */
@@ -136,7 +136,7 @@ export const trainingAnlegen = werkzeug({
     "mit Name, Altersstufe, mindestens einer Alterskategorie und optional einem Ziel. " +
     "Ohne «team_id» in deinem persönlichen Bestand, mit «team_id» direkt im Bestand eines " +
     "deiner Teams: Dann gehört es dem Team, jedes Mitglied kann es bearbeiten, und " +
-    "veröffentlichen lässt es sich nicht. " +
+    "in die Community stellen lässt es sich nicht. " +
     "Beide Altersstufen: " +
     `${SCHEMA_TEXT} ` +
     "Im Juniorenfussball gibt es keine Hauptteilkategorie. Das Auffangen trägt in beiden " +

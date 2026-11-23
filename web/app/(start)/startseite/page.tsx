@@ -15,5 +15,7 @@ export const metadata: Metadata = {
 
 export default async function StartseiteBewusst() {
   const [user, zeilen] = await Promise.all([getUserImRequest(), getStartseitenBeispiele()]);
-  return <Startseite beispiele={zeilen.map(toCardData)} kontoGeloescht={false} angemeldet={user !== null} />;
+  return (
+    <Startseite beispiele={zeilen.map(toCardData)} kontoGeloescht={false} nurMitKonto={null} angemeldet={user !== null} />
+  );
 }

@@ -180,13 +180,13 @@ export function HerkunftLozenge({
   return <HerkunftArtLozenge art={art} label={HERKUNFT_LABEL[art]} aufBild={aufBild} />;
 }
 
-/* Sichtbarkeit eines persönlichen Trainings — dieselbe Zuordnung wie bei der
-   Übung, nur heisst die öffentliche Fassung hier «Öffentlich»: Ein Training
-   stammt nie aus dem Manual, darum gibt es nichts, wovon «Community» es
-   abgrenzen müsste. Für Trainingstabelle, Detail, Eigenschaften und Trainingskopf. */
+/* Sichtbarkeit eines persönlichen Trainings — dieselbe Zuordnung und
+   dieselben Worte wie bei der Übung: «Community» heisst sichtbar für alle
+   angemeldeten Konten (#669 AK 3). Für Trainingstabelle, Detail,
+   Eigenschaften und Trainingskopf. */
 export function SichtbarkeitLozenge({ oeffentlich }: { oeffentlich: boolean }) {
   return oeffentlich ? (
-    <HerkunftArtLozenge art="oeffentlich" label="Öffentlich" />
+    <HerkunftArtLozenge art="oeffentlich" label={HERKUNFT_LABEL.oeffentlich} />
   ) : (
     <HerkunftArtLozenge art="entwurf" label={HERKUNFT_LABEL.entwurf} />
   );

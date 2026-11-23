@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import { PFAD_HEADER } from "@/lib/pfad";
-import { loginAdresse } from "@/lib/weiterleitung";
+import { istNurMitKonto, loginAdresse, nurMitKontoAdresse } from "@/lib/weiterleitung";
 
 // URL-Präfixe, die ein eingeloggtes Konto erfordern (UX-Guard; die echte
 // Durchsetzung bleibt RLS). Route-Groups wie (app) wirken nicht auf die URL,
@@ -69,6 +69,14 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && isProtected(request.nextUrl.pathname)) {
     return NextResponse.redirect(new URL(loginAdresse(request.nextUrl.pathname, request.nextUrl.search), request.url));
+  }
+  // Übungen und Trainings nur mit Konto (#669): Wer ohne Anmeldung einen
+  // Verweis darauf öffnet, sieht die Startseite mit Hinweis und Rücksprung.
+  // Bearbeiten und Neu-Anlegen (oben) führen weiter direkt zur Anmeldung.
+  if (!user && istNurMitKonto(request.nextUrl.pathname)) {
+    return NextResponse.redirect(
+      new URL(nurMitKontoAdresse(request.nextUrl.pathname, request.nextUrl.search), request.url),
+    );
   }
 
   return response;

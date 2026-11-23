@@ -4,7 +4,7 @@ import { Startseite } from "@/components/start/Startseite";
 import type { AdressParameter } from "@/lib/adresse";
 import { getArbeitsbereichPfad } from "@/lib/arbeitsbereich";
 import { getStartseitenBeispiele, toCardData } from "@/lib/queries/exercises";
-import { KONTO_GELOESCHT_PARAMETER, katalogWeiterleitung } from "@/lib/startseite";
+import { KONTO_GELOESCHT_PARAMETER, katalogWeiterleitung, nurMitKontoZiel } from "@/lib/startseite";
 import { getUserImRequest } from "@/lib/supabase/server";
 
 // Je Aufruf: Anmeldung, Bereich und Beispiele.
@@ -23,17 +23,27 @@ export const metadata: Metadata = {
       für die abgelegte App, die Marke, die Anmeldung ohne Ziel und die
       bestätigte Registrierung — sie alle landen auf «/». Ein Datenbankfehler
       wirft (Fehlerseite), statt in den Einstieg «Verein gründen» zu führen.
-   3. Sonst die Startseite (#670), nach «Konto löschen» mit der Bestätigung. */
+      Kam die Adresse vom Hinweis «nur mit Konto» (#669), geht es stattdessen
+      zum Ziel des Verweises.
+   3. Sonst die Startseite (#670), nach «Konto löschen» mit der Bestätigung,
+      nach einem Verweis auf Übung, Training oder Katalog mit dem Hinweis
+      «nur mit Konto» (#669 PC 1). */
 export default async function Startadresse({ searchParams }: { searchParams: Promise<AdressParameter> }) {
   const sp = await searchParams;
   const katalog = katalogWeiterleitung(sp);
   if (katalog) redirect(katalog);
 
+  const nurMitKonto = nurMitKontoZiel(sp);
   const user = await getUserImRequest();
-  if (user) redirect(await getArbeitsbereichPfad());
+  if (user) redirect(nurMitKonto ?? (await getArbeitsbereichPfad()));
 
   const beispiele = (await getStartseitenBeispiele()).map(toCardData);
   return (
-    <Startseite beispiele={beispiele} kontoGeloescht={sp[KONTO_GELOESCHT_PARAMETER] !== undefined} angemeldet={false} />
+    <Startseite
+      beispiele={beispiele}
+      kontoGeloescht={sp[KONTO_GELOESCHT_PARAMETER] !== undefined}
+      nurMitKonto={nurMitKonto}
+      angemeldet={false}
+    />
   );
 }

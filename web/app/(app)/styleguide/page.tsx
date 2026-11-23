@@ -91,7 +91,6 @@ import { ListenGruppenDemo } from "./ListenGruppenDemo";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { ErscheinungsbildDemo } from "./ErscheinungsbildDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
-import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
 import {
   Search,
   SlidersHorizontal,
@@ -541,7 +540,7 @@ const kategorien: KategorieSlug[] = ["G", "F", "E", "D", "C", "B", "A"];
    daneben, wie die Komponente sie führt. */
 const lozengeBedeutung: [LozengeAppearance, string][] = [
   ["neutral", "Herkunft, Entwurf, Altersstufe, Termin ausgefallen"],
-  ["information", "gilt nach aussen: öffentlich, Community, Link zugestellt"],
+  ["information", "gilt nach aussen: Community, Link zugestellt"],
   ["discovery", "etwas Zusätzliches: mehrere Varianten, neue Version"],
   ["warning", "braucht Aufmerksamkeit: Termin ohne Training"],
   ["success", "erledigt: Link abgeholt"],
@@ -1646,7 +1645,7 @@ export default async function Styleguide() {
             <code>&lt;a&gt;</code> statt <code>&lt;button&gt;</code>, gleiche Optik).
             <code>Tooltip</code> umschliesst einen Trigger ohne Text und macht ihn
             lesbar - Pflicht, sobald das Zeichen allein mehrdeutig ist (Globus =
-            öffentlich vs. Schloss = privat). CSS-only, <code>aria-hidden</code>
+            Community vs. Schloss = privat). CSS-only, <code>aria-hidden</code>
             (der Name kommt schon vom <code>aria-label</code> des Triggers). Er
             steht auf 24dp wie der Dialog: Was über allem schwebt, trägt die
             oberste Stufe. Verborgen ist er <code>display: none</code>, damit er
@@ -1659,8 +1658,8 @@ export default async function Styleguide() {
             <Tooltip label="Bearbeiten">
               <IconButtonLink href="#" icon={Pencil} label="Bearbeiten" />
             </Tooltip>
-            <Tooltip label="Öffentlich schalten">
-              <IconButton icon={Globe} label="Öffentlich schalten" />
+            <Tooltip label="In die Community stellen">
+              <IconButton icon={Globe} label="In die Community stellen" />
             </Tooltip>
             <Tooltip label="Auf privat setzen">
               <IconButton icon={Lock} label="Auf privat setzen" />
@@ -2720,7 +2719,7 @@ export default async function Styleguide() {
             Bedeutung: <code>neutral</code> sagt, woher etwas stammt oder in
             welchem Zwischenstand es liegt (Kifu-Manual, Entwurf, Altersstufe,
             ausgefallen), <code>information</code>, was nach aussen gilt
-            (Community, Öffentlich), <code>discovery</code> etwas Zusätzliches
+            (Community), <code>discovery</code> etwas Zusätzliches
             (mehrere Varianten, «Neu» an der Version), <code>warning</code> eine Lücke, die jemand
             schliessen muss (Termin ohne Training). <code>success</code> und{" "}
             <code>danger</code> stehen im Kit bereit. Herkunft und Sichtbarkeit
@@ -3115,11 +3114,6 @@ export default async function Styleguide() {
             betrifft, bleibt dagegen Fehlertext am Feld (<Siehe id="textfelder" />).
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Am Fuss der öffentlichen Trainings-Seiten steht für Besucher ohne
-            Konto der <code>AnmeldeHinweis</code>: eine Meldung mit eigenem
-            Zeichen und dem Weg zum Konto als Aktion. Auf Papier fehlt er.
-          </p>
-          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Schliessbar</strong> (<code>onSchliessen</code>, #650): ein
             Icon-Knopf ✕ oben rechts mit eigenem Label, für einen Hinweis, den man
             ablehnen darf, ohne zu antworten - etwa «Termine als App» am privaten
@@ -3150,7 +3144,6 @@ export default async function Styleguide() {
             >
               Das Feld-Diagramm zeigt inzwischen anderes Material: Hürden: 0 → 1.
             </SectionMessage>
-            <AnmeldeHinweis />
             <SchliessbareMeldung />
             <SectionMessage appearance="warning">
               warning - im Kit, derzeit ohne Ort.

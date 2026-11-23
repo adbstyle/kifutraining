@@ -221,7 +221,7 @@ export const UEBUNG_KENNUNG_FEHLER =
 /** Dazu bei jedem Werkzeug, das nur an EIGENEN Übungen wirkt (ändern,
  *  Sichtbarkeit, Diagramm, Mängel) — «uebung_kopieren» liefert es nie. */
 export const UEBUNG_NUR_EIGENE_FEHLER =
-  "Fehlerart «keine_rechte» - eine Übung aus dem Kifu-Manual oder die öffentliche eines anderen " +
+  "Fehlerart «keine_rechte» - eine Übung aus dem Kifu-Manual oder die Community-Übung eines anderen " +
   "Kontos: ansehen und mit «uebung_kopieren» kopieren ja, ändern nein.";
 
 const ALS_GANZES = "Beim Ändern ersetzt die neue Angabe die bisherige als Ganzes.";

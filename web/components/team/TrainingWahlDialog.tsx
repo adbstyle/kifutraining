@@ -80,7 +80,7 @@ export function TrainingWahlDialog({
           items={persoenliche.map((t) => ({
             id: t.id,
             titel: t.name,
-            untertitel: `${t.visibility === "public" ? "Öffentlich" : "Entwurf"} · ${zaehle(t.exerciseCount, "Übung", "Übungen")}`,
+            untertitel: `${t.visibility === "public" ? "Community" : "Entwurf"} · ${zaehle(t.exerciseCount, "Übung", "Übungen")}`,
           }))}
           wert={gewaehlt}
           onWahl={setGewaehlt}

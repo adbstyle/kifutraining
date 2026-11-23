@@ -252,11 +252,11 @@ export async function setzeStufen(
 
 /** Ein Team-Training ist nie öffentlich (`tr_team_nie_public`). */
 export const TEAM_NICHT_VEROEFFENTLICHBAR =
-  "Ein Team-Training lässt sich nicht veröffentlichen. Übernimm es zuerst in deinen persönlichen Bestand.";
+  "Ein Team-Training lässt sich nicht in die Community stellen. Übernimm es zuerst in deinen persönlichen Bestand.";
 
 /** Dasselbe von der anderen Seite: Ohne «öffentlich» gibt es kein Zurück. */
 export const TEAM_OHNE_ENTWURF =
-  "Ein Team-Training ist nie öffentlich und hat darum keinen Entwurfs-Zustand.";
+  "Ein Team-Training ist nie in der Community und hat darum keinen Entwurfs-Zustand.";
 
 type Bedingungsstand = {
   stufen: string[] | null;

@@ -886,7 +886,7 @@ try {
     const leer = fehler(
       await veroeffentliche(a.supabase, a.id, { trainingId: tp }),
       "bedingung",
-      "Zum Veröffentlichen fehlt noch: mindestens eine Übung in der Einleitung; " +
+      "Für die Community fehlt noch: mindestens eine Übung in der Einleitung; " +
         "mindestens eine Übung im freien Spiel.",
     ) as { fehlend?: unknown };
     assert.deepEqual(leer.fehlend, [
@@ -898,7 +898,7 @@ try {
     fehler(
       await veroeffentliche(a.supabase, a.id, { trainingId: tp }),
       "bedingung",
-      "Zum Veröffentlichen fehlt noch: mindestens eine Übung im freien Spiel.",
+      "Für die Community fehlt noch: mindestens eine Übung im freien Spiel.",
     );
     wert(
       await ordneUebungZu(a.supabase, a.id, {
@@ -928,7 +928,7 @@ try {
     const gate = fehler(
       await entferneUebung(a.supabase, a.id, { fassungId: einl.fassungId }),
       "bedingung",
-      "Ein öffentliches Training braucht mindestens eine Übung in der Einleitung. " +
+      "Ein Training in der Community braucht mindestens eine Übung in der Einleitung. " +
         "Setze es zuerst auf Entwurf, wenn du es so ändern willst.",
     ) as { bedingung?: string; varianteId?: string };
     assert.equal(gate.bedingung, "einleitung");
@@ -952,12 +952,12 @@ try {
     fehler(
       await veroeffentliche(a.supabase, a.id, { trainingId: tt }),
       "regel",
-      "Ein Team-Training lässt sich nicht veröffentlichen. Übernimm es zuerst in deinen persönlichen Bestand.",
+      "Ein Team-Training lässt sich nicht in die Community stellen. Übernimm es zuerst in deinen persönlichen Bestand.",
     );
     fehler(
       await setzeAufEntwurf(a.supabase, a.id, { trainingId: tt }),
       "regel",
-      "Ein Team-Training ist nie öffentlich und hat darum keinen Entwurfs-Zustand.",
+      "Ein Team-Training ist nie in der Community und hat darum keinen Entwurfs-Zustand.",
     );
     fehler(await veroeffentliche(a.supabase, a.id, { trainingId: randomUUID() }), "nicht_gefunden", "Training nicht gefunden.");
   });
@@ -3128,7 +3128,7 @@ try {
     assert.deepEqual(pub, { id: probe.id, slug: probe.slug, sichtbarkeit: "oeffentlich", tragweite: TRAGWEITE_UEBUNG_VEROEFFENTLICHEN });
     assert.equal(
       TRAGWEITE_UEBUNG_VEROEFFENTLICHEN,
-      "Die Übung wird für alle sichtbar - mit allen Angaben, Bild und Feld-Diagramm - und trägt die " +
+      "Die Übung wird in der Community für alle angemeldeten Konten sichtbar - mit allen Angaben, Bild und Feld-Diagramm - und trägt die " +
         "Plakette «Community». Einen Trainernamen zeigt KiFu bei Übungen nicht.",
     );
     wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: probe.id }));

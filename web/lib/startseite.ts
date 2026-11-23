@@ -8,6 +8,7 @@
 
 import type { AdressParameter } from "@/lib/adresse";
 import { UEBUNGEN_PFAD } from "@/lib/navigation";
+import { NUR_MIT_KONTO_PARAMETER, sichererRuecksprung } from "@/lib/weiterleitung";
 
 /** Die Parameter, die der Übungskatalog liest (#674). Eine Adresse «/?…» mit
  *  einem davon war ein geteilter Katalog und führt dorthin. Der Hinweis nach
@@ -26,6 +27,20 @@ export function katalogWeiterleitung(sp: AdressParameter): string | null {
   return `${UEBUNGEN_PFAD}?${abfrage}`;
 }
 
+/** Kam die Besucher:in über einen Verweis auf eine Übung, ein Training oder
+ *  den Katalog, den es nur mit Konto gibt (#669 PC 1)? Dann das sichere Ziel
+ *  dieses Verweises — für den Hinweis «nur mit Konto» und die Anmeldung, die
+ *  dorthin zurückführt (PC 2). Sonst `null`. */
+export function nurMitKontoZiel(sp: AdressParameter): string | null {
+  if (sp[NUR_MIT_KONTO_PARAMETER] === undefined) return null;
+  const roh = Array.isArray(sp.redirect) ? sp.redirect[0] : sp.redirect;
+  return sichererRuecksprung(roh, UEBUNGEN_PFAD);
+}
+
+/** Der Text des Hinweises (#669 AK 2). */
+export const NUR_MIT_KONTO_TEXT =
+  "Dieser Inhalt ist nur mit Konto sichtbar. Melde dich an oder erstelle kostenlos ein Konto, um Übungen und Trainings der Community zu sehen.";
+
 /** Wie viele Übungen aus dem Manual Kinderfussball KiFu mitbringt (AK 4).
  *  Zwilling: die Dateien unter data/uebungen/*.yaml. */
 export const MANUAL_UEBUNGEN_ANZAHL = 75;
@@ -33,7 +48,9 @@ export const MANUAL_UEBUNGEN_ANZAHL = 75;
 /** Die fest ausgewählten Beispiele (AK 4, Entscheid 2): je eine Übung aus
  *  Auffangen, Einleitung und Ausklang, drei aus dem Hauptteil — alle aus dem
  *  Manual und mit Feld-Diagramm (data/diagramme/<slug>.json). Die Reihenfolge
- *  ist die der Anzeige. */
+ *  ist die der Anzeige. Zwilling: die fest eingebaute Liste in
+ *  `startseite_beispiele()` (Migration `nur_mit_konto`, #669) — ohne Konto
+ *  ist sonst keine Übung lesbar; der Wächter vergleicht beide Listen. */
 export const STARTSEITE_BEISPIELE = [
   "freies-kleinfeldspiel",
   "autorennen",
@@ -59,7 +76,7 @@ export const REPO_URL = "https://github.com/adbstyle/kifutraining";
 /** Die Bestätigung nach «Konto löschen» (#670 PC 2): Die Action leitet mit
  *  `?account_deleted=1` auf die Startseite. */
 export const KONTO_GELOESCHT_PARAMETER = "account_deleted";
-export const KONTO_GELOESCHT_TEXT = "Konto gelöscht. Deine Übungen in der Community bleiben anonym erhalten.";
+export const KONTO_GELOESCHT_TEXT = "Konto gelöscht. Deine Übungen und Trainings in der Community bleiben anonym erhalten.";
 
 /** Die Namen im Bild der Startseite (AK 14): alle erfunden. */
 export const BEISPIEL_NAMEN = {

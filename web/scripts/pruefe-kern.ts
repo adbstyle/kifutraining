@@ -505,11 +505,16 @@ import {
   KONTO_GELOESCHT_PARAMETER,
   KONTO_GELOESCHT_TEXT,
   MANUAL_UEBUNGEN_ANZAHL,
+  NUR_MIT_KONTO_TEXT,
   REPO_URL,
   SFV_HINWEIS,
   STARTSEITE_BEISPIELE,
   katalogWeiterleitung,
+  nurMitKontoZiel,
 } from "../lib/startseite";
+import { NUR_MIT_KONTO_PRAEFIXE, istNurMitKonto, nurMitKontoAdresse } from "../lib/weiterleitung";
+import { HERKUNFT_LABEL } from "../lib/labels";
+import { TRAGWEITE_VEROEFFENTLICHEN, ZUM_VEROEFFENTLICHEN_FEHLT } from "../lib/training-bedingungen";
 import { FILTER_SCHLUESSEL, TEAM_BEREICHE, teamBereichAusPfad, teamBereichHref } from "../lib/team-bereiche";
 import {
   OHNE_KADER_WERT,
@@ -614,7 +619,7 @@ pruefe("fachlicheMeldung erklärt Marker, fehlerMeldung bleibt wortgleich", () =
     ["VARIANTE_FREMDES_TRAINING: Variante x gehoert nicht zu Training y", "Diese Variante gehört zu einem anderen Training."],
     [
       "TRAINING_UNVOLLSTAENDIG: einleitung",
-      "Ein öffentliches Training braucht mindestens eine Übung in der Einleitung. " +
+      "Ein Training in der Community braucht mindestens eine Übung in der Einleitung. " +
         "Setze es zuerst auf Entwurf, wenn du es so ändern willst.",
     ],
   ];
@@ -674,7 +679,7 @@ pruefe("ausDbFehler ordnet ein: bedingung, regel, keine_rechte, technisch", () =
   assert.equal(b.varianteId, "1234");
   assert.equal(
     b.meldung,
-    "Ein öffentliches Training braucht in jeder Variante mindestens eine Übung im freien Spiel. " +
+    "Ein Training in der Community braucht in jeder Variante mindestens eine Übung im freien Spiel. " +
       "Setze es zuerst auf Entwurf, wenn du es so ändern willst.",
   );
   assert.equal(ausDbFehler({ message: "STUFE_FEHLT" }).art, "regel");
@@ -2806,8 +2811,10 @@ pruefe("Vereinsverwaltung (#581): Zwillinge, Sätze zum Aufnehmen und Bereich de
 
 /** Alle .ts/.tsx-Dateien unter einem Ordner, ohne node_modules und .next. */
 function quelldateien(wurzel: string): string[] {
+  // lib/database.types.ts ist aus der lokalen DB erzeugt (gitignored) und
+  // nennt jede Spalte und RPC — kein Quelltext, den die Wächter meinen.
   return readdirSync(wurzel, { recursive: true, encoding: "utf8" })
-    .filter((d) => /\.tsx?$/.test(d) && !/(^|\/)(node_modules|\.next)(\/|$)/.test(d))
+    .filter((d) => /\.tsx?$/.test(d) && !/(^|\/)(node_modules|\.next)(\/|$)/.test(d) && !/(^|\/)database\.types\.ts$/.test(d))
     .map((d) => join(wurzel, d));
 }
 
@@ -6550,7 +6557,7 @@ pruefe("Startseite (#670): eigene Gruppe ohne Seitenleiste, immer hell, feste An
   // Eine Komponente für «/» und «/startseite».
   for (const d of ["app/(start)/page.tsx", "app/(start)/startseite/page.tsx"]) {
     const t = ohneKommentare(lies(d));
-    assert.match(t, /<Startseite beispiele=/, d);
+    assert.match(t, /<Startseite\s+beispiele=/, d);
     assert.match(t, /getStartseitenBeispiele\(\)/, d);
     assert.match(t, /export const dynamic = "force-dynamic";/, d);
   }
@@ -6570,9 +6577,7 @@ pruefe("Startseite (#670): eigene Gruppe ohne Seitenleiste, immer hell, feste An
     assert.ok(yaml.includes(`${slug}.yaml`), `${slug}: aus dem Manual`);
     assert.ok(existsSync(join(web, "..", "data/diagramme", `${slug}.json`)), `${slug}: mit Diagramm`);
   }
-  const abfrage = lies("lib/queries/exercises.ts");
-  const beispiele = abfrage.slice(abfrage.indexOf("export async function getStartseitenBeispiele"), abfrage.indexOf("export function toCardData"));
-  assert.match(beispiele, /\.eq\("source", "manual"\)\s*\.in\("slug", \[\.\.\.STARTSEITE_BEISPIELE\]\)/, "nur Manual-Übungen (Epic EK 11)");
+  // Nur Manual-Übungen (Epic EK 11): über startseite_beispiele() (#669), siehe dort.
   // AK 5: Der SFV erscheint nur mit dem Hinweis — nirgends sonst auf der Seite.
   assert.match(SFV_HINWEIS, /eigene Fassungen nach dem Manual Kinderfussball des SFV, nicht vom SFV geprüft/i);
   assert.ok(!/\bSFV\b/.test(seite + layout), "der SFV steht nur in SFV_HINWEIS");
@@ -6643,7 +6648,7 @@ pruefe("Angemeldete direkt in ihre Arbeit (#671): «/» führt in den Arbeitsber
   assert.match(helfer, /leseBereich\(jar\.get\(BEREICH_COOKIE\)\?\.value\)/);
   // «/»: zuerst die Katalog-Weiterleitung, dann angemeldet der Arbeitsbereich, sonst die Startseite.
   const start = ohneKommentare(lies("app/(start)/page.tsx"));
-  const reihe = ["katalogWeiterleitung(sp)", "if (user) redirect(await getArbeitsbereichPfad());", "<Startseite"].map((t) => {
+  const reihe = ["katalogWeiterleitung(sp)", "if (user) redirect(nurMitKonto ?? (await getArbeitsbereichPfad()));", "<Startseite"].map((t) => {
     const i = start.indexOf(t);
     assert.ok(i >= 0, t);
     return i;
@@ -6662,6 +6667,77 @@ pruefe("Angemeldete direkt in ihre Arbeit (#671): «/» führt in den Arbeitsber
     assert.match(lies(d), /sichererRuecksprung\((searchParams\.get\("next"\)|formData\.get\("redirect"\))\)/, d);
   // Die Marke der Seitenleiste bleibt «/».
   assert.match(lies("components/ui/Seitenleiste.tsx"), /function Marke[\s\S]*?<Link\s+href="\/"/);
+});
+
+pruefe("Übungen und Trainings nur mit Konto (#669): Umleitung mit Hinweis und Rücksprung, RLS nur für Angemeldete, «Community»", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  // PC 1: Katalog, Übung, Trainingsübersicht und Training samt Unterseiten — am Pfadsegment, nicht als Präfix.
+  assert.deepEqual([...NUR_MIT_KONTO_PRAEFIXE], ["/uebungen", "/uebung", "/trainings", "/training"]);
+  for (const p of ["/uebungen", "/uebung/autorennen", "/trainings", "/training/x", "/training/x/druck", "/training/x/durchfuehren", "/training/x/uebung/y/diagramm", "/uebung/autorennen/diagramm"])
+    assert.ok(istNurMitKonto(p), p);
+  for (const p of ["/", "/uebungenx", "/trainingsplan", "/team/x/trainings", "/startseite", "/abmelden/x"]) assert.ok(!istNurMitKonto(p), p);
+  // PC 2: Der Rücksprung trägt Pfad und Abfrage, die Startseite liest ihn nur sicher.
+  assert.equal(nurMitKontoAdresse("/uebungen", "?kat=F&q=tor"), "/?nur_mit_konto=1&redirect=%2Fuebungen%3Fkat%3DF%26q%3Dtor");
+  assert.equal(nurMitKontoZiel({ nur_mit_konto: "1", redirect: "/training/x?variante=2" }), "/training/x?variante=2");
+  assert.equal(nurMitKontoZiel({ nur_mit_konto: "1", redirect: "//boese.example" }), UEBUNGEN_PFAD, "fremdes Ziel fällt auf den Katalog");
+  assert.equal(nurMitKontoZiel({ nur_mit_konto: "1" }), UEBUNGEN_PFAD);
+  assert.equal(nurMitKontoZiel({ redirect: "/uebungen" }), null, "ohne Hinweis kein Ziel");
+  assert.equal(katalogWeiterleitung({ nur_mit_konto: "1", redirect: "/uebungen?q=x" }), null, "der Hinweis ist kein Katalog-Filter");
+  // Die Middleware: erst Bearbeiten/Neu zur Anmeldung, dann die Startseite mit Hinweis — nur ohne Anmeldung.
+  const mw = ohneKommentare(lies("lib/supabase/middleware.ts"));
+  const geschuetzt = mw.indexOf("isProtected(request.nextUrl.pathname)");
+  const nurMitKonto = mw.indexOf("if (!user && istNurMitKonto(request.nextUrl.pathname))");
+  assert.ok(geschuetzt >= 0 && nurMitKonto > geschuetzt);
+  assert.match(mw, /nurMitKontoAdresse\(request\.nextUrl\.pathname, request\.nextUrl\.search\)/);
+  // AK 2: der Hinweis oben auf der Startseite mit «Anmelden» (zum Ziel) und «Kostenlos registrieren».
+  assert.match(NUR_MIT_KONTO_TEXT, /^Dieser Inhalt ist nur mit Konto sichtbar\./);
+  const seite = ohneKommentare(lies("components/start/Startseite.tsx"));
+  assert.match(seite, /\{nurMitKonto && \([\s\S]*?href=\{loginAdresse\(nurMitKonto, ""\)\}[\s\S]*?Anmelden[\s\S]*?href="\/registrieren"[\s\S]*?Kostenlos registrieren[\s\S]*?\{NUR_MIT_KONTO_TEXT\}/);
+  const start = ohneKommentare(lies("app/(start)/page.tsx"));
+  assert.match(start, /const nurMitKonto = nurMitKontoZiel\(sp\);/);
+  assert.match(start, /nurMitKonto=\{nurMitKonto\}/);
+  assert.match(ohneKommentare(lies("app/(start)/startseite/page.tsx")), /nurMitKonto=\{null\}/);
+  // AK 1: Die RLS liest Übungen und Trainings nur für `authenticated`; die Startseite liest ihre Beispiele über die eine Funktion.
+  const mig = lies("../supabase/migrations/20261123100000_nur_mit_konto.sql");
+  for (const [policy, tabelle] of [["ex_select", "exercises"], ["fav_select", "exercise_favorites"], ["tr_select", "trainings"], ["te_select", "training_exercises"], ["tg_select", "training_gruppen"], ["teg_select", "training_exercise_gruppen"], ["tv_select", "training_varianten"]])
+    assert.match(mig, new RegExp(`create policy ${policy} on public\\.${tabelle}\\s+for select to authenticated`), policy);
+  // Zwilling: die Liste in startseite_beispiele() = STARTSEITE_BEISPIELE, in derselben Reihenfolge.
+  const liste = mig.slice(mig.indexOf("from unnest(array["), mig.indexOf("]) with ordinality"));
+  assert.deepEqual([...liste.matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1]), [...STARTSEITE_BEISPIELE]);
+  assert.match(mig, /where e\.source = 'manual' and e\.visibility = 'public'/, "nur Manual-Übungen (Epic EK 11)");
+  assert.match(mig, /grant execute on function public\.startseite_beispiele\(\) to anon, authenticated;/);
+  const abfrage = lies("lib/queries/exercises.ts");
+  const beispiele = abfrage.slice(abfrage.indexOf("export async function getStartseitenBeispiele"), abfrage.indexOf("export function toCardData"));
+  assert.match(beispiele, /\.rpc\("startseite_beispiele"\)/);
+  assert.ok(!/\.from\("exercises"\)/.test(beispiele), "ohne Konto liest die RLS nichts");
+  // Hygiene: kein Anmelde-Hinweis für Besucher:innen mehr an Trainings-Seiten, keine Vorlagen ohne Konto.
+  assert.ok(!existsSync(join(web, "components/training/AnmeldeHinweis.tsx")));
+  for (const d of ["app/(app)/trainings/page.tsx", "app/(app)/training/[id]/page.tsx", "app/(app)/styleguide/page.tsx"])
+    assert.ok(!/AnmeldeHinweis/.test(lies(d)), d);
+  assert.match(lies("lib/queries/exercises.ts"), /if \(!user\) return \[\];/);
+  // AK 3: «Community» statt «öffentlich» an der Oberfläche, im Konto-Löschen und beim KI-Assistenten.
+  assert.equal(HERKUNFT_LABEL.oeffentlich, "Community");
+  assert.match(lies("components/ui/Lozenge.tsx"), /<HerkunftArtLozenge art="oeffentlich" label=\{HERKUNFT_LABEL\.oeffentlich\} \/>/);
+  assert.equal(ZUM_VEROEFFENTLICHEN_FEHLT, "Für die Community fehlt noch:");
+  assert.match(TRAGWEITE_VEROEFFENTLICHEN, /in der Community für alle angemeldeten Konten sichtbar/);
+  assert.match(lies("app/(app)/konto/KontoClient.tsx"), /Deine Übungen und Trainings <strong>in der Community<\/strong> bleiben anonymisiert erhalten/);
+  assert.match(lies("app/(app)/konto/daten/page.tsx"), /Übungen und Trainings in der Community bleiben anonymisiert erhalten\./);
+  // Werkzeugnamen bleiben (OoS 2), ihre Titel sagen «Community».
+  assert.match(lies("lib/mcp/werkzeuge/trainings-bearbeiten.ts"), /name: "training_veroeffentlichen",\s*titel: "Training in die Community stellen",/);
+  assert.match(lies("lib/mcp/werkzeuge/uebungen-bearbeiten.ts"), /name: "uebung_veroeffentlichen",\s*titel: "Übung in die Community stellen",/);
+  // Kein «öffentlich»/«veröffentlich» mehr in dem, was Oberfläche und KI sagen (Kommentare ausgenommen; Release-Texte bleiben, wie sie erschienen).
+  const treffer: string[] = [];
+  for (const wurzel of ["app", "components", "lib"])
+    for (const datei of quelldateien(join(web, wurzel))) {
+      const rel = relative(web, datei);
+      if (["lib/releases.ts", "lib/feedback/wissen.ts"].includes(rel) || rel.startsWith("app/(app)/versionen/") || rel.startsWith("app/api/versionen/")) continue;
+      ohneKommentare(readFileSync(datei, "utf8")).split("\n").forEach((zeile, i) => {
+        if (/^\s*\*/.test(zeile)) return;
+        if (/[öÖ]ffentlich/.test(zeile) && !/Tag der Veröffentlichung/.test(zeile)) treffer.push(`${rel}:${i + 1}`);
+      });
+    }
+  assert.deepEqual(treffer, [], `«öffentlich» an der Oberfläche: ${treffer.join(", ")}`);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

@@ -147,9 +147,8 @@ export default async function ExerciseDetailPage({
 
   // Aktions-Cluster auf der Brotkrumen-Zeile, rechtsbündig — dieselbe Stelle
   // wie beim Training (#249 AK 8); der Titel behält so die volle Breite.
-  // Drucken · Stift · Globus · Herz · ⋮. Drucken steht ausserhalb der
-  // Anmelde-Bedingung: eine Übung lässt sich auch ohne Konto ausdrucken (Story
-  // #114 AK 3). Owner sieht alle Aktionen, sonstige angemeldete User nur den
+  // Drucken · Stift · Globus · Herz · ⋮. Drucken steht jedem offen, der die
+  // Übung sieht (Story #114 AK 3; seit #669 nur mit Konto). Owner sieht alle Aktionen, sonstige angemeldete User nur den
   // Favoriten. Im Druck ist der ganze Cluster weg — auf dem Blatt hat kein
   // Bedienelement etwas verloren (Postcondition 5).
   const aktionen = (
@@ -260,10 +259,10 @@ export default async function ExerciseDetailPage({
         ) : (
           <p className="type-body-small text-on-surface-mittel">
             Übung aus der{" "}
-            <strong className="text-on-surface">Gemeinschaft</strong> der
+            <strong className="text-on-surface">Community</strong> der
             Trainerinnen und Trainer, nicht aus dem kuratierten Manual-Bestand.
             {ex.visibility === "private" &&
-              " Noch nicht veröffentlicht - ein Entwurf."}
+              " Noch nicht in der Community - ein Entwurf."}
           </p>
         )}
       </footer>
