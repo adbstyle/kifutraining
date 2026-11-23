@@ -19,12 +19,10 @@ export function TrainingFilterBar({
   q,
   stufen,
   mine = false,
-  showMine = false,
 }: {
   q: string;
   stufen: string[];
   mine?: boolean;
-  showMine?: boolean;
 }) {
   // Die Sortierung ist kein Filter: Sie übersteht auch das Zurücksetzen
   // (#629 PC 2), ebenso die Auswahl samt Detail (#630) — ohne Filter steht
@@ -45,11 +43,10 @@ export function TrainingFilterBar({
         value={stufen}
         onChange={(v) => filter.setzeListe("stufen", v)}
       />
-      {showMine && (
-        <FilterChip selected={mine} onClick={() => filter.schalte("mine", !mine)} icon={ClipboardList}>
-          Meine Trainings
-        </FilterChip>
-      )}
+      {/* Die Trainings gibt es nur mit Konto (#669): der Chip steht immer. */}
+      <FilterChip selected={mine} onClick={() => filter.schalte("mine", !mine)} icon={ClipboardList}>
+        Meine Trainings
+      </FilterChip>
 
       {anyActive && (
         <Button variant="text" onClick={filter.zuruecksetzen}>

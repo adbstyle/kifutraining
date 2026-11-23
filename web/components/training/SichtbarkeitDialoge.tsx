@@ -66,7 +66,7 @@ export function SichtbarkeitDialoge({
       <Dialog
         open={schritt === "unvollstaendig"}
         onClose={onClose}
-        title="Noch nicht veröffentlichbar"
+        title="Noch nicht bereit für die Community"
         actions={
           <Button variant="filled" onClick={onClose}>
             Verstanden
@@ -90,14 +90,14 @@ export function SichtbarkeitDialoge({
       <Dialog
         open={schritt === "tragweite"}
         onClose={onClose}
-        title="Training veröffentlichen?"
+        title="Training in die Community stellen?"
         actions={
           <>
             <Button variant="outlined" onClick={onClose}>
               Abbrechen
             </Button>
             <Button variant="filled" onClick={onVeroeffentlichen} disabled={pending}>
-              Veröffentlichen
+              In die Community stellen
             </Button>
           </>
         }
@@ -105,7 +105,7 @@ export function SichtbarkeitDialoge({
         <p>{TRAGWEITE_VEROEFFENTLICHEN}</p>
         <p className="mt-3">
           Du kannst es weiter bearbeiten; die Community sieht dann jeweils deinen
-          aktuellen Stand. Solange es öffentlich ist, braucht es aber eine
+          aktuellen Stand. Solange es in der Community ist, braucht es aber eine
           Alterskategorie sowie je eine Übung in der Einleitung und
           {mehrereVarianten ? " in jeder Variante im freien Spiel" : " im freien Spiel"}.
           Willst du das ändern, setze es zuerst auf Entwurf.
@@ -129,7 +129,7 @@ export function SichtbarkeitDialoge({
         }
       >
         <p>
-          Das Training verschwindet aus dem öffentlichen Bestand und bleibt im
+          Das Training verschwindet aus der Community und bleibt im
           Übrigen unberührt. Kopien, die andere bereits übernommen haben, bleiben
           bestehen - sie sind eigenständig.
         </p>

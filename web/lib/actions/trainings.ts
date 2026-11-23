@@ -388,8 +388,8 @@ export async function pickExercises(
   hauptteilkategorie?: string | null,
   opts: { form?: string[]; typ?: string[]; q?: string } = {},
 ): Promise<ExerciseListRow[]> {
-  // Anonym bleibt die Abfrage möglich (öffentliche Trainings, RLS) — darum
-  // hier ohne `angemeldet()`.
+  // Ohne Konto liefert die RLS nichts (#669) — die Abfrage braucht darum
+  // kein eigenes `angemeldet()`.
   const supabase = await createClient();
   const {
     data: { user },

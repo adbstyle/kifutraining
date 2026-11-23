@@ -10,10 +10,9 @@ import { TeamBereichMelder } from "@/components/layout/TeamKontext";
    (app)-Layout mit der Navigation wird bei einer Client-Navigation nicht neu
    gerendert, dieses Layout schon. Die Begründung steht bei `TeamKontext`.
 
-   Angemeldet kostet das keine zusätzliche Abfrage: `getTrainingNavKontext` ist
+   Das kostet keine zusätzliche Abfrage: `getTrainingNavKontext` ist
    `cache()`-gebunden und `AppNav` fragt beim harten Laden dieselbe Adresse ab.
-   Ohne Konto fragt `AppNav` gar nicht — dann ist es die eine schmale Abfrage
-   hier, und die RLS liefert für ein Team-Training ohnehin `null`. */
+   Ohne Konto kommt hier niemand an (#669, Middleware). */
 export default async function TrainingLayout({
   children,
   params,

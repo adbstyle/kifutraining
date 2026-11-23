@@ -118,7 +118,7 @@ pruefe("Textkonstanten entsprechen den früheren JSX-Literalen", () => {
   assert.equal(ohneDauerText(3), "3 Übungen ohne erfasste Dauer (zählt nicht zur Summe).");
   // TrainingExerciseRow.tsx (title) und SichtbarkeitDialoge.tsx.
   assert.equal(STUFE_ABWEICHEND_TEXT, "Deckt keine der Trainings-Stufen ab");
-  assert.equal(ZUM_VEROEFFENTLICHEN_FEHLT, "Zum Veröffentlichen fehlt noch:");
+  assert.equal(ZUM_VEROEFFENTLICHEN_FEHLT, "Für die Community fehlt noch:");
 });
 
 /** Die frühere Ausgabe von `ZeitAbgleich`/`GesamtAbgleich` — Zeichen für
@@ -193,7 +193,7 @@ pruefe("Die Komponenten zeichnen aus lib und tragen die Literale nicht mehr", ()
     ],
     [
       "components/training/SichtbarkeitDialoge.tsx",
-      [/Zum Veröffentlichen fehlt/],
+      [/Für die Community fehlt/],
       ["ZUM_VEROEFFENTLICHEN_FEHLT"],
     ],
   ];
@@ -211,13 +211,13 @@ pruefe("Leeres Kinderfussball-Training: zwei sperrende Bedingungen, das leere fr
     {
       art: "veroeffentlichung",
       stelle: { teil: "einleitung" },
-      text: "Zum Veröffentlichen fehlt noch: mindestens eine Übung in der Einleitung",
+      text: "Für die Community fehlt noch: mindestens eine Übung in der Einleitung",
       sperrt: true,
     },
     {
       art: "veroeffentlichung",
       stelle: { teil: "hauptteil", hauptteilkategorie: "fussball-spielen" },
-      text: "Zum Veröffentlichen fehlt noch: mindestens eine Übung im freien Spiel",
+      text: "Für die Community fehlt noch: mindestens eine Übung im freien Spiel",
       sperrt: true,
     },
     {
@@ -232,7 +232,7 @@ pruefe("Leeres Kinderfussball-Training: zwei sperrende Bedingungen, das leere fr
   assert.deepEqual(ohneStufe[0], {
     art: "veroeffentlichung",
     stelle: {},
-    text: "Zum Veröffentlichen fehlt noch: mindestens eine Alterskategorie",
+    text: "Für die Community fehlt noch: mindestens eine Alterskategorie",
     sperrt: true,
   });
   assert.equal(LEER_HINWEIS["fussball-spielen"], nur(hinweise(training({})), "block_leer")[0].text);
@@ -269,7 +269,7 @@ pruefe("Zwei Varianten, eine ohne freies Spiel: genau ein Eintrag mit der Varian
     {
       art: "veroeffentlichung",
       stelle: { teil: "hauptteil", hauptteilkategorie: "fussball-spielen", varianteId: "v2" },
-      text: "Zum Veröffentlichen fehlt noch: mindestens eine Übung im freien Spiel in der Variante „Rondo\"",
+      text: "Für die Community fehlt noch: mindestens eine Übung im freien Spiel in der Variante „Rondo\"",
       sperrt: true,
     },
   ]);
@@ -369,15 +369,15 @@ pruefe("Junioren: Bedingungen und leere Blöcke an Teil und Block", () => {
   assert.deepEqual(
     nur(h, "veroeffentlichung").map((x) => [x.stelle, x.text]),
     [
-      [{ teil: "einstieg", block: "jun-aufwaermen" }, "Zum Veröffentlichen fehlt noch: mindestens eine Übung im Aufwärmen"],
+      [{ teil: "einstieg", block: "jun-aufwaermen" }, "Für die Community fehlt noch: mindestens eine Übung im Aufwärmen"],
       [
         { teil: "einstieg", block: "jun-spielform-trainingsziel" },
-        "Zum Veröffentlichen fehlt noch: mindestens eine Übung in der Spielform zum Trainingsziel",
+        "Für die Community fehlt noch: mindestens eine Übung in der Spielform zum Trainingsziel",
       ],
-      [{ teil: "einstieg", block: "jun-explosivitaet" }, "Zum Veröffentlichen fehlt noch: mindestens eine Übung in der Explosivität"],
+      [{ teil: "einstieg", block: "jun-explosivitaet" }, "Für die Community fehlt noch: mindestens eine Übung in der Explosivität"],
       [
         { teil: "hauptteil", block: "jun-spielformen" },
-        "Zum Veröffentlichen fehlt noch: mindestens eine Übung in den Spielformen und unterstützenden Übungen",
+        "Für die Community fehlt noch: mindestens eine Übung in den Spielformen und unterstützenden Übungen",
       ],
     ],
   );

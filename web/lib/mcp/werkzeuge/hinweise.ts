@@ -18,7 +18,7 @@ import { werkzeug } from "@/lib/mcp/werkzeug";
 /** Was jede Art bedeutet — der Record erzwingt, dass keine Art unerklärt bleibt. */
 const ART_ERKLAERT: Record<HinweisArt, string> = {
   veroeffentlichung:
-    "was noch fehlt, damit das Training öffentlich werden darf (nur bei deinen eigenen " +
+    "was noch fehlt, damit das Training in die Community darf (nur bei deinen eigenen " +
     "persönlichen Trainings)",
   gruppe_doppelt: "eine Gruppe steht im selben Wechsel an mehreren Übungen",
   dauer_ungleich: "die Übungen eines Wechsels sind ungleich lang",
@@ -42,7 +42,7 @@ export const trainingHinweiseAbrufen = werkzeug({
     "Kinderfussball-Hauptteil die «hauptteilkategorie», die Variante des Hauptteils " +
     "(«variante_id», erst ab zwei Varianten), die betroffenen Übungen («fassung_ids»), die " +
     "Gruppe und die Wechsel (1-basiert). Hinweise sind keine Fehler; nur «sperrt: true» " +
-    "(Veröffentlichungsbedingungen) blockiert etwas, nämlich das Veröffentlichen. " +
+    "(Bedingungen für die Community) blockiert etwas, nämlich das In-die-Community-Stellen. " +
     "Zeitrichtwerte sind Orientierung, keine Bedingung. Eine leere Liste heisst: nichts zu " +
     `melden. Das Abrufen ändert nichts am Training. ${KENNUNG_FEHLER}`,
   nurLesen: true,

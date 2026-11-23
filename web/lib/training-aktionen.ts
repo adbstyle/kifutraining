@@ -15,14 +15,14 @@ import type { Bearbeitungsziel } from "@/lib/training-zugriff";
 /** Was an einem Training zu tun ist — je Aktion, nicht je Ort.
  *
  *  Durchführen und Drucken fehlen absichtlich: Sie stehen jedem offen, der das
- *  Training überhaupt sieht, auch ohne Konto. Eine Zeile `durchfuehren: true`
+ *  Training überhaupt sieht (seit #669 nur mit Konto). Eine Zeile `durchfuehren: true`
  *  sagte nichts und lüde bloss dazu ein, sie eines Tages zu verneinen. */
 export type TrainingAktionsRechte = {
   /** Bearbeiten — auf der Ansichtsseite ein Zeichen, im Editor selbst nicht
    *  mehr (#249 AK 9). Diese Unterscheidung gehört dem Ort und nicht dem
    *  Recht; sie trifft die Oberfläche. */
   bearbeiten: boolean;
-  /** Übernehmen — jede angemeldete Person an einem öffentlichen Training,
+  /** Übernehmen — jede Person an einem Community-Training,
    *  auch sein Urheber: Die Kopie ist ein eigenes Trainingsobjekt. */
   uebernehmen: boolean;
   /** Welcher der beiden Wege offensteht, oder `null` für keinen. Ein Training
@@ -65,7 +65,6 @@ export type TrainingAktionsRechte = {
  *  Termin-Training kopiert man erst in den Bestand. */
 export function trainingAktionsRechte(
   training: { visibility: "public" | "private"; teamId: string | null; terminTraining: boolean },
-  angemeldet: boolean,
   bearbeitungsziel: Bearbeitungsziel | null,
   hatTeams: boolean,
 ): TrainingAktionsRechte {
@@ -76,7 +75,7 @@ export function trainingAktionsRechte(
 
   return {
     bearbeiten: darfBearbeiten,
-    uebernehmen: angemeldet && oeffentlich,
+    uebernehmen: oeffentlich,
     sichtbarkeit: persoenlich ? (oeffentlich ? "auf_entwurf" : "veroeffentlichen") : null,
     insTeamStellen: persoenlich && hatTeams,
     terminZuordnen: (persoenlich && hatTeams) || imBestand,

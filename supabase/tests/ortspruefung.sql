@@ -124,7 +124,7 @@ do $$
 declare
   f text;
 begin
-  foreach f in array array['verein_spieler_importieren(uuid,jsonb,jsonb)', 'verein_gruenden(text,boolean)',
+  foreach f in array array['verein_spieler_importieren(uuid,jsonb,jsonb)', 'verein_gruenden(text,boolean,text)',
                            'verein_loeschen(uuid,text)'] loop
     if to_regprocedure(f) is null or not has_function_privilege('authenticated', f, 'execute') then
       raise exception 'Ortsprüfung: % fehlt oder hat kein API-Recht', f;

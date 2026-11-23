@@ -63,10 +63,16 @@ export const VEREIN_MELDUNG = {
    *  Anwendung nennt mit `teamnameVergebenText` das Team. */
   TEAMNAME_VERGEBEN: "Im Verein trägt schon ein anderes Team diesen Namen.",
   NUR_IN_DER_ANWENDUNG: "Das geht nur in der Anwendung, nicht über einen KI-Assistenten.",
-  /** Das Gründen verlangt beide Bestätigungen (#587 AK 3); die Datenebene
-   *  prüft sie, auch wenn die Oberfläche den Knopf schon sperrt. */
-  BESTAETIGUNG_FEHLT:
-    "Bestätige zuerst, dass du für den Verein handeln darfst und der Verein für die Daten seiner Spieler:innen verantwortlich ist.",
+  /** Das Gründen verlangt die Bestätigung, für den Verein handeln zu dürfen
+   *  (#587 AK 3, #675 AK 2); die Datenebene prüft sie, auch wenn die
+   *  Oberfläche den Knopf schon sperrt. */
+  BESTAETIGUNG_FEHLT: "Bestätige zuerst, dass du für den Verein handeln darfst.",
+  /** … und die Zustimmung zur Vereinbarung zur Auftragsbearbeitung (#675 AK 2). */
+  ZUSTIMMUNG_FEHLT: "Stimme zuerst für den Verein der Vereinbarung zur Auftragsbearbeitung zu.",
+  /** Seit dem Öffnen des Dialogs gilt eine neue Fassung der Vereinbarung
+   *  (`vereinbarung_fassung()`): Zugestimmt wird nur der geltenden. */
+  VEREINBARUNG_VERALTET:
+    "Inzwischen gilt eine neue Fassung der Vereinbarung zur Auftragsbearbeitung. Lade die Seite neu, lies sie und stimme ihr zu.",
   /** Gründen kann nur, wer keinem Verein angehört (#587 AK 2). */
   SCHON_IM_VEREIN: "Du gehörst schon einem Verein an. Einen Verein gründen kann nur, wer keinem angehört.",
 } as const;
@@ -107,18 +113,46 @@ export const TEAMS_OHNE_VEREIN_TEXT = {
   },
 } as const;
 
-/** Der Dialog «Verein gründen» (#587 AK 1–3): Name, zwei Pflicht-Bestätigungen
- *  und was das Gründen für die Person bedeutet. Der feste Hinweis zum Namen
+/** Der Dialog «Verein gründen» (#587 AK 1–3, #675 AK 1, 2): Name, zwei
+ *  Pflicht-Bestätigungen — berechtigt zu handeln und die Zustimmung zur
+ *  Vereinbarung zur Auftragsbearbeitung, mit Link zum Lesen (`lesen`) — und
+ *  was das Gründen für die Person bedeutet. Der feste Hinweis zum Namen
  *  steht hinter ⓘ (`info` am Feld). */
 export const VEREIN_GRUENDEN_TEXT = {
   titel: "Verein gründen",
   feld: "Name des Vereins",
   info: `Höchstens ${VEREIN_NAME_MAX} Zeichen. Den Namen kannst du später ändern.`,
   haken1: "Ich bin berechtigt, für diesen Verein zu handeln.",
-  haken2: "Der Verein ist für die Daten seiner Spieler:innen verantwortlich und Ansprechpartner für sie, ihre Eltern und Vertretungen.",
+  haken2: "Ich stimme für den Verein der Vereinbarung zur Auftragsbearbeitung zu.",
+  lesen: "Vereinbarung lesen",
   erste: "Du wirst die erste Person der Vereinsverwaltung. Solange du dabei bist, kannst du keinem anderen Verein angehören.",
   knopf: "Verein gründen",
 } as const;
+
+/** Die Vereinbarung zur Auftragsbearbeitung in der Verwaltung des Vereins
+ *  (#675 AK 3, 4). `neueFassung` erscheint, wenn eine neuere Fassung gilt als
+ *  die, der der Verein zugestimmt hat; `ohneZustimmung` bei Vereinen ohne
+ *  festgehaltene Zustimmung (gegründet vor #675). Beides informiert nur und
+ *  verlangt keine erneute Zustimmung (Out of Scope 2, Entscheid 3). */
+export const VEREIN_VEREINBARUNG_TEXT = {
+  titel: "Vereinbarung zur Auftragsbearbeitung",
+  text: "Sie regelt, wie KiFu die Daten der Spieler:innen im Auftrag des Vereins bearbeitet.",
+  lesen: "Geltende Fassung lesen",
+  zugestimmt: (datum: string) => `Der Verein hat ihr am ${datum} zugestimmt.`,
+  neueFassung: "Es gilt eine neue Fassung der Vereinbarung zur Auftragsbearbeitung. Lies die geltende Fassung.",
+  ohneZustimmung: "Für den Verein ist in KiFu keine Zustimmung zur Vereinbarung festgehalten.",
+  /** Der Weg von der Übersicht zur Karte in der Verwaltung. */
+  zurVerwaltung: "Zur Verwaltung",
+} as const;
+
+/** Was die Verwaltung zur Vereinbarung erfährt (#675 AK 4): `aktuell`, wenn
+ *  der Verein der geltenden Fassung zugestimmt hat; `neue_fassung`, wenn er
+ *  einer anderen (älteren) zugestimmt hat; `ohne`, wenn keine Zustimmung
+ *  festgehalten ist. Die geltende Fassung ist immer die neuste. */
+export function vereinbarungLage(geltend: string, zugestimmt: string | null): "aktuell" | "neue_fassung" | "ohne" {
+  if (zugestimmt === null) return "ohne";
+  return zugestimmt === geltend ? "aktuell" : "neue_fassung";
+}
 
 /** Der Name verletzt den CHECK `verein_name`, den das Web vorab prüft
  *  (`vereinsNameProblem`); diesen Satz sieht nur, wer die Prüfung umgeht. */
@@ -234,6 +268,7 @@ export const kontoEinzigePersonInzwischenText = (verein: string) =>
  *  statt zu einem blinden zweiten Versuch (`lib/verein-antwort.ts`). */
 export const VEREIN_UNSTIMMIG = {
   gruenden: "Die Antwort liess sich nicht lesen. Lade die Seite neu und prüfe, ob der Verein angelegt ist.",
+  vereinbarung: "Die Angaben zur Vereinbarung liessen sich gerade nicht lesen. Lade die Seite neu.",
   loeschen: "Die Antwort liess sich nicht lesen. Lade die Seite neu und prüfe, ob der Verein noch besteht.",
   konto: "Die Antwort liess sich nicht lesen. Melde dich neu an und prüfe, ob dein Konto noch besteht.",
   info: "Die Angaben zu deinem Konto liessen sich gerade nicht lesen. Bitte versuche es noch einmal.",

@@ -35,7 +35,7 @@ export const SPEICHERUNGEN: Speicherung[] = [
     titel: "Anmeldung",
     zweck: "Hält dich angemeldet, damit du deine Übungen, Trainings und Teams siehst. Beim Registrieren und beim Zurücksetzen des Passworts sichert ein zweites Cookie den Bestätigungslink ab.",
     dauer: "Bis du dich abmeldest, längstens gut ein Jahr.",
-    ohne: "Du kannst dich nicht anmelden. Übungen und öffentliche Trainings kannst du weiterhin ansehen, durchführen und drucken.",
+    ohne: "Du kannst dich nicht anmelden und siehst darum keine Übungen und Trainings. Der private Link für Spieler:innen und Eltern funktioniert weiterhin.",
   },
   {
     name: LEISTE_COOKIE,
@@ -47,9 +47,9 @@ export const SPEICHERUNGEN: Speicherung[] = [
   {
     name: BEREICH_COOKIE,
     titel: "Gewählter Bereich",
-    zweck: "Merkt sich, ob du zuletzt eines deiner Teams oder den Verein gewählt hast, damit die Seitenleiste auf Seiten ohne Bereich (Übungen, Trainings, Konto) wieder dort steht.",
+    zweck: "Merkt sich, ob du zuletzt eines deiner Teams oder den Verein gewählt hast, damit die Seitenleiste auf Seiten ohne Bereich (Übungen, Trainings, Konto) wieder dort steht und ki-fu.ch, die abgelegte App und die Anmeldung dich dorthin bringen.",
     dauer: "Ein Jahr.",
-    ohne: "Die Seitenleiste öffnet jedes Mal den ersten deiner Bereiche.",
+    ohne: "Die Seitenleiste und ki-fu.ch öffnen jedes Mal den ersten deiner Bereiche.",
   },
   {
     name: SPALTE_COOKIE,

@@ -39,7 +39,7 @@ export const trainingKopieren = werkzeug({
     "Varianten des Hauptteils, in derselben Altersstufe. Die Kopie ist ein privater Entwurf " +
     "ohne Verbindung zur Quelle; die Quelle bleibt unberührt, und woraus die Kopie hervorging, " +
     "wird nicht festgehalten. Übernehmen lässt sich jedes Training, das du lesen kannst - ein " +
-    "öffentliches der Community (etwa aus «trainings_suchen» mit «bestand: oeffentlich») oder " +
+    "Training der Community (etwa aus «trainings_suchen» mit «bestand: oeffentlich») oder " +
     "ein eigenes, das dann eine zweite, unabhängige Fassung bekommt -, und dasselbe Training " +
     "beliebig oft; jede Kopie hat ihre eigene Kennung. So stellst du ein eigenes Training " +
     "ins Team (mit «team_id») oder übernimmst ein Team-Training zu dir (ohne «team_id»); das " +
@@ -88,8 +88,8 @@ export const trainingLoeschen = werkzeug({
     "allen Übungen, Bildern, Gruppen und Varianten. War es einem Termin zugeordnet, bleibt der " +
     "Termin ohne Training im Kalender («termin_bleibt»). Was mitgeht, " +
     "zeigt vorher «training_abrufen» («uebungen_gesamt», «sichtbarkeit»); das Ergebnis nennt " +
-    "es noch einmal. Ein öffentliches Training verschwindet damit zugleich aus dem " +
-    "öffentlichen Bestand. Kopien, die andere bereits übernommen haben, bleiben bestehen - " +
+    "es noch einmal. Ein Training in der Community verschwindet damit zugleich aus der " +
+    "Community. Kopien, die andere bereits übernommen haben, bleiben bestehen - " +
     "sie sind eigenständige Trainings. Wiederherstellen lässt sich ein gelöschtes Training " +
     `nicht. Ein fremdes Training lässt sich nicht löschen. ${KENNUNG_FEHLER}`,
   nurLesen: false,

@@ -17,8 +17,6 @@ import { sichtbareZuordnungen, type Variante } from "@/lib/varianten";
 
 export type TrainingAnsicht = {
   training: TrainingDetail;
-  /** Angemeldet? Ohne Konto stehen nur Durchführen und Drucken offen. */
-  angemeldet: boolean;
   bearbeitungsziel: Bearbeitungsziel | null;
   teams: TeamUebersicht[];
   /** Gelten für das Konto Grenzen (#588)? Für `KontoGrenzenLage`. */
@@ -29,22 +27,24 @@ export type TrainingAnsicht = {
 /** Lädt ein Training samt Kontext; `null`, wenn es dem USER nicht zugänglich
  *  ist (fremder Entwurf, gelöscht, ungültige Kennung — die RLS entscheidet).
  *  `user`: wer die Anmeldung schon gelesen hat, gibt sie mit (`undefined` =
- *  selbst lesen, `null` = ohne Konto). Training, Teams und Grenzen laufen
+ *  selbst lesen). Trainings gibt es nur mit Konto (#669): Ohne Anmeldung ist
+ *  keines zugänglich. Training, Teams und Grenzen laufen
  *  zusammen — die Teams sind auch für ein unzugängliches Training bloss eine
  *  kurze Abfrage zu viel. */
-export async function ladeTrainingAnsicht(id: string, user?: User | null): Promise<TrainingAnsicht | null> {
-  const ich =
-    user !== undefined ? user : (await (await createClient()).auth.getUser()).data.user;
+export async function ladeTrainingAnsicht(id: string, user?: User): Promise<TrainingAnsicht | null> {
+  const ich = user ?? (await (await createClient()).auth.getUser()).data.user;
+  if (!ich) return null;
   const [training, teams, grenzenLage] = await Promise.all([
     getTrainingView(id),
-    ich ? getMeineTeams() : Promise.resolve([] as TeamUebersicht[]),
-    ich ? getMeineGrenzenLage() : Promise.resolve("ohne" as const),
+    getMeineTeams(),
+    getMeineGrenzenLage(),
   ]);
   if (!training) return null;
 
-  const bearbeitungsziel = ich
-    ? bearbeitungszielVon({ owner_id: training.ownerId, team_id: training.team?.id ?? null }, ich.id)
-    : null;
+  const bearbeitungsziel = bearbeitungszielVon(
+    { owner_id: training.ownerId, team_id: training.team?.id ?? null },
+    ich.id,
+  );
   // Was dem Training zum Veröffentlichen fehlt — dieselbe Funktion, die der
   // Editor und die Server Action nutzen. Gebraucht nur, wo die Aktion
   // offensteht: am eigenen, nicht dem Team gehörenden Training.
@@ -55,7 +55,6 @@ export async function ladeTrainingAnsicht(id: string, user?: User | null): Promi
 
   return {
     training,
-    angemeldet: !!ich,
     bearbeitungsziel,
     teams: [...teams],
     mitGrenzen: grenzenLage !== "ohne",

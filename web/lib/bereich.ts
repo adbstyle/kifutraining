@@ -48,3 +48,28 @@ export function waehleBereich(
   if (hat(gemerkt)) return gemerkt;
   return verfuegbar[0] ?? null;
 }
+
+/** Der Einstieg eines Bereichs (#671 Entscheid 1): der Trainingsplan des
+ *  Teams bzw. die Teams des Vereins. */
+export function bereichPfad(b: Bereich): string {
+  return b.art === "verein" ? "/verein" : `/team/${b.id}`;
+}
+
+/** Wohin «/» ein angemeldetes Konto führt (#671 PC 1): in den zuletzt in
+ *  diesem Browser gewählten Bereich, dem es noch angehört, sonst in den ersten
+ *  in der Reihenfolge des Wechslers — Teams zuerst (alphabetisch, wie der
+ *  Aufrufer sie reicht), der Verein zuletzt. Ohne Verein (und damit ohne
+ *  Teams) in den Einstieg unter `/teams`: Verein gründen oder sich aufnehmen
+ *  lassen. */
+export function arbeitsbereichPfad(
+  teams: { id: string }[],
+  hatVerein: boolean,
+  gemerkt: Bereich | null,
+): string {
+  const verfuegbar: Bereich[] = [
+    ...teams.map((t): Bereich => ({ art: "team", id: t.id })),
+    ...(hatVerein ? [{ art: "verein" } as Bereich] : []),
+  ];
+  const b = waehleBereich(verfuegbar, null, gemerkt);
+  return b ? bereichPfad(b) : "/teams";
+}

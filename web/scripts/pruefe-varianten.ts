@@ -335,7 +335,7 @@ pruefe("Der Text nennt die Variante nur, wenn eine übergeben wird", () => {
 pruefe("Die laufende Verweigerung nennt Variante und Block", () => {
   assert.equal(
     bedingungsMeldungFuer("freies_spiel", "21 Kinder"),
-    "Ein öffentliches Training braucht mindestens eine Übung im freien Spiel " +
+    "Ein Training in der Community braucht mindestens eine Übung im freien Spiel " +
       "in der Variante „21 Kinder\". " +
       "Setze es zuerst auf Entwurf, wenn du es so ändern willst.",
   );
@@ -344,7 +344,7 @@ pruefe("Die laufende Verweigerung nennt Variante und Block", () => {
 pruefe("Ohne Variantennamen bleibt der Satz allgemein", () => {
   assert.equal(
     bedingungsMeldungFuer("einleitung"),
-    "Ein öffentliches Training braucht mindestens eine Übung in der Einleitung. " +
+    "Ein Training in der Community braucht mindestens eine Übung in der Einleitung. " +
       "Setze es zuerst auf Entwurf, wenn du es so ändern willst.",
   );
 });

@@ -102,7 +102,7 @@ env:
   # stehen hier ab dem Feature-PR; Prod
   # bekommt sie erst mit dem Release: Ein Sync aus develop bricht
   # bis dahin am Guard ab (gewollt). Aus main synct die Liste von main.
-  PUBLIC_TABLES: "abholung_sperren exercise_favorites exercises feedback feedback_dialoge kader kader_spieler kalender_abos ki_aufrufe ki_zugang_namen profiles push_abos push_auftraege spiel_meldungen spiel_teilnahmen spiel_treffpunkte spieler spieler_abos spieler_benachrichtigungen team_abholung team_infos team_members team_probetraining team_spieler teams termin_abmeldungen termin_eingefroren termin_kader termin_serien termin_serien_kader termin_serien_luecken termin_serien_trainer termin_serien_verantwortliche termin_statuswechsel termin_teilnahmen termin_trainer termin_trainer_stand termin_verantwortliche trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings verein_verwaltung vereine"
+  PUBLIC_TABLES: "abholung_sperren exercise_favorites exercises feedback feedback_dialoge kader kader_spieler kalender_abos ki_aufrufe ki_zugang_namen profiles push_abos push_auftraege spiel_meldungen spiel_teilnahmen spiel_treffpunkte spieler spieler_abos spieler_benachrichtigungen team_abholung team_infos team_members team_probetraining team_spieler teams termin_abmeldungen termin_eingefroren termin_kader termin_serien termin_serien_kader termin_serien_luecken termin_serien_trainer termin_serien_verantwortliche termin_statuswechsel termin_teilnahmen termin_trainer termin_trainer_stand termin_verantwortliche trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings verein_verwaltung verein_zustimmungen vereine"
 
 jobs:
   sync:

@@ -107,12 +107,12 @@ export const KONTO_GRENZE_HINWEIS = "Es ist nichts entstanden.";
  *  Person in der Anwendung keinen Platz geschaffen hat. */
 export const KONTO_GRENZE_WERKZEUG: Record<KontoArt, string> = {
   uebungen:
-    `Ein Konto ohne Verein besitzt höchstens ${KONTO_UEBUNGEN_MAX} Übungen (Entwürfe, veröffentlichte und Kopien zählen alle). ` +
+    `Ein Konto ohne Verein besitzt höchstens ${KONTO_UEBUNGEN_MAX} Übungen (Entwürfe, Übungen in der Community und Kopien zählen alle). ` +
     "Ist die Grenze erreicht, entsteht nichts: Die Fehlerart ist «regel», die Meldung nennt den Bestand, und " +
     "«hinweis» sagt, dass nichts entstanden ist. Ein zweiter Versuch ändert daran nichts - gib der Person die " +
     "Meldung weiter, statt den Aufruf zu wiederholen. In einem Verein gilt die Grenze nicht.",
   trainings:
-    `Ein Konto ohne Verein besitzt höchstens ${KONTO_TRAININGS_MAX} Trainings (Entwürfe, veröffentlichte, Kopien und übernommene zählen alle, Team-Trainings nicht). ` +
+    `Ein Konto ohne Verein besitzt höchstens ${KONTO_TRAININGS_MAX} Trainings (Entwürfe, Trainings in der Community, Kopien und übernommene zählen alle, Team-Trainings nicht). ` +
     "Ist die Grenze erreicht, entsteht nichts: Die Fehlerart ist «regel», die Meldung nennt den Bestand, und " +
     "«hinweis» sagt, dass nichts entstanden ist. Ein zweiter Versuch ändert daran nichts - gib der Person die " +
     "Meldung weiter, statt den Aufruf zu wiederholen. In einem Verein gilt die Grenze nicht.",
@@ -153,7 +153,7 @@ export function bestandVollMeldung(art: KontoArt, g: KontoGrenze): { titel: stri
     ? {
         titel,
         text: `Ohne Verein besitzt du höchstens ${g.max} Übungen. ${loeschen} In einem Verein gilt die Grenze nicht.`,
-        link: "/?mine=1",
+        link: "/uebungen?mine=1",
         linkText: "Zu meinen Übungen",
       }
     : {

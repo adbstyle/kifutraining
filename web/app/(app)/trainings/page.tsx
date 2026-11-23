@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
+import { abfrageAus, loginAdresse } from "@/lib/weiterleitung";
 import { redirect } from "next/navigation";
 import { ClipboardList, SearchX } from "lucide-react";
 import { BestandAnzeige, ButtonLink, Leerzustand, SectionMessage } from "@/components/ui";
 import { Flash } from "@/components/Flash";
-import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
 import { TrainingTabelle } from "@/components/training/TrainingTabelle";
 import { TrainingFilterBar } from "@/components/training/TrainingFilterBar";
 import { getTrainingPool } from "@/lib/queries/trainings";
@@ -48,8 +48,9 @@ export default async function TrainingsPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  // „Meine Trainings" ist nur angemeldet sinnvoll — anonym gibt es keine.
-  const mine = !!user && sp.mine === "1";
+  // Nur mit Konto (#669): ohne Anmeldung leitet die Middleware vorher auf die Startseite.
+  if (!user) redirect(loginAdresse("/trainings", abfrageAus(sp)));
+  const mine = sp.mine === "1";
   const filtersActive = !!q || stufen.length > 0;
 
   const sortierung = leseSortierung(sp.sort, sp.dir);
@@ -81,11 +82,9 @@ export default async function TrainingsPage({
         mine ? [{ label: "Trainings", href: "/trainings" }, { label: "Meine Trainings" }] : [{ label: "Trainings" }]
       }
       aktionen={
-        user && (
-          <ButtonLink href="/training/neu" variant="filled">
-            Training erstellen
-          </ButtonLink>
-        )
+        <ButtonLink href="/training/neu" variant="filled">
+          Training erstellen
+        </ButtonLink>
       }
     >
       {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
@@ -96,7 +95,7 @@ export default async function TrainingsPage({
       <div className={detail ? "max-lg:hidden" : undefined}>
         {grenzen && <BestandAnzeige art="trainings" grenze={grenzen.trainings} className="mb-4" />}
 
-        <TrainingFilterBar q={q} stufen={stufen} mine={mine} showMine={!!user} />
+        <TrainingFilterBar q={q} stufen={stufen} mine={mine} />
 
         {/* Ein Zustand der Adresse, kein Vorgang: als Section Message, nicht
             als Snackbar. Sie bleibt, bis man ein anderes Training wählt. */}
@@ -117,10 +116,8 @@ export default async function TrainingsPage({
           {filtersActive
             ? "Kein Training entspricht der aktiven Suche oder den Filtern. Passe die Kriterien an."
             : mine
-              ? "Stelle aus dem Übungsbestand dein erstes Training zusammen - es bleibt ein Entwurf, bis du es veröffentlichst."
-              : user
-                ? "Stelle dein erstes Training zusammen. Veröffentlichst du es, steht es der Community zur Verfügung."
-                : "Es wurde noch kein Training veröffentlicht. Schau später wieder vorbei."}
+              ? "Stelle aus dem Übungsbestand dein erstes Training zusammen - es bleibt ein Entwurf, bis du es in die Community stellst."
+              : "Stelle dein erstes Training zusammen. Stellst du es in die Community, steht es allen angemeldeten Konten zur Verfügung."}
         </Leerzustand>
       ) : (
         // Immer dieselbe Fläche, auch ohne Detail: So bleibt die Tabelle beim
@@ -150,8 +147,6 @@ export default async function TrainingsPage({
           }
         />
       )}
-
-      {!user && <AnmeldeHinweis className="mt-8" />}
     </Seitenrahmen>
   );
 }

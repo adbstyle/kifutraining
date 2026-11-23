@@ -87,15 +87,16 @@ export function varianteAusFehler(message: string): string | null {
 /** Die Einleitung der Liste fehlender Bedingungen — im Dialog «Noch nicht
  *  veröffentlichbar» und vor jedem Veröffentlichungs-Hinweis an den
  *  KI-Assistenten (#195 AK 2). */
-export const ZUM_VEROEFFENTLICHEN_FEHLT = "Zum Veröffentlichen fehlt noch:";
+export const ZUM_VEROEFFENTLICHEN_FEHLT = "Für die Community fehlt noch:";
 
 /** Die Tragweite des Veröffentlichens — im Bestätigungsdialog der Oberfläche
  *  und im Ergebnis sowie in der Beschreibung des KI-Werkzeugs
  *  «training_veroeffentlichen» (#196 AK 5): Der Anzeigename wird mit dem
  *  Training öffentlich. Eine Quelle, damit beide Wege dasselbe sagen. */
 export const TRAGWEITE_VEROEFFENTLICHEN =
-  "Das Training wird für alle sichtbar - mit allen Inhalten, Bildern und " +
-  "Feld-Diagrammen. Dein Anzeigename steht als Urheber daran und ist für alle sichtbar.";
+  "Das Training wird in der Community für alle angemeldeten Konten sichtbar - mit allen " +
+  "Inhalten, Bildern und Feld-Diagrammen. Dein Anzeigename steht als Urheber daran und ist " +
+  "in der Community sichtbar.";
 
 /** Was fehlt, aus Sicht des Trainers — mit der Variante, wenn es eine zu
  *  nennen gibt (#204 AK 2). Ergänzt den Satz «Es fehlt …».
@@ -125,7 +126,7 @@ function bedingungsMeldung(bedingung: Bedingung, jeVariante: boolean): string {
 }
 
 /** Dieselbe Meldung für den Aufrufer, der das Training kennt und die Variante
- *  darum benennen kann (#204 AK 3): «Ein öffentliches Training braucht
+ *  darum benennen kann (#204 AK 3): «Ein Training in der Community braucht
  *  mindestens eine Übung im freien Spiel in der Variante „21 Kinder". Setze es
  *  zuerst auf Entwurf, wenn du es so ändern willst.»
  *
@@ -143,7 +144,7 @@ export function bedingungsMeldungFuer(
  *  Wege nicht in zwei Formulierungen desselben auseinanderlaufen. */
 function satzUm(was: string): string {
   return (
-    `Ein öffentliches Training braucht ${was}. ` +
+    `Ein Training in der Community braucht ${was}. ` +
     "Setze es zuerst auf Entwurf, wenn du es so ändern willst."
   );
 }

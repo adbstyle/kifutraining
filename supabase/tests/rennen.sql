@@ -1826,8 +1826,8 @@ declare
 begin
   -- (g1) Gründen gegen Gründen derselben Person.
   ergebnis := rennen_test.verschraenkt(ziel,
-    rennen_test.z('s11_gp'), $q$select verein_gruenden('Gründung A', true)::text$q$,
-    rennen_test.z('s11_gp'), $q$select verein_gruenden('Gründung B', true)::text$q$, 'advisory');
+    rennen_test.z('s11_gp'), $q$select verein_gruenden('Gründung A', true, '2026-11-entwurf')::text$q$,
+    rennen_test.z('s11_gp'), $q$select verein_gruenden('Gründung B', true, '2026-11-entwurf')::text$q$, 'advisory');
   if position('SCHON_IM_VEREIN' in ergebnis) = 0 then
     raise exception '(g1) B hätte SCHON_IM_VEREIN melden müssen: %', ergebnis;
   end if;
@@ -1841,7 +1841,7 @@ begin
   ergebnis := rennen_test.verschraenkt(ziel,
     rennen_test.z('s11_g2_va'), format($q$select verein_verwaltung_aufnehmen(%L, 'rennen-s11-gr@rennen.test')::text$q$,
                                        rennen_test.z('s11_g2_verein')),
-    rennen_test.z('s11_gr'), $q$select verein_gruenden('Gründung R', true)::text$q$, 'advisory');
+    rennen_test.z('s11_gr'), $q$select verein_gruenden('Gründung R', true, '2026-11-entwurf')::text$q$, 'advisory');
   if position('SCHON_IM_VEREIN' in ergebnis) = 0 then
     raise exception '(g2) B hätte SCHON_IM_VEREIN melden müssen: %', ergebnis;
   end if;
@@ -1852,7 +1852,7 @@ begin
 
   -- (g3) Gründen gegen Aufnahme ins Team durch die Verwaltung.
   ergebnis := rennen_test.verschraenkt(ziel,
-    rennen_test.z('s11_gs'), $q$select verein_gruenden('Gründung S', true)::text$q$,
+    rennen_test.z('s11_gs'), $q$select verein_gruenden('Gründung S', true, '2026-11-entwurf')::text$q$,
     rennen_test.z('s11_g2_va'), format($q$select verein_team_aufnehmen(%L, 'rennen-s11-gs@rennen.test')::text$q$,
                                        rennen_test.z('s11_g2_team')), 'advisory');
   if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"status": "anderer_verein"}' then
@@ -1864,7 +1864,7 @@ begin
 
   -- (g4) Gründen gegen Aufnahme am Team-Ort.
   ergebnis := rennen_test.verschraenkt(ziel,
-    rennen_test.z('s11_gt'), $q$select verein_gruenden('Gründung T', true)::text$q$,
+    rennen_test.z('s11_gt'), $q$select verein_gruenden('Gründung T', true, '2026-11-entwurf')::text$q$,
     rennen_test.z('s11_g2_m'), format($q$select add_team_member(%L, 'rennen-s11-gt@rennen.test')::text$q$,
                                       rennen_test.z('s11_g2_team')), 'advisory');
   if left(ergebnis, 7) = 'FEHLER:' or ergebnis::jsonb <> '{"status": "anderer_verein"}' then

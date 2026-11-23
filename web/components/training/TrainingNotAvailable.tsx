@@ -17,11 +17,11 @@ export function TrainingNotAvailable() {
         ueberschrift="h1"
         aktion={
           <ButtonLink href="/trainings" variant="link">
-            Öffentliche Trainings entdecken
+            Trainings der Community entdecken
           </ButtonLink>
         }
       >
-        Dieses Training existiert nicht oder ist nicht öffentlich geteilt.
+        Dieses Training existiert nicht oder ist nicht in der Community geteilt.
       </Leerzustand>
     </Seitenrahmen>
   );

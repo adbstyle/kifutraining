@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { VereinVerwaltung, type VerwaltungEintrag } from "@/components/verein/VereinVerwaltung";
-import { ladeVereinAnsicht } from "@/lib/kern/verein";
+import { VereinbarungKarte } from "@/components/verein/VereinbarungKarte";
+import { ladeVereinAnsicht, ladeVereinbarung } from "@/lib/kern/verein";
 import { getMeinVereinOderWurf } from "@/lib/queries/verein";
 import { createClient } from "@/lib/supabase/server";
 
@@ -10,7 +11,8 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Verwaltung des Vereins - KiFu", robots: { index: false } };
 
 /* Die Verwaltung des Vereins (Epic Vereine #575, Story #581): Vereinsname,
-   Vereinsverwaltung, Austritt und Löschen des Vereins (#587). Nur für die Vereinsverwaltung; alle anderen
+   Vereinsverwaltung, die Vereinbarung zur Auftragsbearbeitung (#675 AK 3, 4),
+   Austritt und Löschen des Vereins (#587). Nur für die Vereinsverwaltung; alle anderen
    gehen zur Übersicht (AK 1, 3, 9) — die Anzeigenamen der Verwaltung stehen
    dort im Kopf. Die Sperre ist die Datenebene (`verein_ansicht` liefert
    Kennung und Adresse nur der Verwaltung), die Weiterleitung nur der Weg. */
@@ -25,8 +27,12 @@ export default async function VereinVerwaltungPage() {
   if (!verein) redirect("/teams");
   if (!verein.istVerwaltung) redirect("/verein");
 
-  const ansicht = await ladeVereinAnsicht(supabase, user.id, { vereinId: verein.id });
+  const [ansicht, vereinbarung] = await Promise.all([
+    ladeVereinAnsicht(supabase, user.id, { vereinId: verein.id }),
+    ladeVereinbarung(supabase, user.id, { vereinId: verein.id }),
+  ]);
   if (!ansicht.ok) throw new Error(ansicht.meldung);
+  if (!vereinbarung.ok) throw new Error(vereinbarung.meldung);
   const { name, teams, spielerZahl, spielerOhneTeam, personen } = ansicht.wert;
 
   // Die Zahl der Spieler:innen liefert die Datenebene der Verwaltung mit; fehlt sie, ist etwas falsch.
@@ -59,6 +65,7 @@ export default async function VereinVerwaltungPage() {
         spielerOhneTeam={spielerOhneTeam}
         anzahlPersonen={personen}
         verwaltung={verwaltung}
+        vereinbarung={<VereinbarungKarte vereinbarung={vereinbarung.wert} />}
       />
     </Seitenrahmen>
   );

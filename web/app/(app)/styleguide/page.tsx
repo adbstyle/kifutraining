@@ -91,7 +91,6 @@ import { ListenGruppenDemo } from "./ListenGruppenDemo";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { ErscheinungsbildDemo } from "./ErscheinungsbildDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
-import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
 import {
   Search,
   SlidersHorizontal,
@@ -168,6 +167,8 @@ import {
   type LozengeAppearance,
 } from "@/lib/farben";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { RechtlicheLinks, RechtsLink } from "@/components/layout/RechtlicheLinks";
+import { Platzhalter, RechtsAbschnitt, TextLink } from "@/components/start/RechtsSeite";
 import { KaderLozenge } from "@/components/team/KaderLozenge";
 import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 import { VERZEICHNIS_COOKIE, leseVerzeichnis } from "@/lib/verzeichnis";
@@ -293,6 +294,7 @@ const GLIEDERUNG = [
           { id: "tabelle", titel: "Tabelle" },
           { id: "eigenschaften", titel: "Eigenschaften" },
           { id: "release-text", titel: "Release-Text" },
+          { id: "rechtliches", titel: "Startseite und Rechtliches" },
         ],
       },
       {
@@ -541,7 +543,7 @@ const kategorien: KategorieSlug[] = ["G", "F", "E", "D", "C", "B", "A"];
    daneben, wie die Komponente sie führt. */
 const lozengeBedeutung: [LozengeAppearance, string][] = [
   ["neutral", "Herkunft, Entwurf, Altersstufe, Termin ausgefallen"],
-  ["information", "gilt nach aussen: öffentlich, Community, Link zugestellt"],
+  ["information", "gilt nach aussen: Community, Link zugestellt"],
   ["discovery", "etwas Zusätzliches: mehrere Varianten, neue Version"],
   ["warning", "braucht Aufmerksamkeit: Termin ohne Training"],
   ["success", "erledigt: Link abgeholt"],
@@ -1646,7 +1648,7 @@ export default async function Styleguide() {
             <code>&lt;a&gt;</code> statt <code>&lt;button&gt;</code>, gleiche Optik).
             <code>Tooltip</code> umschliesst einen Trigger ohne Text und macht ihn
             lesbar - Pflicht, sobald das Zeichen allein mehrdeutig ist (Globus =
-            öffentlich vs. Schloss = privat). CSS-only, <code>aria-hidden</code>
+            Community vs. Schloss = privat). CSS-only, <code>aria-hidden</code>
             (der Name kommt schon vom <code>aria-label</code> des Triggers). Er
             steht auf 24dp wie der Dialog: Was über allem schwebt, trägt die
             oberste Stufe. Verborgen ist er <code>display: none</code>, damit er
@@ -1659,8 +1661,8 @@ export default async function Styleguide() {
             <Tooltip label="Bearbeiten">
               <IconButtonLink href="#" icon={Pencil} label="Bearbeiten" />
             </Tooltip>
-            <Tooltip label="Öffentlich schalten">
-              <IconButton icon={Globe} label="Öffentlich schalten" />
+            <Tooltip label="In die Community stellen">
+              <IconButton icon={Globe} label="In die Community stellen" />
             </Tooltip>
             <Tooltip label="Auf privat setzen">
               <IconButton icon={Lock} label="Auf privat setzen" />
@@ -2720,7 +2722,7 @@ export default async function Styleguide() {
             Bedeutung: <code>neutral</code> sagt, woher etwas stammt oder in
             welchem Zwischenstand es liegt (Kifu-Manual, Entwurf, Altersstufe,
             ausgefallen), <code>information</code>, was nach aussen gilt
-            (Community, Öffentlich), <code>discovery</code> etwas Zusätzliches
+            (Community), <code>discovery</code> etwas Zusätzliches
             (mehrere Varianten, «Neu» an der Version), <code>warning</code> eine Lücke, die jemand
             schliessen muss (Termin ohne Training). <code>success</code> und{" "}
             <code>danger</code> stehen im Kit bereit. Herkunft und Sichtbarkeit
@@ -3115,11 +3117,6 @@ export default async function Styleguide() {
             betrifft, bleibt dagegen Fehlertext am Feld (<Siehe id="textfelder" />).
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Am Fuss der öffentlichen Trainings-Seiten steht für Besucher ohne
-            Konto der <code>AnmeldeHinweis</code>: eine Meldung mit eigenem
-            Zeichen und dem Weg zum Konto als Aktion. Auf Papier fehlt er.
-          </p>
-          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Schliessbar</strong> (<code>onSchliessen</code>, #650): ein
             Icon-Knopf ✕ oben rechts mit eigenem Label, für einen Hinweis, den man
             ablehnen darf, ohne zu antworten - etwa «Termine als App» am privaten
@@ -3150,7 +3147,6 @@ export default async function Styleguide() {
             >
               Das Feld-Diagramm zeigt inzwischen anderes Material: Hürden: 0 → 1.
             </SectionMessage>
-            <AnmeldeHinweis />
             <SchliessbareMeldung />
             <SectionMessage appearance="warning">
               warning - im Kit, derzeit ohne Ort.
@@ -3942,6 +3938,85 @@ export default async function Styleguide() {
           </article>
         </Section>
 
+        <Section id="rechtliches">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Die Seiten ohne Anmeldung (Epic #668) in der Routen-Gruppe <code>(start)</code>: Startseite, Impressum,
+            Datenschutz und Vereinbarung. Kein neuer Baustein im Kit - alles aus Typo-Rollen, <code>ButtonLink</code>{" "}
+            und <code>SectionMessage</code>; die Teile unten sind nur Gerüst, darum liegen sie neben ihren Seiten
+            und nicht in <code>components/ui</code>.
+          </p>
+          <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+            <li>
+              <strong>Kopf- und Fusszeile der Gruppe</strong> (<code>app/(start)/layout.tsx</code>) - statt der
+              Seitenleiste: links die Bildmarke mit «KiFu» auf «/», rechts «Anmelden» (<code>text</code>) und
+              «Kostenlos registrieren» (<code>filled</code>), angemeldet «Zur App». Unten eine Reihe leiser
+              Textlinks (on-surface-mittel). Immer hell.
+            </li>
+            <li>
+              <strong>Rechtliche Linkreihe</strong> (<code>RechtlicheLinks</code>) - Impressum und Datenschutz dort,
+              wo es diese Fusszeile nicht gibt: Anmeldeseiten und privater Link. <code>davor</code> nimmt weitere
+              Links derselben Reihe auf (<code>RechtsLink</code>), etwa «Cookies».
+            </li>
+            <li>
+              <strong>Rechtsseite</strong> (<code>RechtsSeite</code>, <code>RechtsAbschnitt</code>) - Titel, Stand
+              und Entwurfshinweis als Warning-<code>SectionMessage</code>, dann Abschnitte als Fliesstext in einer
+              lesbaren Spalte; Verweise im Text als <code>TextLink</code>.
+            </li>
+            <li>
+              <strong>Platzhalter</strong> (<code>Platzhalter</code>) - eine noch fehlende Angabe im Fliesstext,
+              in eckigen Klammern auf der Warning-Fläche. Nur für Entwürfe: Auf Produktion steht keiner mehr.
+            </li>
+            <li>
+              <strong>Startseiten-Palette</strong> (<code>.start-palette</code> in <code>globals.css</code>, am
+              Layout der Gruppe) - die Pastellflächen und Kacheltöne des Gestaltungsentwurfs. Neu, weil die
+              Anwendung keine Fläche ohne Bedeutung hat: Lozenge und Section Message werten (erledigt, Hinweis,
+              Fehler), ihre Akzente sind die Alterskategorien. Wie das Diagramm nicht im <code>@theme</code>,
+              also keine Utility für die Anwendung; nur hell, weil die Startseite immer hell ist. Angewandt als{" "}
+              <code>bg-(--start-team)</code>; Kontraste in <code>check:farben</code>.
+            </li>
+          </ul>
+          <div className="start-palette mb-5 flex max-w-2xl flex-wrap gap-3 [color-scheme:light]">
+            {(
+              [
+                ["verein", "on-surface-mittel"],
+                ["team", "primary"],
+                ["kalender", "--start-on-kalender"],
+                ["schnuppern", "--start-on-schnuppern"],
+                ["mitteilungen", "--start-on-mitteilungen"],
+                ["training", "--start-on-training"],
+                ["uebungen", "--start-on-uebungen"],
+                ["ki", "--start-on-ki"],
+              ] as const
+            ).map(([flaeche, zeichen]) => (
+              <span
+                key={flaeche}
+                className="type-label-medium flex size-20 items-end rounded-dialog p-2"
+                style={{
+                  backgroundColor: `var(--start-${flaeche})`,
+                  color: zeichen.startsWith("--") ? `var(${zeichen})` : `var(--color-${zeichen})`,
+                }}
+              >
+                {flaeche}
+              </span>
+            ))}
+            <span className="type-label-medium flex size-20 items-end rounded-dialog bg-(--start-dunkel) p-2 text-on-umkehr">
+              dunkel
+            </span>
+            <span className="type-label-medium flex size-20 items-end rounded-dialog border-2 border-primary bg-(--start-hervorgehoben) p-2 text-on-surface">
+              hervorgehoben
+            </span>
+          </div>
+          <div className="flex max-w-2xl flex-col gap-6 rounded-flaeche bg-elev-00 p-5">
+            <RechtlicheLinks davor={<RechtsLink href="/cookies">Cookies</RechtsLink>} />
+            <RechtsAbschnitt titel="Wer KiFu betreibt">
+              <p>
+                <Platzhalter>[Trägerschaft in Gründung]</Platzhalter>, erreichbar über die{" "}
+                <TextLink href="/datenschutz">Datenschutzerklärung</TextLink>.
+              </p>
+            </RechtsAbschnitt>
+          </div>
+        </Section>
+
         <Section id="karten">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Die Karte ist eine Höhenstufe (<code>bg-elev-01</code>,{" "}
@@ -3965,6 +4040,14 @@ export default async function Styleguide() {
             Beispielen. Überfahren färbt die ganze Karte über{" "}
             <code>state</code> - kein eigener Hover-Ton, und die Ebene sitzt auf
             dem Link, der die Karte deckt.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <code>ohneLink</code> zeigt die Karte nur (vierte Karte): ohne Link
+            und ohne Zustands-Ebene, sonst gleich. Für die Beispiele der
+            Startseite (#670) - ohne Konto führte eine Übung bloss zurück auf
+            die Startseite, also wäre ein Link dort ein Versprechen, das er nicht
+            hält. Keine eigene Karte, damit Bild, Herkunft und Eckdaten an einer
+            Stelle bleiben.
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {/* actionSlot demonstriert die Slot-Verdrahtung: das UI-Kit bleibt
@@ -4027,6 +4110,24 @@ export default async function Styleguide() {
                 }),
                 herkunft: "user",
                 visibility: "public",
+              }}
+            />
+            <ExerciseCard
+              ohneLink
+              ex={{
+                slug: "fangis",
+                name: "Fangis",
+                eckdaten: uebungEckdaten({
+                  altersstufe: "kinderfussball",
+                  trainingsteil: "auffangen",
+                  hauptteilkategorie: null,
+                  feldtyp: "freies_feld",
+                  spielfeld_laenge_m: null,
+                  spielfeld_breite_m: null,
+                  kategorien: ["G", "F", "E"],
+                  anzahl_kinder: { min: 10, max: 12 },
+                }),
+                herkunft: "manual",
               }}
             />
           </div>

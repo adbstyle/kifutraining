@@ -58,7 +58,7 @@ export const SucheEingabe = z.object({
   nur_eigene: z
     .boolean()
     .optional()
-    .describe("Nur Übungen dieses Kontos (öffentliche wie private Entwürfe)."),
+    .describe("Nur Übungen dieses Kontos (in der Community wie private Entwürfe)."),
   limit: z.number().int().min(1).max(50).default(20).describe("Treffer je Seite, höchstens 50."),
   offset: z
     .number()

@@ -353,8 +353,8 @@ export type TrainingListRow = {
   name: string;
   visibility: "public" | "private";
   /** Gehört das Training dem aktuellen USER? Entscheidet über Kennzeichnung und
-   *  Ziel des Eintrags in der Übersicht (Story B AK 3–5); `false` für Besucher
-   *  ohne Konto. */
+   *  Ziel des Eintrags in der Übersicht (Story B AK 3–5); `false`, wenn der
+   *  Aufruf keine Kennung mitgibt. */
   istEigen: boolean;
   /** Nach welchem Lehrmittel das Training geführt wird (Story 1,
    *  Übungswelten). */
@@ -454,8 +454,7 @@ export type TrainingPoolFilter = TrainingListFilters & {
  *  Standardmässig alles, was der USER sehen darf: die öffentlichen Trainings der
  *  Community UND seine eigenen, Entwürfe eingeschlossen (Story B AK 1). Welche
  *  Zeilen das sind, entscheidet die RLS — deshalb steht hier KEIN
- *  Sichtbarkeitsfilter. Besucher ohne Konto bekommen dadurch von selbst nur die
- *  öffentlichen (AK 6). Die Facette `mine` grenzt auf die eigenen ein (AK 2).
+ *  Sichtbarkeitsfilter. Ohne Konto liest die RLS nichts (#669). Die Facette `mine` grenzt auf die eigenen ein (AK 2).
  *
  *  Team-Trainings erscheinen in keiner der beiden Sichten: sie gehören dem Team
  *  und leben im Team-Bereich (AK 8). Sie müssen AUSDRÜCKLICH ausgeschlossen
