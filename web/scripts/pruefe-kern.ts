@@ -6584,9 +6584,9 @@ pruefe("Startseite (#670): eigene Gruppe ohne Seitenleiste, immer hell, feste An
     assert.match(t, /export const dynamic = "force-dynamic";/, d);
   }
   // AK 3: registrieren (anmelden in der Kopfzeile); angemeldet über «/startseite» stattdessen «Zur App».
-  assert.match(seite, /angemeldet \? \(\s*<ButtonLink href="\/" variant=\{variant\}>\s*Zur App\s*<\/ButtonLink>\s*\) : \(\s*<ButtonLink href="\/registrieren" variant=\{variant\}>/);
-  // Der Weg hinein steht im Einstieg und bei den Preisen, nicht unter jedem Abschnitt: Die Kopfzeile klebt (PO 2026-11-23).
-  assert.equal((seite.match(/<Registrieren angemeldet=\{angemeldet\}/g) ?? []).length, 3, "der Weg hinein: Einstieg und zwei Preiskarten");
+  assert.match(seite, /angemeldet \? \(\s*<ButtonLink href="\/" variant="filled">\s*Zur App\s*<\/ButtonLink>\s*\) : \(\s*<ButtonLink href="\/registrieren" variant="filled">/);
+  // Der Weg hinein steht nur im Einstieg, nicht unter jedem Abschnitt und in keiner Preiskarte: Die Kopfzeile klebt (PO 2026-11-23).
+  assert.equal((seite.match(/<Registrieren angemeldet=\{angemeldet\}/g) ?? []).length, 1, "der Weg hinein: nur im Einstieg");
   // AK 2 (nach dem Gestaltungsentwurf): Verein, Team und Kalender, Schnuppern, Mitteilungen, Training und Übungen, KI-Assistent.
   for (const t of ["Verein", "Team", "Kalender", "Schnuppern", "Mitteilungen", "Training", "Übungen", "KI-Assistent"])
     assert.ok(seite.includes(`label: "${t}"`), `Kachel «${t}»`);

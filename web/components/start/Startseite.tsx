@@ -437,7 +437,6 @@ export function Startseite({
             titel="Heute"
             unter="Bis das Preismodell eingeführt wird"
             preis="CHF 0"
-            aktion={<Registrieren angemeldet={angemeldet} variant="outlined" />}
           >
             <li>Alle Funktionen, auch der KI-Assistent</li>
             <li>
@@ -454,7 +453,6 @@ export function Startseite({
             preis={`CHF ${GEPLANTER_PREIS_CHF}`}
             proMonat
             hervorgehoben
-            aktion={<Registrieren angemeldet={angemeldet} />}
           >
             <li>Bis {SPIELER_MAX} Spieler:innen</li>
             <li>Ganzes Trainerteam</li>
@@ -471,24 +469,17 @@ export function Startseite({
   );
 }
 
-/** Der Weg hinein: «Kostenlos registrieren» (oder ein anderer Text, etwa
- *  «Verein gründen») — angemeldet über «/startseite» stattdessen «Zur App». */
-function Registrieren({
-  angemeldet,
-  variant = "filled",
-  children = "Kostenlos registrieren",
-}: {
-  angemeldet: boolean;
-  variant?: "filled" | "outlined";
-  children?: string;
-}) {
+/** Der Weg hinein im Einstieg: «Kostenlos registrieren» — angemeldet über
+ *  «/startseite» stattdessen «Zur App». Sonst trägt ihn die klebende
+ *  Kopfzeile (PO 2026-11-23), nicht jeder Abschnitt und keine Preiskarte. */
+function Registrieren({ angemeldet }: { angemeldet: boolean }) {
   return angemeldet ? (
-    <ButtonLink href="/" variant={variant}>
+    <ButtonLink href="/" variant="filled">
       Zur App
     </ButtonLink>
   ) : (
-    <ButtonLink href="/registrieren" variant={variant}>
-      {children}
+    <ButtonLink href="/registrieren" variant="filled">
+      Kostenlos registrieren
     </ButtonLink>
   );
 }
@@ -582,7 +573,6 @@ function Preis({
   preis,
   proMonat = false,
   hervorgehoben = false,
-  aktion,
   children,
 }: {
   titel: string;
@@ -590,7 +580,6 @@ function Preis({
   preis: string;
   proMonat?: boolean;
   hervorgehoben?: boolean;
-  aktion: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -609,7 +598,6 @@ function Preis({
         {proMonat && <span className="type-body-medium text-on-surface-mittel">pro Team und Monat</span>}
       </p>
       <ul className="type-body-medium m-0 flex list-none flex-col gap-2 p-0 text-on-surface">{children}</ul>
-      <div className="mt-auto">{aktion}</div>
     </div>
   );
 }
