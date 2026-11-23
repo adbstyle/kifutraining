@@ -187,7 +187,7 @@ export function Startseite({
       <nav
         id="funktionen"
         aria-label="Funktionen"
-        className="mx-auto max-w-[1200px] scroll-mt-4 px-4 pb-[88px] pt-6 sm:px-6"
+        className="mx-auto max-w-[1200px] scroll-mt-24 px-4 pb-[88px] pt-6 sm:px-6"
       >
         <ul className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(96px,1fr))] gap-3 p-0 sm:grid-cols-[repeat(auto-fit,minmax(112px,1fr))]">
           {FUNKTIONEN.map((f) => (
@@ -257,7 +257,7 @@ export function Startseite({
       </section>
 
       {/* KI-Assistent. */}
-      <section id="ki" aria-labelledby="ki-titel" className="scroll-mt-4 bg-elev-00">
+      <section id="ki" aria-labelledby="ki-titel" className="scroll-mt-24 bg-elev-00">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-12 px-4 py-16 sm:px-6 sm:py-[88px] lg:flex-row lg:items-start">
           <div className="flex min-w-0 flex-col gap-4 lg:flex-[1_1_360px]">
             <span className="type-title-small text-primary">KI-Assistent</span>
@@ -284,7 +284,7 @@ export function Startseite({
       </section>
 
       {/* Verein. */}
-      <section id="verein" aria-labelledby="verein-titel" className="scroll-mt-4">
+      <section id="verein" aria-labelledby="verein-titel" className="scroll-mt-24">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-12 px-4 py-16 sm:px-6 sm:py-24">
           <Kopf eyebrow="Verein" id="verein-titel" titel="In einem Abend vom Verein zu allen Teams.">
             Vier Schritte, und jedes Team arbeitet mit derselben Spielerliste. Keine Kopien, keine verwaisten Listen nach
@@ -315,7 +315,7 @@ export function Startseite({
       </section>
 
       {/* Team und Kalender. */}
-      <section id="team" aria-labelledby="team-titel" className="scroll-mt-4">
+      <section id="team" aria-labelledby="team-titel" className="scroll-mt-24">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-12 px-4 py-16 sm:px-6 sm:py-24">
           {/* Entwurf: «Die Eltern wissen, was läuft.» Angaben am privaten Link
               richten sich nie nur an Eltern (#659 AK 1–3, Wächter in check:kern). */}
@@ -358,7 +358,7 @@ export function Startseite({
       </section>
 
       {/* Training und Übungen: die Beispiele aus dem Manual (AK 4–6). */}
-      <section id="training" aria-labelledby="training-titel" className="scroll-mt-4">
+      <section id="training" aria-labelledby="training-titel" className="scroll-mt-24">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-12 px-4 py-16 sm:px-6 sm:py-24">
           <Kopf eyebrow="Training und Übungen" id="training-titel" titel="Am Sonntag vorbereitet. Am Dienstag auf dem Platz.">
             Trainings nach dem Trainingsschema zusammenstellen und auf dem Platz Schritt für Schritt durchführen – mit
@@ -424,7 +424,7 @@ export function Startseite({
       <section
         id="preise"
         aria-labelledby="preise-titel"
-        className="mx-auto flex max-w-[1200px] scroll-mt-4 flex-col items-center gap-4 px-4 pb-10 pt-16 text-center sm:px-6 sm:pt-[88px]"
+        className="mx-auto flex max-w-[1200px] scroll-mt-24 flex-col items-center gap-4 px-4 pb-10 pt-16 text-center sm:px-6 sm:pt-[88px]"
       >
         <span className="type-title-small text-primary">Preise</span>
         <h2 id="preise-titel" className="type-headline-large text-on-surface sm:type-display-small">

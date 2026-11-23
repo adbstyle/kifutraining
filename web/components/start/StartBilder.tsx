@@ -141,8 +141,8 @@ export function Spielerliste() {
           <span className="flex size-10 items-center justify-center text-on-surface-mittel">
             <FileUp size={20} />
           </span>
-          <span className={cn(buttonClasses("outlined"), "text-primary")}>
-            <Plus size={18} /> Spieler:in erfassen
+          <span className={buttonClasses("outlined")}>
+            <Plus size={18} strokeWidth={2} aria-hidden /> Spieler:in erfassen
           </span>
         </span>
       </div>
@@ -298,7 +298,7 @@ export function PrivaterLink() {
           </div>
           <div className="flex flex-wrap gap-2">
             <span className={buttonClasses("umkehr")}>Anmelden</span>
-            <span className={cn(buttonClasses("outlined"), "text-primary")}>Abmelden</span>
+            <span className={buttonClasses("outlined")}>Abmelden</span>
           </div>
           <span className="type-body-medium">Treffpunkt 08:35, Heimfeld {n.heimfeld}</span>
         </li>

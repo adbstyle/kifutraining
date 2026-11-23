@@ -30,7 +30,8 @@ export default async function StartLayout({ children }: { children: React.ReactN
       <DarstellungsMarke darstellung="hell" />
       {/* Die Figurteile der Feld-Diagramme auf den Übungskarten, einmal pro Seite. */}
       <FigurenSprite />
-      <header>
+      {/* Klebt oben (PO): Der Inhalt scrollt darunter durch, Navigation und «Zur App»/Anmelden bleiben erreichbar. */}
+      <header className="sticky top-0 z-30 border-b border-linie bg-elev-01">
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-4 px-4 py-[18px] sm:px-6">
           <Link href="/" className="focus-ring flex items-center gap-2.5 rounded-flaeche p-1.5 text-on-surface">
             {/* Dieselbe Bildmarke wie Favicon und Seitenleiste; den Namen sagt der Text. */}
