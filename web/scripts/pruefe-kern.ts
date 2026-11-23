@@ -6561,12 +6561,13 @@ pruefe("Startseite (#670): eigene Gruppe ohne Seitenleiste, immer hell, feste An
   assert.match(layout, /user \? \(\s*<ButtonLink href="\/" variant="filled">\s*Zur App/);
   assert.match(layout, /<ButtonLink href="\/login" variant="text">\s*Anmelden/);
   assert.match(layout, /<ButtonLink href="\/registrieren" variant="filled"[^>]*>\s*Kostenlos registrieren/);
-  // Gestaltungsentwurf: Sprünge zu Funktionen, KI-Assistent und Preisen — angemeldet auf «/startseite» (#671).
+  // Gestaltungsentwurf: Sprünge zu Funktionen und KI-Assistent — angemeldet auf «/startseite» (#671). Kein Sprung zu den Preisen (PO 2026-11-23).
   assert.match(layout, /const start = user \? STARTSEITE_PFAD : "\/";/);
-  for (const [ziel, text] of [["funktionen", "Funktionen"], ["ki", "KI-Assistent"], ["preise", "Preise"]]) {
+  for (const [ziel, text] of [["funktionen", "Funktionen"], ["ki", "KI-Assistent"]]) {
     assert.ok(layout.includes(`<KopfSprung href={\`\${start}#${ziel}\`}>${text}</KopfSprung>`), `Sprung «${text}»`);
     assert.match(seite, new RegExp(`id="${ziel}"`), `Ziel #${ziel}`);
   }
+  assert.ok(!layout.includes("#preise"), "kein Sprung zu den Preisen in der Kopfzeile");
   // AK 10: Versionen und Cookies in der Fusszeile, dazu das Repository.
   assert.match(layout, /<FussLink href="\/versionen">Versionen<\/FussLink>/);
   assert.match(layout, /<FussLink href="\/cookies">Cookies<\/FussLink>/);

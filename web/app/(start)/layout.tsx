@@ -43,7 +43,6 @@ export default async function StartLayout({ children }: { children: React.ReactN
             {/* Schmal fehlen die Sprünge: Die Abschnitte folgen ohnehin untereinander. */}
             <KopfSprung href={`${start}#funktionen`}>Funktionen</KopfSprung>
             <KopfSprung href={`${start}#ki`}>KI-Assistent</KopfSprung>
-            <KopfSprung href={`${start}#preise`}>Preise</KopfSprung>
             {user ? (
               <ButtonLink href="/" variant="filled">
                 Zur App
