@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-11-22 (Release 1.52.0). Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-11-23 (Release 1.53.0). Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -103,7 +103,7 @@ Namen, und die Stufe des Teams führt direkt in den Trainingsplan — eine eigen
 es nicht, weil das Team ohnehin dort beginnt. Ein Termin-Training (siehe „Trainings
 zuordnen") trägt immer sein Termindatum.
 
-Ein persönliches oder öffentliches Training führt unverändert in die Trainingsübersicht — auch
+Ein persönliches Training, ob Entwurf oder in der Community, führt unverändert in die Trainingsübersicht — auch
 die persönliche Kopie, die beim Übernehmen eines Team-Trainings entsteht.
 
 ## Der Kalender des Teams
@@ -224,14 +224,14 @@ Danach ist sie eigenständig: Eine Anpassung für nächste Woche verändert die 
 Woche nicht.
 
 Am Termin stehen die Trainings des Team-Bestands zur Wahl und darunter, unter „Meine
-Trainings", die eigenen persönlichen Trainings beider Altersstufen, Entwürfe wie öffentliche.
+Trainings", die eigenen persönlichen Trainings beider Altersstufen, Entwürfe wie solche in der Community.
 Vom Training aus steht jeder Termin des Teams zur Wahl, auch vergangene, ausser ausgefallenen;
 bei jedem steht seine Zeit und ob er ein Training trägt und was mit ihm geschähe. Den Weg gibt
 es auch vom persönlichen Training aus: Hinter den drei Punkten liegt „Einem Team-Termin
 zuordnen", das erst nach dem Team fragt, sofern man in mehreren ist, und dann nach dem Termin.
 Übernommen wird das Training in dem Stand, den es beim Zuordnen hat. Erfüllt es die Bedingungen
-eines Team-Trainings nicht, lehnt die Anwendung ab und nennt den Grund. Ein öffentliches
-Training einer anderen Person lässt sich erst zuordnen, nachdem man es zu sich oder ins Team
+eines Team-Trainings nicht, lehnt die Anwendung ab und nennt den Grund. Ein Training einer
+anderen Person aus der Community lässt sich erst zuordnen, nachdem man es zu sich oder ins Team
 übernommen hat.
 
 Ein Termin-Training lebt mit seinem Termin. Verliert es ihn — weil man es löst, ein anderes
@@ -1179,7 +1179,10 @@ Team mehr angehört.
 
 Wer den Link öffnet, braucht weder Konto noch Anmeldung. Die Seite ist fürs Telefon gebaut, kommt
 ohne Seitenleiste aus; unten am Bildschirmrand klebt nur eine schmale Leiste mit „Fragen und
-Feedback" (siehe [Navigation](navigation.md#fragen-und-feedback)). Ihr Kopf lautet „Termine für"
+Feedback" (siehe [Navigation](navigation.md#fragen-und-feedback)). Erst ganz am Ende der Seite,
+unter dieser Leiste, stehen die Links „Impressum" und „Datenschutz"; sie stehen ebenso auf der
+Seite „Infos" und auf der Abholseite, nicht aber im Ausdruck. Beide Seiten sind Entwürfe und
+tragen oben „Entwurf – rechtlich noch nicht geprüft." Der Kopf der Seite hinter dem Link lautet „Termine für"
 mit dem Namen der Spieler:in; gleich dahinter stehen das ⓘ „Infos und Erklärungen", das
 Kalender-Zeichen und die Glocke der Benachrichtigungen, darunter ihre Teams alphabetisch als
 Plaketten. Erklärungen stehen im Kopf keine: Wie man meldet, die Infos zum Team und wer die
@@ -1666,21 +1669,22 @@ und die Namen weiterer Teams einer Spieler:in; aus einem Team nimmt er sie erst 
 Rückfrage, die dieselben Sätze nennt wie die Anwendung, und löschen kann er keine. Kalender-Abos,
 die Teams selbst und den Verein verwaltet er nicht.
 
-## Veröffentlichen
+## In die Community stellen
 
-Ein persönliches Training lässt sich öffentlich schalten und jederzeit wieder auf Entwurf
-zurücknehmen. Es entsteht keine Kopie: dasselbe Training wird sichtbar und bleibt bearbeitbar,
-die Community sieht jeweils den aktuellen Stand.
+Ein persönliches Training lässt sich mit „In die Community stellen" für alle angemeldeten Konten
+sichtbar machen und jederzeit wieder auf Entwurf zurücknehmen. Es entsteht keine Kopie: dasselbe
+Training wird sichtbar und bleibt bearbeitbar, die Community sieht jeweils den aktuellen Stand.
+Ohne Anmeldung sieht es niemand.
 
-Öffentlich sein setzt in beiden Altersstufen mindestens eine Alterskategorie voraus, dazu die
+In der Community sein setzt in beiden Altersstufen mindestens eine Alterskategorie voraus, dazu die
 belegten Teile des jeweiligen Manuals — im Kinderfussball Einleitung und freies Spiel, im
 Juniorenfussball vier der sieben Blöcke. Die [Trainings-Seite](trainings.md) nennt sie im
 Einzelnen. Diese Bedingungen gelten dauerhaft, nicht nur beim Umschalten, und die Datenebene
 erzwingt sie, nicht nur die Oberfläche. Wer sein Training darunter bringen will, setzt es
 zuerst auf Entwurf.
 
-Team-Trainings lassen sich nicht direkt veröffentlichen — wer eine Team-Arbeit teilen will,
-übernimmt sie zuerst zu sich. An jedem öffentlichen Training steht der Anzeigename seines
+Team-Trainings lassen sich nicht direkt in die Community stellen — wer eine Team-Arbeit teilen
+will, übernimmt sie zuerst zu sich. An jedem Training in der Community steht der Anzeigename seines
 Urhebers; bei gelöschten Konten bleibt es anonymisiert erhalten.
 
 ## Team verlassen
@@ -1976,8 +1980,9 @@ man ihn erneuert — das gilt dann für alle Teams der Spieler:in —, und erneu
 nie alle auf einmal. Welche Angaben gespeichert sind, sagt nur die Abholseite; die Seite „Infos" hinter dem
 Link nennt, wer sie sieht und wer verantwortlich ist, die Ansicht „Benachrichtigungen" nur, wie
 lange diese bleiben und dass das Gerät sich das Gesehene merkt, und der Dialog vor dem Einschalten
-der Mitteilungen, was KiFu dafür speichert. Eine vollständige
-Datenschutzerklärung gibt es nicht (siehe [Navigation](navigation.md#bekannte-grenzen)).
+der Mitteilungen, was KiFu dafür speichert. Die Datenschutzerklärung hinter dem Link „Datenschutz"
+am Seitenende ist ein Entwurf, den die Rechtsberatung noch nicht geprüft hat, mit Platzhaltern
+etwa für die Trägerschaft.
 
 Die Eingrenzung auf Trainings oder Spiele merkt sich die Seite nicht: Neu geöffnet oder neu geladen
 zeigt sie wieder alle Termine. Sie grenzt nur die Liste ein, nicht das Kalender-Abo, und nur nach

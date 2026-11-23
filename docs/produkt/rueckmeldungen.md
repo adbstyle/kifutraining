@@ -1,12 +1,12 @@
 # Rückmeldungen
 
-Stand 2026-11-22 (Release 1.52.0). Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
+Stand 2026-11-23 (Release 1.53.0). Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
 
 ## Zwei Arten, etwas zu sagen
 
 Die Anwendung unterscheidet, ob sie über einen Vorgang berichtet oder über einen Zustand. Ein
 Vorgang ist etwas, das der Trainer eben ausgelöst hat: eine Übung kopiert, einen Termin
-verschoben, ein Training veröffentlicht. Ein Zustand ist etwas, das er in einer Ansicht
+verschoben, ein Training in die Community gestellt. Ein Zustand ist etwas, das er in einer Ansicht
 vorfindet und das stehen bleibt, bis es erledigt ist: ein Formular, dessen Speichern
 gescheitert ist, eine Übung, deren Feld-Diagramm anderes Material zeigt als erfasst.
 
@@ -56,8 +56,9 @@ an der Karte des Termins; auf der Abholseite steht jede Antwort als Hinweis übe
 Ist eine neue Version erschienen, die in diesem Browser noch nicht angesehen wurde, trägt der
 Avatar auf der Konto-Karte unten in der Seitenleiste einen Punkt, und im Konto-Menü steht bei
 «Was ist neu» die Plakette «Neu» statt der Versionsnummer. Beides bleibt stehen, bis die Seite
-mit den Versionen geöffnet wurde. Das gilt auch ohne Anmeldung: Die Karte «Nicht angemeldet»
-führt ebenso zu «Was ist neu». Im selben Menü steht für Angemeldete «Fragen und
+mit den Versionen geöffnet wurde. Ohne Anmeldung gibt es weder Seitenleiste noch Punkt: Die
+Versionen stehen dann über «Versionen» in der Fusszeile der Startseite offen, ohne Hinweis auf eine
+neue. Im selben Menü steht für Angemeldete «Fragen und
 Feedback», der Weg, der Anwendung selbst etwas zu melden (siehe [Navigation](navigation.md)).
 
 ## Bekannte Grenzen

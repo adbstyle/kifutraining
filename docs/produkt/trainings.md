@@ -1,7 +1,14 @@
 # Trainings
 
-Stand 2026-11-22 (Release 1.52.0). Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-11-23 (Release 1.53.0). Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
+
+Trainings gibt es nur für angemeldete Konten. Wer ohne Anmeldung einen Verweis auf die
+Trainingsübersicht, ein Training, seine Durchführen-Ansicht oder seinen Druck öffnet, landet auf
+der Startseite mit dem Hinweis, dass dieser Inhalt nur mit Konto sichtbar ist, und den Wegen
+„Anmelden" und „Kostenlos registrieren"; wer sich von dort anmeldet, kommt beim Ziel des
+Verweises an. Ein Verweis auf das Bearbeiten oder auf „Neues Training" führt ohne Anmeldung
+direkt zur Anmeldung und danach zurück (siehe [Übungen](uebungen.md#nur-mit-konto)).
 
 ## Die Altersstufe wird beim Anlegen gewählt
 
@@ -64,7 +71,7 @@ Bearbeiten fehlt, während man das Training bereits bearbeitet — dort ist man 
 wird dagegen von beiden Orten aus.
 
 Hinter den drei Punkten liegt, was seltener gebraucht wird oder nicht danebengreifen darf, immer
-in derselben Reihenfolge: übernehmen, veröffentlichen beziehungsweise auf Entwurf setzen, ins
+in derselben Reihenfolge: übernehmen, in die Community stellen beziehungsweise auf Entwurf setzen, ins
 Team stellen, einem Team-Termin zuordnen und zuunterst löschen. Übernehmen und Ins-Team-Stellen
 fragen in einem zweiten Schritt nach dem Ziel — man selbst oder eines der eigenen Teams —; das
 Zuordnen zu einem Team-Termin fragt nach dem Team und dem Termin und legt dort eine Kopie an
@@ -73,14 +80,14 @@ bestätigen; war ein Team-Training einem Termin zugeordnet, sagt der Dialog, das
 Training im Trainingsplan des Teams bestehen bleibt. Angeboten wird jeweils nur, was dem
 Betrachter offensteht: Wer ein fremdes Training bloss ansieht, findet die drei Punkte gar nicht,
 Ins-Team-Stellen und das Zuordnen zu einem Team-Termin gibt es nur für jemanden, der in einem
-Team ist. An einem Team-Training gibt es weder Veröffentlichen noch Ins-Team-Stellen; steht es im
+Team ist. An einem Team-Training gibt es weder „In die Community stellen" noch Ins-Team-Stellen; steht es im
 Bestand des Teams, liegen dafür „Zu mir übernehmen" — eine persönliche Kopie, das Original bleibt
 im Team — und „Einem Team-Termin zuordnen", das ohne Frage nach dem Team gleich die Termine
 seines Teams anbietet. Ein Termin-Training hat beides nicht, sondern „In den Team-Bestand
 kopieren": Es legt eine Kopie im Bestand an und bleibt selbst an seinem Termin.
 
 Trainings beider Altersstufen lassen sich auch im Gespräch mit einem verbundenen KI-Assistenten
-anlegen, zusammenstellen, veröffentlichen, übernehmen und löschen (siehe
+anlegen, zusammenstellen, in die Community stellen, übernehmen und löschen (siehe
 [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)). Es gelten dieselben Regeln, der
 Assistent erfährt dieselben Hinweise und Zeitrichtwerte, und was er zusammenstellt, sieht hier
 genauso aus, als hätte man es selbst getan.
@@ -315,7 +322,7 @@ kann nicht an zwei Orten gleichzeitig sein —, und Übungen desselben Wechsels,
 sind. Beides steht als Zeile am Fuss der Hauptteil-Karte, die Gruppen darin in der Reihenfolge der
 Leiste; die Doppelbelegung färbt zusätzlich den betroffenen Chip im Durchlauf und umrandet den
 Chip der Gruppe in der Leiste, die ungleiche Länge den Rahmen des betroffenen Dauerfelds. Gemeldet
-wird es, gesperrt nicht: Speichern, Weiterbearbeiten und Veröffentlichen bleiben unberührt. Eine
+wird es, gesperrt nicht: Speichern, Weiterbearbeiten und In-die-Community-Stellen bleiben unberührt. Eine
 Übung ohne erfasste Dauer zählt beim Längenvergleich nicht mit.
 
 Zwei Vorgänge lösen eine Rückfrage aus, weil dabei Zuweisungen wegfallen, die nirgends sonst
@@ -326,7 +333,7 @@ Hauptteil in einen anderen Teil, fragt die Anwendung nicht nach — dort gelten 
 die Zuweisungen fallen still weg.
 
 Kopiert jemand ein ganzes Training — ins Team stellen, ein Team-Training zu sich übernehmen, ein
-öffentliches Training übernehmen, ein Training einem Termin zuordnen (der Termin bekommt immer
+ein Training der Community übernehmen, ein Training einem Termin zuordnen (der Termin bekommt immer
 eine eigene Kopie), ein Termin-Training in den Team-Bestand kopieren —, reisen
 Gruppen, Durchlauf und Notizen mit: Die Kopie führt dieselben Bezeichnungen in derselben
 Reihenfolge, verteilt die Übungen des Hauptteils auf dieselben Wechsel und trägt dieselben
@@ -428,7 +435,7 @@ ersten Moment eigenständig, und ein Vermerk darauf sagte über ihren heutigen I
 
 ## Durchführen und drucken
 
-Beide Ansichten stehen für jedes sichtbare Training offen, auch für fremde. Die
+Beide Ansichten stehen jedem angemeldeten Konto für jedes Training offen, das es sehen darf, auch für fremde. Die
 Durchführen-Ansicht ist für den Platz gedacht: ein Trainingsteil nach dem anderen mit seinen
 belegten Blöcken, Bedienflächen in derselben Höhe wie überall, und der Bildschirm bleibt wach, solange sie geöffnet
 ist. Das Ziel steht zu Beginn, wo es beim Anpfiff noch zählt. Jede Übung erscheint mit
@@ -478,23 +485,28 @@ Variante, etwa „Hauptteil · 21 Kinder". Der Ausdruck nennt sie zusätzlich im
 Ziel: Ist der Hauptteil dieser Variante leer, fällt sein Abschnitt samt Überschrift weg, und auf
 dem Blatt stünde sonst nirgends, welche gedruckt wurde. Gedruckt wird je Variante ein eigener Ausdruck.
 
-## Veröffentlichen
+## In die Community stellen
 
-Ein Training ist entweder ein Entwurf oder öffentlich; der Trainer schaltet zwischen den beiden
-Zuständen um. Veröffentlicht wird dabei das Training selbst — es entsteht keine Kopie und
-nichts wird eingefroren. Der eigene Anzeigename steht als Urheber daran und ist für alle
-sichtbar; die Tragweite ist bei jedem Veröffentlichen zu bestätigen.
+Ein Training ist entweder ein Entwurf oder in der Community; der Trainer schaltet mit „In die
+Community stellen" und „Auf Entwurf setzen" zwischen den beiden Zuständen um. In der Community
+steht dabei das Training selbst — es entsteht keine Kopie und nichts wird eingefroren. Sichtbar
+ist es dann für alle angemeldeten Konten. Der eigene Anzeigename steht als Urheber daran und ist
+in der Community sichtbar; die Tragweite ist jedes Mal im Dialog „Training in die Community
+stellen?" zu bestätigen. Danach meldet die Anwendung „Das Training ist jetzt in der Community.",
+und das Training trägt in Übersicht, Detail, Eigenschaften und Trainingskopf die Plakette
+„Community" — dieselbe wie eine Übung —, als Entwurf die Plakette „Entwurf".
 
-Ein öffentliches Training bleibt frei bearbeitbar, und die Community sieht jeweils den aktuellen
-Stand. Dafür gelten die Veröffentlichungsbedingungen nicht nur beim Umschalten, sondern solange
-es öffentlich ist. Mindestens eine Alterskategorie braucht es in beiden Altersstufen. Im
+Ein Training in der Community bleibt frei bearbeitbar, und die Community sieht jeweils den
+aktuellen Stand. Dafür gelten die Bedingungen für die Community nicht nur beim Umschalten, sondern
+solange es dort steht. Mindestens eine Alterskategorie braucht es in beiden Altersstufen. Im
 Kinderfussball kommt je mindestens eine Übung in der Einleitung und im freien Spiel dazu. Im
 Juniorenfussball ist die Schwelle höher: Aufwärmen, Spielform zum Trainingsziel, Explosivität
 sowie Spielformen und unterstützende Übungen müssen je mindestens eine Übung tragen. Spiel und
 Abschluss sind ausgenommen — dort bleibt es beim Hinweis —, das Auffangen ganz: Es ist weder
-Bedingung noch Hinweis, in keiner der beiden Altersstufen. Fehlt etwas, nennt die
-Anwendung genau das. Wer sein Training unter diese Schwelle bringen will, setzt es zuerst auf
-Entwurf — die Anwendung sagt das, statt die Änderung bloss abzulehnen.
+Bedingung noch Hinweis, in keiner der beiden Altersstufen. Fehlt etwas, nennt die Anwendung
+genau das, im Dialog „Noch nicht bereit für die Community" unter „Für die Community fehlt
+noch:". Wer sein Training unter diese Schwelle bringen will, setzt es zuerst auf Entwurf — die
+Anwendung sagt das, statt die Änderung bloss abzulehnen.
 
 Führt das Training mehrere Varianten seines Hauptteils, gilt die Bedingung an den Hauptteil in
 jeder einzeln: Im Kinderfussball braucht jede Variante ihr freies Spiel, im Juniorenfussball jede
@@ -505,29 +517,29 @@ abgewiesen, und die Meldung nennt auch dann Block und Variante — der Weg führ
 über den Entwurf.
 
 Eine eigene Übung, die noch privat in der Bibliothek liegt, bleibt dort privat, auch wenn ihre
-Fassung im veröffentlichten Training mitgelesen werden kann: wer ein Training veröffentlicht,
-veröffentlicht dessen Inhalt.
+Fassung im Training in der Community mitgelesen werden kann: wer ein Training in die Community
+stellt, stellt dessen Inhalt hinein.
 
-Auf Entwurf setzen lässt sich ein Training jederzeit; es verschwindet dann aus dem öffentlichen
-Bestand und bleibt im Übrigen unberührt. Löschen entfernt es zugleich aus der Öffentlichkeit —
-der Löschdialog sagt es. Kopien, die andere bereits übernommen haben, bleiben in jedem Fall
-bestehen; sie sind eigenständig.
+Auf Entwurf setzen lässt sich ein Training jederzeit; es verschwindet dann aus der Community und
+bleibt im Übrigen unberührt. Löschen entfernt es zugleich aus der Community — der Löschdialog
+sagt es. Kopien, die andere bereits übernommen haben, bleiben in jedem Fall bestehen; sie sind
+eigenständig.
 
-Team-Trainings sind nicht direkt veröffentlichbar. Wer eine Team-Arbeit veröffentlichen will,
-übernimmt sie zuerst in seinen persönlichen Bestand.
+Team-Trainings lassen sich nicht direkt in die Community stellen. Wer eine Team-Arbeit dort
+zeigen will, übernimmt sie zuerst in seinen persönlichen Bestand.
 
-Jedes öffentliche Training kann jede angemeldete Person übernehmen, auch ihr Urheber selbst. Es
-entsteht eine private, frei bearbeitbare Kopie des ganzen Trainings, samt seinem Ziel.
+Jedes Training der Community kann jedes angemeldete Konto übernehmen, auch sein Urheber selbst.
+Es entsteht eine private, frei bearbeitbare Kopie des ganzen Trainings, samt seinem Ziel.
 
 ## Finden
 
-Die Übersicht zeigt beides zusammen: die öffentlichen Trainings der Community, die auch ohne
-Konto zugänglich sind, und die eigenen, Entwürfe eingeschlossen. Der Chip «Meine Trainings» grenzt
-auf die selbst angelegten und übernommenen ein, Entwürfe wie veröffentlichte. Einen eigenen
+Die Übersicht heisst im Browser „Trainings - KiFu" und zeigt beides zusammen: die Trainings
+der Community und die eigenen, Entwürfe eingeschlossen. Der Chip «Meine Trainings» grenzt
+auf die selbst angelegten und übernommenen ein, Entwürfe wie die in der Community. Einen eigenen
 Eintrag in der Seitenleiste haben die eigenen Trainings nicht; mit gesetztem Chip bleibt dort
 «Trainings» der offene Eintrag, die Brotkrume lautet „Trainings › Meine Trainings", und die
 Adresse trägt die Eingrenzung mit, sodass auch bisherige Adressen und Verweise auf die eigenen
-Trainings so ankommen. Besucher ohne Konto sehen ausschliesslich die öffentlichen Trainings. Team-Trainings
+Trainings so ankommen. Team-Trainings
 erscheinen hier nicht; sie leben im Team-Bereich.
 
 Die Trainings stehen als Tabelle, ein Training je Zeile, über der Tabelle ihre Zahl. Die Spalten
@@ -535,7 +547,7 @@ sind Name, Sichtbarkeit bzw. Urheber, Übungen, Dauer und „Geändert" (das Dat
 Änderung in kurzer Form, 16.09.26). Altersstufe und Alterskategorien nennt die Zeile nicht; sie
 stehen im Detail. Der Name hat Vorrang: Er bekommt allen Platz, den die übrigen Spalten nicht
 brauchen, und bricht darum so selten wie möglich um. An einem eigenen Training steht, ob es ein
-Entwurf oder öffentlich ist, und das immer ganz; an einem fremden steht sein Urheber, sofern es
+Entwurf oder in der Community ist, als Plakette „Entwurf" oder „Community", und das immer ganz; an einem fremden steht sein Urheber, sofern es
 einen führt. Ein langer Urheber wird gekürzt und erscheint beim Überfahren ganz. Führt ein Training mehr
 als eine Variante seines Hauptteils, steht deren Zahl als Marke neben dem Namen, etwa „2
 Varianten" — hier wie im Trainingsbestand eines Teams; sonst bliebe verborgen, dass es
@@ -563,7 +575,7 @@ Detail zeigt wie die Ansicht Name, Alterskategorien, Dauer und Ziel, darunter in
 Trainingsteile mit ihren Übungen, deren Dauer und Feld-Diagramm oder Bild, oder die Eigenschaften.
 Führt das Training mehrere Varianten, lässt sich jede anzeigen, beginnend mit der vordersten. Die
 Aktionen sind dieselben wie in der Ansicht, je nach Berechtigung: durchführen und drucken (mit der
-angezeigten Variante), bearbeiten, übernehmen, veröffentlichen oder auf Entwurf setzen, ins Team
+angezeigten Variante), bearbeiten, übernehmen, in die Community stellen oder auf Entwurf setzen, ins Team
 stellen, einem Team-Termin zuordnen und löschen; ein fremdes Training lässt sich zudem in seiner
 Ansicht öffnen. Ändern lässt sich im Detail selbst nichts. Auswahl, Variante und Reiter stehen in
 der Adresse; ist ein so geöffnetes Training nicht zugänglich, steht die Übersicht ohne Detail da,
@@ -575,7 +587,7 @@ auf der Zeile.
 ## Konten ohne Verein
 
 Ein Konto ohne Verein (siehe [Verein](verein.md#rollen-nach-ort)) besitzt höchstens 30 eigene
-Trainings. Es zählen alle persönlichen Trainings: Entwürfe wie veröffentlichte, angelegte wie
+Trainings. Es zählen alle persönlichen Trainings: Entwürfe wie die in der Community, angelegte wie
 übernommene, auch die persönliche Kopie eines Team-Trainings. Team-Trainings und
 Termin-Trainings zählen nicht, ebenso wenig Varianten, Gruppen oder die Übungen eines Trainings.
 
@@ -591,7 +603,7 @@ ein Konto ohne Verein über einen Dialog, der den Stand frisch nennt, etwa „Du
 Trainings.", und an der Grenze nur „Schliessen" anbietet. Wird trotzdem abgewiesen, weil
 inzwischen anderswo ein Training entstanden ist, zeigt die Anwendung dieselbe Meldung.
 
-Was schon besteht, bleibt, auch über der Grenze: Bearbeiten, veröffentlichen, auf Entwurf setzen
+Was schon besteht, bleibt, auch über der Grenze: Bearbeiten, in die Community stellen, auf Entwurf setzen
 und löschen gehen weiter. In einem Verein gilt die Grenze nicht — ab der Aufnahme in ein Team oder
 eine Vereinsverwaltung sofort —, und Konten in einem Verein sehen weder Stand noch Dialog. In der
 Seitenleiste steht der Stand nicht. Ein verbundener KI-Assistent bekommt dieselbe Grenze und
@@ -613,7 +625,7 @@ Die Altersstufe eines Trainings ändert sich nie, auch dann nicht, wenn eine Man
 aufsteigt — die Einheit wird für die neue Stufe neu angelegt. Gemischt trainierte Jahrgänge,
 etwa E und D zusammen, lassen sich nicht abbilden: Wer beide in einer Einheit hat, entscheidet
 sich für ein Manual und plant darin. Für den Juniorenfussball gibt es zudem keinen kuratierten
-Übungsbestand; wer dort veröffentlichen will, erfasst seine Übungen zuerst selbst. Die
+Übungsbestand; wer dort ein Training in die Community stellen will, erfasst seine Übungen zuerst selbst. Die
 Trainingsübersicht trennt die Altersstufen nicht — sie stehen zusammen in einer Liste,
 eingegrenzt wird über die Alterskategorie. Die Zeile nennt weder Altersstufe noch
 Alterskategorien, und nach der Altersstufe sortieren lässt sich nicht; wer sie wissen will,
@@ -642,7 +654,7 @@ einer Trainingsteil-Überschrift und reicht der Platz darunter nicht, bricht sie
 
 Über die zwei Athletik-Zuordnungen des Juniorenschemas hinaus schlägt die Anwendung nicht vor,
 welche Übung fachlich passen würde; alle Hinweise sind Hinweise und keine Sperren. Eine Ausnahme
-sind die Veröffentlichungsbedingungen: sie sperren.
+sind die Bedingungen für die Community: sie sperren.
 
 Die Reihenfolge von Gruppen und Varianten setzt der Trainer Schritt für Schritt über das Menü am
 Chip, nach vorne oder nach hinten. Ziehen und Ablegen gibt es nicht; eine lange Leiste will darum
@@ -660,18 +672,23 @@ miteinander abgeglichen: Eine Änderung wirkt allein dort, wo sie gemacht wurde.
 keine eigene Sichtbarkeit, keinen eigenen Eigentümer und keinen eigenen Termin. Welche Variante an
 einem Termin tatsächlich gespielt wurde, hält die Anwendung nicht fest, und sie merkt sich auch
 nicht, welche zuletzt angezeigt war — jede Ansicht beginnt wieder bei der ersten. Weist sie eine
-Änderung an einem öffentlichen Training ab, weil diese eine Variante unter die
-Veröffentlichungsbedingungen brächte, nennt die Meldung nur die Regel und nicht, welche Variante
-es trifft; wer das wissen will, setzt das Training auf Entwurf und schaltet es erneut öffentlich —
-erst dort steht alles Offene samt Variante. Veröffentlicht wird ohnehin immer das ganze Training:
+Änderung an einem Training in der Community ab, weil diese eine Variante unter die
+Bedingungen für die Community brächte, nennt die Meldung nur die Regel und nicht, welche Variante
+es trifft; wer das wissen will, setzt das Training auf Entwurf und stellt es erneut in die
+Community — erst dort steht alles Offene samt Variante. In die Community kommt ohnehin immer das
+ganze Training:
 Eine einzelne Variante lässt sich weder für sich zeigen noch für sich zurückziehen. Eine entfernte
 Variante kommt nicht zurück, und aus einem bestehenden Training in ein anderes bestehendes wandert
 keine. In der Übersicht lässt sich nicht auf Trainings mit mehreren Varianten eingrenzen,
 und eine Bandbreite von der kürzesten bis zur längsten Variante nennt sie nirgends. Ein Ausdruck
 enthält immer nur eine Variante; wer alle auf Papier will, druckt mehrmals.
 
-Eine Historie früherer öffentlicher Stände gibt es nicht, und wer ein öffentliches Training
-ändert oder zurückzieht, benachrichtigt damit niemanden.
+Eine Historie früherer Stände in der Community gibt es nicht, und wer ein Training in der
+Community ändert oder zurückzieht, benachrichtigt damit niemanden.
+
+Mit Personen ohne Konto lässt sich ein Training nicht teilen: Ein Verweis führt sie bloss auf
+die Startseite, auch auf Durchführen-Ansicht und Druck. Wer ein Training ohne Konto weitergeben
+will, druckt es selbst aus.
 
 Die Spalte neben den Übungen gibt es nur auf breiten Bildschirmen; schmal und auf Papier fehlen
 Eigenschaften und Übungsdetail an dieser Stelle. Eine Übung aus der Bibliothek lässt sich vor dem
