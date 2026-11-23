@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { FileQuestion } from "lucide-react";
 import { ButtonLink, Leerzustand } from "@/components/ui";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
-import { UEBUNGEN_PFAD } from "@/lib/navigation";
+import { NICHT_GEFUNDEN_TITEL, UEBUNGEN_PFAD } from "@/lib/navigation";
 import { getUserImRequest } from "@/lib/supabase/server";
 
 /* Eine Seite, die es nicht gibt — innerhalb der App, also mit Seitenleiste
@@ -10,7 +10,7 @@ import { getUserImRequest } from "@/lib/supabase/server";
    `notFound()` und über `[...nichtGefunden]` auch bei unbekannten Adressen.
    Angemeldet führt der Weg zu den Übungen, ohne Anmeldung auf die
    Startseite (#670 AK 11). */
-export const metadata: Metadata = { title: "Seite nicht gefunden - KiFu" };
+export const metadata: Metadata = { title: NICHT_GEFUNDEN_TITEL };
 
 export default async function NichtGefunden() {
   const user = await getUserImRequest();

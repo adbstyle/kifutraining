@@ -12,6 +12,12 @@ export const UEBUNGEN_PFAD = "/uebungen";
  *  in den eigenen Arbeitsbereich weiterleitet. */
 export const STARTSEITE_PFAD = "/startseite";
 
+/** Der Titel einer Seite, die es nicht gibt — an `not-found` und an der Seite
+ *  für unbekannte Adressen (`[...nichtGefunden]`): Fehlt er dort, setzt der
+ *  Browser nach dem Laden den Titel der Wurzel ein, weil Next.js die
+ *  Metadaten der Seite auflöst, die `notFound()` warf. */
+export const NICHT_GEFUNDEN_TITEL = "Seite nicht gefunden - KiFu";
+
 export type AktiveBereiche = {
   uebungen: boolean;
   trainings: boolean;

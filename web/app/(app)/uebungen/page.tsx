@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { abfrageAus, loginAdresse } from "@/lib/weiterleitung";
 import { SearchX, Heart } from "lucide-react";
@@ -19,6 +20,11 @@ import { liesListe, liesPositiveZahl, mitAnzahl, type AdressParameter } from "@/
 
 // Server-only Datenzugriff (anon-Key + RLS); kein Prerender ohne DB.
 export const dynamic = "force-dynamic";
+/* Eigener Titel wie «Trainings - KiFu»: Seit «/» die Startseite ist (#674),
+   trug der Katalog sonst den allgemeinen Titel der Wurzel. */
+export const metadata: Metadata = {
+  title: "Übungen - KiFu",
+};
 
 // Der Katalog zeigt die Kacheln seitenweise: Jede Kachel trägt ihr Diagramm als
 // serverseitig gezeichnetes SVG, und der ganze Bestand auf einmal kostete pro
