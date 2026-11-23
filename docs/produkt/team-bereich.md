@@ -1204,7 +1204,7 @@ Verantwortlichen ist eine Auskunft, kein Kontakt: Wer sie ist, erfahren die Elte
 lässt sie sich über die Anwendung nicht. Ist die Spieler:in
 abgemeldet oder fällt der Termin aus, tritt die Karte gedämpft zurück, das Kalenderblatt grau mit
 durchgestrichener Zahl. Die Spielerzahl
-steht knapp und ungefärbt, etwa „24/33": angemeldet von allen, für die der Termin gilt, gezählt wie
+steht knapp und ungefärbt mit dem Trikot-Zeichen wie auf einer Spielkarte, etwa „24/33": angemeldet von allen, für die der Termin gilt, gezählt wie
 für die Mitglieder — bei einem Termin mit Kadern auch über Kader, die nicht die der Spieler:in sind,
 ohne sie zu nennen. „Angemeldet" und „abgemeldet" meinen auf der Seite nur die eigene Spieler:in.
 Ein begonnener Termin ist gesperrt mit „Hat begonnen · nicht mehr änderbar"; der Satz steht unter
@@ -1270,7 +1270,8 @@ besucht, ohne den mittleren Satz —, und die Schalter der übrigen Trainings si
 Verlegung verfallen, steht dort „… Deine Anmeldung gilt nicht mehr." Schaltet ein Mitglied das
 Schnuppern aus, zeigt derselbe Link wieder die gewohnte Seite.
 
-Den Ort zeigt jede Karte ganz, auch wenn er lang ist, und umbricht ihn dafür. Hat der Ort einen
+Den Ort zeigt jede Karte ganz und in derselben Grösse, ob Training oder Spiel, auch wenn er lang
+ist, und umbricht ihn dafür. Hat der Ort einen
 Kartenlink, ist er selbst der Link: violett und unterstrichen, mit einem Zeichen am Ende, das sagt,
 dass er die Karte ausserhalb der Anwendung öffnet. Ein langer Ort mit Link steht dafür auf einer
 Zeile und ist mit „…" gekürzt. Fällt ein Termin aus, steht der Ort ohne Link.
@@ -1308,8 +1309,8 @@ das kleine Programm des Browsers, das sie zeigt (siehe „Mitteilungen aufs Mobi
 ### Infos am privaten Link
 
 Das ⓘ „Infos und Erklärungen" gleich hinter dem Namen führt auf die Seite „Infos" — dieselbe Adresse
-wie der Link mit „/infos" dahinter, kein zweiter Link. Ihr Kopf trägt einen Pfeil „Zurück zu den
-Terminen", den Titel „Infos" und darunter den Namen der Spieler:in; unten steht wie auf der
+wie der Link mit „/infos" dahinter, kein zweiter Link. Ihr Kopf trägt — wie die Benachrichtigungen — den Knopf
+„Zurück zu den Terminen", darunter den Titel „Infos" und darunter den Namen der Spieler:in; unten steht wie auf der
 Termin-Seite „Fragen und Feedback". Hier steht, was die Eltern nachlesen wollen, beim Melden aber
 nicht brauchen, in Abschnitten, die alle zugeklappt sind, auch beim ersten Öffnen; jeder öffnet sich
 für sich.
