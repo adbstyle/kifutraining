@@ -268,11 +268,14 @@ export function Startseite({
               Verbinde KiFu mit deinem KI-Assistenten (MCP). Er kennt dein Team, deine Termine und die Übungen der
               Community und trägt alles direkt in deinen Trainingsplan ein. Du prüfst, passt an und gehst auf den Platz.
             </p>
-            <p className="type-title-small">
-              <ButtonLink href={ohneKonto(angemeldet, VERBINDUNGEN_PFAD)} variant="link">
-                So verbindest du ihn
-              </ButtonLink>
-            </p>
+            {/* Verbinden geht nur mit Konto: Ohne Anmeldung fehlt der Verweis (PO). */}
+            {angemeldet && (
+              <p className="type-title-small">
+                <ButtonLink href={VERBINDUNGEN_PFAD} variant="link">
+                  So verbindest du ihn
+                </ButtonLink>
+              </p>
+            )}
           </div>
           <div className="min-w-0 lg:flex-[1_1_560px]">
             <KiGespraeche />
