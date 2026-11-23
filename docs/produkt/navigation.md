@@ -308,7 +308,7 @@ Filter stehen über den Übersichten in einer Zeile als Knöpfe: Jeder nennt, wo
 und zählt, wie viele Werte gewählt sind; welche, zeigt ein Klick, der darunter eine Liste mit
 Kästchen zum An- und Abwählen öffnet. Ein Filter, der eingrenzt, ist farbig umrandet. Die Wahl
 wirkt sofort und die Liste bleibt offen; Escape oder ein Klick daneben schliesst sie. Den Filter
-„Verfügbare Kinder" füllt man an derselben Stelle als Zahl ein. Sie wirkt wie die Suche daneben
+„Verfügbare Spieler:innen" füllt man an derselben Stelle als Zahl ein. Sie wirkt wie die Suche daneben
 nach einer kurzen Tipppause.
 
 ## Auf schmalen Bildschirmen

@@ -285,9 +285,9 @@ sagt, welches gemeint ist. Der Kinderfussball-Hauptteil steht dort nicht als Gan
 seine drei Hauptteilkategorien: Gewählt wird in beiden Welten die feinste Ebene, die das jeweilige
 Lehrmittel kennt, und einen eigenen Hauptteilkategorie-Filter gibt es darum nicht. Weiter gefiltert
 wird nach Alterskategorie, Feldtyp, Erscheinungsform und Übungstyp, jeweils mit Mehrfachauswahl,
-sowie mit „Verfügbare Kinder" nach der Zahl der verfügbaren Spieler:innen — dann erscheinen alle Übungen, die mit mindestens so
+sowie mit „Verfügbare Spieler:innen" nach der Zahl der verfügbaren Spieler:innen — dann erscheinen alle Übungen, die mit mindestens so
 vielen durchführbar sind. Jede dieser Dimensionen ist ein Filterknopf, der zählt, wie viele Werte
-gewählt sind, „Verfügbare Kinder" ein Knopf mit dem gesetzten Wert (siehe
+gewählt sind, „Verfügbare Spieler:innen" ein Knopf mit dem gesetzten Wert (siehe
 [Navigation](navigation.md#bedienung)). Auch diese Filter beschriften ihre Werte nach Altersstufe: die
 Erscheinungsformen beider Manuals, die Alterskategorien G bis A, und ebenso die zwei Filter, die
 ganz einer Altersstufe gehören — der Feldtyp dem Kinderfussball, der Übungstyp dem

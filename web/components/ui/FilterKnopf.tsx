@@ -242,7 +242,7 @@ export function AuswahlFilter({
   );
 }
 
-/* Zahlenfilter: der Filterknopf für eine Zahl («Verfügbare Kinder»). Der
+/* Zahlenfilter: der Filterknopf für eine Zahl («Verfügbare Spieler:innen»). Der
    Knopf nennt die übernommene Zahl, eingegeben wird sie im Panel — mit
    Tipppause (300 ms), wie die Suche. Er zeigt den Wert, den der Aufrufer als
    `gesetzt` meldet, nicht den gerade getippten: Er sagt, was die Übersicht
@@ -259,7 +259,7 @@ export function ZahlFilter({
   label: string;
   /** Name des Zahlenfelds im Panel. */
   feldLabel: string;
-  /** Wofür die Zahl steht, für die Vorlesehilfe am Knopf («12 Kinder»). */
+  /** Wofür die Zahl steht, für die Vorlesehilfe am Knopf («12 Spieler:innen»). */
   einheit: string;
   hinweis?: string;
   gesetzt?: number;

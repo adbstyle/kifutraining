@@ -1972,9 +1972,9 @@ export default async function Styleguide() {
             über dem fokussierten Feld verstellte sie sonst unbemerkt.
           </p>
           <div className="grid max-w-md gap-6">
-            <TextField label="Verfügbare Kinder" type="number" min={1} />
+            <TextField label="Verfügbare Spieler:innen" type="number" min={1} />
             <TextField
-              label="Verfügbare Kinder"
+              label="Verfügbare Spieler:innen"
               type="number"
               min={1}
               error
@@ -2553,7 +2553,7 @@ export default async function Styleguide() {
             (<code>usePanelAnker</code>, geteilt mit der Mehrfachauswahl). Es ist
             kein Menü und keine Listbox, sondern eine Gruppe gewöhnlicher
             Bedienelemente: Kontrollkästchen im <code>AuswahlFilter</code>, ein
-            Zahlenfeld im <code>ZahlFilter</code> («Verfügbare Kinder»). ↑/↓ wandern zwischen ihnen, Esc
+            Zahlenfeld im <code>ZahlFilter</code> («Verfügbare Spieler:innen»). ↑/↓ wandern zwischen ihnen, Esc
             schliesst und gibt den Fokus an den Knopf zurück. Eine Wahl wirkt
             sofort, das Panel bleibt offen; Zahl und Suche wirken nach einer
             Tipppause.
