@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { SectionMessage } from "@/components/ui";
-import { ENTWURF_HINWEIS, KONTAKT_EMAIL, KONTAKT_PLATZHALTER, RECHTLICHES_STAND } from "@/lib/rechtliches";
+import { ENTWURF_HINWEIS, KONTAKT_EMAIL, RECHTLICHES_STAND } from "@/lib/rechtliches";
 
 /* Gerüst von Impressum, Datenschutzerklärung (#672) und Vereinbarung zur
    Auftragsbearbeitung (#675; `fassung` nennt ihre Fassung): Titel, Stand und —
@@ -42,9 +42,8 @@ export function Platzhalter({ children }: { children: ReactNode }) {
   return <span className="rounded-klein bg-section-warning px-1">{children}</span>;
 }
 
-/** Die E-Mail-Adresse für Anfragen, solange sie fehlt als Platzhalter. */
+/** Die E-Mail-Adresse für Anfragen als Link. */
 export function KontaktAdresse() {
-  if (!KONTAKT_EMAIL) return <Platzhalter>{KONTAKT_PLATZHALTER}</Platzhalter>;
   return (
     <a href={`mailto:${KONTAKT_EMAIL}`} className={LINK_KLASSE}>
       {KONTAKT_EMAIL}
