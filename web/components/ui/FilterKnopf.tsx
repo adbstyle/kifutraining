@@ -251,6 +251,7 @@ export function ZahlFilter({
   label,
   feldLabel,
   einheit,
+  einheitEins = einheit,
   hinweis,
   gesetzt,
   onCommit,
@@ -261,6 +262,8 @@ export function ZahlFilter({
   feldLabel: string;
   /** Wofür die Zahl steht, für die Vorlesehilfe am Knopf («12 Spieler:innen»). */
   einheit: string;
+  /** Einzahl der Einheit für den Wert 1 («1 Spieler:in»); ohne Angabe gilt `einheit`. */
+  einheitEins?: string;
   hinweis?: string;
   gesetzt?: number;
   onCommit: (wert: string) => void;
@@ -271,7 +274,7 @@ export function ZahlFilter({
     <FilterKnopf
       label={label}
       badge={gesetzt}
-      badgeLabel={gesetzt !== undefined ? `${gesetzt} ${einheit}` : undefined}
+      badgeLabel={gesetzt !== undefined ? `${gesetzt} ${gesetzt === 1 ? einheitEins : einheit}` : undefined}
       panelClassName="w-64 px-3 py-2"
     >
       <TextField

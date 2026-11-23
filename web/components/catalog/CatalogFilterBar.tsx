@@ -28,7 +28,7 @@ export type CatalogFilters = {
 /* Such-/Filterleiste für den Übungspool — eine durchgehende, umbrechende Zeile
    statt Sidebar, analog zur Trainings-Filter-Bar. Jede Dimension ist ein
    Filterknopf mit Namen und Zahl (Epic #363), «Verfügbare Spieler:innen» einer mit
-   einem Zahlenfeld im Panel; Suche und Kinderzahl wirken nach einer
+   einem Zahlenfeld im Panel; Suche und Spieler:innenzahl wirken nach einer
    Tipppause, «Meine Übungen» und Favoriten sind Schalter-Chips.
    URL ist die Quelle der Wahrheit: jede Änderung schreibt in die URL und löst
    eine neue Server-Abfrage aus. */
@@ -90,6 +90,7 @@ export function CatalogFilterBar({ filters }: { filters: CatalogFilters }) {
         label="Verfügbare Spieler:innen"
         feldLabel="Anzahl Spieler:innen"
         einheit="Spieler:innen"
+        einheitEins="Spieler:in"
         hinweis="Zeigt Übungen, die mit so vielen Spieler:innen durchführbar sind."
         gesetzt={filters.kinder}
         onCommit={(v) => filter.setzeWert("kinder", v)}
