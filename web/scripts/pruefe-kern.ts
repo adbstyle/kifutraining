@@ -6563,7 +6563,8 @@ pruefe("Startseite (#670): eigene Gruppe ohne Seitenleiste, immer hell, feste An
   // Ohne Konto auch die übrigen erreichbaren Seiten (404, Cookies, Versionen) ohne Seitenleiste (PO 2026-11-23):
   // Das App-Layout zeigt den Rahmen der App nur angemeldet, sonst den der Startseite.
   const appLayout = ohneKommentare(lies("app/(app)/layout.tsx"));
-  assert.match(appLayout, /\{user \? \(\s*<AppRahmen[\s\S]*?<AppNav \/>[\s\S]*?<\/AppRahmen>\s*\) : \(\s*<StartRahmen angemeldet=\{false\}>/, "(app) ohne Konto im Rahmen der Startseite");
+  assert.match(appLayout, /\{user \? \(\s*<AppRahmen[\s\S]*?<AppNav \/>[\s\S]*?<\/AppRahmen>\s*\) : \(\s*<StartRahmen angemeldet=\{false\} eigenesMain>/, "(app) ohne Konto im Rahmen der Startseite, ohne zweites <main>");
+  assert.match(appLayout, /user \? \{\} : \{ colorScheme: "light", themeColor: GRUND_HELL \}/, "Systemleiste ohne Konto hell");
   assert.match(ohneKommentare(lies("components/layout/AppRahmen.tsx")), /export function SlimSchalter\(\) \{\s*const zustand = useContext\(SeitenleisteKontext\);\s*if \(!zustand\) return null;/, "Umschalter nur mit Seitenleiste");
   assert.match(layout, /<Link href="\/"[^>]*>[\s\S]*?KiFu<\/span>\s*<\/Link>/, "Marke führt auf «/»");
   assert.match(layout, /angemeldet \? \(\s*<ButtonLink href="\/" variant="filled">\s*Zur App/);

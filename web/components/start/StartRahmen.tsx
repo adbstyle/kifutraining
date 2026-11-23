@@ -10,7 +10,17 @@ import { REPO_URL } from "@/lib/startseite";
    ohne Anmeldung erreicht (404, Cookies, Versionen): Ohne Konto gibt es keine
    Seitenleiste der App, deren Einträge ohnehin nur zum Hinweis «nur mit Konto»
    führten (PO 2026-11-23). */
-export function StartRahmen({ angemeldet, children }: { angemeldet: boolean; children: React.ReactNode }) {
+export function StartRahmen({
+  angemeldet,
+  eigenesMain = false,
+  children,
+}: {
+  angemeldet: boolean;
+  /** Die Seiten bringen ihr `<main>` selbst mit (Seitenrahmen der App) — dann
+   *  setzt der Rahmen keinen zweiten Hauptbereich darum. */
+  eigenesMain?: boolean;
+  children: React.ReactNode;
+}) {
   // Die Sprünge zu den Abschnitten der Startseite: ohne Anmeldung liegt sie auf
   // «/», angemeldet führte «/» in den Arbeitsbereich (#671).
   const start = angemeldet ? STARTSEITE_PFAD : "/";
@@ -51,7 +61,7 @@ export function StartRahmen({ angemeldet, children }: { angemeldet: boolean; chi
           </nav>
         </div>
       </header>
-      <main className="flex-1">{children}</main>
+      {eigenesMain ? <div className="flex-1">{children}</div> : <main className="flex-1">{children}</main>}
       <footer className="border-t border-linie">
         <div className="type-body-small mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-6 gap-y-4 px-4 py-6 text-on-surface-mittel sm:px-6">
           <p>KiFu · Open Source unter CC BY-SA 4.0</p>
