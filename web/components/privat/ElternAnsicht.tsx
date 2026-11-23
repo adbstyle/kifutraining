@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bell, CalendarX2, Info } from "lucide-react";
-import { ExternerLink, FilterChip, IconButton, IconButtonLink, Kalenderblatt, Leerzustand, Lozenge, SectionMessage, Switch, Tooltip, TrainingsTreffpunkt } from "@/components/ui";
+import { Bell, CalendarX2, Info, Shirt } from "lucide-react";
+import { ExternerLink, FilterChip, IconButton, IconButtonLink, Kalenderblatt, Leerzustand, Lozenge, SectionMessage, Switch, Tooltip, TrainingsTreffpunkt, ZeichenZahl } from "@/components/ui";
 import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
 import type { Meldung } from "@/lib/spiel";
 import { SpielKarte } from "./SpielKarte";
@@ -486,11 +486,11 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
               Kartenlink als Link auf einer Zeile (#533 AK 6, 10, 11; PC 5). */}
           {t.ort &&
             (t.ort_link && !t.ausgefallen ? (
-              <ExternerLink href={t.ort_link} einzeilig className="type-body-small">
+              <ExternerLink href={t.ort_link} einzeilig className="type-body-medium">
                 {t.ort}
               </ExternerLink>
             ) : (
-              <span className="max-w-full break-words type-body-small text-on-surface-mittel">{t.ort}</span>
+              <span className="max-w-full break-words type-body-medium text-on-surface-mittel">{t.ort}</span>
             ))}
           {zweite && <span className="type-body-small text-on-surface-mittel">{zweite}</span>}
           <AusfallGrund grund={t.ausfall_grund} />
@@ -527,14 +527,12 @@ function TeamZeile({ zahl, zusatz }: { zahl: Spielerzahl | null; zusatz: string 
   if (zahl?.quelle !== "liste" && !zusatz) return null;
   return (
     <span className="flex flex-wrap items-center gap-2 type-body-small text-on-surface-mittel">
+      {/* Mit dem Shirt wie auf der Spielkarte; vorgelesen ohne «angemeldet» —
+          das Wort gehört hier der eigenen Spieler:in. */}
       {zahl?.quelle === "liste" && (
-        <>
-          <span aria-hidden className="tabular-nums">{spielerzahlKurz(zahl)}</span>
-          {/* Ohne «angemeldet» — das Wort gehört hier der eigenen Spieler:in. */}
-          <span className="sr-only">
-            Spielerzahl {zahl.angemeldet} von {zahl.gesamt}
-          </span>
-        </>
+        <ZeichenZahl icon={Shirt} klein label={`Spielerzahl ${zahl.anwesend ?? zahl.angemeldet} von ${zahl.gesamt}`}>
+          {spielerzahlKurz(zahl)}
+        </ZeichenZahl>
       )}
       {zusatz && <span>{zahl?.quelle === "liste" ? `· ${zusatz}` : zusatz}</span>}
     </span>
