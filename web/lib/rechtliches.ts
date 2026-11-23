@@ -33,12 +33,9 @@ export const TRAEGERSCHAFT = "Trägerschaft in Gründung";
 /** Die Postadresse der Trägerschaft — Platzhalter bis zur Gründung (PC 1). */
 export const POSTADRESSE_PLATZHALTER = ["[Postadresse folgt mit der Gründung]"] as const;
 
-/** Die E-Mail-Adresse für Anfragen (AK 2, 6; Entscheid 3). Im Repository
- *  steht keine bestehende Kontaktadresse; bis die PO sie nennt, zeigen die
- *  Seiten KONTAKT_PLATZHALTER statt eines Links. Der Release-PR auf `main`
- *  scheitert, solange sie fehlt (check:kern). */
-export const KONTAKT_EMAIL: string | null = null;
-export const KONTAKT_PLATZHALTER = "[E-Mail-Adresse folgt]";
+/** Die E-Mail-Adresse für Anfragen (AK 2, 6; Entscheid 3), genannt von der
+ *  PO am 2026-11-23. */
+export const KONTAKT_EMAIL = "feedback.chuck366@passmail.com";
 
 /** Die Vereinbarung zur Auftragsbearbeitung (#675, ENTWURF wie Impressum und
  *  Datenschutz): Seite für alle, Zustimmung beim Gründen eines Vereins. */

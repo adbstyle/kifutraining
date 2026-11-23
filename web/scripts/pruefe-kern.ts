@@ -6920,10 +6920,8 @@ pruefe("Impressum und Datenschutz (#672, ENTWURF): Seiten mit Entwurfshinweis, e
   assert.match(impressum, /\{TRAEGERSCHAFT\}/);
   assert.match(impressum, /POSTADRESSE_PLATZHALTER\.map/);
   assert.match(impressum, /<KontaktAdresse \/>/);
-  // Epic EK 16, AK 2/6: Auf Produktion braucht es die E-Mail-Adresse, nicht den Platzhalter. Der
-  // Release-PR auf `main` (pr-checks setzt GITHUB_BASE_REF) scheitert, solange KONTAKT_EMAIL fehlt.
-  if (process.env.GITHUB_BASE_REF === "main")
-    assert.ok(KONTAKT_EMAIL, "Release nach main: KONTAKT_EMAIL in lib/rechtliches.ts setzen (keine Platzhalter auf Produktion)");
+  // Epic EK 16, AK 2/6: Auf Produktion steht eine echte E-Mail-Adresse, kein Platzhalter.
+  assert.match(KONTAKT_EMAIL, /^[^\s@\[\]]+@[^\s@\[\]]+\.[a-z]{2,}$/i, "KONTAKT_EMAIL ist eine E-Mail-Adresse");
   // AK 3–7: Daten, Zwecke, Fristen aus ihren Quellen; Auftrag der Vereine; Datenort und Ausnahmen; Rechte ohne Konto; Cookies.
   assert.match(datenschutz, /\{BENACHRICHTIGUNG_TAGE\} Tage/);
   assert.match(datenschutz, /\{AUFBEWAHRUNG_MONATE\} Monaten/);
