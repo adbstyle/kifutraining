@@ -6553,16 +6553,24 @@ pruefe("Übungskatalog an eigener Adresse (#674): «/uebungen», alte Filter-Adr
 pruefe("Startseite (#670): eigene Gruppe ohne Seitenleiste, immer hell, feste Angaben am Bestand, Wege hinein und zurück", () => {
   const lies = (d: string) => readFileSync(join(web, d), "utf8");
   const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  const layout = ohneKommentare(lies("app/(start)/layout.tsx"));
+  // Kopf- und Fusszeile stehen im Rahmen der Startseite; die Gruppe (start) trägt ihn immer.
+  const layout = ohneKommentare(lies("components/start/StartRahmen.tsx"));
+  const gruppe = ohneKommentare(lies("app/(start)/layout.tsx"));
+  assert.match(gruppe, /<StartRahmen angemeldet=\{user !== null\}>/, "(start) im Rahmen der Startseite");
   const seite = ohneKommentare(lies("components/start/Startseite.tsx"));
   // Entscheid 1: keine Seitenleiste, eigene Kopfzeile (Marke → «/», Anmelden, Kostenlos registrieren; angemeldet «Zur App»).
-  assert.ok(!/AppNav|Seitenleiste|AppRahmen/.test(layout), "ohne App-Chrome");
+  assert.ok(!/AppNav|Seitenleiste|AppRahmen/.test(layout + gruppe), "ohne App-Chrome");
+  // Ohne Konto auch die übrigen erreichbaren Seiten (404, Cookies, Versionen) ohne Seitenleiste (PO 2026-11-23):
+  // Das App-Layout zeigt den Rahmen der App nur angemeldet, sonst den der Startseite.
+  const appLayout = ohneKommentare(lies("app/(app)/layout.tsx"));
+  assert.match(appLayout, /\{user \? \(\s*<AppRahmen[\s\S]*?<AppNav \/>[\s\S]*?<\/AppRahmen>\s*\) : \(\s*<StartRahmen angemeldet=\{false\}>/, "(app) ohne Konto im Rahmen der Startseite");
+  assert.match(ohneKommentare(lies("components/layout/AppRahmen.tsx")), /export function SlimSchalter\(\) \{\s*const zustand = useContext\(SeitenleisteKontext\);\s*if \(!zustand\) return null;/, "Umschalter nur mit Seitenleiste");
   assert.match(layout, /<Link href="\/"[^>]*>[\s\S]*?KiFu<\/span>\s*<\/Link>/, "Marke führt auf «/»");
-  assert.match(layout, /user \? \(\s*<ButtonLink href="\/" variant="filled">\s*Zur App/);
+  assert.match(layout, /angemeldet \? \(\s*<ButtonLink href="\/" variant="filled">\s*Zur App/);
   assert.match(layout, /<ButtonLink href="\/login" variant="text">\s*Anmelden/);
   assert.match(layout, /<ButtonLink href="\/registrieren" variant="filled"[^>]*>\s*Kostenlos registrieren/);
   // Gestaltungsentwurf: Sprünge zu Funktionen und KI-Assistent — angemeldet auf «/startseite» (#671). Kein Sprung zu den Preisen (PO 2026-11-23).
-  assert.match(layout, /const start = user \? STARTSEITE_PFAD : "\/";/);
+  assert.match(layout, /const start = angemeldet \? STARTSEITE_PFAD : "\/";/);
   for (const [ziel, text] of [["funktionen", "Funktionen"], ["ki", "KI-Assistent"]]) {
     assert.ok(layout.includes(`<KopfSprung href={\`\${start}#${ziel}\`}>${text}</KopfSprung>`), `Sprung «${text}»`);
     assert.match(seite, new RegExp(`id="${ziel}"`), `Ziel #${ziel}`);
@@ -6575,8 +6583,8 @@ pruefe("Startseite (#670): eigene Gruppe ohne Seitenleiste, immer hell, feste An
   assert.equal(REPO_URL, "https://github.com/adbstyle/kifutraining");
   // AK 13: immer hell — Marke für globals.css und die Systemleiste im hellen Grund.
   assert.match(layout, /<DarstellungsMarke darstellung="hell" \/>/);
-  assert.match(layout, /colorScheme: "light",\s*themeColor: GRUND_HELL,/);
-  assert.match(layout, /<FigurenSprite \/>/, "die Diagramme der Karten brauchen die Figurteile");
+  assert.match(gruppe, /colorScheme: "light",\s*themeColor: GRUND_HELL,/);
+  assert.match(gruppe, /<FigurenSprite \/>/, "die Diagramme der Karten brauchen die Figurteile");
   // Eine Komponente für «/» und «/startseite».
   for (const d of ["app/(start)/page.tsx", "app/(start)/startseite/page.tsx"]) {
     const t = ohneKommentare(lies(d));
@@ -6916,7 +6924,7 @@ pruefe("Impressum und Datenschutz (#672, ENTWURF): Seiten mit Entwurfshinweis, e
   assert.match(datenschutz, /leiten wir sie an den Verein weiter/);
   assert.match(datenschutz, /<TextLink href="\/cookies">Cookies<\/TextLink>/);
   // AK 1: erreichbar von der Startseite (Fusszeile), den Anmeldeseiten und dem privaten Link.
-  assert.match(ohneKommentare(lies("app/(start)/layout.tsx")), /RECHTLICHE_LINKS\.map\(\(l\) => \(\s*<FussLink key=\{l\.href\} href=\{l\.href\}>/);
+  assert.match(ohneKommentare(lies("components/start/StartRahmen.tsx")), /RECHTLICHE_LINKS\.map\(\(l\) => \(\s*<FussLink key=\{l\.href\} href=\{l\.href\}>/);
   assert.match(ohneKommentare(lies("app/(auth)/layout.tsx")), /<RechtlicheLinks /);
   assert.match(ohneKommentare(lies("app/(privat)/layout.tsx")), /<RechtlicheLinks /);
   assert.match(ohneKommentare(lies("components/layout/RechtlicheLinks.tsx")), /RECHTLICHE_LINKS\.map/);
