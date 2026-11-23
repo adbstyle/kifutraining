@@ -331,7 +331,6 @@ export async function kopiereInBibliothek(
   });
   if (!kopie.ok) return { ok: false, error: kopie.error, ...(kopie.grenze && { grenze: kopie.grenze }) };
 
-  revalidatePath("/");
   revalidatePath("/uebungen");
   return kopie;
 }

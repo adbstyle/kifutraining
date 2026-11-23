@@ -3,10 +3,14 @@
 
 import type { Bereich } from "@/lib/bereich";
 
-/** Die Adresse des Übungskatalogs (#674). «/» bleibt die Startadresse und
- *  wird mit #670 die Startseite; bisher geteilte Katalog-Adressen «/?…» mit
- *  Filtern leitet «/» hierher weiter. */
+/** Die Adresse des Übungskatalogs (#674). «/» ist die Startseite (#670);
+ *  bisher geteilte Katalog-Adressen «/?…» mit Filtern leitet «/» hierher
+ *  weiter (`katalogWeiterleitung`, lib/startseite.ts). */
 export const UEBUNGEN_PFAD = "/uebungen";
+
+/** Die Startseite, bewusst aufgerufen (#671 AK 1): auch angemeldet, wo «/»
+ *  in den eigenen Arbeitsbereich weiterleitet. */
+export const STARTSEITE_PFAD = "/startseite";
 
 export type AktiveBereiche = {
   uebungen: boolean;
@@ -24,8 +28,8 @@ export type AktiveBereiche = {
  */
 export function aktiveBereiche(pfad: string, imTeamBereich: boolean): AktiveBereiche {
   return {
-    // Katalog und Detailseiten.
-    uebungen: pfad === "/" || pfad.startsWith("/uebung"),
+    // Katalog und Detailseiten; «/» ist die Startseite (#670), nicht der Katalog.
+    uebungen: pfad.startsWith("/uebung"),
     // Pool, Editor, Einzel-, Durchführungs- und Druckansicht — `/training`
     // deckt als Präfix auch `/trainings` ab.
     trainings: pfad.startsWith("/training") && !imTeamBereich,

@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { STARTSEITE_BEISPIELE } from "@/lib/startseite";
 import {
+  LIST_COLUMNS,
   getExercisesFuer,
   type ExerciseFilters,
   type ExerciseListRow,
@@ -157,6 +159,28 @@ export async function isFavorited(exerciseId: string): Promise<boolean> {
     .maybeSingle();
   if (error) throw error;
   return data != null;
+}
+
+/** Die fest ausgewählten Manual-Beispiele der Startseite (#670 AK 4), in der
+ *  Reihenfolge von `STARTSEITE_BEISPIELE`; nur Manual-Übungen (Epic #668
+ *  EK 11). Die Karten sind Zierde neben der festen Zahl: Ein Datenbankfehler
+ *  wird protokolliert und ergibt keine Karten, nicht die Fehlerseite. */
+export async function getStartseitenBeispiele(): Promise<ExerciseListRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("exercises")
+    .select(LIST_COLUMNS)
+    .eq("source", "manual")
+    .in("slug", [...STARTSEITE_BEISPIELE]);
+  if (error) {
+    console.error("[startseite] Beispiele lesen", error);
+    return [];
+  }
+  const zeilen = (data ?? []) as unknown as Omit<ExerciseListRow, "is_favorited">[];
+  return STARTSEITE_BEISPIELE.flatMap((slug) => {
+    const z = zeilen.find((r) => r.slug === slug);
+    return z ? [{ ...z, is_favorited: false }] : [];
+  });
 }
 
 /** DB-Zeile -> Karten-Props (Labels aus dem Vokabular). */

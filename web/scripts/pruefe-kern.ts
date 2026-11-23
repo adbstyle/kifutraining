@@ -487,8 +487,29 @@ import {
   teamFilterWerte,
 } from "../lib/verein-spielerliste";
 import { gruendungAus, kontoInfoAus, kontoLoeschAusgangAus, vereinLoeschAusgangAus } from "../lib/verein-antwort";
-import { BEREICH_COOKIE, bereichCookie, bereichSchluessel, leseBereich, waehleBereich, type Bereich } from "../lib/bereich";
-import { aktiveBereiche, bereichAusPfad } from "../lib/navigation";
+import {
+  BEREICH_COOKIE,
+  arbeitsbereichPfad,
+  bereichCookie,
+  bereichPfad,
+  bereichSchluessel,
+  leseBereich,
+  waehleBereich,
+  type Bereich,
+} from "../lib/bereich";
+import { STARTSEITE_PFAD, UEBUNGEN_PFAD, aktiveBereiche, bereichAusPfad } from "../lib/navigation";
+import {
+  BEISPIEL_NAMEN,
+  GEPLANTER_PREIS_CHF,
+  KATALOG_PARAMETER,
+  KONTO_GELOESCHT_PARAMETER,
+  KONTO_GELOESCHT_TEXT,
+  MANUAL_UEBUNGEN_ANZAHL,
+  REPO_URL,
+  SFV_HINWEIS,
+  STARTSEITE_BEISPIELE,
+  katalogWeiterleitung,
+} from "../lib/startseite";
 import { FILTER_SCHLUESSEL, TEAM_BEREICHE, teamBereichAusPfad, teamBereichHref } from "../lib/team-bereiche";
 import {
   OHNE_KADER_WERT,
@@ -5463,7 +5484,7 @@ pruefe("Konto ohne Verein (#588 AK 5, PC 3): Anzeige nur ohne Verein und aus der
   assert.ok(!/unstable_cache|revalidate\s*=/.test(lies("lib/queries/verein.ts")), "kein Zwischenspeicher über Anfragen");
   assert.match(lies("lib/queries/verein.ts"), /if \(lage\) return \{ lage, grenzen: null, fehler: null \};/, "mit Verein nie eine Anzeige");
   // Die Seiten rendern je Aufruf frisch.
-  for (const d of ["app/(app)/page.tsx", "app/(app)/uebungen/page.tsx", "app/(app)/trainings/page.tsx", "app/(app)/neu/page.tsx", "app/(app)/training/neu/page.tsx"])
+  for (const d of ["app/(app)/uebungen/page.tsx", "app/(app)/trainings/page.tsx", "app/(app)/neu/page.tsx", "app/(app)/training/neu/page.tsx"])
     assert.match(lies(d), /export const dynamic = "force-dynamic";/, d);
 });
 
@@ -5545,7 +5566,7 @@ pruefe("Konto ohne Verein (#588 PC 2): Wer die Zugehörigkeit oder den Bestand �
   // Wer den Bestand ändert, verwirft die Liste, die ihn zeigt.
   const exercises = lies("lib/actions/exercises.ts");
   for (const name of ["createExercise", "kopiereUebung", "deleteExercise"]) assert.match(rumpf(exercises, name), /revalidateLists\(\)/, name);
-  assert.match(rumpf(lies("lib/actions/fassung.ts"), "kopiereInBibliothek"), /revalidatePath\("\/"\)/);
+  assert.match(rumpf(lies("lib/actions/fassung.ts"), "kopiereInBibliothek"), /revalidatePath\("\/uebungen"\)/);
   const trainings = lies("lib/actions/trainings.ts");
   for (const name of ["createTraining", "deleteTraining"]) assert.match(rumpf(trainings, name), /revalidatePath\("\/trainings"\)/, name);
   assert.match(rumpf(lies("lib/actions/team-trainings.ts"), "uebernimmTraining"), /revalidatePath\("\/trainings"\)/);
@@ -5973,12 +5994,13 @@ pruefe("App ablegen (#650 AK 1, 3–5): Manifest je Link — Name «Vorname · V
   for (const i of APP_ICONS) assert.ok(existsSync(join(web, "public", i.src)), i.src);
 });
 
-pruefe("KiFu als App (#651 AK 1–3): Manifest «KiFu» ab /teams, nur in App und Anmeldung verlinkt, kein Service Worker", () => {
+pruefe("KiFu als App (#651 AK 1–3, #671): Manifest «KiFu» ab «/», nur in App und Anmeldung verlinkt, kein Service Worker", () => {
   const lies = (d: string) => readFileSync(join(web, d), "utf8");
   const m = kontoManifest();
   assert.equal(m.name, "KiFu");
   assert.equal(m.short_name, "KiFu");
-  assert.equal(m.start_url, "/teams");
+  // Ab «/»: angemeldet in den Arbeitsbereich, sonst die Startseite (#671 PC 1).
+  assert.equal(m.start_url, "/");
   assert.equal(m.id, "/");
   assert.equal(m.scope, "/");
   assert.equal(m.display, "standalone");
@@ -5995,6 +6017,9 @@ pruefe("KiFu als App (#651 AK 1–3): Manifest «KiFu» ab /teams, nur in App un
     assert.match(lies(d), /export const metadata: Metadata = KONTO_APP_METADATA;/, d);
   assert.ok(!/KONTO_APP_METADATA|manifest:/.test(lies("app/layout.tsx")), "Wurzel ohne Manifest");
   assert.ok(!/KONTO_APP_METADATA/.test(lies("app/(privat)/layout.tsx")), "Link-Seiten ohne KiFu-Manifest");
+  // Die Startseite ist nicht die App (#670): keine Seite der Gruppe `(start)` verlinkt das Manifest.
+  for (const datei of quelldateien(join(web, "app/(start)")))
+    assert.ok(!/KONTO_APP_METADATA|manifest:/.test(readFileSync(datei, "utf8")), `${relative(web, datei)}: ohne KiFu-Manifest`);
   for (const d of ["app/manifest.ts", "app/manifest.json", "app/manifest.webmanifest/page.tsx", "public/manifest.webmanifest", "public/manifest.json"])
     assert.ok(!existsSync(join(web, d)), `${d}: Manifest per Dateikonvention hinge an jeder Seite`);
   // Die Middleware lässt den Pfad aus (keine Sitzung, der Browser schickt keine Cookies).
@@ -6296,7 +6321,7 @@ pruefe("Eigene Inhalte über die Bibliothek (#660): kein Eintrag «Meine Bibliot
   // Die Eingrenzung ändert den offenen Eintrag nicht: «Übungen» bzw. «Trainings» bleibt aktiv.
   assert.ok(!/\bmine\b/.test(ohneKommentare(lies("lib/navigation.ts"))), "navigation.ts kennt `mine` nicht");
   assert.equal(aktiveBereiche.length, 2, "aktiveBereiche(pfad, imTeamBereich)");
-  assert.deepEqual(aktiveBereiche("/", false), { uebungen: true, trainings: false });
+  assert.deepEqual(aktiveBereiche("/", false), { uebungen: false, trainings: false }, "«/» ist die Startseite (#670)");
   assert.deepEqual(aktiveBereiche("/uebung/abc", false), { uebungen: true, trainings: false });
   assert.deepEqual(aktiveBereiche("/trainings", false), { uebungen: false, trainings: true });
   assert.deepEqual(aktiveBereiche("/training/abc", false), { uebungen: false, trainings: true });
@@ -6371,18 +6396,22 @@ pruefe("Konto-Menü in der Navigation (#661): eine Stelle für Konto, Darstellun
     'hinweis: i === DARSTELLUNGEN.length - 1 ? "Gilt in diesem Browser." : undefined',
     "{ label: FEEDBACK_TITEL, icon: MessageSquare, trenner: umschaltbar, onSelect: feedback.oeffnen }",
     "wasIstNeu,",
+    "startseite,",
     'label: "Abmelden"',
     "nachRueckfrage(() => {",
     "void signOut();",
   ].map((s) => stelle(angemeldet, s));
-  assert.deepEqual(reihe, [...reihe].sort((a, b) => a - b), "angemeldet: Konto, Darstellung, Feedback, Was ist neu, Abmelden");
+  assert.deepEqual(reihe, [...reihe].sort((a, b) => a - b), "angemeldet: Konto, Darstellung, Feedback, Was ist neu, Startseite, Abmelden");
   const anonym = nav.slice(stelle(nav, '{ label: "Anmelden"'), stelle(nav, "return ("));
   const reiheAnonym = [
     '{ label: "Anmelden", icon: LogIn, href: "/login" }',
     '{ label: "Konto erstellen", icon: UserPlus, href: "/registrieren" }',
     "{ ...wasIstNeu, trenner: true }",
+    "startseite,",
   ].map((s) => stelle(anonym, s));
-  assert.deepEqual(reiheAnonym, [...reiheAnonym].sort((a, b) => a - b), "ohne Anmeldung: Anmelden, Konto erstellen, Was ist neu");
+  assert.deepEqual(reiheAnonym, [...reiheAnonym].sort((a, b) => a - b), "ohne Anmeldung: Anmelden, Konto erstellen, Was ist neu, Startseite");
+  // Die Startseite bewusst (#671 AK 1): ein Link, kein Knopf.
+  assert.match(nav, /const startseite: MenuItemDef = \{ label: "Startseite", icon: House, href: STARTSEITE_PFAD \};/);
   assert.ok(!/FEEDBACK_TITEL|waehle|signOut/.test(anonym), "ohne Konto weder Feedback, Darstellung noch Abmelden");
   const neuigkeiten = nav.slice(stelle(nav, "const wasIstNeu: MenuItemDef"), stelle(nav, "const menue"));
   assert.match(neuigkeiten, /href: "\/versionen",\s*current: pfad === "\/versionen",/);
@@ -6471,26 +6500,168 @@ pruefe("Konto in Themen gegliedert (#662): Profil, Verbindungen sowie Daten und 
 pruefe("Übungskatalog an eigener Adresse (#674): «/uebungen», alte Filter-Adressen «/?…» leiten weiter, Verweise führen zum Katalog", () => {
   const lies = (d: string) => readFileSync(join(web, d), "utf8");
   const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  assert.match(lies("lib/navigation.ts"), /export const UEBUNGEN_PFAD = "\/uebungen";/);
-  // AK 1 + 2: «/» leitet jede Adresse mit Katalog-Filter samt Parametern weiter; ohne Filter bleibt «/» unverändert.
-  const start = ohneKommentare(lies("app/(app)/page.tsx"));
-  for (const k of ["teil", "kat", "feld", "form", "typ", "kinder", "q", "fav", "mine", "anzahl", "deleted", "hkat"])
-    assert.ok(start.includes(`"${k}"`), `Filter ${k} leitet weiter`);
-  assert.ok(!start.includes(`"account_deleted"`), "der Hinweis nach dem Löschen des Kontos bleibt auf «/»");
+  assert.equal(UEBUNGEN_PFAD, "/uebungen");
+  // AK 1 + 2: «/» leitet jede Adresse mit Katalog-Filter samt Parametern weiter; ohne Filter gilt die Startseite.
+  assert.deepEqual([...KATALOG_PARAMETER], ["teil", "kat", "feld", "form", "typ", "kinder", "q", "fav", "mine", "anzahl", "deleted", "hkat"]);
+  for (const k of KATALOG_PARAMETER) assert.equal(katalogWeiterleitung({ [k]: "1" }), `/uebungen?${k}=1`, `Filter ${k} leitet weiter`);
+  assert.equal(katalogWeiterleitung({ kat: ["E", "F"], q: "tor", x: "y" }), "/uebungen?kat=E&kat=F&q=tor&x=y", "alle Parameter reisen mit");
+  assert.equal(katalogWeiterleitung({}), null);
+  assert.equal(katalogWeiterleitung({ [KONTO_GELOESCHT_PARAMETER]: "1" }), null, "der Hinweis nach dem Löschen des Kontos bleibt auf «/»");
   // Jeder Parameter, den der Katalog liest, steht in der Weiterleitung — ein neuer Filter fällt hier auf.
   const katalog = ohneKommentare(lies("app/(app)/uebungen/page.tsx"));
   for (const [, k] of katalog.matchAll(/\bsp\.([a-z_]+)/g))
-    if (k !== "account_deleted") assert.ok(start.includes(`"${k}"`), `«/?${k}=…» leitet zum Katalog weiter`);
-  assert.match(start, /redirect\(`\$\{UEBUNGEN_PFAD\}\?\$\{abfrage\}`\)/);
+    assert.ok((KATALOG_PARAMETER as readonly string[]).includes(k), `«/?${k}=…» leitet zum Katalog weiter`);
+  const start = ohneKommentare(lies("app/(start)/page.tsx"));
+  assert.match(start, /const katalog = katalogWeiterleitung\(sp\);\s*if \(katalog\) redirect\(katalog\);/);
+  assert.ok(!existsSync(join(web, "app/(app)/page.tsx")), "«/» gehört der Startseite, nicht dem App-Layout");
   // AK 3: Verweise auf die Übungen führen zum Katalog, nicht mehr zu «/».
   assert.match(lies("components/layout/AppNavClient.tsx"), /UEBUNGEN_PFAD/);
-  for (const d of ["app/(app)/neu/page.tsx", "app/(app)/not-found.tsx", "app/(auth)/layout.tsx", "app/(app)/uebung/[slug]/page.tsx", "app/(app)/uebung/[slug]/edit/page.tsx"])
+  for (const d of ["app/(app)/neu/page.tsx", "app/(app)/not-found.tsx", "app/(app)/uebung/[slug]/page.tsx", "app/(app)/uebung/[slug]/edit/page.tsx"])
     assert.match(lies(d), /UEBUNGEN_PFAD/, d);
   assert.match(lies("lib/actions/exercises.ts"), /redirect\("\/uebungen\?mine=1&deleted=1"\)/);
-  for (const d of ["lib/actions/exercises.ts", "lib/actions/fassung.ts", "lib/actions/favorites.ts"])
+  for (const d of ["lib/actions/exercises.ts", "lib/actions/fassung.ts", "lib/actions/favorites.ts"]) {
     assert.match(lies(d), /revalidatePath\("\/uebungen"\)/, d);
+    assert.ok(!/revalidatePath\("\/"\)/.test(lies(d)), `${d}: «/» ist nicht mehr der Katalog`);
+  }
   const aktiv = aktiveBereiche("/uebungen", false);
   assert.equal(aktiv.uebungen, true);
+});
+
+pruefe("Startseite (#670): eigene Gruppe ohne Seitenleiste, immer hell, feste Angaben am Bestand, Wege hinein und zurück", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  const layout = ohneKommentare(lies("app/(start)/layout.tsx"));
+  const seite = ohneKommentare(lies("components/start/Startseite.tsx"));
+  // Entscheid 1: keine Seitenleiste, eigene Kopfzeile (Marke → «/», Anmelden, Kostenlos registrieren; angemeldet «Zur App»).
+  assert.ok(!/AppNav|Seitenleiste|AppRahmen/.test(layout), "ohne App-Chrome");
+  assert.match(layout, /<Link href="\/"[^>]*>[\s\S]*?KiFu<\/span>\s*<\/Link>/, "Marke führt auf «/»");
+  assert.match(layout, /user \? \(\s*<ButtonLink href="\/" variant="filled">\s*Zur App/);
+  assert.match(layout, /<ButtonLink href="\/login" variant="text">\s*Anmelden/);
+  assert.match(layout, /<ButtonLink href="\/registrieren" variant="filled"[^>]*>\s*Kostenlos registrieren/);
+  // AK 10: Versionen und Cookies in der Fusszeile, dazu das Repository.
+  assert.match(layout, /<FussLink href="\/versionen">Versionen<\/FussLink>/);
+  assert.match(layout, /<FussLink href="\/cookies">Cookies<\/FussLink>/);
+  assert.match(layout, /href=\{REPO_URL\}/);
+  assert.equal(REPO_URL, "https://github.com/adbstyle/kifutraining");
+  // AK 13: immer hell — Marke für globals.css und die Systemleiste im hellen Grund.
+  assert.match(layout, /<DarstellungsMarke darstellung="hell" \/>/);
+  assert.match(layout, /colorScheme: "light",\s*themeColor: GRUND_HELL,/);
+  assert.match(layout, /<FigurenSprite \/>/, "die Diagramme der Karten brauchen die Figurteile");
+  // Eine Komponente für «/» und «/startseite».
+  for (const d of ["app/(start)/page.tsx", "app/(start)/startseite/page.tsx"]) {
+    const t = ohneKommentare(lies(d));
+    assert.match(t, /<Startseite beispiele=/, d);
+    assert.match(t, /getStartseitenBeispiele\(\)/, d);
+    assert.match(t, /export const dynamic = "force-dynamic";/, d);
+  }
+  // AK 3: registrieren und anmelden, auch am Schluss der Seite.
+  assert.match(seite, /<ButtonLink href="\/registrieren" variant="filled">\s*Kostenlos registrieren/);
+  assert.match(seite, /<ButtonLink href="\/login" variant="outlined">\s*Anmelden/);
+  // AK 2: Verein, Team und Kalender, Schnuppertraining, Mitteilungen, Training und Übungen, KI-Assistent.
+  for (const t of ["Verein", "Team und Kalender", "Abmeldungen ohne Konto", "Schnuppertraining", "Mitteilungen aufs Mobile", "Training und Übungen", "KI-Assistent"])
+    assert.ok(seite.includes(`titel="${t}"`), `Leistung «${t}»`);
+  // AK 4: feste Zahl der Manual-Übungen (OoS 1: von Hand nachgeführt, hier am Bestand gehalten) und feste Beispiele mit Diagramm.
+  const yaml = readdirSync(join(web, "..", "data/uebungen")).filter((f) => f.endsWith(".yaml"));
+  assert.equal(MANUAL_UEBUNGEN_ANZAHL, yaml.length, "Zahl der Manual-Übungen = data/uebungen/*.yaml");
+  assert.match(seite, /\{MANUAL_UEBUNGEN_ANZAHL\} Übungen aus dem Manual Kinderfussball/);
+  assert.equal(STARTSEITE_BEISPIELE.length, 6);
+  assert.equal(new Set(STARTSEITE_BEISPIELE).size, 6);
+  for (const slug of STARTSEITE_BEISPIELE) {
+    assert.ok(yaml.includes(`${slug}.yaml`), `${slug}: aus dem Manual`);
+    assert.ok(existsSync(join(web, "..", "data/diagramme", `${slug}.json`)), `${slug}: mit Diagramm`);
+  }
+  const abfrage = lies("lib/queries/exercises.ts");
+  const beispiele = abfrage.slice(abfrage.indexOf("export async function getStartseitenBeispiele"), abfrage.indexOf("export function toCardData"));
+  assert.match(beispiele, /\.eq\("source", "manual"\)\s*\.in\("slug", \[\.\.\.STARTSEITE_BEISPIELE\]\)/, "nur Manual-Übungen (Epic EK 11)");
+  // AK 5: Der SFV erscheint nur mit dem Hinweis — nirgends sonst auf der Seite.
+  assert.match(SFV_HINWEIS, /eigene Fassungen nach dem Manual Kinderfussball des SFV, nicht vom SFV geprüft/i);
+  assert.ok(!/\bSFV\b/.test(seite + layout), "der SFV steht nur in SFV_HINWEIS");
+  assert.match(seite, /\{SFV_HINWEIS\}/);
+  // AK 6: Kinder- und Juniorenfussball, das Manual nur für den Kinderfussball.
+  assert.match(seite, /KiFu unterstützt den Kinderfussball \(G, F, E\) und den Juniorenfussball \(D, C, B, A\)\. Die Übungen aus dem\s+Manual decken den Kinderfussball ab/);
+  // AK 7, 8: heute gratis, geplanter Preis, Konto ohne Verein gratis und seine Grenzen aus der einen Quelle.
+  assert.equal(GEPLANTER_PREIS_CHF, 5);
+  assert.match(seite, /KiFu ist heute gratis\. Nach Einführung des Preismodells sind CHF \{GEPLANTER_PREIS_CHF\} pro Team und\s+Monat geplant\./);
+  assert.match(seite, /Ein Konto ohne Verein bleibt gratis\. Es hat höchstens \{KONTO_UEBUNGEN_MAX\} eigene Übungen und\{" "\}\s*\{KONTO_TRAININGS_MAX\} eigene Trainings/);
+  assert.ok(!/\b(50|30) (eigene|Übungen|Trainings)/.test(seite), "Grenzen nie als Zahl im Text");
+  // AK 9: Open Source, selbst betreibbar, Datenort.
+  assert.match(seite, /titel="Open Source"/);
+  assert.match(seite, /selbst betreiben/);
+  assert.match(seite, /titel="Wo die Daten liegen"/);
+  // AK 14: nur erfundene Namen — das Bild nimmt sie aus BEISPIEL_NAMEN, die Seite nennt sonst keine.
+  assert.match(seite, /const n = BEISPIEL_NAMEN;/);
+  assert.deepEqual([...BEISPIEL_NAMEN.spieler], ["Lena", "Noah", "Mia", "Elias"]);
+  // AK 11: Von den Anmeldeseiten und «Nicht gefunden» ohne Anmeldung zur Startseite.
+  const auth = ohneKommentare(lies("app/(auth)/layout.tsx"));
+  assert.match(auth, /<Link\s+href="\/"[\s\S]*?Zur Startseite\s*<\/Link>/);
+  assert.ok(!/Zum Katalog/.test(auth));
+  const nichtGefunden = ohneKommentare(lies("app/(app)/not-found.tsx"));
+  assert.match(
+    nichtGefunden,
+    /user \? \(\s*<ButtonLink href=\{UEBUNGEN_PFAD\} variant="link">\s*Zu den Übungen\s*<\/ButtonLink>\s*\) : \(\s*<ButtonLink href="\/" variant="link">\s*Zur Startseite/,
+  );
+  // AK 12: Die Registrierung nennt den Weg danach.
+  assert.match(lies("app/(auth)/registrieren/page.tsx"), /Danach gründest du einen Verein oder lässt dich in Verein und Team aufnehmen\./);
+  // PC 1: Abmelden führt auf «/», ohne Sitzung die Startseite.
+  assert.match(lies("lib/actions/auth.ts"), /await supabase\.auth\.signOut\(\);\s*redirect\("\/"\);/);
+  // PC 2: Nach «Konto löschen» die Bestätigung auf der Startseite, nicht mehr im Katalog.
+  assert.ok(lies("lib/actions/auth.ts").includes(`redirect("/?${KONTO_GELOESCHT_PARAMETER}=1");`));
+  assert.match(KONTO_GELOESCHT_TEXT, /^Konto gelöscht\. .*Community/);
+  assert.ok(!/öffentlich/i.test(KONTO_GELOESCHT_TEXT));
+  assert.match(ohneKommentare(lies("app/(start)/page.tsx")), /kontoGeloescht=\{sp\[KONTO_GELOESCHT_PARAMETER\] !== undefined\}/);
+  assert.match(seite, /\{kontoGeloescht && \([\s\S]*?<SectionMessage appearance="success">\s*\{KONTO_GELOESCHT_TEXT\}/);
+  assert.ok(!/account_deleted/.test(lies("app/(app)/uebungen/page.tsx")), "kein Hinweis mehr im Katalog");
+});
+
+pruefe("Angemeldete direkt in ihre Arbeit (#671): «/» führt in den Arbeitsbereich, «/startseite» bleibt erreichbar", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  const a = "11111111-1111-4111-8111-111111111111";
+  const b = "22222222-2222-4222-8222-222222222222";
+  const fremd = "33333333-3333-4333-8333-333333333333";
+  // Entscheid 1: Einstieg eines Teams ist der Trainingsplan, der des Vereins die Teams des Vereins.
+  assert.equal(bereichPfad({ art: "team", id: a }), `/team/${a}`);
+  assert.equal(bereichPfad({ art: "verein" }), "/verein");
+  // PC 1: der gemerkte Bereich, dem das Konto noch angehört.
+  assert.equal(arbeitsbereichPfad([{ id: a }, { id: b }], true, { art: "team", id: b }), `/team/${b}`);
+  assert.equal(arbeitsbereichPfad([{ id: a }, { id: b }], true, { art: "verein" }), "/verein");
+  // Sonst der erste: Teams zuerst (Entscheid 2), auch bei einem fremden oder fehlenden gemerkten Bereich (Entscheid 3).
+  assert.equal(arbeitsbereichPfad([{ id: a }, { id: b }], true, { art: "team", id: fremd }), `/team/${a}`);
+  assert.equal(arbeitsbereichPfad([{ id: a }], true, null), `/team/${a}`);
+  // Nur Verwaltung: der Verein; ein gemerktes Team, dem das Konto nicht mehr angehört, gilt nicht.
+  assert.equal(arbeitsbereichPfad([], true, null), "/verein");
+  assert.equal(arbeitsbereichPfad([], true, { art: "team", id: a }), "/verein");
+  // Ohne Verein der Einstieg «Verein gründen oder aufnehmen lassen».
+  assert.equal(arbeitsbereichPfad([], false, { art: "verein" }), "/teams");
+  assert.equal(arbeitsbereichPfad([], false, null), "/teams");
+  // Der Server-Helfer: Cookie des Wechslers, Teams alphabetisch wie im Wechsler, Verein — beide werfen bei Fehlern.
+  const helfer = ohneKommentare(lies("lib/arbeitsbereich.ts"));
+  assert.match(helfer, /getMeineTeamsImRequest\(\)/);
+  assert.match(helfer, /getMeinVereinOderWurf\(\)/);
+  assert.ok(!/getMeinVerein\(\)|getMeineTeams\(\)|catch/.test(helfer), "nie ein verschluckter Fehler (sonst «Verein gründen» für Mitglieder)");
+  assert.match(helfer, /\.sort\(\(a, b\) => nachTeamname\(a\.name, b\.name\)\)/);
+  assert.match(helfer, /leseBereich\(jar\.get\(BEREICH_COOKIE\)\?\.value\)/);
+  // «/»: zuerst die Katalog-Weiterleitung, dann angemeldet der Arbeitsbereich, sonst die Startseite.
+  const start = ohneKommentare(lies("app/(start)/page.tsx"));
+  const reihe = ["katalogWeiterleitung(sp)", "if (user) redirect(await getArbeitsbereichPfad());", "<Startseite"].map((t) => {
+    const i = start.indexOf(t);
+    assert.ok(i >= 0, t);
+    return i;
+  });
+  assert.deepEqual(reihe, [...reihe].sort((x, y) => x - y));
+  assert.match(start, /angemeldet=\{false\}/, "auf «/» nie angemeldet");
+  // AK 1: «/startseite» auch angemeldet, nicht indexiert, kanonisch «/».
+  assert.equal(STARTSEITE_PFAD, "/startseite");
+  const bewusst = ohneKommentare(lies("app/(start)/startseite/page.tsx"));
+  assert.ok(!/redirect/.test(bewusst), "keine Weiterleitung");
+  assert.match(bewusst, /robots: \{ index: false \},\s*alternates: \{ canonical: "\/" \},/);
+  assert.match(bewusst, /angemeldet=\{user !== null\}/);
+  // Anmeldung ohne Ziel und bestätigte Registrierung fallen auf «/» zurück — und damit in den Arbeitsbereich.
+  assert.match(lies("lib/weiterleitung.ts"), /export function sichererRuecksprung\(roh: unknown, rueckfall = "\/"\)/);
+  for (const d of ["app/auth/confirm/route.ts", "app/auth/callback/route.ts", "lib/actions/auth.ts"])
+    assert.match(lies(d), /sichererRuecksprung\((searchParams\.get\("next"\)|formData\.get\("redirect"\))\)/, d);
+  // Die Marke der Seitenleiste bleibt «/».
+  assert.match(lies("components/ui/Seitenleiste.tsx"), /function Marke[\s\S]*?<Link\s+href="\/"/);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

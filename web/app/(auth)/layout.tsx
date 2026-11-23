@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { UEBUNGEN_PFAD } from "@/lib/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { DarstellungsMarke } from "@/components/layout/DarstellungKontext";
@@ -8,7 +7,8 @@ import { KONTO_APP_METADATA } from "@/lib/app-ablegen";
 import { DARSTELLUNG_COOKIE, leseDarstellung } from "@/lib/darstellung";
 
 /* Auch von der Anmeldung aus lässt sich KiFu als App ablegen (#651); sie
-   startet dann bei den Teams (über die Anmeldung, falls nötig). */
+   startet auf «/» und geht von dort in den Arbeitsbereich (#671), ohne
+   Anmeldung auf die Startseite. */
 export const metadata: Metadata = KONTO_APP_METADATA;
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -17,12 +17,13 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
       <DarstellungsMarke darstellung={darstellung} />
+      {/* Ohne Anmeldung der Weg zurück auf die Startseite (#670 AK 11). */}
       <Link
-        href={UEBUNGEN_PFAD}
+        href="/"
         className="focus-ring type-label-medium mb-6 inline-flex items-center gap-1.5 rounded-flaeche text-on-surface-mittel transition-colors hover:text-on-surface"
       >
         <ArrowLeft size={16} strokeWidth={2} aria-hidden />
-        Zum Katalog
+        Zur Startseite
       </Link>
       {children}
       {/* Auch hier legt KiFu Cookies ab (die Anmeldung) — die Seite dazu (#409). */}

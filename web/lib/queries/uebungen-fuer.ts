@@ -48,7 +48,7 @@ export type ExerciseFilters = {
 };
 
 // Felder, die Liste + Karte brauchen.
-const LIST_COLUMNS =
+export const LIST_COLUMNS =
   "id, slug, name, altersstufe, trainingsteil, feldtyp, hauptteilkategorie, kategorien, spielfeld_laenge_m, spielfeld_breite_m, anzahl_kinder, source, visibility, bild_url, diagramm, bild_quelle";
 
 export type ExerciseListRow = {

@@ -7,6 +7,7 @@ import {
   CalendarDays,
   ClipboardList,
   History,
+  House,
   LayoutGrid,
   ListChecks,
   LogIn,
@@ -32,7 +33,7 @@ import {
   waehleBereich,
   type Bereich,
 } from "@/lib/bereich";
-import { aktiveBereiche, bereichAusPfad, UEBUNGEN_PFAD } from "@/lib/navigation";
+import { aktiveBereiche, bereichAusPfad, STARTSEITE_PFAD, UEBUNGEN_PFAD } from "@/lib/navigation";
 import { useFeedback } from "@/components/feedback/FeedbackKontext";
 import { FEEDBACK_TITEL } from "@/components/feedback/FeedbackGespraech";
 import { useSeitenleiste } from "./AppRahmen";
@@ -248,6 +249,9 @@ export function AppNavClient({
       </>
     ),
   };
+  // Die Startseite bewusst (#671 AK 1, Entscheid 4): «/» und die Marke führen
+  // angemeldet in den Arbeitsbereich, darum ein eigener Verweis.
+  const startseite: MenuItemDef = { label: "Startseite", icon: House, href: STARTSEITE_PFAD };
   // Eine Seite des Kontos ist offen: die Karte hervorgehoben, im Menü die Zeile.
   const imKonto = pfad === "/konto" || pfad.startsWith("/konto/");
   const menue: MenuItemDef[] = konto
@@ -270,6 +274,7 @@ export function AppNavClient({
         // Ein Knopf, kein Link: öffnet den Dialog neben der Seite (#542).
         { label: FEEDBACK_TITEL, icon: MessageSquare, trenner: umschaltbar, onSelect: feedback.oeffnen },
         wasIstNeu,
+        startseite,
         {
           label: "Abmelden",
           icon: LogOut,
@@ -286,6 +291,7 @@ export function AppNavClient({
         { label: "Anmelden", icon: LogIn, href: "/login" },
         { label: "Konto erstellen", icon: UserPlus, href: "/registrieren" },
         { ...wasIstNeu, trenner: true },
+        startseite,
       ];
 
   return (

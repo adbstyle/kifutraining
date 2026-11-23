@@ -29,7 +29,6 @@ export type ExerciseFormState = {
 
 /** Listen-Seiten, die nach Mutationen neu validiert werden. */
 function revalidateLists() {
-  revalidatePath("/");
   revalidatePath("/uebungen");
 }
 

@@ -6,6 +6,7 @@ import {
   CalendarDays,
   ClipboardList,
   History,
+  House,
   LayoutGrid,
   ListChecks,
   LogIn,
@@ -117,6 +118,7 @@ function kontoMenue(
       { label: "Anmelden", icon: LogIn, href: "#anmelden" },
       { label: "Konto erstellen", icon: UserPlus, href: "#registrieren" },
       { ...wasIstNeu, trenner: true },
+      { label: "Startseite", icon: House, href: "#startseite" },
     ];
   }
   return [
@@ -134,6 +136,7 @@ function kontoMenue(
     ),
     { label: "Fragen und Feedback", icon: MessageSquare, trenner: true, onSelect: () => {} },
     wasIstNeu,
+    { label: "Startseite", icon: House, href: "#startseite" },
     { label: "Abmelden", icon: LogOut, trenner: true, onSelect: () => {} },
   ];
 }
