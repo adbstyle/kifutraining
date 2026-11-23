@@ -6585,7 +6585,8 @@ pruefe("Startseite (#670): eigene Gruppe ohne Seitenleiste, immer hell, feste An
   }
   // AK 3: registrieren (anmelden in der Kopfzeile); angemeldet über «/startseite» stattdessen «Zur App».
   assert.match(seite, /angemeldet \? \(\s*<ButtonLink href="\/" variant=\{variant\}>\s*Zur App\s*<\/ButtonLink>\s*\) : \(\s*<ButtonLink href="\/registrieren" variant=\{variant\}>/);
-  assert.ok((seite.match(/<Registrieren angemeldet=\{angemeldet\}/g) ?? []).length >= 5, "der Weg hinein in jedem Abschnitt wie im Entwurf");
+  // Der Weg hinein steht im Einstieg und bei den Preisen, nicht unter jedem Abschnitt: Die Kopfzeile klebt (PO 2026-11-23).
+  assert.equal((seite.match(/<Registrieren angemeldet=\{angemeldet\}/g) ?? []).length, 3, "der Weg hinein: Einstieg und zwei Preiskarten");
   // AK 2 (nach dem Gestaltungsentwurf): Verein, Team und Kalender, Schnuppern, Mitteilungen, Training und Übungen, KI-Assistent.
   for (const t of ["Verein", "Team", "Kalender", "Schnuppern", "Mitteilungen", "Training", "Übungen", "KI-Assistent"])
     assert.ok(seite.includes(`label: "${t}"`), `Kachel «${t}»`);

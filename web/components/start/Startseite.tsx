@@ -307,10 +307,6 @@ export function Startseite({
             </ol>
             <Spielerliste />
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <Registrieren angemeldet={angemeldet}>Verein gründen</Registrieren>
-            <span className="type-body-medium text-on-surface-mittel">Gratis, bis das Preismodell eingeführt wird.</span>
-          </div>
         </div>
       </section>
 
@@ -350,9 +346,6 @@ export function Startseite({
             >
               <PrivaterLink />
             </Seite>
-          </div>
-          <div>
-            <Registrieren angemeldet={angemeldet} />
           </div>
         </div>
       </section>
