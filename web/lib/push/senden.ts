@@ -5,9 +5,14 @@ import type { PushSender } from "@/lib/kern/push";
 
 /* Der echte Sender (#483) mit web-push: Die Mitteilung geht nach RFC 8291
    verschlüsselt an den Mitteilungsdienst des Geräts — er sieht weder Text
-   noch Link. TTL 24 h (danach verwirft der Dienst sie), Dringlichkeit normal,
-   je Gerät höchstens 5 s Wartezeit. Der Fachkern (`arbeitePushAb`) bekommt
-   ihn eingesetzt; die Prüfung check:kern-db setzt einen Stub ein. */
+   noch Link. TTL 24 h (danach verwirft der Dienst sie), je Gerät höchstens
+   5 s Wartezeit. Dringlichkeit hoch: Mit «normal» stellt FCM nur mit normaler
+   Priorität zu, und Android hält die Mitteilung im Ruhemodus (Doze) zurück,
+   bis das Gerät aufwacht oder Chrome geöffnet wird — ein Ausfall für morgen
+   käme so erst Stunden später an. Android drosselt hohe Priorität nur bei
+   Pushes ohne sichtbare Mitteilung; der Service Worker zeigt jeden an. Der
+   Fachkern (`arbeitePushAb`) bekommt ihn eingesetzt; die Prüfung
+   check:kern-db setzt einen Stub ein. */
 export function webPushSender(vapid: { publicKey: string; privateKey: string; subject: string }): PushSender {
   return async (abo, mitteilung: Mitteilung) => {
     try {
@@ -16,7 +21,7 @@ export function webPushSender(vapid: { publicKey: string; privateKey: string; su
         JSON.stringify(mitteilung),
         {
           TTL: PUSH_TTL_SEKUNDEN,
-          urgency: "normal",
+          urgency: "high",
           timeout: PUSH_TIMEOUT_MS,
           vapidDetails: { subject: vapid.subject, publicKey: vapid.publicKey, privateKey: vapid.privateKey },
         },
