@@ -19,7 +19,6 @@ import { TextLink } from "@/components/start/RechtsSeite";
 import { VORSCHAU_CLAIM } from "@/lib/auffindbar";
 import { cn } from "@/lib/cn";
 import { KONTO_TRAININGS_MAX, KONTO_UEBUNGEN_MAX } from "@/lib/konto-grenzen";
-import { UEBUNGEN_PFAD } from "@/lib/navigation";
 import { DATENSCHUTZ_PFAD } from "@/lib/rechtliches";
 import { SPIELER_MAX } from "@/lib/spieler";
 import {
@@ -48,7 +47,7 @@ import { loginAdresse } from "@/lib/weiterleitung";
    Bewusst anders als der Entwurf (dem PO gemeldet):
    - «Spieler:innen und Eltern» statt «Die Eltern» im Titel von «Team und
      Kalender» (#659: nie nur für Eltern).
-   - Neben «Übungen ansehen» die Zahl der Manual-Übungen und der SFV-Hinweis
+   - Unter den Beispielen die Zahl der Manual-Übungen und der SFV-Hinweis
      (AK 4, 5); unter «Aus der Schweiz» der Verweis auf die Ausnahmen zum
      Datenort in der Datenschutzerklärung (AK 9).
    - «Material · bald» ist kein Link: Es gibt noch kein Ziel.
@@ -373,14 +372,10 @@ export function Startseite({
               ))}
             </ul>
           )}
-          <div className="flex flex-wrap items-center gap-4">
-            <ButtonLink href={ohneKonto(angemeldet, UEBUNGEN_PFAD)} variant="filled">
-              Übungen ansehen
-            </ButtonLink>
-            <span className="type-body-medium text-on-surface-mittel">
-              {MANUAL_UEBUNGEN_ANZAHL} Übungen aus dem Manual Kinderfussball sind dabei. {SFV_HINWEIS}
-            </span>
-          </div>
+          {/* Kein Weg in den Katalog (PO): Ohne Konto gibt es ihn nicht, angemeldet führt «Zur App» hinein. */}
+          <p className="type-body-medium text-on-surface-mittel">
+            {MANUAL_UEBUNGEN_ANZAHL} Übungen aus dem Manual Kinderfussball sind dabei. {SFV_HINWEIS}
+          </p>
         </div>
       </section>
 
@@ -480,13 +475,6 @@ export function Startseite({
       </section>
     </>
   );
-}
-
-/** Ein Ziel, das es nur mit Konto gibt: angemeldet direkt, sonst über die
- *  Anmeldung, die danach dorthin führt — kein Link, der ohne Konto bloss
- *  zurück auf die Startseite fiele (wie die Beispielkarten, `ohneLink`). */
-function ohneKonto(angemeldet: boolean, pfad: string): string {
-  return angemeldet ? pfad : loginAdresse(pfad, "");
 }
 
 /** Der Weg hinein: «Kostenlos registrieren» (oder ein anderer Text, etwa
