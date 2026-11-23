@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { UEBUNGEN_PFAD } from "@/lib/navigation";
 import {
   type BreadcrumbItem,
   Card,
@@ -87,8 +88,8 @@ export default async function ExerciseDetailPage({
   // Kinderfussball-Hauptteil auf die Hauptteilkategorie (Story #129). Der TEXT bleibt die Einordnung selbst.
   const teilLabel = EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
-    { label: "Übungen", href: "/" },
-    { label: teilLabel, href: `/?teil=${katalogFilterZiel(ex)}` },
+    { label: "Übungen", href: UEBUNGEN_PFAD },
+    { label: teilLabel, href: `${UEBUNGEN_PFAD}?teil=${katalogFilterZiel(ex)}` },
     { label: ex.name },
   ];
   const materialHinweis = isOwner

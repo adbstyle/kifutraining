@@ -153,7 +153,7 @@ export function bestandVollMeldung(art: KontoArt, g: KontoGrenze): { titel: stri
     ? {
         titel,
         text: `Ohne Verein besitzt du höchstens ${g.max} Übungen. ${loeschen} In einem Verein gilt die Grenze nicht.`,
-        link: "/?mine=1",
+        link: "/uebungen?mine=1",
         linkText: "Zu meinen Übungen",
       }
     : {

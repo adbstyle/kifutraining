@@ -3,6 +3,11 @@
 
 import type { Bereich } from "@/lib/bereich";
 
+/** Die Adresse des Übungskatalogs (#674). «/» bleibt die Startadresse und
+ *  wird mit #670 die Startseite; bisher geteilte Katalog-Adressen «/?…» mit
+ *  Filtern leitet «/» hierher weiter. */
+export const UEBUNGEN_PFAD = "/uebungen";
+
 export type AktiveBereiche = {
   uebungen: boolean;
   trainings: boolean;

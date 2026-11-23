@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import { UEBUNGEN_PFAD } from "@/lib/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { DarstellungsMarke } from "@/components/layout/DarstellungKontext";
@@ -17,7 +18,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
       <DarstellungsMarke darstellung={darstellung} />
       <Link
-        href="/"
+        href={UEBUNGEN_PFAD}
         className="focus-ring type-label-medium mb-6 inline-flex items-center gap-1.5 rounded-flaeche text-on-surface-mittel transition-colors hover:text-on-surface"
       >
         <ArrowLeft size={16} strokeWidth={2} aria-hidden />

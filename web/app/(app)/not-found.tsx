@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { FileQuestion } from "lucide-react";
 import { ButtonLink, Leerzustand } from "@/components/ui";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { UEBUNGEN_PFAD } from "@/lib/navigation";
 
 /* Eine Seite, die es nicht gibt — innerhalb der App, also mit Seitenleiste
    und Brotkrumen, damit der Weg zurück auf der Seite selbst steht. Greift bei
@@ -16,7 +17,7 @@ export default function NichtGefunden() {
         titel="Diese Seite gibt es nicht"
         ueberschrift="h1"
         aktion={
-          <ButtonLink href="/" variant="link">
+          <ButtonLink href={UEBUNGEN_PFAD} variant="link">
             Zu den Übungen
           </ButtonLink>
         }

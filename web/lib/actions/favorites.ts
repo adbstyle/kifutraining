@@ -45,5 +45,6 @@ export async function setFavorite(
 
   // Katalog-Liste neu validieren, damit der Favoriten-Filter konsistent bleibt.
   revalidatePath("/");
+  revalidatePath("/uebungen");
   return { ok: true };
 }

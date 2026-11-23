@@ -32,7 +32,7 @@ import {
   waehleBereich,
   type Bereich,
 } from "@/lib/bereich";
-import { aktiveBereiche, bereichAusPfad } from "@/lib/navigation";
+import { aktiveBereiche, bereichAusPfad, UEBUNGEN_PFAD } from "@/lib/navigation";
 import { useFeedback } from "@/components/feedback/FeedbackKontext";
 import { FEEDBACK_TITEL } from "@/components/feedback/FeedbackGespraech";
 import { useSeitenleiste } from "./AppRahmen";
@@ -158,7 +158,7 @@ export function AppNavClient({
   const bibliotheken: SeitenleisteGruppe = {
     titel: "Bibliothek",
     eintraege: [
-      { label: "Übungen", href: "/", icon: LayoutGrid, current: aktiv.uebungen },
+      { label: "Übungen", href: UEBUNGEN_PFAD, icon: LayoutGrid, current: aktiv.uebungen },
       { label: "Trainings", href: "/trainings", icon: ClipboardList, current: aktiv.trainings },
     ],
   };

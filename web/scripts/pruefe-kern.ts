@@ -5346,7 +5346,7 @@ pruefe("Konto ohne Verein (#588 AK 5): Texte der Anzeige in jeder Lage — unter
   assert.deepEqual(bestandVollMeldung("uebungen", u(50)), {
     titel: "Nichts mehr frei: 50 von 50 Übungen",
     text: "Ohne Verein besitzt du höchstens 50 Übungen. Lösche eine, um Platz zu schaffen. In einem Verein gilt die Grenze nicht.",
-    link: "/?mine=1",
+    link: "/uebungen?mine=1",
     linkText: "Zu meinen Übungen",
   });
   assert.equal(bestandVollMeldung("uebungen", u(62)).titel, "Nichts mehr frei: 62 Übungen, höchstens 50");
@@ -5436,8 +5436,8 @@ pruefe("Konto ohne Verein (#588 AK 5, PC 3): Anzeige nur ohne Verein und aus der
   for (const d of ["components/ui/BestandAnzeige.tsx", "components/konto/BestandStufe.tsx", "lib/actions/konto-bestand.ts"])
     assert.ok(!/\b(50|30)\b/.test(lies(d).replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "")), `${d}: keine feste Grenze im Code`);
   // Die Übersichten zeigen den Stand nur in «Meine …» und lesen ihn von der Datenebene, nicht aus der Liste.
-  assert.match(lies("app/(app)/page.tsx"), /const grenzen = filters\.mine \? await getMeineGrenzen\(\) : null;/);
-  assert.match(lies("app/(app)/page.tsx"), /\{grenzen && <BestandAnzeige art="uebungen" grenze=\{grenzen\.uebungen\}/);
+  assert.match(lies("app/(app)/uebungen/page.tsx"), /const grenzen = filters\.mine \? await getMeineGrenzen\(\) : null;/);
+  assert.match(lies("app/(app)/uebungen/page.tsx"), /\{grenzen && <BestandAnzeige art="uebungen" grenze=\{grenzen\.uebungen\}/);
   // Die Trainingsübersicht lädt ihn mit Liste und Detail zusammen (#630).
   assert.match(lies("app/(app)/trainings/page.tsx"), /mine \? getMeineGrenzen\(\) : Promise\.resolve\(null\),/);
   assert.match(lies("app/(app)/trainings/page.tsx"), /\{grenzen && <BestandAnzeige art="trainings" grenze=\{grenzen\.trainings\}/);
@@ -5463,7 +5463,7 @@ pruefe("Konto ohne Verein (#588 AK 5, PC 3): Anzeige nur ohne Verein und aus der
   assert.ok(!/unstable_cache|revalidate\s*=/.test(lies("lib/queries/verein.ts")), "kein Zwischenspeicher über Anfragen");
   assert.match(lies("lib/queries/verein.ts"), /if \(lage\) return \{ lage, grenzen: null, fehler: null \};/, "mit Verein nie eine Anzeige");
   // Die Seiten rendern je Aufruf frisch.
-  for (const d of ["app/(app)/page.tsx", "app/(app)/trainings/page.tsx", "app/(app)/neu/page.tsx", "app/(app)/training/neu/page.tsx"])
+  for (const d of ["app/(app)/page.tsx", "app/(app)/uebungen/page.tsx", "app/(app)/trainings/page.tsx", "app/(app)/neu/page.tsx", "app/(app)/training/neu/page.tsx"])
     assert.match(lies(d), /export const dynamic = "force-dynamic";/, d);
 });
 
@@ -6305,7 +6305,7 @@ pruefe("Eigene Inhalte über die Bibliothek (#660): kein Eintrag «Meine Bibliot
   // AK 2, AK 3, PC 1: Die Bibliotheken lesen `?mine=1` weiter (bisherige Adressen und Verweise),
   // bieten den Chip und zeigen eingegrenzt den Bestand von der Grenze.
   for (const [seite, filterleiste, art] of [
-    ["app/(app)/page.tsx", "CatalogFilterBar", "uebungen"],
+    ["app/(app)/uebungen/page.tsx", "CatalogFilterBar", "uebungen"],
     ["app/(app)/trainings/page.tsx", "TrainingFilterBar", "trainings"],
   ] as const) {
     const text = lies(seite);
@@ -6466,6 +6466,27 @@ pruefe("Konto in Themen gegliedert (#662): Profil, Verbindungen sowie Daten und 
     lies("app/(app)/cookies/page.tsx"),
     /\[\{ label: "Konto", href: "\/konto" \}, \{ label: "Daten und Konto", href: "\/konto\/daten" \}, \{ label: "Cookies" \}\]/,
   );
+});
+
+pruefe("Übungskatalog an eigener Adresse (#674): «/uebungen», alte Filter-Adressen «/?…» leiten weiter, Verweise führen zum Katalog", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  assert.match(lies("lib/navigation.ts"), /export const UEBUNGEN_PFAD = "\/uebungen";/);
+  // AK 1 + 2: «/» leitet jede Adresse mit Katalog-Filter samt Parametern weiter; ohne Filter bleibt «/» unverändert.
+  const start = ohneKommentare(lies("app/(app)/page.tsx"));
+  for (const k of ["teil", "kat", "feld", "form", "typ", "kinder", "q", "fav", "mine", "anzahl", "deleted", "hkat"])
+    assert.ok(start.includes(`"${k}"`), `Filter ${k} leitet weiter`);
+  assert.ok(!start.includes(`"account_deleted"`), "der Hinweis nach dem Löschen des Kontos bleibt auf «/»");
+  assert.match(start, /redirect\(`\$\{UEBUNGEN_PFAD\}\?\$\{abfrage\}`\)/);
+  // AK 3: Verweise auf die Übungen führen zum Katalog, nicht mehr zu «/».
+  assert.match(lies("components/layout/AppNavClient.tsx"), /UEBUNGEN_PFAD/);
+  for (const d of ["app/(app)/neu/page.tsx", "app/(app)/not-found.tsx", "app/(auth)/layout.tsx", "app/(app)/uebung/[slug]/page.tsx", "app/(app)/uebung/[slug]/edit/page.tsx"])
+    assert.match(lies(d), /UEBUNGEN_PFAD/, d);
+  assert.match(lies("lib/actions/exercises.ts"), /redirect\("\/uebungen\?mine=1&deleted=1"\)/);
+  for (const d of ["lib/actions/exercises.ts", "lib/actions/fassung.ts", "lib/actions/favorites.ts"])
+    assert.match(lies(d), /revalidatePath\("\/uebungen"\)/, d);
+  const aktiv = aktiveBereiche("/uebungen", false);
+  assert.equal(aktiv.uebungen, true);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);
