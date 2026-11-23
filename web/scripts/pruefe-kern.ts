@@ -524,6 +524,7 @@ import {
   basisOrigin,
   robotsRegeln,
 } from "../lib/auffindbar";
+import { DATENSCHUTZ_PFAD, ENTWURF_HINWEIS, IMPRESSUM_PFAD, RECHTLICHE_LINKS } from "../lib/rechtliches";
 import { TRAGWEITE_VEROEFFENTLICHEN, ZUM_VEROEFFENTLICHEN_FEHLT } from "../lib/training-bedingungen";
 import { FILTER_SCHLUESSEL, TEAM_BEREICHE, teamBereichAusPfad, teamBereichHref } from "../lib/team-bereiche";
 import {
@@ -6736,7 +6737,8 @@ pruefe("Übungen und Trainings nur mit Konto (#669): Umleitung mit Hinweis und R
   // Werkzeugnamen bleiben (OoS 2), ihre Titel sagen «Community».
   assert.match(lies("lib/mcp/werkzeuge/trainings-bearbeiten.ts"), /name: "training_veroeffentlichen",\s*titel: "Training in die Community stellen",/);
   assert.match(lies("lib/mcp/werkzeuge/uebungen-bearbeiten.ts"), /name: "uebung_veroeffentlichen",\s*titel: "Übung in die Community stellen",/);
-  // Kein «öffentlich»/«veröffentlich» mehr in dem, was Oberfläche und KI sagen (Kommentare ausgenommen; Release-Texte bleiben, wie sie erschienen).
+  // Kein «öffentlich»/«veröffentlich» mehr in dem, was Oberfläche und KI sagen (Kommentare ausgenommen; Release-Texte bleiben, wie sie erschienen;
+  // der Amtsname des EDÖB in der Datenschutzerklärung, #672, ist kein Sichtbarkeitsbegriff).
   const treffer: string[] = [];
   for (const wurzel of ["app", "components", "lib"])
     for (const datei of quelldateien(join(web, wurzel))) {
@@ -6744,7 +6746,7 @@ pruefe("Übungen und Trainings nur mit Konto (#669): Umleitung mit Hinweis und R
       if (["lib/releases.ts", "lib/feedback/wissen.ts"].includes(rel) || rel.startsWith("app/(app)/versionen/") || rel.startsWith("app/api/versionen/")) continue;
       ohneKommentare(readFileSync(datei, "utf8")).split("\n").forEach((zeile, i) => {
         if (/^\s*\*/.test(zeile)) return;
-        if (/[öÖ]ffentlich/.test(zeile) && !/Tag der Veröffentlichung/.test(zeile)) treffer.push(`${rel}:${i + 1}`);
+        if (/[öÖ]ffentlich/.test(zeile) && !/Tag der Veröffentlichung|Öffentlichkeitsbeauftragte/.test(zeile)) treffer.push(`${rel}:${i + 1}`);
       });
     }
   assert.deepEqual(treffer, [], `«öffentlich» an der Oberfläche: ${treffer.join(", ")}`);
@@ -6811,6 +6813,52 @@ pruefe("Auffindbar und Link-Vorschau (#673 AK 1–3): robots nur auf Produktion 
   }
   // Suchmaschinen und Vorschau-Dienste kommen ohne Sitzung.
   assert.match(lies("middleware.ts"), /\|robots\\\\\.txt\|sitemap\\\\\.xml\|opengraph-image\|twitter-image\|/);
+});
+
+pruefe("Impressum und Datenschutz (#672, ENTWURF): Seiten mit Entwurfshinweis, erreichbar von Startseite, Anmeldung und privatem Link, für Suchmaschinen frei", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  assert.equal(IMPRESSUM_PFAD, "/impressum");
+  assert.equal(DATENSCHUTZ_PFAD, "/datenschutz");
+  assert.deepEqual(RECHTLICHE_LINKS.map((l) => [l.href, l.label]), [["/impressum", "Impressum"], ["/datenschutz", "Datenschutz"]]);
+  // Entscheid 2: Entwurf, bis die Rechtsberatung geprüft hat — sichtbar auf jeder Seite über das gemeinsame Gerüst.
+  assert.match(ENTWURF_HINWEIS, /^Entwurf – rechtlich noch nicht geprüft\./);
+  const geruest = ohneKommentare(lies("components/start/RechtsSeite.tsx"));
+  assert.match(geruest, /<SectionMessage appearance="warning"[^>]*>\s*\{ENTWURF_HINWEIS\}/);
+  // Die Seiten liegen in der Gruppe (start) (ohne Seitenleiste, ohne Anmeldung), nutzen das Gerüst und sperren Suchmaschinen nicht.
+  const impressum = ohneKommentare(lies("app/(start)/impressum/page.tsx"));
+  const datenschutz = ohneKommentare(lies("app/(start)/datenschutz/page.tsx"));
+  for (const [name, t] of [["impressum", impressum], ["datenschutz", datenschutz]] as const) {
+    assert.match(t, /<RechtsSeite titel=/, `${name}: Gerüst mit Entwurfshinweis`);
+    assert.ok(!/robots\s*:/.test(t), `${name}: indexierbar (AK 8)`);
+    assert.match(t, /alternates: \{ canonical: (IMPRESSUM_PFAD|DATENSCHUTZ_PFAD) \}/, `${name}: canonical`);
+  }
+  // AK 2: Trägerschaft, Postadresse und E-Mail-Adresse für Anfragen (Platzhalter bis zur Gründung).
+  assert.match(impressum, /\{TRAEGERSCHAFT\}/);
+  assert.match(impressum, /POSTADRESSE_PLATZHALTER\.map/);
+  assert.match(impressum, /<KontaktAdresse \/>/);
+  // AK 3–7: Daten, Zwecke, Fristen aus ihren Quellen; Auftrag der Vereine; Datenort und Ausnahmen; Rechte ohne Konto; Cookies.
+  assert.match(datenschutz, /\{BENACHRICHTIGUNG_TAGE\} Tage/);
+  assert.match(datenschutz, /\{AUFBEWAHRUNG_MONATE\} Monaten/);
+  assert.match(datenschutz, /KiFu bearbeitet\s+diese Daten in seinem Auftrag/);
+  assert.match(datenschutz, /titel="Wo die Daten liegen"/);
+  for (const w of ["Fragen und Feedback:", "Mitteilungen aufs Mobile:", "KI-Assistenten, die du selbst verbindest:", "Kalender, die du selbst abonnierst:"])
+    assert.ok(datenschutz.includes(w), `Ausnahme «${w}»`);
+  assert.match(datenschutz, /Dafür brauchst du kein Konto: Schreib an <KontaktAdresse \/>/);
+  assert.match(datenschutz, /leiten wir sie an den Verein weiter/);
+  assert.match(datenschutz, /<TextLink href="\/cookies">Cookies<\/TextLink>/);
+  // AK 1: erreichbar von der Startseite (Fusszeile), den Anmeldeseiten und dem privaten Link.
+  assert.match(ohneKommentare(lies("app/(start)/layout.tsx")), /RECHTLICHE_LINKS\.map\(\(l\) => \(\s*<FussLink key=\{l\.href\} href=\{l\.href\}>/);
+  assert.match(ohneKommentare(lies("app/(auth)/layout.tsx")), /<RechtlicheLinks /);
+  assert.match(ohneKommentare(lies("app/(privat)/layout.tsx")), /<RechtlicheLinks /);
+  assert.match(ohneKommentare(lies("components/layout/RechtlicheLinks.tsx")), /RECHTLICHE_LINKS\.map/);
+  // Die Middleware lässt beide Seiten ohne Anmeldung zu (kein Präfix «nur mit Konto»).
+  for (const p of [IMPRESSUM_PFAD, DATENSCHUTZ_PFAD]) assert.ok(!istNurMitKonto(p), `${p} ohne Konto`);
+  // AK 8: robots und Sitemap führen beide.
+  for (const p of [IMPRESSUM_PFAD, DATENSCHUTZ_PFAD]) {
+    assert.ok((FREIGEGEBEN as readonly string[]).includes(p), `${p} in robots frei`);
+    assert.ok((SITEMAP_PFADE as readonly string[]).includes(p), `${p} in der Sitemap`);
+  }
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

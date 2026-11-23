@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { DarstellungsMarke } from "@/components/layout/DarstellungKontext";
+import { RechtlicheLinks, RechtsLink } from "@/components/layout/RechtlicheLinks";
 import { KONTO_APP_METADATA } from "@/lib/app-ablegen";
 import { DARSTELLUNG_COOKIE, leseDarstellung } from "@/lib/darstellung";
 
@@ -26,13 +27,9 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         Zur Startseite
       </Link>
       {children}
-      {/* Auch hier legt KiFu Cookies ab (die Anmeldung) — die Seite dazu (#409). */}
-      <Link
-        href="/cookies"
-        className="focus-ring type-body-small mt-8 self-start rounded-flaeche text-on-surface-tief transition-colors hover:text-on-surface"
-      >
-        Cookies
-      </Link>
+      {/* Auch hier legt KiFu Cookies ab (die Anmeldung) — die Seite dazu (#409);
+          daneben Impressum und Datenschutz (#672 AK 1). */}
+      <RechtlicheLinks className="mt-8" davor={<RechtsLink href="/cookies">Cookies</RechtsLink>} />
     </main>
   );
 }

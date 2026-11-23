@@ -2,8 +2,8 @@
    `check:kern` lädt die Datei und prüft die Regeln.
 
    - Suchmaschinen sehen auf Produktion nur, was für sie gedacht ist (AK 1):
-     die Startseite «/», «Versionen» und — mit #672 — Impressum und
-     Datenschutz (Entscheid 1). Alles andere ist gesperrt; Staging und
+     die Startseite «/», «Versionen», Impressum und Datenschutz (#672,
+     Pfade in lib/rechtliches.ts; Entscheid 1). Alles andere ist gesperrt; Staging und
      Previews sperren ganz.
    - Jede Adresse zeigt beim Teilen dieselbe Vorschau: Marke, «KiFu» und der
      Claim (AK 3, Entscheid 2). Darum steht die Vorschau EINMAL in der Wurzel

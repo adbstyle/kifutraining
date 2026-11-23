@@ -4,6 +4,7 @@ import { FigurenSprite } from "@/components/diagramm/figur";
 import { ButtonLink } from "@/components/ui";
 import { DarstellungsMarke } from "@/components/layout/DarstellungKontext";
 import { GRUND_HELL } from "@/lib/farben";
+import { RECHTLICHE_LINKS } from "@/lib/rechtliches";
 import { REPO_URL } from "@/lib/startseite";
 import { getUserImRequest } from "@/lib/supabase/server";
 
@@ -59,6 +60,11 @@ export default async function StartLayout({ children }: { children: React.ReactN
           <nav aria-label="Weiteres" className="type-body-small flex flex-wrap gap-x-5 gap-y-2">
             <FussLink href="/versionen">Versionen</FussLink>
             <FussLink href="/cookies">Cookies</FussLink>
+            {RECHTLICHE_LINKS.map((l) => (
+              <FussLink key={l.href} href={l.href}>
+                {l.label}
+              </FussLink>
+            ))}
             <a
               href={REPO_URL}
               target="_blank"
