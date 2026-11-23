@@ -47,8 +47,9 @@ export default async function TrainingsPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  // „Meine Trainings" ist nur angemeldet sinnvoll — anonym gibt es keine.
-  const mine = !!user && sp.mine === "1";
+  // Nur mit Konto (#669): ohne Anmeldung leitet die Middleware vorher auf die Startseite.
+  if (!user) redirect("/login?redirect=/trainings");
+  const mine = sp.mine === "1";
   const filtersActive = !!q || stufen.length > 0;
 
   const sortierung = leseSortierung(sp.sort, sp.dir);
@@ -80,11 +81,9 @@ export default async function TrainingsPage({
         mine ? [{ label: "Trainings", href: "/trainings" }, { label: "Meine Trainings" }] : [{ label: "Trainings" }]
       }
       aktionen={
-        user && (
-          <ButtonLink href="/training/neu" variant="filled">
-            Training erstellen
-          </ButtonLink>
-        )
+        <ButtonLink href="/training/neu" variant="filled">
+          Training erstellen
+        </ButtonLink>
       }
     >
       {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
@@ -95,7 +94,7 @@ export default async function TrainingsPage({
       <div className={detail ? "max-lg:hidden" : undefined}>
         {grenzen && <BestandAnzeige art="trainings" grenze={grenzen.trainings} className="mb-4" />}
 
-        <TrainingFilterBar q={q} stufen={stufen} mine={mine} showMine={!!user} />
+        <TrainingFilterBar q={q} stufen={stufen} mine={mine} showMine />
 
         {/* Ein Zustand der Adresse, kein Vorgang: als Section Message, nicht
             als Snackbar. Sie bleibt, bis man ein anderes Training wählt. */}

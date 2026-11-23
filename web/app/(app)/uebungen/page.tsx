@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { SearchX, Heart } from "lucide-react";
 import { BestandAnzeige, ExerciseCard, ButtonLink, Leerzustand, SectionMessage } from "@/components/ui";
 import { Flash } from "@/components/Flash";
@@ -32,13 +33,12 @@ export default async function Home({
 }) {
   const sp = await searchParams;
 
-  // Favoriten- und „Meine Übungen"-Filter sind nur für angemeldete USER
-  // wirksam (AC11; anonym gibt es keine eigenen/privaten Übungen zu sehen).
+  // Nur mit Konto (#669): ohne Anmeldung leitet die Middleware vorher auf die Startseite.
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const canFavorite = !!user;
+  if (!user) redirect("/login?redirect=/uebungen");
 
   const filters: CatalogFilters = {
     // Nur wählbare Einordnungen zählen. Ein Wert aus einem früher geteilten
@@ -54,7 +54,7 @@ export default async function Home({
     kinder: liesPositiveZahl(sp.kinder),
     q: typeof sp.q === "string" ? sp.q : undefined,
     fav: sp.fav === "1",
-    mine: !!user && sp.mine === "1",
+    mine: sp.mine === "1",
   };
   // Die Einordnungen wirken untereinander als ODER und stehen in zwei Spalten
   // — der Query-Layer bekommt sie darum als `einordnung`, nicht als `teil`.
@@ -84,11 +84,9 @@ export default async function Home({
       breite="voll"
       krumen={filters.mine ? [{ label: "Übungen", href: UEBUNGEN_PFAD }, { label: "Meine Übungen" }] : [{ label: "Übungen" }]}
       aktionen={
-        user && (
-          <ButtonLink href="/neu" variant="filled">
-            Übung erstellen
-          </ButtonLink>
-        )
+        <ButtonLink href="/neu" variant="filled">
+          Übung erstellen
+        </ButtonLink>
       }
     >
       {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
@@ -109,7 +107,7 @@ export default async function Home({
 
       {rows && (
         <>
-          <CatalogFilterBar filters={filters} canFavorite={canFavorite} showMine={!!user} />
+          <CatalogFilterBar filters={filters} />
 
           <p className="type-label-small mb-4 text-on-surface-mittel">
             {rows.length} {rows.length === 1 ? "Übung" : "Übungen"}
@@ -132,13 +130,11 @@ export default async function Home({
                     key={row.id}
                     ex={toCardData(row)}
                     actionSlot={
-                      canFavorite ? (
-                        <FavoriteButton
-                          exerciseId={row.id}
-                          initial={row.is_favorited}
-                          variant="overlay"
-                        />
-                      ) : undefined
+                      <FavoriteButton
+                        exerciseId={row.id}
+                        initial={row.is_favorited}
+                        variant="overlay"
+                      />
                     }
                   />
                 ))}

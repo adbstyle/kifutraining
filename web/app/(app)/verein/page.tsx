@@ -28,7 +28,8 @@ export const metadata: Metadata = { title: "Teams im Verein - KiFu", robots: { i
    die Felder für die Verwaltung bei allen anderen weg); die Seite zeigt nur,
    was sie bekommt.
 
-   Konto ohne Verein: zu den Teams. Ein Datenbankfehler wirft (Fehlerseite). */
+   Konto ohne Verein: zu den Teams. Ein Datenbankfehler wirft (Fehlerseite),
+   ausser beim Hinweis zur Vereinbarung (#675), der dann fehlt. */
 export default async function VereinPage({
   searchParams,
 }: {
@@ -51,7 +52,11 @@ export default async function VereinPage({
     istVerwaltung ? ladeVereinbarung(supabase, user.id, { vereinId: verein.id }) : null,
   ]);
   if (!ansicht.ok) throw new Error(ansicht.meldung);
-  if (vereinbarung && !vereinbarung.ok) throw new Error(vereinbarung.meldung);
+  // Die Vereinbarung ist auf der Übersicht nur ein Hinweis: Scheitert ihr
+  // Lesen (etwa im Deploy-Fenster, bevor `verein_vereinbarung` auf der
+  // Datenbank ist), fehlt der Hinweis, die Übersicht bleibt. Die Verwaltung
+  // zeigt die Vereinbarung selbst und wirft dort.
+  if (vereinbarung && !vereinbarung.ok) console.error("verein_vereinbarung:", vereinbarung.meldung);
   const { name, verwaltung, teams, spielerZahl } = ansicht.wert;
   // Eine neue Fassung meldet auch die Übersicht, damit die Verwaltung sie nicht erst in «Verwaltung» findet.
   const neueFassung =

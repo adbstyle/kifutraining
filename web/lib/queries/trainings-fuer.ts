@@ -353,8 +353,8 @@ export type TrainingListRow = {
   name: string;
   visibility: "public" | "private";
   /** Gehört das Training dem aktuellen USER? Entscheidet über Kennzeichnung und
-   *  Ziel des Eintrags in der Übersicht (Story B AK 3–5); `false` für Besucher
-   *  ohne Konto. */
+   *  Ziel des Eintrags in der Übersicht (Story B AK 3–5); `false`, wenn der
+   *  Aufruf keine Kennung mitgibt. */
   istEigen: boolean;
   /** Nach welchem Lehrmittel das Training geführt wird (Story 1,
    *  Übungswelten). */

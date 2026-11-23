@@ -22,9 +22,11 @@ const sans = Geist({
    `metadataBase` macht Bild und canonical absolut (lib/auffindbar.ts). */
 export const metadata: Metadata = {
   metadataBase: new URL(basisOrigin(process.env.APP_ORIGIN)),
-  title: "Übungen & Trainings für Kinder- und Juniorenfussball",
+  // Rückfall für Seiten ohne eigene Angaben, etwa /versionen (#673 AK 1):
+  // KiFu als Werkzeug für Verein, Team und Training (Epic #668 EK 1).
+  title: "KiFu – Verein, Team und Training im Kinder- und Juniorenfussball",
   description:
-    "Übungen durchsuchen und filtern sowie strukturierte Trainings zusammenstellen - nach den SFV-Trainingsschemata für Kinderfussball und Juniorenfussball.",
+    "Vereinsverwaltung, Team und Abmeldungen, Trainings und ein KI-Assistent für den Kinder- und Juniorenfussball.",
   openGraph: {
     type: "website",
     siteName: VORSCHAU_NAME,

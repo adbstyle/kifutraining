@@ -3,6 +3,9 @@
 --   eine Zeile, auch nicht Manual-Übungen und Community-Trainings
 -- - angemeldet bleibt alles wie bisher: Community-Inhalte für alle Konten
 --   (PC 3), auch anonymisierte gelöschter Konten
+-- - ohne Anmeldung lassen sich die Bilder im Bucket nicht aufzählen, und die
+--   Namens- und Bedingungsfunktionen sind für anon zu (Migration
+--   nur_mit_konto_nachzug)
 -- - `startseite_beispiele()` liefert ohne Anmeldung genau die sechs festen
 --   Manual-Übungen, in der Reihenfolge der Anzeige, und sonst nichts
 -- Läuft auch auf der leeren Wegwerf-DB der CI (vor `npm run seed`): fehlende
@@ -76,8 +79,13 @@ select pg_temp.zurueck();
 insert into public.training_exercises (training_id, name, trainingsteil, position, aufbau)
 select '69690000-0000-4000-8000-0000000000a1', 'Fassung', 'ausklang', 0, 'Aufbau';
 
+-- Ein Bild im Bucket der Übungen (Nachzug: anon zählt keine Objekte auf).
+insert into storage.objects (bucket_id, name)
+values ('exercise-images', 'user/69690000-0000-4000-8000-000000000001/nur-mit-konto.webp');
+
 -- ── Ohne Anmeldung: nichts ──────────────────────────────────────────────────
 select pg_temp.anonym();
+select pg_temp.pruefe((select count(*) from storage.objects where bucket_id = 'exercise-images') = 0, 'anon zählt keine Bilder auf');
 select pg_temp.pruefe((select count(*) from public.exercises) = 0, 'anon liest keine Übung');
 select pg_temp.pruefe((select count(*) from public.exercise_favorites) = 0, 'anon liest keine Favoriten');
 select pg_temp.pruefe((select count(*) from public.trainings) = 0, 'anon liest kein Training');
@@ -107,6 +115,7 @@ select pg_temp.pruefe((select count(*) from public.training_exercises where trai
 select pg_temp.pruefe((select count(*) from public.training_varianten where training_id = '69690000-0000-4000-8000-0000000000a1') >= 1, 'Eigentümer liest die Variante');
 select pg_temp.pruefe((select count(*) from public.exercises where slug = 'nur-mit-konto-verwaist') = 1, 'Community-Übung eines gelöschten Kontos bleibt lesbar (PC 3)');
 select pg_temp.pruefe((select count(*) from public.exercises where source = 'manual') >= 7, 'Manual-Übungen mit Konto lesbar');
+select pg_temp.pruefe((select count(*) from storage.objects where bucket_id = 'exercise-images') >= 1, 'Bilder mit Konto auflistbar');
 select pg_temp.zurueck();
 
 -- B sieht den fremden Entwurf nicht, ein Community-Training dagegen schon.
@@ -132,6 +141,13 @@ select pg_temp.zurueck();
 
 -- ── Rechte der Funktion ────────────────────────────────────────────────────
 select pg_temp.pruefe(has_function_privilege('anon', 'public.startseite_beispiele()', 'execute'), 'anon darf die Beispiele lesen');
+-- Was anon nur fürs öffentliche Lesen ausführen durfte, ist zu (Nachzug).
+select pg_temp.pruefe(not has_function_privilege('anon', f, 'execute'), 'anon führt ' || f || ' nicht aus')
+from unnest(array['public.anzeige_name(uuid)', 'public.urheber(public.trainings)',
+                  'public.training_fehlende_bedingungen(uuid)', 'public.training_pruefe_oeffentlich(uuid)']) f;
+select pg_temp.pruefe(has_function_privilege('authenticated', f, 'execute'), 'authenticated führt ' || f || ' aus')
+from unnest(array['public.anzeige_name(uuid)', 'public.urheber(public.trainings)',
+                  'public.training_fehlende_bedingungen(uuid)', 'public.training_pruefe_oeffentlich(uuid)']) f;
 select pg_temp.pruefe(
   (select prosecdef and proconfig @> array['search_path=public, pg_temp'] from pg_proc where proname = 'startseite_beispiele'),
   'SECURITY DEFINER mit festem search_path');

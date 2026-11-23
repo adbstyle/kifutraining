@@ -167,6 +167,8 @@ import {
   type LozengeAppearance,
 } from "@/lib/farben";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { RechtlicheLinks, RechtsLink } from "@/components/layout/RechtlicheLinks";
+import { Platzhalter, RechtsAbschnitt, TextLink } from "@/components/start/RechtsSeite";
 import { KaderLozenge } from "@/components/team/KaderLozenge";
 import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 import { VERZEICHNIS_COOKIE, leseVerzeichnis } from "@/lib/verzeichnis";
@@ -292,6 +294,7 @@ const GLIEDERUNG = [
           { id: "tabelle", titel: "Tabelle" },
           { id: "eigenschaften", titel: "Eigenschaften" },
           { id: "release-text", titel: "Release-Text" },
+          { id: "rechtliches", titel: "Startseite und Rechtliches" },
         ],
       },
       {
@@ -3933,6 +3936,46 @@ export default async function Styleguide() {
             </header>
             <ReleaseText text={BEISPIEL_RELEASE} />
           </article>
+        </Section>
+
+        <Section id="rechtliches">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Die Seiten ohne Anmeldung (Epic #668) in der Routen-Gruppe <code>(start)</code>: Startseite, Impressum,
+            Datenschutz und Vereinbarung. Kein neuer Baustein im Kit - alles aus Typo-Rollen, <code>ButtonLink</code>{" "}
+            und <code>SectionMessage</code>; die Teile unten sind nur Gerüst, darum liegen sie neben ihren Seiten
+            und nicht in <code>components/ui</code>.
+          </p>
+          <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+            <li>
+              <strong>Kopf- und Fusszeile der Gruppe</strong> (<code>app/(start)/layout.tsx</code>) - statt der
+              Seitenleiste: links die Bildmarke mit «KiFu» auf «/», rechts «Anmelden» (<code>text</code>) und
+              «Kostenlos registrieren» (<code>filled</code>), angemeldet «Zur App». Unten eine Reihe leiser
+              Textlinks (on-surface-mittel). Immer hell.
+            </li>
+            <li>
+              <strong>Rechtliche Linkreihe</strong> (<code>RechtlicheLinks</code>) - Impressum und Datenschutz dort,
+              wo es diese Fusszeile nicht gibt: Anmeldeseiten und privater Link. <code>davor</code> nimmt weitere
+              Links derselben Reihe auf (<code>RechtsLink</code>), etwa «Cookies».
+            </li>
+            <li>
+              <strong>Rechtsseite</strong> (<code>RechtsSeite</code>, <code>RechtsAbschnitt</code>) - Titel, Stand
+              und Entwurfshinweis als Warning-<code>SectionMessage</code>, dann Abschnitte als Fliesstext in einer
+              lesbaren Spalte; Verweise im Text als <code>TextLink</code>.
+            </li>
+            <li>
+              <strong>Platzhalter</strong> (<code>Platzhalter</code>) - eine noch fehlende Angabe im Fliesstext,
+              in eckigen Klammern auf der Warning-Fläche. Nur für Entwürfe: Auf Produktion steht keiner mehr.
+            </li>
+          </ul>
+          <div className="flex max-w-2xl flex-col gap-6 rounded-flaeche bg-elev-00 p-5">
+            <RechtlicheLinks davor={<RechtsLink href="/cookies">Cookies</RechtsLink>} />
+            <RechtsAbschnitt titel="Wer KiFu betreibt">
+              <p>
+                <Platzhalter>[Trägerschaft in Gründung]</Platzhalter>, erreichbar über die{" "}
+                <TextLink href="/datenschutz">Datenschutzerklärung</TextLink>.
+              </p>
+            </RechtsAbschnitt>
+          </div>
         </Section>
 
         <Section id="karten">

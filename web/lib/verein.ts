@@ -139,7 +139,7 @@ export const VEREIN_VEREINBARUNG_TEXT = {
   text: "Sie regelt, wie KiFu die Daten der Spieler:innen im Auftrag des Vereins bearbeitet.",
   lesen: "Geltende Fassung lesen",
   zugestimmt: (datum: string) => `Der Verein hat ihr am ${datum} zugestimmt.`,
-  neueFassung: "Es gilt eine neue Fassung der Vereinbarung zur Auftragsbearbeitung. Lies, was sich geändert hat.",
+  neueFassung: "Es gilt eine neue Fassung der Vereinbarung zur Auftragsbearbeitung. Lies die geltende Fassung.",
   ohneZustimmung: "Für den Verein ist in KiFu keine Zustimmung zur Vereinbarung festgehalten.",
   /** Der Weg von der Übersicht zur Karte in der Verwaltung. */
   zurVerwaltung: "Zur Verwaltung",

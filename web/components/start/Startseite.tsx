@@ -24,6 +24,7 @@ import {
   SFV_HINWEIS,
 } from "@/lib/startseite";
 import { loginAdresse } from "@/lib/weiterleitung";
+import { TextLink } from "@/components/start/RechtsSeite";
 
 /* Die Startseite (#670): was KiFu für Verein, Team und Training leistet, für
    Trainer:innen und Vereinsverwaltungen, die KiFu noch nicht kennen. Eine
@@ -112,7 +113,7 @@ export function Startseite({
               Trainer:innen auf. Spieler:innen können in mehreren Teams sein.
             </Leistung>
             <Leistung icon={CalendarDays} titel="Team und Kalender">
-              Trainings und Spiele als Einzeltermin oder Serie, mit Ort, Treffpunkt und Trainer:innen. Den Kalender
+              Trainings als Einzeltermin oder Serie und Spiele, mit Ort, Treffpunkt und Trainer:innen. Den Kalender
               abonniert ihr in eurer Kalender-App.
             </Leistung>
             <Leistung icon={UserCheck} titel="Abmeldungen ohne Konto">
@@ -211,9 +212,10 @@ export function Startseite({
             4.0). Ein Verein kann KiFu auch selbst betreiben.
           </Leistung>
           <Leistung icon={MapPin} titel="Wo die Daten liegen">
-            Die Daten deines Teams liegen in einer Datenbank in Paris, die Anwendung läuft ebenfalls dort. Ausnahmen:
-            «Fragen und Feedback» beantwortet ein KI-Dienst in den USA, Mitteilungen aufs Mobile stellen die Dienste
-            der Gerätehersteller zu.
+            Die Daten deines Teams liegen in einer Datenbank in Paris, die Anwendung läuft ebenfalls dort. Ausnahmen
+            sind unter anderem: «Fragen und Feedback» beantwortet ein KI-Dienst in den USA, Mitteilungen aufs Mobile
+            stellen die Dienste der Gerätehersteller zu, und KI-Assistenten und Kalender, die ihr selbst verbindet,
+            lesen bei ihrem Anbieter. <TextLink href="/datenschutz">Alle Ausnahmen in der Datenschutzerklärung</TextLink>
           </Leistung>
         </div>
       </section>

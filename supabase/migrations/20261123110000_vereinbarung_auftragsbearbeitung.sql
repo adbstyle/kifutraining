@@ -55,6 +55,11 @@ as $$ select '2026-11-entwurf'::text $$;
 -- für den Verein zu handeln»; sie wird wie bisher nicht festgehalten
 -- (Offene Frage 2). Ohne Zustimmung oder mit einer anderen als der geltenden
 -- Fassung entsteht kein Verein.
+-- Die alte Signatur fällt ohne Übergang (kein Expand/Contract): ein Gründen
+-- ohne Zustimmung soll es auch im Deploy-Fenster nicht geben. Folge: Ist die
+-- Migration vor dem neuen Bundle auf Prod, scheitert «Verein gründen» kurz
+-- mit der allgemeinen Meldung; im umgekehrten Fall fehlt auf der Übersicht
+-- nur der Hinweis zur Vereinbarung (/verein wirft dafür nicht).
 --   {status: 'gegruendet', id, name}
 drop function verein_gruenden(text, boolean);
 create function verein_gruenden(p_name text, p_bestaetigt boolean, p_fassung text) returns jsonb

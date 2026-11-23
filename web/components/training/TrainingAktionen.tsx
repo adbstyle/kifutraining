@@ -85,7 +85,6 @@ export function TrainingAktionen({
   teamId,
   terminDatum,
   terminTraining,
-  angemeldet,
   bearbeitungsziel,
   teams,
   fehlendeBedingungen,
@@ -106,7 +105,6 @@ export function TrainingAktionen({
   /** Ein Termin-Training (PO 2026-10-06): Es lässt sich in den Bestand
    *  kopieren, und Löschen nimmt es vom Termin. */
   terminTraining: boolean;
-  angemeldet: boolean;
   bearbeitungsziel: Bearbeitungsziel | null;
   /** Die Teams des USERS — Ziele für Übernehmen und Ins-Team-Stellen. */
   teams: readonly TeamUebersicht[];
@@ -140,7 +138,6 @@ export function TrainingAktionen({
 
   const rechte = trainingAktionsRechte(
     { visibility, teamId, terminTraining },
-    angemeldet,
     bearbeitungsziel,
     teams.length > 0,
   );

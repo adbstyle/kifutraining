@@ -48,7 +48,7 @@ export default async function TrainingViewPage({
   // Ins-Team-Stellen (am eigenen, auch am privaten).
   const ansicht = await ladeTrainingAnsicht(id);
   if (!ansicht) return <TrainingNotAvailable />;
-  const { training, angemeldet, bearbeitungsziel, teams, mitGrenzen, fehlendeBedingungen } = ansicht;
+  const { training, bearbeitungsziel, teams, mitGrenzen, fehlendeBedingungen } = ansicht;
 
   // Angesehen wird genau eine Variante des Hauptteils, zu Beginn die erste
   // (#203 AK 1/7). Die Wahl steht im Suchparameter und nicht im Zustand: Ein
@@ -119,7 +119,6 @@ export default async function TrainingViewPage({
               teamId={training.team?.id ?? null}
               terminDatum={training.terminDatum}
               terminTraining={training.terminTraining}
-              angemeldet={angemeldet}
               bearbeitungsziel={bearbeitungsziel}
               teams={teams}
               fehlendeBedingungen={fehlendeBedingungen}
@@ -132,7 +131,6 @@ export default async function TrainingViewPage({
             <AnsichtSpalte
               altersstufe={training.altersstufe}
               variante={aktive?.id}
-              kopierbar={angemeldet}
               eigenschaften={eigenschaften}
             />
           }
@@ -209,7 +207,7 @@ export default async function TrainingViewPage({
                     AK 2) — hier gibt es keinen Editor, darum steht die Aktion in
                     der Ansicht. Breit im Detail der geöffneten Übung, hier nur
                     schmal (`InBibliothekButton`). */}
-                {angemeldet && <InBibliothekButton fassungId={item.id} name={item.name} className="xl:hidden" />}
+                <InBibliothekButton fassungId={item.id} name={item.name} className="xl:hidden" />
               </AnsichtZeile>
             )}
           />

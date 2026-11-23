@@ -526,7 +526,7 @@ import {
   basisOrigin,
   robotsRegeln,
 } from "../lib/auffindbar";
-import { DATENSCHUTZ_PFAD, ENTWURF_HINWEIS, IMPRESSUM_PFAD, RECHTLICHE_LINKS, VEREINBARUNG_FASSUNG, VEREINBARUNG_PFAD, VEREINBARUNG_TITEL } from "../lib/rechtliches";
+import { DATENSCHUTZ_PFAD, ENTWURF_HINWEIS, IMPRESSUM_PFAD, KONTAKT_EMAIL, RECHTLICHE_LINKS, VEREINBARUNG_FASSUNG, VEREINBARUNG_PFAD, VEREINBARUNG_TITEL } from "../lib/rechtliches";
 import { TRAGWEITE_VEROEFFENTLICHEN, ZUM_VEROEFFENTLICHEN_FEHLT } from "../lib/training-bedingungen";
 import { FILTER_SCHLUESSEL, TEAM_BEREICHE, teamBereichAusPfad, teamBereichHref } from "../lib/team-bereiche";
 import {
@@ -6353,9 +6353,13 @@ pruefe("Eigene Inhalte über die Bibliothek (#660): kein Eintrag «Meine Bibliot
   ] as const) {
     const text = lies(seite);
     assert.match(text, /sp\.mine === "1"/, `${seite}: liest ?mine=1`);
-    assert.match(text, new RegExp(`<${filterleiste} [^>]*showMine=\\{!!user\\}`), `${seite}: Chip für Angemeldete`);
+    // Nur mit Konto (#669): die Seite setzt die Anmeldung voraus, der Chip steht immer.
+    assert.match(text, /if \(!user\) redirect\("\/login\?redirect=/, `${seite}: nur mit Konto`);
+    assert.ok(!/!!user/.test(ohneKommentare(text)), `${seite}: kein Zweig ohne Konto`);
     assert.match(text, new RegExp(`\\{grenzen && <BestandAnzeige art="${art}"`), `${seite}: Bestand bei Eingrenzung`);
   }
+  assert.match(lies("app/(app)/trainings/page.tsx"), /<TrainingFilterBar [^>]*showMine \/>/, "Chip in den Trainings");
+  assert.ok(!/canFavorite|showMine/.test(lies("components/catalog/CatalogFilterBar.tsx")), "Katalog: Chips ohne Schalter");
   assert.match(lies("components/catalog/CatalogFilterBar.tsx"), /filter\.schalte\("mine"/);
   assert.match(lies("components/training/TrainingFilterBar.tsx"), /filter\.schalte\("mine"/);
 });
@@ -6604,6 +6608,11 @@ pruefe("Startseite (#670): eigene Gruppe ohne Seitenleiste, immer hell, feste An
   assert.match(seite, /titel="Open Source"/);
   assert.match(seite, /selbst betreiben/);
   assert.match(seite, /titel="Wo die Daten liegen"/);
+  // Datenort nicht abschliessend (EK 3, Entscheid 7): selbst verbundene Dienste und der Verweis auf alle Ausnahmen.
+  assert.match(seite, /KI-Assistenten und Kalender, die ihr selbst verbindet/);
+  assert.match(seite, /<TextLink href="\/datenschutz">Alle Ausnahmen in der Datenschutzerklärung<\/TextLink>/);
+  // Serien gibt es nur für Trainings (docs/produkt/team-bereich.md).
+  assert.ok(!/Trainings und Spiele als Einzeltermin oder Serie/.test(seite), "keine Serie für Spiele");
   // AK 14: nur erfundene Namen — das Bild nimmt sie aus BEISPIEL_NAMEN, die Seite nennt sonst keine.
   assert.match(seite, /const n = BEISPIEL_NAMEN;/);
   assert.deepEqual([...BEISPIEL_NAMEN.spieler], ["Lena", "Noah", "Mia", "Elias"]);
@@ -6785,6 +6794,9 @@ pruefe("Auffindbar und Link-Vorschau (#673 AK 1–3): robots nur auf Produktion 
   assert.equal(VORSCHAU_NAME, "KiFu");
   assert.equal(VORSCHAU_CLAIM, "Mehr Fussball. Weniger Bürokratie.");
   const wurzel = ohneKommentare(lies("app/layout.tsx"));
+  // Der Rückfall für Seiten ohne eigene Beschreibung (etwa /versionen) sagt dasselbe Bild wie die Startseite.
+  assert.ok(!/Übungen durchsuchen|SFV-Trainingsschemata/.test(wurzel), "Wurzel ohne Bild der Übungsdatenbank");
+  assert.match(wurzel, /description:\s*"Vereinsverwaltung, Team und Abmeldungen/);
   assert.match(wurzel, /metadataBase: new URL\(basisOrigin\(process\.env\.APP_ORIGIN\)\)/);
   assert.match(wurzel, /openGraph: \{\s*type: "website",\s*siteName: VORSCHAU_NAME,\s*title: VORSCHAU_NAME,\s*description: VORSCHAU_CLAIM,/);
   assert.match(wurzel, /twitter: \{ card: "summary_large_image", title: VORSCHAU_NAME, description: VORSCHAU_CLAIM \}/);
@@ -6837,6 +6849,10 @@ pruefe("Impressum und Datenschutz (#672, ENTWURF): Seiten mit Entwurfshinweis, e
   assert.match(impressum, /\{TRAEGERSCHAFT\}/);
   assert.match(impressum, /POSTADRESSE_PLATZHALTER\.map/);
   assert.match(impressum, /<KontaktAdresse \/>/);
+  // Epic EK 16, AK 2/6: Auf Produktion braucht es die E-Mail-Adresse, nicht den Platzhalter. Der
+  // Release-PR auf `main` (pr-checks setzt GITHUB_BASE_REF) scheitert, solange KONTAKT_EMAIL fehlt.
+  if (process.env.GITHUB_BASE_REF === "main")
+    assert.ok(KONTAKT_EMAIL, "Release nach main: KONTAKT_EMAIL in lib/rechtliches.ts setzen (keine Platzhalter auf Produktion)");
   // AK 3–7: Daten, Zwecke, Fristen aus ihren Quellen; Auftrag der Vereine; Datenort und Ausnahmen; Rechte ohne Konto; Cookies.
   assert.match(datenschutz, /\{BENACHRICHTIGUNG_TAGE\} Tage/);
   assert.match(datenschutz, /\{AUFBEWAHRUNG_MONATE\} Monaten/);
@@ -6894,7 +6910,7 @@ pruefe("Vereinbarung zur Auftragsbearbeitung (#675, ENTWURF): Seite mit Entwurfs
   assert.deepEqual(vereinbarungAus({ geltend: "f", zustimmung: { fassung: "f", am } }), { geltend: "f", zustimmung: { fassung: "f", am } });
   for (const kaputt of [null, {}, { geltend: "" , zustimmung: null }, { geltend: "f" }, { geltend: "f", zustimmung: {} }, { geltend: "f", zustimmung: { fassung: "f", am: "gestern" } }])
     assert.equal(vereinbarungAus(kaputt), null, JSON.stringify(kaputt));
-  // Die Verwaltung liest sie in «Verwaltung» (Karte) und erfährt eine neue Fassung auch in der Übersicht; Fehler werfen.
+  // Die Verwaltung liest sie in «Verwaltung» (Karte, Fehler werfen) und erfährt eine neue Fassung auch in der Übersicht.
   const verwaltung = ohneKommentare(lies("app/(app)/verein/verwaltung/page.tsx"));
   assert.match(verwaltung, /ladeVereinbarung\(supabase, user\.id, \{ vereinId: verein\.id \}\)/);
   assert.match(verwaltung, /if \(!vereinbarung\.ok\) throw new Error/);
@@ -6906,6 +6922,9 @@ pruefe("Vereinbarung zur Auftragsbearbeitung (#675, ENTWURF): Seite mit Entwurfs
   const uebersicht = ohneKommentare(lies("app/(app)/verein/page.tsx"));
   assert.match(uebersicht, /istVerwaltung \? ladeVereinbarung\(/, "nur die Verwaltung fragt");
   assert.match(uebersicht, /\{neueFassung && \(/);
+  // Auf der Übersicht ist sie nur ein Hinweis: Lesefehler lassen ihn weg (Deploy-Fenster), werfen nicht.
+  assert.ok(!/vereinbarung\.ok\) throw/.test(uebersicht), "Übersicht wirft nicht wegen der Vereinbarung");
+  assert.match(uebersicht, /vereinbarung\?\.ok === true &&/);
   // sync-staging kennt die neue Tabelle.
   const yml = readFileSync(join(web, "../.github/workflows/sync-staging.yml"), "utf8");
   assert.ok((/PUBLIC_TABLES: "([^"]+)"/.exec(yml)?.[1].split(" ") ?? []).includes("verein_zustimmungen"));

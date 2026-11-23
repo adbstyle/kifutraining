@@ -35,7 +35,8 @@ export const POSTADRESSE_PLATZHALTER = ["[Postadresse folgt mit der Gründung]"]
 
 /** Die E-Mail-Adresse für Anfragen (AK 2, 6; Entscheid 3). Im Repository
  *  steht keine bestehende Kontaktadresse; bis die PO sie nennt, zeigen die
- *  Seiten KONTAKT_PLATZHALTER statt eines Links. */
+ *  Seiten KONTAKT_PLATZHALTER statt eines Links. Der Release-PR auf `main`
+ *  scheitert, solange sie fehlt (check:kern). */
 export const KONTAKT_EMAIL: string | null = null;
 export const KONTAKT_PLATZHALTER = "[E-Mail-Adresse folgt]";
 

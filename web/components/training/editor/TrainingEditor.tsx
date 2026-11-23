@@ -641,7 +641,6 @@ export function TrainingEditor({
             teamId={training.team?.id ?? null}
             terminDatum={training.terminDatum}
             terminTraining={training.terminTraining}
-            angemeldet
             bearbeitungsziel={bearbeitungsziel}
             teams={teams}
             fehlendeBedingungen={fehlendeBedingungen}

@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { UEBUNGEN_PFAD } from "@/lib/navigation";
 import {
@@ -73,14 +73,14 @@ export default async function ExerciseDetailPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isOwner = ex.source === "user" && !!user && ex.owner_id === user.id;
-  // Favoriten-Aktion nur für angemeldete USER (AC2/AC11).
+  // Nur mit Konto (#669): ohne Anmeldung leitet die Middleware vorher auf die
+  // Startseite, und die RLS gäbe die Übung gar nicht heraus.
+  if (!user) redirect(`/login?redirect=${encodeURIComponent(`/uebung/${slug}`)}`);
+  const isOwner = ex.source === "user" && ex.owner_id === user.id;
   // Gelten für das Konto Grenzen (#588)? Nur dann fragt Kopieren den Stand
   // vorher; ein Konto in einem Verein kopiert mit einem Klick. Ist die Lage
   // unbekannt, fragt die Stufe selbst. Beide Abfragen sind unabhängig.
-  const [favorited, grenzenLage] = user
-    ? await Promise.all([isFavorited(ex.id), getMeineGrenzenLage()])
-    : [false, "ohne" as const];
+  const [favorited, grenzenLage] = await Promise.all([isFavorited(ex.id), getMeineGrenzenLage()]);
   const mitGrenzen = grenzenLage !== "ohne";
 
   // Die Brotkrumen nennen die Einordnung als Filter-Link auf den Pool. Der
@@ -148,41 +148,39 @@ export default async function ExerciseDetailPage({
   // Aktions-Cluster auf der Brotkrumen-Zeile, rechtsbündig — dieselbe Stelle
   // wie beim Training (#249 AK 8); der Titel behält so die volle Breite.
   // Drucken · Stift · Globus · Herz · ⋮. Drucken steht jedem offen, der die
-  // Übung sieht (Story #114 AK 3; seit #669 nur mit Konto). Owner sieht alle Aktionen, sonstige angemeldete User nur den
+  // Übung sieht (Story #114 AK 3; seit #669 nur mit Konto). Owner sieht alle Aktionen, alle anderen Kopieren und den
   // Favoriten. Im Druck ist der ganze Cluster weg — auf dem Blatt hat kein
   // Bedienelement etwas verloren (Postcondition 5).
   const aktionen = (
     <div className="ml-auto flex shrink-0 items-center gap-0.5 print:hidden">
       <PrintButton variant="icon" />
-      {(isOwner || user) && (
-        <KontoGrenzenLage mitGrenzen={mitGrenzen}>
-          {isOwner ? (
-            <OwnerActions
-              id={ex.id}
-              slug={ex.slug}
-              name={ex.name}
-              visibility={ex.visibility}
-              favoriteSlot={
-                <FavoriteButton
-                  exerciseId={ex.id}
-                  initial={favorited}
-                />
-              }
-            />
-          ) : (
-            <>
-              {/* Kopieren (Story 7, Übungswelten) — hier an einer
-                  fremden oder kuratierten Übung; die eigene wird über das
-                  ⋮-Menü der Eigentümer-Aktionen kopiert (#171). */}
-              <UebungKopierenButton exerciseId={ex.id} name={ex.name} />
+      <KontoGrenzenLage mitGrenzen={mitGrenzen}>
+        {isOwner ? (
+          <OwnerActions
+            id={ex.id}
+            slug={ex.slug}
+            name={ex.name}
+            visibility={ex.visibility}
+            favoriteSlot={
               <FavoriteButton
                 exerciseId={ex.id}
                 initial={favorited}
               />
-            </>
-          )}
-        </KontoGrenzenLage>
-      )}
+            }
+          />
+        ) : (
+          <>
+            {/* Kopieren (Story 7, Übungswelten) — hier an einer
+                fremden oder kuratierten Übung; die eigene wird über das
+                ⋮-Menü der Eigentümer-Aktionen kopiert (#171). */}
+            <UebungKopierenButton exerciseId={ex.id} name={ex.name} />
+            <FavoriteButton
+              exerciseId={ex.id}
+              initial={favorited}
+            />
+          </>
+        )}
+      </KontoGrenzenLage>
     </div>
   );
 

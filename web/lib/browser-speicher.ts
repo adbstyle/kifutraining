@@ -47,9 +47,9 @@ export const SPEICHERUNGEN: Speicherung[] = [
   {
     name: BEREICH_COOKIE,
     titel: "Gewählter Bereich",
-    zweck: "Merkt sich, ob du zuletzt eines deiner Teams oder den Verein gewählt hast, damit die Seitenleiste auf Seiten ohne Bereich (Übungen, Trainings, Konto) wieder dort steht.",
+    zweck: "Merkt sich, ob du zuletzt eines deiner Teams oder den Verein gewählt hast, damit die Seitenleiste auf Seiten ohne Bereich (Übungen, Trainings, Konto) wieder dort steht und ki-fu.ch, die abgelegte App und die Anmeldung dich dorthin bringen.",
     dauer: "Ein Jahr.",
-    ohne: "Die Seitenleiste öffnet jedes Mal den ersten deiner Bereiche.",
+    ohne: "Die Seitenleiste und ki-fu.ch öffnen jedes Mal den ersten deiner Bereiche.",
   },
   {
     name: SPALTE_COOKIE,

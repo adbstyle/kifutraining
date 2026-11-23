@@ -35,7 +35,7 @@ export function TrainingDetailSpalte({
   /** Die Übersicht ohne Auswahl: Ziel des X und nach dem Löschen. */
   schliessenHref: string;
 }) {
-  const { training, angemeldet, bearbeitungsziel, teams, mitGrenzen, fehlendeBedingungen } = ansicht;
+  const { training, bearbeitungsziel, teams, mitGrenzen, fehlendeBedingungen } = ansicht;
   // Zu Beginn die vorderste Variante (AK 6); eine unbekannte Angabe ebenso.
   const aktive = varianteAus(varianteParam, training.varianten);
   const { sichtbar, sections, dauerText } = angezeigteVariante(training, aktive);
@@ -57,7 +57,6 @@ export function TrainingDetailSpalte({
               teamId={training.team?.id ?? null}
               terminDatum={training.terminDatum}
               terminTraining={training.terminTraining}
-              angemeldet={angemeldet}
               bearbeitungsziel={bearbeitungsziel}
               teams={teams}
               fehlendeBedingungen={fehlendeBedingungen}

@@ -27,8 +27,8 @@ export default function DatenschutzSeite() {
         <p>
           Für die Daten der Spieler:innen ist der Verein verantwortlich, der sie in KiFu führt. KiFu bearbeitet
           diese Daten in seinem Auftrag: nur, damit der Verein und seine Teams KiFu nutzen können, und nie für
-          eigene Zwecke. Das regelt die <TextLink href={VEREINBARUNG_PFAD}>{VEREINBARUNG_TITEL}</TextLink>, der
-          jeder Verein beim Gründen zustimmt.
+          eigene Zwecke. Das regelt die <TextLink href={VEREINBARUNG_PFAD}>{VEREINBARUNG_TITEL}</TextLink>, die
+          für jeden Verein gilt; wer einen Verein gründet, stimmt ihr für ihn zu.
         </p>
       </RechtsAbschnitt>
 
