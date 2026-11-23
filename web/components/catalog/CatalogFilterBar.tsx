@@ -32,15 +32,7 @@ export type CatalogFilters = {
    Tipppause, «Meine Übungen» und Favoriten sind Schalter-Chips.
    URL ist die Quelle der Wahrheit: jede Änderung schreibt in die URL und löst
    eine neue Server-Abfrage aus. */
-export function CatalogFilterBar({
-  filters,
-  canFavorite = false,
-  showMine = false,
-}: {
-  filters: CatalogFilters;
-  canFavorite?: boolean;
-  showMine?: boolean;
-}) {
+export function CatalogFilterBar({ filters }: { filters: CatalogFilters }) {
   const filter = useAdressFilter();
 
   const anyActive =
@@ -103,17 +95,14 @@ export function CatalogFilterBar({
         onCommit={(v) => filter.setzeWert("kinder", v)}
       />
 
-      {showMine && (
-        <FilterChip selected={!!filters.mine} onClick={() => filter.schalte("mine", !filters.mine)}>
-          Meine Übungen
-        </FilterChip>
-      )}
+      {/* Den Katalog gibt es nur mit Konto (#669): beide Schalter stehen immer. */}
+      <FilterChip selected={!!filters.mine} onClick={() => filter.schalte("mine", !filters.mine)}>
+        Meine Übungen
+      </FilterChip>
 
-      {canFavorite && (
-        <FilterChip selected={!!filters.fav} onClick={() => filter.schalte("fav", !filters.fav)}>
-          Favoriten
-        </FilterChip>
-      )}
+      <FilterChip selected={!!filters.fav} onClick={() => filter.schalte("fav", !filters.fav)}>
+        Favoriten
+      </FilterChip>
 
       {anyActive && (
         <Button variant="text" onClick={filter.zuruecksetzen}>

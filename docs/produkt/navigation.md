@@ -1,15 +1,34 @@
 # Navigation
 
-Stand 2026-11-22 (Release 1.52.0). Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-11-23 (Release 1.53.0). Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+
+## Die Startadresse
+
+Wer ki-fu.ch ohne Anmeldung öffnet, sieht die öffentliche Startseite. Angemeldet führt dieselbe
+Adresse ohne Umweg in den eigenen Arbeitsbereich: in den Bereich, der zuletzt in diesem Browser
+gewählt war, sofern man ihm noch angehört — bei einem Team in dessen Trainingsplan, beim Verein zu
+dessen Teams —, sonst in den ersten in der Reihenfolge des Wechslers, also das alphabetisch erste
+eigene Team und erst danach den Verein. Ein Konto ohne Verein landet unter „Teams" beim Einstieg,
+wo es einen Verein gründet oder sich aufnehmen lässt. Dorthin führen auch die Marke in der
+Seitenleiste, die abgelegte App, eine Anmeldung ohne bestimmtes Ziel und der Link zum Bestätigen
+der Registrierung. Lassen sich Teams oder Verein gerade nicht lesen, erscheint eine Fehlerseite
+statt des Einstiegs zum Gründen.
+
+Angemeldet öffnet man die Startseite bewusst über „Startseite" im Konto-Menü; sie hat dafür die
+eigene Adresse ki-fu.ch/startseite. Dort steht in der Kopfzeile statt „Anmelden" und „Kostenlos
+registrieren" der Knopf „Zur App", der zurück in den Arbeitsbereich führt. Eine ältere Adresse des
+Übungskatalogs, ki-fu.ch mit Filtern dahinter, führt samt diesen Filtern zum Katalog, der jetzt
+unter ki-fu.ch/uebungen liegt.
 
 ## Die Seitenleiste
 
-Die Hauptnavigation steht als Leiste am linken Rand. Oben steht die Marke — das Zeichen von
-FutAssist, ein F mit einem Punkt darüber, mit dem Namen KiFu —, die zum Übungsbestand führt.
+Die Hauptnavigation steht als Leiste am linken Rand; es gibt sie nur angemeldet. Oben steht die
+Marke — das Zeichen von FutAssist, ein F mit einem Punkt darüber, mit dem Namen KiFu —, die in den
+eigenen Arbeitsbereich führt (siehe „Die Startadresse").
 Dasselbe Zeichen steht im Tab des Browsers und auf dem Home-Bildschirm, auch als Symbol der
 abgelegten App (siehe [Konto und Zugang](konto-und-zugang.md#kifu-als-app)).
 
-Angemeldet folgt darunter der Bereich-Wechsler. Er wählt, woran man gerade arbeitet: eines der
+Darunter folgt der Bereich-Wechsler. Er wählt, woran man gerade arbeitet: eines der
 eigenen Teams — mit dem Untertitel „Trainer:in", alphabetisch — oder den Verein mit dem
 Untertitel „Teams und Spieler:innen des Vereins", durch einen Strich von den Teams getrennt. Der
 Knopf zeigt in einer kleinen Zeile die Art, etwa „Verein" oder bei einem Team den Vereinsnamen mit
@@ -27,10 +46,11 @@ sich aufnehmen lässt (siehe [Verein](verein.md#einstieg-für-konten-ohne-verein
 Wechsler keine; er ist nur Navigation. Welcher Bereich offen ist, folgt aus der Seite: Auf einer
 Seite eines Teams oder einem Team-Training ist es dieses Team, im Bereich „Verein" der Verein. Auf
 Seiten ohne Bereich — Bibliotheken, Teamübersicht, Konto — bleibt der zuletzt gewählte offen; das
-merkt sich der Browser (siehe „Cookies"). Ein neues, umbenanntes oder aufgelöstes Team erscheint im
+merkt sich der Browser (siehe „Cookies"), und danach richtet sich auch, wohin ki-fu.ch führt. Ein neues, umbenanntes oder aufgelöstes Team erscheint im
 Wechsler nach der eigenen Aktion ohne Neuladen.
 
-Es folgt die Gruppe „Bibliothek" mit „Übungen" und „Trainings", dem ganzen Bestand. Eine eigene
+Es folgt die Gruppe „Bibliothek" mit „Übungen" und „Trainings", dem ganzen Bestand; „Übungen" führt
+zum Katalog unter ki-fu.ch/uebungen. Eine eigene
 Gruppe für das Eigene gibt es nicht: Eigene Übungen und Trainings findet man über den Chip „Meine
 Übungen" bzw. „Meine Trainings" über der Übersicht, der den Bestand auf das Eigene eingrenzt; die
 Brotkrume heisst dann etwa „Übungen › Meine Übungen", und „Übungen" bzw. „Trainings" bleibt in der
@@ -50,7 +70,9 @@ sie, in der schmalen Leiste rechts neben der Leiste. Es enthält:
 - „Fragen und Feedback" (siehe unten). Es ist ein Knopf, kein Link: Er öffnet das Gespräch neben
   der Seite, statt die Seite zu wechseln.
 - „Was ist neu" — führt zu „Versionen" (siehe unten) und zeigt daneben die Version, die gerade läuft.
+- „Startseite" — öffnet die öffentliche Startseite, auch angemeldet (siehe „Die Startadresse").
 - „Abmelden". Abgemeldet wird nur hier; trägt die Seite ungesicherte Angaben, fragt KiFu vorher nach.
+  Danach steht die Startseite da.
 
 Ist eine Seite des Kontos offen, ist die Karte hervorgehoben, im Menü die Zeile „Konto und
 Einstellungen". Das Menü lässt sich mit den Pfeiltasten bedienen; Escape oder ein Klick daneben
@@ -67,10 +89,19 @@ korrigierte nicht. Wer KiFu in einem Browser zum ersten Mal öffnet, sieht keine
 neue Version erscheint spätestens eine Stunde nach ihrer Veröffentlichung, und zwar beim nächsten
 Seitenwechsel; eine offene Seite ändert sich nicht von selbst.
 
-Ohne Anmeldung steht an dieser Stelle die Karte „Nicht angemeldet" mit der Zeile „Anmelden oder
-Konto erstellen". Ihr Menü enthält „Anmelden", „Konto erstellen" und „Was ist neu", mit Plakette
-und Punkt wie angemeldet; „Darstellung" und „Fragen und Feedback" fehlen darin, ebenso der
-Bereich-Wechsler in der Leiste.
+## Ohne Anmeldung
+
+Ohne Anmeldung gibt es keine Seitenleiste und kein Konto-Menü. Was ohne Konto erreichbar ist —
+die Startseite, Impressum, Datenschutz, die Vereinbarung zur Auftragsbearbeitung, „Versionen",
+„Cookies", der Styleguide und die Hinweisseite für Adressen, die es nicht gibt —, steht im Rahmen
+der Startseite. Oben steht eine Kopfzeile, die beim Scrollen stehen bleibt: die Marke, die zur
+Startseite führt, ab mittlerer Breite die Sprünge „Funktionen" und „KI-Assistent" zu den
+Abschnitten der Startseite, dazu „Anmelden" und, ausser auf einem Telefon, „Kostenlos
+registrieren". Unten steht eine Fusszeile mit „Versionen", „Cookies", „Impressum", „Datenschutz"
+und „GitHub", das ausserhalb von KiFu öffnet. Die Seiten der Anwendung behalten darin ihre
+Brotkrumen, deren Zeile klebt aber nicht, weil oben schon die Kopfzeile des Rahmens steht; den
+Knopf zum Verkleinern der Leiste gibt es nicht. Übungen und Trainings gibt es ohne Konto nicht
+(siehe [Konto und Zugang](konto-und-zugang.md#ohne-konto)).
 
 ## Breit oder schmal
 
@@ -98,14 +129,16 @@ auf der Seite gerade eingibt, bleibt stehen. Die Wahl gilt in diesem Browser fü
 benutzen, auch abgemeldet auf den Seiten zum Anmelden, Registrieren und Zurücksetzen des
 Passworts; sie bleibt beim nächsten Besuch. „Wie das Gerät" stellt den Anfang wieder her.
 
-Ohne Anmeldung erscheinen alle Seiten mit Leiste — Übungen, öffentliche Trainings, „Versionen",
-„Cookies" — immer hell, gleich wie das Gerät eingestellt ist; nach dem Anmelden gilt wieder die
-eigene Wahl. Die Seiten hinter einem privaten Link folgen allein dem Gerät: Dort gibt es keine
+Die Startseite, Impressum, Datenschutz und die Vereinbarung zur Auftragsbearbeitung erscheinen
+immer hell, gleich wie das Gerät eingestellt ist, auch angemeldet. Ohne Anmeldung gilt das für
+alle Seiten im Rahmen der Startseite, also auch für „Versionen", „Cookies", den Styleguide und die
+Hinweisseite für Adressen, die es nicht gibt; nach dem Anmelden gilt dort wieder die eigene Wahl. Die Seiten hinter einem privaten Link folgen allein dem Gerät: Dort gibt es keine
 Wahl, und es wird nichts gespeichert.
 
 ## Versionen
 
-Die Seite „Versionen", erreichbar über „Was ist neu" im Konto-Menü, zeigt, was jede Version von KiFu gebracht hat, die neueste zuerst — alle
+Die Seite „Versionen", erreichbar über „Was ist neu" im Konto-Menü und ohne Anmeldung über die
+Fusszeile der Startseite, zeigt, was jede Version von KiFu gebracht hat, die neueste zuerst — alle
 seit 1.0.0. Zu jeder steht ihr Thema als Titel, die Versionsnummer, der Tag der
 Veröffentlichung und der Text, wie er auf der öffentlichen Projektseite auf GitHub steht: unverändert, mit Gliederung,
 Hervorhebungen und Links, auch mit technischen Abschnitten und Nummern von Aufgaben. Ein Verweis
@@ -144,8 +177,9 @@ Anmeldung. Er zeigt die Farben beider Erscheinungsbilder nebeneinander.
 
 Die Seite „Cookies" nennt alles, was KiFu im Browser ablegt: die Anmeldung, die gewählte
 Breite der Seitenleiste, die gezogene Breite der Spalte und des Verzeichnisses unter
-„Versionen" und im Styleguide, die gewählte Darstellung, den zuletzt gewählten Bereich der
-Seitenleiste, bis zu welcher Version man „Versionen" gesehen hat und, nur auf den Seiten hinter
+„Versionen" und im Styleguide, die gewählte Darstellung, den zuletzt gewählten Bereich — nach ihm
+richten sich die Seitenleiste auf Seiten ohne Bereich und das Ziel von ki-fu.ch, der abgelegten App
+und der Anmeldung —, bis zu welcher Version man „Versionen" gesehen hat und, nur auf den Seiten hinter
 einem privaten Link, bis wann das Gerät die Benachrichtigungen angezeigt hat, unter „Hinweis «als App
 ablegen»" wie oft das Gerät den Link besucht und wann es den Hinweis zum Ablegen geschlossen hat —
 je Link nur ein Kürzel, im lokalen Speicher des Browsers, bis man die Daten der Website löscht —
@@ -162,9 +196,10 @@ KI-Modell Haiku läuft, das das Gespräch führt; auch dafür liegt nichts im Br
 die Seite, wie man Cookies in den
 Einstellungen des Browsers sperrt oder löscht. Sie hängt
 am Konto — ein Verweis steht im Reiter „Daten und Konto", die Brotkrume lautet „Konto › Daten und
-Konto › Cookies" — und ist ohne Anmeldung über einen Verweis unten auf den
-Seiten ohne Leiste erreichbar, etwa beim Anmelden und Registrieren — nicht aber auf den Seiten
-hinter einem privaten Link (siehe unten); sie funktioniert auch mit gesperrten Cookies.
+Konto › Cookies" — und ist ohne Anmeldung über die Fusszeile der Startseite, die
+Datenschutzerklärung und einen Verweis unten auf den Seiten zum Anmelden und Registrieren
+erreichbar — nicht aber auf den Seiten hinter einem privaten Link (siehe unten); sie funktioniert
+auch mit gesperrten Cookies.
 
 ## Brotkrumen
 
@@ -180,7 +215,8 @@ Browser, damit auf dem Papier steht, wo das Training liegt.
 
 ## Seitenaufbau
 
-Jede Seite beginnt links neben der Leiste, nichts steht zentriert in der Mitte. Übersichten —
+Jede Seite beginnt links neben der Leiste, nichts steht zentriert in der Mitte; nur ohne Anmeldung
+folgen die Seiten der Spalte von Kopf- und Fusszeile im Rahmen der Startseite. Übersichten —
 Übungen, Trainings, Teams, der Bereich eines Teams und die Übersicht der Teams und Spieler:innen
 eines Vereins — nutzen die ganze Breite des Fensters;
 die Kacheln reihen sich so dicht, wie Platz ist, auf einem breiten Bildschirm also in mehr
@@ -287,13 +323,19 @@ Darstellung nicht.
 
 ## Seiten, die es nicht gibt
 
-Eine falsche Adresse oder ein entfernter Inhalt zeigt eine Hinweisseite mit Leiste und
-Brotkrumen und einem Weg zurück zu den Übungen.
+Eine falsche Adresse oder ein entfernter Inhalt zeigt die Hinweisseite „Diese Seite gibt es
+nicht" mit Brotkrumen und dem Titel „Seite nicht gefunden" im Tab des Browsers. Angemeldet steht
+sie mit Leiste da und führt mit „Zu den Übungen" zum Katalog, ohne Anmeldung im Rahmen der
+Startseite und mit „Zur Startseite".
 
 ## Anmelde-Seiten
 
 Die Seiten zum Anmelden, Registrieren und Zurücksetzen des Passworts kommen ohne Leiste aus,
-ebenso die Bestätigung beim Verbinden eines KI-Assistenten.
+ebenso die Bestätigung beim Verbinden eines KI-Assistenten. Oben führt „Zur Startseite" zurück,
+unten stehen Verweise auf „Cookies", „Impressum" und „Datenschutz". Wer schon angemeldet ist,
+bekommt das Formular zum Anmelden oder Registrieren nicht zu sehen: Die Anmeldung führt gleich zum
+Ziel, das ihre Adresse mitbringt, wie nach einer Anmeldung, sonst — und das Registrieren immer —
+in den eigenen Arbeitsbereich.
 
 ## Seiten hinter einem privaten Link
 
@@ -301,8 +343,8 @@ Die Seite, über die Spieler:innen und Eltern eine Spieler:in ab- und anmelden, 
 [Team-Bereich](team-bereich.md#privater-link)) sind für Menschen ohne Konto gedacht und fürs
 Telefon gebaut: eine schmale Spalte ohne Seitenleiste, ohne Brotkrumen und ohne Meldungen am
 Bildschirmrand. Auf der Seite der Spieler:in und ihrer Seite „Infos" (hinter dem ⓘ neben dem Namen) klebt unten
-am Bildschirmrand eine schmale Leiste mit dem Link „Fragen und Feedback"; die Abholseite hat unten
-nichts. In den
+am Bildschirmrand eine schmale Leiste mit dem Link „Fragen und Feedback". Ganz am Ende jeder dieser
+Seiten, auch der Abholseite, stehen Verweise auf „Impressum" und „Datenschutz"; in den
 übrigen Teil der Anwendung führen sie nicht. Eine Anmeldung kennen sie nicht — auch wer ein Konto
 hat, ist dort niemand Bestimmtes —, und im Browser liegt von ihnen nur, welche Benachrichtigungen
 ein Gerät am privaten Link schon angezeigt hat, wie oft es den Link besucht und wann es den Hinweis
@@ -360,23 +402,25 @@ Darstellung nicht wählen, und die Seiten hinter einem privaten Link kennen kein
 Wird jemand von einem anderen Konto in ein Team oder in die Vereinsverwaltung aufgenommen,
 erscheinen Team oder Verein im Wechsler erst beim nächsten Neuladen oder nach der nächsten
 eigenen Aktion; ebenso verschwindet ein Team, das die Vereinsverwaltung aufgelöst hat. Der zuletzt
-gewählte Bereich gilt je Browser, nicht je Konto. Breit oder schmal merkt
+gewählte Bereich gilt je Browser, nicht je Konto — auf einem anderen Gerät führt ki-fu.ch darum
+zunächst in den ersten Bereich. Breit oder schmal merkt
 sich jeder Browser für sich, nicht das Konto — ebenso die gezogene Breite des Verzeichnisses
 unter „Versionen" und im Styleguide und die der Spalte auf den
 geteilten Seiten; sie gilt für Übung und Training gemeinsam. Die Teilung gibt es nur auf breiten Bildschirmen; auf einem Tablet im
 Hochformat oder einem Telefon steht alles untereinander, und die Breite lässt sich dort nicht
 ziehen.
 
-KiFu hat keine vollständige Datenschutzerklärung und kein Impressum; die Seite „Cookies"
-beschreibt nur, was im Browser liegt, und die Besucherstatistik. Diese lässt sich nicht
+Impressum und Datenschutzerklärung sind ein sichtbar als Entwurf markierter Text, rechtlich noch
+nicht geprüft; Trägerschaft und Postadresse stehen dort als Platzhalter. Die Seite
+„Cookies" beschreibt nur, was im Browser liegt, und die Besucherstatistik. Diese lässt sich nicht
 abwählen, und eine Seite, die über einen ungültigen Link nicht gefunden wird (etwa ein
 Training, das es nicht gibt), zählt sie unter dem eingegebenen Pfad. Eine eigene Einstellung, um Cookies abzuschalten, gibt
 es nicht — das geht über den Browser. Die Seite „Cookies" erwähnt die Seiten hinter einem
 privaten Link nur mit dem Merker der gesehenen Benachrichtigungen, dem Hinweis zum Ablegen als App
-und den Mitteilungen aufs Mobile, und diese verweisen weder auf
-sie noch auf eine andere Erklärung; was zu Spieler:innen gespeichert ist, sagt allein die
-Abholseite, wie lange Benachrichtigungen bleiben, auch deren Ansicht, und was KiFu für Mitteilungen
-aufs Mobile speichert, auch der Dialog vor dem Einschalten.
+und den Mitteilungen aufs Mobile, und diese verweisen nicht auf sie, sondern nur auf Impressum
+und Datenschutz; was zu Spieler:innen gespeichert ist, sagen dort die Abholseite und die
+Datenschutzerklärung, wie lange Benachrichtigungen bleiben, auch deren Ansicht, und was KiFu für
+Mitteilungen aufs Mobile speichert, auch der Dialog vor dem Einschalten.
 
 „Versionen" zeigt die Texte so, wie sie veröffentlicht wurden; ältere enthalten Technisches,
 Nummern von Aufgaben und Aussagen, die inzwischen überholt sind. Nummern von Aufgaben sind dort kein Link,

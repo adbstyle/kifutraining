@@ -36,7 +36,7 @@ export function OverlaysDemo() {
           variant="outlined"
           onClick={() => {
             melde("Termin geändert.");
-            meldeAndere("Ein öffentliches Training braucht mindestens eine Übung im freien Spiel.");
+            meldeAndere("Ein Training in der Community braucht mindestens eine Übung im freien Spiel.");
           }}
         >
           Zwei nacheinander

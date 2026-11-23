@@ -303,6 +303,43 @@
   --diagramm-weg-rand: 5;
 }
 
+/* ═══ Startseite ══════════════════════════════════════════════════════
+   Die Pastellflächen und Kacheltöne aus dem Gestaltungsentwurf der
+   Startseite (#670). Die Anwendung hat dafür keine Rolle: Die Töne von
+   Lozenge und Section Message tragen eine Bedeutung (erledigt, Hinweis,
+   Fehler), und eine Kategorie ohne Wertung ist dort immer eine
+   Alterskategorie. Darum wie das Diagramm bewusst NICHT im `@theme` und
+   ohne `--color-`-Präfix — keine Utility, die sich in die Anwendung
+   verirrt —, und nur im Rahmen der Gruppe `(start)` gesetzt
+   (`start-palette` am Layout). Die Seite ist immer hell (AK 13), also
+   genügt ein Wert je Rolle; sie greifen per `bg-(--start-…)`.
+   Geprüft von `npm run check:farben` (Schrift 4.5:1, Kachelzeichen 3:1). */
+.start-palette {
+  /* ─── Flächen der Bereiche (Kombi-Karten, Abschnitte, Kacheln) ───
+     Verein und Team eine Spur heller als im Entwurf (#ffe9dc, #efeaff):
+     Dort trug Primary als Schrift nur 4.40:1 bzw. 4.39:1. */
+  --start-verein: #ffece1;
+  --start-team: #f2eeff;
+  --start-training: #dcfff1;
+  --start-ki: #ffecf8;
+  /* ─── Kacheln unter dem Einstieg: Fläche und Zeichen ─── */
+  --start-kalender: #e9f2ff;
+  --start-on-kalender: #0055cc;
+  --start-schnuppern: #e3f7f4;
+  --start-on-schnuppern: #0f766e;
+  --start-mitteilungen: #fdecc8;
+  --start-on-mitteilungen: #b45309;
+  --start-on-training: #216e4e;
+  --start-uebungen: #fff7d6;
+  --start-on-uebungen: #a54800;
+  --start-on-ki: #943d73;
+  /* ─── «Grundlegend anders» und die hervorgehobene Preiskarte ───
+     Das tiefe Violett des Entwurfs statt der umgekehrten Fläche der
+     Anwendung; Schrift und Akzent bleiben die der umgekehrten Fläche. */
+  --start-dunkel: #241a4f;
+  --start-hervorgehoben: #faf8ff;
+}
+
 /* ─── Zustands-Ebene ──────────────────────────────────────────────────
    Halbtransparent in der Farbe des Inhalts und ÜBER dem Text statt
    darunter. Das klingt verkehrt, ist aber der Grund, warum die Ebene

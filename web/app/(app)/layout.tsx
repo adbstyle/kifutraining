@@ -1,14 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { FigurenSprite } from "@/components/diagramm/figur";
 import { FeedbackProvider } from "@/components/feedback/FeedbackKontext";
 import { AppNav } from "@/components/layout/AppNav";
 import { AppInhalt, AppRahmen } from "@/components/layout/AppRahmen";
+import { StartRahmen } from "@/components/start/StartRahmen";
 import { DarstellungProvider } from "@/components/layout/DarstellungKontext";
 import { SnackbarProvider } from "@/components/layout/SnackbarKontext";
 import { TeamKontextProvider } from "@/components/layout/TeamKontext";
 import { VersionenProvider } from "@/components/layout/VersionenKontext";
 import { KONTO_APP_METADATA } from "@/lib/app-ablegen";
+import { GRUND_HELL } from "@/lib/farben";
 import { getNeuesteVeroeffentlichung } from "@/lib/releases";
 import { getUserImRequest } from "@/lib/supabase/server";
 import { GESEHEN_COOKIE, leseGesehen } from "@/lib/versionen-gesehen";
@@ -21,8 +23,19 @@ import { SPALTE_COOKIE, leseSpalte } from "@/lib/spalte";
    privaten Links allein ihr eigenes Manifest tragen (#650). */
 export const metadata: Metadata = KONTO_APP_METADATA;
 
+/* Ohne Konto steht die Seite im immer hellen Rahmen der Startseite — dann
+   auch die Systemleiste hell wie in der Gruppe (start). Angemeldet gilt die
+   Wurzel (folgt dem Gerät). */
+export async function generateViewport(): Promise<Viewport> {
+  const user = await getUserImRequest();
+  return user ? {} : { colorScheme: "light", themeColor: GRUND_HELL };
+}
+
 /* App-Chrome für alle Seiten ausser den Anmelde-Seiten unter `(auth)`:
-   Seitenleiste links, Inhalt rechts. Route-Gruppen wirken nicht auf die URL. */
+   Seitenleiste links, Inhalt rechts. Route-Gruppen wirken nicht auf die URL.
+   Ohne Konto keine Seitenleiste (PO 2026-11-23): Was hier ohne Anmeldung
+   erreichbar ist (404, Cookies, Versionen), steht im Rahmen der Startseite —
+   Übungen und Trainings gibt es ohne Konto nicht (#669). */
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -46,21 +59,34 @@ export default async function AppLayout({
         anfangsGesehen={leseGesehen(jar.get(GESEHEN_COOKIE)?.value)}
       >
         <TeamKontextProvider>
-          <AppRahmen anfangsSlim={slim} anfangsSpalte={spalte}>
-            {/* «Fragen und Feedback» (#542) überdauert die Seite ebenfalls: Der
-                Dialog bleibt beim Seitenwechsel offen, am Desktop als Spalte
-                rechts im Rahmen. */}
-            <FeedbackProvider>
-              <AppNav />
-              {/* Der eine Platz für Snackbars am unteren Rand überdauert ebenfalls
-                  die einzelne Seite — siehe SnackbarKontext (#234). Er liegt im
-                  Rahmen, damit er dessen Leistenbreite erbt. Seiten bringen ihren
-                  Seitenrahmen (Breite + Kopfzeile) selbst mit. */}
-              <SnackbarProvider>
-                <AppInhalt>{children}</AppInhalt>
-              </SnackbarProvider>
-            </FeedbackProvider>
-          </AppRahmen>
+          {user ? (
+            <AppRahmen anfangsSlim={slim} anfangsSpalte={spalte}>
+              {/* «Fragen und Feedback» (#542) überdauert die Seite ebenfalls: Der
+                  Dialog bleibt beim Seitenwechsel offen, am Desktop als Spalte
+                  rechts im Rahmen. */}
+              <FeedbackProvider>
+                <AppNav />
+                {/* Der eine Platz für Snackbars am unteren Rand überdauert ebenfalls
+                    die einzelne Seite — siehe SnackbarKontext (#234). Er liegt im
+                    Rahmen, damit er dessen Leistenbreite erbt. Seiten bringen ihren
+                    Seitenrahmen (Breite + Kopfzeile) selbst mit. */}
+                <SnackbarProvider>
+                  <AppInhalt>{children}</AppInhalt>
+                </SnackbarProvider>
+              </FeedbackProvider>
+            </AppRahmen>
+          ) : (
+            <StartRahmen angemeldet={false} eigenesMain>
+              <FeedbackProvider>
+                {/* Die Seiten der App stehen linksbündig neben der Leiste; hier
+                    folgen sie der Spalte von Kopf- und Fusszeile. Ihr Seitenkopf
+                    klebt nicht: Oben klebt schon die Kopfzeile des Rahmens. */}
+                <div className="mx-auto w-full max-w-[1200px] [&_[data-kopf-klebt]]:static [&_[data-kopf-klebt]]:bg-transparent">
+                  <SnackbarProvider>{children}</SnackbarProvider>
+                </div>
+              </FeedbackProvider>
+            </StartRahmen>
+          )}
         </TeamKontextProvider>
       </VersionenProvider>
     </DarstellungProvider>

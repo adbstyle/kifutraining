@@ -483,6 +483,92 @@ pruefe(`Keine Altlast der alten Palette (${DATEIEN.length} Dateien)`, () => {
   assert.deepEqual(treffer, [], `${treffer.length} Altlasten:\n${treffer.join("\n")}`);
 });
 
+// ── Startseite: die eigene Palette des Entwurfs (#670) ──────────────────────
+// Wie das Diagramm nicht im @theme, sondern in `.start-palette` (nur hell, die
+// Seite ist immer hell). Geprüft wird, dass jede Rolle trägt, dass keine tot
+// ist und dass die Seite keine rohen Hex-Werte mehr führt.
+const START = tokens(blockVon(CSS, /\.start-palette\b/, ".start-palette"), "start");
+const START_TEXT = ["verein", "team", "training", "ki", "hervorgehoben"] as const;
+const START_KACHELN: [flaeche: string, zeichen: string][] = [
+  ["verein", "mittel"],
+  ["team", "primary"],
+  ["kalender", "on-kalender"],
+  ["schnuppern", "on-schnuppern"],
+  ["mitteilungen", "on-mitteilungen"],
+  ["training", "on-training"],
+  ["uebungen", "on-uebungen"],
+  ["ki", "on-ki"],
+];
+const startWert = (rolle: string) => {
+  const wert = START.get(rolle);
+  if (!wert) throw new Error(`--start-${rolle} fehlt in .start-palette`);
+  return wert;
+};
+
+pruefe("Startseite: Schrift (voll, mittel, Primary) trägt auf jeder Fläche mit Text", () => {
+  const hell = THEMEN[0];
+  const schwach: string[] = [];
+  for (const rolle of START_TEXT) {
+    const flaeche = startWert(rolle);
+    const paare: [string, string][] = [
+      ["voll", hell.schrift],
+      ["mittel", ueberlagern(hell.schrift, hell.deckung.mittel, flaeche)],
+      ["primary", hell.primary],
+    ];
+    for (const [was, schrift] of paare) {
+      const k = kontrast(schrift, flaeche);
+      if (k < 4.5) schwach.push(`${rolle} ${was} ${z(k)}`);
+    }
+  }
+  assert.deepEqual(schwach, []);
+});
+
+pruefe("Startseite: Jedes Kachelzeichen trägt auf seiner Fläche (WCAG 1.4.11)", () => {
+  const hell = THEMEN[0];
+  const schwach: string[] = [];
+  for (const [flaecheRolle, zeichenRolle] of START_KACHELN) {
+    const flaeche = startWert(flaecheRolle);
+    const zeichen =
+      zeichenRolle === "mittel"
+        ? ueberlagern(hell.schrift, hell.deckung.mittel, flaeche)
+        : zeichenRolle === "primary"
+          ? hell.primary
+          : startWert(zeichenRolle);
+    const k = kontrast(zeichen, flaeche);
+    if (k < 3) schwach.push(`${flaecheRolle}/${zeichenRolle} ${z(k)}`);
+  }
+  assert.deepEqual(schwach, []);
+});
+
+pruefe("Startseite: Schrift und Akzent der umgekehrten Fläche tragen auf dem tiefen Violett", () => {
+  const { umkehr } = THEMEN[0];
+  const dunkel = startWert("dunkel");
+  // Fliesstext steht dort in 80 % (`text-on-umkehr/80`).
+  const paare: [string, string][] = [
+    ["Schrift", umkehr.schrift],
+    ["Schrift 80 %", ueberlagern(umkehr.schrift, 0.8, dunkel)],
+    ["Akzent", umkehr.akzent],
+  ];
+  const schwach = paare.filter(([, f]) => kontrast(f, dunkel) < 4.5).map(([w, f]) => `${w} ${z(kontrast(f, dunkel))}`);
+  assert.deepEqual(schwach, []);
+});
+
+const START_DATEIEN = [
+  ...quelldateien(join(WEB, "components/start")),
+  ...quelldateien(join(WEB, "app/(start)")),
+  join(WEB, "app/(app)/styleguide/page.tsx"),
+];
+pruefe("Startseite: Jede Rolle der Palette wird gebraucht, und keine Datei der Seite führt rohe Hex-Werte", () => {
+  const text = START_DATEIEN.map((pfad) => readFileSync(pfad, "utf8")).join("\n");
+  const tot = [...START.keys()].filter((rolle) => !text.includes(`--start-${rolle})`));
+  const roh = START_DATEIEN.flatMap((pfad) =>
+    readFileSync(pfad, "utf8")
+      .split("\n")
+      .flatMap((zeile, i) => (/\[#[0-9a-f]{3,8}\]/i.test(zeile) ? [`${relative(WEB, pfad)}:${i + 1}`] : [])),
+  );
+  assert.deepEqual({ tot, roh }, { tot: [], roh: [] });
+});
+
 // ── Messwerte ──────────────────────────────────────────────────────────────
 // Nicht geprüft, sondern berichtet: die Zahlen, die im Styleguide stehen.
 console.log("\nMesswerte (Kontrast nach WCAG 2.2):");

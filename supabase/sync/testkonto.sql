@@ -170,7 +170,7 @@ begin
 
   -- Verein und Team wie in der Anwendung (Einstieg → Verein gründen; Verwaltung
   -- legt ein Team an und nimmt sich auf).
-  v_antwort := public.verein_gruenden('Testverein Claude', true);
+  v_antwort := public.verein_gruenden('Testverein Claude', true, public.vereinbarung_fassung());
   v_verein := (v_antwort ->> 'id')::uuid;
   if v_verein is null then raise exception 'testkonto: Verein nicht gegründet: %', v_antwort; end if;
   v_antwort := public.verein_team_anlegen(v_verein, 'Claude Testteam F');

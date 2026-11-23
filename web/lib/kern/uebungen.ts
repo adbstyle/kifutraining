@@ -163,7 +163,7 @@ export async function aendereUebung(
  *  vorher (#144 AK 2). Einen Urheber zeigt KiFu an Übungen nie
  *  (docs/produkt/uebungen.md, «Drucken»; die Übungsseite ebenso). */
 export const TRAGWEITE_UEBUNG_VEROEFFENTLICHEN =
-  "Die Übung wird für alle sichtbar - mit allen Angaben, Bild und Feld-Diagramm - und trägt die " +
+  "Die Übung wird in der Community für alle angemeldeten Konten sichtbar - mit allen Angaben, Bild und Feld-Diagramm - und trägt die " +
   "Plakette «Community». Einen Trainernamen zeigt KiFu bei Übungen nicht.";
 
 /** Die Sichtbarkeit einer eigenen Übung setzen — gleich, welcher

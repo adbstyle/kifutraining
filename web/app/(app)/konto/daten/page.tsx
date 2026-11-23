@@ -52,7 +52,7 @@ export default async function KontoDatenPage() {
       <Gefahrenzone>
         <h3 className="type-title-medium text-on-surface">Konto löschen</h3>
         <ul className="type-body-medium mt-2 list-disc space-y-1 pl-5 text-on-surface-mittel">
-          <li>Öffentliche Übungen bleiben anonymisiert erhalten.</li>
+          <li>Übungen und Trainings in der Community bleiben anonymisiert erhalten.</li>
           <li>Private Entwürfe werden samt Feld-Diagramm gelöscht.</li>
           <li>Verbundene KI-Assistenten verlieren ihren Zugang.</li>
         </ul>

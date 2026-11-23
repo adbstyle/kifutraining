@@ -36,11 +36,13 @@ import {
 import {
   gruendungAus,
   kontoInfoAus,
+  vereinbarungAus,
   kontoLoeschAusgangAus,
   vereinLoeschAusgangAus,
   type KontoLoeschAusgang,
   type KontoLoeschInfo,
   type VereinLoeschAusgang,
+  type VereinVereinbarung,
 } from "@/lib/verein-antwort";
 import { MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler, fehlschlag, ok, type KernErgebnis, type KernFehler } from "@/lib/kern/ergebnis";
 import { argumente, eingabeFehler, spielerFehler } from "@/lib/kern/spieler";
@@ -462,22 +464,30 @@ export async function benenneVereinUm(
   return ok({ name: (data as { name: string }).name });
 }
 
-/** Einen Verein gründen (#587 AK 1–4): Die Person wird seine erste Verwaltung,
- *  ohne Team. Das Web prüft den Namen vorab (`vereinsNameProblem`), die
- *  Datenebene weist mit dem CHECK ab; `bestaetigt` sind die beiden
- *  Bestätigungen zusammen, und die Datenebene verlangt sie selbst. Gehört die
- *  Person inzwischen einem Verein an, ist `feld` `verein_id`: Die offene Seite
- *  ist überholt, der Aufrufer lädt sie neu. */
+/** Einen Verein gründen (#587 AK 1–4, #675 AK 2, PC 1): Die Person wird seine
+ *  erste Verwaltung, ohne Team, und stimmt für den Verein der Vereinbarung zur
+ *  Auftragsbearbeitung zu. Das Web prüft den Namen vorab (`vereinsNameProblem`),
+ *  die Datenebene weist mit dem CHECK ab; `bestaetigt` ist «berechtigt, für
+ *  den Verein zu handeln», `fassung` die Fassung der Vereinbarung, der die
+ *  Person zustimmt (`null` = keine), und die Datenebene verlangt beides selbst
+ *  — die Fassung muss die geltende sein. Gehört die Person inzwischen einem
+ *  Verein an, ist `feld` `verein_id`: Die offene Seite ist überholt, der
+ *  Aufrufer lädt sie neu. */
 export async function gruendeVerein(
   supabase: SupabaseClient,
   _userId: string,
-  e: { name: string; bestaetigt: boolean },
+  e: { name: string; bestaetigt: boolean; fassung: string | null },
 ): Promise<KernErgebnis<{ vereinId: string; name: string }>> {
   // Eine Action nimmt, was ein Aufruf schickt: ohne die Form kein TypeError.
   if (typeof e.name !== "string") return fehlschlag("eingabe", VEREIN_NAME_UNGUELTIG, { feld: "name" });
   const problem = vereinsNameProblem(e.name);
   if (problem) return fehlschlag("eingabe", problem, { feld: "name" });
-  const { data, error } = await supabase.rpc("verein_gruenden", { p_name: e.name.trim(), p_bestaetigt: e.bestaetigt === true });
+  const { data, error } = await supabase.rpc("verein_gruenden", {
+    p_name: e.name.trim(),
+    p_bestaetigt: e.bestaetigt === true,
+    // Die Datenebene nimmt `null` als «keine Zustimmung»; die Typen kennen nur Text.
+    p_fassung: (typeof e.fassung === "string" ? e.fassung : null) as string,
+  });
   if (error) {
     if (error.message.includes("SCHON_IM_VEREIN")) return fehlschlag("regel", VEREIN_MELDUNG.SCHON_IM_VEREIN, { feld: "verein_id" });
     if (error.code === "23514" && error.message.includes("verein_name"))
@@ -486,6 +496,21 @@ export async function gruendeVerein(
   }
   const g = gruendungAus(data);
   return g ? ok({ vereinId: g.id, name: g.name }) : fehlschlag("technisch", VEREIN_UNSTIMMIG.gruenden);
+}
+
+/** Die Vereinbarung zur Auftragsbearbeitung des Vereins für seine Verwaltung
+ *  (#675 AK 3, 4): geltende Fassung und festgehaltene Zustimmung. Wer nicht
+ *  zur Verwaltung gehört, erhält «Verein nicht gefunden». */
+export async function ladeVereinbarung(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { vereinId: string },
+): Promise<KernErgebnis<VereinVereinbarung>> {
+  if (!istUuid(e.vereinId)) return vereinNichtGefunden();
+  const { data, error } = await supabase.rpc("verein_vereinbarung", { p_verein: e.vereinId });
+  if (error) return vereinFehler(error);
+  const v = vereinbarungAus(data);
+  return v ? ok(v) : fehlschlag("technisch", VEREIN_UNSTIMMIG.vereinbarung);
 }
 
 /** Den Verein löschen, nur mit dem bestätigten aktuellen Vereinsnamen (#587

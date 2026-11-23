@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { UEBUNGEN_PFAD } from "@/lib/navigation";
 import { BestandAnzeige } from "@/components/ui";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { createExercise } from "@/lib/actions/exercises";
@@ -46,7 +47,7 @@ export default async function NeuePage({
   const voll = grenzen !== null && istVoll(grenzen.uebungen);
 
   return (
-    <Seitenrahmen breite="4xl" krumen={[{ label: "Übungen", href: "/" }, { label: "Neue Übung" }]}>
+    <Seitenrahmen breite="4xl" krumen={[{ label: "Übungen", href: UEBUNGEN_PFAD }, { label: "Neue Übung" }]}>
       {/* Kopf wie im Trainings-Editor: Brotkrumen, darunter der Name als
           Kopf-Feld der Maske. Die Überschrift trägt die Seite unsichtbar. */}
       <h1 className="sr-only">Neue Übung</h1>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, Pencil, Plus, Shield, Trash2, X } from "lucide-react";
 import {
@@ -55,6 +55,7 @@ export function VereinVerwaltung({
   spielerOhneTeam,
   anzahlPersonen,
   verwaltung,
+  vereinbarung,
 }: {
   vereinId: string;
   vereinName: string;
@@ -66,6 +67,8 @@ export function VereinVerwaltung({
   /** Verschiedene Konten in Verwaltung und Teams: Sie werden beim Löschen zu Konten ohne Verein. */
   anzahlPersonen: number;
   verwaltung: VerwaltungEintrag[];
+  /** Die Karte «Vereinbarung zur Auftragsbearbeitung» (#675 AK 3, 4), vom Server gerendert, vor der Gefahrenzone. */
+  vereinbarung: ReactNode;
 }) {
   const router = useRouter();
   const melde = useSnackbar();
@@ -196,6 +199,8 @@ export function VereinVerwaltung({
           ))}
         </Tabelle>
       </Card>
+
+      {vereinbarung}
 
       <Gefahrenzone beschreibung={VEREIN_LOESCHEN_TEXT.beschreibung}>
         <div className="flex flex-col items-start gap-3">

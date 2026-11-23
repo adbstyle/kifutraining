@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { Flash } from "@/components/Flash";
-import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
@@ -49,11 +48,11 @@ export default async function TrainingViewPage({
   // Ins-Team-Stellen (am eigenen, auch am privaten).
   const ansicht = await ladeTrainingAnsicht(id);
   if (!ansicht) return <TrainingNotAvailable />;
-  const { training, angemeldet, bearbeitungsziel, teams, mitGrenzen, fehlendeBedingungen } = ansicht;
+  const { training, bearbeitungsziel, teams, mitGrenzen, fehlendeBedingungen } = ansicht;
 
   // Angesehen wird genau eine Variante des Hauptteils, zu Beginn die erste
-  // (#203 AK 1/7). Die Wahl steht im Suchparameter und nicht im Zustand: Diese
-  // Seite sehen auch Betrachter ohne Konto, und ein Link braucht keine Rechte.
+  // (#203 AK 1/7). Die Wahl steht im Suchparameter und nicht im Zustand: Ein
+  // Link auf die Variante braucht keine Rechte am Training.
   //
   // Meint die Adresse eine geöffnete Übung des Hauptteils, gilt deren Variante
   // (#371 AK 10) — sonst stünde die Übung gar nicht da.
@@ -120,7 +119,6 @@ export default async function TrainingViewPage({
               teamId={training.team?.id ?? null}
               terminDatum={training.terminDatum}
               terminTraining={training.terminTraining}
-              angemeldet={angemeldet}
               bearbeitungsziel={bearbeitungsziel}
               teams={teams}
               fehlendeBedingungen={fehlendeBedingungen}
@@ -133,7 +131,6 @@ export default async function TrainingViewPage({
             <AnsichtSpalte
               altersstufe={training.altersstufe}
               variante={aktive?.id}
-              kopierbar={angemeldet}
               eigenschaften={eigenschaften}
             />
           }
@@ -210,12 +207,10 @@ export default async function TrainingViewPage({
                     AK 2) — hier gibt es keinen Editor, darum steht die Aktion in
                     der Ansicht. Breit im Detail der geöffneten Übung, hier nur
                     schmal (`InBibliothekButton`). */}
-                {angemeldet && <InBibliothekButton fassungId={item.id} name={item.name} className="xl:hidden" />}
+                <InBibliothekButton fassungId={item.id} name={item.name} className="xl:hidden" />
               </AnsichtZeile>
             )}
           />
-
-          {!angemeldet && <AnmeldeHinweis className="mt-8" />}
         </Seitenrahmen>
       </AnsichtFlaeche>
     </KontoGrenzenLage>

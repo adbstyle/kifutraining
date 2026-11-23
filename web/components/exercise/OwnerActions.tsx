@@ -53,7 +53,7 @@ export function OwnerActions({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const isPublic = visibility === "public";
   const next = isPublic ? "private" : "public";
-  const visibilityLabel = isPublic ? "Auf privat setzen" : "Öffentlich schalten";
+  const visibilityLabel = isPublic ? "Auf privat setzen" : "In die Community stellen";
 
   /* Kopieren: Der Server legt die Kopie an (Name samt Kopie-Kennzeichnung,
      Bild, Diagramm, privat) und meldet ihren Slug; von dort geht es unmittelbar

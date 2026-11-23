@@ -154,7 +154,7 @@ function KontoLoeschenDialog({ info, onClose }: { info: KontoLoeschInfo; onClose
               </p>
             )}
             <ul className="list-disc space-y-1 pl-5">
-              <li>Deine <strong>öffentlichen</strong> Übungen bleiben anonymisiert erhalten und werden unveränderlich.</li>
+              <li>Deine Übungen und Trainings <strong>in der Community</strong> bleiben anonymisiert erhalten und werden unveränderlich.</li>
               <li>Deine <strong>privaten</strong> Übungen werden samt Feld-Diagramm gelöscht.</li>
               {!einzige && (
                 <>

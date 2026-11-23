@@ -1,7 +1,11 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { NICHT_GEFUNDEN_TITEL } from "@/lib/navigation";
 
 /* Unbekannte Adressen fielen sonst auf die Fehlerseite der Wurzel, die keine
    Seitenleiste kennt. Jede bekannte Route ist spezifischer und gewinnt. */
+export const metadata: Metadata = { title: NICHT_GEFUNDEN_TITEL };
+
 export default function UnbekannteAdresse() {
   notFound();
 }

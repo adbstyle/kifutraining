@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { abfrageAus, loginAdresse } from "@/lib/weiterleitung";
 import { SearchX, Heart } from "lucide-react";
 import { BestandAnzeige, ExerciseCard, ButtonLink, Leerzustand, SectionMessage } from "@/components/ui";
 import { Flash } from "@/components/Flash";
@@ -12,10 +15,16 @@ import {
 } from "@/lib/queries/exercises";
 import { alsEinordnungsFilter, einordnungNachSpalten } from "@/lib/filter-optionen";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { UEBUNGEN_PFAD } from "@/lib/navigation";
 import { liesListe, liesPositiveZahl, mitAnzahl, type AdressParameter } from "@/lib/adresse";
 
 // Server-only Datenzugriff (anon-Key + RLS); kein Prerender ohne DB.
 export const dynamic = "force-dynamic";
+/* Eigener Titel wie «Trainings - KiFu»: Seit «/» die Startseite ist (#674),
+   trug der Katalog sonst den allgemeinen Titel der Wurzel. */
+export const metadata: Metadata = {
+  title: "Übungen - KiFu",
+};
 
 // Der Katalog zeigt die Kacheln seitenweise: Jede Kachel trägt ihr Diagramm als
 // serverseitig gezeichnetes SVG, und der ganze Bestand auf einmal kostete pro
@@ -31,13 +40,12 @@ export default async function Home({
 }) {
   const sp = await searchParams;
 
-  // Favoriten- und „Meine Übungen"-Filter sind nur für angemeldete USER
-  // wirksam (AC11; anonym gibt es keine eigenen/privaten Übungen zu sehen).
+  // Nur mit Konto (#669): ohne Anmeldung leitet die Middleware vorher auf die Startseite.
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const canFavorite = !!user;
+  if (!user) redirect(loginAdresse(UEBUNGEN_PFAD, abfrageAus(sp)));
 
   const filters: CatalogFilters = {
     // Nur wählbare Einordnungen zählen. Ein Wert aus einem früher geteilten
@@ -53,7 +61,7 @@ export default async function Home({
     kinder: liesPositiveZahl(sp.kinder),
     q: typeof sp.q === "string" ? sp.q : undefined,
     fav: sp.fav === "1",
-    mine: !!user && sp.mine === "1",
+    mine: sp.mine === "1",
   };
   // Die Einordnungen wirken untereinander als ODER und stehen in zwei Spalten
   // — der Query-Layer bekommt sie darum als `einordnung`, nicht als `teil`.
@@ -81,23 +89,15 @@ export default async function Home({
   return (
     <Seitenrahmen
       breite="voll"
-      krumen={filters.mine ? [{ label: "Übungen", href: "/" }, { label: "Meine Übungen" }] : [{ label: "Übungen" }]}
+      krumen={filters.mine ? [{ label: "Übungen", href: UEBUNGEN_PFAD }, { label: "Meine Übungen" }] : [{ label: "Übungen" }]}
       aktionen={
-        user && (
-          <ButtonLink href="/neu" variant="filled">
-            Übung erstellen
-          </ButtonLink>
-        )
+        <ButtonLink href="/neu" variant="filled">
+          Übung erstellen
+        </ButtonLink>
       }
     >
       {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
       <h1 className="sr-only">{filters.mine ? "Meine Übungen" : "Übungen"}</h1>
-      {sp.account_deleted && (
-        <Flash
-          message="Konto gelöscht. Deine öffentlichen Übungen bleiben anonym erhalten."
-          param="account_deleted"
-        />
-      )}
       {sp.deleted && <Flash message="Übung gelöscht." param="deleted" />}
       {error && (
         <SectionMessage appearance="error">
@@ -114,7 +114,7 @@ export default async function Home({
 
       {rows && (
         <>
-          <CatalogFilterBar filters={filters} canFavorite={canFavorite} showMine={!!user} />
+          <CatalogFilterBar filters={filters} />
 
           <p className="type-label-small mb-4 text-on-surface-mittel">
             {rows.length} {rows.length === 1 ? "Übung" : "Übungen"}
@@ -137,13 +137,11 @@ export default async function Home({
                     key={row.id}
                     ex={toCardData(row)}
                     actionSlot={
-                      canFavorite ? (
-                        <FavoriteButton
-                          exerciseId={row.id}
-                          initial={row.is_favorited}
-                          variant="overlay"
-                        />
-                      ) : undefined
+                      <FavoriteButton
+                        exerciseId={row.id}
+                        initial={row.is_favorited}
+                        variant="overlay"
+                      />
                     }
                   />
                 ))}
@@ -158,7 +156,7 @@ export default async function Home({
                   </p>
                   {rows.length > anzahl && (
                     <ButtonLink
-                      href={mitAnzahl("/", sp, anzahl + SEITE)}
+                      href={mitAnzahl(UEBUNGEN_PFAD, sp, anzahl + SEITE)}
                       scroll={false}
                       variant="outlined"
                     >

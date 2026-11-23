@@ -79,8 +79,11 @@ export function AppInhalt({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Der Umschalter vor den Brotkrumen, verbunden mit dem Rahmen. */
+/** Der Umschalter vor den Brotkrumen, verbunden mit dem Rahmen. Ohne Konto
+ *  gibt es weder Rahmen noch Seitenleiste (Rahmen der Startseite, `(app)`-
+ *  Layout) — dann auch keinen Umschalter. */
 export function SlimSchalter() {
-  const { slim, slimUmschalten } = useSeitenleiste();
-  return <SeitenleistenKnopf slim={slim} onClick={slimUmschalten} />;
+  const zustand = useContext(SeitenleisteKontext);
+  if (!zustand) return null;
+  return <SeitenleistenKnopf slim={zustand.slim} onClick={zustand.slimUmschalten} />;
 }

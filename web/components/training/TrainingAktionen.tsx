@@ -85,7 +85,6 @@ export function TrainingAktionen({
   teamId,
   terminDatum,
   terminTraining,
-  angemeldet,
   bearbeitungsziel,
   teams,
   fehlendeBedingungen,
@@ -106,7 +105,6 @@ export function TrainingAktionen({
   /** Ein Termin-Training (PO 2026-10-06): Es lässt sich in den Bestand
    *  kopieren, und Löschen nimmt es vom Termin. */
   terminTraining: boolean;
-  angemeldet: boolean;
   bearbeitungsziel: Bearbeitungsziel | null;
   /** Die Teams des USERS — Ziele für Übernehmen und Ins-Team-Stellen. */
   teams: readonly TeamUebersicht[];
@@ -140,7 +138,6 @@ export function TrainingAktionen({
 
   const rechte = trainingAktionsRechte(
     { visibility, teamId, terminTraining },
-    angemeldet,
     bearbeitungsziel,
     teams.length > 0,
   );
@@ -233,7 +230,7 @@ export function TrainingAktionen({
       router.refresh();
       if (res.status === "published") {
         setSichtbarkeit(null);
-        melde("Das Training ist jetzt öffentlich.");
+        melde("Das Training ist jetzt in der Community.");
       } else if (res.status === "incomplete") {
         // Zwischen zwei Blicken hat sich etwas geändert — die Bedingungen
         // stehen dann statt der Bestätigung da, nicht daneben. Genannt wird,
@@ -279,7 +276,7 @@ export function TrainingAktionen({
     eintraege.push({ label: "Zu mir übernehmen", icon: Download, onSelect: zuMirJetzt });
   if (rechte.sichtbarkeit === "veroeffentlichen")
     eintraege.push({
-      label: "Veröffentlichen",
+      label: "In die Community stellen",
       icon: Globe,
       onSelect: () => {
         setVermisst(null);
@@ -440,11 +437,11 @@ export function TrainingAktionen({
             </p>
           )}
           {/* Beim öffentlichen Training ist das Löschen mehr als ein Aufräumen
-              im eigenen Bestand: es verschwindet aus der Öffentlichkeit
+              im eigenen Bestand: es verschwindet aus der Community
               (Story A AK 8). */}
           {oeffentlich && (
             <p className="mt-3">
-              Das Training verschwindet damit auch aus dem öffentlichen Bestand.
+              Das Training verschwindet damit auch aus der Community.
               Kopien, die andere bereits übernommen haben, bleiben bestehen.
             </p>
           )}

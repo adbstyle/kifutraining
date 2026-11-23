@@ -187,9 +187,11 @@ export const KONTO_MANIFEST_PFAD = "/manifest.webmanifest";
 /** Der Name auf dem Home-Bildschirm (AK 2), auch für das iPhone. */
 export const KONTO_APP_NAME = "KiFu";
 
-/** Die Startseite der abgelegten App: die Teams. Ohne Sitzung führt die
- *  Middleware zur Anmeldung und danach zurück hierher (AK 3). */
-export const KONTO_APP_START = "/teams";
+/** Die Startseite der abgelegten App: «/». Angemeldet führt sie in den
+ *  Arbeitsbereich (#671), ohne Sitzung auf die Startseite mit dem Weg zur
+ *  Anmeldung, die ohne Ziel wieder auf «/» und damit in den Arbeitsbereich
+ *  führt (AK 3). */
+export const KONTO_APP_START = "/";
 
 /** Das Manifest für Personen mit Konto (AK 1, 2): `id` fest auf «/», damit eine
  *  spätere andere Startseite keine zweite App ergibt; der Bereich ist die ganze

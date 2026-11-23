@@ -1,15 +1,26 @@
 # Konto und Zugang
 
-Stand 2026-11-22 (Release 1.52.0). Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-11-23 (Release 1.53.0). Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
 Der Zugang läuft über E-Mail-Adresse und Passwort; einen Anmeldelink per Mail oder eine
-Anmeldung über fremde Dienste gibt es nicht. Bei der Registrierung braucht es die Adresse, ein
+Anmeldung über fremde Dienste gibt es nicht. Zum Anmelden und Registrieren führen „Anmelden" und
+„Kostenlos registrieren" auf der Startseite. Die Seite zum Registrieren sagt, was danach kommt:
+„Erstelle ein Konto. Danach gründest du einen Verein oder lässt dich in Verein und Team
+aufnehmen." Bei der Registrierung braucht es die Adresse, ein
 Passwort von mindestens acht Zeichen und dessen Wiederholung. Danach erscheint immer derselbe
 Hinweis, dass ein Bestätigungslink unterwegs sei — auch dann, wenn die Adresse längst
 registriert ist. So verrät die Anwendung nicht, wer bei ihr ein Konto hat. Nutzbar wird das
-Konto erst, wenn der Link in der Mail angeklickt wurde.
+Konto erst, wenn der Link in der Mail angeklickt wurde; er führt angemeldet in den eigenen
+Arbeitsbereich.
+
+Nach der Anmeldung geht es dorthin zurück, wo man hinwollte, sonst in den eigenen Arbeitsbereich:
+den zuletzt in diesem Browser gewählten Bereich, sonst das erste eigene Team, den Verein oder, für
+ein Konto ohne Verein, den Einstieg unter „Teams" (siehe
+[Navigation](navigation.md#die-startadresse)). Wer schon angemeldet ist und die Seite zum Anmelden
+oder Registrieren öffnet, kommt ebenso gleich ans Ziel bzw. in den Arbeitsbereich, statt ein
+leeres Formular zu sehen.
 
 Wer sich vor der Bestätigung anzumelden versucht, wird darauf hingewiesen und kann die Mail
 gleich noch einmal anfordern. Stimmt Adresse oder Passwort nicht, bleibt die Meldung bewusst
@@ -48,8 +59,9 @@ Wer ein Konto hat, legt KiFu auf dem Mobile als App auf den Home-Bildschirm, auf
 „Teilen" und „Zum Home-Bildschirm", auf einem Android-Telefon über das Menü des Browsers, „Zum
 Startbildschirm hinzufügen" oder „App installieren"; Chrome bietet es auch am Computer an. Das geht
 von jeder Seite der Anwendung und von der Anmeldung aus. Die App heisst „KiFu", trägt die Bildmarke
-und öffnet ohne die Leiste des Browsers bei den Teams; ohne Anmeldung führt sie zuerst zur Anmeldung
-und danach dorthin. Wer sich in der App einmal anmeldet, bleibt darin so lange angemeldet wie im
+und öffnet ohne die Leiste des Browsers auf ki-fu.ch und damit im eigenen Arbeitsbereich; ohne
+Anmeldung zeigt sie zuerst die Startseite, und nach der Anmeldung geht es von dort in den
+Arbeitsbereich. Wer sich in der App einmal anmeldet, bleibt darin so lange angemeldet wie im
 Browser. Die ganze Anwendung lässt sich darin bedienen, auch Übungen, Trainings und Konto. Eine
 Anleitung oder einen Hinweis zum Ablegen zeigt die Anwendung für Personen mit Konto nicht; das gibt
 es nur am privaten Link einer Spieler:in (siehe [Team-Bereich](team-bereich.md#als-app-ablegen)).
@@ -62,7 +74,8 @@ sehen die Mitglieder der eigenen Teams, in der Mitgliederliste und bei der Wahl 
 Trainer:innen eines Termins, und die Vereinsverwaltung bei jeder Trainer:in des Vereins und bei
 den Personen der Verwaltung; allen anderen bleibt sie verborgen. Den übrigen Mitgliedern des
 Vereins zeigt der Bereich „Verein" von der Verwaltung nur den Anzeigenamen. Der Name steht als Urheber
-an veröffentlichten Trainings, in den Mitgliederlisten der Teams, an den Terminen, zu denen man
+an Trainings in der Community, für alle angemeldeten Konten sichtbar, in den Mitgliederlisten
+der Teams, an den Terminen, zu denen man
 eingeladen ist, und in den Kalender-Abos der anderen Eingeladenen. Ist man für einen Termin
 verantwortlich, sehen ihn auch die Eltern und Spieler:innen am privaten Link; das sagt der
 Hinweis beim Feld. Wer keinen gewählt hat, erscheint nicht namenlos, sondern unter einer
@@ -76,7 +89,7 @@ Bildschirmrand, warum. Wer den Namen und wer die E-Mail-Adresse sieht, sagt der 
 dem ⓘ.
 
 Ein einmal gesetzter Name lässt sich ersetzen, aber nicht mehr entfernen. Das ist Absicht: An
-bereits veröffentlichten Trainings soll nicht plötzlich wieder eine Zufallskennung auftauchen.
+Trainings in der Community soll nicht plötzlich wieder eine Zufallskennung auftauchen.
 Der Name ist auf vierzig Zeichen begrenzt.
 
 ## Konto ohne Verein
@@ -135,13 +148,13 @@ einer Übung wechselt er dabei nie — wie bei Trainings; das Überführen in di
 gibt es nur in der Anwendung. Das Foto ändert er nicht, und eine Übung, die schon
 in einem Training steht, behält dort ihre Fassung. Übungen aus dem Manual und die anderer
 Trainer ändert er nicht; er erfährt, dass sie nicht die eigenen sind. Eine eigene Übung
-schaltet der Assistent auch öffentlich und zieht sie wieder zurück, ohne
+stellt der Assistent auch in die Community und zieht sie wieder zurück, ohne
 nachzufragen. Vorher weiss er, was das bedeutet: Die Übung wird mit allen Angaben, Bild und
-Diagramm für alle sichtbar und trägt die Plakette „Community", einen Trainernamen zeigt sie
-nicht. Zurückgezogen verschwindet sie aus dem öffentlichen Bestand; was andere schon in ihre
+Diagramm für alle angemeldeten Konten sichtbar und trägt die Plakette „Community", einen
+Trainernamen zeigt sie nicht. Zurückgezogen verschwindet sie aus der Community; was andere schon in ihre
 Trainings oder ihren Bestand übernommen haben, bleibt bestehen.
 
-Jede Übung, die das Konto sieht — aus dem Manual, die öffentliche eines anderen Trainers oder
+Jede Übung, die das Konto sieht — aus dem Manual, die Community-Übung eines anderen Trainers oder
 eine eigene —, kopiert der Assistent auch in den eigenen Bestand, nach denselben Regeln wie
 „Übung kopieren" in der Anwendung: Es entsteht ein privater Entwurf mit allen Angaben, eigener
 Kopie von Bild und Feld-Diagramm und derselben Altersstufe, ohne Verbindung zur Quelle. Nur die
@@ -189,7 +202,7 @@ Welche Teile und Blöcke eine Altersstufe kennt, muss der Assistent nicht selbst
 das Schema ab — im Kinderfussball die vier Trainingsteile mit den drei Hauptteilkategorien, im
 Juniorenfussball Auffangen, Einstieg, Hauptteil und Abschluss mit ihren sieben Blöcken, jeweils
 in ihrer Reihenfolge, dazu, wo eine Dauer erfasst wird, wo Gruppen durchlaufen, welche Blöcke
-ein öffentliches Training braucht und welche leer einen Hinweis tragen. Im Juniorenfussball gibt
+ein Training in der Community braucht und welche leer einen Hinweis tragen. Im Juniorenfussball gibt
 es keine Hauptteilkategorie, und der Assistent ordnet eine Übung genau dem Block zu, den er
 wählt. Das Aufwärmen und die Explosivität bieten wie in der Anwendung auch Übungen an, die deren
 Inhalt als Erscheinungsform tragen, gleich wo sie eingeordnet sind. Spielfeldgrösse und Übungstyp
@@ -201,7 +214,7 @@ Altersstufen weder Dauer noch Richtwert. Weil es für den Juniorenfussball keine
 leer, erfährt der Assistent das benannt, statt dass er ausweicht.
 
 Bestehende Trainings kann der Assistent überarbeiten, gleich welcher Altersstufe. Er sucht die
-eigenen Trainings oder die öffentlichen der Community nach Namen und Alterskategorie und ruft
+eigenen Trainings oder die der Community nach Namen und Alterskategorie und ruft
 ein Training vollständig ab: alle Angaben, alle Teile und Blöcke wie im Editor, auch die
 leeren, den Hauptteil einmal je Variante, und jede Übung mit Inhalt, Dauer, Notiz und den
 Gruppen ihres Durchlaufs. Ändern kann er Name, Ziel und Alterskategorien — mindestens eine
@@ -214,7 +227,7 @@ Abschnitt ist ein Trainingsteil bzw. Block, im Kinderfussball-Hauptteil zusätzl
 Hauptteilkategorie und im Hauptteil beider Altersstufen eine Variante. Der Assistent muss dafür
 alle Übungen des Abschnitts nennen, sonst ändert sich nichts und er erfährt, welche fehlen oder
 nicht dazugehören. Den Inhalt einer Übung, ihren Trainingsteil oder die Altersstufe eines
-Trainings ändert er nicht. Ein Training, das jemand anderem gehört und öffentlich ist, darf er
+Trainings ändert er nicht. Ein Training, das jemand anderem gehört und in der Community steht, darf er
 lesen, aber nicht ändern, und bekommt genau das gesagt; ein Training, das er nicht sehen darf,
 gilt als nicht gefunden — ob es fehlt oder jemand anderem gehört, bleibt offen.
 
@@ -245,8 +258,8 @@ gilt beim Öffnen. Führt ein Training mehrere Varianten, sagt der Assistent bei
 lehnt die Anwendung ab und nennt die Varianten.
 
 Zu jedem Training, das er lesen kann, ruft der Assistent auf einmal alle fachlichen Hinweise ab,
-die die Anwendung dazu zeigt, im selben Wortlaut: was zum Veröffentlichen noch fehlt (nur beim
-eigenen persönlichen Training, weil nur dort veröffentlicht wird), eine Gruppe, die im selben
+die die Anwendung dazu zeigt, im selben Wortlaut: was für die Community noch fehlt (nur beim
+eigenen persönlichen Training, weil nur dieses in die Community kommt), eine Gruppe, die im selben
 Wechsel an mehreren Übungen steht, ungleich lange Übungen eines Wechsels, Abweichungen vom
 Zeitrichtwert an Teil, Block und Gesamtdauer samt Richtung (nur im Juniorenfussball), leere
 Blöcke, die einen Hinweis tragen, ungewöhnlich viele Übungen in einem Trainingsteil (nur im
@@ -254,23 +267,23 @@ Kinderfussball), Übungen ohne erfasste Dauer und Übungen, die keine Alterskate
 Trainings abdecken. Jeder Hinweis nennt seine Stelle — Trainingsteil, Block oder
 Hauptteilkategorie, bei mehreren Varianten die Variante, dazu die betroffenen Übungen, die Gruppe
 und die Wechsel —, damit der Assistent ihn ohne Rückfrage beheben kann. Hinweise sind keine
-Fehler: Nur die Veröffentlichungsbedingungen sperren etwas, und zwar das Veröffentlichen; alles
+Fehler: Nur die Bedingungen für die Community sperren etwas, und zwar das In-die-Community-Stellen; alles
 andere ist Orientierung. Das Abrufen ändert am Training nichts.
 
-Ein eigenes persönliches Training kann der Assistent veröffentlichen und wieder auf Entwurf
-setzen. Er fragt dafür nicht nach, gibt aber vorher Auskunft: Die Hinweise zeigen, ob alle
-Bedingungen erfüllt sind, und er weiss, dass das Training danach für alle sichtbar ist und der
-eigene Anzeigename als Urheber daran steht; nach dem Veröffentlichen nennt er diesen Namen.
+Ein eigenes persönliches Training kann der Assistent in die Community stellen und wieder auf
+Entwurf setzen. Er fragt dafür nicht nach, gibt aber vorher Auskunft: Die Hinweise zeigen, ob alle
+Bedingungen erfüllt sind, und er weiss, dass das Training danach in der Community für alle angemeldeten Konten
+sichtbar ist und der eigene Anzeigename als Urheber daran steht; danach nennt er diesen Namen.
 Es gelten dieselben Bedingungen wie in der Anwendung. Fehlt etwas, lehnt die Anwendung ab und
 nennt jede fehlende Bedingung einzeln; ergänzt wird nichts von selbst. Es entsteht keine Kopie:
-Das Training bleibt bearbeitbar, und solange es öffentlich ist, weist die Anwendung auch beim
+Das Training bleibt bearbeitbar, und solange es in der Community ist, weist die Anwendung auch beim
 Assistenten jede Änderung ab, die es unter die Bedingungen brächte. Auf Entwurf gesetzt,
-verschwindet es aus dem öffentlichen Bestand; bereits übernommene Kopien anderer bleiben
-bestehen. Ein Team-Training lässt sich nicht veröffentlichen, ein fremdes Training weder
-veröffentlichen noch zurückziehen.
+verschwindet es aus der Community; bereits übernommene Kopien anderer bleiben
+bestehen. Ein Team-Training lässt sich nicht in die Community stellen, ein fremdes Training
+weder in die Community stellen noch zurückziehen.
 
-Der Assistent kann ausserdem ein Training übernehmen: ein öffentliches der Community, das er
-über die Suche im öffentlichen Bestand findet und vorher vollständig abrufen kann, oder ein
+Der Assistent kann ausserdem ein Training übernehmen: eines der Community, das er
+über die Suche in der Community findet und vorher vollständig abrufen kann, oder ein
 eigenes, das so eine zweite, unabhängige Fassung bekommt. Wie beim Übernehmen in der Anwendung
 entsteht eine private Kopie im persönlichen Bestand, in derselben Altersstufe und samt Ziel,
 Übungen, Bildern, Diagrammen, Varianten, Gruppen, Durchlauf und Notizen; die Quelle bleibt
@@ -279,8 +292,8 @@ einer Meldung, räumt die Anwendung weg, was schon entstanden war, und sagt dem 
 dass nichts entstanden ist und er es gefahrlos wiederholen kann — oder, falls auch das Aufräumen
 scheiterte, welche unvollständige Kopie stehen blieb. Ein eigenes Training oder eines der
 eigenen Teams kann der Assistent auch löschen. Er fragt dafür nicht nach, weiss aber vorher, wie
-viele Übungen es trägt und ob es öffentlich ist, und nennt danach, was mitging. Das Training
-verschwindet samt Übungen und Bildern, ein öffentliches zugleich aus dem öffentlichen Bestand;
+viele Übungen es trägt und ob es in der Community steht, und nennt danach, was mitging. Das Training
+verschwindet samt Übungen und Bildern, eines in der Community zugleich aus ihr;
 Kopien, die andere übernommen haben, bleiben. War ein Team-Training einem Termin zugeordnet,
 bleibt der Termin ohne Training im Kalender des Teams, und der Assistent erfährt, welcher. Ein
 fremdes Training lässt sich nicht löschen.
@@ -297,7 +310,7 @@ diesen Termin samt Zeit, Ort, Trainer:innen, Feldern und erwarteter Spielerzahl.
 direkt im Team an, stellt ein eigenes Training als Kopie ins Team oder übernimmt ein
 Team-Training als Kopie in den persönlichen Bestand; das Original bleibt jeweils, wie es ist,
 und ein Termin geht nie mit. Team-Trainings überarbeitet er mit denselben Möglichkeiten wie
-persönliche; veröffentlichen lassen sie sich nicht.
+persönliche; in die Community stellen lassen sie sich nicht.
 
 Den Kalender eines Teams führt der Assistent nach denselben Regeln wie der
 [Team-Bereich](team-bereich.md#der-kalender-des-teams). Er ruft ihn ab, bereits getrennt in
@@ -483,8 +496,8 @@ Die Seite zum Erlauben nennt, welcher Assistent anfragt, mit welchem Konto man a
 wohin es danach zurückgeht. Sie zählt auf, was ein Zugang künftig insgesamt darf — also auch das,
 was erst mit späteren Erweiterungen dazukommt und heute noch nicht geht —, im Wortlaut der Seite:
 „Übungen suchen und abrufen - den ganzen Bestand, den du auch in KiFu siehst"; „eigene Übungen samt
-Feld-Diagramm anlegen, kopieren, ändern, öffentlich schalten und zurückziehen"; „Trainings anlegen,
-überarbeiten, veröffentlichen, zurückziehen, übernehmen und löschen"; „Team-Trainings deiner Teams
+Feld-Diagramm anlegen, kopieren, ändern, in die Community stellen und zurückziehen"; „Trainings anlegen,
+überarbeiten, in die Community stellen, zurückziehen, übernehmen und löschen"; „Team-Trainings deiner Teams
 führen und im Kalender deiner Teams Termine und Terminserien samt Platz, Treffpunkt, erwarteter
 Spielerzahl, Kadern und Mindestbesetzung sowie Spiele mit Bezeichnung, Richtwert, Meldefrist und Treffpunkten festlegen, ändern und
 entfernen, ihnen als Kopie Trainings aus dem Team oder deine persönlichen Trainings zuordnen und sie
@@ -552,14 +565,21 @@ widerrufen.
 
 ## Ohne Konto
 
-Der gesamte Übungsbestand und alle öffentlichen Trainings sind ohne Anmeldung
-zugänglich — ansehen, durchsuchen, filtern, durchführen und drucken inbegriffen. Verwehrt
-bleibt alles Eigene: Übungen und Trainings anlegen oder bearbeiten, favorisieren, Trainings
-übernehmen, Teams. Die Chips „Meine Übungen" und „Meine Trainings" erscheinen gar nicht erst;
-an der Stelle der Konto-Karte steht unten in der Seitenleiste „Nicht angemeldet", und ihr Menü
-bietet nur „Anmelden", „Konto erstellen" und „Was ist neu". Wer eine geschützte Adresse direkt aufruft, landet bei der Anmeldung und wird danach dorthin
-zurückgeführt, wo er hinwollte. Eine Ausnahme ist das Kalender-Abo: Das Kalenderprogramm ruft die Termine ohne
-Anmeldung ab, denn der Link selbst ist die Berechtigung; der Verweis in einem Kalendereintrag
+Übungen und Trainings gibt es nur mit Konto, auch die Übungen aus dem Manual und die der
+Community: Ohne Anmeldung lassen sie sich weder ansehen noch durchsuchen, durchführen oder
+drucken, und eine Seitenleiste gibt es nicht. Wer ohne Anmeldung einen Verweis auf den Katalog,
+eine Übung, die Trainings oder ein Training öffnet — auch auf das Durchführen oder Drucken —,
+landet auf der Startseite mit dem Hinweis „Dieser Inhalt ist nur mit Konto sichtbar. Melde dich
+an oder erstelle kostenlos ein Konto, um Übungen und Trainings der Community zu sehen." Daneben
+stehen „Anmelden", das nach der Anmeldung zum Ziel des Verweises führt, und „Kostenlos
+registrieren". Öffnet man diese Startseite mit Hinweis angemeldet, geht es gleich zum Ziel.
+Wer eine andere geschützte Adresse direkt aufruft, etwa zum Bearbeiten oder Neu-Anlegen, landet
+bei der Anmeldung und wird danach dorthin zurückgeführt, wo er hinwollte.
+
+Ohne Konto erreichbar sind die Startseite, Impressum, Datenschutz, die Vereinbarung zur
+Auftragsbearbeitung, „Versionen", „Cookies" und der Styleguide, alle im Rahmen der Startseite
+(siehe [Navigation](navigation.md#ohne-anmeldung)). Ohne Anmeldung geht auch das Kalender-Abo: Das
+Kalenderprogramm ruft die Termine ohne Anmeldung ab, denn der Link selbst ist die Berechtigung; der Verweis in einem Kalendereintrag
 führt dagegen über die Anmeldung in den Trainingsplan. Ebenso ohne Konto gehen der private Link
 einer Spieler:in, über den ihre Eltern oder sie selbst sie für Termine ab- und anmelden und ihre
 Termine abonnieren, und die
@@ -575,12 +595,16 @@ eigene App ablegen (siehe [Team-Bereich](team-bereich.md#als-app-ablegen)).
 ## Konto löschen
 
 Das Löschen ist unumkehrbar und verlangt eine ausdrückliche Bestätigung. Es folgt einer
-einfachen Regel: Was privat war, verschwindet; was veröffentlicht war, bleibt der Allgemeinheit
-erhalten, verliert aber jeden Bezug zur Person.
+einfachen Regel: Was privat war, verschwindet; was in der Community stand, bleibt ihr erhalten,
+verliert aber jeden Bezug zur Person. So sagen es auch der Dialog — „Deine Übungen und Trainings
+in der Community bleiben anonymisiert erhalten und werden unveränderlich." — und der Reiter
+„Daten und Konto".
 
 Konkret werden die Favoriten entfernt, die privaten Übungen samt ihren Feld-Diagrammen
-gelöscht und die persönlichen Trainings mitsamt den Bildern ihrer Übungsfassungen. Öffentliche
-Übungen und öffentliche Trainings bleiben bestehen, künftig ohne Urheberangabe.
+gelöscht und die persönlichen Trainings mitsamt den Bildern ihrer Übungsfassungen. Übungen und
+Trainings in der Community bleiben bestehen, künftig ohne Urheberangabe. Nach dem Löschen steht
+die Startseite da, oben mit der Bestätigung „Konto gelöscht. Deine Übungen und Trainings in der
+Community bleiben anonym erhalten."
 
 Teams bleiben samt allen Trainings, Terminen und Spielerlisten unangetastet; die gelöschte
 Person verschwindet nur aus der Mitgliederliste. War sie die letzte Trainer:in, bleibt das Team
@@ -672,7 +696,7 @@ der Gruppen untereinander ändert er nicht. Die Favoriten erreicht er nicht, Tea
 löscht oder importiert er nicht, Spieler:innen ohne Team und die Vereinsliste erreicht er nicht, und Kalender-Abos holt oder widerruft er nicht. Eine Übung überführt er nicht in die andere Altersstufe, und die Altersstufe eines Trainings wechselt er so
 wenig wie die Anwendung. Für den Juniorenfussball gibt es keinen kuratierten Übungsbestand; ein
 Block, zu dem der sichtbare Bestand nichts führt, bleibt leer und wird gemeldet. Die
-Zeitrichtwerte erzwingt die Anwendung weder beim Speichern noch beim Veröffentlichen. Was im
+Zeitrichtwerte erzwingt die Anwendung weder beim Speichern noch beim In-die-Community-Stellen. Was im
 Gespräch zur Sprache kommt — etwa ein Problem der Mannschaft —, hält das Training nicht fest.
 Die Zahl der Spieler:innen steht am Termin — als erwartete Spielerzahl oder aus der Spielerliste —,
 nicht am Training oder an einer Variante, und Spieler:innen lassen sich keiner Gruppe des

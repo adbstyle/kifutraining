@@ -51,7 +51,7 @@ export const vokabular = werkzeug({
     "und Übungstypen - dazu die Werte des Filters «einordnung» von «uebungen_suchen». " +
     `${FELDTYP_HINWEIS} Im Abschnitt «schema» je ` +
     "Altersstufe das Trainingsschema: Teile und Blöcke in Reihenfolge, je mit Dauer, " +
-    "Gruppen, Pflicht zum Veröffentlichen, Leer-Hinweis, anziehender Erscheinungsform und " +
+    "Gruppen, Pflicht für die Community, Leer-Hinweis, anziehender Erscheinungsform und " +
     `Zeitrichtwert. ${RICHTWERTE_HINWEIS} ${RICHTWERTE_VERWEIS} Ändert sich nur mit KiFu ` +
     "selbst; einmal abrufen genügt.",
   nurLesen: true,

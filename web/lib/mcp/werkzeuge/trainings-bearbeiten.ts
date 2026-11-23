@@ -141,7 +141,7 @@ export const trainingUebungEntfernen = werkzeug({
     "Entfernt eine Übung sofort und ohne Rückfrage aus dem Training, samt ihrer Notiz, ihrer " +
     "Gruppen im Durchlauf und ihres Bildes; die Vorlage in der Bibliothek bleibt unberührt. " +
     "Wie viele Gruppen ihren Durchlauf tragen, zeigt vorher «training_abrufen» je Übung " +
-    "(«gruppen»); das Ergebnis nennt sie noch einmal. Bei einem öffentlichen Training lässt " +
+    "(«gruppen»); das Ergebnis nennt sie noch einmal. Bei einem Training in der Community lässt " +
     "sich die letzte Übung eines Pflicht-Abschnitts nicht entfernen - dann zuerst auf " +
     `Entwurf setzen. ${KENNUNG_FEHLER}`,
   nurLesen: false,
@@ -262,16 +262,16 @@ export const trainingUebungNotizSetzen = werkzeug({
 
 export const trainingVeroeffentlichen = werkzeug({
   name: "training_veroeffentlichen",
-  titel: "Training veröffentlichen",
+  titel: "Training in die Community stellen",
   beschreibung:
-    "Schaltet ein eigenes persönliches Training öffentlich - ohne Rückfrage. Tragweite, die " +
+    "Stellt ein eigenes persönliches Training in die Community (für alle angemeldeten Konten sichtbar) - ohne Rückfrage. Tragweite, die " +
     `du dem Trainer vorher nennen solltest: «${TRAGWEITE_VEROEFFENTLICHEN}» Es entsteht keine ` +
-    "Kopie und nichts wird eingefroren: Das Training bleibt bearbeitbar, die Öffentlichkeit " +
-    "sieht jeweils den aktuellen Stand. Ein Team-Training lässt sich nicht veröffentlichen " +
+    "Kopie und nichts wird eingefroren: Das Training bleibt bearbeitbar, die Community " +
+    "sieht jeweils den aktuellen Stand. Ein Team-Training lässt sich nicht in die Community stellen " +
     "(«regel»); es muss zuerst in den persönlichen Bestand übernommen werden. Ob alle " +
     "Bedingungen erfüllt sind, zeigt vorher «training_hinweise_abrufen» (Einträge mit «sperrt: " +
     "true»). Fehlt etwas, lehnt das Werkzeug mit der Fehlerart «bedingung» ab und nennt ALLE " +
-    "fehlenden Bedingungen; ergänzt wird nichts von selbst. Solange das Training öffentlich " +
+    "fehlenden Bedingungen; ergänzt wird nichts von selbst. Solange das Training in der Community " +
     "ist, weist KiFu jede Änderung ab, die eine Bedingung verletzte - dann zuerst " +
     "«training_auf_entwurf_setzen». Das Ergebnis nennt den Anzeigenamen, der nun als Urheber " +
     `sichtbar ist («urheber»), und die Tragweite. ${KENNUNG_FEHLER}`,
@@ -293,11 +293,11 @@ export const trainingAufEntwurfSetzen = werkzeug({
   name: "training_auf_entwurf_setzen",
   titel: "Training auf Entwurf setzen",
   beschreibung:
-    "Nimmt ein eigenes öffentliches Training aus dem öffentlichen Bestand; im Übrigen bleibt " +
+    "Nimmt ein eigenes Training aus der Community; im Übrigen bleibt " +
     "es unberührt. Kopien, die andere bereits übernommen haben, bleiben bestehen - sie sind " +
     "eigenständige Trainings; benachrichtigt wird niemand. Ein Entwurf bleibt Entwurf. " +
-    "Team-Trainings sind nie öffentlich («regel»). Danach lassen sich auch Änderungen machen, " +
-    `die ein öffentliches Training nicht erlaubt. ${KENNUNG_FEHLER}`,
+    "Team-Trainings sind nie in der Community («regel»). Danach lassen sich auch Änderungen machen, " +
+    `die ein Training in der Community nicht erlaubt. ${KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ training_id: TrainingId }),
   ausgabe: z.object({ sichtbarkeit: z.literal("entwurf") }),
