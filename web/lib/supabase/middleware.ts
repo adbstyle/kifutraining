@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import { PFAD_HEADER } from "@/lib/pfad";
-import { istNurMitKonto, loginAdresse, nurMitKontoAdresse } from "@/lib/weiterleitung";
+import { angemeldetWeiter, istNurMitKonto, loginAdresse, nurMitKontoAdresse } from "@/lib/weiterleitung";
 
 // URL-Präfixe, die ein eingeloggtes Konto erfordern (UX-Guard; die echte
 // Durchsetzung bleibt RLS). Route-Groups wie (app) wirken nicht auf die URL,
@@ -66,6 +66,15 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Angemeldet keine Anmelde- oder Registrierseite: gleich zum Ziel bzw. in
+  // den Arbeitsbereich. Die eben aufgefrischten Sitzungs-Cookies gehen mit.
+  const weiter = user ? angemeldetWeiter(request.nextUrl.pathname, request.nextUrl.searchParams) : null;
+  if (weiter) {
+    const umleitung = NextResponse.redirect(new URL(weiter, request.url));
+    for (const c of response.cookies.getAll()) umleitung.cookies.set(c);
+    return umleitung;
+  }
 
   if (!user && isProtected(request.nextUrl.pathname)) {
     return NextResponse.redirect(new URL(loginAdresse(request.nextUrl.pathname, request.nextUrl.search), request.url));
