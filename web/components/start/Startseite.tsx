@@ -174,9 +174,6 @@ export function Startseite({
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Registrieren angemeldet={angemeldet} />
-          <ButtonLink href="#preise" variant="outlined">
-            Preise ansehen
-          </ButtonLink>
         </div>
         <p className="type-body-medium text-on-surface-mittel">
           Heute gratis, ohne Einladung: registrieren, Verein gründen oder dich von deinem Team aufnehmen lassen.
