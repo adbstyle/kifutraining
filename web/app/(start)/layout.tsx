@@ -26,7 +26,7 @@ export default async function StartLayout({ children }: { children: React.ReactN
   // «/», angemeldet führte «/» in den Arbeitsbereich (#671).
   const start = user ? STARTSEITE_PFAD : "/";
   return (
-    <div className="flex min-h-dvh flex-col bg-elev-01">
+    <div className="start-palette flex min-h-dvh flex-col bg-elev-01">
       <DarstellungsMarke darstellung="hell" />
       {/* Die Figurteile der Feld-Diagramme auf den Übungskarten, einmal pro Seite. */}
       <FigurenSprite />

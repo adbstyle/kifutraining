@@ -43,17 +43,29 @@ import { loginAdresse } from "@/lib/weiterleitung";
    «KiFu». Zahlen mit einer Quelle im Code (Manual-Übungen, Preis, Grenzen)
    kommen aus dieser Quelle. Der SFV steht nur im SFV_HINWEIS (Epic #668
    EK 12), darum fehlt er in den Sätzen des Entwurfs, die ihn nennen. Namen
-   in den Bildern sind erfunden (AK 14). */
+   in den Bildern sind erfunden (AK 14; «FC Seewil» statt «FC Seefeld»).
 
-/* Die Pastellflächen des Entwurfs. Die Anwendung hat dafür keine Rolle: Die
-   Töne von Lozenge und Section Message tragen eine Bedeutung (erledigt,
-   Hinweis, Fehler), und eine Kategorie ohne Wertung ist dort immer eine
-   Alterskategorie. Die Seite ist immer hell, also genügt der helle Wert. */
+   Bewusst anders als der Entwurf (dem PO gemeldet):
+   - «Spieler:innen und Eltern» statt «Die Eltern» im Titel von «Team und
+     Kalender» (#659: nie nur für Eltern).
+   - Neben «Übungen ansehen» die Zahl der Manual-Übungen und der SFV-Hinweis
+     (AK 4, 5); unter «Aus der Schweiz» der Verweis auf die Ausnahmen zum
+     Datenort in der Datenschutzerklärung (AK 9).
+   - «Material · bald» ist kein Link: Es gibt noch kein Ziel.
+   - Form aus dem Kit: Radien (`rounded-dialog`, Knöpfe `rounded-flaeche`)
+     und die Typo-Rollen statt der Pillen, Rundungen und Pixelgrössen des
+     Entwurfs. Die Farben des Entwurfs stehen in der Startseiten-Palette. */
+
+/** Wo man den KI-Assistenten verbindet (nur mit Konto). */
+const VERBINDUNGEN_PFAD = "/konto/verbindungen";
+
+/* Die Pastellflächen des Entwurfs: die Startseiten-Palette in globals.css
+   (`.start-palette`, gesetzt vom Layout der Gruppe; Begründung dort). */
 const PASTELL = {
-  verein: "bg-[#ffe9dc]",
-  team: "bg-[#efeaff]",
-  training: "bg-[#dcfff1]",
-  ki: "bg-[#ffecf8]",
+  verein: "bg-(--start-verein)",
+  team: "bg-(--start-team)",
+  training: "bg-(--start-training)",
+  ki: "bg-(--start-ki)",
 } as const;
 
 /** Die Kacheln unter dem Einstieg: je ein Bereich, ein Sprung zu seinem
@@ -61,12 +73,12 @@ const PASTELL = {
 const FUNKTIONEN: { label: string; ziel: string; icon: LucideIcon; ton: string }[] = [
   { label: "Verein", ziel: "#verein", icon: Shield, ton: `${PASTELL.verein} text-on-surface-mittel` },
   { label: "Team", ziel: "#team", icon: Users, ton: `${PASTELL.team} text-primary` },
-  { label: "Kalender", ziel: "#team", icon: CalendarCheck, ton: "bg-[#e9f2ff] text-[#0055cc]" },
-  { label: "Schnuppern", ziel: "#team", icon: UserPlus, ton: "bg-[#e3f7f4] text-[#0f766e]" },
-  { label: "Mitteilungen", ziel: "#team", icon: Bell, ton: "bg-[#fdecc8] text-[#b45309]" },
-  { label: "Training", ziel: "#training", icon: ClipboardList, ton: `${PASTELL.training} text-[#216e4e]` },
-  { label: "Übungen", ziel: "#training", icon: BookOpen, ton: "bg-[#fff7d6] text-[#a54800]" },
-  { label: "KI-Assistent", ziel: "#ki", icon: Bot, ton: `${PASTELL.ki} text-[#943d73]` },
+  { label: "Kalender", ziel: "#team", icon: CalendarCheck, ton: "bg-(--start-kalender) text-(--start-on-kalender)" },
+  { label: "Schnuppern", ziel: "#team", icon: UserPlus, ton: "bg-(--start-schnuppern) text-(--start-on-schnuppern)" },
+  { label: "Mitteilungen", ziel: "#team", icon: Bell, ton: "bg-(--start-mitteilungen) text-(--start-on-mitteilungen)" },
+  { label: "Training", ziel: "#training", icon: ClipboardList, ton: `${PASTELL.training} text-(--start-on-training)` },
+  { label: "Übungen", ziel: "#training", icon: BookOpen, ton: "bg-(--start-uebungen) text-(--start-on-uebungen)" },
+  { label: "KI-Assistent", ziel: "#ki", icon: Bot, ton: `${PASTELL.ki} text-(--start-on-ki)` },
 ];
 
 /** Die vier Werkzeuge, die KiFu in einem vereint. */
@@ -214,25 +226,33 @@ export function Startseite({
           gibt es sonst nirgends – und niemand wechselt zwischen vier Apps oder pflegt dieselbe Spielerliste zweimal.
         </p>
         <ul className="m-0 mt-4 flex w-full list-none flex-wrap items-stretch justify-center gap-4 p-0">
-          {KOMBINATION.map((k, i) => (
-            <li key={k.titel} className="contents">
-              {i > 0 && (
-                <span aria-hidden className="type-headline-large w-full self-center text-center text-primary sm:w-auto">
-                  +
-                </span>
+          {/* Jedes Werkzeug ist ein Eintrag; das «+» dazwischen ist ein eigener,
+              verborgener Eintrag — so bleibt die Liste vier Einträge lang (kein
+              `display: contents` am li, das in WebKit die Rolle nimmt). */}
+          {KOMBINATION.flatMap((k, i) => [
+            ...(i > 0
+              ? [
+                  <li
+                    key={`plus-${k.titel}`}
+                    aria-hidden
+                    className="type-headline-large w-full self-center text-center text-primary sm:w-auto"
+                  >
+                    +
+                  </li>,
+                ]
+              : []),
+            <li
+              key={k.titel}
+              className={cn(
+                "flex min-w-0 max-w-[248px] flex-[1_1_200px] flex-col gap-2 rounded-dialog p-6 text-left",
+                k.flaeche,
               )}
-              <div
-                className={cn(
-                  "flex min-w-0 max-w-[248px] flex-[1_1_200px] flex-col gap-2 rounded-dialog p-6 text-left",
-                  k.flaeche,
-                )}
-              >
-                <h3 className="type-title-medium text-on-surface">{k.titel}</h3>
-                <p className="type-body-medium text-on-surface-mittel">{k.text}</p>
-                <p className="type-body-small mt-auto text-on-surface-mittel">{k.sonst}</p>
-              </div>
-            </li>
-          ))}
+            >
+              <h3 className="type-title-medium text-on-surface">{k.titel}</h3>
+              <p className="type-body-medium text-on-surface-mittel">{k.text}</p>
+              <p className="type-body-small mt-auto text-on-surface-mittel">{k.sonst}</p>
+            </li>,
+          ])}
         </ul>
       </section>
 
@@ -249,7 +269,7 @@ export function Startseite({
               Community und trägt alles direkt in deinen Trainingsplan ein. Du prüfst, passt an und gehst auf den Platz.
             </p>
             <p className="type-title-small">
-              <ButtonLink href="/konto/verbindungen" variant="link">
+              <ButtonLink href={ohneKonto(angemeldet, VERBINDUNGEN_PFAD)} variant="link">
                 So verbindest du ihn
               </ButtonLink>
             </p>
@@ -294,6 +314,8 @@ export function Startseite({
       {/* Team und Kalender. */}
       <section id="team" aria-labelledby="team-titel" className="scroll-mt-4">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-12 px-4 py-16 sm:px-6 sm:py-24">
+          {/* Entwurf: «Die Eltern wissen, was läuft.» Angaben am privaten Link
+              richten sich nie nur an Eltern (#659 AK 1–3, Wächter in check:kern). */}
           <Kopf eyebrow="Team und Kalender" id="team-titel" titel="Du weisst, wer kommt. Spieler:innen und Eltern wissen, was läuft.">
             Ein Termin, zwei Seiten: Du planst und siehst den Stand, Spieler:innen und Eltern melden sich ab und erfahren
             jede Änderung – ohne Konto, ohne Gruppenchat.
@@ -349,7 +371,7 @@ export function Startseite({
             </ul>
           )}
           <div className="flex flex-wrap items-center gap-4">
-            <ButtonLink href={UEBUNGEN_PFAD} variant="filled">
+            <ButtonLink href={ohneKonto(angemeldet, UEBUNGEN_PFAD)} variant="filled">
               Übungen ansehen
             </ButtonLink>
             <span className="type-body-medium text-on-surface-mittel">
@@ -360,7 +382,7 @@ export function Startseite({
       </section>
 
       {/* Grundlegend anders (AK 9: Open Source, selbst betreibbar, Datenort). */}
-      <section aria-labelledby="anders-titel" className="umkehr">
+      <section aria-labelledby="anders-titel" className="umkehr [--color-umkehr:var(--start-dunkel)]">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-10 px-4 py-16 sm:px-6 sm:py-[88px]">
           <div className="flex max-w-[720px] flex-col gap-3">
             <h2 id="anders-titel" className="type-headline-large sm:type-display-small">
@@ -390,7 +412,8 @@ export function Startseite({
             <Grundsatz titel="Im Dialog mit euch">
               Das Entwicklungsteam arbeitet offen mit der Community: Melde Fehler, wünsch dir Funktionen oder bring selbst
               einen Pull Request ein. Was Trainer:innen brauchen, bestimmt, was als Nächstes kommt.
-              <span className="type-title-small mt-2 block">
+              {/* Weiss wie im Entwurf: Primary ist hier die Schrift der Fläche. */}
+              <span className="type-title-small mt-2 block [--color-primary:var(--color-on-umkehr)]">
                 <ExternerLink href={REPO_URL}>Auf GitHub mitreden</ExternerLink>
               </span>
             </Grundsatz>
@@ -454,6 +477,13 @@ export function Startseite({
       </section>
     </>
   );
+}
+
+/** Ein Ziel, das es nur mit Konto gibt: angemeldet direkt, sonst über die
+ *  Anmeldung, die danach dorthin führt — kein Link, der ohne Konto bloss
+ *  zurück auf die Startseite fiele (wie die Beispielkarten, `ohneLink`). */
+function ohneKonto(angemeldet: boolean, pfad: string): string {
+  return angemeldet ? pfad : loginAdresse(pfad, "");
 }
 
 /** Der Weg hinein: «Kostenlos registrieren» (oder ein anderer Text, etwa
@@ -581,8 +611,8 @@ function Preis({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 rounded-dialog bg-elev-01 p-7",
-        hervorgehoben ? "border-2 border-primary" : "border border-linie",
+        "flex flex-col gap-4 rounded-dialog p-7",
+        hervorgehoben ? "border-2 border-primary bg-(--start-hervorgehoben)" : "border border-linie bg-elev-01",
       )}
     >
       <div className="flex flex-col gap-1">

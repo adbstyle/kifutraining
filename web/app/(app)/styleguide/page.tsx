@@ -3966,7 +3966,46 @@ export default async function Styleguide() {
               <strong>Platzhalter</strong> (<code>Platzhalter</code>) - eine noch fehlende Angabe im Fliesstext,
               in eckigen Klammern auf der Warning-Fläche. Nur für Entwürfe: Auf Produktion steht keiner mehr.
             </li>
+            <li>
+              <strong>Startseiten-Palette</strong> (<code>.start-palette</code> in <code>globals.css</code>, am
+              Layout der Gruppe) - die Pastellflächen und Kacheltöne des Gestaltungsentwurfs. Neu, weil die
+              Anwendung keine Fläche ohne Bedeutung hat: Lozenge und Section Message werten (erledigt, Hinweis,
+              Fehler), ihre Akzente sind die Alterskategorien. Wie das Diagramm nicht im <code>@theme</code>,
+              also keine Utility für die Anwendung; nur hell, weil die Startseite immer hell ist. Angewandt als{" "}
+              <code>bg-(--start-team)</code>; Kontraste in <code>check:farben</code>.
+            </li>
           </ul>
+          <div className="start-palette mb-5 flex max-w-2xl flex-wrap gap-3 [color-scheme:light]">
+            {(
+              [
+                ["verein", "on-surface-mittel"],
+                ["team", "primary"],
+                ["kalender", "--start-on-kalender"],
+                ["schnuppern", "--start-on-schnuppern"],
+                ["mitteilungen", "--start-on-mitteilungen"],
+                ["training", "--start-on-training"],
+                ["uebungen", "--start-on-uebungen"],
+                ["ki", "--start-on-ki"],
+              ] as const
+            ).map(([flaeche, zeichen]) => (
+              <span
+                key={flaeche}
+                className="type-label-medium flex size-20 items-end rounded-dialog p-2"
+                style={{
+                  backgroundColor: `var(--start-${flaeche})`,
+                  color: zeichen.startsWith("--") ? `var(${zeichen})` : `var(--color-${zeichen})`,
+                }}
+              >
+                {flaeche}
+              </span>
+            ))}
+            <span className="type-label-medium flex size-20 items-end rounded-dialog bg-(--start-dunkel) p-2 text-on-umkehr">
+              dunkel
+            </span>
+            <span className="type-label-medium flex size-20 items-end rounded-dialog border-2 border-primary bg-(--start-hervorgehoben) p-2 text-on-surface">
+              hervorgehoben
+            </span>
+          </div>
           <div className="flex max-w-2xl flex-col gap-6 rounded-flaeche bg-elev-00 p-5">
             <RechtlicheLinks davor={<RechtsLink href="/cookies">Cookies</RechtsLink>} />
             <RechtsAbschnitt titel="Wer KiFu betreibt">
