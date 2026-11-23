@@ -5,13 +5,16 @@ import { useRouter } from "next/navigation";
 import { Button, Checkbox, Dialog, SectionMessage, TextField } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { gruendeVereinAktion } from "@/lib/actions/verein";
+import { VEREINBARUNG_FASSUNG, VEREINBARUNG_PFAD } from "@/lib/rechtliches";
 import { VEREIN_GRUENDEN_TEXT, vereinsNameProblem, zielWeg } from "@/lib/verein";
 
 /* «Verein gründen» auf dem Einstieg für Konten ohne Verein (Epic Vereine #575,
    Story #587 AK 1–4): ein Knopf mit Dialog. Der Dialog verlangt den Namen und
-   zwei Bestätigungen — die Person darf für den Verein handeln, und der Verein
-   verantwortet die Daten seiner Spieler:innen —, bevor der Knopf frei wird.
-   Die Datenebene prüft beides beim Ausführen selbst.
+   zwei Bestätigungen — die Person darf für den Verein handeln, und sie stimmt
+   für den Verein der Vereinbarung zur Auftragsbearbeitung zu (#675 AK 1, 2;
+   der Link öffnet sie in einem neuen Tab, der Dialog bleibt) —, bevor der
+   Knopf frei wird. Die Datenebene prüft beides beim Ausführen selbst und hält
+   die Zustimmung mit der Fassung fest (PC 1).
 
    Eine laufende Anfrage sperrt Eingaben und Knöpfe; nach einem Fehler geht ein
    zweiter Versuch. Gelingt das Gründen, leitet die Action selbst in den
@@ -25,15 +28,15 @@ export function VereinGruenden() {
   const [offen, setOffen] = useState(false);
   const [name, setName] = useState("");
   const [berechtigt, setBerechtigt] = useState(false);
-  const [verantwortlich, setVerantwortlich] = useState(false);
+  const [zugestimmt, setZugestimmt] = useState(false);
   const [fehler, setFehler] = useState<{ amFeld: boolean; text: string } | null>(null);
   const formId = useId();
-  const frei = berechtigt && verantwortlich;
+  const frei = berechtigt && zugestimmt;
 
   function oeffnen() {
     setName("");
     setBerechtigt(false);
-    setVerantwortlich(false);
+    setZugestimmt(false);
     setFehler(null);
     setOffen(true);
   }
@@ -49,7 +52,7 @@ export function VereinGruenden() {
     setFehler(null);
     startTransition(async () => {
       // Gelingt es, leitet die Action selbst in den Bereich «Verein» um.
-      const r = await gruendeVereinAktion(name, true);
+      const r = await gruendeVereinAktion(name, true, VEREINBARUNG_FASSUNG);
       setFehler({ amFeld: r.art === "eingabe" && r.feld === "name", text: r.error });
       if (zielWeg(r.feld)) {
         melde(r.error);
@@ -109,8 +112,19 @@ export function VereinGruenden() {
             />
             <Checkbox
               label={VEREIN_GRUENDEN_TEXT.haken2}
-              checked={verantwortlich}
-              onChange={(e) => setVerantwortlich(e.target.checked)}
+              hinweis={
+                <a
+                  href={VEREINBARUNG_PFAD}
+                  target="_blank"
+                  rel="noopener"
+                  className="focus-ring rounded-klein text-primary underline decoration-1 underline-offset-[3px] hover:decoration-2"
+                >
+                  {VEREIN_GRUENDEN_TEXT.lesen}
+                  <span className="sr-only"> (öffnet in einem neuen Tab)</span>
+                </a>
+              }
+              checked={zugestimmt}
+              onChange={(e) => setZugestimmt(e.target.checked)}
               disabled={pending}
             />
           </div>

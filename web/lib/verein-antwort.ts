@@ -40,6 +40,21 @@ export function gruendungAus(antwort: unknown): Gruendung | null {
   return { id: antwort.id, name: antwort.name };
 }
 
+// ── Vereinbarung zur Auftragsbearbeitung (#675) ─────────────────────────────
+
+/** Die Vereinbarung des Vereins für seine Verwaltung: die geltende Fassung
+ *  und die festgehaltene Zustimmung (`null` bei Vereinen von vor #675). */
+export type VereinVereinbarung = { geltend: string; zustimmung: { fassung: string; am: string } | null };
+
+/** `verein_vereinbarung` → `{geltend, zustimmung: {fassung, am} | null}`; sonst `null`. */
+export function vereinbarungAus(antwort: unknown): VereinVereinbarung | null {
+  if (!istObjekt(antwort) || !istText(antwort.geltend)) return null;
+  const z = antwort.zustimmung;
+  if (z === null) return { geltend: antwort.geltend, zustimmung: null };
+  if (!istObjekt(z) || !istText(z.fassung) || !istText(z.am) || Number.isNaN(Date.parse(z.am))) return null;
+  return { geltend: antwort.geltend, zustimmung: { fassung: z.fassung, am: z.am } };
+}
+
 // ── Verein löschen ──────────────────────────────────────────────────────────
 
 /** Der Ausgang von `verein_loeschen`: gelöscht (mit dem Namen und den Bildern,

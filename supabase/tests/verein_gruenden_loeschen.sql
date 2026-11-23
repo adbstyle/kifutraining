@@ -344,7 +344,7 @@ do $$
 declare
   f text;
 begin
-  foreach f in array array['verein_gruenden(text,boolean)', 'verein_loeschen(uuid,text)', 'delete_account(text)',
+  foreach f in array array['verein_gruenden(text,boolean,text)', 'verein_loeschen(uuid,text)', 'delete_account(text)',
                            'konto_loeschen_info()'] loop
     perform pg_temp.pruefe(to_regprocedure(f) is not null, f || ' fehlt');
     perform pg_temp.pruefe(not has_function_privilege('anon', f, 'execute')
@@ -368,7 +368,7 @@ select pg_temp.als(pg_temp.id('verw'));
 select pg_temp.erwarte(format('select verein_loeschen_kern(%L)', pg_temp.id('v')), '42501');
 reset role;
 set local role anon;
-select pg_temp.erwarte($$select verein_gruenden('Anon', true)$$, '42501');
+select pg_temp.erwarte($$select verein_gruenden('Anon', true, '2026-11-entwurf')$$, '42501');
 select pg_temp.erwarte(format('select verein_loeschen(%L, %L)', pg_temp.id('v'), 'Löschen-Verein'), '42501');
 select pg_temp.erwarte('select konto_loeschen_info()', '42501');
 select pg_temp.erwarte('select delete_account()', '42501');
@@ -376,7 +376,7 @@ reset role;
 -- Ohne Anmeldung (Rolle authenticated ohne sub).
 select set_config('request.jwt.claims', '{"role": "authenticated"}', true) is not null as ohne_sub \gset
 set local role authenticated;
-select pg_temp.erwarte($$select verein_gruenden('Niemand', true)$$, 'not authenticated');
+select pg_temp.erwarte($$select verein_gruenden('Niemand', true, '2026-11-entwurf')$$, 'not authenticated');
 select pg_temp.erwarte('select konto_loeschen_info()', 'not authenticated');
 select pg_temp.erwarte('select delete_account()', 'not authenticated');
 reset role;
@@ -506,22 +506,22 @@ reset role;
 
 select count(*) as vereine_vorher from vereine \gset
 select pg_temp.als(pg_temp.id('ohne'));
-select pg_temp.erwarte($$select verein_gruenden('FC Neu', false)$$, 'BESTAETIGUNG_FEHLT');
-select pg_temp.erwarte($$select verein_gruenden('FC Neu', null)$$, 'BESTAETIGUNG_FEHLT');
+select pg_temp.erwarte($$select verein_gruenden('FC Neu', false, '2026-11-entwurf')$$, 'BESTAETIGUNG_FEHLT');
+select pg_temp.erwarte($$select verein_gruenden('FC Neu', null, '2026-11-entwurf')$$, 'BESTAETIGUNG_FEHLT');
 -- Namen (AK 2): leer, nur Leerzeichen, null, 61 Zeichen → CHECK verein_name.
-select pg_temp.erwarte($$select verein_gruenden('', true)$$, '23514');
-select pg_temp.erwarte($$select verein_gruenden('   ', true)$$, '23514');
-select pg_temp.erwarte($$select verein_gruenden(null, true)$$, '23514');
-select pg_temp.erwarte($$select verein_gruenden(U&'\00A0\3000\FEFF', true)$$, '23514');
-select pg_temp.erwarte($$select verein_gruenden(U&'\00A0\3000\FEFF', true)$$, 'verein_name');
-select pg_temp.erwarte(format('select verein_gruenden(%L, true)', repeat('x', 61)), '23514');
-select pg_temp.erwarte(format('select verein_gruenden(%L, true)', repeat('x', 61)), 'verein_name');
+select pg_temp.erwarte($$select verein_gruenden('', true, '2026-11-entwurf')$$, '23514');
+select pg_temp.erwarte($$select verein_gruenden('   ', true, '2026-11-entwurf')$$, '23514');
+select pg_temp.erwarte($$select verein_gruenden(null, true, '2026-11-entwurf')$$, '23514');
+select pg_temp.erwarte($$select verein_gruenden(U&'\00A0\3000\FEFF', true, '2026-11-entwurf')$$, '23514');
+select pg_temp.erwarte($$select verein_gruenden(U&'\00A0\3000\FEFF', true, '2026-11-entwurf')$$, 'verein_name');
+select pg_temp.erwarte(format('select verein_gruenden(%L, true, ''2026-11-entwurf'')', repeat('x', 61)), '23514');
+select pg_temp.erwarte(format('select verein_gruenden(%L, true, ''2026-11-entwurf'')', repeat('x', 61)), 'verein_name');
 reset role;
 select pg_temp.pruefe((select count(*) from vereine) = :vereine_vorher, 'abgewiesenes Gründen hinterlässt einen Verein');
 
 -- Testfall 30: KI-Token gründet nicht; dieselben Claims ohne client_id schon.
 select pg_temp.als(pg_temp.id('ohne'), '{"client_id": "ki-client"}');
-select pg_temp.erwarte($$select verein_gruenden('FC KI', true)$$, 'NUR_IN_DER_ANWENDUNG');
+select pg_temp.erwarte($$select verein_gruenden('FC KI', true, '2026-11-entwurf')$$, 'NUR_IN_DER_ANWENDUNG');
 reset role;
 select pg_temp.pruefe((select count(*) from vereine) = :vereine_vorher, 'KI-Token hat gegründet');
 
@@ -532,7 +532,7 @@ declare
 begin
   foreach wer in array array['a', 'verw', 'verw2', 'einzig', 'lm'] loop
     perform pg_temp.als(pg_temp.id(wer));
-    perform pg_temp.erwarte($q$select verein_gruenden('FC Zweit', true)$q$, 'SCHON_IM_VEREIN');
+    perform pg_temp.erwarte($q$select verein_gruenden('FC Zweit', true, '2026-11-entwurf')$q$, 'SCHON_IM_VEREIN');
     perform set_config('role', 'postgres', true);
   end loop;
 end $$;
@@ -540,7 +540,7 @@ reset role;
 select pg_temp.pruefe((select count(*) from vereine) = :vereine_vorher, 'Mitglied hat gegründet');
 
 select pg_temp.als(pg_temp.id('ohne'));
-select verein_gruenden('  FC Neu  ', true) as gegruendet \gset
+select verein_gruenden('  FC Neu  ', true, '2026-11-entwurf') as gegruendet \gset
 reset role;
 select pg_temp.pruefe(pg_temp.schluessel(:'gegruendet'::jsonb) = array['id', 'name', 'status']
                       and :'gegruendet'::jsonb ->> 'status' = 'gegruendet' and :'gegruendet'::jsonb ->> 'name' = 'FC Neu',
@@ -558,7 +558,7 @@ select pg_temp.pruefe(meine_vereinslage() -> 'verein' @> '{"name": "FC Neu", "is
 select pg_temp.pruefe(konto_loeschen_info() = '{"fall": "einzige_person", "verein": "FC Neu", "teams": 0, "spieler": 0}',
                       'konto_loeschen_info nach dem Gründen');
 -- Zweimal gründen (AK 7).
-select pg_temp.erwarte($$select verein_gruenden('FC Neu Zwei', true)$$, 'SCHON_IM_VEREIN');
+select pg_temp.erwarte($$select verein_gruenden('FC Neu Zwei', true, '2026-11-entwurf')$$, 'SCHON_IM_VEREIN');
 -- Austreten geht auch als einzige Person nicht (AK 13).
 select pg_temp.pruefe(verein_verwaltung_entfernen(:'neu_id', pg_temp.id('ohne')) = '{"status": "letzte_verwaltung"}',
                       'einzige Person tritt aus');
@@ -566,10 +566,10 @@ reset role;
 
 -- 60 Zeichen und ein Name, den es schon gibt (Precondition 4), gehen.
 select pg_temp.als(pg_temp.id('ohne2'));
-select pg_temp.pruefe(verein_gruenden(repeat('y', 60), true) ->> 'name' = repeat('y', 60), '60 Zeichen');
+select pg_temp.pruefe(verein_gruenden(repeat('y', 60), true, '2026-11-entwurf') ->> 'name' = repeat('y', 60), '60 Zeichen');
 reset role;
 select pg_temp.als(pg_temp.id('ohne3'));
-select pg_temp.pruefe(verein_gruenden('Löschen-Verein', true) ->> 'status' = 'gegruendet', 'gleicher Name wie V');
+select pg_temp.pruefe(verein_gruenden('Löschen-Verein', true, '2026-11-entwurf') ->> 'status' = 'gegruendet', 'gleicher Name wie V');
 reset role;
 select pg_temp.pruefe((select count(*) from vereine where name = 'Löschen-Verein') = 2, 'zwei Vereine gleichen Namens');
 
@@ -746,7 +746,7 @@ reset role;
 
 -- PC 4: Die Personen können neu gründen oder aufgenommen werden.
 select pg_temp.als(pg_temp.id('verw'));
-select pg_temp.pruefe(verein_gruenden('Neuanfang', true) ->> 'status' = 'gegruendet', 'Verwaltung gründet nach dem Löschen');
+select pg_temp.pruefe(verein_gruenden('Neuanfang', true, '2026-11-entwurf') ->> 'status' = 'gegruendet', 'Verwaltung gründet nach dem Löschen');
 reset role;
 select pg_temp.als(pg_temp.id('wverw'));
 select pg_temp.pruefe(verein_team_aufnehmen(pg_temp.id('tw'), 'a@gruenden-loeschen.test') ->> 'status' = 'aufgenommen',
@@ -893,7 +893,7 @@ select pg_temp.pruefe(not exists (select 1 from teams where id = pg_temp.id('rt'
                       and (select name from vereine where id = pg_temp.id('rv3')) = 'Rand-Neu', 'Team mit Rand bzw. Umbenennen');
 
 select pg_temp.als(pg_temp.id('rand4'));
-select verein_gruenden(U&'\00A0FC Rand\FEFF\0009', true) as rand_gegruendet \gset
+select verein_gruenden(U&'\00A0FC Rand\FEFF\0009', true, '2026-11-entwurf') as rand_gegruendet \gset
 reset role;
 select pg_temp.pruefe(:'rand_gegruendet'::jsonb ->> 'name' = 'FC Rand'
                       and (select name from vereine where id = (:'rand_gegruendet'::jsonb ->> 'id')::uuid) = 'FC Rand',

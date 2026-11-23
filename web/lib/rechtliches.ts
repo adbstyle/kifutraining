@@ -39,6 +39,17 @@ export const POSTADRESSE_PLATZHALTER = ["[Postadresse folgt mit der Gründung]"]
 export const KONTAKT_EMAIL: string | null = null;
 export const KONTAKT_PLATZHALTER = "[E-Mail-Adresse folgt]";
 
+/** Die Vereinbarung zur Auftragsbearbeitung (#675, ENTWURF wie Impressum und
+ *  Datenschutz): Seite für alle, Zustimmung beim Gründen eines Vereins. */
+export const VEREINBARUNG_PFAD = "/vereinbarung";
+export const VEREINBARUNG_TITEL = "Vereinbarung zur Auftragsbearbeitung";
+
+/** Die geltende Fassung der Vereinbarung. Zwilling: `vereinbarung_fassung()`
+ *  (Migration vereinbarung_auftragsbearbeitung); `check:kern-db` vergleicht
+ *  beide. Eine neue Fassung ändert beide Stellen in einem Zug — die
+ *  Verwaltung sieht dann im Bereich «Verein» den Hinweis (AK 4). */
+export const VEREINBARUNG_FASSUNG = "2026-11-entwurf";
+
 /* Die Fristen der Datenschutzerklärung (AK 3) stehen nicht hier, sondern
    kommen aus ihren Quellen: AUFBEWAHRUNG_MONATE (lib/feedback/regeln.ts) und
    BENACHRICHTIGUNG_TAGE (lib/benachrichtigung.ts), je mit SQL-Zwilling. */

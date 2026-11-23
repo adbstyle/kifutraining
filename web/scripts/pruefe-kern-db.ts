@@ -111,10 +111,12 @@ const {
   pruefeVereinImport,
   importiereInVerein,
   gruendeVerein,
+  ladeVereinbarung,
   loescheVerein,
   ladeKontoLoeschenInfo,
   loescheKonto,
 } = await import("../lib/kern/verein");
+const { VEREINBARUNG_FASSUNG } = await import("../lib/rechtliches");
 const { SPIELER_MELDUNG, SPIELER_TEXT, ABMELDUNG_TEXT, HERAUSNEHMEN_TEXT, LINK_TEXT, LINK_STAND_TEXT, abweisungText, herausnehmenFrage, spielerDoppeltText, spielerzahlVon, verfallBestaetigen } = await import("../lib/spieler");
 const { SPIEL_MELDUNG, SPIEL_TEXT, MELDUNG_TEXT, TREFFPUNKT_TEXT, meldefristZeitpunkt, spielBestaetigen, spielEntfernenText, spielVerfallText } =
   await import("../lib/spiel");
@@ -7815,7 +7817,7 @@ try {
   const { ladeLinkAnsicht: linkAnsicht587 } = await import("../lib/privater-link");
   const { ladeAbholAnsicht } = await import("../lib/abholung");
   const gruende = async (k: Konto, name: string) => {
-    const g = wert(await gruendeVerein(k.supabase, k.id, { name, bestaetigt: true }));
+    const g = wert(await gruendeVerein(k.supabase, k.id, { name, bestaetigt: true, fassung: VEREINBARUNG_FASSUNG }));
     vereine.push(g.vereinId);
     return g;
   };
@@ -7897,12 +7899,15 @@ try {
     assert.equal(await lage587(k), null);
     assert.deepEqual(wert(await ladeKontoLoeschenInfo(k.supabase, k.id)), { fall: "frei" }, "frei: ohne Verein, Zahlen 0");
     // Name (das Web prüft vorab) und Bestätigung (die Datenebene verlangt sie selbst).
-    fehler(await gruendeVerein(k.supabase, k.id, { name: "  \t", bestaetigt: true }), "eingabe", "Bitte einen Vereinsnamen angeben.");
-    fehler(await gruendeVerein(k.supabase, k.id, { name: "x".repeat(61), bestaetigt: true }), "eingabe", "Der Vereinsname darf höchstens 60 Zeichen lang sein.");
-    fehler(await gruendeVerein(k.supabase, k.id, { name: "Kern-DB-587", bestaetigt: false }), "regel", VEREIN_MELDUNG.BESTAETIGUNG_FEHLT);
+    fehler(await gruendeVerein(k.supabase, k.id, { name: "  \t", bestaetigt: true, fassung: VEREINBARUNG_FASSUNG }), "eingabe", "Bitte einen Vereinsnamen angeben.");
+    fehler(await gruendeVerein(k.supabase, k.id, { name: "x".repeat(61), bestaetigt: true, fassung: VEREINBARUNG_FASSUNG }), "eingabe", "Der Vereinsname darf höchstens 60 Zeichen lang sein.");
+    fehler(await gruendeVerein(k.supabase, k.id, { name: "Kern-DB-587", bestaetigt: false, fassung: VEREINBARUNG_FASSUNG }), "regel", VEREIN_MELDUNG.BESTAETIGUNG_FEHLT);
+    // #675 AK 2: ohne Zustimmung zur Vereinbarung und mit einer anderen als der geltenden Fassung nicht.
+    fehler(await gruendeVerein(k.supabase, k.id, { name: "Kern-DB-587", bestaetigt: true, fassung: null }), "regel", VEREIN_MELDUNG.ZUSTIMMUNG_FEHLT);
+    fehler(await gruendeVerein(k.supabase, k.id, { name: "Kern-DB-587", bestaetigt: true, fassung: "2020-01-alt" }), "regel", VEREIN_MELDUNG.VEREINBARUNG_VERALTET);
     // Der CHECK verein_name, wie der Kern ihn erkennt (23514 mit dem Namen der Bedingung).
     for (const p_name of ["", "   ", "x".repeat(61)]) {
-      const { error } = await k.supabase.rpc("verein_gruenden", { p_name, p_bestaetigt: true });
+      const { error } = await k.supabase.rpc("verein_gruenden", { p_name, p_bestaetigt: true, p_fassung: VEREINBARUNG_FASSUNG });
       assert.deepEqual([error?.code, error?.message.includes("verein_name")], ["23514", true], p_name);
     }
     assert.equal(await lage587(k), null, "nichts gegründet");
@@ -7915,11 +7920,11 @@ try {
       ["Kern-DB-587 Gründung", [true], [], 1, 0, 0]);
     assert.deepEqual(wert(await ladeKontoLoeschenInfo(k.supabase, k.id)), { fall: "einzige_person", verein: "Kern-DB-587 Gründung", teams: 0, spieler: 0 });
     // AK 2: zweimal nicht; Mitglied eines Teams und Verwaltung eines anderen Vereins auch nicht.
-    fehler(await gruendeVerein(k.supabase, k.id, { name: "Kern-DB-587 Zwei", bestaetigt: true }), "regel", VEREIN_MELDUNG.SCHON_IM_VEREIN);
+    fehler(await gruendeVerein(k.supabase, k.id, { name: "Kern-DB-587 Zwei", bestaetigt: true, fassung: VEREINBARUNG_FASSUNG }), "regel", VEREIN_MELDUNG.SCHON_IM_VEREIN);
     const m = await wegwerfKonto();
     await team587(verein, "Kern-DB-587-Mitglied", [m]);
     for (const x of [m, verwaltung]) {
-      const r = await gruendeVerein(x.supabase, x.id, { name: "Kern-DB-587 Drei", bestaetigt: true });
+      const r = await gruendeVerein(x.supabase, x.id, { name: "Kern-DB-587 Drei", bestaetigt: true, fassung: VEREINBARUNG_FASSUNG });
       fehler(r, "regel", VEREIN_MELDUNG.SCHON_IM_VEREIN);
       assert.equal((r as { feld?: string }).feld, "verein_id", "die offene Seite ist überholt");
     }
@@ -7930,6 +7935,23 @@ try {
     // AK 8: Die Verwaltung eines anderen Vereins nimmt die Gründerin nicht auf, nennt den Verein nicht.
     assert.deepEqual(wert(await findePerson(verwaltung.supabase, verwaltung.id, { vereinId: verein, email: await emailVon(k) })),
       { ok: false, meldung: PERSON_MELDUNG.anderer_verein });
+  });
+
+  await pruefe("Vereinbarung zur Auftragsbearbeitung: Gründen hält die Zustimmung fest, die Verwaltung liest geltende Fassung und Zustimmung, sonst niemand; Fassung wie in der Datenebene (#675 AK 2–4, PC 1)", async () => {
+    const k = await wegwerfKonto();
+    const g = await gruende(k, "Kern-DB-675 Vereinbarung");
+    const v = wert(await ladeVereinbarung(k.supabase, k.id, { vereinId: g.vereinId }));
+    // Zwilling: die geltende Fassung der Datenebene ist VEREINBARUNG_FASSUNG.
+    assert.equal(v.geltend, VEREINBARUNG_FASSUNG);
+    assert.equal(v.zustimmung?.fassung, VEREINBARUNG_FASSUNG);
+    assert.ok(Math.abs(Date.parse(v.zustimmung?.am ?? "") - Date.now()) < 5 * 60_000, "Zeitpunkt der Zustimmung");
+    const { data: zeile } = await admin.from("verein_zustimmungen").select("user_id, fassung").eq("verein_id", g.vereinId).single();
+    assert.deepEqual(zeile, { user_id: k.id, fassung: VEREINBARUNG_FASSUNG }, "wer welcher Fassung zugestimmt hat");
+    // Ein Mitglied ohne Verwaltung und ein fremdes Konto lesen nichts; die Tabelle hat kein API-Recht.
+    const m = await wegwerfKonto();
+    await team587(g.vereinId, "Kern-DB-675 Team", [m]);
+    for (const x of [m, await wegwerfKonto()]) fehler(await ladeVereinbarung(x.supabase, x.id, { vereinId: g.vereinId }), "nicht_gefunden");
+    assert.notEqual((await k.supabase.from("verein_zustimmungen").select("verein_id")).error, null, "kein direkter Zugriff");
   });
 
   await pruefe("Verein löschen: nur die eigene Verwaltung mit dem aktuellen Namen; danach ist nichts des Vereins mehr da, Link/Abo/Abholadresse wie ungültig, Personen ohne Verein, eigene Trainings bleiben, ein anderer Verein unberührt (#587 AK 10, 11, 14, 15; PC 2–5)", async () => {

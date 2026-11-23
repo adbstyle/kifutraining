@@ -417,6 +417,8 @@ import {
   VEREIN_GRUENDEN_TEXT,
   VEREIN_LOESCHEN_TEXT,
   VEREIN_UNSTIMMIG,
+  VEREIN_VEREINBARUNG_TEXT,
+  vereinbarungLage,
   kontoEinzigePersonInzwischenText,
   kontoEinzigePersonSaetze,
   kontoLetzteVerwaltungSaetze,
@@ -486,7 +488,7 @@ import {
   liesSpielerEingrenzung,
   teamFilterWerte,
 } from "../lib/verein-spielerliste";
-import { gruendungAus, kontoInfoAus, kontoLoeschAusgangAus, vereinLoeschAusgangAus } from "../lib/verein-antwort";
+import { gruendungAus, kontoInfoAus, kontoLoeschAusgangAus, vereinLoeschAusgangAus, vereinbarungAus } from "../lib/verein-antwort";
 import {
   BEREICH_COOKIE,
   arbeitsbereichPfad,
@@ -524,7 +526,7 @@ import {
   basisOrigin,
   robotsRegeln,
 } from "../lib/auffindbar";
-import { DATENSCHUTZ_PFAD, ENTWURF_HINWEIS, IMPRESSUM_PFAD, RECHTLICHE_LINKS } from "../lib/rechtliches";
+import { DATENSCHUTZ_PFAD, ENTWURF_HINWEIS, IMPRESSUM_PFAD, RECHTLICHE_LINKS, VEREINBARUNG_FASSUNG, VEREINBARUNG_PFAD, VEREINBARUNG_TITEL } from "../lib/rechtliches";
 import { TRAGWEITE_VEROEFFENTLICHEN, ZUM_VEROEFFENTLICHEN_FEHLT } from "../lib/training-bedingungen";
 import { FILTER_SCHLUESSEL, TEAM_BEREICHE, teamBereichAusPfad, teamBereichHref } from "../lib/team-bereiche";
 import {
@@ -4902,12 +4904,9 @@ pruefe("Treffpunkt eines Trainings: Regeln, Abstand, Änderung und Abo (#561)", 
 
 pruefe("Verein gründen (#587 AK 1–5): Sätze des Dialogs und des Einstiegs, Marker mit eigenem Satz", () => {
   assert.equal(VEREIN_MELDUNG.SCHON_IM_VEREIN, "Du gehörst schon einem Verein an. Einen Verein gründen kann nur, wer keinem angehört.");
-  assert.equal(
-    VEREIN_MELDUNG.BESTAETIGUNG_FEHLT,
-    "Bestätige zuerst, dass du für den Verein handeln darfst und der Verein für die Daten seiner Spieler:innen verantwortlich ist.",
-  );
+  assert.equal(VEREIN_MELDUNG.BESTAETIGUNG_FEHLT, "Bestätige zuerst, dass du für den Verein handeln darfst.");
   // Die Datenebene meldet mit Markern; der Kern liest sie als Regel, nicht als technischen Fehler.
-  for (const marker of ["SCHON_IM_VEREIN", "BESTAETIGUNG_FEHLT"] as const) {
+  for (const marker of ["SCHON_IM_VEREIN", "BESTAETIGUNG_FEHLT", "ZUSTIMMUNG_FEHLT", "VEREINBARUNG_VERALTET"] as const) {
     assert.equal(fehlerMeldung(`x ${marker} y`), VEREIN_MELDUNG[marker]);
     assert.equal(still(() => ausDbFehler({ message: `ERROR: ${marker}` })).art, "regel", marker);
   }
@@ -4916,7 +4915,8 @@ pruefe("Verein gründen (#587 AK 1–5): Sätze des Dialogs und des Einstiegs, M
     feld: "Name des Vereins",
     info: "Höchstens 60 Zeichen. Den Namen kannst du später ändern.",
     haken1: "Ich bin berechtigt, für diesen Verein zu handeln.",
-    haken2: "Der Verein ist für die Daten seiner Spieler:innen verantwortlich und Ansprechpartner für sie, ihre Eltern und Vertretungen.",
+    haken2: "Ich stimme für den Verein der Vereinbarung zur Auftragsbearbeitung zu.",
+    lesen: "Vereinbarung lesen",
     erste: "Du wirst die erste Person der Vereinsverwaltung. Solange du dabei bist, kannst du keinem anderen Verein angehören.",
     knopf: "Verein gründen",
   });
@@ -4961,7 +4961,7 @@ pruefe("Verein gründen (#587): ein Weg — RPC nur im Verein-Kern, Einstieg lie
   assert.ok(seite.lastIndexOf("TEAM_NUR_VERWALTUNG") > seite.indexOf("<OhneVereinStart"), "der Hinweis für Mitglieder steht erst nach dem Einstieg, nicht statt seiner");
   // Der Dialog: beide Häkchen, Knopf gesperrt ohne sie, fester Hinweis hinter ⓘ, Weiterleitung in der Action.
   const dialog = lies("components/verein/VereinGruenden.tsx");
-  assert.match(dialog, /const frei = berechtigt && verantwortlich;/);
+  assert.match(dialog, /const frei = berechtigt && zugestimmt;/);
   assert.match(dialog, /disabled=\{!frei \|\| pending\}/, "Knopf gesperrt ohne beide Häkchen und während der Anfrage");
   assert.match(dialog, /info=\{VEREIN_GRUENDEN_TEXT\.info\}/, "fester Hinweis hinter ⓘ");
   assert.ok(!/router\.(push|replace)\(/.test(dialog), "die Weiterleitung steht in der Action");
@@ -6859,6 +6859,56 @@ pruefe("Impressum und Datenschutz (#672, ENTWURF): Seiten mit Entwurfshinweis, e
     assert.ok((FREIGEGEBEN as readonly string[]).includes(p), `${p} in robots frei`);
     assert.ok((SITEMAP_PFADE as readonly string[]).includes(p), `${p} in der Sitemap`);
   }
+});
+
+pruefe("Vereinbarung zur Auftragsbearbeitung (#675, ENTWURF): Seite mit Entwurfshinweis, Zustimmung beim Gründen mit der geltenden Fassung, Hinweis für die Verwaltung", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  assert.equal(VEREINBARUNG_PFAD, "/vereinbarung");
+  assert.equal(VEREINBARUNG_TITEL, "Vereinbarung zur Auftragsbearbeitung");
+  // Zwilling der Fassung: vereinbarung_fassung() in der Migration (check:kern-db vergleicht mit der laufenden DB).
+  const migration = readFileSync(join(web, "../supabase/migrations/20261123110000_vereinbarung_auftragsbearbeitung.sql"), "utf8");
+  assert.ok(migration.includes(`as $$ select '${VEREINBARUNG_FASSUNG}'::text $$;`), "SQL-Zwilling der Fassung");
+  // Seite: Gerüst mit Entwurfshinweis, Fassung sichtbar, ohne Anmeldung, nicht für Suchmaschinen freigegeben.
+  const seite = ohneKommentare(lies("app/(start)/vereinbarung/page.tsx"));
+  assert.match(seite, /<RechtsSeite titel=\{VEREINBARUNG_TITEL\} fassung=\{VEREINBARUNG_FASSUNG\}>/);
+  assert.match(seite, /alternates: \{ canonical: VEREINBARUNG_PFAD \}/);
+  assert.ok(!istNurMitKonto(VEREINBARUNG_PFAD), "ohne Konto lesbar");
+  assert.ok(!(FREIGEGEBEN as readonly string[]).includes(VEREINBARUNG_PFAD) && !(SITEMAP_PFADE as readonly string[]).includes(VEREINBARUNG_PFAD));
+  assert.match(ohneKommentare(lies("components/start/RechtsSeite.tsx")), /\{fassung && <> · Fassung \{fassung\}<\/>\}/);
+  // Datenschutz verweist auf die Vereinbarung.
+  assert.match(ohneKommentare(lies("app/(start)/datenschutz/page.tsx")), /<TextLink href=\{VEREINBARUNG_PFAD\}>\{VEREINBARUNG_TITEL\}<\/TextLink>/);
+  // AK 1, 2: Der Dialog verlinkt die Vereinbarung (neuer Tab, der Dialog bleibt) und schickt die geltende Fassung.
+  const dialog = ohneKommentare(lies("components/verein/VereinGruenden.tsx"));
+  assert.match(dialog, /href=\{VEREINBARUNG_PFAD\}\s+target="_blank"/);
+  assert.match(dialog, /gruendeVereinAktion\(name, true, VEREINBARUNG_FASSUNG\)/);
+  assert.match(lies("lib/kern/verein.ts"), /p_fassung: \(typeof e\.fassung === "string" \? e\.fassung : null\)/);
+  // AK 3, 4: Lage der Verwaltung.
+  assert.equal(vereinbarungLage("b", "b"), "aktuell");
+  assert.equal(vereinbarungLage("b", "a"), "neue_fassung");
+  assert.equal(vereinbarungLage("b", null), "ohne");
+  assert.equal(VEREIN_VEREINBARUNG_TEXT.zugestimmt("23.11.26"), "Der Verein hat ihr am 23.11.26 zugestimmt.");
+  // Antwort der Datenebene auf ihre Form geprüft.
+  assert.deepEqual(vereinbarungAus({ geltend: "f", zustimmung: null }), { geltend: "f", zustimmung: null });
+  const am = "2026-11-23T10:00:00+00:00";
+  assert.deepEqual(vereinbarungAus({ geltend: "f", zustimmung: { fassung: "f", am } }), { geltend: "f", zustimmung: { fassung: "f", am } });
+  for (const kaputt of [null, {}, { geltend: "" , zustimmung: null }, { geltend: "f" }, { geltend: "f", zustimmung: {} }, { geltend: "f", zustimmung: { fassung: "f", am: "gestern" } }])
+    assert.equal(vereinbarungAus(kaputt), null, JSON.stringify(kaputt));
+  // Die Verwaltung liest sie in «Verwaltung» (Karte) und erfährt eine neue Fassung auch in der Übersicht; Fehler werfen.
+  const verwaltung = ohneKommentare(lies("app/(app)/verein/verwaltung/page.tsx"));
+  assert.match(verwaltung, /ladeVereinbarung\(supabase, user\.id, \{ vereinId: verein\.id \}\)/);
+  assert.match(verwaltung, /if \(!vereinbarung\.ok\) throw new Error/);
+  assert.match(verwaltung, /vereinbarung=\{<VereinbarungKarte vereinbarung=\{vereinbarung\.wert\} \/>\}/);
+  const karte = ohneKommentare(lies("components/verein/VereinbarungKarte.tsx"));
+  assert.match(karte, /<ButtonLink href=\{VEREINBARUNG_PFAD\}/);
+  assert.match(karte, /lage === "neue_fassung"[\s\S]*?VEREIN_VEREINBARUNG_TEXT\.neueFassung/);
+  assert.match(karte, /lage === "ohne"[\s\S]*?VEREIN_VEREINBARUNG_TEXT\.ohneZustimmung/);
+  const uebersicht = ohneKommentare(lies("app/(app)/verein/page.tsx"));
+  assert.match(uebersicht, /istVerwaltung \? ladeVereinbarung\(/, "nur die Verwaltung fragt");
+  assert.match(uebersicht, /\{neueFassung && \(/);
+  // sync-staging kennt die neue Tabelle.
+  const yml = readFileSync(join(web, "../.github/workflows/sync-staging.yml"), "utf8");
+  assert.ok((/PUBLIC_TABLES: "([^"]+)"/.exec(yml)?.[1].split(" ") ?? []).includes("verein_zustimmungen"));
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

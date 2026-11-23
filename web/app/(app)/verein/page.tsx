@@ -6,10 +6,10 @@ import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { Flash } from "@/components/Flash";
 import { TeamAnlegen } from "@/components/verein/TeamAnlegen";
 import { Leerzustand, Lozenge, SectionMessage, Tabelle, TabellenZeile } from "@/components/ui";
-import { ladeVereinAnsicht, type VerwaltungPerson } from "@/lib/kern/verein";
+import { ladeVereinAnsicht, ladeVereinbarung, type VerwaltungPerson } from "@/lib/kern/verein";
 import { getMeinVereinOderWurf } from "@/lib/queries/verein";
 import { createClient } from "@/lib/supabase/server";
-import { vereinKopfText } from "@/lib/verein";
+import { VEREIN_VEREINBARUNG_TEXT, vereinKopfText, vereinbarungLage } from "@/lib/verein";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Teams im Verein - KiFu", robots: { index: false } };
@@ -44,10 +44,19 @@ export default async function VereinPage({
   const verein = await getMeinVereinOderWurf();
   if (!verein) redirect("/teams");
 
-  const ansicht = await ladeVereinAnsicht(supabase, user.id, { vereinId: verein.id });
-  if (!ansicht.ok) throw new Error(ansicht.meldung);
-  const { name, verwaltung, teams, spielerZahl } = ansicht.wert;
   const istVerwaltung = verein.istVerwaltung;
+  // Die Vereinbarung liest nur die Verwaltung (#675 AK 4); alle anderen fragen gar nicht.
+  const [ansicht, vereinbarung] = await Promise.all([
+    ladeVereinAnsicht(supabase, user.id, { vereinId: verein.id }),
+    istVerwaltung ? ladeVereinbarung(supabase, user.id, { vereinId: verein.id }) : null,
+  ]);
+  if (!ansicht.ok) throw new Error(ansicht.meldung);
+  if (vereinbarung && !vereinbarung.ok) throw new Error(vereinbarung.meldung);
+  const { name, verwaltung, teams, spielerZahl } = ansicht.wert;
+  // Eine neue Fassung meldet auch die Übersicht, damit die Verwaltung sie nicht erst in «Verwaltung» findet.
+  const neueFassung =
+    vereinbarung?.ok === true &&
+    vereinbarungLage(vereinbarung.wert.geltend, vereinbarung.wert.zustimmung?.fassung ?? null) === "neue_fassung";
 
   const spalten = istVerwaltung
     ? // Kopf und Zeilen sind getrennte Raster: die letzte Spalte fest, breit
@@ -69,6 +78,15 @@ export default async function VereinPage({
         </div>
         {istVerwaltung && <TeamAnlegen vereinId={verein.id} anzahlTeams={teams.length} />}
       </div>
+
+      {neueFassung && (
+        <SectionMessage appearance="information" className="mt-4">
+          {VEREIN_VEREINBARUNG_TEXT.neueFassung}{" "}
+          <Link href="/verein/verwaltung" className="font-semibold text-primary hover:underline">
+            {VEREIN_VEREINBARUNG_TEXT.zurVerwaltung}
+          </Link>
+        </SectionMessage>
+      )}
 
       {istVerwaltung && (
         <SectionMessage appearance="information" className="mt-4">
