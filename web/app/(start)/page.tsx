@@ -10,10 +10,14 @@ import { getUserImRequest } from "@/lib/supabase/server";
 // Je Aufruf: Anmeldung, Bereich und Beispiele.
 export const dynamic = "force-dynamic";
 
+/* Was das Suchergebnis sagt (#673 AK 2): Vereinsverwaltung, Team und
+   Abmeldungen, Trainingsplanung nach SFV und KI-Assistent im Kinder- und
+   Juniorenfussball. Die Vorschau beim Teilen bleibt die der Wurzel (AK 3). */
 export const metadata: Metadata = {
-  title: "KiFu – Verein, Team und Training im Kinder- und Juniorenfussball",
+  title: "KiFu – Vereinsverwaltung, Team und Training im Kinder- und Juniorenfussball",
   description:
-    "KiFu organisiert Verein, Teams, Termine und Abmeldungen und hilft beim Planen der Trainings im Kinder- und Juniorenfussball. Heute gratis, Open Source.",
+    "Vereinsverwaltung, Team und Abmeldungen, Trainingsplanung nach SFV und ein KI-Assistent für den Kinder- und Juniorenfussball. Heute gratis, Open Source.",
+  alternates: { canonical: "/" },
 };
 
 /* Die Startadresse «/»:

@@ -514,6 +514,16 @@ import {
 } from "../lib/startseite";
 import { NUR_MIT_KONTO_PRAEFIXE, istNurMitKonto, nurMitKontoAdresse } from "../lib/weiterleitung";
 import { HERKUNFT_LABEL } from "../lib/labels";
+import {
+  FREIGEGEBEN,
+  PRODUKTION_ORIGIN,
+  SITEMAP_PFADE,
+  VORSCHAU_CLAIM,
+  VORSCHAU_DIENSTE,
+  VORSCHAU_NAME,
+  basisOrigin,
+  robotsRegeln,
+} from "../lib/auffindbar";
 import { TRAGWEITE_VEROEFFENTLICHEN, ZUM_VEROEFFENTLICHEN_FEHLT } from "../lib/training-bedingungen";
 import { FILTER_SCHLUESSEL, TEAM_BEREICHE, teamBereichAusPfad, teamBereichHref } from "../lib/team-bereiche";
 import {
@@ -6738,6 +6748,69 @@ pruefe("Übungen und Trainings nur mit Konto (#669): Umleitung mit Hinweis und R
       });
     }
   assert.deepEqual(treffer, [], `«öffentlich» an der Oberfläche: ${treffer.join(", ")}`);
+});
+
+pruefe("Auffindbar und Link-Vorschau (#673 AK 1–3): robots nur auf Produktion offen, Sitemap, eine Marken-Vorschau für alle Adressen", () => {
+  const lies = (d: string) => readFileSync(join(web, d), "utf8");
+  const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  // AK 1: Produktion gibt nur Startseite (genau «/»), Versionen, Impressum und Datenschutz frei (#672), dazu die Vorschaubilder.
+  const prod = robotsRegeln("production");
+  assert.deepEqual(prod[0], { userAgent: "*", allow: ["/$", "/versionen", "/impressum", "/datenschutz", "/opengraph-image", "/twitter-image"], disallow: "/" });
+  assert.deepEqual([...FREIGEGEBEN], prod[0].allow);
+  // Entscheid 2: Dienste der Link-Vorschau dürfen jede Adresse lesen — sie indexieren nicht.
+  assert.deepEqual(prod[1], { userAgent: [...VORSCHAU_DIENSTE], allow: "/" });
+  assert.ok(!VORSCHAU_DIENSTE.some((d) => /google|bing|duckduck|yandex/i.test(d)), "keine Suchmaschine unter den Vorschau-Diensten");
+  for (const env of [undefined, "", "preview", "development"])
+    assert.deepEqual(robotsRegeln(env), [{ userAgent: "*", disallow: "/" }], `${env}: alles gesperrt`);
+  const robots = ohneKommentare(lies("app/robots.ts"));
+  assert.match(robots, /rules: robotsRegeln\(process\.env\.VERCEL_ENV\)/);
+  assert.match(robots, /produktion \? \{ sitemap:/, "Sitemap nur auf Produktion angekündigt");
+  // Sitemap = die freigegebenen Seiten.
+  assert.deepEqual([...SITEMAP_PFADE], ["/", "/versionen", "/impressum", "/datenschutz"]);
+  for (const p of SITEMAP_PFADE.filter((p) => p !== "/")) assert.ok(FREIGEGEBEN.includes(p as (typeof FREIGEGEBEN)[number]), `${p} in robots frei`);
+  assert.match(ohneKommentare(lies("app/sitemap.ts")), /SITEMAP_PFADE\.map/);
+  assert.equal(basisOrigin(undefined), PRODUKTION_ORIGIN);
+  assert.equal(basisOrigin("https://staging.ki-fu.ch/"), "https://staging.ki-fu.ch");
+  // AK 2: Titel und Beschreibung der Startseite nennen, wofür KiFu da ist; canonical «/».
+  const start = ohneKommentare(lies("app/(start)/page.tsx"));
+  const beschreibung = start.match(/description:\s*"([^"]+)"/)?.[1] ?? "";
+  const titel = start.match(/title: "([^"]+)"/)?.[1] ?? "";
+  for (const w of ["Vereinsverwaltung", "Team und Abmeldungen", "Trainingsplanung nach SFV", "KI-Assistent", "Kinder- und Juniorenfussball"])
+    assert.ok(beschreibung.includes(w), `Beschreibung nennt «${w}»`);
+  assert.match(titel, /^KiFu – .*Kinder- und Juniorenfussball$/);
+  assert.match(start, /alternates: \{ canonical: "\/" \}/);
+  // AK 3: Vorschau nur in der Wurzel — Marke, «KiFu», Claim; metadataBase für absolute Adressen.
+  assert.equal(VORSCHAU_NAME, "KiFu");
+  assert.equal(VORSCHAU_CLAIM, "Mehr Fussball. Weniger Bürokratie.");
+  const wurzel = ohneKommentare(lies("app/layout.tsx"));
+  assert.match(wurzel, /metadataBase: new URL\(basisOrigin\(process\.env\.APP_ORIGIN\)\)/);
+  assert.match(wurzel, /openGraph: \{\s*type: "website",\s*siteName: VORSCHAU_NAME,\s*title: VORSCHAU_NAME,\s*description: VORSCHAU_CLAIM,/);
+  assert.match(wurzel, /twitter: \{ card: "summary_large_image", title: VORSCHAU_NAME, description: VORSCHAU_CLAIM \}/);
+  const bild = ohneKommentare(lies("app/opengraph-image.tsx"));
+  assert.match(bild, /\{VORSCHAU_NAME\}/);
+  assert.match(bild, /\{VORSCHAU_CLAIM\}/);
+  assert.match(bild, /app\/icon\.svg/, "dieselbe Bildmarke wie das Favicon");
+  // Im Bild steht sonst nichts: nur die beiden Konstanten als Text.
+  assert.deepEqual([...bild.matchAll(/>\{([A-Z_]+)\}</g)].map((m) => m[1]), ["VORSCHAU_NAME", "VORSCHAU_CLAIM"]);
+  for (const d of ["app/opengraph-image.tsx", "app/twitter-image.tsx"])
+    assert.match(lies(d), /export const alt = "KiFu – Mehr Fussball\. Weniger Bürokratie\.";/, d);
+  assert.match(lies("app/twitter-image.tsx"), /export \{ default \} from "\.\/opengraph-image";/);
+  assert.match(lies("components/start/Startseite.tsx"), /\{VORSCHAU_CLAIM\}/, "der Claim der Startseite ist derselbe");
+  // Keine Seite ersetzt die Vorschau (sie trüge sonst womöglich einen Namen, z. B. am privaten Link) und keine eigenen Bilder.
+  for (const datei of quelldateien(join(web, "app"))) {
+    const rel = relative(web, datei);
+    if (rel === "app/layout.tsx") continue;
+    assert.ok(!/\bopenGraph\s*:|\btwitter\s*:/.test(ohneKommentare(readFileSync(datei, "utf8"))), `${rel}: keine eigene Vorschau`);
+    if (/(^|\/)(opengraph|twitter)-image\.tsx$/.test(rel)) assert.ok(["app/opengraph-image.tsx", "app/twitter-image.tsx"].includes(rel), `${rel}: kein eigenes Vorschaubild`);
+  }
+  // Private Links: Seitentitel fest, ohne Namen (der Name unter dem App-Symbol, `appleWebApp.title`, ist kein Seitentitel).
+  for (const datei of quelldateien(join(web, "app/(privat)"))) {
+    const t = ohneKommentare(readFileSync(datei, "utf8"));
+    for (const [, titel] of t.matchAll(/^\s*title: ([^,\n]+)/gm))
+      assert.match(titel, /^"[^"$]*- KiFu"$/, `${relative(web, datei)}: Titel ohne Namen`);
+  }
+  // Suchmaschinen und Vorschau-Dienste kommen ohne Sitzung.
+  assert.match(lies("middleware.ts"), /\|robots\\\\\.txt\|sitemap\\\\\.xml\|opengraph-image\|twitter-image\|/);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

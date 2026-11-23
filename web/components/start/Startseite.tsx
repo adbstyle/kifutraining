@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ButtonLink, Card, ExerciseCard, ExternerLink, Lozenge, SectionMessage, type ExerciseCardData } from "@/components/ui";
+import { VORSCHAU_CLAIM } from "@/lib/auffindbar";
 import { KONTO_TRAININGS_MAX, KONTO_UEBUNGEN_MAX } from "@/lib/konto-grenzen";
 import {
   BEISPIEL_NAMEN,
@@ -93,7 +94,7 @@ export function Startseite({
             Vereinsverwaltung und das Trainerteam — Spieler:innen und Eltern melden sich ohne Konto über einen
             privaten Link ab.
           </p>
-          <p className="type-title-medium mt-4 text-on-surface">Mehr Fussball. Weniger Bürokratie.</p>
+          <p className="type-title-medium mt-4 text-on-surface">{VORSCHAU_CLAIM}</p>
           <EinstiegKnoepfe angemeldet={angemeldet} className="mt-8" />
         </div>
         <TerminBild />
