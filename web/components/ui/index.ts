@@ -7,9 +7,9 @@ export {
   ChoiceChip,
   ChoiceChipGroup,
   AssistChip,
-  chipTextBase,
-  chipTextOutlined,
-  chipTextSelected,
+  chipBase,
+  chipOutlined,
+  chipSelected,
 } from "./Chip";
 export { Card } from "./Card";
 export { Gefahrenzone } from "./Gefahrenzone";
