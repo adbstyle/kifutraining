@@ -4002,6 +4002,14 @@ export default async function Styleguide() {
             <code>state</code> - kein eigener Hover-Ton, und die Ebene sitzt auf
             dem Link, der die Karte deckt.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <code>ohneLink</code> zeigt die Karte nur (vierte Karte): ohne Link
+            und ohne Zustands-Ebene, sonst gleich. Für die Beispiele der
+            Startseite (#670) - ohne Konto führte eine Übung bloss zurück auf
+            die Startseite, also wäre ein Link dort ein Versprechen, das er nicht
+            hält. Keine eigene Karte, damit Bild, Herkunft und Eckdaten an einer
+            Stelle bleiben.
+          </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {/* actionSlot demonstriert die Slot-Verdrahtung: das UI-Kit bleibt
                 domänenfrei, der Favoriten-Knopf kommt aus dem Feature-Layer. */}
@@ -4063,6 +4071,24 @@ export default async function Styleguide() {
                 }),
                 herkunft: "user",
                 visibility: "public",
+              }}
+            />
+            <ExerciseCard
+              ohneLink
+              ex={{
+                slug: "fangis",
+                name: "Fangis",
+                eckdaten: uebungEckdaten({
+                  altersstufe: "kinderfussball",
+                  trainingsteil: "auffangen",
+                  hauptteilkategorie: null,
+                  feldtyp: "freies_feld",
+                  spielfeld_laenge_m: null,
+                  spielfeld_breite_m: null,
+                  kategorien: ["G", "F", "E"],
+                  anzahl_kinder: { min: 10, max: 12 },
+                }),
+                herkunft: "manual",
               }}
             />
           </div>

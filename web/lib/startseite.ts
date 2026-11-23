@@ -41,15 +41,18 @@ export const NUR_MIT_KONTO_TEXT =
  *  Zwilling: die Dateien unter data/uebungen/*.yaml. */
 export const MANUAL_UEBUNGEN_ANZAHL = 75;
 
-/** Die fest ausgewählten Beispiele (AK 4, Entscheid 2): je eine Übung aus
- *  Auffangen, Einleitung und Ausklang, drei aus dem Hauptteil — alle aus dem
- *  Manual und mit Feld-Diagramm (data/diagramme/<slug>.json). Die Reihenfolge
- *  ist die der Anzeige. Zwilling: die fest eingebaute Liste in
+/** Die fest ausgewählten Beispiele (AK 4, Entscheid 2; acht wie im
+ *  Gestaltungsentwurf): je zwei aus Auffangen und Einleitung, drei aus dem
+ *  Hauptteil, eine aus dem Ausklang — alle aus dem Manual und mit
+ *  Feld-Diagramm (data/diagramme/<slug>.json). Die Reihenfolge ist die der
+ *  Anzeige, nach Teil des Trainings. Zwilling: die fest eingebaute Liste in
  *  `startseite_beispiele()` (Migration `nur_mit_konto`, #669) — ohne Konto
  *  ist sonst keine Übung lesbar; der Wächter vergleicht beide Listen. */
 export const STARTSEITE_BEISPIELE = [
   "freies-kleinfeldspiel",
+  "fangis",
   "autorennen",
+  "dribbler",
   "dribbling-1-1-frontal-auf-ein-tor",
   "passen-und-ballkontrolle-tigerball-durch-das-tor",
   "torabschluss-zielschuss",
@@ -74,10 +77,13 @@ export const REPO_URL = "https://github.com/adbstyle/kifutraining";
 export const KONTO_GELOESCHT_PARAMETER = "account_deleted";
 export const KONTO_GELOESCHT_TEXT = "Konto gelöscht. Deine Übungen und Trainings in der Community bleiben anonym erhalten.";
 
-/** Die Namen im Bild der Startseite (AK 14): alle erfunden. */
+/** Die Namen in den Bildern der Startseite (AK 14): alle erfunden, wie im
+ *  Gestaltungsentwurf (dort «FC Seefeld», hier «FC Seewil»: einen FC Seefeld
+ *  gibt es in Zürich). */
 export const BEISPIEL_NAMEN = {
   verein: "FC Seewil",
-  team: "F-Junioren Blau",
-  ort: "Sportplatz Seematt",
-  spieler: ["Lena", "Noah", "Mia", "Elias"],
+  gegner: ["SC Bergtal", "FC Talwil"],
+  heimfeld: "Sportplatz Moos",
+  auswaerts: "Sportanlage Talwil",
+  spieler: ["Lena Meier", "Noah Keller", "Mia Suter", "Ole Brunner", "Ava Brunner", "Elias Frei", "Leo Weber"],
 } as const;

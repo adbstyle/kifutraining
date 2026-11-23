@@ -10,7 +10,7 @@
 -- `to public` jetzt `to authenticated`. Schreib-Policies sind unberührt (sie
 -- verlangen ohnehin `auth.uid()`). Forward-only: keine Datenänderung.
 --
--- Einzige Ausnahme für Besucher:innen ohne Konto: die sechs Beispiele der
+-- Einzige Ausnahme für Besucher:innen ohne Konto: die acht Beispiele der
 -- Startseite über `startseite_beispiele()` (#670 AK 4).
 
 -- ── Übungen ──────────────────────────────────────────────────────────────────
@@ -71,10 +71,10 @@ create policy tv_select on public.training_varianten
 
 -- ── Die Beispiele der Startseite ─────────────────────────────────────────────
 -- Genau die Spalten, die die Übungskarte braucht (LIST_COLUMNS ohne
--- Favorit), für genau sechs fest eingebaute Manual-Übungen mit Diagramm, in
+-- Favorit), für genau acht fest eingebaute Manual-Übungen mit Diagramm, in
 -- der Reihenfolge der Anzeige. Zwilling: STARTSEITE_BEISPIELE in
 -- web/lib/startseite.ts (Wächter in check:kern vergleicht beide Listen).
--- Keine Parameter: Wer die Funktion ruft, bekommt nie mehr als diese sechs.
+-- Keine Parameter: Wer die Funktion ruft, bekommt nie mehr als diese acht.
 create function public.startseite_beispiele()
 returns table (
   id uuid,
@@ -105,7 +105,9 @@ as $$
          e.bild_url, e.diagramm, e.bild_quelle
   from unnest(array[
     'freies-kleinfeldspiel',
+    'fangis',
     'autorennen',
+    'dribbler',
     'dribbling-1-1-frontal-auf-ein-tor',
     'passen-und-ballkontrolle-tigerball-durch-das-tor',
     'torabschluss-zielschuss',

@@ -6,7 +6,7 @@
 -- - ohne Anmeldung lassen sich die Bilder im Bucket nicht aufzählen, und die
 --   Namens- und Bedingungsfunktionen sind für anon zu (Migration
 --   nur_mit_konto_nachzug)
--- - `startseite_beispiele()` liefert ohne Anmeldung genau die sechs festen
+-- - `startseite_beispiele()` liefert ohne Anmeldung genau die acht festen
 --   Manual-Übungen, in der Reihenfolge der Anzeige, und sonst nichts
 -- Läuft auch auf der leeren Wegwerf-DB der CI (vor `npm run seed`): fehlende
 -- Manual-Übungen legt der Test selbst an. Alles in einer Transaktion mit
@@ -48,12 +48,12 @@ begin
   if p_ok is not true then raise exception '#669: %', p_text; end if;
 end $$;
 
--- ── Bestand: die sechs Beispiele (falls nicht geseedet), ein Konto mit
+-- ── Bestand: die acht Beispiele (falls nicht geseedet), ein Konto mit
 --    Community-Training samt Kind-Zeilen, eine anonymisierte Community-Übung ──
 insert into public.exercises (slug, name, trainingsteil, aufbau, source, visibility)
 select s, 'Beispiel ' || s, 'ausklang', 'Aufbau', 'manual', 'public'
 from unnest(array[
-  'freies-kleinfeldspiel', 'autorennen', 'dribbling-1-1-frontal-auf-ein-tor',
+  'freies-kleinfeldspiel', 'fangis', 'autorennen', 'dribbler', 'dribbling-1-1-frontal-auf-ein-tor',
   'passen-und-ballkontrolle-tigerball-durch-das-tor', 'torabschluss-zielschuss', 'penalty-koenig-in'
 ]) s
 on conflict (slug) do nothing;
@@ -94,13 +94,13 @@ select pg_temp.pruefe((select count(*) from public.training_gruppen) = 0, 'anon 
 select pg_temp.pruefe((select count(*) from public.training_exercise_gruppen) = 0, 'anon liest keinen Durchlauf');
 select pg_temp.pruefe((select count(*) from public.training_varianten) = 0, 'anon liest keine Variante');
 
--- Die Startseite: genau die sechs, in der Reihenfolge der Anzeige.
+-- Die Startseite: genau die acht, in der Reihenfolge der Anzeige.
 select pg_temp.pruefe(
   (select array_agg(slug) from public.startseite_beispiele()) = array[
-    'freies-kleinfeldspiel', 'autorennen', 'dribbling-1-1-frontal-auf-ein-tor',
+    'freies-kleinfeldspiel', 'fangis', 'autorennen', 'dribbler', 'dribbling-1-1-frontal-auf-ein-tor',
     'passen-und-ballkontrolle-tigerball-durch-das-tor', 'torabschluss-zielschuss', 'penalty-koenig-in'],
-  'startseite_beispiele liefert die sechs in fester Reihenfolge');
-select pg_temp.pruefe((select count(*) from public.startseite_beispiele()) = 6, 'genau sechs Zeilen');
+  'startseite_beispiele liefert die acht in fester Reihenfolge');
+select pg_temp.pruefe((select count(*) from public.startseite_beispiele()) = 8, 'genau acht Zeilen');
 select pg_temp.pruefe(
   (select bool_and(source = 'manual' and visibility = 'public') from public.startseite_beispiele()),
   'nur Manual-Übungen');

@@ -6560,6 +6560,12 @@ pruefe("Startseite (#670): eigene Gruppe ohne Seitenleiste, immer hell, feste An
   assert.match(layout, /user \? \(\s*<ButtonLink href="\/" variant="filled">\s*Zur App/);
   assert.match(layout, /<ButtonLink href="\/login" variant="text">\s*Anmelden/);
   assert.match(layout, /<ButtonLink href="\/registrieren" variant="filled"[^>]*>\s*Kostenlos registrieren/);
+  // Gestaltungsentwurf: Sprünge zu Funktionen, KI-Assistent und Preisen — angemeldet auf «/startseite» (#671).
+  assert.match(layout, /const start = user \? STARTSEITE_PFAD : "\/";/);
+  for (const [ziel, text] of [["funktionen", "Funktionen"], ["ki", "KI-Assistent"], ["preise", "Preise"]]) {
+    assert.ok(layout.includes(`<KopfSprung href={\`\${start}#${ziel}\`}>${text}</KopfSprung>`), `Sprung «${text}»`);
+    assert.match(seite, new RegExp(`id="${ziel}"`), `Ziel #${ziel}`);
+  }
   // AK 10: Versionen und Cookies in der Fusszeile, dazu das Repository.
   assert.match(layout, /<FussLink href="\/versionen">Versionen<\/FussLink>/);
   assert.match(layout, /<FussLink href="\/cookies">Cookies<\/FussLink>/);
@@ -6576,46 +6582,78 @@ pruefe("Startseite (#670): eigene Gruppe ohne Seitenleiste, immer hell, feste An
     assert.match(t, /getStartseitenBeispiele\(\)/, d);
     assert.match(t, /export const dynamic = "force-dynamic";/, d);
   }
-  // AK 3: registrieren und anmelden, auch am Schluss der Seite.
-  assert.match(seite, /<ButtonLink href="\/registrieren" variant="filled">\s*Kostenlos registrieren/);
-  assert.match(seite, /<ButtonLink href="\/login" variant="outlined">\s*Anmelden/);
-  // AK 2: Verein, Team und Kalender, Schnuppertraining, Mitteilungen, Training und Übungen, KI-Assistent.
-  for (const t of ["Verein", "Team und Kalender", "Abmeldungen ohne Konto", "Schnuppertraining", "Mitteilungen aufs Mobile", "Training und Übungen", "KI-Assistent"])
-    assert.ok(seite.includes(`titel="${t}"`), `Leistung «${t}»`);
+  // AK 3: registrieren (anmelden in der Kopfzeile); angemeldet über «/startseite» stattdessen «Zur App».
+  assert.match(seite, /angemeldet \? \(\s*<ButtonLink href="\/" variant=\{variant\}>\s*Zur App\s*<\/ButtonLink>\s*\) : \(\s*<ButtonLink href="\/registrieren" variant=\{variant\}>/);
+  assert.ok((seite.match(/<Registrieren angemeldet=\{angemeldet\}/g) ?? []).length >= 5, "der Weg hinein in jedem Abschnitt wie im Entwurf");
+  // AK 2 (nach dem Gestaltungsentwurf): Verein, Team und Kalender, Schnuppern, Mitteilungen, Training und Übungen, KI-Assistent.
+  for (const t of ["Verein", "Team", "Kalender", "Schnuppern", "Mitteilungen", "Training", "Übungen", "KI-Assistent"])
+    assert.ok(seite.includes(`label: "${t}"`), `Kachel «${t}»`);
+  for (const t of ["In einem Abend vom Verein zu allen Teams.", "Du weisst, wer kommt. Spieler:innen und Eltern wissen, was läuft.", "Am Sonntag vorbereitet. Am Dienstag auf dem Platz.", "Sagen, was du brauchst. Erledigt.", "Heute gratis. Später fair pro Team."])
+    assert.ok(seite.includes(t), `Abschnitt «${t}»`);
+  // Der Name bleibt «KiFu» (PO): kein «FutAssist» an der Oberfläche.
+  const oberflaeche: string[] = [];
+  const sammle = (d: string) => {
+    for (const e of readdirSync(join(web, d), { withFileTypes: true })) {
+      const rel = `${d}/${e.name}`;
+      if (e.isDirectory()) sammle(rel);
+      // Kommentare dürfen die Herkunft nennen («Bildmarke FutAssist, Variante F»).
+      else if (/\.tsx?$/.test(e.name) && /FutAssist/i.test(ohneKommentare(lies(rel)).replace(/\{\/\*[\s\S]*?\*\/\}/g, ""))) oberflaeche.push(rel);
+    }
+  };
+  sammle("app");
+  sammle("components");
+  assert.deepEqual(oberflaeche, [], "«FutAssist» an der Oberfläche");
   // AK 4: feste Zahl der Manual-Übungen (OoS 1: von Hand nachgeführt, hier am Bestand gehalten) und feste Beispiele mit Diagramm.
   const yaml = readdirSync(join(web, "..", "data/uebungen")).filter((f) => f.endsWith(".yaml"));
   assert.equal(MANUAL_UEBUNGEN_ANZAHL, yaml.length, "Zahl der Manual-Übungen = data/uebungen/*.yaml");
   assert.match(seite, /\{MANUAL_UEBUNGEN_ANZAHL\} Übungen aus dem Manual Kinderfussball/);
-  assert.equal(STARTSEITE_BEISPIELE.length, 6);
-  assert.equal(new Set(STARTSEITE_BEISPIELE).size, 6);
+  assert.equal(STARTSEITE_BEISPIELE.length, 8, "acht wie im Gestaltungsentwurf");
+  assert.equal(new Set(STARTSEITE_BEISPIELE).size, 8);
   for (const slug of STARTSEITE_BEISPIELE) {
     assert.ok(yaml.includes(`${slug}.yaml`), `${slug}: aus dem Manual`);
     assert.ok(existsSync(join(web, "..", "data/diagramme", `${slug}.json`)), `${slug}: mit Diagramm`);
   }
   // Nur Manual-Übungen (Epic EK 11): über startseite_beispiele() (#669), siehe dort.
+  // Die Beispielkarten zeigen nur (#670): ohne Konto führte eine Übung bloss zurück.
+  assert.match(seite, /<ExerciseCard ex=\{ex\} ohneLink \/>/);
+  assert.equal((seite.match(/<ExerciseCard\b/g) ?? []).length, 1, "jede Karte der Startseite ohne Link");
+  const karte = ohneKommentare(lies("components/ui/ExerciseCard.tsx"));
+  assert.match(karte, /\{ohneLink \? \(\s*<div className="rounded-flaeche">\{inhalt\}<\/div>\s*\) : \(\s*<Link href=\{`\/uebung\/\$\{ex\.slug\}`\}/);
   // AK 5: Der SFV erscheint nur mit dem Hinweis — nirgends sonst auf der Seite.
   assert.match(SFV_HINWEIS, /eigene Fassungen nach dem Manual Kinderfussball des SFV, nicht vom SFV geprüft/i);
   assert.ok(!/\bSFV\b/.test(seite + layout), "der SFV steht nur in SFV_HINWEIS");
   assert.match(seite, /\{SFV_HINWEIS\}/);
-  // AK 6: Kinder- und Juniorenfussball, das Manual nur für den Kinderfussball.
-  assert.match(seite, /KiFu unterstützt den Kinderfussball \(G, F, E\) und den Juniorenfussball \(D, C, B, A\)\. Die Übungen aus dem\s+Manual decken den Kinderfussball ab/);
-  // AK 7, 8: heute gratis, geplanter Preis, Konto ohne Verein gratis und seine Grenzen aus der einen Quelle.
+  // AK 6: Kinder- und Juniorenfussball.
+  assert.match(seite, /im Schweizer Kinder- und Juniorenfussball\./);
+  // AK 7, 8: heute gratis, geplanter Preis, Grenzen (Konto ohne Verein, Verein, Team) aus der einen Quelle.
   assert.equal(GEPLANTER_PREIS_CHF, 5);
-  assert.match(seite, /KiFu ist heute gratis\. Nach Einführung des Preismodells sind CHF \{GEPLANTER_PREIS_CHF\} pro Team und\s+Monat geplant\./);
-  assert.match(seite, /Ein Konto ohne Verein bleibt gratis\. Es hat höchstens \{KONTO_UEBUNGEN_MAX\} eigene Übungen und\{" "\}\s*\{KONTO_TRAININGS_MAX\} eigene Trainings/);
-  assert.ok(!/\b(50|30) (eigene|Übungen|Trainings)/.test(seite), "Grenzen nie als Zahl im Text");
-  // AK 9: Open Source, selbst betreibbar, Datenort.
-  assert.match(seite, /titel="Open Source"/);
-  assert.match(seite, /selbst betreiben/);
-  assert.match(seite, /titel="Wo die Daten liegen"/);
-  // Datenort nicht abschliessend (EK 3, Entscheid 7): selbst verbundene Dienste und der Verweis auf alle Ausnahmen.
-  assert.match(seite, /KI-Assistenten und Kalender, die ihr selbst verbindet/);
-  assert.match(seite, /<TextLink href="\/datenschutz">Alle Ausnahmen in der Datenschutzerklärung<\/TextLink>/);
+  assert.match(seite, /preis=\{`CHF \$\{GEPLANTER_PREIS_CHF\}`\}/);
+  assert.match(seite, /Geplant: CHF \{GEPLANTER_PREIS_CHF\} pro Team und Monat, sobald das Preismodell eingeführt wird\. Bis dahin ist\s+alles gratis\./);
+  assert.match(seite, /Ohne Verein: \{KONTO_UEBUNGEN_MAX\} eigene Übungen, \{KONTO_TRAININGS_MAX\} Trainings/);
+  assert.match(seite, /Verein mit bis \{VEREIN_TEAMS_MAX\} Teams und \{VEREIN_SPIELER_MAX\} Spieler:innen/);
+  assert.match(seite, /Bis \{SPIELER_MAX\} Spieler:innen/);
+  const bilder = ohneKommentare(lies("components/start/StartBilder.tsx"));
+  for (const t of [seite, bilder]) {
+    assert.ok(!/\b(50|30) (eigene|Übungen|Trainings|Teams)/.test(t), "Grenzen nie als Zahl im Text");
+    assert.ok(!/\b(1000|100) (Spieler|je)/.test(t), "Grenzen nie als Zahl im Text");
+    assert.ok(!/CHF [1-9]/.test(t), "der Preis nie als Zahl im Text");
+  }
+  // AK 9: Open Source, selbst betreibbar, Datenort mit dem Verweis auf alle Ausnahmen (EK 3, Entscheid 7).
+  assert.match(seite, /<Grundsatz titel="Open Source">/);
+  assert.match(seite, /selbst\s+betreiben/);
+  assert.match(seite, /Die Daten liegen in Europa\.\{" "\}\s*<TextLink href=\{DATENSCHUTZ_PFAD\}>Alle Ausnahmen in der Datenschutzerklärung<\/TextLink>/);
+  assert.match(seite, /<ExternerLink href=\{REPO_URL\}>Auf GitHub mitreden<\/ExternerLink>/);
   // Serien gibt es nur für Trainings (docs/produkt/team-bereich.md).
   assert.ok(!/Trainings und Spiele als Einzeltermin oder Serie/.test(seite), "keine Serie für Spiele");
-  // AK 14: nur erfundene Namen — das Bild nimmt sie aus BEISPIEL_NAMEN, die Seite nennt sonst keine.
-  assert.match(seite, /const n = BEISPIEL_NAMEN;/);
-  assert.deepEqual([...BEISPIEL_NAMEN.spieler], ["Lena", "Noah", "Mia", "Elias"]);
+  // AK 14: nur erfundene Namen — die Bilder nehmen sie aus BEISPIEL_NAMEN, die Seite nennt sonst keine.
+  assert.match(bilder, /const n = BEISPIEL_NAMEN;/);
+  assert.equal(BEISPIEL_NAMEN.verein, "FC Seewil");
+  assert.deepEqual([...BEISPIEL_NAMEN.spieler], ["Lena Meier", "Noah Keller", "Mia Suter", "Ole Brunner", "Ava Brunner", "Elias Frei", "Leo Weber"]);
+  for (const name of [...BEISPIEL_NAMEN.spieler, ...BEISPIEL_NAMEN.gegner, BEISPIEL_NAMEN.verein, "Seefeld"])
+    assert.ok(!seite.includes(name) && !bilder.includes(name), `«${name}» nur über BEISPIEL_NAMEN`);
+  // Die Bilder sind Bilder: beschrieben, ihr Inhalt stumm, nichts darin antippbar.
+  assert.ok(!/<(a|button|Link|ButtonLink|input)\b/.test(bilder), "nichts Antippbares in den Bildern");
+  assert.ok(!/\bSFV\b/.test(bilder), "der SFV steht nur in SFV_HINWEIS");
   // AK 11: Von den Anmeldeseiten und «Nicht gefunden» ohne Anmeldung zur Startseite.
   const auth = ohneKommentare(lies("app/(auth)/layout.tsx"));
   assert.match(auth, /<Link\s+href="\/"[\s\S]*?Zur Startseite\s*<\/Link>/);
@@ -6817,7 +6855,7 @@ pruefe("Auffindbar und Link-Vorschau (#673 AK 1–3): robots nur auf Produktion 
   for (const d of ["app/opengraph-image.tsx", "app/twitter-image.tsx"])
     assert.match(lies(d), /export const alt = "KiFu – Mehr Fussball\. Weniger Bürokratie\.";/, d);
   assert.match(lies("app/twitter-image.tsx"), /export \{ default \} from "\.\/opengraph-image";/);
-  assert.match(lies("components/start/Startseite.tsx"), /\{VORSCHAU_CLAIM\}/, "der Claim der Startseite ist derselbe");
+  assert.match(lies("components/start/Startseite.tsx"), /\{VORSCHAU_CLAIM\.split\(/, "der Claim der Startseite ist derselbe");
   // Keine Seite ersetzt die Vorschau (sie trüge sonst womöglich einen Namen, z. B. am privaten Link) und keine eigenen Bilder.
   for (const datei of quelldateien(join(web, "app"))) {
     const rel = relative(web, datei);
