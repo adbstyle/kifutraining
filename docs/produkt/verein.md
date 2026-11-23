@@ -1,6 +1,6 @@
 # Verein
 
-Stand 2026-11-22 (Release 1.52.0). Wie ein Verein in der Anwendung entsteht, wer ihn führt und was er mit seinen
+Stand 2026-11-23 (Release 1.53.0). Wie ein Verein in der Anwendung entsteht, wer ihn führt und was er mit seinen
 Teams, Trainer:innen und Spieler:innen tun kann. Was ein Team im Alltag plant, steht im
 [Team-Bereich](team-bereich.md).
 
@@ -69,12 +69,26 @@ mit, und die Grenzen für eigene Übungen und Trainings fallen weg.
 ## Verein gründen
 
 Gründen kann nur ein Konto ohne Verein. Der Dialog „Verein gründen" verlangt den „Name des
-Vereins" — höchstens 60 Zeichen, später änderbar — und zwei Bestätigungen: „Ich bin berechtigt,
-für diesen Verein zu handeln." und „Der Verein ist für die Daten seiner Spieler:innen
-verantwortlich und Ansprechpartner für sie, ihre Eltern und Vertretungen." Erst mit beiden Häkchen ist
-der Knopf frei; gespeichert werden die Bestätigungen nicht. Darunter steht, dass man die erste
-Person der Vereinsverwaltung wird und solange keinem anderen Verein angehören kann. Ein leerer
-Name oder einer über 60 Zeichen wird am Feld abgewiesen.
+Vereins" — höchstens 60 Zeichen, später änderbar — und zwei Häkchen: „Ich bin berechtigt,
+für diesen Verein zu handeln." und „Ich stimme für den Verein der Vereinbarung zur
+Auftragsbearbeitung zu." Unter dem zweiten führt „Vereinbarung lesen" in einem neuen Tab zur Seite
+„Vereinbarung zur Auftragsbearbeitung"; der Dialog bleibt dabei offen. Erst mit beiden Häkchen ist
+der Knopf frei. Darunter steht, dass man die erste Person der Vereinsverwaltung wird und solange
+keinem anderen Verein angehören kann. Ein leerer Name oder einer über 60 Zeichen wird am Feld
+abgewiesen.
+
+Die Zustimmung hält KiFu mit dem Verein fest: welche Fassung der Vereinbarung, wann und durch wen.
+Das Häkchen „berechtigt" wird nicht gespeichert. Gilt seit dem Öffnen des Dialogs eine neue
+Fassung, entsteht kein Verein, und die Anwendung sagt: „Inzwischen gilt eine neue Fassung der
+Vereinbarung zur Auftragsbearbeitung. Lade die Seite neu, lies sie und stimme ihr zu." Die
+festgehaltene Zustimmung verschwindet mit dem Verein; löscht die Person, die zugestimmt hat, ihr
+Konto, bleiben Fassung und Zeitpunkt beim Verein, ohne die Person.
+
+Die Vereinbarung ist wie Impressum und Datenschutzerklärung ein Entwurf: Ihre Seite trägt oben
+„Entwurf – rechtlich noch nicht geprüft.", nennt Stand und Fassung, und Angaben in eckigen
+Klammern sind Platzhalter, etwa für die Schutzmassnahmen; farbig hinterlegt sind sie alle, auch
+die Trägerschaft von KiFu, die noch gegründet wird. Die Seite ist ohne Anmeldung
+erreichbar; Suchmaschinen nehmen sie nicht auf.
 
 Nach dem Gründen steht man im Bereich „Verein" eines Vereins ohne Teams und ohne Spieler:innen.
 Die gründende Person ist Verwaltung, aber in keinem Team; Trainer:in wird sie erst, wenn sie sich
@@ -98,16 +112,28 @@ Trainer:innen mit E-Mail-Adresse, ein Team ohne Mitglied mit der Plakette „ohn
 Zahl seiner Spieler:innen, und jedes Team öffnet für sie eine eigene Seite, auf der sie es führt
 (siehe unten). Ein Hinweis erinnert sie, dass sie die Inhalte eines Teams nur als Trainer:in im
 Team sieht und sich dort mit „Mich aufnehmen" selbst aufnimmt. Hat der Verein noch kein Team,
-steht „Noch keine Teams", für die Verwaltung mit der Aufforderung, das erste anzulegen.
+steht „Noch keine Teams", für die Verwaltung mit der Aufforderung, das erste anzulegen. Hat der
+Verein einer älteren Fassung der Vereinbarung zur Auftragsbearbeitung zugestimmt als der geltenden,
+sieht die Verwaltung auch hier den Hinweis „Es gilt eine neue Fassung der Vereinbarung zur
+Auftragsbearbeitung. Lies die geltende Fassung." mit dem Link „Zur Verwaltung".
 
 **Spieler:innen** führt zur Vereinsliste bzw. zum Spielerbestand (siehe unten).
 
 **Verwaltung** zeigt der Verwaltung den Verein mit Name, „Teams 3 von 30" und
 „Spieler:innen 144 von 1000", darunter die Vereinsverwaltung mit Anzeigename und E-Mail-Adresse —
 ohne Anzeigenamen mit „Vereinsverwaltung" und „ohne Anzeigenamen" —, bei jeder Person, in welchen
-Teams sie auch Trainer:in ist, und eine Gefahrenzone mit „Aus der Verwaltung austreten" und
-„Verein löschen". Wer nicht zur Verwaltung gehört und die Adresse aufruft, landet auf der
-Übersicht.
+Teams sie auch Trainer:in ist, die Karte „Vereinbarung zur Auftragsbearbeitung" und eine
+Gefahrenzone mit „Aus der Verwaltung austreten" und „Verein löschen". Wer nicht zur Verwaltung
+gehört und die Adresse aufruft, landet auf der Übersicht.
+
+Die Karte „Vereinbarung zur Auftragsbearbeitung" sagt, dass sie regelt, wie KiFu die Daten der
+Spieler:innen im Auftrag des Vereins bearbeitet, führt mit „Geltende Fassung lesen" zur Seite der
+Vereinbarung und nennt, wann der Verein zugestimmt hat, etwa „Der Verein hat ihr am 23.11.26
+zugestimmt." Gilt inzwischen eine neue Fassung, steht darunter „Es gilt eine neue Fassung der
+Vereinbarung zur Auftragsbearbeitung. Lies die geltende Fassung." Bei einem Verein, der vor
+Release 1.53.0 gegründet wurde, ist keine Zustimmung festgehalten; dort steht nur „Für den Verein
+ist in KiFu keine Zustimmung zur Vereinbarung festgehalten." Beide Hinweise informieren nur: Eine
+erneute Zustimmung verlangt die Anwendung nicht und bietet sie auch nicht an.
 
 ## Verwaltung aufnehmen, entfernen, austreten
 
@@ -405,8 +431,15 @@ eine Anfrage an einen Verein oder eine Annahme durch die aufgenommene Person gib
 Verwaltung kennt keine Abstufung, etwa eine nur lesende Rolle, und eine Rolle als Vorstand oder
 nach den Statuten bildet sie nicht ab. Die Trainer:innen eines Teams ohne Verwaltung sehen
 die Vereinsliste mit Namen, Jahrgang und Teams aller Spieler:innen des Vereins; einschränken lässt
-sich das nicht. Ob die Bestätigungen beim Gründen stimmen, prüft niemand, und gespeichert werden
-sie nicht.
+sich das nicht. Ob die gründende Person für den Verein handeln darf, prüft niemand, und gespeichert
+wird diese Bestätigung nicht.
+
+Die Vereinbarung zur Auftragsbearbeitung ist ein Entwurf, den die Rechtsberatung noch nicht geprüft
+hat, mit Platzhaltern für Trägerschaft, Schutzmassnahmen und Testumgebung. Zugestimmt wird nur beim
+Gründen: Vereine von vor Release 1.53.0 haben keine festgehaltene Zustimmung, und weder sie noch
+ein Verein nach einer neuen Fassung können über die Anwendung (erneut) zustimmen. Welche Person
+zugestimmt hat, zeigt die Anwendung nicht an, und frühere Fassungen der Vereinbarung lassen sich
+nicht nachlesen.
 
 Niemand wird benachrichtigt: weder bei einer Aufnahme oder Entfernung, noch wenn die Verwaltung ein
 Team auflöst, eine Spieler:in zuordnet, herausnimmt oder löscht, noch wenn der Verein gelöscht
