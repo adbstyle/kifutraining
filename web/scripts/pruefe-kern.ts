@@ -6477,6 +6477,10 @@ pruefe("Übungskatalog an eigener Adresse (#674): «/uebungen», alte Filter-Adr
   for (const k of ["teil", "kat", "feld", "form", "typ", "kinder", "q", "fav", "mine", "anzahl", "deleted", "hkat"])
     assert.ok(start.includes(`"${k}"`), `Filter ${k} leitet weiter`);
   assert.ok(!start.includes(`"account_deleted"`), "der Hinweis nach dem Löschen des Kontos bleibt auf «/»");
+  // Jeder Parameter, den der Katalog liest, steht in der Weiterleitung — ein neuer Filter fällt hier auf.
+  const katalog = ohneKommentare(lies("app/(app)/uebungen/page.tsx"));
+  for (const [, k] of katalog.matchAll(/\bsp\.([a-z_]+)/g))
+    if (k !== "account_deleted") assert.ok(start.includes(`"${k}"`), `«/?${k}=…» leitet zum Katalog weiter`);
   assert.match(start, /redirect\(`\$\{UEBUNGEN_PFAD\}\?\$\{abfrage\}`\)/);
   // AK 3: Verweise auf die Übungen führen zum Katalog, nicht mehr zu «/».
   assert.match(lies("components/layout/AppNavClient.tsx"), /UEBUNGEN_PFAD/);
