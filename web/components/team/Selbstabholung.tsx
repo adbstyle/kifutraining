@@ -53,7 +53,7 @@ export function Selbstabholung({ teamId, start }: { teamId: string; start: { url
         <h3 id="selbstabholung" className="type-title-medium text-on-surface">
           Selbstabholung
         </h3>
-        <Switch checked={stand.aktiv} neutral={!stand.aktiv} disabled={pending} onChange={(e) => schalten(e.target.checked)} aria-label="Selbstabholung" />
+        <Switch ton="ruhig" checked={stand.aktiv} disabled={pending} onChange={(e) => schalten(e.target.checked)} aria-label="Selbstabholung" />
       </div>
       {stand.aktiv && stand.url ? (
         <>

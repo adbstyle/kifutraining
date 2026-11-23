@@ -13,8 +13,8 @@ import type { BlattStand } from "@/lib/termin-status";
 const FLAECHE: Record<BlattStand, string> = {
   aktiv: "umkehr text-on-surface",
   leise: "kontur border-on-surface-mittel text-on-surface",
-  vergangen: "bg-elev-08 text-on-surface-mittel",
-  gestrichen: "bg-elev-08 text-on-surface-mittel",
+  vergangen: "betont text-on-surface-mittel",
+  gestrichen: "betont text-on-surface-mittel",
 };
 
 /* Ein Termin als Kalenderblatt: Wochentag, grosse Tageszahl, Monat — wie ein

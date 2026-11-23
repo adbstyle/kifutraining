@@ -3,6 +3,7 @@ import type { ButtonHTMLAttributes, ComponentProps } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { Badge } from "./Lozenge";
 import { ZeichenPunkt, type ZeichenPunktTon } from "./ZeichenPunkt";
 
 type IconBtnVariant = "standard" | "overlay";
@@ -28,6 +29,9 @@ function iconButtonClasses(
     // Eckig mit gerundeten Kanten wie Knopf und Feld (Epic #363), kein Kreis.
     "state focus-ring inline-flex items-center justify-center rounded-flaeche transition-colors",
     "disabled:opacity-40 disabled:pointer-events-none",
+    // Gesperrt, aber fokussierbar (`aria-disabled`, etwa während eine Kopie
+    // läuft): sieht aus wie gesperrt, der Aufrufer fängt den Klick ab.
+    "aria-disabled:opacity-40 aria-disabled:cursor-default",
     BOX,
     // `primary`: die Hauptaktion einer Zeile (etwa Kopieren im KopierFeld,
     // PO 2026-10-24) — gefüllt wie der Knopf `filled`, Primary-Fläche mit
@@ -56,11 +60,14 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
   variant?: "standard" | "overlay";
   /** Pass-Through an das Lucide-Icon (z. B. `fill` für den Favoriten-Herz). */
   iconProps?: Partial<ComponentProps<LucideIcon>>;
-  /** Ein Punkt am Zeichen (`ZeichenPunkt`), etwa ob der private Link bezogen
-   *  ist. Stumm — was er meldet, gehört in `label`. */
+  /** Ein Punkt am Zeichen (`ZeichenPunkt`), etwa ob der private Link abgeholt
+   *  oder zugestellt ist. Stumm — was er meldet, gehört in `label`. */
   punkt?: ZeichenPunktTon;
   /** Hauptaktion: gefüllt in Primary wie `Button variant="filled"` — kein Umschalter. */
   primary?: boolean;
+  /** Eine Zahl am Zeichen (`Badge` oben rechts), etwa die neuen Benachrichtigungen;
+   *  ab 10 «9+», bei 0 nichts. Stumm — die Zahl gehört in `label`. */
+  zahl?: number;
 }
 
 /* Icon-Knopf: gezeichnetes Icon (Lucide) + Zustands-Ebene statt Füllung.
@@ -68,7 +75,7 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
    `active` aktiviert Toggle-Semantik (aria-pressed); ohne `active` = reiner Aktions-Button. */
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   (
-    { icon: Icon, label, active, variant = "standard", iconProps, punkt, primary, className, ...props },
+    { icon: Icon, label, active, variant = "standard", iconProps, punkt, primary, zahl, className, ...props },
     ref,
   ) => {
     const isToggle = active !== undefined;
@@ -80,10 +87,13 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         className={iconButtonClasses(variant, active, className, primary)}
         {...props}
       >
-        {punkt ? (
+        {punkt || (zahl ?? 0) > 0 ? (
           <span className="relative">
             <Icon size={ICON} strokeWidth={2} aria-hidden {...iconProps} />
-            <ZeichenPunkt ton={punkt} />
+            {punkt && <ZeichenPunkt ton={punkt} />}
+            {zahl !== undefined && zahl > 0 && (
+              <Badge className="absolute -right-2 -top-2 ring-2 ring-[var(--zeichen-grund,var(--color-elev-01))]">{zahl > 9 ? "9+" : zahl}</Badge>
+            )}
           </span>
         ) : (
           <Icon size={ICON} strokeWidth={2} aria-hidden {...iconProps} />

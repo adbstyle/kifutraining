@@ -7,18 +7,19 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata: Metadata = { title: "Cookies - KiFu" };
 
 /* Was KiFu im Browser speichert, wozu und wie man es verhindert (#409).
-   Keine Datenschutzerklärung — die gibt es bewusst nicht —, sondern die Liste
-   der Speicherungen aus lib/browser-speicher.ts. Die Seite braucht selbst
+   Nicht die Datenschutzerklärung (/datenschutz, #672, sie verweist hierher),
+   sondern die Liste der Speicherungen aus lib/browser-speicher.ts. Die Seite braucht selbst
    nichts aus dem Browser und steht darum auch dem offen, der Cookies sperrt.
-   Sie hängt am Konto (Verweis dort, Brotkrume «Konto › Cookies»); ohne Konto
-   steht sie für sich und ist über die Anmeldeseiten erreichbar. */
+   Sie hängt am Konto (Verweis unter «Daten und Konto», Brotkrume «Konto ›
+   Daten und Konto › Cookies»); ohne Konto steht sie für sich und ist über
+   die Anmeldeseiten erreichbar. */
 export default async function CookiesPage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   const krumen = user
-    ? [{ label: "Konto", href: "/konto" }, { label: "Cookies" }]
+    ? [{ label: "Konto", href: "/konto" }, { label: "Daten und Konto", href: "/konto/daten" }, { label: "Cookies" }]
     : [{ label: "Cookies" }];
   return (
     <Seitenrahmen breite="3xl" krumen={krumen}>

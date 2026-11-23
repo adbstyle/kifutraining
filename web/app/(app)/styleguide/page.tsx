@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { ReleaseText } from "@/components/versionen/ReleaseText";
 import {
+  BestandAnzeige,
   Button,
   ButtonLink,
   Badge,
@@ -10,6 +11,7 @@ import {
   ZeichenZahl,
   HerkunftLozenge,
   SichtbarkeitLozenge,
+  TrainingsTreffpunkt,
   TreffpunktListe,
   Card,
   ExerciseCard,
@@ -35,6 +37,7 @@ import {
   Select,
   MethodischerFahrplan,
   Freitext,
+  GegliederterText,
   KuerzbarerText,
   MaterialListe,
   Eigenschaften,
@@ -50,8 +53,11 @@ import {
   KopierFeld,
   Tabelle,
   TabellenZeile,
+  SortierKopf,
+  DetailKopf,
   Gefahrenzone,
 } from "@/components/ui";
+import { HinweisEltern } from "@/components/privat/HinweisEltern";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { uebungEckdaten } from "@/lib/eckdaten";
 import { ChipsDemo } from "./ChipsDemo";
@@ -64,6 +70,9 @@ import { OeffnenZeileDemo } from "./OeffnenZeileDemo";
 import { EigenschaftBearbeitbarDemo } from "./EigenschaftBearbeitbarDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { CheckboxDemo } from "./CheckboxDemo";
+import { BenachrichtigungDemo } from "./BenachrichtigungDemo";
+import { AppAblegenDemo, SchliessbareMeldung } from "./AppAblegenDemo";
+import { MitteilungenDemo } from "./MitteilungenDemo";
 import { SwitchDemo } from "./SwitchDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
@@ -72,14 +81,16 @@ import { TabelleAuswahlDemo } from "./TabelleAuswahlDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
+import { NamenBestaetigenDemo } from "./NamenBestaetigenDemo";
+import { PersonAufnehmenDemo } from "./PersonAufnehmenDemo";
 import { MaterialDemo } from "./MaterialDemo";
 import { FelderDemo } from "./FelderDemo";
 import { MiniMonatDemo } from "./MiniMonatDemo";
 import { LozengeAuswahlDemo } from "./LozengeAuswahlDemo";
+import { ListenGruppenDemo } from "./ListenGruppenDemo";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
+import { ErscheinungsbildDemo } from "./ErscheinungsbildDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
-import { TrainingCard } from "@/components/training/TrainingCard";
-import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
 import {
   Search,
   SlidersHorizontal,
@@ -117,9 +128,14 @@ import {
   LayoutGrid,
   ListChecks,
   MapPin,
+  Bell,
   Clock,
   LandPlot,
   History,
+  Play,
+  Printer,
+  Maximize2,
+  MoreVertical,
   type LucideIcon,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
@@ -151,8 +167,10 @@ import {
   type LozengeAppearance,
 } from "@/lib/farben";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { RechtlicheLinks, RechtsLink } from "@/components/layout/RechtlicheLinks";
+import { Platzhalter, RechtsAbschnitt, TextLink } from "@/components/start/RechtsSeite";
 import { KaderLozenge } from "@/components/team/KaderLozenge";
-import { ProbeLozenge } from "@/components/team/ProbeLozenge";
+import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
 import { VERZEICHNIS_COOKIE, leseVerzeichnis } from "@/lib/verzeichnis";
 
 export const metadata: Metadata = {
@@ -208,6 +226,7 @@ const GLIEDERUNG = [
     gruppen: [
       {
         eintraege: [
+          { id: "erscheinungsbild", titel: "Hell und Dunkel" },
           { id: "farbrollen", titel: "Farbrollen" },
           { id: "typografie", titel: "Typografie" },
           { id: "hoehe", titel: "Höhe" },
@@ -235,6 +254,7 @@ const GLIEDERUNG = [
           { id: "filterknopf", titel: "Filterknopf" },
           { id: "menue", titel: "Menü" },
           { id: "chip-menue", titel: "Chip mit Menü" },
+          { id: "person-aufnehmen", titel: "Person aufnehmen" },
         ],
       },
       {
@@ -245,6 +265,7 @@ const GLIEDERUNG = [
         titel: "Meldungen",
         eintraege: [
           { id: "meldungen", titel: "Leerzustand, Hinweiszeile & Section Message" },
+          { id: "bestand-anzeige", titel: "Bestand und Grenze" },
           { id: "dialog-snackbar", titel: "Dialog & Snackbar" },
           { id: "feedback-dialog", titel: "Fragen und Feedback" },
         ],
@@ -261,8 +282,10 @@ const GLIEDERUNG = [
         titel: "Layout und Struktur",
         eintraege: [
           { id: "liste-detail", titel: "Liste mit Detail daneben" },
+          { id: "detail-kopf", titel: "Detailkopf" },
           { id: "disclosure", titel: "Disclosure" },
           { id: "gefahrenzone", titel: "Gefahrenzone" },
+          { id: "namen-bestaetigen", titel: "Namen bestätigen" },
         ],
       },
       {
@@ -271,18 +294,22 @@ const GLIEDERUNG = [
           { id: "tabelle", titel: "Tabelle" },
           { id: "eigenschaften", titel: "Eigenschaften" },
           { id: "release-text", titel: "Release-Text" },
+          { id: "rechtliches", titel: "Startseite und Rechtliches" },
         ],
       },
       {
         titel: "Training und Termine",
         eintraege: [
-          { id: "karten", titel: "Übungs- und Trainingskarten" },
+          { id: "karten", titel: "Übungskarten" },
           { id: "fahrplan", titel: "Methodischer Fahrplan" },
           { id: "feld-diagramm", titel: "Feld-Diagramm" },
           { id: "material", titel: "Material" },
           { id: "kalenderblatt", titel: "Kalenderblatt" },
           { id: "mini-monat", titel: "Mini-Monat" },
           { id: "platz-spielerzahl", titel: "Platz und Spielerzahl eines Termins" },
+          { id: "benachrichtigungen", titel: "Benachrichtigungen" },
+          { id: "app-ablegen", titel: "Als App ablegen" },
+          { id: "mitteilungen", titel: "Mitteilungen aufs Mobile" },
         ],
       },
     ],
@@ -315,8 +342,21 @@ function BereichKopf({ titel }: { titel: Bereich["titel"] }) {
 /* Ein Sprung hält ab lg global 6rem Abstand zur klebenden Kopfzeile
    (globals.css). Ein Abschnitt rückt so weit höher, dass sein Untertitel auf
    der Höhe des Verzeichnisses steht (top-16): 4.5rem = 6rem - 4rem + die
-   Polsterung oben (2.5rem). */
-function Section({ id, children }: { id: AbschnittId; children: React.ReactNode }) {
+   Polsterung oben (2.5rem).
+
+   `dunkel`: Der Abschnitt legt lebende Flächen neben Zahlen, die
+   `lib/farben.ts` für das dunkle Erscheinungsbild rechnet. Damit Fläche und
+   Wert auch im Hellen zusammenpassen, steht sein Inhalt fest auf einer
+   dunklen Tafel; das helle Gegenstück zeigt «Hell und Dunkel». */
+function Section({
+  id,
+  dunkel = false,
+  children,
+}: {
+  id: AbschnittId;
+  dunkel?: boolean;
+  children: React.ReactNode;
+}) {
   const { titel, gruppe } = ABSCHNITTE.get(id)!;
   return (
     <section
@@ -328,7 +368,17 @@ function Section({ id, children }: { id: AbschnittId; children: React.ReactNode 
       <h3 id={`${id}-titel`} className="type-headline-small text-on-surface">
         {titel}
       </h3>
-      <div className="mt-6">{children}</div>
+      {dunkel ? (
+        <div
+          style={{ colorScheme: "dark" }}
+          className="mt-6 rounded-dialog kontur border-linie bg-elev-00 p-5 text-on-surface"
+        >
+          <p className="type-label-medium mb-4 text-on-surface-mittel">Dunkel</p>
+          {children}
+        </div>
+      ) : (
+        <div className="mt-6">{children}</div>
+      )}
     </section>
   );
 }
@@ -493,10 +543,10 @@ const kategorien: KategorieSlug[] = ["G", "F", "E", "D", "C", "B", "A"];
    daneben, wie die Komponente sie führt. */
 const lozengeBedeutung: [LozengeAppearance, string][] = [
   ["neutral", "Herkunft, Entwurf, Altersstufe, Termin ausgefallen"],
-  ["information", "gilt nach aussen: öffentlich, Community"],
+  ["information", "gilt nach aussen: Community, Link zugestellt"],
   ["discovery", "etwas Zusätzliches: mehrere Varianten, neue Version"],
   ["warning", "braucht Aufmerksamkeit: Termin ohne Training"],
-  ["success", "erledigt - im Kit, derzeit ohne Ort"],
+  ["success", "erledigt: Link abgeholt"],
   ["danger", "blockiert - im Kit, derzeit ohne Ort"],
 ];
 
@@ -627,10 +677,10 @@ const zeichenJeSache: [LucideIcon[], string, string][] = [
   [[CalendarDays, CalendarPlus, CalendarOff], "CalendarDays · CalendarPlus · CalendarOff", "Termin"],
   [[Repeat], "Repeat", "Terminserie"],
   [[ClipboardList], "ClipboardList", "Training, auch «Meine Trainings»"],
-  [[LayoutGrid], "LayoutGrid", "Übung, auch «Meine Übungen»"],
+  [[LayoutGrid], "LayoutGrid", "Übung"],
   [[ListChecks], "ListChecks", "nur die Zahl der Übungen in einem Training"],
   [[Layers, MapPin, Clock, LandPlot], "Layers · MapPin · Clock · LandPlot", "Variante · Ort · Zeit · Platz"],
-  [[History], "History", "Version (Versionszeile und Release-History)"],
+  [[History], "History", "Version («Was ist neu» im Konto-Menü und Release-History)"],
 ];
 
 /* Beispieltexte für die drei Stufen des methodischen Fahrplans; die
@@ -669,12 +719,13 @@ export default async function Styleguide() {
 
         <Section id="grundsatz">
           <p className="type-body-large mb-6 max-w-2xl text-on-surface-mittel">
-            KiFu folgt <strong>Material 2 im dunklen Thema</strong>. Eine einzige Fläche trägt die
+            KiFu folgt <strong>Material 2</strong>, in zwei Erscheinungsbildern mit denselben
+            Rollen (<Siehe id="erscheinungsbild" />). Im Dunkeln trägt eine einzige Fläche die
             ganze Anwendung: {GRUND} - Materials Dunkelgrau mit so viel Grün, dass der Platz im
-            Bild bleibt. Höhe entsteht nicht durch eine zweite Farbe, sondern durch ein weisses
-            Overlay auf eben dieser Fläche (<Siehe id="hoehe" />). Akzent ist ein Lila, das im
-            Dunkeln hell genug ist, um selbst Text zu sein; Schwarz steht darauf, nicht Weiss
-            (<Siehe id="farbrollen" />). Farbe umrandet und beschriftet - sie füllt nur dort, wo
+            Bild bleibt. Höhe entsteht dort nicht durch eine zweite Farbe, sondern durch ein weisses
+            Overlay auf eben dieser Fläche (<Siehe id="hoehe" />). Im Hellen tragen Fläche und
+            Schatten die Höhe. Akzent ist das Violett der Marke, im Dunkeln so hell, dass es selbst
+            Text sein kann (<Siehe id="farbrollen" />). Farbe umrandet und beschriftet - sie füllt nur dort, wo
             eine Fläche wirklich gemeint ist. Ausgenommen sind die drei Bausteine von Atlassian
             (unten): Lozenge und Section Message tragen eine getönte Fläche, die Badge eine
             gefüllte.
@@ -699,10 +750,11 @@ export default async function Styleguide() {
                   beim Umschalten (siehe <Siehe id="navigation" />).
                 </li>
                 <li>
-                  <strong>Primary Variant.</strong> Das dunkle Zweit-Lila der
+                  <strong>Primary Variant.</strong> Das dunkle Zweit-Violett der
                   Baseline stammt aus dem hellen Thema; auf dem Grund käme es auf{" "}
                   {v(kontrast("#3700b3", GRUND))}. Eine Rolle mit genau einem
-                  möglichen Ort lädt zum Missgriff ein - das System kennt ein Lila.
+                  möglichen Ort lädt zum Missgriff ein - das System kennt je
+                  Erscheinungsbild ein Violett.
                 </li>
                 <li>
                   <strong>Secondary.</strong> Der zweite Akzent der Baseline
@@ -732,7 +784,7 @@ export default async function Styleguide() {
           </div>
         </Section>
 
-        <Section id="zustaende">
+        <Section id="zustaende" dunkel>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Jede bedienbare Fläche legt beim Überfahren, Fokussieren und Drücken
             eine Ebene auf - <strong>in der Farbe ihres eigenen Inhalts</strong>,
@@ -976,7 +1028,10 @@ export default async function Styleguide() {
               <div key={name} className="rounded-flaeche kontur border-kante p-3">
                 <div
                   className="mb-2 flex h-14 w-full items-end rounded-klein border border-linie p-2"
-                  style={{ backgroundColor: hex, color: DRUCK["on-surface"] }}
+                  style={{
+                    backgroundColor: hex,
+                    color: kontrast(DRUCK["on-surface"], hex) >= 4.5 ? DRUCK["on-surface"] : DRUCK["elev-00"],
+                  }}
                 >
                   <span className="type-label-small">{hex.toUpperCase()}</span>
                 </div>
@@ -1024,7 +1079,37 @@ export default async function Styleguide() {
 
         <BereichKopf titel="Stile" />
 
-        <Section id="farbrollen">
+        <Section id="erscheinungsbild">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            KiFu hat zwei Erscheinungsbilder mit denselben Rollen (Epic #563). Jede Farbe steht im
+            CSS als <code>light-dark(hell, dunkel)</code>; welches gilt, entscheidet allein{" "}
+            <code>color-scheme</code>. Hell trägt die Höhe über Fläche und Schatten: ein leises
+            Rasengrau als Grund, weisse Karten, getönt was in einer Karte liegt, weiss alles
+            Schwebende. Dunkel bleibt der Nachtgrund mit weissem Overlay. Akzent ist in beiden das
+            Violett der Marke, im Dunkeln eine hellere Stufe. Beide Tafeln unten sind die lebenden
+            Klassen und echten Bausteine; geprüft gegen WCAG 2.2 AA in{" "}
+            <code>npm run check:farben</code>.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Betonung an Ort ist keine Höhe.</strong> Im Hellen ist alles über dem Grund
+            weiss - eine höhere Stufe hebt dort nichts ab. Was an seinem Platz hervortritt (aktive
+            Zeile in Leiste und Verzeichnis, vergangenes Kalenderblatt, ausgefallener Tag, Avatar,
+            Code), trägt darum <code>betont</code>: die Schrift zu 8 % über der Fläche darunter. Das
+            hebt auf jeder Stufe und in beiden Erscheinungsbildern ab und entspricht im Dunkeln
+            ziemlich genau der früheren Menüstufe. Schatten bleiben dem Schwebenden vorbehalten:
+            Eine hervorgehobene Karte (der nächste Termin) hebt sich über ihre Kontur ab, die im
+            Hellen 3:1 trägt - im Dunkeln steht sie dazu eine Stufe höher.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Browser ohne <code>light-dark()</code> (Safari vor 17.5, also iOS 16 und frühe 17er)
+            bekommen fest das Helle: ein Ersatz-Block mit den hellen Hälften, geschrieben von{" "}
+            <code>gen:farb-ersatz</code> und geprüft von <code>check:farben</code>. Die
+            Gruppe «Darstellung» fehlt dort im Konto-Menü - umschalten liesse sich nichts.
+          </p>
+          <ErscheinungsbildDemo />
+        </Section>
+
+        <Section id="farbrollen" dunkel>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Material vergibt <strong>Rollen</strong>, keine Bedeutungen: Es gibt
             einen Akzent, eine Fehlerfarbe und Schrift in Deckungen - was davon
@@ -1097,7 +1182,8 @@ export default async function Styleguide() {
             Atlassian - Lozenge und Section Message
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
-            Je Darstellung ein Paar aus Atlassians Dark-Theme: Die Lozenge trägt
+            Je Darstellung ein Paar aus Atlassians Dark-Theme (hier gezeigt; im
+            Hellen gilt das Gegenstück aus dem Light-Theme): Die Lozenge trägt
             die zarte Tönung (<code>lozenge-*</code> = ADS{" "}
             <code>background.&lt;x&gt;.subtler</code>) mit kräftiger Schrift (
             <code>on-lozenge-*</code> = <code>text.&lt;x&gt;.bolder</code>), die
@@ -1196,7 +1282,7 @@ export default async function Styleguide() {
           </p>
         </Section>
 
-        <Section id="hoehe">
+        <Section id="hoehe" dunkel>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Im Dunkeln trägt nicht der Schatten die Höhe, sondern die Helligkeit:
             Jede Stufe legt ein weisses Overlay über denselben Grund. Die Werte
@@ -1397,13 +1483,14 @@ export default async function Styleguide() {
 
         <Section id="knoepfe">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Sechs Varianten (und der helle Knopf weiter unten), eine Regel: <strong>Gefüllt trägt Schwarz</strong>{" "}
-            - ausser Rot. <code>filled</code> ist Primary-Fläche, <code>outlined</code> Kontur
+            Sechs Varianten (und der umgekehrte Knopf weiter unten), eine Regel: <strong>Gefüllt trägt
+            die Schrift, die auf dem Violett am stärksten ist</strong> - im Dunkeln Schwarz, im Hellen
+            Weiss; Rot trägt immer Weiss. <code>filled</code> ist Primary-Fläche, <code>outlined</code> Kontur
             auf der Kante - der <strong>Secondary Button</strong>, wenn von ihm die
             Rede ist, <code>text</code> nur Schrift, <code>danger</code>{" "}
             gefüllt in <code>danger</code> mit weisser Schrift - Löschen soll
-            man nicht übersehen (PO 2026-10-06). Das helle Error-Rot trüge
-            Weiss nicht, darum hat die Fläche ihre eigene, dunklere Rolle. Steht
+            man nicht übersehen (PO 2026-10-06). Das helle Error-Rot des Dunkeln
+            trüge Weiss nicht, darum hat die Fläche ihre eigene, dunklere Rolle. Steht
             Destruktives als Nebenaktion neben dem Hauptweg eines Dialogs, trägt es{" "}
             <code>dangerOutlined</code>, den <strong>Error-Secondary-Button</strong>: die Bauform von <code>outlined</code> mit
             Kontur und Schrift in Error - die Rückfrage danach bleibt{" "}
@@ -1460,10 +1547,10 @@ export default async function Styleguide() {
             (<code>outlined</code>) - auch als einzige Aktion.
           </p>
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
-            Heller Knopf (<code>variant=&quot;hell&quot;</code>) - auf einer Fläche im Fehlerton
+            Umgekehrter Knopf (<code>variant=&quot;umkehr&quot;</code>) - auf einer Fläche im Fehlerton
           </p>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-            Die umgekehrte, helle Fläche der Snackbar mit der Farbe des Grunds als
+            Die umgekehrte Fläche der Snackbar mit der Farbe des Grunds als
             Schrift. Neu, weil auf einer Fläche im Fehlerton <code>filled</code>{" "}
             (Violett auf Rot) zu laut wäre und <code>outlined</code> unterginge: die eine
             Handlung «Wieder anmelden» am abgemeldeten nächsten Termin hinter dem
@@ -1471,7 +1558,7 @@ export default async function Styleguide() {
           </p>
           <div className="flex flex-wrap items-center gap-3 rounded-flaeche kontur border-kante bg-section-danger/60 p-4">
             <span className="type-body-medium text-on-surface">Lena Meier ist abgemeldet.</span>
-            <Button variant="hell">Wieder anmelden</Button>
+            <Button variant="umkehr">Wieder anmelden</Button>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -1510,6 +1597,29 @@ export default async function Styleguide() {
           </div>
 
           <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
+            Gesperrt, aber im Fokus: <code>aria-disabled</code> statt <code>disabled</code> - solange eine Aktion
+            läuft und der Knopf den Fokus behalten soll
+          </p>
+          <div className="flex items-center gap-4">
+            <IconButton icon={Copy} label="Kopieren" aria-disabled />
+            <span className="type-label-small text-on-surface-mittel">
+              Ein <code>disabled</code>-Knopf verliert den Fokus, und die Tastatur- und Vorlesehilfe-Person steht
+              im Leeren. Mit <code>aria-disabled</code> bleibt er fokussierbar und sieht gesperrt aus; der
+              Klick-Handler des Aufrufers fängt den Klick ab (<code>if (laeuft) return</code>).
+            </span>
+          </div>
+
+          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
+            Zähler am Zeichen (<code>zahl</code>, <code>Badge</code>) - die Zahl dessen, was der Knopf noch nicht
+            gezeigt hat, an der Glocke der Benachrichtigungen (<Siehe id="benachrichtigungen" />). Stumm - die Zahl
+            steht im Namen des Knopfs («Benachrichtigungen, 3 neu»); ab zehn «9+», bei null kein Zähler
+          </p>
+          <div className="flex items-center gap-4">
+            <IconButton icon={Bell} zahl={3} label="Benachrichtigungen, 3 neu" />
+            <IconButton icon={Bell} zahl={12} label="Benachrichtigungen, 12 neu" />
+          </div>
+
+          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
             Punkt am Zeichen (<code>ZeichenPunkt</code>, <code>punkt</code>) - wie die Benachrichtigung an einem App-Symbol
           </p>
           <div className="flex items-center gap-4">
@@ -1519,11 +1629,14 @@ export default async function Styleguide() {
                 <ZeichenPunkt ton="primary" />
               </span>
             </span>
-            <IconButton icon={Link2} label="Privater Link, bezogen" punkt="success" />
+            <IconButton icon={Link2} label="Privater Link, abgeholt" punkt="success" />
+            <IconButton icon={Link2} label="Privater Link, zugestellt" punkt="information" />
             <span className="type-label-small text-on-surface-mittel">
-              primary: Neues (Version, schmale Leiste) · success: ein erreichter Zustand (Link bezogen). Nur das
-              Bemerkenswerte trägt einen Punkt, der Normalfall keinen - sonst wird die Liste laut. Stumm - was er
-              meldet, steht im Namen des Knopfs.
+              primary: Neues (Version, schmale Leiste) · success: ein erreichter Zustand (Link abgeholt) ·
+              information: ein gemeldeter Zustand ohne Gewissheit (Link zugestellt, #657) - blau wie die
+              Information-Lozenge des Stands im Link-Dialog, damit Punkt und Plakette dasselbe sagen. Nur das
+              Bemerkenswerte trägt einen Punkt, der Normalfall keinen (Link offen) - sonst wird die Liste laut.
+              Stumm - was er meldet, steht im Namen des Knopfs.
             </span>
           </div>
 
@@ -1535,7 +1648,7 @@ export default async function Styleguide() {
             <code>&lt;a&gt;</code> statt <code>&lt;button&gt;</code>, gleiche Optik).
             <code>Tooltip</code> umschliesst einen Trigger ohne Text und macht ihn
             lesbar - Pflicht, sobald das Zeichen allein mehrdeutig ist (Globus =
-            öffentlich vs. Schloss = privat). CSS-only, <code>aria-hidden</code>
+            Community vs. Schloss = privat). CSS-only, <code>aria-hidden</code>
             (der Name kommt schon vom <code>aria-label</code> des Triggers). Er
             steht auf 24dp wie der Dialog: Was über allem schwebt, trägt die
             oberste Stufe. Verborgen ist er <code>display: none</code>, damit er
@@ -1548,8 +1661,8 @@ export default async function Styleguide() {
             <Tooltip label="Bearbeiten">
               <IconButtonLink href="#" icon={Pencil} label="Bearbeiten" />
             </Tooltip>
-            <Tooltip label="Öffentlich schalten">
-              <IconButton icon={Globe} label="Öffentlich schalten" />
+            <Tooltip label="In die Community stellen">
+              <IconButton icon={Globe} label="In die Community stellen" />
             </Tooltip>
             <Tooltip label="Auf privat setzen">
               <IconButton icon={Lock} label="Auf privat setzen" />
@@ -1581,8 +1694,14 @@ export default async function Styleguide() {
             Ansichts-Umschalter (<code>TabNav</code>)
           </p>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-            Mehrere Sichten auf denselben Gegenstand - etwa ein Team mit
-            Trainingsplan, Trainings und Verwaltung. Bewusst Links statt
+            Mehrere Sichten auf denselben Gegenstand - etwa ein Termin mit
+            Termin, Training, Spieler:innen und Trainer:innen, die
+            Team-Verwaltung mit Spieler:innen, Kader &amp; Schnuppern, Privater
+            Link und Trainer:innen (#656): ein Eintrag «Team» in der
+            Seitenleiste, darunter die Reiter, oder das Konto mit Profil,
+            Verbindungen sowie Daten und Konto (#662). Zwischen den
+            Seiten eines Bereichs (Team, Verein) wechselt dagegen die
+            Seitenleiste (<Siehe id="navigation" />). Bewusst Links statt
             Schaltflächen: jede Ansicht hat ihre eigene Adresse, ist damit
             weitergebbar, und der Zurück-Schritt des Browsers funktioniert.
             Deshalb auch kein Auswahl-Baustein (<Siehe id="offene-einfachauswahl" />,{" "}
@@ -1591,15 +1710,21 @@ export default async function Styleguide() {
             lebt im Formularzustand. Die Leiste trennt sich nach
             unten mit <code>border-linie</code>, die offene Ansicht trägt einen
             2 px starken Strich in Primary. Die Reiter stehen in{" "}
-            <code>type-title-small</code>, normal gesetzt.
+            <code>type-title-small</code>, normal gesetzt. Reicht die Breite
+            nicht, brechen die Reiter in eine zweite Zeile um, statt seitlich zu
+            rollen: Mobile Browser zeigen keine Scrollleiste, ein Reiter
+            ausserhalb des Bilds wäre weder als offen noch als vorhanden zu
+            erkennen (die vier Bereiche der Team-Verwaltung brauchen gut 500 px,
+            auf dem Handy bleiben rund 340 px).
           </p>
           <TabNav
             ariaLabel="Beispiel-Ansichten"
             className="mb-6 max-w-md"
             items={[
-              { label: "Trainingsplan", href: "#", current: true },
-              { label: "Trainings", href: "#" },
-              { label: "Team", href: "#" },
+              { label: "Termin", href: "#", current: true },
+              { label: "Training", href: "#" },
+              { label: "Spieler:innen", href: "#" },
+              { label: "Trainer:innen", href: "#" },
             ]}
           />
 
@@ -1617,6 +1742,11 @@ export default async function Styleguide() {
             dann den eigenen Trigger nicht mehr - das Menü togglet doppelt und
             öffnet sofort wieder. In Listen gehört der Gegenstand ins{" "}
             <code>label</code> („Weitere Aktionen zu …"); der Tooltip bleibt kurz.
+          </p>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <code>gesperrt</code> sperrt den Auslöser, solange eine Aktion aus dem Menü läuft (dritte Reihe unten):
+            Er setzt <code>aria-disabled</code> statt <code>disabled</code>, behält also den Fokus, und das Menü
+            öffnet sich nicht mehr.
           </p>
           <OverflowMenuDemo />
 
@@ -1659,18 +1789,16 @@ export default async function Styleguide() {
             Namen: Zwei zusammengehörige Werte (Länge und Breite, Mindest- und
             Höchstanzahl) sind zwei Felder untereinander, nicht ein gemeinsamer
             Name über zwei Teilnamen - zwei Namensstufen brächen die ruhige
-            Liste aus Namen und Werten (PO 2026-10-04). Bildet ein Knopf mit
-            dem Feld eine Handlung (Mitglied suchen),
-            steht er in <code>aktion</code>: in derselben Zeile wie der
-            Feldkasten, auf einer Linie mit ihm - ob der Name darüber steht oder
-            das leere Feld ihn ausblendet.
+            Liste aus Namen und Werten (PO 2026-10-04).
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Der Feldkasten ist ruhend leer:</strong> keine Kontur, keine
             Fläche (Utility <code>feldkasten</code>). Ein Formular liest sich so
             als Text statt als Stapel von Kästen. Beim Überfahren hellt die ganze
-            Angabe auf, Name und Kasten zusammen, mit einer leisen Ebene in der
-            Schriftfarbe (6 %), die ringsum 6 px über den Kasten hinausragt -
+            Angabe auf - Name, Kasten und Hinweis oder Fehler darunter zusammen,
+            denn alles drei gehört zum Feld, und ein Klick auf den Hinweis wirkt
+            wie einer auf den Namen (PO 2026-10-31) -, mit einer leisen
+            Ebene in der Schriftfarbe (6 %), die ringsum 6 px hinausragt -
             gerade ein leeres Feld gibt sich so deutlich als Feld zu erkennen,
             ohne dass sich etwas verschiebt. Im Fokus trägt die Kontur Primary,
             bei Fehler und Befund Error. Die Stärke bleibt dabei immer
@@ -1691,17 +1819,23 @@ export default async function Styleguide() {
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Hinweise:</strong> Was ein Feld nur erklärt («Höchstens 200
-            Zeichen»), steht nach dem Vorbild von Jira hinter einem ⓘ rechts
-            im Feld (<code>info</code>, Baustein <code>InfoKnopf</code>): beim
-            Zeigen ein Tooltip, ein Klick öffnet ein kleines Panel. Das ⓘ zeigt
+            Zeichen»), steht nach dem Vorbild von Jira hinter einem ⓘ direkt
+            nach dem Namen (<code>info</code>, Baustein <code>InfoKnopf</code>):
+            Ein Klick öffnet ein kleines Panel; einen Tooltip braucht das ⓘ
+            nicht, es sagt selbst, was es tut (PO 2026-10-31). Das ⓘ zeigt
             sich <strong>nur beim Überfahren</strong> der Angabe - nicht ruhend,
             nicht während man im Feld arbeitet, und auf Touch-Geräten gar nicht
             (PO 2026-10-04). Muss man den Hinweis auch dort lesen, bevor man
             weitermacht - dass die Altersstufe eines Trainings lebenslang bindet
-            oder dass die Eltern den Grund eines Ausfalls sehen -,
+            oder dass Spieler:innen und Eltern den Grund eines Ausfalls sehen -,
             zeigt <code>infoAufTouch</code> ihn auf Touch-Geräten als Hinweis
-            unter dem Feld. Das ⓘ steht senkrecht mittig auf der ganzen Angabe,
-            zwischen Name und Wert. Die Tastatur erreicht es weiterhin und macht
+            unter dem Feld. Das ⓘ hängt am Namen (PO 2026-10-31): Steht der
+            Name über dem Feld, steht es oben hinter ihm, mittig zu seiner Zeile
+            und mit 24 px Fläche, die dem Wert darunter nicht zu nahe kommt; im
+            leeren Feld steht es hinter dem Namen im Kasten. Rechts im Kasten
+            lag es früher über dem Zeichen eines Datums- oder Zeitfelds, und
+            ein langer Wert lief darunter. Ein Klick auf den Namen geht wie
+            ohne ⓘ ins Feld. Die Tastatur erreicht es weiterhin und macht
             es dabei sichtbar; die Vorlesehilfe hört den Hinweis ohnehin mit dem
             Feld. Fehler und Hinweise, die
             sich mit der Eingabe ändern, bleiben sichtbar unter dem Feld (
@@ -1838,9 +1972,9 @@ export default async function Styleguide() {
             über dem fokussierten Feld verstellte sie sonst unbemerkt.
           </p>
           <div className="grid max-w-md gap-6">
-            <TextField label="Verfügbare Kinder" type="number" min={1} />
+            <TextField label="Verfügbare Spieler:innen" type="number" min={1} />
             <TextField
-              label="Verfügbare Kinder"
+              label="Verfügbare Spieler:innen"
               type="number"
               min={1}
               error
@@ -1917,8 +2051,9 @@ export default async function Styleguide() {
             Überfahren dieselbe leise Aufhellung; ohne Zeichen - der Text sagt,
             was ein Klick tut (PO 2026-10-06). Ein
             fachlicher Hinweis zur ganzen Liste - was ein Eintrag ist - steht
-            über <code>info</code> hinter dem ⓘ rechts in der Zeile, wie bei
-            einem Feld nur beim Überfahren sichtbar.
+            über <code>info</code> hinter dem ⓘ direkt nach dem Text, wie im
+            leeren Feld hinter dessen Namen und wie dort nur beim Überfahren
+            sichtbar.
           </p>
           <div className="grid max-w-md gap-6">
             <HinzufuegenFeld info="Was ein Eintrag dieser Liste ist und was nicht hierher gehört.">
@@ -1972,6 +2107,20 @@ export default async function Styleguide() {
             Hakens, und der Browser meldet «gemischt». Ein Klick macht daraus
             «gewählt»; zurück zum Strich geht es erst beim neuen Öffnen.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Pflicht-Bestätigung</strong> (#587): Im Dialog «Verein
+            gründen» stehen zwei Häkchen unter dem Namen, und der Knopf bleibt
+            gesperrt, bis beide gesetzt sind. Sie stehen nicht für eine Option,
+            sondern für eine Zusage - der Satz ist die Zusage selbst und darf
+            über mehrere Zeilen laufen. Wer das Häkchen umgeht, scheitert an der
+            Datenebene, die beide Zusagen beim Ausführen verlangt.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Mit Hinweis</strong> (<code>hinweis</code>, #642): eine zweite, leise Zeile unter dem Namen - was
+            das Häkchen bewirkt, wie «Spielervertretungen benachrichtigen» im Dialog eines Spiels (siehe{" "}
+            <Siehe id="benachrichtigungen" />). Sie gehört zur Klickfläche und hängt per <code>aria-describedby</code>{" "}
+            am Kästchen, damit die Vorlesehilfe sie nach dem Namen liest.
+          </p>
           <CheckboxDemo />
 
           <h4 className="mb-2 mt-8 type-title-medium text-on-surface">
@@ -1991,15 +2140,14 @@ export default async function Styleguide() {
             damit der Zustand nicht an der Farbe allein hängt. Rot gibt es am
             Schalter nicht, auch nicht in langen Listen: Ein Fehlen, das
             auffallen soll, zeigen Lozenge und Kalenderblatt. Gesperrt, wenn es
-            nichts mehr zu ändern gibt (der Termin hat begonnen);{" "}
-            <code>neutral</code> mit kleinem grauem Knopf ohne Zeichen, wenn es
-            nichts zu wählen gibt (er fällt aus) - und für die Aus-Lage eines
-            Schalters, dessen Aus kein Fehlen bedeutet (die Selbstabholung eines
-            Teams). <code>ton=&quot;ruhig&quot;</code> (Epic #490, wieder seit PO 2026-10-25) für «angemeldet» und
-            «da» von Spieler:innen an Trainings, am privaten Link und in der Spielerliste am Termin: Der Schalter zeigt
-            den Stand, ohne ihn zu bewerten - an eine durchsichtige Bahn mit heller Kontur und grossem hellem Knopf
-            rechts, aus eine dunkle Bahn mit grauer Kontur und kleinem grauem Knopf links, ohne Zeichen. Die Form nach
-            Proton bleibt für «dabei» der Trainer:innen. Darunter liegt ein echtes{" "}
+            nichts mehr zu ändern gibt (der Termin hat begonnen oder fällt aus).{" "}
+            <code>ton=&quot;ruhig&quot;</code> (Epic #490, Form seit PO 2026-10-30) für «angemeldet» und
+            «da» von Spieler:innen an Trainings, am privaten Link und in der Spielerliste am Termin, und für die
+            Selbstabholung eines Teams, deren Aus kein Fehlen bedeutet. Die frühere Form <code>neutral</code>{" "}
+            (kleiner Knopf ohne Zeichen) entfällt. Der Schalter zeigt
+            den Stand, ohne ihn zu bewerten - dieselbe Form wie Primary, aber der Knopf bleibt in beiden Lagen grau:
+            an rechts mit Haken, aus links mit Kreuz. Den Stand tragen Lage und Zeichen, nicht die Farbe. Primary mit
+            dem violetten Knopf bleibt für «dabei» der Trainer:innen. Darunter liegt ein echtes{" "}
             <code>&lt;input type=&quot;checkbox&quot; role=&quot;switch&quot;&gt;</code>.
           </p>
           <SwitchDemo />
@@ -2052,7 +2200,7 @@ export default async function Styleguide() {
             in einem neuen Tab und gibt weder die Herkunftsseite noch das Fenster preis.
             Neu, weil <code>ButtonLink</code> nur innerhalb der Anwendung führt. Mit
             <code> einzeilig</code> kürzt ein langer Text mit «…», das Zeichen bleibt
-            stehen - so steht der Ort mit Kartenlink auf der Karte der Eltern (#533).
+            stehen - so steht der Ort mit Kartenlink auf der Karte am privaten Link (#533).
           </p>
           <div className="flex max-w-xs flex-col items-start gap-3 type-body-medium">
             <ExternerLink href="https://maps.app.goo.gl/MRWFZj3ZQtsYGBFi9">Auf der Karte öffnen</ExternerLink>
@@ -2401,7 +2549,7 @@ export default async function Styleguide() {
             (<code>usePanelAnker</code>, geteilt mit der Mehrfachauswahl). Es ist
             kein Menü und keine Listbox, sondern eine Gruppe gewöhnlicher
             Bedienelemente: Kontrollkästchen im <code>AuswahlFilter</code>, ein
-            Zahlenfeld im <code>ZahlFilter</code> («Verfügbare Kinder»). ↑/↓ wandern zwischen ihnen, Esc
+            Zahlenfeld im <code>ZahlFilter</code> («Verfügbare Spieler:innen»). ↑/↓ wandern zwischen ihnen, Esc
             schliesst und gibt den Fokus an den Knopf zurück. Eine Wahl wirkt
             sofort, das Panel bleibt offen; Zahl und Suche wirken nach einer
             Tipppause.
@@ -2409,9 +2557,21 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Die Suche der Leiste (<code>FilterSuche</code>) steht ohne
             sichtbaren Namen, dafür umrandet und mit Platzhalter (<Siehe id="textfelder" />) - ohne Kante stünde neben den umrandeten
-            Knöpfen ein Feld, das man nicht sieht. Schalter wie «Meine Übungen»
+            Knöpfen ein Feld, das man nicht sieht. Bereinigt die Seite den
+            Suchtext (trimmen, Leerraum), bekommt das Feld dieselbe Funktion
+            als <code>bereinige</code>: Es erkennt daran das Echo und behält,
+            was gerade getippt wird. Schalter wie «Meine Übungen»
             bleiben <code>FilterChip</code> (<Siehe id="plaketten" />): Sie haben kein Panel, nur an
             und aus.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Dieselbe Leiste steht über den Spieler:innen des Vereins und über der
+            Spielerliste eines Teams (#601: Suche, Kader samt «Ohne Kader»,
+            Jahrgang, Privater Link) - kein eigenes Muster je Liste. Der Zustand
+            steht in der Adresse (<code>useAdressFilter</code>); die Reiter der
+            Team-Verwaltung tragen ihn weiter. Die Kader-Chips mit Zahl bleiben
+            den Reitern «Spieler:innen» an Trainings und Spielen, wo genau ein
+            Kader zur Zeit gilt.
           </p>
           <FilterKnopfDemo />
         </Section>
@@ -2423,7 +2583,12 @@ export default async function Styleguide() {
             <code>rounded-flaeche</code> und <code>shadow-dp-08</code>: Es
             schwebt, also trägt es beides - Höhe und Schatten. Jede Zeile trägt{" "}
             <code>state</code>, Destruktives steht zuunterst und trägt Error als
-            Schrift, nie als Fläche.
+            Schrift, nie als Fläche. Steht das Menü für eine Wahl unter wenigen
+            Möglichkeiten (Darstellung, #567), tragen die Einträge{" "}
+            <code>gewaehlt</code>: Sie werden zu <code>menuitemradio</code>, die
+            gewählte zeigt rechts den Haken in Primary. Ein Satz, der für die
+            Wahl gilt («Gilt in diesem Browser.»), steht als <code>hinweis</code>{" "}
+            unter der letzten Zeile.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Error trägt hier als Fliesstext: Das Panel liegt auf 08dp, und dort
@@ -2441,6 +2606,22 @@ export default async function Styleguide() {
             <code>hinweis</code> setzt einen leisen Satz unter die Zeile, mit ihr verknüpft
             (<code>aria-describedby</code>), etwa wohin ein Rückgängig führt; <code>trailing</code> nimmt
             neben einem Kürzel auch ein Element, etwa Pfeil und Ziel-Lozenge eines Wechsels.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Ziel und Gruppe</strong> (#661, für das Konto-Menü der Seitenleiste):{" "}
+            <code>href</code> macht die Zeile zu einem Link (<code>menuitem</code>) statt einem Knopf.{" "}
+            <em>Warum neu:</em> Das Konto-Menü führt zu Seiten («Konto und Einstellungen», «Was ist
+            neu», «Anmelden»), und wer ungesicherte Angaben auf der Seite hat, soll davor gewarnt werden
+            wie bei jedem Link der Leiste (#246) - die Warnung fängt nur Links ab. <code>gruppe</code>{" "}
+            fasst aufeinanderfolgende Zeilen mit demselben Wert zusammen (<code>role=&quot;group&quot;</code>)
+            und setzt ihren Namen als leise Überschrift darüber (<code>type-label-small</code>, mittel);{" "}
+            <em>warum neu:</em> Im Konto-Menü steht die Wahl der Darstellung zwischen Zielen und
+            Aktionen, und «Hell» allein sagte nicht, wofür es gilt. Vorgelesen wird der Name einmal, an
+            der Gruppe. <code>current</code> (nur mit <code>href</code>) markiert das Ziel als offene
+            Seite: <code>aria-current=&quot;page&quot;</code>, die Zeile betont, das Zeichen in Primary
+            wie der offene Eintrag der Leiste; <em>warum neu:</em> «Konto und Einstellungen» und «Was ist
+            neu» standen vorher als Einträge in der Leiste und trugen die offene Seite dort - im Menü
+            soll sie Vorlesehilfen weiter genannt werden.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Tastatur:</strong> Beim Öffnen springt der Fokus auf den
@@ -2493,6 +2674,32 @@ export default async function Styleguide() {
           <ChipMenuDemo />
         </Section>
 
+        <Section id="person-aufnehmen">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Eine Person ins Trainerteam oder in die Vereinsverwaltung aufnehmen
+            (<code>PersonAufnehmen</code>, #581): ein Dialog in zwei Stufen, den
+            Team-Ort und Vereins-Ort teilen. Erst Adresse und die Tragweite
+            («Was das für die Person bedeutet», als <code>information</code>-
+            Section Message) lesen, «Suchen»; dann den Anzeigenamen samt Adresse
+            prüfen, «Aufnehmen». «Zurück» führt mit der Adresse ins Feld
+            zurück, falls die Vorschau die falsche Person zeigt.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Der Baustein kennt weder Team noch Verein: Er bekommt{" "}
+            <code>suche</code> und <code>aufnahme</code> als Funktionen, die
+            einen <code>PersonSchritt</code> liefern - die Person oder den
+            fertigen Satz, warum es nicht weitergeht. So bleibt der Ablauf an
+            allen Orten derselbe, und die Sätze stehen an einer Stelle. Die
+            Vorschau ist eine dokumentierte Ausnahme von der Anti-Enumeration-
+            Linie und darum gebremst; die Meldung der Bremse steht im selben
+            Feld wie «kein Konto». Nach der Aufnahme schliesst sich der Dialog
+            und ruft <code>onAufgenommen</code>; Neuladen und Snackbar sind
+            Sache der Seite. Erfundene Adressen in der Demo: «lea@beispiel.test»
+            findet eine Person, «frei@beispiel.test» hat schon einen Verein.
+          </p>
+          <PersonAufnehmenDemo />
+        </Section>
+
         <Section id="plaketten">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Lozenge</strong> heisst die Plakette wie bei Atlassian: ein
@@ -2508,7 +2715,7 @@ export default async function Styleguide() {
             Bedeutung: <code>neutral</code> sagt, woher etwas stammt oder in
             welchem Zwischenstand es liegt (Kifu-Manual, Entwurf, Altersstufe,
             ausgefallen), <code>information</code>, was nach aussen gilt
-            (Community, Öffentlich), <code>discovery</code> etwas Zusätzliches
+            (Community), <code>discovery</code> etwas Zusätzliches
             (mehrere Varianten, «Neu» an der Version), <code>warning</code> eine Lücke, die jemand
             schliessen muss (Termin ohne Training). <code>success</code> und{" "}
             <code>danger</code> stehen im Kit bereit. Herkunft und Sichtbarkeit
@@ -2600,6 +2807,16 @@ export default async function Styleguide() {
             <LozengeAuswahlDemo />
           </div>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>ListenGruppen</strong> (#599): eine Liste in Gruppen - je Gruppe eine kleine Überschrift mit
+            Anzahl, etwa «Angemeldet · 5», darunter ihre Zeilen auf einer Fläche. Neu, weil die Spieler:innen eines
+            Termins nach ihrem Status getrennt stehen; die Überschrift folgt den Gruppen im Reiter «Trainer:innen».
+            Leere Gruppen erscheinen nicht. Wechselt eine Zeile die Gruppe, folgt ihr der Fokus
+            (<code>useFokusFolgt</code>). Jede Gruppe ist ein benannter Abschnitt.
+          </p>
+          <div className="mb-6">
+            <ListenGruppenDemo />
+          </div>
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Treffpunkte</strong> (<code>TreffpunktListe</code>, #465): die Treffpunkte eines Spiels in drei
             Spalten - Anreiseart, Zeit, Ort -, frühester zuerst. Das Datum steht nur bei einem Treffpunkt, der nicht am
             Spieltag liegt; vor Ort nennt den aktuellen Ort des Spiels. Kein eigener Baustein für die Liste der
@@ -2616,9 +2833,19 @@ export default async function Styleguide() {
             ]}
           />
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+            <strong>Treffpunkt eines Trainings</strong> (<code>TrainingsTreffpunkt</code>, #561): eine Zeile im selben
+            Raster wie die Treffpunkte eines Spiels - «Treffpunkt», Uhrzeit, Ort. Er liegt immer am Trainingstag, darum
+            ohne Datum. Neu neben <code>TreffpunktListe</code>, weil ein Training keine Anreiseart kennt und nur einen
+            Treffpunkt hat; das gleiche Raster hält beide Karten im Trainingsplan und am privaten Link gleich.
+          </p>
+          <TrainingsTreffpunkt
+            className="type-body-medium mb-6 max-w-md text-on-surface"
+            treffpunkt={{ zeit: "17:15", ort: "Garderoben Schulhaus Rain" }}
+          />
+          <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             <strong>Kader</strong> (<code>KaderLozenge</code>, Epic #447): ein
             Teil des Teams, den die Trainer:innen selbst benennen - in der
-            Spielerliste, im Trainingsplan, am Termin und am privaten Link.
+            Spielerliste, im Trainingsplan und am Termin; am privaten Link nie (#663).
             Neutral und ohne Zeichen, nur der Name (PO 2026-10-18): Ein Kader
             trägt keine Farbe, und ein Zeichen machte aus jeder Zeile mit drei
             Kadern ein Muster. Ein entfernter Kader steht an begonnenen Terminen
@@ -2630,17 +2857,23 @@ export default async function Styleguide() {
             <KaderLozenge name={null} />
           </div>
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-            <strong>Probe</strong> (<code>ProbeLozenge</code>, #555): eine
-            Spieler:in im Probe-Modus, neben dem Namen in der Spielerliste und in
-            der Karte «Probetraining». <code>discovery</code> - etwas Zusätzliches,
-            kein Status. Die Zahl nennt besuchte Probetrainings von der Anzahl
-            des Teams (PO 2026-10-29); angemeldete stehen am jeweiligen Training.
-            Derselbe Ton trägt am privaten Link den Balken der Probetrainings:
-            besucht gefüllt, angemeldet umrandet.
+            <strong>Schnuppern</strong> (<code>SchnupperLozenge</code>, #555, #584):
+            eine Spieler:in, die im Team schnuppert, neben dem Namen in der
+            Spielerliste und in der Karte «Schnuppertraining», und für die
+            Verwaltung in der Teams-Spalte der Vereinsliste und in der
+            Spielerliste unter Verein › Team - ein Baustein für beide Orte
+            (<code>components/spieler</code>).{" "}
+            <code>discovery</code> - etwas Zusätzliches, kein Status. Die Zahl
+            nennt besuchte Schnuppertrainings von der Anzahl des Teams (PO
+            2026-10-29); angemeldete stehen am jeweiligen Training. Ohne
+            festgelegte Anzahl steht nur «Schnuppern». Derselbe Ton trägt am
+            privaten Link den Balken der Schnuppertrainings: besucht gefüllt,
+            angemeldet umrandet.
           </p>
           <div className="mb-6 flex flex-wrap items-center gap-2">
-            <ProbeLozenge stand={{ anzahl: 4, besucht: 1, angemeldet: 2, moeglich: 1 }} />
-            <ProbeLozenge stand={{ anzahl: 4, besucht: 3, angemeldet: 0, moeglich: 1 }} />
+            <SchnupperLozenge stand={{ anzahl: 4, besucht: 1 }} />
+            <SchnupperLozenge stand={{ anzahl: 4, besucht: 3 }} />
+            <SchnupperLozenge stand={{ anzahl: null, besucht: 0 }} />
           </div>
           <div className="mb-6 flex flex-wrap items-center gap-3 rounded-flaeche bg-[linear-gradient(135deg,#f5f5f0,#9aa79c)] p-3">
             <HerkunftLozenge herkunft="manual" aufBild />
@@ -2684,7 +2917,7 @@ export default async function Styleguide() {
             auf die ein Kader-Chip eingrenzt). Anatomie wie{" "}
             <code>@atlaskit/badge</code>: <code>rounded-klein</code>, 4 px
             seitlich, mindestens 24 px breit, <code>type-lozenge</code>. Gefüllt
-            in Primary - Atlassians Markenfarbe ist bei uns das Lila -, weil sie
+            in Primary - Atlassians Markenfarbe ist bei uns das Violett -, weil sie
             als Teil des Knopfes gelesen wird, nicht als eigene Aussage über den
             Inhalt. Für die Vorlesehilfe stumm: Der Knopf sagt die Zahl in Worten.{" "}
             <code>appearance=&quot;neutral&quot;</code> (hell, <code>umkehr</code>) trägt ein Filter-Chip in Ruhe;
@@ -2714,6 +2947,14 @@ export default async function Styleguide() {
             der halbfette Knopf daneben, der die Handlung trägt. Trägt er
             Nutzertext, bliebe der in Versalien ohnehin nicht, was die Trainerin
             geschrieben hat (Regel unter <Siehe id="typografie" />).
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            <strong>Eingrenzen.</strong> Schliessen sich Filter aus, gilt
+            höchstens einer: ein Klick auf den gewählten hebt ihn auf, nichts
+            gewählt heisst alles - darum gibt es keinen Chip «Alle». So im Team
+            («Meine Termine», «Eingeladen») und am privaten Link («Trainings»,
+            «Spiele»). Lässt die Eingrenzung nichts übrig, sagt ein{" "}
+            <code>Leerzustand</code>, wie man zurückkommt.
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             <strong>Eine Höhe.</strong> Jeder Chip ist 36 px hoch, im Fliesstext
@@ -2866,9 +3107,11 @@ export default async function Styleguide() {
             betrifft, bleibt dagegen Fehlertext am Feld (<Siehe id="textfelder" />).
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Am Fuss der öffentlichen Trainings-Seiten steht für Besucher ohne
-            Konto der <code>AnmeldeHinweis</code>: eine Meldung mit eigenem
-            Zeichen und dem Weg zum Konto als Aktion. Auf Papier fehlt er.
+            <strong>Schliessbar</strong> (<code>onSchliessen</code>, #650): ein
+            Icon-Knopf ✕ oben rechts mit eigenem Label, für einen Hinweis, den man
+            ablehnen darf, ohne zu antworten - etwa «Termine als App» am privaten
+            Link (<Siehe id="app-ablegen" />). Was danach geschieht (wann er
+            wiederkommt), bestimmt der Aufrufer.
           </p>
           <div className="grid max-w-2xl gap-4">
             <SectionMessage appearance="error">
@@ -2894,7 +3137,7 @@ export default async function Styleguide() {
             >
               Das Feld-Diagramm zeigt inzwischen anderes Material: Hürden: 0 → 1.
             </SectionMessage>
-            <AnmeldeHinweis />
+            <SchliessbareMeldung />
             <SectionMessage appearance="warning">
               warning - im Kit, derzeit ohne Ort.
             </SectionMessage>
@@ -2905,6 +3148,58 @@ export default async function Styleguide() {
               discovery - im Kit, derzeit ohne Ort.
             </SectionMessage>
           </div>
+        </Section>
+
+        <Section id="bestand-anzeige">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Wie viele eigene Übungen oder Trainings ein Konto ohne Verein von
+            seiner Grenze besitzt (<code>BestandAnzeige</code>, #588): höchstens
+            50 Übungen und 30 Trainings, bis es einem Team oder der Verwaltung
+            eines Vereins angehört. Neu als Baustein, weil derselbe Stand an
+            drei Orten steht und überall gleich lauten muss - oben in «Meine
+            Übungen» und «Meine Trainings», vor dem Anlegen und in der Stufe
+            vor Kopieren und Übernehmen. Die Zahl kommt von der Datenebene,
+            nie aus einer gezählten Liste; die Sätze stehen einmal in{" "}
+            <code>lib/konto-grenzen.ts</code>. Konten in einem Verein sehen
+            nichts davon.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Die <strong>Zeile</strong> ist der Stand als Text; ab der Grenze
+            steht daneben eine Lozenge <code>warning</code> - eine Eigenschaft,
+            die Aufmerksamkeit braucht, kein Fehler. Über der Grenze (Altbestand
+            bleibt, nur Neues wird abgewiesen) steht die Zahl ohne negativen
+            Rest. Die <strong>Meldung</strong> ist die Section Message{" "}
+            <code>warning</code> mit dem Weg zur eigenen Übersicht, wo sich
+            etwas löschen lässt: Sie steht auf <code>/neu</code> und{" "}
+            <code>/training/neu</code> an der Grenze statt der Maske, bevor
+            jemand Angaben macht. Kein Fortschrittsbalken - er zeigte dieselbe
+            Zahl ein zweites Mal und bräuchte ein Mass für den Bestand über der
+            Grenze.
+          </p>
+          <div className="flex max-w-xl flex-col gap-3">
+            <BestandAnzeige art="uebungen" grenze={{ bestand: 12, max: 50 }} />
+            <BestandAnzeige art="trainings" grenze={{ bestand: 30, max: 30 }} />
+            <BestandAnzeige art="uebungen" grenze={{ bestand: 62, max: 50 }} />
+            <BestandAnzeige art="trainings" grenze={{ bestand: 30, max: 30 }} variante="meldung" />
+          </div>
+          <p className="type-body-medium mb-5 mt-8 max-w-2xl text-on-surface-mittel">
+            <strong>Die Stufe vor Kopieren, Übernehmen und «In die Bibliothek»</strong>{" "}
+            (<code>useBestandStufe</code>) ist ein Dialog, den nur ein Konto ohne
+            Verein sieht: Er nennt den frisch gelesenen Stand («Du besitzt 12 von
+            50 Übungen.») und bietet die Aktion an; an der Grenze steht dort die
+            Meldung und nur «Schliessen». Weist die Datenebene trotz freier
+            Anzeige an der Grenze ab (gleichzeitige Vorgänge, überholter Stand),
+            zeigt der Dialog dieselbe Form: die Meldung mit dem Weg zur eigenen
+            Übersicht und nur «Schliessen»; auf <code>/neu</code> und{" "}
+            <code>/training/neu</code> ersetzt die Meldung die Zeile, und die
+            Angaben bleiben. Die Anzeige entscheidet nie: Kein Knopf bleibt
+            wegen eines Zählers gesperrt, den niemand gelesen hat. Ein Konto in
+            einem Verein kopiert und übernimmt weiter mit einem Klick. Während
+            die Aktion läuft, bis die Zielseite steht, ist der Auslöser mit{" "}
+            <code>aria-disabled</code> gesperrt (beim ⋮-Menü{" "}
+            <code>OverflowMenu gesperrt</code>): Er behält den Fokus, und ein
+            schneller zweiter Klick erzeugt keine zweite Kopie.
+          </p>
         </Section>
 
         <Section id="dialog-snackbar">
@@ -2935,17 +3230,26 @@ export default async function Styleguide() {
             von unten ein; bei reduzierter Bewegung blendet sie nur ein.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Rückfragen</strong> stehen als Geschwister neben den übrigen
+            Dialogen, wenn sie eine Aktion der Seite bestätigen (etwa «Variante
+            entfernen» im Trainingseditor). Geschachtelt im Dialog steht eine
+            Rückfrage nur, wenn sie einen Schritt dieses Dialogs bestätigt und
+            danach in ihn zurückführt - wie «Link erneuern?» im Link-Dialog, der
+            danach den neuen Link zeigt. Der Baustein trägt das: Er reagiert nur
+            auf sein eigenes <code>close</code> und <code>cancel</code>, sodass
+            Abbrechen oder Escape in der Rückfrage den äusseren Dialog nicht
+            mitschliessen (React reicht diese Ereignisse sonst nach aussen
+            weiter, ebenso das <code>cancel</code> eines abgebrochenen
+            Dateiwählers).
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Im Fuss eines Dialogs steht kein Textknopf: Der Ausweg ist ein
             Secondary Button (<code>outlined</code>), seine Schrift ist{" "}
-            <code>on-surface</code>. <strong>Bewusste Abweichung:</strong>{" "}
-            Links im Inhalt eines Dialogs («Der Serie folgen», «Übung
-            erfassen») bleiben Primary und kommen auf 24dp damit auf{" "}
-            {v(kontrast(PRIMARY, elev(24)))} - knapp unter 4.5:1. Materials
-            eigene Baseline tut dasselbe, und die Alternative wäre schlechter:
-            Weisse Linkschrift wäre von der Fliesstextzeile daneben nicht mehr zu
-            unterscheiden. Die Links sind unterstrichen und tragen den Ring; wer
-            sie nicht als Links liest, verliert nichts, denn der Dialog nennt
-            seine Handlung auch im Text.
+            <code>on-surface</code>. Links im Inhalt eines Dialogs («Der Serie
+            folgen», «Übung erfassen») bleiben Primary und kommen auf 24dp auf{" "}
+            {v(kontrast(PRIMARY, elev(24)))}. Weisse Linkschrift wäre von der
+            Fliesstextzeile daneben nicht mehr zu unterscheiden; die Links sind
+            zudem unterstrichen und tragen den Ring.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Die Snackbar meldet einen <strong>Vorgang</strong>, die Section
@@ -3057,21 +3361,65 @@ export default async function Styleguide() {
             <strong>Seitenleiste</strong> am linken Rand, auf{" "}
             <code>bg-elev-01</code> mit <code>border-linie</code> zum Inhalt. Sie
             ist Rahmen, keine schwebende Fläche, und trägt darum keinen Schatten.
-            Oben die Marke (Fussball im Primary-Quadrat, zugleich das Favicon), darunter die Einträge in
-            Gruppen, unten «Fragen und Feedback» (nur angemeldet; ein Knopf, kein Link - er öffnet
-            den Dialog neben der Seite, siehe <Siehe id="feedback-dialog" />), die Versionszeile,
-            der Styleguide und die Konto-Karte: Avatar, Anzeigename
-            und E-Mail führen als Ganzes ins Konto. Die Versionszeile (Zeichen und Nummer, ruhiger als
-            ein Eintrag) führt zur Release-History, die Zeile darunter (Palette, gleich ruhig) zu
-            dieser Seite; schmal bleibt je das Zeichen. Ist ein Release
-            erschienen, den dieser Browser noch nicht gesehen hat, trägt die Versionszeile die Plakette «Neu»
-            (<code>discovery</code>: etwas Zusätzliches) - schmal stattdessen einen Punkt in Primary
-            am Zeichen, die einzige Punkt-Markierung im Kit. Sie drängt sich nicht auf und
-            verschwindet, sobald die Versionen angezeigt wurden. Abmelden steht im Konto, nicht in der
-            Leiste. Der offene Eintrag steht eine Stufe höher als sein Grund
-            (08dp auf 01dp) und trägt sein Zeichen in Primary; aufklappbare
+            Oben die Marke (die Bildmarke F mit Punkt, dieselbe Datei wie das Favicon, und der Name), darunter die Einträge in
+            Gruppen, unten nur noch die Konto-Karte (siehe «Konto-Menü» gleich darunter). Diese Seite führt die
+            Leiste nicht (PO 2026-10-30): Sie ist Werkzeug fürs Entwickeln, nicht für Nutzer:innen,
+            und bleibt unter <code>/styleguide</code> erreichbar. Eigene Übungen und Trainings haben keine eigenen Einträge (#660): Der Chip «Meine
+            Übungen» bzw. «Meine Trainings» grenzt die Bibliothek ein, und «Übungen» bzw. «Trainings»
+            bleibt dabei der offene Eintrag. Der offene Eintrag ist betont (<code>betont</code>, die Schrift
+            zu 8 % über der Leiste) und trägt sein Zeichen in Primary; aufklappbare
             Einträge (Teams) haben einen eigenen Pfeil, damit der Name selbst
             zur Übersicht führen kann.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            <strong>Konto-Menü</strong> (#661): Die Konto-Karte unten - Avatar, Name und zweite Zeile,
+            rechts ein Auf-Ab-Zeichen - ist ein Knopf und öffnet ein Menü (<code>Menu</code>, siehe{" "}
+            <Siehe id="menue" />). Angemeldet: «Konto und Einstellungen», die Gruppe «Darstellung» mit
+            «Wie das Gerät», «Hell» und «Dunkel» (#567; nur wo der Browser umschalten kann, die gewählte
+            mit Haken, darunter «Gilt in diesem Browser.»), «Fragen und Feedback» (ein Knopf, kein Link -
+            er öffnet den Dialog neben der Seite, siehe <Siehe id="feedback-dialog" />), «Was ist neu»
+            (die Release-History) und nach einem Strich «Abmelden». Ohne
+            Anmeldung trägt die Karte ein Personenzeichen, «Nicht angemeldet» und «Anmelden oder Konto
+            erstellen»; ihr Menü bietet «Anmelden», «Konto erstellen» und «Was ist neu». Ziele sind
+            Links (<code>href</code>), damit die Warnung vor ungesicherten Angaben greift. Ist ein
+            Release erschienen, den dieser Browser noch nicht gesehen hat, trägt der Avatar einen Punkt
+            in Primary (<code>ZeichenPunkt</code>) - breit wie schmal, die einzige Punkt-Markierung der
+            Leiste - und «Was ist neu» die Plakette «Neu» (<code>discovery</code>: etwas Zusätzliches);
+            sonst steht dort die laufende Versionsnummer. Beides drängt sich nicht auf und verschwindet,
+            sobald die Versionen angezeigt wurden. Breit klappt das Menü über der Karte auf, so breit
+            wie sie, schmal rechts neben der Leiste - es steht darum <code>fixed</code> und ragt aus der
+            Leiste hinaus. Höher als der Platz bis zum oberen Fensterrand wird es nie; reicht er nicht
+            (Drawer auf einem Handy quer), scrollt das Menü in sich. Tastatur nach dem Menü-Muster; Tab
+            schliesst und gibt den Fokus an die Karte, Escape im Drawer schliesst nur das Menü, ein
+            Seitenwechsel schliesst es ebenfalls. Vorgelesen heisst es «Konto» bzw. ohne Anmeldung «Ohne
+            Konto» (der Hinweis am schmalen Knopf bleibt «Anmelden»). Die offene Seite («Konto und
+            Einstellungen» auf jeder Konto-Seite, «Was ist neu» auf den Versionen) trägt im Menü{" "}
+            <code>current</code>. «Abmelden» ist kein Link; es fragt die Warnung vor ungesicherten
+            Angaben darum selbst (<code>nachRueckfrage</code>). Die Wahl der Darstellung lässt den
+            Drawer offen, Ziele und Aktionen schliessen ihn. Umgeschaltet wird sofort und ohne
+            Neuladen; Ungespeichertes auf der Seite bleibt stehen.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            <strong>Bereich-Wechsler</strong> (<code>BereichWechsler</code>, Story #581) steht oben in
+            der Leiste, unter der Marke, und wählt den Bereich: eines der eigenen Teams oder den
+            Verein. <em>Warum neu:</em> Bisher gab es einen einzigen Bereich «Teams» mit allen Teams als
+            Unterpunkten. Mit dem Verein kommt ein zweiter Bereich mit eigenen Einträgen dazu; die Leiste
+            zeigt darum nur, was in dem gewählten Bereich geht, und die Bibliotheken bleiben immer. Der
+            Knopf trägt zwei Zeilen (Art und Name, etwa «FC Wyler · Team» über «Da Junioren») und ein
+            Auf-Ab-Zeichen; die Liste klappt darunter auf, je Bereich mit seinem Untertitel und einem
+            Haken beim offenen, die Teams durch einen Strich vom Verein getrennt. Es gibt keine
+            Avatare. Gibt es nur einen Bereich, ist der Wechsler eine Anzeige ohne Liste.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            Die Einträge der Liste sind <strong>Links</strong>, keine Knöpfe (<code>menuitemradio</code>):
+            Wer ungesicherte Angaben auf der Seite hat, wird vor dem Wechsel wie bei jedem Link der
+            Leiste gewarnt. Tastatur nach dem Menü-Muster: beim Öffnen steht der Fokus auf dem offenen
+            Bereich, ↑/↓ laufen im Kreis, Escape schliesst und gibt den Fokus zurück. Die Beschriftung
+            für Vorlesehilfen ist «Bereich wählen». Schmal bleibt vom Knopf das Zeichen des Bereichs, die
+            Liste klappt (<code>fixed</code>, wie das Konto-Menü) rechts neben der Leiste auf. Welcher
+            Bereich offen ist, folgt aus der Adresse; auf Seiten ohne Bereich (Bibliotheken, Konto) bleibt
+            der zuletzt gewählte, gemerkt im Cookie <code>kifu-bereich</code>. Reine Navigation: Rechte
+            hängen daran keine.
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             <strong>Breit oder schmal</strong> - 280 px mit Namen, 72 px nur mit
@@ -3090,7 +3438,7 @@ export default async function Styleguide() {
             links</strong> auf 08dp, geöffnet über eine schmale Kopfzeile
             (04dp, deckend) mit Hamburger. Scrim, Escape und Scroll-Sperre wie
             bei jedem Overlay; dort ist die Leiste immer breit, die aktive Zeile
-            steht auf 12dp.
+            ebenso betont.
           </p>
           <SeitenleisteDemo />
         </Section>
@@ -3115,7 +3463,7 @@ export default async function Styleguide() {
             (<code>Verzeichnis</code> in <code>VerzeichnisFlaeche</code>): «Versionen» und diese
             Seite - das Verzeichnis links ist das Beispiel. Es klebt unter der Kopfzeile, scrollt
             für sich und führt mit jedem Eintrag zu einem Abschnitt. Der Abschnitt, der oben im
-            Fenster steht, trägt seine Zeile auf 08dp (<code>aria-current=&quot;location&quot;</code>);
+            Fenster steht, trägt seine Zeile betont (<code>aria-current=&quot;location&quot;</code>);
             das Verzeichnis scrollt so, dass sie sichtbar bleibt.
           </p>
           <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-1 pl-5 text-on-surface-mittel">
@@ -3157,7 +3505,7 @@ export default async function Styleguide() {
             statt auf eine eigene Seite zu führen (Epic #369) - der Trainer
             behält die Zusammenstellung im Blick. Breit ist darum{" "}
             <strong>die ganze Zeile die Fläche, die öffnet</strong>, und hellt
-            beim Überfahren auf wie eine Trainingskachel der Übersicht (<Siehe id="karten" />): Die
+            beim Überfahren auf wie eine Zeile der Trainingsübersicht (<Siehe id="tabelle" />): Die
             Zustands-Ebene (<code>state</code>, <Siehe id="zustaende" />) liegt auf der Zeile, der Knopf
             dazu ist der Name (<code>UebungsName</code>), dessen Fläche über die
             Zeile reicht. Was die Zeile sonst trägt - Umsortieren, Entfernen,
@@ -3187,6 +3535,53 @@ export default async function Styleguide() {
             </li>
           </ul>
           <OeffnenZeileDemo />
+        </Section>
+
+        <Section id="detail-kopf">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Der Kopf eines Detail, das neben einer Liste steht - das ausgewählte
+            Training neben der Trainingsübersicht (#630). Neu als Baustein
+            (<code>DetailKopf</code>), weil der Seitenkopf (Brotkrumen und
+            Aktionen) zur Seite gehört und nicht zu einem Eintrag in ihr: Name,
+            Aktionen und Schliessen stehen hier in einer Zeile über dem Detail.
+            Links der Name als Überschrift, die umbricht statt die Knöpfe zu
+            verdrängen; rechts auf Titelhöhe die Icon-Knöpfe - vorne
+            Bearbeiten am eigenen bzw. Öffnen am fremden Eintrag, dann die
+            übrigen Aktionen und das ⋮. Ein senkrechter Trenner (1 px, 20 px hoch,{" "}
+            <code>linie</code>) scheidet sie vom X, das das Detail schliesst:
+            Schliessen betrifft die Ansicht, nicht den Eintrag. Das X ist ein Link
+            ohne Sprung (<code>scroll=&#123;false&#125;</code>) auf die Adresse
+            ohne Auswahl - die Liste behält ihre Stelle, der Fokus kehrt auf die
+            zuvor gewählte Zeile zurück.
+          </p>
+          <div className="max-w-md rounded-flaeche bg-elev-02 p-4">
+            <DetailKopf
+              titel="Passspiel im Quadrat"
+              schliessenHref="#detail-kopf"
+              aktionen={
+                <>
+                  <IconButtonLink href="#detail-kopf" icon={Pencil} label="Bearbeiten" />
+                  <IconButtonLink href="#detail-kopf" icon={Play} label="Durchführen" />
+                  <IconButtonLink href="#detail-kopf" icon={Printer} label="Drucken" />
+                  <IconButton icon={MoreVertical} label="Weitere Aktionen" />
+                </>
+              }
+            />
+          </div>
+          <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">Fremder Eintrag, langer Name</p>
+          <div className="max-w-md rounded-flaeche bg-elev-02 p-4">
+            <DetailKopf
+              titel="Abschluss unter Druck mit zwei Toren und wechselnden Zonen"
+              schliessenHref="#detail-kopf"
+              aktionen={
+                <>
+                  <IconButtonLink href="#detail-kopf" icon={Maximize2} label="Öffnen" />
+                  <IconButtonLink href="#detail-kopf" icon={Play} label="Durchführen" />
+                  <IconButtonLink href="#detail-kopf" icon={Printer} label="Drucken" />
+                </>
+              }
+            />
+          </div>
         </Section>
 
         <Section id="disclosure">
@@ -3229,36 +3624,78 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Der Bereich am Ende einer Verwaltungsseite für Handlungen, die sich
             nicht zurücknehmen lassen und andere mittreffen - in der
-            Teamverwaltung Verlassen und Auflösen (#480). Eine Karte auf{" "}
-            <code>elev-01</code> wie jede andere, aber mit voller Kontur und
-            Überschrift in Error: {v(kontrast(ERROR, elev(1)))} als Schrift, als
-            Kontur mindestens 3:1 auf jeder Stufe und im Druck. Getönt wird die
-            Fläche nicht - <code>section-danger</code> heisst «etwas ist
-            schiefgegangen» (<Siehe id="meldungen" />), die Gefahrenzone dagegen
-            «hier ist Vorsicht geboten». Eine Kontur mit Alpha bräche die 3:1;
-            darum volles <code>border-error</code>.
+            Teamverwaltung das Verlassen des Teams, in der Vereinsverwaltung das
+            Auflösen eines Teams und der Austritt aus der Verwaltung (#480,
+            #581), im Konto unter «Daten und Konto» das Löschen des Kontos
+            (#662). Eine Karte auf <code>elev-01</code> wie jede andere, aber mit
+            voller Kontur und Überschrift in Error: {v(kontrast(ERROR, elev(1)))}{" "}
+            als Schrift, als Kontur mindestens 3:1 auf jeder Stufe und im
+            Druck. Getönt wird die Fläche nicht - <code>section-danger</code>{" "}
+            heisst «etwas ist schiefgegangen» (<Siehe id="meldungen" />), die
+            Gefahrenzone dagegen «hier ist Vorsicht geboten». Eine Kontur mit
+            Alpha bräche die 3:1; darum volles <code>border-error</code>.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Löscht eine Handlung dort für alle, bestätigt man sie durch die{" "}
-            <strong>Eingabe des Namens</strong>: Der Dialog nennt, was verloren
-            geht, und den einzugebenden Namen; der <code>danger</code>-Knopf ist
-            erst frei, wenn die Eingabe genau stimmt (Gross- und Kleinschreibung
-            zählen, Leerzeichen am Rand nicht). Das Feld schaltet Autokorrektur,
-            automatische Grossschreibung und Rechtschreibprüfung ab, Einfügen
-            bleibt erlaubt. Die Vorlesehilfe hört den Namen über{" "}
-            <code>aria-describedby</code> mit dem Feld und die Freigabe über eine
-            Live-Region. Andere Löschungen bleiben bei der gewöhnlichen Rückfrage
-            - die Eingabe ist dem vorbehalten, was mehrere Menschen trifft.
+            Löscht eine Handlung für alle, bestätigt man sie durch die Eingabe
+            des Namens (<Siehe id="namen-bestaetigen" />) - das Auflösen eines
+            Teams und das Löschen des Vereins (#587) liegen im Bereich
+            «Verein». Andere Handlungen bleiben bei der
+            gewöhnlichen Rückfrage; die Eingabe ist dem vorbehalten, was mehrere
+            Menschen trifft.
           </p>
           <Gefahrenzone
             className="max-w-xl"
-            beschreibung="Verlassen betrifft nur dich - ausser du bist das letzte Mitglied. Auflösen löscht das Team samt allen Inhalten für alle Mitglieder."
+            beschreibung="Du verlierst den Zugang zu Kalender, Spieler:innen und Team-Trainings. Das Team bleibt bestehen, auch wenn du die letzte Person bist."
           >
             <div className="flex flex-wrap gap-2">
               <Button variant="outlined">Team verlassen</Button>
-              <Button variant="danger">Team auflösen</Button>
             </div>
           </Gefahrenzone>
+          <p className="type-body-medium mb-5 mt-8 max-w-2xl text-on-surface-mittel">
+            Stehen zwei Handlungen darin, geht die mildere als{" "}
+            <code>outlined</code> voran und die unwiderrufliche als{" "}
+            <code>danger</code> dahinter, nebeneinander und auf schmalem Schirm
+            untereinander (#587): in der Verwaltung des Vereins der eigene
+            Austritt und das Löschen des Vereins.
+          </p>
+          <Gefahrenzone
+            className="max-w-xl"
+            beschreibung="Austreten betrifft nur dich. Verein löschen entfernt alle Teams und alle Spieler:innen; alle Personen werden Konten ohne Verein."
+          >
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outlined">Aus der Verwaltung austreten</Button>
+              <Button variant="danger">Verein löschen</Button>
+            </div>
+          </Gefahrenzone>
+        </Section>
+
+        <Section id="namen-bestaetigen">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Die Bestätigung einer Handlung, die für mehrere Menschen
+            unwiderruflich ist, durch die <strong>Eingabe des Namens</strong>{" "}
+            (<code>NamenBestaetigen</code>, #480, herausgelöst aus der Team-
+            Gefahrenzone, weil auch das Auflösen im Verein sie braucht): ein
+            Absatz, der den einzugebenden Namen nennt, das Feld und die Meldung
+            des Servers. Titel, Folgenliste und der <code>danger</code>-Knopf
+            stehen beim Dialog, der den Baustein trägt; der Knopf ist erst frei,
+            wenn <code>namenStimmen</code> zutrifft - Gross- und Kleinschreibung
+            zählen, Leerzeichen am Rand und die Unicode-Normalform nicht.
+            Dieselbe Regel wiederholt die Datenebene; die Oberfläche entscheidet
+            nichts.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Das Feld schaltet Autokorrektur, automatische Grossschreibung und
+            Rechtschreibprüfung ab und sagt Passwort-Managern, dass es kein
+            Login ist; Einfügen bleibt erlaubt. Die Vorlesehilfe hört den Namen
+            über <code>aria-describedby</code> mit dem Feld und die Freigabe über
+            eine Live-Region. Weicht der Name inzwischen ab, nennt der Dialog
+            den aktuellen als Fehler (<code>fehler</code>) und bleibt offen.
+            Während einer laufenden Anfrage lässt sich das Feld nicht ändern
+            (<code>gesperrt</code>, #587); es bleibt nur schreibgeschützt und
+            behält den Fokus. Der Baustein trägt auch das Löschen eines Vereins
+            und das Löschen des Kontos als einzige Person eines Vereins.
+          </p>
+          <NamenBestaetigenDemo />
         </Section>
 
         <Section id="tabelle">
@@ -3306,6 +3743,68 @@ export default async function Styleguide() {
             Wer die Liste eingrenzt, behält nur sichtbare Einträge in der Auswahl.
           </p>
           <TabelleAuswahlDemo />
+
+          <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+            Sortierbar
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Wo man Einträge vergleicht statt bearbeitet - die Trainingsübersicht
+            (#629) -, steht eine echte Tabelle (<code>table</code>) mit
+            sortierbaren Spaltenköpfen. Neu als Baustein (<code>SortierKopf</code>),
+            weil die <code>Tabelle</code> oben ihren Kopf nur fürs Auge trägt und
+            weder Spaltenbezug noch Sortierung vorlesen kann. Ein sortierbarer
+            Kopf ist ein Link, der die Sortierung in die Adresse schreibt: Der
+            Server sortiert, die Wahl übersteht Neuladen und geteilte Links. Die
+            aktive Spalte trägt den Pfeil in Primary (aufwärts = aufsteigend), die
+            übrigen sortierbaren den Doppelpfeil gedämpft; die Vorlesehilfe hört{" "}
+            <code>aria-sort</code>. Ein Klick auf die aktive Spalte kehrt die
+            Richtung um, eine neue beginnt bei Text mit A-Z, bei Zahlen und Datum
+            mit dem Grössten. Ohne <code>href</code> ist ein Kopf fest (hier
+            «Sichtbarkeit»). Die ganze Zeile hellt beim Überfahren auf; ihr
+            einziger Link ist der Name, dessen Fläche über die Zeile reicht. Er
+            wählt die Zeile aus, ihr Detail steht daneben (<Siehe id="detail-kopf" />):
+            Die ausgewählte Zeile ist betont (<code>betont</code>), ihr Link
+            trägt <code>aria-current</code>. Schmal fallen die Köpfe weg, die Angaben
+            stehen unter dem Namen, und sortiert wird über einen{" "}
+            <code>ChipMenu</code> über der Tabelle.
+          </p>
+          <div className="overflow-hidden rounded-flaeche bg-elev-01">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-linie">
+                  <SortierKopf href="#tabelle" richtung="auf">Name</SortierKopf>
+                  <SortierKopf className="w-36">Sichtbarkeit</SortierKopf>
+                  <SortierKopf href="#tabelle" ausrichtung="end" className="w-28">
+                    Übungen
+                  </SortierKopf>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-linie">
+                {[
+                  ["Abschluss unter Druck", true, 5],
+                  ["Halle oder Rasen", false, 8],
+                  ["Passspiel im Quadrat", true, 6],
+                ].map(([name, oeffentlich, uebungen]) => (
+                  <tr key={String(name)} className="state">
+                    <td className="py-2 pl-4 pr-2 type-body-medium">
+                      <a
+                        href="#tabelle"
+                        className="focus-ring rounded-klein text-on-surface before:absolute before:inset-0 before:content-[''] hover:underline"
+                      >
+                        {name}
+                      </a>
+                    </td>
+                    <td className="px-2 py-2">
+                      <SichtbarkeitLozenge oeffentlich={Boolean(oeffentlich)} />
+                    </td>
+                    <td className="py-2 pl-2 pr-4 text-right tabular-nums type-body-medium text-on-surface">
+                      {uebungen}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Section>
 
         <Section id="eigenschaften">
@@ -3405,13 +3904,14 @@ export default async function Styleguide() {
             «Auf GitHub ansehen»), dann der Text, wie er auf GitHub steht. Er ist Markdown und
             erscheint mit seiner Gliederung in der Schrift der Anwendung: Überschriften eine Stufe
             unter dem Titel (<code>type-title-medium</code>), Listen wie im Freitext, Fettes,
-            Links in Primary, Code auf 08dp. Eingebettetes HTML und Bilder fallen weg. Einträge
+            Links in Primary, Code betont. Eingebettetes HTML und Bilder fallen weg. Einträge
             trennt eine Haarlinie. Ab <code>lg</code> steht links das{" "}
             <Siehe id="verzeichnis" />, flach: je Version Nummer und Thema. Die Texte der neuesten
             30 Versionen stehen gleich da,
             die älteren erst nach «… ältere Versionen anzeigen» (<code>?alle=1</code>); das
             Verzeichnis nennt alle und führt bei einer älteren dorthin. Das Markdown ist eine Ausnahme: Was Trainer:innen selbst
-            schreiben, bleibt Freitext ohne Markdown.
+            schreiben, bleibt Freitext ohne Markdown - ausser den Infos zum Team (#598), die wenige
+            Kürzel kennen (<code>GegliederterText</code>).
           </p>
           <article className="flex max-w-3xl flex-col gap-3">
             <header className="flex flex-col gap-1">
@@ -3426,6 +3926,85 @@ export default async function Styleguide() {
             </header>
             <ReleaseText text={BEISPIEL_RELEASE} />
           </article>
+        </Section>
+
+        <Section id="rechtliches">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Die Seiten ohne Anmeldung (Epic #668) in der Routen-Gruppe <code>(start)</code>: Startseite, Impressum,
+            Datenschutz und Vereinbarung. Kein neuer Baustein im Kit - alles aus Typo-Rollen, <code>ButtonLink</code>{" "}
+            und <code>SectionMessage</code>; die Teile unten sind nur Gerüst, darum liegen sie neben ihren Seiten
+            und nicht in <code>components/ui</code>.
+          </p>
+          <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+            <li>
+              <strong>Kopf- und Fusszeile der Gruppe</strong> (<code>app/(start)/layout.tsx</code>) - statt der
+              Seitenleiste: links die Bildmarke mit «KiFu» auf «/», rechts «Anmelden» (<code>text</code>) und
+              «Kostenlos registrieren» (<code>filled</code>), angemeldet «Zur App». Unten eine Reihe leiser
+              Textlinks (on-surface-mittel). Immer hell.
+            </li>
+            <li>
+              <strong>Rechtliche Linkreihe</strong> (<code>RechtlicheLinks</code>) - Impressum und Datenschutz dort,
+              wo es diese Fusszeile nicht gibt: Anmeldeseiten und privater Link. <code>davor</code> nimmt weitere
+              Links derselben Reihe auf (<code>RechtsLink</code>), etwa «Cookies».
+            </li>
+            <li>
+              <strong>Rechtsseite</strong> (<code>RechtsSeite</code>, <code>RechtsAbschnitt</code>) - Titel, Stand
+              und Entwurfshinweis als Warning-<code>SectionMessage</code>, dann Abschnitte als Fliesstext in einer
+              lesbaren Spalte; Verweise im Text als <code>TextLink</code>.
+            </li>
+            <li>
+              <strong>Platzhalter</strong> (<code>Platzhalter</code>) - eine noch fehlende Angabe im Fliesstext,
+              in eckigen Klammern auf der Warning-Fläche. Nur für Entwürfe: Auf Produktion steht keiner mehr.
+            </li>
+            <li>
+              <strong>Startseiten-Palette</strong> (<code>.start-palette</code> in <code>globals.css</code>, am
+              Layout der Gruppe) - die Pastellflächen und Kacheltöne des Gestaltungsentwurfs. Neu, weil die
+              Anwendung keine Fläche ohne Bedeutung hat: Lozenge und Section Message werten (erledigt, Hinweis,
+              Fehler), ihre Akzente sind die Alterskategorien. Wie das Diagramm nicht im <code>@theme</code>,
+              also keine Utility für die Anwendung; nur hell, weil die Startseite immer hell ist. Angewandt als{" "}
+              <code>bg-(--start-team)</code>; Kontraste in <code>check:farben</code>.
+            </li>
+          </ul>
+          <div className="start-palette mb-5 flex max-w-2xl flex-wrap gap-3 [color-scheme:light]">
+            {(
+              [
+                ["verein", "on-surface-mittel"],
+                ["team", "primary"],
+                ["kalender", "--start-on-kalender"],
+                ["schnuppern", "--start-on-schnuppern"],
+                ["mitteilungen", "--start-on-mitteilungen"],
+                ["training", "--start-on-training"],
+                ["uebungen", "--start-on-uebungen"],
+                ["ki", "--start-on-ki"],
+              ] as const
+            ).map(([flaeche, zeichen]) => (
+              <span
+                key={flaeche}
+                className="type-label-medium flex size-20 items-end rounded-dialog p-2"
+                style={{
+                  backgroundColor: `var(--start-${flaeche})`,
+                  color: zeichen.startsWith("--") ? `var(${zeichen})` : `var(--color-${zeichen})`,
+                }}
+              >
+                {flaeche}
+              </span>
+            ))}
+            <span className="type-label-medium flex size-20 items-end rounded-dialog bg-(--start-dunkel) p-2 text-on-umkehr">
+              dunkel
+            </span>
+            <span className="type-label-medium flex size-20 items-end rounded-dialog border-2 border-primary bg-(--start-hervorgehoben) p-2 text-on-surface">
+              hervorgehoben
+            </span>
+          </div>
+          <div className="flex max-w-2xl flex-col gap-6 rounded-flaeche bg-elev-00 p-5">
+            <RechtlicheLinks davor={<RechtsLink href="/cookies">Cookies</RechtsLink>} />
+            <RechtsAbschnitt titel="Wer KiFu betreibt">
+              <p>
+                <Platzhalter>[Trägerschaft in Gründung]</Platzhalter>, erreichbar über die{" "}
+                <TextLink href="/datenschutz">Datenschutzerklärung</TextLink>.
+              </p>
+            </RechtsAbschnitt>
+          </div>
         </Section>
 
         <Section id="karten">
@@ -3451,6 +4030,14 @@ export default async function Styleguide() {
             Beispielen. Überfahren färbt die ganze Karte über{" "}
             <code>state</code> - kein eigener Hover-Ton, und die Ebene sitzt auf
             dem Link, der die Karte deckt.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <code>ohneLink</code> zeigt die Karte nur (vierte Karte): ohne Link
+            und ohne Zustands-Ebene, sonst gleich. Für die Beispiele der
+            Startseite (#670) - ohne Konto führte eine Übung bloss zurück auf
+            die Startseite, also wäre ein Link dort ein Versprechen, das er nicht
+            hält. Keine eigene Karte, damit Bild, Herkunft und Eckdaten an einer
+            Stelle bleiben.
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {/* actionSlot demonstriert die Slot-Verdrahtung: das UI-Kit bleibt
@@ -3515,73 +4102,26 @@ export default async function Styleguide() {
                 visibility: "public",
               }}
             />
+            <ExerciseCard
+              ohneLink
+              ex={{
+                slug: "fangis",
+                name: "Fangis",
+                eckdaten: uebungEckdaten({
+                  altersstufe: "kinderfussball",
+                  trainingsteil: "auffangen",
+                  hauptteilkategorie: null,
+                  feldtyp: "freies_feld",
+                  spielfeld_laenge_m: null,
+                  spielfeld_breite_m: null,
+                  kategorien: ["G", "F", "E"],
+                  anzahl_kinder: { min: 10, max: 12 },
+                }),
+                herkunft: "manual",
+              }}
+            />
           </div>
 
-          <p className="type-body-medium mb-5 mt-8 max-w-2xl text-on-surface-mittel">
-            Die <strong>Trainingskachel</strong> (<code>TrainingCard</code>) folgt
-            derselben Regel: Höhenstufe ohne Rand, die Zustands-Ebene auf dem
-            Link, der die ganze Kachel deckt. Ein Bild hat sie nicht; oben stehen
-            die Alterskategorien - nur ohne Kategorie die Altersstufe -, ab zwei
-            Varianten die <code>discovery</code>-Lozenge und am eigenen Eintrag,
-            ob er ein Entwurf oder öffentlich ist. Darunter der Name, die
-            Kennzahlen der ersten Variante (Übungen, Gesamtdauer) und zuunterst
-            Urheber oder Änderungsdatum.
-          </p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <TrainingCard
-              href="#"
-              zeigeUrheber={false}
-              training={{
-                id: "t1",
-                name: "Passspiel im Quadrat",
-                visibility: "private",
-                istEigen: true,
-                altersstufe: "kinderfussball",
-                stufen: ["F", "E"],
-                updatedAt: "2026-10-01T18:00:00Z",
-                exerciseCount: 6,
-                totalDuration: 75,
-                hasAnyDuration: true,
-                variantenZahl: 1,
-                urheber: null,
-              }}
-            />
-            <TrainingCard
-              href="#"
-              zeigeUrheber={false}
-              training={{
-                id: "t2",
-                name: "Halle oder Rasen",
-                visibility: "public",
-                istEigen: true,
-                altersstufe: "kinderfussball",
-                stufen: ["G", "F"],
-                updatedAt: "2026-09-28T18:00:00Z",
-                exerciseCount: 8,
-                totalDuration: 90,
-                hasAnyDuration: true,
-                variantenZahl: 2,
-                urheber: null,
-              }}
-            />
-            <TrainingCard
-              href="#"
-              training={{
-                id: "t3",
-                name: "Abschluss unter Druck",
-                visibility: "public",
-                istEigen: false,
-                altersstufe: "juniorenfussball",
-                stufen: ["C", "B"],
-                updatedAt: "2026-09-20T18:00:00Z",
-                exerciseCount: 5,
-                totalDuration: 0,
-                hasAnyDuration: false,
-                variantenZahl: 1,
-                urheber: "Trainerin Muster",
-              }}
-            />
-          </div>
         </Section>
 
         <Section id="fahrplan">
@@ -3613,7 +4153,7 @@ export default async function Styleguide() {
             <strong>Kürzbarer Text</strong> - <code>KuerzbarerText</code>: ein längerer
             Freitext ohne Formatierung, gekürzt auf wenige Zeilen (Vorgabe drei) mit
             «Ganz lesen» als Link darunter - das Info-Schreiben in der Karte
-            «Probetraining» und am privaten Link (#556). Der Link steht nur, wenn der
+            «Schnuppertraining» und am privaten Link (#556). Der Link steht nur, wenn der
             Text wirklich länger ist (gemessen); aufgeklappt heisst er «Weniger
             anzeigen». Zeilenumbrüche bleiben, Webadressen (http, https, www.) werden
             zu externen Links (<code>ExternerLink</code>). Neu, weil{" "}
@@ -3625,6 +4165,38 @@ export default async function Styleguide() {
               className="type-body-medium text-on-surface"
               text={
                 "Schön, dass du bei uns reinschaust!\n\nWir trainieren auf der Allmend, Feld 3. Komm 10 Minuten vor Beginn, in Sportkleidung, mit Fussballschuhen, Schienbeinschonern und einer Trinkflasche.\n\nMelde dich unten für die Trainings an, bei denen du mitmachen willst.\nMehr zum Verein: www.fc-beispiel.ch"
+              }
+            />
+          </Card>
+          <p className="type-body-medium mb-3 mt-8 max-w-2xl text-on-surface-mittel">
+            <strong>Hinweis am privaten Link</strong> - <code>HinweisEltern</code>: der Fuss
+            einer Termin- oder Spielkarte am privaten Link (#590). Eine Haarlinie trennt
+            ihn vom Kopf der Karte, darunter ein <code>KuerzbarerText</code> auf vier
+            Zeilen. An einer gedämpften Karte (abgemeldet) tritt er gedämpft zurück.
+            Neu, weil Training und Spiel denselben Fuss brauchen und der Text, anders
+            als der Ausfallgrund, mehrere Zeilen lang sein darf.
+          </p>
+          <Card className="flex max-w-sm flex-col gap-3 p-3">
+            <span className="type-body-small text-on-surface-mittel">Verantwortlich: Anna Keller</span>
+            <HinweisEltern text={"Pincode: 4702\nEintritt frühestens 15 min vor Trainingsbeginn"} gedaempft={false} />
+          </Card>
+          <p className="type-body-medium mb-3 mt-8 max-w-2xl text-on-surface-mittel">
+            <strong>Gegliederter Text</strong> - <code>GegliederterText</code>: die Infos zum
+            Team (#598), der einzige Text von Trainer:innen mit Gliederung. Wenige Kürzel, die die
+            Leiste im Bearbeiten-Dialog einsetzt: «## » Zwischentitel (<code>type-title-small</code>,
+            eine Ebene unter der umgebenden Überschrift), «- » Aufzählung, «1. » nummeriert,
+            «**…**» fett; eine Leerzeile trennt Absätze. Webadressen werden zu{" "}
+            <code>ExternerLink</code>. Links mit eigenem Text, Bilder, Tabellen und HTML bleiben
+            Text. Neu, weil <code>Freitext</code> nur Listen kennt und <code>ReleaseText</code>{" "}
+            fertiges Markdown samt Linktext zeigt. In der Karte gekürzt: <code>KuerzbarerText</code>{" "}
+            mit <code>gegliedert</code> kürzt auf die Höhe der Zeilen statt per <code>line-clamp</code>.
+            Webadressen in Fliesstext setzt überall <code>TextMitLinks</code> (Kürzbarer Text,
+            Gegliederter Text, Info-Schreiben am Link).
+          </p>
+          <Card className="max-w-xl p-6">
+            <GegliederterText
+              text={
+                "## Trainings\n- Dienstag und Donnerstag, 17:30 bis 19:00\n- Zehn Minuten vorher in der Garderobe\n\n## Abmelden\nKann eure Spielerin nicht, meldet sie am Link ab, **spätestens bis Trainingsbeginn**.\n\n## Ausrüstung\n1. Schienbeinschoner und Nockenschuhe\n2. Trinkflasche mit Namen\n\nMehr zum Verein: www.fc-beispiel.ch"
               }
             />
           </Card>
@@ -3641,16 +4213,18 @@ export default async function Styleguide() {
             sitzt ohne Autosave als <code>DiagrammFeld</code> unter der
             Zuordnung, beim Erfassen wie beim Bearbeiten. Dort wacht{" "}
             <code>VerlassenWarnung</code> über ungesicherte Angaben - ein
-            Bestätigungs-Dialog aus dem Kit für Links (auch die der Seitenleiste) und
-            Browser-Zurück, die Abfrage des Browsers für Neuladen und Schliessen.
+            Bestätigungs-Dialog aus dem Kit für Links (auch die der Seitenleiste),
+            Browser-Zurück und «Abmelden» im Konto-Menü (das über{" "}
+            <code>nachRueckfrage</code> anfragt), die Abfrage des Browsers für Neuladen
+            und Schliessen.
             Symbol-Geometrie ist im Register verankert (Anker = Mittelpunkt),
             damit zentrale Symbol-Updates bestehende Diagramme nie verschieben.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             <strong>Das Diagramm ist Gegenstand, nicht Oberfläche</strong> - es
             folgt weiterhin nicht der Palette der Anwendung. Es hat aber eine
-            <strong> eigene</strong>, und die kennt mehr als einen Satz: dieselbe gespeicherte Zeichnung erscheint am Bildschirm auf
-            einem Nachtrasen und kommt auf Papier weiss aus dem Drucker. Die
+            <strong> eigene</strong>, und die kennt mehr als einen Satz: dieselbe gespeicherte Zeichnung erscheint im Dunkeln auf
+            einem Nachtrasen, im Hellen auf einem blassen Rasen und kommt auf Papier weiss aus dem Drucker. Die
             Rollen heissen <code>--diagramm-*</code> und stehen bewusst neben dem{" "}
             <code>@theme</code>-Block, ohne <code>--color-</code>-Präfix: Tailwind
             macht aus jeder Farbrolle des Themes eine Utility, und{" "}
@@ -3664,8 +4238,8 @@ export default async function Styleguide() {
             davor legte nur eine Linie auf die andere.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Zwei Sätze, ein Bestand: Gespeichert wird nur der Farb-Slug, was er
-            zeigt, entscheidet das Medium. Am Bildschirm liegt der Rasen
+            Drei Sätze, ein Bestand: Gespeichert wird nur der Farb-Slug, was er
+            zeigt, entscheiden Medium und Erscheinungsbild. Im Dunkeln liegt der Rasen
             tief im entsättigten Grün des App-Grunds, die Bewegungspfeile werden
             hell und die Elementfarben sind angehoben - die Manual-Palette kam auf dem dunklen
             Grund bei Rot auf 2.6:1 und bei Blau auf 2.2:1, zwei Mannschaften, die
@@ -3675,9 +4249,16 @@ export default async function Styleguide() {
             gezeichnet ist, kippt ins Graue, weil Weiss auf Papier nicht
             existiert. Einzige Ausnahme ist der Ball - er bleibt weiss und bekommt
             eine kräftigere Kontur, sonst wäre er ein grauer Fleck unter lauter
-            grauen Flecken. Die Werte stehen in <code>app/globals.css</code>, die
+            grauen Flecken. Im Hellen (Epic #563) liegt der Rasen als blasses,
+            frisches Grün auf der Seite, und es gilt dieselbe Umkehrung wie auf
+            Papier: kräftige Palette, schwarze Pfeile, «weiss» wird Graphit und bleibt
+            so von «schwarz» unterscheidbar; den Rand des Felds zieht wieder die
+            Feldkante. Hell und Dunkel stehen wie die Oberfläche als{" "}
+            <code>light-dark()</code>; die Auswahl im Editor trägt die Schrift der
+            Anwendung, damit sie auf beiden Rasen sichtbar bleibt. Die Werte stehen in{" "}
+            <code>app/globals.css</code>, die
             Rollennamen in <code>lib/diagramm-farben.ts</code>;{" "}
-            <code>npm run check:diagramm-farben</code> rechnet beide Sätze nach
+            <code>npm run check:diagramm-farben</code> rechnet alle drei Sätze nach
             (3:1 nach WCAG 1.4.11 - auf dem Rasen steht kein Text) und verbietet
             im Zeichencode jeden rohen Farbwert.
           </p>
@@ -4050,6 +4631,96 @@ export default async function Styleguide() {
             den Regeln des Fachkerns.
           </p>
           <FelderDemo />
+        </Section>
+
+        <Section id="benachrichtigungen">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Benachrichtigungen am privaten Link (Epic #641): was am Team geschieht, sieht die Spielervertretung
+            dort, ohne dass das Team es im Chat mit Spieler:innen und Eltern ankündigt. Aus bestehenden Teilen gebaut -{" "}
+            <code>IconButton</code> mit <code>zahl</code>, <code>Lozenge</code>, <code>Button</code> und{" "}
+            <code>Leerzustand</code> - plus dem Eintrag als einzigem neuem Baustein.
+          </p>
+          <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+            <li>
+              <strong>Glocke im Kopf</strong> - hinter dem Namen, bei den anderen Kopf-Knöpfen. Der Zähler (
+              <code>Badge</code>) nennt, was dieses Gerät noch nicht angezeigt hat; auf einem Gerät, das den Link zum
+              ersten Mal zeigt, steht keiner. Ein Klick öffnet die Ansicht an Stelle der Terminliste (die
+              Rück-Taste führt zurück), der Kopf bleibt.
+            </li>
+            <li>
+              <strong>Eintrag</strong> - das Zeichen des Ereignisses im runden Feld, das Wort dazu (<em>Neues Spiel,
+              Fällt aus, Findet wieder statt, Verlegt, Fällt weg, Trainings geändert</em>) und bei Neuem die Lozenge{" "}
+              «Neu»; darunter «Titel · Team», wann, wo, was sich sonst geändert hat und wann er entstand. Rot trägt
+              nur, was nicht mehr stattfindet. Er ist eine Momentaufnahme: spätere Änderungen übernimmt er nicht. «Zum
+              Termin» führt zur Karte, solange der Termin am Link steht, sonst sagt ein Satz, dass er nicht mehr dort
+              steht.
+            </li>
+            <li>
+              <strong>Gruppen «Neu» und «Früher»</strong> - neu ist, was nach dem letzten Anzeigen entstand; die
+              Gruppen bleiben stehen, solange die Ansicht offen ist. Am Ende der Satz, was KiFu speichert (90 Tage) und
+              was das Gerät festhält.
+            </li>
+            <li>
+              <strong>Häkchen im Dialog</strong> - «Spielervertretungen benachrichtigen» (<code>Checkbox</code> mit{" "}
+              <code>hinweis</code>), vorbelegt an, die Zeile darunter sagt je Vorgang, was die Spielervertretung
+              sieht. Wörter und Zeilen stehen in <code>lib/benachrichtigung.ts</code>; die KI-Beschreibung nimmt
+              dieselben.
+            </li>
+          </ul>
+          <BenachrichtigungDemo />
+        </Section>
+
+        <Section id="app-ablegen">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Die Seite des privaten Links als App auf dem Home-Bildschirm (Story #650): je Spieler:in eine eigene
+            App, benannt «Vorname · Verein». Aus bestehenden Teilen gebaut - <code>SectionMessage</code> (neu
+            schliessbar), <code>Button</code> und <code>Dialog</code>.
+          </p>
+          <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+            <li>
+              <strong>Hinweis über den Terminen</strong> - nur auf dem Mobile, nicht in der abgelegten App, ab dem
+              zweiten Besuch des Links auf diesem Gerät; geschlossen ruht er 7 Tage. Die Aktion heisst auf dem iPhone
+              «So geht’s» (Anleitung), auf Android «Als App ablegen» (der Browser fragt selbst, sonst die
+              Anleitung). Im Browser einer App sagt er nur, dass es dort nicht geht und wohin.
+            </li>
+            <li>
+              <strong>Knopf unter den Terminen</strong> - immer da ausser in der abgelegten App, ruhig als Secondary
+              Button (<code>outlined</code>); am Computer nur, wenn der Browser selbst ablegen kann.
+            </li>
+            <li>
+              <strong>Anleitung</strong> - drei Schritte je Gerät und darunter, wie die App auf dem Home-Bildschirm
+              heisst. Texte in <code>lib/app-ablegen.ts</code>.
+            </li>
+          </ul>
+          <AppAblegenDemo />
+        </Section>
+
+        <Section id="mitteilungen">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Mitteilungen aufs Mobile (Story #483): Jede Benachrichtigung am privaten Link geht auch an die Geräte, auf
+            denen die Spielervertretung sie eingeschaltet hat. Aus bestehenden Teilen gebaut - Fläche
+            <code> elev-01</code> wie ein Eintrag der Benachrichtigungen, <code>Switch</code>,{" "}
+            <code>SectionMessage</code> und <code>Dialog</code>. Begriff durchgängig «Mobile».
+          </p>
+          <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+            <li>
+              <strong>Karte oben in der Glocken-Ansicht</strong> - Schalter und eine Zustandszeile, die sagt, was für
+              dieses Gerät gilt. Auf dem iPhone im Safari-Tab ist der Schalter gesperrt; ein Hinweis führt mit
+              «So geht’s» zur Anleitung «als App ablegen». Hat das Mobile sie abgelehnt, sagt ein Hinweis, wo man
+              sie wieder erlaubt. Nur wenn die Umgebung Mitteilungen hat (VAPID gesetzt).
+            </li>
+            <li>
+              <strong>Dialog vor dem Einschalten</strong> - was KiFu speichert, wer zustellt und wann es
+              verschwindet; erst «Einschalten» ruft die Abfrage des Browsers auf. Ausschalten gilt sofort.
+            </li>
+            <li>
+              <strong>Spalte «Mobile» in der Spielerliste eines Teams</strong> - Glocke (<code>Bell</code>, Schrift
+              on-surface) bzw. durchgestrichene Glocke (<code>BellOff</code>, on-surface-mittel), nie Primary; nur
+              das Zeichen mit <code>aria-label</code>. Der feste Hinweis steht hinter ⓘ im Spaltenkopf - dafür nimmt
+              <code> Tabelle</code> im Kopf neben Text auch ein Element an. Texte in <code>lib/push.ts</code>.
+            </li>
+          </ul>
+          <MitteilungenDemo />
         </Section>
       </VerzeichnisFlaeche>
     </Seitenrahmen>

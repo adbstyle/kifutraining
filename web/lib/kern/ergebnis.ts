@@ -21,8 +21,10 @@
 // REIN: keine Importe aus `next/*`, `server-only` oder Datenbank-Modulen —
 // die Prüfskripte (`tsx scripts/pruefe-*.ts`) laden diese Datei ohne Server.
 import { MELDUNG_VERGEBEN } from "@/lib/bezeichnung";
+import { KONTO_GRENZE_HINWEIS, kontoGrenzeAusFehler, type KontoAbweisung } from "@/lib/konto-grenzen";
 import { SERIE_MELDUNG } from "@/lib/serie";
 import { TERMIN_MELDUNG } from "@/lib/termin";
+import { VEREIN_MELDUNG } from "@/lib/verein";
 import {
   bedingungAusFehler,
   fachlicheMeldung,
@@ -110,12 +112,15 @@ export type KernFehler = {
   nachtraege?: number;
   /** Davon Absagen von Trainer:innen (#520 AK 11). */
   absagen?: number;
-  /** Davon Anmeldungen von Probe-Spieler:innen (#555 AK 14) — beim Verlegen
+  /** Davon Anmeldungen von schnuppernden Spieler:innen (#555 AK 14) — beim Verlegen
    *  und bei Kader-Änderungen. */
   anmeldungen?: number;
   /** Nur an einem Spiel (#463 AK 13, 26): Die Verlegung rückt die Meldefrist
    *  ins Abgelaufene — auch ohne verfallende Meldungen eine Rückfrage. */
   fristAbgelaufen?: boolean;
+  /** Nur an einem Training (#561 PC 5): Mit dem neuen Beginn läge der
+   *  Treffpunkt am Vortag und entfiele — auch ohne Verfall eine Rückfrage. */
+  treffpunktEntfaellt?: boolean;
   /** Nur beim Entfernen eines Spiels (#463 AK 27): wie viele Meldungen mit
    *  ihm verschwinden; erneut mit dieser Zahl als `bestaetigt` senden. */
   verschwindend?: number;
@@ -128,6 +133,11 @@ export type KernFehler = {
   /** Zusatz nur für den Assistenten (die Oberfläche zeigt ihn nie), etwa
    *  «Es ist keine Kopie entstanden.» */
   hinweis?: string;
+  /** Nur für die Oberfläche (der KI-Weg lässt es weg, lib/mcp/ergebnis.ts):
+   *  Die Datenebene hat an der Grenze eines Kontos ohne Verein abgewiesen
+   *  (#588). Daran, nicht am Text, erkennt die Oberfläche, dass sie die Meldung
+   *  der vollen Grenze zeigt. */
+  grenze?: KontoAbweisung;
 };
 
 export type KernErgebnis<T = undefined> = { ok: true; wert: T } | KernFehler;
@@ -166,6 +176,8 @@ export const NICHT_GEFUNDEN = {
    *  (`SERIE_MELDUNG`), die Datenebene meldet mit demselben Marker. */
   team: SERIE_MELDUNG.TEAM_NICHT_GEFUNDEN,
   gruppe: "Gruppe nicht gefunden.",
+  /** Ein Verein, dessen Spielerbestand die Verwaltung liest (#579). */
+  verein: VEREIN_MELDUNG.VEREIN_NICHT_GEFUNDEN,
   /** Ein Termin eines Team-Trainings (#198); sichtbar nur Mitgliedern. */
   termin: TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN,
   /** Eine Variante des Hauptteils (#201, KI-Weg #263). Wortgleich mit den
@@ -217,7 +229,13 @@ export function ausDbFehler(e: { message: string; code?: string }): KernFehler {
       bedingung,
       varianteId: varianteAusFehler(e.message) ?? undefined,
     });
-  if (fachlicheMeldung(e.message)) return fehlschlag("regel", meldung);
+  if (fachlicheMeldung(e.message)) {
+    // Die Grenze eines Kontos ohne Verein (#588 AK 7): Für den Assistenten
+    // steht dabei, dass nichts entstanden ist — und nirgends, dass sich ein
+    // zweiter Versuch lohnte. `wiederholbar` bleibt ungesetzt.
+    const grenze = kontoGrenzeAusFehler(e.message);
+    return fehlschlag("regel", meldung, grenze ? { hinweis: KONTO_GRENZE_HINWEIS, grenze } : {});
+  }
   if (istRlsVerletzung(e.message)) return fehlschlag("keine_rechte", meldung);
   return fehlschlag("technisch", meldung);
 }

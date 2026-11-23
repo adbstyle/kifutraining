@@ -1,12 +1,12 @@
 # Rückmeldungen
 
-Stand 2026-10-16. Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
+Stand 2026-11-23 (Release 1.53.0). Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
 
 ## Zwei Arten, etwas zu sagen
 
 Die Anwendung unterscheidet, ob sie über einen Vorgang berichtet oder über einen Zustand. Ein
 Vorgang ist etwas, das der Trainer eben ausgelöst hat: eine Übung kopiert, einen Termin
-verschoben, ein Training veröffentlicht. Ein Zustand ist etwas, das er in einer Ansicht
+verschoben, ein Training in die Community gestellt. Ein Zustand ist etwas, das er in einer Ansicht
 vorfindet und das stehen bleibt, bis es erledigt ist: ein Formular, dessen Speichern
 gescheitert ist, eine Übung, deren Feld-Diagramm anderes Material zeigt als erfasst.
 
@@ -29,7 +29,10 @@ gescheiterte erste nicht mehr da —, und dieselbe Rückmeldung steht nie zweima
 Nach sechs Sekunden verschwindet die Zeile von selbst. Solange der Zeiger auf ihr liegt oder
 sie mit der Tastatur angesteuert ist, wartet sie; über das Kreuz lässt sie sich jederzeit
 sofort schliessen, und wer sie mit der Tastatur schliesst, steht danach wieder dort, wo er
-vorher war. Ob ein Vorgang gescheitert ist, sagt ihr Text, nicht ihre Farbe. Wer mit
+vorher war. Ob ein Vorgang gescheitert ist, sagt ihr Text, nicht ihre Farbe. Eine einzige
+Rückmeldung trägt einen Knopf für den nächsten Schritt: Nach einem Import in den Spielerbestand
+eines Vereins führt „Zuordnen" zu den Spieler:innen ohne Team (siehe
+[Verein](verein.md#import-aus-einer-datei)). Wer mit
 einer Vorlesehilfe arbeitet, hört jede Rückmeldung, ohne dabei unterbrochen zu werden.
 
 Die Zeile gehört zu der Ansicht, in der sie entstand: Wechselt der Trainer von sich aus auf
@@ -41,11 +44,22 @@ die Bestätigung dort. Sie erscheint ein einziges Mal: Wer die Seite danach neu 
 Scheitert ein Vorgang in einem Dialog, der danach offen bleibt, etwa beim Verlassen oder
 Auflösen eines Teams, steht der Grund oben im Dialog selbst und nicht am Bildschirmrand, wo
 der Dialog ihn verdecken würde. Ebenso meldet der Dialog mit dem privaten Link einer Spieler:in
-ein Erneuern in sich selbst.
+in sich selbst, wenn der Link erneuert, als zugestellt markiert oder das zurückgenommen wurde;
+war der Link inzwischen schon abgeholt, sagt er das, ohne es als Fehler zu werten.
 
 Auf den Seiten hinter einem privaten Link, die Eltern ohne Konto öffnen, gibt es die Zeile nicht.
 Scheitert dort das Umlegen eines Schalters, springt er zurück, und der Grund steht als Hinweis
 an der Karte des Termins; auf der Abholseite steht jede Antwort als Hinweis über dem Knopf.
+
+## Neue Version
+
+Ist eine neue Version erschienen, die in diesem Browser noch nicht angesehen wurde, trägt der
+Avatar auf der Konto-Karte unten in der Seitenleiste einen Punkt, und im Konto-Menü steht bei
+«Was ist neu» die Plakette «Neu» statt der Versionsnummer. Beides bleibt stehen, bis die Seite
+mit den Versionen geöffnet wurde. Ohne Anmeldung gibt es weder Seitenleiste noch Punkt: Die
+Versionen stehen dann über «Versionen» in der Fusszeile der Startseite offen, ohne Hinweis auf eine
+neue. Im selben Menü steht für Angemeldete «Fragen und
+Feedback», der Weg, der Anwendung selbst etwas zu melden (siehe [Navigation](navigation.md)).
 
 ## Bekannte Grenzen
 

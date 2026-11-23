@@ -168,6 +168,8 @@ function baueSchema(streng: boolean) {
       ende: z.string(),
       ort: z.string().nullable(),
       bemerkung: z.string().nullable(),
+      /** Der Hinweis für Eltern (#590); ihn sehen die Eltern, die Bemerkung nicht. */
+      hinweis_eltern: z.string().nullable(),
       /** Die Felder des Platzes (#389 AK 13, 14); `null` = unbekannt. */
       felder: felderSchema(streng),
       /** Die erwartete Spielerzahl (#390 AK 6); `null` = unbekannt. */

@@ -5,6 +5,7 @@ import { brauchtFahrplan, type Altersstufe } from "@/lib/altersstufe";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { bildQuelleZurZeichnung, kopiereDiagramm, parseDiagramm } from "@/lib/diagramm";
 import { ausDbFehler, type FehlerArt } from "@/lib/kern/ergebnis";
+import type { KontoAbweisung } from "@/lib/konto-grenzen";
 import { userSlug } from "@/lib/slug";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -333,7 +334,9 @@ export async function legeUebungsKopieAn(
     /** Abweichender Name der Kopie. Ohne ihn trägt sie den Namen der Quelle. */
     name?: string;
   },
-): Promise<{ ok: true; slug: string; id: string } | { ok: false; error: string; art: FehlerArt }> {
+): Promise<
+  { ok: true; slug: string; id: string } | { ok: false; error: string; art: FehlerArt; hinweis?: string; grenze?: KontoAbweisung }
+> {
   // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
   const uebungId = crypto.randomUUID();
   const bild = await kopiereBild(supabase, quelle.bild_url, userOrdner(ziel.ownerId), uebungId);
@@ -373,7 +376,7 @@ export async function legeUebungsKopieAn(
   if (error) {
     await entferneStorageObjekt(supabase, bild.pfad);
     const f = ausDbFehler(error);
-    return { ok: false, error: f.meldung, art: f.art };
+    return { ok: false, error: f.meldung, art: f.art, ...(f.hinweis && { hinweis: f.hinweis }), ...(f.grenze && { grenze: f.grenze }) };
   }
   return { ok: true, slug: angelegt.slug, id: uebungId };
 }

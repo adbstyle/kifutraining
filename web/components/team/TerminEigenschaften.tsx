@@ -1,5 +1,5 @@
 import { Repeat } from "lucide-react";
-import { Eigenschaft, EigenschaftFehlt, ExternerLink, Lozenge, TreffpunktListe } from "@/components/ui";
+import { Eigenschaft, EigenschaftFehlt, ExternerLink, Lozenge, TrainingsTreffpunkt, TreffpunktListe } from "@/components/ui";
 import { spielStatus } from "@/lib/termin-status";
 import { cn } from "@/lib/cn";
 import { wochentageText } from "@/lib/serie";
@@ -9,6 +9,7 @@ import type { TerminZeile } from "@/lib/queries/termine-fuer";
 import { dabeiZahl, eingeladenZahl, noetigeVon, verantwortlichText } from "@/lib/trainer";
 import { FUER_ALLE } from "@/lib/kader";
 import { richtwertStufeText, richtwertText, zeitpunktKurz } from "@/lib/spiel";
+import { LINK_KANAL } from "@/lib/termin";
 import { KaderLozenges } from "./KaderLozenge";
 
 /** Der Status eines Spiels als Lozenge mit seinem Detail; ohne Richtwert nichts. */
@@ -32,7 +33,8 @@ function spielStatusEcke(zahl: number, min: number | null, max: number | null) {
    Geteilt vom nächsten Termin und dem Reiter «Termin» der Termin-Spalte
    (#435). Ein Spiel (#459) nennt statt Spielerzahl und Feldern seinen
    Richtwert, soweit festgelegt (AK 9), gleich nach dem Ort seine Treffpunkte
-   (#465 AK 8) und an der Bemerkung, dass die Eltern sie sehen (AK 9). */
+   (#465 AK 8). Der Hinweis für Eltern steht vor der Bemerkung und ist als
+   solcher benannt (#590 AK 8): Ihn sehen die Eltern, die Bemerkung nicht. */
 export function TerminEigenschaften({
   t,
   ich,
@@ -62,6 +64,12 @@ export function TerminEigenschaften({
       {t.spiel && t.spiel.treffpunkte.length > 0 && (
         <Eigenschaft label="Treffpunkte">
           <TreffpunktListe treffpunkte={t.spiel.treffpunkte} spieltag={t.datum} spielOrt={t.ort} />
+        </Eigenschaft>
+      )}
+      {/* #561 AK 10: der Treffpunkt eines Trainings, auch nach Beginn und bei einem Ausfall. */}
+      {t.treffpunkt && (
+        <Eigenschaft label="Treffpunkt">
+          <TrainingsTreffpunkt treffpunkt={t.treffpunkt} bezeichnung={false} />
         </Eigenschaft>
       )}
       {/* #519 AK 17: wer verantwortlich ist, man selbst mit «(du)»; die Namen aller im Reiter «Trainer:innen». */}
@@ -102,9 +110,9 @@ export function TerminEigenschaften({
           {richtwertText(t.spiel.richtwertMin, t.spiel.richtwertMax) && (
             <Eigenschaft label="Richtwert">{richtwertText(t.spiel.richtwertMin, t.spiel.richtwertMax)} Spieler:innen</Eigenschaft>
           )}
-          {/* #463 AK 8: bis wann Eltern melden; ohne Frist bis zum Anpfiff. */}
+          {/* #463 AK 8: bis wann am privaten Link gemeldet wird; ohne Frist bis zum Anpfiff. */}
           <Eigenschaft label="Meldefrist">
-            {t.spiel.meldefrist ? `Eltern bis ${zeitpunktKurz(t.spiel.meldefrist)}` : "Bis zum Anpfiff"}
+            {t.spiel.meldefrist ? `Am Link bis ${zeitpunktKurz(t.spiel.meldefrist)}` : "Bis zum Anpfiff"}
           </Eigenschaft>
         </>
       ) : (
@@ -125,9 +133,13 @@ export function TerminEigenschaften({
           )}
         </>
       )}
+      {t.hinweisEltern && (
+        <Eigenschaft label={LINK_KANAL.hinweis}>
+          <span className="whitespace-pre-line">{t.hinweisEltern}</span>
+        </Eigenschaft>
+      )}
       {t.bemerkung && (
-        // Ausgefallen sehen die Eltern statt der Bemerkung nur den Grund (#530).
-        <Eigenschaft label={t.spiel && !t.ausgefallen ? "Bemerkung · sichtbar für Eltern" : "Bemerkung"}>
+        <Eigenschaft label="Bemerkung">
           <span className="whitespace-pre-line">{t.bemerkung}</span>
         </Eigenschaft>
       )}

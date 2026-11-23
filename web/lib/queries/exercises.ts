@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { STARTSEITE_BEISPIELE } from "@/lib/startseite";
 import {
   getExercisesFuer,
   type ExerciseFilters,
@@ -12,8 +13,8 @@ import type { ExerciseCardData } from "@/components/ui";
 
 /**
  * Query-Layer für Übungen — der EINZIGE Datenpfad zu `exercises`
- * (Architektur §6). RLS filtert serverseitig: anonym nur `public`,
- * eingeloggt zusätzlich eigene private Übungen (Story 3 EK12/13). Die Suche
+ * (Architektur §6). RLS filtert serverseitig, nur mit Konto (#669): die
+ * Community-Übungen und die eigenen privaten (Story 3 EK12/13). Die Suche
  * selbst steht in lib/queries/uebungen-fuer.ts (ohne Cookie-Client).
  */
 
@@ -121,16 +122,15 @@ export async function getVorlagen(excludeId?: string): Promise<VorlageItem[]> {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let query = supabase
+  // Vorlagen gibt es nur beim Bearbeiten, also mit Konto (#669).
+  if (!user) return [];
+
+  const { data, error } = await supabase
     .from("exercises")
     .select("id, slug, name, diagramm")
     .not("diagramm", "is", null)
+    .or(`source.eq.manual,owner_id.eq.${user.id}`)
     .order("name");
-  query = user
-    ? query.or(`source.eq.manual,owner_id.eq.${user.id}`)
-    : query.eq("source", "manual");
-
-  const { data, error } = await query;
   if (error) throw error;
   // Nur, was die Zeichenfläche führen kann: Ein älteres Diagramm kann
   // Elemente tragen, die sich heute nicht mehr speichern liessen. Vorschau und
@@ -157,6 +157,26 @@ export async function isFavorited(exerciseId: string): Promise<boolean> {
     .maybeSingle();
   if (error) throw error;
   return data != null;
+}
+
+/** Die fest ausgewählten Manual-Beispiele der Startseite (#670 AK 4), in der
+ *  Reihenfolge von `STARTSEITE_BEISPIELE`. Ohne Konto ist keine Übung lesbar
+ *  (#669): Die Beispiele kommen darum über `startseite_beispiele()`, die genau
+ *  diese sechs liefert (Liste fest in der Funktion, Zwilling der Konstante).
+ *  Die Karten sind Zierde neben der festen Zahl: Ein Datenbankfehler wird
+ *  protokolliert und ergibt keine Karten, nicht die Fehlerseite. */
+export async function getStartseitenBeispiele(): Promise<ExerciseListRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("startseite_beispiele");
+  if (error) {
+    console.error("[startseite] Beispiele lesen", error);
+    return [];
+  }
+  const zeilen = (data ?? []) as unknown as Omit<ExerciseListRow, "is_favorited">[];
+  return STARTSEITE_BEISPIELE.flatMap((slug) => {
+    const z = zeilen.find((r) => r.slug === slug);
+    return z ? [{ ...z, is_favorited: false }] : [];
+  });
 }
 
 /** DB-Zeile -> Karten-Props (Labels aus dem Vokabular). */

@@ -3,25 +3,25 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AB_LG } from "@/lib/breite";
 import {
   ChevronDown,
-  History,
-  LogIn,
+  ChevronsUpDown,
   Menu as MenuIcon,
-  MessageSquare,
-  Palette,
   PanelLeftClose,
   PanelLeftOpen,
+  UserRound,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { ButtonLink } from "./Button";
-import { Lozenge } from "./Lozenge";
+import { Menu, type MenuItemDef } from "./Menu";
 import { IconButton } from "./IconButton";
 import { ZeichenPunkt } from "./ZeichenPunkt";
 import { tooltipFlaeche } from "./Tooltip";
+import { BereichWechsler, type BereichWechslerProps } from "./BereichWechsler";
+import { SCHMAL_KLASSEN, type SchmalAb } from "./seitenleiste-schmal";
 
 /* ── Typen ──────────────────────────────────────────────────── */
 
@@ -51,50 +51,32 @@ export interface SeitenleisteGruppe {
   eintraege: SeitenleisteEintrag[];
 }
 
+/** Die Konto-Karte unten in der Leiste (#661): ein Knopf, der das
+ *  Konto-Menü öffnet — angemeldet wie ohne Anmeldung. */
 export interface SeitenleisteKonto {
+  /** Angemeldet der Anzeigename, sonst «Nicht angemeldet». */
   name: string;
+  /** Die zweite Zeile: angemeldet die E-Mail, sonst «Anmelden oder Konto erstellen». */
   email?: string;
-  href: string;
-  current?: boolean;
-}
-
-/** Die laufende Version unten in der Leiste; führt zur Release-History. */
-export interface SeitenleisteVersion {
-  /** Die Versionsnummer, z. B. «1.27.0». */
-  nummer: string;
-  href: string;
+  /** Ohne Anmeldung: ein Personenzeichen statt der Initialen. */
+  anonym?: boolean;
+  /** Eine Seite des Kontos ist offen → die Karte ist hervorgehoben. */
   current?: boolean;
   /** Ein Release ist erschienen, den dieser Browser noch nicht gesehen hat
-   *  (#410): breit die Plakette «Neu», schmal ein Punkt am Zeichen. */
+   *  (#410): ein Punkt am Avatar, im Menü die Plakette bei «Was ist neu». */
   neu?: boolean;
-}
-
-/** Der Styleguide unten in der Leiste, gleich unter der Version. */
-export interface SeitenleisteStyleguide {
-  href: string;
-  current?: boolean;
-}
-
-/** «Fragen und Feedback» unten in der Leiste (#542): kein Link, sondern ein
- *  Knopf — er öffnet den Dialog neben der Seite, statt sie zu wechseln. */
-export interface SeitenleisteFeedback {
-  label: string;
-  /** Der Dialog steht offen → der Eintrag ist hervorgehoben. */
-  offen: boolean;
-  onOeffnen: () => void;
+  /** Die Einträge des Menüs. Ziele tragen `href` (Links, #246), Aktionen
+   *  `onSelect`; Zeilen mit `gewaehlt` (Darstellung) lassen den Drawer offen. */
+  menue: MenuItemDef[];
 }
 
 export interface SeitenleisteProps {
+  /** Der Wechsler oben, unter der Marke: eines der eigenen Teams oder der
+   *  Verein. Fehlt er (kein Verein, kein Team), steht nichts an seiner Stelle. */
+  bereich?: BereichWechslerProps;
   gruppen: SeitenleisteGruppe[];
-  /** Angemeldet: Konto-Karte unten. Sonst `anmeldenHref`. */
-  konto?: SeitenleisteKonto;
-  anmeldenHref?: string;
-  /** Laufende Version über der Konto-Karte. */
-  version?: SeitenleisteVersion;
-  /** Styleguide unter der Version. */
-  styleguide?: SeitenleisteStyleguide;
-  /** «Fragen und Feedback» über der Version; nur angemeldet. */
-  feedback?: SeitenleisteFeedback;
+  /** Die Konto-Karte unten mit dem Konto-Menü — auch ohne Anmeldung. */
+  konto: SeitenleisteKonto;
   /** Schmal (nur Zeichen). Wirkt ab `lg`; darunter ist die Leiste ein Drawer
    *  und zeigt immer alles. */
   slim: boolean;
@@ -130,29 +112,6 @@ export const unterKopfzeile = "top-12 lg:top-0";
 export const nebenLeiste =
   "left-0 transition-[left] duration-200 motion-reduce:transition-none lg:left-[var(--leiste-breite,0px)]";
 
-/* Schmale Form: eingebettet auf jeder Breite, sonst erst ab `lg` — darunter
-   zeigt der Drawer immer alles. Ausgeschriebene Literale, damit Tailwind sie
-   findet. */
-const SCHMAL_KLASSEN = {
-  lg: {
-    textWeg: "lg:sr-only",
-    nurBreit: "lg:hidden",
-    mitte: "lg:justify-center",
-    linie: "lg:block",
-    konto: "lg:justify-center lg:p-0",
-    anmelden: "lg:px-0",
-  },
-  immer: {
-    textWeg: "sr-only",
-    nurBreit: "hidden",
-    mitte: "justify-center",
-    linie: "block!",
-    konto: "justify-center p-0!",
-    anmelden: "px-0!",
-  },
-} as const;
-type SchmalAb = keyof typeof SCHMAL_KLASSEN;
-
 /* ── Kleinteile ─────────────────────────────────────────────── */
 
 function keineAktion() {}
@@ -165,35 +124,13 @@ function initialen(name: string) {
   return roh.toUpperCase();
 }
 
-/** Marke: ein Fussball, gezeichnet wie ein Lucide-Zeichen (Strich, keine
- *  Füllung), damit er neben den übrigen Zeichen nicht aus der Reihe fällt.
- *  Lucide selbst kennt keinen Fussball. */
-function FussballZeichen({ size = 18 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="m12 7 4.2 3-1.6 5H9.4l-1.6-5z" />
-      <path d="M12 2v5M21.5 9.5 16.2 10M18 20l-3.4-5M6 20l3.4-5M2.5 9.5 7.8 10" />
-    </svg>
-  );
-}
-
 /* Zeile: Zustands-Ebene + Fokus-Ring nach innen (der Scrollbereich der Liste
-   schnitte einen äusseren ab). Aktiv steht die Zeile eine Stufe höher als
-   ihr Grund — am Desktop 08dp auf 01dp, im Drawer (selbst 08dp) 12dp. */
+   schnitte einen äusseren ab). Aktiv ist die Zeile betont (`betont`): die
+   Schrift zu 8 % über der Leiste — auf jeder Stufe und in beiden
+   Erscheinungsbildern sichtbar. */
 const zeile =
   "focus-ring-inset state flex items-center rounded-flaeche transition-colors";
-const zeileAktiv = "bg-elev-08 text-on-surface max-lg:bg-elev-12";
+const zeileAktiv = "betont text-on-surface";
 const zeileRuhe = "text-on-surface-mittel hover:text-on-surface";
 
 /* ── Seitenleiste ───────────────────────────────────────────────
@@ -213,12 +150,9 @@ const zeileRuhe = "text-on-surface-mittel hover:text-on-surface";
    Fläche 01dp mit Haarlinie: Die Leiste ist Rahmen, keine schwebende Fläche,
    und trägt darum keinen Schatten. Der Drawer schwebt und steht auf 08dp. */
 export function Seitenleiste({
+  bereich,
   gruppen,
   konto,
-  anmeldenHref = "/login",
-  version,
-  styleguide,
-  feedback,
   slim,
   drawerOffen = false,
   onDrawerOffenChange = keineAktion,
@@ -242,8 +176,16 @@ export function Seitenleiste({
     if (!offen) return;
     schliessenRef.current?.focus();
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") return onDrawerOffenChange(false);
-      if (e.key !== "Tab" || !navRef.current) return;
+      // Escape in einem offenen Menü der Leiste (Konto, Bereich) schliesst
+      // nur das Menü — das Menü hört selbst darauf und gibt den Fokus zurück.
+      // Tab ebenso: Die Menüs stehen `fixed` (fehlen also unter den Zielen
+      // unten) und schliessen bei Tab selbst.
+      const imMenue = (e.target as Element | null)?.closest?.('[role="menu"]');
+      if (e.key === "Escape") {
+        if (imMenue) return;
+        return onDrawerOffenChange(false);
+      }
+      if (e.key !== "Tab" || !navRef.current || imMenue) return;
       const ziele = [...navRef.current.querySelectorAll<HTMLElement>("a[href], button")].filter(
         (el) => el.offsetParent !== null,
       );
@@ -317,8 +259,12 @@ export function Seitenleiste({
         offen
           ? "max-lg:transition-[translate]"
           : "max-lg:invisible max-lg:-translate-x-full max-lg:transition-[translate,visibility]",
-        // Ab lg: feste Spalte, klebt beim Scrollen.
-        "lg:sticky lg:top-0 lg:h-dvh lg:w-(--leiste-breite) lg:shrink-0 lg:self-start lg:overflow-hidden lg:border-r lg:border-linie lg:bg-elev-01 lg:transition-[width] lg:duration-200",
+        // Ab lg: feste Spalte, klebt beim Scrollen. `sticky` bildet einen
+        // eigenen Stapelkontext — ohne Ebene malte später folgender Inhalt
+        // (Karten, Seitenkopf z-20) über alles, was aus der Leiste ragt, etwa
+        // das Konto-Menü der schmalen Leiste. z-30: über dem Inhalt,
+        // unter Snackbar und Auswahlleiste.
+        "lg:sticky lg:top-0 lg:z-30 lg:h-dvh lg:w-(--leiste-breite) lg:shrink-0 lg:self-start lg:overflow-hidden lg:border-r lg:border-linie lg:bg-elev-01 lg:transition-[width] lg:duration-200",
       );
 
   return (
@@ -377,6 +323,10 @@ export function Seitenleiste({
           )}
         </div>
 
+        {bereich && (
+          <BereichWechsler {...bereich} schmalAb={schmalAb} navRef={navRef} onNavigiert={schliessen} />
+        )}
+
         <div
           className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden px-4 py-3"
           onScroll={() => setHinweis(null)}
@@ -407,140 +357,19 @@ export function Seitenleiste({
           ))}
         </div>
 
-        {/* Die Version führt zur Release-History (#408), der Styleguide
-            darunter zum Designsystem: beide gleich über der Linie zum Konto.
-            Schmal bleibt das Zeichen, der Name steht dann im Hinweis daneben. */}
-        {(version || styleguide || feedback) && (
-          <div className="flex shrink-0 flex-col gap-0.5 px-4 pb-2">
-            {feedback && (
-              <button
-                type="button"
-                aria-expanded={feedback.offen}
-                data-hinweis={feedback.label}
-                onClick={() => {
-                  schliessen();
-                  feedback.onOeffnen();
-                }}
-                className={cn(
-                  zeile,
-                  "type-body-small h-9 gap-3 px-2.5 text-left",
-                  k?.mitte,
-                  feedback.offen ? zeileAktiv : zeileRuhe,
-                )}
-              >
-                <MessageSquare
-                  size={18}
-                  strokeWidth={2}
-                  aria-hidden
-                  className={cn("shrink-0", feedback.offen && "text-primary")}
-                />
-                <span className={cn("truncate", k?.textWeg)}>{feedback.label}</span>
-              </button>
-            )}
-            {version && (
-              <Link
-                href={version.href}
-                aria-current={version.current ? "page" : undefined}
-                data-hinweis={`Version ${version.nummer}${version.neu ? " - Neu" : ""}`}
-                onClick={schliessen}
-                className={cn(
-                  zeile,
-                  "type-body-small h-9 gap-3 px-2.5",
-                  k?.mitte,
-                  version.current ? zeileAktiv : zeileRuhe,
-                )}
-              >
-                <span className="relative shrink-0">
-                  <History
-                    size={18}
-                    strokeWidth={2}
-                    aria-hidden
-                    className={cn(version.current && "text-primary")}
-                  />
-                  {/* Schmal fehlt die Plakette; dann trägt das Zeichen den Punkt. */}
-                  {version.neu && schmalAb && (
-                    <ZeichenPunkt ton="primary" className={cn(schmalAb === "lg" && "max-lg:hidden")} />
-                  )}
-                </span>
-                <span className={cn("truncate", k?.textWeg)}>Version {version.nummer}</span>
-                {version.neu && (
-                  <>
-                    <Lozenge appearance="discovery" className={k?.nurBreit}>
-                      <span aria-hidden>Neu</span>
-                    </Lozenge>
-                    <span className="sr-only">, neue Version erschienen</span>
-                  </>
-                )}
-              </Link>
-            )}
-            {styleguide && (
-              <Link
-                href={styleguide.href}
-                aria-current={styleguide.current ? "page" : undefined}
-                data-hinweis="Styleguide"
-                onClick={schliessen}
-                className={cn(
-                  zeile,
-                  "type-body-small h-9 gap-3 px-2.5",
-                  k?.mitte,
-                  styleguide.current ? zeileAktiv : zeileRuhe,
-                )}
-              >
-                <Palette
-                  size={18}
-                  strokeWidth={2}
-                  aria-hidden
-                  className={cn("shrink-0", styleguide.current && "text-primary")}
-                />
-                <span className={cn("truncate", k?.textWeg)}>Styleguide</span>
-              </Link>
-            )}
-          </div>
-        )}
-
+        {/* Die Konto-Karte öffnet das Konto-Menü (#661): Konto, Darstellung,
+            Fragen und Feedback, Was ist neu und Abmelden — ohne Anmeldung
+            Anmelden, Konto erstellen und Was ist neu. Den Styleguide führt
+            die Leiste nicht: Er ist Werkzeug fürs Entwickeln, nicht für
+            Nutzer:innen, und bleibt unter /styleguide erreichbar. */}
         <div className="mx-4 shrink-0 border-t border-linie py-3">
-          {konto ? (
-            <Link
-              href={konto.href}
-              aria-current={konto.current ? "page" : undefined}
-              data-hinweis="Konto"
-              onClick={schliessen}
-              className={cn(
-                zeile,
-                "gap-3 p-2",
-                k?.konto,
-                konto.current ? zeileAktiv : "text-on-surface",
-              )}
-            >
-              <span
-                aria-hidden
-                className={cn(
-                  "type-label-medium grid h-10 w-10 shrink-0 place-items-center rounded-full bg-elev-12 text-on-surface",
-                  konto.current && "outline-2 outline-primary",
-                )}
-              >
-                {initialen(konto.name)}
-              </span>
-              <span className={cn("flex min-w-0 flex-col", k?.textWeg)}>
-                <span className="type-title-small truncate">{konto.name}</span>
-                {konto.email && (
-                  <span className="type-body-small truncate text-on-surface-mittel">
-                    {konto.email}
-                  </span>
-                )}
-              </span>
-            </Link>
-          ) : (
-            <ButtonLink
-              href={anmeldenHref}
-              data-hinweis="Anmelden"
-              onClick={schliessen}
-              className={cn("w-full", k?.anmelden)}
-            >
-              <LogIn size={18} strokeWidth={2.5} aria-hidden className="shrink-0" />
-              <span className={k?.textWeg}>Anmelden</span>
-            </ButtonLink>
-          )}
+          <KontoKarte
+            {...konto}
+            schmalAb={schmalAb}
+            navRef={navRef}
+            onNavigiert={schliessen}
+            onOeffnen={() => setHinweis(null)}
+          />
         </div>
       </nav>
 
@@ -557,7 +386,175 @@ export function Seitenleiste({
   );
 }
 
-/* Marke: Fussball im Primary-Quadrat + Wortmarke. Schmal bleibt das Quadrat. */
+/* Konto-Karte (#661, Entwurf «Seitenleiste mit Konto-Menü» und «Ohne Konto ·
+   B»): Avatar, Name und zweite Zeile als ein Knopf, der das Konto-Menü öffnet.
+   Breit klappt es über der Karte auf, so breit wie sie, schmal rechts neben
+   der Leiste. Das Menü steht `fixed`, weil die Leiste ihren Inhalt
+   abschneidet (`overflow-hidden`) — schmal ragte es sonst nicht hinaus. Die
+   Lage wird beim Öffnen aus der Karte gerechnet; ändert sich das Fenster oder
+   scrollt etwas darunter, geht es zu, statt von der Karte abzureissen. Höher
+   als der Platz über (breit) bzw. bis zur Unterkante (schmal) der Karte wird
+   es nie: Im Drawer auf einem Handy quer reicht der nicht für alle Zeilen,
+   dann scrollt das Menü in sich — das schliesst es nicht.
+
+   Ziele und Aktionen schliessen auch den Drawer; die Wahl der Darstellung
+   lässt ihn offen: Wer umschaltet, will sehen, wie es aussieht. Tastatur nach
+   dem Menü-Muster, dazu schliesst Tab und gibt den Fokus an die Karte. Ein
+   Seitenwechsel schliesst es auch: Fängt die Warnung vor ungesicherten
+   Angaben (#246) den Klick auf ein Ziel ab, erreicht er die Zeile nie, und
+   nach «Verlassen» stünde das Menü sonst offen auf der neuen Seite. */
+function KontoKarte({
+  name,
+  email,
+  anonym,
+  current,
+  neu,
+  menue,
+  schmalAb,
+  navRef,
+  onNavigiert,
+  onOeffnen,
+}: SeitenleisteKonto & {
+  schmalAb: SchmalAb | null;
+  navRef: React.RefObject<HTMLElement | null>;
+  onNavigiert: () => void;
+  /** Das Menü geht auf — der Hinweis daneben (schmal) muss weichen. */
+  onOeffnen: () => void;
+}) {
+  const knopfRef = useRef<HTMLButtonElement>(null);
+  const menueRef = useRef<HTMLDivElement>(null);
+  const [lage, setLage] = useState<CSSProperties | null>(null);
+  const k = schmalAb ? SCHMAL_KLASSEN[schmalAb] : null;
+  const zu = () => setLage(null);
+  const pfad = usePathname();
+  useEffect(() => setLage(null), [pfad]);
+
+  useEffect(() => {
+    if (!lage) return;
+    const schliessen = () => setLage(null);
+    // Capture: Auch ein Scrollbereich ausserhalb des Fensters (Styleguide)
+    // verschiebt die Karte — das Menü selbst nicht.
+    const beiScroll = (e: Event) => {
+      if (menueRef.current?.contains(e.target as Node)) return;
+      schliessen();
+    };
+    window.addEventListener("resize", schliessen);
+    window.addEventListener("scroll", beiScroll, true);
+    return () => {
+      window.removeEventListener("resize", schliessen);
+      window.removeEventListener("scroll", beiScroll, true);
+    };
+  }, [lage]);
+
+  function oeffnen() {
+    const r = knopfRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const schmal =
+      schmalAb === "immer" || (schmalAb === "lg" && window.matchMedia(AB_LG).matches);
+    const kante = navRef.current?.getBoundingClientRect().right ?? r.right;
+    onOeffnen();
+    // Breit endet das Menü 4 px über der Karte, schmal auf ihrer Unterkante;
+    // nach oben bleiben 8 px bis zum Fensterrand.
+    const unterkante = schmal ? r.bottom : r.top - 4;
+    const stil: CSSProperties & Record<`--${string}`, string> = {
+      ...(schmal ? { left: kante + 8, width: "16rem" } : { left: r.left, width: r.width }),
+      bottom: window.innerHeight - unterkante,
+      "--konto-menue-hoehe": `${Math.max(unterkante - 8, 0)}px`,
+    };
+    setLage(stil);
+  }
+
+  // Ziele und Aktionen schliessen den Drawer, die Wahl einer Darstellung nicht.
+  const eintraege = menue.map((m) =>
+    m.gewaehlt === undefined
+      ? {
+          ...m,
+          onSelect: () => {
+            onNavigiert();
+            m.onSelect?.();
+          },
+        }
+      : m,
+  );
+  // Schmal der Hinweis am Knopf; der Name des Menüs ist ein anderer: Ohne
+  // Anmeldung steht «Anmelden» schon als Zeile darin (Entwurf «Ohne Konto · B»).
+  const hinweis = anonym ? "Anmelden" : "Konto";
+  const menueName = anonym ? "Ohne Konto" : "Konto";
+
+  return (
+    <>
+      <button
+        ref={knopfRef}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={!!lage}
+        // Offen steht das Menü dort, wo schmal der Hinweis stünde.
+        data-hinweis={lage ? undefined : hinweis}
+        onClick={() => (lage ? zu() : oeffnen())}
+        className={cn(
+          zeile,
+          "w-full gap-3 p-2 text-left",
+          k?.konto,
+          lage || current ? zeileAktiv : "text-on-surface",
+        )}
+      >
+        <span
+          aria-hidden
+          className={cn(
+            "type-label-medium relative grid h-10 w-10 shrink-0 place-items-center rounded-full betont text-on-surface",
+            current && "outline-2 outline-primary",
+          )}
+        >
+          {anonym ? <UserRound size={20} strokeWidth={2} /> : initialen(name)}
+          {/* Neue Version: ein Punkt am Avatar, breit wie schmal (Entwurf
+              «Ohne Konto · B»); was er meldet, sagt der sr-only-Text unten. */}
+          {neu && (
+            <span className="absolute top-1 right-1 h-2 w-2">
+              <ZeichenPunkt ton="primary" />
+            </span>
+          )}
+        </span>
+        <span className={cn("flex min-w-0 flex-1 flex-col", k?.textWeg)}>
+          <span className="type-title-small truncate">{name}</span>
+          {email && (
+            <span className="type-body-small truncate text-on-surface-mittel">{email}</span>
+          )}
+          {neu && <span className="sr-only">, neue Version erschienen</span>}
+        </span>
+        <ChevronsUpDown
+          size={16}
+          strokeWidth={2}
+          aria-hidden
+          className={cn("shrink-0 text-on-surface-mittel", k?.nurBreit)}
+        />
+      </button>
+      {lage && (
+        <div
+          ref={menueRef}
+          className="fixed z-50"
+          style={lage}
+          onKeyDown={(e) => {
+            if (e.key !== "Tab") return;
+            e.preventDefault();
+            zu();
+            knopfRef.current?.focus();
+          }}
+        >
+          <Menu
+            open
+            onClose={zu}
+            triggerRef={knopfRef}
+            label={menueName}
+            className="bottom-0 left-0 mt-0 max-h-(--konto-menue-hoehe) w-full overflow-y-auto"
+            items={eintraege}
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
+/* Marke: Bildmarke + Name. Schmal bleibt die Bildmarke. */
 function Marke({ textKlasse }: { textKlasse?: string }) {
   return (
     <Link
@@ -565,9 +562,12 @@ function Marke({ textKlasse }: { textKlasse?: string }) {
       data-hinweis="KiFu"
       className="focus-ring-inset flex items-center gap-2.5 rounded-flaeche p-1.5 text-on-surface"
     >
-      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-flaeche bg-primary text-on-primary">
-        <FussballZeichen />
-      </span>
+      {/* Die Bildmarke (FutAssist, Variante F) ist dieselbe Datei wie das
+          Favicon: eine Quelle für Tab, Homescreen und Leiste. Ihr Verlauf
+          trägt sich auf hellem wie dunklem Grund. Den Namen sagt der Text
+          daneben, darum stumm. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- SVG, nichts zu optimieren */}
+      <img src="/icon.svg" alt="" width={32} height={32} className="h-8 w-8 shrink-0" />
       <span className={cn("type-title-large", textKlasse)}>KiFu</span>
     </Link>
   );
@@ -612,7 +612,7 @@ function Eintrag({
             zeile,
             "type-title-small h-9 min-w-0 flex-1 gap-3 px-2.5",
             k?.mitte,
-            hervor ? zeileAktiv : cn(zeileRuhe, nurAbLg && "lg:bg-elev-08 lg:text-on-surface"),
+            hervor ? zeileAktiv : cn(zeileRuhe, nurAbLg && "lg:betont lg:text-on-surface"),
           )}
         >
           <Icon

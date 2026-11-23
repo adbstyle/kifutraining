@@ -4,11 +4,23 @@ import { istUuid } from "@/lib/kennung";
 import {
   SERIE_MELDUNG,
   serieProblem,
+  verfallSumme,
   vergangeneBestaetigen,
   type Reichweite,
   type Wochentag,
 } from "@/lib/serie";
-import { TERMIN_TEXT, istKalendertag, kartenlinkOhneOrt, leerZuNull, textProblem, zeitProblem } from "@/lib/termin";
+import {
+  TERMIN_TEXT,
+  istKalendertag,
+  kartenlinkOhneOrt,
+  leerZuNull,
+  textProblem,
+  treffpunktGespeichert,
+  treffpunktPasst,
+  treffpunktProblem,
+  zeitProblem,
+  type TerminTreffpunkt,
+} from "@/lib/termin";
 import type { FeldEingabe } from "@/lib/termin-felder";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import type { Mindestbesetzung } from "@/lib/besetzung";
@@ -33,6 +45,7 @@ import {
 import { NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
 import { KADER_MELDUNG, kaderVerfallBestaetigen } from "@/lib/kader";
 import { mitVerfall, setzeTerminKader, type VerfallBestaetigt } from "@/lib/kern/kader";
+import { holeVerlegungNach, NICHT_BENACHRICHTIGT, type AusstehendeVerlegung, type Benachrichtigt } from "@/lib/kern/benachrichtigungen";
 
 /**
  * Terminserien (#324, #326): festlegen, mit Reichweite ändern und entfernen,
@@ -61,6 +74,10 @@ export type SerieFestlegen = {
   /** Der Kartenlink zum Ort der Serie (#533 AK 2); nur mit Ort. */
   ortLink?: string | null;
   bemerkung?: string | null;
+  /** Der Hinweis für Eltern jedes Termins der Serie (#590 AK 2); ohne: keiner. */
+  hinweisEltern?: string | null;
+  /** Der Treffpunkt jedes Termins der Serie (#561 AK 2); ohne: keiner. */
+  treffpunkt?: TerminTreffpunkt | null;
   /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1); ohne: unbekannt. */
   felder?: readonly FeldEingabe[] | null;
   spielerzahl?: number | null;
@@ -115,6 +132,8 @@ export async function legeSerieFest(
     p_kader: e.kaderIds ?? [],
     p_besetzung: e.mindestbesetzung ?? null,
     p_ort_link: leerZuNull(e.ortLink),
+    p_hinweis_eltern: leerZuNull(e.hinweisEltern),
+    p_treffpunkt: e.treffpunkt ? treffpunktGespeichert(e.treffpunkt, e.beginn) : null,
   });
   if (error) return kalenderFehler(error);
   const r = data as { serie: string; termine: number };
@@ -134,6 +153,11 @@ export type SerienAenderung = {
    *  Ort bleibt — ändert sich der Ort ohne ihn, fällt er weg (PC 1). */
   ortLink?: string | null;
   bemerkung?: string | null;
+  /** Der Hinweis für Eltern (#590): `null` oder `""` = leeren. */
+  hinweisEltern?: string | null;
+  /** Der Treffpunkt (#561): `null` = entfernen; die Uhrzeit gilt zum Beginn
+   *  des gewählten Termins nach der Änderung. */
+  treffpunkt?: TerminTreffpunkt | null;
   /** Die künftigen Eingeladenen der Serie als ganze Liste (#519 AK 12). */
   eingeladene?: string[];
   /** Die künftige Verantwortliche der Serie; sie ist damit eingeladen. */
@@ -177,12 +201,24 @@ export type SerienFolge = {
   nachtraegeVerfallend: number;
   /** Wie viele Absagen von Trainer:innen die Verlegung verfallen lässt (#520 AK 11). */
   absagenVerfallend: number;
-  /** Wie viele Anmeldungen von Probe-Spieler:innen verfallen — durch Verlegung
+  /** Wie viele Anmeldungen von schnuppernden Spieler:innen verfallen — durch Verlegung
    *  oder weil ein Termin nicht mehr für sie gilt (#555 AK 14). */
   anmeldungenVerfallend: number;
+  /** Die anstehenden Termine, deren Treffpunkt die Zeitänderung nimmt, weil
+   *  er am Vortag läge (#561 PC 4, 5). */
+  treffpunktEntfallend: { terminId: string; datum: string }[];
   teamId: string;
   /** Der Kartenlink der Serie fiel mit dem Ort weg (#533 AK 14). */
   kartenlinkEntfallen?: boolean;
+  /** Nur in der Vorschau einer Änderung oder des Entfernens: wie viele
+   *  Spieler:innen eine Benachrichtigung erhielten (#644 AK 2, #645 AK 1) —
+   *  verlegte und entfallende Termine zusammen, jede Spieler:in einmal. Die
+   *  Oberfläche zeigt das Häkchen nur, wenn es mehr als 0 sind. */
+  mitteilbar?: number;
+  /** Nach dem Ausführen: wie viele Spieler:innen eine Benachrichtigung
+   *  erhielten (#644 PC 2, #645 PC 2); fehlt, wenn nicht benachrichtigt
+   *  werden sollte. Die Datenebene legt in derselben Transaktion ab. */
+  benachrichtigt?: number;
 };
 
 type Roh = {
@@ -191,12 +227,17 @@ type Roh = {
   entfallend: { id: string; datum: string; beginn: string; training: { id: string; name: string } }[];
   entfallend_anzahl: number;
   vergangene: number;
+  /** Nur beim Ändern (`terminserie_rechnen`). */
+  treffpunkt_entfallend?: { id: string; datum: string }[];
   /** Nur beim Ändern (`terminserie_aendern`). */
   abmeldungen_verfallend?: number;
   abmeldungen_kader?: number;
   nachtraege_verfallend?: number;
   absagen_verfallend?: number;
   anmeldungen_verfallend?: number;
+  /** In der Vorschau bzw. nach dem Ausführen (#644, #645). */
+  mitteilbar?: number | null;
+  benachrichtigt?: number | null;
 };
 
 function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): SerienFolge {
@@ -216,7 +257,10 @@ function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): Se
     nachtraegeVerfallend: r.nachtraege_verfallend ?? 0,
     absagenVerfallend: r.absagen_verfallend ?? 0,
     anmeldungenVerfallend: r.anmeldungen_verfallend ?? 0,
+    treffpunktEntfallend: (r.treffpunkt_entfallend ?? []).map((x) => ({ terminId: x.id, datum: x.datum })),
     teamId,
+    mitteilbar: r.mitteilbar ?? undefined,
+    benachrichtigt: r.benachrichtigt ?? undefined,
   };
 }
 
@@ -233,6 +277,7 @@ type Lauf = {
 type Erwartet = { version: number; entfallend: string[]; verfallend?: number };
 
 type RpcAntwort = { data: unknown; error: { message: string; code?: string } | null };
+
 
 /** Welche Trainings dieser Termine Termin-Trainings sind — sie gehen mit
  *  ihrem Termin (PO 2026-10-06), die übrigen bleiben im Bestand. */
@@ -284,15 +329,11 @@ async function laufe(
       });
     // Auch die Zahl verfallender Abmeldungen: Ändert sie sich bis zur
     // Ausführung, weist die Datenebene ab (#453 AK 12), der Lauf ist wiederholbar.
+    // Entfallende Treffpunkte zählen mit, fragen aber nicht nach (#561 PC 6).
     erwartet = {
       version: vorschau.versionVorher,
       entfallend: vorschau.entfallend.map((x) => x.terminId),
-      verfallend:
-        vorschau.abmeldungenVerfallend +
-        vorschau.abmeldungenKader +
-        vorschau.nachtraegeVerfallend +
-        vorschau.absagenVerfallend +
-        vorschau.anmeldungenVerfallend,
+      verfallend: verfallSumme(vorschau),
     };
   }
   const terminTrainings = await terminTrainingsDerTermine(supabase, erwartet.entfallend);
@@ -308,7 +349,17 @@ async function laufe(
 export async function aendereSerie(
   supabase: SupabaseClient,
   _userId: string,
-  e: { terminId: string; reichweite: "dieser_und_folgende" | "alle"; aenderung: SerienAenderung } & Lauf,
+  e: {
+    terminId: string;
+    reichweite: "dieser_und_folgende" | "alle";
+    aenderung: SerienAenderung;
+    /** Ob die Spielervertretungen die Änderung erfahren (#644 AK 2): je
+     *  Spieler:in eine Benachrichtigung, wenn für sie ein Termin verlegt
+     *  wird (PC 2). Pflicht, damit jeder Weg ausdrücklich entscheidet;
+     *  Oberfläche und KI: Standard ja. Wirkt nur beim Ausführen — die
+     *  Vorschau legt nie ab und nennt `mitteilbar`. */
+    benachrichtigen: boolean;
+  } & Lauf,
 ): Promise<KernErgebnis<SerienFolge>> {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
@@ -324,6 +375,8 @@ export async function aendereSerie(
     a.ort === undefined &&
     a.ortLink === undefined &&
     a.bemerkung === undefined &&
+    a.hinweisEltern === undefined &&
+    a.treffpunkt === undefined &&
     a.eingeladene === undefined &&
     a.verantwortlich === undefined &&
     a.felder === undefined &&
@@ -368,6 +421,21 @@ export async function aendereSerie(
   if (kader) return kader;
   const besetzung = besetzungFehler(a.mindestbesetzung);
   if (besetzung) return besetzung;
+  // Der Treffpunkt (#561): zum Beginn des gewählten Termins nach der Änderung
+  // eingegeben, an der Serie gegen ihren Beginn danach geprüft (AK 5).
+  let treffpunkt: { vorlauf_min: number; ort: string | null } | null | undefined;
+  if (a.treffpunkt !== undefined) {
+    if (t.art === "spiel") return fehlschlag("eingabe", TERMIN_TEXT.treffpunktNurTraining, { feld: "treffpunkt" });
+    const beginn = leerZuNull(a.beginn) ?? t.beginn;
+    const p = treffpunktProblem(a.treffpunkt, beginn);
+    if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
+    treffpunkt = a.treffpunkt ? treffpunktGespeichert(a.treffpunkt, beginn) : null;
+    if (treffpunkt && !hatZeit) {
+      const { data: sb } = await supabase.from("termin_serien").select("beginn").eq("id", t.serie_id).maybeSingle<{ beginn: string }>();
+      if (sb && !treffpunktPasst(treffpunkt.vorlauf_min, sb.beginn))
+        return fehlschlag("eingabe", TERMIN_TEXT.treffpunktTermintag, { feld: "treffpunkt" });
+    }
+  }
 
   // Die Regel vorab prüfen, mit den Feldnamen des Werkzeugs (AK 5, PC 19) —
   // nur wenn sie sich ändert: Eine reine Werteänderung an einem verlegten
@@ -397,6 +465,8 @@ export async function aendereSerie(
   if (hatZeit) Object.assign(aenderung, { beginn: leerZuNull(a.beginn), ende: leerZuNull(a.ende) });
   if (ortPaar) Object.assign(aenderung, { ort: ortPaar.ort, ort_link: ortPaar.ortLink });
   if (a.bemerkung !== undefined) aenderung.bemerkung = leerZuNull(a.bemerkung);
+  if (a.hinweisEltern !== undefined) aenderung.hinweis_eltern = leerZuNull(a.hinweisEltern);
+  if (treffpunkt !== undefined) aenderung.treffpunkt = treffpunkt;
   if (eingeladene?.ok) aenderung.eingeladene = eingeladene.ids;
   if (a.verantwortlich !== undefined) aenderung.verantwortlich = a.verantwortlich.toLowerCase();
   // Schlüssel vorhanden mit null heisst «auf unbekannt setzen» (#391).
@@ -414,6 +484,7 @@ export async function aendereSerie(
       p_entfallend: ausfuehren ? (erwartet?.entfallend ?? null) : null,
       p_ausfuehren: ausfuehren,
       p_verfallend: ausfuehren ? (erwartet?.verfallend ?? null) : null,
+      p_benachrichtigen: ausfuehren && e.benachrichtigen,
     }),
   );
   return r.ok ? ok({ ...r.wert, kartenlinkEntfallen: ortPaar?.entfallen ?? false }) : r;
@@ -424,7 +495,14 @@ export async function aendereSerie(
 export async function entferneSerie(
   supabase: SupabaseClient,
   _userId: string,
-  e: { terminId: string; reichweite: "dieser_und_folgende" | "alle" } & Lauf,
+  e: {
+    terminId: string;
+    reichweite: "dieser_und_folgende" | "alle";
+    /** Ob die Spielervertretungen erfahren, welche Termine wegfallen (#645
+     *  AK 1, 3; PC 2). Gilt nur beim Ausführen; die Vorschau legt nie ab und
+     *  nennt `mitteilbar`. */
+    benachrichtigen: boolean;
+  } & Lauf,
 ): Promise<KernErgebnis<SerienFolge>> {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
@@ -437,6 +515,7 @@ export async function entferneSerie(
       p_version: erwartet?.version ?? null,
       p_entfallend: ausfuehren ? (erwartet?.entfallend ?? null) : null,
       p_ausfuehren: ausfuehren,
+      p_benachrichtigen: ausfuehren && e.benachrichtigen,
     }),
   );
 }
@@ -445,6 +524,8 @@ export type FolgeAngabe =
   | "zeit"
   | "ort"
   | "bemerkung"
+  | "hinweis_eltern"
+  | "treffpunkt"
   | "eingeladene"
   | "verantwortung"
   | "besetzung"
@@ -458,6 +539,8 @@ const FOLGE_ANGABEN: readonly FolgeAngabe[] = [
   "zeit",
   "ort",
   "bemerkung",
+  "hinweis_eltern",
+  "treffpunkt",
   "eingeladene",
   "verantwortung",
   "besetzung",
@@ -479,32 +562,78 @@ export async function folgeDerSerie(
      *  Abmeldungen durch Kader mit deren Zahl (#453 AK 10, 12); die KI
      *  bestätigt mit `true` beides. */
     bestaetigt?: VerfallBestaetigt | false;
+    /** Entfällt mit der Zeit der Serie ein eigener Treffpunkt (#561 PC 4),
+     *  fragt der Kern nach — die KI nicht (`true`, PC 6). */
+    treffpunktWeg?: boolean;
+    /** Ob die Spielervertretungen erfahren, dass der Termin damit verlegt ist
+     *  (#644 AK 1). Pflicht wie bei `aendereTermin`; wirkt nur, wenn Zeit
+     *  oder Ort sich dadurch ändern (prüft die Datenebene). */
+    benachrichtigen: boolean;
   },
-): Promise<KernErgebnis<{ terminId: string; teamId: string; verfallen: number; kartenlinkEntfallen: boolean }>> {
+): Promise<
+  KernErgebnis<{
+    terminId: string;
+    teamId: string;
+    verfallen: number;
+    kartenlinkEntfallen: boolean;
+    treffpunktEntfallen: boolean;
+    /** Wie viele Spieler:innen die Verlegung erfahren; fehlt, wenn nicht
+     *  benachrichtigt werden sollte (#644 PC 1). Die Datenebene legt in
+     *  derselben Transaktion ab. */
+    benachrichtigt?: number;
+  }>
+> {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   if (e.angaben.length === 0 || e.angaben.some((x) => x !== "datum" && !FOLGE_ANGABEN.includes(x)))
     return fehlschlag("eingabe", SERIE_MELDUNG.SERIE_ANGABEN_UNGUELTIG, {
       feld: "angaben",
       zulaessig: FOLGE_ANGABEN,
     });
+  // #561 AK 9: Folgt nur der Treffpunkt und läge der der Serie mit der eigenen
+  // Zeit des Termins am Vortag, sagt der Kern, was zuerst folgen muss.
+  if (e.angaben.includes("treffpunkt") && !e.angaben.includes("zeit")) {
+    const { data: z } = await supabase
+      .from("training_termine")
+      .select("beginn, termin_serien ( treffpunkt_vorlauf_min )")
+      .eq("id", e.terminId)
+      .maybeSingle<{ beginn: string; termin_serien: { treffpunkt_vorlauf_min: number | null } | null }>();
+    if (z?.termin_serien && !treffpunktPasst(z.termin_serien.treffpunkt_vorlauf_min, z.beginn))
+      return fehlschlag("regel", TERMIN_TEXT.treffpunktFolgtNicht, { feld: "angaben" });
+  }
   // #437 AK 1: Folgt die Zeit wieder der Serie, ändert sich womöglich der
   // Beginn — verfallende Abmeldungen erst nach Bestätigung.
+  // #561 PC 4, 5: Läge ein eigener Treffpunkt mit der Zeit der Serie am
+  // Vortag, entfällt er — in derselben Rückfrage.
   if (e.angaben.includes("zeit") && !e.bestaetigt) {
     const { data: z } = await supabase
       .from("training_termine")
-      .select("datum, termin_serien ( beginn )")
+      .select("datum, treffpunkt_vorlauf_min, termin_serien ( beginn )")
       .eq("id", e.terminId)
-      .maybeSingle<{ datum: string; termin_serien: { beginn: string } | null }>();
+      .maybeSingle<{ datum: string; treffpunkt_vorlauf_min: number | null; termin_serien: { beginn: string } | null }>();
     if (z?.termin_serien) {
       const n = await verfallendeAbmeldungen(supabase, e.terminId, z.datum, z.termin_serien.beginn);
       if (!n.ok) return n;
-      if (n.wert.summe > 0) return verfallFehler(n.wert);
+      const treffpunktEntfaellt =
+        !e.treffpunktWeg && !e.angaben.includes("treffpunkt") && !treffpunktPasst(z.treffpunkt_vorlauf_min, z.termin_serien.beginn);
+      if (n.wert.summe > 0 || treffpunktEntfaellt) return verfallFehler(n.wert, treffpunktEntfaellt);
     }
   }
   // #453: Folgen die Kader, zählt und bestätigt die Datenebene den Verfall.
-  const r = await mitVerfall<{ team: string; verfallen: number; kartenlink_entfallen?: boolean }>(
+  const r = await mitVerfall<{
+    team: string;
+    verfallen: number;
+    kartenlink_entfallen?: boolean;
+    treffpunkt_entfallen?: boolean;
+    benachrichtigt?: number | null;
+  }>(
     e.bestaetigt === false ? undefined : e.bestaetigt,
-    (zahl) => supabase.rpc("termin_der_serie_folgen", { p_termin: e.terminId, p_angaben: e.angaben, p_bestaetigt: zahl }),
+    (zahl) =>
+      supabase.rpc("termin_der_serie_folgen", {
+        p_termin: e.terminId,
+        p_angaben: e.angaben,
+        p_bestaetigt: zahl,
+        p_benachrichtigen: e.benachrichtigen,
+      }),
     (f) => kalenderFehler(f),
   );
   return r.ok
@@ -514,6 +643,9 @@ export async function folgeDerSerie(
         verfallen: r.wert.verfallen,
         // #533 AK 13, 14: Ein eigener Kartenlink des Termins fiel mit dem Ort weg.
         kartenlinkEntfallen: r.wert.kartenlink_entfallen === true,
+        // #561 PC 6: Ein eigener Treffpunkt fiel mit der Zeit der Serie weg.
+        treffpunktEntfallen: r.wert.treffpunkt_entfallen === true,
+        benachrichtigt: r.wert.benachrichtigt ?? undefined,
       })
     : r;
 }
@@ -543,7 +675,9 @@ export async function aendereMitReichweite(
     serie: SerienFolge | null;
     abmeldungenVerfallen: number;
     kartenlinkEntfallen: boolean;
-  }>
+    /** Die Daten der Termine, deren Treffpunkt die Zeitänderung nahm (#561 PC 6). */
+    treffpunktEntfallen: string[];
+  } & Benachrichtigt>
 > {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
@@ -572,6 +706,7 @@ export async function aendereMitReichweite(
         felder.ort,
         felder.ortLink,
         felder.bemerkung,
+        felder.hinweisEltern,
         felder.felder,
         felder.spielerzahl,
         felder.mindestbesetzung,
@@ -580,23 +715,44 @@ export async function aendereMitReichweite(
         felder.richtwertMax,
         felder.meldefrist,
         felder.treffpunkte,
+        felder.treffpunkt,
       ].every((x) => x === undefined);
     let verfallen = 0;
     let teamId = t.team_id;
     let kartenlinkEntfallen = false;
+    let b: Benachrichtigt = NICHT_BENACHRICHTIGT;
+    let ausstehend: AusstehendeVerlegung | null = null;
+    const treffpunktEntfallen: string[] = [];
+    // Die Kader selbst benachrichtigen nie (Prinzip 1). Folgen sie auf eine
+    // Verlegung, kommt deren Benachrichtigung erst nach ihnen — für die neuen
+    // Kader (#644 PC 1); scheitert der Kader-Schritt, entsteht keine.
     if (!nurKader) {
-      const r = await aendereTermin(supabase, userId, felder);
+      // #561 PC 6: Die KI fragt nach keinem entfallenden Treffpunkt; das Ergebnis nennt ihn.
+      const r = await aendereTermin(supabase, userId, { ...felder, treffpunktWeg: true, kaderFolgen: kaderIds !== undefined });
       if (!r.ok) return r;
       verfallen = r.wert.abmeldungenVerfallen;
       teamId = r.wert.teamId;
       kartenlinkEntfallen = r.wert.kartenlinkEntfallen;
+      b = r.wert;
+      ausstehend = r.wert.ausstehend;
+      if (r.wert.treffpunktEntfallen) treffpunktEntfallen.push(felder.datum ?? t.datum);
     }
     if (kaderIds !== undefined) {
       const k = await setzeTerminKader(supabase, userId, { terminId: t.id, kaderIds, bestaetigt: e.bestaetigt === true ? true : undefined });
       if (!k.ok) return k;
       verfallen += k.wert.verfallen;
+      b = await holeVerlegungNach(supabase, ausstehend);
     }
-    return ok({ terminId: t.id, teamId, serie: null, abmeldungenVerfallen: verfallen, kartenlinkEntfallen });
+    return ok({
+      terminId: t.id,
+      teamId,
+      serie: null,
+      abmeldungenVerfallen: verfallen,
+      kartenlinkEntfallen,
+      treffpunktEntfallen,
+      benachrichtigt: b.benachrichtigt,
+      benachrichtigungFehlt: b.benachrichtigungFehlt,
+    });
   }
   if (e.datum !== undefined) return fehlschlag("regel", SERIE_MELDUNG.DATUM_NUR_EINZELN, { feld: "datum" });
   const r = await aendereSerie(supabase, userId, {
@@ -611,12 +767,15 @@ export async function aendereMitReichweite(
       ort: e.ort,
       ortLink: e.ortLink,
       bemerkung: e.bemerkung,
+      hinweisEltern: e.hinweisEltern,
+      treffpunkt: e.treffpunkt,
       felder: e.felder,
       spielerzahl: e.spielerzahl,
       mindestbesetzung: e.mindestbesetzung,
       kaderIds: e.kaderIds,
     },
     bestaetigt: e.bestaetigt === true,
+    benachrichtigen: e.benachrichtigen,
   });
   return r.ok
     ? ok({
@@ -625,6 +784,9 @@ export async function aendereMitReichweite(
         serie: r.wert,
         abmeldungenVerfallen: r.wert.abmeldungenVerfallend + r.wert.abmeldungenKader,
         kartenlinkEntfallen: r.wert.kartenlinkEntfallen ?? false,
+        treffpunktEntfallen: r.wert.treffpunktEntfallend.map((x) => x.datum),
+        benachrichtigt: r.wert.benachrichtigt,
+        benachrichtigungFehlt: false,
       })
     : r;
 }
@@ -633,8 +795,23 @@ export async function aendereMitReichweite(
 export async function entferneMitReichweite(
   supabase: SupabaseClient,
   userId: string,
-  e: { terminId: string; reichweite?: Reichweite; bestaetigt?: boolean },
-): Promise<KernErgebnis<{ teamId: string; training: Verlassen; serie: SerienFolge | null }>> {
+  e: {
+    terminId: string;
+    reichweite?: Reichweite;
+    bestaetigt?: boolean;
+    /** Ob die Spielervertretungen vom Wegfall erfahren (#645 AK 1). */
+    benachrichtigen: boolean;
+  },
+): Promise<
+  KernErgebnis<{
+    teamId: string;
+    training: Verlassen;
+    serie: SerienFolge | null;
+    /** Wie viele Spieler:innen eine Benachrichtigung erhielten (#645 PC 1,
+     *  2); fehlt, wenn nicht benachrichtigt werden sollte. */
+    benachrichtigt?: number;
+  }>
+> {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
   const t = geladen.wert;
@@ -647,13 +824,20 @@ export async function entferneMitReichweite(
     return fehlschlag("regel", SERIE_MELDUNG.TERMIN_OHNE_SERIE, { feld: "reichweite" });
   if (!t.serie_id || e.reichweite === "nur_dieser") {
     // Ein Spiel mit Meldungen nur bestätigt (#463 AK 27).
-    const r = await entferneTermin(supabase, userId, { terminId: t.id, bestaetigt: e.bestaetigt });
+    const r = await entferneTermin(supabase, userId, {
+      terminId: t.id,
+      bestaetigt: e.bestaetigt,
+      benachrichtigen: e.benachrichtigen,
+    });
     return r.ok ? ok({ ...r.wert, serie: null }) : r;
   }
   const r = await entferneSerie(supabase, userId, {
     terminId: t.id,
     reichweite: e.reichweite as "dieser_und_folgende" | "alle",
     bestaetigt: e.bestaetigt,
+    benachrichtigen: e.benachrichtigen,
   });
-  return r.ok ? ok({ teamId: r.wert.teamId, training: null, serie: r.wert }) : r;
+  return r.ok
+    ? ok({ teamId: r.wert.teamId, training: null, serie: r.wert, benachrichtigt: r.wert.benachrichtigt })
+    : r;
 }

@@ -9,16 +9,17 @@
  *   Herleitung neben dem Ergebnis, damit ein vertippter Hex-Wert auffällt.
  *   Diagramm-Farben werden nicht hergeleitet — sie werden pro Satz gesetzt.
  *   Ein Zwilling brächte keine Prüfung, nur eine zweite Stelle, die driftet.
- * - **Es werden mehr als zwei Sätze.** Heute Bildschirm und Druck, später ein
- *   Light-Modus. Jeder Satz ist ein Block in `app/globals.css`; die Namen hier
- *   bleiben dieselben, egal wie viele Sätze dazukommen.
+ * - **Es sind mehrere Sätze.** Hell und Dunkel am Bildschirm (als
+ *   `light-dark()`, Epic #563) und der Druck. Die Werte stehen in
+ *   `app/globals.css`; die Namen hier bleiben dieselben, egal wie viele Sätze
+ *   dazukommen.
  * - **Ein Tippfehler ist sonst unsichtbar.** `var(--diagramm-rasn)` löst still
  *   zu `unset` auf: die Fläche wird schwarz, nichts meldet sich. Der Union-Typ
  *   macht daraus einen Compile-Fehler — `dv()` ist deshalb die einzige Stelle,
  *   die im Code einen Diagramm-Farbwert erzeugen darf.
  *
- * Die Werte stehen in `app/globals.css` (`:root` für den Bildschirm,
- * `@media print :root` für das Papier), geprüft von
+ * Die Werte stehen in `app/globals.css` (`:root` für den Bildschirm, hell
+ * und dunkel, `@media print :root` für das Papier), geprüft von
  * `scripts/pruefe-diagramm-farben.ts`.
  */
 
@@ -27,7 +28,8 @@
  * heutigen Bildschirmfarbe. Ausgenommen ist die wählbare Palette: ihre sieben
  * Rollen heissen wie die gespeicherten Slugs (siehe `FARBEN` in
  * `lib/diagramm.ts`) und meinen deshalb einen Namen, keine Farbe — «schwarz»
- * zeigt auf dem Nachtrasen Graphit und «weiss» auf Papier Dunkelgrau.
+ * zeigt auf dem Nachtrasen Graphit und «weiss» auf hellem Rasen und Papier
+ * Graphit bzw. Dunkelgrau.
  *
  * Zwei Vorkommen teilen sich genau dann eine Rolle, wenn sie dasselbe
  * bedeuten UND in jedem Satz denselben Wert tragen. Was heute zufällig
@@ -54,7 +56,8 @@ export const DIAGRAMM_FARBROLLEN = [
 
   // ── Bewegung ──────────────────────────────────────────────────────────
   /** Laufweg, Pass und Dribbling samt Pfeilspitze — im Manual (Abb. 24)
-   *  schwarz; auf dem Nachtrasen trägt Schwarz nicht mehr. */
+   *  schwarz; auf dem Nachtrasen trägt Schwarz nicht mehr, auf dem hellen
+   *  Rasen und auf Papier wieder. */
   "bewegung",
 
   // ── Textbox ───────────────────────────────────────────────────────────

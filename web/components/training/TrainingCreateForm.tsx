@@ -1,13 +1,15 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import {
   TextArea,
   Button,
   AltersstufeField,
   SectionMessage,
   TextField,
+  BestandAnzeige,
 } from "@/components/ui";
+import { grenzeAusAbweisung, type KontoGrenze } from "@/lib/konto-grenzen";
 import { StufenField } from "./StufenField";
 import { kategorienFuer, type Altersstufe } from "@/lib/altersstufe";
 import { TRAINING_NAME_MAX, ZIEL_MAX } from "@/lib/training";
@@ -16,11 +18,25 @@ import { createTraining, type TrainingFormState } from "@/lib/actions/trainings"
 /* Formular „Neues Training anlegen" (Story #10 AC1/AC2/AC3, Story 5 AK 1/2/4).
    FormData wird im onSubmit selbst aufgebaut (zuverlässige Serialisierung der
    Auswahl-Felder), dann an die Server-Action übergeben. */
-export function TrainingCreateForm() {
+export function TrainingCreateForm({
+  bestand,
+}: {
+  /** Nur für ein Konto ohne Verein (#588 AK 5): der Stand der eigenen
+   *  Trainings, zuoberst als Zeile. */
+  bestand?: KontoGrenze;
+} = {}) {
   const [state, formAction] = useActionState<TrainingFormState, FormData>(createTraining, {
     status: "idle",
   });
   const [pending, startTransition] = useTransition();
+  // Weist die Datenebene an der Grenze ab (#588), rückt die Meldung ins Bild und
+  // bekommt den Fokus (die Vorlesehilfe sagt sie an).
+  const grenzMeldungRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!state.grenze) return;
+    grenzMeldungRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    grenzMeldungRef.current?.focus({ preventScroll: true });
+  }, [state]);
   const [name, setName] = useState("");
   const [ziel, setZiel] = useState("");
   // Bewusst OHNE Vorbelegung: Die Altersstufe eines Trainings bindet lebenslang
@@ -65,9 +81,17 @@ export function TrainingCreateForm() {
     // `lg:pt-2`: Ab `lg` klebt die Kopfzeile direkt darüber; ohne Abstand
     // verdeckte sie die Fläche, die beim Überfahren 6 px über das Feld ragt.
     <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-10 lg:pt-2">
-      {state.status === "error" && state.message && (
-        <SectionMessage appearance="error">{state.message}</SectionMessage>
+      {/* Abweisung an der Grenze (#588): dieselbe Meldung wie bei voller
+          Grenze, die Zeile mit dem alten Stand fällt weg, die Angaben bleiben. */}
+      {state.status === "error" && state.grenze ? (
+        <div ref={grenzMeldungRef} tabIndex={-1} role="alert" className="outline-none">
+          <BestandAnzeige art="trainings" grenze={grenzeAusAbweisung(state.grenze)} variante="meldung" />
+        </div>
+      ) : (
+        state.status === "error" && state.message && <SectionMessage appearance="error">{state.message}</SectionMessage>
       )}
+      {/* Eng über dem ersten Feld (16 px statt gap-10): -mb-6 nimmt 24 zurück. */}
+      {bestand && !state.grenze && <BestandAnzeige art="trainings" grenze={bestand} className="-mb-6" />}
 
       <div className="flex flex-col gap-5">
         <TextField

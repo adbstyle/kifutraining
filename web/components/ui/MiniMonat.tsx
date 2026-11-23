@@ -93,7 +93,7 @@ function Tageszahl({
           : stand === "training"
             ? "font-medium text-on-surface"
             : stand === "ausgefallen"
-              ? "bg-elev-08 text-on-surface-mittel line-through"
+              ? "betont text-on-surface-mittel line-through"
               : tag === heute
                 ? "bg-primary font-medium text-on-primary"
                 : imMonat
@@ -243,7 +243,7 @@ export function MiniMonat({
           Training
         </li>
         <li className="flex items-center gap-2">
-          <span aria-hidden className="size-2.5 rounded-klein bg-elev-08" />
+          <span aria-hidden className="size-2.5 rounded-klein betont" />
           Fällt aus
         </li>
       </ul>

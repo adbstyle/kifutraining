@@ -8,7 +8,7 @@ import {
   stufenOptionen,
   typOptionen,
 } from "@/lib/filter-optionen";
-import { useAdressFilter } from "@/lib/use-adress-filter";
+import { trimme, useAdressFilter } from "@/lib/use-adress-filter";
 
 export type CatalogFilters = {
   /** Die gewählten Einordnungen: Kinderfussball-Trainingsteile und die drei
@@ -27,20 +27,12 @@ export type CatalogFilters = {
 
 /* Such-/Filterleiste für den Übungspool — eine durchgehende, umbrechende Zeile
    statt Sidebar, analog zur Trainings-Filter-Bar. Jede Dimension ist ein
-   Filterknopf mit Namen und Zahl (Epic #363), «Verfügbare Kinder» einer mit
-   einem Zahlenfeld im Panel; Suche und Kinderzahl wirken nach einer
+   Filterknopf mit Namen und Zahl (Epic #363), «Verfügbare Spieler:innen» einer mit
+   einem Zahlenfeld im Panel; Suche und Spieler:innenzahl wirken nach einer
    Tipppause, «Meine Übungen» und Favoriten sind Schalter-Chips.
    URL ist die Quelle der Wahrheit: jede Änderung schreibt in die URL und löst
    eine neue Server-Abfrage aus. */
-export function CatalogFilterBar({
-  filters,
-  canFavorite = false,
-  showMine = false,
-}: {
-  filters: CatalogFilters;
-  canFavorite?: boolean;
-  showMine?: boolean;
-}) {
+export function CatalogFilterBar({ filters }: { filters: CatalogFilters }) {
   const filter = useAdressFilter();
 
   const anyActive =
@@ -59,6 +51,7 @@ export function CatalogFilterBar({
       <FilterSuche
         label="Übungen durchsuchen"
         initial={filters.q ?? ""}
+        bereinige={trimme}
         onCommit={(v) => filter.setzeWert("q", v)}
       />
 
@@ -94,25 +87,23 @@ export function CatalogFilterBar({
       />
 
       <ZahlFilter
-        label="Verfügbare Kinder"
-        feldLabel="Anzahl Kinder"
-        einheit="Kinder"
-        hinweis="Zeigt Übungen, die mit so vielen Kindern durchführbar sind."
+        label="Verfügbare Spieler:innen"
+        feldLabel="Anzahl Spieler:innen"
+        einheit="Spieler:innen"
+        einheitEins="Spieler:in"
+        hinweis="Zeigt Übungen, die mit so vielen Spieler:innen durchführbar sind."
         gesetzt={filters.kinder}
         onCommit={(v) => filter.setzeWert("kinder", v)}
       />
 
-      {showMine && (
-        <FilterChip selected={!!filters.mine} onClick={() => filter.schalte("mine", !filters.mine)}>
-          Meine Übungen
-        </FilterChip>
-      )}
+      {/* Den Katalog gibt es nur mit Konto (#669): beide Schalter stehen immer. */}
+      <FilterChip selected={!!filters.mine} onClick={() => filter.schalte("mine", !filters.mine)}>
+        Meine Übungen
+      </FilterChip>
 
-      {canFavorite && (
-        <FilterChip selected={!!filters.fav} onClick={() => filter.schalte("fav", !filters.fav)}>
-          Favoriten
-        </FilterChip>
-      )}
+      <FilterChip selected={!!filters.fav} onClick={() => filter.schalte("fav", !filters.fav)}>
+        Favoriten
+      </FilterChip>
 
       {anyActive && (
         <Button variant="text" onClick={filter.zuruecksetzen}>

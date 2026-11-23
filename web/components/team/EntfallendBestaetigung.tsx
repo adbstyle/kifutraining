@@ -4,9 +4,10 @@ import { TriangleAlert } from "lucide-react";
 import { Button, Dialog } from "@/components/ui";
 import { verfallDialogText } from "@/lib/spieler";
 import { kaderVerfallText } from "@/lib/kader";
-import { trainingOhneTermin } from "@/lib/termin";
+import { TERMIN_TEXT, trainingOhneTermin } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { SerienFolge } from "@/lib/kern/serien";
+import { useBenachrichtigen } from "./BenachrichtigenFeld";
 
 /* Fallen Termine weg, muss das bestätigt werden (#326 AK 8). Genannt werden
    nur die wegfallenden Termine MIT Training (OoS 2), je mit dem, was ihrem
@@ -18,7 +19,14 @@ import type { SerienFolge } from "@/lib/kern/serien";
    Dialog — auch, wenn keine Termine wegfallen. Ebenso Abmeldungen, deren
    Termin wegen der Kader nicht mehr für die Spieler:in gilt (#453 AK 10),
    und Nachträge zur Anwesenheit begonnener Termine, die wieder offen
-   werden (#475 AK 12).
+   werden (#475 AK 12). Nimmt die Zeitänderung Treffpunkte, weil sie am
+   Vortag lägen, nennt er jeden dieser Termine (#561 PC 5).
+
+   Beim Entfernen entscheidet der Dialog, ob die Spielervertretungen vom
+   Wegfall erfahren (#645 AK 1; vorbelegt an) — nur, wenn die Vorschau
+   Spieler:innen nennt, die eine Benachrichtigung erhielten (`mitteilbar`).
+   Beim Ändern fiel der Entscheid schon im Termin-Dialog (#644); er gilt dort
+   für Verlegung und Wegfall zusammen (#645 PC 3), hier kein zweites Feld.
 
    `SerienFolge` ist ein reiner Typ: `import type` zieht nichts aus dem
    server-only Fachkern in das Client-Bundle. */
@@ -33,8 +41,14 @@ export function EntfallendBestaetigung({
   aktion: "aendern" | "entfernen";
   pending?: boolean;
   onClose: () => void;
-  onBestaetigen: () => void;
+  /** Der Entscheid; beim Ändern und ohne Feld immer `false`. */
+  onBestaetigen: (benachrichtigen: boolean) => void;
 }) {
+  const benachrichtigen = useBenachrichtigen("entfernen", {
+    offen: folge,
+    sichtbar: aktion === "entfernen" && (folge?.mitteilbar ?? 0) > 0,
+    pending,
+  });
   const wegfall = aktion === "entfernen" || (folge?.entfallendAnzahl ?? 0) > 0;
   const nachtraege = folge?.nachtraegeVerfallend ?? 0;
   const absagen = folge?.absagenVerfallend ?? 0;
@@ -42,6 +56,8 @@ export function EntfallendBestaetigung({
   const anmeldungen = folge?.anmeldungenVerfallend ?? 0;
   const verfall = abmeldungen + nachtraege + absagen + anmeldungen;
   const kaderVerfall = folge?.abmeldungenKader ?? 0;
+  const treffpunkte = folge?.treffpunktEntfallend ?? [];
+  const davor = wegfall || verfall > 0 || kaderVerfall > 0;
   return (
     <Dialog
       open={folge !== null}
@@ -55,12 +71,14 @@ export function EntfallendBestaetigung({
               ? "Abmeldungen verfallen"
               : anmeldungen > 0
                 ? "Anmeldungen verfallen"
-                : "Absagen verfallen"
+                : absagen > 0
+                  ? "Absagen verfallen"
+                  : "Treffpunkt entfällt"
       }
       actions={
         <>
           <Button variant="outlined" onClick={onClose}>Abbrechen</Button>
-          <Button variant="danger" disabled={pending} onClick={onBestaetigen}>
+          <Button variant="danger" disabled={pending} onClick={() => onBestaetigen(benachrichtigen.wert)}>
             {aktion === "entfernen" ? "Entfernen" : "Ändern"}
           </Button>
         </>
@@ -97,6 +115,20 @@ export function EntfallendBestaetigung({
           <span>{kaderVerfallText(kaderVerfall)}</span>
         </p>
       )}
+      {treffpunkte.length > 0 && (
+        <>
+          <p className={davor ? "mt-3" : "flex items-start gap-2"}>
+            {!davor && <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0 text-icon-warning" />}
+            <span>{TERMIN_TEXT.treffpunktEntfaelltSerie}</span>
+          </p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            {treffpunkte.map((t) => (
+              <li key={t.terminId}>{datumKurz(t.datum)}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      {benachrichtigen.feld}
     </Dialog>
   );
 }

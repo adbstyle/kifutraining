@@ -14,6 +14,7 @@ import { diagrammAusFormular } from "@/lib/diagramm-pruefung";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 import { entferneStorageObjekt } from "@/lib/fassung";
 import { kopiereUebungNach } from "@/lib/kern/uebungen";
+import { kontoGrenzeAusFehler, type KontoAbweisung } from "@/lib/konto-grenzen";
 
 export type ExerciseFormState = {
   /** `gesichert`: nur ohne Weiterleitung — die Übung im Training in der
@@ -21,11 +22,14 @@ export type ExerciseFormState = {
   status: "idle" | "error" | "gesichert";
   errors?: Record<string, string>;
   message?: string;
+  /** Die Datenebene hat an der Grenze eines Kontos ohne Verein abgewiesen
+   *  (#588): Die Maske zeigt dann die Meldung der vollen Grenze statt `message`. */
+  grenze?: KontoAbweisung;
 };
 
 /** Listen-Seiten, die nach Mutationen neu validiert werden. */
 function revalidateLists() {
-  revalidatePath("/");
+  revalidatePath("/uebungen");
 }
 
 /** Optionales Feld-Diagramm validieren + in den Storage laden. Gibt public URL
@@ -127,9 +131,11 @@ export async function createExercise(
     await entferneStorageObjekt(supabase, bildPfad);
     // Übersetzt statt roh: Werte, die nicht zur Altersstufe der Übung passen,
     // kommen als Constraint-Meldung an, und die versteht niemand.
+    const grenze = error ? kontoGrenzeAusFehler(error.message) : null;
     return {
       status: "error",
       message: error ? fehlerMeldung(error.message) : "Speichern fehlgeschlagen.",
+      ...(grenze && { grenze }),
     };
   }
 
@@ -258,7 +264,7 @@ export async function updateExercise(
  *  «uebung_kopieren» nutzt (#317 NFR 1). */
 export async function kopiereUebung(
   exerciseId: string,
-): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
+): Promise<{ ok: true; slug: string } | { ok: false; error: string; grenze?: KontoAbweisung }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -266,7 +272,7 @@ export async function kopiereUebung(
   if (!user) return { ok: false, error: "Nicht angemeldet." };
 
   const kopie = await kopiereUebungNach(supabase, user.id, { kennung: exerciseId });
-  if (!kopie.ok) return { ok: false, error: kopie.meldung };
+  if (!kopie.ok) return { ok: false, error: kopie.meldung, ...(kopie.grenze && { grenze: kopie.grenze }) };
   revalidateLists();
   return { ok: true, slug: kopie.wert.slug };
 }
@@ -324,5 +330,5 @@ export async function deleteExercise(id: string, _form: FormData) {
   await entferneStorageObjekt(supabase, bildUrlToPath(ex?.bild_url));
 
   revalidateLists();
-  redirect("/?mine=1&deleted=1");
+  redirect("/uebungen?mine=1&deleted=1");
 }

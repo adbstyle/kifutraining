@@ -3,10 +3,10 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Shirt } from "lucide-react";
-import { Leerzustand, Lozenge, LozengeAuswahl, type Wechsel } from "@/components/ui";
+import { Leerzustand, ListenGruppen, Lozenge, LozengeAuswahl, type Wechsel } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { setzeAnwesenheitAktion, setzeAufgebotAktion, setzeMeldungAktion } from "@/lib/actions/abmeldungen";
-import { EHEMALIGE_SPIELERIN, spielerName } from "@/lib/spieler";
+import { EHEMALIGE_SPIELERIN, GRUPPE_TEXT, NICHT_MEHR_IM_TEAM, spielerName } from "@/lib/spieler";
 import {
   AUFGEBOT_TEXT,
   MELDUNG_TEXT,
@@ -18,18 +18,32 @@ import {
   type Meldung,
 } from "@/lib/spiel";
 import { MELDE_STATUS, TERMIN_STATUS, meldeStatus, spielStatus } from "@/lib/termin-status";
+import { LINK_KANAL } from "@/lib/termin";
 import type { SpielSpieler, SpielTeilnehmer } from "@/lib/kern/spiele";
 import { seitWann } from "@/lib/zeit";
 import { KADER_TEXT, uebrigeText } from "@/lib/kader";
 import { cn } from "@/lib/cn";
 import { useLokalerStand } from "@/lib/use-lokaler-stand";
+import { useFokusFolgt } from "@/lib/use-fokus-folgt";
 import { KaderLozenges } from "./KaderLozenge";
 import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
 
-/** Wofür eine Spieler:in im Kopf zählt: ohne Meldung (nach der Meldefrist
+/** Wofür eine Spieler:in im Kopf zählt und in welcher Gruppe sie steht (#599): ohne Meldung (nach der Meldefrist
  *  «Meldefrist verpasst», #496), angemeldet, abgemeldet oder — gleich welche
  *  Meldung sie trägt — nicht aufgeboten (#464). */
 type Gruppe = "ohne" | "angemeldet" | "abgemeldet" | "nicht_aufgeboten";
+
+/** Die Gruppen vor dem Anpfiff in ihrer Reihenfolge (#599 AK 1). */
+const GRUPPEN: readonly Gruppe[] = ["angemeldet", "ohne", "abgemeldet", "nicht_aufgeboten"];
+
+/** Eine Gruppe heisst wie ihr Status; ohne Meldung nach der Frist
+ *  «Meldefrist verpasst». */
+const GRUPPE_TITEL: Record<Gruppe, (verpasst: boolean) => string> = {
+  angemeldet: () => MELDE_STATUS.angemeldet.wort,
+  ohne: (verpasst) => (verpasst ? MELDE_STATUS.verpasst : MELDE_STATUS.ohne).wort,
+  abgemeldet: () => MELDE_STATUS.abgemeldet.wort,
+  nicht_aufgeboten: () => MELDE_STATUS.nichtAufgeboten.wort,
+};
 
 /** Was unter dem Namen einer nicht Aufgebotenen steht: ihre Meldung (#464 AK 6). */
 const UNTER_KENNZEICHNUNG: Record<"ohne" | "angemeldet" | "abgemeldet", string> = {
@@ -59,17 +73,18 @@ function Kopf({ zahl, gesamt, wort, min, max, children }: { zahl: number; gesamt
 }
 
 /* Der Reiter «Spieler:innen» an einem Spiel (#463, #464; Epic #490, Tafel 4):
-   wer ohne Meldung, angemeldet oder abgemeldet ist, als flache Liste. Jede Zeile
+   wer angemeldet, ohne Meldung, abgemeldet oder nicht aufgeboten ist, je in
+   einer Gruppe (#599). Jede Zeile
    trägt ihren Status als `LozengeAuswahl`: Ein Tipp darauf öffnet die
    möglichen Wechsel — «Anmelden» und «Abmelden» bis zum Anpfiff, auch nach
-   der Meldefrist der Eltern, nach einem Trenner «Nicht aufbieten» bzw.
+   der Meldefrist am privaten Link, nach einem Trenner «Nicht aufbieten» bzw.
    «Aufbieten». Eine abgegebene Meldung lässt sich nicht zurück auf «ohne»
    setzen. Nach der Meldefrist heisst «ohne Meldung» «Meldefrist verpasst»
    (#496): Das Team rechnet nicht mit ihr, kann sie aber bis zum Anpfiff
    anfragen und melden.
 
    Oben der Status des Spiels mit Detail, die Zahl gross und ungefärbt, dazu,
-   bis wann Eltern und Mitglieder melden. Kader wie bei Trainings. Ab dem
+   bis wann am privaten Link und im Team gemeldet wird. Kader wie bei Trainings. Ab dem
    Anpfiff gilt der Stand beim Anpfiff, nachgetragen wird in
    `SpielNachAnpfiff` (#487). */
 export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpieler }) {
@@ -78,6 +93,7 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
   const meldungen = useLokalerStand<Meldung>(daten);
   const aufgebot = useLokalerStand<boolean>(daten);
   const pending = meldungen.pending || aufgebot.pending;
+  const fokusFolgt = useFokusFolgt(!pending);
   const [gewaehlterKader, setKader] = useState<string | null>(null);
   const jeKader = useMemo(() => {
     const zahl = new Map<string, number>();
@@ -119,20 +135,24 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
   const verpasst = daten.fristAbgelaufen;
 
   // Ein offenes Spiel hat keine Ehemaligen: Jede Zeile trägt ihre Kennung.
-  const melden = (id: string, an: boolean) =>
+  const melden = (id: string, an: boolean) => {
+    fokusFolgt(id);
     meldungen.aendere(
       id,
       an ? "angemeldet" : "abgemeldet",
       () => setzeMeldungAktion(teamId, { terminId: daten.terminId, spielerId: id, angemeldet: an, gesehen }),
       (r) => melde(r.error),
     );
-  const aufbieten = (id: string, nichtAufgeboten: boolean) =>
+  };
+  const aufbieten = (id: string, nichtAufgeboten: boolean) => {
+    fokusFolgt(id);
     aufgebot.aendere(
       id,
       nichtAufgeboten,
       () => setzeAufgebotAktion(teamId, { terminId: daten.terminId, spielerId: id, nichtAufgeboten, gesehen }),
       (r) => melde(r.error),
     );
+  };
 
   const uebrige = uebrigeText(daten.uebrige);
   const kaderNamen = daten.kader.flatMap((k) => (k.name !== null ? [k.name] : []));
@@ -140,8 +160,8 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
   const eingrenzung = mitChips && gewaehlterKader !== null && kaderNamen.includes(gewaehlterKader) ? gewaehlterKader : null;
   const sichtbar = eingrenzung === null ? daten.spieler : daten.spieler.filter((s) => s.kader.includes(eingrenzung));
   const melden_bis = daten.frist
-    ? `Eltern melden bis ${zeitpunktKurz(daten.frist)}${verpasst ? " (abgelaufen)" : ""} · Mitglieder bis zum Anpfiff`
-    : "Eltern und Mitglieder melden bis zum Anpfiff";
+    ? `${LINK_KANAL.meldefrist}: ${zeitpunktKurz(daten.frist)}${verpasst ? " (abgelaufen)" : ""} · Mitglieder melden bis zum Anpfiff`
+    : "Ohne Meldefrist: Alle melden bis zum Anpfiff";
 
   return (
     <div className="flex flex-col gap-3">
@@ -176,26 +196,32 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
           {KADER_TEXT.leerKaderTermin}
         </EingrenzungLeer>
       )}
-      {/* Eine flache Liste ohne Gruppen (PO 2026-10-22): Der Status jeder
-          Zeile steht in ihrer Lozenge, und eine Zeile bleibt an ihrem Platz,
-          wenn sich ihr Status ändert. */}
+      {/* In Gruppen nach Status (#599 AK 1, hebt PO 2026-10-22 auf): Wer den
+          Status wechselt, steht sofort in der Gruppe des neuen; die
+          Gruppenzahl zählt, was die Eingrenzung zeigt. */}
       {sichtbar.length > 0 && (
-        <ul className="divide-y divide-linie rounded-flaeche bg-elev-01">
-          {sichtbar.map((s, i) => (
-            <SpielZeile
-              key={s.spielerId ?? `ehemalig-${i}`}
-              s={s}
-              meldung={meldungVon(s)}
-              nichtAufgeboten={aufgebotVon(s)}
-              fristAbgelaufen={verpasst}
-              eben={meldungen.hat(s.spielerId) && meldungVon(s) !== s.meldung}
-              gelesenAm={daten.gelesenAm}
-              pending={pending}
-              onMelden={(an) => s.spielerId && melden(s.spielerId, an)}
-              onAufgebot={(nein) => s.spielerId && aufbieten(s.spielerId, nein)}
-            />
-          ))}
-        </ul>
+        <ListenGruppen
+          gruppen={GRUPPEN.map((g) => ({
+            schluessel: g,
+            titel: GRUPPE_TITEL[g](verpasst),
+            zeilen: sichtbar
+              .filter((s) => gruppeVon(s) === g)
+              .map((s) => (
+                <SpielZeile
+                  key={s.spielerId}
+                  s={s}
+                  meldung={meldungVon(s)}
+                  nichtAufgeboten={aufgebotVon(s)}
+                  fristAbgelaufen={verpasst}
+                  eben={meldungen.hat(s.spielerId) && meldungVon(s) !== s.meldung}
+                  gelesenAm={daten.gelesenAm}
+                  pending={pending}
+                  onMelden={(an) => s.spielerId && melden(s.spielerId, an)}
+                  onAufgebot={(nein) => s.spielerId && aufbieten(s.spielerId, nein)}
+                />
+              )),
+          }))}
+        />
       )}
       {uebrige && <p className="type-body-small text-on-surface-mittel">{uebrige}</p>}
     </div>
@@ -257,7 +283,7 @@ function SpielZeile({
       ];
   const status = meldeStatus(meldung, nichtAufgeboten, fristAbgelaufen);
   return (
-    <li className="state flex min-h-12 items-center gap-3 px-4 py-1.5">
+    <li data-fokus-ziel={s.spielerId ?? undefined} className="state flex min-h-12 items-center gap-3 px-4 py-1.5">
       <span className="min-w-0 flex-1">
         <span className={cn("block truncate type-body-medium", meldung === "abgemeldet" || nichtAufgeboten || s.ehemalig ? "text-on-surface-mittel" : "text-on-surface")}>
           {name}
@@ -283,11 +309,11 @@ function warBeimAnpfiff(s: SpielTeilnehmer, fristAbgelaufen: boolean): string {
   return s.meldung === null ? "war ohne Meldung" : `war ${s.meldung}`;
 }
 
-/* Ein begonnenes Spiel (#487; Epic #490, Tafel 5): der Stand beim Anpfiff in
-   einer Liste. Jede Zeile nennt als `LozengeAuswahl` den Status beim Anpfiff
+/* Ein begonnenes Spiel (#487; Epic #490, Tafel 5): der Stand beim Anpfiff. Jede Zeile nennt als `LozengeAuswahl` den Status beim Anpfiff
    — Angemeldet, Ohne Meldung bzw. Meldefrist verpasst, Abgemeldet, Nicht
    aufgeboten — oder den Nachtrag: «Nicht erschienen» bei einer, die zählte,
-   «Doch erschienen» bei allen anderen. Ihr Menü bietet den Nachtrag oder,
+   «Doch erschienen» bei allen anderen. Gruppiert nach da und nicht da (#599
+   AK 3). Ihr Menü bietet den Nachtrag oder,
    wenn es einen gibt, «Nachtrag zurücknehmen» zum Stand beim Anpfiff. Oben
    die Anwesenden mit dem Status des Spiels. Ehemalige stehen ohne Namen da
    und lassen sich nicht mehr ansprechen. */
@@ -295,12 +321,15 @@ function SpielNachAnpfiff({ teamId, daten }: { teamId: string; daten: SpielSpiel
   const melde = useSnackbar();
   // Was gerade nachgetragen wird, steht sofort so da.
   const nachtraege = useLokalerStand<boolean>(daten);
+  const fokusFolgt = useFokusFolgt(!nachtraege.pending);
   const nachgetragen = (s: SpielTeilnehmer) => nachtraege.wert(s.spielerId, s.nachgetragen);
-  const anwesend = daten.spieler.filter((s) => zaehlteBeimAnpfiff(s.meldung, s.nichtAufgeboten) !== nachgetragen(s)).length;
+  const istDa = (s: SpielTeilnehmer) => zaehlteBeimAnpfiff(s.meldung, s.nichtAufgeboten) !== nachgetragen(s);
+  const anwesend = daten.spieler.filter(istDa).length;
 
   function nachtragen(s: SpielTeilnehmer, nachtrag: boolean) {
     const id = s.spielerId;
     if (!id) return;
+    fokusFolgt(id);
     nachtraege.aendere(
       id,
       nachtrag,
@@ -329,19 +358,29 @@ function SpielNachAnpfiff({ teamId, daten }: { teamId: string; daten: SpielSpiel
       {daten.gesamt === 0 ? (
         <p className="type-body-medium text-on-surface-mittel">{KADER_TEXT.niemand}</p>
       ) : (
-        <ul className="divide-y divide-linie rounded-flaeche bg-elev-01">
-          {daten.spieler.map((s, i) => (
-            <NachtragZeile
-              key={s.spielerId ?? `ehemalig-${i}`}
-              s={s}
-              nachgetragen={nachgetragen(s)}
-              fristAbgelaufen={daten.fristAbgelaufen}
-              gelesenAm={daten.gelesenAm}
-              pending={nachtraege.pending}
-              onNachtrag={(n) => nachtragen(s, n)}
-            />
-          ))}
-        </ul>
+        <ListenGruppen
+          gruppen={[
+            { schluessel: "da", titel: GRUPPE_TEXT.da, da: true },
+            { schluessel: "nicht-da", titel: GRUPPE_TEXT.nichtDa, da: false },
+          ].map(({ da, ...g }) => ({
+            ...g,
+            zeilen: daten.spieler.flatMap((s, i) =>
+              istDa(s) === da
+                ? [
+                    <NachtragZeile
+                      key={s.spielerId ?? `ehemalig-${i}`}
+                      s={s}
+                      nachgetragen={nachgetragen(s)}
+                      fristAbgelaufen={daten.fristAbgelaufen}
+                      gelesenAm={daten.gelesenAm}
+                      pending={nachtraege.pending}
+                      onNachtrag={(n) => nachtragen(s, n)}
+                    />,
+                  ]
+                : [],
+            ),
+          }))}
+        />
       )}
     </div>
   );
@@ -368,7 +407,12 @@ function NachtragZeile({
   const beimAnpfiff = meldeStatus(s.meldung, s.nichtAufgeboten, fristAbgelaufen);
   const nachtrag = zaehlte ? MELDE_STATUS.nichtErschienen : MELDE_STATUS.dochErschienen;
   const status = nachgetragen ? nachtrag : beimAnpfiff;
-  const zeile2 = [zaehlte && !nachgetragen ? "angemeldet" : warBeimAnpfiff(s, fristAbgelaufen), s.gewechseltAm && seitWann(s.gewechseltAm, gelesenAm), ...s.kader]
+  const zeile2 = [
+    zaehlte && !nachgetragen ? "angemeldet" : warBeimAnpfiff(s, fristAbgelaufen),
+    s.gewechseltAm && seitWann(s.gewechseltAm, gelesenAm),
+    s.nichtMehrImTeam && NICHT_MEHR_IM_TEAM,
+    ...s.kader,
+  ]
     .filter(Boolean)
     .join(" · ");
   const wechsel: Wechsel[] = s.ehemalig
@@ -377,7 +421,7 @@ function NachtragZeile({
       ? [{ handlung: NACHTRAG_TEXT.zurueck, ziel: beimAnpfiff, hinweis: NACHTRAG_TEXT.zurueckHinweis, onSelect: () => onNachtrag(false) }]
       : [{ handlung: nachtrag.wort, ziel: nachtrag, onSelect: () => onNachtrag(true) }];
   return (
-    <li className="state flex min-h-12 items-center gap-3 px-4 py-1.5">
+    <li data-fokus-ziel={s.spielerId ?? undefined} className="state flex min-h-12 items-center gap-3 px-4 py-1.5">
       <span className="min-w-0 flex-1">
         <span className={cn("block truncate type-body-medium", da && !s.ehemalig ? "text-on-surface" : "text-on-surface-mittel")}>{name}</span>
         {zeile2 && <span className="block truncate type-body-small text-on-surface-mittel">{zeile2}</span>}

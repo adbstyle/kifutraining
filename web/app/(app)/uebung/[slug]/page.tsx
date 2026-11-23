@@ -1,5 +1,7 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { abfrageAus, loginAdresse } from "@/lib/weiterleitung";
 import type { Metadata } from "next";
+import { UEBUNGEN_PFAD } from "@/lib/navigation";
 import {
   type BreadcrumbItem,
   Card,
@@ -14,7 +16,9 @@ import { OwnerActions } from "@/components/exercise/OwnerActions";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { UebungKopierenButton } from "@/components/exercise/UebungKopierenButton";
 import { EinordnungsLeiste } from "@/components/exercise/EinordnungsLeiste";
+import { KontoGrenzenLage } from "@/components/konto/BestandStufe";
 import { createClient } from "@/lib/supabase/server";
+import { getMeineGrenzenLage } from "@/lib/queries/verein";
 import { getExerciseDetail, isFavorited } from "@/lib/queries/exercises";
 import { EINORDNUNG_LABEL } from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
@@ -70,17 +74,23 @@ export default async function ExerciseDetailPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isOwner = ex.source === "user" && !!user && ex.owner_id === user.id;
-  // Favoriten-Aktion nur für angemeldete USER (AC2/AC11).
-  const favorited = user ? await isFavorited(ex.id) : false;
+  // Nur mit Konto (#669): ohne Anmeldung leitet die Middleware vorher auf die
+  // Startseite, und die RLS gäbe die Übung gar nicht heraus.
+  if (!user) redirect(loginAdresse(`/uebung/${slug}`, abfrageAus(sp)));
+  const isOwner = ex.source === "user" && ex.owner_id === user.id;
+  // Gelten für das Konto Grenzen (#588)? Nur dann fragt Kopieren den Stand
+  // vorher; ein Konto in einem Verein kopiert mit einem Klick. Ist die Lage
+  // unbekannt, fragt die Stufe selbst. Beide Abfragen sind unabhängig.
+  const [favorited, grenzenLage] = await Promise.all([isFavorited(ex.id), getMeineGrenzenLage()]);
+  const mitGrenzen = grenzenLage !== "ohne";
 
   // Die Brotkrumen nennen die Einordnung als Filter-Link auf den Pool. Der
   // Link zielt auf die feinste Einordnung, die der Katalog filtern kann — im
   // Kinderfussball-Hauptteil auf die Hauptteilkategorie (Story #129). Der TEXT bleibt die Einordnung selbst.
   const teilLabel = EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
-    { label: "Übungen", href: "/" },
-    { label: teilLabel, href: `/?teil=${katalogFilterZiel(ex)}` },
+    { label: "Übungen", href: UEBUNGEN_PFAD },
+    { label: teilLabel, href: `${UEBUNGEN_PFAD}?teil=${katalogFilterZiel(ex)}` },
     { label: ex.name },
   ];
   const materialHinweis = isOwner
@@ -138,43 +148,40 @@ export default async function ExerciseDetailPage({
 
   // Aktions-Cluster auf der Brotkrumen-Zeile, rechtsbündig — dieselbe Stelle
   // wie beim Training (#249 AK 8); der Titel behält so die volle Breite.
-  // Drucken · Stift · Globus · Herz · ⋮. Drucken steht ausserhalb der
-  // Anmelde-Bedingung: eine Übung lässt sich auch ohne Konto ausdrucken (Story
-  // #114 AK 3). Owner sieht alle Aktionen, sonstige angemeldete User nur den
+  // Drucken · Stift · Globus · Herz · ⋮. Drucken steht jedem offen, der die
+  // Übung sieht (Story #114 AK 3; seit #669 nur mit Konto). Owner sieht alle Aktionen, alle anderen Kopieren und den
   // Favoriten. Im Druck ist der ganze Cluster weg — auf dem Blatt hat kein
   // Bedienelement etwas verloren (Postcondition 5).
   const aktionen = (
     <div className="ml-auto flex shrink-0 items-center gap-0.5 print:hidden">
       <PrintButton variant="icon" />
-      {(isOwner || user) && (
-        <>
-          {isOwner ? (
-            <OwnerActions
-              id={ex.id}
-              slug={ex.slug}
-              name={ex.name}
-              visibility={ex.visibility}
-              favoriteSlot={
-                <FavoriteButton
-                  exerciseId={ex.id}
-                  initial={favorited}
-                />
-              }
-            />
-          ) : (
-            <>
-              {/* Kopieren (Story 7, Übungswelten) — hier an einer
-                  fremden oder kuratierten Übung; die eigene wird über das
-                  ⋮-Menü der Eigentümer-Aktionen kopiert (#171). */}
-              <UebungKopierenButton exerciseId={ex.id} name={ex.name} />
+      <KontoGrenzenLage mitGrenzen={mitGrenzen}>
+        {isOwner ? (
+          <OwnerActions
+            id={ex.id}
+            slug={ex.slug}
+            name={ex.name}
+            visibility={ex.visibility}
+            favoriteSlot={
               <FavoriteButton
                 exerciseId={ex.id}
                 initial={favorited}
               />
-            </>
-          )}
-        </>
-      )}
+            }
+          />
+        ) : (
+          <>
+            {/* Kopieren (Story 7, Übungswelten) — hier an einer
+                fremden oder kuratierten Übung; die eigene wird über das
+                ⋮-Menü der Eigentümer-Aktionen kopiert (#171). */}
+            <UebungKopierenButton exerciseId={ex.id} name={ex.name} />
+            <FavoriteButton
+              exerciseId={ex.id}
+              initial={favorited}
+            />
+          </>
+        )}
+      </KontoGrenzenLage>
     </div>
   );
 
@@ -251,10 +258,10 @@ export default async function ExerciseDetailPage({
         ) : (
           <p className="type-body-small text-on-surface-mittel">
             Übung aus der{" "}
-            <strong className="text-on-surface">Gemeinschaft</strong> der
+            <strong className="text-on-surface">Community</strong> der
             Trainerinnen und Trainer, nicht aus dem kuratierten Manual-Bestand.
             {ex.visibility === "private" &&
-              " Noch nicht veröffentlicht - ein Entwurf."}
+              " Noch nicht in der Community - ein Entwurf."}
           </p>
         )}
       </footer>

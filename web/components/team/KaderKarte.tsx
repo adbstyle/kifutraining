@@ -18,7 +18,8 @@ import { useVerfallRueckfrage } from "./VerfallBestaetigung";
    soll (AK 13), steht als Hinweis unter dem Namensfeld, solange kein Fehler
    dasteht — bewusst nicht hinter dem ⓘ: Er muss gelesen werden, bevor man
    tippt, und im niedrigen Dialog schnitte dieser das Panel ab (PO
-   2026-10-18). Entfernen fragt nach (AK 4) und nennt, was danach gilt. */
+   2026-10-18). Entfernen fragt nach (AK 4) und nennt, was danach gilt.
+   Dass Kader nur das Team sieht, steht als Meldung über der Liste (#663 AK 2). */
 export function KaderKarte({ teamId, kader }: { teamId: string; kader: Kader[] }) {
   const router = useRouter();
   const melde = useSnackbar();
@@ -97,9 +98,12 @@ export function KaderKarte({ teamId, kader }: { teamId: string; kader: Kader[] }
         </Tooltip>
       </div>
 
+      {/* #663 AK 2: Kader sieht nur das Team — immer, auch ohne Kader. */}
+      <SectionMessage className="mt-3 max-w-2xl">{KADER_TEXT.sichtbarkeit}</SectionMessage>
+
       {kader.length > 0 ? (
         <>
-          <p className="type-body-medium mt-2 max-w-2xl text-on-surface-mittel">{KADER_TEXT.wirkung}</p>
+          <p className="type-body-medium mt-4 max-w-2xl text-on-surface-mittel">{KADER_TEXT.wirkung}</p>
           <Tabelle className="mt-4" spalten="sm:grid-cols-[minmax(0,1fr)_8.5rem_5rem]" kopf={["Name", "Spieler:innen", ""]}>
             {kader.map((k) => (
               <TabellenZeile key={k.id}>
@@ -211,7 +215,7 @@ function EntfernenFolgen({ name, folgen }: { name: string; folgen: KaderEntferne
       {fuerAlle > 0 && (
         <>
           <p className="mt-3">Diese anstehenden Termine und Serien tragen nur «{name}» und gelten danach für alle:</p>
-          <ul className="mt-2 flex flex-col gap-1.5 rounded-flaeche bg-elev-08 p-3 type-body-small text-on-surface">
+          <ul className="mt-2 flex flex-col gap-1.5 rounded-flaeche betont p-3 type-body-small text-on-surface">
             {folgen.serien.map((s) => (
               <li key={s.id}>
                 Terminserie {wochentageText(s.wochentage as Wochentag[])} · {s.beginn}–{s.ende} Uhr · bis {datumKurz(s.bis)}

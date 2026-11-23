@@ -7,6 +7,7 @@ import {
   Copy,
   Download,
   Globe,
+  Maximize2,
   Pencil,
   Play,
   Printer,
@@ -24,6 +25,7 @@ import {
 } from "@/components/ui";
 import { datumKurz } from "@/lib/zeit";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
+import { useBestandStufe } from "@/components/konto/BestandStufe";
 import {
   SichtbarkeitDialoge,
   type SichtbarkeitSchritt,
@@ -39,7 +41,7 @@ import {
   setzeTrainingAufEntwurf,
   veroeffentlicheTraining,
 } from "@/lib/actions/trainings";
-import { stelleInsTeam, uebernimmTraining } from "@/lib/actions/team-trainings";
+import { stelleInsTeam, uebernimmTraining, uebernimmZuMir } from "@/lib/actions/team-trainings";
 import type { Bearbeitungsziel } from "@/lib/training-zugriff";
 import type { FehlendeBedingung } from "@/lib/training-bedingungen";
 import type { TeamUebersicht } from "@/lib/queries/teams";
@@ -65,6 +67,13 @@ import { mitVariante, type Variante } from "@/lib/varianten";
    hierher ein gefüllter Knopf war. Die Reihe trägt `print:hidden`: Auf dem
    Blatt hat kein Bedienelement etwas verloren (NFR 3).
 
+   Im Detail der Trainingsübersicht (`ort="uebersicht"`, #630) steht die
+   Reihe im `DetailKopf`: vorne Bearbeiten am eigenen bzw. Öffnen am fremden
+   Training (AK 8) — von dort erreicht man Bearbeitung und Ansicht —, dann
+   Durchführen, Drucken und das ⋮. Dasselbe Detail steht neben dem Bestand
+   eines Teams (#637); dort trägt das ⋮ die Aktionen, die früher an der
+   Kachel standen: Termin zuordnen, Zu mir übernehmen, Löschen.
+
    Was der Betrachter darf, rechnet `trainingAktionsRechte` aus. Hier steht
    keine Rechtebedingung mehr — die Server Actions und die RLS bleiben die
    Trust-Boundary, diese Reihe ist die Auskunft darüber. */
@@ -76,14 +85,14 @@ export function TrainingAktionen({
   teamId,
   terminDatum,
   terminTraining,
-  angemeldet,
   bearbeitungsziel,
   teams,
   fehlendeBedingungen,
   varianten,
   aktiveVarianteId,
+  nachLoeschen,
 }: {
-  ort: "ansicht" | "editor";
+  ort: "ansicht" | "editor" | "uebersicht";
   trainingId: string;
   /** Für die a11y-Namen und den Löschdialog: ohne ihn hiesse jedes ⋮-Menü
    *  gleich. */
@@ -96,7 +105,6 @@ export function TrainingAktionen({
   /** Ein Termin-Training (PO 2026-10-06): Es lässt sich in den Bestand
    *  kopieren, und Löschen nimmt es vom Termin. */
   terminTraining: boolean;
-  angemeldet: boolean;
   bearbeitungsziel: Bearbeitungsziel | null;
   /** Die Teams des USERS — Ziele für Übernehmen und Ins-Team-Stellen. */
   teams: readonly TeamUebersicht[];
@@ -107,6 +115,10 @@ export function TrainingAktionen({
   /** Die angezeigte Variante — sie reist an Durchführen, Drucken und
    *  Bearbeiten mit (#203 AK 1). */
   aktiveVarianteId?: string;
+  /** Wohin das Löschen zurückführt, wenn nicht in die eigenen Trainings —
+   *  aus dem Detail der Übersicht dieselbe Übersicht (#630 PC 4). Die Action
+   *  prüft die Angabe. */
+  nachLoeschen?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -126,7 +138,6 @@ export function TrainingAktionen({
 
   const rechte = trainingAktionsRechte(
     { visibility, teamId, terminTraining },
-    angemeldet,
     bearbeitungsziel,
     teams.length > 0,
   );
@@ -137,13 +148,30 @@ export function TrainingAktionen({
   }
 
   /** Übernehmen ohne eigenes Team: Es gibt nur ein mögliches Ziel, und eine
-   *  Wahl mit einer Option ist bloss ein Klick mehr (AK 11). */
+   *  Wahl mit einer Option ist bloss ein Klick mehr (AK 11). Ohne Team heisst
+   *  auch: kein Verein durch ein Team — dann geht der frisch gelesene Stand
+   *  voraus (#588); ein Konto in der Verwaltung ohne Team übernimmt wie bisher
+   *  mit einem Klick (die Seite gibt die Lage über `KontoGrenzenLage` mit). */
+  const uebernehmenStufe = useBestandStufe({
+    art: "trainings",
+    titel: "Training übernehmen",
+    aktion: "Übernehmen",
+    hinweis: "Die Kopie ist ein privater Entwurf in deinem Bestand.",
+    ausfuehren: async () => {
+      const res = await uebernimmTraining(trainingId, { art: "persoenlich" });
+      if (!res.ok) return res;
+      // PO-Entscheid Übungswelten-Epic: nach der Übernahme direkt zur Kopie.
+      router.push(`/training/${res.trainingId}?uebernommen=1`);
+      return null;
+    },
+  });
+
   function uebernehmenStarten() {
     if (teams.length > 0) {
       setZielWahl("uebernehmen");
       return;
     }
-    uebernehmenJetzt({ art: "persoenlich" });
+    uebernehmenStufe.starte();
   }
 
   function uebernehmenJetzt(wahl: KopieZielWahl) {
@@ -177,6 +205,15 @@ export function TrainingAktionen({
     });
   }
 
+  /** Ein Training des Team-Bestands als persönliche Kopie zu sich nehmen —
+   *  die Kopie entsteht still, das Original bleibt im Team. */
+  function zuMirJetzt() {
+    startTransition(async () => {
+      const res = await uebernimmZuMir(trainingId);
+      melde(res.ok ? `„${name}" liegt jetzt als eigene Kopie bei dir.` : res.error);
+    });
+  }
+
   /** Eine Kopie des Termin-Trainings in den Bestand des Teams — bewusst und
    *  von Hand; das Original bleibt am Termin (PO 2026-10-06). */
   function inBestandJetzt() {
@@ -193,7 +230,7 @@ export function TrainingAktionen({
       router.refresh();
       if (res.status === "published") {
         setSichtbarkeit(null);
-        melde("Das Training ist jetzt öffentlich.");
+        melde("Das Training ist jetzt in der Community.");
       } else if (res.status === "incomplete") {
         // Zwischen zwei Blicken hat sich etwas geändert — die Bedingungen
         // stehen dann statt der Bestätigung da, nicht daneben. Genannt wird,
@@ -219,15 +256,27 @@ export function TrainingAktionen({
     });
   }
 
+  const bearbeitenKnopf = (
+    <Tooltip label="Bearbeiten">
+      <IconButtonLink
+        href={ziel(`/training/${trainingId}/edit`)}
+        icon={Pencil}
+        label={`„${name}" bearbeiten`}
+      />
+    </Tooltip>
+  );
+
   /* Die Einträge des Überlaufmenüs — immer in dieser Reihenfolge, was auch
      immer davon offensteht (AK 6). Löschen zuletzt und als einziges in
      Error-Schrift. */
   const eintraege: MenuItemDef[] = [];
   if (rechte.uebernehmen)
     eintraege.push({ label: "Übernehmen", icon: Download, onSelect: uebernehmenStarten });
+  if (rechte.zuMirUebernehmen)
+    eintraege.push({ label: "Zu mir übernehmen", icon: Download, onSelect: zuMirJetzt });
   if (rechte.sichtbarkeit === "veroeffentlichen")
     eintraege.push({
-      label: "Veröffentlichen",
+      label: "In die Community stellen",
       icon: Globe,
       onSelect: () => {
         setVermisst(null);
@@ -271,6 +320,17 @@ export function TrainingAktionen({
       {/* Rechtsbündig und im Druck ausgeblendet wird die Leiste von der
           Kopfzeile (`SeitenKopf`) — ausserhalb von ihr fehlt beides. */}
       <div className="flex items-center gap-0.5">
+        {ort === "uebersicht" &&
+          (rechte.bearbeiten ? bearbeitenKnopf : (
+            <Tooltip label="Öffnen">
+              <IconButtonLink
+                href={ziel(`/training/${trainingId}`)}
+                icon={Maximize2}
+                label={`„${name}" öffnen`}
+              />
+            </Tooltip>
+          ))}
+
         <Tooltip label="Durchführen">
           <IconButtonLink
             href={ziel(`/training/${trainingId}/durchfuehren`)}
@@ -290,20 +350,13 @@ export function TrainingAktionen({
           />
         </Tooltip>
 
-        {ort === "ansicht" && rechte.bearbeiten && (
-          <Tooltip label="Bearbeiten">
-            <IconButtonLink
-              href={ziel(`/training/${trainingId}/edit`)}
-              icon={Pencil}
-              label={`„${name}" bearbeiten`}
-            />
-          </Tooltip>
-        )}
+        {ort === "ansicht" && rechte.bearbeiten && bearbeitenKnopf}
 
         {hatUeberlauf(rechte) && (
           <OverflowMenu
             label={`Weitere Aktionen zu „${name}"`}
             disabled={pending}
+            gesperrt={uebernehmenStufe.laeuft}
             items={eintraege}
           />
         )}
@@ -324,6 +377,8 @@ export function TrainingAktionen({
         />
       )}
 
+      {uebernehmenStufe.dialog}
+
       {(rechte.uebernehmen || rechte.insTeamStellen) && (
         <TrainingZielDialog
           open={zielWahl !== null}
@@ -340,7 +395,9 @@ export function TrainingAktionen({
           open={terminZuordnen}
           trainingId={trainingId}
           name={name}
-          teams={teams}
+          // Vom Team-Training aus in die Termine seines Teams (#637), vom
+          // persönlichen aus in die eines der eigenen Teams.
+          teams={teamId ? teams.filter((t) => t.id === teamId) : teams}
           onClose={() => setTerminZuordnen(false)}
         />
       )}
@@ -355,7 +412,7 @@ export function TrainingAktionen({
               <Button variant="outlined" onClick={() => setLoeschen(false)}>
                 Abbrechen
               </Button>
-              <form action={deleteTraining.bind(null, trainingId)}>
+              <form action={deleteTraining.bind(null, trainingId, nachLoeschen)}>
                 <Button type="submit" variant="danger">
                   Endgültig löschen
                 </Button>
@@ -372,12 +429,19 @@ export function TrainingAktionen({
               Der Termin am {datumKurz(terminDatum)} bleibt ohne Training im Trainingsplan des Teams bestehen.
             </p>
           )}
+          {/* Ein Training des Bestands gehört allen im Team (#637). */}
+          {teamId && !terminTraining && (
+            <p className="mt-3">
+              Es verschwindet damit für das ganze Team. Persönliche Kopien, die
+              jemand zu sich übernommen hat, bleiben bestehen.
+            </p>
+          )}
           {/* Beim öffentlichen Training ist das Löschen mehr als ein Aufräumen
-              im eigenen Bestand: es verschwindet aus der Öffentlichkeit
+              im eigenen Bestand: es verschwindet aus der Community
               (Story A AK 8). */}
           {oeffentlich && (
             <p className="mt-3">
-              Das Training verschwindet damit auch aus dem öffentlichen Bestand.
+              Das Training verschwindet damit auch aus der Community.
               Kopien, die andere bereits übernommen haben, bleiben bestehen.
             </p>
           )}

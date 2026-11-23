@@ -1,178 +1,65 @@
 import type { Metadata } from "next";
-import { Bookmark, ChevronRight, Cookie, LogOut, type LucideIcon } from "lucide-react";
-import { Card, Button, SectionMessage } from "@/components/ui";
-import { KontoClient } from "./KontoClient";
-import { AnzeigenameForm } from "./AnzeigenameForm";
-import { KiZugaengeListe } from "./KiZugaengeListe";
-import { AbosListe } from "./AbosListe";
-import { createClient } from "@/lib/supabase/server";
-import { signOut } from "@/lib/actions/auth";
-import { getMeinAnzeigename } from "@/lib/queries/profil";
-import { getMeineZugaenge } from "@/lib/queries/ki-zugaenge";
-import { getMeineAbos } from "@/lib/queries/abos";
-import { KI_ZUGAENGE_MAX } from "@/lib/mcp/regeln";
-import { oeffentlicherOrigin } from "@/lib/origin";
-import { MCP_PFAD } from "@/lib/mcp/pfad";
 import Link from "next/link";
-import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { Card } from "@/components/ui";
+import { AnzeigenameForm } from "./AnzeigenameForm";
+import { KontoRahmen } from "./KontoRahmen";
+import { createClient } from "@/lib/supabase/server";
+import { getAnzeigenameFuer } from "@/lib/queries/profil";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Konto - KiFu", robots: { index: false } };
+export const metadata: Metadata = { title: "Profil im Konto - KiFu", robots: { index: false } };
 
-/** Eine Zeile, die vom Konto weiterführt: Zeichen, Titel, ein Satz. */
-function KontoLink({
-  href,
-  icon: Icon,
-  titel,
-  children,
-}: {
-  href: string;
-  icon: LucideIcon;
-  titel: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className="focus-ring state group mb-4 flex items-center gap-4 rounded-flaeche bg-elev-01 p-5"
-    >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
-        <Icon size={22} strokeWidth={2} aria-hidden />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="type-title-medium block text-on-surface">{titel}</span>
-        <span className="type-body-small block text-on-surface-mittel">{children}</span>
-      </span>
-      <ChevronRight
-        size={20}
-        strokeWidth={2}
-        className="shrink-0 text-on-surface-mittel transition-transform group-hover:translate-x-0.5"
-        aria-hidden
-      />
-    </Link>
-  );
-}
-
-export default async function KontoPage() {
+/* Konto › Profil (#662 AK 2): die E-Mail-Adresse zum Lesen, der Anzeigename
+   zum Ändern und der Weg zu einem neuen Passwort. Abmelden steht im
+   Konto-Menü der Seitenleiste (#661), nicht hier. */
+export default async function KontoProfilPage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [anzeigeName, zugaenge, abos, origin] = await Promise.all([
-    getMeinAnzeigename(),
-    getMeineZugaenge(),
-    getMeineAbos(),
-    oeffentlicherOrigin(),
-  ]);
+  // Mit dem schon geholten User direkt, ohne zweites getUser() (Verbrauch #444).
+  const anzeigeName = user ? await getAnzeigenameFuer(supabase, user.id) : null;
 
   return (
-    <Seitenrahmen breite="2xl" krumen={[{ label: "Konto" }]}>
-      <header className="mb-8">
-        <h1 className="type-headline-large text-on-surface">Dein Konto</h1>
+    <KontoRahmen reiter="profil">
+      <Card className="flex flex-col gap-5 p-6">
         {user?.email && (
-          <p className="type-body-medium mt-2 text-on-surface-mittel">
-            Angemeldet als <strong className="text-on-surface">{user.email}</strong>
-          </p>
+          <section aria-labelledby="konto-email">
+            <h2 id="konto-email" className="type-title-small text-on-surface">
+              E-Mail-Adresse
+            </h2>
+            <p className="type-body-large mt-1 break-all text-on-surface">{user.email}</p>
+            <p className="type-body-small mt-1 text-on-surface-mittel">
+              Damit meldest du dich an. Sehen können sie die Mitglieder deiner Teams und die
+              Vereinsverwaltung.
+            </p>
+          </section>
         )}
-        <form action={signOut} className="mt-5">
-          <Button type="submit" variant="outlined">
-            <LogOut size={18} strokeWidth={2} aria-hidden />
-            Abmelden
-          </Button>
-        </form>
-      </header>
 
-      {anzeigeName && (
-        <Card className="mb-4 p-6">
-          <AnzeigenameForm aktuell={anzeigeName} />
-        </Card>
-      )}
+        {anzeigeName && (
+          <div className="border-t border-linie pt-5">
+            <AnzeigenameForm aktuell={anzeigeName} />
+          </div>
+        )}
 
-      <KontoLink href="/?mine=1" icon={Bookmark} titel="Meine Übungen">
-        Deine eigenen Übungen - öffentliche und private Entwürfe.
-      </KontoLink>
-
-      {/* KI-Zugänge (Story #142 AK 5, AK 6). Die Adresse steht hier, weil der
-          Trainer sie in seinen KI-Client eintragen muss; ein Geheimnis gibt es
-          nicht (NFR 4) — erlaubt wird im Browser. */}
-      <Card className="mb-4 p-6">
-        <h2 className="type-title-large text-on-surface">KI-Zugänge</h2>
-        <p className="type-body-medium mt-2 text-on-surface-mittel">
-          Verbinde einen KI-Assistenten mit deinem Konto. Er sucht dann Übungen
-          und stellt Trainings für dich zusammen. Die Adresse dafür ist{" "}
-          <strong className="break-all text-on-surface">{`${origin}${MCP_PFAD}`}</strong>.
-          Ein Passwort oder Schlüssel brauchst du nicht: Du erlaubst den Zugriff
-          im Browser, mit deiner Anmeldung hier.
-        </p>
-        {/* Zwei konkrete Wege statt «in seinen Einstellungen»: Der Trainer weiss
-            nicht, wo ein Client die Adresse erwartet (Rückmeldung 2026-09-23).
-            Jeder Client, der Werkzeuge über MCP einbindet, funktioniert gleich. */}
-        <ol className="type-body-medium mt-3 list-decimal space-y-2 pl-5 text-on-surface-mittel">
-          <li>
-            <strong className="text-on-surface">Claude Desktop oder claude.ai:</strong>{" "}
-            Einstellungen → Connectors → «Custom connector» hinzufügen → Adresse
-            eintragen. Der Browser öffnet sich: anmelden, dem Zugang einen Namen
-            geben, «Erlauben».
-          </li>
-          <li>
-            <strong className="text-on-surface">Claude Code im Terminal:</strong>{" "}
-            <code className="break-all text-on-surface">{`claude mcp add --transport http kifu ${origin}${MCP_PFAD}`}</code>,
-            danach in der Sitzung <code className="text-on-surface">/mcp</code> → kifu →
-            «Authenticate»; der Rest läuft wie oben im Browser.
-          </li>
-        </ol>
-        <p className="type-body-small mt-3 text-on-surface-mittel">
-          Andere Assistenten, die Werkzeuge über MCP einbinden, gehen gleich.
-          Höchstens {KI_ZUGAENGE_MAX} Zugänge gleichzeitig; jeden kannst du hier
-          einzeln widerrufen.
-        </p>
-        <div className="mt-4">
-          {zugaenge === null ? (
-            <SectionMessage appearance="error">
-              Deine KI-Zugänge lassen sich gerade nicht anzeigen. Bitte lade die
-              Seite später erneut.
-            </SectionMessage>
-          ) : (
-            <KiZugaengeListe zugaenge={zugaenge} />
-          )}
-        </div>
+        {/* Ein Passwort ändert man über denselben Link per E-Mail wie beim
+            Vergessen; die Seite steht auch Angemeldeten offen. */}
+        <section aria-labelledby="konto-passwort" className="border-t border-linie pt-5">
+          <h2 id="konto-passwort" className="type-title-small text-on-surface">
+            Passwort
+          </h2>
+          <p className="type-body-small mt-1 text-on-surface-mittel">
+            Ein neues Passwort setzt du über einen Link, den wir dir per E-Mail senden.
+          </p>
+          <Link
+            href="/passwort-vergessen"
+            className="focus-ring type-label-medium mt-2 inline-block rounded-flaeche text-primary underline"
+          >
+            Passwort vergessen?
+          </Link>
+        </section>
       </Card>
-
-      {/* Kalender-Abos (Story #330 AK 4, 5, 7). Der Link ist ein Geheimnis; er
-          erscheint nur im Dialog «Link anzeigen», mit seiner Warnung. */}
-      <Card className="mb-4 p-6">
-        <h2 className="type-title-large text-on-surface">Kalender-Abos</h2>
-        <p className="type-body-medium mt-2 text-on-surface-mittel">
-          Deine persönlichen Links, mit denen dein Kalenderprogramm die Trainings und Spiele deiner Teams
-          abonniert.
-        </p>
-        <div className="mt-4">
-          {abos === null ? (
-            <SectionMessage appearance="error">Deine Abos liessen sich gerade nicht laden.</SectionMessage>
-          ) : (
-            <AbosListe abos={abos} />
-          )}
-        </div>
-      </Card>
-
-      {/* Was KiFu im Browser speichert (#409). Die Seite selbst ist ohne
-          Anmeldung offen; ohne Konto führen die Anmeldeseiten dorthin. */}
-      <KontoLink href="/cookies" icon={Cookie} titel="Cookies">
-        Was KiFu in deinem Browser speichert, wozu und wie du es verhinderst.
-      </KontoLink>
-
-      <Card className="p-6">
-        <h2 className="type-title-large text-on-surface">Konto löschen</h2>
-        <p className="type-body-medium mt-2 text-on-surface-mittel">
-          Wenn du die Plattform verlässt, bleiben deine öffentlich geteilten
-          Übungen anonymisiert für andere erhalten. Deine privaten Entwürfe werden
-          gelöscht. Verbundene KI-Assistenten verlieren ihren Zugang.
-        </p>
-        <div className="mt-5">
-          <KontoClient />
-        </div>
-      </Card>
-    </Seitenrahmen>
+    </KontoRahmen>
   );
 }

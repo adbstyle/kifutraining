@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
+import { UEBUNGEN_PFAD } from "@/lib/navigation";
 import { type BreadcrumbItem } from "@/components/ui";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
@@ -39,8 +40,8 @@ export default async function EditPage({
   // (Story #129). Der TEXT bleibt die Einordnung selbst.
   const teilLabel = EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
-    { label: "Übungen", href: "/" },
-    { label: teilLabel, href: `/?teil=${katalogFilterZiel(ex)}` },
+    { label: "Übungen", href: UEBUNGEN_PFAD },
+    { label: teilLabel, href: `${UEBUNGEN_PFAD}?teil=${katalogFilterZiel(ex)}` },
     { label: ex.name, href: `/uebung/${slug}` },
     { label: "Übung bearbeiten" },
   ];

@@ -25,9 +25,15 @@ name: Sync Staging (Prod-Spiegel, manuell)
 #   Ebenso `spieler_abos` (Abo-Adressen der Spielervertretungen, #507) — der
 #   Trigger, der sie beim Erneuern des Links löscht, schweigt im Restore
 #   (`session_replication_role = replica`).
+#   Ebenso `spieler_benachrichtigungen` (#642): Die Links bekommen neue
+#   Werte, ein erneuerter Link beginnt ohne Benachrichtigungen.
+#   Ebenso `push_abos` und `push_auftraege` (#483): Adressen der Geräte mit
+#   Mitteilungen aus der Produktion gehören nie auf Staging (PC 5); Adresse
+#   und Geheimnis der Route stehen in Vault, das nicht gedumpt wird.
 # - `spieler.link_token` und `team_abholung.token` bekommen nach dem Restore
 #   neue Werte (private Links der Spieler:innen #436, Abholadressen #438):
-#   Prod-Links gelten auf Staging nicht; «bezogen» fällt damit zurück.
+#   Prod-Links gelten auf Staging nicht; «abgeholt» (link_bezogen) und
+#   «zugestellt» (link_zugestellt, #657) fallen damit zurück.
 #   `abholung_sperren` (Fehlversuche je Anschluss) wird geleert.
 # - `feedback` und `feedback_dialoge` werden geleert (#542 PC 9): Feedback aus
 #   der Produktion gelangt nie in eine Testumgebung.
@@ -51,6 +57,24 @@ name: Sync Staging (Prod-Spiegel, manuell)
 # Bis zum Release die Datei nach dem Sync gegen Staging erneut ausführen —
 # dafür muss sie wiederholbar geschrieben sein (Vorbild:
 # 20260928100000_fahrplan_freitext).
+#
+# Vorauseilendes develop (Epic Vereine, AP §6.2; fällt mit N1 weg): In der
+# Restore-Transaktion, unter `session_replication_role = replica`, laufen zwei
+# Bausteine aus supabase/sync/ (geprüft von supabase/tests/sync_bausteine.sql):
+# - vor dem Restore `vor_restore.sql`: leert public-Tabellen, die Staging hat,
+#   die aber nicht in PUBLIC_TABLES stehen (Staging-eigene Tabellen), in einem
+#   `truncate … cascade`. Ein zweites `truncate … cascade` nach dem Restore gibt
+#   es bewusst nicht: es risse über die FKs den eben geladenen Bestand mit.
+# - nach dem Restore, vor der Geheimnis-Nachbehandlung, `nach_restore.sql`: ruft
+#   `public.staging_nach_sync()` auf, sofern es die Funktion gibt.
+# Ohne Staging-eigene Tabellen und ohne die Funktion bewirken beide nichts.
+#
+# Testkonto: Nach dem Restore legt `supabase/sync/testkonto.sql` in einer
+# eigenen Transaktion (alle Trigger aktiv) das Konto claude@tester.ch und
+# erfundene Testdaten an (Verein, Team, Spieler:innen, Trainings, Termine).
+# Das Passwort kommt aus dem Secret STAGING_TESTKONTO_PASSWORT; fehlt es,
+# bleibt es bei einer Warnung. reset-staging löscht das Konto ebenfalls —
+# danach diesen Sync fahren, dann ist es wieder da.
 on:
   workflow_dispatch:
     inputs:
@@ -58,13 +82,27 @@ on:
         description: 'Zum Bestätigen "sync" eintippen (überschreibt ALLE Staging-Daten)'
         required: true
 
+# Dieselbe Gruppe wie reset-staging.yml und deploy-staging.yml: Läufe auf der
+# Staging-DB warten aufeinander, statt sich zu überschneiden. GitHub hält je
+# Gruppe einen laufenden und einen wartenden Lauf; ein neu wartender ersetzt
+# einen älteren wartenden.
+concurrency:
+  group: staging-db
+  cancel-in-progress: false
+
 env:
+  # Testkonto auf Staging (supabase/sync/testkonto.sql und Anmeldeprobe).
+  TESTKONTO_EMAIL: claude@tester.ch
   # Single Source für Dump, TRUNCATE und Vollständigkeits-Guard.
   # Bytewise sortiert (collate "C", d. h. '_' vor Buchstaben) — muss der
   # Sortierung im Guard-Query entsprechen. Neue public-Tabelle in einer
   # Migration? -> hier ergänzen, sonst bricht der Guard den Sync bewusst ab
-  # (statt die Tabelle still leer zu lassen).
-  PUBLIC_TABLES: "abholung_sperren exercise_favorites exercises feedback feedback_dialoge kader kader_spieler kalender_abos ki_aufrufe ki_zugang_namen profiles spiel_meldungen spiel_teilnahmen spiel_treffpunkte spieler spieler_abos team_abholung team_members team_probetraining teams termin_abmeldungen termin_eingefroren termin_kader termin_serien termin_serien_kader termin_serien_luecken termin_serien_trainer termin_serien_verantwortliche termin_statuswechsel termin_teilnahmen termin_trainer termin_trainer_stand termin_verantwortliche trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings"
+  # (statt die Tabelle still leer zu lassen). team_infos (#598) und
+  # spieler_benachrichtigungen (#642), push_abos und push_auftraege (#483)
+  # stehen hier ab dem Feature-PR; Prod
+  # bekommt sie erst mit dem Release: Ein Sync aus develop bricht
+  # bis dahin am Guard ab (gewollt). Aus main synct die Liste von main.
+  PUBLIC_TABLES: "abholung_sperren exercise_favorites exercises feedback feedback_dialoge kader kader_spieler kalender_abos ki_aufrufe ki_zugang_namen profiles push_abos push_auftraege spiel_meldungen spiel_teilnahmen spiel_treffpunkte spieler spieler_abos spieler_benachrichtigungen team_abholung team_infos team_members team_probetraining team_spieler teams termin_abmeldungen termin_eingefroren termin_kader termin_serien termin_serien_kader termin_serien_luecken termin_serien_trainer termin_serien_verantwortliche termin_statuswechsel termin_teilnahmen termin_trainer termin_trainer_stand termin_verantwortliche trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings verein_verwaltung verein_zustimmungen vereine"
 
 jobs:
   sync:
@@ -178,6 +216,15 @@ jobs:
             exit 1
           fi
 
+          # Ohne pipefail endete der Schritt grün, wenn `cat` eine Datei nicht
+          # findet und psql den Rest trotzdem übernimmt.
+          for F in supabase/sync/vor_restore.sql supabase/sync/nach_restore.sql; do
+            if ! test -f "$F"; then
+              echo "::error::Sync-Baustein $F fehlt im Checkout. Abbruch vor dem Restore."
+              exit 1
+            fi
+          done
+
           TRUNCATE_LIST="auth.users"
           for T in $PUBLIC_TABLES; do
             TRUNCATE_LIST="$TRUNCATE_LIST, public.$T"
@@ -189,17 +236,37 @@ jobs:
           set local session_replication_role = replica;
           SQL
             echo "truncate $TRUNCATE_LIST cascade;"
+            # Staging-eigene public-Tabellen (nicht in PUBLIC_TABLES) leeren.
+            cat supabase/sync/vor_restore.sql
             cat dump.sql
+            # public.staging_nach_sync() aufrufen, sofern vorhanden.
+            cat supabase/sync/nach_restore.sql
             cat <<'SQL'
           -- Abo-Links sind Geheimnisse der Prod-Konten (#330). Auf Staging gelten
           -- sie nicht; wer dort testet, holt sich einen neuen.
           delete from public.kalender_abos;
           delete from public.spieler_abos;
+          -- Benachrichtigungen hängen an den Links (#642 PC 2); der Trigger schweigt im Restore.
+          delete from public.spieler_benachrichtigungen;
+          -- Mitteilungen aufs Mobile (#483 PC 5): keine Prod-Geräte auf Staging.
+          delete from public.push_auftraege;
+          delete from public.push_abos;
           -- Ebenso die privaten Links der Spieler:innen (#436 PC 4) und die
           -- Abholadressen (#438 PC 7).
           update public.spieler
           set link_token = replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''),
               link_bezogen = false;
+          -- «zugestellt» (#657) nur, wo die Spalte schon besteht: Nach
+          -- reset-staging trägt Staging das Schema von main, bis #657 dort
+          -- ist ohne sie. Bis N1; danach direkt im UPDATE oben.
+          do $$
+          begin
+            if exists (select 1 from information_schema.columns
+                        where table_schema = 'public' and table_name = 'spieler'
+                          and column_name = 'link_zugestellt') then
+              update public.spieler set link_zugestellt = false;
+            end if;
+          end $$;
           update public.team_abholung
           set token = replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
           delete from public.abholung_sperren;
@@ -227,6 +294,80 @@ jobs:
           SQL
           } | psql "$SUPABASE_STAGING_DB_URL" \
                 -v ON_ERROR_STOP=1 \
+                -v public_tables="$PUBLIC_TABLES" \
                 -v prod_ref="$SUPABASE_PROD_REF" \
                 -v staging_ref="$SUPABASE_STAGING_REF" \
                 --quiet
+
+      # Eigene Transaktion nach dem Restore: Scheitert sie, bleibt der
+      # gespiegelte Stand stehen, nur Konto und Testdaten fehlen.
+      - name: Testkonto claude@tester.ch und Testdaten anlegen
+        env:
+          SUPABASE_STAGING_DB_URL: ${{ secrets.SUPABASE_STAGING_DB_URL }}
+          STAGING_TESTKONTO_PASSWORT: ${{ secrets.STAGING_TESTKONTO_PASSWORT }}
+        run: |
+          if ! test -f supabase/sync/testkonto.sql; then
+            echo "::error::Sync-Baustein supabase/sync/testkonto.sql fehlt im Checkout."
+            exit 1
+          fi
+          if [ -z "$STAGING_TESTKONTO_PASSWORT" ]; then
+            echo "::warning::Secret STAGING_TESTKONTO_PASSWORT fehlt: kein Testkonto auf Staging."
+          fi
+          {
+            echo 'begin;'
+            cat supabase/sync/testkonto.sql
+            echo 'commit;'
+          } | psql "$SUPABASE_STAGING_DB_URL" \
+                -v ON_ERROR_STOP=1 \
+                -v email="$TESTKONTO_EMAIL" \
+                -v passwort="$STAGING_TESTKONTO_PASSWORT" \
+                --quiet
+
+      # Anmeldeprobe wie in der App: Passwort-Anmeldung bei Supabase Auth mit
+      # dem Anon-Key (den Vercel der App gibt; hier über die Management-API
+      # geholt, weil er kein GitHub-Secret ist). Beweist, dass Konto und
+      # Passwort zusammenpassen. Das Passwort geht über stdin an curl, die
+      # Antwort (mit Sitzung) liegt nur in $RUNNER_TEMP und wird nie
+      # ausgegeben. curl wiederholt vorübergehende Fehler (u. a. 429, 5xx).
+      - name: Anmeldung des Testkontos prüfen
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_STAGING_REF: ${{ secrets.SUPABASE_STAGING_REF }}
+          SUPABASE_STAGING_URL: ${{ secrets.SUPABASE_STAGING_URL }}
+          STAGING_TESTKONTO_PASSWORT: ${{ secrets.STAGING_TESTKONTO_PASSWORT }}
+        run: |
+          if [ -z "$STAGING_TESTKONTO_PASSWORT" ]; then
+            echo "Kein Passwort-Secret, keine Anmeldeprobe."
+            exit 0
+          fi
+          antwort=$(mktemp "$RUNNER_TEMP/anmeldung.XXXXXX")
+          trap 'rm -f "$antwort"' EXIT
+          scheitern() {
+            echo "::error::Anmeldung als $TESTKONTO_EMAIL scheitert ($1)."
+            exit 1
+          }
+
+          anon=$(curl -fsS --retry 3 --retry-all-errors \
+                   -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+                   "https://api.supabase.com/v1/projects/$SUPABASE_STAGING_REF/api-keys" \
+                 | jq -r '.[] | select(.name == "anon") | .api_key') \
+            || scheitern "Anon-Key über die Management-API nicht abrufbar"
+          [ -n "$anon" ] || scheitern "kein Anon-Key im Staging-Projekt"
+          echo "::add-mask::$anon"
+
+          code=$(jq -n --arg email "$TESTKONTO_EMAIL" --arg pw "$STAGING_TESTKONTO_PASSWORT" \
+                   '{email: $email, password: $pw}' \
+                 | curl -sS --retry 3 --retry-all-errors -o "$antwort" -w '%{http_code}' \
+                     -X POST "${SUPABASE_STAGING_URL%/}/auth/v1/token?grant_type=password" \
+                     -H "apikey: $anon" \
+                     -H "Content-Type: application/json" \
+                     --data-binary @-) \
+            || scheitern "Auth nicht erreichbar, curl-Exit $?"
+          ok=$(jq -r --arg email "$TESTKONTO_EMAIL" \
+                 'if (.access_token // "") != "" and .user.email == $email then "ja" else "nein" end' \
+                 "$antwort" 2>/dev/null || echo nein)
+          fehler=$(jq -r '.error_code // .error // empty' "$antwort" 2>/dev/null || true)
+          if [ "$code" != "200" ] || [ "$ok" != "ja" ]; then
+            scheitern "HTTP $code${fehler:+, $fehler}"
+          fi
+          echo "Anmeldung als $TESTKONTO_EMAIL klappt (HTTP 200, Sitzung erhalten)."

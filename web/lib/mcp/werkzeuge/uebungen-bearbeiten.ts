@@ -22,6 +22,7 @@ import {
   alsUebungInhalt,
   alsUebungPatch,
 } from "@/lib/mcp/uebung-eingaben";
+import { KONTO_GRENZE_WERKZEUG } from "@/lib/konto-grenzen";
 import { werkzeug, type Zugang } from "@/lib/mcp/werkzeug";
 
 /**
@@ -60,10 +61,10 @@ export const uebungAnlegen = werkzeug({
   titel: "Übung anlegen",
   beschreibung:
     "Legt eine eigene Übung als privaten Entwurf an - sichtbar nur für dich und in KiFu unter " +
-    "deinen eigenen Übungen, bis «uebung_veroeffentlichen» sie öffentlich schaltet. Es gelten " +
+    "deinen eigenen Übungen, bis «uebung_veroeffentlichen» sie in die Community stellt. Es gelten " +
     "dieselben Regeln wie im Formular in KiFu, je Altersstufe die ihren; die Altersstufe steht " +
-    `danach fest. ${ABLEHNUNG} Danach die ` +
-    `ganze Übung korrigiert noch einmal senden. ${UEBUNG_ANGABEN} Die Werte samt Klartext liefert ` +
+    `danach fest. ${ABLEHNUNG} Nach einer Ablehnung wegen ` +
+    `verletzter Angaben die ganze Übung korrigiert noch einmal senden. ${KONTO_GRENZE_WERKZEUG.uebungen} ${UEBUNG_ANGABEN} Die Werte samt Klartext liefert ` +
     "«vokabular». Ein Feld-Diagramm lässt sich in «diagramm» gleich mitgeben, mit denselben " +
     "Grenzen wie bei «uebung_diagramm_setzen»: Es wird das Bild der Übung, und KiFu zählt das " +
     "Material daraus selbst - dann «material.liste» weglassen, die Ergänzung bleibt möglich - und " +
@@ -137,13 +138,13 @@ export const uebungAendern = werkzeug({
 
 export const uebungVeroeffentlichen = werkzeug({
   name: "uebung_veroeffentlichen",
-  titel: "Übung veröffentlichen",
+  titel: "Übung in die Community stellen",
   beschreibung:
-    "Schaltet eine eigene Übung öffentlich - ohne Rückfrage und in beiden Altersstufen. " +
+    "Stellt eine eigene Übung in die Community (für alle angemeldeten Konten sichtbar) - ohne Rückfrage und in beiden Altersstufen. " +
     "Tragweite, die du dem Trainer vorher nennen solltest: " +
     `«${TRAGWEITE_UEBUNG_VEROEFFENTLICHEN}» Es entsteht keine Kopie: Die Übung bleibt ` +
-    "bearbeitbar, und die Öffentlichkeit sieht jeweils den aktuellen Stand. Eine öffentliche " +
-    `Übung bleibt öffentlich. ${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
+    "bearbeitbar, und die Community sieht jeweils den aktuellen Stand. Eine Übung in der " +
+    `Community bleibt dort. ${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ kennung: UebungKennung }),
   ausgabe: z.object({ ...Kopf, sichtbarkeit: z.literal("oeffentlich"), tragweite: z.string() }),
@@ -159,7 +160,7 @@ export const uebungAufEntwurfSetzen = werkzeug({
   name: "uebung_auf_entwurf_setzen",
   titel: "Übung auf Entwurf setzen",
   beschreibung:
-    "Nimmt eine eigene öffentliche Übung aus dem öffentlichen Bestand; sie bleibt als privater " +
+    "Nimmt eine eigene Übung aus der Community; sie bleibt als privater " +
     "Entwurf in deinem Bestand. Was andere bereits in ihre Trainings übernommen oder in ihren " +
     "Bestand kopiert haben, bleibt bestehen - es sind eigenständige Kopien; benachrichtigt wird " +
     `niemand. Ein Entwurf bleibt Entwurf. ${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
@@ -179,7 +180,7 @@ export const uebungKopieren = werkzeug({
   name: "uebung_kopieren",
   titel: "Übung in den eigenen Bestand kopieren",
   beschreibung:
-    "Kopiert eine Übung, die dein Konto sieht - aus dem Kifu-Manual, die öffentliche eines " +
+    "Kopiert eine Übung, die dein Konto sieht - aus dem Kifu-Manual, die Community-Übung eines " +
     "anderen Kontos oder eine eigene, in beiden Altersstufen - in deinen Bestand, wie «Übung " +
     "kopieren» in KiFu. Es entsteht ein privater Entwurf mit allen Angaben, eigener Kopie von Bild " +
     "und Feld-Diagramm und derselben Altersstufe, ohne Verbindung zur Quelle: Spätere Änderungen " +
@@ -187,7 +188,9 @@ export const uebungKopieren = werkzeug({
     "trägt im Namen den Zusatz «(Kopie)», die einer Manual- oder fremden Übung behält den Namen. " +
     "Danach lässt sich die Kopie mit «uebung_aendern» anpassen. Je Aufruf entsteht genau eine " +
     "Kopie; scheitert es mit einer Meldung, bleibt nichts zurück (siehe «hinweis»); bei " +
-    "«technisch» oder «konflikt» ist ein zweiter Versuch gefahrlos. Bricht der Vorgang ohne " +
+    "«technisch» oder «konflikt» ist ein zweiter Versuch gefahrlos. " +
+    `${KONTO_GRENZE_WERKZEUG.uebungen} ` +
+    "Bricht der Vorgang ohne " +
     "Meldung ab (Zeitüberschreitung), " +
     "kann die Kopie trotzdem entstanden sein - prüfe dann mit «uebungen_suchen» («nur_eigene»), " +
     "bevor du es noch einmal versuchst. Übungen aus Trainings («fassung_id» aus «training_abrufen») lassen sich hier nicht " +

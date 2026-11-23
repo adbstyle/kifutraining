@@ -2,35 +2,57 @@
 
 import { useId, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FileUp, Link2, Pencil, Plus, Shirt, X } from "lucide-react";
+import { Bell, BellOff, Link2, Pencil, Plus, Shirt, UserMinus } from "lucide-react";
 import {
   AuswahlLeiste,
   Button,
   Checkbox,
   Dialog,
   IconButton,
+  InfoKnopf,
   MultiSelect,
   SectionMessage,
   Tabelle,
   TabellenZeile,
-  TextField,
   Tooltip,
 } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
-import { aendereSpielerAktion, entferneSpielerAktion, nimmSpielerAufAktion } from "@/lib/actions/spieler";
+import { aendereSpielerAktion, ladeSpielerTeamsAktion, nimmSpielerAufAktion, nimmSpielerAusTeamAktion } from "@/lib/actions/spieler";
 import { aendereZuteilungAktion } from "@/lib/actions/kader";
 import { probeFolgenAktion, schalteProbeAktion } from "@/lib/actions/probe";
 import { PROBE_TEXT, probeAusschaltenText, probeEinschaltenText, probeFolgenSumme, probeVerfallFolge, probeVerfallTitel, type ProbeFolgen } from "@/lib/probe";
-import { KADER_TEXT, kaderVon, type Kader } from "@/lib/kader";
-import { JAHRGANG_STELLEN, JS_MAX, nurZiffern, spielerName, type Spieler, type SpielerFeld } from "@/lib/spieler";
+import { kaderVon, type Kader } from "@/lib/kader";
+import {
+  HERAUSNEHMEN_TEXT,
+  herausnehmenSaetze,
+  herausnehmenTitel,
+  linkKnopfText,
+  spielerName,
+  TEAM_SPIELER_FILTER,
+  teamSpielerAnzahlText,
+  verbleibendeTeams,
+  type Spieler,
+  type SpielerTeams,
+} from "@/lib/spieler";
+import { SpielerFelder, istFeldFehler, type SpielerAngaben, type SpielerFehler } from "@/components/spieler/SpielerFelder";
 import { SpielerLinkDialog } from "./SpielerLinkDialog";
-import { Selbstabholung } from "./Selbstabholung";
-import { SpielerImport } from "./SpielerImport";
+import { LINK_STAND_PUNKT } from "./LinkStandLozenge";
 import { KaderLozenges } from "./KaderLozenge";
+import { TeamLozenges } from "./TeamLozenges";
 import { KaderZuteilen, type ZuteilungAenderung } from "./KaderZuteilen";
-import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
+import { EingrenzungLeer } from "./KaderEingrenzung";
+import { TeamSpielerFilter } from "./TeamSpielerFilter";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
-import { ProbeLozenge } from "./ProbeLozenge";
+import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
+import { MITTEILUNGEN_SPALTE } from "@/lib/push";
+import { useAdressFilter } from "@/lib/use-adress-filter";
+import {
+  filtereSpieler,
+  jahrgaengeDerListe,
+  sichtbareAuswahl,
+  teamEingrenzungGesetzt,
+  type TeamEingrenzung,
+} from "@/lib/team-spielerliste";
 
 /* Die Spielerliste eines Teams (Epic #433, Story #434): Vorname, Nachname,
    Jahrgang und optional die J+S-Nummer je Spieler:in. Das Plus öffnet einen
@@ -38,86 +60,100 @@ import { ProbeLozenge } from "./ProbeLozenge";
    ihn, ohne zu speichern. «Hinzufügen» und Enter nehmen auf, danach bleibt
    er für die nächste offen und sagt, wer eben dazukam — die Snackbar läge
    unter dem Dialog. Ändern öffnet denselben Dialog mit den Angaben der
-   Spieler:in und schliesst nach dem Speichern, Entfernen fragt nach.
-   Das Kettenglied zeigt ihren privaten Link (#436); ob er über die
-   Selbstabholung bezogen wurde (#438 AK 21), sagt ein grüner Punkt daran;
-   «nicht bezogen» steht nur im Link-Dialog — in der Liste wäre es bei fast
-   allen der lauteste Eindruck (PO 2026-10-18). Der
-   Abschnitt «Selbstabholung» steht zuoberst (#438). Das Datei-Symbol neben
-   dem Plus übernimmt eine ganze Mannschaft aus einer CSV-Datei (#455).
+   Spieler:in und schliesst nach dem Speichern. «Aus dem Team nehmen» fragt
+   nach (#579): Die Spieler:in wird nicht gelöscht und bleibt samt Link im
+   Verein; der Dialog nennt die Teams, in denen sie bleibt, oder dass sie
+   danach keinem Team mehr angehört. Die Spalte «Auch in» nennt ihre weiteren
+   Teams (#579 AK 9). Die Spalte «Mobile» zeigt mit Glocke bzw.
+   durchgestrichener Glocke, ob nach dem letzten bekannten Stand mindestens ein
+   Gerät Mitteilungen für sie eingeschaltet hat (#483 AK 11), mit dem festen
+   Hinweis hinter ⓘ, dass das kein Ankommen sichert. Löschen gibt es im Team nicht — das macht nur die
+   Vereinsverwaltung.
+   Das Kettenglied zeigt ihren privaten Link (#436); seinen Stand (#657 AK 4)
+   ein Punkt daran: grün abgeholt (über die Selbstabholung, #438 AK 21), blau
+   zugestellt. Offen bleibt unmarkiert und steht nur im Link-Dialog — in der
+   Liste wäre es bei fast allen der lauteste Eindruck (PO 2026-10-18). Die
+   Zahlen je Stand stehen im Bereich «Privater Link», nicht im Kopf. Die Selbstabholung (#438)
+   steht im Bereich «Privater Link» der Team-Verwaltung (#656). Einen Import aus einer
+   CSV-Datei gibt es hier nicht mehr: Ihn macht die Vereinsverwaltung im
+   Spielerbestand des Vereins (Story #585).
 
    Führt das Team Kader (#452), zeigt die Liste je Spieler:in ihre Kader
-   (AK 7), grenzt sich über die Chips darüber auf einen Kader oder auf
-   «Ohne Kader» ein (AK 8, 9; ein Chip zur Zeit, PO 2026-10-18) und teilt
-   über die Auswahl mehreren in einem Schritt zu (AK 6). Der Dialog führt die
-   Kader einer Spieler:in als Mehrfachauswahl (AK 5). Nimmt eine Änderung
-   Spieler:innen aus Terminen, für die sie abgemeldet waren, fragt sie vorher
-   nach (#453 AK 10).
+   (AK 7) und teilt über die Auswahl mehreren in einem Schritt zu (AK 6). Der
+   Dialog führt die Kader einer Spieler:in als Mehrfachauswahl (AK 5). Nimmt
+   eine Änderung Spieler:innen aus Terminen, für die sie abgemeldet waren,
+   fragt sie vorher nach (#453 AK 10).
 
-   Probetraining (#555): Eine Probe-Spieler:in trägt die Plakette «Probe 1/4»
-   neben dem Namen. Den Probe-Modus schaltet die Checkbox im Dialog «Spieler:in
-   ändern» — gesperrt, solange das Team keine Anzahl festgelegt hat. Was das
+   Eingrenzen (#601): Die Filterleiste über der Liste grenzt nach Name oder
+   J+S-Nummer, Kadern samt «Ohne Kader», Jahrgängen und dem Stand des Links
+   ein (hebt «ein Chip zur Zeit» aus #452 AK 8, 9 auf; am Termin bleibt es
+   bei einem Kader). Der Zustand steht in der Adresse, die Seite liest und
+   bereinigt ihn (`eingrenzung`), die Liste filtert im Browser. Der Kopf
+   zählt dann «12 von 35»; trifft die Eingrenzung niemanden, steht das
+   Leerfeld mit «Zurücksetzen». Zugeteilt wird nur, wer ausgewählt ist und
+   sichtbar bleibt (AK 10).
+
+   Schnuppertraining (#555, #584): Eine schnuppernde Spieler:in trägt die
+   Plakette «Schnuppern 1/4» neben dem Namen. Das Schnuppern schaltet die
+   Checkbox im Dialog «Spieler:in ändern» — gesperrt, solange das Team keine
+   Anzahl festgelegt hat. Was das
    Einschalten verfallen liesse, steht vor dem Speichern als Warnung im Dialog;
    was das Ausschalten bewirkt, als Information. */
 
 type Form = { vorname: string; nachname: string; jahrgang: string; jsNummer: string; kaderIds: string[]; probe: boolean };
 const LEER: Form = { vorname: "", nachname: "", jahrgang: "", jsNummer: "", kaderIds: [], probe: false };
 
-/** Die Eingrenzung auf Spieler:innen ohne Kader; sonst die id eines Kaders. */
-const OHNE = "ohne";
-
 export function SpielerListe({
   teamId,
+  teamName,
+  vereinName,
   spieler,
   kader,
-  abholung,
   probeAnzahl,
+  eingrenzung,
 }: {
   teamId: string;
+  teamName: string;
+  /** Der Name des Vereins; `null`, wenn das Konto keinem angehört. */
+  vereinName: string | null;
   spieler: Spieler[];
   /** Die Kader des Teams (#452), nach Namen. */
   kader: Kader[];
-  /** Die Selbstabholung des Teams (#438); `url` fehlt, solange es keine Adresse gibt. */
-  abholung: { url: string | null; aktiv: boolean };
-  /** Die Anzahl Probetrainings des Teams (#555); `null`, solange keine festgelegt ist. */
+  /** Die Anzahl Schnuppertrainings des Teams (#555); `null`, solange keine festgelegt ist. */
   probeAnzahl: number | null;
+  /** Suche und Eingrenzung aus der Adresse, bereinigt (#601). */
+  eingrenzung: TeamEingrenzung;
 }) {
   const router = useRouter();
   const melde = useSnackbar();
   const [pending, startTransition] = useTransition();
   // `null`: zu; sonst neu (`id` leer) oder die geänderte Spieler:in.
-  // `probe`: ihr Probe-Modus beim Öffnen — dagegen zählt, was sich ändert.
+  // `probe`: ihr Schnuppern beim Öffnen — dagegen zählt, was sich ändert.
   const [offen, setOffen] = useState<{ id: string | null; probe: boolean } | null>(null);
   const [form, setForm] = useState<Form>(LEER);
-  const [fehler, setFehler] = useState<{ feld?: SpielerFeld; text: string } | null>(null);
-  const [entfernen, setEntfernen] = useState<Spieler | null>(null);
+  const [fehler, setFehler] = useState<SpielerFehler | null>(null);
+  // Wer aus dem Team genommen werden soll, samt den Teams und dem Stand, die
+  // die Bestätigung nennt; `hinweis`: Die Lage hat sich inzwischen geändert.
+  const [herausnehmen, setHerausnehmen] = useState<{ spieler: Spieler; teams: SpielerTeams; hinweis?: string; fehler?: string } | null>(null);
   const [link, setLink] = useState<Spieler | null>(null);
-  const [importOffen, setImportOffen] = useState(false);
   // Wer eben aufgenommen wurde — im noch offenen Dialog.
   const [aufgenommen, setAufgenommen] = useState<string | null>(null);
   const erstesFeld = useRef<HTMLInputElement>(null);
   const formId = useId();
-  // Die id des Kaders, auf den die Liste eingegrenzt ist, `OHNE` oder `null`.
-  const [gewaehlteEingrenzung, setEingrenzung] = useState<string | null>(null);
-  // Fällt der eingegrenzte Kader weg (eben entfernt), gilt wieder die ganze Liste.
-  const eingegrenzterKader = kader.find((k) => k.id === gewaehlteEingrenzung);
-  const eingrenzung = gewaehlteEingrenzung === OHNE || eingegrenzterKader ? gewaehlteEingrenzung : null;
+  const filter = useAdressFilter();
   const [auswahl, setAuswahl] = useState<string[]>([]);
   const [zuteilenOffen, setZuteilenOffen] = useState(false);
   const verfall = useVerfallRueckfrage(pending);
-  // Was das Einschalten des Probe-Modus verfallen liesse (#555 AK 5), sobald die Checkbox an ist.
+  // Was das Einschalten des Schnupperns verfallen liesse (#555 AK 5), sobald die Checkbox an ist.
   const [probeFolgen, setProbeFolgen] = useState<ProbeFolgen | null>(null);
   const [probeFehler, setProbeFehler] = useState<string | null>(null);
 
   const mitKadern = kader.length > 0;
-  const sichtbar = useMemo(() => {
-    if (eingrenzung === null) return spieler;
-    if (eingrenzung === OHNE) return spieler.filter((s) => s.kaderIds.length === 0);
-    return spieler.filter((s) => s.kaderIds.includes(eingrenzung));
-  }, [spieler, eingrenzung]);
-  // Nur, wer noch da und sichtbar ist, bleibt ausgewählt.
-  const gewaehlt = auswahl.filter((id) => sichtbar.some((s) => s.id === id));
-  const ohneKader = spieler.filter((s) => s.kaderIds.length === 0).length;
+  const eingegrenzt = teamEingrenzungGesetzt(eingrenzung);
+  const sichtbar = useMemo(() => filtereSpieler(spieler, eingrenzung), [spieler, eingrenzung]);
+  const jahrgaenge = useMemo(() => jahrgaengeDerListe(spieler), [spieler]);
+  // Nur, wer noch da und sichtbar ist, bleibt ausgewählt (#601 AK 10).
+  const gewaehlt = sichtbareAuswahl(auswahl, sichtbar);
 
   /** Eine Zuteilung ausführen; liesse sie Abmeldungen verfallen, erst
    *  nachfragen (#453 AK 10, 12). */
@@ -151,7 +187,7 @@ export function SpielerListe({
     );
   }
 
-  /** Die Checkbox «Im Probetraining»: beim Einschalten erst holen, was
+  /** Die Checkbox «Schnuppert»: beim Einschalten erst holen, was
    *  verfiele (AK 5, 16) — die Warnung steht vor dem Speichern. */
   function probeSchalten(id: string, an: boolean) {
     setForm((f) => ({ ...f, probe: an }));
@@ -159,7 +195,7 @@ export function SpielerListe({
     setProbeFolgen(null);
     if (!an || offen?.probe) return;
     startTransition(async () => {
-      const r = await probeFolgenAktion(id);
+      const r = await probeFolgenAktion(teamId, id);
       if (!r.ok) return setProbeFehler(r.error);
       setProbeFolgen(r.folgen);
     });
@@ -187,22 +223,27 @@ export function SpielerListe({
         // und erst der nächste Klick schaltet.
         let folgen = probeFolgen;
         if (probeWechsel && form.probe && !folgen) {
-          const f = await probeFolgenAktion(id);
+          const f = await probeFolgenAktion(teamId, id);
           if (!f.ok) return setProbeFehler(f.error);
           folgen = f.folgen;
           setProbeFehler(null);
           setProbeFolgen(folgen);
           if (probeFolgenSumme(folgen) > 0) return;
         }
-        const r = await aendereSpielerAktion(id, eingabe);
-        if (!r.ok) return setFehler({ feld: r.feld, text: r.error });
+        const r = await aendereSpielerAktion(teamId, id, eingabe);
+        if (!r.ok) {
+          // Inzwischen aus dem Team genommen oder von der Verwaltung gelöscht
+          // (#582): Die Meldung steht über den Feldern, die Liste lädt neu.
+          if (r.feld === "spieler_id") router.refresh();
+          return setFehler({ feld: r.feld, text: r.error });
+        }
         const vorher = spieler.find((s) => s.id === id);
         // Stimmt die Zahl nicht mehr, steht der neue Stand im offenen Dialog.
         if (probeWechsel) {
           const p = await schalteProbeAktion(teamId, id, form.probe, form.probe && folgen ? probeFolgenSumme(folgen) : null);
           if (!p.ok) {
             router.refresh();
-            const f = await probeFolgenAktion(id);
+            const f = await probeFolgenAktion(teamId, id);
             if (f.ok) setProbeFolgen(f.folgen);
             return setProbeFehler(p.error);
           }
@@ -234,43 +275,74 @@ export function SpielerListe({
     });
   }
 
-  function entfernenAusfuehren(s: Spieler) {
+  /** Die Bestätigung öffnen: erst die Teams der Spieler:in lesen. */
+  function herausnehmenOeffnen(s: Spieler) {
     startTransition(async () => {
-      const r = await entferneSpielerAktion(s.id);
-      setEntfernen(null);
-      if (!r.ok) return melde(r.error);
-      if (offen?.id === s.id) schliessen();
-      router.refresh();
-      melde(`${spielerName(s)} ist nicht mehr auf der Liste.`);
+      const r = await ladeSpielerTeamsAktion(teamId, s.id);
+      if (!r.ok) {
+        router.refresh();
+        return melde(r.error);
+      }
+      setHerausnehmen({ spieler: s, teams: { teams: r.teams, stand: r.stand, schnuppert: r.schnuppert } });
     });
   }
 
-  const feld = (k: Exclude<keyof Form, "kaderIds" | "probe">) => ({
-    value: form[k],
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((f) => ({ ...f, [k]: k === "jahrgang" ? nurZiffern(e.target.value) : e.target.value }));
-      setFehler(null);
-      setAufgenommen(null);
-    },
-  });
-  const fehlerAn = (f: SpielerFeld) => fehler && (fehler.feld ?? "vorname") === f ? fehler.text : undefined;
+  function herausnehmenAusfuehren() {
+    if (!herausnehmen) return;
+    const { spieler: s, teams } = herausnehmen;
+    startTransition(async () => {
+      const r = await nimmSpielerAusTeamAktion(teamId, s.id, teams.stand);
+      if (r.ok) {
+        setHerausnehmen(null);
+        if (offen?.id === s.id) schliessen();
+        router.refresh();
+        return melde(`${spielerName(s)} ist nicht mehr im Team ${teamName}.`);
+      }
+      // Ein Fehler (etwa gleichzeitig herausgenommen): die Liste neu, nur die
+      // Meldung im Dialog, kein früherer Hinweis.
+      if (!r.geaendert) {
+        router.refresh();
+        return setHerausnehmen({ spieler: s, teams, fehler: r.error });
+      }
+      // Die Lage hat sich geändert, nichts wurde geschrieben: der neue Stand.
+      const neu = await ladeSpielerTeamsAktion(teamId, s.id);
+      if (!neu.ok) {
+        router.refresh();
+        return setHerausnehmen({ spieler: s, teams, fehler: neu.error });
+      }
+      setHerausnehmen({ spieler: s, teams: { teams: neu.teams, stand: neu.stand, schnuppert: neu.schnuppert }, hinweis: HERAUSNEHMEN_TEXT.geaendert });
+    });
+  }
 
-  const bezogen = spieler.filter((s) => s.linkBezogen).length;
+  const aendern = (k: keyof SpielerAngaben, text: string) => {
+    setForm((f) => ({ ...f, [k]: text }));
+    setFehler(null);
+    setAufgenommen(null);
+  };
+
   const namenVon = (s: Spieler) => kaderVon(s.id, kader).map((k) => k.name);
   const gewaehlteNamen = kader.filter((k) => form.kaderIds.includes(k.id)).map((k) => k.name);
   const wer = form.vorname.trim() || "Die Spieler:in";
+  // Welche Termine für sie gelten — ohne Aussage darüber, was der Link zeigt (#663).
   const kaderHinweis =
     gewaehlteNamen.length === 0
-      ? `${wer} sieht nur Termine ohne Kader.`
-      : `${wer} sieht Termine ohne Kader und die Termine von ${aufzaehlung(gewaehlteNamen)}.`;
+      ? `${wer} ist nur bei Terminen ohne Kader dabei.`
+      : `${wer} ist bei Terminen ohne Kader und bei den Terminen von ${aufzaehlung(gewaehlteNamen)} dabei.`;
   const probeVorher = !!offen?.probe;
   const mitProbe = spieler.some((s) => s.probe);
   const spalten = mitKadern
-    ? "sm:grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_7.5rem]"
-    : "sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_7.5rem]";
+    ? "sm:grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_minmax(0,1fr)_5rem_7.5rem]"
+    : "sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_5rem_7.5rem]";
+  // Die Spalte «Mobile» (#483 AK 11) mit ihrem festen Hinweis hinter ⓘ.
+  const mobileKopf = (
+    <span className="-my-2 flex items-center gap-0.5">
+      <span aria-hidden>{MITTEILUNGEN_SPALTE.kopf}</span>
+      <InfoKnopf label={`Spalte ${MITTEILUNGEN_SPALTE.kopf}`}>{MITTEILUNGEN_SPALTE.hinweis}</InfoKnopf>
+    </span>
+  );
   const kopf = mitKadern
-    ? ["", "Name", "Jahrgang", "J+S-Nr.", "Kader", ""]
-    : ["Name", "Jahrgang", "J+S-Nr.", ""];
+    ? ["", "Name", "Jahrgang", "J+S-Nr.", "Kader", "Auch in", mobileKopf, ""]
+    : ["Name", "Jahrgang", "J+S-Nr.", "Auch in", mobileKopf, ""];
 
   return (
     <>
@@ -280,23 +352,13 @@ export function SpielerListe({
           <span>
             Spieler:innen
             <span className="type-label-small ml-2 text-on-surface-mittel">
-              {spieler.length}
-              {spieler.length > 0 && ` · ${bezogen} ${bezogen === 1 ? "Link" : "Links"} bezogen`}
+              {teamSpielerAnzahlText(sichtbar.length, spieler.length, eingegrenzt)}
             </span>
           </span>
         </h2>
-        <span className="flex gap-1">
-          <Tooltip label="Aus Datei importieren">
-            <IconButton icon={FileUp} label="Spieler:innen aus Datei importieren" aria-haspopup="dialog" onClick={() => setImportOffen(true)} />
-          </Tooltip>
-          <Tooltip label="Spieler:in hinzufügen" ende>
-            <IconButton icon={Plus} label="Spieler:in hinzufügen" aria-haspopup="dialog" onClick={() => oeffnen()} />
-          </Tooltip>
-        </span>
-      </div>
-
-      <div className="mt-4">
-        <Selbstabholung teamId={teamId} start={abholung} />
+        <Tooltip label="Spieler:in hinzufügen" ende>
+          <IconButton icon={Plus} label="Spieler:in hinzufügen" aria-haspopup="dialog" onClick={() => oeffnen()} />
+        </Tooltip>
       </div>
 
       <Dialog
@@ -324,10 +386,8 @@ export function SpielerListe({
           }}
         >
           {aufgenommen && <SectionMessage appearance="success">{aufgenommen}</SectionMessage>}
-          <TextField ref={erstesFeld} label="Vorname" autoComplete="off" autoFocus {...feld("vorname")} error={!!fehlerAn("vorname")} supportingText={fehlerAn("vorname")} />
-          <TextField label="Nachname" autoComplete="off" {...feld("nachname")} error={!!fehlerAn("nachname")} supportingText={fehlerAn("nachname")} />
-          <TextField label="Jahrgang" inputMode="numeric" maxLength={JAHRGANG_STELLEN} autoComplete="off" {...feld("jahrgang")} error={!!fehlerAn("jahrgang")} supportingText={fehlerAn("jahrgang")} />
-          <TextField label="J+S-Nummer (optional)" autoComplete="off" maxLength={JS_MAX} {...feld("jsNummer")} error={!!fehlerAn("js_nummer")} supportingText={fehlerAn("js_nummer")} />
+          {fehler && !istFeldFehler(fehler) && <SectionMessage appearance="error">{fehler.text}</SectionMessage>}
+          <SpielerFelder wert={form} onAendern={aendern} fehler={fehler} erstesFeld={erstesFeld} />
           {mitKadern && (
             <MultiSelect
               label="Kader (optional)"
@@ -343,6 +403,7 @@ export function SpielerListe({
             <ProbeFeld
               vorname={form.vorname.trim() || "Die Spieler:in"}
               anzahl={probeAnzahl}
+              mehrereTeams={(spieler.find((x) => x.id === offen.id)?.weitereTeams.length ?? 0) > 0}
               an={form.probe}
               vorher={probeVorher}
               folgen={probeFolgen}
@@ -354,31 +415,24 @@ export function SpielerListe({
         </form>
       </Dialog>
 
-      {spieler.length > 0 && mitKadern && (
-        <KaderChips
-          label="Spielerliste eingrenzen"
-          className="mt-5"
-          chips={[
-            ...kader.map((k) => ({ schluessel: k.id, name: k.name, anzahl: k.spielerIds.length })),
-            { schluessel: OHNE, name: KADER_TEXT.ohneKader, anzahl: ohneKader },
-          ]}
-          gewaehlt={eingrenzung}
-          onWahl={setEingrenzung}
-        />
-      )}
+      {spieler.length > 0 && <TeamSpielerFilter eingrenzung={eingrenzung} kader={kader} jahrgaenge={jahrgaenge} />}
 
-      {/* Grenzt ein Chip auf niemanden ein, steht statt des leeren Tabellenkopfs
-          das Leerfeld — mit dem Weg zurück zur ganzen Liste. */}
-      {spieler.length > 0 && eingrenzung !== null && sichtbar.length === 0 ? (
+      {/* Trifft die Eingrenzung niemanden, steht statt des leeren Tabellenkopfs
+          das Leerfeld — mit dem Weg zurück zur ganzen Liste (#601 AK 7, 8). */}
+      {spieler.length > 0 && sichtbar.length === 0 ? (
         <div className="mt-4">
           <EingrenzungLeer
-            titel={eingegrenzterKader ? KADER_TEXT.leerKader(eingegrenzterKader.name) : KADER_TEXT.leerOhne}
-            onAufheben={() => setEingrenzung(null)}
+            titel={TEAM_SPIELER_FILTER.leerTitel}
+            aufhebenText={TEAM_SPIELER_FILTER.zuruecksetzen}
+            onAufheben={filter.zuruecksetzen}
           >
-            {eingegrenzterKader ? KADER_TEXT.leerKaderText : KADER_TEXT.leerOhneText}
+            {TEAM_SPIELER_FILTER.leerText}
           </EingrenzungLeer>
         </div>
       ) : spieler.length > 0 ? (
+        <>
+        {/* Der Hinweis zur Spalte «Mobile» für die Vorlesehilfe (das Panel hinter ⓘ ist nur fürs Auge). */}
+        <p className="sr-only">{MITTEILUNGEN_SPALTE.hinweis}</p>
         <Tabelle className="mt-4" spalten={spalten} kopf={kopf}>
           {sichtbar.map((s) => (
             <TabellenZeile key={s.id}>
@@ -395,13 +449,23 @@ export function SpielerListe({
               <span className="min-w-0 flex-1">
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="type-body-medium truncate text-on-surface">{spielerName(s)}</span>
-                  {s.probe && <ProbeLozenge stand={s.probe} />}
+                  {s.probe && (
+                    <span className="hidden shrink-0 sm:inline-flex">
+                      <SchnupperLozenge stand={s.probe} />
+                    </span>
+                  )}
                 </span>
-                {/* Schmal stehen Jahrgang, J+S-Nummer und Kader unter dem Namen. */}
+                {/* Schmal stehen Jahrgang, J+S-Nummer, Schnuppern und Kader unter dem Namen: Der Name bleibt lesbar. */}
                 <span className="type-body-small block text-on-surface-mittel sm:hidden">
                   {[s.jahrgang, s.jsNummer && `J+S ${s.jsNummer}`].filter(Boolean).join(" · ")}
                 </span>
+                {s.probe && (
+                  <span className="mt-1 flex sm:hidden">
+                    <SchnupperLozenge stand={s.probe} />
+                  </span>
+                )}
                 <KaderLozenges namen={namenVon(s)} className="mt-1 sm:hidden" />
+                <TeamLozenges namen={s.weitereTeams} className="mt-1 sm:hidden" />
               </span>
               <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.jahrgang}</span>
               <span className={`type-body-medium hidden truncate sm:block ${s.jsNummer ? "text-on-surface-mittel" : "text-on-surface-tief"}`}>
@@ -416,29 +480,51 @@ export function SpielerListe({
                   )}
                 </span>
               )}
+              <span className="hidden min-w-0 sm:block">
+                {s.weitereTeams.length > 0 ? (
+                  <TeamLozenges namen={s.weitereTeams} />
+                ) : (
+                  <span className="type-body-medium text-on-surface-tief">–</span>
+                )}
+              </span>
+              {/* Nur ein Zeichen, keine Primärfarbe (PO): eingeschaltet in Schriftfarbe, sonst gedämpft. */}
+              <span
+                role="img"
+                aria-label={`${spielerName(s)}: ${s.mitteilungen ? MITTEILUNGEN_SPALTE.an : MITTEILUNGEN_SPALTE.aus}`}
+                className={`flex shrink-0 items-center ${s.mitteilungen ? "text-on-surface" : "text-on-surface-mittel"}`}
+              >
+                {s.mitteilungen ? <Bell size={18} strokeWidth={2} aria-hidden /> : <BellOff size={18} strokeWidth={2} aria-hidden />}
+              </span>
               <span className="flex justify-end gap-1">
-                <Tooltip label={s.linkBezogen ? "Privater Link · bezogen" : "Privater Link"}>
+                {/* Der Link gehört der Spieler:in und geht in jedem ihrer Teams (#583 AK 14). */}
+                <Tooltip label={linkKnopfText(spielerName(s), s.linkStand).tooltip}>
                   <IconButton
                     icon={Link2}
-                    label={`Privater Link für ${spielerName(s)}${s.linkBezogen ? ", bezogen" : ""}`}
-                    punkt={s.linkBezogen ? "success" : undefined}
+                    label={linkKnopfText(spielerName(s), s.linkStand).label}
+                    punkt={LINK_STAND_PUNKT[s.linkStand]}
                     onClick={() => setLink(s)}
                   />
                 </Tooltip>
                 <Tooltip label="Ändern">
                   <IconButton icon={Pencil} label={`${spielerName(s)} ändern`} onClick={() => oeffnen(s)} />
                 </Tooltip>
-                <Tooltip label="Entfernen" ende>
-                  <IconButton icon={X} label={`${spielerName(s)} entfernen`} onClick={() => setEntfernen(s)} />
+                <Tooltip label="Aus dem Team nehmen" ende>
+                  <IconButton
+                    icon={UserMinus}
+                    label={`${spielerName(s)} aus dem Team nehmen`}
+                    aria-haspopup="dialog"
+                    disabled={pending}
+                    onClick={() => herausnehmenOeffnen(s)}
+                  />
                 </Tooltip>
               </span>
             </TabellenZeile>
           ))}
         </Tabelle>
+        </>
       ) : (
         <p className="type-body-medium mt-4 text-on-surface-mittel">
-          Noch niemand auf der Liste. Solange sie leer ist, planst du mit der erwarteten Spielerzahl. Eine ganze
-          Mannschaft übernimmst du aus einer CSV-Datei.
+          Noch niemand auf der Liste. Solange sie leer ist, planst du mit der erwarteten Spielerzahl.
         </p>
       )}
 
@@ -453,25 +539,21 @@ export function SpielerListe({
       </AuswahlLeiste>
 
       <Dialog
-        open={entfernen != null}
-        onClose={() => setEntfernen(null)}
-        title={`${entfernen ? spielerName(entfernen) : ""} entfernen?`}
+        open={herausnehmen !== null}
+        onClose={() => !pending && setHerausnehmen(null)}
+        title={herausnehmen ? herausnehmenTitel({ ...herausnehmen.spieler, team: teamName }) : ""}
         actions={
           <>
-            <Button variant="outlined" onClick={() => setEntfernen(null)}>
+            <Button variant="outlined" onClick={() => setHerausnehmen(null)} disabled={pending}>
               Abbrechen
             </Button>
-            <Button variant="danger" onClick={() => entfernen && entfernenAusfuehren(entfernen)} disabled={pending}>
-              Entfernen
+            <Button variant="danger" onClick={herausnehmenAusfuehren} disabled={pending}>
+              {HERAUSNEHMEN_TEXT.aktion}
             </Button>
           </>
         }
       >
-        <p>
-          Ihr privater Link gilt danach nicht mehr, und die Selbstabholung findet sie nicht mehr. An
-          vergangenen Terminen steht sie nur noch ohne Namen, die Spielerzahl dort bleibt. An anstehenden
-          Terminen zählt sie nicht mehr.
-        </p>
+        {herausnehmen && <HerausnehmenText {...herausnehmen} team={teamName} verein={vereinName} />}
       </Dialog>
 
       <KaderZuteilen
@@ -492,10 +574,47 @@ export function SpielerListe({
 
       {verfall.dialog}
 
-      <SpielerImport teamId={teamId} offen={importOffen} onClose={() => setImportOffen(false)} />
-
-      <SpielerLinkDialog spieler={link} abholungAktiv={abholung.aktiv} onClose={() => setLink(null)} />
+      <SpielerLinkDialog teamId={teamId} spieler={link} onClose={() => setLink(null)} />
     </>
+  );
+}
+
+/** Der Inhalt der Bestätigung (#579 AK 13–16): nicht gelöscht, bleibt im
+ *  Verein, was verfällt — mit weiteren Teams oder als letztes Team. */
+function HerausnehmenText({
+  spieler,
+  teams,
+  team,
+  verein,
+  hinweis,
+  fehler,
+}: {
+  spieler: Spieler;
+  teams: SpielerTeams;
+  team: string;
+  verein: string | null;
+  hinweis?: string;
+  fehler?: string;
+}) {
+  const s = herausnehmenSaetze({
+    vorname: spieler.vorname,
+    nachname: spieler.nachname,
+    team,
+    verein,
+    verbleibend: verbleibendeTeams(teams.teams),
+    // Aus `spieler_teams` (dieses Team), nicht aus der Liste: eine Quelle.
+    probe: teams.schnuppert,
+  });
+  return (
+    <div className="flex flex-col gap-3">
+      {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
+      {hinweis && <SectionMessage appearance="information">{hinweis}</SectionMessage>}
+      {s.absaetze.map((a) => (
+        <p key={a}>{a}</p>
+      ))}
+      <SectionMessage appearance="warning">{s.warnung}</SectionMessage>
+      <p>{s.zusatz}</p>
+    </div>
   );
 }
 
@@ -509,13 +628,16 @@ function aufzaehlung(namen: string[]): string {
   return namen.length <= 1 ? (namen[0] ?? "") : `${namen.slice(0, -1).join(", ")} und ${namen[namen.length - 1]}`;
 }
 
-/** Die Checkbox «Im Probetraining» im Dialog «Spieler:in ändern» (#555 AK 3–5,
- *  16, 18, 19): darunter, was der Probe-Modus bedeutet; ohne Anzahl gesperrt
+/** Die Checkbox «Schnuppert» im Dialog «Spieler:in ändern» (#555 AK 3–5,
+ *  16, 18, 19; #584 AK 6, 7): darunter, was das Schnuppern bedeutet, und vor
+ *  dem Einschalten, dass sie sich dann keinem weiteren Team zuordnen lässt; ohne Anzahl gesperrt
  *  mit dem Weg dahin; beim Einschalten die Warnung, was verfällt, beim
- *  Ausschalten, was danach gilt. */
+ *  Ausschalten, was danach gilt. Wer weiteren Teams zugeordnet ist, schnuppert
+ *  nicht (Vereine AP §5.3): statt der Checkbox nur der Hinweis. */
 function ProbeFeld({
   vorname,
   anzahl,
+  mehrereTeams,
   an,
   vorher,
   folgen,
@@ -525,6 +647,7 @@ function ProbeFeld({
 }: {
   vorname: string;
   anzahl: number | null;
+  mehrereTeams: boolean;
   an: boolean;
   vorher: boolean;
   folgen: ProbeFolgen | null;
@@ -534,6 +657,13 @@ function ProbeFeld({
 }) {
   const gesperrt = anzahl === null && !vorher;
   const verfaellt = an && !vorher && folgen && probeFolgenSumme(folgen) > 0 ? folgen : null;
+  if (mehrereTeams && !vorher)
+    return (
+      <>
+        <hr className="my-1 border-kante" />
+        <p className="type-body-small text-on-surface-mittel">{PROBE_TEXT.mehrereTeams}</p>
+      </>
+    );
   return (
     <>
       <hr className="my-1 border-kante" />
@@ -548,6 +678,9 @@ function ProbeFeld({
             <span className="type-body-small text-on-surface-mittel">
               {gesperrt ? PROBE_TEXT.anzahlFehlt : probeEinschaltenText(vorname, anzahl)}
             </span>
+            {/* AK 7: beim Einschalten; schnuppert sie schon, sagt es nichts Neues,
+                und beim Ausschalten widerspräche es dem Hinweis darunter. */}
+            {!gesperrt && !vorher && <span className="type-body-small text-on-surface-mittel">{PROBE_TEXT.keinWeiteresTeam}</span>}
           </span>
         }
       />

@@ -1,6 +1,5 @@
 import { forwardRef } from "react";
 import type { ReactNode, TextareaHTMLAttributes } from "react";
-import { cn } from "@/lib/cn";
 import { Feld, beschreibungIdVon, useFeldId } from "./feld";
 
 export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -46,11 +45,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           // 4 px: Die erste Zeile beginnt so auf derselben Höhe wie der Wert
           // eines einzeiligen Felds, und der Name hält ruhend zu ihr denselben
           // Abstand wie dort (`.feld-rahmen .feld-name`).
-          // Mit ⓘ rechts 40 px frei: Es liegt beim Überfahren über dem Kasten (`Feld`).
-          className={cn(
-            "feldkasten type-body-large field-sizing-content block min-h-16 max-h-[17rem] w-full resize-none overflow-y-auto px-3 pt-1 pb-1.5",
-            !!info && "pr-10",
-          )}
+          className="feldkasten type-body-large field-sizing-content block min-h-16 max-h-[17rem] w-full resize-none overflow-y-auto px-3 pt-1 pb-1.5"
           {...props}
         />
       </Feld>

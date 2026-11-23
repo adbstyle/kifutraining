@@ -4,6 +4,8 @@ import { useEffect, useId, useState } from "react";
 import { Button, DateField, Dialog, FormAbschnitt, SectionMessage, TextArea, TimeField, WochentagWahl } from "@/components/ui";
 import {
   BEMERKUNG_MAX,
+  HINWEIS_ELTERN_MAX,
+  LINK_KANAL,
   TERMIN_TEXT,
   ausfallProblem,
   leerZuNull,
@@ -31,11 +33,13 @@ import type { FolgeAngabe } from "@/lib/kern/serien";
 import { TrainerWahl, gleicheMenge, trainerAenderung, trainerStart, type TrainerAenderung, type TrainerWert } from "./TrainerWahl";
 import { KEINE_BESETZUNG, MindestbesetzungFeld, besetzungAusEingabe, besetzungEingabe, type BesetzungEingabe } from "./MindestbesetzungFeld";
 import { besetzungText } from "@/lib/besetzung";
+import { ausfallEndet, benachrichtigungZaehlt, mitteilbarEinzeln, mitteilbarSerie } from "@/lib/benachrichtigung";
+import { useBenachrichtigen } from "./BenachrichtigenFeld";
 import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
 import { terminBegonnen } from "@/lib/zeit";
 import { usePlatzAngaben } from "./usePlatzAngaben";
-import { SPIEL_MELDUNG, TREFFPUNKT_TEXT } from "@/lib/spiel";
+import { SPIEL_MELDUNG } from "@/lib/spiel";
 import {
   BezeichnungFeld,
   MeldefristFelder,
@@ -48,11 +52,14 @@ import {
 import type { Kader, TerminKader } from "@/lib/kader";
 import { KaderWahl } from "./KaderWahl";
 import { OrtFelder } from "./OrtFelder";
+import { TreffpunktFelder, treffpunktAusEingabe, treffpunktEingabe, type TrainingsTreffpunktEingabe } from "./TreffpunktFelder";
 
 const ANGABE: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit",
   ort: "Der Ort",
   bemerkung: "Die Bemerkung",
+  hinweis_eltern: `Der ${LINK_KANAL.hinweis}`,
+  treffpunkt: "Der Treffpunkt",
   eingeladene: "Die Eingeladenen",
   verantwortung: "Die Verantwortung",
   besetzung: "Die Mindestbesetzung",
@@ -66,6 +73,8 @@ const MEHRZAHL: readonly FolgeAngabe[] = ["eingeladene", "felder", "kader"];
 const FOLGEN_KANN: readonly FolgeAngabe[] = [
   "zeit",
   "ort",
+  "treffpunkt",
+  "hinweis_eltern",
   "bemerkung",
   "kader",
   "spielerzahl",
@@ -78,6 +87,8 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   zeit: "Zeit wieder der Serie folgen lassen",
   ort: "Ort wieder der Serie folgen lassen",
   bemerkung: "Bemerkung wieder der Serie folgen lassen",
+  hinweis_eltern: `${LINK_KANAL.hinweis} wieder der Serie folgen lassen`,
+  treffpunkt: "Treffpunkt wieder der Serie folgen lassen",
   eingeladene: "Eingeladene wieder der Serie folgen lassen",
   verantwortung: "Verantwortung wieder der Serie folgen lassen",
   besetzung: "Mindestbesetzung wieder der Serie folgen lassen",
@@ -171,7 +182,8 @@ export function TerminDialog({
   spielerGesamt?: number;
   /** Der Termin hat begonnen: Seine Kader stehen fest (AK 13). */
   begonnen?: boolean;
-  onFolgen?: (angabe: FolgeAngabe) => void;
+  /** `benachrichtigen`: Entscheid des Häkchens (#644); false, wenn es nicht erscheint. */
+  onFolgen?: (angabe: FolgeAngabe, benachrichtigen: boolean) => void;
   onClose: () => void;
   /** `regel` nur bei einem Serientermin: Wochentage und Zeitraum, wie sie im
    *  Dialog stehen (geändert oder nicht). `trainer` nur, wenn sich die Wahl
@@ -179,11 +191,14 @@ export function TerminDialog({
    *  solange der Ausfall bestehen bleibt. */
   onSpeichern: (
     felder: TerminFelder,
-    regel?: SerienRegel,
-    trainer?: TrainerAenderung,
-    grund?: string,
+    regel: SerienRegel | undefined,
+    trainer: TrainerAenderung | undefined,
+    grund: string | undefined,
     /** Nur, wenn sich die Kader geändert haben (#453). */
-    kaderIds?: string[],
+    kaderIds: string[] | undefined,
+    /** Der Entscheid des Häkchens «Spielervertretungen benachrichtigen» (#644);
+     *  false, solange es nicht erscheint. */
+    benachrichtigen: boolean,
   ) => void;
 }) {
   const [felder, setFelder] = useState<TerminFelder>({ datum: "" });
@@ -198,6 +213,7 @@ export function TerminDialog({
   const [grundFehler, setGrundFehler] = useState<string>();
   const kaderStart = terminKader.flatMap((k) => (k.id ? [k.id] : []));
   const [kaderWahl, setKaderWahl] = useState<string[]>([]);
+  const [treffpunkt, setTreffpunkt] = useState<TrainingsTreffpunktEingabe>(null);
   const platz = usePlatzAngaben();
   const istSpiel = start?.art === "spiel";
   const spiel = useSpielAngaben(felder.datum, felder.beginn ?? "");
@@ -216,7 +232,9 @@ export function TerminDialog({
       ort: start?.ort ?? "",
       ortLink: start?.ortLink ?? "",
       bemerkung: start?.bemerkung ?? "",
+      hinweisEltern: start?.hinweisEltern ?? "",
     });
+    setTreffpunkt(treffpunktEingabe(start?.treffpunkt, start?.beginn ?? ""));
     platz.zuruecksetzen(start);
     spiel.zuruecksetzen(
       {
@@ -269,10 +287,44 @@ export function TerminDialog({
   const terminDatum = start?.datum ?? "";
   const verschoben = !!serienTag && !!abweichungen?.includes("datum");
   const folgenKann = FOLGEN_KANN.filter((a) => abweichungen?.includes(a));
-  // Dieselbe Regel wie der Fachkern (`aendereTermin`): ein anderes Datum ab
-  // heute — bei einem Spiel jede Verlegung, auch nur der Zeit (#459 PC 5).
+  // Ein Spiel mit anderem Anpfiff liegt nur in der Zukunft (#459 PC 5).
   const verlegt = felder.datum !== terminDatum || (felder.beginn ?? "") !== (start?.beginn ?? "");
-  const ausfallEndet = !!ausfall && (istSpiel ? verlegt : felder.datum !== terminDatum && felder.datum >= heute);
+  // #644 AK 1, 2: Das Häkchen erscheint, wenn die Änderung den
+  // Spielervertretungen mitteilbar ist (Zwilling der Datenregel). Bei einem
+  // Serientermin steht die Reichweite erst nach dem Speichern fest: Er zählt
+  // als mitteilbar, wenn «nur dieser» (Datum) oder die Serie (Wochentage, Zeit,
+  // Ort bei unverändertem Datum) eine Verlegung ergäbe; die Datenebene
+  // entscheidet dann genau. Der Entscheid gilt bei der Serie auch für Termine,
+  // die wegfallen (#645 PC 3): Ein kürzerer Zeitraum kann sie bis zum
+  // bisherigen Ende treffen, darum zählt das spätere der beiden Enden.
+  const vorherStand = {
+    datum: terminDatum,
+    beginn: start?.beginn ?? null,
+    ende: start?.ende ?? null,
+    ort: start?.ort ?? null,
+    ausgefallen: !!ausfall,
+  };
+  const nachherStand = { datum: felder.datum, beginn: felder.beginn ?? null, ende: felder.ende ?? null, ort: felder.ort ?? null };
+  const artKurz = istSpiel ? "spiel" : "training";
+  // Dieselbe Regel wie der Fachkern (`aendereTermin`) und die Datenebene
+  // (#327 PC 4, #459 PC 5): Der Ausfall endet mit dieser Änderung.
+  const endetAusfall = !!ausfall && ausfallEndet(vorherStand, nachherStand, artKurz, heute);
+  const mitteilbarSpeichern =
+    !!felder.datum &&
+    (mitteilbarEinzeln({ vorher: vorherStand, nachher: nachherStand, art: artKurz, heute }) ||
+      (!!serie &&
+        felder.datum === terminDatum &&
+        mitteilbarSerie({
+          vorher: vorherStand,
+          nachher: nachherStand,
+          regelGeaendert: !!regelAenderung(serie, regel),
+          serieEnde: regel.bis > serie.endDatum ? regel.bis : serie.endDatum,
+          heute,
+        })));
+  // Der Serie folgen: nur Zeit und Ort verlegen; nur bei einem Termin ab heute, der nicht ausgefallen ist.
+  const mitteilbarFolgen =
+    !ausfall && benachrichtigungZaehlt(terminDatum, heute) && (folgenKann.includes("zeit") || folgenKann.includes("ort"));
+  const benachrichtigen = useBenachrichtigen("aendern", { offen: open, sichtbar: mitteilbarSpeichern || mitteilbarFolgen, pending });
 
   function regelPruefen(): boolean {
     if (!serie) return true;
@@ -299,11 +351,14 @@ export function TerminDialog({
    *  Treffpunkte statt Feldern und Spielerzahl, hat nie eine Serie, und ein
    *  verlegter Anpfiff liegt nur in der Zukunft. */
   function speichern() {
-    const p = terminProblem(felder);
+    // #561: Der Treffpunkt eines Trainings zum Beginn im Dialog; entfiele er,
+    // bleibt er unverändert und der Kern fragt nach (PC 5).
+    const tp = istSpiel ? undefined : treffpunktAusEingabe(treffpunkt, felder.beginn ?? "");
+    const p = terminProblem({ ...felder, treffpunkt: tp });
     setProblem(p);
     const angaben = istSpiel ? spiel.pruefe() : platz.pruefe();
     const regelOk = regelPruefen();
-    const gp = ausfall && !ausfallEndet ? ausfallProblem(grund) : null;
+    const gp = ausfall && !endetAusfall ? ausfallProblem(grund) : null;
     setGrundFehler(gp?.text);
     const m = besetzungAusEingabe(mindest);
     setMindestFehler(m.ok ? undefined : m.text);
@@ -312,15 +367,16 @@ export function TerminDialog({
       setProblem({ feld: "beginn", text: SPIEL_MELDUNG.SPIEL_ANPFIFF_VERGANGEN });
       return;
     }
-    const grundNeu = ausfall && !ausfallEndet && grund.trim() !== (ausfall.grund ?? "") ? grund : undefined;
+    const grundNeu = ausfall && !endetAusfall && grund.trim() !== (ausfall.grund ?? "") ? grund : undefined;
     onSpeichern(
       istSpiel
         ? { ...felder, art: "spiel", ...angaben, mindestbesetzung: m.wert }
-        : { ...felder, ...angaben, mindestbesetzung: m.wert },
+        : { ...felder, ...angaben, mindestbesetzung: m.wert, treffpunkt: tp },
       serie ? regel : undefined,
       trainerAenderung(besetzung, besetzungStart) ?? undefined,
       grundNeu,
       gleicheMenge(kaderWahl, kaderStart) ? undefined : kaderWahl,
+      mitteilbarSpeichern && benachrichtigen.wert,
     );
   }
 
@@ -340,7 +396,7 @@ export function TerminDialog({
       {serverFehler && <SectionMessage appearance="error" className="mb-4">{serverFehler}</SectionMessage>}
       {ausfall && (
         <div className="mb-4 flex flex-col gap-3">
-          {ausfallEndet ? (
+          {endetAusfall ? (
             <SectionMessage appearance="information">
               {istSpiel
                 ? "Verlegt findet das Spiel statt: Mit dem Speichern endet sein Ausfall, und der Grund entfällt."
@@ -382,10 +438,23 @@ export function TerminDialog({
           hinweis={kartenlinkWeg ? TERMIN_TEXT.kartenlinkFaelltWeg : undefined}
           disabled={pending}
         />
+        {!istSpiel && (
+          <TreffpunktFelder
+            wert={treffpunkt}
+            onChange={(w) => {
+              setTreffpunkt(w);
+              if (problem?.feld === "treffpunkt") setProblem(null);
+            }}
+            beginn={felder.beginn ?? ""}
+            fehler={fehlerAn("treffpunkt")}
+            disabled={pending}
+          />
+        )}
         {istSpiel && <RichtwertFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <MeldefristFelder angaben={spiel} disabled={pending} />}
         {istSpiel && <TreffpunkteFelder angaben={spiel} spieltag={felder.datum} disabled={pending} />}
-        <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} info={istSpiel ? TREFFPUNKT_TEXT.bemerkungSichtbar : undefined} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
+        <TextArea label={`${LINK_KANAL.hinweis} (optional)`} rows={3} maxLength={HINWEIS_ELTERN_MAX} value={felder.hinweisEltern ?? ""} onChange={(e) => setze("hinweisEltern")(e.target.value)} info={TERMIN_TEXT.hinweisElternSichtbar} infoAufTouch error={!!fehlerAn("hinweisEltern")} supportingText={fehlerAn("hinweisEltern")} />
+        <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} info={TERMIN_TEXT.bemerkungIntern} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         {(kader.length > 0 || terminKader.length > 0 || !istSpiel) && (
           <FormAbschnitt titel="Spieler:innen" untertitel="Für wen der Termin gilt und mit wie vielen gerechnet wird." imDialog>
             {(kader.length > 0 || terminKader.length > 0) && (
@@ -434,6 +503,11 @@ export function TerminDialog({
             {wochentageText(serie.wochentage)} · {datumKurz(serie.beginnDatum)} bis {datumKurz(serie.endDatum)} · {serie.beginn}–{serie.ende} Uhr
             {serie.ort ? <> · {serie.ort}</> : null}
           </p>
+          {serie.treffpunkt && (
+            <p className="type-body-small">
+              Treffpunkt: {serie.treffpunkt.zeit} · {serie.treffpunkt.ort}
+            </p>
+          )}
           {serie.trainer.length > 0 && (
             <p className="type-body-small">Eingeladen: {serie.trainer.map((v) => v.name).join(", ")}</p>
           )}
@@ -465,7 +539,7 @@ export function TerminDialog({
                     {ANGABE[a]} {MEHRZAHL.includes(a) ? "weichen" : "weicht"} von der Serie ab.
                     {a === "ort" && eigenerLinkWeg && <> {TERMIN_TEXT.kartenlinkFolgtSerie}</>}
                   </span>
-                  <Button variant="link" aria-label={FOLGEN_LABEL[a]} disabled={pending} onClick={() => onFolgen?.(a)}>Der Serie folgen</Button>
+                  <Button variant="link" aria-label={FOLGEN_LABEL[a]} disabled={pending} onClick={() => onFolgen?.(a, (a === "zeit" || a === "ort") && mitteilbarFolgen && benachrichtigen.wert)}>Der Serie folgen</Button>
                 </li>
               ))}
             </ul>
@@ -490,6 +564,7 @@ export function TerminDialog({
           </div>
         </section>
       )}
+      {benachrichtigen.feld}
     </Dialog>
   );
 }

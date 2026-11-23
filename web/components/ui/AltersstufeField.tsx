@@ -50,7 +50,7 @@ export function AltersstufeField({
    *  Stufenwechsel ist an einer gespeicherten Übung kein Feld, sondern ein
    *  eigener, zu bestätigender Vorgang. */
   aktion?: ReactNode;
-  /** Erklärung hinter einem ⓘ neben der Wahl. Ohne steht keines: An der Übung sagt
+  /** Erklärung hinter einem ⓘ am Namen der Wahl. Ohne steht keines: An der Übung sagt
    *  der Feldname alles, und was die Wahl nach sich zieht, sieht man an der
    *  Maske selbst. Das Training erklärt sie, weil sie dort lebenslang bindet. */
   info?: string;

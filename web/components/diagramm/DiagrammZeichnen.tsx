@@ -1226,8 +1226,8 @@ export function DiagrammZeichnen({
                 y={r.minY}
                 width={r.maxX - r.minX}
                 height={r.maxY - r.minY}
-                fill="rgba(255,255,255,.12)"
-                stroke="#ffffff"
+                fill={AUSWAHL_FLAECHE}
+                stroke={AUSWAHL_STRICH}
                 strokeWidth={2}
                 strokeDasharray="6 4"
                 pointerEvents="none"
@@ -1357,6 +1357,12 @@ function elementBBox(element: DiagrammElement): {
   return { x: box.x, y: box.y, breite: box.breite, hoehe: box.hoehe };
 }
 
+/* Auswahl über dem Diagramm ist Bedienoberfläche, keine Zeichnung: Sie
+   trägt die Schrift der Anwendung — auf dem Nachtrasen weiss, auf dem hellen
+   Rasen fast schwarz (Epic #563). Ein festes Weiss verschwände im Hellen. */
+const AUSWAHL_STRICH = "var(--color-on-surface)";
+const AUSWAHL_FLAECHE = "color-mix(in srgb, var(--color-on-surface) 12%, transparent)";
+
 function SelektionsRahmen({ element }: { element: DiagrammElement }) {
   const r = 8; // Luft um die Element-Begrenzung
   const { x, y, breite, hoehe } = elementBBox(element);
@@ -1367,7 +1373,7 @@ function SelektionsRahmen({ element }: { element: DiagrammElement }) {
       width={breite + r * 2}
       height={hoehe + r * 2}
       fill="none"
-      stroke="#ffffff"
+      stroke={AUSWAHL_STRICH}
       strokeWidth={2.5}
       strokeDasharray="6 4"
       pointerEvents="none"

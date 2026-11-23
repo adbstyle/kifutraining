@@ -20,13 +20,14 @@ import {
   type SerienFolge,
 } from "@/lib/kern/serien";
 import { teamPlan } from "@/lib/kern/team";
+import { holeVerlegungNach, type AusstehendeVerlegung } from "@/lib/kern/benachrichtigungen";
 import { aendereTrainer, setzeAbsage, type AbsageSetzen, type TrainerAendern } from "@/lib/kern/trainer";
 import type { KernErgebnis } from "@/lib/kern/ergebnis";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Reichweite, Wochentag } from "@/lib/serie";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
-import type { TerminFelder } from "@/lib/termin";
+import type { TerminFelder, TerminTreffpunkt } from "@/lib/termin";
 import type { Felder } from "@/lib/termin-felder";
 import type { Mindestbesetzung } from "@/lib/besetzung";
 import type { TerminZeile } from "@/lib/queries/termine";
@@ -56,8 +57,10 @@ type Fehler = {
   verschwindend?: number;
   /** Davon Kennzeichnungen als nicht aufgeboten (#464 AK 10). */
   kennzeichnungen?: number;
-  /** Davon Anmeldungen von Probe-Spieler:innen (#555 AK 14). */
+  /** Davon Anmeldungen von schnuppernden Spieler:innen (#555 AK 14). */
   anmeldungen?: number;
+  /** Ein Training (#561 PC 5): Mit dem neuen Beginn entfiele der Treffpunkt. */
+  treffpunktEntfaellt?: boolean;
 };
 
 export async function legeTerminFestAktion(
@@ -67,7 +70,9 @@ export async function legeTerminFestAktion(
   kaderIds: string[],
   /** Die Eingeladenen und die Verantwortliche (#519 AK 1). */
   trainer: { eingeladene: string[]; verantwortlich: string | null },
-): Promise<{ ok: true; terminId: string } | Fehler> {
+  /** Nur an einem Spiel (#642 AK 6): die Spielervertretungen benachrichtigen. */
+  benachrichtigen: boolean,
+): Promise<{ ok: true; terminId: string; benachrichtigungFehlt: boolean } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await legeTerminFest(a.supabase, a.userId, {
@@ -84,16 +89,19 @@ export async function legeTerminFestAktion(
     ort: felder.ort,
     ortLink: felder.ortLink,
     bemerkung: felder.bemerkung,
+    hinweisEltern: felder.hinweisEltern,
+    treffpunkt: felder.treffpunkt,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
     mindestbesetzung: felder.mindestbesetzung ?? null,
     kaderIds,
     eingeladene: trainer.eingeladene,
     verantwortlich: trainer.verantwortlich,
+    benachrichtigen,
   });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
-  return { ok: true, terminId: r.wert.terminId };
+  return { ok: true, terminId: r.wert.terminId, benachrichtigungFehlt: r.wert.benachrichtigungFehlt };
 }
 
 /** Der Dialog sendet nur, was sich gegenüber seinen Startwerten geändert hat
@@ -104,13 +112,23 @@ export async function aendereTerminAktion(
   terminId: string,
   felder: Partial<TerminFelder>,
   erwartetesTraining: string | null,
-  /** Die bestätigte Zahl verfallender Abmeldungen (#437 AK 1). */
+  /** Die Spielervertretungen benachrichtigen (#644 AK 1); wirkt nur bei
+   *  einer Verlegung (Datum, Beginn, Ende, Ort). */
+  benachrichtigen: boolean,
+  /** Die bestätigte Zahl verfallender Abmeldungen (#437 AK 1); sie
+   *  bestätigt auch einen entfallenden Treffpunkt (#561 PC 5). */
   bestaetigt: number | false = false,
-): Promise<{ ok: true } | Fehler> {
+  /** Setzt der Dialog danach noch die Kader, kommt die Benachrichtigung erst
+   *  nach ihnen (#644 PC 1): `ausstehend` geht an `holeVerlegungNachAktion`. */
+  kaderFolgen = false,
+): Promise<{ ok: true; benachrichtigungFehlt: boolean; ausstehend: AusstehendeVerlegung | null } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await aendereTermin(a.supabase, a.userId, {
+    benachrichtigen,
+    kaderFolgen,
     bestaetigt,
+    treffpunktWeg: bestaetigt !== false,
     terminId,
     datum: felder.datum,
     beginn: felder.beginn,
@@ -118,6 +136,7 @@ export async function aendereTerminAktion(
     ort: felder.ort,
     ortLink: felder.ortLink,
     bemerkung: felder.bemerkung,
+    hinweisEltern: felder.hinweisEltern,
     felder: felder.felder,
     spielerzahl: felder.spielerzahl,
     mindestbesetzung: felder.mindestbesetzung,
@@ -126,6 +145,7 @@ export async function aendereTerminAktion(
     richtwertMax: felder.richtwertMax,
     meldefrist: felder.meldefrist,
     treffpunkte: felder.treffpunkte,
+    treffpunkt: felder.treffpunkt,
     erwartetesTraining,
   });
   if (!r.ok)
@@ -138,22 +158,38 @@ export async function aendereTerminAktion(
       fristAbgelaufen: r.fristAbgelaufen,
       kennzeichnungen: r.kennzeichnungen,
       anmeldungen: r.anmeldungen,
+      treffpunktEntfaellt: r.treffpunktEntfaellt,
     };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.trainingId) revalidiereTraining(r.wert.trainingId);
-  return { ok: true };
+  return { ok: true, benachrichtigungFehlt: r.wert.benachrichtigungFehlt, ausstehend: r.wert.ausstehend };
+}
+
+/** Die zurückgestellte Benachrichtigung einer Verlegung nachholen, nachdem
+ *  der Dialog die Kader gesetzt hat (#644 PC 1). Die Datenebene prüft
+ *  Mitgliedschaft, Tag und Zustand des Termins. */
+export async function holeVerlegungNachAktion(
+  ausstehend: AusstehendeVerlegung,
+): Promise<{ ok: true; benachrichtigungFehlt: boolean } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const b = await holeVerlegungNach(a.supabase, ausstehend);
+  return { ok: true, benachrichtigungFehlt: b.benachrichtigungFehlt };
 }
 
 export async function entferneTerminAktion(
   terminId: string,
   erwartetesTraining: string | null,
+  /** Die Spielervertretungen benachrichtigen, dass der Termin wegfällt
+   *  (#645 AK 1); die Datenebene lässt ausgefallene und vergangene still. */
+  benachrichtigen: boolean,
   /** Ein Spiel: die bestätigte Zahl verschwindender Meldungen und
    *  Kennzeichnungen (#463 AK 27, #464 AK 10). */
   bestaetigt: number | false = false,
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await entferneTermin(a.supabase, a.userId, { terminId, erwartetesTraining, bestaetigt });
+  const r = await entferneTermin(a.supabase, a.userId, { terminId, erwartetesTraining, bestaetigt, benachrichtigen });
   if (!r.ok) return { ok: false, error: r.meldung, verschwindend: r.verschwindend, kennzeichnungen: r.kennzeichnungen };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.training) revalidiereTraining(r.wert.training.trainingId);
@@ -169,23 +205,30 @@ export async function lasseAusfallenAktion(
   terminId: string,
   grund: string,
   erwartetAusgefallen: boolean,
-): Promise<{ ok: true } | Fehler> {
+  /** Die Spielervertretungen benachrichtigen (#643 AK 1); wirkt nur beim
+   *  Ausfallen lassen, nie beim Ändern des Grunds. */
+  benachrichtigen: boolean,
+): Promise<{ ok: true; benachrichtigungFehlt: boolean } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await lasseAusfallen(a.supabase, a.userId, { terminId, grund, erwartetAusgefallen });
+  const r = await lasseAusfallen(a.supabase, a.userId, { terminId, grund, erwartetAusgefallen, benachrichtigen });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
-  return { ok: true };
+  return { ok: true, benachrichtigungFehlt: r.wert.benachrichtigungFehlt };
 }
 
-/** Den Ausfall eines Termins zurücknehmen (#327 AK 6). */
-export async function nimmAusfallZurueckAktion(terminId: string): Promise<{ ok: true } | Fehler> {
+/** Den Ausfall eines Termins zurücknehmen (#327 AK 6), auf Wunsch mit
+ *  Benachrichtigung (#643 AK 1). */
+export async function nimmAusfallZurueckAktion(
+  terminId: string,
+  benachrichtigen: boolean,
+): Promise<{ ok: true; benachrichtigungFehlt: boolean } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await nimmAusfallZurueck(a.supabase, a.userId, { terminId });
+  const r = await nimmAusfallZurueck(a.supabase, a.userId, { terminId, benachrichtigen });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
-  return { ok: true };
+  return { ok: true, benachrichtigungFehlt: r.wert.benachrichtigungFehlt };
 }
 
 /** Einem Termin ein Training zuordnen — immer als stille Kopie, die ein
@@ -245,6 +288,10 @@ export async function legeSerieFestAktion(
     /** Der Kartenlink zum Ort (#533 AK 2). */
     ortLink: string;
     bemerkung: string;
+    /** Der Hinweis für Eltern jedes Termins (#590 AK 2). */
+    hinweisEltern: string;
+    /** Der Treffpunkt jedes Termins (#561 AK 2); `null`: keiner. */
+    treffpunkt: TerminTreffpunkt | null;
     eingeladene: string[];
     verantwortlich: string | null;
     /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1). */
@@ -302,7 +349,8 @@ export async function setzeAbsageAktion(e: AbsageSetzen): Promise<{ ok: true } |
 // Serie und die entfallenden Termine mit Training.
 
 type Serienweit = "dieser_und_folgende" | "alle";
-/** `verfallend`: die Summe verfallender Abmeldungen aus der Vorschau (#453 AK 12). */
+/** `verfallend`: die Summe verfallender Abmeldungen aus der Vorschau (#453
+ *  AK 12) und der Termine, deren Treffpunkt entfällt (#561 PC 5). */
 type Erwartet = { version: number; entfallend: string[]; verfallend?: number };
 
 async function serienLauf(
@@ -320,21 +368,42 @@ async function serienLauf(
  *  nach der Bestätigung. Die entfallenden Termine vergleicht die Vorschau
  *  nicht — sie liefert sie erst. */
 export async function vorschauSerieAktion(terminId: string, reichweite: Serienweit, aenderung: SerienAenderung, version: number) {
-  return serienLauf((s, u) => aendereSerie(s, u, { terminId, reichweite, aenderung, vorschau: true, erwartet: { version, entfallend: [] } }));
+  // Die Vorschau legt nie ab; `folge.mitteilbar` sagt, wie viele Spieler:innen
+  // eine Benachrichtigung erhielten (#644 AK 2).
+  return serienLauf((s, u) =>
+    aendereSerie(s, u, { terminId, reichweite, aenderung, vorschau: true, erwartet: { version, entfallend: [] }, benachrichtigen: false }),
+  );
 }
 
-export async function aendereSerieAktion(terminId: string, reichweite: Serienweit, aenderung: SerienAenderung, erwartet: Erwartet) {
-  const r = await serienLauf((s, u) => aendereSerie(s, u, { terminId, reichweite, aenderung, erwartet }));
+export async function aendereSerieAktion(
+  terminId: string,
+  reichweite: Serienweit,
+  aenderung: SerienAenderung,
+  erwartet: Erwartet,
+  /** Die Spielervertretungen benachrichtigen (#644 AK 2). */
+  benachrichtigen: boolean,
+) {
+  const r = await serienLauf((s, u) => aendereSerie(s, u, { terminId, reichweite, aenderung, erwartet, benachrichtigen }));
   if (r.ok) revalidiereTeam(r.folge.teamId);
   return r;
 }
 
 export async function vorschauSerieEntfernenAktion(terminId: string, reichweite: Serienweit, version: number) {
-  return serienLauf((s, u) => entferneSerie(s, u, { terminId, reichweite, vorschau: true, erwartet: { version, entfallend: [] } }));
+  // Die Vorschau legt nie ab; `folge.mitteilbar` sagt, wie viele Spieler:innen
+  // eine Benachrichtigung erhielten (#645 AK 1).
+  return serienLauf((s, u) =>
+    entferneSerie(s, u, { terminId, reichweite, vorschau: true, erwartet: { version, entfallend: [] }, benachrichtigen: false }),
+  );
 }
 
-export async function entferneSerieAktion(terminId: string, reichweite: Serienweit, erwartet: Erwartet) {
-  const r = await serienLauf((s, u) => entferneSerie(s, u, { terminId, reichweite, erwartet }));
+export async function entferneSerieAktion(
+  terminId: string,
+  reichweite: Serienweit,
+  erwartet: Erwartet,
+  /** Die Spielervertretungen benachrichtigen, welche Termine wegfallen (#645 AK 1). */
+  benachrichtigen: boolean,
+) {
+  const r = await serienLauf((s, u) => entferneSerie(s, u, { terminId, reichweite, erwartet, benachrichtigen }));
   if (r.ok) revalidiereTeam(r.folge.teamId);
   return r;
 }
@@ -343,14 +412,25 @@ export async function entferneSerieAktion(terminId: string, reichweite: Serienwe
 export async function folgeDerSerieAktion(
   terminId: string,
   angaben: FolgeAngabe[],
+  /** Die Spielervertretungen benachrichtigen, wenn der Termin damit verlegt
+   *  ist (#644 AK 1). */
+  benachrichtigen: boolean,
   /** `true` bestätigt eine Verlegung (#437), eine Zahl verfallende
    *  Abmeldungen durch Kader (#453 AK 10, 12). */
   bestaetigt: boolean | number = false,
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await folgeDerSerie(a.supabase, a.userId, { terminId, angaben, bestaetigt });
-  if (!r.ok) return { ok: false, error: r.meldung, verfallend: r.verfallend, nachtraege: r.nachtraege, absagen: r.absagen };
+  const r = await folgeDerSerie(a.supabase, a.userId, { terminId, angaben, bestaetigt, benachrichtigen });
+  if (!r.ok)
+    return {
+      ok: false,
+      error: r.meldung,
+      verfallend: r.verfallend,
+      nachtraege: r.nachtraege,
+      absagen: r.absagen,
+      treffpunktEntfaellt: r.treffpunktEntfaellt,
+    };
   revalidiereTeam(r.wert.teamId);
   return { ok: true };
 }

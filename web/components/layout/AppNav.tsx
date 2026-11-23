@@ -1,10 +1,13 @@
-import { headers } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { cookies, headers } from "next/headers";
+import { createClient, getUserImRequest } from "@/lib/supabase/server";
 import { PFAD_HEADER } from "@/lib/pfad";
 import { APP_VERSION } from "@/lib/version";
 import { getAnzeigenameFuer } from "@/lib/queries/profil";
 import { getMeineTeamsImRequest } from "@/lib/queries/teams";
 import { getTrainingNavKontext } from "@/lib/queries/trainings";
+import { getMeinVerein } from "@/lib/queries/verein";
+import { BEREICH_COOKIE } from "@/lib/bereich";
+import { nachTeamname } from "@/lib/spieler";
 import { AppNavClient } from "./AppNavClient";
 
 /** Ein geöffnetes Training in der Adresse: `/training/<uuid>` und alles
@@ -12,7 +15,9 @@ import { AppNavClient } from "./AppNavClient";
 const TRAINING_PFAD = /^\/training\/([0-9a-f-]{36})(\/|$)/i;
 
 /* App-Chrome: die Seitenleiste. Server-Komponente — liest die Session, die
-   eigenen Teams (Unterpunkte von „Teams") und den Anzeigenamen (Konto-Karte);
+   eigenen Teams und den Verein (der Bereich-Wechsler), den gemerkten Bereich
+   (Cookie) und den Anzeigenamen (Konto-Karte). Scheitert die Vereinslage,
+   zeigt der Wechsler nur die eigenen Teams (protokolliert in `getMeinVerein`);
    Aktiv-Zustand und Drawer übernimmt der Client-Teil.
 
    Ein Team-Training liegt zwar unter `/training/…`, gehört aber in den
@@ -27,10 +32,7 @@ const TRAINING_PFAD = /^\/training\/([0-9a-f-]{36})(\/|$)/i;
    siehe `TeamKontext`. Teams und Name werden mit jeder Server Action neu
    gelesen, die `revalidatePath` ruft. */
 export async function AppNav() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [supabase, user] = await Promise.all([createClient(), getUserImRequest()]);
 
   const pfad = (await headers()).get(PFAD_HEADER) ?? "";
   const trainingId = pfad.match(TRAINING_PFAD)?.[1];
@@ -38,15 +40,17 @@ export async function AppNav() {
   // Nur angemeldet nötig: Teams sieht nur, wer Mitglied ist. Ohne Recht am
   // Training liefert die RLS `null` — die Navigation verrät dann nichts.
   // Scheitert eine der Abfragen, fehlt nur ihr Teil der Leiste, nicht die Seite.
-  const [kontext, teams, name] = user
+  const [kontext, teams, name, verein] = user
     ? await Promise.all([
         trainingId ? getTrainingNavKontext(trainingId) : null,
         getMeineTeamsImRequest()
           .then((teams) => teams.map(({ id, name }) => ({ id, name })))
           .catch(() => []),
         getAnzeigenameFuer(supabase, user.id).catch(() => null),
+        getMeinVerein(),
       ])
-    : [null, [], null];
+    : [null, [], null, null];
+  const gemerkt = (await cookies()).get(BEREICH_COOKIE)?.value;
 
   return (
     <AppNavClient
@@ -59,8 +63,10 @@ export async function AppNav() {
             }
           : null
       }
-      teams={teams}
-      imTeamBereich={!!kontext?.team}
+      teams={[...teams].sort((a, b) => nachTeamname(a.name, b.name))}
+      verein={verein ? { name: verein.name, istVerwaltung: verein.istVerwaltung } : null}
+      gemerkt={gemerkt ?? null}
+      teamImTraining={kontext?.team?.id ?? null}
       version={APP_VERSION}
     />
   );

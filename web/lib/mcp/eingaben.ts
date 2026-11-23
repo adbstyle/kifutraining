@@ -53,12 +53,12 @@ export const SucheEingabe = z.object({
     .max(200)
     .optional()
     .describe(
-      "Verfügbare Kinder: liefert Übungen, deren Mindestzahl damit erreicht ist (oder die keine nennen).",
+      "Verfügbare Spieler:innen: liefert Übungen, deren Mindestzahl damit erreicht ist (oder die keine nennen).",
     ),
   nur_eigene: z
     .boolean()
     .optional()
-    .describe("Nur Übungen dieses Kontos (öffentliche wie private Entwürfe)."),
+    .describe("Nur Übungen dieses Kontos (in der Community wie private Entwürfe)."),
   limit: z.number().int().min(1).max(50).default(20).describe("Treffer je Seite, höchstens 50."),
   offset: z
     .number()

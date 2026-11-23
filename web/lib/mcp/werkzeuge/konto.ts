@@ -26,7 +26,7 @@ export const werBinIch = werkzeug({
   titel: "Verbundenes Konto",
   beschreibung:
     "Zeigt, mit welchem KiFu-Konto dieser Zugang verbunden ist: den Anzeigenamen und " +
-    "die Adresse der Konto-Seite, auf der sich der Zugang widerrufen lässt.",
+    "die Adresse der Seite «Verbindungen» im Konto, auf der sich der Zugang widerrufen lässt.",
   nurLesen: true,
   eingabe: LeereEingabe,
   ausgabe: WerBinIchAusgabe,
@@ -35,7 +35,7 @@ export const werBinIch = werkzeug({
       p_user: zugang.userId,
     });
     if (error) throw error; // → «technisch», Rohtext nur im Server-Log
-    return ok({ anzeigename: String(data ?? ""), konto_url: zugang.url("konto") });
+    return ok({ anzeigename: String(data ?? ""), konto_url: zugang.url("konto", "verbindungen") });
   },
 });
 
@@ -51,7 +51,7 @@ export const vokabular = werkzeug({
     "und Übungstypen - dazu die Werte des Filters «einordnung» von «uebungen_suchen». " +
     `${FELDTYP_HINWEIS} Im Abschnitt «schema» je ` +
     "Altersstufe das Trainingsschema: Teile und Blöcke in Reihenfolge, je mit Dauer, " +
-    "Gruppen, Pflicht zum Veröffentlichen, Leer-Hinweis, anziehender Erscheinungsform und " +
+    "Gruppen, Pflicht für die Community, Leer-Hinweis, anziehender Erscheinungsform und " +
     `Zeitrichtwert. ${RICHTWERTE_HINWEIS} ${RICHTWERTE_VERWEIS} Ändert sich nur mit KiFu ` +
     "selbst; einmal abrufen genügt.",
   nurLesen: true,

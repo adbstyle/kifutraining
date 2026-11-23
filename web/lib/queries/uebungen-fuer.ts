@@ -10,8 +10,8 @@ import type { Altersstufe } from "@/lib/altersstufe";
 
 /**
  * Teil des Query-Layers für Übungen — des EINZIGEN Datenpfads zu `exercises`
- * (Architektur §6). RLS filtert serverseitig: anonym nur `public`,
- * eingeloggt zusätzlich eigene private Übungen (Story 3 EK12/13).
+ * (Architektur §6). RLS filtert serverseitig, nur mit Konto (#669): die
+ * Community-Übungen und die eigenen privaten (Story 3 EK12/13).
  */
 
 export type ExerciseFilters = {
@@ -48,7 +48,7 @@ export type ExerciseFilters = {
 };
 
 // Felder, die Liste + Karte brauchen.
-const LIST_COLUMNS =
+export const LIST_COLUMNS =
   "id, slug, name, altersstufe, trainingsteil, feldtyp, hauptteilkategorie, kategorien, spielfeld_laenge_m, spielfeld_breite_m, anzahl_kinder, source, visibility, bild_url, diagramm, bild_quelle";
 
 export type ExerciseListRow = {

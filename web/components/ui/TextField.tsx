@@ -14,8 +14,6 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   info?: ReactNode;
   /** Den festen Hinweis auf Touch-Geräten unter dem Feld zeigen (siehe `Feld`). */
   infoAufTouch?: boolean;
-  /** Ein Knopf neben dem Feld, auf einer Linie mit dem Feldkasten (siehe `Feld`). */
-  aktion?: ReactNode;
   error?: boolean;
   /** Ein BEFUND am Feld, keine Fehleingabe — der Wert ist gespeichert und
       richtig erfasst, geht aber mit anderen nicht auf (Story #151: ungleich
@@ -59,7 +57,6 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       supportingText,
       info,
       infoAufTouch,
-      aktion,
       error = false,
       befund = false,
       labelVersteckt = false,
@@ -86,8 +83,8 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
         hinweis={supportingText}
         info={info}
         infoAufTouch={infoAufTouch}
-        aktion={aktion}
         error={error}
+        schrift={schrift}
         className={className}
       >
         <div className="relative">
@@ -110,10 +107,9 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
               schrift === "title"
                 ? "feldkasten type-title-large h-11 w-full px-3"
                 : "feldkasten type-body-large h-9 w-full px-3",
-              // Rechts Platz für das Zeichen am Feldrand und das ⓘ, das beim
-              // Überfahren über dem Kasten liegt (`Feld`) — je 40 px, damit
-              // ein langer Wert unter keinem von beiden verschwindet.
-              trailing && info ? "pr-20" : trailing || info ? "pr-10" : undefined,
+              // Rechts Platz für das Zeichen am Feldrand (40 px), damit ein
+              // langer Wert nicht darunter verschwindet.
+              !!trailing && "pr-10",
               // Das Suchfeld trägt sein eigenes Kreuz; das von WebKit für
               // `type="search"` gezeichnete wäre ein zweites ohne Unterschied.
               props.type === "search" && "[&::-webkit-search-cancel-button]:appearance-none",
@@ -122,11 +118,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
             )}
             {...props}
           />
-          {/* Mit ⓘ rückt das Zeichen um dessen Breite nach links: Am Rand
-              läge sonst beim Überfahren das ⓘ darüber und finge den Klick. */}
-          {trailing && (
-            <span className={cn("absolute inset-y-0 flex", info ? "right-10" : "right-0")}>{trailing}</span>
-          )}
+          {trailing && <span className="absolute inset-y-0 right-0 flex">{trailing}</span>}
         </div>
       </Feld>
     );

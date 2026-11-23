@@ -11,10 +11,11 @@ import { istVeraltet } from "@/lib/veraltet";
 import type { TeamUebersicht } from "@/lib/queries/teams";
 import type { TerminZeile } from "@/lib/queries/termine";
 
-/* Ein persönliches Training einem Termin eines eigenen Teams zuordnen
-   (#328 AK 2). Erst das Team, dann der Termin (der Dialog der Wahl ist
-   derselbe wie im Team-Bestand); der Termin bekommt still eine eigene Kopie,
-   ein Termin-Training — ins Team kommt dabei nichts (PO 2026-10-06).
+/* Ein Training einem Team-Termin zuordnen: ein persönliches in einem der
+   eigenen Teams (#328 AK 2), ein Training des Team-Bestands in seinem Team
+   (#637 — dann ist `teams` genau dieses eine und sofort gewählt). Erst das
+   Team, dann der Termin; der Termin bekommt still eine eigene Kopie, ein
+   Termin-Training — in den Bestand kommt dabei nichts (PO 2026-10-06).
 
    Fehler wie im Trainingsplan (PO 17): Ein Fehler steht im Dialog, ausser die
    Auswahl ist veraltet — dann würde ein erneuter Versuch immer wieder

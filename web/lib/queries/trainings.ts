@@ -5,10 +5,11 @@ import {
   getTeamTrainingsFuer,
   getTrainingPoolFuer,
   ladeTrainingDetail,
+  type TeamTrainingFilter,
   type TeamTrainingRow,
   type TrainingDetail,
-  type TrainingListFilters,
   type TrainingListRow,
+  type TrainingPoolFilter,
 } from "@/lib/queries/trainings-fuer";
 
 /**
@@ -117,7 +118,7 @@ export const getTrainingNavKontext = cache(
 /** Trainings-Übersicht mit der Anmeldung aus den Cookies — Regeln, Filter und
  *  Sortierung in `getTrainingPoolFuer`. */
 export async function getTrainingPool(
-  f: TrainingListFilters = {},
+  f: TrainingPoolFilter = {},
 ): Promise<TrainingListRow[]> {
   const supabase = await createClient();
   const {
@@ -130,6 +131,6 @@ export async function getTrainingPool(
 
 /** Der Trainingsbestand eines Teams mit der Anmeldung aus den Cookies —
  *  Abfrage und Mapping in `getTeamTrainingsFuer`. */
-export async function getTeamTrainings(teamId: string): Promise<TeamTrainingRow[]> {
-  return getTeamTrainingsFuer(await createClient(), teamId);
+export async function getTeamTrainings(teamId: string, f: TeamTrainingFilter = {}): Promise<TeamTrainingRow[]> {
+  return getTeamTrainingsFuer(await createClient(), teamId, f);
 }

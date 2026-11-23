@@ -10,6 +10,49 @@ on:
       - "docs/feedback-triage.md"
 
 jobs:
+  workflow-waechter:
+    name: Workflow-Wächter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      # reset-staging.yml löscht alle Daten des Ziels samt Konten und darf nur
+      # Staging kennen: kein Prod-Secret in der Datei, auch nicht in
+      # Index-Schreibweise (secrets[...]) oder als Ganzes (toJSON(secrets)).
+      # Ohne Gross-/Kleinschreibung, wie GitHub Secret-Namen behandelt.
+      - name: reset-staging.yml ohne Prod-Secrets
+        run: |
+          DATEI=.github/workflows/reset-staging.yml
+          test -f "$DATEI"
+          if grep -niE 'SUPABASE_PROD_|secrets\.SUPABASE_(DB_PASSWORD|URL|SERVICE_ROLE_KEY)\b|secrets[[:space:]]*\[|toJSON[[:space:]]*\([[:space:]]*secrets' "$DATEI"; then
+            echo "::error::$DATEI nennt ein Prod-Secret oder greift auf secrets als Ganzes bzw. per Index zu (siehe Zeilen oben)."
+            exit 1
+          fi
+
+  # Eigener Job, damit die übrigen ihr Ergebnis weiter zeigen: Fiele der
+  # Default von vereine_nachziehen auf den Platzhalter zurück, legte der
+  # Backfill auf Prod «FC Wyler» ohne Verwaltung an (AP §6.1 Schritt −1, §6.3).
+  # Bis N1 ruft der Sync vereine_nachziehen() mit diesem Default auf
+  # (staging_nach_sync); fällt vereine_nachziehen in N1, braucht es ihn nicht mehr.
+  konto-platzhalter:
+    name: Verwaltungskonto im Backfill eingesetzt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Default von vereine_nachziehen ist eine Konto-ID
+        run: |
+          DATEI=supabase/migrations/20261113100000_vereine_fundament.sql
+          KONTO=$(sed -n "s/.*p_verwaltung uuid default '\([0-9A-Fa-f-]*\)'::uuid.*/\1/p" "$DATEI")
+          if [ "$(printf '%s' "$KONTO" | grep -c .)" -ne 1 ]; then
+            echo "::error file=$DATEI::Default von vereine_nachziehen(p_verwaltung) nicht genau einmal gefunden: '$KONTO'."
+            exit 1
+          fi
+          if ! printf '%s\n' "$KONTO" | grep -Eqix '[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}' \
+             || [ "$KONTO" = "00000000-0000-0000-0000-000000000000" ]; then
+            echo "::error file=$DATEI::Keine Konto-ID als Default von vereine_nachziehen: '$KONTO'. Dort steht die auth.users.id des Verwaltungskontos (AP §6.1 Schritt −1)."
+            exit 1
+          fi
+          echo "Verwaltungskonto: $KONTO"
+
   web:
     name: Typecheck (web)
     runs-on: ubuntu-latest
@@ -96,15 +139,31 @@ jobs:
       - uses: actions/checkout@v6
       - uses: supabase/setup-cli@v2
         with:
-          version: latest
-          # Ohne Token löst die Action «latest» anonym auf und scheitert am
-          # API-Limit von GitHub («rate limit exceeded»).
-          github-token: ${{ github.token }}
-      - name: Lokalen Stack starten und Migrationen + seed.sql anwenden
-        run: supabase start
+          # Fest gepinnt (gleiche Version in deploy.yml und deploy-staging.yml):
+          # «latest» zog am 2026-11-02 still die CLI v3, die [inbucket] ablehnt
+          # und bei 'db push' ohne --remote die lokale DB anpeilt. Wechsel auf v3
+          # nur bewusst, samt Anpassung der Deploy-Befehle.
+          version: 2.122.1
       # 'supabase start' fährt den vollen lokalen Stack hoch und wendet alle
       # Migrationen + seed.sql an -> schlägt fehl, wenn eine Migration kaputt ist
       # und validiert so die Schema-Änderungen wirklich.
+      - name: Lokalen Stack starten und Migrationen + seed.sql anwenden
+        run: supabase start
+      # psql-Tests (supabase/tests/run.sh): Ortsprüfung, Rennen über dblink,
+      # Sync-Bausteine. run.sh lässt nur lokale Ziele zu. Dazu vor_restore.sql
+      # wie im Sync über stdin (zurückgerollt): muss still bleiben, also ohne
+      # die Tabellenliste im Log.
+      - name: psql-Tests gegen Wegwerf-DB
+        run: |
+          eval "$(supabase status -o env)"
+          supabase/tests/run.sh "$DB_URL"
+          LISTE=$(psql "$DB_URL" -X -t -A -c "select string_agg(tablename, ' ') from pg_tables where schemaname = 'public'")
+          if ! AUSGABE=$({ echo 'begin;'; cat supabase/sync/vor_restore.sql; echo 'rollback;'; } \
+                 | psql "$DB_URL" -X --quiet -v ON_ERROR_STOP=1 -v public_tables="$LISTE" 2>&1) \
+             || [ -n "$AUSGABE" ]; then
+            echo "::error::vor_restore.sql über stdin fehlgeschlagen oder nicht still: $AUSGABE"
+            exit 1
+          fi
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc

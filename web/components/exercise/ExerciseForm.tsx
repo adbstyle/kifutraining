@@ -16,8 +16,10 @@ import {
   Card,
   IconButton,
   Tooltip,
+  BestandAnzeige,
 } from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
+import { grenzeAusAbweisung, type KontoGrenze } from "@/lib/konto-grenzen";
 import {
   feldtyp as feldLabels,
   uebungstyp as uebungstypLabels,
@@ -118,6 +120,7 @@ export function ExerciseForm({
   diagramm: gespeichertesDiagramm,
   vorlagenAusser,
   inSpalte,
+  bestand,
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
@@ -161,6 +164,9 @@ export function ExerciseForm({
     onVerwerfen: () => void;
     onSchliessen: () => void;
   };
+  /** Nur beim Erfassen für ein Konto ohne Verein (#588 AK 5): der Stand der
+   *  eigenen Übungen, zuoberst als Zeile. */
+  bestand?: KontoGrenze;
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -179,6 +185,15 @@ export function ExerciseForm({
         (el) => el.offsetParent !== null && !el.closest('dialog, [role="alert"], [role="status"]'),
       );
     ziel?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [state]);
+  // Weist die Datenebene an der Grenze ab, steht die Meldung zuoberst der
+  // Maske, in der geteilten Maske womöglich ausserhalb des Sichtbaren: Sie rückt
+  // ins Bild und bekommt den Fokus (die Vorlesehilfe sagt sie an).
+  const grenzMeldungRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!state.grenze) return;
+    grenzMeldungRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    grenzMeldungRef.current?.focus({ preventScroll: true });
   }, [state]);
   const err = state.errors ?? {};
 
@@ -881,10 +896,25 @@ export function ExerciseForm({
       // und Speichern stehen dann fest, dazwischen scrollen die Spalten.
       className={cn("flex flex-col gap-10", geteilt && "xl:min-h-0 xl:flex-1 xl:gap-6")}
     >
-      {state.message && (
-        <SectionMessage appearance="error" className={UEBER_BEIDEN}>
-          {state.message}
-        </SectionMessage>
+      {/* Weist die Datenebene an der Grenze ab (#588: Rennen, veraltete
+          Anzeige), steht dieselbe Meldung wie bei voller Grenze, samt Weg zur
+          eigenen Übersicht, und die Zeile mit dem alten Stand fällt weg; die
+          Angaben bleiben in der Maske. */}
+      {state.grenze ? (
+        <div ref={grenzMeldungRef} tabIndex={-1} role="alert" className={cn("outline-none", UEBER_BEIDEN)}>
+          <BestandAnzeige art="uebungen" grenze={grenzeAusAbweisung(state.grenze)} variante="meldung" />
+        </div>
+      ) : (
+        state.message && (
+          <SectionMessage appearance="error" className={UEBER_BEIDEN}>
+            {state.message}
+          </SectionMessage>
+        )
+      )}
+      {/* Die Zeile gehört eng über das erste Feld (mb-4): `-mb-6` nimmt vom
+          Abstand der Maske (gap-10) so viel zurück, dass 16 px bleiben. */}
+      {bestand && !state.grenze && (
+        <BestandAnzeige art="uebungen" grenze={bestand} className={cn(UEBER_BEIDEN, !geteilt && "-mb-6")} />
       )}
 
       <VerlassenWarnung

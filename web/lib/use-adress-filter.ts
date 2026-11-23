@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 /* Filterzustand in der Adresse — die gemeinsame Mechanik der Filterleisten
-   (Übungskatalog, Trainings-Übersicht). Die Adresse ist die Quelle der
+   (Übungskatalog, Trainings-Übersicht, Spieler:innen des Vereins). Die Adresse ist die Quelle der
    Wahrheit: Jede Änderung schreibt dorthin und löst eine neue Server-Abfrage
    aus. Was eine Leiste zeigt und wann sie «Zurücksetzen» anbietet, bleibt bei
    ihr; hier steht nur, WIE ein Wert in die Adresse kommt.
@@ -12,10 +12,22 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
    Server-Seiten sie lesen. Leere Werte fallen ganz weg — und mit dem letzten
    Parameter auch das `?`, sonst endete die Adresse auf `pfad?`.
 
+   Ein getippter Wert geht bereinigt in die Adresse (`setzeWert`, ohne Angabe
+   getrimmt); dieselbe Bereinigung bekommt das Suchfeld, damit es das Echo
+   erkennt (`FilterSuche`, `bereinige`).
+
      const filter = useAdressFilter();
      <AuswahlFilter value={kat} onChange={(v) => filter.setzeListe("kat", v)} />
-     <FilterChip selected={mine} onClick={() => filter.schalte("mine", !mine)} /> */
-export function useAdressFilter() {
+     <FilterChip selected={mine} onClick={() => filter.schalte("mine", !mine)} />
+     <FilterSuche initial={q} bereinige={trimme} onCommit={(v) => filter.setzeWert("q", v)} />
+
+   `behalte` nennt Parameter, die keine Filter sind und darum auch das
+   Zurücksetzen überstehen — die Sortierung der Trainingsübersicht (#629 PC 2).
+   Die übrigen Änderungen lassen fremde Parameter ohnehin stehen. */
+/** Die Bereinigung eines getippten Werts, wenn die Seite keine eigene hat. */
+export const trimme = (wert: string) => wert.trim();
+
+export function useAdressFilter({ behalte = [] }: { behalte?: readonly string[] } = {}) {
   const router = useRouter();
   const pathname = usePathname();
   // Koppelt die Leiste an jeden Adresswechsel (auch Browser-Zurück), damit
@@ -41,10 +53,10 @@ export function useAdressFilter() {
         if (werte.length) p.set(key, werte.join(","));
         else p.delete(key);
       }),
-    /** Ein getippter Wert, getrimmt; leer entfernt den Parameter. */
-    setzeWert: (key: string, wert: string) =>
+    /** Ein getippter Wert, bereinigt (ohne Angabe getrimmt); leer entfernt den Parameter. */
+    setzeWert: (key: string, wert: string, bereinige: (wert: string) => string = trimme) =>
       schreiben((p) => {
-        const v = wert.trim();
+        const v = bereinige(wert);
         if (v) p.set(key, v);
         else p.delete(key);
       }),
@@ -54,7 +66,12 @@ export function useAdressFilter() {
         if (an) p.set(key, "1");
         else p.delete(key);
       }),
-    /** Alle Filter weg — die nackte Seite. */
-    zuruecksetzen: () => router.push(pathname, { scroll: false }),
+    /** Alle Filter weg — die nackte Seite, bis auf die `behalte`-Parameter. */
+    zuruecksetzen: () =>
+      schreiben((p) => {
+        for (const key of Array.from(p.keys())) {
+          if (!behalte.includes(key)) p.delete(key);
+        }
+      }),
   };
 }

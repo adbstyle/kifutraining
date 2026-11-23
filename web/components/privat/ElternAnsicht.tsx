@@ -1,25 +1,47 @@
 "use client";
 
-import { useState } from "react";
-import { CalendarX2 } from "lucide-react";
-import { ExternerLink, Kalenderblatt, KuerzbarerText, Leerzustand, Lozenge, SectionMessage, Switch } from "@/components/ui";
+import { useEffect, useRef, useState } from "react";
+import { Bell, CalendarX2, Info } from "lucide-react";
+import { ExternerLink, FilterChip, IconButton, IconButtonLink, Kalenderblatt, Leerzustand, Lozenge, SectionMessage, Switch, Tooltip, TrainingsTreffpunkt } from "@/components/ui";
 import { MELDE_STATUS, TERMIN_STATUS } from "@/lib/termin-status";
 import type { Meldung } from "@/lib/spiel";
 import { SpielKarte } from "./SpielKarte";
 import { AusfallGrund } from "./AusfallGrund";
+import { HinweisEltern } from "./HinweisEltern";
 import { AboKnopf } from "./AboKnopf";
-import { KaderLozenges } from "@/components/team/KaderLozenge";
+import { BenachrichtigungenAnsicht } from "./BenachrichtigungenAnsicht";
+import { useBenachrichtigungen } from "./useBenachrichtigungen";
+import { AppAblegenAnleitung, AppAblegenHinweis, AppAblegenKnopf, useAppAblegen } from "./AppAblegen";
+import { Mitteilungen } from "./Mitteilungen";
+import { appName } from "@/lib/app-ablegen";
+import { knopfLabel, type LinkBenachrichtigungen } from "@/lib/benachrichtigung";
 import { cn } from "@/lib/cn";
 import { meldeSpielUeberLinkAktion, meldeUeberLinkAktion } from "@/lib/actions/spieler-link";
 import { monatsName, tagText } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import type { LinkTermin } from "@/lib/privater-link";
-import { spielerName, spielerzahlKurz, verfallenHinweis, type Spielerzahl } from "@/lib/spieler";
+import {
+  LINK_EINGRENZUNG,
+  LINK_INFOS,
+  LINK_GILT_NICHT_TITEL,
+  LINK_KEINE_TERMINE_TITEL,
+  linkEingrenzungLeer,
+  linkEingrenzungStand,
+  linkGiltNichtText,
+  linkKeineTermineText,
+  linkKopfTitel,
+  linkOhneTeamEltern,
+  spielerName,
+  spielerzahlKurz,
+  verfallenHinweis,
+  type Spielerzahl,
+} from "@/lib/spieler";
 import { useLokalerStand } from "@/lib/use-lokaler-stand";
-import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaehler, type ProbeStand } from "@/lib/probe";
+import { PROBE_TEXT, linkProbeStand, linkProbeVoll, linkProbeZaehler, type ProbeStand } from "@/lib/probe";
 
 /* Was die Spielervertretung über den privaten Link sieht (#436 AK 5–9): ihre
-   Spieler:in, das Team und die anstehenden Termine. Angemeldet ist der
+   Spieler:in, ihre Teams und die anstehenden Termine aller Teams — jeder
+   Termin nennt sein Team, auch bei nur einem (#583 AK 1–3). Angemeldet ist der
    Normalfall — man meldet nur ab, wenn sie nicht kann, und bis zum Beginn
    wieder an. Ein begonnener Termin bleibt bis Ende des Tages stehen,
    gesperrt; ein ausgefallener ist neutral gesperrt. Wurde ein Termin verlegt,
@@ -35,30 +57,64 @@ import { PROBE_TEXT, linkProbeKopf, linkProbeStand, linkProbeVoll, linkProbeZaeh
    (#472): «angemeldet» und «abgemeldet» meinen auf dieser Seite nur die
    eigene Spieler:in.
 
-   Im Probe-Modus (#555 AK 9–12) ist es umgekehrt: Die Spieler:in ist an
+   Schnuppert sie (#555 AK 9–12), ist es umgekehrt: Die Spieler:in ist an
    Trainings zuerst nicht angemeldet, Spiele stehen keine da. Der Kopf nennt,
-   wie viele Probetrainings noch möglich sind, mit einem Balken je
-   Probetraining (besucht gefüllt, angemeldet umrandet). Ist die Anzahl
+   wie viele Schnuppertrainings noch möglich sind, mit einem Balken je
+   Schnuppertraining (besucht gefüllt, angemeldet umrandet). Ist die Anzahl
    erreicht, sagt das eine Meldung über den Trainings, und die Schalter der
-   übrigen sind gesperrt, bis ein Platz frei wird. Das Info-Schreiben des
-   Teams (#556) steht davor, gekürzt mit «Ganz lesen» — man liest es, bevor
-   man anmeldet (AK 4); Webadressen darin öffnen sich (AK 5). */
+   übrigen sind gesperrt, bis ein Platz frei wird.
+
+   Alle Erklärungen — wie man meldet bzw. wie das Schnuppern geht, das
+   Info-Schreiben, die Infos zum Team und wer die Angaben sieht — stehen
+   hinter dem ⓘ neben dem Namen auf einer eigenen Seite (#598 AK 10, löst
+   #556 AK 4 ab): Sie halten beim Melden nicht auf. Hier bleiben nur der
+   Schnupperstand, Hinweise zu Terminen und Fehler (OoS 10).
+
+   Die Glocke hinter dem Namen zeigt, wie viele Benachrichtigungen dieses
+   Gerät noch nicht angezeigt hat (#642 AK 2), und öffnet deren Ansicht an
+   Stelle der Chips und der Liste; der Kopf bleibt. Von einem Eintrag führt
+   «Zum Termin» zur Karte in der Liste (AK 4). Fehlen die Daten
+   (`benachrichtigungen` ist `null`), gibt es keine Glocke.
+
+   Als App ablegen (#650): Auf dem Mobile steht ab dem zweiten Besuch ein
+   schliessbarer Hinweis über den Terminen, unter ihnen immer ein ruhiger
+   Knopf — beides nicht in der abgelegten App. Erst nach dem Einhängen: Der
+   Server kennt weder Gerät noch Speicher.
+
+   Mitteilungen aufs Mobile (#483): Oben in der Glocken-Ansicht steht die
+   Karte mit dem Schalter, wenn die Umgebung Mitteilungen hat
+   (`mitteilungen`); dann nennt sie auch der Hinweis zum Ablegen. Auf dem
+   iPhone im Safari-Tab führt «So geht’s» zur selben Anleitung. */
 export function ElternAnsicht({
   token,
-  team,
+  verein,
+  teams,
   spieler,
   probe,
-  probeInfo,
   termine,
+  benachrichtigungen,
+  gesehenBis,
+  schluessel,
+  mitteilungen,
 }: {
   token: string;
-  team: string;
+  /** Der Verein der Spieler:in: Teil des App-Namens (#650 AK 4). */
+  verein: string;
+  /** Die Teams der Spieler:in, alphabetisch, auch ohne Termine; leer ohne Team. */
+  teams: string[];
   spieler: { vorname: string; nachname: string };
-  /** Im Probe-Modus ihr Stand, sonst `null`. */
+  /** Schnuppert sie: ihr Stand, sonst `null`. */
   probe: ProbeStand | null;
-  /** Das Info-Schreiben des Teams, nur im Probe-Modus (#556). */
-  probeInfo: string | null;
   termine: LinkTermin[];
+  /** Die Benachrichtigungen der Spieler:in; `null`, wenn sie nicht zu laden waren. */
+  benachrichtigungen: LinkBenachrichtigungen | null;
+  /** Bis wann dieses Gerät sie angezeigt hat (aus dem Cookie); `null` auf einem Gerät, das den Link noch nicht kennt. */
+  gesehenBis: number | null;
+  /** Aus dem Link abgeleiteter Schlüssel des Cookies (nie der Link selbst). */
+  schluessel: string;
+  /** Der öffentliche VAPID-Schlüssel, wenn die Umgebung Mitteilungen hat
+   *  (#483); sonst `null`: kein Schalter, der Hinweis nennt sie nicht. */
+  mitteilungen: string | null;
 }) {
   // Was gerade umgelegt wird, steht sofort so da; scheitert es, zurück. Bei
   // Spielen die Meldung (#463) ebenso.
@@ -66,18 +122,71 @@ export function ElternAnsicht({
   const meldungen = useLokalerStand<Meldung>(termine);
   const pending = abmeldungen.pending || meldungen.pending;
   const [fehler, setFehler] = useState<{ terminId: string; text: string } | null>(null);
+  // Gilt der Termin nicht mehr für die Spieler:in (#583 AK 7), zeigt die neu
+  // geladene Liste ihn nicht mehr: Die Meldung hält Art und Tag selbst fest und
+  // bleibt stehen, bis neu gemeldet wird.
+  const [giltNicht, setGiltNicht] = useState<{ art: LinkTermin["art"]; datum: string } | null>(null);
+  // Der gedrückte Schalter verschwindet mit seiner Karte: Der Fokus geht auf
+  // die Meldung, statt auf die Seite zu fallen (Tastatur, Vorlesehilfen).
+  const giltNichtRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (giltNicht) giltNichtRef.current?.focus();
+  }, [giltNicht]);
   // Ein inzwischen erneuerter Link: Die Seite lädt neu und sagt es.
-  const zeigeFehler = (terminId: string) => (r: { ungueltig: true } | { ungueltig?: false; error: string }) => {
-    if (!r.ungueltig) setFehler({ terminId, text: r.error });
+  const zeigeFehler = (t: LinkTermin) => (r: { ungueltig: true } | { ungueltig?: false; giltNicht?: boolean; error: string }) => {
+    if (r.ungueltig) return;
+    if (r.giltNicht) setGiltNicht({ art: t.art, datum: t.datum });
+    else setFehler({ terminId: t.id, text: r.error });
   };
 
   const name = spielerName(spieler);
+  const glocke = useBenachrichtigungen({ daten: benachrichtigungen, gesehenBis, schluessel });
+  const app = useAppAblegen(schluessel);
+  // Der Knopf auf dem Mobile, am Computer nur, wenn der Browser selbst ablegen kann (OoS 4).
+  const appKnopf = !!app.lage && !app.lage.abgelegt && (app.lage.geraet.system !== "andere" || app.installierbar);
+  const glockeRef = useRef<HTMLButtonElement>(null);
+  // Zu welchem Termin «Zum Termin» führen soll, sobald die Liste wieder steht.
+  const ziel = useRef<string | null>(null);
+  const warOffen = useRef(glocke.offen);
+  useEffect(() => {
+    if (warOffen.current && !glocke.offen) {
+      const karte = ziel.current ? document.getElementById(`termin-${ziel.current}`) : null;
+      ziel.current = null;
+      if (karte) {
+        const ruhig = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        karte.scrollIntoView({ behavior: ruhig ? "auto" : "smooth", block: "center" });
+        karte.focus({ preventScroll: true });
+      } else glockeRef.current?.focus();
+    }
+    warOffen.current = glocke.offen;
+  }, [glocke.offen]);
+  // Auf Trainings oder Spiele eingrenzen (#596): Es gilt höchstens eine Art,
+  // ein Klick auf die gewählte hebt sie auf — wie «Meine Termine» im Team.
+  // Bewusst nur im Zustand der Seite: Neu öffnen oder neu laden zeigt wieder
+  // alles (PC 1), ein Melden lädt die Daten neu und lässt die Wahl stehen
+  // (AK 7). Beim Schnuppern stehen keine Spiele da, also keine Wahl (AK 8).
+  const [art, setArt] = useState<LinkTermin["art"] | null>(null);
+  const eingrenzbar = !probe && termine.length > 0;
+  // Verschwinden die Chips (Schnuppern, keine Termine mehr), fällt die Wahl
+  // weg, statt verdeckt weiterzuleben und beim Wiedererscheinen still zu gelten.
+  if (!eingrenzbar && art) setArt(null);
+  const sichtbar = art ? termine.filter((t) => t.art === art) : termine;
+  /** «Zum Termin» (#642 AK 4): Eine Eingrenzung, die den Termin ausschlösse, fällt weg, die Ansicht schliesst, die Karte erhält den Fokus. */
+  function zeigeTermin(id: string) {
+    const t = termine.find((x) => x.id === id);
+    if (art && t && t.art !== art) setArt(null);
+    ziel.current = id;
+    glocke.schliessen();
+  }
+  // Ein Fehler beim Melden steht an seiner Karte; ist sie weggefiltert, steht
+  // er mit dem Tag über der Liste, damit er nicht ungesehen verschwindet.
+  const fehlerVerdeckt = fehler && !sichtbar.some((t) => t.id === fehler.terminId) ? termine.find((t) => t.id === fehler.terminId) : undefined;
   // Begonnen sind nur Termine von heute: Sie stehen zuoberst unter «Heute»,
   // gesperrt bis Ende des Tages.
-  const begonnen = termine.filter((t) => t.begonnen);
-  const uebrige = termine.filter((t) => !t.begonnen);
+  const begonnen = sichtbar.filter((t) => t.begonnen);
+  const uebrige = sichtbar.filter((t) => !t.begonnen);
 
-  // Der Probe-Stand folgt den lokalen Schaltern, bevor der Server antwortet.
+  // Der Schnupper-Stand folgt den lokalen Schaltern, bevor der Server antwortet.
   const probeLokal = probe && {
     ...probe,
     angemeldet:
@@ -92,22 +201,24 @@ export function ElternAnsicht({
 
   function umlegen(t: LinkTermin, an: boolean) {
     setFehler(null);
+    setGiltNicht(null);
     abmeldungen.aendere(
       t.id,
       !an,
       () => meldeUeberLinkAktion(token, { terminId: t.id, abgemeldet: !an, gesehen: { datum: t.datum, beginn: t.beginn } }),
-      zeigeFehler(t.id),
+      zeigeFehler(t),
     );
   }
 
   /** Ein Spiel melden (#463 AK 3): bis zur Meldefrist, sonst bis zum Anpfiff. */
   function melden(t: LinkTermin, an: boolean) {
     setFehler(null);
+    setGiltNicht(null);
     meldungen.aendere(
       t.id,
       an ? "angemeldet" : "abgemeldet",
       () => meldeSpielUeberLinkAktion(token, { terminId: t.id, angemeldet: an, gesehen: { datum: t.datum, beginn: t.beginn } }),
-      zeigeFehler(t.id),
+      zeigeFehler(t),
     );
   }
 
@@ -145,7 +256,7 @@ export function ElternAnsicht({
         : { quelle: "liste" as const, angemeldet: t.angemeldet + Number(t.abgemeldet) - Number(ab), gesamt: t.gesamt, anwesend: null }; // Eltern sehen den Stand bei Beginn (#475 AK 16).
     // «Fällt aus» sagt schon die Lozenge; ausgefallen bleibt der Ort stehen (#530 AK 5).
     const zweite = !t.ausgefallen && t.begonnen ? "Hat begonnen · nicht mehr änderbar" : null;
-    // Probe: Ist die Anzahl erreicht, lässt sich nur noch abmelden (AK 10, 12).
+    // Schnuppern: Ist die Anzahl erreicht, lässt sich nur noch abmelden (AK 10, 12).
     const vergeben = voll && ab && !t.ausgefallen && !t.begonnen;
     return { ab, zweite, zahl, probe: !!probe, vergeben };
   }
@@ -165,75 +276,160 @@ export function ElternAnsicht({
   return (
     <>
       <header className="flex flex-col gap-0.5 border-b border-linie px-4 pb-4 pt-6">
-        <p className="type-body-small text-on-surface-mittel">{team}</p>
-        {/* Das Kalender-Abo (#507 AK 1) gleich hinter dem Namen: Es ist der
-            Kalender dieser Spieler:in (PO 2026-10-24). */}
+        {/* Die Infos (#598 AK 10) und das Kalender-Abo (#507 AK 1) gleich
+            hinter dem Namen: Es ist der Kalender dieser Spieler:in (PO 2026-10-24). */}
         <div className="flex items-center gap-1">
-          <h1 className="min-w-0 type-headline-small text-on-surface">{name}</h1>
+          <h1 className="min-w-0 type-headline-small text-on-surface">{linkKopfTitel(name)}</h1>
+          <Tooltip label={LINK_INFOS.knopf}>
+            <IconButtonLink icon={Info} label={LINK_INFOS.knopf} href={`/abmelden/${token}/infos`} />
+          </Tooltip>
           <AboKnopf token={token} />
-        </div>
-        {probeLokal ? (
-          <>
-            <p className="type-body-medium text-on-surface-mittel">{linkProbeKopf(spieler.vorname)}</p>
-            <ProbeZaehler stand={probeLokal} />
-          </>
-        ) : (
-          <p className="type-body-medium text-on-surface-mittel">
-            {name} ist für jedes Training zuerst angemeldet. Kann {spieler.vorname} nicht, melde ab - und bis zum
-            Beginn wieder an. Für ein Spiel ist {spieler.vorname} erst angemeldet, wenn du anmeldest.
-          </p>
-        )}
-      </header>
-      {probeLokal && probeInfo && (
-        <section aria-labelledby="probe-info" className="mx-4 mt-4 rounded-flaeche bg-elev-01 px-3 py-3">
-          <h2 id="probe-info" className="type-title-small text-on-surface">
-            {PROBE_TEXT.linkInfoTitel}
-          </h2>
-          <KuerzbarerText text={probeInfo} zeilen={4} className="mt-1 type-body-medium text-on-surface" />
-        </section>
-      )}
-      {voll && probeLokal && (
-        <div className="px-4 pt-4">
-          <SectionMessage>{linkProbeVoll(spieler.vorname, probeLokal)}</SectionMessage>
-        </div>
-      )}
-      {termine.length === 0 ? (
-        <div className="px-4 py-6">
-          <Leerzustand icon={CalendarX2} titel="Keine anstehenden Termine" dicht>
-            Sobald das Team Termine plant, stehen sie hier.
-          </Leerzustand>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4 px-4 py-4">
-          {begonnen.length > 0 && (
-            <section>
-              <h2 className="type-title-small text-on-surface">Heute</h2>
-              <ul className="mt-2 flex flex-col gap-2">
-                {begonnen.map((t) =>
-                  t.art === "spiel" ? (
-                    spielKarte(t)
-                  ) : (
-                    <TerminKarte key={t.id} t={t} {...stand(t)} name={name} pending={pending} onUmlegen={(an) => umlegen(t, an)} hinweise={hinweise(t, stand(t).ab)} />
-                  ),
-                )}
-              </ul>
-            </section>
+          {benachrichtigungen && (
+            <Tooltip label={knopfLabel(glocke.neu)}>
+              <IconButton
+                ref={glockeRef}
+                icon={Bell}
+                zahl={glocke.neu}
+                label={knopfLabel(glocke.neu)}
+                active={glocke.offen}
+                onClick={glocke.offen ? glocke.schliessen : glocke.oeffnen}
+              />
+            </Tooltip>
           )}
-          {nachMonatUndTag(uebrige).map((m) => (
-            <section key={m.monat}>
-              <h2 className="type-title-small text-on-surface">{monatsName(m.monat)}</h2>
-              <ul className="mt-2 flex flex-col gap-2">
-                {m.tage.flatMap((tag) => tag.termine).map((t) =>
-                  t.art === "spiel" ? (
-                    spielKarte(t)
-                  ) : (
-                    <TerminKarte key={t.id} t={t} {...stand(t)} name={name} pending={pending} onUmlegen={(an) => umlegen(t, an)} hinweise={hinweise(t, stand(t).ab)} />
-                  ),
-                )}
-              </ul>
-            </section>
-          ))}
         </div>
+        {/* Die Teams alphabetisch, auch ohne Termine (#583 AK 3). */}
+        {teams.length > 0 && (
+          <ul aria-label="Teams" className="mt-1 flex flex-wrap gap-1">
+            {/* Gleichnamige Teams eines Vereins sind im Altbestand möglich: Schlüssel mit Stelle. */}
+            {teams.map((t, i) => (
+              <li key={`${i}:${t}`}>
+                <Lozenge appearance="neutral">{t}</Lozenge>
+              </li>
+            ))}
+          </ul>
+        )}
+        {probeLokal && <ProbeZaehler stand={probeLokal} />}
+      </header>
+      {glocke.offen && benachrichtigungen ? (
+        <BenachrichtigungenAnsicht
+          daten={benachrichtigungen}
+          neuSeit={glocke.neuSeit}
+          terminIds={new Set(termine.map((t) => t.id))}
+          onZurueck={glocke.schliessen}
+          onZumTermin={zeigeTermin}
+          kopf={
+            mitteilungen && (
+              <Mitteilungen link={token} vorname={spieler.vorname} publicKey={mitteilungen} onSoGehts={app.oeffneAnleitung} />
+            )
+          }
+        />
+      ) : (
+        <>
+          {app.lage?.hinweis && (
+            <div className="px-4 pt-4">
+              <AppAblegenHinweis
+                vorname={spieler.vorname}
+                geraet={app.lage.geraet}
+                mitteilungen={!!mitteilungen}
+                onSchliessen={app.schliessen}
+                onAktion={app.ablegen}
+              />
+            </div>
+          )}
+          {voll && probeLokal && (
+            <div className="px-4 pt-4">
+              <SectionMessage>{linkProbeVoll(spieler.vorname, probeLokal)}</SectionMessage>
+            </div>
+          )}
+          {eingrenzbar && (
+            <div role="group" aria-label="Termine eingrenzen" className="flex flex-wrap gap-2 px-4 pt-4">
+              {(["training", "spiel"] as const).map((a) => (
+                <FilterChip key={a} selected={art === a} onClick={() => setArt(art === a ? null : a)}>
+                  {LINK_EINGRENZUNG[a].chip}
+                </FilterChip>
+              ))}
+              {/* Nach dem Wechsel sagt eine Sprachausgabe, was nun dasteht. */}
+              <p role="status" className="sr-only">
+                {art ? linkEingrenzungStand(art, sichtbar.length) : ""}
+              </p>
+            </div>
+          )}
+          {fehlerVerdeckt && fehler && (
+            <div className="px-4 pt-4">
+              <SectionMessage appearance="error">
+                {tagText(fehlerVerdeckt.datum)}: {fehler.text}
+              </SectionMessage>
+            </div>
+          )}
+          {giltNicht && (
+            <div ref={giltNichtRef} tabIndex={-1} className="px-4 pt-4 focus:outline-none">
+              <SectionMessage appearance="error">
+                <strong className="block font-semibold">{LINK_GILT_NICHT_TITEL}</strong>
+                {linkGiltNichtText(giltNicht.art, giltNicht.datum, spieler.vorname)}
+              </SectionMessage>
+            </div>
+          )}
+          {termine.length === 0 ? (
+            <div className="px-4 py-6">
+              <Leerzustand icon={CalendarX2} titel={LINK_KEINE_TERMINE_TITEL} dicht>
+                {/* Ohne Team bleibt der Link gültig (#583 AK 5). */}
+                {teams.length === 0 ? linkOhneTeamEltern(spieler.vorname) : linkKeineTermineText(spieler.vorname)}
+              </Leerzustand>
+            </div>
+          ) : art && sichtbar.length === 0 ? (
+            // Die Eingrenzung lässt nichts übrig (AK 6); der Weg zurück ist der
+            // gewählte Chip darüber.
+            <div className="px-4 py-6">
+              <Leerzustand icon={CalendarX2} titel={LINK_EINGRENZUNG[art].leer} dicht>
+                {linkEingrenzungLeer(art)}
+              </Leerzustand>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 px-4 py-4">
+              {begonnen.length > 0 && (
+                <section>
+                  <h2 className="type-title-small text-on-surface">Heute</h2>
+                  <ul className="mt-2 flex flex-col gap-2">
+                    {begonnen.map((t) =>
+                      t.art === "spiel" ? (
+                        spielKarte(t)
+                      ) : (
+                        <TerminKarte key={t.id} t={t} {...stand(t)} name={name} pending={pending} onUmlegen={(an) => umlegen(t, an)} hinweise={hinweise(t, stand(t).ab)} />
+                      ),
+                    )}
+                  </ul>
+                </section>
+              )}
+              {nachMonatUndTag(uebrige).map((m) => (
+                <section key={m.monat}>
+                  <h2 className="type-title-small text-on-surface">{monatsName(m.monat)}</h2>
+                  <ul className="mt-2 flex flex-col gap-2">
+                    {m.tage.flatMap((tag) => tag.termine).map((t) =>
+                      t.art === "spiel" ? (
+                        spielKarte(t)
+                      ) : (
+                        <TerminKarte key={t.id} t={t} {...stand(t)} name={name} pending={pending} onUmlegen={(an) => umlegen(t, an)} hinweise={hinweise(t, stand(t).ab)} />
+                      ),
+                    )}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          )}
+          {appKnopf && (
+            <div className="flex flex-col px-4 pb-6 pt-2">
+              <AppAblegenKnopf onClick={app.ablegen} />
+            </div>
+          )}
+        </>
+      )}
+      {app.lage && (
+        <AppAblegenAnleitung
+          open={app.anleitung}
+          onClose={app.schliesseAnleitung}
+          geraet={app.lage.geraet}
+          name={appName(spieler.vorname, verein)}
+        />
       )}
     </>
   );
@@ -245,9 +441,9 @@ type KarteProps = {
   /** Unter dem Ort: begonnen und nicht mehr änderbar. */
   zweite: string | null;
   zahl: Spielerzahl | null;
-  /** Im Probe-Modus: zuerst nicht angemeldet (#555). */
+  /** Beim Schnuppern: zuerst nicht angemeldet (#555). */
   probe: boolean;
-  /** Probe: Die Anzahl ist erreicht, anmelden geht hier nicht (AK 12). */
+  /** Schnuppern: Die Anzahl ist erreicht, anmelden geht hier nicht (AK 12). */
   vergeben: boolean;
   name: string;
   pending: boolean;
@@ -260,19 +456,23 @@ type KarteProps = {
 function trainingStatus(t: LinkTermin, ab: boolean, probe: boolean) {
   if (t.ausgefallen) return TERMIN_STATUS.faelltAus;
   if (!ab) return MELDE_STATUS.angemeldet;
-  // Probe: nicht angemeldet ist der Ausgangsstand, kein Absagen (#555).
+  // Schnuppern: nicht angemeldet ist der Ausgangsstand, kein Absagen (#555).
   return probe ? { wort: PROBE_TEXT.nichtAngemeldet, appearance: "neutral" as const } : MELDE_STATUS.abgemeldet;
 }
 
 /* Ein Training in der Liste (Epic #490, Tafel 9 Gruppe 4): Kalenderblatt,
-   der Status als Lozenge, Zeit, Ort, Kader und Spielerzahl, rechts der
+   der Status als Lozenge, Zeit, Ort und Spielerzahl, rechts der
    Schalter. Abgemeldet oder ausgefallen tritt die Karte gedämpft zurück. */
 function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUmlegen, hinweise }: KarteProps) {
   const status = trainingStatus(t, ab, probe);
-  // Probe: nicht angemeldet ist der Ausgangsstand, keine Absage - die Karte bleibt.
+  // Schnuppern: nicht angemeldet ist der Ausgangsstand, keine Absage - die Karte bleibt.
   const gedaempft = t.ausgefallen || (ab && !probe);
   return (
-    <li className={cn("flex flex-col gap-2 rounded-flaeche px-3 py-3", gedaempft ? "kontur border-linie" : "bg-elev-01")}>
+    <li
+      id={`termin-${t.id}`}
+      tabIndex={-1}
+      className={cn("flex flex-col gap-2 rounded-flaeche px-3 py-3 focus:outline-none", gedaempft ? "kontur border-linie" : "bg-elev-01")}
+    >
       <div className="flex items-start gap-3">
         <Kalenderblatt datum={t.datum} stand={gedaempft ? "gestrichen" : "leise"} />
         <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
@@ -280,6 +480,8 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
           <span className={cn("type-body-medium", gedaempft ? "text-on-surface-mittel" : "text-on-surface")}>
             {t.beginn}–{t.ende}
           </span>
+          {/* Jeder Termin nennt sein Team (#583 AK 2). */}
+          <span className="type-body-small text-on-surface-mittel">{t.team}</span>
           {/* Der Ort steht ganz und auch nach Beginn (#534 AK 1, 2); mit
               Kartenlink als Link auf einer Zeile (#533 AK 6, 10, 11; PC 5). */}
           {t.ort &&
@@ -292,30 +494,39 @@ function TerminKarte({ t, ab, zweite, zahl, probe, vergeben, name, pending, onUm
             ))}
           {zweite && <span className="type-body-small text-on-surface-mittel">{zweite}</span>}
           <AusfallGrund grund={t.ausfall_grund} />
-          <TeamZeile t={t} zahl={zahl} zusatz={vergeben ? PROBE_TEXT.vergeben : null} />
+          <TeamZeile zahl={zahl} zusatz={vergeben ? PROBE_TEXT.vergeben : null} />
           {t.verantwortlich && <span className="type-body-small text-on-surface-mittel">Verantwortlich: {t.verantwortlich}</span>}
         </div>
-        <Switch
-          ton="ruhig"
-          checked={!t.ausgefallen && !ab}
-          neutral={t.ausgefallen}
-          disabled={t.ausgefallen || t.begonnen || vergeben || pending}
-          onChange={(e) => onUmlegen(e.target.checked)}
-          aria-label={`${name} am ${tagText(t.datum)} dabei`}
-        />
+        {/* Fällt der Termin aus, gibt es nichts zu wählen: kein Schalter — ein
+            gesperrter auf ✕ läse sich als «abgemeldet». Den Ausfall sagen
+            Kalenderblatt und Grund. */}
+        {!t.ausgefallen && (
+          <Switch
+            ton="ruhig"
+            checked={!ab}
+            disabled={t.begonnen || vergeben || pending}
+            onChange={(e) => onUmlegen(e.target.checked)}
+            aria-label={`${name} am ${tagText(t.datum)} dabei`}
+          />
+        )}
       </div>
+      {/* #561 AK 12: der Treffpunkt wie bei einem Spiel — nicht abgemeldet,
+          ausgefallen oder ab Beginn; nicht angemeldet beim Schnuppern sieht ihn. */}
+      {!t.begonnen && !gedaempft && (
+        <TrainingsTreffpunkt treffpunkt={t.treffpunkt ?? null} className="type-body-medium text-on-surface" />
+      )}
+      <HinweisEltern text={t.hinweis_eltern} gedaempft={gedaempft} />
       {hinweise}
     </li>
   );
 }
 
-/* Kader und Spielerzahl knapp: «S1 15/16». Die Zahl wird nie gekürzt (#472
-   NFR 1) und bleibt ungefärbt. */
-function TeamZeile({ t, zahl, zusatz }: { t: LinkTermin; zahl: Spielerzahl | null; zusatz: string | null }) {
-  if (t.kader.length === 0 && zahl?.quelle !== "liste" && !zusatz) return null;
+/* Spielerzahl knapp: «15/16». Die Zahl wird nie gekürzt (#472 NFR 1) und
+   bleibt ungefärbt. Kader nennt der Link nicht (#663 AK 1). */
+function TeamZeile({ zahl, zusatz }: { zahl: Spielerzahl | null; zusatz: string | null }) {
+  if (zahl?.quelle !== "liste" && !zusatz) return null;
   return (
     <span className="flex flex-wrap items-center gap-2 type-body-small text-on-surface-mittel">
-      <KaderLozenges namen={t.kader} />
       {zahl?.quelle === "liste" && (
         <>
           <span aria-hidden className="tabular-nums">{spielerzahlKurz(zahl)}</span>
@@ -330,8 +541,8 @@ function TeamZeile({ t, zahl, zusatz }: { t: LinkTermin; zahl: Spielerzahl | nul
   );
 }
 
-/** Wie viele Probetrainings noch möglich sind (#555 AK 11; PC 13): ein Balken
- *  je Probetraining — besucht gefüllt, künftig angemeldet umrandet, frei leer. */
+/** Wie viele Schnuppertrainings noch möglich sind (#555 AK 11; PC 13): ein Balken
+ *  je Schnuppertraining — besucht gefüllt, künftig angemeldet umrandet, frei leer. */
 function ProbeZaehler({ stand }: { stand: ProbeStand }) {
   const n = stand.anzahl ?? 0;
   return (

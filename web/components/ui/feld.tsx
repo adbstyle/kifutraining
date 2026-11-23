@@ -1,6 +1,7 @@
 import { useId } from "react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { FeldHinweis } from "./feld-hinweis";
 import { InfoKnopf } from "./InfoKnopf";
 
 /* Der Rahmen jedes Formularfelds (Epic #363, nach dem Vorbild von Jira): Ist
@@ -65,8 +66,8 @@ export function Feld({
   hinweis,
   info,
   infoAufTouch = false,
-  aktion,
   error = false,
+  schrift,
   className,
   onLabelClick,
   children,
@@ -84,20 +85,22 @@ export function Feld({
   /** Fehler und Hinweise, die sich mit der Eingabe ändern — sichtbar unter
    *  dem Feld. */
   hinweis?: ReactNode;
-  /** Ein fester Hinweis, der das Feld erklärt — hinter einem ⓘ rechts im
-   *  Feld (`InfoKnopf`), damit er das Formular nicht dauernd füllt. Das ⓘ
-   *  zeigt sich nur beim Überfahren (siehe `.feld-info` in globals.css). */
+  /** Ein fester Hinweis, der das Feld erklärt — hinter einem ⓘ direkt nach
+   *  dem Namen (`InfoKnopf`), damit er das Formular nicht dauernd füllt. Das
+   *  ⓘ zeigt sich nur beim Überfahren (siehe `.feld-info` in globals.css).
+   *  Ohne sichtbaren Namen (`labelVersteckt`) steht kein ⓘ — es hätte nichts,
+   *  woran es hängt; die Vorlesehilfe hört den Hinweis trotzdem. */
   info?: ReactNode;
   /** Auf Touch-Geräten bleibt das ⓘ verborgen (PO-Entscheid). Muss man den
    *  festen Hinweis trotzdem lesen, bevor man weitermacht — etwa dass die
    *  Altersstufe eines Trainings lebenslang bindet —, steht er dort als
    *  Hinweis unter dem Feld, solange kein anderer dasteht. */
   infoAufTouch?: boolean;
-  /** Ein Knopf, der mit dem Feld zusammen eine Handlung bildet (Speichern,
-   *  Suchen) — in derselben Zeile wie der Feldkasten, damit beide auf einer
-   *  Linie stehen, ob der Name darüber steht oder (leer) ausgeblendet ist. */
-  aktion?: ReactNode;
   error?: boolean;
+  /** Die Schrift des Werts, wenn sie nicht die gewöhnliche ist (siehe
+   *  `TextField`) — im leeren Feld steht der Name in ihr, und das ⓘ dahinter
+   *  braucht ihre Breite. */
+  schrift?: "title";
   className?: string;
   /** Für Eingabe-Elemente, die kein <label> beschriften kann (ein <div> als
    *  Auslöser): was ein Klick auf den Namen auslösen soll. */
@@ -111,19 +114,13 @@ export function Feld({
       data-fehler={error || undefined}
       data-name-versteckt={labelVersteckt || undefined}
     >
-      <div className={cn(!!aktion && "flex items-end gap-3")}>
-        {/* Name und Feldkasten — die «Angabe»; sie hellt beim Überfahren auf
-            (`.feld-angabe` in globals.css), ein Knopf daneben nicht. Das ⓘ
-            steht in ihr rechts, senkrecht mittig: zwischen Name und Wert, bei
-            leerem Feld (Name im Feld) mittig im Kasten. Es liegt ÜBER dem
-            Kasten, der so breit bleibt wie jeder andere: Sichtbar ist es nur
-            beim Überfahren, nie während man im Feld arbeitet. Den Platz, damit
-            der Wert nicht darunter läuft, hält der Kasten selbst frei — ein
-            Text-Feld mit Polster, eine Auswahl mit dem Platz ihres Pfeils.
-            Zentriert per Flex, nicht per `translate`: Eine Verschiebung
-            eröffnete einen eigenen Stapel, und das Hinweis-Panel läge dann
-            unter dem nächsten Feld. */}
-        <div className={cn("feld-angabe relative", !!aktion && "min-w-0 flex-1")}>
+      {/* Name, Feldkasten und Hinweis darunter — die «Angabe»; sie hellt beim
+          Überfahren als Ganzes auf (`.feld-angabe` in globals.css): Was über
+          und unter dem Kasten steht, gehört zum Feld (PO 2026-10-31). */}
+      <div className="feld-angabe">
+        {/* Name und Kasten allein: Auf sie bezieht sich das ⓘ, im leeren Feld
+            mittig zum Kasten — nicht zum Hinweis darunter. */}
+        <div className="relative">
           <label
             id={`${id}-label`}
             htmlFor={id}
@@ -135,30 +132,44 @@ export function Feld({
           {children}
           {info && (
             <>
-              <div className="feld-info absolute inset-y-0 right-0 flex items-center">
-                <InfoKnopf label={label}>{info}</InfoKnopf>
-              </div>
+              {/* Das ⓘ hängt am Namen (PO 2026-10-31): oben hinter dem Namen,
+                  solange er über dem Feld steht, im leeren Feld hinter dem
+                  Namen im Kasten. Eine unsichtbare Kopie des Namens hält den
+                  Platz davor frei — in der Schrift, in der der Name gerade
+                  steht (`.feld-info-am-namen`). So stösst es nie an ein
+                  Zeichen am rechten Rand: Uhr, Kalender, Pfeil. */}
+              {!labelVersteckt && (
+                <div className="feld-info feld-info-am-namen">
+                  <span aria-hidden className="feld-info-oben type-body-small leading-3">
+                    {label}
+                  </span>
+                  <span
+                    aria-hidden
+                    className={cn("feld-info-leer", schrift === "title" ? "type-title-large" : "type-body-large")}
+                  >
+                    {label}
+                  </span>
+                  <InfoKnopf label={label}>{info}</InfoKnopf>
+                </div>
+              )}
               <span id={`${id}-info`} className="sr-only">
                 {info}
               </span>
             </>
           )}
         </div>
-        {/* Unten bündig: Der Knopf steht auf einer Linie mit dem Kasten, ob
-            der Name darüber steht oder (leer) ausgeblendet ist. */}
-        {aktion && <div className="shrink-0">{aktion}</div>}
+        {hinweis && (
+          <FeldHinweis feldId={id} id={`${id}-hinweis`} className={hinweisKlasse(error)}>
+            {hinweis}
+          </FeldHinweis>
+        )}
+        {/* Vorgelesen wird der Hinweis schon mit dem ⓘ (`${id}-info`). */}
+        {info && infoAufTouch && !hinweis && (
+          <FeldHinweis feldId={id} aria-hidden className={cn(hinweisKlasse(), "[@media(hover:hover)]:hidden")}>
+            {info}
+          </FeldHinweis>
+        )}
       </div>
-      {hinweis && (
-        <p id={`${id}-hinweis`} className={hinweisKlasse(error)}>
-          {hinweis}
-        </p>
-      )}
-      {/* Vorgelesen wird der Hinweis schon mit dem ⓘ (`${id}-info`). */}
-      {info && infoAufTouch && !hinweis && (
-        <p aria-hidden className={cn(hinweisKlasse(), "[@media(hover:hover)]:hidden")}>
-          {info}
-        </p>
-      )}
     </div>
   );
 }

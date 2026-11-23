@@ -9,7 +9,7 @@ import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
 import { AUFBEWAHRUNG_MONATE, NACHRICHT_MAX } from "@/lib/feedback/regeln";
 import type { GespraechZustand } from "./useFeedbackGespraech";
 
-/** Der Name des Dialogs — in der Seitenleiste, im Kopf und am privaten Link. */
+/** Der Name des Dialogs — im Konto-Menü der Seitenleiste, im Kopf und am privaten Link. */
 export const FEEDBACK_TITEL = "Fragen und Feedback";
 
 /** Mit Zeiger (Maus, Trackpad) — dieselbe Weiche wie `hover: hover` in globals.css. */
@@ -134,7 +134,7 @@ export function FeedbackGespraech({
   /** Die Seite, auf der die Person gerade ist (nur der Pfad). */
   seite: string;
   onSchliessen: () => void;
-  /** Am privaten Link: wohin mit Dringendem (#544). */
+  /** Am privaten Link: wohin mit Dringendem (#544) — in der Begrüssung und nach dem Absenden (#583 AK 19). */
   dringend?: string;
 }) {
   const [text, setText] = useState("");
@@ -195,6 +195,7 @@ export function FeedbackGespraech({
             Frage? Erzähl es in deinen Worten.
           </p>
           <p className="type-body-medium text-on-surface-mittel">Bitte gib keine sensiblen Angaben ein.</p>
+          {dringend && <p className="type-body-medium text-on-surface-mittel">{dringend}</p>}
         </div>
 
         {g.verlauf.map((n, i) => (

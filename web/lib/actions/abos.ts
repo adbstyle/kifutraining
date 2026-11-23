@@ -54,7 +54,7 @@ export async function widerrufeAboAktion(aboId: string): Promise<AboWiderrufErge
   }
   // Die Ansicht in beiden Fällen auffrischen: Eine veraltete Zeile soll
   // verschwinden, auch wenn das Abo schon anderswo widerrufen wurde.
-  revalidatePath("/konto");
+  revalidatePath("/konto/verbindungen");
   if (!data || data.length === 0) return { ok: false, error: MELDUNG_ABO_WEG };
   return { ok: true };
 }

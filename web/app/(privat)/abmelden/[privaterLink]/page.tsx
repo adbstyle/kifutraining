@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { ElternAnsicht } from "@/components/privat/ElternAnsicht";
 import { FeedbackLink } from "@/components/privat/FeedbackLink";
 import { GiltNicht } from "@/components/privat/GiltNicht";
-import { ladeLinkAnsicht } from "@/lib/privater-link";
+import { BENACHRICHTIGUNG_COOKIE, leseGesehenStand } from "@/lib/benachrichtigung-gesehen";
+import { ladeBenachrichtigungen, ladeLinkAnsicht, linkSchluessel } from "@/lib/privater-link";
 import { LINK_TEXT } from "@/lib/spieler";
+import { pushOeffentlich } from "@/lib/push/schluessel";
 
 /* Der private Link einer Spieler:in (#436): Ihre Spielervertretung meldet sie
-   ohne Konto für anstehende Termine ab und wieder an. Jeder Aufruf liest neu —
+   ohne Konto für anstehende Termine aller ihrer Teams ab und wieder an (#583). Jeder Aufruf liest neu —
    ein erneuerter Link gilt sofort nicht mehr (PC 2).
 
    Titel und Beschreibung sind fest und nennen weder Team noch Spieler:in: Ein
@@ -24,20 +27,28 @@ export const metadata: Metadata = {
 
 export default async function SpielerLinkSeite({ params }: { params: Promise<{ privaterLink: string }> }) {
   const { privaterLink } = await params;
-  const ansicht = await ladeLinkAnsicht(privaterLink);
+  const [ansicht, benachrichtigungen, jar] = await Promise.all([ladeLinkAnsicht(privaterLink), ladeBenachrichtigungen(privaterLink), cookies()]);
   if (!ansicht.gueltig) return <GiltNicht titel={LINK_TEXT.ungueltigTitel} text={LINK_TEXT.ungueltig} />;
+  // Was dieses Gerät schon angezeigt hat (#642 AK 2): Der Zähler steht so schon
+  // im ersten HTML. Ohne Eintrag zeigt das Gerät zum ersten Mal an, `null`.
+  const schluessel = linkSchluessel(privaterLink);
+  const gesehenBis = leseGesehenStand(jar.get(BENACHRICHTIGUNG_COOKIE)?.value, schluessel);
   return (
     <>
       <ElternAnsicht
         token={privaterLink}
-        team={ansicht.team}
+        verein={ansicht.verein}
+        teams={ansicht.teams}
         spieler={ansicht.spieler}
         probe={ansicht.probe ?? null}
-        probeInfo={ansicht.probe_info ?? null}
         termine={ansicht.termine}
+        benachrichtigungen={benachrichtigungen}
+        gesehenBis={gesehenBis}
+        schluessel={schluessel}
+        mitteilungen={pushOeffentlich()?.publicKey ?? null}
       />
       {/* Fragen und Feedback ohne Konto (#544), am Ende der Seite. */}
-      <FeedbackLink token={privaterLink} />
+      <FeedbackLink token={privaterLink} ohneTeam={ansicht.teams.length === 0} verein={ansicht.verein} />
     </>
   );
 }

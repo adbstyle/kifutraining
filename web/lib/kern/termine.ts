@@ -4,6 +4,14 @@ import { verfallBestaetigen, type Spielstand } from "@/lib/spieler";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
 import {
+  benachrichtige,
+  holeVerlegungNach,
+  NICHT_BENACHRICHTIGT,
+  type AusstehendeVerlegung,
+  type Benachrichtigt,
+} from "@/lib/kern/benachrichtigungen";
+import { istVerlegung } from "@/lib/benachrichtigung";
+import {
   KONFLIKT_MARKER,
   TERMIN_MELDUNG,
   ausfallProblem,
@@ -12,7 +20,10 @@ import {
   leerZuNull,
   spielerzahlProblem,
   terminProblem,
+  treffpunktGespeichert,
+  treffpunktPasst,
   type TerminProblem,
+  type TerminTreffpunkt,
 } from "@/lib/termin";
 import {
   felderPfad,
@@ -45,7 +56,7 @@ import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugrif
 import { mitAbsagen } from "@/lib/trainer";
 import { besetzungProblem, type Mindestbesetzung } from "@/lib/besetzung";
 import { trainerBeimFestlegen, type TrainerWahl } from "@/lib/kern/trainer";
-import { HINWEIS_NICHTS_ENTSTANDEN, hinweisRest, kopiereTraining, type KopieErgebnis } from "@/lib/kern/kopie";
+import { hinweisRest, kopiereTraining, nichtsEntstanden, type KopieErgebnis } from "@/lib/kern/kopie";
 import { gibtEsTraining, loescheTrainingMitBildern, raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
 import {
   NICHT_GEFUNDEN,
@@ -78,7 +89,7 @@ import {
 export const TERMIN_FELD = { feld: "termin_id" } as const;
 
 export const TERMIN_ROH =
-  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, training_id, datum, beginn, ende, ort, ort_link, bemerkung, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
+  "id, team_id, art, bezeichnung, richtwert_min, richtwert_max, meldefrist_vorlauf_min, training_id, datum, beginn, ende, ort, ort_link, bemerkung, hinweis_eltern, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, treffpunkt_vorlauf_min, treffpunkt_ort, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, hinweis_eltern_abweichend, treffpunkt_abweichend, ausgefallen, ausfall_grund";
 
 export type TerminRoh = {
   id: string;
@@ -99,6 +110,8 @@ export type TerminRoh = {
   /** Der Kartenlink zum Ort (#533); nur mit Ort. */
   ort_link: string | null;
   bemerkung: string | null;
+  /** Der Hinweis für Eltern (#590). */
+  hinweis_eltern: string | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: Felder | null;
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
@@ -106,12 +119,17 @@ export type TerminRoh = {
   /** Die Mindestbesetzung (#521). */
   besetzung_art: string | null;
   besetzung_zahl: number | null;
+  /** Nur an einem Training: der Treffpunkt als Minuten vor dem Beginn und Ort (#561). */
+  treffpunkt_vorlauf_min: number | null;
+  treffpunkt_ort: string | null;
   /** Nur Serientermine tragen eine Serie; die Flags zeigen, welche Angaben
    *  von ihr abweichen. */
   serie_id: string | null;
   zeit_abweichend: boolean;
   ort_abweichend: boolean;
   bemerkung_abweichend: boolean;
+  hinweis_eltern_abweichend: boolean;
+  treffpunkt_abweichend: boolean;
   /** Ein ausgefallener Termin behält sein Training; es ruht (PO 2026-10-06). */
   ausgefallen: boolean;
   ausfall_grund: string | null;
@@ -181,8 +199,10 @@ export type TerminMitStand = TerminRoh & {
   termin_kader: { kader_id: string | null; kader: { name: string } | null }[];
 };
 
+// `!tk_termin_team`: eindeutige Einbettung neben dem FK auf termin_id allein
+// (Story #579, sonst PGRST201; wie TERMIN_SELECT in lib/queries/termine-fuer.ts).
 export async function ladeTerminMitStand(supabase: SupabaseClient, terminId: string): Promise<KernErgebnis<TerminMitStand>> {
-  return lade<TerminMitStand>(supabase, terminId, `${TERMIN_ROH}, spielstand, termin_kader ( kader_id, kader ( name ) )`);
+  return lade<TerminMitStand>(supabase, terminId, `${TERMIN_ROH}, spielstand, termin_kader!tk_termin_team ( kader_id, kader ( name ) )`);
 }
 
 async function lade<T extends TerminRoh>(supabase: SupabaseClient, terminId: string, spalten: string): Promise<KernErgebnis<T>> {
@@ -215,6 +235,10 @@ export type TerminFestlegen = {
   /** Der Kartenlink zum Ort (#533 AK 1); nur mit Ort. */
   ortLink?: string | null;
   bemerkung?: string | null;
+  /** Der Hinweis für Eltern (#590 AK 1); ohne Angabe oder leer: keiner. */
+  hinweisEltern?: string | null;
+  /** Nur an einem Training: der Treffpunkt (#561 AK 1); ohne Angabe: keiner. */
+  treffpunkt?: TerminTreffpunkt | null;
   /** Die Felder des Platzes (#389); ohne Angabe oder leer: keine. */
   felder?: readonly FeldEingabe[] | null;
   /** Die erwartete Spielerzahl (#390); ohne Angabe: unbekannt. */
@@ -223,6 +247,10 @@ export type TerminFestlegen = {
   kaderIds?: string[];
   /** Wie viele Trainer:innen mindestens dabei sein sollen (#521); ohne: keine. */
   mindestbesetzung?: Mindestbesetzung;
+  /** Nur an einem Spiel (#642 AK 6): ob die Spielervertretungen der
+   *  Spieler:innen, für die es gilt, benachrichtigt werden. Pflicht, damit
+   *  jeder Weg ausdrücklich entscheidet; Oberfläche und KI: Standard ja. */
+  benachrichtigen: boolean;
 } & TrainerWahl;
 
 /** Was ein Spiel trägt und ein Training nicht (#459 AK 2, 5, 10, 11, 16) —
@@ -238,12 +266,14 @@ function artFehler(
     spielerzahl?: number | null;
     meldefrist?: string | null;
     treffpunkte?: readonly TreffpunktEingabe[] | null;
+    treffpunkt?: TerminTreffpunkt | null;
   },
   pruefeBezeichnung: boolean,
 ): KernFehler | null {
   if (art === "spiel") {
     if ((a.felder?.length ?? 0) > 0 || (a.spielerzahl !== undefined && a.spielerzahl !== null))
       return fehlschlag("eingabe", SPIEL_TEXT.nurTraining, { feld: a.spielerzahl != null ? "erwartete_spielerzahl" : "felder" });
+    if (a.treffpunkt) return fehlschlag("eingabe", TERMIN_TEXT.treffpunktNurTraining, { feld: "treffpunkt" });
     if (pruefeBezeichnung) {
       const b = bezeichnungProblem(a.bezeichnung);
       if (b) return fehlschlag("eingabe", b.text, { feld: b.feld });
@@ -281,6 +311,17 @@ async function setzeTreffpunkte(supabase: SupabaseClient, terminId: string, zeil
   return error ? ausDbFehler(error) : ok(undefined);
 }
 
+/** Der Treffpunkt eines Trainings, wie er gespeichert wird (#561): Abstand
+ *  zum Beginn und Ort; ohne Treffpunkt beide `null`. Vorher geprüft. */
+export function treffpunktSpalten(
+  t: TerminTreffpunkt | null | undefined,
+  beginn: string | null | undefined,
+): { treffpunkt_vorlauf_min: number | null; treffpunkt_ort: string | null } {
+  if (!t) return { treffpunkt_vorlauf_min: null, treffpunkt_ort: null };
+  const g = treffpunktGespeichert(t, beginn ?? "");
+  return { treffpunkt_vorlauf_min: g.vorlauf_min, treffpunkt_ort: g.ort };
+}
+
 /** Die Meldefrist eines Spiels prüfen (#463 AK 8): leer heisst keine. */
 function fristFehler(datum: string, beginn: string | null | undefined, frist: string | null | undefined): KernFehler | null {
   const f = leerZuNull(frist);
@@ -311,9 +352,10 @@ export async function legeTerminFest(
   supabase: SupabaseClient,
   userId: string,
   e: TerminFestlegen,
-): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
+): Promise<KernErgebnis<{ terminId: string; teamId: string } & Benachrichtigt>> {
   if (!istTerminArt(e.art)) return fehlschlag("eingabe", SPIEL_TEXT.art, { feld: "art" });
-  const problem = feldFehler(terminProblem(e));
+  // Den Treffpunkt prüft beim Spiel `artFehler` (nur an einem Training).
+  const problem = feldFehler(terminProblem(e.art === "spiel" ? { ...e, treffpunkt: undefined } : e));
   if (problem) return problem;
   const art = artFehler(e.art, e, true);
   if (art) return art;
@@ -355,6 +397,8 @@ export async function legeTerminFest(
       ort: leerZuNull(e.ort),
       ort_link: leerZuNull(e.ortLink),
       bemerkung: leerZuNull(e.bemerkung),
+      hinweis_eltern: leerZuNull(e.hinweisEltern),
+      ...treffpunktSpalten(e.treffpunkt, e.beginn),
       felder: felder.felder,
       erwartete_spielerzahl: e.spielerzahl ?? null,
       besetzung_art: e.mindestbesetzung?.art ?? null,
@@ -393,7 +437,11 @@ export async function legeTerminFest(
     const weg = await supabase.from("training_termine").delete().eq("id", data.id);
     return weg.error ? ausDbFehler(weg.error) : kalenderFehler(b.error);
   }
-  return ok({ terminId: data.id, teamId: e.teamId });
+  // Ganz am Ende, wenn das Spiel mit Treffpunkten, Kadern und Besetzung steht
+  // (#642 PC 1): Die Benachrichtigung zeigt es, wie es gilt. Scheitert sie,
+  // bleibt der Termin trotzdem (`benachrichtigungFehlt`).
+  const n = e.art === "spiel" && e.benachrichtigen ? await benachrichtige(supabase, data.id, "neues_spiel") : NICHT_BENACHRICHTIGT;
+  return ok({ terminId: data.id, teamId: e.teamId, ...n });
 }
 
 export type TerminAendern = {
@@ -409,6 +457,8 @@ export type TerminAendern = {
    *  Ort bleibt — ändert sich der Ort ohne ihn, fällt er weg (PC 1). */
   ortLink?: string | null;
   bemerkung?: string | null;
+  /** Der Hinweis für Eltern (#590): `undefined` = unverändert, `null` oder `""` = leeren. */
+  hinweisEltern?: string | null;
   /** Die Felder als ganze Liste (#389 AK 7): `undefined` = unverändert,
    *  `null` oder `[]` = entfernen. */
   felder?: readonly FeldEingabe[] | null;
@@ -431,6 +481,10 @@ export type TerminAendern = {
    *  `null` oder `[]` = alle entfernen. Die Zeitpunkte gelten zum neuen
    *  Anpfiff. */
   treffpunkte?: readonly TreffpunktEingabe[] | null;
+  /** Nur an einem Training (#561): `undefined` = unverändert (eine Verlegung
+   *  nimmt ihn im selben Abstand mit, PC 1), `null` = entfernen. Die Uhrzeit
+   *  gilt zum neuen Beginn. */
+  treffpunkt?: TerminTreffpunkt | null;
   /** Das Training, das der Termin bei der Auswahl trug (AK 23). `undefined`
    *  beim KI-Weg: geprüft wird dann gegen den eben gelesenen Stand. */
   erwartetesTraining?: string | null;
@@ -438,6 +492,21 @@ export type TerminAendern = {
    *  Bestätigung — sonst kommt ein Fehler mit `verfallend`. Die Oberfläche
    *  sendet die bestätigte Zahl, die KI `true`. */
   bestaetigt?: boolean | number;
+  /** Läge der Treffpunkt mit dem neuen Beginn am Vortag, entfällt er (#561
+   *  PC 4) — nur mit `true`, sonst kommt ein Fehler mit `treffpunktEntfaellt`
+   *  (PC 5). Die KI fragt nicht nach und sendet `true` (PC 6). */
+  treffpunktWeg?: boolean;
+  /** Ob die Spielervertretungen eine Verlegung erfahren (#644 AK 1). Pflicht,
+   *  damit jeder Weg ausdrücklich entscheidet; Oberfläche und KI: Standard
+   *  ja. Wirkt nur, wenn sich Datum, Beginn, Ende oder Ort ändern; ob der
+   *  Termin danach zählt und nicht ausgefallen ist, prüft die Datenebene. */
+  benachrichtigen: boolean;
+  /** Setzt der Aufrufer danach noch die Kader, gilt die Benachrichtigung erst
+   *  für die neuen (#644 PC 1: nach dem letzten Schritt). Dann legt der Kern
+   *  nichts ab und liefert die Verlegung in `ausstehend`; der Aufrufer holt
+   *  sie nach dem Kader-Schritt nach (`holeVerlegungNach`) — scheitert der,
+   *  entsteht keine. */
+  kaderFolgen?: boolean;
 };
 
 /** Was eine Verlegung verfallen lässt: Abmeldungen (#437 AK 1) und, wird
@@ -448,7 +517,7 @@ export type Verfallend = {
   nachtraege: number;
   /** Absagen von Trainer:innen (#520 AK 11). */
   absagen: number;
-  /** Anmeldungen von Probe-Spieler:innen (#555 AK 14, PC 5). */
+  /** Anmeldungen von schnuppernden Spieler:innen (#555 AK 14, PC 5). */
   anmeldungen: number;
   summe: number;
   /** Nur an einem Spiel (#463 AK 13, 26; #464 AK 10): verfallende Meldungen
@@ -489,8 +558,17 @@ export function verfallend(abmeldungen: number, nachtraege: number, absagen = 0,
   return { abmeldungen, nachtraege, absagen, anmeldungen, summe: abmeldungen + nachtraege + absagen + anmeldungen };
 }
 
-/** Ein Fehler, der vor dem Verlegen nach der Bestätigung fragt. */
-export function verfallFehler(v: Verfallend): KernFehler {
+/** Ein Fehler, der vor dem Verlegen nach der Bestätigung fragt — auch, wenn
+ *  nur der Treffpunkt entfiele (#561 PC 5). */
+export function verfallFehler(v: Verfallend, treffpunktEntfaellt = false): KernFehler {
+  if (!treffpunktEntfaellt) return verfallFehlerOhneTreffpunkt(v);
+  if (v.summe === 0)
+    return fehlschlag("regel", TERMIN_TEXT.treffpunktEntfaellt, { feld: "bestaetigt", verfallend: 0, treffpunktEntfaellt: true });
+  const f = verfallFehlerOhneTreffpunkt(v);
+  return { ...f, meldung: `${TERMIN_TEXT.treffpunktEntfaellt} ${f.meldung}`, treffpunktEntfaellt: true };
+}
+
+function verfallFehlerOhneTreffpunkt(v: Verfallend): KernFehler {
   if (v.spiel)
     return fehlschlag(
       "regel",
@@ -561,7 +639,7 @@ async function warumNichtGeschrieben(
     : fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
 }
 
-/** Datum, Zeit, Ort, Bemerkung, Felder (#389) und erwartete Spielerzahl
+/** Datum, Zeit, Ort, Bemerkung, Hinweis für Eltern (#590), Felder (#389) und erwartete Spielerzahl
  *  (#390) eines Termins ändern (AK 7–10, 23). Der Termin wird mit seinem
  *  Stand zusammengeführt und als Ganzes geprüft; geschrieben werden aber nur die übergebenen Felder (Beginn und Ende stets
  *  zusammen). So überschreibt eine gleichzeitige Änderung eines anderen
@@ -578,7 +656,12 @@ export async function aendereTermin(
     abmeldungenVerfallen: number;
     /** Der Kartenlink fiel mit dem Ort weg (#533 AK 14). */
     kartenlinkEntfallen: boolean;
-  }>
+    /** Der Treffpunkt fiel mit dem neuen Beginn weg (#561 PC 6). */
+    treffpunktEntfallen: boolean;
+    /** Mit `kaderFolgen`: die Verlegung, deren Benachrichtigung der
+     *  Aufrufer nachholt; sonst `null`. */
+    ausstehend: AusstehendeVerlegung | null;
+  } & Benachrichtigt>
 > {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
@@ -593,8 +676,9 @@ export async function aendereTermin(
     // #533 PC 1: Der Link gehört zum Ort — ändert sich der Ort ohne ihn, fällt er weg.
     ortLink: e.ortLink !== undefined ? leerZuNull(e.ortLink) : ort !== t.ort ? null : t.ort_link,
     bemerkung: e.bemerkung !== undefined ? leerZuNull(e.bemerkung) : t.bemerkung,
+    hinweisEltern: e.hinweisEltern !== undefined ? leerZuNull(e.hinweisEltern) : t.hinweis_eltern,
   };
-  const problem = feldFehler(terminProblem(neu));
+  const problem = feldFehler(terminProblem({ ...neu, treffpunkt: t.art === "spiel" ? undefined : e.treffpunkt }));
   if (problem) return problem;
   // Die Spielangaben, wie sie nach dem Schreiben dastünden (#459).
   const spiel = {
@@ -603,6 +687,7 @@ export async function aendereTermin(
     richtwertMax: e.richtwertMax !== undefined ? e.richtwertMax : t.richtwert_max,
     felder: e.felder,
     spielerzahl: e.spielerzahl,
+    treffpunkt: e.treffpunkt,
   };
   const artProblem =
     t.art === "spiel"
@@ -636,8 +721,9 @@ export async function aendereTermin(
   if (besetzung) return besetzung;
 
   const aenderung: Partial<
-    Omit<typeof neu, "ortLink"> & {
+    Omit<typeof neu, "ortLink" | "hinweisEltern"> & {
       ort_link: string | null;
+      hinweis_eltern: string | null;
       felder: Felder | null;
       erwartete_spielerzahl: number | null;
       besetzung_art: string | null;
@@ -646,6 +732,8 @@ export async function aendereTermin(
       richtwert_min: number | null;
       richtwert_max: number | null;
       meldefrist_vorlauf_min: number | null;
+      treffpunkt_vorlauf_min: number | null;
+      treffpunkt_ort: string | null;
     }
   > = {};
   if (e.datum !== undefined) aenderung.datum = neu.datum;
@@ -656,6 +744,7 @@ export async function aendereTermin(
   if (e.ort !== undefined) aenderung.ort = neu.ort;
   if (neu.ortLink !== t.ort_link) aenderung.ort_link = neu.ortLink;
   if (e.bemerkung !== undefined) aenderung.bemerkung = neu.bemerkung;
+  if (e.hinweisEltern !== undefined) aenderung.hinweis_eltern = neu.hinweisEltern;
   // Die Felder sind EINE Angabe und gehen als ganze Liste (#389 AK 7).
   if (felder) aenderung.felder = felder.felder;
   if (e.spielerzahl !== undefined) aenderung.erwartete_spielerzahl = e.spielerzahl;
@@ -669,6 +758,15 @@ export async function aendereTermin(
     if (e.richtwertMax !== undefined) aenderung.richtwert_max = e.richtwertMax;
     if (e.meldefrist !== undefined) aenderung.meldefrist_vorlauf_min = vorlaufAus(neu.datum, neu.beginn, e.meldefrist);
   }
+  // Der Treffpunkt eines Trainings (#561): gesetzt zum neuen Beginn, sonst
+  // wandert er im selben Abstand mit (PC 1) — ausser er läge dann am Vortag:
+  // Dann entfällt er (PC 4), erst nach Bestätigung (PC 5).
+  const treffpunktEntfaellt =
+    e.treffpunkt === undefined &&
+    "beginn" in aenderung &&
+    !treffpunktPasst(t.treffpunkt_vorlauf_min, neu.beginn ?? "");
+  if (e.treffpunkt !== undefined) Object.assign(aenderung, treffpunktSpalten(e.treffpunkt, neu.beginn));
+  else if (treffpunktEntfaellt) Object.assign(aenderung, treffpunktSpalten(null, null));
 
   // «Nur dieser» (#326 AK 1, PC 1): Jede Angabe eines Serientermins, die sich
   // ändert, weicht danach ab — bis man sie wieder der Serie folgen lässt. Nur
@@ -683,6 +781,15 @@ export async function aendereTermin(
     // Ort und Kartenlink weichen gemeinsam ab (#533 PC 2).
     if (("ort" in aenderung && neu.ort !== t.ort) || "ort_link" in aenderung) flags.ort_abweichend = true;
     if ("bemerkung" in aenderung && neu.bemerkung !== t.bemerkung) flags.bemerkung_abweichend = true;
+    // #590 AK 4: auch ein entfernter Hinweis weicht ab — der Termin ist dann bewusst ohne.
+    if ("hinweis_eltern" in aenderung && neu.hinweisEltern !== t.hinweis_eltern) flags.hinweis_eltern_abweichend = true;
+    // #561 PC 2: Zeit und Ort des Treffpunkts sind eine Angabe; auch ein
+    // entfernter oder entfallener weicht ab — der Termin ist dann bewusst ohne.
+    if (
+      "treffpunkt_vorlauf_min" in aenderung &&
+      (aenderung.treffpunkt_vorlauf_min !== t.treffpunkt_vorlauf_min || aenderung.treffpunkt_ort !== t.treffpunkt_ort)
+    )
+      flags.treffpunkt_abweichend = true;
     if (felder && !gleicheFelder(felder.felder, t.felder)) flags.felder_abweichend = true;
     if (e.spielerzahl !== undefined && e.spielerzahl !== t.erwartete_spielerzahl) flags.spielerzahl_abweichend = true;
     if (
@@ -730,8 +837,13 @@ export async function aendereTermin(
     const n = await verfallendeAbmeldungen(supabase, t.id, neu.datum, neu.beginn);
     if (!n.ok) return n;
     // Eine Zahl bestätigt genau so viele (Oberfläche); sind es inzwischen
-    // andere, fragt der Kern neu. `true` (KI) bestätigt, was es ist.
-    if (n.wert.summe > 0 && e.bestaetigt !== true && e.bestaetigt !== n.wert.summe) return verfallFehler(n.wert);
+    // andere, fragt der Kern neu. `true` (KI) bestätigt, was es ist. Ein
+    // entfallender Treffpunkt fragt in derselben Rückfrage mit (#561 PC 5).
+    if (
+      (n.wert.summe > 0 && e.bestaetigt !== true && e.bestaetigt !== n.wert.summe) ||
+      (treffpunktEntfaellt && e.treffpunktWeg !== true)
+    )
+      return verfallFehler(n.wert, treffpunktEntfaellt);
     verfallen = n.wert.abmeldungen;
   }
 
@@ -761,12 +873,22 @@ export async function aendereTermin(
       return error ? ausDbFehler(error) : warumNichtGeschrieben(supabase, t.id, e.erwartetesTraining === undefined);
     }
   }
+  // #644 PC 1: nach dem Schreiben, nur bei einer Verlegung (Datum, Beginn,
+  // Ende, Ort; der Kartenlink allein nicht, OoS 1). `wieder` (AK 3): Der
+  // Termin war ausgefallen — bleibt er es, legt die Datenebene nichts ab (0),
+  // ebenso für einen Termin vor heute. Folgen noch Kader, holt der Aufrufer
+  // die Benachrichtigung danach nach.
+  const verlegung = e.benachrichtigen && istVerlegung(t, neu) ? { terminId: t.id, wieder: t.ausgefallen } : null;
+  const b = e.kaderFolgen ? NICHT_BENACHRICHTIGT : await holeVerlegungNach(supabase, verlegung);
   return ok({
     terminId: t.id,
     teamId: t.team_id,
     trainingId: erwartet,
     abmeldungenVerfallen: verfallen,
     kartenlinkEntfallen: t.ort_link !== null && neu.ortLink === null && e.ortLink === undefined,
+    treffpunktEntfallen: treffpunktEntfaellt,
+    ausstehend: e.kaderFolgen ? verlegung : null,
+    ...b,
   });
 }
 
@@ -790,8 +912,20 @@ export async function entferneTermin(
      *  die bestätigte Summe (Oberfläche) oder `true` (KI). Ohne kommt ein
      *  Fehler mit `verschwindend`. */
     bestaetigt?: boolean | number;
+    /** Ob die Spielervertretungen erfahren, dass der Termin wegfällt
+     *  (#645 AK 1, PC 1); still bleiben ausgefallene und vergangene. */
+    benachrichtigen: boolean;
   },
-): Promise<KernErgebnis<{ teamId: string; training: Verlassen }>> {
+): Promise<
+  KernErgebnis<{
+    teamId: string;
+    training: Verlassen;
+    /** Wie viele Spieler:innen vom Wegfall erfuhren (#645 PC 1); fehlt, wenn
+     *  nicht benachrichtigt werden sollte. Die Datenebene legt in derselben
+     *  Transaktion ab: ohne Benachrichtigung kein Entfernen. */
+    benachrichtigt?: number;
+  }>
+> {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   const { data: vorher } = await supabase
     .from("training_termine")
@@ -814,11 +948,12 @@ export async function entferneTermin(
   const { data, error } = await supabase.rpc("termin_entfernen", {
     p_termin: e.terminId,
     p_erwartet: e.erwartetesTraining === undefined ? null : { termin_training: e.erwartetesTraining },
+    p_benachrichtigen: e.benachrichtigen,
   });
   if (error) return kalenderFehler(error);
-  const r = data as { training: string | null; team: string };
+  const r = data as { training: string | null; team: string; benachrichtigt?: number | null };
   await raeumeBilderAb(supabase, bilder);
-  return ok({ teamId: r.team, training: await verlassen(supabase, r.training) });
+  return ok({ teamId: r.team, training: await verlassen(supabase, r.training), benachrichtigt: r.benachrichtigt ?? undefined });
 }
 
 // ── Zuordnen und lösen (#323; Termin-Trainings, PO 2026-10-06) ───────────────
@@ -849,7 +984,7 @@ export async function mitAufgeraeumterKopie(
   f: KernFehler,
   kopieId: string,
 ): Promise<KernFehler> {
-  if (await loescheTrainingMitBildern(supabase, kopieId)) return { ...f, hinweis: HINWEIS_NICHTS_ENTSTANDEN };
+  if (await loescheTrainingMitBildern(supabase, kopieId)) return { ...f, hinweis: nichtsEntstanden(f.art) };
   const { data } = await supabase.from("trainings").select("name").eq("id", kopieId).maybeSingle<{ name: string }>();
   return { ...f, meldung: `${f.meldung} ${kopieGebliebenText(data?.name ?? "Kopie")}`, hinweis: hinweisRest(kopieId) };
 }
@@ -861,7 +996,7 @@ async function kopierFehler(
   supabase: SupabaseClient,
   kopie: Extract<KopieErgebnis, { ok: false }>,
 ): Promise<KernFehler> {
-  if (kopie.nichtsEntstanden) return fehlschlag(kopie.art, kopie.error, { hinweis: HINWEIS_NICHTS_ENTSTANDEN });
+  if (kopie.nichtsEntstanden) return fehlschlag(kopie.art, kopie.error, { hinweis: nichtsEntstanden(kopie.art) });
   const { data } = await supabase.from("trainings").select("name").eq("id", kopie.rest).maybeSingle<{ name: string }>();
   return fehlschlag(kopie.art, `${kopie.error} ${kopieGebliebenText(data?.name ?? "Kopie")}`, {
     hinweis: hinweisRest(kopie.rest),
@@ -952,8 +1087,13 @@ export async function lasseAusfallen(
      *  es, PO 17): Hat ein anderes Mitglied den Ausfall inzwischen gesetzt oder
      *  zurückgenommen, wird nicht geschrieben (`AUSFALL_GEAENDERT`). */
     erwartetAusgefallen?: boolean;
+    /** Ob die Spielervertretungen den Ausfall erfahren (#643 AK 1). Pflicht,
+     *  damit jeder Weg ausdrücklich entscheidet; Oberfläche und KI: Standard
+     *  ja. Wirkt nur, wenn der Termin vorher stattfand — ein geänderter Grund
+     *  bleibt immer still (OoS 1). */
+    benachrichtigen: boolean;
   },
-): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
+): Promise<KernErgebnis<{ terminId: string; teamId: string } & Benachrichtigt>> {
   const p = ausfallProblem(e.grund);
   if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
   const geladen = await ladeTermin(supabase, e.terminId);
@@ -974,7 +1114,13 @@ export async function lasseAusfallen(
       ? fehlschlag("konflikt", TERMIN_MELDUNG.AUSFALL_GEAENDERT)
       : fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   }
-  return ok({ terminId: t.id, teamId: t.team_id });
+  // Nach dem Schreiben, nur beim Wechsel zu «fällt aus» (#643 PC 1, OoS 1):
+  // Mit `erwartetAusgefallen` traf das Update genau diesen Stand, sonst gilt
+  // der geladene. Tag und Empfänger prüft die Datenebene. Scheitert das
+  // Ablegen, bleibt der Ausfall trotzdem (`benachrichtigungFehlt`).
+  const vorher = e.erwartetAusgefallen ?? t.ausgefallen;
+  const b = e.benachrichtigen && !vorher ? await benachrichtige(supabase, t.id, "ausfall") : NICHT_BENACHRICHTIGT;
+  return ok({ terminId: t.id, teamId: t.team_id, ...b });
 }
 
 /** Den Ausfall zurücknehmen (#327 AK 6, PC 3): wieder ein normaler Termin,
@@ -982,8 +1128,13 @@ export async function lasseAusfallen(
 export async function nimmAusfallZurueck(
   supabase: SupabaseClient,
   _userId: string,
-  e: { terminId: string },
-): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
+  e: {
+    terminId: string;
+    /** Ob die Spielervertretungen erfahren, dass der Termin wieder
+     *  stattfindet (#643 AK 1). Pflicht wie bei `lasseAusfallen`. */
+    benachrichtigen: boolean;
+  },
+): Promise<KernErgebnis<{ terminId: string; teamId: string } & Benachrichtigt>> {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
   if (!geladen.wert.ausgefallen) return fehlschlag("regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN, TERMIN_FELD);
@@ -1003,5 +1154,8 @@ export async function nimmAusfallZurueck(
       ? fehlschlag("regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN, TERMIN_FELD)
       : fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   }
-  return ok({ terminId: e.terminId, teamId: geladen.wert.team_id });
+  // Nach dem Schreiben (#643 PC 1); einen vergangenen Termin lässt die
+  // Datenebene still (0).
+  const b = e.benachrichtigen ? await benachrichtige(supabase, e.terminId, "ruecknahme") : NICHT_BENACHRICHTIGT;
+  return ok({ terminId: e.terminId, teamId: geladen.wert.team_id, ...b });
 }

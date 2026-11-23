@@ -66,7 +66,7 @@ export const trainingAbrufen = werkzeug({
     "das dein Konto in KiFu sieht; ändern lassen sich nur die mit «bearbeitbar». Ein " +
     "Team-Training trägt in «termin» den Termin, dem es zugeordnet ist (höchstens einen; " +
     "«anstehend» sagt, ob er heute oder später ist; «trainer» nennt die Eingeladenen und wer ihn vorbereitet und leitet, «felder» den Platz, «erwartete_spielerzahl» die erwartete Zahl Spieler:innen), sonst null. Ob es " +
-    "veröffentlicht werden kann und was dazu fehlt, zeigt «training_hinweise_abrufen». " +
+    "in die Community gestellt werden kann und was dazu fehlt, zeigt «training_hinweise_abrufen». " +
     `${KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: z.object({ training_id: TrainingId }),
@@ -87,7 +87,7 @@ export const trainingAbrufen = werkzeug({
 const SuchenEingabe = z.object({
   bestand: alsEnum(["eigene", "oeffentlich", "team"] as const).describe(
     "eigene: deine persönlichen Trainings, Entwürfe eingeschlossen. " +
-      "oeffentlich: alle öffentlichen Trainings der Community, auch deine eigenen öffentlichen. " +
+      "oeffentlich: alle Trainings der Community, auch deine eigenen in der Community. " +
       "team: der Trainingsbestand eines deiner Teams - dann mit «team_id»; ohne Termin-Trainings, die nennt «team_plan_abrufen».",
   ),
   team_id: TeamId.optional().describe(
@@ -129,6 +129,7 @@ const SuchenTreffer = z.object({
       ende: z.string(),
       ort: z.string().nullable(),
       bemerkung: z.string().nullable(),
+      hinweis_eltern: z.string().nullable(),
       felder: felderSchema(),
       erwartete_spielerzahl: spielerzahlSchema(),
       spielerzahl: spielerzahlQuelleSchema(),
@@ -148,7 +149,7 @@ export const trainingsSuchen = werkzeug({
   name: "trainings_suchen",
   titel: "Trainings suchen",
   beschreibung:
-    "Durchsucht deine eigenen Trainings, die öffentlichen Trainings der Community oder den " +
+    "Durchsucht deine eigenen Trainings, die Trainings der Community oder den " +
     "Trainingsbestand eines deiner Teams - " +
     "dieselbe Suche wie die Trainings-Übersicht in KiFu: ohne Suchtext das zuletzt " +
     "Geänderte zuerst, mit Suchtext kürzere Namen zuerst. Eingrenzen nach " +
@@ -198,6 +199,7 @@ export const trainingsSuchen = werkzeug({
                   ende: t.termin.ende,
                   ort: t.termin.ort,
                   bemerkung: t.termin.bemerkung,
+                  hinweis_eltern: t.termin.hinweisEltern,
                   felder: felderAusgabe(t.termin.felder),
                   erwartete_spielerzahl: t.termin.spielerzahl,
                   spielerzahl: spielerzahlQuelleAusgabe(spielerzahlVon(t.termin)),

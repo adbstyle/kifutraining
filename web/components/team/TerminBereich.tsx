@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { Button, Dialog } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { AusfallDialog } from "./AusfallDialog";
+import { AusfallZuruecknehmenDialog } from "./AusfallZuruecknehmenDialog";
 import { EntfallendBestaetigung } from "./EntfallendBestaetigung";
+import { useBenachrichtigen } from "./BenachrichtigenFeld";
 import { ReichweiteDialog } from "./ReichweiteDialog";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
 import { NeuerTerminDialog } from "./NeuerTerminDialog";
@@ -26,6 +28,7 @@ import {
   folgeDerSerieAktion,
   lasseAusfallenAktion,
   legeSerieFestAktion,
+  holeVerlegungNachAktion,
   legeTerminFestAktion,
   loeseTrainingAktion,
   nimmAusfallZurueckAktion,
@@ -36,12 +39,13 @@ import {
   vorschauSerieEntfernenAktion,
   type TerminFelder,
 } from "@/lib/actions/termine";
-import { geaenderteFelder, trainingOhneTermin, ZUORDNEN_ERFOLG } from "@/lib/termin";
+import { AUSFALL_ZURUECKNEHMEN_TEXT, geaenderteFelder, LINK_KANAL, trainingOhneTermin, ZUORDNEN_ERFOLG } from "@/lib/termin";
 import {
   SERIE_MELDUNG,
   SERIE_TEXT,
   erlaubteReichweiten,
   regelAenderung,
+  verfallSumme,
   type Reichweite,
   type SerienRegel,
 } from "@/lib/serie";
@@ -49,6 +53,8 @@ import type { FolgeAngabe, SerienAenderung, SerienFolge } from "@/lib/kern/serie
 import { istVeraltet } from "@/lib/veraltet";
 import { datumKurz, terminBegonnen } from "@/lib/zeit";
 import { setzeTerminKaderAktion } from "@/lib/actions/kader";
+import { BENACHRICHTIGEN_TEXT, benachrichtigungZaehlt } from "@/lib/benachrichtigung";
+import type { AusstehendeVerlegung } from "@/lib/kern/benachrichtigungen";
 import type { Kader } from "@/lib/kader";
 import type { TeamTrainingRow, TrainingListRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
@@ -102,6 +108,9 @@ function startWerte(t: TerminZeile): TerminFelder {
     ort: t.ort ?? "",
     ortLink: t.ortLink ?? "",
     bemerkung: t.bemerkung ?? "",
+    hinweisEltern: t.hinweisEltern ?? "",
+    // Ein Training (#561): der Treffpunkt zum Beginn; ein Spiel hat keinen.
+    ...(t.spiel ? {} : { treffpunkt: t.treffpunkt }),
     felder: t.felder,
     spielerzahl: t.spielerzahl,
     mindestbesetzung: t.mindestbesetzung,
@@ -127,6 +136,8 @@ const FOLGT_WIEDER: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit folgt wieder der Serie.",
   ort: "Der Ort folgt wieder der Serie.",
   bemerkung: "Die Bemerkung folgt wieder der Serie.",
+  hinweis_eltern: `Der ${LINK_KANAL.hinweis} folgt wieder der Serie.`,
+  treffpunkt: "Der Treffpunkt folgt wieder der Serie.",
   eingeladene: "Die Eingeladenen folgen wieder der Serie.",
   verantwortung: "Die Verantwortung folgt wieder der Serie.",
   besetzung: "Die Mindestbesetzung folgt wieder der Serie.",
@@ -151,6 +162,10 @@ type ReichweiteFrage = {
   aenderung?: SerienAenderung;
   /** Der geänderte Ausfallgrund — er gilt nur für diesen Termin (#402 PC 4). */
   grund?: string;
+  /** Nur beim Ändern: der Entscheid des Häkchens im Termin-Dialog (#644),
+   *  für «nur dieser» und die Serie. Beim Entfernen fällt er erst in der
+   *  Bestätigung (#645 AK 1). */
+  benachrichtigen?: boolean;
 };
 
 /** Die Felder sind gespeichert, die Trainer:innen nicht — weil der USER
@@ -171,7 +186,14 @@ type SerienSchritt = {
   aenderung?: SerienAenderung;
   folge: SerienFolge;
   grund?: string;
+  /** Wie in `ReichweiteFrage`; beim Entfernen aus der Bestätigung. */
+  benachrichtigen?: boolean;
 };
+
+/** Ein einzelner Termin nach seinem ersten Schritt (#644): Die Verlegung
+ *  wartet auf die Kader (`ausstehend`, PC 1), oder ihre Benachrichtigung ist
+ *  nicht entstanden (`fehlt`). */
+type NachFeldern = { ausstehend: AusstehendeVerlegung | null; fehlt: boolean };
 
 export function TerminBereich({
   teamId,
@@ -208,6 +230,14 @@ export function TerminBereich({
   const [bearbeiten, setBearbeiten] = useState<TerminZeile | null>(null);
   const [zuordnen, setZuordnen] = useState<TerminZeile | null>(null);
   const [entfernen, setEntfernen] = useState<TerminZeile | null>(null);
+  // #645 AK 1: der Entscheid im Entfernen-Dialog, beim Öffnen vorbelegt an; er
+  // bleibt über die Rückfrage zu verschwindenden Meldungen erhalten. Nur ein
+  // Termin von heute oder später, der nicht ausgefallen ist (Prinzipien 1, 2).
+  const entfernenBenachrichtigen = useBenachrichtigen("entfernen", {
+    offen: entfernen,
+    sichtbar: !!entfernen && !entfernen.ausgefallen && benachrichtigungZaehlt(entfernen.datum, heute),
+    pending,
+  });
   // Ein Spiel (#463 AK 27, #464 AK 10): wie viele Meldungen und
   // Kennzeichnungen mit ihm verschwinden — aus dem Plan, oder der aktuelle
   // Stand, wenn er sich inzwischen geändert hat.
@@ -220,6 +250,7 @@ export function TerminBereich({
   const entfernenZahl = entfernenStand.meldungen + entfernenStand.kennzeichnungen;
   const [loesen, setLoesen] = useState<TerminZeile | null>(null);
   const [ausfall, setAusfall] = useState<TerminZeile | null>(null);
+  const [ruecknahme, setRuecknahme] = useState<TerminZeile | null>(null);
   const [reichweite, setReichweite] = useState<ReichweiteFrage | null>(null);
   const [bestaetigen, setBestaetigen] = useState<SerienSchritt | null>(null);
   /** Eine Verlegung oder eine Änderung an Kadern liesse Abmeldungen
@@ -288,38 +319,57 @@ export function TerminBereich({
    *  unberührt, die Snackbar sagt, dass nur die Felder gespeichert sind.
    *  Die Kader (#453) folgen den Trainer:innen; lassen sie Abmeldungen
    *  verfallen, fragt der Ablauf nach und setzt danach mit den Kadern fort.
-   *  Ein geänderter Ausfallgrund (#402 AK 13) folgt als letzter Schritt. */
+   *  Ein geänderter Ausfallgrund (#402 AK 13) folgt als letzter Schritt.
+   *  Folgen auf eine Verlegung die Kader, kommt ihre Benachrichtigung erst
+   *  nach ihnen, für die neuen Kader (#644 PC 1); ohne gesetzte Kader keine.
+   *  Ist eine Benachrichtigung nicht entstanden, sagt das jede Meldung dazu. */
   function aendereEinzeln(
     t: TerminZeile,
     geaendert: Partial<TerminFelder> | null | undefined,
-    trainer?: TrainerAenderung,
-    grund?: string,
+    trainer: TrainerAenderung | undefined,
+    grund: string | undefined,
+    benachrichtigen: boolean,
     bestaetigt: number | false = false,
     kaderIds?: string[],
     kaderBestaetigt: number | false = false,
+    /** Die Fortsetzung nach der Kader-Rückfrage trägt mit, was der erste
+     *  Schritt hinterliess. */
+    nachFeldern: NachFeldern = { ausstehend: null, fehlt: false },
   ) {
     const nr = laufNr.current;
     const gilt = () => laufNr.current === nr;
     startTransition(async () => {
+      let { ausstehend, fehlt } = nachFeldern;
+      const mitFehlt = (text: string) => (fehlt ? `${text} ${BENACHRICHTIGEN_TEXT.gescheitert}` : text);
       if (geaendert) {
-        const r = await aendereTerminAktion(t.id, geaendert, t.training?.id ?? null, bestaetigt);
+        const r = await aendereTerminAktion(
+          t.id,
+          geaendert,
+          t.training?.id ?? null,
+          benachrichtigen,
+          bestaetigt,
+          kaderIds !== undefined,
+        );
         // #437 AK 1: Verfallen Abmeldungen, erst nachfragen; der Dialog bleibt offen.
-        // Ein Spiel fragt auch, wenn nur die Frist ins Abgelaufene rückt (#463 AK 26).
-        if (!r.ok && (r.verfallend || r.fristAbgelaufen)) {
+        // Ein Spiel fragt auch, wenn nur die Frist ins Abgelaufene rückt (#463 AK 26),
+        // ein Training, wenn nur der Treffpunkt entfiele (#561 PC 5).
+        if (!r.ok && (r.verfallend || r.fristAbgelaufen || r.treffpunktEntfaellt)) {
           const anzahl = r.verfallend ?? 0;
           if (gilt())
             return verfall.nachVerlegung({ ...r, verfallend: anzahl }, () =>
-              aendereEinzeln(t, geaendert, trainer, grund, anzahl, kaderIds),
+              aendereEinzeln(t, geaendert, trainer, grund, benachrichtigen, anzahl, kaderIds),
             );
           // Abgebrochen, bevor die Rückfrage kam: Gespeichert ist nichts.
           return melde(NICHT_GEAENDERT);
         }
         if (!r.ok) return einzelnGescheitert(r.error, gilt());
+        ausstehend = r.ausstehend;
+        fehlt = r.benachrichtigungFehlt;
       }
       if (trainer) {
         if (geaendert && !gilt()) {
           router.refresh();
-          return melde(NUR_FELDER_GEAENDERT);
+          return melde(mitFehlt(NUR_FELDER_GEAENDERT));
         }
         const { einladen, ausladen, ausladenEintraege, verantwortlich } = trainer;
         const v = await aendereTrainerAktion(
@@ -327,10 +377,10 @@ export function TerminBereich({
           { einladen, ausladen, ausladenEintraege, verantwortlich },
           t.serie ? "nur_dieser" : undefined,
         );
-        if (!v.ok) return einzelnGescheitert(v.error, gilt(), geaendert ? NUR_FELDER_GEAENDERT : undefined);
+        if (!v.ok) return einzelnGescheitert(v.error, gilt(), geaendert ? mitFehlt(NUR_FELDER_GEAENDERT) : undefined);
       }
       if (kaderIds) {
-        const davor = geaendert || trainer ? KADER_UNVERAENDERT : undefined;
+        const davor = geaendert || trainer ? mitFehlt(KADER_UNVERAENDERT) : undefined;
         if (davor && !gilt()) {
           router.refresh();
           return melde(davor);
@@ -340,20 +390,27 @@ export function TerminBereich({
         if (!k.ok && k.verfallend) {
           if (davor) router.refresh();
           if (gilt()) {
-            verfall.nachKader(k, kaderBestaetigt, (n) => aendereEinzeln(t, null, undefined, grund, false, kaderIds, n));
+            verfall.nachKader(k, kaderBestaetigt, (n) =>
+              aendereEinzeln(t, null, undefined, grund, benachrichtigen, false, kaderIds, n, { ausstehend, fehlt }),
+            );
             return;
           }
           return melde(davor ?? NICHT_GEAENDERT);
         }
         if (!k.ok) return einzelnGescheitert(k.error, gilt(), davor);
+        if (ausstehend) {
+          const b = await holeVerlegungNachAktion(ausstehend);
+          fehlt = !b.ok || b.benachrichtigungFehlt;
+        }
       }
       if (grund !== undefined) {
-        const vorher = geaendert || trainer ? GRUND_UNVERAENDERT : undefined;
+        const vorher = geaendert || trainer ? mitFehlt(GRUND_UNVERAENDERT) : undefined;
         if (vorher && !gilt()) {
           router.refresh();
           return melde(vorher);
         }
-        const g = await lasseAusfallenAktion(t.id, grund, true);
+        // Nur der Grund eines ausgefallenen Termins: bleibt still (#643 OoS 1).
+        const g = await lasseAusfallenAktion(t.id, grund, true, false);
         if (!g.ok) return einzelnGescheitert(g.error, gilt(), vorher);
       }
       router.refresh();
@@ -361,7 +418,7 @@ export function TerminBereich({
         setBearbeiten(null);
         setDialogFehler(undefined);
       }
-      melde("Termin geändert.");
+      melde(mitFehlt("Termin geändert."));
     });
   }
 
@@ -413,19 +470,18 @@ export function TerminBereich({
   async function fuehreAus(b: SerienSchritt, nr: number) {
     const erwartet = { version: b.folge.versionVorher, entfallend: b.folge.entfallend.map((e) => e.terminId) };
     const r = b.art === "aendern"
-      ? await aendereSerieAktion(b.t.id, b.reichweite, b.aenderung ?? {}, {
-          ...erwartet,
-          verfallend:
-            b.folge.abmeldungenVerfallend +
-            b.folge.abmeldungenKader +
-            b.folge.nachtraegeVerfallend +
-            b.folge.absagenVerfallend +
-            b.folge.anmeldungenVerfallend,
-        })
-      : await entferneSerieAktion(b.t.id, b.reichweite, erwartet);
+      ? await aendereSerieAktion(
+          b.t.id,
+          b.reichweite,
+          b.aenderung ?? {},
+          { ...erwartet, verfallend: verfallSumme(b.folge) },
+          b.benachrichtigen === true,
+        )
+      : await entferneSerieAktion(b.t.id, b.reichweite, erwartet, b.benachrichtigen === true);
     if (!r.ok) return serienFehler(b.art, r.error, laufNr.current !== nr);
     // Der Grund gilt nur für diesen Termin (#402 PC 4); er folgt der Serie nicht.
-    const g = b.grund !== undefined ? await lasseAusfallenAktion(b.t.id, b.grund, true) : null;
+    // Nur der Grund: bleibt still (#643 OoS 1).
+    const g = b.grund !== undefined ? await lasseAusfallenAktion(b.t.id, b.grund, true, false) : null;
     router.refresh();
     serieSchliessen();
     melde(b.art === "aendern" ? `Terminserie geändert.${g && !g.ok ? ` ${g.error}` : ""}` : "Termine entfernt.");
@@ -439,19 +495,21 @@ export function TerminBereich({
   function speichereBearbeitung(
     t: TerminZeile,
     f: TerminFelder,
-    regel?: SerienRegel,
-    trainer?: TrainerAenderung,
-    grund?: string,
-    kaderIds?: string[],
+    regel: SerienRegel | undefined,
+    trainer: TrainerAenderung | undefined,
+    grund: string | undefined,
+    kaderIds: string[] | undefined,
+    benachrichtigen: boolean,
   ) {
     const geaendert = geaenderteFelder(f, startWerte(t));
     const regelNeu = t.serie && regel ? regelAenderung(t.serie, regel) : null;
     if (!geaendert && !regelNeu && !trainer && !kaderIds) {
       if (grund === undefined) return setBearbeiten(null);
-      // Nur der Grund: Er gilt für diesen Termin, eine Reichweite gibt es nicht (#402 PC 4).
-      return lauf(() => lasseAusfallenAktion(t.id, grund, true), () => "Grund gespeichert.", () => setBearbeiten(null), true, laufNr.current);
+      // Nur der Grund: Er gilt für diesen Termin, eine Reichweite gibt es nicht
+      // (#402 PC 4); er bleibt still (#643 OoS 1).
+      return lauf(() => lasseAusfallenAktion(t.id, grund, true, false), () => "Grund gespeichert.", () => setBearbeiten(null), true, laufNr.current);
     }
-    if (!t.serie) return aendereEinzeln(t, geaendert, trainer, grund, false, kaderIds);
+    if (!t.serie) return aendereEinzeln(t, geaendert, trainer, grund, benachrichtigen, false, kaderIds);
     const datum = geaendert?.datum !== undefined;
     const namenlose = !!trainer?.nurNamenlose;
     const erlaubt = erlaubteReichweiten({ datum, regel: !!regelNeu, namenlose });
@@ -476,6 +534,7 @@ export function TerminBereich({
       trainer,
       kader: kaderIds,
       grund,
+      benachrichtigen,
       // Für folgende und alle gehen die Trainer:innen mit der übrigen
       // Änderung in EINE Serienänderung (#519 AK 12). Die Serienrechnung
       // ersetzt damit an jedem erfassten Termin ALLE Eingeladenen durch diese
@@ -502,7 +561,7 @@ export function TerminBereich({
       // mit dem Training geschieht (#322; PO 2026-10-06).
       if (art === "entfernen") return setEntfernen(t);
       if (!frage.geaendert && !frage.trainer && !frage.kader) return;
-      return aendereEinzeln(t, frage.geaendert, frage.trainer, frage.grund, false, frage.kader);
+      return aendereEinzeln(t, frage.geaendert, frage.trainer, frage.grund, frage.benachrichtigen === true, false, frage.kader);
     }
     const version = t.serie?.version ?? 0;
     const nr = laufNr.current;
@@ -514,18 +573,10 @@ export function TerminBereich({
       if (laufNr.current !== nr) return;
       if (!v.ok) return serienFehler(art, v.error);
       setReichweite(null);
-      const schritt: SerienSchritt = { art, t, reichweite: r, aenderung: frage.aenderung, folge: v.folge, grund: frage.grund };
+      const schritt: SerienSchritt = { art, t, reichweite: r, aenderung: frage.aenderung, folge: v.folge, grund: frage.grund, benachrichtigen: frage.benachrichtigen };
       // AK 8: bestätigen, wenn Termine wegfallen — beim Entfernen immer; ebenso,
-      // wenn Abmeldungen verfallen (#437 AK 1).
-      if (
-        art === "entfernen" ||
-        v.folge.entfallendAnzahl > 0 ||
-        v.folge.abmeldungenVerfallend > 0 ||
-        v.folge.abmeldungenKader > 0 ||
-        v.folge.nachtraegeVerfallend > 0 ||
-        v.folge.absagenVerfallend > 0 ||
-        v.folge.anmeldungenVerfallend > 0
-      )
+      // wenn Abmeldungen verfallen (#437 AK 1) oder Treffpunkte entfallen (#561 PC 5).
+      if (art === "entfernen" || v.folge.entfallendAnzahl > 0 || verfallSumme(v.folge) > 0)
         setBestaetigen(schritt);
       else await fuehreAus(schritt, nr);
     });
@@ -533,9 +584,9 @@ export function TerminBereich({
 
   /** Eine Angabe wieder der Serie folgen lassen (#326 AK 6). Folgt die Zeit
    *  und verfallen damit Abmeldungen, erst nachfragen (#437 AK 1). */
-  function folgen(t: TerminZeile, angabe: FolgeAngabe, bestaetigt: boolean | number = false) {
+  function folgen(t: TerminZeile, angabe: FolgeAngabe, benachrichtigen: boolean, bestaetigt: boolean | number = false) {
     lauf(
-      () => folgeDerSerieAktion(t.id, [angabe], bestaetigt),
+      () => folgeDerSerieAktion(t.id, [angabe], benachrichtigen, bestaetigt),
       () => FOLGT_WIEDER[angabe],
       () => setBearbeiten(null),
       true,
@@ -544,9 +595,9 @@ export function TerminBereich({
         // #453: Folgen die Kader, bestätigt die Zahl (erst `false`, dann die
         // gemeldete); die Zeit bestätigt `true`.
         if (angabe === "kader")
-          return verfall.nachKader(r, typeof bestaetigt === "number" ? bestaetigt : false, (n) => folgen(t, angabe, n));
-        if (r.ok || !r.verfallend) return false;
-        verfall.nachVerlegung({ ...r, verfallend: r.verfallend }, () => folgen(t, angabe, true));
+          return verfall.nachKader(r, typeof bestaetigt === "number" ? bestaetigt : false, (n) => folgen(t, angabe, benachrichtigen, n));
+        if (r.ok || (!r.verfallend && !r.treffpunktEntfaellt)) return false;
+        verfall.nachVerlegung({ ...r, verfallend: r.verfallend ?? 0 }, () => folgen(t, angabe, benachrichtigen, true));
         return true;
       },
     );
@@ -585,7 +636,14 @@ export function TerminBereich({
     ausfallen: (t) => { neuerLauf(); setDialogFehler(undefined); setAusfall(t); },
     ausfallZuruecknehmen: (t) => {
       if (pending) return;
-      lauf(() => nimmAusfallZurueckAktion(t.id), () => "Ausfall zurückgenommen.", () => {});
+      // Heute oder später: erst der Dialog mit dem Entscheid (#643 AK 1);
+      // ein vergangener Termin benachrichtigt nie, dort bleibt es ein Klick.
+      if (benachrichtigungZaehlt(t.datum, heute)) {
+        neuerLauf();
+        setDialogFehler(undefined);
+        return setRuecknahme(t);
+      }
+      lauf(() => nimmAusfallZurueckAktion(t.id, false), () => AUSFALL_ZURUECKNEHMEN_TEXT.erfolg, () => {});
     },
     trainer: (t, aenderung, meldung) => {
       if (pending) return;
@@ -644,8 +702,10 @@ export function TerminBereich({
           t.art === "serie"
             ? lauf(() => legeSerieFestAktion(teamId, t.felder), () => "Terminserie erstellt.", () => setNeu(false), true, laufNr.current)
             : lauf(
-                () => legeTerminFestAktion(teamId, { ...t.felder, mindestbesetzung: t.trainer.mindestbesetzung }, t.kaderIds, t.trainer),
-                () => "Termin erstellt.",
+                () =>
+                  legeTerminFestAktion(teamId, { ...t.felder, mindestbesetzung: t.trainer.mindestbesetzung }, t.kaderIds, t.trainer, t.benachrichtigen),
+                // Das Spiel steht; nur die Benachrichtigung ist nicht entstanden (#642).
+                (r) => (r.ok && r.benachrichtigungFehlt ? `Termin erstellt. ${BENACHRICHTIGEN_TEXT.gescheitert}` : "Termin erstellt."),
                 () => setNeu(false),
                 true,
                 laufNr.current,
@@ -672,7 +732,7 @@ export function TerminBereich({
         terminKader={bearbeiten?.kader}
         spielerGesamt={spielerGesamt}
         begonnen={!!bearbeiten && terminBegonnen(bearbeiten.datum, bearbeiten.beginn)}
-        onFolgen={(angabe) => bearbeiten && folgen(bearbeiten, angabe)}
+        onFolgen={(angabe, benachrichtigen) => bearbeiten && folgen(bearbeiten, angabe, benachrichtigen)}
         onClose={() => {
           // Nur ein Abbruch durch den USER zählt; schliesst der Code den
           // Dialog, ist `bearbeiten` schon leer (gilt für alle drei Dialoge).
@@ -680,8 +740,8 @@ export function TerminBereich({
           neuerLauf();
           setBearbeiten(null);
         }}
-        onSpeichern={(f, regel, trainer, grund, kaderIds) =>
-          bearbeiten && speichereBearbeitung(bearbeiten, f, regel, trainer, grund, kaderIds)
+        onSpeichern={(f, regel, trainer, grund, kaderIds, benachrichtigen) =>
+          bearbeiten && speichereBearbeitung(bearbeiten, f, regel, trainer, grund, kaderIds, benachrichtigen)
         }
       />
 
@@ -730,10 +790,13 @@ export function TerminBereich({
           neuerLauf();
           setBestaetigen(null);
         }}
-        onBestaetigen={() => {
+        onBestaetigen={(benachrichtigen) => {
           const b = bestaetigen;
           const nr = laufNr.current;
-          if (b) startTransition(() => fuehreAus(b, nr));
+          // Beim Entfernen entscheidet dieser Dialog (#645 AK 1); beim Ändern
+          // galt der Entscheid des Termin-Dialogs schon (#644), auch für den
+          // Wegfall (#645 PC 3).
+          if (b) startTransition(() => fuehreAus(b.art === "entfernen" ? { ...b, benachrichtigen } : b, nr));
         }}
       />
 
@@ -766,6 +829,7 @@ export function TerminBereich({
 
       <AusfallDialog
         termin={ausfall}
+        heute={heute}
         pending={pending}
         fehler={dialogFehler}
         onClose={() => {
@@ -773,14 +837,41 @@ export function TerminBereich({
           neuerLauf();
           setAusfall(null);
         }}
-        onSpeichern={(grund) => {
+        onSpeichern={(grund, benachrichtigen) => {
           const t = ausfall;
           if (!t) return;
           // Der Grund geht immer als Text mit; «» leert ihn (ausdrücklich «Grund setzen»).
           lauf(
-            () => lasseAusfallenAktion(t.id, grund, t.ausgefallen),
-            () => (t.ausgefallen ? "Grund gespeichert." : "Termin als ausgefallen markiert."),
+            () => lasseAusfallenAktion(t.id, grund, t.ausgefallen, benachrichtigen),
+            (r) =>
+              t.ausgefallen
+                ? "Grund gespeichert."
+                : // Der Ausfall steht; nur die Benachrichtigung ist nicht entstanden (#643).
+                  `Termin als ausgefallen markiert.${r.ok && r.benachrichtigungFehlt ? ` ${BENACHRICHTIGEN_TEXT.gescheitert}` : ""}`,
             () => setAusfall(null),
+            true,
+            laufNr.current,
+          );
+        }}
+      />
+
+      <AusfallZuruecknehmenDialog
+        termin={ruecknahme}
+        pending={pending}
+        fehler={dialogFehler}
+        onClose={() => {
+          if (!ruecknahme) return;
+          neuerLauf();
+          setRuecknahme(null);
+        }}
+        onZuruecknehmen={(benachrichtigen) => {
+          const t = ruecknahme;
+          if (!t) return;
+          lauf(
+            () => nimmAusfallZurueckAktion(t.id, benachrichtigen),
+            (r) =>
+              `${AUSFALL_ZURUECKNEHMEN_TEXT.erfolg}${r.ok && r.benachrichtigungFehlt ? ` ${BENACHRICHTIGEN_TEXT.gescheitert}` : ""}`,
+            () => setRuecknahme(null),
             true,
             laufNr.current,
           );
@@ -806,7 +897,13 @@ export function TerminBereich({
               onClick={() =>
                 entfernen &&
                 lauf(
-                  () => entferneTerminAktion(entfernen.id, entfernen.training?.id ?? null, entfernenZahl),
+                  () =>
+                    entferneTerminAktion(
+                      entfernen.id,
+                      entfernen.training?.id ?? null,
+                      entfernenBenachrichtigen.wert,
+                      entfernenZahl,
+                    ),
                   () => (entfernen.spiel ? "Spiel entfernt." : "Termin entfernt."),
                   () => {
                     setEntfernen(null);
@@ -837,6 +934,7 @@ export function TerminBereich({
             <> <strong className="text-on-surface">{entfernen.training.name}</strong> {trainingOhneTermin(entfernen.training.terminTraining)}.</>
           )}
         </p>
+        {entfernenBenachrichtigen.feld}
       </Dialog>
 
       {/* Lösen eines Termin-Trainings löscht es — darum diese Rückfrage. */}

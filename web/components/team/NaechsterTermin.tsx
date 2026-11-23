@@ -3,11 +3,11 @@
 import { absageOffen, trainerLuecke, trainerNameFuer, verantwortlicheVon, type Eingrenzung } from "@/lib/trainer";
 import Link from "next/link";
 import { CalendarPlus, Clock, LandPlot, Shirt } from "lucide-react";
-import { Button, ButtonLink, Kalenderblatt, Lozenge, OverflowMenu, SectionMessage, Switch, TreffpunktListe, ZeichenZahl } from "@/components/ui";
+import { Button, ButtonLink, Kalenderblatt, Lozenge, OverflowMenu, SectionMessage, Switch, TrainingsTreffpunkt, TreffpunktListe, ZeichenZahl } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage } from "@/lib/serie";
-import { zeitText } from "@/lib/termin";
+import { LINK_KANAL, zeitText } from "@/lib/termin";
 import { datumKurz, terminBegonnen } from "@/lib/zeit";
 import { richtwertStufeText, zeitpunktKurz } from "@/lib/spiel";
 import { felderKurz } from "@/lib/termin-felder";
@@ -33,7 +33,7 @@ import { TrainerLozenge, TrainerZahl } from "./TrainerZeichen";
    geöffneten Termin. Bei einem Spiel darunter die Treffpunkte, der späteste
    zuoberst: Die Trainer:in steht am Treffpunkt nächst am Spiel. Dann die
    Bemerkung (#403 AK 3), wer verantwortlich ist (#519 AK 24) und zuunterst
-   die Handgriffe, der wichtigste hell. Die Serie steht am geöffneten Termin.
+   die Handgriffe, der wichtigste umgekehrt. Die Serie steht am geöffneten Termin.
 
    `hervorgehoben`: Der Verweis aus dem Kalender-Abo zielt auf ihn (PC 4) —
    Kontur in Primary, `aria-current` und Sprungziel wie an jeder Zeile. */
@@ -82,7 +82,9 @@ export function NaechsterTermin({
       aria-current={hervorgehoben ? "true" : undefined}
       tabIndex={-1}
       className={cn(
-        // Eine Stufe höher als die Karten der Tage darunter: abgehoben (AK 1).
+        // Abgehoben von den Karten der Tage darunter (AK 1): durch die Kontur,
+        // die jene nicht tragen — im Dunkeln dazu eine Stufe höher. Im Hellen
+        // ist jede Karte weiss, dort trägt die Kante allein (3:1).
         "relative rounded-flaeche bg-elev-04 p-4 outline-none focus:border-primary",
         naechster && "mt-2",
         hervorgehoben ? "kontur border-primary" : "kontur border-kante",
@@ -157,18 +159,27 @@ export function NaechsterTermin({
             className="type-body-medium text-on-surface"
           />
         )}
+        {/* #561 AK 10: der Treffpunkt eines Trainings wie die eines Spiels. */}
+        <TrainingsTreffpunkt treffpunkt={t.treffpunkt} className="type-body-medium text-on-surface" />
+        {/* #590, #659: der Hinweis am privaten Link mit «Am Link:» davor, damit er sich von der Bemerkung abhebt. */}
+        {t.hinweisEltern && (
+          <p className="whitespace-pre-line type-body-medium text-on-surface">
+            <span className="text-on-surface-mittel">{LINK_KANAL.kurz} </span>
+            {t.hinweisEltern}
+          </p>
+        )}
         {t.bemerkung && <p className="whitespace-pre-line type-body-medium text-on-surface">{t.bemerkung}</p>}
         <IchBinDabei t={t} />
 
         <div className="flex flex-wrap gap-2">
           {t.training ? (
             <>
-              <ButtonLink variant="hell" href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`}>Durchführen</ButtonLink>
+              <ButtonLink variant="umkehr" href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`}>Durchführen</ButtonLink>
               <ButtonLink variant="outlined" href={`/training/${t.training.id}`}>Training öffnen</ButtonLink>
             </>
           ) : (
             !t.spiel && (
-              <Button variant="hell" aria-haspopup="dialog" onClick={() => a.zuordnen(t)}>Training hinzufügen</Button>
+              <Button variant="umkehr" aria-haspopup="dialog" onClick={() => a.zuordnen(t)}>Training hinzufügen</Button>
             )
           )}
           {/* Wer kommt (#435) — sobald das Team eine Spielerliste führt. */}
@@ -244,7 +255,7 @@ function SpielerZeichen({ t, nachFrist }: { t: TerminZeile; nachFrist: boolean }
           richtwertStufeText(s.anwesend ?? s.angemeldet, t.spiel.richtwertMin, t.spiel.richtwertMax),
           s.anwesend == null && (s.ohne_meldung ?? 0) > 0 && `${s.ohne_meldung} ${nachFrist ? "Meldefrist verpasst" : "ohne Meldung"}`,
         ]
-      : // «nicht angemeldet» statt «abgemeldet»: Probe-Spieler:innen haben sich nicht abgemeldet (#555).
+      : // «nicht angemeldet» statt «abgemeldet»: schnuppernde Spieler:innen haben sich nicht abgemeldet (#555).
         [s.anwesend == null && `${s.gesamt - s.angemeldet} nicht angemeldet`];
   const label = [`Spieler:innen: ${spielerzahlLang(z)}`, ...details].filter(Boolean).join(" · ");
   return (

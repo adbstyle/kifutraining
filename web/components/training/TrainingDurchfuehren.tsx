@@ -10,7 +10,7 @@ import { cn } from "@/lib/cn";
 import { SeitenKopf } from "@/components/layout/SeitenKopf";
 import { leseGliederung, formatDuration } from "@/lib/training";
 import { datumKurz } from "@/lib/zeit";
-import { zeitText } from "@/lib/termin";
+import { LINK_KANAL, zeitText } from "@/lib/termin";
 import { spielerzahlLang, type Spielerzahl } from "@/lib/spieler";
 import { feldName, feldText, type Felder } from "@/lib/termin-felder";
 import {
@@ -27,6 +27,8 @@ type TerminKontext = {
   ende: string;
   ort: string | null;
   bemerkung: string | null;
+  /** Der Hinweis für Eltern (#590). */
+  hinweisEltern: string | null;
   /** Wer verantwortlich ist (#519 AK 17); `null`: niemand. */
   verantwortlich: string | null;
   /** Die Namen der Eingeladenen, die dabei sind bzw. abgesagt haben (#520 AK 9), man selbst mit «(du)». */
@@ -87,6 +89,9 @@ function TerminKopf({ termin, className }: { termin: TerminKontext; className?: 
             </li>
           ))}
         </ul>
+      )}
+      {termin.hinweisEltern && (
+        <span className="type-body-small basis-full whitespace-pre-line">{LINK_KANAL.kurz} {termin.hinweisEltern}</span>
       )}
       {termin.bemerkung && (
         <span className="type-body-small basis-full">{termin.bemerkung}</span>

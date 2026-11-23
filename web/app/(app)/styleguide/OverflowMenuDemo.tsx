@@ -13,9 +13,11 @@ import { IconButton, OverflowMenu, Tooltip } from "@/components/ui";
 function Reihe({
   name,
   onAktion,
+  gesperrt,
 }: {
   name: string;
   onAktion: (was: string) => void;
+  gesperrt?: boolean;
 }) {
   return (
     <div className="flex items-center gap-0.5">
@@ -35,6 +37,7 @@ function Reihe({
       </Tooltip>
       <OverflowMenu
         label={`Weitere Aktionen zu ${name}`}
+        gesperrt={gesperrt}
         items={[
           {
             label: "Entfernen",
@@ -55,6 +58,7 @@ export function OverflowMenuDemo() {
     <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
       <Reihe name="Karte A" onAktion={setGewaehlt} />
       <Reihe name="Karte B" onAktion={setGewaehlt} />
+      <Reihe name="Karte C (läuft gerade)" onAktion={setGewaehlt} gesperrt />
       <span className="type-label-small text-on-surface-mittel">
         {gewaehlt ? `gewählt: ${gewaehlt}` : "hovern, klicken, ⋮ öffnen"}
       </span>

@@ -6,6 +6,7 @@ import type { Fahrplan } from "@/lib/queries/exercises";
 import type { KategorieSlug, TrainingsteilSlug } from "@/lib/vocab";
 import { JUNIOREN_BLOCK_SLUGS, type Einordnung } from "@/lib/junioren";
 import type { Altersstufe } from "@/lib/altersstufe";
+import { sortiereTrainings, type TrainingSortierung } from "@/lib/training-sortierung";
 import { FASSUNG_INHALT_FELDER, FASSUNG_ZUORDNUNG_FELDER } from "@/lib/fassung";
 import type { Variante } from "@/lib/varianten";
 import { kurzeZeit, mapTrainer } from "@/lib/queries/termine-fuer";
@@ -352,8 +353,8 @@ export type TrainingListRow = {
   name: string;
   visibility: "public" | "private";
   /** Gehört das Training dem aktuellen USER? Entscheidet über Kennzeichnung und
-   *  Ziel des Eintrags in der Übersicht (Story B AK 3–5); `false` für Besucher
-   *  ohne Konto. */
+   *  Ziel des Eintrags in der Übersicht (Story B AK 3–5); `false`, wenn der
+   *  Aufruf keine Kennung mitgibt. */
   istEigen: boolean;
   /** Nach welchem Lehrmittel das Training geführt wird (Story 1,
    *  Übungswelten). */
@@ -441,6 +442,11 @@ export type TrainingPoolFilter = TrainingListFilters & {
   nurOeffentlich?: boolean;
   /** Höchstens so viele Zeilen; ohne Angabe alle (die Oberfläche). */
   limit?: number;
+  /** Eine feste Ordnung (die Übersicht, #629): gilt auch mit Suchbegriff —
+   *  die Suche grenzt dann nur ein (AK 7). Ohne Angabe (der KI-Assistent,
+   *  Out of Scope 5) wie bisher: ohne Suche nach Aktualität, mit Suche nach
+   *  Namens-Relevanz. */
+  sortierung?: TrainingSortierung;
 };
 
 /** Trainings-Übersicht — der Einstieg, genau wie der Übungsbestand aufgebaut.
@@ -448,16 +454,16 @@ export type TrainingPoolFilter = TrainingListFilters & {
  *  Standardmässig alles, was der USER sehen darf: die öffentlichen Trainings der
  *  Community UND seine eigenen, Entwürfe eingeschlossen (Story B AK 1). Welche
  *  Zeilen das sind, entscheidet die RLS — deshalb steht hier KEIN
- *  Sichtbarkeitsfilter. Besucher ohne Konto bekommen dadurch von selbst nur die
- *  öffentlichen (AK 6). Die Facette `mine` grenzt auf die eigenen ein (AK 2).
+ *  Sichtbarkeitsfilter. Ohne Konto liest die RLS nichts (#669). Die Facette `mine` grenzt auf die eigenen ein (AK 2).
  *
  *  Team-Trainings erscheinen in keiner der beiden Sichten: sie gehören dem Team
  *  und leben im Team-Bereich (AK 8). Sie müssen AUSDRÜCKLICH ausgeschlossen
  *  werden — die RLS lässt sie für Mitglieder durch, und ohne
  *  Sichtbarkeitsfilter fiele dieser Ausschluss sonst weg.
  *
- *  Ohne Suche nach Aktualität; mit Suche nach Namens-Relevanz (kürzerer Name
- *  ⇒ näher am Begriff) sortiert. */
+ *  Mit `sortierung` in dieser Ordnung (die Übersicht). Sonst ohne Suche nach
+ *  Aktualität, mit Suche nach Namens-Relevanz (kürzerer Name ⇒ näher am
+ *  Begriff) — so findet der KI-Assistent, was am ehesten gemeint ist. */
 export async function getTrainingPoolFuer(
   supabase: SupabaseClient,
   userId: string | null,
@@ -475,23 +481,27 @@ export async function getTrainingPoolFuer(
   if (f.stufen?.length) query = query.overlaps("stufen", f.stufen);
 
   const hasQuery = !!f.q?.trim();
-  if (hasQuery) {
-    query = query.ilike("search_text", likePattern(f.q!));
-  } else {
-    query = query.order("updated_at", { ascending: false }).order("id");
-    // Ohne Suche sortiert die Datenbank — dann darf sie auch begrenzen. Mit
-    // Suche sortiert erst JS nach Relevanz, die Grenze greift danach.
+  if (hasQuery) query = query.ilike("search_text", likePattern(f.q!));
+  // Die Datenbank ordnet nach Aktualität, auch wenn danach JS sortiert: Greift
+  // `max_rows` von PostgREST, bleiben so die neuesten.
+  if (!hasQuery || f.sortierung) query = query.order("updated_at", { ascending: false }).order("id");
+  if (!hasQuery && !f.sortierung) {
+    // Nur wenn die Datenbank die endgültige Ordnung liefert, darf sie auch
+    // begrenzen. Sonst sortiert erst JS (Relevanz oder feste Ordnung), die
+    // Grenze greift danach.
     if (f.limit) query = query.limit(f.limit);
   }
 
   const { data, error } = await query;
   if (error) throw error;
-  const rows = (data ?? []).map((r) =>
+  let rows = (data ?? []).map((r) =>
     mapListRow(r as unknown as RawListTraining, userId ?? undefined),
   );
 
-  // Relevanz-Sortierung bei aktiver Suche: kürzerer Treffer zuerst, dann Name.
-  if (hasQuery) {
+  if (f.sortierung) {
+    rows = sortiereTrainings(rows, f.sortierung);
+  } else if (hasQuery) {
+    // Relevanz bei aktiver Suche: kürzerer Treffer zuerst, dann Name.
     rows.sort(
       (a, b) =>
         a.name.length - b.name.length || a.name.localeCompare(b.name, "de"),
@@ -516,6 +526,8 @@ export type TeamTrainingRow = TrainingListRow & {
     ende: string;
     ort: string | null;
     bemerkung: string | null;
+    /** Der Hinweis für Eltern (#590). */
+    hinweisEltern: string | null;
     /** Die Felder des Platzes (#389); `null` = unbekannt. */
     felder: Felder | null;
     /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
@@ -536,7 +548,7 @@ export type TeamTrainingRow = TrainingListRow & {
 };
 
 const TEAM_LIST_SELECT =
-  `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, spielstand, serie_id, ausgefallen, ausfall_grund, ` +
+  `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, hinweis_eltern, felder, erwartete_spielerzahl, besetzung_art, besetzung_zahl, spielstand, serie_id, ausgefallen, ausfall_grund, ` +
   "termin_trainer ( id, user_id, verantwortlich, abgesagt_am, trainer_name, trainer_ehemalig ) )";
 
 export type TeamTrainingFilter = {
@@ -546,6 +558,12 @@ export type TeamTrainingFilter = {
   stufen?: string[];
   /** Höchstens so viele Zeilen; ohne Angabe alle (die Oberfläche). */
   limit?: number;
+  /** Eine feste Ordnung (die Oberfläche, #637) wie in der Übersicht: gilt
+   *  auch mit Suchbegriff. Ohne Angabe (der KI-Assistent) wie bisher. */
+  sortierung?: TrainingSortierung;
+  /** Ohne den eingebetteten Termin (`termin` bleibt `null`): Die Tabelle des
+   *  Bestands nennt keinen (#637 OoS 2) und spart die Einbettung. */
+  ohneTermin?: boolean;
 };
 
 /** Der Trainingsbestand eines Teams. Team-Trainings erscheinen NIE im
@@ -567,16 +585,17 @@ export async function getTeamTrainingsFuer(
   if (!istUuid(teamId)) return [];
   // Der Bestand: ohne Termin-Trainings — sie leben mit ihrem Termin und
   // stehen nur im Trainingsplan (PO 2026-10-06).
-  let query = supabase.from("trainings").select(TEAM_LIST_SELECT).eq("team_id", teamId).eq("termin_training", false);
+  let query = supabase
+    .from("trainings")
+    .select(f.ohneTermin ? LIST_SELECT : TEAM_LIST_SELECT)
+    .eq("team_id", teamId)
+    .eq("termin_training", false);
   if (f.stufen?.length) query = query.overlaps("stufen", f.stufen);
 
   const hasQuery = !!f.q?.trim();
-  if (hasQuery) {
-    query = query.ilike("search_text", likePattern(f.q!));
-  } else {
-    query = query.order("updated_at", { ascending: false }).order("id");
-    if (f.limit) query = query.limit(f.limit);
-  }
+  if (hasQuery) query = query.ilike("search_text", likePattern(f.q!));
+  if (!hasQuery || f.sortierung) query = query.order("updated_at", { ascending: false }).order("id");
+  if (!hasQuery && !f.sortierung && f.limit) query = query.limit(f.limit);
   const { data, error } = await query;
   if (error) throw error;
 
@@ -591,6 +610,7 @@ export async function getTeamTrainingsFuer(
       ende: string;
       ort: string | null;
       bemerkung: string | null;
+      hinweis_eltern: string | null;
       felder: Felder | null;
       erwartete_spielerzahl: number | null;
       besetzung_art: string | null;
@@ -622,6 +642,7 @@ export async function getTeamTrainingsFuer(
             ende: kurzeZeit(termin.ende),
             ort: termin.ort,
             bemerkung: termin.bemerkung,
+            hinweisEltern: termin.hinweis_eltern,
             felder: termin.felder,
             spielerzahl: termin.erwartete_spielerzahl,
             spielstand: termin.spielstand ?? null,
@@ -636,6 +657,10 @@ export async function getTeamTrainingsFuer(
     };
   });
 
+  if (f.sortierung) {
+    const sortiert = sortiereTrainings(rows, f.sortierung);
+    return f.limit ? sortiert.slice(0, f.limit) : sortiert;
+  }
   if (hasQuery)
     rows.sort((a, b) => a.name.length - b.name.length || a.name.localeCompare(b.name, "de"));
   return f.limit ? rows.slice(0, f.limit) : rows;

@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-10-06. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-11-23 (Release 1.53.0). Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -24,12 +24,26 @@ werden sie ausschliesslich, indem der Bestand als Ganzes neu geladen wird. Für 
 Juniorenfussball gibt es keinen solchen kuratierten Bestand.
 
 Die andere Quelle sind die Trainerinnen und Trainer selbst. Wer eine eigene Übung erfasst, legt
-sie zunächst als Entwurf an; sie bleibt privat, bis er sie öffentlich schaltet. Danach trägt
-sie die Plakette „Community" und steht allen zur Verfügung. Die Sichtbarkeit lässt sich
-jederzeit in beide Richtungen umschalten. Eine eigene Übung beider Altersstufen kann auch ein
-verbundener KI-Assistent anlegen, ändern, öffentlich schalten und zurückziehen; sie entsteht
+sie zunächst als Entwurf an; sie bleibt privat, bis er sie mit „In die Community stellen"
+freigibt. Danach trägt sie die Plakette „Community" und steht allen angemeldeten Konten zur
+Verfügung; „Auf privat setzen" nimmt sie wieder zurück. Die Sichtbarkeit lässt sich jederzeit in
+beide Richtungen umschalten. Eine eigene Übung beider Altersstufen kann auch ein verbundener
+KI-Assistent anlegen, ändern, in die Community stellen und zurückziehen; sie entsteht
 ebenso als Entwurf und folgt denselben Regeln wie im Formular, je Altersstufe den ihren (siehe
 [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
+
+## Nur mit Konto
+
+Übungen gibt es nur für angemeldete Konten, auch die aus dem Manual. Wer ohne Anmeldung einen
+Verweis auf eine Übung, ihr Diagramm oder den Katalog öffnet, landet auf der
+[Startseite](startseite.md). Dort
+steht oben der Hinweis „Dieser Inhalt ist nur mit Konto sichtbar. Melde dich an oder erstelle
+kostenlos ein Konto, um Übungen und Trainings der Community zu sehen." mit den Wegen „Anmelden"
+und „Kostenlos registrieren". Wer sich von dort anmeldet, kommt beim Ziel des Verweises an,
+samt dessen Filtern. Ein Verweis auf das
+Bearbeiten einer Übung oder auf „Neue Übung" führt ohne Anmeldung direkt zur Anmeldung und
+danach zurück. Die Startseite zeigt acht Manual-Übungen als Beispiele; sie lassen sich dort
+nicht öffnen. Übungsseiten erscheinen nicht in Suchmaschinen.
 
 ## Was eine Übung ausmacht
 
@@ -53,7 +67,7 @@ lässt sich zusätzlich seine Grösse in Metern angeben, denn anders als Klein- 
 es nicht, wie gross abzustecken ist — freiwillig wie im Juniorenfussball, aber nur ganz. Wechselt
 der Feldtyp auf Kleinfeld oder Grossfeld, entfallen die Meter. Jede Manual-Übung trägt einen
 Feldtyp, so wie ihn die Abbildung im Manual erkennen lässt. Stehen sich zwei grosse Tore gegenüber,
-ist es Grossfeld. Kleinfeld ist es, wenn sich Minitore gegenüberstehen oder die Kinder 3:3 in einem
+ist es Grossfeld. Kleinfeld ist es, wenn sich Minitore gegenüberstehen oder die Spieler:innen 3:3 in einem
 abgegrenzten Feld spielen, dem Kleinfeld-Format des Manuals. Zeigt das Manual keins von beidem,
 gilt das freie Feld, und zwar ohne Meterangabe. Klein- und Grossfeld selbst tragen keine Masse;
 ein verbundener KI-Assistent kennt aber ihre Richtmasse je Alterskategorie nach den
@@ -150,7 +164,7 @@ Spielfeldgrösse in Metern — jeweils nur, wo Altersstufe, Trainingsteil oder B
 sie vorsehen. Erscheinungsform, Übungstyp und Feldtyp sind zugleich Filter des Katalogs; eine
 Übung ohne sie bleibt dort für manche Suche unsichtbar. Sie stehen an ihrem Platz als «Nicht erfasst», verschwinden, sobald die Angabe
 gespeichert ist, und erscheinen nie auf dem Druckblatt. Pflicht wird dadurch nichts: Eine Übung
-lässt sich ohne sie speichern und veröffentlichen. Leeres Material und eine fehlende Anzahl
+lässt sich ohne sie speichern und in die Community stellen. Leeres Material und eine fehlende Anzahl
 Spieler:innen gelten nicht als fehlend, denn es gibt Übungen ohne beides. Auffangen und
 Abschluss im Juniorenfussball heissen wie ihr einziger Block und stehen darum einmal. Hat eine Änderung am Feld-Diagramm das Material verändert, sieht
 die Eigentümerin den Hinweis dazu in der Einordnung, beim Material, und entscheidet dort, ob sie
@@ -218,7 +232,7 @@ von vorn. Fassungen, die aus dieser Übung in Trainings entstanden sind, bleiben
 ## Kopieren
 
 Jede Übung, die ein Trainer sehen darf, lässt sich in seinen eigenen Bestand kopieren — die
-kuratierte, die fremde öffentliche und ebenso die eigene. Es entsteht eine private, frei
+kuratierte, die fremde aus der Community und ebenso die eigene. Es entsteht eine private, frei
 bearbeitbare Kopie samt Bild und Diagramm, ohne Verbindung zur Quelle und mit deren
 Altersstufe; die Quelle bleibt unverändert, und spätere Änderungen an der einen erreichen die
 andere nicht. Kopiert werden darf mehrfach, und jedes Mal entsteht eine weitere, eigenständige
@@ -237,10 +251,15 @@ aber nur aus dem Übungsbestand, nicht aus einem Training (siehe
 [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
 
 Denselben Weg gibt es aus einem Training heraus: Eine Übung, die dort angepasst wurde, lässt
-sich als eigene Vorlage in die Bibliothek kopieren, auch aus einem fremden, veröffentlichten
-Training. Unvollständige Fassungen lassen sich erst nach Ergänzung kopieren.
+sich als eigene Vorlage in die Bibliothek kopieren, auch aus einem fremden Training der
+Community. Unvollständige Fassungen lassen sich erst nach Ergänzung kopieren.
 
 ## Finden
+
+Der Katalog steht unter der Adresse `/uebungen` und heisst im Browser „Übungen - KiFu"; die
+Seitenleiste, die Brotkrumen einer Übung und alle übrigen Verweise der Anwendung führen dorthin.
+Die Startadresse ist die Startseite. Eine bisher geteilte Katalog-Adresse auf der Startadresse
+mit Filtern, etwa „/?teil=…", führt samt allen Filtern zum Katalog.
 
 Gesucht wird über den gesamten Text einer Übung, also auch über Material, Varianten und Ablauf — die Listenzeichen am Zeilenanfang zählen dabei nicht mit;
 Wortteile genügen. Sobald etwas im Suchfeld steht, tritt an die Stelle der Lupe ein Kreuz, das die
@@ -266,9 +285,9 @@ sagt, welches gemeint ist. Der Kinderfussball-Hauptteil steht dort nicht als Gan
 seine drei Hauptteilkategorien: Gewählt wird in beiden Welten die feinste Ebene, die das jeweilige
 Lehrmittel kennt, und einen eigenen Hauptteilkategorie-Filter gibt es darum nicht. Weiter gefiltert
 wird nach Alterskategorie, Feldtyp, Erscheinungsform und Übungstyp, jeweils mit Mehrfachauswahl,
-sowie nach der Zahl der verfügbaren Kinder — dann erscheinen alle Übungen, die mit mindestens so
+sowie mit „Verfügbare Spieler:innen" nach der Zahl der verfügbaren Spieler:innen — dann erscheinen alle Übungen, die mit mindestens so
 vielen durchführbar sind. Jede dieser Dimensionen ist ein Filterknopf, der zählt, wie viele Werte
-gewählt sind, die Zahl der verfügbaren Kinder ein Knopf mit dem gesetzten Wert (siehe
+gewählt sind, „Verfügbare Spieler:innen" ein Knopf mit dem gesetzten Wert (siehe
 [Navigation](navigation.md#bedienung)). Auch diese Filter beschriften ihre Werte nach Altersstufe: die
 Erscheinungsformen beider Manuals, die Alterskategorien G bis A, und ebenso die zwei Filter, die
 ganz einer Altersstufe gehören — der Feldtyp dem Kinderfussball, der Übungstyp dem
@@ -280,7 +299,12 @@ nächsten 24 dazu; über dem Knopf steht, wie viele von wie vielen zu sehen sind
 Trefferzahl über den Kacheln nennt immer die ganze Auswahl. Wer einen Filter ändert oder die
 Filter zurücksetzt, beginnt wieder bei den ersten 24.
 
-Angemeldete haben zwei weitere Sichten: die eigenen Übungen und die Favoriten. Favorisieren
+Zwei weitere Chips grenzen den Katalog ein: «Meine Übungen» zeigt nur die
+selbst angelegten, Entwürfe wie die in der Community, «Favoriten» nur die favorisierten. Beide lassen sich
+mit den übrigen Filtern und miteinander verbinden. Einen eigenen Eintrag in der Seitenleiste
+haben die eigenen Übungen nicht; mit gesetztem «Meine Übungen» bleibt dort «Übungen» der offene
+Eintrag, die Brotkrume lautet „Übungen › Meine Übungen", und die Adresse trägt die Eingrenzung
+mit, sodass auch bisherige Adressen und Verweise auf die eigenen Übungen so ankommen. Favorisieren
 kann jeder jede sichtbare Übung, auch die aus dem Manual und die fremder Trainer.
 
 Derselbe Bestand lässt sich auch im Gespräch mit einem verbundenen KI-Assistenten durchsuchen
@@ -325,14 +349,18 @@ sich also weiterhin umbenennen. Der Assistent kann das Diagramm einer eigenen Ü
 setzen und sich seine inhaltlichen Mängel melden lassen; die Anwendung selbst zeigt diese Mängel
 nicht an (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
 
-Dasselbe Diagramm sieht am Bildschirm anders aus als auf Papier, und beides ist Absicht. Am
-Bildschirm liegt es auf einem dunklen Rasen, passend zur übrigen Anwendung, mit hellen
-Bewegungspfeilen und kräftigeren Farben für Leibchen und Material. Auf Papier kommt dieselbe
+Dasselbe Diagramm sieht im Dunkeln, im Hellen und auf Papier verschieden aus, und das ist Absicht.
+Im dunklen Erscheinungsbild liegt es auf einem dunklen Rasen mit hellen Bewegungspfeilen und
+kräftig aufgehellten Farben für Leibchen und Material. Im hellen liegt es auf einem blassen,
+frischen Rasen mit einer feinen Kante, die Pfeile sind schwarz und die Farben kräftig und dunkel;
+«weiss» erscheint dort als Graphit, damit es auf dem hellen Rasen sichtbar und von «schwarz»
+unterscheidbar bleibt. Der Ball bleibt in jedem Fall weiss mit dunkler Zeichnung. Auf Papier kommt dieselbe
 Zeichnung auf weissem Grund mit angedeuteten Mähstreifen, schwarzen Pfeilen wie in der
 Zeichenerklärung des Manuals und dunkleren Farben. Das spart Druckfarbe — der grüne Rasen füllte
 bisher das ganze Blatt — und bleibt auf einem einfachen Bürodrucker lesbar. Wer eine Farbe wählt,
 wählt nicht einen Farbton, sondern «rot» oder «blau»; wie kräftig der ausfällt, entscheidet die
-Anwendung je nach Bildschirm oder Papier.
+Anwendung je nach Erscheinungsbild oder Papier. Die Auswahl beim Zeichnen ist im Hellen dunkel,
+im Dunkeln weiss umrandet.
 
 Ein vorhandenes Diagramm kann als Vorlage in eine andere eigene Übung oder eine Übung im Training
 kopiert werden. Zur Auswahl stehen die eigenen Diagramme und alle Manual-Diagramme, durchsuchbar
@@ -353,8 +381,8 @@ langen Kante. Trägt eine Übung beides, zeigt sie das Diagramm; das Foto bleibt
 
 ## Drucken
 
-Jede Übung, die ein Trainer ansehen darf, lässt sich einzeln ausdrucken — auch ohne Konto und
-ohne dafür ein Training anzulegen. Das Blatt ist aufgeteilt wie die Übungsseite am Bildschirm:
+Jede Übung, die ein Trainer ansehen darf, lässt sich einzeln ausdrucken, ohne dafür ein
+Training anzulegen. Das Blatt ist aufgeteilt wie die Übungsseite am Bildschirm:
 links Name, Bild oder Diagramm, Ablauf und Varianten, rechts daneben in einer schmaleren Spalte
 die Einordnung mit Altersstufe, Alterskategorien, Trainingsteil oder Block, im
 Kinderfussball-Hauptteil dessen Kategorie, Feldtyp oder Spielfeldgrösse, der Anzahl
@@ -364,8 +392,8 @@ bleibt. Was die Übung nicht führt, erscheint auch nicht; fehlen Bild und Diagr
 leere Feld-Skizze. Eine Dauer trägt das Blatt nie, weil eine Übung in der Bibliothek keine hat.
 
 Im Fuss steht, woher die Übung stammt: nach dem Manual Kinderfussball des SFV oder aus der
-Gemeinschaft der Trainerinnen und Trainer. Ein Trainername steht nie dabei. Beim eigenen, noch
-nicht veröffentlichten Entwurf vermerkt das Blatt zusätzlich, dass es einer ist. Darin
+Community der Trainerinnen und Trainer. Ein Trainername steht nie dabei. Beim eigenen Entwurf,
+der noch nicht in der Community steht, vermerkt das Blatt zusätzlich, dass es einer ist. Darin
 unterscheidet sich das Übungsblatt bewusst vom Trainings-Druck, der keine Herkunft ausweist:
 Auf dem Platz zählt, was zu tun ist; ein einzelnes Blatt aus der Bibliothek soll seine Quelle
 nennen.
@@ -376,10 +404,47 @@ Gedruckt wird mit den Bordmitteln des Geräts, auf dem Rechner wie auf dem Telef
 als PDF übernimmt der Druckdialog. Eine eigene PDF-Datei erzeugt die Anwendung nicht, und
 mehrere Übungen in einem Vorgang lassen sich nicht drucken.
 
+## Konten ohne Verein
+
+Ein Konto ohne Verein (siehe [Verein](verein.md#rollen-nach-ort)) besitzt höchstens 50 eigene
+Übungen. Es zählen alle eigenen Übungen: Entwürfe wie die in der Community, selbst erfasste wie kopierte,
+auch eine aus einem Training in die Bibliothek kopierte Vorlage. Nicht zählen der Manual-Bestand,
+die Übungen anderer und die Übungen in einem Training, denn diese Fassungen gehören zum Training
+(siehe [Trainings](trainings.md#jede-übung-im-training-ist-eine-eigene-fassung)). Eine Übung in
+ein Training zu übernehmen bleibt darum immer frei.
+
+Den Stand zeigt der Katalog, sobald der Chip «Meine Übungen» gesetzt ist, oben über der Liste, etwa „12 von 50 Übungen", und ab der Grenze
+mit der Plakette „Nichts mehr frei". Er nennt immer den ganzen Bestand, auch wenn ein Filter die
+Liste kürzt. Liegt der Bestand über der Grenze — etwa nach dem Löschen des eigenen Vereins —,
+steht nur die Zahl, etwa „62 Übungen (höchstens 50)". Die Seite „Neue Übung" zeigt denselben
+Stand über der Maske; an der Grenze steht statt der Maske die Meldung „Nichts mehr frei: 50 von 50
+Übungen" mit „Ohne Verein besitzt du höchstens 50 Übungen. Lösche eine, um Platz zu schaffen. In
+einem Verein gilt die Grenze nicht." und dem Weg „Zu meinen Übungen". Über der Grenze nennt der
+Satz, wie viele weg müssen, etwa „Lösche 13 Übungen, um Platz für eine neue zu schaffen."
+
+Kopieren — aus dem Bestand wie aus einem Training mit „In meine Bibliothek kopieren" — geht für ein
+Konto ohne Verein über einen Dialog, der den Stand frisch nennt, etwa „Du besitzt 12 von 50
+Übungen.", und dann den Knopf der Aktion anbietet; an der Grenze steht dort dieselbe Meldung wie
+auf „Neue Übung", und der Dialog bietet nur „Schliessen". Wird beim Speichern trotzdem
+abgewiesen, weil inzwischen anderswo eine Übung entstanden ist, zeigt die Anwendung dieselbe
+Meldung; eingegebene Angaben bleiben stehen.
+
+Was schon besteht, bleibt, auch über der Grenze: Ändern, in die Community stellen, auf privat setzen,
+überführen und löschen gehen weiter; die Grenze hält nur Neues zurück. In einem Verein gilt sie
+nicht — ab der Aufnahme in ein Team oder eine Vereinsverwaltung sofort —, und Konten in einem
+Verein sehen weder Stand noch Dialog. In der Seitenleiste steht der Stand nicht. Ein verbundener
+KI-Assistent bekommt dieselbe Grenze und dieselbe Auskunft (siehe
+[Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
+
 ## Bekannte Grenzen
 
+Mit Personen ohne Konto lässt sich eine Übung nicht teilen: Ein Verweis führt sie bloss auf die
+Startseite, und ausdrucken kann sie nur, wer angemeldet ist. Einen anderen Weg dafür gibt es
+nicht. Ein hochgeladenes Foto bleibt dagegen über seine direkte Adresse abrufbar, auch ohne
+Konto.
+
 Für den Juniorenfussball gibt es keinen kuratierten Bestand. Wer dort plant, erfasst seine
-Übungen zuerst selbst; erst danach kann er sie in ein Training holen oder veröffentlichen. Der
+Übungen zuerst selbst; erst danach kann er sie in ein Training holen oder in die Community stellen. Der
 Anfang ist entsprechend leer.
 
 Keine Übung steht in beiden Altersstufen zugleich. Wer dieselbe Idee in beiden braucht, führt
@@ -410,8 +475,8 @@ Farbe wählt, wer zeichnet, und die Anwendung prüft sie nicht gegen die Figuren
 
 Die Material-Liste zählt, was gezeichnet ist, nicht wofür. Vier Pylonen bleiben vier Pylonen,
 auch wenn sie ein Tor bilden, und Teller am Feldrand zählen wie Teller im Feld. Die Mengen
-folgen dem Diagramm, nicht der Zahl der Kinder, die tatsächlich kommen. Weil die Manual-Diagramme
-die Kinder fast durchwegs in zwei Farben zeichnen, schlägt der Vorschlag dort in aller Regel
+folgen dem Diagramm, nicht der Zahl der Spieler:innen, die tatsächlich kommen. Weil die Manual-Diagramme
+die Spieler:innen fast durchwegs in zwei Farben zeichnen, schlägt der Vorschlag dort in aller Regel
 Überziehleibchen für beide Farben vor; die Anwendung nimmt nicht an, dass ein Team in eigener
 Kleidung spielt. Eigene Material-Arten ausserhalb des Diagramm-Vorrats gibt es in der Liste
 nicht — dafür ist die Ergänzung da. Die Spielfeldgrösse leitet die Anwendung nie aus dem

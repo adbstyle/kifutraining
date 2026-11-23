@@ -256,6 +256,7 @@ export function trainingAuskunft(
           ende: k.termin.ende,
           ort: k.termin.ort,
           bemerkung: k.termin.bemerkung,
+          hinweis_eltern: k.termin.hinweisEltern,
           felder: felderAusgabe(k.termin.felder),
           erwartete_spielerzahl: k.termin.spielerzahl,
           spielerzahl: spielerzahlQuelleAusgabe(spielerzahlVon(k.termin)),

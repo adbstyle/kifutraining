@@ -44,6 +44,10 @@ import {
   zugangsnameProblem,
 } from "../lib/mcp/regeln";
 import { loginAdresse, sichererRuecksprung } from "../lib/weiterleitung";
+import { KONTO_GRENZE_WERKZEUG, kontoGrenzeText } from "../lib/konto-grenzen";
+import { registriereWerkzeuge } from "../lib/mcp/server";
+import { ZUGANG_DARF, ZUGANG_DARF_NICHT, ZUGANG_ERWEITERUNG } from "../lib/mcp/umfang";
+import { BENACHRICHTIGEN_HINWEIS, BENACHRICHTIGEN_MODELL, BENACHRICHTIGEN_TEXT, BENACHRICHTIGEN_WERKZEUG } from "../lib/benachrichtigung";
 import {
   altersstufeSlugs,
   erscheinungsform_juniorenSlugs,
@@ -673,20 +677,26 @@ pruefe("fehlerErgebnis: jedes gesetzte Feld eines Kern-Fehlers kommt an", () => 
     verfallendSpiele: 1,
     kennzeichnungen: 1,
     anmeldungen: 1,
+    treffpunktEntfaellt: true,
+    grenze: { art: "uebungen", bestand: 50 },
   };
   const SNAKE: Record<string, string> = {
     retryAfter: "retry_after",
     varianteId: "variante_id",
     fristAbgelaufen: "frist_abgelaufen",
     verfallendSpiele: "verfallend_spiele",
+    treffpunktEntfaellt: "treffpunkt_entfaellt",
   };
   const aussen = (k: string) => SNAKE[k] ?? k;
   const f = fehlerVon(fehlerErgebnis(voll));
+  // Einzige Ausnahme: `grenze` ist das Merkmal der Oberfläche (#588); der
+  // Assistent liest die Grenze aus Meldung und Hinweis.
   assert.deepEqual(
     Object.keys(f).sort(),
-    Object.keys(voll).map(aussen).sort(),
+    Object.keys(voll).filter((k) => k !== "grenze").map(aussen).sort(),
     "Schlüssel in structuredContent.fehler",
   );
+  assert.ok(!("grenze" in f));
   assert.deepEqual(f.bedingung, "einleitung");
   // Auch in `fehlend` snake_case (#196): aussen trägt nichts camelCase.
   assert.deepEqual(f.fehlend, [{ bedingung: "einleitung", variante_id: null }]);
@@ -959,6 +969,501 @@ pruefe("Ein trotzdem gesendetes Abo weist das SDK sofort ab, statt einen Stream 
 pruefe("Die Frühabweisung antwortet wie das SDK und lässt alles andere durch", () => {
   assert.deepEqual(fruehAboWert, sdkAbo);
   assert.equal(fruehAufruf, null);
+});
+
+// ── Konten ohne Verein: die Grenzen im KI-Zugang (Story #588 AK 2, 3, 7, 8) ──
+//
+// Ohne Datenbank: Ein Client, der auf jedes Einfügen mit dem Marker der
+// Datenebene antwortet, durchläuft die vier Wege (Übung anlegen, Übung kopieren,
+// Training anlegen, Training kopieren) und die beiden Rümpfe dahinter. Was die
+// Datenebene dazu sagt, prüft `check:kern-db` und `supabase/tests`.
+
+type DbAntwort = { data: unknown; error: { message: string; code?: string } | null };
+
+function fakeClient(antwort: (tabelle: string, art: string) => DbAntwort) {
+  const aufrufe: string[] = [];
+  const baustein = (tabelle: string) => {
+    let art = "select";
+    const b: Record<string, unknown> = {};
+    const fertig = () => {
+      aufrufe.push(`${art} ${tabelle}`);
+      return Promise.resolve(antwort(tabelle, art));
+    };
+    for (const m of ["select", "eq", "order", "in", "limit"]) b[m] = () => b;
+    for (const m of ["insert", "delete", "update"]) b[m] = () => ((art = m), b);
+    b.single = fertig;
+    b.maybeSingle = fertig;
+    b.then = (ok: (v: DbAntwort) => unknown, nein?: (e: unknown) => unknown) => fertig().then(ok, nein);
+    return b;
+  };
+  const storage = {
+    from: () => ({
+      copy: async () => (aufrufe.push("copy bild"), { error: null }),
+      remove: async (pfade: string[]) => (aufrufe.push(`remove ${pfade.join(",")}`), { error: null }),
+      getPublicUrl: (pfad: string) => ({ data: { publicUrl: `https://x.test/storage/v1/object/public/exercise-images/${pfad}` } }),
+    }),
+  };
+  return { client: { from: baustein, storage } as never, aufrufe };
+}
+
+const KONTO_FEHLER = (art: "UEBUNGEN" | "TRAININGS", n: number) => ({
+  message: `KONTO_${art}_VOLL ${n}`,
+  code: "P0001",
+});
+const QUELLE_UEBUNG = {
+  id: "11111111-1111-4111-8111-111111111111",
+  slug: "quelle-1",
+  name: "Quelle",
+  altersstufe: "kinderfussball",
+  owner_id: "11111111-1111-4111-8111-111111111112",
+  source: "user",
+  visibility: "private",
+  trainingsteil: "einleitung",
+  hauptteilkategorie: null,
+  bild_url: "https://x.test/storage/v1/object/public/exercise-images/u/quelle.webp",
+  bild_quelle: "foto",
+  diagramm: null,
+};
+const QUELLE_TRAINING = {
+  id: "11111111-1111-4111-8111-111111111113",
+  name: "Quelle",
+  altersstufe: "kinderfussball",
+  stufen: ["F"],
+  ziel: null,
+  owner_id: "11111111-1111-4111-8111-111111111112",
+  team_id: null,
+  visibility: "private",
+};
+const NUTZER = "11111111-1111-4111-8111-111111111112";
+const nurLesen = (tabelle: string, art: string): DbAntwort | null =>
+  art !== "select"
+    ? null
+    : tabelle === "exercises"
+      ? { data: QUELLE_UEBUNG, error: null }
+      : tabelle === "trainings"
+        ? { data: QUELLE_TRAINING, error: null }
+        : { data: [], error: null };
+
+const voll = async (art: "UEBUNGEN" | "TRAININGS", n: number) => {
+  const { client, aufrufe } = fakeClient((tabelle, a) => nurLesen(tabelle, a) ?? { data: null, error: KONTO_FEHLER(art, n) });
+  const { legeUebungAn } = await import("../lib/kern/uebungen");
+  const { kopiereUebungNach } = await import("../lib/kern/uebungen");
+  const { legeTrainingAn } = await import("../lib/kern/training");
+  const { kopiereTrainingNach } = await import("../lib/kern/kopie");
+  const { legeUebungsKopieAn } = await import("../lib/fassung");
+  return {
+    aufrufe,
+    anlegenUebung: await legeUebungAn(client, NUTZER, {
+      altersstufe: "kinderfussball",
+      name: "Probe",
+      einordnung: "einleitung",
+      kategorien: ["F"],
+      offenStarten: "Offen",
+      ueben: "Üben",
+      wetteifern: "Wett",
+    } as never),
+    kopierenUebung: await kopiereUebungNach(client, NUTZER, { kennung: QUELLE_UEBUNG.slug }),
+    anlegenTraining: await legeTrainingAn(client, NUTZER, { name: "Probe", altersstufe: "kinderfussball", stufen: ["F"] }),
+    kopierenTraining: await kopiereTrainingNach(client, NUTZER, { quelleId: QUELLE_TRAINING.id }),
+    bibliothek: await legeUebungsKopieAn(client, QUELLE_UEBUNG as never, { ownerId: NUTZER, altersstufe: "kinderfussball" }),
+  };
+};
+const uebungenVoll = await voll("UEBUNGEN", 50);
+const trainingsVoll = await voll("TRAININGS", 31);
+
+pruefe("Konto ohne Verein (#588 AK 2, 7): Übung anlegen und kopieren, auch aus dem Training in die Bibliothek — dieselbe Auskunft, nichts entstanden, kein Wiederholen", () => {
+  const satz = kontoGrenzeText("uebungen", 50);
+  for (const f of [uebungenVoll.anlegenUebung, uebungenVoll.kopierenUebung]) {
+    assert.equal(f.ok, false);
+    if (f.ok) return;
+    assert.equal(f.art, "regel");
+    assert.equal(f.meldung, satz, "wie in der Anwendung");
+    assert.equal(f.hinweis, "Es ist nichts entstanden.");
+    assert.equal(f.wiederholbar, undefined);
+    // Wie es beim Assistenten ankommt: Text und Struktur, ohne Aufforderung zum Wiederholen.
+    const r = fehlerErgebnis(f);
+    assert.ok(textVon(r).startsWith(`[regel] ${satz}`), textVon(r));
+    assert.ok(textVon(r).endsWith("Es ist nichts entstanden."), textVon(r));
+    assert.ok(!/wiederhol|noch einmal/i.test(textVon(r)), textVon(r));
+    assert.ok(!("wiederholbar" in fehlerVon(r)), "nicht als wiederholbar gekennzeichnet");
+    assert.ok(!/(uebung|training)_loeschen/.test(textVon(r)), "kein Löschwerkzeug");
+  }
+  // Das Kopieren aus dem Training (Rumpf der Bibliothek) meldet denselben Satz.
+  assert.equal(uebungenVoll.bibliothek.ok, false);
+  if (!uebungenVoll.bibliothek.ok) {
+    assert.equal(uebungenVoll.bibliothek.error, satz);
+    assert.equal(uebungenVoll.bibliothek.art, "regel");
+    assert.equal(uebungenVoll.bibliothek.hinweis, "Es ist nichts entstanden.");
+  }
+  // Eine abgewiesene Kopie hinterlässt nichts, auch kein Bild: Die kopierte Bilddatei wird entfernt.
+  const bildKopien = uebungenVoll.aufrufe.filter((a) => a === "copy bild").length;
+  const bildEntfernt = uebungenVoll.aufrufe.filter((a) => a.startsWith("remove ")).length;
+  assert.equal(bildKopien, 2, "uebung_kopieren und Bibliothek kopieren das Bild vor dem Einfügen");
+  assert.equal(bildEntfernt, bildKopien, "jede abgewiesene Kopie räumt ihr Bild ab");
+  assert.ok(!uebungenVoll.aufrufe.includes("delete exercises"), "nichts zu löschen: es entstand keine Zeile");
+});
+
+pruefe("Konto ohne Verein (#588 AK 3, 7): Training anlegen und übernehmen — dieselbe Auskunft, nichts entstanden, kein «gefahrlos wiederholen»", () => {
+  const satz = kontoGrenzeText("trainings", 31);
+  assert.equal(satz, "Du besitzt 31 Trainings, höchstens 30 sind erlaubt. In der Anwendung schaffst du durch Löschen wieder Platz. Für Personen in einem Verein gelten die Grenzen nicht.");
+  for (const f of [trainingsVoll.anlegenTraining, trainingsVoll.kopierenTraining]) {
+    assert.equal(f.ok, false);
+    if (f.ok) return;
+    assert.equal(f.art, "regel");
+    assert.equal(f.meldung, satz);
+    assert.equal(f.hinweis, "Es ist nichts entstanden.", "nicht «gefahrlos wiederholen»");
+    assert.equal(f.wiederholbar, undefined);
+    const r = fehlerErgebnis(f);
+    assert.ok(!/wiederhol|noch einmal/i.test(textVon(r)), textVon(r));
+    assert.ok(!("wiederholbar" in fehlerVon(r)));
+    assert.ok(!/(uebung|training)_loeschen/.test(textVon(r)), "kein Löschwerkzeug");
+  }
+  assert.ok(!trainingsVoll.aufrufe.includes("delete trainings"), "nichts zu löschen: es entstand keine Zeile");
+});
+
+pruefe("Konto ohne Verein (#588): der Satz nennt die Art - Übungen und Trainings haben je ihre Grenze", () => {
+  // Ein Marker der anderen Art ergibt den eigenen Satz: Bei Trainings nennt er Trainings.
+  assert.ok(uebungenVoll.kopierenUebung.ok === false && uebungenVoll.kopierenUebung.meldung.includes("Übungen"));
+  assert.ok(trainingsVoll.kopierenTraining.ok === false && trainingsVoll.kopierenTraining.meldung.includes("Trainings"));
+});
+
+pruefe("Konto ohne Verein (#588 AK 7): die Werkzeugbeschreibungen der vier Wege nennen die Grenze; «gefahrlos wiederholen» gilt bei training_kopieren nicht für sie", () => {
+  const beschreibungen = new Map<string, string>();
+  const teamKennung = new Map<string, boolean>();
+  const server = {
+    registerTool: (name: string, def: { description?: string; inputSchema?: { shape?: Record<string, unknown> } }) => {
+      beschreibungen.set(name, def.description ?? "");
+      teamKennung.set(name, "team_id" in (def.inputSchema?.shape ?? {}));
+    },
+  };
+  registriereWerkzeuge(server as never);
+  for (const name of ["uebung_anlegen", "uebung_kopieren"])
+    assert.ok(beschreibungen.get(name)?.includes(KONTO_GRENZE_WERKZEUG.uebungen), name);
+  for (const name of ["training_anlegen", "training_kopieren"])
+    assert.ok(beschreibungen.get(name)?.includes(KONTO_GRENZE_WERKZEUG.trainings), name);
+  const kopieren = beschreibungen.get("training_kopieren") ?? "";
+  // «Gefahrlos wiederholen» nur bei «technisch» und «konflikt» — nie bei einer Regel wie der Grenze (Fix-Lauf #588).
+  assert.match(kopieren, /«hinweis» sagt, dass nichts entstanden ist - bei «technisch» oder «konflikt» mit dem Zusatz, dass ein Wiederholen gefahrlos ist -/);
+  assert.ok(!/ausser bei der Grenze unten/.test(kopieren));
+  // Die Aufforderung, bei einer Ablehnung «noch einmal zu senden», gilt für Verstösse, nicht für die Grenze.
+  const anlegen = beschreibungen.get("uebung_anlegen") ?? "";
+  assert.match(anlegen, /Nach einer Ablehnung wegen verletzter Angaben die ganze Übung korrigiert noch einmal senden\./);
+  assert.ok(!/Danach die ganze Übung korrigiert/.test(anlegen));
+  // Übungen löscht der Assistent nie (#588 OoS 3): kein Werkzeug, kein Verweis darauf.
+  assert.ok(![...beschreibungen.keys()].some((n) => n === "uebung_loeschen"));
+  for (const [name, text] of beschreibungen)
+    if (name.startsWith("uebung")) assert.ok(!/uebung_loeschen/.test(text), name);
+  // Übung ins Training übernehmen zählt nicht (AK 4) — die Beschreibung sagt es.
+  assert.match(beschreibungen.get("training_uebung_zuordnen") ?? "", /zählt nicht zur Grenze der eigenen Übungen/);
+  // AK 9 (schon durchgesetzt, hier festgehalten): Team, Spielerliste, Kader und Kalender öffnet nur, wer die Kennung
+  // eines Teams nennt, und `pruefeTeamMitglied` liest das Team unter der RLS (lib/kern/zugriff.ts) — ein Konto ohne
+  // Team bekommt «nicht gefunden». Kein Werkzeug listet fremde Teams, `teams_abrufen` nur die eigenen.
+  for (const name of ["team_plan_abrufen", "team_mitglieder_abrufen", "spielerliste_abrufen", "kader_abrufen", "termin_festlegen", "spieler_aufnehmen"])
+    assert.ok(teamKennung.get(name), `${name} verlangt «team_id»`);
+});
+
+// ── KI-Assistent und Vereine (Story #589) ───────────────────────────────────
+// Die Werkzeugbeschreibungen sind das ganze Modell des Assistenten (keine
+// Server-Anweisungen): Hier steht fest, was sie seit Story 13 über Verein,
+// weitere Teams, Herausnehmen, Löschen und den privaten Link sagen.
+/** Beschreibungen und Eingabefelder aller registrierten Werkzeuge. */
+function werkzeugTexte() {
+  const beschreibung = new Map<string, string>();
+  const eingabe = new Map<string, string[]>();
+  registriereWerkzeuge({
+    registerTool: (name: string, def: { description?: string; inputSchema?: { shape?: Record<string, unknown> } }) => {
+      beschreibung.set(name, def.description ?? "");
+      eingabe.set(name, Object.keys(def.inputSchema?.shape ?? {}));
+    },
+  } as never);
+  return { beschreibung, eingabe };
+}
+
+pruefe("Story 13 (#589 A2): der Werkzeugsatz bleibt, wie er ist - kein Werkzeug umbenannt, entfernt oder neu (seither neu: #598 team_infos_*, #657 spieler_link_zugestellt)", () => {
+  assert.deepEqual([...werkzeugTexte().beschreibung.keys()].sort(), [
+    "abholadresse_erneuern", "diagramm_katalog_abrufen", "gruppe_anlegen", "gruppe_entfernen", "gruppe_umbenennen",
+    "kader_abrufen", "kader_anlegen", "kader_entfernen", "kader_herausnehmen", "kader_umbenennen", "kader_zuteilen",
+    "schnuppertraining_abrufen", "schnuppertraining_festlegen", "selbstabholung_abrufen", "selbstabholung_schalten",
+    "spieler_aendern", "spieler_aufnehmen", "spieler_aus_team_nehmen", "spieler_link_abrufen", "spieler_link_erneuern",
+    "spieler_link_zugestellt", "spieler_schnuppern_setzen", "spielerliste_abrufen", "team_infos_abrufen", "team_infos_festlegen",
+    "team_mitglieder_abrufen", "team_plan_abrufen",
+    "teams_abrufen", "termin_abmeldung_setzen", "termin_aendern", "termin_anwesenheit_setzen",
+    "termin_aufgebot_setzen", "termin_ausfall_zuruecknehmen", "termin_ausfallen_lassen", "termin_der_serie_folgen",
+    "termin_entfernen", "termin_festlegen", "termin_spieler_abrufen", "termin_trainer_absagen",
+    "termin_trainer_aendern", "terminserie_festlegen", "training_abrufen", "training_anlegen",
+    "training_auf_entwurf_setzen", "training_durchlauf_abrufen", "training_hinweise_abrufen",
+    "training_kategorien_setzen", "training_kopieren", "training_loeschen", "training_loesen",
+    "training_uebung_dauer_setzen", "training_uebung_durchlauf_setzen", "training_uebung_entfernen",
+    "training_uebung_notiz_setzen", "training_uebung_zuordnen", "training_uebungen_fuer_block",
+    "training_uebungen_ordnen", "training_umbenennen", "training_veroeffentlichen", "training_ziel_setzen",
+    "training_zuordnen", "trainings_suchen", "uebung_abrufen", "uebung_aendern", "uebung_anlegen",
+    "uebung_auf_entwurf_setzen", "uebung_diagramm_maengel_abrufen", "uebung_diagramm_setzen", "uebung_kopieren",
+    "uebung_veroeffentlichen", "uebungen_suchen", "variante_anlegen", "variante_entfernen", "variante_umbenennen",
+    "varianten_ordnen", "vokabular", "wer_bin_ich",
+  ]);
+});
+
+pruefe("Story 13 (#589 AK 1, 10): teams_abrufen nennt den Verein und den Hinweis ohne Team; Teams verwaltet nur die Vereinsverwaltung im Bereich «Verein»", () => {
+  const t = werkzeugTexte().beschreibung.get("teams_abrufen") ?? "";
+  assert.match(t, /«verein»/);
+  assert.match(t, /«hinweis»/);
+  assert.match(t, /Teams, Spielerlisten und Kalender stehen nur Mitgliedern eines Teams offen/);
+  assert.match(t, /Teams anlegen, umbenennen und auflösen kann nur die Vereinsverwaltung, im Bereich «Verein» der Anwendung/);
+  // Seit #581 falsch: Umbenennen und Auflösen gehen nicht im Team-Bereich.
+  assert.ok(!t.includes("nur im Team-Bereich von KiFu"), t);
+});
+
+pruefe("Story 13 (#589 AK 2, 5, 8): Spieler-Werkzeuge nennen weitere Teams, Herausnehmen statt Löschen, «nicht gefunden» ausserhalb der eigenen Teams", () => {
+  const { beschreibung } = werkzeugTexte();
+  const LOESCHEN = "Aus dem Verein löscht Spieler:innen nur die Vereinsverwaltung, in der Anwendung; kein Werkzeug löscht sie.";
+  for (const n of ["spielerliste_abrufen", "spieler_aufnehmen", "spieler_aendern", "spieler_aus_team_nehmen"])
+    assert.ok(beschreibung.get(n)?.includes(LOESCHEN), n);
+  assert.match(beschreibung.get("spielerliste_abrufen") ?? "", /«weitere_teams»/);
+  // Kein Werkzeug löscht Spieler:innen, und keine Beschreibung verweist auf ein Lösch-Werkzeug, das es nicht gibt.
+  for (const [n, text] of beschreibung) {
+    assert.ok(!/^spieler.*loeschen$/.test(n), n);
+    for (const m of text.matchAll(/\b[a-z]+(?:_[a-z]+)*_loeschen\b/g)) assert.ok(beschreibung.has(m[0]), `${n} verweist auf ${m[0]}`);
+  }
+  // AK 8: «nicht gefunden» schliesst Spieler:innen ohne Team und in fremden Teams ein; die Ausnahmen stehen dabei.
+  const fehlerText = beschreibung.get("spieler_aendern") ?? "";
+  assert.match(fehlerText, /sie gehört nur fremden Teams oder keinem Team des Vereins an/);
+  assert.match(fehlerText, /aus deinen Teams genommen oder aus dem Verein gelöscht/);
+  assert.match(fehlerText, /Abweisung einer Doppelerfassung/);
+  assert.match(fehlerText, /«nicht_mehr_im_team»/);
+  assert.ok(!fehlerText.includes("sie wurde entfernt"), "das Entfernen gibt es nicht mehr");
+});
+
+pruefe("Story 13 (#589 AK 4, 6, 7): spieler_aus_team_nehmen beschreibt die Rückfrage als «regel» mit «stand», den Zusatz zum letzten eigenen Team und die Auskunft bei fremdem Team", () => {
+  const t = werkzeugTexte().beschreibung.get("spieler_aus_team_nehmen") ?? "";
+  assert.match(t, /Fehlerart «regel», «feld»: «stand»/);
+  assert.match(t, /über den Assistenten nicht mehr erreichbar/);
+  assert.match(t, /Fehlerart «konflikt»/);
+  assert.match(t, /dieselbe Auskunft wie eine unbekannte Spieler:in/);
+});
+
+pruefe("Story 13 (#589 AK 9; A8, A9): Link-Werkzeuge über alle Teams, Erneuern zweistufig mit «bestaetigt», kein «team_id» als Eingabe", () => {
+  const { beschreibung, eingabe } = werkzeugTexte();
+  for (const n of ["spieler_link_abrufen", "spieler_link_erneuern"]) {
+    const t = beschreibung.get(n) ?? "";
+    assert.match(t, /die anstehenden Termine aller ihrer Teams/, n);
+    assert.match(t, /Ein erneuerter Link gilt für alle ihre Teams/, n);
+    assert.match(t, /«teams»/, n);
+    // Der Link zeigt seit Story 7 nicht mehr die Termine eines Teams.
+    assert.ok(!/den Teamnamen|Termine des Teams/.test(t), n);
+  }
+  assert.deepEqual(eingabe.get("spieler_link_abrufen"), ["spieler_id"]);
+  assert.deepEqual(eingabe.get("spieler_link_erneuern"), ["spieler_id", "bestaetigt"]);
+  assert.match(beschreibung.get("spieler_link_erneuern") ?? "", /Ohne «bestaetigt: true» ändert der Aufruf nichts/);
+  // A9: kein «team_id» an Link und Schnuppern — der Link gilt für alle Teams, Schnuppern nur bei genau einem.
+  assert.deepEqual(eingabe.get("spieler_schnuppern_setzen"), ["spieler_id", "schnuppern", "bestaetigt"]);
+  const schnuppern = beschreibung.get("spieler_schnuppern_setzen") ?? "";
+  assert.ok(!schnuppern.includes("im ältesten ihrer Teams"), schnuppern);
+  assert.match(schnuppern, /solange sie genau einem Team angehört/);
+  // Die Abholadresse eines Teams gibt den einen Link der Spieler:in heraus.
+  for (const n of ["selbstabholung_abrufen", "selbstabholung_schalten", "abholadresse_erneuern"])
+    assert.match(beschreibung.get(n) ?? "", /denselben, den die Abholadresse jedes ihrer Teams mit eingeschalteter Selbstabholung herausgibt/, n);
+});
+
+pruefe("Link als zugestellt (#657 AK 3, PC 4): ein Werkzeug je Spieler:in, reine Markierung, nur solange nicht abgeholt; derselbe Stand in Liste und Link", () => {
+  const { beschreibung, eingabe } = werkzeugTexte();
+  assert.deepEqual(eingabe.get("spieler_link_zugestellt"), ["spieler_id", "zugestellt"], "einzeln, nie gesammelt (OoS 1)");
+  const t = beschreibung.get("spieler_link_zugestellt") ?? "";
+  assert.match(t, /KiFu verschickt nichts/);
+  assert.match(t, /Nur solange der Link nicht abgeholt ist/);
+  assert.match(t, /ein erneuerter Link ist wieder offen/);
+  assert.match(t, /Immer eine Spieler:in je Aufruf/);
+  // PC 4: überall abgeholt/zugestellt/offen, nirgends «bezogen».
+  for (const [n, text] of beschreibung) assert.ok(!/bezogen/i.test(text), `${n} sagt «bezogen»`);
+});
+
+pruefe("Benachrichtigungen (#642 AK 6): termin_festlegen beschreibt «benachrichtigen» wie die Oberfläche; der Zugang nennt es ohne neue Zustimmung", () => {
+  const felder = new Map<string, { description?: string }>();
+  registriereWerkzeuge({
+    registerTool: (name: string, def: { inputSchema?: { shape?: Record<string, { description?: string }> } }) => {
+      if (name === "termin_festlegen") for (const [k, v] of Object.entries(def.inputSchema?.shape ?? {})) felder.set(k, v);
+    },
+  } as never);
+  const beschreibung = felder.get("benachrichtigen")?.description ?? "";
+  assert.equal(beschreibung, `Nur bei einem Spiel. ${BENACHRICHTIGEN_MODELL("neues_spiel")}`);
+  assert.ok(beschreibung.includes(BENACHRICHTIGEN_HINWEIS.neues_spiel), "UI = KI: derselbe Hinweis");
+  // Der Satz gilt für alle Vorgänge des Epics #641 (#642–#645).
+  assert.ok(
+    ZUGANG_DARF[3].endsWith(
+      "; bei neuen Spielen, Ausfällen und ihrer Rücknahme, Verlegungen und beim Entfernen jeweils entscheiden, ob die Spielervertretungen am privaten Link benachrichtigt werden",
+    ),
+  );
+  assert.ok(ZUGANG_ERWEITERUNG.includes("nicht erneut zustimmen"));
+});
+
+pruefe("Benachrichtigungen (#643 AK 1, 2): termin_ausfallen_lassen und termin_ausfall_zuruecknehmen beschreiben «benachrichtigen» wie die Oberfläche (Standard true)", () => {
+  const felder = new Map<string, Map<string, { description?: string; parse?: (x: unknown) => unknown }>>();
+  registriereWerkzeuge({
+    registerTool: (name: string, def: { inputSchema?: { shape?: Record<string, { description?: string }> } }) => {
+      if (name === "termin_ausfallen_lassen" || name === "termin_ausfall_zuruecknehmen")
+        felder.set(name, new Map(Object.entries(def.inputSchema?.shape ?? {})));
+    },
+  } as never);
+  const ausfall = felder.get("termin_ausfallen_lassen")?.get("benachrichtigen");
+  const ruecknahme = felder.get("termin_ausfall_zuruecknehmen")?.get("benachrichtigen");
+  assert.equal(
+    ausfall?.description,
+    `Nur beim Ausfallen lassen; den Grund eines schon ausgefallenen ändern bleibt still. ${BENACHRICHTIGEN_MODELL("ausfall")}`,
+  );
+  assert.ok(ausfall?.description?.includes(BENACHRICHTIGEN_HINWEIS.ausfall), "UI = KI: derselbe Hinweis (AK 2)");
+  assert.equal(ruecknahme?.description, BENACHRICHTIGEN_MODELL("ruecknahme"));
+  assert.ok(ruecknahme?.description?.includes(BENACHRICHTIGEN_HINWEIS.ruecknahme), "UI = KI: derselbe Hinweis");
+  // Ohne Angabe: benachrichtigen (Prinzip 4).
+  assert.equal(ausfall?.parse?.(undefined), true);
+  assert.equal(ruecknahme?.parse?.(undefined), true);
+});
+
+pruefe("Benachrichtigungen (#644 AK 1, 2): termin_aendern und termin_der_serie_folgen beschreiben «benachrichtigen» wie die Oberfläche (Standard true); jeder Werkzeugtext nennt den Standard", () => {
+  const felder = new Map<string, Map<string, { description?: string; parse?: (x: unknown) => unknown }>>();
+  const texte = new Map<string, string>();
+  registriereWerkzeuge({
+    registerTool: (name: string, def: { description?: string; inputSchema?: { shape?: Record<string, { description?: string }> } }) => {
+      felder.set(name, new Map(Object.entries(def.inputSchema?.shape ?? {})));
+      texte.set(name, def.description ?? "");
+    },
+  } as never);
+  const aendern = felder.get("termin_aendern")?.get("benachrichtigen");
+  const folgen = felder.get("termin_der_serie_folgen")?.get("benachrichtigen");
+  // UI = KI: derselbe Hinweis wie unter dem Häkchen des Termin-Dialogs, einzeln
+  // und über die Serie — und kein weiterer (#641 Prinzip 4).
+  assert.ok(aendern?.description?.endsWith(BENACHRICHTIGEN_MODELL("aendern")), aendern?.description);
+  for (const [v, h] of Object.entries(BENACHRICHTIGEN_HINWEIS))
+    if (v !== "aendern") assert.ok(!aendern?.description?.includes(h), `termin_aendern nennt den Hinweis «${v}»`);
+  assert.ok(aendern?.description?.includes("der Kartenlink allein nicht"), "OoS 1");
+  assert.ok(folgen?.description?.endsWith(BENACHRICHTIGEN_MODELL("aendern")), folgen?.description);
+  // Ohne Angabe: benachrichtigen (Prinzip 4).
+  assert.equal(aendern?.parse?.(undefined), true);
+  assert.equal(folgen?.parse?.(undefined), true);
+  // Jedes Werkzeug mit «benachrichtigen» nennt den Standard im Werkzeugtext, und nur diese.
+  const mit = [...felder].filter(([, f]) => f.has("benachrichtigen")).map(([n]) => n).sort();
+  assert.deepEqual(mit, [
+    "termin_aendern",
+    "termin_ausfall_zuruecknehmen",
+    "termin_ausfallen_lassen",
+    "termin_der_serie_folgen",
+    "termin_entfernen",
+    "termin_festlegen",
+  ]);
+  for (const [name, text] of texte) assert.equal(text.includes(BENACHRICHTIGEN_WERKZEUG), mit.includes(name), name);
+});
+
+pruefe("Benachrichtigungen (#645 AK 1): termin_entfernen beschreibt «benachrichtigen» wie die Oberfläche (Standard true) und nennt «benachrichtigt»", () => {
+  const felder = new Map<string, Map<string, { description?: string; parse?: (x: unknown) => unknown }>>();
+  const ausgaben = new Map<string, Record<string, unknown>>();
+  registriereWerkzeuge({
+    registerTool: (
+      name: string,
+      def: { inputSchema?: { shape?: Record<string, { description?: string }> }; outputSchema?: { shape?: Record<string, unknown> } },
+    ) => {
+      felder.set(name, new Map(Object.entries(def.inputSchema?.shape ?? {})));
+      ausgaben.set(name, def.outputSchema?.shape ?? {});
+    },
+  } as never);
+  const entfernen = felder.get("termin_entfernen")?.get("benachrichtigen");
+  assert.equal(entfernen?.description, BENACHRICHTIGEN_MODELL("entfernen"));
+  assert.ok(entfernen?.description?.includes(BENACHRICHTIGEN_HINWEIS.entfernen), "UI = KI: derselbe Hinweis");
+  assert.equal(entfernen?.parse?.(undefined), true, "Prinzip 4: ohne Angabe benachrichtigen");
+  assert.equal(entfernen?.parse?.(false), false);
+  assert.ok("benachrichtigt" in (ausgaben.get("termin_entfernen") ?? {}), "Ausgabe benachrichtigt");
+  // Befund 3: Die Wege, die direkt schreiben, sagen ein Scheitern der
+  // Benachrichtigung im «hinweis» — wortgleich zur Oberfläche. Die RPC-Wege
+  // legen in derselben Transaktion ab und kennen es nicht.
+  const mitHinweis = ["termin_aendern", "termin_ausfall_zuruecknehmen", "termin_ausfallen_lassen", "termin_festlegen"];
+  for (const n of [...mitHinweis, "termin_entfernen", "termin_der_serie_folgen"]) {
+    const hinweis = ausgaben.get(n)?.hinweis as { description?: string; parse?: (x: unknown) => unknown } | undefined;
+    assert.equal(!!hinweis, mitHinweis.includes(n), `${n}: hinweis`);
+    if (!hinweis) continue;
+    assert.ok(hinweis.description?.includes(BENACHRICHTIGEN_TEXT.gescheitert), hinweis.description);
+    assert.equal(hinweis.parse?.(undefined), undefined, "ohne Scheitern kein hinweis");
+  }
+});
+
+pruefe("Story 13 (#589 PC 1, 2): ZUGANG_DARF und ZUGANG_DARF_NICHT im Wortlaut, der Kopf von umfang.ts verlangt keine erneute Zustimmung", () => {
+  assert.equal(
+    ZUGANG_DARF[5],
+    "die Spielerliste deiner Teams (Vorname, Nachname, Jahrgang, J+S-Nummer) einsehen und führen, dazu den Verein deiner Teams und die Namen weiterer Teams einer Spieler:in sehen, Spieler:innen aus einem deiner Teams nehmen (sie bleiben im Verein), Kader anlegen, umbenennen und entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining nehmen und die Anzahl Schnuppertrainings samt Info-Schreiben festlegen, die Infos zum Team für Spieler:innen und Eltern verfassen, ändern und entfernen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link einer Spieler:in holen, erneuern und als zugestellt markieren, die Selbstabholung ein- und ausschalten, die Abholadresse holen und erneuern und sehen, welche Links abgeholt oder zugestellt sind",
+  );
+  assert.deepEqual(ZUGANG_DARF_NICHT, [
+    "deine Favoriten",
+    "die Verwaltung deiner Teams und deines Vereins (Verein gründen, umbenennen und löschen, Teams anlegen, umbenennen und auflösen, Personen in Teams oder in die Vereinsverwaltung aufnehmen oder daraus entfernen, Spieler:innen Teams zuordnen, Spieler:innen aus dem Verein löschen und Spielerlisten importieren)",
+    "dein Konto selbst (Anzeigename, Passwort, Löschen)",
+  ]);
+  const kopf = readFileSync(join(fileURLToPath(new URL("..", import.meta.url)), "lib/mcp/umfang.ts"), "utf8").split("export")[0];
+  assert.ok(!kopf.includes("Frage nach erneuter Zustimmung"), "PC 2: keine erneute Zustimmung");
+  assert.match(kopf, /#589 PC 2/);
+});
+
+pruefe("#598 AK 9: die Infos zum Team über zwei Werkzeuge, mit Gliederung, Grenze und wer sie sieht", () => {
+  const { beschreibung, eingabe } = werkzeugTexte();
+  assert.deepEqual(eingabe.get("team_infos_abrufen"), ["team_id"]);
+  assert.deepEqual(eingabe.get("team_infos_festlegen"), ["team_id", "text"]);
+  for (const n of ["team_infos_abrufen", "team_infos_festlegen"]) {
+    const t = beschreibung.get(n) ?? "";
+    assert.match(t, /10000 Zeichen samt Gliederung/, n);
+    assert.match(t, /nicht, solange die Spieler:in schnuppert/, n);
+    assert.match(t, /«## »/, n);
+  }
+  assert.match(beschreibung.get("team_infos_festlegen") ?? "", /leerer Text/);
+});
+
+// ── wer_bin_ich führt zu «Verbindungen» (#662 AK 5) ─────────────────────────
+// Am echten Werkzeug mit Wrapper: Ein Zugang mit Origin, ein `fetch`, das
+// Supabase spielt (Aufruf-Zählung, Anzeigename) — die Adresse entsteht über
+// `zugang.url(...)` und endet dort, wo sich der Zugang widerrufen lässt.
+const werBinIchErgebnis = await (async () => {
+  let aufruf: ((args: unknown, ctx: unknown) => Promise<CallToolResult>) | undefined;
+  registriereWerkzeuge({
+    registerTool: (name: string, _def: unknown, cb: (args: unknown, ctx: unknown) => Promise<CallToolResult>) => {
+      if (name === "wer_bin_ich") aufruf = cb;
+    },
+  } as never);
+  assert.ok(aufruf, "wer_bin_ich ist registriert");
+  const vorher = { fetch: globalThis.fetch, url: process.env.SUPABASE_URL, key: process.env.SUPABASE_ANON_KEY };
+  process.env.SUPABASE_URL = "https://supabase.test";
+  process.env.SUPABASE_ANON_KEY = "anon";
+  globalThis.fetch = (async (eingabe: RequestInfo | URL) => {
+    const url = String(eingabe instanceof Request ? eingabe.url : eingabe);
+    const wert = url.endsWith("/rpc/ki_aufruf_zaehlen") ? { status: "ok" } : url.endsWith("/rpc/anzeige_name") ? "Adrian" : null;
+    return new Response(JSON.stringify(wert), { status: wert === null ? 404 : 200, headers: { "content-type": "application/json" } });
+  }) as typeof fetch;
+  try {
+    return await aufruf({}, { http: { authInfo: { token: "t", clientId: "c", scopes: [], extra: { userId: "u", origin: "https://ki-fu.test/" } } } });
+  } finally {
+    globalThis.fetch = vorher.fetch;
+    if (vorher.url === undefined) delete process.env.SUPABASE_URL;
+    else process.env.SUPABASE_URL = vorher.url;
+    if (vorher.key === undefined) delete process.env.SUPABASE_ANON_KEY;
+    else process.env.SUPABASE_ANON_KEY = vorher.key;
+  }
+})();
+
+pruefe("#662 AK 5: wer_bin_ich nennt als konto_url die Seite «Verbindungen» im Konto", () => {
+  assert.notEqual(werBinIchErgebnis.isError, true, JSON.stringify(werBinIchErgebnis));
+  assert.deepEqual(werBinIchErgebnis.structuredContent, {
+    anzeigename: "Adrian",
+    konto_url: "https://ki-fu.test/konto/verbindungen",
+  });
+  assert.match(werkzeugTexte().beschreibung.get("wer_bin_ich") ?? "", /Seite «Verbindungen» im Konto/);
+  assert.match(MELDUNG_ZUGAENGE_GRENZE, /im Konto unter «Verbindungen»/);
+});
+
+pruefe("#659 AK 3: der KI-Assistent beschreibt Angaben am privaten Link als für Spieler:innen und Eltern bestimmt", () => {
+  const { beschreibung } = werkzeugTexte();
+  // Kein Satz einer Werkzeugbeschreibung nennt «Eltern» ohne die Spieler:in (Zwilling des Wächters in check:kern).
+  for (const [name, text] of beschreibung)
+    for (const satz of text.split(/(?<=[.!?])\s+/))
+      assert.ok(!/\bEltern\b/.test(satz) || /Spieler:in/.test(satz), `${name}: «${satz}»`);
+  for (const [name, text] of beschreibung) assert.ok(!/Hinweis für Eltern|Eltern-Chat/.test(text), name);
+  // Die Angaben selbst: Hinweis, Infos zum Team, Meldefrist.
+  assert.match(beschreibung.get("team_plan_abrufen") ?? "", /Hinweis am privaten Link/);
+  assert.match(beschreibung.get("termin_festlegen") ?? "", /Spieler:innen und Eltern sehen den Hinweis über den privaten Link/);
+  for (const n of ["team_infos_abrufen", "team_infos_festlegen"])
+    assert.match(beschreibung.get(n) ?? "", /ein Text je Team für Spieler:innen und Eltern/, n);
+  assert.match(beschreibung.get("termin_spieler_abrufen") ?? "", /Spieler:innen und Eltern über den privaten Link nur bis zur Meldefrist/);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

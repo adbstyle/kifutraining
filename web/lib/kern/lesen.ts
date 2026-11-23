@@ -98,6 +98,8 @@ export type TrefferTermin = {
   ende: string;
   ort: string | null;
   bemerkung: string | null;
+  /** Der Hinweis für Eltern (#590). */
+  hinweisEltern: string | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: Felder | null;
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */

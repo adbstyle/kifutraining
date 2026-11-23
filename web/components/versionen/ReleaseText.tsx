@@ -33,10 +33,10 @@ const bausteine: Components = {
     </a>
   ),
   code: ({ children }) => (
-    <code className="rounded-klein bg-elev-08 px-1 font-mono text-[0.9em]">{children}</code>
+    <code className="rounded-klein betont px-1 font-mono text-[0.9em]">{children}</code>
   ),
   pre: ({ children }) => (
-    <pre className="overflow-x-auto rounded-flaeche bg-elev-08 p-3 [&>code]:bg-transparent [&>code]:p-0">
+    <pre className="overflow-x-auto rounded-flaeche betont p-3 [&>code]:bg-transparent [&>code]:p-0">
       {children}
     </pre>
   ),

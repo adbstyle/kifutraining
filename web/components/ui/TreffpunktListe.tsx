@@ -35,3 +35,33 @@ export function TreffpunktListe({
     </ul>
   );
 }
+
+/* Der Treffpunkt eines Trainings (#561; Design PO 2026-10-29): eine Zeile im
+   selben Raster wie die Treffpunkte eines Spiels — statt der Anreiseart steht
+   «Treffpunkt», danach Uhrzeit und Ort. Er liegt immer am Trainingstag, darum
+   ohne Datum. Geteilt vom Trainingsplan, den Eckdaten (dort ohne das Wort,
+   das schon die Angabe nennt) und der Trainingskarte am privaten Link. */
+export function TrainingsTreffpunkt({
+  treffpunkt,
+  bezeichnung = true,
+  className,
+}: {
+  treffpunkt: { zeit: string; ort: string } | null;
+  bezeichnung?: boolean;
+  className?: string;
+}) {
+  if (!treffpunkt) return null;
+  return (
+    <span
+      className={cn(
+        "grid gap-x-3",
+        bezeichnung ? "grid-cols-[auto_auto_minmax(0,1fr)]" : "grid-cols-[auto_minmax(0,1fr)]",
+        className,
+      )}
+    >
+      {bezeichnung && <span>Treffpunkt</span>}
+      <span className="tabular-nums">{treffpunkt.zeit}</span>
+      <span className="min-w-0 break-words">{treffpunkt.ort}</span>
+    </span>
+  );
+}

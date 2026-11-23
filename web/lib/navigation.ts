@@ -1,43 +1,57 @@
 /* Welcher Navigationseintrag gerade offen ist — rein aus Adresse und
    Team-Kontext abgeleitet, ohne React. */
 
+import type { Bereich } from "@/lib/bereich";
+
+/** Die Adresse des Übungskatalogs (#674). «/» ist die Startseite (#670);
+ *  bisher geteilte Katalog-Adressen «/?…» mit Filtern leitet «/» hierher
+ *  weiter (`katalogWeiterleitung`, lib/startseite.ts). */
+export const UEBUNGEN_PFAD = "/uebungen";
+
+/** Die Startseite, bewusst aufgerufen (#671 AK 1): auch angemeldet, wo «/»
+ *  in den eigenen Arbeitsbereich weiterleitet. */
+export const STARTSEITE_PFAD = "/startseite";
+
+/** Der Titel einer Seite, die es nicht gibt — an `not-found` und an der Seite
+ *  für unbekannte Adressen (`[...nichtGefunden]`): Fehlt er dort, setzt der
+ *  Browser nach dem Laden den Titel der Wurzel ein, weil Next.js die
+ *  Metadaten der Seite auflöst, die `notFound()` warf. */
+export const NICHT_GEFUNDEN_TITEL = "Seite nicht gefunden - KiFu";
+
 export type AktiveBereiche = {
   uebungen: boolean;
-  meineUebungen: boolean;
   trainings: boolean;
-  meineTrainings: boolean;
-  /** Genau die Teams-Übersicht. */
-  teamsSeite: boolean;
-  /** Irgendwo im Team-Bereich: ein Team, seine Unterseiten oder ein
-   *  geöffnetes Team-Training. */
-  teamsBereich: boolean;
 };
 
 /**
+ * Eigene Inhalte haben keinen eigenen Eintrag (#660): `?mine=1` grenzt die
+ * Bibliothek nur ein, „Übungen" bzw. „Trainings" bleibt aktiv.
+ *
  * @param pfad    `usePathname()`
- * @param mine    `?mine=1` — „Meine Übungen" und „Meine Trainings" sind
- *                derselbe Pool wie „Übungen" und „Trainings", vorgefiltert.
  * @param imTeamBereich  Das geöffnete Training gehört einem Team (#156). Es
  *                liegt unter `/training/…`, gehört aber zu „Teams" und in
  *                keine Trainingsübersicht.
  */
-export function aktiveBereiche(pfad: string, mine: boolean, imTeamBereich: boolean): AktiveBereiche {
-  const meineUebungen = pfad === "/" && mine;
-  const meineTrainings = pfad === "/trainings" && mine;
+export function aktiveBereiche(pfad: string, imTeamBereich: boolean): AktiveBereiche {
   return {
-    // Katalog und Detailseiten.
-    uebungen: (pfad === "/" || pfad.startsWith("/uebung")) && !meineUebungen,
-    meineUebungen,
+    // Katalog und Detailseiten; «/» ist die Startseite (#670), nicht der Katalog.
+    uebungen: pfad.startsWith("/uebung"),
     // Pool, Editor, Einzel-, Durchführungs- und Druckansicht — `/training`
     // deckt als Präfix auch `/trainings` ab.
-    trainings: pfad.startsWith("/training") && !imTeamBereich && !meineTrainings,
-    meineTrainings,
-    teamsSeite: pfad === "/teams",
-    teamsBereich: pfad === "/teams" || pfad.startsWith("/team/") || imTeamBereich,
+    trainings: pfad.startsWith("/training") && !imTeamBereich,
   };
 }
 
-/** Ist dieses Team (oder eine seiner Unterseiten) offen? */
-export function teamOffen(pfad: string, teamId: string): boolean {
-  return pfad === `/team/${teamId}` || pfad.startsWith(`/team/${teamId}/`);
+const TEAM_PFAD = /^\/team\/([0-9a-f-]{36})(\/|$)/i;
+
+/** Der Bereich, in dem die Adresse liegt: `/team/<id>/…` und ein geöffnetes
+ *  Team-Training (`teamImTraining`: das Team, dem es gehört) → dieses Team,
+ *  `/verein/…` → der Verein. Sonst `null`: Auf Seiten ohne Bereich
+ *  (Bibliotheken, `/teams`, `/konto`) bleibt der gemerkte (lib/bereich.ts). */
+export function bereichAusPfad(pfad: string, teamImTraining: string | null): Bereich | null {
+  const team = pfad.match(TEAM_PFAD)?.[1];
+  if (team) return { art: "team", id: team };
+  if (pfad === "/verein" || pfad.startsWith("/verein/")) return { art: "verein" };
+  if (teamImTraining && pfad.startsWith("/training/")) return { art: "team", id: teamImTraining };
+  return null;
 }

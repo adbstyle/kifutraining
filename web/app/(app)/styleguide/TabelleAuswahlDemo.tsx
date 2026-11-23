@@ -8,7 +8,7 @@ import { useSnackbar } from "@/components/layout/SnackbarKontext";
 const ZEILEN = [
   { id: "mia", name: "Mia Muster", jahrgang: "2016" },
   { id: "leo", name: "Leo Beispiel", jahrgang: "2016" },
-  { id: "ana", name: "Ana Probe", jahrgang: "2015" },
+  { id: "ana", name: "Ana Schmid", jahrgang: "2015" },
 ];
 
 /* Tabelle mit Mehrfachauswahl (Spielerliste, #452 AK 6): ein Kästchen vorne

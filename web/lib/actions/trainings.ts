@@ -8,6 +8,7 @@ import { ZIEL_MAX } from "@/lib/training";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { loescheTraining } from "@/lib/kern/loeschen";
 import { kategorienSlugs } from "@/lib/vocab";
+import { rueckwegNachLoeschen } from "@/lib/training-auswahl";
 import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag } from "@/lib/kern/ergebnis";
 import {
   TEAM_OHNE_ENTWURF,
@@ -33,11 +34,14 @@ import {
   oberflaechenMeldung,
 } from "@/lib/actions/adapter";
 import type { Bedingung, FehlendeBedingung } from "@/lib/training-bedingungen";
+import type { KontoAbweisung } from "@/lib/konto-grenzen";
 
 export type TrainingFormState = {
   status: "idle" | "error";
   errors?: Record<string, string>;
   message?: string;
+  /** Abweisung an der Grenze eines Kontos ohne Verein (#588), wie bei der Übung. */
+  grenze?: KontoAbweisung;
 };
 
 /** Ergebnis einer feingranularen Editor-Aktion (sofort-persistent).
@@ -104,7 +108,7 @@ export async function createTraining(
   if (!r.ok)
     return r.feld === "name"
       ? { status: "error", errors: { name: oberflaechenMeldung(r) } }
-      : { status: "error", message: oberflaechenMeldung(r) };
+      : { status: "error", message: oberflaechenMeldung(r), ...(r.grenze && { grenze: r.grenze }) };
 
   revalidatePath("/trainings");
   redirect(`/training/${r.wert.id}/edit`);
@@ -301,7 +305,7 @@ export async function removeTrainingExercise(
  *  Ein Team-Training löscht das ganze Team-Exemplar — jedes Mitglied darf das
  *  (Story 6); die Rückkehr führt dann in den Team-Bereich statt in die eigene
  *  Übersicht. Wer nur seine eigene Kopie will, übernimmt sie vorher zu sich. */
-export async function deleteTraining(trainingId: string): Promise<void> {
+export async function deleteTraining(trainingId: string, zurueck?: unknown): Promise<void> {
   const a = await angemeldet();
   if (!a) return;
 
@@ -315,10 +319,18 @@ export async function deleteTraining(trainingId: string): Promise<void> {
     // Zurück in die Ansicht, aus der das Training verschwunden ist — dort
     // erwartet der Trainer den Beleg, dass es weg ist (Story 17): mit Termin
     // der Trainingsplan (ein Termin-Training steht nur dort), sonst der Bestand.
-    redirect(r.wert.terminBleibt ? `/team/${r.wert.teamId}` : `/team/${r.wert.teamId}/trainings`);
+    // Aus dem Detail des Bestands zurück in denselben Bestand, mit Suche,
+    // Filter und Sortierung (#637 PC 5) — auch bei einem Altfall mit Termin:
+    // Wer im Bestand löscht, bleibt im Bestand.
+    const bestand = `/team/${r.wert.teamId}/trainings`;
+    redirect(rueckwegNachLoeschen(zurueck, bestand) ?? (r.wert.terminBleibt ? `/team/${r.wert.teamId}` : bestand));
   }
   revalidatePath("/trainings");
-  redirect("/trainings?mine=1&deleted=1");
+  // Aus dem Detail der Übersicht zurück in dieselbe Übersicht — Suche, Filter
+  // und Sortierung bleiben, das Detail schliesst (#630 PC 4). Die Angabe kommt
+  // vom Client: nur eine Adresse der Übersicht zählt. Gebunden als zweites
+  // Argument; ohne sie steht an dieser Stelle das FormData des Formulars.
+  redirect(rueckwegNachLoeschen(zurueck, "/trainings") ?? "/trainings?mine=1&deleted=1");
 }
 
 // ── Story #11: Dauer je Zuordnung erfassen/ändern/entfernen ──────────────────
@@ -376,8 +388,8 @@ export async function pickExercises(
   hauptteilkategorie?: string | null,
   opts: { form?: string[]; typ?: string[]; q?: string } = {},
 ): Promise<ExerciseListRow[]> {
-  // Anonym bleibt die Abfrage möglich (öffentliche Trainings, RLS) — darum
-  // hier ohne `angemeldet()`.
+  // Ohne Konto liefert die RLS nichts (#669) — die Abfrage braucht darum
+  // kein eigenes `angemeldet()`.
   const supabase = await createClient();
   const {
     data: { user },

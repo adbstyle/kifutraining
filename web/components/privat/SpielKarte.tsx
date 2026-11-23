@@ -2,13 +2,13 @@
 
 import { Clock, Shirt } from "lucide-react";
 import { Button, ExternerLink, Kalenderblatt, Lozenge, SectionMessage, TreffpunktListe, ZeichenZahl } from "@/components/ui";
-import { KaderLozenges } from "@/components/team/KaderLozenge";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr, tagText } from "@/lib/monat";
 import type { LinkTermin } from "@/lib/privater-link";
 import { AUFGEBOT_TEXT, richtwertText, zeitpunktKurz, type Meldung } from "@/lib/spiel";
 import { TERMIN_STATUS, meldeStatus } from "@/lib/termin-status";
 import { AusfallGrund } from "./AusfallGrund";
+import { HinweisEltern } from "./HinweisEltern";
 
 /* Ein Spiel am privaten Link (#459, #463, #464, #465; Epic #490, Tafel 9;
    kompakt mit #523, Tafel «Vergleich» 1c). Von oben nach unten:
@@ -17,10 +17,10 @@ import { AusfallGrund } from "./AusfallGrund";
    Zeichen — bis wann sich melden lässt und wie viele angemeldet sind, mit dem
    gesuchten Bereich, ohne Überfahren, weil Eltern am Telefon sind (AK 4);
    die Handlung als Knopf; Hinweise zur Verlegung oder zu einem Fehler; die
-   Treffpunkte mit Anreise, Zeit und Ort, frühester zuerst (AK 5); die
-   Bemerkung.
+   Treffpunkte mit Anreise, Zeit und Ort, frühester zuerst (AK 5); der
+   Hinweis für Eltern (#590; die Bemerkung bleibt beim Team).
 
-   - Ohne Meldung «Anmelden» hell und «Abmelden» umrandet, sonst nur der eine
+   - Ohne Meldung «Anmelden» umgekehrt und «Abmelden» umrandet, sonst nur der eine
      mögliche Wechsel umrandet. Nach der Meldefrist, ab dem Anpfiff und bei
      nicht aufgeboten keine Knöpfe, nur der Satz dazu.
    - Abgemeldet, nicht aufgeboten, Meldefrist verpasst und ausgefallen: Die
@@ -28,7 +28,7 @@ import { AusfallGrund } from "./AusfallGrund";
    - Treffpunkte nur, solange das Spiel nicht begonnen hat und die
      Spieler:in dabei sein kann.
    - Ein ausgefallenes Spiel zeigt nur den Kopf mit dem Grund (#530; ohne
-     Bemerkung, PO 2026-10-27). */
+     Hinweis, #590 AK 11). */
 export function SpielKarte({
   t,
   meldung,
@@ -63,8 +63,10 @@ export function SpielKarte({
   const treffpunkte = !t.begonnen && !gedaempft && t.treffpunkte && t.treffpunkte.length > 0 ? t.treffpunkte : null;
   return (
     <li
+      id={`termin-${t.id}`}
+      tabIndex={-1}
       className={cn(
-        "flex flex-col gap-3 rounded-flaeche",
+        "flex flex-col gap-3 rounded-flaeche focus:outline-none",
         "px-3 py-3",
         gedaempft ? "kontur border-linie bg-transparent" : "bg-elev-01",
       )}
@@ -79,6 +81,8 @@ export function SpielKarte({
           <span className="type-body-medium text-on-surface-mittel">
             {t.beginn}–{t.ende}
           </span>
+          {/* Jeder Termin nennt sein Team (#583 AK 2). */}
+          <span className="type-body-small text-on-surface-mittel">{t.team}</span>
           {/* #533 AK 6, 10, 11; PC 5: mit Kartenlink als Link auf einer Zeile. */}
           {t.ort &&
             (t.ort_link && !t.ausgefallen ? (
@@ -109,14 +113,13 @@ export function SpielKarte({
           ) : (
             <span className="type-body-small text-on-surface-mittel">Das Team führt keine Spielerliste.</span>
           )}
-          {t.kader.length > 0 && <KaderLozenges namen={t.kader} />}
         </div>
       )}
       {offen && (
         <div className="flex flex-wrap gap-2">
           {meldung !== "angemeldet" && (
             <Button
-              variant={meldung === null ? "hell" : "outlined"}
+              variant={meldung === null ? "umkehr" : "outlined"}
               disabled={pending}
               onClick={() => onMelden(true)}
               aria-label={`${name} am ${tagText(t.datum)} anmelden`}
@@ -142,7 +145,7 @@ export function SpielKarte({
       {treffpunkte && (
         <TreffpunktListe treffpunkte={treffpunkte} spieltag={t.datum} spielOrt={t.ort} className="type-body-medium text-on-surface" />
       )}
-      {t.bemerkung && !t.ausgefallen && <p className="type-body-medium whitespace-pre-line text-on-surface">{t.bemerkung}</p>}
+      <HinweisEltern text={t.hinweis_eltern} gedaempft={gedaempft} />
     </li>
   );
 }

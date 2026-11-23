@@ -28,7 +28,7 @@ type Fehler = {
   verfallend?: number;
   verfallendSpiele?: number;
   kennzeichnungen?: number;
-  /** Davon Anmeldungen von Probe-Spieler:innen (#555 AK 14). */
+  /** Davon Anmeldungen von schnuppernden Spieler:innen (#555 AK 14). */
   anmeldungen?: number;
 };
 

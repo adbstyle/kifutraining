@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { env } from "@/lib/env";
 
@@ -30,3 +31,14 @@ export async function createClient() {
     },
   });
 }
+
+/** Das angemeldete Konto, einmal pro Request gelesen: Das `(app)`-Layout
+ *  (Darstellung, #569) und die Seitenleiste fragen beide danach, und jede
+ *  Frage ist eine Rundreise zu Supabase Auth. Anonym: `null`. */
+export const getUserImRequest = cache(async () => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
+});

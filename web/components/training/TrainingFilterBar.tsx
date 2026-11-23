@@ -1,9 +1,11 @@
 "use client";
 
+import { ANSICHT_PARAM, AUSWAHL_PARAM } from "@/lib/training-auswahl";
+import { VARIANTE_PARAM } from "@/lib/varianten";
 import { ClipboardList } from "lucide-react";
 import { AuswahlFilter, Button, FilterChip, FilterSuche } from "@/components/ui";
 import { stufenOptionen } from "@/lib/filter-optionen";
-import { useAdressFilter } from "@/lib/use-adress-filter";
+import { trimme, useAdressFilter } from "@/lib/use-adress-filter";
 
 /* Such-/Filterleiste für die Trainings-Übersicht.
    URL-basierter Zustand wie im Übungskatalog: jede Änderung schreibt in die URL
@@ -17,14 +19,15 @@ export function TrainingFilterBar({
   q,
   stufen,
   mine = false,
-  showMine = false,
 }: {
   q: string;
   stufen: string[];
   mine?: boolean;
-  showMine?: boolean;
 }) {
-  const filter = useAdressFilter();
+  // Die Sortierung ist kein Filter: Sie übersteht auch das Zurücksetzen
+  // (#629 PC 2), ebenso die Auswahl samt Detail (#630) — ohne Filter steht
+  // das ausgewählte Training sicher in der Liste.
+  const filter = useAdressFilter({ behalte: ["sort", "dir", AUSWAHL_PARAM, VARIANTE_PARAM, ANSICHT_PARAM] });
 
   const anyActive = q.trim().length > 0 || stufen.length > 0 || mine;
 
@@ -32,7 +35,7 @@ export function TrainingFilterBar({
     // Eine durchgehende, umbrechende Zeile: Suchfeld zuerst, dann die Filter
     // direkt dahinter angereiht — alle Elemente 36 px hoch (Epic #363).
     <div className="mb-6 flex flex-wrap items-center gap-2">
-      <FilterSuche label="Nach Trainingsnamen suchen" initial={q} onCommit={(v) => filter.setzeWert("q", v)} />
+      <FilterSuche label="Nach Trainingsnamen suchen" initial={q} bereinige={trimme} onCommit={(v) => filter.setzeWert("q", v)} />
 
       <AuswahlFilter
         label="Alterskategorie"
@@ -40,11 +43,10 @@ export function TrainingFilterBar({
         value={stufen}
         onChange={(v) => filter.setzeListe("stufen", v)}
       />
-      {showMine && (
-        <FilterChip selected={mine} onClick={() => filter.schalte("mine", !mine)} icon={ClipboardList}>
-          Meine Trainings
-        </FilterChip>
-      )}
+      {/* Die Trainings gibt es nur mit Konto (#669): der Chip steht immer. */}
+      <FilterChip selected={mine} onClick={() => filter.schalte("mine", !mine)} icon={ClipboardList}>
+        Meine Trainings
+      </FilterChip>
 
       {anyActive && (
         <Button variant="text" onClick={filter.zuruecksetzen}>

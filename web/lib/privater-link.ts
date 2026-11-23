@@ -1,18 +1,23 @@
 import "server-only";
+import { createHash } from "node:crypto";
+import { cache } from "react";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { istUuid } from "@/lib/kennung";
-import { LINK_FEHLER, abweisungText, istLinkToken, type AbmeldeGrund, type AbmeldeStand, type Spielstand } from "@/lib/spieler";
+import { LINK_FEHLER, abweisungText, istLinkToken, nachTeamname, type AbmeldeGrund, type AbmeldeStand, type Spielstand } from "@/lib/spieler";
 import { meldungAbweisungText, type Meldung, type Treffpunkt } from "@/lib/spiel";
 import type { MeldeAntwort } from "@/lib/kern/spiele";
 import { spielerAboUrl } from "@/lib/spieler-abo";
 import type { ProbeStand } from "@/lib/probe";
+import type { LinkBenachrichtigungen } from "@/lib/benachrichtigung";
+import { MITTEILUNGEN_TEXT, istPushAbo, istPushEndpunkt } from "@/lib/push";
+import { istGueltigerPunkt, pushOeffentlich } from "@/lib/push/schluessel";
 
 /**
  * Die Seite hinter dem privaten Link einer Spieler:in (Epic #433, Story #436)
  * — ohne Konto und ohne Sitzung. Das Geheimnis im Link ist die Berechtigung;
  * die RPCs `spieler_link_*` und `spieler_abo_holen`/`_widerrufen` (#506)
  * prüfen es als SECURITY DEFINER und geben nur heraus, was die
- * Spielervertretung sehen darf: Teamname, ihre Spieler:in, die anstehenden
+ * Spielervertretung sehen darf: die Teams der Spieler:in, ihre Spieler:in, die anstehenden
  * Termine mit der Zahl der Angemeldeten und derer, für die sie gelten (OoS 2,
  * #472), und die Abo-Adresse ihres Kalender-Abos.
  *
@@ -24,6 +29,9 @@ import type { ProbeStand } from "@/lib/probe";
 
 export type LinkTermin = {
   id: string;
+  /** Das Team des Termins (#583 AK 2): auch bei nur einem Team. Ab- und
+   *  Anmelden folgt den Regeln dieses Teams. */
+  team: string;
   /** Nur an einem Spiel (#463): ihre Meldung (null = ohne), ob sie mit einer
    *  Verlegung verfallen ist, die Meldefrist und der Zeitpunkt vorher. */
   meldung: Meldung;
@@ -31,12 +39,18 @@ export type LinkTermin = {
   frist: string | null;
   frist_abgelaufen: boolean;
   vorher: { datum: string; beginn: string } | null;
-  /** Nur an einem Spiel (#465 AK 10): die Bemerkung und die Treffpunkte,
-   *  frühester zuerst — an einem ausgefallenen keine (`null`), dort spricht
-   *  der Grund (#530, PO 2026-10-27). Die Bemerkung eines Trainings sieht die
-   *  Spielervertretung nicht (PC 4). */
-  bemerkung: string | null;
+  /** Der Hinweis für Eltern eines Trainings oder Spiels (#590 AK 9–11) — an
+   *  einem ausgefallenen keiner (`null`), dort spricht der Grund. Die
+   *  Bemerkung sieht die Spielervertretung nie (AK 13). */
+  hinweis_eltern: string | null;
+  /** Nur an einem Spiel (#465 AK 10): die Treffpunkte, frühester zuerst — an
+   *  einem ausgefallenen keine (`null`), dort spricht der Grund (#530). */
   treffpunkte: Treffpunkt[] | null;
+  /** Nur an einem Training (#561 AK 12): der Treffpunkt mit Uhrzeit am
+   *  Trainingstag — an einem ausgefallenen keiner (`null`). Ab Beginn und bei
+   *  einer Abmeldung blendet die Ansicht ihn aus. Optional, bis die Migration
+   *  läuft (Deploy-Reihenfolge). */
+  treffpunkt?: { zeit: string; ort: string } | null;
   /** Nur an einem Spiel (#464 AK 8, 9; PC 3): ob sie nicht aufgeboten ist,
    *  ob die Kennzeichnung mit einer Verlegung verfallen ist, und wie viele
    *  nicht aufgeboten sind (`null` an einem ausgefallenen und bei Trainings). */
@@ -69,48 +83,107 @@ export type LinkTermin = {
   abgemeldet: boolean;
   /** Verlegt, seit sie abgemeldet wurde (#437 AK 2): der Zeitpunkt vorher —
    *  die Abmeldung gilt nicht mehr. `anmeldung`: Es war die Anmeldung einer
-   *  Probe-Spieler:in (#555 PC 5). */
+   *  schnuppernden Spieler:in (#555 PC 5). */
   verfallen: { datum: string; beginn: string; anmeldung?: boolean } | null;
-  /** Die Kader der Spieler:in, über die der Termin für sie gilt (#454 AK 2);
-   *  leer bei einem Termin für alle. Fremde Kader nennt der Link nie (AK 3). */
-  kader: string[];
   /** Wer den Termin vorbereitet und leitet (#523), mit Anzeigenamen; `null`
    *  ohne Verantwortliche:n oder an einem ausgefallenen Termin. */
   verantwortlich: string | null;
 };
 
+/** Was die Seite liest. Die Datenebene liefert dazu `team` (bei genau einem
+ *  Team dessen Name, sonst der Vereinsname); das hat im Web keinen Leser. Den
+ *  `verein` nennt die Seite als verantwortlich für die Daten und für Dringendes
+ *  (#587 PC 2). */
 export type LinkAnsicht =
   | {
       gueltig: true;
-      team: string;
+      /** Der Name des Vereins, der für die Daten der Spieler:in verantwortlich ist. */
+      verein: string;
+      /** Die Teams der Spieler:in, nach Namen wie alle Team-Listen
+       *  (`nachTeamname`, hier geordnet), auch ohne Termine (AK 3); leer ohne
+       *  Team (AK 5). */
+      teams: string[];
       spieler: { vorname: string; nachname: string };
-      /** Im Probe-Modus ihr Stand (#555 AK 11), sonst `null`; fehlt bei einer
+      /** Schnuppert sie, ihr Stand (#555 AK 11), sonst `null`; fehlt bei einer
        *  Datenebene vor der Migration. */
       probe?: ProbeStand | null;
-      /** Das Info-Schreiben des Teams, nur im Probe-Modus (#556 AK 4). */
+      /** Das Info-Schreiben des Teams, nur wenn sie schnuppert (#556 AK 4). */
       probe_info?: string | null;
+      /** Die Infos zum Team jedes Teams mit Infos, nach Teamname (#598 AK 5–7);
+       *  leer, solange sie schnuppert. `stand` als «YYYY-MM-DD». Fehlt bei einer
+       *  Datenebene vor der Migration. */
+      team_infos?: { team: string; text: string; stand: string }[];
+      /** In der Ordnung der Datenebene: heute begonnene zuerst, dann nach
+       *  Datum, Beginn und Teamname (AK 1). Das Web sortiert nicht um. */
       termine: LinkTermin[];
     }
   | { gueltig: false };
 
 const UNGUELTIG = { gueltig: false } as const;
 
-/** Was der Link zeigt — oder einheitlich «ungültig». */
-export async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
+/** Was der Link zeigt — oder einheitlich «ungültig». Je Anfrage einmal
+ *  (`cache`): Das Layout liest daraus den Namen der App (#650 AK 4), die
+ *  Seite dieselbe Antwort. */
+export const ladeLinkAnsicht = cache(async function ladeLinkAnsicht(token: string): Promise<LinkAnsicht> {
   if (!istLinkToken(token)) return UNGUELTIG;
   const { data, error } = await createAnonClient().rpc("spieler_link_ansicht", { p_token: token });
   // Ein Fehler der Datenebene ist kein Beweis, dass der Link nicht gilt — die
   // Seite sagt es trotzdem so, statt etwas über ihn preiszugeben.
   if (error || !data) return UNGUELTIG;
-  return data as LinkAnsicht;
+  const ansicht = data as LinkAnsicht;
+  // Ohne Vereinsnamen stünde «undefined» im Satz «Verantwortlich …»: wie ungültig.
+  if (ansicht.gueltig && (typeof ansicht.verein !== "string" || !ansicht.verein)) return UNGUELTIG;
+  return ansicht.gueltig
+    ? {
+        ...ansicht,
+        teams: [...ansicht.teams].sort(nachTeamname),
+        // Dieselbe Ordnung wie die Teams im Kopf (#598 AK 6).
+        team_infos: ansicht.team_infos && [...ansicht.team_infos].sort((a, b) => nachTeamname(a.team, b.team)),
+      }
+    : ansicht;
+});
+
+/** Was das Manifest eines Links braucht (#650 AK 4): Vorname und Verein —
+ *  eine schlanke Abfrage statt der ganzen Ansicht, denn der Browser holt das
+ *  Manifest bei jedem Seitenaufruf. `null` für einen ungültigen Link und bei
+ *  jedem Fehler der Datenebene. */
+export async function ladeLinkApp(token: string): Promise<{ vorname: string; verein: string } | null> {
+  if (!istLinkToken(token)) return null;
+  const { data, error } = await createAnonClient().rpc("spieler_link_app", { p_token: token });
+  if (error || !data) return null;
+  const { vorname, verein } = data as { vorname?: unknown; verein?: unknown };
+  return typeof vorname === "string" && typeof verein === "string" && verein ? { vorname, verein } : null;
+}
+
+/** Die Benachrichtigungen der Spieler:in (#642 AK 1) — `null` bei einem
+ *  ungültigen Link und bei jedem Fehler der Datenebene (auch vor der
+ *  Migration): Dann zeigt die Seite keine Glocke, statt etwas zu behaupten. */
+export async function ladeBenachrichtigungen(token: string): Promise<LinkBenachrichtigungen | null> {
+  if (!istLinkToken(token)) return null;
+  const { data, error } = await createAnonClient().rpc("spieler_link_benachrichtigungen", { p_token: token });
+  if (error || !data) return null;
+  const r = data as ({ gueltig: true } & LinkBenachrichtigungen) | { gueltig: false };
+  if (!r.gueltig || !Array.isArray(r.eintraege)) return null;
+  return { jetzt: Number(r.jetzt), heute: r.heute, eintraege: r.eintraege };
+}
+
+/** Der Schlüssel, unter dem das Gerät den Gelesen-Stand eines Links ablegt
+ *  (#642 AK 2): aus dem Link abgeleitet, damit ein erneuerter Link neu
+ *  beginnt, ohne das Geheimnis selbst im Cookie zu tragen — sha256, base64url,
+ *  die ersten 12 Zeichen. Nur auf dem Server. */
+export function linkSchluessel(token: string): string {
+  return createHash("sha256").update(token).digest("base64url").slice(0, 12);
 }
 
 export type LinkAbmeldung = { terminId: string; abgemeldet: boolean; gesehen: { datum: string; beginn: string } };
 
+/** `giltNicht`: Der Termin gilt nicht mehr für die Spieler:in (#583 AK 7) —
+ *  die Seite hält die Meldung fest, auch wenn die neu geladene Liste ihn
+ *  nicht mehr zeigt. */
 export type LinkAbmeldeErgebnis =
   | { ok: true; abgemeldet: boolean; angemeldet: number }
   | { ok: false; ungueltig: true }
-  | { ok: false; ungueltig?: false; error: string };
+  | { ok: false; ungueltig?: false; giltNicht?: boolean; error: string };
 
 type Antwort =
   | { status: "ungueltig" }
@@ -133,7 +206,7 @@ export async function meldeUeberLink(token: string, e: LinkAbmeldung): Promise<L
   if (error || !data) return { ok: false, error: LINK_FEHLER };
   const r = data as Antwort;
   if (r.status === "ungueltig") return { ok: false, ungueltig: true };
-  if (r.status === "abgewiesen") return { ok: false, error: abweisungText(r.grund, r.stand) };
+  if (r.status === "abgewiesen") return { ok: false, giltNicht: r.grund === "gilt_nicht", error: abweisungText(r.grund, r.stand) };
   return { ok: true, abgemeldet: r.abgemeldet, angemeldet: r.stand?.angemeldet ?? 0 };
 }
 
@@ -142,7 +215,7 @@ export type LinkMeldung = { terminId: string; angemeldet: boolean; gesehen: { da
 export type LinkMeldeErgebnis =
   | { ok: true; angemeldet: boolean; zahl: number | null }
   | { ok: false; ungueltig: true }
-  | { ok: false; ungueltig?: false; error: string };
+  | { ok: false; ungueltig?: false; giltNicht?: boolean; error: string };
 
 /** Für ein Spiel über den Link an- oder abmelden (#463 AK 3, 9, 17): bis zur
  *  Meldefrist, ohne Frist bis zum Anpfiff — dieselbe Regel wie für
@@ -161,7 +234,7 @@ export async function meldeSpielUeberLink(token: string, e: LinkMeldung): Promis
   if (error || !data) return { ok: false, error: LINK_FEHLER };
   const r = data as MeldeAntwort | { status: "ungueltig" };
   if (r.status === "ungueltig") return { ok: false, ungueltig: true };
-  if (r.status === "abgewiesen") return { ok: false, error: meldungAbweisungText(r.grund, r.stand) };
+  if (r.status === "abgewiesen") return { ok: false, giltNicht: r.grund === "gilt_nicht", error: meldungAbweisungText(r.grund, r.stand) };
   return { ok: true, angemeldet: r.angemeldet, zahl: r.stand?.angemeldet ?? null };
 }
 
@@ -188,4 +261,52 @@ export async function widerrufeAbo(token: string): Promise<AboWiderrufErgebnis> 
   const { data, error } = await createAnonClient().rpc("spieler_abo_widerrufen", { p_link: token });
   if (error || !data) return { ok: false, error: LINK_FEHLER };
   return data === "ungueltig" ? { ok: false, ungueltig: true } : { ok: true };
+}
+
+// ── Mitteilungen aufs Mobile (#483) ─────────────────────────────────────────
+
+export type PushSchaltErgebnis =
+  | { ok: true }
+  | { ok: false; ungueltig: true }
+  | { ok: false; ungueltig?: false; grenze?: boolean; error: string };
+
+/** Mitteilungen für den Link auf diesem Gerät einschalten (AK 1, 5): die
+ *  Anmeldung des Browsers samt dem Kürzel des Schlüssels dieser Umgebung
+ *  (PC 5). Ohne Mitteilungen in der Umgebung, mit unbekanntem Dienst oder
+ *  unlesbaren Schlüsseln: Fehler. `grenze`: schon 10 Geräte. */
+export async function schaltePushEin(token: string, abo: unknown): Promise<PushSchaltErgebnis> {
+  if (!istLinkToken(token)) return { ok: false, ungueltig: true };
+  const vapid = pushOeffentlich();
+  if (!vapid || !istPushAbo(abo) || !istGueltigerPunkt(abo.keys.p256dh)) return { ok: false, error: MITTEILUNGEN_TEXT.fehler };
+  const { data, error } = await createAnonClient().rpc("spieler_push_anmelden", {
+    p_link: token,
+    p_endpoint: abo.endpoint,
+    p_p256dh: abo.keys.p256dh,
+    p_auth: abo.keys.auth,
+    p_schluessel: vapid.schluessel,
+  });
+  if (error || typeof data !== "string") return { ok: false, error: MITTEILUNGEN_TEXT.fehler };
+  if (data === "ungueltig") return { ok: false, ungueltig: true };
+  if (data === "grenze") return { ok: false, grenze: true, error: MITTEILUNGEN_TEXT.fehler };
+  if (data !== "ok") return { ok: false, error: MITTEILUNGEN_TEXT.fehler };
+  return { ok: true };
+}
+
+/** Mitteilungen auf diesem Gerät ausschalten (AK 7) — sofort. */
+export async function schaltePushAus(token: string, endpoint: unknown): Promise<PushSchaltErgebnis> {
+  if (!istLinkToken(token)) return { ok: false, ungueltig: true };
+  if (!istPushEndpunkt(endpoint)) return { ok: true };
+  const { data, error } = await createAnonClient().rpc("spieler_push_abmelden", { p_link: token, p_endpoint: endpoint });
+  if (error || typeof data !== "string") return { ok: false, error: MITTEILUNGEN_TEXT.fehler };
+  return data === "ungueltig" ? { ok: false, ungueltig: true } : { ok: true };
+}
+
+/** Ob dieses Gerät eingeschaltet ist (AK 6); `null` bei einem Fehler der
+ *  Datenebene — dann zeigt die Seite «aus», statt etwas zu behaupten. */
+export async function pushStand(token: string, endpoint: unknown): Promise<"an" | "aus" | "ungueltig" | null> {
+  if (!istLinkToken(token)) return "ungueltig";
+  if (!istPushEndpunkt(endpoint)) return "aus";
+  const { data, error } = await createAnonClient().rpc("spieler_push_status", { p_link: token, p_endpoint: endpoint });
+  if (error || (data !== "an" && data !== "aus" && data !== "ungueltig")) return null;
+  return data;
 }

@@ -1,8 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#bb86fc"/>
-  <g transform="translate(4 4)" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="10"/>
-    <path d="m12 7 4.2 3-1.6 5H9.4l-1.6-5z"/>
-    <path d="M12 2v5M21.5 9.5 16.2 10M18 20l-3.4-5M6 20l3.4-5M2.5 9.5 7.8 10"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="230 236 680 680">
+  <defs>
+    <linearGradient id="fa-arm-oben" x1="375" y1="560" x2="757" y2="380" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6c46f7"/>
+      <stop offset="0.45" stop-color="#8a5cfa"/>
+      <stop offset="1" stop-color="#cd86fc"/>
+    </linearGradient>
+    <linearGradient id="fa-stamm" x1="450" y1="560" x2="460" y2="895" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3415bd"/>
+      <stop offset="0.22" stop-color="#4a26d4"/>
+      <stop offset="0.55" stop-color="#8456f6"/>
+      <stop offset="1" stop-color="#e488fc"/>
+    </linearGradient>
+    <linearGradient id="fa-arm-mitte" x1="535" y1="735" x2="760" y2="570" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3a18c6"/>
+      <stop offset="0.35" stop-color="#7a4ef6"/>
+      <stop offset="1" stop-color="#c983fc"/>
+    </linearGradient>
+    <linearGradient id="fa-ball" x1="406" y1="396" x2="511" y2="271" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3612c2"/>
+      <stop offset="0.5" stop-color="#7a4bf4"/>
+      <stop offset="1" stop-color="#e48dfc"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#fa-stamm)" d="M375 662 C392 602 452 572 533 547 L533 884 Q532 899 516 891 L390 823 Q375 814 375 797 Z"/>
+  <path fill="url(#fa-arm-oben)" d="M375 535 C375 485 405 455 447 443 L742 362 Q762 357 756 379 L733 463 Q719 496 689 504 L533 547 C452 572 392 602 375 662 Z"/>
+  <path fill="url(#fa-arm-mitte)" d="M533 618 L740 562 Q766 557 760 579 L741 645 Q725 690 688 702 L533 745 Z"/>
+  <circle cx="455" cy="333" r="79" fill="url(#fa-ball)"/>
 </svg>

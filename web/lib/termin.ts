@@ -10,7 +10,12 @@
 // rein) — `check:kern` lädt diese Datei mit tsx.
 import { gleicheBesetzung, type Mindestbesetzung } from "@/lib/besetzung";
 import { gleicheFelder, type Felder } from "@/lib/termin-felder";
-import { treffpunkteNormal, type TerminArt, type Treffpunkt } from "@/lib/spiel";
+import { TREFFPUNKT_ORT_MAX, TREFFPUNKT_TEXT, treffpunkteNormal, type TerminArt, type Treffpunkt } from "@/lib/spiel";
+
+/** Der Treffpunkt eines Trainings (#561): Uhrzeit `HH:MM` am Termintag und
+ *  Ort — nicht zu verwechseln mit den Treffpunkten eines Spiels (#465).
+ *  Gespeichert ist der Abstand zum Beginn (`treffpunkt_vorlauf_min`). */
+export type TerminTreffpunkt = { zeit: string; ort: string };
 
 /** Die Angaben eines Termins, wie der Dialog sie führt. `felder` sind die
  *  Felder des Platzes (#389, lib/termin-felder.ts) — nicht zu verwechseln mit
@@ -23,6 +28,8 @@ export type TerminFelder = {
   /** Der Kartenlink zum Ort (#533); leer = keiner. */
   ortLink?: string | null;
   bemerkung?: string | null;
+  /** Der Hinweis für Eltern (#590); leer = keiner. */
+  hinweisEltern?: string | null;
   /** `null`: ohne Felder (Platz unbekannt). */
   felder?: Felder | null;
   /** Die erwartete Spielerzahl (#390); `null`: unbekannt. */
@@ -39,16 +46,30 @@ export type TerminFelder = {
   meldefrist?: string | null;
   /** Nur an einem Spiel: die Treffpunkte als ganze Liste (#465). */
   treffpunkte?: Treffpunkt[];
+  /** Nur an einem Training: der Treffpunkt (#561); `null`: keiner. */
+  treffpunkt?: TerminTreffpunkt | null;
 };
 
-export type TerminFeld = "datum" | "beginn" | "ende" | "ort" | "ortLink" | "bemerkung";
+export type TerminFeld = "datum" | "beginn" | "ende" | "ort" | "ortLink" | "bemerkung" | "hinweisEltern" | "treffpunkt";
 export type TerminProblem = { feld: TerminFeld; text: string };
 
 /** Zwillinge der Checks `tt_ort_laenge` und `tt_bemerkung_laenge`. */
 export const ORT_MAX = 100;
 export const BEMERKUNG_MAX = 500;
+/** Zwilling der Checks `tt_hinweis_eltern_laenge` und `ts_hinweis_eltern_laenge` (#590 AK 16). */
+export const HINWEIS_ELTERN_MAX = 500;
 /** Zwilling der Checks `tt_ort_link` und `ts_ort_link` (#533 AK 5). */
 export const KARTENLINK_MAX = 500;
+
+/** Wie Angaben am privaten Link heissen (#659 AK 2): nach dem Kanal, nicht
+ *  nach einer Lesergruppe — den Link nutzen Spieler:innen und Eltern. Die
+ *  Felder heissen intern weiter `hinweis_eltern` / `hinweisEltern`. */
+export const LINK_KANAL = {
+  hinweis: "Hinweis am privaten Link",
+  meldefrist: "Meldefrist am privaten Link",
+  /** Vor dem Hinweis in knappen Zeilen (nächster Termin, Durchführen). */
+  kurz: "Am Link:",
+} as const;
 
 /** Die erwartete Spielerzahl (#390, PO 7): ganze Zahl von 1 bis 200 wie der
  *  Kinder-Filter der Übungssuche. Zwilling des Checks `tt_spielerzahl`. */
@@ -62,21 +83,97 @@ export const TERMIN_TEXT = {
   endeNachBeginn: "Das Ende muss am selben Tag nach dem Beginn liegen.",
   ortLang: `Der Ort darf höchstens ${ORT_MAX} Zeichen lang sein.`,
   bemerkungLang: `Die Bemerkung darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
+  hinweisElternLang: `Der ${LINK_KANAL.hinweis} darf höchstens ${HINWEIS_ELTERN_MAX} Zeichen lang sein.`,
+  /** Wer den Hinweis liest und wer die Bemerkung (#590 AK 6, 7, 15) — als
+   *  Hinweis am Feld und im KI-Werkzeug. */
+  hinweisElternSichtbar:
+    "Spieler:innen und Eltern sehen den Hinweis über den privaten Link und im Kalender-Abo, ausser der Termin fällt aus.",
+  bemerkungIntern: "Die Bemerkung ist für das Team. Am privaten Link steht sie nicht.",
   grundLang: `Der Grund darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
   /** Wer den Grund liest (#530 AK 6, 7) — als Hinweis am Feld und im KI-Werkzeug. */
-  grundSichtbar: "Die Eltern sehen den Grund des Ausfalls über ihren privaten Link.",
+  grundSichtbar: "Spieler:innen und Eltern sehen den Grund des Ausfalls über den privaten Link.",
   kartenlinkUngueltig: "Füge den ganzen Link ein, er beginnt mit https://.",
   kartenlinkLang: `Der Kartenlink darf höchstens ${KARTENLINK_MAX} Zeichen lang sein.`,
   kartenlinkOhneOrt: "Gib zuerst einen Ort an.",
   /** Wer den Link öffnet (#533) — als Hinweis am Feld und im KI-Werkzeug. */
-  kartenlinkSichtbar: "Die Eltern öffnen den Kartenlink über ihren privaten Link.",
+  kartenlinkSichtbar: "Spieler:innen und Eltern öffnen den Kartenlink über den privaten Link.",
   /** #533 AK 12, 13: vor dem Speichern, wenn der Link mit dem Ort wegfällt. */
   kartenlinkFaelltWeg: "Der Kartenlink gehörte zum bisherigen Ort und fällt weg. Füge den Link zum neuen Ort ein.",
   kartenlinkFolgtSerie: "Mit dem Ort der Serie gilt auch ihr Kartenlink, der eigene Kartenlink dieses Termins fällt weg.",
   spielerzahl: `Die erwartete Spielerzahl ist eine ganze Zahl von ${SPIELERZAHL_MIN} bis ${SPIELERZAHL_MAX}.`,
   /** Was die Zahl zählt (PO 7) — als Hinweis am Feld und im KI-Werkzeug. */
-  spielerzahlZaehlt: "Alle erwarteten Kinder einschliesslich Torhüter:innen, ohne Trainer:innen.",
+  spielerzahlZaehlt: "Alle erwarteten Spieler:innen einschliesslich Torhüter:innen, ohne Trainer:innen.",
+  treffpunktPflicht: "Bitte für den Treffpunkt Uhrzeit und Ort angeben.",
+  /** Zwilling der Checks `tt_treffpunkt_termintag` und `ts_treffpunkt_termintag`. */
+  treffpunktTermintag: "Der Treffpunkt liegt am Tag des Trainings und nicht nach dem Beginn.",
+  /** Wer den Treffpunkt sieht und was beim Verlegen geschieht (#561 AK 11) —
+   *  als Hinweis am Feld und im KI-Werkzeug. */
+  treffpunktSichtbar:
+    "Wann und wo sich das Team vor dem Beginn trifft, etwa bei den Garderoben. Spieler:innen und Eltern sehen den " +
+    "Treffpunkt über den privaten Link und im Kalender-Abo. Wird der Termin verlegt, behält er seinen Abstand zum Beginn.",
+  treffpunktNurTraining: "Einen Treffpunkt mit Uhrzeit und Ort gibt es nur an einem Training; ein Spiel hat Treffpunkte je Anreiseart.",
+  /** #561 PC 5, 6: vor dem Speichern und im Ergebnis der KI. */
+  treffpunktEntfaellt: "Mit dem neuen Beginn läge der Treffpunkt am Vortag. Er entfällt, das Training hat danach keinen Treffpunkt.",
+  /** #561 AK 9: Der Treffpunkt der Serie läge mit der eigenen Zeit des Termins am Vortag. */
+  treffpunktFolgtNicht:
+    "Mit der eigenen Zeit dieses Termins läge der Treffpunkt der Serie am Vortag. Lass zuerst die Zeit der Serie folgen.",
+  /** #561 PC 4: beim Erstellen — ohne Rückfrage, der Dialog hält an. */
+  treffpunktVortag: "Mit diesem Beginn läge der Treffpunkt am Vortag. Wähle eine andere Uhrzeit oder entferne den Treffpunkt.",
+  treffpunktEntfaelltSerie:
+    "Mit dem neuen Beginn läge der Treffpunkt am Vortag. An diesen Terminen hat das Training danach keinen Treffpunkt:",
 } as const;
+
+/** Der Treffpunkt liegt nach dem Beginn (#561 AK 5) — mit der spätesten Uhrzeit. */
+export function treffpunktNachBeginnText(beginn: string): string {
+  return `Der Treffpunkt liegt nach dem Beginn. Wähle eine Uhrzeit bis ${beginn}.`;
+}
+
+/** Minuten seit Mitternacht einer Uhrzeit `HH:MM`. */
+function minuten(hhmm: string): number {
+  return Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+}
+
+/** Liegt ein Treffpunkt `vorlauf` Minuten vor `beginn` am selben Tag? Ohne
+ *  Treffpunkt wahr. Zwilling von `treffpunkt_passt`. */
+export function treffpunktPasst(vorlauf: number | null, beginn: string): boolean {
+  return vorlauf === null || (vorlauf >= 0 && vorlauf <= minuten(beginn));
+}
+
+/** Der Abstand eines Treffpunkts um `zeit` zum Beginn, in Minuten. */
+export function treffpunktVorlauf(beginn: string, zeit: string): number {
+  return minuten(beginn) - minuten(zeit);
+}
+
+/** Die Uhrzeit eines Treffpunkts `vorlauf` Minuten vor `beginn`; `null`, wenn
+ *  er dann am Vortag läge. */
+export function treffpunktZeit(beginn: string, vorlauf: number): string | null {
+  const m = minuten(beginn) - vorlauf;
+  if (vorlauf < 0 || m < 0) return null;
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+}
+
+/** Der Treffpunkt, wie er gespeichert wird (#561 PC 1): Abstand zum Beginn
+ *  und Ort, beides getrimmt. Vorher mit `treffpunktProblem` geprüft. */
+export function treffpunktGespeichert(t: TerminTreffpunkt, beginn: string): { vorlauf_min: number; ort: string | null } {
+  return { vorlauf_min: treffpunktVorlauf(beginn.trim(), t.zeit.trim()), ort: leerZuNull(t.ort) };
+}
+
+/** Was am Treffpunkt eines Trainings nicht stimmt, sonst `null` (#561 AK 3, 5,
+ *  6). Ohne Treffpunkt stimmt alles; der Beginn ist vorher geprüft. */
+export function treffpunktProblem(
+  t: TerminTreffpunkt | null | undefined,
+  beginn: string | null | undefined,
+): { feld: "treffpunkt"; text: string } | null {
+  if (!t) return null;
+  const zeit = leerZuNull(t.zeit);
+  const ort = leerZuNull(t.ort);
+  if (zeit === null || ort === null) return { feld: "treffpunkt", text: TERMIN_TEXT.treffpunktPflicht };
+  if (!istUhrzeit(zeit)) return { feld: "treffpunkt", text: TERMIN_TEXT.uhrzeit };
+  if ([...ort].length > TREFFPUNKT_ORT_MAX) return { feld: "treffpunkt", text: TREFFPUNKT_TEXT.ortLang };
+  const b = leerZuNull(beginn);
+  if (b !== null && istUhrzeit(b) && zeit > b) return { feld: "treffpunkt", text: treffpunktNachBeginnText(b) };
+  return null;
+}
 
 /** Leere Eingaben sind „nicht erfasst", nicht „leerer Text". */
 export function leerZuNull(v: string | null | undefined): string | null {
@@ -142,17 +239,21 @@ export function kartenlinkOhneOrt(f: { ort?: string | null; ortLink?: string | n
     : null;
 }
 
-/** Ort, Kartenlink und Bemerkung sind frei, aber begrenzt (AK 6; #533 AK 5). */
+/** Ort, Kartenlink, Bemerkung und Hinweis für Eltern sind frei, aber begrenzt
+ *  (AK 6; #533 AK 5; #590 AK 16). */
 export function textProblem(f: {
   ort?: string | null;
   ortLink?: string | null;
   bemerkung?: string | null;
-}): { feld: "ort" | "ortLink" | "bemerkung"; text: string } | null {
+  hinweisEltern?: string | null;
+}): { feld: "ort" | "ortLink" | "bemerkung" | "hinweisEltern"; text: string } | null {
   if ((leerZuNull(f.ort) ?? "").length > ORT_MAX) return { feld: "ort", text: TERMIN_TEXT.ortLang };
   const link = kartenlinkProblem(f.ortLink);
   if (link) return link;
   if ((leerZuNull(f.bemerkung) ?? "").length > BEMERKUNG_MAX)
     return { feld: "bemerkung", text: TERMIN_TEXT.bemerkungLang };
+  if ((leerZuNull(f.hinweisEltern) ?? "").length > HINWEIS_ELTERN_MAX)
+    return { feld: "hinweisEltern", text: TERMIN_TEXT.hinweisElternLang };
   return null;
 }
 
@@ -167,10 +268,12 @@ export function terminProblem(
     ort?: string | null;
     ortLink?: string | null;
     bemerkung?: string | null;
+    hinweisEltern?: string | null;
+    treffpunkt?: TerminTreffpunkt | null;
   },
 ): TerminProblem | null {
   if (!istKalendertag(f.datum ?? "")) return { feld: "datum", text: TERMIN_TEXT.datum };
-  return zeitProblem(f.beginn, f.ende) ?? textProblem(f) ?? kartenlinkOhneOrt(f);
+  return zeitProblem(f.beginn, f.ende) ?? textProblem(f) ?? kartenlinkOhneOrt(f) ?? treffpunktProblem(f.treffpunkt, f.beginn);
 }
 
 /** Die erwartete Spielerzahl (#390 AK 3): `null` heisst unbekannt, sonst eine
@@ -194,6 +297,15 @@ export function zahlOderNull(text: string | null | undefined): number | null {
 export function spielerzahlText(n: number): string {
   return `${n} ${n === 1 ? "Spieler:in" : "Spieler:innen"}`;
 }
+
+/** Den Ausfall zurücknehmen (#327 AK 6): Titel, Knopf und Meldung. Bei einem
+ *  Termin von heute oder später als Dialog mit dem Entscheid, ob die
+ *  Spielervertretungen benachrichtigt werden (#643 AK 1), sonst ein Klick. */
+export const AUSFALL_ZURUECKNEHMEN_TEXT = {
+  titel: "Ausfall zurücknehmen",
+  knopf: "Zurücknehmen",
+  erfolg: "Ausfall zurückgenommen.",
+} as const;
 
 /** Der Grund eines Ausfalls folgt den Regeln der Bemerkung (#327 AK 4);
  *  Zwilling des Checks `tt_ausfall_grund`. */
@@ -226,6 +338,7 @@ export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partia
     aenderung.ortLink = neu.ortLink ?? "";
   }
   if (!gleich(neu.bemerkung, start.bemerkung)) aenderung.bemerkung = neu.bemerkung ?? "";
+  if (!gleich(neu.hinweisEltern, start.hinweisEltern)) aenderung.hinweisEltern = neu.hinweisEltern ?? "";
   if (!gleicheFelder(neu.felder, start.felder)) aenderung.felder = neu.felder ?? null;
   if ((neu.spielerzahl ?? null) !== (start.spielerzahl ?? null)) aenderung.spielerzahl = neu.spielerzahl ?? null;
   if (neu.mindestbesetzung !== undefined && !gleicheBesetzung(neu.mindestbesetzung, start.mindestbesetzung ?? null))
@@ -239,7 +352,24 @@ export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partia
   // Die Treffpunkte ebenso (#465 PC 2): gleich sind sie, wenn sie denselben
   // Abstand zum jeweiligen Anpfiff haben.
   if (neu.treffpunkte && !gleicheTreffpunkte(neu, start)) aenderung.treffpunkte = neu.treffpunkte;
+  // Der Treffpunkt eines Trainings ebenso (#561 PC 1): gleich bei gleichem
+  // Ort und Abstand zum jeweiligen Beginn; `undefined` heisst unverändert.
+  if (neu.treffpunkt !== undefined && !gleicherTreffpunkt(neu, start)) aenderung.treffpunkt = neu.treffpunkt;
   return Object.keys(aenderung).length > 0 ? aenderung : null;
+}
+
+/** Haben zwei Stände denselben Treffpunkt — je zu ihrem Beginn? Ein
+ *  ungültiger ist nie gleich: Er geht zur Prüfung mit. */
+function gleicherTreffpunkt(neu: TerminFelder, start: TerminFelder): boolean {
+  const form = (f: TerminFelder) => {
+    if (!f.treffpunkt) return "ohne";
+    const zeit = leerZuNull(f.treffpunkt.zeit);
+    const beginn = leerZuNull(f.beginn);
+    if (zeit === null || beginn === null || !istUhrzeit(zeit) || !istUhrzeit(beginn)) return null;
+    return `${treffpunktVorlauf(beginn, zeit)}|${leerZuNull(f.treffpunkt.ort) ?? ""}`;
+  };
+  const a = form(neu);
+  return a !== null && a === form(start);
 }
 
 /** Haben zwei Stände dieselben Treffpunkte — je zu ihrem Anpfiff? Eine
@@ -289,6 +419,8 @@ export const TERMIN_MELDUNG = {
     "Der Termin ist inzwischen ausgefallen oder sein Ausfall wurde zurückgenommen. Sieh ihn dir noch einmal an.",
   NICHT_MEHR_MITGLIED:
     "Mindestens eine gewählte Person ist nicht mehr Mitglied des Teams. Sieh dir die Mitglieder noch einmal an.",
+  /** #561 AK 5: Rückhalt der Datenebene, wenn der Fachkern umgangen wird. */
+  TREFFPUNKT_TERMINTAG: TERMIN_TEXT.treffpunktTermintag,
 } as const;
 
 export type TerminMarker = keyof typeof TERMIN_MELDUNG;

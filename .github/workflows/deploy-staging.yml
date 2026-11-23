@@ -11,6 +11,14 @@ on:
   # Manuell auslösbar, z. B. um ein frisches Staging-Projekt initial zu befüllen.
   workflow_dispatch:
 
+# Dieselbe Gruppe wie reset-staging.yml und sync-staging.yml: Läufe auf der
+# Staging-DB warten aufeinander, statt sich zu überschneiden. GitHub hält je
+# Gruppe einen laufenden und einen wartenden Lauf; ein neu wartender ersetzt
+# einen älteren wartenden.
+concurrency:
+  group: staging-db
+  cancel-in-progress: false
+
 jobs:
   db-push:
     name: supabase db push (Staging)
@@ -30,10 +38,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: supabase/setup-cli@v2
         with:
-          version: latest
-          # Ohne Token löst die Action «latest» anonym auf und scheitert am
-          # API-Limit von GitHub («rate limit exceeded»).
-          github-token: ${{ github.token }}
+          version: 2.122.1
       - name: Mit Staging-Projekt verknüpfen
         run: supabase link --project-ref "$SUPABASE_STAGING_REF"
         env:

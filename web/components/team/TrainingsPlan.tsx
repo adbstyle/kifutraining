@@ -11,7 +11,7 @@ import { cn } from "@/lib/cn";
 import { TerminHandgriffe, TrainingHinzufuegen } from "./TerminHandgriffe";
 import { NaechsterTermin } from "./NaechsterTermin";
 import { PlanMonat } from "./PlanMonat";
-import { PlanGeteilt } from "./PlanGeteilt";
+import { ListeMitDetail } from "@/components/layout/ListeMitDetail";
 import { zeitText } from "@/lib/termin";
 import { spielerzahlKurz, spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { terminHref } from "@/lib/team-ansicht";
@@ -53,7 +53,7 @@ export function TrainingsPlan({
   eingrenzung: Eingrenzung | null;
   leer?: ReactNode;
   /** Der geöffnete Termin (#435): ab `lg` an Stelle des Monats daneben, in
-   *  einer geteilten Fläche mit Griff (`PlanGeteilt`); schmaler an Stelle
+   *  einer geteilten Fläche mit Griff (`ListeMitDetail`); schmaler an Stelle
    *  der Liste. */
   spalte?: ReactNode;
 }) {
@@ -121,7 +121,7 @@ export function TrainingsPlan({
   );
 
   // Ein geöffneter Termin teilt die Fläche wie ein Training (#435).
-  if (spalte) return <PlanGeteilt links={termine} rechts={spalte} listeRef={liste} />;
+  if (spalte) return <ListeMitDetail links={termine} rechts={spalte} listeRef={liste} spaltenName="Terminspalte" />;
 
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_16.5rem] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">

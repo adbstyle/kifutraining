@@ -2,19 +2,19 @@
 
 import {
   aendereSpieler,
-  entferneSpieler,
   erneuereAbholung,
   erneuereSpielerLink,
   holeSpielerLink,
-  importiereSpieler,
+  ladeSpieler,
+  ladeSpielerTeams,
   nimmSpielerAuf,
-  pruefeSpielerImport,
+  nimmSpielerAusTeam,
   schalteAbholung,
+  setzeLinkZugestellt,
 } from "@/lib/kern/spieler";
-import { abholUrl, spielerLinkUrl, type SpielerEingabe, type SpielerFeld } from "@/lib/spieler";
-import type { ImportEintrag, ImportErwartet, ImportVorschau } from "@/lib/spieler-import";
+import { abholUrl, spielerLinkUrl, type LinkStand, type SpielerEingabe, type SpielerFeld, type SpielerTeams } from "@/lib/spieler";
 import { oeffentlicherOrigin } from "@/lib/origin";
-import { revalidiereTeam } from "@/lib/revalidate";
+import { revalidiereAlleTeams, revalidiereTeam, revalidiereVerein } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
 
 /**
@@ -22,10 +22,12 @@ import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
  * (lib/kern/spieler.ts), dieselben Funktionen wie die KI-Werkzeuge.
  */
 
-type Fehler = { ok: false; error: string; feld?: SpielerFeld };
+/** `feld`: eines der vier Felder oder, wo kein Feld gemeint ist, das Ziel
+ *  (`spieler_id`: inzwischen herausgenommen oder gelöscht; `team_id`). */
+type Fehler = { ok: false; error: string; feld?: SpielerFeld | "spieler_id" | "team_id" };
 
 function fehler(r: { meldung: string; feld?: string }): Fehler {
-  return { ok: false, error: r.meldung, feld: r.feld as SpielerFeld | undefined };
+  return { ok: false, error: r.meldung, feld: r.feld as Fehler["feld"] };
 }
 
 export async function nimmSpielerAufAktion(
@@ -40,68 +42,84 @@ export async function nimmSpielerAufAktion(
   return { ok: true, spielerId: r.wert.spielerId, ersetzt: r.wert.ersetzt };
 }
 
-export async function aendereSpielerAktion(spielerId: string, e: SpielerEingabe): Promise<{ ok: true } | Fehler> {
+export async function aendereSpielerAktion(teamId: string, spielerId: string, e: SpielerEingabe): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await aendereSpieler(a.supabase, a.userId, { ...e, spielerId });
+  const r = await aendereSpieler(a.supabase, a.userId, { ...e, spielerId, teamId });
   if (!r.ok) return fehler(r);
   revalidiereTeam(r.wert.teamId);
   return { ok: true };
 }
 
-export async function entferneSpielerAktion(spielerId: string): Promise<{ ok: true } | Fehler> {
+/** Die Teams einer Spieler:in samt Stand, für die Bestätigung des
+ *  Herausnehmens (#579 AK 14–16). */
+export async function ladeSpielerTeamsAktion(teamId: string, spielerId: string): Promise<({ ok: true } & SpielerTeams) | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await entferneSpieler(a.supabase, a.userId, { spielerId });
+  const r = await ladeSpielerTeams(a.supabase, a.userId, { teamId, spielerId });
   if (!r.ok) return fehler(r);
-  revalidiereTeam(r.wert.teamId);
-  return { ok: true };
+  return { ok: true, ...r.wert };
 }
 
-/** Die Vorschau eines Imports aus einer Datei (#455) — nur die vier Angaben
- *  je Zeile kommen hierher, die Datei bleibt im Browser. */
-export async function pruefeSpielerImportAktion(
+/** Eine Spieler:in aus dem Team nehmen, nicht löschen (#579 AK 10). `stand`
+ *  ist der, den die Bestätigung zeigte; `geaendert`: Er galt nicht mehr, es
+ *  wurde nichts geändert — die Bestätigung zeigt den neuen Stand. */
+export async function nimmSpielerAusTeamAktion(
   teamId: string,
-  zeilen: ImportEintrag[],
-): Promise<{ ok: true; vorschau: ImportVorschau } | Fehler> {
+  spielerId: string,
+  stand: string,
+): Promise<{ ok: true } | (Fehler & { geaendert?: boolean })> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await pruefeSpielerImport(a.supabase, a.userId, { teamId, zeilen });
-  if (!r.ok) return fehler(r);
-  return { ok: true, vorschau: r.wert };
-}
-
-/** Den Import übernehmen (#455), ganz oder gar nicht. `geaendert`: Die Liste
- *  traf nicht mehr die bestätigte Vorschau. */
-export async function importiereSpielerAktion(
-  teamId: string,
-  zeilen: ImportEintrag[],
-  erwartet: ImportErwartet,
-): Promise<{ ok: true; neu: number; js: number; ersetzt: number } | (Fehler & { geaendert?: boolean })> {
-  const a = await angemeldet();
-  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await importiereSpieler(a.supabase, a.userId, { teamId, zeilen, erwartet });
-  if (!r.ok) return { ...fehler(r), geaendert: r.art === "konflikt" && !r.wiederholbar };
+  const r = await nimmSpielerAusTeam(a.supabase, a.userId, { teamId, spielerId, stand });
+  if (!r.ok) return { ...fehler(r), geaendert: r.art === "konflikt" && r.feld === "stand" };
   revalidiereTeam(teamId);
-  return { ok: true, neu: r.wert.neu, js: r.wert.js, ersetzt: r.wert.ersetzt };
+  revalidiereVerein();
+  return { ok: true };
 }
 
-/** Den privaten Link einer Spieler:in holen (#436 AK 1) — als Adresse. */
-export async function holeSpielerLinkAktion(spielerId: string): Promise<{ ok: true; url: string } | Fehler> {
+/** Den privaten Link einer Spieler:in holen (#436 AK 1) — als Adresse, mit
+ *  dem frischen Stand (#657). Im Team, in dessen Liste man sie sieht (#583
+ *  AK 14): in jedem ihrer Teams. Ohne lesbaren Stand bleibt der der Liste. */
+export async function holeSpielerLinkAktion(teamId: string, spielerId: string): Promise<{ ok: true; url: string; stand?: LinkStand } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await holeSpielerLink(a.supabase, a.userId, { spielerId });
+  const [r, s] = await Promise.all([
+    holeSpielerLink(a.supabase, a.userId, { teamId, spielerId }),
+    ladeSpieler(a.supabase, teamId, spielerId),
+  ]);
   if (!r.ok) return fehler(r);
-  return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token) };
+  return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token), stand: s.ok ? s.wert.linkStand : undefined };
 }
 
-/** Den privaten Link erneuern (#436 AK 3): Der bisherige gilt nie wieder. */
-export async function erneuereSpielerLinkAktion(spielerId: string): Promise<{ ok: true; url: string } | Fehler> {
+/** Den Link als zugestellt markieren oder zurücknehmen (#657 AK 1). Der
+ *  Stand gilt in allen Teams der Spieler:in und im Verein (PC 1), darum laden
+ *  alle neu. `geaendert` false: Er war inzwischen abgeholt. */
+export async function setzeLinkZugestelltAktion(
+  teamId: string,
+  spielerId: string,
+  zugestellt: boolean,
+): Promise<{ ok: true; stand: LinkStand; geaendert: boolean } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await erneuereSpielerLink(a.supabase, a.userId, { spielerId });
+  const r = await setzeLinkZugestellt(a.supabase, a.userId, { teamId, spielerId, zugestellt });
   if (!r.ok) return fehler(r);
-  revalidiereTeam(r.wert.teamId);
+  revalidiereAlleTeams();
+  revalidiereVerein();
+  return { ok: true, stand: r.wert.linkStand, geaendert: r.wert.geaendert };
+}
+
+/** Den privaten Link erneuern (#436 AK 3): Der bisherige gilt nie wieder, in
+ *  allen Teams der Spieler:in (#583 AK 15). Der Stand ist in jeder Liste
+ *  wieder offen; die Antwort nennt die anderen Teams nicht, darum laden alle
+ *  neu, dazu der Spielerbestand des Vereins. */
+export async function erneuereSpielerLinkAktion(teamId: string, spielerId: string): Promise<{ ok: true; url: string } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await erneuereSpielerLink(a.supabase, a.userId, { teamId, spielerId });
+  if (!r.ok) return fehler(r);
+  revalidiereAlleTeams();
+  revalidiereVerein();
   return { ok: true, url: spielerLinkUrl(await oeffentlicherOrigin(), r.wert.token) };
 }
 

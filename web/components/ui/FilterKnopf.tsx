@@ -242,7 +242,7 @@ export function AuswahlFilter({
   );
 }
 
-/* Zahlenfilter: der Filterknopf für eine Zahl («Verfügbare Kinder»). Der
+/* Zahlenfilter: der Filterknopf für eine Zahl («Verfügbare Spieler:innen»). Der
    Knopf nennt die übernommene Zahl, eingegeben wird sie im Panel — mit
    Tipppause (300 ms), wie die Suche. Er zeigt den Wert, den der Aufrufer als
    `gesetzt` meldet, nicht den gerade getippten: Er sagt, was die Übersicht
@@ -251,6 +251,7 @@ export function ZahlFilter({
   label,
   feldLabel,
   einheit,
+  einheitEins = einheit,
   hinweis,
   gesetzt,
   onCommit,
@@ -259,8 +260,10 @@ export function ZahlFilter({
   label: string;
   /** Name des Zahlenfelds im Panel. */
   feldLabel: string;
-  /** Wofür die Zahl steht, für die Vorlesehilfe am Knopf («12 Kinder»). */
+  /** Wofür die Zahl steht, für die Vorlesehilfe am Knopf («12 Spieler:innen»). */
   einheit: string;
+  /** Einzahl der Einheit für den Wert 1 («1 Spieler:in»); ohne Angabe gilt `einheit`. */
+  einheitEins?: string;
   hinweis?: string;
   gesetzt?: number;
   onCommit: (wert: string) => void;
@@ -271,7 +274,7 @@ export function ZahlFilter({
     <FilterKnopf
       label={label}
       badge={gesetzt}
-      badgeLabel={gesetzt !== undefined ? `${gesetzt} ${einheit}` : undefined}
+      badgeLabel={gesetzt !== undefined ? `${gesetzt} ${gesetzt === 1 ? einheitEins : einheit}` : undefined}
       panelClassName="w-64 px-3 py-2"
     >
       <TextField
@@ -292,19 +295,24 @@ export function ZahlFilter({
    Platzhalter sagen, wofür sie da ist —, dafür umrandet, denn neben den
    umrandeten Filterknöpfen stünde sonst ein Feld, das man nicht sieht. Wirkt
    nach einer Tipppause (300 ms); das Kreuz zum Leeren läuft über denselben
-   Weg. */
+   Weg. `bereinige`: wie die Seite den übernommenen Wert bereinigt zurückgibt
+   (`initial`) — dieselbe Funktion, mit der `useAdressFilter().setzeWert` ihn
+   in die Adresse schreibt; so überschreibt das Echo der eigenen Eingabe das
+   Feld nie. */
 export function FilterSuche({
   label,
   initial,
   onCommit,
+  bereinige,
   className = "w-full sm:w-72",
 }: {
   label: string;
   initial: string;
   onCommit: (wert: string) => void;
+  bereinige?: (wert: string) => string;
   className?: string;
 }) {
-  const [wert, aendern] = useDebouncedWert(initial, onCommit);
+  const [wert, aendern] = useDebouncedWert(initial, onCommit, bereinige);
   return (
     <SearchField
       label={label}

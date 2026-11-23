@@ -1,7 +1,7 @@
 // Das Kalender-Abo einer Spielervertretung (Epic #506): Status und Einträge.
 //
 // Das Abo folgt dem privaten Link — die Datenebene liefert dieselben Termine
-// wie er (ohne ausgefallene), hier wird daraus, wie ein Termin im
+// wie er, über alle Teams der Spieler:in (ohne ausgefallene), hier wird daraus, wie ein Termin im
 // Kalenderprogramm erscheint. Der Status steht vorn im Titel als Zeichen
 // (PO 2026-10-24): So unterscheidet die Spielervertretung zugesagt und
 // abgesagt schon in der Kalenderübersicht, in allen vier Programmen (#507
@@ -27,6 +27,7 @@ export const ABO_STATUS: Record<AboStatus, { zeichen: string; wort: string }> = 
 export type AboFeedTermin = Pick<
   LinkTermin,
   | "id"
+  | "team"
   | "datum"
   | "beginn"
   | "ende"
@@ -39,19 +40,21 @@ export type AboFeedTermin = Pick<
   | "meldung"
   | "frist_abgelaufen"
   | "nicht_aufgeboten"
-  | "bemerkung"
+  | "hinweis_eltern"
   | "treffpunkte"
+  | "treffpunkt"
 >;
 
-/** `probe`: Die Spieler:in ist im Probe-Modus (#555 PC 11); fehlt bei einer
- *  Datenebene vor der Migration. */
+/** `probe`: Die Spieler:in schnuppert (#555 PC 11); fehlt bei einer
+ *  Datenebene vor der Migration. Ohne Team ist das Abo gültig und leer
+ *  (#583 AK 9); jeder Termin nennt sein Team. */
 export type AboFeed =
   | { gueltig: false }
-  | { gueltig: true; abo: string; team: string; probe?: boolean; termine: AboFeedTermin[] };
+  | { gueltig: true; abo: string; probe?: boolean; termine: AboFeedTermin[] };
 
 /** Der Status der Spieler:in an einem Termin.
  *  - Training (#507 PC 3): angemeldet = zugesagt, abgemeldet = abgesagt;
- *    «vielleicht» gibt es nicht — ausser im Probe-Modus (#555 PC 11): Dort
+ *    «vielleicht» gibt es nicht — ausser beim Schnuppern (#555 PC 11): Dort
  *    heisst nicht angemeldet vielleicht, auch wenn sie sich nicht mehr
  *    anmelden kann.
  *  - Spiel (#508 PC 3–6): nicht aufgeboten = abgesagt, auch wenn angemeldet;
@@ -67,9 +70,11 @@ export function aboStatus(t: AboFeedTermin, probe = false): AboStatus {
 
 /** Ein Termin, wie er ins Abo geht (#507 PC 2, #508 PC 2): Terminart bzw.
  *  Bezeichnung, Teamname, Beginn, Ende, Ort und der Status — im Titel als
- *  Zeichen, in der Beschreibung als Wort. Bei Spielen dazu Treffpunkte und
- *  Bemerkung. Vielleicht ist vorläufig, abgesagt belegt keine Zeit. */
-export function aboEintrag(t: AboFeedTermin, team: string, probe = false): AboTermin {
+ *  Zeichen, in der Beschreibung als Wort. Bei Spielen dazu die Treffpunkte,
+ *  bei Trainings der Treffpunkt (#561 AK 13), bei beiden der Hinweis für
+ *  Eltern (#590 AK 12). Vielleicht
+ *  ist vorläufig, abgesagt belegt keine Zeit. */
+export function aboEintrag(t: AboFeedTermin, probe = false): AboTermin {
   const status = aboStatus(t, probe);
   const { zeichen, wort } = ABO_STATUS[status];
   const art = t.art === "spiel" ? (t.bezeichnung ?? "Spiel") : "Training";
@@ -80,35 +85,34 @@ export function aboEintrag(t: AboFeedTermin, team: string, probe = false): AboTe
     ende: t.ende,
     ort: t.ort,
     ortLink: t.ort_link ?? null,
-    titel: `${zeichen} ${art} · ${team}`,
-    beschreibung: [wort, ...spielAbschnitte(t, status)].join("\n\n"),
+    titel: `${zeichen} ${art} · ${t.team}`,
+    beschreibung: [wort, ...treffpunktAbschnitt(t, status), ...(t.hinweis_eltern ? [t.hinweis_eltern] : [])].join("\n\n"),
     status: status === "vielleicht" ? "TENTATIVE" : "CONFIRMED",
     frei: status === "abgesagt",
   };
 }
 
-/** Treffpunkte und Bemerkung eines Spiels, wie die Spielkarte am Link sie
- *  zeigt (#508 PC 2): Treffpunkte nur, solange es nicht begonnen hat und die
- *  Spieler:in mitkommt — ein abgesagtes Spiel ist am Link gedämpft und nennt
- *  keine. Die Bemerkung immer, so wie Mitglieder sie geschrieben haben
- *  (OoS 4). Der Ort von «vor Ort» ist der des Spiels. */
-function spielAbschnitte(t: AboFeedTermin, status: AboStatus): string[] {
-  if (t.art !== "spiel") return [];
-  const abschnitte: string[] = [];
-  const treffpunkte = !t.begonnen && status !== "abgesagt" ? (t.treffpunkte ?? []) : [];
-  if (treffpunkte.length > 0) {
-    const zeilen = treffpunkte.map((tp) => {
-      const a = treffpunktAnzeige(tp, t.datum, t.ort);
-      return [a.zeit, a.anreise, a.ort].filter(Boolean).join(" · ");
-    });
-    abschnitte.push(["Treffpunkte", ...zeilen].join("\n"));
-  }
-  if (t.bemerkung) abschnitte.push(`Bemerkung\n${t.bemerkung}`);
-  return abschnitte;
+/** Die Treffpunkte eines Spiels, wie die Spielkarte am Link sie zeigt
+ *  (#508 PC 2): nur, solange es nicht begonnen hat und die Spieler:in
+ *  mitkommt — ein abgesagtes Spiel ist am Link gedämpft und nennt keine. Der
+ *  Ort von «vor Ort» ist der des Spiels. Der Hinweis für Eltern folgt immer,
+ *  so wie das Team ihn geschrieben hat (#590 AK 12; OoS 6). */
+function treffpunktAbschnitt(t: AboFeedTermin, status: AboStatus): string[] {
+  // #561 AK 13: der Treffpunkt eines Trainings unter denselben Bedingungen wie am Link.
+  if (t.art !== "spiel")
+    return t.treffpunkt && !t.begonnen && status !== "abgesagt" ? [`Treffpunkt\n${t.treffpunkt.zeit} · ${t.treffpunkt.ort}`] : [];
+  const treffpunkte = t.art === "spiel" && !t.begonnen && status !== "abgesagt" ? (t.treffpunkte ?? []) : [];
+  if (treffpunkte.length === 0) return [];
+  const zeilen = treffpunkte.map((tp) => {
+    const a = treffpunktAnzeige(tp, t.datum, t.ort);
+    return [a.zeit, a.anreise, a.ort].filter(Boolean).join(" · ");
+  });
+  return [["Treffpunkte", ...zeilen].join("\n")];
 }
 
-/** Der Kalender heisst nach dem Team (#507 PC 6) — wie das Abo der Mitglieder. */
-export const aboKalenderName = (team: string) => `Trainings und Spiele · ${team}`;
+/** Der Kalender heisst immer gleich (#583 AK 10): Er zeigt die Termine aller
+ *  Teams der Spieler:in, jeder Eintrag trägt sein Team im Titel. */
+export const ABO_KALENDER_NAME = "Trainings und Spiele";
 
 /** Die Adresse des Feeds neben der der Mitglieder: `/api/kalender/spieler/…`. */
 export const spielerAboUrl = (origin: string, token: string) => aboUrl(origin, token, "spieler/");

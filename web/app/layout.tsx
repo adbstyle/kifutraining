@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { Besucherstatistik } from "@/components/layout/Besucherstatistik";
+import { THEME_FARBEN } from "@/lib/app-ablegen";
+import { VORSCHAU_CLAIM, VORSCHAU_NAME, basisOrigin } from "@/lib/auffindbar";
 import "./globals.css";
 
 // Eine Familie für die ganze Anwendung: Display, Titel, Fliesstext und
@@ -13,18 +15,38 @@ const sans = Geist({
   display: "swap",
 });
 
+/* Die Vorschau beim Teilen (#673 AK 3, Entscheid 2) steht NUR hier: Name und
+   Claim für jede Adresse, das Bild aus `opengraph-image.tsx`/`twitter-image.tsx`.
+   Keine Seite setzt eigene `openGraph`-/`twitter`-Angaben (sie ersetzten
+   diese ganz) — so zeigt auch ein privater Link keinen Namen im Chat.
+   `metadataBase` macht Bild und canonical absolut (lib/auffindbar.ts). */
 export const metadata: Metadata = {
-  title: "Übungen & Trainings für Kinder- und Juniorenfussball",
+  metadataBase: new URL(basisOrigin(process.env.APP_ORIGIN)),
+  // Rückfall für Seiten ohne eigene Angaben, etwa /versionen (#673 AK 1):
+  // KiFu als Werkzeug für Verein, Team und Training (Epic #668 EK 1).
+  title: "KiFu – Verein, Team und Training im Kinder- und Juniorenfussball",
   description:
-    "Übungen durchsuchen und filtern sowie strukturierte Trainings zusammenstellen - nach den SFV-Trainingsschemata für Kinderfussball und Juniorenfussball.",
+    "Vereinsverwaltung, Team und Abmeldungen, Trainings und ein KI-Assistent für den Kinder- und Juniorenfussball.",
+  openGraph: {
+    type: "website",
+    siteName: VORSCHAU_NAME,
+    title: VORSCHAU_NAME,
+    description: VORSCHAU_CLAIM,
+    locale: "de_CH",
+  },
+  twitter: { card: "summary_large_image", title: VORSCHAU_NAME, description: VORSCHAU_CLAIM },
 };
 
-/* Die Anwendung ist dunkel: `<meta name="color-scheme" content="dark">` lässt
-   den Browser seine Leinwand und eigenen Bedienteile dunkel zeichnen, noch
-   bevor das CSS geladen ist (kein heller Blitz). Zwilling ist `color-scheme`
-   auf `:root` in globals.css, das der Druck auf hell umstellt. */
+/* Die Anwendung folgt dem Gerät, ohne dessen Angabe hell (Epic #563):
+   `<meta name="color-scheme" content="light dark">` lässt den Browser seine
+   Leinwand schon passend zeichnen, bevor das CSS geladen ist (kein Blitz im
+   anderen Erscheinungsbild). Zwilling ist `color-scheme` auf `:root` in
+   globals.css, das der Druck auf hell umstellt.
+   `themeColor` färbt die Systemleiste der abgelegten App (#651) und des
+   Browsers im Grund des Erscheinungsbilds; sie folgt dem Gerät. */
 export const viewport: Viewport = {
-  colorScheme: "dark",
+  colorScheme: "light dark",
+  themeColor: [...THEME_FARBEN],
 };
 
 /* Wurzel: nur Dokument, Schrift, globale Styles und die Besucherstatistik —

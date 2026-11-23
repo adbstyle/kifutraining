@@ -21,7 +21,7 @@ function useAnsichtFlaeche(): OffeneUebung {
  * Die geöffnete Übung in der Ansicht eines Trainings (Epic #369, Stories
  * #371/#374) — dieselbe Regel wie beim Zusammenstellen (`useOffeneUebung`).
  *
- * Die Ansicht ist eine Server-Seite, auch für Betrachter ohne Konto. Was
+ * Die Ansicht ist eine Server-Seite, nur mit Konto (#669). Was
  * offen ist, hält dieser Rahmen im Browser; Zeilen und Spalte lesen es hier.
  * Wer das Training bearbeiten darf, bearbeitet die geöffnete Übung hier wie
  * beim Zusammenstellen (#374). Ein Link aus der Seite heraus, auch auf eine
@@ -69,14 +69,11 @@ export function AnsichtFlaeche({
 export function AnsichtSpalte({
   altersstufe,
   variante,
-  kopierbar,
   eigenschaften,
 }: {
   altersstufe: Altersstufe;
   /** Die angezeigte Variante des Hauptteils. */
   variante: string | undefined;
-  /** In die eigene Bibliothek kopieren — nur mit Konto (Story 7). */
-  kopierbar: boolean;
   eigenschaften: ReactNode;
 }) {
   const steuerung = useAnsichtFlaeche();
@@ -89,7 +86,7 @@ export function AnsichtSpalte({
       variante={variante}
       durchlauf={offen?.gruppen ?? []}
       aktionen={
-        kopierbar && offen && <InBibliothekButton fassungId={offen.id} name={offen.name} />
+        offen && <InBibliothekButton fassungId={offen.id} name={offen.name} />
       }
       eigenschaften={eigenschaften}
     />

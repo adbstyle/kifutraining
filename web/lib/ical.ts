@@ -152,7 +152,7 @@ export function kalenderText(k: {
     if (t.status) z.push(`STATUS:${t.status}`);
     if (t.frei) z.push("TRANSP:TRANSPARENT");
     if (verweis) z.push(`URL:${verweis}`);
-    const beschreibung = [t.beschreibung, t.ortLink ? `Karte: ${t.ortLink}` : null, verweis].filter(Boolean).join("\n\n");
+    const beschreibung = [t.beschreibung, t.ortLink ? `Karte zum Ort: ${t.ortLink}` : null, verweis].filter(Boolean).join("\n\n");
     if (beschreibung) z.push(`DESCRIPTION:${textEscape(beschreibung)}`);
     z.push("END:VEVENT");
   }

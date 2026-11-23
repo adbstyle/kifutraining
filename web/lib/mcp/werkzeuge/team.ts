@@ -1,6 +1,8 @@
 import "server-only";
 import { z } from "zod";
 import { kategorieStufe } from "@/lib/labels";
+import { BENACHRICHTIGEN_MODELL, BENACHRICHTIGEN_TEXT, BENACHRICHTIGEN_WERKZEUG } from "@/lib/benachrichtigung";
+import type { Benachrichtigt } from "@/lib/kern/benachrichtigungen";
 import { abgebildet } from "@/lib/kern/ergebnis";
 import { meineTeams, teamPlan } from "@/lib/kern/team";
 import { aendereTrainer, setzeAbsage, teamMitglieder } from "@/lib/kern/trainer";
@@ -33,7 +35,7 @@ import {
 } from "@/lib/trainer-ausgabe";
 import { angezeigteSpielerzahl, noetigeTrainer } from "@/lib/besetzung";
 import { spielerzahlVon } from "@/lib/spieler";
-import { KARTENLINK_MAX, TERMIN_TEXT } from "@/lib/termin";
+import { HINWEIS_ELTERN_MAX, KARTENLINK_MAX, TERMIN_TEXT } from "@/lib/termin";
 import {
   KENNUNG_FEHLER,
   TEAM_KENNUNG_FEHLER,
@@ -48,7 +50,7 @@ import { KaderId, KADER_KENNUNG_FEHLER } from "@/lib/mcp/werkzeuge/kader";
 
 /**
  * Teams und Kalender (Stories #198, #322, #323, #324, #326; Felder #389,
- * erwartete Spielerzahl #390, beide an der Serie #391).
+ * erwartete Spielerzahl #390, beide an der Serie #391; Hinweis am privaten Link #590).
  *
  * Dünne Adapter über den Fachkern (lib/kern/team.ts, lib/kern/termine.ts) —
  * dieselben Funktionen wie Team-Übersicht, Trainingsplan und Termin-Dialog
@@ -67,7 +69,7 @@ import { KaderId, KADER_KENNUNG_FEHLER } from "@/lib/mcp/werkzeuge/kader";
 
 /** Was jede Beschreibung eines Termin-Werkzeugs über das Modell sagt. */
 const TERMIN_MODELL =
-  "Der Kalender eines Teams besteht aus Terminen: Datum, Beginn, Ende, Ort, Bemerkung, die Felder " +
+  "Der Kalender eines Teams besteht aus Terminen: Datum, Beginn, Ende, Ort, Bemerkung, Hinweis am privaten Link, die Felder " +
   "des Platzes und die erwartete Spielerzahl, mit oder ohne Training. Einzelne Termine entstehen mit «termin_festlegen», wöchentliche Serien mit " +
   "«terminserie_festlegen»; ein Training kommt ausschliesslich durch «training_zuordnen» an einen " +
   "bestehenden Termin auf ein Datum. Ein Termin trägt höchstens " +
@@ -84,7 +86,13 @@ const TERMIN_MODELL =
   "Mindest- und Höchstzahl an Spieler:innen als Richtwert (begrenzen keine Anmeldungen), nie ein Training, keine Felder und keine " +
   "erwartete Spielerzahl. Beginn heisst bei einem Spiel Anpfiff; ein Spiel lässt sich nur mit einem noch bevorstehenden Anpfiff " +
   "festlegen und nur auf einen solchen verlegen, und eine Verlegung beendet seinen Ausfall. Treten Mannschaften eines Turniers zu " +
-  "verschiedenen Zeiten an, ist es je Mannschaft ein Spiel.";
+  "verschiedenen Zeiten an, ist es je Mannschaft ein Spiel. " +
+  `Trainings und Spiele tragen einen Hinweis am privaten Link («hinweis_eltern»): ${TERMIN_TEXT.hinweisElternSichtbar} ` +
+  `${TERMIN_TEXT.bemerkungIntern} Was Spieler:innen und Eltern wissen sollen (etwa ein Zugangscode oder der Einlass), gehört in den Hinweis. ` +
+  "Ein Training trägt auf Wunsch einen Treffpunkt («treffpunkt»: Uhrzeit und Ort, etwa bei den Garderoben, wenn sie nicht beim " +
+  "Platz liegen) - nicht zu verwechseln mit den «treffpunkte» eines Spiels je Anreiseart. Er liegt am Tag des Trainings und nicht " +
+  "nach dem Beginn; Spieler:innen und Eltern sehen ihn über den privaten Link und im Kalender-Abo, ausser das Training fällt aus, " +
+  "hat begonnen oder die Spieler:in ist abgemeldet. Wird das Training verlegt, behält er seinen Abstand zum Beginn; ein geänderter Ort lässt ihn stehen.";
 
 const ART = z.enum(TERMIN_ARTEN as ["training", "spiel"]).describe("«training» oder «spiel»; bleibt nach dem Festlegen.");
 const BEZEICHNUNG = z
@@ -93,8 +101,8 @@ const BEZEICHNUNG = z
 const MELDEFRIST = z
   .string()
   .describe(
-    "Meldefrist eines Spiels für die Eltern als JJJJ-MM-TTTHH:MM (Uhr am Trainingsort), vor dem Anpfiff, höchstens ein Jahr " +
-      "davor. Ohne Frist melden Eltern bis zum Anpfiff. Eine Verlegung nimmt sie im selben Abstand mit.",
+    "Meldefrist eines Spiels am privaten Link als JJJJ-MM-TTTHH:MM (Uhr am Trainingsort), vor dem Anpfiff, höchstens ein Jahr " +
+      "davor. Ohne Frist melden Spieler:innen und Eltern bis zum Anpfiff. Eine Verlegung nimmt sie im selben Abstand mit.",
   );
 const TREFFPUNKTE = z
   .array(
@@ -113,10 +121,21 @@ const TREFFPUNKTE = z
     }),
   )
   .describe(
-    `Treffpunkte eines Spiels als GANZE Liste, höchstens ${TREFFPUNKTE_MAX}, je Anreiseart einer. Die Eltern sehen sie über ihren ` +
-      "Link (nicht an einem ausgefallenen Spiel). Eine Verlegung nimmt sie im selben Abstand zum Anpfiff mit. Eine Rückkehr gehört " +
-      "in die Bemerkung.",
+    `Treffpunkte eines Spiels als GANZE Liste, höchstens ${TREFFPUNKTE_MAX}, je Anreiseart einer. Spieler:innen und Eltern sehen sie ` +
+      "über den privaten Link (nicht an einem ausgefallenen Spiel). Eine Verlegung nimmt sie im selben Abstand zum Anpfiff mit. Eine Rückkehr gehört " +
+      "in den Hinweis am privaten Link.",
   );
+/** Der Treffpunkt eines Trainings (#561) — eine Angabe aus Uhrzeit und Ort. */
+const TREFFPUNKT = z
+  .object({
+    uhrzeit: z.string().describe("Uhrzeit als HH:MM am Tag des Trainings, nicht nach dem Beginn, etwa 17:15."),
+    ort: z.string().describe(`Wo, frei formuliert, höchstens ${TREFFPUNKT_ORT_MAX} Zeichen, etwa «Garderoben Schulhaus Rain».`),
+  })
+  .describe(`Treffpunkt eines Trainings, nur bei «art: training». ${TERMIN_TEXT.treffpunktSichtbar}`);
+const alsTreffpunkt = (t: { uhrzeit: string; ort: string } | null | undefined) =>
+  t === undefined ? undefined : t === null ? null : { zeit: t.uhrzeit, ort: t.ort };
+const treffpunktAusgabe = (t: { zeit: string; ort: string } | null) => (t ? { uhrzeit: t.zeit, ort: t.ort } : null);
+
 const RICHTWERT_ZAHL = z
   .number()
   .int()
@@ -126,6 +145,9 @@ const DATUM = z.string().describe("Datum als JJJJ-MM-TT, etwa 2026-10-07.");
 const UHRZEIT = z.string().describe("Uhrzeit als HH:MM (24 Stunden), etwa 18:30.");
 const ORT = z.string().describe("Ort, frei formuliert, höchstens 100 Zeichen, etwa «Sportplatz Allmend, Feld 2».");
 const BEMERKUNG = z.string().describe("Bemerkung, frei formuliert, höchstens 500 Zeichen.");
+const HINWEIS_ELTERN = z
+  .string()
+  .describe(`Hinweis am privaten Link, frei formuliert, höchstens ${HINWEIS_ELTERN_MAX} Zeichen. ${TERMIN_TEXT.hinweisElternSichtbar}`);
 const KARTENLINK_MODELL =
   `Eine vollständige Webadresse mit https://, höchstens ${KARTENLINK_MAX} Zeichen, meist ein geteilter Link aus einer ` +
   "Karten-App. Nur zusammen mit einem Ort; ändert sich der Ort ohne neuen Kartenlink, fällt der bisherige weg. " +
@@ -152,7 +174,9 @@ const VERFALL_MODELL =
   "Ändern sich Datum oder Beginn eines Trainings und hat es danach noch nicht begonnen, verfallen seine Abmeldungen: " +
   "Alle Spieler:innen gelten wieder als angemeldet (auch über die Serie, auch an einem ausgefallenen Termin). " +
   "Verfallen dadurch Abmeldungen, kommt zuerst ein Fehler mit «verfallend» (Anzahl); frag nach und wiederhole den " +
-  "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Felder, Trainer:innen und Training lassen sie stehen. " +
+  "Aufruf mit «bestaetigt: true». Ende, Ort, Bemerkung, Hinweis am privaten Link, Treffpunkt, Felder, Trainer:innen und Training lassen sie stehen. " +
+  "Läge der Treffpunkt eines Trainings mit dem neuen Beginn am Vortag, entfällt er an denselben Terminen ohne Rückfrage; " +
+  "«treffpunkt_entfallen» im Ergebnis nennt sie - sag es der Person. " +
   "Ebenso verfallen die Absagen der Trainer:innen (an einem Spiel nur mit einem anderen Datum); «absagen» im Fehler nennt, wie viele. " +
   "An einem Spiel verfallen die Meldungen nur mit einem anderen Datum (alle sind dann wieder ohne Meldung), samt den " +
   "Kennzeichnungen als nicht aufgeboten - auch wenn nur solche verfallen, kommt zuerst der Fehler mit «verfallend» " +
@@ -193,22 +217,39 @@ const SERIEN_MODELL =
   "Eine Terminserie läuft wöchentlich an einem oder mehreren Wochentagen zwischen Beginn- und " +
   "Enddatum (höchstens bis zum gleichen Kalendertag im Folgejahr) und legt ihre Termine als " +
   "einzelne Termine an. Ein Termin einer Serie kann je Angabe abweichen (Datum, Zeit, Ort, " +
-  "Bemerkung, Eingeladene, Verantwortung, Mindestbesetzung, Felder, erwartete Spielerzahl, Kader) und behält die Abweichung bei späteren Serienänderungen; " +
+  "Bemerkung, Hinweis am privaten Link, Treffpunkt, Eingeladene, Verantwortung, Mindestbesetzung, Felder, erwartete Spielerzahl, Kader) und behält die Abweichung bei späteren Serienänderungen; " +
+  "wer an nur einem Serientermin den Hinweis am privaten Link oder den Treffpunkt entfernt, führt ihn bewusst ohne, bis er wieder der Serie folgt; " +
   "das Datum gilt immer, wie es ist. Die Felder sind eine Angabe (die ganze Liste), die Spielerzahl eine zweite. " +
   "Wer an nur einem Serientermin Felder oder Spielerzahl entfernt, macht ihn bewusst leer: Er weicht ab und gilt " +
   "als unbekannt, bis er wieder der Serie folgt. Einzeln entfernte Termine legt keine Serienänderung wieder an.";
 
 // ── teams_abrufen ───────────────────────────────────────────────────────────
 
+/** Ohne Team öffnet kein Team-Werkzeug etwas (#588 AK 9); das sagt der
+ *  Hinweis, statt den Assistenten an einer leeren Liste raten zu lassen
+ *  (#589 AK 10). Nur für die KI: Die Anwendung hat eigene Leerzustände. */
+const OHNE_TEAM_HINWEIS =
+  "Du gehörst keinem Team an. Teams, Spielerlisten und Kalender stehen nur Mitgliedern eines Teams offen; " +
+  "die Vereinsfunktionen gibt es nur in der Anwendung, nicht über den KI-Assistenten.";
+
+/** Dazu für die Vereinsverwaltung ohne Team: ihr Verein und der Weg ins Team. */
+const verwaltungOhneTeamHinweis = (verein: string) =>
+  `${OHNE_TEAM_HINWEIS} Du gehörst der Vereinsverwaltung des Vereins «${verein}» an: Im Bereich «Verein» der ` +
+  "Anwendung nimmst du dich selbst in ein Team auf.";
+
 export const teamsAbrufen = werkzeug({
   name: "teams_abrufen",
   titel: "Meine Teams",
   beschreibung:
-    "Nennt die Teams, in denen du Mitglied bist, alphabetisch mit Name und Zahl der " +
-    "Mitglieder. Die «id» ist die Kennung für «team_plan_abrufen», «trainings_suchen» " +
-    "(bestand: team) und für «team_id» in «training_anlegen» und «training_kopieren». Teams " +
-    "gründen, umbenennen, auflösen oder Mitglieder verwalten lässt sich über den KI-Client " +
-    "nicht - das geht nur im Team-Bereich von KiFu.",
+    "Nennt die Teams, in denen du Mitglied bist, alphabetisch mit Name, Zahl der Mitglieder und dem Namen ihres " +
+    "Vereins («verein»). Eine Person gehört höchstens einem Verein an; «verein» neben der Liste nennt ihn einmal, " +
+    "ohne Team nur, wenn du seiner Vereinsverwaltung angehörst, sonst null. Die «id» ist die Kennung für " +
+    "«team_plan_abrufen», «trainings_suchen» (bestand: team) und für «team_id» in «training_anlegen» und " +
+    "«training_kopieren». Gehörst du keinem Team an, ist die Liste leer, und «hinweis» sagt warum: Teams, " +
+    "Spielerlisten und Kalender stehen nur Mitgliedern eines Teams offen; der Vereinsverwaltung sagt er dazu, wie " +
+    "sie sich selbst in ein Team aufnimmt. Mit Teams ist «hinweis» null. Teams anlegen, umbenennen und auflösen " +
+    "kann nur die Vereinsverwaltung, im Bereich «Verein» der Anwendung; Mitglieder aufnehmen und entfernen geht " +
+    "nur in der Anwendung. Über den KI-Client lässt sich weder ein Team noch der Verein verwalten.",
   nurLesen: true,
   eingabe: z.object({}),
   ausgabe: z.object({
@@ -219,13 +260,24 @@ export const teamsAbrufen = werkzeug({
         mitglieder: z.number().int(),
         /** Der Team-Bereich in KiFu. */
         url: z.string(),
+        verein: z.string().nullable().describe("Der Name des Vereins, dem das Team angehört."),
       }),
     ),
+    verein: z.string().nullable().describe("Dein Verein; ohne Team nur für die Vereinsverwaltung, sonst null."),
+    hinweis: z.string().nullable().describe("Nur ohne Team: warum die Liste leer ist und was du tun kannst."),
   }),
   ausfuehren: async (_e, zugang) =>
-    abgebildet(await meineTeams(zugang.supabase, zugang.userId), (w) => ({
-      teams: w.teams.map((t) => ({ ...t, url: zugang.url("team", t.id) })),
-    })),
+    abgebildet(await meineTeams(zugang.supabase, zugang.userId), (w) => {
+      const verein = w.verein?.name ?? null;
+      const ohneTeam = w.teams.length === 0;
+      return {
+        // Mitglied eines Teams ist Mitglied seines Vereins, und eine Person gehört höchstens einem an.
+        teams: w.teams.map((t) => ({ ...t, url: zugang.url("team", t.id), verein })),
+        // AK 10: ohne Team den Verein nur der Vereinsverwaltung.
+        verein: ohneTeam && !w.verein?.istVerwaltung ? null : verein,
+        hinweis: !ohneTeam ? null : w.verein?.istVerwaltung ? verwaltungOhneTeamHinweis(w.verein.name) : OHNE_TEAM_HINWEIS,
+      };
+    }),
 });
 
 // ── team_plan_abrufen ───────────────────────────────────────────────────────
@@ -253,6 +305,12 @@ const PlanEintrag = z.object({
   /** Der Kartenlink zum Ort (#533 AK 3); `null` ohne. */
   kartenlink: z.string().nullable(),
   bemerkung: z.string().nullable(),
+  /** Der Hinweis am privaten Link (#590); `null` ohne. */
+  hinweis_eltern: z.string().nullable(),
+  treffpunkt: z
+    .object({ uhrzeit: z.string(), ort: z.string() })
+    .nullable()
+    .describe("Nur bei Trainings: der Treffpunkt zum aktuellen Beginn (#561); null ohne."),
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: felderSchema(),
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
@@ -263,7 +321,20 @@ const PlanEintrag = z.object({
   serie_id: z.string().nullable(),
   /** Die Angaben, in denen der Termin von seiner Serie abweicht; leer ohne Serie. */
   abweichungen: z.array(
-    z.enum(["datum", "zeit", "ort", "bemerkung", "eingeladene", "verantwortung", "besetzung", "felder", "spielerzahl", "kader"]),
+    z.enum([
+      "datum",
+      "zeit",
+      "ort",
+      "bemerkung",
+      "hinweis_eltern",
+      "treffpunkt",
+      "eingeladene",
+      "verantwortung",
+      "besetzung",
+      "felder",
+      "spielerzahl",
+      "kader",
+    ]),
   ),
   /** Für wen der Termin gilt (#453); leer = für alle. `id: null` ist ein ehemaliger Kader eines begonnenen Termins. */
   kader: z.array(z.object({ id: z.string().nullable(), name: z.string().nullable() })),
@@ -300,6 +371,8 @@ function planEintrag(t: TerminZeile, zugang: Zugang) {
     ort: t.ort,
     kartenlink: t.ortLink,
     bemerkung: t.bemerkung,
+    hinweis_eltern: t.hinweisEltern,
+    treffpunkt: treffpunktAusgabe(t.treffpunkt),
     felder: felderAusgabe(t.felder),
     erwartete_spielerzahl: t.spielerzahl,
     spielerzahl: spielerzahlQuelleAusgabe(spielerzahlVon(t)),
@@ -332,6 +405,9 @@ const PlanSerie = z.object({
   ort: z.string().nullable(),
   kartenlink: z.string().nullable(),
   bemerkung: z.string().nullable(),
+  hinweis_eltern: z.string().nullable(),
+  /** Der Treffpunkt, den die Serie vorgibt (#561), zu ihrem Beginn. */
+  treffpunkt: z.object({ uhrzeit: z.string(), ort: z.string() }).nullable(),
   /** Wen die Serie einlädt und wer verantwortlich ist (#519). */
   trainer: serienTrainerSchema(),
   /** Die Mindestbesetzung, die die Serie vorgibt (#521). */
@@ -358,6 +434,8 @@ function planSerien(termine: TerminZeile[]) {
         ort: t.serie.ort,
         kartenlink: t.serie.ortLink,
         bemerkung: t.serie.bemerkung,
+        hinweis_eltern: t.serie.hinweisEltern,
+        treffpunkt: treffpunktAusgabe(t.serie.treffpunkt),
         trainer: serienTrainerAusgabe(t.serie.trainer),
         mindestbesetzung: t.serie.mindestbesetzung,
         felder: felderAusgabe(t.serie.felder),
@@ -374,11 +452,11 @@ export const teamPlanAbrufen = werkzeug({
     "Liefert den Kalender eines deiner Teams (Trainings und Spiele, je mit «art»), bereits geteilt wie im Team-Bereich: «kommend» (ab " +
     "heute, aufsteigend; der heutige Tag zählt ganz dazu) und «vergangen» (der jüngste zuerst). " +
     "«heute» ist der Tag, an dem geteilt wurde - gemessen am Trainingsort (Schweiz), nicht in deiner " +
-    "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung, die Felder " +
+    "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung, Hinweis am privaten Link, Treffpunkt, die Felder " +
     "des Platzes, die erwartete Spielerzahl, «spielerzahl» (die Zahl, mit der geplant wird, samt Quelle - aus der Spielerliste, " +
     "sobald das Team eine führt) und das zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
     "Training ohne Training-Inhalt, das nicht ausgefallen ist, ist noch nicht vorbereitet; ein Spiel nie. Spiele nennen Bezeichnung, Mindest- und Höchstzahl. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
-    "Ort, Bemerkung, Trainer:innen, Felder, erwartete Spielerzahl und Kader jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
+    "Ort, Bemerkung, Hinweis am privaten Link, Treffpunkt, Trainer:innen, Felder, erwartete Spielerzahl und Kader jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
     "von ihr abweicht. Jeder Eintrag nennt seine Trainer:innen und seine Kader («kader» leer: für alle); «eingrenzung» grenzt auf " +
     "deine Termine ein. " +
     `${TRAINER_MODELL} ` +
@@ -422,15 +500,35 @@ export const teamPlanAbrufen = werkzeug({
 
 // ── termin_festlegen ────────────────────────────────────────────────────────
 
+/** Was ein KI-Werkzeug über die Benachrichtigung meldet (Epic #641): die Zahl
+ *  der Spieler:innen (`null`, wenn nicht benachrichtigt werden sollte oder es
+ *  nichts mitzuteilen gab) und — nur auf den Wegen, die direkt schreiben —
+ *  einen Hinweis, wenn sie nicht entstanden ist; wortgleich zur Oberfläche. */
+const BenachrichtigtAusgabe = {
+  benachrichtigt: z
+    .number()
+    .int()
+    .nullable()
+    .describe("Wie viele Spieler:innen eine Benachrichtigung erhielten; null, wenn nicht benachrichtigt werden sollte oder es nichts mitzuteilen gab."),
+  hinweis: z
+    .string()
+    .optional()
+    .describe(`Nur, wenn die Benachrichtigung nicht entstanden ist: «${BENACHRICHTIGEN_TEXT.gescheitert}» Der Vorgang selbst gilt.`),
+};
+const benachrichtigtAus = (b: Benachrichtigt) => ({
+  benachrichtigt: b.benachrichtigt ?? null,
+  ...(b.benachrichtigungFehlt ? { hinweis: BENACHRICHTIGEN_TEXT.gescheitert } : {}),
+});
+
 export const terminFestlegen = werkzeug({
   name: "termin_festlegen",
   titel: "Termin festlegen",
   beschreibung:
     "Legt im Kalender eines deiner Teams einen einzelnen Termin fest: ein Training (ohne Training-Inhalt, auch in der " +
     "Vergangenheit) oder ein Spiel - «art» ist Pflicht. Datum, Beginn und Ende sind Pflicht, das Ende liegt am selben Tag nach dem " +
-    "Beginn; Ort, Bemerkung und Kader sind frei. Ohne Angabe sind alle Mitglieder eingeladen und du bist verantwortlich. Ein Training trägt auf Wunsch Felder und erwartete Spielerzahl; einen Inhalt ordnest du " +
+    "Beginn; Ort, Bemerkung, Hinweis am privaten Link und Kader sind frei. Ohne Angabe sind alle Mitglieder eingeladen und du bist verantwortlich. Ein Training trägt auf Wunsch Treffpunkt, Felder und erwartete Spielerzahl; einen Inhalt ordnest du " +
     "danach mit «training_zuordnen» zu. Ein Spiel braucht eine Bezeichnung und trägt auf Wunsch Mindest- und Höchstzahl. " +
-    `${TERMIN_MODELL} ${KADER_TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
+    `${BENACHRICHTIGEN_WERKZEUG} ${TERMIN_MODELL} ${KADER_TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     team_id: TeamId,
@@ -448,6 +546,8 @@ export const terminFestlegen = werkzeug({
     ort: ORT.optional(),
     kartenlink: KARTENLINK.optional(),
     bemerkung: BEMERKUNG.optional(),
+    hinweis_eltern: HINWEIS_ELTERN.optional(),
+    treffpunkt: TREFFPUNKT.optional(),
     felder: FelderEingabe.optional().describe(`Die Felder des Platzes; ohne Angabe ist der Platz unbekannt. ${FELDER_MODELL}`),
     erwartete_spielerzahl: SpielerzahlEingabe.optional().describe(
       `Die erwartete Spielerzahl; ohne Angabe unbekannt. ${SPIELERZAHL_MODELL}`,
@@ -456,8 +556,9 @@ export const terminFestlegen = werkzeug({
     eingeladene: EINGELADENE.optional(),
     verantwortlich: VERANTWORTLICH.optional(),
     mindestbesetzung: BesetzungEingabe.optional().describe(`Ohne Angabe keine. ${BESETZUNG_MODELL}`),
+    benachrichtigen: z.boolean().default(true).describe(`Nur bei einem Spiel. ${BENACHRICHTIGEN_MODELL("neues_spiel")}`),
   }),
-  ausgabe: z.object({ termin_id: z.string(), team_id: z.string() }),
+  ausgabe: z.object({ termin_id: z.string(), team_id: z.string(), ...BenachrichtigtAusgabe }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
       await legeTerminFest(zugang.supabase, zugang.userId, {
@@ -474,18 +575,31 @@ export const terminFestlegen = werkzeug({
         ort: e.ort,
         ortLink: e.kartenlink,
         bemerkung: e.bemerkung,
+        hinweisEltern: e.hinweis_eltern,
+        treffpunkt: alsTreffpunkt(e.treffpunkt),
         felder: e.felder,
         spielerzahl: e.erwartete_spielerzahl,
         kaderIds: e.kader_ids,
         eingeladene: e.eingeladene,
         verantwortlich: e.verantwortlich,
         mindestbesetzung: alsBesetzung(e.mindestbesetzung),
+        // Ohne gegenteiligen Entscheid benachrichtigen (#642 AK 6) — auch wenn
+        // die Eingabe nicht durch das Schema mit seinem Standard lief.
+        benachrichtigen: e.benachrichtigen !== false,
       }),
-      (w) => ({ termin_id: w.terminId, team_id: w.teamId }),
+      (w) => ({ termin_id: w.terminId, team_id: w.teamId, ...benachrichtigtAus(w) }),
     ),
 });
 
 // ── termin_aendern ──────────────────────────────────────────────────────────
+
+/** `benachrichtigen` beim Ändern (#644 AK 1, 2; #645 PC 3): wirkt nur, wenn
+ *  sich Datum, Zeit oder Ort ändern oder Termine wegfallen; über die Serie
+ *  eine Benachrichtigung je Spieler:in. Hinweis wie im Termin-Dialog. */
+const AENDERN_BENACHRICHTIGEN =
+  "Nur wenn sich Datum, Zeit oder Ort eines Termins ändern (der Kartenlink allein nicht) oder Termine der Serie wegfallen; " +
+  "ein ausgefallener Termin, der dadurch wieder stattfindet, meldet das; über die Serie eine Benachrichtigung je Spieler:in. " +
+  BENACHRICHTIGEN_MODELL("aendern");
 
 export const AendernEingabe = z.object({
   termin_id: TerminId,
@@ -506,6 +620,15 @@ export const AendernEingabe = z.object({
     .optional()
     .describe(`Neuer Kartenlink; null entfernt ihn, ohne Angabe unverändert, solange der Ort bleibt. ${KARTENLINK_MODELL}`),
   bemerkung: BEMERKUNG.nullable().optional().describe("Neue Bemerkung; null leert sie, ohne Angabe unverändert."),
+  hinweis_eltern: HINWEIS_ELTERN.nullable()
+    .optional()
+    .describe(`Neuer Hinweis am privaten Link; null leert ihn, ohne Angabe unverändert. ${TERMIN_TEXT.hinweisElternSichtbar}`),
+  treffpunkt: TREFFPUNKT.nullable()
+    .optional()
+    .describe(
+      "Nur bei einem Training: neuer Treffpunkt, die Uhrzeit zum neuen Beginn; null entfernt ihn, ohne Angabe unverändert " +
+        "(eine Verlegung nimmt ihn im selben Abstand mit). An einem Termin einer Serie gilt «reichweite».",
+    ),
   bezeichnung: BEZEICHNUNG.optional().describe("Nur bei einem Spiel: neue Bezeichnung; ohne Angabe unverändert."),
   mindestzahl: RICHTWERT_ZAHL.nullable().optional().describe("Nur bei einem Spiel: neue Mindestzahl; null entfernt sie, ohne Angabe unverändert."),
   hoechstzahl: RICHTWERT_ZAHL.nullable().optional().describe("Nur bei einem Spiel: neue Höchstzahl; null entfernt sie, ohne Angabe unverändert."),
@@ -542,6 +665,7 @@ export const AendernEingabe = z.object({
   ),
   bis: DATUM.optional().describe("Neues Enddatum der Serie (nur mit «dieser_und_folgende» oder «alle»)."),
   bestaetigt: BestaetigtVerlegen,
+  benachrichtigen: z.boolean().default(true).describe(AENDERN_BENACHRICHTIGEN),
 });
 
 const EntfallenMitTraining = z.array(
@@ -579,13 +703,13 @@ export const terminAendern = werkzeug({
   name: "termin_aendern",
   titel: "Termin ändern",
   beschreibung:
-    "Ändert Datum, Zeit, Ort, Bemerkung, die Felder, die erwartete Spielerzahl oder die Kader eines Termins, bei einem Spiel auch " +
+    "Ändert Datum, Zeit, Ort, Bemerkung, Hinweis am privaten Link, Treffpunkt, die Felder, die erwartete Spielerzahl oder die Kader eines Termins, bei einem Spiel auch " +
     "Bezeichnung, Mindest- und Höchstzahl - nur, was du mitgibst; die Art bleibt. Beginn und Ende " +
     "lassen sich nicht leeren; ändert sich die Zeit, braucht der Termin danach beide. Das " +
     "zugeordnete Training bleibt dasselbe. Für einen Termin einer Serie ist «reichweite» Pflicht; " +
     "das Datum ändert nur «nur_dieser», Wochentage und Zeitraum nur «dieser_und_folgende» oder " +
     "«alle». Das Ergebnis nennt entfallene Termine mit Training; Termin-Trainings gehen mit ihnen, " +
-    `andere bleiben im Bestand. ${VERFALL_MODELL} ${KADER_TERMIN_MODELL} ${SERIEN_MODELL} ${TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
+    `andere bleiben im Bestand. ${BENACHRICHTIGEN_WERKZEUG} ${VERFALL_MODELL} ${KADER_TERMIN_MODELL} ${SERIEN_MODELL} ${TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: AendernEingabe,
   ausgabe: z.object({
@@ -596,6 +720,10 @@ export const terminAendern = werkzeug({
     kartenlink_entfallen: z
       .boolean()
       .describe("Der Kartenlink fiel weg, weil sich der Ort ohne neuen Kartenlink änderte."),
+    treffpunkt_entfallen: z
+      .array(z.string())
+      .describe("Die Daten der Termine, deren Treffpunkt mit dem neuen Beginn am Vortag läge und darum entfiel; leer ohne."),
+    ...BenachrichtigtAusgabe,
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
@@ -607,6 +735,8 @@ export const terminAendern = werkzeug({
         ort: e.ort,
         ortLink: e.kartenlink,
         bemerkung: e.bemerkung,
+        hinweisEltern: e.hinweis_eltern,
+        treffpunkt: alsTreffpunkt(e.treffpunkt),
         felder: e.felder,
         spielerzahl: e.erwartete_spielerzahl,
         mindestbesetzung: alsBesetzung(e.mindestbesetzung),
@@ -621,6 +751,8 @@ export const terminAendern = werkzeug({
         von: e.von,
         bis: e.bis,
         bestaetigt: e.bestaetigt,
+        // Ohne gegenteiligen Entscheid benachrichtigen (#644 AK 1, 2).
+        benachrichtigen: e.benachrichtigen !== false,
       }),
       (w) => ({
         termin_id: w.terminId,
@@ -628,6 +760,8 @@ export const terminAendern = werkzeug({
         entfallen_mit_training: entfallenMitTraining(w.serie),
         abmeldungen_verfallen: w.abmeldungenVerfallen,
         kartenlink_entfallen: w.kartenlinkEntfallen,
+        treffpunkt_entfallen: w.treffpunktEntfallen,
+        ...benachrichtigtAus(w),
       }),
     ),
 });
@@ -647,18 +781,38 @@ export const terminEntfernen = werkzeug({
     "Bestätigung nennt das Ergebnis, was entfiele. Ein einzelner Termin oder «nur_dieser» wird " +
     "sofort entfernt - ein Spiel mit Meldungen oder Kennzeichnungen als nicht aufgeboten erst mit «bestaetigt: true»; ohne " +
     "nennt der Fehler, wie viele verschwinden («verschwindend», davon «kennzeichnungen»). " +
-    `${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
+    "Über die Serie erhält jede Spieler:in eine einzige Benachrichtigung mit den Terminen, die für sie wegfallen. " +
+    `${BENACHRICHTIGEN_WERKZEUG} ${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
-  eingabe: z.object({ termin_id: TerminId, reichweite: Reichweite.optional(), bestaetigt: Bestaetigt }),
-  ausgabe: z.object({ training: VerlassenSchema, entfallen_mit_training: EntfallenMitTraining }),
+  eingabe: z.object({
+    termin_id: TerminId,
+    reichweite: Reichweite.optional(),
+    bestaetigt: Bestaetigt,
+    benachrichtigen: z.boolean().default(true).describe(BENACHRICHTIGEN_MODELL("entfernen")),
+  }),
+  ausgabe: z.object({
+    training: VerlassenSchema,
+    entfallen_mit_training: EntfallenMitTraining,
+    benachrichtigt: z
+      .number()
+      .int()
+      .nullable()
+      .describe("Wie viele Spieler:innen eine Benachrichtigung erhielten; null, wenn nicht benachrichtigt werden sollte."),
+  }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
       await entferneMitReichweite(zugang.supabase, zugang.userId, {
         terminId: e.termin_id,
         reichweite: e.reichweite,
         bestaetigt: e.bestaetigt,
+        // Ohne gegenteiligen Entscheid benachrichtigen (#645 AK 1).
+        benachrichtigen: e.benachrichtigen !== false,
       }),
-      (w) => ({ training: verlassenAus(w.training), entfallen_mit_training: entfallenMitTraining(w.serie) }),
+      (w) => ({
+        training: verlassenAus(w.training),
+        entfallen_mit_training: entfallenMitTraining(w.serie),
+        benachrichtigt: w.benachrichtigt ?? null,
+      }),
     ),
 });
 
@@ -670,7 +824,7 @@ export const terminserieFestlegen = werkzeug({
   beschreibung:
     "Legt für eines deiner Teams eine wöchentliche Terminserie fest: je gewähltem Wochentag " +
     "zwischen «von» und «bis» (beide eingeschlossen) einen Termin ohne Training mit Beginn, Ende, " +
-    "Ort, Bemerkung, Eingeladenen, Verantwortlicher, Feldern, erwarteter Spielerzahl und Kadern der Serie - auch ganz oder teilweise in " +
+    "Ort, Bemerkung, Hinweis am privaten Link, Treffpunkt, Eingeladenen, Verantwortlicher, Feldern, erwarteter Spielerzahl und Kadern der Serie - auch ganz oder teilweise in " +
     "der Vergangenheit. Bestehende " +
     "Termine an denselben Tagen bleiben daneben stehen. Ohne Angabe sind alle Mitglieder eingeladen und du bist verantwortlich. " +
     `${SERIEN_MODELL} ${KADER_TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER} ${KADER_KENNUNG_FEHLER}`,
@@ -685,6 +839,8 @@ export const terminserieFestlegen = werkzeug({
     ort: ORT.optional(),
     kartenlink: KARTENLINK.optional(),
     bemerkung: BEMERKUNG.optional(),
+    hinweis_eltern: HINWEIS_ELTERN.optional(),
+    treffpunkt: TREFFPUNKT.optional().describe(`Der Treffpunkt jedes Termins der Serie; ohne Angabe keiner. ${TERMIN_TEXT.treffpunktSichtbar}`),
     eingeladene: EINGELADENE.optional(),
     verantwortlich: VERANTWORTLICH.optional(),
     mindestbesetzung: BesetzungEingabe.optional().describe(`Die Mindestbesetzung jedes Termins der Serie; ohne Angabe keine. ${BESETZUNG_MODELL}`),
@@ -707,6 +863,8 @@ export const terminserieFestlegen = werkzeug({
         ort: e.ort,
         ortLink: e.kartenlink,
         bemerkung: e.bemerkung,
+        hinweisEltern: e.hinweis_eltern,
+        treffpunkt: alsTreffpunkt(e.treffpunkt),
         eingeladene: e.eingeladene,
         verantwortlich: e.verantwortlich,
         mindestbesetzung: alsBesetzung(e.mindestbesetzung),
@@ -725,17 +883,34 @@ export const terminDerSerieFolgen = werkzeug({
   titel: "Termin wieder der Serie folgen lassen",
   beschreibung:
     "Lässt abweichende Angaben eines Serientermins wieder seiner Serie folgen: Zeit, Ort, " +
-    "Bemerkung, Eingeladene, Verantwortung, Mindestbesetzung («besetzung»), Felder, erwartete Spielerzahl («spielerzahl») oder Kader übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
-    `lässt sich nicht zurücksetzen («datum» wird abgewiesen). ${VERFALL_MODELL} ${KADER_TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
+    "Bemerkung, Hinweis am privaten Link («hinweis_eltern»), Treffpunkt («treffpunkt»), Eingeladene, Verantwortung, Mindestbesetzung («besetzung»), Felder, erwartete Spielerzahl («spielerzahl») oder Kader übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
+    `lässt sich nicht zurücksetzen («datum» wird abgewiesen). ${BENACHRICHTIGEN_WERKZEUG} ${VERFALL_MODELL} ${KADER_TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     termin_id: TerminId,
     angaben: z
       .array(
-        z.enum(["zeit", "ort", "bemerkung", "eingeladene", "verantwortung", "besetzung", "felder", "spielerzahl", "kader", "datum"]),
+        z.enum([
+          "zeit",
+          "ort",
+          "bemerkung",
+          "hinweis_eltern",
+          "treffpunkt",
+          "eingeladene",
+          "verantwortung",
+          "besetzung",
+          "felder",
+          "spielerzahl",
+          "kader",
+          "datum",
+        ]),
       )
       .min(1),
     bestaetigt: z.boolean().optional().describe("Nur nötig, wenn mit «zeit» oder «kader» Abmeldungen verfallen."),
+    benachrichtigen: z
+      .boolean()
+      .default(true)
+      .describe(`Nur wenn der Termin mit «zeit» oder «ort» eine andere Zeit oder einen anderen Ort erhält. ${BENACHRICHTIGEN_MODELL("aendern")}`),
   }),
   ausgabe: z.object({
     termin_id: z.string(),
@@ -743,6 +918,14 @@ export const terminDerSerieFolgen = werkzeug({
     kartenlink_entfallen: z
       .boolean()
       .describe("Mit «ort» fiel der eigene Kartenlink des Termins weg; es gilt der der Serie."),
+    treffpunkt_entfallen: z
+      .boolean()
+      .describe("Mit «zeit» fiel der eigene Treffpunkt weg, weil er mit dem Beginn der Serie am Vortag läge."),
+    benachrichtigt: z
+      .number()
+      .int()
+      .nullable()
+      .describe("Wie viele Spieler:innen eine Benachrichtigung erhielten; null, wenn nicht benachrichtigt werden sollte."),
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
@@ -750,8 +933,17 @@ export const terminDerSerieFolgen = werkzeug({
         terminId: e.termin_id,
         angaben: e.angaben,
         bestaetigt: e.bestaetigt ? true : undefined,
+        treffpunktWeg: true,
+        // Ohne gegenteiligen Entscheid benachrichtigen (#644 AK 1).
+        benachrichtigen: e.benachrichtigen !== false,
       }),
-      (w) => ({ termin_id: w.terminId, abmeldungen_verfallen: w.verfallen, kartenlink_entfallen: w.kartenlinkEntfallen }),
+      (w) => ({
+        termin_id: w.terminId,
+        abmeldungen_verfallen: w.verfallen,
+        kartenlink_entfallen: w.kartenlinkEntfallen,
+        treffpunkt_entfallen: w.treffpunktEntfallen,
+        benachrichtigt: w.benachrichtigt ?? null,
+      }),
     ),
 });
 
@@ -764,7 +956,7 @@ export const trainingZuordnen = werkzeug({
     "Ordnet einem Termin ein Training zu: Der Termin bekommt immer eine eigene Kopie als " +
     "Termin-Training; die Quelle bleibt unverändert, und in den Bestand des Teams kommt nichts. " +
     "Quelle kann ein Training aus dem Bestand desselben Teams, das Training eines anderen Termins " +
-    "oder ein eigenes persönliches Training sein (jeder Altersstufe, Entwurf oder öffentlich). " +
+    "oder ein eigenes persönliches Training sein (jeder Altersstufe, Entwurf oder in der Community). " +
     "Trainings eines anderen Teams lassen sich nicht zuordnen. Trägt der Termin schon eins, wird es " +
     "ersetzt («ersetzt»): ein Termin-Training wird dabei gelöscht, ein älteres Training aus dem " +
     "Bestand bleibt dort. Scheitert die Zuordnung, entfernt KiFu die Kopie wieder; «hinweis» sagt, " +
@@ -818,19 +1010,29 @@ export const terminAusfallenLassen = werkzeug({
     "Grund eines schon ausgefallenen. Ohne «grund» bleibt ein vorhandener Grund stehen; «grund»: " +
     `null (oder leer) leert ihn. ${TERMIN_TEXT.grundSichtbar} Trägt der Termin ein Training, ruht es am Termin und ist wieder da, ` +
     "wenn der Ausfall zurückgenommen wird. Ein ausgefallener Termin gilt nicht als unvorbereitet " +
-    `und nimmt kein neues Training an. Einzeln auf heute oder später verlegt, findet er wieder statt. ${TERMIN_KENNUNG_FEHLER}`,
+    `und nimmt kein neues Training an. Einzeln auf heute oder später verlegt, findet er wieder statt. ${BENACHRICHTIGEN_WERKZEUG} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     termin_id: TerminId,
     grund: BEMERKUNG.nullable()
       .optional()
       .describe("Grund, frei, höchstens 500 Zeichen. Weggelassen: ein vorhandener Grund bleibt. null: leert ihn."),
+    benachrichtigen: z
+      .boolean()
+      .default(true)
+      .describe(`Nur beim Ausfallen lassen; den Grund eines schon ausgefallenen ändern bleibt still. ${BENACHRICHTIGEN_MODELL("ausfall")}`),
   }),
-  ausgabe: z.object({ termin_id: z.string() }),
+  ausgabe: z.object({ termin_id: z.string(), ...BenachrichtigtAusgabe }),
   ausfuehren: async (e, zugang) =>
-    abgebildet(await lasseAusfallen(zugang.supabase, zugang.userId, { terminId: e.termin_id, grund: e.grund }), (w) => ({
-      termin_id: w.terminId,
-    })),
+    abgebildet(
+      await lasseAusfallen(zugang.supabase, zugang.userId, {
+        terminId: e.termin_id,
+        grund: e.grund,
+        // Ohne gegenteiligen Entscheid benachrichtigen (#643 AK 1).
+        benachrichtigen: e.benachrichtigen !== false,
+      }),
+      (w) => ({ termin_id: w.terminId, ...benachrichtigtAus(w) }),
+    ),
 });
 
 // ── termin_ausfall_zuruecknehmen ────────────────────────────────────────────
@@ -840,14 +1042,19 @@ export const terminAusfallZuruecknehmen = werkzeug({
   titel: "Ausfall zurücknehmen",
   beschreibung:
     "Nimmt den Ausfall eines Termins zurück: Er ist danach wieder ein normaler Termin ohne Grund; " +
-    `ein Training, das am Termin ruhte, ist wieder da. ${TERMIN_KENNUNG_FEHLER}`,
+    `ein Training, das am Termin ruhte, ist wieder da. ${BENACHRICHTIGEN_WERKZEUG} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
-  eingabe: z.object({ termin_id: TerminId }),
-  ausgabe: z.object({ termin_id: z.string() }),
+  eingabe: z.object({
+    termin_id: TerminId,
+    benachrichtigen: z.boolean().default(true).describe(BENACHRICHTIGEN_MODELL("ruecknahme")),
+  }),
+  ausgabe: z.object({ termin_id: z.string(), ...BenachrichtigtAusgabe }),
   ausfuehren: async (e, zugang) =>
-    abgebildet(await nimmAusfallZurueck(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) => ({
-      termin_id: w.terminId,
-    })),
+    abgebildet(
+      // Ohne gegenteiligen Entscheid benachrichtigen (#643 AK 1).
+      await nimmAusfallZurueck(zugang.supabase, zugang.userId, { terminId: e.termin_id, benachrichtigen: e.benachrichtigen !== false }),
+      (w) => ({ termin_id: w.terminId, ...benachrichtigtAus(w) }),
+    ),
 });
 
 // ── team_mitglieder_abrufen ─────────────────────────────────────────────────

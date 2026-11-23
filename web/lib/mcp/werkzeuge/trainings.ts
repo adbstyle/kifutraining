@@ -22,6 +22,7 @@ import {
 } from "@/lib/mcp/bausteine";
 import { SuchTreffer } from "@/lib/mcp/eingaben";
 import { alsTreffer } from "@/lib/mcp/werkzeuge/uebungen";
+import { KONTO_GRENZE_WERKZEUG } from "@/lib/konto-grenzen";
 import { werkzeug } from "@/lib/mcp/werkzeug";
 
 /**
@@ -73,7 +74,7 @@ export const VarianteId = kennung(
 export const KENNUNG_FEHLER =
   "Fehlerarten zur Kennung: «nicht_gefunden» - für dein Konto nicht sichtbar (es gibt sie " +
   "nicht, sie wurde gelöscht oder gehört jemand anderem privat; bewusst nicht " +
-  "unterscheidbar); «keine_rechte» - ein öffentliches Training eines anderen Kontos: " +
+  "unterscheidbar); «keine_rechte» - ein Training eines anderen Kontos in der Community: " +
   "ansehen und übernehmen ja, ändern nein.";
 
 /** Die Kennung eines Teams (#198). Sichtbar sind nur die eigenen Teams. */
@@ -135,7 +136,7 @@ export const trainingAnlegen = werkzeug({
     "mit Name, Altersstufe, mindestens einer Alterskategorie und optional einem Ziel. " +
     "Ohne «team_id» in deinem persönlichen Bestand, mit «team_id» direkt im Bestand eines " +
     "deiner Teams: Dann gehört es dem Team, jedes Mitglied kann es bearbeiten, und " +
-    "veröffentlichen lässt es sich nicht. " +
+    "in die Community stellen lässt es sich nicht. " +
     "Beide Altersstufen: " +
     `${SCHEMA_TEXT} ` +
     "Im Juniorenfussball gibt es keine Hauptteilkategorie. Das Auffangen trägt in beiden " +
@@ -143,7 +144,7 @@ export const trainingAnlegen = werkzeug({
     "keine Bedingung. Teile, Blöcke und Richtwerte samt Pflichten nennt «vokabular» im " +
     "Abschnitt «schema». " +
     "Liefert die Kennung und die Adresse des Editors in KiFu. " +
-    `Übungen kommen danach mit «training_uebung_zuordnen» dazu. ${TEAM_KENNUNG_FEHLER}`,
+    `Übungen kommen danach mit «training_uebung_zuordnen» dazu. ${KONTO_GRENZE_WERKZEUG.trainings} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: AnlegenEingabe,
   ausgabe: AnlegenAusgabe,
@@ -258,6 +259,7 @@ export const trainingUebungZuordnen = werkzeug({
     "des Trainings, zum Block und im Kinderfussball-Hauptteil zur Hauptteilkategorie " +
     "passt - eine Übung der anderen Altersstufe wird abgewiesen, und die Meldung nennt die " +
     `verletzte Regel. ${PFLICHT_SATZ} ` +
+    "Das Zuordnen zählt nicht zur Grenze der eigenen Übungen eines Kontos ohne Verein. " +
     "Alle Inhalte kommen aus der Vorlage, im Juniorenfussball auch Spielfeldgrösse und " +
     "Übungstyp; «training_abrufen» zeigt sie danach an der Übung. " +
     "Scheitert eine Zuordnung, bleiben alle vorherigen bestehen; bei «konflikt» genügt " +

@@ -186,7 +186,7 @@ export function Verzeichnis({
                               className={cn(
                                 "focus-ring-inset state flex flex-col rounded-flaeche px-2.5 py-1.5 transition-colors",
                                 istAktiv
-                                  ? "bg-elev-08 text-on-surface"
+                                  ? "betont text-on-surface"
                                   : "text-on-surface-mittel hover:text-on-surface",
                               )}
                             >
