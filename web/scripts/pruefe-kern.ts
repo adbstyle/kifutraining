@@ -507,6 +507,7 @@ import {
   KONTO_GELOESCHT_PARAMETER,
   KONTO_GELOESCHT_TEXT,
   MANUAL_UEBUNGEN_ANZAHL,
+  UEBUNGEN_RUND,
   NUR_MIT_KONTO_TEXT,
   REPO_URL,
   SFV_HINWEIS,
@@ -6607,6 +6608,9 @@ pruefe("Startseite (#670): eigene Gruppe ohne Seitenleiste, immer hell, feste An
   const yaml = readdirSync(join(web, "..", "data/uebungen")).filter((f) => f.endsWith(".yaml"));
   assert.equal(MANUAL_UEBUNGEN_ANZAHL, yaml.length, "Zahl der Manual-Übungen = data/uebungen/*.yaml");
   assert.match(seite, /\{MANUAL_UEBUNGEN_ANZAHL\} Übungen aus dem Manual Kinderfussball/);
+  // Die Gesamtzahl ist fester Text (PO 2026-11-23) und liegt über der des Manuals.
+  assert.ok(UEBUNGEN_RUND > MANUAL_UEBUNGEN_ANZAHL, "rund mehr Übungen als im Manual");
+  assert.match(seite, /Rund \{UEBUNGEN_RUND\} Übungen/);
   assert.equal(STARTSEITE_BEISPIELE.length, 8, "acht wie im Gestaltungsentwurf");
   assert.equal(new Set(STARTSEITE_BEISPIELE).size, 8);
   for (const slug of STARTSEITE_BEISPIELE) {

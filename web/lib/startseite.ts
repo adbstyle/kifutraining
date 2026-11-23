@@ -41,6 +41,11 @@ export const NUR_MIT_KONTO_TEXT =
  *  Zwilling: die Dateien unter data/uebungen/*.yaml. */
 export const MANUAL_UEBUNGEN_ANZAHL = 75;
 
+/** Wie viele Übungen es insgesamt rund gibt: die des Manuals und die, die die
+ *  Community beigesteuert hat (PO 2026-11-23). Fester Text wie die Zahl oben,
+ *  nachgeführt bei Bedarf (Epic #668 OoS 8); er wächst. */
+export const UEBUNGEN_RUND = 200;
+
 /** Die fest ausgewählten Beispiele (AK 4, Entscheid 2; acht wie im
  *  Gestaltungsentwurf): je zwei aus Auffangen und Einleitung, drei aus dem
  *  Hauptteil, eine aus dem Ausklang — alle aus dem Manual und mit

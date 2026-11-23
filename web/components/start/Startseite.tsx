@@ -25,6 +25,7 @@ import {
   GEPLANTER_PREIS_CHF,
   KONTO_GELOESCHT_TEXT,
   MANUAL_UEBUNGEN_ANZAHL,
+  UEBUNGEN_RUND,
   NUR_MIT_KONTO_TEXT,
   REPO_URL,
   SFV_HINWEIS,
@@ -374,7 +375,7 @@ export function Startseite({
           )}
           {/* Kein Weg in den Katalog (PO): Ohne Konto gibt es ihn nicht, angemeldet führt «Zur App» hinein. */}
           <p className="type-body-medium text-on-surface-mittel">
-            {MANUAL_UEBUNGEN_ANZAHL} Übungen aus dem Manual Kinderfussball sind dabei. {SFV_HINWEIS}
+            Rund {UEBUNGEN_RUND} Übungen, und es werden laufend mehr: {MANUAL_UEBUNGEN_ANZAHL} Übungen aus dem Manual Kinderfussball, die übrigen hat die Community beigesteuert. {SFV_HINWEIS}
           </p>
         </div>
       </section>
