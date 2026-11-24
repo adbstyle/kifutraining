@@ -67,7 +67,6 @@ export function MindestbesetzungFeld({
           {wahl.map((w) => (
             <ChoiceChip
               key={w.label}
-              look="nutzertext"
               selected={wert.art === w.art}
               onSelect={() => !disabled && onChange({ art: w.art, zahl: w.art === null ? "" : wert.zahl })}
             >

@@ -1,5 +1,5 @@
 import { ArrowLeft } from "lucide-react";
-import { Disclosure, GegliederterText, IconButtonLink, TextMitLinks } from "@/components/ui";
+import { ButtonLink, Disclosure, GegliederterText, TextMitLinks } from "@/components/ui";
 import { PROBE_TEXT, linkProbeKopf } from "@/lib/probe";
 import {
   LINK_INFOS,
@@ -41,8 +41,12 @@ export function LinkInfos({
   const { vorname } = spieler;
   return (
     <>
-      <header className="flex items-center gap-1 border-b border-linie px-2 pb-4 pt-6">
-        <IconButtonLink icon={ArrowLeft} label={LINK_INFOS.zurueck} href={`/abmelden/${token}`} />
+      {/* Zurück wie in den Benachrichtigungen: derselbe ruhige Knopf über dem Titel. */}
+      <header className="flex flex-col items-start gap-2 border-b border-linie px-4 pb-4 pt-6">
+        <ButtonLink variant="quiet" href={`/abmelden/${token}`}>
+          <ArrowLeft size={16} strokeWidth={2} aria-hidden />
+          {LINK_INFOS.zurueck}
+        </ButtonLink>
         <div className="flex min-w-0 flex-col">
           <h1 className="type-headline-small text-on-surface">{LINK_INFOS.titel}</h1>
           <p className="type-body-small truncate text-on-surface-mittel">{name}</p>

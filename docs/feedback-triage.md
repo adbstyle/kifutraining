@@ -1,6 +1,6 @@
 # KiFu – Produktwissen für die Einordnung von User-Feedback
 
-Stand 2026-11-23 (Release 1.53.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
+Stand 2026-11-23 (Release 1.54.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
 gedacht als Kontext für ein kleines Modell (z. B. Haiku), das Rückmeldungen von Nutzer:innen
 einordnet. Rückmeldungen sind **Fehlermeldungen ebenso wie Feature-Wünsche**: Das Modell erkennt,
 was die Person meint, gleicht es mit dem heutigen Stand ab und stellt die Rückfragen, mit denen sich
@@ -173,6 +173,8 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Plakettenfarben:** grau = benennt (Herkunft, Entwurf, Altersstufe), blau = gilt nach aussen, violett = Zusatz (mehrere Varianten, neue Version), orange = braucht Aufmerksamkeit (Termin ohne Training).
 
+**Chips** (Filter, Auswahl, Varianten, Gruppen, „Gruppe hinzufügen"): alle in gewöhnlicher Schreibung, nie in Grossbuchstaben; gewählt violett umrandet und beschriftet, nie gefüllt. Seit 1.54.0 auch „Gruppe hinzufügen" (vorher in Grossbuchstaben) und „Für mich" im Dialog „Wohin übernehmen" (vorher in Grossbuchstaben und gefüllt).
+
 ---
 
 ## 4. Konto und Zugang
@@ -223,7 +225,7 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 
 **Konto ohne Verein: höchstens 50 eigene Übungen.** Zählen: alle eigenen (Entwurf/Community, erfasst/kopiert, aus Training in die Bibliothek kopiert). Nicht: Manual, fremde, Fassungen in Trainings (in ein Training übernehmen bleibt frei). Anzeige oben über der Liste, sobald der Chip „Meine Übungen" gesetzt ist („12 von 50 Übungen", ab Grenze Plakette „Nichts mehr frei", darüber „62 Übungen (höchstens 50)"; immer ganzer Bestand, auch bei Filter). „Neue Übung" an der Grenze: statt Maske „Nichts mehr frei: 50 von 50 Übungen" + „Ohne Verein besitzt du höchstens 50 Übungen. Lösche eine, um Platz zu schaffen. In einem Verein gilt die Grenze nicht." (darüber: „Lösche 13 Übungen, um Platz für eine neue zu schaffen."). Kopieren und „In meine Bibliothek kopieren" über einen Dialog mit frischem Stand. Bestehendes bleibt änderbar/löschbar. In einem Verein: keine Grenze, keine Anzeige, kein Dialog.
 
-**Finden (Katalog):** unter **`/uebungen`** (seit 1.53.0; Tab-Titel „Übungen - KiFu"; Leiste, Brotkrumen und alle Verweise führen dorthin; alte Adressen „/?teil=…" leiten samt Filtern weiter). Volltextsuche (Wortteile), Kreuz leert. Beide Altersstufen in einer Liste. Kachel: Bild, Name, Eckdaten (z. B. „F E · Fussball spielen lernen · Kleinfeld · 6–8 Sp.", max. 2 Zeilen). Filter: Trainingsteil (Kinder-Teile und Junioren-Blöcke getrennt, Kinder-Hauptteil als 3 Kategorien), Alterskategorie, Feldtyp, Erscheinungsform, Übungstyp, „Verfügbare Kinder" (Zahl; zeigt Übungen, die mit mindestens so vielen Spieler:innen gehen). Erst 24 Kacheln, „Weitere anzeigen" +24; Filteränderung beginnt wieder bei 24. Dazu die Chips „Meine Übungen" (selbst angelegte, Entwürfe wie Community) und „Favoriten" (jede sichtbare Übung favorisierbar), mit den übrigen Filtern und miteinander verbindbar; kein eigener Leisten-Eintrag mehr (Brotkrume „Übungen › Meine Übungen", Adresse `?mine=1`).
+**Finden (Katalog):** unter **`/uebungen`** (seit 1.53.0; Tab-Titel „Übungen - KiFu"; Leiste, Brotkrumen und alle Verweise führen dorthin; alte Adressen „/?teil=…" leiten samt Filtern weiter). Volltextsuche (Wortteile), Kreuz leert. Beide Altersstufen in einer Liste. Kachel: Bild, Name, Eckdaten (z. B. „F E · Fussball spielen lernen · Kleinfeld · 6–8 Sp.", max. 2 Zeilen). Filter: Trainingsteil (Kinder-Teile und Junioren-Blöcke getrennt, Kinder-Hauptteil als 3 Kategorien), Alterskategorie, Feldtyp, Erscheinungsform, Übungstyp, „Verfügbare Spieler:innen" (Zahl; zeigt Übungen, die mit mindestens so vielen Spieler:innen gehen). Erst 24 Kacheln, „Weitere anzeigen" +24; Filteränderung beginnt wieder bei 24. Dazu die Chips „Meine Übungen" (selbst angelegte, Entwürfe wie Community) und „Favoriten" (jede sichtbare Übung favorisierbar), mit den übrigen Filtern und miteinander verbindbar; kein eigener Leisten-Eintrag mehr (Brotkrume „Übungen › Meine Übungen", Adresse `?mine=1`).
 - Übungen ohne Erscheinungsform/Übungstyp/Feldtyp fallen bei entsprechenden Filtern raus (Absicht).
 
 **Drucken:** jede sichtbare Übung, nur angemeldet (seit 1.53.0). Drucker-Symbol neben dem Herz → Druckdialog des Geräts (PDF über Druckdialog). Fuss nennt Herkunft (Manual SFV oder Community), nie Trainername; Entwurf wird vermerkt. Keine Dauer. Ohne Bild leere Feld-Skizze. Nur eine Übung pro Vorgang.
@@ -561,6 +563,7 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Mitteilung kommt doppelt → auf demselben Gerät in zwei verschiedenen Browsern eingeschaltet (bekannt); eins ausschalten.
 - Mitteilung zeigt alten Zeitpunkt/Ort → versandte Mitteilung ändert sich nicht nachträglich; massgeblich ist die Terminkarte.
 - Mitteilung mitten in der Nacht → keine Ruhezeiten; geht beim Speichern hinaus.
+- Mitteilung kam auf Android erst beim Öffnen von Chrome → bis 1.53.0 Fehler (Telefon im Ruhezustand hielt sie zurück), seit 1.54.0 behoben (KiFu sendet mit hoher Dringlichkeit). Tritt es weiter auf: Energiespar-Einstellungen von Gerät und Browser nachfragen.
 - Glocke in der Spalte „Mobile", Eltern sagen, sie bekämen nichts → letzter bekannter Stand, keine Zustellgarantie; Gerät kann noch zählen, bis der Mitteilungsdienst es als weg meldet.
 - Nach „Link erneuern" keine Mitteilungen mehr und die App zeigt „Dieser Link gilt nicht mehr" → Absicht: App mit neuem Link neu ablegen, Mitteilungen neu einschalten.
 - Für ein Geschwister kommen keine Mitteilungen → je Link/App einzeln einschalten.

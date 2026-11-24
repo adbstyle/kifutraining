@@ -170,10 +170,10 @@ export function TeamInfosKarte({ teamId, infos }: { teamId: string; infos: TeamI
           <p>{TEAM_INFOS_TEXT.werDialog}</p>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <ChoiceChipGroup ariaLabel={`${TEAM_INFOS_TEXT.schreiben} oder ${TEAM_INFOS_TEXT.vorschau}`}>
-              <ChoiceChip look="nutzertext" selected={!vorschau} onSelect={() => setVorschau(false)}>
+              <ChoiceChip selected={!vorschau} onSelect={() => setVorschau(false)}>
                 {TEAM_INFOS_TEXT.schreiben}
               </ChoiceChip>
-              <ChoiceChip look="nutzertext" selected={vorschau} onSelect={() => setVorschau(true)}>
+              <ChoiceChip selected={vorschau} onSelect={() => setVorschau(true)}>
                 {TEAM_INFOS_TEXT.vorschau}
               </ChoiceChip>
             </ChoiceChipGroup>

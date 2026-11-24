@@ -25,10 +25,11 @@ export function FilterKnopfDemo() {
       <AuswahlFilter label="Alterskategorie" options={stufenOptionen} value={stufen} onChange={setStufen} />
       <AuswahlFilter label="Erscheinungsform" options={formen} value={form} onChange={setForm} />
       <ZahlFilter
-        label="Verfügbare Kinder"
-        feldLabel="Anzahl Kinder"
-        einheit="Kinder"
-        hinweis="Zeigt Übungen, die mit so vielen Kindern durchführbar sind."
+        label="Verfügbare Spieler:innen"
+        feldLabel="Anzahl Spieler:innen"
+        einheit="Spieler:innen"
+        einheitEins="Spieler:in"
+        hinweis="Zeigt Übungen, die mit so vielen Spieler:innen durchführbar sind."
         gesetzt={kinder}
         onCommit={(v) => setKinder(v.trim() ? Number(v) : undefined)}
       />
