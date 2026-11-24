@@ -80,9 +80,9 @@ export function absageOffen(t: { ausgefallen: boolean }, begonnen: boolean): boo
 }
 
 /** Der eigene Stand an einem Termin (#691 AK 1). */
-export type EigenerStand = "dabei" | "abgesagt" | "nichtEingeladen";
+export type MeinStand = "dabei" | "abgesagt" | "nichtEingeladen";
 
-export function eigenerStand(trainer: readonly TerminTrainer[], ich: string): EigenerStand {
+export function eigenerStand(trainer: readonly TerminTrainer[], ich: string): MeinStand {
   const e = trainer.find((t) => t.userId === ich);
   return !e ? "nichtEingeladen" : e.abgesagtAm ? "abgesagt" : "dabei";
 }
@@ -129,9 +129,16 @@ export function mitAbsicht<T extends { trainer: readonly TerminTrainer[] }>(
 }
 
 /** Der Name des eigenen Schalters für die Vorlesehilfe (#691): Ein Schalter
- *  kennt nur an und aus; abgesagt und nicht eingeladen unterscheidet der Name. */
-export function standText(stand: EigenerStand, termin: string): string {
-  return stand === "nichtEingeladen" ? `Aushelfen, ${termin}, nicht eingeladen` : stand === "abgesagt" ? `Ich bin dabei, ${termin}, abgesagt` : `Ich bin dabei, ${termin}`;
+ *  kennt nur an und aus; abgesagt und nicht eingeladen unterscheidet der Name.
+ *  Er beginnt immer mit der sichtbaren Beschriftung «Ich bin dabei». */
+export function standText(stand: MeinStand, termin: string): string {
+  return `Ich bin dabei, ${termin}${stand === "abgesagt" ? ", abgesagt" : stand === "nichtEingeladen" ? ", nicht eingeladen" : ""}`;
+}
+
+/** Was die Oberfläche beim Absagen zeigte (#520 AK 10): Hat es sich seither
+ *  geändert, ist die Wahl veraltet. */
+export function gesehenVon(t: { datum: string; beginn: string; trainer: readonly TerminTrainer[] }) {
+  return { datum: t.datum, beginn: t.beginn, verantwortlich: verantwortlicheVon(t.trainer)?.userId ?? null };
 }
 
 /** Wer die Verantwortung übernehmen kann, wenn die Verantwortliche absagt
@@ -208,11 +215,9 @@ export function trainerLuecke(t: MitBesetzung, heute: string): { art: "zuWenig";
  *  `noetig` auch, wie viele die Mindestbesetzung verlangt (#521 AK 9). */
 export function trainerZahlSatz(trainer: readonly TerminTrainer[], ich: string, noetig: number | null = null): string {
   const v = verantwortlicheVon(trainer);
-  const eigen = istDabei(trainer, ich)
-    ? "du bist dabei"
-    : istEingeladen(trainer, ich)
-      ? "du hast abgesagt"
-      : "du bist nicht eingeladen";
+  const eigen = { dabei: "du bist dabei", abgesagt: "du hast abgesagt", nichtEingeladen: "du bist nicht eingeladen" }[
+    eigenerStand(trainer, ich)
+  ];
   return [
     `Trainer:innen: ${dabeiZahl(trainer)} von ${eingeladenZahl(trainer)} dabei`,
     ...(noetig !== null ? [`nötig ${noetig}`] : []),

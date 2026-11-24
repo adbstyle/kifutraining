@@ -346,9 +346,11 @@ function TerminReihe({
           </ZeichenZahl>
         )}
         {!t.ausgefallen && <TrainerZahl t={t} ich={ich} klein />}
+        {/* Der eigene Stand, in einem Schritt umzulegen (#691), auch gesperrt
+            sichtbar — am Telefon unter den Zahlen, damit Name und Ort Platz
+            behalten (NFR 2). */}
+        <EigenerStand t={t} jetzt={jetzt} />
       </span>
-      {/* Der eigene Stand, in einem Schritt umzulegen (#691), auch gesperrt sichtbar. */}
-      <EigenerStand t={t} jetzt={jetzt} className="self-center" />
       <TerminHandgriffe t={t} zuordnen={!nochNichtVorbereitet(t, heute)} />
     </li>
   );

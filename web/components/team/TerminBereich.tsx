@@ -18,7 +18,7 @@ import { angezeigteSpielerzahl } from "@/lib/besetzung";
 import { spielerzahlVon } from "@/lib/spieler";
 import { AbsageDialog } from "./AbsageDialog";
 import { terminHref } from "@/lib/team-ansicht";
-import { absageOffen, istEingeladen, mitAbsicht, uebernehmenKoennen, type Eingrenzung, type StandAbsicht, type TerminTrainer } from "@/lib/trainer";
+import { absageOffen, gesehenVon, istEingeladen, mitAbsicht, uebernehmenKoennen, type Eingrenzung, type StandAbsicht, type TerminTrainer } from "@/lib/trainer";
 import type { TrainerAenderung } from "./TrainerWahl";
 import {
   aendereSerieAktion,
@@ -318,8 +318,13 @@ export function TerminBereich({
   function schalteJetzt(t: TerminZeile, ziel: StandAbsicht["ziel"], uebernimmt?: string, melden = false) {
     const eingeladen = istEingeladen(t.trainer, ich);
     if (ziel === "abgesagt" && !eingeladen) return;
-    setAbsichten((alt) => ({ ...alt, [t.id]: { ziel, am: new Date().toISOString(), uebernimmt } }));
-    if (ziel === "abgesagt" && eingrenzung === "dabei") setGehalten((alt) => ({ ...alt, [t.id]: t }));
+    const absicht: StandAbsicht = { ziel, am: new Date().toISOString(), uebernimmt };
+    setAbsichten((alt) => ({ ...alt, [t.id]: absicht }));
+    // Festgehalten mit der Absage: Auch wenn die Absicht nach dem Neuladen
+    // wegfällt und der Server den Termin nicht mehr liefert, zeigt die Zeile
+    // den geltenden Stand (PC 2).
+    if (ziel === "abgesagt" && eingrenzung === "dabei")
+      setGehalten((alt) => ({ ...alt, [t.id]: mitAbsicht(t, ich, ichName, absicht) }));
     const aufruf = eingeladen
       ? () =>
           setzeAbsageAktion({
@@ -327,7 +332,7 @@ export function TerminBereich({
             userId: ich,
             abgesagt: ziel === "abgesagt",
             uebernimmt,
-            gesehen: { datum: t.datum, beginn: t.beginn, verantwortlich: t.trainer.find((x) => x.verantwortlich)?.userId ?? null },
+            gesehen: gesehenVon(t),
           })
       : () => helfeAusAktion(t.id);
     offen.current.set(t.id, (offen.current.get(t.id) ?? 0) + 1);
@@ -776,7 +781,7 @@ export function TerminBereich({
           userId: wer.userId!,
           abgesagt,
           uebernimmt,
-          gesehen: { datum: t.datum, beginn: t.beginn, verantwortlich: t.trainer.find((x) => x.verantwortlich)?.userId ?? null },
+          gesehen: gesehenVon(t),
         }),
       () => meldung,
       () => setAbsage(null),

@@ -32,7 +32,7 @@ export function SwitchDemo() {
       </li>
       <li className="flex items-center gap-3 px-4 py-2">
         <span className="min-w-0 flex-1 type-body-medium text-on-surface">Eigener Stand: nicht eingeladen (leer)</span>
-        <Switch checked={false} leer readOnly aria-label="Aushelfen, nicht eingeladen" />
+        <Switch checked={false} leer readOnly aria-label="Ich bin dabei, nicht eingeladen" />
       </li>
       <li className="flex items-center gap-3 px-4 py-2">
         <span className="min-w-0 flex-1 type-body-medium text-on-surface-mittel">Eigener Stand begonnen (zeigtStand)</span>

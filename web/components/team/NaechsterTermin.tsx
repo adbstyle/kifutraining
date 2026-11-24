@@ -206,7 +206,7 @@ function IchBinDabei({ t, jetzt }: { t: TerminZeile; jetzt: string }) {
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
       {/* Auch ein Tipp auf die Beschriftung legt um, statt den Termin zu öffnen. */}
-      <label className="flex cursor-pointer items-center gap-3">
+      <label className="flex cursor-pointer items-center gap-3 has-[:disabled]:cursor-default">
         <EigenerStand t={t} jetzt={jetzt} />
         <span aria-hidden className="type-body-medium text-on-surface">Ich bin dabei</span>
       </label>

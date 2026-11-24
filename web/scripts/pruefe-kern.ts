@@ -1433,7 +1433,7 @@ pruefe("Eigener Stand per Schalter (#691)", () => {
   // Vorlesehilfe: aus unterscheidet sich im Namen.
   assert.equal(standText("dabei", "Fr., 27.11.2026, 18:00"), "Ich bin dabei, Fr., 27.11.2026, 18:00");
   assert.equal(standText("abgesagt", "Fr., 27.11.2026, 18:00"), "Ich bin dabei, Fr., 27.11.2026, 18:00, abgesagt");
-  assert.equal(standText("nichtEingeladen", "Fr., 27.11.2026, 18:00"), "Aushelfen, Fr., 27.11.2026, 18:00, nicht eingeladen");
+  assert.equal(standText("nichtEingeladen", "Fr., 27.11.2026, 18:00"), "Ich bin dabei, Fr., 27.11.2026, 18:00, nicht eingeladen");
 });
 
 pruefe("Festgehaltene Termine unter «Meine Termine» (#691 PC 2)", () => {
