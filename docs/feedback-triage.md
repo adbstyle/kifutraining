@@ -1,6 +1,6 @@
 # KiFu – Produktwissen für die Einordnung von User-Feedback
 
-Stand 2026-11-23 (Release 1.53.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
+Stand 2026-11-23 (Release 1.54.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
 gedacht als Kontext für ein kleines Modell (z. B. Haiku), das Rückmeldungen von Nutzer:innen
 einordnet. Rückmeldungen sind **Fehlermeldungen ebenso wie Feature-Wünsche**: Das Modell erkennt,
 was die Person meint, gleicht es mit dem heutigen Stand ab und stellt die Rückfragen, mit denen sich
@@ -172,6 +172,8 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 **Fragen und Feedback:** Gespräch mit Haiku (Anthropic, USA) über Fehler, Wünsche und Fragen; Trainer:innen über das Konto-Menü der Seitenleiste, Spieler:innen und Eltern über eine am unteren Rand klebende Leiste auf der Seite hinter dem privaten Link. Desktop: Spalte rechts, bleibt beim Seitenwechsel offen; Telefon und privater Link: Vollbild. Gespeichert wird nur die bestätigte Zusammenfassung samt Gespräch (Trainer:innen mit Konto; am privaten Link ohne Spieler:in, Team oder Link, auch für eine Spieler:in ohne Team); Eltern verweist der Dialog bei Dringendem an die Trainer:innen, bei einer Spieler:in ohne Team an die Vereinsverwaltung (mit Vereinsnamen); bei Verhalten von Personen im Verein an Vereinsverwaltung oder Swiss Sport Integrity (kein Feedback). Keine Antwort über KiFu, Löschung nach 12 Monaten; bei Konto-Löschung bleibt es ohne Kontobezug, bei gelöschtem Team oder Verein ohne Teambezug. Fällt die KI aus oder ist ihr Budget aufgebraucht: nur „Feedback ist gerade nicht möglich", kein anderer Weg.
 
 **Plakettenfarben:** grau = benennt (Herkunft, Entwurf, Altersstufe), blau = gilt nach aussen, violett = Zusatz (mehrere Varianten, neue Version), orange = braucht Aufmerksamkeit (Termin ohne Training).
+
+**Chips** (Filter, Auswahl, Varianten, Gruppen, „Gruppe hinzufügen"): alle in gewöhnlicher Schreibung, nie in Grossbuchstaben; gewählt violett umrandet und beschriftet, nie gefüllt. Seit 1.54.0 auch „Gruppe hinzufügen" (vorher in Grossbuchstaben) und „Für mich" im Dialog „Wohin übernehmen" (vorher in Grossbuchstaben und gefüllt).
 
 ---
 
@@ -561,6 +563,7 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Mitteilung kommt doppelt → auf demselben Gerät in zwei verschiedenen Browsern eingeschaltet (bekannt); eins ausschalten.
 - Mitteilung zeigt alten Zeitpunkt/Ort → versandte Mitteilung ändert sich nicht nachträglich; massgeblich ist die Terminkarte.
 - Mitteilung mitten in der Nacht → keine Ruhezeiten; geht beim Speichern hinaus.
+- Mitteilung kam auf Android erst beim Öffnen von Chrome → bis 1.53.0 Fehler (Telefon im Ruhezustand hielt sie zurück), seit 1.54.0 behoben (KiFu sendet mit hoher Dringlichkeit). Tritt es weiter auf: Energiespar-Einstellungen von Gerät und Browser nachfragen.
 - Glocke in der Spalte „Mobile", Eltern sagen, sie bekämen nichts → letzter bekannter Stand, keine Zustellgarantie; Gerät kann noch zählen, bis der Mitteilungsdienst es als weg meldet.
 - Nach „Link erneuern" keine Mitteilungen mehr und die App zeigt „Dieser Link gilt nicht mehr" → Absicht: App mit neuem Link neu ablegen, Mitteilungen neu einschalten.
 - Für ein Geschwister kommen keine Mitteilungen → je Link/App einzeln einschalten.

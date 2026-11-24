@@ -2015,7 +2015,8 @@ Mitteilungen auf demselben Gerät in zwei verschiedenen Browsern einschaltet, er
 Mitteilungen für Geschwister fasst KiFu nicht zusammen. Eine versandte Mitteilung ändert sich
 nicht, wenn sich der Termin danach ändert, und Benachrichtigungen aus der Zeit vor dem Einschalten
 gehen nicht nachträglich hinaus. Ruhezeiten gibt es nicht: Eine Mitteilung geht hinaus, sobald das
-Mitglied speichert, auch nachts. Dass ihre Mitteilungen geendet haben, etwa nach dem Erneuern des
+Mitglied speichert, auch nachts. KiFu sendet sie mit hoher Dringlichkeit, damit auch ein
+Telefon im Ruhezustand sie sofort zeigt. Dass ihre Mitteilungen geendet haben, etwa nach dem Erneuern des
 Links, erfährt die Spielervertretung nicht. Auf dem iPhone gehen Mitteilungen nur aus der abgelegten
 App, und in einem Browser, der keine Mitteilungen von Webseiten zulässt, lassen sie sich nicht
 einschalten; mehr als 10 Geräte je Spieler:in gehen nicht. Erinnerungen an Termine oder Meldefristen
