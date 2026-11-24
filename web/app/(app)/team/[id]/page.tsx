@@ -102,6 +102,7 @@ export default async function TeamPlanPage({
       fuehrtListe={fuehrtListe}
       kader={teamKader}
       spielerGesamt={spielerGesamt}
+      eingrenzung={eingrenzung}
     >
       <section>
         {/* Keine sichtbare Überschrift: «Trainingsplan» steht schon im

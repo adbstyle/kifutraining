@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useRef, useState, useTransition } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Dialog } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
@@ -18,7 +18,7 @@ import { angezeigteSpielerzahl } from "@/lib/besetzung";
 import { spielerzahlVon } from "@/lib/spieler";
 import { AbsageDialog } from "./AbsageDialog";
 import { terminHref } from "@/lib/team-ansicht";
-import { uebernehmenKoennen, type TerminTrainer } from "@/lib/trainer";
+import { absageOffen, istEingeladen, mitAbsicht, uebernehmenKoennen, type Eingrenzung, type StandAbsicht, type TerminTrainer } from "@/lib/trainer";
 import type { TrainerAenderung } from "./TrainerWahl";
 import {
   aendereSerieAktion,
@@ -34,6 +34,7 @@ import {
   nimmAusfallZurueckAktion,
   ordneTrainingZuAktion,
   aendereTrainerAktion,
+  helfeAusAktion,
   setzeAbsageAktion,
   vorschauSerieAktion,
   vorschauSerieEntfernenAktion,
@@ -79,6 +80,18 @@ export type TerminAktionen = {
   /** Eine Eingeladene für diesen Termin absagen oder wieder zusagen (#520
    *  AK 1, 18); sagt die Verantwortliche ab, fragt erst «wer übernimmt?». */
   absagen: (t: TerminZeile, wer: TerminTrainer, abgesagt: boolean) => void;
+  /** Der Termin mit dem eigenen Stand, wie man ihn zuletzt gesetzt hat —
+   *  bis der Server ihn bestätigt (#691 NFR 1). Plan und Reiter lesen jeden
+   *  Termin hierdurch, damit Schalter, Zahl und Lücke übereinstimmen. */
+  stand: (t: TerminZeile) => TerminZeile;
+  /** Den eigenen Stand umlegen (#691 AK 3): dabei, abgesagt oder aushelfen.
+   *  Still und ohne Sperre, je Termin der Reihe nach; eine Abweisung zeigt
+   *  danach den geltenden Stand (PC 3). Die Verantwortliche wählt beim
+   *  Absagen, wer übernimmt (AK 4). */
+  schalten: (t: TerminZeile, dabei: boolean) => void;
+  /** Unter «Meine Termine» abgesagte Termine, die bis zum Wechsel der
+   *  Eingrenzung stehen bleiben (#691 PC 2). */
+  gehalten: TerminZeile[];
   /** Das eigene Konto. */
   ich: string;
   pending: boolean;
@@ -205,6 +218,7 @@ export function TerminBereich({
   fuehrtListe,
   kader = [],
   spielerGesamt = 0,
+  eingrenzung = null,
   children,
 }: {
   teamId: string;
@@ -221,6 +235,9 @@ export function TerminBereich({
   /** Die Kader des Teams (#453) und wie viele Spieler:innen die Liste führt. */
   kader?: Kader[];
   spielerGesamt?: number;
+  /** Die Eingrenzung des Plans (#518 PO 12): Unter «Meine Termine» bleiben
+   *  abgesagte Termine stehen, bis sie wechselt (#691 PC 2). */
+  eingrenzung?: Eingrenzung | null;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -257,8 +274,88 @@ export function TerminBereich({
    *  verfallen (#437 AK 1, #453 AK 10): die Rückfrage samt Fortsetzung. */
   const verfall = useVerfallRueckfrage(pending);
   const [dialogFehler, setDialogFehler] = useState<string | undefined>();
-  /** Die Verantwortliche sagt ab: Wer übernimmt (#520 AK 4, 19)? */
-  const [absage, setAbsage] = useState<{ t: TerminZeile; wer: TerminTrainer } | null>(null);
+  /** Die Verantwortliche sagt ab: Wer übernimmt (#520 AK 4, 19)? `still`:
+   *  vom eigenen Schalter (#691), `melden`: mit Snackbar (Reiter). */
+  const [absage, setAbsage] = useState<{ t: TerminZeile; wer: TerminTrainer; still?: { melden: boolean } } | null>(null);
+
+  // ── Der eigene Stand per Schalter (#691) ─────────────────────────────────
+  // Die Absicht je Termin liegt über den Daten des Servers, bis keine
+  // Änderung mehr läuft und das Neuladen danach fertig ist; dann zeigt der
+  // Termin wieder den Server — nach einer Abweisung den geltenden Stand.
+  // Je Termin laufen die Aufrufe der Reihe nach (`kette`), über Termine
+  // hinweg ohne gemeinsame Sperre.
+  const ichName = mitglieder.find((m) => m.userId === ich)?.anzeigeName ?? null;
+  const [absichten, setAbsichten] = useState<Record<string, StandAbsicht>>({});
+  const [gehalten, setGehalten] = useState<Record<string, TerminZeile>>({});
+  const offen = useRef(new Map<string, number>());
+  const kette = useRef(new Map<string, Promise<void>>());
+  const [aktualisiert, startAktualisieren] = useTransition();
+  const warAktualisiert = useRef(false);
+  useEffect(() => {
+    if (aktualisiert) {
+      warAktualisiert.current = true;
+      return;
+    }
+    if (!warAktualisiert.current) return;
+    warAktualisiert.current = false;
+    setAbsichten((alt) => {
+      const bleiben = Object.entries(alt).filter(([id]) => (offen.current.get(id) ?? 0) > 0);
+      return bleiben.length === Object.keys(alt).length ? alt : Object.fromEntries(bleiben);
+    });
+  }, [aktualisiert]);
+  // PC 2: Ein Wechsel der Eingrenzung zeigt den Plan neu (PO 2026-11-24).
+  const [gehaltenFuer, setGehaltenFuer] = useState(eingrenzung);
+  if (gehaltenFuer !== eingrenzung) {
+    setGehaltenFuer(eingrenzung);
+    setGehalten({});
+  }
+
+  const stand = (t: TerminZeile) => mitAbsicht(t, ich, ichName, absichten[t.id]);
+
+  /** Den eigenen Stand am (schon überlagerten) Termin umlegen. Welcher Aufruf
+   *  läuft, entscheidet der angezeigte Stand beim Klick; `gesehen` kommt
+   *  daraus, damit ein Folgeklick nach einer Übergabe nicht veraltet ist. */
+  function schalteJetzt(t: TerminZeile, ziel: StandAbsicht["ziel"], uebernimmt?: string, melden = false) {
+    const eingeladen = istEingeladen(t.trainer, ich);
+    if (ziel === "abgesagt" && !eingeladen) return;
+    setAbsichten((alt) => ({ ...alt, [t.id]: { ziel, am: new Date().toISOString(), uebernimmt } }));
+    if (ziel === "abgesagt" && eingrenzung === "dabei") setGehalten((alt) => ({ ...alt, [t.id]: t }));
+    const aufruf = eingeladen
+      ? () =>
+          setzeAbsageAktion({
+            terminId: t.id,
+            userId: ich,
+            abgesagt: ziel === "abgesagt",
+            uebernimmt,
+            gesehen: { datum: t.datum, beginn: t.beginn, verantwortlich: t.trainer.find((x) => x.verantwortlich)?.userId ?? null },
+          })
+      : () => helfeAusAktion(t.id);
+    offen.current.set(t.id, (offen.current.get(t.id) ?? 0) + 1);
+    const vorher = kette.current.get(t.id) ?? Promise.resolve();
+    const jetzt = vorher
+      .then(aufruf)
+      .then((r) => {
+        if (melden) melde(r.ok ? (ziel === "abgesagt" ? "Du hast abgesagt." : "Du bist wieder dabei.") : (r.error ?? "Fehlgeschlagen."));
+      })
+      .catch(() => {})
+      .finally(() => {
+        const rest = (offen.current.get(t.id) ?? 1) - 1;
+        offen.current.set(t.id, rest);
+        if (rest === 0) {
+          kette.current.delete(t.id);
+          startAktualisieren(() => router.refresh());
+        }
+      });
+    kette.current.set(t.id, jetzt);
+  }
+
+  function schalten(t: TerminZeile, dabei: boolean, melden = false) {
+    // Die Uhr beim Klick: Was inzwischen begonnen hat, bleibt, wie es ist.
+    if (!absageOffen(t, terminBegonnen(t.datum, t.beginn))) return;
+    const wer = t.trainer.find((x) => x.userId === ich);
+    if (!dabei && wer?.verantwortlich) return setAbsage({ t, wer, still: { melden } });
+    schalteJetzt(t, dabei ? "dabei" : "abgesagt", undefined, melden);
+  }
 
   /** Die Nummer des laufenden Ablaufs in einem Dialog. Öffnen und Abbrechen
    *  (Knopf, Escape, Klick daneben) zählen sie hoch; wer nach einem `await`
@@ -650,10 +747,16 @@ export function TerminBereich({
       lauf(() => aendereTrainerAktion(t.id, aenderung, t.serie ? "nur_dieser" : undefined), () => meldung, () => {});
     },
     absagen: (t, wer, abgesagt) => {
+      // Der eigene Stand im Reiter läuft mit dem Schalter der Zeile in einer
+      // Reihe (#691), mit Snackbar wie bisher.
+      if (wer.userId === ich) return schalten(stand(t), !abgesagt, true);
       if (pending || !wer.userId) return;
       if (abgesagt && wer.verantwortlich) return setAbsage({ t, wer });
       sageAb(t, wer, abgesagt);
     },
+    stand,
+    schalten: (t, dabei) => schalten(t, dabei),
+    gehalten: Object.values(gehalten),
     ich,
     pending,
     mitKadern: kader.length > 0,
@@ -755,9 +858,14 @@ export function TerminBereich({
           }
         }
         ich={ich}
-        pending={pending}
+        pending={!absage?.still && pending}
         onClose={() => setAbsage(null)}
-        onAbsagen={(uebernimmt) => absage && sageAb(absage.t, absage.wer, true, uebernimmt)}
+        onAbsagen={(uebernimmt) => {
+          if (!absage) return;
+          if (!absage.still) return sageAb(absage.t, absage.wer, true, uebernimmt);
+          setAbsage(null);
+          schalteJetzt(absage.t, "abgesagt", uebernimmt, absage.still.melden);
+        }}
         onEinladen={() => {
           if (!absage) return;
           setAbsage(null);

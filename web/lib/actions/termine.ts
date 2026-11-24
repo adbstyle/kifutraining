@@ -21,7 +21,7 @@ import {
 } from "@/lib/kern/serien";
 import { teamPlan } from "@/lib/kern/team";
 import { holeVerlegungNach, type AusstehendeVerlegung } from "@/lib/kern/benachrichtigungen";
-import { aendereTrainer, setzeAbsage, type AbsageSetzen, type TrainerAendern } from "@/lib/kern/trainer";
+import { aendereTrainer, helfeAus, setzeAbsage, type AbsageSetzen, type TrainerAendern } from "@/lib/kern/trainer";
 import type { KernErgebnis } from "@/lib/kern/ergebnis";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Reichweite, Wochentag } from "@/lib/serie";
@@ -325,6 +325,16 @@ export async function aendereTrainerAktion(
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await aendereTrainer(a.supabase, a.userId, { ...aenderung, terminId, reichweite });
+  if (!r.ok) return { ok: false, error: r.meldung };
+  revalidiereTeam(r.wert.teamId);
+  return { ok: true };
+}
+
+/** Aushelfen: sich selbst zu einem anstehenden Termin einladen (#691 AK 3). */
+export async function helfeAusAktion(terminId: string): Promise<{ ok: true } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await helfeAus(a.supabase, a.userId, { terminId });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
   return { ok: true };

@@ -79,6 +79,61 @@ export function absageOffen(t: { ausgefallen: boolean }, begonnen: boolean): boo
   return !t.ausgefallen && !begonnen;
 }
 
+/** Der eigene Stand an einem Termin (#691 AK 1). */
+export type EigenerStand = "dabei" | "abgesagt" | "nichtEingeladen";
+
+export function eigenerStand(trainer: readonly TerminTrainer[], ich: string): EigenerStand {
+  const e = trainer.find((t) => t.userId === ich);
+  return !e ? "nichtEingeladen" : e.abgesagtAm ? "abgesagt" : "dabei";
+}
+
+/** Was man mit dem Schalter zuletzt wollte (#691), solange der Server es noch
+ *  nicht bestätigt hat. `uebernimmt`: Die Verantwortliche gibt beim Absagen ab. */
+export type StandAbsicht = { ziel: "dabei" | "abgesagt"; am: string; uebernimmt?: string };
+
+/** Ein Termin, wie er nach der Absicht aussieht — so zeigen Schalter, Zahl,
+ *  Lücke und Reiter sofort denselben Stand (#691 NFR 1). Spiegelt die Regeln
+ *  der Datenebene: Aushelfen lädt ein und ist dabei, Absagen behält die
+ *  Einladung (PC 1); sagt die Verantwortliche ab, übernimmt `uebernimmt`
+ *  oder niemand. Ohne Wirkung kommt derselbe Termin zurück. */
+export function mitAbsicht<T extends { trainer: readonly TerminTrainer[] }>(
+  t: T,
+  ich: string,
+  ichName: string | null,
+  a: StandAbsicht | undefined,
+): T {
+  if (!a) return t;
+  const stand = eigenerStand(t.trainer, ich);
+  if (a.ziel === stand || (a.ziel === "abgesagt" && stand === "nichtEingeladen")) return t;
+  if (a.ziel === "dabei") {
+    const trainer =
+      stand === "abgesagt"
+        ? t.trainer.map((x) => (x.userId === ich ? { ...x, abgesagtAm: null } : x))
+        : nachTrainerName(
+            [...t.trainer, { eintragId: `absicht-${ich}`, userId: ich, name: ichName, ehemalig: false, verantwortlich: false, abgesagtAm: null }],
+            (x) => x.eintragId,
+          );
+    return { ...t, trainer };
+  }
+  const warVerantwortlich = t.trainer.some((x) => x.userId === ich && x.verantwortlich);
+  return {
+    ...t,
+    trainer: t.trainer.map((x) =>
+      x.userId === ich
+        ? { ...x, verantwortlich: false, abgesagtAm: a.am }
+        : warVerantwortlich && a.uebernimmt && x.userId === a.uebernimmt
+          ? { ...x, verantwortlich: true, abgesagtAm: null }
+          : x,
+    ),
+  };
+}
+
+/** Der Name des eigenen Schalters für die Vorlesehilfe (#691): Ein Schalter
+ *  kennt nur an und aus; abgesagt und nicht eingeladen unterscheidet der Name. */
+export function standText(stand: EigenerStand, termin: string): string {
+  return stand === "nichtEingeladen" ? `Aushelfen, ${termin}, nicht eingeladen` : stand === "abgesagt" ? `Ich bin dabei, ${termin}, abgesagt` : `Ich bin dabei, ${termin}`;
+}
+
 /** Wer die Verantwortung übernehmen kann, wenn die Verantwortliche absagt
  *  (#520 AK 4, 19): andere Eingeladene, die dabei sind. */
 export function uebernehmenKoennen(trainer: readonly TerminTrainer[], ohne: string): TerminTrainer[] {
@@ -293,4 +348,7 @@ export const TRAINER_MELDUNG = {
   VERANTWORTUNG_UEBERGEBEN:
     "Die Verantwortliche kann erst absagen, wenn eine andere Trainer:in, die dabei ist, die Verantwortung übernimmt.",
   UEBERNAHME_UNGUELTIG: "Übernehmen kann nur eine andere eingeladene Trainer:in, die dabei ist.",
+  // Aushelfen (Migration aushelfen, #691): dieselbe Frist wie das Zusagen.
+  AUSHELFEN_AUSGEFALLEN: "Der Termin fällt aus: Aushelfen ist erst wieder möglich, wenn der Ausfall zurückgenommen ist.",
+  AUSHELFEN_BEGONNEN: "Der Termin hat begonnen: Aushelfen ist nicht mehr möglich.",
 } as const;
