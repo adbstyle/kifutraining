@@ -67,7 +67,8 @@ export function Switch({
         aria-hidden
         className={cn(
           "pointer-events-none absolute left-[3px] size-[26px] rounded-full transition-[left,background-color] motion-reduce:transition-none peer-checked:left-[23px]",
-          leer ? "kontur border-on-surface-mittel bg-elev-01" : "bg-on-surface-mittel",
+          // `leer` gilt nur ausgeschaltet; angeschaltet die gewöhnliche Form.
+          leer ? cn("kontur border-on-surface-mittel bg-elev-01 peer-checked:border-transparent", !primary && "peer-checked:bg-on-surface-mittel") : "bg-on-surface-mittel",
           primary && "peer-checked:bg-primary",
         )}
       />

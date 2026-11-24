@@ -340,6 +340,9 @@ export function TerminBereich({
     const jetzt = vorher
       .then(aufruf)
       .then((r) => {
+        // Abgewiesen: Die festgehaltene Zeile trüge einen Stand, den es nicht
+        // gibt — sie fällt mit dem Neuladen weg, der Server zeigt den geltenden.
+        if (!r.ok) setGehalten((alt) => (t.id in alt ? Object.fromEntries(Object.entries(alt).filter(([id]) => id !== t.id)) : alt));
         if (melden) melde(r.ok ? (ziel === "abgesagt" ? "Du hast abgesagt." : "Du bist wieder dabei.") : (r.error ?? "Fehlgeschlagen."));
       })
       .catch(() => {})
