@@ -182,6 +182,21 @@ export async function aendereTrainer(
   return r.ok ? ok({ terminId: t.id, teamId: r.wert.teamId, serie: r.wert }) : r;
 }
 
+/** Aushelfen (#691 AK 3): sich selbst zu einem Termin einladen und damit dabei
+ *  sein — nur bis zum Beginn bzw. Anpfiff und nie an einem ausgefallenen
+ *  Termin. An einem Serientermin gilt es nur für diesen. Wer schon eingeladen
+ *  ist, ändert nichts. */
+export async function helfeAus(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { terminId: string },
+): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
+  if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, { feld: "termin_id" });
+  const { data, error } = await supabase.rpc("termin_aushelfen", { p_termin: e.terminId });
+  if (error) return kalenderFehler(error);
+  return ok({ terminId: e.terminId, teamId: (data as { team: string }).team });
+}
+
 export type AbsageSetzen = {
   terminId: string;
   /** Wer absagt oder wieder zusagt — man selbst oder eine andere Eingeladene (AK 1). */

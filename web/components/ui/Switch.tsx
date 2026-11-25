@@ -27,19 +27,35 @@ import { cn } from "@/lib/cn";
    (PO 2026-10-30). Der Schalter zeigt den Stand, ohne ihn zu
    bewerten: dieselbe Form wie Primary, aber der Knopf bleibt in beiden Lagen
    grau — an rechts mit Haken, aus links mit Kreuz. Den Stand tragen Lage und
-   Zeichen, nicht die Farbe. */
+   Zeichen, nicht die Farbe.
+
+   `leer` (#691, PO 2026-11-24): der eigene Stand einer Trainer:in, die zum
+   Termin nicht eingeladen ist. Aus heisst dort wie bei «abgesagt» «nicht
+   dabei» — darum dasselbe Kreuz —, aber ohne Absage: Der Knopf ist nicht
+   gefüllt, nur umrandet, das Kreuz grau. So unterscheiden sich die beiden
+   Stände ohne Wort und nicht allein über die Farbe. Angeschaltet gilt die
+   gewöhnliche Form. Die Vorlesehilfe braucht den Unterschied im Namen.
+
+   `zeigtStand` (#691): Gesperrt bleibt der Stand lesbar — schwächer gedämpft
+   als ein gewöhnlicher gesperrter Schalter, der nur sagt, dass nichts geht. */
 export function Switch({
   className,
   disabled,
   ton = "primary",
+  leer = false,
+  zeigtStand = false,
   ...rest
 }: Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "role"> & {
   /** Primary nach Proton oder ruhig: dieselbe Form, Knopf immer grau (Spieler:innen an Trainings). */
   ton?: "primary" | "ruhig";
+  /** Aus ohne Absage: Knopf nur umrandet, Kreuz grau (nicht eingeladen, #691). */
+  leer?: boolean;
+  /** Gesperrt, aber der Stand bleibt lesbar (#691). */
+  zeigtStand?: boolean;
 }) {
   const primary = ton === "primary";
   return (
-    <span className={cn("relative inline-flex h-8 w-[52px] shrink-0 items-center", disabled && "opacity-40", className)}>
+    <span className={cn("relative inline-flex h-8 w-[52px] shrink-0 items-center", disabled && (zeigtStand ? "opacity-70" : "opacity-40"), className)}>
       <input
         type="checkbox"
         role="switch"
@@ -50,11 +66,13 @@ export function Switch({
       <span
         aria-hidden
         className={cn(
-          "pointer-events-none absolute left-[3px] size-[26px] rounded-full bg-on-surface-mittel transition-[left,background-color] motion-reduce:transition-none peer-checked:left-[23px]",
+          "pointer-events-none absolute left-[3px] size-[26px] rounded-full transition-[left,background-color] motion-reduce:transition-none peer-checked:left-[23px]",
+          // `leer` gilt nur ausgeschaltet; angeschaltet die gewöhnliche Form.
+          leer ? cn("kontur border-on-surface-mittel bg-elev-01 peer-checked:border-transparent", !primary && "peer-checked:bg-on-surface-mittel") : "bg-on-surface-mittel",
           primary && "peer-checked:bg-primary",
         )}
       />
-      <X aria-hidden size={14} strokeWidth={3} className="pointer-events-none absolute left-[9px] text-elev-01 peer-checked:hidden" />
+      <X aria-hidden size={14} strokeWidth={3} className={cn("pointer-events-none absolute left-[9px] peer-checked:hidden", leer ? "text-on-surface-mittel" : "text-elev-01")} />
       <Check
         aria-hidden
         size={14}
