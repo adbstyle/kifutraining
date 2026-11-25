@@ -301,7 +301,7 @@ function TerminReihe({
       // Sprungziel aus dem Kalender-Abo und dem Monat; die Kontur zeigt, wo man landet.
       tabIndex={-1}
       className={cn(
-        "group/zeile state relative flex items-start gap-3 px-3 py-2.5 outline-none first:rounded-t-flaeche last:rounded-b-flaeche focus:kontur focus:border-primary",
+        "group/zeile @container state relative flex items-start gap-3 px-3 py-2.5 outline-none first:rounded-t-flaeche last:rounded-b-flaeche focus:kontur focus:border-primary",
         hervorgehoben && "kontur border-primary",
       )}
     >
@@ -339,7 +339,9 @@ function TerminReihe({
         )}
         <span className="max-w-full truncate type-body-medium text-on-surface-mittel">{unterzeile}</span>
       </div>
-      <span className="pointer-events-none relative flex shrink-0 flex-col items-end gap-1 py-0.5 text-on-surface-mittel sm:flex-row sm:items-center sm:gap-3">
+      {/* Untereinander, sobald die Zeile schmal ist — am Telefon und neben einem
+          geöffneten Termin (#691): gemessen an der Zeile, nicht am Bildschirm. */}
+      <span className="pointer-events-none relative flex shrink-0 flex-col items-end gap-1 py-0.5 text-on-surface-mittel @md:flex-row @md:items-center @md:gap-3">
         {zahlKurz && (
           <ZeichenZahl icon={Shirt} label={`Spielerzahl: ${zahlLang}`} klein>
             {zahlKurz}
