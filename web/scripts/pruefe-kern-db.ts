@@ -2139,7 +2139,7 @@ try {
   });
 
   // ── Kalender: Trainer:innen einladen und Verantwortung (#519) ───────────
-  const { aendereTrainer, setzeAbsage, teamMitglieder } = await import("../lib/kern/trainer");
+  const { aendereTrainer, helfeAus, setzeAbsage, teamMitglieder } = await import("../lib/kern/trainer");
   const { trainerAusgabe } = await import("../lib/trainer-ausgabe");
   /** Die Eingeladenen eines Termins, sortiert; `null` = Eintrag eines gelöschten Kontos. */
   const eingeladeneVon = async (terminId: string) =>
@@ -2397,6 +2397,29 @@ try {
     fehler(await setzeAbsage(a.supabase, a.id, { terminId: vorbei, userId: b.id, abgesagt: true }), "regel", TRAINER_MELDUNG.ABSAGE_BEGONNEN);
     // Fremde sehen den Termin nicht.
     fehler(await setzeAbsage(c.supabase, c.id, { terminId: randomUUID(), userId: c.id, abgesagt: true }), "nicht_gefunden");
+  });
+
+  await pruefe("Aushelfen: nur bis Beginn und nie am Ausfall, an der Serie nur dieser (#691 AK 3, PC 1)", async () => {
+    const team = await serienTeam("Kern-DB-Aushelfen");
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    const t = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00", eingeladene: [a.id], verantwortlich: a.id })).terminId;
+    wert(await helfeAus(b.supabase, b.id, { terminId: t }));
+    assert.deepEqual(await eingeladeneVon(t), [a.id, b.id].sort());
+    // PC 1: Wer ausgeholfen hat und absagt, bleibt eingeladen.
+    wert(await setzeAbsage(b.supabase, b.id, { terminId: t, userId: b.id, abgesagt: true }));
+    assert.deepEqual(await eingeladeneVon(t), [a.id, b.id].sort());
+    // Am Ausfall und ab Beginn abgewiesen, mit dem Satz für Oberfläche und KI.
+    const ausfall = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:00", eingeladene: [a.id], verantwortlich: a.id })).terminId;
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: ausfall, benachrichtigen: false }));
+    fehler(await helfeAus(b.supabase, b.id, { terminId: ausfall }), "regel", TRAINER_MELDUNG.AUSHELFEN_AUSGEFALLEN);
+    const vorbei = wert(await legeTerminFest(a.supabase, a.id, { benachrichtigen: false, art: "training", teamId: team, datum: tagCh(-1), beginn: "18:00", ende: "19:00", eingeladene: [a.id], verantwortlich: a.id })).terminId;
+    fehler(await helfeAus(b.supabase, b.id, { terminId: vorbei }), "regel", TRAINER_MELDUNG.AUSHELFEN_BEGONNEN);
+    // Über den Termin lädt man sich auch vergangen weiter ein (#518 PO 7).
+    wert(await aendereTrainer(b.supabase, b.id, { terminId: vorbei, einladen: [b.id] }));
+    assert.deepEqual(await eingeladeneVon(vorbei), [a.id, b.id].sort());
+    // Fremde sehen den Termin nicht.
+    const c = await wegwerfKonto();
+    fehler(await helfeAus(c.supabase, c.id, { terminId: t }), "nicht_gefunden");
   });
 
   await pruefe("Absagen der Verantwortlichen: erst übergeben, sonst ohne Verantwortliche:n; Verantwortung hebt die Absage auf (#520 AK 4, 5, 19, PC 1, 11)", async () => {

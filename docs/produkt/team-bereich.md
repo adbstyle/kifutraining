@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-11-23 (Release 1.53.0). Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-11-25 (Release 1.55.0). Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -361,13 +361,18 @@ Schalter — an heisst dabei, aus abgesagt — und ein Menü mit „Verantwortun
 jedes nicht eingeladene Mitglied einen Knopf zum Einladen. Jedes Mitglied darf für alle absagen
 und wieder zusagen, alle einladen und ausladen; das sagt ein Hinweis unter der Liste. An einem
 Serientermin gilt alles in diesem Reiter nur für diesen Termin; für die Serie ändert man über
-„Termin ändern". Den eigenen Stand ändert man auch, ohne den Termin zu öffnen: Im Menü jeder Zeile
-und der Karte „Als Nächstes" steht zuoberst „Absagen" bzw. „Wieder zusagen", und wer nicht
-eingeladen ist, lädt sich mit „Ich helfe aus" selbst ein. Auf der Karte „Als Nächstes" tut der
-Schalter „Ich bin dabei" dasselbe.
+„Termin ändern". Den eigenen Stand ändert man auch, ohne den Termin zu öffnen: mit dem Schalter in
+jeder Zeile des Trainingsplans und dem Schalter „Ich bin dabei" auf der Karte „Als Nächstes" (siehe
+„Trainingsplan"). Ein Umlegen sagt ab, sagt wieder zu oder — wer nicht eingeladen ist — hilft aus:
+Man ist damit eingeladen und dabei, an einem Serientermin nur an diesem. Wer ausgeholfen hat und
+wieder absagt, bleibt eingeladen und gilt als abgesagt. Das Menü der Zeile und der Karte bietet
+dafür nichts mehr an.
 
 Absagen lassen sich bis zum Beginn bzw. Anpfiff ändern, danach stehen sie fest; an einem
-ausgefallenen Termin ruhen sie, bis der Ausfall zurückgenommen ist. Sagt die Verantwortliche ab,
+ausgefallenen Termin ruhen sie, bis der Ausfall zurückgenommen ist. Für das Aushelfen gilt dieselbe
+Frist: Ab Beginn und an einem ausgefallenen Termin ist der Schalter gesperrt, und eine abgewiesene
+Änderung zeigt ohne Hinweis wieder den geltenden Stand. Einladen — auch sich selbst — lässt sich im Reiter „Trainer:innen" auch nach dem
+Beginn. Sagt die Verantwortliche ab,
 fragt die Anwendung „Wer übernimmt?" und bietet die anderen an, die dabei sind; übergeben und
 abgesagt wird in einem Schritt. Ist sonst niemand dabei, darf sie trotzdem absagen, und der Termin
 steht ohne Verantwortliche:n im Plan; „Jemanden einladen" führt statt dessen in den Reiter. Hat
@@ -414,7 +419,9 @@ vergangene. Es gilt höchstens eine der beiden. Auch der nächste Termin ist dan
 Der Monat neben den Terminen zeigt nur noch die eigenen, und Tage, an denen nur Termine anderer
 liegen, tragen dort nur den Kreis, ohne Zeichen: belegt. Die Eingrenzung steht in der Adresse und
 fällt weg, sobald man das Team erneut öffnet. Ältere Adressen mit „Meine Termine" grenzen auf die
-Termine ein, an denen man dabei ist.
+Termine ein, an denen man dabei ist. Sagt man unter „Meine Termine" ab, bleibt der Termin mit der
+Absage in der Liste stehen, bis man die Eingrenzung wechselt oder den Trainingsplan neu lädt; so
+lässt sich ein Versehen gleich zurücknehmen, und auch „Als Nächstes" springt nicht weiter.
 
 ### Ausscheiden
 
@@ -476,12 +483,13 @@ Zeit und Ort, rechts das Menü mit „Training ersetzen" und den übrigen Handgr
 steht für die nächsten Tage „Heute" oder „Morgen" mit dem Tag, neben dem Status eine Trainer-Lücke
 (siehe „Mindestbesetzung"). Darunter eine Zeile mit Zeichen und Zahlen: die Spielerzahl — mit
 Spielerliste die Angemeldeten von allen, etwa „12/14", sonst die erwartete —, die Kader, die
-Trainer:innen als „dabei/eingeladen" mit dem eigenen Stand als Zeichen davor und der Platz, ohne
+Trainer:innen als „dabei/eingeladen" und der Platz, ohne
 Felder „Platz nicht erfasst"; die Einzelheiten nennt jedes Zeichen beim Darüberfahren und für die
 Vorlesehilfe. Hat das Training einen Treffpunkt, folgt eine Zeile wie bei den Treffpunkten eines
 Spiels: „Treffpunkt", die Uhrzeit und der Ort, etwa „Treffpunkt  17:45  Garderoben Schulhaus". Dann der Hinweis am privaten Link mit „Am Link:" davor, die Bemerkung und der Schalter „Ich bin dabei" mit dem Satz, wer verantwortlich
 ist, und — wenn das zutrifft — „du hast abgesagt" oder „du bist nicht eingeladen"; ab Beginn und an
-einem ausgefallenen Termin ist er gesperrt. Zuunterst „Durchführen" als hervorgehobener Knopf und „Training
+einem ausgefallenen Termin ist er gesperrt, zeigt den eigenen Stand aber weiter. Er wirkt wie der
+Schalter einer Zeile (siehe unten). Zuunterst „Durchführen" als hervorgehobener Knopf und „Training
 öffnen", ohne Training „Training hinzufügen" als hervorgehobener Knopf; dazu „Spieler:innen", sofern das Team
 eine Spielerliste führt, und „Trainer:innen", die den Termin bei diesem Reiter öffnen (siehe „Der
 geöffnete Termin"). Ein Klick auf die Karte oder den Namen öffnet den Termin. Die Namen der
@@ -506,17 +514,26 @@ und, falls ein Training zugeordnet ist, „Training ruht" — und die Kader. Neb
 eine Trainer-Lücke (siehe „Mindestbesetzung"). Rechts stehen klein und ungefärbt, je mit einem
 Zeichen, die Spielerzahl — mit Spielerliste die angemeldeten von allen, etwa „12/15", ab Beginn die
 Anwesenden, sonst die erwartete, ausgefallen keine — und die Trainer:innen als „dabei/eingeladen",
-etwa „2/3", davor der eigene Stand: dabei, abgesagt oder nicht eingeladen; ein ausgefallener Termin
-nennt keine Trainer:innen. Namen stehen in der Zeile keine. Vergangene und
+etwa „2/3"; ein ausgefallener Termin nennt keine Trainer:innen. Daneben steht ohne Beschriftung
+ein Schalter mit dem eigenen Stand: an heisst dabei, aus mit gefülltem Knopf abgesagt, aus mit nur
+umrandetem, leerem Knopf nicht eingeladen; die Vorlesehilfe hört etwa „Ich bin dabei, Fr.,
+27.11.2026, 18:00, abgesagt". Ein Umlegen ändert den eigenen Stand in einem Schritt (siehe
+„Trainer:innen"), ohne den Termin zu öffnen und ohne Meldung; der neue Stand steht sofort in der
+Zeile, in der Zahl, an der Trainer-Lücke, auf der Karte „Als Nächstes" und im geöffneten Termin,
+auch wenn man mehrere Termine schnell nacheinander umlegt. Nur wer verantwortlich ist, wählt beim Absagen
+zusätzlich im Dialog „Wer übernimmt?", wer übernimmt (siehe „Trainer:innen"). Weist die Anwendung
+eine Änderung ab, etwa weil der Termin inzwischen ausfällt, zeigt die Zeile ohne Hinweis wieder den
+geltenden Stand. Ab Beginn und an einem ausgefallenen Termin ist der Schalter gesperrt, zeigt den
+eigenen Stand aber weiter. Ist die Zeile schmal — am Telefon und neben einem geöffneten Termin —,
+stehen Zahlen und Schalter untereinander, sonst nebeneinander. Namen stehen in der Zeile keine. Vergangene und
 ausgefallene Termine stehen gedämpft, ein ausgefallener mit durchgestrichenem Namen. Was zu lang
 ist, endet in „…" und steht ganz im Hinweis beim Darüberfahren. Treffpunkt, Bemerkung, Serie, Platz und
 Alterskategorien stehen nicht in der Zeile; Treffpunkt, Bemerkung, Serie und Platz zeigt der geöffnete Termin,
 die Alterskategorien das Training selbst. Der Rückblick sieht genauso aus.
 
 Ein Klick auf die Zeile öffnet den Termin neben der Liste (siehe „Der geöffnete Termin"), ein
-Klick auf den Trainingsnamen das Training. Alle Handgriffe einer Zeile liegen in ihrem Menü rechts:
-zuoberst, solange der Termin nicht begonnen hat und nicht ausfällt, der eigene Stand — „Absagen",
-„Wieder zusagen" oder „Ich helfe aus" (siehe „Trainer:innen") —, dann Durchführen, Training ersetzen — vergangen ohne Training: zuordnen —, Termin ändern, Training
+Klick auf den Trainingsnamen das Training. Alle übrigen Handgriffe einer Zeile liegen in ihrem Menü
+rechts: Durchführen, Training ersetzen — vergangen ohne Training: zuordnen —, Termin ändern, Training
 lösen, Ausfallen lassen oder — bei einem ausgefallenen — Grund ändern und Ausfall zurücknehmen,
 und Termin entfernen; ein Spiel bietet nur „Spiel ändern", die Handgriffe zum Ausfall und „Spiel
 entfernen". Die Durchführen-Ansicht zeigt, aus
@@ -576,6 +593,20 @@ welche Trainer:innen (siehe „Trainer:innen"). Unter den Eckdaten stehen dazu �
 ohne Verantwortliche:n „Niemand" — und „Trainer:innen" mit „2 von 3 dabei", mit Mindestbesetzung samt der nötigen
 Zahl. Der geöffnete Termin und sein Reiter stehen in der Adresse; der Wechsel zwischen den Reitern
 bleibt an der Stelle der Liste, und auch die Eingrenzung bleibt.
+
+Der gewählte Reiter bleibt beim Wechsel auf einen anderen Termin erhalten: Wer bei einem Termin
+„Trainer:innen" gewählt hat, sieht auch den nächsten, den er in der Liste oder über „Als Nächstes"
+öffnet, in „Trainer:innen". Das gilt auch nach dem Schliessen und Wiederöffnen, beim Wechsel der
+Eingrenzung und nach dem Neuladen, denn die Wahl steht in der Adresse, auch ohne geöffneten Termin.
+„Termin" bei einem Training und „Spiel" bei einem Spiel gelten als dieselbe Wahl. Ist „Training"
+gewählt und der nächste Termin ein Spiel, zeigt es „Spiel"; die Wahl bleibt, und das folgende
+Training öffnet wieder in „Training". Ändern lässt sie sich nur, indem man einen Reiter wählt oder
+einen Termin gezielt in einem Reiter aufruft — mit „Spieler:innen" oder „Trainer:innen" auf der
+Karte „Als Nächstes", über „Jemanden einladen" im Dialog beim Absagen, mit einer Adresse, die einen
+Reiter nennt, oder mit Zurück und Vor im Browser; jeder dieser Wege zeigt seinen Reiter und wird
+zur neuen Wahl. Der Weg nach einer Absage in den Reiter „Trainer:innen" behält auch die
+Eingrenzung. Wer den Trainingsplan verlässt — in einen anderen Bereich oder in den Trainingsplan
+eines anderen Teams —, sieht Termine danach wieder zuerst in „Termin".
 
 ## Kalender-Abo
 
@@ -1041,7 +1072,7 @@ reicht es nicht mehr. Ersatz bereithalten."; bei „Genügend" steht keiner. Die
 Meldefrist statt „ohne Meldung", und die Meldefrist heisst „abgelaufen".
 Ein ausgefallenes Spiel wird nie zur grossen Karte.
 
-Geöffnet trägt ein Spiel seine Bezeichnung als Titel, darunter Tag, Zeit und Ort, und hat zwei
+Geöffnet trägt ein Spiel seine Bezeichnung als Titel, darunter Tag, Zeit und Ort, und hat drei
 Reiter, „Spiel", „Spieler:innen" und „Trainer:innen"; einen Reiter „Training" gibt es nicht. „Spiel" bietet
 „Ausfallen lassen" bzw. „Ausfall zurücknehmen", „Spiel ändern" und im Menü die übrigen Handgriffe,
 darunter die Eckdaten: Ort, Treffpunkte, Verantwortlich, Trainer:innen, Kader, die Spieler:innen mit dem Status
@@ -1751,7 +1782,7 @@ Eingrenzung der Spielerliste reisen mit, sodass sie beim Zurückkehren noch gelt
 Breite nicht für alle Reiter, brechen sie in eine zweite Zeile um, statt seitlich zu rollen.
 
 Jede Seite hat ihre eigene Adresse, der Trainingsplan samt der Eingrenzung auf die eigenen
-Termine und dem geöffneten Termin mit seinem Reiter; der gezeigte Monat steht nicht darin. Adressen des früheren Monatsüberblicks führen in
+Termine, dem geöffneten Termin und dem gewählten Reiter; der gezeigte Monat steht nicht darin. Adressen des früheren Monatsüberblicks führen in
 den Trainingsplan, wie er sich sonst öffnet, die Eingrenzung bleibt. Eine Adresse lässt sich einem Mitglied
 schicken, als Lesezeichen ablegen, und der Zurück-Schritt des Browsers führt in die zuvor
 geöffnete Seite. Wer eine Adresse eines Teams aufruft, in dem er nicht ist — auch als
@@ -1820,7 +1851,11 @@ werden; einen Weg, ihn zu allen anstehenden Terminen auf einmal einzuladen, gibt
 
 Verantwortlich zu sein heisst nicht, als J+S-Leitperson anerkannt zu sein, und weder
 Einladungen noch „dabei" an vergangenen Terminen sind ein Nachweis geleisteter Einsätze. Eine
-Absage trägt keinen Grund, und eine Vertretung schlägt die Anwendung nicht vor. Ob ein Termin stattgefunden hat,
+Absage trägt keinen Grund, und eine Vertretung schlägt die Anwendung nicht vor. Ohne den Termin zu
+öffnen, ändert man nur den eigenen Stand, den anderer Trainer:innen nur im Reiter
+„Trainer:innen", und mehrere Termine lassen sich nicht auf einmal absagen. Den gewählten Reiter
+behält nur der Trainingsplan; die Trainingsdetails der Trainingsliste merken ihn sich beim Wechsel
+zu einem anderen Training nicht. Ob ein Termin stattgefunden hat,
 hält die Anwendung nicht fest, und wer dabei war, nur mit Spielerliste; ein vergangener Termin, der nicht ausgefallen
 ist, gilt deshalb nicht als durchgeführt, und ein Tag ohne Termin ist nicht von einer bewussten
 Pause zu unterscheiden. Dass die Trainer:innen, die Mindestbesetzung, die Felder oder die erwartete Spielerzahl eines

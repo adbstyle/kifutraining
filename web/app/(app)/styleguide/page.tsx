@@ -2150,6 +2150,14 @@ export default async function Styleguide() {
             dem violetten Knopf bleibt für «dabei» der Trainer:innen. Darunter liegt ein echtes{" "}
             <code>&lt;input type=&quot;checkbox&quot; role=&quot;switch&quot;&gt;</code>.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Der eigene Stand einer Trainer:in (#691) steht ohne Beschriftung in jeder Terminzeile. Aus heisst dort
+            «nicht dabei» - abgesagt oder gar nicht eingeladen. Beide tragen das Kreuz; <code>leer</code>{" "}
+            unterscheidet «nicht eingeladen» ohne Wort und nicht allein über die Farbe: Der Knopf ist nur umrandet
+            (<code>kontur</code> in <code>on-surface-mittel</code> auf <code>elev-01</code>), das Kreuz grau. Den
+            Unterschied für die Vorlesehilfe trägt der Name des Schalters. Gesperrt (begonnen, vergangen,
+            ausgefallen) bleibt der Stand mit <code>zeigtStand</code> lesbar: gedämpft auf 70 statt 40 Prozent.
+          </p>
           <SwitchDemo />
 
           <h4 className="mb-2 mt-8 type-title-medium text-on-surface">

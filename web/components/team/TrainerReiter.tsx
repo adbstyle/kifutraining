@@ -24,11 +24,23 @@ import { useTerminAktionen } from "./TerminBereich";
    AK 10); auch eine, die abgesagt hat, kann sie übernehmen und ist dann
    wieder dabei (#520 AK 5). Ehemalige lassen sich ausladen, aber nicht
    verantwortlich machen. */
-export function TrainerReiter({ t, mitglieder }: { t: TerminZeile; mitglieder: readonly TeamMitglied[] }) {
+export function TrainerReiter({
+  t: geladen,
+  mitglieder,
+  geladenUm,
+}: {
+  t: TerminZeile;
+  mitglieder: readonly TeamMitglied[];
+  /** `YYYY-MM-DDTHH:MM` am Trainingsort beim Laden: Server und Browser rechnen
+   *  «begonnen» gleich (keine Abweichung beim Hydrieren an der Beginn-Grenze). */
+  geladenUm: string;
+}) {
   const a = useTerminAktionen();
+  // Mit dem eigenen Stand, wie man ihn zuletzt gesetzt hat (#691).
+  const t = a.stand(geladen);
   const imTeam = new Set(mitglieder.map((m) => m.userId));
   const verantwortlich = verantwortlicheVon(t.trainer);
-  const begonnen = terminBegonnen(t.datum, t.beginn);
+  const begonnen = terminBegonnen(t.datum, t.beginn, geladenUm);
   const offen = absageOffen(t, begonnen);
   const jetzt = new Date().toISOString();
   // Du stehst zuoberst (Tafel «Reiter»), danach wie im Plan nach Name.
@@ -64,7 +76,7 @@ export function TrainerReiter({ t, mitglieder }: { t: TerminZeile; mitglieder: r
         {tr.userId && (
           <Switch
             checked={!tr.abgesagtAm}
-            disabled={!offen || a.pending}
+            disabled={!offen || (!selbst && a.pending)}
             aria-label={`${name} dabei`}
             onChange={(e) => a.absagen(t, tr, !e.target.checked)}
           />

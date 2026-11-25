@@ -6,7 +6,7 @@ import { TrainingTeile } from "@/components/training/TrainingTeile";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { tagOhneJahr } from "@/lib/monat";
 import { zeitText } from "@/lib/termin";
-import { terminBegonnen } from "@/lib/zeit";
+import { jetztAmTrainingsort, terminBegonnen } from "@/lib/zeit";
 import { formatDuration, gesamtDauer, leseGliederung } from "@/lib/training";
 import { sichtbareZuordnungen, varianteAus } from "@/lib/varianten";
 import { planHref, terminHref, type TerminReiter } from "@/lib/team-ansicht";
@@ -50,7 +50,9 @@ export async function TerminSpalte({
   /** Das Team führt Kader (#453 AK 5). */
   mitKadern?: boolean;
 }) {
-  // Ein Spiel zeigt keinen Reiter «Training», auch wenn die Adresse ihn nennt.
+  // Ein Spiel zeigt keinen Reiter «Training», auch wenn die Adresse ihn nennt;
+  // die Wahl bleibt aber stehen, damit das nächste Training wieder in ihm
+  // öffnet (#694 AK 1).
   const offen: TerminReiter = t.spiel && reiter === "training" ? "termin" : reiter;
   const reiterItems = t.spiel
     ? [
@@ -74,7 +76,7 @@ export async function TerminSpalte({
             {zeitText(t.beginn, t.ende)} Uhr{t.ort ? ` · ${t.ort}` : ""}
           </p>
         </div>
-        <IconButtonLink href={planHref(t.teamId, eingrenzung)} scroll={false} icon={X} label={t.spiel ? "Spiel schliessen" : "Termin schliessen"} />
+        <IconButtonLink href={planHref(t.teamId, eingrenzung, reiter)} scroll={false} icon={X} label={t.spiel ? "Spiel schliessen" : "Termin schliessen"} />
       </div>
       <TabNav items={reiterItems} ariaLabel="Bereiche des Termins" scroll={false} className="mt-2" />
       <div className="mt-4 flex flex-col gap-4">
@@ -99,7 +101,7 @@ export async function TerminSpalte({
           </>
         )}
         {offen === "training" && <TrainingReiter t={t} />}
-        {offen === "trainer" && <TrainerReiter key={t.id} t={t} mitglieder={mitglieder} />}
+        {offen === "trainer" && <TrainerReiter key={t.id} t={t} mitglieder={mitglieder} geladenUm={jetztAmTrainingsort()} />}
         {offen === "spieler" && (t.spiel ? <SpielReiterLaden t={t} ich={ich} /> : <SpielerReiterLaden t={t} ich={ich} />)}
       </div>
     </section>

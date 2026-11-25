@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-11-23 (Release 1.53.0). Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-11-25 (Release 1.55.0). Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Startadresse
 
@@ -249,8 +249,10 @@ unter den Übungen stehen.
 
 Auch der Trainingsplan eines Teams teilt sich, sobald ein Termin geöffnet ist: links die Termine,
 rechts der Termin mit seinen Reitern an der Stelle des Monats; er bleibt beim Scrollen stehen und
-scrollt für sich (siehe [Team-Bereich](team-bereich.md#der-geöffnete-termin)). Seine Breite
-lässt sich nicht ziehen. Schmaler als ein Tablet im Querformat ersetzt der Termin die Liste, bis
+scrollt für sich (siehe [Team-Bereich](team-bereich.md#der-geöffnete-termin)). Der gewählte
+Reiter bleibt beim Wechsel auf einen anderen Termin stehen und steht in der Adresse, sodass er
+auch Neuladen, Zurück und einen weitergegebenen Link übersteht. Die Breite
+des Termins lässt sich nicht ziehen. Schmaler als ein Tablet im Querformat ersetzt der Termin die Liste, bis
 man ihn schliesst; auf Papier erscheint er nicht.
 
 ## Bedienung
@@ -275,11 +277,16 @@ Kästchen dagegen gehört in ein Formular, das man erst speichert. Die Bahn des 
 umrandet; Farbe trägt allein sein Knopf. Damit der Zustand nicht an der Farbe allein hängt, trägt
 der Knopf ein Zeichen: an steht er rechts in der Akzentfarbe mit einem Haken, aus links in Grau mit
 einem Kreuz. Rot gibt es am Schalter nicht, auch nicht in langen Listen — ein Fehlen zeigen Status
-und Kalenderblatt. Für Spieler:innen an Terminen — im Reiter „Spieler:innen" und am privaten Link
+und Kalenderblatt. Ist eine Trainer:in zu einem Termin nicht eingeladen, steht ihr eigener
+Schalter aus, aber mit leerem Knopf: nur umrandet, das Kreuz grau — so unterscheidet er sich von
+einer Absage ohne Wort und nicht allein über die Farbe; eine Sprachausgabe nennt den Unterschied.
+In den Zeilen einer Liste, wie den Terminen im Trainingsplan, steht der Schalter ohne Beschriftung;
+was er schaltet, sagt die Zeile und, für die Sprachausgabe, sein Name. Für Spieler:innen an Terminen — im Reiter „Spieler:innen" und am privaten Link
 — und für die Selbstabholung, deren Aus kein Fehlen bedeutet, ist er ruhiger: dieselbe Form, aber
 der Knopf bleibt in beiden Lagen grau, an rechts mit Haken, aus links mit Kreuz. Ist nichts mehr
-zu ändern, ist er gesperrt; an einem ausgefallenen Termin steht am privaten Link gar kein
-Schalter.
+zu ändern, ist er gesperrt; der eigene Stand einer Trainer:in an einem begonnenen, vergangenen oder
+ausgefallenen Termin bleibt dabei lesbar, weniger gedämpft als ein gewöhnlicher gesperrter Schalter.
+An einem ausgefallenen Termin steht am privaten Link gar kein Schalter.
 
 Ein Formular liest sich als Liste aus Namen und Werten. Jede Angabe steht als eigenes Feld in
 einer eigenen Zeile, auch wo zwei Angaben zusammengehören wie Länge und Breite oder Mindest- und

@@ -142,6 +142,10 @@ import {
   TRAINER_MELDUNG,
   TRAINER_TEXT,
   absageOffen,
+  eigenerStand,
+  eingeladenZahl,
+  mitAbsicht,
+  standText,
   mitAbsagen,
   dabeiZahl,
   hatAbgesagt,
@@ -243,7 +247,7 @@ import {
   zeigeHinweis,
 } from "../lib/app-ablegen";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
-import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
+import { mitGehaltenen, nochNichtVorbereitet, type TerminZeile } from "../lib/queries/termine-fuer";
 import { blattStand, handlungsMeldung, meldeStatus, nachMeldefrist, spielStatus, terminStatus } from "../lib/termin-status";
 import { meldefristVerpasst } from "../lib/spiel";
 import {
@@ -1386,6 +1390,62 @@ pruefe("Termin: Wortlaut der Trainer-Meldungen (#325, #519 AK 11, 23)", () => {
   assert.equal(TRAINER_TEXT.kennungUngueltig, "Bitte nur Mitglieder des Teams als Trainer:innen wählen.");
   assert.equal(TRAINER_MELDUNG.VERANTWORTUNG_PFLICHT, TRAINER_TEXT.verantwortlichPflicht);
   for (const [marker, satz] of Object.entries(TRAINER_MELDUNG)) assert.equal(fehlerMeldung(`x ${marker} y`), satz, marker);
+});
+
+pruefe("Eigener Stand per Schalter (#691)", () => {
+  const anna = tr("a", "Anna", true);
+  const ben = tr("b", "Ben");
+  const t = { id: "t1", trainer: [anna, ben] };
+  const am = "2026-11-24T20:00:00.000Z";
+  assert.equal(eigenerStand(t.trainer, "a"), "dabei");
+  assert.equal(eigenerStand([tr("a", "Anna", false, am)], "a"), "abgesagt");
+  assert.equal(eigenerStand(t.trainer, "c"), "nichtEingeladen");
+  // Ohne Absicht oder ohne Wirkung: derselbe Termin.
+  assert.equal(mitAbsicht(t, "b", "Ben", undefined), t);
+  assert.equal(mitAbsicht(t, "b", "Ben", { ziel: "dabei", am }), t, "schon dabei");
+  assert.equal(mitAbsicht(t, "c", "Cleo", { ziel: "abgesagt", am }), t, "nicht eingeladen: absagen wirkt nicht");
+  // Absagen: eingeladen bleiben, nicht mehr dabei (PC 1).
+  const ohneBen = mitAbsicht(t, "b", "Ben", { ziel: "abgesagt", am });
+  assert.equal(eigenerStand(ohneBen.trainer, "b"), "abgesagt");
+  assert.equal(dabeiZahl(ohneBen.trainer), 1);
+  assert.equal(eingeladenZahl(ohneBen.trainer), 2);
+  // Wieder zusagen.
+  assert.equal(eigenerStand(mitAbsicht(ohneBen, "b", "Ben", { ziel: "dabei", am }).trainer, "b"), "dabei");
+  // Aushelfen: eingeladen und dabei, nicht verantwortlich; Zahl 3/3.
+  const mitCleo = mitAbsicht(t, "c", "Cleo", { ziel: "dabei", am });
+  assert.equal(eigenerStand(mitCleo.trainer, "c"), "dabei");
+  assert.equal(eingeladenZahl(mitCleo.trainer), 3);
+  assert.equal(mitCleo.trainer.find((x) => x.userId === "c")?.verantwortlich, false);
+  assert.deepEqual(mitCleo.trainer.map((x) => x.name), ["Anna", "Ben", "Cleo"], "nach Name eingereiht");
+  // Aushelfen, dann absagen: eingeladen und abgesagt (PC 1).
+  const zurueck = mitAbsicht(mitCleo, "c", "Cleo", { ziel: "abgesagt", am });
+  assert.equal(eigenerStand(zurueck.trainer, "c"), "abgesagt");
+  assert.equal(eingeladenZahl(zurueck.trainer), 3);
+  // Die Verantwortliche sagt ab und gibt ab (AK 4) — oder an niemanden.
+  const uebergeben = mitAbsicht(t, "a", "Anna", { ziel: "abgesagt", am, uebernimmt: "b" });
+  assert.deepEqual(
+    uebergeben.trainer.map((x) => [x.userId, x.verantwortlich, !!x.abgesagtAm]),
+    [["a", false, true], ["b", true, false]],
+  );
+  const niemand = mitAbsicht({ trainer: [anna] }, "a", "Anna", { ziel: "abgesagt", am });
+  assert.equal(niemand.trainer[0].verantwortlich, false);
+  assert.equal(niemand.trainer[0].abgesagtAm, am);
+  // Vorlesehilfe: aus unterscheidet sich im Namen.
+  assert.equal(standText("dabei", "Fr., 27.11.2026, 18:00"), "Ich bin dabei, Fr., 27.11.2026, 18:00");
+  assert.equal(standText("abgesagt", "Fr., 27.11.2026, 18:00"), "Ich bin dabei, Fr., 27.11.2026, 18:00, abgesagt");
+  assert.equal(standText("nichtEingeladen", "Fr., 27.11.2026, 18:00"), "Ich bin dabei, Fr., 27.11.2026, 18:00, nicht eingeladen");
+});
+
+pruefe("Festgehaltene Termine unter «Meine Termine» (#691 PC 2)", () => {
+  const z = (id: string, datum: string, beginn: string) => ({ id, datum, beginn }) as TerminZeile;
+  const kommend = [z("a", "2026-11-27", "18:00"), z("c", "2026-12-04", "18:00")];
+  assert.deepEqual(mitGehaltenen(kommend, []).map((t) => t.id), ["a", "c"]);
+  assert.deepEqual(mitGehaltenen(kommend, [z("b", "2026-12-01", "17:30")]).map((t) => t.id), ["a", "b", "c"], "nach Datum eingereiht");
+  assert.deepEqual(mitGehaltenen(kommend, [z("x", "2026-11-27", "18:00")]).map((t) => t.id), ["a", "x", "c"], "Gleichstand dahinter");
+  assert.deepEqual(mitGehaltenen(kommend, [z("z", "2027-01-05", "18:00")]).map((t) => t.id), ["a", "c", "z"], "ans Ende");
+  const vomServer = mitGehaltenen(kommend, [{ ...kommend[0], beginn: "09:00" }]);
+  assert.equal(vomServer.length, 2, "was der Server liefert, geht vor");
+  assert.equal(vomServer[0].beginn, "18:00");
 });
 
 pruefe("Serie: namenlose Verantwortliche nur für diesen Termin (#325 PC 8)", () => {

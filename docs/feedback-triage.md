@@ -1,6 +1,6 @@
 # KiFu – Produktwissen für die Einordnung von User-Feedback
 
-Stand 2026-11-23 (Release 1.54.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
+Stand 2026-11-25 (Release 1.55.0). Zusammenfassung der Produktdokumentation unter `docs/produkt/`,
 gedacht als Kontext für ein kleines Modell (z. B. Haiku), das Rückmeldungen von Nutzer:innen
 einordnet. Rückmeldungen sind **Fehlermeldungen ebenso wie Feature-Wünsche**: Das Modell erkennt,
 was die Person meint, gleicht es mit dem heutigen Stand ab und stellt die Rückfragen, mit denen sich
@@ -331,10 +331,10 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 - Wochentag/Zeitraum verkleinert → Termine entfallen **inkl. solcher mit Training** (Rückfrage nennt nur Termine mit Training). Genau ein Wochentag getauscht → Termine wandern innerhalb der Woche. Entfernte Termine kommen nie zurück.
 - „Der Serie folgen" wirkt sofort und schliesst den Dialog – andere ungespeicherte Änderungen im Dialog gehen verloren (bekannt).
 
-**Trainer:innen am Termin:** Eingeladene gelten als dabei, bis sie absagen. Max. eine verantwortliche Person (wird automatisch eingeladen und dabei). Beim Erstellen vorgewählt: alle Mitglieder eingeladen, man selbst verantwortlich. Reiter „Trainer:innen": „2 von 3 dabei", Gruppen Dabei / Abgesagt (mit Zeit) / Nicht eingeladen; Schalter je Person; Menü „Verantwortung geben", „Ausladen". **Jedes Mitglied darf für alle absagen/zusagen.** Eigener Stand auch über Zeilenmenü („Absagen", „Wieder zusagen", „Ich helfe aus") und Schalter „Ich bin dabei" auf der Karte „Als Nächstes".
+**Trainer:innen am Termin:** Eingeladene gelten als dabei, bis sie absagen. Max. eine verantwortliche Person (wird automatisch eingeladen und dabei). Beim Erstellen vorgewählt: alle Mitglieder eingeladen, man selbst verantwortlich. Reiter „Trainer:innen": „2 von 3 dabei", Gruppen Dabei / Abgesagt (mit Zeit) / Nicht eingeladen; Schalter je Person; Menü „Verantwortung geben", „Ausladen". **Jedes Mitglied darf für alle absagen/zusagen.** Eigener Stand seit 1.55.0 mit einem **Schalter in jeder Terminzeile** des Trainingsplans (ohne Beschriftung) und dem Schalter „Ich bin dabei" auf der Karte „Als Nächstes": ein Klick, ohne den Termin zu öffnen, ohne Meldung; dabei ↔ abgesagt, als nicht Eingeladene:r (leerer Knopf) **aushelfen** (= eingeladen und dabei). Gesperrt (begonnen, vergangen, ausgefallen) zeigt der Schalter den Stand weiter. Verantwortliche:r → „Wer übernimmt?". Die Menü-Einträge „Absagen", „Wieder zusagen", „Ich helfe aus" gibt es im Menü der Zeile und der Karte „Als Nächstes" nicht mehr. Den Stand anderer ändert man im Reiter „Trainer:innen".
 - Absagen änderbar bis Beginn/Anpfiff; an ausgefallenem Termin ruhend. Verantwortliche sagt ab → „Wer übernimmt?". Datum/Beginn geändert (noch nicht begonnen) → **Absagen verfallen** (bei Spiel nur Datum). Neue Mitglieder sind zu bestehenden Terminen **nicht** eingeladen.
 - **Mindestbesetzung:** feste Zahl oder Verhältnis (1–99). Unterbesetzt (anstehend) → rote Plakette „1 Trainer:in fehlt"; ohne Verantwortliche:n gelbe „Niemand verantwortlich". Verhindert nichts.
-- Eingrenzung: „Meine Termine" (dabei) oder „Eingeladen" (inkl. abgesagt); fällt beim erneuten Öffnen des Teams weg.
+- Eingrenzung: „Meine Termine" (dabei) oder „Eingeladen" (inkl. abgesagt); fällt beim erneuten Öffnen des Teams weg. Eine eben abgesagte Zeile bleibt in „Meine Termine" mit der Absage stehen, bis die Eingrenzung wechselt (oder neu geladen wird).
 - Ausscheiden aus dem Team → aus allen anstehenden Terminen/Serien ausgeladen.
 
 **Ausfälle:** Termin bleibt, Plakette „Ausgefallen", optionaler Grund (max. 500; Spieler:innen und Eltern sehen ihn am Link). Auch nachträglich. Training ruht (öffnen ja, durchführen nein). Abmeldungen/Absagen/Nachträge ruhen; **keine Spielerzahl** angezeigt. Rücknahme stellt alles her. Training: auf heute/später verlegt → findet wieder statt; Spiel: jede Verlegung → findet wieder statt. Kein Massen-Ausfall (z. B. Ferienwoche) möglich.
@@ -344,9 +344,9 @@ bekannte Grenze; dann diese wörtlich als Bezug nennen, damit gleiche Wünsche z
 **Trainingsplan:** Anstehend (aufsteigend) oben, Rückblick (zusammengeklappt, neueste zuerst) unten. Grenze = **Tagesende Schweizer Zeit** (heutiger Termin bleibt den ganzen Tag oben, auch nach Ende).
 - **„Als Nächstes"**-Karte: erster anstehender, nicht ausgefallener Termin. Status „Vorbereitet" (grün) / „Nicht vorbereitet" (gelb, nur hier). Zeile mit Spielerzahl („12/14"), Kader, Trainer:innen („dabei/eingeladen"), Platz. Treffpunkt eines Trainings als Zeile „Treffpunkt  17:45  Ort". Schalter „Ich bin dabei" (gesperrt ab Beginn/bei Ausfall). Knöpfe Durchführen, Training öffnen bzw. Training hinzufügen, Spieler:innen, Trainer:innen.
 - Übrige Termine nach Monaten (mit Jahr), je Tag eine Karte. Status-Wort: „Vorbereitet" grün, „Nicht vorbereitet" grau, „Fällt aus" grau; Spiel: Status zum Richtwert. Ohne Training anstehend: violett „+ Training hinzufügen". Vergangen ohne Training: „Kein Training eingetragen".
-- Rechts klein: Spielerzahl (mit Liste „12/15", ab Beginn Anwesende, ausgefallen keine), Trainer:innen „2/3" mit eigenem Stand.
+- Rechts klein: Spielerzahl (mit Liste „12/15", ab Beginn Anwesende, ausgefallen keine), Trainer:innen „2/3" und der eigene Schalter; Zahlen und Schalter stehen untereinander, wenn die Zeile schmal ist (Telefon, neben einem geöffneten Termin), sonst nebeneinander.
 - **Mini-Monat** rechts (nur ab Tablet quer): folgt der Liste (Monat des obersten sichtbaren Termins); Pfeile/„Heute" wechseln nur den Monat. Punkte für farbige Status (max. 2 + „+n"). Klick auf Tag springt in die Liste. Kein Anlegen aus dem Monat. **Am Handy kein Monat.**
-- **Geöffneter Termin**: rechts neben der Liste (schmal: ersetzt die Liste). Reiter **Termin / Training / Spieler:innen / Trainer:innen** (Spiel: Spiel / Spieler:innen / Trainer:innen). Eigene Adresse inkl. Reiter.
+- **Geöffneter Termin**: rechts neben der Liste (schmal: ersetzt die Liste). Reiter **Termin / Training / Spieler:innen / Trainer:innen** (Spiel: Spiel / Spieler:innen / Trainer:innen). Eigene Adresse inkl. Reiter (`?tab=`). **Seit 1.55.0 bleibt der gewählte Reiter beim Wechsel auf einen anderen Termin**, auch über Schliessen/Wiederöffnen, Eingrenzung, „Als Nächstes" und Neuladen. Ein Spiel ohne „Training" zeigt „Spiel", die Wahl „Training" gilt fürs nächste Training weiter. Gezielte Wege setzen die Wahl: Knöpfe „Spieler:innen"/„Trainer:innen" der Karte, Absage-Dialog (führt zu „Trainer:innen", Eingrenzung bleibt), Link mit Reiter, Zurück/Vor. Anderer Bereich oder anderes Team → wieder „Termin". Nur Trainingsplan, nicht die Trainingsdetails der Trainingsliste.
 - Eigene Änderungen erscheinen sofort; **Änderungen anderer erst nach Neuladen**.
 
 **Kalender-Abo (Mitglieder):** Menü neben „Termin erstellen" → persönlicher Link je Team (Warnung: persönlich, nicht weitergeben). Anleitung für Apple, Google (nur im Browser hinzufügen), Outlook, Proton. Liefert anstehende + letzte 28 Tage, **nur Termine, zu denen man eingeladen ist**; ausgefallene/entfernte fehlen. Titel „Training · Teamname" bzw. „Bezeichnung · Teamname", Präfix „Abgesagt · " / „Verantwortlich · ". Beschreibung: eigener Stand, wer dabei/abgesagt/verantwortlich, Lücke Mindestbesetzung, Kartenlink als „Karte zum Ort: …". Keine Trainingsnamen, Bemerkung, Felder, Spieler:innen, kein Treffpunkt. Schweizer Zeit. Erlischt bei Widerruf, Austritt, Entfernung, Kontolöschung, Teamauflösung, Löschen des Vereins; bleibt erloschen (neuer Link nötig). Kalenderprogramm bestimmt Abrufhäufigkeit (Änderungen kommen verzögert – kein Fehler).
@@ -497,6 +497,13 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Treffpunkt eines Trainings hat sich beim Verlegen mitverschoben → Absicht, er behält seinen Abstand zum Beginn. Treffpunkt verschwunden nach Zeitänderung → er läge am Vortag und entfiel (Rückfrage nannte es).
 - Eltern sehen den Treffpunkt nicht → Spieler:in abgemeldet, Training ausgefallen oder begonnen; die Bemerkung sehen sie nie.
 - Neues Teammitglied ist zu bestehenden Terminen nicht eingeladen.
+- „Absagen"/„Wieder zusagen"/„Ich helfe aus" fehlen im Menü der Zeile bzw. der Karte „Als Nächstes" → seit 1.55.0 Schalter direkt in der Terminzeile.
+- Abgesagte Zeile bleibt in „Meine Termine" stehen → Absicht, bis die Eingrenzung wechselt (verschwindet dann).
+- Eigener Schalter springt ohne Meldung zurück → Termin hat inzwischen begonnen, fiel aus o. Ä.; angezeigt wird der geltende Stand.
+- Schalter in der Terminzeile ohne Beschriftung, Zahl steht über dem Schalter → Absicht (schmale Zeile, z. B. neben geöffnetem Termin).
+- Geöffneter Termin zeigt „Spiel" statt des gewählten Reiters „Training" → Spiele haben keinen Reiter Training; das nächste Training öffnet wieder in „Training".
+- Termin öffnet nicht mehr in „Termin", sondern im zuletzt gewählten Reiter → Absicht seit 1.55.0 (steht in der Adresse). Nach Team- oder Bereichswechsel beginnt er wieder bei „Termin".
+- Trainingsdetails der Trainingsliste behalten den Reiter beim Wechsel zu einem anderen Training nicht → Absicht, das gilt nur im Trainingsplan.
 - Ein „Erledigt"-Zustand für vergangene Termine existiert nicht („Kein Training eingetragen" heisst nicht „hat nicht stattgefunden").
 - Durchführen zeigt keine Erscheinungsform; Druck einer Übung zeigt keine Dauer.
 - Übungen ohne Erscheinungsform/Feldtyp/Übungstyp tauchen bei diesen Filtern nicht auf.
@@ -676,6 +683,7 @@ Private Übungen/Trainings anderer sind nirgends sichtbar (auch nicht für den A
 - Serien nur wöchentlich, max. 1 Jahr, keine Ferien/Feiertage, kein Massen-Ausfall, keine Serienübersicht, Termin nicht aus Serie lösbar, entfernte Termine nicht wiederherstellbar.
 - Treffpunkt eines Trainings: höchstens einer, ohne Anreiseart, gilt für alle Kader gleich, wandert beim Kopieren/Zuordnen eines Trainings nicht mit, Änderung für Eltern nicht gekennzeichnet; einmal entfallen, kommt er nicht zurück.
 - Neues Mitglied nicht auf einmal zu allen Terminen einladbar.
+- Mehrere Termine nicht auf einmal absagen; Stand anderer Trainer:innen nur am geöffneten Termin (Reiter „Trainer:innen"), nicht in der Zeile. Gewählter Reiter bleibt nur im Trainingsplan (nicht in den Trainingsdetails), nicht über Team-/Bereichswechsel.
 - Keine Tages-/Wochenansicht; Liste nicht durchsuchbar, nicht nach Zeitraum filterbar; kein Archiv.
 - „Verantwortlich" ≠ J+S-Leitperson; keine Einsatz-Nachweise; Absage ohne Grund.
 - Abo nicht auf eigene Termine/Trainings/Spiele eingrenzbar; Abruf-Frequenz bestimmt das Kalenderprogramm.
