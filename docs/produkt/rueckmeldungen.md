@@ -1,6 +1,6 @@
 # Rückmeldungen
 
-Stand 2026-11-23 (Release 1.53.0). Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
+Stand 2026-11-25 (Release 1.55.0). Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
 
 ## Zwei Arten, etwas zu sagen
 
@@ -46,6 +46,11 @@ Auflösen eines Teams, steht der Grund oben im Dialog selbst und nicht am Bildsc
 der Dialog ihn verdecken würde. Ebenso meldet der Dialog mit dem privaten Link einer Spieler:in
 in sich selbst, wenn der Link erneuert, als zugestellt markiert oder das zurückgenommen wurde;
 war der Link inzwischen schon abgeholt, sagt er das, ohne es als Fehler zu werten.
+
+Der eigene Schalter einer Trainer:in in den Terminzeilen des Trainingsplans und auf der Karte
+«Als Nächstes» meldet nichts: Der neue Stand steht sofort in der Zeile, und weist die Anwendung
+die Änderung ab, zeigt die Zeile ohne Hinweis wieder den geltenden Stand. Im Reiter
+«Trainer:innen» meldet derselbe Schalter wie bisher.
 
 Auf den Seiten hinter einem privaten Link, die Eltern ohne Konto öffnen, gibt es die Zeile nicht.
 Scheitert dort das Umlegen eines Schalters, springt er zurück, und der Grund steht als Hinweis
