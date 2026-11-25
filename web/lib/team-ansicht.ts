@@ -14,16 +14,30 @@ export function eingrenzungAus(sp: { meine?: string; eingeladen?: string }): Ein
   return null;
 }
 
-/** Die Adresse des Trainingsplans; nur die Eingrenzung reist in ihr mit. */
-export function planHref(teamId: string, eingrenzung: Eingrenzung | null): string {
-  return `/team/${teamId}${eingrenzung ? `?${PARAM[eingrenzung]}=1` : ""}`;
-}
-
 /** Die Reiter eines geöffneten Termins (#435, Trainer:innen #519). */
 export type TerminReiter = "termin" | "training" | "spieler" | "trainer";
-export const TERMIN_REITER: readonly TerminReiter[] = ["termin", "training", "spieler", "trainer"];
+const TERMIN_REITER: readonly TerminReiter[] = ["termin", "training", "spieler", "trainer"];
 
-/** Die Adresse des Trainingsplans mit geöffnetem Termin und Reiter (#435). */
+/** Der gewählte Reiter aus der Adresse; ohne oder unbekannt «termin». */
+export function reiterAus(sp: { tab?: string }): TerminReiter {
+  return TERMIN_REITER.includes(sp.tab as TerminReiter) ? (sp.tab as TerminReiter) : "termin";
+}
+
+/** Die Adresse des Trainingsplans; mit ihr reisen die Eingrenzung und der
+ *  gewählte Reiter (#694), auch wenn kein Termin offen ist: So öffnet der
+ *  nächste Termin im zuletzt gewählten Reiter. Wer den Plan verlässt, verliert
+ *  beides, weil keine andere Adresse sie trägt (#694 AK 4). */
+export function planHref(teamId: string, eingrenzung: Eingrenzung | null, reiter: TerminReiter = "termin"): string {
+  const q = new URLSearchParams();
+  if (eingrenzung) q.set(PARAM[eingrenzung], "1");
+  if (reiter !== "termin") q.set("tab", reiter);
+  const s = q.toString();
+  return `/team/${teamId}${s ? `?${s}` : ""}`;
+}
+
+/** Die Adresse des Trainingsplans mit geöffnetem Termin und Reiter (#435).
+ *  Wer einen Termin aus der Liste öffnet, gibt den gewählten Reiter mit; er
+ *  bleibt beim Terminwechsel (#694 AK 1). */
 export function terminHref(
   teamId: string,
   eingrenzung: Eingrenzung | null,

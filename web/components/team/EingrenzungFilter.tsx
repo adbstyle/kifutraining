@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { FilterChip } from "@/components/ui";
-import { planHref } from "@/lib/team-ansicht";
+import { planHref, type TerminReiter } from "@/lib/team-ansicht";
 import type { Eingrenzung } from "@/lib/trainer";
 
 /** Den Trainingsplan auf die eigenen Termine eingrenzen (#518 PO 12): «Meine
@@ -12,10 +12,19 @@ import type { Eingrenzung } from "@/lib/trainer";
  *  weitergeben und fällt beim erneuten Öffnen des Teams weg, weil dessen
  *  Adresse sie nicht trägt. Derselbe Filter-Chip wie «Meine Übungen» im
  *  Katalog, der seine Auswahl ebenso in die Adresse schreibt. */
-export function EingrenzungFilter({ teamId, aktiv }: { teamId: string; aktiv: Eingrenzung | null }) {
+export function EingrenzungFilter({
+  teamId,
+  aktiv,
+  reiter,
+}: {
+  teamId: string;
+  aktiv: Eingrenzung | null;
+  /** Der gewählte Reiter reist mit (#694). */
+  reiter: TerminReiter;
+}) {
   const router = useRouter();
   const chip = (e: Eingrenzung, label: string) => (
-    <FilterChip selected={aktiv === e} onClick={() => router.push(planHref(teamId, aktiv === e ? null : e), { scroll: false })}>
+    <FilterChip selected={aktiv === e} onClick={() => router.push(planHref(teamId, aktiv === e ? null : e, reiter), { scroll: false })}>
       {label}
     </FilterChip>
   );
