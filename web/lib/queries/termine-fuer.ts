@@ -482,6 +482,23 @@ export function teilePlan(termine: TerminZeile[], heute: string): Plan {
   };
 }
 
+/** Anstehende Termine samt den festgehaltenen (#691 PC 2): Wer unter «Meine
+ *  Termine» absagt, behält die Zeile, bis die Eingrenzung wechselt — auch wenn
+ *  der Server sie nicht mehr liefert. Nach Datum und Beginn eingereiht, bei
+ *  Gleichstand dahinter; was der Server liefert, geht vor. */
+export function mitGehaltenen(kommend: readonly TerminZeile[], gehalten: readonly TerminZeile[]): TerminZeile[] {
+  const da = new Set(kommend.map((t) => t.id));
+  const fehlend = gehalten.filter((t) => !da.has(t.id));
+  if (!fehlend.length) return [...kommend];
+  const schluessel = (t: TerminZeile) => `${t.datum}T${t.beginn}`;
+  const alle = [...kommend];
+  for (const g of fehlend) {
+    const i = alle.findIndex((t) => schluessel(t) > schluessel(g));
+    alle.splice(i === -1 ? alle.length : i, 0, g);
+  }
+  return alle;
+}
+
 /** Der Termin, dem ein Training zugeordnet ist, falls es einen hat. Für den
  *  Kopf der Durchführen-Ansicht (AK 19). */
 export async function getTerminZuTrainingFuer(

@@ -10,6 +10,8 @@ import { TrainerLozenge, TrainerZahl } from "./TrainerZeichen";
 import { cn } from "@/lib/cn";
 import { TerminHandgriffe, TrainingHinzufuegen } from "./TerminHandgriffe";
 import { NaechsterTermin } from "./NaechsterTermin";
+import { EigenerStand } from "./EigenerStand";
+import { useTerminAktionen } from "./TerminBereich";
 import { PlanMonat } from "./PlanMonat";
 import { ListeMitDetail } from "@/components/layout/ListeMitDetail";
 import { zeitText } from "@/lib/termin";
@@ -19,7 +21,7 @@ import { monatVon, monatsName } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
 // (next/headers) ins Client-Bundle.
-import { nochNichtVorbereitet, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
+import { mitGehaltenen, nochNichtVorbereitet, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { blattStand, nachMeldefrist, terminStatus } from "@/lib/termin-status";
 
 /* Der Kalender eines Teams als Liste (Team-Kalender #322, #323; gegliedert
@@ -32,7 +34,7 @@ import { blattStand, nachMeldefrist, terminStatus } from "@/lib/termin-status";
    AK 1, 15); schmal und auf Papier gibt es ihn nicht (OoS 7). Ohne Termine
    steht `leer` an der Stelle der Liste. */
 export function TrainingsPlan({
-  plan,
+  plan: geladen,
   heute,
   jetzt,
   ich,
@@ -60,6 +62,17 @@ export function TrainingsPlan({
    *  der Liste. */
   spalte?: ReactNode;
 }) {
+  // #691: Jeder Termin mit dem eigenen Stand, wie man ihn zuletzt gesetzt
+  // hat; unter «Meine Termine» bleiben eben abgesagte stehen (PC 2) — samt
+  // «Als Nächstes», das so nicht weiterspringt.
+  const a = useTerminAktionen();
+  const gehalten = eingrenzung === "dabei" ? a.gehalten : [];
+  const plan: Plan = {
+    kommend: mitGehaltenen(geladen.kommend, gehalten).map(a.stand),
+    vergangen: geladen.vergangen.map(a.stand),
+  };
+  const gehalteneTage = new Set(gehalten.map((t) => t.datum));
+  const nurAndere = gehalteneTage.size ? belegt.filter((d) => !gehalteneTage.has(d)) : belegt;
   const nichtsMehrOffen = plan.kommend.length === 0;
   // #403, #492 AK 1, 2: Der erste anstehende Termin, der stattfindet, steht
   // zuoberst und nicht noch einmal in der Liste (AK 18); ein ausgefallener
@@ -135,7 +148,7 @@ export function TrainingsPlan({
         <PlanMonat
           termine={alle}
           heute={heute}
-          belegt={belegt}
+          belegt={nurAndere}
           eingrenzung={eingrenzung}
           anfang={monatVon(plan.kommend[0]?.datum ?? heute)}
           liste={liste}
@@ -198,7 +211,7 @@ function PlanMonate({
                 <ZeilenKarte gedaempft={teil.art === "gedaempft"}>
                   <ol className="divide-y divide-linie">
                     {teil.termine.map((t) => (
-                      <TerminReihe key={t.id} t={t} heute={heute} ich={ich} eingrenzung={eingrenzung} reiter={reiter} hervorgehoben={t.id === hervorheben} ersterDesTages={t === erste} />
+                      <TerminReihe key={t.id} t={t} heute={heute} jetzt={jetzt} ich={ich} eingrenzung={eingrenzung} reiter={reiter} hervorgehoben={t.id === hervorheben} ersterDesTages={t === erste} />
                     ))}
                   </ol>
                 </ZeilenKarte>
@@ -256,6 +269,7 @@ function abschnitte(termine: TerminZeile[], art: (t: TerminZeile) => Abschnitt["
 function TerminReihe({
   t,
   heute,
+  jetzt,
   ich,
   eingrenzung,
   reiter,
@@ -264,6 +278,7 @@ function TerminReihe({
 }: {
   t: TerminZeile;
   heute: string;
+  jetzt: string;
   ich: string;
   eingrenzung: Eingrenzung | null;
   reiter: TerminReiter;
@@ -294,7 +309,7 @@ function TerminReihe({
       // Sprungziel aus dem Kalender-Abo und dem Monat; die Kontur zeigt, wo man landet.
       tabIndex={-1}
       className={cn(
-        "group/zeile state relative flex items-start gap-3 px-3 py-2.5 outline-none first:rounded-t-flaeche last:rounded-b-flaeche focus:kontur focus:border-primary",
+        "group/zeile @container state relative flex items-start gap-3 px-3 py-2.5 outline-none first:rounded-t-flaeche last:rounded-b-flaeche focus:kontur focus:border-primary",
         hervorgehoben && "kontur border-primary",
       )}
     >
@@ -332,13 +347,19 @@ function TerminReihe({
         )}
         <span className="max-w-full truncate type-body-medium text-on-surface-mittel">{unterzeile}</span>
       </div>
-      <span className="pointer-events-none relative flex shrink-0 flex-col items-end gap-1 py-0.5 text-on-surface-mittel sm:flex-row sm:items-center sm:gap-3">
+      {/* Untereinander, sobald die Zeile schmal ist — am Telefon und neben einem
+          geöffneten Termin (#691): gemessen an der Zeile, nicht am Bildschirm. */}
+      <span className="pointer-events-none relative flex shrink-0 flex-col items-end gap-1 py-0.5 text-on-surface-mittel @md:flex-row @md:items-center @md:gap-3">
         {zahlKurz && (
           <ZeichenZahl icon={Shirt} label={`Spielerzahl: ${zahlLang}`} klein>
             {zahlKurz}
           </ZeichenZahl>
         )}
         {!t.ausgefallen && <TrainerZahl t={t} ich={ich} klein />}
+        {/* Der eigene Stand, in einem Schritt umzulegen (#691), auch gesperrt
+            sichtbar — am Telefon unter den Zahlen, damit Name und Ort Platz
+            behalten (NFR 2). */}
+        <EigenerStand t={t} jetzt={jetzt} />
       </span>
       <TerminHandgriffe t={t} zuordnen={!nochNichtVorbereitet(t, heute)} />
     </li>

@@ -6,7 +6,7 @@ import { TrainingTeile } from "@/components/training/TrainingTeile";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { tagOhneJahr } from "@/lib/monat";
 import { zeitText } from "@/lib/termin";
-import { terminBegonnen } from "@/lib/zeit";
+import { jetztAmTrainingsort, terminBegonnen } from "@/lib/zeit";
 import { formatDuration, gesamtDauer, leseGliederung } from "@/lib/training";
 import { sichtbareZuordnungen, varianteAus } from "@/lib/varianten";
 import { planHref, terminHref, type TerminReiter } from "@/lib/team-ansicht";
@@ -101,7 +101,7 @@ export async function TerminSpalte({
           </>
         )}
         {offen === "training" && <TrainingReiter t={t} />}
-        {offen === "trainer" && <TrainerReiter key={t.id} t={t} mitglieder={mitglieder} />}
+        {offen === "trainer" && <TrainerReiter key={t.id} t={t} mitglieder={mitglieder} geladenUm={jetztAmTrainingsort()} />}
         {offen === "spieler" && (t.spiel ? <SpielReiterLaden t={t} ich={ich} /> : <SpielerReiterLaden t={t} ich={ich} />)}
       </div>
     </section>

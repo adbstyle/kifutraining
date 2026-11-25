@@ -1,14 +1,14 @@
 "use client";
 
-import { absageOffen, trainerLuecke, trainerNameFuer, verantwortlicheVon, type Eingrenzung } from "@/lib/trainer";
+import { trainerLuecke, trainerNameFuer, verantwortlicheVon, type Eingrenzung } from "@/lib/trainer";
 import Link from "next/link";
 import { CalendarPlus, Clock, LandPlot, Shirt } from "lucide-react";
-import { Button, ButtonLink, Kalenderblatt, Lozenge, OverflowMenu, SectionMessage, Switch, TrainingsTreffpunkt, TreffpunktListe, ZeichenZahl } from "@/components/ui";
+import { Button, ButtonLink, Kalenderblatt, Lozenge, OverflowMenu, SectionMessage, TrainingsTreffpunkt, TreffpunktListe, ZeichenZahl } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage } from "@/lib/serie";
 import { LINK_KANAL, zeitText } from "@/lib/termin";
-import { datumKurz, terminBegonnen } from "@/lib/zeit";
+import { datumKurz } from "@/lib/zeit";
 import { richtwertStufeText, zeitpunktKurz } from "@/lib/spiel";
 import { felderKurz } from "@/lib/termin-felder";
 import { spielerzahlKurz, spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
@@ -19,6 +19,7 @@ import { useTerminAktionen } from "./TerminBereich";
 import { terminMenue } from "./TerminHandgriffe";
 import { KaderLozenges } from "./KaderLozenge";
 import { TrainerLozenge, TrainerZahl } from "./TrainerZeichen";
+import { EigenerStand } from "./EigenerStand";
 
 /* Ein Termin als grosse Karte zuoberst im Trainingsplan (#403; Epic #490,
    Tafeln 2b und 2d): «Als Nächstes» ist der nächste Termin, der stattfindet.
@@ -172,7 +173,7 @@ export function NaechsterTermin({
           </p>
         )}
         {t.bemerkung && <p className="whitespace-pre-line type-body-medium text-on-surface">{t.bemerkung}</p>}
-        <IchBinDabei t={t} />
+        <IchBinDabei t={t} jetzt={jetzt} />
 
         <div className="flex flex-wrap gap-2">
           {t.training ? (
@@ -198,26 +199,18 @@ export function NaechsterTermin({
 }
 
 
-/** Der eigene Stand als Schalter (#520 AK 18, 20; Tafel «Als Nächstes»):
- *  an = dabei. Wer nicht eingeladen ist, lädt sich mit dem Umlegen ein (wie
- *  «Ich helfe aus»). Daneben, wer verantwortlich ist (#519 AK 24). Ab Beginn
- *  und an einem ausgefallenen Termin gesperrt. */
-function IchBinDabei({ t }: { t: TerminZeile }) {
+/** Der eigene Stand als Schalter (#520 AK 18, 20; Tafel «Als Nächstes»;
+ *  #691): an = dabei. Wer nicht eingeladen ist, hilft mit dem Umlegen aus.
+ *  Daneben, wer verantwortlich ist (#519 AK 24). Ab Beginn und an einem
+ *  ausgefallenen Termin gesperrt. */
+function IchBinDabei({ t, jetzt }: { t: TerminZeile; jetzt: string }) {
   const a = useTerminAktionen();
   const ich = t.trainer.find((x) => x.userId === a.ich);
-  const offen = absageOffen(t, terminBegonnen(t.datum, t.beginn));
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
       {/* Auch ein Tipp auf die Beschriftung legt um, statt den Termin zu öffnen. */}
-      <label className="flex cursor-pointer items-center gap-3">
-        <Switch
-          checked={!!ich && !ich.abgesagtAm}
-          disabled={!offen || a.pending}
-          aria-label="Ich bin dabei"
-          onChange={(e) =>
-            ich ? a.absagen(t, ich, !e.target.checked) : a.trainer(t, { einladen: [a.ich] }, "Du bist eingeladen.")
-          }
-        />
+      <label className="flex cursor-pointer items-center gap-3 has-[:disabled]:cursor-default">
+        <EigenerStand t={t} jetzt={jetzt} />
         <span aria-hidden className="type-body-medium text-on-surface">Ich bin dabei</span>
       </label>
       <span className="type-body-small text-on-surface-mittel">
