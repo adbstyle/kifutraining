@@ -18,7 +18,7 @@ import { angezeigteSpielerzahl } from "@/lib/besetzung";
 import { spielerzahlVon } from "@/lib/spieler";
 import { AbsageDialog } from "./AbsageDialog";
 import { terminHref } from "@/lib/team-ansicht";
-import { uebernehmenKoennen, type TerminTrainer } from "@/lib/trainer";
+import { uebernehmenKoennen, type Eingrenzung, type TerminTrainer } from "@/lib/trainer";
 import type { TrainerAenderung } from "./TrainerWahl";
 import {
   aendereSerieAktion,
@@ -205,6 +205,7 @@ export function TerminBereich({
   fuehrtListe,
   kader = [],
   spielerGesamt = 0,
+  eingrenzung = null,
   children,
 }: {
   teamId: string;
@@ -221,6 +222,8 @@ export function TerminBereich({
   /** Die Kader des Teams (#453) und wie viele Spieler:innen die Liste führt. */
   kader?: Kader[];
   spielerGesamt?: number;
+  /** Die aktive Eingrenzung: Der Sprung nach einer Absage behält sie. */
+  eingrenzung?: Eingrenzung | null;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -761,7 +764,7 @@ export function TerminBereich({
         onEinladen={() => {
           if (!absage) return;
           setAbsage(null);
-          router.push(terminHref(teamId, null, absage.t.id, "trainer"), { scroll: false });
+          router.push(terminHref(teamId, eingrenzung, absage.t.id, "trainer"), { scroll: false });
         }}
       />
 
