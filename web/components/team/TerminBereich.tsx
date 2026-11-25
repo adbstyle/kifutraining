@@ -877,7 +877,7 @@ export function TerminBereich({
         onEinladen={() => {
           if (!absage) return;
           setAbsage(null);
-          router.push(terminHref(teamId, null, absage.t.id, "trainer"), { scroll: false });
+          router.push(terminHref(teamId, eingrenzung, absage.t.id, "trainer"), { scroll: false });
         }}
       />
 

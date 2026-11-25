@@ -12,7 +12,7 @@ import { datumKurz } from "@/lib/zeit";
 import { richtwertStufeText, zeitpunktKurz } from "@/lib/spiel";
 import { felderKurz } from "@/lib/termin-felder";
 import { spielerzahlKurz, spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
-import { terminHref } from "@/lib/team-ansicht";
+import { terminHref, type TerminReiter } from "@/lib/team-ansicht";
 import { TERMIN_STATUS, blattStand, handlungsMeldung, nachMeldefrist, terminStatus } from "@/lib/termin-status";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
 import { useTerminAktionen } from "./TerminBereich";
@@ -44,6 +44,7 @@ export function NaechsterTermin({
   jetzt,
   ich,
   eingrenzung,
+  reiter,
   hervorgehoben,
   naechster = true,
   tagesUeberschrift = false,
@@ -54,6 +55,8 @@ export function NaechsterTermin({
   jetzt: string;
   ich: string;
   eingrenzung: Eingrenzung | null;
+  /** Der gewählte Reiter: Die Karte öffnet den Termin in ihm (#694). */
+  reiter: TerminReiter;
   hervorgehoben: boolean;
   /** `false`: ein Spiel nach der Meldefrist in der Liste, nicht «Als Nächstes» (#494). */
   naechster?: boolean;
@@ -71,7 +74,7 @@ export function NaechsterTermin({
   const nachFrist = nachMeldefrist(t, jetzt);
   const handlung = nachFrist ? handlungsMeldung(t) : null;
   const name = t.spiel ? t.spiel.bezeichnung : t.training ? t.training.name : "Noch kein Training";
-  const oeffnen = terminHref(t.teamId, eingrenzung, t.id);
+  const oeffnen = terminHref(t.teamId, eingrenzung, t.id, reiter);
   // #403 AK 8: Heute oder Morgen über dem Namen des nächsten Termins.
   const relativ = !naechster ? null : t.datum === heute ? "Heute" : t.datum === plusTage(heute, 1) ? "Morgen" : null;
   // Die Karte «Als Nächstes» trägt ihre Überschrift; in der Liste ist das Blatt die des Tages.

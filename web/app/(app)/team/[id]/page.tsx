@@ -11,7 +11,7 @@ import { getTeam } from "@/lib/queries/teams";
 import { getTeamPlan, teilePlan } from "@/lib/queries/termine";
 import { imFilter } from "@/lib/trainer";
 import { getTeamTrainings, getTrainingPool } from "@/lib/queries/trainings";
-import { TERMIN_REITER, eingrenzungAus, type TerminReiter } from "@/lib/team-ansicht";
+import { eingrenzungAus, reiterAus } from "@/lib/team-ansicht";
 import { TerminSpalte } from "@/components/team/TerminSpalte";
 import { createClient } from "@/lib/supabase/server";
 import { anzahlSpieler } from "@/lib/kern/spieler";
@@ -89,7 +89,9 @@ export default async function TeamPlanPage({
   const leer = termine.length === 0;
   // #435: Der Termin aus `?termin=` steht offen daneben, im Reiter aus `?tab=`.
   const offen = hervorheben ? alleTermine.find((t) => t.id === hervorheben) : undefined;
-  const reiter: TerminReiter = TERMIN_REITER.includes(sp.tab as TerminReiter) ? (sp.tab as TerminReiter) : "termin";
+  // #694: Der Reiter steht auch ohne offenen Termin in der Adresse — der
+  // nächste Termin öffnet in ihm.
+  const reiter = reiterAus(sp);
 
   return (
     <TerminBereich
@@ -112,7 +114,7 @@ export default async function TeamPlanPage({
         <h2 className="sr-only">Trainingsplan</h2>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            {(eingrenzung || !leer) && <EingrenzungFilter teamId={id} aktiv={eingrenzung} />}
+            {(eingrenzung || !leer) && <EingrenzungFilter teamId={id} aktiv={eingrenzung} reiter={reiter} />}
           </div>
           <div className="ml-auto flex items-center gap-1">
             <NeuerTerminKnopf />
@@ -128,6 +130,7 @@ export default async function TeamPlanPage({
           hervorheben={hervorheben}
           belegt={belegt}
           eingrenzung={eingrenzung}
+          reiter={reiter}
           spalte={
             offen && (
               <TerminSpalte

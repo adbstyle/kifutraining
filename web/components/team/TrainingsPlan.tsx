@@ -16,7 +16,7 @@ import { PlanMonat } from "./PlanMonat";
 import { ListeMitDetail } from "@/components/layout/ListeMitDetail";
 import { zeitText } from "@/lib/termin";
 import { spielerzahlKurz, spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
-import { terminHref } from "@/lib/team-ansicht";
+import { terminHref, type TerminReiter } from "@/lib/team-ansicht";
 import { monatVon, monatsName } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
@@ -41,6 +41,7 @@ export function TrainingsPlan({
   hervorheben,
   belegt,
   eingrenzung,
+  reiter,
   leer,
   spalte,
 }: {
@@ -53,6 +54,8 @@ export function TrainingsPlan({
   /** Tage mit Terminen, die «Meine Termine» ausblendet (#404 AK 14). */
   belegt: readonly string[];
   eingrenzung: Eingrenzung | null;
+  /** Der gewählte Reiter: Jeder Termin öffnet in ihm (#694). */
+  reiter: TerminReiter;
   leer?: ReactNode;
   /** Der geöffnete Termin (#435): ab `lg` an Stelle des Monats daneben, in
    *  einer geteilten Fläche mit Griff (`ListeMitDetail`); schmaler an Stelle
@@ -115,8 +118,8 @@ export function TrainingsPlan({
           <h3 className="type-title-small text-on-surface-mittel">
             Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
           </h3>
-          {naechster && <NaechsterTermin t={naechster} heute={heute} jetzt={jetzt} ich={ich} eingrenzung={eingrenzung} hervorgehoben={naechster.id === hervorheben} />}
-          <PlanMonate termine={danach} heute={heute} jetzt={jetzt} ich={ich} eingrenzung={eingrenzung} hervorheben={hervorheben} />
+          {naechster && <NaechsterTermin t={naechster} heute={heute} jetzt={jetzt} ich={ich} eingrenzung={eingrenzung} reiter={reiter} hervorgehoben={naechster.id === hervorheben} />}
+          <PlanMonate termine={danach} heute={heute} jetzt={jetzt} ich={ich} eingrenzung={eingrenzung} reiter={reiter} hervorheben={hervorheben} />
         </section>
       )}
       {plan.vergangen.length > 0 && (
@@ -127,7 +130,7 @@ export function TrainingsPlan({
           defaultOpen={nichtsMehrOffen || imRueckblick || rueckblickAuf > 0}
           className={cn(!nichtsMehrOffen && "mt-6")}
         >
-          <PlanMonate termine={plan.vergangen} heute={heute} jetzt={jetzt} ich={ich} eingrenzung={eingrenzung} hervorheben={hervorheben} />
+          <PlanMonate termine={plan.vergangen} heute={heute} jetzt={jetzt} ich={ich} eingrenzung={eingrenzung} reiter={reiter} hervorheben={hervorheben} />
         </Disclosure>
       )}
     </>
@@ -169,6 +172,7 @@ function PlanMonate({
   jetzt,
   ich,
   eingrenzung,
+  reiter,
   hervorheben,
 }: {
   termine: TerminZeile[];
@@ -176,6 +180,7 @@ function PlanMonate({
   jetzt: string;
   ich: string;
   eingrenzung: Eingrenzung | null;
+  reiter: TerminReiter;
   hervorheben?: string;
 }) {
   return nachMonatUndTag(termine).map((m) => (
@@ -195,6 +200,7 @@ function PlanMonate({
                   jetzt={jetzt}
                   ich={ich}
                   eingrenzung={eingrenzung}
+                  reiter={reiter}
                   hervorgehoben={teil.termine[0].id === hervorheben}
                   naechster={false}
                   tagesUeberschrift={teil.termine[0] === erste}
@@ -205,7 +211,7 @@ function PlanMonate({
                 <ZeilenKarte gedaempft={teil.art === "gedaempft"}>
                   <ol className="divide-y divide-linie">
                     {teil.termine.map((t) => (
-                      <TerminReihe key={t.id} t={t} heute={heute} jetzt={jetzt} ich={ich} eingrenzung={eingrenzung} hervorgehoben={t.id === hervorheben} ersterDesTages={t === erste} />
+                      <TerminReihe key={t.id} t={t} heute={heute} jetzt={jetzt} ich={ich} eingrenzung={eingrenzung} reiter={reiter} hervorgehoben={t.id === hervorheben} ersterDesTages={t === erste} />
                     ))}
                   </ol>
                 </ZeilenKarte>
@@ -266,6 +272,7 @@ function TerminReihe({
   jetzt,
   ich,
   eingrenzung,
+  reiter,
   hervorgehoben,
   ersterDesTages,
 }: {
@@ -274,6 +281,7 @@ function TerminReihe({
   jetzt: string;
   ich: string;
   eingrenzung: Eingrenzung | null;
+  reiter: TerminReiter;
   hervorgehoben: boolean;
   ersterDesTages: boolean;
 }) {
@@ -306,7 +314,7 @@ function TerminReihe({
       )}
     >
       {/* Die Zeile öffnet den Termin daneben (#435); ändern lässt er sich dort. */}
-      <Link href={terminHref(t.teamId, eingrenzung, t.id)} scroll={false} title={ganz} className="focus-ring absolute inset-0 group-first/zeile:rounded-t-flaeche group-last/zeile:rounded-b-flaeche">
+      <Link href={terminHref(t.teamId, eingrenzung, t.id, reiter)} scroll={false} title={ganz} className="focus-ring absolute inset-0 group-first/zeile:rounded-t-flaeche group-last/zeile:rounded-b-flaeche">
         <span className="sr-only">{t.spiel ? `Spiel öffnen: ${t.spiel.bezeichnung}, ${zeit}` : `Termin öffnen: ${zeit}`}</span>
       </Link>
       <div aria-hidden={!ersterDesTages || undefined} className="pointer-events-none relative">
