@@ -11,8 +11,10 @@ import { HinweisEltern } from "./HinweisEltern";
 import { AboKnopf } from "./AboKnopf";
 import { BenachrichtigungenAnsicht } from "./BenachrichtigungenAnsicht";
 import { useBenachrichtigungen } from "./useBenachrichtigungen";
-import { AppAblegenAnleitung, AppAblegenHinweis, AppAblegenKnopf, useAppAblegen } from "./AppAblegen";
-import { Mitteilungen } from "./Mitteilungen";
+import { AppAblegenAnleitung, AppAblegenEintrag, useAppAblegen } from "./AppAblegen";
+import { MitteilungenDialog, MitteilungenKarte, useMitteilungen } from "./Mitteilungen";
+import { AngebotKarte, OBEN, useAngebot } from "./Angebot";
+import { ungesehenerAusfall } from "@/lib/angebot";
 import { appName } from "@/lib/app-ablegen";
 import { knopfLabel, type LinkBenachrichtigungen } from "@/lib/benachrichtigung";
 import { cn } from "@/lib/cn";
@@ -76,15 +78,13 @@ import { PROBE_TEXT, linkProbeStand, linkProbeVoll, linkProbeZaehler, type Probe
    «Zum Termin» zur Karte in der Liste (AK 4). Fehlen die Daten
    (`benachrichtigungen` ist `null`), gibt es keine Glocke.
 
-   Als App ablegen (#650): Auf dem Mobile steht ab dem zweiten Besuch ein
-   schliessbarer Hinweis über den Terminen, unter ihnen immer ein ruhiger
-   Knopf — beides nicht in der abgelegten App. Erst nach dem Einhängen: Der
-   Server kennt weder Gerät noch Speicher.
-
-   Mitteilungen aufs Mobile (#483): Oben in der Glocken-Ansicht steht die
-   Karte mit dem Schalter, wenn die Umgebung Mitteilungen hat
-   (`mitteilungen`); dann nennt sie auch der Hinweis zum Ablegen. Auf dem
-   iPhone im Safari-Tab führt «So geht’s» zur selben Anleitung. */
+   Mitteilungen aufs Mobile (#483) und als App ablegen (#650): Oben in der
+   Glocken-Ansicht steht die Karte mit dem Schalter, wenn die Umgebung
+   Mitteilungen hat (`mitteilungen`), darunter auf Telefon und Tablet das
+   Ablegen (#698 AK 7). Im Moment des Nutzens kommt das Angebot (#698): nach
+   einer Ab- oder Anmeldung unter diesem Termin, bei einem noch nicht
+   gesehenen Ausfall unter ihm, in der abgelegten App oben. Erst nach dem
+   Einhängen: Der Server kennt weder Gerät noch Speicher. */
 export function ElternAnsicht({
   token,
   verein,
@@ -141,9 +141,54 @@ export function ElternAnsicht({
 
   const name = spielerName(spieler);
   const glocke = useBenachrichtigungen({ daten: benachrichtigungen, gesehenBis, schluessel });
-  const app = useAppAblegen(schluessel);
-  // Der Knopf auf dem Mobile, am Computer nur, wenn der Browser selbst ablegen kann (OoS 4).
-  const appKnopf = !!app.lage && !app.lage.abgelegt && (app.lage.geraet.system !== "andere" || app.installierbar);
+  const app = useAppAblegen();
+  const mobil = !!app.lage && app.lage.geraet.system !== "andere";
+  // Das Angebot liest denselben Stand wie die Karte in der Glocken-Ansicht;
+  // mit der Datenebene abgeglichen wird er erst dort (#698).
+  const angebotRef = useRef<() => void>(() => undefined);
+  const mitteilungenStand = useMitteilungen({
+    link: token,
+    vorname: spieler.vorname,
+    publicKey: mitteilungen,
+    abgleich: glocke.offen,
+    onAbgelehnt: () => angebotRef.current(),
+  });
+  const { angebot, ausloesen, ablehnen } = useAngebot({ schluessel, lage: app.lage, mitteilungen: mitteilungenStand.stand });
+  useEffect(() => {
+    angebotRef.current = ablehnen;
+  }, [ablehnen]);
+  // Anlässe beim Öffnen (#698 AK 1): die abgelegte App, sonst ein noch nicht
+  // gesehener Ausfall — sobald Gerät und Stand feststehen, einmal.
+  const beimOeffnen = useRef(false);
+  useEffect(() => {
+    if (beimOeffnen.current || !app.lage || mitteilungenStand.stand === "laedt") return;
+    beimOeffnen.current = true;
+    if (app.lage.abgelegt) return ausloesen(OBEN);
+    const ausfall = benachrichtigungen && ungesehenerAusfall(benachrichtigungen.eintraege, gesehenBis, new Set(termine.map((t) => t.id)));
+    if (ausfall) ausloesen(ausfall);
+  }, [app.lage, mitteilungenStand.stand, ausloesen, benachrichtigungen, gesehenBis, termine]);
+
+  /** «Einschalten» bzw. «Einrichten»: auf Android zuerst ablegen, wo der
+   *  Browser es selbst kann (AK 4), dann der Dialog vor dem Einschalten;
+   *  auf dem iPhone im Browser die Anleitung (AK 5). */
+  async function angebotAnnehmen() {
+    if (angebot?.art === "ablegen_ios") return app.oeffneAnleitung();
+    if (app.lage?.geraet.system === "android" && app.installierbar) await app.ablegen();
+    mitteilungenStand.schalten(true);
+  }
+
+  /** Das Angebot an einem Termin. */
+  const angebotBei = (id: string) =>
+    angebot?.ort === id && (
+      <AngebotKarte
+        art={angebot.art}
+        vorname={spieler.vorname}
+        pfad={`/abmelden/${token}`}
+        einrichten={app.lage?.geraet.system === "android" && app.installierbar}
+        onAnnehmen={() => void angebotAnnehmen()}
+        onAblehnen={ablehnen}
+      />
+    );
   const glockeRef = useRef<HTMLButtonElement>(null);
   // Zu welchem Termin «Zum Termin» führen soll, sobald die Liste wieder steht.
   const ziel = useRef<string | null>(null);
@@ -207,6 +252,7 @@ export function ElternAnsicht({
       !an,
       () => meldeUeberLinkAktion(token, { terminId: t.id, abgemeldet: !an, gesehen: { datum: t.datum, beginn: t.beginn } }),
       zeigeFehler(t),
+      () => ausloesen(t.id),
     );
   }
 
@@ -219,6 +265,7 @@ export function ElternAnsicht({
       an ? "angemeldet" : "abgemeldet",
       () => meldeSpielUeberLinkAktion(token, { terminId: t.id, angemeldet: an, gesehen: { datum: t.datum, beginn: t.beginn } }),
       zeigeFehler(t),
+      () => ausloesen(t.id),
     );
   }
 
@@ -239,6 +286,7 @@ export function ElternAnsicht({
         name={name}
         pending={pending}
         fehler={fehler?.terminId === t.id ? fehler.text : undefined}
+        angebot={angebotBei(t.id)}
         onMelden={(an) => melden(t, an)}
       />
     );
@@ -269,6 +317,7 @@ export function ElternAnsicht({
           <SectionMessage>{verfallenHinweis(t.verfallen)}</SectionMessage>
         )}
         {fehler?.terminId === t.id && <SectionMessage appearance="error">{fehler.text}</SectionMessage>}
+        {angebotBei(t.id)}
       </>
     );
   }
@@ -318,24 +367,24 @@ export function ElternAnsicht({
           onZurueck={glocke.schliessen}
           onZumTermin={zeigeTermin}
           kopf={
-            mitteilungen && (
-              <Mitteilungen link={token} vorname={spieler.vorname} publicKey={mitteilungen} onSoGehts={app.oeffneAnleitung} />
-            )
+            <>
+              {mitteilungen && (
+                <MitteilungenKarte
+                  vorname={spieler.vorname}
+                  stand={mitteilungenStand.stand}
+                  pending={mitteilungenStand.pending}
+                  meldung={mitteilungenStand.meldung}
+                  onSchalten={mitteilungenStand.schalten}
+                  onSoGehts={app.oeffneAnleitung}
+                />
+              )}
+              {mobil && !app.lage?.abgelegt && <AppAblegenEintrag vorname={spieler.vorname} onAblegen={() => void app.ablegen()} />}
+            </>
           }
         />
       ) : (
         <>
-          {app.lage?.hinweis && (
-            <div className="px-4 pt-4">
-              <AppAblegenHinweis
-                vorname={spieler.vorname}
-                geraet={app.lage.geraet}
-                mitteilungen={!!mitteilungen}
-                onSchliessen={app.schliessen}
-                onAktion={app.ablegen}
-              />
-            </div>
-          )}
+          {angebot?.ort === OBEN && <div className="px-4 pt-4">{angebotBei(OBEN)}</div>}
           {voll && probeLokal && (
             <div className="px-4 pt-4">
               <SectionMessage>{linkProbeVoll(spieler.vorname, probeLokal)}</SectionMessage>
@@ -416,11 +465,6 @@ export function ElternAnsicht({
               ))}
             </div>
           )}
-          {appKnopf && (
-            <div className="flex flex-col px-4 pb-6 pt-2">
-              <AppAblegenKnopf onClick={app.ablegen} />
-            </div>
-          )}
         </>
       )}
       {app.lage && (
@@ -431,6 +475,12 @@ export function ElternAnsicht({
           name={appName(spieler.vorname, verein)}
         />
       )}
+      <MitteilungenDialog
+        open={mitteilungenStand.dialog}
+        vorname={spieler.vorname}
+        onAbbrechen={mitteilungenStand.schliesseDialog}
+        onEinschalten={() => void mitteilungenStand.einschalten()}
+      />
     </>
   );
 }

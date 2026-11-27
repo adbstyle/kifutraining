@@ -1,4 +1,4 @@
-import { APP_ABLEGEN_SPEICHER } from "@/lib/app-ablegen";
+import { ANGEBOT_SPEICHER } from "@/lib/angebot";
 import { BENACHRICHTIGUNG_COOKIE } from "@/lib/benachrichtigung-gesehen";
 import { BEREICH_COOKIE } from "@/lib/bereich";
 import { DARSTELLUNG_COOKIE } from "@/lib/darstellung";
@@ -88,12 +88,12 @@ export const SPEICHERUNGEN: Speicherung[] = [
   },
   {
     // Kein Cookie, sondern der lokale Speicher des Browsers: Der Server
-    // braucht es nie (#650).
-    name: APP_ABLEGEN_SPEICHER,
-    titel: "Hinweis «als App ablegen»",
-    zweck: "Auf der Seite hinter dem privaten Link einer Spieler:in, im lokalen Speicher des Browsers: zählt die Besuche dieses Geräts und merkt sich, wann du den Hinweis «als App ablegen» geschlossen hast. Je Link ein Eintrag, nur ein Kürzel des Links, nie der Link selbst.",
+    // braucht es nie (#698 PC 1).
+    name: ANGEBOT_SPEICHER,
+    titel: "Angebot «Mitteilungen aufs Mobile»",
+    zweck: "Auf der Seite hinter dem privaten Link einer Spieler:in, im lokalen Speicher des Browsers: merkt sich, wann dieses Gerät das Angebot für Mitteilungen und die App zuletzt gezeigt hat und wann du es abgelehnt hast, damit es höchstens einmal je Besuch und nach dem Ablehnen erst nach 30 Tagen wiederkommt. Je Link ein Eintrag, nur ein Kürzel des Links, nie der Link selbst.",
     dauer: "Bis du die Daten der Website im Browser löschst.",
-    ohne: "Der Hinweis erscheint nicht; der Knopf unter den Terminen bleibt.",
+    ohne: "Das Angebot kann bei jedem Seitenaufruf wiederkommen; Mitteilungen und App findest du jederzeit hinter der Glocke.",
   },
   {
     // Kein Cookie: ein Service Worker je Link und seine Anmeldung beim

@@ -25,9 +25,14 @@ import { istAbgelegt } from "./AppAblegen";
 
    Der Stand hängt am Gerät: Der Service Worker ist je Link registriert
    (Bereich `/abmelden/<link>`, wie das Manifest), seine Anmeldung beim
-   Mitteilungsdienst ist das Abo. Ob die Datenebene sie kennt, fragt die Seite
-   beim Einhängen nach. Alles erst nach dem Einhängen: Der Server kennt das
-   Gerät nicht. */
+   Mitteilungsdienst ist das Abo. Den Stand ermittelt die Seite beim
+   Einhängen nur am Gerät — er steuert auch das Angebot (#698) —, ob die
+   Datenebene das Abo kennt, fragt sie erst, wenn die Glocken-Ansicht offen
+   ist (`abgleich`): kein Aufruf des Servers bei jedem Besuch. Alles erst
+   nach dem Einhängen: Der Server kennt das Gerät nicht.
+
+   Wird die Erlaubnis nicht erteilt oder schaltet jemand aus, meldet
+   `onAbgelehnt` das dem Angebot (#698 AK 2). */
 
 /** Wartet, bis der Service Worker einer Registrierung aktiv ist. */
 async function aktiv(reg: ServiceWorkerRegistration): Promise<void> {
@@ -59,15 +64,30 @@ async function anmeldungFuer(link: string): Promise<PushSubscription | null> {
 export type MitteilungenMeldung = { art: "error" | "information"; text: string } | null;
 
 /** Zustand und Handlungen der Karte. `publicKey`: der öffentliche
- *  VAPID-Schlüssel der Umgebung. */
-export function useMitteilungen({ link, vorname, publicKey }: { link: string; vorname: string; publicKey: string }) {
+ *  VAPID-Schlüssel der Umgebung, `null` ohne Mitteilungen. */
+export function useMitteilungen({
+  link,
+  vorname,
+  publicKey,
+  abgleich,
+  onAbgelehnt,
+}: {
+  link: string;
+  vorname: string;
+  publicKey: string | null;
+  /** Den Stand mit der Datenebene abgleichen (Glocken-Ansicht offen). */
+  abgleich: boolean;
+  /** Die Erlaubnis wurde nicht erteilt oder die Mitteilungen ausgeschaltet. */
+  onAbgelehnt?: () => void;
+}) {
   const router = useRouter();
   const [stand, setStand] = useState<MitteilungenStand>("laedt");
   const [dialog, setDialog] = useState(false);
   const [pending, setPending] = useState(false);
   const [meldung, setMeldung] = useState<MitteilungenMeldung>(null);
 
-  const pruefen = useCallback(async () => {
+  const pruefen = useCallback(async (mitServer: boolean) => {
+    if (!publicKey) return setStand("nicht_moeglich");
     const geraet = erkenneGeraet(navigator.userAgent, navigator.maxTouchPoints);
     if (geraet.inApp || (!unterstuetzt() && geraet.system !== "ios")) return setStand("nicht_moeglich");
     if (geraet.system === "ios" && !istAbgelegt()) return setStand("ios_browser");
@@ -81,6 +101,7 @@ export function useMitteilungen({ link, vorname, publicKey }: { link: string; vo
         await anmeldung.unsubscribe().catch(() => false);
         return setStand("aus");
       }
+      if (!mitServer) return setStand("an");
       const r = await pushStandAktion(link, anmeldung.endpoint);
       if (r === "ungueltig") return router.refresh();
       setStand(r === "an" ? "an" : "aus");
@@ -90,8 +111,8 @@ export function useMitteilungen({ link, vorname, publicKey }: { link: string; vo
   }, [link, publicKey, router]);
 
   useEffect(() => {
-    void pruefen();
-  }, [pruefen]);
+    void pruefen(abgleich);
+  }, [pruefen, abgleich]);
 
   /** Der Schalter: ein öffnet den Dialog, aus schaltet sofort aus. */
   function schalten(an: boolean) {
@@ -116,6 +137,7 @@ export function useMitteilungen({ link, vorname, publicKey }: { link: string; vo
         await anmeldung.unsubscribe().catch(() => false);
       }
       setStand("aus");
+      onAbgelehnt?.();
     } catch (e) {
       console.error("[mitteilungen] ausschalten:", e);
       setMeldung({ art: "error", text: MITTEILUNGEN_TEXT.fehler });
@@ -142,12 +164,16 @@ export function useMitteilungen({ link, vorname, publicKey }: { link: string; vo
       if (anmeldung && neu) {
         await anmeldung.unsubscribe().catch(() => false);
         setStand(unterstuetzt() && Notification.permission === "denied" ? "abgelehnt" : "aus");
-      } else await pruefen();
+      } else await pruefen(true);
     };
     try {
+      if (!publicKey) return;
       const erlaubnis = await Notification.requestPermission();
-      if (erlaubnis === "denied") return setStand("abgelehnt");
-      if (erlaubnis !== "granted") return setMeldung({ art: "information", text: MITTEILUNGEN_TEXT.nichtErlaubt });
+      if (erlaubnis !== "granted") {
+        onAbgelehnt?.();
+        if (erlaubnis === "denied") return setStand("abgelehnt");
+        return setMeldung({ art: "information", text: MITTEILUNGEN_TEXT.nichtErlaubt });
+      }
       const reg = await navigator.serviceWorker.register(SERVICE_WORKER_PFAD, { scope: pushBereich(link) });
       await aktiv(reg);
       anmeldung = await reg.pushManager.getSubscription();
@@ -278,33 +304,5 @@ export function MitteilungenDialog({
         {abschnitt(MITTEILUNGEN_TEXT.verschwindetTitel, MITTEILUNGEN_TEXT.verschwindet(vorname))}
       </div>
     </Dialog>
-  );
-}
-
-/** Karte und Dialog am privaten Link. */
-export function Mitteilungen({
-  link,
-  vorname,
-  publicKey,
-  onSoGehts,
-}: {
-  link: string;
-  vorname: string;
-  publicKey: string;
-  onSoGehts?: () => void;
-}) {
-  const m = useMitteilungen({ link, vorname, publicKey });
-  return (
-    <>
-      <MitteilungenKarte
-        vorname={vorname}
-        stand={m.stand}
-        pending={m.pending}
-        meldung={m.meldung}
-        onSchalten={m.schalten}
-        onSoGehts={onSoGehts}
-      />
-      <MitteilungenDialog open={m.dialog} vorname={vorname} onAbbrechen={m.schliesseDialog} onEinschalten={() => void m.einschalten()} />
-    </>
   );
 }

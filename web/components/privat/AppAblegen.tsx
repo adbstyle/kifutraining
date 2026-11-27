@@ -2,30 +2,20 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Smartphone } from "lucide-react";
-import { Button, Dialog, SectionMessage } from "@/components/ui";
-import {
-  APP_ABLEGEN_SPEICHER,
-  APP_ABLEGEN_TEXT,
-  APP_ICONS,
-  ablageFuer,
-  erkenneGeraet,
-  mitBesuch,
-  mitGeschlossen,
-  zeigeHinweis,
-  type Geraet,
-} from "@/lib/app-ablegen";
+import { Button, Dialog } from "@/components/ui";
+import { APP_ABLEGEN_TEXT, APP_ICONS, erkenneGeraet, type Geraet } from "@/lib/app-ablegen";
 
-/* Die Seite des privaten Links als App ablegen (#650).
+/* Die Seite des privaten Links als App ablegen (#650, #698).
 
    Android-Browser melden mit `beforeinstallprompt`, dass sie die Seite selbst
    ablegen können; das Ereignis kommt einmal und früh, darum hört dieses Modul
    schon beim Laden darauf und hält es fest. `preventDefault` unterdrückt die
-   eigene Leiste des Browsers — an ihrer Stelle stehen Hinweis und Knopf. Ohne
-   das Ereignis (Firefox, Samsung Internet, iPhone) zeigt die Anleitung den
-   Weg über das Menü bzw. «Teilen».
+   eigene Leiste des Browsers — an ihrer Stelle stehen das Angebot und der
+   Eintrag in der Glocken-Ansicht. Ohne das Ereignis (Firefox, Samsung
+   Internet, iPhone) zeigt die Anleitung den Weg über das Menü bzw. «Teilen».
 
-   Alles hängt am Gerät und am lokalen Speicher, darum erscheint nichts vor dem
-   Einhängen: Der Server kennt beides nicht, das erste HTML bleibt ohne. */
+   Alles hängt am Gerät, darum steht nichts vor dem Einhängen fest: Der Server
+   kennt es nicht, das erste HTML bleibt ohne. */
 
 type InstallEreignis = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
 
@@ -50,34 +40,16 @@ const abonniere = (f: () => void) => {
   };
 };
 
-/** Lesen und Schreiben im lokalen Speicher; gesperrt (privates Surfen,
- *  Einstellungen) gilt es als leer und bleibt ungeschrieben. */
-function liesSpeicher(): string | null {
-  try {
-    return window.localStorage.getItem(APP_ABLEGEN_SPEICHER);
-  } catch {
-    return null;
-  }
-}
-function schreibeSpeicher(wert: string) {
-  try {
-    window.localStorage.setItem(APP_ABLEGEN_SPEICHER, wert);
-  } catch {
-    // Ohne Speicher zählt dieses Gerät keine Besuche: kein Hinweis, der Knopf bleibt.
-  }
-}
-
-/** In der abgelegten App (AK 3): ohne Browser-Leiste. `navigator.standalone` meldet es auf dem iPhone. */
+/** In der abgelegten App: ohne Browser-Leiste. `navigator.standalone` meldet es auf dem iPhone. */
 export function istAbgelegt(): boolean {
   return window.matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
 }
 
-type Lage = { geraet: Geraet; abgelegt: boolean; hinweis: boolean };
+export type AblageLage = { geraet: Geraet; abgelegt: boolean };
 
-/** Der Zustand für Hinweis und Knopf eines Links; `schluessel` ist das Kürzel
- *  aus `linkSchluessel` (nie der Link selbst). Zählt beim Einhängen den Besuch. */
-export function useAppAblegen(schluessel: string) {
-  const [lage, setLage] = useState<Lage | null>(null);
+/** Gerät, Ablage und der Weg zum Ablegen. */
+export function useAppAblegen() {
+  const [lage, setLage] = useState<AblageLage | null>(null);
   const [anleitung, setAnleitung] = useState(false);
   const installierbar = useSyncExternalStore(
     abonniere,
@@ -86,86 +58,39 @@ export function useAppAblegen(schluessel: string) {
   );
 
   useEffect(() => {
-    const geraet = erkenneGeraet(navigator.userAgent, navigator.maxTouchPoints);
-    const abgelegt = istAbgelegt();
-    const jetzt = Date.now();
-    // In der abgelegten App zählt kein Besuch: Dort gibt es nichts mehr abzulegen.
-    let wert = liesSpeicher();
-    if (!abgelegt) {
-      wert = mitBesuch(wert, schluessel, jetzt);
-      schreibeSpeicher(wert);
-    }
-    setLage({ geraet, abgelegt, hinweis: zeigeHinweis({ geraet, standalone: abgelegt, stand: ablageFuer(wert, schluessel), jetzt }) });
-  }, [schluessel]);
+    setLage({ geraet: erkenneGeraet(navigator.userAgent, navigator.maxTouchPoints), abgelegt: istAbgelegt() });
+  }, []);
 
-  /** Der Hinweis ruht 7 Tage (AK 7). */
-  function schliessen() {
-    schreibeSpeicher(mitGeschlossen(liesSpeicher(), schluessel, Date.now()));
-    setLage((l) => l && { ...l, hinweis: false });
-  }
-
-  /** Ablegen: Kann der Browser es selbst, fragt er; sonst die Anleitung. */
-  async function ablegen() {
+  /** Ablegen: Kann der Browser es selbst, fragt er; sonst die Anleitung.
+   *  `true`, wenn der Browser abgelegt hat. */
+  async function ablegen(): Promise<boolean> {
     const e = installEreignis;
-    if (!e) return setAnleitung(true);
+    if (!e) {
+      setAnleitung(true);
+      return false;
+    }
     // Das Ereignis gilt nur einmal.
     installEreignis = null;
     melde();
     await e.prompt();
     const { outcome } = await e.userChoice;
-    if (outcome === "accepted") schliessen();
+    return outcome === "accepted";
   }
 
   return {
     /** `null` vor dem Einhängen. */
     lage,
+    /** Der Browser kann selbst ablegen (Android, Chrome am Computer). */
     installierbar,
     anleitung,
     oeffneAnleitung: () => setAnleitung(true),
     schliesseAnleitung: () => setAnleitung(false),
-    schliessen,
     ablegen,
   };
 }
 
-/** Der Hinweis über den Terminen (AK 2, 6–8): schliessbar; im Browser einer App
- *  nur der Weg in den Browser des Mobiles. */
-export function AppAblegenHinweis({
-  vorname,
-  geraet,
-  mitteilungen = false,
-  onSchliessen,
-  onAktion,
-}: {
-  vorname: string;
-  geraet: Geraet;
-  /** Gibt es Mitteilungen, nennt der Hinweis sie (#483 AK 4). */
-  mitteilungen?: boolean;
-  onSchliessen: () => void;
-  /** «So geht’s» (iPhone) bzw. «Als App ablegen» (Android). */
-  onAktion: () => void;
-}) {
-  return (
-    <SectionMessage
-      icon={Smartphone}
-      onSchliessen={onSchliessen}
-      schliessenLabel={APP_ABLEGEN_TEXT.schliessen}
-      actions={
-        geraet.inApp ? undefined : (
-          <Button type="button" variant="link" onClick={onAktion}>
-            {geraet.system === "ios" ? APP_ABLEGEN_TEXT.soGehts : APP_ABLEGEN_TEXT.ablegen}
-          </Button>
-        )
-      }
-    >
-      <strong className="block font-semibold">{APP_ABLEGEN_TEXT.hinweisTitel(vorname)}</strong>
-      {geraet.inApp ? APP_ABLEGEN_TEXT.inApp : APP_ABLEGEN_TEXT.hinweisText(vorname, mitteilungen)}
-    </SectionMessage>
-  );
-}
-
-/** Die Anleitung (AK 2, 8): drei Schritte für iPhone bzw. Android, darunter der
- *  Name, unter dem die App erscheint (AK 4). Im Browser einer App nur der Weg
+/** Die Anleitung: drei Schritte für iPhone bzw. Android, darunter der Name,
+ *  unter dem die App erscheint (#650 AK 4). Im Browser einer App nur der Weg
  *  in den Browser. */
 export function AppAblegenAnleitung({
   open,
@@ -222,13 +147,19 @@ function AppVorschau({ name }: { name: string }) {
   );
 }
 
-/** Der ruhige Knopf unter den Terminen (Secondary, outlined): öffnet die
- *  Anleitung bzw. fragt den Browser, wenn er selbst ablegen kann. */
-export function AppAblegenKnopf({ onClick }: { onClick: () => void }) {
+/** Der Eintrag in der Glocken-Ansicht (#698 AK 7): auf Telefon und Tablet
+ *  jederzeit ablegen, auch ohne Mitteilungen. Rein darstellend. */
+export function AppAblegenEintrag({ vorname, onAblegen }: { vorname: string; onAblegen: () => void }) {
   return (
-    <Button type="button" variant="outlined" onClick={onClick} className="self-center">
-      <Smartphone size={16} strokeWidth={2} aria-hidden />
-      {APP_ABLEGEN_TEXT.knopf}
-    </Button>
+    <section aria-label={APP_ABLEGEN_TEXT.eintragTitel} className="flex items-center gap-3 rounded-flaeche bg-elev-01 px-3 py-3">
+      <Smartphone size={20} strokeWidth={2} aria-hidden className="shrink-0 text-on-surface-mittel" />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <h3 className="type-title-small text-on-surface">{APP_ABLEGEN_TEXT.eintragTitel}</h3>
+        <p className="type-body-small text-on-surface-mittel">{APP_ABLEGEN_TEXT.eintragText(vorname)}</p>
+      </div>
+      <Button type="button" variant="outlined" onClick={onAblegen}>
+        {APP_ABLEGEN_TEXT.ablegen}
+      </Button>
+    </section>
   );
 }

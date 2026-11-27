@@ -33,12 +33,14 @@ export function useLokalerStand<W>(daten: unknown) {
     /** Der lokale Wert für `id`, sonst `stand`. */
     wert: (id: string | null, stand: W): W => (hat(id) ? lokal[id] : stand),
     /** Setzt `id` sofort auf `neu` und führt `aktion` aus; scheitert sie,
-     *  gilt wieder der Stand und `beiFehler` erhält die Antwort. */
+     *  gilt wieder der Stand und `beiFehler` erhält die Antwort, sonst ruft
+     *  sie `beiErfolg`. */
     aendere<R extends { ok: boolean }>(
       id: string,
       neu: W,
       aktion: () => Promise<R>,
       beiFehler: (r: Extract<R, { ok: false }>) => void,
+      beiErfolg?: () => void,
     ) {
       setLokal((l) => ({ ...l, [id]: neu }));
       startTransition(async () => {
@@ -49,7 +51,7 @@ export function useLokalerStand<W>(daten: unknown) {
             return rest;
           });
           beiFehler(r as Extract<R, { ok: false }>);
-        }
+        } else beiErfolg?.();
         router.refresh();
       });
     },

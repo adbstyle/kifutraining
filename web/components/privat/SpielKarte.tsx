@@ -36,6 +36,7 @@ export function SpielKarte({
   name,
   pending,
   fehler,
+  angebot,
   onMelden,
 }: {
   t: LinkTermin;
@@ -46,6 +47,8 @@ export function SpielKarte({
   name: string;
   pending: boolean;
   fehler?: string;
+  /** Das Angebot nach dem Melden (#698), unter dem Fehler. */
+  angebot?: React.ReactNode;
   onMelden: (an: boolean) => void;
 }) {
   const nichtAufgeboten = t.nicht_aufgeboten && !t.ausgefallen;
@@ -142,6 +145,7 @@ export function SpielKarte({
         </SectionMessage>
       )}
       {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
+      {angebot}
       {treffpunkte && (
         <TreffpunktListe treffpunkte={treffpunkte} spieltag={t.datum} spielOrt={t.ort} className="type-body-medium text-on-surface" />
       )}
