@@ -225,27 +225,31 @@ import {
 } from "../lib/push";
 import { MITTEILUNG_ERSATZ, SERVICE_WORKER_QUELLE } from "../lib/push-service-worker";
 import {
-  APP_ABLEGEN_MAX_LINKS,
-  APP_ABLEGEN_MITTEILUNGEN,
-  APP_ABLEGEN_SPEICHER,
   APP_ABLEGEN_TEXT,
   APP_ICONS,
-  BESUCH_ABSTAND_MS,
-  HINWEIS_PAUSE_MS,
   KONTO_APP_METADATA,
   KONTO_MANIFEST_PFAD,
   THEME_FARBEN,
-  ablageFuer,
   appName,
   erkenneGeraet,
   genitiv,
   kontoManifest,
-  liesAblage,
   linkManifest,
-  mitBesuch,
-  mitGeschlossen,
-  zeigeHinweis,
 } from "../lib/app-ablegen";
+import {
+  ANGEBOT_ALTER_SPEICHER,
+  ANGEBOT_BESUCH_MS,
+  ANGEBOT_MAX_LINKS,
+  ANGEBOT_PAUSE_MS,
+  ANGEBOT_SPEICHER,
+  ANGEBOT_TEXT,
+  angebotFuer,
+  angebotJetzt,
+  liesAngebot,
+  mitAbgelehnt,
+  mitGezeigt,
+  ungesehenerAusfall,
+} from "../lib/angebot";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { mitGehaltenen, nochNichtVorbereitet, type TerminZeile } from "../lib/queries/termine-fuer";
 import { blattStand, handlungsMeldung, meldeStatus, nachMeldefrist, spielStatus, terminStatus } from "../lib/termin-status";
@@ -5997,61 +6001,74 @@ pruefe("App ablegen (#650 AK 1, 8; OoS 4): erkenneGeraet — iPhone, Android, Br
   assert.deepEqual(erkenneGeraet("", 0), { system: "andere", inApp: false });
 });
 
-pruefe("App ablegen (#650 AK 6, 7): Besuche je Link, ab dem zweiten der Hinweis, nach dem Schliessen 7 Tage Ruhe", () => {
+pruefe("Angebot (#698 AK 1, 2): einmal je Besuch, nach dem Ablehnen 30 Tage Ruhe, nur auf dem Mobile", () => {
   const t0 = 1_800_000_000_000;
   const iphone = erkenneGeraet(UA.iphoneSafari, 5);
-  const hinweis = (wert: string, jetzt: number, extra: Partial<Parameters<typeof zeigeHinweis>[0]> = {}) =>
-    zeigeHinweis({ geraet: iphone, standalone: false, stand: ablageFuer(wert, AA_K1), jetzt, ...extra });
-  // Erster Besuch: kein Hinweis.
-  let w = mitBesuch(null, AA_K1, t0);
-  assert.deepEqual(ablageFuer(w, AA_K1), { k: AA_K1, b: 1, l: t0, z: null });
-  assert.equal(hinweis(w, t0), false);
-  // Neu laden kurz danach ist derselbe Besuch.
-  w = mitBesuch(w, AA_K1, t0 + BESUCH_ABSTAND_MS - 1);
-  assert.equal(ablageFuer(w, AA_K1)?.b, 1);
-  assert.equal(hinweis(w, t0 + BESUCH_ABSTAND_MS - 1), false);
-  // Zweiter Besuch: der Hinweis.
-  const t1 = t0 + BESUCH_ABSTAND_MS;
-  w = mitBesuch(w, AA_K1, t1);
-  assert.equal(ablageFuer(w, AA_K1)?.b, 2);
-  assert.equal(hinweis(w, t1), true);
-  // Nicht in der abgelegten App, nicht am Computer (OoS 4), nicht ohne Stand.
-  assert.equal(hinweis(w, t1, { standalone: true }), false);
-  assert.equal(hinweis(w, t1, { geraet: erkenneGeraet(UA.macChrome, 0) }), false);
-  assert.equal(hinweis(w, t1, { geraet: erkenneGeraet(UA.androidChrome, 5) }), true);
-  assert.equal(hinweis(w, t1, { geraet: erkenneGeraet(UA.iphoneInstagram, 5) }), true, "im Browser einer App sagt er, wo es geht (AK 8)");
-  assert.equal(zeigeHinweis({ geraet: iphone, standalone: false, stand: null, jetzt: t1 }), false);
-  // Geschlossen: ruht 7 Tage, auch über weitere Besuche hinweg.
-  w = mitGeschlossen(w, AA_K1, t1);
-  assert.equal(ablageFuer(w, AA_K1)?.z, t1);
-  assert.equal(ablageFuer(w, AA_K1)?.b, 2, "Schliessen zählt keinen Besuch");
-  const t2 = t1 + HINWEIS_PAUSE_MS - 1;
-  w = mitBesuch(w, AA_K1, t2);
-  assert.equal(hinweis(w, t2), false);
-  assert.equal(hinweis(w, t1 + HINWEIS_PAUSE_MS), true, "nach 7 Tagen wieder");
-  // Je Link getrennt: Ein anderer Link beginnt bei 1, der zuletzt besuchte steht zuerst.
-  w = mitBesuch(w, AA_K2, t2);
-  assert.deepEqual(liesAblage(w).map((s) => [s.k, s.b]), [[AA_K2, 1], [AA_K1, 3]]);
-  assert.equal(zeigeHinweis({ geraet: iphone, standalone: false, stand: ablageFuer(w, AA_K2), jetzt: t2 }), false);
-  // Schliessen eines unbekannten Links legt ihn an.
-  assert.deepEqual(ablageFuer(mitGeschlossen(null, AA_K1, t0), AA_K1), { k: AA_K1, b: 1, l: t0, z: t0 });
+  const android = erkenneGeraet(UA.androidChrome, 5);
+  const jetzt = (wert: string | null, t: number, extra: Partial<Parameters<typeof angebotJetzt>[0]> = {}) =>
+    angebotJetzt({ geraet: android, mitteilungen: "aus", stand: angebotFuer(wert, AA_K1), jetzt: t, ...extra });
+  // Unbekannter Link: das Angebot, je nach Gerät und Stand der Mitteilungen.
+  assert.equal(jetzt(null, t0), "einschalten");
+  assert.equal(jetzt(null, t0, { geraet: iphone, mitteilungen: "ios_browser" }), "ablegen_ios", "iPhone im Browser: zuerst ablegen (AK 5)");
+  assert.equal(jetzt(null, t0, { geraet: iphone, mitteilungen: "aus" }), "einschalten", "in der abgelegten App einschalten");
+  assert.equal(jetzt(null, t0, { mitteilungen: "abgelehnt" }), "gesperrt", "gesperrt: der Weg in die Einstellungen (AK 3)");
+  assert.equal(jetzt(null, t0, { geraet: erkenneGeraet(UA.androidWhatsApp, 5), mitteilungen: "nicht_moeglich" }), "in_app", "Browser einer App (AK 6)");
+  assert.equal(jetzt(null, t0, { geraet: erkenneGeraet(UA.iphoneInstagram, 5), mitteilungen: "nicht_moeglich" }), "in_app");
+  // Kein Angebot: eingeschaltet, Stand noch offen, Browser ohne Mitteilungen, am Computer.
+  assert.equal(jetzt(null, t0, { mitteilungen: "an" }), null);
+  assert.equal(jetzt(null, t0, { mitteilungen: "laedt" }), null);
+  assert.equal(jetzt(null, t0, { mitteilungen: "nicht_moeglich" }), null);
+  assert.equal(jetzt(null, t0, { geraet: erkenneGeraet(UA.macChrome, 0) }), null, "Computer: nie");
+  assert.equal(jetzt(null, t0, { geraet: erkenneGeraet(UA.ipad, 5) }), "einschalten", "Tablet wie Telefon");
+  // Gezeigt: höchstens einmal je Besuch.
+  let w = mitGezeigt(null, AA_K1, t0);
+  assert.deepEqual(angebotFuer(w, AA_K1), { k: AA_K1, a: null, g: t0 });
+  assert.equal(jetzt(w, t0 + ANGEBOT_BESUCH_MS - 1), null);
+  assert.equal(jetzt(w, t0 + ANGEBOT_BESUCH_MS), "einschalten", "nächster Besuch: wieder");
+  // Abgelehnt: 30 Tage Ruhe, auch über Besuche hinweg.
+  w = mitAbgelehnt(w, AA_K1, t0);
+  assert.equal(angebotFuer(w, AA_K1)?.a, t0);
+  assert.equal(jetzt(w, t0 + ANGEBOT_PAUSE_MS - 1), null);
+  assert.equal(jetzt(w, t0 + ANGEBOT_PAUSE_MS), "einschalten", "nach 30 Tagen wieder");
+  assert.equal(jetzt(w, t0 + ANGEBOT_PAUSE_MS, { mitteilungen: "abgelehnt" }), "gesperrt", "auch gesperrt, dann mit dem Weg in die Einstellungen");
+  assert.equal(ANGEBOT_PAUSE_MS, 30 * 24 * 60 * 60 * 1000);
+  // Je Link getrennt; der zuletzt berührte steht zuerst.
+  w = mitGezeigt(w, AA_K2, t0);
+  assert.deepEqual(liesAngebot(w).map((x) => x.k), [AA_K2, AA_K1]);
+  assert.equal(angebotJetzt({ geraet: android, mitteilungen: "aus", stand: angebotFuer(w, AA_K2), jetzt: t0 + ANGEBOT_PAUSE_MS - 1 }), "einschalten");
   // Höchstens 20 Links; der älteste fällt heraus.
   let viele: string | null = null;
-  for (let i = 0; i < APP_ABLEGEN_MAX_LINKS + 3; i++) viele = mitBesuch(viele, `k${String(i).padStart(11, "0")}`, t0 + i);
-  const liste = liesAblage(viele);
-  assert.equal(liste.length, APP_ABLEGEN_MAX_LINKS);
-  assert.equal(liste[0].k, `k${String(APP_ABLEGEN_MAX_LINKS + 2).padStart(11, "0")}`);
-  assert.equal(liste.some((s) => s.k === "k00000000000"), false);
+  for (let i = 0; i < ANGEBOT_MAX_LINKS + 3; i++) viele = mitGezeigt(viele, `k${String(i).padStart(11, "0")}`, t0 + i);
+  const liste = liesAngebot(viele);
+  assert.equal(liste.length, ANGEBOT_MAX_LINKS);
+  assert.equal(liste[0].k, `k${String(ANGEBOT_MAX_LINKS + 2).padStart(11, "0")}`);
+  assert.equal(liste.some((x) => x.k === "k00000000000"), false);
   // Müll: Unlesbares fällt weg, nichts wirft; ein ungültiger Schlüssel ändert nichts.
-  for (const muell of ["x", "{}", "[1]", '[{"k":"kurz","b":1,"l":1,"z":null}]', '[{"k":"AbCdEf123456","b":-1,"l":1,"z":null}]', '[{"k":"AbCdEf123456","b":1,"l":1,"z":"x"}]'])
-    assert.equal(ablageFuer(muell, AA_K1), null, muell);
-  const gut = JSON.stringify([{ k: AA_K1, b: 2, l: 5, z: null }]);
-  assert.equal(ablageFuer(`[{"k":"kaputt"},${gut.slice(1)}`, AA_K1)?.b, 2, "ein kaputter Eintrag nimmt die anderen nicht mit");
-  assert.equal(mitBesuch(gut, "kurz", t0), gut);
-  assert.equal(mitBesuch(gut, AA_K1, Number.NaN), gut);
-  assert.equal(mitGeschlossen(gut, AA_K1, -1), gut);
-  // Kein Klartext-Link im Speicher, und die Seite «Cookies» nennt ihn (#409).
-  assert.ok(SPEICHERUNGEN.some((x) => x.name === APP_ABLEGEN_SPEICHER), "SPEICHERUNGEN enthält den lokalen Speicher");
+  for (const muell of ["x", "{}", "[1]", '[{"k":"kurz","a":null,"g":1}]', '[{"k":"AbCdEf123456","a":-1,"g":null}]', '[{"k":"AbCdEf123456","a":null,"g":"x"}]'])
+    assert.equal(angebotFuer(muell, AA_K1), null, muell);
+  const gut = JSON.stringify([{ k: AA_K1, a: null, g: 5 }]);
+  assert.equal(angebotFuer(`[{"k":"kaputt"},${gut.slice(1)}`, AA_K1)?.g, 5, "ein kaputter Eintrag nimmt die anderen nicht mit");
+  assert.equal(mitGezeigt(gut, "kurz", t0), gut);
+  assert.equal(mitAbgelehnt(gut, AA_K1, Number.NaN), gut);
+  // Der alte Hinweis zählt nicht (PC 2): eigener Name, sein Format liest das Angebot nicht.
+  assert.notEqual(ANGEBOT_SPEICHER, ANGEBOT_ALTER_SPEICHER);
+  assert.equal(angebotFuer(JSON.stringify([{ k: AA_K1, b: 3, l: 1, z: 1 }]), AA_K1), null);
+  // Die Seite «Cookies» nennt den Speicher (PC 1), den alten nicht mehr.
+  assert.ok(SPEICHERUNGEN.some((x) => x.name === ANGEBOT_SPEICHER), "SPEICHERUNGEN enthält den lokalen Speicher");
+  assert.ok(!SPEICHERUNGEN.some((x) => x.name === ANGEBOT_ALTER_SPEICHER));
+});
+
+pruefe("Angebot (#698 AK 1): Anlass Ausfall — nur ein auf diesem Gerät noch nicht gesehener, dessen Termin noch ausgefallen ist", () => {
+  const e = (id: string, ereignis: "ausfall" | "neues_spiel", termin: string | null, erstellt: number) =>
+    ({ id, ereignis, termin_id: termin, erstellt, erstellt_tag: "2026-12-01", inhalt: {} }) as unknown as Parameters<typeof ungesehenerAusfall>[0][number];
+  const eintraege = [e("3", "neues_spiel", "t3", 300), e("2", "ausfall", "t2", 200), e("1", "ausfall", "t1", 100)];
+  const amLink = new Set(["t1", "t2", "t3"]);
+  assert.equal(ungesehenerAusfall(eintraege, 150, amLink), "t2", "der neueste ungesehene");
+  assert.equal(ungesehenerAusfall(eintraege, 50, amLink), "t2");
+  assert.equal(ungesehenerAusfall(eintraege, 200, amLink), null, "gesehen");
+  assert.equal(ungesehenerAusfall(eintraege, null, amLink), null, "Gerät kennt den Link nicht: alles gesehen (#642)");
+  assert.equal(ungesehenerAusfall(eintraege, 50, new Set(["t1"])), "t1", "zurückgenommen (t2 nicht mehr ausgefallen): zählt nicht");
+  assert.equal(ungesehenerAusfall([e("4", "ausfall", null, 400)], 0, amLink), null);
 });
 
 pruefe("App ablegen (#650 AK 1, 3–5): Manifest je Link — Name «Vorname · Verein», id, start_url und scope mit dem Link", () => {
@@ -6112,21 +6129,25 @@ pruefe("KiFu als App (#651 AK 1–3, #671): Manifest «KiFu» ab «/», nur in A
   assert.deepEqual(THEME_FARBEN.map((f) => f.color), [grund[1], grund[2]]);
 });
 
-pruefe("App ablegen (#650 AK 2, 6, 8): Texte — Genitiv des Vornamens, Begriff «Mobile», Mitteilungen nur mit #483", () => {
+pruefe("App ablegen und Angebot (#650, #698): Texte — Genitiv des Vornamens, Begriff «Mobile», Titel des Angebots", () => {
   assert.equal(genitiv("Lena"), "Lenas");
   assert.equal(genitiv("Jonas"), "Jonas’");
   assert.equal(genitiv("Max"), "Max’");
   assert.equal(genitiv("Fritz"), "Fritz’");
   assert.equal(genitiv("Alice"), "Alice’");
-  assert.equal(APP_ABLEGEN_TEXT.hinweisTitel("Lena"), "Termine von Lena als App");
-  assert.equal(
-    APP_ABLEGEN_TEXT.hinweisText("Lena"),
-    "Lege diese Seite auf den Home-Bildschirm. Dann öffnest du Lenas Termine mit einem Tipp, ohne den Link im Chat zu suchen.",
-  );
+  assert.equal(APP_ABLEGEN_TEXT.eintragText("Lena"), "Lenas Termine mit einem Tipp öffnen, ohne den Link im Chat zu suchen.");
   assert.equal(APP_ABLEGEN_TEXT.inApp, "Hier lässt sich die Seite nicht als App ablegen. Öffne den Link im Browser deines Mobiles, etwa in Safari oder Chrome.");
-  const alle = JSON.stringify(APP_ABLEGEN_TEXT) + APP_ABLEGEN_TEXT.hinweisText("X") + APP_ABLEGEN_TEXT.hinweisTitel("X");
+  const alle = JSON.stringify(APP_ABLEGEN_TEXT) + APP_ABLEGEN_TEXT.eintragText("X") + JSON.stringify(ANGEBOT_TEXT) +
+    ANGEBOT_TEXT.einschalten("X") + ANGEBOT_TEXT.einrichten("X") + ANGEBOT_TEXT.ablegenIos("X") + ANGEBOT_TEXT.gesperrt("X");
   assert.ok(!/Handy/i.test(alle), "«Mobile», nie «Handy»");
-  assert.ok(!/Mitteilung/i.test(alle), "ohne Mitteilungen in der Umgebung nennt der Hinweis sie nicht");
+  assert.ok(!/\bKind/.test(alle), "Spieler:in, nie «Kind»");
+  // Das Angebot (#698): Titel, und auf Android das Ablegen nur, wo der Browser es kann (AK 4).
+  assert.equal(ANGEBOT_TEXT.titel, "Ausfälle, Änderungen und neue Spiele sofort aufs Mobile");
+  assert.match(ANGEBOT_TEXT.einrichten("Lena"), /^Lege Lenas Termine als App/);
+  assert.match(ANGEBOT_TEXT.ablegenIos("Jonas"), /Jonas’ Termine/);
+  assert.match(ANGEBOT_TEXT.inApp, /kopiere den Link/);
+  assert.match(ANGEBOT_TEXT.einrichten("Lena"), /Home-Bildschirm/, "ein Begriff wie in der Anleitung");
+  assert.match(ANGEBOT_TEXT.gesperrt("Lena"), /Einstellungen/);
   assert.equal(APP_ABLEGEN_TEXT.ios.length, 3);
   assert.equal(APP_ABLEGEN_TEXT.android.length, 3);
   assert.match(APP_ABLEGEN_TEXT.ios[1], /«Zum Home-Bildschirm»/);
@@ -6273,7 +6294,7 @@ pruefe("Mitteilungen (#652 Review): Spielerliste fragt Glocken gleichzeitig; Ein
   const m = lies("components/privat/Mitteilungen.tsx");
   const ein = m.slice(m.indexOf("async function einschalten()"), m.indexOf("return { stand"));
   // Eine wiederverwendete Anmeldung kennt die Datenebene vielleicht schon: abmelden nur, wenn neu, sonst neu prüfen.
-  assert.match(ein, /if \(anmeldung && neu\) \{\s*await anmeldung\.unsubscribe\(\)[\s\S]*?\} else await pruefen\(\);/);
+  assert.match(ein, /if \(anmeldung && neu\) \{\s*await anmeldung\.unsubscribe\(\)[\s\S]*?\} else await pruefen\(true\);/);
   assert.match(ein, /subscribe\(\{[^}]*\}\);\s*neu = true;/);
   // Ausser beim fremden Schlüssel (taugt nie) meldet nur `zuruecknehmen` ab.
   assert.equal((ein.match(/\.unsubscribe\(\)/g) ?? []).length, 2);
@@ -6352,9 +6373,6 @@ pruefe("Mitteilungen (#483 AK 2–4, 10, 11, 13; PC 6): Texte — Begriff «Mobi
   assert.equal(MITTEILUNGEN_TEXT.stand.ios_browser, "Auf dem iPhone nur in der abgelegten App.");
   assert.equal(MITTEILUNGEN_TEXT.stand.abgelehnt, "Dein Mobile lässt keine Mitteilungen zu.");
   assert.match(MITTEILUNGEN_TEXT.grenze(v), new RegExp(`${PUSH_MAX_GERAETE} Geräten`));
-  // AK 4: der Hinweis zum Ablegen nennt die Mitteilungen, wenn es sie gibt.
-  assert.ok(APP_ABLEGEN_TEXT.hinweisText(v, true).endsWith(APP_ABLEGEN_MITTEILUNGEN));
-  assert.match(APP_ABLEGEN_MITTEILUNGEN, /Mitteilungen aufs Mobile/);
   // AK 10: das Häkchen.
   for (const vorgang of ["neues_spiel", "ausfall", "ruecknahme", "aendern", "entfernen"] as const)
     assert.ok(benachrichtigenHinweis(vorgang).endsWith(BENACHRICHTIGEN_MOBILE), vorgang);
@@ -6382,7 +6400,7 @@ pruefe("Mitteilungen (#483 AK 2–4, 10, 11, 13; PC 6): Texte — Begriff «Mobi
     BENACHRICHTIGEN_MOBILE +
     LINK_ERNEUERN_MITTEILUNGEN +
     ABHOL_MITTEILUNGEN +
-    APP_ABLEGEN_MITTEILUNGEN +
+    JSON.stringify(ANGEBOT_TEXT) +
     JSON.stringify(SPEICHERUNGEN);
   assert.ok(!/Handy/i.test(alle), "«Mobile», nie «Handy»");
   assert.ok(!/\bKind/.test(alle) && !/\bProbe/.test(alle), "Spieler:in, nie Kind; kein «Probe»");

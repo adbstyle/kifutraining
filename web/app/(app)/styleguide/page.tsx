@@ -71,7 +71,7 @@ import { EigenschaftBearbeitbarDemo } from "./EigenschaftBearbeitbarDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { CheckboxDemo } from "./CheckboxDemo";
 import { BenachrichtigungDemo } from "./BenachrichtigungDemo";
-import { AppAblegenDemo, SchliessbareMeldung } from "./AppAblegenDemo";
+import { AppAblegenDemo } from "./AppAblegenDemo";
 import { MitteilungenDemo } from "./MitteilungenDemo";
 import { SwitchDemo } from "./SwitchDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
@@ -308,7 +308,7 @@ const GLIEDERUNG = [
           { id: "mini-monat", titel: "Mini-Monat" },
           { id: "platz-spielerzahl", titel: "Platz und Spielerzahl eines Termins" },
           { id: "benachrichtigungen", titel: "Benachrichtigungen" },
-          { id: "app-ablegen", titel: "Als App ablegen" },
+          { id: "app-ablegen", titel: "Angebot und als App ablegen" },
           { id: "mitteilungen", titel: "Mitteilungen aufs Mobile" },
         ],
       },
@@ -3114,13 +3114,6 @@ export default async function Styleguide() {
             <code>mb-4</code> Abstand; der Dialog bleibt offen. Was nur ein Feld
             betrifft, bleibt dagegen Fehlertext am Feld (<Siehe id="textfelder" />).
           </p>
-          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            <strong>Schliessbar</strong> (<code>onSchliessen</code>, #650): ein
-            Icon-Knopf ✕ oben rechts mit eigenem Label, für einen Hinweis, den man
-            ablehnen darf, ohne zu antworten - etwa «Termine als App» am privaten
-            Link (<Siehe id="app-ablegen" />). Was danach geschieht (wann er
-            wiederkommt), bestimmt der Aufrufer.
-          </p>
           <div className="grid max-w-2xl gap-4">
             <SectionMessage appearance="error">
               Das Training konnte nicht gespeichert werden. Bitte versuche es noch
@@ -3145,7 +3138,6 @@ export default async function Styleguide() {
             >
               Das Feld-Diagramm zeigt inzwischen anderes Material: Hürden: 0 → 1.
             </SectionMessage>
-            <SchliessbareMeldung />
             <SectionMessage appearance="warning">
               warning - im Kit, derzeit ohne Ort.
             </SectionMessage>
@@ -4680,20 +4672,23 @@ export default async function Styleguide() {
 
         <Section id="app-ablegen">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Die Seite des privaten Links als App auf dem Home-Bildschirm (Story #650): je Spieler:in eine eigene
-            App, benannt «Vorname · Verein». Aus bestehenden Teilen gebaut - <code>SectionMessage</code> (neu
-            schliessbar), <code>Button</code> und <code>Dialog</code>.
+            Mitteilungen aufs Mobile und die Seite des privaten Links als App (Story #698, #650): je Spieler:in eine
+            eigene App, benannt «Vorname · Verein». Aus bestehenden Teilen gebaut - <code>SectionMessage</code>,{" "}
+            <code>Button</code> und <code>Dialog</code>.
           </p>
           <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
             <li>
-              <strong>Hinweis über den Terminen</strong> - nur auf dem Mobile, nicht in der abgelegten App, ab dem
-              zweiten Besuch des Links auf diesem Gerät; geschlossen ruht er 7 Tage. Die Aktion heisst auf dem iPhone
-              «So geht’s» (Anleitung), auf Android «Als App ablegen» (der Browser fragt selbst, sonst die
-              Anleitung). Im Browser einer App sagt er nur, dass es dort nicht geht und wohin.
+              <strong>Angebot</strong> - im Moment des Nutzens: unter dem Termin, den man eben ab- oder angemeldet hat,
+              unter einem auf diesem Gerät noch nicht gesehenen Ausfall, in der abgelegten App oben. Nur auf Telefon
+              und Tablet, solange auf diesem Gerät keine Mitteilungen an sind, höchstens einmal je Besuch; «Nicht
+              jetzt», eine nicht erteilte Erlaubnis oder Ausschalten lassen es 30 Tage ruhen. Je Gerät der nächste
+              Schritt: einschalten (auf Android zugleich ablegen, wo der Browser es kann), auf dem iPhone im Browser
+              «So geht’s», im Browser einer App der Weg in den Browser mit «Link kopieren», gesperrt der Weg in die
+              Einstellungen. Regeln in <code>lib/angebot.ts</code>.
             </li>
             <li>
-              <strong>Knopf unter den Terminen</strong> - immer da ausser in der abgelegten App, ruhig als Secondary
-              Button (<code>outlined</code>); am Computer nur, wenn der Browser selbst ablegen kann.
+              <strong>Als App ablegen in der Glocken-Ansicht</strong> - auf Telefon und Tablet ausser in der
+              abgelegten App, jederzeit, auch ohne Mitteilungen; ruhig als Secondary Button (<code>outlined</code>).
             </li>
             <li>
               <strong>Anleitung</strong> - drei Schritte je Gerät und darunter, wie die App auf dem Home-Bildschirm

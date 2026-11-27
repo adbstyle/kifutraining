@@ -1,17 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Button, SectionMessage } from "@/components/ui";
-import { AppAblegenAnleitung, AppAblegenHinweis, AppAblegenKnopf } from "@/components/privat/AppAblegen";
+import { Button } from "@/components/ui";
+import { AppAblegenAnleitung, AppAblegenEintrag } from "@/components/privat/AppAblegen";
+import { AngebotKarte } from "@/components/privat/Angebot";
 import { appName, type Geraet } from "@/lib/app-ablegen";
+import type { AngebotArt } from "@/lib/angebot";
 
-/* «Als App ablegen» am privaten Link (#650) für jedes Gerät, ohne das eigene:
-   der Hinweis auf dem iPhone, auf Android und im Browser einer App, der
-   ruhige Knopf unter den Terminen und die Anleitung je Gerät. Erfundene Namen. */
-const GERAETE: { titel: string; geraet: Geraet }[] = [
-  { titel: "iPhone (Safari)", geraet: { system: "ios", inApp: false } },
-  { titel: "Android (Chrome)", geraet: { system: "android", inApp: false } },
-  { titel: "Browser in einer App (WhatsApp, Instagram …)", geraet: { system: "ios", inApp: true } },
+/* Das Angebot am privaten Link (#698) in jeder Art, der Eintrag «Als App
+   ablegen» der Glocken-Ansicht und die Anleitung je Gerät — ohne das eigene
+   Gerät. «Nicht jetzt» blendet hier nur aus. Erfundene Namen. */
+const ARTEN: { titel: string; art: AngebotArt; einrichten?: boolean; geraet: Geraet }[] = [
+  { titel: "Mitteilungen einschalten (abgelegte App, Android ohne Ablegen)", art: "einschalten", geraet: { system: "android", inApp: false } },
+  { titel: "Android, der Browser kann ablegen", art: "einschalten", einrichten: true, geraet: { system: "android", inApp: false } },
+  { titel: "iPhone oder iPad im Browser", art: "ablegen_ios", geraet: { system: "ios", inApp: false } },
+  { titel: "Browser in einer App (WhatsApp, Instagram …)", art: "in_app", geraet: { system: "ios", inApp: true } },
+  { titel: "Mitteilungen gesperrt (nach 30 Tagen)", art: "gesperrt", geraet: { system: "android", inApp: false } },
 ];
 
 export function AppAblegenDemo() {
@@ -19,51 +23,35 @@ export function AppAblegenDemo() {
   const [zu, setZu] = useState<Record<string, boolean>>({});
   return (
     <div className="flex max-w-md flex-col gap-6">
-      {GERAETE.map(({ titel, geraet }) => (
+      {ARTEN.map(({ titel, art, einrichten, geraet }) => (
         <div key={titel}>
-          <p className="type-label-small mb-2 text-on-surface-mittel">Hinweis · {titel}</p>
+          <p className="type-label-small mb-2 text-on-surface-mittel">Angebot · {titel}</p>
           {zu[titel] ? (
             <Button type="button" variant="link" onClick={() => setZu({ ...zu, [titel]: false })}>
-              Geschlossen - wieder zeigen
+              Abgelehnt - wieder zeigen
             </Button>
           ) : (
-            <AppAblegenHinweis
+            <AngebotKarte
+              art={art}
               vorname="Lena"
-              geraet={geraet}
-              onSchliessen={() => setZu({ ...zu, [titel]: true })}
-              onAktion={() => setAnleitung(geraet)}
+              pfad="/abmelden/beispiel"
+              einrichten={einrichten}
+              onAnnehmen={() => setAnleitung(geraet)}
+              onAblehnen={() => setZu({ ...zu, [titel]: true })}
             />
           )}
         </div>
       ))}
       <div>
-        <p className="type-label-small mb-2 text-on-surface-mittel">Knopf unter den Terminen (öffnet hier die Anleitung fürs iPhone)</p>
-        <div className="flex flex-col">
-          <AppAblegenKnopf onClick={() => setAnleitung(GERAETE[0].geraet)} />
-        </div>
+        <p className="type-label-small mb-2 text-on-surface-mittel">Glocken-Ansicht · Als App ablegen (öffnet hier die Anleitung fürs iPhone)</p>
+        <AppAblegenEintrag vorname="Lena" onAblegen={() => setAnleitung({ system: "ios", inApp: false })} />
       </div>
       <AppAblegenAnleitung
         open={!!anleitung}
         onClose={() => setAnleitung(null)}
-        geraet={anleitung ?? GERAETE[0].geraet}
+        geraet={anleitung ?? { system: "ios", inApp: false }}
         name={appName("Lena", "FC Wyler")}
       />
     </div>
-  );
-}
-
-/** Eine schliessbare Section Message für den Abschnitt der Section Message. */
-export function SchliessbareMeldung() {
-  const [zu, setZu] = useState(false);
-  if (zu)
-    return (
-      <Button type="button" variant="link" onClick={() => setZu(false)}>
-        Geschlossen - wieder zeigen
-      </Button>
-    );
-  return (
-    <SectionMessage onSchliessen={() => setZu(true)} schliessenLabel="Hinweis schliessen">
-      Schliessbar: der Icon-Knopf ✕ oben rechts. Wann der Hinweis wiederkommt, bestimmt der Aufrufer.
-    </SectionMessage>
   );
 }
