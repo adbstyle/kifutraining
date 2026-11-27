@@ -128,16 +128,17 @@ export function angebotJetzt({
 }
 
 /** Der Ausfall, der das Angebot auslöst (AK 1): der neueste, den dieses Gerät
- *  noch nicht gesehen hat und dessen Termin am Link steht. Kennt das Gerät
- *  den Link noch nicht (`gesehenBis` `null`), gilt alles Bisherige als
- *  gesehen (#642) — dann keiner. */
+ *  noch nicht gesehen hat und dessen Termin am Link noch ausgefallen ist
+ *  (`ausgefallen`: ihre Kennungen; ein zurückgenommener zählt nicht). Kennt
+ *  das Gerät den Link noch nicht (`gesehenBis` `null`), gilt alles Bisherige
+ *  als gesehen (#642) — dann keiner. */
 export function ungesehenerAusfall(
   eintraege: readonly LinkBenachrichtigung[],
   gesehenBis: number | null,
-  amLink: ReadonlySet<string>,
+  ausgefallen: ReadonlySet<string>,
 ): string | null {
   if (gesehenBis === null) return null;
-  const e = eintraege.find((x) => x.ereignis === "ausfall" && x.erstellt > gesehenBis && x.termin_id !== null && amLink.has(x.termin_id));
+  const e = eintraege.find((x) => x.ereignis === "ausfall" && x.erstellt > gesehenBis && x.termin_id !== null && ausgefallen.has(x.termin_id));
   return e?.termin_id ?? null;
 }
 
@@ -147,16 +148,16 @@ export const ANGEBOT_TEXT = {
   einschalten: (vorname: string) => `Schalte Mitteilungen für ${vorname} ein. Dann meldet sich dein Mobile, sobald sich etwas ändert.`,
   /** Android, wenn der Browser selbst ablegen kann (AK 4). */
   einrichten: (vorname: string) =>
-    `Lege ${genitiv(vorname)} Termine als App auf den Startbildschirm und schalte Mitteilungen ein. Dann meldet sich dein Mobile, sobald sich etwas ändert.`,
+    `Lege ${genitiv(vorname)} Termine als App auf den Home-Bildschirm und schalte Mitteilungen ein. Dann meldet sich dein Mobile, sobald sich etwas ändert.`,
   ablegenIos: (vorname: string) =>
     `Lege ${genitiv(vorname)} Termine als App auf den Home-Bildschirm und öffne sie dort. In der App schaltest du die Mitteilungen ein.`,
   inApp: "Öffne den Link dafür im Browser deines Mobiles, etwa in Safari oder Chrome: im Menü dieser App mit «Im Browser öffnen», oder kopiere den Link.",
+  /** Name des Links für die Vorlesehilfe (KopierFeld). */
+  linkLabel: "Privater Link",
   gesperrt: (vorname: string) =>
     `Dein Mobile lässt für ${genitiv(vorname)} Termine keine Mitteilungen zu. Erlaube sie in den Einstellungen deines Mobiles, danach schaltest du sie hinter der Glocke ein.`,
   knopfEinschalten: "Einschalten",
   knopfEinrichten: "Einrichten",
   knopfSoGehts: "So geht’s",
-  knopfKopieren: "Link kopieren",
-  kopiert: "Link kopiert",
   nichtJetzt: "Nicht jetzt",
 } as const;

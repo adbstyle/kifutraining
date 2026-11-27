@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, SectionMessage } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { AppAblegenAnleitung, AppAblegenEintrag } from "@/components/privat/AppAblegen";
 import { AngebotKarte } from "@/components/privat/Angebot";
 import { appName, type Geraet } from "@/lib/app-ablegen";
@@ -53,21 +53,5 @@ export function AppAblegenDemo() {
         name={appName("Lena", "FC Wyler")}
       />
     </div>
-  );
-}
-
-/** Eine schliessbare Section Message für den Abschnitt der Section Message. */
-export function SchliessbareMeldung() {
-  const [zu, setZu] = useState(false);
-  if (zu)
-    return (
-      <Button type="button" variant="link" onClick={() => setZu(false)}>
-        Geschlossen - wieder zeigen
-      </Button>
-    );
-  return (
-    <SectionMessage onSchliessen={() => setZu(true)} schliessenLabel="Hinweis schliessen">
-      Schliessbar: der Icon-Knopf ✕ oben rechts. Wann der Hinweis wiederkommt, bestimmt der Aufrufer.
-    </SectionMessage>
   );
 }

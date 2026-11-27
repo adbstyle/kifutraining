@@ -6058,7 +6058,7 @@ pruefe("Angebot (#698 AK 1, 2): einmal je Besuch, nach dem Ablehnen 30 Tage Ruhe
   assert.ok(!SPEICHERUNGEN.some((x) => x.name === ANGEBOT_ALTER_SPEICHER));
 });
 
-pruefe("Angebot (#698 AK 1): Anlass Ausfall — nur ein auf diesem Gerät noch nicht gesehener, dessen Termin am Link steht", () => {
+pruefe("Angebot (#698 AK 1): Anlass Ausfall — nur ein auf diesem Gerät noch nicht gesehener, dessen Termin noch ausgefallen ist", () => {
   const e = (id: string, ereignis: "ausfall" | "neues_spiel", termin: string | null, erstellt: number) =>
     ({ id, ereignis, termin_id: termin, erstellt, erstellt_tag: "2026-12-01", inhalt: {} }) as unknown as Parameters<typeof ungesehenerAusfall>[0][number];
   const eintraege = [e("3", "neues_spiel", "t3", 300), e("2", "ausfall", "t2", 200), e("1", "ausfall", "t1", 100)];
@@ -6067,7 +6067,7 @@ pruefe("Angebot (#698 AK 1): Anlass Ausfall — nur ein auf diesem Gerät noch n
   assert.equal(ungesehenerAusfall(eintraege, 50, amLink), "t2");
   assert.equal(ungesehenerAusfall(eintraege, 200, amLink), null, "gesehen");
   assert.equal(ungesehenerAusfall(eintraege, null, amLink), null, "Gerät kennt den Link nicht: alles gesehen (#642)");
-  assert.equal(ungesehenerAusfall(eintraege, 50, new Set(["t1"])), "t1", "nur Termine am Link");
+  assert.equal(ungesehenerAusfall(eintraege, 50, new Set(["t1"])), "t1", "zurückgenommen (t2 nicht mehr ausgefallen): zählt nicht");
   assert.equal(ungesehenerAusfall([e("4", "ausfall", null, 400)], 0, amLink), null);
 });
 
@@ -6129,7 +6129,7 @@ pruefe("KiFu als App (#651 AK 1–3, #671): Manifest «KiFu» ab «/», nur in A
   assert.deepEqual(THEME_FARBEN.map((f) => f.color), [grund[1], grund[2]]);
 });
 
-pruefe("App ablegen (#650 AK 2, 6, 8): Texte — Genitiv des Vornamens, Begriff «Mobile», Mitteilungen nur mit #483", () => {
+pruefe("App ablegen und Angebot (#650, #698): Texte — Genitiv des Vornamens, Begriff «Mobile», Titel des Angebots", () => {
   assert.equal(genitiv("Lena"), "Lenas");
   assert.equal(genitiv("Jonas"), "Jonas’");
   assert.equal(genitiv("Max"), "Max’");
@@ -6146,6 +6146,7 @@ pruefe("App ablegen (#650 AK 2, 6, 8): Texte — Genitiv des Vornamens, Begriff 
   assert.match(ANGEBOT_TEXT.einrichten("Lena"), /^Lege Lenas Termine als App/);
   assert.match(ANGEBOT_TEXT.ablegenIos("Jonas"), /Jonas’ Termine/);
   assert.match(ANGEBOT_TEXT.inApp, /kopiere den Link/);
+  assert.match(ANGEBOT_TEXT.einrichten("Lena"), /Home-Bildschirm/, "ein Begriff wie in der Anleitung");
   assert.match(ANGEBOT_TEXT.gesperrt("Lena"), /Einstellungen/);
   assert.equal(APP_ABLEGEN_TEXT.ios.length, 3);
   assert.equal(APP_ABLEGEN_TEXT.android.length, 3);

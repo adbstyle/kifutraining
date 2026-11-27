@@ -17,7 +17,7 @@ import { APP_ABLEGEN_TEXT, APP_ICONS, erkenneGeraet, type Geraet } from "@/lib/a
    Alles hängt am Gerät, darum steht nichts vor dem Einhängen fest: Der Server
    kennt es nicht, das erste HTML bleibt ohne. */
 
-type InstallEreignis = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
+type InstallEreignis = Event & { prompt: () => Promise<void>; userChoice: Promise<unknown> };
 
 let installEreignis: InstallEreignis | null = null;
 const hoerer = new Set<() => void>();
@@ -61,20 +61,15 @@ export function useAppAblegen() {
     setLage({ geraet: erkenneGeraet(navigator.userAgent, navigator.maxTouchPoints), abgelegt: istAbgelegt() });
   }, []);
 
-  /** Ablegen: Kann der Browser es selbst, fragt er; sonst die Anleitung.
-   *  `true`, wenn der Browser abgelegt hat. */
-  async function ablegen(): Promise<boolean> {
+  /** Ablegen: Kann der Browser es selbst, fragt er; sonst die Anleitung. */
+  async function ablegen() {
     const e = installEreignis;
-    if (!e) {
-      setAnleitung(true);
-      return false;
-    }
+    if (!e) return setAnleitung(true);
     // Das Ereignis gilt nur einmal.
     installEreignis = null;
     melde();
     await e.prompt();
-    const { outcome } = await e.userChoice;
-    return outcome === "accepted";
+    await e.userChoice;
   }
 
   return {

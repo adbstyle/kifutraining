@@ -71,7 +71,7 @@ import { EigenschaftBearbeitbarDemo } from "./EigenschaftBearbeitbarDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { CheckboxDemo } from "./CheckboxDemo";
 import { BenachrichtigungDemo } from "./BenachrichtigungDemo";
-import { AppAblegenDemo, SchliessbareMeldung } from "./AppAblegenDemo";
+import { AppAblegenDemo } from "./AppAblegenDemo";
 import { MitteilungenDemo } from "./MitteilungenDemo";
 import { SwitchDemo } from "./SwitchDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
@@ -3114,12 +3114,6 @@ export default async function Styleguide() {
             <code>mb-4</code> Abstand; der Dialog bleibt offen. Was nur ein Feld
             betrifft, bleibt dagegen Fehlertext am Feld (<Siehe id="textfelder" />).
           </p>
-          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            <strong>Schliessbar</strong> (<code>onSchliessen</code>, #650): ein
-            Icon-Knopf ✕ oben rechts mit eigenem Label, für einen Hinweis, den man
-            ablehnen darf, ohne zu antworten. Was danach geschieht (wann er
-            wiederkommt), bestimmt der Aufrufer.
-          </p>
           <div className="grid max-w-2xl gap-4">
             <SectionMessage appearance="error">
               Das Training konnte nicht gespeichert werden. Bitte versuche es noch
@@ -3144,7 +3138,6 @@ export default async function Styleguide() {
             >
               Das Feld-Diagramm zeigt inzwischen anderes Material: Hürden: 0 → 1.
             </SectionMessage>
-            <SchliessbareMeldung />
             <SectionMessage appearance="warning">
               warning - im Kit, derzeit ohne Ort.
             </SectionMessage>

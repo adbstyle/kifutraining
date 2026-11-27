@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BellRing } from "lucide-react";
-import { Button, SectionMessage } from "@/components/ui";
+import { Button, KopierFeld, SectionMessage } from "@/components/ui";
 import {
   ANGEBOT_ALTER_SPEICHER,
   ANGEBOT_SPEICHER,
@@ -50,6 +50,12 @@ export function useAngebot({ schluessel, lage, mitteilungen }: { schluessel: str
   const [angebot, setAngebot] = useState<{ ort: string; art: AngebotArt } | null>(null);
   // Schon ein Angebot auf diesem Seitenaufruf: kein zweites (AK 1).
   const gezeigt = useRef(false);
+  // Der Anlass nach dem Melden kommt erst nach der Antwort des Servers: Er
+  // liest Gerät und Stand von dann, nicht vom Klick.
+  const aktuell = useRef({ lage, mitteilungen });
+  useEffect(() => {
+    aktuell.current = { lage, mitteilungen };
+  }, [lage, mitteilungen]);
 
   // Der Hinweis zum Ablegen (#650) zählt nicht mehr (PC 2): sein Speicher geht.
   useEffect(() => {
@@ -62,6 +68,7 @@ export function useAngebot({ schluessel, lage, mitteilungen }: { schluessel: str
 
   const ausloesen = useCallback(
     (ort: string) => {
+      const { lage, mitteilungen } = aktuell.current;
       if (gezeigt.current || !lage) return;
       const jetzt = Date.now();
       const wert = lies();
@@ -71,7 +78,7 @@ export function useAngebot({ schluessel, lage, mitteilungen }: { schluessel: str
       schreibe(mitGezeigt(wert, schluessel, jetzt));
       setAngebot({ ort, art });
     },
-    [lage, mitteilungen, schluessel],
+    [schluessel],
   );
 
   /** «Nicht jetzt», eine nicht erteilte Erlaubnis oder Ausschalten (AK 2). */
@@ -100,7 +107,7 @@ export function AngebotKarte({
 }: {
   art: AngebotArt;
   vorname: string;
-  /** Der Pfad des privaten Links, zum Kopieren im Browser einer App. */
+  /** Der Pfad des privaten Links, zum Kopieren im Browser einer App (AK 6). */
   pfad: string;
   /** Android: Der Browser kann zugleich ablegen (AK 4). */
   einrichten?: boolean;
@@ -108,19 +115,9 @@ export function AngebotKarte({
   onAnnehmen: () => void;
   onAblehnen: () => void;
 }) {
-  const [kopiert, setKopiert] = useState<"ja" | "nein" | null>(null);
-  const [link, setLink] = useState(pfad);
-  async function kopieren() {
-    const adresse = new URL(pfad, window.location.origin).href;
-    setLink(adresse);
-    try {
-      await navigator.clipboard.writeText(adresse);
-      setKopiert("ja");
-    } catch {
-      // Manche Browser in Apps lassen das nicht zu: Der Link steht dann da.
-      setKopiert("nein");
-    }
-  }
+  // Die ganze Adresse kennt erst der Browser.
+  const [adresse, setAdresse] = useState(pfad);
+  useEffect(() => setAdresse(new URL(pfad, window.location.origin).href), [pfad]);
   const text =
     art === "einschalten"
       ? einrichten
@@ -140,10 +137,6 @@ export function AngebotKarte({
       <Button type="button" variant="link" onClick={onAnnehmen}>
         {ANGEBOT_TEXT.knopfSoGehts}
       </Button>
-    ) : art === "in_app" ? (
-      <Button type="button" variant="link" onClick={() => void kopieren()}>
-        {kopiert === "ja" ? ANGEBOT_TEXT.kopiert : ANGEBOT_TEXT.knopfKopieren}
-      </Button>
     ) : null;
   return (
     <SectionMessage
@@ -159,7 +152,7 @@ export function AngebotKarte({
     >
       <strong className="block font-semibold">{ANGEBOT_TEXT.titel}</strong>
       {text}
-      {kopiert === "nein" && <span className="mt-1 block break-all">{link}</span>}
+      {art === "in_app" && <KopierFeld label={ANGEBOT_TEXT.linkLabel} value={adresse} className="mt-3" />}
     </SectionMessage>
   );
 }

@@ -2,8 +2,7 @@ import { GRUND, GRUND_HELL } from "@/lib/farben";
 
 /* Die Seite des privaten Links als App ablegen (#650): auf welchem Gerät
    welcher Weg gilt, und das Manifest je Link. Angeboten wird das Ablegen im
-   Angebot (#698, lib/angebot.ts) und in der Glocken-Ansicht (AK 7) — der
-   Hinweis ab dem zweiten Besuch und der Knopf unter den Terminen sind weg.
+   Angebot (lib/angebot.ts) und in der Glocken-Ansicht (#698 AK 7).
 
    REIN: kein Browser, kein Server. Geprüft in scripts/pruefe-kern.ts. */
 
@@ -13,7 +12,7 @@ export type System = "ios" | "android" | "andere";
 export type Geraet = {
   system: System;
   /** Ein Browser in einer App (WhatsApp, Instagram, Facebook …): Dort lässt
-   *  sich die Seite nicht als App ablegen (AK 8). */
+   *  sich die Seite nicht als App ablegen (#698 AK 6). */
   inApp: boolean;
 };
 

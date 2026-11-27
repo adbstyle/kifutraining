@@ -14,7 +14,7 @@ import { useBenachrichtigungen } from "./useBenachrichtigungen";
 import { AppAblegenAnleitung, AppAblegenEintrag, useAppAblegen } from "./AppAblegen";
 import { MitteilungenDialog, MitteilungenKarte, useMitteilungen } from "./Mitteilungen";
 import { AngebotKarte, OBEN, useAngebot } from "./Angebot";
-import { ungesehenerAusfall } from "@/lib/angebot";
+import { ANGEBOT_TEXT, ungesehenerAusfall } from "@/lib/angebot";
 import { appName } from "@/lib/app-ablegen";
 import { knopfLabel, type LinkBenachrichtigungen } from "@/lib/benachrichtigung";
 import { cn } from "@/lib/cn";
@@ -164,29 +164,41 @@ export function ElternAnsicht({
     if (beimOeffnen.current || !app.lage || mitteilungenStand.stand === "laedt") return;
     beimOeffnen.current = true;
     if (app.lage.abgelegt) return ausloesen(OBEN);
-    const ausfall = benachrichtigungen && ungesehenerAusfall(benachrichtigungen.eintraege, gesehenBis, new Set(termine.map((t) => t.id)));
+    // Nur Termine, die jetzt ausgefallen sind: Ein zurückgenommener Ausfall ist keiner mehr.
+    const ausgefallen = new Set(termine.filter((t) => t.ausgefallen).map((t) => t.id));
+    const ausfall = benachrichtigungen && ungesehenerAusfall(benachrichtigungen.eintraege, gesehenBis, ausgefallen);
     if (ausfall) ausloesen(ausfall);
   }, [app.lage, mitteilungenStand.stand, ausloesen, benachrichtigungen, gesehenBis, termine]);
 
   /** «Einschalten» bzw. «Einrichten»: auf Android zuerst ablegen, wo der
    *  Browser es selbst kann (AK 4), dann der Dialog vor dem Einschalten;
    *  auf dem iPhone im Browser die Anleitung (AK 5). */
+  const einrichten = app.lage?.geraet.system === "android" && app.installierbar;
   async function angebotAnnehmen() {
     if (angebot?.art === "ablegen_ios") return app.oeffneAnleitung();
-    if (app.lage?.geraet.system === "android" && app.installierbar) await app.ablegen();
+    if (einrichten) await app.ablegen();
     mitteilungenStand.schalten(true);
   }
 
-  /** Das Angebot an einem Termin. */
+  /** «Nicht jetzt»: Der Knopf verschwindet mit dem Angebot, der Fokus geht an
+   *  den Termin, an dem es stand, sonst an die Glocke. */
+  function angebotAblehnen(ort: string) {
+    ablehnen();
+    const karte = document.getElementById(`termin-${ort}`);
+    if (karte) karte.focus();
+    else glockeRef.current?.focus();
+  }
+
+  /** Das Angebot an einem Termin bzw. oben («OBEN»). */
   const angebotBei = (id: string) =>
     angebot?.ort === id && (
       <AngebotKarte
         art={angebot.art}
         vorname={spieler.vorname}
         pfad={`/abmelden/${token}`}
-        einrichten={app.lage?.geraet.system === "android" && app.installierbar}
+        einrichten={einrichten}
         onAnnehmen={() => void angebotAnnehmen()}
-        onAblehnen={ablehnen}
+        onAblehnen={() => angebotAblehnen(id)}
       />
     );
   const glockeRef = useRef<HTMLButtonElement>(null);
@@ -378,13 +390,20 @@ export function ElternAnsicht({
                   onSoGehts={app.oeffneAnleitung}
                 />
               )}
-              {mobil && !app.lage?.abgelegt && <AppAblegenEintrag vorname={spieler.vorname} onAblegen={() => void app.ablegen()} />}
+              {/* Im iPhone-Browser führt schon die Karte mit «So geht’s» dorthin, im Browser einer App geht es nicht. */}
+              {mobil && !app.lage?.abgelegt && !app.lage?.geraet.inApp && mitteilungenStand.stand !== "ios_browser" && (
+                <AppAblegenEintrag vorname={spieler.vorname} onAblegen={() => void app.ablegen()} />
+              )}
             </>
           }
         />
       ) : (
         <>
           {angebot?.ort === OBEN && <div className="px-4 pt-4">{angebotBei(OBEN)}</div>}
+          {/* Das Angebot entsteht mit seinem Inhalt; eine bleibende Live-Region sagt es an. */}
+          <p role="status" className="sr-only">
+            {angebot ? ANGEBOT_TEXT.titel : ""}
+          </p>
           {voll && probeLokal && (
             <div className="px-4 pt-4">
               <SectionMessage>{linkProbeVoll(spieler.vorname, probeLokal)}</SectionMessage>
