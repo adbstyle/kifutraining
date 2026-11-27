@@ -181,27 +181,33 @@ export function ElternAnsicht({
   }
 
   /** «Nicht jetzt»: Der Knopf verschwindet mit dem Angebot, der Fokus geht an
-   *  den Termin, an dem es stand, sonst an die Glocke. */
+   *  den Termin, an dem es stand, sonst an die Glocke bzw. den Titel. */
   function angebotAblehnen(ort: string) {
     ablehnen();
-    const karte = document.getElementById(`termin-${ort}`);
-    if (karte) karte.focus();
-    else glockeRef.current?.focus();
+    const ziel = document.getElementById(`termin-${ort}`) ?? glockeRef.current ?? titelRef.current;
+    ziel?.focus();
   }
 
   /** Das Angebot an einem Termin bzw. oben («OBEN»). */
   const angebotBei = (id: string) =>
     angebot?.ort === id && (
-      <AngebotKarte
-        art={angebot.art}
-        vorname={spieler.vorname}
-        pfad={`/abmelden/${token}`}
-        einrichten={einrichten}
-        onAnnehmen={() => void angebotAnnehmen()}
-        onAblehnen={() => angebotAblehnen(id)}
-      />
+      <>
+        <AngebotKarte
+          art={angebot.art}
+          vorname={spieler.vorname}
+          pfad={`/abmelden/${token}`}
+          einrichten={einrichten}
+          onAnnehmen={() => void angebotAnnehmen()}
+          onAblehnen={() => angebotAblehnen(id)}
+        />
+        {/* Scheitert das Einschalten (etwa die Grenze der Geräte), sagt es das hier. */}
+        {mitteilungenStand.meldung && (
+          <SectionMessage appearance={mitteilungenStand.meldung.art}>{mitteilungenStand.meldung.text}</SectionMessage>
+        )}
+      </>
     );
   const glockeRef = useRef<HTMLButtonElement>(null);
+  const titelRef = useRef<HTMLHeadingElement>(null);
   // Zu welchem Termin «Zum Termin» führen soll, sobald die Liste wieder steht.
   const ziel = useRef<string | null>(null);
   const warOffen = useRef(glocke.offen);
@@ -340,7 +346,9 @@ export function ElternAnsicht({
         {/* Die Infos (#598 AK 10) und das Kalender-Abo (#507 AK 1) gleich
             hinter dem Namen: Es ist der Kalender dieser Spieler:in (PO 2026-10-24). */}
         <div className="flex items-center gap-1">
-          <h1 className="min-w-0 type-headline-small text-on-surface">{linkKopfTitel(name)}</h1>
+          <h1 ref={titelRef} tabIndex={-1} className="min-w-0 type-headline-small text-on-surface focus:outline-none">
+            {linkKopfTitel(name)}
+          </h1>
           <Tooltip label={LINK_INFOS.knopf}>
             <IconButtonLink icon={Info} label={LINK_INFOS.knopf} href={`/abmelden/${token}/infos`} />
           </Tooltip>

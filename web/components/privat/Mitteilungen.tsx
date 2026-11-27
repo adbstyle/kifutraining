@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BellRing } from "lucide-react";
 import { Button, Dialog, SectionMessage, Switch } from "@/components/ui";
@@ -110,7 +110,12 @@ export function useMitteilungen({
     }
   }, [link, publicKey, router]);
 
+  // Beim Einhängen am Gerät, mit offener Glocke zusätzlich mit der
+  // Datenebene. Schliessen prüft nicht neu: Der Stand der Datenebene gilt.
+  const geprueft = useRef(false);
   useEffect(() => {
+    if (geprueft.current && !abgleich) return;
+    geprueft.current = true;
     void pruefen(abgleich);
   }, [pruefen, abgleich]);
 
