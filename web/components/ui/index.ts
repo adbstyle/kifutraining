@@ -106,4 +106,6 @@ export type { SearchFieldProps } from "./SearchField";
 export { PasswordField } from "./PasswordField";
 export type { PasswordFieldProps } from "./PasswordField";
 export { feldNameKlasse } from "./feld";
-export { FilterKnopf, AuswahlFilter, FilterSuche, ZahlFilter } from "./FilterKnopf";
+export { FilterKnopf, AuswahlFilter, FilterSuche, ZahlFilter, ZeitraumFilter } from "./FilterKnopf";
+export { Teilnahmebalken, TeilnahmePunkt, type TeilnahmeTon } from "./Teilnahmebalken";
+export { Radio } from "./Radio";

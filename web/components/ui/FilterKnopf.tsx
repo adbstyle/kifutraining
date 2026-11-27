@@ -11,6 +11,8 @@ import { usePanelAnker } from "./use-panel-anker";
 import { gruppenIdVon, gruppenKopf, gruppenKopfKlasse } from "./gruppen";
 import { SearchField } from "./SearchField";
 import { TextField } from "./TextField";
+import { DateField } from "./DateTimeField";
+import { Radio } from "./Radio";
 import type { SelectOption } from "./Select";
 import { useDebouncedWert } from "@/lib/use-debounce";
 
@@ -32,6 +34,7 @@ export function FilterKnopf({
   label,
   badge,
   badgeLabel,
+  wert,
   maxHoehe = 440,
   panelClassName,
   className,
@@ -44,6 +47,11 @@ export function FilterKnopf({
   badge?: string | number;
   /** Dasselbe in Worten für die Vorlesehilfe («2 gewählt»). */
   badgeLabel?: string;
+  /** Für einen Filter mit genau einem Wert (Zeitraum, #700): Solange er
+   *  eingrenzt, nennt der Knopf den Wert im Text («Zeitraum: Letzte 30
+   *  Tage», nach dem Vorbild von Jira, PO 2026-11-27) statt einer Zahl;
+   *  `badge` entfällt dann. */
+  wert?: string | null;
   maxHoehe?: number;
   /** Breite des Panels. */
   panelClassName?: string;
@@ -77,8 +85,9 @@ export function FilterKnopf({
       return;
     }
     if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
-    // Im Zahlenfeld gehören die Pfeile dem Feld (es zählt sie ohnehin nicht).
-    if ((e.target as HTMLElement).matches('input[type="number"]')) return;
+    // Im Zahlen- und im Datumsfeld gehören die Pfeile dem Feld (sie zählen
+    // die Zahl bzw. den Tag).
+    if ((e.target as HTMLElement).matches('input[type="number"], input[type="date"]')) return;
     const alle = bedienbare(panelRef.current);
     const i = alle.indexOf(document.activeElement as HTMLElement);
     const naechster = e.key === "ArrowDown" ? alle[i + 1] ?? alle[0] : alle[i - 1] ?? alle[alle.length - 1];
@@ -88,7 +97,8 @@ export function FilterKnopf({
     }
   }
 
-  const aktiv = badge !== undefined && badge !== "";
+  const mitWert = wert !== undefined && wert !== null && wert !== "";
+  const aktiv = mitWert || (badge !== undefined && badge !== "");
 
   return (
     <div
@@ -111,7 +121,7 @@ export function FilterKnopf({
         type="button"
         aria-expanded={offen}
         aria-controls={offen ? panelId : undefined}
-        aria-label={aktiv && badgeLabel ? `${label}, ${badgeLabel}` : undefined}
+        aria-label={!mitWert && aktiv && badgeLabel ? `${label}, ${badgeLabel}` : undefined}
         onClick={() => (offen ? setOffen(false) : oeffnen())}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown" && !offen) {
@@ -127,8 +137,8 @@ export function FilterKnopf({
           aktiv ? chipSelected : chipOutlined,
         )}
       >
-        {label}
-        {aktiv && <Badge>{badge}</Badge>}
+        {mitWert ? `${label}: ${wert}` : label}
+        {aktiv && !mitWert && <Badge>{badge}</Badge>}
         <ChevronDown
           size={16}
           strokeWidth={2}
@@ -323,5 +333,97 @@ export function FilterSuche({
       onChange={(e) => aendern(e.target.value)}
       className={className}
     />
+  );
+}
+
+/* Zeitraumfilter (#700): der Filterknopf für einen Zeitraum aus zwei Tagen.
+   Der Knopf nennt den gesetzten Zeitraum im Text (`wert`, «Zeitraum: Letzte
+   30 Tage») statt einer Zahl — ein Zeitraum ist genau ein Wert, eine «1»
+   sagte nichts. Im Panel oben die Kurzwahl als Einfachauswahl (sie setzt den
+   Von-Tag und lässt den Bis-Tag offen), darunter Von und Bis frei; wer einen
+   Tag von Hand ändert, verlässt die Kurzwahl. Beide Tage zählen mit, ein
+   leerer lässt die Seite offen. Die Wirkung tritt sofort ein, das Panel
+   bleibt offen — wie bei den übrigen Filterknöpfen. */
+export function ZeitraumFilter({
+  label,
+  wert,
+  von,
+  bis,
+  bisHoechstens,
+  kurzwahl,
+  texte,
+  onChange,
+}: {
+  label: string;
+  /** Was der Knopf nennt, solange ein Zeitraum gilt; `null` ohne. */
+  wert: string | null;
+  von: string | null;
+  bis: string | null;
+  /** Der späteste wählbare Tag (heute am Trainingsort). */
+  bisHoechstens: string;
+  /** Die Kurzwahl mit ihrem Von-Tag; `aktiv` die passende. */
+  kurzwahl: readonly { id: string; label: string; von: string; aktiv: boolean }[];
+  texte: { kurzwahl: string; vonBis: string; von: string; bis: string };
+  onChange: (zeitraum: { von: string; bis: string }) => void;
+}) {
+  const kopfId = useId();
+  // Die Tage stehen im Feld, bevor sie gelten: Ein natives Datumsfeld meldet
+  // beim Tippen des Jahres jeden Zwischenstand (0002, 0020, 0202 …). In die
+  // Adresse geht ein Tag, sobald er vollständig ist; ein leeres Feld hebt die
+  // Seite beim Verlassen auf. Ein Stand von aussen
+  // (Kurzwahl, Zurücksetzen, Zurück im Browser) ersetzt die Felder.
+  const [tage, setTage] = useState({ von: von ?? "", bis: bis ?? "" });
+  const [vonAussen, setVonAussen] = useState(`${von}|${bis}`);
+  if (`${von}|${bis}` !== vonAussen) {
+    setVonAussen(`${von}|${bis}`);
+    setTage({ von: von ?? "", bis: bis ?? "" });
+  }
+  const fertig = (tag: string) => tag === "" || (/^\d{4}-\d{2}-\d{2}$/.test(tag) && tag >= "1900-01-01");
+  function uebernehmen(t: { von: string; bis: string }) {
+    if (fertig(t.von) && fertig(t.bis) && (t.von !== (von ?? "") || t.bis !== (bis ?? ""))) onChange(t);
+  }
+  function tippen(feld: "von" | "bis", wert: string) {
+    const t = { ...tage, [feld]: wert };
+    setTage(t);
+    // Ein geleertes Feld gilt erst beim Verlassen — beim Tippen leert der
+    // Browser auch Zwischenstände.
+    if (wert !== "") uebernehmen(t);
+  }
+  return (
+    <FilterKnopf label={label} wert={wert} panelClassName="w-72 pb-3">
+      <p id={kopfId} className={gruppenKopfKlasse}>
+        {texte.kurzwahl}
+      </p>
+      <div role="radiogroup" aria-labelledby={kopfId} className="flex flex-col">
+        {kurzwahl.map((k) => (
+          <Radio
+            key={k.id}
+            name={`${kopfId}-kurzwahl`}
+            label={k.label}
+            checked={k.aktiv}
+            onChange={() => onChange({ von: k.von, bis: "" })}
+            className="state w-full px-3 py-1.5"
+          />
+        ))}
+      </div>
+      <div className="mt-2 flex flex-col gap-3 border-t border-linie px-3 pt-3">
+        <p className="type-label-medium text-on-surface-mittel">{texte.vonBis}</p>
+        <DateField
+          label={texte.von}
+          value={tage.von}
+          max={tage.bis || bisHoechstens}
+          onChange={(e) => tippen("von", e.target.value)}
+          onBlur={() => uebernehmen(tage)}
+        />
+        <DateField
+          label={texte.bis}
+          value={tage.bis}
+          min={tage.von || undefined}
+          max={bisHoechstens}
+          onChange={(e) => tippen("bis", e.target.value)}
+          onBlur={() => uebernehmen(tage)}
+        />
+      </div>
+    </FilterKnopf>
   );
 }

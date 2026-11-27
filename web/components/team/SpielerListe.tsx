@@ -1,7 +1,10 @@
 "use client";
 
 import { useId, useMemo, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { cn } from "@/lib/cn";
+import { SPIELER_AUSWAHL_PARAM, TEILNAHME_PARAMETER } from "@/lib/teilnahme";
 import { Bell, BellOff, Link2, Pencil, Plus, Shirt, UserMinus } from "lucide-react";
 import {
   AuswahlLeiste,
@@ -111,6 +114,7 @@ export function SpielerListe({
   kader,
   probeAnzahl,
   eingrenzung,
+  ausgewaehlt = null,
 }: {
   teamId: string;
   teamName: string;
@@ -123,8 +127,17 @@ export function SpielerListe({
   probeAnzahl: number | null;
   /** Suche und Eingrenzung aus der Adresse, bereinigt (#601). */
   eingrenzung: TeamEingrenzung;
+  /** Die Spieler:in, deren Teilnahme daneben offen ist (#700). */
+  ausgewaehlt?: string | null;
 }) {
   const router = useRouter();
+  const adresse = useSearchParams();
+  // Dieselbe Adresse mit dieser Spieler:in in der Spalte daneben.
+  const teilnahmeHref = (id: string) => {
+    const p = new URLSearchParams(adresse.toString());
+    p.set(SPIELER_AUSWAHL_PARAM, id);
+    return `?${p.toString()}`;
+  };
   const melde = useSnackbar();
   const [pending, startTransition] = useTransition();
   // `null`: zu; sonst neu (`id` leer) oder die geänderte Spieler:in.
@@ -140,7 +153,9 @@ export function SpielerListe({
   const [aufgenommen, setAufgenommen] = useState<string | null>(null);
   const erstesFeld = useRef<HTMLInputElement>(null);
   const formId = useId();
-  const filter = useAdressFilter();
+  // Die Teilnahme daneben (#700) und ihr Zeitraum gehören nicht zur
+  // Eingrenzung der Liste: «Zurücksetzen» lässt sie stehen.
+  const filter = useAdressFilter({ behalte: TEILNAHME_PARAMETER });
   const [auswahl, setAuswahl] = useState<string[]>([]);
   const [zuteilenOffen, setZuteilenOffen] = useState(false);
   const verfall = useVerfallRueckfrage(pending);
@@ -331,8 +346,8 @@ export function SpielerListe({
   const probeVorher = !!offen?.probe;
   const mitProbe = spieler.some((s) => s.probe);
   const spalten = mitKadern
-    ? "sm:grid-cols-[1.5rem_minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_minmax(0,1fr)_5rem_7.5rem]"
-    : "sm:grid-cols-[minmax(0,1fr)_4.5rem_7rem_minmax(0,1fr)_5rem_7.5rem]";
+    ? "@2xl/tabelle:grid-cols-[1.5rem_minmax(0,2fr)_4.5rem_7rem_minmax(0,1fr)_minmax(0,1fr)_5rem_7.5rem]"
+    : "@2xl/tabelle:grid-cols-[minmax(0,2fr)_4.5rem_7rem_minmax(0,1fr)_5rem_7.5rem]";
   // Die Spalte «Mobile» (#483 AK 11) mit ihrem festen Hinweis hinter ⓘ.
   const mobileKopf = (
     <span className="-my-2 flex items-center gap-0.5">
@@ -433,7 +448,7 @@ export function SpielerListe({
         <>
         {/* Der Hinweis zur Spalte «Mobile» für die Vorlesehilfe (das Panel hinter ⓘ ist nur fürs Auge). */}
         <p className="sr-only">{MITTEILUNGEN_SPALTE.hinweis}</p>
-        <Tabelle className="mt-4" spalten={spalten} kopf={kopf}>
+        <Tabelle className="mt-4" spalten={spalten} kopf={kopf} rasterAb="behaelter">
           {sichtbar.map((s) => (
             <TabellenZeile key={s.id}>
               {mitKadern && (
@@ -448,31 +463,43 @@ export function SpielerListe({
               )}
               <span className="min-w-0 flex-1">
                 <span className="flex min-w-0 items-center gap-2">
-                  <span className="type-body-medium truncate text-on-surface">{spielerName(s)}</span>
+                  {/* Der Name öffnet die Teilnahme der Spieler:in daneben
+                      (#700); Eingrenzung und Zeitraum bleiben in der Adresse. */}
+                  <Link
+                    href={teilnahmeHref(s.id)}
+                    scroll={false}
+                    aria-current={s.id === ausgewaehlt ? "true" : undefined}
+                    className={cn(
+                      "focus-ring truncate rounded-klein type-body-medium hover:underline",
+                      s.id === ausgewaehlt ? "text-primary" : "text-on-surface",
+                    )}
+                  >
+                    {spielerName(s)}
+                  </Link>
                   {s.probe && (
-                    <span className="hidden shrink-0 sm:inline-flex">
+                    <span className="hidden shrink-0 @2xl/tabelle:inline-flex">
                       <SchnupperLozenge stand={s.probe} />
                     </span>
                   )}
                 </span>
                 {/* Schmal stehen Jahrgang, J+S-Nummer, Schnuppern und Kader unter dem Namen: Der Name bleibt lesbar. */}
-                <span className="type-body-small block text-on-surface-mittel sm:hidden">
+                <span className="type-body-small block text-on-surface-mittel @2xl/tabelle:hidden">
                   {[s.jahrgang, s.jsNummer && `J+S ${s.jsNummer}`].filter(Boolean).join(" · ")}
                 </span>
                 {s.probe && (
-                  <span className="mt-1 flex sm:hidden">
+                  <span className="mt-1 flex @2xl/tabelle:hidden">
                     <SchnupperLozenge stand={s.probe} />
                   </span>
                 )}
-                <KaderLozenges namen={namenVon(s)} className="mt-1 sm:hidden" />
-                <TeamLozenges namen={s.weitereTeams} className="mt-1 sm:hidden" />
+                <KaderLozenges namen={namenVon(s)} className="mt-1 @2xl/tabelle:hidden" />
+                <TeamLozenges namen={s.weitereTeams} className="mt-1 @2xl/tabelle:hidden" />
               </span>
-              <span className="type-body-medium hidden text-on-surface-mittel sm:block">{s.jahrgang}</span>
-              <span className={`type-body-medium hidden truncate sm:block ${s.jsNummer ? "text-on-surface-mittel" : "text-on-surface-tief"}`}>
+              <span className="type-body-medium hidden text-on-surface-mittel @2xl/tabelle:block">{s.jahrgang}</span>
+              <span className={`type-body-medium hidden truncate @2xl/tabelle:block ${s.jsNummer ? "text-on-surface-mittel" : "text-on-surface-tief"}`}>
                 {s.jsNummer ?? "–"}
               </span>
               {mitKadern && (
-                <span className="hidden min-w-0 sm:block">
+                <span className="hidden min-w-0 @2xl/tabelle:block">
                   {s.kaderIds.length > 0 ? (
                     <KaderLozenges namen={namenVon(s)} />
                   ) : (
@@ -480,7 +507,7 @@ export function SpielerListe({
                   )}
                 </span>
               )}
-              <span className="hidden min-w-0 sm:block">
+              <span className="hidden min-w-0 @2xl/tabelle:block">
                 {s.weitereTeams.length > 0 ? (
                   <TeamLozenges namen={s.weitereTeams} />
                 ) : (
