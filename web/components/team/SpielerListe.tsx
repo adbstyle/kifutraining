@@ -47,6 +47,7 @@ import { EingrenzungLeer } from "./KaderEingrenzung";
 import { TeamSpielerFilter } from "./TeamSpielerFilter";
 import { useVerfallRueckfrage } from "./VerfallBestaetigung";
 import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
+import { TabellenAuswahl } from "@/components/training/TabellenAuswahl";
 import { MITTEILUNGEN_SPALTE } from "@/lib/push";
 import { useAdressFilter } from "@/lib/use-adress-filter";
 import {
@@ -448,6 +449,8 @@ export function SpielerListe({
         <>
         {/* Der Hinweis zur Spalte «Mobile» für die Vorlesehilfe (das Panel hinter ⓘ ist nur fürs Auge). */}
         <p className="sr-only">{MITTEILUNGEN_SPALTE.hinweis}</p>
+        {/* Fokus und Sichtbarkeit beim Öffnen und Schliessen der Teilnahme (#700). */}
+        <TabellenAuswahl ausgewaehlt={ausgewaehlt ?? undefined} attribut="data-spieler-zeile" />
         <Tabelle className="mt-4" spalten={spalten} kopf={kopf} rasterAb="behaelter">
           {sichtbar.map((s) => (
             <TabellenZeile key={s.id}>
@@ -469,6 +472,7 @@ export function SpielerListe({
                     href={teilnahmeHref(s.id)}
                     scroll={false}
                     aria-current={s.id === ausgewaehlt ? "true" : undefined}
+                    data-spieler-zeile={s.id}
                     className={cn(
                       "focus-ring truncate rounded-klein type-body-medium hover:underline",
                       s.id === ausgewaehlt ? "text-primary" : "text-on-surface",

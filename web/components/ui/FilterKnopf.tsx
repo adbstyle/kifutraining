@@ -87,7 +87,8 @@ export function FilterKnopf({
     if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
     // Im Zahlen- und im Datumsfeld gehören die Pfeile dem Feld (sie zählen
     // die Zahl bzw. den Tag).
-    if ((e.target as HTMLElement).matches('input[type="number"], input[type="date"]')) return;
+    // Im Optionsfeld wählen die Pfeile wie in jeder radiogroup.
+    if ((e.target as HTMLElement).matches('input[type="number"], input[type="date"], input[type="radio"]')) return;
     const alle = bedienbare(panelRef.current);
     const i = alle.indexOf(document.activeElement as HTMLElement);
     const naechster = e.key === "ArrowDown" ? alle[i + 1] ?? alle[0] : alle[i - 1] ?? alle[alle.length - 1];
@@ -389,6 +390,12 @@ export function ZeitraumFilter({
     // Browser auch Zwischenstände.
     if (wert !== "") uebernehmen(t);
   }
+  // Beim Verlassen gilt ein vollständiger (oder leerer) Tag; ein halb
+  // getippter fällt auf den geltenden zurück, statt im Feld stehenzubleiben.
+  function verlassen(feld: "von" | "bis") {
+    if (fertig(tage[feld])) uebernehmen(tage);
+    else setTage((t) => ({ ...t, [feld]: (feld === "von" ? von : bis) ?? "" }));
+  }
   return (
     <FilterKnopf label={label} wert={wert} panelClassName="w-72 pb-3">
       <p id={kopfId} className={gruppenKopfKlasse}>
@@ -413,7 +420,7 @@ export function ZeitraumFilter({
           value={tage.von}
           max={tage.bis || bisHoechstens}
           onChange={(e) => tippen("von", e.target.value)}
-          onBlur={() => uebernehmen(tage)}
+          onBlur={() => verlassen("von")}
         />
         <DateField
           label={texte.bis}
@@ -421,7 +428,7 @@ export function ZeitraumFilter({
           min={tage.von || undefined}
           max={bisHoechstens}
           onChange={(e) => tippen("bis", e.target.value)}
-          onBlur={() => uebernehmen(tage)}
+          onBlur={() => verlassen("bis")}
         />
       </div>
     </FilterKnopf>
