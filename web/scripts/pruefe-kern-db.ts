@@ -76,6 +76,7 @@ const { kalendertagAmTrainingsort } = await import("../lib/zeit");
 const { legeSerieFest, aendereSerie, entferneSerie, folgeDerSerie, aendereMitReichweite, entferneMitReichweite } =
   await import("../lib/kern/serien");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
+const { spielerTeilnahme } = await import("../lib/kern/teilnahme");
 const { getTeamPlanFuer, nochNichtVorbereitet } = await import("../lib/queries/termine-fuer");
 const { ladeSpielerliste, anzahlSpieler, nimmSpielerAuf, aendereSpieler, ladeSpieler, ladeSpielerTeams, eigenesTeamVon, nimmSpielerAusTeam, holeSpielerLink, erneuereSpielerLink, setzeLinkZugestellt, leseAbholung, schalteAbholung, erneuereAbholung } =
   await import("../lib/kern/spieler");
@@ -4518,6 +4519,19 @@ try {
     wert(await nimmHeraus(a, team, lena.spielerId));
     await neuerSpieler(team, "Wieder", "Platz");
     assert.equal(await anzahlSpieler(a.supabase, team), 100);
+  });
+
+  await pruefe("Teilnahme-Statistik (#700): nur Mitglieder, nur Spieler:innen des Teams, Zeitraum geprüft (NFR 2, AK 2)", async () => {
+    const team = await serienTeam("Kern-DB-Teilnahme");
+    const lena = await neuerSpieler(team, "Lena", "Teilnahme");
+    const r = wert(await spielerTeilnahme(a.supabase, a.id, { teamId: team, spielerId: lena.spielerId }));
+    assert.deepEqual(r.zeitraum, { von: null, bis: null }, "ohne Zeitraum die ganze Zeit");
+    assert.equal(r.zahlen.training.gesamt + r.zahlen.spiel.gesamt, 0, "ohne begonnene Termine nichts gezählt");
+    fehler(await spielerTeilnahme(b.supabase, b.id, { teamId: team, spielerId: lena.spielerId }), "nicht_gefunden");
+    fehler(await spielerTeilnahme(a.supabase, a.id, { teamId: team, spielerId: randomUUID() }), "nicht_gefunden", SPIELER_MELDUNG.SPIELER_NICHT_GEFUNDEN);
+    fehler(await spielerTeilnahme(a.supabase, a.id, { teamId: team, spielerId: lena.spielerId, von: "2026-02-30" }), "eingabe");
+    fehler(await spielerTeilnahme(a.supabase, a.id, { teamId: team, spielerId: lena.spielerId, von: "2026-11-02", bis: "2026-11-01" }), "eingabe");
+    wert(await spielerTeilnahme(a.supabase, a.id, { teamId: team, spielerId: lena.spielerId, von: "2026-11-01" }));
   });
 
   await pruefe("Doppelerfassung im Verein: abgewiesen mit den Teams, ohne J+S, vor der Teamgrenze, fremder Verein stört nicht (#578 AK 1–4, 9, PC 2, 3; Testfall 5)", async () => {

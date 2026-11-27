@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { ReleaseText } from "@/components/versionen/ReleaseText";
 import {
   BestandAnzeige,
+  Teilnahmebalken,
+  TeilnahmePunkt,
   Button,
   ButtonLink,
   Badge,
@@ -266,6 +268,7 @@ const GLIEDERUNG = [
         eintraege: [
           { id: "meldungen", titel: "Leerzustand, Hinweiszeile & Section Message" },
           { id: "bestand-anzeige", titel: "Bestand und Grenze" },
+          { id: "teilnahmebalken", titel: "Teilnahmebalken" },
           { id: "dialog-snackbar", titel: "Dialog & Snackbar" },
           { id: "feedback-dialog", titel: "Fragen und Feedback" },
         ],
@@ -2581,6 +2584,23 @@ export default async function Styleguide() {
             den Reitern «Spieler:innen» an Trainings und Spielen, wo genau ein
             Kader zur Zeit gilt.
           </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Zeitraum</strong> (<code>ZeitraumFilter</code>, #700): Ein
+            Zeitraum ist genau ein Wert - eine «1» im Badge sagte nichts. Darum
+            nennt der aktive Knopf den Wert im Text, nach dem Vorbild von Jira
+            («Zeitraum: Letzte 30 Tage», «Zeitraum: 01.11.2026 – 26.11.2026»);
+            Kontur und Schrift in Primary bleiben das Zeichen für «grenzt ein».
+            Im Panel oben die Kurzwahl als Einfachauswahl, darunter Von und Bis
+            als Datumsfelder; wer einen Tag von Hand ändert, verlässt die
+            Kurzwahl, ein leerer Tag lässt die Seite offen. Nur für Filter mit
+            genau einem Wert - Auswahl- und Zahlenfilter behalten den Badge.
+            Die Kurzwahl steht als <code>Radio</code>: neu im Kit, weil eine
+            Einfachauswahl über Datumsfeldern weder als Chip noch als Zeile mit
+            Häkchen liest; Masse, Kontur und Primary wie die Checkbox, gewählt
+            ein dicker Ring statt eines Häkchens. Ein Tag geht erst vollständig
+            in die Adresse - das Datumsfeld meldet beim Tippen jeden
+            Zwischenstand.
+          </p>
           <FilterKnopfDemo />
         </Section>
 
@@ -3147,6 +3167,41 @@ export default async function Styleguide() {
             <SectionMessage appearance="discovery">
               discovery - im Kit, derzeit ohne Ort.
             </SectionMessage>
+          </div>
+        </Section>
+
+        <Section id="teilnahmebalken">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Wie sich die gezählten Termine einer Spieler:in auf «da» und die
+            Gründe für «nicht da» verteilen (<code>Teilnahmebalken</code>,
+            #700). Neu, weil keine bestehende Form eine Verteilung zeigt: Der
+            Bestand (oben) zählt auf eine Grenze zu, hier gibt es kein Ziel.
+            Der Balken ergänzt die Zahlen und trägt keine eigene Aussage
+            (<code>aria-hidden</code>); die Zahlen stehen daneben als Liste,
+            jede mit dem Farbpunkt ihres Anteils (<code>TeilnahmePunkt</code>).
+            Die Töne sind die der Icon-Rollen, eine Fuge trennt die Anteile,
+            damit sie nicht nur über die Farbe zu unterscheiden sind.
+          </p>
+          <div className="flex max-w-sm flex-col gap-4">
+            <Teilnahmebalken anteile={[{ anzahl: 6, ton: "da" }, { anzahl: 1, ton: "grau" }, { anzahl: 1, ton: "orange" }]} />
+            <Teilnahmebalken
+              anteile={[
+                { anzahl: 3, ton: "da" },
+                { anzahl: 1, ton: "grau" },
+                { anzahl: 1, ton: "violett" },
+                { anzahl: 1, ton: "blau" },
+                { anzahl: 1, ton: "hellgrau" },
+              ]}
+            />
+            <Teilnahmebalken anteile={[]} />
+            <div className="flex flex-wrap gap-4 type-body-medium text-on-surface">
+              {(["da", "grau", "orange", "violett", "blau", "hellgrau"] as const).map((ton) => (
+                <span key={ton} className="flex items-center gap-2">
+                  <TeilnahmePunkt ton={ton} />
+                  {ton}
+                </span>
+              ))}
+            </div>
           </div>
         </Section>
 

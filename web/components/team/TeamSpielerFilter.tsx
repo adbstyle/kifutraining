@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { AuswahlFilter, Button, FilterSuche } from "@/components/ui";
 import { useAdressFilter } from "@/lib/use-adress-filter";
+import { TEILNAHME_PARAMETER } from "@/lib/teilnahme";
 import { LINK_STAENDE, TEAM_SPIELER_FILTER } from "@/lib/spieler";
 import { bereinigeSuche } from "@/lib/verein-spielerliste";
 import { kaderFilterWerte, OHNE_KADER_WERT, teamEingrenzungGesetzt, type TeamEingrenzung } from "@/lib/team-spielerliste";
@@ -25,7 +26,9 @@ export function TeamSpielerFilter({
   kader: readonly { id: string; name: string }[];
   jahrgaenge: readonly number[];
 }) {
-  const filter = useAdressFilter();
+  // Die Teilnahme daneben (#700) und ihr Zeitraum gehören nicht zur
+  // Eingrenzung der Liste: «Zurücksetzen» lässt sie stehen.
+  const filter = useAdressFilter({ behalte: TEILNAHME_PARAMETER });
   const kaderOptionen = useMemo(
     () => [
       { value: OHNE_KADER_WERT, label: TEAM_SPIELER_FILTER.ohneKader },

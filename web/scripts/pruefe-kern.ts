@@ -554,6 +554,18 @@ import {
 import { textMitLinks } from "../lib/text-links";
 import { gliedere, gliederungAlsText, gliederungBloecke } from "../lib/gliederung";
 import { TEAM_INFOS_MAX, TEAM_INFOS_TEXT, standDatum, teamInfosBereinigt, teamInfosProblem, zahlCh } from "../lib/team-infos";
+import {
+  TEILNAHME_ERGEBNISSE,
+  ZEITRAUM_FEHLER,
+  ZEITRAUM_KURZWAHL,
+  bereinigteTeilnahmeAdresse,
+  kurzwahlVon,
+  liesSpielerAuswahl,
+  liesZeitraum,
+  teilnahmeZahlen,
+  zeitraumFehler,
+  zeitraumWert,
+} from "../lib/teilnahme";
 
 let gelaufen = 0;
 
@@ -7075,6 +7087,88 @@ pruefe("Vereinbarung zur Auftragsbearbeitung (#675, ENTWURF): Seite mit Entwurfs
   // sync-staging kennt die neue Tabelle.
   const yml = readFileSync(join(web, "../.github/workflows/sync-staging.yml"), "utf8");
   assert.ok((/PUBLIC_TABLES: "([^"]+)"/.exec(yml)?.[1].split(" ") ?? []).includes("verein_zustimmungen"));
+});
+
+// ── Teilnahme-Statistik (#700) ──────────────────────────────────────────────
+
+const liesTn = (d: string) => readFileSync(join(web, d), "utf8");
+const ohneKommentareTn = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+
+pruefe("Teilnahme (#700): Zahlen je Art — die Gründe ergeben «nicht da», jeder Grund steht da, unbekannte Zeilen fallen weg", () => {
+  const z = teilnahmeZahlen([
+    { art: "training", ergebnis: "da", anzahl: 3 },
+    { art: "training", ergebnis: "abgemeldet", anzahl: 2 },
+    { art: "spiel", ergebnis: "nicht_aufgeboten", anzahl: 1 },
+    { art: "spiel", ergebnis: "ohne_meldung", anzahl: 2 },
+    { art: "spiel", ergebnis: "unbekannt", anzahl: 9 },
+  ]);
+  assert.deepEqual(z.training, {
+    gesamt: 5,
+    da: 3,
+    nichtDa: 2,
+    gruende: [
+      { grund: "abgemeldet", anzahl: 2 },
+      { grund: "nicht_erschienen", anzahl: 0 },
+    ],
+  });
+  assert.equal(z.spiel.gesamt, 3);
+  assert.equal(z.spiel.nichtDa, 3);
+  assert.deepEqual(
+    z.spiel.gruende.map((g) => g.grund),
+    ["abgemeldet", "nicht_erschienen", "nicht_aufgeboten", "meldefrist_verpasst", "ohne_meldung"],
+  );
+});
+
+pruefe("Teilnahme (#700): Zwilling — jeder Ergebnis-Schlüssel steht in spieler_teilnahme, keiner mehr", () => {
+  const sql = liesTn("../supabase/migrations/20261127100000_spieler_teilnahme.sql");
+  const imSql = new Set([...sql.matchAll(/then '([a-z_]+)'|else '([a-z_]+)'/g)].map((m) => m[1] ?? m[2]));
+  assert.deepEqual([...imSql].sort(), [...TEILNAHME_ERGEBNISSE.spiel].sort());
+  for (const e of TEILNAHME_ERGEBNISSE.training) assert.ok(imSql.has(e), e);
+});
+
+pruefe("Teilnahme (#700 AK 2, 7): Zeitraum — beide Tage offen möglich, unlesbare Tage und Bis vor Von fallen weg", () => {
+  assert.equal(zeitraumFehler({}), null);
+  assert.equal(zeitraumFehler({ von: "2026-11-01" }), null);
+  assert.equal(zeitraumFehler({ bis: "2026-11-01" }), null);
+  assert.equal(zeitraumFehler({ von: "2026-02-30" })?.feld, "von");
+  assert.equal(zeitraumFehler({ bis: "gestern" })?.feld, "bis");
+  assert.equal(zeitraumFehler({ von: "2026-11-02", bis: "2026-11-01" })?.text, ZEITRAUM_FEHLER.bisVorVon);
+  assert.equal(zeitraumFehler({ von: "2026-11-01", bis: "2026-11-01" }), null, "ein Tag ist ein Zeitraum");
+  assert.deepEqual(liesZeitraum({ von: "2026-11-01", bis: "2026-11-30" }), { von: "2026-11-01", bis: "2026-11-30" });
+  assert.deepEqual(liesZeitraum({ von: "2026-13-01", bis: "2026-11-30" }), { von: null, bis: "2026-11-30" });
+  assert.deepEqual(liesZeitraum({ von: "2026-11-30", bis: "2026-11-01" }), { von: "2026-11-30", bis: null });
+  assert.deepEqual(liesZeitraum({}), { von: null, bis: null });
+});
+
+pruefe("Teilnahme (#700): Kurzwahl und Wert im Filterknopf — ab heute am Trainingsort, Bis offen", () => {
+  const heute = "2026-05-31";
+  const von = Object.fromEntries(ZEITRAUM_KURZWAHL.map((k) => [k.id, k.von(heute)]));
+  assert.deepEqual(von, { "30-tage": "2026-05-02", "3-monate": "2026-02-28", jahr: "2026-01-01" });
+  assert.equal(kurzwahlVon({ von: "2026-05-02", bis: null }, heute)?.label, "Letzte 30 Tage");
+  assert.equal(kurzwahlVon({ von: "2026-05-02", bis: "2026-05-31" }, heute), null, "mit Bis keine Kurzwahl");
+  assert.equal(zeitraumWert({ von: "2026-01-01", bis: null }, heute), "Seit 1. Januar");
+  assert.equal(zeitraumWert({ von: "2026-03-01", bis: "2026-03-31" }, heute), "01.03.2026 – 31.03.2026");
+  assert.equal(zeitraumWert({ von: "2026-03-01", bis: null }, heute), "ab 01.03.2026");
+  assert.equal(zeitraumWert({ von: null, bis: "2026-03-31" }, heute), "bis 31.03.2026");
+  assert.equal(zeitraumWert({ von: null, bis: null }, heute), null);
+});
+
+pruefe("Teilnahme (#700): Adresse — fremde Spieler:in und unlesbare Tage fallen weg, alles übrige reist mit", () => {
+  const pfad = "/team/x/verwaltung";
+  assert.equal(bereinigteTeilnahmeAdresse(pfad, { spieler: "s1", von: "2026-11-01", q: "le" }, "s1"), null);
+  assert.equal(bereinigteTeilnahmeAdresse(pfad, { spieler: "s1", von: "2026-11-01", q: "le" }, null), `${pfad}?q=le&von=2026-11-01`);
+  assert.equal(bereinigteTeilnahmeAdresse(pfad, { spieler: "s1", von: "kaputt" }, "s1"), `${pfad}?spieler=s1`);
+  assert.equal(bereinigteTeilnahmeAdresse(pfad, { bis: "2026-11-01", von: "2026-11-02" }, null), `${pfad}?von=2026-11-02`);
+  assert.equal(liesSpielerAuswahl({ spieler: ["a", "b"] }), null, "zwei Spieler:innen sind keine");
+  assert.equal(liesSpielerAuswahl({ spieler: "a" }), "a");
+});
+
+pruefe("Teilnahme (#700): App und KI-Werkzeug zählen über dieselbe Kern-Funktion (NFR 3)", () => {
+  const seite = ohneKommentareTn(liesTn("app/(app)/team/[id]/verwaltung/page.tsx"));
+  const werkzeugTeilnahme = ohneKommentareTn(liesTn("lib/mcp/werkzeuge/teilnahme.ts"));
+  assert.match(seite, /spielerTeilnahme\(supabase, user\.id,/);
+  assert.match(werkzeugTeilnahme, /spielerTeilnahme\(zugang\.supabase, zugang\.userId,/);
+  for (const q of [seite, werkzeugTeilnahme]) assert.ok(!/\.rpc\("spieler_teilnahme"/.test(q), "die RPC ruft nur der Kern");
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

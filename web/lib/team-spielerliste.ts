@@ -1,4 +1,4 @@
-import { liesListe, type AdressParameter } from "@/lib/adresse";
+import { adresseMitWerten, liesListe, type AdressParameter } from "@/lib/adresse";
 import { istUuid } from "@/lib/kennung";
 import { LINK_STAENDE, type LinkStand, type Spieler } from "@/lib/spieler";
 import { teamVerwaltungPfad } from "@/lib/team-bereiche";
@@ -75,22 +75,12 @@ export function bereinigeTeamEingrenzung(e: TeamEingrenzung, bestand: TeamBestan
  *  `LINK_STAENDE`); `?q=` nur, wenn `e` keine Suche mehr hat (so wird
  *  der Tippstand nie umgeschrieben); alles übrige reist unverändert mit. */
 export function bereinigteTeamAdresse(pfad: string, sp: AdressParameter, e: TeamEingrenzung): string | null {
-  const roh = (v: string | string[] | undefined) => (Array.isArray(v) ? v.join(",") : v ?? "");
-  const soll: Record<string, string> = {
+  return adresseMitWerten(pfad, sp, {
     kader: kaderFilterWerte(e).join(","),
     jahrgang: e.jahrgaenge.join(","),
     link: e.linkStaende.join(","),
     ...(e.suche === "" ? { q: "" } : {}),
-  };
-  if (Object.entries(soll).every(([k, v]) => roh(sp[k]) === v)) return null;
-  const p = new URLSearchParams();
-  for (const [k, v] of Object.entries(sp)) {
-    if (k in soll || v === undefined) continue;
-    for (const w of Array.isArray(v) ? v : [v]) p.append(k, w);
-  }
-  for (const [k, v] of Object.entries(soll)) if (v) p.set(k, v);
-  const qs = p.toString();
-  return qs ? `${pfad}?${qs}` : pfad;
+  });
 }
 
 /** Die Adresse der Spielerliste mit einer Eingrenzung, in der Schreibweise
