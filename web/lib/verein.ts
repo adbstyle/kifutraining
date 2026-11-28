@@ -29,7 +29,7 @@ export const VEREIN_SEITEN = {
 /** Die Sätze mit dem Grund einer Sperre in der Kopfzeile des Vereins (#707
  *  AK 4), auf die der gesperrte Knopf mit `aria-describedby` verweist. */
 export const TEAMS_GESPERRT_ID = "teams-voll";
-export const SPIELER_ERFASSEN_GESPERRT_ID = "verein-spieler-voll";
+export const VEREIN_SPIELER_GESPERRT_ID = "verein-spieler-voll";
 
 /** Gesperrt an der Grenze (#707 AK 4); darüber (Altbestand) ebenso. */
 export const vereinTeamsVoll = (anzahlTeams: number) => anzahlTeams >= VEREIN_TEAMS_MAX;

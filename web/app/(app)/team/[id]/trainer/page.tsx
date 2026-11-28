@@ -36,7 +36,7 @@ export default async function TeamSeitePage({ params }: { params: Promise<{ id: 
   return (
     <TeamSeite teamId={id} seite={TEAM_SEITEN.team}>
       <div className="flex flex-col gap-4">
-        <h2 className="type-title-large text-on-surface">Team</h2>
+        <h2 className="sr-only">{TEAM_SEITEN.team}</h2>
         <Card className="p-5 sm:p-6">
           <MitgliederListe
             teamId={team.id}

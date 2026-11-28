@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui";
 import { KopfAktionen, KopfKnopfText } from "@/components/layout/KopfAktionen";
-import { SPIELER_ERFASSEN_GESPERRT_ID } from "@/lib/verein";
+import { VEREIN_SPIELER_GESPERRT_ID } from "@/lib/verein";
 import type { SpielerEingrenzung } from "@/lib/verein-spielerliste";
 import { VereinSpielerFormular } from "./VereinSpielerFormular";
 import { VereinSpielerImport } from "./VereinSpielerImport";
@@ -16,7 +16,7 @@ import { VereinSpielerImport } from "./VereinSpielerImport";
 
    Hat der Verein seine Grenze erreicht (`voll`, AK 4), sind beide gesperrt
    und verweisen auf den Satz mit dem Grund unter der Kopfzeile
-   (`SPIELER_ERFASSEN_GESPERRT_ID`, gesetzt von der Seite). Würde erst ein
+   (`VEREIN_SPIELER_GESPERRT_ID`, gesetzt von der Seite). Würde erst ein
    Import die Grenze überschreiten, meldet es seine Vorschau wie bisher.
 
    Der Import steht nur, solange er offen ist: Datei und Vorschau beginnen
@@ -47,7 +47,7 @@ export function VereinSpielerAktionen({
     setImportOffen(false);
   }
 
-  const sperre = { disabled: voll, "aria-describedby": voll ? SPIELER_ERFASSEN_GESPERRT_ID : undefined };
+  const sperre = { disabled: voll, "aria-describedby": voll ? VEREIN_SPIELER_GESPERRT_ID : undefined };
 
   return (
     <>

@@ -71,7 +71,6 @@ export default async function TeamMeldezeitpunktePage({
             fenster={fasseFensterZusammen(melde.wert.zeilen, ids)}
             summen={teamSummen(teilnahme.wert.zahlen, ids)}
             zeitraumText={zeitraumText}
-            umfang={ids.length < ansicht.spieler.length ? { n: ids.length, von: ansicht.spieler.length } : null}
           />
           <h3 className="mt-2 type-title-medium text-on-surface">{MELDE_TEXT.jeSpielerin}</h3>
         </>

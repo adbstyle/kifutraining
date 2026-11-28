@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient, getUserImRequest } from "@/lib/supabase/server";
+import { getTeam } from "@/lib/queries/teams";
 import { anzahlSpieler, ladeSpielerliste, vereinVollFuerTeam } from "@/lib/kern/spieler";
 import { ladeKader } from "@/lib/kern/kader";
 import { leseProbetraining } from "@/lib/kern/probe";
@@ -47,6 +48,9 @@ export const kaderDesTeams = cache(async (teamId: string) => {
  *  Spielerliste des Teams voll oder der Spielerbestand des Vereins
  *  (`team_verein_voll`, nur Ja oder Nein). */
 export async function ladeHinzufuegen(teamId: string): Promise<{ kader: Kader[]; sperre: SpielerSperre | null }> {
+  // Layouts rendern nebeneinander: Ohne Team leitet das Team-Layout weiter,
+  // hier wird nichts gelesen (Request-Cache, keine zweite Abfrage).
+  if (!(await getTeam(teamId))) redirect("/teams");
   const supabase = await createClient();
   const [kader, imTeam, vereinVoll] = await Promise.all([
     kaderDesTeams(teamId),

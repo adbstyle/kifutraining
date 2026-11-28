@@ -9,7 +9,7 @@ import { mitAnzahl, type AdressParameter } from "@/lib/adresse";
 import { ladeVereinSpielerliste } from "@/lib/kern/verein";
 import { getMeinVereinOderWurf } from "@/lib/queries/verein";
 import { createClient } from "@/lib/supabase/server";
-import { SPIELER_ERFASSEN_GESPERRT_ID, VEREIN_MELDUNG, VEREIN_SEITEN, vereinSpielerVoll } from "@/lib/verein";
+import { VEREIN_SPIELER_GESPERRT_ID, VEREIN_MELDUNG, VEREIN_SEITEN, vereinSpielerVoll } from "@/lib/verein";
 import {
   bereinigeEingrenzung,
   bereinigteAdresse,
@@ -82,7 +82,7 @@ export default async function VereinSpielerPage({ searchParams }: { searchParams
       }
     >
       {liste.verwaltung && voll && (
-        <div id={SPIELER_ERFASSEN_GESPERRT_ID} className="mb-4">
+        <div id={VEREIN_SPIELER_GESPERRT_ID} className="mb-4">
           <SectionMessage>{VEREIN_MELDUNG.VEREIN_VOLL}</SectionMessage>
         </div>
       )}

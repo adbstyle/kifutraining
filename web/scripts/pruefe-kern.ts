@@ -444,7 +444,7 @@ import {
   VEREIN_TEAMS_MAX,
   VEREIN_SEITEN,
   TEAMS_GESPERRT_ID,
-  SPIELER_ERFASSEN_GESPERRT_ID,
+  VEREIN_SPIELER_GESPERRT_ID,
   vereinTeamsVoll,
   vereinSpielerVoll,
   linkOhneTeamText,
@@ -4795,7 +4795,7 @@ pruefe("Seiten des Vereins einheitlich: Name als letzte Krume, Hauptaktion in de
   const formular = liesWeb("components/verein/VereinSpielerFormular.tsx");
   assert.match(formular, /"Spieler:in hinzufügen"/);
   for (const d of ["components/verein/VereinSpielerFormular.tsx", "components/verein/VereinSpielerAktionen.tsx", "components/verein/VereinSpielerListe.tsx"])
-    assert.ok(!/[Ee]rfass/.test(liesWeb(d).replace(/SPIELER_ERFASSEN_GESPERRT_ID|spielerErfassen\w*/g, "")), `${d}: «erfassen» in der Oberfläche`);
+    assert.ok(!/[Ee]rfass/.test(liesWeb(d).replace(/spielerErfassen\w*/g, "")), `${d}: «erfassen» in der Oberfläche`);
   assert.ok(!/[Ee]rfass/.test(SPIELER_BESTAND_LEER.text));
   // Das Bild der Spielerliste auf der Startseite zeigt dieselben Aktionen wie die Seite.
   const startBild = liesWeb("components/start/StartBilder.tsx");
@@ -4809,17 +4809,17 @@ pruefe("Seiten des Vereins einheitlich: Name als letzte Krume, Hauptaktion in de
   assert.equal(vereinTeamsVoll(VEREIN_TEAMS_MAX + 1), true, "Altbestand über der Grenze");
   assert.equal(vereinSpielerVoll(VEREIN_SPIELER_MAX - 1), false);
   assert.equal(vereinSpielerVoll(VEREIN_SPIELER_MAX), true);
-  assert.notEqual(TEAMS_GESPERRT_ID, SPIELER_ERFASSEN_GESPERRT_ID);
+  assert.notEqual(TEAMS_GESPERRT_ID, VEREIN_SPIELER_GESPERRT_ID);
   const anlegen = liesWeb("components/verein/TeamAnlegen.tsx");
   assert.match(anlegen, /disabled=\{voll\}\s*aria-describedby=\{voll \? TEAMS_GESPERRT_ID : undefined\}/);
   assert.match(anlegen, /const voll = vereinTeamsVoll\(anzahlTeams\);/);
   assert.match(teams, /const teamsVoll = vereinTeamsVoll\(teams\.length\);/);
   assert.match(teams, /\{istVerwaltung && teamsVoll && \(\s*<div id=\{TEAMS_GESPERRT_ID\}>\s*<SectionMessage>\{VEREIN_MELDUNG\.VEREIN_TEAMS_VOLL\}<\/SectionMessage>/);
   // Bei 1000 Spieler:innen sind Hinzufügen UND Import gesperrt; die Grenze zählt den ganzen Verein, nicht die Treffer.
-  assert.match(aktionen, /const sperre = \{ disabled: voll, "aria-describedby": voll \? SPIELER_ERFASSEN_GESPERRT_ID : undefined \};/);
+  assert.match(aktionen, /const sperre = \{ disabled: voll, "aria-describedby": voll \? VEREIN_SPIELER_GESPERRT_ID : undefined \};/);
   assert.equal(aktionen.match(/\{\.\.\.sperre\}/g)?.length, 2, "beide Knöpfe gesperrt");
   assert.match(spieler, /const voll = vereinSpielerVoll\(liste\.gesamt\);/);
-  assert.match(spieler, /\{liste\.verwaltung && voll && \(\s*<div id=\{SPIELER_ERFASSEN_GESPERRT_ID\}[^>]*>\s*<SectionMessage>\{VEREIN_MELDUNG\.VEREIN_VOLL\}<\/SectionMessage>/);
+  assert.match(spieler, /\{liste\.verwaltung && voll && \(\s*<div id=\{VEREIN_SPIELER_GESPERRT_ID\}[^>]*>\s*<SectionMessage>\{VEREIN_MELDUNG\.VEREIN_VOLL\}<\/SectionMessage>/);
   // AK 3: die Anzahl über der Liste in beiden Sichten, eingegrenzt als Treffer von allen.
   for (const d of ["components/verein/VereinSpielerListe.tsx", "components/verein/VereinSpielerAnsicht.tsx"])
     assert.match(liesWeb(d), /<SpielerAnzahl treffer=\{treffer\} gesamt=\{gesamt\} ohneTeam=\{ohneTeam\} eingrenzung=\{eingrenzung\} \/>/, d);

@@ -3272,7 +3272,6 @@ export default async function Styleguide() {
               }}
               summen={{ ohneAbmeldungGefehlt: { training: 3, spiel: 1 }, nichtGemeldet: 4 }}
               zeitraumText="Letzte 3 Monate"
-              umfang={{ n: 12, von: 14 }}
             />
           </div>
         </Section>
