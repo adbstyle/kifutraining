@@ -4,10 +4,13 @@ import { Leerzustand, SectionMessage } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { ListeMitDetail } from "@/components/layout/ListeMitDetail";
 import { TeamTrainingErstellenButton } from "@/components/team/TeamTrainingErstellenButton";
+import { TeamSeite } from "@/components/team/TeamSeite";
+import { KopfAktionen } from "@/components/layout/KopfAktionen";
 import { TrainingDetailSpalte } from "@/components/training/TrainingDetailSpalte";
 import { TrainingFilterBar } from "@/components/training/TrainingFilterBar";
 import { TrainingTabelle } from "@/components/training/TrainingTabelle";
-import { getTeamTrainings } from "@/lib/queries/trainings";
+import { getTeamTrainings, zaehleTeamTrainings } from "@/lib/queries/trainings";
+import { TEAM_SEITEN } from "@/lib/team-bereiche";
 import { ladeTrainingAnsicht } from "@/lib/queries/training-ansicht";
 import { auswahlLage, leseAuswahl } from "@/lib/training-auswahl";
 import { leseSortierung } from "@/lib/training-sortierung";
@@ -22,7 +25,10 @@ import { kategorienSlugs } from "@/lib/vocab";
  * `variante`, `ansicht`); was sich unterscheidet: keine Spalte
  * «Sichtbarkeit / Urheber» (Team-Trainings gehören dem Team), kein Schalter
  * «Meine Trainings», und die Aktionen der früheren Kachel — Termin zuordnen,
- * Zu mir übernehmen, Löschen — stehen im Detail (`TrainingAktionen`). */
+ * Zu mir übernehmen, Löschen — stehen im Detail (`TrainingAktionen`).
+ *
+ * Seit #706: «Training erstellen» in der Kopfzeile, die Anzahl über der
+ * Tabelle — bei Suche oder Filter als Treffer von allen. */
 export default async function TeamTrainingsPage({
   params,
   searchParams,
@@ -47,9 +53,11 @@ export default async function TeamTrainingsPage({
   const sortierung = leseSortierung(sp.sort, sp.dir);
   const auswahl = leseAuswahl(sp);
 
-  const [trainings, ansicht] = await Promise.all([
+  const [trainings, ansicht, gesamt] = await Promise.all([
     getTeamTrainings(id, { q, stufen, sortierung, ohneTermin: true }),
     auswahl ? ladeTrainingAnsicht(auswahl.training) : Promise.resolve(null),
+    // Nur eingegrenzt nötig: sonst ist die Liste schon der ganze Bestand.
+    filtersActive ? zaehleTeamTrainings(id) : Promise.resolve(null),
   ]);
   // Wie in der Übersicht: ein Termin-Training oder ein fremdes steht nicht
   // in diesem Bestand — die Auswahl schliesst.
@@ -58,59 +66,68 @@ export default async function TeamTrainingsPage({
   const { detail, nichtVerfuegbar, parameter, detailHref } = lage;
 
   return (
-    <section>
-      {/* Keine sichtbare Überschrift: «Trainings» steht schon in der
-          Seitenleiste; für Screenreader bleibt sie, damit unter dem Teamnamen
-          keine Ebene fehlt. */}
-      <h2 className="sr-only">Trainings</h2>
-      {sp.deleted && <Flash message="Training gelöscht." param="deleted" />}
-
-      {/* Schmal ersetzt das Detail den ganzen Bestand samt Filtern. */}
-      <div className={detail ? "max-lg:hidden" : undefined}>
-        <div className="mb-4 flex justify-end">
-          <TeamTrainingErstellenButton teamId={id} />
+    <TeamSeite
+      teamId={id}
+      seite={TEAM_SEITEN.trainings}
+      aktionen={
+        // Schmal ersetzt das Detail den ganzen Bestand — samt seiner Aktion.
+        <div className={detail ? "max-lg:hidden" : undefined}>
+          <KopfAktionen haupt={<TeamTrainingErstellenButton teamId={id} />} />
         </div>
-        <TrainingFilterBar q={q} stufen={stufen} />
-        {nichtVerfuegbar && <SectionMessage className="mb-4">Dieses Training ist nicht verfügbar.</SectionMessage>}
-      </div>
+      }
+    >
+      <section>
+        {/* Keine sichtbare Überschrift: «Trainings» steht in der Brotkrume; für
+            Screenreader bleibt sie, damit unter dem Teamnamen keine Ebene
+            fehlt. */}
+        <h2 className="sr-only">{TEAM_SEITEN.trainings}</h2>
+        {sp.deleted && <Flash message="Training gelöscht." param="deleted" />}
 
-      {trainings.length === 0 ? (
-        <Leerzustand
-          icon={filtersActive ? SearchX : ClipboardList}
-          titel={filtersActive ? "Keine Trainings gefunden" : "Noch kein Training im Team"}
-          dicht
-        >
-          {filtersActive
-            ? "Kein Training entspricht der aktiven Suche oder den Filtern. Passe die Kriterien an."
-            : "Erstelle eines hier oder stelle eine Kopie eines eigenen Trainings ins Team."}
-        </Leerzustand>
-      ) : (
-        <ListeMitDetail
-          spaltenName="Trainingsdetail"
-          links={
-            <TrainingTabelle
-              trainings={trainings}
-              sortierung={sortierung}
-              pfad={pfad}
-              parameter={parameter}
-              ausgewaehlt={detail?.training.id}
-              mitUrheber={false}
-            />
-          }
-          rechts={
-            detail &&
-            auswahl && (
-              <TrainingDetailSpalte
-                ansicht={detail}
-                varianteParam={auswahl.variante}
-                offen={auswahl.ansicht}
-                hrefFuer={detailHref}
-                schliessenHref={detailHref(null)}
+        {/* Schmal ersetzt das Detail den ganzen Bestand samt Filtern. */}
+        <div className={detail ? "max-lg:hidden" : undefined}>
+          <TrainingFilterBar q={q} stufen={stufen} />
+          {nichtVerfuegbar && <SectionMessage className="mb-4">Dieses Training ist nicht verfügbar.</SectionMessage>}
+        </div>
+
+        {trainings.length === 0 ? (
+          <Leerzustand
+            icon={filtersActive ? SearchX : ClipboardList}
+            titel={filtersActive ? "Keine Trainings gefunden" : "Noch kein Training im Team"}
+            dicht
+          >
+            {filtersActive
+              ? "Kein Training entspricht der aktiven Suche oder den Filtern. Passe die Kriterien an."
+              : "Erstelle eines hier oder stelle eine Kopie eines eigenen Trainings ins Team."}
+          </Leerzustand>
+        ) : (
+          <ListeMitDetail
+            spaltenName="Trainingsdetail"
+            links={
+              <TrainingTabelle
+                trainings={trainings}
+                sortierung={sortierung}
+                pfad={pfad}
+                parameter={parameter}
+                ausgewaehlt={detail?.training.id}
+                mitUrheber={false}
+                gesamt={gesamt}
               />
-            )
-          }
-        />
-      )}
-    </section>
+            }
+            rechts={
+              detail &&
+              auswahl && (
+                <TrainingDetailSpalte
+                  ansicht={detail}
+                  varianteParam={auswahl.variante}
+                  offen={auswahl.ansicht}
+                  hrefFuer={detailHref}
+                  schliessenHref={detailHref(null)}
+                />
+              )
+            }
+          />
+        )}
+      </section>
+    </TeamSeite>
   );
 }

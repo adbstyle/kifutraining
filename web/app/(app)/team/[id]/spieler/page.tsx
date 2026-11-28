@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { Card } from "@/components/ui";
 import { ListeMitDetail } from "@/components/layout/ListeMitDetail";
 import { EinzelteilnahmeRechts } from "@/components/team/EinzelteilnahmeRechts";
 import { SpielerListe } from "@/components/team/SpielerListe";
@@ -35,7 +34,9 @@ export default async function TeamSpielerPage({
     <ListeMitDetail
       spaltenName="Teilnahme"
       links={
-        <Card className="p-5 sm:p-6">
+        // Ohne Karte und ohne Überschrift (#706): Eingrenzung, Anzahl und
+        // Tabelle stehen wie in den übrigen Reitern direkt unter den Reitern.
+        <div>
           <SpielerListe
             teamId={team.id}
             teamName={team.name}
@@ -46,7 +47,7 @@ export default async function TeamSpielerPage({
             eingrenzung={ansicht.eingrenzung}
             ausgewaehlt={ansicht.ausgewaehlt?.id ?? null}
           />
-        </Card>
+        </div>
       }
       // `ListeMitDetail` teilt die Fläche nur mit einem Detail; ohne Wahl bleibt `rechts` leer.
       rechts={ansicht.teilnahme && <EinzelteilnahmeRechts ansicht={ansicht} sp={sp} />}

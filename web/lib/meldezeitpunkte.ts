@@ -135,7 +135,6 @@ export const MELDE_TEXT = {
   teamTitel: "Meldungen im Team",
   teamUnter: "Wie lange vor Beginn bzw. Anpfiff gemeldet wurde.",
   /** Die Eingrenzung trifft nicht alle (AK 9). */
-  umfang: (n: number, von: number) => `${n} von ${von} Spieler:innen`,
   karteLeer: "Im Zeitraum keine Meldung mit festgehaltenem Zeitpunkt.",
   ohneAbmeldung: "Ohne Abmeldung gefehlt",
   ohneAbmeldungUnter: "Angemeldet und nicht erschienen",

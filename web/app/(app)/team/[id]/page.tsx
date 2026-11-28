@@ -6,12 +6,15 @@ import { TrainingsPlan } from "@/components/team/TrainingsPlan";
 import { NeuerTerminKnopf } from "@/components/team/NeuerTerminKnopf";
 import { PlanMenue } from "@/components/team/PlanMenue";
 import { EingrenzungFilter } from "@/components/team/EingrenzungFilter";
+import { TeamSeite } from "@/components/team/TeamSeite";
+import { KopfAktionen } from "@/components/layout/KopfAktionen";
 import { istUuid } from "@/lib/kennung";
 import { getTeam } from "@/lib/queries/teams";
 import { getTeamPlan, teilePlan } from "@/lib/queries/termine";
 import { imFilter } from "@/lib/trainer";
 import { getTeamTrainings, getTrainingPool } from "@/lib/queries/trainings";
 import { eingrenzungAus, reiterAus } from "@/lib/team-ansicht";
+import { TEAM_SEITEN } from "@/lib/team-bereiche";
 import { TerminSpalte } from "@/components/team/TerminSpalte";
 import { createClient } from "@/lib/supabase/server";
 import { anzahlSpieler } from "@/lib/kern/spieler";
@@ -106,58 +109,63 @@ export default async function TeamPlanPage({
       spielerGesamt={spielerGesamt}
       eingrenzung={eingrenzung}
     >
-      <section>
-        {/* Keine sichtbare Überschrift: «Trainingsplan» steht schon im
-            Reiter; für Screenreader bleibt sie, damit unter dem Teamnamen
-            keine Ebene fehlt. Links die Eingrenzung; rechts, was man dem Plan
-            hinzufügt. */}
-        <h2 className="sr-only">Trainingsplan</h2>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            {(eingrenzung || !leer) && <EingrenzungFilter teamId={id} aktiv={eingrenzung} reiter={reiter} />}
-          </div>
-          <div className="ml-auto flex items-center gap-1">
-            <NeuerTerminKnopf />
-            {team && <PlanMenue teamId={id} teamName={team.name} />}
-          </div>
-        </div>
-        {terminWeg && <SectionMessage className="mb-4">{TERMIN_WEG}</SectionMessage>}
-        <TrainingsPlan
-          plan={plan}
-          heute={heute}
-          jetzt={jetzt}
-          ich={user.id}
-          hervorheben={hervorheben}
-          belegt={belegt}
-          eingrenzung={eingrenzung}
-          reiter={reiter}
-          spalte={
-            offen && (
-              <TerminSpalte
-                t={offen}
-                reiter={reiter}
-                eingrenzung={eingrenzung}
-                ich={user.id}
-                mitglieder={team?.mitglieder ?? []}
-                mitKadern={teamKader.length > 0}
-              />
-            )
-          }
-          leer={
-            eingrenzung ? (
-              <Leerzustand icon={UserCheck} titel="Keine Termine für dich" dicht>
-                {eingrenzung === "dabei" ? "Du bist bei keinem Termin dabei." : "Du bist zu keinem Termin eingeladen."}{" "}
-                Einladen kannst du dich an jedem Termin unter «Trainer:innen».
-              </Leerzustand>
-            ) : (
-              <Leerzustand icon={CalendarPlus} titel="Noch keine Termine" dicht>
-                Lege die Trainingszeiten des Teams als Termine fest. Welches Training dort stattfindet,
-                ordnest du danach zu.
-              </Leerzustand>
-            )
-          }
-        />
-      </section>
+      {/* Im Provider: «Termin erstellen» öffnet dessen Dialog (#706 AK 2, 4 —
+          Hauptaktion und Menü in der Kopfzeile). */}
+      <TeamSeite
+        teamId={id}
+        seite={TEAM_SEITEN.plan}
+        aktionen={
+          <KopfAktionen haupt={<NeuerTerminKnopf />} menue={team && <PlanMenue teamId={id} teamName={team.name} />} />
+        }
+      >
+        <section>
+          {/* Keine sichtbare Überschrift: «Trainingsplan» steht in der
+              Brotkrume; für Screenreader bleibt sie, damit unter dem Teamnamen
+              keine Ebene fehlt. Darunter die Eingrenzung. */}
+          <h2 className="sr-only">{TEAM_SEITEN.plan}</h2>
+          {(eingrenzung || !leer) && (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <EingrenzungFilter teamId={id} aktiv={eingrenzung} reiter={reiter} />
+            </div>
+          )}
+          {terminWeg && <SectionMessage className="mb-4">{TERMIN_WEG}</SectionMessage>}
+          <TrainingsPlan
+            plan={plan}
+            heute={heute}
+            jetzt={jetzt}
+            ich={user.id}
+            hervorheben={hervorheben}
+            belegt={belegt}
+            eingrenzung={eingrenzung}
+            reiter={reiter}
+            spalte={
+              offen && (
+                <TerminSpalte
+                  t={offen}
+                  reiter={reiter}
+                  eingrenzung={eingrenzung}
+                  ich={user.id}
+                  mitglieder={team?.mitglieder ?? []}
+                  mitKadern={teamKader.length > 0}
+                />
+              )
+            }
+            leer={
+              eingrenzung ? (
+                <Leerzustand icon={UserCheck} titel="Keine Termine für dich" dicht>
+                  {eingrenzung === "dabei" ? "Du bist bei keinem Termin dabei." : "Du bist zu keinem Termin eingeladen."}{" "}
+                  Einladen kannst du dich an jedem Termin unter «Trainer:innen».
+                </Leerzustand>
+              ) : (
+                <Leerzustand icon={CalendarPlus} titel="Noch keine Termine" dicht>
+                  Lege die Trainingszeiten des Teams als Termine fest. Welches Training dort stattfindet,
+                  ordnest du danach zu.
+                </Leerzustand>
+              )
+            }
+          />
+        </section>
+      </TeamSeite>
     </TerminBereich>
   );
 }

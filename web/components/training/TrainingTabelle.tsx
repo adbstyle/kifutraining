@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Layers } from "lucide-react";
 import { SecondaryLozenge, SichtbarkeitLozenge, SortierKopf, SortierWahl, type SortierOption } from "@/components/ui";
 import type { TrainingListRow } from "@/lib/queries/trainings";
-import { formatDate, formatDuration } from "@/lib/training";
+import { formatDate, formatDuration, trainingAnzahlText } from "@/lib/training";
 import {
   SORTIER_LABEL,
   SORTIER_SPALTEN,
@@ -65,6 +65,7 @@ export function TrainingTabelle({
   parameter,
   ausgewaehlt,
   mitUrheber = true,
+  gesamt = null,
 }: {
   trainings: TrainingListRow[];
   sortierung: TrainingSortierung;
@@ -77,6 +78,9 @@ export function TrainingTabelle({
   ausgewaehlt?: string;
   /** Die Spalte «Sichtbarkeit / Urheber» — im Team-Bestand ohne (#637). */
   mitUrheber?: boolean;
+  /** Der ganze Bestand, wenn Suche oder Filter eingrenzen: Die Anzahl heisst
+   *  dann «3 von 12 Trainings» (#706 AK 6). `null`: nicht eingegrenzt. */
+  gesamt?: number | null;
 }) {
   const href = (s: TrainingSortierung) => sortierHref(pfad, parameter, s);
   const kopf = (spalte: SortierSpalte) => ({
@@ -109,7 +113,7 @@ export function TrainingTabelle({
     <>
       <div className="mb-4 flex min-h-9 items-center justify-between gap-2">
         <p className="type-label-small text-on-surface-mittel">
-          {trainings.length} {trainings.length === 1 ? "Training" : "Trainings"}
+          {trainingAnzahlText(trainings.length, gesamt)}
         </p>
         <SortierWahl
           className="md:hidden"

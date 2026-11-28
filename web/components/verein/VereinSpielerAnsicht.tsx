@@ -3,7 +3,7 @@ import { Tabelle, TabellenZeile } from "@/components/ui";
 import type { VereinSpielerMitglied, VereinTeamMitglied } from "@/lib/kern/verein";
 import type { SpielerEingrenzung } from "@/lib/verein-spielerliste";
 import { VereinSpielerFilter } from "./VereinSpielerFilter";
-import { SpielerFuss, SpielerKopf, SpielerLeer, SpielerTeams } from "./VereinSpielerTeile";
+import { SpielerAnzahl, SpielerFuss, SpielerLeer, SpielerTeams } from "./VereinSpielerTeile";
 
 /* Die Spieler:innen des Vereins für Mitglieder ohne Vereinsverwaltung (Story
    #580 AK 3–5): nur lesen, nur Vorname, Nachname, Jahrgang und Teams — auch bei
@@ -11,7 +11,8 @@ import { SpielerFuss, SpielerKopf, SpielerLeer, SpielerTeams } from "./VereinSpi
    Zuordnen weist der Hinweis. Die Verwaltungsfelder kennt diese Sicht nicht:
    Die Datenebene liefert sie einem Mitglied gar nicht erst, und der Typ der
    Zeile führt sie nicht. Die Verwaltung hat ihre eigene Liste
-   (`VereinSpielerListe`); beide teilen Filterleiste, Kopf und Leerzustände. */
+   (`VereinSpielerListe`); beide teilen Filterleiste, Anzahl und Leerzustände.
+   Aktionen in der Kopfzeile hat diese Sicht keine (#707). */
 export function VereinSpielerAnsicht({
   spieler,
   treffer,
@@ -36,9 +37,9 @@ export function VereinSpielerAnsicht({
 }) {
   return (
     <>
-      <SpielerKopf gesamt={gesamt} ohneTeam={ohneTeam} />
-      <p className="type-body-small mt-1 text-on-surface-mittel">{SPIELER_ZUORDNUNG_HINWEIS}</p>
+      <p className="type-body-small text-on-surface-mittel">{SPIELER_ZUORDNUNG_HINWEIS}</p>
       {gesamt > 0 && <VereinSpielerFilter eingrenzung={eingrenzung} teams={teams} jahrgaenge={jahrgaenge} />}
+      <SpielerAnzahl treffer={treffer} gesamt={gesamt} ohneTeam={ohneTeam} eingrenzung={eingrenzung} />
       <div className="mt-4">
         {treffer === 0 ? (
           <SpielerLeer vereinLeer={gesamt === 0} verwaltung={false} pfad={pfad} />
@@ -65,7 +66,7 @@ export function VereinSpielerAnsicht({
             ))}
           </Tabelle>
         )}
-        <SpielerFuss angezeigt={spieler.length} treffer={treffer} eingrenzung={eingrenzung} weiterHref={weiterHref} />
+        <SpielerFuss angezeigt={spieler.length} treffer={treffer} weiterHref={weiterHref} />
       </div>
     </>
   );

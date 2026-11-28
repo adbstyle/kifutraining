@@ -15,14 +15,11 @@ export function MeldeTeam({
   fenster,
   summen,
   zeitraumText,
-  umfang,
 }: {
   fenster: Record<Meldeart, number[]>;
   summen: TeamSummen;
   /** Der gewählte Zeitraum als Text; `null`: die ganze Zeit im Team. */
   zeitraumText: string | null;
-  /** Wie viele der Spieler:innen die Eingrenzung umfasst; `null`: alle. */
-  umfang: { n: number; von: number } | null;
 }) {
   // Ein Massstab für alle drei Karten, damit ihre Balken vergleichbar sind.
   const max = Math.max(1, ...MELDEARTEN.flatMap((m) => fenster[m]));
@@ -35,7 +32,6 @@ export function MeldeTeam({
           </h3>
           <p className="type-body-small text-on-surface-mittel">
             {MELDE_TEXT.teamUnter} Zeitraum: {zeitraumText ?? "ganze Zeit im Team"}
-            {umfang && ` · ${MELDE_TEXT.umfang(umfang.n, umfang.von)}`}
           </p>
         </div>
         <InfoKnopf label={MELDE_TEXT.hinweisLabel}>

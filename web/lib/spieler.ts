@@ -613,6 +613,41 @@ export function teamSpielerAnzahlText(sichtbar: number, gesamt: number, eingegre
   return eingegrenzt && gesamt > 0 ? `${sichtbar} von ${gesamt}` : String(gesamt);
 }
 
+/** Warum «Spieler:in hinzufügen» gesperrt ist (#706 AK 7): Die Spielerliste
+ *  des Teams ist voll (`SPIELER_MAX`, Zwilling im Trigger), oder der
+ *  Spielerbestand des Vereins. Vom Verein erfährt das Team nur, dass er voll
+ *  ist, nie den Bestand — und wer Platz schafft. */
+export const SPIELER_SPERRE = {
+  team: SPIELER_MELDUNG.SPIELERLISTE_VOLL,
+  verein: "Im Verein ist kein Platz für weitere Spieler:innen. Zuerst muss die Vereinsverwaltung Platz schaffen.",
+} as const;
+export type SpielerSperre = keyof typeof SPIELER_SPERRE;
+/** Der Satz mit dem Grund der Sperre, auf den der gesperrte Knopf verweist. */
+export const SPIELER_GESPERRT_ID = "spieler-gesperrt";
+
+/** Welche Sperre gilt: zuerst die des Teams, dann die des Vereins. */
+export function spielerSperre(anzahlImTeam: number, vereinVoll: boolean): SpielerSperre | null {
+  if (anzahlImTeam >= SPIELER_MAX) return "team";
+  return vereinVoll ? "verein" : null;
+}
+
+/** Für welche Termine eine Spieler:in mit diesen Kadern gilt — ohne Aussage
+ *  darüber, was der Link zeigt (#663). In den Dialogen «Spieler:in
+ *  hinzufügen» und «Spieler:in ändern». */
+export function kaderHinweisText(vorname: string, kaderNamen: string[]): string {
+  const wer = vorname.trim() || "Die Spieler:in";
+  return kaderNamen.length === 0
+    ? `${wer} ist nur bei Terminen ohne Kader dabei.`
+    : `${wer} ist bei Terminen ohne Kader und bei den Terminen von ${aufzaehlung(kaderNamen)} dabei.`;
+}
+
+/** Die Anzahl über der Spielerliste, der Teilnahme und den Meldezeitpunkten
+ *  (#706 AK 6): alle Spieler:innen des Teams samt Schnuppernden, «34
+ *  Spieler:innen», bei Eingrenzung «12 von 34 Spieler:innen». */
+export function teamSpielerAnzahlZeile(sichtbar: number, gesamt: number, eingegrenzt: boolean): string {
+  return `${teamSpielerAnzahlText(sichtbar, gesamt, eingegrenzt)} ${gesamt === 1 ? "Spieler:in" : "Spieler:innen"}`;
+}
+
 /** Was der Link-Knopf einer Zeile sagt: Tooltip und Name (AK 4). Offen bleibt
  *  unmarkiert — der Stand fehlt im Text wie der Punkt am Knopf. */
 export function linkKnopfText(name: string, stand: LinkStand): { tooltip: string; label: string } {

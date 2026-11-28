@@ -370,6 +370,21 @@ export async function anzahlSpieler(supabase: SupabaseClient, teamId: string): P
   return count ?? 0;
 }
 
+/** Ob der Spielerbestand des Vereins, zu dem das Team gehört, voll ist
+ *  (#706 AK 7): nur Ja oder Nein, nie die Zahl (RPC `team_verein_voll` am
+ *  Team-Ort). Auskunft für die Sperre von «Spieler:in hinzufügen»; abweisen
+ *  tut die Datenebene (Marker VEREIN_VOLL). Bei einem Fehler `false`: Der
+ *  Knopf bleibt offen, und das Aufnehmen meldet die Grenze selbst. */
+export async function vereinVollFuerTeam(supabase: SupabaseClient, teamId: string): Promise<boolean> {
+  if (!istUuid(teamId)) return false;
+  const { data, error } = await supabase.rpc("team_verein_voll", { p_team: teamId });
+  if (error) {
+    console.error("[kern] team_verein_voll:", error.message);
+    return false;
+  }
+  return data === true;
+}
+
 // ── Privater Link (#436) ────────────────────────────────────────────────────
 
 type LinkErgebnis = KernErgebnis<{ token: string; teamId: string; name: string }>;

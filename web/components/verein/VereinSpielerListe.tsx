@@ -2,19 +2,17 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FileUp, Link2, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
+import { Link2, Pencil, Trash2, UserPlus } from "lucide-react";
 import {
   AuswahlLeiste,
   AuswahlListe,
   Button,
   Checkbox,
   Dialog,
-  IconButton,
   OverflowMenu,
   SectionMessage,
   Tabelle,
   TabellenZeile,
-  Tooltip,
 } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { ordneSpielerZuAktion } from "@/lib/actions/verein";
@@ -33,10 +31,9 @@ import { LinkStandLozenge } from "@/components/team/LinkStandLozenge";
 import type { SpielerEingrenzung } from "@/lib/verein-spielerliste";
 import { VereinSpielerFilter } from "./VereinSpielerFilter";
 import { VereinSpielerFormular } from "./VereinSpielerFormular";
-import { VereinSpielerImport } from "./VereinSpielerImport";
 import { VereinSpielerLinkDialog } from "./VereinSpielerLinkDialog";
 import { VereinSpielerLoeschen } from "./VereinSpielerLoeschen";
-import { SpielerFuss, SpielerKopf, SpielerLeer, SpielerTeams } from "./VereinSpielerTeile";
+import { SpielerAnzahl, SpielerFuss, SpielerLeer, SpielerTeams } from "./VereinSpielerTeile";
 
 /* Der Spielerbestand des Vereins (Epic Vereine #575): alle Spieler:innen mit
    Vorname, Nachname, Jahrgang, ihren Teams, J+S-Nummer und dem Stand ihres
@@ -48,8 +45,9 @@ import { SpielerFuss, SpielerKopf, SpielerLeer, SpielerTeams } from "./VereinSpi
    Auswahl, und offene Dialoge schliessen.
 
    Je Zeile liegen die Aktionen im ⋮-Menü (Story #582): Ändern, Privater Link,
-   Einem Team zuordnen und — zweistufig, mit Bestätigung — Löschen. Über der
-   Liste erfasst «Spieler:in erfassen» eine Spieler:in ohne Team. Zugeordnet
+   Einem Team zuordnen und — zweistufig, mit Bestätigung — Löschen.
+   Hinzufügen und Importieren stehen in der Kopfzeile (`VereinSpielerAktionen`,
+   #707). Zugeordnet
    wird einzeln über das Menü oder gesammelt über die Auswahl (#579 AK 2, 20):
    Beide öffnen denselben Dialog «Einem Team zuordnen», der die Teams mit
    ihrem Füllstand «16 von 100» zeigt. Gesammelt gilt ganz oder gar nicht (AK
@@ -100,12 +98,10 @@ export function VereinSpielerListe({
   const [teamId, setTeamId] = useState<string | null>(null);
   const [abweisung, setAbweisung] = useState<string | null>(null);
   const [schnuppern, setSchnuppern] = useState(false);
-  // Der Dialog zum Erfassen (`{ spieler: null }`) oder Ändern, der Link, das Löschen.
-  const [formular, setFormular] = useState<{ spieler: VereinSpieler | null } | null>(null);
+  // Der Dialog zum Ändern, der Link, das Löschen.
+  const [formular, setFormular] = useState<{ spieler: VereinSpieler } | null>(null);
   const [link, setLink] = useState<VereinSpieler | null>(null);
   const [loeschen, setLoeschen] = useState<VereinSpieler | null>(null);
-  // Der Import steht nur, solange er offen ist: Datei und Vorschau beginnen jedes Mal von vorn.
-  const [importOffen, setImportOffen] = useState(false);
 
   // Andere Suche, andere Eingrenzung (auch über die Zurück-Taste): Auswahl
   // und Dialoge gelten nur für die Zeilen, die man sieht — die Auswahl
@@ -120,7 +116,6 @@ export function VereinSpielerListe({
     setFormular(null);
     setLink(null);
     setLoeschen(null);
-    setImportOffen(false);
   }
 
   // Nur, wer noch dasteht, bleibt ausgewählt.
@@ -159,39 +154,20 @@ export function VereinSpielerListe({
     });
   }
 
-  const kopf = (
-    <SpielerKopf
-      gesamt={gesamt}
-      ohneTeam={ohneTeam}
-      aktion={
-        <span className="flex items-center gap-2">
-          <Tooltip label="Aus Datei importieren">
-            <IconButton icon={FileUp} label="Spieler:innen aus Datei importieren" aria-haspopup="dialog" onClick={() => setImportOffen(true)} />
-          </Tooltip>
-          <Button variant="outlined" aria-haspopup="dialog" onClick={() => setFormular({ spieler: null })}>
-            <Plus size={18} strokeWidth={2} aria-hidden />
-            Spieler:in erfassen
-          </Button>
-        </span>
-      }
-    />
-  );
-
   const dialoge = (
     <>
       <VereinSpielerFormular offen={formular} vereinId={vereinId} vereinName={vereinName} onClose={() => setFormular(null)} />
       <VereinSpielerLinkDialog spieler={link} onClose={() => setLink(null)} />
       <VereinSpielerLoeschen spieler={loeschen} onClose={() => setLoeschen(null)} />
-      {importOffen && <VereinSpielerImport vereinId={vereinId} vereinName={vereinName} pfad={pfad} onClose={() => setImportOffen(false)} />}
     </>
   );
 
   return (
     <>
-      {kopf}
       {/* Die Leiste steht an derselben Stelle, ob Treffer da sind oder nicht:
           Wer tippt, behält den Fokus im Suchfeld. */}
       {gesamt > 0 && <VereinSpielerFilter eingrenzung={eingrenzung} teams={teams} jahrgaenge={jahrgaenge} />}
+      <SpielerAnzahl treffer={treffer} gesamt={gesamt} ohneTeam={ohneTeam} eingrenzung={eingrenzung} />
       {treffer === 0 ? (
         <div className="mt-4">
           <SpielerLeer vereinLeer={gesamt === 0} verwaltung pfad={pfad} />
@@ -247,7 +223,7 @@ export function VereinSpielerListe({
           ))}
         </Tabelle>
       )}
-      <SpielerFuss angezeigt={spieler.length} treffer={treffer} eingrenzung={eingrenzung} weiterHref={weiterHref} />
+      <SpielerFuss angezeigt={spieler.length} treffer={treffer} weiterHref={weiterHref} />
 
       <AuswahlLeiste offen={gewaehlt.length > 0} titel={`${gewaehlt.length} ausgewählt`} onAufheben={() => setAuswahl([])}>
         <Button variant="filled" aria-haspopup="dialog" onClick={() => oeffnen(spieler.filter((s) => gewaehlt.includes(s.id)))}>

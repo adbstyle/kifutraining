@@ -72,7 +72,7 @@ import {
   NICHT_GEFUNDEN,
   ausDbFehler,
 } from "../lib/kern/ergebnis";
-import { KEINE_PASSENDE_UEBUNG, LEER_HINWEIS, leerBestandText, zielLabel } from "../lib/training";
+import { KEINE_PASSENDE_UEBUNG, LEER_HINWEIS, leerBestandText, trainingAnzahlText, zielLabel } from "../lib/training";
 import { trainingAuskunft as auskunftRoh } from "../lib/kern/auskunft";
 import { TrainingAuskunftStreng } from "../lib/kern/auskunft-schema";
 import { zeitAbgleich } from "../lib/junioren";
@@ -314,6 +314,11 @@ import {
   linkStandAus,
   TEAM_SPIELER_FILTER,
   teamSpielerAnzahlText,
+  teamSpielerAnzahlZeile,
+  SPIELER_SPERRE,
+  SPIELER_GESPERRT_ID,
+  spielerSperre,
+  kaderHinweisText,
   zaehleLinkStaende,
   LINK_UEBERSICHT,
   type LinkStand,
@@ -437,6 +442,11 @@ import {
   VEREIN_NAME_MAX,
   VEREIN_SPIELER_MAX,
   VEREIN_TEAMS_MAX,
+  VEREIN_SEITEN,
+  TEAMS_GESPERRT_ID,
+  VEREIN_SPIELER_GESPERRT_ID,
+  vereinTeamsVoll,
+  vereinSpielerVoll,
   linkOhneTeamText,
   spielerAendernAbgewiesenText,
   spielerErfassenAbgewiesenText,
@@ -537,7 +547,7 @@ import {
 } from "../lib/auffindbar";
 import { DATENSCHUTZ_PFAD, ENTWURF_HINWEIS, IMPRESSUM_PFAD, KONTAKT_EMAIL, RECHTLICHE_LINKS, VEREINBARUNG_FASSUNG, VEREINBARUNG_PFAD, VEREINBARUNG_TITEL } from "../lib/rechtliches";
 import { TRAGWEITE_VEROEFFENTLICHEN, ZUM_VEROEFFENTLICHEN_FEHLT } from "../lib/training-bedingungen";
-import { FILTER_SCHLUESSEL, REISENDE_SCHLUESSEL, SPIELER_BEREICHE, teamBereichAusPfad, teamBereichHref, teamSeitePfad, teamSpielerPfad } from "../lib/team-bereiche";
+import { FILTER_SCHLUESSEL, REISENDE_SCHLUESSEL, SPIELER_BEREICHE, TEAM_SEITEN, teamBereichAusPfad, teamBereichHref, teamSeitePfad, teamSpielerPfad } from "../lib/team-bereiche";
 import {
   OHNE_KADER_WERT,
   bereinigeTeamEingrenzung,
@@ -2766,6 +2776,10 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
   assert.deepEqual(spielerKopfTeile(144, 2), ["144 Spieler:innen", "2 ohne Team", "höchstens 1000 je Verein"]);
   assert.deepEqual(spielerKopfTeile(1, 0), ["1 Spieler:in", "höchstens 1000 je Verein"]);
   assert.deepEqual(spielerKopfTeile(1001, 1), ["1001 Spieler:innen", "1 ohne Team", "höchstens 1000 je Verein"]);
+  // #707 AK 3: eingegrenzt die Treffer von allen; «ohne Team» und die Höchstzahl gelten für den ganzen Verein.
+  assert.deepEqual(spielerKopfTeile(144, 23, 12), ["12 von 144 Spieler:innen", "23 ohne Team", "höchstens 1000 je Verein"]);
+  assert.deepEqual(spielerKopfTeile(1, 0, 0), ["0 von 1 Spieler:in", "höchstens 1000 je Verein"]);
+  assert.deepEqual(spielerKopfTeile(0, 0, 0), ["0 Spieler:innen", "höchstens 1000 je Verein"], "leerer Verein: keine Treffer von null");
   assert.equal(vereinKopfText(10, 144), "10 Teams · 144 Spieler:innen · höchstens 30 Teams");
   assert.equal(vereinKopfText(1, 1), "1 Team · 1 Spieler:in · höchstens 30 Teams");
   assert.equal(vereinKopfText(10), "10 Teams · höchstens 30 Teams", "ohne Recht keine Zahl der Spieler:innen");
@@ -2773,7 +2787,7 @@ pruefe("Spielerbestand der Verwaltung (#582): Link ohne Team, Löschen-Bestätig
   assert.equal(spielerVonText(1000), "1000 von 1000");
   assert.equal(spielerVonText(1003), "1003 (höchstens 1000 Spieler:innen)");
   assert.equal(SPIELER_BESTAND_LEER.titel, "Noch keine Spieler:innen");
-  assert.equal(SPIELER_BESTAND_LEER.text, "Der Verein führt noch keine Spieler:innen. Erfasse die erste oder nimm sie in der Spielerliste eines Teams auf.");
+  assert.equal(SPIELER_BESTAND_LEER.text, "Der Verein führt noch keine Spieler:innen. Füge die erste hinzu oder nimm sie in der Spielerliste eines Teams auf.");
   // Eine gelöschte Spieler:in macht die offene Seite überholt (AK 15), wie ein aufgelöstes Team.
   for (const f of ["team_id", "verein_id", "spieler_id"]) assert.equal(zielWeg(f), true, f);
   for (const f of [undefined, "vorname", "name", "spieler_ids"]) assert.equal(zielWeg(f), false, String(f));
@@ -2841,14 +2855,16 @@ pruefe("Spielerbestand der Verwaltung (#582, #585): Löschen, Import und Verein-
     if (/\.rpc\(\s*["`']verein_spieler_importieren["`']/.test(text)) rpcImport.push(rel);
   }
   assert.deepEqual(teamImport, [], `Team-Import-Namen stehen noch in: ${teamImport.join(", ")}`);
-  assert.deepEqual(dialogNutzer, ["components/verein/VereinSpielerListe.tsx"], "Import-Dialog nur in der Verwaltungsliste");
+  assert.deepEqual(dialogNutzer, ["components/verein/VereinSpielerAktionen.tsx"], "Import-Dialog nur in den Aktionen der Verwaltung (#707)");
   assert.deepEqual(rpcImport, ["lib/kern/verein.ts"], "verein_spieler_importieren nur im Verein-Kern");
   assert.ok(!/FileUp/.test(lies("components/team/SpielerListe.tsx")), "kein Datei-Symbol in der Spielerliste des Teams");
   assert.ok(!/CSV/.test(lies("components/team/SpielerListe.tsx").replace(/\/\*[\s\S]*?\*\//g, "")), "kein Hinweis auf den Import an der alten Stelle (#585 OoS 2)");
-  // Der Knopf steht in der Verwaltungsliste, der Dialog nur, solange er offen ist, und er schliesst beim Wechsel der Eingrenzung.
-  const verwaltungsliste = lies("components/verein/VereinSpielerListe.tsx");
-  assert.match(verwaltungsliste, /\{importOffen && <VereinSpielerImport /, "Dialog bedingt gemountet");
-  assert.match(verwaltungsliste, /setSchluesselVorher\(schluessel\);[\s\S]*?setImportOffen\(false\)/, "Eingrenzungswechsel schliesst den Import");
+  // Der Knopf steht seit #707 in der Kopfzeile (Aktionen der Verwaltung), der Dialog nur, solange er offen ist,
+  // und er schliesst beim Wechsel der Eingrenzung (Zurück-Taste).
+  const verwaltungsAktionen = lies("components/verein/VereinSpielerAktionen.tsx");
+  assert.match(verwaltungsAktionen, /\{importOffen && <VereinSpielerImport /, "Dialog bedingt gemountet");
+  assert.match(verwaltungsAktionen, /setSchluesselVorher\(schluessel\);[\s\S]*?setImportOffen\(false\)/, "Eingrenzungswechsel schliesst den Import");
+  assert.ok(!/importOffen|VereinSpielerImport/.test(lies("components/verein/VereinSpielerListe.tsx")), "kein Import mehr in der Liste");
   // Die Antwort `veraltet` ersetzt die Vorschau und zeigt das Band; die nächste selbst ausgelöste Vorschau löscht es.
   const dialog = lies("components/verein/VereinSpielerImport.tsx");
   assert.match(dialog, /function laden\([\s\S]*?setVeraltet\(false\)/, "Hinweisband verschwindet bei der nächsten Vorschau");
@@ -4636,6 +4652,179 @@ pruefe("Spielerliste eingrenzen: Suche, Kader, Jahrgang, Link-Stand; Adresse und
   for (const b of ["FilterSuche", "AuswahlFilter", "useAdressFilter", "zuruecksetzen"]) assert.ok(leiste.includes(b), `TeamSpielerFilter nutzt ${b}`);
   assert.match(quelle("lib/team-spieler-seite.ts"), /teamEingrenzungWerte\(eingrenzung\)/, "die Sichten leiten auf die bereinigte Adresse weiter");
   assert.match(quelle("app/(app)/team/[id]/spieler/page.tsx"), /ladeSpielerAnsicht\(/, "die Liste bereinigt über ladeSpielerAnsicht");
+});
+
+pruefe("Seiten eines Teams einheitlich: Name als letzte Krume, Hauptaktion in der Kopfzeile, Anzahl über der Liste (#706)", () => {
+  const app = join(web, "app/(app)/team/[id]");
+  const ohneKommentare = (t: string) => t.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const lies = (d: string) => ohneKommentare(readFileSync(join(app, d), "utf8"));
+  const liesWeb = (d: string) => ohneKommentare(readFileSync(join(web, d), "utf8"));
+  // Die Namen der Seiten sind die der Seitenleiste.
+  const nav = liesWeb("components/layout/AppNavClient.tsx");
+  const teamGruppe = nav.slice(nav.indexOf('titel: "Team"'), nav.indexOf('titel: "Verein"'));
+  assert.deepEqual([...teamGruppe.matchAll(/label: "([^"]+)"/g)].map((m) => m[1]), Object.values(TEAM_SEITEN));
+  // AK 1, NFR 2: Das Layout prüft nur noch den Zugriff; jede Seite setzt den
+  // einen Rahmen (TeamSeite) mit ihrem Namen — unter «Spieler:innen» einmal im
+  // Rahmen der Reiter, nie je Reiter.
+  const layout = lies("layout.tsx");
+  assert.ok(!/Seitenrahmen|<h1/.test(layout), "das Team-Layout setzt keinen Rahmen mehr");
+  assert.match(layout, /if \(!team\) redirect\("\/teams"\)/, "das Team-Layout prüft den Zugriff");
+  const rahmen: Record<string, keyof typeof TEAM_SEITEN> = {
+    "page.tsx": "plan",
+    "trainings/page.tsx": "trainings",
+    "trainer/page.tsx": "team",
+    "spieler/layout.tsx": "spieler",
+  };
+  for (const [datei, seite] of Object.entries(rahmen)) {
+    const q = lies(datei);
+    assert.match(q, new RegExp(`<TeamSeite\\s+teamId=\\{id\\}\\s+seite=\\{TEAM_SEITEN\\.${seite}\\}`), `${datei}: TeamSeite mit «${TEAM_SEITEN[seite]}»`);
+    assert.ok(!/Seitenrahmen/.test(q), `${datei}: kein eigener Seitenrahmen`);
+  }
+  for (const b of SPIELER_BEREICHE) {
+    const q = lies(join("spieler", b.pfad.slice(1), "page.tsx"));
+    assert.ok(!/TeamSeite|Seitenrahmen|SpielerHinzufuegen/.test(q), `Reiter ${b.label}: Rahmen und Hinzufügen nur im Rahmen der Spieler:innen`);
+  }
+  const teamSeite = liesWeb("components/team/TeamSeite.tsx");
+  assert.match(teamSeite, /\{ label: team\.name, href: `\/team\/\$\{team\.id\}` \},\s*\{ label: seite \},/, "die Seite ist die letzte Krume, das Team führt auf den Trainingsplan");
+  assert.match(teamSeite, /<h1 className="sr-only">\{team\.name\}<\/h1>/, "die Überschrift bleibt für Vorlesehilfen");
+  for (const datei of ["page.tsx", "trainings/page.tsx", "spieler/layout.tsx"])
+    assert.match(lies(datei), /<h2 className="sr-only">\{TEAM_SEITEN\.\w+\}<\/h2>/, `${datei}: unsichtbare Überschrift der Seite`);
+  // AK 2, 4: die Hauptaktion nur in der Kopfzeile (KopfAktionen), die Zweitaktion daneben.
+  const plan = lies("page.tsx");
+  assert.match(plan, /aktionen=\{\s*<KopfAktionen haupt=\{<NeuerTerminKnopf \/>\} menue=\{team && <PlanMenue /, "Trainingsplan: Termin erstellen und das Menü in der Kopfzeile");
+  assert.equal(plan.match(/<NeuerTerminKnopf/g)?.length, 1, "«Termin erstellen» steht nur einmal");
+  const trainings = lies("trainings/page.tsx");
+  assert.match(trainings, /<KopfAktionen haupt=\{<TeamTrainingErstellenButton teamId=\{id\} \/>\} \/>/, "Trainings: Training erstellen in der Kopfzeile");
+  assert.equal(trainings.match(/<TeamTrainingErstellenButton/g)?.length, 1, "«Training erstellen» steht nur einmal");
+  assert.ok(!/KopfAktionen|aktionen=/.test(lies("trainer/page.tsx")), "«Team» hat keine Aktionen in der Kopfzeile (Out of Scope 1)");
+  // AK 3: «Spieler:in hinzufügen» im Rahmen der Spieler:innen, also in jedem Reiter, und nirgends sonst.
+  const spielerRahmen = lies("spieler/layout.tsx");
+  assert.match(spielerRahmen, /haupt=\{<SpielerHinzufuegen teamId=\{id\} kader=\{kader\} sperre=\{sperre\} \/>\}/);
+  assert.match(spielerRahmen, /<SpielerBereicheNav teamId=\{id\} \/>/, "AK 5: die Reiter direkt im Rahmen");
+  const liste = liesWeb("components/team/SpielerListe.tsx");
+  assert.ok(!/nimmSpielerAufAktion|Spieler:in hinzufügen|<h3|Shirt|\bPlus\b/.test(liste), "die Spielerliste hat kein eigenes Hinzufügen und keine Überschrift mehr");
+  assert.ok(!/<Card/.test(lies("spieler/page.tsx")), "die Liste steht wie die übrigen Reiter ohne Karte");
+  const hinzu = liesWeb("components/team/SpielerHinzufuegen.tsx");
+  assert.match(hinzu, /nimmSpielerAufAktion\(teamId, eingabe\)/);
+  assert.match(hinzu, /setForm\(LEER\);\s*setFehler\(null\);\s*router\.refresh\(\);\s*erstesFeld\.current\?\.focus\(\);/, "der Dialog bleibt für die nächste offen");
+  const nachAufnahme = hinzu.slice(hinzu.indexOf("nimmSpielerAufAktion(teamId, eingabe)"), hinzu.indexOf("const aendern"));
+  assert.ok(!/setOffen\(false\)/.test(nachAufnahme), "nach dem Hinzufügen schliesst der Dialog nicht");
+  assert.ok(!/Löschen|Import|CSV/.test(hinzu), "kein Löschen und kein Import im Team");
+  // AK 8: auf dem Telefon die Kurzform, der volle Name für Vorlesehilfen.
+  for (const [datei, label, kurz] of [
+    ["components/team/NeuerTerminKnopf.tsx", "Termin erstellen", "Erstellen"],
+    ["components/team/TeamTrainingErstellenButton.tsx", "Training erstellen", "Erstellen"],
+    ["components/team/SpielerHinzufuegen.tsx", "Spieler:in hinzufügen", "Hinzufügen"],
+  ])
+    assert.ok(liesWeb(datei).includes(`<KopfKnopfText label="${label}" kurz="${kurz}" />`), `${datei}: Kurzform`);
+  const kopf = liesWeb("components/layout/KopfAktionen.tsx");
+  assert.match(kopf, /<span aria-hidden className="sm:hidden">\s*\{kurz\}\s*<\/span>\s*<span className="max-sm:sr-only">\{label\}<\/span>/);
+  assert.match(kopf, /\{zweit\}\s*\{haupt\}\s*\{menue\}/, "Kontur links, Hauptaktion, Menü rechts aussen");
+  // AK 7: gesperrt bei voller Spielerliste oder vollem Verein, mit Grund; Muster TeamAnlegen.
+  assert.equal(spielerSperre(SPIELER_MAX - 1, false), null);
+  assert.equal(spielerSperre(SPIELER_MAX, false), "team");
+  assert.equal(spielerSperre(SPIELER_MAX, true), "team", "die Grenze des Teams zuerst");
+  assert.equal(spielerSperre(0, true), "verein");
+  assert.equal(SPIELER_SPERRE.team, SPIELER_MELDUNG.SPIELERLISTE_VOLL);
+  assert.ok(!/\d/.test(SPIELER_SPERRE.verein), "vom Verein erfährt das Team keine Zahl");
+  assert.match(SPIELER_SPERRE.verein, /Vereinsverwaltung/, "der Satz nennt, wer Platz schafft");
+  assert.match(hinzu, /disabled=\{sperre !== null\}\s*aria-describedby=\{sperre \? SPIELER_GESPERRT_ID : undefined\}/);
+  assert.match(spielerRahmen, /\{sperre && \(\s*<div id=\{SPIELER_GESPERRT_ID\}>\s*<SectionMessage>\{SPIELER_SPERRE\[sperre\]\}<\/SectionMessage>/);
+  assert.equal(SPIELER_GESPERRT_ID, "spieler-gesperrt");
+  assert.match(liesWeb("lib/team-spieler-seite.ts"), /spielerSperre\(imTeam, vereinVoll\)/);
+  assert.match(liesWeb("lib/kern/spieler.ts"), /supabase\.rpc\("team_verein_voll", \{ p_team: teamId \}\)/);
+  // Die RPC: Team-Ort, Prüfung zuerst, nur Ja oder Nein; nur der Kern ruft sie, nie das KI-Werkzeug.
+  const mig = readFileSync(join(web, "..", "supabase", "migrations", "20261129100000_team_verein_voll.sql"), "utf8");
+  assert.match(mig, /returns boolean[\s\S]*?as \$\$\s*begin\s*if not ist_team_mitglied\(p_team\) then/);
+  assert.ok(!/ist_verein_verwaltung|nur_in_der_anwendung\(/.test(mig), "kein Verwaltungsweg am Team-Ort");
+  assert.match(mig, /revoke all on function team_verein_voll\(uuid\) from public, anon;/);
+  const aufrufer = ["lib", "app", "components"]
+    .flatMap((o) => quelldateien(join(web, o)))
+    .filter((d) => /\bteam_verein_voll\b/.test(ohneKommentare(readFileSync(d, "utf8"))))
+    .map((d) => relative(web, d));
+  assert.deepEqual(aufrufer, ["lib/kern/spieler.ts"], "nur der Kern ruft team_verein_voll");
+  // AK 6: die Anzahl — Spieler:innen samt Schnuppernden, eingegrenzt als Treffer von allen.
+  assert.equal(teamSpielerAnzahlZeile(34, 34, false), "34 Spieler:innen");
+  assert.equal(teamSpielerAnzahlZeile(12, 34, true), "12 von 34 Spieler:innen");
+  assert.equal(teamSpielerAnzahlZeile(1, 1, false), "1 Spieler:in");
+  assert.equal(teamSpielerAnzahlZeile(1, 34, true), "1 von 34 Spieler:innen");
+  assert.equal(trainingAnzahlText(12), "12 Trainings");
+  assert.equal(trainingAnzahlText(1), "1 Training");
+  assert.equal(trainingAnzahlText(3, 12), "3 von 12 Trainings");
+  assert.match(liste, /teamSpielerAnzahlZeile\(sichtbar\.length, spieler\.length, eingegrenzt\)/, "Liste");
+  assert.match(liesWeb("components/team/SpielerTabellenSeite.tsx"), /teamSpielerAnzahlZeile\(\s*ansicht\.gefiltert\.length,\s*ansicht\.spieler\.length,/, "Teilnahme und Meldezeitpunkte");
+  for (const r of ["spieler/teilnahme/page.tsx", "spieler/meldezeitpunkte/page.tsx"]) assert.match(lies(r), /<SpielerTabellenSeite/);
+  assert.match(trainings, /filtersActive \? zaehleTeamTrainings\(id\) : Promise\.resolve\(null\)/);
+  assert.match(trainings, /gesamt=\{gesamt\}/, "Trainings: eingegrenzt als Treffer von allen");
+  assert.match(liesWeb("components/training/TrainingTabelle.tsx"), /\{trainingAnzahlText\(trainings\.length, gesamt\)\}/);
+  // Die Kader-Hinweise beider Dialoge aus einer Quelle.
+  assert.equal(kaderHinweisText(" ", []), "Die Spieler:in ist nur bei Terminen ohne Kader dabei.");
+  assert.equal(kaderHinweisText("Lea", ["A", "B"]), "Lea ist bei Terminen ohne Kader und bei den Terminen von A und B dabei.");
+  for (const d of ["components/team/SpielerListe.tsx", "components/team/SpielerHinzufuegen.tsx"]) assert.match(liesWeb(d), /kaderHinweisText\(form\.vorname, gewaehlteNamen\)/, d);
+});
+
+pruefe("Seiten des Vereins einheitlich: Name als letzte Krume, Hauptaktion in der Kopfzeile, Anzahl über der Liste (#707)", () => {
+  const ohneKommentare = (t: string) => t.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const liesWeb = (d: string) => ohneKommentare(readFileSync(join(web, d), "utf8"));
+  // Die Namen der Seiten sind die der Seitenleiste (Bereich «Verein», vor «Verwaltung»).
+  const nav = liesWeb("components/layout/AppNavClient.tsx");
+  const vereinGruppe = nav.slice(nav.indexOf('titel: "Verein"'), nav.indexOf("verein?.istVerwaltung"));
+  assert.deepEqual([...vereinGruppe.matchAll(/label: "([^"]+)"/g)].map((m) => m[1]), Object.values(VEREIN_SEITEN));
+  // AK 1, NFR 2: ein Rahmen (VereinSeite) mit dem Namen der Seite als letzter Krume; die Überschrift nur unsichtbar.
+  const rahmen = liesWeb("components/verein/VereinSeite.tsx");
+  assert.match(rahmen, /krumen=\{\[\{ label: vereinName \}, \{ label: seite \}\]\}/);
+  assert.match(rahmen, /<h1 className="sr-only">\s*\{seite\} im Verein «\{vereinName\}»\s*<\/h1>/, "Überschrift für Vorlesehilfen, Vereinsname nach «Verein» in « »");
+  const teams = liesWeb("app/(app)/verein/page.tsx");
+  const spieler = liesWeb("app/(app)/verein/spieler/page.tsx");
+  for (const [q, seite, datei] of [[teams, "teams", "verein/page.tsx"], [spieler, "spieler", "verein/spieler/page.tsx"]] as const) {
+    assert.match(q, new RegExp(`<VereinSeite\\s+vereinName=\\{[\\w.]+\\}\\s+seite=\\{VEREIN_SEITEN\\.${seite}\\}`), `${datei}: VereinSeite mit «${VEREIN_SEITEN[seite]}»`);
+    assert.ok(!/Seitenrahmen|<h1|<h2/.test(q), `${datei}: kein eigener Rahmen, keine sichtbare Überschrift`);
+  }
+  for (const d of ["components/verein/VereinSpielerListe.tsx", "components/verein/VereinSpielerAnsicht.tsx", "components/verein/VereinSpielerTeile.tsx"])
+    assert.ok(!/<h[1-3]|SpielerKopf/.test(liesWeb(d)), `${d}: keine Überschrift «Spieler:innen» mehr über der Liste`);
+  // AK 2: die Hauptaktion nur in der Kopfzeile, nur für die Verwaltung; der Import als Zweitaktion daneben.
+  assert.match(teams, /aktionen=\{istVerwaltung \? <KopfAktionen haupt=\{<TeamAnlegen vereinId=\{verein\.id\} anzahlTeams=\{teams\.length\} \/>\} \/> : undefined\}/);
+  assert.equal(teams.match(/<TeamAnlegen/g)?.length, 1, "«Team anlegen» steht nur einmal");
+  assert.match(spieler, /liste\.verwaltung \? \(\s*<VereinSpielerAktionen /, "Aktionen nur für die Verwaltung");
+  assert.equal(spieler.match(/<VereinSpielerAktionen/g)?.length, 1);
+  const aktionen = liesWeb("components/verein/VereinSpielerAktionen.tsx");
+  assert.match(aktionen, /<KopfAktionen\s+zweit=\{\s*<Button variant="outlined"[\s\S]*?<KopfKnopfText label="Spieler:innen importieren" kurz="Importieren" \/>[\s\S]*?haupt=\{\s*<Button variant="filled"[\s\S]*?<KopfKnopfText label="Spieler:in hinzufügen" kurz="Hinzufügen" \/>/, "Import in Kontur links, Hinzufügen gefüllt");
+  const liste = liesWeb("components/verein/VereinSpielerListe.tsx");
+  assert.ok(!/Spieler:in (erfassen|hinzufügen)|setFormular\(\{ spieler: null \}\)|FileUp/.test(liste), "kein Hinzufügen und kein Import in der Liste");
+  // Ein Begriff für Team und Verein: «Spieler:in hinzufügen»; «erfassen» steht nirgends mehr in der Oberfläche des Vereins.
+  const formular = liesWeb("components/verein/VereinSpielerFormular.tsx");
+  assert.match(formular, /"Spieler:in hinzufügen"/);
+  for (const d of ["components/verein/VereinSpielerFormular.tsx", "components/verein/VereinSpielerAktionen.tsx", "components/verein/VereinSpielerListe.tsx"])
+    assert.ok(!/[Ee]rfass/.test(liesWeb(d).replace(/spielerErfassen\w*/g, "")), `${d}: «erfassen» in der Oberfläche`);
+  assert.ok(!/[Ee]rfass/.test(SPIELER_BESTAND_LEER.text));
+  // Das Bild der Spielerliste auf der Startseite zeigt dieselben Aktionen wie die Seite.
+  const startBild = liesWeb("components/start/StartBilder.tsx");
+  assert.ok(!/Spieler:in erfassen|FileUp/.test(startBild), "Startseite: kein «erfassen», kein Datei-Symbol");
+  assert.match(startBild, /buttonClasses\("outlined"\)\}>Spieler:innen importieren<\/span>\s*<span className=\{buttonClasses\("filled"\)\}>Spieler:in hinzufügen</);
+  // AK 5: auf dem Telefon die Kurzform, der volle Name für Vorlesehilfen.
+  assert.ok(liesWeb("components/verein/TeamAnlegen.tsx").includes(`<KopfKnopfText label="Team anlegen" kurz="Anlegen" />`));
+  // AK 4: gesperrt an der Grenze des Vereins, sichtbar mit Grund — Muster wie im Team (#706).
+  assert.equal(vereinTeamsVoll(VEREIN_TEAMS_MAX - 1), false);
+  assert.equal(vereinTeamsVoll(VEREIN_TEAMS_MAX), true);
+  assert.equal(vereinTeamsVoll(VEREIN_TEAMS_MAX + 1), true, "Altbestand über der Grenze");
+  assert.equal(vereinSpielerVoll(VEREIN_SPIELER_MAX - 1), false);
+  assert.equal(vereinSpielerVoll(VEREIN_SPIELER_MAX), true);
+  assert.notEqual(TEAMS_GESPERRT_ID, VEREIN_SPIELER_GESPERRT_ID);
+  const anlegen = liesWeb("components/verein/TeamAnlegen.tsx");
+  assert.match(anlegen, /disabled=\{voll\}\s*aria-describedby=\{voll \? TEAMS_GESPERRT_ID : undefined\}/);
+  assert.match(anlegen, /const voll = vereinTeamsVoll\(anzahlTeams\);/);
+  assert.match(teams, /const teamsVoll = vereinTeamsVoll\(teams\.length\);/);
+  assert.match(teams, /\{istVerwaltung && teamsVoll && \(\s*<div id=\{TEAMS_GESPERRT_ID\}>\s*<SectionMessage>\{VEREIN_MELDUNG\.VEREIN_TEAMS_VOLL\}<\/SectionMessage>/);
+  // Bei 1000 Spieler:innen sind Hinzufügen UND Import gesperrt; die Grenze zählt den ganzen Verein, nicht die Treffer.
+  assert.match(aktionen, /const sperre = \{ disabled: voll, "aria-describedby": voll \? VEREIN_SPIELER_GESPERRT_ID : undefined \};/);
+  assert.equal(aktionen.match(/\{\.\.\.sperre\}/g)?.length, 2, "beide Knöpfe gesperrt");
+  assert.match(spieler, /const voll = vereinSpielerVoll\(liste\.gesamt\);/);
+  assert.match(spieler, /\{liste\.verwaltung && voll && \(\s*<div id=\{VEREIN_SPIELER_GESPERRT_ID\}[^>]*>\s*<SectionMessage>\{VEREIN_MELDUNG\.VEREIN_VOLL\}<\/SectionMessage>/);
+  // AK 3: die Anzahl über der Liste in beiden Sichten, eingegrenzt als Treffer von allen.
+  for (const d of ["components/verein/VereinSpielerListe.tsx", "components/verein/VereinSpielerAnsicht.tsx"])
+    assert.match(liesWeb(d), /<SpielerAnzahl treffer=\{treffer\} gesamt=\{gesamt\} ohneTeam=\{ohneTeam\} eingrenzung=\{eingrenzung\} \/>/, d);
+  assert.match(liesWeb("components/verein/VereinSpielerTeile.tsx"), /spielerKopfTeile\(gesamt, ohneTeam, eingrenzungGesetzt\(eingrenzung\) \? treffer : undefined\)/);
+  assert.match(teams, /\{vereinKopfText\(teams\.length, spielerZahl\)\}/);
 });
 
 pruefe("Stand der Links im Team überblicken: Zahlen je Stand, Sprung auf die offenen (#658)", () => {

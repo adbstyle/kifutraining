@@ -584,3 +584,11 @@ export function formatDuration(min: number): string {
   if (m === 0) return `${h} h`;
   return `${h} h ${m} min`;
 }
+
+/** Die Anzahl über einer Liste von Trainings: «12 Trainings», bei Suche oder
+ *  Filter die Treffer von allen, «3 von 12 Trainings» (#706 AK 6). */
+export function trainingAnzahlText(sichtbar: number, gesamt: number | null = null): string {
+  const n = gesamt ?? sichtbar;
+  const wort = n === 1 ? "Training" : "Trainings";
+  return gesamt === null ? `${sichtbar} ${wort}` : `${sichtbar} von ${gesamt} ${wort}`;
+}
