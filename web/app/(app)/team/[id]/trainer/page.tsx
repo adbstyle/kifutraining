@@ -41,7 +41,7 @@ export default async function TeamSeitePage({ params }: { params: Promise<{ id: 
       </Card>
 
       <Card className="p-5 sm:p-6">
-        <h2 className="type-title-medium text-on-surface">Teamangaben</h2>
+        <h3 className="type-title-medium text-on-surface">Teamangaben</h3>
         <p className="type-body-small text-on-surface-mittel">Legt die Vereinsverwaltung fest</p>
         <dl className="mt-3">
           <div className="flex items-center justify-between gap-3 border-t border-linie py-2">

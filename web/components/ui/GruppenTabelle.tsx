@@ -70,11 +70,12 @@ export function GruppenTabelle({
   schmal: ReactNode;
   className?: string;
 }) {
-  const gruppen: { label: string; anzahl: number }[] = [];
+  // `schluessel`: die erste Spalte der Gruppe — eindeutig, auch wenn eine Gruppe zweimal vorkommt.
+  const gruppen: { label: string; anzahl: number; schluessel: string }[] = [];
   for (const s of spalten) {
     const letzte = gruppen.at(-1);
     if (letzte && letzte.label === s.gruppe) letzte.anzahl++;
-    else gruppen.push({ label: s.gruppe, anzahl: 1 });
+    else gruppen.push({ label: s.gruppe, anzahl: 1, schluessel: s.schluessel });
   }
   const gruppenStart = (i: number) => i === 0 || spalten[i - 1].gruppe !== spalten[i].gruppe;
   const grenze = (i: number) => (gruppenStart(i) ? "border-l border-linie pl-4" : "");
@@ -91,7 +92,7 @@ export function GruppenTabelle({
               <td className="sticky left-0 z-10 bg-elev-01" />
               {gruppen.map((g) => (
                 <th
-                  key={g.label}
+                  key={g.schluessel}
                   scope="colgroup"
                   colSpan={g.anzahl}
                   className="border-l border-linie px-4 pt-3 text-left align-bottom font-normal last:pr-4"

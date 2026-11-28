@@ -48,7 +48,7 @@ export function TeamGefahrenzone({
   }
 
   return (
-    <Gefahrenzone beschreibung="Du verlierst den Zugang zu Kalender, Spieler:innen und Team-Trainings. Das Team bleibt bestehen, auch wenn du die letzte Person bist.">
+    <Gefahrenzone ebene={3} beschreibung="Du verlierst den Zugang zu Kalender, Spieler:innen und Team-Trainings. Das Team bleibt bestehen, auch wenn du die letzte Person bist.">
       <Button variant="outlined" disabled={pending} onClick={oeffnen}>
         <LogOut size={18} strokeWidth={2} aria-hidden />
         Team verlassen

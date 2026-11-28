@@ -101,10 +101,10 @@ export function TeamInfosKarte({ teamId, infos }: { teamId: string; infos: TeamI
   return (
     <>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 type-title-large text-on-surface">
+        <h3 className="flex items-center gap-2 type-title-large text-on-surface">
           <ScrollText size={20} strokeWidth={2} aria-hidden />
           {TEAM_INFOS_TEXT.titel}
-        </h2>
+        </h3>
         {vorhanden && (
           <Tooltip label={TEAM_INFOS_TEXT.bearbeiten} ende>
             <IconButton icon={Pencil} label={TEAM_INFOS_TEXT.bearbeiten} aria-haspopup="dialog" onClick={oeffnen} />

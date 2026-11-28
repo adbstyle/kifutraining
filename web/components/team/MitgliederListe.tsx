@@ -61,13 +61,13 @@ export function MitgliederListe({
   return (
     <>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 type-title-large text-on-surface">
+        <h3 className="flex items-center gap-2 type-title-large text-on-surface">
           <UserRound size={20} strokeWidth={2} aria-hidden />
           <span>
             Mitglieder
             <span className="type-label-small ml-2 text-on-surface-mittel">{mitglieder.length}</span>
           </span>
-        </h2>
+        </h3>
         <Tooltip label="Trainer:in aufnehmen" ende>
           <IconButton icon={Plus} label="Trainer:in aufnehmen" aria-haspopup="dialog" onClick={() => setAufnahme(true)} />
         </Tooltip>

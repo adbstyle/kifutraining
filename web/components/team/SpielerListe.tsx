@@ -363,7 +363,7 @@ export function SpielerListe({
   return (
     <>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 type-title-large text-on-surface">
+        <h3 className="flex items-center gap-2 type-title-large text-on-surface">
           <Shirt size={20} strokeWidth={2} aria-hidden />
           <span>
             Spieler:innen
@@ -371,7 +371,7 @@ export function SpielerListe({
               {teamSpielerAnzahlText(sichtbar.length, spieler.length, eingegrenzt)}
             </span>
           </span>
-        </h2>
+        </h3>
         <Tooltip label="Spieler:in hinzufügen" ende>
           <IconButton icon={Plus} label="Spieler:in hinzufügen" aria-haspopup="dialog" onClick={() => oeffnen()} />
         </Tooltip>

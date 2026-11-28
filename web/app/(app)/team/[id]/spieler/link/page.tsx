@@ -35,10 +35,10 @@ export default async function TeamLinkPage({ params }: { params: Promise<{ id: s
   return (
     <div className="flex flex-col gap-4">
       <Card className="p-5 sm:p-6">
-        <h2 className="flex items-center gap-2 type-title-large text-on-surface">
+        <h3 className="flex items-center gap-2 type-title-large text-on-surface">
           <Link2 size={20} strokeWidth={2} aria-hidden />
           Link verteilen
-        </h2>
+        </h3>
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
           <Selbstabholung
             teamId={id}

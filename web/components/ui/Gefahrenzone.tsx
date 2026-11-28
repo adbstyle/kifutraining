@@ -23,22 +23,26 @@ export function Gefahrenzone({
   beschreibung,
   children,
   className,
+  ebene = 2,
 }: {
   /** Ein Satz, was die Handlungen hier bewirken. */
   beschreibung?: ReactNode;
   children: ReactNode;
   className?: string;
+  /** Die Ebene der Überschrift: 3 unter einer Bereichsüberschrift (Seite «Team», #704). */
+  ebene?: 2 | 3;
 }) {
   const id = useId();
+  const Ueberschrift = ebene === 3 ? "h3" : "h2";
   return (
     <section
       aria-labelledby={id}
       className={cn("rounded-flaeche kontur border-error bg-elev-01 p-5 sm:p-6", className)}
     >
-      <h2 id={id} className="type-title-large flex items-center gap-2 text-error">
+      <Ueberschrift id={id} className="type-title-large flex items-center gap-2 text-error">
         <AlertTriangle size={20} strokeWidth={2} aria-hidden />
         Gefahrenzone
-      </h2>
+      </Ueberschrift>
       {beschreibung && (
         <p className="type-body-medium mt-2 text-on-surface-mittel">{beschreibung}</p>
       )}
