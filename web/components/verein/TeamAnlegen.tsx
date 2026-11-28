@@ -2,20 +2,22 @@
 
 import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
 import { Button, Dialog, SectionMessage, TextField } from "@/components/ui";
+import { KopfKnopfText } from "@/components/layout/KopfAktionen";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { legeTeamAnAktion } from "@/lib/actions/verein";
 import { teamNameProblem } from "@/lib/team";
-import { VEREIN_MELDUNG, VEREIN_TEAMS_MAX } from "@/lib/verein";
+import { TEAMS_GESPERRT_ID, VEREIN_TEAMS_MAX, vereinTeamsVoll } from "@/lib/verein";
 
 /* «Team anlegen» auf der Übersicht des Vereins (Epic Vereine #575, Story
-   #581 AK 17, 18, 20, 21): ein Knopf mit Dialog, nur für die Vereinsverwaltung.
-   Die Verwaltung wird beim Anlegen nicht Trainer:in — Trainer:innen, auch sie
-   selbst, nimmt sie danach im Team auf.
+   #581 AK 17, 18, 20, 21): die Hauptaktion in der Kopfzeile (#707 AK 2), mit
+   Dialog, nur für die Vereinsverwaltung. Die Verwaltung wird beim Anlegen
+   nicht Trainer:in — Trainer:innen, auch sie selbst, nimmt sie danach im Team
+   auf.
 
-   Bei `VEREIN_TEAMS_MAX` Teams ist der Knopf gesperrt; der Satz dazu steht
-   sichtbar daneben, nicht im Tooltip eines gesperrten Knopfs (der reagiert nicht
+   Bei `VEREIN_TEAMS_MAX` Teams ist der Knopf gesperrt (#707 AK 4); der Satz
+   dazu steht sichtbar unter der Kopfzeile (`TEAMS_GESPERRT_ID`, gesetzt von
+   der Seite), nicht im Tooltip eines gesperrten Knopfs (der reagiert nicht
    auf Zeiger). Das Rennen deckt die Datenebene mit dem Marker. Ein vergebener
    Name wird am Feld abgewiesen und nennt das Team, das ihn trägt. */
 export function TeamAnlegen({ vereinId, anzahlTeams }: { vereinId: string; anzahlTeams: number }) {
@@ -26,7 +28,7 @@ export function TeamAnlegen({ vereinId, anzahlTeams }: { vereinId: string; anzah
   const [name, setName] = useState("");
   const [fehler, setFehler] = useState<{ feld: boolean; text: string } | null>(null);
   const formId = useId();
-  const voll = anzahlTeams >= VEREIN_TEAMS_MAX;
+  const voll = vereinTeamsVoll(anzahlTeams);
   // Nie eine negative Restzahl, auch wenn der Verein über der Grenze steht (PC 7).
   const rest = Math.max(0, VEREIN_TEAMS_MAX - anzahlTeams);
 
@@ -55,17 +57,15 @@ export function TeamAnlegen({ vereinId, anzahlTeams }: { vereinId: string; anzah
 
   return (
     <>
-      <div className="flex flex-col items-start gap-2 sm:items-end">
-        <Button variant="filled" disabled={voll} aria-describedby={voll ? "teams-voll" : undefined} aria-haspopup="dialog" onClick={oeffnen}>
-          <Plus size={18} strokeWidth={2} aria-hidden />
-          Team anlegen
-        </Button>
-        {voll && (
-          <p id="teams-voll" className="type-body-small max-w-xs text-on-surface-mittel sm:text-right">
-            {VEREIN_MELDUNG.VEREIN_TEAMS_VOLL}
-          </p>
-        )}
-      </div>
+      <Button
+        variant="filled"
+        disabled={voll}
+        aria-describedby={voll ? TEAMS_GESPERRT_ID : undefined}
+        aria-haspopup="dialog"
+        onClick={oeffnen}
+      >
+        <KopfKnopfText label="Team anlegen" kurz="Anlegen" />
+      </Button>
 
       <Dialog
         open={offen}

@@ -16,30 +16,37 @@ import { eingrenzungGesetzt, SPIELER_SEITE, type SpielerEingrenzung } from "@/li
 
 /* Die Teile, die die Spielerliste des Vereins für Mitglieder
    (`VereinSpielerAnsicht`) und Verwaltung (`VereinSpielerListe`) teilt
-   (Story #580): Kopf mit den Zahlen des ganzen Vereins, die Teams einer
-   Zeile, der Fuss «x von y angezeigt», die zwei Leerzustände. Nichts davon
-   bedient etwas der Verwaltung; die Aktionen stehen in der Verwaltungsliste. */
+   (Story #580): die Anzahl über der Liste, die Teams einer Zeile, der Fuss
+   «x von y angezeigt», die zwei Leerzustände. Nichts davon bedient etwas der
+   Verwaltung; ihre Aktionen stehen in der Kopfzeile (`VereinSpielerAktionen`)
+   und in der Verwaltungsliste. */
 
-/** Kopfzeile: «Spieler:innen» mit den Zahlen des ganzen Vereins; `aktion`
- *  rechts, immer einzeilig. Schmal bricht die Zeile nur zwischen den Teilen
- *  («78 Spieler:innen» · «23 ohne Team» · «höchstens 1000 je Verein»): Jeder
- *  Teil bleibt beisammen, der Punkt steht vor dem Teil, den er einleitet. */
-export function SpielerKopf({ gesamt, ohneTeam, aktion }: { gesamt: number; ohneTeam: number; aktion?: ReactNode }) {
+/** Die Zeile über der Liste (#707 AK 3): «144 Spieler:innen · 23 ohne Team ·
+ *  höchstens 1000 je Verein», bei Suche oder Eingrenzung «12 von 144
+ *  Spieler:innen · …». Schmal bricht sie nur zwischen den Teilen: Jeder Teil
+ *  bleibt beisammen, der Punkt steht vor dem Teil, den er einleitet.
+ *  Live-Region, damit die Sprachausgabe eine neue Trefferzahl meldet. */
+export function SpielerAnzahl({
+  treffer,
+  gesamt,
+  ohneTeam,
+  eingrenzung,
+}: {
+  treffer: number;
+  gesamt: number;
+  ohneTeam: number;
+  eingrenzung: SpielerEingrenzung;
+}) {
+  const teile = spielerKopfTeile(gesamt, ohneTeam, eingrenzungGesetzt(eingrenzung) ? treffer : undefined);
   return (
-    <div className="flex items-center justify-between gap-3">
-      <h2 className="type-title-large min-w-0 text-on-surface">
-        Spieler:innen
-        <span className="type-label-small ml-2 text-on-surface-mittel">
-          {spielerKopfTeile(gesamt, ohneTeam).map((teil, i) => (
-            <Fragment key={teil}>
-              {i > 0 && " "}
-              <span className="whitespace-nowrap">{i > 0 ? `· ${teil}` : teil}</span>
-            </Fragment>
-          ))}
-        </span>
-      </h2>
-      {aktion && <div className="shrink-0 whitespace-nowrap">{aktion}</div>}
-    </div>
+    <p role="status" className="type-label-small mt-4 text-on-surface-mittel">
+      {teile.map((teil, i) => (
+        <Fragment key={teil}>
+          {i > 0 && " "}
+          <span className="whitespace-nowrap">{i > 0 ? `· ${teil}` : teil}</span>
+        </Fragment>
+      ))}
+    </p>
   );
 }
 
@@ -58,24 +65,20 @@ export function SpielerTeams({ teams, children }: { teams: readonly { id: string
   );
 }
 
-/** Unter der Liste: wie viele stehen, und der Weg zu mehr. Bei gesetzter
- *  Suche oder Eingrenzung immer (der Kopf zählt den ganzen Verein, hier steht,
- *  wie viele es getroffen hat), sonst nur, wenn mehr da sind als eine Seite;
- *  ohne Treffer sagt es der Leerzustand. «Weitere anzeigen» nur, solange
- *  nicht alle stehen. Live-Region, damit die Sprachausgabe Nachladen und
- *  neue Trefferzahl meldet. */
+/** Unter der Liste: wie viele stehen, und der Weg zu mehr — nur, wenn mehr
+ *  getroffen sind als eine Seite; die Trefferzahl selbst steht seit #707 über
+ *  der Liste (`SpielerAnzahl`). «Weitere anzeigen» nur, solange nicht alle
+ *  stehen. Live-Region, damit die Sprachausgabe das Nachladen meldet. */
 export function SpielerFuss({
   angezeigt,
   treffer,
-  eingrenzung,
   weiterHref,
 }: {
   angezeigt: number;
   treffer: number;
-  eingrenzung: SpielerEingrenzung;
   weiterHref: string | null;
 }) {
-  if (treffer === 0 || (!eingrenzungGesetzt(eingrenzung) && treffer <= SPIELER_SEITE)) return null;
+  if (treffer <= SPIELER_SEITE) return null;
   return (
     <p role="status" className="type-body-small mt-3 text-on-surface-mittel">
       {spielerAngezeigtText(angezeigt, treffer)}

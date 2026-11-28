@@ -3624,7 +3624,9 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Neu, weil das Kit bisher nur den Ort der Aktionen kannte (<code>SeitenKopf</code>),
             nicht ihre Ordnung und keine Kurzform. Die Seiten eines Teams setzen den Rahmen mit{" "}
-            <code>TeamSeite</code>.
+            <code>TeamSeite</code>, die Seiten «Teams» und «Spieler:innen» des Vereins mit{" "}
+            <code>VereinSeite</code> (#707, Krumen Verein › Seite). Die Zahlen und die Höchstzahl
+            stehen in der Zeile über der Liste, nicht im Kopf.
           </p>
           <SeitenKopfDemo />
         </Section>

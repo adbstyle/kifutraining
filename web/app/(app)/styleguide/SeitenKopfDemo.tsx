@@ -15,10 +15,10 @@ const KRUMEN = [
   { label: "FC Wyler FF-11", href: "#" },
 ];
 
-function Zeile({ seite, aktionen }: { seite: string; aktionen: React.ReactNode }) {
+function Zeile({ seite, aktionen, krumen = KRUMEN }: { seite: string; aktionen: React.ReactNode; krumen?: typeof KRUMEN }) {
   return (
     <div className="flex min-h-16 items-center gap-3 rounded-flaeche bg-elev-00 px-4 kontur border-kante">
-      <Breadcrumbs items={[...KRUMEN, { label: seite }]} />
+      <Breadcrumbs items={[...krumen, { label: seite }]} />
       <div className="ml-auto flex shrink-0 items-center">{aktionen}</div>
     </div>
   );
@@ -50,12 +50,17 @@ export function SeitenKopfDemo() {
       </div>
 
       <div>
-        <p className="type-label-small mb-2 text-on-surface-mittel">Hauptaktion und Zweitaktion in Kontur</p>
+        <p className="type-label-small mb-2 text-on-surface-mittel">Hauptaktion und Zweitaktion in Kontur (Verein)</p>
         <Zeile
           seite="Spieler:innen"
+          krumen={[{ label: "FC Wyler", href: "#" }]}
           aktionen={
             <KopfAktionen
-              zweit={<Button variant="outlined">Importieren</Button>}
+              zweit={
+                <Button variant="outlined">
+                  <KopfKnopfText label="Spieler:innen importieren" kurz="Importieren" />
+                </Button>
+              }
               haupt={
                 <Button variant="filled">
                   <KopfKnopfText label="Spieler:in hinzufügen" kurz="Hinzufügen" />
