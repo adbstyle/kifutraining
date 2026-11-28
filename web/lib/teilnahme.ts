@@ -101,8 +101,15 @@ export function liesZeitraum(sp: AdressParameter): Zeitraum {
  *  im Team ist — sie fällt samt Spalte weg); ein unlesbarer Tag oder ein Bis vor dem Von wird
  *  wie `liesZeitraum` bereinigt. Alles übrige reist unverändert mit. */
 export function bereinigteTeilnahmeAdresse(pfad: string, sp: AdressParameter, spieler: string | null): string | null {
+  return adresseMitWerten(pfad, sp, teilnahmeWerte(sp, spieler));
+}
+
+/** Die Adresswerte, die `bereinigteTeilnahmeAdresse` vergleicht — für
+ *  Seiten, die sie mit weiteren Werten in einer einzigen Weiterleitung
+ *  bereinigen. */
+export function teilnahmeWerte(sp: AdressParameter, spieler: string | null): Record<string, string> {
   const z = liesZeitraum(sp);
-  return adresseMitWerten(pfad, sp, { [SPIELER_AUSWAHL_PARAM]: spieler ?? "", von: z.von ?? "", bis: z.bis ?? "" });
+  return { [SPIELER_AUSWAHL_PARAM]: spieler ?? "", von: z.von ?? "", bis: z.bis ?? "" };
 }
 
 /** Die Spieler:in in der Adresse (`?spieler=`) — genau eine, sonst `null`. */

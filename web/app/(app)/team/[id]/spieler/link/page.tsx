@@ -10,12 +10,12 @@ import { leseTeamInfos } from "@/lib/kern/team-infos";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { abholUrl } from "@/lib/spieler";
 
-/* Bereich «Privater Link» der Team-Verwaltung (#656): wie der private Link zu
+/* Reiter «Privater Link» unter «Spieler:innen» (#704): wie der private Link zu
  * den Spieler:innen kommt — die Selbstabholung (#438) — und was dort über das
  * Team steht, die Infos zum Team (#598). Neben der Selbstabholung die
  * Übersicht, wer den Link hat (#658): die Stände über die ganze Spielerliste
- * samt Schnuppernden. Den Link einer einzelnen Spieler:in zeigt der Bereich
- * «Spieler:innen» an ihrer Zeile. */
+ * samt Schnuppernden. Den Link einer einzelnen Spieler:in zeigt der Reiter
+ * «Liste» an ihrer Zeile. */
 export default async function TeamLinkPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   // Den Zugriff hat der Rahmen bereits geprüft (team/[id]/layout.tsx).

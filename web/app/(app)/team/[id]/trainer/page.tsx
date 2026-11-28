@@ -6,15 +6,18 @@ import { getTeam } from "@/lib/queries/teams";
 import { getMeinVerein } from "@/lib/queries/verein";
 import { getUserImRequest } from "@/lib/supabase/server";
 
-/* Bereich «Trainer:innen» der Team-Verwaltung (#656): wer im Team ist
- * (Mitglieder), wie das Team heisst und zu welchem Verein es gehört, und wie
- * man wieder herauskommt — in der Gefahrenzone am Ende (Story 17, #581).
+/* Die Seite «Team» (#704 AK 4): was das Team selbst betrifft, auf einer Seite
+ * ohne Reiter — wer im Team ist (Mitglieder), wie das Team heisst und zu
+ * welchem Verein es gehört, und wie man wieder herauskommt, in der
+ * Gefahrenzone am Ende (Story 17, #581). Die Adresse `/trainer` stammt vom
+ * früheren Reiter «Trainer:innen» (#656); die Sichten auf die Spieler:innen
+ * stehen unter «Spieler:innen» (spieler/).
  *
  * Den Namen zeigt der Bereich nur an: Umbenennen und Auflösen macht die
  * Vereinsverwaltung im Bereich «Verein» (#581 AK 27) — auch dann, wenn die
  * Person zugleich Mitglied des Teams ist; am Team-Ort gibt es für sie keine
  * Verwaltungsaktion. */
-export default async function TeamTrainerPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function TeamSeitePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   // Gebraucht wird die eigene Kennung, damit sich niemand selbst aus der
   // Liste entfernt; den Zugriff hat der Rahmen geprüft.
@@ -27,6 +30,7 @@ export default async function TeamTrainerPage({ params }: { params: Promise<{ id
 
   return (
     <div className="flex flex-col gap-4">
+      <h2 className="type-title-large text-on-surface">Team</h2>
       <Card className="p-5 sm:p-6">
         <MitgliederListe
           teamId={team.id}

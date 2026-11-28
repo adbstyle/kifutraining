@@ -77,8 +77,8 @@ import {
    ein Punkt daran: grün abgeholt (über die Selbstabholung, #438 AK 21), blau
    zugestellt. Offen bleibt unmarkiert und steht nur im Link-Dialog — in der
    Liste wäre es bei fast allen der lauteste Eindruck (PO 2026-10-18). Die
-   Zahlen je Stand stehen im Bereich «Privater Link», nicht im Kopf. Die Selbstabholung (#438)
-   steht im Bereich «Privater Link» der Team-Verwaltung (#656). Einen Import aus einer
+   Zahlen je Stand stehen im Reiter «Privater Link», nicht im Kopf. Die Selbstabholung (#438)
+   steht im Reiter «Privater Link» unter «Spieler:innen» (#704). Einen Import aus einer
    CSV-Datei gibt es hier nicht mehr: Ihn macht die Vereinsverwaltung im
    Spielerbestand des Vereins (Story #585).
 

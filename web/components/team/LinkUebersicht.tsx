@@ -4,7 +4,7 @@ import { LinkStandLozenge } from "@/components/team/LinkStandLozenge";
 import { LINK_STAENDE, LINK_UEBERSICHT, zaehleLinkStaende, type LinkStand } from "@/lib/spieler";
 import { teamSpielerHref } from "@/lib/team-spielerliste";
 
-/* Die Übersicht der Link-Stände im Bereich «Privater Link» (#658): wie viele
+/* Die Übersicht der Link-Stände im Reiter «Privater Link» (#658, #704): wie viele
    Spieler:innen des Teams — Schnuppernde eingeschlossen — einen abgeholten,
    einen zugestellten und einen offenen Link haben (AK 1), und der Sprung in
    die Spielerliste, eingegrenzt auf die offenen (AK 2, Eingrenzung aus #601).

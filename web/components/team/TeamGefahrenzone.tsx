@@ -5,7 +5,7 @@ import { LogOut } from "lucide-react";
 import { SectionMessage, Button, Dialog, Gefahrenzone } from "@/components/ui";
 import { verlasseTeam } from "@/lib/actions/teams";
 
-/* Team verlassen — in der Gefahrenzone der Teamverwaltung (Story 13, #581).
+/* Team verlassen — in der Gefahrenzone der Seite «Team» (Story 13, #581; #704).
 
    Verlassen betrifft nur die eigene Person. Auch als letztes Mitglied bleibt
    das Team bestehen, ohne Trainer:in: Auflösen kann es nur die Vereinsverwaltung

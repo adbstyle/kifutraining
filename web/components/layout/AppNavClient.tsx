@@ -6,6 +6,7 @@ import {
   Building2,
   CalendarDays,
   ClipboardList,
+  Contact,
   History,
   House,
   LayoutGrid,
@@ -179,13 +180,21 @@ export function AppNavClient({
           current: pfad === basis,
           bereichAktiv: imTeamBereich,
         },
+        // «Spieler:innen» öffnet immer die Liste, ohne Eingrenzung (#704 AK 2),
+        // und bleibt in jedem ihrer Reiter markiert.
+        {
+          label: "Spieler:innen",
+          href: `${basis}/spieler`,
+          icon: Users,
+          current: pfad === `${basis}/spieler` || pfad.startsWith(`${basis}/spieler/`),
+        },
         { label: "Trainings", href: `${basis}/trainings`, icon: ListChecks, current: pfad === `${basis}/trainings` },
-        // «Team» bleibt in allen Bereichen der Team-Verwaltung markiert (#656).
+        // «Team»: was das Team selbst betrifft, ohne Reiter (#704 AK 4).
         {
           label: "Team",
-          href: `${basis}/verwaltung`,
-          icon: Users,
-          current: pfad === `${basis}/verwaltung` || pfad.startsWith(`${basis}/verwaltung/`),
+          href: `${basis}/trainer`,
+          icon: Contact,
+          current: pfad === `${basis}/trainer` || pfad.startsWith(`${basis}/trainer/`),
         },
       ],
     });

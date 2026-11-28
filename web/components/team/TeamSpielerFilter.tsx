@@ -14,7 +14,7 @@ import { kaderFilterWerte, OHNE_KADER_WERT, teamEingrenzungGesetzt, type TeamEin
    mit seinen drei Ständen, und «Zurücksetzen», sobald etwas gesetzt ist
    (AK 6, 8). Dieselben Bausteine wie die Spieler:innen des Vereins
    (`VereinSpielerFilter`, aus der Leiste des Katalogs): Der Zustand steht in
-   der Adresse, die Reiter der Team-Verwaltung tragen ihn weiter (AK 9). Die
+   der Adresse, die Reiter unter «Spieler:innen» tragen ihn weiter (AK 9, #704). Die
    Optionen kommen aus der ganzen Liste — sie schrumpfen nicht mit der
    Eingrenzung. */
 export function TeamSpielerFilter({

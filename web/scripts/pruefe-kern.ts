@@ -537,7 +537,7 @@ import {
 } from "../lib/auffindbar";
 import { DATENSCHUTZ_PFAD, ENTWURF_HINWEIS, IMPRESSUM_PFAD, KONTAKT_EMAIL, RECHTLICHE_LINKS, VEREINBARUNG_FASSUNG, VEREINBARUNG_PFAD, VEREINBARUNG_TITEL } from "../lib/rechtliches";
 import { TRAGWEITE_VEROEFFENTLICHEN, ZUM_VEROEFFENTLICHEN_FEHLT } from "../lib/training-bedingungen";
-import { FILTER_SCHLUESSEL, TEAM_BEREICHE, teamBereichAusPfad, teamBereichHref } from "../lib/team-bereiche";
+import { FILTER_SCHLUESSEL, REISENDE_SCHLUESSEL, SPIELER_BEREICHE, teamBereichAusPfad, teamBereichHref, teamSeitePfad, teamSpielerPfad } from "../lib/team-bereiche";
 import {
   OHNE_KADER_WERT,
   bereinigeTeamEingrenzung,
@@ -549,6 +549,7 @@ import {
   liesTeamEingrenzung,
   sichtbareAuswahl,
   teamEingrenzungGesetzt,
+  teamEingrenzungWerte,
   teamSpielerHref,
 } from "../lib/team-spielerliste";
 import { textMitLinks } from "../lib/text-links";
@@ -562,10 +563,12 @@ import {
   kurzwahlVon,
   liesSpielerAuswahl,
   liesZeitraum,
+  teilnahmeWerte,
   teilnahmeZahlen,
   zeitraumFehler,
   zeitraumWert,
 } from "../lib/teilnahme";
+import { adresseMitWerten } from "../lib/adresse";
 
 let gelaufen = 0;
 
@@ -2870,8 +2873,9 @@ pruefe("Vereinsverwaltung (#581): Zwillinge, Sätze zum Aufnehmen und Bereich de
   const T1 = "11111111-1111-4111-8111-111111111111";
   const T2 = "22222222-2222-4222-8222-222222222222";
   assert.deepEqual(bereichAusPfad(`/team/${T1}`, null), { art: "team", id: T1 });
-  assert.deepEqual(bereichAusPfad(`/team/${T1}/verwaltung`, null), { art: "team", id: T1 });
-  assert.deepEqual(bereichAusPfad(`/team/${T1}/verwaltung/link`, null), { art: "team", id: T1 }, "ein Bereich der Team-Verwaltung (#656)");
+  assert.deepEqual(bereichAusPfad(`/team/${T1}/spieler`, null), { art: "team", id: T1 });
+  assert.deepEqual(bereichAusPfad(`/team/${T1}/spieler/link`, null), { art: "team", id: T1 }, "ein Reiter unter «Spieler:innen» (#704)");
+  assert.deepEqual(bereichAusPfad(`/team/${T1}/trainer`, null), { art: "team", id: T1 }, "die Seite «Team» (#704)");
   assert.deepEqual(bereichAusPfad("/verein", null), { art: "verein" });
   assert.deepEqual(bereichAusPfad("/verein/team/abc", null), { art: "verein" });
   assert.deepEqual(bereichAusPfad("/verein/verwaltung", null), { art: "verein" });
@@ -4403,46 +4407,100 @@ pruefe("Kader: Zugehörigkeit einer Auswahl und Kader einer Spieler:in (#452 AK 
   assert.deepEqual(kaderVon("b", [k, { id: "j", name: "S1", spielerIds: ["c"] }]).map((x) => x.id), ["k"]);
 });
 
-pruefe("Team-Verwaltung in vier Bereichen mit eigener Adresse; die bisherige zeigt die Spieler:innen (#656)", () => {
+// Die Weiterleitungen aus next.config.ts (#704 AK 6), wie Next sie liest.
+const WEITERLEITUNGEN = await (await import("../next.config")).default.redirects!();
+
+pruefe("Spieler:innen als eigener Bereich mit Reitern; «Team» ohne Reiter; alte Adressen leiten weiter (#704)", () => {
   const T = "11111111-1111-4111-8111-111111111111";
-  // AK 3: die vier Bereiche in dieser Reihenfolge, unterscheidbar benannt.
-  assert.deepEqual(TEAM_BEREICHE.map((b) => b.label), ["Spieler:innen", "Kader & Schnuppern", "Privater Link", "Trainer:innen"]);
-  // AK 1, 2, PC 1: jeder Bereich hat seine Adresse, die bisherige ist «Spieler:innen».
-  assert.equal(teamBereichHref(T, "spieler"), `/team/${T}/verwaltung`);
-  assert.equal(teamBereichHref(T, "trainer"), `/team/${T}/verwaltung/trainer`);
-  for (const b of TEAM_BEREICHE) {
+  // AK 3: die Reiter in dieser Reihenfolge, unterscheidbar benannt.
+  assert.deepEqual(SPIELER_BEREICHE.map((b) => b.label), ["Liste", "Kader & Schnuppern", "Privater Link"]);
+  // AK 2, 3: jeder Reiter hat seine Adresse, die Liste ist die Grundadresse.
+  assert.equal(teamSpielerPfad(T), `/team/${T}/spieler`);
+  assert.equal(teamSeitePfad(T), `/team/${T}/trainer`);
+  assert.equal(teamBereichHref(T, "liste"), `/team/${T}/spieler`);
+  assert.equal(teamBereichHref(T, "kader"), `/team/${T}/spieler/kader`);
+  assert.equal(teamBereichHref(T, "link"), `/team/${T}/spieler/link`);
+  const app = join(web, "app/(app)/team/[id]");
+  for (const b of SPIELER_BEREICHE) {
     const href = teamBereichHref(T, b.schluessel);
     assert.equal(teamBereichAusPfad(href, T), b.schluessel, href);
-    const seite = join(web, "app/(app)/team/[id]/verwaltung", b.pfad.slice(1), "page.tsx");
+    const seite = join(app, "spieler", b.pfad.slice(1), "page.tsx");
     assert.ok(existsSync(seite), `${relative(web, seite)} fehlt`);
   }
-  assert.equal(teamBereichAusPfad(`/team/${T}/verwaltung/`, T), "spieler");
+  // AK 4: «Team» ist eine Seite ohne Reiter; die Team-Verwaltung gibt es nicht mehr.
+  assert.ok(existsSync(join(app, "trainer/page.tsx")), "team/[id]/trainer/page.tsx fehlt");
+  assert.ok(!existsSync(join(app, "trainer/layout.tsx")), "«Team» hat keinen Rahmen mit Reitern");
+  assert.ok(!existsSync(join(app, "verwaltung")), "team/[id]/verwaltung/ ist weg — die alten Adressen leiten weiter");
+  assert.equal(teamBereichAusPfad(`/team/${T}/spieler/`, T), "liste");
   assert.equal(teamBereichAusPfad(`/team/${T}`, T), null);
-  assert.equal(teamBereichAusPfad(`/team/${T}/verwaltung/unbekannt`, T), null);
-  // Die Reiter tragen nur die Eingrenzung der Spielerliste weiter (#601).
+  assert.equal(teamBereichAusPfad(`/team/${T}/trainer`, T), null);
+  assert.equal(teamBereichAusPfad(`/team/${T}/spieler/unbekannt`, T), null);
+  // AK 5: Die Reiter tragen Eingrenzung und Zeitraum weiter; Spieler:in und Sortierung nie.
   assert.deepEqual([...FILTER_SCHLUESSEL], ["q", "kader", "jahrgang", "link"]);
-  const suche = new URLSearchParams("jahrgang=2016&fremd=1&kader=a&kader=ohne&q=lea");
-  assert.equal(teamBereichHref(T, "link", suche), `/team/${T}/verwaltung/link?q=lea&kader=a&kader=ohne&jahrgang=2016`);
-  assert.equal(teamBereichHref(T, "kader", new URLSearchParams("fremd=1")), `/team/${T}/verwaltung/kader`);
-  // AK 4: was die eine Seite bot, steht jetzt in genau einem Bereich.
+  assert.deepEqual([...REISENDE_SCHLUESSEL], ["q", "kader", "jahrgang", "link", "von", "bis"]);
+  const suche = new URLSearchParams("bis=2026-11-30&jahrgang=2016&fremd=1&spieler=s1&sort=name&dir=ab&kader=a&kader=ohne&von=2026-11-01&q=lea");
+  assert.equal(teamBereichHref(T, "link", suche), `/team/${T}/spieler/link?q=lea&kader=a&kader=ohne&jahrgang=2016&von=2026-11-01&bis=2026-11-30`);
+  assert.equal(teamBereichHref(T, "liste", suche), `/team/${T}/spieler?q=lea&kader=a&kader=ohne&jahrgang=2016&von=2026-11-01&bis=2026-11-30`);
+  assert.equal(teamBereichHref(T, "kader", new URLSearchParams("fremd=1&spieler=s1")), `/team/${T}/spieler/kader`);
+  // AK 3, 4: was die Team-Verwaltung bot, steht jetzt in genau einer Seite.
   const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-  const lies = (d: string) => ohneKommentare(readFileSync(join(web, "app/(app)/team/[id]/verwaltung", d), "utf8"));
+  const lies = (d: string) => ohneKommentare(readFileSync(join(app, d), "utf8"));
   const ort: Record<string, string> = {
-    SpielerListe: "page.tsx",
-    KaderKarte: "kader/page.tsx",
-    SchnupperKarte: "kader/page.tsx",
-    Selbstabholung: "link/page.tsx",
-    TeamInfosKarte: "link/page.tsx",
+    SpielerListe: "spieler/page.tsx",
+    KaderKarte: "spieler/kader/page.tsx",
+    SchnupperKarte: "spieler/kader/page.tsx",
+    Selbstabholung: "spieler/link/page.tsx",
+    LinkUebersicht: "spieler/link/page.tsx",
+    TeamInfosKarte: "spieler/link/page.tsx",
     MitgliederListe: "trainer/page.tsx",
     TeamGefahrenzone: "trainer/page.tsx",
     Teamangaben: "trainer/page.tsx",
   };
-  const seiten = ["page.tsx", "kader/page.tsx", "link/page.tsx", "trainer/page.tsx"];
+  const seiten = ["spieler/page.tsx", "spieler/kader/page.tsx", "spieler/link/page.tsx", "trainer/page.tsx"];
   for (const [teil, datei] of Object.entries(ort))
     for (const s of seiten) assert.equal(new RegExp(`\\b${teil}\\b`).test(lies(s)), s === datei, `${teil} in ${s}`);
-  assert.ok(!/Selbstabholung/.test(ohneKommentare(readFileSync(join(web, "components/team/SpielerListe.tsx"), "utf8"))), "die Spielerliste zeigt die Selbstabholung nicht mehr");
-  // Die Seitenleiste markiert «Team» in jedem Bereich.
-  assert.match(readFileSync(join(web, "components/layout/AppNavClient.tsx"), "utf8"), /pfad\.startsWith\(`\$\{basis\}\/verwaltung\/`\)/);
+  assert.ok(!/Selbstabholung/.test(ohneKommentare(readFileSync(join(web, "components/team/SpielerListe.tsx"), "utf8"))), "die Spielerliste zeigt die Selbstabholung nicht");
+  assert.match(lies("spieler/layout.tsx"), /<SpielerBereicheNav teamId=\{id\} \/>/, "die Reiter stehen über allen Sichten der Spieler:innen");
+  assert.ok(!/TabNav|BereicheNav/.test(lies("trainer/page.tsx")), "«Team» zeigt keine Reiter");
+  // AK 1, 2: die Seitenleiste — Trainingsplan, Spieler:innen, Trainings, Team;
+  // «Spieler:innen» ohne Parameter, in jedem Reiter markiert; «Team» auf /trainer.
+  const nav = ohneKommentare(readFileSync(join(web, "components/layout/AppNavClient.tsx"), "utf8"));
+  const teamGruppe = nav.slice(nav.indexOf('titel: "Team"'), nav.indexOf('titel: "Verein"'));
+  const labels = [...teamGruppe.matchAll(/label: "([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(labels, ["Trainingsplan", "Spieler:innen", "Trainings", "Team"]);
+  assert.match(teamGruppe, /href: `\$\{basis\}\/spieler`,/, "«Spieler:innen» öffnet immer die Liste, ohne Parameter");
+  assert.match(teamGruppe, /current: pfad === `\$\{basis\}\/spieler` \|\| pfad\.startsWith\(`\$\{basis\}\/spieler\/`\)/);
+  assert.match(teamGruppe, /href: `\$\{basis\}\/trainer`,/);
+  assert.match(teamGruppe, /current: pfad === `\$\{basis\}\/trainer` \|\| pfad\.startsWith\(`\$\{basis\}\/trainer\/`\)/);
+  assert.ok(!/verwaltung/.test(teamGruppe), "kein Eintrag führt mehr in die Team-Verwaltung");
+  // AK 6: die bisherigen Adressen leiten an die neue Stelle weiter, nicht dauerhaft (307).
+  const weiter = WEITERLEITUNGEN.filter((r) => r.source.includes("/verwaltung"));
+  assert.deepEqual(
+    weiter.map((r) => [r.source, r.destination, "permanent" in r ? r.permanent : undefined]),
+    [
+      ["/team/:id/verwaltung", "/team/:id/spieler", false],
+      ["/team/:id/verwaltung/kader", "/team/:id/spieler/kader", false],
+      ["/team/:id/verwaltung/link", "/team/:id/spieler/link", false],
+      ["/team/:id/verwaltung/trainer", "/team/:id/trainer", false],
+    ],
+  );
+  // AK 7: die Hinweise am Termin verweisen auf die neue Stelle der Spielerliste.
+  for (const d of ["components/team/SpielerReiter.tsx", "components/team/SpielReiter.tsx"]) {
+    const q = ohneKommentare(readFileSync(join(web, d), "utf8"));
+    assert.match(q, /<Link href=\{teamSpielerPfad\(teamId\)\}[^>]*>\s*Spieler:innen\s*<\/Link>/, d);
+    assert.ok(!/\/verwaltung/.test(q), `${d} nennt keine alte Adresse`);
+  }
+  assert.match(PROBE_TEXT.anzahlFehlt, /unter «Spieler:innen» im Reiter «Kader & Schnuppern»/);
+  // Eine Weiterleitung, nicht zwei: Eingrenzung und Teilnahme werden zusammen bereinigt.
+  const P = `/team/${T}/spieler`;
+  const ka = "22222222-2222-4222-8222-222222222222";
+  const roh = { q: "le", kader: `${ka},33333333-3333-4333-8333-333333333333`, spieler: "fremd", von: "kaputt", bis: "2026-11-30" };
+  const e = bereinigeTeamEingrenzung(liesTeamEingrenzung(roh), { kader: [{ id: ka }], jahrgaenge: [2016] });
+  const ziel = adresseMitWerten(P, roh, { ...teamEingrenzungWerte(e), ...teilnahmeWerte(roh, null) });
+  assert.equal(ziel, `${P}?q=le&kader=${ka}&bis=2026-11-30`);
+  const danach = Object.fromEntries(new URL(ziel!, "http://x").searchParams);
+  const e2 = bereinigeTeamEingrenzung(liesTeamEingrenzung(danach), { kader: [{ id: ka }], jahrgaenge: [2016] });
+  assert.equal(adresseMitWerten(P, danach, { ...teamEingrenzungWerte(e2), ...teilnahmeWerte(danach, null) }), null, "die bereinigte Adresse bleibt stehen");
 });
 
 pruefe("Spielerliste eingrenzen: Suche, Kader, Jahrgang, Link-Stand; Adresse und Auswahl (#601)", () => {
@@ -4521,7 +4579,7 @@ pruefe("Spielerliste eingrenzen: Suche, Kader, Jahrgang, Link-Stand; Adresse und
   assert.equal(bereinigteTeamAdresse("/t", leerSp, leerE), "/t?fremd=1");
   assert.equal(bereinigteTeamAdresse("/t", { q: "   " }, liesTeamEingrenzung({ q: "   " })), "/t", "leere Suche fällt aus der Adresse");
   // Die Adresse: einmal weiterleiten, q und Fremdes reisen mit; die bereinigte bleibt stehen.
-  const P = "/team/x/verwaltung";
+  const P = "/team/x/spieler";
   const sp = { q: "lea", kader: `${kx},${ka},${OHNE_KADER_WERT}`, jahrgang: "2016,2014", link: "offen,abgeholt" };
   const ziel = bereinigteTeamAdresse(P, sp, bereinigeTeamEingrenzung(liesTeamEingrenzung(sp), bestand));
   assert.equal(ziel, `${P}?q=lea&kader=${OHNE_KADER_WERT}%2C${ka}&jahrgang=2016&link=abgeholt%2Coffen`);
@@ -4543,7 +4601,8 @@ pruefe("Spielerliste eingrenzen: Suche, Kader, Jahrgang, Link-Stand; Adresse und
   // Dieselben Bausteine wie die Leiste des Vereins, kein neues Muster.
   const leiste = quelle("components/team/TeamSpielerFilter.tsx");
   for (const b of ["FilterSuche", "AuswahlFilter", "useAdressFilter", "zuruecksetzen"]) assert.ok(leiste.includes(b), `TeamSpielerFilter nutzt ${b}`);
-  assert.match(quelle("app/(app)/team/[id]/verwaltung/page.tsx"), /bereinigteTeamAdresse\(/, "die Seite leitet auf die bereinigte Adresse weiter");
+  assert.match(quelle("lib/team-spieler-seite.ts"), /teamEingrenzungWerte\(eingrenzung\)/, "die Sichten leiten auf die bereinigte Adresse weiter");
+  assert.match(quelle("app/(app)/team/[id]/spieler/page.tsx"), /ladeSpielerAnsicht\(/, "die Liste bereinigt über ladeSpielerAnsicht");
 });
 
 pruefe("Stand der Links im Team überblicken: Zahlen je Stand, Sprung auf die offenen (#658)", () => {
@@ -4556,19 +4615,19 @@ pruefe("Stand der Links im Team überblicken: Zahlen je Stand, Sprung auf die of
   // AK 2: der Sprung führt auf die Spielerliste, eingegrenzt auf «offen» — in der
   // Schreibweise der Leiste, die Seite leitet also nicht noch einmal weiter.
   const ziel = teamSpielerHref(T, { linkStaende: ["offen"] });
-  assert.equal(ziel, `/team/${T}/verwaltung?link=offen`);
+  assert.equal(ziel, `/team/${T}/spieler?link=offen`);
   const sp = Object.fromEntries(new URL(ziel, "http://x").searchParams);
   assert.deepEqual(filtereSpieler(
     staende.map((linkStand, i) => ({ vorname: `V${i}`, nachname: "N", jsNummer: null, jahrgang: 2016, kaderIds: [], linkStand })),
     liesTeamEingrenzung(sp),
   ).map((s) => s.linkStand), ["offen", "offen", "offen"]);
-  assert.equal(bereinigteTeamAdresse(`/team/${T}/verwaltung`, sp, liesTeamEingrenzung(sp)), null);
-  assert.equal(teamSpielerHref(T), `/team/${T}/verwaltung`);
-  assert.equal(teamSpielerHref(T, { linkStaende: ["offen", "abgeholt"], jahrgaenge: [2016] }), `/team/${T}/verwaltung?jahrgang=2016&link=abgeholt%2Coffen`);
-  // Die Übersicht steht im Bereich «Privater Link», gezählt über die ganze
+  assert.equal(bereinigteTeamAdresse(`/team/${T}/spieler`, sp, liesTeamEingrenzung(sp)), null);
+  assert.equal(teamSpielerHref(T), `/team/${T}/spieler`);
+  assert.equal(teamSpielerHref(T, { linkStaende: ["offen", "abgeholt"], jahrgaenge: [2016] }), `/team/${T}/spieler?jahrgang=2016&link=abgeholt%2Coffen`);
+  // Die Übersicht steht im Reiter «Privater Link», gezählt über die ganze
   // Spielerliste (samt Schnuppernden), und springt über teamSpielerHref.
   const quelle = (d: string) => readFileSync(join(web, d), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-  const seite = quelle("app/(app)/team/[id]/verwaltung/link/page.tsx");
+  const seite = quelle("app/(app)/team/[id]/spieler/link/page.tsx");
   assert.match(seite, /<LinkUebersicht teamId=\{id\} spieler=\{liste\.wert\.spieler\} \/>/);
   assert.match(seite, /ladeSpielerliste\(/);
   const karte = quelle("components/team/LinkUebersicht.tsx");
@@ -7154,7 +7213,7 @@ pruefe("Teilnahme (#700): Kurzwahl und Wert im Filterknopf — ab heute am Train
 });
 
 pruefe("Teilnahme (#700): Adresse — fremde Spieler:in und unlesbare Tage fallen weg, alles übrige reist mit", () => {
-  const pfad = "/team/x/verwaltung";
+  const pfad = "/team/x/spieler";
   assert.equal(bereinigteTeilnahmeAdresse(pfad, { spieler: "s1", von: "2026-11-01", q: "le" }, "s1"), null);
   assert.equal(bereinigteTeilnahmeAdresse(pfad, { spieler: "s1", von: "2026-11-01", q: "le" }, null), `${pfad}?q=le&von=2026-11-01`);
   assert.equal(bereinigteTeilnahmeAdresse(pfad, { spieler: "s1", von: "kaputt" }, "s1"), `${pfad}?spieler=s1`);
@@ -7164,7 +7223,7 @@ pruefe("Teilnahme (#700): Adresse — fremde Spieler:in und unlesbare Tage falle
 });
 
 pruefe("Teilnahme (#700): App und KI-Werkzeug zählen über dieselbe Kern-Funktion (NFR 3)", () => {
-  const seite = ohneKommentareTn(liesTn("app/(app)/team/[id]/verwaltung/page.tsx"));
+  const seite = ohneKommentareTn(liesTn("lib/team-spieler-seite.ts"));
   const werkzeugTeilnahme = ohneKommentareTn(liesTn("lib/mcp/werkzeuge/teilnahme.ts"));
   assert.match(seite, /spielerTeilnahme\(supabase, user\.id,/);
   assert.match(werkzeugTeilnahme, /spielerTeilnahme\(zugang\.supabase, zugang\.userId,/);

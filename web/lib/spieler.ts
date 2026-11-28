@@ -562,7 +562,7 @@ export const LINK_STAND_TEXT = {
 } as const;
 
 /** Wie viele Links je Stand (#658 AK 1) — über alle Zeilen, die der Aufrufer
- *  gibt; im Bereich «Privater Link» die ganze Spielerliste des Teams samt
+ *  gibt; im Reiter «Privater Link» die ganze Spielerliste des Teams samt
  *  Schnuppernden. */
 export function zaehleLinkStaende(spieler: readonly { linkStand: LinkStand }[]): Record<LinkStand, number> {
   const zahl: Record<LinkStand, number> = { abgeholt: 0, zugestellt: 0, offen: 0 };
@@ -570,7 +570,7 @@ export function zaehleLinkStaende(spieler: readonly { linkStand: LinkStand }[]):
   return zahl;
 }
 
-/** Die Übersicht der Link-Stände im Bereich «Privater Link» (#658). */
+/** Die Übersicht der Link-Stände im Reiter «Privater Link» (#658). */
 export const LINK_UEBERSICHT = {
   titel: "Wer hat den Link?",
   einleitung: "Spieler:innen oder Eltern holen ihn selbst ab, oder du gibst ihn weiter und markierst ihn als zugestellt. Schnuppernde zählen mit.",
@@ -585,7 +585,7 @@ export const LINK_UEBERSICHT = {
       mobil, schmale 2fr-Spalte ab lg); den Zusammenhang liefert die Zeile
       «offen» darüber. */
   offeneZeigen: (anzahl: number): string => `Offene zeigen (${anzahl})`,
-  hinweis: "Link selbst weitergegeben? Markiere ihn unter «Spieler:innen» im Link-Dialog der Spieler:in als zugestellt. Erneuern setzt ihn auf offen zurück.",
+  hinweis: "Link selbst weitergegeben? Markiere ihn unter «Spieler:innen» in der Liste im Link-Dialog der Spieler:in als zugestellt. Erneuern setzt ihn auf offen zurück.",
 } as const;
 
 /** Die Filterleiste der Spielerliste eines Teams (#601) — aus denselben

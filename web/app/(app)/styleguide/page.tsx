@@ -1699,8 +1699,8 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             Mehrere Sichten auf denselben Gegenstand - etwa ein Termin mit
             Termin, Training, Spieler:innen und Trainer:innen, die
-            Team-Verwaltung mit Spieler:innen, Kader &amp; Schnuppern, Privater
-            Link und Trainer:innen (#656): ein Eintrag «Team» in der
+            Spieler:innen eines Teams mit Liste, Kader &amp; Schnuppern und
+            Privater Link (#704): ein Eintrag «Spieler:innen» in der
             Seitenleiste, darunter die Reiter, oder das Konto mit Profil,
             Verbindungen sowie Daten und Konto (#662). Zwischen den
             Seiten eines Bereichs (Team, Verein) wechselt dagegen die
@@ -1717,8 +1717,9 @@ export default async function Styleguide() {
             nicht, brechen die Reiter in eine zweite Zeile um, statt seitlich zu
             rollen: Mobile Browser zeigen keine Scrollleiste, ein Reiter
             ausserhalb des Bilds wäre weder als offen noch als vorhanden zu
-            erkennen (die vier Bereiche der Team-Verwaltung brauchen gut 500 px,
-            auf dem Handy bleiben rund 340 px).
+            erkennen (vier Reiter brauchten gut 500 px, auf dem Handy bleiben
+            rund 340 px; unter «Spieler:innen» kommen mit Teilnahme und
+            Meldezeitpunkten bis zu fünf dazu).
           </p>
           <TabNav
             ariaLabel="Beispiel-Ansichten"
@@ -2579,8 +2580,8 @@ export default async function Styleguide() {
             Dieselbe Leiste steht über den Spieler:innen des Vereins und über der
             Spielerliste eines Teams (#601: Suche, Kader samt «Ohne Kader»,
             Jahrgang, Privater Link) - kein eigenes Muster je Liste. Der Zustand
-            steht in der Adresse (<code>useAdressFilter</code>); die Reiter der
-            Team-Verwaltung tragen ihn weiter. Die Kader-Chips mit Zahl bleiben
+            steht in der Adresse (<code>useAdressFilter</code>); die Reiter unter
+            «Spieler:innen» tragen ihn samt Zeitraum weiter (#704). Die Kader-Chips mit Zahl bleiben
             den Reitern «Spieler:innen» an Trainings und Spielen, wo genau ein
             Kader zur Zeit gilt.
           </p>
@@ -3453,6 +3454,15 @@ export default async function Styleguide() {
             Angaben darum selbst (<code>nachRueckfrage</code>). Die Wahl der Darstellung lässt den
             Drawer offen, Ziele und Aktionen schliessen ihn. Umgeschaltet wird sofort und ohne
             Neuladen; Ungespeichertes auf der Seite bleibt stehen.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            <strong>Einträge eines Teams</strong> (#704): Trainingsplan, Spieler:innen, Trainings, Team.
+            Die Seitenleiste wählt, was man ansieht; die Reiter einer Seite zeigen dessen Sichten (Muster
+            wie in Jira). «Spieler:innen» öffnet immer die Liste ohne Eingrenzung und bleibt in jedem
+            ihrer Reiter offen; «Team» zeigt, was das Team selbst betrifft, auf einer Seite ohne Reiter
+            und trägt ein eigenes Zeichen (<code>Contact</code>), damit es neben den Spieler:innen
+            (<code>Users</code>) unterscheidbar bleibt. Eine zweite Reiterebene unter «Team» gibt es
+            bewusst nicht.
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             <strong>Bereich-Wechsler</strong> (<code>BereichWechsler</code>, Story #581) steht oben in

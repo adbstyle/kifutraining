@@ -24,6 +24,7 @@ import { Shirt } from "lucide-react";
 import { KADER_TEXT, uebrigeText } from "@/lib/kader";
 import { KaderLozenges } from "./KaderLozenge";
 import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
+import { teamSpielerPfad } from "@/lib/team-bereiche";
 
 /* Der Reiter «Spieler:innen» am Termin (#435 AK 1, 2, 5): wer angemeldet ist,
    wer abgemeldet, je mit einem Schalter, der sofort speichert. Abgemeldete
@@ -82,8 +83,8 @@ export function SpielerReiter({ teamId, daten }: { teamId: string; daten: Termin
     return (
       <Leerzustand icon={Shirt} titel="Noch keine Spielerliste" dicht>
         Wer an einem Termin kommt, siehst du, sobald das Team eine Spielerliste führt. Sie steht unter{" "}
-        <Link href={`/team/${teamId}/verwaltung`} className="focus-ring rounded-klein text-primary hover:underline">
-          Team
+        <Link href={teamSpielerPfad(teamId)} className="focus-ring rounded-klein text-primary hover:underline">
+          Spieler:innen
         </Link>
         .
       </Leerzustand>
