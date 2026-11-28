@@ -10,14 +10,17 @@ import { TabellenAuswahl } from "@/components/training/TabellenAuswahl";
 import type { AdressParameter } from "@/lib/adresse";
 import { TEILNAHME_TEXT } from "@/lib/teilnahme";
 import type { SpielerAnsicht } from "@/lib/team-spieler-seite";
-import { jahrgaengeDerListe } from "@/lib/team-spielerliste";
+import { jahrgaengeDerListe, teamEingrenzungGesetzt } from "@/lib/team-spielerliste";
+import { teamSpielerAnzahlZeile } from "@/lib/spieler";
 
 /* Das Gerüst der Reiter mit sortierbarer Tabelle unter «Spieler:innen»
  * («Teilnahme» #702, «Meldezeitpunkte» #703): links Eingrenzung und Zeitraum
  * über der Tabelle, rechts die Teilnahme der gewählten Spieler:in. Ohne
  * Spieler:innen im Team steht ein Leerzustand, trifft die Eingrenzung
  * niemanden, das Leerfeld mit dem Weg zurück (`TeilnahmeLeer`). Was die
- * Sicht zeigt (`vorTabelle`, `tabelle`, `fussnote`), gibt die Seite. */
+ * Sicht zeigt (`vorTabelle`, `tabelle`, `fussnote`), gibt die Seite. Unter
+ * der Eingrenzung die Anzahl der Spieler:innen, wie über der Liste (#706
+ * AK 6): dieselben samt Schnuppernden, eingegrenzt «12 von 34». */
 export function SpielerTabellenSeite({
   ansicht,
   sp,
@@ -64,6 +67,13 @@ export function SpielerTabellenSeite({
                 <TeilnahmeLeer />
               ) : (
                 <>
+                  <p className="type-label-small text-on-surface-mittel">
+                    {teamSpielerAnzahlZeile(
+                      ansicht.gefiltert.length,
+                      ansicht.spieler.length,
+                      teamEingrenzungGesetzt(ansicht.eingrenzung),
+                    )}
+                  </p>
                   {vorTabelle}
                   {/* Fokus und Sichtbarkeit beim Öffnen und Schliessen der Teilnahme daneben. */}
                   <TabellenAuswahl ausgewaehlt={ansicht.ausgewaehlt?.id} attribut="data-spieler-zeile" />

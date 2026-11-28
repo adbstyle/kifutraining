@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { AltersstufeField, Button, Dialog, TextField } from "@/components/ui";
 import { StufenField } from "@/components/training/StufenField";
+import { KopfKnopfText } from "@/components/layout/KopfAktionen";
 import { kategorienFuer, type Altersstufe } from "@/lib/altersstufe";
 import { erstelleTeamTraining } from "@/lib/actions/team-trainings";
 import { trainingNameProblem } from "@/lib/training";
@@ -13,7 +14,10 @@ import { trainingNameProblem } from "@/lib/training";
    Dieselben Pflichtangaben wie beim persönlichen Anlegen (Story 5 AK 1/2,
    Übungswelten): Die Altersstufe wird hier gewählt — bewusst ohne Vorbelegung,
    weil sie lebenslang bindet — und dazu mindestens eine Alterskategorie ihrer
-   Stufe. */
+   Stufe.
+
+   Die Hauptaktion der Trainings des Teams in deren Kopfzeile, schmal kurz
+   «Erstellen» (#706). */
 export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -58,8 +62,8 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
 
   return (
     <>
-      <Button variant="filled" onClick={() => setOpen(true)}>
-        Training erstellen
+      <Button variant="filled" aria-haspopup="dialog" onClick={() => setOpen(true)}>
+        <KopfKnopfText label="Training erstellen" kurz="Erstellen" />
       </Button>
 
       <Dialog

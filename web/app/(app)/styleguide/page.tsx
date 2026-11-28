@@ -85,6 +85,7 @@ import { OverlaysDemo } from "./OverlaysDemo";
 import { FeedbackDemo } from "./FeedbackDemo";
 import { TabelleAuswahlDemo } from "./TabelleAuswahlDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
+import { SeitenKopfDemo } from "./SeitenKopfDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
 import { NamenBestaetigenDemo } from "./NamenBestaetigenDemo";
@@ -283,6 +284,7 @@ const GLIEDERUNG = [
         eintraege: [
           { id: "navigation", titel: "Seitenleiste & Tabs" },
           { id: "breadcrumbs", titel: "Breadcrumbs" },
+          { id: "seitenkopf", titel: "Seitenkopf mit Aktionen" },
           { id: "verzeichnis", titel: "Verzeichnis" },
         ],
       },
@@ -3589,6 +3591,42 @@ export default async function Styleguide() {
             „…"-Knopf.
           </p>
           <BreadcrumbsDemo />
+        </Section>
+
+        <Section id="seitenkopf">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Übersichten tragen ihren Namen als letzte Brotkrume und keine weitere sichtbare
+            Überschrift; rechts in der Kopfzeile stehen ihre Aktionen (<code>KopfAktionen</code>{" "}
+            in <code>aktionen</code> des <code>Seitenrahmen</code>, #706, Variante B «wie
+            Übungen»). Darunter folgen Reiter, Eingrenzung, Anzahl und Liste, in dieser Ordnung.
+            Für Vorlesehilfen behält die Seite ihre Überschrift unsichtbar.
+          </p>
+          <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-1 pl-5 text-on-surface-mittel">
+            <li>
+              <strong>Hauptaktion</strong> als gefüllter Knopf mit Text, nur hier - auch im
+              Leerzustand steht kein zweiter Knopf in der Seite.
+            </li>
+            <li>
+              <strong>Zweitaktionen</strong> weniger hervorgehoben daneben: Knöpfe in Kontur
+              links (<code>zweit</code>), ein Menü ⋮ rechts aussen (<code>menue</code>).
+            </li>
+            <li>
+              <strong>Kurzform</strong> schmal (unter <code>sm</code>), etwa «Hinzufügen» oder
+              «Erstellen» (<code>KopfKnopfText</code>); der volle Name bleibt im Knopf für
+              Vorlesehilfen.
+            </li>
+            <li>
+              <strong>Gesperrt</strong> an einer Grenze bleibt die Hauptaktion sichtbar; der Satz
+              mit dem Grund steht sichtbar unter der Kopfzeile, der Knopf verweist mit{" "}
+              <code>aria-describedby</code> darauf - kein Tooltip am gesperrten Knopf.
+            </li>
+          </ul>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Neu, weil das Kit bisher nur den Ort der Aktionen kannte (<code>SeitenKopf</code>),
+            nicht ihre Ordnung und keine Kurzform. Die Seiten eines Teams setzen den Rahmen mit{" "}
+            <code>TeamSeite</code>.
+          </p>
+          <SeitenKopfDemo />
         </Section>
 
         <Section id="verzeichnis">

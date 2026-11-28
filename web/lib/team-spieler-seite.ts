@@ -1,14 +1,15 @@
 import "server-only";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient, getUserImRequest } from "@/lib/supabase/server";
-import { ladeSpielerliste } from "@/lib/kern/spieler";
+import { anzahlSpieler, ladeSpielerliste, vereinVollFuerTeam } from "@/lib/kern/spieler";
 import { ladeKader } from "@/lib/kern/kader";
 import { leseProbetraining } from "@/lib/kern/probe";
 import { spielerTeilnahme, type SpielerTeilnahme } from "@/lib/kern/teilnahme";
 import { adresseMitWerten, type AdressParameter } from "@/lib/adresse";
 import type { Kader } from "@/lib/kader";
 import type { Probetraining } from "@/lib/probe";
-import type { Spieler } from "@/lib/spieler";
+import { spielerSperre, type Spieler, type SpielerSperre } from "@/lib/spieler";
 import { teamSpielerPfad } from "@/lib/team-bereiche";
 import { leseTabellenSortierung, tabellenSortierWerte, type TabellenSpalte } from "@/lib/team-tabellen";
 import { liesSpielerAuswahl, liesZeitraum, teilnahmeWerte, type Zeitraum } from "@/lib/teilnahme";
@@ -32,6 +33,29 @@ import {
  * oder als Vorgabe ausgeschriebene Sortierung (#702). Ist
  * eine Spieler:in gewählt, kommt ihre Teilnahme dazu (`spielerTeilnahme`, wie
  * im KI-Werkzeug, NFR 3). Den Zugriff hat der Team-Rahmen geprüft. */
+
+/** Die Kader des Teams, einmal je Request: Der Rahmen der Spieler:innen
+ *  (Dialog «Spieler:in hinzufügen») und die Sicht lesen dieselben. */
+export const kaderDesTeams = cache(async (teamId: string) => {
+  const user = await getUserImRequest();
+  if (!user) redirect("/login");
+  return ladeKader(await createClient(), user.id, { teamId });
+});
+
+/** Was «Spieler:in hinzufügen» im Rahmen der Spieler:innen braucht (#706):
+ *  die Kader für den Dialog und ob das Hinzufügen gesperrt ist — die
+ *  Spielerliste des Teams voll oder der Spielerbestand des Vereins
+ *  (`team_verein_voll`, nur Ja oder Nein). */
+export async function ladeHinzufuegen(teamId: string): Promise<{ kader: Kader[]; sperre: SpielerSperre | null }> {
+  const supabase = await createClient();
+  const [kader, imTeam, vereinVoll] = await Promise.all([
+    kaderDesTeams(teamId),
+    anzahlSpieler(supabase, teamId),
+    vereinVollFuerTeam(supabase, teamId),
+  ]);
+  if (!kader.ok) throw new Error(kader.meldung);
+  return { kader: kader.wert.kader, sperre: spielerSperre(imTeam, vereinVoll) };
+}
 
 export type SpielerAnsicht = {
   /** Die Adresse der Sicht, gegen die bereinigt wurde. */
@@ -63,7 +87,7 @@ export async function ladeSpielerAnsicht(
 
   const [liste, kader, probe] = await Promise.all([
     ladeSpielerliste(supabase, user.id, { teamId }),
-    ladeKader(supabase, user.id, { teamId }),
+    kaderDesTeams(teamId),
     leseProbetraining(supabase, user.id, { teamId }),
   ]);
   if (!liste.ok) throw new Error(liste.meldung);

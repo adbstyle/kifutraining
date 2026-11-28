@@ -10,7 +10,19 @@
  * Rein, ohne next/*: Die Reiter (components/team/SpielerBereicheNav.tsx), die
  * Seitenleiste und check:kern lesen dieselben Angaben. */
 
-export type SpielerBereich = "liste" | "teilnahme" | "meldezeitpunkte" | "kader" | "link";
+/** Die Namen der Seiten eines Teams (#706): dieselben wie in der Seitenleiste
+ *  (AppNavClient, von check:kern abgeglichen). Auf jeder Seite steht der Name
+ *  als letzte Brotkrume (components/team/TeamSeite.tsx); unter
+ *  «Spieler:innen» bleibt es in jedem Reiter bei «Spieler:innen» — den Reiter
+ *  zeigt die Reiterleiste. */
+export const TEAM_SEITEN = {
+  plan: "Trainingsplan",
+  spieler: "Spieler:innen",
+  trainings: "Trainings",
+  team: "Team",
+} as const;
+
+export type SpielerBereich ="liste" | "teilnahme" | "meldezeitpunkte" | "kader" | "link";
 
 export const SPIELER_BEREICHE: readonly { schluessel: SpielerBereich; label: string; pfad: string }[] = [
   { schluessel: "liste", label: "Liste", pfad: "" },

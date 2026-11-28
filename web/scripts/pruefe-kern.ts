@@ -72,7 +72,7 @@ import {
   NICHT_GEFUNDEN,
   ausDbFehler,
 } from "../lib/kern/ergebnis";
-import { KEINE_PASSENDE_UEBUNG, LEER_HINWEIS, leerBestandText, zielLabel } from "../lib/training";
+import { KEINE_PASSENDE_UEBUNG, LEER_HINWEIS, leerBestandText, trainingAnzahlText, zielLabel } from "../lib/training";
 import { trainingAuskunft as auskunftRoh } from "../lib/kern/auskunft";
 import { TrainingAuskunftStreng } from "../lib/kern/auskunft-schema";
 import { zeitAbgleich } from "../lib/junioren";
@@ -314,6 +314,11 @@ import {
   linkStandAus,
   TEAM_SPIELER_FILTER,
   teamSpielerAnzahlText,
+  teamSpielerAnzahlZeile,
+  SPIELER_SPERRE,
+  SPIELER_GESPERRT_ID,
+  spielerSperre,
+  kaderHinweisText,
   zaehleLinkStaende,
   LINK_UEBERSICHT,
   type LinkStand,
@@ -537,7 +542,7 @@ import {
 } from "../lib/auffindbar";
 import { DATENSCHUTZ_PFAD, ENTWURF_HINWEIS, IMPRESSUM_PFAD, KONTAKT_EMAIL, RECHTLICHE_LINKS, VEREINBARUNG_FASSUNG, VEREINBARUNG_PFAD, VEREINBARUNG_TITEL } from "../lib/rechtliches";
 import { TRAGWEITE_VEROEFFENTLICHEN, ZUM_VEROEFFENTLICHEN_FEHLT } from "../lib/training-bedingungen";
-import { FILTER_SCHLUESSEL, REISENDE_SCHLUESSEL, SPIELER_BEREICHE, teamBereichAusPfad, teamBereichHref, teamSeitePfad, teamSpielerPfad } from "../lib/team-bereiche";
+import { FILTER_SCHLUESSEL, REISENDE_SCHLUESSEL, SPIELER_BEREICHE, TEAM_SEITEN, teamBereichAusPfad, teamBereichHref, teamSeitePfad, teamSpielerPfad } from "../lib/team-bereiche";
 import {
   OHNE_KADER_WERT,
   bereinigeTeamEingrenzung,
@@ -4636,6 +4641,115 @@ pruefe("Spielerliste eingrenzen: Suche, Kader, Jahrgang, Link-Stand; Adresse und
   for (const b of ["FilterSuche", "AuswahlFilter", "useAdressFilter", "zuruecksetzen"]) assert.ok(leiste.includes(b), `TeamSpielerFilter nutzt ${b}`);
   assert.match(quelle("lib/team-spieler-seite.ts"), /teamEingrenzungWerte\(eingrenzung\)/, "die Sichten leiten auf die bereinigte Adresse weiter");
   assert.match(quelle("app/(app)/team/[id]/spieler/page.tsx"), /ladeSpielerAnsicht\(/, "die Liste bereinigt über ladeSpielerAnsicht");
+});
+
+pruefe("Seiten eines Teams einheitlich: Name als letzte Krume, Hauptaktion in der Kopfzeile, Anzahl über der Liste (#706)", () => {
+  const app = join(web, "app/(app)/team/[id]");
+  const ohneKommentare = (t: string) => t.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const lies = (d: string) => ohneKommentare(readFileSync(join(app, d), "utf8"));
+  const liesWeb = (d: string) => ohneKommentare(readFileSync(join(web, d), "utf8"));
+  // Die Namen der Seiten sind die der Seitenleiste.
+  const nav = liesWeb("components/layout/AppNavClient.tsx");
+  const teamGruppe = nav.slice(nav.indexOf('titel: "Team"'), nav.indexOf('titel: "Verein"'));
+  assert.deepEqual([...teamGruppe.matchAll(/label: "([^"]+)"/g)].map((m) => m[1]), Object.values(TEAM_SEITEN));
+  // AK 1, NFR 2: Das Layout prüft nur noch den Zugriff; jede Seite setzt den
+  // einen Rahmen (TeamSeite) mit ihrem Namen — unter «Spieler:innen» einmal im
+  // Rahmen der Reiter, nie je Reiter.
+  const layout = lies("layout.tsx");
+  assert.ok(!/Seitenrahmen|<h1/.test(layout), "das Team-Layout setzt keinen Rahmen mehr");
+  assert.match(layout, /if \(!team\) redirect\("\/teams"\)/, "das Team-Layout prüft den Zugriff");
+  const rahmen: Record<string, keyof typeof TEAM_SEITEN> = {
+    "page.tsx": "plan",
+    "trainings/page.tsx": "trainings",
+    "trainer/page.tsx": "team",
+    "spieler/layout.tsx": "spieler",
+  };
+  for (const [datei, seite] of Object.entries(rahmen)) {
+    const q = lies(datei);
+    assert.match(q, new RegExp(`<TeamSeite\\s+teamId=\\{id\\}\\s+seite=\\{TEAM_SEITEN\\.${seite}\\}`), `${datei}: TeamSeite mit «${TEAM_SEITEN[seite]}»`);
+    assert.ok(!/Seitenrahmen/.test(q), `${datei}: kein eigener Seitenrahmen`);
+  }
+  for (const b of SPIELER_BEREICHE) {
+    const q = lies(join("spieler", b.pfad.slice(1), "page.tsx"));
+    assert.ok(!/TeamSeite|Seitenrahmen|SpielerHinzufuegen/.test(q), `Reiter ${b.label}: Rahmen und Hinzufügen nur im Rahmen der Spieler:innen`);
+  }
+  const teamSeite = liesWeb("components/team/TeamSeite.tsx");
+  assert.match(teamSeite, /\{ label: team\.name, href: `\/team\/\$\{team\.id\}` \},\s*\{ label: seite \},/, "die Seite ist die letzte Krume, das Team führt auf den Trainingsplan");
+  assert.match(teamSeite, /<h1 className="sr-only">\{team\.name\}<\/h1>/, "die Überschrift bleibt für Vorlesehilfen");
+  for (const datei of ["page.tsx", "trainings/page.tsx", "spieler/layout.tsx"])
+    assert.match(lies(datei), /<h2 className="sr-only">\{TEAM_SEITEN\.\w+\}<\/h2>/, `${datei}: unsichtbare Überschrift der Seite`);
+  // AK 2, 4: die Hauptaktion nur in der Kopfzeile (KopfAktionen), die Zweitaktion daneben.
+  const plan = lies("page.tsx");
+  assert.match(plan, /aktionen=\{\s*<KopfAktionen haupt=\{<NeuerTerminKnopf \/>\} menue=\{team && <PlanMenue /, "Trainingsplan: Termin erstellen und das Menü in der Kopfzeile");
+  assert.equal(plan.match(/<NeuerTerminKnopf/g)?.length, 1, "«Termin erstellen» steht nur einmal");
+  const trainings = lies("trainings/page.tsx");
+  assert.match(trainings, /<KopfAktionen haupt=\{<TeamTrainingErstellenButton teamId=\{id\} \/>\} \/>/, "Trainings: Training erstellen in der Kopfzeile");
+  assert.equal(trainings.match(/<TeamTrainingErstellenButton/g)?.length, 1, "«Training erstellen» steht nur einmal");
+  assert.ok(!/KopfAktionen|aktionen=/.test(lies("trainer/page.tsx")), "«Team» hat keine Aktionen in der Kopfzeile (Out of Scope 1)");
+  // AK 3: «Spieler:in hinzufügen» im Rahmen der Spieler:innen, also in jedem Reiter, und nirgends sonst.
+  const spielerRahmen = lies("spieler/layout.tsx");
+  assert.match(spielerRahmen, /haupt=\{<SpielerHinzufuegen teamId=\{id\} kader=\{kader\} sperre=\{sperre\} \/>\}/);
+  assert.match(spielerRahmen, /<SpielerBereicheNav teamId=\{id\} \/>/, "AK 5: die Reiter direkt im Rahmen");
+  const liste = liesWeb("components/team/SpielerListe.tsx");
+  assert.ok(!/nimmSpielerAufAktion|Spieler:in hinzufügen|<h3|Shirt|\bPlus\b/.test(liste), "die Spielerliste hat kein eigenes Hinzufügen und keine Überschrift mehr");
+  assert.ok(!/<Card/.test(lies("spieler/page.tsx")), "die Liste steht wie die übrigen Reiter ohne Karte");
+  const hinzu = liesWeb("components/team/SpielerHinzufuegen.tsx");
+  assert.match(hinzu, /nimmSpielerAufAktion\(teamId, eingabe\)/);
+  assert.match(hinzu, /setForm\(LEER\);\s*setFehler\(null\);\s*router\.refresh\(\);\s*erstesFeld\.current\?\.focus\(\);/, "der Dialog bleibt für die nächste offen");
+  const nachAufnahme = hinzu.slice(hinzu.indexOf("nimmSpielerAufAktion(teamId, eingabe)"), hinzu.indexOf("const aendern"));
+  assert.ok(!/setOffen\(false\)/.test(nachAufnahme), "nach dem Hinzufügen schliesst der Dialog nicht");
+  assert.ok(!/Löschen|Import|CSV/.test(hinzu), "kein Löschen und kein Import im Team");
+  // AK 8: auf dem Telefon die Kurzform, der volle Name für Vorlesehilfen.
+  for (const [datei, label, kurz] of [
+    ["components/team/NeuerTerminKnopf.tsx", "Termin erstellen", "Erstellen"],
+    ["components/team/TeamTrainingErstellenButton.tsx", "Training erstellen", "Erstellen"],
+    ["components/team/SpielerHinzufuegen.tsx", "Spieler:in hinzufügen", "Hinzufügen"],
+  ])
+    assert.ok(liesWeb(datei).includes(`<KopfKnopfText label="${label}" kurz="${kurz}" />`), `${datei}: Kurzform`);
+  const kopf = liesWeb("components/layout/KopfAktionen.tsx");
+  assert.match(kopf, /<span aria-hidden className="sm:hidden">\s*\{kurz\}\s*<\/span>\s*<span className="max-sm:sr-only">\{label\}<\/span>/);
+  assert.match(kopf, /\{zweit\}\s*\{haupt\}\s*\{menue\}/, "Kontur links, Hauptaktion, Menü rechts aussen");
+  // AK 7: gesperrt bei voller Spielerliste oder vollem Verein, mit Grund; Muster TeamAnlegen.
+  assert.equal(spielerSperre(SPIELER_MAX - 1, false), null);
+  assert.equal(spielerSperre(SPIELER_MAX, false), "team");
+  assert.equal(spielerSperre(SPIELER_MAX, true), "team", "die Grenze des Teams zuerst");
+  assert.equal(spielerSperre(0, true), "verein");
+  assert.equal(SPIELER_SPERRE.team, SPIELER_MELDUNG.SPIELERLISTE_VOLL);
+  assert.ok(!/\d/.test(SPIELER_SPERRE.verein), "vom Verein erfährt das Team keine Zahl");
+  assert.match(SPIELER_SPERRE.verein, /Vereinsverwaltung/, "der Satz nennt, wer Platz schafft");
+  assert.match(hinzu, /disabled=\{sperre !== null\}\s*aria-describedby=\{sperre \? SPIELER_GESPERRT_ID : undefined\}/);
+  assert.match(spielerRahmen, /\{sperre && \(\s*<div id=\{SPIELER_GESPERRT_ID\}>\s*<SectionMessage>\{SPIELER_SPERRE\[sperre\]\}<\/SectionMessage>/);
+  assert.equal(SPIELER_GESPERRT_ID, "spieler-gesperrt");
+  assert.match(liesWeb("lib/team-spieler-seite.ts"), /spielerSperre\(imTeam, vereinVoll\)/);
+  assert.match(liesWeb("lib/kern/spieler.ts"), /supabase\.rpc\("team_verein_voll", \{ p_team: teamId \}\)/);
+  // Die RPC: Team-Ort, Prüfung zuerst, nur Ja oder Nein; nur der Kern ruft sie, nie das KI-Werkzeug.
+  const mig = readFileSync(join(web, "..", "supabase", "migrations", "20261129100000_team_verein_voll.sql"), "utf8");
+  assert.match(mig, /returns boolean[\s\S]*?as \$\$\s*begin\s*if not ist_team_mitglied\(p_team\) then/);
+  assert.ok(!/ist_verein_verwaltung|nur_in_der_anwendung\(/.test(mig), "kein Verwaltungsweg am Team-Ort");
+  assert.match(mig, /revoke all on function team_verein_voll\(uuid\) from public, anon;/);
+  const aufrufer = ["lib", "app", "components"]
+    .flatMap((o) => quelldateien(join(web, o)))
+    .filter((d) => /\bteam_verein_voll\b/.test(ohneKommentare(readFileSync(d, "utf8"))))
+    .map((d) => relative(web, d));
+  assert.deepEqual(aufrufer, ["lib/kern/spieler.ts"], "nur der Kern ruft team_verein_voll");
+  // AK 6: die Anzahl — Spieler:innen samt Schnuppernden, eingegrenzt als Treffer von allen.
+  assert.equal(teamSpielerAnzahlZeile(34, 34, false), "34 Spieler:innen");
+  assert.equal(teamSpielerAnzahlZeile(12, 34, true), "12 von 34 Spieler:innen");
+  assert.equal(teamSpielerAnzahlZeile(1, 1, false), "1 Spieler:in");
+  assert.equal(teamSpielerAnzahlZeile(1, 34, true), "1 von 34 Spieler:innen");
+  assert.equal(trainingAnzahlText(12), "12 Trainings");
+  assert.equal(trainingAnzahlText(1), "1 Training");
+  assert.equal(trainingAnzahlText(3, 12), "3 von 12 Trainings");
+  assert.match(liste, /teamSpielerAnzahlZeile\(sichtbar\.length, spieler\.length, eingegrenzt\)/, "Liste");
+  assert.match(liesWeb("components/team/SpielerTabellenSeite.tsx"), /teamSpielerAnzahlZeile\(\s*ansicht\.gefiltert\.length,\s*ansicht\.spieler\.length,/, "Teilnahme und Meldezeitpunkte");
+  for (const r of ["spieler/teilnahme/page.tsx", "spieler/meldezeitpunkte/page.tsx"]) assert.match(lies(r), /<SpielerTabellenSeite/);
+  assert.match(trainings, /filtersActive \? zaehleTeamTrainings\(id\) : Promise\.resolve\(null\)/);
+  assert.match(trainings, /gesamt=\{gesamt\}/, "Trainings: eingegrenzt als Treffer von allen");
+  assert.match(liesWeb("components/training/TrainingTabelle.tsx"), /\{trainingAnzahlText\(trainings\.length, gesamt\)\}/);
+  // Die Kader-Hinweise beider Dialoge aus einer Quelle.
+  assert.equal(kaderHinweisText(" ", []), "Die Spieler:in ist nur bei Terminen ohne Kader dabei.");
+  assert.equal(kaderHinweisText("Lea", ["A", "B"]), "Lea ist bei Terminen ohne Kader und bei den Terminen von A und B dabei.");
+  for (const d of ["components/team/SpielerListe.tsx", "components/team/SpielerHinzufuegen.tsx"]) assert.match(liesWeb(d), /kaderHinweisText\(form\.vorname, gewaehlteNamen\)/, d);
 });
 
 pruefe("Stand der Links im Team überblicken: Zahlen je Stand, Sprung auf die offenen (#658)", () => {
