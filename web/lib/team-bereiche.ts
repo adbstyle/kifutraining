@@ -22,7 +22,7 @@ export const TEAM_SEITEN = {
   team: "Team",
 } as const;
 
-export type SpielerBereich ="liste" | "teilnahme" | "meldezeitpunkte" | "kader" | "link";
+export type SpielerBereich = "liste" | "teilnahme" | "meldezeitpunkte" | "kader" | "link";
 
 export const SPIELER_BEREICHE: readonly { schluessel: SpielerBereich; label: string; pfad: string }[] = [
   { schluessel: "liste", label: "Liste", pfad: "" },

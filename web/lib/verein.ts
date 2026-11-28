@@ -11,7 +11,8 @@ import { SPIELER_MAX, aufzaehlung, bereinigeName, imTeam, spielerName } from "@/
 
 /** Zwilling der Grenze im Trigger `spieler_vorher` (Marker `VEREIN_VOLL`): So
  *  viele Spieler:innen führt ein Verein höchstens — mit denen ohne Team, den
- *  Schnuppernden und Doppeleinträgen. Sie wirkt nur auf neue Einträge. */
+ *  Schnuppernden und Doppeleinträgen. Sie wirkt nur auf neue Einträge.
+ *  Dieselbe Grenze fragt `team_verein_voll` am Team-Ort ab (#706). */
 export const VEREIN_SPIELER_MAX = 1000;
 /** Zwilling der Grenze im Trigger `teams_vorher` (Marker `VEREIN_TEAMS_VOLL`). */
 export const VEREIN_TEAMS_MAX = 30;
