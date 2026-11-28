@@ -1,4 +1,5 @@
 import type { AdressParameter } from "@/lib/adresse";
+import { MELDE_TEXT, type Meldeart } from "@/lib/meldezeitpunkte";
 import { TEILNAHME_TEXT, type TeilnahmeUebersichtZeile } from "@/lib/teilnahme";
 
 /* Sortierbare Tabellen unter «Spieler:innen» (#702): welche Spalten eine
@@ -47,6 +48,19 @@ export const TEILNAHME_SPALTEN: readonly TabellenSpalte<TeilnahmeSpalte>[] = [
   { schluessel: "gOhne", label: T.spalte.gOhne, gruppe: T.spiel, ...ZAHL },
   { schluessel: "gNa", label: T.spalte.gNa, gruppe: T.spiel, ...ZAHL },
   { schluessel: "gNg", label: T.spalte.gNg, gruppe: T.spiel, ...ZAHL },
+];
+
+export type MeldeSpalte = "name" | Meldeart;
+
+/** Die Spalten der Meldezeitpunkte (#703, Variante M2): der Name, dann die
+ *  drei Mediane unter «Median vor Beginn» (AK 11). Sie beginnen beim
+ *  kürzesten Abstand — wer sich kurzfristig meldet, steht oben; «keine
+ *  Angabe» steht in beiden Richtungen zuletzt (`sortiereZeilen`). */
+export const MELDE_SPALTEN: readonly TabellenSpalte<MeldeSpalte>[] = [
+  { schluessel: "name", label: T.spielerin, ersteRichtung: "auf" },
+  { schluessel: "training_abmeldung", label: MELDE_TEXT.spalte.training_abmeldung, gruppe: MELDE_TEXT.gruppe, ersteRichtung: "auf" },
+  { schluessel: "spiel_anmeldung", label: MELDE_TEXT.spalte.spiel_anmeldung, gruppe: MELDE_TEXT.gruppe, ersteRichtung: "auf" },
+  { schluessel: "spiel_abmeldung", label: MELDE_TEXT.spalte.spiel_abmeldung, gruppe: MELDE_TEXT.gruppe, ersteRichtung: "auf" },
 ];
 
 /** Ohne Wahl: die erste Spalte (der Name), aufsteigend. */

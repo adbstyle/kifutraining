@@ -1,7 +1,8 @@
--- Lasttest der Teilnahme aller Spieler:innen eines Teams (#702 NFR 1): 100
--- Spieler:innen, ein Jahr mit 100 Trainings und 50 Spielen, drei Kader,
--- gemischte Meldungen. team_teilnahme muss als `authenticated` in weniger
--- als 2 Sekunden antworten — einmal, wenn noch nichts festgehalten ist (die
+-- Lasttest der Teilnahme aller Spieler:innen eines Teams (#702 NFR 1) und
+-- ihrer Meldezeitpunkte (#703 NFR 1): 100 Spieler:innen, ein Jahr mit 100
+-- Trainings und 50 Spielen, drei Kader, gemischte Meldungen. team_teilnahme
+-- und team_meldezeitpunkte müssen als `authenticated` je in weniger als 2
+-- Sekunden antworten — einmal, wenn noch nichts festgehalten ist (die
 -- Helfer laufen je Termin und Spieler:in), und einmal, wenn alles
 -- festgehalten ist. Die Dauer steht als NOTICE in der Ausgabe.
 -- Wird es knapp: zuerst den Plan prüfen (`explain analyze`), nicht die
@@ -28,8 +29,8 @@ begin
   perform set_config('request.jwt.claims', '', true);
 end $$;
 
--- Misst team_teilnahme über das ganze Jahr und bricht ab, wenn es 2 s oder
--- länger dauert. Gibt die Zahl der Spieler:innen mit Zeilen zurück.
+-- Misst team_teilnahme (#702) und team_meldezeitpunkte (#703) über das
+-- ganze Jahr und bricht ab, wenn eines 2 s oder länger dauert.
 create function pg_temp.messe(p_team uuid, p_lauf text) returns void
 language plpgsql as $$
 declare
@@ -43,6 +44,15 @@ begin
   if n <> 100 then raise exception '#702 Last (%): % statt 100 Spieler:innen', p_lauf, n; end if;
   if dauer >= interval '2 seconds' then
     raise exception '#702 Last (%): % — mehr als 2 s', p_lauf, dauer;
+  end if;
+
+  t0 := clock_timestamp();
+  select count(distinct spieler_id) into n from team_meldezeitpunkte(p_team, current_date - 365, current_date);
+  dauer := clock_timestamp() - t0;
+  raise notice '#703 Last (%): % Spieler:innen mit Meldungen in % ms', p_lauf, n, round(extract(epoch from dauer) * 1000);
+  if n < 50 then raise exception '#703 Last (%): nur % Spieler:innen mit Meldungen', p_lauf, n; end if;
+  if dauer >= interval '2 seconds' then
+    raise exception '#703 Last (%): % — mehr als 2 s', p_lauf, dauer;
   end if;
 end $$;
 

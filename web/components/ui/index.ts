@@ -111,3 +111,4 @@ export { feldNameKlasse } from "./feld";
 export { FilterKnopf, AuswahlFilter, FilterSuche, ZahlFilter, ZeitraumFilter } from "./FilterKnopf";
 export { Teilnahmebalken, TeilnahmePunkt, type TeilnahmeTon } from "./Teilnahmebalken";
 export { Radio } from "./Radio";
+export { LiegenderBalken } from "./LiegenderBalken";

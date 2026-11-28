@@ -4,8 +4,19 @@ import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import { ladeSpieler, ladeSpielerliste } from "@/lib/kern/spieler";
 import { ausDbFehler, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
 import {
+  fasseFensterZusammen,
+  keineMediane,
+  meldeMediane,
+  type MeldeAnzahlen,
+  type Meldeart,
+  type MeldeMediane,
+  type MeldeZeile,
+} from "@/lib/meldezeitpunkte";
+import {
+  teamSummen,
   teilnahmeZahlen,
   zeitraumFehler,
+  type TeamSummen,
   type TeilnahmeArt,
   type TeilnahmeZahlen,
   type TeilnahmeZeile,
@@ -133,5 +144,81 @@ export async function teamTeilnahme(
       nachname: s.nachname,
       zahlen: zahlen.wert.zahlen.get(s.id) ?? leer,
     })),
+  });
+}
+
+/**
+ * Die Meldezeitpunkte aller Spieler:innen eines Teams (#703) — für den Reiter
+ * «Meldezeitpunkte» und, über `teamMeldezeitpunkte`, das KI-Werkzeug
+ * «team_meldezeitpunkte_abrufen». Gezählt wird in `team_meldezeitpunkte` auf
+ * derselben Zählbasis wie die Teilnahme (`teilnahme_kern`): je Spieler:in und
+ * Meldeart Anzahl, Median und die fünf Fenster. Nur Mitglieder des Teams
+ * (NFR 2). Wer keine Meldung mit festgehaltenem Zeitpunkt hat, fehlt.
+ */
+export type TeamMeldeZahlen = {
+  team: { id: string; name: string };
+  zeitraum: Zeitraum;
+  zeilen: MeldeZeile[];
+};
+
+export async function teamMeldeZahlen(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { teamId: string; von?: string | null; bis?: string | null },
+): Promise<KernErgebnis<TeamMeldeZahlen>> {
+  const zeitraum: Zeitraum = { von: e.von || null, bis: e.bis || null };
+  const problem = zeitraumFehler(zeitraum);
+  if (problem) return fehlschlag("eingabe", problem.text, { feld: problem.feld });
+
+  const team = await pruefeTeamMitglied(supabase, e.teamId);
+  if (!team.ok) return team;
+
+  const { data, error } = await supabase.rpc("team_meldezeitpunkte", {
+    p_team: e.teamId,
+    p_von: zeitraum.von,
+    p_bis: zeitraum.bis,
+  });
+  if (error) return ausDbFehler(error);
+  return ok({ team: team.wert, zeitraum, zeilen: (data ?? []) as MeldeZeile[] });
+}
+
+/** Die Meldezeitpunkte für den KI-Assistenten (AK 13): je Spieler:in, die
+ *  aktuell im Team ist, die Mediane (ohne Meldung: keine Angabe), und für das
+ *  Team die Fenster sowie «ohne Abmeldung gefehlt» und «nicht gemeldet» — die
+ *  aus `team_teilnahme`, damit sie der Teilnahme-Übersicht gleichen (NFR 3). */
+export type TeamMeldezeitpunkte = {
+  team: { id: string; name: string };
+  zeitraum: Zeitraum;
+  spieler: { id: string; vorname: string; nachname: string; mediane: MeldeMediane; anzahl: MeldeAnzahlen }[];
+  fenster: Record<Meldeart, number[]>;
+  summen: TeamSummen;
+};
+
+export async function teamMeldezeitpunkte(
+  supabase: SupabaseClient,
+  userId: string,
+  e: { teamId: string; von?: string | null; bis?: string | null },
+): Promise<KernErgebnis<TeamMeldezeitpunkte>> {
+  const [melde, teilnahme, liste] = await Promise.all([
+    teamMeldeZahlen(supabase, userId, e),
+    teamTeilnahmeZahlen(supabase, userId, e),
+    ladeSpielerliste(supabase, userId, { teamId: e.teamId }),
+  ]);
+  if (!melde.ok) return melde;
+  if (!teilnahme.ok) return teilnahme;
+  if (!liste.ok) return liste;
+  const ids = liste.wert.spieler.map((s) => s.id);
+  const je = meldeMediane(melde.wert.zeilen);
+  return ok({
+    team: melde.wert.team,
+    zeitraum: melde.wert.zeitraum,
+    spieler: liste.wert.spieler.map((s) => ({
+      id: s.id,
+      vorname: s.vorname,
+      nachname: s.nachname,
+      ...(je.get(s.id) ?? keineMediane()),
+    })),
+    fenster: fasseFensterZusammen(melde.wert.zeilen, ids),
+    summen: teamSummen(teilnahme.wert.zahlen, ids),
   });
 }

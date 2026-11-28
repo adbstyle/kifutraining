@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { ReleaseText } from "@/components/versionen/ReleaseText";
 import {
   BestandAnzeige,
+  LiegenderBalken,
   Teilnahmebalken,
   TeilnahmePunkt,
   Button,
@@ -62,6 +63,7 @@ import {
   Gefahrenzone,
 } from "@/components/ui";
 import { HinweisEltern } from "@/components/privat/HinweisEltern";
+import { MeldeTeam } from "@/components/team/MeldeTeam";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { uebungEckdaten } from "@/lib/eckdaten";
 import { ChipsDemo } from "./ChipsDemo";
@@ -271,6 +273,7 @@ const GLIEDERUNG = [
           { id: "meldungen", titel: "Leerzustand, Hinweiszeile & Section Message" },
           { id: "bestand-anzeige", titel: "Bestand und Grenze" },
           { id: "teilnahmebalken", titel: "Teilnahmebalken" },
+          { id: "liegender-balken", titel: "Liegende Balken & Kennzahlen" },
           { id: "dialog-snackbar", titel: "Dialog & Snackbar" },
           { id: "feedback-dialog", titel: "Fragen und Feedback" },
         ],
@@ -3205,6 +3208,70 @@ export default async function Styleguide() {
                 </span>
               ))}
             </div>
+          </div>
+        </Section>
+
+        <Section id="liegender-balken">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Anzahlen nebeneinander vergleichen (<code>LiegenderBalken</code>,
+            #703): je Reihe Beschriftung, Balken und Zahl. Neu, weil der
+            Teilnahmebalken eine Summe in Anteile teilt und der Bestand auf eine
+            Grenze zuzählt; hier stehen Anzahlen gleichrangig nebeneinander.
+            Mehrere Diagramme teilen einen Massstab (<code>max</code>), damit
+            ihre Balken vergleichbar bleiben. Eine echte Liste, die Zahl steht
+            als Text, der Balken ergänzt nur (<code>aria-hidden</code>). Eine
+            Farbe statt der heller werdenden Stufen des Prototyps: Die hellen
+            Stufen hielten den Kontrast 3:1 für Grafik nicht, die Reihenfolge
+            tragen die Beschriftungen.
+          </p>
+          <div className="mb-8 grid max-w-3xl grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-4">
+            <Card className="px-5 py-4">
+              <LiegenderBalken
+                label="Beispiel A"
+                max={9}
+                reihen={[
+                  { label: "mehr als 7 Tage", anzahl: 9 },
+                  { label: "3–7 Tage", anzahl: 4 },
+                  { label: "1–3 Tage", anzahl: 1 },
+                  { label: "6–24 Stunden", anzahl: 0 },
+                  { label: "höchstens 6 Stunden", anzahl: 2 },
+                ]}
+              />
+            </Card>
+            <Card className="px-5 py-4">
+              <LiegenderBalken
+                label="Beispiel B, gleicher Massstab"
+                max={9}
+                reihen={[
+                  { label: "mehr als 7 Tage", anzahl: 2 },
+                  { label: "3–7 Tage", anzahl: 3 },
+                  { label: "1–3 Tage", anzahl: 0 },
+                  { label: "6–24 Stunden", anzahl: 1 },
+                  { label: "höchstens 6 Stunden", anzahl: 0 },
+                ]}
+              />
+            </Card>
+          </div>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            So stehen sie in den Meldezeitpunkten der Spieler:innen
+            (<code>MeldeTeam</code>, Variante M2): je Meldeart eine Karte im
+            gleichen Massstab, daneben Kennzahlen als <code>Card</code> mit
+            Kit-Typografie — Bezeichnung und Erklärung links, grosse Zahlen in
+            gleich breiten Ziffern rechts (<code>dl</code>). Für zwei Kacheln an
+            einem Ort lohnt sich kein eigener Baustein; kommt ein zweiter Ort
+            dazu, wird daraus einer.
+          </p>
+          <div className="max-w-5xl">
+            <MeldeTeam
+              fenster={{
+                training_abmeldung: [9, 4, 1, 0, 2],
+                spiel_anmeldung: [2, 3, 0, 1, 0],
+                spiel_abmeldung: [0, 0, 0, 0, 0],
+              }}
+              summen={{ ohneAbmeldungGefehlt: { training: 3, spiel: 1 }, nichtGemeldet: 4 }}
+              zeitraumText="Letzte 3 Monate"
+              umfang={{ n: 12, von: 14 }}
+            />
           </div>
         </Section>
 

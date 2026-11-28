@@ -103,6 +103,29 @@ export function teilnahmeTabellenZeile(zahlen: Record<TeilnahmeArt, TeilnahmeZah
   };
 }
 
+/** Die Teamzahlen neben den Meldezeitpunkten (#703 AK 7, 8): ohne Abmeldung
+ *  gefehlt (Trainings und Spiele getrennt) und nicht gemeldet, über die
+ *  Spieler:innen `ids` (aktuell im Team und eingegrenzt, AK 9). Summiert aus
+ *  `teilnahmeTabellenZeile` — dieselben Zahlen wie die Spalten der
+ *  Teilnahme-Übersicht (#703 NFR 3). Wer in `zahlenJe` fehlt, zählt 0. */
+export type TeamSummen = { ohneAbmeldungGefehlt: { training: number; spiel: number }; nichtGemeldet: number };
+
+export function teamSummen(
+  zahlenJe: ReadonlyMap<string, Record<TeilnahmeArt, TeilnahmeZahlen>>,
+  ids: Iterable<string>,
+): TeamSummen {
+  const summe: TeamSummen = { ohneAbmeldungGefehlt: { training: 0, spiel: 0 }, nichtGemeldet: 0 };
+  for (const id of ids) {
+    const zahlen = zahlenJe.get(id);
+    if (!zahlen) continue;
+    const z = teilnahmeTabellenZeile(zahlen);
+    summe.ohneAbmeldungGefehlt.training += z.tOhne;
+    summe.ohneAbmeldungGefehlt.spiel += z.gOhne;
+    summe.nichtGemeldet += z.gNg;
+  }
+  return summe;
+}
+
 // ── Zeitraum ────────────────────────────────────────────────────────────────
 
 /** Der Zeitraum der Statistik: beide Tage eingeschlossen, `null` lässt die

@@ -76,8 +76,8 @@ const { kalendertagAmTrainingsort } = await import("../lib/zeit");
 const { legeSerieFest, aendereSerie, entferneSerie, folgeDerSerie, aendereMitReichweite, entferneMitReichweite } =
   await import("../lib/kern/serien");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
-const { spielerTeilnahme, teamTeilnahme, teamTeilnahmeZahlen } = await import("../lib/kern/teilnahme");
-const { teilnahmeZahlen } = await import("../lib/teilnahme");
+const { spielerTeilnahme, teamMeldeZahlen, teamMeldezeitpunkte, teamTeilnahme, teamTeilnahmeZahlen } = await import("../lib/kern/teilnahme");
+const { teilnahmeTabellenZeile, teilnahmeZahlen } = await import("../lib/teilnahme");
 const { getTeamPlanFuer, nochNichtVorbereitet } = await import("../lib/queries/termine-fuer");
 const { ladeSpielerliste, anzahlSpieler, nimmSpielerAuf, aendereSpieler, ladeSpieler, ladeSpielerTeams, eigenesTeamVon, nimmSpielerAusTeam, holeSpielerLink, erneuereSpielerLink, setzeLinkZugestellt, leseAbholung, schalteAbholung, erneuereAbholung } =
   await import("../lib/kern/spieler");
@@ -4574,6 +4574,61 @@ try {
     // Die RPC selbst weist ein Nicht-Mitglied ab (42501), anon hat kein Recht.
     assert.equal((await b.supabase.rpc("team_teilnahme", { p_team: team })).error?.code, "42501");
     assert.ok((await feldAnon.rpc("team_teilnahme", { p_team: team })).error, "anon darf nicht");
+  });
+
+  await pruefe("Meldezeitpunkte (#703): Mediane und Fenster aus der Datenbank, Teamzahlen wie die Teilnahme, nur Mitglieder, Zeitraum geprüft (NFR 2, 3; AK 13)", async () => {
+    const team = await serienTeam("Kern-DB-Meldezeitpunkte");
+    const lena = await neuerSpieler(team, "Lena", "Melde");
+    await neuerSpieler(team, "Mia", "Melde");
+    // Ein begonnenes Training; Lena hat sich lange vorher abgemeldet (Stand und Zeitpunkt per Admin).
+    // Grenzwerte, Spiele und Verlegungen deckt supabase/tests/team_meldezeitpunkte.sql ab.
+    const termine = await admin
+      .from("training_termine")
+      .insert([{ team_id: team, datum: tagCh(-3), beginn: "18:00", ende: "19:00", art: "training", bezeichnung: null }])
+      .select("id");
+    assert.equal(termine.error, null);
+    const termin = termine.data![0].id as string;
+    const vorher = new Date(Date.now() - 20 * 86400_000).toISOString();
+    assert.equal(
+      (await admin.from("termin_statuswechsel").upsert({ termin_id: termin, spieler_id: lena.spielerId, team_id: team, gewechselt_am: vorher })).error,
+      null,
+    );
+    // Ein begonnener Termin ist beim Anlegen schon festgehalten (termin_teilnahmen); dort steht die Abmeldung.
+    assert.equal(
+      (await admin.from("termin_teilnahmen").update({ abgemeldet: true }).eq("termin_id", termin).eq("spieler_id", lena.spielerId)).error,
+      null,
+    );
+
+    const r = wert(await teamMeldeZahlen(a.supabase, a.id, { teamId: team }));
+    assert.equal(r.zeilen.length, 1, "nur Lenas Abmeldung");
+    const z = r.zeilen[0];
+    assert.deepEqual([z.spieler_id, z.meldeart, z.anzahl, z.fenster], [lena.spielerId, "training_abmeldung", 1, [1, 0, 0, 0, 0]]);
+    assert.ok(z.median_sekunden! > 7 * 86400, "mehr als 7 Tage vor Beginn");
+    assert.equal(wert(await teamMeldeZahlen(a.supabase, a.id, { teamId: team, von: tagCh(-2) })).zeilen.length, 0, "Zeitraum grenzt ein");
+
+    // KI: jede aktuelle Spieler:in mit ihren Medianen; Teamzahlen wie die Teilnahme-Übersicht (NFR 3).
+    const ki = wert(await teamMeldezeitpunkte(a.supabase, a.id, { teamId: team }));
+    assert.deepEqual(ki.spieler.map((s) => s.vorname), ["Lena", "Mia"]);
+    assert.equal(ki.spieler[0].mediane.training_abmeldung, z.median_sekunden);
+    assert.deepEqual(ki.spieler[1].mediane, { training_abmeldung: null, spiel_anmeldung: null, spiel_abmeldung: null });
+    assert.deepEqual(ki.fenster.training_abmeldung, [1, 0, 0, 0, 0]);
+    const tn = wert(await teamTeilnahme(a.supabase, a.id, { teamId: team }));
+    const uebersicht = tn.spieler.map((s) => teilnahmeTabellenZeile(s.zahlen));
+    assert.deepEqual(ki.summen, {
+      ohneAbmeldungGefehlt: {
+        training: uebersicht.reduce((n, x) => n + x.tOhne, 0),
+        spiel: uebersicht.reduce((n, x) => n + x.gOhne, 0),
+      },
+      nichtGemeldet: uebersicht.reduce((n, x) => n + x.gNg, 0),
+    });
+
+    // Nur Mitglieder; der Zeitraum wird geprüft, bevor gezählt wird.
+    fehler(await teamMeldeZahlen(b.supabase, b.id, { teamId: team }), "nicht_gefunden");
+    fehler(await teamMeldezeitpunkte(b.supabase, b.id, { teamId: team }), "nicht_gefunden");
+    fehler(await teamMeldeZahlen(a.supabase, a.id, { teamId: team, von: "2026-02-30" }), "eingabe");
+    // Die RPC selbst weist ein Nicht-Mitglied ab (42501), anon hat kein Recht.
+    assert.equal((await b.supabase.rpc("team_meldezeitpunkte", { p_team: team })).error?.code, "42501");
+    assert.ok((await feldAnon.rpc("team_meldezeitpunkte", { p_team: team })).error, "anon darf nicht");
   });
 
   await pruefe("Doppelerfassung im Verein: abgewiesen mit den Teams, ohne J+S, vor der Teamgrenze, fremder Verein stört nicht (#578 AK 1–4, 9, PC 2, 3; Testfall 5)", async () => {

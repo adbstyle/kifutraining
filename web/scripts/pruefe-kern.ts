@@ -564,6 +564,7 @@ import {
   kurzwahlVon,
   liesSpielerAuswahl,
   liesZeitraum,
+  teamSummen,
   teilnahmeTabellenZeile,
   teilnahmeWerte,
   teilnahmeZahlen,
@@ -571,6 +572,17 @@ import {
   zeitraumWert,
 } from "../lib/teilnahme";
 import {
+  MELDE_FENSTER,
+  MELDE_TEXT,
+  MELDEARTEN,
+  dauerText,
+  fasseFensterZusammen,
+  fensterIndex,
+  meldeMediane,
+  stundenGerundet,
+} from "../lib/meldezeitpunkte";
+import {
+  MELDE_SPALTEN,
   TEILNAHME_SPALTEN,
   leseTabellenSortierung,
   naechsteTabellenSortierung,
@@ -4423,13 +4435,14 @@ const WEITERLEITUNGEN = await (await import("../next.config")).default.redirects
 pruefe("Spieler:innen als eigener Bereich mit Reitern; «Team» ohne Reiter; alte Adressen leiten weiter (#704)", () => {
   const T = "11111111-1111-4111-8111-111111111111";
   // AK 3: die Reiter in dieser Reihenfolge, unterscheidbar benannt.
-  // #702 fügt «Teilnahme» an zweiter Stelle ein.
-  assert.deepEqual(SPIELER_BEREICHE.map((b) => b.label), ["Liste", "Teilnahme", "Kader & Schnuppern", "Privater Link"]);
+  // #702 fügt «Teilnahme» an zweiter Stelle ein, #703 «Meldezeitpunkte» an dritter.
+  assert.deepEqual(SPIELER_BEREICHE.map((b) => b.label), ["Liste", "Teilnahme", "Meldezeitpunkte", "Kader & Schnuppern", "Privater Link"]);
   // AK 2, 3: jeder Reiter hat seine Adresse, die Liste ist die Grundadresse.
   assert.equal(teamSpielerPfad(T), `/team/${T}/spieler`);
   assert.equal(teamSeitePfad(T), `/team/${T}/trainer`);
   assert.equal(teamBereichHref(T, "liste"), `/team/${T}/spieler`);
   assert.equal(teamBereichHref(T, "teilnahme"), `/team/${T}/spieler/teilnahme`);
+  assert.equal(teamBereichHref(T, "meldezeitpunkte"), `/team/${T}/spieler/meldezeitpunkte`);
   assert.equal(teamBereichHref(T, "kader"), `/team/${T}/spieler/kader`);
   assert.equal(teamBereichHref(T, "link"), `/team/${T}/spieler/link`);
   const app = join(web, "app/(app)/team/[id]");
@@ -4460,6 +4473,8 @@ pruefe("Spieler:innen als eigener Bereich mit Reitern; «Team» ohne Reiter; alt
   const ort: Record<string, string> = {
     SpielerListe: "spieler/page.tsx",
     TeilnahmeTabelle: "spieler/teilnahme/page.tsx",
+    MeldeTabelle: "spieler/meldezeitpunkte/page.tsx",
+    MeldeTeam: "spieler/meldezeitpunkte/page.tsx",
     KaderKarte: "spieler/kader/page.tsx",
     SchnupperKarte: "spieler/kader/page.tsx",
     Selbstabholung: "spieler/link/page.tsx",
@@ -4469,7 +4484,7 @@ pruefe("Spieler:innen als eigener Bereich mit Reitern; «Team» ohne Reiter; alt
     TeamGefahrenzone: "trainer/page.tsx",
     Teamangaben: "trainer/page.tsx",
   };
-  const seiten = ["spieler/page.tsx", "spieler/teilnahme/page.tsx", "spieler/kader/page.tsx", "spieler/link/page.tsx", "trainer/page.tsx"];
+  const seiten = ["spieler/page.tsx", "spieler/teilnahme/page.tsx", "spieler/meldezeitpunkte/page.tsx", "spieler/kader/page.tsx", "spieler/link/page.tsx", "trainer/page.tsx"];
   for (const [teil, datei] of Object.entries(ort))
     for (const s of seiten) assert.equal(new RegExp(`\\b${teil}\\b`).test(lies(s)), s === datei, `${teil} in ${s}`);
   assert.ok(!/Selbstabholung/.test(ohneKommentare(readFileSync(join(web, "components/team/SpielerListe.tsx"), "utf8"))), "die Spielerliste zeigt die Selbstabholung nicht");
@@ -7323,6 +7338,128 @@ pruefe("Teilnahme (#702): Seite, Einzelteilnahme und KI-Werkzeug zählen über d
     assert.ok(!/teilnahme_kern/.test(q), `${relative(web, d)} nennt teilnahme_kern`);
   }
   assert.ok(!/rpc\("teilnahme_kern"/.test(liesTn("lib/kern/teilnahme.ts")), "auch der Kern ruft teilnahme_kern nicht");
+});
+
+// ── Meldezeitpunkte (#703) ──────────────────────────────────────────────────
+
+pruefe("Meldezeitpunkte (#703 AK 5): Fenster mit Grenzwert ins Fenster, das dort endet — Zwilling der SQL-Schwellen", () => {
+  const H = 3600;
+  const D = 86400;
+  assert.deepEqual(MELDE_FENSTER.map((f) => f.label), ["mehr als 7 Tage", "3–7 Tage", "1–3 Tage", "6–24 Stunden", "höchstens 6 Stunden"]);
+  // Genau auf der Grenze → das kurzfristigere Fenster; eine Sekunde mehr → das frühere.
+  for (const [s, i] of [
+    [7 * D + 1, 0], [7 * D, 1], [3 * D + 1, 1], [3 * D, 2], [D + 1, 2], [D, 3], [6 * H + 1, 3], [6 * H, 4], [1, 4], [0, 4],
+  ] as const)
+    assert.equal(fensterIndex(s), i, `${s} s`);
+  // Die Schwellen in der Migration sind dieselben, in derselben Folge.
+  const sql = liesTn("../supabase/migrations/20261128110000_team_meldezeitpunkte.sql");
+  const filter = [...sql.matchAll(/count\(\*\) filter \(where ([^)]*)\)/g)].map((m) => m[1]);
+  assert.equal(filter.length, MELDE_FENSTER.length);
+  filter.forEach((bed, i) => {
+    const unten = /sekunden_vor_beginn > (\d+)/.exec(bed)?.[1];
+    const oben = /sekunden_vor_beginn <= (\d+)/.exec(bed)?.[1];
+    assert.equal(unten === undefined ? -Infinity : Number(unten), MELDE_FENSTER[i].ueber, `Fenster ${i}: untere Grenze`);
+    assert.equal(oben === undefined ? Infinity : Number(oben), i === 0 ? Infinity : MELDE_FENSTER[i - 1].ueber, `Fenster ${i}: obere Grenze`);
+  });
+  // Die Meldearten: Zwilling von `art || '_' || meldung`.
+  assert.deepEqual([...MELDEARTEN], ["training_abmeldung", "spiel_anmeldung", "spiel_abmeldung"]);
+  assert.match(sql, /k\.art \|\| '_' \|\| k\.meldung/);
+  assert.match(sql, /percentile_cont\(0\.5\) within group \(order by k\.sekunden_vor_beginn\)/);
+  assert.match(sql, /if not ist_team_mitglied\(p_team\) then\s+raise exception '[^']+' using errcode = '42501';/, "die Mitgliedschaft ist die erste Anweisung");
+});
+
+pruefe("Meldezeitpunkte (#703 AK 1–4): Dauer als Text, Mediane je Spieler:in, keine Angabe; Stunden für die KI", () => {
+  assert.equal(dauerText(null), "keine Angabe");
+  assert.equal(dauerText(600), "unter 1 Std.");
+  assert.equal(dauerText(3600), "1 Std.");
+  assert.equal(dauerText(5.4 * 3600), "5 Std.");
+  assert.equal(dauerText(23.4 * 3600), "23 Std.");
+  assert.equal(dauerText(86400), "1 Tag");
+  assert.equal(dauerText(1.6 * 86400), "1,5 Tage");
+  assert.equal(dauerText(1.8 * 86400), "2 Tage");
+  assert.equal(dauerText(10 * 86400), "10 Tage");
+  assert.equal(stundenGerundet(null), null);
+  assert.equal(stundenGerundet(172801), 48);
+  assert.equal(stundenGerundet(23400), 6.5);
+  const je = meldeMediane([
+    { spieler_id: "a", meldeart: "training_abmeldung", anzahl: 5, median_sekunden: 86400, fenster: [0, 1, 1, 2, 1] },
+    { spieler_id: "a", meldeart: "spiel_anmeldung", anzahl: 2, median_sekunden: 259200, fenster: [0, 1, 1, 0, 0] },
+    { spieler_id: "a", meldeart: "unbekannt", anzahl: 1, median_sekunden: 1, fenster: [0, 0, 0, 0, 1] },
+  ]);
+  assert.deepEqual(je.get("a"), {
+    mediane: { training_abmeldung: 86400, spiel_anmeldung: 259200, spiel_abmeldung: null },
+    anzahl: { training_abmeldung: 5, spiel_anmeldung: 2, spiel_abmeldung: 0 },
+  });
+  assert.equal(je.get("b"), undefined, "ohne Meldung: keine Angabe");
+});
+
+pruefe("Meldezeitpunkte (#703 AK 5, 7–9, 11, NFR 3): Teamzahlen nur der eingegrenzten Spieler:innen; Summen wie die Teilnahme-Übersicht; Sortierung keine Angabe zuletzt", () => {
+  const zeilen = [
+    { spieler_id: "a", meldeart: "training_abmeldung", anzahl: 3, median_sekunden: 1, fenster: [1, 0, 1, 0, 1] },
+    { spieler_id: "b", meldeart: "training_abmeldung", anzahl: 2, median_sekunden: 1, fenster: [0, 2, 0, 0, 0] },
+    { spieler_id: "b", meldeart: "spiel_abmeldung", anzahl: 1, median_sekunden: 1, fenster: [0, 0, 0, 0, 1] },
+    { spieler_id: "c", meldeart: "spiel_anmeldung", anzahl: 4, median_sekunden: 1, fenster: [4, 0, 0, 0, 0] },
+  ];
+  assert.deepEqual(fasseFensterZusammen(zeilen, ["a", "b"]), {
+    training_abmeldung: [1, 2, 1, 0, 1],
+    spiel_anmeldung: [0, 0, 0, 0, 0],
+    spiel_abmeldung: [0, 0, 0, 0, 1],
+  });
+  // NFR 3: «ohne Abmeldung gefehlt» und «nicht gemeldet» sind die Summe der Spalten der Übersicht.
+  const zahlenJe = new Map([
+    ["a", teilnahmeZahlen([
+      { art: "training", ergebnis: "nicht_erschienen", anzahl: 2 },
+      { art: "spiel", ergebnis: "nicht_erschienen", anzahl: 1 },
+      { art: "spiel", ergebnis: "meldefrist_verpasst", anzahl: 1 },
+    ])],
+    ["b", teilnahmeZahlen([
+      { art: "spiel", ergebnis: "ohne_meldung", anzahl: 3 },
+      { art: "training", ergebnis: "nicht_erschienen", anzahl: 1 },
+    ])],
+    ["c", teilnahmeZahlen([{ art: "training", ergebnis: "nicht_erschienen", anzahl: 9 }])],
+  ]);
+  const ids = ["a", "b", "x"];
+  const zeilenUebersicht = ids.map((id) => teilnahmeTabellenZeile(zahlenJe.get(id) ?? teilnahmeZahlen([])));
+  const summe = (k: "tOhne" | "gOhne" | "gNg") => zeilenUebersicht.reduce((n, z) => n + z[k], 0);
+  assert.deepEqual(teamSummen(zahlenJe, ids), {
+    ohneAbmeldungGefehlt: { training: summe("tOhne"), spiel: summe("gOhne") },
+    nichtGemeldet: summe("gNg"),
+  });
+  assert.deepEqual(teamSummen(zahlenJe, ids), { ohneAbmeldungGefehlt: { training: 3, spiel: 1 }, nichtGemeldet: 4 });
+  // AK 11: drei Mediane unter «Median vor Beginn», erste Richtung «auf»; keine Angabe zuletzt.
+  assert.deepEqual(MELDE_SPALTEN.map((s) => s.schluessel), ["name", ...MELDEARTEN]);
+  assert.deepEqual(MELDE_SPALTEN.slice(1).map((s) => [s.gruppe, s.ersteRichtung]), MELDEARTEN.map(() => [MELDE_TEXT.gruppe, "auf"]));
+  assert.deepEqual(leseTabellenSortierung({ sort: "spiel_anmeldung" }, MELDE_SPALTEN), { spalte: "spiel_anmeldung", richtung: "auf" });
+  const sp = [
+    { id: "a", vorname: "Ava", nachname: "A", m: 7200 },
+    { id: "b", vorname: "Ben", nachname: "B", m: null },
+    { id: "c", vorname: "Cem", nachname: "C", m: 600 },
+  ];
+  assert.deepEqual(sortiereZeilen(sp, { spalte: "m", richtung: "auf" }, (x) => x.m).map((x) => x.id), ["c", "a", "b"]);
+  assert.deepEqual(sortiereZeilen(sp, { spalte: "m", richtung: "ab" }, (x) => x.m).map((x) => x.id), ["a", "c", "b"]);
+});
+
+pruefe("Meldezeitpunkte (#703): Seite und KI-Werkzeug zählen über den Kern; die RPC ruft nur er (NFR 2, 3; AK 9, 10, 12)", () => {
+  const app = join(web, "app/(app)/team/[id]/spieler");
+  const seite = ohneKommentareTn(readFileSync(join(app, "meldezeitpunkte/page.tsx"), "utf8"));
+  assert.match(seite, /ladeSpielerAnsicht\(id, sp, "\/meldezeitpunkte", \{ sortierbar: MELDE_SPALTEN \}\)/);
+  assert.match(seite, /teamMeldeZahlen\(supabase, user\.id, \{ teamId: id, \.\.\.zeitraum \}\)/);
+  assert.match(seite, /teamTeilnahmeZahlen\(supabase, user\.id, \{ teamId: id, \.\.\.zeitraum \}\)/, "dieselbe Zählung wie die Übersicht (NFR 3)");
+  assert.match(seite, /const ids = ansicht\.gefiltert\.map\(\(s\) => s\.id\)/, "Teamzahlen aus den eingegrenzten Spieler:innen (AK 9, 10)");
+  assert.match(seite, /fasseFensterZusammen\(melde\.wert\.zeilen, ids\)/);
+  assert.match(seite, /teamSummen\(teilnahme\.wert\.zahlen, ids\)/);
+  assert.match(seite, /<EinzelteilnahmeRechts ansicht=\{ansicht\} sp=\{sp\} \/>/, "die Einzelteilnahme mit demselben Zeitraum (AK 12)");
+  assert.match(ohneKommentareTn(liesTn("lib/mcp/werkzeuge/teilnahme.ts")), /teamMeldezeitpunkte\(zugang\.supabase, zugang\.userId,/);
+  const kern = liesTn("lib/kern/teilnahme.ts");
+  assert.match(kern, /supabase\.rpc\("team_meldezeitpunkte"/);
+  assert.match(kern, /summen: teamSummen\(teilnahme\.wert\.zahlen, ids\)/, "die KI summiert wie die Seite");
+  const dateien = [
+    ...readdirSync(app, { recursive: true, encoding: "utf8" }).map((d) => join(app, d)),
+    ...readdirSync(join(web, "lib/mcp"), { recursive: true, encoding: "utf8" }).map((d) => join(web, "lib/mcp", d)),
+    ...readdirSync(join(web, "components/team"), { encoding: "utf8" }).map((d) => join(web, "components/team", d)),
+  ].filter((d) => /\.tsx?$/.test(d));
+  for (const d of dateien)
+    assert.ok(!/rpc\("team_meldezeitpunkte"/.test(readFileSync(d, "utf8")), `${relative(web, d)} ruft die RPC selbst`);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

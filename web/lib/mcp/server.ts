@@ -88,7 +88,7 @@ import {
 } from "@/lib/mcp/werkzeuge/kader";
 import { schnuppertrainingAbrufen, schnuppertrainingFestlegen, spielerSchnuppernSetzen } from "@/lib/mcp/werkzeuge/probe";
 import { teamInfosAbrufen, teamInfosFestlegen } from "@/lib/mcp/werkzeuge/team-infos";
-import { spielerTeilnahmeAbrufen, teamTeilnahmeAbrufen } from "@/lib/mcp/werkzeuge/teilnahme";
+import { spielerTeilnahmeAbrufen, teamMeldezeitpunkteAbrufen, teamTeilnahmeAbrufen } from "@/lib/mcp/werkzeuge/teilnahme";
 
 /** Der vollständige Werkzeugsatz (Story #142; Epic #139 und #190 hängen ihre
  *  Werkzeuge hier an). Der Werkzeugsatz IST die Grenze eines Zugangs: das
@@ -175,6 +175,7 @@ export const WERKZEUGE = [
   teamInfosFestlegen,
   spielerTeilnahmeAbrufen,
   teamTeilnahmeAbrufen,
+  teamMeldezeitpunkteAbrufen,
 ] as const;
 
 export function registriereWerkzeuge(server: McpServer): void {
