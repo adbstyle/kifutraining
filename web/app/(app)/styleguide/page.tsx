@@ -1718,8 +1718,8 @@ export default async function Styleguide() {
             rollen: Mobile Browser zeigen keine Scrollleiste, ein Reiter
             ausserhalb des Bilds wäre weder als offen noch als vorhanden zu
             erkennen (vier Reiter brauchten gut 500 px, auf dem Handy bleiben
-            rund 340 px; unter «Spieler:innen» kommen mit Teilnahme und
-            Meldezeitpunkten bis zu fünf dazu).
+            rund 340 px; unter «Spieler:innen» stehen mit Teilnahme und
+            Meldezeitpunkten bis zu fünf Reiter).
           </p>
           <TabNav
             ariaLabel="Beispiel-Ansichten"

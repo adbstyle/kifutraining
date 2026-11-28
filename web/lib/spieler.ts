@@ -585,7 +585,7 @@ export const LINK_UEBERSICHT = {
       mobil, schmale 2fr-Spalte ab lg); den Zusammenhang liefert die Zeile
       «offen» darüber. */
   offeneZeigen: (anzahl: number): string => `Offene zeigen (${anzahl})`,
-  hinweis: "Link selbst weitergegeben? Markiere ihn unter «Spieler:innen» in der Liste im Link-Dialog der Spieler:in als zugestellt. Erneuern setzt ihn auf offen zurück.",
+  hinweis: "Link selbst weitergegeben? Markiere ihn unter «Spieler:innen» im Reiter «Liste» im Link-Dialog der Spieler:in als zugestellt. Erneuern setzt ihn auf offen zurück.",
 } as const;
 
 /** Die Filterleiste der Spielerliste eines Teams (#601) — aus denselben
