@@ -39,11 +39,14 @@ export function SortierWahl({
 }) {
   const router = useRouter();
   const Pfeil = richtung === "auf" ? ArrowUp : ArrowDown;
+  // Der sichtbare Text steht am Anfang des vorgelesenen Namens (WCAG 2.5.3):
+  // Wer per Sprache «Sortieren nach» sagt, trifft den Chip.
+  const sichtbar = praefix ? `${praefix} ${spalte}` : spalte;
   return (
     <ChipMenu
-      label={praefix ? `${praefix} ${spalte}` : spalte}
+      label={sichtbar}
       leading={<Pfeil size={14} strokeWidth={2} aria-hidden className="shrink-0" />}
-      ariaLabel={`Sortiert nach ${spalte}, ${richtung === "auf" ? "aufsteigend" : "absteigend"}. Sortierung ändern`}
+      ariaLabel={`${praefix ? sichtbar : `Sortiert nach ${spalte}`}, ${richtung === "auf" ? "aufsteigend" : "absteigend"}. Sortierung ändern`}
       menuClassName="right-0"
       className={className}
       items={optionen.map((o) => ({
