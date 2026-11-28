@@ -1,9 +1,7 @@
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
 import { TeilnahmePunkt, type TeilnahmeTon } from "@/components/ui";
-import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
+import { SpielerKartenName } from "./SpielerTabellenName";
 import { cn } from "@/lib/cn";
-import { spielerName, type Spieler } from "@/lib/spieler";
+import type { Spieler } from "@/lib/spieler";
 import { TEILNAHME_TEXT, type TeilnahmeUebersichtZeile } from "@/lib/teilnahme";
 import { TEILNAHME_SPALTEN } from "@/lib/team-tabellen";
 
@@ -47,20 +45,7 @@ export function TeilnahmeKarten({
         const gewaehlt = spieler.id === ausgewaehlt;
         return (
           <li key={spieler.id} className={cn("flex flex-col gap-2 pb-3 pl-4 pr-3 pt-1", gewaehlt && "betont")}>
-            <Link
-              href={oeffnenHref(spieler.id)}
-              scroll={false}
-              aria-current={gewaehlt ? "true" : undefined}
-              aria-label={TEILNAHME_TEXT.oeffnen(spielerName(spieler))}
-              data-spieler-karte={spieler.id}
-              className="focus-ring state -mr-2 flex min-h-11 items-center gap-2 rounded-klein text-on-surface"
-            >
-              <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-                <span className={cn("type-title-small", gewaehlt && "text-primary")}>{spielerName(spieler)}</span>
-                {spieler.probe && <SchnupperLozenge stand={spieler.probe} />}
-              </span>
-              <ChevronRight size={20} strokeWidth={2} aria-hidden className="shrink-0 text-on-surface-mittel" />
-            </Link>
+            <SpielerKartenName spieler={spieler} href={oeffnenHref(spieler.id)} gewaehlt={gewaehlt} />
             {GRUPPEN.map((gruppe) => (
               <div key={gruppe} className="flex flex-col gap-1">
                 <p className="border-b border-linie pb-1 type-label-small font-semibold text-on-surface-mittel">{gruppe}</p>

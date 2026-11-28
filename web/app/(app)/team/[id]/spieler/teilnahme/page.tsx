@@ -1,17 +1,9 @@
-import { Users } from "lucide-react";
-import { Leerzustand } from "@/components/ui";
-import { ListeMitDetail } from "@/components/layout/ListeMitDetail";
-import { EinzelteilnahmeRechts } from "@/components/team/EinzelteilnahmeRechts";
-import { TeamSpielerFilter } from "@/components/team/TeamSpielerFilter";
-import { TeilnahmeLeer } from "@/components/team/TeilnahmeLeer";
+import { SpielerTabellenSeite } from "@/components/team/SpielerTabellenSeite";
 import { TeilnahmeTabelle } from "@/components/team/TeilnahmeTabelle";
-import { TeilnahmeZeitraum } from "@/components/team/TeilnahmeZeitraum";
-import { TabellenAuswahl } from "@/components/training/TabellenAuswahl";
 import { createClient, getUserImRequest } from "@/lib/supabase/server";
 import { teamTeilnahmeZahlen } from "@/lib/kern/teilnahme";
 import type { AdressParameter } from "@/lib/adresse";
 import { ladeSpielerAnsicht } from "@/lib/team-spieler-seite";
-import { jahrgaengeDerListe } from "@/lib/team-spielerliste";
 import { liesZeitraum, teilnahmeTabellenZeile, teilnahmeZahlen, TEILNAHME_TEXT, zeitraumWert } from "@/lib/teilnahme";
 import { leseTabellenSortierung, sortiereZeilen, TEILNAHME_SPALTEN } from "@/lib/team-tabellen";
 import { heuteAmTrainingsort } from "@/lib/zeit";
@@ -62,49 +54,23 @@ export default async function TeamTeilnahmePage({
   ).map((z) => ({ spieler: z, werte: z.werte }));
 
   return (
-    <ListeMitDetail
-      spaltenName="Teilnahme"
-      links={
-        <div className="flex flex-col gap-4">
-          {ansicht.spieler.length === 0 ? (
-            <Leerzustand icon={Users} titel={TEILNAHME_TEXT.keineSpieler}>
-              {TEILNAHME_TEXT.keineSpielerText}
-            </Leerzustand>
-          ) : (
-            <>
-              <div className="flex flex-wrap items-center gap-2">
-                <TeamSpielerFilter
-                  className=""
-                  eingrenzung={ansicht.eingrenzung}
-                  kader={ansicht.kader}
-                  jahrgaenge={jahrgaengeDerListe(ansicht.spieler)}
-                />
-                <TeilnahmeZeitraum zeitraum={ansicht.zeitraum} heute={heute} />
-              </div>
-              {zeilen.length === 0 ? (
-                <TeilnahmeLeer />
-              ) : (
-                <>
-                  {/* Fokus und Sichtbarkeit beim Öffnen und Schliessen der Teilnahme daneben. */}
-                  <TabellenAuswahl ausgewaehlt={ansicht.ausgewaehlt?.id} attribut="data-spieler-zeile" />
-                  <TabellenAuswahl ausgewaehlt={ansicht.ausgewaehlt?.id} attribut="data-spieler-karte" />
-                  <TeilnahmeTabelle
-                    zeilen={zeilen}
-                    sortierung={sortierung}
-                    pfad={ansicht.pfad}
-                    sp={sp}
-                    ausgewaehlt={ansicht.ausgewaehlt?.id ?? null}
-                    zeitraumText={zeitraumWert(ansicht.zeitraum, heute)}
-                  />
-                  <p className="type-body-small text-on-surface-mittel">{TEILNAHME_TEXT.fussnote}</p>
-                </>
-              )}
-            </>
-          )}
-        </div>
+    <SpielerTabellenSeite
+      ansicht={ansicht}
+      sp={sp}
+      heute={heute}
+      keineSpielerText={TEILNAHME_TEXT.keineSpielerText}
+      leer={zeilen.length === 0}
+      tabelle={
+        <TeilnahmeTabelle
+          zeilen={zeilen}
+          sortierung={sortierung}
+          pfad={ansicht.pfad}
+          sp={sp}
+          ausgewaehlt={ansicht.ausgewaehlt?.id ?? null}
+          zeitraumText={zeitraumWert(ansicht.zeitraum, heute)}
+        />
       }
-      // `ListeMitDetail` teilt die Fläche nur mit einem Detail; ohne Wahl bleibt `rechts` leer.
-      rechts={ansicht.teilnahme && <EinzelteilnahmeRechts ansicht={ansicht} sp={sp} />}
+      fussnote={TEILNAHME_TEXT.fussnote}
     />
   );
 }

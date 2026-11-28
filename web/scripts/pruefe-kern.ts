@@ -588,6 +588,7 @@ import {
   naechsteTabellenSortierung,
   sortiereZeilen,
   tabellenSortierHref,
+  tabellenSortierung,
   tabellenSortierWerte,
 } from "../lib/team-tabellen";
 import { adresseMitWerten } from "../lib/adresse";
@@ -4496,10 +4497,14 @@ pruefe("Spieler:innen als eigener Bereich mit Reitern; «Team» ohne Reiter; alt
   const teamGruppe = nav.slice(nav.indexOf('titel: "Team"'), nav.indexOf('titel: "Verein"'));
   const labels = [...teamGruppe.matchAll(/label: "([^"]+)"/g)].map((m) => m[1]);
   assert.deepEqual(labels, ["Trainingsplan", "Spieler:innen", "Trainings", "Team"]);
-  assert.match(teamGruppe, /href: `\$\{basis\}\/spieler`,/, "«Spieler:innen» öffnet immer die Liste, ohne Parameter");
-  assert.match(teamGruppe, /current: pfad === `\$\{basis\}\/spieler` \|\| pfad\.startsWith\(`\$\{basis\}\/spieler\/`\)/);
-  assert.match(teamGruppe, /href: `\$\{basis\}\/trainer`,/);
-  assert.match(teamGruppe, /current: pfad === `\$\{basis\}\/trainer` \|\| pfad\.startsWith\(`\$\{basis\}\/trainer\/`\)/);
+  // Die Adressen kommen aus lib/team-bereiche.ts — dieselben, die oben geprüft sind.
+  const teamBlock = nav.slice(nav.indexOf('offen?.art === "team"'), nav.indexOf('titel: "Verein"'));
+  assert.match(teamBlock, /const spielerSeite = teamSpielerPfad\(offen\.id\);/);
+  assert.match(teamBlock, /const teamSeite = teamSeitePfad\(offen\.id\);/);
+  assert.match(teamGruppe, /href: spielerSeite,/, "«Spieler:innen» öffnet immer die Liste, ohne Parameter");
+  assert.match(teamGruppe, /current: pfad === spielerSeite \|\| pfad\.startsWith\(`\$\{spielerSeite\}\/`\)/);
+  assert.match(teamGruppe, /href: teamSeite,/);
+  assert.match(teamGruppe, /current: pfad === teamSeite \|\| pfad\.startsWith\(`\$\{teamSeite\}\/`\)/);
   assert.ok(!/verwaltung/.test(teamGruppe), "kein Eintrag führt mehr in die Team-Verwaltung");
   // AK 6: die bisherigen Adressen leiten an die neue Stelle weiter, nicht dauerhaft (307).
   const weiter = WEITERLEITUNGEN.filter((r) => r.source.includes("/verwaltung"));
@@ -7298,6 +7303,18 @@ pruefe("Teilnahme (#702 AK 6): Spalten, Sortierung in der Adresse, Ordnung ohne 
     `${P}?q=le&spieler=s1&von=2026-11-01&sort=gNg&dir=ab`,
   );
   assert.equal(tabellenSortierHref(P, { sort: "tDa", dir: "ab" }, { spalte: "name", richtung: "auf" }, TEILNAHME_SPALTEN), P);
+  // Die Links einer Tabelle (`tabellenSortierung`): Kopf, Name, «Sortieren nach».
+  const links = tabellenSortierung(P, { q: "le", sort: "tDa", dir: "ab" }, { spalte: "tDa", richtung: "ab" }, TEILNAHME_SPALTEN, (s) =>
+    s.gruppe ? `${s.gruppe}: ${s.label}` : s.label,
+  );
+  assert.deepEqual(links.kopf("tDa"), { href: `${P}?q=le&sort=tDa&dir=auf`, richtung: "ab" }, "die aktive Spalte kehrt um");
+  assert.deepEqual(links.kopf("name"), { href: `${P}?q=le`, richtung: null }, "eine andere beginnt mit ihrer ersten Richtung");
+  assert.equal(links.oeffnenHref("s1"), `${P}?q=le&sort=tDa&dir=ab&spieler=s1`, "der Name öffnet daneben, Sortierung bleibt");
+  assert.equal(links.aktivLabel, `${TEILNAHME_SPALTEN[1].gruppe}: ${TEILNAHME_SPALTEN[1].label}`, "schmal mit der Gruppe");
+  assert.deepEqual(links.optionen.map((o) => [o.label, o.gewaehlt, !!o.trenner]).slice(-2), [["Aufsteigend", false, true], ["Absteigend", true, false]]);
+  assert.equal(links.optionen.length, TEILNAHME_SPALTEN.length + 2);
+  assert.equal(links.optionen[1].href, `${P}?q=le&sort=tDa&dir=ab`, "die aktive Spalte behält ihre Richtung");
+  assert.equal(links.optionen[2].href, `${P}?q=le&sort=tNicht&dir=ab`);
   // Ordnung: Name nach Vorname, dann Nachname; Gleichstand nach Name, dann Kennung; null in beiden Richtungen zuletzt.
   const z = [
     { id: "c", vorname: "Mia", nachname: "Zürcher", n: 2 },
@@ -7321,7 +7338,12 @@ pruefe("Teilnahme (#702): Seite, Einzelteilnahme und KI-Werkzeug zählen über d
   assert.match(seite, /teamTeilnahmeZahlen\(supabase, user\.id, \{ teamId: id, \.\.\.zeitraum \}\)/);
   assert.match(seite, /ladeSpielerAnsicht\(id, sp, "\/teilnahme", \{ sortierbar: TEILNAHME_SPALTEN \}\)/, "Eingrenzung, Zeitraum und Sortierung in einer Weiterleitung bereinigt");
   assert.match(seite, /ansicht\.gefiltert\.map/, "die Eingrenzung der Spielerliste wirkt (AK 10)");
-  assert.match(seite, /<EinzelteilnahmeRechts ansicht=\{ansicht\} sp=\{sp\} \/>/, "die Einzelteilnahme öffnet daneben (AK 8, 9)");
+  assert.match(seite, /<SpielerTabellenSeite\s+ansicht=\{ansicht\}\s+sp=\{sp\}/, "das gemeinsame Gerüst mit der Ansicht der Seite");
+  assert.match(
+    ohneKommentareTn(liesTn("components/team/SpielerTabellenSeite.tsx")),
+    /rechts=\{ansicht\.teilnahme && <EinzelteilnahmeRechts ansicht=\{ansicht\} sp=\{sp\} \/>\}/,
+    "die Einzelteilnahme öffnet daneben (AK 8, 9)",
+  );
   assert.match(werkzeug, /teamTeilnahme\(zugang\.supabase, zugang\.userId,/);
   assert.match(liesTn("lib/kern/teilnahme.ts"), /supabase\.rpc\("team_teilnahme"/);
   // Wächter: nur lib/kern ruft die Teilnahme-RPCs, teilnahme_kern ruft in TS niemand.
@@ -7449,7 +7471,7 @@ pruefe("Meldezeitpunkte (#703): Seite und KI-Werkzeug zählen über den Kern; di
   assert.match(seite, /const ids = ansicht\.gefiltert\.map\(\(s\) => s\.id\)/, "Teamzahlen aus den eingegrenzten Spieler:innen (AK 9, 10)");
   assert.match(seite, /fasseFensterZusammen\(melde\.wert\.zeilen, ids\)/);
   assert.match(seite, /teamSummen\(teilnahme\.wert\.zahlen, ids\)/);
-  assert.match(seite, /<EinzelteilnahmeRechts ansicht=\{ansicht\} sp=\{sp\} \/>/, "die Einzelteilnahme mit demselben Zeitraum (AK 12)");
+  assert.match(seite, /<SpielerTabellenSeite\s+ansicht=\{ansicht\}\s+sp=\{sp\}/, "die Einzelteilnahme mit demselben Zeitraum im gemeinsamen Gerüst (AK 12)");
   assert.match(ohneKommentareTn(liesTn("lib/mcp/werkzeuge/teilnahme.ts")), /teamMeldezeitpunkte\(zugang\.supabase, zugang\.userId,/);
   const kern = liesTn("lib/kern/teilnahme.ts");
   assert.match(kern, /supabase\.rpc\("team_meldezeitpunkte"/);

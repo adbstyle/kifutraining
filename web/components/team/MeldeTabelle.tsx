@@ -1,19 +1,11 @@
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
-import { GruppenTabelle, SortierWahl, type SortierOption } from "@/components/ui";
-import { SchnupperLozenge } from "@/components/spieler/SchnupperLozenge";
-import { adresseMitWerten, type AdressParameter } from "@/lib/adresse";
+import { GruppenTabelle, SortierWahl } from "@/components/ui";
+import { SpielerKartenName, SpielerZeilenName } from "./SpielerTabellenName";
+import type { AdressParameter } from "@/lib/adresse";
 import { cn } from "@/lib/cn";
 import { dauerText, MELDE_TEXT, MELDEARTEN, type MeldeMediane } from "@/lib/meldezeitpunkte";
-import { spielerName, type Spieler } from "@/lib/spieler";
-import { SPIELER_AUSWAHL_PARAM, TEILNAHME_TEXT } from "@/lib/teilnahme";
-import {
-  MELDE_SPALTEN,
-  naechsteTabellenSortierung,
-  tabellenSortierHref,
-  type MeldeSpalte,
-  type TabellenSortierung,
-} from "@/lib/team-tabellen";
+import type { Spieler } from "@/lib/spieler";
+import { TEILNAHME_TEXT } from "@/lib/teilnahme";
+import { MELDE_SPALTEN, tabellenSortierung, type MeldeSpalte, type TabellenSortierung } from "@/lib/team-tabellen";
 
 /* Die Meldezeitpunkte je Spieler:in (#703, Variante M2): der Median vor
    Beginn bzw. Anpfiff in drei Spalten unter «Median vor Beginn» (AK 1–3),
@@ -48,25 +40,7 @@ export function MeldeTabelle({
   /** Der gewählte Zeitraum als Text; `null`: die ganze Zeit im Team. */
   zeitraumText: string | null;
 }) {
-  const href = (s: TabellenSortierung<MeldeSpalte>) => tabellenSortierHref(pfad, sp, s, MELDE_SPALTEN);
-  const kopf = (spalte: MeldeSpalte) => ({
-    href: href(naechsteTabellenSortierung(sortierung, spalte, MELDE_SPALTEN)),
-    richtung: sortierung.spalte === spalte ? sortierung.richtung : null,
-  });
-  const oeffnenHref = (id: string) =>
-    adresseMitWerten(pfad, sp, { [SPIELER_AUSWAHL_PARAM]: id }) ?? tabellenSortierHref(pfad, sp, sortierung, MELDE_SPALTEN);
-
-  // Schmal: erst die Spalten (eine neue beginnt mit ihrer ersten Richtung), dann die Richtung.
-  const aktiv = MELDE_SPALTEN.find((s) => s.schluessel === sortierung.spalte)!;
-  const optionen: SortierOption[] = [
-    ...MELDE_SPALTEN.map((s) => ({
-      label: s.label,
-      gewaehlt: s.schluessel === sortierung.spalte,
-      href: href(s.schluessel === sortierung.spalte ? sortierung : { spalte: s.schluessel, richtung: s.ersteRichtung }),
-    })),
-    { label: "Aufsteigend", gewaehlt: sortierung.richtung === "auf", href: href({ ...sortierung, richtung: "auf" }), trenner: true },
-    { label: "Absteigend", gewaehlt: sortierung.richtung === "ab", href: href({ ...sortierung, richtung: "ab" }) },
-  ];
+  const { kopf, oeffnenHref, aktivLabel, optionen } = tabellenSortierung(pfad, sp, sortierung, MELDE_SPALTEN);
 
   return (
     <GruppenTabelle
@@ -82,24 +56,7 @@ export function MeldeTabelle({
       zeilen={zeilen.map(({ spieler, mediane }) => ({
         id: spieler.id,
         gewaehlt: spieler.id === ausgewaehlt,
-        kopf: (
-          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <Link
-              href={oeffnenHref(spieler.id)}
-              scroll={false}
-              aria-current={spieler.id === ausgewaehlt ? "true" : undefined}
-              aria-label={TEILNAHME_TEXT.oeffnen(spielerName(spieler))}
-              data-spieler-zeile={spieler.id}
-              className={cn(
-                "focus-ring rounded-klein type-body-medium hover:underline",
-                spieler.id === ausgewaehlt ? "text-primary" : "text-on-surface",
-              )}
-            >
-              {spielerName(spieler)}
-            </Link>
-            {spieler.probe && <SchnupperLozenge stand={spieler.probe} />}
-          </span>
-        ),
+        kopf: <SpielerZeilenName spieler={spieler} href={oeffnenHref(spieler.id)} gewaehlt={spieler.id === ausgewaehlt} />,
         zellen: MELDEARTEN.map((m) => <Dauer key={m} sekunden={mediane[m]} />),
       }))}
       schmal={
@@ -107,7 +64,7 @@ export function MeldeTabelle({
           <SortierWahl
             className="self-start"
             praefix={TEILNAHME_TEXT.sortierenNach}
-            spalte={aktiv.label}
+            spalte={aktivLabel}
             richtung={sortierung.richtung}
             optionen={optionen}
           />
@@ -116,20 +73,7 @@ export function MeldeTabelle({
               const gewaehlt = spieler.id === ausgewaehlt;
               return (
                 <li key={spieler.id} className={cn("flex flex-col gap-1.5 pb-3 pl-4 pr-3 pt-1", gewaehlt && "betont")}>
-                  <Link
-                    href={oeffnenHref(spieler.id)}
-                    scroll={false}
-                    aria-current={gewaehlt ? "true" : undefined}
-                    aria-label={TEILNAHME_TEXT.oeffnen(spielerName(spieler))}
-                    data-spieler-karte={spieler.id}
-                    className="focus-ring state -mr-2 flex min-h-11 items-center gap-2 rounded-klein text-on-surface"
-                  >
-                    <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-                      <span className={cn("type-title-small", gewaehlt && "text-primary")}>{spielerName(spieler)}</span>
-                      {spieler.probe && <SchnupperLozenge stand={spieler.probe} />}
-                    </span>
-                    <ChevronRight size={20} strokeWidth={2} aria-hidden className="shrink-0 text-on-surface-mittel" />
-                  </Link>
+                  <SpielerKartenName spieler={spieler} href={oeffnenHref(spieler.id)} gewaehlt={gewaehlt} />
                   <dl className="flex flex-col">
                     {MELDEARTEN.map((m) => (
                       <div key={m} className="flex items-baseline justify-between gap-3 py-0.5 type-body-small">

@@ -1,6 +1,6 @@
-import type { AdressParameter } from "@/lib/adresse";
+import { adresseMitWerten, type AdressParameter } from "@/lib/adresse";
 import { MELDE_TEXT, type Meldeart } from "@/lib/meldezeitpunkte";
-import { TEILNAHME_TEXT, type TeilnahmeUebersichtZeile } from "@/lib/teilnahme";
+import { SPIELER_AUSWAHL_PARAM, TEILNAHME_TEXT, type TeilnahmeUebersichtZeile } from "@/lib/teilnahme";
 
 /* Sortierbare Tabellen unter «Spieler:innen» (#702): welche Spalten eine
    Tabelle hat, nach welcher sie sortiert ist und wie die Zeilen geordnet
@@ -64,7 +64,7 @@ export const MELDE_SPALTEN: readonly TabellenSpalte<MeldeSpalte>[] = [
 ];
 
 /** Ohne Wahl: die erste Spalte (der Name), aufsteigend. */
-export function tabellenVorgabe<K extends string>(katalog: readonly TabellenSpalte<K>[]): TabellenSortierung<K> {
+function tabellenVorgabe<K extends string>(katalog: readonly TabellenSpalte<K>[]): TabellenSortierung<K> {
   return { spalte: katalog[0].schluessel, richtung: katalog[0].ersteRichtung };
 }
 
@@ -123,6 +123,52 @@ export function tabellenSortierHref<K extends string>(
   }
   const qs = p.toString();
   return qs ? `${pfad}?${qs}` : pfad;
+}
+
+/** Eine Wahl in «Sortieren nach» (Zwilling von `SortierOption` in
+ *  components/ui/SortierWahl.tsx, hier ohne Import aus components/). */
+export type TabellenSortierOption = { label: string; href: string; gewaehlt: boolean; trenner?: boolean };
+
+/** Was eine sortierbare Tabelle unter «Spieler:innen» an Links braucht:
+ *
+ *  - `kopf(spalte)`: Ziel und Richtung eines Spaltenkopfs (`SortierKopf`);
+ *  - `oeffnenHref(id)`: der Name öffnet daneben die Teilnahme der
+ *    Spieler:in — dieselbe Adresse mit `?spieler=`, Eingrenzung, Zeitraum
+ *    und Sortierung bleiben;
+ *  - `aktivLabel`, `optionen`: «Sortieren nach» schmal, wo die Köpfe fehlen —
+ *    erst die Spalten (eine neue beginnt mit ihrer ersten Richtung), dann die
+ *    Richtung. `beschriftung` nennt eine Spalte dort (Vorgabe: ihr Label). */
+export function tabellenSortierung<K extends string>(
+  pfad: string,
+  sp: AdressParameter,
+  sortierung: TabellenSortierung<K>,
+  katalog: readonly TabellenSpalte<K>[],
+  beschriftung: (s: TabellenSpalte<K>) => string = (s) => s.label,
+): {
+  kopf: (spalte: K) => { href: string; richtung: Richtung | null };
+  oeffnenHref: (id: string) => string;
+  aktivLabel: string;
+  optionen: TabellenSortierOption[];
+} {
+  const href = (s: TabellenSortierung<K>) => tabellenSortierHref(pfad, sp, s, katalog);
+  const aktiv = katalog.find((s) => s.schluessel === sortierung.spalte)!;
+  return {
+    kopf: (spalte) => ({
+      href: href(naechsteTabellenSortierung(sortierung, spalte, katalog)),
+      richtung: sortierung.spalte === spalte ? sortierung.richtung : null,
+    }),
+    oeffnenHref: (id) => adresseMitWerten(pfad, sp, { [SPIELER_AUSWAHL_PARAM]: id }) ?? href(sortierung),
+    aktivLabel: beschriftung(aktiv),
+    optionen: [
+      ...katalog.map((s) => ({
+        label: beschriftung(s),
+        gewaehlt: s.schluessel === sortierung.spalte,
+        href: href(s.schluessel === sortierung.spalte ? sortierung : { spalte: s.schluessel, richtung: s.ersteRichtung }),
+      })),
+      { label: "Aufsteigend", gewaehlt: sortierung.richtung === "auf", href: href({ ...sortierung, richtung: "auf" }), trenner: true },
+      { label: "Absteigend", gewaehlt: sortierung.richtung === "ab", href: href({ ...sortierung, richtung: "ab" }) },
+    ],
+  };
 }
 
 const namen = new Intl.Collator("de");

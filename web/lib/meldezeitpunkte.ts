@@ -54,7 +54,8 @@ export type MeldeMediane = Record<Meldeart, number | null>;
 /** Je Meldeart, auf wie vielen Meldungen der Median beruht. */
 export type MeldeAnzahlen = Record<Meldeart, number>;
 
-const leereMediane = (): MeldeMediane => ({ training_abmeldung: null, spiel_anmeldung: null, spiel_abmeldung: null });
+/** Keine Angabe in allen drei Arten. */
+export const leereMediane = (): MeldeMediane => ({ training_abmeldung: null, spiel_anmeldung: null, spiel_abmeldung: null });
 const leereAnzahlen = (): MeldeAnzahlen => ({ training_abmeldung: 0, spiel_anmeldung: 0, spiel_abmeldung: 0 });
 
 /** Die Mediane und Anzahlen je Spieler:in. Wer fehlt, hat keine Angabe. */

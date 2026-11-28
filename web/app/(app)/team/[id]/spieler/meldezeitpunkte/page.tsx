@@ -1,20 +1,12 @@
-import { Users } from "lucide-react";
-import { Leerzustand } from "@/components/ui";
-import { ListeMitDetail } from "@/components/layout/ListeMitDetail";
-import { EinzelteilnahmeRechts } from "@/components/team/EinzelteilnahmeRechts";
 import { MeldeTabelle } from "@/components/team/MeldeTabelle";
 import { MeldeTeam } from "@/components/team/MeldeTeam";
-import { TeamSpielerFilter } from "@/components/team/TeamSpielerFilter";
-import { TeilnahmeLeer } from "@/components/team/TeilnahmeLeer";
-import { TeilnahmeZeitraum } from "@/components/team/TeilnahmeZeitraum";
-import { TabellenAuswahl } from "@/components/training/TabellenAuswahl";
+import { SpielerTabellenSeite } from "@/components/team/SpielerTabellenSeite";
 import { createClient, getUserImRequest } from "@/lib/supabase/server";
 import { teamMeldeZahlen, teamTeilnahmeZahlen } from "@/lib/kern/teilnahme";
 import type { AdressParameter } from "@/lib/adresse";
-import { fasseFensterZusammen, keineMediane, MELDE_TEXT, meldeMediane } from "@/lib/meldezeitpunkte";
+import { fasseFensterZusammen, leereMediane, MELDE_TEXT, meldeMediane } from "@/lib/meldezeitpunkte";
 import { ladeSpielerAnsicht } from "@/lib/team-spieler-seite";
-import { jahrgaengeDerListe } from "@/lib/team-spielerliste";
-import { liesZeitraum, teamSummen, TEILNAHME_TEXT, zeitraumWert } from "@/lib/teilnahme";
+import { liesZeitraum, teamSummen, zeitraumWert } from "@/lib/teilnahme";
 import { leseTabellenSortierung, MELDE_SPALTEN, sortiereZeilen } from "@/lib/team-tabellen";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 import { redirect } from "next/navigation";
@@ -61,62 +53,40 @@ export default async function TeamMeldezeitpunktePage({
   const je = meldeMediane(melde.wert.zeilen);
   const sortierung = leseTabellenSortierung(sp, MELDE_SPALTEN);
   const zeilen = sortiereZeilen(
-    ansicht.gefiltert.map((s) => ({ ...s, mediane: (je.get(s.id) ?? keineMediane()).mediane })),
+    ansicht.gefiltert.map((s) => ({ ...s, mediane: je.get(s.id)?.mediane ?? leereMediane() })),
     sortierung,
     (z, spalte) => z.mediane[spalte],
   ).map((z) => ({ spieler: z, mediane: z.mediane }));
 
   return (
-    <ListeMitDetail
-      spaltenName="Teilnahme"
-      links={
-        <div className="flex flex-col gap-4">
-          {ansicht.spieler.length === 0 ? (
-            <Leerzustand icon={Users} titel={TEILNAHME_TEXT.keineSpieler}>
-              {MELDE_TEXT.keineSpielerText}
-            </Leerzustand>
-          ) : (
-            <>
-              <div className="flex flex-wrap items-center gap-2">
-                <TeamSpielerFilter
-                  className=""
-                  eingrenzung={ansicht.eingrenzung}
-                  kader={ansicht.kader}
-                  jahrgaenge={jahrgaengeDerListe(ansicht.spieler)}
-                />
-                <TeilnahmeZeitraum zeitraum={ansicht.zeitraum} heute={heute} />
-              </div>
-              {zeilen.length === 0 ? (
-                <TeilnahmeLeer />
-              ) : (
-                <>
-                  <MeldeTeam
-                    fenster={fasseFensterZusammen(melde.wert.zeilen, ids)}
-                    summen={teamSummen(teilnahme.wert.zahlen, ids)}
-                    zeitraumText={zeitraumText}
-                    umfang={ids.length < ansicht.spieler.length ? { n: ids.length, von: ansicht.spieler.length } : null}
-                  />
-                  <h3 className="mt-2 type-title-medium text-on-surface">{MELDE_TEXT.jeSpielerin}</h3>
-                  {/* Fokus und Sichtbarkeit beim Öffnen und Schliessen der Teilnahme daneben. */}
-                  <TabellenAuswahl ausgewaehlt={ansicht.ausgewaehlt?.id} attribut="data-spieler-zeile" />
-                  <TabellenAuswahl ausgewaehlt={ansicht.ausgewaehlt?.id} attribut="data-spieler-karte" />
-                  <MeldeTabelle
-                    zeilen={zeilen}
-                    sortierung={sortierung}
-                    pfad={ansicht.pfad}
-                    sp={sp}
-                    ausgewaehlt={ansicht.ausgewaehlt?.id ?? null}
-                    zeitraumText={zeitraumText}
-                  />
-                  <p className="type-body-small text-on-surface-mittel">{MELDE_TEXT.fussnote}</p>
-                </>
-              )}
-            </>
-          )}
-        </div>
+    <SpielerTabellenSeite
+      ansicht={ansicht}
+      sp={sp}
+      heute={heute}
+      keineSpielerText={MELDE_TEXT.keineSpielerText}
+      leer={zeilen.length === 0}
+      vorTabelle={
+        <>
+          <MeldeTeam
+            fenster={fasseFensterZusammen(melde.wert.zeilen, ids)}
+            summen={teamSummen(teilnahme.wert.zahlen, ids)}
+            zeitraumText={zeitraumText}
+            umfang={ids.length < ansicht.spieler.length ? { n: ids.length, von: ansicht.spieler.length } : null}
+          />
+          <h3 className="mt-2 type-title-medium text-on-surface">{MELDE_TEXT.jeSpielerin}</h3>
+        </>
       }
-      // `ListeMitDetail` teilt die Fläche nur mit einem Detail; ohne Wahl bleibt `rechts` leer.
-      rechts={ansicht.teilnahme && <EinzelteilnahmeRechts ansicht={ansicht} sp={sp} />}
+      tabelle={
+        <MeldeTabelle
+          zeilen={zeilen}
+          sortierung={sortierung}
+          pfad={ansicht.pfad}
+          sp={sp}
+          ausgewaehlt={ansicht.ausgewaehlt?.id ?? null}
+          zeitraumText={zeitraumText}
+        />
+      }
+      fussnote={MELDE_TEXT.fussnote}
     />
   );
 }
