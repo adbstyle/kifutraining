@@ -4797,6 +4797,10 @@ pruefe("Seiten des Vereins einheitlich: Name als letzte Krume, Hauptaktion in de
   for (const d of ["components/verein/VereinSpielerFormular.tsx", "components/verein/VereinSpielerAktionen.tsx", "components/verein/VereinSpielerListe.tsx"])
     assert.ok(!/[Ee]rfass/.test(liesWeb(d).replace(/SPIELER_ERFASSEN_GESPERRT_ID|spielerErfassen\w*/g, "")), `${d}: «erfassen» in der Oberfläche`);
   assert.ok(!/[Ee]rfass/.test(SPIELER_BESTAND_LEER.text));
+  // Das Bild der Spielerliste auf der Startseite zeigt dieselben Aktionen wie die Seite.
+  const startBild = liesWeb("components/start/StartBilder.tsx");
+  assert.ok(!/Spieler:in erfassen|FileUp/.test(startBild), "Startseite: kein «erfassen», kein Datei-Symbol");
+  assert.match(startBild, /buttonClasses\("outlined"\)\}>Spieler:innen importieren<\/span>\s*<span className=\{buttonClasses\("filled"\)\}>Spieler:in hinzufügen</);
   // AK 5: auf dem Telefon die Kurzform, der volle Name für Vorlesehilfen.
   assert.ok(liesWeb("components/verein/TeamAnlegen.tsx").includes(`<KopfKnopfText label="Team anlegen" kurz="Anlegen" />`));
   // AK 4: gesperrt an der Grenze des Vereins, sichtbar mit Grund — Muster wie im Team (#706).

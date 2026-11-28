@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Clock, EllipsisVertical, FileUp, Plus, Shirt } from "lucide-react";
+import { Check, ChevronDown, Clock, EllipsisVertical, Shirt } from "lucide-react";
 import { Kalenderblatt, Lozenge, buttonClasses } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { BEISPIEL_NAMEN } from "@/lib/startseite";
@@ -130,21 +130,20 @@ export function Spielerliste() {
       label={`Beispiel: die Spielerliste im Verein «${n.verein}», 212 Spieler:innen, eine davon ohne Team, mit Teams, J+S-Nummer und Stand des privaten Links.`}
       className="gap-4"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="type-title-large">
-          Spieler:innen
-          <span className="type-label-small ml-2 text-on-surface-mittel">
-            212 Spieler:innen · 1 ohne Team · höchstens {VEREIN_SPIELER_MAX} je Verein
+      {/* Wie die Seite seit #707: Krumen Verein › Spieler:innen mit den Aktionen, die Anzahl darunter. */}
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="type-title-medium text-on-surface">
+            <span className="text-on-surface-mittel">{n.verein} › </span>Spieler:innen
+          </p>
+          <span className="flex shrink-0 items-center gap-2">
+            <span className={buttonClasses("outlined")}>Spieler:innen importieren</span>
+            <span className={buttonClasses("filled")}>Spieler:in hinzufügen</span>
           </span>
+        </div>
+        <p className="type-label-small text-on-surface-mittel">
+          212 Spieler:innen · 1 ohne Team · höchstens {VEREIN_SPIELER_MAX} je Verein
         </p>
-        <span className="flex shrink-0 items-center gap-2">
-          <span className="flex size-10 items-center justify-center text-on-surface-mittel">
-            <FileUp size={20} />
-          </span>
-          <span className={buttonClasses("outlined")}>
-            <Plus size={18} strokeWidth={2} aria-hidden /> Spieler:in erfassen
-          </span>
-        </span>
       </div>
       <div className="overflow-hidden rounded-flaeche bg-elev-01">
         <div className={cn(SPALTEN, "type-label-small border-b border-linie py-2 pl-4 pr-2 text-on-surface-mittel")}>
