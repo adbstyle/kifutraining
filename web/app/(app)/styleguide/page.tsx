@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { ReleaseText } from "@/components/versionen/ReleaseText";
 import {
   BestandAnzeige,
+  LiegenderBalken,
   Teilnahmebalken,
   TeilnahmePunkt,
   Button,
@@ -56,10 +57,13 @@ import {
   Tabelle,
   TabellenZeile,
   SortierKopf,
+  SortierWahl,
+  GruppenTabelle,
   DetailKopf,
   Gefahrenzone,
 } from "@/components/ui";
 import { HinweisEltern } from "@/components/privat/HinweisEltern";
+import { MeldeTeam } from "@/components/team/MeldeTeam";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { uebungEckdaten } from "@/lib/eckdaten";
 import { ChipsDemo } from "./ChipsDemo";
@@ -269,6 +273,7 @@ const GLIEDERUNG = [
           { id: "meldungen", titel: "Leerzustand, Hinweiszeile & Section Message" },
           { id: "bestand-anzeige", titel: "Bestand und Grenze" },
           { id: "teilnahmebalken", titel: "Teilnahmebalken" },
+          { id: "liegender-balken", titel: "Liegende Balken & Kennzahlen" },
           { id: "dialog-snackbar", titel: "Dialog & Snackbar" },
           { id: "feedback-dialog", titel: "Fragen und Feedback" },
         ],
@@ -1699,8 +1704,8 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             Mehrere Sichten auf denselben Gegenstand - etwa ein Termin mit
             Termin, Training, Spieler:innen und Trainer:innen, die
-            Team-Verwaltung mit Spieler:innen, Kader &amp; Schnuppern, Privater
-            Link und Trainer:innen (#656): ein Eintrag «Team» in der
+            Spieler:innen eines Teams mit Liste, Kader &amp; Schnuppern und
+            Privater Link (#704): ein Eintrag «Spieler:innen» in der
             Seitenleiste, darunter die Reiter, oder das Konto mit Profil,
             Verbindungen sowie Daten und Konto (#662). Zwischen den
             Seiten eines Bereichs (Team, Verein) wechselt dagegen die
@@ -1717,8 +1722,9 @@ export default async function Styleguide() {
             nicht, brechen die Reiter in eine zweite Zeile um, statt seitlich zu
             rollen: Mobile Browser zeigen keine Scrollleiste, ein Reiter
             ausserhalb des Bilds wäre weder als offen noch als vorhanden zu
-            erkennen (die vier Bereiche der Team-Verwaltung brauchen gut 500 px,
-            auf dem Handy bleiben rund 340 px).
+            erkennen (vier Reiter brauchten gut 500 px, auf dem Handy bleiben
+            rund 340 px; unter «Spieler:innen» stehen mit Teilnahme und
+            Meldezeitpunkten bis zu fünf Reiter).
           </p>
           <TabNav
             ariaLabel="Beispiel-Ansichten"
@@ -2579,8 +2585,8 @@ export default async function Styleguide() {
             Dieselbe Leiste steht über den Spieler:innen des Vereins und über der
             Spielerliste eines Teams (#601: Suche, Kader samt «Ohne Kader»,
             Jahrgang, Privater Link) - kein eigenes Muster je Liste. Der Zustand
-            steht in der Adresse (<code>useAdressFilter</code>); die Reiter der
-            Team-Verwaltung tragen ihn weiter. Die Kader-Chips mit Zahl bleiben
+            steht in der Adresse (<code>useAdressFilter</code>); die Reiter unter
+            «Spieler:innen» tragen ihn samt Zeitraum weiter (#704). Die Kader-Chips mit Zahl bleiben
             den Reitern «Spieler:innen» an Trainings und Spielen, wo genau ein
             Kader zur Zeit gilt.
           </p>
@@ -3205,6 +3211,70 @@ export default async function Styleguide() {
           </div>
         </Section>
 
+        <Section id="liegender-balken">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Anzahlen nebeneinander vergleichen (<code>LiegenderBalken</code>,
+            #703): je Reihe Beschriftung, Balken und Zahl. Neu, weil der
+            Teilnahmebalken eine Summe in Anteile teilt und der Bestand auf eine
+            Grenze zuzählt; hier stehen Anzahlen gleichrangig nebeneinander.
+            Mehrere Diagramme teilen einen Massstab (<code>max</code>), damit
+            ihre Balken vergleichbar bleiben. Eine echte Liste, die Zahl steht
+            als Text, der Balken ergänzt nur (<code>aria-hidden</code>). Eine
+            Farbe statt der heller werdenden Stufen des Prototyps: Die hellen
+            Stufen hielten den Kontrast 3:1 für Grafik nicht, die Reihenfolge
+            tragen die Beschriftungen.
+          </p>
+          <div className="mb-8 grid max-w-3xl grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-4">
+            <Card className="px-5 py-4">
+              <LiegenderBalken
+                label="Beispiel A"
+                max={9}
+                reihen={[
+                  { label: "mehr als 7 Tage", anzahl: 9 },
+                  { label: "3–7 Tage", anzahl: 4 },
+                  { label: "1–3 Tage", anzahl: 1 },
+                  { label: "6–24 Stunden", anzahl: 0 },
+                  { label: "höchstens 6 Stunden", anzahl: 2 },
+                ]}
+              />
+            </Card>
+            <Card className="px-5 py-4">
+              <LiegenderBalken
+                label="Beispiel B, gleicher Massstab"
+                max={9}
+                reihen={[
+                  { label: "mehr als 7 Tage", anzahl: 2 },
+                  { label: "3–7 Tage", anzahl: 3 },
+                  { label: "1–3 Tage", anzahl: 0 },
+                  { label: "6–24 Stunden", anzahl: 1 },
+                  { label: "höchstens 6 Stunden", anzahl: 0 },
+                ]}
+              />
+            </Card>
+          </div>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            So stehen sie in den Meldezeitpunkten der Spieler:innen
+            (<code>MeldeTeam</code>, Variante M2): je Meldeart eine Karte im
+            gleichen Massstab, daneben Kennzahlen als <code>Card</code> mit
+            Kit-Typografie — Bezeichnung und Erklärung links, grosse Zahlen in
+            gleich breiten Ziffern rechts (<code>dl</code>). Für zwei Kacheln an
+            einem Ort lohnt sich kein eigener Baustein; kommt ein zweiter Ort
+            dazu, wird daraus einer.
+          </p>
+          <div className="max-w-5xl">
+            <MeldeTeam
+              fenster={{
+                training_abmeldung: [9, 4, 1, 0, 2],
+                spiel_anmeldung: [2, 3, 0, 1, 0],
+                spiel_abmeldung: [0, 0, 0, 0, 0],
+              }}
+              summen={{ ohneAbmeldungGefehlt: { training: 3, spiel: 1 }, nichtGemeldet: 4 }}
+              zeitraumText="Letzte 3 Monate"
+              umfang={{ n: 12, von: 14 }}
+            />
+          </div>
+        </Section>
+
         <Section id="bestand-anzeige">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Wie viele eigene Übungen oder Trainings ein Konto ohne Verein von
@@ -3453,6 +3523,15 @@ export default async function Styleguide() {
             Angaben darum selbst (<code>nachRueckfrage</code>). Die Wahl der Darstellung lässt den
             Drawer offen, Ziele und Aktionen schliessen ihn. Umgeschaltet wird sofort und ohne
             Neuladen; Ungespeichertes auf der Seite bleibt stehen.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            <strong>Einträge eines Teams</strong> (#704): Trainingsplan, Spieler:innen, Trainings, Team.
+            Die Seitenleiste wählt, was man ansieht; die Reiter einer Seite zeigen dessen Sichten (Muster
+            wie in Jira). «Spieler:innen» öffnet immer die Liste ohne Eingrenzung und bleibt in jedem
+            ihrer Reiter offen; «Team» zeigt, was das Team selbst betrifft, auf einer Seite ohne Reiter
+            und trägt ein eigenes Zeichen (<code>Contact</code>), damit es neben den Spieler:innen
+            (<code>Users</code>) unterscheidbar bleibt. Eine zweite Reiterebene unter «Team» gibt es
+            bewusst nicht.
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             <strong>Bereich-Wechsler</strong> (<code>BereichWechsler</code>, Story #581) steht oben in
@@ -3820,8 +3899,8 @@ export default async function Styleguide() {
             wählt die Zeile aus, ihr Detail steht daneben (<Siehe id="detail-kopf" />):
             Die ausgewählte Zeile ist betont (<code>betont</code>), ihr Link
             trägt <code>aria-current</code>. Schmal fallen die Köpfe weg, die Angaben
-            stehen unter dem Namen, und sortiert wird über einen{" "}
-            <code>ChipMenu</code> über der Tabelle.
+            stehen unter dem Namen, und sortiert wird über die{" "}
+            <code>SortierWahl</code> über der Tabelle (unten).
           </p>
           <div className="overflow-hidden rounded-flaeche bg-elev-01">
             <table className="w-full border-collapse">
@@ -3860,6 +3939,66 @@ export default async function Styleguide() {
               </tbody>
             </table>
           </div>
+
+          <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+            Mit Spaltengruppen
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Wo dieselben Spaltennamen in mehreren Gruppen stehen - die Teilnahme
+            aller Spieler:innen eines Teams (#702) mit «Da» und «Nicht da» bei
+            Trainings und bei Spielen -, trägt die Tabelle eine zweite Kopfzeile
+            mit den Gruppen (<code>GruppenTabelle</code>, <code>th scope=&quot;colgroup&quot;</code>).
+            Atlassian kennt keine Spaltengruppen; die zweite Kopfzeile ist eine
+            bewusste Abweichung (PO 2026-11-28), denn erst die Gruppe
+            unterscheidet die Spalten. Eine Linie über die ganze Höhe trennt die
+            Gruppen, die Vorlesehilfe hört die Gruppe im Spaltennamen. Die Köpfe
+            sind dieselben <code>SortierKopf</code> wie oben. Die erste Spalte
+            bleibt beim waagrechten Scrollen stehen; die Tabelle hat eine
+            Mindestbreite und scrollt in ihrer Fläche, nie die Seite. Schmaler als
+            36 rem (auch neben einem Detail) steht statt der Tabelle, was der
+            Aufrufer als <code>schmal</code> gibt - bei der Teilnahme Karten mit
+            denselben Blöcken und «Sortieren nach».
+          </p>
+          <GruppenTabelle
+            beschriftung="Beispiel: Teilnahme je Spieler:in"
+            mindestbreite={520}
+            kopf={{ label: "Spieler:in", href: "#tabelle", richtung: "auf" }}
+            spalten={[
+              { schluessel: "tDa", gruppe: "Trainings", href: "#tabelle", label: <span className="inline-flex items-center gap-1.5"><TeilnahmePunkt ton="da" />Da</span> },
+              { schluessel: "tNicht", gruppe: "Trainings", href: "#tabelle", label: "Nicht da" },
+              { schluessel: "gDa", gruppe: "Spiele", href: "#tabelle", label: <span className="inline-flex items-center gap-1.5"><TeilnahmePunkt ton="da" />Da</span> },
+              { schluessel: "gNa", gruppe: "Spiele", href: "#tabelle", label: <span className="inline-flex items-center gap-1.5"><TeilnahmePunkt ton="violett" />Nicht aufgeboten</span> },
+            ]}
+            zeilen={[
+              { id: "a", kopf: <a href="#tabelle" className="focus-ring rounded-klein type-body-medium text-on-surface hover:underline">Lena Brunner</a>, zellen: [12, 2, 5, 1] },
+              { id: "b", gewaehlt: true, kopf: <a href="#tabelle" aria-current="true" className="focus-ring rounded-klein type-body-medium text-primary hover:underline">Noah Keller</a>, zellen: [9, 5, 4, 0] },
+            ]}
+            schmal={<p className="type-body-medium text-on-surface-mittel">Schmal: hier stünden die Karten.</p>}
+          />
+
+          <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+            Sortieren nach (schmal)
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Fehlen schmal die Spaltenköpfe, sortiert ein Chip mit Menü
+            (<code>SortierWahl</code>): oben die Spalten, nach dem Strich die
+            Richtung, Haken an der aktuellen Wahl. Aus der Trainingsübersicht ins
+            Kit gezogen, weil auch die Teilnahme-Karten ihn brauchen (#702); steht
+            er allein über Karten statt in einer Filterleiste, nennt er
+            «Sortieren nach:» vor der Spalte (Telefon-Prototyp).
+          </p>
+          <SortierWahl
+            praefix="Sortieren nach:"
+            spalte="Spieler:in"
+            richtung="auf"
+            optionen={[
+              { label: "Spieler:in", href: "#tabelle", gewaehlt: true },
+              { label: "Trainings: Da", href: "#tabelle", gewaehlt: false },
+              { label: "Spiele: Nicht gemeldet", href: "#tabelle", gewaehlt: false },
+              { label: "Aufsteigend", href: "#tabelle", gewaehlt: true, trenner: true },
+              { label: "Absteigend", href: "#tabelle", gewaehlt: false },
+            ]}
+          />
         </Section>
 
         <Section id="eigenschaften">

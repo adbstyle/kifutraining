@@ -537,7 +537,7 @@ import {
 } from "../lib/auffindbar";
 import { DATENSCHUTZ_PFAD, ENTWURF_HINWEIS, IMPRESSUM_PFAD, KONTAKT_EMAIL, RECHTLICHE_LINKS, VEREINBARUNG_FASSUNG, VEREINBARUNG_PFAD, VEREINBARUNG_TITEL } from "../lib/rechtliches";
 import { TRAGWEITE_VEROEFFENTLICHEN, ZUM_VEROEFFENTLICHEN_FEHLT } from "../lib/training-bedingungen";
-import { FILTER_SCHLUESSEL, TEAM_BEREICHE, teamBereichAusPfad, teamBereichHref } from "../lib/team-bereiche";
+import { FILTER_SCHLUESSEL, REISENDE_SCHLUESSEL, SPIELER_BEREICHE, teamBereichAusPfad, teamBereichHref, teamSeitePfad, teamSpielerPfad } from "../lib/team-bereiche";
 import {
   OHNE_KADER_WERT,
   bereinigeTeamEingrenzung,
@@ -549,12 +549,14 @@ import {
   liesTeamEingrenzung,
   sichtbareAuswahl,
   teamEingrenzungGesetzt,
+  teamEingrenzungWerte,
   teamSpielerHref,
 } from "../lib/team-spielerliste";
 import { textMitLinks } from "../lib/text-links";
 import { gliedere, gliederungAlsText, gliederungBloecke } from "../lib/gliederung";
 import { TEAM_INFOS_MAX, TEAM_INFOS_TEXT, standDatum, teamInfosBereinigt, teamInfosProblem, zahlCh } from "../lib/team-infos";
 import {
+  BEHALTE_BEIM_ZURUECKSETZEN,
   TEILNAHME_ERGEBNISSE,
   ZEITRAUM_FEHLER,
   ZEITRAUM_KURZWAHL,
@@ -562,10 +564,34 @@ import {
   kurzwahlVon,
   liesSpielerAuswahl,
   liesZeitraum,
+  teamSummen,
+  teilnahmeTabellenZeile,
+  teilnahmeWerte,
   teilnahmeZahlen,
   zeitraumFehler,
   zeitraumWert,
 } from "../lib/teilnahme";
+import {
+  MELDE_FENSTER,
+  MELDE_TEXT,
+  MELDEARTEN,
+  dauerText,
+  fasseFensterZusammen,
+  fensterIndex,
+  meldeMediane,
+  stundenGerundet,
+} from "../lib/meldezeitpunkte";
+import {
+  MELDE_SPALTEN,
+  TEILNAHME_SPALTEN,
+  leseTabellenSortierung,
+  naechsteTabellenSortierung,
+  sortiereZeilen,
+  tabellenSortierHref,
+  tabellenSortierung,
+  tabellenSortierWerte,
+} from "../lib/team-tabellen";
+import { adresseMitWerten } from "../lib/adresse";
 
 let gelaufen = 0;
 
@@ -2870,8 +2896,9 @@ pruefe("Vereinsverwaltung (#581): Zwillinge, Sätze zum Aufnehmen und Bereich de
   const T1 = "11111111-1111-4111-8111-111111111111";
   const T2 = "22222222-2222-4222-8222-222222222222";
   assert.deepEqual(bereichAusPfad(`/team/${T1}`, null), { art: "team", id: T1 });
-  assert.deepEqual(bereichAusPfad(`/team/${T1}/verwaltung`, null), { art: "team", id: T1 });
-  assert.deepEqual(bereichAusPfad(`/team/${T1}/verwaltung/link`, null), { art: "team", id: T1 }, "ein Bereich der Team-Verwaltung (#656)");
+  assert.deepEqual(bereichAusPfad(`/team/${T1}/spieler`, null), { art: "team", id: T1 });
+  assert.deepEqual(bereichAusPfad(`/team/${T1}/spieler/link`, null), { art: "team", id: T1 }, "ein Reiter unter «Spieler:innen» (#704)");
+  assert.deepEqual(bereichAusPfad(`/team/${T1}/trainer`, null), { art: "team", id: T1 }, "die Seite «Team» (#704)");
   assert.deepEqual(bereichAusPfad("/verein", null), { art: "verein" });
   assert.deepEqual(bereichAusPfad("/verein/team/abc", null), { art: "verein" });
   assert.deepEqual(bereichAusPfad("/verein/verwaltung", null), { art: "verein" });
@@ -4403,46 +4430,110 @@ pruefe("Kader: Zugehörigkeit einer Auswahl und Kader einer Spieler:in (#452 AK 
   assert.deepEqual(kaderVon("b", [k, { id: "j", name: "S1", spielerIds: ["c"] }]).map((x) => x.id), ["k"]);
 });
 
-pruefe("Team-Verwaltung in vier Bereichen mit eigener Adresse; die bisherige zeigt die Spieler:innen (#656)", () => {
+// Die Weiterleitungen aus next.config.ts (#704 AK 6), wie Next sie liest.
+const WEITERLEITUNGEN = await (await import("../next.config")).default.redirects!();
+
+pruefe("Spieler:innen als eigener Bereich mit Reitern; «Team» ohne Reiter; alte Adressen leiten weiter (#704)", () => {
   const T = "11111111-1111-4111-8111-111111111111";
-  // AK 3: die vier Bereiche in dieser Reihenfolge, unterscheidbar benannt.
-  assert.deepEqual(TEAM_BEREICHE.map((b) => b.label), ["Spieler:innen", "Kader & Schnuppern", "Privater Link", "Trainer:innen"]);
-  // AK 1, 2, PC 1: jeder Bereich hat seine Adresse, die bisherige ist «Spieler:innen».
-  assert.equal(teamBereichHref(T, "spieler"), `/team/${T}/verwaltung`);
-  assert.equal(teamBereichHref(T, "trainer"), `/team/${T}/verwaltung/trainer`);
-  for (const b of TEAM_BEREICHE) {
+  // AK 3: die Reiter in dieser Reihenfolge, unterscheidbar benannt.
+  // #702 fügt «Teilnahme» an zweiter Stelle ein, #703 «Meldezeitpunkte» an dritter.
+  assert.deepEqual(SPIELER_BEREICHE.map((b) => b.label), ["Liste", "Teilnahme", "Meldezeitpunkte", "Kader & Schnuppern", "Privater Link"]);
+  // AK 2, 3: jeder Reiter hat seine Adresse, die Liste ist die Grundadresse.
+  assert.equal(teamSpielerPfad(T), `/team/${T}/spieler`);
+  assert.equal(teamSeitePfad(T), `/team/${T}/trainer`);
+  assert.equal(teamBereichHref(T, "liste"), `/team/${T}/spieler`);
+  assert.equal(teamBereichHref(T, "teilnahme"), `/team/${T}/spieler/teilnahme`);
+  assert.equal(teamBereichHref(T, "meldezeitpunkte"), `/team/${T}/spieler/meldezeitpunkte`);
+  assert.equal(teamBereichHref(T, "kader"), `/team/${T}/spieler/kader`);
+  assert.equal(teamBereichHref(T, "link"), `/team/${T}/spieler/link`);
+  const app = join(web, "app/(app)/team/[id]");
+  for (const b of SPIELER_BEREICHE) {
     const href = teamBereichHref(T, b.schluessel);
     assert.equal(teamBereichAusPfad(href, T), b.schluessel, href);
-    const seite = join(web, "app/(app)/team/[id]/verwaltung", b.pfad.slice(1), "page.tsx");
+    const seite = join(app, "spieler", b.pfad.slice(1), "page.tsx");
     assert.ok(existsSync(seite), `${relative(web, seite)} fehlt`);
   }
-  assert.equal(teamBereichAusPfad(`/team/${T}/verwaltung/`, T), "spieler");
+  // AK 4: «Team» ist eine Seite ohne Reiter; die Team-Verwaltung gibt es nicht mehr.
+  assert.ok(existsSync(join(app, "trainer/page.tsx")), "team/[id]/trainer/page.tsx fehlt");
+  assert.ok(!existsSync(join(app, "trainer/layout.tsx")), "«Team» hat keinen Rahmen mit Reitern");
+  assert.ok(!existsSync(join(app, "verwaltung")), "team/[id]/verwaltung/ ist weg — die alten Adressen leiten weiter");
+  assert.equal(teamBereichAusPfad(`/team/${T}/spieler/`, T), "liste");
   assert.equal(teamBereichAusPfad(`/team/${T}`, T), null);
-  assert.equal(teamBereichAusPfad(`/team/${T}/verwaltung/unbekannt`, T), null);
-  // Die Reiter tragen nur die Eingrenzung der Spielerliste weiter (#601).
+  assert.equal(teamBereichAusPfad(`/team/${T}/trainer`, T), null);
+  assert.equal(teamBereichAusPfad(`/team/${T}/spieler/unbekannt`, T), null);
+  // AK 5: Die Reiter tragen Eingrenzung und Zeitraum weiter; Spieler:in und Sortierung nie.
   assert.deepEqual([...FILTER_SCHLUESSEL], ["q", "kader", "jahrgang", "link"]);
-  const suche = new URLSearchParams("jahrgang=2016&fremd=1&kader=a&kader=ohne&q=lea");
-  assert.equal(teamBereichHref(T, "link", suche), `/team/${T}/verwaltung/link?q=lea&kader=a&kader=ohne&jahrgang=2016`);
-  assert.equal(teamBereichHref(T, "kader", new URLSearchParams("fremd=1")), `/team/${T}/verwaltung/kader`);
-  // AK 4: was die eine Seite bot, steht jetzt in genau einem Bereich.
+  assert.deepEqual([...REISENDE_SCHLUESSEL], ["q", "kader", "jahrgang", "link", "von", "bis"]);
+  const suche = new URLSearchParams("bis=2026-11-30&jahrgang=2016&fremd=1&spieler=s1&sort=name&dir=ab&kader=a&kader=ohne&von=2026-11-01&q=lea");
+  assert.equal(teamBereichHref(T, "link", suche), `/team/${T}/spieler/link?q=lea&kader=a&kader=ohne&jahrgang=2016&von=2026-11-01&bis=2026-11-30`);
+  assert.equal(teamBereichHref(T, "liste", suche), `/team/${T}/spieler?q=lea&kader=a&kader=ohne&jahrgang=2016&von=2026-11-01&bis=2026-11-30`);
+  assert.equal(teamBereichHref(T, "kader", new URLSearchParams("fremd=1&spieler=s1")), `/team/${T}/spieler/kader`);
+  // AK 3, 4: was die Team-Verwaltung bot, steht jetzt in genau einer Seite.
   const ohneKommentare = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-  const lies = (d: string) => ohneKommentare(readFileSync(join(web, "app/(app)/team/[id]/verwaltung", d), "utf8"));
+  const lies = (d: string) => ohneKommentare(readFileSync(join(app, d), "utf8"));
   const ort: Record<string, string> = {
-    SpielerListe: "page.tsx",
-    KaderKarte: "kader/page.tsx",
-    SchnupperKarte: "kader/page.tsx",
-    Selbstabholung: "link/page.tsx",
-    TeamInfosKarte: "link/page.tsx",
+    SpielerListe: "spieler/page.tsx",
+    TeilnahmeTabelle: "spieler/teilnahme/page.tsx",
+    MeldeTabelle: "spieler/meldezeitpunkte/page.tsx",
+    MeldeTeam: "spieler/meldezeitpunkte/page.tsx",
+    KaderKarte: "spieler/kader/page.tsx",
+    SchnupperKarte: "spieler/kader/page.tsx",
+    Selbstabholung: "spieler/link/page.tsx",
+    LinkUebersicht: "spieler/link/page.tsx",
+    TeamInfosKarte: "spieler/link/page.tsx",
     MitgliederListe: "trainer/page.tsx",
     TeamGefahrenzone: "trainer/page.tsx",
     Teamangaben: "trainer/page.tsx",
   };
-  const seiten = ["page.tsx", "kader/page.tsx", "link/page.tsx", "trainer/page.tsx"];
+  const seiten = ["spieler/page.tsx", "spieler/teilnahme/page.tsx", "spieler/meldezeitpunkte/page.tsx", "spieler/kader/page.tsx", "spieler/link/page.tsx", "trainer/page.tsx"];
   for (const [teil, datei] of Object.entries(ort))
     for (const s of seiten) assert.equal(new RegExp(`\\b${teil}\\b`).test(lies(s)), s === datei, `${teil} in ${s}`);
-  assert.ok(!/Selbstabholung/.test(ohneKommentare(readFileSync(join(web, "components/team/SpielerListe.tsx"), "utf8"))), "die Spielerliste zeigt die Selbstabholung nicht mehr");
-  // Die Seitenleiste markiert «Team» in jedem Bereich.
-  assert.match(readFileSync(join(web, "components/layout/AppNavClient.tsx"), "utf8"), /pfad\.startsWith\(`\$\{basis\}\/verwaltung\/`\)/);
+  assert.ok(!/Selbstabholung/.test(ohneKommentare(readFileSync(join(web, "components/team/SpielerListe.tsx"), "utf8"))), "die Spielerliste zeigt die Selbstabholung nicht");
+  assert.match(lies("spieler/layout.tsx"), /<SpielerBereicheNav teamId=\{id\} \/>/, "die Reiter stehen über allen Sichten der Spieler:innen");
+  assert.ok(!/TabNav|BereicheNav/.test(lies("trainer/page.tsx")), "«Team» zeigt keine Reiter");
+  // AK 1, 2: die Seitenleiste — Trainingsplan, Spieler:innen, Trainings, Team;
+  // «Spieler:innen» ohne Parameter, in jedem Reiter markiert; «Team» auf /trainer.
+  const nav = ohneKommentare(readFileSync(join(web, "components/layout/AppNavClient.tsx"), "utf8"));
+  const teamGruppe = nav.slice(nav.indexOf('titel: "Team"'), nav.indexOf('titel: "Verein"'));
+  const labels = [...teamGruppe.matchAll(/label: "([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(labels, ["Trainingsplan", "Spieler:innen", "Trainings", "Team"]);
+  // Die Adressen kommen aus lib/team-bereiche.ts — dieselben, die oben geprüft sind.
+  const teamBlock = nav.slice(nav.indexOf('offen?.art === "team"'), nav.indexOf('titel: "Verein"'));
+  assert.match(teamBlock, /const spielerSeite = teamSpielerPfad\(offen\.id\);/);
+  assert.match(teamBlock, /const teamSeite = teamSeitePfad\(offen\.id\);/);
+  assert.match(teamGruppe, /href: spielerSeite,/, "«Spieler:innen» öffnet immer die Liste, ohne Parameter");
+  assert.match(teamGruppe, /current: pfad === spielerSeite \|\| pfad\.startsWith\(`\$\{spielerSeite\}\/`\)/);
+  assert.match(teamGruppe, /href: teamSeite,/);
+  assert.match(teamGruppe, /current: pfad === teamSeite \|\| pfad\.startsWith\(`\$\{teamSeite\}\/`\)/);
+  assert.ok(!/verwaltung/.test(teamGruppe), "kein Eintrag führt mehr in die Team-Verwaltung");
+  // AK 6: die bisherigen Adressen leiten an die neue Stelle weiter, nicht dauerhaft (307).
+  const weiter = WEITERLEITUNGEN.filter((r) => r.source.includes("/verwaltung"));
+  assert.deepEqual(
+    weiter.map((r) => [r.source, r.destination, "permanent" in r ? r.permanent : undefined]),
+    [
+      ["/team/:id/verwaltung", "/team/:id/spieler", false],
+      ["/team/:id/verwaltung/kader", "/team/:id/spieler/kader", false],
+      ["/team/:id/verwaltung/link", "/team/:id/spieler/link", false],
+      ["/team/:id/verwaltung/trainer", "/team/:id/trainer", false],
+    ],
+  );
+  // AK 7: die Hinweise am Termin verweisen auf die neue Stelle der Spielerliste.
+  for (const d of ["components/team/SpielerReiter.tsx", "components/team/SpielReiter.tsx"]) {
+    const q = ohneKommentare(readFileSync(join(web, d), "utf8"));
+    assert.match(q, /<Link href=\{teamSpielerPfad\(teamId\)\}[^>]*>\s*Spieler:innen\s*<\/Link>/, d);
+    assert.ok(!/\/verwaltung/.test(q), `${d} nennt keine alte Adresse`);
+  }
+  assert.match(PROBE_TEXT.anzahlFehlt, /unter «Spieler:innen» im Reiter «Kader & Schnuppern»/);
+  // Eine Weiterleitung, nicht zwei: Eingrenzung und Teilnahme werden zusammen bereinigt.
+  const P = `/team/${T}/spieler`;
+  const ka = "22222222-2222-4222-8222-222222222222";
+  const roh = { q: "le", kader: `${ka},33333333-3333-4333-8333-333333333333`, spieler: "fremd", von: "kaputt", bis: "2026-11-30" };
+  const e = bereinigeTeamEingrenzung(liesTeamEingrenzung(roh), { kader: [{ id: ka }], jahrgaenge: [2016] });
+  const ziel = adresseMitWerten(P, roh, { ...teamEingrenzungWerte(e), ...teilnahmeWerte(roh, null) });
+  assert.equal(ziel, `${P}?q=le&kader=${ka}&bis=2026-11-30`);
+  const danach = Object.fromEntries(new URL(ziel!, "http://x").searchParams);
+  const e2 = bereinigeTeamEingrenzung(liesTeamEingrenzung(danach), { kader: [{ id: ka }], jahrgaenge: [2016] });
+  assert.equal(adresseMitWerten(P, danach, { ...teamEingrenzungWerte(e2), ...teilnahmeWerte(danach, null) }), null, "die bereinigte Adresse bleibt stehen");
 });
 
 pruefe("Spielerliste eingrenzen: Suche, Kader, Jahrgang, Link-Stand; Adresse und Auswahl (#601)", () => {
@@ -4521,7 +4612,7 @@ pruefe("Spielerliste eingrenzen: Suche, Kader, Jahrgang, Link-Stand; Adresse und
   assert.equal(bereinigteTeamAdresse("/t", leerSp, leerE), "/t?fremd=1");
   assert.equal(bereinigteTeamAdresse("/t", { q: "   " }, liesTeamEingrenzung({ q: "   " })), "/t", "leere Suche fällt aus der Adresse");
   // Die Adresse: einmal weiterleiten, q und Fremdes reisen mit; die bereinigte bleibt stehen.
-  const P = "/team/x/verwaltung";
+  const P = "/team/x/spieler";
   const sp = { q: "lea", kader: `${kx},${ka},${OHNE_KADER_WERT}`, jahrgang: "2016,2014", link: "offen,abgeholt" };
   const ziel = bereinigteTeamAdresse(P, sp, bereinigeTeamEingrenzung(liesTeamEingrenzung(sp), bestand));
   assert.equal(ziel, `${P}?q=lea&kader=${OHNE_KADER_WERT}%2C${ka}&jahrgang=2016&link=abgeholt%2Coffen`);
@@ -4543,7 +4634,8 @@ pruefe("Spielerliste eingrenzen: Suche, Kader, Jahrgang, Link-Stand; Adresse und
   // Dieselben Bausteine wie die Leiste des Vereins, kein neues Muster.
   const leiste = quelle("components/team/TeamSpielerFilter.tsx");
   for (const b of ["FilterSuche", "AuswahlFilter", "useAdressFilter", "zuruecksetzen"]) assert.ok(leiste.includes(b), `TeamSpielerFilter nutzt ${b}`);
-  assert.match(quelle("app/(app)/team/[id]/verwaltung/page.tsx"), /bereinigteTeamAdresse\(/, "die Seite leitet auf die bereinigte Adresse weiter");
+  assert.match(quelle("lib/team-spieler-seite.ts"), /teamEingrenzungWerte\(eingrenzung\)/, "die Sichten leiten auf die bereinigte Adresse weiter");
+  assert.match(quelle("app/(app)/team/[id]/spieler/page.tsx"), /ladeSpielerAnsicht\(/, "die Liste bereinigt über ladeSpielerAnsicht");
 });
 
 pruefe("Stand der Links im Team überblicken: Zahlen je Stand, Sprung auf die offenen (#658)", () => {
@@ -4556,19 +4648,19 @@ pruefe("Stand der Links im Team überblicken: Zahlen je Stand, Sprung auf die of
   // AK 2: der Sprung führt auf die Spielerliste, eingegrenzt auf «offen» — in der
   // Schreibweise der Leiste, die Seite leitet also nicht noch einmal weiter.
   const ziel = teamSpielerHref(T, { linkStaende: ["offen"] });
-  assert.equal(ziel, `/team/${T}/verwaltung?link=offen`);
+  assert.equal(ziel, `/team/${T}/spieler?link=offen`);
   const sp = Object.fromEntries(new URL(ziel, "http://x").searchParams);
   assert.deepEqual(filtereSpieler(
     staende.map((linkStand, i) => ({ vorname: `V${i}`, nachname: "N", jsNummer: null, jahrgang: 2016, kaderIds: [], linkStand })),
     liesTeamEingrenzung(sp),
   ).map((s) => s.linkStand), ["offen", "offen", "offen"]);
-  assert.equal(bereinigteTeamAdresse(`/team/${T}/verwaltung`, sp, liesTeamEingrenzung(sp)), null);
-  assert.equal(teamSpielerHref(T), `/team/${T}/verwaltung`);
-  assert.equal(teamSpielerHref(T, { linkStaende: ["offen", "abgeholt"], jahrgaenge: [2016] }), `/team/${T}/verwaltung?jahrgang=2016&link=abgeholt%2Coffen`);
-  // Die Übersicht steht im Bereich «Privater Link», gezählt über die ganze
+  assert.equal(bereinigteTeamAdresse(`/team/${T}/spieler`, sp, liesTeamEingrenzung(sp)), null);
+  assert.equal(teamSpielerHref(T), `/team/${T}/spieler`);
+  assert.equal(teamSpielerHref(T, { linkStaende: ["offen", "abgeholt"], jahrgaenge: [2016] }), `/team/${T}/spieler?jahrgang=2016&link=abgeholt%2Coffen`);
+  // Die Übersicht steht im Reiter «Privater Link», gezählt über die ganze
   // Spielerliste (samt Schnuppernden), und springt über teamSpielerHref.
   const quelle = (d: string) => readFileSync(join(web, d), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-  const seite = quelle("app/(app)/team/[id]/verwaltung/link/page.tsx");
+  const seite = quelle("app/(app)/team/[id]/spieler/link/page.tsx");
   assert.match(seite, /<LinkUebersicht teamId=\{id\} spieler=\{liste\.wert\.spieler\} \/>/);
   assert.match(seite, /ladeSpielerliste\(/);
   const karte = quelle("components/team/LinkUebersicht.tsx");
@@ -7119,9 +7211,12 @@ pruefe("Teilnahme (#700): Zahlen je Art — die Gründe ergeben «nicht da», je
   );
 });
 
-pruefe("Teilnahme (#700): Zwilling — jeder Ergebnis-Schlüssel steht in spieler_teilnahme, keiner mehr", () => {
-  const sql = liesTn("../supabase/migrations/20261127100000_spieler_teilnahme.sql");
-  const imSql = new Set([...sql.matchAll(/then '([a-z_]+)'|else '([a-z_]+)'/g)].map((m) => m[1] ?? m[2]));
+pruefe("Teilnahme (#700, #702): Zwilling — jeder Ergebnis-Schlüssel steht in teilnahme_kern, keiner mehr", () => {
+  // Seit #702 zählt teilnahme_kern für Einzel- und Teamzählung; gelesen wird nur der Ausdruck «ergebnis».
+  const sql = liesTn("../supabase/migrations/20261128100000_teilnahme_kern.sql");
+  const ergebnis = sql.slice(sql.indexOf("cross join lateral (\n      select case\n        when f.termin_id is not null"), sql.indexOf("end as ergebnis) x"));
+  assert.ok(ergebnis.length > 0, "Ausdruck «ergebnis» in teilnahme_kern gefunden");
+  const imSql = new Set([...ergebnis.matchAll(/then '([a-z_]+)'|else '([a-z_]+)'/g)].map((m) => m[1] ?? m[2]));
   assert.deepEqual([...imSql].sort(), [...TEILNAHME_ERGEBNISSE.spiel].sort());
   for (const e of TEILNAHME_ERGEBNISSE.training) assert.ok(imSql.has(e), e);
 });
@@ -7154,7 +7249,7 @@ pruefe("Teilnahme (#700): Kurzwahl und Wert im Filterknopf — ab heute am Train
 });
 
 pruefe("Teilnahme (#700): Adresse — fremde Spieler:in und unlesbare Tage fallen weg, alles übrige reist mit", () => {
-  const pfad = "/team/x/verwaltung";
+  const pfad = "/team/x/spieler";
   assert.equal(bereinigteTeilnahmeAdresse(pfad, { spieler: "s1", von: "2026-11-01", q: "le" }, "s1"), null);
   assert.equal(bereinigteTeilnahmeAdresse(pfad, { spieler: "s1", von: "2026-11-01", q: "le" }, null), `${pfad}?q=le&von=2026-11-01`);
   assert.equal(bereinigteTeilnahmeAdresse(pfad, { spieler: "s1", von: "kaputt" }, "s1"), `${pfad}?spieler=s1`);
@@ -7164,11 +7259,230 @@ pruefe("Teilnahme (#700): Adresse — fremde Spieler:in und unlesbare Tage falle
 });
 
 pruefe("Teilnahme (#700): App und KI-Werkzeug zählen über dieselbe Kern-Funktion (NFR 3)", () => {
-  const seite = ohneKommentareTn(liesTn("app/(app)/team/[id]/verwaltung/page.tsx"));
+  const seite = ohneKommentareTn(liesTn("lib/team-spieler-seite.ts"));
   const werkzeugTeilnahme = ohneKommentareTn(liesTn("lib/mcp/werkzeuge/teilnahme.ts"));
   assert.match(seite, /spielerTeilnahme\(supabase, user\.id,/);
   assert.match(werkzeugTeilnahme, /spielerTeilnahme\(zugang\.supabase, zugang\.userId,/);
   for (const q of [seite, werkzeugTeilnahme]) assert.ok(!/\.rpc\("spieler_teilnahme"/.test(q), "die RPC ruft nur der Kern");
+});
+
+// ── Teilnahme aller Spieler:innen (#702) ────────────────────────────────────
+
+pruefe("Teilnahme (#702 AK 2–5): die Zeile der Übersicht aus den Zahlen der Einzelteilnahme — «nicht gemeldet» fasst beide Gründe zusammen", () => {
+  const z = teilnahmeZahlen([
+    { art: "training", ergebnis: "da", anzahl: 5 },
+    { art: "training", ergebnis: "abgemeldet", anzahl: 2 },
+    { art: "training", ergebnis: "nicht_erschienen", anzahl: 1 },
+    { art: "spiel", ergebnis: "da", anzahl: 3 },
+    { art: "spiel", ergebnis: "abgemeldet", anzahl: 1 },
+    { art: "spiel", ergebnis: "nicht_erschienen", anzahl: 2 },
+    { art: "spiel", ergebnis: "nicht_aufgeboten", anzahl: 4 },
+    { art: "spiel", ergebnis: "meldefrist_verpasst", anzahl: 1 },
+    { art: "spiel", ergebnis: "ohne_meldung", anzahl: 2 },
+  ]);
+  assert.deepEqual(teilnahmeTabellenZeile(z), { tDa: 5, tNicht: 3, tOhne: 1, gDa: 3, gNicht: 10, gOhne: 2, gNa: 4, gNg: 3 });
+  assert.deepEqual(teilnahmeTabellenZeile(teilnahmeZahlen([])), { tDa: 0, tNicht: 0, tOhne: 0, gDa: 0, gNicht: 0, gOhne: 0, gNa: 0, gNg: 0 });
+});
+
+pruefe("Teilnahme (#702 AK 6): Spalten, Sortierung in der Adresse, Ordnung ohne Wertung — Gleichstand nach Name, keine Angabe zuletzt", () => {
+  // Spalten wie im Prototyp: der Name, dann drei Trainings- und fünf Spielspalten.
+  assert.deepEqual(TEILNAHME_SPALTEN.map((s) => s.schluessel), ["name", "tDa", "tNicht", "tOhne", "gDa", "gNicht", "gOhne", "gNa", "gNg"]);
+  assert.deepEqual(TEILNAHME_SPALTEN.map((s) => s.gruppe ?? ""), ["", "Trainings", "Trainings", "Trainings", "Spiele", "Spiele", "Spiele", "Spiele", "Spiele"]);
+  // Adresse: Vorgabe Name aufsteigend, unbekanntes fällt zurück, Zahlen beginnen «ab».
+  assert.deepEqual(leseTabellenSortierung({}, TEILNAHME_SPALTEN), { spalte: "name", richtung: "auf" });
+  assert.deepEqual(leseTabellenSortierung({ sort: "gNa" }, TEILNAHME_SPALTEN), { spalte: "gNa", richtung: "ab" });
+  assert.deepEqual(leseTabellenSortierung({ sort: "gNa", dir: "auf" }, TEILNAHME_SPALTEN), { spalte: "gNa", richtung: "auf" });
+  assert.deepEqual(leseTabellenSortierung({ sort: "unbekannt", dir: "ab" }, TEILNAHME_SPALTEN), { spalte: "name", richtung: "auf" });
+  assert.deepEqual(tabellenSortierWerte({ spalte: "name", richtung: "auf" }, TEILNAHME_SPALTEN), { sort: "", dir: "" }, "die Vorgabe ist die nackte Adresse");
+  assert.deepEqual(naechsteTabellenSortierung({ spalte: "name", richtung: "auf" }, "name", TEILNAHME_SPALTEN), { spalte: "name", richtung: "ab" });
+  assert.deepEqual(naechsteTabellenSortierung({ spalte: "name", richtung: "ab" }, "tDa", TEILNAHME_SPALTEN), { spalte: "tDa", richtung: "ab" });
+  // Die Links lassen Eingrenzung, Zeitraum und die offene Spieler:in stehen.
+  const P = "/team/x/spieler/teilnahme";
+  assert.equal(
+    tabellenSortierHref(P, { q: "le", spieler: "s1", von: "2026-11-01", sort: "tDa", dir: "ab" }, { spalte: "gNg", richtung: "ab" }, TEILNAHME_SPALTEN),
+    `${P}?q=le&spieler=s1&von=2026-11-01&sort=gNg&dir=ab`,
+  );
+  assert.equal(tabellenSortierHref(P, { sort: "tDa", dir: "ab" }, { spalte: "name", richtung: "auf" }, TEILNAHME_SPALTEN), P);
+  // Die Links einer Tabelle (`tabellenSortierung`): Kopf, Name, «Sortieren nach».
+  const links = tabellenSortierung(P, { q: "le", sort: "tDa", dir: "ab" }, { spalte: "tDa", richtung: "ab" }, TEILNAHME_SPALTEN, (s) =>
+    s.gruppe ? `${s.gruppe}: ${s.label}` : s.label,
+  );
+  assert.deepEqual(links.kopf("tDa"), { href: `${P}?q=le&sort=tDa&dir=auf`, richtung: "ab" }, "die aktive Spalte kehrt um");
+  assert.deepEqual(links.kopf("name"), { href: `${P}?q=le`, richtung: null }, "eine andere beginnt mit ihrer ersten Richtung");
+  assert.equal(links.oeffnenHref("s1"), `${P}?q=le&sort=tDa&dir=ab&spieler=s1`, "der Name öffnet daneben, Sortierung bleibt");
+  assert.equal(links.aktivLabel, `${TEILNAHME_SPALTEN[1].gruppe}: ${TEILNAHME_SPALTEN[1].label}`, "schmal mit der Gruppe");
+  assert.deepEqual(links.optionen.map((o) => [o.label, o.gewaehlt, !!o.trenner]).slice(-2), [["Aufsteigend", false, true], ["Absteigend", true, false]]);
+  assert.equal(links.optionen.length, TEILNAHME_SPALTEN.length + 2);
+  assert.equal(links.optionen[1].href, `${P}?q=le&sort=tDa&dir=ab`, "die aktive Spalte behält ihre Richtung");
+  assert.equal(links.optionen[2].href, `${P}?q=le&sort=tNicht&dir=ab`);
+  // Ordnung: Name nach Vorname, dann Nachname; Gleichstand nach Name, dann Kennung; null in beiden Richtungen zuletzt.
+  const z = [
+    { id: "c", vorname: "Mia", nachname: "Zürcher", n: 2 },
+    { id: "a", vorname: "Ben", nachname: "Ott", n: null },
+    { id: "b", vorname: "Mia", nachname: "Arn", n: 2 },
+    { id: "d", vorname: "Ava", nachname: "Kunz", n: 5 },
+  ];
+  const wert = (x: (typeof z)[number]) => x.n;
+  assert.deepEqual(sortiereZeilen(z, { spalte: "name", richtung: "auf" }, wert).map((x) => x.id), ["d", "a", "b", "c"]);
+  assert.deepEqual(sortiereZeilen(z, { spalte: "name", richtung: "ab" }, wert).map((x) => x.id), ["c", "b", "a", "d"]);
+  assert.deepEqual(sortiereZeilen(z, { spalte: "n", richtung: "ab" }, wert).map((x) => x.id), ["d", "b", "c", "a"]);
+  assert.deepEqual(sortiereZeilen(z, { spalte: "n", richtung: "auf" }, wert).map((x) => x.id), ["b", "c", "d", "a"]);
+  // «Zurücksetzen» der Eingrenzung lässt Teilnahme, Zeitraum und Sortierung stehen.
+  assert.deepEqual([...BEHALTE_BEIM_ZURUECKSETZEN], ["spieler", "von", "bis", "sort", "dir"]);
+});
+
+pruefe("Teilnahme (#702): Seite, Einzelteilnahme und KI-Werkzeug zählen über den Kern; die RPCs ruft nur er, teilnahme_kern niemand (NFR 2, 3)", () => {
+  const app = join(web, "app/(app)/team/[id]/spieler");
+  const seite = ohneKommentareTn(readFileSync(join(app, "teilnahme/page.tsx"), "utf8"));
+  const werkzeug = ohneKommentareTn(liesTn("lib/mcp/werkzeuge/teilnahme.ts"));
+  assert.match(seite, /teamTeilnahmeZahlen\(supabase, user\.id, \{ teamId: id, \.\.\.zeitraum \}\)/);
+  assert.match(seite, /ladeSpielerAnsicht\(id, sp, "\/teilnahme", \{ sortierbar: TEILNAHME_SPALTEN \}\)/, "Eingrenzung, Zeitraum und Sortierung in einer Weiterleitung bereinigt");
+  assert.match(seite, /ansicht\.gefiltert\.map/, "die Eingrenzung der Spielerliste wirkt (AK 10)");
+  assert.match(seite, /<SpielerTabellenSeite\s+ansicht=\{ansicht\}\s+sp=\{sp\}/, "das gemeinsame Gerüst mit der Ansicht der Seite");
+  assert.match(
+    ohneKommentareTn(liesTn("components/team/SpielerTabellenSeite.tsx")),
+    /rechts=\{ansicht\.teilnahme && <EinzelteilnahmeRechts ansicht=\{ansicht\} sp=\{sp\} \/>\}/,
+    "die Einzelteilnahme öffnet daneben (AK 8, 9)",
+  );
+  assert.match(werkzeug, /teamTeilnahme\(zugang\.supabase, zugang\.userId,/);
+  assert.match(liesTn("lib/kern/teilnahme.ts"), /supabase\.rpc\("team_teilnahme"/);
+  // Wächter: nur lib/kern ruft die Teilnahme-RPCs, teilnahme_kern ruft in TS niemand.
+  const dateien = [
+    ...readdirSync(app, { recursive: true, encoding: "utf8" }).map((d) => join(app, d)),
+    ...readdirSync(join(web, "lib/mcp"), { recursive: true, encoding: "utf8" }).map((d) => join(web, "lib/mcp", d)),
+    ...readdirSync(join(web, "components/team"), { encoding: "utf8" }).map((d) => join(web, "components/team", d)),
+    join(web, "lib/team-spieler-seite.ts"),
+  ].filter((d) => /\.tsx?$/.test(d));
+  assert.ok(dateien.length > 10, "Dateien gefunden");
+  for (const d of dateien) {
+    const q = readFileSync(d, "utf8");
+    assert.ok(!/rpc\("(team|spieler)_teilnahme"/.test(q), `${relative(web, d)} ruft die RPC selbst`);
+    assert.ok(!/teilnahme_kern/.test(q), `${relative(web, d)} nennt teilnahme_kern`);
+  }
+  assert.ok(!/rpc\("teilnahme_kern"/.test(liesTn("lib/kern/teilnahme.ts")), "auch der Kern ruft teilnahme_kern nicht");
+});
+
+// ── Meldezeitpunkte (#703) ──────────────────────────────────────────────────
+
+pruefe("Meldezeitpunkte (#703 AK 5): Fenster mit Grenzwert ins Fenster, das dort endet — Zwilling der SQL-Schwellen", () => {
+  const H = 3600;
+  const D = 86400;
+  assert.deepEqual(MELDE_FENSTER.map((f) => f.label), ["mehr als 7 Tage", "3–7 Tage", "1–3 Tage", "6–24 Stunden", "höchstens 6 Stunden"]);
+  // Genau auf der Grenze → das kurzfristigere Fenster; eine Sekunde mehr → das frühere.
+  for (const [s, i] of [
+    [7 * D + 1, 0], [7 * D, 1], [3 * D + 1, 1], [3 * D, 2], [D + 1, 2], [D, 3], [6 * H + 1, 3], [6 * H, 4], [1, 4], [0, 4],
+  ] as const)
+    assert.equal(fensterIndex(s), i, `${s} s`);
+  // Die Schwellen in der Migration sind dieselben, in derselben Folge.
+  const sql = liesTn("../supabase/migrations/20261128110000_team_meldezeitpunkte.sql");
+  const filter = [...sql.matchAll(/count\(\*\) filter \(where ([^)]*)\)/g)].map((m) => m[1]);
+  assert.equal(filter.length, MELDE_FENSTER.length);
+  filter.forEach((bed, i) => {
+    const unten = /sekunden_vor_beginn > (\d+)/.exec(bed)?.[1];
+    const oben = /sekunden_vor_beginn <= (\d+)/.exec(bed)?.[1];
+    assert.equal(unten === undefined ? -Infinity : Number(unten), MELDE_FENSTER[i].ueber, `Fenster ${i}: untere Grenze`);
+    assert.equal(oben === undefined ? Infinity : Number(oben), i === 0 ? Infinity : MELDE_FENSTER[i - 1].ueber, `Fenster ${i}: obere Grenze`);
+  });
+  // Die Meldearten: Zwilling von `art || '_' || meldung`.
+  assert.deepEqual([...MELDEARTEN], ["training_abmeldung", "spiel_anmeldung", "spiel_abmeldung"]);
+  assert.match(sql, /k\.art \|\| '_' \|\| k\.meldung/);
+  assert.match(sql, /percentile_cont\(0\.5\) within group \(order by k\.sekunden_vor_beginn\)/);
+  assert.match(sql, /if not ist_team_mitglied\(p_team\) then\s+raise exception '[^']+' using errcode = '42501';/, "die Mitgliedschaft ist die erste Anweisung");
+});
+
+pruefe("Meldezeitpunkte (#703 AK 1–4): Dauer als Text, Mediane je Spieler:in, keine Angabe; Stunden für die KI", () => {
+  assert.equal(dauerText(null), "keine Angabe");
+  assert.equal(dauerText(600), "unter 1 Std.");
+  assert.equal(dauerText(3600), "1 Std.");
+  assert.equal(dauerText(5.4 * 3600), "5 Std.");
+  assert.equal(dauerText(23.4 * 3600), "23 Std.");
+  assert.equal(dauerText(23.6 * 3600), "1 Tag");
+  assert.equal(dauerText(86400), "1 Tag");
+  assert.equal(dauerText(1.6 * 86400), "1,5 Tage");
+  assert.equal(dauerText(1.8 * 86400), "2 Tage");
+  assert.equal(dauerText(10 * 86400), "10 Tage");
+  assert.equal(stundenGerundet(null), null);
+  assert.equal(stundenGerundet(172801), 48);
+  assert.equal(stundenGerundet(23400), 6.5);
+  const je = meldeMediane([
+    { spieler_id: "a", meldeart: "training_abmeldung", anzahl: 5, median_sekunden: 86400, fenster: [0, 1, 1, 2, 1] },
+    { spieler_id: "a", meldeart: "spiel_anmeldung", anzahl: 2, median_sekunden: 259200, fenster: [0, 1, 1, 0, 0] },
+    { spieler_id: "a", meldeart: "unbekannt", anzahl: 1, median_sekunden: 1, fenster: [0, 0, 0, 0, 1] },
+  ]);
+  assert.deepEqual(je.get("a"), {
+    mediane: { training_abmeldung: 86400, spiel_anmeldung: 259200, spiel_abmeldung: null },
+    anzahl: { training_abmeldung: 5, spiel_anmeldung: 2, spiel_abmeldung: 0 },
+  });
+  assert.equal(je.get("b"), undefined, "ohne Meldung: keine Angabe");
+});
+
+pruefe("Meldezeitpunkte (#703 AK 5, 7–9, 11, NFR 3): Teamzahlen nur der eingegrenzten Spieler:innen; Summen wie die Teilnahme-Übersicht; Sortierung keine Angabe zuletzt", () => {
+  const zeilen = [
+    { spieler_id: "a", meldeart: "training_abmeldung", anzahl: 3, median_sekunden: 1, fenster: [1, 0, 1, 0, 1] },
+    { spieler_id: "b", meldeart: "training_abmeldung", anzahl: 2, median_sekunden: 1, fenster: [0, 2, 0, 0, 0] },
+    { spieler_id: "b", meldeart: "spiel_abmeldung", anzahl: 1, median_sekunden: 1, fenster: [0, 0, 0, 0, 1] },
+    { spieler_id: "c", meldeart: "spiel_anmeldung", anzahl: 4, median_sekunden: 1, fenster: [4, 0, 0, 0, 0] },
+  ];
+  assert.deepEqual(fasseFensterZusammen(zeilen, ["a", "b"]), {
+    training_abmeldung: [1, 2, 1, 0, 1],
+    spiel_anmeldung: [0, 0, 0, 0, 0],
+    spiel_abmeldung: [0, 0, 0, 0, 1],
+  });
+  // NFR 3: «ohne Abmeldung gefehlt» und «nicht gemeldet» sind die Summe der Spalten der Übersicht.
+  const zahlenJe = new Map([
+    ["a", teilnahmeZahlen([
+      { art: "training", ergebnis: "nicht_erschienen", anzahl: 2 },
+      { art: "spiel", ergebnis: "nicht_erschienen", anzahl: 1 },
+      { art: "spiel", ergebnis: "meldefrist_verpasst", anzahl: 1 },
+    ])],
+    ["b", teilnahmeZahlen([
+      { art: "spiel", ergebnis: "ohne_meldung", anzahl: 3 },
+      { art: "training", ergebnis: "nicht_erschienen", anzahl: 1 },
+    ])],
+    ["c", teilnahmeZahlen([{ art: "training", ergebnis: "nicht_erschienen", anzahl: 9 }])],
+  ]);
+  const ids = ["a", "b", "x"];
+  const zeilenUebersicht = ids.map((id) => teilnahmeTabellenZeile(zahlenJe.get(id) ?? teilnahmeZahlen([])));
+  const summe = (k: "tOhne" | "gOhne" | "gNg") => zeilenUebersicht.reduce((n, z) => n + z[k], 0);
+  assert.deepEqual(teamSummen(zahlenJe, ids), {
+    ohneAbmeldungGefehlt: { training: summe("tOhne"), spiel: summe("gOhne") },
+    nichtGemeldet: summe("gNg"),
+  });
+  assert.deepEqual(teamSummen(zahlenJe, ids), { ohneAbmeldungGefehlt: { training: 3, spiel: 1 }, nichtGemeldet: 4 });
+  // AK 11: drei Mediane unter «Median vor Beginn», erste Richtung «auf»; keine Angabe zuletzt.
+  assert.deepEqual(MELDE_SPALTEN.map((s) => s.schluessel), ["name", ...MELDEARTEN]);
+  assert.deepEqual(MELDE_SPALTEN.slice(1).map((s) => [s.gruppe, s.ersteRichtung]), MELDEARTEN.map(() => [MELDE_TEXT.gruppe, "auf"]));
+  assert.deepEqual(leseTabellenSortierung({ sort: "spiel_anmeldung" }, MELDE_SPALTEN), { spalte: "spiel_anmeldung", richtung: "auf" });
+  const sp = [
+    { id: "a", vorname: "Ava", nachname: "A", m: 7200 },
+    { id: "b", vorname: "Ben", nachname: "B", m: null },
+    { id: "c", vorname: "Cem", nachname: "C", m: 600 },
+  ];
+  assert.deepEqual(sortiereZeilen(sp, { spalte: "m", richtung: "auf" }, (x) => x.m).map((x) => x.id), ["c", "a", "b"]);
+  assert.deepEqual(sortiereZeilen(sp, { spalte: "m", richtung: "ab" }, (x) => x.m).map((x) => x.id), ["a", "c", "b"]);
+});
+
+pruefe("Meldezeitpunkte (#703): Seite und KI-Werkzeug zählen über den Kern; die RPC ruft nur er (NFR 2, 3; AK 9, 10, 12)", () => {
+  const app = join(web, "app/(app)/team/[id]/spieler");
+  const seite = ohneKommentareTn(readFileSync(join(app, "meldezeitpunkte/page.tsx"), "utf8"));
+  assert.match(seite, /ladeSpielerAnsicht\(id, sp, "\/meldezeitpunkte", \{ sortierbar: MELDE_SPALTEN \}\)/);
+  assert.match(seite, /teamMeldeZahlen\(supabase, user\.id, \{ teamId: id, \.\.\.zeitraum \}\)/);
+  assert.match(seite, /teamTeilnahmeZahlen\(supabase, user\.id, \{ teamId: id, \.\.\.zeitraum \}\)/, "dieselbe Zählung wie die Übersicht (NFR 3)");
+  assert.match(seite, /const ids = ansicht\.gefiltert\.map\(\(s\) => s\.id\)/, "Teamzahlen aus den eingegrenzten Spieler:innen (AK 9, 10)");
+  assert.match(seite, /fasseFensterZusammen\(melde\.wert\.zeilen, ids\)/);
+  assert.match(seite, /teamSummen\(teilnahme\.wert\.zahlen, ids\)/);
+  assert.match(seite, /<SpielerTabellenSeite\s+ansicht=\{ansicht\}\s+sp=\{sp\}/, "die Einzelteilnahme mit demselben Zeitraum im gemeinsamen Gerüst (AK 12)");
+  assert.match(ohneKommentareTn(liesTn("lib/mcp/werkzeuge/teilnahme.ts")), /teamMeldezeitpunkte\(zugang\.supabase, zugang\.userId,/);
+  const kern = liesTn("lib/kern/teilnahme.ts");
+  assert.match(kern, /supabase\.rpc\("team_meldezeitpunkte"/);
+  assert.match(kern, /summen: teamSummen\(teilnahme\.wert\.zahlen, ids\)/, "die KI summiert wie die Seite");
+  const dateien = [
+    ...readdirSync(app, { recursive: true, encoding: "utf8" }).map((d) => join(app, d)),
+    ...readdirSync(join(web, "lib/mcp"), { recursive: true, encoding: "utf8" }).map((d) => join(web, "lib/mcp", d)),
+    ...readdirSync(join(web, "components/team"), { encoding: "utf8" }).map((d) => join(web, "components/team", d)),
+  ].filter((d) => /\.tsx?$/.test(d));
+  for (const d of dateien)
+    assert.ok(!/rpc\("team_meldezeitpunkte"/.test(readFileSync(d, "utf8")), `${relative(web, d)} ruft die RPC selbst`);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

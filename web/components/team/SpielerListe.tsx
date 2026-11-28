@@ -4,7 +4,7 @@ import { useId, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
-import { SPIELER_AUSWAHL_PARAM, TEILNAHME_PARAMETER } from "@/lib/teilnahme";
+import { BEHALTE_BEIM_ZURUECKSETZEN, SPIELER_AUSWAHL_PARAM } from "@/lib/teilnahme";
 import { Bell, BellOff, Link2, Pencil, Plus, Shirt, UserMinus } from "lucide-react";
 import {
   AuswahlLeiste,
@@ -77,8 +77,8 @@ import {
    ein Punkt daran: grün abgeholt (über die Selbstabholung, #438 AK 21), blau
    zugestellt. Offen bleibt unmarkiert und steht nur im Link-Dialog — in der
    Liste wäre es bei fast allen der lauteste Eindruck (PO 2026-10-18). Die
-   Zahlen je Stand stehen im Bereich «Privater Link», nicht im Kopf. Die Selbstabholung (#438)
-   steht im Bereich «Privater Link» der Team-Verwaltung (#656). Einen Import aus einer
+   Zahlen je Stand stehen im Reiter «Privater Link», nicht im Kopf. Die Selbstabholung (#438)
+   steht im Reiter «Privater Link» unter «Spieler:innen» (#704). Einen Import aus einer
    CSV-Datei gibt es hier nicht mehr: Ihn macht die Vereinsverwaltung im
    Spielerbestand des Vereins (Story #585).
 
@@ -154,9 +154,9 @@ export function SpielerListe({
   const [aufgenommen, setAufgenommen] = useState<string | null>(null);
   const erstesFeld = useRef<HTMLInputElement>(null);
   const formId = useId();
-  // Die Teilnahme daneben (#700) und ihr Zeitraum gehören nicht zur
-  // Eingrenzung der Liste: «Zurücksetzen» lässt sie stehen.
-  const filter = useAdressFilter({ behalte: TEILNAHME_PARAMETER });
+  // Die Teilnahme daneben (#700), ihr Zeitraum und die Sortierung (#702)
+  // gehören nicht zur Eingrenzung: «Zurücksetzen» lässt sie stehen.
+  const filter = useAdressFilter({ behalte: BEHALTE_BEIM_ZURUECKSETZEN });
   const [auswahl, setAuswahl] = useState<string[]>([]);
   const [zuteilenOffen, setZuteilenOffen] = useState(false);
   const verfall = useVerfallRueckfrage(pending);
@@ -363,7 +363,7 @@ export function SpielerListe({
   return (
     <>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 type-title-large text-on-surface">
+        <h3 className="flex items-center gap-2 type-title-large text-on-surface">
           <Shirt size={20} strokeWidth={2} aria-hidden />
           <span>
             Spieler:innen
@@ -371,7 +371,7 @@ export function SpielerListe({
               {teamSpielerAnzahlText(sichtbar.length, spieler.length, eingegrenzt)}
             </span>
           </span>
-        </h2>
+        </h3>
         <Tooltip label="Spieler:in hinzufügen" ende>
           <IconButton icon={Plus} label="Spieler:in hinzufügen" aria-haspopup="dialog" onClick={() => oeffnen()} />
         </Tooltip>

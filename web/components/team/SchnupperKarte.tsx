@@ -74,7 +74,7 @@ export function SchnupperKarte({
   return (
     <>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 type-title-large text-on-surface">
+        <h3 className="flex items-center gap-2 type-title-large text-on-surface">
           <Sprout size={20} strokeWidth={2} aria-hidden />
           <span>
             {PROBE_TEXT.titel}
@@ -84,7 +84,7 @@ export function SchnupperKarte({
               </span>
             )}
           </span>
-        </h2>
+        </h3>
         {konfiguriert && (
           <Tooltip label={PROBE_TEXT.bearbeiten} ende>
             <IconButton icon={Pencil} label={PROBE_TEXT.bearbeiten} aria-haspopup="dialog" onClick={oeffnen} />

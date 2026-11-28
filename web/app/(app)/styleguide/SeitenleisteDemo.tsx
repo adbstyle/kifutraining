@@ -5,6 +5,7 @@ import {
   Building2,
   CalendarDays,
   ClipboardList,
+  Contact,
   History,
   House,
   LayoutGrid,
@@ -65,8 +66,9 @@ function gruppen(angemeldet: boolean, bereich: string): SeitenleisteGruppe[] {
                 titel: "Team",
                 eintraege: [
                   { label: "Trainingsplan", href: "#plan", icon: CalendarDays, current: true },
+                  { label: "Spieler:innen", href: "#team-spieler", icon: Users },
                   { label: "Trainings", href: "#team-trainings", icon: ListChecks },
-                  { label: "Team", href: "#team", icon: Users },
+                  { label: "Team", href: "#team", icon: Contact },
                 ],
               },
         ]

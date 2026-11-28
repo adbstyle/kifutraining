@@ -61,9 +61,70 @@ export function teilnahmeZahlen(zeilen: readonly TeilnahmeZeile[]): Record<Teiln
  *  Spielerliste offen ist (`?spieler=`). */
 export const SPIELER_AUSWAHL_PARAM = "spieler";
 
-/** Die Parameter der Teilnahme-Spalte; das Zurücksetzen der Spielerliste
- *  lässt sie stehen. */
+/** Die Parameter der Teilnahme-Spalte. */
 export const TEILNAHME_PARAMETER = [SPIELER_AUSWAHL_PARAM, "von", "bis"] as const;
+
+/** Was das Zurücksetzen der Eingrenzung stehen lässt: die Teilnahme daneben,
+ *  ihren Zeitraum und die Sortierung einer Tabelle (#702) — sie gehören
+ *  nicht zur Eingrenzung. */
+export const BEHALTE_BEIM_ZURUECKSETZEN = [...TEILNAHME_PARAMETER, "sort", "dir"] as const;
+
+// ── Übersicht des Teams (#702) ──────────────────────────────────────────────
+
+/** Die Zahlen einer Spieler:in in der Teamübersicht, je Spalte (Prototyp
+ *  «702 Teamübersicht»): bei Trainings da, nicht da und ohne Abmeldung
+ *  gefehlt; bei Spielen dazu nicht aufgeboten und nicht gemeldet. */
+export type TeilnahmeUebersichtZeile = {
+  tDa: number;
+  tNicht: number;
+  tOhne: number;
+  gDa: number;
+  gNicht: number;
+  gOhne: number;
+  gNa: number;
+  gNg: number;
+};
+
+/** Die Zeile der Übersicht aus den Zahlen der Einzelteilnahme — dieselbe
+ *  Quelle, darum dieselben Zahlen (NFR 3). «Ohne Abmeldung gefehlt» ist
+ *  «angemeldet, nicht erschienen»; «nicht gemeldet» fasst «Meldefrist
+ *  verpasst» und «ohne Meldung» zusammen (PO 2026-11-28). */
+export function teilnahmeTabellenZeile(zahlen: Record<TeilnahmeArt, TeilnahmeZahlen>): TeilnahmeUebersichtZeile {
+  const grund = (art: TeilnahmeArt, g: TeilnahmeGrund) => zahlen[art].gruende.find((x) => x.grund === g)?.anzahl ?? 0;
+  return {
+    tDa: zahlen.training.da,
+    tNicht: zahlen.training.nichtDa,
+    tOhne: grund("training", "nicht_erschienen"),
+    gDa: zahlen.spiel.da,
+    gNicht: zahlen.spiel.nichtDa,
+    gOhne: grund("spiel", "nicht_erschienen"),
+    gNa: grund("spiel", "nicht_aufgeboten"),
+    gNg: grund("spiel", "meldefrist_verpasst") + grund("spiel", "ohne_meldung"),
+  };
+}
+
+/** Die Teamzahlen neben den Meldezeitpunkten (#703 AK 7, 8): ohne Abmeldung
+ *  gefehlt (Trainings und Spiele getrennt) und nicht gemeldet, über die
+ *  Spieler:innen `ids` (aktuell im Team und eingegrenzt, AK 9). Summiert aus
+ *  `teilnahmeTabellenZeile` — dieselben Zahlen wie die Spalten der
+ *  Teilnahme-Übersicht (#703 NFR 3). Wer in `zahlenJe` fehlt, zählt 0. */
+export type TeamSummen = { ohneAbmeldungGefehlt: { training: number; spiel: number }; nichtGemeldet: number };
+
+export function teamSummen(
+  zahlenJe: ReadonlyMap<string, Record<TeilnahmeArt, TeilnahmeZahlen>>,
+  ids: Iterable<string>,
+): TeamSummen {
+  const summe: TeamSummen = { ohneAbmeldungGefehlt: { training: 0, spiel: 0 }, nichtGemeldet: 0 };
+  for (const id of ids) {
+    const zahlen = zahlenJe.get(id);
+    if (!zahlen) continue;
+    const z = teilnahmeTabellenZeile(zahlen);
+    summe.ohneAbmeldungGefehlt.training += z.tOhne;
+    summe.ohneAbmeldungGefehlt.spiel += z.gOhne;
+    summe.nichtGemeldet += z.gNg;
+  }
+  return summe;
+}
 
 // ── Zeitraum ────────────────────────────────────────────────────────────────
 
@@ -101,8 +162,15 @@ export function liesZeitraum(sp: AdressParameter): Zeitraum {
  *  im Team ist — sie fällt samt Spalte weg); ein unlesbarer Tag oder ein Bis vor dem Von wird
  *  wie `liesZeitraum` bereinigt. Alles übrige reist unverändert mit. */
 export function bereinigteTeilnahmeAdresse(pfad: string, sp: AdressParameter, spieler: string | null): string | null {
+  return adresseMitWerten(pfad, sp, teilnahmeWerte(sp, spieler));
+}
+
+/** Die Adresswerte, die `bereinigteTeilnahmeAdresse` vergleicht — für
+ *  Seiten, die sie mit weiteren Werten in einer einzigen Weiterleitung
+ *  bereinigen. */
+export function teilnahmeWerte(sp: AdressParameter, spieler: string | null): Record<string, string> {
   const z = liesZeitraum(sp);
-  return adresseMitWerten(pfad, sp, { [SPIELER_AUSWAHL_PARAM]: spieler ?? "", von: z.von ?? "", bis: z.bis ?? "" });
+  return { [SPIELER_AUSWAHL_PARAM]: spieler ?? "", von: z.von ?? "", bis: z.bis ?? "" };
 }
 
 /** Die Spieler:in in der Adresse (`?spieler=`) — genau eine, sonst `null`. */
@@ -169,6 +237,30 @@ export const TEILNAHME_TEXT = {
   /** Ohne gezählten Termin dieser Art — mit oder ohne gewählten Zeitraum. */
   leer: (art: "training" | "spiel", mitZeitraum: boolean) =>
     `${mitZeitraum ? "Im gewählten Zeitraum" : "Bisher"} zählt ${art === "training" ? "kein Training" : "kein Spiel"}.`,
+  /** Die Spalten der Teamübersicht (#702, Prototyp). */
+  spalte: {
+    tDa: "Da",
+    tNicht: "Nicht da",
+    tOhne: "Ohne Abmeldung gefehlt",
+    gDa: "Da",
+    gNicht: "Nicht da",
+    gOhne: "Ohne Abmeldung gefehlt",
+    gNa: "Nicht aufgeboten",
+    gNg: "Nicht gemeldet",
+  },
+  spielerin: "Spieler:in",
+  /** Die Beschriftung der Tabelle für Vorlesehilfen. */
+  tabelle: (zeitraum: string | null) => `Teilnahme der Spieler:innen, ${zeitraum ? `Zeitraum: ${zeitraum}` : "ganze Zeit im Team"}`,
+  /** Unter der Übersicht: wie die Spalten zusammenhängen (Prototyp). */
+  fussnote:
+    "«Nicht da» zählt alle Gründe zusammen; «Ohne Abmeldung gefehlt» und bei Spielen «Nicht aufgeboten» und «Nicht gemeldet» sind ein Teil davon, der Rest sind Abmeldungen. " +
+    "«Nicht gemeldet» fasst Meldefrist verpasst und ohne Meldung zusammen. Gezählt sind begonnene, nicht ausgefallene Termine.",
+  oeffnen: (name: string) => `Teilnahme von ${name} öffnen`,
+  /** Vor der Sortierwahl über den Karten (schmal, Telefon-Prototyp). */
+  sortierenNach: "Sortieren nach:",
+  /** Im Team stehen noch keine Spieler:innen. */
+  keineSpieler: "Noch keine Spieler:innen",
+  keineSpielerText: "Sobald Spieler:innen im Team sind, steht hier ihre Teilnahme.",
   /** «6 von 7 da» als Satz für Vorlesehilfen und KI. */
   vonDa: (da: number, gesamt: number) => `${da} von ${gesamt} da`,
   /** AK 8: nach welcher Regel gezählt wird und wann jemand als da gilt. */

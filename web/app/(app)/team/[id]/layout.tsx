@@ -13,8 +13,8 @@ export const metadata: Metadata = { title: "Team - KiFu", robots: { index: false
  * Brotkrumen mit dem Namen des Teams. Damit lädt keine Ansicht diese Dinge
  * selbst, und der Wechsel zwischen ihnen tauscht nur den Inhalt aus. Zwischen
  * den Ansichten wechselt die Seitenleiste (Bereich «Team», #581); innerhalb
- * der Ansicht «Team» wechseln die Reiter der Team-Verwaltung (#656,
- * verwaltung/layout.tsx).
+ * der Ansicht «Spieler:innen» wechseln die Reiter zwischen deren Sichten
+ * (#704, spieler/layout.tsx).
  *
  * Ein Team ist ausschliesslich seinen Mitgliedern sichtbar. Ob es nicht
  * existiert oder ob der USER nicht dazugehört, bleibt ununterscheidbar — die

@@ -27,6 +27,7 @@ import { useLokalerStand } from "@/lib/use-lokaler-stand";
 import { useFokusFolgt } from "@/lib/use-fokus-folgt";
 import { KaderLozenges } from "./KaderLozenge";
 import { EingrenzungLeer, KaderChips } from "./KaderEingrenzung";
+import { teamSpielerPfad } from "@/lib/team-bereiche";
 
 /** Wofür eine Spieler:in im Kopf zählt und in welcher Gruppe sie steht (#599): ohne Meldung (nach der Meldefrist
  *  «Meldefrist verpasst», #496), angemeldet, abgemeldet oder — gleich welche
@@ -108,8 +109,8 @@ export function SpielReiter({ teamId, daten }: { teamId: string; daten: SpielSpi
     return (
       <Leerzustand icon={Shirt} titel="Noch keine Spielerliste" dicht>
         Wer zu einem Spiel kommt, siehst du, sobald das Team eine Spielerliste führt. Sie steht unter{" "}
-        <Link href={`/team/${teamId}/verwaltung`} className="focus-ring rounded-klein text-primary hover:underline">
-          Team
+        <Link href={teamSpielerPfad(teamId)} className="focus-ring rounded-klein text-primary hover:underline">
+          Spieler:innen
         </Link>
         .
       </Leerzustand>

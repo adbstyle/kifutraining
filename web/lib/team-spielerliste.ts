@@ -1,14 +1,14 @@
 import { adresseMitWerten, liesListe, type AdressParameter } from "@/lib/adresse";
 import { istUuid } from "@/lib/kennung";
 import { LINK_STAENDE, type LinkStand, type Spieler } from "@/lib/spieler";
-import { teamVerwaltungPfad } from "@/lib/team-bereiche";
+import { teamSpielerPfad } from "@/lib/team-bereiche";
 import { bereinigeSuche, liesJahrgaenge } from "@/lib/verein-spielerliste";
 
 /* Suche und Eingrenzung der Spielerliste eines Teams in der Adresse (Story
    #601): `?q=` die Suche, `?kader=` Kader und «ohne Kader», `?jahrgang=` die
    Jahrgänge, `?link=` der Stand des privaten Links (je kommagetrennt, die
    Schlüssel aus `FILTER_SCHLUESSEL` in lib/team-bereiche.ts, die die Reiter
-   weitertragen, AK 9). Muster: die Spieler:innen des Vereins
+   unter «Spieler:innen» weitertragen, AK 9, #704 AK 5). Muster: die Spieler:innen des Vereins
    (lib/verein-spielerliste.ts) — was nicht stimmt, fällt mit einer
    Weiterleitung weg, statt als unsichtbarer Filter stehenzubleiben.
 
@@ -75,12 +75,18 @@ export function bereinigeTeamEingrenzung(e: TeamEingrenzung, bestand: TeamBestan
  *  `LINK_STAENDE`); `?q=` nur, wenn `e` keine Suche mehr hat (so wird
  *  der Tippstand nie umgeschrieben); alles übrige reist unverändert mit. */
 export function bereinigteTeamAdresse(pfad: string, sp: AdressParameter, e: TeamEingrenzung): string | null {
-  return adresseMitWerten(pfad, sp, {
+  return adresseMitWerten(pfad, sp, teamEingrenzungWerte(e));
+}
+
+/** Die Adresswerte, die `bereinigteTeamAdresse` vergleicht — für Seiten, die
+ *  sie mit weiteren Werten in einer einzigen Weiterleitung bereinigen. */
+export function teamEingrenzungWerte(e: TeamEingrenzung): Record<string, string> {
+  return {
     kader: kaderFilterWerte(e).join(","),
     jahrgang: e.jahrgaenge.join(","),
     link: e.linkStaende.join(","),
     ...(e.suche === "" ? { q: "" } : {}),
-  });
+  };
 }
 
 /** Die Adresse der Spielerliste mit einer Eingrenzung, in der Schreibweise
@@ -97,7 +103,7 @@ export function teamSpielerHref(teamId: string, e: Partial<TeamEingrenzung> = {}
   ];
   for (const [k, v] of werte) if (v) p.set(k, v);
   const qs = p.toString();
-  return `${teamVerwaltungPfad(teamId)}${qs ? `?${qs}` : ""}`;
+  return `${teamSpielerPfad(teamId)}${qs ? `?${qs}` : ""}`;
 }
 
 /** Ist etwas gesetzt — Suche oder irgendeine Eingrenzung (AK 6, 8)? */

@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { AuswahlFilter, Button, FilterSuche } from "@/components/ui";
 import { useAdressFilter } from "@/lib/use-adress-filter";
-import { TEILNAHME_PARAMETER } from "@/lib/teilnahme";
+import { BEHALTE_BEIM_ZURUECKSETZEN } from "@/lib/teilnahme";
 import { LINK_STAENDE, TEAM_SPIELER_FILTER } from "@/lib/spieler";
 import { bereinigeSuche } from "@/lib/verein-spielerliste";
 import { kaderFilterWerte, OHNE_KADER_WERT, teamEingrenzungGesetzt, type TeamEingrenzung } from "@/lib/team-spielerliste";
@@ -14,21 +14,24 @@ import { kaderFilterWerte, OHNE_KADER_WERT, teamEingrenzungGesetzt, type TeamEin
    mit seinen drei Ständen, und «Zurücksetzen», sobald etwas gesetzt ist
    (AK 6, 8). Dieselben Bausteine wie die Spieler:innen des Vereins
    (`VereinSpielerFilter`, aus der Leiste des Katalogs): Der Zustand steht in
-   der Adresse, die Reiter der Team-Verwaltung tragen ihn weiter (AK 9). Die
+   der Adresse, die Reiter unter «Spieler:innen» tragen ihn weiter (AK 9, #704). Die
    Optionen kommen aus der ganzen Liste — sie schrumpfen nicht mit der
    Eingrenzung. */
 export function TeamSpielerFilter({
   eingrenzung,
   kader,
   jahrgaenge,
+  className = "mt-4",
 }: {
   eingrenzung: TeamEingrenzung;
   kader: readonly { id: string; name: string }[];
   jahrgaenge: readonly number[];
+  /** Der Abstand nach oben; in der Liste unter der Überschrift. */
+  className?: string;
 }) {
-  // Die Teilnahme daneben (#700) und ihr Zeitraum gehören nicht zur
-  // Eingrenzung der Liste: «Zurücksetzen» lässt sie stehen.
-  const filter = useAdressFilter({ behalte: TEILNAHME_PARAMETER });
+  // Die Teilnahme daneben (#700), ihr Zeitraum und die Sortierung (#702)
+  // gehören nicht zur Eingrenzung: «Zurücksetzen» lässt sie stehen.
+  const filter = useAdressFilter({ behalte: BEHALTE_BEIM_ZURUECKSETZEN });
   const kaderOptionen = useMemo(
     () => [
       { value: OHNE_KADER_WERT, label: TEAM_SPIELER_FILTER.ohneKader },
@@ -40,7 +43,7 @@ export function TeamSpielerFilter({
   const linkOptionen = LINK_STAENDE.map((s) => ({ value: s, label: TEAM_SPIELER_FILTER.linkStand[s] }));
 
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-2">
+    <div className={`flex flex-wrap items-center gap-2 ${className}`}>
       <FilterSuche
         label={TEAM_SPIELER_FILTER.suche}
         initial={eingrenzung.suche}

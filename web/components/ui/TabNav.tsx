@@ -23,8 +23,9 @@ export interface TabNavItem {
    Reicht die Breite nicht, brechen die Reiter in eine zweite Zeile um, statt
    seitlich zu rollen: Mobile Browser zeigen keine Scrollleiste, ein Reiter
    ausserhalb des Bilds wäre weder als offen noch als vorhanden zu erkennen
-   (gemessen #656: vier Bereiche brauchen 505 px, bei 375 px Fensterbreite
-   bleiben 343 px). */
+   (gemessen #656: vier Reiter brauchen 505 px, bei 375 px Fensterbreite
+   bleiben 343 px). Unter «Spieler:innen» eines Teams stehen bis zu fünf
+   Reiter (#704); der Telefon-Entwurf bricht sie ebenso um (`flex-wrap`). */
 export function TabNav({
   items,
   ariaLabel,
