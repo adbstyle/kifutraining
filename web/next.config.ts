@@ -59,6 +59,22 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [{ source: "/:datei(apple-touch-icon.*\\.png)", destination: "/apple-icon.png" }];
   },
+  // Die bisherigen Adressen der Team-Verwaltung (#656) führen an die neue
+  // Stelle derselben Sicht (#704 AK 6): die Spielerliste, Kader & Schnuppern
+  // und der private Link unter «Spieler:innen», die Trainer:innen auf die
+  // Seite «Team». Next hängt die Suchparameter selbst an, die Eingrenzung
+  // reist also mit. Bewusst nicht dauerhaft (307 statt 308): Browser und
+  // Zwischenspeicher merken sich eine dauerhafte Weiterleitung, sie liesse
+  // sich nicht mehr zurücknehmen. Vor dem App-Layout, kostet darum keinen
+  // Seitenaufbau.
+  async redirects() {
+    return [
+      { source: "/team/:id/verwaltung", destination: "/team/:id/spieler", permanent: false },
+      { source: "/team/:id/verwaltung/kader", destination: "/team/:id/spieler/kader", permanent: false },
+      { source: "/team/:id/verwaltung/link", destination: "/team/:id/spieler/link", permanent: false },
+      { source: "/team/:id/verwaltung/trainer", destination: "/team/:id/trainer", permanent: false },
+    ];
+  },
   images: {
     // Feld-Diagramme werden aus Supabase Storage ausgeliefert (öffentliche URLs).
     remotePatterns: [

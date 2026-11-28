@@ -7,7 +7,7 @@ import { ladeSpielerliste } from "@/lib/kern/spieler";
 import { ladeKader } from "@/lib/kern/kader";
 import { leseProbetraining } from "@/lib/kern/probe";
 
-/* Bereich «Kader & Schnuppern» der Team-Verwaltung (#656): die Kader (#452)
+/* Reiter «Kader & Schnuppern» unter «Spieler:innen» (#704): die Kader (#452)
  * und das Schnuppertraining (#555, #584). Auf breiten Bildschirmen stehen die
  * beiden Karten nebeneinander. Die Spielerliste lädt der Bereich nur, weil
  * die Schnupper-Karte nennt, wer schnuppert. */

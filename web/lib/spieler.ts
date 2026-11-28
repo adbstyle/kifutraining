@@ -562,7 +562,7 @@ export const LINK_STAND_TEXT = {
 } as const;
 
 /** Wie viele Links je Stand (#658 AK 1) — über alle Zeilen, die der Aufrufer
- *  gibt; im Bereich «Privater Link» die ganze Spielerliste des Teams samt
+ *  gibt; im Reiter «Privater Link» die ganze Spielerliste des Teams samt
  *  Schnuppernden. */
 export function zaehleLinkStaende(spieler: readonly { linkStand: LinkStand }[]): Record<LinkStand, number> {
   const zahl: Record<LinkStand, number> = { abgeholt: 0, zugestellt: 0, offen: 0 };
@@ -570,7 +570,7 @@ export function zaehleLinkStaende(spieler: readonly { linkStand: LinkStand }[]):
   return zahl;
 }
 
-/** Die Übersicht der Link-Stände im Bereich «Privater Link» (#658). */
+/** Die Übersicht der Link-Stände im Reiter «Privater Link» (#658). */
 export const LINK_UEBERSICHT = {
   titel: "Wer hat den Link?",
   einleitung: "Spieler:innen oder Eltern holen ihn selbst ab, oder du gibst ihn weiter und markierst ihn als zugestellt. Schnuppernde zählen mit.",
@@ -585,7 +585,7 @@ export const LINK_UEBERSICHT = {
       mobil, schmale 2fr-Spalte ab lg); den Zusammenhang liefert die Zeile
       «offen» darüber. */
   offeneZeigen: (anzahl: number): string => `Offene zeigen (${anzahl})`,
-  hinweis: "Link selbst weitergegeben? Markiere ihn unter «Spieler:innen» im Link-Dialog der Spieler:in als zugestellt. Erneuern setzt ihn auf offen zurück.",
+  hinweis: "Link selbst weitergegeben? Markiere ihn unter «Spieler:innen» im Reiter «Liste» im Link-Dialog der Spieler:in als zugestellt. Erneuern setzt ihn auf offen zurück.",
 } as const;
 
 /** Die Filterleiste der Spielerliste eines Teams (#601) — aus denselben
@@ -611,6 +611,41 @@ export const TEAM_SPIELER_FILTER = {
  *  gesetzter Eingrenzung «12 von 35». */
 export function teamSpielerAnzahlText(sichtbar: number, gesamt: number, eingegrenzt: boolean): string {
   return eingegrenzt && gesamt > 0 ? `${sichtbar} von ${gesamt}` : String(gesamt);
+}
+
+/** Warum «Spieler:in hinzufügen» gesperrt ist (#706 AK 7): Die Spielerliste
+ *  des Teams ist voll (`SPIELER_MAX`, Zwilling im Trigger), oder der
+ *  Spielerbestand des Vereins. Vom Verein erfährt das Team nur, dass er voll
+ *  ist, nie den Bestand — und wer Platz schafft. */
+export const SPIELER_SPERRE = {
+  team: SPIELER_MELDUNG.SPIELERLISTE_VOLL,
+  verein: "Im Verein ist kein Platz für weitere Spieler:innen. Zuerst muss die Vereinsverwaltung Platz schaffen.",
+} as const;
+export type SpielerSperre = keyof typeof SPIELER_SPERRE;
+/** Der Satz mit dem Grund der Sperre, auf den der gesperrte Knopf verweist. */
+export const SPIELER_GESPERRT_ID = "spieler-gesperrt";
+
+/** Welche Sperre gilt: zuerst die des Teams, dann die des Vereins. */
+export function spielerSperre(anzahlImTeam: number, vereinVoll: boolean): SpielerSperre | null {
+  if (anzahlImTeam >= SPIELER_MAX) return "team";
+  return vereinVoll ? "verein" : null;
+}
+
+/** Für welche Termine eine Spieler:in mit diesen Kadern gilt — ohne Aussage
+ *  darüber, was der Link zeigt (#663). In den Dialogen «Spieler:in
+ *  hinzufügen» und «Spieler:in ändern». */
+export function kaderHinweisText(vorname: string, kaderNamen: string[]): string {
+  const wer = vorname.trim() || "Die Spieler:in";
+  return kaderNamen.length === 0
+    ? `${wer} ist nur bei Terminen ohne Kader dabei.`
+    : `${wer} ist bei Terminen ohne Kader und bei den Terminen von ${aufzaehlung(kaderNamen)} dabei.`;
+}
+
+/** Die Anzahl über der Spielerliste, der Teilnahme und den Meldezeitpunkten
+ *  (#706 AK 6): alle Spieler:innen des Teams samt Schnuppernden, «34
+ *  Spieler:innen», bei Eingrenzung «12 von 34 Spieler:innen». */
+export function teamSpielerAnzahlZeile(sichtbar: number, gesamt: number, eingegrenzt: boolean): string {
+  return `${teamSpielerAnzahlText(sichtbar, gesamt, eingegrenzt)} ${gesamt === 1 ? "Spieler:in" : "Spieler:innen"}`;
 }
 
 /** Was der Link-Knopf einer Zeile sagt: Tooltip und Name (AK 4). Offen bleibt

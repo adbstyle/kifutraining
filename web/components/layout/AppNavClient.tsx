@@ -6,6 +6,7 @@ import {
   Building2,
   CalendarDays,
   ClipboardList,
+  Contact,
   History,
   House,
   LayoutGrid,
@@ -34,6 +35,7 @@ import {
   type Bereich,
 } from "@/lib/bereich";
 import { aktiveBereiche, bereichAusPfad, STARTSEITE_PFAD, UEBUNGEN_PFAD } from "@/lib/navigation";
+import { teamSeitePfad, teamSpielerPfad } from "@/lib/team-bereiche";
 import { useFeedback } from "@/components/feedback/FeedbackKontext";
 import { FEEDBACK_TITEL } from "@/components/feedback/FeedbackGespraech";
 import { useSeitenleiste } from "./AppRahmen";
@@ -168,6 +170,8 @@ export function AppNavClient({
   // Die Einträge des offenen Bereichs — nur angemeldet, nur mit Bereich.
   if (konto && offen?.art === "team") {
     const basis = `/team/${offen.id}`;
+    const spielerSeite = teamSpielerPfad(offen.id);
+    const teamSeite = teamSeitePfad(offen.id);
     gruppen.push({
       titel: "Team",
       eintraege: [
@@ -179,13 +183,21 @@ export function AppNavClient({
           current: pfad === basis,
           bereichAktiv: imTeamBereich,
         },
+        // «Spieler:innen» öffnet immer die Liste, ohne Eingrenzung (#704 AK 2),
+        // und bleibt in jedem ihrer Reiter markiert.
+        {
+          label: "Spieler:innen",
+          href: spielerSeite,
+          icon: Users,
+          current: pfad === spielerSeite || pfad.startsWith(`${spielerSeite}/`),
+        },
         { label: "Trainings", href: `${basis}/trainings`, icon: ListChecks, current: pfad === `${basis}/trainings` },
-        // «Team» bleibt in allen Bereichen der Team-Verwaltung markiert (#656).
+        // «Team»: was das Team selbst betrifft, ohne Reiter (#704 AK 4).
         {
           label: "Team",
-          href: `${basis}/verwaltung`,
-          icon: Users,
-          current: pfad === `${basis}/verwaltung` || pfad.startsWith(`${basis}/verwaltung/`),
+          href: teamSeite,
+          icon: Contact,
+          current: pfad === teamSeite || pfad.startsWith(`${teamSeite}/`),
         },
       ],
     });

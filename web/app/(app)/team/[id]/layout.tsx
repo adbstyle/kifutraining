@@ -1,24 +1,21 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { getTeam } from "@/lib/queries/teams";
-import { getMeinVerein } from "@/lib/queries/verein";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Team - KiFu", robots: { index: false } };
 
-/* Der Rahmen um alle Ansichten eines Teams (Story 17).
- *
- * Hier steht, was in jeder Ansicht gleich ist: die Zugehörigkeitsprüfung und die
- * Brotkrumen mit dem Namen des Teams. Damit lädt keine Ansicht diese Dinge
- * selbst, und der Wechsel zwischen ihnen tauscht nur den Inhalt aus. Zwischen
- * den Ansichten wechselt die Seitenleiste (Bereich «Team», #581); innerhalb
- * der Ansicht «Team» wechseln die Reiter der Team-Verwaltung (#656,
- * verwaltung/layout.tsx).
+/* Die Zugehörigkeitsprüfung für alle Seiten eines Teams (Story 17).
  *
  * Ein Team ist ausschliesslich seinen Mitgliedern sichtbar. Ob es nicht
  * existiert oder ob der USER nicht dazugehört, bleibt ununterscheidbar — die
- * Existenz eines fremden Teams ist keine Auskunft wert. */
+ * Existenz eines fremden Teams ist keine Auskunft wert.
+ *
+ * Den Rahmen mit Brotkrumen und Aktionen setzt jede Seite selbst
+ * (components/team/TeamSeite.tsx, #706): Ein Layout kennt weder den Namen der
+ * Seite noch ihre Aktionen. Zwischen den Seiten wechselt die Seitenleiste
+ * (Bereich «Team», #581); innerhalb der Seite «Spieler:innen» wechseln die
+ * Reiter zwischen deren Sichten (#704, spieler/layout.tsx). */
 export default async function TeamLayout({
   params,
   children,
@@ -27,20 +24,7 @@ export default async function TeamLayout({
   children: React.ReactNode;
 }) {
   const { id } = await params;
-  const [team, verein] = await Promise.all([getTeam(id), getMeinVerein()]);
+  const team = await getTeam(id);
   if (!team) redirect("/teams");
-
-  // Der Verein steht als erste Krume und führt in den Bereich «Verein». Ohne
-  // Verein entfällt sie.
-  const krumen = [{ label: "Teams", href: "/teams" }, { label: team.name }];
-  return (
-    <Seitenrahmen breite="voll" krumen={verein ? [{ label: verein.name, href: "/verein" }, ...krumen] : krumen}>
-      {/* Sichtbar nennt die Brotkrume das Team; die Überschrift bleibt für
-          Vorlesehilfen, damit die Seite ihre Gliederung behält. Umbenannt
-          wird im Bereich «Verein». */}
-      <h1 className="sr-only">{team.name}</h1>
-
-      {children}
-    </Seitenrahmen>
-  );
+  return <>{children}</>;
 }

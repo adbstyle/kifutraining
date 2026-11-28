@@ -9,7 +9,7 @@ import { trainerName, type TerminTrainer } from "@/lib/trainer";
    andere Eingeladene dabei, übernimmt zuerst eine von ihnen — gewählt im
    selben Schritt. Ist niemand sonst dabei, darf sie trotzdem absagen: Der
    Termin steht dann ohne Verantwortliche:n da und fällt im Plan auf.
-   «Jemanden einladen» führt zum Reiter «Trainer:innen». */
+   «Jemanden einladen» führt zum Reiter «Trainer:innen» des Termins. */
 export function AbsageDialog({
   frage,
   ich,

@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { SectionMessage } from "@/components/ui";
+import { VereinSeite } from "@/components/verein/VereinSeite";
+import { VereinSpielerAktionen } from "@/components/verein/VereinSpielerAktionen";
 import { VereinSpielerAnsicht } from "@/components/verein/VereinSpielerAnsicht";
 import { VereinSpielerListe } from "@/components/verein/VereinSpielerListe";
 import { mitAnzahl, type AdressParameter } from "@/lib/adresse";
 import { ladeVereinSpielerliste } from "@/lib/kern/verein";
 import { getMeinVereinOderWurf } from "@/lib/queries/verein";
 import { createClient } from "@/lib/supabase/server";
+import { VEREIN_SPIELER_GESPERRT_ID, VEREIN_MELDUNG, VEREIN_SEITEN, vereinSpielerVoll } from "@/lib/verein";
 import {
   bereinigeEingrenzung,
   bereinigteAdresse,
@@ -30,7 +33,13 @@ const PFAD = "/verein/spieler";
    allein an `verwaltung` aus derselben Antwort — eine Quelle, sodass ein
    Rollenwechsel zwischen zwei Abfragen nichts auseinanderlaufen lässt. Teams
    und Jahrgänge in der Adresse, die es im Verein nicht gibt (oder die gar
-   keine sind), leiten einmal auf die bereinigte Adresse weiter. */
+   keine sind), leiten einmal auf die bereinigte Adresse weiter.
+
+   Wie die Seiten eines Teams (#707): «Spieler:innen» als letzte Brotkrume,
+   für die Verwaltung «Spieler:in hinzufügen» und den Import in der
+   Kopfzeile — an der Grenze des Vereins beide gesperrt, mit dem Satz
+   darunter —, die Zahlen in der Zeile über der Liste. Mitglieder ohne
+   Verwaltung haben keine Aktionen. */
 export default async function VereinSpielerPage({ searchParams }: { searchParams: Promise<AdressParameter> }) {
   const sp = await searchParams;
   const supabase = await createClient();
@@ -59,9 +68,24 @@ export default async function VereinSpielerPage({ searchParams }: { searchParams
   const weiterHref = treffer > anzahl ? mitAnzahl(PFAD, sp, anzahl + SPIELER_SEITE) : null;
   const gemeinsam = { treffer, gesamt: liste.gesamt, ohneTeam: liste.ohneTeam, jahrgaenge: liste.jahrgaenge, eingrenzung, weiterHref, pfad: PFAD };
 
+  // Die Grenze zählt den ganzen Verein, nicht die Treffer (AK 4).
+  const voll = vereinSpielerVoll(liste.gesamt);
+
   return (
-    <Seitenrahmen breite="voll" krumen={[{ label: verein.name }, { label: "Spieler:innen" }]}>
-      <h1 className="sr-only">Spieler:innen im Verein «{verein.name}»</h1>
+    <VereinSeite
+      vereinName={verein.name}
+      seite={VEREIN_SEITEN.spieler}
+      aktionen={
+        liste.verwaltung ? (
+          <VereinSpielerAktionen vereinId={verein.id} vereinName={verein.name} pfad={PFAD} voll={voll} eingrenzung={eingrenzung} />
+        ) : undefined
+      }
+    >
+      {liste.verwaltung && voll && (
+        <div id={VEREIN_SPIELER_GESPERRT_ID} className="mb-4">
+          <SectionMessage>{VEREIN_MELDUNG.VEREIN_VOLL}</SectionMessage>
+        </div>
+      )}
       {liste.verwaltung ? (
         <VereinSpielerListe
           vereinId={verein.id}
@@ -73,7 +97,6 @@ export default async function VereinSpielerPage({ searchParams }: { searchParams
       ) : (
         <VereinSpielerAnsicht spieler={liste.spieler.slice(0, anzahl)} teams={liste.teams} {...gemeinsam} />
       )}
-    </Seitenrahmen>
+    </VereinSeite>
   );
 }
-

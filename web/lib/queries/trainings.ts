@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { istUuid } from "@/lib/kennung";
 import {
   einzelnerTermin,
   getTeamTrainingsFuer,
@@ -133,4 +134,18 @@ export async function getTrainingPool(
  *  Abfrage und Mapping in `getTeamTrainingsFuer`. */
 export async function getTeamTrainings(teamId: string, f: TeamTrainingFilter = {}): Promise<TeamTrainingRow[]> {
   return getTeamTrainingsFuer(await createClient(), teamId, f);
+}
+
+/** Wie viele Trainings der Bestand eines Teams umfasst, ohne Termin-Trainings
+ *  — die Zahl «von allen», wenn Suche oder Filter eingrenzen (#706 AK 6). */
+export async function zaehleTeamTrainings(teamId: string): Promise<number> {
+  if (!istUuid(teamId)) return 0;
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("trainings")
+    .select("id", { count: "exact", head: true })
+    .eq("team_id", teamId)
+    .eq("termin_training", false);
+  if (error) throw error;
+  return count ?? 0;
 }

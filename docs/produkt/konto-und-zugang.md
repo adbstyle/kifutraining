@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-11-23 (Release 1.53.0). Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-11-28 (Release 1.56.0). Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -63,7 +63,7 @@ und öffnet ohne die Leiste des Browsers auf ki-fu.ch und damit im eigenen Arbei
 Anmeldung zeigt sie zuerst die Startseite, und nach der Anmeldung geht es von dort in den
 Arbeitsbereich. Wer sich in der App einmal anmeldet, bleibt darin so lange angemeldet wie im
 Browser. Die ganze Anwendung lässt sich darin bedienen, auch Übungen, Trainings und Konto. Eine
-Anleitung oder einen Hinweis zum Ablegen zeigt die Anwendung für Personen mit Konto nicht; das gibt
+Anleitung oder ein Angebot zum Ablegen zeigt die Anwendung für Personen mit Konto nicht; das gibt
 es nur am privaten Link einer Spieler:in (siehe [Team-Bereich](team-bereich.md#als-app-ablegen)).
 Die Leiste des Mobiles färbt die App im Grund des Erscheinungsbilds, das das Gerät eingestellt hat.
 
@@ -399,6 +399,23 @@ da waren. Er meldet ab und wieder an und trägt ab Beginn nach, ob eine Spieler:
 nennt dafür Datum und Beginn, wie er den Termin zuletzt gelesen hat; wurde er inzwischen
 verlegt, weist die Anwendung mit dem neuen Stand ab.
 
+Seit Release 1.56.0 liest der Assistent auch die Teilnahme (siehe
+[Team-Bereich](team-bereich.md#teilnahme)), mit denselben Zahlen wie die Anwendung und nur für
+Mitglieder des Teams. „spieler_teilnahme_abrufen" nennt für eine Spieler:in eines eigenen Teams,
+wie oft sie an Trainings und Spielen dieses Teams da war und aus welchem Grund nicht — je Art die
+gezählten Termine, da, nicht da und die Gründe abgemeldet, nicht erschienen und bei Spielen dazu
+nicht aufgeboten, Meldefrist verpasst und ohne Meldung. „team_teilnahme_abrufen" nennt dasselbe
+für alle Spieler:innen, die zurzeit im Team sind, bei Spielen dazu „nicht gemeldet" als Summe aus
+Meldefrist verpasst und ohne Meldung, „team_meldezeitpunkte_abrufen" je Spieler:in und Meldeart
+den Median vor Beginn bzw. Anpfiff in Stunden samt der Zahl der Meldungen, für das Team die
+Verteilung auf die fünf Abstände und die Zahlen ohne Abmeldung gefehlt und nicht gemeldet. Ein
+Zeitraum mit „von" und „bis" schliesst beide Tage ein; ohne zählt die ganze Zeit im Team, und
+einen unlesbaren Tag oder ein Bis vor dem Von weist er mit dem Feld ab. Die Beschreibungen bitten
+ihn, keine Rangliste aufzustellen und niemanden zu markieren, ausser es wird ausdrücklich danach
+gefragt, und die Angaben nur zu nennen, wo es für die Planung nötig ist. Welche einzelnen Termine
+gezählt sind, nennen die drei Werkzeuge nicht; das liest er Termin für Termin. Neu zustimmen muss
+dafür niemand.
+
 Das Schnuppertraining führt der Assistent nach denselben Regeln (siehe
 [Team-Bereich](team-bereich.md#schnuppertraining)): Mit „schnuppertraining_abrufen" und
 „schnuppertraining_festlegen" liest er die Anzahl Schnuppertrainings und das Info-Schreiben eines
@@ -433,7 +450,8 @@ Link einer Spieler:in und erneuert ihn in zwei Schritten: Der erste Aufruf von
 neue gilt, und dass die Mitteilungen aufs Mobile enden; erst mit der ausdrücklichen Bestätigung erneuert er. Mit „spieler_link_zugestellt" markiert er den Link als zugestellt oder nimmt die Markierung zurück, wenn jemand ihn ausserhalb von KiFu weitergegeben hat — ohne Rückfrage und nur, solange er nicht abgeholt ist; ein abgeholter Link bleibt unverändert, und der Assistent erfährt das. Den Stand erfährt er mit der Spielerliste und beim Holen des Links; ein erneuerter Link ist wieder offen, und wer ihn über die Abholadresse holt, hat ihn abgeholt. Er sieht, ob die Selbstabholung eingeschaltet ist, schaltet sie
 ein und aus und holt und erneuert die Abholadresse. Vor- und Nachnamen, Jahrgänge und
 J+S-Nummern der Spieler:innen, wann sie sich ab- und angemeldet haben, ihre Meldungen zu Spielen,
-wer nicht aufgeboten und wer nicht oder doch erschienen ist, ihre privaten Links und die
+wer nicht aufgeboten und wer nicht oder doch erschienen ist, ihre Teilnahme und Meldezeitpunkte,
+ihre privaten Links und die
 Abholadresse gelangen damit zum Anbieter
 des verbundenen Assistenten.
 
@@ -512,8 +530,10 @@ entfernen und ihnen Spieler:innen zuteilen, Spieler:innen ins Schnuppertraining 
 Anzahl Schnuppertrainings samt Info-Schreiben festlegen, die Infos zum Team für Spieler:innen und Eltern verfassen,
 ändern und entfernen, Spieler:innen für Termine ab- und wieder anmelden, für Spiele an- oder abmelden und als nicht aufgeboten
 kennzeichnen und sehen, wer angemeldet ist, wer an Spielen noch ohne Meldung ist und seit wann, ab
-Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, den privaten Link
-einer Spieler:in holen, erneuern und als zugestellt markieren, die Selbstabholung ein- und ausschalten, die Abholadresse holen
+Beginn eines Trainings oder Spiels nachtragen, wer nicht oder doch erschienen ist, je Spieler:in
+sehen, wie oft sie in einem Zeitraum an Trainings und Spielen da war und aus welchem Grund nicht,
+das für alle Spieler:innen eines Teams vergleichen und sehen, wie früh vor Beginn sie sich ab- und
+anmelden, den privaten Link einer Spieler:in holen, erneuern und als zugestellt markieren, die Selbstabholung ein- und ausschalten, die Abholadresse holen
 und erneuern und sehen, welche Links abgeholt oder zugestellt sind". Nie erreichbar sind „deine Favoriten", „die
 Verwaltung deiner Teams und deines Vereins (Verein gründen, umbenennen und löschen, Teams anlegen,
 umbenennen und auflösen, Personen in Teams oder in die Vereinsverwaltung aufnehmen oder daraus
@@ -523,7 +543,8 @@ Fähigkeiten dazu, muss man nicht erneut zustimmen; auch wer seinen Zugang erlau
 Kalender, Platz, Spielerzahl und Treffpunkt der Termine, die Spielerliste samt Abmeldungen, Links und
 Selbstabholung, die Kader, die Spiele, das Schnuppertraining (früher Probetraining), der Verein
 mit den weiteren Teams einer Spieler:in, die Infos zum Team, das Benachrichtigen der
-Spielervertretungen oder das Markieren zugestellter Links dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt
+Spielervertretungen, das Markieren zugestellter Links oder die Teilnahme samt Meldezeitpunkten
+dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt
 die Seite, nur zu erlauben, wenn man das Verbinden eben selbst gestartet hat.
 
 Beim Erlauben kann man dem Zugang einen eigenen Namen geben, etwa „Claude auf dem Laptop",
@@ -586,7 +607,7 @@ Termine abonnieren, und die
 Abholadresse eines Teams, über die Spieler:innen und Eltern diesen Link abholen (siehe
 [Team-Bereich](team-bereich.md#privater-link)). Wer sie öffnet, wird weder angemeldet noch zum
 Mitglied; im Browser bleibt vom privaten Link nur, welche Benachrichtigungen das Gerät gesehen hat,
-wie oft es den Link besucht und wann es den Hinweis zum Ablegen als App geschlossen hat und, wer
+wann es das Angebot für Mitteilungen und App zuletzt gezeigt hat und wann es abgelehnt wurde und, wer
 Mitteilungen aufs Mobile einschaltet, das kleine Programm des Browsers, das sie zeigt (siehe
 [Navigation](navigation.md#cookies)); von der Abholadresse bleibt nichts. Erreichbar ist nur, was zu
 dieser einen Spieler:in bzw. zur Abholung gehört. Die Seite des privaten Links lässt sich als
@@ -730,4 +751,7 @@ Abholadresse und beim Schalten der Selbstabholung verlangt die Anwendung keine B
 vorher nachfragt, liegt bei ihm. Beim Herausnehmen einer Spieler:in und beim Erneuern eines Links
 verlangt sie eine, prüft aber nicht, ob er die Person wirklich gefragt hat. Die Liste aller
 Spieler:innen mit ihren Abmeldungen für mehrere Termine auf einmal liest er nicht; wer an einem
-Termin kommt, ruft er Termin für Termin ab.
+Termin kommt, ruft er Termin für Termin ab. Die Teilnahme und die Meldezeitpunkte erhält er nur
+zusammengezählt und je Team; über mehrere Teams einer Spieler:in oder den Verein fasst kein
+Werkzeug sie zusammen. Ob er sich an die Bitte hält, niemanden zu bewerten, prüft die
+Anwendung nicht.

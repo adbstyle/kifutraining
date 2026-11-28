@@ -3,6 +3,9 @@ import { cookies } from "next/headers";
 import { ReleaseText } from "@/components/versionen/ReleaseText";
 import {
   BestandAnzeige,
+  LiegenderBalken,
+  Teilnahmebalken,
+  TeilnahmePunkt,
   Button,
   ButtonLink,
   Badge,
@@ -54,10 +57,13 @@ import {
   Tabelle,
   TabellenZeile,
   SortierKopf,
+  SortierWahl,
+  GruppenTabelle,
   DetailKopf,
   Gefahrenzone,
 } from "@/components/ui";
 import { HinweisEltern } from "@/components/privat/HinweisEltern";
+import { MeldeTeam } from "@/components/team/MeldeTeam";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { uebungEckdaten } from "@/lib/eckdaten";
 import { ChipsDemo } from "./ChipsDemo";
@@ -71,7 +77,7 @@ import { EigenschaftBearbeitbarDemo } from "./EigenschaftBearbeitbarDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { CheckboxDemo } from "./CheckboxDemo";
 import { BenachrichtigungDemo } from "./BenachrichtigungDemo";
-import { AppAblegenDemo, SchliessbareMeldung } from "./AppAblegenDemo";
+import { AppAblegenDemo } from "./AppAblegenDemo";
 import { MitteilungenDemo } from "./MitteilungenDemo";
 import { SwitchDemo } from "./SwitchDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
@@ -79,6 +85,7 @@ import { OverlaysDemo } from "./OverlaysDemo";
 import { FeedbackDemo } from "./FeedbackDemo";
 import { TabelleAuswahlDemo } from "./TabelleAuswahlDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
+import { SeitenKopfDemo } from "./SeitenKopfDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
 import { NamenBestaetigenDemo } from "./NamenBestaetigenDemo";
@@ -266,6 +273,8 @@ const GLIEDERUNG = [
         eintraege: [
           { id: "meldungen", titel: "Leerzustand, Hinweiszeile & Section Message" },
           { id: "bestand-anzeige", titel: "Bestand und Grenze" },
+          { id: "teilnahmebalken", titel: "Teilnahmebalken" },
+          { id: "liegender-balken", titel: "Liegende Balken & Kennzahlen" },
           { id: "dialog-snackbar", titel: "Dialog & Snackbar" },
           { id: "feedback-dialog", titel: "Fragen und Feedback" },
         ],
@@ -275,6 +284,7 @@ const GLIEDERUNG = [
         eintraege: [
           { id: "navigation", titel: "Seitenleiste & Tabs" },
           { id: "breadcrumbs", titel: "Breadcrumbs" },
+          { id: "seitenkopf", titel: "Seitenkopf mit Aktionen" },
           { id: "verzeichnis", titel: "Verzeichnis" },
         ],
       },
@@ -308,7 +318,7 @@ const GLIEDERUNG = [
           { id: "mini-monat", titel: "Mini-Monat" },
           { id: "platz-spielerzahl", titel: "Platz und Spielerzahl eines Termins" },
           { id: "benachrichtigungen", titel: "Benachrichtigungen" },
-          { id: "app-ablegen", titel: "Als App ablegen" },
+          { id: "app-ablegen", titel: "Angebot und als App ablegen" },
           { id: "mitteilungen", titel: "Mitteilungen aufs Mobile" },
         ],
       },
@@ -1696,8 +1706,8 @@ export default async function Styleguide() {
           <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
             Mehrere Sichten auf denselben Gegenstand - etwa ein Termin mit
             Termin, Training, Spieler:innen und Trainer:innen, die
-            Team-Verwaltung mit Spieler:innen, Kader &amp; Schnuppern, Privater
-            Link und Trainer:innen (#656): ein Eintrag «Team» in der
+            Spieler:innen eines Teams mit Liste, Kader &amp; Schnuppern und
+            Privater Link (#704): ein Eintrag «Spieler:innen» in der
             Seitenleiste, darunter die Reiter, oder das Konto mit Profil,
             Verbindungen sowie Daten und Konto (#662). Zwischen den
             Seiten eines Bereichs (Team, Verein) wechselt dagegen die
@@ -1714,8 +1724,9 @@ export default async function Styleguide() {
             nicht, brechen die Reiter in eine zweite Zeile um, statt seitlich zu
             rollen: Mobile Browser zeigen keine Scrollleiste, ein Reiter
             ausserhalb des Bilds wäre weder als offen noch als vorhanden zu
-            erkennen (die vier Bereiche der Team-Verwaltung brauchen gut 500 px,
-            auf dem Handy bleiben rund 340 px).
+            erkennen (vier Reiter brauchten gut 500 px, auf dem Handy bleiben
+            rund 340 px; unter «Spieler:innen» stehen mit Teilnahme und
+            Meldezeitpunkten bis zu fünf Reiter).
           </p>
           <TabNav
             ariaLabel="Beispiel-Ansichten"
@@ -2576,10 +2587,27 @@ export default async function Styleguide() {
             Dieselbe Leiste steht über den Spieler:innen des Vereins und über der
             Spielerliste eines Teams (#601: Suche, Kader samt «Ohne Kader»,
             Jahrgang, Privater Link) - kein eigenes Muster je Liste. Der Zustand
-            steht in der Adresse (<code>useAdressFilter</code>); die Reiter der
-            Team-Verwaltung tragen ihn weiter. Die Kader-Chips mit Zahl bleiben
+            steht in der Adresse (<code>useAdressFilter</code>); die Reiter unter
+            «Spieler:innen» tragen ihn samt Zeitraum weiter (#704). Die Kader-Chips mit Zahl bleiben
             den Reitern «Spieler:innen» an Trainings und Spielen, wo genau ein
             Kader zur Zeit gilt.
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            <strong>Zeitraum</strong> (<code>ZeitraumFilter</code>, #700): Ein
+            Zeitraum ist genau ein Wert - eine «1» im Badge sagte nichts. Darum
+            nennt der aktive Knopf den Wert im Text, nach dem Vorbild von Jira
+            («Zeitraum: Letzte 30 Tage», «Zeitraum: 01.11.2026 – 26.11.2026»);
+            Kontur und Schrift in Primary bleiben das Zeichen für «grenzt ein».
+            Im Panel oben die Kurzwahl als Einfachauswahl, darunter Von und Bis
+            als Datumsfelder; wer einen Tag von Hand ändert, verlässt die
+            Kurzwahl, ein leerer Tag lässt die Seite offen. Nur für Filter mit
+            genau einem Wert - Auswahl- und Zahlenfilter behalten den Badge.
+            Die Kurzwahl steht als <code>Radio</code>: neu im Kit, weil eine
+            Einfachauswahl über Datumsfeldern weder als Chip noch als Zeile mit
+            Häkchen liest; Masse, Kontur und Primary wie die Checkbox, gewählt
+            ein dicker Ring statt eines Häkchens. Ein Tag geht erst vollständig
+            in die Adresse - das Datumsfeld meldet beim Tippen jeden
+            Zwischenstand.
           </p>
           <FilterKnopfDemo />
         </Section>
@@ -3114,13 +3142,6 @@ export default async function Styleguide() {
             <code>mb-4</code> Abstand; der Dialog bleibt offen. Was nur ein Feld
             betrifft, bleibt dagegen Fehlertext am Feld (<Siehe id="textfelder" />).
           </p>
-          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            <strong>Schliessbar</strong> (<code>onSchliessen</code>, #650): ein
-            Icon-Knopf ✕ oben rechts mit eigenem Label, für einen Hinweis, den man
-            ablehnen darf, ohne zu antworten - etwa «Termine als App» am privaten
-            Link (<Siehe id="app-ablegen" />). Was danach geschieht (wann er
-            wiederkommt), bestimmt der Aufrufer.
-          </p>
           <div className="grid max-w-2xl gap-4">
             <SectionMessage appearance="error">
               Das Training konnte nicht gespeichert werden. Bitte versuche es noch
@@ -3145,7 +3166,6 @@ export default async function Styleguide() {
             >
               Das Feld-Diagramm zeigt inzwischen anderes Material: Hürden: 0 → 1.
             </SectionMessage>
-            <SchliessbareMeldung />
             <SectionMessage appearance="warning">
               warning - im Kit, derzeit ohne Ort.
             </SectionMessage>
@@ -3155,6 +3175,104 @@ export default async function Styleguide() {
             <SectionMessage appearance="discovery">
               discovery - im Kit, derzeit ohne Ort.
             </SectionMessage>
+          </div>
+        </Section>
+
+        <Section id="teilnahmebalken">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Wie sich die gezählten Termine einer Spieler:in auf «da» und die
+            Gründe für «nicht da» verteilen (<code>Teilnahmebalken</code>,
+            #700). Neu, weil keine bestehende Form eine Verteilung zeigt: Der
+            Bestand (oben) zählt auf eine Grenze zu, hier gibt es kein Ziel.
+            Der Balken ergänzt die Zahlen und trägt keine eigene Aussage
+            (<code>aria-hidden</code>); die Zahlen stehen daneben als Liste,
+            jede mit dem Farbpunkt ihres Anteils (<code>TeilnahmePunkt</code>).
+            Die Töne sind die der Icon-Rollen, eine Fuge trennt die Anteile,
+            damit sie nicht nur über die Farbe zu unterscheiden sind.
+          </p>
+          <div className="flex max-w-sm flex-col gap-4">
+            <Teilnahmebalken anteile={[{ anzahl: 6, ton: "da" }, { anzahl: 1, ton: "grau" }, { anzahl: 1, ton: "orange" }]} />
+            <Teilnahmebalken
+              anteile={[
+                { anzahl: 3, ton: "da" },
+                { anzahl: 1, ton: "grau" },
+                { anzahl: 1, ton: "violett" },
+                { anzahl: 1, ton: "blau" },
+                { anzahl: 1, ton: "hellgrau" },
+              ]}
+            />
+            <Teilnahmebalken anteile={[]} />
+            <div className="flex flex-wrap gap-4 type-body-medium text-on-surface">
+              {(["da", "grau", "orange", "violett", "blau", "hellgrau"] as const).map((ton) => (
+                <span key={ton} className="flex items-center gap-2">
+                  <TeilnahmePunkt ton={ton} />
+                  {ton}
+                </span>
+              ))}
+            </div>
+          </div>
+        </Section>
+
+        <Section id="liegender-balken">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Anzahlen nebeneinander vergleichen (<code>LiegenderBalken</code>,
+            #703): je Reihe Beschriftung, Balken und Zahl. Neu, weil der
+            Teilnahmebalken eine Summe in Anteile teilt und der Bestand auf eine
+            Grenze zuzählt; hier stehen Anzahlen gleichrangig nebeneinander.
+            Mehrere Diagramme teilen einen Massstab (<code>max</code>), damit
+            ihre Balken vergleichbar bleiben. Eine echte Liste, die Zahl steht
+            als Text, der Balken ergänzt nur (<code>aria-hidden</code>). Eine
+            Farbe statt der heller werdenden Stufen des Prototyps: Die hellen
+            Stufen hielten den Kontrast 3:1 für Grafik nicht, die Reihenfolge
+            tragen die Beschriftungen.
+          </p>
+          <div className="mb-8 grid max-w-3xl grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-4">
+            <Card className="px-5 py-4">
+              <LiegenderBalken
+                label="Beispiel A"
+                max={9}
+                reihen={[
+                  { label: "mehr als 7 Tage", anzahl: 9 },
+                  { label: "3–7 Tage", anzahl: 4 },
+                  { label: "1–3 Tage", anzahl: 1 },
+                  { label: "6–24 Stunden", anzahl: 0 },
+                  { label: "höchstens 6 Stunden", anzahl: 2 },
+                ]}
+              />
+            </Card>
+            <Card className="px-5 py-4">
+              <LiegenderBalken
+                label="Beispiel B, gleicher Massstab"
+                max={9}
+                reihen={[
+                  { label: "mehr als 7 Tage", anzahl: 2 },
+                  { label: "3–7 Tage", anzahl: 3 },
+                  { label: "1–3 Tage", anzahl: 0 },
+                  { label: "6–24 Stunden", anzahl: 1 },
+                  { label: "höchstens 6 Stunden", anzahl: 0 },
+                ]}
+              />
+            </Card>
+          </div>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            So stehen sie in den Meldezeitpunkten der Spieler:innen
+            (<code>MeldeTeam</code>, Variante M2): je Meldeart eine Karte im
+            gleichen Massstab, daneben Kennzahlen als <code>Card</code> mit
+            Kit-Typografie — Bezeichnung und Erklärung links, grosse Zahlen in
+            gleich breiten Ziffern rechts (<code>dl</code>). Für zwei Kacheln an
+            einem Ort lohnt sich kein eigener Baustein; kommt ein zweiter Ort
+            dazu, wird daraus einer.
+          </p>
+          <div className="max-w-5xl">
+            <MeldeTeam
+              fenster={{
+                training_abmeldung: [9, 4, 1, 0, 2],
+                spiel_anmeldung: [2, 3, 0, 1, 0],
+                spiel_abmeldung: [0, 0, 0, 0, 0],
+              }}
+              summen={{ ohneAbmeldungGefehlt: { training: 3, spiel: 1 }, nichtGemeldet: 4 }}
+              zeitraumText="Letzte 3 Monate"
+            />
           </div>
         </Section>
 
@@ -3408,6 +3526,15 @@ export default async function Styleguide() {
             Neuladen; Ungespeichertes auf der Seite bleibt stehen.
           </p>
           <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+            <strong>Einträge eines Teams</strong> (#704): Trainingsplan, Spieler:innen, Trainings, Team.
+            Die Seitenleiste wählt, was man ansieht; die Reiter einer Seite zeigen dessen Sichten (Muster
+            wie in Jira). «Spieler:innen» öffnet immer die Liste ohne Eingrenzung und bleibt in jedem
+            ihrer Reiter offen; «Team» zeigt, was das Team selbst betrifft, auf einer Seite ohne Reiter
+            und trägt ein eigenes Zeichen (<code>Contact</code>), damit es neben den Spieler:innen
+            (<code>Users</code>) unterscheidbar bleibt. Eine zweite Reiterebene unter «Team» gibt es
+            bewusst nicht.
+          </p>
+          <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
             <strong>Bereich-Wechsler</strong> (<code>BereichWechsler</code>, Story #581) steht oben in
             der Leiste, unter der Marke, und wählt den Bereich: eines der eigenen Teams oder den
             Verein. <em>Warum neu:</em> Bisher gab es einen einzigen Bereich «Teams» mit allen Teams als
@@ -3463,6 +3590,44 @@ export default async function Styleguide() {
             „…"-Knopf.
           </p>
           <BreadcrumbsDemo />
+        </Section>
+
+        <Section id="seitenkopf">
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Übersichten tragen ihren Namen als letzte Brotkrume und keine weitere sichtbare
+            Überschrift; rechts in der Kopfzeile stehen ihre Aktionen (<code>KopfAktionen</code>{" "}
+            in <code>aktionen</code> des <code>Seitenrahmen</code>, #706, Variante B «wie
+            Übungen»). Darunter folgen Reiter, Eingrenzung, Anzahl und Liste, in dieser Ordnung.
+            Für Vorlesehilfen behält die Seite ihre Überschrift unsichtbar.
+          </p>
+          <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-1 pl-5 text-on-surface-mittel">
+            <li>
+              <strong>Hauptaktion</strong> als gefüllter Knopf mit Text, nur hier - auch im
+              Leerzustand steht kein zweiter Knopf in der Seite.
+            </li>
+            <li>
+              <strong>Zweitaktionen</strong> weniger hervorgehoben daneben: Knöpfe in Kontur
+              links (<code>zweit</code>), ein Menü ⋮ rechts aussen (<code>menue</code>).
+            </li>
+            <li>
+              <strong>Kurzform</strong> schmal (unter <code>sm</code>), etwa «Hinzufügen» oder
+              «Erstellen» (<code>KopfKnopfText</code>); der volle Name bleibt im Knopf für
+              Vorlesehilfen.
+            </li>
+            <li>
+              <strong>Gesperrt</strong> an einer Grenze bleibt die Hauptaktion sichtbar; der Satz
+              mit dem Grund steht sichtbar unter der Kopfzeile, der Knopf verweist mit{" "}
+              <code>aria-describedby</code> darauf - kein Tooltip am gesperrten Knopf.
+            </li>
+          </ul>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Neu, weil das Kit bisher nur den Ort der Aktionen kannte (<code>SeitenKopf</code>),
+            nicht ihre Ordnung und keine Kurzform. Die Seiten eines Teams setzen den Rahmen mit{" "}
+            <code>TeamSeite</code>, die Seiten «Teams» und «Spieler:innen» des Vereins mit{" "}
+            <code>VereinSeite</code> (#707, Krumen Verein › Seite). Die Zahlen und die Höchstzahl
+            stehen in der Zeile über der Liste, nicht im Kopf.
+          </p>
+          <SeitenKopfDemo />
         </Section>
 
         <Section id="verzeichnis">
@@ -3773,8 +3938,8 @@ export default async function Styleguide() {
             wählt die Zeile aus, ihr Detail steht daneben (<Siehe id="detail-kopf" />):
             Die ausgewählte Zeile ist betont (<code>betont</code>), ihr Link
             trägt <code>aria-current</code>. Schmal fallen die Köpfe weg, die Angaben
-            stehen unter dem Namen, und sortiert wird über einen{" "}
-            <code>ChipMenu</code> über der Tabelle.
+            stehen unter dem Namen, und sortiert wird über die{" "}
+            <code>SortierWahl</code> über der Tabelle (unten).
           </p>
           <div className="overflow-hidden rounded-flaeche bg-elev-01">
             <table className="w-full border-collapse">
@@ -3813,6 +3978,66 @@ export default async function Styleguide() {
               </tbody>
             </table>
           </div>
+
+          <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+            Mit Spaltengruppen
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Wo dieselben Spaltennamen in mehreren Gruppen stehen - die Teilnahme
+            aller Spieler:innen eines Teams (#702) mit «Da» und «Nicht da» bei
+            Trainings und bei Spielen -, trägt die Tabelle eine zweite Kopfzeile
+            mit den Gruppen (<code>GruppenTabelle</code>, <code>th scope=&quot;colgroup&quot;</code>).
+            Atlassian kennt keine Spaltengruppen; die zweite Kopfzeile ist eine
+            bewusste Abweichung (PO 2026-11-28), denn erst die Gruppe
+            unterscheidet die Spalten. Eine Linie über die ganze Höhe trennt die
+            Gruppen, die Vorlesehilfe hört die Gruppe im Spaltennamen. Die Köpfe
+            sind dieselben <code>SortierKopf</code> wie oben. Die erste Spalte
+            bleibt beim waagrechten Scrollen stehen; die Tabelle hat eine
+            Mindestbreite und scrollt in ihrer Fläche, nie die Seite. Schmaler als
+            36 rem (auch neben einem Detail) steht statt der Tabelle, was der
+            Aufrufer als <code>schmal</code> gibt - bei der Teilnahme Karten mit
+            denselben Blöcken und «Sortieren nach».
+          </p>
+          <GruppenTabelle
+            beschriftung="Beispiel: Teilnahme je Spieler:in"
+            mindestbreite={520}
+            kopf={{ label: "Spieler:in", href: "#tabelle", richtung: "auf" }}
+            spalten={[
+              { schluessel: "tDa", gruppe: "Trainings", href: "#tabelle", label: <span className="inline-flex items-center gap-1.5"><TeilnahmePunkt ton="da" />Da</span> },
+              { schluessel: "tNicht", gruppe: "Trainings", href: "#tabelle", label: "Nicht da" },
+              { schluessel: "gDa", gruppe: "Spiele", href: "#tabelle", label: <span className="inline-flex items-center gap-1.5"><TeilnahmePunkt ton="da" />Da</span> },
+              { schluessel: "gNa", gruppe: "Spiele", href: "#tabelle", label: <span className="inline-flex items-center gap-1.5"><TeilnahmePunkt ton="violett" />Nicht aufgeboten</span> },
+            ]}
+            zeilen={[
+              { id: "a", kopf: <a href="#tabelle" className="focus-ring rounded-klein type-body-medium text-on-surface hover:underline">Lena Brunner</a>, zellen: [12, 2, 5, 1] },
+              { id: "b", gewaehlt: true, kopf: <a href="#tabelle" aria-current="true" className="focus-ring rounded-klein type-body-medium text-primary hover:underline">Noah Keller</a>, zellen: [9, 5, 4, 0] },
+            ]}
+            schmal={<p className="type-body-medium text-on-surface-mittel">Schmal: hier stünden die Karten.</p>}
+          />
+
+          <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+            Sortieren nach (schmal)
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Fehlen schmal die Spaltenköpfe, sortiert ein Chip mit Menü
+            (<code>SortierWahl</code>): oben die Spalten, nach dem Strich die
+            Richtung, Haken an der aktuellen Wahl. Aus der Trainingsübersicht ins
+            Kit gezogen, weil auch die Teilnahme-Karten ihn brauchen (#702); steht
+            er allein über Karten statt in einer Filterleiste, nennt er
+            «Sortieren nach:» vor der Spalte (Telefon-Prototyp).
+          </p>
+          <SortierWahl
+            praefix="Sortieren nach:"
+            spalte="Spieler:in"
+            richtung="auf"
+            optionen={[
+              { label: "Spieler:in", href: "#tabelle", gewaehlt: true },
+              { label: "Trainings: Da", href: "#tabelle", gewaehlt: false },
+              { label: "Spiele: Nicht gemeldet", href: "#tabelle", gewaehlt: false },
+              { label: "Aufsteigend", href: "#tabelle", gewaehlt: true, trenner: true },
+              { label: "Absteigend", href: "#tabelle", gewaehlt: false },
+            ]}
+          />
         </Section>
 
         <Section id="eigenschaften">
@@ -4680,20 +4905,23 @@ export default async function Styleguide() {
 
         <Section id="app-ablegen">
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-            Die Seite des privaten Links als App auf dem Home-Bildschirm (Story #650): je Spieler:in eine eigene
-            App, benannt «Vorname · Verein». Aus bestehenden Teilen gebaut - <code>SectionMessage</code> (neu
-            schliessbar), <code>Button</code> und <code>Dialog</code>.
+            Mitteilungen aufs Mobile und die Seite des privaten Links als App (Story #698, #650): je Spieler:in eine
+            eigene App, benannt «Vorname · Verein». Aus bestehenden Teilen gebaut - <code>SectionMessage</code>,{" "}
+            <code>Button</code> und <code>Dialog</code>.
           </p>
           <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
             <li>
-              <strong>Hinweis über den Terminen</strong> - nur auf dem Mobile, nicht in der abgelegten App, ab dem
-              zweiten Besuch des Links auf diesem Gerät; geschlossen ruht er 7 Tage. Die Aktion heisst auf dem iPhone
-              «So geht’s» (Anleitung), auf Android «Als App ablegen» (der Browser fragt selbst, sonst die
-              Anleitung). Im Browser einer App sagt er nur, dass es dort nicht geht und wohin.
+              <strong>Angebot</strong> - im Moment des Nutzens: unter dem Termin, den man eben ab- oder angemeldet hat,
+              unter einem auf diesem Gerät noch nicht gesehenen Ausfall, in der abgelegten App oben. Nur auf Telefon
+              und Tablet, solange auf diesem Gerät keine Mitteilungen an sind, höchstens einmal je Besuch; «Nicht
+              jetzt», eine nicht erteilte Erlaubnis oder Ausschalten lassen es 30 Tage ruhen. Je Gerät der nächste
+              Schritt: einschalten (auf Android zugleich ablegen, wo der Browser es kann), auf dem iPhone im Browser
+              «So geht’s», im Browser einer App der Weg in den Browser mit «Link kopieren», gesperrt der Weg in die
+              Einstellungen. Regeln in <code>lib/angebot.ts</code>.
             </li>
             <li>
-              <strong>Knopf unter den Terminen</strong> - immer da ausser in der abgelegten App, ruhig als Secondary
-              Button (<code>outlined</code>); am Computer nur, wenn der Browser selbst ablegen kann.
+              <strong>Als App ablegen in der Glocken-Ansicht</strong> - auf Telefon und Tablet ausser in der
+              abgelegten App, jederzeit, auch ohne Mitteilungen; ruhig als Secondary Button (<code>outlined</code>).
             </li>
             <li>
               <strong>Anleitung</strong> - drei Schritte je Gerät und darunter, wie die App auf dem Home-Bildschirm

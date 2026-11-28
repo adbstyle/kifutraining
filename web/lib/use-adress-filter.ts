@@ -60,6 +60,15 @@ export function useAdressFilter({ behalte = [] }: { behalte?: readonly string[] 
         if (v) p.set(key, v);
         else p.delete(key);
       }),
+    /** Mehrere Werte in einem Schritt (ein Eintrag im Verlauf), etwa Von
+     *  und Bis eines Zeitraums; leer entfernt den Parameter. */
+    setzeWerte: (werte: Record<string, string>) =>
+      schreiben((p) => {
+        for (const [key, wert] of Object.entries(werte)) {
+          if (wert) p.set(key, wert);
+          else p.delete(key);
+        }
+      }),
     /** Ein Schalter: an = `key=1`, aus = kein Parameter. */
     schalte: (key: string, an: boolean) =>
       schreiben((p) => {

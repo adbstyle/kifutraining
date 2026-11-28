@@ -2,14 +2,23 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Shield } from "lucide-react";
-import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
+import { KopfAktionen } from "@/components/layout/KopfAktionen";
 import { Flash } from "@/components/Flash";
 import { TeamAnlegen } from "@/components/verein/TeamAnlegen";
+import { VereinSeite } from "@/components/verein/VereinSeite";
 import { Leerzustand, Lozenge, SectionMessage, Tabelle, TabellenZeile } from "@/components/ui";
 import { ladeVereinAnsicht, ladeVereinbarung, type VerwaltungPerson } from "@/lib/kern/verein";
 import { getMeinVereinOderWurf } from "@/lib/queries/verein";
 import { createClient } from "@/lib/supabase/server";
-import { VEREIN_VEREINBARUNG_TEXT, vereinKopfText, vereinbarungLage } from "@/lib/verein";
+import {
+  TEAMS_GESPERRT_ID,
+  VEREIN_MELDUNG,
+  VEREIN_SEITEN,
+  VEREIN_VEREINBARUNG_TEXT,
+  vereinKopfText,
+  vereinTeamsVoll,
+  vereinbarungLage,
+} from "@/lib/verein";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Teams im Verein - KiFu", robots: { index: false } };
@@ -27,6 +36,11 @@ export const metadata: Metadata = { title: "Teams im Verein - KiFu", robots: { i
    Liste. Was gezeigt wird, entscheidet die Datenebene (`verein_ansicht` lässt
    die Felder für die Verwaltung bei allen anderen weg); die Seite zeigt nur,
    was sie bekommt.
+
+   Wie die Seiten eines Teams (#707): «Teams» als letzte Brotkrume ohne
+   sichtbare Überschrift, «Team anlegen» als Hauptaktion in der Kopfzeile —
+   nur für die Verwaltung, an der Grenze gesperrt mit dem Satz darunter —,
+   die Zahlen in der Zeile über der Liste.
 
    Konto ohne Verein: zu den Teams. Ein Datenbankfehler wirft (Fehlerseite),
    ausser beim Hinweis zur Vereinbarung (#675), der dann fehlt. */
@@ -69,36 +83,45 @@ export default async function VereinPage({
       "sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1.6fr)_7rem]"
     : "sm:grid-cols-[minmax(0,1fr)]";
 
+  const teamsVoll = vereinTeamsVoll(teams.length);
+
   return (
-    <Seitenrahmen breite="voll" krumen={[{ label: name }, { label: "Teams" }]}>
+    <VereinSeite
+      vereinName={name}
+      seite={VEREIN_SEITEN.teams}
+      aktionen={istVerwaltung ? <KopfAktionen haupt={<TeamAnlegen vereinId={verein.id} anzahlTeams={teams.length} />} /> : undefined}
+    >
       {/* Nach dem Auflösen eines Teams (`/verein/team/[teamId]`). */}
       {sp.aufgeloest && <Flash message={`Das Team ${sp.aufgeloest.slice(0, 120)} ist aufgelöst.`} param="aufgeloest" />}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-1">
-          <h1 className="type-headline-small text-on-surface">Teams im Verein «{name}»</h1>
-          <p className="type-body-medium text-on-surface-mittel">
-            {vereinKopfText(teams.length, spielerZahl)}
-          </p>
+      <div className="flex flex-col gap-4">
+        {istVerwaltung && teamsVoll && (
+          <div id={TEAMS_GESPERRT_ID}>
+            <SectionMessage>{VEREIN_MELDUNG.VEREIN_TEAMS_VOLL}</SectionMessage>
+          </div>
+        )}
+
+        {neueFassung && (
+          <SectionMessage appearance="information">
+            {VEREIN_VEREINBARUNG_TEXT.neueFassung}{" "}
+            <Link href="/verein/verwaltung" className="font-semibold text-primary hover:underline">
+              {VEREIN_VEREINBARUNG_TEXT.zurVerwaltung}
+            </Link>
+          </SectionMessage>
+        )}
+
+        {istVerwaltung && (
+          <SectionMessage appearance="information">
+            Die Inhalte eines Teams siehst du nur als Trainer:in im Team. Im Team nimmst du dich mit «Mich aufnehmen»
+            selbst auf.
+          </SectionMessage>
+        )}
+
+        {/* Die Zeilen über der Liste (#707 AK 3): Anzahl und Höchstzahl, dazu die Verwaltung. */}
+        <div className="flex flex-col gap-1">
           <p className="type-body-medium text-on-surface">Vereinsverwaltung: {verwaltungsZeile(verwaltung)}</p>
+          <p className="type-label-small text-on-surface-mittel">{vereinKopfText(teams.length, spielerZahl)}</p>
         </div>
-        {istVerwaltung && <TeamAnlegen vereinId={verein.id} anzahlTeams={teams.length} />}
       </div>
-
-      {neueFassung && (
-        <SectionMessage appearance="information" className="mt-4">
-          {VEREIN_VEREINBARUNG_TEXT.neueFassung}{" "}
-          <Link href="/verein/verwaltung" className="font-semibold text-primary hover:underline">
-            {VEREIN_VEREINBARUNG_TEXT.zurVerwaltung}
-          </Link>
-        </SectionMessage>
-      )}
-
-      {istVerwaltung && (
-        <SectionMessage appearance="information" className="mt-4">
-          Die Inhalte eines Teams siehst du nur als Trainer:in im Team. Im Team nimmst du dich mit «Mich aufnehmen»
-          selbst auf.
-        </SectionMessage>
-      )}
 
       <div className="mt-4">
         {teams.length === 0 ? (
@@ -149,7 +172,7 @@ export default async function VereinPage({
           </Tabelle>
         )}
       </div>
-    </Seitenrahmen>
+    </VereinSeite>
   );
 }
 

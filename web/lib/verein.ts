@@ -11,10 +11,29 @@ import { SPIELER_MAX, aufzaehlung, bereinigeName, imTeam, spielerName } from "@/
 
 /** Zwilling der Grenze im Trigger `spieler_vorher` (Marker `VEREIN_VOLL`): So
  *  viele Spieler:innen führt ein Verein höchstens — mit denen ohne Team, den
- *  Schnuppernden und Doppeleinträgen. Sie wirkt nur auf neue Einträge. */
+ *  Schnuppernden und Doppeleinträgen. Sie wirkt nur auf neue Einträge.
+ *  Dieselbe Grenze fragt `team_verein_voll` am Team-Ort ab (#706). */
 export const VEREIN_SPIELER_MAX = 1000;
 /** Zwilling der Grenze im Trigger `teams_vorher` (Marker `VEREIN_TEAMS_VOLL`). */
 export const VEREIN_TEAMS_MAX = 30;
+
+/** Die Namen der Seiten des Vereins mit Liste (#707): dieselben wie in der
+ *  Seitenleiste (AppNavClient, von check:kern abgeglichen). Sie stehen als
+ *  letzte Brotkrume (components/verein/VereinSeite.tsx). «Verwaltung» hat
+ *  ihren eigenen Rahmen (#707 Out of Scope 1). */
+export const VEREIN_SEITEN = {
+  teams: "Teams",
+  spieler: "Spieler:innen",
+} as const;
+
+/** Die Sätze mit dem Grund einer Sperre in der Kopfzeile des Vereins (#707
+ *  AK 4), auf die der gesperrte Knopf mit `aria-describedby` verweist. */
+export const TEAMS_GESPERRT_ID = "teams-voll";
+export const VEREIN_SPIELER_GESPERRT_ID = "verein-spieler-voll";
+
+/** Gesperrt an der Grenze (#707 AK 4); darüber (Altbestand) ebenso. */
+export const vereinTeamsVoll = (anzahlTeams: number) => anzahlTeams >= VEREIN_TEAMS_MAX;
+export const vereinSpielerVoll = (anzahlSpieler: number) => anzahlSpieler >= VEREIN_SPIELER_MAX;
 
 /** «Team nicht gefunden» am Verein-Ort: Die Verwaltung arbeitet in Teams
  *  ohne Mitgliedschaft, darum ohne den Zusatz des Team-Orts
@@ -428,7 +447,7 @@ export function spielerAendernAbgewiesenText(d: SpielerDoppeltImVerein): string 
   return d.teams.length > 0 ? `${anfang}, ${imTeam(d.teams)}.` : `${anfang}, die keinem Team zugeordnet ist.`;
 }
 
-/** Der Satz über dem Dialog «Spieler:in erfassen». */
+/** Der Satz über dem Dialog «Spieler:in hinzufügen» des Vereins. */
 export function spielerErfassenEinleitung(verein: string): string {
   return `Die Spieler:in kommt ohne Team in den Verein «${verein}». Einem Team ordnest du sie danach zu.`;
 }
@@ -462,16 +481,20 @@ export function spielerLoeschenSaetze(vorname: string, teams: string[]): { zuord
 
 const spielerZahlWort = (n: number) => (n === 1 ? "1 Spieler:in" : `${n} Spieler:innen`);
 
-/** Die Teile der Kopfzeile von `/verein/spieler`, die zusammen «144
- *  Spieler:innen · 2 ohne Team · höchstens 1000 je Verein» lauten; die
- *  Oberfläche bricht nur zwischen ihnen um. «· 0 ohne Team» entfällt. */
-export function spielerKopfTeile(spieler: number, ohneTeam: number): string[] {
-  return [spielerZahlWort(spieler), ...(ohneTeam > 0 ? [`${ohneTeam} ${SPIELER_OHNE_TEAM}`] : []), `höchstens ${VEREIN_SPIELER_MAX} je Verein`];
+/** Die Teile der Zeile über der Liste von `/verein/spieler` (#707 AK 3), die
+ *  zusammen «144 Spieler:innen · 2 ohne Team · höchstens 1000 je Verein»
+ *  lauten, bei Suche oder Eingrenzung (`treffer`) «12 von 144 Spieler:innen ·
+ *  …». «ohne Team» und die Höchstzahl gelten immer für den ganzen Verein. Die
+ *  Oberfläche bricht nur zwischen den Teilen um. «· 0 ohne Team» entfällt. */
+export function spielerKopfTeile(spieler: number, ohneTeam: number, treffer?: number): string[] {
+  // Wie über der Spielerliste eines Teams (`teamSpielerAnzahlZeile`, #706).
+  const anzahl = treffer === undefined || spieler === 0 ? spielerZahlWort(spieler) : `${treffer} von ${spielerZahlWort(spieler)}`;
+  return [anzahl, ...(ohneTeam > 0 ? [`${ohneTeam} ${SPIELER_OHNE_TEAM}`] : []), `höchstens ${VEREIN_SPIELER_MAX} je Verein`];
 }
 
-/** Die Kopfzeile von `/verein` für die Verwaltung: «10 Teams · 144
- *  Spieler:innen · höchstens 30 Teams». Ohne Zahl der Spieler:innen (kein
- *  Recht) fehlt der mittlere Teil. */
+/** Die Zeile über der Liste von `/verein` (#707 AK 3), für die Verwaltung
+ *  «10 Teams · 144 Spieler:innen · höchstens 30 Teams». Ohne Zahl der
+ *  Spieler:innen (kein Recht) fehlt der mittlere Teil. */
 export function vereinKopfText(teams: number, spieler?: number): string {
   const t = teams === 1 ? "1 Team" : `${teams} Teams`;
   return `${t}${spieler === undefined ? "" : ` · ${spielerZahlWort(spieler)}`} · höchstens ${VEREIN_TEAMS_MAX} Teams`;
@@ -483,10 +506,11 @@ export function spielerVonText(n: number): string {
   return n <= VEREIN_SPIELER_MAX ? `${n} von ${VEREIN_SPIELER_MAX}` : `${n} (höchstens ${VEREIN_SPIELER_MAX} Spieler:innen)`;
 }
 
-/** Der Leerzustand von `/verein/spieler` für die Verwaltung, solange der Verein niemanden führt. */
+/** Der Leerzustand von `/verein/spieler` für die Verwaltung, solange der
+ *  Verein niemanden führt. Der Knopf dazu steht nur in der Kopfzeile (#707 AK 2). */
 export const SPIELER_BESTAND_LEER = {
   titel: "Noch keine Spieler:innen",
-  text: "Der Verein führt noch keine Spieler:innen. Erfasse die erste oder nimm sie in der Spielerliste eines Teams auf.",
+  text: "Der Verein führt noch keine Spieler:innen. Füge die erste hinzu oder nimm sie in der Spielerliste eines Teams auf.",
 } as const;
 
 /** Derselbe Leerzustand für ein Mitglied ohne Verwaltung (Story #580 AK 11):

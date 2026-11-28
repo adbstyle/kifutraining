@@ -10,10 +10,11 @@ import type { VereinSpieler } from "@/lib/kern/verein";
 import { bereinigeName } from "@/lib/spieler";
 import { spielerErfassenEinleitung, zielWeg } from "@/lib/verein";
 
-/* Erfassen und Ändern einer Spieler:in im Spielerbestand des Vereins (Story
-   #582 AK 2–7, 15): ein Dialog mit den vier Feldern des Team-Orts
-   (`SpielerFelder`). Erfassen legt sie ohne Team an; danach schliesst der
-   Dialog, und die Snackbar sagt, wer erfasst ist. Eine Abweisung — gleiche
+/* Hinzufügen und Ändern einer Spieler:in im Spielerbestand des Vereins
+   (Story #582 AK 2–7, 15): ein Dialog mit den vier Feldern des Team-Orts
+   (`SpielerFelder`). Hinzufügen (#707: derselbe Begriff wie im Team) legt sie
+   ohne Team an; danach schliesst der Dialog, und die Snackbar sagt, wer
+   dazukam. Eine Abweisung — gleiche
    Angaben schon im Verein, Grenze des Vereins, gelöscht — steht als Meldung im
    Dialog; nur die Prüfung eines Feldes («Bitte einen Vornamen …») steht am
    Feld. Das entscheidet die Art des Fehlers aus dem Kern, nicht sein
@@ -34,7 +35,7 @@ export function VereinSpielerFormular({
   vereinName,
   onClose,
 }: {
-  /** `null`: zu; sonst die Spieler:in, die geändert wird, oder `{ spieler: null }` zum Erfassen. */
+  /** `null`: zu; sonst die Spieler:in, die geändert wird, oder `{ spieler: null }` zum Hinzufügen. */
   offen: { spieler: VereinSpieler | null } | null;
   vereinId: string;
   vereinName: string;
@@ -72,7 +73,7 @@ export function VereinSpielerFormular({
       }
       onClose();
       router.refresh();
-      melde(spieler ? `${name} geändert.` : `${name} ist erfasst.`);
+      melde(spieler ? `${name} geändert.` : `${name} ist hinzugefügt.`);
     });
   }
 
@@ -82,14 +83,14 @@ export function VereinSpielerFormular({
     <Dialog
       open={offen !== null}
       onClose={() => !pending && onClose()}
-      title={spieler ? "Spieler:in ändern" : "Spieler:in erfassen"}
+      title={spieler ? "Spieler:in ändern" : "Spieler:in hinzufügen"}
       actions={
         <>
           <Button type="button" variant="outlined" onClick={onClose} disabled={pending}>
             Abbrechen
           </Button>
           <Button type="submit" form={formId} variant="filled" disabled={pending}>
-            {spieler ? "Speichern" : "Erfassen"}
+            {spieler ? "Speichern" : "Hinzufügen"}
           </Button>
         </>
       }

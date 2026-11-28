@@ -14,7 +14,14 @@ import { useEffect, useRef } from "react";
      rührt er sich nicht.
    - Geschlossen: Der Fokus geht auf den Link der zuvor ausgewählten Zeile
      zurück, sonst fiele er mit dem Detail ins Leere. */
-export function TabellenAuswahl({ ausgewaehlt }: { ausgewaehlt?: string }) {
+export function TabellenAuswahl({
+  ausgewaehlt,
+  attribut = "data-training-zeile",
+}: {
+  ausgewaehlt?: string;
+  /** Das Attribut der Zeilen-Links mit der Kennung (Spielerliste: `data-spieler-zeile`, #700). */
+  attribut?: string;
+}) {
   // `undefined` bis zum ersten Lauf: Erst danach ist eine Änderung ein Wechsel.
   const vorher = useRef<string | null | undefined>(undefined);
 
@@ -25,7 +32,7 @@ export function TabellenAuswahl({ ausgewaehlt }: { ausgewaehlt?: string }) {
     if (zuvor === jetzt) return;
 
     const id = jetzt ?? zuvor;
-    const link = id ? document.querySelector<HTMLElement>(`[data-training-zeile="${CSS.escape(id)}"]`) : null;
+    const link = id ? document.querySelector<HTMLElement>(`[${attribut}="${CSS.escape(id)}"]`) : null;
     if (!link) return;
     if (!imBild(link)) link.scrollIntoView({ block: "center" });
     // Beim Laden (geteilter Link, Zurück aus dem Editor) bleibt der Fokus am
@@ -37,7 +44,7 @@ export function TabellenAuswahl({ ausgewaehlt }: { ausgewaehlt?: string }) {
       const titel = document.querySelector<HTMLElement>("[data-detail-titel]");
       (titel ?? link).focus({ preventScroll: true });
     }
-  }, [ausgewaehlt]);
+  }, [ausgewaehlt, attribut]);
 
   return null;
 }

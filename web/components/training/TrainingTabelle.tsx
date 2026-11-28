@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { Layers } from "lucide-react";
-import { SecondaryLozenge, SichtbarkeitLozenge, SortierKopf } from "@/components/ui";
-import { TrainingSortierWahl, type SortierOption } from "@/components/training/TrainingSortierWahl";
+import { SecondaryLozenge, SichtbarkeitLozenge, SortierKopf, SortierWahl, type SortierOption } from "@/components/ui";
 import type { TrainingListRow } from "@/lib/queries/trainings";
-import { formatDate, formatDuration } from "@/lib/training";
+import { formatDate, formatDuration, trainingAnzahlText } from "@/lib/training";
 import {
   SORTIER_LABEL,
   SORTIER_SPALTEN,
@@ -31,7 +30,7 @@ import { TabellenAuswahl } from "./TabellenAuswahl";
    den Bestand eines Teams (#637), dort ohne diese Spalte (`mitUrheber`):
    Team-Trainings gehören dem Team, nicht einer Person. Schmal bleibt nur die Namensspalte, die übrigen Angaben
    stehen als zweite Zeile darunter, und sortiert wird über den Chip über der
-   Tabelle (`TrainingSortierWahl`) — die Seite scrollt nie seitwärts. */
+   Tabelle (`SortierWahl`) — die Seite scrollt nie seitwärts. */
 
 /** Wohin eine Zeile führt — an EINER Stelle: in dieselbe Übersicht mit
  *  diesem Training ausgewählt; sein Detail steht daneben (#630 AK 1). Die
@@ -66,6 +65,7 @@ export function TrainingTabelle({
   parameter,
   ausgewaehlt,
   mitUrheber = true,
+  gesamt = null,
 }: {
   trainings: TrainingListRow[];
   sortierung: TrainingSortierung;
@@ -78,6 +78,9 @@ export function TrainingTabelle({
   ausgewaehlt?: string;
   /** Die Spalte «Sichtbarkeit / Urheber» — im Team-Bestand ohne (#637). */
   mitUrheber?: boolean;
+  /** Der ganze Bestand, wenn Suche oder Filter eingrenzen: Die Anzahl heisst
+   *  dann «3 von 12 Trainings» (#706 AK 6). `null`: nicht eingegrenzt. */
+  gesamt?: number | null;
 }) {
   const href = (s: TrainingSortierung) => sortierHref(pfad, parameter, s);
   const kopf = (spalte: SortierSpalte) => ({
@@ -110,9 +113,9 @@ export function TrainingTabelle({
     <>
       <div className="mb-4 flex min-h-9 items-center justify-between gap-2">
         <p className="type-label-small text-on-surface-mittel">
-          {trainings.length} {trainings.length === 1 ? "Training" : "Trainings"}
+          {trainingAnzahlText(trainings.length, gesamt)}
         </p>
-        <TrainingSortierWahl
+        <SortierWahl
           className="md:hidden"
           spalte={SORTIER_LABEL[sortierung.spalte]}
           richtung={sortierung.richtung}
