@@ -100,7 +100,8 @@ export function dauerText(sekunden: number | null): string {
   if (sekunden === null) return MELDE_TEXT.keineAngabe;
   const stunden = sekunden / 3600;
   if (stunden < 1) return "unter 1 Std.";
-  if (stunden < 24) return `${Math.round(stunden)} Std.`;
+  // Gerundet entscheidet: 23,6 Stunden stehen als «1 Tag», nicht als «24 Std.».
+  if (Math.round(stunden) < 24) return `${Math.round(stunden)} Std.`;
   const tage = Math.round((stunden / 24) * 2) / 2;
   return tage === 1 ? "1 Tag" : `${String(tage).replace(".", ",")} Tage`;
 }

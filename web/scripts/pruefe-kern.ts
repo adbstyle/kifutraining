@@ -7374,6 +7374,7 @@ pruefe("Meldezeitpunkte (#703 AK 1–4): Dauer als Text, Mediane je Spieler:in, 
   assert.equal(dauerText(3600), "1 Std.");
   assert.equal(dauerText(5.4 * 3600), "5 Std.");
   assert.equal(dauerText(23.4 * 3600), "23 Std.");
+  assert.equal(dauerText(23.6 * 3600), "1 Tag");
   assert.equal(dauerText(86400), "1 Tag");
   assert.equal(dauerText(1.6 * 86400), "1,5 Tage");
   assert.equal(dauerText(1.8 * 86400), "2 Tage");
