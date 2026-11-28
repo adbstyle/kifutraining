@@ -56,6 +56,8 @@ import {
   Tabelle,
   TabellenZeile,
   SortierKopf,
+  SortierWahl,
+  GruppenTabelle,
   DetailKopf,
   Gefahrenzone,
 } from "@/components/ui";
@@ -3830,8 +3832,8 @@ export default async function Styleguide() {
             wählt die Zeile aus, ihr Detail steht daneben (<Siehe id="detail-kopf" />):
             Die ausgewählte Zeile ist betont (<code>betont</code>), ihr Link
             trägt <code>aria-current</code>. Schmal fallen die Köpfe weg, die Angaben
-            stehen unter dem Namen, und sortiert wird über einen{" "}
-            <code>ChipMenu</code> über der Tabelle.
+            stehen unter dem Namen, und sortiert wird über die{" "}
+            <code>SortierWahl</code> über der Tabelle (unten).
           </p>
           <div className="overflow-hidden rounded-flaeche bg-elev-01">
             <table className="w-full border-collapse">
@@ -3870,6 +3872,66 @@ export default async function Styleguide() {
               </tbody>
             </table>
           </div>
+
+          <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+            Mit Spaltengruppen
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Wo dieselben Spaltennamen in mehreren Gruppen stehen - die Teilnahme
+            aller Spieler:innen eines Teams (#702) mit «Da» und «Nicht da» bei
+            Trainings und bei Spielen -, trägt die Tabelle eine zweite Kopfzeile
+            mit den Gruppen (<code>GruppenTabelle</code>, <code>th scope=&quot;colgroup&quot;</code>).
+            Atlassian kennt keine Spaltengruppen; die zweite Kopfzeile ist eine
+            bewusste Abweichung (PO 2026-11-28), denn erst die Gruppe
+            unterscheidet die Spalten. Eine Linie über die ganze Höhe trennt die
+            Gruppen, die Vorlesehilfe hört die Gruppe im Spaltennamen. Die Köpfe
+            sind dieselben <code>SortierKopf</code> wie oben. Die erste Spalte
+            bleibt beim waagrechten Scrollen stehen; die Tabelle hat eine
+            Mindestbreite und scrollt in ihrer Fläche, nie die Seite. Schmaler als
+            36 rem (auch neben einem Detail) steht statt der Tabelle, was der
+            Aufrufer als <code>schmal</code> gibt - bei der Teilnahme Karten mit
+            denselben Blöcken und «Sortieren nach».
+          </p>
+          <GruppenTabelle
+            beschriftung="Beispiel: Teilnahme je Spieler:in"
+            mindestbreite={520}
+            kopf={{ label: "Spieler:in", href: "#tabelle", richtung: "auf" }}
+            spalten={[
+              { schluessel: "tDa", gruppe: "Trainings", href: "#tabelle", label: <span className="inline-flex items-center gap-1.5"><TeilnahmePunkt ton="da" />Da</span> },
+              { schluessel: "tNicht", gruppe: "Trainings", href: "#tabelle", label: "Nicht da" },
+              { schluessel: "gDa", gruppe: "Spiele", href: "#tabelle", label: <span className="inline-flex items-center gap-1.5"><TeilnahmePunkt ton="da" />Da</span> },
+              { schluessel: "gNa", gruppe: "Spiele", href: "#tabelle", label: <span className="inline-flex items-center gap-1.5"><TeilnahmePunkt ton="violett" />Nicht aufgeboten</span> },
+            ]}
+            zeilen={[
+              { id: "a", kopf: <a href="#tabelle" className="focus-ring rounded-klein type-body-medium text-on-surface hover:underline">Lena Brunner</a>, zellen: [12, 2, 5, 1] },
+              { id: "b", gewaehlt: true, kopf: <a href="#tabelle" aria-current="true" className="focus-ring rounded-klein type-body-medium text-primary hover:underline">Noah Keller</a>, zellen: [9, 5, 4, 0] },
+            ]}
+            schmal={<p className="type-body-medium text-on-surface-mittel">Schmal: hier stünden die Karten.</p>}
+          />
+
+          <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+            Sortieren nach (schmal)
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Fehlen schmal die Spaltenköpfe, sortiert ein Chip mit Menü
+            (<code>SortierWahl</code>): oben die Spalten, nach dem Strich die
+            Richtung, Haken an der aktuellen Wahl. Aus der Trainingsübersicht ins
+            Kit gezogen, weil auch die Teilnahme-Karten ihn brauchen (#702); steht
+            er allein über Karten statt in einer Filterleiste, nennt er
+            «Sortieren nach:» vor der Spalte (Telefon-Prototyp).
+          </p>
+          <SortierWahl
+            praefix="Sortieren nach:"
+            spalte="Spieler:in"
+            richtung="auf"
+            optionen={[
+              { label: "Spieler:in", href: "#tabelle", gewaehlt: true },
+              { label: "Trainings: Da", href: "#tabelle", gewaehlt: false },
+              { label: "Spiele: Nicht gemeldet", href: "#tabelle", gewaehlt: false },
+              { label: "Aufsteigend", href: "#tabelle", gewaehlt: true, trenner: true },
+              { label: "Absteigend", href: "#tabelle", gewaehlt: false },
+            ]}
+          />
         </Section>
 
         <Section id="eigenschaften">

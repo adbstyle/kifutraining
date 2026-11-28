@@ -10,10 +10,11 @@
  * Rein, ohne next/*: Die Reiter (components/team/SpielerBereicheNav.tsx), die
  * Seitenleiste und check:kern lesen dieselben Angaben. */
 
-export type SpielerBereich = "liste" | "kader" | "link";
+export type SpielerBereich = "liste" | "teilnahme" | "kader" | "link";
 
 export const SPIELER_BEREICHE: readonly { schluessel: SpielerBereich; label: string; pfad: string }[] = [
   { schluessel: "liste", label: "Liste", pfad: "" },
+  { schluessel: "teilnahme", label: "Teilnahme", pfad: "/teilnahme" },
   { schluessel: "kader", label: "Kader & Schnuppern", pfad: "/kader" },
   { schluessel: "link", label: "Privater Link", pfad: "/link" },
 ];

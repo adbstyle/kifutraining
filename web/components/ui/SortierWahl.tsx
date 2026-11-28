@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { ChipMenu } from "@/components/ui";
+import { ChipMenu } from "./ChipMenu";
 
 export type SortierOption = {
   label: string;
@@ -12,21 +12,27 @@ export type SortierOption = {
   trenner?: boolean;
 };
 
-/* Die Sortierung der Trainingsübersicht schmal (#629): Dort fehlen die
-   Spaltenköpfe, sortieren lässt sich trotzdem — über einen Chip mit Menü
-   (`ChipMenu`), wie die übrigen Wahlen der Filterleiste. Oben die Spalten,
-   nach dem Strich die Richtung; die Haken zeigen die aktuelle Wahl.
+/* Die Sortierung einer Tabelle schmal, wo die Spaltenköpfe fehlen — die
+   Trainingsübersicht (#629) und die Teilnahme der Spieler:innen auf Karten
+   (#702, Telefon-Prototyp «Sortieren nach»). Ein Chip mit Menü (`ChipMenu`),
+   wie die übrigen Wahlen der Filterleiste. Oben die Spalten, nach dem Strich
+   die Richtung; die Haken zeigen die aktuelle Wahl.
 
-   Die Adressen rechnet die Seite (`sortierHref`), damit Kopf und Chip
-   dieselbe Regel teilen; hier wird nur navigiert. */
-export function TrainingSortierWahl({
+   Aus der Trainingsübersicht ins Kit gezogen (#702), weil eine zweite Tabelle
+   ihn braucht; er kennt keine Domäne. Die Adressen rechnet die Seite, damit
+   Kopf und Chip dieselbe Regel teilen; hier wird nur navigiert. */
+export function SortierWahl({
   spalte,
   richtung,
   optionen,
+  praefix,
   className,
 }: {
   /** Die Beschriftung der aktiven Spalte. */
   spalte: string;
+  /** Steht vor der Spalte im Chip, etwa «Sortieren nach:» — dort, wo der
+   *  Chip allein über Karten steht und nicht in einer Filterleiste. */
+  praefix?: string;
   richtung: "auf" | "ab";
   optionen: SortierOption[];
   className?: string;
@@ -35,7 +41,7 @@ export function TrainingSortierWahl({
   const Pfeil = richtung === "auf" ? ArrowUp : ArrowDown;
   return (
     <ChipMenu
-      label={spalte}
+      label={praefix ? `${praefix} ${spalte}` : spalte}
       leading={<Pfeil size={14} strokeWidth={2} aria-hidden className="shrink-0" />}
       ariaLabel={`Sortiert nach ${spalte}, ${richtung === "auf" ? "aufsteigend" : "absteigend"}. Sortierung ändern`}
       menuClassName="right-0"

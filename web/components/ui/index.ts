@@ -45,6 +45,8 @@ export { TextField } from "./TextField";
 export { KopierFeld } from "./KopierFeld";
 export { Tabelle, TabellenZeile } from "./Tabelle";
 export { SortierKopf } from "./SortierKopf";
+export { SortierWahl, type SortierOption } from "./SortierWahl";
+export { GruppenTabelle, type GruppenTabellenSpalte, type GruppenTabellenZeile } from "./GruppenTabelle";
 export { DetailKopf } from "./DetailKopf";
 export type { TextFieldProps } from "./TextField";
 export { HeadlineField } from "./HeadlineField";

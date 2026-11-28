@@ -4,7 +4,7 @@ import { useId, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
-import { SPIELER_AUSWAHL_PARAM, TEILNAHME_PARAMETER } from "@/lib/teilnahme";
+import { BEHALTE_BEIM_ZURUECKSETZEN, SPIELER_AUSWAHL_PARAM } from "@/lib/teilnahme";
 import { Bell, BellOff, Link2, Pencil, Plus, Shirt, UserMinus } from "lucide-react";
 import {
   AuswahlLeiste,
@@ -154,9 +154,9 @@ export function SpielerListe({
   const [aufgenommen, setAufgenommen] = useState<string | null>(null);
   const erstesFeld = useRef<HTMLInputElement>(null);
   const formId = useId();
-  // Die Teilnahme daneben (#700) und ihr Zeitraum gehören nicht zur
-  // Eingrenzung der Liste: «Zurücksetzen» lässt sie stehen.
-  const filter = useAdressFilter({ behalte: TEILNAHME_PARAMETER });
+  // Die Teilnahme daneben (#700), ihr Zeitraum und die Sortierung (#702)
+  // gehören nicht zur Eingrenzung: «Zurücksetzen» lässt sie stehen.
+  const filter = useAdressFilter({ behalte: BEHALTE_BEIM_ZURUECKSETZEN });
   const [auswahl, setAuswahl] = useState<string[]>([]);
   const [zuteilenOffen, setZuteilenOffen] = useState(false);
   const verfall = useVerfallRueckfrage(pending);

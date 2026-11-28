@@ -11,7 +11,8 @@
 --   beide Tage ein, ein fehlender Tag lässt die Seite offen
 -- - Schnuppern (AK 4): Trainings ohne Anmeldung zählen als abgemeldet,
 --   Spiele gelten nicht
--- - Nur Mitglieder des Teams bekommen Zeilen; anon hat kein Recht
+-- - Nur Mitglieder des Teams: ein Nicht-Mitglied bekommt 42501 (seit #702
+--   SECURITY DEFINER mit Prüfung als erster Anweisung); anon hat kein Recht
 -- Alles in einer Transaktion mit rollback; hinterlässt nichts.
 
 \set ON_ERROR_STOP on
@@ -143,9 +144,17 @@ select pg_temp.pruefe(pg_temp.stand(null, null, 'elin') = 'training:abgemeldet=2
   'Schnuppern: ' || pg_temp.stand(null, null, 'elin'));
 select pg_temp.zurueck();
 
--- Ein Mitglied eines anderen Teams sieht nichts.
+-- Ein Mitglied eines anderen Teams wird abgewiesen (#702: 42501 statt leer).
+create function pg_temp.fehler(p_sql text) returns text
+language plpgsql as $$
+begin
+  execute p_sql;
+  return null;
+exception when others then
+  return sqlstate;
+end $$;
 select pg_temp.als(pg_temp.id('b'));
-select pg_temp.pruefe(pg_temp.stand() = '', 'fremdes Team: ' || pg_temp.stand());
+select pg_temp.pruefe(pg_temp.fehler('select pg_temp.stand()') = '42501', 'fremdes Team: 42501');
 select pg_temp.zurueck();
 
 -- anon hat kein Recht auf die Funktion.

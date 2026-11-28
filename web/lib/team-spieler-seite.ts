@@ -10,6 +10,7 @@ import type { Kader } from "@/lib/kader";
 import type { Probetraining } from "@/lib/probe";
 import type { Spieler } from "@/lib/spieler";
 import { teamSpielerPfad } from "@/lib/team-bereiche";
+import { leseTabellenSortierung, tabellenSortierWerte, type TabellenSpalte } from "@/lib/team-tabellen";
 import { liesSpielerAuswahl, liesZeitraum, teilnahmeWerte, type Zeitraum } from "@/lib/teilnahme";
 import {
   bereinigeTeamEingrenzung,
@@ -26,7 +27,9 @@ import {
  *
  * Was in der Adresse nicht stimmt — Kader und Jahrgänge, die es im Team
  * nicht (mehr) gibt, eine Spieler:in, die nicht im Team ist, unlesbare Tage —
- * fällt mit genau einer Weiterleitung auf die bereinigte Adresse weg. Ist
+ * fällt mit genau einer Weiterleitung auf die bereinigte Adresse weg, bei
+ * einer Sicht mit sortierbarer Tabelle (`sortierbar`) auch eine unbekannte
+ * oder als Vorgabe ausgeschriebene Sortierung (#702). Ist
  * eine Spieler:in gewählt, kommt ihre Teilnahme dazu (`spielerTeilnahme`, wie
  * im KI-Werkzeug, NFR 3). Den Zugriff hat der Team-Rahmen geprüft. */
 
@@ -45,8 +48,15 @@ export type SpielerAnsicht = {
   teilnahme: SpielerTeilnahme | null;
 };
 
-/** `unterpfad`: der Pfad des Reiters unter `/team/<id>/spieler` (`""`: die Liste). */
-export async function ladeSpielerAnsicht(teamId: string, sp: AdressParameter, unterpfad = ""): Promise<SpielerAnsicht> {
+/** `unterpfad`: der Pfad des Reiters unter `/team/<id>/spieler` (`""`: die
+ *  Liste); `sortierbar`: die Spalten der Tabelle der Sicht, deren Sortierung
+ *  in der Adresse steht (`lib/team-tabellen.ts`). */
+export async function ladeSpielerAnsicht(
+  teamId: string,
+  sp: AdressParameter,
+  unterpfad = "",
+  opts: { sortierbar?: readonly TabellenSpalte<string>[] } = {},
+): Promise<SpielerAnsicht> {
   const user = await getUserImRequest();
   if (!user) redirect("/login");
   const supabase = await createClient();
@@ -69,7 +79,12 @@ export async function ladeSpielerAnsicht(teamId: string, sp: AdressParameter, un
   const ausgewaehlt = auswahlId ? (spieler.find((s) => s.id === auswahlId) ?? null) : null;
 
   const pfad = `${teamSpielerPfad(teamId)}${unterpfad}`;
-  const sauber = adresseMitWerten(pfad, sp, { ...teamEingrenzungWerte(eingrenzung), ...teilnahmeWerte(sp, ausgewaehlt?.id ?? null) });
+  const sortierung = opts.sortierbar && tabellenSortierWerte(leseTabellenSortierung(sp, opts.sortierbar), opts.sortierbar);
+  const sauber = adresseMitWerten(pfad, sp, {
+    ...teamEingrenzungWerte(eingrenzung),
+    ...teilnahmeWerte(sp, ausgewaehlt?.id ?? null),
+    ...sortierung,
+  });
   if (sauber) redirect(sauber);
 
   const zeitraum = liesZeitraum(sp);

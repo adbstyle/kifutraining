@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
-import { ladeSpieler } from "@/lib/kern/spieler";
+import { ladeSpieler, ladeSpielerliste } from "@/lib/kern/spieler";
 import { ausDbFehler, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
 import {
   teilnahmeZahlen,
@@ -56,5 +56,82 @@ export async function spielerTeilnahme(
     spieler: { id: spieler.wert.id, vorname: spieler.wert.vorname, nachname: spieler.wert.nachname },
     zeitraum,
     zahlen: teilnahmeZahlen((data ?? []) as TeilnahmeZeile[]),
+  });
+}
+
+/**
+ * Die Teilnahme aller Spieler:innen eines Teams (#702) — für den Reiter
+ * «Teilnahme» und, über `teamTeilnahme`, das KI-Werkzeug
+ * «team_teilnahme_abrufen». Gezählt wird in `team_teilnahme` mit derselben
+ * Zählregel wie `spieler_teilnahme` (`teilnahme_kern`), darum liefern
+ * Übersicht, Einzelteilnahme und KI für dieselbe Spieler:in und denselben
+ * Zeitraum dieselben Zahlen (NFR 3). Nur Mitglieder des Teams (NFR 2).
+ *
+ * `zahlen` nennt nur Spieler:innen mit mindestens einem gezählten Termin;
+ * wer fehlt, hat überall 0 (`teilnahmeZahlen([])`).
+ */
+export type TeamTeilnahmeZahlen = {
+  team: { id: string; name: string };
+  zeitraum: Zeitraum;
+  zahlen: Map<string, Record<TeilnahmeArt, TeilnahmeZahlen>>;
+};
+
+export async function teamTeilnahmeZahlen(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { teamId: string; von?: string | null; bis?: string | null },
+): Promise<KernErgebnis<TeamTeilnahmeZahlen>> {
+  const zeitraum: Zeitraum = { von: e.von || null, bis: e.bis || null };
+  const problem = zeitraumFehler(zeitraum);
+  if (problem) return fehlschlag("eingabe", problem.text, { feld: problem.feld });
+
+  const team = await pruefeTeamMitglied(supabase, e.teamId);
+  if (!team.ok) return team;
+
+  const { data, error } = await supabase.rpc("team_teilnahme", {
+    p_team: e.teamId,
+    p_von: zeitraum.von,
+    p_bis: zeitraum.bis,
+  });
+  if (error) return ausDbFehler(error);
+  const zahlen = new Map(
+    ((data ?? []) as { spieler_id: string; zeilen: unknown }[]).map((z) => [
+      z.spieler_id,
+      teilnahmeZahlen(Array.isArray(z.zeilen) ? (z.zeilen as TeilnahmeZeile[]) : []),
+    ]),
+  );
+  return ok({ team: team.wert, zeitraum, zahlen });
+}
+
+/** Die Teilnahme jeder Spieler:in, die aktuell im Team ist (auch
+ *  Schnuppernde), nach Name — wer im Zeitraum nichts gezählt hat, mit 0. Für
+ *  das KI-Werkzeug; die Seite nimmt die Spielerliste aus ihrer Ansicht. */
+export type TeamTeilnahme = {
+  team: { id: string; name: string };
+  zeitraum: Zeitraum;
+  spieler: { id: string; vorname: string; nachname: string; zahlen: Record<TeilnahmeArt, TeilnahmeZahlen> }[];
+};
+
+export async function teamTeilnahme(
+  supabase: SupabaseClient,
+  userId: string,
+  e: { teamId: string; von?: string | null; bis?: string | null },
+): Promise<KernErgebnis<TeamTeilnahme>> {
+  const [zahlen, liste] = await Promise.all([
+    teamTeilnahmeZahlen(supabase, userId, e),
+    ladeSpielerliste(supabase, userId, { teamId: e.teamId }),
+  ]);
+  if (!zahlen.ok) return zahlen;
+  if (!liste.ok) return liste;
+  const leer = teilnahmeZahlen([]);
+  return ok({
+    team: zahlen.wert.team,
+    zeitraum: zahlen.wert.zeitraum,
+    spieler: liste.wert.spieler.map((s) => ({
+      id: s.id,
+      vorname: s.vorname,
+      nachname: s.nachname,
+      zahlen: zahlen.wert.zahlen.get(s.id) ?? leer,
+    })),
   });
 }
