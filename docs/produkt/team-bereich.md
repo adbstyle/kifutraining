@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-11-25 (Release 1.55.0). Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-11-28 (Release 1.56.0). Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -15,7 +15,7 @@ Vereinsverwaltung den Hinweis, dass sie sich im Bereich „Verein" selbst in ein
 Trainerinnen und Trainer kommen über ihre E-Mail-Adresse ins Team, sofern sie bereits ein
 bestätigtes Konto haben und keinem anderen Verein angehören. Wer aufgenommen wird, muss nicht
 zustimmen — wer nicht mag, verlässt das Team wieder —, und gehört damit dem Verein an. Das Plus im
-Kopf der Mitgliederliste im Reiter „Trainer:innen" (siehe „Drei Seiten") öffnet dafür den Dialog „Trainer:in aufnehmen": erst die Adresse
+Kopf der Mitgliederliste auf der Seite „Team" (siehe „Vier Seiten") öffnet dafür den Dialog „Trainer:in aufnehmen": erst die Adresse
 eingeben und „Suchen", dann den gefundenen Anzeigenamen samt Adresse prüfen und „Aufnehmen". Vor
 dem Suchen sagt der Dialog, dass die Person damit zum Verein gehört, solange keinem anderen
 beitreten und keinen gründen kann und dass die Vereinsverwaltung und das Trainerteam ihre
@@ -37,7 +37,7 @@ die Adressen nicht.
 Im Team sind alle gleichberechtigt: Jedes Mitglied darf Trainings und Termine planen, die
 Spielerliste führen und Mitglieder aufnehmen und entfernen, auch solche der Vereinsverwaltung.
 Abgestufte Rollen gibt es im Team nicht, und wer zugleich der Vereinsverwaltung angehört, hat im
-Team keine weiteren Rechte. Name und Verein stehen unter „Team" im Reiter „Trainer:innen" in der
+Team keine weiteren Rechte. Name und Verein stehen auf der Seite „Team" in der
 Karte „Teamangaben" mit dem
 Satz, dass Umbenennen und Auflösen die Vereinsverwaltung im Bereich „Verein" macht. Ein Team
 besteht auch ohne Mitglieder weiter — verlässt die letzte Person das Team, bleibt es samt
@@ -69,8 +69,9 @@ Trainings; einzig beim Zuordnen eines Trainings zu einem Termin stehen die eigen
 (siehe unten).
 
 Der Bestand eines Teams unter „Trainings" sieht aus und bedient sich wie die Trainingsübersicht
-(siehe [Trainings](trainings.md#finden)): eine Tabelle, ein Training je Zeile, darüber ihre Zahl,
-die Suche nach dem Namen und der Filter nach Alterskategorie. Die Spalten sind Name, Übungen, Dauer
+(siehe [Trainings](trainings.md#finden)): eine Tabelle, ein Training je Zeile, darüber die Suche
+nach dem Namen, der Filter nach Alterskategorie und die Zahl, etwa „12 Trainings", bei Suche oder
+Filter die Treffer von allen, etwa „3 von 12 Trainings". Die Spalten sind Name, Übungen, Dauer
 und „Geändert"; führt ein Training mehrere Varianten seines Hauptteils, steht deren Zahl als Marke
 neben dem Namen, und Übungszahl und Dauer beziehen sich auf die vorderste. Eine Spalte für
 Sichtbarkeit oder Urheber gibt es nicht, denn ein Team-Training gehört dem Team und nennt keine
@@ -79,7 +80,9 @@ Termine nennt die Zeile nicht. Sortiert wird wie dort nach Name, Übungen, Dauer
 Wahl das zuletzt Geänderte oben, auch mit Suchbegriff; Sortierung, Suche und Filter stehen in der
 Adresse. Ohne Trainings steht „Noch kein Training im Team" mit dem Satz „Erstelle eines hier oder
 stelle eine Kopie eines eigenen Trainings ins Team."; findet die Suche nichts, sagt das der Hinweis
-„Keine Trainings gefunden". Der Knopf zum Erstellen steht über der Suche.
+„Keine Trainings gefunden". „Training erstellen" steht rechts in der Kopfzeile, auf dem Telefon
+als „Erstellen"; ersetzt ein geöffnetes Training auf schmalem Bildschirm den Bestand, fehlt er mit
+ihm.
 
 Ein Klick auf eine Zeile öffnet das Training nicht zum Bearbeiten, sondern wählt es aus: Es steht
 daneben im Detail, auf einem schmalen Bildschirm an Stelle des Bestands, bis man es schliesst, mit
@@ -542,10 +545,10 @@ abgesagt hat, Spielerzahl, Felder,
 Hinweis am privaten Link („Am Link: …") und Bemerkung des Termins, jedes Feld mit Grösse, Toren je Torart und Untergrund; was zu einem
 Feld nicht erfasst ist, steht dort ausdrücklich als unbekannt. Den Treffpunkt nennt sie nicht.
 
-Eine eigene Überschrift trägt der Trainingsplan nicht, sie steht schon in der Seitenleiste.
-Über den Terminen liegt eine Zeile: links die Eingrenzungen „Meine Termine" und „Eingeladen",
-rechts „Termin erstellen" und ein Menü mit „Kalender abonnieren". „Termin erstellen" belegt
-kein Datum vor.
+Eine eigene Überschrift trägt der Trainingsplan nicht; „Trainingsplan" steht als letzte
+Brotkrume. Rechts in der Kopfzeile stehen „Termin erstellen", auf dem Telefon als „Erstellen", und
+daneben ein Menü mit „Kalender abonnieren"; über den Terminen stehen die Eingrenzungen „Meine
+Termine" und „Eingeladen". „Termin erstellen" belegt kein Datum vor.
 
 Auf breiten Bildschirmen, ab etwa der Breite eines Tablets im Querformat, steht rechts neben
 den Terminen ein Monat und bleibt beim Scrollen stehen. Er zeigt Monat und Jahr, die Wochen von
@@ -655,7 +658,7 @@ Eltern und Spieler:innen abonnieren die Termine der Spieler:in über ihren priva
 
 Ein Team kann für seine Spieler:innen und deren Eltern aufschreiben, wie es arbeitet —
 Trainingszeiten, Abmelden, Ausrüstung —, und den Text laufend aktuell halten. Die Karte „Infos zum
-Team" steht unter „Team" im Reiter „Privater Link" unter der Karte „Link verteilen" und sagt unter
+Team" steht unter „Spieler:innen" im Reiter „Privater Link" unter der Karte „Link verteilen" und sagt unter
 dem Titel, wer sie sieht: „Für Spieler:innen und Eltern am privaten Link, nicht beim Schnuppern",
 sobald es Infos gibt dazu den Stand, etwa „Stand 12.11.2026". Solange das Team keine Infos führt,
 zeigt sie „Noch keine Infos zum Team" mit dem Satz „Schreib auf, wie euer Team trainiert, abmeldet
@@ -691,17 +694,25 @@ Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
 
 ## Spielerliste
 
-Ein Team kann seine Spieler:innen in einer Liste führen. Sie steht unter „Team" im ersten Reiter
-„Spieler:innen" (siehe „Drei Seiten"); ihr Kopf nennt, wie viele auf der Liste stehen, etwa „15",
-und ist die Liste eingegrenzt, wie viele davon zu sehen sind, etwa „12 von 35". Wie viele Links
-abgeholt, zugestellt oder offen sind, steht im Reiter „Privater Link" (siehe „Selbstabholung").
+Ein Team kann seine Spieler:innen in einer Liste führen. Sie steht unter „Spieler:innen" im ersten
+Reiter „Liste" (siehe „Vier Seiten"), ohne eigene Überschrift; über ihr steht, wie viele auf der
+Liste stehen, etwa „15 Spieler:innen", und ist die Liste eingegrenzt, wie viele davon zu sehen sind,
+etwa „12 von 35 Spieler:innen"; Schnuppernde zählen mit. Wie viele Links abgeholt, zugestellt oder
+offen sind, steht im Reiter „Privater Link" (siehe „Selbstabholung").
 Jede Spieler:in trägt Vorname, Nachname und Jahrgang, auf Wunsch dazu
 ihre J+S-Nummer. Vor- und Nachname haben je 1 bis 60 Zeichen, der Jahrgang ist eine vierstellige
 Jahreszahl, die J+S-Nummer höchstens 20 Zeichen lang; ein Team führt höchstens 100 Spieler:innen.
-Das Plus im Kopf öffnet den Dialog „Spieler:in hinzufügen" mit den vier Feldern untereinander;
-„Hinzufügen" oder die Eingabetaste nimmt auf, der Dialog sagt, wer dazukam, und bleibt für die
-nächste offen, bis „Abbrechen" ihn ohne Speichern schliesst. Die Liste ist nach Vor- und Nachname
-geordnet; jede Zeile nennt Name, Jahrgang, J+S-Nummer, sobald das Team Kader führt, ihre Kader,
+
+„Spieler:in hinzufügen" steht rechts in der Kopfzeile, in jedem Reiter unter „Spieler:innen"
+gleich, auf dem Telefon als „Hinzufügen". Der Knopf öffnet den Dialog „Spieler:in hinzufügen" mit
+den vier Feldern untereinander und, führt das Team Kader, dem Feld „Kader (optional)"; „Hinzufügen"
+oder die Eingabetaste nimmt auf, der Dialog sagt, wer dazukam, und bleibt für die nächste offen,
+bis „Abbrechen" ihn ohne Speichern schliesst. Ist die Liste leer, steht an ihrer Stelle „Noch
+niemand auf der Liste. Solange sie leer ist, planst du mit der erwarteten Spielerzahl."; einen
+zweiten Knopf zum Hinzufügen gibt es dort nicht, auch nicht mehr das Plus im Kopf der Liste wie bis
+Release 1.55.0. Die Liste ist nach Vor- und Nachname
+geordnet; jede Zeile nennt den Namen — ein Klick darauf öffnet daneben ihre Teilnahme (siehe
+„Teilnahme") —, Jahrgang, J+S-Nummer, sobald das Team Kader führt, ihre Kader,
 unter „Auch in" die weiteren Teams des Vereins, denen sie zugeordnet ist, unter „Mobile" eine
 Glocke, wenn nach dem letzten bekannten Stand mindestens ein Gerät Mitteilungen für sie eingeschaltet
 hat (siehe „Mitteilungen aufs Mobile"), sonst eine durchgestrichene Glocke, dazu Knöpfe für den
@@ -725,7 +736,9 @@ Auswahl kommt immer aus der ganzen Liste und schrumpft nicht mit der Eingrenzung
 bleibt die der Liste. Trifft die Eingrenzung niemanden, steht statt der Liste „Keine Spieler:in
 gefunden" mit „Ändere die Suche oder die Eingrenzung." und „Zurücksetzen". Suche und Eingrenzung
 stehen in der Adresse der Seite, lassen sich also als Lesezeichen ablegen und weitergeben, und
-bleiben beim Wechsel zwischen den Reitern unter „Team" stehen. Werte, die es im Team nicht (mehr)
+bleiben beim Wechsel zwischen den Reitern unter „Spieler:innen" stehen; in „Teilnahme" und
+„Meldezeitpunkte" grenzen sie ebenso ein. „Zurücksetzen" hebt nur Suche und Eingrenzung auf;
+Zeitraum, Sortierung und eine geöffnete Teilnahme bleiben. Werte, die es im Team nicht (mehr)
 gibt — ein entfernter Kader, ein Jahrgang, den niemand trägt —, lässt die Anwendung beim Öffnen
 weg.
 
@@ -742,10 +755,13 @@ als dieselbe, „Müller" und „Mueller" nicht. Steht sie schon in diesem Team,
 Vornamen." Steht sie in anderen Teams, nennt die Meldung deren Namen und bittet, die Zuordnung
 mit der Vereinsverwaltung zu klären; ebenso, wenn sie im Verein keinem Team zugeordnet ist.
 Einem weiteren Team zuordnen kann eine bestehende Spieler:in nur die Vereinsverwaltung. Zwei
-Spieler:innen mit gleichen Angaben unterscheidet man mit einem Zusatz im Vornamen. An die Grenze
-stösst, wer eine 101. Spieler:in aufnimmt — „Das Team hat schon 100 Spieler:innen. Weitere kommen
-erst dazu, wenn es weniger sind." — oder eine neue, wenn der Verein schon 1000 führt; die Meldung
-sagt jeweils, welche Grenze erreicht ist. Angezeigt wird überall Vor- und Nachname, Jahrgang und
+Spieler:innen mit gleichen Angaben unterscheidet man mit einem Zusatz im Vornamen. Führt das Team
+schon 100 Spieler:innen, ist „Spieler:in hinzufügen" gesperrt, und unter den Reitern steht „Das Team
+hat schon 100 Spieler:innen. Weitere kommen erst dazu, wenn es weniger sind."; führt der Verein
+schon 1000, steht dort „Im Verein ist kein Platz für weitere Spieler:innen. Zuerst muss die
+Vereinsverwaltung Platz schaffen." Wie viele der Verein führt, erfährt das Team dabei nicht. Wird
+eine Grenze erst erreicht, während der Dialog offen ist, nimmt die Anwendung niemanden auf und sagt,
+welche Grenze erreicht ist. Angezeigt wird überall Vor- und Nachname, Jahrgang und
 J+S-Nummer nur in der Liste. Einsehen und führen können die Liste nur die Mitglieder des Teams;
 Name, Jahrgang und Teams aller Spieler:innen sehen zudem alle Trainer:innen des Vereins in der
 Vereinsliste.
@@ -794,7 +810,7 @@ eine Liste führt. Wie ein begonnenes Spiel wieder offen wird, steht unter „Sp
 
 Ein Team kann Teile seiner Spielerliste als Kader benennen, etwa „Stärkeklasse 1", „Torhüterinnen",
 „Schnupperlis" oder „Aushilfe", und Termine auf sie beschränken. Die Karte „Kader" steht unter
-„Team" im Reiter „Kader & Schnuppern", auf breiten Bildschirmen neben dem Schnuppertraining; ihr Kopf
+„Spieler:innen" im Reiter „Kader & Schnuppern", auf breiten Bildschirmen neben dem Schnuppertraining; ihr Kopf
 zählt, wie viele Kader das Team führt, etwa „4 von 20", das Plus legt einen an. Darunter steht
 immer, auch ohne Kader: „Kader sieht nur das Team. Am privaten Link erscheinen sie nicht:
 Spieler:innen und Eltern sehen nur die Termine, die für sie gelten." Jede Zeile nennt den Namen und wie viele Spieler:innen ihm
@@ -864,7 +880,7 @@ mit. Ein Team ohne Kader plant unverändert.
 ## Schnuppertraining
 
 Ein Team kann neue Spieler:innen zuerst einige Trainings schnuppern lassen; früher hiess das
-Probetraining. Die Karte „Schnuppertraining" steht unter „Team" im Reiter „Kader & Schnuppern" neben den Kadern
+Probetraining. Die Karte „Schnuppertraining" steht unter „Spieler:innen" im Reiter „Kader & Schnuppern" neben den Kadern
 und sagt unter dem Titel, für wen sie gedacht ist: „Für Spieler:innen, die den Verein
 ausprobieren. Sie melden sich über ihren Link selbst für Trainings an, höchstens für so viele, wie
 das Team festlegt. Spiele sehen sie nicht." Solange das Team nichts festgelegt hat, zeigt sie
@@ -882,7 +898,7 @@ entfernt. Formatieren lässt es sich nicht; das geht nur in den Infos zum Team. 
 Schnuppern gibt es nur für eine Spieler:in, die genau einem Team zugeordnet ist. Ein Mitglied
 schaltet es im Dialog „Spieler:in ändern" mit der Checkbox „Schnuppert" ein und aus; beim
 Hinzufügen gibt es sie nicht. Solange das Team keine Anzahl festgelegt hat, ist sie gesperrt und
-sagt, wo man das tut: „Lege zuerst im Bereich «Kader & Schnuppern» in der Karte «Schnuppertraining» fest, wie viele Trainings eine Spieler:in zum Schnuppern besuchen darf." Ist die Spieler:in weiteren Teams zugeordnet, steht statt der Checkbox
+sagt, wo man das tut: „Lege zuerst unter «Spieler:innen» im Reiter «Kader & Schnuppern» in der Karte «Schnuppertraining» fest, wie viele Trainings eine Spieler:in zum Schnuppern besuchen darf." Ist die Spieler:in weiteren Teams zugeordnet, steht statt der Checkbox
 „Diese Spieler:in ist weiteren Teams zugeordnet und macht darum regulär in deinem Team mit."
 Unter der Checkbox steht, was das Schnuppern bedeutet, etwa „Mia meldet sich selbst für
 Trainings an, höchstens für 4. Spiele sieht Mia nicht.", und vor dem Einschalten dazu „Solange die
@@ -1184,6 +1200,114 @@ Spielervertretungen, wenn der Aufruf es nicht ausdrücklich abwählt. Er erfähr
 mit verpasster Meldefrist, nicht aufgeboten, Mindest- und Höchstzahl —, aber nicht den Status: Ob es
 reicht, beurteilt er selbst.
 
+## Teilnahme
+
+Seit Release 1.56.0 lässt sich unter „Spieler:innen" nachsehen, wie oft die Spieler:innen an
+Trainings und Spielen des Teams da waren und aus welchem Grund nicht: für eine einzelne neben der
+Liste, für alle im Reiter „Teilnahme", und wie früh sie sich melden, im Reiter „Meldezeitpunkte".
+Alle drei zählen nach derselben Regel und ergeben für dieselbe Spieler:in und denselben Zeitraum
+dieselben Zahlen, auch über den KI-Assistenten.
+
+Gezählt sind nur Termine dieses Teams, die begonnen haben und nicht ausgefallen sind, und nur
+solche, die für die Spieler:in galten, solange sie auf der Liste stand. Wer da war, bestimmt derselbe
+Stand wie am Termin: da ist, wer bei Beginn angemeldet war und nicht als nicht erschienen
+nachgetragen ist, oder wer als doch erschienen nachgetragen ist. Die Gründe für „nicht da" sind bei
+Trainings „Abgemeldet" — auch, solange eine schnuppernde Spieler:in nicht angemeldet war — und
+„Angemeldet, nicht erschienen"; bei Spielen kommen „Nicht aufgeboten", „Meldefrist verpasst" für
+ein Spiel mit Meldefrist, zu dem keine Meldung kam, und „Ohne Meldung" für eines ohne Meldefrist
+dazu. Eine nicht aufgebotene Spieler:in zählt als nicht da, gleich wie sie gemeldet war, ausser sie
+ist als doch erschienen nachgetragen. Eine Wertung gibt es nicht: keine Ampel, keine Rangliste,
+keine Grenze, ab der etwas zu wenig wäre.
+
+Der Zeitraum ist ein Filter „Zeitraum" mit der Kurzwahl „Letzte 30 Tage", „Letzte 3 Monate" und
+„Seit 1. Januar", gerechnet ab heute, oder mit „Von" und „Bis" — beide Tage eingeschlossen, bis
+höchstens heute. Der Knopf nennt den gewählten Zeitraum, etwa „Zeitraum: Letzte 30 Tage" oder
+„Zeitraum: ab 01.09.2026"; „Zurücksetzen" daneben hebt ihn auf, dann zählt die ganze Zeit im Team.
+Der Zeitraum steht in der Adresse und gilt für die Teilnahme einer Spieler:in, den Reiter
+„Teilnahme" und die Meldezeitpunkte gemeinsam: Wer ihn an einer Stelle ändert, ändert ihn für alle,
+und er bleibt beim Wechsel zwischen den Reitern und beim Öffnen einer anderen Spieler:in stehen.
+
+### Teilnahme einer Spieler:in
+
+Ein Klick auf einen Namen in der Liste, in „Teilnahme" oder in „Meldezeitpunkte" öffnet rechts
+daneben die Teilnahme dieser Spieler:in; schmaler ersetzt sie die Liste, bis man sie mit dem Kreuz
+schliesst. Der gewählte Name ist hervorgehoben, und die Spieler:in steht in der Adresse;
+Eingrenzung und Zeitraum bleiben beim Öffnen und Schliessen. Oben stehen Name, Jahrgang und ihre
+Kader, darunter „Teilnahme" mit dem Zeitraum und je eine Karte „Trainings" und „Spiele": gross die
+Anwesenden von den gezählten Terminen, etwa „6 von 7 da", ein Balken mit der Verteilung, darunter
+„Da", „Nicht da" und eingerückt die Gründe, je mit Zahl, auch mit 0. Zählt kein Termin, sagt die
+Karte etwa „Bisher zählt kein Spiel." bzw. „Im gewählten Zeitraum zählt kein Training." Darunter
+steht, wie gezählt wird: „Gezählt sind begonnene Termine, die nicht ausgefallen sind und für Mia
+galten, solange Mia auf der Spielerliste stand. Da ist, wer bei Beginn angemeldet war und nicht als
+«nicht erschienen» nachgetragen ist, oder wer als «doch erschienen» nachgetragen ist. Ob jemand die
+Anwesenheit geprüft hat, hält die Anwendung nicht fest." Welche einzelnen Termine es waren, zeigt
+die Teilnahme nicht.
+
+### Teilnahme aller Spieler:innen
+
+Der Reiter „Teilnahme" stellt alle Spieler:innen, die zurzeit im Team sind, nebeneinander,
+Schnuppernde eingeschlossen; wer aus dem Team genommen wurde, fehlt. Über der Tabelle stehen die
+Filterleiste der Liste, der Zeitraum und die Zahl, etwa „12 von 34 Spieler:innen". Die Tabelle hat
+zwei Kopfzeilen: unter „Trainings" die Spalten „Da", „Nicht da" und „Ohne Abmeldung gefehlt", unter
+„Spiele" „Da", „Nicht da", „Ohne Abmeldung gefehlt", „Nicht aufgeboten" und „Nicht gemeldet".
+„Ohne Abmeldung gefehlt" heisst angemeldet und nicht erschienen, „Nicht gemeldet" fasst Meldefrist
+verpasst und ohne Meldung zusammen. Die Spaltenköpfe tragen dieselben Farbpunkte wie die Gründe in
+der Teilnahme einer Spieler:in; sie sagen nur, welcher Teil von „nicht da" gemeint ist. Eine 0 steht
+gedämpft. Unter der Tabelle steht: „«Nicht da» zählt alle Gründe zusammen; «Ohne Abmeldung gefehlt»
+und bei Spielen «Nicht aufgeboten» und «Nicht gemeldet» sind ein Teil davon, der Rest sind
+Abmeldungen. «Nicht gemeldet» fasst Meldefrist verpasst und ohne Meldung zusammen. Gezählt sind
+begonnene, nicht ausgefallene Termine."
+
+Ein Klick auf einen Spaltenkopf sortiert nach ihm, ein zweiter kehrt die Richtung um; ohne Wahl ist
+nach Vor- und Nachname geordnet, und Zahlen ordnen beim ersten Klick die grössten zuoberst. Bei
+gleichen Zahlen entscheidet der Name. Die Sortierung steht in der Adresse, reist aber beim Wechsel
+der Reiter nicht mit. Ist die Tabelle breiter als ihr Platz, scrollt sie in sich seitwärts, und die
+Namen bleiben stehen. Schmal — auf dem Telefon oder neben einer geöffneten Teilnahme — steht statt
+der Tabelle je Spieler:in eine Karte mit den Blöcken „Trainings" und „Spiele" und denselben Zahlen,
+darüber „Sortieren nach:" mit der Wahl der Spalte und „Aufsteigend" oder „Absteigend". Führt das
+Team noch niemanden, steht „Noch keine Spieler:innen" mit „Sobald Spieler:innen im Team sind, steht
+hier ihre Teilnahme."; trifft die Eingrenzung niemanden, dasselbe Leerfeld wie in der Liste.
+
+### Meldezeitpunkte
+
+Der Reiter „Meldezeitpunkte" zeigt, wie lange vor Beginn bzw. Anpfiff sich die Spieler:innen von
+Trainings abmelden und zu Spielen an- und abmelden. Oben stehen die „Meldungen im Team" mit „Wie
+lange vor Beginn bzw. Anpfiff gemeldet wurde." und dem Zeitraum, ohne Wahl „ganze Zeit im Team";
+das ⓘ daneben erklärt Median, Abstände und was zählt. Drei Karten — „Abmeldungen von Trainings",
+„Anmeldungen zu Spielen" und „Abmeldungen von Spielen" — verteilen die Meldungen mit liegenden
+Balken im gleichen Massstab auf fünf Abstände: „mehr als 7 Tage", „3–7 Tage", „1–3 Tage", „6–24
+Stunden" und „höchstens 6 Stunden". Eine Meldung genau auf einer Grenze zählt zum Abstand, der dort
+endet: genau 3 Tage vor Beginn zu „1–3 Tage", genau 24 Stunden zu „6–24 Stunden". Ohne Meldung sagt
+eine Karte „Im Zeitraum keine Meldung mit festgehaltenem Zeitpunkt." Darunter stehen die Kacheln
+„Ohne Abmeldung gefehlt" („Angemeldet und nicht erschienen", für Trainings und Spiele) und „Nicht
+gemeldet" („Spiele: Meldefrist verpasst oder ohne Meldung") mit denselben Zahlen wie im Reiter
+„Teilnahme" und dem Satz „«Ohne Abmeldung gefehlt» und «Nicht gemeldet» zählen weder in die Fenster
+noch in die Mediane." Alle Zahlen oben gelten für die Spieler:innen, die die Eingrenzung zeigt.
+
+Unter „Je Spieler:in" folgt eine Tabelle mit den Spalten „Abmeldung vom Training", „Anmeldung zum
+Spiel" und „Abmeldung vom Spiel" unter „Median vor Beginn": die mittlere Meldung, etwa „unter 1
+Std.", „5 Std.", „1 Tag" oder „2,5 Tage", ohne solche Meldung „keine Angabe". Sortiert wird wie in
+„Teilnahme", die Mediane beim ersten Klick mit dem kürzesten Abstand zuoberst; „keine Angabe" steht
+in beiden Richtungen zuletzt. Schmal stehen auch hier Karten mit „Sortieren nach:".
+
+Je Termin zählt nur die Meldung, die zuletzt galt, gleich wer sie gesetzt hat — ein Mitglied, die
+Eltern über den Link oder ein KI-Assistent —, und nur, wenn sie vor dem Beginn lag. Bei Trainings
+zählen nur Abmeldungen, denn angemeldet ist jede Spieler:in von selbst; eine Abmeldung zählt auch,
+wenn die Spieler:in danach als doch erschienen nachgetragen ist. Bei Spielen zählt jede An- und
+Abmeldung, auch wenn die Spieler:in danach nicht aufgeboten wurde oder nicht erschien. Gemessen wird
+bis zum Beginn bzw. Anpfiff, nicht bis zur Meldefrist. Zeitpunkte gibt es für Trainings seit dem
+19.10.2026; Abmeldungen, die an diesem Tag noch galten, bringen ihren Zeitpunkt mit, frühere
+Wieder-Anmeldungen nicht. Für Spiele gibt es sie seit dem 21.10.2026. Eine
+Verlegung, die Abmeldungen bzw. Meldungen verfallen lässt, nimmt ihnen auch den Zeitpunkt; wird ein
+Spiel nur in der Uhrzeit verlegt, misst die Anwendung bis zum neuen Anpfiff. Unter der Tabelle steht:
+„Median aus den Meldungen mit festgehaltenem Zeitpunkt, gemessen bis Beginn bzw. Anpfiff. «keine
+Angabe»: keine solche Meldung im Zeitraum."
+
+Ein verbundener KI-Assistent liest dieselben Zahlen über „spieler_teilnahme_abrufen",
+„team_teilnahme_abrufen" und „team_meldezeitpunkte_abrufen" (siehe [Konto und
+Zugang](konto-und-zugang.md#ki-assistent-verbinden)). Einsehen können die Teilnahme nur die
+Mitglieder des Teams, die Vereinsverwaltung nur, wenn sie selbst Mitglied ist.
+
 ## Privater Link
 
 Jede Spieler:in hat einen privaten Link, über den ihre Eltern oder sie selbst sie ohne Konto ab- und
@@ -1333,8 +1457,9 @@ Trainer:innen oder bei der Vereinsverwaltung." Ob es den Link je gab, ist nicht 
 Ebenso ungültig wird er, wenn die Vereinsverwaltung den Verein löscht. Die Vorschau, die ein Chat beim Teilen zeigt, trägt einen festen Titel ohne
 Team und Namen; Suchmaschinen nehmen die Seite nicht auf, die Besucherstatistik zählt sie nicht, und
 im Browser legt sie nur ab, welche Benachrichtigungen das Gerät schon angezeigt hat (siehe
-„Benachrichtigungen am privaten Link"), wie oft das Gerät den Link besucht und wann es den Hinweis
-zum Ablegen geschlossen hat (siehe „Als App ablegen") und, erst wenn jemand Mitteilungen einschaltet,
+„Benachrichtigungen am privaten Link"), wann es das Angebot für Mitteilungen und App zuletzt
+gezeigt hat und wann es abgelehnt wurde (siehe „Angebot für Mitteilungen und App") und, erst wenn
+jemand Mitteilungen einschaltet,
 das kleine Programm des Browsers, das sie zeigt (siehe „Mitteilungen aufs Mobile").
 
 ### Infos am privaten Link
@@ -1504,30 +1629,28 @@ Seite „Infos" und die Benachrichtigungen liegen darin. Ihr Symbol ist die Bild
 darunter steht der Vorname mit dem Verein, etwa „Mia · FC Beispiel". Für jede Spieler:in lässt sich
 eine eigene App ablegen, auch auf demselben Gerät; Geschwister haben je ihre eigene.
 
-Unter den Terminen steht auf dem Mobile immer der ruhige Knopf „Diese Seite als App ablegen", am
-Computer nur, wenn der Browser die Seite selbst ablegen kann. Ab dem zweiten Besuch des Links auf
-diesem Gerät steht auf dem Mobile zudem über den Terminen der Hinweis „Termine von Mia als App":
-„Lege diese Seite auf den Home-Bildschirm. Dann öffnest du Mias Termine mit einem Tipp, ohne den
-Link im Chat zu suchen.", und dazu „In der App kannst du ausserdem Mitteilungen aufs Mobile
-einschalten." Als neuer Besuch zählt ein Aufruf erst, wenn der letzte mindestens eine halbe Stunde
-zurückliegt; neu laden oder der Weg zurück aus den Infos zählen nicht. Der Hinweis lässt sich
-schliessen und erscheint auf diesem Gerät frühestens nach 7 Tagen wieder. In der abgelegten App
-stehen weder Hinweis noch Knopf, am Computer nie ein Hinweis.
+Abgelegt wird auf dem Mobile — Telefon oder Tablet — jederzeit über die Ansicht
+„Benachrichtigungen" hinter der Glocke: Unter der Karte „Mitteilungen aufs Mobile" steht der
+Eintrag „Als App ablegen" mit „Mias Termine mit einem Tipp öffnen, ohne den Link im Chat zu
+suchen." und dem Knopf „Ablegen", auch ohne dass man Mitteilungen einschaltet. Er fehlt in der
+abgelegten App, im Browser einer anderen App und auf dem iPhone oder iPad im Browser, wo die Karte
+der Mitteilungen mit „So geht’s" schon zur Anleitung führt. Dazu bietet das Angebot das Ablegen im
+Moment an, in dem es nützt (siehe „Angebot für Mitteilungen und App"). Den Hinweis „Termine von …
+als App" über den Terminen ab dem zweiten Besuch und den Knopf „Diese Seite als App ablegen" unter
+den Terminen gibt es seit Release 1.56.0 nicht mehr; am Computer bietet die Seite das Ablegen nicht
+mehr an.
 
-Kann der Browser die Seite selbst ablegen, etwa Chrome auf einem Android-Telefon, fragt „Als App
-ablegen" ihn direkt, und nach dem Ablegen ruht der Hinweis. Sonst, und auf dem iPhone mit „So
-geht’s", öffnet sich die Anleitung „Diese Seite als App ablegen" mit drei Schritten für das Gerät —
-auf dem iPhone über „Teilen" und „Zum Home-Bildschirm", auf Android über das Menü ⋮ und „Zum
-Startbildschirm hinzufügen" oder „App installieren" — und darunter, wie die App auf dem
-Home-Bildschirm heisst. Öffnet jemand den Link im Browser einer anderen App, etwa aus WhatsApp oder
-Instagram heraus, lässt sich die Seite dort nicht ablegen; Hinweis und Anleitung sagen dann nur:
-„Hier lässt sich die Seite nicht als App ablegen. Öffne den Link im Browser deines Mobiles, etwa in
-Safari oder Chrome."
+Kann der Browser die Seite selbst ablegen, etwa Chrome auf einem Android-Telefon, fragt „Ablegen"
+ihn direkt. Sonst, und auf dem iPhone mit „So geht’s", öffnet sich die Anleitung „Diese Seite als
+App ablegen" mit drei Schritten für das Gerät — auf dem iPhone über „Teilen", in Safari unten, in
+Chrome oben, und „Zum Home-Bildschirm", auf Android über das Menü ⋮ und „Zum Startbildschirm
+hinzufügen" oder „App installieren" — und darunter, wie die App auf dem Home-Bildschirm heisst.
+Öffnet jemand den Link im Browser einer anderen App, etwa aus WhatsApp oder Instagram heraus,
+lässt sich die Seite dort nicht ablegen; die Anleitung sagt dann nur: „Hier lässt sich die Seite
+nicht als App ablegen. Öffne den Link im Browser deines Mobiles, etwa in Safari oder Chrome."
 
-Wie oft das Gerät den Link besucht hat und wann der Hinweis geschlossen wurde, merkt sich der
-Browser je Link für bis zu 20 Links, nur mit einem Kürzel, nie mit dem Link selbst (siehe
-[Navigation](navigation.md#cookies)). Ein erneuerter Link beginnt damit neu; eine bisher abgelegte
-App führt dann auf „Dieser Link gilt nicht mehr" und ist mit dem neuen Link neu abzulegen.
+Ein erneuerter Link führt eine bisher abgelegte App auf „Dieser Link gilt nicht mehr"; sie ist mit
+dem neuen Link neu abzulegen.
 
 ### Mitteilungen aufs Mobile
 
@@ -1583,10 +1706,51 @@ Ob für eine Spieler:in Mitteilungen eingeschaltet sind, zeigt die Spalte „Mob
 und ihre Adressen sieht niemand. Was KiFu dazu speichert, steht auch auf der Abholseite unter „Was
 KiFu speichert" (siehe „Selbstabholung").
 
+### Angebot für Mitteilungen und App
+
+Seit Release 1.56.0 bietet die Seite des privaten Links Mitteilungen aufs Mobile und die App in dem
+Moment an, in dem sie nützen: nachdem Eltern oder die Spieler:in sie für ein Training ab- oder
+angemeldet oder für ein Spiel gemeldet haben — dann steht das Angebot unter diesem Termin —, beim
+Öffnen des Links, wenn ein Ausfall angekündigt ist, den dieses Gerät noch nicht angezeigt hat und
+dessen Termin noch ausfällt — dann unter diesem Termin; beim ersten Öffnen eines Links auf einem
+Gerät gilt alles Bisherige als gesehen —, und beim Öffnen der abgelegten App oben
+über den Terminen. Eine Bestätigung des Meldens gibt es dabei nicht; den neuen Stand zeigt beim
+Training der Schalter, beim Spiel die Karte mit ihrem Status.
+
+Die Karte trägt den Titel „Ausfälle, Änderungen und neue Spiele sofort aufs Mobile" und je nach
+Gerät:
+
+- Wo sich Mitteilungen einschalten lassen: „Schalte Mitteilungen für Mia ein. Dann meldet sich dein
+  Mobile, sobald sich etwas ändert." mit „Einschalten", das den Dialog „Mitteilungen für Mia
+  einschalten" öffnet (siehe „Mitteilungen aufs Mobile"). Kann der Browser die Seite selbst ablegen,
+  etwa Chrome auf Android, heisst es „Lege Mias Termine als App auf den Home-Bildschirm und schalte
+  Mitteilungen ein. …" mit „Einrichten", das zuerst den Browser ablegen lässt und dann denselben
+  Dialog öffnet.
+- Auf dem iPhone oder iPad im Browser: „Lege Mias Termine als App auf den Home-Bildschirm und öffne
+  sie dort. In der App schaltest du die Mitteilungen ein." mit „So geht’s" zur Anleitung.
+- Im Browser einer anderen App wie WhatsApp: „Öffne den Link dafür im Browser deines Mobiles, etwa
+  in Safari oder Chrome: im Menü dieser App mit «Im Browser öffnen», oder kopiere den Link." mit dem
+  Link zum Kopieren.
+- Hat das Mobile Mitteilungen für die Seite gesperrt: „Dein Mobile lässt für Mias Termine keine
+  Mitteilungen zu. Erlaube sie in den Einstellungen deines Mobiles, danach schaltest du sie hinter
+  der Glocke ein."
+
+Jede Karte trägt „Nicht jetzt". Das Angebot erscheint nur auf Telefon und Tablet, nie am Computer,
+nur solange auf diesem Gerät keine Mitteilungen eingeschaltet sind, höchstens einmal je Besuch — ein
+neuer Besuch beginnt nach einer halben Stunde — und bleibt stehen, bis man es ablehnt, die
+Mitteilungen einschaltet oder die Seite verlässt. Abgelehnt ist es mit „Nicht jetzt", wenn man die
+Abfrage des Mobiles nicht erlaubt oder die Mitteilungen später ausschaltet; dann kommt es auf diesem
+Gerät für diesen Link frühestens nach 30 Tagen wieder. Hinter der Glocke lassen sich Mitteilungen
+und App jederzeit einschalten bzw. ablegen. Was das Gerät dafür weiss, merkt sich der Browser je
+Link für bis zu 20 Links, nur mit einem Kürzel, nie mit dem Link selbst (siehe
+[Navigation](navigation.md#cookies)); ein erneuerter Link beginnt neu, und was sich ein Gerät zum
+früheren Hinweis zum Ablegen gemerkt hatte, verfällt. Lässt der Browser nichts ablegen, etwa beim
+privaten Surfen, kann das Angebot bei jedem Seitenaufruf wiederkommen.
+
 ## Selbstabholung
 
 Damit niemand jeder Spieler:in oder jedem Elternteil einzeln schreiben muss, holen Spieler:innen
-oder ihre Eltern den Link auf Wunsch selbst ab. Der Abschnitt „Selbstabholung" unter „Team" im
+oder ihre Eltern den Link auf Wunsch selbst ab. Der Abschnitt „Selbstabholung" unter „Spieler:innen" im
 Reiter „Privater Link", in der Karte „Link verteilen" (siehe „Link-Stand"), trägt dafür einen
 Schalter; ausgeschaltet ist er, bis ein Mitglied ihn einschaltet. Eingeschaltet zeigt er die
 Abholadresse des Teams in einem Kasten nur zum Lesen, mit dem Knopf zum Kopieren daneben, und sagt,
@@ -1657,15 +1821,15 @@ offen trägt es keinen. Der Tooltip sagt dann „Privater Link · abgeholt" bzw.
 zugestellt". Über den Filter „Privater Link" lässt sich die Liste auf Stände eingrenzen (siehe
 „Spielerliste").
 
-Unter „Team" im Reiter „Privater Link" steht die Karte „Link verteilen" mit der Selbstabholung und
+Unter „Spieler:innen" im Reiter „Privater Link" steht die Karte „Link verteilen" mit der Selbstabholung und
 daneben, auf schmalen Bildschirmen darunter, der Übersicht „Wer hat den Link?": „Spieler:innen
 oder Eltern holen ihn selbst ab, oder du gibst ihn weiter und markierst ihn als zugestellt.
 Schnuppernde zählen mit." Darunter steht für jeden Stand die Plakette mit einer Erklärung — „selbst
 über die Abholadresse", „als zugestellt markiert", „weder abgeholt noch zugestellt" — und die
 Zahl der Spieler:innen des Teams, schnuppernde eingeschlossen. Gibt es offene, führt „Offene zeigen
-(3)" in den Reiter „Spieler:innen", eingegrenzt auf die offenen Links. Zuunterst steht „Link selbst
-weitergegeben? Markiere ihn unter «Spieler:innen» im Link-Dialog der Spieler:in als zugestellt.
-Erneuern setzt ihn auf offen zurück." Die Zahlen sind der Stand beim Öffnen der Seite.
+(3)" in den Reiter „Liste", eingegrenzt auf die offenen Links. Zuunterst steht „Link selbst
+weitergegeben? Markiere ihn unter «Spieler:innen» im Reiter «Liste» im Link-Dialog der Spieler:in
+als zugestellt. Erneuern setzt ihn auf offen zurück." Die Zahlen sind der Stand beim Öffnen der Seite.
 
 ## Gleichzeitige Änderungen
 
@@ -1686,7 +1850,8 @@ sich auch über einen verbundenen KI-Assistenten führen, samt Treffpunkt, Felde
 Zugang](konto-und-zugang.md#ki-assistent-verbinden)), ebenso Spiele samt Richtwert, Meldefrist und
 Treffpunkten, die Spielerliste, die Kader samt Zuteilung und den Kadern von Terminen und Serien, die
 Ab- und Anmeldungen, die Meldungen zu Spielen und die Kennzeichnungen als nicht aufgeboten, die
-Nachträge, die privaten Links samt ihrem Stand, die Selbstabholung und die Infos zum Team. Mit der
+Nachträge, die privaten Links samt ihrem Stand, die Selbstabholung und die Infos zum Team; die
+Teilnahme und die Meldezeitpunkte liest er (siehe „Teilnahme"). Mit der
 Spielerliste und dem Link einer Spieler:in erfährt er den Link-Stand („abgeholt", „zugestellt" oder
 „offen"), und über das Werkzeug „spieler_link_zugestellt" markiert er einen Link als zugestellt
 oder nimmt das zurück, je Spieler:in einzeln und nur, solange der Link nicht abgeholt ist. Es gelten dieselben Regeln, und was er
@@ -1721,7 +1886,7 @@ Urhebers; bei gelöschten Konten bleibt es anonymisiert erhalten.
 
 ## Team verlassen
 
-„Team verlassen" steht unter „Team" am Ende des Reiters „Trainer:innen" in einem eigenen Bereich „Gefahrenzone", mit Kontur und
+„Team verlassen" steht am Ende der Seite „Team" in einem eigenen Bereich „Gefahrenzone", mit Kontur und
 Überschrift in der Fehlerfarbe und dem Satz „Du verlierst den Zugang zu Kalender, Spieler:innen und
 Team-Trainings. Das Team bleibt bestehen, auch wenn du die letzte Person bist." Die Rückfrage sagt,
 dass man die Trainings und Termine des Teams danach nicht mehr sieht, das Team bestehen bleibt und
@@ -1758,28 +1923,38 @@ verlassen hatte. War er das letzte Mitglied eines Teams, bleibt das Team samt Tr
 Terminen, Terminserien und Spielerliste ohne Trainer:in bestehen. Auf die Spielerliste wirkt das
 Ausscheiden eines Mitglieds nicht.
 
-## Drei Seiten
+## Vier Seiten
 
-Der Team-Bereich gliedert sich in drei Seiten, die in der Seitenleiste unter dem gewählten Team
-stehen: „Trainingsplan", „Trainings" und „Team". Den Namen des Teams nennt die Brotkrume, davor
-den Verein. Wer ein Team öffnet, landet im Trainingsplan — was als Nächstes ansteht, ist beim
-Öffnen die häufigste Frage. Daneben liegen die Trainings, also der Bestand, aus dem geplant wird,
-und unter „Team" die Verwaltung des Teams. Ein geöffneter Termin ist keine eigene Seite; er steht
-im Trainingsplan daneben.
+Der Team-Bereich gliedert sich in vier Seiten, die in der Seitenleiste unter dem gewählten Team
+stehen: „Trainingsplan", „Spieler:innen", „Trainings" und „Team". Die Brotkrumen nennen den Verein,
+„Teams", den Namen des Teams, der in den Trainingsplan führt, und zuletzt die Seite; eine weitere
+sichtbare Überschrift gibt es nicht. Ihre Hauptaktion steht rechts in der Kopfzeile: „Termin
+erstellen" im Trainingsplan, „Spieler:in hinzufügen" unter „Spieler:innen", „Training erstellen"
+unter „Trainings"; „Team" hat keine. Wer ein Team öffnet, landet im Trainingsplan — was als Nächstes
+ansteht, ist beim Öffnen die häufigste Frage. Unter „Spieler:innen" stehen die Spieler:innen des
+Teams, unter „Trainings" der Bestand, aus dem geplant wird, und unter „Team", was das Team selbst
+betrifft. Ein geöffneter Termin ist keine eigene Seite; er steht im Trainingsplan daneben.
 
-„Team" gliedert sich in vier Reiter, die über dem Inhalt stehen; der offene ist markiert:
+„Spieler:innen" gliedert sich in fünf Reiter, die direkt unter der Kopfzeile stehen; der offene ist
+markiert, und in jedem heisst die letzte Brotkrume „Spieler:innen":
 
-- „Spieler:innen" — die Spielerliste mit Suche und Eingrenzung (siehe „Spielerliste"); er öffnet
-  sich zuerst und hat dieselbe Adresse wie früher die ganze Seite „Team".
+- „Liste" — die Spielerliste mit Suche und Eingrenzung (siehe „Spielerliste"); „Spieler:innen" in
+  der Seitenleiste öffnet immer sie, ohne Eingrenzung.
+- „Teilnahme" — die Teilnahme aller Spieler:innen (siehe „Teilnahme").
+- „Meldezeitpunkte" — wie früh sich die Spieler:innen ab- und anmelden (siehe „Meldezeitpunkte").
 - „Kader & Schnuppern" — die Kader und das Schnuppertraining, auf breiten Bildschirmen
   nebeneinander (siehe „Kader" und „Schnuppertraining").
 - „Privater Link" — die Karte „Link verteilen" mit Selbstabholung und der Übersicht „Wer hat den
   Link?" (siehe „Link-Stand"), darunter die Infos zum Team (siehe „Infos zum Team").
-- „Trainer:innen" — die Mitglieder, die Teamangaben und die Gefahrenzone mit „Team verlassen".
 
-Jeder Reiter hat seine eigene Adresse. Beim Wechsel bleibt die Seite an ihrer Stelle, und Suche und
-Eingrenzung der Spielerliste reisen mit, sodass sie beim Zurückkehren noch gelten. Reicht die
-Breite nicht für alle Reiter, brechen sie in eine zweite Zeile um, statt seitlich zu rollen.
+Jeder Reiter hat seine eigene Adresse. Beim Wechsel bleibt die Seite an ihrer Stelle, und Suche,
+Eingrenzung und Zeitraum reisen mit, sodass sie beim Zurückkehren noch gelten; die geöffnete
+Teilnahme einer Spieler:in und die Sortierung reisen nicht mit. Reicht die Breite nicht für alle
+Reiter, brechen sie in eine zweite Zeile um, statt seitlich zu rollen.
+
+„Team" zeigt auf einer Seite ohne Reiter die Mitglieder, die Karte „Teamangaben" und die
+Gefahrenzone mit „Team verlassen". Bis Release 1.55.0 standen die Spieler:innen als Reiter unter
+„Team"; ihre damaligen Adressen führen auf die neuen Seiten, samt Suche und Eingrenzung.
 
 Jede Seite hat ihre eigene Adresse, der Trainingsplan samt der Eingrenzung auf die eigenen
 Termine, dem geöffneten Termin und dem gewählten Reiter; der gezeigte Monat steht nicht darin. Adressen des früheren Monatsüberblicks führen in
@@ -1983,10 +2158,22 @@ war. Ohne Nachtrag gilt der Stand bei Beginn als Anwesenheit — ob jemand gepr�
 Anwendung nicht fest, ebenso wenig, wer einen Nachtrag gesetzt hat und wann. Ein Nachtrag trägt
 keinen Grund und unterscheidet nicht zwischen entschuldigt und unentschuldigt; Teilanwesenheit wie
 verspätet, früher gegangen oder verletzt zuschauend kennt sie nicht. Wer bei Beginn nicht zum Termin
-gehörte, lässt sich nicht als erschienen ergänzen. Eine Präsenzliste über mehrere Termine und eine
-Auswertung, wer wie oft nicht erschienen ist, gibt es in der Anwendung nicht, und an J+S übermittelt
-sie nichts; die J+S-Anwesenheitskontrolle ersetzt sie nicht. Der Hinweis auf der Abholseite, was
-KiFu speichert, nennt die Nachträge nicht.
+gehörte, lässt sich nicht als erschienen ergänzen. Eine Präsenzliste, die die einzelnen Termine
+mehrerer Wochen nebeneinander zeigt, gibt es nicht; die Teilnahme zählt nur zusammen, und welche
+Termine es waren, zeigt sie nicht. An J+S übermittelt die Anwendung nichts; die
+J+S-Anwesenheitskontrolle ersetzt sie nicht. Der Hinweis auf der Abholseite, was KiFu speichert,
+nennt die Nachträge nicht.
+
+Die Teilnahme zählt nur die Termine des eigenen Teams; über mehrere Teams einer Spieler:in oder für
+den ganzen Verein zählt sie nicht, auch nicht für die Vereinsverwaltung. Die Übersicht und die
+Meldezeitpunkte nennen nur, wer zurzeit im Team ist; wer herausgenommen wurde, erscheint nirgends
+mehr, auch nicht für den Zeitraum davor. Sie lassen sich weder drucken noch exportieren, und den
+Zeitraum gibt es nur am Stück, nicht etwa je Saison oder ohne Ferien. Ein ausgefallener Termin zählt
+nie. Die Meldezeitpunkte kennen bei Trainings nur Meldungen seit dem 19.10.2026 und
+Abmeldungen, die an diesem Tag noch galten, bei Spielen nur Meldungen seit dem 21.10.2026, und je
+Termin nur die zuletzt gültige; frühere Wechsel und wer gemeldet hat, zählen nicht. Eine Abmeldung von einem Training zählt dort auch, wenn die Spieler:in
+dann doch erschienen ist. Gemessen wird nur bis Beginn bzw. Anpfiff, nicht gegen die Meldefrist, und
+eine Grenze, ab der eine Meldung zu spät wäre, gibt es bewusst nicht.
 
 Spiele führt die Anwendung nur so weit, wie das Team sie plant: Resultate, Tabellen und Angaben zum
 Gegner ausser der Bezeichnung kennt sie nicht, und aus ClubCorner, dem Matchcenter oder anderen
@@ -2058,10 +2245,17 @@ einschalten; mehr als 10 Geräte je Spieler:in gehen nicht. Erinnerungen an Term
 gibt es auch als Mitteilung nicht.
 
 Die abgelegte App zeigt ohne Internetverbindung nichts an und ist keine App aus einem App-Store. Ob
-die Seite auf einem Gerät schon als App abgelegt ist, erkennt der Hinweis zum Ablegen nicht in jedem
-Fall; er kann im Browser weiter erscheinen. Am Computer erscheint kein Hinweis. Wer den Link im
-Browser einer anderen App wie WhatsApp öffnet, muss ihn zum Ablegen erst im Browser des Mobiles
-öffnen. Nach dem Erneuern des Links führt eine bisher abgelegte App ins Leere und ist neu abzulegen.
+die Seite auf einem Gerät schon als App abgelegt ist, erkennen das Angebot und der Eintrag „Als App
+ablegen" im Browser nicht in jedem Fall; sie können dort weiter erscheinen. Am Computer bietet der
+Link weder Angebot noch Ablegen an. Wer den Link im Browser einer anderen App wie WhatsApp öffnet,
+muss ihn zum Ablegen erst im Browser des Mobiles öffnen. Nach dem Erneuern des Links führt eine
+bisher abgelegte App ins Leere und ist neu abzulegen.
+
+Das Angebot für Mitteilungen und App erscheint nur bei einem Anlass — nach dem Melden über den
+Link, bei einem noch nicht gesehenen Ausfall oder in der abgelegten App — und höchstens einmal je
+Besuch; nach dem Ablehnen ruht es 30 Tage, je Gerät und Link, und die Frist lässt sich nicht ändern.
+Ob ein Gerät das Angebot gezeigt oder abgelehnt hat, erfahren die Mitglieder nicht. Auch das Angebot
+sichert nicht zu, dass Mitteilungen ankommen.
 
 Die Abholung erkennt keine Schreibvarianten: Umschriebene Umlaute, Rufnamen oder Tippfehler
 passen nicht. Wer die Abholadresse hat und Vorname, Nachname und Jahrgang einer Spieler:in kennt — im

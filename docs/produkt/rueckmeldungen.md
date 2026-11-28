@@ -1,6 +1,6 @@
 # Rückmeldungen
 
-Stand 2026-11-25 (Release 1.55.0). Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
+Stand 2026-11-28 (Release 1.56.0). Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
 
 ## Zwei Arten, etwas zu sagen
 
@@ -10,7 +10,9 @@ verschoben, ein Training in die Community gestellt. Ein Zustand ist etwas, das e
 vorfindet und das stehen bleibt, bis es erledigt ist: ein Formular, dessen Speichern
 gescheitert ist, eine Übung, deren Feld-Diagramm anderes Material zeigt als erfasst.
 
-Einen Zustand meldet ein Hinweis im Seiteninhalt, dort, wo er gilt. Er bleibt stehen, bis der
+Einen Zustand meldet ein Hinweis im Seiteninhalt, dort, wo er gilt — auch, warum die
+Hauptaktion einer Seite gesperrt ist, etwa „Spieler:in hinzufügen" an der Grenze von 100
+Spieler:innen; er steht dann unter der Kopfzeile. Er bleibt stehen, bis der
 Trainer ihn beantwortet oder die Sache behoben ist. Der Hinweis steht wie in Jira auf einer leicht
 getönten Fläche mit einem Zeichen links — rötlich, wenn etwas nicht ging, bläulich für alles
 andere; verlangt er eine Antwort, stehen die Knöpfe dafür unter dem Text. Einen Vorgang meldet eine kurze Zeile am
@@ -53,8 +55,11 @@ die Änderung ab, zeigt die Zeile ohne Hinweis wieder den geltenden Stand. Im Re
 «Trainer:innen» meldet derselbe Schalter wie bisher.
 
 Auf den Seiten hinter einem privaten Link, die Eltern ohne Konto öffnen, gibt es die Zeile nicht.
-Scheitert dort das Umlegen eines Schalters, springt er zurück, und der Grund steht als Hinweis
-an der Karte des Termins; auf der Abholseite steht jede Antwort als Hinweis über dem Knopf.
+Gelingt dort eine Ab- oder Anmeldung, bestätigt sie nur der neue Stand an der Karte (Schalter beim Training, Status beim Spiel); unter dem
+Termin kann dann das Angebot für Mitteilungen und App erscheinen (siehe
+[Team-Bereich](team-bereich.md#angebot-für-mitteilungen-und-app)). Scheitert das Umlegen eines
+Schalters, springt er zurück, und der Grund steht als Hinweis an der Karte des Termins; auf der
+Abholseite steht jede Antwort als Hinweis über dem Knopf.
 
 ## Neue Version
 

@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-11-25 (Release 1.55.0). Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-11-28 (Release 1.56.0). Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Startadresse
 
@@ -34,9 +34,10 @@ Untertitel „Teams und Spieler:innen des Vereins", durch einen Strich von den T
 Knopf zeigt in einer kleinen Zeile die Art, etwa „Verein" oder bei einem Team den Vereinsnamen mit
 „· Team", und darunter den Namen; ein Klick klappt die Liste auf, die sich auch mit den Pfeiltasten
 bedienen lässt. Gibt es nur einen Bereich, ist es eine Anzeige ohne Liste. Darunter stehen nur die
-Einträge des gewählten Bereichs: bei einem Team „Trainingsplan", „Trainings" und „Team" (siehe
-[Team-Bereich](team-bereich.md#drei-seiten)) — „Team" führt in die Verwaltung des Teams mit
-ihren Reitern und bleibt in jedem davon hervorgehoben —, beim Verein „Teams", „Spieler:innen" und, nur für
+Einträge des gewählten Bereichs: bei einem Team „Trainingsplan", „Spieler:innen", „Trainings" und
+„Team" (siehe [Team-Bereich](team-bereich.md#vier-seiten)) — „Spieler:innen" öffnet immer die
+Liste ohne Eingrenzung und bleibt in jedem seiner Reiter hervorgehoben, „Team" führt zu den
+Mitgliedern, den Teamangaben und „Team verlassen" —, beim Verein „Teams", „Spieler:innen" und, nur für
 die Vereinsverwaltung, „Verwaltung" (siehe [Verein](verein.md#der-bereich-verein)).
 
 Wer welche Bereiche sieht, folgt aus der Lage im Verein: eine Trainer:in die eigenen Teams und den
@@ -180,9 +181,10 @@ Breite der Seitenleiste, die gezogene Breite der Spalte und des Verzeichnisses u
 „Versionen" und im Styleguide, die gewählte Darstellung, den zuletzt gewählten Bereich — nach ihm
 richten sich die Seitenleiste auf Seiten ohne Bereich und das Ziel von ki-fu.ch, der abgelegten App
 und der Anmeldung —, bis zu welcher Version man „Versionen" gesehen hat und, nur auf den Seiten hinter
-einem privaten Link, bis wann das Gerät die Benachrichtigungen angezeigt hat, unter „Hinweis «als App
-ablegen»" wie oft das Gerät den Link besucht und wann es den Hinweis zum Ablegen geschlossen hat —
-je Link nur ein Kürzel, im lokalen Speicher des Browsers, bis man die Daten der Website löscht —
+einem privaten Link, bis wann das Gerät die Benachrichtigungen angezeigt hat, unter „Angebot
+«Mitteilungen aufs Mobile»" wann das Gerät das Angebot für Mitteilungen und die App zuletzt gezeigt
+und wann man es abgelehnt hat — je Link nur ein Kürzel, im lokalen Speicher des Browsers, bis man
+die Daten der Website löscht —
 und unter „Mitteilungen aufs Mobile" das kleine Programm des Browsers, das erst beim Einschalten der
 Mitteilungen dazukommt, sie anzeigt, beim Antippen die Benachrichtigungen öffnet und das Gerät beim
 Mitteilungsdienst des Herstellers anmeldet, bis man die Mitteilungen ausschaltet, das Team den Link
@@ -204,12 +206,23 @@ auch mit gesperrten Cookies.
 ## Brotkrumen
 
 Jede Seite zeigt zuoberst ihren Pfad als Brotkrumen, auch die Einstiegsseiten: der
-Übungsbestand etwa „Übungen", eine Übung „Übungen › Hauptteil › ‹Name›". Davor steht der
-Knopf zum Verkleinern der Leiste. Die Zeile steht auf einer Höhe mit der Marke oben in der
+Übungsbestand etwa „Übungen", eine Übung „Übungen › Hauptteil › ‹Name›", eine Seite eines Teams
+etwa „‹Verein› › Teams › ‹Team› › Spieler:innen", eine Seite des Vereins „‹Verein› › Teams". Davor
+steht der Knopf zum Verkleinern der Leiste. Die Zeile steht auf einer Höhe mit der Marke oben in der
 Leiste. In derselben Zeile stehen rechts die Aktionen der Seite: auf den Übersichten von
 Übungen und Trainings der Knopf zum Erstellen, auf Trainingsseiten die Aktionen am
-Training. Eine sichtbare Überschrift tragen die Übersichten nicht, ihren Namen nennt die
-Brotkrume; für Screenreader steht er unsichtbar als Überschrift der Seite. Im Druck
+Training. Seit Release 1.56.0 gilt das auch für die Seiten eines Teams und die Seiten „Teams" und
+„Spieler:innen" des Vereins: Die Hauptaktion steht als gefüllter Knopf mit Text rechts in der
+Kopfzeile — „Termin erstellen", „Spieler:in hinzufügen", „Training erstellen", „Team anlegen" —,
+eine Zweitaktion schwächer daneben, ein Knopf in Kontur wie „Spieler:innen importieren" links von
+ihr, ein Menü wie das des Trainingsplans rechts aussen. Auf einem Telefon tragen diese Knöpfe die
+Kurzform „Erstellen", „Hinzufügen", „Anlegen" bzw. „Importieren"; eine Vorlesehilfe hört den
+vollen Namen. Die Hauptaktion steht nur dort, auch wenn die Seite leer ist. Ist sie an einer Grenze
+gesperrt, bleibt sie sichtbar, und der Grund steht als Hinweis unter der Kopfzeile. Eine sichtbare
+Überschrift tragen die Übersichten und diese Seiten nicht, ihren Namen nennt die letzte Brotkrume;
+für Screenreader steht er unsichtbar als Überschrift der Seite. Wie viel eine Liste umfasst, steht
+klein direkt über ihr, unter Reitern und Eingrenzung, etwa „34 Spieler:innen", eingegrenzt „12 von
+34 Spieler:innen". Im Druck
 erscheint die Leiste nie; die Brotkrumen nur beim Drucken der Trainingsansicht aus dem
 Browser, damit auf dem Papier steht, wo das Training liegt.
 
@@ -246,6 +259,10 @@ rechts die Eigenschaften des Trainings oder die geöffnete Übung (siehe
 auf einem breiten Bildschirm; schmaler und auf Papier fehlt sie, und die Seite steht wie gewohnt
 untereinander. Einzig eine Übung, deren Bearbeitung ungesicherte Änderungen trägt, bleibt dann
 unter den Übungen stehen.
+
+Ebenso die Spieler:innen eines Teams: Ein Klick auf einen Namen in der Liste, der Teilnahme oder
+den Meldezeitpunkten öffnet daneben die Teilnahme dieser Spieler:in, schmaler an Stelle der Liste
+(siehe [Team-Bereich](team-bereich.md#teilnahme)).
 
 Auch der Trainingsplan eines Teams teilt sich, sobald ein Termin geöffnet ist: links die Termine,
 rechts der Termin mit seinen Reitern an der Stelle des Monats; er bleibt beim Scrollen stehen und
@@ -315,7 +332,8 @@ deutsch — die eigenen, englischen Meldungen des Browsers erscheinen nicht. Ebe
 
 Filter stehen über den Übersichten in einer Zeile als Knöpfe: Jeder nennt, wonach er filtert,
 und zählt, wie viele Werte gewählt sind; welche, zeigt ein Klick, der darunter eine Liste mit
-Kästchen zum An- und Abwählen öffnet. Ein Filter, der eingrenzt, ist farbig umrandet. Die Wahl
+Kästchen zum An- und Abwählen öffnet. Ein Filter mit genau einem Wert, wie der Zeitraum unter
+„Spieler:innen", nennt diesen Wert im Knopf, etwa „Zeitraum: Letzte 30 Tage". Ein Filter, der eingrenzt, ist farbig umrandet. Die Wahl
 wirkt sofort und die Liste bleibt offen; Escape oder ein Klick daneben schliesst sie. Den Filter
 „Verfügbare Spieler:innen" füllt man an derselben Stelle als Zahl ein. Sie wirkt wie die Suche daneben
 nach einer kurzen Tipppause.
@@ -356,8 +374,8 @@ am Bildschirmrand eine schmale Leiste mit dem Link „Fragen und Feedback". Ganz
 Seiten, auch der Abholseite, stehen Verweise auf „Impressum" und „Datenschutz"; in den
 übrigen Teil der Anwendung führen sie nicht. Eine Anmeldung kennen sie nicht — auch wer ein Konto
 hat, ist dort niemand Bestimmtes —, und im Browser liegt von ihnen nur, welche Benachrichtigungen
-ein Gerät am privaten Link schon angezeigt hat, wie oft es den Link besucht und wann es den Hinweis
-zum Ablegen als App geschlossen hat und, wer Mitteilungen aufs Mobile einschaltet, das kleine
+ein Gerät am privaten Link schon angezeigt hat, wann es das Angebot für Mitteilungen und die App
+zuletzt gezeigt hat und wann es abgelehnt wurde und, wer Mitteilungen aufs Mobile einschaltet, das kleine
 Programm des Browsers, das sie zeigt. Die Seite der Spieler:in lässt sich als eigene App auf den
 Home-Bildschirm legen (siehe [Team-Bereich](team-bereich.md#als-app-ablegen)). Ihr Titel ist fest und nennt weder Team noch Spieler:in,
 damit ein Chat beim Teilen keine Namen in die Vorschau setzt; Suchmaschinen nehmen sie nicht auf,
@@ -425,8 +443,8 @@ nicht geprüft; Trägerschaft und Postadresse stehen dort als Platzhalter. Die S
 abwählen, und eine Seite, die über einen ungültigen Link nicht gefunden wird (etwa ein
 Training, das es nicht gibt), zählt sie unter dem eingegebenen Pfad. Eine eigene Einstellung, um Cookies abzuschalten, gibt
 es nicht — das geht über den Browser. Die Seite „Cookies" erwähnt die Seiten hinter einem
-privaten Link nur mit dem Merker der gesehenen Benachrichtigungen, dem Hinweis zum Ablegen als App
-und den Mitteilungen aufs Mobile, und diese verweisen nicht auf sie, sondern nur auf Impressum
+privaten Link nur mit dem Merker der gesehenen Benachrichtigungen, dem Angebot für Mitteilungen
+und App und den Mitteilungen aufs Mobile, und diese verweisen nicht auf sie, sondern nur auf Impressum
 und Datenschutz; was zu Spieler:innen gespeichert ist, sagen dort die Abholseite und die
 Datenschutzerklärung, wie lange Benachrichtigungen bleiben, auch deren Ansicht, und was KiFu für
 Mitteilungen aufs Mobile speichert, auch der Dialog vor dem Einschalten.

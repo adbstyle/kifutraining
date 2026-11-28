@@ -1,6 +1,6 @@
 # Verein
 
-Stand 2026-11-23 (Release 1.53.0). Wie ein Verein in der Anwendung entsteht, wer ihn führt und was er mit seinen
+Stand 2026-11-28 (Release 1.56.0). Wie ein Verein in der Anwendung entsteht, wer ihn führt und was er mit seinen
 Teams, Trainer:innen und Spieler:innen tun kann. Was ein Team im Alltag plant, steht im
 [Team-Bereich](team-bereich.md).
 
@@ -100,14 +100,20 @@ an. Einen Verein gründen kann nur, wer keinem angehört."
 
 Den Bereich wählt man oben in der Seitenleiste (siehe [Navigation](navigation.md#die-seitenleiste)).
 Er hat die Einträge „Teams" und „Spieler:innen" und, nur für die Verwaltung, „Verwaltung". Die
-erste Brotkrume jeder Seite eines Teams nennt den Verein und führt hierher.
+erste Brotkrume jeder Seite eines Teams nennt den Verein und führt hierher. Wie die Seiten eines
+Teams tragen „Teams" und „Spieler:innen" seit Release 1.56.0 keine sichtbare Überschrift mehr — die
+Brotkrumen lauten etwa „FC Beispiel › Teams" —, ihre Aktionen stehen rechts in der Kopfzeile, und
+die Zahlen stehen in einer Zeile direkt über der Liste. Der frühere Titel „Teams im Verein «…»" ist
+weg.
 
-**Teams.** Die Übersicht zeigt allen Vereinsmitgliedern den Vereinsnamen, die Zahl der Teams mit
-der Grenze, etwa „3 Teams · höchstens 30 Teams", die Personen der Verwaltung mit ihrem
-Anzeigenamen — die eigene Person mit „(du)", wer keinen Anzeigenamen gewählt hat, nur als
-„Vereinsverwaltung", nie mit Adresse — und alle Teams alphabetisch. Die eigenen Teams tragen die
-Plakette „Mein Team" und führen in den Team-Bereich, die übrigen stehen nur mit Namen da. Die
-Verwaltung sieht zusätzlich die Zahl der Spieler:innen des Vereins im Kopf, je Team die
+**Teams.** Die Übersicht zeigt allen Vereinsmitgliedern über der Liste die Personen der
+Verwaltung mit ihrem Anzeigenamen, etwa „Vereinsverwaltung: Anna Keller (du)" — die eigene Person
+mit „(du)", wer keinen Anzeigenamen gewählt hat, nur als „Vereinsverwaltung", nie mit Adresse —,
+darunter klein die Zahl der Teams mit der Grenze, etwa „3 Teams · höchstens 30 Teams", und alle
+Teams alphabetisch. Die eigenen Teams tragen die Plakette „Mein Team" und führen in den
+Team-Bereich, die übrigen stehen nur mit Namen da. Die Verwaltung sieht zusätzlich in dieser Zeile
+die Zahl der Spieler:innen des Vereins, etwa „10 Teams · 144 Spieler:innen · höchstens 30 Teams",
+rechts in der Kopfzeile „Team anlegen" (siehe unten), je Team die
 Trainer:innen mit E-Mail-Adresse, ein Team ohne Mitglied mit der Plakette „ohne Trainer:in", die
 Zahl seiner Spieler:innen, und jedes Team öffnet für sie eine eigene Seite, auf der sie es führt
 (siehe unten). Ein Hinweis erinnert sie, dass sie die Inhalte eines Teams nur als Trainer:in im
@@ -161,14 +167,15 @@ Regeln wie beim Gründen.
 
 ## Teams und Trainer:innen führen
 
-Teams legt nur die Verwaltung an, mit „Team anlegen" auf der Übersicht. Der Dialog verlangt einen
+Teams legt nur die Verwaltung an, mit „Team anlegen" rechts in der Kopfzeile der Übersicht, auf
+dem Telefon „Anlegen". Der Dialog verlangt einen
 Namen — im Verein eindeutig, höchstens 60 Zeichen — und sagt, dass man dabei nicht Trainer:in wird
 und Trainer:innen, auch sich selbst, danach im Team aufnimmt, und wie viele Teams noch möglich
 sind. Eindeutig heisst: Gross- und Kleinschreibung, überzählige Leerzeichen, Bindestrich gegen
 Leerzeichen und verschiedene Apostrophe unterscheiden nicht. Trägt schon ein Team den Namen,
 nennt das Feld es: „Im Verein trägt schon das Team «…» diesen Namen." Ein Verein führt höchstens
-30 Teams; dann ist der Knopf gesperrt, und daneben steht „Der Verein hat schon 30 Teams. Ein
-weiteres kommt erst dazu, wenn es weniger sind."
+30 Teams; dann bleibt der Knopf sichtbar, aber gesperrt, und unter der Kopfzeile steht „Der
+Verein hat schon 30 Teams. Ein weiteres kommt erst dazu, wenn es weniger sind."
 
 Die Seite eines Teams im Bereich „Verein" zeigt der Verwaltung, ob sie selbst Trainer:in ist.
 Ist sie es nicht, sagt ein Hinweis „Du verwaltest dieses Team, ohne selbst Trainer:in zu sein.
@@ -219,9 +226,12 @@ Kalender-Abos der Trainer:innen für dieses Team erlöschen.
 ## Spielerbestand und Vereinsliste
 
 Unter Verein › Spieler:innen stehen alle Spieler:innen des Vereins, mit und ohne Team, auch die
-Schnuppernden, geordnet nach Vorname und Nachname. Der Kopf nennt die Zahlen des ganzen Vereins,
-etwa „144 Spieler:innen · 2 ohne Team · höchstens 1000 je Verein"; ohne Spieler:innen ohne Team
-fällt der mittlere Teil weg. Angezeigt wird in Schritten von 50 mit „Weitere anzeigen".
+Schnuppernden, geordnet nach Vorname und Nachname. Die Zeile direkt über der Liste nennt die Zahlen
+des ganzen Vereins, etwa „144 Spieler:innen · 2 ohne Team · höchstens 1000 je Verein", bei gesetzter
+Suche oder Eingrenzung die Treffer davon, etwa „12 von 144 Spieler:innen · 2 ohne Team · höchstens
+1000 je Verein"; ohne Spieler:innen ohne Team fällt der mittlere Teil weg. Angezeigt wird in
+Schritten von 50 mit „Weitere anzeigen"; solange mehr als 50 getroffen sind, steht unter der Liste,
+wie viele davon zu sehen sind, etwa „50 von 144 angezeigt".
 
 **Was alle Vereinsmitglieder sehen.** Trainer:innen ohne Verwaltung sehen je Spieler:in nur
 Vorname, Nachname, Jahrgang und ihre Teams als Plaketten, ohne Team die Plakette „ohne Team".
@@ -240,21 +250,30 @@ Vor- oder Nachnamens. Sie ignoriert Gross- und Kleinschreibung und Akzente und b
 „ß" wie „ss", „æ" wie „ae" und „œ" wie „oe" — „Strasse" findet „Straße" und umgekehrt —, kennt
 aber keine Umschreibung „ue" für „ü": „Mueller" findet „Müller" nicht. Suche und Eingrenzung
 stehen in der Adresse und lassen sich so teilen; ist danach niemand übrig, steht „Keine
-Spieler:in gefunden" mit „Ändere die Suche oder die Eingrenzung." und „Zurücksetzen". Bei
-gesetzter Suche oder Eingrenzung steht unter der Liste, wie viele es getroffen hat, etwa „12 von
-37 angezeigt".
+Spieler:in gefunden" mit „Ändere die Suche oder die Eingrenzung." und „Zurücksetzen". Wie viele es
+getroffen hat, nennt die Zeile über der Liste.
 
 **Was die Verwaltung dazu sieht und tut.** Die Verwaltung sieht zusätzlich die J+S-Nummer („–"
 ohne), den Stand des privaten Links als Plakette „abgeholt", „zugestellt" oder „offen" — derselbe
 Stand wie in allen Teams der Spieler:in (siehe [Team-Bereich](team-bereich.md#privater-link)) —
 und bei Schnuppernden die Plakette „Schnuppern
-1/4". Jede Zeile hat ein Menü mit „Ändern", „Privater Link", „Einem Team zuordnen" und „Löschen";
-über der Liste stehen „Spieler:in erfassen" und das Zeichen „Spieler:innen aus Datei importieren".
+1/4". Jede Zeile hat ein Menü mit „Ändern", „Privater Link", „Einem Team zuordnen" und „Löschen".
+Rechts in der Kopfzeile stehen „Spieler:in hinzufügen" und links davon, in Kontur, „Spieler:innen
+importieren", auf dem Telefon „Hinzufügen" und „Importieren"; bis Release 1.55.0 hiess das Erste
+„Spieler:in erfassen" und stand mit dem Zeichen für den Import über der Liste. Führt der Verein noch
+niemanden, steht „Noch keine Spieler:innen" mit „Der Verein führt noch keine Spieler:innen. Füge die
+erste hinzu oder nimm sie in der Spielerliste eines Teams auf."; einen weiteren Knopf gibt es dort
+nicht. Führt der Verein schon 1000 Spieler:innen, sind beide Knöpfe gesperrt, und unter der
+Kopfzeile steht „Der Verein hat schon 1000 Spieler:innen. Weitere kommen erst dazu, wenn es weniger
+sind."
 
-- **Erfassen** nimmt eine Spieler:in mit Vorname, Nachname, Jahrgang und auf Wunsch J+S-Nummer
-  auf, nach denselben Regeln wie die Spielerliste eines Teams. Sie kommt ohne Team in den Verein;
-  einem Team ordnet man sie danach zu. **Ändern** gilt für jede Spieler:in des Vereins, auch ohne
-  Team, und wirkt sofort in allen ihren Teams.
+- **Hinzufügen** öffnet den Dialog „Spieler:in hinzufügen" — derselbe Begriff wie in der
+  Spielerliste eines Teams — und nimmt mit „Hinzufügen" eine Spieler:in mit Vorname, Nachname,
+  Jahrgang und auf Wunsch J+S-Nummer auf, nach denselben Regeln wie die Spielerliste eines Teams.
+  Der Dialog sagt dazu: „Die Spieler:in kommt ohne Team in den Verein «FC Beispiel». Einem Team
+  ordnest du sie danach zu." Danach schliesst er, und die Anwendung meldet etwa „Mia Keller ist
+  hinzugefügt." **Ändern** gilt für jede Spieler:in des Vereins, auch ohne Team, und wirkt sofort
+  in allen ihren Teams.
 - **Privater Link** zeigt den Link wie im Team, mit dem Stand als Plakette. Ist er nicht
   abgeholt, steht daneben „Als zugestellt markieren" bzw. bei einem zugestellten „Zustellung
   zurücknehmen", mit der Erklärung hinter ⓘ: „Du hast den Link der Spieler:in oder den Eltern
@@ -315,14 +334,14 @@ als dieselbe —, Umlaute und Akzente schon: „Müller" und „Mueller" sind zw
 gehört nicht dazu. Zwei verschiedene Spieler:innen mit gleichen Angaben unterscheidet man mit
 einem Zusatz im Vornamen.
 
-Wer eine Spieler:in erfasst, die es im Verein schon gibt, wird abgewiesen, und die Meldung nennt,
+Wer eine Spieler:in hinzufügt, die es im Verein schon gibt, wird abgewiesen, und die Meldung nennt,
 wo sie steht. In der Spielerliste eines Teams heisst das: steht sie schon in diesem Team, „Diese
 Spieler:in steht schon auf der Liste. Unterscheide zwei Gleichnamige mit einem Zusatz im
 Vornamen."; steht sie in anderen Teams, nennt die Meldung deren Namen, etwa „Noah Keller (2015)
 wird im Verein schon im Team «Da» geführt. Kläre die Zuordnung zu deinem Team mit der
 Vereinsverwaltung."; steht sie in keinem Team, sagt sie, dass die Spieler:in im Verein geführt
 wird, aber keinem Team zugeordnet ist. Trainer:innen können eine bestehende Spieler:in nicht
-selbst in ihr Team holen; das tut die Verwaltung. Erfasst die Verwaltung im Spielerbestand, nennt
+selbst in ihr Team holen; das tut die Verwaltung. Fügt die Verwaltung im Spielerbestand hinzu, nennt
 die Meldung ebenso die Teams oder „keinem Team zugeordnet" und dass sie die bestehende selbst
 zuordnet. Dieselbe Regel gilt beim Ändern. J+S-Nummer und Link nennt keine dieser Meldungen.
 
@@ -333,8 +352,8 @@ nicht.
 
 ## Import aus einer Datei
 
-Eine ganze Mannschaft übernimmt nur die Verwaltung, im Spielerbestand über das Zeichen
-„Spieler:innen aus Datei importieren"; in der Spielerliste eines Teams gibt es keinen Import mehr.
+Eine ganze Mannschaft übernimmt nur die Verwaltung, im Spielerbestand über „Spieler:innen
+importieren" in der Kopfzeile; in der Spielerliste eines Teams gibt es keinen Import mehr.
 Der Dialog „Spieler:innen importieren" sagt vorab, dass neue Spieler:innen ohne Team in den
 Verein kommen und KiFu Bestehende im ganzen Verein erkennt und nicht neu anlegt.
 
@@ -376,8 +395,12 @@ einem Team ordnest du sie im Spielerbestand zu." mit der Aktion „Zuordnen", di
 
 Ein Verein führt höchstens 30 Teams und 1000 Spieler:innen — mitgezählt werden die ohne Team, die
 Schnuppernden und doppelte Einträge —, ein Team höchstens 100 Spieler:innen, die Schnuppernden
-mitgezählt. Die Grenzen wirken nur auf Neues: auf das Anlegen eines Teams, das Erfassen einer
-Spieler:in, einen Import mit Neuen und das Zuordnen. Ändern, Herausnehmen, Löschen, Schnuppern,
+mitgezählt. Die Grenzen wirken nur auf Neues: auf das Anlegen eines Teams, das Hinzufügen einer
+Spieler:in, einen Import mit Neuen und das Zuordnen. Ist eine Grenze erreicht, bleiben „Team
+anlegen", „Spieler:in hinzufügen" und „Spieler:innen importieren" sichtbar, aber gesperrt, und der
+Grund steht unter der Kopfzeile; ist der Verein voll, sagt die Spielerliste eines Teams nur „Im
+Verein ist kein Platz für weitere Spieler:innen. Zuerst muss die Vereinsverwaltung Platz
+schaffen.", ohne den Bestand zu nennen. Ändern, Herausnehmen, Löschen, Schnuppern,
 Links, Abholung und Auflösen bleiben auch an oder über einer Grenze möglich, und ein Bestand über
 einer Grenze bleibt bestehen; die Anzeigen nennen dann nur die Zahl, etwa „1012 (höchstens 1000
 Spieler:innen)". Wer an eine Grenze stösst, erfährt, welche: „Das Team hat schon 100
